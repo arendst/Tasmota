@@ -251,6 +251,7 @@ enum SupportedModules {
   APLIC_WDP303075,
   TUYA_DIMMER,
   GOSUND,
+  GOSUND_KS602,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -468,6 +469,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   TECKIN,
   APLIC_WDP303075,
   GOSUND,
+  GOSUND_KS602,
   NEO_COOLCAM,        // Socket Relay Devices
   OBI,
   ESP_SWITCH,         // Switch Devices
@@ -1230,7 +1232,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED2_INV,    // GPIO13 LED2 (red) inv
      GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
      0, 0, 0
+  },
+  { "Gosund KS-602",   // https://
+     GPIO_KEY1,        // GPIO00 User Button
+     0,                // RXD
+     0,
+     0,                // TXD
+     0,
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL1,        // GPIO12 Relay (0 = Off, 1 = On)
+     GPIO_LED2_INV,    // GPIO13 WiFi LED
+     0,
+     0,
+     0,
+     0
   }
+
 };
 
 /*
