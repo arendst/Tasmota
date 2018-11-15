@@ -1544,7 +1544,7 @@ void HandleUploadLoop(void)
             upload_error = 4;  // Program flash size is larger than real flash size
             return;
           }
-          upload.buf[2] = 3;  // Force DOUT - ESP8285
+//          upload.buf[2] = 3;  // Force DOUT - ESP8285
         }
       }
     }
