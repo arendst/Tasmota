@@ -75,7 +75,7 @@ int16_t Ads1115GetConversion(byte channel)
 
 /********************************************************************************************/
 
-void Ads1115Detect()
+void Ads1115Detect(void)
 {
   if (ads1115_type) {
     return;

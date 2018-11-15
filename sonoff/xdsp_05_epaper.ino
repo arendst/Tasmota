@@ -41,7 +41,7 @@ sFONT *selected_font;
 
 /*********************************************************************************************/
 
-void EpdInitMode()
+void EpdInitMode(void)
 {
   // whiten display with full update
   epd.Init(lut_full_update);
@@ -72,7 +72,7 @@ void EpdInitMode()
   paint.Clear(UNCOLORED);
 }
 
-void EpdInitPartial()
+void EpdInitPartial(void)
 {
   epd.Init(lut_partial_update);
   //paint.Clear(UNCOLORED);
@@ -80,7 +80,7 @@ void EpdInitPartial()
   delay(500);
 }
 
-void EpdInitFull()
+void EpdInitFull(void)
 {
   epd.Init(lut_full_update);
   //paint.Clear(UNCOLORED);
@@ -104,7 +104,7 @@ void EpdInit(uint8_t mode)
   }
 }
 
-void EpdInitDriver()
+void EpdInitDriver(void)
 {
   if (!Settings.display_model) {
     Settings.display_model = XDSP_05;
@@ -121,7 +121,7 @@ void EpdInitDriver()
 
 /*********************************************************************************************/
 
-void EpdClear()
+void EpdClear(void)
 {
   paint.Clear(UNCOLORED);
 }
@@ -158,7 +158,7 @@ void EpdDisplayOnOff(uint8_t on)
 
 }
 
-void EpdOnOff()
+void EpdOnOff(void)
 {
   EpdDisplayOnOff(disp_power);
 }
@@ -167,7 +167,7 @@ void EpdOnOff()
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-void EpdRefresh()  // Every second
+void EpdRefresh(void)  // Every second
 {
   if (Settings.display_mode) {  // Mode 0 is User text
 

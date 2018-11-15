@@ -87,7 +87,7 @@ void PzemSend(uint8_t cmd)
   PzemSerial->write(bytes, sizeof(pzem));
 }
 
-bool PzemReceiveReady()
+bool PzemReceiveReady(void)
 {
   return PzemSerial->available() >= (int)sizeof(PZEMCommand);
 }
@@ -162,7 +162,7 @@ const uint8_t pzem_responses[] { RESP_SET_ADDRESS, RESP_VOLTAGE, RESP_CURRENT, R
 uint8_t pzem_read_state = 0;
 uint8_t pzem_sendRetry = 0;
 
-void PzemEvery200ms()
+void PzemEvery200ms(void)
 {
   bool data_ready = PzemReceiveReady();
 
@@ -200,7 +200,7 @@ void PzemEvery200ms()
   }
 }
 
-void PzemSnsInit()
+void PzemSnsInit(void)
 {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
   PzemSerial = new TasmotaSerial(pin[GPIO_PZEM004_RX], pin[GPIO_PZEM0XX_TX], 1);
@@ -211,7 +211,7 @@ void PzemSnsInit()
   }
 }
 
-void PzemDrvInit()
+void PzemDrvInit(void)
 {
   if (!energy_flg) {
     if ((pin[GPIO_PZEM004_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {  // Any device with a Pzem004T

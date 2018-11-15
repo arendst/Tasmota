@@ -45,7 +45,7 @@ int16_t MPU_6050_temperature = 0;
 #include <MPU6050.h>
 MPU6050 mpu6050;
 
-void MPU_6050PerformReading()
+void MPU_6050PerformReading(void)
 {
   mpu6050.getMotion6(
     &MPU_6050_ax,
@@ -75,7 +75,7 @@ void MPU_6050SetAccelOffsets(int x, int y, int z)
 }
 */
 
-void MPU_6050Detect()
+void MPU_6050Detect(void)
 {
   if (MPU_6050_found)
   {

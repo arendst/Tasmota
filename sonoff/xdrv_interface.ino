@@ -216,7 +216,7 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
   return XdrvCall(FUNC_MQTT_DATA);
 }
 
-boolean XdrvRulesProcess()
+boolean XdrvRulesProcess(void)
 {
   return XdrvCall(FUNC_RULES_PROCESS);
 }

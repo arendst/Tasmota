@@ -146,11 +146,11 @@ uint8_t arilux_rf_toggle = 0;
 
 #ifndef ARDUINO_ESP8266_RELEASE_2_3_0
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves RF misses
-void AriluxRfInterrupt() ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
+void AriluxRfInterrupt(void) ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
 #endif  // USE_WS2812_DMA
 #endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
-void AriluxRfInterrupt()
+void AriluxRfInterrupt(void)
 {
   unsigned long time = micros();
   unsigned int duration = time - arilux_rf_lasttime;
@@ -184,7 +184,7 @@ void AriluxRfInterrupt()
   arilux_rf_lasttime = time;
 }
 
-void AriluxRfHandler()
+void AriluxRfHandler(void)
 {
   unsigned long now = millis();
   if (arilux_rf_received_value && !((arilux_rf_received_value == arilux_rf_last_received_value) && (now - arilux_rf_last_time < ARILUX_RF_TIME_AVOID_DUPLICATE))) {
@@ -245,7 +245,7 @@ void AriluxRfHandler()
   arilux_rf_received_value = 0;
 }
 
-void AriluxRfInit()
+void AriluxRfInit(void)
 {
   if ((pin[GPIO_ARIRFRCV] < 99) && (pin[GPIO_LED2] < 99)) {
     if (Settings.last_module != Settings.module) {
@@ -259,7 +259,7 @@ void AriluxRfInit()
   }
 }
 
-void AriluxRfDisable()
+void AriluxRfDisable(void)
 {
   if ((pin[GPIO_ARIRFRCV] < 99) && (pin[GPIO_LED2] < 99)) {
     detachInterrupt(pin[GPIO_ARIRFRCV]);
@@ -309,7 +309,7 @@ void LightMy92x1Write(uint8_t data)
   }
 }
 
-void LightMy92x1Init()
+void LightMy92x1Init(void)
 {
   uint8_t chips = light_type -11;       // 1 (AiLight) or 2 (Sonoff B1)
 
@@ -347,7 +347,7 @@ void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t dut
 
 /********************************************************************************************/
 
-void LightInit()
+void LightInit(void)
 {
   uint8_t max_scheme = LS_MAX -1;
 
@@ -449,7 +449,7 @@ void LightSetColorTemp(uint16_t ct)
   }
 }
 
-uint16_t LightGetColorTemp()
+uint16_t LightGetColorTemp(void)
 {
   uint8_t ct_idx = 0;
   if (LST_RGBWC == light_subtype) {
@@ -491,7 +491,7 @@ void LightSetDimmer(uint8_t myDimmer)
   }
 }
 
-void LightSetColor()
+void LightSetColor(void)
 {
   uint8_t highest = 0;
 
@@ -551,7 +551,7 @@ char* LightGetColor(uint8_t type, char* scolor)
   return scolor;
 }
 
-void LightPowerOn()
+void LightPowerOn(void)
 {
   if (Settings.light_dimmer && !(light_power)) {
     ExecuteCommandPower(light_device, POWER_ON, SRC_LIGHT);
@@ -606,7 +606,7 @@ void LightState(uint8_t append)
   }
 }
 
-void LightPreparePower()
+void LightPreparePower(void)
 {
   if (Settings.light_dimmer && !(light_power)) {
     if (!Settings.flag.not_power_linked) {
@@ -623,7 +623,7 @@ void LightPreparePower()
   LightState(0);
 }
 
-void LightFade()
+void LightFade(void)
 {
   if (0 == Settings.light_fade) {
     for (byte i = 0; i < light_subtype; i++) {
@@ -686,7 +686,7 @@ void LightCycleColor(int8_t direction)
   memcpy(light_new_color, light_entry_color, sizeof(light_new_color));
 }
 
-void LightRandomColor()
+void LightRandomColor(void)
 {
   uint8_t light_update = 0;
   for (byte i = 0; i < LST_RGB; i++) {
@@ -702,7 +702,7 @@ void LightRandomColor()
   LightFade();
 }
 
-void LightSetPower()
+void LightSetPower(void)
 {
 //  light_power = XdrvMailbox.index;
   light_power = bitRead(XdrvMailbox.index, light_device -1);
@@ -715,7 +715,7 @@ void LightSetPower()
   LightAnimate();
 }
 
-void LightAnimate()
+void LightAnimate(void)
 {
   uint8_t cur_col[5];
   uint16_t light_still_on = 0;
@@ -843,7 +843,7 @@ float light_hue = 0.0;
 float light_saturation = 0.0;
 float light_brightness = 0.0;
 
-void LightRgbToHsb()
+void LightRgbToHsb(void)
 {
   LightSetDimmer(Settings.light_dimmer);
 
@@ -874,7 +874,7 @@ void LightRgbToHsb()
   }
 }
 
-void LightHsbToRgb()
+void LightHsbToRgb(void)
 {
   float r;
   float g;
@@ -1064,7 +1064,7 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
 /********************************************************************************************/
 
 //boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t XdrvMailbox.data_len, int16_t XdrvMailbox.payload)
-boolean LightCommand()
+boolean LightCommand(void)
 {
   char command [CMDSZ];
   boolean serviced = true;

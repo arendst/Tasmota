@@ -46,7 +46,7 @@ uint8_t sr04_trig_pin = 0;
 
 /********************************************************************************************/
 
-void Sr04Init()
+void Sr04Init(void)
 {
   sr04_echo_pin = pin[GPIO_SR04_ECHO];
   sr04_trig_pin = pin[GPIO_SR04_TRIG];
