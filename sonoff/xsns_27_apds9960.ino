@@ -1518,9 +1518,8 @@ int16_t readGesture(void)
         if (gesture_loop_counter == APDS9960_MAX_GESTURE_CYCLES){ // We will escape after a few loops
           disableGestureSensor();   // stop the sensor to prevent problems with power consumption/blocking  and return to the main loop
           APDS9960_overload = true; // we report this as "long"-gesture
-          char log[LOGSZ];
-          snprintf_P(log, sizeof(log), PSTR("Sensor overload"));
-          AddLog_P(LOG_LEVEL_DEBUG, log);
+          snprintf_P(log_data, sizeof(log_data), PSTR("Sensor overload"));
+          AddLog(LOG_LEVEL_DEBUG);
         }
         gesture_loop_counter += 1;
         /* Wait some time to collect next batch of FIFO data */
@@ -1793,36 +1792,35 @@ bool decodeGesture(void)
 
 void handleGesture(void) {
     if (isGestureAvailable() ) {
-    char log[LOGSZ];
     switch (readGesture()) {
       case DIR_UP:
-        snprintf_P(log, sizeof(log), PSTR("UP"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("UP"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Up"));
         break;
       case DIR_DOWN:
-        snprintf_P(log, sizeof(log), PSTR("DOWN"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("DOWN"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Down"));
         break;
       case DIR_LEFT:
-        snprintf_P(log, sizeof(log), PSTR("LEFT"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("LEFT"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Left"));
         break;
       case DIR_RIGHT:
-        snprintf_P(log, sizeof(log), PSTR("RIGHT"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("RIGHT"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Right"));
         break;
       default:
       if(APDS9960_overload)
       {
-        snprintf_P(log, sizeof(log), PSTR("LONG"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("LONG"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Long"));
       }
       else{
-        snprintf_P(log, sizeof(log), PSTR("NONE"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("NONE"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("None"));
       }
     }
-    AddLog_P(LOG_LEVEL_DEBUG, log);
+    AddLog(LOG_LEVEL_DEBUG);
 
     mqtt_data[0] = '\0';
     if (MqttShowSensor()) {
@@ -1834,7 +1832,7 @@ void handleGesture(void) {
   }
 }
 
-void APDS9960_adjustATime(void)  // not really used atm 
+void APDS9960_adjustATime(void)  // not really used atm
 {
   //readAllColorAndProximityData();
   I2cValidRead16LE(&color_data.a, APDS9960_I2C_ADDR, APDS9960_CDATAL);
