@@ -257,7 +257,6 @@ void SettingsSave(byte rotate)
  * stop_flash_rotate 0 = Allow flash slot rotation (SetOption12 0)
  * stop_flash_rotate 1 = Allow only eeprom flash slot use (SetOption12 1)
  */
-#ifndef BE_MINIMAL
   if ((GetSettingsCrc() != settings_crc) || rotate) {
     if (1 == rotate) {   // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
       stop_flash_rotate = 1;
@@ -290,7 +289,6 @@ void SettingsSave(byte rotate)
 
     settings_crc = Settings.cfg_crc;
   }
-#endif  // BE_MINIMAL
   RtcSettingsSave();
 }
 
@@ -319,10 +317,8 @@ void SettingsLoad(void)
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"), settings_location, Settings.save_flag);
   AddLog(LOG_LEVEL_DEBUG);
 
-#ifndef BE_MINIMAL
   if (bad_crc || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) { SettingsDefault(); }
   settings_crc = GetSettingsCrc();
-#endif  // BE_MINIMAL
 
   RtcSettingsLoad();
 }
