@@ -95,7 +95,7 @@ const char HASS_DISCOVER_LIGHT_DIMMER_SHORT[] PROGMEM =
 const char HASS_DISCOVER_LIGHT_COLOR_SHORT[] PROGMEM =
   "%s,\"rgb_cmd_t\":\"%s2\","                      // cmnd/led2/Color2
   "\"rgb_stat_t\":\"%s\","                         // stat/led2/RESULT
-  "\"rgb_val_tpl\":\"{{value_json." D_CMND_COLOR "}}\"";
+  "\"rgb_val_tpl\":\"{{value_json." D_CMND_COLOR ".split(',')[0:3]|join(',')}}\"";
 //  "\"rgb_val_tpl\":\"{{value_json." D_CMND_COLOR " | join(',')}}\"";
 
 const char HASS_DISCOVER_LIGHT_CT_SHORT[] PROGMEM =
@@ -109,6 +109,28 @@ const char HASS_DISCOVER_LIGHT_SCHEME[] PROGMEM =
   "\"effect_value_template\":\"{{value_json." D_CMND_SCHEME "}}\","
   "\"effect_list\":[\"0\",\"1\",\"2\",\"3\",\"4\"]";  // string list with reference to scheme parameter. Currently only supports numbers 0 to 11 as it make the mqtt string too long
 */
+const char HASS_DISCOVER_TOPIC_PREFIX[] PROGMEM =
+  "%s, \"~\":\"%s\"";
+
+static void FindPrefix(char* s1, char* s2, char* out)
+{
+  int prefixlen = 0;
+
+  while (s1[prefixlen] != '\0' && s2[prefixlen] != '\0' && s1[prefixlen] == s2[prefixlen]) {
+    prefixlen++;
+  }
+  strlcpy(out, s1, prefixlen+1);
+}
+
+static void Shorten(char** s, char *prefix)
+{
+  size_t len = strlen(*s);
+  size_t prefixlen = strlen(prefix);
+  if (len > prefixlen && !strncmp(*s, prefix, prefixlen)) {
+    *s += prefixlen-1;
+    *s[0] = '~';
+  }
+}
 
 void HAssDiscoverRelay(void)
 {
@@ -133,9 +155,13 @@ void HAssDiscoverRelay(void)
     if (Settings.flag.hass_discovery && (i <= devices_present)) {
       char name[33];
       char value_template[33];
-      char command_topic[TOPSZ];
-      char state_topic[TOPSZ];
-      char availability_topic[TOPSZ];
+      char _command_topic[TOPSZ];
+      char _state_topic[TOPSZ];
+      char _availability_topic[TOPSZ];
+      char prefix[TOPSZ];
+      char *command_topic = _command_topic;
+      char *state_topic = _state_topic;
+      char *availability_topic = _availability_topic;
 
       if (i > MAX_FRIENDLYNAMES) {
         snprintf_P(name, sizeof(name), PSTR("%s %d"), Settings.friendlyname[0], i);
@@ -146,20 +172,32 @@ void HAssDiscoverRelay(void)
       GetTopic_P(command_topic, CMND, mqtt_topic, value_template);
       GetTopic_P(state_topic, STAT, mqtt_topic, S_RSLT_RESULT);
       GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
+      FindPrefix(command_topic, state_topic, prefix);
+      if (Settings.flag3.hass_short_discovery_msg) {
+        Shorten(&command_topic, prefix);
+        Shorten(&state_topic, prefix);
+        Shorten(&availability_topic, prefix);
+      }
       snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_RELAY_SHORT:HASS_DISCOVER_RELAY,
                  name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
 
       if (is_light) {
-        char brightness_command_topic[TOPSZ];
+        char _brightness_command_topic[TOPSZ];
+        char *brightness_command_topic = _brightness_command_topic;
 
         GetTopic_P(brightness_command_topic, CMND, mqtt_topic, D_CMND_DIMMER);
+        if (Settings.flag3.hass_short_discovery_msg)
+          Shorten(&brightness_command_topic, prefix);
         snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_LIGHT_DIMMER_SHORT:HASS_DISCOVER_LIGHT_DIMMER,
                    mqtt_data, brightness_command_topic, state_topic);
 
         if (light_subtype >= LST_RGB) {
-          char rgb_command_topic[TOPSZ];
+          char _rgb_command_topic[TOPSZ];
+          char *rgb_command_topic = _rgb_command_topic;
 
           GetTopic_P(rgb_command_topic, CMND, mqtt_topic, D_CMND_COLOR);
+          if (Settings.flag3.hass_short_discovery_msg)
+            Shorten(&rgb_command_topic, prefix);
           snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_LIGHT_COLOR_SHORT:HASS_DISCOVER_LIGHT_COLOR,
                      mqtt_data, rgb_command_topic, state_topic);
 /*
@@ -170,13 +208,18 @@ void HAssDiscoverRelay(void)
 */
         }
         if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
-          char color_temp_command_topic[TOPSZ];
+          char _color_temp_command_topic[TOPSZ];
+          char *color_temp_command_topic = _color_temp_command_topic;
 
           GetTopic_P(color_temp_command_topic, CMND, mqtt_topic, D_CMND_COLORTEMPERATURE);
+          if (Settings.flag3.hass_short_discovery_msg)
+            Shorten(&color_temp_command_topic, prefix);
           snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_LIGHT_CT_SHORT:HASS_DISCOVER_LIGHT_CT,
                      mqtt_data, color_temp_command_topic, state_topic);
         }
       }
+      if (Settings.flag3.hass_short_discovery_msg)
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
     MqttPublish(stopic, true);
@@ -213,8 +256,11 @@ void HAssDiscoverButton(void)
       if (Settings.flag.hass_discovery && button_present) {
         char name[33];
         char value_template[33];
-        char state_topic[TOPSZ];
-        char availability_topic[TOPSZ];
+        char _state_topic[TOPSZ];
+        char _availability_topic[TOPSZ];
+        char prefix[TOPSZ];
+        char *state_topic = _state_topic;
+        char *availability_topic = _availability_topic;
 
         if (button_index+1 > MAX_FRIENDLYNAMES) {
           snprintf_P(name, sizeof(name), PSTR("%s %d BTN"), Settings.friendlyname[0], button_index+1);
@@ -224,14 +270,29 @@ void HAssDiscoverButton(void)
         GetPowerDevice(value_template, button_index+1, sizeof(value_template), Settings.flag.device_index_enable);
         GetTopic_P(state_topic, CMND, key_topic, value_template); // State of button is sent as CMND TOGGLE
         GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
+        FindPrefix(state_topic, availability_topic, prefix);
+        if (Settings.flag3.hass_short_discovery_msg) {
+          Shorten(&state_topic, prefix);
+          Shorten(&availability_topic, prefix);
+        }
         snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_BUTTON_SHORT:HASS_DISCOVER_BUTTON,
                    name, state_topic, Settings.state_text[2], availability_topic);
 
+        if (Settings.flag3.hass_short_discovery_msg)
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
       }
       MqttPublish(stopic, true);
     }
   }
+}
+
+static int string_ends_with(const char * str, const char * suffix)
+{
+  int str_len = strlen(str);
+  int suffix_len = strlen(suffix);
+
+  return (str_len >= suffix_len) && (0 == strcmp(str + (str_len-suffix_len), suffix));
 }
 
 void HAssDiscovery(uint8_t mode)
@@ -241,7 +302,8 @@ void HAssDiscovery(uint8_t mode)
     Settings.flag.mqtt_response = 0;     // Response always as RESULT and not as uppercase command
     Settings.flag.decimal_text = 1;      // Respond with decimal color values
 //    Settings.light_scheme = 0;           // To just control color it needs to be Scheme 0
-//    strncpy_P(Settings.mqtt_fulltopic, PSTR("%prefix%/%topic%/"), sizeof(Settings.mqtt_fulltopic));  // Make MQTT topic as short as possible to make this process posible within MQTT_MAX_PACKET_SIZE
+    if (!string_ends_with(Settings.mqtt_fulltopic, "%prefix%/"))
+      strncpy_P(Settings.mqtt_fulltopic, PSTR("%topic%/%prefix%/"), sizeof(Settings.mqtt_fulltopic));
   }
 
   if (Settings.flag.hass_discovery || (1 == mode)) {
