@@ -250,8 +250,8 @@ enum SupportedModules {
   TECKIN,
   APLIC_WDP303075,
   TUYA_DIMMER,
-  ARMTRONIX_DIMMERS,
   GOSUND,
+  ARMTRONIX_DIMMERS,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -1220,7 +1220,20 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,
      0
   },
-    { "ARMTR Dimmer",     // ARMTRONIX Dimmer, one or two channel (ESP8266 w/ separate MCU dimmer)
+  { "Gosund SP1_v23",  // https://www.amazon.de/gp/product/B0777BWS1P
+     0,
+     GPIO_LED1_INV,    // GPIO01 Serial RXD and LED1 (blue) inv
+     0,
+     GPIO_KEY1,        // GPIO03 Serial TXD and Button
+     GPIO_HJL_CF,      // GPIO04 BL0937 or HJL-01 CF power
+     GPIO_NRG_CF1,     // GPIO05 BL0937 or HJL-01 CF1 current / voltage
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_NRG_SEL_INV, // GPIO12 BL0937 or HJL-01 Sel output (0 = Voltage)
+     GPIO_LED2_INV,    // GPIO13 LED2 (red) inv
+     GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
+     0, 0, 0
+  },
+  { "ARMTR Dimmer",     // ARMTRONIX Dimmer, one or two channel (ESP8266 w/ separate MCU dimmer)
                        // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-two-triac-board/
                        // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-esp8266-one-triac-board-alexaecho/
      GPIO_USER,        
@@ -1236,19 +1249,6 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,
      GPIO_USER,
      0
-  },
-  { "Gosund SP1_v23",  // https://www.amazon.de/gp/product/B0777BWS1P
-     0,
-     GPIO_LED1_INV,    // GPIO01 Serial RXD and LED1 (blue) inv
-     0,
-     GPIO_KEY1,        // GPIO03 Serial TXD and Button
-     GPIO_HJL_CF,      // GPIO04 BL0937 or HJL-01 CF power
-     GPIO_NRG_CF1,     // GPIO05 BL0937 or HJL-01 CF1 current / voltage
-     0, 0, 0, 0, 0, 0, // Flash connection
-     GPIO_NRG_SEL_INV, // GPIO12 BL0937 or HJL-01 Sel output (0 = Voltage)
-     GPIO_LED2_INV,    // GPIO13 LED2 (red) inv
-     GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
-     0, 0, 0
   }
 };
 
