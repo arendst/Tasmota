@@ -38,7 +38,7 @@ uint8_t serial_bridge_in_byte_counter = 0;
 unsigned long serial_bridge_polling_window = 0;
 char serial_bridge_buffer[SERIAL_BRIDGE_BUFFER_SIZE];
 
-void SerialBridgeInput()
+void SerialBridgeInput(void)
 {
   while (SerialBridgeSerial->available()) {
     yield();
@@ -87,7 +87,7 @@ void SerialBridgeInit(void)
  * Commands
 \*********************************************************************************************/
 
-boolean SerialBridgeCommand()
+boolean SerialBridgeCommand(void)
 {
   char command [CMDSZ];
   boolean serviced = true;

@@ -45,7 +45,7 @@ struct DHTSTRUCT {
   float    h = NAN;
 } Dht[DHT_MAX_SENSORS];
 
-void DhtReadPrep()
+void DhtReadPrep(void)
 {
   for (byte i = 0; i < dht_sensors; i++) {
     digitalWrite(Dht[i].pin, HIGH);
@@ -177,7 +177,7 @@ boolean DhtSetup(byte pin, byte type)
 
 /********************************************************************************************/
 
-void DhtInit()
+void DhtInit(void)
 {
   dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
@@ -192,7 +192,7 @@ void DhtInit()
   }
 }
 
-void DhtEverySecond()
+void DhtEverySecond(void)
 {
   if (uptime &1) {
     // <1mS

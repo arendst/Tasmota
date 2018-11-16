@@ -119,7 +119,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define INPUT_BUFFER_SIZE      520          // Max number of characters in (serial and http) command buffer
 #define CMDSZ                  24           // Max number of characters in command
 #define TOPSZ                  100          // Max number of characters in topic string
-#define LOGSZ                  512          // Max number of characters in log
+#define LOGSZ                  520          // Max number of characters in log
 #define MIN_MESSZ              893          // Min number of characters in MQTT message
 
 #define SENSOR_MAX_MISS        5            // Max number of missed sensor reads before deciding it's offline

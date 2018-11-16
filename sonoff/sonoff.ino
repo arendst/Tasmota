@@ -378,7 +378,7 @@ void SetLedPower(uint8_t state)
   digitalWrite(pin[GPIO_LED1], (bitRead(led_inverted, 0)) ? !state : state);
 }
 
-uint8_t GetFanspeed()
+uint8_t GetFanspeed(void)
 {
   uint8_t fanspeed = 0;
 
@@ -531,7 +531,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         char *blcommand = strtok(dataBuf, ";");
         while ((blcommand != NULL) && (backlog_index != bl_pointer)) {
           while(true) {
-            blcommand = LTrim(blcommand);
+            blcommand = Trim(blcommand);
             if (!strncasecmp_P(blcommand, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG))) {
               blcommand += strlen(D_CMND_BACKLOG);                                  // Skip unnecessary command Backlog
             } else {
@@ -1224,9 +1224,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               if (5 == tpos) { Settings.tflag[ts].hour = (value < 0) ? 0 : (value > 23) ? 23 : value; }
               if (6 == tpos) { Settings.toffset[ts] = (value < -900) ? -900 : (value > 900) ? 900 : value; }
             }
-            p = LTrim(p);                        // Skip spaces
+            p = Trim(p);                        // Skip spaces
             if (tpos && (*p == ',')) { p++; }    // Skip separator
-            p = LTrim(p);                        // Skip spaces
+            p = Trim(p);                        // Skip spaces
             q = p;                               // Reset any value entered flag
             value = strtol(p, &p, 10);
             tpos++;                              // Next parameter
@@ -1426,7 +1426,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
   if (publish_power) MqttPublishPowerState(device);
 }
 
-void StopAllPowerBlink()
+void StopAllPowerBlink(void)
 {
   power_t mask;
 
@@ -1571,7 +1571,7 @@ void PublishStatus(uint8_t payload)
 
 }
 
-void MqttShowPWMState()
+void MqttShowPWMState(void)
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_PWM "\":{"), mqtt_data);
   bool first = true;
@@ -1584,7 +1584,7 @@ void MqttShowPWMState()
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
 }
 
-void MqttShowState()
+void MqttShowState(void)
 {
   char stemp1[33];
 
@@ -1615,7 +1615,7 @@ void MqttShowState()
     mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WiFi.BSSIDstr().c_str(), WiFi.channel(), WifiGetRssiAsQuality(WiFi.RSSI()));
 }
 
-boolean MqttShowSensor()
+boolean MqttShowSensor(void)
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_JSON_TIME "\":\"%s\""), mqtt_data, GetDateAndTime(DT_LOCAL).c_str());
   int json_data_start = strlen(mqtt_data);
@@ -1645,7 +1645,7 @@ boolean MqttShowSensor()
 
 /********************************************************************************************/
 
-void PerformEverySecond()
+void PerformEverySecond(void)
 {
   uptime++;
 
@@ -1718,7 +1718,7 @@ void PerformEverySecond()
  * Button handler with single press only or multi-press and hold on all buttons
 \*********************************************************************************************/
 
-void ButtonHandler()
+void ButtonHandler(void)
 {
   uint8_t button = NOT_PRESSED;
   uint8_t button_present = 0;
@@ -1956,7 +1956,7 @@ void SwitchHandler(byte mode)
  * Every 0.1 second
 \*-------------------------------------------------------------------------------------------*/
 
-void Every100mSeconds()
+void Every100mSeconds(void)
 {
   // As the max amount of sleep = 250 mSec this loop will shift in time...
   power_t power_now;
@@ -2005,7 +2005,7 @@ void Every100mSeconds()
  * Every 0.25 second
 \*-------------------------------------------------------------------------------------------*/
 
-void Every250mSeconds()
+void Every250mSeconds(void)
 {
 // As the max amount of sleep = 250 mSec this loop should always be taken...
 
@@ -2117,7 +2117,7 @@ void Every250mSeconds()
       if (90 == ota_state_flag) {  // Allow MQTT to reconnect
         ota_state_flag = 0;
         if (ota_result) {
-          SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
+//          SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
         } else {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
@@ -2201,7 +2201,7 @@ void Every250mSeconds()
 bool arduino_ota_triggered = false;
 uint16_t arduino_ota_progress_dot_count = 0;
 
-void ArduinoOTAInit()
+void ArduinoOTAInit(void)
 {
   ArduinoOTA.setPort(8266);
   ArduinoOTA.setHostname(Settings.hostname);
@@ -2270,7 +2270,7 @@ void ArduinoOTAInit()
 
 /********************************************************************************************/
 
-void SerialInput()
+void SerialInput(void)
 {
   while (Serial.available()) {
     yield();
@@ -2398,7 +2398,7 @@ void GpioSwitchPinMode(uint8_t index)
   }
 }
 
-void GpioInit()
+void GpioInit(void)
 {
   uint8_t mpin;
   uint8_t key_no_pullup = 0;
@@ -2599,7 +2599,7 @@ extern "C" {
 extern struct rst_info resetInfo;
 }
 
-void setup()
+void setup(void)
 {
   byte idx;
 
@@ -2751,7 +2751,7 @@ void setup()
   XsnsCall(FUNC_INIT);
 }
 
-void loop()
+void loop(void)
 {
   XdrvCall(FUNC_LOOP);
 

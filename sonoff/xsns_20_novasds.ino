@@ -48,7 +48,7 @@ struct sds011data {
   uint16_t pm25;
 } novasds_data;
 
-void NovaSdsSetWorkPeriod()
+void NovaSdsSetWorkPeriod(void)
 {
 
   while (NovaSdsSerial->available() > 0) {
@@ -73,9 +73,7 @@ void NovaSdsSetWorkPeriod()
   }
 }
 
-
-
-bool NovaSdsReadData()
+bool NovaSdsReadData(void)
 {
   if (! NovaSdsSerial->available()) return false;
 
@@ -101,27 +99,31 @@ bool NovaSdsReadData()
     return false;
   }
 
-  novasds_valid = 10;
-
   return true;
 }
 
 /*********************************************************************************************/
 
-void NovaSdsSecond()                 // Every second
+void NovaSdsSecond(void)                 // Every second
 {
-  if (NovaSdsReadData()) {
-    novasds_valid = 10;
+  if (XSNS_20 == (uptime % 100)) {
+    if (!novasds_valid) {
+      NovaSdsSetWorkPeriod();
+    }
   } else {
-    if (novasds_valid) {
-      novasds_valid--;
+    if (NovaSdsReadData()) {
+      novasds_valid = 10;
+    } else {
+      if (novasds_valid) {
+        novasds_valid--;
+      }
     }
   }
 }
 
 /*********************************************************************************************/
 
-void NovaSdsInit()
+void NovaSdsInit(void)
 {
   novasds_type = 0;
   if (pin[GPIO_SDS0X1_RX] < 99 && pin[GPIO_SDS0X1_TX] < 99) {

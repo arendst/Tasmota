@@ -96,7 +96,7 @@ uint8_t ws_show_next = 1;
 bool ws_suspend_update = false;
 /********************************************************************************************/
 
-void Ws2812StripShow()
+void Ws2812StripShow(void)
 {
 #if (USE_WS2812_CTYPE > NEO_3LED)
   RgbwColor c;
@@ -163,7 +163,7 @@ void Ws2812UpdateHand(int position, uint8_t index)
   }
 }
 
-void Ws2812Clock()
+void Ws2812Clock(void)
 {
   strip->ClearTo(0); // Reset strip
   int clksize = 60000 / (int)Settings.light_pixels;
@@ -302,7 +302,7 @@ void Ws2812Bars(uint8_t schemenr)
  * Public
 \*********************************************************************************************/
 
-void Ws2812Init()
+void Ws2812Init(void)
 {
 #ifdef USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == NEO_GRB)
@@ -337,7 +337,7 @@ void Ws2812Init()
   Ws2812Clear();
 }
 
-void Ws2812Clear()
+void Ws2812Clear(void)
 {
   strip->ClearTo(0);
   strip->Show();
@@ -371,11 +371,11 @@ void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint
   }
 }
 
-void Ws2812ForceSuspend () {
+void Ws2812ForceSuspend (void) {
   ws_suspend_update = true;
 }
 
-void Ws2812ForceUpdate () {
+void Ws2812ForceUpdate (void) {
   ws_suspend_update = false;
   strip->Show();
   ws_show_next = 1;

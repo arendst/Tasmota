@@ -69,7 +69,7 @@ boolean DS3231chipDetected;
 /*----------------------------------------------------------------------*
   Detect the DS3231 Chip
   ----------------------------------------------------------------------*/
-boolean DS3231Detect()
+boolean DS3231Detect(void)
 {
   if (I2cValidRead(USE_RTC_ADDR, RTC_STATUS, 1))
   {
@@ -104,7 +104,7 @@ uint8_t dec2bcd(uint8_t n)
 /*----------------------------------------------------------------------*
    Read time from DS3231 and return the epoch time (second since 1-1-1970 00:00)
   ----------------------------------------------------------------------*/
-uint32_t ReadFromDS3231()
+uint32_t ReadFromDS3231(void)
 {
   TIME_T tm;
   tm.second = bcd2dec(I2cRead8(USE_RTC_ADDR, RTC_SECONDS));

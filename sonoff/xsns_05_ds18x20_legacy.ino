@@ -43,12 +43,12 @@ uint8_t ds18x20_index[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_sensors = 0;
 char ds18x20_types[9];
 
-void Ds18x20Init()
+void Ds18x20Init(void)
 {
   ds = new OneWire(pin[GPIO_DSB]);
 }
 
-void Ds18x20Search()
+void Ds18x20Search(void)
 {
   uint8_t num_sensors=0;
   uint8_t sensor = 0;
@@ -78,7 +78,7 @@ void Ds18x20Search()
   ds18x20_sensors = num_sensors;
 }
 
-uint8_t Ds18x20Sensors()
+uint8_t Ds18x20Sensors(void)
 {
   return ds18x20_sensors;
 }
@@ -93,7 +93,7 @@ String Ds18x20Addresses(uint8_t sensor)
   return String(address);
 }
 
-void Ds18x20Convert()
+void Ds18x20Convert(void)
 {
   ds->reset();
   ds->write(W1_SKIP_ROM);        // Address all Sensors on Bus
