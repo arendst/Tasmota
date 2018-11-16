@@ -17,6 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*This code can be used for Armtronix dimmers. The dimmers contain a Atmega328 to do the actual dimming. 
+  Checkout the Tasmota Wiki for information on how to flash this Atmega328 with the firmware to work together with this driver.
+*/
+
 #ifdef USE_ARMTRONIX_DIMMERS
 
 #define XDRV_18                18
