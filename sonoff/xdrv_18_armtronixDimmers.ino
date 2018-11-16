@@ -1,5 +1,5 @@
 /*
-  xdrv_16_armtronixdimmer.ino - Armtronix dimmer support for Sonoff-Tasmota
+  xdrv_18_armtronixdimmer.ino - Armtronix dimmers support for Sonoff-Tasmota
 
   Copyright (C) 2018  digiblur, Joel Stein and Theo Arends
 
@@ -16,8 +16,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-#define USE_ARMTRONIX_DIMMERS
 
 #ifdef USE_ARMTRONIX_DIMMERS
 
@@ -161,8 +159,6 @@ void ArmtronixSetWifiLed(){
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool flip;
-
 boolean Xdrv18(byte function)
 {
   boolean result = false;
