@@ -396,6 +396,9 @@ void LightInit(void)
   else if (LT_SERIAL == light_type) {
     light_subtype = LST_SINGLE;
   }
+  else if (LT_SERIAL2 == light_type) {
+    light_subtype = LST_COLDWARM;
+  }
   else {
     light_pdi_pin = pin[GPIO_DI];
     light_pdcki_pin = pin[GPIO_DCKI];
@@ -831,6 +834,12 @@ void LightAnimate(void)
         LightSerialDuty(cur_col[0]);
       }
 #endif  // USE_TUYA_DIMMER
+#ifdef USE_ARMTRONIX_DIMMERS
+      if (light_type == LT_SERIAL2) {
+        LightSerial2Duty(cur_col[0],cur_col[1]);
+      }
+#endif  // USE_ARMTRONIX_DIMMERS
+
     }
   }
 }
