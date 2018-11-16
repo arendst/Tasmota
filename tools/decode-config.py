@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0007'
+VER = '2.1.0008'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -395,6 +395,15 @@ def bitsRead(x, n=0, c=1):
     if c>0:
         x &= (1<<c)-1
     return x
+
+    
+def MqttFingerprint(value, idx=None):
+    fingerprint = ""
+    for i in value:
+        fingerprint += "{:02x} ".format(ord(i))
+    return "MqttFingerprint{} {}".format('' if idx is None else idx, fingerprint.strip())
+
+    
 # ----------------------------------------------------------------------
 # Tasmota configuration data definition
 # ----------------------------------------------------------------------
@@ -440,7 +449,7 @@ Setting_5_10_0 = {
     'syslog_level':                 ('B',   0x1AA,       (None, '0 <= $ <= 4',                  ('Logging',     '"SysLog {}".format($)')) ),
     'webserver':                    ('B',   0x1AB,       (None, '0 <= $ <= 2',                  ('Wifi',        '"WebServer {}".format($)')) ),
     'weblog_level':                 ('B',   0x1AC,       (None, '0 <= $ <= 4',                  ('Logging',     '"WebLog {}".format($)')) ),
-    'mqtt_fingerprint':             ('60s', 0x1AD,       (None, None,                           ('MQTT',        '"MqttFingerprint {}".format($)')) ),
+    'mqtt_fingerprint':             ('60s', 0x1AD,       (None, None,                           ('MQTT',        None)) ),
     'mqtt_host':                    ('33s', 0x1E9,       (None, None,                           ('MQTT',        '"MqttHost {}".format($)')) ),
     'mqtt_port':                    ('<H',  0x20A,       (None, None,                           ('MQTT',        '"MqttPort {}".format($)')) ),
     'mqtt_client':                  ('33s', 0x20C,       (None, None,                           ('MQTT',        '"MqttClient {}".format($)')) ),
@@ -449,7 +458,7 @@ Setting_5_10_0 = {
     'mqtt_topic':                   ('33s', 0x26F,       (None, None,                           ('MQTT',        '"FullTopic {}".format($)')) ),
     'button_topic':                 ('33s', 0x290,       (None, None,                           ('MQTT',        '"ButtonTopic {}".format($)')) ),
     'mqtt_grptopic':                ('33s', 0x2B1,       (None, None,                           ('MQTT',        '"GroupTopic {}".format($)')) ),
-    'mqtt_fingerprinth':            ('B',   0x2D2,       ([20], None,                           ('MQTT',        '"MqttFingerprint {}".format($)')) ),
+    'mqtt_fingerprinth':            ('B',   0x2D2,       ([20], None,                           ('MQTT',        None)) ),
     'pwm_frequency':                ('<H',  0x2E6,       (None, '$==1 or 100 <= $ <= 4000',     ('Management',  '"PwmFrequency {}".format($)')) ),
     'power':                        ({
         'power1':                   ('<L', (0x2E8,1,0),  (None, None,                           ('Main',        '"Power1 {}".format($)')) ),
@@ -578,7 +587,7 @@ Setting_5_13_1['flag'][0].update    ({
                                     })
 Setting_5_13_1.update               ({
     'baudrate':                     ('B',   0x09D,       (None, None,                           ('Serial',      '"Baudrate {}".format($)')), ('$ * 1200','$ / 1200') ),
-    'mqtt_fingerprint':             ('20s', 0x1AD,       ([2],  None,                           ('MQTT',        '"MqttFingerprint{} {}".format(#,$)')) ),
+    'mqtt_fingerprint':             ('20s', 0x1AD,       ([2],  None,                           ('MQTT',        MqttFingerprint)) ),
     'energy_power_delta':           ('B',   0x33F,       (None, None,                           ('Pow',         '"PowerDelta {}".format($)')) ),
     'light_rotation':               ('<H',  0x39E,       (None, None,                           ('Led',         '"Rotation {}".format($)')) ),
     'serial_delimiter':             ('B',   0x451,       (None, None,                           ('Serial',      '"SerialDelimiter {}".format($)')) ),
@@ -762,8 +771,13 @@ Setting_6_3_0_4.update({
 Setting_6_3_0_4['flag3'][0].update ({
         'tuya_apply_o20':           ('<L', (0x3A0,1, 4), (None, None,                           ('SetOption',   '"SetOption54 {}".format($)')) ),
                                     })
+Setting_6_3_0_8 = copy.deepcopy(Setting_6_3_0_4)
+Setting_6_3_0_8['flag3'][0].update ({
+        'hass_short_discovery_msg': ('<L', (0x3A0,1, 5), (None, None,                           ('SetOption',   '"SetOption55 {}".format($)')) ),
+                                    })
 # ======================================================================
 Settings = [
+            (0x6030008, 0xe00, Setting_6_3_0_8),
             (0x6030004, 0xe00, Setting_6_3_0_4),
             (0x6030002, 0xe00, Setting_6_3_0_2),
             (0x6030000, 0xe00, Setting_6_3_0),
@@ -1504,7 +1518,7 @@ def GetFieldDef(fielddef, fields="format, addrdef, baseaddr, bits, bitshift, dat
                 if group is not None and not isinstance(group, (str, unicode)):
                     print >> sys.stderr, 'wrong <group> {} in <fielddef> {}'.format(group, fielddef)
                     raise SyntaxError('<fielddef> error')
-                if tasmotacmnd is not None and not isinstance(tasmotacmnd, (str, unicode)):
+                if tasmotacmnd is not None and not callable(tasmotacmnd) and not isinstance(tasmotacmnd, (str, unicode)):
                     print >> sys.stderr, 'wrong <tasmotacmnd> {} in <fielddef> {}'.format(tasmotacmnd, fielddef)
                     raise SyntaxError('<fielddef> error')
             else:
@@ -1607,7 +1621,7 @@ def CmndConverter(valuemapping, value, idx, fielddef):
         else:
             result = value
 
-    if tasmotacmnd is not None and len(tasmotacmnd) > 0:
+    if tasmotacmnd is not None and (callable(tasmotacmnd) or len(tasmotacmnd) > 0):
         if idx is not None:
             idx += 1
         if isinstance(tasmotacmnd, str): # evaluate strings
