@@ -356,7 +356,7 @@
   #define MP3_VOLUME           10                // Set the startup volume on init, the range can be 0..30(max)
 #define USE_TUYA_DIMMER                          // Add support for Tuya Serial Dimmer
   #define TUYA_DIMMER_ID       0                 // Default dimmer Id
-#define USE_ARMTRONIX_DIMMERS                     //Add support for Armtronix Dimmers
+//#define USE_ARMTRONIX_DIMMERS                     //Add support for Armtronix Dimmers
 
 // Power monitoring sensors -----------------------
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
