@@ -1,5 +1,6 @@
 /* 6.3.0.8 20181115
- * Stop enforcing flashmode dout. Still mandatory but this a chk for possible future flash corruption
+ * Stop enforcing flashmode dout but it is still mandatory
+ * Moved bootcount update (being first) flash write to 10 seconds after restart
  *
  * 6.3.0.7 20181111
  * Fix wifi connection errors using wifi disconnect and ESP.reset instead of ESP.restart

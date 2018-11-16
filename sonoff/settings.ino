@@ -334,6 +334,7 @@ void SettingsErase(uint8_t type)
     1 = Erase SDK parameter area at end of linker memory model (0x0FDxxx - 0x0FFFFF) solving possible wifi errors
   */
 
+#ifndef BE_MINIMAL
   bool result;
 
   uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
@@ -362,6 +363,7 @@ void SettingsErase(uint8_t type)
     }
     OsWatchLoop();
   }
+#endif  // BE_MINIMAL
 }
 
 // Copied from 2.4.0 as 2.3.0 is incomplete

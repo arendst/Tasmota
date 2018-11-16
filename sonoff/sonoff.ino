@@ -1652,6 +1652,10 @@ void PerformEverySecond(void)
   if (BOOT_LOOP_TIME == uptime) {
     RtcReboot.fast_reboot_count = 0;
     RtcRebootSave();
+
+    Settings.bootcount++;              // Moved to here to stop flash writes during start-up
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
+    AddLog(LOG_LEVEL_DEBUG);
   }
 
   if ((4 == uptime) && (SONOFF_IFAN02 == Settings.module)) {  // Microcontroller needs 3 seconds before accepting commands
@@ -2635,13 +2639,13 @@ void setup(void)
   mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
   seriallog_level = Settings.seriallog_level;
   seriallog_timer = SERIALLOG_TIMER;
-#ifndef USE_EMULATION
-  Settings.flag2.emulation = 0;
-#endif  // USE_EMULATION
   syslog_level = Settings.syslog_level;
   stop_flash_rotate = Settings.flag.stop_flash_rotate;
   save_data_counter = Settings.save_data;
   sleep = Settings.sleep;
+#ifndef USE_EMULATION
+  Settings.flag2.emulation = 0;
+#endif  // USE_EMULATION
 
   // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
   if (RtcReboot.fast_reboot_count > 1) {          // Restart twice
@@ -2666,10 +2670,6 @@ void setup(void)
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     AddLog(LOG_LEVEL_DEBUG);
   }
-
-  Settings.bootcount++;
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
-  AddLog(LOG_LEVEL_DEBUG);
 
   Format(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
   Format(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
