@@ -311,7 +311,10 @@ void LightMy92x1Write(uint8_t data)
 
 void LightMy92x1Init(void)
 {
-  uint8_t chips = light_type -11;       // 1 (AiLight) or 2 (Sonoff B1)
+  uint8_t chips = 1;                    // 1 (AiLight)
+  if (LT_RGBWC == light_type) {
+    chips = 2;                          // 2 (Sonoff B1)
+  }
 
   LightDckiPulse(chips * 32);           // Clear all duty register
   os_delay_us(12);                      // TStop > 12us.
@@ -332,7 +335,12 @@ void LightMy92x1Init(void)
 void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w, uint8_t duty_c)
 {
   uint8_t channels[2] = { 4, 6 };
-  uint8_t didx = light_type -12;        // 0 or 1
+
+  uint8_t didx = 0;                     // 0 (AiLight)
+  if (LT_RGBWC == light_type) {
+    didx = 1;                           // 1 (Sonoff B1)
+  }
+
   uint8_t duty[2][6] = {{ duty_r, duty_g, duty_b, duty_w, 0, 0 },        // Definition for RGBW channels
                         { duty_w, duty_c, 0, duty_g, duty_r, duty_b }};  // Definition for RGBWC channels
 
@@ -352,17 +360,17 @@ void LightInit(void)
   uint8_t max_scheme = LS_MAX -1;
 
   light_device = devices_present;
-  light_subtype = light_type &7;
+  light_subtype = light_type &7;        // Always 0 - 7
 
+  if (LST_SINGLE == light_subtype) {
+    Settings.light_color[0] = 255;      // One channel only supports Dimmer but needs max color
+  }
   if (light_type < LT_PWM6) {           // PWM
     for (byte i = 0; i < light_type; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
       if (pin[GPIO_PWM1 +i] < 99) {
         pinMode(pin[GPIO_PWM1 +i], OUTPUT);
       }
-    }
-    if (LT_PWM1 == light_type || LT_SERIAL == light_type) {
-      Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
     }
     if (SONOFF_LED == Settings.module) { // Fix Sonoff Led instabilities
       if (!my_module.gp.io[4]) {
@@ -393,12 +401,6 @@ void LightInit(void)
     max_scheme = LS_MAX + WS2812_SCHEMES;
   }
 #endif  // USE_WS2812 ************************************************************************
-  else if (LT_SERIAL == light_type) {
-    light_subtype = LST_SINGLE;
-  }
-  else if (LT_SERIAL2 == light_type) {
-    light_subtype = LST_COLDWARM;
-  }
   else {
     light_pdi_pin = pin[GPIO_DI];
     light_pdcki_pin = pin[GPIO_DCKI];
@@ -830,7 +832,7 @@ void LightAnimate(void)
         LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
       }
 #ifdef USE_TUYA_DIMMER
-      if (light_type == LT_SERIAL) {
+      if (light_type == LT_SERIAL1) {
         LightSerialDuty(cur_col[0]);
       }
 #endif  // USE_TUYA_DIMMER

@@ -276,7 +276,7 @@ boolean TuyaModuleSelected(void)
     Settings.my_gp.io[3] = GPIO_TUYA_RX;
     restart_flag = 2;
   }
-  light_type = LT_SERIAL;
+  light_type = LT_SERIAL1;
   return true;
 }
 

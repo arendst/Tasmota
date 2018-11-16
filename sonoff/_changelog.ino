@@ -1,6 +1,7 @@
 /* 6.3.0.8 20181115
  * Stop enforcing flashmode dout but it is still mandatory
  * Moved bootcount update (being first) flash write to 10 seconds after restart
+ * Add support for Armtronix dimmers. See wiki for info (#4321)
  *
  * 6.3.0.7 20181111
  * Fix wifi connection errors using wifi disconnect and ESP.reset instead of ESP.restart
