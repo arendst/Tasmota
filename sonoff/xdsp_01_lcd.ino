@@ -33,7 +33,7 @@ LiquidCrystal_I2C *lcd;
 
 /*********************************************************************************************/
 
-void LcdInitMode()
+void LcdInitMode(void)
 {
   lcd->init();
   lcd->clear();
@@ -54,7 +54,7 @@ void LcdInit(uint8_t mode)
   }
 }
 
-void LcdInitDriver()
+void LcdInitDriver(void)
 {
   if (!Settings.display_model) {
     if (I2cDevice(LCD_ADDRESS1)) {
@@ -78,7 +78,7 @@ void LcdInitDriver()
   }
 }
 
-void LcdDrawStringAt()
+void LcdDrawStringAt(void)
 {
   lcd->setCursor(dsp_x, dsp_y);
   lcd->print(dsp_str);
@@ -112,7 +112,7 @@ void LcdCenter(byte row, char* txt)
   lcd->print(line);
 }
 
-boolean LcdPrintLog()
+boolean LcdPrintLog(void)
 {
   boolean result = false;
 
@@ -145,7 +145,7 @@ boolean LcdPrintLog()
   return result;
 }
 
-void LcdTime()
+void LcdTime(void)
 {
   char line[Settings.display_cols[0] +1];
 
@@ -155,7 +155,7 @@ void LcdTime()
   LcdCenter(1, line);
 }
 
-void LcdRefresh()  // Every second
+void LcdRefresh(void)  // Every second
 {
   if (Settings.display_mode) {  // Mode 0 is User text
     switch (Settings.display_mode) {

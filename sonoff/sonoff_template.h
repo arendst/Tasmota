@@ -251,6 +251,7 @@ enum SupportedModules {
   APLIC_WDP303075,
   TUYA_DIMMER,
   GOSUND,
+  ARMTRONIX_DIMMERS,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -472,6 +473,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   OBI,
   ESP_SWITCH,         // Switch Devices
   TUYA_DIMMER,		    // Dimmer Devices
+  ARMTRONIX_DIMMERS,
   H801,               // Light Devices
   MAGICHOME,
   ARILUX_LC01,
@@ -1230,6 +1232,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED2_INV,    // GPIO13 LED2 (red) inv
      GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
      0, 0, 0
+  },
+  { "ARMTR Dimmer",     // ARMTRONIX Dimmer, one or two channel (ESP8266 w/ separate MCU dimmer)
+                       // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-two-triac-board/
+                       // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-esp8266-one-triac-board-alexaecho/
+     GPIO_USER,        
+     GPIO_TXD,        // GPIO01 MCU serial control
+     GPIO_USER,
+     GPIO_RXD,        // GPIO03 MCU serial control
+     GPIO_USER,
+     GPIO_USER,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,
+     GPIO_USER,
+     GPIO_USER,       
+     GPIO_USER,
+     GPIO_USER,
+     0
   }
 };
 

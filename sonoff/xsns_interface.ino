@@ -542,7 +542,7 @@ boolean XsnsPresent(byte sns_index)
   return false;
 }
 
-String XsnsGetSensors()
+String XsnsGetSensors(void)
 {
   char state[2] = { 0 };
 

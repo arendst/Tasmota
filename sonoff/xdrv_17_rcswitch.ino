@@ -40,7 +40,7 @@ RCSwitch mySwitch = RCSwitch();
 
 uint32_t rf_lasttime = 0;
 
-void RfReceiveCheck()
+void RfReceiveCheck(void)
 {
   if (mySwitch.available()) {
 
@@ -74,7 +74,7 @@ void RfReceiveCheck()
   }
 }
 
-void RfInit()
+void RfInit(void)
 {
   if (pin[GPIO_RFSEND] < 99) {
     mySwitch.enableTransmit(pin[GPIO_RFSEND]);
@@ -88,7 +88,7 @@ void RfInit()
  * Commands
 \*********************************************************************************************/
 
-boolean RfSendCommand()
+boolean RfSendCommand(void)
 {
   boolean serviced = true;
   boolean error = false;

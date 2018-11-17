@@ -45,7 +45,7 @@ struct pms5003data {
 
 /*********************************************************************************************/
 
-boolean PmsReadData()
+boolean PmsReadData(void)
 {
   if (! PmsSerial->available()) {
     return false;
@@ -87,7 +87,7 @@ boolean PmsReadData()
 
 /*********************************************************************************************/
 
-void PmsSecond()                 // Every second
+void PmsSecond(void)                 // Every second
 {
   if (PmsReadData()) {
     pms_valid = 10;
@@ -100,7 +100,7 @@ void PmsSecond()                 // Every second
 
 /*********************************************************************************************/
 
-void PmsInit()
+void PmsInit(void)
 {
   pms_type = 0;
   if (pin[GPIO_PMS5003] < 99) {

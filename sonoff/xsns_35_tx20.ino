@@ -80,7 +80,7 @@ uint8_t tx20_wind_direction = 0;
 
 boolean tx20_available = false;
 
-void Tx20StartRead()
+void Tx20StartRead(void)
 {
   /* La Crosse TX20 Anemometer datagram every 2 seconds
    * 0-0 11011 0011 111010101111 0101 1100 000101010000 0-0 - Received pin data at 1200 uSec per bit
@@ -146,7 +146,7 @@ void Tx20StartRead()
   GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << pin[GPIO_TX20_TXD_BLACK]);
 }
 
-void Tx20Read()
+void Tx20Read(void)
 {
   if (!(uptime % TX20_RESET_VALUES)) {
     tx20_count = 0;
@@ -165,7 +165,7 @@ void Tx20Read()
   }
 }
 
-void Tx20Init() {
+void Tx20Init(void) {
   pinMode(pin[GPIO_TX20_TXD_BLACK], INPUT);
   attachInterrupt(pin[GPIO_TX20_TXD_BLACK], Tx20StartRead, RISING);
 }

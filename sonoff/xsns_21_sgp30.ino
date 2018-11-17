@@ -38,7 +38,7 @@ uint8_t sgp30_counter = 0;
 
 /********************************************************************************************/
 
-void Sgp30Update()  // Perform every second to ensure proper operation of the baseline compensation algorithm
+void Sgp30Update(void)  // Perform every second to ensure proper operation of the baseline compensation algorithm
 {
   sgp30_ready = 0;
   if (!sgp30_type) {

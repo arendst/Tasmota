@@ -128,7 +128,7 @@ bool Ina219SetCalibration(uint8_t mode)
   return success;
 }
 
-float Ina219GetShuntVoltage_mV()
+float Ina219GetShuntVoltage_mV(void)
 {
   // raw shunt voltage (16-bit signed integer, so +-32767)
   int16_t value = I2cReadS16(ina219_address, INA219_REG_SHUNTVOLTAGE);
@@ -136,7 +136,7 @@ float Ina219GetShuntVoltage_mV()
   return value * 0.01;
 }
 
-float Ina219GetBusVoltage_V()
+float Ina219GetBusVoltage_V(void)
 {
   // Shift to the right 3 to drop CNVR and OVF and multiply by LSB
   // raw bus voltage (16-bit signed integer, so +-32767)
@@ -145,7 +145,7 @@ float Ina219GetBusVoltage_V()
   return value * 0.001;
 }
 
-float Ina219GetCurrent_mA()
+float Ina219GetCurrent_mA(void)
 {
   // Sometimes a sharp load will reset the INA219, which will reset the cal register,
   // meaning CURRENT and POWER will not be available ... avoid this by always setting
@@ -159,7 +159,7 @@ float Ina219GetCurrent_mA()
   return value;
 }
 
-bool Ina219Read()
+bool Ina219Read(void)
 {
   ina219_voltage = Ina219GetBusVoltage_V() + (Ina219GetShuntVoltage_mV() / 1000);
   ina219_current = Ina219GetCurrent_mA() / 1000;
@@ -175,7 +175,7 @@ bool Ina219Read()
  * 2 - Max 16V 0.4A range
 \*********************************************************************************************/
 
-bool Ina219CommandSensor()
+bool Ina219CommandSensor(void)
 {
   boolean serviced = true;
 
@@ -190,7 +190,7 @@ bool Ina219CommandSensor()
 
 /********************************************************************************************/
 
-void Ina219Detect()
+void Ina219Detect(void)
 {
   if (ina219_type) { return; }
 
@@ -205,7 +205,7 @@ void Ina219Detect()
   }
 }
 
-void Ina219EverySecond()
+void Ina219EverySecond(void)
 {
   if (87 == (uptime %100)) {
     // 2mS

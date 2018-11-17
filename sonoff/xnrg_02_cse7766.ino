@@ -46,7 +46,7 @@ long cf_pulses = 0;
 long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 uint8_t cse_power_invalid = CSE_MAX_INVALID_POWER;
 
-void CseReceived()
+void CseReceived(void)
 {
   //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
   // 55 5A 02 F7 60 00 03 5A 00 40 10 04 8B 9F 51 A6 58 18 72 75 61 AC A1 30 - Power not valid (load below 5W)
@@ -128,7 +128,7 @@ void CseReceived()
   }
 }
 
-bool CseSerialInput()
+bool CseSerialInput(void)
 {
   if (cse_receive_flag) {
     serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
@@ -168,7 +168,7 @@ bool CseSerialInput()
 
 /********************************************************************************************/
 
-void CseEverySecond()
+void CseEverySecond(void)
 {
   long cf_frequency = 0;
 
@@ -188,7 +188,7 @@ void CseEverySecond()
   }
 }
 
-void CseDrvInit()
+void CseDrvInit(void)
 {
   if (!energy_flg) {
     if ((SONOFF_S31 == Settings.module) || (SONOFF_POW_R2 == Settings.module)) {     // Sonoff S31 or Sonoff Pow R2
@@ -199,7 +199,7 @@ void CseDrvInit()
   }
 }
 
-boolean CseCommand()
+boolean CseCommand(void)
 {
   boolean serviced = true;
 

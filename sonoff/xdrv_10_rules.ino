@@ -347,12 +347,12 @@ bool RulesProcessEvent(char *json_event)
   return serviced;
 }
 
-bool RulesProcess()
+bool RulesProcess(void)
 {
   return RulesProcessEvent(mqtt_data);
 }
 
-void RulesInit()
+void RulesInit(void)
 {
   rules_flag.data = 0;
   for (byte i = 0; i < MAX_RULE_SETS; i++) {
@@ -364,7 +364,7 @@ void RulesInit()
   rules_teleperiod = 0;
 }
 
-void RulesEvery50ms()
+void RulesEvery50ms(void)
 {
   if (Settings.rule_enabled) {  // Any rule enabled
     char json_event[120];
@@ -455,7 +455,7 @@ void RulesEvery50ms()
   }
 }
 
-void RulesEvery100ms()
+void RulesEvery100ms(void)
 {
   if (Settings.rule_enabled && (uptime > 4)) {  // Any rule enabled and allow 4 seconds start-up time for sensors (#3811)
     mqtt_data[0] = '\0';
@@ -471,7 +471,7 @@ void RulesEvery100ms()
   }
 }
 
-void RulesEverySecond()
+void RulesEverySecond(void)
 {
   if (Settings.rule_enabled) {  // Any rule enabled
     char json_event[120];
@@ -495,19 +495,19 @@ void RulesEverySecond()
   }
 }
 
-void RulesSetPower()
+void RulesSetPower(void)
 {
   rules_new_power = XdrvMailbox.index;
 }
 
-void RulesTeleperiod()
+void RulesTeleperiod(void)
 {
   rules_teleperiod = 1;
   RulesProcess();
   rules_teleperiod = 0;
 }
 
-boolean RulesCommand()
+boolean RulesCommand(void)
 {
   char command[CMDSZ];
   boolean serviced = true;
