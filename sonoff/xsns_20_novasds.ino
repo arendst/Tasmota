@@ -32,6 +32,9 @@
 #ifndef WORKING_PERIOD
 #define WORKING_PERIOD      5
 #endif
+#ifndef XSNS_20_QUERY_INTERVAL
+#define XSNS_20_QUERY_INTERVAL  3 // query every 3 seconds
+#endif
 
 TasmotaSerial *NovaSdsSerial;
 
@@ -58,15 +61,15 @@ void NovaSdsSetWorkPeriod(void)
   novasds_workperiod[4] = WORKING_PERIOD;
   novasds_workperiod[17] = ((novasds_workperiod[2] + novasds_workperiod[3] + novasds_workperiod[4] + novasds_workperiod[15] + novasds_workperiod[16]) & 0xFF); //checksum
 
-  NovaSdsSerial->write(novasds_workperiod, sizeof(novasds_workperiod));
   NovaSdsSerial->flush();
+  NovaSdsSerial->write(novasds_workperiod, sizeof(novasds_workperiod));
 
   while (NovaSdsSerial->available() > 0) {
     NovaSdsSerial->read();
   }
 
-  NovaSdsSerial->write(novasds_setquerymode, sizeof(novasds_setquerymode));
   NovaSdsSerial->flush();
+  NovaSdsSerial->write(novasds_setquerymode, sizeof(novasds_setquerymode));
 
   while (NovaSdsSerial->available() > 0) {
     NovaSdsSerial->read();
@@ -77,23 +80,16 @@ bool NovaSdsReadData(void)
 {
   if (! NovaSdsSerial->available()) return false;
 
+  byte d[10] = { 0 };
+  NovaSdsSerial->flush();
   NovaSdsSerial->write(novasds_querydata, sizeof(novasds_querydata));
-  NovaSdsSerial->flush();
+  NovaSdsSerial->readBytes(d, 10);
 
-  while ((NovaSdsSerial->peek() != 0xAA) && NovaSdsSerial->available()) {
-    NovaSdsSerial->read();
-  }
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, d, 10);
 
-  byte d[8] = { 0 };
-  NovaSdsSerial->read();  // skip 0xAA
-  NovaSdsSerial->readBytes(d, 8);
-  NovaSdsSerial->flush();
-
-  AddLogSerial(LOG_LEVEL_DEBUG_MORE, d, 8);
-
-  if (d[7] == ((d[1] + d[2] + d[3] + d[4] + d[5] + d[6]) & 0xFF)) {
-    novasds_data.pm25 = (d[1] + 256 * d[2]);
-    novasds_data.pm100 = (d[3] + 256 * d[4]);
+  if (d[0] ==  0xAA && d[9] == 0xAB && (d[8] == ((d[2] + d[3] + d[4] + d[5] + d[6] + d[7]) & 0xFF))) {
+    novasds_data.pm25 = (d[2] + 256 * d[3]);
+    novasds_data.pm100 = (d[4] + 256 * d[5]);
   } else {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("SDS: " D_CHECKSUM_FAILURE));
     return false;
@@ -110,7 +106,7 @@ void NovaSdsSecond(void)                 // Every second
     if (!novasds_valid) {
       NovaSdsSetWorkPeriod();
     }
-  } else {
+  } else if (0 == (uptime % XSNS_20_QUERY_INTERVAL)) {       // Every 5 seconds
     if (NovaSdsReadData()) {
       novasds_valid = 10;
     } else {
