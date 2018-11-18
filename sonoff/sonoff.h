@@ -189,8 +189,8 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define KNX_MAX_device_param   30
 #define MAX_KNXTX_CMNDS        5
 
-#define DRIVER_BOOT_DELAY      1                // Number of milliseconds to retard driver cycles during boot-up time to reduce overall CPU load whilst Wifi is connecting
-#define LOOP_SLEEP_DELAY       10               // Lowest number of milliseconds to go through the main loop using delay when needed
+#define DRIVER_BOOT_DELAY      1            // Number of milliseconds to retard driver cycles during boot-up time to reduce overall CPU load whilst Wifi is connecting
+#define LOOP_SLEEP_DELAY       10           // Lowest number of milliseconds to go through the main loop using delay when needed
 
 /*********************************************************************************************\
  * Enumeration
@@ -222,7 +222,7 @@ enum ButtonStates { PRESSED, NOT_PRESSED };
 
 enum Shortcuts { SC_CLEAR, SC_DEFAULT, SC_USER };
 
-enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_TUYA_DIMMER_ID, P_MDNS_DELAYED_START, P_MAX_PARAM8};  // Max is PARAM8_SIZE (18)
+enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_TUYA_DIMMER_ID, P_MDNS_DELAYED_START, P_LOOP_SLEEP_DELAY, P_MAX_PARAM8};  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
 
 enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_AIRQUALITY, DZ_MAX_SENSORS};
 
@@ -233,7 +233,7 @@ enum LightSubtypes { LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB,   LST_RGBW, LS
 enum LightTypes    { LT_BASIC, LT_PWM1,    LT_PWM2,      LT_PWM3,   LT_PWM4,  LT_PWM5,  LT_PWM6, LT_PWM7,
                      LT_NU8,   LT_SERIAL1, LT_SERIAL2,   LT_WS2812, LT_RGBW,  LT_RGBWC, LT_NU14, LT_NU15 };  // Do not insert new fields
 
-enum LichtSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX};
+enum LightSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX};
 
 enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_MODULE_INIT, FUNC_PRE_INIT, FUNC_INIT,
                     FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND,

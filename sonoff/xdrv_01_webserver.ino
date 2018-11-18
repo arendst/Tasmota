@@ -2055,10 +2055,12 @@ boolean Xdrv01(byte function)
 
   switch (function) {
     case FUNC_LOOP:
-      PollDnsWebserver();
+      if (!global_state.wifi_down) { 
+        PollDnsWebserver();
 #ifdef USE_EMULATION
-      if (Settings.flag2.emulation) PollUdp();
+        if (Settings.flag2.emulation) PollUdp();
 #endif  // USE_EMULATION
+      }
       break;
     case FUNC_COMMAND:
       result = WebCommand();

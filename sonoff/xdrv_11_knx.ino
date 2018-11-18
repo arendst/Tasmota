@@ -1298,7 +1298,7 @@ boolean Xdrv11(byte function)
 #endif // USE_KNX_WEB_MENU
 #endif  // USE_WEBSERVER
       case FUNC_LOOP:
-        knx.loop();  // Process knx events
+        if (!global_state.wifi_down) { knx.loop(); }  // Process knx events
         break;
       case FUNC_EVERY_50_MSECOND:
         if (toggle_inhibit) {
