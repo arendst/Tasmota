@@ -1,5 +1,5 @@
 /* 6.3.0.10 20181118
- * Add command SetOption36 0..255 milliseconds (10 default) to tune main loop dynamic delay
+ * Add command SetOption36 0..255 milliseconds (50 default) to tune main loop dynamic delay
  *
  * 6.3.0.9 20181118
  * Moved command SetSensorXX to debugging driver freeing user code space
