@@ -190,7 +190,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define MAX_KNXTX_CMNDS        5
 
 #define DRIVER_BOOT_DELAY      1            // Number of milliseconds to retard driver cycles during boot-up time to reduce overall CPU load whilst Wifi is connecting
-#define LOOP_SLEEP_DELAY       10           // Lowest number of milliseconds to go through the main loop using delay when needed
+#define LOOP_SLEEP_DELAY       50           // Lowest number of milliseconds to go through the main loop using delay when needed
 
 /*********************************************************************************************\
  * Enumeration
