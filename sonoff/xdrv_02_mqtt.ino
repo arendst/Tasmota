@@ -926,7 +926,7 @@ boolean Xdrv02(byte function)
         break;
 #endif  // USE_WEBSERVER
       case FUNC_LOOP:
-        MqttLoop();
+        if (!global_state.mqtt_down) { MqttLoop(); }
         break;
       case FUNC_COMMAND:
         result = MqttCommand();

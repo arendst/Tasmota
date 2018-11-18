@@ -1,5 +1,5 @@
 /*
-  xdrv_95_debug.ino - debug support for Sonoff-Tasmota
+  xdrv_99_debug.ino - debug support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -27,10 +27,12 @@
 
 #ifdef USE_DEBUG_DRIVER
 /*********************************************************************************************\
- * Virtual debugging support
+ * Virtual debugging support - Part1
+ *
+ * Needs file zzzz_debug.ino due to DEFINE processing
 \*********************************************************************************************/
 
-#define XDRV_95             95
+#define XDRV_99             99
 
 #ifndef CPU_LOAD_CHECK
 #define CPU_LOAD_CHECK      1                 // Seconds between each CPU_LOAD log
@@ -50,9 +52,15 @@
 #define D_CMND_FREEMEM   "FreeMem"
 #define D_CMND_RTCDUMP   "RtcDump"
 #define D_CMND_HELP      "Help"
+#define D_CMND_SETSENSOR "SetSensor"
+#define D_CMND_FLASHMODE "FlashMode"
 
-enum DebugCommands { CMND_CFGDUMP, CMND_CFGPEEK, CMND_CFGPOKE, CMND_CFGSHOW, CMND_CFGXOR, CMND_CPUCHECK, CMND_EXCEPTION, CMND_FREEMEM, CMND_RTCDUMP, CMND_HELP };
-const char kDebugCommands[] PROGMEM = D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|" D_CMND_CFGSHOW "|" D_CMND_CFGXOR "|" D_CMND_CPUCHECK "|" D_CMND_EXCEPTION "|" D_CMND_FREEMEM "|" D_CMND_RTCDUMP "|" D_CMND_HELP;
+enum DebugCommands {
+  CMND_CFGDUMP, CMND_CFGPEEK, CMND_CFGPOKE, CMND_CFGSHOW, CMND_CFGXOR,
+  CMND_CPUCHECK, CMND_EXCEPTION, CMND_FREEMEM, CMND_RTCDUMP, CMND_SETSENSOR, CMND_FLASHMODE, CMND_HELP };
+const char kDebugCommands[] PROGMEM =
+  D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|" D_CMND_CFGSHOW "|" D_CMND_CFGXOR "|"
+  D_CMND_CPUCHECK "|" D_CMND_EXCEPTION "|" D_CMND_FREEMEM "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR "|" D_CMND_FLASHMODE "|" D_CMND_HELP;
 
 uint32_t CPU_loops = 0;
 uint32_t CPU_last_millis = 0;
@@ -406,6 +414,23 @@ void DebugCfgShow(uint8_t more)
   }
 }
 
+void SetFlashMode(uint8_t mode)
+{
+  uint8_t *_buffer;
+  uint32_t address;
+
+  address = 0;
+  _buffer = new uint8_t[FLASH_SECTOR_SIZE];
+
+  if (ESP.flashRead(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
+    if (_buffer[2] != mode) {  // DOUT
+      _buffer[2] = mode;
+      if (ESP.flashEraseSector(address / FLASH_SECTOR_SIZE)) ESP.flashWrite(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
+    }
+  }
+  delete[] _buffer;
+}
+
 /*******************************************************************************************/
 
 boolean DebugCommand(void)
@@ -469,6 +494,19 @@ boolean DebugCommand(void)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, CPU_show_freemem);
   }
+  else if ((CMND_SETSENSOR == command_code) && (XdrvMailbox.index < MAX_XSNS_DRIVERS)) {
+    if ((XdrvMailbox.payload >= 0) && XsnsPresent(XdrvMailbox.index)) {
+      bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      if (1 == XdrvMailbox.payload) { restart_flag = 2; }  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_XVALUE, command, XsnsGetSensors().c_str());
+  }
+  else if (CMND_FLASHMODE == command_code) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
+      SetFlashMode(XdrvMailbox.payload);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, ESP.getFlashChipMode());
+  }
   else serviced = false;  // Unknown command
 
   return serviced;
@@ -478,7 +516,7 @@ boolean DebugCommand(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv95(byte function)
+boolean Xdrv99(byte function)
 {
   boolean result = false;
 
