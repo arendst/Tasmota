@@ -1,4 +1,9 @@
-/* 6.3.0.8 20181115
+/* 6.3.0.9 20181118
+ * Moved command SetSensorXX to debugging driver freeing user code space
+ * Add dynamic delay to main loop providing time for wifi background tasks
+ * Remove delays introduced in 6.3.0.1 (#4233)
+ *
+ * 6.3.0.8 20181115
  * Stop enforcing flashmode dout but it is still mandatory
  * Moved bootcount update (being first) flash write to 10 seconds after restart
  * Add support for Armtronix dimmers. See wiki for info (#4321)
