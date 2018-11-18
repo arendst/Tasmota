@@ -1,14 +1,18 @@
 /*
   xdrv_05_irremote.ino - infra red support for Sonoff-Tasmota
+
   Copyright (C) 2018  Heiko Krupp, Lazar Obradovic and Theo Arends
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -39,9 +43,6 @@ const char kIrRemoteProtocols[] PROGMEM =
 #define HVAC_TOSHIBA_RPT_MARK 440
 #define HVAC_TOSHIBA_RPT_SPACE 7048 // Above original iremote limit
 #define HVAC_TOSHIBA_DATALEN 9
-
-// HVAC LG
-#define HVAC_LG_DATALEN 7
 
 IRMitsubishiAC *mitsubir = NULL;
 
@@ -136,10 +137,6 @@ void IrReceiveCheck(void)
  * IR Heating, Ventilation and Air Conditioning using IRMitsubishiAC library
 \*********************************************************************************************/
 
-/******************* 
-      TOSHIBA
-********************/
-
 boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
 {
   uint16_t rawdata[2 + 2 * 8 * HVAC_TOSHIBA_DATALEN + 2];
@@ -229,11 +226,6 @@ boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
   return false;
 }
 
-
-/******************* 
-     MITSUBISHI
-********************/
-
 boolean IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
 {
   char *p;
@@ -277,124 +269,6 @@ boolean IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, boolea
 
   return false;
 }
-
-
-/******************* 
-        LG
-********************/
-
-boolean IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
-{
-  uint32_t LG_Code;
-  byte data[HVAC_LG_DATALEN];
-  static boolean hvacOn = false;
-  char *p;
-  uint8_t mode;
-  byte Temp;
-
-  // Constant data
-  data[0] = 0x08;
-  data[1] = 0x08;
-  data[2] = 0x00;
-
-  if (!HVAC_Power) {
-    data[2] = (byte)0x0C; // Turn OFF HVAC, code 0x88C0051
-    data[3] = (byte)0x00; 
-    data[4] = (byte)0x00; 
-    data[5] = (byte)0x05; 
-    data[6] = (byte)0x01; 
-    hvacOn = false;
-  }
-
-  else {
-    
-    // Set code for HVAC Mode - data[3]
-    if (HVAC_Mode == NULL) {
-      p = (char *)kHvacModeOptions; // default HVAC_HOT
-    }
-    else {
-      p = strchr(kHvacModeOptions, toupper(HVAC_Mode[0]));  
-    }
-    if (!p) {
-      return true;
-    }
-    mode = (p - kHvacModeOptions) ^ 0x03; // HOT = 0x03, DRY = 0x02, COOL = 0x01, AUTO = 0x00
-    switch (mode) {
-      case 0: // AUTO
-        data[3] = 11;
-        break;
-      case 1: // COOL
-        data[3] = 8;
-        break;
-      case 2: // DRY
-        data[3] = 9;
-        break;
-      case 3: // HOT
-        data[3] = 12;
-        break; 
-    }
-    if (!hvacOn) {
-      data[3] = data[3] & 7; // reset bit3
-      hvacOn = true;
-    }
-  
-    snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: HvacMode %s, ModeVal %d, Code %d"), p, mode, data[3]);
-    AddLog(LOG_LEVEL_DEBUG);
-    
-    // Set code for HVAC temperature - data[4]
-    if (HVAC_Temp > 30) {
-      Temp = 30;
-    }
-    else if (HVAC_Temp < 18) {
-      Temp = 18;
-    }
-    else {
-      Temp = HVAC_Temp;
-    }
-    data[4] = (byte)(Temp - 15);
-
-    // Set code for HVAC fan mode - data[5]
-    if (HVAC_FanMode == NULL) {
-      p = (char *)kFanSpeedOptions; // default FAN_SPEED_AUTO
-    }
-    else {
-      p = strchr(kFanSpeedOptions, toupper(HVAC_FanMode[0]));
-    }
-    if (!p) {
-      return true;
-    }
-    mode = p - kFanSpeedOptions;
-    if ((mode == 0) || (mode > 3)) {
-      data[5] = 5; // Auto = 0x05
-    }
-    else {
-      data[5] = (mode * 2) - 2; // Low = 0x00, Mid = 0x02, High = 0x04
-    }
-    
-    snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: FanMode %s, ModeVal %d, Code %d"), p, mode, data[5]);
-    AddLog(LOG_LEVEL_DEBUG);
-
-    // Set CRC code - data[6]
-    data[6] = (data[3] + data[4] + data[5]) & 0x0f; // CRC
-
-  }    
-  // Build LG IR code
-  LG_Code = data[0] << 4;
-  for (int i = 1; i < 6; i++) {
-    LG_Code = (LG_Code + data[i]) << 4;
-  }
-  LG_Code = LG_Code + data[6];
-
-  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: LG_Code %d"), LG_Code);
-  AddLog(LOG_LEVEL_DEBUG);
-
-  // Send LG IR Code 
-  noInterrupts();
-  irsend->sendLG(LG_Code, 28);
-  interrupts();
-  
-  return false;
-}
 #endif // USE_IR_HVAC
 
 /*********************************************************************************************\
@@ -405,6 +279,7 @@ boolean IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_P
  * ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(3) + 40 = 96
  IRsend:
  { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
+
  IRhvac:
  { "Vendor": "<Toshiba|Mitsubishi>", "Power": <0|1>, "Mode": "<Hot|Cold|Dry|Auto>", "FanSpeed": "<1|2|3|4|5|Auto|Silence>", "Temp": <17..30> }
 */
@@ -505,9 +380,6 @@ boolean IrSendCommand(void)
         }
         else if (!strcasecmp_P(HVAC_Vendor, PSTR("MITSUBISHI"))) {
           error = IrHvacMitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
-        }
-        else if (!strcasecmp_P(HVAC_Vendor, PSTR("LG"))) {
-          error = IrHvacLG(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
         else {
           error = true;
