@@ -1,5 +1,5 @@
 /*
-  xdrv_18_timeprop.ino - Time Proportional Controller Support for Sonoff-Tasmota
+  xdrv_20_timeprop.ino - Time Proportional Controller Support for Sonoff-Tasmota
 
   Copyright (C) 2018  Colin Law, Thomas Herrmann and Adrian Scillato
 
@@ -206,9 +206,9 @@ boolean Timeprop_Command()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_18
+#define XDRV_20
 
-boolean Xdrv18(byte function)
+boolean Xdrv20(byte function)
 {
   boolean result = false;
 
