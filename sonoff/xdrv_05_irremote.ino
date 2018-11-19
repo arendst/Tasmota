@@ -33,6 +33,7 @@ const char kIrRemoteProtocols[] PROGMEM =
 #ifdef USE_IR_HVAC
 
 #include <ir_Mitsubishi.h>
+#include <ir_Fujitsu.h>
 
 // HVAC TOSHIBA_
 #define HVAC_TOSHIBA_HDR_MARK 4400
@@ -136,7 +137,56 @@ void IrReceiveCheck(void)
 #endif // USE_IR_RECEIVE
 
 #ifdef USE_IR_HVAC
-/*********************************************************************************************\
+
+boolean IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
+{
+    const char kFujitsuHvacModeOptions[] = "HDCAF";
+
+    char stemp[64];
+    snprintf_P(stemp, sizeof(stemp), PSTR("FUJITSU: mode:%s, fan:%s, power:%u, temp:%u"), HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+    IRFujitsuAC ac(pin[GPIO_IRSEND]);
+
+    if (HVAC_Power == 0) {
+        ac.off();
+        ac.send();
+        return false;
+    }
+
+    byte modes[5] = {FUJITSU_AC_MODE_HEAT, FUJITSU_AC_MODE_DRY, FUJITSU_AC_MODE_COOL, FUJITSU_AC_MODE_AUTO, FUJITSU_AC_MODE_FAN};
+    byte fanModes[7] = {FUJITSU_AC_FAN_AUTO, FUJITSU_AC_FAN_LOW, FUJITSU_AC_FAN_MED, FUJITSU_AC_FAN_HIGH, FUJITSU_AC_FAN_HIGH, FUJITSU_AC_FAN_HIGH, FUJITSU_AC_FAN_QUIET};
+    ac.setCmd(FUJITSU_AC_CMD_TURN_ON);
+    ac.setSwing(FUJITSU_AC_SWING_VERT);
+
+    char *p;
+    if (HVAC_Mode == NULL) {
+        p = (char *)kFujitsuHvacModeOptions;
+    }
+    else {
+        p = strchr(kFujitsuHvacModeOptions, toupper(HVAC_Mode[0]));
+    }
+    if (!p) {
+        return true;
+    }
+    ac.setMode(modes[p - kFujitsuHvacModeOptions]);
+
+    if (HVAC_FanMode == NULL) {
+        p = (char *)kFanSpeedOptions; // default FAN_SPEED_AUTO
+    }
+    else {
+        p = strchr(kFanSpeedOptions, toupper(HVAC_FanMode[0]));
+    }
+    if (!p) {
+        return true;
+    }
+    ac.setFanSpeed(fanModes[p - kFanSpeedOptions]);
+
+    ac.setTemp(HVAC_Temp);
+    ac.send();
+
+    return false;
+}
+
+/********************************************************************************************* \
  * IR Heating, Ventilation and Air Conditioning using IRMitsubishiAC library
 \*********************************************************************************************/
 
@@ -512,6 +562,8 @@ boolean IrSendCommand(void)
         }
         else if (!strcasecmp_P(HVAC_Vendor, PSTR("LG"))) {
           error = IrHvacLG(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+        else if (!strcasecmp_P(HVAC_Vendor, PSTR("FUJITSU"))) {
+          error = IrHvacFujitsu(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }
         else {
           error = true;
