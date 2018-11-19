@@ -333,7 +333,7 @@ void WifiCheckIp(void)
         }
         if (3 == wifi_scan_state) {   // Scan done
           if (wifi_scan_result > 0) {
-            int best_network_db = INT_MIN;
+            int best_network_db = -2147483646;
             for (int8_t i = 0; i < wifi_scan_result; ++i) {
               String ssid_scan;
               int32_t rssi_scan;
