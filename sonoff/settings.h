@@ -68,8 +68,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)
     uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)
     uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)
-    uint32_t hass_short_discovery_msg : 1; // bit 5 (vTBD)
-    uint32_t spare06 : 1;
+    uint32_t hass_short_discovery_msg : 1; // bit 5 (v6.3.0.7)
+    uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)
     uint32_t spare07 : 1;
     uint32_t spare08 : 1;
     uint32_t spare09 : 1;

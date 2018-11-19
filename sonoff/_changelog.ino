@@ -1,5 +1,7 @@
 /* 6.3.0.10 20181118
  * Add command SetOption36 0..255 milliseconds (50 default) to tune main loop dynamic delay
+ * Add support for LG HVac and IrRemote (#4377)
+ * Add command SetOption56 0/1 to enable wifi network scan and select highest RSSI (#3173)
  *
  * 6.3.0.9 20181118
  * Moved command SetSensorXX to debugging driver freeing user code space

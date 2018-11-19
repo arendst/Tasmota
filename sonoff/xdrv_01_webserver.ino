@@ -29,6 +29,9 @@
 
 #define HTTP_REFRESH_TIME      2345   // milliseconds
 
+#include <ESP8266WebServer.h>         // WifiManager, Webserver
+#include <DNSServer.h>                // WifiManager
+
 #ifdef USE_RF_FLASH
 uint8_t *efm8bb1_update = NULL;
 #endif  // USE_RF_FLASH
