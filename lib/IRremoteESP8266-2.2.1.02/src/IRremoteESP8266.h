@@ -171,8 +171,8 @@
 #define DECODE_AIWA_RC_T501  false
 #define SEND_AIWA_RC_T501    false
 
-#define DECODE_LG            false
-#define SEND_LG              false
+#define DECODE_LG            true
+#define SEND_LG              true
 
 #define DECODE_SANYO         false
 #define SEND_SANYO           false
