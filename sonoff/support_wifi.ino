@@ -26,7 +26,6 @@
 #define WIFI_RETRY_OFFSET_SEC  20   // seconds
 
 #include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
-#include <vector>
 
 #ifdef USE_MQTT_TLS
   WiFiClientSecure EspClient;       // Wifi Secure Client
@@ -43,9 +42,7 @@ uint8_t wifi_config_type = 0;
 uint8_t wifi_config_counter = 0;
 
 uint8_t wifi_scan_state;
-int8_t wifi_best_ap = 3;
-uint8_t wifi_best_bssid[6];
-int32_t wifi_best_channel;
+uint8_t wifi_bssid[6];
 
 int WifiGetRssiAsQuality(int rssi)
 {
@@ -190,7 +187,7 @@ void WiFiSetSleepMode(void)
 #endif
 }
 
-void WifiBegin(uint8_t flag)
+void WifiBegin(uint8_t flag, uint8_t channel)
 {
   const char kWifiPhyMode[] = " BGN";
 
@@ -210,7 +207,7 @@ void WifiBegin(uint8_t flag)
   WiFiSetSleepMode();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
-//  WiFi.setAutoReconnect(true);
+  WiFi.setAutoReconnect(true);
   switch (flag) {
   case 0:  // AP1
   case 1:  // AP2
@@ -224,14 +221,102 @@ void WifiBegin(uint8_t flag)
     WiFi.config(Settings.ip_address[0], Settings.ip_address[1], Settings.ip_address[2], Settings.ip_address[3]);  // Set static IP
   }
   WiFi.hostname(my_hostname);
-  if (wifi_best_ap < 3) {
-    WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active], wifi_best_channel, wifi_best_bssid);
+  if (channel) {
+    WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active], channel, wifi_bssid);
   } else {
     WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active]);
   }
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
     Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
   AddLog(LOG_LEVEL_INFO);
+}
+
+void WifiBeginAfterScan()
+{
+  static int8_t rssi_threshold;
+
+  // Not active
+  if (0 == wifi_scan_state) { return; }
+  // Init scan when not connected
+  if (1 == wifi_scan_state) {
+    memset((void*) &wifi_bssid, 0, sizeof(wifi_bssid));
+    rssi_threshold = 0;
+    wifi_scan_state = 3;
+  }
+  // Init scan when connected
+  if (2 == wifi_scan_state) {
+    rssi_threshold = 10;
+    wifi_scan_state = 3;
+  }
+  // Init scan
+  if (3 == wifi_scan_state) {
+    if (WiFi.scanComplete() != WIFI_SCAN_RUNNING) {
+      WiFi.scanNetworks(true);                      // Start wifi scan async
+      wifi_scan_state++;
+      AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR("Network (re)scan started..."));
+      return;
+    }
+  }
+  int8_t wifi_scan_result = WiFi.scanComplete();
+  // Check scan done
+  if (4 == wifi_scan_state) {
+    if (wifi_scan_result != WIFI_SCAN_RUNNING) {
+      wifi_scan_state++;
+    }
+  }
+  // Scan done
+  if (5 == wifi_scan_state) {
+    int32_t channel = 0;                            // No scan result
+    int8_t ap = 3;                                  // AP default if not found
+    uint8_t last_bssid[6];
+    memcpy((void*) &last_bssid, (void*) &wifi_bssid, sizeof(last_bssid));
+
+    if (wifi_scan_result > 0) {
+      // Networks found
+      int32_t best_network_db = -127;
+      for (int8_t i = 0; i < wifi_scan_result; ++i) {
+
+        String ssid_scan;
+        int32_t rssi_scan;
+        uint8_t sec_scan;
+        uint8_t* bssid_scan;
+        int32_t chan_scan;
+        bool hidden_scan;
+
+        WiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, bssid_scan, chan_scan, hidden_scan);
+
+        bool known = false;
+        uint8_t j;
+        for (j = 0; j < 2; j++) {
+          if (ssid_scan == Settings.sta_ssid[j]) {  // SSID match
+            known = true;
+            if (rssi_scan > (best_network_db + rssi_threshold)) {      // Best network
+              if (sec_scan == ENC_TYPE_NONE || Settings.sta_pwd[j]) {  // Check for passphrase if not open wlan
+                best_network_db = rssi_scan;
+                channel = chan_scan;
+                ap = j;                             // AP1 or AP2
+                memcpy((void*) &wifi_bssid, (void*) bssid_scan, sizeof(wifi_bssid));
+              }
+            }
+            break;
+          }
+        }
+        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI "Network %d, AP%c, SSId %s, Channel %d, BSSId %02X:%02X:%02X:%02X:%02X:%02X, RSSI %d, Encryption %d"),
+          i, (known) ? (j) ? '2' : '1' : '-', ssid_scan.c_str(), chan_scan, bssid_scan[0], bssid_scan[1], bssid_scan[2], bssid_scan[3], bssid_scan[4], bssid_scan[5], rssi_scan, (sec_scan == ENC_TYPE_NONE) ? 0 : 1);
+        AddLog(LOG_LEVEL_DEBUG);
+        delay(0);
+      }
+      WiFi.scanDelete();                            // Clean up Ram
+      delay(0);
+    }
+    wifi_scan_state = 0;
+    for (uint8_t i = 0; i < sizeof(wifi_bssid); i++) {
+      if (last_bssid[i] != wifi_bssid[i]) {
+        WifiBegin(ap, channel);                     // 0 (AP1), 1 (AP2) or 3 (default AP)
+        break;
+      }
+    }
+  }
 }
 
 void WifiSetState(uint8_t state)
@@ -307,77 +392,16 @@ void WifiCheckIp(void)
     if (wifi_retry) {
       if (!Settings.flag3.use_wifi_scan) {
         if (wifi_retry_init == wifi_retry) {
-          WifiBegin(3);  // Select default SSID
+          WifiBegin(3, 0);        // Select default SSID
         }
         if ((Settings.sta_config != WIFI_WAIT) && ((wifi_retry_init / 2) == wifi_retry)) {
-          WifiBegin(2);  // Select alternate SSID
+          WifiBegin(2, 0);        // Select alternate SSID
         }
       } else {
         if (wifi_retry_init == wifi_retry) {
-          wifi_best_ap = 3;
           wifi_scan_state = 1;
         }
-        if (1 == wifi_scan_state) {
-          if (WiFi.scanComplete() != WIFI_SCAN_RUNNING) {
-            WiFi.disconnect();
-            WiFi.scanNetworks(true);  // Start wifi scan async
-            wifi_scan_state = 2;
-            AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR("Network scan started..."));
-          }
-        }
-        int8_t wifi_scan_result = WiFi.scanComplete();
-        if (2 == wifi_scan_state) {   // Scan started
-          if (wifi_scan_result != WIFI_SCAN_RUNNING) {
-            wifi_scan_state = 3;
-          }
-        }
-        if (3 == wifi_scan_state) {   // Scan done
-          if (wifi_scan_result > 0) {
-            int best_network_db = -2147483646;
-            for (int8_t i = 0; i < wifi_scan_result; ++i) {
-              String ssid_scan;
-              int32_t rssi_scan;
-              uint8_t sec_scan;
-              uint8_t* bssid_scan;
-              int32_t chan_scan;
-              bool hidden_scan;
-
-              WiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, bssid_scan, chan_scan, hidden_scan);
-
-              bool known = false;
-              uint8_t j;
-              for (j = 0; j < 2; j++) {
-                if (ssid_scan == Settings.sta_ssid[j]) {  // SSID match
-                  known = true;
-                  if (rssi_scan > best_network_db) {        // Best network
-                    if (sec_scan == ENC_TYPE_NONE || Settings.sta_pwd[j]) {  // Check for passphrase if not open wlan
-                      best_network_db = rssi_scan;
-                      wifi_best_channel = chan_scan;
-                      wifi_best_ap = j;
-                      memcpy((void*) &wifi_best_bssid, (void*) bssid_scan, sizeof(wifi_best_bssid));
-                    }
-                  }
-                  break;
-                }
-              }
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI "Network %d, AP%c, SSId %s, Channel %d, BSSId %02X:%02X:%02X:%02X:%02X:%02X, RSSI %d, Encryption %d"),
-                i, (known) ? (j) ? '2' : '1' : '-', ssid_scan.c_str(), chan_scan, bssid_scan[0], bssid_scan[1], bssid_scan[2], bssid_scan[3], bssid_scan[4], bssid_scan[5], rssi_scan, (sec_scan == ENC_TYPE_NONE) ? 0 : 1);
-              AddLog(LOG_LEVEL_DEBUG);
-              delay(0);
-            }
-            WiFi.scanDelete();  // Clean up ram
-            delay(0);
-          } else {
-            AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR("No network found"));
-          }
-          wifi_scan_state = 4;
-        }
-        if (4 == wifi_scan_state) {   // Strongest found
-          WifiBegin(wifi_best_ap);    // Select strongest or default SSID
-          wifi_scan_state = 0;
-        }
       }
-
       wifi_counter = 1;
       wifi_retry--;
     } else {
@@ -433,6 +457,8 @@ void WifiCheck(uint8_t param)
         restart_flag = 2;
       }
     } else {
+      WifiBeginAfterScan();
+
       if (wifi_counter <= 0) {
         AddLog_P(LOG_LEVEL_DEBUG_MORE, S_LOG_WIFI, PSTR(D_CHECKING_CONNECTION));
         wifi_counter = WIFI_CHECK_SEC;
@@ -440,6 +466,13 @@ void WifiCheck(uint8_t param)
       }
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !wifi_config_type) {
         WifiSetState(1);
+
+        if (Settings.flag3.use_wifi_rescan) {
+          if (!(uptime % (60 * 44))) {
+            wifi_scan_state = 2;
+          }
+        }
+
 #ifdef BE_MINIMAL
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
@@ -534,6 +567,7 @@ void WifiDisconnect(void)
 void EspRestart(void)
 {
   delay(100);                 // Allow time for message xfer - disabled v6.1.0b
+  if (Settings.flag.mqtt_enabled) MqttDisconnect();
   WifiDisconnect();
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();

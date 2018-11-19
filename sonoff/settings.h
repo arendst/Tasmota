@@ -70,7 +70,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)
     uint32_t hass_short_discovery_msg : 1; // bit 5 (v6.3.0.7)
     uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)
-    uint32_t spare07 : 1;
+    uint32_t use_wifi_rescan : 1;          // bit 7 (v6.3.0.10)
     uint32_t spare08 : 1;
     uint32_t spare09 : 1;
     uint32_t spare10 : 1;
