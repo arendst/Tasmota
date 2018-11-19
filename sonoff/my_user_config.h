@@ -366,7 +366,7 @@
 
 // -- Low level interface devices -----------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
-  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
+//  #define USE_IR_HVAC                            // Support for HVAC system using IR (+2k code)
   #define USE_IR_RECEIVE                         // Support for IR receiver (+5k5 code, 264 iram)
 
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
