@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0008'
+VER = '2.1.0009'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -771,12 +771,20 @@ Setting_6_3_0_4.update({
 Setting_6_3_0_4['flag3'][0].update ({
         'tuya_apply_o20':           ('<L', (0x3A0,1, 4), (None, None,                           ('SetOption',   '"SetOption54 {}".format($)')) ),
                                     })
+# ======================================================================
 Setting_6_3_0_8 = copy.deepcopy(Setting_6_3_0_4)
 Setting_6_3_0_8['flag3'][0].update ({
         'hass_short_discovery_msg': ('<L', (0x3A0,1, 5), (None, None,                           ('SetOption',   '"SetOption55 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_3_0_10 = copy.deepcopy(Setting_6_3_0_8)
+Setting_6_3_0_10['flag3'][0].update ({
+        'use_wifi_scan':            ('<L', (0x3A0,1, 6), (None, None,                           ('SetOption',   '"SetOption56 {}".format($)')) ),
+        'use_wifi_rescan':          ('<L', (0x3A0,1, 7), (None, None,                           ('SetOption',   '"SetOption57 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x603000A, 0xe00, Setting_6_3_0_10),
             (0x6030008, 0xe00, Setting_6_3_0_8),
             (0x6030004, 0xe00, Setting_6_3_0_4),
             (0x6030002, 0xe00, Setting_6_3_0_2),
