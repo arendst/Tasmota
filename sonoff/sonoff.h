@@ -138,6 +138,9 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define SERIAL_POLLING         100          // Serial receive polling in ms
 #define MAX_STATUS             11           // Max number of status lines
 
+#define DRIVER_BOOT_DELAY      1            // Number of milliseconds to retard driver cycles during boot-up time to reduce overall CPU load whilst Wifi is connecting
+#define LOOP_SLEEP_DELAY       50           // Lowest number of milliseconds to go through the main loop using delay when needed
+
 #define NO_EXTRA_4K_HEAP                    // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
 
 /*
@@ -188,9 +191,6 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define KNX_SLOT5              30
 #define KNX_MAX_device_param   30
 #define MAX_KNXTX_CMNDS        5
-
-#define DRIVER_BOOT_DELAY      1            // Number of milliseconds to retard driver cycles during boot-up time to reduce overall CPU load whilst Wifi is connecting
-#define LOOP_SLEEP_DELAY       50           // Lowest number of milliseconds to go through the main loop using delay when needed
 
 /*********************************************************************************************\
  * Enumeration

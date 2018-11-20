@@ -1,18 +1,18 @@
 /*
   xdrv_05_irremote.ino - infra red support for Sonoff-Tasmota
-  
+
   Copyright (C) 2018  Heiko Krupp, Lazar Obradovic and Theo Arends
-  
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -137,60 +137,11 @@ void IrReceiveCheck(void)
 #endif // USE_IR_RECEIVE
 
 #ifdef USE_IR_HVAC
-
-boolean IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
-{
-    const char kFujitsuHvacModeOptions[] = "HDCAF";
-
-    char stemp[64];
-    snprintf_P(stemp, sizeof(stemp), PSTR("FUJITSU: mode:%s, fan:%s, power:%u, temp:%u"), HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
-    IRFujitsuAC ac(pin[GPIO_IRSEND]);
-
-    if (HVAC_Power == 0) {
-        ac.off();
-        ac.send();
-        return false;
-    }
-
-    byte modes[5] = {FUJITSU_AC_MODE_HEAT, FUJITSU_AC_MODE_DRY, FUJITSU_AC_MODE_COOL, FUJITSU_AC_MODE_AUTO, FUJITSU_AC_MODE_FAN};
-    byte fanModes[7] = {FUJITSU_AC_FAN_AUTO, FUJITSU_AC_FAN_LOW, FUJITSU_AC_FAN_MED, FUJITSU_AC_FAN_HIGH, FUJITSU_AC_FAN_HIGH, FUJITSU_AC_FAN_HIGH, FUJITSU_AC_FAN_QUIET};
-    ac.setCmd(FUJITSU_AC_CMD_TURN_ON);
-    ac.setSwing(FUJITSU_AC_SWING_VERT);
-
-    char *p;
-    if (HVAC_Mode == NULL) {
-        p = (char *)kFujitsuHvacModeOptions;
-    }
-    else {
-        p = strchr(kFujitsuHvacModeOptions, toupper(HVAC_Mode[0]));
-    }
-    if (!p) {
-        return true;
-    }
-    ac.setMode(modes[p - kFujitsuHvacModeOptions]);
-
-    if (HVAC_FanMode == NULL) {
-        p = (char *)kFanSpeedOptions; // default FAN_SPEED_AUTO
-    }
-    else {
-        p = strchr(kFanSpeedOptions, toupper(HVAC_FanMode[0]));
-    }
-    if (!p) {
-        return true;
-    }
-    ac.setFanSpeed(fanModes[p - kFanSpeedOptions]);
-
-    ac.setTemp(HVAC_Temp);
-    ac.send();
-
-    return false;
-}
-
 /********************************************************************************************* \
  * IR Heating, Ventilation and Air Conditioning using IRMitsubishiAC library
 \*********************************************************************************************/
 
-/******************* 
+/*******************
       TOSHIBA
 ********************/
 
@@ -284,7 +235,7 @@ boolean IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
 }
 
 
-/******************* 
+/*******************
      MITSUBISHI
 ********************/
 
@@ -333,7 +284,7 @@ boolean IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, boolea
 }
 
 
-/******************* 
+/*******************
         LG
 ********************/
 
@@ -353,21 +304,21 @@ boolean IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_P
 
   if (!HVAC_Power) {
     data[2] = (byte)0x0C; // Turn OFF HVAC, code 0x88C0051
-    data[3] = (byte)0x00; 
-    data[4] = (byte)0x00; 
-    data[5] = (byte)0x05; 
-    data[6] = (byte)0x01; 
+    data[3] = (byte)0x00;
+    data[4] = (byte)0x00;
+    data[5] = (byte)0x05;
+    data[6] = (byte)0x01;
     hvacOn = false;
   }
 
   else {
-    
+
     // Set code for HVAC Mode - data[3]
     if (HVAC_Mode == NULL) {
       p = (char *)kHvacModeOptions; // default HVAC_HOT
     }
     else {
-      p = strchr(kHvacModeOptions, toupper(HVAC_Mode[0]));  
+      p = strchr(kHvacModeOptions, toupper(HVAC_Mode[0]));
     }
     if (!p) {
       return true;
@@ -385,16 +336,16 @@ boolean IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_P
         break;
       case 3: // HOT
         data[3] = 12;
-        break; 
+        break;
     }
     if (!hvacOn) {
       data[3] = data[3] & 7; // reset bit3
       hvacOn = true;
     }
-  
+
     snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: HvacMode %s, ModeVal %d, Code %d"), p, mode, data[3]);
     AddLog(LOG_LEVEL_DEBUG);
-    
+
     // Set code for HVAC temperature - data[4]
     if (HVAC_Temp > 30) {
       Temp = 30;
@@ -424,14 +375,14 @@ boolean IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_P
     else {
       data[5] = (mode * 2) - 2; // Low = 0x00, Mid = 0x02, High = 0x04
     }
-    
+
     snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: FanMode %s, ModeVal %d, Code %d"), p, mode, data[5]);
     AddLog(LOG_LEVEL_DEBUG);
 
     // Set CRC code - data[6]
     data[6] = (data[3] + data[4] + data[5]) & 0x0f; // CRC
 
-  }    
+  }
   // Build LG IR code
   LG_Code = data[0] << 4;
   for (int i = 1; i < 6; i++) {
@@ -442,13 +393,68 @@ boolean IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_P
   snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: LG_Code %d"), LG_Code);
   AddLog(LOG_LEVEL_DEBUG);
 
-  // Send LG IR Code 
+  // Send LG IR Code
   noInterrupts();
   irsend->sendLG(LG_Code, 28);
   interrupts();
-  
+
   return false;
 }
+
+
+/*******************
+      Fujitsu
+********************/
+
+boolean IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_Power, int HVAC_Temp)
+{
+  const char kFujitsuHvacModeOptions[] = "HDCAF";
+
+  char stemp[64];
+  snprintf_P(stemp, sizeof(stemp), PSTR("FUJITSU: mode:%s, fan:%s, power:%u, temp:%u"), HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+
+  IRFujitsuAC ac(pin[GPIO_IRSEND]);
+
+  if (0 == HVAC_Power) {
+    ac.off();
+    ac.send();
+    return false;
+  }
+
+  byte modes[5] = {FUJITSU_AC_MODE_HEAT, FUJITSU_AC_MODE_DRY, FUJITSU_AC_MODE_COOL, FUJITSU_AC_MODE_AUTO, FUJITSU_AC_MODE_FAN};
+  byte fanModes[7] = {FUJITSU_AC_FAN_AUTO, FUJITSU_AC_FAN_LOW, FUJITSU_AC_FAN_MED, FUJITSU_AC_FAN_HIGH, FUJITSU_AC_FAN_HIGH, FUJITSU_AC_FAN_HIGH, FUJITSU_AC_FAN_QUIET};
+  ac.setCmd(FUJITSU_AC_CMD_TURN_ON);
+  ac.setSwing(FUJITSU_AC_SWING_VERT);
+
+  char *p;
+  if (NULL == HVAC_Mode) {
+    p = (char *)kFujitsuHvacModeOptions;
+  }
+  else {
+    p = strchr(kFujitsuHvacModeOptions, toupper(HVAC_Mode[0]));
+  }
+  if (!p) {
+    return true;
+  }
+  ac.setMode(modes[p - kFujitsuHvacModeOptions]);
+
+  if (HVAC_FanMode == NULL) {
+    p = (char *)kFanSpeedOptions; // default FAN_SPEED_AUTO
+  }
+  else {
+    p = strchr(kFanSpeedOptions, toupper(HVAC_FanMode[0]));
+  }
+  if (!p) {
+    return true;
+  }
+  ac.setFanSpeed(fanModes[p - kFanSpeedOptions]);
+
+  ac.setTemp(HVAC_Temp);
+  ac.send();
+
+  return false;
+}
+
 #endif // USE_IR_HVAC
 
 /*********************************************************************************************\
@@ -562,6 +568,7 @@ boolean IrSendCommand(void)
         }
         else if (!strcasecmp_P(HVAC_Vendor, PSTR("LG"))) {
           error = IrHvacLG(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+        }
         else if (!strcasecmp_P(HVAC_Vendor, PSTR("FUJITSU"))) {
           error = IrHvacFujitsu(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
         }

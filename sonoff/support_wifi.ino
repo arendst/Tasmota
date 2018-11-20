@@ -21,6 +21,13 @@
  * Wifi
 \*********************************************************************************************/
 
+#ifndef WIFI_RSSI_THRESHOLD
+#define WIFI_RSSI_THRESHOLD    10   // Difference in dB between current network and scanned network
+#endif
+#ifndef WIFI_RESCAN_MINUTES
+#define WIFI_RESCAN_MINUTES    44   // Number of minutes between wifi network rescan
+#endif
+
 #define WIFI_CONFIG_SEC        180  // seconds before restart
 #define WIFI_CHECK_SEC         20   // seconds
 #define WIFI_RETRY_OFFSET_SEC  20   // seconds
@@ -207,7 +214,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   WiFiSetSleepMode();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
-  WiFi.setAutoReconnect(true);
+//  WiFi.setAutoReconnect(true);
   switch (flag) {
   case 0:  // AP1
   case 1:  // AP2
@@ -230,8 +237,6 @@ void WifiBegin(uint8_t flag, uint8_t channel)
     Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
   AddLog(LOG_LEVEL_INFO);
 }
-
-#define WIFI_RSSI_THRESHOLD 10
 
 void WifiBeginAfterScan()
 {
@@ -395,16 +400,16 @@ void WifiCheckIp(void)
         }
     }
     if (wifi_retry) {
-      if (!Settings.flag3.use_wifi_scan) {
+      if (Settings.flag3.use_wifi_scan) {
+        if (wifi_retry_init == wifi_retry) {
+          wifi_scan_state = 1;    // Select scanned SSID
+        }
+      } else {
         if (wifi_retry_init == wifi_retry) {
           WifiBegin(3, 0);        // Select default SSID
         }
         if ((Settings.sta_config != WIFI_WAIT) && ((wifi_retry_init / 2) == wifi_retry)) {
           WifiBegin(2, 0);        // Select alternate SSID
-        }
-      } else {
-        if (wifi_retry_init == wifi_retry) {
-          wifi_scan_state = 1;
         }
       }
       wifi_counter = 1;
@@ -473,7 +478,7 @@ void WifiCheck(uint8_t param)
         WifiSetState(1);
 
         if (Settings.flag3.use_wifi_rescan) {
-          if (!(uptime % (60 * 44))) {
+          if (!(uptime % (60 * WIFI_RESCAN_MINUTES))) {
             wifi_scan_state = 2;
           }
         }
