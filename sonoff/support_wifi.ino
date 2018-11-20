@@ -231,21 +231,26 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   AddLog(LOG_LEVEL_INFO);
 }
 
+#define WIFI_RSSI_THRESHOLD 10
+
 void WifiBeginAfterScan()
 {
-  static int8_t rssi_threshold;
+  static int8_t best_network_db;
 
   // Not active
   if (0 == wifi_scan_state) { return; }
   // Init scan when not connected
   if (1 == wifi_scan_state) {
     memset((void*) &wifi_bssid, 0, sizeof(wifi_bssid));
-    rssi_threshold = 0;
+    best_network_db = -127;
     wifi_scan_state = 3;
   }
   // Init scan when connected
   if (2 == wifi_scan_state) {
-    rssi_threshold = 10;
+    uint8_t* bssid = WiFi.BSSID();                  // Get current bssid
+    memcpy((void*) &wifi_bssid, (void*) bssid, sizeof(wifi_bssid));
+    best_network_db = WiFi.RSSI();                  // Get current rssi and add threshold
+    if (best_network_db < -WIFI_RSSI_THRESHOLD) { best_network_db +WIFI_RSSI_THRESHOLD; }
     wifi_scan_state = 3;
   }
   // Init scan
@@ -268,12 +273,11 @@ void WifiBeginAfterScan()
   if (5 == wifi_scan_state) {
     int32_t channel = 0;                            // No scan result
     int8_t ap = 3;                                  // AP default if not found
-    uint8_t last_bssid[6];
+    uint8_t last_bssid[6];                          // Save last bssid
     memcpy((void*) &last_bssid, (void*) &wifi_bssid, sizeof(last_bssid));
 
     if (wifi_scan_result > 0) {
       // Networks found
-      int32_t best_network_db = -127;
       for (int8_t i = 0; i < wifi_scan_result; ++i) {
 
         String ssid_scan;
@@ -290,9 +294,9 @@ void WifiBeginAfterScan()
         for (j = 0; j < 2; j++) {
           if (ssid_scan == Settings.sta_ssid[j]) {  // SSID match
             known = true;
-            if (rssi_scan > (best_network_db + rssi_threshold)) {      // Best network
+            if (rssi_scan > best_network_db) {      // Best network
               if (sec_scan == ENC_TYPE_NONE || Settings.sta_pwd[j]) {  // Check for passphrase if not open wlan
-                best_network_db = rssi_scan;
+                best_network_db = (int8_t)rssi_scan;
                 channel = chan_scan;
                 ap = j;                             // AP1 or AP2
                 memcpy((void*) &wifi_bssid, (void*) bssid_scan, sizeof(wifi_bssid));
@@ -310,6 +314,7 @@ void WifiBeginAfterScan()
       delay(0);
     }
     wifi_scan_state = 0;
+    // If bssid changed then (re)connect wifi
     for (uint8_t i = 0; i < sizeof(wifi_bssid); i++) {
       if (last_bssid[i] != wifi_bssid[i]) {
         WifiBegin(ap, channel);                     // 0 (AP1), 1 (AP2) or 3 (default AP)
@@ -457,7 +462,7 @@ void WifiCheck(uint8_t param)
         restart_flag = 2;
       }
     } else {
-      WifiBeginAfterScan();
+      if (wifi_scan_state) { WifiBeginAfterScan(); }
 
       if (wifi_counter <= 0) {
         AddLog_P(LOG_LEVEL_DEBUG_MORE, S_LOG_WIFI, PSTR(D_CHECKING_CONNECTION));
