@@ -252,6 +252,7 @@ enum SupportedModules {
   TUYA_DIMMER,
   GOSUND,
   ARMTRONIX_DIMMERS,
+  SK03_TUYA,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -469,6 +470,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   TECKIN,
   APLIC_WDP303075,
   GOSUND,
+  SK03_TUYA,
   NEO_COOLCAM,        // Socket Relay Devices
   OBI,
   ESP_SWITCH,         // Switch Devices
@@ -1249,7 +1251,19 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,
      GPIO_USER,
      0
-  }
+  },
+  { "SK03 Outdoor",    // Outdoor smart plug with power monitoring HLW8012 chip - https://www.amazon.com/gp/product/B07CG7MBPV
+     GPIO_KEY1,        // GPIO00 Button
+     0, 0, 0,    
+     GPIO_HLW_CF,      // GPIO04 HLW8012 CF power
+     GPIO_NRG_CF1,     // GPIO05 HLW8012 CF1 current / voltage
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_NRG_SEL_INV, // GPIO12 HLW8012 CF Sel output (0 = Voltage)
+     GPIO_LED2_INV,    // GPIO13 Red Led (0 = On, 1 = Off)
+     GPIO_LED1_INV,    // GPIO14 Blue Led (0 = On, 1 = Off)
+     GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
+     0, 0
+  } 
 };
 
 /*

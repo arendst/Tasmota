@@ -29,6 +29,9 @@
 
 #define HTTP_REFRESH_TIME      2345   // milliseconds
 
+#include <ESP8266WebServer.h>         // WifiManager, Webserver
+#include <DNSServer.h>                // WifiManager
+
 #ifdef USE_RF_FLASH
 uint8_t *efm8bb1_update = NULL;
 #endif  // USE_RF_FLASH
@@ -2055,7 +2058,7 @@ boolean Xdrv01(byte function)
 
   switch (function) {
     case FUNC_LOOP:
-      if (!global_state.wifi_down) { 
+      if (!global_state.wifi_down) {
         PollDnsWebserver();
 #ifdef USE_EMULATION
         if (Settings.flag2.emulation) PollUdp();

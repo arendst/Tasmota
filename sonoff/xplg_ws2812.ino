@@ -85,7 +85,7 @@ uint8_t kWidth[5] = {
     4,     // Large
     8,     // Largest
   255 };   // All
-uint8_t kRepeat[5] = {
+uint8_t kWsRepeat[5] = {
     8,     // Small
     6,     // Medium
     4,     // Large
@@ -222,7 +222,7 @@ void Ws2812Gradient(uint8_t schemenr)
   ColorScheme scheme = kSchemes[schemenr];
   if (scheme.count < 2) return;
 
-  uint8_t repeat = kRepeat[Settings.light_width];  // number of scheme.count per ledcount
+  uint8_t repeat = kWsRepeat[Settings.light_width];  // number of scheme.count per ledcount
   uint16_t range = (uint16_t)ceil((float)Settings.light_pixels / (float)repeat);
   uint16_t gradRange = (uint16_t)ceil((float)range / (float)(scheme.count - 1));
   uint16_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
@@ -232,7 +232,7 @@ void Ws2812Gradient(uint8_t schemenr)
   Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
   currentColor = oldColor;
   for (uint16_t i = 0; i < Settings.light_pixels; i++) {
-    if (kRepeat[Settings.light_width] > 1) {
+    if (kWsRepeat[Settings.light_width] > 1) {
       Ws2812GradientColor(schemenr, &currentColor, range, gradRange, i +offset);
     }
     if (Settings.light_speed > 0) {
