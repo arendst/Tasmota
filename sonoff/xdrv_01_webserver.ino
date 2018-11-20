@@ -2058,7 +2058,7 @@ boolean Xdrv01(byte function)
 
   switch (function) {
     case FUNC_LOOP:
-      if (!global_state.wifi_down) { 
+      if (!global_state.wifi_down) {
         PollDnsWebserver();
 #ifdef USE_EMULATION
         if (Settings.flag2.emulation) PollUdp();

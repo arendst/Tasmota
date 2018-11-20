@@ -45,8 +45,7 @@
 #endif
 
 // Libraries
-#include <Ticker.h>                         // RTC, Energy, OSWatch
-#include <ESP8266HTTPClient.h>              // MQTT, Ota
+#include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
 #include <StreamString.h>                   // Webserver, Updater
 #include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz

@@ -34,12 +34,6 @@
 
 #include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
 
-#ifdef USE_MQTT_TLS
-  WiFiClientSecure EspClient;       // Wifi Secure Client
-#else
-  WiFiClient EspClient;             // Wifi Client
-#endif
-
 uint8_t wifi_counter;
 uint8_t wifi_retry_init;
 uint8_t wifi_retry;

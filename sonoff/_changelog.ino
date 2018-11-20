@@ -2,7 +2,7 @@
  * Add delays removed in 6.3.0.9 (#4233)
  * Allow user definition of defines WIFI_RSSI_THRESHOLD (default 10) and WIFI_RESCAN_MINUTES (default 44)
  * Add support for Fujitsu HVac and IrRemote (#4387)
- * 
+ *
  * 6.3.0.10 20181118
  * Add command SetOption36 0..255 milliseconds (50 default) to tune main loop dynamic delay
  * Add support for LG HVac and IrRemote (#4377)

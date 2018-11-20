@@ -55,6 +55,12 @@
 
 /*********************************************************************************************/
 
+#ifdef USE_MQTT_TLS
+  WiFiClientSecure EspClient;               // Wifi Secure Client
+#else
+  WiFiClient EspClient;                     // Wifi Client
+#endif
+
 enum MqttCommands {
   CMND_MQTTHOST, CMND_MQTTPORT, CMND_MQTTRETRY, CMND_STATETEXT, CMND_MQTTFINGERPRINT, CMND_MQTTCLIENT,
   CMND_MQTTUSER, CMND_MQTTPASSWORD, CMND_FULLTOPIC, CMND_PREFIX, CMND_GROUPTOPIC, CMND_TOPIC, CMND_PUBLISH,
