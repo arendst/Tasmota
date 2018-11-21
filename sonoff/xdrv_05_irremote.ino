@@ -77,16 +77,21 @@ void IrSendInit(void)
  * IR Receive
 \*********************************************************************************************/
 
+#define IR_RCV_SAVE_BUFFER      0            // 0 = do not use buffer, 1 = use buffer for decoding
+
+#define IR_TIME_AVOID_DUPLICATE 500          // Milliseconds
+
 #include <IRrecv.h>
 
-#define IR_TIME_AVOID_DUPLICATE 500 // Milliseconds
-
 IRrecv *irrecv = NULL;
+
 unsigned long ir_lasttime = 0;
 
 void IrReceiveInit(void)
 {
-  irrecv = new IRrecv(pin[GPIO_IRRECV]); // an IR led is at GPIO_IRRECV
+  // an IR led is at GPIO_IRRECV
+  irrecv = new IRrecv(pin[GPIO_IRRECV], IR_RCV_BUFFER_SIZE, IR_RCV_TIMEOUT, IR_RCV_SAVE_BUFFER);
+  irrecv->setUnknownThreshold(IR_RCV_MIN_UNKNOWN_SIZE);
   irrecv->enableIRIn();                  // Start the receiver
 
   //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
@@ -102,33 +107,58 @@ void IrReceiveCheck(void)
 
   if (irrecv->decode(&results)) {
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_IRR "RawLen %d, Bits %d, Value %08X, Decode %d"),
-               results.rawlen, results.bits, results.value, results.decode_type);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_IRR "RawLen %d, Overflow %d, Bits %d, Value %08X, Decode %d"),
+               results.rawlen, results.overflow, results.bits, results.value, results.decode_type);
     AddLog(LOG_LEVEL_DEBUG);
 
     unsigned long now = millis();
-    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
+//    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
+    if (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) {
       ir_lasttime = now;
 
       iridx = results.decode_type;
       if ((iridx < 0) || (iridx > 14)) {
-        iridx = 0;
+        iridx = 0;  // UNKNOWN
       }
-
       if (Settings.flag.ir_receive_decimal) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%u"), (uint32_t)results.value);
       } else {
         snprintf_P(stemp, sizeof(stemp), PSTR("\"%lX\""), (uint32_t)results.value);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s}}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, stemp);
 
+      if (Settings.flag3.receive_raw) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_IR_RAWDATA "\":["), mqtt_data);
+        uint16_t i;
+        for (i = 1; i < results.rawlen; i++) {
+          if (i > 1) { snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data); }
+          uint32_t usecs;
+          for (usecs = results.rawbuf[i] * kRawTick; usecs > UINT16_MAX; usecs -= UINT16_MAX) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d,0,"), mqtt_data, UINT16_MAX);
+          }
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d"), mqtt_data, usecs);
+          if (strlen(mqtt_data) > sizeof(mqtt_data) - 40) { break; }  // Quit if char string becomes too long
+        }
+        uint16_t extended_length = results.rawlen - 1;
+        for (uint16_t j = 0; j < results.rawlen - 1; j++) {
+          uint32_t usecs = results.rawbuf[j] * kRawTick;
+          // Add two extra entries for multiple larger than UINT16_MAX it is.
+          extended_length += (usecs / (UINT16_MAX + 1)) * 2;
+        }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_IR_RAWDATA "Info\":[%d,%d,%d]"), mqtt_data, extended_length, i -1, results.overflow);
+      }
+
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}}"), mqtt_data);
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
-      XdrvRulesProcess();
+
+      if (iridx) {
+        XdrvRulesProcess();
 #ifdef USE_DOMOTICZ
-      unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]
-      DomoticzSensor(DZ_COUNT, value);                      // Send data as Domoticz Counter value
-#endif                                                      // USE_DOMOTICZ
+        unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]
+        DomoticzSensor(DZ_COUNT, value);                      // Send data as Domoticz Counter value
+#endif  // USE_DOMOTICZ
+      }
     }
 
     irrecv->resume();
@@ -276,9 +306,9 @@ boolean IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, boolea
   mitsubir->setVane(MITSUBISHI_AC_VANE_AUTO);
   mitsubir->send();
 
-  //  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Mitsubishi Power %d, Mode %d, FanSpeed %d, Temp %d, VaneMode %d"),
-  //    mitsubir->getPower(), mitsubir->getMode(), mitsubir->getFan(), mitsubir->getTemp(), mitsubir->getVane());
-  //  AddLog(LOG_LEVEL_DEBUG);
+//  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Mitsubishi Power %d, Mode %d, FanSpeed %d, Temp %d, VaneMode %d"),
+//    mitsubir->getPower(), mitsubir->getMode(), mitsubir->getFan(), mitsubir->getTemp(), mitsubir->getVane());
+//  AddLog(LOG_LEVEL_DEBUG);
 
   return false;
 }
@@ -469,28 +499,64 @@ boolean IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
  { "Vendor": "<Toshiba|Mitsubishi>", "Power": <0|1>, "Mode": "<Hot|Cold|Dry|Auto>", "FanSpeed": "<1|2|3|4|5|Auto|Silence>", "Temp": <17..30> }
 */
 
-//boolean IrSendCommand(char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload)
 boolean IrSendCommand(void)
 {
   boolean serviced = true;
   boolean error = false;
-  char dataBufUc[XdrvMailbox.data_len];
   char protocol_text[20];
   const char *protocol;
   uint32_t bits = 0;
   uint32_t data = 0;
 
+  char dataBufUc[XdrvMailbox.data_len];
   UpperCase(dataBufUc, XdrvMailbox.data);
   if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_IRSEND))) {
     if (XdrvMailbox.data_len) {
       StaticJsonBuffer<128> jsonBuf;
       JsonObject &root = jsonBuf.parseObject(dataBufUc);
+
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_DONE "\"}"));
       if (!root.success()) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_INVALID_JSON "\"}")); // JSON decode failed
+        // IRSend frequency, rawdata, rawdata ...
+        char *p;
+        char *str = strtok_r(XdrvMailbox.data, ", ", &p);
+        uint16_t freq = atoi(str);
+        if (!freq) { freq = 38000; }  // Default to 38kHz
+        uint16_t count = 0;
+        char *q = p;
+        for (; *q; count += (*q++ == ','));
+        if (count) {  // At least two raw data values
+          count++;
+          uint16_t* raw_array = NULL;
+          raw_array = reinterpret_cast<uint16_t*>(malloc(count * sizeof(uint16_t)));
+          if (raw_array != NULL) {
+            byte i = 0;
+            for (str = strtok_r(NULL, ", ", &p); str && i < count; str = strtok_r(NULL, ", ", &p)) {
+              raw_array[i++] = strtoul(str, NULL, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+            }
+
+//            snprintf_P(log_data, sizeof(log_data), PSTR("IRS: Count %d, Freq %d, Arr[0] %d, Arr[count -1] %d"),
+//               count, freq, raw_array[0], raw_array[count -1]);
+//            AddLog(LOG_LEVEL_DEBUG);
+
+            irsend->sendRaw(raw_array, count, freq);
+            free(raw_array);
+            if (!count) {
+              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_FAILED "\"}")); // JSON decode failed and invalid RawData
+            }
+          }
+          else {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_NO_BUFFER_SPACE "\"}")); // JSON decode failed and invalid RawData
+          }
+        }
+        else {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_INVALID_RAWDATA "\"}")); // JSON decode failed and invalid RawData
+        }
       }
       else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_DONE "\"}"));
+        // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
         char parm_uc[10];
+
         protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_PROTOCOL))];
         bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS))];
         data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA))], NULL, 0);
@@ -556,9 +622,9 @@ boolean IrSendCommand(void)
         HVAC_FanMode = root[D_JSON_IRHVAC_FANSPEED];
         HVAC_Temp = root[D_JSON_IRHVAC_TEMP];
 
-        //        snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Received Vendor %s, Power %d, Mode %s, FanSpeed %s, Temp %d"),
-        //          HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
-        //        AddLog(LOG_LEVEL_DEBUG);
+//        snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Received Vendor %s, Power %d, Mode %s, FanSpeed %s, Temp %d"),
+//          HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
+//        AddLog(LOG_LEVEL_DEBUG);
 
         if (HVAC_Vendor == NULL || !strcasecmp_P(HVAC_Vendor, PSTR("TOSHIBA"))) {
           error = IrHvacToshiba(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);

@@ -133,6 +133,8 @@ enum UserSelectablePins {
   GPIO_RFRECV,         // RF receiver
   GPIO_TUYA_TX,        // Tuya Serial interface
   GPIO_TUYA_RX,        // Tuya Serial interface
+  GPIO_MGC3130_XFER,   // MGC3130 Transfer
+  GPIO_MGC3130_RESET,  // MGC3130 Reset
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -190,7 +192,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
   D_SENSOR_TX20_TX "|"
   D_SENSOR_RFSEND "|" D_SENSOR_RFRECV "|"
-  D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX;
+  D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX "|"
+  D_SENSOR_MGC3130_XFER "|" D_SENSOR_MGC3130_RESET;
 
 /********************************************************************************************/
 
@@ -426,7 +429,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_TUYA_DIMMER
   GPIO_TUYA_TX,        // Tuya Serial interface
-  GPIO_TUYA_RX         // Tuya Serial interface
+  GPIO_TUYA_RX,         // Tuya Serial interface
+#endif
+#ifdef USE_MGC3130
+  GPIO_MGC3130_XFER,
+  GPIO_MGC3130_RESET
 #endif
 };
 
