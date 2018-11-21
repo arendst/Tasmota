@@ -4,6 +4,7 @@
  * Add support for Fujitsu HVac and IrRemote (#4387)
  * Add command SetOption58 0/1 to enable IR raw data info in JSON message (#2116)
  * Add command IRSend <frequency>|0,<rawdata1>,<rawdata2>,.. to allow raw data transmission (#2116)
+ * Change default WIFI_CONFIG_TOOL from WIFI_WAIT to WIFI_RETRY in my_user_config.h (#4400)
  *
  * 6.3.0.10 20181118
  * Add command SetOption36 0..255 milliseconds (50 default) to tune main loop dynamic delay
