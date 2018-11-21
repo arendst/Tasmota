@@ -335,10 +335,13 @@
 // Commands xdrv_05_irremote.ino
 #define D_CMND_IRSEND "IRSend"
   #define D_JSON_INVALID_JSON "Invalid JSON"
+  #define D_JSON_INVALID_RAWDATA "Invalid RawData"
+  #define D_JSON_NO_BUFFER_SPACE "No buffer space"
   #define D_JSON_PROTOCOL_NOT_SUPPORTED "Protocol not supported"
   #define D_JSON_IR_PROTOCOL "Protocol"
   #define D_JSON_IR_BITS "Bits"
   #define D_JSON_IR_DATA "Data"
+  #define D_JSON_IR_RAWDATA "RawData"
 #define D_CMND_IRHVAC "IRHVAC"
   #define D_JSON_IRHVAC_VENDOR "VENDOR"
   #define D_JSON_IRHVAC_POWER "POWER"

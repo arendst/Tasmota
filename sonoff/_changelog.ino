@@ -2,6 +2,8 @@
  * Add delays removed in 6.3.0.9 (#4233)
  * Allow user definition of defines WIFI_RSSI_THRESHOLD (default 10) and WIFI_RESCAN_MINUTES (default 44)
  * Add support for Fujitsu HVac and IrRemote (#4387)
+ * Add command SetOption58 0/1 to enable IR raw data info in JSON message (#2116)
+ * Add command IRSend <frequency>|0,<rawdata1>,<rawdata2>,.. to allow raw data transmission (#2116)
  *
  * 6.3.0.10 20181118
  * Add command SetOption36 0..255 milliseconds (50 default) to tune main loop dynamic delay
