@@ -1,37 +1,26 @@
 /*
-  xsns_91_MGC3130.ino - Support for I2C MGC3130 Electric Field Sensor for Sonoff-Tasmota
+  xsns_36_MGC3130.ino - Support for I2C MGC3130 Electric Field Sensor for Sonoff-Tasmota
 
   Copyright (C) 2018  Christian Baars & Theo Arends
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-  - Redistributions of source code must retain the above copyright notice,
-    this list of conditions and the following disclaimer.
-  - Redistributions in binary form must reproduce the above copyright notice,
-    this list of conditions and the following disclaimer in the documentation
-    and/or other materials provided with the distribution.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-  POSSIBILITY OF SUCH DAMAGE.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 //#define USE_MGC3130
 
 #ifdef USE_I2C
 #ifdef USE_MGC3130
-
-#define XSNS_36 36
-
 /*********************************************************************************************\
  * MGC3130 - Electric Field Sensor
  *
@@ -43,9 +32,11 @@
  * Wiring: SDA/SCL as usual plus RESET and TRANSFER -> 4 Wires
 \*********************************************************************************************/
 
+#define XSNS_36                 36
+
 #warning **** MGC3130: It is recommended to disable all unneeded I2C-drivers ****
 
-#define MGC3130_I2C_ADDR         0x42
+#define MGC3130_I2C_ADDR        0x42
 
 #define MGC3130_xfer            pin[GPIO_MGC3130_XFER]
 #define MGC3130_reset           pin[GPIO_MGC3130_RESET]
@@ -527,25 +518,21 @@ bool MGC3130_detect(void)
 
 void MGC3130_show(boolean json)
 {
-  if (!MGC3130_type) {
-    return;
-  }
+  if (!MGC3130_type) { return; }
 
   char status_chr[2];
-  if(MGC_data.out.systemInfo.DSPRunning){
+  if (MGC_data.out.systemInfo.DSPRunning) {
     sprintf (status_chr, "1");
   }
   else{
     sprintf (status_chr, "0");
   }
 
-
   if (json) {
-    if (MGC3130_mode == 3 && !MGC3130_triggeredByTouch)
-    {
-      if(MGC_data.out.systemInfo.positionValid && !(MGC_data.out.x == MGC3130_lastSentX && MGC_data.out.y == MGC3130_lastSentY && MGC_data.out.z == MGC3130_lastSentZ)){
+    if (MGC3130_mode == 3 && !MGC3130_triggeredByTouch) {
+      if (MGC_data.out.systemInfo.positionValid && !(MGC_data.out.x == MGC3130_lastSentX && MGC_data.out.y == MGC3130_lastSentY && MGC_data.out.z == MGC3130_lastSentZ)) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"X\":%u,\"Y\":%u,\"Z\":%u}"),
-        mqtt_data, MGC3130stype, MGC_data.out.x/64, MGC_data.out.y/64, (MGC_data.out.z-(uint16_t)MGC3130_MIN_ZVALUE)/64);
+          mqtt_data, MGC3130stype, MGC_data.out.x/64, MGC_data.out.y/64, (MGC_data.out.z-(uint16_t)MGC3130_MIN_ZVALUE)/64);
         MGC3130_lastSentX = MGC_data.out.x;
         MGC3130_lastSentY = MGC_data.out.y;
         MGC3130_lastSentZ = MGC_data.out.z;
@@ -553,40 +540,38 @@ void MGC3130_show(boolean json)
     }
     MGC3130_triggeredByTouch = false;
 
-    if (MGC3130_mode == 2){
-      if (MGC_data.out.systemInfo.airWheelValid && (MGC3130_rotValue != MGC3130_lastSentRotValue)){
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"AW\":%i}"), mqtt_data, MGC3130stype, MGC3130_rotValue);
-          MGC3130_lastSentRotValue = MGC3130_rotValue;
-        }
+    if (MGC3130_mode == 2) {
+      if (MGC_data.out.systemInfo.airWheelValid && (MGC3130_rotValue != MGC3130_lastSentRotValue)) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"AW\":%i}"), mqtt_data, MGC3130stype, MGC3130_rotValue);
+        MGC3130_lastSentRotValue = MGC3130_rotValue;
+      }
     }
 
-    if (MGC3130_currentGesture[0] != '\0'){
-        if (millis() - MGC3130_touchTimeStamp > 220 ){
-          MGC3130_touchCounter = 1;
-        }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"%s\":%u}"), mqtt_data, MGC3130stype, MGC3130_currentGesture, MGC3130_touchCounter);
-        MGC3130_currentGesture[0] = '\0';
-        MGC3130_touchTimeStamp = millis();
-        }
-  }
-#ifdef USE_WEBSERVER
- else {
-  if (true){
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGC_3130_SNS, mqtt_data, MGC3130stype, status_chr, hwRev[0], hwRev[1], loaderVersion[0], loaderVersion[1], loaderPlatform );
+    if (MGC3130_currentGesture[0] != '\0') {
+      if (millis() - MGC3130_touchTimeStamp > 220 ) {
+        MGC3130_touchCounter = 1;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"%s\":%u}"), mqtt_data, MGC3130stype, MGC3130_currentGesture, MGC3130_touchCounter);
+      MGC3130_currentGesture[0] = '\0';
+      MGC3130_touchTimeStamp = millis();
     }
+#ifdef USE_WEBSERVER
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGC_3130_SNS, mqtt_data, MGC3130stype, status_chr, hwRev[0], hwRev[1], loaderVersion[0], loaderVersion[1], loaderPlatform );
 #endif  // USE_WEBSERVER
+  }
 }
-}
+
 /*********************************************************************************************\
- * Command Sensor91
+ * Command Sensor36
  *
  * Command  | Payload | Description
  * ---------|---------|--------------------------
- * Sensor91 |         | ...
- * Sensor91 | 0       | Next Mode - cycle through the modes
- * Sensor91 | 1       | Gesture Mode
- * Sensor91 | 2       | Airwheel Mode
- * Sensor91 | 3       | Position Mode with x,y,z - z must be higher than half of the max. sensing height
+ * Sensor36 |         | ...
+ * Sensor36 | 0       | Next Mode - cycle through the modes
+ * Sensor36 | 1       | Gesture Mode
+ * Sensor36 | 2       | Airwheel Mode
+ * Sensor36 | 3       | Position Mode with x,y,z - z must be higher than half of the max. sensing height
 \*********************************************************************************************/
 
 bool MGC3130CommandSensor()
@@ -624,19 +609,20 @@ boolean Xsns36(byte function)
   if (i2c_flg) {
     if ((FUNC_INIT == function) && (pin[GPIO_MGC3130_XFER] < 99) && (pin[GPIO_MGC3130_RESET] < 99)) {
       MGC3130_detect();
-    } else if (MGC3130_type) {
+    }
+    else if (MGC3130_type) {
       switch (function) {
         case FUNC_EVERY_50_MSECOND:
-            MGC3130_loop();
-            break;
+          MGC3130_loop();
+          break;
         case FUNC_COMMAND:
-            if (XSNS_36 == XdrvMailbox.index) {
+          if (XSNS_36 == XdrvMailbox.index) {
             result = MGC3130CommandSensor();
-            }
-            break;
+          }
+          break;
         case FUNC_JSON_APPEND:
-            MGC3130_show(1);
-            break;
+          MGC3130_show(1);
+          break;
 #ifdef USE_WEBSERVER
         case FUNC_WEB_APPEND:
           MGC3130_show(0);

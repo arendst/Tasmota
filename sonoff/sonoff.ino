@@ -2778,5 +2778,11 @@ void loop(void)
   delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
 
   uint32_t my_activity = millis() - my_sleep;
-  if (my_activity < (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]) { delay((uint32_t)Settings.param[P_LOOP_SLEEP_DELAY] - my_activity); }  // Provide time for background tasks like wifi
+  if (global_state.wifi_down) {
+    delay(my_activity /2);    // Force max of 50% processing vs. yield time while wifi is down
+  } else {
+    if (my_activity < (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]) {
+      delay((uint32_t)Settings.param[P_LOOP_SLEEP_DELAY] - my_activity);  // Provide time for background tasks like wifi
+    }
+  }
 }
