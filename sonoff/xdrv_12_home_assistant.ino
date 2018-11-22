@@ -62,6 +62,25 @@ const char HASS_DISCOVER_LIGHT_CT[] PROGMEM =
   "\"color_temp_state_topic\":\"%s\","             // stat/led2/RESULT
   "\"color_temp_value_template\":\"{{value_json." D_CMND_COLORTEMPERATURE "}}\"";
 
+const char HASS_DISCOVER_SENSOR[] PROGMEM =
+  "{\"name\":\"%s\","                                        // dualr2 1 BTN
+  "\"state_topic\":\"%s\","                                  // cmnd/dualr2/POWER  (implies "\"optimistic\":\"false\",")
+  "\"availability_topic\":\"%s\","                           // tele/dualr2/LWT
+  "\"payload_available\":\"" D_ONLINE "\","                  // Online
+  "\"payload_not_available\":\"" D_OFFLINE "\"";             // Offline
+
+const char HASS_DISCOVER_SENSOR_TEMP[] PROGMEM =
+  "%s,\"unit_of_measurement\":\"°%c\","                      // °C / °F
+  "\"value_template\":\"{{value_json['%s'].Temperature}}\""; // "SI7021-14":{"Temperature":null,"Humidity":null} -> {{ value_json['SI7021-14'].Temperature }}
+
+const char HASS_DISCOVER_SENSOR_HUM[] PROGMEM =
+  "%s,\"unit_of_measurement\":\"%%\","                       // %
+  "\"value_template\":\"{{value_json['%s'].Humidity}}\","    // "SI7021-14":{"Temperature":null,"Humidity":null} -> {{ value_json['SI7021-14'].Humidity }}
+  "\"device_class\":\"humidity\"";                           // temperature / humidity
+
+const char HASS_DISCOVER_SENSOR_ANY[] PROGMEM =
+  "%s,\"value_template\":\"{{value_json['%s'].%s}}\"";       // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
+
 const char HASS_DISCOVER_RELAY_SHORT[] PROGMEM =
   "{\"name\":\"%s\","                              // dualr2 1
   "\"cmd_t\":\"%s\","                              // cmnd/dualr2/POWER2
@@ -109,6 +128,26 @@ const char HASS_DISCOVER_LIGHT_SCHEME[] PROGMEM =
   "\"effect_value_template\":\"{{value_json." D_CMND_SCHEME "}}\","
   "\"effect_list\":[\"0\",\"1\",\"2\",\"3\",\"4\"]";  // string list with reference to scheme parameter. Currently only supports numbers 0 to 11 as it make the mqtt string too long
 */
+
+const char HASS_DISCOVER_SENSOR_SHORT[] PROGMEM =
+  "{\"name\":\"%s\","                                 // dualr2 1 BTN
+  "\"stat_t\":\"%s\","                                // cmnd/dualr2/POWER  (implies "\"optimistic\":\"false\",")
+  "\"avty_t\":\"%s\","                                // tele/dualr2/LWT
+  "\"pl_avail\":\"" D_ONLINE "\","                    // Online
+  "\"pl_not_avail\":\"" D_OFFLINE "\"";               // Offline
+
+const char HASS_DISCOVER_SENSOR_TEMP_SHORT[] PROGMEM =
+  "%s,\"unit_of_meas\":\"°%c\","                      // °C / °F
+  "\"val_tpl\":\"{{value_json['%s'].Temperature}}\""; // "SI7021-14":{"Temperature":null,"Humidity":null} -> {{ value_json['SI7021-14'].Temperature }}
+
+const char HASS_DISCOVER_SENSOR_HUM_SHORT[] PROGMEM =
+  "%s,\"unit_of_meas\":\"%%\","                       // %
+  "\"val_tpl\":\"{{value_json['%s'].Humidity}}\","    // "SI7021-14":{"Temperature":null,"Humidity":null} -> {{ value_json['SI7021-14'].Humidity }}
+  "\"dev_cla\":\"humidity\"";                         // humidity
+
+const char HASS_DISCOVER_SENSOR_ANY_SHORT[] PROGMEM =
+  "%s,\"val_tpl\":\"{{value_json['%s'].%s}}\"";       // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
+
 const char HASS_DISCOVER_TOPIC_PREFIX[] PROGMEM =
   "%s, \"~\":\"%s\"";
 
@@ -132,7 +171,7 @@ static void Shorten(char** s, char *prefix)
   }
 }
 
-void HAssDiscoverRelay(void)
+void HAssAnnounceRelayLight(void)
 {
   char sidx[8];
   char stopic[TOPSZ];
@@ -226,7 +265,7 @@ void HAssDiscoverRelay(void)
   }
 }
 
-void HAssDiscoverButton(void)
+void HAssAnnounceButton(void)
 {
   char sidx[8];
   char stopic[TOPSZ];
@@ -287,6 +326,92 @@ void HAssDiscoverButton(void)
   }
 }
 
+void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
+{
+  char stopic[TOPSZ];
+
+  // Announce sensor, special handling of temperature and humidity sensors
+  mqtt_data[0] = '\0';  // Clear retained message
+
+  // Clear or Set topic
+  snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s_%s_%s/config"),
+             mqtt_topic, sensorname, subsensortype);
+
+  if (Settings.flag.hass_discovery) {
+    char name[33];
+    char _state_topic[TOPSZ];
+    char _availability_topic[TOPSZ];
+    char prefix[TOPSZ];
+    char *state_topic = _state_topic;
+    char *availability_topic = _availability_topic;
+
+    snprintf_P(name, sizeof(name), PSTR("%s %s %s"), Settings.friendlyname[0], sensorname, subsensortype);
+    GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_SENSOR));
+    GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
+    FindPrefix(state_topic, availability_topic, prefix);
+    if (Settings.flag3.hass_short_discovery_msg) {
+      Shorten(&state_topic, prefix);
+      Shorten(&availability_topic, prefix);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_SHORT:HASS_DISCOVER_SENSOR,
+               name, state_topic, availability_topic);
+    if (!strcmp(subsensortype, "Temperature")) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_TEMP_SHORT:HASS_DISCOVER_SENSOR_TEMP,
+                 mqtt_data, TempUnit(), sensorname);
+    } else if (!strcmp(subsensortype, "Humidity")) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_HUM_SHORT:HASS_DISCOVER_SENSOR_HUM,
+                 mqtt_data, sensorname);
+    } else {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_ANY_SHORT:HASS_DISCOVER_SENSOR_ANY,
+                 mqtt_data, sensorname, subsensortype);
+    }
+    if (Settings.flag3.hass_short_discovery_msg)
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+  }
+  MqttPublish(stopic, true);
+}
+
+void HAssAnnounceSensors(void)
+{
+  uint8_t hass_xsns_index = 0;
+  do {
+    mqtt_data[0] = '\0';
+    int tele_period_save = tele_period;
+    tele_period = 2;                                  // Do not allow HA updates during next function call
+    XsnsNextCall(FUNC_JSON_APPEND, hass_xsns_index);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
+    tele_period = tele_period_save;
+
+    char sensordata[256]; // Copy because we need to write to mqtt_data
+    strlcpy(sensordata, mqtt_data, sizeof(sensordata));
+
+    if (strlen(sensordata)) {
+      sensordata[0] = '{';                             // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
+      snprintf_P(sensordata, sizeof(sensordata), PSTR("%s}"), sensordata);
+
+      StaticJsonBuffer<256> jsonBuffer;
+      JsonObject& root = jsonBuffer.parseObject(sensordata);
+      if (!root.success()) {
+        snprintf_P(log_data, sizeof(log_data), PSTR("HASS: failed to parse '%s'"), sensordata);
+        AddLog(LOG_LEVEL_ERROR);
+        continue;
+      }
+      for (auto sensor : root) {
+        const char* sensorname = sensor.key;
+        JsonObject& sensors = sensor.value.as<JsonObject>();
+        if (!sensors.success()) {
+          snprintf_P(log_data, sizeof(log_data), PSTR("HASS: failed to parse '%s'"), sensordata);
+          AddLog(LOG_LEVEL_ERROR);
+          continue;
+        }
+        for (auto subsensor : sensors) {
+          HAssAnnounceSensor(sensorname, subsensor.key);
+        }
+      }
+    }
+  } while (hass_xsns_index != 0);
+}
+
 static int string_ends_with(const char * str, const char * suffix)
 {
   int str_len = strlen(str);
@@ -308,12 +433,15 @@ void HAssDiscovery(uint8_t mode)
 
   if (Settings.flag.hass_discovery || (1 == mode)) {
     // Send info about relays and lights
-    HAssDiscoverRelay();
+    HAssAnnounceRelayLight();
+
     // Send info about buttons
-    HAssDiscoverButton();
+    HAssAnnounceButton();
+
     // TODO: Send info about switches
 
-    // TODO: Send info about sensors
+    // Send info about sensors
+    HAssAnnounceSensors();
   }
 }
 

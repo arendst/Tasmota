@@ -263,15 +263,13 @@ boolean (* const xsns_func_ptr[])(byte) = {  // Sensor Function Pointers for sim
 };
 
 const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  // Number of External Sensors found
-uint8_t xsns_index = 0;
 
 /*********************************************************************************************\
  * Function call to all xsns
 \*********************************************************************************************/
 
-boolean XsnsNextCall(byte Function)
+boolean XsnsNextCall(byte Function, uint8_t &xsns_index)
 {
-
   xsns_index++;
   if (xsns_index == xsns_present) { xsns_index = 0; }
 #ifdef USE_DEBUG_DRIVER
@@ -280,7 +278,7 @@ boolean XsnsNextCall(byte Function)
     if (xsns_index == xsns_present) { xsns_index = 0; }
   }
 #endif
-  AppDelay();
+//  AppDelay();
   return xsns_func_ptr[xsns_index](Function);
 }
 
@@ -300,7 +298,7 @@ boolean XsnsCall(byte Function)
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
       uint32_t profile_start_millis = millis();
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
-      AppDelay();
+//      AppDelay();
       result = xsns_func_ptr[x](Function);
 
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
