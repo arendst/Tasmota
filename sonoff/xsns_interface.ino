@@ -263,13 +263,12 @@ boolean (* const xsns_func_ptr[])(byte) = {  // Sensor Function Pointers for sim
 };
 
 const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  // Number of External Sensors found
-uint8_t xsns_index = 0;
 
 /*********************************************************************************************\
  * Function call to all xsns
 \*********************************************************************************************/
 
-boolean XsnsNextCall(byte Function)
+boolean XsnsNextCall(byte Function, uint8_t &xsns_index)
 {
 
   xsns_index++;
