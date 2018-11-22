@@ -1290,7 +1290,7 @@ boolean Xdrv11(byte function)
 #ifdef USE_WEBSERVER
 #ifdef USE_KNX_WEB_MENU
       case FUNC_WEB_ADD_BUTTON:
-        strncat_P(mqtt_data, HTTP_BTN_MENU_KNX, sizeof(mqtt_data));
+        strncat_P(mqtt_data, HTTP_BTN_MENU_KNX, sizeof(mqtt_data) - strlen(mqtt_data) -1);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/kn", HandleKNXConfiguration);

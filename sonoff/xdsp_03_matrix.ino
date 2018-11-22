@@ -251,7 +251,7 @@ void MatrixPrintLog(uint8_t direction)
           space = 0;
         }
         if (space < 2) {
-          strncat(mtx_buffer, (const char*)txt +i, 1);
+          strncat(mtx_buffer, (const char*)txt +i, (strlen(mtx_buffer) < sizeof(mtx_buffer) -1) ? 1 : 0);
         }
         i++;
       }

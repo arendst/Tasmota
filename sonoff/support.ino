@@ -452,7 +452,7 @@ char* GetPowerDevice(char* dest, uint8_t idx, size_t size, uint8_t option)
   strncpy_P(dest, S_RSLT_POWER, size);                // POWER
   if ((devices_present + option) > 1) {
     snprintf_P(sidx, sizeof(sidx), PSTR("%d"), idx);  // x
-    strncat(dest, sidx, size);                        // POWERx
+    strncat(dest, sidx, size - strlen(dest) -1);      // POWERx
   }
   return dest;
 }
@@ -1030,7 +1030,7 @@ void I2cScan(char *devs, unsigned int devs_len)
     }
   }
   if (any) {
-    strncat(devs, "\"}", devs_len);
+    strncat(devs, "\"}", devs_len - strlen(devs) -1);
   }
   else {
     snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_NO_DEVICES_FOUND "\"}"));
@@ -1157,7 +1157,7 @@ void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
 
   snprintf_P(log_data, sizeof(log_data), formatP);
   snprintf_P(message, sizeof(message), formatP2);
-  strncat(log_data, message, sizeof(log_data));
+  strncat(log_data, message, sizeof(log_data) - strlen(log_data) -1);
   AddLog(loglevel);
 }
 

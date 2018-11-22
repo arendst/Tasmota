@@ -358,8 +358,10 @@ void GetFeatures(void)
 #ifdef USE_TX20_WIND_SENSOR
   feature_sns2 |= 0x00002000;  // xsns_35_tx20.ino
 #endif
+#ifdef USE_MGC3130
+  feature_sns2 |= 0x00004000;  // xsns_36_mgc3130.ino
+#endif
 
-//  feature_sns2 |= 0x00004000;
 //  feature_sns2 |= 0x00008000;
 //  feature_sns2 |= 0x00010000;
 //  feature_sns2 |= 0x00020000;

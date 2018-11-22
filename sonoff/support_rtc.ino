@@ -124,12 +124,13 @@ String GetDateAndTime(byte time_type)
       tmpTime = RtcTime;
   }
 
+
   snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
     tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
 
   if (Settings.flag3.time_append_timezone && (DT_LOCAL == time_type)) {
 //  if (Settings.flag3.time_append_timezone && ((DT_LOCAL == time_type) || (DT_ENERGY == time_type))) {
-    strncat(dt, GetTimeZone().c_str(), sizeof(dt));
+    strncat(dt, GetTimeZone().c_str(), sizeof(dt) - strlen(dt) -1);
   }
 
   return String(dt);  // 2017-03-07T11:08:02-07:00

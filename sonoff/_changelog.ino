@@ -3,6 +3,7 @@
  * Add additional start-up delay during initial wifi connection
  * Add support for I2C MGC3130 Electric Field Effect sensor by Christian Baars (#3774, #4404)
  * Add initial support for Hass sensor discovery (#4380)
+ * Fix possible strncat buffer overflows
  *
  * 6.3.0.11 20181120
  * Add delays removed in 6.3.0.9 (#4233)
