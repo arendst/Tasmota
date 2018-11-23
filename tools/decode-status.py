@@ -132,7 +132,7 @@ a_features = [[
     "USE_MCP230xx","USE_MPR121","USE_CCS811","USE_MPU6050",
     "USE_MCP230xx_OUTPUT","USE_MCP230xx_DISPLAYOUTPUT","USE_HLW8012","USE_CSE7766",
     "USE_MCP39F501","USE_PZEM_AC","USE_DS3231","USE_HX711",
-    "USE_PZEM_DC","USE_TX20_WIND_SENSOR","","",
+    "USE_PZEM_DC","USE_TX20_WIND_SENSOR","USE_MGC3130","",
     "","","","",
     "","","","",
     "","","","",

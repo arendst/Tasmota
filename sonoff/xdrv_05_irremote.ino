@@ -26,6 +26,9 @@
 
 #include <IRremoteESP8266.h>
 
+enum IrRemoteCommands { CMND_IRSEND, CMND_IRHVAC };
+const char kIrRemoteCommands[] PROGMEM = D_CMND_IRSEND "|" D_CMND_IRHVAC ;
+
 // Based on IRremoteESP8266.h enum decode_type_t
 const char kIrRemoteProtocols[] PROGMEM =
   "UNKNOWN|RC5|RC6|NEC|SONY|PANASONIC|JVC|SAMSUNG|WHYNTER|AIWA_RC_T501|LG|SANYO|MITSUBISHI|DISH|SHARP";
@@ -34,6 +37,9 @@ const char kIrRemoteProtocols[] PROGMEM =
 
 #include <ir_Mitsubishi.h>
 #include <ir_Fujitsu.h>
+
+enum IrHvacVendors { VNDR_TOSHIBA, VNDR_MITSUBISHI, VNDR_LG, VNDR_FUJITSU };
+const char kIrHvacVendors[] PROGMEM = "Toshiba|Mitsubishi|LG|Fujitsu" ;
 
 // HVAC TOSHIBA_
 #define HVAC_TOSHIBA_HDR_MARK 4400
@@ -501,22 +507,19 @@ boolean IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
 
 boolean IrSendCommand(void)
 {
+  char command [CMDSZ];
   boolean serviced = true;
   boolean error = false;
-  char protocol_text[20];
-  const char *protocol;
-  uint32_t bits = 0;
-  uint32_t data = 0;
 
-  char dataBufUc[XdrvMailbox.data_len];
-  UpperCase(dataBufUc, XdrvMailbox.data);
-  if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_IRSEND))) {
+  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kIrRemoteCommands);
+  if (-1 == command_code) {
+    serviced = false;  // Unknown command
+  }
+  else if (CMND_IRSEND == command_code) {
     if (XdrvMailbox.data_len) {
-      StaticJsonBuffer<128> jsonBuf;
-      JsonObject &root = jsonBuf.parseObject(dataBufUc);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
 
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_DONE "\"}"));
-      if (!root.success()) {
+      if (!strstr(XdrvMailbox.data, "{")) {  // If no JSON it must be rawdata
         // IRSend frequency, rawdata, rawdata ...
         char *p;
         char *str = strtok_r(XdrvMailbox.data, ", ", &p);
@@ -527,69 +530,72 @@ boolean IrSendCommand(void)
         for (; *q; count += (*q++ == ','));
         if (count) {  // At least two raw data values
           count++;
-          uint16_t* raw_array = NULL;
-          raw_array = reinterpret_cast<uint16_t*>(malloc(count * sizeof(uint16_t)));
-          if (raw_array != NULL) {
-            byte i = 0;
-            for (str = strtok_r(NULL, ", ", &p); str && i < count; str = strtok_r(NULL, ", ", &p)) {
-              raw_array[i++] = strtoul(str, NULL, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
-            }
-
-//            snprintf_P(log_data, sizeof(log_data), PSTR("IRS: Count %d, Freq %d, Arr[0] %d, Arr[count -1] %d"),
-//               count, freq, raw_array[0], raw_array[count -1]);
-//            AddLog(LOG_LEVEL_DEBUG);
-
-            irsend->sendRaw(raw_array, count, freq);
-            free(raw_array);
-            if (!count) {
-              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_FAILED "\"}")); // JSON decode failed and invalid RawData
-            }
+          uint16_t raw_array[count];  // It's safe to use stack for up to 240 packets (limited by mqtt_data length)
+          byte i = 0;
+          for (str = strtok_r(NULL, ", ", &p); str && i < count; str = strtok_r(NULL, ", ", &p)) {
+            raw_array[i++] = strtoul(str, NULL, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
           }
-          else {
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_NO_BUFFER_SPACE "\"}")); // JSON decode failed and invalid RawData
+
+//          DebugFreeMem();
+//          snprintf_P(log_data, sizeof(log_data), PSTR("IRS: Count %d, Freq %d, Arr[0] %d, Arr[count -1] %d"),
+//            count, freq, raw_array[0], raw_array[count -1]);
+//          AddLog(LOG_LEVEL_DEBUG);
+
+          irsend->sendRaw(raw_array, count, freq);
+          if (!count) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_FAILED);
           }
         }
         else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_INVALID_RAWDATA "\"}")); // JSON decode failed and invalid RawData
+          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_INVALID_RAWDATA);
         }
       }
       else {
-        // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
-        char parm_uc[10];
-
-        protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_PROTOCOL))];
-        bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS))];
-        data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA))], NULL, 0);
-        if (protocol && bits) {
-          int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
-
-          snprintf_P(log_data, sizeof(log_data), PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %u (0x%lX), protocol_code %d"),
-            protocol_text, protocol, bits, data, data, protocol_code);
-          AddLog(LOG_LEVEL_DEBUG);
-
-          switch (protocol_code) {
-            case NEC:
-              irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits); break;
-            case SONY:
-              irsend->sendSony(data, (bits > SONY_20_BITS) ? SONY_20_BITS : bits, 2); break;
-            case RC5:
-              irsend->sendRC5(data, bits); break;
-            case RC6:
-              irsend->sendRC6(data, bits); break;
-            case DISH:
-              irsend->sendDISH(data, (bits > DISH_BITS) ? DISH_BITS : bits); break;
-            case JVC:
-              irsend->sendJVC(data, (bits > JVC_BITS) ? JVC_BITS : bits, 1); break;
-            case SAMSUNG:
-              irsend->sendSAMSUNG(data, (bits > SAMSUNG_BITS) ? SAMSUNG_BITS : bits); break;
-            case PANASONIC:
-              irsend->sendPanasonic(bits, data); break;
-            default:
-              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_PROTOCOL_NOT_SUPPORTED "\"}"));
-          }
+        char dataBufUc[XdrvMailbox.data_len];
+        UpperCase(dataBufUc, XdrvMailbox.data);
+        StaticJsonBuffer<128> jsonBuf;
+        JsonObject &root = jsonBuf.parseObject(dataBufUc);
+        if (!root.success()) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_INVALID_JSON);
         }
         else {
-          error = true;
+          // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
+          char parm_uc[10];
+          const char *protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_PROTOCOL))];
+          uint32_t bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS))];
+          uint32_t data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA))], NULL, 0);
+          if (protocol && bits) {
+            char protocol_text[20];
+            int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
+
+            snprintf_P(log_data, sizeof(log_data), PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %u (0x%lX), protocol_code %d"),
+              protocol_text, protocol, bits, data, data, protocol_code);
+            AddLog(LOG_LEVEL_DEBUG);
+
+            switch (protocol_code) {
+              case NEC:
+                irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits); break;
+              case SONY:
+                irsend->sendSony(data, (bits > SONY_20_BITS) ? SONY_20_BITS : bits, 2); break;
+              case RC5:
+                irsend->sendRC5(data, bits); break;
+              case RC6:
+                irsend->sendRC6(data, bits); break;
+              case DISH:
+                irsend->sendDISH(data, (bits > DISH_BITS) ? DISH_BITS : bits); break;
+              case JVC:
+                irsend->sendJVC(data, (bits > JVC_BITS) ? JVC_BITS : bits, 1); break;
+              case SAMSUNG:
+                irsend->sendSAMSUNG(data, (bits > SAMSUNG_BITS) ? SAMSUNG_BITS : bits); break;
+              case PANASONIC:
+                irsend->sendPanasonic(bits, data); break;
+              default:
+                snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_PROTOCOL_NOT_SUPPORTED);
+            }
+          }
+          else {
+            error = true;
+          }
         }
       }
     }
@@ -601,7 +607,7 @@ boolean IrSendCommand(void)
     }
   }
 #ifdef USE_IR_HVAC
-  else if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_IRHVAC))) {
+  else if (CMND_IRHVAC == command_code) {
     const char *HVAC_Mode;
     const char *HVAC_FanMode;
     const char *HVAC_Vendor;
@@ -609,13 +615,15 @@ boolean IrSendCommand(void)
     boolean HVAC_Power = true;
 
     if (XdrvMailbox.data_len) {
+      char dataBufUc[XdrvMailbox.data_len];
+      UpperCase(dataBufUc, XdrvMailbox.data);
       StaticJsonBuffer<164> jsonBufer;
       JsonObject &root = jsonBufer.parseObject(dataBufUc);
       if (!root.success()) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_JSON_INVALID_JSON "\"}")); // JSON decode failed
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_INVALID_JSON);
       }
       else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_JSON_DONE "\"}"));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
         HVAC_Vendor = root[D_JSON_IRHVAC_VENDOR];
         HVAC_Power = root[D_JSON_IRHVAC_POWER];
         HVAC_Mode = root[D_JSON_IRHVAC_MODE];
@@ -626,20 +634,19 @@ boolean IrSendCommand(void)
 //          HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
 //        AddLog(LOG_LEVEL_DEBUG);
 
-        if (HVAC_Vendor == NULL || !strcasecmp_P(HVAC_Vendor, PSTR("TOSHIBA"))) {
-          error = IrHvacToshiba(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
-        }
-        else if (!strcasecmp_P(HVAC_Vendor, PSTR("MITSUBISHI"))) {
-          error = IrHvacMitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
-        }
-        else if (!strcasecmp_P(HVAC_Vendor, PSTR("LG"))) {
-          error = IrHvacLG(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
-        }
-        else if (!strcasecmp_P(HVAC_Vendor, PSTR("FUJITSU"))) {
-          error = IrHvacFujitsu(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
-        }
-        else {
-          error = true;
+        char vendor[20];
+        int vendor_code = GetCommandCode(vendor, sizeof(vendor), HVAC_Vendor, kIrHvacVendors);
+        switch (vendor_code) {
+          case VNDR_TOSHIBA:
+            error = IrHvacToshiba(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+          case VNDR_MITSUBISHI:
+            error = IrHvacMitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+          case VNDR_LG:
+            error = IrHvacLG(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+          case VNDR_FUJITSU:
+            error = IrHvacFujitsu(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+          default:
+            error = true;
         }
       }
     }
@@ -651,7 +658,7 @@ boolean IrSendCommand(void)
     }
   }
 #endif // USE_IR_HVAC
-  else serviced = false; // Unknown command
+  else serviced = false;  // Unknown command
 
   return serviced;
 }
