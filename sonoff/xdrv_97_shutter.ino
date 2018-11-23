@@ -310,21 +310,22 @@ boolean ShutterCommand()
     serviced = false;  // Unknown command
   }
   if (CMND_POSITION == command_code && (index > 0) && (index <= shutters_present)) {
+    int8_t target_pos_percent;
     //limit the payload
     snprintf_P(log_data, sizeof(log_data), PSTR("shutterposition in: payload %d, index %d, source %d"), XdrvMailbox.payload , index, last_source );
     AddLog(LOG_LEVEL_DEBUG);
-    XdrvMailbox.payload = XdrvMailbox.payload < 0 ? XdrvMailbox.payload : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
+    target_pos_percent = XdrvMailbox.payload < XdrvMailbox.payload ? 0 : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
     serviced = true;
     // webgui still send also on inverted shutter the native position.
-    XdrvMailbox.payload = Settings.shutter_invert[index-1] &&  SRC_WEBGUI != last_source ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
-    if (XdrvMailbox.payload != -99) {
-      XdrvMailbox.payload = Settings.shutter_invert[index-1] &&  SRC_WEBGUI != last_source ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
-      Shutter_Target_Position[index-1] = percent_to_realposition(XdrvMailbox.payload, index-1);
+    target_pos_percent = Settings.shutter_invert[index-1] &&  SRC_WEBGUI != last_source ? 100 - target_pos_percent : target_pos_percent;
+    if (target_pos_percent != -99) {
+      //target_pos_percent = Settings.shutter_invert[index-1] ? 100 - target_pos_percent : target_pos_percent;
+      Shutter_Target_Position[index-1] = percent_to_realposition(target_pos_percent, index-1);
       //Shutter_Target_Position[index-1] = XdrvMailbox.payload < 5 ?  Settings.shuttercoeff[2][index-1] * XdrvMailbox.payload : Settings.shuttercoeff[1][index-1] * XdrvMailbox.payload + Settings.shuttercoeff[0,index-1];
-      snprintf_P(log_data, sizeof(log_data), PSTR("lastsource %d:, realpos %d, target %d, payload %d"), last_source, Shutter_Real_Position[index-1] ,Shutter_Target_Position[index-1],XdrvMailbox.payload);
+      snprintf_P(log_data, sizeof(log_data), PSTR("lastsource %d:, realpos %d, target %d, payload %d"), last_source, Shutter_Real_Position[index-1] ,Shutter_Target_Position[index-1],target_pos_percent);
       AddLog(LOG_LEVEL_DEBUG);
     }
-    if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 2) {
+    if ( (target_pos_percent >= 0) && (target_pos_percent <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 2) {
       int8_t new_shutterdirection = Shutter_Real_Position[index-1] < Shutter_Target_Position[index-1] ? 1 : -1;
       if (Shutter_Direction[index-1] ==  -new_shutterdirection ) {
         // direction need to be changed. on momentary switches first stop the Shutter
@@ -339,7 +340,7 @@ boolean ShutterCommand()
         Shutter_Operations[index-1]++;
         if (shutterMode == OFF_ON__OPEN_CLOSE) {
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] , 0, SRC_SHUTTER);
-          snprintf_P(log_data, sizeof(log_data), PSTR("Delay5 5s"));
+          snprintf_P(log_data, sizeof(log_data), PSTR("Delay5 5s, xdrv %d"), XdrvMailbox.payload);
           AddLog(LOG_LEVEL_DEBUG);
           delay(MOTOR_STOP_TIME);
           // Code for shutters with circuit safe configuration, switch the direction Relay
@@ -350,23 +351,23 @@ boolean ShutterCommand()
           // now start the motor for the right direction, work for momentary and normal shutters.
           snprintf_P(log_data, sizeof(log_data), PSTR("Start shutter in right direction %d"), Shutter_Direction[index-1]);
           AddLog(LOG_LEVEL_INFO);
-          snprintf_P(log_data, sizeof(log_data), PSTR("Delay6 5s"));
-          AddLog(LOG_LEVEL_DEBUG);
           delay(MOTOR_STOP_TIME);
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);
+          snprintf_P(log_data, sizeof(log_data), PSTR("Delay6 5s, xdrv %d"), XdrvMailbox.payload);
+          AddLog(LOG_LEVEL_DEBUG);
         }
         SwitchedRelay = 0;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index,  Settings.shutter_invert[index-1] ? 100 - XdrvMailbox.payload : XdrvMailbox.payload);
+
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index,  Settings.shutter_invert[index-1] ? 100 - target_pos_percent : target_pos_percent);
     } else {
-      uint8_t temp;
       if (Shutter_Direction[index-1] != 0) {
-        temp = realposition_to_percent(Shutter_Real_Position[index-1], index-1);
+        target_pos_percent = realposition_to_percent(Shutter_Real_Position[index-1], index-1);
         //temp = Settings.shuttercoeff[2][index-1] * 5 > Shutter_Real_Position[index-1] ? Shutter_Real_Position[index-1] / Settings.shuttercoeff[2][index-1] : (Shutter_Real_Position[index-1]-Settings.shuttercoeff[0,index-1]) / Settings.shuttercoeff[1][index-1];
       } else {
-        temp = Settings.shutter_invert[index-1] ? 100 - Settings.shutter_position[index-1]: Settings.shutter_position[index-1];
+        target_pos_percent = Settings.shutter_invert[index-1] ? 100 - Settings.shutter_position[index-1]: Settings.shutter_position[index-1];
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]  ? 100 - temp : temp);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]  ? 100 - target_pos_percent : target_pos_percent);
       command_code = 0;
     }
   }
