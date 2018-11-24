@@ -841,6 +841,11 @@ void LightAnimate(void)
         LightSerial2Duty(cur_col[0],cur_col[1]);
       }
 #endif  // USE_ARMTRONIX_DIMMERS
+#ifdef USE_PS16DZ_DIMMERS
+      if (light_type == LT_SERIAL3) {
+        PS16DZSerialDuty(cur_col[0]);
+      }
+#endif  // USE_PS16DZ_DIMMERS
 
     }
   }

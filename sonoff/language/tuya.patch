@@ -1,0 +1,13 @@
+diff --git a/sonoff/language/en-GB.h b/sonoff/language/en-GB.h
+index 4e3aa00..925080d 100644
+--- a/sonoff/language/en-GB.h
++++ b/sonoff/language/en-GB.h
+@@ -527,6 +527,8 @@
+ #define D_SENSOR_TX20_TX "TX20"
+ #define D_SENSOR_RFSEND "RFSend"
+ #define D_SENSOR_RFRECV "RFrecv"
++#define D_SENSOR_TUYA_TX "Tuya Tx"
++#define D_SENSOR_TUYA_RX "Tuya Rx"
+ 
+ // Units
+ #define D_UNIT_AMPERE "A"

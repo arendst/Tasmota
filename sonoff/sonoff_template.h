@@ -256,6 +256,7 @@ enum SupportedModules {
   GOSUND,
   ARMTRONIX_DIMMERS,
   SK03_TUYA,
+  PS_16_DZ,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -494,7 +495,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   AILIGHT,            // Light Bulbs
   PHILIPS,
   WITTY,              // Development Devices
-  WEMOS
+  WEMOS,
+  PS_16_DZ
 };
 
 // Default module settings
@@ -1270,7 +1272,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO14 Blue Led (0 = On, 1 = Off)
      GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
      0, 0
-  } 
+  },
+  { "PS-16-DZ", // PS-16-DZ Dimmer (ESP8266 w/ separate Nuvoton MCU dimmer)
+                       // https://www.aliexpress.com/item/SM-Smart-WIFI-Wall-Dimmer-Light-Switch-US-Ewelink-APP-Remote-Control-Wi-Fi-Wirele-Work/32871151902.html
+     GPIO_USER,
+     GPIO_TXD,         // GPIO01 MCU serial control
+     GPIO_USER,
+     GPIO_RXD,        // GPIO03 MCU serial control
+     GPIO_USER,
+     GPIO_USER,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,
+     GPIO_USER,
+     GPIO_USER,
+     GPIO_USER,
+     GPIO_USER,
+     0
+  }
 };
 
 /*

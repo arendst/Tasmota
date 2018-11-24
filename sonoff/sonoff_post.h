@@ -111,6 +111,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #ifndef TUYA_DIMMER_ID
   #define TUYA_DIMMER_ID       0              // Default dimmer Id
 #endif
+#define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_PZEM_AC                           // Add support for PZEM014,016 Energy monitor (+1k1 code)
 #define USE_PZEM_DC                           // Add support for PZEM003,017 Energy monitor (+1k1 code)
