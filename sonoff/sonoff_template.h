@@ -243,7 +243,7 @@ enum SupportedModules {
   ZENGGE_ZF_WF017,
   SONOFF_POW_R2,
   SONOFF_IFAN02,
-  BLITZWOLF_BWSHP2,
+  BLITZWOLF_BWSHP,
   SHELLY1,
   SHELLY2,
   PHILIPS,
@@ -473,7 +473,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WION,
   SHELLY1,
   SHELLY2,
-  BLITZWOLF_BWSHP2,   // Socket Relay Devices with Energy Monitoring
+  BLITZWOLF_BWSHP,    // Socket Relay Devices with Energy Monitoring
   TECKIN,
   APLIC_WDP303075,
   GOSUND,
@@ -1104,10 +1104,11 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL4,        // GPIO15 WIFI_O3 Relay 4 (0 = Off, 1 = On) controlling the fan
      0, 0
   },
-  { "BlitzWolf SHP2",  // BlitzWolf BW-SHP2 (ESP8285 - BL0937 or HJL-01 Energy Monitoring)
+  { "BlitzWolf SHP",   // BlitzWolf BW-SHP2 and BW-SHP6 (ESP8285 - BL0937 or HJL-01 Energy Monitoring)
                        // https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html
                        // https://www.amazon.de/Steckdose-Homecube-intelligente-Verbrauchsanzeige-funktioniert/dp/B076Q2LKHG/ref=sr_1_fkmr0_1
                        // https://www.amazon.de/Intelligente-Stromverbrauch-Fernsteurung-Schaltbare-Energieklasse/dp/B076WZQS4S/ref=sr_1_1
+                       // https://www.aliexpress.com/store/product/BlitzWolf-BW-SHP6-EU-Plug-Metering-Version-WIFI-Smart-Socket-220V-240V-10A-Work-with-Amazon/1965360_32945504669.html
      GPIO_LED2_INV,    // GPIO00 Red Led (1 = On, 0 = Off)
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_LED1_INV,    // GPIO02 Blue Led (1 = On, 0 = Off)
@@ -1243,25 +1244,25 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0
   },
   { "ARMTR Dimmer",     // ARMTRONIX Dimmer, one or two channel (ESP8266 w/ separate MCU dimmer)
-                       // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-two-triac-board/
-                       // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-esp8266-one-triac-board-alexaecho/
-     GPIO_USER,        
-     GPIO_TXD,        // GPIO01 MCU serial control
+                        // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-two-triac-board/
+                        // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-esp8266-one-triac-board-alexaecho/
      GPIO_USER,
-     GPIO_RXD,        // GPIO03 MCU serial control
+     GPIO_TXD,          // GPIO01 MCU serial control
+     GPIO_USER,
+     GPIO_RXD,          // GPIO03 MCU serial control
      GPIO_USER,
      GPIO_USER,
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_USER,
      GPIO_USER,
-     GPIO_USER,       
+     GPIO_USER,
      GPIO_USER,
      GPIO_USER,
      0
   },
   { "SK03 Outdoor",    // Outdoor smart plug with power monitoring HLW8012 chip - https://www.amazon.com/gp/product/B07CG7MBPV
      GPIO_KEY1,        // GPIO00 Button
-     0, 0, 0,    
+     0, 0, 0,
      GPIO_HLW_CF,      // GPIO04 HLW8012 CF power
      GPIO_NRG_CF1,     // GPIO05 HLW8012 CF1 current / voltage
      0, 0, 0, 0, 0, 0, // Flash connection
@@ -1270,7 +1271,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO14 Blue Led (0 = On, 1 = Off)
      GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
      0, 0
-  } 
+  }
 };
 
 /*
@@ -1385,6 +1386,16 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO16 (D16)
      0                 // ADC0 Analog input (A0)
   }
+
+  { "Delock 11826",    // Delock 11826 (ESP8285) = Sonoff Basic
+     GPIO_KEY1,        // GPIO00 Button
+     0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
+     0, 0, 0, 0
+  }
+
 */
 
 #endif  // _SONOFF_TEMPLATE_H_
