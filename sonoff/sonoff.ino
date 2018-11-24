@@ -2583,14 +2583,13 @@ void GpioInit(void)
 
   XdrvCall(FUNC_PRE_INIT);
 }
-	
-void update_loop_load_avg(uint32_t loop_activity)
+
+void UpdateLoopLoadAvg(uint32_t loop_activity)
 {
-  uint32_t loops_per_second = 1000 / (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]; // We need to keep track of this many loops per second
+  uint32_t loops_per_second = 1000 / (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY];  // We need to keep track of this many loops per second
   uint32_t this_cycle_ratio = 100 * loop_activity / (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY];
-  uint32_t new_load_avg = loop_load_avg-(loop_load_avg/loops_per_second); // Take away one loop average
-  new_load_avg = new_load_avg + this_cycle_ratio;
-  loop_load_avg = new_load_avg;
+  uint32_t new_load_avg = loop_load_avg - (loop_load_avg / loops_per_second);       // Take away one loop average
+  loop_load_avg = new_load_avg + this_cycle_ratio;;
 }
 
 extern "C" {
@@ -2799,8 +2798,8 @@ void loop(void)
     }
   }
  if (my_activity < (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]) {
-   update_loop_load_avg(my_activity);
+   UpdateLoopLoadAvg(my_activity);
  } else {
-   update_loop_load_avg((uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]); // Assume 100% loop cycle ratio
+   UpdateLoopLoadAvg((uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]); // Assume 100% loop cycle ratio
  }
 }
