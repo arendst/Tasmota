@@ -95,7 +95,12 @@ const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "}";
 
 const char HTTP_SCRIPT_RELOAD[] PROGMEM =
-  "setTimeout(function(){location.href='.';},5000);"
+  "setTimeout(function(){location.href='.';},10000);"
+  "</script>";
+
+// Local OTA upgrade requires more time to complete cp: before web ui should be reloaded
+const char HTTP_SCRIPT_RELOAD_OTA[] PROGMEM =
+  "setTimeout(function(){location.href='.';},20000);"
   "</script>";
 
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
@@ -1463,7 +1468,7 @@ void HandleUploadDone(void)
   } else {
     page += F("green'>" D_SUCCESSFUL "</font></b><br/>");
     page += FPSTR(HTTP_MSG_RSTRT);
-    page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD));
+    page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD_OTA)); // Refesh main web ui after OTA upgrade
     ShowWebSource(SRC_WEBGUI);
     restart_flag = 2;  // Always restart to re-enable disabled features during update
   }
