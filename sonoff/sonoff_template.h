@@ -1178,7 +1178,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "OBI Socket",      // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko/p/2291706
      GPIO_USER,        // GPIO00
-     0,0,0,
+     GPIO_USER,        // GPIO01 Serial RXD
+     0,
+     GPIO_USER,        // GPIO03 Serial TXD
      GPIO_LED1,        // GPIO04 Blue LED
      GPIO_REL1,        // GPIO05 (Relay OFF, but used as Relay Switch)
      0, 0, 0, 0, 0, 0, // Flash connection
