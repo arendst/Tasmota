@@ -1,5 +1,5 @@
 /*
-  xdrv_16_ps16dzdimmer.ino - PS16DZ dimmer support for Sonoff-Tasmota
+  xdrv_16_ps16dz_dimmer.ino - PS16DZ dimmer support for Sonoff-Tasmota
 
   Copyright (C) 2018 Joel Stein and Theo Arends
 
@@ -42,6 +42,31 @@ int ps16dz_byte_counter = 0;                  // Index in serial receive buffer
 \*********************************************************************************************/
 
 
+size_t print_uint64_t(uint64_t number)
+{
+    size_t n = 0;
+    unsigned char buf[21];
+    uint8_t i = 0;
+
+    if (number == 0)
+    {
+        n += snprintf_P(ps16dz_buffer, sizeof(ps16dz_buffer), PSTR( "%s%c"), ps16dz_buffer, (char)'0');
+        return n;
+    }
+
+    while (number > 0)
+    {
+        uint64_t q = number/10;
+        buf[i++] = number - q*10;
+        number = q;
+    }
+
+    for (; i > 0; i--)
+    n += snprintf_P(ps16dz_buffer, sizeof(ps16dz_buffer), PSTR( "%s%c"), ps16dz_buffer, (char) ('0' + buf[i - 1])); 
+
+    return n;
+}
+
 boolean PS16DZSetPower(void)
 {
   boolean status = false;
@@ -51,7 +76,9 @@ boolean PS16DZSetPower(void)
 
   if (source != SRC_SWITCH && PS16DZSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
 
-    snprintf_P(ps16dz_buffer, sizeof(ps16dz_buffer), PSTR( "AT+UPDATE=\"sequence\":\"%lld\",\"switch\":\"%s\""), ps16dz_seq++, rpower?"on":"off");
+    snprintf_P(ps16dz_buffer, sizeof(ps16dz_buffer), PSTR( "AT+UPDATE=\"sequence\":\""));
+    print_uint64_t(ps16dz_seq++);
+    snprintf_P(ps16dz_buffer, sizeof(ps16dz_buffer), PSTR( "%s\",\"switch\":\"%s\""), ps16dz_buffer, rpower?"on":"off");
     snprintf_P(log_data, sizeof(log_data), PSTR( "PSD: Send serial command: %s"), ps16dz_buffer );
     AddLog(LOG_LEVEL_DEBUG);
     
@@ -70,7 +97,9 @@ void PS16DZSerialDuty(uint8_t duty)
       duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     }
 
-    snprintf_P(ps16dz_buffer, sizeof(ps16dz_buffer), PSTR( "AT+UPDATE=\"sequence\":\"%lld\",\"bright\":\"%d\""), ps16dz_seq++, duty/(255./100.));
+    snprintf_P(ps16dz_buffer, sizeof(ps16dz_buffer), PSTR( "AT+UPDATE=\"sequence\":\""));
+    print_uint64_t(ps16dz_seq++);
+    snprintf_P(ps16dz_buffer, sizeof(ps16dz_buffer), PSTR( "%s\",\"bright\":\"%d\""), ps16dz_buffer, round(duty * (100. / 255.)));
     snprintf_P(log_data, sizeof(log_data), PSTR( "PSD: Send serial command: %s"), ps16dz_buffer );
     AddLog(LOG_LEVEL_DEBUG);
     
@@ -101,7 +130,7 @@ void PS16DZResetWifi(void)
 
 boolean PS16DZModuleSelected(void)
 {
-  light_type = LT_SERIAL3;
+  light_type = LT_SERIAL1;
   return true;
 }
 
@@ -158,7 +187,7 @@ void PS16DZSerialInput(void)
         }
         else if(!strncmp(token2, "\"sequence\"", 10)){
           ps16dz_seq = strtoull(token3, NULL, 10);
-          snprintf_P(log_data, sizeof(log_data), PSTR("PSD: sequence received: %lld"), ps16dz_seq);
+          snprintf_P(log_data, sizeof(log_data), PSTR("PSD: sequence received: %0ld"), ps16dz_seq/1000000L, ps16dz_seq%1000000L);
           AddLog(LOG_LEVEL_DEBUG);
         }
           
