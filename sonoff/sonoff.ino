@@ -2588,8 +2588,7 @@ void UpdateLoopLoadAvg(uint32_t loop_activity)
 {
   uint32_t loops_per_second = 1000 / (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY];  // We need to keep track of this many loops per second
   uint32_t this_cycle_ratio = 100 * loop_activity / (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY];
-  uint32_t new_load_avg = loop_load_avg - (loop_load_avg / loops_per_second);       // Take away one loop average
-  loop_load_avg = new_load_avg + this_cycle_ratio;;
+  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + this_cycle_ratio; // Take away one loop average away and add the new one
 }
 
 extern "C" {
