@@ -5,6 +5,7 @@
  * Add initial support for Hass sensor discovery (#4380)
  * Fix possible strncat buffer overflows
  * Fix MqttRetry values above 255 seconds (#4424)
+ * Increase webui refresh time delay for Save Settings and local OTA Upload (#4423)
  *
  * 6.3.0.11 20181120
  * Add delays removed in 6.3.0.9 (#4233)
