@@ -190,6 +190,7 @@ char mqtt_data[MESSZ];                      // MQTT publish buffer and web page 
 char log_data[LOGSZ];                       // Logging
 char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
+uint32_t loop_load_avg = 0;                 // Indicative loop load average
 
 /********************************************************************************************/
 
@@ -1575,6 +1576,8 @@ void MqttShowState(void)
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_VCC "\":%s"), mqtt_data, stemp1);
 #endif
 
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoadAvg\":%u"), mqtt_data, loop_load_avg);
+
   for (byte i = 0; i < devices_present; i++) {
     if (i == light_device -1) {
       LightState(1);
@@ -2579,6 +2582,15 @@ void GpioInit(void)
 
   XdrvCall(FUNC_PRE_INIT);
 }
+	
+void update_loop_load_avg(uint32_t loop_activity)
+{
+  uint32_t loops_per_second = 1000 / (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]; // We need to keep track of this many loops per second
+  uint32_t this_cycle_ratio = 100 * loop_activity / (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY];
+  uint32_t new_load_avg = loop_load_avg-(loop_load_avg/loops_per_second); // Take away one loop average
+  new_load_avg = new_load_avg + this_cycle_ratio;
+  loop_load_avg = new_load_avg;
+}
 
 extern "C" {
 extern struct rst_info resetInfo;
@@ -2785,4 +2797,9 @@ void loop(void)
       delay(my_activity /2); // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
     }
   }
+ if (my_activity < (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]) {
+   update_loop_load_avg(my_activity);
+ } else {
+   update_loop_load_avg((uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]); // Assume 100% loop cycle ratio
+ }
 }
