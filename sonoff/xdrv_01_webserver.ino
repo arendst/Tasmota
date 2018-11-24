@@ -95,7 +95,7 @@ const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "}";
 
 const char HTTP_SCRIPT_RELOAD[] PROGMEM =
-  "setTimeout(function(){location.href='.';},5000);"
+  "setTimeout(function(){location.href='.';},9000);"
   "</script>";
 
 // Local OTA upgrade requires more time to complete cp: before web ui should be reloaded
