@@ -278,7 +278,7 @@ boolean XsnsNextCall(byte Function, uint8_t &xsns_index)
     if (xsns_index == xsns_present) { xsns_index = 0; }
   }
 #endif
-//  AppDelay();
+//  WifiAddDelayWhenDisconnected();
   return xsns_func_ptr[xsns_index](Function);
 }
 
@@ -298,7 +298,7 @@ boolean XsnsCall(byte Function)
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
       uint32_t profile_start_millis = millis();
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
-//      AppDelay();
+//      WifiAddDelayWhenDisconnected();
       result = xsns_func_ptr[x](Function);
 
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
