@@ -1,5 +1,5 @@
 /*
-  xdrv_16_ps16dz_dimmer.ino - PS16DZ dimmer support for Sonoff-Tasmota
+  xdrv_19_ps16dz_dimmer.ino - PS_16_DZ dimmer support for Sonoff-Tasmota
 
   Copyright (C) 2018 Joel Stein and Theo Arends
 
