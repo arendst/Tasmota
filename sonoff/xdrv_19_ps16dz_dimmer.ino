@@ -31,7 +31,7 @@ boolean ps16dz_ignore_dim = false;            // Flag to skip serial send to pre
 
 boolean ps16dz_power = false;
 uint8_t ps16dz_bright = 0;
-uint64_t ps16dz_seq = 0;
+uint64_t ps16dz_seq = 1529000000000;
 
 char ps16dz_tx_buffer[PS16DZ_BUFFER_SIZE];         // Serial transmit buffer
 char ps16dz_rx_buffer[PS16DZ_BUFFER_SIZE];         // Serial receive buffer
