@@ -1577,7 +1577,8 @@ void MqttShowState(void)
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_VCC "\":%s"), mqtt_data, stemp1);
 #endif
 
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoadAvg\":%u"), mqtt_data, loop_load_avg);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoopSet\":%u"), mqtt_data, (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]); // Add current loop delay target to telemetry
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoadAvg\":%u"), mqtt_data, loop_load_avg);                                // Add LoadAvg to telemetry data
 
   for (byte i = 0; i < devices_present; i++) {
     if (i == light_device -1) {
