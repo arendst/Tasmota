@@ -832,7 +832,7 @@ void LightAnimate(void)
         LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
       }
 #ifdef USE_TUYA_DIMMER
-      if (light_type == LT_SERIAL1) {
+      if (light_type == LT_SERIAL1 && Settings.module == TUYA_DIMMER ) {
         LightSerialDuty(cur_col[0]);
       }
 #endif  // USE_TUYA_DIMMER
@@ -842,7 +842,7 @@ void LightAnimate(void)
       }
 #endif  // USE_ARMTRONIX_DIMMERS
 #ifdef USE_PS_16_DZ
-      if (light_type == LT_SERIAL1) {
+      if (light_type == LT_SERIAL1 && Settings.module == PS_16_DZ) {
         PS16DZSerialDuty(cur_col[0]);
       }
 #endif  // USE_PS_16_DZ
