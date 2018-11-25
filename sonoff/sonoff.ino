@@ -2587,9 +2587,11 @@ void GpioInit(void)
 
 void UpdateLoopLoadAvg(uint32_t loop_activity)
 {
-  uint32_t loops_per_second = 1000 / (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY];  // We need to keep track of this many loops per second
-  uint32_t this_cycle_ratio = 100 * loop_activity / (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY];
-  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + this_cycle_ratio; // Take away one loop average away and add the new one
+  uint32_t loop_delay = Settings.param[P_LOOP_SLEEP_DELAY];
+  if (!loop_delay) { loop_delay = 1; }  // We cannot devide by 0
+  uint32_t loops_per_second = 1000 / loop_delay;  // We need to keep track of this many loops per second
+  uint32_t this_cycle_ratio = 100 * loop_activity / loop_delay;
+  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + this_cycle_ratio;  // Take away one loop average away and add the new one
 }
 
 extern "C" {
