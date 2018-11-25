@@ -2799,9 +2799,5 @@ void loop(void)
       delay(my_activity /2); // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
     }
   }
- if (my_activity < (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]) {
-   UpdateLoopLoadAvg(my_activity);
- } else {
-   UpdateLoopLoadAvg((uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]); // Assume 100% loop cycle ratio
- }
+  UpdateLoopLoadAvg(my_activity);
 }
