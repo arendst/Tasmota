@@ -150,6 +150,7 @@ void PS16DZSerialInput(void)
     //ps16dz_command = PS16DZSerial->readStringUntil(0x1B); 
     byte serial_in_byte = PS16DZSerial->read();
     if (serial_in_byte != 0x1B){
+      if (ps16dz_byte_counter || (!ps16dz_byte_counter && serial_in_byte = 'A'));
       ps16dz_rx_buffer[ps16dz_byte_counter++] = serial_in_byte;
     }
     else {
