@@ -193,7 +193,7 @@ void PS16DZSerialInput(void)
           }
           else if(!strncmp(token2, "\"sequence\"", 10)){
             ps16dz_seq = strtoull(token3, NULL, 10);
-            snprintf_P(log_data, sizeof(log_data), PSTR("PSD: sequence received: %0ld"), ps16dz_seq/1000000L, ps16dz_seq%1000000L);
+            snprintf_P(log_data, sizeof(log_data), PSTR("PSD: sequence received: %s"), token3);
             AddLog(LOG_LEVEL_DEBUG);
           }  
           token = strtok_r(NULL, ",", &end_str);
