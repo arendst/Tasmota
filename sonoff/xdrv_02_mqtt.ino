@@ -70,7 +70,7 @@ const char kMqttCommands[] PROGMEM =
   D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
 
-uint8_t mqtt_retry_counter = 1;             // MQTT connection retry counter
+uint16_t mqtt_retry_counter = 1;            // MQTT connection retry counter
 uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
 bool mqtt_connected = false;                // MQTT virtual connection status
 
