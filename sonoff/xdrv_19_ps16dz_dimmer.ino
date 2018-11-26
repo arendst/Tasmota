@@ -31,8 +31,7 @@ boolean ps16dz_ignore_dim = false;            // Flag to skip serial send to pre
 
 boolean ps16dz_power = false;
 uint8_t ps16dz_bright = 0;
-//uint64_t ps16dz_seq = 1529000000000;
-uint64_t ps16dz_seq = 0;
+uint64_t ps16dz_seq = 1530000000000;
 
 char ps16dz_tx_buffer[PS16DZ_BUFFER_SIZE];         // Serial transmit buffer
 char ps16dz_rx_buffer[PS16DZ_BUFFER_SIZE];         // Serial receive buffer
@@ -192,7 +191,7 @@ void PS16DZSerialInput(void)
             }
           }
           else if(!strncmp(token2, "\"sequence\"", 10)){
-            ps16dz_seq = strtoull(token3, NULL, 10);
+            ps16dz_seq = strtoull(token3+1, NULL, 10);
             snprintf_P(log_data, sizeof(log_data), PSTR("PSD: sequence received: %s"), token3);
             AddLog(LOG_LEVEL_DEBUG);
           }  
