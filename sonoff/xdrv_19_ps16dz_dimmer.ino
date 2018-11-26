@@ -85,7 +85,7 @@ boolean PS16DZSetPower(void)
     ps16dz_seq = getTimestamp();
     print_uint64_t(ps16dz_seq);
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s\",\"switch\":\"%s\""), ps16dz_tx_buffer, rpower?"on":"off");
-    snprintf_P(log_data, sizeof(log_data), PSTR( "PSD: Send serial command: %s"), ps16dz_tx_buffer );
+    snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
     AddLog(LOG_LEVEL_DEBUG);
     
     PS16DZSerial->print(ps16dz_tx_buffer);
@@ -108,7 +108,7 @@ void PS16DZSerialDuty(uint8_t duty)
     ps16dz_seq = getTimestamp();
     print_uint64_t(ps16dz_seq);
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s\",\"bright\":\"%d\""), ps16dz_tx_buffer, round(duty * (100. / 255.)));
-    snprintf_P(log_data, sizeof(log_data), PSTR( "PSD: Send serial command: %s"), ps16dz_tx_buffer );
+    snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
     AddLog(LOG_LEVEL_DEBUG);
     
     PS16DZSerial->print(ps16dz_tx_buffer);
@@ -118,7 +118,7 @@ void PS16DZSerialDuty(uint8_t duty)
   } else {
     ps16dz_ignore_dim = false;  // reset flag
 
-    snprintf_P(log_data, sizeof(log_data), PSTR( "PSD: Send Dim Level skipped due to 0 or already set. Value=%d"), duty);
+    snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send Dim Level skipped due to 0 or already set. Value=%d"), duty);
     AddLog(LOG_LEVEL_DEBUG);
 
   }
@@ -164,7 +164,7 @@ void PS16DZSerialInput(void)
     }
     else {
       ps16dz_rx_buffer[ps16dz_byte_counter++] = 0x00;
-      snprintf_P(log_data, sizeof(log_data), PSTR("PSD: command received: %s"), ps16dz_rx_buffer);
+      snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: command received: %s"), ps16dz_rx_buffer);
       AddLog(LOG_LEVEL_DEBUG);
       if(!strncmp(ps16dz_rx_buffer+3, "UPDATE", 6) || !strncmp(ps16dz_rx_buffer+3, "RESULT", 6)) {
         char *end_str;
@@ -172,13 +172,13 @@ void PS16DZSerialInput(void)
         char* token = strtok_r(string, ",", &end_str);
         while (token != NULL) {
           char* end_token;
-          snprintf_P(log_data, sizeof(log_data), PSTR("PSD: token = %s"), token);
+          snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: token = %s"), token);
           AddLog(LOG_LEVEL_DEBUG);
           char* token2 = strtok_r(token, ":", &end_token);
           char* token3 = strtok_r(NULL, ":", &end_token);
           if(!strncmp(token2, "\"switch\"", 8)){
             ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
-            snprintf_P(log_data, sizeof(log_data), PSTR("PSD: power received: %s"), token3);
+            snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: power received: %s"), token3);
             AddLog(LOG_LEVEL_DEBUG);
             if((power || Settings.light_dimmer > 0) && (power !=ps16dz_power)) {
               ExecuteCommandPower(1, ps16dz_power, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
@@ -186,13 +186,13 @@ void PS16DZSerialInput(void)
           }
           else if(!strncmp(token2, "\"bright\"", 8)){
             ps16dz_bright = atoi(token3);
-            snprintf_P(log_data, sizeof(log_data), PSTR("PSD: brightness received: %d"), ps16dz_bright);
+            snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: brightness received: %d"), ps16dz_bright);
             AddLog(LOG_LEVEL_DEBUG);
             if(power && ps16dz_bright > 0) {
 
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), ps16dz_bright );
 
-              snprintf_P(log_data, sizeof(log_data), PSTR("PSD: Send CMND_DIMMER_STR=%s"), scmnd );
+              snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: Send CMND_DIMMER_STR=%s"), scmnd );
               AddLog(LOG_LEVEL_DEBUG);
 
               ps16dz_ignore_dim = true;
@@ -201,14 +201,14 @@ void PS16DZSerialInput(void)
           }
           else if(!strncmp(token2, "\"sequence\"", 10)){
             //ps16dz_seq = strtoull(token3+1, NULL, 10);
-            snprintf_P(log_data, sizeof(log_data), PSTR("PSD: sequence received: %s"), token3);
+            snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: sequence received: %s"), token3);
             AddLog(LOG_LEVEL_DEBUG);
           }  
           token = strtok_r(NULL, ",", &end_str);
         }
       }
       else if(!strncmp(ps16dz_rx_buffer+3, "SETTING", 7)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("PSD: Reset"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: Reset"));
         AddLog(LOG_LEVEL_DEBUG);
         PS16DZResetWifi();
       }
@@ -216,7 +216,7 @@ void PS16DZSerialInput(void)
       ps16dz_byte_counter = 0;
 
       snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "AT+SEND=ok"));
-      snprintf_P(log_data, sizeof(log_data), PSTR( "PSD: Send serial command: %s"), ps16dz_tx_buffer );
+      snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
       AddLog(LOG_LEVEL_DEBUG);
 
       PS16DZSerial->print(ps16dz_tx_buffer);
