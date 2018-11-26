@@ -84,6 +84,7 @@ boolean PS16DZSetPower(void)
     
     PS16DZSerial->print(ps16dz_tx_buffer);
     PS16DZSerial->write(0x1B);
+    PS16DZSerial->flush();
 
     status = true;
   }
@@ -105,6 +106,7 @@ void PS16DZSerialDuty(uint8_t duty)
     
     PS16DZSerial->print(ps16dz_tx_buffer);
     PS16DZSerial->write(0x1B);
+    PS16DZSerial->flush();
 
   } else {
     ps16dz_ignore_dim = false;  // reset flag
@@ -212,6 +214,7 @@ void PS16DZSerialInput(void)
 
       PS16DZSerial->print(ps16dz_tx_buffer);
       PS16DZSerial->write(0x1B);
+      PS16DZSerial->flush();
     }
   }
 }
