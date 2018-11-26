@@ -1577,7 +1577,8 @@ void MqttShowState(void)
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_VCC "\":%s"), mqtt_data, stemp1);
 #endif
 
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoadAvg\":%u"), mqtt_data, loop_load_avg);
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoopSet\":%u"), mqtt_data, (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]); // Add current loop delay target to telemetry
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoadAvg\":%u"), mqtt_data, loop_load_avg);                                // Add LoadAvg to telemetry data
 
   for (byte i = 0; i < devices_present; i++) {
     if (i == light_device -1) {
@@ -1680,7 +1681,11 @@ void PerformEverySecond(void)
 
       mqtt_data[0] = '\0';
       MqttShowState();
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+      if (Settings.flag3.hass_tele_as_result) {
+        MqttPublishPrefixTopic_P(STAT, S_RSLT_RESULT, MQTT_TELE_RETAIN);
+      } else {
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+      }
 
       mqtt_data[0] = '\0';
       if (MqttShowSensor()) {
@@ -2584,13 +2589,6 @@ void GpioInit(void)
   XdrvCall(FUNC_PRE_INIT);
 }
 
-void UpdateLoopLoadAvg(uint32_t loop_activity)
-{
-  uint32_t loops_per_second = 1000 / (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY];  // We need to keep track of this many loops per second
-  uint32_t this_cycle_ratio = 100 * loop_activity / (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY];
-  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + this_cycle_ratio; // Take away one loop average away and add the new one
-}
-
 extern "C" {
 extern struct rst_info resetInfo;
 }
@@ -2796,9 +2794,11 @@ void loop(void)
       delay(my_activity /2); // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
     }
   }
- if (my_activity < (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]) {
-   UpdateLoopLoadAvg(my_activity);
- } else {
-   UpdateLoopLoadAvg((uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]); // Assume 100% loop cycle ratio
- }
+
+  if (!my_activity) { my_activity++; }            // We cannot divide by 0
+  uint32_t loop_delay = Settings.param[P_LOOP_SLEEP_DELAY];
+  if (!loop_delay) { loop_delay++; }              // We cannot divide by 0
+  uint32_t loops_per_second = 1000 / loop_delay;  // We need to keep track of this many loops per second
+  uint32_t this_cycle_ratio = 100 * my_activity / loop_delay;
+  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + (this_cycle_ratio / loops_per_second);  // Take away one loop average away and add the new one
 }
