@@ -1681,7 +1681,11 @@ void PerformEverySecond(void)
 
       mqtt_data[0] = '\0';
       MqttShowState();
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+      if (Settings.flag3.hass_tele_as_result) {
+        MqttPublishPrefixTopic_P(STAT, S_RSLT_RESULT, MQTT_TELE_RETAIN);
+      } else {
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+      }
 
       mqtt_data[0] = '\0';
       if (MqttShowSensor()) {
