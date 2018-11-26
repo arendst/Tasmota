@@ -482,8 +482,9 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   NEO_COOLCAM,        // Socket Relay Devices
   OBI,
   ESP_SWITCH,         // Switch Devices
-  TUYA_DIMMER,		    // Dimmer Devices
+  TUYA_DIMMER,        // Dimmer Devices
   ARMTRONIX_DIMMERS,
+  PS_16_DZ,
   H801,               // Light Devices
   MAGICHOME,
   ARILUX_LC01,
@@ -495,8 +496,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   AILIGHT,            // Light Bulbs
   PHILIPS,
   WITTY,              // Development Devices
-  WEMOS,
-  PS_16_DZ
+  WEMOS
 };
 
 // Default module settings
