@@ -67,6 +67,11 @@ size_t print_uint64_t(uint64_t number)
     return n;
 }
 
+uint64_t getTimestamp(void)
+{
+    return (((uint64_t)LocalTime()) * 1000) + (millis()%1000);
+}
+
 boolean PS16DZSetPower(void)
 {
   boolean status = false;
@@ -77,7 +82,8 @@ boolean PS16DZSetPower(void)
   if (source != SRC_SWITCH && PS16DZSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
 
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "AT+UPDATE=\"sequence\":\""));
-    print_uint64_t(ps16dz_seq++);
+    ps16dz_seq = getTimestamp();
+    print_uint64_t(ps16dz_seq);
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s\",\"switch\":\"%s\""), ps16dz_tx_buffer, rpower?"on":"off");
     snprintf_P(log_data, sizeof(log_data), PSTR( "PSD: Send serial command: %s"), ps16dz_tx_buffer );
     AddLog(LOG_LEVEL_DEBUG);
@@ -99,7 +105,8 @@ void PS16DZSerialDuty(uint8_t duty)
     }
 
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "AT+UPDATE=\"sequence\":\""));
-    print_uint64_t(ps16dz_seq++);
+    ps16dz_seq = getTimestamp();
+    print_uint64_t(ps16dz_seq);
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s\",\"bright\":\"%d\""), ps16dz_tx_buffer, round(duty * (100. / 255.)));
     snprintf_P(log_data, sizeof(log_data), PSTR( "PSD: Send serial command: %s"), ps16dz_tx_buffer );
     AddLog(LOG_LEVEL_DEBUG);
@@ -193,7 +200,7 @@ void PS16DZSerialInput(void)
             }
           }
           else if(!strncmp(token2, "\"sequence\"", 10)){
-            ps16dz_seq = strtoull(token3+1, NULL, 10);
+            //ps16dz_seq = strtoull(token3+1, NULL, 10);
             snprintf_P(log_data, sizeof(log_data), PSTR("PSD: sequence received: %s"), token3);
             AddLog(LOG_LEVEL_DEBUG);
           }  
