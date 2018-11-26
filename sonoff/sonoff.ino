@@ -2796,5 +2796,5 @@ void loop(void)
   if (!loop_delay) { loop_delay++; }              // We cannot divide by 0
   uint32_t loops_per_second = 1000 / loop_delay;  // We need to keep track of this many loops per second
   uint32_t this_cycle_ratio = 100 * my_activity / loop_delay;
-  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + this_cycle_ratio;  // Take away one loop average away and add the new one
+  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + (this_cycle_ratio / loops_per_second);  // Take away one loop average away and add the new one
 }
