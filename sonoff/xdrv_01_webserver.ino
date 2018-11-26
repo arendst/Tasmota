@@ -25,12 +25,14 @@
  * Based on source by AlexT (https://github.com/tzapu)
 \*********************************************************************************************/
 
-#define XDRV_01                1
+#define XDRV_01                               1
 
-#define HTTP_REFRESH_TIME      2345   // milliseconds
+#define HTTP_REFRESH_TIME                  2345   // milliseconds
+#define HTTP_RESTART_RECONNECT_TIME        9000   // milliseconds
+#define HTTP_OTA_RESTART_RECONNECT_TIME   20000   // milliseconds
 
-#include <ESP8266WebServer.h>         // WifiManager, Webserver
-#include <DNSServer.h>                // WifiManager
+#include <ESP8266WebServer.h>
+#include <DNSServer.h>
 
 #ifdef USE_RF_FLASH
 uint8_t *efm8bb1_update = NULL;
@@ -95,12 +97,12 @@ const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "}";
 
 const char HTTP_SCRIPT_RELOAD[] PROGMEM =
-  "setTimeout(function(){location.href='.';},9000);"
+  "setTimeout(function(){location.href='.';}," STR(HTTP_RESTART_RECONNECT_TIME) ");"
   "</script>";
 
 // Local OTA upgrade requires more time to complete cp: before web ui should be reloaded
 const char HTTP_SCRIPT_RELOAD_OTA[] PROGMEM =
-  "setTimeout(function(){location.href='.';},20000);"
+  "setTimeout(function(){location.href='.';}," STR(HTTP_OTA_RESTART_RECONNECT_TIME) ");"
   "</script>";
 
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
@@ -1417,7 +1419,7 @@ void HandleUpgradeFirmwareStart(void)
   page += F("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
-//  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD));
+  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD_OTA));
   ShowPage(page);
 
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_UPGRADE " 1"));
@@ -2063,12 +2065,10 @@ boolean Xdrv01(byte function)
 
   switch (function) {
     case FUNC_LOOP:
-      if (!global_state.wifi_down) {
-        PollDnsWebserver();
+      PollDnsWebserver();
 #ifdef USE_EMULATION
-        if (Settings.flag2.emulation) PollUdp();
+      if (Settings.flag2.emulation) PollUdp();
 #endif  // USE_EMULATION
-      }
       break;
     case FUNC_COMMAND:
       result = WebCommand();
