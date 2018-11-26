@@ -32,7 +32,6 @@ boolean ps16dz_ignore_dim = false;            // Flag to skip serial send to pre
 boolean ps16dz_power = false;
 uint8_t ps16dz_bright = 0;
 uint64_t ps16dz_seq = 1530000000000;
-boolean ps16dz_synced = true;
 
 char ps16dz_tx_buffer[PS16DZ_BUFFER_SIZE];         // Serial transmit buffer
 char ps16dz_rx_buffer[PS16DZ_BUFFER_SIZE];         // Serial receive buffer
@@ -75,9 +74,8 @@ boolean PS16DZSetPower(void)
   uint8_t rpower = XdrvMailbox.index;
   int16_t source = XdrvMailbox.payload;
 
-  if (source != SRC_SWITCH && PS16DZSerial && ps16dz_synced) {  // ignore to prevent loop from pushing state from faceplate interaction
+  if (source != SRC_SWITCH && PS16DZSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
 
-    ps16dz_synced = false;
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "AT+UPDATE=\"sequence\":\""));
     print_uint64_t(ps16dz_seq++);
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s\",\"switch\":\"%s\""), ps16dz_tx_buffer, rpower?"on":"off");
@@ -94,12 +92,11 @@ boolean PS16DZSetPower(void)
 
 void PS16DZSerialDuty(uint8_t duty)
 {
-  if (duty > 0 && !ps16dz_ignore_dim && PS16DZSerial && ps16dz_synced) {
+  if (duty > 0 && !ps16dz_ignore_dim && PS16DZSerial) {
     if (duty < 25) {
       duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     }
 
-    ps16dz_synced = false;
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "AT+UPDATE=\"sequence\":\""));
     print_uint64_t(ps16dz_seq++);
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s\",\"bright\":\"%d\""), ps16dz_tx_buffer, round(duty * (100. / 255.)));
@@ -194,13 +191,9 @@ void PS16DZSerialInput(void)
             }
           }
           else if(!strncmp(token2, "\"sequence\"", 10)){
-            uint64_t ps16dz_seq_tmp = strtoull(token3+1, NULL, 10);
+            ps16dz_seq = strtoull(token3+1, NULL, 10);
             snprintf_P(log_data, sizeof(log_data), PSTR("PSD: sequence received: %s"), token3);
             AddLog(LOG_LEVEL_DEBUG);
-            if(ps16dz_seq_tmp >= ps16dz_seq){
-              ps16dz_synced = true;
-              ps16dz_seq = ps16dz_seq_tmp;
-            }
           }  
           token = strtok_r(NULL, ",", &end_str);
         }
