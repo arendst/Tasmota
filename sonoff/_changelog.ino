@@ -1,4 +1,7 @@
-/* 6.3.0.12 20181122
+/* 6.3.0.13 20181126
+ * Add command SetOption59 0/1 to change state topic from tele/STATE to stat/RESULT (#4450)
+ * 
+ * 6.3.0.12 20181122
  * Remove delays introduced in 6.3.0.11 (#4233)
  * Add additional start-up delay during initial wifi connection
  * Add support for I2C MGC3130 Electric Field Effect sensor by Christian Baars (#3774, #4404)
