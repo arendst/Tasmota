@@ -595,8 +595,8 @@ boolean RulesCommand(void)
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
   else if (CMND_CALC_RESOLUTION == command_code) {
-    if ((payload >= 0) && (payload <= 7)) {
-      Settings.flag2.calc_resolution = payload;
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
+      Settings.flag2.calc_resolution = XdrvMailbox.payload;
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.flag2.calc_resolution);
   }
