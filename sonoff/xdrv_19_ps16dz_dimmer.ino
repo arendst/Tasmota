@@ -31,7 +31,7 @@ boolean ps16dz_ignore_dim = false;            // Flag to skip serial send to pre
 
 boolean ps16dz_power = false;
 uint8_t ps16dz_bright = 0;
-uint64_t ps16dz_seq = 0;
+//uint64_t ps16dz_seq = 0;
 
 char ps16dz_tx_buffer[PS16DZ_BUFFER_SIZE];         // Serial transmit buffer
 char ps16dz_rx_buffer[PS16DZ_BUFFER_SIZE];         // Serial receive buffer
@@ -41,35 +41,9 @@ int ps16dz_byte_counter = 0;
  * Internal Functions
 \*********************************************************************************************/
 
-
-size_t print_uint64_t(uint64_t number)
+void printTimestamp(void)
 {
-    size_t n = 0;
-    unsigned char buf[21];
-    uint8_t i = 0;
-
-    if (number == 0)
-    {
-        n += snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s%c"), ps16dz_tx_buffer, (char)'0');
-        return n;
-    }
-
-    while (number > 0)
-    {
-        uint64_t q = number/10;
-        buf[i++] = number - q*10;
-        number = q;
-    }
-
-    for (; i > 0; i--)
-    n += snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s%c"), ps16dz_tx_buffer, (char) ('0' + buf[i - 1]));
-
-    return n;
-}
-
-uint64_t getTimestamp(void)
-{
-    return (((uint64_t)LocalTime()) * 1000) + (millis()%1000);
+    snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s%d%03d"), ps16dz_tx_buffer, LocalTime(), millis()%1000);
 }
 
 boolean PS16DZSetPower(void)
@@ -82,8 +56,7 @@ boolean PS16DZSetPower(void)
   if (source != SRC_SWITCH && PS16DZSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
 
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "AT+UPDATE=\"sequence\":\""));
-    ps16dz_seq = getTimestamp();
-    print_uint64_t(ps16dz_seq);
+    printTimestamp();
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s\",\"switch\":\"%s\""), ps16dz_tx_buffer, rpower?"on":"off");
     snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
     AddLog(LOG_LEVEL_DEBUG);
@@ -105,8 +78,7 @@ void PS16DZSerialDuty(uint8_t duty)
     }
 
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "AT+UPDATE=\"sequence\":\""));
-    ps16dz_seq = getTimestamp();
-    print_uint64_t(ps16dz_seq);
+    printTimestamp();
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s\",\"bright\":%d"), ps16dz_tx_buffer, round(duty * (100. / 255.)));
     snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
     AddLog(LOG_LEVEL_DEBUG);
@@ -156,7 +128,6 @@ void PS16DZSerialInput(void)
   char scmnd[20];
   while (PS16DZSerial->available()) {
     yield();
-    //ps16dz_command = PS16DZSerial->readStringUntil(0x1B); 
     byte serial_in_byte = PS16DZSerial->read();
     if (serial_in_byte != 0x1B){
       if (ps16dz_byte_counter || (!ps16dz_byte_counter && serial_in_byte == 'A'));
