@@ -149,7 +149,7 @@ void PS16DZSerialInput(void)
     yield();
     byte serial_in_byte = PS16DZSerial->read();
     if (serial_in_byte != 0x1B){
-      if (ps16dz_byte_counter >= PS16DZ_BUFFER_SIZE) {
+      if (ps16dz_byte_counter >= PS16DZ_BUFFER_SIZE - 1) {
         memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);
         ps16dz_byte_counter = 0;
       }
