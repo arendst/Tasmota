@@ -428,8 +428,10 @@ void HAssDiscovery(uint8_t mode)
     Settings.flag.decimal_text = 1;         // Respond with decimal color values
     Settings.flag3.hass_tele_as_result = 1; // send tele/STATE message as stat/RESULT
 //    Settings.light_scheme = 0;           // To just control color it needs to be Scheme 0
-    if (!string_ends_with(Settings.mqtt_fulltopic, "%prefix%/"))
+    if (!string_ends_with(Settings.mqtt_fulltopic, "%prefix%/")) {
       strncpy_P(Settings.mqtt_fulltopic, PSTR("%topic%/%prefix%/"), sizeof(Settings.mqtt_fulltopic));
+      restart_flag = 2;
+    }
   }
 
   if (Settings.flag.hass_discovery || (1 == mode)) {
