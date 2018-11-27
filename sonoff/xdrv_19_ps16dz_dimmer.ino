@@ -21,7 +21,7 @@
 
 #define XDRV_19                19
 
-#define PS16DZ_BUFFER_SIZE     256
+#define PS16DZ_BUFFER_SIZE     80
 
 #include <TasmotaSerial.h>
 
@@ -29,8 +29,6 @@ TasmotaSerial *PS16DZSerial = nullptr;
 
 boolean ps16dz_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
 
-boolean ps16dz_power = false;
-uint8_t ps16dz_bright = 0;
 //uint64_t ps16dz_seq = 0;
 
 char *ps16dz_tx_buffer = NULL;                // Serial transmit buffer
@@ -136,6 +134,10 @@ void PS16DZSerialInput(void)
     yield();
     byte serial_in_byte = PS16DZSerial->read();
     if (serial_in_byte != 0x1B){
+      if (ps16dz_byte_counter >= PS16DZ_BUFFER_SIZE) {
+        memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);
+        ps16dz_byte_counter = 0;
+      }
       if (ps16dz_byte_counter || (!ps16dz_byte_counter && serial_in_byte == 'A'));
       ps16dz_rx_buffer[ps16dz_byte_counter++] = serial_in_byte;
     }
@@ -154,7 +156,7 @@ void PS16DZSerialInput(void)
           char* token2 = strtok_r(token, ":", &end_token);
           char* token3 = strtok_r(NULL, ":", &end_token);
           if(!strncmp(token2, "\"switch\"", 8)){
-            ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
+            boolean ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
             snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: power received: %s"), token3);
             AddLog(LOG_LEVEL_DEBUG);
             if((power || Settings.light_dimmer > 0) && (power !=ps16dz_power)) {
@@ -162,7 +164,7 @@ void PS16DZSerialInput(void)
             }
           }
           else if(!strncmp(token2, "\"bright\"", 8)){
-            ps16dz_bright = atoi(token3);
+            uint8_t ps16dz_bright = atoi(token3);
             snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: brightness received: %d"), ps16dz_bright);
             AddLog(LOG_LEVEL_DEBUG);
             if(power && ps16dz_bright > 0 && ps16dz_bright != Settings.light_dimmer) {
