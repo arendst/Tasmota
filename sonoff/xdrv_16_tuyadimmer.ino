@@ -53,7 +53,7 @@ uint8_t tuya_cmd_checksum = 0;              // Checksum of tuya command
 uint8_t tuya_data_len = 0;                  // Data lenght of command
 int8_t tuya_wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()
 
-char tuya_buffer[TUYA_BUFFER_SIZE];         // Serial receive buffer
+char *tuya_buffer = NULL;                   // Serial receive buffer
 int tuya_byte_counter = 0;                  // Index in serial receive buffer
 
 /*********************************************************************************************\
@@ -285,14 +285,17 @@ void TuyaInit(void)
   if (!Settings.param[P_TUYA_DIMMER_ID]) {
     Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
   }
-  TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 2);
-  if (TuyaSerial->begin(9600)) {
-    if (TuyaSerial->hardwareSerial()) { ClaimSerial(); }
-    // Get MCU Configuration
-    snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU configuration");
-    AddLog(LOG_LEVEL_DEBUG);
+  tuya_buffer = reinterpret_cast<char*>(malloc(TUYA_BUFFER_SIZE));
+  if (tuya_buffer != NULL) {
+    TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 2);
+    if (TuyaSerial->begin(9600)) {
+      if (TuyaSerial->hardwareSerial()) { ClaimSerial(); }
+      // Get MCU Configuration
+      snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU configuration");
+      AddLog(LOG_LEVEL_DEBUG);
 
-    TuyaSendCmd(TUYA_CMD_MCU_CONF);
+      TuyaSendCmd(TUYA_CMD_MCU_CONF);
+    }
   }
 }
 
