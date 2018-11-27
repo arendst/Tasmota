@@ -534,6 +534,7 @@ Setting_5_10_0 = {
     'energy_kWhtotal':              ('<L',  0x554,       (None, None,                           ('Pow',         None)) ),
     'mqtt_fulltopic':               ('100s',0x558,       (None, None,                           ('MQTT',        '"FullTopic {}".format($)')) ),
     'flag2':                        ({
+        'calc_resolution':          ('<L', (0x5BC,2,13), (None, '0 <= $ <= 3',                  ('Management',  '"CalcRes {}".format($)')) ),
         'current_resolution':       ('<L', (0x5BC,2,15), (None, '0 <= $ <= 3',                  ('Pow',         '"AmpRes {}".format($)')) ),
         'voltage_resolution':       ('<L', (0x5BC,2,17), (None, '0 <= $ <= 3',                  ('Pow',         '"VoltRes {}".format($)')) ),
         'wattage_resolution':       ('<L', (0x5BC,2,19), (None, '0 <= $ <= 3',                  ('Pow',         '"WattRes {}".format($)')) ),
