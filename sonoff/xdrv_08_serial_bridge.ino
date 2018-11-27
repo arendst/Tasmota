@@ -50,7 +50,7 @@ void SerialBridgeInput(void)
       return;
     }
     if (serial_in_byte) {
-      if ((serial_in_byte_counter < sizeof(serial_bridge_buffer) -1) && (serial_in_byte != Settings.serial_delimiter)) {  // add char to string if it still fits
+      if ((serial_in_byte_counter < SERIAL_BRIDGE_BUFFER_SIZE -1) && (serial_in_byte != Settings.serial_delimiter)) {  // add char to string if it still fits
         serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
         serial_bridge_polling_window = millis();  // Wait for more data
       } else {

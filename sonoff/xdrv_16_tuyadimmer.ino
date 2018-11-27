@@ -285,7 +285,7 @@ void TuyaInit(void)
   if (!Settings.param[P_TUYA_DIMMER_ID]) {
     Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
   }
-  tuya_buffer = reinterpret_cast<char*>(malloc(TUYA_BUFFER_SIZE));
+  tuya_buffer = (char*)(malloc(TUYA_BUFFER_SIZE));
   if (tuya_buffer != NULL) {
     TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 2);
     if (TuyaSerial->begin(9600)) {
