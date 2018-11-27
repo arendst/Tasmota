@@ -107,7 +107,7 @@ void PS16DZSerialDuty(uint8_t duty)
     snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "AT+UPDATE=\"sequence\":\""));
     ps16dz_seq = getTimestamp();
     print_uint64_t(ps16dz_seq);
-    snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s\",\"bright\":\"%d\""), ps16dz_tx_buffer, round(duty * (100. / 255.)));
+    snprintf_P(ps16dz_tx_buffer, sizeof(ps16dz_tx_buffer), PSTR( "%s\",\"bright\":%d"), ps16dz_tx_buffer, round(duty * (100. / 255.)));
     snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
     AddLog(LOG_LEVEL_DEBUG);
     
