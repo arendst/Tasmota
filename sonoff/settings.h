@@ -107,9 +107,7 @@ typedef union {
     uint32_t spare03 : 1;
     uint32_t spare04 : 1;
     uint32_t spare05 : 1;
-    uint32_t spare06 : 1;
-    uint32_t spare07 : 1;
-    uint32_t spare08 : 1;
+    uint32_t calc_resolution : 3;
     uint32_t weight_resolution : 2;
     uint32_t frequency_resolution : 2;
     uint32_t axis_resolution : 2;

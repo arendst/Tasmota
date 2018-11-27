@@ -576,6 +576,7 @@ void SettingsDefaultSet2(void)
 //  Settings.rule_enabled = 0;
 //  Settings.rule_once = 0;
 //  for (byte i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
+  Settings.flag2.calc_resolution = CALC_RESOLUTION;
 
   // Home Assistant
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
@@ -856,6 +857,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x0603000A) {
       Settings.param[P_LOOP_SLEEP_DELAY] = LOOP_SLEEP_DELAY;
+    }
+    if (Settings.version < 0x0603000E) {
+      Settings.flag2.calc_resolution = CALC_RESOLUTION;
     }
 
     Settings.version = VERSION;

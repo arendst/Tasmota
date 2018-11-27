@@ -1,4 +1,7 @@
-/* 6.3.0.13 20181126
+/* 6.3.0.14 20181127
+ * Add Command CalcRes to set number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE (#4420)
+ *
+ * 6.3.0.13 20181126
  * Add command SetOption59 0/1 to change state topic from tele/STATE to stat/RESULT (#4450)
  * Fix WifiManager functionality on initial installation (#4433)
  *
