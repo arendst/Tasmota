@@ -74,11 +74,12 @@
 #define D_CMND_SUB "Sub"
 #define D_CMND_MULT "Mult"
 #define D_CMND_SCALE "Scale"
+#define D_CMND_CALC_RESOLUTION "CalcRes"
 
 #define D_JSON_INITIATED "Initiated"
 
-enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_MULT, CMND_SCALE };
-const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE ;
+enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_MULT, CMND_SCALE, CMND_CALC_RESOLUTION };
+const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION ;
 
 String rules_event_value;
 unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
@@ -593,24 +594,30 @@ boolean RulesCommand(void)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
+  else if (CMND_CALC_RESOLUTION == command_code) {
+    if ((payload >= 0) && (payload <= 7)) {
+      Settings.flag2.calc_resolution = payload;
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.flag2.calc_resolution);
+  }
   else if ((CMND_ADD == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) + CharToDouble(XdrvMailbox.data);
-      dtostrfd(tempvar, 2, vars[index -1]);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SUB == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) - CharToDouble(XdrvMailbox.data);
-      dtostrfd(tempvar, 2, vars[index -1]);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MULT == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) * CharToDouble(XdrvMailbox.data);
-      dtostrfd(tempvar, 2, vars[index -1]);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
@@ -625,7 +632,7 @@ boolean RulesCommand(void)
         double toLow = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 4));
         double toHigh = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 5));
         double value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
-        dtostrfd(value, 2, vars[index -1]);
+        dtostrfd(value, Settings.flag2.calc_resolution, vars[index -1]);
       }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
