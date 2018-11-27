@@ -166,8 +166,6 @@ void PS16DZSerialInput(void)
         char* token = strtok_r(string, ",", &end_str);
         while (token != NULL) {
           char* end_token;
-          snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: token = %s"), token);
-          AddLog(LOG_LEVEL_DEBUG);
           char* token2 = strtok_r(token, ":", &end_token);
           char* token3 = strtok_r(NULL, ":", &end_token);
           if(!strncmp(token2, "\"switch\"", 8)){
