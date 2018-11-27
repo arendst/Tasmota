@@ -576,6 +576,7 @@ void SettingsDefaultSet2(void)
 //  Settings.rule_enabled = 0;
 //  Settings.rule_once = 0;
 //  for (byte i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
+  Settings.flag2.calc_resolution = CALC_RESOLUTION;
 
   // Home Assistant
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
