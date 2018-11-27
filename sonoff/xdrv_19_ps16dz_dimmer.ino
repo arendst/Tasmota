@@ -165,7 +165,7 @@ void PS16DZSerialInput(void)
             ps16dz_bright = atoi(token3);
             snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: brightness received: %d"), ps16dz_bright);
             AddLog(LOG_LEVEL_DEBUG);
-            if(power && ps16dz_bright > 0) {
+            if(power && ps16dz_bright > 0 && ps16dz_bright != Settings.light_dimmer) {
 
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), ps16dz_bright );
 
