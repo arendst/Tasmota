@@ -135,6 +135,11 @@ enum UserSelectablePins {
   GPIO_TUYA_RX,        // Tuya Serial interface
   GPIO_MGC3130_XFER,   // MGC3130 Transfer
   GPIO_MGC3130_RESET,  // MGC3130 Reset
+  GPIO_SSPI_MISO,      // Software SPI Master Input Slave Output
+  GPIO_SSPI_MOSI,      // Software SPI Master Output Slave Input
+  GPIO_SSPI_SCLK,      // Software SPI Serial Clock
+  GPIO_SSPI_CS,        // Software SPI Chip Select
+  GPIO_SSPI_DC,        // Software SPI Data or Command
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -193,7 +198,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TX20_TX "|"
   D_SENSOR_RFSEND "|" D_SENSOR_RFRECV "|"
   D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX "|"
-  D_SENSOR_MGC3130_XFER "|" D_SENSOR_MGC3130_RESET;
+  D_SENSOR_MGC3130_XFER "|" D_SENSOR_MGC3130_RESET "|"
+  D_SENSOR_SSPI_MISO "|" D_SENSOR_SSPI_MOSI "|" D_SENSOR_SSPI_SCLK "|" D_SENSOR_SSPI_CS "|" D_SENSOR_SSPI_DC;
 
 /********************************************************************************************/
 
@@ -349,6 +355,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SPI
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
+  GPIO_SSPI_MISO,      // Software SPI Master Input Slave Output
+  GPIO_SSPI_MOSI,      // Software SPI Master Output Slave Input
+  GPIO_SSPI_SCLK,      // Software SPI Serial Clock
+  GPIO_SSPI_CS,        // Software SPI Chip Select
+  GPIO_SSPI_DC,        // Software SPI Data or Command
 #endif
 #ifdef USE_DISPLAY
   GPIO_BACKLIGHT,      // Display backlight control
@@ -1276,7 +1287,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
      0, 0
   },
-  { "PS-16-DZ", // PS-16-DZ Dimmer (ESP8266 w/ separate Nuvoton MCU dimmer)
+  { "PS-16-DZ",        // PS-16-DZ Dimmer (ESP8266 w/ separate Nuvoton MCU dimmer)
                        // https://www.aliexpress.com/item/SM-Smart-WIFI-Wall-Dimmer-Light-Switch-US-Ewelink-APP-Remote-Control-Wi-Fi-Wirele-Work/32871151902.html
      GPIO_USER,
      GPIO_TXD,         // GPIO01 MCU serial control
