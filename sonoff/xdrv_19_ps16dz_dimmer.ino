@@ -55,14 +55,15 @@ void PS16DZSendCommand(char type = 0, uint8_t value = 0)
       snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "AT+SEND=ok"));
       break;
     case PS16DZ_TYPE_PWR:
-      snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "AT+UPDATE=\"sequence\":\""));
-      printTimestamp();
-      snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s\",\"switch\":\"%s\""), ps16dz_tx_buffer, value?"on":"off");
-      break;
     case PS16DZ_TYPE_DIM:
       snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "AT+UPDATE=\"sequence\":\""));
       printTimestamp();
-      snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s\",\"bright\":%d"), ps16dz_tx_buffer, round(value * (100. / 255.)));
+      if ( type == PS16DZ_TYPE_PWR) {
+        snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s\",\"switch\":\"%s\""), ps16dz_tx_buffer, value?"on":"off");
+      }
+      else if ( type == PS16DZ_TYPE_DIM) {
+        snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s\",\"bright\":%d"), ps16dz_tx_buffer, round(value * (100. / 255.)));
+      }
       break;
     }
 
