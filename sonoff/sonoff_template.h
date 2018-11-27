@@ -1281,12 +1281,12 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,
      GPIO_TXD,         // GPIO01 MCU serial control
      GPIO_USER,
-     GPIO_RXD,        // GPIO03 MCU serial control
+     GPIO_RXD,         // GPIO03 MCU serial control
      GPIO_USER,
      GPIO_USER,
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_USER,
-     GPIO_USER,
+     GPIO_LED1,        // GPIO13 WiFi LED
      GPIO_USER,
      GPIO_USER,
      GPIO_USER,
