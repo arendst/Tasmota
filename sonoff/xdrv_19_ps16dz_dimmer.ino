@@ -21,7 +21,11 @@
 
 #define XDRV_19                19
 
-#define PS16DZ_BUFFER_SIZE     256
+#define PS16DZ_BUFFER_SIZE     80
+
+#define PS16DZ_TYPE_ACK        0
+#define PS16DZ_TYPE_PWR        1
+#define PS16DZ_TYPE_DIM        2
 
 #include <TasmotaSerial.h>
 
@@ -29,8 +33,6 @@ TasmotaSerial *PS16DZSerial = nullptr;
 
 boolean ps16dz_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
 
-boolean ps16dz_power = false;
-uint8_t ps16dz_bright = 0;
 //uint64_t ps16dz_seq = 0;
 
 char *ps16dz_tx_buffer = NULL;                // Serial transmit buffer
@@ -46,6 +48,33 @@ void printTimestamp(void)
     snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s%d%03d"), ps16dz_tx_buffer, LocalTime(), millis()%1000);
 }
 
+void PS16DZSendCommand(char type = 0, uint8_t value = 0)
+{
+  switch(type){
+    case PS16DZ_TYPE_ACK:
+      snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "AT+SEND=ok"));
+      break;
+    case PS16DZ_TYPE_PWR:
+    case PS16DZ_TYPE_DIM:
+      snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "AT+UPDATE=\"sequence\":\""));
+      printTimestamp();
+      if ( type == PS16DZ_TYPE_PWR) {
+        snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s\",\"switch\":\"%s\""), ps16dz_tx_buffer, value?"on":"off");
+      }
+      else if ( type == PS16DZ_TYPE_DIM) {
+        snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s\",\"bright\":%d"), ps16dz_tx_buffer, round(value * (100. / 255.)));
+      }
+      break;
+    }
+
+    snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
+    AddLog(LOG_LEVEL_DEBUG);
+
+    PS16DZSerial->print(ps16dz_tx_buffer);
+    PS16DZSerial->write(0x1B);
+    PS16DZSerial->flush();
+}
+
 boolean PS16DZSetPower(void)
 {
   boolean status = false;
@@ -55,15 +84,7 @@ boolean PS16DZSetPower(void)
 
   if (source != SRC_SWITCH && PS16DZSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
 
-    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "AT+UPDATE=\"sequence\":\""));
-    printTimestamp();
-    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s\",\"switch\":\"%s\""), ps16dz_tx_buffer, rpower?"on":"off");
-    snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
-    AddLog(LOG_LEVEL_DEBUG);
-
-    PS16DZSerial->print(ps16dz_tx_buffer);
-    PS16DZSerial->write(0x1B);
-    PS16DZSerial->flush();
+    PS16DZSendCommand(PS16DZ_TYPE_PWR, rpower);
 
     status = true;
   }
@@ -77,15 +98,7 @@ void PS16DZSerialDuty(uint8_t duty)
       duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     }
 
-    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "AT+UPDATE=\"sequence\":\""));
-    printTimestamp();
-    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s\",\"bright\":%d"), ps16dz_tx_buffer, round(duty * (100. / 255.)));
-    snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
-    AddLog(LOG_LEVEL_DEBUG);
-
-    PS16DZSerial->print(ps16dz_tx_buffer);
-    PS16DZSerial->write(0x1B);
-    PS16DZSerial->flush();
+    PS16DZSendCommand(PS16DZ_TYPE_DIM, duty);
 
   } else {
     ps16dz_ignore_dim = false;  // reset flag
@@ -136,6 +149,10 @@ void PS16DZSerialInput(void)
     yield();
     byte serial_in_byte = PS16DZSerial->read();
     if (serial_in_byte != 0x1B){
+      if (ps16dz_byte_counter >= PS16DZ_BUFFER_SIZE - 1) {
+        memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);
+        ps16dz_byte_counter = 0;
+      }
       if (ps16dz_byte_counter || (!ps16dz_byte_counter && serial_in_byte == 'A'));
       ps16dz_rx_buffer[ps16dz_byte_counter++] = serial_in_byte;
     }
@@ -149,12 +166,10 @@ void PS16DZSerialInput(void)
         char* token = strtok_r(string, ",", &end_str);
         while (token != NULL) {
           char* end_token;
-          snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: token = %s"), token);
-          AddLog(LOG_LEVEL_DEBUG);
           char* token2 = strtok_r(token, ":", &end_token);
           char* token3 = strtok_r(NULL, ":", &end_token);
           if(!strncmp(token2, "\"switch\"", 8)){
-            ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
+            boolean ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
             snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: power received: %s"), token3);
             AddLog(LOG_LEVEL_DEBUG);
             if((power || Settings.light_dimmer > 0) && (power !=ps16dz_power)) {
@@ -162,10 +177,10 @@ void PS16DZSerialInput(void)
             }
           }
           else if(!strncmp(token2, "\"bright\"", 8)){
-            ps16dz_bright = atoi(token3);
+            uint8_t ps16dz_bright = atoi(token3);
             snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: brightness received: %d"), ps16dz_bright);
             AddLog(LOG_LEVEL_DEBUG);
-            if(power && ps16dz_bright > 0) {
+            if(power && ps16dz_bright > 0 && ps16dz_bright != Settings.light_dimmer) {
 
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), ps16dz_bright );
 
@@ -192,13 +207,7 @@ void PS16DZSerialInput(void)
       memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);
       ps16dz_byte_counter = 0;
 
-      snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "AT+SEND=ok"));
-      snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
-      AddLog(LOG_LEVEL_DEBUG);
-
-      PS16DZSerial->print(ps16dz_tx_buffer);
-      PS16DZSerial->write(0x1B);
-      PS16DZSerial->flush();
+      PS16DZSendCommand();
     }
   }
 }
