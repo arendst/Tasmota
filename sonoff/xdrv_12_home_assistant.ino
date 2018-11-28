@@ -54,8 +54,7 @@ const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
 const char HASS_DISCOVER_LIGHT_COLOR[] PROGMEM =
   "%s,\"rgb_command_topic\":\"%s2\","              // cmnd/led2/Color2
   "\"rgb_state_topic\":\"%s\","                    // stat/led2/RESULT
-  "\"rgb_value_template\":\"{{value_json." D_CMND_COLOR "}}\"";
-//  "\"rgb_value_template\":\"{{value_json." D_CMND_COLOR " | join(',')}}\"";
+  "\"rgb_value_template\":\"{{value_json." D_CMND_COLOR ".split(',')[0:3]|join(',')}}\"";
 
 const char HASS_DISCOVER_LIGHT_CT[] PROGMEM =
   "%s,\"color_temp_command_topic\":\"%s\","        // cmnd/led2/CT
@@ -115,19 +114,17 @@ const char HASS_DISCOVER_LIGHT_COLOR_SHORT[] PROGMEM =
   "%s,\"rgb_cmd_t\":\"%s2\","                      // cmnd/led2/Color2
   "\"rgb_stat_t\":\"%s\","                         // stat/led2/RESULT
   "\"rgb_val_tpl\":\"{{value_json." D_CMND_COLOR ".split(',')[0:3]|join(',')}}\"";
-//  "\"rgb_val_tpl\":\"{{value_json." D_CMND_COLOR " | join(',')}}\"";
 
 const char HASS_DISCOVER_LIGHT_CT_SHORT[] PROGMEM =
   "%s,\"clr_temp_cmd_t\":\"%s\","                  // cmnd/led2/CT
   "\"clr_temp_stat_t\":\"%s\","                    // stat/led2/RESULT
   "\"clr_temp_val_tpl\":\"{{value_json." D_CMND_COLORTEMPERATURE "}}\"";
-/*
-const char HASS_DISCOVER_LIGHT_SCHEME[] PROGMEM =
-  "%s,\"effect_command_topic\":\"%s\","            // cmnd/led2/Scheme
-  "\"effect_state_topic\":\"%s\","                 // stat/led2/RESULT
-  "\"effect_value_template\":\"{{value_json." D_CMND_SCHEME "}}\","
-  "\"effect_list\":[\"0\",\"1\",\"2\",\"3\",\"4\"]";  // string list with reference to scheme parameter. Currently only supports numbers 0 to 11 as it make the mqtt string too long
-*/
+
+const char HASS_DISCOVER_LIGHT_SCHEME_SHORT[] PROGMEM =
+  "%s,\"fx_cmd_t\":\"%s\","                        // cmnd/led2/Scheme
+  "\"fx_stat_t\":\"%s\","                          // stat/led2/RESULT
+  "\"fx_val_tpl\":\"{{value_json." D_CMND_SCHEME "}}\","
+  "\"fx_list\":[\"0\",\"1\",\"2\",\"3\",\"4\"]";   // string list with reference to scheme parameter.
 
 const char HASS_DISCOVER_SENSOR_SHORT[] PROGMEM =
   "{\"name\":\"%s\","                                 // dualr2 1 BTN
@@ -239,12 +236,15 @@ void HAssAnnounceRelayLight(void)
             Shorten(&rgb_command_topic, prefix);
           snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_LIGHT_COLOR_SHORT:HASS_DISCOVER_LIGHT_COLOR,
                      mqtt_data, rgb_command_topic, state_topic);
-/*
-          char effect_command_topic[TOPSZ];
 
+          char _effect_command_topic[TOPSZ];
+          char *effect_command_topic = _effect_command_topic;
           GetTopic_P(effect_command_topic, CMND, mqtt_topic, D_CMND_SCHEME);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_SCHEME, mqtt_data, effect_command_topic, state_topic);
-*/
+          if (Settings.flag3.hass_short_discovery_msg) {
+            Shorten(&effect_command_topic, prefix);
+            snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_SCHEME_SHORT, mqtt_data, effect_command_topic, state_topic);
+          }
+
         }
         if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
           char _color_temp_command_topic[TOPSZ];
