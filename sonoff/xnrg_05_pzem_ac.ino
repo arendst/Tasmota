@@ -62,9 +62,11 @@ void PzemAcEverySecond(void)
       energy_power_factor = (float)((buffer[19] << 8) + buffer[20]) / 100.0;                                          // 1.00
       float energy = (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);               // 4294967295 Wh
 
-      if (!energy_start || (energy < energy_start)) { energy_start = energy; }  // Init after restart and hanlde roll-over if any
-      energy_kWhtoday += (energy - energy_start) * 100;
-      energy_start = energy;
+      if (!energy_start || (energy < energy_start)) { energy_start = energy; }  // Init after restart and handle roll-over if any
+      if (energy != energy_start) {
+        energy_kWhtoday += (unsigned long)((energy - energy_start) * 100);
+        energy_start = energy;
+      }
       EnergyUpdateToday();
     }
   }
