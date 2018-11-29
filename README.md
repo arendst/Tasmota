@@ -1,3 +1,8 @@
+## Sonoff-Tasmota-addTeckinSP20USandZeeZooSA102
+This fork adds support for devices Teckin SP20 US and ZeeZoo SA102
+Just small changes to sonoff_template.h these devices look like BlitzWolf with relay at GPIO04 instead of GPIO15
+Although the pricepoint for these devices is good I don't recommend them as getting to flashing requires drilling holes to get to circuit board pads. Better off with extra cost for easily disassembled Sonoff S31. 
+
 ## Sonoff-Tasmota
 
 Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web**, **timers**, 'Over The Air' (**OTA**) firmware updates and **sensors support**, allowing control under **Serial**, **HTTP**, **MQTT** and **KNX**, so as to be used on **Smart Home Systems**. Written for Arduino IDE and PlatformIO.
