@@ -1,5 +1,5 @@
 /*
-  xdrv_19_pid.ino - PID Controller Algorithm Support for Sonoff-Tasmota
+  xdrv_21_pid.ino - PID Controller Algorithm Support for Sonoff-Tasmota
 
   Copyright (C) 2018  Colin Law, Thomas Herrmann and Adrian Scillato
 
@@ -370,9 +370,9 @@ static void run_pid()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_19
+#define XDRV_21
 
-boolean Xdrv19(byte function)
+boolean Xdrv21(byte function)
 {
   boolean result = false;
 
