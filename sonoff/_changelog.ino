@@ -2,6 +2,7 @@
  * Add Command CalcRes to set number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE (#4420)
  * Add support for SM Smart Wifi Dimmer PS-16-DZ (#4465)
  * Move some static (serial) buffers to dynamic buffers
+ * Update display and epaper drivers
  *
  * 6.3.0.13 20181126
  * Add command SetOption59 0/1 to change state topic from tele/STATE to stat/RESULT (#4450)
