@@ -1,5 +1,5 @@
-## Sonoff-Tasmota-addTeckinSP20USandZeeZooSA102
-This fork adds support for devices Teckin SP20 US and ZeeZoo SA102
+## Sonoff-Tasmota-addTeckinSP20USandZ00ZeeSA102
+This fork adds support for devices Teckin SP20 US and ZooZee SA102
 Just small changes to sonoff_template.h these devices look like BlitzWolf with relay at GPIO04 instead of GPIO15
 Although the pricepoint for these devices is good I don't recommend them as getting to flashing requires drilling holes to get to circuit board pads. Better off with extra cost for easily disassembled Sonoff S31. 
 
