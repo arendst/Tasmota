@@ -181,6 +181,7 @@
 #define HUMIDITY_RESOLUTION    1                 // [HumRes] Maximum number of decimals (0 - 3) showing sensor Humidity
 #define PRESSURE_RESOLUTION    1                 // [PressRes] Maximum number of decimals (0 - 3) showing sensor Pressure
 #define ENERGY_RESOLUTION      3                 // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
+#define CALC_RESOLUTION        3                 // [CalcRes] Maximum number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE
 
 /*********************************************************************************************\
  * END OF SECTION 1
@@ -360,6 +361,7 @@
 #define USE_TUYA_DIMMER                          // Add support for Tuya Serial Dimmer
   #define TUYA_DIMMER_ID       0                 // Default dimmer Id
 #define USE_ARMTRONIX_DIMMERS                    // Add support for Armtronix Dimmers (+1k4 code)
+#define USE_PS_16_DZ                             // ADD support for PS-16-DZ Dimmer
 
 // Power monitoring sensors -----------------------
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)

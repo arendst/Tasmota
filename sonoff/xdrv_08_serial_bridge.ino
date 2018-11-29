@@ -36,7 +36,7 @@ TasmotaSerial *SerialBridgeSerial;
 uint8_t serial_bridge_active = 1;
 uint8_t serial_bridge_in_byte_counter = 0;
 unsigned long serial_bridge_polling_window = 0;
-char serial_bridge_buffer[SERIAL_BRIDGE_BUFFER_SIZE];
+char *serial_bridge_buffer = NULL;
 
 void SerialBridgeInput(void)
 {
@@ -50,7 +50,7 @@ void SerialBridgeInput(void)
       return;
     }
     if (serial_in_byte) {
-      if ((serial_in_byte_counter < sizeof(serial_bridge_buffer) -1) && (serial_in_byte != Settings.serial_delimiter)) {  // add char to string if it still fits
+      if ((serial_in_byte_counter < SERIAL_BRIDGE_BUFFER_SIZE -1) && (serial_in_byte != Settings.serial_delimiter)) {  // add char to string if it still fits
         serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
         serial_bridge_polling_window = millis();  // Wait for more data
       } else {
@@ -75,10 +75,13 @@ void SerialBridgeInit(void)
 {
   serial_bridge_active = 0;
   if ((pin[GPIO_SBR_RX] < 99) && (pin[GPIO_SBR_TX] < 99)) {
-    SerialBridgeSerial = new TasmotaSerial(pin[GPIO_SBR_RX], pin[GPIO_SBR_TX]);
-    if (SerialBridgeSerial->begin(Settings.sbaudrate * 1200)) {  // Baud rate is stored div 1200 so it fits into one byte
-      serial_bridge_active = 1;
-      SerialBridgeSerial->flush();
+    serial_bridge_buffer = (char*)(malloc(SERIAL_BRIDGE_BUFFER_SIZE));
+    if (serial_bridge_buffer != NULL) {
+      SerialBridgeSerial = new TasmotaSerial(pin[GPIO_SBR_RX], pin[GPIO_SBR_TX]);
+      if (SerialBridgeSerial->begin(Settings.sbaudrate * 1200)) {  // Baud rate is stored div 1200 so it fits into one byte
+        serial_bridge_active = 1;
+        SerialBridgeSerial->flush();
+      }
     }
   }
 }
@@ -122,7 +125,7 @@ boolean SerialBridgeCommand(void)
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_LVALUE, command, Settings.sbaudrate * 1200);
   }
   else serviced = false;  // Unknown command
-  
+
   return serviced;
 }
 

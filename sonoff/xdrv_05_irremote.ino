@@ -379,8 +379,8 @@ boolean IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_P
       hvacOn = true;
     }
 
-    snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: HvacMode %s, ModeVal %d, Code %d"), p, mode, data[3]);
-    AddLog(LOG_LEVEL_DEBUG);
+//    snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: HvacMode %s, ModeVal %d, Code %d"), p, mode, data[3]);
+//    AddLog(LOG_LEVEL_DEBUG);
 
     // Set code for HVAC temperature - data[4]
     if (HVAC_Temp > 30) {
@@ -412,8 +412,8 @@ boolean IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_P
       data[5] = (mode * 2) - 2; // Low = 0x00, Mid = 0x02, High = 0x04
     }
 
-    snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: FanMode %s, ModeVal %d, Code %d"), p, mode, data[5]);
-    AddLog(LOG_LEVEL_DEBUG);
+//    snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: FanMode %s, ModeVal %d, Code %d"), p, mode, data[5]);
+//    AddLog(LOG_LEVEL_DEBUG);
 
     // Set CRC code - data[6]
     data[6] = (data[3] + data[4] + data[5]) & 0x0f; // CRC
@@ -426,8 +426,8 @@ boolean IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, boolean HVAC_P
   }
   LG_Code = LG_Code + data[6];
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: LG_Code %d"), LG_Code);
-  AddLog(LOG_LEVEL_DEBUG);
+//  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: LG_Code %d"), LG_Code);
+//  AddLog(LOG_LEVEL_DEBUG);
 
   // Send LG IR Code
   noInterrupts();
@@ -446,8 +446,8 @@ boolean IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, boolean H
 {
   const char kFujitsuHvacModeOptions[] = "HDCAF";
 
-  char stemp[64];
-  snprintf_P(stemp, sizeof(stemp), PSTR("FUJITSU: mode:%s, fan:%s, power:%u, temp:%u"), HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+//  snprintf_P(log_data, sizeof(log_data), PSTR("FUJITSU: mode:%s, fan:%s, power:%u, temp:%u"), HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+//  AddLog(LOG_LEVEL_DEBUG);
 
   IRFujitsuAC ac(pin[GPIO_IRSEND]);
 
@@ -536,7 +536,6 @@ boolean IrSendCommand(void)
             raw_array[i++] = strtoul(str, NULL, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
           }
 
-//          DebugFreeMem();
 //          snprintf_P(log_data, sizeof(log_data), PSTR("IRS: Count %d, Freq %d, Arr[0] %d, Arr[count -1] %d"),
 //            count, freq, raw_array[0], raw_array[count -1]);
 //          AddLog(LOG_LEVEL_DEBUG);
