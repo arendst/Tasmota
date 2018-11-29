@@ -263,6 +263,7 @@ enum SupportedModules {
   ARMTRONIX_DIMMERS,
   SK03_TUYA,
   PS_16_DZ,
+  TECKIN_US,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -487,6 +488,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SHELLY2,
   BLITZWOLF_BWSHP,    // Socket Relay Devices with Energy Monitoring
   TECKIN,
+  TECKIN_US,
   APLIC_WDP303075,
   GOSUND,
   SK03_TUYA,
@@ -1245,7 +1247,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,
      0
   },
-  { "Gosund SP1_v23",  // https://www.amazon.de/gp/product/B0777BWS1P
+  { "Gosund SP1 v23",  // https://www.amazon.de/gp/product/B0777BWS1P
      0,
      GPIO_LED1_INV,    // GPIO01 Serial RXD and LED1 (blue) inv
      0,
@@ -1302,6 +1304,21 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,
      GPIO_USER,
      0
+  },
+  { "Teckin US",       // Teckin SP20 US with Energy Monitoring
+                       // https://www.amazon.com/Outlet-Compatible-Monitoring-Function-Required/dp/B079Q5W22B
+                       // https://www.amazon.com/Outlet-ZOOZEE-Monitoring-Function-Compatible/dp/B07J2LR5KN
+     GPIO_LED2_INV,    // GPIO00 Red Led (1 = On, 0 = Off)
+     0,
+     GPIO_LED1_INV,    // GPIO02 Blue Led (1 = On, 0 = Off)
+     0,
+     GPIO_REL1,        // GPIO04 Relay (0 = Off, 1 = On)
+     GPIO_HJL_CF,      // GPIO05 BL0937 or HJL-01 CF power
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_NRG_SEL_INV, // GPIO12 BL0937 or HJL-01 Sel output (0 = Voltage)
+     GPIO_KEY1,        // GPIO13 Button
+     GPIO_NRG_CF1,     // GPIO14 BL0937 or HJL-01 CF1 current / voltage
+     0, 0, 0
   }
 };
 

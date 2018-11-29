@@ -76,7 +76,26 @@ Module            | Description
 52 Teckin         | Teckin SP20 Wifi Smart Switch with Energy Monitoring
 53 AplicWDP303075 | Aplic WDP 303075 CSL Wifi Smart Switch with Energy Monitoring
 54 Tuya Dimmer    | MIUO (and other Tuya based) Wifi Dimmer for Incandescent Lights and Led
-55 Gosund SP1_v23 | Gosund SP1 v2.3 Wifi Smart Switch with Energy Monitoring
+55 Gosund SP1 v23 | Gosund SP1 v2.3 Wifi Smart Switch with Energy Monitoring
+56 ARMTR Dimmer   | ARMtronix Wifi dimmer for Incandescent Lights and Led
+57 SK03 Outdoor   | SK03 Outdoor Wifi Smart Switch with Energy Monitoring
+58 PS-16-DZ       | PS-16-DZ  Wifi dimmer for Incandescent Lights and Led
+59 Teckin US      | Teckin US and ZooZee SA102 Wifi Smart Switch with Energy Monitoring
+
+## Supported Smart Switch with Energy Monitoring GPIO usage
+Module | GPIO00 | GPIO01 | GPIO02 | GPIO03 | GPIO04 | GPIO05 | GPIO12 | GPIO13 | GPIO14 | GPIO15
+-------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------
+Sonoff Pow  | KEY1  |  -  |  -  |  -  |  -  |  NRG_SEL  |  REL1  |  NRG_CF1  |  HLW_CF  |  LED1
+Sonoff Pow R2 |  KEY1  |  RXD  |  -  |  TXD  |  -  |  -  |  REL1  |  LED1_INV  |  -  |  -
+Shelly 2  |  -  |  RXD  |  -  |  TXD  |  REL1  |  REL2  |  SWT1  |  -  |  SWT2  |  -
+Huafan SS  |  LED1_INV  |  -  |  -  |  LED2_INV  |  KEY1  |  REL1_INV  |  NRG_CF1  |  NRG_SEL  |  HLW_CF  |  -
+KMC 70011  |  KEY1  |  -  |  -  |  -  |  HLW_CF  |  NRG_CF1  |  NRG_SEL  |  LED1_INV  |  REL1  |  -
+Teckin  |  -  |  KEY1  |  -  |  LED2_INV  |  HJL_CF  |  NRG_CF1  |  NRG_SEL_INV  |  LED1_INV  |  REL1  |  -
+AplicWDP303075  |  -  |  -  |  -  |  KEY1  |  HLW_CF  |  NRG_CF1  |  NRG_SEL_INV  |  LED1_INV  |  REL1  |  -
+Gosund SP1 v23  |  -  |  LED1_INV  |  -  |  KEY1  |  HJL_CF  |  NRG_CF1  |  NRG_SEL_INV  |  LED2_INV  |  REL1  |  -
+SK03 Outdoor  |  KEY1  |  -  |  -  |  -  |  HLW_CF  |  NRG_CF1  |  NRG_SEL_INV  |  LED2_INV  |  LED1_INV  |  REL1
+BlitzWolf SHP  |  LED2_INV  |  -  |  LED1_INV  |  -  |  -  |  HJL_CF  |  NRG_SEL_INV  |  KEY1  |  NRG_CF1  |  REL1
+Teckin US |  LED2_INV |  - |  LED1_INV |  - |  REL1 |  HJL_CF |  NRG_SEL_INV |  KEY1 |  NRG_CF1 |  -
 
 ## Provided Binary Downloads
 The following binary downloads have been compiled with ESP8266/Arduino library version **2.3.0**
