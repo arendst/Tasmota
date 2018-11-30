@@ -766,6 +766,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
                 snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabling sleep in favour of SetOption36 (Dynamic Sleep)"));
                 AddLog(LOG_LEVEL_INFO);
                 Settings.sleep = 0; // We do not want traditional sleep to be enabled along side SetOption36
+                sleep = 0;
+                WiFiSetSleepMode();
               }
           }
           if ((payload >= param_low) && (payload <= param_high)) {
@@ -1588,8 +1590,12 @@ void MqttShowState(void)
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_VCC "\":%s"), mqtt_data, stemp1);
 #endif
 
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoopSet\":%u"), mqtt_data, (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]); // Add current loop delay target to telemetry
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoadAvg\":%u"), mqtt_data, loop_load_avg);                                // Add LoadAvg to telemetry data
+  if (Settings.param[P_LOOP_SLEEP_DELAY]) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoopSet\":%u"), mqtt_data, (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]); // Add current loop delay target to telemetry
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoadAvg\":%u"), mqtt_data, loop_load_avg);                                // Add LoadAvg to telemetry data
+  } else {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"Sleep\":%u"), mqtt_data, (uint32_t)sleep);                                // Add current sleep setting so we know Dynamic Sleep is not enabled
+  }
 
   for (byte i = 0; i < devices_present; i++) {
     if (i == light_device -1) {
