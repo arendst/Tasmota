@@ -857,6 +857,7 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x0603000A) {
       Settings.param[P_LOOP_SLEEP_DELAY] = LOOP_SLEEP_DELAY;
+      Settings.sleep = 0;                   // We do not want sleep enabled when SetOption36 is active
     }
     if (Settings.version < 0x0603000E) {
       Settings.flag2.calc_resolution = CALC_RESOLUTION;

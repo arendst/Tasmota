@@ -587,6 +587,11 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if (CMND_SLEEP == command_code) {
       if ((payload >= 0) && (payload < 251)) {
+        if (payload > 0) {
+          snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabling SetOption36 (Dynamic Sleep) in favour of sleep"));
+          AddLog(LOG_LEVEL_INFO);
+          Settings.param[P_LOOP_SLEEP_DELAY] = 0; // We do not want SetOption36 to be active along with traditional sleep
+        }
         Settings.sleep = payload;
         sleep = payload;
         WiFiSetSleepMode();
@@ -756,6 +761,12 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               param_low = 1;
               param_high = 250;
               break;
+            case P_LOOP_SLEEP_DELAY:
+              if (payload > 0) {
+                snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabling sleep in favour of SetOption36 (Dynamic Sleep)"));
+                AddLog(LOG_LEVEL_INFO);
+                Settings.sleep = 0; // We do not want traditional sleep to be enabled along side SetOption36
+              }
           }
           if ((payload >= param_low) && (payload <= param_high)) {
             Settings.param[pindex] = payload;
