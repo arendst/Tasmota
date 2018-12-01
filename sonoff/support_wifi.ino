@@ -186,7 +186,6 @@ void WiFiSetSleepMode(void)
     } else {
       WiFi.setSleepMode(WIFI_MODEM_SLEEP);  // Disable sleep (Esp8288/Arduino core and sdk default)
     }
-    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
   } else {
     WiFi.setSleepMode(WIFI_MODEM_SLEEP);  // Disable sleep (Esp8288/Arduino core and sdk default)
   }
