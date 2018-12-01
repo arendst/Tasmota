@@ -483,6 +483,14 @@ void KNX_INIT(void)
   {
     if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
   }
+  for (int i = GPIO_SWT1_NP; i < GPIO_SWT4_NP + 1; ++i)
+  {
+    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_SWT1_NP + 8].show = true; }
+  }
+  for (int i = GPIO_KEY1_NP; i < GPIO_KEY4_NP + 1; ++i)
+  {
+    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_KEY1_NP + 8].show = true; }
+  }
   if (GetUsedInModule(GPIO_DHT11, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
   if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
   if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
