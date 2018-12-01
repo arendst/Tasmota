@@ -285,7 +285,7 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
 
     if (plen == -1) { plen = 9999; }
     if (plen2 == -1) { plen2 = 9999; }
-    plen = min(plen, plen2);
+    plen = tmin(plen, plen2);
     if (plen == plen2) { stop_all_rules = true; }     // If BREAK was used, Stop execution of this rule set
 
     String commands = rules.substring(pevt +4, plen);     // "Backlog Dimmer 10;Color 100000"
