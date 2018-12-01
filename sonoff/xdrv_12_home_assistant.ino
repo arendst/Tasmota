@@ -24,8 +24,8 @@
 const char HASS_DISCOVER_RELAY[] PROGMEM =
   "{\"name\":\"%s\","                              // dualr2 1
   "\"command_topic\":\"%s\","                      // cmnd/dualr2/POWER2
-  "\"state_topic\":\"%s\","                        // stat/dualr2/RESULT  (implies "\"optimistic\":\"false\",")
-  "\"value_template\":\"{{value_json.%s}}\","      // POWER2
+  "\"state_topic\":\"%s\","                        // stat/dualr2/POWER  (implies "\"optimistic\":\"false\",")
+//  "\"value_template\":\"{{value_json.%s}}\","      // POWER2
   "\"payload_off\":\"%s\","                        // OFF
   "\"payload_on\":\"%s\","                         // ON
 //  "\"optimistic\":\"false\","                    // false is Hass default when state_topic is set
@@ -83,8 +83,8 @@ const char HASS_DISCOVER_SENSOR_ANY[] PROGMEM =
 const char HASS_DISCOVER_RELAY_SHORT[] PROGMEM =
   "{\"name\":\"%s\","                              // dualr2 1
   "\"cmd_t\":\"%s\","                              // cmnd/dualr2/POWER2
-  "\"stat_t\":\"%s\","                             // stat/dualr2/RESULT  (implies "\"optimistic\":\"false\",")
-  "\"val_tpl\":\"{{value_json.%s}}\","             // POWER2
+  "\"stat_t\":\"%s\","                             // stat/dualr2/POWER  (implies "\"optimistic\":\"false\",")
+//  "\"val_tpl\":\"{{value_json.%s}}\","             // POWER2
   "\"pl_off\":\"%s\","                             // OFF
   "\"pl_on\":\"%s\","                              // ON
 //  "\"optimistic\":\"false\","                    // false is Hass default when state_topic is set
@@ -206,7 +206,7 @@ void HAssAnnounceRelayLight(void)
       }
       GetPowerDevice(value_template, i, sizeof(value_template), Settings.flag.device_index_enable);
       GetTopic_P(command_topic, CMND, mqtt_topic, value_template);
-      GetTopic_P(state_topic, STAT, mqtt_topic, S_RSLT_RESULT);
+      GetTopic_P(state_topic, STAT, mqtt_topic, S_RSLT_POWER);
       GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
       FindPrefix(command_topic, state_topic, prefix);
       if (Settings.flag3.hass_short_discovery_msg) {
@@ -215,7 +215,7 @@ void HAssAnnounceRelayLight(void)
         Shorten(&availability_topic, prefix);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_RELAY_SHORT:HASS_DISCOVER_RELAY,
-                 name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
+                 name, command_topic, state_topic, Settings.state_text[0], Settings.state_text[1], availability_topic);
 
       if (is_light) {
         char _brightness_command_topic[TOPSZ];
