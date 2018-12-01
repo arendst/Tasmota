@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.2.1.7
+ * Updated until v6.3.0.14
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -174,7 +174,7 @@
 #define D_UV_POWER "Puissance UV"
 #define D_VERSION "Version"
 #define D_VOLTAGE "Tension"
-#define D_WEIGHT "Weight"
+#define D_WEIGHT "Poids"
 #define D_WARMLIGHT "Chaud"
 #define D_WEB_SERVER "Serveur web"
 
@@ -457,27 +457,27 @@
 #define D_GZ_AXIS "Gyro Axe-Z"
 
 // xsns_34_hx711.ino
-#define D_HX_CAL_REMOVE "Remove weigth"
-#define D_HX_CAL_REFERENCE "Load reference weigth"
-#define D_HX_CAL_DONE "Calibrated"
-#define D_HX_CAL_FAIL "Calibration failed"
-#define D_RESET_HX711 "Reset Scale"
-#define D_CONFIGURE_HX711 "Configure Scale"
-#define D_HX711_PARAMETERS "Scale parameters"
-#define D_ITEM_WEIGHT "Item weight"
-#define D_REFERENCE_WEIGHT "Reference weigth"
-#define D_CALIBRATE "Calibrate"
-#define D_CALIBRATION "Calibration"
+#define D_HX_CAL_REMOVE "Retirer la charge"
+#define D_HX_CAL_REFERENCE "Charger l'étalon de poids"
+#define D_HX_CAL_DONE "Étalonné"
+#define D_HX_CAL_FAIL "L'étalonnage a échoué"
+#define D_RESET_HX711 "Réinitialiser le capteur"
+#define D_CONFIGURE_HX711 "Configurer le capteur"
+#define D_HX711_PARAMETERS "Paramètres capteur"
+#define D_ITEM_WEIGHT "Poids de l'objet"
+#define D_REFERENCE_WEIGHT "Poids de référence"
+#define D_CALIBRATE "Étalonner"
+#define D_CALIBRATION "Étalonnage"
 
 //xsns_35_tx20.ino
-#define D_TX20_WIND_DIRECTION "Wind Direction"
-#define D_TX20_WIND_SPEED "Wind Speed"
-#define D_TX20_WIND_SPEED_AVG "Wind Speed Avg"
-#define D_TX20_WIND_SPEED_MAX "Wind Speed Max"
+#define D_TX20_WIND_DIRECTION "Direction du vent"
+#define D_TX20_WIND_SPEED "Vitesse du vent"
+#define D_TX20_WIND_SPEED_AVG "Vitesse Moy."
+#define D_TX20_WIND_SPEED_MAX "Vitesse Max"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "E"
 #define D_TX20_SOUTH "S"
-#define D_TX20_WEST "W"
+#define D_TX20_WEST "O"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "Aucun"
@@ -544,7 +544,7 @@
 #define D_UNIT_HOUR "h"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
-#define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
+#define D_UNIT_KILOMETER_PER_HOUR "km/h"
 #define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
