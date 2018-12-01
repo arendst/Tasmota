@@ -340,7 +340,7 @@
   #define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT
   #endif
     #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
-//    #define USE_DISPLAY_EPAPER                   // [DisplayModel 5] Enable e-paper display (+19k code)
+//    #define USE_DISPLAY_EPAPER_29                 // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
 #endif  // USE_SPI
 
 // -- Serial sensors ------------------------------

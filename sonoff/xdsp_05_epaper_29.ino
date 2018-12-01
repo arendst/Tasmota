@@ -1,5 +1,5 @@
 /*
-  xdsp_05_epaper.ino - Display e-paper support for Sonoff-Tasmota
+  xdsp_05_epaper_29.ino - 2.9 Inch display e-paper support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends, Gerhard Mutz and Waveshare
 
@@ -23,6 +23,9 @@
 
 #define XDSP_05                5
 
+#define EPD_TOP                12
+#define EPD_FONT_HEIGTH        12
+
 #define COLORED                0
 #define UNCOLORED              1
 
@@ -38,6 +41,8 @@ unsigned char image[(EPD_HEIGHT * EPD_WIDTH) / 8];
 Paint paint(image, EPD_WIDTH, EPD_HEIGHT);    // width should be the multiple of 8
 Epd epd;
 sFONT *selected_font;
+
+uint16_t epd_scroll;
 
 /*********************************************************************************************/
 
@@ -70,6 +75,8 @@ void EpdInitMode(void)
   delay(1000);
 */
   paint.Clear(UNCOLORED);
+
+  epd_scroll = EPD_TOP;
 }
 
 void EpdInitPartial(void)
@@ -111,11 +118,18 @@ void EpdInitDriver(void)
   }
 
   if (XDSP_05 == Settings.display_model) {
-    epd.cs_pin = pin[GPIO_SPI_CS];
-    epd.mosi_pin = pin[GPIO_SPI_MOSI];  // 13
-    epd.sclk_pin = pin[GPIO_SPI_CLK];   // 14
-
-    EpdInitMode();
+    if ((pin[GPIO_SPI_CS] < 99) && (pin[GPIO_SPI_CLK] < 99) && (pin[GPIO_SPI_MOSI] < 99)) {
+      epd.cs_pin = pin[GPIO_SPI_CS];
+      epd.sclk_pin = pin[GPIO_SPI_CLK];   // 14
+      epd.mosi_pin = pin[GPIO_SPI_MOSI];  // 13
+      EpdInitMode();
+    }
+    else if ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && (pin[GPIO_SSPI_MOSI] < 99)) {
+      epd.cs_pin = pin[GPIO_SSPI_CS];
+      epd.sclk_pin = pin[GPIO_SSPI_SCLK];
+      epd.mosi_pin = pin[GPIO_SSPI_MOSI];
+      EpdInitMode();
+    }
   }
 }
 
@@ -143,6 +157,12 @@ void EpdSetFont(uint8_t font)
   }
 }
 
+void EpdDisplayFrame(void)
+{
+  epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+}
+
 void EpdDrawStringAt(uint16_t x, uint16_t y, char *str, uint8_t color, uint8_t flag)
 {
   if (!flag) {
@@ -167,10 +187,72 @@ void EpdOnOff(void)
 
 #ifdef USE_DISPLAY_MODES1TO5
 
+void EpdPrintLog(void)
+{
+  disp_refresh--;
+  if (!disp_refresh) {
+    disp_refresh = Settings.display_refresh;
+    if (Settings.display_rotate) {
+      if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
+    }
+
+    char* txt = DisplayLogBuffer('\040');
+    if (txt != NULL) {
+      byte size = Settings.display_size;
+      uint16_t theight = size * EPD_FONT_HEIGTH;
+
+      EpdSetFont(size);
+      uint8_t last_row = Settings.display_rows -1;
+
+//      epd_scroll = theight;  // Start below header
+      epd_scroll = 0;  // Start at top with no header
+      for (byte i = 0; i < last_row; i++) {
+        strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
+        EpdDrawStringAt(0, epd_scroll, disp_screen_buffer[i], COLORED, 0);
+        epd_scroll += theight;
+      }
+      strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
+      DisplayFillScreen(last_row);
+      EpdDrawStringAt(0, epd_scroll, disp_screen_buffer[last_row], COLORED, 0);
+//      EpdDisplayFrame();
+
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "[%s]"), txt);
+      AddLog(LOG_LEVEL_DEBUG);
+    }
+  }
+}
+
 void EpdRefresh(void)  // Every second
 {
   if (Settings.display_mode) {  // Mode 0 is User text
+/*
+    char tftdt[Settings.display_cols[0] +1];
+    char date4[11];  // 24-04-2017
+    char space[Settings.display_cols[0] - 17];
+    char time[9];    // 13:45:43
 
+    EpdSetFont(1);
+
+    snprintf_P(date4, sizeof(date4), PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%04d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year);
+    memset(space, 0x20, sizeof(space));
+    space[sizeof(space) -1] = '\0';
+    snprintf_P(time, sizeof(time), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);
+    snprintf_P(tftdt, sizeof(tftdt), PSTR("%s%s%s"), date4, space, time);
+
+    EpdDrawStringAt(0, 0, tftdt, COLORED, 0);
+*/
+    switch (Settings.display_mode) {
+      case 1:  // Text
+      case 2:  // Local
+      case 3:  // Local
+      case 4:  // Mqtt
+      case 5:  // Mqtt
+        EpdPrintLog();
+        EpdDisplayFrame();
+        break;
+    }
+
+//    EpdDisplayFrame();
   }
 }
 
@@ -184,7 +266,7 @@ boolean Xdsp05(byte function)
 {
   boolean result = false;
 
-  if (spi_flg) {
+  if (spi_flg || soft_spi_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {
       EpdInitDriver();
     }
@@ -227,8 +309,7 @@ boolean Xdsp05(byte function)
           paint.DrawFilledRectangle(dsp_x, dsp_y, dsp_x + dsp_x2, dsp_y + dsp_y2, dsp_color);
           break;
         case FUNC_DISPLAY_DRAW_FRAME:
-          epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
-          epd.DisplayFrame();
+          EpdDisplayFrame();
           break;
         case FUNC_DISPLAY_TEXT_SIZE:
 //          EpdSetFontorSize(Settings.display_size);

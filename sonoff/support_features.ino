@@ -156,7 +156,7 @@ void GetFeatures(void)
 #ifdef USE_DISPLAY_ILI9341
   feature_drv2 |= 0x00000400;  // xdsp_04_ili9341.ino
 #endif
-#ifdef USE_DISPLAY_EPAPER
+#ifdef USE_DISPLAY_EPAPER_29
   feature_drv2 |= 0x00000800;  // xdsp_05_epaper.ino
 #endif
 #ifdef USE_DISPLAY_SH1106

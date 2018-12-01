@@ -1,7 +1,14 @@
-/* 6.3.0.14 20181127
+/* 6.3.0.15 20181201
+ * Removed command SetOption36 (#4497)
+ * Add command SetOption60 0/1 to select dynamic sleep (0) or sleep (1) (#4497)
+ *
+ * 6.3.0.14 20181127
  * Add Command CalcRes to set number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE (#4420)
  * Add support for SM Smart Wifi Dimmer PS-16-DZ (#4465)
  * Move some static (serial) buffers to dynamic buffers
+ * Update display and epaper drivers
+ * Fix intermittent Pzem sensor energy overflow calculation error
+ * Add support for Teckin US Power Socket with Energy Monitoring (#4481)
  *
  * 6.3.0.13 20181126
  * Add command SetOption59 0/1 to change state topic from tele/STATE to stat/RESULT (#4450)

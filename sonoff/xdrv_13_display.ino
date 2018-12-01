@@ -23,7 +23,7 @@
 #define XDRV_13                13
 
 #define DISPLAY_MAX_DRIVERS    16           // Max number of display drivers/models supported by xdsp_interface.ino
-#define DISPLAY_MAX_COLS       40           // Max number of columns allowed with command DisplayCols
+#define DISPLAY_MAX_COLS       44           // Max number of columns allowed with command DisplayCols
 #define DISPLAY_MAX_ROWS       32           // Max number of lines allowed with command DisplayRows
 
 #define DISPLAY_LOG_ROWS       32           // Number of lines in display log buffer
@@ -1066,7 +1066,7 @@ boolean Xdrv13(byte function)
 {
   boolean result = false;
 
-  if ((i2c_flg || spi_flg) && XdspPresent()) {
+  if ((i2c_flg || spi_flg || soft_spi_flg) && XdspPresent()) {
     switch (function) {
       case FUNC_PRE_INIT:
         DisplayInitDriver();

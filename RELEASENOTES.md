@@ -76,7 +76,11 @@ Module            | Description
 52 Teckin         | Teckin SP20 Wifi Smart Switch with Energy Monitoring
 53 AplicWDP303075 | Aplic WDP 303075 CSL Wifi Smart Switch with Energy Monitoring
 54 Tuya Dimmer    | MIUO (and other Tuya based) Wifi Dimmer for Incandescent Lights and Led
-55 Gosund SP1_v23 | Gosund SP1 v2.3 Wifi Smart Switch with Energy Monitoring
+55 Gosund SP1 v23 | Gosund SP1 v2.3 Wifi Smart Switch with Energy Monitoring
+56 ARMTR Dimmer   | ARMtronix Wifi dimmer for Incandescent Lights and Led
+57 SK03 Outdoor   | SK03 Outdoor Wifi Smart Switch with Energy Monitoring
+58 PS-16-DZ       | PS-16-DZ  Wifi dimmer for Incandescent Lights and Led
+59 Teckin US      | Teckin US and ZooZee SA102 Wifi Smart Switch with Energy Monitoring
 
 ## Provided Binary Downloads
 The following binary downloads have been compiled with ESP8266/Arduino library version **2.3.0**
