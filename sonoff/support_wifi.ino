@@ -181,7 +181,11 @@ void WiFiSetSleepMode(void)
 #if defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
 #else  // Enabled in 2.3.0, 2.4.0 and stage
   if (sleep) {
-    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+    if (Settings.flag3.sleep_normal) {
+      WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+    } else {
+      WiFi.setSleepMode(WIFI_MODEM_SLEEP);  // Disable sleep (Esp8288/Arduino core and sdk default)
+    }
   } else {
     WiFi.setSleepMode(WIFI_MODEM_SLEEP);  // Disable sleep (Esp8288/Arduino core and sdk default)
   }
