@@ -89,6 +89,8 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER "|" D_CMND_DRIVER;
 
+const char kSleepMode[] PROGMEM = "Dynamic|Normal";
+
 const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
 
 // Global variables
@@ -1579,21 +1581,15 @@ void MqttShowState(void)
   char stemp1[33];
 
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_JSON_TIME "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\""), mqtt_data, GetDateAndTime(DT_LOCAL).c_str(), GetUptime().c_str());
+
 #ifdef USE_ADC_VCC
   dtostrfd((double)ESP.getVcc()/1000, 3, stemp1);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_VCC "\":%s"), mqtt_data, stemp1);
 #endif
 
-  char _sleepmode[8];
-  if (Settings.flag3.sleep_normal) {
-    sprintf(_sleepmode,"Normal");
-  } else {
-    sprintf(_sleepmode,"Dynamic");
-  }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SleepMode\":\"%s\""), mqtt_data, _sleepmode);     // Add current sleep mode setting to telemetry
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"Sleep\":%u"), mqtt_data, sleep);              // Add current sleep setting to telemetry
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoadAvg\":%u"), mqtt_data, loop_load_avg);    // Add LoadAvg to telemetry
-  
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u"),
+    mqtt_data, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode), sleep, loop_load_avg);
+
   for (byte i = 0; i < devices_present; i++) {
     if (i == light_device -1) {
       LightState(1);
@@ -2800,7 +2796,7 @@ void loop(void)
 #endif  // USE_ARDUINO_OTA
 
   uint32_t my_activity = millis() - my_sleep;
-  
+
   if (Settings.flag3.sleep_normal) {
     //  yield();       // yield == delay(0), delay contains yield, auto yield in loop
     delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021

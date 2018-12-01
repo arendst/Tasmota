@@ -417,6 +417,9 @@ void SettingsDefaultSet2(void)
 //  Settings.flag.stop_flash_rotate = 0;
   Settings.save_data = SAVE_DATA;
   Settings.sleep = APP_SLEEP;
+  if (Settings.sleep < 50) {
+    Settings.sleep = 50;                // Default to 50 for sleep, for now
+  }
 
   // Module
 //  Settings.flag.interlock = 0;
@@ -854,13 +857,13 @@ void SettingsDelta(void)
     if (Settings.version < 0x06030004) {
       memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
     }
-    if (Settings.version < 0x0603000F) {
-      if (Settings.sleep < 50) {
-        Settings.sleep = 50;                   // Default to 50 for sleep, for now
-      }
-    }
     if (Settings.version < 0x0603000E) {
       Settings.flag2.calc_resolution = CALC_RESOLUTION;
+    }
+    if (Settings.version < 0x0603000F) {
+      if (Settings.sleep < 50) {
+        Settings.sleep = 50;                // Default to 50 for sleep, for now
+      }
     }
 
     Settings.version = VERSION;
