@@ -167,6 +167,7 @@ uint8_t dht_flg = 0;                        // DHT configured
 uint8_t energy_flg = 0;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
+uint8_t soft_spi_flg = 0;                   // Software SPI ** Temporary fix to satisfy compiler **
 uint8_t light_type = 0;                     // Light types
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
 byte serial_in_byte;                        // Received byte
