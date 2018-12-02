@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define min(a,b) ((a)<(b)?(a):(b))
-#define max(a,b) ((a)>(b)?(a):(b))
+//#define min(a,b) ((a)<(b)?(a):(b))
+//#define max(a,b) ((a)>(b)?(a):(b))
 
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
 /*********************************************************************************************\
@@ -692,8 +692,8 @@ void HueLights(String *path)
 
       if (hue_json.containsKey("bri")) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
         tmp = hue_json["bri"];
-        tmp = max(tmp, 1);
-        tmp = min(tmp, 254);
+        tmp = tmax(tmp, 1);
+        tmp = tmin(tmp, 254);
         bri = (float)tmp / 254.0f;
         if (resp) {
           response += ",";
@@ -721,8 +721,8 @@ void HueLights(String *path)
       }
       if (hue_json.containsKey("sat")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
         tmp = hue_json["sat"];
-        tmp = max(tmp, 0);
-        tmp = min(tmp, 254);
+        tmp = tmax(tmp, 0);
+        tmp = tmin(tmp, 254);
         sat = (float)tmp / 254.0f;
         if (resp) {
           response += ",";

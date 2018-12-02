@@ -206,7 +206,8 @@ void HAssAnnounceRelayLight(void)
       }
       GetPowerDevice(value_template, i, sizeof(value_template), Settings.flag.device_index_enable);
       GetTopic_P(command_topic, CMND, mqtt_topic, value_template);
-      GetTopic_P(state_topic, STAT, mqtt_topic, S_RSLT_RESULT);
+      //GetTopic_P(state_topic, STAT, mqtt_topic, S_RSLT_RESULT);
+      GetTopic_P(state_topic, TELE, mqtt_topic, D_RSLT_STATE);
       GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
       FindPrefix(command_topic, state_topic, prefix);
       if (Settings.flag3.hass_short_discovery_msg) {
@@ -426,7 +427,7 @@ void HAssDiscovery(uint8_t mode)
   if (Settings.flag.hass_discovery) {
     Settings.flag.mqtt_response = 0;        // Response always as RESULT and not as uppercase command
     Settings.flag.decimal_text = 1;         // Respond with decimal color values
-    Settings.flag3.hass_tele_as_result = 1; // send tele/STATE message as stat/RESULT
+    Settings.flag3.hass_tele_on_power = 1; // send tele/STATE message as stat/RESULT
 //    Settings.light_scheme = 0;           // To just control color it needs to be Scheme 0
     if (!string_ends_with(Settings.mqtt_fulltopic, "%prefix%/")) {
       strncpy_P(Settings.mqtt_fulltopic, PSTR("%topic%/%prefix%/"), sizeof(Settings.mqtt_fulltopic));

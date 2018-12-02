@@ -72,7 +72,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)
     uint32_t use_wifi_rescan : 1;          // bit 7 (v6.3.0.10)
     uint32_t receive_raw : 1;              // bit 8 (v6.3.0.11)
-    uint32_t hass_tele_as_result : 1;      // bit 9 (v6.3.0.13)
+    uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)
     uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60 - Enable normal sleep instead of dynamic sleep
     uint32_t spare11 : 1;
     uint32_t spare12 : 1;

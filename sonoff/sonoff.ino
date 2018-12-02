@@ -167,6 +167,7 @@ uint8_t dht_flg = 0;                        // DHT configured
 uint8_t energy_flg = 0;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
+uint8_t soft_spi_flg = 0;                   // Software SPI ** Temporary fix to satisfy compiler **
 uint8_t light_type = 0;                     // Light types
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
 byte serial_in_byte;                        // Received byte
@@ -586,6 +587,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if (CMND_STATE == command_code) {
       mqtt_data[0] = '\0';
       MqttShowState();
+      if (Settings.flag3.hass_tele_on_power) {
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+      }
     }
     else if (CMND_SLEEP == command_code) {
       if ((payload >= 0) && (payload < 251)) {
@@ -1393,6 +1397,11 @@ void ExecuteCommandPower(byte device, byte state, int source)
 #ifdef USE_KNX
     KnxUpdatePowerState(device, power);
 #endif  // USE_KNX
+    if (publish_power && Settings.flag3.hass_tele_on_power) {
+      mqtt_data[0] = '\0';
+      MqttShowState();
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+    }
     if (device <= MAX_PULSETIMERS) {  // Restart PulseTime if powered On
       SetPulseTimer(device -1, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[device -1] : 0);
     }
@@ -1691,11 +1700,7 @@ void PerformEverySecond(void)
 
       mqtt_data[0] = '\0';
       MqttShowState();
-      if (Settings.flag3.hass_tele_as_result) {
-        MqttPublishPrefixTopic_P(STAT, S_RSLT_RESULT, MQTT_TELE_RETAIN);
-      } else {
-        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
-      }
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
 
       mqtt_data[0] = '\0';
       if (MqttShowSensor()) {

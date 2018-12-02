@@ -1,6 +1,7 @@
 /* 6.3.0.15 20181201
  * Removed command SetOption36 (#4497)
  * Add command SetOption60 0/1 to select dynamic sleep (0) or sleep (1) (#4497)
+ * Update SR-04 driver to use NewPing library (#4488)
  *
  * 6.3.0.14 20181127
  * Add Command CalcRes to set number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE (#4420)
