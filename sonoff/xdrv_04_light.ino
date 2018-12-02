@@ -624,6 +624,11 @@ void LightPreparePower(void)
 #ifdef USE_DOMOTICZ
   DomoticzUpdatePowerState(light_device);
 #endif  // USE_DOMOTICZ
+  if (Settings.flag3.hass_tele_on_power) {
+    mqtt_data[0] = '\0';
+    MqttShowState();
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+  }
 
   LightState(0);
 }
