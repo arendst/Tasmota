@@ -91,7 +91,8 @@ const char kTasmotaCommands[] PROGMEM =
 
 const char kSleepMode[] PROGMEM = "Dynamic|Normal";
 
-const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
+#define FAN_STAGES 4
+const uint8_t kIFan02Speed[FAN_STAGES][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
 
 // Global variables
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
@@ -375,7 +376,7 @@ uint8_t GetFanspeed(void)
 {
   uint8_t fanspeed = 0;
 
-//  if (SONOFF_IFAN02 == Settings.module) {
+//  if (IS_FAN_MODULE) {
     /* Fanspeed is controlled by relay 2, 3 and 4 as in Sonoff 4CH.
        000x = 0
        001x = 1
@@ -562,18 +563,18 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       fallback_topic_flag = 0;
       return;
     }
-    else if ((CMND_FANSPEED == command_code) && (SONOFF_IFAN02 == Settings.module)) {
+    else if ((CMND_FANSPEED == command_code) && IS_FAN_MODULE) {
       if (data_len > 0) {
         if ('-' == dataBuf[0]) {
           payload = (int16_t)GetFanspeed() -1;
-          if (payload < 0) { payload = 3; }
+          if (payload < 0) { payload = FAN_STAGES - 1; }
         }
         else if ('+' == dataBuf[0]) {
           payload = GetFanspeed() +1;
-          if (payload > 3) { payload = 0; }
+          if (payload > FAN_STAGES - 1) { payload = 0; }
         }
       }
-      if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
+      if ((payload >= 0) && (payload < FAN_STAGES) && (payload != GetFanspeed())) {
         SetFanspeed(payload);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, GetFanspeed());
@@ -1351,7 +1352,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
 
 //  ShowSource(source);
 
-  if (SONOFF_IFAN02 == Settings.module) {
+  if (IS_FAN_MODULE) {
     blink_mask &= 1;                 // No blinking on the fan relays
     Settings.flag.interlock = 0;     // No interlock mode as it is already done by the microcontroller
     Settings.pulse_timer[1] = 0;     // No pulsetimers on the fan relays
@@ -1477,7 +1478,7 @@ void PublishStatus(uint8_t payload)
 
   if ((0 == payload) || (99 == payload)) {
     uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
-    if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
+    if (IS_FAN_MODULE) { maxfn = 1; }
     stemp[0] = '\0';
     for (byte i = 0; i < maxfn; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), Settings.friendlyname[i]);
@@ -1604,7 +1605,7 @@ void MqttShowState(void)
       LightState(1);
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":\"%s\""), mqtt_data, GetPowerDevice(stemp1, i +1, sizeof(stemp1), Settings.flag.device_index_enable), GetStateText(bitRead(power, i)));
-      if (SONOFF_IFAN02 == Settings.module) {
+      if (IS_FAN_MODULE) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_FANSPEED "\":%d"), mqtt_data, GetFanspeed());
         break;
       }
@@ -1663,7 +1664,7 @@ void PerformEverySecond(void)
     AddLog(LOG_LEVEL_DEBUG);
   }
 
-  if ((4 == uptime) && (SONOFF_IFAN02 == Settings.module)) {  // Microcontroller needs 3 seconds before accepting commands
+  if ((4 == uptime) && IS_FAN_MODULE) {  // Microcontroller needs 3 seconds before accepting commands
     SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
     SetDevicePower(power, SRC_RETRY);  // Set required power on state
   }

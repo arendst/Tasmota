@@ -512,6 +512,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WEMOS
 };
 
+#define IS_FAN_MODULE (Settings.module == SONOFF_IFAN02)
+
 // Default module settings
 const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff Basic",    // Sonoff Basic (ESP8266)

@@ -625,10 +625,10 @@ void HandleRoot(void)
       }
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
-      if (SONOFF_IFAN02 == Settings.module) {
+      if (IS_FAN_MODULE) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
         page += mqtt_data;
-        for (byte i = 0; i < 4; i++) {
+        for (byte i = 0; i < FAN_STAGES; i++) {
           snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
           snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 16, i +2, stemp, "");
           page += mqtt_data;
@@ -684,7 +684,7 @@ void HandleAjaxStatusRefresh(void)
   if (strlen(tmp)) {
     ShowWebSource(SRC_WEBGUI);
     uint8_t device = atoi(tmp);
-    if (SONOFF_IFAN02 == Settings.module) {
+    if (IS_FAN_MODULE) {
       if (device < 2) {
         ExecuteCommandPower(1, POWER_TOGGLE, SRC_IGNORE);
       } else {
@@ -724,7 +724,7 @@ void HandleAjaxStatusRefresh(void)
   if (devices_present) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{t}<tr>"), mqtt_data);
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
-    if (SONOFF_IFAN02 == Settings.module) {
+    if (IS_FAN_MODULE) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
         mqtt_data, 36, (bitRead(power, 0)) ? "bold" : "normal", 54, GetStateText(bitRead(power, 0)));
       uint8_t fanspeed = GetFanspeed();
@@ -1119,7 +1119,7 @@ void HandleOtherConfiguration(void)
   page += FPSTR(HTTP_FORM_OTHER);
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
-  if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
+  if (IS_FAN_MODULE) { maxfn = 1; }
   for (byte i = 0; i < maxfn; i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
     page.replace(F("{1"), String(i +1));
@@ -1288,7 +1288,7 @@ void HandleInformation(void)
   func += F("}1" D_BOOT_COUNT "}2"); func += String(Settings.bootcount);
   func += F("}1" D_RESTART_REASON "}2"); func += GetResetReason();
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
-  if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
+  if (IS_FAN_MODULE) { maxfn = 1; }
   for (byte i = 0; i < maxfn; i++) {
     func += F("}1" D_FRIENDLY_NAME " "); func += i +1; func += F("}2"); func += Settings.friendlyname[i];
   }
