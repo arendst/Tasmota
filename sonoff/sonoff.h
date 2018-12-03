@@ -152,7 +152,9 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define tmax(a,b) ((a)>(b)?(a):(b))
 
 #define STR_HELPER(x) #x
+#ifndef STR
 #define STR(x) STR_HELPER(x)
+#endif
 
 //enum ws2812NeopixelbusFeature { NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_3LED, NEO_RGBW, NEO_GRBW };  // Doesn't work
 #define NEO_RGB                0            // Neopixel RGB leds
