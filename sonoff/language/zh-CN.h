@@ -387,6 +387,7 @@
   #define D_DOMOTICZ_CURRENT "电流/PM10"
   #define D_DOMOTICZ_AIRQUALITY "空气质量"
 #define D_DOMOTICZ_UPDATE_TIMER "更新计时器"
+#define D_DOMOTICZ_FAN "Fan"
 
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "定时器设置"

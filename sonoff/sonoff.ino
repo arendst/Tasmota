@@ -396,6 +396,9 @@ void SetFanspeed(uint8_t fanspeed)
 //    uint8_t state = pgm_read_byte(kIFan02Speed +(speed *3) +i);
     ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
   }
+#ifdef USE_DOMOTICZ
+    DomoticzUpdateFanState();
+#endif  // USE_DOMOTICZ
 }
 
 void SetPulseTimer(uint8_t index, uint16_t time)
@@ -1393,7 +1396,8 @@ void ExecuteCommandPower(byte device, byte state, int source)
     }
     SetDevicePower(power, source);
 #ifdef USE_DOMOTICZ
-    DomoticzUpdatePowerState(device);
+    // Don't publish power on eg fan devices
+    if (!IS_FAN_MODULE || publish_power) DomoticzUpdatePowerState(device);
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
     KnxUpdatePowerState(device, power);

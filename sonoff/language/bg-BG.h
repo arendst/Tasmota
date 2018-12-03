@@ -387,6 +387,7 @@
   #define D_DOMOTICZ_CURRENT "Ток/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Качество на въздуха"
 #define D_DOMOTICZ_UPDATE_TIMER "Период на опресняване"
+#define D_DOMOTICZ_FAN "Fan"
 
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Конфигуриране на таймер"

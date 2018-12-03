@@ -387,6 +387,7 @@
   #define D_DOMOTICZ_CURRENT "Stroom/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Bijwerk timer"
+#define D_DOMOTICZ_FAN "Fan"
 
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configureer Tijdschakelaar"

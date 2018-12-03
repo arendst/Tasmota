@@ -86,6 +86,26 @@ void MqttPublishDomoticzPowerState(byte device)
   }
 }
 
+void MqttPublishDomoticzFanState()
+{
+  if (Settings.flag.mqtt_enabled && Settings.domoticz_fan_idx) {
+      char sfan[8];
+      uint8_t fan_speed = GetFanspeed();
+      snprintf_P(sfan, sizeof(sfan), PSTR("%d"), (int)fan_speed * 10);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
+        Settings.domoticz_fan_idx, fan_speed == 0 ? 0 : 2, sfan, DomoticzBatteryQuality(), DomoticzRssiQuality());
+      MqttPublish(domoticz_in_topic);
+  }
+}
+
+void DomoticzUpdateFanState()
+{
+  if (domoticz_update_flag)
+    MqttPublishDomoticzFanState();
+
+  domoticz_update_flag = 1;
+}
+
 void DomoticzUpdatePowerState(byte device)
 {
   if (domoticz_update_flag) {
@@ -110,6 +130,9 @@ void DomoticzMqttUpdate(void)
 void DomoticzMqttSubscribe(void)
 {
   uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
+  if (Settings.domoticz_fan_idx)
+    domoticz_subscribe = true;
+
   for (byte i = 0; i < maxdev; i++) {
     if (Settings.domoticz_relay_idx[i]) {
       domoticz_subscribe = true;
@@ -178,6 +201,13 @@ boolean DomoticzMqttData(void)
 
     if ((idx > 0) && (nvalue >= 0) && (nvalue <= 15)) {
       uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
+
+      if( idx == Settings.domoticz_fan_idx ) {
+        found = 1;
+        snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_FANSPEED));
+        snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), nvalue == 2 ? atoi(domoticz["svalue1"]) / 10 : 0);
+      }
+
       for (byte i = 0; i < maxdev; i++) {
         if (idx == Settings.domoticz_relay_idx[i]) {
           bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
@@ -392,6 +422,8 @@ const char HTTP_FORM_DOMOTICZ_SENSOR[] PROGMEM =
   "<tr><td style='width:260px'><b>" D_DOMOTICZ_SENSOR_IDX " {1</b> {2</td><td style='width:70px'><input id='l{1' name='l{1' placeholder='0' value='{5'></td></tr>";
 const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
   "<tr><td style='width:260px'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td style='width:70px'><input id='ut' name='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{6'</td></tr>";
+const char HTTP_FORM_DOMOTICZ_FAN[] PROGMEM =
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_FAN "</b></td><td style='width:70px'><input id='fan' name='fan' value='{9'></td></tr>";
 
 void HandleDomoticzConfiguration(void)
 {
@@ -431,6 +463,10 @@ void HandleDomoticzConfiguration(void)
   }
   page += FPSTR(HTTP_FORM_DOMOTICZ_TIMER);
   page.replace("{6", String((int)Settings.domoticz_update_timer));
+  if( IS_FAN_MODULE ) {
+    page += FPSTR(HTTP_FORM_DOMOTICZ_FAN);
+    page.replace("{9", String((int)Settings.domoticz_fan_idx));
+  }
   page += F("</table>");
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
@@ -463,12 +499,16 @@ void DomoticzSaveSettings(void)
   }
   WebGetArg("ut", tmp, sizeof(tmp));
   Settings.domoticz_update_timer = (!strlen(tmp)) ? DOMOTICZ_UPDATE_TIMER : atoi(tmp);
+  if (IS_FAN_MODULE) {
+    WebGetArg("fan", tmp, sizeof(tmp));
+    Settings.domoticz_fan_idx = (!strlen(tmp)) ? 0 : atoi(tmp);
+  }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ D_CMND_IDX " %d,%d,%d,%d, " D_CMND_KEYIDX " %d,%d,%d,%d, " D_CMND_SWITCHIDX " %d,%d,%d,%d, " D_CMND_SENSORIDX " %s, " D_CMND_UPDATETIMER " %d"),
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ D_CMND_IDX " %d,%d,%d,%d, " D_CMND_KEYIDX " %d,%d,%d,%d, " D_CMND_SWITCHIDX " %d,%d,%d,%d, " D_CMND_SENSORIDX " %s, " D_CMND_UPDATETIMER " %d, fan %d"),
     Settings.domoticz_relay_idx[0], Settings.domoticz_relay_idx[1], Settings.domoticz_relay_idx[2], Settings.domoticz_relay_idx[3],
     Settings.domoticz_key_idx[0], Settings.domoticz_key_idx[1], Settings.domoticz_key_idx[2], Settings.domoticz_key_idx[3],
     Settings.domoticz_switch_idx[0], Settings.domoticz_switch_idx[1], Settings.domoticz_switch_idx[2], Settings.domoticz_switch_idx[3],
-    ssensor_indices, Settings.domoticz_update_timer);
+    ssensor_indices, Settings.domoticz_update_timer, Settings.domoticz_fan_idx);
   AddLog(LOG_LEVEL_INFO);
 }
 #endif  // USE_WEBSERVER

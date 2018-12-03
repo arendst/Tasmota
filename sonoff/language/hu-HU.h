@@ -387,6 +387,7 @@
   #define D_DOMOTICZ_CURRENT "Áram/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Légminőség"
 #define D_DOMOTICZ_UPDATE_TIMER "Update időzítő"
+#define D_DOMOTICZ_FAN "Fan"
 
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configure Timer"

@@ -387,6 +387,7 @@
   #define D_DOMOTICZ_CURRENT "Corrente/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Qualidade do Ar"
 #define D_DOMOTICZ_UPDATE_TIMER "Tempo de atualização"
+#define D_DOMOTICZ_FAN "Fan"
 
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configure Timer"

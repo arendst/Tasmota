@@ -387,6 +387,7 @@
   #define D_DOMOTICZ_CURRENT "Current/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Zamanlayıcıyı güncelle"
+#define D_DOMOTICZ_FAN "Pervane"
 
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Zamanlayıcı Ayarları"

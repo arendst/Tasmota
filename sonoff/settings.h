@@ -318,7 +318,9 @@ struct SYSCFG {
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
 
-  byte          free_71F[117];             // 71F
+  unsigned long domoticz_fan_idx;          // 71F
+
+  byte          free_723[113];             // 723
 
   uint32_t      drivers[3];                // 794
   uint32_t      monitors;                  // 7A0
