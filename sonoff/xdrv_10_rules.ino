@@ -75,13 +75,14 @@
 #define D_CMND_MULT "Mult"
 #define D_CMND_OR "Or"
 #define D_CMND_AND "And"
+#define D_CMND_MSB "Msb"
 #define D_CMND_SCALE "Scale"
 #define D_CMND_CALC_RESOLUTION "CalcRes"
 
 #define D_JSON_INITIATED "Initiated"
 
-enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_OR, CMND_AND, CMND_MULT, CMND_SCALE, CMND_CALC_RESOLUTION };
-const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_SUB "|" D_CMND_OR "|" D_CMND_AND "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION ;
+enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_OR, CMND_AND, CMND_MSB, CMND_MULT, CMND_SCALE, CMND_CALC_RESOLUTION };
+const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_MSB "|" D_CMND_SUB "|" D_CMND_OR "|" D_CMND_AND "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION ;
 
 String rules_event_value;
 unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
@@ -231,7 +232,7 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
         if (value < rule_value) { match = true; }
         break;
       case '&':
-        if (value & rule_value) { match = true; }
+        if (int_value & int_rule_value) { match = true; }
         break;
       case '=':
 //        if (value == rule_value) { match = true; }     // Compare values - only decimals or partly hexadecimals
@@ -530,6 +531,20 @@ void RulesTeleperiod(void)
   rules_teleperiod = 0;
 }
 
+static unsigned int MSb(unsigned int n)
+{
+    if (n == 0)
+        return 0;
+
+    unsigned int msb = 0;
+    while (n != 0) {
+        n = n >> 1;
+        msb++;
+    }
+
+    return msb;
+}
+
 boolean RulesCommand(void)
 {
   char command[CMDSZ];
@@ -637,16 +652,20 @@ boolean RulesCommand(void)
   else if ((CMND_OR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       int tempvar = TextToInt(vars[index -1]) | TextToInt(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
+      dtostrfd(tempvar, 0, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_AND == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       double tempvar = TextToInt(vars[index -1]) & TextToInt(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
+      dtostrfd(tempvar, 0, vars[index -1]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+  }
+  else if ((CMND_MSB == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
+    unsigned int tempvar = MSb(TextToInt(vars[index - 1]));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_LVALUE, command, index, tempvar);
   }
   else if ((CMND_MULT == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
