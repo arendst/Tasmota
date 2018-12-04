@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0010'
+VER = '2.1.0011'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -790,7 +790,7 @@ Setting_6_3_0_11['flag3'][0].update ({
 # ======================================================================
 Setting_6_3_0_13 = copy.deepcopy(Setting_6_3_0_11)
 Setting_6_3_0_13['flag3'][0].update ({
-        'hass_tele_as_result':      ('<L', (0x3A0,1, 9), (None, None,                           ('SetOption',   '"SetOption59 {}".format($)')) ),
+        'hass_tele_on_power':       ('<L', (0x3A0,1, 9), (None, None,                           ('SetOption',   '"SetOption59 {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_6_3_0_14 = copy.deepcopy(Setting_6_3_0_13)
@@ -798,7 +798,13 @@ Setting_6_3_0_14['flag2'][0].update ({
         'calc_resolution':          ('<L', (0x5BC,3, 6), (None, '0 <= $ <= 7',                  ('Management',  '"CalcRes {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_3_0_15 = copy.deepcopy(Setting_6_3_0_14)
+Setting_6_3_0_15['flag3'][0].update ({
+        'sleep_normal':             ('<L', (0x3A0,1,10), (None, None,                           ('SetOption',   '"SetOption60 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x603000F, 0xe00, Setting_6_3_0_15),
             (0x603000E, 0xe00, Setting_6_3_0_14),
             (0x603000D, 0xe00, Setting_6_3_0_13),
             (0x603000B, 0xe00, Setting_6_3_0_11),
