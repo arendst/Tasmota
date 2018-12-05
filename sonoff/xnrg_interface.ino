@@ -17,7 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef XFUNC_PTR_IN_ROM
 int (* const xnrg_func_ptr[])(byte) PROGMEM = {   // Energy driver Function Pointers
+#else
+int (* const xnrg_func_ptr[])(byte) = {   // Energy driver Function Pointers
+#endif
+
 #ifdef XNRG_01
   &Xnrg01,
 #endif

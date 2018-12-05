@@ -26,6 +26,8 @@
  * - https://www.dfrobot.com/wiki/index.php/Weather-proof_Ultrasonic_Sensor_SKU_:_SEN0207
 \*********************************************************************************************/
 
+#define XSNS_22             22
+
 uint8_t sr04_echo_pin = 0;
 uint8_t sr04_trig_pin = 0;
 
@@ -134,6 +136,11 @@ void Sr04Show(boolean json)
   if (Sr04Read(&distance)) {                // Check if read failed
     if(json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SR04\":{\"" D_JSON_DISTANCE "\":%d}"), mqtt_data, distance);
+#ifdef USE_DOMOTICZ
+      if (0 == tele_period) {
+        DomoticzSensor(DZ_COUNT, distance);  // Send distance as Domoticz Counter value
+      }
+#endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_DISTANCE, mqtt_data, distance);
@@ -145,8 +152,6 @@ void Sr04Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_22
 
 boolean Xsns22(byte function)
 {

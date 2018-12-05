@@ -48,8 +48,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
-    uint32_t mqtt_serial_raw : 1;          // bit 23 (v6.1.1c)
-    uint32_t rules_once : 1;               // bit 24 (v5.12.0k) - free since v5.14.0b
+    uint32_t mqtt_serial_raw : 1;          // bit 23 (v6.1.1c)   // Was rules_enabled until 5.14.0b
+    uint32_t pressure_conversion : 1;      // bit 24 (v6.3.0.2)  // Was rules_once until 5.14.0b
     uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
     uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
     uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
@@ -67,7 +67,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)
     uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)
     uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)
-    uint32_t spare04 : 1;
+    uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)
     uint32_t spare05 : 1;
     uint32_t spare06 : 1;
     uint32_t spare07 : 1;
@@ -302,9 +302,7 @@ struct SYSCFG {
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
-
-  byte          free_66d[1];               // 66D
-
+  uint8_t       timezone_minutes;          // 66D
   uint16_t      switch_debounce;           // 66E
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
@@ -322,8 +320,12 @@ struct SYSCFG {
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
 
-  byte          free_71F[149];             // 71F
+  byte          free_71F[117];             // 71F
 
+  uint32_t      drivers[3];                // 794
+  uint32_t      monitors;                  // 7A0
+  uint32_t      sensors[3];                // 7A4
+  uint32_t      displays;                  // 7B0
   uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
 

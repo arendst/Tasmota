@@ -17,7 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef XFUNC_PTR_IN_ROM
 boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointers
+#else
+boolean (* const xdrv_func_ptr[])(byte) = {   // Driver Function Pointers
+#endif
+
 #ifdef XDRV_01
   &Xdrv01,
 #endif
@@ -226,22 +231,6 @@ void ShowFreeMem(const char *where)
 
 /*********************************************************************************************\
  * Function call to all xdrv
- *
- * FUNC_PRE_INIT
- * FUNC_INIT
- * FUNC_LOOP
- * FUNC_MQTT_SUBSCRIBE
- * FUNC_MQTT_INIT
- * return FUNC_MQTT_DATA
- * return FUNC_COMMAND
- * FUNC_SET_POWER
- * FUNC_SHOW_SENSOR
- * FUNC_EVERY_SECOND
- * FUNC_EVERY_50_MSECOND
- * FUNC_EVERY_100_MSECOND
- * FUNC_EVERY_250_MSECOND
- * FUNC_RULES_PROCESS
- * FUNC_FREE_MEM
 \*********************************************************************************************/
 
 boolean XdrvCall(byte Function)
@@ -249,9 +238,7 @@ boolean XdrvCall(byte Function)
   boolean result = false;
 
   for (byte x = 0; x < xdrv_present; x++) {
-    if (!((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0))) {
-      delay(1);
-    }
+    AppDelay();
     result = xdrv_func_ptr[x](Function);
     if (result) break;
   }

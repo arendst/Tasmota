@@ -66,16 +66,17 @@ Module            | Description
 42 Zengge WF017   | Zengge WF017 Wifi RGB(W) Led Controller
 43 Sonoff Pow R2  | Sonoff Pow R2 Wifi Smart Switch with Energy Monitoring
 44 Sonoff iFan02  | Sonoff iFan02 Wifi Smart Ceiling Fan with Light
-45 BlitzWolf SHP2 | BlitzWolf BW-SHP2, BW-SHP6, HomeCube SP1, Gosund SP111 Wifi Smart Switch with Energy Monitoring
+45 BlitzWolf SHP2 | BlitzWolf BW-SHP2, BW-SHP6, HomeCube SP1, Gosund SP111, Teckin SP22 Wifi Smart Switch with Energy Monitoring
 46 Shelly 1       | Shelly 1 Open Source Wifi Relay Module
 47 Shelly 2       | Shelly 2 Wifi 2-gang Relay Module with Energy Monitoring
 48 Xiaomi Philips | Xiaomi Philips Wifi WW Led Bulb
 49 Neo Coolcam    | Neo Coolcam Wifi Smart Socket
 50 ESP Switch     | ESP Switch 4-gang Wifi Switch with Leds
 51 OBI Socket     | OBI Wifi Smart Socket
-52 Teckin         | Teckin SP20, SP22 Wifi Smart Switch with Energy Monitoring
+52 Teckin         | Teckin SP20 Wifi Smart Switch with Energy Monitoring
 53 AplicWDP303075 | Aplic WDP 303075 CSL Wifi Smart Switch with Energy Monitoring
 54 Tuya Dimmer    | MIUO (and other Tuya based) Wifi Dimmer for Incandescent Lights and Led
+55 Gosund SP1_v23 | Gosund SP1 v2.3 Wifi Smart Switch with Energy Monitoring
 
 ## Provided Binary Downloads
 The following binary downloads have been compiled with ESP8266/Arduino library version **2.3.0**

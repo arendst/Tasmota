@@ -250,6 +250,7 @@ enum SupportedModules {
   TECKIN,
   APLIC_WDP303075,
   TUYA_DIMMER,
+  GOSUND,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -267,7 +268,7 @@ typedef struct MYTMPLT {
   myio         gp;
 } mytmplt;
 
-const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
+const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_NONE,           // Not used
   GPIO_KEY1,           // Buttons
   GPIO_KEY1_NP,
@@ -335,48 +336,96 @@ const uint8_t kGpioNiceList[GPIO_SENSOR_END] PROGMEM = {
   GPIO_CNTR3_NP,
   GPIO_CNTR4,
   GPIO_CNTR4_NP,
+#ifdef USE_I2C
   GPIO_I2C_SCL,        // I2C SCL
   GPIO_I2C_SDA,        // I2C SDA
+#endif
+#ifdef USE_SPI
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
+#endif
+#ifdef USE_DISPLAY
   GPIO_BACKLIGHT,      // Display backlight control
+#endif
   GPIO_DHT11,          // DHT11
   GPIO_DHT22,          // DHT21, DHT22, AM2301, AM2302, AM2321
   GPIO_SI7021,         // iTead SI7021
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
+#ifdef USE_WS2812
   GPIO_WS2812,         // WS2812 Led string
+#endif
+#ifdef USE_IR_REMOTE
   GPIO_IRSEND,         // IR remote
+#ifdef USE_IR_RECEIVE
   GPIO_IRRECV,         // IR receiver
+#endif
+#endif
+#ifdef USE_RC_SWITCH
   GPIO_RFSEND,         // RF transmitter
   GPIO_RFRECV,         // RF receiver
+#endif
+#ifdef USE_SR04
   GPIO_SR04_TRIG,      // SR04 Trigger pin
   GPIO_SR04_ECHO,      // SR04 Echo pin
+#endif
+#ifdef USE_TM1638
   GPIO_TM16CLK,        // TM1638 Clock
   GPIO_TM16DIO,        // TM1638 Data I/O
   GPIO_TM16STB,        // TM1638 Strobe
+#endif
+#ifdef USE_HX711
   GPIO_HX711_SCK,      // HX711 Load Cell clock
   GPIO_HX711_DAT,      // HX711 Load Cell data
+#endif
+#ifdef USE_SERIAL_BRIDGE
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
+#endif
+#ifdef USE_MHZ19
   GPIO_MHZ_TXD,        // MH-Z19 Serial interface
   GPIO_MHZ_RXD,        // MH-Z19 Serial interface
+#endif
+#ifdef USE_SENSEAIR
   GPIO_SAIR_TX,        // SenseAir Serial interface
   GPIO_SAIR_RX,        // SenseAir Serial interface
+#endif
+#ifdef USE_NOVA_SDS
   GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
+#endif
+#if defined(USE_PZEM004T) || defined(USE_PZEM_AC) || defined(USE_PZEM_DC)
   GPIO_PZEM0XX_TX,     // PZEM0XX Serial interface
+#endif
+#ifdef USE_PZEM004T
   GPIO_PZEM004_RX,     // PZEM004T Serial interface
+#endif
+#ifdef USE_PZEM_AC
   GPIO_PZEM016_RX,     // PZEM-014,016 Serial Modbus interface
+#endif
+#ifdef USE_PZEM_DC
   GPIO_PZEM017_RX,     // PZEM-003,017 Serial Modbus interface
+#endif
+#ifdef USE_SDM120
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
+#endif
+#ifdef USE_SDM630
   GPIO_SDM630_TX,      // SDM630 Serial interface
   GPIO_SDM630_RX,      // SDM630 Serial interface
+#endif
+#ifdef USE_PMS5003
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
+#endif
+#ifdef USE_TX20_WIND_SENSOR
   GPIO_TX20_TXD_BLACK, // TX20 Transmission Pin
+#endif
+#ifdef USE_MP3_PLAYER
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
+#endif
+#ifdef USE_TUYA_DIMMER
   GPIO_TUYA_TX,        // Tuya Serial interface
   GPIO_TUYA_RX         // Tuya Serial interface
+#endif
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
@@ -418,6 +467,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   BLITZWOLF_BWSHP2,   // Socket Relay Devices with Energy Monitoring
   TECKIN,
   APLIC_WDP303075,
+  GOSUND,
   NEO_COOLCAM,        // Socket Relay Devices
   OBI,
   ESP_SWITCH,         // Switch Devices
@@ -1075,9 +1125,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,         // GPIO04
      GPIO_REL2,         // GPIO05
      0, 0, 0, 0, 0, 0,  // Flash connection
-     GPIO_SWT1_NP,      // GPIO12
+     GPIO_SWT1,         // GPIO12
      0,
-     GPIO_SWT2_NP,      // GPIO14
+     GPIO_SWT2,         // GPIO14
      0,                 // GPIO15 MCP39F501 Reset
      0, 0
   },
@@ -1154,7 +1204,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Tuya Dimmer",     // Tuya Dimmer (ESP8266 w/ separate MCU dimmer)
                        // https://www.amazon.com/gp/product/B07CTNSZZ8/ref=oh_aui_detailpage_o00_s00?ie=UTF8&psc=1
-     GPIO_KEY1,        // Virtual Button (controlled by MCU)
+     GPIO_USER,        // Virtual Button (controlled by MCU)
      GPIO_USER,        // GPIO01 MCU serial control
      GPIO_USER,
      GPIO_USER,        // GPIO03 MCU serial control
@@ -1163,10 +1213,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0, 0, 0, // Flash connection
      GPIO_USER,
      GPIO_USER,
-     GPIO_LED1,        // GPIO14 Green Led
+     GPIO_USER,        // GPIO14 Green Led
      GPIO_USER,
      GPIO_USER,
      0
+  },
+  { "Gosund SP1_v23",  // https://www.amazon.de/gp/product/B0777BWS1P
+     0,
+     GPIO_LED1_INV,    // GPIO01 Serial RXD and LED1 (blue) inv
+     0,
+     GPIO_KEY1,        // GPIO03 Serial TXD and Button
+     GPIO_HJL_CF,      // GPIO04 BL0937 or HJL-01 CF power
+     GPIO_NRG_CF1,     // GPIO05 BL0937 or HJL-01 CF1 current / voltage
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_NRG_SEL_INV, // GPIO12 BL0937 or HJL-01 Sel output (0 = Voltage)
+     GPIO_LED2_INV,    // GPIO13 LED2 (red) inv
+     GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
+     0, 0, 0
   }
 };
 

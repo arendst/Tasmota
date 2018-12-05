@@ -22,6 +22,8 @@
  * IR Remote send and receive using IRremoteESP8266 library
 \*********************************************************************************************/
 
+#define XDRV_05             5
+
 #include <IRremoteESP8266.h>
 
 // Based on IRremoteESP8266.h enum decode_type_t
@@ -400,8 +402,6 @@ boolean IrSendCommand()
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_05
 
 boolean Xdrv05(byte function)
 {

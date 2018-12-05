@@ -1,7 +1,37 @@
-/* 6.3.0.1 20181031
+/* 6.3.0.7 20181111
+ * Fix wifi connection errors using wifi disconnect and ESP.reset instead of ESP.restart
+ * Fix Sonoff Pow R2 and Sonoff S31 Serial interface hang caused by Sonoff Basic R2 driver delay implementation (and possibly core bug)
+ * Change command WebSend Host header field from IP address to hostname (#4331)
+ * Add to command WebSend option to send a direct path when command starts with a slash (#4329)
+ * Consolidate LTrim into Trim
+ *
+ * 6.3.0.6 20181110
+ * Change GUI Configure Module by using AJAX for data fetch to cut page size (and memory use) by 40%
+ *   In case of web page errors clear your browser cache or do Page Reload (F5 or Ctrl+R)
+ *
+ * 6.3.0.5 20181107
+ * Add code image and optional commit number to version
+ * Add support for Gosund SP1 v2.3 Power Socket with Energy Monitoring (#4297)
+ * Fix shelly2 ghost switching caused by lack of pull-up inputs (#4255)
+ *
+ * 6.3.0.4 20181106
+ * Add command SetSensorXX 0/1 to disable/re-enable compiled xsns_XX_sensor.ino driver
+ *
+ * 6.3.0.3 20181105
+ * Fix hardware serial pin configuration. To keep using hardware serial swap current Rx/Tx pin configuration only (#4280)
+ * Add more strict checks for GPIO selections
+ * Add optional hardware serial when GPIO13(Rx) and GPIO15(Tx) are selected removing hardware serial from GPIO01(Tx) and GPIO03(Rx) (#4288)
+ * Bump TasmotaSerial version from 2.1.0 to 2.2.0
+ *
+ * 6.3.0.2 20181101
+ * Add minutes to commands Timezone to allow all possible world timezones
+ * Add command SetOption24 0/1 to select pressure unit as hPa or mmHg (#4241)
+ *
+ * 6.3.0.1 20181031
  * Add wifi status to Tuya (#4221)
- * Add default sleep 1 to sonoff-basic to lower enrgy consumption (#4217)
+ * Add default sleep 1 to sonoff-basic to lower energy consumption (#4217)
  * Fix unintended function overload of WifiState
+ * Add delays to reduce CPU usage at boot time (#4233)
  *
  * 6.3.0 20181030
  * Release of v6.3.0

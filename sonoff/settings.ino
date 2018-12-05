@@ -563,14 +563,15 @@ void SettingsDefaultSet2()
 
   // Sensor
   Settings.flag.temperature_conversion = TEMP_CONVERSION;
+  Settings.flag.pressure_conversion = PRESSURE_CONVERSION;
   Settings.flag2.pressure_resolution = PRESSURE_RESOLUTION;
   Settings.flag2.humidity_resolution = HUMIDITY_RESOLUTION;
   Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
 //  Settings.altitude = 0;
 
   // Rules
-//  Settings.flag.rules_enabled = 0;
-//  Settings.flag.rules_once = 0;
+//  Settings.rule_enabled = 0;
+//  Settings.rule_once = 0;
 //  for (byte i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
 
   // Home Assistant
@@ -607,7 +608,13 @@ void SettingsDefaultSet2()
   SettingsDefaultSet_5_10_1();   // Display settings
 
   // Time
-  Settings.timezone = APP_TIMEZONE;
+  if (((APP_TIMEZONE > -14) && (APP_TIMEZONE < 15)) || (99 == APP_TIMEZONE)) {
+    Settings.timezone = APP_TIMEZONE;
+    Settings.timezone_minutes = 0;
+  } else {
+    Settings.timezone = APP_TIMEZONE / 60;
+    Settings.timezone_minutes = abs(APP_TIMEZONE % 60);
+  }
   strlcpy(Settings.ntp_server[0], NTP_SERVER1, sizeof(Settings.ntp_server[0]));
   strlcpy(Settings.ntp_server[1], NTP_SERVER2, sizeof(Settings.ntp_server[1]));
   strlcpy(Settings.ntp_server[2], NTP_SERVER3, sizeof(Settings.ntp_server[2]));
@@ -628,6 +635,8 @@ void SettingsDefaultSet2()
   for (byte j = 0; j < 5; j++) {
     Settings.rgbwwTable[j] = 255;
   }
+
+  memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
 }
 
 /********************************************************************************************/
@@ -798,8 +807,8 @@ void SettingsDelta()
     }
     if (Settings.version < 0x050E0002) {
       for (byte i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
-      Settings.rule_enabled = Settings.flag.mqtt_serial_raw;
-      Settings.rule_once = Settings.flag.rules_once;
+      Settings.rule_enabled = Settings.flag.mqtt_serial_raw;   // Was rules_enabled until 5.14.0b
+      Settings.rule_once = Settings.flag.pressure_conversion;  // Was rules_once until 5.14.0b
     }
     if (Settings.version < 0x06000000) {
       Settings.cfg_size = sizeof(SYSCFG);
@@ -820,8 +829,8 @@ void SettingsDelta()
       }
     }
     if (Settings.version < 0x06000003) {
-      Settings.flag.mqtt_serial_raw = 0;
-      Settings.flag.rules_once = 0;
+      Settings.flag.mqtt_serial_raw = 0;      // Was rules_enabled until 5.14.0b
+      Settings.flag.pressure_conversion = 0;  // Was rules_once until 5.14.0b
       Settings.flag3.data = 0;
     }
     if (Settings.version < 0x06010103) {
@@ -835,6 +844,12 @@ void SettingsDelta()
       for (byte j = 0; j < 5; j++) {
         Settings.rgbwwTable[j] = 255;
       }
+    }
+    if (Settings.version < 0x06030002) {
+      Settings.timezone_minutes = 0;
+    }
+    if (Settings.version < 0x06030004) {
+      memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
     }
 
     Settings.version = VERSION;

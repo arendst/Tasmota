@@ -57,6 +57,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #ifdef USE_SENSORS
 
+#undef CODE_IMAGE
+#define CODE_IMAGE 3
+
 #undef USE_ADC_VCC                            // Add Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
@@ -104,7 +107,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_MP3_PLAYER                        // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10             // Set the startup volume on init, the range can be 0..30(max)
 #define USE_TUYA_DIMMER                       // Add support for Tuya Serial Dimmer
-  #define TUYA_DIMMER_ID       3              // Default dimmer Id
+  #define TUYA_DIMMER_ID       0              // Default dimmer Id
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_PZEM_AC                           // Add support for PZEM014,016 Energy monitor (+1k1 code)
 #define USE_PZEM_DC                           // Add support for PZEM003,017 Energy monitor (+1k1 code)
@@ -133,6 +136,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef USE_CLASSIC
+
+#undef CODE_IMAGE
+#define CODE_IMAGE 2
 
 #ifndef USE_WPS
 #define USE_WPS                               // Add support for WPS as initial wifi configuration tool (+33k code, 1k mem (5k mem with core v2.4.2+))
@@ -183,6 +189,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #ifdef USE_KNX_NO_EMULATION
 
+#undef CODE_IMAGE
+#define CODE_IMAGE 4
+
 #ifndef USE_KNX
 #define USE_KNX                               // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
 #endif
@@ -195,6 +204,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef USE_DISPLAYS
+
+#undef CODE_IMAGE
+#define CODE_IMAGE 6
 
 #undef USE_ENERGY_SENSOR                      // Disable energy sensors (-14k code)
 #undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
@@ -228,6 +240,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef USE_BASIC
+
+#undef CODE_IMAGE
+#define CODE_IMAGE 5
 
 //reloxx13: dont override basic env, its set in my_user_config.h
 //#undef APP_SLEEP
@@ -288,6 +303,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef BE_MINIMAL
+
+#undef CODE_IMAGE
+#define CODE_IMAGE 1
 
 #undef USE_ENERGY_SENSOR                      // Disable energy sensors
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA

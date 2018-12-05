@@ -25,10 +25,12 @@
  * Hardware Serial will be selected if GPIO3 = [SDS0X01]
 \*********************************************************************************************/
 
+#define XSNS_20             20
+
 #include <TasmotaSerial.h>
 
 #ifndef WORKING_PERIOD
-	#define WORKING_PERIOD 5
+#define WORKING_PERIOD      5
 #endif
 
 TasmotaSerial *NovaSdsSerial;
@@ -168,8 +170,6 @@ void NovaSdsShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_20
 
 boolean Xsns20(byte function)
 {

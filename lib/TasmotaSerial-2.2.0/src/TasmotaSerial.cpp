@@ -76,10 +76,11 @@ static void (*ISRList[16])() = {
       tms_isr_15
 };
 
-TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, bool hardware_fallback)
+TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback)
 {
   m_valid = false;
   m_hardserial = 0;
+  m_hardswap = 0;
   m_stop_bits = 1;
   if (!((isValidGPIOpin(receive_pin)) && (isValidGPIOpin(transmit_pin) || transmit_pin == 16))) {
     return;
@@ -87,9 +88,14 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, bool hardware_fa
   m_rx_pin = receive_pin;
   m_tx_pin = transmit_pin;
   m_in_pos = m_out_pos = 0;
-  if (hardware_fallback && (((1 == m_rx_pin) && (3 == m_tx_pin)) || ((3 == m_rx_pin) && (-1 == m_tx_pin)) || ((-1 == m_rx_pin) && (1 == m_tx_pin)))) {
+  if (hardware_fallback && (((3 == m_rx_pin) && (1 == m_tx_pin)) || ((3 == m_rx_pin) && (-1 == m_tx_pin)) || ((-1 == m_rx_pin) && (1 == m_tx_pin)))) {
     m_hardserial = 1;
-  } else {
+  }
+  else if ((2 == hardware_fallback) && (((13 == m_rx_pin) && (15 == m_tx_pin)) || ((13 == m_rx_pin) && (-1 == m_tx_pin)) || ((-1 == m_rx_pin) && (15 == m_tx_pin)))) {
+    m_hardserial = 1;
+    m_hardswap = 1;
+  }
+  else {
     if (m_rx_pin > -1) {
       m_buffer = (uint8_t*)malloc(TM_SERIAL_BUFFER_SIZE);
       if (m_buffer == NULL) return;
@@ -133,6 +139,9 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
       Serial.begin(speed, SERIAL_8N2);
     } else {
       Serial.begin(speed, SERIAL_8N1);
+    }
+    if (m_hardswap) {
+      Serial.swap();
     }
   } else {
     // Use getCycleCount() loop to get as exact timing as possible

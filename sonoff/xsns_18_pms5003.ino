@@ -25,6 +25,8 @@
  * Hardware Serial will be selected if GPIO3 = [PMS5003]
 \*********************************************************************************************/
 
+#define XSNS_18             18
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *PmsSerial;
@@ -155,8 +157,6 @@ void PmsShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_18
 
 boolean Xsns18(byte function)
 {

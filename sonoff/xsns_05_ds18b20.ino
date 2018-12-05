@@ -22,6 +22,8 @@
  * DS18B20 - Temperature - Single sensor
 \*********************************************************************************************/
 
+#define XSNS_05              5
+
 #define W1_SKIP_ROM          0xCC
 #define W1_CONVERT_TEMP      0x44
 #define W1_READ_SCRATCHPAD   0xBE
@@ -214,8 +216,6 @@ void Ds18b20Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_05
 
 boolean Xsns05(byte function)
 {
