@@ -167,7 +167,7 @@ uint8_t dht_flg = 0;                        // DHT configured
 uint8_t energy_flg = 0;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
-uint8_t soft_spi_flg = 0;                   // Software SPI ** Temporary fix to satisfy compiler **
+uint8_t soft_spi_flg = 0;                   // Software SPI configured
 uint8_t light_type = 0;                     // Light types
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
 byte serial_in_byte;                        // Received byte
@@ -2498,6 +2498,7 @@ void GpioInit(void)
     my_module.gp.io[14] = GPIO_SPI_CLK;
     pin[GPIO_SPI_CLK] = 14;
   }
+  soft_spi_flg = ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && ((pin[GPIO_SSPI_MOSI] < 99) || (pin[GPIO_SSPI_MOSI] < 99)));
 #endif  // USE_SPI
 
 #ifdef USE_I2C
