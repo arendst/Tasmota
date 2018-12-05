@@ -91,6 +91,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 //#define USE_CCS811                            // Add I2C code for CCS811 sensor (+2k2 code)
 //#define USE_MPU6050                           // Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+2k6 code)
 //#define USE_DS3231                            // Enable DS3231 external RTC in case no Wifi is avaliable. See docs in the source file (+1k2 code)
+//#define USE_MGC3130                           // Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW
@@ -107,7 +108,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_MP3_PLAYER                        // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10             // Set the startup volume on init, the range can be 0..30(max)
 #define USE_TUYA_DIMMER                       // Add support for Tuya Serial Dimmer
+#ifndef TUYA_DIMMER_ID
   #define TUYA_DIMMER_ID       0              // Default dimmer Id
+#endif
+#define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_PZEM_AC                           // Add support for PZEM014,016 Energy monitor (+1k1 code)
 #define USE_PZEM_DC                           // Add support for PZEM003,017 Energy monitor (+1k1 code)

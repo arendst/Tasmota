@@ -64,7 +64,7 @@ const double pi2 = TWO_PI;
 const double pi = PI;
 const double RAD = DEG_TO_RAD;
 
-double JulianischesDatum()
+double JulianischesDatum(void)
 {
   // Gregorianischer Kalender
   int Gregor;
@@ -255,12 +255,12 @@ void TimerSetRandomWindow(byte index)
   }
 }
 
-void TimerSetRandomWindows()
+void TimerSetRandomWindows(void)
 {
   for (byte i = 0; i < MAX_TIMERS; i++) { TimerSetRandomWindow(i); }
 }
 
-void TimerEverySecond()
+void TimerEverySecond(void)
 {
   if (RtcTime.valid) {
     if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) { TimerSetRandomWindows(); }  // Midnight
@@ -338,7 +338,7 @@ void PrepShowTimer(uint8_t index)
  * Commands
 \*********************************************************************************************/
 
-boolean TimerCommand()
+boolean TimerCommand(void)
 {
   char command[CMDSZ];
   char dataBufUc[XdrvMailbox.data_len];
@@ -681,7 +681,7 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
   "</div><br/>"
   "<div id='ds' name='ds'></div>";
 
-void HandleTimerConfiguration()
+void HandleTimerConfiguration(void)
 {
   if (HttpUser()) { return; }
   if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
@@ -717,7 +717,7 @@ void HandleTimerConfiguration()
   ShowPage(page);
 }
 
-void TimerSaveSettings()
+void TimerSaveSettings(void)
 {
   char tmp[MAX_TIMERS *12];  // Need space for MAX_TIMERS x 10 digit numbers separated by a comma
   Timer timer;
@@ -757,9 +757,9 @@ boolean Xdrv09(byte function)
 #ifdef USE_TIMERS_WEB
     case FUNC_WEB_ADD_BUTTON:
 #ifdef USE_RULES
-      strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data));
+      strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data) - strlen(mqtt_data) -1);
 #else
-      if (devices_present) { strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data)); }
+      if (devices_present) { strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data) - strlen(mqtt_data) -1); }
 #endif  // USE_RULES
       break;
     case FUNC_WEB_ADD_HANDLER:

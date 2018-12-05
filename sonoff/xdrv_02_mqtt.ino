@@ -55,6 +55,12 @@
 
 /*********************************************************************************************/
 
+#ifdef USE_MQTT_TLS
+  WiFiClientSecure EspClient;               // Wifi Secure Client
+#else
+  WiFiClient EspClient;                     // Wifi Client
+#endif
+
 enum MqttCommands {
   CMND_MQTTHOST, CMND_MQTTPORT, CMND_MQTTRETRY, CMND_STATETEXT, CMND_MQTTFINGERPRINT, CMND_MQTTCLIENT,
   CMND_MQTTUSER, CMND_MQTTPASSWORD, CMND_FULLTOPIC, CMND_PREFIX, CMND_GROUPTOPIC, CMND_TOPIC, CMND_PUBLISH,
@@ -64,7 +70,7 @@ const char kMqttCommands[] PROGMEM =
   D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
 
-uint8_t mqtt_retry_counter = 1;             // MQTT connection retry counter
+uint16_t mqtt_retry_counter = 1;            // MQTT connection retry counter
 uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
 bool mqtt_connected = false;                // MQTT virtual connection status
 
@@ -89,12 +95,12 @@ bool mqtt_connected = false;                // MQTT virtual connection status
 
 PubSubClient MqttClient(EspClient);
 
-bool MqttIsConnected()
+bool MqttIsConnected(void)
 {
   return MqttClient.connected();
 }
 
-void MqttDisconnect()
+void MqttDisconnect(void)
 {
   MqttClient.disconnect();
 }
@@ -112,7 +118,7 @@ bool MqttPublishLib(const char* topic, boolean retained)
   return result;
 }
 
-void MqttLoop()
+void MqttLoop(void)
 {
   MqttClient.loop();
 }
@@ -122,17 +128,17 @@ void MqttLoop()
 #include <TasmotaMqtt.h>
 TasmotaMqtt MqttClient;
 
-bool MqttIsConnected()
+bool MqttIsConnected(void)
 {
   return MqttClient.Connected();
 }
 
-void MqttDisconnect()
+void MqttDisconnect(void)
 {
   MqttClient.Disconnect();
 }
 
-void MqttDisconnectedCb()
+void MqttDisconnectedCb(void)
 {
   MqttDisconnected(MqttClient.State());  // status codes are documented in file mqtt.h as tConnState
 }
@@ -147,7 +153,7 @@ bool MqttPublishLib(const char* topic, boolean retained)
   return MqttClient.Publish(topic, mqtt_data, strlen(mqtt_data), 0, retained);
 }
 
-void MqttLoop()
+void MqttLoop(void)
 {
 }
 
@@ -156,12 +162,12 @@ void MqttLoop()
 #include <MQTTClient.h>
 MQTTClient MqttClient(MQTT_MAX_PACKET_SIZE);
 
-bool MqttIsConnected()
+bool MqttIsConnected(void)
 {
   return MqttClient.connected();
 }
 
-void MqttDisconnect()
+void MqttDisconnect(void)
 {
   MqttClient.disconnect();
 }
@@ -189,7 +195,7 @@ bool MqttPublishLib(const char* topic, boolean retained)
   return MqttClient.publish(topic, mqtt_data, strlen(mqtt_data), retained, 0);
 }
 
-void MqttLoop()
+void MqttLoop(void)
 {
   MqttClient.loop();
 //  delay(10);
@@ -201,7 +207,7 @@ void MqttLoop()
 
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
-boolean MqttDiscoverServer()
+boolean MqttDiscoverServer(void)
 {
   if (!mdns_begun) { return false; }
 
@@ -225,7 +231,7 @@ boolean MqttDiscoverServer()
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
 
-int MqttLibraryType()
+int MqttLibraryType(void)
 {
   return (int)MQTT_LIBRARY_TYPE;
 }
@@ -372,7 +378,7 @@ void MqttDisconnected(int state)
   rules_flag.mqtt_disconnected = 1;
 }
 
-void MqttConnected()
+void MqttConnected(void)
 {
   char stopic[TOPSZ];
 
@@ -434,7 +440,7 @@ void MqttConnected()
 }
 
 #ifdef USE_MQTT_TLS
-boolean MqttCheckTls()
+boolean MqttCheckTls(void)
 {
   char fingerprint1[60];
   char fingerprint2[60];
@@ -474,7 +480,7 @@ boolean MqttCheckTls()
 }
 #endif  // USE_MQTT_TLS
 
-void MqttReconnect()
+void MqttReconnect(void)
 {
   char stopic[TOPSZ];
 
@@ -559,7 +565,7 @@ void MqttReconnect()
 #endif  // MQTT_LIBRARY_TYPE
 }
 
-void MqttCheck()
+void MqttCheck(void)
 {
   if (Settings.flag.mqtt_enabled) {
     if (!MqttIsConnected()) {
@@ -587,7 +593,7 @@ void MqttCheck()
 
 /*********************************************************************************************/
 
-bool MqttCommand()
+bool MqttCommand(void)
 {
   char command [CMDSZ];
   bool serviced = true;
@@ -841,7 +847,7 @@ const char HTTP_FORM_MQTT[] PROGMEM =
   "<br/><b>" D_TOPIC "</b> = %topic% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' placeholder='" MQTT_TOPIC" ' value='{m6'><br/>"
   "<br/><b>" D_FULL_TOPIC "</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' placeholder='" MQTT_FULLTOPIC" ' value='{m7'><br/>";
 
-void HandleMqttConfiguration()
+void HandleMqttConfiguration(void)
 {
   if (HttpUser()) { return; }
   if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
@@ -873,7 +879,7 @@ void HandleMqttConfiguration()
   ShowPage(page);
 }
 
-void MqttSaveSettings()
+void MqttSaveSettings(void)
 {
   char tmp[100];
   char stemp[TOPSZ];
@@ -919,14 +925,14 @@ boolean Xdrv02(byte function)
     switch (function) {
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
-        strncat_P(mqtt_data, HTTP_BTN_MENU_MQTT, sizeof(mqtt_data));
+        strncat_P(mqtt_data, HTTP_BTN_MENU_MQTT, sizeof(mqtt_data) - strlen(mqtt_data) -1);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/" WEB_HANDLE_MQTT, HandleMqttConfiguration);
         break;
 #endif  // USE_WEBSERVER
       case FUNC_LOOP:
-        MqttLoop();
+        if (!global_state.mqtt_down) { MqttLoop(); }
         break;
       case FUNC_COMMAND:
         result = MqttCommand();

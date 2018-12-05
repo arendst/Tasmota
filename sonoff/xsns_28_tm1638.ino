@@ -72,7 +72,7 @@ void TM16XXSendData(byte address, byte data)
   digitalWrite(tm1638_strobe_pin, HIGH);
 }
 
-byte Tm16XXReceive()
+byte Tm16XXReceive(void)
 {
   byte temp = 0;
 
@@ -96,7 +96,7 @@ byte Tm16XXReceive()
 
 /*********************************************************************************************/
 
-void Tm16XXClearDisplay()
+void Tm16XXClearDisplay(void)
 {
   for (int i = 0; i < tm1638_displays; i++) {
     TM16XXSendData(i << 1, 0);
@@ -125,7 +125,7 @@ void Tm1638SetLEDs(word leds)
   }
 }
 
-byte Tm1638GetButtons()
+byte Tm1638GetButtons(void)
 {
   byte keys = 0;
 
@@ -141,7 +141,7 @@ byte Tm1638GetButtons()
 
 /*********************************************************************************************/
 
-void TmInit()
+void TmInit(void)
 {
   tm1638_type = 0;
   if ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99)) {
@@ -171,7 +171,7 @@ void TmInit()
   }
 }
 
-void TmLoop()
+void TmLoop(void)
 {
   if (tm1638_state) {
     byte buttons = Tm1638GetButtons();

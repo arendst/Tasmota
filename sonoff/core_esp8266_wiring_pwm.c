@@ -84,7 +84,7 @@ uint32_t pwm_get_mask(uint16_t value)
     return mask;
 }
 
-void prep_pwm_steps()
+void prep_pwm_steps(void)
 {
     if(pwm_mask == 0) {
         return;
@@ -123,7 +123,7 @@ void prep_pwm_steps()
     pwm_steps_changed = 1;
 }
 
-void ICACHE_RAM_ATTR pwm_timer_isr() //103-138
+void ICACHE_RAM_ATTR pwm_timer_isr(void) //103-138
 {
     struct pwm_isr_table *table = &(_pwm_isr_data.tables[_pwm_isr_data.active]);
     static uint8_t current_step = 0;
@@ -160,7 +160,7 @@ void ICACHE_RAM_ATTR pwm_timer_isr() //103-138
     TEIE |= TEIE1;//13
 }
 
-void pwm_start_timer()
+void pwm_start_timer(void)
 {
     timer1_disable();
     ETS_FRC_TIMER1_INTR_ATTACH(NULL, NULL);

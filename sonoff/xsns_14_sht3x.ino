@@ -76,7 +76,7 @@ bool Sht3xRead(float &t, float &h, uint8_t sht3x_address)
 
 /********************************************************************************************/
 
-void Sht3xDetect()
+void Sht3xDetect(void)
 {
   if (sht3x_count) return;
 

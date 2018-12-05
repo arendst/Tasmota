@@ -157,7 +157,7 @@ int16_t Ads1115GetConversion(uint8_t channel)
 
 /********************************************************************************************/
 
-void Ads1115Detect()
+void Ads1115Detect(void)
 {
   uint16_t buffer;
 
