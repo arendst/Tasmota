@@ -43,10 +43,10 @@ const char HASS_DISCOVER_BUTTON_SWITCH[] PROGMEM =
   "\"payload_available\":\"" D_ONLINE "\","        // Online
   "\"payload_not_available\":\"" D_OFFLINE "\"";   // Offline
 
-const char HASS_DISCOVER_BUTTON[] PROGMEM =
+const char HASS_DISCOVER_BUTTON_SWITCH_TOGGLE[] PROGMEM =
   "%s,\"force_update\":true";
 
-const char HASS_DISCOVER_SWITCH[] PROGMEM =
+const char HASS_DISCOVER_BUTTON_SWITCH_ONOFF[] PROGMEM =
   "%s,\"payload_off\":\"%s\"";                    // OFF
 
 const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
@@ -107,10 +107,10 @@ const char HASS_DISCOVER_BUTTON_SWITCH_SHORT[] PROGMEM =
   "\"pl_avail\":\"" D_ONLINE "\","                 // Online
   "\"pl_not_avail\":\"" D_OFFLINE "\"";            // Offline
 
-const char HASS_DISCOVER_BUTTON_SHORT[] PROGMEM =
+const char HASS_DISCOVER_BUTTON_SWITCH_TOGGLE_SHORT[] PROGMEM =
   "%s,\"frc_upd\":true";
 
-const char HASS_DISCOVER_SWITCH_SHORT[] PROGMEM =
+const char HASS_DISCOVER_BUTTON_SWITCH_ONOFF_SHORT[] PROGMEM =
   "%s,\"pl_off\":\"%s\"";                          // OFF
 
 
@@ -277,7 +277,7 @@ void HAssAnnounceRelayLight(void)
   }
 }
 
-void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key)
+void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, byte toggle)
 {
   char stopic[TOPSZ];
   char sidx[8];
@@ -311,10 +311,12 @@ void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key)
       Shorten(&availability_topic, prefix);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_BUTTON_SWITCH_SHORT:HASS_DISCOVER_BUTTON_SWITCH,
-               name, state_topic, Settings.state_text[key?2:1], availability_topic);
-    if (key) snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_BUTTON_SHORT:HASS_DISCOVER_BUTTON,
+               name, state_topic, Settings.state_text[toggle?2:1], availability_topic);
+    if (toggle) snprintf_P(mqtt_data, sizeof(mqtt_data),
+                           Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_BUTTON_SWITCH_TOGGLE_SHORT:HASS_DISCOVER_BUTTON_SWITCH_TOGGLE,
                            mqtt_data);
-    else snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SWITCH_SHORT:HASS_DISCOVER_SWITCH,
+    else snprintf_P(mqtt_data, sizeof(mqtt_data),
+                    Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_BUTTON_SWITCH_ONOFF_SHORT:HASS_DISCOVER_BUTTON_SWITCH_ONOFF,
                     mqtt_data, Settings.state_text[0]);
 
     if (Settings.flag3.hass_short_discovery_msg)
@@ -333,13 +335,21 @@ void HAssAnnounceSwitches(void)
   Format(sw_topic, tmp, sizeof(sw_topic));
   if ((strlen(sw_topic) != 0) && strcmp(sw_topic, "0")) {
     for (byte switch_index = 0; switch_index < MAX_SWITCHES; switch_index++) {
-      uint8_t switch_present = 0;
+      byte switch_present = 0;
+      byte toggle = 1;
 
       if ((pin[GPIO_SWT1 + switch_index] < 99) || (pin[GPIO_SWT1_NP + switch_index] < 99)) {
         switch_present = 1;
       }
 
-      HAssAnnounceButtonSwitch(switch_index, sw_topic, switch_present, 0);
+      // Check if MQTT message will be ON/OFF or TOGGLE
+      if (Settings.switchmode[switch_index] == FOLLOW || Settings.switchmode[switch_index] == FOLLOW_INV ||
+          !strcmp(mqtt_topic, sw_topic) || !strcmp(Settings.mqtt_grptopic, sw_topic))
+      {
+        toggle = 0;
+      }
+
+      HAssAnnounceButtonSwitch(switch_index, sw_topic, switch_present, 0, toggle);
     }
   }
 }
@@ -354,7 +364,8 @@ void HAssAnnounceButtons(void)
   Format(key_topic, tmp, sizeof(key_topic));
   if ((strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
     for (byte button_index = 0; button_index < MAX_KEYS; button_index++) {
-      uint8_t button_present = 0;
+      byte button_present = 0;
+      byte toggle = 1;
 
       if (!button_index && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
         button_present = 1;
@@ -364,7 +375,13 @@ void HAssAnnounceButtons(void)
         }
       }
 
-      HAssAnnounceButtonSwitch(button_index, key_topic, button_present, 1);
+      // Check if MQTT message will be ON/OFF or TOGGLE
+      if (!strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic))
+      {
+        toggle = 0;
+      }
+
+      HAssAnnounceButtonSwitch(button_index, key_topic, button_present, 1, toggle);
     }
   }
 }
