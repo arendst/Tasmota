@@ -433,14 +433,14 @@
 #define D_SENSORS_FOUND "Sensorer hittades"
 
 // xsns_06_dht.ino
-#define D_TIMEOUT_WAITING_FOR "Timeout under väntan
-#define D_START_SIGNAL_LOW "startsignal låg
-#define D_START_SIGNAL_HIGH "startsignal hög
+#define D_TIMEOUT_WAITING_FOR "Timeout under väntan"
+#define D_START_SIGNAL_LOW "startsignal låg"
+#define D_START_SIGNAL_HIGH "startsignal hög"
 #define D_PULSE "puls"
-#define D_CHECKSUM_FAILURE "Fel kontrollsumma
+#define D_CHECKSUM_FAILURE "Fel kontrollsumma"
 
 // xsns_07_sht1x.ino
-#define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor besvarade inte med ACK kommando
+#define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor besvarade inte med ACK kommando"
 #define D_SHT1X_FOUND "SHT1X hittades"
 
 // xsns_18_pms5003.ino
