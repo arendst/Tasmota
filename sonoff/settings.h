@@ -156,7 +156,7 @@ typedef union {
     uint16_t int_report_mode : 2;           // Interrupt reporting mode 0 = immediate telemetry & event, 1 = immediate event only, 2 = immediate telemetry only
     uint16_t int_report_defer : 4;          // Number of interrupts to ignore until reporting (default 0, max 15)
     uint16_t int_count_en : 1;              // Enable interrupt counter for this pin
-    uint16_t spare12 : 1;
+    uint16_t int_retain_flag : 1;           // Report if interrupt occured for pin in next teleperiod
     uint16_t spare13 : 1;
     uint16_t spare14 : 1;
     uint16_t spare15 : 1;
