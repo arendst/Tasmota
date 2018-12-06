@@ -73,16 +73,25 @@ int DomoticzRssiQuality(void)
 
 void MqttPublishDomoticzPowerState(byte device)
 {
-  char sdimmer[8];
+  char svalue[8];  // Dimmer or Fanspeed value
 
-  if ((device < 1) || (device > devices_present)) {
-    device = 1;
-  }
-  if (Settings.flag.mqtt_enabled && Settings.domoticz_relay_idx[device -1]) {
-    snprintf_P(sdimmer, sizeof(sdimmer), PSTR("%d"), Settings.light_dimmer);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-      Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? sdimmer : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
-    MqttPublish(domoticz_in_topic);
+  if (Settings.flag.mqtt_enabled) {
+    if ((device < 1) || (device > devices_present)) { device = 1; }
+    if ((SONOFF_IFAN02 == Settings.module) && Settings.domoticz_relay_idx[1] && (device > 1)) {  // device (relay) 1 handled below
+      if (4 == device) {  // Wait for device (relay) 4 to get valid GetFanspeed
+        uint8_t fan_speed = GetFanspeed();
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), (int)fan_speed * 10);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
+          Settings.domoticz_relay_idx[1], (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
+        MqttPublish(domoticz_in_topic);
+      }
+    }
+    else if (Settings.domoticz_relay_idx[device -1]) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), Settings.light_dimmer);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
+        Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
+      MqttPublish(domoticz_in_topic);
+    }
   }
 }
 
@@ -182,7 +191,18 @@ boolean DomoticzMqttData(void)
         if (idx == Settings.domoticz_relay_idx[i]) {
           bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
-          if (iscolordimmer && 10 == nvalue) { // Color_SetColor
+          if ((SONOFF_IFAN02 == Settings.module) && (1 == i)) {  // Idx 2 is fanspeed
+            int16_t svalue = 0;
+            if (domoticz.containsKey("svalue1")) {
+              svalue = domoticz["svalue1"];
+            } else {
+              return 1;
+            }
+            snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_FANSPEED));
+            snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), (nvalue == 2) ? svalue / 10 : 0);
+            found = 1;
+          }
+          else if (iscolordimmer && 10 == nvalue) { // Color_SetColor
             JsonObject& color = domoticz["Color"];
             uint16_t level = nvalue = domoticz["svalue1"];
             uint16_t r = color["r"]; r = r * level / 100;
@@ -193,8 +213,9 @@ boolean DomoticzMqttData(void)
             snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_COLOR));
             snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%02x%02x%02x%02x%02x"), r, g, b, cw, ww);
             found = 1;
-          } else if ((!iscolordimmer && 2 == nvalue) || // gswitch_sSetLevel
-                     (iscolordimmer && 15 == nvalue)) { // Color_SetBrightnessLevel
+          }
+          else if ((!iscolordimmer && 2 == nvalue) || // gswitch_sSetLevel
+                   (iscolordimmer && 15 == nvalue)) { // Color_SetBrightnessLevel
             if (domoticz.containsKey("svalue1")) {
               nvalue = domoticz["svalue1"];
             } else {
@@ -206,7 +227,8 @@ boolean DomoticzMqttData(void)
             snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_DIMMER));
             snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), nvalue);
             found = 1;
-          } else if (1 == nvalue || 0 == nvalue) {
+          }
+          else if (1 == nvalue || 0 == nvalue) {
             if (((power >> i) &1) == (power_t)nvalue) {
               return 1;
             }
@@ -422,6 +444,7 @@ void HandleDomoticzConfiguration(void)
       page.replace("{4", String((int)Settings.domoticz_switch_idx[i]));
     }
     page.replace("{1", String(i +1));
+    if ((SONOFF_IFAN02 == Settings.module) && (1 == i)) { break; }
   }
   for (int i = 0; i < DZ_MAX_SENSORS; i++) {
     page += FPSTR(HTTP_FORM_DOMOTICZ_SENSOR);

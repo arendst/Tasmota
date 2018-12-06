@@ -91,8 +91,6 @@ const char kTasmotaCommands[] PROGMEM =
 
 const char kSleepMode[] PROGMEM = "Dynamic|Normal";
 
-const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
-
 // Global variables
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
 
@@ -390,7 +388,7 @@ uint8_t GetFanspeed(void)
 
 void SetFanspeed(uint8_t fanspeed)
 {
- for (byte i = 0; i < 3; i++) {
+  for (byte i = 0; i < MAX_FAN_SPEED -1; i++) {
     uint8_t state = kIFan02Speed[fanspeed][i];
 //    uint8_t state = pgm_read_byte(kIFan02Speed +(speed *3) +i);
     ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
@@ -566,14 +564,14 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       if (data_len > 0) {
         if ('-' == dataBuf[0]) {
           payload = (int16_t)GetFanspeed() -1;
-          if (payload < 0) { payload = 3; }
+          if (payload < 0) { payload = MAX_FAN_SPEED -1; }
         }
         else if ('+' == dataBuf[0]) {
           payload = GetFanspeed() +1;
-          if (payload > 3) { payload = 0; }
+          if (payload > MAX_FAN_SPEED -1) { payload = 0; }
         }
       }
-      if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
+      if ((payload >= 0) && (payload < MAX_FAN_SPEED) && (payload != GetFanspeed())) {
         SetFanspeed(payload);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, GetFanspeed());
