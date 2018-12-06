@@ -42,8 +42,9 @@ char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
 char domoticz_out_topic[] = DOMOTICZ_OUT_TOPIC;
 
 boolean domoticz_subscribe = false;
-int domoticz_update_timer = 0;
 byte domoticz_update_flag = 1;
+int domoticz_update_timer = 0;
+unsigned long fan_debounce = 0;             // iFan02 state debounce timer
 
 int DomoticzBatteryQuality(void)
 {
@@ -71,26 +72,44 @@ int DomoticzRssiQuality(void)
   return WifiGetRssiAsQuality(WiFi.RSSI()) / 10;
 }
 
+void MqttPublishDomoticzFanState()
+{
+  if (Settings.flag.mqtt_enabled && Settings.domoticz_relay_idx[1]) {
+    char svalue[8];  // Fanspeed value
+
+    int fan_speed = GetFanspeed();
+    snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fan_speed * 10);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
+      Settings.domoticz_relay_idx[1], (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
+    MqttPublish(domoticz_in_topic);
+
+    fan_debounce = millis();
+  }
+}
+
+void DomoticzUpdateFanState()
+{
+  if (domoticz_update_flag) {
+    MqttPublishDomoticzFanState();
+  }
+  domoticz_update_flag = 1;
+}
+
 void MqttPublishDomoticzPowerState(byte device)
 {
-  char svalue[8];  // Dimmer or Fanspeed value
-
   if (Settings.flag.mqtt_enabled) {
     if ((device < 1) || (device > devices_present)) { device = 1; }
-    if ((SONOFF_IFAN02 == Settings.module) && Settings.domoticz_relay_idx[1] && (device > 1)) {  // device (relay) 1 handled below
-      if (4 == device) {  // Wait for device (relay) 4 to get valid GetFanspeed
-        uint8_t fan_speed = GetFanspeed();
-        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), (int)fan_speed * 10);
+    if (Settings.domoticz_relay_idx[device -1]) {
+      if ((SONOFF_IFAN02 == Settings.module) && (device > 1)) {
+        // Fan handled by MqttPublishDomoticzFanState
+      } else {
+        char svalue[8];  // Dimmer value
+
+        snprintf_P(svalue, sizeof(svalue), PSTR("%d"), Settings.light_dimmer);
         snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-          Settings.domoticz_relay_idx[1], (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
+          Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
         MqttPublish(domoticz_in_topic);
       }
-    }
-    else if (Settings.domoticz_relay_idx[device -1]) {
-      snprintf_P(svalue, sizeof(svalue), PSTR("%d"), Settings.light_dimmer);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-        Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
-      MqttPublish(domoticz_in_topic);
     }
   }
 }
@@ -110,7 +129,12 @@ void DomoticzMqttUpdate(void)
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = Settings.domoticz_update_timer;
       for (byte i = 1; i <= devices_present; i++) {
-        MqttPublishDomoticzPowerState(i);
+        if ((SONOFF_IFAN02 == Settings.module) && (i > 1)) {
+          MqttPublishDomoticzFanState();
+          break;
+        } else {
+          MqttPublishDomoticzPowerState(i);
+        }
       }
     }
   }
@@ -192,14 +216,21 @@ boolean DomoticzMqttData(void)
           bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
           if ((SONOFF_IFAN02 == Settings.module) && (1 == i)) {  // Idx 2 is fanspeed
-            int16_t svalue = 0;
+            uint8_t svalue = 0;
             if (domoticz.containsKey("svalue1")) {
               svalue = domoticz["svalue1"];
             } else {
               return 1;
             }
+            svalue = (nvalue == 2) ? svalue / 10 : 0;
+            if (GetFanspeed() == svalue) {
+              return 1;  // Stop loop as already set
+            }
+            if (TimePassedSince(fan_debounce) < 1000) {
+              return 1;  // Stop loop if device in limbo
+            }
             snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_FANSPEED));
-            snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), (nvalue == 2) ? svalue / 10 : 0);
+            snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), svalue);
             found = 1;
           }
           else if (iscolordimmer && 10 == nvalue) { // Color_SetColor
@@ -230,7 +261,7 @@ boolean DomoticzMqttData(void)
           }
           else if (1 == nvalue || 0 == nvalue) {
             if (((power >> i) &1) == (power_t)nvalue) {
-              return 1;
+              return 1;  // Stop loop
             }
             snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_POWER "%s"), (devices_present > 1) ? stemp1 : "");
             snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), nvalue);
