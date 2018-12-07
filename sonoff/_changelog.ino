@@ -1,6 +1,7 @@
 /* 6.3.0.16 20181201
  * Add support for iFan02 Fanspeed in Domoticz using a selector (#4517)
  * Add Announce Switches to MQTT Discovery (#4531)
+ * Update MCP230xx driver to support interrupt retention over teleperiod (#4547)
  *
  * 6.3.0.15 20181201
  * Removed command SetOption36 (#4497)
