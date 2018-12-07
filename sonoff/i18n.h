@@ -330,6 +330,7 @@
 #define D_CMND_SPEED "Speed"
 #define D_CMND_WAKEUP "Wakeup"
 #define D_CMND_WAKEUPDURATION "WakeUpDuration"
+#define D_CMND_WHITE "White"
 #define D_CMND_WIDTH "Width"
 
 // Commands xdrv_05_irremote.ino

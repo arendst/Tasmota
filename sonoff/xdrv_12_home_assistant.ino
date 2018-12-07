@@ -61,6 +61,12 @@ const char HASS_DISCOVER_LIGHT_COLOR[] PROGMEM =
   "\"rgb_state_topic\":\"%s\","                    // stat/led2/RESULT
   "\"rgb_value_template\":\"{{value_json." D_CMND_COLOR ".split(',')[0:3]|join(',')}}\"";
 
+const char HASS_DISCOVER_LIGHT_WHITE[] PROGMEM =
+  "%s,\"white_value_command_topic\":\"%s\","       // cmnd/led2/White
+  "\"white_value_state_topic\":\"%s\","            // stat/led2/RESULT
+  "\"white_value_scale\":100,"
+  "\"white_value_template\":\"{{ value_json.Channel[3] }}\"";
+
 const char HASS_DISCOVER_LIGHT_CT[] PROGMEM =
   "%s,\"color_temp_command_topic\":\"%s\","        // cmnd/led2/CT
   "\"color_temp_state_topic\":\"%s\","             // stat/led2/RESULT
@@ -125,6 +131,12 @@ const char HASS_DISCOVER_LIGHT_COLOR_SHORT[] PROGMEM =
   "%s,\"rgb_cmd_t\":\"%s2\","                      // cmnd/led2/Color2
   "\"rgb_stat_t\":\"%s\","                         // stat/led2/RESULT
   "\"rgb_val_tpl\":\"{{value_json." D_CMND_COLOR ".split(',')[0:3]|join(',')}}\"";
+
+const char HASS_DISCOVER_LIGHT_WHITE_SHORT[] PROGMEM =
+  "%s,\"whit_val_cmd_t\":\"%s\","                  // cmnd/led2/White
+  "\"whit_val_stat_t\":\"%s\","                    // stat/led2/RESULT
+  "\"white_value_scale\":100,"                     // (No abbreviation defined)
+  "\"whit_val_tpl\":\"{{ value_json.Channel[3] }}\"";
 
 const char HASS_DISCOVER_LIGHT_CT_SHORT[] PROGMEM =
   "%s,\"clr_temp_cmd_t\":\"%s\","                  // cmnd/led2/CT
@@ -257,6 +269,16 @@ void HAssAnnounceRelayLight(void)
             snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_SCHEME_SHORT, mqtt_data, effect_command_topic, state_topic);
           }
 
+        }
+        if (LST_RGBW == light_subtype) {
+          char _white_temp_command_topic[TOPSZ];
+          char *white_temp_command_topic = _white_temp_command_topic;
+
+          GetTopic_P(white_temp_command_topic, CMND, mqtt_topic, D_CMND_WHITE);
+          if (Settings.flag3.hass_short_discovery_msg)
+            Shorten(&white_temp_command_topic, prefix);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_LIGHT_WHITE_SHORT:HASS_DISCOVER_LIGHT_WHITE,
+                     mqtt_data, white_temp_command_topic, state_topic);
         }
         if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
           char _color_temp_command_topic[TOPSZ];
