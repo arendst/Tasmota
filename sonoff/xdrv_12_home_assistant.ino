@@ -302,7 +302,8 @@ void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, 
     } else {
       snprintf_P(name, sizeof(name), PSTR("%s %s"), Settings.friendlyname[device], key?"BTN":"SW");
     }
-    GetPowerDevice(value_template, device+1, sizeof(value_template), Settings.flag.device_index_enable);
+    GetPowerDevice(value_template, device+1, sizeof(value_template),
+                   key + Settings.flag.device_index_enable); // Force index for Switch 1, Index on Button1 is controlled by Settings.flag.device_index_enable
     GetTopic_P(state_topic, CMND, topic, value_template); // State of button is sent as CMND TOGGLE, state of switch is sent as ON/OFF
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
     FindPrefix(state_topic, availability_topic, prefix);
