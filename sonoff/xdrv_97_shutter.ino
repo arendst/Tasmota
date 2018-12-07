@@ -128,7 +128,7 @@ void ShutterInit()
       dtostrfd((double)Shutter_Open_Time[i] / 10 , 1, shutter_open_chr);
       dtostrfd((double)Shutter_Close_Time[i] / 10, 1, shutter_close_chr);
 
-      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoedffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, size %d"), i, Settings.shutter_startrelay[i],Shutter_Real_Position[i],Settings.shutter_position[i],  Shutter_Close_Velocity[i] , Shutter_Open_Max[i], shutter_open_chr, shutter_close_chr,Settings.shuttercoeff[0][i],Settings.shuttercoeff[1][i],Settings.shuttercoeff[2][i],Settings.shuttercoeff[3][i],Settings.shuttercoeff[4][i],shutter_mask,Settings.shutter_invert[i], sizeof(Settings.shuttercoeff));
+      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoedffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, shuttermode %d"), i, Settings.shutter_startrelay[i],Shutter_Real_Position[i],Settings.shutter_position[i],  Shutter_Close_Velocity[i] , Shutter_Open_Max[i], shutter_open_chr, shutter_close_chr,Settings.shuttercoeff[0][i],Settings.shuttercoeff[1][i],Settings.shuttercoeff[2][i],Settings.shuttercoeff[3][i],Settings.shuttercoeff[4][i],shutter_mask,Settings.shutter_invert[i],shutterMode );
       AddLog(LOG_LEVEL_INFO);
     } else {
       // terminate loop at first INVALID shutter.
@@ -358,15 +358,9 @@ boolean ShutterCommand()
         }
         SwitchedRelay = 0;
       }
-
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index,  Settings.shutter_invert[index-1] ? 100 - target_pos_percent : target_pos_percent);
     } else {
-      if (Shutter_Direction[index-1] != 0) {
-        target_pos_percent = realposition_to_percent(Shutter_Real_Position[index-1], index-1);
-        //temp = Settings.shuttercoeff[2][index-1] * 5 > Shutter_Real_Position[index-1] ? Shutter_Real_Position[index-1] / Settings.shuttercoeff[2][index-1] : (Shutter_Real_Position[index-1]-Settings.shuttercoeff[0,index-1]) / Settings.shuttercoeff[1][index-1];
-      } else {
-        target_pos_percent = Settings.shutter_invert[index-1] ? 100 - Settings.shutter_position[index-1]: Settings.shutter_position[index-1];
-      }
+      target_pos_percent = realposition_to_percent(Shutter_Real_Position[index-1], index-1);
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]  ? 100 - target_pos_percent : target_pos_percent);
       command_code = 0;
     }
