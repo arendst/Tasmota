@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0011'
+VER = '2.1.0012'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -803,7 +803,13 @@ Setting_6_3_0_15['flag3'][0].update ({
         'sleep_normal':             ('<L', (0x3A0,1,10), (None, None,                           ('SetOption',   '"SetOption60 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_3_0_16 = copy.deepcopy(Setting_6_3_0_15)
+Setting_6_3_0_16['mcp230xx_config'][0].update ({
+        'int_retain_flag':          ('<L', (0x6F6,1,12), (None, None,                           ('MCP230xx',    None)) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x6030010, 0xe00, Setting_6_3_0_16),
             (0x603000F, 0xe00, Setting_6_3_0_15),
             (0x603000E, 0xe00, Setting_6_3_0_14),
             (0x603000D, 0xe00, Setting_6_3_0_13),
