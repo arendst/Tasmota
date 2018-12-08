@@ -1,5 +1,5 @@
 /*
-  xsns_32_MPU_6050.ino - MPU_6050 gyroscope and temperature sensor support for Sonoff-Tasmota
+  xsns_32_mpu6050.ino - MPU6050 gyroscope and temperature sensor support for Sonoff-Tasmota
 
   Copyright (C) 2018  Oliver Welter
 
@@ -20,14 +20,16 @@
 #ifdef USE_I2C
 #ifdef USE_MPU6050
 /*********************************************************************************************\
- * MPU_6050 3 axis gyroscope and temperature sensor
+ * MPU6050 3 axis gyroscope and temperature sensor
  *
  * Source: Oliver Welter, with special thanks to Jeff Rowberg
  *
  * I2C Address: 0x68 or 0x69 with AD0 HIGH
 \*********************************************************************************************/
 
-#define D_SENSOR_MPU6050 "MPU6050"
+#define XSNS_32                          32
+
+#define D_SENSOR_MPU6050                 "MPU6050"
 
 #define MPU_6050_ADDR_AD0_LOW            0x68
 #define MPU_6050_ADDR_AD0_HIGH           0x69
@@ -43,7 +45,7 @@ int16_t MPU_6050_temperature = 0;
 #include <MPU6050.h>
 MPU6050 mpu6050;
 
-void MPU_6050PerformReading()
+void MPU_6050PerformReading(void)
 {
   mpu6050.getMotion6(
     &MPU_6050_ax,
@@ -73,7 +75,7 @@ void MPU_6050SetAccelOffsets(int x, int y, int z)
 }
 */
 
-void MPU_6050Detect()
+void MPU_6050Detect(void)
 {
   if (MPU_6050_found)
   {
@@ -150,7 +152,7 @@ void MPU_6050Show(boolean json)
       snprintf_P(json_axis_gy, sizeof(json_axis_gy), PSTR(",\"" D_JSON_AXIS_GY "\":%s"), axis_gy);
       char json_axis_gz[40];
       snprintf_P(json_axis_gz, sizeof(json_axis_gz), PSTR(",\"" D_JSON_AXIS_GZ "\":%s"), axis_gz);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s%s%s%s%s%s,\"}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s%s%s%s%s%s}"),
         mqtt_data, D_SENSOR_MPU6050, temperature, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz);
 #ifdef USE_DOMOTICZ
       DomoticzTempHumSensor(temperature, 0);
@@ -172,8 +174,6 @@ void MPU_6050Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_32
 
 boolean Xsns32(byte function)
 {

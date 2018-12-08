@@ -17,7 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef XFUNC_PTR_IN_ROM
 boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointers
+#else
+boolean (* const xdrv_func_ptr[])(byte) = {   // Driver Function Pointers
+#endif
+
 #ifdef XDRV_01
   &Xdrv01,
 #endif
@@ -211,7 +216,7 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
   return XdrvCall(FUNC_MQTT_DATA);
 }
 
-boolean XdrvRulesProcess()
+boolean XdrvRulesProcess(void)
 {
   return XdrvCall(FUNC_RULES_PROCESS);
 }
@@ -233,7 +238,7 @@ boolean XdrvCall(byte Function)
   boolean result = false;
 
   for (byte x = 0; x < xdrv_present; x++) {
-    if (global_state.wifi_down) { delay(DRIVER_BOOT_DELAY); }
+//    WifiAddDelayWhenDisconnected();
     result = xdrv_func_ptr[x](Function);
     if (result) break;
   }

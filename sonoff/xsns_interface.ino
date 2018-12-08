@@ -17,7 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef XFUNC_PTR_IN_ROM
 boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers for simple implementation of sensors
+#else
+boolean (* const xsns_func_ptr[])(byte) = {  // Sensor Function Pointers for simple implementation of sensors
+#endif
+
 #ifdef XSNS_01
   &Xsns01,
 #endif
@@ -258,22 +263,22 @@ boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers
 };
 
 const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  // Number of External Sensors found
-uint8_t xsns_index = 0;
 
 /*********************************************************************************************\
  * Function call to all xsns
 \*********************************************************************************************/
 
-uint8_t XsnsPresent()
-{
-  return xsns_present;
-}
-
-boolean XsnsNextCall(byte Function)
+boolean XsnsNextCall(byte Function, uint8_t &xsns_index)
 {
   xsns_index++;
-  if (xsns_index == xsns_present) xsns_index = 0;
-  if (global_state.wifi_down) { delay(DRIVER_BOOT_DELAY); }
+  if (xsns_index == xsns_present) { xsns_index = 0; }
+#ifdef USE_DEBUG_DRIVER
+  while (!XsnsEnabled(xsns_index) && !xsns_index) {  // Perform at least first sensor (counter)
+    xsns_index++;
+    if (xsns_index == xsns_present) { xsns_index = 0; }
+  }
+#endif
+//  WifiAddDelayWhenDisconnected();
   return xsns_func_ptr[xsns_index](Function);
 }
 
@@ -286,24 +291,30 @@ boolean XsnsCall(byte Function)
 #endif  // PROFILE_XSNS_EVERY_SECOND
 
   for (byte x = 0; x < xsns_present; x++) {
+#ifdef USE_DEBUG_DRIVER
+    if (XsnsEnabled(x)) {
+#endif
 
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
-    uint32_t profile_start_millis = millis();
+      uint32_t profile_start_millis = millis();
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
-    if (global_state.wifi_down) { delay(DRIVER_BOOT_DELAY); }
-    result = xsns_func_ptr[x](Function);
+//      WifiAddDelayWhenDisconnected();
+      result = xsns_func_ptr[x](Function);
 
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
-    uint32_t profile_millis = millis() - profile_start_millis;
-    if (profile_millis) {
-      if (FUNC_EVERY_SECOND == Function) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("PRF: At %08u XsnsCall %d to Sensor %d took %u mS"), uptime, Function, x, profile_millis);
-        AddLog(LOG_LEVEL_DEBUG);
+      uint32_t profile_millis = millis() - profile_start_millis;
+      if (profile_millis) {
+        if (FUNC_EVERY_SECOND == Function) {
+          snprintf_P(log_data, sizeof(log_data), PSTR("PRF: At %08u XsnsCall %d to Sensor %d took %u mS"), uptime, Function, x, profile_millis);
+          AddLog(LOG_LEVEL_DEBUG);
+        }
       }
-    }
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
 
-    if (result) break;
+      if (result) break;
+#ifdef USE_DEBUG_DRIVER
+    }
+#endif
   }
 
 #ifdef PROFILE_XSNS_EVERY_SECOND

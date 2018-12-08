@@ -36,7 +36,7 @@
 #include <TasmotaModbus.h>
 TasmotaModbus *PzemDcModbus;
 
-void PzemDcEverySecond()
+void PzemDcEverySecond(void)
 {
   static uint8_t send_retry = 0;
 
@@ -60,9 +60,11 @@ void PzemDcEverySecond()
       energy_active_power = (float)((buffer[9] << 24) + (buffer[10] << 16) + (buffer[7] << 8) + buffer[8]) / 10.0;  // 429496729.0 W
       float energy = (float)((buffer[13] << 24) + (buffer[14] << 16) + (buffer[11] << 8) + buffer[12]);             // 4294967295 Wh
 
-      if (!energy_start || (energy < energy_start)) { energy_start = energy; }  // Init after restart and hanlde roll-over if any
-      energy_kWhtoday += (energy - energy_start) * 100;
-      energy_start = energy;
+      if (!energy_start || (energy < energy_start)) { energy_start = energy; }  // Init after restart and handle roll-over if any
+      if (energy != energy_start) {
+        energy_kWhtoday += (unsigned long)((energy - energy_start) * 100);
+        energy_start = energy;
+      }
       EnergyUpdateToday();
     }
   }
@@ -76,7 +78,7 @@ void PzemDcEverySecond()
   }
 }
 
-void PzemDcSnsInit()
+void PzemDcSnsInit(void)
 {
   PzemDcModbus = new TasmotaModbus(pin[GPIO_PZEM017_RX], pin[GPIO_PZEM0XX_TX]);
   uint8_t result = PzemDcModbus->Begin(9600, 2);  // Uses two stop bits!!
@@ -88,7 +90,7 @@ void PzemDcSnsInit()
   }
 }
 
-void PzemDcDrvInit()
+void PzemDcDrvInit(void)
 {
   if (!energy_flg) {
     if ((pin[GPIO_PZEM017_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {

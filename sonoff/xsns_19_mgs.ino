@@ -26,17 +26,19 @@
  * https://github.com/Seeed-Studio/Mutichannel_Gas_Sensor.git
 \*********************************************************************************************/
 
+#define XSNS_19            19
+
 #ifndef MGS_SENSOR_ADDR
 #define MGS_SENSOR_ADDR    0x04             // Default Mutichannel Gas sensor i2c address
 #endif
 
 #include "MutichannelGasSensor.h"
 
-void MGSInit() {
+void MGSInit(void) {
   gas.begin(MGS_SENSOR_ADDR);
 }
 
-boolean MGSPrepare()
+boolean MGSPrepare(void)
 {
   gas.begin(MGS_SENSOR_ADDR);
   if (!gas.isError()) {
@@ -88,8 +90,6 @@ void MGSShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_19
 
 boolean Xsns19(byte function)
 {

@@ -18,6 +18,8 @@
 */
 
 #ifdef USE_SR04
+
+#include <NewPing.h>
 /*********************************************************************************************\
  * HC-SR04, HC-SR04+, JSN-SR04T - Ultrasonic distance sensor
  *
@@ -28,115 +30,41 @@
 
 uint8_t sr04_echo_pin = 0;
 uint8_t sr04_trig_pin = 0;
+real64_t distance;
 
-/*********************************************************************************************\
- * Embedded stripped and tuned NewPing library from Tim Eckel - teckel@leethost.com
- * https://bitbucket.org/teckel12/arduino-new-ping
-\*********************************************************************************************/
-#define US_ROUNDTRIP_CM       58      // Microseconds (uS) it takes sound to travel round-trip 1cm (2cm total), uses integer to save compiled code space. Default: 58
-#define US_ROUNDTRIP_IN       148     // Microseconds (uS) it takes sound to travel round-trip 1 inch (2 inches total), uses integer to save compiled code space. Default: 148
-#define PING_MEDIAN_DELAY     29000
-#define MAX_SENSOR_DISTANCE   500
-#define PING_OVERHEAD         5
+NewPing* sonar = NULL;
 
-// Conversion from uS to distance (round result to nearest cm or inch).
-#define EchoConvert(echoTime, conversionFactor) (tmax(((unsigned int)echoTime + conversionFactor / 2) / conversionFactor, (echoTime ? 1 : 0)))
-
-/********************************************************************************************/
-
-void Sr04Init()
+void Sr04Init(void)
 {
   sr04_echo_pin = pin[GPIO_SR04_ECHO];
   sr04_trig_pin = pin[GPIO_SR04_TRIG];
-  pinMode(sr04_trig_pin, OUTPUT);
-  pinMode(sr04_echo_pin, INPUT_PULLUP);
-}
-
-boolean Sr04Read(uint16_t *distance)
-{
-  uint16_t duration = 0;
-
-  *distance = 0;
-
-  /* Send ping and get delay */
-  duration = Sr04GetSamples(9, 250);
-
-  /* Calculate the distance (in cm) based on the speed of sound. */
-  *distance = EchoConvert(duration, US_ROUNDTRIP_CM);
-
-  return 1;
-}
-
-uint16_t Sr04Ping(uint16_t max_cm_distance)
-{
-  uint16_t duration = 0;
-  uint16_t maxEchoTime;
-
-  maxEchoTime = tmin(max_cm_distance + 1, (uint16_t) MAX_SENSOR_DISTANCE + 1) * US_ROUNDTRIP_CM;
-
-  /* The following trigPin/echoPin cycle is used to determine the
-     distance of the nearest object by bouncing soundwaves off of it. */
-  digitalWrite(sr04_trig_pin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(sr04_trig_pin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(sr04_trig_pin, LOW);
-
-  /* Wait for the echo */
-  duration = pulseIn(sr04_echo_pin, HIGH, 26000) - PING_OVERHEAD;
-
-  return (duration > maxEchoTime) ? 0 : duration;
-}
-
-uint16_t Sr04GetSamples(uint8_t it, uint16_t max_cm_distance)
-{
-  uint16_t uS[it];
-  uint16_t last;
-  uint8_t j;
-  uint8_t i = 0;
-  uint16_t t;
-  uS[0] = 0;
-
-  while (i < it) {
-    t = micros();
-    last = Sr04Ping(max_cm_distance);
-
-    if (last != 0) {
-      if (i > 0) {
-        for (j = i; j > 0 && uS[j - 1] < last; j--) {
-          uS[j] = uS[j - 1];
-        }
-      } else {
-        j = 0;
-      }
-      uS[j] = last;
-      i++;
-    } else {
-      it--;
-    }
-    if (i < it && micros() - t < PING_MEDIAN_DELAY) {
-      delay((PING_MEDIAN_DELAY + t - micros()) / 1000);
-    }
-  }
-
-  return (uS[1]); // Return the ping distance from the 2nd highest reading
+  sonar = new NewPing(sr04_trig_pin, sr04_echo_pin, 300);
 }
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_DISTANCE[] PROGMEM =
-  "%s{s}SR04 " D_DISTANCE "{m}%d" D_UNIT_CENTIMETER "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "%s{s}SR04 " D_DISTANCE "{m}%s" D_UNIT_CENTIMETER "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 void Sr04Show(boolean json)
 {
-  uint16_t distance;
+  distance = (real64_t)(sonar->ping_median(5))/ US_ROUNDTRIP_CM;
 
-  if (Sr04Read(&distance)) {                // Check if read failed
+  if (distance != 0) {                // Check if read failed
+    char distance_chr[10];
+
+    dtostrfd(distance, 3, distance_chr);
+
     if(json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SR04\":{\"" D_JSON_DISTANCE "\":%d}"), mqtt_data, distance);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SR04\":{\"" D_JSON_DISTANCE "\":%s}"), mqtt_data, distance_chr);
+#ifdef USE_DOMOTICZ
+      if (0 == tele_period) {
+        DomoticzSensor(DZ_COUNT, distance_chr);  // Send distance as Domoticz Counter value
+      }
+#endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_DISTANCE, mqtt_data, distance);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_DISTANCE, mqtt_data, distance_chr);
 #endif  // USE_WEBSERVER
     }
   }

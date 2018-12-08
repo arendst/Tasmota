@@ -43,6 +43,12 @@
 #ifdef USE_I2C
 #ifdef USE_MPR121
 
+/**
+ * @ingroup group1
+ * Assign Tasmota sensor model ID
+ */
+#define XSNS_30          30
+
 /** @defgroup group1 MPR121
  *  MPR121 preprocessor directives
  *  @{
@@ -383,12 +389,6 @@ void Mpr121Show(struct mpr121 *pS, byte function)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-/**
- * @ingroup group1
- * Assign Tasmota sensor model ID
- */
-#define XSNS_30
 
 /**
  * The function Xsns30() interfaces Tasmota with the driver.

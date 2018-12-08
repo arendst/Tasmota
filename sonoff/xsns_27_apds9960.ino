@@ -27,9 +27,6 @@
 
 #ifdef USE_I2C
 #ifdef USE_APDS9960
-
-#define XSNS_27 27
-
 /*********************************************************************************************\
  * APDS9960 - Digital Proximity Ambient Light RGB and Gesture Sensor
  *
@@ -38,6 +35,8 @@
  *
  * I2C Address: 0x39
 \*********************************************************************************************/
+
+#define XSNS_27             27
 
 #if defined(USE_SHT) || defined(USE_VEML6070) || defined(USE_TSL2561)
   #warning **** Turned off conflicting drivers SHT and VEML6070 ****
@@ -352,7 +351,7 @@ int8_t wireReadDataBlock(   uint8_t reg,
 *            Kelvin
 */
 
-void calculateColorTemperature()
+void calculateColorTemperature(void)
 {
   float X, Y, Z;      /* RGB to XYZ correlation      */
   float xc, yc;       /* Chromaticity co-ordinates   */
@@ -399,7 +398,7 @@ float powf(const float x, const float y)
   *
   * @return lower threshold
   */
- uint8_t getProxIntLowThresh()
+ uint8_t getProxIntLowThresh(void)
  {
      uint8_t val;
 
@@ -423,7 +422,7 @@ float powf(const float x, const float y)
   *
   * @return high threshold
   */
- uint8_t getProxIntHighThresh()
+ uint8_t getProxIntHighThresh(void)
  {
      uint8_t val;
 
@@ -455,7 +454,7 @@ float powf(const float x, const float y)
   *
   * @return the value of the LED drive strength. 0xFF on failure.
   */
- uint8_t getLEDDrive()
+ uint8_t getLEDDrive(void)
  {
      uint8_t val;
 
@@ -507,7 +506,7 @@ float powf(const float x, const float y)
   *
   * @return the value of the proximity gain. 0xFF on failure.
   */
- uint8_t getProximityGain()
+ uint8_t getProximityGain(void)
  {
      uint8_t val;
 
@@ -598,7 +597,7 @@ float powf(const float x, const float y)
   *
   * @return The LED boost value. 0xFF on failure.
   */
- uint8_t getLEDBoost()
+ uint8_t getLEDBoost(void)
  {
      uint8_t val;
 
@@ -643,7 +642,7 @@ float powf(const float x, const float y)
   *
   * @return 1 if compensation is enabled. 0 if not. 0xFF on error.
   */
- uint8_t getProxGainCompEnable()
+ uint8_t getProxGainCompEnable(void)
  {
      uint8_t val;
 
@@ -690,7 +689,7 @@ float powf(const float x, const float y)
   *
   * @return Current proximity mask for photodiodes. 0xFF on error.
   */
- uint8_t getProxPhotoMask()
+ uint8_t getProxPhotoMask(void)
  {
      uint8_t val;
 
@@ -736,7 +735,7 @@ float powf(const float x, const float y)
   *
   * @return Current entry proximity threshold.
   */
- uint8_t getGestureEnterThresh()
+ uint8_t getGestureEnterThresh(void)
  {
      uint8_t val;
 
@@ -762,7 +761,7 @@ float powf(const float x, const float y)
   *
   * @return Current exit proximity threshold.
   */
- uint8_t getGestureExitThresh()
+ uint8_t getGestureExitThresh(void)
  {
      uint8_t val;
 
@@ -793,7 +792,7 @@ float powf(const float x, const float y)
   *
   * @return the current photodiode gain. 0xFF on error.
   */
- uint8_t getGestureGain()
+ uint8_t getGestureGain(void)
  {
      uint8_t val;
 
@@ -845,7 +844,7 @@ float powf(const float x, const float y)
   *
   * @return the LED drive current value. 0xFF on error.
   */
- uint8_t getGestureLEDDrive()
+ uint8_t getGestureLEDDrive(void)
  {
      uint8_t val;
 
@@ -901,7 +900,7 @@ float powf(const float x, const float y)
   *
   * @return the current wait time between gestures. 0xFF on error.
   */
- uint8_t getGestureWaitTime()
+ uint8_t getGestureWaitTime(void)
  {
      uint8_t val;
 
@@ -1088,7 +1087,7 @@ float powf(const float x, const float y)
   *
   * @return 1 if interrupts are enabled, 0 if not. 0xFF on error.
   */
- uint8_t getAmbientLightIntEnable()
+ uint8_t getAmbientLightIntEnable(void)
  {
      uint8_t val;
 
@@ -1128,7 +1127,7 @@ float powf(const float x, const float y)
   *
   * @return 1 if interrupts are enabled, 0 if not. 0xFF on error.
   */
- uint8_t getProximityIntEnable()
+ uint8_t getProximityIntEnable(void)
  {
      uint8_t val;
 
@@ -1168,7 +1167,7 @@ float powf(const float x, const float y)
   *
   * @return 1 if interrupts are enabled, 0 if not. 0xFF on error.
   */
- uint8_t getGestureIntEnable()
+ uint8_t getGestureIntEnable(void)
  {
      uint8_t val;
 
@@ -1207,7 +1206,7 @@ float powf(const float x, const float y)
   * @brief Clears the ambient light interrupt
   *
   */
- void clearAmbientLightInt()
+ void clearAmbientLightInt(void)
  {
      uint8_t throwaway;
      throwaway = I2cRead8(APDS9960_I2C_ADDR, APDS9960_AICLEAR);
@@ -1217,7 +1216,7 @@ float powf(const float x, const float y)
   * @brief Clears the proximity interrupt
   *
   */
- void clearProximityInt()
+ void clearProximityInt(void)
  {
      uint8_t throwaway;
      throwaway = I2cRead8(APDS9960_I2C_ADDR, APDS9960_PICLEAR) ;
@@ -1229,7 +1228,7 @@ float powf(const float x, const float y)
   *
   * @return 1 if gesture state machine is running, 0 if not. 0xFF on error.
   */
- uint8_t getGestureMode()
+ uint8_t getGestureMode(void)
  {
      uint8_t val;
 
@@ -1264,7 +1263,7 @@ float powf(const float x, const float y)
  }
 
 
-bool APDS9960_init()
+bool APDS9960_init(void)
 {
     /* Set default values for ambient light and proximity registers */
 
@@ -1340,7 +1339,7 @@ bool APDS9960_init()
  *
  * @return Contents of the ENABLE register. 0xFF if error.
  */
-uint8_t getMode()
+uint8_t getMode(void)
 {
     uint8_t enable_value;
 
@@ -1389,7 +1388,7 @@ void setMode(uint8_t mode, uint8_t enable)
  *
  * no interrupts
  */
-void enableLightSensor()
+void enableLightSensor(void)
 {
     /* Set default gain, interrupts, enable power, and enable sensor */
     setAmbientLightGain(DEFAULT_AGAIN);
@@ -1402,7 +1401,7 @@ void enableLightSensor()
  * @brief Ends the light sensor on the APDS-9960
  *
  */
-void disableLightSensor()
+void disableLightSensor(void)
 {
     setAmbientLightIntEnable(0) ;
     setMode(AMBIENT_LIGHT, 0) ;
@@ -1413,7 +1412,7 @@ void disableLightSensor()
  *
  * no interrupts
  */
-void enableProximitySensor()
+void enableProximitySensor(void)
 {
     /* Set default gain, LED, interrupts, enable power, and enable sensor */
     setProximityGain(DEFAULT_PGAIN);
@@ -1427,7 +1426,7 @@ void enableProximitySensor()
  * @brief Ends the proximity sensor on the APDS-9960
  *
  */
-void disableProximitySensor()
+void disableProximitySensor(void)
 {
 	setProximityIntEnable(0) ;
   setMode(PROXIMITY, 0) ;
@@ -1438,7 +1437,7 @@ void disableProximitySensor()
  *
  * no interrupts
  */
-void enableGestureSensor()
+void enableGestureSensor(void)
 {
     /* Enable gesture mode
        Set ENABLE to 0 (power off)
@@ -1463,7 +1462,7 @@ void enableGestureSensor()
  * @brief Ends the gesture recognition engine on the APDS-9960
  *
  */
-void disableGestureSensor()
+void disableGestureSensor(void)
 {
     resetGestureParameters();
     setGestureIntEnable(0) ;
@@ -1476,7 +1475,7 @@ void disableGestureSensor()
  *
  * @return True if gesture available. False otherwise.
  */
-bool isGestureAvailable()
+bool isGestureAvailable(void)
 {
     uint8_t val;
 
@@ -1499,7 +1498,7 @@ bool isGestureAvailable()
  *
  * @return Number corresponding to gesture. -1 on error.
  */
-int16_t readGesture()
+int16_t readGesture(void)
 {
     uint8_t fifo_level = 0;
     uint8_t bytes_read = 0;
@@ -1519,9 +1518,8 @@ int16_t readGesture()
         if (gesture_loop_counter == APDS9960_MAX_GESTURE_CYCLES){ // We will escape after a few loops
           disableGestureSensor();   // stop the sensor to prevent problems with power consumption/blocking  and return to the main loop
           APDS9960_overload = true; // we report this as "long"-gesture
-          char log[LOGSZ];
-          snprintf_P(log, sizeof(log), PSTR("Sensor overload"));
-          AddLog_P(LOG_LEVEL_DEBUG, log);
+          snprintf_P(log_data, sizeof(log_data), PSTR("Sensor overload"));
+          AddLog(LOG_LEVEL_DEBUG);
         }
         gesture_loop_counter += 1;
         /* Wait some time to collect next batch of FIFO data */
@@ -1586,7 +1584,7 @@ int16_t readGesture()
  * Turn the APDS-9960 on
  *
  */
-void enablePower()
+void enablePower(void)
 {
     setMode(POWER, 1) ;
 }
@@ -1595,7 +1593,7 @@ void enablePower()
  * Turn the APDS-9960 off
  *
  */
-void disablePower()
+void disablePower(void)
 {
     setMode(POWER, 0) ;
 }
@@ -1609,7 +1607,7 @@ void disablePower()
   *
   */
 
-void readAllColorAndProximityData()
+void readAllColorAndProximityData(void)
 {
   if (I2cReadBuffer(APDS9960_I2C_ADDR, APDS9960_CDATAL, (uint8_t *) &color_data, (uint16_t)9))
   {
@@ -1625,7 +1623,7 @@ void readAllColorAndProximityData()
 /**
  * @brief Resets all the parameters in the gesture data member
  */
-void resetGestureParameters()
+void resetGestureParameters(void)
 {
     gesture_data_.index = 0;
     gesture_data_.total_gestures = 0;
@@ -1645,7 +1643,7 @@ void resetGestureParameters()
  *
  * @return True if near or far state seen. False otherwise.
  */
-bool processGestureData()
+bool processGestureData(void)
 {
     uint8_t u_first = 0;
     uint8_t d_first = 0;
@@ -1749,7 +1747,7 @@ bool processGestureData()
  *
  * @return True if near/far event. False otherwise.
  */
-bool decodeGesture()
+bool decodeGesture(void)
 {
 
     /* Determine swipe direction */
@@ -1792,38 +1790,37 @@ bool decodeGesture()
     return true;
 }
 
-void handleGesture() {
+void handleGesture(void) {
     if (isGestureAvailable() ) {
-    char log[LOGSZ];
     switch (readGesture()) {
       case DIR_UP:
-        snprintf_P(log, sizeof(log), PSTR("UP"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("UP"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Up"));
         break;
       case DIR_DOWN:
-        snprintf_P(log, sizeof(log), PSTR("DOWN"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("DOWN"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Down"));
         break;
       case DIR_LEFT:
-        snprintf_P(log, sizeof(log), PSTR("LEFT"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("LEFT"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Left"));
         break;
       case DIR_RIGHT:
-        snprintf_P(log, sizeof(log), PSTR("RIGHT"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("RIGHT"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Right"));
         break;
       default:
       if(APDS9960_overload)
       {
-        snprintf_P(log, sizeof(log), PSTR("LONG"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("LONG"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Long"));
       }
       else{
-        snprintf_P(log, sizeof(log), PSTR("NONE"));
+        snprintf_P(log_data, sizeof(log_data), PSTR("NONE"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("None"));
       }
     }
-    AddLog_P(LOG_LEVEL_DEBUG, log);
+    AddLog(LOG_LEVEL_DEBUG);
 
     mqtt_data[0] = '\0';
     if (MqttShowSensor()) {
@@ -1835,7 +1832,7 @@ void handleGesture() {
   }
 }
 
-void APDS9960_adjustATime(void)  // not really used atm 
+void APDS9960_adjustATime(void)  // not really used atm
 {
   //readAllColorAndProximityData();
   I2cValidRead16LE(&color_data.a, APDS9960_I2C_ADDR, APDS9960_CDATAL);
@@ -1871,7 +1868,7 @@ void APDS9960_adjustATime(void)  // not really used atm
 }
 
 
-void APDS9960_loop()
+void APDS9960_loop(void)
 {
   if (recovery_loop_counter > 0){
     recovery_loop_counter -= 1;
@@ -1994,7 +1991,7 @@ void APDS9960_show(boolean json)
  * Sensor27 | 2 / On  | Enable gesture mode with half gain
 \*********************************************************************************************/
 
-bool APDS9960CommandSensor()
+bool APDS9960CommandSensor(void)
 {
   boolean serviced = true;
 

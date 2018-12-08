@@ -22,6 +22,8 @@
  * DS18B20 - Temperature - Single sensor
 \*********************************************************************************************/
 
+#define XSNS_05              5
+
 #define W1_SKIP_ROM          0xCC
 #define W1_CONVERT_TEMP      0x44
 #define W1_READ_SCRATCHPAD   0xBE
@@ -35,7 +37,7 @@ char ds18b20_types[] = "DS18B20";
  * Embedded stripped and tuned OneWire library
 \*********************************************************************************************/
 
-uint8_t OneWireReset()
+uint8_t OneWireReset(void)
 {
   uint8_t retries = 125;
 
@@ -73,7 +75,7 @@ void OneWireWriteBit(uint8_t v)
   delayMicroseconds(delay_high[v]);
 }
 
-uint8_t OneWireReadBit()
+uint8_t OneWireReadBit(void)
 {
   //noInterrupts();
   pinMode(ds18x20_pin, OUTPUT);
@@ -94,7 +96,7 @@ void OneWireWrite(uint8_t v)
   }
 }
 
-uint8_t OneWireRead()
+uint8_t OneWireRead(void)
 {
   uint8_t r = 0;
 
@@ -127,7 +129,7 @@ boolean OneWireCrc8(uint8_t *addr)
 
 /********************************************************************************************/
 
-void Ds18b20Convert()
+void Ds18b20Convert(void)
 {
   OneWireReset();
   OneWireWrite(W1_SKIP_ROM);           // Address all Sensors on Bus
@@ -135,7 +137,7 @@ void Ds18b20Convert()
 //  delay(750);                          // 750ms should be enough for 12bit conv
 }
 
-boolean Ds18b20Read()
+boolean Ds18b20Read(void)
 {
   uint8_t data[9];
   int8_t sign = 1;
@@ -171,7 +173,7 @@ boolean Ds18b20Read()
 
 /********************************************************************************************/
 
-void Ds18b20EverySecond()
+void Ds18b20EverySecond(void)
 {
   ds18x20_pin = pin[GPIO_DSB];
   if (uptime &1) {
@@ -214,8 +216,6 @@ void Ds18b20Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_05
 
 boolean Xsns05(byte function)
 {

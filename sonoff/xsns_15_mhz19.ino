@@ -18,9 +18,6 @@
 */
 
 #ifdef USE_MHZ19
-
-#define XSNS_15 15
-
 /*********************************************************************************************\
  * MH-Z19 - CO2 sensor
  *
@@ -32,6 +29,8 @@
  *
  * Select filter usage on low stability readings
 \*********************************************************************************************/
+
+#define XSNS_15                      15
 
 enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILTER_FAST, MHZ19_FILTER_MEDIUM, MHZ19_FILTER_SLOW};
 
@@ -160,7 +159,7 @@ bool MhzCheckAndApplyFilter(uint16_t ppm, uint8_t s)
   return true;
 }
 
-void MhzEverySecond()
+void MhzEverySecond(void)
 {
   mhz_state++;
   if (8 == mhz_state) {                   // Every 8 sec start a MH-Z19 measuring cycle (which takes 1005 +5% ms)
@@ -246,19 +245,15 @@ void MhzEverySecond()
 
 /*********************************************************************************************\
  * Command Sensor15
+ *
+ * 0 - (Not implemented) ABC Off
+ * 1 - (Not implemented) ABC On
+ * 2 - Manual start = ABC Off
+ * 3 - (Not implemented) Optional filter settings
+ * 9 - Reset
 \*********************************************************************************************/
 
-/*
-  0 - ABC Off
-  1 - ABC On
-  2 - Manual start = ABC Off
-
-  3 - Optional filter settings
-
-  9 - Reset
-*/
-
-bool MhzCommandSensor()
+bool MhzCommandSensor(void)
 {
   boolean serviced = true;
 
@@ -280,7 +275,7 @@ bool MhzCommandSensor()
 
 /*********************************************************************************************/
 
-void MhzInit()
+void MhzInit(void)
 {
   mhz_type = 0;
   if ((pin[GPIO_MHZ_RXD] < 99) && (pin[GPIO_MHZ_TXD] < 99)) {

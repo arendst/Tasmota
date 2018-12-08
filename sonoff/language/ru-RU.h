@@ -555,6 +555,13 @@
 #define D_SENSOR_RFRECV "RFrecv"
 #define D_SENSOR_TUYA_TX "Tuya Tx"
 #define D_SENSOR_TUYA_RX "Tuya Rx"
+#define D_SENSOR_MGC3130_XFER "MGC3130 Xfer"
+#define D_SENSOR_MGC3130_RESET "MGC3130 Reset"
+#define D_SENSOR_SSPI_MISO "SSPI MISO"
+#define D_SENSOR_SSPI_MOSI "SSPI MOSI"
+#define D_SENSOR_SSPI_SCLK "SSPI SCLK"
+#define D_SENSOR_SSPI_CS   "SSPI CS"
+#define D_SENSOR_SSPI_DC   "SSPI DC"
 
 // Units
 #define D_UNIT_AMPERE "А"
@@ -571,6 +578,7 @@
 #define D_UNIT_MICROMETER "мкм"
 #define D_UNIT_MICROSECOND "мкс"
 #define D_UNIT_MILLIAMPERE "мА"
+#define D_UNIT_MILLIMETER_MERCURY "мм рт.ст."
 #define D_UNIT_MILLISECOND "мс"
 #define D_UNIT_MINUTE "мин"
 #define D_UNIT_PARTS_PER_BILLION "ppb"

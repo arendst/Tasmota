@@ -26,9 +26,16 @@
 #endif  // DEBUG_THEO
 
 #ifdef USE_DEBUG_DRIVER
+/*********************************************************************************************\
+ * Virtual debugging support - Part1
+ *
+ * Needs file zzzz_debug.ino due to DEFINE processing
+\*********************************************************************************************/
+
+#define XDRV_99             99
 
 #ifndef CPU_LOAD_CHECK
-#define CPU_LOAD_CHECK       1                 // Seconds between each CPU_LOAD log
+#define CPU_LOAD_CHECK      1                 // Seconds between each CPU_LOAD log
 #endif
 
 /*********************************************************************************************\
@@ -45,9 +52,15 @@
 #define D_CMND_FREEMEM   "FreeMem"
 #define D_CMND_RTCDUMP   "RtcDump"
 #define D_CMND_HELP      "Help"
+#define D_CMND_SETSENSOR "SetSensor"
+#define D_CMND_FLASHMODE "FlashMode"
 
-enum DebugCommands { CMND_CFGDUMP, CMND_CFGPEEK, CMND_CFGPOKE, CMND_CFGSHOW, CMND_CFGXOR, CMND_CPUCHECK, CMND_EXCEPTION, CMND_FREEMEM, CMND_RTCDUMP, CMND_HELP };
-const char kDebugCommands[] PROGMEM = D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|" D_CMND_CFGSHOW "|" D_CMND_CFGXOR "|" D_CMND_CPUCHECK "|" D_CMND_EXCEPTION "|" D_CMND_FREEMEM "|" D_CMND_RTCDUMP "|" D_CMND_HELP;
+enum DebugCommands {
+  CMND_CFGDUMP, CMND_CFGPEEK, CMND_CFGPOKE, CMND_CFGSHOW, CMND_CFGXOR,
+  CMND_CPUCHECK, CMND_EXCEPTION, CMND_FREEMEM, CMND_RTCDUMP, CMND_SETSENSOR, CMND_FLASHMODE, CMND_HELP };
+const char kDebugCommands[] PROGMEM =
+  D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|" D_CMND_CFGSHOW "|" D_CMND_CFGXOR "|"
+  D_CMND_CPUCHECK "|" D_CMND_EXCEPTION "|" D_CMND_FREEMEM "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR "|" D_CMND_FLASHMODE "|" D_CMND_HELP;
 
 uint32_t CPU_loops = 0;
 uint32_t CPU_last_millis = 0;
@@ -126,7 +139,7 @@ Decoding 14 results
 
 /*******************************************************************************************/
 
-void CpuLoadLoop()
+void CpuLoadLoop(void)
 {
   CPU_last_loop_time = millis();
   if (CPU_load_check && CPU_last_millis) {
@@ -159,7 +172,7 @@ extern "C" {
   extern cont_t g_cont;
 }
 
-void DebugFreeMem()
+void DebugFreeMem(void)
 {
   register uint32_t *sp asm("a1");
 
@@ -181,7 +194,7 @@ extern "C" {
   extern cont_t* g_pcont;
 }
 
-void DebugFreeMem()
+void DebugFreeMem(void)
 {
   register uint32_t *sp asm("a1");
 
@@ -401,9 +414,26 @@ void DebugCfgShow(uint8_t more)
   }
 }
 
+void SetFlashMode(uint8_t mode)
+{
+  uint8_t *_buffer;
+  uint32_t address;
+
+  address = 0;
+  _buffer = new uint8_t[FLASH_SECTOR_SIZE];
+
+  if (ESP.flashRead(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
+    if (_buffer[2] != mode) {  // DOUT
+      _buffer[2] = mode;
+      if (ESP.flashEraseSector(address / FLASH_SECTOR_SIZE)) ESP.flashWrite(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
+    }
+  }
+  delete[] _buffer;
+}
+
 /*******************************************************************************************/
 
-boolean DebugCommand()
+boolean DebugCommand(void)
 {
   char command[CMDSZ];
   boolean serviced = true;
@@ -464,6 +494,19 @@ boolean DebugCommand()
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, CPU_show_freemem);
   }
+  else if ((CMND_SETSENSOR == command_code) && (XdrvMailbox.index < MAX_XSNS_DRIVERS)) {
+    if ((XdrvMailbox.payload >= 0) && XsnsPresent(XdrvMailbox.index)) {
+      bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      if (1 == XdrvMailbox.payload) { restart_flag = 2; }  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_XVALUE, command, XsnsGetSensors().c_str());
+  }
+  else if (CMND_FLASHMODE == command_code) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
+      SetFlashMode(XdrvMailbox.payload);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, ESP.getFlashChipMode());
+  }
   else serviced = false;  // Unknown command
 
   return serviced;
@@ -472,8 +515,6 @@ boolean DebugCommand()
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_99
 
 boolean Xdrv99(byte function)
 {

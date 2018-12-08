@@ -25,6 +25,8 @@
  * Based on: https://github.com/reaper7/SDM_Energy_Meter
 \*********************************************************************************************/
 
+#define XSNS_23             23
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *SDM120Serial;
@@ -41,7 +43,7 @@ float sdm120_power_factor = 0;
 float sdm120_frequency = 0;
 float sdm120_energy_total = 0;
 
-bool SDM120_ModbusReceiveReady()
+bool SDM120_ModbusReceiveReady(void)
 {
   return (SDM120Serial->available() > 1);
 }
@@ -135,7 +137,7 @@ const uint16_t sdm120_start_addresses[] {
 uint8_t sdm120_read_state = 0;
 uint8_t sdm120_send_retry = 0;
 
-void SDM120250ms()              // Every 250 mSec
+void SDM120250ms(void)              // Every 250 mSec
 {
 //  sdm120_state++;
 //  if (6 == sdm120_state) {     // Every 300 mSec
@@ -201,7 +203,7 @@ void SDM120250ms()              // Every 250 mSec
 //  } // end 300 ms
 }
 
-void SDM120Init()
+void SDM120Init(void)
 {
   sdm120_type = 0;
   if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
@@ -269,8 +271,6 @@ void SDM120Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_23
 
 boolean Xsns23(byte function)
 {

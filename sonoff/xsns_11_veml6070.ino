@@ -94,6 +94,8 @@
  * I2C Address: 0x38 and 0x39
 \*********************************************************************************************/
 
+#define XSNS_11                     11
+
 #define VEML6070_ADDR_H             0x39            // on some PCB boards the address can be changed by a solder point,
 #define VEML6070_ADDR_L             0x38            // to have no address conflicts with other I2C sensors and/or hardware
 #define VEML6070_INTEGRATION_TIME   3               // IT_4 = 500msec integration time, because the precission is 4 times higher then IT_0.5
@@ -304,8 +306,6 @@ void Veml6070Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_11
 
 boolean Xsns11(byte function)
 {
