@@ -301,6 +301,8 @@ void HAssAnnounceRelayLight(void)
 
 void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, byte toggle)
 {
+// key 0 = button
+// key 1 = switch
   char stopic[TOPSZ];
   char sidx[8];
 
@@ -308,7 +310,7 @@ void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, 
 
   // Clear or Set topic
   snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/binary_sensor/%s_%s_%d/config"),
-             topic, key?"BTN":"SW",device+1);
+             topic, key?"SW":"BTN",device+1);
 
   if (Settings.flag.hass_discovery && present) {
     char name[33];
@@ -320,9 +322,9 @@ void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, 
     char *availability_topic = _availability_topic;
 
     if (device+1 > MAX_FRIENDLYNAMES) {
-      snprintf_P(name, sizeof(name), PSTR("%s %s %d"), Settings.friendlyname[0], key?"BTN":"SW", device+1);
+      snprintf_P(name, sizeof(name), PSTR("%s %s %d"), Settings.friendlyname[0], key?"SW":"BTN", device+1);
     } else {
-      snprintf_P(name, sizeof(name), PSTR("%s %s"), Settings.friendlyname[device], key?"BTN":"SW");
+      snprintf_P(name, sizeof(name), PSTR("%s %s"), Settings.friendlyname[device], key?"SW":"BTN");
     }
     GetPowerDevice(value_template, device+1, sizeof(value_template),
                    key + Settings.flag.device_index_enable); // Force index for Switch 1, Index on Button1 is controlled by Settings.flag.device_index_enable
@@ -373,7 +375,7 @@ void HAssAnnounceSwitches(void)
         toggle = 0; // MQTT message will be ON/OFF
       }
 
-      HAssAnnounceButtonSwitch(switch_index, sw_topic, switch_present, 0, toggle);
+      HAssAnnounceButtonSwitch(switch_index, sw_topic, switch_present, 1, toggle);
     }
   }
 }
@@ -406,7 +408,7 @@ void HAssAnnounceButtons(void)
         toggle = 0; // MQTT message will be ON/OFF
       }
 
-      HAssAnnounceButtonSwitch(button_index, key_topic, button_present, 1, toggle);
+      HAssAnnounceButtonSwitch(button_index, key_topic, button_present, 0, toggle);
     }
   }
 }
