@@ -345,9 +345,10 @@ void HAssAnnounceSwitches(void)
 
       // Check if MQTT message will be ON/OFF or TOGGLE
       if (Settings.switchmode[switch_index] == FOLLOW || Settings.switchmode[switch_index] == FOLLOW_INV ||
+          Settings.flag3.button_switch_force_local ||
           !strcmp(mqtt_topic, sw_topic) || !strcmp(Settings.mqtt_grptopic, sw_topic))
       {
-        toggle = 0;
+        toggle = 0; // MQTT message will be ON/OFF
       }
 
       HAssAnnounceButtonSwitch(switch_index, sw_topic, switch_present, 0, toggle);
@@ -377,9 +378,10 @@ void HAssAnnounceButtons(void)
       }
 
       // Check if MQTT message will be ON/OFF or TOGGLE
-      if (!strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic))
+      if (Settings.flag3.button_switch_force_local ||
+          !strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic))
       {
-        toggle = 0;
+        toggle = 0; // MQTT message will be ON/OFF
       }
 
       HAssAnnounceButtonSwitch(button_index, key_topic, button_present, 1, toggle);
