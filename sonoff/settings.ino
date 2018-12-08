@@ -486,6 +486,7 @@ void SettingsDefaultSet2(void)
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+  Settings.flag3.button_switch_force_local = MQTT_BUTTON_SWITCH_FORCE_LOCAL;
 //  Settings.flag.mqtt_sensor_retain = 0;
 //  Settings.flag.mqtt_offline = 0;
 //  Settings.flag.mqtt_serial = 0;
