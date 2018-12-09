@@ -25,9 +25,6 @@
 #define XSNS_02             2
 
 uint16_t adc_last_value = 0;
-double scale = 1;
-double offset = 0;
-uint8_t resolution = 3;
 
 const char ADC_SENSOR_RESPONSE[] PROGMEM = "{\"Sensor02_A%i\":{\"SCALE\":%s,\"OFFSET\":%s,\"DECIMALS\":%i}}";
 
@@ -40,7 +37,7 @@ double AdcRead(void)
     delay(1);
   }
   analogRaw >>= 5;
-  analogEU = scale * analogRaw + offset;
+  analogEU = (((double)Settings.adc_config.scale)/10000) * analogRaw + (((double)Settings.adc_config.offset)/10000);
   return analogEU;
 }
 
@@ -61,7 +58,7 @@ void AdcShow(boolean json)
 {
   char analog[10];
   double analogEU = AdcRead();
-  dtostrfd(analogEU, resolution, analog);
+  dtostrfd(analogEU, Settings.adc_config.resolution, analog);
 
   if (json) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ANALOG\":{\"A0\":%s}"), mqtt_data, analog);
@@ -97,9 +94,9 @@ bool AdcCommandSensor(void)
     paramcount=1;
   }
   else {
-    dtostrfd(scale, 4, scale_str);
-    dtostrfd(offset, 4, offset_str);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), ADC_SENSOR_RESPONSE,0,scale_str,offset_str,resolution);
+    dtostrfd((((double)Settings.adc_config.scale)/10000), 4, scale_str);
+    dtostrfd((((double)Settings.adc_config.offset)/10000), 4, offset_str);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), ADC_SENSOR_RESPONSE,0,scale_str,offset_str,Settings.adc_config.resolution);
     return serviced;
   }
 
@@ -112,7 +109,7 @@ bool AdcCommandSensor(void)
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"SCALE")) {  // SCALE Command parameter
     if (paramcount > 1) {
-      scale = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      Settings.adc_config.scale = (int)(CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2))*10000);
       AdcShow(1);
       return serviced;
     }
@@ -124,7 +121,7 @@ bool AdcCommandSensor(void)
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"OFFSET")) { // OFFSET Command parameter
     if (paramcount > 1) {
-      offset = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      Settings.adc_config.offset = (int)(CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2))*10000);
       AdcShow(1);
       return serviced;
     }
@@ -136,7 +133,7 @@ bool AdcCommandSensor(void)
 
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"DECIMALS")) { // DECIMALS Command parameter
     if (paramcount > 1) {
-      resolution = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2));
+      Settings.adc_config.resolution = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2));
       AdcShow(1);
       return serviced;
     }
@@ -161,10 +158,6 @@ boolean Xsns02(byte function)
       case FUNC_COMMAND:
         if (XSNS_02 == XdrvMailbox.index) {
           result = AdcCommandSensor();
-      
- //         snprintf_P(log_data, sizeof(log_data), PSTR("ANALOG: Cmd Result %s"), result ? "true" : "false");
- //         AddLog(LOG_LEVEL_DEBUG);
-      
         }
         break;
 #ifdef USE_RULES

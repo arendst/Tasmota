@@ -182,6 +182,10 @@
 #define PRESSURE_RESOLUTION    1                 // [PressRes] Maximum number of decimals (0 - 3) showing sensor Pressure
 #define ENERGY_RESOLUTION      3                 // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
 
+#define ADC_SCALE              1                 // Scale value for analog scaling (used if USE_ADC_VCC is disabled)
+#define ADC_OFFSET             0                 // Offset value for analog scaling (used if USE_ADC_VCC is disabled)
+#define ADC_DECIMALS           3                 // Number of decimals of scaled analog value (used if USE_ADC_VCC is disabled)
+
 /*********************************************************************************************\
  * END OF SECTION 1
  *

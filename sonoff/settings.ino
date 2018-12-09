@@ -632,6 +632,13 @@ void SettingsDefaultSet2(void)
   Settings.longitude = (int)((double)LONGITUDE * 1000000);
   SettingsDefaultSet_5_13_1c();  // Time STD/DST settings
 
+  // Analog
+  #ifndef USE_ADC_VCC
+  Settings.adc_config.scale = (int)((double)ADC_SCALE * 10000);
+  Settings.adc_config.offset = (int)((double)ADC_OFFSET * 10000);
+  Settings.adc_config.resolution = ADC_DECIMALS;
+  #endif // USE_ADC_VCC
+
   Settings.button_debounce = KEY_DEBOUNCE_TIME;
   Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
 
