@@ -46,7 +46,11 @@ THE SOFTWARE.
 // Tom Carpenter's conditional PROGMEM code
 // http://forum.arduino.cc/index.php?topic=129407.0
 #ifndef __arm__
-    #include <avr/pgmspace.h>
+    #if (defined(__AVR__))
+    #include <avr\pgmspace.h>
+    #else
+    #include <pgmspace.h>
+    #endif
 #else
     // Teensy 3.0 library conditional PROGMEM code from Paul Stoffregen
     #ifndef __PGMSPACE_H_
@@ -402,7 +406,7 @@ uint8_t MPU6050::dmpInitialize() {
             setIntEnabled(0x12);
 
             DEBUG_PRINTLN(F("Setting sample rate to 200Hz..."));
-            setRate(4); // 1khz / (1 + 4) = 200 Hz
+            setRate(1); // 1khz / (1 + 4) = 200 Hz
 
             DEBUG_PRINTLN(F("Setting external frame sync to TEMP_OUT_L[0]..."));
             setExternalFrameSync(MPU6050_EXT_SYNC_TEMP_OUT_L);
