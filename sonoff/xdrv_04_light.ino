@@ -590,7 +590,7 @@ void LightState(uint8_t append)
     // Add status for each channel
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_CHANNEL "\":[" ), mqtt_data);
     for (byte i = 0; i < light_subtype; i++) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d" ), mqtt_data, (i > 0 ? "," : ""), round(light_current_color[i]/2.55));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d" ), mqtt_data, (i > 0 ? "," : ""), light_current_color[i] * 100 / 255);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]" ), mqtt_data);
   }
@@ -1084,7 +1084,6 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
 
 /********************************************************************************************/
 
-//boolean LightCommand(char *type, uint16_t index, char *dataBuf, uint16_t XdrvMailbox.data_len, int16_t XdrvMailbox.payload)
 boolean LightCommand(void)
 {
   char command [CMDSZ];
@@ -1098,13 +1097,17 @@ boolean LightCommand(void)
   if (-1 == command_code) {
     serviced = false;  // Unknown command
   }
-  else if ((CMND_WHITE == command_code) && (light_subtype == LST_RGBW) && (XdrvMailbox.index == 1)) {
-    command_code = CMND_COLOR;
-    uint8_t value = atoi(XdrvMailbox.data);
-    snprintf_P(scolor, sizeof(scolor), PSTR("0,0,0,%d"), value*255/100);
-    XdrvMailbox.data = scolor;
-  }
-  if ((CMND_COLOR == command_code) && (light_subtype > LST_SINGLE) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
+  else if (((CMND_COLOR == command_code) && (light_subtype > LST_SINGLE) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) ||
+           ((CMND_WHITE == command_code) && (light_subtype == LST_RGBW) && (XdrvMailbox.index == 1))) {
+    if (CMND_WHITE == command_code) {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
+        snprintf_P(scolor, sizeof(scolor), PSTR("0,0,0,%d"), XdrvMailbox.payload * 255 / 100);
+        XdrvMailbox.data = scolor;
+        XdrvMailbox.data_len = strlen(scolor);
+      } else {
+        XdrvMailbox.data_len = 0;
+      }
+    }
     if (XdrvMailbox.data_len > 0) {
       valid_entry = LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len);
       if (valid_entry) {
@@ -1142,12 +1145,11 @@ boolean LightCommand(void)
   else if ((CMND_CHANNEL == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= light_subtype ) ) {
     //  Set "Channel" directly - this allows Color and Direct PWM control to coexist
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      uint8_t level = XdrvMailbox.payload;
-      light_current_color[XdrvMailbox.index-1] = round(level * 2.55);
+      light_current_color[XdrvMailbox.index-1] = XdrvMailbox.payload * 255 / 100;
       LightSetColor();
       coldim = true;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, round(light_current_color[XdrvMailbox.index -1] / 2.55));
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, light_current_color[XdrvMailbox.index -1] * 100 / 255);
   }
   else if ((CMND_HSBCOLOR == command_code) && ( light_subtype >= LST_RGB)) {
     bool validHSB = (XdrvMailbox.data_len > 0);
