@@ -184,6 +184,10 @@
 #define ENERGY_RESOLUTION      3                 // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
 #define CALC_RESOLUTION        3                 // [CalcRes] Maximum number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE
 
+#define ADC_SCALE              1                 // Scale value for analog scaling (used if USE_ADC_VCC is disabled)
+#define ADC_OFFSET             0                 // Offset value for analog scaling (used if USE_ADC_VCC is disabled)
+#define ADC_DECIMALS           3                 // Number of decimals of scaled analog value (used if USE_ADC_VCC is disabled)
+
 /*********************************************************************************************\
  * END OF SECTION 1
  *
