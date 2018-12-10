@@ -113,10 +113,18 @@ THE SOFTWARE.
     #define DEBUG_PRINTLN(x) Serial.println(x)
     #define DEBUG_PRINTLNF(x, y) Serial.println(x, y)
 #else
+#ifndef DEBUG_PRINT
     #define DEBUG_PRINT(x)
+#endif
+#ifndef DEBUG_PRINTF
     #define DEBUG_PRINTF(x, y)
+#endif
+#ifndef DEBUG_PRINTLN
     #define DEBUG_PRINTLN(x)
+#endif
+#ifndef DEBUG_PRINTLNF
     #define DEBUG_PRINTLNF(x, y)
+#endif
 #endif
 
 #define MPU6050_DMP_CODE_SIZE       1929    // dmpMemory[]
