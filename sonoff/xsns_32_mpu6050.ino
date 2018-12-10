@@ -19,7 +19,6 @@
 
 #ifdef USE_I2C
 #ifdef USE_MPU6050
-#define USE_MPU6050_DMP // Use the DMP on the chip, should create better results
 /*********************************************************************************************\
  * MPU6050 3 axis gyroscope and temperature sensor
  *
