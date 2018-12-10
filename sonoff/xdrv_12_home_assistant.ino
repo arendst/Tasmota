@@ -44,7 +44,7 @@ const char HASS_DISCOVER_BUTTON_SWITCH[] PROGMEM =
   "\"payload_not_available\":\"" D_OFFLINE "\"";   // Offline
 
 const char HASS_DISCOVER_BUTTON_SWITCH_TOGGLE[] PROGMEM =
-  "%s,\"force_update\":true";
+  "%s,\"off_delay\":1";
 
 const char HASS_DISCOVER_BUTTON_SWITCH_ONOFF[] PROGMEM =
   "%s,\"payload_off\":\"%s\"";                    // OFF
@@ -114,7 +114,7 @@ const char HASS_DISCOVER_BUTTON_SWITCH_SHORT[] PROGMEM =
   "\"pl_not_avail\":\"" D_OFFLINE "\"";            // Offline
 
 const char HASS_DISCOVER_BUTTON_SWITCH_TOGGLE_SHORT[] PROGMEM =
-  "%s,\"frc_upd\":true";
+  "%s,\"off_delay\":1";
 
 const char HASS_DISCOVER_BUTTON_SWITCH_ONOFF_SHORT[] PROGMEM =
   "%s,\"pl_off\":\"%s\"";                          // OFF
@@ -168,6 +168,14 @@ const char HASS_DISCOVER_SENSOR_HUM_SHORT[] PROGMEM =
 const char HASS_DISCOVER_SENSOR_ANY_SHORT[] PROGMEM =
   "%s,\"val_tpl\":\"{{value_json['%s'].%s}}\"";       // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
 
+const char HASS_DISCOVER_DEVICE_INFO_SHORT[] PROGMEM =
+  "%s,\"uniq_id\":\"%s\","
+  "\"device\":{\"identifiers\":[\"%06X\"],"
+  "\"name\":\"%s\","
+  "\"model\":\"%s\","
+  "\"sw_version\":\"%s%s\","
+  "\"manufacturer\":\"%s\"}";
+
 const char HASS_DISCOVER_TOPIC_PREFIX[] PROGMEM =
   "%s, \"~\":\"%s\"";
 
@@ -193,8 +201,11 @@ static void Shorten(char** s, char *prefix)
 
 void HAssAnnounceRelayLight(void)
 {
-  char sidx[8];
   char stopic[TOPSZ];
+  char stemp1[TOPSZ];
+  char stemp2[TOPSZ];
+  char stemp3[TOPSZ];
+  char unique_id[30];
   bool is_light = false;
   bool is_topic_light = false;
 
@@ -204,23 +215,21 @@ void HAssAnnounceRelayLight(void)
 
     mqtt_data[0] = '\0';  // Clear retained message
 
-    snprintf_P(sidx, sizeof(sidx), PSTR("_%d"), i);
-    // Clear "other" topic first in case the device has been reconfigured
-    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_topic_light) ? "switch" : "light", mqtt_topic, sidx);
+    // Clear "other" topic first in case the device has been reconfigured from ligth to switch or vice versa
+    snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%d"), ESP.getChipId(), (is_topic_light) ? "RL" : "LI", i);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s/config"), (is_topic_light) ? "switch" : "light", unique_id);
     MqttPublish(stopic, true);
     // Clear or Set topic
-    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s%s/config"), (is_topic_light) ? "light" : "switch", mqtt_topic, sidx);
+    snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%d"), ESP.getChipId(), (is_topic_light) ? "LI" : "RL", i);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s/config"), (is_topic_light) ? "light" : "switch", unique_id);
 
     if (Settings.flag.hass_discovery && (i <= devices_present)) {
       char name[33];
       char value_template[33];
-      char _command_topic[TOPSZ];
-      char _state_topic[TOPSZ];
-      char _availability_topic[TOPSZ];
       char prefix[TOPSZ];
-      char *command_topic = _command_topic;
-      char *state_topic = _state_topic;
-      char *availability_topic = _availability_topic;
+      char *command_topic = stemp1;
+      char *state_topic = stemp2;
+      char *availability_topic = stemp3;
 
       if (i > MAX_FRIENDLYNAMES) {
         snprintf_P(name, sizeof(name), PSTR("%s %d"), Settings.friendlyname[0], i);
@@ -242,8 +251,7 @@ void HAssAnnounceRelayLight(void)
                  name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
 
       if (is_light) {
-        char _brightness_command_topic[TOPSZ];
-        char *brightness_command_topic = _brightness_command_topic;
+        char *brightness_command_topic = stemp1;
 
         GetTopic_P(brightness_command_topic, CMND, mqtt_topic, D_CMND_DIMMER);
         if (Settings.flag3.hass_short_discovery_msg)
@@ -252,8 +260,7 @@ void HAssAnnounceRelayLight(void)
                    mqtt_data, brightness_command_topic, state_topic);
 
         if (light_subtype >= LST_RGB) {
-          char _rgb_command_topic[TOPSZ];
-          char *rgb_command_topic = _rgb_command_topic;
+          char *rgb_command_topic = stemp1;
 
           GetTopic_P(rgb_command_topic, CMND, mqtt_topic, D_CMND_COLOR);
           if (Settings.flag3.hass_short_discovery_msg)
@@ -261,8 +268,7 @@ void HAssAnnounceRelayLight(void)
           snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_LIGHT_COLOR_SHORT:HASS_DISCOVER_LIGHT_COLOR,
                      mqtt_data, rgb_command_topic, state_topic);
 
-          char _effect_command_topic[TOPSZ];
-          char *effect_command_topic = _effect_command_topic;
+          char *effect_command_topic = stemp1;
           GetTopic_P(effect_command_topic, CMND, mqtt_topic, D_CMND_SCHEME);
           if (Settings.flag3.hass_short_discovery_msg) {
             Shorten(&effect_command_topic, prefix);
@@ -271,8 +277,7 @@ void HAssAnnounceRelayLight(void)
 
         }
         if (LST_RGBW == light_subtype) {
-          char _white_temp_command_topic[TOPSZ];
-          char *white_temp_command_topic = _white_temp_command_topic;
+          char *white_temp_command_topic = stemp1;
 
           GetTopic_P(white_temp_command_topic, CMND, mqtt_topic, D_CMND_WHITE);
           if (Settings.flag3.hass_short_discovery_msg)
@@ -281,8 +286,7 @@ void HAssAnnounceRelayLight(void)
                      mqtt_data, white_temp_command_topic, state_topic);
         }
         if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
-          char _color_temp_command_topic[TOPSZ];
-          char *color_temp_command_topic = _color_temp_command_topic;
+          char *color_temp_command_topic = stemp1;
 
           GetTopic_P(color_temp_command_topic, CMND, mqtt_topic, D_CMND_COLORTEMPERATURE);
           if (Settings.flag3.hass_short_discovery_msg)
@@ -291,8 +295,13 @@ void HAssAnnounceRelayLight(void)
                      mqtt_data, color_temp_command_topic, state_topic);
         }
       }
-      if (Settings.flag3.hass_short_discovery_msg)
+      if (Settings.flag3.hass_short_discovery_msg) {
+        snprintf_P(stemp1, sizeof(stemp1), kModules[Settings.module].name);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO_SHORT, mqtt_data,
+                   unique_id, ESP.getChipId(),
+                   Settings.friendlyname[0], stemp1, my_version, my_image, "Tasmota");
         snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
+      }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
     MqttPublish(stopic, true);
@@ -304,22 +313,22 @@ void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, 
 // key 0 = button
 // key 1 = switch
   char stopic[TOPSZ];
-  char sidx[8];
+  char stemp1[TOPSZ];
+  char stemp2[TOPSZ];
+  char unique_id[30];
 
   mqtt_data[0] = '\0';  // Clear retained message
 
   // Clear or Set topic
-  snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/binary_sensor/%s_%s_%d/config"),
-             topic, key?"SW":"BTN",device+1);
+  snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%d"), ESP.getChipId(), key?"SW":"BTN", device+1);
+  snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/binary_sensor/%s/config"), unique_id);
 
   if (Settings.flag.hass_discovery && present) {
     char name[33];
     char value_template[33];
-    char _state_topic[TOPSZ];
-    char _availability_topic[TOPSZ];
     char prefix[TOPSZ];
-    char *state_topic = _state_topic;
-    char *availability_topic = _availability_topic;
+    char *state_topic = stemp1;
+    char *availability_topic = stemp2;
 
     if (device+1 > MAX_FRIENDLYNAMES) {
       snprintf_P(name, sizeof(name), PSTR("%s %s %d"), Settings.friendlyname[0], key?"SW":"BTN", device+1);
@@ -338,14 +347,19 @@ void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, 
     snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_BUTTON_SWITCH_SHORT:HASS_DISCOVER_BUTTON_SWITCH,
                name, state_topic, Settings.state_text[toggle?2:1], availability_topic);
     if (toggle) snprintf_P(mqtt_data, sizeof(mqtt_data),
-                           Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_BUTTON_SWITCH_TOGGLE_SHORT:HASS_DISCOVER_BUTTON_SWITCH_TOGGLE,
-                           mqtt_data);
-    else snprintf_P(mqtt_data, sizeof(mqtt_data),
-                    Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_BUTTON_SWITCH_ONOFF_SHORT:HASS_DISCOVER_BUTTON_SWITCH_ONOFF,
-                    mqtt_data, Settings.state_text[0]);
+               Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_BUTTON_SWITCH_TOGGLE_SHORT:HASS_DISCOVER_BUTTON_SWITCH_TOGGLE,
+               mqtt_data);
+    if (!toggle) snprintf_P(mqtt_data, sizeof(mqtt_data),
+                            Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_BUTTON_SWITCH_ONOFF_SHORT:HASS_DISCOVER_BUTTON_SWITCH_ONOFF,
+                            mqtt_data, Settings.state_text[0]);
 
-    if (Settings.flag3.hass_short_discovery_msg)
+    if (Settings.flag3.hass_short_discovery_msg) {
+      snprintf_P(stemp1, sizeof(stemp1), kModules[Settings.module].name);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO_SHORT, mqtt_data,
+                   unique_id, ESP.getChipId(),
+                   Settings.friendlyname[0], stemp1, my_version, my_image, "Tasmota");
       snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
+    }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
   MqttPublish(stopic, true);
@@ -382,7 +396,6 @@ void HAssAnnounceSwitches(void)
 
 void HAssAnnounceButtons(void)
 {
-  char stopic[TOPSZ];
   char key_topic[sizeof(Settings.button_topic)];
 
   // Send info about buttons
@@ -416,21 +429,22 @@ void HAssAnnounceButtons(void)
 void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
 {
   char stopic[TOPSZ];
+  char stemp1[TOPSZ];
+  char stemp2[TOPSZ];
+  char unique_id[30];
 
   // Announce sensor, special handling of temperature and humidity sensors
   mqtt_data[0] = '\0';  // Clear retained message
 
   // Clear or Set topic
-  snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s_%s_%s/config"),
-             mqtt_topic, sensorname, subsensortype);
+  snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%s"), ESP.getChipId(), sensorname, subsensortype);
+  snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
 
   if (Settings.flag.hass_discovery) {
     char name[33];
-    char _state_topic[TOPSZ];
-    char _availability_topic[TOPSZ];
     char prefix[TOPSZ];
-    char *state_topic = _state_topic;
-    char *availability_topic = _availability_topic;
+    char *state_topic = stemp1;
+    char *availability_topic = stemp2;
 
     snprintf_P(name, sizeof(name), PSTR("%s %s %s"), Settings.friendlyname[0], sensorname, subsensortype);
     GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_SENSOR));
@@ -442,18 +456,23 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_SHORT:HASS_DISCOVER_SENSOR,
                name, state_topic, availability_topic);
-    if (!strcmp(subsensortype, "Temperature")) {
+    if (!strcmp_P(subsensortype, PSTR(D_JSON_HUMIDITY))) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_TEMP_SHORT:HASS_DISCOVER_SENSOR_TEMP,
                  mqtt_data, TempUnit(), sensorname);
-    } else if (!strcmp(subsensortype, "Humidity")) {
+    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_HUMIDITY))) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_HUM_SHORT:HASS_DISCOVER_SENSOR_HUM,
                  mqtt_data, sensorname);
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_ANY_SHORT:HASS_DISCOVER_SENSOR_ANY,
                  mqtt_data, sensorname, subsensortype);
     }
-    if (Settings.flag3.hass_short_discovery_msg)
+    if (Settings.flag3.hass_short_discovery_msg) {
+      snprintf_P(stemp1, sizeof(stemp1), kModules[Settings.module].name);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO_SHORT, mqtt_data,
+                 unique_id, ESP.getChipId(),
+                 Settings.friendlyname[0], stemp1, my_version, my_image, "Tasmota");
       snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
+    }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
   MqttPublish(stopic, true);
