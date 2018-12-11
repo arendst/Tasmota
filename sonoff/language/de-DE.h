@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0l
+ * Updated until v6.3.0.17
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -597,13 +597,13 @@
 #define D_LOG_WIFI "WIF: "         // Wifi
 
 //SDM220
-#define D_PHASE_ANGLE     "Phase Angle"
-#define D_IMPORT_ACTIVE   "Import Active"
-#define D_EXPORT_ACTIVE   "Export Active"
-#define D_IMPORT_REACTIVE "Import Reactive"
-#define D_EXPORT_REACTIVE "Export Reactive"
-#define D_TOTAL_REACTIVE  "Total Reactive"
+#define D_PHASE_ANGLE     "Phasenwinkel"
+#define D_IMPORT_ACTIVE   "Importiere Wirk"
+#define D_EXPORT_ACTIVE   "Exportiere Wirk"
+#define D_IMPORT_REACTIVE "Importiere Blind"
+#define D_EXPORT_REACTIVE "Exportiere Blind"
+#define D_TOTAL_REACTIVE  "Total Blind"
 #define D_UNIT_KWARH      "kVArh"
-#define D_UNIT_ANGLE      "Deg"
+#define D_UNIT_ANGLE      "Grad"
 
 #endif  // _LANGUAGE_DE_DE_H_
