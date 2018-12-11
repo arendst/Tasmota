@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.2.1.11
+ * Updated until v6.3.0.17
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -132,7 +132,7 @@
 #define D_PROGRAM_FLASH_SIZE "Tamaño de Flash de Programa"
 #define D_PROGRAM_SIZE "Tamaño Programa"
 #define D_PROJECT "Proyecto"
-#define D_RAIN "Rain"
+#define D_RAIN "Lluvia"
 #define D_RECEIVED "Recibido"
 #define D_RESTART "Reiniciar"
 #define D_RESTARTING "Reiniciando"
@@ -438,7 +438,7 @@
 #define D_START_SIGNAL_LOW "iniciar señal baja"
 #define D_START_SIGNAL_HIGH "iniciar señal alta"
 #define D_PULSE "pulso"
-#define D_CHECKSUM_FAILURE "Checksum fallido"
+#define D_CHECKSUM_FAILURE "Falló Checksum"
 
 // xsns_07_sht1x.ino
 #define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor no ha enviado el comando ACK"
@@ -597,13 +597,13 @@
 #define D_LOG_WIFI "WIF: "         // Wifi
 
 //SDM220
-#define D_PHASE_ANGLE     "Phase Angle"
-#define D_IMPORT_ACTIVE   "Import Active"
-#define D_EXPORT_ACTIVE   "Export Active"
-#define D_IMPORT_REACTIVE "Import Reactive"
-#define D_EXPORT_REACTIVE "Export Reactive"
-#define D_TOTAL_REACTIVE  "Total Reactive"
-#define D_UNIT_KWARH      "kVArh"
-#define D_UNIT_ANGLE      "Deg"
+#define D_PHASE_ANGLE     "Ángulo de Fase"
+#define D_IMPORT_ACTIVE   "P. Activa Entrante"
+#define D_EXPORT_ACTIVE   "P. Activa Saliente"
+#define D_IMPORT_REACTIVE "P. Reactiva Entrante"
+#define D_EXPORT_REACTIVE "P. Reactiva Saliente"
+#define D_TOTAL_REACTIVE  "P. Reactiva Total"
+#define D_UNIT_KWARH      "kVArH"
+#define D_UNIT_ANGLE      "Grados"
 
 #endif  // _LANGUAGE_ES_AR_H_
