@@ -85,7 +85,7 @@ uint8_t kWidth[5] = {
     4,     // Large
     8,     // Largest
   255 };   // All
-uint8_t kRepeat[5] = {
+uint8_t kWsRepeat[5] = {
     8,     // Small
     6,     // Medium
     4,     // Large
@@ -96,7 +96,7 @@ uint8_t ws_show_next = 1;
 bool ws_suspend_update = false;
 /********************************************************************************************/
 
-void Ws2812StripShow()
+void Ws2812StripShow(void)
 {
 #if (USE_WS2812_CTYPE > NEO_3LED)
   RgbwColor c;
@@ -163,7 +163,7 @@ void Ws2812UpdateHand(int position, uint8_t index)
   }
 }
 
-void Ws2812Clock()
+void Ws2812Clock(void)
 {
   strip->ClearTo(0); // Reset strip
   int clksize = 60000 / (int)Settings.light_pixels;
@@ -222,7 +222,7 @@ void Ws2812Gradient(uint8_t schemenr)
   ColorScheme scheme = kSchemes[schemenr];
   if (scheme.count < 2) return;
 
-  uint8_t repeat = kRepeat[Settings.light_width];  // number of scheme.count per ledcount
+  uint8_t repeat = kWsRepeat[Settings.light_width];  // number of scheme.count per ledcount
   uint16_t range = (uint16_t)ceil((float)Settings.light_pixels / (float)repeat);
   uint16_t gradRange = (uint16_t)ceil((float)range / (float)(scheme.count - 1));
   uint16_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
@@ -232,7 +232,7 @@ void Ws2812Gradient(uint8_t schemenr)
   Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
   currentColor = oldColor;
   for (uint16_t i = 0; i < Settings.light_pixels; i++) {
-    if (kRepeat[Settings.light_width] > 1) {
+    if (kWsRepeat[Settings.light_width] > 1) {
       Ws2812GradientColor(schemenr, &currentColor, range, gradRange, i +offset);
     }
     if (Settings.light_speed > 0) {
@@ -302,7 +302,7 @@ void Ws2812Bars(uint8_t schemenr)
  * Public
 \*********************************************************************************************/
 
-void Ws2812Init()
+void Ws2812Init(void)
 {
 #ifdef USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == NEO_GRB)
@@ -337,7 +337,7 @@ void Ws2812Init()
   Ws2812Clear();
 }
 
-void Ws2812Clear()
+void Ws2812Clear(void)
 {
   strip->ClearTo(0);
   strip->Show();
@@ -371,11 +371,11 @@ void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint
   }
 }
 
-void Ws2812ForceSuspend () {
+void Ws2812ForceSuspend (void) {
   ws_suspend_update = true;
 }
 
-void Ws2812ForceUpdate () {
+void Ws2812ForceUpdate (void) {
   ws_suspend_update = false;
   strip->Show();
   ws_show_next = 1;

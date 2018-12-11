@@ -133,6 +133,13 @@ enum UserSelectablePins {
   GPIO_RFRECV,         // RF receiver
   GPIO_TUYA_TX,        // Tuya Serial interface
   GPIO_TUYA_RX,        // Tuya Serial interface
+  GPIO_MGC3130_XFER,   // MGC3130 Transfer
+  GPIO_MGC3130_RESET,  // MGC3130 Reset
+  GPIO_SSPI_MISO,      // Software SPI Master Input Slave Output
+  GPIO_SSPI_MOSI,      // Software SPI Master Output Slave Input
+  GPIO_SSPI_SCLK,      // Software SPI Serial Clock
+  GPIO_SSPI_CS,        // Software SPI Chip Select
+  GPIO_SSPI_DC,        // Software SPI Data or Command
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -190,7 +197,9 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_HX711_SCK "|" D_SENSOR_HX711_DAT "|"
   D_SENSOR_TX20_TX "|"
   D_SENSOR_RFSEND "|" D_SENSOR_RFRECV "|"
-  D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX;
+  D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX "|"
+  D_SENSOR_MGC3130_XFER "|" D_SENSOR_MGC3130_RESET "|"
+  D_SENSOR_SSPI_MISO "|" D_SENSOR_SSPI_MOSI "|" D_SENSOR_SSPI_SCLK "|" D_SENSOR_SSPI_CS "|" D_SENSOR_SSPI_DC;
 
 /********************************************************************************************/
 
@@ -240,7 +249,7 @@ enum SupportedModules {
   ZENGGE_ZF_WF017,
   SONOFF_POW_R2,
   SONOFF_IFAN02,
-  BLITZWOLF_BWSHP2,
+  BLITZWOLF_BWSHP,
   SHELLY1,
   SHELLY2,
   PHILIPS,
@@ -251,6 +260,10 @@ enum SupportedModules {
   APLIC_WDP303075,
   TUYA_DIMMER,
   GOSUND,
+  ARMTRONIX_DIMMERS,
+  SK03_TUYA,
+  PS_16_DZ,
+  TECKIN_US,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -343,6 +356,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SPI
   GPIO_SPI_CS,         // SPI Chip Select
   GPIO_SPI_DC,         // SPI Data Direction
+  GPIO_SSPI_MISO,      // Software SPI Master Input Slave Output
+  GPIO_SSPI_MOSI,      // Software SPI Master Output Slave Input
+  GPIO_SSPI_SCLK,      // Software SPI Serial Clock
+  GPIO_SSPI_CS,        // Software SPI Chip Select
+  GPIO_SSPI_DC,        // Software SPI Data or Command
 #endif
 #ifdef USE_DISPLAY
   GPIO_BACKLIGHT,      // Display backlight control
@@ -424,7 +442,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_TUYA_DIMMER
   GPIO_TUYA_TX,        // Tuya Serial interface
-  GPIO_TUYA_RX         // Tuya Serial interface
+  GPIO_TUYA_RX,         // Tuya Serial interface
+#endif
+#ifdef USE_MGC3130
+  GPIO_MGC3130_XFER,
+  GPIO_MGC3130_RESET
 #endif
 };
 
@@ -464,14 +486,18 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WION,
   SHELLY1,
   SHELLY2,
-  BLITZWOLF_BWSHP2,   // Socket Relay Devices with Energy Monitoring
+  BLITZWOLF_BWSHP,    // Socket Relay Devices with Energy Monitoring
   TECKIN,
+  TECKIN_US,
   APLIC_WDP303075,
   GOSUND,
+  SK03_TUYA,
   NEO_COOLCAM,        // Socket Relay Devices
   OBI,
   ESP_SWITCH,         // Switch Devices
-  TUYA_DIMMER,		    // Dimmer Devices
+  TUYA_DIMMER,        // Dimmer Devices
+  ARMTRONIX_DIMMERS,
+  PS_16_DZ,
   H801,               // Light Devices
   MAGICHOME,
   ARILUX_LC01,
@@ -491,7 +517,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff Basic",    // Sonoff Basic (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,                // GPIO02
+     GPIO_USER,        // GPIO02 Only available on newer Sonoff Basic R2 V1
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0,                // GPIO05
@@ -1093,10 +1119,11 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL4,        // GPIO15 WIFI_O3 Relay 4 (0 = Off, 1 = On) controlling the fan
      0, 0
   },
-  { "BlitzWolf SHP2",  // BlitzWolf BW-SHP2 (ESP8285 - BL0937 or HJL-01 Energy Monitoring)
+  { "BlitzWolf SHP",   // BlitzWolf BW-SHP2 and BW-SHP6 (ESP8285 - BL0937 or HJL-01 Energy Monitoring)
                        // https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html
                        // https://www.amazon.de/Steckdose-Homecube-intelligente-Verbrauchsanzeige-funktioniert/dp/B076Q2LKHG/ref=sr_1_fkmr0_1
                        // https://www.amazon.de/Intelligente-Stromverbrauch-Fernsteurung-Schaltbare-Energieklasse/dp/B076WZQS4S/ref=sr_1_1
+                       // https://www.aliexpress.com/store/product/BlitzWolf-BW-SHP6-EU-Plug-Metering-Version-WIFI-Smart-Socket-220V-240V-10A-Work-with-Amazon/1965360_32945504669.html
      GPIO_LED2_INV,    // GPIO00 Red Led (1 = On, 0 = Off)
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
      GPIO_LED1_INV,    // GPIO02 Blue Led (1 = On, 0 = Off)
@@ -1166,7 +1193,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "OBI Socket",      // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko/p/2291706
      GPIO_USER,        // GPIO00
-     0,0,0,
+     GPIO_USER,        // GPIO01 Serial RXD
+     0,
+     GPIO_USER,        // GPIO03 Serial TXD
      GPIO_LED1,        // GPIO04 Blue LED
      GPIO_REL1,        // GPIO05 (Relay OFF, but used as Relay Switch)
      0, 0, 0, 0, 0, 0, // Flash connection
@@ -1218,7 +1247,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,
      0
   },
-  { "Gosund SP1_v23",  // https://www.amazon.de/gp/product/B0777BWS1P
+  { "Gosund SP1 v23",  // https://www.amazon.de/gp/product/B0777BWS1P
      0,
      GPIO_LED1_INV,    // GPIO01 Serial RXD and LED1 (blue) inv
      0,
@@ -1229,6 +1258,66 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_NRG_SEL_INV, // GPIO12 BL0937 or HJL-01 Sel output (0 = Voltage)
      GPIO_LED2_INV,    // GPIO13 LED2 (red) inv
      GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
+     0, 0, 0
+  },
+  { "ARMTR Dimmer",     // ARMTRONIX Dimmer, one or two channel (ESP8266 w/ separate MCU dimmer)
+                        // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-two-triac-board/
+                        // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-esp8266-one-triac-board-alexaecho/
+     GPIO_USER,
+     GPIO_TXD,          // GPIO01 MCU serial control
+     GPIO_USER,
+     GPIO_RXD,          // GPIO03 MCU serial control
+     GPIO_USER,
+     GPIO_USER,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,
+     GPIO_USER,
+     GPIO_USER,
+     GPIO_USER,
+     GPIO_USER,
+     0
+  },
+  { "SK03 Outdoor",    // Outdoor smart plug with power monitoring HLW8012 chip - https://www.amazon.com/gp/product/B07CG7MBPV
+     GPIO_KEY1,        // GPIO00 Button
+     0, 0, 0,
+     GPIO_HLW_CF,      // GPIO04 HLW8012 CF power
+     GPIO_NRG_CF1,     // GPIO05 HLW8012 CF1 current / voltage
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_NRG_SEL_INV, // GPIO12 HLW8012 CF Sel output (0 = Voltage)
+     GPIO_LED2_INV,    // GPIO13 Red Led (0 = On, 1 = Off)
+     GPIO_LED1_INV,    // GPIO14 Blue Led (0 = On, 1 = Off)
+     GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
+     0, 0
+  },
+  { "PS-16-DZ",        // PS-16-DZ Dimmer (ESP8266 w/ separate Nuvoton MCU dimmer)
+                       // https://www.aliexpress.com/item/SM-Smart-WIFI-Wall-Dimmer-Light-Switch-US-Ewelink-APP-Remote-Control-Wi-Fi-Wirele-Work/32871151902.html
+     GPIO_USER,
+     GPIO_TXD,         // GPIO01 MCU serial control
+     GPIO_USER,
+     GPIO_RXD,         // GPIO03 MCU serial control
+     GPIO_USER,
+     GPIO_USER,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_USER,
+     GPIO_LED1,        // GPIO13 WiFi LED
+     GPIO_USER,
+     GPIO_USER,
+     GPIO_USER,
+     0
+  },
+  { "Teckin US",       // Teckin SP20 US with Energy Monitoring
+                       // https://www.amazon.com/Outlet-Compatible-Monitoring-Function-Required/dp/B079Q5W22B
+                       // https://www.amazon.com/Outlet-ZOOZEE-Monitoring-Function-Compatible/dp/B07J2LR5KN
+     GPIO_LED2_INV,    // GPIO00 Red Led (1 = On, 0 = Off)
+     0,
+     GPIO_LED1_INV,    // GPIO02 Blue Led (1 = On, 0 = Off)
+     0,
+     GPIO_REL1,        // GPIO04 Relay (0 = Off, 1 = On)
+     GPIO_HJL_CF,      // GPIO05 BL0937 or HJL-01 CF power
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_NRG_SEL_INV, // GPIO12 BL0937 or HJL-01 Sel output (0 = Voltage)
+     GPIO_KEY1,        // GPIO13 Button
+     GPIO_NRG_CF1,     // GPIO14 BL0937 or HJL-01 CF1 current / voltage
      0, 0, 0
   }
 };
@@ -1345,6 +1434,16 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO16 (D16)
      0                 // ADC0 Analog input (A0)
   }
+
+  { "Delock 11826",    // Delock 11826 (ESP8285) = Sonoff Basic
+     GPIO_KEY1,        // GPIO00 Button
+     0, 0, 0, 0, 0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
+     0, 0, 0, 0
+  }
+
 */
 
 #endif  // _SONOFF_TEMPLATE_H_

@@ -5,6 +5,7 @@ Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.
 [![GitHub version](https://img.shields.io/github/release/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Sonoff-Tasmota/total.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
 [![License](https://img.shields.io/github/license/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/blob/development/LICENSE.txt)
+[![Chat](https://img.shields.io/discord/479389167382691863.svg)](https://discord.gg/Ks2Kzd4)
 
 If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 
@@ -137,6 +138,7 @@ Libraries used with Sonoff-Tasmota are:
 - [OneWire](https://github.com/PaulStoffregen/OneWire)
 - [PubSubClient](https://github.com/knolleary/pubsubclient)
 - [rc-switch](https://github.com/sui77/rc-switch)
+- [NewPing](https://bitbucket.org/teckel12/arduino-new-ping/wiki/Home)
 
 #### People inspiring me
 People helping to keep the show on the road:

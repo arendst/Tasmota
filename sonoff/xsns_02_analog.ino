@@ -26,7 +26,7 @@
 
 uint16_t adc_last_value = 0;
 
-uint16_t AdcRead()
+uint16_t AdcRead(void)
 {
   uint16_t analog = 0;
   for (byte i = 0; i < 32; i++) {
@@ -38,7 +38,7 @@ uint16_t AdcRead()
 }
 
 #ifdef USE_RULES
-void AdcEvery250ms()
+void AdcEvery250ms(void)
 {
   uint16_t new_value = AdcRead();
   if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {

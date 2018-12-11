@@ -1,9 +1,69 @@
-/* 6.3.0.7 20181111
+/* 6.3.0.16 20181201
+ * Add support for iFan02 Fanspeed in Domoticz using a selector (#4517)
+ * Add Announce Switches to MQTT Discovery (#4531)
+ * Update MCP230xx driver to support interrupt retention over teleperiod (#4547)
+ *
+ * 6.3.0.15 20181201
+ * Removed command SetOption36 (#4497)
+ * Add command SetOption60 0/1 to select dynamic sleep (0) or sleep (1) (#4497)
+ * Update SR-04 driver to use NewPing library (#4488)
+ * Add support for GPIO02 for newer Sonoff Basic (#4518)
+ *
+ * 6.3.0.14 20181127
+ * Add command CalcRes to set number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE (#4420)
+ * Add support for SM Smart Wifi Dimmer PS-16-DZ (#4465)
+ * Move some static (serial) buffers to dynamic buffers
+ * Update display and epaper drivers
+ * Fix intermittent Pzem sensor energy overflow calculation error
+ * Add support for Teckin US Power Socket with Energy Monitoring (#4481)
+ *
+ * 6.3.0.13 20181126
+ * Add command SetOption59 0/1 to change state topic from tele/STATE to stat/RESULT (#4450)
+ * Fix WifiManager functionality on initial installation (#4433)
+ *
+ * 6.3.0.12 20181122
+ * Remove delays introduced in 6.3.0.11 (#4233)
+ * Add additional start-up delay during initial wifi connection
+ * Add support for I2C MGC3130 Electric Field Effect sensor by Christian Baars (#3774, #4404)
+ * Add initial support for Hass sensor discovery (#4380)
+ * Fix possible strncat buffer overflows
+ * Fix MqttRetry values above 255 seconds (#4424)
+ * Increase webui refresh time delay for Save Settings and local OTA Upload (#4423)
+ * Add CPU average load to state message (#4431)
+ *
+ * 6.3.0.11 20181120
+ * Add delays removed in 6.3.0.9 (#4233)
+ * Allow user definition of defines WIFI_RSSI_THRESHOLD (default 10) and WIFI_RESCAN_MINUTES (default 44)
+ * Add support for Fujitsu HVac and IrRemote (#4387)
+ * Add command SetOption58 0/1 to enable IR raw data info in JSON message (#2116)
+ * Add command IRSend <frequency>|0,<rawdata1>,<rawdata2>,.. to allow raw data transmission (#2116)
+ * Change default WIFI_CONFIG_TOOL from WIFI_WAIT to WIFI_RETRY in my_user_config.h (#4400)
+ *
+ * 6.3.0.10 20181118
+ * Add command SetOption36 0..255 milliseconds (50 default) to tune main loop dynamic delay
+ * Add support for LG HVac and IrRemote (#4377)
+ * Add command SetOption56 0/1 to enable wifi network scan and select highest RSSI (#3173)
+ * Add command SetOption57 0/1 to enable wifi network re-scan every 44 minutes with a rssi threshold of 10 to select highest RSSI (#3173)
+ * Fix MQTT connection error after restart
+ * Fix wifi re-scan connection baseline
+ *
+ * 6.3.0.9 20181118
+ * Moved command SetSensorXX to debugging driver freeing user code space
+ * Add dynamic delay to main loop providing time for wifi background tasks
+ * Remove delays introduced in 6.3.0.1 (#4233)
+ *
+ * 6.3.0.8 20181115
+ * Stop enforcing flashmode dout but it is still mandatory
+ * Moved bootcount update (being first) flash write to 10 seconds after restart
+ * Add support for Armtronix dimmers. See wiki for info (#4321)
+ *
+ * 6.3.0.7 20181111
  * Fix wifi connection errors using wifi disconnect and ESP.reset instead of ESP.restart
  * Fix Sonoff Pow R2 and Sonoff S31 Serial interface hang caused by Sonoff Basic R2 driver delay implementation (and possibly core bug)
  * Change command WebSend Host header field from IP address to hostname (#4331)
  * Add to command WebSend option to send a direct path when command starts with a slash (#4329)
  * Consolidate LTrim into Trim
+ * Increase log buffer size from 512 to 520 to accommodate http sensor data (#4354)
  *
  * 6.3.0.6 20181110
  * Change GUI Configure Module by using AJAX for data fetch to cut page size (and memory use) by 40%

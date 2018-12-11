@@ -45,16 +45,10 @@
 #endif
 
 // Libraries
-#include <Ticker.h>                         // RTC, Energy, OSWatch
-#include <ESP8266WiFi.h>                    // MQTT, Ota, WifiManager
-#include <ESP8266HTTPClient.h>              // MQTT, Ota
+#include <ESP8266HTTPClient.h>              // Ota
 #include <ESP8266httpUpdate.h>              // Ota
 #include <StreamString.h>                   // Webserver, Updater
 #include <ArduinoJson.h>                    // WemoHue, IRremote, Domoticz
-#ifdef USE_WEBSERVER
-  #include <ESP8266WebServer.h>             // WifiManager, Webserver
-  #include <DNSServer.h>                    // WifiManager
-#endif  // USE_WEBSERVER
 #ifdef USE_ARDUINO_OTA
   #include <ArduinoOTA.h>                   // Arduino OTA
   #ifndef USE_DISCOVERY
@@ -81,7 +75,7 @@ enum TasmotaCommands {
   CMND_MODULE, CMND_MODULES, CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
   CMND_COUNTERDEBOUNCE, CMND_BUTTONDEBOUNCE, CMND_SWITCHDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
-  CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE, CMND_SETSENSOR,
+  CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE,
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_TIMESTD, CMND_TIMEDST, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
   CMND_I2CSCAN, CMND_SERIALSEND, CMND_BAUDRATE, CMND_SERIALDELIMITER, CMND_DRIVER };
 const char kTasmotaCommands[] PROGMEM =
@@ -91,20 +85,14 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|"
   D_CMND_COUNTERDEBOUNCE "|" D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
-  D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_SETSENSOR "|"
+  D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER "|" D_CMND_DRIVER;
 
-const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
+const char kSleepMode[] PROGMEM = "Dynamic|Normal";
 
 // Global variables
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
-
-#ifdef USE_MQTT_TLS
-  WiFiClientSecure EspClient;               // Wifi Secure Client
-#else
-  WiFiClient EspClient;                     // Wifi Client
-#endif
 
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
@@ -137,6 +125,7 @@ int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 int tele_period = 1;                        // Tele period timer
 int blinks = 201;                           // Number of LED blinks
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
+uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
 float global_temperature = 0;               // Provide a global temperature to be used by some sensors
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
@@ -176,6 +165,7 @@ uint8_t dht_flg = 0;                        // DHT configured
 uint8_t energy_flg = 0;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
+uint8_t soft_spi_flg = 0;                   // Software SPI configured
 uint8_t light_type = 0;                     // Light types
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
 byte serial_in_byte;                        // Received byte
@@ -202,6 +192,7 @@ char mqtt_data[MESSZ];                      // MQTT publish buffer and web page 
 char log_data[LOGSZ];                       // Logging
 char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
+
 
 /********************************************************************************************/
 
@@ -378,7 +369,7 @@ void SetLedPower(uint8_t state)
   digitalWrite(pin[GPIO_LED1], (bitRead(led_inverted, 0)) ? !state : state);
 }
 
-uint8_t GetFanspeed()
+uint8_t GetFanspeed(void)
 {
   uint8_t fanspeed = 0;
 
@@ -397,11 +388,14 @@ uint8_t GetFanspeed()
 
 void SetFanspeed(uint8_t fanspeed)
 {
- for (byte i = 0; i < 3; i++) {
+  for (byte i = 0; i < MAX_FAN_SPEED -1; i++) {
     uint8_t state = kIFan02Speed[fanspeed][i];
 //    uint8_t state = pgm_read_byte(kIFan02Speed +(speed *3) +i);
     ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
   }
+#ifdef USE_DOMOTICZ
+  DomoticzUpdateFanState();  // Command FanSpeed feedback
+#endif  // USE_DOMOTICZ
 }
 
 void SetPulseTimer(uint8_t index, uint16_t time)
@@ -573,14 +567,14 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       if (data_len > 0) {
         if ('-' == dataBuf[0]) {
           payload = (int16_t)GetFanspeed() -1;
-          if (payload < 0) { payload = 3; }
+          if (payload < 0) { payload = MAX_FAN_SPEED -1; }
         }
         else if ('+' == dataBuf[0]) {
           payload = GetFanspeed() +1;
-          if (payload > 3) { payload = 0; }
+          if (payload > MAX_FAN_SPEED -1) { payload = 0; }
         }
       }
-      if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
+      if ((payload >= 0) && (payload < MAX_FAN_SPEED) && (payload != GetFanspeed())) {
         SetFanspeed(payload);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, GetFanspeed());
@@ -594,6 +588,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if (CMND_STATE == command_code) {
       mqtt_data[0] = '\0';
       MqttShowState();
+      if (Settings.flag3.hass_tele_on_power) {
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+      }
     }
     else if (CMND_SLEEP == command_code) {
       if ((payload >= 0) && (payload < 251)) {
@@ -755,6 +752,13 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         else if (1 == ptype) {   // SetOption50 .. 81
           if (payload <= 1) {
             bitWrite(Settings.flag3.data, pindex, payload);
+            if (60 == ptype) {   // SetOption60 enable or disable traditional sleep
+              if (payload == 0) {   // Dynamic Sleep
+                WiFiSetSleepMode(); // Update WiFi sleep mode accordingly
+              } else {            // Traditional Sleep //AT
+                WiFiSetSleepMode(); // Update WiFi sleep mode accordingly
+              }
+            }
           }
         }
         else {                   // SetOption32 .. 49
@@ -776,13 +780,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         if (2 == ptype) snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), Settings.param[pindex]);
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, (2 == ptype) ? stemp1 : (1 == ptype) ? GetStateText(bitRead(Settings.flag3.data, pindex)) : GetStateText(bitRead(Settings.flag.data, pindex)));
       }
-    }
-    else if ((CMND_SETSENSOR == command_code) && (index < MAX_XSNS_DRIVERS)) {
-      if ((payload >= 0) && XsnsPresent(index)) {
-        bitWrite(Settings.sensors[index / 32], index % 32, payload &1);
-        if (1 == payload) { restart_flag = 2; }  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_XVALUE, command, XsnsGetSensors().c_str());
     }
     else if (CMND_TEMPERATURE_RESOLUTION == command_code) {
       if ((payload >= 0) && (payload <= 3)) {
@@ -1313,12 +1310,13 @@ boolean SendKey(byte key, byte device, byte state)
   char *tmp = (key) ? Settings.switch_topic : Settings.button_topic;
   Format(key_topic, tmp, sizeof(key_topic));
   if (Settings.flag.mqtt_enabled && MqttIsConnected() && (strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
-    if (!key && (device > devices_present)) device = 1;                                             // Only allow number of buttons up to number of devices
-    GetTopic_P(stopic, CMND, key_topic, GetPowerDevice(scommand, device, sizeof(scommand), key));   // cmnd/switchtopic/POWERx
+    if (!key && (device > devices_present)) { device = 1; }  // Only allow number of buttons up to number of devices
+    GetTopic_P(stopic, CMND, key_topic,
+               GetPowerDevice(scommand, device, sizeof(scommand), (key + Settings.flag.device_index_enable)));  // cmnd/switchtopic/POWERx
     if (9 == state) {
       mqtt_data[0] = '\0';
     } else {
-      if ((!strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic)) && (2 == state)) {
+      if ((Settings.flag3.button_switch_force_local || !strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic)) && (2 == state)) {
         state = ~(power >> (device -1)) &1;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(state));
@@ -1330,7 +1328,7 @@ boolean SendKey(byte key, byte device, byte state)
 #else
     MqttPublishDirect(stopic, (key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain);
 #endif  // USE_DOMOTICZ
-    result = true;
+    result = !Settings.flag3.button_switch_force_local;
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
     result = XdrvRulesProcess();
@@ -1401,6 +1399,11 @@ void ExecuteCommandPower(byte device, byte state, int source)
 #ifdef USE_KNX
     KnxUpdatePowerState(device, power);
 #endif  // USE_KNX
+    if (publish_power && Settings.flag3.hass_tele_on_power) {
+      mqtt_data[0] = '\0';
+      MqttShowState();
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+    }
     if (device <= MAX_PULSETIMERS) {  // Restart PulseTime if powered On
       SetPulseTimer(device -1, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[device -1] : 0);
     }
@@ -1426,7 +1429,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
   if (publish_power) MqttPublishPowerState(device);
 }
 
-void StopAllPowerBlink()
+void StopAllPowerBlink(void)
 {
   power_t mask;
 
@@ -1571,7 +1574,7 @@ void PublishStatus(uint8_t payload)
 
 }
 
-void MqttShowPWMState()
+void MqttShowPWMState(void)
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_PWM "\":{"), mqtt_data);
   bool first = true;
@@ -1584,15 +1587,19 @@ void MqttShowPWMState()
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
 }
 
-void MqttShowState()
+void MqttShowState(void)
 {
   char stemp1[33];
 
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_JSON_TIME "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\""), mqtt_data, GetDateAndTime(DT_LOCAL).c_str(), GetUptime().c_str());
+
 #ifdef USE_ADC_VCC
   dtostrfd((double)ESP.getVcc()/1000, 3, stemp1);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_VCC "\":%s"), mqtt_data, stemp1);
 #endif
+
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u"),
+    mqtt_data, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode), sleep, loop_load_avg);
 
   for (byte i = 0; i < devices_present; i++) {
     if (i == light_device -1) {
@@ -1615,7 +1622,7 @@ void MqttShowState()
     mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WiFi.BSSIDstr().c_str(), WiFi.channel(), WifiGetRssiAsQuality(WiFi.RSSI()));
 }
 
-boolean MqttShowSensor()
+boolean MqttShowSensor(void)
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_JSON_TIME "\":\"%s\""), mqtt_data, GetDateAndTime(DT_LOCAL).c_str());
   int json_data_start = strlen(mqtt_data);
@@ -1645,13 +1652,17 @@ boolean MqttShowSensor()
 
 /********************************************************************************************/
 
-void PerformEverySecond()
+void PerformEverySecond(void)
 {
   uptime++;
 
   if (BOOT_LOOP_TIME == uptime) {
     RtcReboot.fast_reboot_count = 0;
     RtcRebootSave();
+
+    Settings.bootcount++;              // Moved to here to stop flash writes during start-up
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
+    AddLog(LOG_LEVEL_DEBUG);
   }
 
   if ((4 == uptime) && (SONOFF_IFAN02 == Settings.module)) {  // Microcontroller needs 3 seconds before accepting commands
@@ -1718,7 +1729,7 @@ void PerformEverySecond()
  * Button handler with single press only or multi-press and hold on all buttons
 \*********************************************************************************************/
 
-void ButtonHandler()
+void ButtonHandler(void)
 {
   uint8_t button = NOT_PRESSED;
   uint8_t button_present = 0;
@@ -1956,7 +1967,7 @@ void SwitchHandler(byte mode)
  * Every 0.1 second
 \*-------------------------------------------------------------------------------------------*/
 
-void Every100mSeconds()
+void Every100mSeconds(void)
 {
   // As the max amount of sleep = 250 mSec this loop will shift in time...
   power_t power_now;
@@ -2005,7 +2016,7 @@ void Every100mSeconds()
  * Every 0.25 second
 \*-------------------------------------------------------------------------------------------*/
 
-void Every250mSeconds()
+void Every250mSeconds(void)
 {
 // As the max amount of sleep = 250 mSec this loop should always be taken...
 
@@ -2117,7 +2128,7 @@ void Every250mSeconds()
       if (90 == ota_state_flag) {  // Allow MQTT to reconnect
         ota_state_flag = 0;
         if (ota_result) {
-          SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
+//          SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
         } else {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
@@ -2201,7 +2212,7 @@ void Every250mSeconds()
 bool arduino_ota_triggered = false;
 uint16_t arduino_ota_progress_dot_count = 0;
 
-void ArduinoOTAInit()
+void ArduinoOTAInit(void)
 {
   ArduinoOTA.setPort(8266);
   ArduinoOTA.setHostname(Settings.hostname);
@@ -2270,7 +2281,7 @@ void ArduinoOTAInit()
 
 /********************************************************************************************/
 
-void SerialInput()
+void SerialInput(void)
 {
   while (Serial.available()) {
     yield();
@@ -2398,7 +2409,7 @@ void GpioSwitchPinMode(uint8_t index)
   }
 }
 
-void GpioInit()
+void GpioInit(void)
 {
   uint8_t mpin;
   uint8_t key_no_pullup = 0;
@@ -2489,6 +2500,7 @@ void GpioInit()
     my_module.gp.io[14] = GPIO_SPI_CLK;
     pin[GPIO_SPI_CLK] = 14;
   }
+  soft_spi_flg = ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && ((pin[GPIO_SSPI_MOSI] < 99) || (pin[GPIO_SSPI_MOSI] < 99)));
 #endif  // USE_SPI
 
 #ifdef USE_I2C
@@ -2599,7 +2611,7 @@ extern "C" {
 extern struct rst_info resetInfo;
 }
 
-void setup()
+void setup(void)
 {
   byte idx;
 
@@ -2635,13 +2647,13 @@ void setup()
   mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
   seriallog_level = Settings.seriallog_level;
   seriallog_timer = SERIALLOG_TIMER;
-#ifndef USE_EMULATION
-  Settings.flag2.emulation = 0;
-#endif  // USE_EMULATION
   syslog_level = Settings.syslog_level;
   stop_flash_rotate = Settings.flag.stop_flash_rotate;
   save_data_counter = Settings.save_data;
   sleep = Settings.sleep;
+#ifndef USE_EMULATION
+  Settings.flag2.emulation = 0;
+#endif  // USE_EMULATION
 
   // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
   if (RtcReboot.fast_reboot_count > 1) {          // Restart twice
@@ -2666,10 +2678,6 @@ void setup()
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     AddLog(LOG_LEVEL_DEBUG);
   }
-
-  Settings.bootcount++;
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
-  AddLog(LOG_LEVEL_DEBUG);
 
   Format(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
   Format(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
@@ -2751,8 +2759,12 @@ void setup()
   XsnsCall(FUNC_INIT);
 }
 
-void loop()
+uint32_t _counter = 0;
+
+void loop(void)
 {
+  uint32_t my_sleep = millis();
+
   XdrvCall(FUNC_LOOP);
 
   OsWatchLoop();
@@ -2791,6 +2803,25 @@ void loop()
   while (arduino_ota_triggered) ArduinoOTA.handle();
 #endif  // USE_ARDUINO_OTA
 
-//  yield();     // yield == delay(0), delay contains yield, auto yield in loop
-  delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
+  uint32_t my_activity = millis() - my_sleep;
+
+  if (Settings.flag3.sleep_normal) {
+    //  yield();       // yield == delay(0), delay contains yield, auto yield in loop
+    delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
+  } else {
+    if (my_activity < (uint32_t)sleep) {
+      delay((uint32_t)sleep - my_activity);  // Provide time for background tasks like wifi
+    } else {
+      if (global_state.wifi_down) {
+        delay(my_activity /2); // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
+      }
+    }
+  }
+
+  if (!my_activity) { my_activity++; }            // We cannot divide by 0
+  uint32_t loop_delay = sleep;
+  if (!loop_delay) { loop_delay++; }              // We cannot divide by 0
+  uint32_t loops_per_second = 1000 / loop_delay;  // We need to keep track of this many loops per second
+  uint32_t this_cycle_ratio = 100 * my_activity / loop_delay;
+  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + (this_cycle_ratio / loops_per_second); // Take away one loop average away and add the new one
 }

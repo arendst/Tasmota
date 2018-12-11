@@ -49,7 +49,7 @@ float sdm120_import_reactive = 0;
 float sdm120_export_reactive = 0;
 float sdm120_total_reactive = 0;
 
-bool SDM120_ModbusReceiveReady()
+bool SDM120_ModbusReceiveReady(void)
 {
   return (SDM120Serial->available() > 1);
 }
@@ -153,7 +153,7 @@ const uint16_t sdm120_start_addresses[] {
 uint8_t sdm120_read_state = 0;
 uint8_t sdm120_send_retry = 0;
 
-void SDM120250ms()              // Every 250 mSec
+void SDM120250ms(void)              // Every 250 mSec
 {
 //  sdm120_state++;
 //  if (6 == sdm120_state) {     // Every 300 mSec
@@ -244,7 +244,7 @@ void SDM120250ms()              // Every 250 mSec
 //  } // end 300 ms
 }
 
-void SDM120Init()
+void SDM120Init(void)
 {
   sdm120_type = 0;
   if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
