@@ -208,7 +208,7 @@ void MPU_6050Show(boolean json)
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s%s%s%s%s%s}"),
       mqtt_data, D_SENSOR_MPU6050, temperature, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz);
 #ifdef USE_DOMOTICZ
-      DomoticzTempHumSensor(temperature, 0);
+      DomoticzSensor(DZ_TEMP, temperature);
 #endif // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
