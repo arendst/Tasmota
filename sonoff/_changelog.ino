@@ -1,6 +1,8 @@
 /* 6.3.0.17 20181211
- * Add support for TheoV2 sensors as documented on https://sidweb.nl
+ * Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver
+ * Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver
  * Add support for SDM220 (#3610)
+ * Add support for Manzoku Power Strip (#4590)
  * Enhance support for MPU6050 using DMP (#4581)
  *
  * 6.3.0.16 20181201

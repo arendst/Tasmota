@@ -312,7 +312,7 @@ void RfSnsTheoV2Show(boolean json)
             mqtt_data, sensor, temperature, humidity, voltage);
           if ((0 == tele_period) && !sensor_once) {
 #ifdef USE_DOMOTICZ
-            DomoticzTempHumSensor(temperature, humidity);
+            DomoticzTempHumSensor(temperature, humidity);  //
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
             KnxSensor(KNX_TEMPERATURE, temp);
@@ -384,6 +384,25 @@ void RfSnsTheoV2Show(boolean json)
 #define RFSNS_ACH2010_MIN_PULSECOUNT   160 // reduce this value (144?) in case of bad reception
 #define RFSNS_ACH2010_MAX_PULSECOUNT   160
 
+#define D_ALECTOV2                     "AlectoV2"
+
+const char kAlectoV2Directions[] PROGMEM = D_TX20_NORTH "|"
+                                           D_TX20_NORTH D_TX20_NORTH D_TX20_EAST "|"
+                                           D_TX20_NORTH D_TX20_EAST "|"
+                                           D_TX20_EAST D_TX20_NORTH D_TX20_EAST "|"
+                                           D_TX20_EAST "|"
+                                           D_TX20_EAST D_TX20_SOUTH D_TX20_EAST "|"
+                                           D_TX20_SOUTH D_TX20_EAST "|"
+                                           D_TX20_SOUTH D_TX20_SOUTH D_TX20_EAST "|"
+                                           D_TX20_SOUTH "|"
+                                           D_TX20_SOUTH D_TX20_SOUTH D_TX20_WEST "|"
+                                           D_TX20_SOUTH D_TX20_WEST "|"
+                                           D_TX20_WEST D_TX20_SOUTH D_TX20_WEST "|"
+                                           D_TX20_WEST "|"
+                                           D_TX20_WEST D_TX20_NORTH D_TX20_WEST "|"
+                                           D_TX20_NORTH D_TX20_WEST "|"
+                                           D_TX20_NORTH D_TX20_NORTH D_TX20_WEST;
+
 typedef struct {
   uint32_t time;
   float temp;
@@ -407,7 +426,7 @@ boolean RfSnsAnalyzeAlectov2()
 
   byte c = 0;
   byte rfbit;
-  byte data[9];
+  byte data[9] = { 0 };
   byte msgtype = 0;
   byte rc = 0;
   int temp;
@@ -447,6 +466,10 @@ boolean RfSnsAnalyzeAlectov2()
 
   rfsns_raw_signal.Repeats = 1;  // het is een herhalend signaal. Bij ontvangst herhalingen onderdukken
 
+//  Test set
+//  rfsns_raw_signal.Number = RFSNS_DKW2012_PULSECOUNT;  // DKW2012
+//  data[8] = 11;                                        // WSW
+
   factor = 1.22;  // (1.08)
 //  atime = rfsns_raw_signal.Time - rfsns_alecto_time;
 //  if ((atime > 10000) && (atime < 60000)) factor = (float)60000 / atime;
@@ -454,7 +477,7 @@ boolean RfSnsAnalyzeAlectov2()
 //  Serial.printf("atime %d, rfsns_alecto_time %d\n", atime, rfsns_alecto_time);
 
   rfsns_alecto_v2.time = LocalTime();
-  rfsns_alecto_v2.type = (rfsns_raw_signal.Number == RFSNS_DKW2012_PULSECOUNT);
+  rfsns_alecto_v2.type = (RFSNS_DKW2012_PULSECOUNT == rfsns_raw_signal.Number);
   rfsns_alecto_v2.temp = (float)(((data[1] & 0x3) * 256 + data[2]) - 400) / 10;
   rfsns_alecto_v2.humi = data[3];
   uint16_t rain = (data[6] * 256) + data[7];
@@ -470,7 +493,7 @@ boolean RfSnsAnalyzeAlectov2()
     rfsns_alecto_v2.wdir = data[8] & 0xf;
   }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("RFS: AlectoV2, ChkCalc %d, Chksum %d, rc %d, Temp %d, Hum %d, Rain %d, Wind %d, Gust %d, Dir %d, Factor %s"),
+  snprintf_P(log_data, sizeof(log_data), PSTR("RFS: " D_ALECTOV2 ", ChkCalc %d, Chksum %d, rc %d, Temp %d, Hum %d, Rain %d, Wind %d, Gust %d, Dir %d, Factor %s"),
     checksumcalc, checksum, rc, ((data[1] & 0x3) * 256 + data[2]) - 400, data[3], (data[6] * 256) + data[7], data[4], data[5], data[8] & 0xf, dtostrfd(factor, 3, buf1));
   AddLog(LOG_LEVEL_DEBUG);
 
@@ -505,16 +528,22 @@ uint8_t RfSnsAlectoCRC8(uint8_t *addr, uint8_t len)
   return crc;
 }
 
+#ifdef USE_WEBSERVER
+const char HTTP_SNS_ALECTOV2[] PROGMEM = "%s"
+  "{s}" D_ALECTOV2 " " D_RAIN "{m}%s " D_UNIT_MILLIMETER "{e}"
+  "{s}" D_ALECTOV2 " " D_TX20_WIND_SPEED "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
+  "{s}" D_ALECTOV2 " " D_TX20_WIND_SPEED_MAX "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}";
+const char HTTP_SNS_ALECTOV2_WDIR[] PROGMEM = "%s"
+  "{s}" D_ALECTOV2 " " D_TX20_WIND_DIRECTION "{m}%s{e}";
+#endif
+
 void RfSnsAlectoV2Show(boolean json)
 {
   if (rfsns_alecto_v2.time) {
-    char sensor[10];
-    snprintf_P(sensor, sizeof(sensor), PSTR("AlectoV2"));
-
     if (rfsns_alecto_v2.time < LocalTime() - RFSNS_VALID_WINDOW) {
       if (json) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_RFRECEIVED "\":\"%s\"}"),
-          mqtt_data, sensor, GetDT(rfsns_alecto_v2.time).c_str());
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_ALECTOV2 "\":{\"" D_JSON_RFRECEIVED "\":\"%s\"}"),
+          mqtt_data, GetDT(rfsns_alecto_v2.time).c_str());
       }
     } else {
       float temp = ConvertTemp(rfsns_alecto_v2.temp);
@@ -529,23 +558,29 @@ void RfSnsAlectoV2Show(boolean json)
       dtostrfd(rfsns_alecto_v2.wind, 2, wind);
       char gust[10];
       dtostrfd(rfsns_alecto_v2.gust, 2, gust);
+      char wdir[4];
+      char direction[20];
+      if (rfsns_alecto_v2.type) {
+        GetTextIndexed(wdir, sizeof(wdir), rfsns_alecto_v2.wdir, kAlectoV2Directions);
+        snprintf_P(direction, sizeof(direction), PSTR(",\"Direction\":\"%s\""), wdir);
+      }
 
       if (json) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s, \"Rain\":%s,\"Wind\":%s,\"Gust\":%s}"),
-          mqtt_data, sensor, temperature, humidity, rain, wind, gust);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_ALECTOV2 "\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"Rain\":%s,\"Wind\":%s,\"Gust\":%s%s}"),
+          mqtt_data, temperature, humidity, rain, wind, gust, (rfsns_alecto_v2.type) ? direction : "");
         if (0 == tele_period) {
 #ifdef USE_DOMOTICZ
-          DomoticzTempHumSensor(temperature, humidity);
+        // Use a rule
 #endif  // USE_DOMOTICZ
-#ifdef USE_KNX
-//          KnxSensor(KNX_TEMPERATURE, temp);
-//          KnxSensor(KNX_HUMIDITY, humi);
-#endif  // USE_KNX
         }
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, sensor, temperature, TempUnit());
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, sensor, humidity);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, D_ALECTOV2, temperature, TempUnit());
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, D_ALECTOV2, humidity);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ALECTOV2, mqtt_data, rain, wind, gust);
+        if (rfsns_alecto_v2.type) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ALECTOV2_WDIR, mqtt_data, wdir);
+        }
 #endif  // USE_WEBSERVER
       }
     }
