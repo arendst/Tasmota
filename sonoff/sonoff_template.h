@@ -266,6 +266,7 @@ enum SupportedModules {
   SK03_TUYA,
   PS_16_DZ,
   TECKIN_US,
+  MANZOKU_EU_4,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -499,6 +500,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SK03_TUYA,
   NEO_COOLCAM,        // Socket Relay Devices
   OBI,
+  MANZOKU_EU_4,
   ESP_SWITCH,         // Switch Devices
   TUYA_DIMMER,        // Dimmer Devices
   ARMTRONIX_DIMMERS,
@@ -1324,6 +1326,21 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO13 Button
      GPIO_NRG_CF1,     // GPIO14 BL0937 or HJL-01 CF1 current / voltage
      0, 0, 0
+  },
+  { "Manzoku strip",      // "MANZOKU" labeled power strip, EU version
+     0,                // GPIO00
+     0,                // GPIO01 Serial RXD
+     0,
+     GPIO_KEY1,        // GPIO03 Serial TXD + Button
+     GPIO_REL2,        // GPIO04 Relay 2
+     GPIO_REL1,        // GPIO05 Relay 1
+     0, 0, 0, 0, 0, 0,
+     GPIO_REL3,        // GPIO12 Relay 3
+     GPIO_REL4,        // GPIO13 Relay 4
+     GPIO_USER,        // GPIO14
+     0,
+     GPIO_USER,        // GPIO16
+     0
   }
 };
 
