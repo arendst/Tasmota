@@ -44,10 +44,11 @@ const char HASS_DISCOVER_BUTTON_SWITCH[] PROGMEM =
   "\"payload_not_available\":\"" D_OFFLINE "\"";   // Offline
 
 const char HASS_DISCOVER_BUTTON_SWITCH_TOGGLE[] PROGMEM =
-  "%s,\"off_delay\":1";
+  "%s,\"off_delay\":1";                            // Hass has no support for TOGGLE, fake it by resetting to OFF after 1s
 
 const char HASS_DISCOVER_BUTTON_SWITCH_ONOFF[] PROGMEM =
-  "%s,\"payload_off\":\"%s\"";                    // OFF
+  "%s,\"force_update\":true,"                      // In ON/OFF case, enable force_update to make automations work
+  "\"payload_off\":\"%s\"";                        // OFF
 
 const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
   "%s,\"brightness_command_topic\":\"%s\","        // cmnd/led2/Dimmer
@@ -114,10 +115,11 @@ const char HASS_DISCOVER_BUTTON_SWITCH_SHORT[] PROGMEM =
   "\"pl_not_avail\":\"" D_OFFLINE "\"";            // Offline
 
 const char HASS_DISCOVER_BUTTON_SWITCH_TOGGLE_SHORT[] PROGMEM =
-  "%s,\"off_delay\":1";
+  "%s,\"off_delay\":1";                            // Hass has no support for TOGGLE, fake it by resetting to OFF after 1s
 
 const char HASS_DISCOVER_BUTTON_SWITCH_ONOFF_SHORT[] PROGMEM =
-  "%s,\"pl_off\":\"%s\"";                          // OFF
+  "%s,\"frc_upd\":true,"                           // In ON/OFF case, enable force_update to make automations work
+  "\"pl_off\":\"%s\"";                             // OFF
 
 
 const char HASS_DISCOVER_LIGHT_DIMMER_SHORT[] PROGMEM =
