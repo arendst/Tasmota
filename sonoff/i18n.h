@@ -49,6 +49,12 @@
 #define D_JSON_COUNT "Count"
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
+#define D_JSON_PHASE_ANGLE     "Phase angle"
+#define D_JSON_IMPORT_ACTIVE   "Import Active Power"
+#define D_JSON_EXPORT_ACTIVE   "Export Active Power"
+#define D_JSON_IMPORT_REACTIVE "Import Reactive Power"
+#define D_JSON_EXPORT_REACTIVE "Export Reactive Power"
+#define D_JSON_TOTAL_REACTIVE  "Total Reactive Power"
 #define D_JSON_DATA "Data"
 #define D_JSON_DISTANCE "Distance"
 #define D_JSON_DNSSERVER "DNSServer"

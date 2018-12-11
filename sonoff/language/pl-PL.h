@@ -515,8 +515,8 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-#define D_SENSOR_SDM120_TX "SDM120 Tx"
-#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM120_TX "SDM120/220 Tx"
+#define D_SENSOR_SDM120_RX "SDM120/220 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
@@ -592,5 +592,15 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+
+//SDM220
+#define D_PHASE_ANGLE     "Phase Angle"
+#define D_IMPORT_ACTIVE   "Import Active"
+#define D_EXPORT_ACTIVE   "Export Active"
+#define D_IMPORT_REACTIVE "Import Reactive"
+#define D_EXPORT_REACTIVE "Export Reactive"
+#define D_TOTAL_REACTIVE  "Total Reactive"
+#define D_UNIT_KWARH      "kVArh"
+#define D_UNIT_ANGLE      "Deg"
 
 #endif  // _LANGUAGE_PL_PL_D_H_
