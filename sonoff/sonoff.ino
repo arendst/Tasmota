@@ -91,8 +91,6 @@ const char kTasmotaCommands[] PROGMEM =
 
 const char kSleepMode[] PROGMEM = "Dynamic|Normal";
 
-const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
-
 // Global variables
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
 
@@ -390,11 +388,14 @@ uint8_t GetFanspeed(void)
 
 void SetFanspeed(uint8_t fanspeed)
 {
- for (byte i = 0; i < 3; i++) {
+  for (byte i = 0; i < MAX_FAN_SPEED -1; i++) {
     uint8_t state = kIFan02Speed[fanspeed][i];
 //    uint8_t state = pgm_read_byte(kIFan02Speed +(speed *3) +i);
     ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
   }
+#ifdef USE_DOMOTICZ
+  DomoticzUpdateFanState();  // Command FanSpeed feedback
+#endif  // USE_DOMOTICZ
 }
 
 void SetPulseTimer(uint8_t index, uint16_t time)
@@ -566,14 +567,14 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       if (data_len > 0) {
         if ('-' == dataBuf[0]) {
           payload = (int16_t)GetFanspeed() -1;
-          if (payload < 0) { payload = 3; }
+          if (payload < 0) { payload = MAX_FAN_SPEED -1; }
         }
         else if ('+' == dataBuf[0]) {
           payload = GetFanspeed() +1;
-          if (payload > 3) { payload = 0; }
+          if (payload > MAX_FAN_SPEED -1) { payload = 0; }
         }
       }
-      if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
+      if ((payload >= 0) && (payload < MAX_FAN_SPEED) && (payload != GetFanspeed())) {
         SetFanspeed(payload);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, GetFanspeed());
@@ -1309,12 +1310,13 @@ boolean SendKey(byte key, byte device, byte state)
   char *tmp = (key) ? Settings.switch_topic : Settings.button_topic;
   Format(key_topic, tmp, sizeof(key_topic));
   if (Settings.flag.mqtt_enabled && MqttIsConnected() && (strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
-    if (!key && (device > devices_present)) device = 1;                                             // Only allow number of buttons up to number of devices
-    GetTopic_P(stopic, CMND, key_topic, GetPowerDevice(scommand, device, sizeof(scommand), key));   // cmnd/switchtopic/POWERx
+    if (!key && (device > devices_present)) { device = 1; }  // Only allow number of buttons up to number of devices
+    GetTopic_P(stopic, CMND, key_topic,
+               GetPowerDevice(scommand, device, sizeof(scommand), (key + Settings.flag.device_index_enable)));  // cmnd/switchtopic/POWERx
     if (9 == state) {
       mqtt_data[0] = '\0';
     } else {
-      if ((!strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic)) && (2 == state)) {
+      if ((Settings.flag3.button_switch_force_local || !strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic)) && (2 == state)) {
         state = ~(power >> (device -1)) &1;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(state));
@@ -1326,7 +1328,7 @@ boolean SendKey(byte key, byte device, byte state)
 #else
     MqttPublishDirect(stopic, (key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain);
 #endif  // USE_DOMOTICZ
-    result = true;
+    result = !Settings.flag3.button_switch_force_local;
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
     result = XdrvRulesProcess();
@@ -2764,6 +2766,7 @@ void loop(void)
   uint32_t my_sleep = millis();
 
   XdrvCall(FUNC_LOOP);
+  XsnsCall(FUNC_LOOP);
 
   OsWatchLoop();
 

@@ -59,6 +59,8 @@
 #define D_JSON_ERASE "Erase"
 #define D_JSON_ERROR "Error"
 #define D_JSON_EVERY "Every"
+#define D_JSON_EXPORT_ACTIVE "ExportActivePower"
+#define D_JSON_EXPORT_REACTIVE "ExportReactivePower"
 #define D_JSON_FAILED "Failed"
 #define D_JSON_FALLBACKTOPIC "FallbackTopic"
 #define D_JSON_FEATURES "Features"
@@ -80,6 +82,8 @@
 #define D_JSON_I2CSCAN_NO_DEVICES_FOUND "No devices found"
 #define D_JSON_ID "Id"
 #define D_JSON_ILLUMINANCE "Illuminance"
+#define D_JSON_IMPORT_ACTIVE "ImportActivePower"
+#define D_JSON_IMPORT_REACTIVE "ImportReactivePower"
 #define D_JSON_INFRARED "Infrared"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
@@ -93,6 +97,7 @@
 #define D_JSON_NONE "None"
 #define D_JSON_OR "or"
 #define D_JSON_PERIOD "Period"
+#define D_JSON_PHASE_ANGLE "PhaseAngle"
 #define D_JSON_POWERFACTOR "Factor"
 #define D_JSON_POWERUSAGE "Power"
 #define D_JSON_ACTIVE_POWERUSAGE "ActivePower"
@@ -129,6 +134,7 @@
 #define D_JSON_TIME "Time"
 #define D_JSON_TODAY "Today"
 #define D_JSON_TOTAL "Total"
+#define D_JSON_TOTAL_REACTIVE "TotalReactivePower"
 #define D_JSON_TOTAL_START_TIME "TotalStartTime"
 #define D_JSON_TVOC "TVOC"
 #define D_JSON_TYPE "Type"
@@ -330,6 +336,7 @@
 #define D_CMND_SPEED "Speed"
 #define D_CMND_WAKEUP "Wakeup"
 #define D_CMND_WAKEUPDURATION "WakeUpDuration"
+#define D_CMND_WHITE "White"
 #define D_CMND_WIDTH "Width"
 
 // Commands xdrv_05_irremote.ino
@@ -539,6 +546,7 @@ const char HTTP_SNS_HUM[] PROGMEM = "%s{s}%s " D_HUMIDITY "{m}%s%%{e}";         
 const char HTTP_SNS_PRESSURE[] PROGMEM = "%s{s}%s " D_PRESSURE "{m}%s %s{e}";                                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}%s %s{e}";                   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_ILLUMINANCE[] PROGMEM = "%s{s}%s " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}";              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 #if defined(USE_MHZ19) || defined(USE_SENSEAIR)
 const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
