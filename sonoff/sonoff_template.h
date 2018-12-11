@@ -140,6 +140,7 @@ enum UserSelectablePins {
   GPIO_SSPI_SCLK,      // Software SPI Serial Clock
   GPIO_SSPI_CS,        // Software SPI Chip Select
   GPIO_SSPI_DC,        // Software SPI Data or Command
+  GPIO_RF_SENSOR,      // Rf receiver with sensor decoding
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -199,7 +200,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_RFSEND "|" D_SENSOR_RFRECV "|"
   D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX "|"
   D_SENSOR_MGC3130_XFER "|" D_SENSOR_MGC3130_RESET "|"
-  D_SENSOR_SSPI_MISO "|" D_SENSOR_SSPI_MOSI "|" D_SENSOR_SSPI_SCLK "|" D_SENSOR_SSPI_CS "|" D_SENSOR_SSPI_DC;
+  D_SENSOR_SSPI_MISO "|" D_SENSOR_SSPI_MOSI "|" D_SENSOR_SSPI_SCLK "|" D_SENSOR_SSPI_CS "|" D_SENSOR_SSPI_DC "|"
+  D_SENSOR_RF_SENSOR;
 
 /********************************************************************************************/
 
@@ -381,6 +383,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_RC_SWITCH
   GPIO_RFSEND,         // RF transmitter
   GPIO_RFRECV,         // RF receiver
+#endif
+#ifdef USE_RF_SENSOR
+  GPIO_RF_SENSOR,      // Rf receiver with sensor decoding
 #endif
 #ifdef USE_SR04
   GPIO_SR04_TRIG,      // SR04 Trigger pin

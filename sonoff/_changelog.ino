@@ -1,4 +1,9 @@
-/* 6.3.0.16 20181201
+/* 6.3.0.17 20181211
+ * Add support for TheoV2 sensors as documented on https://sidweb.nl
+ * Add support for SDM220 (#3610)
+ * Enhance support for MPU6050 using DMP (#4581)
+ *
+ * 6.3.0.16 20181201
  * Add support for iFan02 Fanspeed in Domoticz using a selector (#4517)
  * Add Announce Switches to MQTT Discovery (#4531)
  * Update MCP230xx driver to support interrupt retention over teleperiod (#4547)

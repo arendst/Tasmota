@@ -2766,6 +2766,7 @@ void loop(void)
   uint32_t my_sleep = millis();
 
   XdrvCall(FUNC_LOOP);
+  XsnsCall(FUNC_LOOP);
 
   OsWatchLoop();
 

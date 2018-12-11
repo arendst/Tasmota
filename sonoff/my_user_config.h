@@ -357,7 +357,7 @@
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
 //#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
   #define SDM120_SPEED         9600              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
-  #define USE_SDM220                             // add extra parameters for SDM220 (+0k1 code)
+  #define USE_SDM220                             // Add extra parameters for SDM220 (+0k1 code)
 //#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy meter (+2k code)
   #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
 //#define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
@@ -398,6 +398,10 @@
 #define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k code)
 
 #define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
+
+//#define USE_RF_SENSOR                            // Add support for RF (434MHz or 868MHz) receiver (+2k code)
+//  #define USE_THEO_V2                            // Add support for 434MHz Theo V2 sensors as documented on https://sidweb.nl
+//  #define USE_ALECTO_V2                          // Add support for 868MHz Alecto V2 sensors like ACH2010, WS3000 and DKW2012
 
 /*********************************************************************************************\
  * Debug features are only supported in development branch

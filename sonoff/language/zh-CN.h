@@ -536,6 +536,7 @@
 #define D_SENSOR_SSPI_SCLK "SSPI SCLK"
 #define D_SENSOR_SSPI_CS   "SSPI CS"
 #define D_SENSOR_SSPI_DC   "SSPI DC"
+#define D_SENSOR_RF_SENSOR "RF Sensor"
 
 // Units
 #define D_UNIT_AMPERE "安"
