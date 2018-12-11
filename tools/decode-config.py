@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0012'
+VER = '2.1.0013'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -806,6 +806,9 @@ Setting_6_3_0_15['flag3'][0].update ({
 Setting_6_3_0_16 = copy.deepcopy(Setting_6_3_0_15)
 Setting_6_3_0_16['mcp230xx_config'][0].update ({
         'int_retain_flag':          ('<L', (0x6F6,1,12), (None, None,                           ('MCP230xx',    None)) ),
+                                    })
+Setting_6_3_0_16['flag3'][0].update ({
+        'button_switch_force_local':('<L', (0x3A0,1,11), (None, None,                           ('SetOption',   '"SetOption61 {}".format($)')) ),
                                     })
 # ======================================================================
 Settings = [
