@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.3.0.14
+ * Updated until v6.3.0.17
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -124,14 +124,15 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Facteur de puissance"
 #define D_POWERUSAGE "Puissance"
-#define D_POWERUSAGE_ACTIVE "Puissance Active"
-#define D_POWERUSAGE_APPARENT "Puissance Apparente"
-#define D_POWERUSAGE_REACTIVE "Puissance Réactive"
+#define D_POWERUSAGE_ACTIVE "Puissance active"
+#define D_POWERUSAGE_APPARENT "Puissance apparente"
+#define D_POWERUSAGE_REACTIVE "Puissance réactive"
 #define D_PRESSURE "Pression"
 #define D_PRESSUREATSEALEVEL "PressionMer"
 #define D_PROGRAM_FLASH_SIZE "Taille Flash Programme"
 #define D_PROGRAM_SIZE "Taille programme"
 #define D_PROJECT "Projet"
+#define D_RAIN "Pluie"
 #define D_RECEIVED "Reçu"
 #define D_RESTART "Redémarrage"
 #define D_RESTARTING "Redémarre"
@@ -244,7 +245,7 @@
 #define D_CONFIGURE_DOMOTICZ "Configuration Domoticz"
 #define D_CONFIGURE_LOGGING "Configuration du journal"
 #define D_CONFIGURE_OTHER "Autre configuration"
-#define D_CONFIRM_RESET_CONFIGURATION "Confirmer réinitialisation configuration"
+#define D_CONFIRM_RESET_CONFIGURATION "Confirmer la réinit. de la config."
 #define D_RESET_CONFIGURATION "Configuration par défaut"
 #define D_BACKUP_CONFIGURATION "Sauvegarde de la config."
 #define D_RESTORE_CONFIGURATION "Restauration de la config."
@@ -515,8 +516,8 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-#define D_SENSOR_SDM120_TX "SDM120 Tx"
-#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM120_TX "SDM120/220 Tx"
+#define D_SENSOR_SDM120_RX "SDM120/220 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
@@ -536,6 +537,7 @@
 #define D_SENSOR_SSPI_SCLK "SSPI SCLK"
 #define D_SENSOR_SSPI_CS   "SSPI CS"
 #define D_SENSOR_SSPI_DC   "SSPI DC"
+#define D_SENSOR_RF_SENSOR "RF Sensor"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -552,6 +554,7 @@
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
@@ -592,5 +595,15 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+
+//SDM220
+#define D_PHASE_ANGLE     "Angle de phase"
+#define D_IMPORT_ACTIVE   "P active importée"
+#define D_EXPORT_ACTIVE   "P active exportée"
+#define D_IMPORT_REACTIVE "P réactive importée"
+#define D_EXPORT_REACTIVE "P réactive exportée"
+#define D_TOTAL_REACTIVE  "P réactive total"
+#define D_UNIT_KWARH      "kVArh"
+#define D_UNIT_ANGLE      "°"
 
 #endif  // _LANGUAGE_FR_FR_H_
