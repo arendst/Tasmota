@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.3.0.14
+ * Updated until v6.3.0.17
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -122,17 +122,17 @@
 #define D_ONLINE "Connecté"
 #define D_PASSWORD "Mot de passe"
 #define D_PORT "Port"
-#define D_POWER_FACTOR "Facteur de puissance"
+#define D_POWER_FACTOR "Fact de puiss"
 #define D_POWERUSAGE "Puissance"
-#define D_POWERUSAGE_ACTIVE "Puissance Active"
-#define D_POWERUSAGE_APPARENT "Puissance Apparente"
-#define D_POWERUSAGE_REACTIVE "Puissance Réactive"
+#define D_POWERUSAGE_ACTIVE "Puiss act"
+#define D_POWERUSAGE_APPARENT "Puiss app"
+#define D_POWERUSAGE_REACTIVE "Puiss réactive"
 #define D_PRESSURE "Pression"
 #define D_PRESSUREATSEALEVEL "PressionMer"
 #define D_PROGRAM_FLASH_SIZE "Taille Flash Programme"
 #define D_PROGRAM_SIZE "Taille programme"
 #define D_PROJECT "Projet"
-#define D_RAIN "Plui"
+#define D_RAIN "Pluie"
 #define D_RECEIVED "Reçu"
 #define D_RESTART "Redémarrage"
 #define D_RESTARTING "Redémarre"
@@ -245,7 +245,7 @@
 #define D_CONFIGURE_DOMOTICZ "Configuration Domoticz"
 #define D_CONFIGURE_LOGGING "Configuration du journal"
 #define D_CONFIGURE_OTHER "Autre configuration"
-#define D_CONFIRM_RESET_CONFIGURATION "Confirmer réinitialisation configuration"
+#define D_CONFIRM_RESET_CONFIGURATION "Confirmer la réinit. de la config."
 #define D_RESET_CONFIGURATION "Configuration par défaut"
 #define D_BACKUP_CONFIGURATION "Sauvegarde de la config."
 #define D_RESTORE_CONFIGURATION "Restauration de la config."
@@ -597,13 +597,13 @@
 #define D_LOG_WIFI "WIF: "         // Wifi
 
 //SDM220
-#define D_PHASE_ANGLE     "Phase Angle"
-#define D_IMPORT_ACTIVE   "Import Active"
-#define D_EXPORT_ACTIVE   "Export Active"
-#define D_IMPORT_REACTIVE "Import Reactive"
-#define D_EXPORT_REACTIVE "Export Reactive"
-#define D_TOTAL_REACTIVE  "Total Reactive"
+#define D_PHASE_ANGLE     "Angle de phase"
+#define D_IMPORT_ACTIVE   "Puiss act conso"
+#define D_EXPORT_ACTIVE   "Puiss act fournie"
+#define D_IMPORT_REACTIVE "Puiss réa conso"
+#define D_EXPORT_REACTIVE "Puiss réa fournie"
+#define D_TOTAL_REACTIVE  "Puiss réa totale"
 #define D_UNIT_KWARH      "kVArh"
-#define D_UNIT_ANGLE      "Deg"
+#define D_UNIT_ANGLE      "°"
 
 #endif  // _LANGUAGE_FR_FR_H_
