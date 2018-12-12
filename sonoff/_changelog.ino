@@ -1,5 +1,23 @@
-/* 6.3.0.14 20181127
- * Add Command CalcRes to set number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE (#4420)
+/* 6.3.0.17 20181211
+ * Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver
+ * Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver
+ * Add support for SDM220 (#3610)
+ * Add support for Manzoku Power Strip (#4590)
+ * Enhance support for MPU6050 using DMP (#4581)
+ *
+ * 6.3.0.16 20181201
+ * Add support for iFan02 Fanspeed in Domoticz using a selector (#4517)
+ * Add Announce Switches to MQTT Discovery (#4531)
+ * Update MCP230xx driver to support interrupt retention over teleperiod (#4547)
+ *
+ * 6.3.0.15 20181201
+ * Removed command SetOption36 (#4497)
+ * Add command SetOption60 0/1 to select dynamic sleep (0) or sleep (1) (#4497)
+ * Update SR-04 driver to use NewPing library (#4488)
+ * Add support for GPIO02 for newer Sonoff Basic (#4518)
+ *
+ * 6.3.0.14 20181127
+ * Add command CalcRes to set number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE (#4420)
  * Add support for SM Smart Wifi Dimmer PS-16-DZ (#4465)
  * Move some static (serial) buffers to dynamic buffers
  * Update display and epaper drivers

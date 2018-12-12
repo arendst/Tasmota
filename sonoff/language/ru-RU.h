@@ -132,6 +132,7 @@
 #define D_PROGRAM_FLASH_SIZE "Размер Flash для программ"
 #define D_PROGRAM_SIZE "Размер программы "
 #define D_PROJECT "Проект"
+#define D_RAIN "Rain"
 #define D_RECEIVED "Получено"
 #define D_RESTART "Перезапуск"
 #define D_RESTARTING "Перезапуск"
@@ -515,8 +516,8 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-#define D_SENSOR_SDM120_TX "SDM120 Tx"
-#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM120_TX "SDM120/220 Tx"
+#define D_SENSOR_SDM120_RX "SDM120/220 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
@@ -536,6 +537,7 @@
 #define D_SENSOR_SSPI_SCLK "SSPI SCLK"
 #define D_SENSOR_SSPI_CS   "SSPI CS"
 #define D_SENSOR_SSPI_DC   "SSPI DC"
+#define D_SENSOR_RF_SENSOR "RF Sensor"
 
 // Units
 #define D_UNIT_AMPERE "А"
@@ -552,6 +554,7 @@
 #define D_UNIT_MICROMETER "мкм"
 #define D_UNIT_MICROSECOND "мкс"
 #define D_UNIT_MILLIAMPERE "мА"
+#define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "мм рт.ст."
 #define D_UNIT_MILLISECOND "мс"
 #define D_UNIT_MINUTE "мин"
@@ -592,5 +595,15 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+
+//SDM220
+#define D_PHASE_ANGLE     "Угол фазы"
+#define D_IMPORT_ACTIVE   "Импорт активной мощности"
+#define D_EXPORT_ACTIVE   "Экспорт активной мощности"
+#define D_IMPORT_REACTIVE "Импорт реактивной мощности"
+#define D_EXPORT_REACTIVE "Экспорт реактивной мощности"
+#define D_TOTAL_REACTIVE  "Итого реактивная мощность"
+#define D_UNIT_KWARH      "kVArh"
+#define D_UNIT_ANGLE      "Град"
 
 #endif  // _LANGUAGE_RU_RU_H_

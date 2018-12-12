@@ -89,7 +89,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER "|" D_CMND_DRIVER;
 
-const uint8_t kIFan02Speed[4][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};
+const char kSleepMode[] PROGMEM = "Dynamic|Normal";
 
 // Global variables
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
@@ -165,6 +165,7 @@ uint8_t dht_flg = 0;                        // DHT configured
 uint8_t energy_flg = 0;                     // Energy monitor configured
 uint8_t i2c_flg = 0;                        // I2C configured
 uint8_t spi_flg = 0;                        // SPI configured
+uint8_t soft_spi_flg = 0;                   // Software SPI configured
 uint8_t light_type = 0;                     // Light types
 uint8_t ntp_force_sync = 0;                 // Force NTP sync
 byte serial_in_byte;                        // Received byte
@@ -387,11 +388,14 @@ uint8_t GetFanspeed(void)
 
 void SetFanspeed(uint8_t fanspeed)
 {
- for (byte i = 0; i < 3; i++) {
+  for (byte i = 0; i < MAX_FAN_SPEED -1; i++) {
     uint8_t state = kIFan02Speed[fanspeed][i];
 //    uint8_t state = pgm_read_byte(kIFan02Speed +(speed *3) +i);
     ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
   }
+#ifdef USE_DOMOTICZ
+  DomoticzUpdateFanState();  // Command FanSpeed feedback
+#endif  // USE_DOMOTICZ
 }
 
 void SetPulseTimer(uint8_t index, uint16_t time)
@@ -563,14 +567,14 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       if (data_len > 0) {
         if ('-' == dataBuf[0]) {
           payload = (int16_t)GetFanspeed() -1;
-          if (payload < 0) { payload = 3; }
+          if (payload < 0) { payload = MAX_FAN_SPEED -1; }
         }
         else if ('+' == dataBuf[0]) {
           payload = GetFanspeed() +1;
-          if (payload > 3) { payload = 0; }
+          if (payload > MAX_FAN_SPEED -1) { payload = 0; }
         }
       }
-      if ((payload >= 0) && (payload <= 3) && (payload != GetFanspeed())) {
+      if ((payload >= 0) && (payload < MAX_FAN_SPEED) && (payload != GetFanspeed())) {
         SetFanspeed(payload);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, GetFanspeed());
@@ -584,14 +588,12 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if (CMND_STATE == command_code) {
       mqtt_data[0] = '\0';
       MqttShowState();
+      if (Settings.flag3.hass_tele_on_power) {
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+      }
     }
     else if (CMND_SLEEP == command_code) {
       if ((payload >= 0) && (payload < 251)) {
-        if (payload > 0) {
-          snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabling SetOption36 (Dynamic Sleep) in favour of sleep"));
-          AddLog(LOG_LEVEL_INFO);
-          Settings.param[P_LOOP_SLEEP_DELAY] = 0; // We do not want SetOption36 to be active along with traditional sleep
-        }
         Settings.sleep = payload;
         sleep = payload;
         WiFiSetSleepMode();
@@ -750,6 +752,13 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         else if (1 == ptype) {   // SetOption50 .. 81
           if (payload <= 1) {
             bitWrite(Settings.flag3.data, pindex, payload);
+            if (60 == ptype) {   // SetOption60 enable or disable traditional sleep
+              if (payload == 0) {   // Dynamic Sleep
+                WiFiSetSleepMode(); // Update WiFi sleep mode accordingly
+              } else {            // Traditional Sleep //AT
+                WiFiSetSleepMode(); // Update WiFi sleep mode accordingly
+              }
+            }
           }
         }
         else {                   // SetOption32 .. 49
@@ -761,12 +770,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               param_low = 1;
               param_high = 250;
               break;
-            case P_LOOP_SLEEP_DELAY:
-              if (payload > 0) {
-                snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabling sleep in favour of SetOption36 (Dynamic Sleep)"));
-                AddLog(LOG_LEVEL_INFO);
-                Settings.sleep = 0; // We do not want traditional sleep to be enabled along side SetOption36
-              }
           }
           if ((payload >= param_low) && (payload <= param_high)) {
             Settings.param[pindex] = payload;
@@ -1307,12 +1310,13 @@ boolean SendKey(byte key, byte device, byte state)
   char *tmp = (key) ? Settings.switch_topic : Settings.button_topic;
   Format(key_topic, tmp, sizeof(key_topic));
   if (Settings.flag.mqtt_enabled && MqttIsConnected() && (strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
-    if (!key && (device > devices_present)) device = 1;                                             // Only allow number of buttons up to number of devices
-    GetTopic_P(stopic, CMND, key_topic, GetPowerDevice(scommand, device, sizeof(scommand), key));   // cmnd/switchtopic/POWERx
+    if (!key && (device > devices_present)) { device = 1; }  // Only allow number of buttons up to number of devices
+    GetTopic_P(stopic, CMND, key_topic,
+               GetPowerDevice(scommand, device, sizeof(scommand), (key + Settings.flag.device_index_enable)));  // cmnd/switchtopic/POWERx
     if (9 == state) {
       mqtt_data[0] = '\0';
     } else {
-      if ((!strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic)) && (2 == state)) {
+      if ((Settings.flag3.button_switch_force_local || !strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic)) && (2 == state)) {
         state = ~(power >> (device -1)) &1;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(state));
@@ -1324,7 +1328,7 @@ boolean SendKey(byte key, byte device, byte state)
 #else
     MqttPublishDirect(stopic, (key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain);
 #endif  // USE_DOMOTICZ
-    result = true;
+    result = !Settings.flag3.button_switch_force_local;
   } else {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
     result = XdrvRulesProcess();
@@ -1395,6 +1399,11 @@ void ExecuteCommandPower(byte device, byte state, int source)
 #ifdef USE_KNX
     KnxUpdatePowerState(device, power);
 #endif  // USE_KNX
+    if (publish_power && Settings.flag3.hass_tele_on_power) {
+      mqtt_data[0] = '\0';
+      MqttShowState();
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+    }
     if (device <= MAX_PULSETIMERS) {  // Restart PulseTime if powered On
       SetPulseTimer(device -1, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[device -1] : 0);
     }
@@ -1583,13 +1592,14 @@ void MqttShowState(void)
   char stemp1[33];
 
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_JSON_TIME "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\""), mqtt_data, GetDateAndTime(DT_LOCAL).c_str(), GetUptime().c_str());
+
 #ifdef USE_ADC_VCC
   dtostrfd((double)ESP.getVcc()/1000, 3, stemp1);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_VCC "\":%s"), mqtt_data, stemp1);
 #endif
 
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoopSet\":%u"), mqtt_data, (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]); // Add current loop delay target to telemetry
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LoadAvg\":%u"), mqtt_data, loop_load_avg);                                // Add LoadAvg to telemetry data
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u"),
+    mqtt_data, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode), sleep, loop_load_avg);
 
   for (byte i = 0; i < devices_present; i++) {
     if (i == light_device -1) {
@@ -1692,11 +1702,7 @@ void PerformEverySecond(void)
 
       mqtt_data[0] = '\0';
       MqttShowState();
-      if (Settings.flag3.hass_tele_as_result) {
-        MqttPublishPrefixTopic_P(STAT, S_RSLT_RESULT, MQTT_TELE_RETAIN);
-      } else {
-        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
-      }
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
 
       mqtt_data[0] = '\0';
       if (MqttShowSensor()) {
@@ -2494,6 +2500,7 @@ void GpioInit(void)
     my_module.gp.io[14] = GPIO_SPI_CLK;
     pin[GPIO_SPI_CLK] = 14;
   }
+  soft_spi_flg = ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && ((pin[GPIO_SSPI_MOSI] < 99) || (pin[GPIO_SSPI_MOSI] < 99)));
 #endif  // USE_SPI
 
 #ifdef USE_I2C
@@ -2752,11 +2759,14 @@ void setup(void)
   XsnsCall(FUNC_INIT);
 }
 
+uint32_t _counter = 0;
+
 void loop(void)
 {
   uint32_t my_sleep = millis();
 
   XdrvCall(FUNC_LOOP);
+  XsnsCall(FUNC_LOOP);
 
   OsWatchLoop();
 
@@ -2794,22 +2804,25 @@ void loop(void)
   while (arduino_ota_triggered) ArduinoOTA.handle();
 #endif  // USE_ARDUINO_OTA
 
-//  yield();       // yield == delay(0), delay contains yield, auto yield in loop
-  delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
-
   uint32_t my_activity = millis() - my_sleep;
-  if (my_activity < (uint32_t)Settings.param[P_LOOP_SLEEP_DELAY]) {
-    delay((uint32_t)Settings.param[P_LOOP_SLEEP_DELAY] - my_activity);  // Provide time for background tasks like wifi
+
+  if (Settings.flag3.sleep_normal) {
+    //  yield();       // yield == delay(0), delay contains yield, auto yield in loop
+    delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
   } else {
-    if (global_state.wifi_down) {
-      delay(my_activity /2); // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
+    if (my_activity < (uint32_t)sleep) {
+      delay((uint32_t)sleep - my_activity);  // Provide time for background tasks like wifi
+    } else {
+      if (global_state.wifi_down) {
+        delay(my_activity /2); // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
+      }
     }
   }
 
   if (!my_activity) { my_activity++; }            // We cannot divide by 0
-  uint32_t loop_delay = Settings.param[P_LOOP_SLEEP_DELAY];
+  uint32_t loop_delay = sleep;
   if (!loop_delay) { loop_delay++; }              // We cannot divide by 0
   uint32_t loops_per_second = 1000 / loop_delay;  // We need to keep track of this many loops per second
   uint32_t this_cycle_ratio = 100 * my_activity / loop_delay;
-  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + (this_cycle_ratio / loops_per_second);  // Take away one loop average away and add the new one
+  loop_load_avg = loop_load_avg - (loop_load_avg / loops_per_second) + (this_cycle_ratio / loops_per_second); // Take away one loop average away and add the new one
 }

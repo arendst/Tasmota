@@ -140,6 +140,7 @@ enum UserSelectablePins {
   GPIO_SSPI_SCLK,      // Software SPI Serial Clock
   GPIO_SSPI_CS,        // Software SPI Chip Select
   GPIO_SSPI_DC,        // Software SPI Data or Command
+  GPIO_RF_SENSOR,      // Rf receiver with sensor decoding
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -199,7 +200,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_RFSEND "|" D_SENSOR_RFRECV "|"
   D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX "|"
   D_SENSOR_MGC3130_XFER "|" D_SENSOR_MGC3130_RESET "|"
-  D_SENSOR_SSPI_MISO "|" D_SENSOR_SSPI_MOSI "|" D_SENSOR_SSPI_SCLK "|" D_SENSOR_SSPI_CS "|" D_SENSOR_SSPI_DC;
+  D_SENSOR_SSPI_MISO "|" D_SENSOR_SSPI_MOSI "|" D_SENSOR_SSPI_SCLK "|" D_SENSOR_SSPI_CS "|" D_SENSOR_SSPI_DC "|"
+  D_SENSOR_RF_SENSOR;
 
 /********************************************************************************************/
 
@@ -264,6 +266,7 @@ enum SupportedModules {
   SK03_TUYA,
   PS_16_DZ,
   TECKIN_US,
+  MANZOKU_EU_4,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -382,6 +385,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_RFSEND,         // RF transmitter
   GPIO_RFRECV,         // RF receiver
 #endif
+#ifdef USE_RF_SENSOR
+  GPIO_RF_SENSOR,      // Rf receiver with sensor decoding
+#endif
 #ifdef USE_SR04
   GPIO_SR04_TRIG,      // SR04 Trigger pin
   GPIO_SR04_ECHO,      // SR04 Echo pin
@@ -494,6 +500,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SK03_TUYA,
   NEO_COOLCAM,        // Socket Relay Devices
   OBI,
+  MANZOKU_EU_4,
   ESP_SWITCH,         // Switch Devices
   TUYA_DIMMER,        // Dimmer Devices
   ARMTRONIX_DIMMERS,
@@ -517,7 +524,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff Basic",    // Sonoff Basic (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,                // GPIO02
+     GPIO_USER,        // GPIO02 Only available on newer Sonoff Basic R2 V1
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0,                // GPIO05
@@ -1319,6 +1326,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO13 Button
      GPIO_NRG_CF1,     // GPIO14 BL0937 or HJL-01 CF1 current / voltage
      0, 0, 0
+  },
+  { "Manzoku strip",   // "MANZOKU" labeled power strip, EU version
+                       // https://www.amazon.de/Steckdosenleiste-AOFO-Mehrfachsteckdose-Überspannungsschutz-Sprachsteuerung/dp/B07GBSD11P/
+                       // https://www.amazon.de/Steckdosenleiste-Geekbes-USB-Anschluss-Kompatibel-gesteuert/dp/B078W23BW9/
+     0,                // GPIO00
+     0,                // GPIO01 Serial RXD
+     0,
+     GPIO_KEY1,        // GPIO03 Serial TXD + Button
+     GPIO_REL2,        // GPIO04 Relay 2
+     GPIO_REL1,        // GPIO05 Relay 1
+     0, 0, 0, 0, 0, 0, // Flash connection
+     GPIO_REL3,        // GPIO12 Relay 3
+     GPIO_REL4,        // GPIO13 Relay 4
+     GPIO_USER,        // GPIO14
+     0,
+     GPIO_USER,        // GPIO16
+     0
   }
 };
 

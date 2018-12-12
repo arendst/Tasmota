@@ -417,7 +417,9 @@ void SettingsDefaultSet2(void)
 //  Settings.flag.stop_flash_rotate = 0;
   Settings.save_data = SAVE_DATA;
   Settings.sleep = APP_SLEEP;
-  Settings.param[P_LOOP_SLEEP_DELAY] = LOOP_SLEEP_DELAY;
+  if (Settings.sleep < 50) {
+    Settings.sleep = 50;                // Default to 50 for sleep, for now
+  }
 
   // Module
 //  Settings.flag.interlock = 0;
@@ -484,6 +486,7 @@ void SettingsDefaultSet2(void)
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+  Settings.flag3.button_switch_force_local = MQTT_BUTTON_SWITCH_FORCE_LOCAL;
 //  Settings.flag.mqtt_sensor_retain = 0;
 //  Settings.flag.mqtt_offline = 0;
 //  Settings.flag.mqtt_serial = 0;
@@ -855,12 +858,13 @@ void SettingsDelta(void)
     if (Settings.version < 0x06030004) {
       memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
     }
-    if (Settings.version < 0x0603000A) {
-      Settings.param[P_LOOP_SLEEP_DELAY] = LOOP_SLEEP_DELAY;
-      Settings.sleep = 0;                   // We do not want sleep enabled when SetOption36 is active
-    }
     if (Settings.version < 0x0603000E) {
       Settings.flag2.calc_resolution = CALC_RESOLUTION;
+    }
+    if (Settings.version < 0x0603000F) {
+      if (Settings.sleep < 50) {
+        Settings.sleep = 50;                // Default to 50 for sleep, for now
+      }
     }
 
     Settings.version = VERSION;

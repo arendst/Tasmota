@@ -138,6 +138,7 @@ Libraries used with Sonoff-Tasmota are:
 - [OneWire](https://github.com/PaulStoffregen/OneWire)
 - [PubSubClient](https://github.com/knolleary/pubsubclient)
 - [rc-switch](https://github.com/sui77/rc-switch)
+- [NewPing](https://bitbucket.org/teckel12/arduino-new-ping/wiki/Home)
 
 #### People inspiring me
 People helping to keep the show on the road:

@@ -628,7 +628,7 @@ void HandleRoot(void)
       if (SONOFF_IFAN02 == Settings.module) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
         page += mqtt_data;
-        for (byte i = 0; i < 4; i++) {
+        for (byte i = 0; i < MAX_FAN_SPEED; i++) {
           snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
           snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 16, i +2, stemp, "");
           page += mqtt_data;

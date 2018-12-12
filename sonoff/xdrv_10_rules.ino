@@ -264,6 +264,8 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
 
   rules_trigger_count[rule_set] = 0;
   int plen = 0;
+  int plen2 = 0;
+  bool stop_all_rules = false;
   while (true) {
     rules = rules.substring(plen);                        // Select relative to last rule
     rules.trim();
@@ -278,7 +280,14 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
     String event_trigger = rule.substring(3, pevt);       // "INA219#CURRENT>0.100"
 
     plen = rule.indexOf(" ENDON");
-    if (plen == -1) { return serviced; }                  // Bad syntax - No endon
+    plen2 = rule.indexOf(" BREAK");
+    if ((plen == -1) && (plen2 == -1)) { return serviced; } // Bad syntax - No ENDON neither BREAK
+
+    if (plen == -1) { plen = 9999; }
+    if (plen2 == -1) { plen2 = 9999; }
+    plen = tmin(plen, plen2);
+    if (plen == plen2) { stop_all_rules = true; }     // If BREAK was used, Stop execution of this rule set
+
     String commands = rules.substring(pevt +4, plen);     // "Backlog Dimmer 10;Color 100000"
     plen += 6;
     rules_event_value = "";
@@ -320,6 +329,7 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
 
       ExecuteCommand(command, SRC_RULE);
       serviced = true;
+      if (stop_all_rules) { return serviced; }     // If BREAK was used, Stop execution of this rule set
     }
     rules_trigger_count[rule_set]++;
   }
