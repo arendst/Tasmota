@@ -1260,6 +1260,12 @@ boolean LightCommand(void)
       }
       LightPowerOn();
       strip_timer_counter = 0;
+      // Publish state message for Hass
+      if (Settings.flag3.hass_tele_on_power) {
+        mqtt_data[0] = '\0';
+        MqttShowState();
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+      }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_scheme);
   }
