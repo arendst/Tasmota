@@ -72,13 +72,18 @@ TasmotaSerial *MhzSerial;
 
 const char kMhzTypes[] PROGMEM = "MHZ19|MHZ19B";
 
-enum MhzCommands { MHZ_CMND_READPPM, MHZ_CMND_ABCENABLE, MHZ_CMND_ABCDISABLE, MHZ_CMND_ZEROPOINT, MHZ_CMND_RESET };
-const uint8_t kMhzCommands[][2] PROGMEM = {
-  {0x86,0x00},   // mhz_cmnd_read_ppm
-  {0x79,0xA0},   // mhz_cmnd_abc_enable
-  {0x79,0x00},   // mhz_cmnd_abc_disable
-  {0x87,0x00},   // mhz_cmnd_zeropoint
-  {0x8D,0x00}};  // mhz_cmnd_reset
+enum MhzCommands { MHZ_CMND_READPPM, MHZ_CMND_ABCENABLE, MHZ_CMND_ABCDISABLE, MHZ_CMND_ZEROPOINT, MHZ_CMND_RESET, MHZ_CMND_RANGE_1000, MHZ_CMND_RANGE_2000, MHZ_CMND_RANGE_3000, MHZ_CMND_RANGE_5000 };
+const uint8_t kMhzCommands[][4] PROGMEM = {
+//  2     3    6    7
+  {0x86,0x00,0x00,0x00},   // mhz_cmnd_read_ppm
+  {0x79,0xA0,0x00,0x00},   // mhz_cmnd_abc_enable
+  {0x79,0x00,0x00,0x00},   // mhz_cmnd_abc_disable
+  {0x87,0x00,0x00,0x00},   // mhz_cmnd_zeropoint
+  {0x8D,0x00,0x00,0x00},   // mhz_cmnd_reset
+  {0x99,0x00,0x03,0xE8},   // mhz_cmnd_set_range_1000
+  {0x99,0x00,0x07,0xD0},   // mhz_cmnd_set_range_2000
+  {0x99,0x00,0x0B,0xB8},   // mhz_cmnd_set_range_3000
+  {0x99,0x00,0x13,0x88}};  // mhz_cmnd_set_range_5000
 
 uint8_t mhz_type = 1;
 uint16_t mhz_last_ppm = 0;
@@ -110,13 +115,12 @@ size_t MhzSendCmd(byte command_id)
 
   mhz_send[0] = 0xFF;  // Start byte, fixed
   mhz_send[1] = 0x01;  // Sensor number, 0x01 by default
-  memcpy_P(&mhz_send[2], kMhzCommands[command_id], sizeof(kMhzCommands[0]));
+  memcpy_P(&mhz_send[2], kMhzCommands[command_id], sizeof(kMhzCommands[2]));
 /*
   mhz_send[4] = 0x00;
   mhz_send[5] = 0x00;
-  mhz_send[6] = 0x00;
-  mhz_send[7] = 0x00;
 */
+  memcpy_P(&mhz_send[6], kMhzCommands[command_id] + sizeof(kMhzCommands[2]), sizeof(kMhzCommands[2]));
   mhz_send[8] = MhzCalculateChecksum(mhz_send);
 
   return MhzSerial->write(mhz_send, sizeof(mhz_send));
@@ -246,11 +250,15 @@ void MhzEverySecond(void)
 /*********************************************************************************************\
  * Command Sensor15
  *
- * 0 - (Not implemented) ABC Off
- * 1 - (Not implemented) ABC On
- * 2 - Manual start = ABC Off
- * 3 - (Not implemented) Optional filter settings
- * 9 - Reset
+ * 0    - (Not implemented) ABC Off
+ * 1    - (Not implemented) ABC On
+ * 2    - Manual start = ABC Off
+ * 3    - (Not implemented) Optional filter settings
+ * 9    - Reset
+ * 1000 - Range
+ * 2000 - Range
+ * 3000 - Range
+ * 5000 - Range
 \*********************************************************************************************/
 
 bool MhzCommandSensor(void)
@@ -265,6 +273,22 @@ bool MhzCommandSensor(void)
     case 9:
       MhzSendCmd(MHZ_CMND_RESET);
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET);
+      break;
+    case 1000:
+      MhzSendCmd(MHZ_CMND_RANGE_1000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET); // not done yet
+      break;
+    case 2000:
+      MhzSendCmd(MHZ_CMND_RANGE_2000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET); // not done yet
+      break;
+    case 3000:
+      MhzSendCmd(MHZ_CMND_RANGE_3000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET); // not done yet
+      break;
+    case 5000:
+      MhzSendCmd(MHZ_CMND_RANGE_5000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET); // not done yet
       break;
     default:
       serviced = false;
