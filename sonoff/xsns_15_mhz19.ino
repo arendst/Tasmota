@@ -261,6 +261,11 @@ void MhzEverySecond(void)
  * 5000 - Range
 \*********************************************************************************************/
 
+#define D_JSON_RANGE_1000 "1000 ppm range"
+#define D_JSON_RANGE_2000 "2000 ppm range"
+#define D_JSON_RANGE_3000 "3000 ppm range"
+#define D_JSON_RANGE_5000 "5000 ppm range"
+
 bool MhzCommandSensor(void)
 {
   boolean serviced = true;
@@ -276,19 +281,19 @@ bool MhzCommandSensor(void)
       break;
     case 1000:
       MhzSendCmd(MHZ_CMND_RANGE_1000);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET); // not done yet
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_1000);
       break;
     case 2000:
       MhzSendCmd(MHZ_CMND_RANGE_2000);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET); // not done yet
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_2000);
       break;
     case 3000:
       MhzSendCmd(MHZ_CMND_RANGE_3000);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET); // not done yet
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_3000);
       break;
     case 5000:
       MhzSendCmd(MHZ_CMND_RANGE_5000);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET); // not done yet
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_5000);
       break;
     default:
       serviced = false;
