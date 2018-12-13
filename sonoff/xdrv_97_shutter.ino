@@ -184,7 +184,7 @@ void Schutter_Update_Position()
         switch (shutterMode) {
           case PULSE_OPEN__PULSE_CLOSE:
             // we have a momentary switch here. Needs additional pulse on same relay after the end
-            if (SRC_PULSETIMER == last_source || SRC_SHUTTER == last_source) {
+            if (SRC_PULSETIMER == last_source || SRC_SHUTTER == last_source || SRC_WEBGUI == last_source) {
               ExecuteCommandPower(cur_relay, 1, SRC_SHUTTER);
             } else {
               last_source = SRC_SHUTTER;
