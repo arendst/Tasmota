@@ -2215,7 +2215,7 @@ uint16_t arduino_ota_progress_dot_count = 0;
 void ArduinoOTAInit(void)
 {
   ArduinoOTA.setPort(8266);
-  ArduinoOTA.setHostname(Settings.hostname);
+  ArduinoOTA.setHostname(my_hostname);
   if (Settings.web_password[0] !=0) ArduinoOTA.setPassword(Settings.web_password);
 
   ArduinoOTA.onStart([]()
@@ -2799,6 +2799,7 @@ void loop(void)
   if (!serial_local) SerialInput();
 
 #ifdef USE_ARDUINO_OTA
+  MDNS.update();
   ArduinoOTA.handle();
   // Once OTA is triggered, only handle that and dont do other stuff. (otherwise it fails)
   while (arduino_ota_triggered) ArduinoOTA.handle();
