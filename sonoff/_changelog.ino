@@ -4,6 +4,7 @@
  * Add support for SDM220 (#3610)
  * Add support for Manzoku Power Strip (#4590)
  * Enhance support for MPU6050 using DMP (#4581)
+ * Fix ArduinoOTA for Core 2.5.0 (fix is backwards compatible) (#4620)
  *
  * 6.3.0.16 20181201
  * Add support for iFan02 Fanspeed in Domoticz using a selector (#4517)
