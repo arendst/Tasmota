@@ -21,6 +21,8 @@
   Sonoff RF Bridge 433
 \*********************************************************************************************/
 
+#define XDRV_06                   6
+
 #define SFB_TIME_AVOID_DUPLICATE  2000  // Milliseconds
 
 enum SonoffBridgeCommands {
@@ -165,7 +167,7 @@ ssize_t rf_search_and_write(uint8_t *buf, size_t size)
   return 0;
 }
 
-uint8_t rf_erase_flash()
+uint8_t rf_erase_flash(void)
 {
   uint8_t err;
 
@@ -188,7 +190,7 @@ uint8_t rf_erase_flash()
   return 0;
 }
 
-uint8_t SnfBrUpdateInit()
+uint8_t SnfBrUpdateInit(void)
 {
   pinMode(PIN_C2CK, OUTPUT);
   pinMode(PIN_C2D, INPUT);
@@ -199,7 +201,7 @@ uint8_t SnfBrUpdateInit()
 
 /********************************************************************************************/
 
-void SonoffBridgeReceivedRaw()
+void SonoffBridgeReceivedRaw(void)
 {
   // Decoding according to https://github.com/Portisch/RF-Bridge-EFM8BB1
   uint8_t buckets = 0;
@@ -223,14 +225,14 @@ void SonoffBridgeReceivedRaw()
 
 /********************************************************************************************/
 
-void SonoffBridgeLearnFailed()
+void SonoffBridgeLearnFailed(void)
 {
   sonoff_bridge_learn_active = 0;
   snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, sonoff_bridge_learn_key, D_JSON_LEARN_FAILED);
   MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RFKEY));
 }
 
-void SonoffBridgeReceived()
+void SonoffBridgeReceived(void)
 {
   uint16_t sync_time = 0;
   uint16_t low_time = 0;
@@ -298,7 +300,7 @@ void SonoffBridgeReceived()
   }
 }
 
-boolean SonoffBridgeSerialInput()
+boolean SonoffBridgeSerialInput(void)
 {
   // iTead Rf Universal Transceiver Module Serial Protocol Version 1.0 (20170420)
   static int8_t receive_len = 0;
@@ -357,7 +359,7 @@ void SonoffBridgeSendCommand(byte code)
   Serial.write(0x55);  // End of Text
 }
 
-void SonoffBridgeSendAck()
+void SonoffBridgeSendAck(void)
 {
   Serial.write(0xAA);  // Start of Text
   Serial.write(0xA0);  // Acknowledge
@@ -416,7 +418,7 @@ void SonoffBridgeLearn(uint8_t key)
  * Commands
 \*********************************************************************************************/
 
-boolean SonoffBridgeCommand()
+boolean SonoffBridgeCommand(void)
 {
   char command [CMDSZ];
   boolean serviced = true;
@@ -554,7 +556,7 @@ boolean SonoffBridgeCommand()
 
 /*********************************************************************************************/
 
-void SonoffBridgeInit()
+void SonoffBridgeInit(void)
 {
   sonoff_bridge_receive_raw_flag = 0;
   SonoffBridgeSendCommand(0xA7);  // Stop reading RF signals enabling iTead default RF handling
@@ -563,8 +565,6 @@ void SonoffBridgeInit()
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_06
 
 boolean Xdrv06(byte function)
 {

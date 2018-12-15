@@ -22,9 +22,14 @@
  * Energy
 \*********************************************************************************************/
 
-#define ENERGY_NONE             0
+#define XDRV_03              3
+#define XSNS_03              3
+
+#define ENERGY_NONE          0
 
 #define FEATURE_POWER_LIMIT  true
+
+#include <Ticker.h>
 
 enum EnergyCommands {
   CMND_POWERDELTA,
@@ -84,7 +89,7 @@ Ticker ticker_energy;
 int energy_command_code = 0;
 /********************************************************************************************/
 
-void EnergyUpdateToday()
+void EnergyUpdateToday(void)
 {
   if (energy_kWhtoday_delta > 1000) {
     unsigned long delta = energy_kWhtoday_delta / 1000;
@@ -98,7 +103,7 @@ void EnergyUpdateToday()
 
 /*********************************************************************************************/
 
-void Energy200ms()
+void Energy200ms(void)
 {
   energy_power_on = (power != 0) | Settings.flag.no_power_on_check;
 
@@ -128,7 +133,7 @@ void Energy200ms()
   XnrgCall(FUNC_EVERY_200_MSECOND);
 }
 
-void EnergySaveState()
+void EnergySaveState(void)
 {
   Settings.energy_kWhdoy = (RtcTime.valid) ? RtcTime.day_of_year : 0;
   Settings.energy_kWhtoday = energy_kWhtoday;
@@ -151,12 +156,12 @@ boolean EnergyMargin(byte type, uint16_t margin, uint16_t value, byte &flag, byt
   return (change != save_flag);
 }
 
-void EnergySetPowerSteadyCounter()
+void EnergySetPowerSteadyCounter(void)
 {
   energy_power_steady_cntr = 2;
 }
 
-void EnergyMarginCheck()
+void EnergyMarginCheck(void)
 {
   uint16_t energy_daily_u = 0;
   uint16_t energy_power_u = 0;
@@ -293,7 +298,7 @@ void EnergyMarginCheck()
   if (energy_power_delta) EnergyMqttShow();
 }
 
-void EnergyMqttShow()
+void EnergyMqttShow(void)
 {
 // {"Time":"2017-12-16T11:48:55","ENERGY":{"Total":0.212,"Yesterday":0.000,"Today":0.014,"Period":2.0,"Power":22.0,"Factor":1.00,"Voltage":213.6,"Current":0.100}}
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
@@ -310,7 +315,7 @@ void EnergyMqttShow()
  * Commands
 \*********************************************************************************************/
 
-boolean EnergyCommand()
+boolean EnergyCommand(void)
 {
   char command [CMDSZ];
   char sunit[CMDSZ];
@@ -503,13 +508,13 @@ boolean EnergyCommand()
   return serviced;
 }
 
-void EnergyDrvInit()
+void EnergyDrvInit(void)
 {
   energy_flg = ENERGY_NONE;
   XnrgCall(FUNC_PRE_INIT);
 }
 
-void EnergySnsInit()
+void EnergySnsInit(void)
 {
   XnrgCall(FUNC_INIT);
 
@@ -656,8 +661,6 @@ void EnergyShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_03
-
 boolean Xdrv03(byte function)
 {
   boolean result = false;
@@ -680,8 +683,6 @@ boolean Xdrv03(byte function)
   }
   return result;
 }
-
-#define XSNS_03
 
 boolean Xsns03(byte function)
 {

@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0l
+ * Updated until v6.3.0.17
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -94,7 +94,7 @@
 #define D_FALSE "falsch"
 #define D_FILE "Datei"
 #define D_FREE_MEMORY "Freier Arbeitsspeicher"
-#define D_FREQUENCY "Frequency"
+#define D_FREQUENCY "Frequenz"
 #define D_GAS "Gas"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Gruppe"
@@ -116,10 +116,10 @@
 #define D_NOISE "Lautstärke"
 #define D_NONE "keine"
 #define D_OFF "aus"
-#define D_OFFLINE "offline"
+#define D_OFFLINE "Offline"
 #define D_OK "OK"
 #define D_ON "an"
-#define D_ONLINE "online"
+#define D_ONLINE "Online"
 #define D_PASSWORD "Passwort"
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Leistungsfaktor"
@@ -132,6 +132,7 @@
 #define D_PROGRAM_FLASH_SIZE "Ges. Flash Speicher"
 #define D_PROGRAM_SIZE "Ben. Flash Speicher"
 #define D_PROJECT "Projekt"
+#define D_RAIN "Regen"
 #define D_RECEIVED "erhalten"
 #define D_RESTART "Neustart"
 #define D_RESTARTING "starte neu"
@@ -174,7 +175,7 @@
 #define D_UV_POWER "UV Intensität"
 #define D_VERSION "Version"
 #define D_VOLTAGE "Spannung"
-#define D_WEIGHT "Weight"
+#define D_WEIGHT "Gewicht"
 #define D_WARMLIGHT "warm"
 #define D_WEB_SERVER "Web-Server"
 
@@ -436,7 +437,7 @@
 #define D_TIMEOUT_WAITING_FOR "Timeout während Warten auf"
 #define D_START_SIGNAL_LOW "Startausschlag niedrig"
 #define D_START_SIGNAL_HIGH "Startausschlag hoch"
-#define D_PULSE "pulse"
+#define D_PULSE "Puls"
 #define D_CHECKSUM_FAILURE "Checksum-Fehler"
 
 // xsns_07_sht1x.ino
@@ -515,8 +516,8 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-#define D_SENSOR_SDM120_TX "SDM120 Tx"
-#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM120_TX "SDM120/220 Tx"
+#define D_SENSOR_SDM120_RX "SDM120/220 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
@@ -529,6 +530,14 @@
 #define D_SENSOR_RFRECV "RFrecv"
 #define D_SENSOR_TUYA_TX "Tuya Tx"
 #define D_SENSOR_TUYA_RX "Tuya Rx"
+#define D_SENSOR_MGC3130_XFER "MGC3130 Xfer"
+#define D_SENSOR_MGC3130_RESET "MGC3130 Reset"
+#define D_SENSOR_SSPI_MISO "SSPI MISO"
+#define D_SENSOR_SSPI_MOSI "SSPI MOSI"
+#define D_SENSOR_SSPI_SCLK "SSPI SCLK"
+#define D_SENSOR_SSPI_CS   "SSPI CS"
+#define D_SENSOR_SSPI_DC   "SSPI DC"
+#define D_SENSOR_RF_SENSOR "RF Sensor"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -537,7 +546,7 @@
 #define D_UNIT_HOUR "h"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
-#define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
+#define D_UNIT_KILOMETER_PER_HOUR "km/h"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
@@ -545,6 +554,8 @@
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLIMETER "mm"
+#define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "min"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
@@ -584,5 +595,15 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+
+//SDM220
+#define D_PHASE_ANGLE     "Phasenwinkel"
+#define D_IMPORT_ACTIVE   "Importiere Wirk"
+#define D_EXPORT_ACTIVE   "Exportiere Wirk"
+#define D_IMPORT_REACTIVE "Importiere Blind"
+#define D_EXPORT_REACTIVE "Exportiere Blind"
+#define D_TOTAL_REACTIVE  "Total Blind"
+#define D_UNIT_KWARH      "kVArh"
+#define D_UNIT_ANGLE      "Grad"
 
 #endif  // _LANGUAGE_DE_DE_H_

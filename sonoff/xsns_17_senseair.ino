@@ -26,6 +26,8 @@
  * Hardware Serial will be selected if GPIO1 = [SAir Rx] and GPIO3 = [SAir Tx]
 \*********************************************************************************************/
 
+#define XSNS_17                      17
+
 #define SENSEAIR_MODBUS_SPEED        9600
 #define SENSEAIR_DEVICE_ADDRESS      0xFE    // Any address
 #define SENSEAIR_READ_REGISTER       0x04    // Command Read
@@ -56,7 +58,7 @@ const uint8_t start_addresses[] { 0x1A, 0x00, 0x03, 0x04, 0x05, 0x1C, 0x0A };
 uint8_t senseair_read_state = 0;
 uint8_t senseair_send_retry = 0;
 
-void Senseair250ms()              // Every 250 mSec
+void Senseair250ms(void)              // Every 250 mSec
 {
 //  senseair_state++;
 //  if (6 == senseair_state) {     // Every 300 mSec
@@ -130,7 +132,7 @@ void Senseair250ms()              // Every 250 mSec
 
 /*********************************************************************************************/
 
-void SenseairInit()
+void SenseairInit(void)
 {
   senseair_type = 0;
   if ((pin[GPIO_SAIR_RX] < 99) && (pin[GPIO_SAIR_TX] < 99)) {
@@ -174,8 +176,6 @@ void SenseairShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_17
 
 boolean Xsns17(byte function)
 {

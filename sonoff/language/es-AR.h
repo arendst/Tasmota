@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.2.1.11
+ * Updated until v6.3.0.17
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -132,6 +132,7 @@
 #define D_PROGRAM_FLASH_SIZE "Tamaño de Flash de Programa"
 #define D_PROGRAM_SIZE "Tamaño Programa"
 #define D_PROJECT "Proyecto"
+#define D_RAIN "Lluvia"
 #define D_RECEIVED "Recibido"
 #define D_RESTART "Reiniciar"
 #define D_RESTARTING "Reiniciando"
@@ -437,7 +438,7 @@
 #define D_START_SIGNAL_LOW "iniciar señal baja"
 #define D_START_SIGNAL_HIGH "iniciar señal alta"
 #define D_PULSE "pulso"
-#define D_CHECKSUM_FAILURE "Checksum fallido"
+#define D_CHECKSUM_FAILURE "Falló Checksum"
 
 // xsns_07_sht1x.ino
 #define D_SENSOR_DID_NOT_ACK_COMMAND "Sensor no ha enviado el comando ACK"
@@ -515,8 +516,8 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-#define D_SENSOR_SDM120_TX "SDM120 Tx"
-#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM120_TX "SDM120/220 Tx"
+#define D_SENSOR_SDM120_RX "SDM120/220 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
@@ -529,6 +530,14 @@
 #define D_SENSOR_RFRECV "RFrecv"
 #define D_SENSOR_TUYA_TX "Tuya Tx"
 #define D_SENSOR_TUYA_RX "Tuya Rx"
+#define D_SENSOR_MGC3130_XFER "MGC3130 Xfer"
+#define D_SENSOR_MGC3130_RESET "MGC3130 Reset"
+#define D_SENSOR_SSPI_MISO "SSPI MISO"
+#define D_SENSOR_SSPI_MOSI "SSPI MOSI"
+#define D_SENSOR_SSPI_SCLK "SSPI SCLK"
+#define D_SENSOR_SSPI_CS   "SSPI CS"
+#define D_SENSOR_SSPI_DC   "SSPI DC"
+#define D_SENSOR_RF_SENSOR "RF Sensor"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -545,6 +554,8 @@
 #define D_UNIT_MICROMETER "um"
 #define D_UNIT_MICROSECOND "us"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLIMETER "mm"
+#define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
@@ -584,5 +595,15 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+
+//SDM220
+#define D_PHASE_ANGLE     "Ángulo de Fase"
+#define D_IMPORT_ACTIVE   "P. Activa Entrante"
+#define D_EXPORT_ACTIVE   "P. Activa Saliente"
+#define D_IMPORT_REACTIVE "P. Reactiva Entrante"
+#define D_EXPORT_REACTIVE "P. Reactiva Saliente"
+#define D_TOTAL_REACTIVE  "P. Reactiva Total"
+#define D_UNIT_KWARH      "kVArH"
+#define D_UNIT_ANGLE      "Grados"
 
 #endif  // _LANGUAGE_ES_AR_H_

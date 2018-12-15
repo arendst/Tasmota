@@ -28,6 +28,8 @@
  * I2C Address: None
 \*********************************************************************************************/
 
+#define XSNS_07             7
+
 enum {
   SHT1X_CMD_MEASURE_TEMP  = B00000011,
   SHT1X_CMD_MEASURE_RH    = B00000101,
@@ -42,7 +44,7 @@ uint8_t sht_valid = 0;
 float sht_temperature = 0;
 float sht_humidity = 0;
 
-boolean ShtReset()
+boolean ShtReset(void)
 {
   pinMode(sht_sda_pin, INPUT_PULLUP);
   pinMode(sht_scl_pin, OUTPUT);
@@ -88,7 +90,7 @@ boolean ShtSendCommand(const byte cmd)
   return (!ackerror);
 }
 
-boolean ShtAwaitResult()
+boolean ShtAwaitResult(void)
 {
   // Maximum 320ms for 14 bit measurement
   for (byte i = 0; i < 16; i++) {
@@ -102,7 +104,7 @@ boolean ShtAwaitResult()
   return false;
 }
 
-int ShtReadData()
+int ShtReadData(void)
 {
   int val = 0;
 
@@ -123,7 +125,7 @@ int ShtReadData()
   return val;
 }
 
-boolean ShtRead()
+boolean ShtRead(void)
 {
   if (sht_valid) { sht_valid--; }
   if (!ShtReset()) { return false; }
@@ -155,7 +157,7 @@ boolean ShtRead()
 
 /********************************************************************************************/
 
-void ShtDetect()
+void ShtDetect(void)
 {
   if (sht_type) {
     return;
@@ -172,7 +174,7 @@ void ShtDetect()
   }
 }
 
-void ShtEverySecond()
+void ShtEverySecond(void)
 {
   if (sht_type && !(uptime %4)) {  // Update every 4 seconds
     // 344mS
@@ -217,8 +219,6 @@ void ShtShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_07
 
 boolean Xsns07(byte function)
 {

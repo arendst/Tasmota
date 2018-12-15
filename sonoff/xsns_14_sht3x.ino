@@ -25,6 +25,8 @@
  * I2C Address: 0x44, 0x45 or 0x70 (SHTC3)
 \*********************************************************************************************/
 
+#define XSNS_14             14
+
 #define SHT3X_ADDR_GND      0x44       // address pin low (GND)
 #define SHT3X_ADDR_VDD      0x45       // address pin high (VDD)
 #define SHTC3_ADDR          0x70       // address for shtc3 sensor
@@ -74,7 +76,7 @@ bool Sht3xRead(float &t, float &h, uint8_t sht3x_address)
 
 /********************************************************************************************/
 
-void Sht3xDetect()
+void Sht3xDetect(void)
 {
   if (sht3x_count) return;
 
@@ -137,8 +139,6 @@ void Sht3xShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_14
 
 boolean Xsns14(byte function)
 {

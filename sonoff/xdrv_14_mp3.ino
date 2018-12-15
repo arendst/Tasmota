@@ -33,7 +33,7 @@
                     tested  - works by MP3Device 1 = USB STick, or MP3Device 2 = SD-Card
                             - after power and/or reset the SD-Card(2) is the default device
   ---
-  1.0.0.2 20180912  added   - again some if-commands to switch() because of new commands 
+  1.0.0.2 20180912  added   - again some if-commands to switch() because of new commands
   ---
   1.0.0.1 20180911  added   - command eq (equalizer 0..5)
                     tested  - works in console with MP3EQ 1, the value can be 0..5
@@ -42,13 +42,13 @@
                     erased  - code for USB device about some errors, will be added in a next release
   ---
   1.0.0.1 20180910  changed - command real MP3Stop in place of pause/stop used in the original version
-                    changed - the command MP3Play e.g. 001 to MP3Track e.g. 001, 
-                    added   - new normal command MP3Play and MP3Pause 
+                    changed - the command MP3Play e.g. 001 to MP3Track e.g. 001,
+                    added   - new normal command MP3Play and MP3Pause
   ---
-  1.0.0.0 20180907  merged  - by arendst 
+  1.0.0.0 20180907  merged  - by arendst
                     changed - the driver name from xdrv_91_mp3.ino to xdrv_14_mp3.ino
   ---
-  0.9.0.3 20180906  request - Pull Request  
+  0.9.0.3 20180906  request - Pull Request
                     changed - if-commands to switch() for faster response
   ---
   0.9.0.2 20180906  cleaned - source code for faster reading
@@ -66,6 +66,8 @@
  * MP3 control for RB-DFR-562 DFRobot mini MP3 player
  * https://www.dfrobot.com/wiki/index.php/DFPlayer_Mini_SKU:DFR0299
 \*********************************************************************************************/
+
+#define XDRV_14             14
 
 #include <TasmotaSerial.h>
 
@@ -96,7 +98,7 @@ enum MP3_Commands {                                 // commands useable in conso
   CMND_MP3_RESET,                                   // MP3Reset, a fresh and default restart
   CMND_MP3_DAC };                                   // set dac, 1=off, 0=on, DAC is turned on (0) by default
 
-  
+
 /*********************************************************************************************\
  * command defines
 \*********************************************************************************************/
@@ -105,7 +107,7 @@ enum MP3_Commands {                                 // commands useable in conso
 // player commands
 #define MP3_CMD_TRACK       0x03                    // specify playback of a track, e.g. MP3Track 003
 #define MP3_CMD_PLAY        0x0d                    // Play, works as a normal play on a real MP3 Player, starts at 001.mp3 file on the selected device
-#define MP3_CMD_PAUSE       0x0e                    // Pause, was original designed as stop, see data sheet 
+#define MP3_CMD_PAUSE       0x0e                    // Pause, was original designed as stop, see data sheet
 #define MP3_CMD_STOP        0x16                    // Stop, it's a real stop now, in the original version it was a pause command
 #define MP3_CMD_VOLUME      0x06                    // specifies the volume and means a console input as 0..100
 #define MP3_CMD_EQ          0x07                    // specify EQ(0/1/2/3/4/5), 0:Normal, 1:Pop, 2:Rock, 3:Jazz, 4:Classic, 5:Bass
@@ -136,7 +138,7 @@ uint16_t MP3_Checksum(uint8_t *array)
 void MP3PlayerInit(void) {
   MP3Player = new TasmotaSerial(-1, pin[GPIO_MP3_DFR562]);
   // start serial communication fixed to 9600 baud
-  if (MP3Player->begin(9600)) { 
+  if (MP3Player->begin(9600)) {
     MP3Player->flush();
     delay(1000);
     MP3_CMD(MP3_CMD_RESET, MP3_CMD_RESET_VALUE);    // reset the player to defaults
@@ -183,7 +185,7 @@ boolean MP3PlayerCmd(void) {
 
   if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_MP3), disp_len)) {  // prefix
     int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + disp_len, kMP3_Commands);
-	
+
     switch (command_code) {
       case CMND_MP3_TRACK:
       case CMND_MP3_VOLUME:
@@ -204,7 +206,7 @@ boolean MP3PlayerCmd(void) {
       case CMND_MP3_PAUSE:
       case CMND_MP3_STOP:
       case CMND_MP3_RESET:
-        // play or re-play after pause, pause, stop, 
+        // play or re-play after pause, pause, stop,
         if (command_code == CMND_MP3_PLAY)     { MP3_CMD(MP3_CMD_PLAY,   0); }
         if (command_code == CMND_MP3_PAUSE)    { MP3_CMD(MP3_CMD_PAUSE,  0); }
         if (command_code == CMND_MP3_STOP)     { MP3_CMD(MP3_CMD_STOP,   0); }
@@ -224,19 +226,19 @@ boolean MP3PlayerCmd(void) {
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_14
-
 boolean Xdrv14(byte function)
 {
   boolean result = false;
 
-  switch (function) {
-    case FUNC_PRE_INIT:
-      MP3PlayerInit();                              // init and start communication
-      break;
-    case FUNC_COMMAND:
-      result = MP3PlayerCmd();                      // return result from mp3 player command
-      break;
+  if (pin[GPIO_MP3_DFR562] < 99) {
+    switch (function) {
+      case FUNC_PRE_INIT:
+        MP3PlayerInit();                              // init and start communication
+        break;
+      case FUNC_COMMAND:
+        result = MP3PlayerCmd();                      // return result from mp3 player command
+        break;
+    }
   }
   return result;
 }

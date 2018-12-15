@@ -19,10 +19,28 @@
 
 #ifdef USE_TUYA_DIMMER
 
+#define XDRV_16                16
+
 #ifndef TUYA_DIMMER_ID
-#define TUYA_DIMMER_ID    3
+#define TUYA_DIMMER_ID         0
 #endif
-#define TUYA_BUFFER_SIZE  256
+
+#define TUYA_POWER_ID          1
+
+#define TUYA_CMD_HEARTBEAT     0x00
+#define TUYA_CMD_QUERY_PRODUCT 0x01
+#define TUYA_CMD_MCU_CONF      0x02
+#define TUYA_CMD_WIFI_STATE    0x03
+#define TUYA_CMD_WIFI_RESET    0x04
+#define TUYA_CMD_WIFI_SELECT   0x05
+#define TUYA_CMD_SET_DP        0x06
+#define TUYA_CMD_STATE         0x07
+#define TUYA_CMD_QUERY_STATE   0x08
+
+#define TUYA_TYPE_BOOL         0x01
+#define TUYA_TYPE_VALUE        0x02
+
+#define TUYA_BUFFER_SIZE       256
 
 #include <TasmotaSerial.h>
 
@@ -33,12 +51,70 @@ boolean tuya_ignore_dim = false;            // Flag to skip serial send to preve
 uint8_t tuya_cmd_status = 0;                // Current status of serial-read
 uint8_t tuya_cmd_checksum = 0;              // Checksum of tuya command
 uint8_t tuya_data_len = 0;                  // Data lenght of command
-bool tuya_wifi_state = false;
+int8_t tuya_wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()
 
-char tuya_buffer[TUYA_BUFFER_SIZE];         // Serial receive buffer
+char *tuya_buffer = NULL;                   // Serial receive buffer
 int tuya_byte_counter = 0;                  // Index in serial receive buffer
 
-boolean TuyaSetPower()
+/*********************************************************************************************\
+ * Internal Functions
+\*********************************************************************************************/
+
+void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len = 0){
+  uint8_t checksum = (0xFF + cmd + (payload_len >> 8) + (payload_len & 0xFF));
+  TuyaSerial->write(0x55);                  // Tuya header 55AA
+  TuyaSerial->write(0xAA);
+  TuyaSerial->write((uint8_t)0x00);         // version 00
+  TuyaSerial->write(cmd);                   // Tuya command
+  TuyaSerial->write(payload_len >> 8);      // following data length (Hi)
+  TuyaSerial->write(payload_len & 0xFF);    // following data length (Lo)
+  snprintf_P(log_data, sizeof(log_data), PSTR("TYA: TX Packet: \"55aa00%02x%02x%02x"), cmd, payload_len >> 8, payload_len & 0xFF);
+  for(int i = 0; i < payload_len; ++i) {
+    TuyaSerial->write(payload[i]);
+    checksum += payload[i];
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, payload[i]);
+  }
+  TuyaSerial->write(checksum);
+  TuyaSerial->flush();
+  snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x\""), log_data, checksum);
+  AddLog(LOG_LEVEL_DEBUG);
+}
+
+void TuyaSendState(uint8_t id, uint8_t type, uint8_t* value){
+  uint16_t payload_len = 4;
+  uint8_t payload_buffer[8];
+  payload_buffer[0] = id;
+  payload_buffer[1] = type;
+  switch(type){
+    case TUYA_TYPE_BOOL:
+      payload_len += 1;
+      payload_buffer[2] = 0x00;
+      payload_buffer[3] = 0x01;
+      payload_buffer[4] = value[0];
+      break;
+    case TUYA_TYPE_VALUE:
+      payload_len += 4;
+      payload_buffer[2] = 0x00;
+      payload_buffer[3] = 0x04;
+      payload_buffer[4] = value[3];
+      payload_buffer[5] = value[2];
+      payload_buffer[6] = value[1];
+      payload_buffer[7] = value[0];
+      break;
+  }
+
+  TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, payload_len);
+}
+
+void TuyaSendBool(uint8_t id, boolean value){
+    TuyaSendState(id, TUYA_TYPE_BOOL, &value);
+}
+
+void TuyaSendValue(uint8_t id, uint32_t value){
+    TuyaSendState(id, TUYA_TYPE_VALUE, (uint8_t*)(&value));
+}
+
+boolean TuyaSetPower(void)
 {
   boolean status = false;
 
@@ -50,19 +126,7 @@ boolean TuyaSetPower()
     snprintf_P(log_data, sizeof(log_data), PSTR("TYA: SetDevicePower.rpower=%d"), rpower);
     AddLog(LOG_LEVEL_DEBUG);
 
-    TuyaSerial->write((uint8_t)0x55); // Tuya header 55AA
-    TuyaSerial->write((uint8_t)0xAA);
-    TuyaSerial->write((uint8_t)0x00); // version 00
-    TuyaSerial->write((uint8_t)0x06); // Tuya command 06
-    TuyaSerial->write((uint8_t)0x00);
-    TuyaSerial->write((uint8_t)0x05); // following data length 0x05
-    TuyaSerial->write((uint8_t)0x01); // relay number 1,2,3
-    TuyaSerial->write((uint8_t)0x01);
-    TuyaSerial->write((uint8_t)0x00);
-    TuyaSerial->write((uint8_t)0x01);
-    TuyaSerial->write((uint8_t)rpower); // status
-    TuyaSerial->write((uint8_t)0x0D + rpower); // checksum sum of all bytes in packet mod 256
-    TuyaSerial->flush();
+    TuyaSendBool(TUYA_POWER_ID, rpower);
 
     status = true;
   }
@@ -75,25 +139,11 @@ void LightSerialDuty(uint8_t duty)
     if (duty < 25) {
       duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     }
-    TuyaSerial->write((uint8_t)0x55); // Tuya header 55AA
-    TuyaSerial->write((uint8_t)0xAA);
-    TuyaSerial->write((uint8_t)0x00); // version 00
-    TuyaSerial->write((uint8_t)0x06); // Tuya command 06 - send order
-    TuyaSerial->write((uint8_t)0x00);
-    TuyaSerial->write((uint8_t)0x08); // following data length 0x08
-    TuyaSerial->write((uint8_t)Settings.param[P_TUYA_DIMMER_ID]); // dimmer id
-    TuyaSerial->write((uint8_t)0x02); // type=value
-    TuyaSerial->write((uint8_t)0x00); // length hi
-    TuyaSerial->write((uint8_t)0x04); // length low
-    TuyaSerial->write((uint8_t)0x00); //
-    TuyaSerial->write((uint8_t)0x00); //
-    TuyaSerial->write((uint8_t)0x00); //
-    TuyaSerial->write((uint8_t) duty ); // dim value (0-255)
-    TuyaSerial->write((uint8_t) byte(Settings.param[P_TUYA_DIMMER_ID] + 19 + duty) ); // checksum:sum of all bytes in packet mod 256
-    TuyaSerial->flush();
 
     snprintf_P(log_data, sizeof(log_data), PSTR( "TYA: Send Serial Packet Dim Value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
     AddLog(LOG_LEVEL_DEBUG);
+
+    TuyaSendValue(Settings.param[P_TUYA_DIMMER_ID], duty);
 
   } else {
     tuya_ignore_dim = false;  // reset flag
@@ -104,65 +154,156 @@ void LightSerialDuty(uint8_t duty)
   }
 }
 
-void TuyaPacketProcess()
-{
-  char scmnd[20];
+void TuyaRequestState(void){
+  if(TuyaSerial) {
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Packet Size=%d"), tuya_byte_counter);
-  AddLog(LOG_LEVEL_DEBUG);
-
-  if (tuya_byte_counter == 7 && tuya_buffer[3] == 14 ) {  // heartbeat packet
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Heartbeat"));
-  }
-  else if (tuya_byte_counter == 12 && tuya_buffer[3] == 7 && tuya_buffer[5] == 5) {  // on/off packet
-
-    snprintf_P(log_data, sizeof(log_data),PSTR("TYA: Rcvd - %s State"),tuya_buffer[10]?"On":"Off");
+    // Get current status of MCU
+    snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU state");
     AddLog(LOG_LEVEL_DEBUG);
 
-    if((power || Settings.light_dimmer > 0) && (power != tuya_buffer[10])) {
-      ExecuteCommandPower(1, tuya_buffer[10], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
-    }
-  }
-  else if (tuya_byte_counter == 15 && tuya_buffer[3] == 7 && tuya_buffer[5] == 8) {  // dim packet
-
-    snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Rcvd Dim State=%d"), tuya_buffer[13]);
-    AddLog(LOG_LEVEL_DEBUG);
-
-    tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
-    if((power) && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 2)) {
-
-      snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send CMND_DIMMER=%d"), tuya_new_dim );
-      AddLog(LOG_LEVEL_DEBUG);
-
-      snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), tuya_new_dim );
-
-      snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send CMND_DIMMER_STR=%s"), scmnd );
-      AddLog(LOG_LEVEL_DEBUG);
-
-      tuya_ignore_dim = true;
-      ExecuteCommand(scmnd, SRC_SWITCH);
-    }
-  }
-  else if (tuya_byte_counter == 8 && tuya_buffer[3] == 5 && tuya_buffer[5] == 1 && tuya_buffer[7] == 5 ) {  // reset WiFi settings packet
-
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi Reset Rcvd"));
-    TuyaResetWifi();
-  }
-  else if (tuya_byte_counter == 7 && tuya_buffer[3] == 3 && tuya_buffer[6] == 2) {  // WiFi LED has been sucessfully reset.
-
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: WiFi LED reset ACK"));
-    tuya_wifi_state = true;
+    TuyaSendCmd(TUYA_CMD_QUERY_STATE);
   }
 }
 
-void TuyaSerialInput()
+void TuyaResetWifi(void)
+{
+  if (!Settings.flag.button_restrict) {
+    char scmnd[20];
+    snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
+    ExecuteCommand(scmnd, SRC_BUTTON);
+  }
+}
+
+void TuyaPacketProcess(void)
+{
+  char scmnd[20];
+
+  switch(tuya_buffer[3]) {
+
+    case TUYA_CMD_HEARTBEAT:
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Heartbeat"));
+      if(tuya_buffer[6] == 0){
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: Detected MCU restart"));
+        tuya_wifi_state = -2;
+      }
+      break;
+
+    case TUYA_CMD_STATE:
+      if (tuya_buffer[5] == 5) {  // on/off packet
+
+        snprintf_P(log_data, sizeof(log_data),PSTR("TYA: RX - %s State"),tuya_buffer[10]?"On":"Off");
+        AddLog(LOG_LEVEL_DEBUG);
+
+        if((power || Settings.light_dimmer > 0) && (power != tuya_buffer[10])) {
+          ExecuteCommandPower(1, tuya_buffer[10], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+        }
+      }
+      else if (tuya_buffer[5] == 8) {  // dim packet
+
+        snprintf_P(log_data, sizeof(log_data), PSTR("TYA: RX Dim State=%d"), tuya_buffer[13]);
+        AddLog(LOG_LEVEL_DEBUG);
+
+        if (!Settings.param[P_TUYA_DIMMER_ID]) {
+          snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Autoconfiguring Dimmer ID %d"), tuya_buffer[6]);
+          AddLog(LOG_LEVEL_DEBUG);
+          Settings.param[P_TUYA_DIMMER_ID] = tuya_buffer[6];
+        }
+
+        tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
+        if((power || Settings.flag3.tuya_apply_o20)  && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 1)) {
+
+          snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), tuya_new_dim );
+
+          snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Send CMND_DIMMER_STR=%s"), scmnd );
+          AddLog(LOG_LEVEL_DEBUG);
+
+          tuya_ignore_dim = true;
+          ExecuteCommand(scmnd, SRC_SWITCH);
+        }
+      }
+      break;
+
+    case TUYA_CMD_WIFI_RESET:
+    case TUYA_CMD_WIFI_SELECT:
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: RX WiFi Reset"));
+      TuyaResetWifi();
+      break;
+
+    case TUYA_CMD_WIFI_STATE:
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: RX WiFi LED set ACK"));
+      tuya_wifi_state = WifiState();
+      break;
+
+    case TUYA_CMD_MCU_CONF:
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: RX MCU configuration"));
+
+      if (tuya_buffer[5] == 2) {
+        uint8_t led1_gpio = tuya_buffer[6];
+        uint8_t key1_gpio = tuya_buffer[7];
+        boolean key1_set = false;
+        boolean led1_set = false;
+        for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+          if (Settings.my_gp.io[i] == GPIO_LED1) led1_set = true;
+          else if (Settings.my_gp.io[i] == GPIO_KEY1) key1_set = true;
+        }
+        if(!Settings.my_gp.io[led1_gpio] && !led1_set){
+          Settings.my_gp.io[led1_gpio] = GPIO_LED1;
+          restart_flag = 2;
+        }
+        if(!Settings.my_gp.io[key1_gpio] && !key1_set){
+          Settings.my_gp.io[key1_gpio] = GPIO_KEY1;
+          restart_flag = 2;
+        }
+      }
+      TuyaRequestState();
+      break;
+
+    default:
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: RX unknown command"));
+  }
+}
+
+/*********************************************************************************************\
+ * API Functions
+\*********************************************************************************************/
+
+boolean TuyaModuleSelected(void)
+{
+  if (!(pin[GPIO_TUYA_RX] < 99) || !(pin[GPIO_TUYA_TX] < 99)) {  // fallback to hardware-serial if not explicitly selected
+    pin[GPIO_TUYA_TX] = 1;
+    pin[GPIO_TUYA_RX] = 3;
+    Settings.my_gp.io[1] = GPIO_TUYA_TX;
+    Settings.my_gp.io[3] = GPIO_TUYA_RX;
+    restart_flag = 2;
+  }
+  light_type = LT_SERIAL1;
+  return true;
+}
+
+void TuyaInit(void)
+{
+  if (!Settings.param[P_TUYA_DIMMER_ID]) {
+    Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
+  }
+  tuya_buffer = (char*)(malloc(TUYA_BUFFER_SIZE));
+  if (tuya_buffer != NULL) {
+    TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 2);
+    if (TuyaSerial->begin(9600)) {
+      if (TuyaSerial->hardwareSerial()) { ClaimSerial(); }
+      // Get MCU Configuration
+      snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU configuration");
+      AddLog(LOG_LEVEL_DEBUG);
+
+      TuyaSendCmd(TUYA_CMD_MCU_CONF);
+    }
+  }
+}
+
+void TuyaSerialInput(void)
 {
   while (TuyaSerial->available()) {
     yield();
     byte serial_in_byte = TuyaSerial->read();
-
-    //snprintf_P(log_data, sizeof(log_data), PSTR("TYA: serial_in_byte %d, tuya_cmd_status %d, tuya_cmd_checksum %d, tuya_data_len %d, tuya_byte_counter %d"), serial_in_byte, tuya_cmd_status, tuya_cmd_checksum, tuya_data_len, tuya_byte_counter);
-    //AddLog(LOG_LEVEL_DEBUG);
 
     if (serial_in_byte == 0x55) {            // Start TUYA Packet
       tuya_cmd_status = 1;
@@ -171,8 +312,6 @@ void TuyaSerialInput()
     }
     else if (tuya_cmd_status == 1 && serial_in_byte == 0xAA){ // Only packtes with header 0x55AA are valid
       tuya_cmd_status = 2;
-
-      AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: 0x55AA Packet Start"));
 
       tuya_byte_counter = 0;
       tuya_buffer[tuya_byte_counter++] = 0x55;
@@ -190,7 +329,7 @@ void TuyaSerialInput()
     else if ((tuya_cmd_status == 3) && (tuya_byte_counter == (6 + tuya_data_len)) && (tuya_cmd_checksum == serial_in_byte)){ // Compare checksum and process packet
       tuya_buffer[tuya_byte_counter++] = serial_in_byte;
 
-      snprintf_P(log_data, sizeof(log_data), PSTR("TYA: 0x55 Packet End: \""));
+      snprintf_P(log_data, sizeof(log_data), PSTR("TYA: RX Packet: \""));
       for (int i = 0; i < tuya_byte_counter; i++) {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, tuya_buffer[i]);
       }
@@ -215,82 +354,43 @@ void TuyaSerialInput()
   }
 }
 
-boolean TuyaModuleSelected()
+
+boolean TuyaButtonPressed(void)
 {
-  if (!(pin[GPIO_TUYA_RX] < 99) || !(pin[GPIO_TUYA_TX] < 99)) {  // fallback to hardware-serial if not explicitly selected
-    pin[GPIO_TUYA_RX] = 1;
-    pin[GPIO_TUYA_TX] = 3;
-  }
-  light_type = LT_SERIAL;
-  return true;
-}
-
-void TuyaResetWifiLed(){
-    snprintf_P(log_data, sizeof(log_data), "TYA: Reset WiFi LED");
-    AddLog(LOG_LEVEL_DEBUG);
-
-    TuyaSerial->write((uint8_t)0x55); // header 55AA
-    TuyaSerial->write((uint8_t)0xAA);
-    TuyaSerial->write((uint8_t)0x00); // version 00
-    TuyaSerial->write((uint8_t)0x03); // command 03 - set wifi state
-    TuyaSerial->write((uint8_t)0x00);
-    TuyaSerial->write((uint8_t)0x01); // following data length 0x01
-    TuyaSerial->write((uint8_t)0x03); // wifi state 4 (configured and connected)
-    TuyaSerial->write((uint8_t)0x06); // checksum:sum of all bytes in packet mod 256
-    TuyaSerial->flush();
-}
-
-void TuyaInit()
-{
-  if (!Settings.param[P_TUYA_DIMMER_ID]) {
-    Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
-  }
-  TuyaSerial = new TasmotaSerial(pin[GPIO_TUYA_RX], pin[GPIO_TUYA_TX], 1);
-  if (TuyaSerial->begin(9600)) {
-    if (TuyaSerial->hardwareSerial()) { ClaimSerial(); }
-
-    // Get current status of MCU
-    snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU state");
-    AddLog(LOG_LEVEL_DEBUG);
-
-    TuyaSerial->write((uint8_t)0x55); // header 55AA
-    TuyaSerial->write((uint8_t)0xAA);
-    TuyaSerial->write((uint8_t)0x00); // version 00
-    TuyaSerial->write((uint8_t)0x08); // command 08 - get status
-    TuyaSerial->write((uint8_t)0x00);
-    TuyaSerial->write((uint8_t)0x00); // following data length 0x00
-    TuyaSerial->write((uint8_t)0x07); // checksum:sum of all bytes in packet mod 256
-    TuyaSerial->flush();
-  }
-}
-
-void TuyaResetWifi()
-{
-  if (!Settings.flag.button_restrict) {
-    char scmnd[20];
-    snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
-    ExecuteCommand(scmnd, SRC_BUTTON);
-    tuya_wifi_state = false;
-  }
-}
-
-boolean TuyaButtonPressed()
-{
-  if ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == lastbutton[XdrvMailbox.index])) {
-
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), XdrvMailbox.index +1);
+  if (!XdrvMailbox.index && ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == lastbutton[XdrvMailbox.index]))) {
+    snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Reset GPIO triggered"));
     AddLog(LOG_LEVEL_DEBUG);
     TuyaResetWifi();
-
+    return true;  // Reset GPIO served here
   }
-  return true;  // Serviced here
+  return false;   // Don't serve other buttons
 }
+
+void TuyaSetWifiLed(void){
+    uint8_t wifi_state = 0x02;
+    switch(WifiState()){
+      case WIFI_SMARTCONFIG:
+        wifi_state = 0x00;
+        break;
+      case WIFI_MANAGER:
+      case WIFI_WPSCONFIG:
+        wifi_state = 0x01;
+        break;
+      case WIFI_RESTART:
+        wifi_state =  0x03;
+        break;
+    }
+
+    snprintf_P(log_data, sizeof(log_data), "TYA: Set WiFi LED to state %d (%d)", wifi_state, WifiState());
+    AddLog(LOG_LEVEL_DEBUG);
+
+    TuyaSendCmd(TUYA_CMD_WIFI_STATE, &wifi_state, 1);
+}
+
 
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XDRV_16
 
 boolean Xdrv16(byte function)
 {
@@ -314,7 +414,7 @@ boolean Xdrv16(byte function)
         result = TuyaButtonPressed();
         break;
       case FUNC_EVERY_SECOND:
-        if(TuyaSerial && !tuya_wifi_state) { TuyaResetWifiLed(); }
+        if(TuyaSerial && tuya_wifi_state!=WifiState()) { TuyaSetWifiLed(); }
         break;
     }
   }

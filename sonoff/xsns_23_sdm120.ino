@@ -25,6 +25,8 @@
  * Based on: https://github.com/reaper7/SDM_Energy_Meter
 \*********************************************************************************************/
 
+#define XSNS_23             23
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *SDM120Serial;
@@ -40,8 +42,14 @@ float sdm120_reactive_power = 0;
 float sdm120_power_factor = 0;
 float sdm120_frequency = 0;
 float sdm120_energy_total = 0;
+float sdm120_phase_angle = 0;
+float sdm120_import_active = 0;
+float sdm120_export_active = 0;
+float sdm120_import_reactive = 0;
+float sdm120_export_reactive = 0;
+float sdm120_total_reactive = 0;
 
-bool SDM120_ModbusReceiveReady()
+bool SDM120_ModbusReceiveReady(void)
 {
   return (SDM120Serial->available() > 1);
 }
@@ -129,13 +137,23 @@ const uint16_t sdm120_start_addresses[] {
   0x0018,   // SDM120C_REACTIVE_POWER  [VAR]
   0x001E,   // SDM120C_POWER_FACTOR
   0x0046,   // SDM120C_FREQUENCY  [Hz]
+#ifdef USE_SDM220
+  0x0156,   // SDM120C_TOTAL_ACTIVE_ENERGY  [Wh]
+    0X0024, // SDM220_PHASE_ANGLE [Degre]
+    0X0048, // SDM220_IMPORT_ACTIVE [kWh]
+    0X004A, // SDM220_EXPORT_ACTIVE [kWh]
+    0X004C, // SDM220_IMPORT_REACTIVE [kVArh]
+    0X004E, // SDM220_EXPORT_REACTIVE [kVArh]
+    0X0158  // SDM220 TOTAL_REACTIVE   [kVArh]
+#else  // USE_SDM220
   0x0156    // SDM120C_TOTAL_ACTIVE_ENERGY  [Wh]
+#endif // USE_SDM220
 };
 
 uint8_t sdm120_read_state = 0;
 uint8_t sdm120_send_retry = 0;
 
-void SDM120250ms()              // Every 250 mSec
+void SDM120250ms(void)              // Every 250 mSec
 {
 //  sdm120_state++;
 //  if (6 == sdm120_state) {     // Every 300 mSec
@@ -182,6 +200,31 @@ void SDM120250ms()              // Every 250 mSec
           case 7:
             sdm120_energy_total = value;
             break;
+#ifdef USE_SDM220
+          case 8:
+            sdm120_phase_angle = value;
+            break; 
+            
+          case 9:
+            sdm120_import_active = value;
+            break;            
+
+          case 10:
+            sdm120_export_active = value;
+            break;            
+
+          case 11:
+            sdm120_import_reactive = value;
+            break;            
+
+          case 12:
+            sdm120_export_reactive = value;
+            break;                       
+
+          case 13:
+            sdm120_total_reactive = value;
+            break;            
+#endif  // USE_SDM220          
         } // end switch
 
         sdm120_read_state++;
@@ -201,7 +244,7 @@ void SDM120250ms()              // Every 250 mSec
 //  } // end 300 ms
 }
 
-void SDM120Init()
+void SDM120Init(void)
 {
   sdm120_type = 0;
   if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
@@ -226,7 +269,16 @@ const char HTTP_SNS_SDM120_DATA[] PROGMEM = "%s"
   "{s}SDM120 " D_POWERUSAGE_REACTIVE "{m}%s " D_UNIT_VAR "{e}"
   "{s}SDM120 " D_POWER_FACTOR "{m}%s{e}"
   "{s}SDM120 " D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"
-  "{s}SDM120 " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
+  "{s}SDM120 " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+#ifdef USE_SDM220
+  "{s}SDM120 " D_PHASE_ANGLE "{m}%s " D_UNIT_ANGLE "{e}"
+  "{s}SDM120 " D_IMPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}SDM120 " D_EXPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}SDM120 " D_IMPORT_REACTIVE "{m}%s " D_UNIT_KWARH "{e}"
+  "{s}SDM120 " D_EXPORT_REACTIVE "{m}%s " D_UNIT_KWARH "{e}"
+  "{s}SDM120 " D_TOTAL_REACTIVE "{m}%s " D_UNIT_KWARH "{e}"
+#endif // USE_SDM220
+  ;
 #endif  // USE_WEBSERVER
 
 void SDM120Show(boolean json)
@@ -239,19 +291,37 @@ void SDM120Show(boolean json)
   char power_factor[10];
   char frequency[10];
   char energy_total[10];
+  char phase_angle[10];
+  char import_active[10];
+  char export_active[10];
+  char import_reactive[10];
+  char export_reactive[10];
+  char total_reactive[10];
 
-  dtostrfd(sdm120_voltage, Settings.flag2.voltage_resolution, voltage);
-  dtostrfd(sdm120_current, Settings.flag2.current_resolution, current);
-  dtostrfd(sdm120_active_power, Settings.flag2.wattage_resolution, active_power);
+  dtostrfd(sdm120_voltage,        Settings.flag2.voltage_resolution, voltage);
+  dtostrfd(sdm120_current,        Settings.flag2.current_resolution, current);
+  dtostrfd(sdm120_active_power,   Settings.flag2.wattage_resolution, active_power);
   dtostrfd(sdm120_apparent_power, Settings.flag2.wattage_resolution, apparent_power);
   dtostrfd(sdm120_reactive_power, Settings.flag2.wattage_resolution, reactive_power);
-  dtostrfd(sdm120_power_factor, 2, power_factor);
-  dtostrfd(sdm120_frequency, Settings.flag2.frequency_resolution, frequency);
-  dtostrfd(sdm120_energy_total, Settings.flag2.energy_resolution, energy_total);
-
+  dtostrfd(sdm120_power_factor,   2, power_factor);
+  dtostrfd(sdm120_frequency,      Settings.flag2.frequency_resolution, frequency);
+  dtostrfd(sdm120_energy_total,   Settings.flag2.energy_resolution, energy_total);
+#ifdef USE_SDM220
+  dtostrfd(sdm120_phase_angle,    2, phase_angle);
+  dtostrfd(sdm120_import_active,  Settings.flag2.wattage_resolution, import_active);
+  dtostrfd(sdm120_export_active,  Settings.flag2.wattage_resolution, export_active);
+  dtostrfd(sdm120_import_reactive,Settings.flag2.wattage_resolution, import_reactive);
+  dtostrfd(sdm120_export_reactive,Settings.flag2.wattage_resolution, export_reactive);
+  dtostrfd(sdm120_total_reactive, Settings.flag2.wattage_resolution, total_reactive);
+#endif // USE_SDM220
   if (json) {
+#ifdef USE_SDM220
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT  "\":%s,\"" D_JSON_PHASE_ANGLE "\":%s,\"" D_JSON_IMPORT_ACTIVE "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s,\"" D_JSON_IMPORT_REACTIVE "\":%s,\"" D_JSON_EXPORT_REACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s}"),
+      mqtt_data, energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current, phase_angle, import_active, export_active, import_reactive, export_reactive, total_reactive);
+#else
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
       mqtt_data, energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current);
+#endif // USE_SDM220
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) {
       DomoticzSensor(DZ_VOLTAGE, voltage);
@@ -261,7 +331,11 @@ void SDM120Show(boolean json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
+#ifdef USE_SDM220
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM120_DATA, mqtt_data, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total, phase_angle,import_active,export_active,import_reactive,export_reactive,total_reactive);
+#else
     snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM120_DATA, mqtt_data, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total);
+#endif  // USE_SDM220
 #endif  // USE_WEBSERVER
   }
 }
@@ -269,8 +343,6 @@ void SDM120Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_23
 
 boolean Xsns23(byte function)
 {

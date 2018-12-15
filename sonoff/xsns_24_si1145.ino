@@ -27,9 +27,7 @@
  * I2C Addresses: 0x60
 \*********************************************************************************************/
 
-uint8_t si1145_type = 0;
-
-/********************************************************************************************/
+#define XSNS_24                             24
 
 #define SI114X_ADDR                         0X60
 //
@@ -184,6 +182,8 @@ uint8_t si1145_type = 0;
 #define SI114X_IRQEN_PS2                    0x08
 #define SI114X_IRQEN_PS3                    0x10
 
+uint8_t si1145_type = 0;
+
 /********************************************************************************************/
 
 uint8_t Si1145ReadByte(uint8_t reg)
@@ -210,12 +210,12 @@ uint8_t Si1145WriteParamData(uint8_t p, uint8_t v)
 
 /********************************************************************************************/
 
-bool Si1145Present()
+bool Si1145Present(void)
 {
   return (Si1145ReadByte(SI114X_PART_ID) == 0X45);
 }
 
-void Si1145Reset()
+void Si1145Reset(void)
 {
   Si1145WriteByte(SI114X_MEAS_RATE0, 0);
   Si1145WriteByte(SI114X_MEAS_RATE1, 0);
@@ -231,7 +231,7 @@ void Si1145Reset()
   delay(10);
 }
 
-void Si1145DeInit()
+void Si1145DeInit(void)
 {
   //ENABLE UV reading
   //these reg must be set to the fixed value
@@ -276,7 +276,7 @@ void Si1145DeInit()
   Si1145WriteByte(SI114X_COMMAND, SI114X_PSALS_AUTO);
 }
 
-boolean Si1145Begin()
+boolean Si1145Begin(void)
 {
   if (!Si1145Present()) { return false; }
 
@@ -286,26 +286,26 @@ boolean Si1145Begin()
 }
 
 // returns the UV index * 100 (divide by 100 to get the index)
-uint16_t Si1145ReadUV()
+uint16_t Si1145ReadUV(void)
 {
   return Si1145ReadHalfWord(SI114X_AUX_DATA0_UVINDEX0);
 }
 
 // returns visible+IR light levels
-uint16_t Si1145ReadVisible()
+uint16_t Si1145ReadVisible(void)
 {
   return Si1145ReadHalfWord(SI114X_ALS_VIS_DATA0);
 }
 
 // returns IR light levels
-uint16_t Si1145ReadIR()
+uint16_t Si1145ReadIR(void)
 {
   return Si1145ReadHalfWord(SI114X_ALS_IR_DATA0);
 }
 
 /********************************************************************************************/
 
-void Si1145Update()
+void Si1145Update(void)
 {
   if (!si1145_type) {
     if (Si1145Begin()) {
@@ -348,8 +348,6 @@ void Si1145Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_24
 
 boolean Xsns24(byte function)
 {

@@ -116,7 +116,7 @@ long HxRead()
 
 /*********************************************************************************************/
 
-void HxReset()
+void HxReset(void)
 {
   hx_tare_flg = 1;
   hx_sum_weight = 0;
@@ -149,7 +149,7 @@ void HxCalibrationStateTextJson(uint8_t msg_id)
  * Sensor34 6 <weight in decigram> - Set item weight
 \*********************************************************************************************/
 
-bool HxCommand()
+bool HxCommand(void)
 {
   bool serviced = true;
   bool show_parms = false;
@@ -220,7 +220,7 @@ long HxWeight()
   return (hx_calibrate_step < HX_CAL_FAIL) ? hx_weight : 0;
 }
 
-void HxInit()
+void HxInit(void)
 {
   hx_type = 0;
   if ((pin[GPIO_HX711_DAT] < 99) && (pin[GPIO_HX711_SCK] < 99)) {
@@ -245,7 +245,7 @@ void HxInit()
   }
 }
 
-void HxEvery100mSecond()
+void HxEvery100mSecond(void)
 {
   hx_sum_weight += HxRead();
 
@@ -391,7 +391,7 @@ const char HTTP_FORM_HX711[] PROGMEM =
   "<form method='post' action='" WEB_HANDLE_HX711 "'>"
   "<br/><b>" D_ITEM_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br/><input type='number' max='6.5535' step='0.0001' id='p2' name='p2' placeholder='0.0' value='{2'><br/>";
 
-void HandleHxAction()
+void HandleHxAction(void)
 {
   if (HttpUser()) { return; }
   if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
@@ -440,7 +440,7 @@ void HandleHxAction()
   ShowPage(page);
 }
 
-void HxSaveSettings()
+void HxSaveSettings(void)
 {
   char tmp[100];
 
@@ -450,7 +450,7 @@ void HxSaveSettings()
   HxLogUpdates();
 }
 
-void HxLogUpdates()
+void HxLogUpdates(void)
 {
   char weigth_ref_chr[10];
   char weigth_item_chr[10];
@@ -496,10 +496,10 @@ boolean Xsns34(byte function)
         break;
 #ifdef USE_HX711_GUI
       case FUNC_WEB_ADD_MAIN_BUTTON:
-        strncat_P(mqtt_data, HTTP_BTN_MENU_MAIN_HX711, sizeof(mqtt_data));
+        strncat_P(mqtt_data, HTTP_BTN_MENU_MAIN_HX711, sizeof(mqtt_data) - strlen(mqtt_data) -1);
         break;
       case FUNC_WEB_ADD_BUTTON:
-        strncat_P(mqtt_data, HTTP_BTN_MENU_HX711, sizeof(mqtt_data));
+        strncat_P(mqtt_data, HTTP_BTN_MENU_HX711, sizeof(mqtt_data) - strlen(mqtt_data) -1);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/" WEB_HANDLE_HX711, HandleHxAction);

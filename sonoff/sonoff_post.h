@@ -57,6 +57,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #ifdef USE_SENSORS
 
+#undef CODE_IMAGE
+#define CODE_IMAGE 3
+
 #undef USE_ADC_VCC                            // Add Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
@@ -88,6 +91,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 //#define USE_CCS811                            // Add I2C code for CCS811 sensor (+2k2 code)
 //#define USE_MPU6050                           // Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+2k6 code)
 //#define USE_DS3231                            // Enable DS3231 external RTC in case no Wifi is avaliable. See docs in the source file (+1k2 code)
+//#define USE_MGC3130                           // Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW
@@ -104,7 +108,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_MP3_PLAYER                        // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10             // Set the startup volume on init, the range can be 0..30(max)
 #define USE_TUYA_DIMMER                       // Add support for Tuya Serial Dimmer
-  #define TUYA_DIMMER_ID       3              // Default dimmer Id
+#ifndef TUYA_DIMMER_ID
+  #define TUYA_DIMMER_ID       0              // Default dimmer Id
+#endif
+#define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_PZEM_AC                           // Add support for PZEM014,016 Energy monitor (+1k1 code)
 #define USE_PZEM_DC                           // Add support for PZEM003,017 Energy monitor (+1k1 code)
@@ -133,6 +140,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef USE_CLASSIC
+
+#undef CODE_IMAGE
+#define CODE_IMAGE 2
 
 #ifndef USE_WPS
 #define USE_WPS                               // Add support for WPS as initial wifi configuration tool (+33k code, 1k mem (5k mem with core v2.4.2+))
@@ -183,6 +193,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #ifdef USE_KNX_NO_EMULATION
 
+#undef CODE_IMAGE
+#define CODE_IMAGE 4
+
 #ifndef USE_KNX
 #define USE_KNX                               // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
 #endif
@@ -195,6 +208,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef USE_DISPLAYS
+
+#undef CODE_IMAGE
+#define CODE_IMAGE 6
 
 #undef USE_ENERGY_SENSOR                      // Disable energy sensors (-14k code)
 #undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
@@ -228,6 +244,12 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef USE_BASIC
+
+#undef CODE_IMAGE
+#define CODE_IMAGE 5
+
+#undef APP_SLEEP
+#define APP_SLEEP 1                          // Default to sleep = 1 for USE_BASIC
 
 //#undef USE_ENERGY_SENSOR                      // Disable energy sensors
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
@@ -284,6 +306,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 \*********************************************************************************************/
 
 #ifdef BE_MINIMAL
+
+#undef CODE_IMAGE
+#define CODE_IMAGE 1
 
 #undef USE_ENERGY_SENSOR                      // Disable energy sensors
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA

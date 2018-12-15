@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define min(a,b) ((a)<(b)?(a):(b))
-#define max(a,b) ((a)>(b)?(a):(b))
+//#define min(a,b) ((a)<(b)?(a):(b))
+//#define max(a,b) ((a)>(b)?(a):(b))
 
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
 /*********************************************************************************************\
@@ -59,7 +59,7 @@ const char WEMO_MSEARCH[] PROGMEM =
   "X-User-Agent: redsonic\r\n"
   "\r\n";
 
-String WemoSerialnumber()
+String WemoSerialnumber(void)
 {
   char serial[16];
 
@@ -67,7 +67,7 @@ String WemoSerialnumber()
   return String(serial);
 }
 
-String WemoUuid()
+String WemoUuid(void)
 {
   char uuid[27];
 
@@ -131,7 +131,7 @@ const char HUE_ST3[] PROGMEM =
   "USN: uuid:{r3\r\n"
   "\r\n";
 
-String HueBridgeId()
+String HueBridgeId(void)
 {
   String temp = WiFi.macAddress();
   temp.replace(":", "");
@@ -139,7 +139,7 @@ String HueBridgeId()
   return bridgeid;  // 5CCF7FFFFE139F3D
 }
 
-String HueSerialnumber()
+String HueSerialnumber(void)
 {
   String serial = WiFi.macAddress();
   serial.replace(":", "");
@@ -147,14 +147,14 @@ String HueSerialnumber()
   return serial;  // 5ccf7f139f3d
 }
 
-String HueUuid()
+String HueUuid(void)
 {
   String uuid = F("f6543a06-da50-11ba-8d8f-");
   uuid += HueSerialnumber();
   return uuid;  // f6543a06-da50-11ba-8d8f-5ccf7f139f3d
 }
 
-void HueRespondToMSearch()
+void HueRespondToMSearch(void)
 {
   char message[TOPSZ];
 
@@ -197,7 +197,7 @@ void HueRespondToMSearch()
  * Belkin WeMo and Philips Hue bridge UDP multicast support
 \*********************************************************************************************/
 
-boolean UdpDisconnect()
+boolean UdpDisconnect(void)
 {
   if (udp_connected) {
     WiFiUDP::stopAll();
@@ -207,7 +207,7 @@ boolean UdpDisconnect()
   return udp_connected;
 }
 
-boolean UdpConnect()
+boolean UdpConnect(void)
 {
   if (!udp_connected) {
     if (PortUdp.beginMulticast(WiFi.localIP(), ipMulticast, port_multicast)) {
@@ -222,7 +222,7 @@ boolean UdpConnect()
   return udp_connected;
 }
 
-void PollUdp()
+void PollUdp(void)
 {
   if (udp_connected && !udp_response_mutex) {
     if (PortUdp.parsePacket()) {
@@ -381,7 +381,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
 
 /********************************************************************************************/
 
-void HandleUpnpEvent()
+void HandleUpnpEvent(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
 
@@ -408,21 +408,21 @@ void HandleUpnpEvent()
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), state_xml);
 }
 
-void HandleUpnpService()
+void HandleUpnpService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_EVENT_SERVICE));
 
   WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), FPSTR(WEMO_EVENTSERVICE_XML));
 }
 
-void HandleUpnpMetaService()
+void HandleUpnpMetaService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_META_SERVICE));
 
   WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), FPSTR(WEMO_METASERVICE_XML));
 }
 
-void HandleUpnpSetupWemo()
+void HandleUpnpSetupWemo(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_SETUP));
 
@@ -517,7 +517,7 @@ String GetHueDeviceId(uint8_t id)
   return deviceid;  // 5c:cf:7f:13:9f:3d:00:11-1
 }
 
-String GetHueUserId()
+String GetHueUserId(void)
 {
   char userid[7];
 
@@ -525,7 +525,7 @@ String GetHueUserId()
   return String(userid);
 }
 
-void HandleUpnpSetupHue()
+void HandleUpnpSetupHue(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_HUE_BRIDGE_SETUP));
   String description_xml = FPSTR(HUE_DESCRIPTION_XML);
@@ -692,8 +692,8 @@ void HueLights(String *path)
 
       if (hue_json.containsKey("bri")) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
         tmp = hue_json["bri"];
-        tmp = max(tmp, 1);
-        tmp = min(tmp, 254);
+        tmp = tmax(tmp, 1);
+        tmp = tmin(tmp, 254);
         bri = (float)tmp / 254.0f;
         if (resp) {
           response += ",";
@@ -721,8 +721,8 @@ void HueLights(String *path)
       }
       if (hue_json.containsKey("sat")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
         tmp = hue_json["sat"];
-        tmp = max(tmp, 0);
-        tmp = min(tmp, 254);
+        tmp = tmax(tmp, 0);
+        tmp = tmin(tmp, 254);
         sat = (float)tmp / 254.0f;
         if (resp) {
           response += ",";
@@ -841,7 +841,7 @@ void HandleHueApi(String *path)
   else HueGlobalConfig(path);
 }
 
-void HueWemoAddHandlers()
+void HueWemoAddHandlers(void)
 {
   if (EMUL_WEMO == Settings.flag2.emulation) {
     WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);

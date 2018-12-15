@@ -1,5 +1,11 @@
 <h1 id="decode-config-py">decode-config.py</h1>
-<p><em>decode-config.py</em> backup and restore Sonoff-Tasmota configuration.</p>
+<p><em>decode-config.py</em> is able to backup and restore Sonoff-Tasmota configuration.</p>
+<p>In contrast to the Tasmota build-in &quot;Backup/Restore Configuration&quot; function,</p>
+<ul>
+<li><em>decode-config.py</em> uses human readable and editable <a href="http://www.json.org/">JSON</a>-format for backup/restore,</li>
+<li><em>decode-config.py</em> can restore previous backuped and changed <a href="http://www.json.org/">JSON</a>-format files,</li>
+<li><em>decode-config.py</em> is able to create Tasmota commands based on given configuration</li>
+</ul>
 <p>Comparing backup files created by <em>decode-config.py</em> and *.dmp files created by Tasmota &quot;Backup/Restore Configuration&quot;:  </p>
 <table>
 <thead>
@@ -32,39 +38,51 @@
 </tr>
 </tbody>
 </table>
-<p><em>decode-config.py</em> handles Tasmota configurations for release version since 5.10.0 up to now.</p>
+<p><em>decode-config.py</em> is able to handle Tasmota configurations for release version starting from 5.10.0 up to now.</p>
 <h1 id="content">Content</h1>
 <ul>
-<li><a href="decode-config.html#prerequisite">Prerequisite</a></li>
-<li><a href="decode-config.html#file-types">File Types</a><ul>
-<li><a href="decode-config.html#-dmp-file-format">.dmp File Format</a></li>
-<li><a href="decode-config.html#-json-file-format">.json File Format</a></li>
-<li><a href="decode-config.html#-bin-file-format">.bin File Format</a><ul>
-<li><a href="decode-config.html#file-extensions">File extensions</a></li>
+<li><a href="decode-config.md#prerequisite">Prerequisite</a></li>
+<li><a href="decode-config.md#file-types">File Types</a><ul>
+<li><a href="decode-config.md#-dmp-format">.dmp File Format</a></li>
+<li><a href="decode-config.md#-json-format">.json File Format</a></li>
+<li><a href="decode-config.md#-bin-format">.bin File Format</a><ul>
+<li><a href="decode-config.md#file-extensions">File extensions</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="decode-config.html#usage">Usage</a><ul>
-<li><a href="decode-config.html#basics">Basics</a></li>
-<li><a href="decode-config.html#save-backup-file">Save backup file</a></li>
-<li><a href="decode-config.html#restore-backup-file">Restore backup file</a></li>
-<li><a href="decode-config.html#configuration-file">Configuration file</a></li>
-<li><a href="decode-config.html#more-program-arguments">More program arguments</a></li>
-<li><a href="decode-config.html#examples">Examples</a><ul>
-<li><a href="decode-config.html#config-file">Config file</a></li>
-<li><a href="decode-config.html#using-tasmota-binary-configuration-files">Using Tasmota binary configuration files</a></li>
-<li><a href="decode-config.html#use-batch-processing">Use batch processing</a></li>
+<li><a href="decode-config.md#usage">Usage</a><ul>
+<li><a href="decode-config.md#basics">Basics</a></li>
+<li><a href="decode-config.md#save-backup-file">Save backup file</a></li>
+<li><a href="decode-config.md#restore-backup-file">Restore backup file</a></li>
+<li><a href="decode-config.md#output-to-screen">Output to screen</a><ul>
+<li><a href="decode-config.md#json-output">JSON output</a></li>
+<li><a href="decode-config.md#tasmota-command-output">Tasmota command output</a></li>
 </ul>
 </li>
+<li><a href="decode-config.md#filter-data">Filter data</a></li>
+<li><a href="decode-config.md#configuration-file">Configuration file</a></li>
+<li><a href="decode-config.md#more-program-arguments">More program arguments</a></li>
+<li><a href="decode-config.md#examples">Examples</a><ul>
+<li><a href="decode-config.md#config-file">Config file</a></li>
+<li><a href="decode-config.md#using-tasmota-binary-configuration-files">Using Tasmota binary configuration files</a></li>
+<li><a href="decode-config.md#use-batch-processing">Use batch processing</a></li>
+</ul>
+</li>
+<li><a href="decode-config.md#notes">Notes</a></li>
 </ul>
 </li>
 </ul>
 <h2 id="prerequisite">Prerequisite</h2>
 <ul>
-<li><a href="https://en.wikipedia.org/wiki/Python_(programming_language">Python</a>)<br>This program is written in <a href="https://en.wikipedia.org/wiki/Python_(programming_language">Python</a>) so you need to install a python environment (for details see <a href="https://docs.python.org/2.7/using/index.html">Python Setup and Usage</a>)</li>
-<li><a href="https://github.com/arendst/Sonoff-Tasmota">Sonoff-Tasmota</a> <a href="https://github.com/arendst/Sonoff-Tasmota/releases">Firmware</a> with enabled Web-Server<br>To backup or restore configurations from/to a Sonoff-Tasmota device you need a firmare with enabled web-server in admin mode (command <a href="https://github.com/arendst/Sonoff-Tasmota/wiki/Commands#wifi">WebServer 2</a>).
-<br />Only self compiled firmware may do not have a web-server sod if you use your own compiled firmware be aware to enable the web-server, otherwise you can only use the <code>--file</code> parameter as source.</li>
+<li><p><a href="https://en.wikipedia.org/wiki/Python_(programming_language">Python</a>)<br>This program is written in <a href="https://en.wikipedia.org/wiki/Python_(programming_language">Python</a>) so you need to install a python environment (for details see <a href="https://docs.python.org/2.7/using/index.html">Python Setup and Usage</a>)</p>
+</li>
+<li><p><a href="https://github.com/arendst/Sonoff-Tasmota">Sonoff-Tasmota</a> <a href="https://github.com/arendst/Sonoff-Tasmota/releases">Firmware</a> with Web-Server enabled:</p>
+<ul>
+<li>To backup or restore configurations from/to a Sonoff-Tasmota device you need a firmare with enabled web-server in admin mode (command <a href="https://github.com/arendst/Sonoff-Tasmota/wiki/Commands#wifi">WebServer 2</a>).</li>
+<li>If using your own compiled firmware be aware to enable the web-server (<code>#define USE_WEBSERVER</code> and <code>#define WEB_SERVER 2</code>).</li>
+</ul>
+</li>
 </ul>
 <h2 id="file-types">File Types</h2>
 <p><em>decode-config.py</em> can handle the following backup file types:  </p>
@@ -83,7 +101,7 @@
 <p>The source can be either </p>
 <ul>
 <li>a Tasmota device hostname or IP by passing it using the <code>-d &lt;host&gt;</code> arg</li>
-<li>or a previously stored Tasmota *.dmp<code>configuration file by passing the filename using</code>-f <filename>` arg</li>
+<li>or a previously stored Tasmota <code>*.dmp</code> configuration file by passing the filename using <code>-f &lt;filename&gt;</code> arg</li>
 </ul>
 <p>Example:  </p>
 <pre><code>decode-config<span class="hljs-selector-class">.py</span> -d sonoff-<span class="hljs-number">4281</span>
@@ -112,6 +130,72 @@
 <pre><code><span class="hljs-selector-tag">decode-config</span><span class="hljs-selector-class">.py</span> <span class="hljs-selector-tag">-d</span> <span class="hljs-selector-tag">sonoff-4281</span> <span class="hljs-selector-tag">--restore-file</span> <span class="hljs-selector-tag">Config_Sonoff_6</span><span class="hljs-selector-class">.2</span><span class="hljs-selector-class">.1</span><span class="hljs-selector-class">.json</span>
 </code></pre><p>with password set by WebPassword:</p>
 <pre><code><span class="hljs-selector-tag">decode-config</span><span class="hljs-selector-class">.py</span> <span class="hljs-selector-tag">-d</span> <span class="hljs-selector-tag">sonoff-4281</span> <span class="hljs-selector-tag">-p</span> &lt;<span class="hljs-selector-tag">yourpassword</span>&gt; <span class="hljs-selector-tag">--restore-file</span> <span class="hljs-selector-tag">Config_Sonoff_6</span><span class="hljs-selector-class">.2</span><span class="hljs-selector-class">.1</span><span class="hljs-selector-class">.json</span>
+</code></pre><h3 id="output-to-screen">Output to screen</h3>
+<p>Output to screen is default enabled when calling the program with a source arg but without a backup or restore arg.</p>
+<p><code>--output</code> arg will force screen output even if you use backup or restore arg.</p>
+<h4 id="json-output">JSON output</h4>
+<p>The default output format is JSON. You can force JSON output with <code>--output-format json</code> arg.</p>
+<p>Example:</p>
+<pre><code>decode-config.py -d sonoff<span class="hljs-number">-4281</span> -c my.conf -x <span class="hljs-symbol">Wifi</span> --output-format json
+
+{
+  ...
+  <span class="hljs-string">"hostname"</span>: <span class="hljs-string">"%s-%04d"</span>, 
+  <span class="hljs-string">"ip_address"</span>: [
+    <span class="hljs-string">"0.0.0.0"</span>, 
+    <span class="hljs-string">"192.168.12.1"</span>, 
+    <span class="hljs-string">"255.255.255.0"</span>, 
+    <span class="hljs-string">"192.168.12.1"</span>
+  ], 
+  <span class="hljs-string">"ntp_server"</span>: [
+    <span class="hljs-string">"ntp.localnet.home"</span>, 
+    <span class="hljs-string">"ntp2.localnet.home"</span>, 
+    <span class="hljs-string">"192.168.12.1"</span>
+  ], 
+  <span class="hljs-string">"sta_active"</span>: <span class="hljs-number">0</span>, 
+  <span class="hljs-string">"sta_config"</span>: <span class="hljs-number">5</span>, 
+  <span class="hljs-string">"sta_pwd"</span>: [
+    <span class="hljs-string">"myWlAnPaszxwo!z"</span>, 
+    <span class="hljs-string">"myWlAnPaszxwo!z2"</span>
+  ], 
+  <span class="hljs-string">"sta_ssid"</span>: [
+    <span class="hljs-string">"wlan.1"</span>, 
+    <span class="hljs-string">"my-wlan"</span>
+  ], 
+  <span class="hljs-string">"web_password"</span>: <span class="hljs-string">"myPaszxwo!z"</span>, 
+  <span class="hljs-string">"webserver"</span>: <span class="hljs-number">2</span>
+  ...
+}
+</code></pre><p>Note: JSON output always contains all configuration data like the backup file except you are using <code>--group</code> arg.</p>
+<h4 id="tasmota-command-output">Tasmota command output</h4>
+<p><em>decode-config.py</em> is able to translate the configuration data to (most all) Tasmota commands. To output your configuration as Tasmota commands use <code>--output-format cmnd</code> or <code>--output-format command</code>.</p>
+<p>Example:</p>
+<pre><code><span class="hljs-selector-tag">decode-config</span><span class="hljs-selector-class">.py</span> <span class="hljs-selector-tag">-d</span> <span class="hljs-selector-tag">sonoff-4281</span> <span class="hljs-selector-tag">-c</span> <span class="hljs-selector-tag">my</span><span class="hljs-selector-class">.conf</span> <span class="hljs-selector-tag">-g</span> <span class="hljs-selector-tag">Wifi</span> <span class="hljs-selector-tag">--output-format</span> <span class="hljs-selector-tag">cmnd</span>
+
+# <span class="hljs-selector-tag">Wifi</span>:
+  <span class="hljs-selector-tag">AP</span> 0
+  <span class="hljs-selector-tag">Hostname</span> %<span class="hljs-selector-tag">s-</span>%04<span class="hljs-selector-tag">d</span>
+  <span class="hljs-selector-tag">IPAddress1</span> 0<span class="hljs-selector-class">.0</span><span class="hljs-selector-class">.0</span><span class="hljs-selector-class">.0</span>
+  <span class="hljs-selector-tag">IPAddress2</span> 192<span class="hljs-selector-class">.168</span><span class="hljs-selector-class">.12</span><span class="hljs-selector-class">.1</span>
+  <span class="hljs-selector-tag">IPAddress3</span> 255<span class="hljs-selector-class">.255</span><span class="hljs-selector-class">.255</span><span class="hljs-selector-class">.0</span>
+  <span class="hljs-selector-tag">IPAddress4</span> 192<span class="hljs-selector-class">.168</span><span class="hljs-selector-class">.12</span><span class="hljs-selector-class">.1</span>
+  <span class="hljs-selector-tag">NtpServer1</span> <span class="hljs-selector-tag">ntp</span><span class="hljs-selector-class">.localnet</span><span class="hljs-selector-class">.home</span>
+  <span class="hljs-selector-tag">NtpServer2</span> <span class="hljs-selector-tag">ntp2</span><span class="hljs-selector-class">.localnet</span><span class="hljs-selector-class">.home</span>
+  <span class="hljs-selector-tag">NtpServer3</span> 192<span class="hljs-selector-class">.168</span><span class="hljs-selector-class">.12</span><span class="hljs-selector-class">.1</span>
+  <span class="hljs-selector-tag">Password1</span> <span class="hljs-selector-tag">myWlAnPaszxwo</span>!<span class="hljs-selector-tag">z</span>
+  <span class="hljs-selector-tag">Password2</span> <span class="hljs-selector-tag">myWlAnPaszxwo</span>!<span class="hljs-selector-tag">z2</span>
+  <span class="hljs-selector-tag">SSId1</span> <span class="hljs-selector-tag">wlan</span><span class="hljs-selector-class">.1</span>
+  <span class="hljs-selector-tag">SSId2</span> <span class="hljs-selector-tag">wlan</span><span class="hljs-selector-class">.1</span>
+  <span class="hljs-selector-tag">WebPassword</span> <span class="hljs-selector-tag">myPaszxwo</span>!<span class="hljs-selector-tag">z</span>
+  <span class="hljs-selector-tag">WebServer</span> 2
+  <span class="hljs-selector-tag">WifiConfig</span> 5
+</code></pre><p>Note: A few very specific module commands like MPC230xx, KNX and some Display commands are not supported. These are still available by JSON output.</p>
+<h3 id="filter-data">Filter data</h3>
+<p>The huge number of Tasmota configuration data can be overstrained and confusing, so the most of the configuration data are grouped into categories. </p>
+<p>With <em>decode-config.py</em> the following categories are available:   <code>Display</code>, <code>Domoticz</code>, <code>Internal</code>, <code>KNX</code>, <code>Led</code>, <code>Logging</code>, <code>MCP230xx</code>, <code>MQTT</code>, <code>Main</code>, <code>Management</code>, <code>Pow</code>, <code>Sensor</code>, <code>Serial</code>, <code>SetOption</code>, <code>SonoffRF</code>, <code>System</code>, <code>Timers</code>, <code>Wifi</code></p>
+<p>These are similary to the categories on <a href="Tasmota Command Wiki">https://github.com/arendst/Sonoff-Tasmota/wiki/Commands</a>.</p>
+<p>To filter outputs to a subset of groups use the <code>-g</code> or <code>--group</code> arg concatenating the grooup you want, e. g.</p>
+<pre><code>decode-config<span class="hljs-selector-class">.py</span> -d sonoff-<span class="hljs-number">4281</span> -c my<span class="hljs-selector-class">.conf</span> --output-format cmnd --group Main MQTT Management Wifi
 </code></pre><h3 id="configuration-file">Configuration file</h3>
 <p>Each argument that start with <code>--</code> (eg. <code>--file</code>) can also be set in a config file (specified via -c). Config file syntax allows: key=value, flag=true, stuff=[a,b,c] (for details, see syntax at <a href="https://pypi.org/project/ConfigArgParse/">https://pypi.org/project/ConfigArgParse</a>).</p>
 <p>If an argument is specified in more than one place, then commandline values override config file values which override defaults. This is usefull if you always use the same argument or a basic set of arguments.</p>
@@ -123,83 +207,115 @@
 </code></pre><p>To make a backup file from example above you can now pass the config file instead using the password on command line:</p>
 <pre><code><span class="hljs-selector-tag">decode-config</span><span class="hljs-selector-class">.py</span> <span class="hljs-selector-tag">-d</span> <span class="hljs-selector-tag">sonoff-4281</span> <span class="hljs-selector-tag">-c</span> <span class="hljs-selector-tag">my</span><span class="hljs-selector-class">.conf</span> <span class="hljs-selector-tag">--backup-file</span> <span class="hljs-selector-tag">Config_</span>@<span class="hljs-keyword">f_</span>@<span class="hljs-keyword">v</span>
 </code></pre><h3 id="more-program-arguments">More program arguments</h3>
-<p>For better reading your porgram arguments each short written arg (minus sign <code>-</code>) has a corresponding readable long version (two minus signs <code>--</code>), eg. <code>--device</code> for <code>-d</code> or <code>--file</code> for <code>-f</code> (note: not even all <code>--</code> arg has a corresponding <code>-</code> one).</p>
+<p>For better reading each short written arg (minus sign <code>-</code>) has a corresponding long version (two minus signs <code>--</code>), eg. <code>--device</code> for <code>-d</code> or <code>--file</code> for <code>-f</code> (note: not even all <code>--</code> arg has a corresponding <code>-</code> one).</p>
 <p>A short list of possible program args is displayed using <code>-h</code> or <code>--help</code>.</p>
 <p>For advanced help use <code>-H</code> or <code>--full-help</code>:</p>
-<pre><code>usage: decode-config.py [-f &lt;filename&gt;] [-d &lt;host&gt;] [-P &lt;<span class="hljs-keyword">port</span>&gt;]
+<pre><code><span class="hljs-title">usage</span>: decode-config.py [-f &lt;filename&gt;] [-d &lt;host&gt;] [-<span class="hljs-type">P</span> &lt;port&gt;]
                         [-u &lt;username&gt;] [-p &lt;password&gt;] [-i &lt;filename&gt;]
-                        [-o &lt;filename&gt;] [-F json|bin|dmp] [-E] [-e]
+                        [-o &lt;filename&gt;] [-t json|bin|dmp] [-<span class="hljs-type">E</span>] [-e] [-<span class="hljs-type">F</span>]
                         [<span class="hljs-comment">--json-indent &lt;indent&gt;] [--json-compact]</span>
-                        [<span class="hljs-comment">--json-hide-pw] [--json-unhide-pw] [-h] [-H] [-v]</span>
-                        [-V] [-c &lt;filename&gt;] [<span class="hljs-comment">--ignore-warnings]</span>
+                        [<span class="hljs-comment">--json-hide-pw] [--json-show-pw]</span>
+                        [<span class="hljs-comment">--cmnd-indent &lt;indent&gt;] [--cmnd-groups]</span>
+                        [<span class="hljs-comment">--cmnd-nogroups] [--cmnd-sort] [--cmnd-unsort]</span>
+                        [-c &lt;filename&gt;] [-<span class="hljs-type">S</span>] [-<span class="hljs-type">T</span> json|cmnd|command]
+                        [-g {<span class="hljs-type">Display</span>,<span class="hljs-type">Domoticz</span>,<span class="hljs-type">Internal</span>,<span class="hljs-type">KNX</span>,<span class="hljs-type">Led</span>,<span class="hljs-type">Logging</span>,<span class="hljs-type">MCP230xx</span>,<span class="hljs-type">MQTT</span>,<span class="hljs-type">Main</span>,<span class="hljs-type">Management</span>,<span class="hljs-type">Pow</span>,<span class="hljs-type">Sensor</span>,<span class="hljs-type">Serial</span>,<span class="hljs-type">SetOption</span>,<span class="hljs-type">SonoffRF</span>,<span class="hljs-type">System</span>,<span class="hljs-type">Timers</span>,<span class="hljs-type">Wifi</span>} [{<span class="hljs-type">Display</span>,<span class="hljs-type">Domoticz</span>,<span class="hljs-type">Internal</span>,<span class="hljs-type">KNX</span>,<span class="hljs-type">Led</span>,<span class="hljs-type">Logging</span>,<span class="hljs-type">MCP230xx</span>,<span class="hljs-type">MQTT</span>,<span class="hljs-type">Main</span>,<span class="hljs-type">Management</span>,<span class="hljs-type">Pow</span>,<span class="hljs-type">Sensor</span>,<span class="hljs-type">Serial</span>,<span class="hljs-type">SetOption</span>,<span class="hljs-type">SonoffRF</span>,<span class="hljs-type">System</span>,<span class="hljs-type">Timers</span>,<span class="hljs-type">Wifi</span>} ...]]
+                        [<span class="hljs-comment">--ignore-warnings] [-h] [-H] [-v] [-V]</span>
 
-Backup/Restore Sonoff-Tasmota <span class="hljs-keyword">configuration</span> data. Args that start <span class="hljs-keyword">with</span> '<span class="hljs-comment">--'</span>
-(eg. -f) can also be set <span class="hljs-keyword">in</span> a config <span class="hljs-keyword">file</span> (specified via -c). Config <span class="hljs-keyword">file</span>
-syntax allows: key=value, flag=<span class="hljs-literal">true</span>, stuff=[a,b,c] (<span class="hljs-keyword">for</span> details, see syntax at
-https://goo.gl/R74nmi). <span class="hljs-keyword">If</span> an arg <span class="hljs-keyword">is</span> specified <span class="hljs-keyword">in</span> more than one place, <span class="hljs-keyword">then</span>
-commandline values override config <span class="hljs-keyword">file</span> values which override defaults.
+<span class="hljs-type">Backup</span>/<span class="hljs-type">Restore</span> <span class="hljs-type">Sonoff</span>-<span class="hljs-type">Tasmota</span> configuration <span class="hljs-class"><span class="hljs-keyword">data</span>. <span class="hljs-type">Args</span> that start with '<span class="hljs-comment">--'</span></span>
+(eg. -f) can also be set <span class="hljs-keyword">in</span> a config file (specified via -c). <span class="hljs-type">Config</span> file
+<span class="hljs-title">syntax</span> allows: key=value, flag=true, stuff=[a,b,c] (for details, see syntax at
+<span class="hljs-title">https</span>://goo.gl/<span class="hljs-type">R74nmi</span>). <span class="hljs-type">If</span> an arg is specified <span class="hljs-keyword">in</span> more than one place, <span class="hljs-keyword">then</span>
+<span class="hljs-title">commandline</span> values override config file values which override defaults.
 
-optional arguments:
+<span class="hljs-type">Source</span>:
+  <span class="hljs-type">Read</span>/<span class="hljs-type">Write</span> <span class="hljs-type">Tasmota</span> configuration from/to
+
+  -f, <span class="hljs-comment">--file, --tasmota-file &lt;filename&gt;</span>
+                        file to retrieve/write <span class="hljs-type">Tasmota</span> configuration from/to
+                        (<span class="hljs-keyword">default</span>: <span class="hljs-type">None</span>)'
+  -d, <span class="hljs-comment">--device, --host &lt;host&gt;</span>
+                        hostname or <span class="hljs-type">IP</span> address to retrieve/send <span class="hljs-type">Tasmota</span>
+                        configuration from/to (<span class="hljs-keyword">default</span>: <span class="hljs-type">None</span>)
+  -<span class="hljs-type">P</span>, <span class="hljs-comment">--port &lt;port&gt;     TCP/IP port number to use for the host connection</span>
+                        (<span class="hljs-keyword">default</span>: 80)
+  -u, <span class="hljs-comment">--username &lt;username&gt;</span>
+                        host <span class="hljs-type">HTTP</span> access username (<span class="hljs-keyword">default</span>: admin)
+  -p, <span class="hljs-comment">--password &lt;password&gt;</span>
+                        host <span class="hljs-type">HTTP</span> access password (<span class="hljs-keyword">default</span>: <span class="hljs-type">None</span>)
+
+<span class="hljs-type">Backup</span>/<span class="hljs-type">Restore</span>:
+  <span class="hljs-type">Backup</span> &amp; restore specification
+
+  -i, <span class="hljs-comment">--restore-file &lt;filename&gt;</span>
+                        file to restore configuration from (<span class="hljs-keyword">default</span>: <span class="hljs-type">None</span>).
+                        <span class="hljs-type">Replacements</span>: @v=firmware version from config,
+                        @f=device friendly name from config, @h=device
+                        hostname from config, @<span class="hljs-type">H</span>=device hostname from device
+                        (-d arg only)
+  -o, <span class="hljs-comment">--backup-file &lt;filename&gt;</span>
+                        file to backup configuration to (<span class="hljs-keyword">default</span>: <span class="hljs-type">None</span>).
+                        <span class="hljs-type">Replacements</span>: @v=firmware version from config,
+                        @f=device friendly name from config, @h=device
+                        hostname from config, @<span class="hljs-type">H</span>=device hostname from device
+                        (-d arg only)
+  -t, <span class="hljs-comment">--backup-type json|bin|dmp</span>
+                        backup filetype (<span class="hljs-keyword">default</span>: 'json')
+  -<span class="hljs-type">E</span>, <span class="hljs-comment">--extension       append filetype extension for -i and -o filename</span>
+                        (<span class="hljs-keyword">default</span>)
+  -e, <span class="hljs-comment">--no-extension    do not append filetype extension, use -i and -o</span>
+                        filename <span class="hljs-keyword">as</span> passed
+  -<span class="hljs-type">F</span>, <span class="hljs-comment">--force-restore   force restore even configuration is identical</span>
+
+<span class="hljs-type">JSON</span> output:
+  <span class="hljs-type">JSON</span> format specification
+
+  <span class="hljs-comment">--json-indent &lt;indent&gt;</span>
+                        pretty-printed <span class="hljs-type">JSON</span> output using indent level
+                        (<span class="hljs-keyword">default</span>: '<span class="hljs-type">None'</span>). -1 disables indent.
+  <span class="hljs-comment">--json-compact        compact JSON output by eliminate whitespace</span>
+  <span class="hljs-comment">--json-hide-pw        hide passwords</span>
+  <span class="hljs-comment">--json-show-pw, --json-unhide-pw</span>
+                        unhide passwords (<span class="hljs-keyword">default</span>)
+
+<span class="hljs-type">Tasmota</span> command output:
+  <span class="hljs-type">Tasmota</span> command output format specification
+
+  <span class="hljs-comment">--cmnd-indent &lt;indent&gt;</span>
+                        <span class="hljs-type">Tasmota</span> command grouping indent level (<span class="hljs-keyword">default</span>: '2').
+                        <span class="hljs-number">0</span> disables indent
+  <span class="hljs-comment">--cmnd-groups         group Tasmota commands (default)</span>
+  <span class="hljs-comment">--cmnd-nogroups       leave Tasmota commands ungrouped</span>
+  <span class="hljs-comment">--cmnd-sort           sort Tasmota commands (default)</span>
+  <span class="hljs-comment">--cmnd-unsort         leave Tasmota commands unsorted</span>
+
+<span class="hljs-type">Common</span>:
+  <span class="hljs-type">Optional</span> arguments
+
   -c, <span class="hljs-comment">--config &lt;filename&gt;</span>
-                        program config <span class="hljs-keyword">file</span> - can be used <span class="hljs-keyword">to</span> set <span class="hljs-keyword">default</span>
-                        command args (<span class="hljs-keyword">default</span>: None)
+                        program config file - can be used to set <span class="hljs-keyword">default</span>
+                        command args (<span class="hljs-keyword">default</span>: <span class="hljs-type">None</span>)
+  -<span class="hljs-type">S</span>, <span class="hljs-comment">--output          display output regardsless of backup/restore usage</span>
+                        (<span class="hljs-keyword">default</span> do not output on backup or restore usage)
+  -<span class="hljs-type">T</span>, <span class="hljs-comment">--output-format json|cmnd|command</span>
+                        display output format (<span class="hljs-keyword">default</span>: 'json')
+  -g, <span class="hljs-comment">--group {Display,Domoticz,Internal,KNX,Led,Logging,MCP230xx,MQTT,Main,Management,Pow,Sensor,Serial,SetOption,SonoffRF,System,Timers,Wifi}</span>
+                        limit <span class="hljs-class"><span class="hljs-keyword">data</span> processing to command groups (<span class="hljs-title">default</span> <span class="hljs-title">no</span>
+                        <span class="hljs-title">filter</span>)</span>
   <span class="hljs-comment">--ignore-warnings     do not exit on warnings. Not recommended, used by your</span>
                         own responsibility!
 
-Source:
-  Read/Write Tasmota <span class="hljs-keyword">configuration</span> from/<span class="hljs-keyword">to</span>
-
-  -f, <span class="hljs-comment">--file, --tasmota-file &lt;filename&gt;</span>
-                        <span class="hljs-keyword">file</span> <span class="hljs-keyword">to</span> retrieve/write Tasmota <span class="hljs-keyword">configuration</span> from/<span class="hljs-keyword">to</span>
-                        (<span class="hljs-keyword">default</span>: None)'
-  -d, <span class="hljs-comment">--device, --host &lt;host&gt;</span>
-                        hostname <span class="hljs-keyword">or</span> IP address <span class="hljs-keyword">to</span> retrieve/send Tasmota
-                        <span class="hljs-keyword">configuration</span> from/<span class="hljs-keyword">to</span> (<span class="hljs-keyword">default</span>: None)
-  -P, <span class="hljs-comment">--port &lt;port&gt;     TCP/IP port number to use for the host connection</span>
-                        (<span class="hljs-keyword">default</span>: <span class="hljs-number">80</span>)
-  -u, <span class="hljs-comment">--username &lt;username&gt;</span>
-                        host HTTP <span class="hljs-keyword">access</span> username (<span class="hljs-keyword">default</span>: admin)
-  -p, <span class="hljs-comment">--password &lt;password&gt;</span>
-                        host HTTP <span class="hljs-keyword">access</span> password (<span class="hljs-keyword">default</span>: None)
-
-Backup/Restore:
-  Backup/Restore <span class="hljs-keyword">configuration</span> <span class="hljs-keyword">file</span> specification
-
-  -i, <span class="hljs-comment">--restore-file &lt;filename&gt;</span>
-                        <span class="hljs-keyword">file</span> <span class="hljs-keyword">to</span> restore <span class="hljs-keyword">configuration</span> from (<span class="hljs-keyword">default</span>: None).
-                        Replacements: @v=firmware version, @f=device friendly
-                        name, @h=device hostname
-  -o, <span class="hljs-comment">--backup-file &lt;filename&gt;</span>
-                        <span class="hljs-keyword">file</span> <span class="hljs-keyword">to</span> backup <span class="hljs-keyword">configuration</span> <span class="hljs-keyword">to</span> (<span class="hljs-keyword">default</span>: None).
-                        Replacements: @v=firmware version, @f=device friendly
-                        name, @h=device hostname
-  -F, <span class="hljs-comment">--backup-type json|bin|dmp</span>
-                        backup filetype (<span class="hljs-keyword">default</span>: <span class="hljs-symbol">'json</span>')
-  -E, <span class="hljs-comment">--extension       append filetype extension for -i and -o filename</span>
-                        (<span class="hljs-keyword">default</span>)
-  -e, <span class="hljs-comment">--no-extension    do not append filetype extension, use -i and -o</span>
-                        filename as passed
-
-JSON:
-  JSON backup format specification
-
-  <span class="hljs-comment">--json-indent &lt;indent&gt;</span>
-                        pretty-printed JSON output using indent level
-                        (<span class="hljs-keyword">default</span>: <span class="hljs-symbol">'None</span>'). -<span class="hljs-number">1</span> disables indent.
-  <span class="hljs-comment">--json-compact        compact JSON output by eliminate whitespace</span>
-  <span class="hljs-comment">--json-hide-pw        hide passwords (default)</span>
-  <span class="hljs-comment">--json-unhide-pw      unhide passwords</span>
-
-Info:
-  additional information
+<span class="hljs-type">Info</span>:
+  <span class="hljs-type">Extra</span> information
 
   -h, <span class="hljs-comment">--help            show usage help message and exit</span>
-  -H, <span class="hljs-comment">--full-help       show full help message and exit</span>
+  -<span class="hljs-type">H</span>, <span class="hljs-comment">--full-help       show full help message and exit</span>
   -v, <span class="hljs-comment">--verbose         produce more output about what the program does</span>
-  -V, <span class="hljs-comment">--version         show program's version number and exit</span>
+  -<span class="hljs-type">V</span>, <span class="hljs-comment">--version         show program's version number and exit</span>
 
-Either argument -d &lt;host&gt; <span class="hljs-keyword">or</span> -f &lt;filename&gt; must be given.
-</code></pre><h3 id="examples">Examples</h3>
+<span class="hljs-type">Either</span> argument -d &lt;host&gt; or -f &lt;filename&gt; must be given.
+</code></pre><h3 id="program-parameter-notes">Program parameter notes</h3>
+<p><em>decode-config.py</em></p>
+<h3 id="examples">Examples</h3>
 <p>The most of the examples are for linux command line. Under Windows call the program using <code>python decode-config.py ...</code>.</p>
 <h4 id="config-file">Config file</h4>
 <p>Note: The example contains .ini style sections <code>[...]</code>. Sections are always treated as comment and serves as clarity only.
@@ -228,3 +344,12 @@ json-indent <span class="hljs-number">2</span>
 </code></pre><p>or under windows</p>
 <pre><code><span class="hljs-keyword">for</span> device <span class="hljs-keyword">in</span> (sonoff1 sonoff2 sonoff3) <span class="hljs-keyword">do</span> <span class="hljs-keyword">python</span> decode-config.py -c my.conf -d %device -o Config_@f_@v
 </code></pre><p>will produce JSON configuration files for host sonoff1, sonoff2 and sonoff3 using friendly name and Tasmota firmware version for backup filenames.</p>
+<h2 id="notes">Notes</h2>
+<p>Some general notes:</p>
+<ul>
+<li>Filename replacement macros <strong>@h</strong> and <strong>@H</strong>:<ul>
+<li><strong>@h</strong><br>The <strong>@h</strong> replacement macro uses the hostname configured with the Tasomta Wifi <code>Hostname &lt;host&gt;</code> command (defaults to <code>%s-%04d</code>). It will not use the network hostname of your device because this is not available when working with files only (e.g. <code>--file &lt;filename&gt;</code> as source).<br>To prevent having a useless % in your filename, <strong>@h</strong> will not replaced by configuration data hostname if this contains &#39;%&#39; characters.</li>
+<li><strong>@H</strong><br>If you want to use the network hostname within your filename, use the <strong>@H</strong> replacement macro instead - but be aware this will only replaced if you are using a network device as source (<code>-d</code>, <code>--device</code>, <code>--host</code>); it will not work when using a file as source (<code>-f</code>, <code>--file</code>)</li>
+</ul>
+</li>
+</ul>
