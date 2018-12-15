@@ -458,7 +458,7 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_SHORT:HASS_DISCOVER_SENSOR,
                name, state_topic, availability_topic);
-    if (!strcmp_P(subsensortype, PSTR(D_JSON_HUMIDITY))) {
+    if (!strcmp_P(subsensortype, PSTR(D_JSON_TEMPERATURE))) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_TEMP_SHORT:HASS_DISCOVER_SENSOR_TEMP,
                  mqtt_data, TempUnit(), sensorname);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_HUMIDITY))) {
