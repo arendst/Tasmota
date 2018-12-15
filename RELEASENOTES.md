@@ -221,6 +221,7 @@ Version 6.4.0 20181217
  * Add command IRSend \<frequency\>|0,\<rawdata1\>,\<rawdata2\>,.. to allow raw data transmission (#2116)
  * Add command SetOption56 0/1 to enable wifi network scan and select highest RSSI (#3173)
  * Add command SetOption57 0/1 to enable wifi network re-scan every 44 minutes with a rssi threshold of 10 to select highest RSSI (#3173)
+ * Add support for SDM220 (#3610)
  * Add default sleep 1 to sonoff-basic to lower energy consumption (#4217)
  * Add wifi status to Tuya (#4221)
  * Add delays to reduce CPU usage at boot time (#4233)
@@ -242,5 +243,4 @@ Version 6.4.0 20181217
  * Add support for iFan02 Fanspeed in Domoticz using a selector (#4517)
  * Add support for GPIO02 for newer Sonoff Basic (#4518)
  * Add Announce Switches to MQTT Discovery (#4531)
- * Add support for SDM220 (#3610)
  * Add support for Manzoku Power Strip (#4590)
