@@ -81,6 +81,7 @@ Module            | Description
 57 SK03 Outdoor   | SK03 Outdoor Wifi Smart Switch with Energy Monitoring
 58 PS-16-DZ       | PS-16-DZ  Wifi dimmer for Incandescent Lights and Led
 59 Teckin US      | Teckin US and ZooZee SA102 Wifi Smart Switch with Energy Monitoring
+60 Manzoku strip  | Manzoku Wifi Smart Power Strip with four Relays
 
 ## Provided Binary Downloads
 The following binary downloads have been compiled with ESP8266/Arduino library core version **2.4.2** patched with the Alexa fix.
@@ -97,8 +98,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 | Feature or Sensor              | minimal | basic | classic | sonoff | knx  | sensors | Remarks
 |--------------------------------|---------|-------|---------|--------|------|---------|--------
-| ESP/Arduino lib v2.3.0         | 343k    | 425k  | 484k    | 490k   | 508k | 517k    |
-| ESP/Arduino lib v2.4.2         | 371k    | 449k  | 510k    | 522k   | 538k | 549k    |
+| ESP/Arduino lib v2.3.0         | 346k    | 429k  | 482k    | 504k   | 522k | 535k    |
+| ESP/Arduino lib v2.4.2         | 366k    | 446k  | 496k    | 522k   | 538k | 551k    |
 |                                |   |   |   |   |   |   |
 | MY_LANGUAGE en-GB              | x | x | x | x | x | x |
 | MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x | x |
@@ -106,7 +107,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_SMARTCONFIG                | - | - | x | - | - | - | SmartConfig
 | USE_ARDUINO_OTA                | - | - | - | - | - | - |
 | USE_DOMOTICZ                   | - | - | x | x | x | x |
-| USE_HOME_ASSISTANT             | - | - | x | x | x | x |
+| USE_HOME_ASSISTANT             | - | - | - | x | x | x |
 | USE_MQTT_TLS                   | - | - | - | - | - | - |
 | USE_KNX                        | - | - | - | - | x | - |
 | USE_WEBSERVER                  | x | x | x | x | x | x | WifiManager
@@ -165,6 +166,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_SDM630                     | - | - | - | - | - | x |
 | USE_MP3_PLAYER                 | - | - | - | - | - | x |
 | USE_TUYA_DIMMER                | - | x | - | x | x | x |
+| USE_ARMTRONIX_DIMMERS          | - | x | - | x | x | x |
+| USE_PS_16_DZ                   | - | x | - | x | x | x |
 | USE_IR_REMOTE                  | - | - | - | x | x | x |
 | USE_IR_HVAC                    | - | - | - | - | - | x |
 | USE_IR_RECEIVE                 | - | - | - | x | x | x |
