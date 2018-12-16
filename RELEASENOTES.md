@@ -81,9 +81,10 @@ Module            | Description
 57 SK03 Outdoor   | SK03 Outdoor Wifi Smart Switch with Energy Monitoring
 58 PS-16-DZ       | PS-16-DZ  Wifi dimmer for Incandescent Lights and Led
 59 Teckin US      | Teckin US and ZooZee SA102 Wifi Smart Switch with Energy Monitoring
+60 Manzoku strip  | Manzoku Wifi Smart Power Strip with four Relays
 
 ## Provided Binary Downloads
-The following binary downloads have been compiled with ESP8266/Arduino library version **2.3.0**
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.4.2** patched with the Alexa fix.
 
 - **sonoff-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
 - **sonoff-classic.bin** = The Classic version allows **initial installation** using either WifiManager, Wps or SmartConfig.
@@ -93,14 +94,12 @@ The following binary downloads have been compiled with ESP8266/Arduino library v
 - **sonoff-display.bin** = The Display version without Wps and SmartConfig configuration but adds display support.
 - **sonoff-knx.bin** = The Knx version without Wps and SmartConfig configuration and some other features but adds KNX support.
 
-See [Tasmota ESP/Arduino library version related issues](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips#20180523---relation-tasmota-and-esp8266arduino-core-version) why these files are still released using ESP/Arduino library version v2.3.0.
-
 ### Available Features and Sensors
 
 | Feature or Sensor              | minimal | basic | classic | sonoff | knx  | sensors | Remarks
 |--------------------------------|---------|-------|---------|--------|------|---------|--------
-| ESP/Arduino lib v2.3.0         | 343k    | 425k  | 484k    | 490k   | 508k | 517k    |
-| ESP/Arduino lib v2.4.2         | 372k    | 451k  | 497k    | 517k   | 533k | 541k    | No sleep
+| ESP/Arduino lib v2.3.0         | 346k    | 429k  | 482k    | 504k   | 522k | 535k    |
+| ESP/Arduino lib v2.4.2         | 366k    | 446k  | 496k    | 522k   | 538k | 551k    | No wifi sleep
 |                                |   |   |   |   |   |   |
 | MY_LANGUAGE en-GB              | x | x | x | x | x | x |
 | MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x | x |
@@ -108,7 +107,7 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | USE_SMARTCONFIG                | - | - | x | - | - | - | SmartConfig
 | USE_ARDUINO_OTA                | - | - | - | - | - | - |
 | USE_DOMOTICZ                   | - | - | x | x | x | x |
-| USE_HOME_ASSISTANT             | - | - | x | x | x | x |
+| USE_HOME_ASSISTANT             | - | - | - | x | x | x |
 | USE_MQTT_TLS                   | - | - | - | - | - | - |
 | USE_KNX                        | - | - | - | - | x | - |
 | USE_WEBSERVER                  | x | x | x | x | x | x | WifiManager
@@ -150,6 +149,7 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | USE_CCS811                     | - | - | - | - | - | - |
 | USE_MPU6050                    | - | - | - | - | - | - |
 | USE_DS3231                     | - | - | - | - | - | - |
+| USE_MGC3130                    | - | - | - | - | - | - |
 |                                |   |   |   |   |   |   |
 | Feature or Sensor              | minimal | basic | classic | sonoff | knx  | sensors |
 | USE_SPI                        | - | - | - | - | - | - |
@@ -166,6 +166,8 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | USE_SDM630                     | - | - | - | - | - | x |
 | USE_MP3_PLAYER                 | - | - | - | - | - | x |
 | USE_TUYA_DIMMER                | - | x | - | x | x | x |
+| USE_ARMTRONIX_DIMMERS          | - | x | - | x | x | x |
+| USE_PS_16_DZ                   | - | x | - | x | x | x |
 | USE_IR_REMOTE                  | - | - | - | x | x | x |
 | USE_IR_HVAC                    | - | - | - | - | - | x |
 | USE_IR_RECEIVE                 | - | - | - | x | x | x |
@@ -178,94 +180,67 @@ See [Tasmota ESP/Arduino library version related issues](https://github.com/aren
 | USE_RF_FLASH                   | - | - | - | x | x | x |
 | USE_TX20_WIND_SENSOR           | - | - | - | x | x | x |
 | USE_RC_SWITCH                  | - | - | - | x | x | x |
+| USE_RF_SENSOR                  | - | - | - | - | - | x | AlectoV2 only
 | USE_DISPLAY                    | - | - | - | - | - | - |
 
 ## Changelog
-Version 6.3.0 20181030
- * Change web Configure Module GPIO drop down list order for better readability
- * Change status JSON message providing more switch and retain information
- * Change xsns_17_senseair.ino to use TasmotaModbus library
- * Change MCP230xx driver
- * Change PubSubClient Mqtt library to non-blocking EspEasy version
- * Change energy monitoring using energy sensor driver modules
- * Change Webserver page handler for easier extension (thx to Adrian Scillato)
- * Change pinmode for no-pullup defined switches to pullup when configured as switchmode PUSHBUTTON (=3 and up) (#3896)
- * Change default OTA Url to http://thehackbox.org/tasmota/release/sonoff.bin (#4170)
- * Remove support for MQTT Client esp-mqtt-arduino by #define MQTT_LIBRARY_TYPE MQTT_ESPMQTTARDUINO
- * Remove commands PowerCal, VoltageCal and CurrentCal as more functionality is provided by commands PowerSet, VoltageSet and CurrentSet
- * Remove restart after ntpserver change and force NTP re-sync (#3890)
- * Fix showing Period Power in energy threshold messages
- * Fix header file execution order by renaming user_config.h to my_user_config.h
- * Fix some TSL2561 driver issues (#3681)
- * Fix KNX PA exception. Regression from 6.2.1 buffer overflow caused by subStr() (#3700, #3710)
- * Fix setting and getting color temperature for Philips Hue emulation (#3733)
- * Fix ButtonRetain to not use default topic for clearing retain messages (#3737)
- * Fix syslog when emulation is selected (#2109, #3784)
- * Fix rule trigger POWER1#STATE execution after restart and SetOption0 is 0 (#3856)
- * Fix Home Assistant forced light discovery (#3908)
- * Fix invalid configuration restores and decode_config.py crc error when savedata = 0 (#3918)
- * Fix timer offset -00:00 causing 12:00 hour offset (#3923)
- * Fix I2CScan invalid JSON error message (#3925)
- * Fix exception when wrong Domoticz JSON message is received (#3963)
- * Fix Sonoff Bridge RfRaw receive (#4080, #4085)
- * Fix possible wifi connection error (#4044, #4083)
- * Fix invalid JSON floating point result from nan (Not a Number) and inf (Infinity) into null (#4147)
- * Fix rule mqtt#connected trigger when mqtt is disabled (#4149)
- * Add support for LCD, Matrix, TFT and Oled displays
- * Add support for Neo Coolcam Wifi Smart Power Plug
- * Add support for Michael Haustein ESP Switch
- * Add support for MQTT Client based on lwmqtt to be selected by #define MQTT_LIBRARY_TYPE MQTT_ARDUINOMQTT
- * Add support for Neo Coolcam Wifi Smart Power Plug
- * Add support for Michael Haustein ESP Switch
- * Add support for MQTT Client based on lwmqtt to be selected by #define MQTT_LIBRARY_TYPE MQTT_ARDUINOMQTT
- * Add support for DS3231 Real Time Clock
- * Add support for HX711 Load Cell with optional web GUI scale interface to demonstrate easy GUI plug-in
- * Add support for serial 8N2 communication to TasmotaModbus and TasmotaSerial libraries
- * Add support for RF transceiving using library RcSwitch (#2702)
- * Add support for Shelly 1 and Shelly 2 (#2789)
- * Add support for La Crosse TX20 Anemometer (#2654, #3146)
- * Add support for MP3 player using DFRobot RB-DFR-562 (#3723)
- * Add Support for Xiaomi-Philips Bulbs (#3787)
- * Add support for PCA9685 12bit 16pin hardware PWM driver (#3866)
- * Add support for EXS Relay V5.0 (#3810)
- * Add support for OBI Power Socket (#1988, #3944)
- * Add support for Teckin Power Socket with Energy Monitoring (#3950)
- * Add support for Pzem-003/017 DC Energy monitoring module (#3694)
- * Add support for Pzem-014/016 AC Energy monitoring module (#3694)
- * Add support for CSL Aplic WDP 303075 Power Socket with Energy Monitoring (#3991, #3996)
- * Add support for Tuya Dimmer (#469, #4075)
- * Add command Display to show all settings at once
- * Add command SerialSend5 to send raw serial data like "A5074100545293"
- * Add command WebRefresh 1000..10000 to control web page refresh in milliseconds. Default is 2345
- * Add command WeightRes 0..3 to control display of decimals for kilogram
- * Add command RGBWWTable to support color calibration (#3933)
- * Add command Reset 4 (reset to defaults but keep wifi params) and Reset 5 (as reset 4 and also erase flash) (#4061)
- * Add command SetOption35 0..255 (seconds) to delay mDNS initialization to control possible Wifi connect problems
- * Add command SetOption52 0/1 to control display of optional time offset from UTC in JSON messages (#3629, #3711)
- * Add command SetOption53 0/1 to toggle gui display of Hostname and IP address (#1006, #2091)
- * Add authentication to HTTP web pages
- * Add decimals as input to commands PowerSet, VoltageSet and CurrentSet
- * Add tools/decode-config.py by Norbert Richter to decode configuration data. See file for information
- * Add define USE_DISPLAYS for selecting image sonoff-display
- * Add define USE_BASIC for selecting image sonoff-basic without most sensors
- * Add auto reload of main web page to some web restarts
- * Add TasmotaModbus library as very basic modbus wrapper for TasmotaSerial
- * Add more API callbacks and document API.md
- * Add Apparent Power and Reactive Power to Energy Monitoring devices (#251)
- * Add token %hostname% to command FullTopic (#3018)
- * Add Wifi channel number to state message (#3664)
- * Add user configurable GPIO02 and GPIO03 on H801 devices (#3692)
- * Add toggle function RGBW lights (#3695, #3697)
- * Add network information to display start screen (#3704)
- * Add sleep to Nova Fitness SDS01X sensor (#2841, #3724, #3749)
- * Add Analog input AD0 enabled to sonoff-sensors.bin (#3756, #3757)
- * Add power value below 5W to Sonoff Pow R2 and S31 (#3745)
- * Add RF Receiver control to module MagicHome to be used on Arilux LC10 (#3792)
- * Add userid/password option to decode-status.py (#3796)
- * Add delay after restart before processing rule sensor data (#3811)
- * Add force_update to Home Assistant discovery (#3873)
- * Add rule triggers SWITCH1#BOOT and POWER1#BOOT (#3904, #3910)
- * Add Hebrew language file (#3960)
- * Add TotalStartTime to Energy JSON message (#3971)
- * Add whitespace removal from RfRaw and SerialSend5 (#4020)
- * Add support for two BMP/BME sensors (#4195)
+Version 6.4.0 20181217
+ * Change GUI Configure Module by using AJAX for data fetch to cut page size (and memory use) by 40%.
+     In case of web page errors clear your browser cache or do Page Reload (F5 or Ctrl+R)
+ * Change enforcing flashmode dout but it is still mandatory
+ * Change bootcount update (being first) flash write to 10 seconds after restart
+ * Change display and epaper drivers
+ * Change command WebSend Host header field from IP address to hostname (#4331)
+ * Change log buffer size from 512 to 520 to accommodate http sensor data (#4354)
+ * Change default WIFI_CONFIG_TOOL from WIFI_WAIT to WIFI_RETRY in my_user_config.h (#4400)
+ * Change webgui refresh time delay for Save Settings and local OTA Upload (#4423)
+ * Change SR-04 driver to use NewPing library (#4488)
+ * Change MCP230xx driver to support interrupt retention over teleperiod (#4547)
+ * Change support for MPU6050 using DMP (#4581)
+ * Fix unintended function overload of WifiState
+ * Fix wifi connection errors using wifi disconnect and ESP.reset instead of ESP.restart
+ * Fix Sonoff Pow R2 and Sonoff S31 Serial interface hang caused by Sonoff Basic R2 driver delay implementation (and possibly core bug)
+ * Fix MQTT connection error after restart
+ * Fix wifi re-scan connection baseline
+ * Fix possible strncat buffer overflows
+ * Fix intermittent Pzem sensor energy overflow calculation error
+ * Fix shelly2 ghost switching caused by lack of pull-up inputs (#4255)
+ * Fix hardware serial pin configuration. To keep using hardware serial swap current Rx/Tx pin configuration only (#4280)
+ * Fix MqttRetry values above 255 seconds (#4424)
+ * Fix WifiManager functionality on initial installation (#4433)
+ * Fix ArduinoOTA for Core 2.5.0 (#4620)
+ * Add minutes to commands Timezone to allow all possible world timezones
+ * Add more strict checks for GPIO selections
+ * Add code image and optional commit number to version
+ * Add dynamic delay to main loop providing time for wifi background tasks
+ * Add additional start-up delay during initial wifi connection
+ * Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver
+ * Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 weather stations using 868MHz RF sensor receiver
+ * Add user definition of defines WIFI_RSSI_THRESHOLD (default 10) and WIFI_RESCAN_MINUTES (default 44)
+ * Add command SetOption58 0/1 to enable IR raw data info in JSON message (#2116)
+ * Add command IRSend \<frequency\>|0,\<rawdata1\>,\<rawdata2\>,.. to allow raw data transmission (#2116)
+ * Add command SetOption56 0/1 to enable wifi network scan and select highest RSSI (#3173)
+ * Add command SetOption57 0/1 to enable wifi network re-scan every 44 minutes with a rssi threshold of 10 to select highest RSSI (#3173)
+ * Add support for SDM220 (#3610)
+ * Add default sleep 1 to sonoff-basic to lower energy consumption (#4217)
+ * Add wifi status to Tuya (#4221)
+ * Add delays to reduce CPU usage at boot time (#4233)
+ * Add command SetOption24 0/1 to select pressure unit as hPa or mmHg (#4241)
+ * Add optional hardware serial when GPIO13(Rx) and GPIO15(Tx) are selected removing hardware serial from GPIO01(Tx) and GPIO03(Rx) (#4288)
+ * Add support for Gosund SP1 v2.3 Power Socket with Energy Monitoring (#4297)
+ * Add support for Armtronix dimmers. See wiki for info (#4321)
+ * Add to command WebSend option to send a direct path when command starts with a slash (#4329)
+ * Add support for LG HVac and IrRemote (#4377)
+ * Add initial support for Hass sensor discovery (#4380)
+ * Add support for Fujitsu HVac and IrRemote (#4387)
+ * Add support for I2C MGC3130 Electric Field Effect sensor by Christian Baars (#3774, #4404)
+ * Add command CalcRes to set number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE (#4420)
+ * Add CPU average load to state message (#4431)
+ * Add command SetOption59 0/1 to change state topic from tele/STATE to stat/RESULT (#4450)
+ * Add support for SM Smart Wifi Dimmer PS-16-DZ (#4465)
+ * Add support for Teckin US Power Socket with Energy Monitoring (#4481)
+ * Add command SetOption60 0/1 to select dynamic sleep (0) or sleep (1) (#4497)
+ * Add support for iFan02 Fanspeed in Domoticz using a selector (#4517)
+ * Add support for GPIO02 for newer Sonoff Basic (#4518)
+ * Add Announce Switches to MQTT Discovery (#4531)
+ * Add support for Manzoku Power Strip (#4590)
