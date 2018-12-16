@@ -1,4 +1,7 @@
-/* 6.4.0 20181217
+/* 6.4.0.1 20181217
+ * New release
+ *
+ * 6.4.0 20181217
  * Change GUI Configure Module by using AJAX for data fetch to cut page size (and memory use) by 40%
      In case of web page errors clear your browser cache or do Page Reload (F5 or Ctrl+R)
  * Change enforcing flashmode dout but it is still mandatory
