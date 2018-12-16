@@ -26,7 +26,7 @@
  * Source: Adafruit Industries https://github.com/adafruit/DHT-sensor-library
 \*********************************************************************************************/
 
-#define DHT_MAX_SENSORS  3
+#define DHT_MAX_SENSORS  4
 #define DHT_MAX_RETRY    8
 
 uint32_t dht_max_cycles;

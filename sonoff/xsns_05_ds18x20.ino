@@ -34,7 +34,7 @@
 #define W1_WRITE_SCRATCHPAD  0x4E
 #define W1_READ_SCRATCHPAD   0xBE
 
-#define DS18X20_MAX_SENSORS  8
+#define DS18X20_MAX_SENSORS  10 //CH
 
 const char kDs18x20Types[] PROGMEM = "DS18x20|DS18S20|DS1822|DS18B20|MAX31850";
 
@@ -380,7 +380,7 @@ void Ds18x20Name(uint8_t sensor)
   }
   GetTextIndexed(ds18x20_types, sizeof(ds18x20_types), index, kDs18x20Types);
   if (ds18x20_sensors > 1) {
-    snprintf_P(ds18x20_types, sizeof(ds18x20_types), PSTR("%s-%d"), ds18x20_types, sensor +1);
+    snprintf_P(ds18x20_types, sizeof(ds18x20_types), PSTR("%s-%02d"), ds18x20_types, sensor +1); //CH
   }
 }
 

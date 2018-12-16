@@ -58,6 +58,82 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #ifdef USE_SENSORS
 
 #undef USE_ADC_VCC                            // Add Analog input on selected devices
+/*
+#define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
+//#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
+#define USE_I2C                               // I2C using library wire (+10k code, 0k2 mem, 124 iram)
+#define USE_SHT                               // Add I2C emulating code for SHT1X sensor (+1k4 code)
+#define USE_SHT3X                             // Add I2C code for SHT3x sensor (+0k6 code)
+#define USE_HTU                               // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
+#define USE_LM75AD                            // Add I2C code for LM75AD sensor (+0k5 code)
+#define USE_BMP                               // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
+  #define USE_BME680                          // Add additional support for BME680 sensor using Bosch BME680 library (+4k code)
+#define USE_SGP30                             // Add I2C code for SGP30 sensor (+1k1 code)
+#define USE_BH1750                            // Add I2C code for BH1750 sensor (+0k5 code)
+#define USE_VEML6070                          // Add I2C code for VEML6070 sensor (+0k5 code)
+#define USE_TSL2561                           // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
+//#define USE_SI1145                            // Add I2C code for SI1145/46/47 sensor (+1k code)
+#define USE_ADS1115                           // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
+//#define USE_ADS1115_I2CDEV                    // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
+#define USE_INA219                            // Add I2C code for INA219 Low voltage and current sensor (+1k code)
+#define USE_MGS                               // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
+//#define USE_APDS9960                          // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
+//#define USE_MCP230xx                          // Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
+//  #define USE_MCP230xx_ADDR 0x20              // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x27 - set according to your wired setup)
+//  #define USE_MCP230xx_OUTPUT                 // Enable MCP23008/MCP23017 OUTPUT support through sensor29 commands (+1k5 code)
+//  #define USE_MCP230xx_DISPLAYOUTPUT          // Enable MCP23008/MCP23017 to display state of OUTPUT pins on Web UI (+0k2 code)
+//#define USE_PCA9685                           // Enable PCA9685 I2C HW PWM Driver - Must define I2C Address in #define USE_PCA9685_ADDR below - range 0x40 - 0x47 (+1k4 code)
+//  #define USE_PCA9685_ADDR 0x40               // Enable PCA9685 I2C Address to use (Must be within range 0x40 through 0x47 - set according to your wired setup)
+//  #define USE_PCA9685_FREQ 50                 // Define default PWM frequency in Hz to be used (must be within 24 to 1526) - If other value is used, it will rever to 50Hz
+//#define USE_MPR121                            // Enable MPR121 controller (I2C addresses 0x5A, 0x5B, 0x5C and 0x5D) in input mode for touch buttons (+1k3 code)
+//#define USE_CCS811                            // Add I2C code for CCS811 sensor (+2k2 code)
+//#define USE_MPU6050                           // Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+2k6 code)
+//#define USE_DS3231                            // Enable DS3231 external RTC in case no Wifi is avaliable. See docs in the source file (+1k2 code)
+#define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
+#define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
+#ifndef CO2_LOW
+  #define CO2_LOW              800            // Below this CO2 value show green light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
+#endif
+#ifndef CO2_HIGH
+  #define CO2_HIGH             1200           // Above this CO2 value show red light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
+#endif
+#define USE_PMS5003                           // Add support for PMS5003 and PMS7003 particle concentration sensor (+1k3 code)
+#define USE_NOVA_SDS                          // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
+#define USE_SERIAL_BRIDGE                     // Add support for software Serial Bridge (+0k8 code)
+#define USE_SDM120                            // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
+#define USE_SDM630                            // Add support for Eastron SDM630-Modbus energy meter (+2k code)
+#define USE_MP3_PLAYER                        // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
+  #define MP3_VOLUME           10             // Set the startup volume on init, the range can be 0..30(max)
+#define USE_TUYA_DIMMER                       // Add support for Tuya Serial Dimmer
+  #define TUYA_DIMMER_ID       3              // Default dimmer Id
+#define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
+#define USE_PZEM_AC                           // Add support for PZEM014,016 Energy monitor (+1k1 code)
+#define USE_PZEM_DC                           // Add support for PZEM003,017 Energy monitor (+1k1 code)
+#define USE_MCP39F501                         // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
+#define USE_IR_REMOTE                         // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
+  #define USE_IR_HVAC                         // Support for HVAC system using IR (+2k code)
+  #define USE_IR_RECEIVE                      // Support for IR receiver (+5k5 code, 264 iram)
+#define USE_WS2812                            // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
+#ifndef USE_WS2812_CTYPE
+  #define USE_WS2812_CTYPE     NEO_GRB        // WS2812 Color type (NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_RGBW, NEO_GRBW)
+#endif
+//  #define USE_WS2812_DMA                      // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
+#define USE_ARILUX_RF                         // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
+#define USE_SR04                              // Add support for HC-SR04 ultrasonic devices (+1k code)
+#define USE_TM1638                            // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
+#define USE_HX711                             // Add support for HX711 load cell (+1k5 code)
+//#define USE_HX711_GUI                         // Add optional web GUI to HX711 as scale (+1k8 code)
+#define USE_RF_FLASH                          // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (+3k code)
+#define USE_TX20_WIND_SENSOR                  // Add support for La Crosse TX20 anemometer (+2k code)
+#define USE_RC_SWITCH                         // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
+*/
+#define USE_SR04                              // Add support for HC-SR04 ultrasonic devices (+1k code)
+#endif  // USE_SENSORS
+
+
+#ifdef USE_SENSORS_ORIG //CH: Das waren die Original-Settings, specke jetzt ab wegen Groesse
+
+#undef USE_ADC_VCC                            // Add Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 #define USE_I2C                               // I2C using library wire (+10k code, 0k2 mem, 124 iram)
@@ -126,6 +202,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_TX20_WIND_SENSOR                  // Add support for La Crosse TX20 anemometer (+2k code)
 #define USE_RC_SWITCH                         // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 #endif  // USE_SENSORS
+
 
 /*********************************************************************************************\
  * [sonoff-classic.bin]
@@ -268,7 +345,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
-#undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
+//#undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
 #undef USE_HX711                              // Disable support for HX711 load cell
 #undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB

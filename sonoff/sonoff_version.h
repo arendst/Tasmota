@@ -22,7 +22,7 @@
 
 #define VERSION            0x06030000
 
-#define D_PROGRAMNAME      "Sonoff-Tasmota"
+#define D_PROGRAMNAME      "Sonoff-Tasmota (CH)" //CH
 #define D_AUTHOR           "Theo Arends"
 //#define D_WEBLINK          "https://github.com/arendst/Sonoff-Tasmota"
 #define D_WEBLINK          "https://bit.ly/tasmota"
