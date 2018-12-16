@@ -99,7 +99,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | Feature or Sensor              | minimal | basic | classic | sonoff | knx  | sensors | Remarks
 |--------------------------------|---------|-------|---------|--------|------|---------|--------
 | ESP/Arduino lib v2.3.0         | 346k    | 429k  | 482k    | 504k   | 522k | 535k    |
-| ESP/Arduino lib v2.4.2         | 366k    | 446k  | 496k    | 522k   | 538k | 551k    |
+| ESP/Arduino lib v2.4.2         | 366k    | 446k  | 496k    | 522k   | 538k | 551k    | No wifi sleep
 |                                |   |   |   |   |   |   |
 | MY_LANGUAGE en-GB              | x | x | x | x | x | x |
 | MQTT_LIBRARY_TYPE PUBSUBCLIENT | x | x | x | x | x | x |
@@ -180,7 +180,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_RF_FLASH                   | - | - | - | x | x | x |
 | USE_TX20_WIND_SENSOR           | - | - | - | x | x | x |
 | USE_RC_SWITCH                  | - | - | - | x | x | x |
-| USE_RF_SENSOR                  | - | - | - | - | - | - |
+| USE_RF_SENSOR                  | - | - | - | - | - | x | AlectoV2 only
 | USE_DISPLAY                    | - | - | - | - | - | - |
 
 ## Changelog
