@@ -24,8 +24,8 @@ build.lwip_flags=-DLWIP_OPEN_SRC
 
 build.vtable_flags=-DVTABLES_IN_FLASH
 
-build.exception_flags=-fexceptions
-build.stdcpp_lib=-lstdc++
+build.exception_flags=-fno-exceptions
+build.stdcpp_lib=-lstdc++-nox
 
 build.float=
 build.led=
