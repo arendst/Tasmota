@@ -165,7 +165,7 @@ const char HTTP_SCRIPT_MODULE2[] PROGMEM =
     "x.send();"
   "}";
 const char HTTP_SCRIPT_MODULE3[] PROGMEM =
-  "}1'%d'>%02d %s}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
+  "}1'%d'>%s (%02d)}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
 
 const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
   "function i(){"
@@ -798,14 +798,14 @@ void HandleModuleConfiguration(void)
     for (byte i = 0; i < MAXMODULE; i++) {
       midx = pgm_read_byte(kModuleNiceList + i);
       snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, midx +1, stemp);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, stemp, midx +1);
       page += mqtt_data;
     }
     page += "}3";  // String separator means do not use "}3" in Module name and Sensor name
     for (byte j = 0; j < sizeof(kGpioNiceList); j++) {
       midx = pgm_read_byte(kGpioNiceList + j);
       if (!GetUsedInModule(midx, cmodule.gp.io)) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
         page += mqtt_data;
       }
     }
