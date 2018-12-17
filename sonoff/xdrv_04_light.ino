@@ -828,30 +828,20 @@ void LightAnimate(void)
           }
         }
       }
+      XdrvMailbox.index = light_device;
+      XdrvMailbox.data = (char*)cur_col;
+      XdrvMailbox.data_len = sizeof(cur_col);
+      if (XdrvCall(FUNC_SET_CHANNELS)) {
+        // Serviced
+      }
 #ifdef USE_WS2812  // ************************************************************************
-      if (LT_WS2812 == light_type) {
+      else if (LT_WS2812 == light_type) {
         Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
       }
 #endif  // USE_ES2812 ************************************************************************
-      if (light_type > LT_WS2812) {
+      else if (light_type > LT_WS2812) {
         LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
       }
-#ifdef USE_TUYA_DIMMER
-      if (light_type == LT_SERIAL1 && Settings.module == TUYA_DIMMER ) {
-        LightSerialDuty(cur_col[0]);
-      }
-#endif  // USE_TUYA_DIMMER
-#ifdef USE_ARMTRONIX_DIMMERS
-      if (light_type == LT_SERIAL2) {
-        LightSerial2Duty(cur_col[0],cur_col[1]);
-      }
-#endif  // USE_ARMTRONIX_DIMMERS
-#ifdef USE_PS_16_DZ
-      if (light_type == LT_SERIAL1 && Settings.module == PS_16_DZ) {
-        PS16DZSerialDuty(cur_col[0]);
-      }
-#endif  // USE_PS_16_DZ
-
     }
   }
 }
