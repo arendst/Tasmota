@@ -91,6 +91,12 @@ boolean PS16DZSetPower(void)
   return status;
 }
 
+boolean PS16DZSetChannels(void)
+{
+  PS16DZSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
+  return true;
+}
+
 void PS16DZSerialDuty(uint8_t duty)
 {
   if (duty > 0 && !ps16dz_ignore_dim && PS16DZSerial) {
@@ -235,6 +241,9 @@ boolean Xdrv19(byte function)
         break;
       case FUNC_SET_DEVICE_POWER:
         result = PS16DZSetPower();
+        break;
+      case FUNC_SET_CHANNELS:
+        result = PS16DZSetChannels();
         break;
     }
   }
