@@ -1,5 +1,5 @@
 /* 6.4.0.1 20181217
- * New release
+ * Display WiFi channel number on Web UI Information page (#4667)
  *
  * 6.4.0 20181217
  * Change GUI Configure Module by using AJAX for data fetch to cut page size (and memory use) by 40%
