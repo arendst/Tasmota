@@ -141,6 +141,8 @@ enum UserSelectablePins {
   GPIO_SSPI_CS,        // Software SPI Chip Select
   GPIO_SSPI_DC,        // Software SPI Data or Command
   GPIO_RF_SENSOR,      // Rf receiver with sensor decoding
+  GPIO_AZ_TXD,         // AZ-Instrument 7798 Serial interface
+  GPIO_AZ_RXD,         // AZ-Instrument 7798 Serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -201,7 +203,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TUYA_TX "|" D_SENSOR_TUYA_RX "|"
   D_SENSOR_MGC3130_XFER "|" D_SENSOR_MGC3130_RESET "|"
   D_SENSOR_SSPI_MISO "|" D_SENSOR_SSPI_MOSI "|" D_SENSOR_SSPI_SCLK "|" D_SENSOR_SSPI_CS "|" D_SENSOR_SSPI_DC "|"
-  D_SENSOR_RF_SENSOR;
+  D_SENSOR_RF_SENSOR "|"
+  D_SENSOR_AZ_TX "|" D_SENSOR_AZ_RX;
 
 /********************************************************************************************/
 
@@ -453,6 +456,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MGC3130
   GPIO_MGC3130_XFER,
   GPIO_MGC3130_RESET
+#endif
+#ifdef USE_AZ7798
+  GPIO_AZ_TXD,         // AZ-Instrument 7798 CO2 datalogger Serial interface
+  GPIO_AZ_RXD          // AZ-Instrument 7798 CO2 datalogger Serial interface
 #endif
 };
 
