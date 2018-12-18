@@ -278,7 +278,7 @@ void AzShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns36(byte function)
+boolean Xsns38(byte function)
 {
   boolean result = false;
 
