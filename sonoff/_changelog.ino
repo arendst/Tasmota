@@ -1,4 +1,5 @@
 /* 6.4.0.1 20181217
+ * Add support for AZ-Instrument 7798 CO2 meter/datalogger (#4672)
  * Display WiFi channel number on Web UI Information page (#4667)
  *
  * 6.4.0 20181217
