@@ -1295,7 +1295,7 @@ void HandleInformation(void)
 
   func += F("}1}2&nbsp;");  // Empty line
   func += F("}1" D_AP); func += String(Settings.sta_active +1);
-    func += F(" " D_SSID " (" D_RSSI ")}2"); func += Settings.sta_ssid[Settings.sta_active]; func += F(" ("); func += WifiGetRssiAsQuality(WiFi.RSSI()); func += F("%)");
+    func += F(" " D_SSID " (" D_RSSI ")}2"); func += Settings.sta_ssid[Settings.sta_active]; func += F(" ch"); func+= WiFi.channel(); func += F(" ("); func += WifiGetRssiAsQuality(WiFi.RSSI()); func += F("%)");
   func += F("}1" D_HOSTNAME "}2"); func += my_hostname;
   if (mdns_begun) { func += F(".local"); }
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
