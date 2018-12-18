@@ -188,9 +188,7 @@ void AzEverySecond(void)
     if(az_response[i] == 'C') {             // meter transmits in degC
       az_temperature = ConvertTemp((float)az_temperature); // convert to degF, depending on settings
     } else {                                // meter transmits in degF
-      if(!Settings.flag.temperature_conversion) {
-        az_temperature = (az_temperature - 32) / 1.8; // convert to degC
-      }
+      az_temperature = ConvertTemp((az_temperature - 32) / 1.8); // convert to degC and then C or F depending on setting
     }
     i++;                                    // advance to first delimiter
     if(az_response[i] != ':') {
