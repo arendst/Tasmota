@@ -134,7 +134,7 @@ uint8_t az_state = 0;
 
 /*********************************************************************************************/
 
-void AzEverySecond()
+void AzEverySecond(void)
 {
   az_state++;
   if (5 == az_state) {                      // every 5 seconds
@@ -242,7 +242,7 @@ void AzEverySecond()
 
 /*********************************************************************************************/
 
-void AzInit()
+void AzInit(void)
 {
   az_type = 0;
   if ((pin[GPIO_AZ_RXD] < 99) && (pin[GPIO_AZ_TXD] < 99)) {
