@@ -182,7 +182,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_RC_SWITCH                  | - | - | - | x | x | x |
 | USE_RF_SENSOR                  | - | - | - | - | - | x | AlectoV2 only
 | USE_DISPLAY                    | - | - | - | - | - | - |
-| USE_AZ7798                     | - | - | - | x | x | x |
+| USE_AZ7798                     | - | - | - | - | - | - |
 
 ## Changelog
 Version 6.4.0 20181217
