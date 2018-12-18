@@ -182,7 +182,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_RC_SWITCH                  | - | - | - | x | x | x |
 | USE_RF_SENSOR                  | - | - | - | - | - | x | AlectoV2 only
 | USE_DISPLAY                    | - | - | - | - | - | - |
-| USE_AZ7798                     | - | - | - | - | - | - |
 
 ## Changelog
 Version 6.4.0 20181217
@@ -245,4 +244,3 @@ Version 6.4.0 20181217
  * Add support for GPIO02 for newer Sonoff Basic (#4518)
  * Add Announce Switches to MQTT Discovery (#4531)
  * Add support for Manzoku Power Strip (#4590)
- * Add support for AZ-Instrument 7798 CO2 meter/datalogger
