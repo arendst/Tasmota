@@ -608,4 +608,6 @@
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
 
+#define D_MODIFIED "modified"
+
 #endif  // _LANGUAGE_SV_SE_H_
