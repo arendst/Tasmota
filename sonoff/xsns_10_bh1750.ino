@@ -89,11 +89,6 @@ void Bh1750EverySecond(void)
   }
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_SNS_ILLUMINANCE[] PROGMEM =
-  "%s{s}%s " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
-
 void Bh1750Show(boolean json)
 {
   if (bh1750_valid) {

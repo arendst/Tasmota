@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0011'
+VER = '2.1.0014'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -803,7 +803,16 @@ Setting_6_3_0_15['flag3'][0].update ({
         'sleep_normal':             ('<L', (0x3A0,1,10), (None, None,                           ('SetOption',   '"SetOption60 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_3_0_16 = copy.deepcopy(Setting_6_3_0_15)
+Setting_6_3_0_16['mcp230xx_config'][0].update ({
+        'int_retain_flag':          ('<L', (0x6F6,1,12), (None, None,                           ('MCP230xx',    None)) ),
+                                    })
+Setting_6_3_0_16['flag3'][0].update ({
+        'button_switch_force_local':('<L', (0x3A0,1,11), (None, None,                           ('SetOption',   '"SetOption61 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x6030010, 0xe00, Setting_6_3_0_16),
             (0x603000F, 0xe00, Setting_6_3_0_15),
             (0x603000E, 0xe00, Setting_6_3_0_14),
             (0x603000D, 0xe00, Setting_6_3_0_13),
@@ -1169,14 +1178,7 @@ def MakeFilename(filename, filetype, configmapping):
         if device_hostname is None:
             device_hostname = ''
 
-    filename = filename.replace('@v', config_version)
-    filename = filename.replace('@f', config_friendlyname )
-    filename = filename.replace('@h', config_hostname )
-    filename = filename.replace('@H', device_hostname )
-        
-
     dirname = basename = ext = ''
-    name = filename
 
     # split file parts
     dirname = os.path.normpath(os.path.dirname(filename))
@@ -1207,6 +1209,11 @@ def MakeFilename(filename, filetype, configmapping):
         filename = os.path.join(dirname, name_ext)
     except:
         pass
+
+    filename = filename.replace('@v', config_version)
+    filename = filename.replace('@f', config_friendlyname )
+    filename = filename.replace('@h', config_hostname )
+    filename = filename.replace('@H', device_hostname )
 
     return filename
 
@@ -2362,7 +2369,6 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
         config data mapppings
     """
 
-    backupfileformat = args.backupfileformat
     name, ext = os.path.splitext(backupfile)
     if ext.lower() == '.'+FileType.BIN.lower():
         backupfileformat = FileType.BIN
@@ -2425,12 +2431,14 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
         message("Backup successful from {} '{}' to file '{}' ({} format)".format(srctype, src, backup_filename, fileformat), typ=LogType.INFO)
 
 
-def Restore(restorefile, encode_cfg, decode_cfg, configmapping):
+def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping):
     """
     Restore from file
 
     @param encode_cfg:
         binary config data (encrypted)
+    @param backupfileformat:
+        Backup file format
     @param decode_cfg:
         binary config data (decrypted)
     @param configmapping:
@@ -2439,7 +2447,14 @@ def Restore(restorefile, encode_cfg, decode_cfg, configmapping):
 
     new_encode_cfg = None
 
-    restorefilename = MakeFilename(restorefile, None, configmapping)
+    restorefileformat = None
+    if backupfileformat.lower() == 'bin':
+        restorefileformat = FileType.BIN
+    elif backupfileformat.lower() == 'dmp':
+        restorefileformat = FileType.DMP
+    elif backupfileformat.lower() == 'json':
+        restorefileformat = FileType.JSON
+    restorefilename = MakeFilename(restorefile, restorefileformat, configmapping)
     filetype = GetFileType(restorefilename)
 
     if filetype == FileType.DMP:
@@ -2808,7 +2823,7 @@ if __name__ == "__main__":
 
     # restore from file
     if args.restorefile is not None:
-        Restore(args.restorefile, encode_cfg, decode_cfg, configmapping)
+        Restore(args.restorefile, args.backupfileformat, encode_cfg, decode_cfg, configmapping)
 
     # json screen output
     if (args.backupfile is None and args.restorefile is None) or args.output:

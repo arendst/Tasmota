@@ -1113,7 +1113,7 @@ void AddLog(byte loglevel)
   snprintf_P(mxtime, sizeof(mxtime), PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d "), RtcTime.hour, RtcTime.minute, RtcTime.second);
 
   if (loglevel <= seriallog_level) {
-    Serial.printf("%s%s\n", mxtime, log_data);
+    Serial.printf("%s%s\r\n", mxtime, log_data);
   }
 #ifdef USE_WEBSERVER
   if (Settings.webserver && (loglevel <= Settings.weblog_level)) {

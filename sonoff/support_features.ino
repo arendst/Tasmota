@@ -361,11 +361,18 @@ void GetFeatures(void)
 #ifdef USE_MGC3130
   feature_sns2 |= 0x00004000;  // xsns_36_mgc3130.ino
 #endif
-
-//  feature_sns2 |= 0x00008000;
-//  feature_sns2 |= 0x00010000;
-//  feature_sns2 |= 0x00020000;
-//  feature_sns2 |= 0x00040000;
+#ifdef USE_RF_SENSOR
+  feature_sns2 |= 0x00008000;  // xsns_37_rfsensor.ino
+#endif
+#ifdef USE_THEO_V2
+  feature_sns2 |= 0x00010000;
+#endif
+#ifdef USE_ALECTO_V2
+  feature_sns2 |= 0x00020000;
+#endif
+#ifdef USE_AZ7798
+  feature_sns2 |= 0x00040000;
+#endif
 //  feature_sns2 |= 0x00080000;
 //  feature_sns2 |= 0x00100000;
 //  feature_sns2 |= 0x00200000;
