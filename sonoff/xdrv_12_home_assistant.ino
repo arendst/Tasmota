@@ -89,6 +89,11 @@ const char HASS_DISCOVER_SENSOR_HUM[] PROGMEM =
   "\"value_template\":\"{{value_json['%s'].Humidity}}\","    // "SI7021-14":{"Temperature":null,"Humidity":null} -> {{ value_json['SI7021-14'].Humidity }}
   "\"device_class\":\"humidity\"";                           // temperature / humidity
 
+const char HASS_DISCOVER_SENSOR_PRESS[] PROGMEM =
+  "%s,\"unit_of_measurement\":\"%s\","                       // PressureUnit() setting
+  "\"value_template\":\"{{value_json['%s'].Pressure}}\","    // "BME280":{"Temperature":19.7,"Humidity":27.8,"Pressure":990.1} -> {{ value_json['BME280'].Pressure }}
+  "\"device_class\":\"pressure\"";                           // pressure
+
 const char HASS_DISCOVER_SENSOR_ANY[] PROGMEM =
   "%s,\"value_template\":\"{{value_json['%s'].%s}}\"";       // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
 
@@ -166,6 +171,11 @@ const char HASS_DISCOVER_SENSOR_HUM_SHORT[] PROGMEM =
   "%s,\"unit_of_meas\":\"%%\","                       // %
   "\"val_tpl\":\"{{value_json['%s'].Humidity}}\","    // "SI7021-14":{"Temperature":null,"Humidity":null} -> {{ value_json['SI7021-14'].Humidity }}
   "\"dev_cla\":\"humidity\"";                         // humidity
+
+const char HASS_DISCOVER_SENSOR_PRESS_SHORT[] PROGMEM =
+  "%s,\"unit_of_meas\":\"%s\","                      // PressureUnit() setting
+  "\"val_tpl\":\"{{value_json['%s'].Pressure}}\","    // "BME280":{"Temperature":19.7,"Humidity":27.8,"Pressure":990.1} -> {{ value_json['BME280'].Pressure }}
+  "\"dev_cla\":\"pressure\"";                         // pressure
 
 const char HASS_DISCOVER_SENSOR_ANY_SHORT[] PROGMEM =
   "%s,\"val_tpl\":\"{{value_json['%s'].%s}}\"";       // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
@@ -464,7 +474,11 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_HUMIDITY))) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_HUM_SHORT:HASS_DISCOVER_SENSOR_HUM,
                  mqtt_data, sensorname);
-    } else {
+    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_PRESSURE))) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_PRESS_SHORT:HASS_DISCOVER_SENSOR_PRESS,
+                 mqtt_data, PressureUnit().c_str(), sensorname);
+    }
+    else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_ANY_SHORT:HASS_DISCOVER_SENSOR_ANY,
                  mqtt_data, sensorname, subsensortype);
     }
