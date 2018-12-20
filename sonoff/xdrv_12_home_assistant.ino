@@ -96,19 +96,19 @@ const char HASS_DISCOVER_SENSOR_PRESS[] PROGMEM =
 
 //ENERGY
 const char HASS_DISCOVER_SENSOR_KWH[] PROGMEM =
-  "%s,\"unit_of_measurement\":\"°%kWh\","                      // kWh
+  "%s,\"unit_of_measurement\":\"kWh\","                      // kWh
   "\"value_template\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Total/Yesterday/Today }}
 
 const char HASS_DISCOVER_SENSOR_WATT[] PROGMEM =
-  "%s,\"unit_of_measurement\":\"°%W\","                      // W
+  "%s,\"unit_of_measurement\":\"W\","                      // W
   "\"value_template\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].POWER }}
 
 const char HASS_DISCOVER_SENSOR_VOLTAGE[] PROGMEM =
-  "%s,\"unit_of_measurement\":\"°%V\","                      // V
+  "%s,\"unit_of_measurement\":\"V\","                      // V
   "\"value_template\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Voltage }}
 
 const char HASS_DISCOVER_SENSOR_AMPERE[] PROGMEM =
-  "%s,\"unit_of_measurement\":\"°%A\","                      // A
+  "%s,\"unit_of_measurement\":\"A\","                      // A
   "\"value_template\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Current }}
 
 const char HASS_DISCOVER_SENSOR_ANY[] PROGMEM =
@@ -196,19 +196,19 @@ const char HASS_DISCOVER_SENSOR_PRESS_SHORT[] PROGMEM =
 
 //ENERGY
 const char HASS_DISCOVER_SENSOR_KWH_SHORT[] PROGMEM =
-  "%s,\"unit_of_meas\":\"°%kWh\","                      // kWh
+  "%s,\"unit_of_meas\":\"kWh\","                      // kWh
   "\"val_tpl\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Total/Yesterday/Today }}
 
 const char HASS_DISCOVER_SENSOR_WATT_SHORT[] PROGMEM =
-  "%s,\"unit_of_meas\":\"°%W\","                      // W
+  "%s,\"unit_of_meas\":\"W\","                      // W
   "\"val_tpl\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].POWER }}
 
 const char HASS_DISCOVER_SENSOR_VOLTAGE_SHORT[] PROGMEM =
-  "%s,\"unit_of_meas\":\"°%V\","                      // V
+  "%s,\"unit_of_meas\":\"V\","                      // V
   "\"val_tpl\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Voltage }}
 
 const char HASS_DISCOVER_SENSOR_AMPERE_SHORT[] PROGMEM =
-  "%s,\"unit_of_meas\":\"°%A\","                      // A
+  "%s,\"unit_of_meas\":\"A\","                      // A
   "\"val_tpl\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Current }}
 
 const char HASS_DISCOVER_SENSOR_ANY_SHORT[] PROGMEM =
