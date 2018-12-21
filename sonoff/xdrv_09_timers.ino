@@ -488,7 +488,7 @@ boolean TimerCommand(void)
     if (XdrvMailbox.data_len) {
       Settings.longitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
     }
-    char lbuff[32];
+    char lbuff[33];
     dtostrfd(((double)Settings.longitude) /1000000, 6, lbuff);
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, lbuff);
   }
@@ -496,7 +496,7 @@ boolean TimerCommand(void)
     if (XdrvMailbox.data_len) {
       Settings.latitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
     }
-    char lbuff[32];
+    char lbuff[33];
     dtostrfd(((double)Settings.latitude) /1000000, 6, lbuff);
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, lbuff);
   }

@@ -232,13 +232,12 @@ const char HTTP_SNS_INA219_DATA[] PROGMEM = "%s"
 void Ina219Show(boolean json)
 {
   if (ina219_valid) {
-    char voltage[10];
-    char current[10];
-    char power[10];
-
     float fpower = ina219_voltage * ina219_current;
+    char voltage[33];
     dtostrfd(ina219_voltage, Settings.flag2.voltage_resolution, voltage);
+    char power[33];
     dtostrfd(fpower, Settings.flag2.wattage_resolution, power);
+    char current[33];
     dtostrfd(ina219_current, Settings.flag2.current_resolution, current);
 
     if (json) {

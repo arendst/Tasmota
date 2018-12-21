@@ -177,19 +177,19 @@ void MPU_6050Show(boolean json)
     MPU_6050PerformReading();
 
     double tempConv = (MPU_6050_temperature / 340.0 + 35.53);
-    char temperature[10];
+    char temperature[33];
     dtostrfd(tempConv, Settings.flag2.temperature_resolution, temperature);
-    char axis_ax[10];
+    char axis_ax[33];
     dtostrfd(MPU_6050_ax, Settings.flag2.axis_resolution, axis_ax);
-    char axis_ay[10];
+    char axis_ay[33];
     dtostrfd(MPU_6050_ay, Settings.flag2.axis_resolution, axis_ay);
-    char axis_az[10];
+    char axis_az[33];
     dtostrfd(MPU_6050_az, Settings.flag2.axis_resolution, axis_az);
-    char axis_gx[10];
+    char axis_gx[33];
     dtostrfd(MPU_6050_gx, Settings.flag2.axis_resolution, axis_gx);
-    char axis_gy[10];
+    char axis_gy[33];
     dtostrfd(MPU_6050_gy, Settings.flag2.axis_resolution, axis_gy);
-    char axis_gz[10];
+    char axis_gz[33];
     dtostrfd(MPU_6050_gz, Settings.flag2.axis_resolution, axis_gz);
 
     if (json) {

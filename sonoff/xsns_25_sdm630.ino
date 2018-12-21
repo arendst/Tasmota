@@ -269,38 +269,37 @@ const char HTTP_SNS_SDM630_DATA[] PROGMEM = "%s"
 
 void SDM630Show(boolean json)
 {
-  char voltage_l1[10];
-  char voltage_l2[10];
-  char voltage_l3[10];
-  char current_l1[10];
-  char current_l2[10];
-  char current_l3[10];
-  char active_power_l1[10];
-  char active_power_l2[10];
-  char active_power_l3[10];
-  char reactive_power_l1[10];
-  char reactive_power_l2[10];
-  char reactive_power_l3[10];
-  char power_factor_l1[10];
-  char power_factor_l2[10];
-  char power_factor_l3[10];
-  char energy_total[10];
-
+  char voltage_l1[33];
   dtostrfd(sdm630_voltage[0], Settings.flag2.voltage_resolution, voltage_l1);
+  char voltage_l2[33];
   dtostrfd(sdm630_voltage[1], Settings.flag2.voltage_resolution, voltage_l2);
+  char voltage_l3[33];
   dtostrfd(sdm630_voltage[2], Settings.flag2.voltage_resolution, voltage_l3);
+  char current_l1[33];
   dtostrfd(sdm630_current[0], Settings.flag2.current_resolution, current_l1);
+  char current_l2[33];
   dtostrfd(sdm630_current[1], Settings.flag2.current_resolution, current_l2);
+  char current_l3[33];
   dtostrfd(sdm630_current[2], Settings.flag2.current_resolution, current_l3);
+  char active_power_l1[33];
   dtostrfd(sdm630_active_power[0], Settings.flag2.wattage_resolution, active_power_l1);
+  char active_power_l2[33];
   dtostrfd(sdm630_active_power[1], Settings.flag2.wattage_resolution, active_power_l2);
+  char active_power_l3[33];
   dtostrfd(sdm630_active_power[2], Settings.flag2.wattage_resolution, active_power_l3);
+  char reactive_power_l1[33];
   dtostrfd(sdm630_reactive_power[0], Settings.flag2.wattage_resolution, reactive_power_l1);
+  char reactive_power_l2[33];
   dtostrfd(sdm630_reactive_power[1], Settings.flag2.wattage_resolution, reactive_power_l2);
+  char reactive_power_l3[33];
   dtostrfd(sdm630_reactive_power[2], Settings.flag2.wattage_resolution, reactive_power_l3);
+  char power_factor_l1[33];
   dtostrfd(sdm630_power_factor[0], 2, power_factor_l1);
+  char power_factor_l2[33];
   dtostrfd(sdm630_power_factor[1], 2, power_factor_l2);
+  char power_factor_l3[33];
   dtostrfd(sdm630_power_factor[2], 2, power_factor_l3);
+  char energy_total[33];
   dtostrfd(sdm630_energy_total, Settings.flag2.energy_resolution, energy_total);
 
   if (json) {

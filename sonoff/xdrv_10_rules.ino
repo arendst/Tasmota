@@ -94,7 +94,7 @@ uint8_t rules_trigger_count[MAX_RULE_SETS] = { 0 };
 uint8_t rules_teleperiod = 0;
 
 char event_data[100];
-char vars[MAX_RULE_VARS][10] = { 0 };
+char vars[MAX_RULE_VARS][33] = { 0 };
 
 /*******************************************************************************************/
 

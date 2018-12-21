@@ -147,9 +147,9 @@ void SenseairInit(void)
 
 void SenseairShow(boolean json)
 {
-  char temperature[10];
-  char humidity[10];
+  char temperature[33];
   dtostrfd(senseair_temperature, Settings.flag2.temperature_resolution, temperature);
+  char humidity[33];
   dtostrfd(senseair_humidity, Settings.flag2.temperature_resolution, humidity);
   GetTextIndexed(senseair_types, sizeof(senseair_types), senseair_type -1, kSenseairTypes);
 

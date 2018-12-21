@@ -1,4 +1,7 @@
-/* 6.4.0.1 20181217
+/* 6.4.0.2 20181221
+ * Fix possible dtostrf buffer overflows by increasing buffers
+ * 
+ * 6.4.0.1 20181217
  * Add support for AZ-Instrument 7798 CO2 meter/datalogger (#4672)
  * Change RAM usage BMP/BME I2C sensors
  * Fix wifi strongest signal detection (#4704)
