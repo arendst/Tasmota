@@ -467,9 +467,9 @@ boolean MqttCheckTls(void)
       Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
     AddLog(LOG_LEVEL_DEBUG);
   } else {
-#ifdef USE_MQTT_TLS_ROOTCERT
-    unsigned char tls_root_ca[] = MQTT_TLS_ROOT_CA;
-    if(EspClient.setCACert(tls_root_ca, MQTT_TLS_ROOT_CA_LENGTH)) {
+#ifdef USE_MQTT_TLS_CA_CERT
+    unsigned char tls_ca_cert[] = MQTT_TLS_CA_CERT;
+    if(EspClient.setCACert(tls_ca_cert, MQTT_TLS_CA_CERT_LENGTH)) {
       if (EspClient.verifyCertChain(Settings.mqtt_host)) {
         AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "CA"));
         result = true;
