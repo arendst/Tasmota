@@ -506,8 +506,8 @@
   #error "Select either USE_MQTT_TLS or USE_WEBSERVER as there is just not enough memory to play with"
 #endif
 
-#if defined(USE_MQTT_TLS_ROOTCERT) && defined(ARDUINO_ESP8266_RELEASE_2_3_0)
-  #error "USE_MQTT_TLS_ROOTCERT does not work with core version 2.3.0""
+#if defined(USE_MQTT_TLS_CA_CERT) && defined(ARDUINO_ESP8266_RELEASE_2_3_0)
+  #error "USE_MQTT_TLS_CA_CERT does not work with core version 2.3.0""
 #endif
 
 #endif  // _MY_USER_CONFIG_H_
