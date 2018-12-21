@@ -112,7 +112,8 @@ const char HASS_DISCOVER_SENSOR_AMPERE[] PROGMEM =
   "\"value_template\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Current }}
 
 const char HASS_DISCOVER_SENSOR_ANY[] PROGMEM =
-  "%s,\"value_template\":\"{{value_json['%s'].%s}}\"";       // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
+  "%s,\"unit_of_measurement\":\" \","                        // " " As unit of measurement to get a value graph in Hass
+  "\"value_template\":\"{{value_json['%s'].%s}}\"";          // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
 
 const char HASS_DISCOVER_RELAY_SHORT[] PROGMEM =
   "{\"name\":\"%s\","                              // dualr2 1
@@ -212,7 +213,8 @@ const char HASS_DISCOVER_SENSOR_AMPERE_SHORT[] PROGMEM =
   "\"val_tpl\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Current }}
 
 const char HASS_DISCOVER_SENSOR_ANY_SHORT[] PROGMEM =
-  "%s,\"val_tpl\":\"{{value_json['%s'].%s}}\"";       // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
+  "%s,\"unit_of_meas\":\" \","                        // " " As unit of measurement to get a value graph in Hass
+  "\"val_tpl\":\"{{value_json['%s'].%s}}\"";          // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
 
 const char HASS_DISCOVER_DEVICE_INFO_SHORT[] PROGMEM =
   "%s,\"uniq_id\":\"%s\","
