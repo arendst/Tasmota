@@ -94,8 +94,26 @@ const char HASS_DISCOVER_SENSOR_PRESS[] PROGMEM =
   "\"value_template\":\"{{value_json['%s'].Pressure}}\","    // "BME280":{"Temperature":19.7,"Humidity":27.8,"Pressure":990.1} -> {{ value_json['BME280'].Pressure }}
   "\"device_class\":\"pressure\"";                           // pressure
 
+//ENERGY
+const char HASS_DISCOVER_SENSOR_KWH[] PROGMEM =
+  "%s,\"unit_of_measurement\":\"kWh\","                      // kWh
+  "\"value_template\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Total/Yesterday/Today }}
+
+const char HASS_DISCOVER_SENSOR_WATT[] PROGMEM =
+  "%s,\"unit_of_measurement\":\"W\","                      // W
+  "\"value_template\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].POWER }}
+
+const char HASS_DISCOVER_SENSOR_VOLTAGE[] PROGMEM =
+  "%s,\"unit_of_measurement\":\"V\","                      // V
+  "\"value_template\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Voltage }}
+
+const char HASS_DISCOVER_SENSOR_AMPERE[] PROGMEM =
+  "%s,\"unit_of_measurement\":\"A\","                      // A
+  "\"value_template\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Current }}
+
 const char HASS_DISCOVER_SENSOR_ANY[] PROGMEM =
-  "%s,\"value_template\":\"{{value_json['%s'].%s}}\"";       // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
+  "%s,\"unit_of_measurement\":\" \","                        // " " As unit of measurement to get a value graph in Hass
+  "\"value_template\":\"{{value_json['%s'].%s}}\"";          // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
 
 const char HASS_DISCOVER_RELAY_SHORT[] PROGMEM =
   "{\"name\":\"%s\","                              // dualr2 1
@@ -177,8 +195,26 @@ const char HASS_DISCOVER_SENSOR_PRESS_SHORT[] PROGMEM =
   "\"val_tpl\":\"{{value_json['%s'].Pressure}}\","    // "BME280":{"Temperature":19.7,"Humidity":27.8,"Pressure":990.1} -> {{ value_json['BME280'].Pressure }}
   "\"dev_cla\":\"pressure\"";                         // pressure
 
+//ENERGY
+const char HASS_DISCOVER_SENSOR_KWH_SHORT[] PROGMEM =
+  "%s,\"unit_of_meas\":\"kWh\","                      // kWh
+  "\"val_tpl\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Total/Yesterday/Today }}
+
+const char HASS_DISCOVER_SENSOR_WATT_SHORT[] PROGMEM =
+  "%s,\"unit_of_meas\":\"W\","                      // W
+  "\"val_tpl\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].POWER }}
+
+const char HASS_DISCOVER_SENSOR_VOLTAGE_SHORT[] PROGMEM =
+  "%s,\"unit_of_meas\":\"V\","                      // V
+  "\"val_tpl\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Voltage }}
+
+const char HASS_DISCOVER_SENSOR_AMPERE_SHORT[] PROGMEM =
+  "%s,\"unit_of_meas\":\"A\","                      // A
+  "\"val_tpl\":\"{{value_json['%s'].%s}}\""; // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Current }}
+
 const char HASS_DISCOVER_SENSOR_ANY_SHORT[] PROGMEM =
-  "%s,\"val_tpl\":\"{{value_json['%s'].%s}}\"";       // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
+  "%s,\"unit_of_meas\":\" \","                        // " " As unit of measurement to get a value graph in Hass
+  "\"val_tpl\":\"{{value_json['%s'].%s}}\"";          // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
 
 const char HASS_DISCOVER_DEVICE_INFO_SHORT[] PROGMEM =
   "%s,\"uniq_id\":\"%s\","
@@ -477,6 +513,18 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_PRESSURE))) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_PRESS_SHORT:HASS_DISCOVER_SENSOR_PRESS,
                  mqtt_data, PressureUnit().c_str(), sensorname);
+    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_TOTAL)) || !strcmp_P(subsensortype, PSTR(D_JSON_TODAY)) || !strcmp_P(subsensortype, PSTR(D_JSON_YESTERDAY))){
+      snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_KWH_SHORT:HASS_DISCOVER_SENSOR_KWH,
+                 mqtt_data, sensorname, subsensortype);
+    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_POWERUSAGE))){
+      snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_WATT_SHORT:HASS_DISCOVER_SENSOR_WATT,
+                 mqtt_data, sensorname, subsensortype);
+    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_VOLTAGE))){
+      snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_VOLTAGE_SHORT:HASS_DISCOVER_SENSOR_VOLTAGE,
+                 mqtt_data, sensorname, subsensortype);
+    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_CURRENT))){
+      snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_AMPERE_SHORT:HASS_DISCOVER_SENSOR_AMPERE,
+                 mqtt_data, sensorname, subsensortype);
     }
     else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), Settings.flag3.hass_short_discovery_msg?HASS_DISCOVER_SENSOR_ANY_SHORT:HASS_DISCOVER_SENSOR_ANY,
