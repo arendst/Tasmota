@@ -467,6 +467,15 @@ boolean MqttCheckTls(void)
       Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
     AddLog(LOG_LEVEL_DEBUG);
   } else {
+#ifdef USE_MQTT_TLS_CA_CERT
+    unsigned char tls_ca_cert[] = MQTT_TLS_CA_CERT;
+    if(EspClient.setCACert(tls_ca_cert, MQTT_TLS_CA_CERT_LENGTH)) {
+      if (EspClient.verifyCertChain(Settings.mqtt_host)) {
+        AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "CA"));
+        result = true;
+      }
+    }
+#else    
     if (EspClient.verify(fingerprint1, Settings.mqtt_host)) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "1"));
       result = true;
@@ -475,6 +484,7 @@ boolean MqttCheckTls(void)
       AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "2"));
       result = true;
     }
+#endif
   }
   if (!result) AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FAILED));
   EspClient.stop();
