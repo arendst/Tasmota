@@ -51,11 +51,14 @@
 #define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as it only supports TLS
 #endif
 
-#endif
+#endif  //  USE_MQTT_TLS
 
 /*********************************************************************************************/
 
 #ifdef USE_MQTT_TLS
+#ifdef USE_MQTT_TLS_CA_CERT
+  #include "sonoff_letsencrypt.h"           // LetsEncrypt certificate
+#endif
   WiFiClientSecure EspClient;               // Wifi Secure Client
 #else
   WiFiClient EspClient;                     // Wifi Client
@@ -469,13 +472,13 @@ boolean MqttCheckTls(void)
   } else {
 #ifdef USE_MQTT_TLS_CA_CERT
     unsigned char tls_ca_cert[] = MQTT_TLS_CA_CERT;
-    if(EspClient.setCACert(tls_ca_cert, MQTT_TLS_CA_CERT_LENGTH)) {
+    if (EspClient.setCACert(tls_ca_cert, MQTT_TLS_CA_CERT_LENGTH)) {
       if (EspClient.verifyCertChain(Settings.mqtt_host)) {
         AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "CA"));
         result = true;
       }
     }
-#else    
+#else
     if (EspClient.verify(fingerprint1, Settings.mqtt_host)) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "1"));
       result = true;

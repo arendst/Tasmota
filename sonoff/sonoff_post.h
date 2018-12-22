@@ -426,4 +426,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define ARDUINO_ESP8266_RELEASE "STAGE"
 #endif
 
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0          // Disable not supported features in core 2.3.0
+#undef USE_MQTT_TLS_CA_CERT
+#endif
+
 #endif  // _SONOFF_POST_H_
