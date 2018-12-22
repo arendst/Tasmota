@@ -424,12 +424,11 @@ void Ds18x20EverySecond(void)
 
 void Ds18x20Show(boolean json)
 {
-  char temperature[10];
-
   for (uint8_t i = 0; i < ds18x20_sensors; i++) {
     uint8_t index = ds18x20_sensor[i].index;
 
     if (ds18x20_sensor[index].valid) {   // Check for valid temperature
+      char temperature[33];
       dtostrfd(ds18x20_sensor[index].temperature, Settings.flag2.temperature_resolution, temperature);
 
       Ds18x20Name(i);

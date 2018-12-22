@@ -81,9 +81,8 @@ float LM75ADGetTemp(void) {
 void LM75ADShow(boolean json)
 {
   if (lm75ad_type) {
-    char temperature[10];
-
     float t = LM75ADGetTemp();
+    char temperature[33];
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
     if (json) {

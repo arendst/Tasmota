@@ -322,7 +322,7 @@ void MhzInit(void)
 
 void MhzShow(boolean json)
 {
-  char temperature[10];
+  char temperature[33];
   dtostrfd(mhz_temperature, Settings.flag2.temperature_resolution, temperature);
   GetTextIndexed(mhz_types, sizeof(mhz_types), mhz_type -1, kMhzTypes);
 

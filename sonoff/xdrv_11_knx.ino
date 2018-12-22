@@ -551,7 +551,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
   device_parameters_t *chan = (device_parameters_t *)arg;
   if (!(Settings.flag.knx_enabled)) { return; }
 
-  char tempchar[25];
+  char tempchar[33];
 
   if (msg.data_len == 1) {
     // COMMAND

@@ -170,7 +170,6 @@ void Ds18x20Type(uint8_t sensor)
 
 void Ds18x20Show(boolean json)
 {
-  char temperature[10];
   char stemp[10];
   float t;
 
@@ -178,6 +177,7 @@ void Ds18x20Show(boolean json)
   for (byte i = 0; i < Ds18x20Sensors(); i++) {
     if (Ds18x20Read(i, t)) {           // Check if read failed
       Ds18x20Type(i);
+      char temperature[33];
       dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
       if (json) {

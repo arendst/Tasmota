@@ -19,10 +19,15 @@
 
 #ifdef USE_RF_SENSOR
 /*********************************************************************************************\
- * RF receive based on work by Paul Tonkes (www.nodo-domotica.nl)
+ * RF receiver based on work by Paul Tonkes (www.nodo-domotica.nl)
+ *
+ * Supported 434MHz receiver is Aurel RX-4M50RR30SF
+ * Supported 868MHz receiver is Aurel RX-AM8SF
+ *
+ * Connect one of above receivers with a 330 Ohm resistor to any GPIO
  *
  * USE_THEO_V2    Add support for 434MHz Theo V2 sensors as documented on https://sidweb.nl
- * USE_ALECTO_V2  Add support for 868MHz Alecto V2 sensors like ACH2010, WS3000 and DKW2012
+ * USE_ALECTO_V2  Add support for 868MHz Alecto V2 sensors like ACH2010, WS3000 and DKW2012 weather stations
 \*********************************************************************************************/
 
 #define XSNS_37                   37
@@ -41,24 +46,26 @@
 #define RFSNS_SIGNAL_TIMEOUT      10     // Pulse timings in mSec. Beyond this value indicate end of message
 #define RFSNS_SIGNAL_REPEAT_TIME  500    // (500) Tijd in mSec. waarbinnen hetzelfde event niet nogmaals via RF mag binnenkomen. Onderdrukt ongewenste herhalingen van signaal
 
-struct RawSignalStruct                   // Variabelen geplaatst in struct zodat deze later eenvoudig kunnen worden weggeschreven naar SDCard
+typedef struct RawSignalStruct                   // Variabelen geplaatst in struct zodat deze later eenvoudig kunnen worden weggeschreven naar SDCard
 {
   int  Number;                           // aantal bits, maal twee omdat iedere bit een mark en een space heeft.
   byte Repeats;                          // Aantal maal dat de pulsreeks verzonden moet worden bij een zendactie.
   byte Multiply;                         // Pulses[] * Multiply is de echte tijd van een puls in microseconden
   unsigned long Time;                    // Tijdstempel wanneer signaal is binnengekomen (millis())
-  byte Pulses[RFSNS_RAW_BUFFER_SIZE+2];  // Tabel met de gemeten pulsen in microseconden gedeeld door rfsns_raw_signal.Multiply. Dit scheelt helft aan RAM geheugen.
+  byte Pulses[RFSNS_RAW_BUFFER_SIZE+2];  // Tabel met de gemeten pulsen in microseconden gedeeld door rfsns_raw_signal->Multiply. Dit scheelt helft aan RAM geheugen.
                                          // Om legacy redenen zit de eerste puls in element 1. Element 0 wordt dus niet gebruikt.
-} rfsns_raw_signal = {0, 0, 0, 0L};
+} raw_signal_t;
 
+raw_signal_t *rfsns_raw_signal = NULL;
 uint8_t rfsns_rf_bit;
 uint8_t rfsns_rf_port;
+uint8_t rfsns_any_sensor = 0;
 
 /*********************************************************************************************\
  * Fetch signals from RF pin
 \*********************************************************************************************/
 
-boolean RfSnsFetchSignal(byte DataPin, boolean StateSignal)
+bool RfSnsFetchSignal(byte DataPin, bool StateSignal)
 {
   uint8_t Fbit = digitalPinToBitMask(DataPin);
   uint8_t Fport = digitalPinToPort(DataPin);
@@ -73,15 +80,15 @@ boolean RfSnsFetchSignal(byte DataPin, boolean StateSignal)
     // rust tussen de signalen. Op deze wijze wordt het aantal zinloze captures teruggebracht.
 
     unsigned long PulseLength = 0;
-    if (rfsns_raw_signal.Time) {                                            //  Eerst een snelle check, want dit bevindt zich in een tijdkritisch deel...
-      if (rfsns_raw_signal.Repeats && (rfsns_raw_signal.Time + RFSNS_SIGNAL_REPEAT_TIME) > millis()) {  // ...want deze check duurt enkele micro's langer!
+    if (rfsns_raw_signal->Time) {                                           //  Eerst een snelle check, want dit bevindt zich in een tijdkritisch deel...
+      if (rfsns_raw_signal->Repeats && (rfsns_raw_signal->Time + RFSNS_SIGNAL_REPEAT_TIME) > millis()) {  // ...want deze check duurt enkele micro's langer!
         PulseLength = micros() + RFSNS_SIGNAL_TIMEOUT *1000;                // Wachttijd
-        while (((rfsns_raw_signal.Time + RFSNS_SIGNAL_REPEAT_TIME) > millis()) && (PulseLength > micros())) {
+        while (((rfsns_raw_signal->Time + RFSNS_SIGNAL_REPEAT_TIME) > millis()) && (PulseLength > micros())) {
           if ((*portInputRegister(Fport) & Fbit) == FstateMask) {
             PulseLength = micros() + RFSNS_SIGNAL_TIMEOUT *1000;
           }
         }
-        while (((rfsns_raw_signal.Time + RFSNS_SIGNAL_REPEAT_TIME) > millis()) && ((*portInputRegister(Fport) & Fbit) != FstateMask));
+        while (((rfsns_raw_signal->Time + RFSNS_SIGNAL_REPEAT_TIME) > millis()) && ((*portInputRegister(Fport) & Fbit) != FstateMask));
       }
     }
 
@@ -89,7 +96,7 @@ boolean RfSnsFetchSignal(byte DataPin, boolean StateSignal)
     bool Ftoggle = false;
     unsigned long numloops = 0;
     unsigned long maxloops = RFSNS_SIGNAL_TIMEOUT * LoopsPerMilli;
-    rfsns_raw_signal.Multiply = RFSNS_RAWSIGNAL_SAMPLE;                     // Ingestelde sample groote.
+    rfsns_raw_signal->Multiply = RFSNS_RAWSIGNAL_SAMPLE;                    // Ingestelde sample groote.
     do {                                                                    // lees de pulsen in microseconden en plaats deze in de tijdelijke buffer rfsns_raw_signal
       numloops = 0;
       while(((*portInputRegister(Fport) & Fbit) == FstateMask) ^ Ftoggle) { // while() loop *A*
@@ -98,19 +105,19 @@ boolean RfSnsFetchSignal(byte DataPin, boolean StateSignal)
       PulseLength = (numloops *1000) / LoopsPerMilli;                       // Bevat nu de pulslengte in microseconden
       if (PulseLength < RFSNS_MIN_PULSE_LENGTH) { break; }
       Ftoggle = !Ftoggle;
-      rfsns_raw_signal.Pulses[RawCodeLength++] = PulseLength / (unsigned long)rfsns_raw_signal.Multiply;  // sla op in de tabel rfsns_raw_signal
+      rfsns_raw_signal->Pulses[RawCodeLength++] = PulseLength / (unsigned long)rfsns_raw_signal->Multiply;  // sla op in de tabel rfsns_raw_signal
     }
-    while(RawCodeLength < RFSNS_RAW_BUFFER_SIZE && numloops <= maxloops);  // Zolang nog ruimte in de buffer, geen timeout en geen stoorpuls
+    while(RawCodeLength < RFSNS_RAW_BUFFER_SIZE && numloops <= maxloops);   // Zolang nog ruimte in de buffer, geen timeout en geen stoorpuls
 
     if ((RawCodeLength >= RFSNS_MIN_RAW_PULSES) && (RawCodeLength < RFSNS_RAW_BUFFER_SIZE -1)) {
-      rfsns_raw_signal.Repeats = 0;                                        // Op dit moment weten we nog niet het type signaal, maar de variabele niet ongedefinieerd laten.
-      rfsns_raw_signal.Number = RawCodeLength -1;                          // Aantal ontvangen tijden (pulsen *2)
-      rfsns_raw_signal.Pulses[rfsns_raw_signal.Number] = 0;                // Laatste element bevat de timeout. Niet relevant.
-      rfsns_raw_signal.Time = millis();
+      rfsns_raw_signal->Repeats = 0;                                        // Op dit moment weten we nog niet het type signaal, maar de variabele niet ongedefinieerd laten.
+      rfsns_raw_signal->Number = RawCodeLength -1;                          // Aantal ontvangen tijden (pulsen *2)
+      rfsns_raw_signal->Pulses[rfsns_raw_signal->Number] = 0;               // Laatste element bevat de timeout. Niet relevant.
+      rfsns_raw_signal->Time = millis();
       return true;
     }
     else
-      rfsns_raw_signal.Number = 0;
+      rfsns_raw_signal->Number = 0;
   }
 
   return false;
@@ -151,8 +158,6 @@ typedef struct {
   uint8_t volt;
 } theo_v2_t1_t;
 
-theo_v2_t1_t rfsns_theo_v2_t1[RFSNS_THEOV2_MAX_CHANNEL];
-
 typedef struct {
   uint32_t time;
   int16_t temp;
@@ -160,11 +165,19 @@ typedef struct {
   uint8_t volt;
 } theo_v2_t2_t;
 
-theo_v2_t2_t rfsns_theo_v2_t2[RFSNS_THEOV2_MAX_CHANNEL];
+theo_v2_t1_t *rfsns_theo_v2_t1 = NULL;
+theo_v2_t2_t *rfsns_theo_v2_t2 = NULL;
 
-boolean RfSnsAnalyzeTheov2(void)
+void RfSnsInitTheoV2(void)
 {
-  if (rfsns_raw_signal.Number != RFSNS_THEOV2_PULSECOUNT) return false;
+  rfsns_theo_v2_t1 = (theo_v2_t1_t*)malloc(RFSNS_THEOV2_MAX_CHANNEL * sizeof(theo_v2_t1_t));
+  rfsns_theo_v2_t2 = (theo_v2_t2_t*)malloc(RFSNS_THEOV2_MAX_CHANNEL * sizeof(theo_v2_t2_t));
+  rfsns_any_sensor++;
+}
+
+void RfSnsAnalyzeTheov2(void)
+{
+  if (rfsns_raw_signal->Number != RFSNS_THEOV2_PULSECOUNT) { return; }
 
   byte Checksum;     // 8 bits Checksum over following bytes
   byte Channel;      // 3 bits channel
@@ -174,7 +187,6 @@ boolean RfSnsAnalyzeTheov2(void)
   int Payload2;      // 16 bits
 
   byte b, bytes, bits, id;
-  char log[128];
 
   byte idx = 3;
   byte chksum = 0;
@@ -182,7 +194,7 @@ boolean RfSnsAnalyzeTheov2(void)
     b = 0;
     for (bits = 0; bits <= 7; bits++)
     {
-      if ((rfsns_raw_signal.Pulses[idx] * rfsns_raw_signal.Multiply) > RFSNS_THEOV2_RF_PULSE_MID) {
+      if ((rfsns_raw_signal->Pulses[idx] * rfsns_raw_signal->Multiply) > RFSNS_THEOV2_RF_PULSE_MID) {
         b |= 1 << bits;
       }
       idx += 2;
@@ -216,13 +228,13 @@ boolean RfSnsAnalyzeTheov2(void)
     }
   }
 
-  if (Checksum != chksum) { return false; }
-  if (Channel == 0) { return false; }
+  if (Checksum != chksum) { return; }
+  if ((Channel == 0) || (Channel > RFSNS_THEOV2_MAX_CHANNEL)) { return; }
+  Channel--;
 
-  rfsns_raw_signal.Repeats = 1;  // het is een herhalend signaal. Bij ontvangst herhalingen onderdukken
+  rfsns_raw_signal->Repeats = 1;  // het is een herhalend signaal. Bij ontvangst herhalingen onderdukken
 
   int Payload3 = Voltage & 0x3f;
-  Channel--;
 
   switch (Type) {
   case 1:   // Temp / Lux
@@ -242,11 +254,9 @@ boolean RfSnsAnalyzeTheov2(void)
   snprintf_P(log_data, sizeof(log_data), PSTR("RFS: TheoV2, ChkCalc %d, Chksum %d, id %d, Type %d, Ch %d, Volt %d, BattLo %d, Pld1 %d, Pld2 %d"),
     chksum, Checksum, id, Type, Channel +1, Payload3, (Voltage & 0x80) >> 7, Payload1, Payload2);
   AddLog(LOG_LEVEL_DEBUG);
-
-  return true;
 }
 
-void RfSnsTheoV2Show(boolean json)
+void RfSnsTheoV2Show(bool json)
 {
   bool sensor_once = false;
 
@@ -254,7 +264,7 @@ void RfSnsTheoV2Show(boolean json)
     if (rfsns_theo_v2_t1[i].time) {
       char sensor[10];
       snprintf_P(sensor, sizeof(sensor), PSTR("TV2T1C%d"), i +1);
-      char voltage[10];
+      char voltage[33];
       dtostrfd((float)rfsns_theo_v2_t1[i].volt / 10, 1, voltage);
 
       if (rfsns_theo_v2_t1[i].time < LocalTime() - RFSNS_VALID_WINDOW) {
@@ -263,7 +273,7 @@ void RfSnsTheoV2Show(boolean json)
             mqtt_data, sensor, GetDT(rfsns_theo_v2_t1[i].time).c_str(), voltage);
         }
       } else {
-        char temperature[10];
+        char temperature[33];
         dtostrfd(ConvertTemp((float)rfsns_theo_v2_t1[i].temp / 100), Settings.flag2.temperature_resolution, temperature);
 
         if (json) {
@@ -291,7 +301,7 @@ void RfSnsTheoV2Show(boolean json)
     if (rfsns_theo_v2_t2[i].time) {
       char sensor[10];
       snprintf_P(sensor, sizeof(sensor), PSTR("TV2T2C%d"), i +1);
-      char voltage[10];
+      char voltage[33];
       dtostrfd((float)rfsns_theo_v2_t2[i].volt / 10, 1, voltage);
 
       if (rfsns_theo_v2_t2[i].time < LocalTime() - RFSNS_VALID_WINDOW) {
@@ -301,10 +311,10 @@ void RfSnsTheoV2Show(boolean json)
         }
       } else {
         float temp = ConvertTemp((float)rfsns_theo_v2_t2[i].temp / 100);
-        char temperature[10];
-        dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
         float humi = (float)rfsns_theo_v2_t2[i].hum / 100;
-        char humidity[10];
+        char temperature[33];
+        dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
+        char humidity[33];
         dtostrfd(humi, Settings.flag2.humidity_resolution, humidity);
 
         if (json) {
@@ -414,15 +424,19 @@ typedef struct {
   uint8_t wdir;
 } alecto_v2_t;
 
-alecto_v2_t rfsns_alecto_v2;
-
+alecto_v2_t *rfsns_alecto_v2 = NULL;
 uint16_t rfsns_alecto_rain_base = 0;
-//unsigned long rfsns_alecto_time = 60000;
 
-boolean RfSnsAnalyzeAlectov2()
+void RfSnsInitAlectoV2(void)
 {
-  if (!(((rfsns_raw_signal.Number >= RFSNS_ACH2010_MIN_PULSECOUNT) &&
-         (rfsns_raw_signal.Number <= RFSNS_ACH2010_MAX_PULSECOUNT)) || (rfsns_raw_signal.Number == RFSNS_DKW2012_PULSECOUNT))) { return false; }
+  rfsns_alecto_v2 = (alecto_v2_t*)malloc(sizeof(alecto_v2_t));
+  rfsns_any_sensor++;
+}
+
+void RfSnsAnalyzeAlectov2()
+{
+  if (!(((rfsns_raw_signal->Number >= RFSNS_ACH2010_MIN_PULSECOUNT) &&
+         (rfsns_raw_signal->Number <= RFSNS_ACH2010_MAX_PULSECOUNT)) || (rfsns_raw_signal->Number == RFSNS_DKW2012_PULSECOUNT))) { return; }
 
   byte c = 0;
   byte rfbit;
@@ -437,11 +451,11 @@ boolean RfSnsAnalyzeAlectov2()
   float factor;
   char buf1[16];
 
-  if (rfsns_raw_signal.Number > RFSNS_ACH2010_MAX_PULSECOUNT) { maxidx = 9; }
+  if (rfsns_raw_signal->Number > RFSNS_ACH2010_MAX_PULSECOUNT) { maxidx = 9; }
   // Get message back to front as the header is almost never received complete for ACH2010
   byte idx = maxidx;
-  for (byte x = rfsns_raw_signal.Number; x > 0; x = x-2) {
-    if (rfsns_raw_signal.Pulses[x-1] * rfsns_raw_signal.Multiply < 0x300) {
+  for (byte x = rfsns_raw_signal->Number; x > 0; x = x-2) {
+    if (rfsns_raw_signal->Pulses[x-1] * rfsns_raw_signal->Multiply < 0x300) {
       rfbit = 0x80;
     } else {
       rfbit = 0;
@@ -461,49 +475,47 @@ boolean RfSnsAnalyzeAlectov2()
   msgtype = (data[0] >> 4) & 0xf;
   rc = (data[0] << 4) | (data[1] >> 4);
 
-  if (checksum != checksumcalc) { return false; }
-  if ((msgtype != 10) && (msgtype != 5)) { return true; }
+  if (checksum != checksumcalc) { return; }
+  if ((msgtype != 10) && (msgtype != 5)) { return; }
 
-  rfsns_raw_signal.Repeats = 1;  // het is een herhalend signaal. Bij ontvangst herhalingen onderdukken
+  rfsns_raw_signal->Repeats = 1;  // het is een herhalend signaal. Bij ontvangst herhalingen onderdukken
 
 //  Test set
-//  rfsns_raw_signal.Number = RFSNS_DKW2012_PULSECOUNT;  // DKW2012
+//  rfsns_raw_signal->Number = RFSNS_DKW2012_PULSECOUNT;  // DKW2012
 //  data[8] = 11;                                        // WSW
 
   factor = 1.22;  // (1.08)
-//  atime = rfsns_raw_signal.Time - rfsns_alecto_time;
+//  atime = rfsns_raw_signal->Time - rfsns_alecto_time;
 //  if ((atime > 10000) && (atime < 60000)) factor = (float)60000 / atime;
-//  rfsns_alecto_time = rfsns_raw_signal.Time;
+//  rfsns_alecto_time = rfsns_raw_signal->Time;
 //  Serial.printf("atime %d, rfsns_alecto_time %d\n", atime, rfsns_alecto_time);
 
-  rfsns_alecto_v2.time = LocalTime();
-  rfsns_alecto_v2.type = (RFSNS_DKW2012_PULSECOUNT == rfsns_raw_signal.Number);
-  rfsns_alecto_v2.temp = (float)(((data[1] & 0x3) * 256 + data[2]) - 400) / 10;
-  rfsns_alecto_v2.humi = data[3];
+  rfsns_alecto_v2->time = LocalTime();
+  rfsns_alecto_v2->type = (RFSNS_DKW2012_PULSECOUNT == rfsns_raw_signal->Number);
+  rfsns_alecto_v2->temp = (float)(((data[1] & 0x3) * 256 + data[2]) - 400) / 10;
+  rfsns_alecto_v2->humi = data[3];
   uint16_t rain = (data[6] * 256) + data[7];
   // check if rain unit has been reset!
   if (rain < rfsns_alecto_rain_base) { rfsns_alecto_rain_base = rain; }
   if (rfsns_alecto_rain_base > 0) {
-    rfsns_alecto_v2.rain += ((float)rain - rfsns_alecto_rain_base) * 0.30;
+    rfsns_alecto_v2->rain += ((float)rain - rfsns_alecto_rain_base) * 0.30;
   }
   rfsns_alecto_rain_base = rain;
-  rfsns_alecto_v2.wind = (float)data[4] * factor;
-  rfsns_alecto_v2.gust = (float)data[5] * factor;
-  if (rfsns_alecto_v2.type) {
-    rfsns_alecto_v2.wdir = data[8] & 0xf;
+  rfsns_alecto_v2->wind = (float)data[4] * factor;
+  rfsns_alecto_v2->gust = (float)data[5] * factor;
+  if (rfsns_alecto_v2->type) {
+    rfsns_alecto_v2->wdir = data[8] & 0xf;
   }
 
   snprintf_P(log_data, sizeof(log_data), PSTR("RFS: " D_ALECTOV2 ", ChkCalc %d, Chksum %d, rc %d, Temp %d, Hum %d, Rain %d, Wind %d, Gust %d, Dir %d, Factor %s"),
     checksumcalc, checksum, rc, ((data[1] & 0x3) * 256 + data[2]) - 400, data[3], (data[6] * 256) + data[7], data[4], data[5], data[8] & 0xf, dtostrfd(factor, 3, buf1));
   AddLog(LOG_LEVEL_DEBUG);
-
-  return true;
 }
 
 void RfSnsAlectoResetRain(void)
 {
   if ((RtcTime.hour == 0) && (RtcTime.minute == 0) && (RtcTime.second == 5)) {
-    rfsns_alecto_v2.rain = 0;  // Reset Rain
+    rfsns_alecto_v2->rain = 0;  // Reset Rain
   }
 }
 
@@ -537,40 +549,43 @@ const char HTTP_SNS_ALECTOV2_WDIR[] PROGMEM = "%s"
   "{s}" D_ALECTOV2 " " D_TX20_WIND_DIRECTION "{m}%s{e}";
 #endif
 
-void RfSnsAlectoV2Show(boolean json)
+void RfSnsAlectoV2Show(bool json)
 {
-  if (rfsns_alecto_v2.time) {
-    if (rfsns_alecto_v2.time < LocalTime() - RFSNS_VALID_WINDOW) {
+  if (rfsns_alecto_v2->time) {
+    if (rfsns_alecto_v2->time < LocalTime() - RFSNS_VALID_WINDOW) {
       if (json) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_ALECTOV2 "\":{\"" D_JSON_RFRECEIVED "\":\"%s\"}"),
-          mqtt_data, GetDT(rfsns_alecto_v2.time).c_str());
+          mqtt_data, GetDT(rfsns_alecto_v2->time).c_str());
       }
     } else {
-      float temp = ConvertTemp(rfsns_alecto_v2.temp);
-      char temperature[10];
+      float temp = ConvertTemp(rfsns_alecto_v2->temp);
+      char temperature[33];
       dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
-      float humi = (float)rfsns_alecto_v2.humi;
-      char humidity[10];
+      float humi = (float)rfsns_alecto_v2->humi;
+      char humidity[33];
       dtostrfd(humi, Settings.flag2.humidity_resolution, humidity);
-      char rain[10];
-      dtostrfd(rfsns_alecto_v2.rain, 2, rain);
-      char wind[10];
-      dtostrfd(rfsns_alecto_v2.wind, 2, wind);
-      char gust[10];
-      dtostrfd(rfsns_alecto_v2.gust, 2, gust);
+      char rain[33];
+      dtostrfd(rfsns_alecto_v2->rain, 2, rain);
+      char wind[33];
+      dtostrfd(rfsns_alecto_v2->wind, 2, wind);
+      char gust[33];
+      dtostrfd(rfsns_alecto_v2->gust, 2, gust);
       char wdir[4];
       char direction[20];
-      if (rfsns_alecto_v2.type) {
-        GetTextIndexed(wdir, sizeof(wdir), rfsns_alecto_v2.wdir, kAlectoV2Directions);
+      if (rfsns_alecto_v2->type) {
+        GetTextIndexed(wdir, sizeof(wdir), rfsns_alecto_v2->wdir, kAlectoV2Directions);
         snprintf_P(direction, sizeof(direction), PSTR(",\"Direction\":\"%s\""), wdir);
       }
 
       if (json) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_ALECTOV2 "\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"Rain\":%s,\"Wind\":%s,\"Gust\":%s%s}"),
-          mqtt_data, temperature, humidity, rain, wind, gust, (rfsns_alecto_v2.type) ? direction : "");
+          mqtt_data, temperature, humidity, rain, wind, gust, (rfsns_alecto_v2->type) ? direction : "");
         if (0 == tele_period) {
 #ifdef USE_DOMOTICZ
-        // Use a rule
+        // Use a rules to send data to Domoticz where also a local BMP280 is connected:
+        // on tele-alectov2#temperature do var1 %value% endon on tele-alectov2#humidity do var2 %value% endon on tele-bmp280#pressure do publish domoticz/in {"idx":68,"svalue":"%var1%;%var2%;0;%value%;0"} endon
+        // on tele-alectov2#wind do var1 %value% endon on tele-alectov2#gust do publish domoticz/in {"idx":69,"svalue":"0;N;%var1%;%value%;22;24"} endon"}
+        // on tele-alectov2#rain do publish domoticz/in {"idx":70,"svalue":"0;%value%"} endon
 #endif  // USE_DOMOTICZ
         }
 #ifdef USE_WEBSERVER
@@ -578,7 +593,7 @@ void RfSnsAlectoV2Show(boolean json)
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, D_ALECTOV2, temperature, TempUnit());
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, D_ALECTOV2, humidity);
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ALECTOV2, mqtt_data, rain, wind, gust);
-        if (rfsns_alecto_v2.type) {
+        if (rfsns_alecto_v2->type) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ALECTOV2_WDIR, mqtt_data, wdir);
         }
 #endif  // USE_WEBSERVER
@@ -590,25 +605,37 @@ void RfSnsAlectoV2Show(boolean json)
 
 void RfSnsInit(void)
 {
-  rfsns_rf_bit = digitalPinToBitMask(pin[GPIO_RF_SENSOR]);
-  rfsns_rf_port = digitalPinToPort(pin[GPIO_RF_SENSOR]);
-  pinMode(pin[GPIO_RF_SENSOR], INPUT);
+  rfsns_raw_signal = (raw_signal_t*)(malloc(sizeof(raw_signal_t)));
+  if (rfsns_raw_signal) {
+    memset(rfsns_raw_signal, 0, sizeof(raw_signal_t));  // Init defaults to 0
+#ifdef USE_THEO_V2
+    RfSnsInitTheoV2();
+#endif
+#ifdef USE_ALECTO_V2
+    RfSnsInitAlectoV2();
+#endif
+    if (rfsns_any_sensor) {
+      rfsns_rf_bit = digitalPinToBitMask(pin[GPIO_RF_SENSOR]);
+      rfsns_rf_port = digitalPinToPort(pin[GPIO_RF_SENSOR]);
+      pinMode(pin[GPIO_RF_SENSOR], INPUT);
+    } else {
+      free(rfsns_raw_signal);
+      rfsns_raw_signal = NULL;
+    }
+  }
 }
 
 void RfSnsAnalyzeRawSignal(void)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR("RFS: Pulses %d"), (int)rfsns_raw_signal.Number);
+  snprintf_P(log_data, sizeof(log_data), PSTR("RFS: Pulses %d"), (int)rfsns_raw_signal->Number);
   AddLog(LOG_LEVEL_DEBUG);
 
-//  if (Settings.flag3.rf_type) {
 #ifdef USE_THEO_V2
     RfSnsAnalyzeTheov2();
 #endif
-//  } else {
 #ifdef USE_ALECTO_V2
     RfSnsAnalyzeAlectov2();
 #endif
-//  }
 }
 
 void RfSnsEverySecond(void)
@@ -618,12 +645,11 @@ void RfSnsEverySecond(void)
 #endif
 }
 
-void RfSnsShow(boolean json)
+void RfSnsShow(bool json)
 {
 #ifdef USE_THEO_V2
   RfSnsTheoV2Show(json);
 #endif
-
 #ifdef USE_ALECTO_V2
   RfSnsAlectoV2Show(json);
 #endif
@@ -635,13 +661,13 @@ void RfSnsShow(boolean json)
 
 boolean Xsns37(byte function)
 {
-  boolean result = false;
+  bool result = false;
 
-  if (pin[GPIO_RF_SENSOR] < 99) {
+  if ((pin[GPIO_RF_SENSOR] < 99) && (FUNC_INIT == function)) {
+    RfSnsInit();
+  }
+  else if (rfsns_raw_signal) {
     switch (function) {
-      case FUNC_INIT:
-        RfSnsInit();
-        break;
       case FUNC_LOOP:
         if ((*portInputRegister(rfsns_rf_port) &rfsns_rf_bit) == rfsns_rf_bit) {
           if (RfSnsFetchSignal(pin[GPIO_RF_SENSOR], HIGH)) {

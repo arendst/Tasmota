@@ -40,6 +40,12 @@ int8_t armtronix_knobState[2];                   // Dimmer state values.
  * Internal Functions
 \*********************************************************************************************/
 
+boolean ArmtronixSetChannels(void)
+{
+  LightSerial2Duty(((uint8_t*)XdrvMailbox.data)[0], ((uint8_t*)XdrvMailbox.data)[1]);
+  return true;
+}
+
 void LightSerial2Duty(uint8_t duty1, uint8_t duty2)
 {
   if (ArmtronixSerial && !armtronix_ignore_dim) {
@@ -185,6 +191,9 @@ boolean Xdrv18(byte function)
             ArmtronixSerial->println("Status");
           }
         }
+        break;
+      case FUNC_SET_CHANNELS:
+        result = ArmtronixSetChannels();
         break;
     }
   }

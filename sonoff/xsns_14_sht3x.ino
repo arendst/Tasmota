@@ -98,15 +98,15 @@ void Sht3xShow(boolean json)
   if (sht3x_count) {
     float t;
     float h;
-    char temperature[10];
-    char humidity[10];
     char types[11];
     for (byte i = 0; i < sht3x_count; i++) {
       if (Sht3xRead(t, h, sht3x_sensors[i].address)) {
 
         if (0 == i) { SetGlobalValues(t, h); }
 
+        char temperature[33];
         dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+        char humidity[33];
         dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
         snprintf_P(types, sizeof(types), PSTR("%s-0x%02X"), sht3x_sensors[i].types, sht3x_sensors[i].address);  // "SHT3X-0xXX"
 

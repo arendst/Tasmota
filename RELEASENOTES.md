@@ -184,6 +184,17 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_DISPLAY                    | - | - | - | - | - | - |
 
 ## Changelog
+Version 6.4.1 20181223
+ * Change RAM usage BMP/BME I2C sensors
+ * Change FallbackTopic detection (#4706)
+ * Change Hass discovery to short MQTT messages as used by Hass 0.81 and up (#4711)
+ * Fix possible dtostrf buffer overflows by increasing buffers
+ * Fix wifi strongest signal detection (#4704)
+ * Fix Alexa "this value is outside the range of the device". Needs power cycle and Alexa deletion/discovery cycle. (#3159, #4712)
+ * Add support for AZ-Instrument 7798 CO2 meter/datalogger (#4672)
+ * Add define WIFI_SOFT_AP_CHANNEL in my_user_config.h to set Soft Access Point Channel number between 1 and 13 as used by Wifi Manager web GUI (#4673)
+ * Add define USE_MQTT_TLS_CA_CERT for checking MQTT TLS against root ca using Let's Encrypt cert from sonoff_letsencrypt.h - not supported with core 2.3.0 (#4703)
+
 Version 6.4.0 20181217
  * Change GUI Configure Module by using AJAX for data fetch to cut page size (and memory use) by 40%.
      In case of web page errors clear your browser cache or do Page Reload (F5 or Ctrl+R)

@@ -135,6 +135,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_RF_SENSOR                         // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 //  #define USE_THEO_V2                         // Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver (+1k4 code)
   #define USE_ALECTO_V2                       // Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver (+1k7 code)
+//#define USE_AZ7798                               // Add support for AZ-Instrument 7798 CO2 datalogger
 #endif  // USE_SENSORS
 
 /*********************************************************************************************\
@@ -193,6 +194,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
+#undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #endif  // USE_CLASSIC
 
 /*********************************************************************************************\
@@ -313,6 +315,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
+#undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #endif  // USE_BASIC
 
 /*********************************************************************************************\
@@ -375,6 +378,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
+#undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #endif  // BE_MINIMAL
 
 /*********************************************************************************************\
@@ -420,6 +424,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 //#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
 #ifndef ARDUINO_ESP8266_RELEASE
 #define ARDUINO_ESP8266_RELEASE "STAGE"
+#endif
+
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0          // Disable not supported features in core 2.3.0
+#undef USE_MQTT_TLS_CA_CERT
 #endif
 
 #endif  // _SONOFF_POST_H_

@@ -190,8 +190,7 @@ void Ds18b20EverySecond(void)
 void Ds18b20Show(boolean json)
 {
   if (ds18b20_valid) {        // Check for valid temperature
-    char temperature[10];
-
+    char temperature[33];
     dtostrfd(ds18b20_temperature, Settings.flag2.temperature_resolution, temperature);
     if(json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMP, mqtt_data, ds18b20_types, temperature);

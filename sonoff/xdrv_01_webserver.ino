@@ -27,6 +27,10 @@
 
 #define XDRV_01                               1
 
+#ifndef WIFI_SOFT_AP_CHANNEL
+#define WIFI_SOFT_AP_CHANNEL                  1   // Soft Access Point Channel number between 1 and 11 as used by SmartConfig web GUI
+#endif
+
 #define HTTP_REFRESH_TIME                  2345   // milliseconds
 #define HTTP_RESTART_RECONNECT_TIME        9000   // milliseconds
 #define HTTP_OTA_RESTART_RECONNECT_TIME   20000   // milliseconds
@@ -165,7 +169,7 @@ const char HTTP_SCRIPT_MODULE2[] PROGMEM =
     "x.send();"
   "}";
 const char HTTP_SCRIPT_MODULE3[] PROGMEM =
-  "}1'%d'>%02d %s}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
+  "}1'%d'>%s (%02d)}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
 
 const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
   "function i(){"
@@ -441,7 +445,11 @@ void WifiManagerBegin(void)
   StopWebserver();
 
   DnsServer = new DNSServer();
-  WiFi.softAP(my_hostname);
+
+  int channel = WIFI_SOFT_AP_CHANNEL;
+  if ((channel < 1) || (channel > 13)) { channel = 1; }
+  WiFi.softAP(my_hostname, NULL, channel);
+
   delay(500); // Without delay I've seen the IP address blank
   /* Setup the DNS server redirecting all the domains to the apIP */
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);
@@ -798,14 +806,14 @@ void HandleModuleConfiguration(void)
     for (byte i = 0; i < MAXMODULE; i++) {
       midx = pgm_read_byte(kModuleNiceList + i);
       snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, midx +1, stemp);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, stemp, midx +1);
       page += mqtt_data;
     }
     page += "}3";  // String separator means do not use "}3" in Module name and Sensor name
     for (byte j = 0; j < sizeof(kGpioNiceList); j++) {
       midx = pgm_read_byte(kGpioNiceList + j);
       if (!GetUsedInModule(midx, cmodule.gp.io)) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
         page += mqtt_data;
       }
     }
