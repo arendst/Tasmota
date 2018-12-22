@@ -467,7 +467,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
   if (XdrvMqttData(topicBuf, sizeof(topicBuf), dataBuf, sizeof(dataBuf))) return;
 
   grpflg = (strstr(topicBuf, Settings.mqtt_grptopic) != NULL);
-  fallback_topic_flag = (strstr(topicBuf, mqtt_client) != NULL);
+  snprintf_P(stemp1, sizeof(stemp1), PSTR(D_CMND "/%s/"), mqtt_client);  // Full Fallback topic = cmnd/DVES_xxxxxxxx
+  fallback_topic_flag = (!strncmp(topicBuf, stemp1, strlen(stemp1)));
   type = strrchr(topicBuf, '/');  // Last part of received topic is always the command (type)
 
   index = 1;
