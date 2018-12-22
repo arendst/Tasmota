@@ -583,6 +583,7 @@ void SettingsDefaultSet2(void)
 
   // Home Assistant
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
+  Settings.flag3.hass_short_discovery_msg = 1;
 
   // Knx
 //  Settings.flag.knx_enabled = 0;
