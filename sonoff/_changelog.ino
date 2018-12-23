@@ -4,6 +4,7 @@
  * Add define WIFI_SOFT_AP_CHANNEL in my_user_config.h to set Soft Access Point Channel number between 1 and 13 as used by Wifi Manager web GUI (#4673)
  * Fix Alexa "this value is outside the range of the device". Needs power cycle and Alexa deletion/discovery cycle. (#3159, #4712)
  * Add define USE_MQTT_TLS_CA_CERT for checking MQTT TLS against root ca using Let's Encrypt cert from sonoff_letsencrypt.h - not supported with core 2.3.0 (#4703)
+ * Change FallbackTopic from cmnd/<mqttclient>/ to cmnd/<mqttclient>_fb/ to discriminate from Topic (#1528)
  *
  * 6.4.0.2 20181221
  * Fix possible dtostrf buffer overflows by increasing buffers

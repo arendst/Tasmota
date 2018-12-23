@@ -1323,13 +1323,12 @@ void HandleInformation(void)
   if (Settings.flag.mqtt_enabled) {
     func += F("}1" D_MQTT_HOST "}2"); func += Settings.mqtt_host;
     func += F("}1" D_MQTT_PORT "}2"); func += String(Settings.mqtt_port);
-    func += F("}1" D_MQTT_CLIENT " &<br/>&nbsp;" D_FALLBACK_TOPIC "}2"); func += mqtt_client;
     func += F("}1" D_MQTT_USER "}2"); func += Settings.mqtt_user;
+    func += F("}1" D_MQTT_CLIENT "}2"); func += mqtt_client;
     func += F("}1" D_MQTT_TOPIC "}2"); func += Settings.mqtt_topic;
     func += F("}1" D_MQTT_GROUP_TOPIC "}2"); func += Settings.mqtt_grptopic;
-    GetTopic_P(stopic, CMND, mqtt_topic, "");
-    func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += stopic;
-
+    func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += GetTopic_P(stopic, CMND, mqtt_topic, "");
+    func += F("}1" D_MQTT " " D_FALLBACK_TOPIC "}2"); func += GetFallbackTopic_P(stopic, CMND, "");
   } else {
     func += F("}1" D_MQTT "}2" D_DISABLED);
   }
