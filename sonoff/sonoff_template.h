@@ -270,10 +270,12 @@ enum SupportedModules {
   PS_16_DZ,
   TECKIN_US,
   MANZOKU_EU_4,
+#ifdef USE_LC_TECH_RELAY
   LC_TECH_RELAY1,
   LC_TECH_RELAY2,
   LC_TECH_RELAY4,
   ESP_01,
+#endif
   MAXMODULE };
 
 /********************************************************************************************/
@@ -503,9 +505,11 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WION,
   SHELLY1,
   SHELLY2,
+#ifdef USE_LC_TECH_RELAY
   LC_TECH_RELAY1,
   LC_TECH_RELAY2,
   LC_TECH_RELAY4,
+#endif
   BLITZWOLF_BWSHP,    // Socket Relay Devices with Energy Monitoring
   TECKIN,
   TECKIN_US,
@@ -531,7 +535,9 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   PHILIPS,
   WITTY,              // Development Devices
   WEMOS,
+#ifdef USE_LC_TECH_RELAY
   ESP_01
+#endif
 };
 
 // Default module settings
@@ -1359,6 +1365,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO16
      0
   },
+#ifdef USE_LC_TECH_RELAY
   { "LCTech 1-Relay",  // LC Technology Relais board 1 channel, based on ESP 01
      GPIO_USER,        // GPIO00
      GPIO_RXD,         // GPIO01 TX Serial RXD
@@ -1399,6 +1406,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0, 0, 0, 0, // Flash connection
      0, 0, 0, 0, 0, 0
   }
+#endif
 };
 
 /*

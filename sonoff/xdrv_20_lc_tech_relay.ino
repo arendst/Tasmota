@@ -40,7 +40,6 @@ boolean LCTInitialized = false;
 
 boolean LCTSetRelay(void)
 {
-  uint8_t state;
   power_t rpower = XdrvMailbox.index;
 
   return LCTSetStates(rpower);
