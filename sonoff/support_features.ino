@@ -177,8 +177,10 @@ void GetFeatures(void)
 #ifdef USE_ARMTRONIX_DIMMERS
   feature_drv2 |= 0x00020000;  // xdrv_18_armtronixdimmer.ino
 #endif
+#ifdef USE_LC_TECH_RELAY
+  feature_drv2 |= 0x00040000;  // xdrv_20_lc_tech_relay.ino
+#endif
 
-//  feature_drv2 |= 0x00040000;
 //  feature_drv2 |= 0x00080000;
 //  feature_drv2 |= 0x00100000;
 //  feature_drv2 |= 0x00200000;

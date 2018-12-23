@@ -270,6 +270,10 @@ enum SupportedModules {
   PS_16_DZ,
   TECKIN_US,
   MANZOKU_EU_4,
+  LC_TECH_RELAY1,
+  LC_TECH_RELAY2,
+  LC_TECH_RELAY4,
+  ESP_01,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -499,6 +503,9 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WION,
   SHELLY1,
   SHELLY2,
+  LC_TECH_RELAY1,
+  LC_TECH_RELAY2,
+  LC_TECH_RELAY4,
   BLITZWOLF_BWSHP,    // Socket Relay Devices with Energy Monitoring
   TECKIN,
   TECKIN_US,
@@ -523,7 +530,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   AILIGHT,            // Light Bulbs
   PHILIPS,
   WITTY,              // Development Devices
-  WEMOS
+  WEMOS,
+  ESP_01
 };
 
 // Default module settings
@@ -1350,6 +1358,46 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,
      GPIO_USER,        // GPIO16
      0
+  },
+  { "LCTech 1-Relay",  // LC Technology Relais board 1 channel, based on ESP 01
+     GPIO_USER,        // GPIO00
+     GPIO_RXD,         // GPIO01 TX Serial RXD
+     GPIO_USER,        // GPIO02
+     GPIO_TXD,         // GPIO03 RX Serial TXD
+     0,
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0, 0, 0, 0, 0, 0
+  },
+  { "LCTech 2-Relay",  // LC Technology Relais board 2 channel, based on ESP 01
+     GPIO_USER,        // GPIO00
+     GPIO_RXD,         // GPIO01 TX Serial RXD
+     GPIO_USER,        // GPIO02
+     GPIO_TXD,         // GPIO03 RX Serial TXD
+     0,
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0, 0, 0, 0, 0, 0
+  },
+  { "LCTech 4-Relay",  // LC Technology Relais board 4 channel, based on ESP 01
+     GPIO_USER,        // GPIO00
+     GPIO_RXD,         // GPIO01 TX Serial RXD
+     GPIO_USER,        // GPIO02
+     GPIO_TXD,         // GPIO03 RX Serial TXD
+     0,
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0, 0, 0, 0, 0, 0
+  },
+  { "Raw ESP 01",      // ESP 01 board
+     GPIO_USER,        // GPIO00 U!_TXD SPI_CS2
+     GPIO_USER,        // GPIO01 U0_TXD SPI_CS1
+     GPIO_USER,        // GPIO02 U1_TXD
+     GPIO_USER,        // GPIO03 U0_RXD
+     0,
+     0,
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0, 0, 0, 0, 0, 0
   }
 };
 

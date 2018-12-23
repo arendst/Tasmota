@@ -1041,7 +1041,7 @@ void HandleLoggingConfiguration(void)
       page.replace(F("{b1"), STR(SERIAL_LOG_LEVEL));
       page.replace(F("{b2"), F("ls"));
       for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
-        page.replace("{a" + String(i), (i == Settings.seriallog_level) ? F(" selected ") : F(" "));
+        page.replace("{a" + String(i), (i == Settings.seriallog_level) ? F(" selected ") : (suppress_serial_logging) ? F(" disabled ") : F(" "));
       }
       break;
     case 1:

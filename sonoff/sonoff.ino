@@ -180,6 +180,7 @@ byte mdns_delayed_start = 0;                // mDNS delayed start
 boolean latest_uptime_flag = true;          // Signal latest uptime
 boolean pwm_present = false;                // Any PWM channel configured with SetOption15 0
 boolean mdns_begun = false;                 // mDNS active
+boolean suppress_serial_logging = false;    // Stop user from setting serial logging in WebUI
 mytmplt my_module;                          // Active copy of Module name and GPIOs (23 x 8 bits)
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
 char my_version[33];                        // Composed version string
@@ -2624,6 +2625,7 @@ void setup(void)
   delay(10);
   Serial.println();
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
+  suppress_serial_logging = false;   // Initialize serial logging suppresion
 
   snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
   if (VERSION & 0xff) {  // Development or patched version 6.3.0.10

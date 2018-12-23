@@ -181,6 +181,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_LC_TECH_RELAY                      // Disable support for LC Technology relais boards
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer
 #undef USE_IR_REMOTE                          // Disable IR remote commands using library IRremoteESP8266 and ArduinoJson
 #undef USE_IR_RECEIVE                         // Disable support for IR receiver
@@ -298,6 +299,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 //#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_LC_TECH_RELAY                      // Disable support for LC Technology relais boards
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
@@ -361,6 +363,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_LC_TECH_RELAY                      // Disable support for LC Technology relais boards
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
