@@ -406,9 +406,7 @@ void MqttConnected(void)
     if (strstr(Settings.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != NULL) {
       GetTopic_P(stopic, CMND, Settings.mqtt_grptopic, PSTR("#"));
       MqttSubscribe(stopic);
-      fallback_topic_flag = 1;
-      GetTopic_P(stopic, CMND, mqtt_client, PSTR("#"));
-      fallback_topic_flag = 0;
+      GetFallbackTopic_P(stopic, CMND, PSTR("#"));
       MqttSubscribe(stopic);
     }
 
@@ -417,7 +415,8 @@ void MqttConnected(void)
 
   if (mqtt_initial_connection_state) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
-      my_module.name, my_version, my_image, mqtt_client, Settings.mqtt_grptopic);
+      my_module.name, my_version, my_image, GetFallbackTopic_P(stopic, CMND, ""), Settings.mqtt_grptopic);
+//      my_module.name, my_version, my_image, mqtt_client, Settings.mqtt_grptopic);
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
     if (Settings.webserver) {

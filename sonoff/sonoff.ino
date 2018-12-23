@@ -245,20 +245,25 @@ char* GetOtaUrl(char *otaurl, size_t otaurl_size)
   return otaurl;
 }
 
-void GetTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
+char* GetTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
 {
   /* prefix 0 = Cmnd
      prefix 1 = Stat
      prefix 2 = Tele
+     prefix 4 = Cmnd fallback
+     prefix 5 = Stat fallback
+     prefix 6 = Tele fallback
   */
   char romram[CMDSZ];
   String fulltopic;
 
   snprintf_P(romram, sizeof(romram), subtopic);
-  if (fallback_topic_flag) {
+  if (fallback_topic_flag || (prefix > 3)) {
+    prefix &= 3;
     fulltopic = FPSTR(kPrefixes[prefix]);
     fulltopic += F("/");
     fulltopic += mqtt_client;
+    fulltopic += F("_fb");                    // cmnd/<mqttclient>_fb
   } else {
     fulltopic = Settings.mqtt_fulltopic;
     if ((0 == prefix) && (-1 == fulltopic.indexOf(F(MQTT_TOKEN_PREFIX)))) {
@@ -280,6 +285,12 @@ void GetTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
   fulltopic.replace(F("//"), "/");
   if (!fulltopic.endsWith("/")) fulltopic += "/";
   snprintf_P(stopic, TOPSZ, PSTR("%s%s"), fulltopic.c_str(), romram);
+  return stopic;
+}
+
+char* GetFallbackTopic_P(char *stopic, byte prefix, const char* subtopic)
+{
+  return GetTopic_P(stopic, prefix +4, NULL, subtopic);
 }
 
 char* GetStateText(byte state)
@@ -467,8 +478,10 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
   if (XdrvMqttData(topicBuf, sizeof(topicBuf), dataBuf, sizeof(dataBuf))) return;
 
   grpflg = (strstr(topicBuf, Settings.mqtt_grptopic) != NULL);
-  snprintf_P(stemp1, sizeof(stemp1), PSTR(D_CMND "/%s/"), mqtt_client);  // Full Fallback topic = cmnd/DVES_xxxxxxxx
+
+  GetFallbackTopic_P(stemp1, CMND, "");  // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
   fallback_topic_flag = (!strncmp(topicBuf, stemp1, strlen(stemp1)));
+
   type = strrchr(topicBuf, '/');  // Last part of received topic is always the command (type)
 
   index = 1;
@@ -2742,8 +2755,9 @@ void setup(void)
   }
   blink_powersave = power;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_PROJECT " %s %s (" D_CMND_TOPIC " %s, " D_FALLBACK " %s, " D_CMND_GROUPTOPIC " %s) " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE),
-    PROJECT, Settings.friendlyname[0], mqtt_topic, mqtt_client, Settings.mqtt_grptopic, my_version, my_image);
+  char stopic[TOPSZ];
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE),
+    PROJECT, Settings.friendlyname[0], my_version, my_image);
   AddLog(LOG_LEVEL_INFO);
 #ifdef BE_MINIMAL
   snprintf_P(log_data, sizeof(log_data), PSTR(D_WARNING_MINIMAL_VERSION));
