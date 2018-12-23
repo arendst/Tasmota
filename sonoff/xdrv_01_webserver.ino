@@ -27,6 +27,10 @@
 
 #define XDRV_01                               1
 
+#ifndef WIFI_SOFT_AP_CHANNEL
+#define WIFI_SOFT_AP_CHANNEL                  1   // Soft Access Point Channel number between 1 and 11 as used by SmartConfig web GUI
+#endif
+
 #define HTTP_REFRESH_TIME                  2345   // milliseconds
 #define HTTP_RESTART_RECONNECT_TIME        9000   // milliseconds
 #define HTTP_OTA_RESTART_RECONNECT_TIME   20000   // milliseconds
@@ -441,7 +445,11 @@ void WifiManagerBegin(void)
   StopWebserver();
 
   DnsServer = new DNSServer();
-  WiFi.softAP(my_hostname);
+
+  int channel = WIFI_SOFT_AP_CHANNEL;
+  if ((channel < 1) || (channel > 13)) { channel = 1; }
+  WiFi.softAP(my_hostname, NULL, channel);
+
   delay(500); // Without delay I've seen the IP address blank
   /* Setup the DNS server redirecting all the domains to the apIP */
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);

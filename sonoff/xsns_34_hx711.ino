@@ -204,7 +204,7 @@ bool HxCommand(void)
   }
 
   if (show_parms) {
-    char item[10];
+    char item[33];
     dtostrfd((float)Settings.weight_item / 10, 1, item);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\"" D_JSON_WEIGHT_ITEM "\":%s}}"),
       Settings.weight_reference, Settings.weight_calibration, Settings.weight_max * 1000, item);
@@ -331,7 +331,6 @@ const char HTTP_HX711_CAL[] PROGMEM = "%s"
 
 void HxShow(boolean json)
 {
-  char weight_chr[10];
   char scount[30] = { 0 };
 
   uint16_t count = 0;
@@ -345,6 +344,7 @@ void HxShow(boolean json)
     }
     weight = (float)hx_weight / 1000;                // kilograms
   }
+  char weight_chr[33];
   dtostrfd(weight, Settings.flag2.weight_resolution, weight_chr);
 
   if (json) {
@@ -452,10 +452,9 @@ void HxSaveSettings(void)
 
 void HxLogUpdates(void)
 {
-  char weigth_ref_chr[10];
-  char weigth_item_chr[10];
-
+  char weigth_ref_chr[33];
   dtostrfd((float)Settings.weight_reference / 1000, Settings.flag2.weight_resolution, weigth_ref_chr);
+  char weigth_item_chr[33];
   dtostrfd((float)Settings.weight_item / 10000, 4, weigth_item_chr);
 
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_JSON_WEIGHT_REF " %s, " D_JSON_WEIGHT_ITEM " %s"),

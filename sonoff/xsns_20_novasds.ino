@@ -189,11 +189,11 @@ const char HTTP_SDS0X1_SNS[] PROGMEM = "%s"
 void NovaSdsShow(boolean json)
 {
   if (novasds_valid) {
-    char pm10[10];
-    char pm2_5[10];
     float pm10f = (float)(novasds_data.pm100) / 10.0f;
     float pm2_5f = (float)(novasds_data.pm25) / 10.0f;
+    char pm10[33];
     dtostrfd(pm10f, 1, pm10);
+    char pm2_5[33];
     dtostrfd(pm2_5f, 1, pm2_5);
     if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SDS0X1\":{\"PM2.5\":%s,\"PM10\":%s}"), mqtt_data, pm2_5, pm10);

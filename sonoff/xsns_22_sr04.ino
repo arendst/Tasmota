@@ -51,8 +51,7 @@ void Sr04Show(boolean json)
   distance = (real64_t)(sonar->ping_median(5))/ US_ROUNDTRIP_CM;
 
   if (distance != 0) {                // Check if read failed
-    char distance_chr[10];
-
+    char distance_chr[33];
     dtostrfd(distance, 3, distance_chr);
 
     if(json) {

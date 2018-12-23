@@ -113,12 +113,12 @@ const char HTTP_SNS_SCPLUS[] PROGMEM =
 void SonoffScShow(boolean json)
 {
   if (sc_value[0] > 0) {
-    char temperature[10];
-    char humidity[10];
-
     float t = ConvertTemp(sc_value[1]);
     float h = sc_value[0];
+
+    char temperature[33];
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+    char humidity[33];
     dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
