@@ -159,8 +159,9 @@ void PS16DZSerialInput(void)
         memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);
         ps16dz_byte_counter = 0;
       }
-      if (ps16dz_byte_counter || (!ps16dz_byte_counter && serial_in_byte == 'A'));
-      ps16dz_rx_buffer[ps16dz_byte_counter++] = serial_in_byte;
+      if (ps16dz_byte_counter || (!ps16dz_byte_counter && serial_in_byte == 'A')) {
+        ps16dz_rx_buffer[ps16dz_byte_counter++] = serial_in_byte;
+      }
     }
     else {
       ps16dz_rx_buffer[ps16dz_byte_counter++] = 0x00;

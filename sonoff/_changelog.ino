@@ -3,6 +3,7 @@
  * Change FallbackTopic from cmnd/<mqttclient>/ to cmnd/<mqttclient>_fb/ to discriminate from Topic (#1528)
  * Change FallbackTopic detection (#4706)
  * Change Hass discovery to short MQTT messages as used by Hass 0.81 and up (#4711)
+ * Change MQTT GUI password handling (#4723)
  * Fix possible dtostrf buffer overflows by increasing buffers
  * Fix wifi strongest signal detection (#4704)
  * Fix Alexa "this value is outside the range of the device". Needs power cycle and Alexa deletion/discovery cycle. (#3159, #4712)
