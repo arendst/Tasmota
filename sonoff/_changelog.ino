@@ -1,4 +1,7 @@
-/* 6.4.1 20181225
+/* 6.4.1.1 20181224
+ * Fix most compiler warnings
+ *
+ * 6.4.1 20181224
  * Change RAM usage BMP/BME I2C sensors
  * Change FallbackTopic from cmnd/<mqttclient>/ to cmnd/<mqttclient>_fb/ to discriminate from Topic (#1528)
  * Change FallbackTopic detection (#4706)

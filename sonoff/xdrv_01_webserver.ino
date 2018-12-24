@@ -1591,7 +1591,7 @@ void HandleUploadLoop(void)
         upload_error = abs(result);
         return;
       } else if (result > 0) {
-        if (result > upload.currentSize) {
+        if ((size_t)result > upload.currentSize) {
           // Offset is larger than the buffer supplied, this should not happen
           upload_error = 9;  // File too large - Failed to decode RF firmware
           return;

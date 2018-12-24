@@ -1026,7 +1026,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           Serial.printf("%s\n", dataBuf);                    // "Hello Tiger\n"
         }
         else if (2 == index || 4 == index) {
-          for (int i = 0; i < data_len; i++) {
+          for (uint16_t i = 0; i < data_len; i++) {
             Serial.write(dataBuf[i]);                        // "Hello Tiger" or "A0"
           }
         }
@@ -2627,8 +2627,6 @@ extern struct rst_info resetInfo;
 
 void setup(void)
 {
-  byte idx;
-
   RtcRebootLoad();
   if (!RtcRebootValid()) { RtcReboot.fast_reboot_count = 0; }
   RtcReboot.fast_reboot_count++;
@@ -2755,7 +2753,6 @@ void setup(void)
   }
   blink_powersave = power;
 
-  char stopic[TOPSZ];
   snprintf_P(log_data, sizeof(log_data), PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE),
     PROJECT, Settings.friendlyname[0], my_version, my_image);
   AddLog(LOG_LEVEL_INFO);

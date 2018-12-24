@@ -56,7 +56,7 @@ unsigned long sonoff_bridge_last_learn_time = 0;
 
 ssize_t rf_find_hex_record_start(uint8_t *buf, size_t size)
 {
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     if (buf[i] == ':') {
       return i;
     }
@@ -66,7 +66,7 @@ ssize_t rf_find_hex_record_start(uint8_t *buf, size_t size)
 
 ssize_t rf_find_hex_record_end(uint8_t *buf, size_t size)
 {
-  for (ssize_t i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     if (buf[i] == '\n') {
       return i;
     }

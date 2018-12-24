@@ -270,7 +270,7 @@ void HxEvery100mSecond(void)
       }
       else if (HX_CAL_RESET == hx_calibrate_step) {  // Wait for stable reset
         if (hx_calibrate_timer) {
-          if (hx_weight < Settings.weight_reference) {
+          if (hx_weight < (long)Settings.weight_reference) {
             hx_calibrate_step--;
             hx_calibrate_timer = HX_CAL_TIMEOUT * (10 / HX_SAMPLES);
             HxCalibrationStateTextJson(2);
@@ -281,7 +281,7 @@ void HxEvery100mSecond(void)
       }
       else if (HX_CAL_FIRST == hx_calibrate_step) {  // Wait for first reference weight
         if (hx_calibrate_timer) {
-          if (hx_weight > Settings.weight_reference) {
+          if (hx_weight > (long)Settings.weight_reference) {
             hx_calibrate_step--;
           }
         } else {
@@ -289,7 +289,7 @@ void HxEvery100mSecond(void)
         }
       }
       else if (HX_CAL_DONE == hx_calibrate_step) {   // Second stable reference weight
-        if (hx_weight > Settings.weight_reference) {
+        if (hx_weight > (long)Settings.weight_reference) {
           hx_calibrate_step = HX_CAL_FINISH;         // Calibration done
           Settings.weight_calibration = hx_weight / Settings.weight_reference;
           hx_weight = 0;                             // Reset calibration value

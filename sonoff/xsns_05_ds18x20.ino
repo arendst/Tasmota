@@ -261,7 +261,9 @@ void Ds18x20Init(void)
   ds18x20_pin = pin[GPIO_DSB];
 
   OneWireResetSearch();
-  for (ds18x20_sensors = 0; ds18x20_sensors < DS18X20_MAX_SENSORS; ds18x20_sensors) {
+
+  ds18x20_sensors = 0;
+  while (ds18x20_sensors < DS18X20_MAX_SENSORS) {
     if (!OneWireSearch(ds18x20_sensor[ds18x20_sensors].address)) {
       break;
     }
