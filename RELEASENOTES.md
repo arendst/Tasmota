@@ -168,6 +168,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_TUYA_DIMMER                | - | x | - | x | x | x |
 | USE_ARMTRONIX_DIMMERS          | - | x | - | x | x | x |
 | USE_PS_16_DZ                   | - | x | - | x | x | x |
+| USE_AZ7798                     | - | - | - | - | - | - |
 | USE_IR_REMOTE                  | - | - | - | x | x | x |
 | USE_IR_HVAC                    | - | - | - | - | - | x |
 | USE_IR_RECEIVE                 | - | - | - | x | x | x |
