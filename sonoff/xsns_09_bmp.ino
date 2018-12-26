@@ -426,7 +426,11 @@ void Bme680Read(uint8_t bmp_idx)
       rslt = bme680_get_sensor_data(&data, &gas_sensor[bmp_idx]);
       if (rslt != BME680_OK) { return; }
 
+#ifdef BME680_OFFSET
+      bmp_sensors[bmp_idx].bmp_temperature = data.temperature / 100.0 + BME680_OFFSET;
+#else
       bmp_sensors[bmp_idx].bmp_temperature = data.temperature / 100.0;
+#endif
       bmp_sensors[bmp_idx].bmp_humidity = data.humidity / 1000.0;
       bmp_sensors[bmp_idx].bmp_pressure = data.pressure / 100.0;
       /* Avoid using measurements from an unstable heating setup */
