@@ -127,6 +127,7 @@ int blinks = 201;                           // Number of LED blinks
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
+uint32_t switch_change[MAX_SWITCHES];       // Timestamp of last switch change
 float global_temperature = 0;               // Provide a global temperature to be used by some sensors
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
 char *ota_url;                              // OTA url string pointer
@@ -1898,7 +1899,7 @@ void SwitchHandler(byte mode)
   uint16_t loops_per_second = 1000 / Settings.switch_debounce;
 
   for (byte i = 0; i < MAX_SWITCHES; i++) {
-    if ((pin[GPIO_SWT1 +i] < 99) || (mode)) {
+    if (((pin[GPIO_SWT1 +i] < 99) && (TimePassedSince(switch_change[i]) > Settings.switch_debounce)) || (mode)) {
 
       if (holdwallswitch[i]) {
         holdwallswitch[i]--;
@@ -2405,21 +2406,60 @@ void SerialInput(void)
 }
 /********************************************************************************************/
 
+void SwitchChange(byte index)
+{
+  switch_change[index] = millis();
+}
+
+void SwitchChange1(void)
+{
+  SwitchChange(0);
+}
+
+void SwitchChange2(void)
+{
+  SwitchChange(1);
+}
+
+void SwitchChange3(void)
+{
+  SwitchChange(2);
+}
+
+void SwitchChange4(void)
+{
+  SwitchChange(3);
+}
+
+void SwitchChange5(void)
+{
+  SwitchChange(4);
+}
+
+void SwitchChange6(void)
+{
+  SwitchChange(5);
+}
+
+void SwitchChange7(void)
+{
+  SwitchChange(6);
+}
+
+void SwitchChange8(void)
+{
+  SwitchChange(7);
+}
+
 void GpioSwitchPinMode(uint8_t index)
 {
-  if (pin[GPIO_SWT1 +index] < 99) {
+  if ((pin[GPIO_SWT1 +index] < 99) && (index < MAX_SWITCHES)) {
     pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : bitRead(switch_no_pullup, index) ? INPUT : INPUT_PULLUP);
-/*
-    // Re-enable pull-up on Shelly2 as of 20181110 (#4255)
-    uint8_t no_pullup = bitRead(switch_no_pullup, index);       // 0 = INPUT_PULLUP, 1 = INPUT
-    if (no_pullup) {
-      if (SHELLY2 == Settings.module) {
-        // Switchmodes : TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, MAX_SWITCH_OPTION
-        no_pullup = (Settings.switchmode[index] < PUSHBUTTON);  // INPUT on TOGGLE, FOLLOW and FOLLOW_INV. INPUT_PULLUP on anything else
-      }
-    }
-    pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : (no_pullup) ? INPUT : INPUT_PULLUP);
-*/
+
+    typedef void (*function)(void) ;
+    function switch_callbacks[MAX_SWITCHES] = { SwitchChange1, SwitchChange2, SwitchChange3, SwitchChange4, SwitchChange5, SwitchChange6, SwitchChange7, SwitchChange8 };
+    detachInterrupt(pin[GPIO_SWT1 +index]);
+    attachInterrupt(pin[GPIO_SWT1 +index], switch_callbacks[index], CHANGE);
   }
 }
 

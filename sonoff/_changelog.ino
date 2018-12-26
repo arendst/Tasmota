@@ -1,5 +1,6 @@
 /* 6.4.1.1 20181224
  * Fix most compiler warnings
+ * Change switch input detection by optimizing switch debounce (#4724)
  *
  * 6.4.1 20181224
  * Change RAM usage BMP/BME I2C sensors
