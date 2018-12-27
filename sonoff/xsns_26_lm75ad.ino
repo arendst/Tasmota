@@ -50,7 +50,7 @@ uint8_t lm75ad_type = 0;
 uint8_t lm75ad_address;
 uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3, LM75AD_ADDRESS4, LM75AD_ADDRESS5, LM75AD_ADDRESS6, LM75AD_ADDRESS7, LM75AD_ADDRESS8 };
 
-SensorFilter_Median LM75AD_Median(5,3); // Use 9 elements and pick element number 5 (center)
+SensorFilter_Median LM75AD_Median(5,3); // Use 5 elements and pick element number 3 (center)
 
 void LM75ADDetect(void)
 {
