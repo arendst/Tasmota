@@ -167,6 +167,10 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
     if (rule_param.startsWith(stemp)) {
       rule_param = String(GetMinutesUptime());
     }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMESTAMP%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = GetDateAndTime(DT_LOCAL).c_str();
+    }
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
     snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNRISE%%"));
     if (rule_param.startsWith(stemp)) {
@@ -313,6 +317,7 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
       }
       commands.replace(F("%time%"), String(GetMinutesPastMidnight()));
       commands.replace(F("%uptime%"), String(GetMinutesUptime()));
+      commands.replace(F("%timestamp%"), GetDateAndTime(DT_LOCAL).c_str());      
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       commands.replace(F("%sunrise%"), String(GetSunMinutes(0)));
       commands.replace(F("%sunset%"), String(GetSunMinutes(1)));
