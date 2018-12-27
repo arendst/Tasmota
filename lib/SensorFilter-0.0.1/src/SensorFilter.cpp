@@ -108,7 +108,11 @@ double SensorFilter_Average::NewAverage(double newvalue)
   }
   AverageData[AverageElements-1] = newvalue;
   newaverage = newaverage + newvalue;
-  newaverage = newaverage / AverageElements;
+  if (newaverage != 0) {
+    newaverage = newaverage / AverageElements;
+  } else {
+    newaverage = 0;
+  }
   return newaverage;
 }
 
