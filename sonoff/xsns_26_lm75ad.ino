@@ -28,8 +28,6 @@
  * I2C Address: 0x48 - 0x4F
 \*********************************************************************************************/
 
-#include <SensorFilter.h>
-
 #define XSNS_26                 26
 
 #define LM75AD_ADDRESS1					0x48
@@ -49,8 +47,6 @@
 uint8_t lm75ad_type = 0;
 uint8_t lm75ad_address;
 uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3, LM75AD_ADDRESS4, LM75AD_ADDRESS5, LM75AD_ADDRESS6, LM75AD_ADDRESS7, LM75AD_ADDRESS8 };
-
-SensorFilter_Median LM75AD_Median(5,3); // Use 5 elements and pick element number 3 (center)
 
 void LM75ADDetect(void)
 {
@@ -79,7 +75,7 @@ float LM75ADGetTemp(void) {
     sign = -1;
   }
   t = t >> 5; // shift value into place (5 LSB not used)
-  return LM75AD_Median.NewMedian(ConvertTemp(sign * t * 0.125));
+  return ConvertTemp(sign * t * 0.125);
 }
 
 void LM75ADShow(boolean json)
