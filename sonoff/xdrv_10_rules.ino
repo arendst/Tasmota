@@ -317,7 +317,7 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
       }
       commands.replace(F("%time%"), String(GetMinutesPastMidnight()));
       commands.replace(F("%uptime%"), String(GetMinutesUptime()));
-      commands.replace(F("%timestamp%"), GetDateAndTime(DT_LOCAL).c_str());      
+      commands.replace(F("%timestamp%"), GetDateAndTime(DT_LOCAL).c_str());
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       commands.replace(F("%sunrise%"), String(GetSunMinutes(0)));
       commands.replace(F("%sunset%"), String(GetSunMinutes(1)));
@@ -410,7 +410,7 @@ void RulesEvery50ms(void)
           if (pin[GPIO_SWT1 +i] < 99) {
 #endif // USE_TM1638
             boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
-            snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (swm ^ lastwallswitch[i]));
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (swm ^ SwitchLastState(i)));
             RulesProcessEvent(json_event);
           }
         }

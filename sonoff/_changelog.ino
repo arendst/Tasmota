@@ -1,4 +1,9 @@
-/* 6.4.1.1 20181224
+/* 6.4.1.2 20181228
+ * Change switch driver making it modular and introduce input filter (#4665, #4724)
+ * Add define DS18B20_INTERNAL_PULLUP to select internal input pullup when only one DS18B20 sensor is connected eliminating external resistor (#4738)
+ * Add variable %timestamp% to rules (#4749)
+ *
+ * 6.4.1.1 20181224
  * Fix most compiler warnings
  * Change switch input detection by optimizing switch debounce (#4724)
  *

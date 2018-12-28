@@ -109,7 +109,6 @@ unsigned long pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
 unsigned long blink_timer = 0;              // Power cycle timer
 unsigned long backlog_delay = 0;            // Command backlog delay
 unsigned long button_debounce = 0;          // Button debounce timer
-unsigned long switch_debounce = 0;          // Switch debounce timer
 power_t power = 0;                          // Current copy of Settings.power
 power_t blink_power;                        // Blink power state
 power_t blink_mask = 0;                     // Blink relay active mask
@@ -127,7 +126,6 @@ int blinks = 201;                           // Number of LED blinks
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
-uint32_t switch_change[MAX_SWITCHES];       // Timestamp of last switch change
 float global_temperature = 0;               // Provide a global temperature to be used by some sensors
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
 char *ota_url;                              // OTA url string pointer
@@ -137,7 +135,6 @@ uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
 uint16_t syslog_timer = 0;                  // Timer to re-enable syslog_level
 uint16_t holdbutton[MAX_KEYS] = { 0 };      // Timer for button hold
-uint16_t switch_no_pullup = 0;              // Switch pull-up bitmask flags
 int16_t save_data_counter;                  // Counter and flag for config save to Flash
 RulesBitfield rules_flag;                   // Rule state flags (16 bits)
 uint8_t serial_local = 0;                   // Handle serial locally;
@@ -155,9 +152,6 @@ uint8_t blinkspeed = 1;                     // LED blink rate
 uint8_t lastbutton[MAX_KEYS] = { NOT_PRESSED, NOT_PRESSED, NOT_PRESSED, NOT_PRESSED };  // Last button states
 uint8_t multiwindow[MAX_KEYS] = { 0 };      // Max time between button presses to record press count
 uint8_t multipress[MAX_KEYS] = { 0 };       // Number of button presses within multiwindow
-uint8_t lastwallswitch[MAX_SWITCHES];       // Last wall switch states
-uint8_t holdwallswitch[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
-uint8_t virtualswitch[MAX_SWITCHES];        // Virtual switch states
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
@@ -1163,7 +1157,6 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if ((CMND_SWITCHMODE == command_code) && (index > 0) && (index <= MAX_SWITCHES)) {
       if ((payload >= 0) && (payload < MAX_SWITCH_OPTION)) {
         Settings.switchmode[index -1] = payload;
-        GpioSwitchPinMode(index -1);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.switchmode[index-1]);
     }
@@ -1648,7 +1641,7 @@ boolean MqttShowSensor(void)
     if (pin[GPIO_SWT1 +i] < 99) {
 #endif  // USE_TM1638
       boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_SWITCH "%d\":\"%s\""), mqtt_data, i +1, GetStateText(swm ^ lastwallswitch[i]));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_SWITCH "%d\":\"%s\""), mqtt_data, i +1, GetStateText(swm ^ SwitchLastState(i)));
     }
   }
   XsnsCall(FUNC_JSON_APPEND);
@@ -1885,93 +1878,6 @@ void ButtonHandler(void)
       }
     }
     lastbutton[button_index] = button;
-  }
-}
-
-/*********************************************************************************************\
- * Switch handler
-\*********************************************************************************************/
-
-void SwitchHandler(byte mode)
-{
-  uint8_t button = NOT_PRESSED;
-  uint8_t switchflag;
-  uint16_t loops_per_second = 1000 / Settings.switch_debounce;
-
-  for (byte i = 0; i < MAX_SWITCHES; i++) {
-    if (((pin[GPIO_SWT1 +i] < 99) && (TimePassedSince(switch_change[i]) > Settings.switch_debounce)) || (mode)) {
-
-      if (holdwallswitch[i]) {
-        holdwallswitch[i]--;
-        if (0 == holdwallswitch[i]) {
-          SendKey(1, i +1, 3);           // Execute command via MQTT
-        }
-      }
-
-      if (mode) {
-        button = virtualswitch[i];
-      } else {
-        if (!((uptime < 4) && (0 == pin[GPIO_SWT1 +i]))) {  // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
-          button = digitalRead(pin[GPIO_SWT1 +i]);
-        }
-      }
-
-      if (button != lastwallswitch[i]) {
-        switchflag = 3;
-        switch (Settings.switchmode[i]) {
-        case TOGGLE:
-          switchflag = 2;                // Toggle
-          break;
-        case FOLLOW:
-          switchflag = button &1;        // Follow wall switch state
-          break;
-        case FOLLOW_INV:
-          switchflag = ~button &1;       // Follow inverted wall switch state
-          break;
-        case PUSHBUTTON:
-          if ((PRESSED == button) && (NOT_PRESSED == lastwallswitch[i])) {
-            switchflag = 2;              // Toggle with pushbutton to Gnd
-          }
-          break;
-        case PUSHBUTTON_INV:
-          if ((NOT_PRESSED == button) && (PRESSED == lastwallswitch[i])) {
-            switchflag = 2;              // Toggle with releasing pushbutton from Gnd
-          }
-          break;
-        case PUSHBUTTON_TOGGLE:
-          if (button != lastwallswitch[i]) {
-            switchflag = 2;              // Toggle with any pushbutton change
-          }
-          break;
-        case PUSHBUTTONHOLD:
-          if ((PRESSED == button) && (NOT_PRESSED == lastwallswitch[i])) {
-            holdwallswitch[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;
-          }
-          if ((NOT_PRESSED == button) && (PRESSED == lastwallswitch[i]) && (holdwallswitch[i])) {
-            holdwallswitch[i] = 0;
-            switchflag = 2;              // Toggle with pushbutton to Gnd
-          }
-          break;
-        case PUSHBUTTONHOLD_INV:
-          if ((NOT_PRESSED == button) && (PRESSED == lastwallswitch[i])) {
-            holdwallswitch[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;
-          }
-          if ((PRESSED == button) && (NOT_PRESSED == lastwallswitch[i]) && (holdwallswitch[i])) {
-            holdwallswitch[i] = 0;
-            switchflag = 2;              // Toggle with pushbutton to Gnd
-          }
-          break;
-        }
-
-        if (switchflag < 3) {
-          if (!SendKey(1, i +1, switchflag)) {  // Execute command via MQTT
-            ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < devices_present)
-          }
-        }
-
-        lastwallswitch[i] = button;
-      }
-    }
   }
 }
 
@@ -2404,64 +2310,8 @@ void SerialInput(void)
     serial_in_byte_counter = 0;
   }
 }
+
 /********************************************************************************************/
-
-void SwitchChange(byte index)
-{
-  switch_change[index] = millis();
-}
-
-void SwitchChange1(void)
-{
-  SwitchChange(0);
-}
-
-void SwitchChange2(void)
-{
-  SwitchChange(1);
-}
-
-void SwitchChange3(void)
-{
-  SwitchChange(2);
-}
-
-void SwitchChange4(void)
-{
-  SwitchChange(3);
-}
-
-void SwitchChange5(void)
-{
-  SwitchChange(4);
-}
-
-void SwitchChange6(void)
-{
-  SwitchChange(5);
-}
-
-void SwitchChange7(void)
-{
-  SwitchChange(6);
-}
-
-void SwitchChange8(void)
-{
-  SwitchChange(7);
-}
-
-void GpioSwitchPinMode(uint8_t index)
-{
-  if ((pin[GPIO_SWT1 +index] < 99) && (index < MAX_SWITCHES)) {
-    pinMode(pin[GPIO_SWT1 +index], (16 == pin[GPIO_SWT1 +index]) ? INPUT_PULLDOWN_16 : bitRead(switch_no_pullup, index) ? INPUT : INPUT_PULLUP);
-
-    typedef void (*function)(void) ;
-    function switch_callbacks[MAX_SWITCHES] = { SwitchChange1, SwitchChange2, SwitchChange3, SwitchChange4, SwitchChange5, SwitchChange6, SwitchChange7, SwitchChange8 };
-    detachInterrupt(pin[GPIO_SWT1 +index]);
-    attachInterrupt(pin[GPIO_SWT1 +index], switch_callbacks[index], CHANGE);
-  }
-}
 
 void GpioInit(void)
 {
@@ -2499,7 +2349,7 @@ void GpioInit(void)
 
     if (mpin) {
       if ((mpin >= GPIO_SWT1_NP) && (mpin < (GPIO_SWT1_NP + MAX_SWITCHES))) {
-        bitSet(switch_no_pullup, mpin - GPIO_SWT1_NP);
+        SwitchPullupFlag(mpin - GPIO_SWT1_NP);
         mpin -= (GPIO_SWT1_NP - GPIO_SWT1);
       }
       else if ((mpin >= GPIO_KEY1_NP) && (mpin < (GPIO_KEY1_NP + MAX_KEYS))) {
@@ -2631,14 +2481,8 @@ void GpioInit(void)
       digitalWrite(pin[GPIO_LED1 +i], bitRead(led_inverted, i));
     }
   }
-  for (byte i = 0; i < MAX_SWITCHES; i++) {
-    lastwallswitch[i] = 1;  // Init global to virtual switch state;
-    if (pin[GPIO_SWT1 +i] < 99) {
-      GpioSwitchPinMode(i);
-      lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // Set global now so doesn't change the saved power state on first switch check
-    }
-    virtualswitch[i] = lastwallswitch[i];
-  }
+
+  SwitchInit();
 
 #ifdef USE_WS2812
   if (!light_type && (pin[GPIO_WS2812] < 99)) {  // RGB led
@@ -2826,10 +2670,9 @@ void loop(void)
     SetNextTimeInterval(button_debounce, Settings.button_debounce);
     ButtonHandler();
   }
-  if (TimeReached(switch_debounce)) {
-    SetNextTimeInterval(switch_debounce, Settings.switch_debounce);
-    SwitchHandler(0);
-  }
+
+  SwitchLoop();
+
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
     XdrvCall(FUNC_EVERY_50_MSECOND);
