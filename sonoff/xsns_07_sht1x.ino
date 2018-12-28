@@ -188,10 +188,9 @@ void ShtEverySecond(void)
 void ShtShow(boolean json)
 {
   if (sht_valid) {
-    char temperature[10];
-    char humidity[10];
-
+    char temperature[33];
     dtostrfd(sht_temperature, Settings.flag2.temperature_resolution, temperature);
+    char humidity[33];
     dtostrfd(sht_humidity, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {

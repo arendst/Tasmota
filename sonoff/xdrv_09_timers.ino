@@ -135,7 +135,6 @@ void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8
 //  double Zeitzone = 2.0;   //Sommerzeit
   double Zeitzone = ((double)time_timezone) / 60;
   double Zeitgleichung = BerechneZeitgleichung(&DK, T);
-  double Minuten = Zeitgleichung * 60.0;
   double Zeitdifferenz = 12.0*acos((sin(h) - sin(B)*sin(DK)) / (cos(B)*cos(DK)))/pi;
   double AufgangOrtszeit = 12.0 - Zeitdifferenz - Zeitgleichung;
   double UntergangOrtszeit = 12.0 + Zeitdifferenz - Zeitgleichung;
@@ -488,7 +487,7 @@ boolean TimerCommand(void)
     if (XdrvMailbox.data_len) {
       Settings.longitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
     }
-    char lbuff[32];
+    char lbuff[33];
     dtostrfd(((double)Settings.longitude) /1000000, 6, lbuff);
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, lbuff);
   }
@@ -496,7 +495,7 @@ boolean TimerCommand(void)
     if (XdrvMailbox.data_len) {
       Settings.latitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
     }
-    char lbuff[32];
+    char lbuff[33];
     dtostrfd(((double)Settings.latitude) /1000000, 6, lbuff);
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, lbuff);
   }

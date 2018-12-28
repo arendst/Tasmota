@@ -1319,7 +1319,6 @@ boolean LightCommand(void)
     bool validtable = (XdrvMailbox.data_len > 0);
     char scolor[25];
     if (validtable) {
-      uint16_t HSB[3];
       if (strstr(XdrvMailbox.data, ",")) {  // Command with up to 5 comma separated parameters
         for (int i = 0; i < LST_RGBWC; i++) {
           char *substr;

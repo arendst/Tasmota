@@ -207,11 +207,10 @@ void DhtEverySecond(void)
 
 void DhtShow(boolean json)
 {
-  char temperature[10];
-  char humidity[10];
-
   for (byte i = 0; i < dht_sensors; i++) {
+    char temperature[33];
     dtostrfd(Dht[i].t, Settings.flag2.temperature_resolution, temperature);
+    char humidity[33];
     dtostrfd(Dht[i].h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {

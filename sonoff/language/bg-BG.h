@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.2.1.20
+ * Updated until v6.4.0.1
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -77,14 +77,14 @@
 #define D_DATA "Данни"
 #define D_DARKLIGHT "Тъмна"
 #define D_DEBUG "Дебъгване"
-#define D_DISABLED "Деактивиран"
+#define D_DISABLED "Забранен"
 #define D_DISTANCE "Разстояние"
 #define D_DNS_SERVER "DNS Сървър"
 #define D_DONE "Изпълнено"
-#define D_DST_TIME "DST"
+#define D_DST_TIME "Лятно време"
 #define D_ECO2 "eCO₂"
 #define D_EMULATION "Емулация"
-#define D_ENABLED "Активиран"
+#define D_ENABLED "Разрешен"
 #define D_ERASE "Изтриване"
 #define D_ERROR "Грешка"
 #define D_FAHRENHEIT "Фаренхайт"
@@ -128,11 +128,11 @@
 #define D_POWERUSAGE_APPARENT "Пълна мощност"
 #define D_POWERUSAGE_REACTIVE "Реактивна мощност"
 #define D_PRESSURE "Налягане"
-#define D_PRESSUREATSEALEVEL "Налягане на морското ниво"
+#define D_PRESSUREATSEALEVEL "Налягане при морското ниво"
 #define D_PROGRAM_FLASH_SIZE "Размер на флаш паметта за програми"
 #define D_PROGRAM_SIZE "Размер на програмата"
 #define D_PROJECT "Проект"
-#define D_RAIN "Rain"
+#define D_RAIN "Дъжд"
 #define D_RECEIVED "Получено"
 #define D_RESTART "Рестарт"
 #define D_RESTARTING "Рестартиране"
@@ -393,7 +393,7 @@
 #define D_CONFIGURE_TIMER "Конфигуриране на таймер"
 #define D_TIMER_PARAMETERS "Параметри на таймера"
 #define D_TIMER_ENABLE "Активиране на таймера"
-#define D_TIMER_ARM "Arm"
+#define D_TIMER_ARM "Активиран"
 #define D_TIMER_TIME "Време"
 #define D_TIMER_DAYS "Дни"
 #define D_TIMER_REPEAT "Повтори"
@@ -537,7 +537,9 @@
 #define D_SENSOR_SSPI_SCLK "SSPI SCLK"
 #define D_SENSOR_SSPI_CS   "SSPI CS"
 #define D_SENSOR_SSPI_DC   "SSPI DC"
-#define D_SENSOR_RF_SENSOR "RF Sensor"
+#define D_SENSOR_RF_SENSOR "RF датчик"
+#define D_SENSOR_AZ_RX   "AZ Rx"
+#define D_SENSOR_AZ_TX   "AZ Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -597,13 +599,13 @@
 #define D_LOG_WIFI "WIF: "         // Wifi
 
 //SDM220
-#define D_PHASE_ANGLE     "Phase Angle"
-#define D_IMPORT_ACTIVE   "Import Active"
-#define D_EXPORT_ACTIVE   "Export Active"
-#define D_IMPORT_REACTIVE "Import Reactive"
-#define D_EXPORT_REACTIVE "Export Reactive"
-#define D_TOTAL_REACTIVE  "Total Reactive"
+#define D_PHASE_ANGLE     "Фазов ъгъл"
+#define D_IMPORT_ACTIVE   "Входна активна мощност"
+#define D_EXPORT_ACTIVE   "Изходна активна мощност"
+#define D_IMPORT_REACTIVE "Входна реактивна мощност"
+#define D_EXPORT_REACTIVE "Изходна реактивна мощност"
+#define D_TOTAL_REACTIVE  "Общо реактивна мощност"
 #define D_UNIT_KWARH      "kVArh"
-#define D_UNIT_ANGLE      "Deg"
+#define D_UNIT_ANGLE      "°"
 
 #endif  // _LANGUAGE_BG_BG_H_

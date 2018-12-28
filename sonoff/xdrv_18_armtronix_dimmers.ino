@@ -155,11 +155,11 @@ void ArmtronixSetWifiLed(void)
   snprintf_P(log_data, sizeof(log_data), "ARM: Set WiFi LED to state %d (%d)", wifi_state, WifiState());
   AddLog(LOG_LEVEL_DEBUG);
 
-  char state = '0' + (wifi_state & 1 > 0);
+  char state = '0' + ((wifi_state & 1) > 0);
   ArmtronixSerial->print("Setled:");
   ArmtronixSerial->write(state);
   ArmtronixSerial->write(',');
-  state = '0' + (wifi_state & 2 > 0);
+  state = '0' + ((wifi_state & 2) > 0);
   ArmtronixSerial->write(state);
   ArmtronixSerial->write(10);
   armtronix_wifi_state = WifiState();

@@ -140,7 +140,7 @@ size_t strchrspn(const char *str1, int character)
 char* subStr(char* dest, char* str, const char *delim, int index)
 {
   char *act;
-  char *sub;
+  char *sub = NULL;
   char *ptr;
   int i;
 

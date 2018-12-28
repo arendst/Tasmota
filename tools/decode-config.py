@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0014'
+VER = '2.1.0015'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -811,7 +811,11 @@ Setting_6_3_0_16['flag3'][0].update ({
         'button_switch_force_local':('<L', (0x3A0,1,11), (None, None,                           ('SetOption',   '"SetOption61 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_4_0_2 = copy.deepcopy(Setting_6_3_0_16)
+Setting_6_4_0_2['flag3'][0].pop('hass_short_discovery_msg',None)
+# ======================================================================
 Settings = [
+            (0x6040002, 0xe00, Setting_6_4_0_2),
             (0x6030010, 0xe00, Setting_6_3_0_16),
             (0x603000F, 0xe00, Setting_6_3_0_15),
             (0x603000E, 0xe00, Setting_6_3_0_14),

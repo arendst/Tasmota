@@ -27,6 +27,10 @@
 
 #define XDRV_01                               1
 
+#ifndef WIFI_SOFT_AP_CHANNEL
+#define WIFI_SOFT_AP_CHANNEL                  1   // Soft Access Point Channel number between 1 and 11 as used by SmartConfig web GUI
+#endif
+
 #define HTTP_REFRESH_TIME                  2345   // milliseconds
 #define HTTP_RESTART_RECONNECT_TIME        9000   // milliseconds
 #define HTTP_OTA_RESTART_RECONNECT_TIME   20000   // milliseconds
@@ -441,7 +445,11 @@ void WifiManagerBegin(void)
   StopWebserver();
 
   DnsServer = new DNSServer();
-  WiFi.softAP(my_hostname);
+
+  int channel = WIFI_SOFT_AP_CHANNEL;
+  if ((channel < 1) || (channel > 13)) { channel = 1; }
+  WiFi.softAP(my_hostname, NULL, channel);
+
   delay(500); // Without delay I've seen the IP address blank
   /* Setup the DNS server redirecting all the domains to the apIP */
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);
@@ -1315,13 +1323,12 @@ void HandleInformation(void)
   if (Settings.flag.mqtt_enabled) {
     func += F("}1" D_MQTT_HOST "}2"); func += Settings.mqtt_host;
     func += F("}1" D_MQTT_PORT "}2"); func += String(Settings.mqtt_port);
-    func += F("}1" D_MQTT_CLIENT " &<br/>&nbsp;" D_FALLBACK_TOPIC "}2"); func += mqtt_client;
     func += F("}1" D_MQTT_USER "}2"); func += Settings.mqtt_user;
+    func += F("}1" D_MQTT_CLIENT "}2"); func += mqtt_client;
     func += F("}1" D_MQTT_TOPIC "}2"); func += Settings.mqtt_topic;
     func += F("}1" D_MQTT_GROUP_TOPIC "}2"); func += Settings.mqtt_grptopic;
-    GetTopic_P(stopic, CMND, mqtt_topic, "");
-    func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += stopic;
-
+    func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += GetTopic_P(stopic, CMND, mqtt_topic, "");
+    func += F("}1" D_MQTT " " D_FALLBACK_TOPIC "}2"); func += GetFallbackTopic_P(stopic, CMND, "");
   } else {
     func += F("}1" D_MQTT "}2" D_DISABLED);
   }
@@ -1584,7 +1591,7 @@ void HandleUploadLoop(void)
         upload_error = abs(result);
         return;
       } else if (result > 0) {
-        if (result > upload.currentSize) {
+        if ((size_t)result > upload.currentSize) {
           // Offset is larger than the buffer supplied, this should not happen
           upload_error = 9;  // File too large - Failed to decode RF firmware
           return;

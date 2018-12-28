@@ -176,8 +176,8 @@ void TmLoop(void)
   if (tm1638_state) {
     byte buttons = Tm1638GetButtons();
     for (byte i = 0; i < MAX_SWITCHES; i++) {
-      virtualswitch[i] = (buttons &1) ^1;
-      byte color = (virtualswitch[i]) ? TM1638_COLOR_NONE : TM1638_COLOR_RED;
+      SwitchSetVirtual(i, (buttons &1) ^1);
+      byte color = (SwitchGetVirtual(i)) ? TM1638_COLOR_NONE : TM1638_COLOR_RED;
       Tm1638SetLED(color, i);
       buttons >>= 1;
     }

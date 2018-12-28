@@ -94,7 +94,7 @@ uint8_t rules_trigger_count[MAX_RULE_SETS] = { 0 };
 uint8_t rules_teleperiod = 0;
 
 char event_data[100];
-char vars[MAX_RULE_VARS][10] = { 0 };
+char vars[MAX_RULE_VARS][33] = { 0 };
 
 /*******************************************************************************************/
 
@@ -166,6 +166,10 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
     snprintf_P(stemp, sizeof(stemp), PSTR("%%UPTIME%%"));
     if (rule_param.startsWith(stemp)) {
       rule_param = String(GetMinutesUptime());
+    }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMESTAMP%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = GetDateAndTime(DT_LOCAL).c_str();
     }
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
     snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNRISE%%"));
@@ -313,6 +317,7 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
       }
       commands.replace(F("%time%"), String(GetMinutesPastMidnight()));
       commands.replace(F("%uptime%"), String(GetMinutesUptime()));
+      commands.replace(F("%timestamp%"), GetDateAndTime(DT_LOCAL).c_str());
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       commands.replace(F("%sunrise%"), String(GetSunMinutes(0)));
       commands.replace(F("%sunset%"), String(GetSunMinutes(1)));
@@ -405,7 +410,7 @@ void RulesEvery50ms(void)
           if (pin[GPIO_SWT1 +i] < 99) {
 #endif // USE_TM1638
             boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
-            snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (swm ^ lastwallswitch[i]));
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (swm ^ SwitchLastState(i)));
             RulesProcessEvent(json_event);
           }
         }

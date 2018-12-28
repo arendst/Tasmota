@@ -6,6 +6,7 @@
 
 menu.BoardModel=Model
 menu.baud=Upload Speed
+menu.UploadTool=Upload Using
 menu.xtal=CPU Frequency
 menu.CrystalFreq=Crystal Frequency
 menu.eesz=Flash Size
@@ -36,6 +37,13 @@ generic.build.variant=generic
 generic.build.spiffs_pagesize=256
 generic.build.debug_port=
 generic.build.debug_level=
+
+generic.menu.UploadTool.esptool=Serial
+generic.menu.UploadTool.esptool.upload.tool=esptool
+generic.menu.UploadTool.esptool.upload.verbose=-vv
+generic.menu.UploadTool.espupload=OTA_upload
+generic.menu.UploadTool.espupload.upload.tool=espupload
+
 generic.menu.xtal.80=80 MHz
 generic.menu.xtal.80.build.f_cpu=80000000L
 generic.menu.xtal.160=160 MHz
@@ -6075,3 +6083,4 @@ espectro.menu.baud.512000.windows=512000
 espectro.menu.baud.512000.upload.speed=512000
 espectro.menu.baud.921600=921600
 espectro.menu.baud.921600.upload.speed=921600
+

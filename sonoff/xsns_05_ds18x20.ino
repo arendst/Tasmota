@@ -261,7 +261,9 @@ void Ds18x20Init(void)
   ds18x20_pin = pin[GPIO_DSB];
 
   OneWireResetSearch();
-  for (ds18x20_sensors = 0; ds18x20_sensors < DS18X20_MAX_SENSORS; ds18x20_sensors) {
+
+  ds18x20_sensors = 0;
+  while (ds18x20_sensors < DS18X20_MAX_SENSORS) {
     if (!OneWireSearch(ds18x20_sensor[ds18x20_sensors].address)) {
       break;
     }
@@ -424,12 +426,11 @@ void Ds18x20EverySecond(void)
 
 void Ds18x20Show(boolean json)
 {
-  char temperature[10];
-
   for (uint8_t i = 0; i < ds18x20_sensors; i++) {
     uint8_t index = ds18x20_sensor[i].index;
 
     if (ds18x20_sensor[index].valid) {   // Check for valid temperature
+      char temperature[33];
       dtostrfd(ds18x20_sensor[index].temperature, Settings.flag2.temperature_resolution, temperature);
 
       Ds18x20Name(i);

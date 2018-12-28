@@ -93,12 +93,12 @@ const char HTTP_SNS_COUNTER[] PROGMEM =
 void CounterShow(boolean json)
 {
   char stemp[10];
-  char counter[16];
 
   byte dsxflg = 0;
   byte header = 0;
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
+      char counter[33];
       if (bitRead(Settings.pulse_counter_type, i)) {
         dtostrfd((double)RtcSettings.pulse_counter[i] / 1000000, 6, counter);
       } else {
