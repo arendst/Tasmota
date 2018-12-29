@@ -169,7 +169,7 @@ const char HTTP_SCRIPT_MODULE2[] PROGMEM =
     "x.send();"
   "}";
 const char HTTP_SCRIPT_MODULE3[] PROGMEM =
-  "}1'%d'>%s (%02d)}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
+  "}1'%d'>%s (%d)}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
 
 const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
   "function i(){"
@@ -492,7 +492,7 @@ void ShowPage(String &page, bool auth)
   }
 
   page.replace(F("{a}"), String(Settings.web_refresh));
-  page.replace(F("{ha"), my_module.name);
+  page.replace(F("{ha"), ModuleName());
   page.replace(F("{h}"), Settings.friendlyname[0]);
 
   String info = "";
@@ -798,21 +798,20 @@ void HandleModuleConfiguration(void)
 
   char stemp[20];
   uint8_t midx;
-  mytmplt cmodule;
-  memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
+  myio cmodule;
+  ModuleGpios(&cmodule);
 
   if (WebServer->hasArg("m")) {
     String page = "";
     for (byte i = 0; i < MAXMODULE; i++) {
       midx = pgm_read_byte(kModuleNiceList + i);
-      snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, stemp, midx +1);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, AnyModuleName(midx).c_str(), midx +1);
       page += mqtt_data;
     }
     page += "}3";  // String separator means do not use "}3" in Module name and Sensor name
     for (byte j = 0; j < sizeof(kGpioNiceList); j++) {
       midx = pgm_read_byte(kGpioNiceList + j);
-      if (!GetUsedInModule(midx, cmodule.gp.io)) {
+      if (!GetUsedInModule(midx, cmodule.io)) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
         page += mqtt_data;
       }
@@ -828,8 +827,8 @@ void HandleModuleConfiguration(void)
   page += FPSTR(HTTP_SCRIPT_MODULE1);
   page.replace(F("}4"), String(Settings.module));
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
+    if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g16
       page += mqtt_data;
     }
   }
@@ -837,11 +836,10 @@ void HandleModuleConfiguration(void)
   page += FPSTR(HTTP_HEAD_STYLE);
   page.replace(F("<body>"), F("<body onload='sl()'>"));
   page += FPSTR(HTTP_FORM_MODULE);
-  snprintf_P(stemp, sizeof(stemp), kModules[MODULE].name);
-  page.replace(F("{mt"), stemp);
+  page.replace(F("{mt"), AnyModuleName(MODULE));
   page += F("<br/><table>");
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
+    if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:160px'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(9==i)? "<font color='red'>ESP8285</font>" :(10==i)? "<font color='red'>ESP8285</font>" :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
@@ -863,14 +861,14 @@ void ModuleSaveSettings(void)
   byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
   Settings.last_module = Settings.module;
   Settings.module = new_module;
-  mytmplt cmodule;
-  memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
+  myio cmodule;
+  ModuleGpios(&cmodule);
   String gpios = "";
   for (byte i = 0; i < MAX_GPIO_PIN; i++) {
     if (Settings.last_module != new_module) {
       Settings.my_gp.io[i] = 0;
     } else {
-      if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
+      if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
         snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
         WebGetArg(stemp, tmp, sizeof(tmp));
         Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
@@ -878,8 +876,7 @@ void ModuleSaveSettings(void)
       }
     }
   }
-  snprintf_P(stemp, sizeof(stemp), kModules[Settings.module].name);
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MODULE "%s " D_CMND_MODULE "%s"), stemp, gpios.c_str());
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MODULE "%s " D_CMND_MODULE "%s"), ModuleName().c_str(), gpios.c_str());
   AddLog(LOG_LEVEL_INFO);
 }
 

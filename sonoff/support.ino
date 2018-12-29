@@ -492,6 +492,21 @@ String PressureUnit(void)
   return (Settings.flag.pressure_conversion) ? String(D_UNIT_MILLIMETER_MERCURY) : String(D_UNIT_PRESSURE);
 }
 
+String AnyModuleName(uint8_t index)
+{
+  return FPSTR(kModules[index].name);
+}
+
+String ModuleName()
+{
+  return FPSTR(kModules[Settings.module].name);
+}
+
+void ModuleGpios(myio *gp)
+{
+  memcpy_P(gp, &kModules[Settings.module].gp, 18);
+}
+
 void SetGlobalValues(float temperature, float humidity)
 {
   global_update = uptime;
