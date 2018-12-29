@@ -197,13 +197,13 @@ struct SYSCFG {
   byte          weblog_level;              // 1AC
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
 
-  byte          free_1D5[20];              // 1D5  Free since 5.12.0e
+  byte          free_1D5[4];               // 1D5  Free since 5.12.0e
 
-  char          mqtt_host[33];             // 1E9
-  uint16_t      mqtt_port;                 // 20A
-  char          mqtt_client[33];           // 20C
-  char          mqtt_user[33];             // 22D
-  char          mqtt_pwd[33];              // 24E
+  char          mqtt_host[33];             // 1D9  shifted up since 6.4.2.0
+  uint16_t      mqtt_port;                 // 1FA         " "
+  char          mqtt_client[33];           // 1FC         " "
+  char          mqtt_user[41];             // 21D  32 to 40 since 6.4.2.0
+  char          mqtt_pwd[41];              // 246  32 to 40 since 6.4.2.0
   char          mqtt_topic[33];            // 26F
   char          button_topic[33];          // 290
   char          mqtt_grptopic[33];         // 2B1

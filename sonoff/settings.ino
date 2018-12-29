@@ -866,6 +866,12 @@ void SettingsDelta(void)
         Settings.sleep = 50;                // Default to 50 for sleep, for now
       }
     }
+    if (Settings.version < 0x06040200) {
+      memmove(Settings.mqtt_host, Settings.mqtt_host +16, sizeof(Settings.mqtt_host)+sizeof(Settings.mqtt_port)+sizeof(Settings.mqtt_client)+sizeof(Settings.mqtt_user)-8);  // Move mqtt settings down by 16 bytes
+      memset(&Settings.mqtt_user+sizeof(Settings.mqtt_user)-8, 0x00, 8);                    // Initialize new space allocated to mqtt_user
+      memmove(Settings.mqtt_pwd, Settings.mqtt_pwd +8, sizeof(Settings.mqtt_pwd)-8);     // Shift down mqtt_pass by 8 bytes to make room for new size
+      memset(&Settings.mqtt_pwd+sizeof(Settings.mqtt_pwd)-8, 0x00, 8);                    // Initialize new space allocated to mqtt_pass
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);
