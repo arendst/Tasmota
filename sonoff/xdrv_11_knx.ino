@@ -465,11 +465,11 @@ void KNX_INIT(void)
   //   and activate options according to the hardware
   /*for (int i = GPIO_REL1; i < GPIO_REL8 + 1; ++i)
   {
-    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_REL1].show = true; }
+    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_REL1].show = true; }
   }
   for (int i = GPIO_REL1_INV; i < GPIO_REL8_INV + 1; ++i)
   {
-    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_REL1_INV].show = true; }
+    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_REL1_INV].show = true; }
   }*/
   for (int i = 0; i < devices_present; ++i)
   {
@@ -477,27 +477,27 @@ void KNX_INIT(void)
   }
   for (int i = GPIO_SWT1; i < GPIO_SWT4 + 1; ++i)
   {
-    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_SWT1 + 8].show = true; }
+    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_SWT1 + 8].show = true; }
   }
   for (int i = GPIO_KEY1; i < GPIO_KEY4 + 1; ++i)
   {
-    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
+    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_KEY1 + 8].show = true; }
   }
   for (int i = GPIO_SWT1_NP; i < GPIO_SWT4_NP + 1; ++i)
   {
-    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_SWT1_NP + 8].show = true; }
+    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_SWT1_NP + 8].show = true; }
   }
   for (int i = GPIO_KEY1_NP; i < GPIO_KEY4_NP + 1; ++i)
   {
-    if (GetUsedInModule(i, my_module.gp.io)) { device_param[i - GPIO_KEY1_NP + 8].show = true; }
+    if (GetUsedInModule(i, my_module.io)) { device_param[i - GPIO_KEY1_NP + 8].show = true; }
   }
-  if (GetUsedInModule(GPIO_DHT11, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
-  if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
-  if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
-  if (GetUsedInModule(GPIO_DSB, my_module.gp.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
-  if (GetUsedInModule(GPIO_DHT11, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
-  if (GetUsedInModule(GPIO_DHT22, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
-  if (GetUsedInModule(GPIO_SI7021, my_module.gp.io)) { device_param[KNX_HUMIDITY-1].show = true; }
+  if (GetUsedInModule(GPIO_DHT11, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+  if (GetUsedInModule(GPIO_DHT22, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+  if (GetUsedInModule(GPIO_SI7021, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+  if (GetUsedInModule(GPIO_DSB, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+  if (GetUsedInModule(GPIO_DHT11, my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
+  if (GetUsedInModule(GPIO_DHT22, my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
+  if (GetUsedInModule(GPIO_SI7021, my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
 
   // Sonoff 31 or Sonoff Pow or any HLW8012 based device or Sonoff POW R2 or Any device with a Pzem004T
   if ( ( SONOFF_S31 == Settings.module ) || ( SONOFF_POW_R2 == Settings.module ) || ( energy_flg != ENERGY_NONE ) ) {

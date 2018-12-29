@@ -175,7 +175,7 @@ byte mdns_delayed_start = 0;                // mDNS delayed start
 boolean latest_uptime_flag = true;          // Signal latest uptime
 boolean pwm_present = false;                // Any PWM channel configured with SetOption15 0
 boolean mdns_begun = false;                 // mDNS active
-mytmplt my_module;                          // Active copy of Module name and GPIOs (23 x 8 bits)
+myio my_module;                             // Active copy of Module GPIOs (18 x 8 bits)
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
 char my_version[33];                        // Composed version string
 char my_image[33];                          // Code image and/or commit
@@ -850,14 +850,13 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         Settings.last_module = Settings.module;
         Settings.module = payload;
         if (Settings.last_module != payload) {
-          for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-            Settings.my_gp.io[i] = 0;
+          for (byte i = 0; i < sizeof(Settings.my_gp); i++) {
+            Settings.my_gp.io[i] = GPIO_NONE;
           }
         }
         restart_flag = 2;
       }
-      snprintf_P(stemp1, sizeof(stemp1), kModules[Settings.module].name);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_SVALUE, command, Settings.module +1, stemp1);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_SVALUE, command, Settings.module +1, ModuleName().c_str());
     }
     else if (CMND_MODULES == command_code) {
       for (byte i = 0; i < MAXMODULE; i++) {
@@ -867,8 +866,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
         }
         jsflg = 1;
-        snprintf_P(stemp1, sizeof(stemp1), kModules[i].name);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i +1, stemp1);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%d (%s)\""), mqtt_data, i +1, AnyModuleName(i).c_str());
         if ((strlen(mqtt_data) > (LOGSZ - TOPSZ)) || (i == MAXMODULE -1)) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]}"), mqtt_data);
           MqttPublishPrefixTopic_P(RESULT_OR_STAT, type);
@@ -878,19 +876,19 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       mqtt_data[0] = '\0';
     }
-    else if ((CMND_GPIO == command_code) && (index < MAX_GPIO_PIN)) {
-      mytmplt cmodule;
-      memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
-      if ((GPIO_USER == ValidGPIO(index, cmodule.gp.io[index])) && (payload >= 0) && (payload < GPIO_SENSOR_END)) {
+    else if ((CMND_GPIO == command_code) && (index < sizeof(Settings.my_gp))) {
+      myio cmodule;
+      ModuleGpios(&cmodule);
+      if ((GPIO_USER == ValidGPIO(index, cmodule.io[index])) && (payload >= 0) && (payload < GPIO_SENSOR_END)) {
         bool present = false;
         for (byte i = 0; i < sizeof(kGpioNiceList); i++) {
           uint8_t midx = pgm_read_byte(kGpioNiceList + i);
           if (midx == payload) { present = true; }
         }
         if (present) {
-          for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-            if ((GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) && (Settings.my_gp.io[i] == payload)) {
-              Settings.my_gp.io[i] = 0;
+          for (byte i = 0; i < sizeof(Settings.my_gp); i++) {
+            if ((GPIO_USER == ValidGPIO(i, cmodule.io[i])) && (Settings.my_gp.io[i] == payload)) {
+              Settings.my_gp.io[i] = GPIO_NONE;
             }
           }
           Settings.my_gp.io[index] = payload;
@@ -898,8 +896,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         }
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
-      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-        if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
+      for (byte i = 0; i < sizeof(Settings.my_gp); i++) {
+        if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
           if (jsflg) snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
           jsflg = 1;
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_GPIO "%d\":\"%d (%s)\""),
@@ -913,12 +911,12 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
     }
     else if (CMND_GPIOS == command_code) {
-      mytmplt cmodule;
-      memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
+      myio cmodule;
+      ModuleGpios(&cmodule);
       uint8_t midx;
       for (byte i = 0; i < sizeof(kGpioNiceList); i++) {
         midx = pgm_read_byte(kGpioNiceList + i);
-        if (!GetUsedInModule(midx, cmodule.gp.io)) {
+        if (!GetUsedInModule(midx, cmodule.io)) {
 
           if (!jsflg) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
@@ -2317,7 +2315,6 @@ void GpioInit(void)
 {
   uint8_t mpin;
   uint8_t key_no_pullup = 0;
-  mytmplt def_module;
 
   if (Settings.module >= MAXMODULE) {
     Settings.module = MODULE;
@@ -2327,22 +2324,24 @@ void GpioInit(void)
     baudrate = APP_BAUDRATE;
   }
 
-  memcpy_P(&def_module, &kModules[Settings.module], sizeof(def_module));
-  strlcpy(my_module.name, def_module.name, sizeof(my_module.name));
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+  myio def_gp;
+  ModuleGpios(&def_gp);
+
+
+  for (byte i = 0; i < sizeof(Settings.my_gp); i++) {
     if (Settings.my_gp.io[i] > GPIO_NONE) {
-      my_module.gp.io[i] = Settings.my_gp.io[i];
+      my_module.io[i] = Settings.my_gp.io[i];
     }
-    if ((def_module.gp.io[i] > GPIO_NONE) && (def_module.gp.io[i] < GPIO_USER)) {
-      my_module.gp.io[i] = def_module.gp.io[i];
+    if ((def_gp.io[i] > GPIO_NONE) && (def_gp.io[i] < GPIO_USER)) {
+      my_module.io[i] = def_gp.io[i];
     }
   }
 
   for (byte i = 0; i < GPIO_MAX; i++) {
     pin[i] = 99;
   }
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    mpin = ValidGPIO(i, my_module.gp.io[i]);
+  for (byte i = 0; i < sizeof(my_module.io); i++) {
+    mpin = ValidGPIO(i, my_module.io[i]);
 
 //  snprintf_P(log_data, sizeof(log_data), PSTR("DBG: gpio pin %d, mpin %d"), i, mpin);
 //  AddLog(LOG_LEVEL_DEBUG);
@@ -2397,11 +2396,11 @@ void GpioInit(void)
     for (byte i = 0; i < GPIO_MAX; i++) {
       if ((pin[i] >= 12) && (pin[i] <=14)) pin[i] = 99;
     }
-    my_module.gp.io[12] = GPIO_SPI_MISO;
+    my_module.io[12] = GPIO_SPI_MISO;
     pin[GPIO_SPI_MISO] = 12;
-    my_module.gp.io[13] = GPIO_SPI_MOSI;
+    my_module.io[13] = GPIO_SPI_MOSI;
     pin[GPIO_SPI_MOSI] = 13;
-    my_module.gp.io[14] = GPIO_SPI_CLK;
+    my_module.io[14] = GPIO_SPI_CLK;
     pin[GPIO_SPI_CLK] = 14;
   }
   soft_spi_flg = ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && ((pin[GPIO_SSPI_MOSI] < 99) || (pin[GPIO_SSPI_MOSI] < 99)));
@@ -2567,7 +2566,7 @@ void setup(void)
     if (RtcReboot.fast_reboot_count > 4) {        // Restarted 5 times
       Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
 //      Settings.last_module = SONOFF_BASIC;
-      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+      for (byte i = 0; i < sizeof(Settings.my_gp); i++) {
         Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
       }
     }
