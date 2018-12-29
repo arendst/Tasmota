@@ -826,7 +826,7 @@ void HandleModuleConfiguration(void)
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
   page += FPSTR(HTTP_SCRIPT_MODULE1);
   page.replace(F("}4"), String(Settings.module));
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+  for (byte i = 0; i < sizeof(cmodule); i++) {
     if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g16
       page += mqtt_data;
@@ -838,7 +838,7 @@ void HandleModuleConfiguration(void)
   page += FPSTR(HTTP_FORM_MODULE);
   page.replace(F("{mt"), AnyModuleName(MODULE));
   page += F("<br/><table>");
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+  for (byte i = 0; i < sizeof(cmodule); i++) {
     if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:160px'><select id='g%d' name='g%d'></select></td></tr>"),
@@ -864,7 +864,7 @@ void ModuleSaveSettings(void)
   myio cmodule;
   ModuleGpios(&cmodule);
   String gpios = "";
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+  for (byte i = 0; i < sizeof(cmodule); i++) {
     if (Settings.last_module != new_module) {
       Settings.my_gp.io[i] = 0;
     } else {

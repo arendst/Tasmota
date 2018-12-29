@@ -424,7 +424,7 @@ void SettingsDefaultSet2(void)
   // Module
 //  Settings.flag.interlock = 0;
   Settings.module = MODULE;
-//  for (byte i = 0; i < MAX_GPIO_PIN; i++) { Settings.my_gp.io[i] = 0; }
+//  for (byte i = 0; i < sizeof(Settings.my_gp); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
   strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
   strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
   strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
@@ -742,7 +742,7 @@ void SettingsDelta(void)
       Settings.altitude = 0;
     }
     if (Settings.version < 0x0508000B) {
-      for (byte i = 0; i < MAX_GPIO_PIN; i++) {  // Move GPIO_LEDs
+      for (byte i = 0; i < sizeof(Settings.my_gp); i++) {  // Move GPIO_LEDs
         if ((Settings.my_gp.io[i] >= 25) && (Settings.my_gp.io[i] <= 32)) {  // Was GPIO_LED1
           Settings.my_gp.io[i] += 23;  // Move GPIO_LED1
         }
@@ -829,7 +829,7 @@ void SettingsDelta(void)
           Settings.switchmode[i] = SWITCH_MODE;
         }
       }
-      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+      for (byte i = 0; i < sizeof(Settings.my_gp); i++) {
         if (Settings.my_gp.io[i] >= GPIO_SWT5) {  // Move up from GPIO_SWT5 to GPIO_KEY1
           Settings.my_gp.io[i] += 4;
         }

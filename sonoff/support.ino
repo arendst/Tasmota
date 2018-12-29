@@ -504,7 +504,29 @@ String ModuleName()
 
 void ModuleGpios(myio *gp)
 {
-  memcpy_P(gp, &kModules[Settings.module].gp, 18);
+  uint8_t *dest = (uint8_t *)gp;
+  memset(dest, GPIO_NONE, sizeof(myio));
+
+  uint8_t src[sizeof(mycfgio)];
+  memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
+  // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
+
+//  AddLogSerial(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
+
+  for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+    if (i < 6) {
+      dest[i] = src[i];     // GPIO00 - GPIO05
+    }
+    else if (i < 8) {
+      dest[i +3] = src[i];  // GPIO09 - GPIO10
+    }
+    else {
+      dest[i +4] = src[i];  // GPIO12 - GPIO16 and ADC0
+    }
+  }
+  // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
+
+//  AddLogSerial(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
 }
 
 void SetGlobalValues(float temperature, float humidity)
