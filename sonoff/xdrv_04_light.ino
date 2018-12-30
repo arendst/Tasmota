@@ -373,15 +373,15 @@ void LightInit(void)
       }
     }
     if (SONOFF_LED == Settings.module) { // Fix Sonoff Led instabilities
-      if (!my_module.gp.io[4]) {
+      if (!my_module.io[4]) {
         pinMode(4, OUTPUT);             // Stop floating outputs
         digitalWrite(4, LOW);
       }
-      if (!my_module.gp.io[5]) {
+      if (!my_module.io[5]) {
         pinMode(5, OUTPUT);             // Stop floating outputs
         digitalWrite(5, LOW);
       }
-      if (!my_module.gp.io[14]) {
+      if (!my_module.io[14]) {
         pinMode(14, OUTPUT);            // Stop floating outputs
         digitalWrite(14, LOW);
       }

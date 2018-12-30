@@ -462,7 +462,7 @@
 #define D_HX_CAL_REFERENCE "Poner Peso de Referencia"
 #define D_HX_CAL_DONE "Calibrado"
 #define D_HX_CAL_FAIL "Falló Calibración"
-#define D_RESET_HX711 "Restableces Escala"
+#define D_RESET_HX711 "Restablecer Escala"
 #define D_CONFIGURE_HX711 "Configurar Escala"
 #define D_HX711_PARAMETERS "Parámetros de Escala"
 #define D_ITEM_WEIGHT "Peso"

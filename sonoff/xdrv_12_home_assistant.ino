@@ -237,10 +237,9 @@ void HAssAnnounceRelayLight(void)
           snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_CT, mqtt_data, color_temp_command_topic, state_topic);
         }
       }
-      snprintf_P(stemp1, sizeof(stemp1), kModules[Settings.module].name);
       snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
                  unique_id, ESP.getChipId(),
-                 Settings.friendlyname[0], stemp1, my_version, my_image, "Tasmota");
+                 Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image, "Tasmota");
       snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
@@ -287,10 +286,9 @@ void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, 
     if (toggle) snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_BUTTON_SWITCH_TOGGLE, mqtt_data);
     else snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_BUTTON_SWITCH_ONOFF, mqtt_data, Settings.state_text[0]);
 
-    snprintf_P(stemp1, sizeof(stemp1), kModules[Settings.module].name);
     snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
                unique_id, ESP.getChipId(),
-               Settings.friendlyname[0], stemp1, my_version, my_image, "Tasmota");
+               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image, "Tasmota");
     snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
@@ -413,10 +411,9 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
       snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SENSOR_ANY,
                  mqtt_data, sensorname, subsensortype);
     }
-    snprintf_P(stemp1, sizeof(stemp1), kModules[Settings.module].name);
     snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
                unique_id, ESP.getChipId(),
-               Settings.friendlyname[0], stemp1, my_version, my_image, "Tasmota");
+               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image, "Tasmota");
     snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
