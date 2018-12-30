@@ -456,15 +456,15 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_TUYA_DIMMER
   GPIO_TUYA_TX,        // Tuya Serial interface
-  GPIO_TUYA_RX,         // Tuya Serial interface
+  GPIO_TUYA_RX,        // Tuya Serial interface
 #endif
 #ifdef USE_MGC3130
   GPIO_MGC3130_XFER,
-  GPIO_MGC3130_RESET
+  GPIO_MGC3130_RESET,
 #endif
 #ifdef USE_AZ7798
   GPIO_AZ_TXD,         // AZ-Instrument 7798 CO2 datalogger Serial interface
-  GPIO_AZ_RXD          // AZ-Instrument 7798 CO2 datalogger Serial interface
+  GPIO_AZ_RXD,         // AZ-Instrument 7798 CO2 datalogger Serial interface
 #endif
 };
 
