@@ -17,6 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_ENERGY_SENSOR
+
 #ifdef XFUNC_PTR_IN_ROM
 int (* const xnrg_func_ptr[])(byte) PROGMEM = {   // Energy driver Function Pointers
 #else
@@ -96,7 +98,14 @@ int XnrgCall(byte Function)
 
   for (byte x = 0; x < xnrg_present; x++) {
     result = xnrg_func_ptr[x](Function);
-    if (result) break;
+
+    if (result && ((FUNC_SERIAL == Function) ||
+                   (FUNC_COMMAND == Function)
+                  )) {
+      break;
+    }
   }
   return result;
 }
+
+#endif  // USE_ENERGY_SENSOR
