@@ -240,7 +240,18 @@ boolean XdrvCall(byte Function)
   for (byte x = 0; x < xdrv_present; x++) {
 //    WifiAddDelayWhenDisconnected();
     result = xdrv_func_ptr[x](Function);
-    if (result) break;
+
+    if (result && ((FUNC_COMMAND == Function) ||
+                   (FUNC_MQTT_DATA == Function) ||
+                   (FUNC_RULES_PROCESS == Function) ||
+                   (FUNC_BUTTON_PRESSED == Function) ||
+                   (FUNC_SERIAL == Function) ||
+                   (FUNC_MODULE_INIT == Function) ||
+                   (FUNC_SET_CHANNELS == Function) ||
+                   (FUNC_SET_DEVICE_POWER == Function)
+                  )) {
+      break;
+    }
   }
 
   return result;

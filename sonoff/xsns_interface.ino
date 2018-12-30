@@ -311,7 +311,9 @@ boolean XsnsCall(byte Function)
       }
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
 
-      if (result) break;
+      if (result && (FUNC_COMMAND == Function)) {
+        break;
+      }
 #ifdef USE_DEBUG_DRIVER
     }
 #endif

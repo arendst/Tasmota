@@ -25,7 +25,7 @@
  * Inspired by (https://github.com/OLIMEX/olimex-iot-firmware-esp8266/blob/master/olimex/user/user_switch2.c)
 \*********************************************************************************************/
 
-#define SWITCH_STATE_FILTER   5
+#define SWITCH_PROBE_INTERVAL    10         // Time in milliseconds between switch input probe
 
 #include <Ticker.h>
 
@@ -33,7 +33,7 @@ Ticker TickerSwitch;
 
 unsigned long switch_debounce = 0;          // Switch debounce timer
 uint16_t switch_no_pullup = 0;              // Switch pull-up bitmask flags
-uint8_t switch_state_buf[MAX_SWITCHES] = { SWITCH_STATE_FILTER / 2 };
+uint8_t switch_state_buf[MAX_SWITCHES] = { 0 };
 uint8_t lastwallswitch[MAX_SWITCHES];       // Last wall switch states
 uint8_t holdwallswitch[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
 uint8_t switch_virtual[MAX_SWITCHES];       // Virtual switch states
@@ -65,29 +65,47 @@ uint8_t SwitchGetVirtual(uint8_t index)
 
 void SwitchProbe(void)
 {
+  uint8_t state_filter = Settings.switch_debounce / SWITCH_PROBE_INTERVAL;   // 5, 10, 15
+  uint8_t force_high = (Settings.switch_debounce % 50) &1;                   // 51, 101, 151 etc
+  uint8_t force_low = (Settings.switch_debounce % 50) &2;                    // 52, 102, 152 etc
+
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
       if (!((uptime < 4) && (0 == pin[GPIO_SWT1 +i]))) {  // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
         // Olimex user_switch2.c code to fix 50Hz induced pulses
         if (1 == digitalRead(pin[GPIO_SWT1 +i])) {
-          if (switch_state_buf[i] < SWITCH_STATE_FILTER) {
+
+          if (force_high) {                               // Enabled with SwitchDebounce x1
+            if (1 == switch_virtual[i]) {
+              switch_state_buf[i] = state_filter;         // With noisy input keep current state 1 unless constant 0
+            }
+          }
+
+          if (switch_state_buf[i] < state_filter) {
             switch_state_buf[i]++;
-            if (SWITCH_STATE_FILTER == switch_state_buf[i]) {
+            if (state_filter == switch_state_buf[i]) {
               switch_virtual[i] = 1;
             }
           }
         } else {
+
+          if (force_low) {                                // Enabled with SwitchDebounce x2
+            if (0 == switch_virtual[i]) {
+              switch_state_buf[i] = 0;                    // With noisy input keep current state 0 unless constant 1
+            }
+          }
+
           if (switch_state_buf[i] > 0) {
             switch_state_buf[i]--;
             if (0 == switch_state_buf[i]) {
-              switch_virtual[i] = 0;
+              switch_virtual[i] = 0; 
             }
           }
         }
       }
     }
   }
-  TickerSwitch.attach_ms(10, SwitchProbe);  // Re-arm as core 2.3.0 does only support ONCE mode
+  TickerSwitch.attach_ms(SWITCH_PROBE_INTERVAL, SwitchProbe);  // Re-arm as core 2.3.0 does only support ONCE mode
 }
 
 void SwitchInit(void)
@@ -102,7 +120,7 @@ void SwitchInit(void)
     }
     switch_virtual[i] = lastwallswitch[i];
   }
-  if (switches_found) { TickerSwitch.attach_ms(10, SwitchProbe); }
+  if (switches_found) { TickerSwitch.attach_ms(SWITCH_PROBE_INTERVAL, SwitchProbe); }
 }
 
 /*********************************************************************************************\
