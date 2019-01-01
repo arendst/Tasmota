@@ -285,6 +285,9 @@
 //  #define W1_PARASITE_POWER                      // If using USE_DS18x20 then optimize for parasite powered sensors
 //  #define DS18B20_INTERNAL_PULLUP	               // Use INPUT_PULLUP internal pullup resistors for single DS18B20
 
+// -- SPI sensors ----------------------------------
+#define USE_MAX31855                           // Enable MAX31855 K-Type thermocouple sensor
+
 // -- I2C sensors ---------------------------------
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 
