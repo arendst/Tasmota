@@ -1,7 +1,7 @@
 /*
   xsns_32_mpu6050.ino - MPU6050 gyroscope and temperature sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Oliver Welter
+  Copyright (C) 2019  Oliver Welter
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

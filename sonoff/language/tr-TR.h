@@ -1,7 +1,7 @@
 /*
   tr-TR.h - localization for Turkish - Turkey for Sonoff-Tasmota
 
-  Copyright (C) 2018  Ali Sait Teke and Theo Arends
+  Copyright (C) 2019  Ali Sait Teke and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

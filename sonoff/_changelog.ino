@@ -1,4 +1,7 @@
-/* 6.4.1.3 20181229
+/* 6.4.1.4 20190101
+ * Update Copyright (C) 2019 
+ * 
+ * 6.4.1.3 20181229
  * Change sonoff_template.h module lay-out by removing non-configurable GPIOs
  * Add support for MAX31855 K-Type thermocouple sensor using softSPI (#4764)
  *

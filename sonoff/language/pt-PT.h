@@ -1,7 +1,7 @@
 /*
   pt-PT.h - localization for Portuguese - Portugal for Sonoff-Tasmota
 
-  Copyright (C) 2018  Paulo Paiva
+  Copyright (C) 2019  Paulo Paiva
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

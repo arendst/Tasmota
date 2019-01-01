@@ -1,7 +1,7 @@
 /*
   xsns_16_tsl2561.ino - TSL2561 light sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends and Joachim Banzhaf
+  Copyright (C) 2019  Theo Arends and Joachim Banzhaf
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

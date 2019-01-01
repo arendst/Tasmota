@@ -1,7 +1,7 @@
 /*
   xdrv_06_snfbridge.ino - sonoff RF bridge 433 support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends and Erik Andrén Zachrisson (fw update)
+  Copyright (C) 2019  Theo Arends and Erik Andrén Zachrisson (fw update)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

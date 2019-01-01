@@ -1,7 +1,7 @@
 /*
   sv-SE.h - localization for Swedish - Svenska for Sonoff-Tasmota
 
-  Copyright (C) 2018  Gunnar Norin
+  Copyright (C) 2019  Gunnar Norin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
