@@ -365,15 +365,17 @@ void GetFeatures(void)
   feature_sns2 |= 0x00008000;  // xsns_37_rfsensor.ino
 #endif
 #ifdef USE_THEO_V2
-  feature_sns2 |= 0x00010000;
+  feature_sns2 |= 0x00010000;  // xsns_37_rfsensor.ino
 #endif
 #ifdef USE_ALECTO_V2
-  feature_sns2 |= 0x00020000;
+  feature_sns2 |= 0x00020000;  // xsns_37_rfsensor.ino
 #endif
 #ifdef USE_AZ7798
-  feature_sns2 |= 0x00040000;
+  feature_sns2 |= 0x00040000;  // xsns_38_az7798.ino
 #endif
-//  feature_sns2 |= 0x00080000;
+#ifdef USE_MAX31855
+  feature_sns2 |= 0x00080000;  // xsns_39_max31855.ino
+#endif
 //  feature_sns2 |= 0x00100000;
 //  feature_sns2 |= 0x00200000;
 //  feature_sns2 |= 0x00400000;

@@ -285,9 +285,6 @@
 //  #define W1_PARASITE_POWER                      // If using USE_DS18x20 then optimize for parasite powered sensors
 //  #define DS18B20_INTERNAL_PULLUP	               // Use INPUT_PULLUP internal pullup resistors for single DS18B20
 
-// -- SPI sensors ----------------------------------
-#define USE_MAX31855                           // Enable MAX31855 K-Type thermocouple sensor
-
 // -- I2C sensors ---------------------------------
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 
@@ -382,6 +379,8 @@
 #define USE_MCP39F501                            // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
 
 // -- Low level interface devices -----------------
+//#define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
+
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k3 code, 0k3 mem, 48 iram)
 //  #define USE_IR_HVAC                            // Support for HVAC (Toshiba, Mitsubishi and LG) system using IR (+3k5 code)
   #define USE_IR_RECEIVE                         // Support for IR receiver (+7k2 code, 264 iram)

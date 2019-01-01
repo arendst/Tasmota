@@ -116,6 +116,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_PZEM_AC                           // Add support for PZEM014,016 Energy monitor (+1k1 code)
 #define USE_PZEM_DC                           // Add support for PZEM003,017 Energy monitor (+1k1 code)
 #define USE_MCP39F501                         // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
+#define USE_MAX31855                          // Add support for MAX31855 K-Type thermocouple sensor using softSPI
 #define USE_IR_REMOTE                         // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
   #define USE_IR_HVAC                         // Support for HVAC system using IR (+2k code)
   #define USE_IR_RECEIVE                      // Support for IR receiver (+5k5 code, 264 iram)
@@ -182,6 +183,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer
+#undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR remote commands using library IRremoteESP8266 and ArduinoJson
 #undef USE_IR_RECEIVE                         // Disable support for IR receiver
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
@@ -303,6 +305,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 //#undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
+#undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
@@ -366,6 +369,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
+#undef USE_MAX31855                           // DIsable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
