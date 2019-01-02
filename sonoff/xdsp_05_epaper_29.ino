@@ -19,7 +19,7 @@
 
 #ifdef USE_SPI
 #ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_EPAPER
+#ifdef USE_DISPLAY_EPAPER_29
 
 #define XDSP_05                5
 
@@ -123,12 +123,16 @@ void EpdInitDriver(void)
       epd.sclk_pin = pin[GPIO_SPI_CLK];   // 14
       epd.mosi_pin = pin[GPIO_SPI_MOSI];  // 13
       EpdInitMode();
+      snprintf_P(log_data, sizeof(log_data), PSTR("EPD: HardSPI CS %d, CLK %d, MOSI %d"), epd.cs_pin, epd.sclk_pin, epd.mosi_pin);
+      AddLog(LOG_LEVEL_DEBUG);
     }
     else if ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && (pin[GPIO_SSPI_MOSI] < 99)) {
       epd.cs_pin = pin[GPIO_SSPI_CS];
       epd.sclk_pin = pin[GPIO_SSPI_SCLK];
       epd.mosi_pin = pin[GPIO_SSPI_MOSI];
       EpdInitMode();
+      snprintf_P(log_data, sizeof(log_data), PSTR("EPD: SoftSPI CS %d, CLK %d, MOSI %d"), epd.cs_pin, epd.sclk_pin, epd.mosi_pin);
+      AddLog(LOG_LEVEL_DEBUG);
     }
   }
 }
@@ -337,6 +341,6 @@ boolean Xdsp05(byte function)
   return result;
 }
 
-#endif  // USE_DISPLAY_EPAPER
+#endif  // USE_DISPLAY_EPAPER_29
 #endif  // USE_DISPLAY
 #endif  // USE_SPI
