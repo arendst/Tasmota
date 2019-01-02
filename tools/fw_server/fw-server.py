@@ -3,7 +3,7 @@
 """
 fw-server.py - firmware server for Sonoff-Tasmota OTA upgrade
 
-Copyright (C) 2018 Gennaro Tortone
+Copyright (C) 2019 Gennaro Tortone
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

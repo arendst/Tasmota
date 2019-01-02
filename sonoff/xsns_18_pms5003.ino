@@ -1,7 +1,7 @@
 /*
   xsns_18_pms5003.ino - PMS5003-7003 particle concentration sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

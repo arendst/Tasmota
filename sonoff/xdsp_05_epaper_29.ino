@@ -1,7 +1,7 @@
 /*
   xdsp_05_epaper_29.ino - 2.9 Inch display e-paper support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends, Gerhard Mutz and Waveshare
+  Copyright (C) 2019  Theo Arends, Gerhard Mutz and Waveshare
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

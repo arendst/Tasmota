@@ -1,7 +1,7 @@
 /*
   xnrg_04_mcp39f501.ino - MCP39F501 energy sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
