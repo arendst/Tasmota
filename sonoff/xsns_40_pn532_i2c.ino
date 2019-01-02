@@ -290,7 +290,7 @@ void PN532_ScanForTag(void)
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PN532\":{\"UID\":\"%s\"}}"), mqtt_data, uids);
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-      char command[15];
+      char command[27];
       sprintf(command,"event PN532=%s",uids);
       ExecuteCommand(command, SRC_RULE);
       pn532_i2c_scan_defer_report = 19;
