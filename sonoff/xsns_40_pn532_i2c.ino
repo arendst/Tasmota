@@ -314,6 +314,7 @@ boolean Xsns40(byte function)
         if (pn532_i2c_detected) {
           PN532_ScanForTag();
         }
+        break;
       case FUNC_EVERY_SECOND:
         PN532_Detect();
         break;
