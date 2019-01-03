@@ -1,6 +1,7 @@
 /* 6.4.1.4 20190101
  * Update Copyright (C) 2019 
  * Fix epaper driver (#4785)
+ * Add support for Near Field Communication (NFC) controller PN532 using I2C (#4791)
  * 
  * 6.4.1.3 20181229
  * Change sonoff_template.h module lay-out by removing non-configurable GPIOs
