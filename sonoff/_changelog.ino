@@ -1,8 +1,12 @@
-/* 6.4.1.4 20190101
- * Update Copyright (C) 2019 
+/* 6.4.1.5 20190103
+ * Remove command SetOption35 0-255 for mDNS start-up delay (#4793)
+ * Add command SetOption55 0/1 to disable/enable mDNS (#4793)
+ *
+ * 6.4.1.4 20190101
+ * Update Copyright (C) 2019
  * Fix epaper driver (#4785)
  * Add support for Near Field Communication (NFC) controller PN532 using I2C (#4791)
- * 
+ *
  * 6.4.1.3 20181229
  * Change sonoff_template.h module lay-out by removing non-configurable GPIOs
  * Add support for MAX31855 K-Type thermocouple sensor using softSPI (#4764)

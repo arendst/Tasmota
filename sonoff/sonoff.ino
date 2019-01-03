@@ -171,7 +171,7 @@ byte reset_web_log_flag = 0;                // Reset web console log
 byte devices_present = 0;                   // Max number of devices supported
 byte seriallog_level;                       // Current copy of Settings.seriallog_level
 byte syslog_level;                          // Current copy of Settings.syslog_level
-byte mdns_delayed_start = 0;                // mDNS delayed start
+//byte mdns_delayed_start = 0;                // mDNS delayed start
 boolean latest_uptime_flag = true;          // Signal latest uptime
 boolean pwm_present = false;                // Any PWM channel configured with SetOption15 0
 boolean mdns_begun = false;                 // mDNS active
@@ -761,12 +761,13 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         else if (1 == ptype) {   // SetOption50 .. 81
           if (payload <= 1) {
             bitWrite(Settings.flag3.data, pindex, payload);
-            if (60 == ptype) {   // SetOption60 enable or disable traditional sleep
-              if (payload == 0) {   // Dynamic Sleep
-                WiFiSetSleepMode(); // Update WiFi sleep mode accordingly
-              } else {            // Traditional Sleep //AT
-                WiFiSetSleepMode(); // Update WiFi sleep mode accordingly
+            if (5 == pindex) {   // SetOption55
+              if (0 == payload) {
+                restart_flag = 2;  // Disable mDNS needs restart
               }
+            }
+            if (10 == pindex) {  // SetOption60 enable or disable traditional sleep
+              WiFiSetSleepMode();  // Update WiFi sleep mode accordingly
             }
           }
         }
@@ -2539,7 +2540,7 @@ void setup(void)
   }
 
   baudrate = Settings.baudrate * 1200;
-  mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
+//  mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
   seriallog_level = Settings.seriallog_level;
   seriallog_timer = SERIALLOG_TIMER;
   syslog_level = Settings.syslog_level;

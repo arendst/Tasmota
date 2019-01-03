@@ -866,6 +866,10 @@ void SettingsDelta(void)
         Settings.sleep = 50;                // Default to 50 for sleep, for now
       }
     }
+    if (Settings.version < 0x06040105) {
+      Settings.flag3.mdns_enabled = 0;
+      Settings.param[P_MDNS_DELAYED_START] = 0;
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);
