@@ -54,12 +54,13 @@
 uint8_t pn532_i2c_detected = 0;
 uint8_t pn532_i2c_packetbuffer[64];
 uint8_t pn532_i2c_scan_defer_report = 0;         // If a valid card was found we will not scan for one again in the same two seconds so we set this to 19 if a card was found
+uint8_t pn532_i2c_command = 0;
 
-uint8_t pn532_i2c_command;
+const uint8_t PROGMEM pn532_global_timeout = 10;
 
-int16_t PN532_getResponseLength(uint8_t buf[], uint8_t len, uint16_t timeout) {
+int16_t PN532_getResponseLength(uint8_t buf[], uint8_t len) {
   const uint8_t PN532_NACK[] = {0, 0, 0xFF, 0xFF, 0, 0};
-  uint16_t time = 0;
+  uint8_t time = 0;
   do {
     if (Wire.requestFrom(PN532_I2C_ADDRESS, 6)) {
       if (Wire.read() & 1) {  // check first byte --- status
@@ -68,7 +69,7 @@ int16_t PN532_getResponseLength(uint8_t buf[], uint8_t len, uint16_t timeout) {
     }
     delay(1);
     time++;
-    if ((0 != timeout) && (time > timeout)) {
+    if (time > pn532_global_timeout) {
       return -1;
     }
   } while (1);
@@ -91,11 +92,10 @@ int16_t PN532_getResponseLength(uint8_t buf[], uint8_t len, uint16_t timeout) {
 
 int16_t PN532_readResponse(uint8_t buf[], uint8_t len)
 {
-  uint16_t time = 0;
+  uint8_t time = 0;
   uint8_t length;
-  uint8_t timeout = 10;
 
-  length = PN532_getResponseLength(buf, len, timeout);
+  length = PN532_getResponseLength(buf, len);
 
   // [RDY] 00 00 FF LEN LCS (TFI PD0 ... PDn) DCS 00
 
@@ -107,7 +107,7 @@ int16_t PN532_readResponse(uint8_t buf[], uint8_t len)
     }
     delay(1);
     time++;
-    if ((0 != timeout) && (time > timeout)) {
+    if (time > pn532_global_timeout) {
       return -1;
     }
   } while (1);
@@ -149,7 +149,7 @@ int8_t PN532_readAckFrame(void)
   const uint8_t PN532_ACK[] = {0, 0, 0xFF, 0, 0xFF, 0};
   uint8_t ackBuf[sizeof(PN532_ACK)];
   
-  uint16_t time = 0;
+  uint8_t time = 0;
   
   do {
     if (Wire.requestFrom(PN532_I2C_ADDRESS,  sizeof(PN532_ACK) + 1)) {
