@@ -228,6 +228,7 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager set AccessPoint and keep Station"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager set AccessPoint"
 #define D_TRYING_TO_CONNECT "Trying to connect device to network"
+#define D_WEBLOGOUT "Logout"
 
 #define D_RESTART_IN "Restart in"
 #define D_SECONDS "seconds"
@@ -238,7 +239,10 @@
 #define D_FIRMWARE_UPGRADE "Firmware Upgrade"
 #define D_CONSOLE "Console"
 #define D_CONFIRM_RESTART "Confirm Restart"
+#define D_WORKING "Working"
+#define D_READY "Ready"
 
+#define D_CONFIGURE_GENERAL "General Options"
 #define D_CONFIGURE_MODULE "Configure Module"
 #define D_CONFIGURE_WIFI "Configure WiFi"
 #define D_CONFIGURE_MQTT "Configure MQTT"
@@ -251,11 +255,18 @@
 #define D_RESTORE_CONFIGURATION "Restore Configuration"
 #define D_MAIN_MENU "Main Menu"
 
+#define D_GENERAL_PARAMETERS " General options"
+#define D_LED_INDICATOR "LED Indicator"
+#define D_SAVE_STATE "Save State"
+#define D_DISABLED "Disabled"
+#define D_ENABLED "Enabled"
+
 #define D_MODULE_PARAMETERS "Module parameters"
 #define D_MODULE_TYPE "Module type"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
+#define D_IO_SETUP "I/O configuration"
 
 #define D_WIFI_PARAMETERS "Wifi parameters"
 #define D_SCAN_FOR_WIFI_NETWORKS "Scan for wifi networks"
