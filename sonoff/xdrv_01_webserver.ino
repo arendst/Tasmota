@@ -1345,16 +1345,19 @@ void HandleInformation(void)
 #else
   func += F(D_DISABLED);
 #endif // USE_EMULATION
-
   func += F("}1" D_MDNS_DISCOVERY "}2");
 #ifdef USE_DISCOVERY
-  func += F(D_ENABLED);
-  func += F("}1" D_MDNS_ADVERTISE "}2");
+  if (Settings.flag3.mdns_enabled) {
+    func += F(D_ENABLED);
+    func += F("}1" D_MDNS_ADVERTISE "}2");
 #ifdef WEBSERVER_ADVERTISE
-  func += F(D_WEB_SERVER);
+    func += F(D_WEB_SERVER);
 #else
-  func += F(D_DISABLED);
+    func += F(D_DISABLED);
 #endif // WEBSERVER_ADVERTISE
+  } else {
+    func += F(D_DISABLED);
+  }
 #else
   func += F(D_DISABLED);
 #endif // USE_DISCOVERY
