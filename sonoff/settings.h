@@ -75,7 +75,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)
     uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60 - Enable normal sleep instead of dynamic sleep
     uint32_t button_switch_force_local : 1;// bit 11
-    uint32_t spare12 : 1;
+    uint32_t led_indicator_disable : 1;    // bit 12 - disable use of the status LED
     uint32_t spare13 : 1;
     uint32_t spare14 : 1;
     uint32_t spare15 : 1;

@@ -212,7 +212,40 @@ enum WifiConfigOptions {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCO
 
 enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, MAX_SWITCH_OPTION};
 
-enum LedStateOptions {LED_OFF, LED_POWER, LED_MQTTSUB, LED_POWER_MQTTSUB, LED_MQTTPUB, LED_POWER_MQTTPUB, LED_MQTT, LED_POWER_MQTT, MAX_LED_OPTION};
+enum LedStateOptions {
+  LED_OFF           , // = 0x00,
+  LED_POWER         , // = 0x01,
+  LED_MQTTSUB       , // = 0x02,
+  LED_POWER_MQTTSUB , // = 0x03,
+  LED_MQTTPUB       , // = 0x04,
+  LED_POWER_MQTTPUB , // = 0x05,
+  LED_MQTT          , // = 0x06,
+  LED_POWER_MQTT    , // = 0x07,
+  LED_ON            , // = 0x08,
+  MAX_LED_OPTION    ,
+  MASK_LED_OPTION = 0xFF
+};
+
+enum LEDBlinkMode {
+  LED_BLINKMODE_CONTINUOUS, // blink setup will be repeated forever
+  LED_BLINKMODE_LIMITED,    // blink will operate till blink counter reaches stop state
+  MAX_OPTION_LEDBLINKMODE
+};
+
+enum LEDBlinkPattern {
+  LED_BLINKPATTERN_IDLE     = 0x0F, // bits : 0000 1111
+  LED_BLINKPATTERN_ERROR    = 0xAA, // bits : 1010 1010
+  LED_BLINKPATTERN_WIFIDOWN = 0x15, // bits : 0001 0101
+  LED_BLINKPATTERN_MQTTDOWN = 0x05, // bits : 0000 0101
+  MAX_OPTION_LEDBLINKPATTERN
+};
+
+enum LEDBlinkSpeed {
+  LED_BLINKSPEED_FAST       = 1,  // 250ms
+  LED_BLINKSPEED_NORMAL     = 2,  // 500ms
+  LED_BLINKSPEED_SLOW       = 4,  // 1s
+  MAX_OPTION_LEDBLINKSPEED
+};
 
 enum EmulationOptions {EMUL_NONE, EMUL_WEMO, EMUL_HUE, EMUL_MAX};
 

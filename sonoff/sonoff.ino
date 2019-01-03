@@ -123,6 +123,9 @@ int restart_flag = 0;                       // Sonoff restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 int tele_period = 1;                        // Tele period timer
 int blinks = 201;                           // Number of LED blinks
+uint8_t blinkMode = LED_BLINKMODE_LIMITED;  // Blink operation mode affecting application of 'blinks'
+uint8_t blinkPattern = LED_BLINKPATTERN_IDLE;// Blink pattern
+uint8_t blinkPatternIndex = 0;              // The current blinkPattern  bit index : 0-8
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
@@ -501,7 +504,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 
   if (type != NULL) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
-    if (Settings.ledstate &0x02) blinks++;
+    if (Settings.ledstate & LED_MQTTSUB) blinks++;
 
     if (!strcmp(dataBuf,"?")) data_len = 0;
     int16_t payload = -99;               // No payload
@@ -1258,25 +1261,25 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if (CMND_LEDPOWER == command_code) {
       if ((payload >= 0) && (payload <= 2)) {
-        Settings.ledstate &= 8;
         switch (payload) {
         case 0: // Off
+          Settings.ledstate = LED_OFF;
         case 1: // On
-          Settings.ledstate = payload << 3;
+          Settings.ledstate = LED_ON;
           break;
         case 2: // Toggle
-          Settings.ledstate ^= 8;
+          Settings.ledstate = Settings.ledstate==LED_OFF ? LED_ON : LED_OFF;    // literal toggle..
           break;
         }
         blinks = 0;
-        SetLedPower(Settings.ledstate &8);
+        SetLedPower(Settings.ledstate);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(bitRead(Settings.ledstate, 3)));
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(payload));
     }
     else if (CMND_LEDSTATE == command_code) {
       if ((payload >= 0) && (payload < MAX_LED_OPTION)) {
         Settings.ledstate = payload;
-        if (!Settings.ledstate) SetLedPower(0);
+        SetLedPower(Settings.ledstate);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.ledstate);
     }
@@ -1935,7 +1938,6 @@ void Every100mSeconds(void)
 /*-------------------------------------------------------------------------------------------*\
  * Every 0.25 second
 \*-------------------------------------------------------------------------------------------*/
-
 void Every250mSeconds(void)
 {
 // As the max amount of sleep = 250 mSec this loop should always be taken...
@@ -1947,39 +1949,70 @@ void Every250mSeconds(void)
 
   if (mqtt_cmnd_publish) mqtt_cmnd_publish--;             // Clean up
 
+  // --- State Notification blink rate setup
   if (!Settings.flag.global_state) {                      // Problem blinkyblinky enabled
     if (global_state.data) {                              // Any problem
-      if (global_state.mqtt_down) { blinkinterval = 7; }  // MQTT problem so blink every 2 seconds (slowest)
-      if (global_state.wifi_down) { blinkinterval = 3; }  // Wifi problem so blink every second (slow)
+      if (global_state.mqtt_down) { blinkPattern = LED_BLINKPATTERN_MQTTDOWN; blinkinterval = LED_BLINKSPEED_NORMAL; }  // MQTT problem so blink every 2 seconds (slowest)
+      if (global_state.wifi_down) { blinkPattern = LED_BLINKPATTERN_WIFIDOWN; blinkinterval = LED_BLINKSPEED_NORMAL; }  // Wifi problem so blink every second (slow)
       blinks = 201;                                       // Allow only a single blink in case the problem is solved
     }
   }
-  if (blinks || restart_flag || ota_state_flag) {
-    if (restart_flag || ota_state_flag) {                 // Overrule blinks and keep led lit
-      blinkstate = 1;                                     // Stay lit
-    } else {
+  else {
+    blinkPattern  = LED_BLINKPATTERN_IDLE;
+    blinkinterval = LED_BLINKSPEED_NORMAL;
+  }
+
+  // --- Blink state validation/setup
+  boolean force_on = restart_flag || ota_state_flag;// || Settings.ledstate==LED_ON;
+  if (blinkMode==LED_BLINKMODE_CONTINUOUS) blinks=201;
+
+  // --- Figuring out what we are going to do with the LED
+  // If forced on..
+  if ( force_on ) {                                     // Overrule blinks and keep led lit
+    blinkstate = 1;                                     // Stay lit
+  }
+  // If a blink is active..
+  else if ( blinkPattern && blinks ) {
+    if (Settings.flag3.led_indicator_disable) {          // Check the LED config and set led on or off
+      blinkstate = 0;
+    }
+    else {                                                // Normal operation
       blinkspeed--;
       if (!blinkspeed) {
         blinkspeed = blinkinterval;                       // Set interval to 0.2 (default), 1 or 2 seconds
-        blinkstate ^= 1;                                  // Blink
+        blinkstate = bitRead(blinkPattern,blinkPatternIndex);
+        if (++blinkPatternIndex>=(sizeof(blinkPattern)*8)) blinkPatternIndex=0;
       }
     }
-    if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) {
-//    if ( (!Settings.flag.global_state && global_state.data) || ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) ) {
-      SetLedPower(blinkstate);                            // Set led on or off
-    }
-    if (!blinkstate) {
+
+    if (blinks && blinkPatternIndex==0) {
       blinks--;
       if (200 == blinks) blinks = 0;                      // Disable blink
     }
   }
-  else if (Settings.ledstate &1) {
+
+  // If there is a current 'power' state
+  if (Settings.ledstate & LED_POWER) {
     boolean tstate = power;
     if ((SONOFF_TOUCH == Settings.module) || (SONOFF_T11 == Settings.module) || (SONOFF_T12 == Settings.module) || (SONOFF_T13 == Settings.module)) {
-      tstate = (!power) ? 1 : 0;                          // As requested invert signal for Touch devices to find them in the dark
+      tstate = (!power) ? 1 : 0;                         // As requested invert signal for Touch devices to find them in the dark
     }
-    SetLedPower(tstate);
+    else if(Settings.flag3.led_indicator_disable) {      // Check the LED config
+      tstate = 0;
+    }
+    else if (blinkPattern!=LED_BLINKPATTERN_IDLE) {
+      tstate = blinkstate ^ tstate;                     // XOR blinkstate and power state to embed state info in 'power' state of LED_POWER
+    }
+    SetLedPower( tstate );
   }
+  // --- Apply the LED state
+  else if ( Settings.ledstate>0 ) {
+    SetLedPower( blinkstate );
+  }
+  else {
+    SetLedPower( 0 );
+  }
+
 
 /*-------------------------------------------------------------------------------------------*\
  * Every second at 0.25 second interval
@@ -2500,7 +2533,7 @@ void GpioInit(void)
     }
   }
 
-  SetLedPower(Settings.ledstate &8);
+  SetLedPower(Settings.ledstate & MASK_LED_OPTION);                             // GPIO Init
 
   XdrvCall(FUNC_PRE_INIT);
 }
