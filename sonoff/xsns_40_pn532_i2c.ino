@@ -144,7 +144,7 @@ int16_t PN532_readResponse(uint8_t buf[], uint8_t len)
 }
 
 
-int8_t PN532_readAckFrame()
+int8_t PN532_readAckFrame(void)
 {
   const uint8_t PN532_ACK[] = {0, 0, 0xFF, 0, 0xFF, 0};
   uint8_t ackBuf[sizeof(PN532_ACK)];
