@@ -52,10 +52,34 @@ const char HTTP_HEAD[] PROGMEM =
   "<title>{h} - {v}</title>"
 
   "<script>"
-  "var x=null,lt,to,tp,pc='';"   // x=null allow for abortion
+  "var x=null,lt,to,tp,pc='';"            // x=null allow for abortion
+
+  // function: eb(:string) - Get document element by Id
   "function eb(s){"
-    "return document.getElementById(s);"  // Save code space
-  "}";
+    "return document.getElementById(s);"
+  "}"
+
+  // function: getxhr(url:string, onsuccess:function, onfail:function, tout:timeout(ms)) - perform a GET XHR req, to a url, returns data to onsuccess/onfail function refs
+  "function getxhr(url,onsuccess=null,onfail=null,tout=2000){"
+    "xh=new XMLHttpRequest();"
+    "xh.timeout=tout;"
+    "xh.onreadystatechange=function(){"
+      "if(xh.readyState==4){"
+        "if(xh.status==200) { if(onsuccess) onsuccess(xh.responseText); }"
+        "else { if(onfail) onfail(xh.responseText); }"
+      "}"
+    "};"
+    "xh.open('GET',url,true);"
+    "xh.send();"
+  "}"
+
+  "function logout(){"
+    "var p = window.location.protocol + '//';"
+    "var l = window.location.href.replace(p, p + 'log:out@');"
+    "getxhr(l,function(d){location.reload();},function(d){location.reload();});"
+  "}"
+
+  "";
 
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "var cn=180;"                  // seconds
@@ -92,7 +116,8 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "}"
   "function lc(p){"
     "la('?t='+p);"              // ?t related to WebGetArg("t", tmp, sizeof(tmp));
-  "}";
+  "}"
+  "";
 
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "function c(l){"
@@ -106,7 +131,14 @@ const char HTTP_SCRIPT_RELOAD[] PROGMEM =
 
 // Local OTA upgrade requires more time to complete cp: before web ui should be reloaded
 const char HTTP_SCRIPT_RELOAD_OTA[] PROGMEM =
-  "setTimeout(function(){location.href='.';}," STR(HTTP_OTA_RESTART_RECONNECT_TIME) ");"
+  "var tmw=0;"
+  "setInterval(function(){"
+    "e=eb('tmr'); e.innerHTML=tmw+'s'; tmw++;"
+    "if(tmw*1000>" STR(HTTP_OTA_RESTART_RECONNECT_TIME) " && tmw%2==0){"
+      "getxhr('.',function(){ e.innerHTML='" D_READY "'; setTimeout(function(){location.href='.'},1000); }, function(d){}, 2000 );"
+    "}"
+  "}, 1000);"
+  //"setTimeout(function(){location.href='.';}," STR(HTTP_OTA_RESTART_RECONNECT_TIME) ");"
   "</script>";
 
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
@@ -200,15 +232,21 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
   "a{text-decoration:none;}"
   ".p{float:left;text-align:left;}"
   ".q{float:right;text-align:right;}"
+  ".c{text-align:center}"
+  ".l{text-align:left}"
+  ".r{text-align:right}"
+  ".i{display:inline-block}"
+  ".sf{font-size:11px;color:#aaa;}"
+  ".cg{color:#aaa;}"
   "</style>"
 
   "</head>"
   "<body>"
-  "<div style='text-align:left;display:inline-block;min-width:340px;'>"
+  "<div class='l i' style='min-width:340px;'>"
 #ifdef BE_MINIMAL
-  "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
+  "<div class='c' style='color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
-  "<div style='text-align:center;'><noscript>" D_NOSCRIPT "<br/></noscript>"
+  "<div class='c'><noscript>" D_NOSCRIPT "<br/></noscript>"
 #ifdef LANGUAGE_MODULE_NAME
   "<h3>" D_MODULE " {ha</h3>"
 #else
@@ -222,7 +260,7 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><span class='p'>" D_DARKLIGHT "</span><span class='q'>" D_BRIGHTLIGHT "</span></div>"
   "<div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
-  "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
+  "<br/><div class='c'>" D_DEVICE_WILL_RESTART "</div><br/><div class='c'>" D_WORKING " ... <div class='i c' id='tmr'></div></div>";
 const char HTTP_BTN_MENU1[] PROGMEM =
 #ifndef BE_MINIMAL
   "<br/><form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>"
@@ -233,6 +271,7 @@ const char HTTP_BTN_MENU1[] PROGMEM =
 const char HTTP_BTN_RSTRT[] PROGMEM =
   "<br/><form action='.' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button name='rstrt' class='button bred'>" D_RESTART "</button></form>";
 const char HTTP_BTN_MENU_MODULE[] PROGMEM =
+  "<br/><form action='gs' method='get'><button>" D_CONFIGURE_GENERAL "</button></form>"
   "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>"
   "<br/><form action='wi' method='get'><button>" D_CONFIGURE_WIFI "</button></form>";
 const char HTTP_BTN_MENU4[] PROGMEM =
@@ -255,6 +294,13 @@ const char HTTP_BTN_CONF[] PROGMEM =
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend><form method='get' action='md'>"
   "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
+const char HTTP_FORM_GENERAL[] PROGMEM =
+  "<fieldset><legend><b>&nbsp;" D_GENERAL_PARAMETERS "&nbsp;</b></legend><form method='get' action='gs'>";
+const char HTTP_FORM_GENERAL_TOGGLE_ONOFF[] PROGMEM =
+  "<br/><b>{b0</b><br/><select id='{b1' name='{b1'>"
+  "<option{a0value='0'>0 " D_DISABLED "</option>"
+  "<option{a1value='1'>1 " D_ENABLED "</option>"
+  "</select><br/>";
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;({w})&nbsp<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
@@ -322,10 +368,12 @@ const char HTTP_FORM_CMND[] PROGMEM =
 const char HTTP_TABLE100[] PROGMEM =
   "<table style='width:100%'>";
 const char HTTP_COUNTER[] PROGMEM =
-  "<br/><div id='t' name='t' style='text-align:center;'></div>";
+  "<br/><div id='t' name='t' class='text-align:center;'></div>";
+const char HTTP_LOGOUT[] PROGMEM =
+  "<div class='q i sf' style='position:absolute;top:0;right:0;'><a href='#' onclick='logout();' class='cg'>" D_WEBLOGOUT "</a></div>";
 const char HTTP_END[] PROGMEM =
   "<br/>"
-  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " {mv " D_BY " " D_AUTHOR "</a></div>"
+  "<div class='r sf'><hr/><a href='" D_WEBLINK "' target='_blank' class='cg'>" D_PROGRAMNAME " {mv " D_BY " " D_AUTHOR "</a></div>"
   "</div>"
   "</body>"
   "</html>";
@@ -381,6 +429,7 @@ void ExecuteWebCommand(char* svalue, int source)
 void StartWebserver(int type, IPAddress ipweb)
 {
   if (!Settings.web_refresh) { Settings.web_refresh = HTTP_REFRESH_TIME; }
+
   if (!webserver_state) {
     if (!WebServer) {
       WebServer = new ESP8266WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
@@ -396,7 +445,8 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->onNotFound(HandleNotFound);
 #ifndef BE_MINIMAL
       WebServer->on("/cn", HandleConfiguration);
-      WebServer->on("/md", HandleModuleConfiguration);
+      WebServer->on("/gs", HandleGeneralConfiguration);
+      WebServer->on("/md", HandleModuleHardwareConfiguration);
       WebServer->on("/wi", HandleWifiConfiguration);
       WebServer->on("/lg", HandleLoggingConfiguration);
       WebServer->on("/co", HandleOtherConfiguration);
@@ -413,13 +463,15 @@ void StartWebserver(int type, IPAddress ipweb)
     }
     reset_web_log_flag = 0;
     WebServer->begin(); // Web server start
+
+    if (webserver_state != type) {
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
+        my_hostname, (mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+      AddLog(LOG_LEVEL_INFO);
+    }
+
+    if (type) { webserver_state = type; }
   }
-  if (webserver_state != type) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"),
-      my_hostname, (mdns_begun) ? ".local" : "", ipweb.toString().c_str());
-    AddLog(LOG_LEVEL_INFO);
-  }
-  if (type) { webserver_state = type; }
 }
 
 void StopWebserver(void)
@@ -479,15 +531,30 @@ void SetHeader(void)
 bool WebAuthenticate(void)
 {
   if (Settings.web_password[0] != 0) {
-    return WebServer->authenticate(WEB_USERNAME, Settings.web_password);
-  } else {
+    if (webserver_state==HTTP_MANAGER) {
+      return true;//WebServer->authenticate(WEB_USERNAME, Settings.web_password);      // don't mess with the manager
+    }
+    else if (WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {    // admin user login
+      webserver_state = HTTP_ADMIN;
+      return true;
+    }
+    else if (WebServer->authenticate("user", "password")) {                     // basic user login
+      webserver_state = HTTP_USER;
+      return true;
+    }
+    else {                                                                      // no valid login
+      return false;
+    }
+  }
+  else {
     return true;
   }
 }
 
 void ShowPage(String &page, bool auth)
 {
-  if (auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
+  //if (auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
+  if (auth && !WebAuthenticate()) {
     return WebServer->requestAuthentication();
   }
 
@@ -584,6 +651,10 @@ void HandleWifiLogin(void)
 
 void HandleRoot(void)
 {
+  if (!WebAuthenticate()) {
+    return WebServer->requestAuthentication();
+  }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_MAIN_MENU);
 
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
@@ -619,7 +690,12 @@ void HandleRoot(void)
     page.replace(F("{v}"), FPSTR(S_MAIN_MENU));
     page += FPSTR(HTTP_SCRIPT_ROOT);
     page += FPSTR(HTTP_HEAD_STYLE);
+
     page.replace(F("<body>"), F("<body onload='la()'>"));
+
+    if (Settings.web_password[0] != 0) {
+      page += FPSTR(HTTP_LOGOUT);
+    }
 
     page += F("<div id='l1' name='l1'></div>");
     if (devices_present) {
@@ -683,7 +759,10 @@ void HandleRoot(void)
 
 void HandleAjaxStatusRefresh(void)
 {
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!WebAuthenticate()) {
+    //WebServer->send(401); return;
+    return WebServer->requestAuthentication();
+  }
 
   char svalue[80];
   char tmp[100];
@@ -758,14 +837,29 @@ boolean HttpUser(void)
   return status;
 }
 
+boolean HttpCheckPriviledgedAccess(boolean autorequestauth = true)
+{
+  boolean validUser = WebAuthenticate();
+  if (HTTP_USER == webserver_state) {
+    HandleRoot();
+    return false;
+  }
+  if (autorequestauth && !validUser){
+    WebServer->requestAuthentication();
+    return false;
+  }
+  return true;
+}
 /*-------------------------------------------------------------------------------------------*/
 
 #ifndef BE_MINIMAL
 
 void HandleConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURATION);
 
   String page = FPSTR(HTTP_HEAD);
@@ -785,13 +879,14 @@ void HandleConfiguration(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-void HandleModuleConfiguration(void)
+void HandleModuleHardwareConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   if (WebServer->hasArg("save")) {
-    ModuleSaveSettings();
+    ModuleHardwareSaveSettings();
     WebRestart(1);
     return;
   }
@@ -824,6 +919,7 @@ void HandleModuleConfiguration(void)
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
+
   page += FPSTR(HTTP_SCRIPT_MODULE1);
   page.replace(F("}4"), String(Settings.module));
   for (byte i = 0; i < sizeof(cmodule); i++) {
@@ -837,7 +933,9 @@ void HandleModuleConfiguration(void)
   page.replace(F("<body>"), F("<body onload='sl()'>"));
   page += FPSTR(HTTP_FORM_MODULE);
   page.replace(F("{mt"), AnyModuleName(MODULE));
-  page += F("<br/><table>");
+  page += F("<br/>");
+  page += FPSTR(D_IO_SETUP);
+  page += F("<table>");
   for (byte i = 0; i < sizeof(cmodule); i++) {
     if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
@@ -852,7 +950,7 @@ void HandleModuleConfiguration(void)
   ShowPage(page);
 }
 
-void ModuleSaveSettings(void)
+void ModuleHardwareSaveSettings(void)
 {
   char tmp[100];
   char stemp[TOPSZ];
@@ -880,6 +978,67 @@ void ModuleSaveSettings(void)
   AddLog(LOG_LEVEL_INFO);
 }
 
+void HandleGeneralConfiguration(void)
+{
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
+  if (WebServer->hasArg("save")) {
+    GeneralConfigurationSaveSettings();
+    //WebRestart(1);
+    //return;
+  }
+
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_GENERAL);
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_GENERAL));
+
+  page += FPSTR(HTTP_HEAD_STYLE);
+  page.replace(F("<body>"), F("<body onload='sl()'>"));
+  page += FPSTR(HTTP_FORM_GENERAL);
+  page += F("<table>");
+
+  // LED 'general' status indicator - LED still used for 'core' ops (updates etc..)
+  page += FPSTR(HTTP_FORM_GENERAL_TOGGLE_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR));
+  page.replace(F("{b1"), F("o0"));
+  for (byte i = 0; i < 2; i++) {
+    page.replace("{a" + String(i), (i == Settings.flag3.led_indicator_disable) ? F(" ") : F(" selected ")); //note - inv
+  }
+
+  // Save state to flash
+  page += FPSTR(HTTP_FORM_GENERAL_TOGGLE_ONOFF);
+  page.replace(F("{b0"), F(D_SAVE_STATE));
+  page.replace(F("{b1"), F("o1"));
+  for (byte i = 0; i < 2; i++) {
+    page.replace("{a" + String(i), (i == Settings.flag.save_state) ? F(" selected ") : F(" "));
+  }
+
+  page += F("</table>");
+
+  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_BTN_CONF);
+  ShowPage(page);
+}
+
+void GeneralConfigurationSaveSettings(void)
+{
+  char tmp[100];
+
+  // LED indicator
+  WebGetArg("o0", tmp, sizeof(tmp));
+  Settings.flag3.led_indicator_disable = ~(atoi(tmp) > 0 ? 1 : 0);              // note - inv
+
+  // Save state
+  WebGetArg("o1", tmp, sizeof(tmp));
+  Settings.flag.save_state = (atoi(tmp) > 0 ? 1 : 0);
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_CONFIGURE_GENERAL "%s:%u"), tmp, Settings.flag3.led_indicator_disable);
+  AddLog(LOG_LEVEL_INFO);
+}
+
 /*-------------------------------------------------------------------------------------------*/
 
 String htmlEscape(String s)
@@ -895,8 +1054,9 @@ String htmlEscape(String s)
 
 void HandleWifiConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_WIFI);
 
@@ -1023,8 +1183,10 @@ void WifiSaveSettings(void)
 
 void HandleLoggingConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_LOGGING);
 
   if (WebServer->hasArg("save")) {
@@ -1106,8 +1268,10 @@ void LoggingSaveSettings(void)
 
 void HandleOtherConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_OTHER);
 
   if (WebServer->hasArg("save")) {
@@ -1177,8 +1341,10 @@ void OtherSaveSettings(void)
 
 void HandleBackupConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
 
   if (!SettingsBufferAlloc()) { return; }
@@ -1221,8 +1387,9 @@ void HandleBackupConfiguration(void)
 
 void HandleResetConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   char svalue[33];
 
@@ -1242,8 +1409,10 @@ void HandleResetConfiguration(void)
 
 void HandleRestoreConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTORE_CONFIGURATION);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1263,8 +1432,10 @@ void HandleRestoreConfiguration(void)
 
 void HandleInformation(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_INFORMATION);
 
   char stopic[TOPSZ];
@@ -1386,8 +1557,10 @@ void HandleInformation(void)
 
 void HandleUpgradeFirmware(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_FIRMWARE_UPGRADE);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1406,8 +1579,10 @@ void HandleUpgradeFirmware(void)
 
 void HandleUpgradeFirmwareStart(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   char svalue[100];
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
@@ -1435,8 +1610,10 @@ void HandleUpgradeFirmwareStart(void)
 
 void HandleUploadDone(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 
   char error[100];
@@ -1693,8 +1870,9 @@ void HandlePreflightRequest(void)
 
 void HandleHttpCommand(void)
 {
-  if (HttpUser()) { return; }
-//  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess(false)) { return; }
+//  if (HttpUser()) { return; }
+////  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
   char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
@@ -1753,8 +1931,10 @@ void HandleHttpCommand(void)
 
 void HandleConsole(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONSOLE);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1769,8 +1949,10 @@ void HandleConsole(void)
 
 void HandleAjaxConsoleRefresh(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
   byte cflg = 1;
   byte counter = 0;                // Initial start, should never be 0 again
