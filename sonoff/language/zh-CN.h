@@ -229,6 +229,19 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager 设置接入点"
 #define D_TRYING_TO_CONNECT "尝试将设备连接到网络"
 
+//?? @TODO:Translation  >>>
+#define D_WEBLOGOUT "Logout"
+#define D_WORKING "Working"
+#define D_CONFIGURE_GENERAL "General Options"
+#define D_GENERAL_PARAMETERS " General options"
+#define D_LED_INDICATOR "LED Indicator"
+#define D_SAVE_STATE "Save State"
+#define D_DISABLED "Disabled"
+#define D_ENABLED "Enabled"
+#define D_IO_SETUP "I/O configuration"
+#define D_READY "Ready"
+//<<<
+
 #define D_RESTART_IN "重启需要"
 #define D_SECONDS "秒"
 #define D_DEVICE_WILL_RESTART "设备将在几秒钟内重启"

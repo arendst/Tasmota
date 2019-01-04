@@ -229,6 +229,19 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT "WLAN-Manager AccessPoint gesetzt"
 #define D_TRYING_TO_CONNECT "Versuche Gerät mit Netzwerk zu verbinden"
 
+//?? @TODO:Translation  >>>
+#define D_WEBLOGOUT "Logout"
+#define D_WORKING "Working"
+#define D_CONFIGURE_GENERAL "General Options"
+#define D_GENERAL_PARAMETERS " General options"
+#define D_LED_INDICATOR "LED Indicator"
+#define D_SAVE_STATE "Save State"
+#define D_DISABLED "Disabled"
+#define D_ENABLED "Enabled"
+#define D_IO_SETUP "I/O configuration"
+#define D_READY "Ready"
+//<<<
+
 #define D_RESTART_IN "Neustart in"
 #define D_SECONDS "Sekunden"
 #define D_DEVICE_WILL_RESTART "Gerät wird jetzt neu gestartet"

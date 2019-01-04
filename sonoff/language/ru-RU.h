@@ -229,6 +229,19 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifi менеджер установил Точку Доступа"
 #define D_TRYING_TO_CONNECT "Попытка подключения устройства к сети"
 
+//?? @TODO:Translation  >>>
+#define D_WEBLOGOUT "Logout"
+#define D_WORKING "Working"
+#define D_CONFIGURE_GENERAL "General Options"
+#define D_GENERAL_PARAMETERS " General options"
+#define D_LED_INDICATOR "LED Indicator"
+#define D_SAVE_STATE "Save State"
+#define D_DISABLED "Disabled"
+#define D_ENABLED "Enabled"
+#define D_IO_SETUP "I/O configuration"
+#define D_READY "Ready"
+//<<<
+
 #define D_RESTART_IN "Перезапуск"
 #define D_SECONDS "секунд"
 #define D_DEVICE_WILL_RESTART "Устройство будет перезапущено через несколько секунд"

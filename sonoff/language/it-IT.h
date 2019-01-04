@@ -229,6 +229,19 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Impostazione Wifimanager come AccessPoint"
 #define D_TRYING_TO_CONNECT "Tentativo di connessione del dispositivo alla rete"
 
+//?? @TODO:Translation  >>>
+#define D_WEBLOGOUT "Logout"
+#define D_WORKING "Working"
+#define D_CONFIGURE_GENERAL "General Options"
+#define D_GENERAL_PARAMETERS " General options"
+#define D_LED_INDICATOR "LED Indicator"
+#define D_SAVE_STATE "Save State"
+#define D_DISABLED "Disabled"
+#define D_ENABLED "Enabled"
+#define D_IO_SETUP "I/O configuration"
+#define D_READY "Ready"
+//<<<
+
 #define D_RESTART_IN "Riavvio in"
 #define D_SECONDS "secondi"
 #define D_DEVICE_WILL_RESTART "Il dispositivo verrà riavviato tra pochi secondi"
