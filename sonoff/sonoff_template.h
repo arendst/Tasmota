@@ -274,7 +274,7 @@ enum SupportedModules {
   PS_16_DZ,
   TECKIN_US,
   MANZOKU_EU_4,
-  KINGARTS_N1,
+  KINGART_N1,
   MAXMODULE
 };
 
@@ -475,7 +475,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MAX31855
   GPIO_MAX31855CS,   // MAX31855 Serial interface
   GPIO_MAX31855CLK,  // MAX31855 Serial interface
-  GPIO_MAX31855DO,   // MAX31855 Serial interface    
+  GPIO_MAX31855DO,   // MAX31855 Serial interface
 #endif
 };
 
@@ -540,7 +540,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   PHILIPS,
   WITTY,              // Development Devices
   WEMOS,
-  KINGARTS_N1,
+  KINGART_N1,
 };
 
 // Default module settings
@@ -1630,22 +1630,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO16
      0
   },
-  { "KingArts N1",     // KingArts N1 : 1-gang Touch Lightswitch (ESP8285) - derived from Sonoff Basic
-     GPIO_KEY1,        // GPIO00 Button
-     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     GPIO_USER,        // GPIO02 Only available on newer Sonoff Basic R2 V1
-     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
-     GPIO_USER,        // GPIO04 Optional sensor
-     0,                // GPIO05
-                       // GPIO06 (SD_CLK   Flash)
-                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
-                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
-     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
-     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
-                       // GPIO11 (SD_CMD   Flash)
-     GPIO_REL1,        // GPIO12 Relay (0 = Off, 1 = On)
-     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off)
-     GPIO_USER,        // GPIO14 Optional sensor
+  { "KingArt N1",     // KingArt N1 : 1-gang Touch Lightswitch (ESP8285) - derived from Sonoff Basic
+                       // Notes: https://github.com/EphemeralPersistence/Sonoff-Tasmota/wiki/KingArt-N1
+     GPIO_KEY1,        // GPIO00,(p15) Button1, SW1 / Relay 1
+     0,                // GPIO01
+     0,                // GPIO02
+     0,                // GPIO03
+     GPIO_USER,        // GPIO04,(p16) Relay3 - (Optional Relay 3) (require N3? series board)
+     GPIO_USER,        // GPIO05,(p24) Relay2 - (Optional Relay 2) (require N2? series board)
+                       // GPIO06
+                       // GPIO07
+                       // GPIO08
+     GPIO_USER,        // GPIO09,(p18) Button2, SW2? / Relay 2 -  (require N2? series board)
+     GPIO_USER,        // GPIO10,(p19) Button3, SW3? / Relay 3 -  (require N3? series board)
+                       // GPIO11
+     GPIO_REL1,        // GPIO12,(p10) Relay1 (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13,(p12) Blue Led (0 = On, 1 = Off)
+     0,                // GPIO14 (p9) :: N/C - Optional sensor
      0,                // GPIO15
      0,                // GPIO16
      0                 // ADC0 Analog input
