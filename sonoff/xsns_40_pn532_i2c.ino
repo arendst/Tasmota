@@ -55,6 +55,7 @@ uint8_t pn532_i2c_detected = 0;
 uint8_t pn532_i2c_packetbuffer[64];
 uint8_t pn532_i2c_scan_defer_report = 0;         // If a valid card was found we will not scan for one again in the same two seconds so we set this to 19 if a card was found
 uint8_t pn532_i2c_command = 0;
+uint8_t pn532_i2c_disable = 0;
 
 const uint8_t PROGMEM pn532_global_timeout = 10;
 
@@ -237,7 +238,7 @@ bool PN532_SAMConfig(void)
 
 void PN532_Detect(void)
 {
-  if (pn532_i2c_detected) { return; }
+  if ((pn532_i2c_detected) || (pn532_i2c_disable)) { return; }
 
   uint32_t ver = PN532_getFirmwareVersion();
   if (ver) {
@@ -276,6 +277,7 @@ boolean PN532_readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *u
 
 void PN532_ScanForTag(void)
 {
+  if (pn532_i2c_disable) { return; }
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
   uint8_t uid_len = 0;
   if (PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uid_len)) {
@@ -317,6 +319,15 @@ boolean Xsns40(byte function)
         break;
       case FUNC_EVERY_SECOND:
         PN532_Detect();
+        break;
+      case FUNC_SAVE_BEFORE_RESTART:
+        if (!pn532_i2c_disable) {
+          pn532_i2c_disable = 1;
+          snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "PN532 NFC Reader - Disabling for reboot", PN532_I2C_ADDRESS);
+          AddLog(LOG_LEVEL_DEBUG);
+        }
+        break;
+      default:
         break;
     }
   }
