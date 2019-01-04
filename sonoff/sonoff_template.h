@@ -565,7 +565,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff RF",       // Sonoff RF (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,
+     GPIO_USER,        // GPIO02 Optional sensor 
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0,
