@@ -160,7 +160,7 @@ int8_t PN532_readAckFrame(void)
     }
     delay(1);
     time++;
-        if (time > 10) { // We time out after 10ms
+        if (time > pn532_global_timeout) { // We time out after 10ms
             return PN532_TIMEOUT;
         }
   } while (1);
@@ -295,7 +295,7 @@ void PN532_ScanForTag(void)
       char command[27];
       sprintf(command,"event PN532=%s",uids);
       ExecuteCommand(command, SRC_RULE);
-      pn532_i2c_scan_defer_report = 19;
+      pn532_i2c_scan_defer_report = 7; // Ignore tags found for two seconds
     }
   } else {
     if (pn532_i2c_scan_defer_report > 0) { pn532_i2c_scan_defer_report--; }
@@ -312,7 +312,7 @@ boolean Xsns40(byte function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_EVERY_100_MSECOND:
+      case FUNC_EVERY_250_MSECOND:
         if (pn532_i2c_detected) {
           PN532_ScanForTag();
         }
