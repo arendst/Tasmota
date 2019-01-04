@@ -5,7 +5,7 @@ VER = '2.1.0016'
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
 
-    Copyright (C) 2018 Norbert Richter <nr@prsolution.eu>
+    Copyright (C) 2019 Norbert Richter <nr@prsolution.eu>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
