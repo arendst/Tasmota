@@ -1963,7 +1963,7 @@ void Every250mSeconds(void)
   }
 
   // --- Blink state validation/setup
-  boolean force_on = restart_flag || ota_state_flag;// || Settings.ledstate==LED_ON;
+  boolean force_on = restart_flag || ota_state_flag || (Settings.ledstate&LED_ON);
   if (blinkMode==LED_BLINKMODE_CONTINUOUS) blinks=201;
 
   // --- Figuring out what we are going to do with the LED
