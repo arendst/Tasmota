@@ -38,6 +38,7 @@
 #define HJL_IREF             3300
 
 #define HLW_POWER_PROBE_TIME   10    // Number of seconds to probe for power before deciding none used
+#define HLW_PROBE_COUNT        10    // Max number of probes per cycle
 
 byte hlw_select_ui_flag;
 byte hlw_ui_flag = 1;
@@ -46,12 +47,17 @@ byte hlw_load_off;
 byte hlw_cf1_timer;
 unsigned long hlw_cf_pulse_length;
 unsigned long hlw_cf_pulse_last_time;
+unsigned long hlw_cf_summed_pulse_length;
+unsigned long hlw_cf_pulse_counter;
+unsigned long hlw_cf_power_pulse_length;
+
 unsigned long hlw_cf1_pulse_length;
 unsigned long hlw_cf1_pulse_last_time;
 unsigned long hlw_cf1_summed_pulse_length;
 unsigned long hlw_cf1_pulse_counter;
 unsigned long hlw_cf1_voltage_pulse_length;
 unsigned long hlw_cf1_current_pulse_length;
+
 unsigned long hlw_energy_period_counter;
 
 unsigned long hlw_power_ratio = 0;
@@ -60,6 +66,8 @@ unsigned long hlw_current_ratio = 0;
 
 unsigned long hlw_cf1_voltage_max_pulse_counter;
 unsigned long hlw_cf1_current_max_pulse_counter;
+
+//unsigned long hlw_debug[HLW_PROBE_COUNT];
 
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
 void HlwCfInterrupt(void) ICACHE_RAM_ATTR;
@@ -76,6 +84,10 @@ void HlwCfInterrupt(void)  // Service Power
   } else {
     hlw_cf_pulse_length = us - hlw_cf_pulse_last_time;
     hlw_cf_pulse_last_time = us;
+
+    hlw_cf_summed_pulse_length += hlw_cf_pulse_length;
+    hlw_cf_pulse_counter++;
+
     hlw_energy_period_counter++;
   }
 }
@@ -88,9 +100,12 @@ void HlwCf1Interrupt(void)  // Service Voltage and Current
   hlw_cf1_pulse_last_time = us;
   if ((hlw_cf1_timer > 2) && (hlw_cf1_timer < 8)) {  // Allow for 300 mSec set-up time and measure for up to 1 second
     hlw_cf1_summed_pulse_length += hlw_cf1_pulse_length;
+
+//  hlw_debug[hlw_cf1_pulse_counter] = hlw_cf1_pulse_length;
+
     hlw_cf1_pulse_counter++;
-    if (10 == hlw_cf1_pulse_counter) {
-      hlw_cf1_timer = 8;  // We need up to ten samples within 1 second (low current could take up to 0.3 second)
+    if (HLW_PROBE_COUNT == hlw_cf1_pulse_counter) {
+      hlw_cf1_timer = 8;  // We need up to HLW_PROBE_COUNT samples within 1 second (low current could take up to 0.3 second)
     }
   }
 }
@@ -99,21 +114,25 @@ void HlwCf1Interrupt(void)  // Service Voltage and Current
 
 void HlwEvery200ms(void)
 {
+  unsigned long cf1_pulse_length = 0;
   unsigned long hlw_w = 0;
   unsigned long hlw_u = 0;
   unsigned long hlw_i = 0;
 
   if (micros() - hlw_cf_pulse_last_time > (HLW_POWER_PROBE_TIME * 1000000)) {
-    hlw_cf_pulse_length = 0;    // No load for some time
+    hlw_cf_pulse_counter = 0;    // No load for some time
     hlw_load_off = 1;
   }
 
-  if (hlw_cf_pulse_length && energy_power_on && !hlw_load_off) {
-    hlw_w = (hlw_power_ratio * Settings.energy_power_calibration) / hlw_cf_pulse_length;
+  if (hlw_cf_pulse_counter && energy_power_on && !hlw_load_off) {
+    hlw_cf_power_pulse_length = hlw_cf_summed_pulse_length / hlw_cf_pulse_counter;
+    hlw_w = (hlw_power_ratio * Settings.energy_power_calibration) / hlw_cf_power_pulse_length;
     energy_active_power = (float)hlw_w / 10;
   } else {
     energy_active_power = 0;
   }
+  hlw_cf_summed_pulse_length = 0;
+  hlw_cf_pulse_counter = 0;
 
   hlw_cf1_timer++;
   if (hlw_cf1_timer >= 8) {
@@ -122,12 +141,31 @@ void HlwEvery200ms(void)
     digitalWrite(pin[GPIO_NRG_SEL], hlw_select_ui_flag);
 
     if (hlw_cf1_pulse_counter) {
-      hlw_cf1_pulse_length = hlw_cf1_summed_pulse_length / hlw_cf1_pulse_counter;
-    } else {
-      hlw_cf1_pulse_length = 0;
+      cf1_pulse_length = hlw_cf1_summed_pulse_length / hlw_cf1_pulse_counter;
     }
+
+/*
+  // Debugging for calculating mean and median
+  char stemp[100];
+  stemp[0] = '\0';
+  for (uint8_t i = 0; i < hlw_cf1_pulse_counter; i++) {
+    snprintf_P(stemp, sizeof(stemp), PSTR("%s %d"), stemp, hlw_debug[i]);
+  }
+  for (uint8_t i = 0; i < hlw_cf1_pulse_counter; i++) {
+    for (uint8_t j = i + 1; j < hlw_cf1_pulse_counter; j++) {
+      if (hlw_debug[i] > hlw_debug[j]) {  // Sort ascending
+        std::swap(hlw_debug[i], hlw_debug[j]);
+      }
+    }
+  }
+  unsigned long median = hlw_debug[(hlw_cf1_pulse_counter +1) / 2];
+  snprintf_P(log_data, sizeof(log_data), PSTR("NRG: power %d, ui %d, count %d, samples%s, sum %d, mean %d, median %d"),
+    hlw_cf_power_pulse_length, hlw_select_ui_flag, hlw_cf1_pulse_counter, stemp, hlw_cf1_summed_pulse_length, cf1_pulse_length, median);
+  AddLog(LOG_LEVEL_DEBUG);
+*/
+
     if (hlw_select_ui_flag == hlw_ui_flag) {
-      hlw_cf1_voltage_pulse_length = hlw_cf1_pulse_length;
+      hlw_cf1_voltage_pulse_length = cf1_pulse_length;
       hlw_cf1_voltage_max_pulse_counter = hlw_cf1_pulse_counter;
 
       if (hlw_cf1_voltage_pulse_length && energy_power_on) {     // If powered on always provide voltage
@@ -138,7 +176,7 @@ void HlwEvery200ms(void)
       }
 
     } else {
-      hlw_cf1_current_pulse_length = hlw_cf1_pulse_length;
+      hlw_cf1_current_pulse_length = cf1_pulse_length;
       hlw_cf1_current_max_pulse_counter = hlw_cf1_pulse_counter;
 
       if (hlw_cf1_current_pulse_length && energy_active_power) {   // No current if no power being consumed
@@ -186,8 +224,8 @@ void HlwSnsInit(void)
     hlw_current_ratio = HLW_IREF;
   }
 
-  hlw_cf_pulse_length = 0;
   hlw_cf_pulse_last_time = 0;
+  hlw_cf_power_pulse_length = 0;
   hlw_cf1_pulse_length = 0;
   hlw_cf1_pulse_last_time = 0;
   hlw_cf1_voltage_pulse_length = 0;
@@ -213,18 +251,18 @@ void HlwSnsInit(void)
 void HlwDrvInit(void)
 {
   if (!energy_flg) {
-    hlw_model_type = 0;
+    hlw_model_type = 0;    // HLW8012
     if (pin[GPIO_HJL_CF] < 99) {
       pin[GPIO_HLW_CF] = pin[GPIO_HJL_CF];
       pin[GPIO_HJL_CF] = 99;
-      hlw_model_type = 1;
+      hlw_model_type = 1;  // HJL-01/BL0937
     }
 
-    hlw_ui_flag = 1;
+    hlw_ui_flag = 1;       // Voltage on high
     if (pin[GPIO_NRG_SEL_INV] < 99) {
       pin[GPIO_NRG_SEL] = pin[GPIO_NRG_SEL_INV];
       pin[GPIO_NRG_SEL_INV] = 99;
-      hlw_ui_flag = 0;
+      hlw_ui_flag = 0;     // Voltage on low
     }
 
     if ((pin[GPIO_NRG_SEL] < 99) && (pin[GPIO_NRG_CF1] < 99) && (pin[GPIO_HLW_CF] < 99)) {  // HLW8012 or HJL-01 based device
@@ -241,8 +279,8 @@ boolean HlwCommand(void)
     // Service in xdrv_03_energy.ino
   }
   else if (CMND_POWERSET == energy_command_code) {
-    if (XdrvMailbox.data_len && hlw_cf_pulse_length) {
-      Settings.energy_power_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data) * 10) * hlw_cf_pulse_length) / hlw_power_ratio;
+    if (XdrvMailbox.data_len && hlw_cf_power_pulse_length) {
+      Settings.energy_power_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data) * 10) * hlw_cf_power_pulse_length) / hlw_power_ratio;
     }
   }
   else if (CMND_VOLTAGESET == energy_command_code) {
