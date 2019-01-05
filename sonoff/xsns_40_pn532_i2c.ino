@@ -239,6 +239,8 @@ bool PN532_SAMConfig(void)
 void PN532_Detect(void)
 {
   if ((pn532_i2c_detected) || (pn532_i2c_disable)) { return; }
+  
+  Wire.setClockStretchLimit(1000); // Enable 1ms clock stretch as per datasheet Table 12.25 (Timing for the I2C interface)
 
   uint32_t ver = PN532_getFirmwareVersion();
   if (ver) {
