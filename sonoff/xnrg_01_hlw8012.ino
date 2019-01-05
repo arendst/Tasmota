@@ -237,7 +237,10 @@ boolean HlwCommand(void)
 {
   boolean serviced = true;
 
-  if (CMND_POWERSET == energy_command_code) {
+  if ((CMND_POWERCAL == energy_command_code) || (CMND_VOLTAGECAL == energy_command_code) || (CMND_CURRENTCAL == energy_command_code)) {
+    // Service in xdrv_03_energy.ino
+  }
+  else if (CMND_POWERSET == energy_command_code) {
     if (XdrvMailbox.data_len && hlw_cf_pulse_length) {
       Settings.energy_power_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data) * 10) * hlw_cf_pulse_length) / hlw_power_ratio;
     }

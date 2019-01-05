@@ -1,4 +1,7 @@
-/* 6.4.1.5 20190103
+/* 6.4.1.6 20190105
+ * Add commands PowerCal, VoltageCal and CurrentCal for HLW8012, HJL01 and BL0937 based energy sensors
+ *
+ * 6.4.1.5 20190103
  * Remove command SetOption35 0-255 for mDNS start-up delay (#4793)
  * Add command SetOption55 0/1 to disable/enable mDNS (#4793)
  *
