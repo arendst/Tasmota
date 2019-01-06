@@ -1,4 +1,7 @@
-/* 6.4.1.6 20190105
+/* 6.4.1.7 20190106
+ * Fix HLW8012, HJL01 and BL0937 based energy sensors low Power (below 10W) measurement regression from 6.4.1.6
+ *
+ * 6.4.1.6 20190105
  * Add commands PowerCal, VoltageCal and CurrentCal for HLW8012, HJL01 and BL0937 based energy sensors
  *
  * 6.4.1.5 20190103

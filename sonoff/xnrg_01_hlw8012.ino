@@ -47,8 +47,6 @@ byte hlw_load_off;
 byte hlw_cf1_timer;
 unsigned long hlw_cf_pulse_length;
 unsigned long hlw_cf_pulse_last_time;
-unsigned long hlw_cf_summed_pulse_length;
-unsigned long hlw_cf_pulse_counter;
 unsigned long hlw_cf_power_pulse_length;
 
 unsigned long hlw_cf1_pulse_length;
@@ -84,10 +82,6 @@ void HlwCfInterrupt(void)  // Service Power
   } else {
     hlw_cf_pulse_length = us - hlw_cf_pulse_last_time;
     hlw_cf_pulse_last_time = us;
-
-    hlw_cf_summed_pulse_length += hlw_cf_pulse_length;
-    hlw_cf_pulse_counter++;
-
     hlw_energy_period_counter++;
   }
 }
@@ -119,20 +113,19 @@ void HlwEvery200ms(void)
   unsigned long hlw_u = 0;
   unsigned long hlw_i = 0;
 
+
   if (micros() - hlw_cf_pulse_last_time > (HLW_POWER_PROBE_TIME * 1000000)) {
-    hlw_cf_pulse_counter = 0;    // No load for some time
+    hlw_cf_pulse_length = 0;    // No load for some time
     hlw_load_off = 1;
   }
+  hlw_cf_power_pulse_length = hlw_cf_pulse_length;
 
-  if (hlw_cf_pulse_counter && energy_power_on && !hlw_load_off) {
-    hlw_cf_power_pulse_length = hlw_cf_summed_pulse_length / hlw_cf_pulse_counter;
+  if (hlw_cf_power_pulse_length && energy_power_on && !hlw_load_off) {
     hlw_w = (hlw_power_ratio * Settings.energy_power_calibration) / hlw_cf_power_pulse_length;
     energy_active_power = (float)hlw_w / 10;
   } else {
     energy_active_power = 0;
   }
-  hlw_cf_summed_pulse_length = 0;
-  hlw_cf_pulse_counter = 0;
 
   hlw_cf1_timer++;
   if (hlw_cf1_timer >= 8) {
@@ -224,6 +217,7 @@ void HlwSnsInit(void)
     hlw_current_ratio = HLW_IREF;
   }
 
+  hlw_cf_pulse_length = 0;
   hlw_cf_pulse_last_time = 0;
   hlw_cf_power_pulse_length = 0;
   hlw_cf1_pulse_length = 0;
