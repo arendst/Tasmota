@@ -289,7 +289,7 @@ void PN532_ScanForTag(void)
       char uids[15];
       sprintf(uids,"");
       for (uint8_t i = 0;i < uid_len;i++) {
-        sprintf(uids,"%s%X",uids,uid[i]);
+        sprintf(uids,"%s%02X",uids,uid[i]);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PN532\":{\"UID\":\"%s\"}}"), mqtt_data, uids);
