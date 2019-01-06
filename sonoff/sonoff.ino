@@ -1775,7 +1775,8 @@ void ButtonHandler(void)
       }
     } else {
       if (pin[GPIO_KEY1 +button_index] < 99) {
-        if (!((uptime < 4) && (0 == pin[GPIO_KEY1 +button_index]))) {  // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
+//        if (!((uptime < 4) && (0 == pin[GPIO_KEY1 +button_index]))) {  // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
+        if (uptime > 3) {                                      // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
           button_present = 1;
           button = digitalRead(pin[GPIO_KEY1 +button_index]);
         }

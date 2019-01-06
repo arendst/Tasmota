@@ -110,6 +110,10 @@ void SwitchProbe(void)
 
 void SwitchInit(void)
 {
+  if (SHELLY2 == Settings.module) {
+    if (switch_no_pullup > 0) { switch_no_pullup = 0xffff; }  // If any switch is no pull-up make them all no pull-up
+  }
+
   switches_found = 0;
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     lastwallswitch[i] = 1;  // Init global to virtual switch state;

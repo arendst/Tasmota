@@ -1367,7 +1367,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Shelly 2",        // Shelly2 (ESP8266 - 2MB) - https://shelly.cloud/shelly2/
      0,
      GPIO_TXD,         // GPIO01 MCP39F501 Serial input
-     0,
+     GPIO_USER,        // GPIO02 Decide if we use (no) pull-up
      GPIO_RXD,         // GPIO03 MCP39F501 Serial output
      GPIO_REL1,        // GPIO04
      GPIO_REL2,        // GPIO05
@@ -1378,7 +1378,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
      GPIO_SWT1,        // GPIO12
-     0,
+     0,                // GPIO13
      GPIO_SWT2,        // GPIO14
      0,                // GPIO15 MCP39F501 Reset
      0, 0
