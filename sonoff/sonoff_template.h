@@ -473,7 +473,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MAX31855
   GPIO_MAX31855CS,   // MAX31855 Serial interface
   GPIO_MAX31855CLK,  // MAX31855 Serial interface
-  GPIO_MAX31855DO,   // MAX31855 Serial interface    
+  GPIO_MAX31855DO,   // MAX31855 Serial interface
 #endif
 };
 
@@ -565,7 +565,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff RF",       // Sonoff RF (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     GPIO_USER,        // GPIO02 Optional sensor 
+     GPIO_USER,        // GPIO02 Optional sensor
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0,
@@ -1140,7 +1140,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM3,        // GPIO12 RGB LED Blue
      GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White as used on Arilux LC10)
      GPIO_PWM1,        // GPIO14 RGB LED Red
-     GPIO_LED2_INV,    // GPIO15 RF receiver control (Arilux LC10)
+     GPIO_LED4_INV,    // GPIO15 RF receiver control (Arilux LC10)
      0, 0
   },
   { "Luani HVIO",      // ESP8266_HVIO
@@ -1186,7 +1186,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        //  (PwmFrequency 1111Hz)
      GPIO_KEY1,        // GPIO00 Optional Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     GPIO_LED2_INV,    // GPIO02 RF receiver control
+     GPIO_LED4_INV,    // GPIO02 RF receiver control
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_ARIRFRCV,    // GPIO04 IR or RF receiver (optional)
      GPIO_PWM1,        // GPIO05 RGB LED Red
@@ -1206,7 +1206,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        //  (PwmFrequency 540Hz)
      GPIO_KEY1,        // GPIO00 Optional Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     GPIO_LED2_INV,    // GPIO02 RF receiver control
+     GPIO_LED4_INV,    // GPIO02 RF receiver control
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_PWM2,        // GPIO04 RGB LED Green
      GPIO_PWM1,        // GPIO05 RGB LED Red
@@ -1444,7 +1444,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     GPIO_LED2,        // GPIO12 (Relay ON, but set to LOW, so we can switch with GPIO05)
+     GPIO_LED3,        // GPIO12 (Relay ON, but set to LOW, so we can switch with GPIO05)
      GPIO_USER,        // GPIO13
      GPIO_KEY1,        // GPIO14 Button
      0,
@@ -1670,7 +1670,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM3,        // GPIO12 RGB LED Blue
      GPIO_PWM4,        // GPIO13 RGBW LED White
      GPIO_PWM1,        // GPIO14 RGB LED Red
-     GPIO_LED2_INV,    // GPIO15 RF receiver control
+     GPIO_LED4_INV,    // GPIO15 RF receiver control
      0, 0
   }
 

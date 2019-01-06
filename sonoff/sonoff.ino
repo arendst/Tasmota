@@ -372,6 +372,15 @@ void SetDevicePower(power_t rpower, int source)
 void SetLedPower(uint8_t state)
 {
   if (state) state = 1;
+
+  uint8_t led_pin = 0;
+  if (pin[GPIO_LED2] < 99) { led_pin = 1; }
+  digitalWrite(pin[GPIO_LED1 + led_pin], (bitRead(led_inverted, led_pin)) ? !state : state);
+}
+
+void SetLedWifi(uint8_t state)
+{
+  if (state) state = 1;
   digitalWrite(pin[GPIO_LED1], (bitRead(led_inverted, 0)) ? !state : state);
 }
 
@@ -1276,7 +1285,10 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     else if (CMND_LEDSTATE == command_code) {
       if ((payload >= 0) && (payload < MAX_LED_OPTION)) {
         Settings.ledstate = payload;
-        if (!Settings.ledstate) SetLedPower(0);
+        if (!Settings.ledstate) {
+          SetLedPower(0);
+          SetLedWifi(0);
+        }
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.ledstate);
     }
@@ -1966,7 +1978,8 @@ void Every250mSeconds(void)
     }
     if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) {
 //    if ( (!Settings.flag.global_state && global_state.data) || ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) ) {
-      SetLedPower(blinkstate);                            // Set led on or off
+//      SetLedPower(blinkstate);                            // Set led on or off
+      SetLedWifi(blinkstate);                            // Set led on or off
     }
     if (!blinkstate) {
       blinks--;
@@ -2501,6 +2514,7 @@ void GpioInit(void)
   }
 
   SetLedPower(Settings.ledstate &8);
+  SetLedWifi(Settings.ledstate &8);
 
   XdrvCall(FUNC_PRE_INIT);
 }

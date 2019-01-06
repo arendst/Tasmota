@@ -1,5 +1,6 @@
 /* 6.4.1.7 20190106
  * Fix HLW8012, HJL01 and BL0937 based energy sensors low Power (below 10W) measurement regression from 6.4.1.6
+ * Add relay status functionality to LED2 when configured leaving LED1 for (wifi/mqtt) status indication
  *
  * 6.4.1.6 20190105
  * Add commands PowerCal, VoltageCal and CurrentCal for HLW8012, HJL01 and BL0937 based energy sensors
