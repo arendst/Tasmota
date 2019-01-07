@@ -1659,7 +1659,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
 
   { "KA10",            // SMANERGY KA10 (ESP8285 - BL0937 Energy Monitoring) - https://www.amazon.es/dp/B07MBTCH2Y
      0,                // GPIO00
-     GPIO_LED2_INV,    // GPIO01 Blue LED
+     GPIO_LED1_INV,    // GPIO01 Blue LED
      0,                // GPIO02
      GPIO_KEY1,        // GPIO03 Button
      GPIO_HJL_CF,      // GPIO04 BL0937 CF power
@@ -1671,7 +1671,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
      GPIO_NRG_SEL_INV, // GPIO12 BL0937 Sel output (1 = Voltage)
-     GPIO_LED1,        // GPIO13 Red LED
+     GPIO_LED2,        // GPIO13 Red LED
      GPIO_REL1,        // GPIO14 Relay 1
      0, 0, 0
   }
@@ -1689,8 +1689,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     GPIO_LED2,        // GPIO12 Green LED
-     GPIO_LED1,        // GPIO13 Red LED
+     GPIO_LED1,        // GPIO12 Green LED
+     GPIO_LED2,        // GPIO13 Red LED
      0, 0, 0, 0
   }
 
