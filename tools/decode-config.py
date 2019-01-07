@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0016'
+VER = '2.1.0017'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -819,7 +819,13 @@ Setting_6_4_1_4['flag3'][0].update ({
         'mdns_enabled':             ('<L', (0x3A0,1, 5), (None, None,                           ('SetOption',   '"SetOption55 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_4_1_7 = copy.deepcopy(Setting_6_4_1_4)
+Setting_6_4_1_7['flag3'][0].update ({
+        'no_pullup':                ('<L', (0x3A0,1,12), (None, None,                           ('SetOption',   '"SetOption62 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x6040107, 0xe00, Setting_6_4_1_7),
             (0x6040104, 0xe00, Setting_6_4_1_4),
             (0x6040002, 0xe00, Setting_6_4_0_2),
             (0x6030010, 0xe00, Setting_6_3_0_16),

@@ -1,10 +1,10 @@
 <h1 id="decode-config-py">decode-config.py</h1>
 <p><em>decode-config.py</em> is able to backup and restore Sonoff-Tasmota configuration.</p>
-<p>In contrast to the Tasmota build-in &quot;Backup/Restore Configuration&quot; function,</p>
+<p>In comparison with the Tasmota build-in &quot;Backup/Restore Configuration&quot; function <em>decode-config.py</em></p>
 <ul>
-<li><em>decode-config.py</em> uses human readable and editable <a href="http://www.json.org/">JSON</a>-format for backup/restore,</li>
-<li><em>decode-config.py</em> can restore previous backuped and changed <a href="http://www.json.org/">JSON</a>-format files,</li>
-<li><em>decode-config.py</em> is able to create Tasmota commands based on given configuration</li>
+<li>uses human readable and editable <a href="http://www.json.org/">JSON</a>-format for backup/restore,</li>
+<li>can restore previously backup and changed <a href="http://www.json.org/">JSON</a>-format files,</li>
+<li>is able to create Tasmota compatible command list with related config parameter</li>
 </ul>
 <p>Comparing backup files created by <em>decode-config.py</em> and *.dmp files created by Tasmota &quot;Backup/Restore Configuration&quot;:  </p>
 <table>
@@ -38,7 +38,7 @@
 </tr>
 </tbody>
 </table>
-<p><em>decode-config.py</em> is able to handle Tasmota configurations for release version starting from 5.10.0 up to now.</p>
+<p><em>decode-config.py</em> is compatible with Tasmota version from v5.10.0 up to now.</p>
 <h1 id="content">Content</h1>
 <ul>
 <li><a href="decode-config.md#prerequisite">Prerequisite</a></li>
@@ -75,11 +75,11 @@
 </ul>
 <h2 id="prerequisite">Prerequisite</h2>
 <ul>
-<li><p><a href="https://en.wikipedia.org/wiki/Python_(programming_language">Python</a>)<br>This program is written in <a href="https://en.wikipedia.org/wiki/Python_(programming_language">Python</a>) so you need to install a python environment (for details see <a href="https://docs.python.org/2.7/using/index.html">Python Setup and Usage</a>)</p>
+<li><p><a href="https://en.wikipedia.org/wiki/Python_(programming_language">Python</a>)<br>This program is written in <a href="https://en.wikipedia.org/wiki/Python_(programming_language">Python</a>) so you need to install a working python environment (for details see <a href="https://docs.python.org/2.7/using/index.html">Python Setup and Usage</a>)</p>
 </li>
 <li><p><a href="https://github.com/arendst/Sonoff-Tasmota">Sonoff-Tasmota</a> <a href="https://github.com/arendst/Sonoff-Tasmota/releases">Firmware</a> with Web-Server enabled:</p>
 <ul>
-<li>To backup or restore configurations from/to a Sonoff-Tasmota device you need a firmare with enabled web-server in admin mode (command <a href="https://github.com/arendst/Sonoff-Tasmota/wiki/Commands#wifi">WebServer 2</a>).</li>
+<li>To backup or restore configurations from or to a Sonoff-Tasmota device you need a firmare with enabled web-server in admin mode (command <a href="https://github.com/arendst/Sonoff-Tasmota/wiki/Commands#wifi">WebServer 2</a>). This is the Tasmota default.</li>
 <li>If using your own compiled firmware be aware to enable the web-server (<code>#define USE_WEBSERVER</code> and <code>#define WEB_SERVER 2</code>).</li>
 </ul>
 </li>
@@ -89,19 +89,20 @@
 <h3 id="-dmp-format">.dmp Format</h3>
 <p>Configuration data as used by Tasmota &quot;Backup/Restore Configuration&quot; web interface.<br>This format is binary and encrypted.</p>
 <h3 id="-json-format">.json Format</h3>
-<p>Configuration data in <a href="http://www.json.org/">JSON</a>-format.<br>This format is decrypted, human readable and editable and can also be used for the <code>--restore-file</code> command.<br>This file will becreated by <em>decode-config.py</em> using <code>--backup-file</code> with <code>--backup-type json</code> parameter (default).</p>
+<p>Configuration data in <a href="http://www.json.org/">JSON</a>-format.<br>This format is decrypted, human readable and editable and can also be used for the <code>--restore-file</code> parameter.<br>This file will be created by <em>decode-config.py</em> using the <code>--backup-file</code> with <code>--backup-type json</code> parameter, this is the default.</p>
 <h3 id="-bin-format">.bin Format</h3>
-<p>Configuration data in binary format.<br>This format is binary decryptet, editable (e.g. using a hex editor) and can also be used for <code>--restore-file</code> command.<br>It will be created by <em>decode-config.py</em> using <code>--backup-file</code> with <code>--backup-type bin</code>.<br>Note:<br>This file is 4 byte longer than an original .dmp file due to an prefix header at the beginning. The file data starting at address position 4 are containing the same as the <strong>struct SYSCFG</strong> from Tasmota <a href="https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/settings.h">settings.h</a> in decrypted format.</p>
+<p>Configuration data in binary format.<br>This format is binary decryptet, editable (e.g. using a hex editor) and can also be used for <code>--restore-file</code> command.<br>It will be created by <em>decode-config.py</em> using <code>--backup-file</code> with <code>--backup-type bin</code>.<br>Note:<br>The .bin file contains the same information as the original .dmp file from Tasmota &quot;Backup/Restore Configuration&quot; but it is decrpted and  4 byte longer than an original (it is a prefix header at the beginning). .bin file data starting at address 4 contains the same as the <strong>struct SYSCFG</strong> from Tasmota <a href="https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/settings.h">settings.h</a> in decrypted format.</p>
 <h4 id="file-extensions">File extensions</h4>
-<p><em>decode-config.py</em> uses auto extension as default for backup filenames; you don&#39;t need to append extensions to your backup file, it will be selected based on <code>--backup-type</code> argument.<br>If you want using your own extension use the <code>--no-extension</code> argument.</p>
+<p>You don&#39;t need to append exensions for your file name as <em>decode-config.py</em> uses auto extension as default. The extension will be choose based on file contents and <code>--backup-type</code> parameter.
+If you do not want using auto extensions use the <code>--no-extension</code> parameter.</p>
 <h2 id="usage">Usage</h2>
-<p>After download don&#39;t forget to set exec flag under linux with <code>chmod +x decode-config.py</code> or call the program using <code>python decode-config.py...</code>.</p>
+<p>After download don&#39;t forget to set the executable flag under linux with <code>chmod +x decode-config.py</code> or call the program using <code>python decode-config.py...</code>.</p>
 <h3 id="basics">Basics</h3>
 <p>At least pass a source where you want to read the configuration data from using <code>-f &lt;filename&gt;</code> or <code>-d &lt;host&gt;</code>:</p>
 <p>The source can be either </p>
 <ul>
-<li>a Tasmota device hostname or IP by passing it using the <code>-d &lt;host&gt;</code> arg</li>
-<li>or a previously stored Tasmota <code>*.dmp</code> configuration file by passing the filename using <code>-f &lt;filename&gt;</code> arg</li>
+<li>a Tasmota device hostname or IP using the <code>-d &lt;host&gt;</code> parameter</li>
+<li>a Tasmota <code>*.dmp</code> configuration file using <code>-f &lt;filename&gt;</code> parameter</li>
 </ul>
 <p>Example:  </p>
 <pre><code>decode-config<span class="hljs-selector-class">.py</span> -d sonoff-<span class="hljs-number">4281</span>
@@ -119,22 +120,22 @@
   ]
 }
 </code></pre><h3 id="save-backup-file">Save backup file</h3>
-<p>To save the output as backup file <code>--backup-file &lt;filename&gt;</code>, you can use placeholder for Version, Friendlyname and Hostname:  </p>
+<p>To save the output as backup file use <code>--backup-file &lt;filename&gt;</code>, you can use placeholder for Version, Friendlyname and Hostname:  </p>
 <pre><code><span class="hljs-selector-tag">decode-config</span><span class="hljs-selector-class">.py</span> <span class="hljs-selector-tag">-d</span> <span class="hljs-selector-tag">sonoff-4281</span> <span class="hljs-selector-tag">--backup-file</span> <span class="hljs-selector-tag">Config_</span>@<span class="hljs-keyword">f_</span>@<span class="hljs-keyword">v</span>
 </code></pre><p>If you have setup a WebPassword within Tasmota, use</p>
 <pre><code>decode-config<span class="hljs-selector-class">.py</span> -d sonoff-<span class="hljs-number">4281</span> -<span class="hljs-selector-tag">p</span> &lt;yourpassword&gt; --backup-file Config_@f_@v
-</code></pre><p>will create a file like <code>Config_Sonoff_x.x.x.json</code>. Because it is in JSON format, you can read and edit the file with any raw text editor.</p>
+</code></pre><p>will create a file like <code>Config_Sonoff_6.4.0.json</code> (the part <code>Sonoff</code> and <code>6.4.0</code> will choosen related to your device configuration). Because the default backup file format is JSON, you can read and change it with any raw text editor.</p>
 <h3 id="restore-backup-file">Restore backup file</h3>
-<p>Reading back a saved (and possible changed) backup file use the <code>--restore-file &lt;filename&gt;</code> arg. This will read the (changed) configuration data from this file and send it back to the source device or filename.</p>
+<p>Reading back a saved (and possible changed) backup file use the <code>--restore-file &lt;filename&gt;</code> parameter. This will read the (changed) configuration data from this file and send it back to the source device or filename.</p>
 <p>To restore the previously save backup file <code>Config_Sonoff_6.2.1.json</code> to device <code>sonoff-4281</code> use:  </p>
 <pre><code><span class="hljs-selector-tag">decode-config</span><span class="hljs-selector-class">.py</span> <span class="hljs-selector-tag">-d</span> <span class="hljs-selector-tag">sonoff-4281</span> <span class="hljs-selector-tag">--restore-file</span> <span class="hljs-selector-tag">Config_Sonoff_6</span><span class="hljs-selector-class">.2</span><span class="hljs-selector-class">.1</span><span class="hljs-selector-class">.json</span>
 </code></pre><p>with password set by WebPassword:</p>
 <pre><code><span class="hljs-selector-tag">decode-config</span><span class="hljs-selector-class">.py</span> <span class="hljs-selector-tag">-d</span> <span class="hljs-selector-tag">sonoff-4281</span> <span class="hljs-selector-tag">-p</span> &lt;<span class="hljs-selector-tag">yourpassword</span>&gt; <span class="hljs-selector-tag">--restore-file</span> <span class="hljs-selector-tag">Config_Sonoff_6</span><span class="hljs-selector-class">.2</span><span class="hljs-selector-class">.1</span><span class="hljs-selector-class">.json</span>
 </code></pre><h3 id="output-to-screen">Output to screen</h3>
-<p>Output to screen is default enabled when calling the program with a source arg but without a backup or restore arg.</p>
-<p><code>--output</code> arg will force screen output even if you use backup or restore arg.</p>
+<p>To force screen output use the <code>--output</code> parameter.</p>
+<p>Output to screen is default enabled when calling the program with a source parameter (-f or -d) but without any backup or restore parameter.</p>
 <h4 id="json-output">JSON output</h4>
-<p>The default output format is JSON. You can force JSON output with <code>--output-format json</code> arg.</p>
+<p>The default output format is <a href="decode-config.md#-json-format">JSON</a>. You can force JSON output using the <code>--output-format json</code> parameter.</p>
 <p>Example:</p>
 <pre><code>decode-config.py -d sonoff<span class="hljs-number">-4281</span> -c my.conf -x <span class="hljs-symbol">Wifi</span> --output-format json
 
