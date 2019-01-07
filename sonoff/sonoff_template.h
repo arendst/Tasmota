@@ -1657,6 +1657,43 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
 /*
   Optionals
 
+  { "KA10",            // SMANERGY KA10 (ESP8285 - BL0937 Energy Monitoring) - https://www.amazon.es/dp/B07MBTCH2Y
+     0,                // GPIO00
+     GPIO_LED2_INV,    // GPIO01 Blue LED
+     0,                // GPIO02
+     GPIO_KEY1,        // GPIO03 Button
+     GPIO_HJL_CF,      // GPIO04 BL0937 CF power
+     GPIO_NRG_CF1,     // GPIO05 BL0937 CF1 voltage / current
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_NRG_SEL_INV, // GPIO12 BL0937 Sel output (1 = Voltage)
+     GPIO_LED1,        // GPIO13 Red LED
+     GPIO_REL1,        // GPIO14 Relay 1
+     0, 0, 0
+  }
+
+  { "OBI Socket 2",    // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko-2-stueck-weiss/p/4077673
+     0,                // GPIO00
+     0,                // GPIO01 Serial RXD
+     0,
+     0,                // GPIO03 Serial TXD
+     GPIO_REL1,        // GPIO04 Relay 1
+     GPIO_KEY1,        // GPIO05 Button
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_LED2,        // GPIO12 Green LED
+     GPIO_LED1,        // GPIO13 Red LED
+     0, 0, 0, 0
+  }
+
   { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266)
                        // https://www.aliexpress.com/item/Magic-Home-Mini-RGB-RGBW-Wifi-Controller-For-Led-Strip-Panel-light-Timing-Function-16million-colors/32686853650.html
      0,
@@ -1675,7 +1712,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White)
      GPIO_PWM1,        // GPIO14 RGB LED Red
      0, 0, 0
-  },
+  }
+
   { "Arilux LC10",     // Arilux LC10 (ESP8285), RGBW + RF
                        // https://github.com/arendst/Sonoff-Tasmota/wiki/MagicHome-with-ESP8285
                        // https://www.aliexpress.com/item/DC5-24V-Wireless-WIFI-LED-RGB-Controller-RGBW-Controller-IR-RF-Remote-Control-IOS-Android-for/32827253255.html
