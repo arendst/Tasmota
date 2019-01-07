@@ -65,41 +65,41 @@ uint8_t SwitchGetVirtual(uint8_t index)
 
 void SwitchProbe(void)
 {
+  if (uptime < 4) { return; }                           // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+
   uint8_t state_filter = Settings.switch_debounce / SWITCH_PROBE_INTERVAL;   // 5, 10, 15
   uint8_t force_high = (Settings.switch_debounce % 50) &1;                   // 51, 101, 151 etc
   uint8_t force_low = (Settings.switch_debounce % 50) &2;                    // 52, 102, 152 etc
 
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
-      if (!((uptime < 4) && (0 == pin[GPIO_SWT1 +i]))) {  // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
-        // Olimex user_switch2.c code to fix 50Hz induced pulses
-        if (1 == digitalRead(pin[GPIO_SWT1 +i])) {
+      // Olimex user_switch2.c code to fix 50Hz induced pulses
+      if (1 == digitalRead(pin[GPIO_SWT1 +i])) {
 
-          if (force_high) {                               // Enabled with SwitchDebounce x1
-            if (1 == switch_virtual[i]) {
-              switch_state_buf[i] = state_filter;         // With noisy input keep current state 1 unless constant 0
-            }
+        if (force_high) {                               // Enabled with SwitchDebounce x1
+          if (1 == switch_virtual[i]) {
+            switch_state_buf[i] = state_filter;         // With noisy input keep current state 1 unless constant 0
           }
+        }
 
-          if (switch_state_buf[i] < state_filter) {
-            switch_state_buf[i]++;
-            if (state_filter == switch_state_buf[i]) {
-              switch_virtual[i] = 1;
-            }
+        if (switch_state_buf[i] < state_filter) {
+          switch_state_buf[i]++;
+          if (state_filter == switch_state_buf[i]) {
+            switch_virtual[i] = 1;
           }
-        } else {
+        }
+      } else {
 
-          if (force_low) {                                // Enabled with SwitchDebounce x2
-            if (0 == switch_virtual[i]) {
-              switch_state_buf[i] = 0;                    // With noisy input keep current state 0 unless constant 1
-            }
+        if (force_low) {                                // Enabled with SwitchDebounce x2
+          if (0 == switch_virtual[i]) {
+            switch_state_buf[i] = 0;                    // With noisy input keep current state 0 unless constant 1
           }
+        }
 
-          if (switch_state_buf[i] > 0) {
-            switch_state_buf[i]--;
-            if (0 == switch_state_buf[i]) {
-              switch_virtual[i] = 0;
-            }
+        if (switch_state_buf[i] > 0) {
+          switch_state_buf[i]--;
+          if (0 == switch_state_buf[i]) {
+            switch_virtual[i] = 0;
           }
         }
       }

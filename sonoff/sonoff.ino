@@ -1750,6 +1750,8 @@ void PerformEverySecond(void)
 
 void ButtonHandler(void)
 {
+  if (uptime < 4) { return; }                                  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+
   uint8_t button = NOT_PRESSED;
   uint8_t button_present = 0;
   uint8_t hold_time_extent = IMMINENT_RESET_FACTOR;            // Extent hold time factor in case of iminnent Reset command
@@ -1775,11 +1777,8 @@ void ButtonHandler(void)
       }
     } else {
       if (pin[GPIO_KEY1 +button_index] < 99) {
-//        if (!((uptime < 4) && (0 == pin[GPIO_KEY1 +button_index]))) {  // Block GPIO0 for 4 seconds after poweron to workaround Wemos D1 RTS circuit
-        if (uptime > 3) {                                      // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
-          button_present = 1;
-          button = digitalRead(pin[GPIO_KEY1 +button_index]);
-        }
+        button_present = 1;
+        button = digitalRead(pin[GPIO_KEY1 +button_index]);
       }
     }
 
