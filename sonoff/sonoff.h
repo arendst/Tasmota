@@ -213,17 +213,23 @@ enum WifiConfigOptions {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCO
 enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, MAX_SWITCH_OPTION};
 
 enum LedStateOptions {
-  LED_OFF           , // = 0x00,
-  LED_POWER         , // = 0x01,
+  LED_OFF           = 0x00, // LED is not used for status, activity or power state information.  LED WILL still use used for 'core' ops incl: Restarts,Updates,etc
+
+  LED_ON            = 0x10, // always on
+  LED_STATUS        = 0x20, // show status information on the LED
+  LED_ACTIVITY      = 0x40, // show activity information on the LED
+  LED_POWER         = 0x80, //  illuminate when any 'powered' state is active
+
+/*
   LED_MQTTSUB       , // = 0x02,
   LED_POWER_MQTTSUB , // = 0x03,
   LED_MQTTPUB       , // = 0x04,
   LED_POWER_MQTTPUB , // = 0x05,
   LED_MQTT          , // = 0x06,
   LED_POWER_MQTT    , // = 0x07,
-  LED_ON            , // = 0x08,
-  MAX_LED_OPTION    ,
-  MASK_LED_OPTION = 0xFF
+*/
+
+  MASK_LED_OPTION   = 0xF0
 };
 
 enum LEDBlinkMode {
@@ -232,18 +238,33 @@ enum LEDBlinkMode {
   MAX_OPTION_LEDBLINKMODE
 };
 
+typedef union {
+  uint32_t data;
+  struct {
+      uint32_t bits :16;    // 16 bits - the pattern.
+      uint32_t length :4;   // bit pattern length is taken as 1+this value.. ie: the min pattern size will be 1, max 16.  (ie: we count from 1 not 0 here.. some squirrel thinking, but its useful)
+      uint32_t index :4;    // 0..15 - the current bit pattern index - this should always be set to zero in definitions (unless you want the patternto start somewhere interesting)
+      uint32_t unused :8;   // unused...
+  };
+} LEDBlinkPatternInfo;
+
 enum LEDBlinkPattern {
-  LED_BLINKPATTERN_IDLE     = 0x0F, // bits : 0000 1111
-  LED_BLINKPATTERN_ERROR    = 0xAA, // bits : 1010 1010
-  LED_BLINKPATTERN_WIFIDOWN = 0x15, // bits : 0001 0101
-  LED_BLINKPATTERN_MQTTDOWN = 0x05, // bits : 0000 0101
-  MAX_OPTION_LEDBLINKPATTERN
+  // Bit format: (note: BigEndian)
+  // [00] [0] [0] [0000] :: [unused:8] [index:4] [length:4] [pattern:16]
+  LED_BLINKPATTERN_NONE     = 0x00000000,  //32bit zero
+  //---
+  LED_BLINKPATTERN_IDLE     = 0x000F0001, // All good       - bits : 0000 0000 0000 0001
+  LED_BLINKPATTERN_BLINK    = 0x00020001, // Blink          - bits : 10
+  LED_BLINKPATTERN_WIFIDOWN = 0x00080015, // No WiFiUDP     - bits : 0001 0101
+  LED_BLINKPATTERN_MQTTDOWN = 0x00080005, // No MQTT        - bits : 0000 0101
+
+  MASK_BLINKPATTERN_DATA    = 0x000FFFFF,
 };
 
+
 enum LEDBlinkSpeed {
-  LED_BLINKSPEED_FAST       = 1,  // 250ms
-  LED_BLINKSPEED_NORMAL     = 2,  // 500ms
-  LED_BLINKSPEED_SLOW       = 4,  // 1s
+  LED_BLINKSPEED_NORMAL     = 1,  // 250ms blinks
+  LED_BLINKSPEED_SLOW       = 4,  // 1s blinks
   MAX_OPTION_LEDBLINKSPEED
 };
 

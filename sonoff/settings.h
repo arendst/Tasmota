@@ -420,6 +420,20 @@ typedef union {
   };
 } StateBitfield;
 
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t mqtt_sub : 1;
+    uint8_t mqtt_pub : 1;
+    uint8_t spare02 : 1;
+    uint8_t spare03 : 1;
+    uint8_t spare04 : 1;
+    uint8_t spare05 : 1;
+    uint8_t spare06 : 1;
+    uint8_t spare07 : 1;
+  };
+} ActivityBitfield;
+
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC
   ADC_MODE(ADC_VCC);                       // Set ADC input for Power Supply Voltage usage
