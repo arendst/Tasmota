@@ -253,7 +253,7 @@
 
 #define D_MODULE_PARAMETERS "Parámetros del módulo"
 #define D_MODULE_TYPE "Tipo de módulo"
-#define D_PULLUP_ENABLE "No Button/Switch pull-up"
+#define D_PULLUP_ENABLE "Botón/Llave sin pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
