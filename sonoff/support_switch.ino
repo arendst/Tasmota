@@ -133,13 +133,14 @@ void SwitchInit(void)
 
 void SwitchHandler(byte mode)
 {
+  if (uptime < 4) { return; }                                  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+
   uint8_t button = NOT_PRESSED;
   uint8_t switchflag;
   uint16_t loops_per_second = 1000 / Settings.switch_debounce;
 
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if ((pin[GPIO_SWT1 +i] < 99) || (mode)) {
-
 
       if (holdwallswitch[i]) {
         holdwallswitch[i]--;
