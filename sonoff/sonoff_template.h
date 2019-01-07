@@ -160,7 +160,6 @@ enum ProgramSelectablePins {
   GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
   GPIO_HLW_CF,         // HLW8012 CF power
   GPIO_HJL_CF,         // HJL-01/BL0937 CF power
-  GPIO_ADC0,           // ADC
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
   GPIO_ARIRFRCV,       // AliLux RF Receive input
@@ -278,7 +277,7 @@ enum SupportedModules {
 
 /********************************************************************************************/
 
-#define MAX_GPIO_PIN       18   // Number of supported GPIO
+#define MAX_GPIO_PIN       17   // Number of supported GPIO
 #define MIN_FLASH_PINS     4    // Number of flash chip pins unusable for configuration (GPIO6, 7, 8 and 11)
 
 const char PINS_WEMOS[] PROGMEM = "D3TXD4RXD2D1flashcFLFLolD6D7D5D8D0A0";
@@ -291,9 +290,33 @@ typedef struct MYCFGIO {
   uint8_t      io[MAX_GPIO_PIN - MIN_FLASH_PINS];
 } mycfgio;
 
+#define GPIO_FLAG_ADC0       1  // Allow ADC0 when define USE_ADC_VCC is disabled
+#define GPIO_FLAG_PULLUP     2  // Allow input pull-up control using SetOption62
+#define GPIO_FLAG_SPARE02    4
+#define GPIO_FLAG_SPARE03    8
+#define GPIO_FLAG_SPARE04   16
+#define GPIO_FLAG_SPARE05   32
+#define GPIO_FLAG_SPARE06   64
+#define GPIO_FLAG_SPARE07  128
+
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t adc0 : 1;            // Allow ADC0 when define USE_ADC_VCC is disabled
+    uint8_t pullup : 1;          // Allow input pull-up control using SetOption62
+    uint8_t spare02 : 1;
+    uint8_t spare03 : 1;
+    uint8_t spare04 : 1;
+    uint8_t spare05 : 1;
+    uint8_t spare06 : 1;
+    uint8_t spare07 : 1;
+  };
+} gpio_flag;
+
 typedef struct MYTMPLT {
   char         name[15];
   mycfgio      gp;
+  gpio_flag    flag;
 } mytmplt;
 
 const uint8_t kGpioNiceList[] PROGMEM = {
@@ -473,7 +496,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MAX31855
   GPIO_MAX31855CS,   // MAX31855 Serial interface
   GPIO_MAX31855CLK,  // MAX31855 Serial interface
-  GPIO_MAX31855DO,   // MAX31855 Serial interface    
+  GPIO_MAX31855DO,   // MAX31855 Serial interface
 #endif
 };
 
@@ -565,7 +588,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Sonoff RF",       // Sonoff RF (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     0,
+     GPIO_USER,        // GPIO02 Optional sensor
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_USER,        // GPIO04 Optional sensor
      0,
@@ -597,7 +620,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off)
      GPIO_USER,        // GPIO14 Optional sensor
      0, 0,
-     GPIO_ADC0         // ADC0 Analog input
+     GPIO_FLAG_ADC0    // ADC0 Analog input
   },
   { "Sonoff TH",       // Sonoff TH10/16 (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
@@ -795,7 +818,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor
      GPIO_USER,        // GPIO15 Optional sensor
      GPIO_LED1,        // GPIO16 Green/Blue Led (1 = On, 0 = Off)
-     GPIO_ADC0         // ADC0   A0 Analog input
+     GPIO_FLAG_ADC0    // ADC0   A0 Analog input
   },
   { "EXS Relay(s)",    // ES-Store Latching relay(s) (ESP8266)
                        // https://ex-store.de/ESP8266-WiFi-Relay-V31
@@ -856,7 +879,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 D5
      GPIO_USER,        // GPIO15 D8
      GPIO_USER,        // GPIO16 D0 Wemos Wake
-     GPIO_ADC0         // ADC0   A0 Analog input
+     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
+//   + GPIO_FLAG_PULLUP  // Allow input pull-up control
   },
   { "Sonoff Dev",      // Sonoff Dev (ESP8266)
      GPIO_KEY1,        // GPIO00 E-FW Button
@@ -876,7 +900,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor
      0,                // GPIO15
      0,                // GPIO16
-     GPIO_ADC0         // ADC0 A0 Analog input
+     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
   },
   { "H801",            // Lixada H801 Wifi (ESP8266)
      GPIO_USER,        // GPIO00 E-FW Button
@@ -1083,7 +1107,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor
      0,
      GPIO_LED1,        // GPIO16 Led (1 = On, 0 = Off)
-     GPIO_ADC0         // ADC0 A0 Analog input
+     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
   },
   { "Witty Cloud",     // Witty Cloud Dev Board (ESP8266)
                        // https://www.aliexpress.com/item/ESP8266-serial-WIFI-Witty-cloud-Development-Board-ESP-12F-module-MINI-nodemcu/32643464555.html
@@ -1104,7 +1128,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 D5 optional sensor
      GPIO_PWM1,        // GPIO15 D8 RGB LED Red
      GPIO_USER,        // GPIO16 D0 optional sensor
-     GPIO_ADC0         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
+     GPIO_FLAG_ADC0    // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
   },
   { "Yunshan Relay",   // Yunshan Wifi Relay (ESP8266)
                        // https://www.ebay.com/p/Esp8266-220v-10a-Network-Relay-WiFi-Module/1369583381
@@ -1140,7 +1164,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM3,        // GPIO12 RGB LED Blue
      GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White as used on Arilux LC10)
      GPIO_PWM1,        // GPIO14 RGB LED Red
-     GPIO_LED2_INV,    // GPIO15 RF receiver control (Arilux LC10)
+     GPIO_LED4_INV,    // GPIO15 RF receiver control (Arilux LC10)
      0, 0
   },
   { "Luani HVIO",      // ESP8266_HVIO
@@ -1162,7 +1186,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor / I2C SCL pad
      GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off)
      0,
-     GPIO_ADC0         // ADC0 A0 Analog input
+     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
   },
   { "KMC 70011",       // KMC 70011
                        // https://www.amazon.com/KMC-Timing-Monitoring-Network-125V-240V/dp/B06XRX2GTQ
@@ -1186,7 +1210,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        //  (PwmFrequency 1111Hz)
      GPIO_KEY1,        // GPIO00 Optional Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     GPIO_LED2_INV,    // GPIO02 RF receiver control
+     GPIO_LED4_INV,    // GPIO02 RF receiver control
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_ARIRFRCV,    // GPIO04 IR or RF receiver (optional)
      GPIO_PWM1,        // GPIO05 RGB LED Red
@@ -1206,7 +1230,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        //  (PwmFrequency 540Hz)
      GPIO_KEY1,        // GPIO00 Optional Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     GPIO_LED2_INV,    // GPIO02 RF receiver control
+     GPIO_LED4_INV,    // GPIO02 RF receiver control
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_PWM2,        // GPIO04 RGB LED Green
      GPIO_PWM1,        // GPIO05 RGB LED Red
@@ -1381,7 +1405,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,
      GPIO_SWT2,        // GPIO14
      0,                // GPIO15 MCP39F501 Reset
-     0, 0
+     0,
+     GPIO_FLAG_PULLUP  // Allow input pull-up control
   },
   { "Xiaomi Philips",  // Xiaomi Philips bulb (ESP8266)
      0, 0, 0, 0, 0, 0,
@@ -1444,12 +1469,12 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     GPIO_LED2,        // GPIO12 (Relay ON, but set to LOW, so we can switch with GPIO05)
+     GPIO_LED3,        // GPIO12 (Relay ON, but set to LOW, so we can switch with GPIO05)
      GPIO_USER,        // GPIO13
      GPIO_KEY1,        // GPIO14 Button
      0,
      GPIO_USER,        // GPIO16
-     GPIO_ADC0         // ADC0   A0 Analog input
+     GPIO_FLAG_ADC0    // ADC0   A0 Analog input
   },
   { "Teckin",          // https://www.amazon.de/gp/product/B07D5V139R
      0,
@@ -1632,6 +1657,43 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
 /*
   Optionals
 
+  { "KA10",            // SMANERGY KA10 (ESP8285 - BL0937 Energy Monitoring) - https://www.amazon.es/dp/B07MBTCH2Y
+     0,                // GPIO00
+     GPIO_LED1_INV,    // GPIO01 Blue LED
+     0,                // GPIO02
+     GPIO_KEY1,        // GPIO03 Button
+     GPIO_HJL_CF,      // GPIO04 BL0937 CF power
+     GPIO_NRG_CF1,     // GPIO05 BL0937 CF1 voltage / current
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_NRG_SEL_INV, // GPIO12 BL0937 Sel output (1 = Voltage)
+     GPIO_LED2,        // GPIO13 Red LED
+     GPIO_REL1,        // GPIO14 Relay 1
+     0, 0, 0
+  }
+
+  { "OBI Socket 2",    // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko-2-stueck-weiss/p/4077673
+     0,                // GPIO00
+     0,                // GPIO01 Serial RXD
+     0,
+     0,                // GPIO03 Serial TXD
+     GPIO_REL1,        // GPIO04 Relay 1
+     GPIO_KEY1,        // GPIO05 Button
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_LED1,        // GPIO12 Green LED
+     GPIO_LED2,        // GPIO13 Red LED
+     0, 0, 0, 0
+  }
+
   { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266)
                        // https://www.aliexpress.com/item/Magic-Home-Mini-RGB-RGBW-Wifi-Controller-For-Led-Strip-Panel-light-Timing-Function-16million-colors/32686853650.html
      0,
@@ -1650,7 +1712,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White)
      GPIO_PWM1,        // GPIO14 RGB LED Red
      0, 0, 0
-  },
+  }
+
   { "Arilux LC10",     // Arilux LC10 (ESP8285), RGBW + RF
                        // https://github.com/arendst/Sonoff-Tasmota/wiki/MagicHome-with-ESP8285
                        // https://www.aliexpress.com/item/DC5-24V-Wireless-WIFI-LED-RGB-Controller-RGBW-Controller-IR-RF-Remote-Control-IOS-Android-for/32827253255.html
@@ -1670,7 +1733,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM3,        // GPIO12 RGB LED Blue
      GPIO_PWM4,        // GPIO13 RGBW LED White
      GPIO_PWM1,        // GPIO14 RGB LED Red
-     GPIO_LED2_INV,    // GPIO15 RF receiver control
+     GPIO_LED4_INV,    // GPIO15 RF receiver control
      0, 0
   }
 

@@ -253,6 +253,7 @@
 
 #define D_MODULE_PARAMETERS "Modül parametreleri"
 #define D_MODULE_TYPE "Modul türü"
+#define D_PULLUP_ENABLE "No Button/Switch pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"

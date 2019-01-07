@@ -253,6 +253,7 @@
 
 #define D_MODULE_PARAMETERS "Параметры модуля"
 #define D_MODULE_TYPE "Тип модуля"
+#define D_PULLUP_ENABLE "No Button/Switch pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial вход"
 #define D_SERIAL_OUT "Serial выход"

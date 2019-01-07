@@ -485,15 +485,17 @@ void WifiCheck(uint8_t param)
 #endif  // BE_MINIMAL
 
 #ifdef USE_DISCOVERY
-        if (!mdns_begun) {
-          if (mdns_delayed_start) {
-            AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_ATTEMPTING_CONNECTION));
-            mdns_delayed_start--;
-          } else {
-            mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
-            mdns_begun = MDNS.begin(my_hostname);
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS "%s"), (mdns_begun) ? D_INITIALIZED : D_FAILED);
-            AddLog(LOG_LEVEL_INFO);
+        if (Settings.flag3.mdns_enabled) {
+          if (!mdns_begun) {
+//            if (mdns_delayed_start) {
+//              AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_ATTEMPTING_CONNECTION));
+//              mdns_delayed_start--;
+//            } else {
+//              mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
+              mdns_begun = MDNS.begin(my_hostname);
+              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS "%s"), (mdns_begun) ? D_INITIALIZED : D_FAILED);
+              AddLog(LOG_LEVEL_INFO);
+//            }
           }
         }
 #endif  // USE_DISCOVERY

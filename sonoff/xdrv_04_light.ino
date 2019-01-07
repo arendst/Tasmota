@@ -247,23 +247,23 @@ void AriluxRfHandler(void)
 
 void AriluxRfInit(void)
 {
-  if ((pin[GPIO_ARIRFRCV] < 99) && (pin[GPIO_LED2] < 99)) {
+  if ((pin[GPIO_ARIRFRCV] < 99) && (pin[GPIO_LED4] < 99)) {
     if (Settings.last_module != Settings.module) {
       Settings.rf_code[1][6] = 0;
       Settings.rf_code[1][7] = 0;
       Settings.last_module = Settings.module;
     }
     arilux_rf_received_value = 0;
-    digitalWrite(pin[GPIO_LED2], !bitRead(led_inverted, 1));  // Turn on RF
+    digitalWrite(pin[GPIO_LED4], !bitRead(led_inverted, 3));  // Turn on RF
     attachInterrupt(pin[GPIO_ARIRFRCV], AriluxRfInterrupt, CHANGE);
   }
 }
 
 void AriluxRfDisable(void)
 {
-  if ((pin[GPIO_ARIRFRCV] < 99) && (pin[GPIO_LED2] < 99)) {
+  if ((pin[GPIO_ARIRFRCV] < 99) && (pin[GPIO_LED4] < 99)) {
     detachInterrupt(pin[GPIO_ARIRFRCV]);
-    digitalWrite(pin[GPIO_LED2], bitRead(led_inverted, 1));  // Turn off RF
+    digitalWrite(pin[GPIO_LED4], bitRead(led_inverted, 3));  // Turn off RF
   }
 }
 #endif  // USE_ARILUX_RF
@@ -387,8 +387,8 @@ void LightInit(void)
       }
     }
     if (pin[GPIO_ARIRFRCV] < 99) {
-      if (pin[GPIO_LED2] < 99) {
-        digitalWrite(pin[GPIO_LED2], bitRead(led_inverted, 1));  // Turn off RF
+      if (pin[GPIO_LED4] < 99) {
+        digitalWrite(pin[GPIO_LED4], bitRead(led_inverted, 3));  // Turn off RF
       }
     }
   }

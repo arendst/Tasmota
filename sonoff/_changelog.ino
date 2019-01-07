@@ -1,6 +1,26 @@
-/* 6.4.1.4 20190101
- * Update Copyright (C) 2019 
- * 
+/* 6.4.1.8 20190107
+ * Change sonoff_template.h layout regarding optional module flags like ADC0
+ * Add command SetOption62 1 to force no Button/Switch pullup on dedicated modules. Currently only supported on Shelly2 (#4841)
+ *
+ * 6.4.1.7 20190106
+ * Fix HLW8012, HJL01 and BL0937 based energy sensors low Power (below 10W) measurement regression from 6.4.1.6
+ * Add relay status functionality to LED2 when configured leaving LED1 for (wifi/mqtt) status indication
+ * Add no pull-up control to Shelly 2 module (default is pull-up, change GPIO2 to Switch3n for no pull-up) (#4841)
+ * Add 4 seconds startup delay to button control (#4829)
+ * Change button driver making it modular
+ *
+ * 6.4.1.6 20190105
+ * Add commands PowerCal, VoltageCal and CurrentCal for HLW8012, HJL01 and BL0937 based energy sensors
+ *
+ * 6.4.1.5 20190103
+ * Remove command SetOption35 0-255 for mDNS start-up delay (#4793)
+ * Add command SetOption55 0/1 to disable/enable mDNS (#4793)
+ *
+ * 6.4.1.4 20190101
+ * Update Copyright (C) 2019
+ * Fix epaper driver (#4785)
+ * Add support for Near Field Communication (NFC) controller PN532 using I2C (#4791)
+ *
  * 6.4.1.3 20181229
  * Change sonoff_template.h module lay-out by removing non-configurable GPIOs
  * Add support for MAX31855 K-Type thermocouple sensor using softSPI (#4764)

@@ -123,8 +123,8 @@ size_t MhzSendCmd(byte command_id)
   memcpy_P(&mhz_send[6], kMhzCommands[command_id] + sizeof(uint16_t), sizeof(uint16_t));
   mhz_send[8] = MhzCalculateChecksum(mhz_send);
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("Final MhzCommand: %x %x %x %x %x %x %x %x %x"),mhz_send[0],mhz_send[1],mhz_send[2],mhz_send[3],mhz_send[4],mhz_send[5],mhz_send[6],mhz_send[7],mhz_send[8]);
-  AddLog(LOG_LEVEL_DEBUG);
+//  snprintf_P(log_data, sizeof(log_data), PSTR("Final MhzCommand: %x %x %x %x %x %x %x %x %x"),mhz_send[0],mhz_send[1],mhz_send[2],mhz_send[3],mhz_send[4],mhz_send[5],mhz_send[6],mhz_send[7],mhz_send[8]);
+//  AddLog(LOG_LEVEL_DEBUG);
 
   return MhzSerial->write(mhz_send, sizeof(mhz_send));
 }

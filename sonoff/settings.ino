@@ -171,6 +171,139 @@ extern "C" uint32_t _SPIFFS_end;
 // Version 5.2 allow for more flash space
 #define CFG_ROTATES         8           // Number of flash sectors used (handles uploads)
 
+/*********************************************************************************************\
+ * EEPROM support based on EEPROM library and tuned for Tasmota
+\*********************************************************************************************/
+
+uint32_t eeprom_sector = SPIFFS_END;
+uint8_t* eeprom_data = 0;
+size_t eeprom_size = 0;
+bool eeprom_dirty = false;
+
+void EepromBegin(size_t size)
+{
+  if (size <= 0) { return; }
+  if (size > SPI_FLASH_SEC_SIZE - sizeof(Settings) -4) { size = SPI_FLASH_SEC_SIZE - sizeof(Settings) -4; }
+  size = (size + 3) & (~3);
+
+  // In case begin() is called a 2nd+ time, don't reallocate if size is the same
+  if (eeprom_data && size != eeprom_size) {
+    delete[] eeprom_data;
+    eeprom_data = new uint8_t[size];
+  } else if (!eeprom_data) {
+    eeprom_data = new uint8_t[size];
+  }
+  eeprom_size = size;
+
+  size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
+  uint8_t* flash_buffer;
+  flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
+  noInterrupts();
+  spi_flash_read(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE);
+  interrupts();
+  memcpy(eeprom_data, flash_buffer + flash_offset, eeprom_size);
+  delete[] flash_buffer;
+
+  eeprom_dirty = false;  // make sure dirty is cleared in case begin() is called 2nd+ time
+}
+
+size_t EepromLength(void)
+{
+  return eeprom_size;
+}
+
+uint8_t EepromRead(int const address)
+{
+  if (address < 0 || (size_t)address >= eeprom_size) { return 0; }
+  if (!eeprom_data) { return 0; }
+
+  return eeprom_data[address];
+}
+
+// Prototype needed for Arduino IDE - https://forum.arduino.cc/index.php?topic=406509.0
+template<typename T> T EepromGet(int const address, T &t);
+template<typename T> T EepromGet(int const address, T &t)
+{
+  if (address < 0 || address + sizeof(T) > eeprom_size) { return t; }
+  if (!eeprom_data) { return 0; }
+
+  memcpy((uint8_t*) &t, eeprom_data + address, sizeof(T));
+  return t;
+}
+
+void EepromWrite(int const address, uint8_t const value)
+{
+  if (address < 0 || (size_t)address >= eeprom_size) { return; }
+  if (!eeprom_data) { return; }
+
+  // Optimise eeprom_dirty. Only flagged if data written is different.
+  uint8_t* pData = &eeprom_data[address];
+  if (*pData != value) {
+    *pData = value;
+    eeprom_dirty = true;
+  }
+}
+
+// Prototype needed for Arduino IDE - https://forum.arduino.cc/index.php?topic=406509.0
+template<typename T> void EepromPut(int const address, const T &t);
+template<typename T> void EepromPut(int const address, const T &t)
+{
+  if (address < 0 || address + sizeof(T) > eeprom_size) { return; }
+  if (!eeprom_data) { return; }
+
+  // Optimise eeprom_dirty. Only flagged if data written is different.
+  if (memcmp(eeprom_data + address, (const uint8_t*)&t, sizeof(T)) != 0) {
+    eeprom_dirty = true;
+    memcpy(eeprom_data + address, (const uint8_t*)&t, sizeof(T));
+  }
+}
+
+bool EepromCommit(void)
+{
+  bool ret = false;
+  if (!eeprom_size) { return false; }
+  if (!eeprom_dirty) { return true; }
+  if (!eeprom_data) { return false; }
+
+  size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
+  uint8_t* flash_buffer;
+  flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
+  noInterrupts();
+  spi_flash_read(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE);
+  memcpy(flash_buffer + flash_offset, eeprom_data, eeprom_size);
+  if (spi_flash_erase_sector(eeprom_sector) == SPI_FLASH_RESULT_OK) {
+    if (spi_flash_write(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE) == SPI_FLASH_RESULT_OK) {
+      eeprom_dirty = false;
+      ret = true;
+    }
+  }
+  interrupts();
+  delete[] flash_buffer;
+
+  return ret;
+}
+
+uint8_t * EepromGetDataPtr()
+{
+  eeprom_dirty = true;
+  return &eeprom_data[0];
+}
+
+void EepromEnd(void)
+{
+  if (!eeprom_size) { return; }
+
+  EepromCommit();
+  if (eeprom_data) {
+    delete[] eeprom_data;
+  }
+  eeprom_data = 0;
+  eeprom_size = 0;
+  eeprom_dirty = false;
+}
+
+/********************************************************************************************/
+
 uint16_t settings_crc = 0;
 uint32_t settings_location = SETTINGS_LOCATION;
 uint8_t *settings_buffer = NULL;
@@ -235,6 +368,7 @@ void SettingsSaveAll(void)
     Settings.power = 0;
   }
   XsnsCall(FUNC_SAVE_BEFORE_RESTART);
+  EepromCommit();
   SettingsSave(0);
 }
 
@@ -276,8 +410,25 @@ void SettingsSave(byte rotate)
     Settings.save_flag++;
     Settings.cfg_size = sizeof(SYSCFG);
     Settings.cfg_crc = GetSettingsCrc();
-    ESP.flashEraseSector(settings_location);
-    ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+
+    if (SPIFFS_END == settings_location) {
+      uint8_t* flash_buffer;
+      flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
+      if (eeprom_data && eeprom_size) {
+        size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
+        memcpy(flash_buffer + flash_offset, eeprom_data, eeprom_size);  // Write dirty EEPROM data
+      } else {
+        ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)flash_buffer, SPI_FLASH_SEC_SIZE);   // Read EEPROM area
+      }
+      memcpy(flash_buffer, &Settings, sizeof(Settings));
+      ESP.flashEraseSector(settings_location);
+      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)flash_buffer, SPI_FLASH_SEC_SIZE);
+      delete[] flash_buffer;
+    } else {
+      ESP.flashEraseSector(settings_location);
+      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    }
+
     if (!stop_flash_rotate && rotate) {
       for (byte i = 1; i < CFG_ROTATES; i++) {
         ESP.flashEraseSector(settings_location -i);  // Delete previous configurations by resetting to 0xFF
@@ -865,6 +1016,10 @@ void SettingsDelta(void)
       if (Settings.sleep < 50) {
         Settings.sleep = 50;                // Default to 50 for sleep, for now
       }
+    }
+    if (Settings.version < 0x06040105) {
+      Settings.flag3.mdns_enabled = 0;
+      Settings.param[P_MDNS_DELAYED_START] = 0;
     }
 
     Settings.version = VERSION;

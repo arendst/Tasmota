@@ -255,6 +255,10 @@ const char HTTP_BTN_CONF[] PROGMEM =
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend><form method='get' action='md'>"
   "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
+
+const char HTTP_FORM_MODULE_PULLUP[] PROGMEM =
+  "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_PULLUP_ENABLE "</b><br/>";
+
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;({w})&nbsp<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
@@ -837,6 +841,12 @@ void HandleModuleConfiguration(void)
   page.replace(F("<body>"), F("<body onload='sl()'>"));
   page += FPSTR(HTTP_FORM_MODULE);
   page.replace(F("{mt"), AnyModuleName(MODULE));
+
+  if (my_module_flag.pullup) {
+    page += FPSTR(HTTP_FORM_MODULE_PULLUP);
+    page.replace(F("{r1"), (Settings.flag3.no_pullup) ? F(" checked") : F(""));
+  }
+
   page += F("<br/><table>");
   for (byte i = 0; i < sizeof(cmodule); i++) {
     if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
@@ -861,6 +871,11 @@ void ModuleSaveSettings(void)
   byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
   Settings.last_module = Settings.module;
   Settings.module = new_module;
+  if (Settings.last_module == new_module) {
+    if (my_module_flag.pullup) {
+      Settings.flag3.no_pullup = WebServer->hasArg("b1");
+    }
+  }
   myio cmodule;
   ModuleGpios(&cmodule);
   String gpios = "";
@@ -1123,6 +1138,7 @@ void HandleOtherConfiguration(void)
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_OTHER);
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
+
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
   if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
   for (byte i = 0; i < maxfn; i++) {
@@ -1345,16 +1361,19 @@ void HandleInformation(void)
 #else
   func += F(D_DISABLED);
 #endif // USE_EMULATION
-
   func += F("}1" D_MDNS_DISCOVERY "}2");
 #ifdef USE_DISCOVERY
-  func += F(D_ENABLED);
-  func += F("}1" D_MDNS_ADVERTISE "}2");
+  if (Settings.flag3.mdns_enabled) {
+    func += F(D_ENABLED);
+    func += F("}1" D_MDNS_ADVERTISE "}2");
 #ifdef WEBSERVER_ADVERTISE
-  func += F(D_WEB_SERVER);
+    func += F(D_WEB_SERVER);
 #else
-  func += F(D_DISABLED);
+    func += F(D_DISABLED);
 #endif // WEBSERVER_ADVERTISE
+  } else {
+    func += F(D_DISABLED);
+  }
 #else
   func += F(D_DISABLED);
 #endif // USE_DISCOVERY
