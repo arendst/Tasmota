@@ -168,7 +168,8 @@ byte syslog_level;                          // Current copy of Settings.syslog_l
 boolean latest_uptime_flag = true;          // Signal latest uptime
 boolean pwm_present = false;                // Any PWM channel configured with SetOption15 0
 boolean mdns_begun = false;                 // mDNS active
-myio my_module;                             // Active copy of Module GPIOs (18 x 8 bits)
+myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
+gpio_flag my_module_flag;                   // Active copy of Module GPIO flags
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
 char my_version[33];                        // Composed version string
 char my_image[33];                          // Code image and/or commit
@@ -180,7 +181,6 @@ char mqtt_data[MESSZ];                      // MQTT publish buffer and web page 
 char log_data[LOGSZ];                       // Logging
 char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
 String backlog[MAX_BACKLOG];                // Command backlog
-
 
 /********************************************************************************************/
 
@@ -770,6 +770,9 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
             }
             if (10 == pindex) {  // SetOption60 enable or disable traditional sleep
               WiFiSetSleepMode();  // Update WiFi sleep mode accordingly
+            }
+            if (12 == pindex) {  // SetOption62 change input pull-up
+              restart_flag = 2;
             }
           }
         }
@@ -2169,8 +2172,6 @@ void GpioInit(void)
 
   myio def_gp;
   ModuleGpios(&def_gp);
-
-
   for (byte i = 0; i < sizeof(Settings.my_gp); i++) {
     if (Settings.my_gp.io[i] > GPIO_NONE) {
       my_module.io[i] = Settings.my_gp.io[i];
@@ -2179,6 +2180,7 @@ void GpioInit(void)
       my_module.io[i] = def_gp.io[i];
     }
   }
+  my_module_flag = ModuleFlag();
 
   for (byte i = 0; i < GPIO_MAX; i++) {
     pin[i] = 99;

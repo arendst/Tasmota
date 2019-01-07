@@ -253,6 +253,7 @@
 
 #define D_MODULE_PARAMETERS "模块设置"
 #define D_MODULE_TYPE "模块类型"
+#define D_PULLUP_ENABLE "No Button/Switch pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "串口输入(RX)"
 #define D_SERIAL_OUT "串口输出(TX)"

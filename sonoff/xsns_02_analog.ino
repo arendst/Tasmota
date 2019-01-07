@@ -71,7 +71,7 @@ boolean Xsns02(byte function)
 {
   boolean result = false;
 
-  if (pin[GPIO_ADC0] < 99) {
+  if (my_module_flag.adc0) {
     switch (function) {
 #ifdef USE_RULES
       case FUNC_EVERY_250_MSECOND:

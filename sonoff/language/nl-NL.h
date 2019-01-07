@@ -253,6 +253,7 @@
 
 #define D_MODULE_PARAMETERS "Module parameters"
 #define D_MODULE_TYPE "Module soort"
+#define D_PULLUP_ENABLE "Geen schakelaar pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serieel In"
 #define D_SERIAL_OUT "Serieel Uit"

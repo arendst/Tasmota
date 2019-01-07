@@ -110,8 +110,10 @@ void SwitchProbe(void)
 
 void SwitchInit(void)
 {
-  if (SHELLY2 == Settings.module) {
-    if (switch_no_pullup > 0) { switch_no_pullup = 0xffff; }  // If any switch is no pull-up make them all no pull-up
+  if (my_module_flag.pullup) {
+    if (Settings.flag3.no_pullup) {
+      switch_no_pullup = 0xffff;
+    }
   }
 
   switches_found = 0;

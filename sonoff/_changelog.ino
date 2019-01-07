@@ -1,4 +1,8 @@
-/* 6.4.1.7 20190106
+/* 6.4.1.8 20190107
+ * Change sonoff_template.h layout regarding optional module flags like ADC0
+ * Add command SetOption62 1 to force no Button/Switch pullup on dedicated modules. Currently only supported on Shelly2 (#4841)
+ *
+ * 6.4.1.7 20190106
  * Fix HLW8012, HJL01 and BL0937 based energy sensors low Power (below 10W) measurement regression from 6.4.1.6
  * Add relay status functionality to LED2 when configured leaving LED1 for (wifi/mqtt) status indication
  * Add no pull-up control to Shelly 2 module (default is pull-up, change GPIO2 to Switch3n for no pull-up) (#4841)
