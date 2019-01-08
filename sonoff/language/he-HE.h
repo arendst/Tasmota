@@ -266,6 +266,7 @@
 
 #define D_MODULE_PARAMETERS "מודול פרמטרים"
 #define D_MODULE_TYPE "סוג מודול"
+#define D_PULLUP_ENABLE "No Button/Switch pull-up"
 #define D_GPIO " רגל "
 #define D_SERIAL_IN "כניסת סריאל"
 #define D_SERIAL_OUT "יציאת סריאל"

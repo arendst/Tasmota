@@ -294,6 +294,10 @@ const char HTTP_BTN_CONF[] PROGMEM =
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend><form method='get' action='md'>"
   "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
+
+const char HTTP_FORM_MODULE_PULLUP[] PROGMEM =
+  "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_PULLUP_ENABLE "</b><br/>";
+
 const char HTTP_FORM_GENERAL[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_GENERAL_PARAMETERS "&nbsp;</b></legend><form method='get' action='gs'>";
 const char HTTP_FORM_GENERAL_CHECKBOX_ONOFF[] PROGMEM =
@@ -937,7 +941,14 @@ void HandleModuleHardwareConfiguration(void)
   page.replace(F("{mt"), AnyModuleName(MODULE));
   page += F("<br/>");
   page += FPSTR(D_IO_SETUP);
-  page += F("<table>");
+
+
+  if (my_module_flag.pullup) {
+    page += FPSTR(HTTP_FORM_MODULE_PULLUP);
+    page.replace(F("{r1"), (Settings.flag3.no_pullup) ? F(" checked") : F(""));
+  }
+
+  page += F("<br/><table>");
   for (byte i = 0; i < sizeof(cmodule); i++) {
     if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
@@ -961,6 +972,11 @@ void ModuleHardwareSaveSettings(void)
   byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
   Settings.last_module = Settings.module;
   Settings.module = new_module;
+  if (Settings.last_module == new_module) {
+    if (my_module_flag.pullup) {
+      Settings.flag3.no_pullup = WebServer->hasArg("b1");
+    }
+  }
   myio cmodule;
   ModuleGpios(&cmodule);
   String gpios = "";
@@ -1304,6 +1320,7 @@ void HandleOtherConfiguration(void)
   page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
   page.replace(F("{b0"), FPSTR(D_MQTT_ENABLE));
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
+
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
   if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
   for (byte i = 0; i < maxfn; i++) {
