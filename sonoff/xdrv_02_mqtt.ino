@@ -851,6 +851,7 @@ const char HTTP_BTN_MENU_MQTT[] PROGMEM =
 
 const char HTTP_FORM_MQTT[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend><form method='get' action='" WEB_HANDLE_MQTT "'>"
+  "<br/><input style='width:10%;' id='me' name='me' type='checkbox'{m8><b>" D_MQTT_ENABLE "</b><br/>"
   "<br/><b>" D_HOST "</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' placeholder='" MQTT_HOST" ' value='{m1'><br/>"
   "<br/><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' placeholder='" STR(MQTT_PORT) "' value='{m2'><br/>"
   "<br/><b>" D_CLIENT "</b> ({m0)<br/><input id='mc' name='mc' placeholder='" MQTT_CLIENT_ID "' value='{m3'><br/>"
@@ -886,6 +887,7 @@ void HandleMqttConfiguration(void)
   page.replace(F("{m4"), (Settings.mqtt_user[0] == '\0')?"0":Settings.mqtt_user);
   page.replace(F("{m6"), Settings.mqtt_topic);
   page.replace(F("{m7"), Settings.mqtt_fulltopic);
+  page.replace(F("{m8"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
 
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
@@ -898,6 +900,7 @@ void MqttSaveSettings(void)
   char stemp[TOPSZ];
   char stemp2[TOPSZ];
 
+  Settings.flag.mqtt_enabled = WebServer->hasArg("me");
   WebGetArg("mt", tmp, sizeof(tmp));
   strlcpy(stemp, (!strlen(tmp)) ? MQTT_TOPIC : tmp, sizeof(stemp));
   MakeValidMqtt(0, stemp);
@@ -934,7 +937,7 @@ boolean Xdrv02(byte function)
 {
   boolean result = false;
 
-  if (Settings.flag.mqtt_enabled) {
+  //if (Settings.flag.mqtt_enabled) {
     switch (function) {
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
@@ -945,12 +948,12 @@ boolean Xdrv02(byte function)
         break;
 #endif  // USE_WEBSERVER
       case FUNC_LOOP:
-        if (!global_state.mqtt_down) { MqttLoop(); }
+        if (Settings.flag.mqtt_enabled && !global_state.mqtt_down) { MqttLoop(); }
         break;
       case FUNC_COMMAND:
-        result = MqttCommand();
+        if (Settings.flag.mqtt_enabled) result = MqttCommand();
         break;
     }
-  }
+  //}
   return result;
 }

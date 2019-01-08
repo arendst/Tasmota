@@ -60,7 +60,7 @@ const char HTTP_HEAD[] PROGMEM =
   "}"
 
   // function: getxhr(url:string, onsuccess:function, onfail:function, tout:timeout(ms)) - perform a GET XHR req, to a url, returns data to onsuccess/onfail function refs
-  "function getxhr(url,onsuccess=null,onfail=null,tout=2000){"
+  "function getxhr(url,onsuccess=null,onfail=null,tout=5000){"
     "xh=new XMLHttpRequest();"
     "xh.timeout=tout;"
     "xh.onreadystatechange=function(){"
@@ -71,6 +71,7 @@ const char HTTP_HEAD[] PROGMEM =
     "};"
     "xh.open('GET',url,true);"
     "xh.send();"
+    "return xh;"
   "}"
 
   "function logout(){"
@@ -100,7 +101,11 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
       "clearTimeout(lt);"
     "}"
     "if(x!=null){x.abort();}"    // Abort if no response within 2 seconds (happens on restart 1)
-    "x=new XMLHttpRequest();"
+    "x=getxhr('ay'+a,function(){"
+        "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%'>\").replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{c}/g,\"%'><div style='text-align:center;font-weight:\");"
+        "eb('l1').innerHTML=s;"
+      "});"
+    /*"x=new XMLHttpRequest();"
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
         "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%'>\").replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{c}/g,\"%'><div style='text-align:center;font-weight:\");"
@@ -108,7 +113,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
       "}"
     "};"
     "x.open('GET','ay'+a,true);"
-    "x.send();"
+    "x.send();"*/
     "lt=setTimeout(la,{a});"    // Settings.web_refresh
   "}"
   "function lb(p){"
@@ -125,21 +130,37 @@ const char HTTP_SCRIPT_WIFI[] PROGMEM =
     "eb('p1').focus();"
   "}";
 
+const char HTTP_SCRIPT_RELOAD_GENERIC[] PROGMEM =
+    "var tmw=0,vld=0;"
+    "setInterval(function(){"
+      "e=eb('tmr'); e.innerHTML=tmw+'s'; tmw++;"
+      "if(tmw*1000>{t0 && (!vld||tmw%2==0)){"
+        "getxhr('.',"
+          "function(){e.innerHTML='" D_ONLINE "'; if(++vld<5)return; e.innerHTML+=' " D_READY "'; setTimeout(function(){location.href='.'},2000);}"
+          ",null,2000);"
+      "}"
+    "},1000);"
+    "</script>";
+/*
 const char HTTP_SCRIPT_RELOAD[] PROGMEM =
   "setTimeout(function(){location.href='.';}," STR(HTTP_RESTART_RECONNECT_TIME) ");"
   "</script>";
 
 // Local OTA upgrade requires more time to complete cp: before web ui should be reloaded
 const char HTTP_SCRIPT_RELOAD_OTA[] PROGMEM =
-  "var tmw=0;"
+  "var tmw=0,vld=0"
   "setInterval(function(){"
     "e=eb('tmr'); e.innerHTML=tmw+'s'; tmw++;"
     "if(tmw*1000>" STR(HTTP_OTA_RESTART_RECONNECT_TIME) " && tmw%2==0){"
-      "getxhr('.',function(){ e.innerHTML='" D_READY "'; setTimeout(function(){location.href='.'},1000); }, function(d){}, 2000 );"
+      "getxhr('.',"
+        "function(){ e.innerHTML='" D_ONLINE "'; if (++vld<5) return; e.innerHTML='" D_READY "'; setTimeout(function(){location.href='.'},2000); }"
+        ",null, 2000);"
     "}"
   "}, 1000);"
-  //"setTimeout(function(){location.href='.';}," STR(HTTP_OTA_RESTART_RECONNECT_TIME) ");"
   "</script>";
+  //"setTimeout(function(){location.href='.';}," STR(HTTP_OTA_RESTART_RECONNECT_TIME) ");"
+  //"</script>";
+*/
 
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
@@ -157,6 +178,17 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "}"
     "if(t.scrollTop>=sn){"       // User scrolled back so no updates
       "if(x!=null){x.abort();}"  // Abort if no response within 2 seconds (happens on restart 1)
+      "x=getxhr('ax?c2='+id+o,function(){"
+        "var z,d;"
+        "d=x.responseXML;"
+        "id=d.getElementsByTagName('i')[0].childNodes[0].nodeValue;"
+        "if(d.getElementsByTagName('j')[0].childNodes[0].nodeValue==0){t.value='';}"
+        "z=d.getElementsByTagName('l')[0].childNodes;"
+        "if(z.length>0){t.value+=decodeURIComponent(z[0].nodeValue);}"
+        "t.scrollTop=99999;"
+        "sn=t.scrollTop;"
+      "});"
+      /*
       "x=new XMLHttpRequest();"
       "x.onreadystatechange=function(){"
         "if(x.readyState==4&&x.status==200){"
@@ -172,6 +204,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "};"
       "x.open('GET','ax?c2='+id+o,true);"
       "x.send();"
+      */
     "}"
     "lt=setTimeout(l,{a});"
     "return false;"
@@ -186,7 +219,13 @@ const char HTTP_SCRIPT_MODULE1[] PROGMEM =
   "}"
   "function sl(){"
     "if(x!=null){x.abort();}"    // Abort any request pending
-    "x=new XMLHttpRequest();"
+    "x=getxhr('md?m=1',function(){"
+      "var i,o=x.responseText.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");"
+      "i=o.indexOf(\"}3\");"   // String separator means do not use "}3" in Module name and Sensor name
+      "os=o.substring(0,i);"
+      "sk(}4,99);"
+      "os=o.substring(i+2);";  // +2 is length "}3"
+    /*"x=new XMLHttpRequest();"
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
         "var i,o=x.responseText.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");"
@@ -194,11 +233,14 @@ const char HTTP_SCRIPT_MODULE1[] PROGMEM =
         "os=o.substring(0,i);"
         "sk(}4,99);"
         "os=o.substring(i+2);";  // +2 is length "}3"
+        */
 const char HTTP_SCRIPT_MODULE2[] PROGMEM =
-      "}"
+    "});"
+    /*  "}"
     "};"
     "x.open('GET','md?m=1',true);"  // ?m related to WebServer->hasArg("m")
     "x.send();"
+    */
   "}";
 const char HTTP_SCRIPT_MODULE3[] PROGMEM =
   "}1'%d'>%s (%d)}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
@@ -299,7 +341,7 @@ const char HTTP_FORM_MODULE_PULLUP[] PROGMEM =
   "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_PULLUP_ENABLE "</b><br/>";
 
 const char HTTP_FORM_GENERAL[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_GENERAL_PARAMETERS "&nbsp;</b></legend><form method='get' action='gs'>";
+  "<fieldset><legend><b>&nbsp;" D_CONFIGURE_GENERAL "&nbsp;</b></legend><form method='get' action='gs'>";
 const char HTTP_FORM_GENERAL_CHECKBOX_ONOFF[] PROGMEM =
   //"<br/><b>{b0</b><br/><select id='{b1' name='{b1'>"
   //"<option{a0value='0'>0 " D_DISABLED "</option>"
@@ -637,7 +679,8 @@ void WebRestart(uint8_t type)
   } else {
     page += FPSTR(HTTP_BTN_MAIN);
   }
-  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD));
+  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD_GENERIC));
+  page.replace(F("{t0"),STR(HTTP_RESTART_RECONNECT_TIME));
   ShowPage(page);
 
   ShowWebSource(SRC_WEBGUI);
@@ -1035,15 +1078,21 @@ void HandleGeneralConfiguration(void)
   page.replace(F("{b0"), F(D_LED_INDICATOR_POWER));
   page.replace(F("{b1"), F("o02"));
   page.replace(F("{r1"), (Settings.ledstate&LED_POWER) ? F(" checked") : F(""));
+  page += F("<br>");
 
   // Save state to flash
+  page += FPSTR(D_GENERAL_USAGE); page += F("<br>");
   page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
   page.replace(F("{b0"), F(D_SAVE_STATE));
-  page.replace(F("{b1"), F("o1"));
+  page.replace(F("{b1"), F("o10"));
   page.replace(F("{r1"), (Settings.flag.save_state) ? F(" checked") : F(""));
+  //-- button single mode
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), FPSTR(D_BUTTON_SINGLEMODE));
+  page.replace(F("{b1"), F("o11"));
+  page.replace(F("{r1"), (Settings.flag.button_single) ? F(" checked") : F(""));
 
   page += F("</table>");
-
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
@@ -1055,18 +1104,17 @@ void GeneralConfigurationSaveSettings(void)
 
   // LED indicator
   Settings.ledstate = 0;
-  WebGetArg("o00", tmp, sizeof(tmp));
-  Settings.ledstate |= (atoi(tmp) > 0 ? LED_ACTIVITY : 0);
-  WebGetArg("o01", tmp, sizeof(tmp));
-  Settings.ledstate |= (atoi(tmp) > 0 ? LED_STATUS : 0);
-  WebGetArg("o02", tmp, sizeof(tmp));
-  Settings.ledstate |= (atoi(tmp) > 0 ? LED_POWER : 0);
+  if ( WebServer->hasArg("o00") ) Settings.ledstate |= LED_ACTIVITY;
+  if ( WebServer->hasArg("o01") ) Settings.ledstate |= LED_STATUS;
+  if ( WebServer->hasArg("o02") ) Settings.ledstate |= LED_POWER;
 
   // Save state
-  WebGetArg("o1", tmp, sizeof(tmp));
-  Settings.flag.save_state = (atoi(tmp) > 0 ? 1 : 0);
+  Settings.flag.save_state = WebServer->hasArg("o10");
+  // Single button mode
+  Settings.flag.button_single = WebServer->hasArg("o11");
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_CONFIGURE_GENERAL "%02X, %02X"), tmp, Settings.ledstate, Settings.flag.save_state);
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_CONFIGURE_GENERAL "%s %02X, %02X"),tmp, Settings.ledstate, Settings.flag.save_state);
   AddLog(LOG_LEVEL_INFO);
 }
 
@@ -1317,9 +1365,6 @@ void HandleOtherConfiguration(void)
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_OTHER));
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_OTHER);
-  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
-  page.replace(F("{b0"), FPSTR(D_MQTT_ENABLE));
-  page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
 
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
   if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
@@ -1330,6 +1375,7 @@ void HandleOtherConfiguration(void)
     page.replace(F("{2"), (i) ? stemp : FRIENDLY_NAME);
     page.replace(F("{3"), Settings.friendlyname[i]);
   }
+
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3a);
   for (byte i = 0; i < EMUL_MAX; i++) {
@@ -1355,7 +1401,6 @@ void OtherSaveSettings(void)
 
   WebGetArg("p1", tmp, sizeof(tmp));
   strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
-  Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
 #ifdef USE_EMULATION
   WebGetArg("b2", tmp, sizeof(tmp));
   Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
@@ -1635,7 +1680,8 @@ void HandleUpgradeFirmwareStart(void)
   page += F("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
-  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD_OTA));
+  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD_GENERIC));
+  page.replace(F("{t0"),STR(HTTP_OTA_RESTART_RECONNECT_TIME));
   ShowPage(page);
 
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_UPGRADE " 1"));
@@ -1688,7 +1734,8 @@ void HandleUploadDone(void)
   } else {
     page += F("green'>" D_SUCCESSFUL "</font></b><br/>");
     page += FPSTR(HTTP_MSG_RSTRT);
-    page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD_OTA)); // Refesh main web ui after OTA upgrade
+    page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD_GENERIC));
+    page.replace(F("{t0"),STR(HTTP_OTA_RESTART_RECONNECT_TIME));
     ShowWebSource(SRC_WEBGUI);
     restart_flag = 2;  // Always restart to re-enable disabled features during update
   }

@@ -214,12 +214,10 @@ enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, 
 
 enum LedStateOptions {
   LED_OFF           = 0x00, // LED is not used for status, activity or power state information.  LED WILL still use used for 'core' ops incl: Restarts,Updates,etc
-
   LED_ON            = 0x10, // always on
   LED_STATUS        = 0x20, // show status information on the LED
   LED_ACTIVITY      = 0x40, // show activity information on the LED
   LED_POWER         = 0x80, //  illuminate when any 'powered' state is active
-
 /*
   LED_MQTTSUB       , // = 0x02,
   LED_POWER_MQTTSUB , // = 0x03,
@@ -228,7 +226,6 @@ enum LedStateOptions {
   LED_MQTT          , // = 0x06,
   LED_POWER_MQTT    , // = 0x07,
 */
-
   MASK_LED_OPTION   = 0xF0
 };
 
@@ -250,17 +247,16 @@ typedef union {
 
 enum LEDBlinkPattern {
   // Bit format: (note: BigEndian)
-  // [00] [0] [0] [0000] :: [unused:8] [index:4] [length:4] [pattern:16]
+  // [00] [0] [0] [0000] :: [unused:8] [index:4] [length:4] [pattern:16bits]
   LED_BLINKPATTERN_NONE     = 0x00000000,  //32bit zero
   //---
   LED_BLINKPATTERN_IDLE     = 0x000F0001, // All good       - bits : 0000 0000 0000 0001
-  LED_BLINKPATTERN_BLINK    = 0x00020001, // Blink          - bits : 10
+  LED_BLINKPATTERN_BLINK    = 0x00010002, // Blink          - bits : 10
   LED_BLINKPATTERN_WIFIDOWN = 0x00080015, // No WiFiUDP     - bits : 0001 0101
   LED_BLINKPATTERN_MQTTDOWN = 0x00080005, // No MQTT        - bits : 0000 0101
-
+  //---
   MASK_BLINKPATTERN_DATA    = 0x000FFFFF,
 };
-
 
 enum LEDBlinkSpeed {
   LED_BLINKSPEED_NORMAL     = 1,  // 250ms blinks
