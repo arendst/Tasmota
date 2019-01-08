@@ -31,9 +31,14 @@
 
 #include <Ticker.h>
 
+#define D_CMND_POWERCAL "PowerCal"
+#define D_CMND_VOLTAGECAL "VoltageCal"
+#define D_CMND_CURRENTCAL "CurrentCal"
+
 enum EnergyCommands {
   CMND_POWERDELTA,
   CMND_POWERLOW, CMND_POWERHIGH, CMND_VOLTAGELOW, CMND_VOLTAGEHIGH, CMND_CURRENTLOW, CMND_CURRENTHIGH,
+  CMND_POWERCAL, CMND_VOLTAGECAL, CMND_CURRENTCAL,
   CMND_POWERSET, CMND_VOLTAGESET, CMND_CURRENTSET, CMND_FREQUENCYSET,
   CMND_ENERGYRESET, CMND_MAXENERGY, CMND_MAXENERGYSTART,
   CMND_MAXPOWER, CMND_MAXPOWERHOLD, CMND_MAXPOWERWINDOW,
@@ -41,6 +46,7 @@ enum EnergyCommands {
 const char kEnergyCommands[] PROGMEM =
   D_CMND_POWERDELTA "|"
   D_CMND_POWERLOW "|" D_CMND_POWERHIGH "|" D_CMND_VOLTAGELOW "|" D_CMND_VOLTAGEHIGH "|" D_CMND_CURRENTLOW "|" D_CMND_CURRENTHIGH "|"
+  D_CMND_POWERCAL "|" D_CMND_VOLTAGECAL "|" D_CMND_CURRENTCAL "|"
   D_CMND_POWERSET "|" D_CMND_VOLTAGESET "|" D_CMND_CURRENTSET "|" D_CMND_FREQUENCYSET "|"
   D_CMND_ENERGYRESET "|" D_CMND_MAXENERGY "|" D_CMND_MAXENERGYSTART "|"
   D_CMND_MAXPOWER "|" D_CMND_MAXPOWERHOLD "|" D_CMND_MAXPOWERWINDOW "|"
@@ -413,21 +419,36 @@ boolean EnergyCommand(void)
       command, energy_total_chr, energy_yesterday_chr, energy_daily_chr);
     status_flag = 1;
   }
-  else if ((CMND_POWERSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // Watt
+  else if ((CMND_POWERCAL == command_code) && XnrgCall(FUNC_COMMAND)) {  // microseconds
+    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) { Settings.energy_power_calibration = XdrvMailbox.payload; }
     nvalue = Settings.energy_power_calibration;
     unit = UNIT_MICROSECOND;
   }
-  else if ((CMND_VOLTAGESET == command_code) && XnrgCall(FUNC_COMMAND)) {  // Volt
+  else if ((CMND_VOLTAGECAL == command_code) && XnrgCall(FUNC_COMMAND)) {  // microseconds
+    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) { Settings.energy_voltage_calibration = XdrvMailbox.payload; }
     nvalue = Settings.energy_voltage_calibration;
     unit = UNIT_MICROSECOND;
   }
-  else if ((CMND_CURRENTSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // milliAmpere
+  else if ((CMND_CURRENTCAL == command_code) && XnrgCall(FUNC_COMMAND)) {  // microseconds
+    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) { Settings.energy_current_calibration = XdrvMailbox.payload; }
     nvalue = Settings.energy_current_calibration;
     unit = UNIT_MICROSECOND;
   }
+  else if ((CMND_POWERSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // Watt
+    nvalue = Settings.energy_power_calibration;
+    unit = UNIT_MILLISECOND;
+  }
+  else if ((CMND_VOLTAGESET == command_code) && XnrgCall(FUNC_COMMAND)) {  // Volt
+    nvalue = Settings.energy_voltage_calibration;
+    unit = UNIT_MILLISECOND;
+  }
+  else if ((CMND_CURRENTSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // milliAmpere
+    nvalue = Settings.energy_current_calibration;
+    unit = UNIT_MILLISECOND;
+  }
   else if ((CMND_FREQUENCYSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // Hz
     nvalue = Settings.energy_frequency_calibration;
-    unit = UNIT_MICROSECOND;
+    unit = UNIT_MILLISECOND;
   }
 
 #if FEATURE_POWER_LIMIT
@@ -493,8 +514,9 @@ boolean EnergyCommand(void)
 
   if (serviced && !status_flag) {
 
-    if (UNIT_MICROSECOND == unit) {
+    if (UNIT_MILLISECOND == unit) {
       snprintf_P(command, sizeof(command), PSTR("%sCal"), command);
+      unit = UNIT_MICROSECOND;
     }
 
     if (Settings.flag.value_units) {

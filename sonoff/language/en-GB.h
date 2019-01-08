@@ -234,6 +234,9 @@
 #define D_CONFIGURE_GENERAL "General Options"
 #define D_GENERAL_PARAMETERS " General options"
 #define D_LED_INDICATOR "LED Indicator"
+#define D_LED_INDICATOR_ACTIVITY "Activity"
+#define D_LED_INDICATOR_STATUS "Status"
+#define D_LED_INDICATOR_POWER "Power"
 #define D_SAVE_STATE "Save State"
 #define D_DISABLED "Disabled"
 #define D_ENABLED "Enabled"
@@ -264,6 +267,7 @@
 
 #define D_MODULE_PARAMETERS "Module parameters"
 #define D_MODULE_TYPE "Module type"
+#define D_PULLUP_ENABLE "No Button/Switch pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"

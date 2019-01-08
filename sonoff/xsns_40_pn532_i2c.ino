@@ -55,6 +55,7 @@ uint8_t pn532_i2c_detected = 0;
 uint8_t pn532_i2c_packetbuffer[64];
 uint8_t pn532_i2c_scan_defer_report = 0;         // If a valid card was found we will not scan for one again in the same two seconds so we set this to 19 if a card was found
 uint8_t pn532_i2c_command = 0;
+uint8_t pn532_i2c_disable = 0;
 
 const uint8_t PROGMEM pn532_global_timeout = 10;
 
@@ -159,7 +160,7 @@ int8_t PN532_readAckFrame(void)
     }
     delay(1);
     time++;
-        if (time > 10) { // We time out after 10ms
+        if (time > pn532_global_timeout) { // We time out after 10ms
             return PN532_TIMEOUT;
         }
   } while (1);
@@ -237,7 +238,9 @@ bool PN532_SAMConfig(void)
 
 void PN532_Detect(void)
 {
-  if (pn532_i2c_detected) { return; }
+  if ((pn532_i2c_detected) || (pn532_i2c_disable)) { return; }
+  
+  Wire.setClockStretchLimit(1000); // Enable 1ms clock stretch as per datasheet Table 12.25 (Timing for the I2C interface)
 
   uint32_t ver = PN532_getFirmwareVersion();
   if (ver) {
@@ -276,6 +279,7 @@ boolean PN532_readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *u
 
 void PN532_ScanForTag(void)
 {
+  if (pn532_i2c_disable) { return; }
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
   uint8_t uid_len = 0;
   if (PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uid_len)) {
@@ -285,7 +289,7 @@ void PN532_ScanForTag(void)
       char uids[15];
       sprintf(uids,"");
       for (uint8_t i = 0;i < uid_len;i++) {
-        sprintf(uids,"%s%X",uids,uid[i]);
+        sprintf(uids,"%s%02X",uids,uid[i]);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PN532\":{\"UID\":\"%s\"}}"), mqtt_data, uids);
@@ -293,7 +297,7 @@ void PN532_ScanForTag(void)
       char command[27];
       sprintf(command,"event PN532=%s",uids);
       ExecuteCommand(command, SRC_RULE);
-      pn532_i2c_scan_defer_report = 19;
+      pn532_i2c_scan_defer_report = 7; // Ignore tags found for two seconds
     }
   } else {
     if (pn532_i2c_scan_defer_report > 0) { pn532_i2c_scan_defer_report--; }
@@ -310,13 +314,22 @@ boolean Xsns40(byte function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_EVERY_100_MSECOND:
+      case FUNC_EVERY_250_MSECOND:
         if (pn532_i2c_detected) {
           PN532_ScanForTag();
         }
         break;
       case FUNC_EVERY_SECOND:
         PN532_Detect();
+        break;
+      case FUNC_SAVE_BEFORE_RESTART:
+        if (!pn532_i2c_disable) {
+          pn532_i2c_disable = 1;
+          snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "PN532 NFC Reader - Disabling for reboot", PN532_I2C_ADDRESS);
+          AddLog(LOG_LEVEL_DEBUG);
+        }
+        break;
+      default:
         break;
     }
   }

@@ -266,6 +266,7 @@
 
 #define D_MODULE_PARAMETERS "Modulparameterar"
 #define D_MODULE_TYPE "Modultyp"
+#define D_PULLUP_ENABLE "No Button/Switch pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Seriell in"
 #define D_SERIAL_OUT "Seriell ut"

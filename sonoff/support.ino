@@ -529,6 +529,14 @@ void ModuleGpios(myio *gp)
 //  AddLogSerial(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
 }
 
+gpio_flag ModuleFlag()
+{
+  gpio_flag flag;
+
+  memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
+  return flag;
+}
+
 void SetGlobalValues(float temperature, float humidity)
 {
   global_update = uptime;

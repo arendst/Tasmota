@@ -147,7 +147,7 @@ static void Shorten(char** s, char *prefix)
 {
   size_t len = strlen(*s);
   size_t prefixlen = strlen(prefix);
-  if (len > prefixlen && !strncmp(*s, prefix, prefixlen)) {
+  if (len > prefixlen && prefixlen != 0 && !strncmp(*s, prefix, prefixlen)) {
     *s += prefixlen-1;
     *s[0] = '~';
   }
@@ -289,7 +289,7 @@ void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, 
     snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
                unique_id, ESP.getChipId(),
                Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image, "Tasmota");
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
+    if (strlen(prefix) > 0 ) snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
   MqttPublish(stopic, true);

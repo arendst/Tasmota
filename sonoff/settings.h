@@ -68,14 +68,14 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)
     uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)
     uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)
-    uint32_t mdns_enabled : 1;             // bit 5 (v6.4.1.4) - SetOption55
+    uint32_t mdns_enabled : 1;             // bit 5 (v6.4.1.4)   - SetOption55
     uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)
     uint32_t use_wifi_rescan : 1;          // bit 7 (v6.3.0.10)
     uint32_t receive_raw : 1;              // bit 8 (v6.3.0.11)
     uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)
     uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60 - Enable normal sleep instead of dynamic sleep
-    uint32_t button_switch_force_local : 1;// bit 11
-    uint32_t led_indicator_disable : 1;    // bit 12 - disable use of the status LED
+    uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61 - Force local operation when button/switch topic is set
+    uint32_t no_pullup : 1;                // bit 12 (v6.4.1.7)  - SetOption62 - Force no pull-up (0 = (no)pull-up, 1 = no pull-up)
     uint32_t spare13 : 1;
     uint32_t spare14 : 1;
     uint32_t spare15 : 1;
@@ -271,6 +271,9 @@ struct SYSCFG {
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
   myio          my_gp;                     // 484
+
+  byte          free_495[1];               // 495
+
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
   uint8_t       light_correction;          // 49D
@@ -419,6 +422,20 @@ typedef union {
     uint8_t spare07 : 1;
   };
 } StateBitfield;
+
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t mqtt_sub : 1;
+    uint8_t mqtt_pub : 1;
+    uint8_t spare02 : 1;
+    uint8_t spare03 : 1;
+    uint8_t spare04 : 1;
+    uint8_t spare05 : 1;
+    uint8_t spare06 : 1;
+    uint8_t spare07 : 1;
+  };
+} ActivityBitfield;
 
 // See issue https://github.com/esp8266/Arduino/issues/2913
 #ifdef USE_ADC_VCC

@@ -95,6 +95,14 @@ uint8_t rules_teleperiod = 0;
 
 char event_data[100];
 char vars[MAX_RULE_VARS][33] = { 0 };
+#if (MAX_RULE_VARS>8)
+#error MAX_RULE_VARS is bigger than 8
+#endif
+#if (MAX_RULE_MEMS>8)
+#error MAX_RULE_MEMS is bigger than 8
+#endif
+uint8_t vars_event = 0;
+uint8_t mems_event = 0;
 
 /*******************************************************************************************/
 
@@ -445,6 +453,26 @@ void RulesEvery50ms(void)
         event_data[0] ='\0';
       }
     }
+    else if (vars_event) {
+      for (byte i = 0; i < MAX_RULE_VARS-1; i++) {
+        if (bitRead(vars_event, i)) {
+          bitClear(vars_event, i);
+          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
+          RulesProcessEvent(json_event);
+          break;
+        }
+      }
+    }
+    else if (mems_event) {
+      for (byte i = 0; i < MAX_RULE_MEMS-1; i++) {
+        if (bitRead(mems_event, i)) {
+          bitClear(mems_event, i);
+          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
+          RulesProcessEvent(json_event);
+          break;
+        }
+      }
+    }
     else if (rules_flag.data) {
       uint16_t mask = 1;
       for (byte i = 0; i < MAX_RULES_FLAG; i++) {
@@ -600,12 +628,14 @@ boolean RulesCommand(void)
   else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
+      bitSet(vars_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
     if (XdrvMailbox.data_len > 0) {
       strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
+      bitSet(mems_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
@@ -619,6 +649,7 @@ boolean RulesCommand(void)
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) + CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
+      bitSet(vars_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
@@ -626,6 +657,7 @@ boolean RulesCommand(void)
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) - CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
+      bitSet(vars_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
@@ -633,6 +665,7 @@ boolean RulesCommand(void)
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) * CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
+      bitSet(vars_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
@@ -648,6 +681,7 @@ boolean RulesCommand(void)
         double toHigh = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 5));
         double value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
         dtostrfd(value, Settings.flag2.calc_resolution, vars[index -1]);
+        bitSet(vars_event, index -1);
       }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);

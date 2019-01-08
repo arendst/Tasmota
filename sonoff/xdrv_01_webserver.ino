@@ -294,13 +294,18 @@ const char HTTP_BTN_CONF[] PROGMEM =
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend><form method='get' action='md'>"
   "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
+
+const char HTTP_FORM_MODULE_PULLUP[] PROGMEM =
+  "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_PULLUP_ENABLE "</b><br/>";
+
 const char HTTP_FORM_GENERAL[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_GENERAL_PARAMETERS "&nbsp;</b></legend><form method='get' action='gs'>";
-const char HTTP_FORM_GENERAL_TOGGLE_ONOFF[] PROGMEM =
-  "<br/><b>{b0</b><br/><select id='{b1' name='{b1'>"
-  "<option{a0value='0'>0 " D_DISABLED "</option>"
-  "<option{a1value='1'>1 " D_ENABLED "</option>"
-  "</select><br/>";
+const char HTTP_FORM_GENERAL_CHECKBOX_ONOFF[] PROGMEM =
+  //"<br/><b>{b0</b><br/><select id='{b1' name='{b1'>"
+  //"<option{a0value='0'>0 " D_DISABLED "</option>"
+  //"<option{a1value='1'>1 " D_ENABLED "</option>"
+  //"</select><br/>";
+  "<br/><input style='width:10%;' id='{b1' name='{b1' type='checkbox'{r1><b>{b0</b><br/>";
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;({w})&nbsp<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
@@ -328,9 +333,10 @@ const char HTTP_FORM_LOG3[] PROGMEM =
   "<br/><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' placeholder='" STR(TELE_PERIOD) "' value='{l4'><br/>";
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='co'>"
-//  "<input id='w' name='w' value='5,1' hidden>"
+  //"<input id='w' name='w' value='5,1' hidden>"
   "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
-  "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>";
+  //"<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>"
+  "";
   const char HTTP_FORM_OTHER2[] PROGMEM =
   "<br/><b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' placeholder='{2' value='{3'><br/>";
 #ifdef USE_EMULATION
@@ -935,7 +941,14 @@ void HandleModuleHardwareConfiguration(void)
   page.replace(F("{mt"), AnyModuleName(MODULE));
   page += F("<br/>");
   page += FPSTR(D_IO_SETUP);
-  page += F("<table>");
+
+
+  if (my_module_flag.pullup) {
+    page += FPSTR(HTTP_FORM_MODULE_PULLUP);
+    page.replace(F("{r1"), (Settings.flag3.no_pullup) ? F(" checked") : F(""));
+  }
+
+  page += F("<br/><table>");
   for (byte i = 0; i < sizeof(cmodule); i++) {
     if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
@@ -959,6 +972,11 @@ void ModuleHardwareSaveSettings(void)
   byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
   Settings.last_module = Settings.module;
   Settings.module = new_module;
+  if (Settings.last_module == new_module) {
+    if (my_module_flag.pullup) {
+      Settings.flag3.no_pullup = WebServer->hasArg("b1");
+    }
+  }
   myio cmodule;
   ModuleGpios(&cmodule);
   String gpios = "";
@@ -1001,20 +1019,28 @@ void HandleGeneralConfiguration(void)
   page += F("<table>");
 
   // LED 'general' status indicator - LED still used for 'core' ops (updates etc..)
-  page += FPSTR(HTTP_FORM_GENERAL_TOGGLE_ONOFF);
-  page.replace(F("{b0"), F(D_LED_INDICATOR));
-  page.replace(F("{b1"), F("o0"));
-  for (byte i = 0; i < 2; i++) {
-    page.replace("{a" + String(i), (i == Settings.flag3.led_indicator_disable) ? F(" ") : F(" selected ")); //note - inv
-  }
+  //-- Activity
+  page += FPSTR(D_LED_INDICATOR); page += F("<br>");
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_ACTIVITY));
+  page.replace(F("{b1"), F("o00"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_ACTIVITY) ? F(" checked") : F(""));
+  //-- Status
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_STATUS));
+  page.replace(F("{b1"), F("o01"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_STATUS) ? F(" checked") : F(""));
+  //-- Power
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_POWER));
+  page.replace(F("{b1"), F("o02"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_POWER) ? F(" checked") : F(""));
 
   // Save state to flash
-  page += FPSTR(HTTP_FORM_GENERAL_TOGGLE_ONOFF);
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
   page.replace(F("{b0"), F(D_SAVE_STATE));
   page.replace(F("{b1"), F("o1"));
-  for (byte i = 0; i < 2; i++) {
-    page.replace("{a" + String(i), (i == Settings.flag.save_state) ? F(" selected ") : F(" "));
-  }
+  page.replace(F("{r1"), (Settings.flag.save_state) ? F(" checked") : F(""));
 
   page += F("</table>");
 
@@ -1028,14 +1054,19 @@ void GeneralConfigurationSaveSettings(void)
   char tmp[100];
 
   // LED indicator
-  WebGetArg("o0", tmp, sizeof(tmp));
-  Settings.flag3.led_indicator_disable = ~(atoi(tmp) > 0 ? 1 : 0);              // note - inv
+  Settings.ledstate = 0;
+  WebGetArg("o00", tmp, sizeof(tmp));
+  Settings.ledstate |= (atoi(tmp) > 0 ? LED_ACTIVITY : 0);
+  WebGetArg("o01", tmp, sizeof(tmp));
+  Settings.ledstate |= (atoi(tmp) > 0 ? LED_STATUS : 0);
+  WebGetArg("o02", tmp, sizeof(tmp));
+  Settings.ledstate |= (atoi(tmp) > 0 ? LED_POWER : 0);
 
   // Save state
   WebGetArg("o1", tmp, sizeof(tmp));
   Settings.flag.save_state = (atoi(tmp) > 0 ? 1 : 0);
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_CONFIGURE_GENERAL "%s:%u"), tmp, Settings.flag3.led_indicator_disable);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_CONFIGURE_GENERAL "%02X, %02X"), tmp, Settings.ledstate, Settings.flag.save_state);
   AddLog(LOG_LEVEL_INFO);
 }
 
@@ -1286,7 +1317,10 @@ void HandleOtherConfiguration(void)
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_OTHER));
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_OTHER);
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), FPSTR(D_MQTT_ENABLE));
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
+
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
   if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
   for (byte i = 0; i < maxfn; i++) {
