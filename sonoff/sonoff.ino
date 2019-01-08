@@ -371,7 +371,7 @@ void SetLedPower(uint8_t state)
   digitalWrite(pin[GPIO_LED1 + led_pin], (bitRead(led_inverted, led_pin)) ? !state : state);
 }
 
-void SetLedWifi(uint8_t state)
+void SetLedLink(uint8_t state)
 {
   if (state) state = 1;
   digitalWrite(pin[GPIO_LED1], (bitRead(led_inverted, 0)) ? !state : state);
@@ -1283,7 +1283,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         Settings.ledstate = payload;
         if (!Settings.ledstate) {
           SetLedPower(0);
-          SetLedWifi(0);
+          SetLedLink(0);
         }
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.ledstate);
@@ -1827,7 +1827,7 @@ void Every250mSeconds(void)
     if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) {
 //    if ( (!Settings.flag.global_state && global_state.data) || ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) ) {
 //      SetLedPower(blinkstate);                            // Set led on or off
-      SetLedWifi(blinkstate);                            // Set led on or off
+      SetLedLink(blinkstate);                            // Set led on or off
     }
     if (!blinkstate) {
       blinks--;
@@ -2341,7 +2341,7 @@ void GpioInit(void)
   }
 
   SetLedPower(Settings.ledstate &8);
-  SetLedWifi(Settings.ledstate &8);
+  SetLedLink(Settings.ledstate &8);
 
   XdrvCall(FUNC_PRE_INIT);
 }
