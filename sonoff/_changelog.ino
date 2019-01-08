@@ -3,6 +3,8 @@
  * Add command SetOption62 1 to force no Button/Switch pullup on dedicated modules. Currently only supported on Shelly2 (#4841)
  * Fix Display exception 28 when JSON value is NULL received
  * Fix Home Assistant Sensor Discovery Software Watchdog restart (#4831)
+ * Add support for OBI Power Socket 2 (#4829)
+ * Add support for YTF IR Bridge (#4855)
  *
  * 6.4.1.7 20190106
  * Fix HLW8012, HJL01 and BL0937 based energy sensors low Power (below 10W) measurement regression from 6.4.1.6
