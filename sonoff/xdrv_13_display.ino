@@ -785,14 +785,20 @@ void DisplayAnalyzeJson(char *topic, char *json)
           if (value2.is<JsonObject>()) {
             JsonObject& Object3 = value2;
             for (JsonObject::iterator it3 = Object3.begin(); it3 != Object3.end(); ++it3) {
-              DisplayJsonValue(topic, it->key, it3->key, it3->value.as<const char*>());  // Sensor 56%
+              if (it3->value != NULL) {   // "DHT11":{"Temperature":null,"Humidity":null} - ignore as it will raise exception 28
+                DisplayJsonValue(topic, it->key, it3->key, it3->value.as<const char*>());  // Sensor 56%
+              }
             }
           } else {
-            DisplayJsonValue(topic, it->key, it2->key, it2->value.as<const char*>());  // Sensor  56%
+            if (it2->value != NULL) {   // "DHT11":{"Temperature":null,"Humidity":null} - ignore as it will raise exception 28
+              DisplayJsonValue(topic, it->key, it2->key, it2->value.as<const char*>());  // Sensor  56%
+            }
           }
         }
       } else {
-        DisplayJsonValue(topic, it->key, it->key, it->value.as<const char*>());  // Topic  56%
+        if (it->value != NULL) {   // "DHT11":{"Temperature":null,"Humidity":null} - ignore as it will raise exception 28
+          DisplayJsonValue(topic, it->key, it->key, it->value.as<const char*>());  // Topic  56%
+        }
       }
     }
   }
