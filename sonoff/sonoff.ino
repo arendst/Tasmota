@@ -2456,7 +2456,7 @@ void GpioInit(void)
   }
 
   SetLedPower(Settings.ledstate==LED_ON);                                       // GPIO Init
-  SetLedLink(Settings.ledstate &8);
+  SetLedLink(Settings.ledstate==LED_ON);
 
   XdrvCall(FUNC_PRE_INIT);
 }

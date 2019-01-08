@@ -593,7 +593,6 @@ void SettingsDefaultSet2(void)
 
   // LED
   Settings.ledstate = APP_LEDSTATE;
-  Settings.flag3.led_indicator_disable = 0;
 
   // Serial
   Settings.baudrate = APP_BAUDRATE / 1200;

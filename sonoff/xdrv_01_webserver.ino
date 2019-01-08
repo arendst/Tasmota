@@ -1066,7 +1066,7 @@ void GeneralConfigurationSaveSettings(void)
   WebGetArg("o1", tmp, sizeof(tmp));
   Settings.flag.save_state = (atoi(tmp) > 0 ? 1 : 0);
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_CONFIGURE_GENERAL "%s:%u"), tmp, Settings.flag3.led_indicator_disable);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_CONFIGURE_GENERAL "%02X, %02X"), tmp, Settings.ledstate, Settings.flag.save_state);
   AddLog(LOG_LEVEL_INFO);
 }
 
