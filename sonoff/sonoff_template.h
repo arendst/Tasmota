@@ -273,7 +273,9 @@ enum SupportedModules {
   PS_16_DZ,
   TECKIN_US,
   MANZOKU_EU_4,
-  MAXMODULE };
+  KINGART_N1,
+  MAXMODULE
+};
 
 /********************************************************************************************/
 
@@ -560,7 +562,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   AILIGHT,            // Light Bulbs
   PHILIPS,
   WITTY,              // Development Devices
-  WEMOS
+  WEMOS,
+  KINGART_N1,
 };
 
 // Default module settings
@@ -1651,7 +1654,29 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,
      GPIO_USER,        // GPIO16
      0
-  }
+  },
+  { "KingArt N1",     // KingArt N1 : 1-gang Touch Lightswitch (ESP8285) - derived from Sonoff Basic
+                       // Notes: https://github.com/EphemeralPersistence/Sonoff-Tasmota/wiki/KingArt-N1
+     GPIO_KEY1,        // GPIO00,(p15) Button1, SW1 / Relay 1
+     0,                // GPIO01
+     0,                // GPIO02
+     0,                // GPIO03
+     GPIO_USER,        // GPIO04,(p16) Relay3 - (Optional Relay 3) (require N3? series board)
+     GPIO_USER,        // GPIO05,(p24) Relay2 - (Optional Relay 2) (require N2? series board)
+                       // GPIO06
+                       // GPIO07
+                       // GPIO08
+     GPIO_USER,        // GPIO09,(p18) Button2, SW2? / Relay 2 -  (require N2? series board)
+     GPIO_USER,        // GPIO10,(p19) Button3, SW3? / Relay 3 -  (require N3? series board)
+                       // GPIO11
+     GPIO_REL1,        // GPIO12,(p10) Relay1 (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13,(p12) Blue Led (0 = On, 1 = Off)
+     0,                // GPIO14 (p9) :: N/C - Optional sensor
+     0,                // GPIO15
+     0,                // GPIO16
+     0                 // ADC0 Analog input
+  },
+
 };
 
 /*
