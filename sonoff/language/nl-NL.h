@@ -362,14 +362,6 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Schakel weblog 2 in indien antwoord verwacht"
 #define D_NEED_USER_AND_PASSWORD "Benodig user=<gebruiker>&password=<webwachtwoord>"
 
-#define D_LED_INDICATOR_ACTIVITY "Activity"
-#define D_LED_INDICATOR_STATUS "Status"
-#define D_LED_INDICATOR_POWER "Power"
-#define D_SAVE_STATE "Save State to Flash"
-#define D_BUTTON_SINGLEMODE "Single Press Button"
-#define D_LED_INDICATOR "LED Indicator"
-#define D_GENERAL_USAGE "General Usage"
-
 // xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Controleer TLS vingerafdruk..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Verbinding mislukt naar"

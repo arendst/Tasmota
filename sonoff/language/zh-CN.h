@@ -362,14 +362,6 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "如果想得到预期响应，请调整日志级别至: 2 信息"
 #define D_NEED_USER_AND_PASSWORD "需要 user=<用户名>&password=<密码>"
 
-#define D_LED_INDICATOR_ACTIVITY "Activity"
-#define D_LED_INDICATOR_STATUS "Status"
-#define D_LED_INDICATOR_POWER "Power"
-#define D_SAVE_STATE "Save State to Flash"
-#define D_BUTTON_SINGLEMODE "Single Press Button"
-#define D_LED_INDICATOR "LED Indicator"
-#define D_GENERAL_USAGE "General Usage"
-
 // xdrv_00_mqtt.ino
 #define D_FINGERPRINT "验证 TLS 指纹..."
 #define D_TLS_CONNECT_FAILED_TO "TLS 连接失败"

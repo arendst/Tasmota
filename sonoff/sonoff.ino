@@ -1867,27 +1867,14 @@ void Every250mSeconds(void)
     blinkstate = 0;
   }
 
-  // ---
+  // Final --- Apply the LED state
   if ( Settings.ledstate==LED_OFF ) {
     SetLedPower( 0 );
   }
   else {
     SetLedPower( blinkstate );
   }
-  // Final --- Apply the LED state
-  else if ( Settings.ledstate==LED_OFF ) {
-    SetLedPower( 0 );
-  }
-  else {
-    SetLedPower( blinkstate );
-  }
-  static int c=0; c++;
-  if (c%4==0) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("0x%2X : B%04X, L%u, i%u - #%u > %u"), Settings.ledstate, blinkPattern.bits, blinkPattern.length, blinkPattern.index, blinks, blinkstate);
-    AddLog(LOG_LEVEL_INFO);
-  }
-  */
-
+  
 /*-------------------------------------------------------------------------------------------*\
  * Every second at 0.25 second interval
 \*-------------------------------------------------------------------------------------------*/

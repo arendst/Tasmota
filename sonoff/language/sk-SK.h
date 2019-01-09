@@ -362,14 +362,6 @@
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Zapni úroveň 2 zápisu Weblog, ak je očekávaná odpoveď"
 #define D_NEED_USER_AND_PASSWORD "Vyžadovaný používateľ=<username>&heslo=<password>"
 
-#define D_LED_INDICATOR_ACTIVITY "Activity"
-#define D_LED_INDICATOR_STATUS "Status"
-#define D_LED_INDICATOR_POWER "Power"
-#define D_SAVE_STATE "Save State to Flash"
-#define D_BUTTON_SINGLEMODE "Single Press Button"
-#define D_LED_INDICATOR "LED Indicator"
-#define D_GENERAL_USAGE "General Usage"
-
 // xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verifikuj odtlačok TLS..."
 #define D_TLS_CONNECT_FAILED_TO "Nepripojené TLS do"
