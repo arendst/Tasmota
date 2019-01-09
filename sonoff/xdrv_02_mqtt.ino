@@ -280,9 +280,7 @@ void MqttPublishDirect(const char* topic, boolean retained)
   snprintf_P(log_data, sizeof(log_data), PSTR("%s%s"), log_data, sretained);
 
   AddLog(LOG_LEVEL_INFO);
-  if (Settings.ledstate &0x04) {
-    blinks++;
-  }
+  global_activity.mqtt_pub=1;
 }
 
 void MqttPublish(const char* topic, boolean retained)

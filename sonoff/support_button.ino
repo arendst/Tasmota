@@ -160,7 +160,7 @@ void ButtonHandler(void)
             AddLog(LOG_LEVEL_DEBUG);
             multiwindow[button_index] = loops_per_second / 2;  // 0.5 second multi press window
           }
-          blinks = 201;
+          global_activity.button=1;
         }
 
         if (NOT_PRESSED == button) {
