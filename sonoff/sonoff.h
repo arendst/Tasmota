@@ -238,21 +238,21 @@ enum LEDBlinkMode {
 typedef union {
   uint32_t data;
   struct {
-      uint32_t bits :16;    // 16 bits - the pattern.
-      uint32_t length :4;   // bit pattern length is taken as 1+this value.. ie: the min pattern size will be 1, max 16.  (ie: we count from 1 not 0 here.. some squirrel thinking, but its useful)
-      uint32_t index :4;    // 0..15 - the current bit pattern index - this should always be set to zero in definitions (unless you want the patternto start somewhere interesting)
-      uint32_t unused :8;   // unused...
+      uint32_t bits   :16;  // 16 bits - the pattern.
+      uint32_t length :5;   // bit pattern length (number of bits) is taken as this value.. ie: the min pattern size will be 0, max supported is 16.
+      uint32_t index  :4;   // 0..15 - the current bit index - this should always be set to zero in definitions (unless you want the patternto start somewhere interesting)
+      uint32_t unused :7;   // unused...
   };
 } LEDBlinkPatternInfo;
 
 enum LEDBlinkPattern {
   // Bit format: (note: BigEndian)
-  // [00] [0] [0] [0000] :: [unused:8] [index:4] [length:4] [pattern:16bits]
+  // [00] [0] [0] [0000] :: [unused:7] [index:5] [length:4] [pattern:16bits]
   LED_BLINKPATTERN_NONE     = 0x00000000,  //32bit zero
   //---
-  LED_BLINKPATTERN_IDLE     = 0x000F0001, // All good       - bits : 0000 0000 0000 0001
-  LED_BLINKPATTERN_BLINK    = 0x00010002, // Blink          - bits : 10
-  LED_BLINKPATTERN_WIFIDOWN = 0x00080015, // No WiFiUDP     - bits : 0001 0101
+  LED_BLINKPATTERN_IDLE     = 0x00100001, // All good       - bits : 0000 0000 0000 0001
+  LED_BLINKPATTERN_BLINK    = 0x00020002, // Blink          - bits : 10
+  LED_BLINKPATTERN_WIFIDOWN = 0x00080055, // No WiFi        - bits : 0101 0101
   LED_BLINKPATTERN_MQTTDOWN = 0x00080005, // No MQTT        - bits : 0000 0101
   //---
   MASK_BLINKPATTERN_DATA    = 0x000FFFFF,

@@ -131,7 +131,8 @@ void WifiConfig(uint8_t type)
 
     wifi_config_counter = WIFI_CONFIG_SEC;   // Allow up to WIFI_CONFIG_SECS seconds for phone to provide ssid/pswd
     wifi_counter = wifi_config_counter +5;
-    blinks = 1999;
+    global_state.wifi_down=1;
+
     if (WIFI_RESTART == wifi_config_type) {
       restart_flag = 2;
     }

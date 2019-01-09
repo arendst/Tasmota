@@ -178,6 +178,7 @@
 #define D_WEIGHT "Poids"
 #define D_WARMLIGHT "Chaud"
 #define D_WEB_SERVER "Serveur web"
+#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "ATTENTION Cette version ne supporte pas les réglages persistants"
@@ -360,6 +361,14 @@
 #define D_ENTER_COMMAND "Saisir une commande"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Activer Weblog 2 si une réponse est attendue"
 #define D_NEED_USER_AND_PASSWORD "Nécessite utilisateur=<username>&password=<password>"
+
+#define D_LED_INDICATOR_ACTIVITY "Activity"
+#define D_LED_INDICATOR_STATUS "Status"
+#define D_LED_INDICATOR_POWER "Power"
+#define D_SAVE_STATE "Save State to Flash"
+#define D_BUTTON_SINGLEMODE "Single Press Button"
+#define D_LED_INDICATOR "LED Indicator"
+#define D_GENERAL_USAGE "General Usage"
 
 // xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Vérification d'empreinte TLS ..."

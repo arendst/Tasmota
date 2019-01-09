@@ -60,18 +60,18 @@ const char HTTP_HEAD[] PROGMEM =
   "}"
 
   // function: getxhr(url:string, onsuccess:function, onfail:function, tout:timeout(ms)) - perform a GET XHR req, to a url, returns data to onsuccess/onfail function refs
-  "function getxhr(url,onsuccess=null,onfail=null,tout=5000){"
-    "xh=new XMLHttpRequest();"
-    "xh.timeout=tout;"
-    "xh.onreadystatechange=function(){"
-      "if(xh.readyState==4){"
-        "if(xh.status==200) { if(onsuccess) onsuccess(xh.responseText); }"
-        "else { if(onfail) onfail(xh.responseText); }"
+  "function getxhr(url,oS=null,oF=null,tO=5000){"
+    "h=new XMLHttpRequest();"
+    "h.timeout=tO;"
+    "h.onreadystatechange=function(){"
+      "if(h.readyState==4){"
+        "if(h.status==200) { if(oS) oS(h.responseText); }"
+        "else { if(oF) oF(h.responseText); }"
       "}"
     "};"
-    "xh.open('GET',url,true);"
-    "xh.send();"
-    "return xh;"
+    "h.open('GET',url,true);"
+    "h.send();"
+    "return h;"
   "}"
 
   "function logout(){"
@@ -105,15 +105,6 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
         "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%'>\").replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{c}/g,\"%'><div style='text-align:center;font-weight:\");"
         "eb('l1').innerHTML=s;"
       "});"
-    /*"x=new XMLHttpRequest();"
-    "x.onreadystatechange=function(){"
-      "if(x.readyState==4&&x.status==200){"
-        "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%'>\").replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{c}/g,\"%'><div style='text-align:center;font-weight:\");"
-        "eb('l1').innerHTML=s;"
-      "}"
-    "};"
-    "x.open('GET','ay'+a,true);"
-    "x.send();"*/
     "lt=setTimeout(la,{a});"    // Settings.web_refresh
   "}"
   "function lb(p){"
@@ -136,31 +127,11 @@ const char HTTP_SCRIPT_RELOAD_GENERIC[] PROGMEM =
       "e=eb('tmr'); e.innerHTML=tmw+'s'; tmw++;"
       "if(tmw*1000>{t0 && (!vld||tmw%2==0)){"
         "getxhr('.',"
-          "function(){e.innerHTML='" D_ONLINE "'; if(++vld<5)return; e.innerHTML+=' " D_READY "'; setTimeout(function(){location.href='.'},2000);}"
+          "function(){e.innerHTML+='" D_ONLINE "'; if(++vld<5)return; e.innerHTML+=' " D_DONE "'; setTimeout(function(){location.href='.'},2000);}"
           ",null,2000);"
       "}"
     "},1000);"
     "</script>";
-/*
-const char HTTP_SCRIPT_RELOAD[] PROGMEM =
-  "setTimeout(function(){location.href='.';}," STR(HTTP_RESTART_RECONNECT_TIME) ");"
-  "</script>";
-
-// Local OTA upgrade requires more time to complete cp: before web ui should be reloaded
-const char HTTP_SCRIPT_RELOAD_OTA[] PROGMEM =
-  "var tmw=0,vld=0"
-  "setInterval(function(){"
-    "e=eb('tmr'); e.innerHTML=tmw+'s'; tmw++;"
-    "if(tmw*1000>" STR(HTTP_OTA_RESTART_RECONNECT_TIME) " && tmw%2==0){"
-      "getxhr('.',"
-        "function(){ e.innerHTML='" D_ONLINE "'; if (++vld<5) return; e.innerHTML='" D_READY "'; setTimeout(function(){location.href='.'},2000); }"
-        ",null, 2000);"
-    "}"
-  "}, 1000);"
-  "</script>";
-  //"setTimeout(function(){location.href='.';}," STR(HTTP_OTA_RESTART_RECONNECT_TIME) ");"
-  //"</script>";
-*/
 
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
@@ -188,23 +159,6 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
         "t.scrollTop=99999;"
         "sn=t.scrollTop;"
       "});"
-      /*
-      "x=new XMLHttpRequest();"
-      "x.onreadystatechange=function(){"
-        "if(x.readyState==4&&x.status==200){"
-          "var z,d;"
-          "d=x.responseXML;"
-          "id=d.getElementsByTagName('i')[0].childNodes[0].nodeValue;"
-          "if(d.getElementsByTagName('j')[0].childNodes[0].nodeValue==0){t.value='';}"
-          "z=d.getElementsByTagName('l')[0].childNodes;"
-          "if(z.length>0){t.value+=decodeURIComponent(z[0].nodeValue);}"
-          "t.scrollTop=99999;"
-          "sn=t.scrollTop;"
-        "}"
-      "};"
-      "x.open('GET','ax?c2='+id+o,true);"
-      "x.send();"
-      */
     "}"
     "lt=setTimeout(l,{a});"
     "return false;"
@@ -225,22 +179,9 @@ const char HTTP_SCRIPT_MODULE1[] PROGMEM =
       "os=o.substring(0,i);"
       "sk(}4,99);"
       "os=o.substring(i+2);";  // +2 is length "}3"
-    /*"x=new XMLHttpRequest();"
-    "x.onreadystatechange=function(){"
-      "if(x.readyState==4&&x.status==200){"
-        "var i,o=x.responseText.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");"
-        "i=o.indexOf(\"}3\");"   // String separator means do not use "}3" in Module name and Sensor name
-        "os=o.substring(0,i);"
-        "sk(}4,99);"
-        "os=o.substring(i+2);";  // +2 is length "}3"
-        */
+
 const char HTTP_SCRIPT_MODULE2[] PROGMEM =
     "});"
-    /*  "}"
-    "};"
-    "x.open('GET','md?m=1',true);"  // ?m related to WebServer->hasArg("m")
-    "x.send();"
-    */
   "}";
 const char HTTP_SCRIPT_MODULE3[] PROGMEM =
   "}1'%d'>%s (%d)}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
@@ -302,7 +243,7 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><span class='p'>" D_DARKLIGHT "</span><span class='q'>" D_BRIGHTLIGHT "</span></div>"
   "<div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
-  "<br/><div class='c'>" D_DEVICE_WILL_RESTART "</div><br/><div class='c'>" D_WORKING " ... <div class='i c' id='tmr'></div></div>";
+  "<br/><div class='c'>" D_DEVICE_WILL_RESTART "</div><br/><div class='c'> ... <div class='i c' id='tmr'></div></div>";
 const char HTTP_BTN_MENU1[] PROGMEM =
 #ifndef BE_MINIMAL
   "<br/><form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>"
@@ -376,9 +317,7 @@ const char HTTP_FORM_LOG3[] PROGMEM =
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='co'>"
   //"<input id='w' name='w' value='5,1' hidden>"
-  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
-  //"<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>"
-  "";
+  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>";
   const char HTTP_FORM_OTHER2[] PROGMEM =
   "<br/><b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' placeholder='{2' value='{3'><br/>";
 #ifdef USE_EMULATION
@@ -406,7 +345,7 @@ const char HTTP_FORM_RST_UPG[] PROGMEM =
   "<br/><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " {r1</button></form>"
   "</fieldset>"
   "</div>"
-  "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
+  "<div id='f2' name='f2' style='display:none;' class='c'><b>" D_UPLOAD_STARTED " ...</b></div>";
 const char HTTP_FORM_CMND[] PROGMEM =
   "<br/><textarea readonly id='t1' name='t1' cols='340' wrap='off'></textarea><br/><br/>"
   "<form method='get' onsubmit='return l(1);'>"
@@ -416,9 +355,11 @@ const char HTTP_FORM_CMND[] PROGMEM =
 const char HTTP_TABLE100[] PROGMEM =
   "<table style='width:100%'>";
 const char HTTP_COUNTER[] PROGMEM =
-  "<br/><div id='t' name='t' class='text-align:center;'></div>";
+  "<br/><div id='t' name='t' class='c'></div>";
 const char HTTP_LOGOUT[] PROGMEM =
-  "<div class='q i sf' style='position:absolute;top:0;right:0;'><a href='#' onclick='logout();' class='cg'>" D_WEBLOGOUT "</a></div>";
+  "<div class='q i sf' style='position:absolute;top:0;right:0;'><a href='#' onclick='logout();' class='cg'>" D_LOGOUT "</a></div>";
+const char HTTP_FORM_GENERAL_CHECKBOX_ONOFF[] PROGMEM =
+  "<br/><input style='width:10%;' id='{b1' name='{b1' type='checkbox'{r1><b>{b0</b><br/>";
 const char HTTP_END[] PROGMEM =
   "<br/>"
   "<div class='r sf'><hr/><a href='" D_WEBLINK "' target='_blank' class='cg'>" D_PROGRAMNAME " {mv " D_BY " " D_AUTHOR "</a></div>"
@@ -601,7 +542,6 @@ bool WebAuthenticate(void)
 
 void ShowPage(String &page, bool auth)
 {
-  //if (auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
   if (auth && !WebAuthenticate()) {
     return WebServer->requestAuthentication();
   }
@@ -879,12 +819,12 @@ void HandleAjaxStatusRefresh(void)
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), mqtt_data);
 }
 
-boolean HttpUser(void)
+/*boolean HttpUser(void)
 {
   boolean status = (HTTP_USER == webserver_state);
   if (status) { HandleRoot(); }
   return status;
-}
+}*/
 
 boolean HttpCheckPriviledgedAccess(boolean autorequestauth = true)
 {
@@ -906,8 +846,6 @@ boolean HttpCheckPriviledgedAccess(boolean autorequestauth = true)
 void HandleConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURATION);
 
@@ -931,8 +869,6 @@ void HandleConfiguration(void)
 void HandleModuleHardwareConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   if (WebServer->hasArg("save")) {
     ModuleHardwareSaveSettings();
@@ -1134,8 +1070,6 @@ String htmlEscape(String s)
 void HandleWifiConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_WIFI);
 
@@ -1263,8 +1197,6 @@ void WifiSaveSettings(void)
 void HandleLoggingConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_LOGGING);
 
@@ -1348,8 +1280,6 @@ void LoggingSaveSettings(void)
 void HandleOtherConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_OTHER);
 
@@ -1388,6 +1318,41 @@ void HandleOtherConfiguration(void)
   page += F("<br/>");
   page += F("<br/></fieldset>");
 #endif  // USE_EMULATION
+
+  page += F("<fieldset>");
+  // LED 'general' status indicator - LED still used for 'core' ops (updates etc..)
+  //-- Activity
+  page += FPSTR(D_LED_INDICATOR); page += F("<br>");
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_ACTIVITY));
+  page.replace(F("{b1"), F("o00"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_ACTIVITY) ? F(" checked") : F(""));
+  //-- Status
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_STATUS));
+  page.replace(F("{b1"), F("o01"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_STATUS) ? F(" checked") : F(""));
+  //-- Power
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_POWER));
+  page.replace(F("{b1"), F("o02"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_POWER) ? F(" checked") : F(""));
+  page += F("<br>");
+
+  // Save state to flash
+  page += FPSTR(D_GENERAL_USAGE); page += F("<br>");
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_SAVE_STATE));
+  page.replace(F("{b1"), F("o10"));
+  page.replace(F("{r1"), (Settings.flag.save_state) ? F(" checked") : F(""));
+  //-- button single mode
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), FPSTR(D_BUTTON_SINGLEMODE));
+  page.replace(F("{b1"), F("o11"));
+  page.replace(F("{r1"), (Settings.flag.button_single) ? F(" checked") : F(""));
+
+  page += F("<br/></fieldset>");
+
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
@@ -1401,11 +1366,7 @@ void OtherSaveSettings(void)
 
   WebGetArg("p1", tmp, sizeof(tmp));
   strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
-#ifdef USE_EMULATION
-  WebGetArg("b2", tmp, sizeof(tmp));
-  Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
-#endif  // USE_EMULATION
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
+
   for (byte i = 0; i < MAX_FRIENDLYNAMES; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("a%d"), i +1);
     WebGetArg(stemp, tmp, sizeof(tmp));
@@ -1413,6 +1374,25 @@ void OtherSaveSettings(void)
     strlcpy(Settings.friendlyname[i], (!strlen(tmp)) ? (i) ? stemp2 : FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[i]));
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%s %s"), log_data, (i) ? "," : "", Settings.friendlyname[i]);
   }
+
+#ifdef USE_EMULATION
+  WebGetArg("b2", tmp, sizeof(tmp));
+  Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
+#endif  // USE_EMULATION
+
+  // LED indicator
+  Settings.ledstate = 0;
+  if ( WebServer->hasArg("o00") ) Settings.ledstate |= LED_ACTIVITY;
+  if ( WebServer->hasArg("o01") ) Settings.ledstate |= LED_STATUS;
+  if ( WebServer->hasArg("o02") ) Settings.ledstate |= LED_POWER;
+
+  // Save state
+  Settings.flag.save_state = WebServer->hasArg("o10");
+  // Single button mode
+  Settings.flag.button_single = WebServer->hasArg("o11");
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME),
+    GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
   AddLog(LOG_LEVEL_INFO);
 }
 
@@ -1421,8 +1401,6 @@ void OtherSaveSettings(void)
 void HandleBackupConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
 
@@ -1467,8 +1445,6 @@ void HandleBackupConfiguration(void)
 void HandleResetConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   char svalue[33];
 
@@ -1489,8 +1465,6 @@ void HandleResetConfiguration(void)
 void HandleRestoreConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTORE_CONFIGURATION);
 
@@ -1512,8 +1486,6 @@ void HandleRestoreConfiguration(void)
 void HandleInformation(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_INFORMATION);
 
@@ -1637,8 +1609,6 @@ void HandleInformation(void)
 void HandleUpgradeFirmware(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_FIRMWARE_UPGRADE);
 
@@ -1659,8 +1629,6 @@ void HandleUpgradeFirmware(void)
 void HandleUpgradeFirmwareStart(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   char svalue[100];
 
@@ -1691,8 +1659,6 @@ void HandleUpgradeFirmwareStart(void)
 void HandleUploadDone(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 
@@ -1952,8 +1918,7 @@ void HandlePreflightRequest(void)
 void HandleHttpCommand(void)
 {
   if (!HttpCheckPriviledgedAccess(false)) { return; }
-//  if (HttpUser()) { return; }
-////  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
   char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
@@ -2013,8 +1978,6 @@ void HandleHttpCommand(void)
 void HandleConsole(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONSOLE);
 
@@ -2031,8 +1994,6 @@ void HandleConsole(void)
 void HandleAjaxConsoleRefresh(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
   byte cflg = 1;

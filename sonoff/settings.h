@@ -428,7 +428,7 @@ typedef union {
   struct {
     uint8_t mqtt_sub : 1;
     uint8_t mqtt_pub : 1;
-    uint8_t spare02 : 1;
+    uint8_t button  : 1;
     uint8_t spare03 : 1;
     uint8_t spare04 : 1;
     uint8_t spare05 : 1;

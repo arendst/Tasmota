@@ -178,6 +178,7 @@
 #define D_WEIGHT "Weight"
 #define D_WARMLIGHT "暖"
 #define D_WEB_SERVER "Web Server"
+#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "警告：精簡產品不支持配置寫入保存"
@@ -360,6 +361,14 @@
 #define D_ENTER_COMMAND "輸入命令"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "如果預期響應，則啟用Weblog 2"
 #define D_NEED_USER_AND_PASSWORD "需要 user=<用戶名>&password=<密碼>"
+
+#define D_LED_INDICATOR_ACTIVITY "Activity"
+#define D_LED_INDICATOR_STATUS "Status"
+#define D_LED_INDICATOR_POWER "Power"
+#define D_SAVE_STATE "Save State to Flash"
+#define D_BUTTON_SINGLEMODE "Single Press Button"
+#define D_LED_INDICATOR "LED Indicator"
+#define D_GENERAL_USAGE "General Usage"
 
 // xdrv_01_mqtt.ino
 #define D_FINGERPRINT "驗證 TLS 指紋..."

@@ -806,8 +806,6 @@ const char HTTP_FORM_KNX_ADD_TABLE_ROW2[] PROGMEM =
 void HandleKNXConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_KNX);
 

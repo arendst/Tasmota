@@ -178,6 +178,7 @@
 #define D_WEIGHT "Weight"
 #define D_WARMLIGHT "Sıcak"
 #define D_WEB_SERVER "Web Sunucusu"
+#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "UYARI Bu versiyon ayarların kalıcı olarak kaydedilmesine olanak sağlamıyor"
@@ -360,6 +361,14 @@
 #define D_ENTER_COMMAND "Komut girişi"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Enable weblog 2 if response expected"
 #define D_NEED_USER_AND_PASSWORD "Need user=<username>&password=<password>"
+
+#define D_LED_INDICATOR_ACTIVITY "Activity"
+#define D_LED_INDICATOR_STATUS "Status"
+#define D_LED_INDICATOR_POWER "Power"
+#define D_SAVE_STATE "Save State to Flash"
+#define D_BUTTON_SINGLEMODE "Single Press Button"
+#define D_LED_INDICATOR "LED Indicator"
+#define D_GENERAL_USAGE "General Usage"
 
 // xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verify TLS fingerprint..."

@@ -683,8 +683,6 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
 void HandleTimerConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
-  //if (HttpUser()) { return; }
-  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMER);
 
