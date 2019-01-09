@@ -74,7 +74,7 @@ Examples :
 
 #ifdef MY_IP
 #undef  WIFI_IP_ADDRESS
-#define WIFI_IP_ADDRESS   MY_IP                  // Set to 0.0.0.0 for using DHCP or IP address
+#define WIFI_IP_ADDRESS   MY_IP                  // Set to 0.0.0.0 for using DHCP or enter a static IP address
 #endif
 
 #ifdef MY_GW
