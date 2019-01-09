@@ -118,14 +118,15 @@ const char HTTP_SCRIPT_WIFI[] PROGMEM =
     "eb('p1').focus();"
   "}";
 
+// Reload incorporates checking the device is online.. 5 checks (10s)
 const char HTTP_SCRIPT_RELOAD_GENERIC[] PROGMEM =
     "var tmw=0,vld=0;"
-    "setInterval(function(){"
+    "var itv=setInterval(function(){"
       "e=eb('tmr'); e.innerHTML=tmw+'s'; tmw++;"
-      "if(tmw*1000>{t0 && (!vld||tmw%2==0)){"
+      "if(tmw*1000>{t0 && (tmw%2==0)){"
         "getxhr('.',"
-          "function(){e.innerHTML+='" D_ONLINE "'; if(++vld<5)return; e.innerHTML+=' " D_DONE "'; setTimeout(function(){location.href='.'},2000);}"
-          ",null,2000);"
+          "function(){if(++vld<5)return; clearInterval(itv); e.innerHTML='" D_ONLINE "'; setTimeout(function(){location.href='.'},2000);}"
+          ",function(){vld=0;},2000);"
       "}"
     "},1000);"
     "</script>";
