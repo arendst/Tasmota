@@ -1705,9 +1705,16 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO03 Serial TXD or Optional sensor on J2 TXD (if not using serial io)
      GPIO_REL2_INV,    // GPIO04 Relay 2 (active low)
      GPIO_REL1_INV,    // GPIO05 Relay 1 (active low)
-     0, 0, 0, 0, 0, 0, // Flash connection
-     0, 0, 0, 0, 0,    // Unused GPIO 12-16
-     0                 // ADC0 Analog input
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     0,                // GPIO12
+     0,                // GPIO13 Button
+     0,                // GPIO14 IR Transmitter
+     0, 0, 0
   }
 };
 
