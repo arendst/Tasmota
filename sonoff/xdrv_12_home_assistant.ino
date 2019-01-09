@@ -128,7 +128,7 @@ const char HASS_DISCOVER_DEVICE_INFO[] PROGMEM =
   "\"name\":\"%s\","
   "\"model\":\"%s\","
   "\"sw_version\":\"%s%s\","
-  "\"manufacturer\":\"%s\"}";
+  "\"manufacturer\":\"Tasmota\"}";
 
 const char HASS_DISCOVER_TOPIC_PREFIX[] PROGMEM =
   "%s, \"~\":\"%s\"";
@@ -239,7 +239,7 @@ void HAssAnnounceRelayLight(void)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
                  unique_id, ESP.getChipId(),
-                 Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image, "Tasmota");
+                 Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
       snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
@@ -288,7 +288,7 @@ void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, 
 
     snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
                unique_id, ESP.getChipId(),
-               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image, "Tasmota");
+               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
     if (strlen(prefix) > 0 ) snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
@@ -307,7 +307,7 @@ void HAssAnnounceSwitches(void)
       byte switch_present = 0;
       byte toggle = 1;
 
-      if ((pin[GPIO_SWT1 + switch_index] < 99) || (pin[GPIO_SWT1_NP + switch_index] < 99)) {
+      if (pin[GPIO_SWT1 + switch_index] < 99) {
         switch_present = 1;
       }
 
@@ -339,7 +339,7 @@ void HAssAnnounceButtons(void)
       if (!button_index && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
         button_present = 1;
       } else {
-        if ((pin[GPIO_KEY1 + button_index] < 99) || (pin[GPIO_KEY1_NP + button_index] < 99)) {
+        if (pin[GPIO_KEY1 + button_index] < 99) {
           button_present = 1;
         }
       }
@@ -413,7 +413,7 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
                unique_id, ESP.getChipId(),
-               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image, "Tasmota");
+               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
     snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
@@ -457,6 +457,7 @@ void HAssAnnounceSensors(void)
         }
       }
     }
+    yield();
   } while (hass_xsns_index != 0);
 }
 

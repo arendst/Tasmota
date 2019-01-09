@@ -273,6 +273,8 @@ enum SupportedModules {
   PS_16_DZ,
   TECKIN_US,
   MANZOKU_EU_4,
+  OBI2,
+  YTF_IR_BRIDGE,
   KINGART_N1,
   MAXMODULE
 };
@@ -546,6 +548,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SK03_TUYA,
   NEO_COOLCAM,        // Socket Relay Devices
   OBI,
+  OBI2,
   MANZOKU_EU_4,
   ESP_SWITCH,         // Switch Devices
   TUYA_DIMMER,        // Dimmer Devices
@@ -561,9 +564,10 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,            // Light Bulbs
   PHILIPS,
+  YTF_IR_BRIDGE,
+  KINGART_N1,
   WITTY,              // Development Devices
   WEMOS,
-  KINGART_N1,
 };
 
 // Default module settings
@@ -1380,7 +1384,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0
   },
   { "Shelly 1",        // Shelly1 Open Source (ESP8266 - 2MB) - https://shelly.cloud/shelly1-open-source/
-     0, 0, 0, 0,
+     GPIO_USER,        // GPIO00 - Only to be used when Shelly is connected to 12V DC
+     GPIO_USER,        // GPIO01 Serial RXD - Only to be used when Shelly is connected to 12V DC
+     0,
+     GPIO_USER,        // GPIO03 Serial TXD - Only to be used when Shelly is connected to 12V DC
      GPIO_REL1,        // GPIO04 Relay (0 = Off, 1 = On)
      GPIO_SWT1_NP,     // GPIO05 SW pin
                        // GPIO06 (SD_CLK   Flash)
@@ -1655,6 +1662,41 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO16
      0
   },
+  { "OBI Socket 2",    // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko-2-stueck-weiss/p/4077673
+     0,                // GPIO00
+     0,                // GPIO01 Serial RXD
+     0,
+     0,                // GPIO03 Serial TXD
+     GPIO_REL1,        // GPIO04 Relay 1
+     GPIO_KEY1,        // GPIO05 Button
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_LED1,        // GPIO12 Green LED - Link status
+     GPIO_LED2,        // GPIO13 Red LED - Power status
+     0, 0, 0, 0
+  },
+  { "YTF IR Bridge",   // https://www.aliexpress.com/item/Tuya-universal-Smart-IR-Hub-remote-control-Voice-Control-AC-TV-Work-With-Alexa-Google-Home/32951202513.html
+     GPIO_USER,        // GPIO00
+     GPIO_USER,        // GPIO01 Serial RXD
+     GPIO_USER,        // GPIO02
+     GPIO_USER,        // GPIO03 Serial TXD
+     GPIO_LED1_INV,    // GPIO04 Blue Led - Link status
+     GPIO_IRRECV,      // GPIO05 IR Receiver
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     0,                // GPIO12
+     GPIO_KEY1,        // GPIO13 Button
+     GPIO_IRSEND,      // GPIO14 IR Transmitter
+     0, 0, 0
+  },
   { "KingArt N1",     // KingArt N1 : 1-gang Touch Lightswitch (ESP8285) - derived from Sonoff Basic
                        // Notes: https://github.com/EphemeralPersistence/Sonoff-Tasmota/wiki/KingArt-N1
      GPIO_KEY1,        // GPIO00,(p15) Button1, SW1 / Relay 1
@@ -1675,7 +1717,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO15
      0,                // GPIO16
      0                 // ADC0 Analog input
-  },
+  }
 
 };
 
@@ -1699,24 +1741,6 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED2,        // GPIO13 Red LED - Power status
      GPIO_REL1,        // GPIO14 Relay 1
      0, 0, 0
-  }
-
-  { "OBI Socket 2",    // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko-2-stueck-weiss/p/4077673
-     0,                // GPIO00
-     0,                // GPIO01 Serial RXD
-     0,
-     0,                // GPIO03 Serial TXD
-     GPIO_REL1,        // GPIO04 Relay 1
-     GPIO_KEY1,        // GPIO05 Button
-                       // GPIO06 (SD_CLK   Flash)
-                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
-                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
-     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
-     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
-                       // GPIO11 (SD_CMD   Flash)
-     GPIO_LED1,        // GPIO12 Green LED - Link status
-     GPIO_LED2,        // GPIO13 Red LED - Power status
-     0, 0, 0, 0
   }
 
   { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266)
