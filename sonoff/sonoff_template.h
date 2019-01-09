@@ -275,6 +275,7 @@ enum SupportedModules {
   MANZOKU_EU_4,
   OBI2,
   YTF_IR_BRIDGE,
+  N0DY_RELAY,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -538,6 +539,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WION,
   SHELLY1,
   SHELLY2,
+  N0DY_RELAY,
   BLITZWOLF_BWSHP,    // Socket Relay Devices with Energy Monitoring
   TECKIN,
   TECKIN_US,
@@ -1693,6 +1695,19 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO13 Button
      GPIO_IRSEND,      // GPIO14 IR Transmitter
      0, 0, 0
+  },  
+  { "N0DY Relay",      // N0DY Wifi Dual Relay (ESP-07)
+                       // https://www.n0dy.com/product/web-controlled-dual-relay/
+                       // https://www.amazon.com/dp/B072MKV8ZM
+     GPIO_KEY1,        // GPIO00 PROG Button
+     GPIO_USER,        // GPIO01 Serial RXD or Optional sensor on J2 RXD (if not using serial io)
+     0,                // GPIO02 
+     GPIO_USER,        // GPIO03 Serial TXD or Optional sensor on J2 TXD (if not using serial io)
+     GPIO_REL2_INV,    // GPIO04 Relay 2 (active low)
+     GPIO_REL1_INV,    // GPIO05 Relay 1 (active low)
+     0, 0, 0, 0, 0, 0, // Flash connection
+     0, 0, 0, 0, 0,    // Unused GPIO 12-16
+     0                 // ADC0 Analog input
   }
 };
 
