@@ -230,6 +230,22 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager définit AccessPoint"
 #define D_TRYING_TO_CONNECT "Tentative de connexion du module au réseau"
 
+//?? @TODO:Translation  >>>
+#define D_WEBLOGOUT "Logout"
+#define D_WORKING "Working"
+#define D_CONFIGURE_GENERAL "General Options"
+#define D_LED_INDICATOR "LED Indicator"
+#define D_LED_INDICATOR_ACTIVITY "Activity"
+#define D_LED_INDICATOR_STATUS "Status"
+#define D_LED_INDICATOR_POWER "Power"
+#define D_GENERAL_USAGE "General Usage"
+#define D_SAVE_STATE "Save State"
+#define D_DISABLED "Disabled"
+#define D_ENABLED "Enabled"
+#define D_IO_SETUP "I/O configuration"
+#define D_READY "Ready"
+//<<<
+
 #define D_RESTART_IN "Redémarrage dans"
 #define D_SECONDS "secondes"
 #define D_DEVICE_WILL_RESTART "Le module va redémarrer dans quelques secondes"

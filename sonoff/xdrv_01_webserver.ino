@@ -52,7 +52,9 @@ const char HTTP_HEAD[] PROGMEM =
   "<title>{h} - {v}</title>"
 
   "<script>"
-  "var x=null,lt,to,tp,pc='';"   // x=null allow for abortion
+  "var x=null,lt,to,tp,pc='';"            // x=null allow for abortion
+
+  // function: eb(:string) - Get document element by Id
   "function eb(s){"
     "return document.getElementById(s);"
   "}"
@@ -110,7 +112,8 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "}"
   "function lc(p){"
     "la('?t='+p);"              // ?t related to WebGetArg("t", tmp, sizeof(tmp));
-  "}";
+  "}"
+  "";
 
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "function c(l){"
@@ -124,21 +127,11 @@ const char HTTP_SCRIPT_RELOAD_GENERIC[] PROGMEM =
       "e=eb('tmr'); e.innerHTML=tmw+'s'; tmw++;"
       "if(tmw*1000>{t0 && (!vld||tmw%2==0)){"
         "getxhr('.',"
-          "function(){e.innerHTML='" D_ONLINE "'; if(++vld<5)return; e.innerHTML+=' " D_DONE "'; setTimeout(function(){location.href='.'},2000);}"
+          "function(){e.innerHTML+='" D_ONLINE "'; if(++vld<5)return; e.innerHTML+=' " D_DONE "'; setTimeout(function(){location.href='.'},2000);}"
           ",null,2000);"
       "}"
     "},1000);"
     "</script>";
-/*
-const char HTTP_SCRIPT_RELOAD[] PROGMEM =
-  "setTimeout(function(){location.href='.';}," STR(HTTP_RESTART_RECONNECT_TIME) ");"
-  "</script>";
-
-// Local OTA upgrade requires more time to complete cp: before web ui should be reloaded
-const char HTTP_SCRIPT_RELOAD_OTA[] PROGMEM =
-  "setTimeout(function(){location.href='.';}," STR(HTTP_OTA_RESTART_RECONNECT_TIME) ");"
-  "</script>";
-*/
 
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                    // Scroll position
@@ -186,6 +179,7 @@ const char HTTP_SCRIPT_MODULE1[] PROGMEM =
       "os=o.substring(0,i);"
       "sk(}4,99);"
       "os=o.substring(i+2);";  // +2 is length "}3"
+
 const char HTTP_SCRIPT_MODULE2[] PROGMEM =
     "});"
   "}";
@@ -260,6 +254,7 @@ const char HTTP_BTN_MENU1[] PROGMEM =
 const char HTTP_BTN_RSTRT[] PROGMEM =
   "<br/><form action='.' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button name='rstrt' class='button bred'>" D_RESTART "</button></form>";
 const char HTTP_BTN_MENU_MODULE[] PROGMEM =
+  "<br/><form action='gs' method='get'><button>" D_CONFIGURE_GENERAL "</button></form>"
   "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>"
   "<br/><form action='wi' method='get'><button>" D_CONFIGURE_WIFI "</button></form>";
 const char HTTP_BTN_MENU4[] PROGMEM =
@@ -286,6 +281,14 @@ const char HTTP_FORM_MODULE[] PROGMEM =
 const char HTTP_FORM_MODULE_PULLUP[] PROGMEM =
   "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_PULLUP_ENABLE "</b><br/>";
 
+const char HTTP_FORM_GENERAL[] PROGMEM =
+  "<fieldset><legend><b>&nbsp;" D_CONFIGURE_GENERAL "&nbsp;</b></legend><form method='get' action='gs'>";
+const char HTTP_FORM_GENERAL_CHECKBOX_ONOFF[] PROGMEM =
+  //"<br/><b>{b0</b><br/><select id='{b1' name='{b1'>"
+  //"<option{a0value='0'>0 " D_DISABLED "</option>"
+  //"<option{a1value='1'>1 " D_ENABLED "</option>"
+  //"</select><br/>";
+  "<br/><input style='width:10%;' id='{b1' name='{b1' type='checkbox'{r1><b>{b0</b><br/>";
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;({w})&nbsp<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
@@ -415,6 +418,7 @@ void ExecuteWebCommand(char* svalue, int source)
 void StartWebserver(int type, IPAddress ipweb)
 {
   if (!Settings.web_refresh) { Settings.web_refresh = HTTP_REFRESH_TIME; }
+
   if (!webserver_state) {
     if (!WebServer) {
       WebServer = new ESP8266WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
@@ -430,7 +434,8 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->onNotFound(HandleNotFound);
 #ifndef BE_MINIMAL
       WebServer->on("/cn", HandleConfiguration);
-      WebServer->on("/md", HandleModuleConfiguration);
+      WebServer->on("/gs", HandleGeneralConfiguration);
+      WebServer->on("/md", HandleModuleHardwareConfiguration);
       WebServer->on("/wi", HandleWifiConfiguration);
       WebServer->on("/lg", HandleLoggingConfiguration);
       WebServer->on("/co", HandleOtherConfiguration);
@@ -743,7 +748,10 @@ void HandleRoot(void)
 
 void HandleAjaxStatusRefresh(void)
 {
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!WebAuthenticate()) {
+    //WebServer->send(401); return;
+    return WebServer->requestAuthentication();
+  }
 
   char svalue[80];
   char tmp[100];
@@ -858,12 +866,12 @@ void HandleConfiguration(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-void HandleModuleConfiguration(void)
+void HandleModuleHardwareConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   if (WebServer->hasArg("save")) {
-    ModuleSaveSettings();
+    ModuleHardwareSaveSettings();
     WebRestart(1);
     return;
   }
@@ -896,6 +904,7 @@ void HandleModuleConfiguration(void)
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
+
   page += FPSTR(HTTP_SCRIPT_MODULE1);
   page.replace(F("}4"), String(Settings.module));
   for (byte i = 0; i < sizeof(cmodule); i++) {
@@ -909,6 +918,9 @@ void HandleModuleConfiguration(void)
   page.replace(F("<body>"), F("<body onload='sl()'>"));
   page += FPSTR(HTTP_FORM_MODULE);
   page.replace(F("{mt"), AnyModuleName(MODULE));
+  page += F("<br/>");
+  page += FPSTR(D_IO_SETUP);
+
 
   if (my_module_flag.pullup) {
     page += FPSTR(HTTP_FORM_MODULE_PULLUP);
@@ -930,7 +942,7 @@ void HandleModuleConfiguration(void)
   ShowPage(page);
 }
 
-void ModuleSaveSettings(void)
+void ModuleHardwareSaveSettings(void)
 {
   char tmp[100];
   char stemp[TOPSZ];
@@ -960,6 +972,85 @@ void ModuleSaveSettings(void)
     }
   }
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MODULE "%s " D_CMND_MODULE "%s"), ModuleName().c_str(), gpios.c_str());
+  AddLog(LOG_LEVEL_INFO);
+}
+
+void HandleGeneralConfiguration(void)
+{
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  //if (HttpUser()) { return; }
+  //if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+
+  if (WebServer->hasArg("save")) {
+    GeneralConfigurationSaveSettings();
+    //WebRestart(1);
+    //return;
+  }
+
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_GENERAL);
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_GENERAL));
+
+  page += FPSTR(HTTP_HEAD_STYLE);
+  page.replace(F("<body>"), F("<body onload='sl()'>"));
+  page += FPSTR(HTTP_FORM_GENERAL);
+  page += F("<table>");
+
+  // LED 'general' status indicator - LED still used for 'core' ops (updates etc..)
+  //-- Activity
+  page += FPSTR(D_LED_INDICATOR); page += F("<br>");
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_ACTIVITY));
+  page.replace(F("{b1"), F("o00"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_ACTIVITY) ? F(" checked") : F(""));
+  //-- Status
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_STATUS));
+  page.replace(F("{b1"), F("o01"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_STATUS) ? F(" checked") : F(""));
+  //-- Power
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_POWER));
+  page.replace(F("{b1"), F("o02"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_POWER) ? F(" checked") : F(""));
+  page += F("<br>");
+
+  // Save state to flash
+  page += FPSTR(D_GENERAL_USAGE); page += F("<br>");
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_SAVE_STATE));
+  page.replace(F("{b1"), F("o10"));
+  page.replace(F("{r1"), (Settings.flag.save_state) ? F(" checked") : F(""));
+  //-- button single mode
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), FPSTR(D_BUTTON_SINGLEMODE));
+  page.replace(F("{b1"), F("o11"));
+  page.replace(F("{r1"), (Settings.flag.button_single) ? F(" checked") : F(""));
+
+  page += F("</table>");
+  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_BTN_CONF);
+  ShowPage(page);
+}
+
+void GeneralConfigurationSaveSettings(void)
+{
+  char tmp[100];
+
+  // LED indicator
+  Settings.ledstate = 0;
+  if ( WebServer->hasArg("o00") ) Settings.ledstate |= LED_ACTIVITY;
+  if ( WebServer->hasArg("o01") ) Settings.ledstate |= LED_STATUS;
+  if ( WebServer->hasArg("o02") ) Settings.ledstate |= LED_POWER;
+
+  // Save state
+  Settings.flag.save_state = WebServer->hasArg("o10");
+  // Single button mode
+  Settings.flag.button_single = WebServer->hasArg("o11");
+
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_CONFIGURE_GENERAL "%s %02X, %02X"),tmp, Settings.ledstate, Settings.flag.save_state);
   AddLog(LOG_LEVEL_INFO);
 }
 

@@ -230,6 +230,22 @@
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager 設置接入點"
 #define D_TRYING_TO_CONNECT "嘗試將設備連接到網絡"
 
+//?? @TODO:Translation  >>>
+#define D_WEBLOGOUT "Logout"
+#define D_WORKING "Working"
+#define D_CONFIGURE_GENERAL "General Options"
+#define D_LED_INDICATOR "LED Indicator"
+#define D_LED_INDICATOR_ACTIVITY "Activity"
+#define D_LED_INDICATOR_STATUS "Status"
+#define D_LED_INDICATOR_POWER "Power"
+#define D_GENERAL_USAGE "General Usage"
+#define D_SAVE_STATE "Save State"
+#define D_DISABLED "Disabled"
+#define D_ENABLED "Enabled"
+#define D_IO_SETUP "I/O configuration"
+#define D_READY "Ready"
+//<<<
+
 #define D_RESTART_IN "重啟需要"
 #define D_SECONDS "秒"
 #define D_DEVICE_WILL_RESTART "設備將在幾分鐘內重啟"

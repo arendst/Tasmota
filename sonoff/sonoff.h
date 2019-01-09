@@ -247,7 +247,7 @@ typedef union {
 
 enum LEDBlinkPattern {
   // Bit format: (note: BigEndian)
-  // [00] [0] [0] [0000] :: [unused:8] [index:4] [length:4] [pattern:16bits]
+  // [00] [0] [0] [0000] :: [unused:7] [index:5] [length:4] [pattern:16bits]
   LED_BLINKPATTERN_NONE     = 0x00000000,  //32bit zero
   //---
   LED_BLINKPATTERN_IDLE     = 0x00100001, // All good       - bits : 0000 0000 0000 0001

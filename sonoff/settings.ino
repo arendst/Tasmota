@@ -588,9 +588,11 @@ void SettingsDefaultSet2(void)
   Settings.poweronstate = APP_POWERON_STATE;
   Settings.blinktime = APP_BLINKTIME;
   Settings.blinkcount = APP_BLINKCOUNT;
-  Settings.ledstate = APP_LEDSTATE;
   Settings.pulse_timer[0] = APP_PULSETIME;
 //  for (byte i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
+
+  // LED
+  Settings.ledstate = APP_LEDSTATE;
 
   // Serial
   Settings.baudrate = APP_BAUDRATE / 1200;
