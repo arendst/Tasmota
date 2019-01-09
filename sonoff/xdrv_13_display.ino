@@ -427,13 +427,18 @@ void DisplayText(void)
             cp += var;
             DisplayDrawFilledRectangle(disp_xpos, disp_ypos, temp, temp1, color);
             break;
-          case 't': {
+          case 't':
             if (dp < (linebuf + DISPLAY_BUFFER_COLS) -5) {
-              snprintf_P(dp, 5, PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute);
+              snprintf_P(dp, 6, PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute);
               dp += 5;
             }
             break;
-          }
+          case 'T':
+            if (dp < (linebuf + DISPLAY_BUFFER_COLS) -8) {
+              snprintf_P(dp, 9, PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%02d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year%2000);
+              dp += 8;
+            }
+            break;
           case 'd':
             // force draw grafics buffer
             DisplayDrawFrame();
@@ -465,7 +470,7 @@ void DisplayText(void)
             break;
         }
       }
-    }
+    } 
   }
   exit:
   // now draw buffer
