@@ -441,12 +441,10 @@ void PN532_ScanForTag(void)
 
 #ifdef USE_PN532_CAUSE_EVENTS      
 
-      char command[64];
-      sprintf(command,"event PN532_UID=%s",uids);
+      char command[71];
+      sprintf(command,"backlog event PN532_UID=%s;event PN532_DATA=%s",uids,card_datas);
       ExecuteCommand(command, SRC_RULE);
-      sprintf(command,"event PN532_DATA=%s",card_datas);
-      ExecuteCommand(command, SRC_RULE);
-
+      
 #endif
       
       pn532_i2c_scan_defer_report = 7; // Ignore tags found for two seconds
