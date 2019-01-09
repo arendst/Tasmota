@@ -178,6 +178,7 @@
 #define D_WEIGHT "Gewicht"
 #define D_WARMLIGHT "Warm"
 #define D_WEB_SERVER "Webserver"
+#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "WAARSCHUWING Deze versie bewaart geen instellingen"

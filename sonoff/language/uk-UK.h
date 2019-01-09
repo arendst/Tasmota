@@ -178,6 +178,7 @@
 #define D_WEIGHT "Weight"
 #define D_WARMLIGHT "Тепло"
 #define D_WEB_SERVER "Web сервер"
+#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "ПОПЕРЕДЖЕННЯ! Ця версія не підтримує персистентні налаштування"

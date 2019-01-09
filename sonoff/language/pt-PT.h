@@ -178,6 +178,7 @@
 #define D_WEIGHT "Weight"
 #define D_WARMLIGHT "Luz Quente"
 #define D_WEB_SERVER "servidor WEB"
+#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "AVISO esta versão não supporta configurações persistentes"

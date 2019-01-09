@@ -448,8 +448,8 @@ const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
 
 void HandleDomoticzConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_DOMOTICZ);
 
   if (WebServer->hasArg("save")) {

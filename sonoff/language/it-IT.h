@@ -178,6 +178,7 @@
 #define D_WEIGHT "Peso"
 #define D_WARMLIGHT "Calda"
 #define D_WEB_SERVER "Web Server"
+#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "ATTENZIONE Questa versione non supporta il salvataggio delle impostazioni"
