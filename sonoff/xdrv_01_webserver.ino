@@ -313,9 +313,8 @@ const char HTTP_FORM_LOG3[] PROGMEM =
   "<br/><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' placeholder='" STR(TELE_PERIOD) "' value='{l4'><br/>";
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='co'>"
-//  "<input id='w' name='w' value='5,1' hidden>"
-  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
-  "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>";
+  //"<input id='w' name='w' value='5,1' hidden>"
+  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>";
   const char HTTP_FORM_OTHER2[] PROGMEM =
   "<br/><b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' placeholder='{2' value='{3'><br/>";
 #ifdef USE_EMULATION
@@ -1203,7 +1202,6 @@ void HandleOtherConfiguration(void)
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_OTHER));
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_OTHER);
-  page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
 
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
   if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
@@ -1239,7 +1237,6 @@ void OtherSaveSettings(void)
 
   WebGetArg("p1", tmp, sizeof(tmp));
   strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
-  Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
 #ifdef USE_EMULATION
   WebGetArg("b2", tmp, sizeof(tmp));
   Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
