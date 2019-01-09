@@ -178,7 +178,6 @@
 #define D_WEIGHT "Weight"
 #define D_WARMLIGHT "Sıcak"
 #define D_WEB_SERVER "Web Sunucusu"
-#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "UYARI Bu versiyon ayarların kalıcı olarak kaydedilmesine olanak sağlamıyor"

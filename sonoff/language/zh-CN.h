@@ -178,7 +178,6 @@
 #define D_WEIGHT "Weight"
 #define D_WARMLIGHT "暖"
 #define D_WEB_SERVER "Web Server"
-#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "警告：精简固件不支持配置持久化保存"

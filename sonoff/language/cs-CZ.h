@@ -178,7 +178,6 @@
 #define D_WEIGHT "Hmotnost"
 #define D_WARMLIGHT "Teplé světlo"
 #define D_WEB_SERVER "Web Server"
-#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "UPOZORNĚNÍ Tato verze nepodporuje trvalé nastavení"

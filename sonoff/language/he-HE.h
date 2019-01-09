@@ -178,7 +178,6 @@
 #define D_WEIGHT "Weight"
 #define D_WARMLIGHT "חום"
 #define D_WEB_SERVER "Web שרת"
-#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "WARNING This version does not support persistent settings"

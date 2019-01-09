@@ -178,7 +178,6 @@
 #define D_WEIGHT "Weight"
 #define D_WARMLIGHT "Meleg"
 #define D_WEB_SERVER "Web Szerver"
-#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "VIGYÁZZ Ez a verzió nem támogat tartós beállításokat"

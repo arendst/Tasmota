@@ -178,7 +178,6 @@
 #define D_WEIGHT "Vikt"
 #define D_WARMLIGHT "Varm"
 #define D_WEB_SERVER "Webbserver"
-#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "VARNING Denna version supporterar inte beständiga inställningar"

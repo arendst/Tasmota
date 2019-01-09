@@ -178,7 +178,6 @@
 #define D_WEIGHT "Βάρος"
 #define D_WARMLIGHT "Θερμό"
 #define D_WEB_SERVER "Διακομιστής Web"
-#define D_LOGOUT "Logout"
 
 // sonoff.ino
 #define D_WARNING_MINIMAL_VERSION "ΠΡΟΕΙΔΟΠΟΙΗΣΗ Αυτή η έκδοση δεν αποθηκεύει τις ρυθμίσεις"

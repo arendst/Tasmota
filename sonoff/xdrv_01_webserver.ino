@@ -344,7 +344,7 @@ const char HTTP_TABLE100[] PROGMEM =
 const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' class='c'></div>";
 const char HTTP_LOGOUT[] PROGMEM =
-  "<div class='q i sf' style='position:absolute;top:0;right:0;'><a href='#' onclick='logout();' class='cg'>" D_LOGOUT "</a></div>";
+  "<div class='q i sf' style='position:absolute;top:0;right:0;'><a href='#' onclick='logout();' class='cg'>" D_WEBLOGOUT "</a></div>";
 const char HTTP_FORM_GENERAL_CHECKBOX_ONOFF[] PROGMEM =
   "<br/><input style='width:10%;' id='{b1' name='{b1' type='checkbox'{r1><b>{b0</b><br/>";
 const char HTTP_END[] PROGMEM =
@@ -1218,7 +1218,7 @@ void HandleOtherConfiguration(void)
   page += F("<br/></fieldset>");
 #endif  // USE_EMULATION
 
-  page += F("<fieldset>");
+  page += F("<br/>" D_CONFIGURE_GENERAL "<fieldset>");
   // LED 'general' status indicator - LED still used for 'core' ops (updates etc..)
   //-- Activity
   page += FPSTR(D_LED_INDICATOR); page += F("<br>");
