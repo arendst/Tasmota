@@ -355,6 +355,8 @@ const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' class='c'></div>";
 const char HTTP_LOGOUT[] PROGMEM =
   "<div class='q i sf' style='position:absolute;top:0;right:0;'><a href='#' onclick='logout();' class='cg'>" D_LOGOUT "</a></div>";
+const char HTTP_FORM_GENERAL_CHECKBOX_ONOFF[] PROGMEM =
+  "<br/><input style='width:10%;' id='{b1' name='{b1' type='checkbox'{r1><b>{b0</b><br/>";
 const char HTTP_END[] PROGMEM =
   "<br/>"
   "<div class='r sf'><hr/><a href='" D_WEBLINK "' target='_blank' class='cg'>" D_PROGRAMNAME " {mv " D_BY " " D_AUTHOR "</a></div>"
@@ -1212,6 +1214,7 @@ void HandleOtherConfiguration(void)
     page.replace(F("{2"), (i) ? stemp : FRIENDLY_NAME);
     page.replace(F("{3"), Settings.friendlyname[i]);
   }
+
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3a);
   for (byte i = 0; i < EMUL_MAX; i++) {
@@ -1224,6 +1227,41 @@ void HandleOtherConfiguration(void)
   page += F("<br/>");
   page += F("<br/></fieldset>");
 #endif  // USE_EMULATION
+
+  page += F("<fieldset>");
+  // LED 'general' status indicator - LED still used for 'core' ops (updates etc..)
+  //-- Activity
+  page += FPSTR(D_LED_INDICATOR); page += F("<br>");
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_ACTIVITY));
+  page.replace(F("{b1"), F("o00"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_ACTIVITY) ? F(" checked") : F(""));
+  //-- Status
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_STATUS));
+  page.replace(F("{b1"), F("o01"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_STATUS) ? F(" checked") : F(""));
+  //-- Power
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_LED_INDICATOR_POWER));
+  page.replace(F("{b1"), F("o02"));
+  page.replace(F("{r1"), (Settings.ledstate&LED_POWER) ? F(" checked") : F(""));
+  page += F("<br>");
+
+  // Save state to flash
+  page += FPSTR(D_GENERAL_USAGE); page += F("<br>");
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), F(D_SAVE_STATE));
+  page.replace(F("{b1"), F("o10"));
+  page.replace(F("{r1"), (Settings.flag.save_state) ? F(" checked") : F(""));
+  //-- button single mode
+  page += FPSTR(HTTP_FORM_GENERAL_CHECKBOX_ONOFF);
+  page.replace(F("{b0"), FPSTR(D_BUTTON_SINGLEMODE));
+  page.replace(F("{b1"), F("o11"));
+  page.replace(F("{r1"), (Settings.flag.button_single) ? F(" checked") : F(""));
+
+  page += F("<br/></fieldset>");
+
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
@@ -1237,11 +1275,7 @@ void OtherSaveSettings(void)
 
   WebGetArg("p1", tmp, sizeof(tmp));
   strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
-#ifdef USE_EMULATION
-  WebGetArg("b2", tmp, sizeof(tmp));
-  Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
-#endif  // USE_EMULATION
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
+
   for (byte i = 0; i < MAX_FRIENDLYNAMES; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("a%d"), i +1);
     WebGetArg(stemp, tmp, sizeof(tmp));
@@ -1249,6 +1283,25 @@ void OtherSaveSettings(void)
     strlcpy(Settings.friendlyname[i], (!strlen(tmp)) ? (i) ? stemp2 : FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[i]));
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%s %s"), log_data, (i) ? "," : "", Settings.friendlyname[i]);
   }
+
+#ifdef USE_EMULATION
+  WebGetArg("b2", tmp, sizeof(tmp));
+  Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
+#endif  // USE_EMULATION
+
+  // LED indicator
+  Settings.ledstate = 0;
+  if ( WebServer->hasArg("o00") ) Settings.ledstate |= LED_ACTIVITY;
+  if ( WebServer->hasArg("o01") ) Settings.ledstate |= LED_STATUS;
+  if ( WebServer->hasArg("o02") ) Settings.ledstate |= LED_POWER;
+
+  // Save state
+  Settings.flag.save_state = WebServer->hasArg("o10");
+  // Single button mode
+  Settings.flag.button_single = WebServer->hasArg("o11");
+
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME),
+    GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
   AddLog(LOG_LEVEL_INFO);
 }
 
