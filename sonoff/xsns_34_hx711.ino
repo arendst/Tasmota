@@ -393,8 +393,8 @@ const char HTTP_FORM_HX711[] PROGMEM =
 
 void HandleHxAction(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_HX711);
 
   if (WebServer->hasArg("save")) {
