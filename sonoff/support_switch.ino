@@ -121,7 +121,7 @@ void SwitchInit(void)
     lastwallswitch[i] = 1;  // Init global to virtual switch state;
     if (pin[GPIO_SWT1 +i] < 99) {
       switches_found++;
-      pinMode(pin[GPIO_SWT1 +i], (16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 : bitRead(switch_no_pullup, i) ? INPUT : INPUT_PULLUP);
+      pinMode(pin[GPIO_SWT1 +i], bitRead(switch_no_pullup, i) ? INPUT : ((16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
       lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // Set global now so doesn't change the saved power state on first switch check
     }
     switch_virtual[i] = lastwallswitch[i];
