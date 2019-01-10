@@ -393,7 +393,7 @@ void PN532_ScanForTag(void)
         uint8_t keyuniversal[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
         if (mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
           if (mifareclassic_ReadDataBlock(1, card_data)) {
-            memcpy(&card_datas,card_data,sizeof(card_data)); // Cast block 0 to a string
+            memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 0 to a string
           }
           if (pn532_i2c_function == 1) { // erase block 1 of card
             for (uint8_t i = 0;i<16;i++) {
@@ -403,7 +403,7 @@ void PN532_ScanForTag(void)
               erase_success = true;
               snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Erase success");
               AddLog(LOG_LEVEL_INFO);
-              memcpy(&card_datas,card_data,sizeof(card_data)); // Cast block 0 to a string
+              memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 0 to a string
             }
           }
           if (pn532_i2c_function == 2) {
@@ -412,7 +412,7 @@ void PN532_ScanForTag(void)
               set_success = true;
               snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data write successful");
               AddLog(LOG_LEVEL_INFO);
-              memcpy(&card_datas,card_data,sizeof(card_data)); // Cast block 0 to a string
+              memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 0 to a string
             }
           }
         } else {
