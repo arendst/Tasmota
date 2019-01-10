@@ -951,8 +951,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        // GPIO11 (SD_CMD   Flash)
      GPIO_PWM1,        // GPIO12 Light
      GPIO_LED1_INV,    // GPIO13 Red Led (0 = On, 1 = Off) - Link and Power status
-     0, 0,
-     0, 0
+     0, 0, 0, 0
   },
   { "Sonoff 4CH Pro",  // Sonoff 4CH Pro (ESP8285)
      GPIO_KEY1,        // GPIO00 Button 1
@@ -1149,7 +1148,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     0, 0, 0, 0, 0
+     0, 0, 0, 0, 0, 0
   },
   { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266) and Arilux LC10 (ESP8285)
                        // https://www.aliexpress.com/item/Magic-Home-Mini-RGB-RGBW-Wifi-Controller-For-Led-Strip-Panel-light-Timing-Function-16million-colors/32686853650.html
@@ -1462,6 +1461,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY3,        // GPIO14 Button 3
      GPIO_LED1,        // GPIO15 Optional sensor
      GPIO_REL1_INV,    // GPIO16 Green Led 1 (0 = On, 1 = Off)
+     0
   },
   { "OBI Socket",      // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko/p/2291706
      GPIO_USER,        // GPIO00
@@ -1716,6 +1716,24 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED2,        // GPIO13 Red LED - Power status
      GPIO_REL1,        // GPIO14 Relay 1
      0, 0, 0
+  }
+
+  { "N0DY Relay",      // N0DY Wifi Dual Relay (ESP-07)
+                       // https://www.n0dy.com/product/web-controlled-dual-relay/
+                       // https://www.amazon.com/dp/B072MKV8ZM
+     GPIO_KEY1,        // GPIO00 PROG Button
+     GPIO_USER,        // GPIO01 Serial RXD or Optional sensor on J2 RXD (if not using serial io)
+     0,                // GPIO02 
+     GPIO_USER,        // GPIO03 Serial TXD or Optional sensor on J2 TXD (if not using serial io)
+     GPIO_REL2_INV,    // GPIO04 Relay 2 (active low)
+     GPIO_REL1_INV,    // GPIO05 Relay 1 (active low)
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     0, 0, 0, 0, 0, 0
   }
 
   { "MagicHome",       // Magic Home (aka Flux-light) (ESP8266)
