@@ -481,6 +481,10 @@ boolean PN532_Command(void)
   }
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"S")) {
     if (paramcount > 1) {
+      if (XdrvMailbox.data[XdrvMailbox.data_len-1] == ',') {
+        serviced = false;
+        return serviced;
+      }
       sprintf(sub_string_tmp,subStr(sub_string, XdrvMailbox.data, ",", 2));
       uint8_t dlen = strlen(sub_string_tmp);
       if (dlen > 15) { dlen = 15; }
