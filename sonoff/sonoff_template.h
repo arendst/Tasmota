@@ -275,6 +275,7 @@ enum SupportedModules {
   MANZOKU_EU_4,
   OBI2,
   YTF_IR_BRIDGE,
+  DIGOO,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -539,6 +540,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SHELLY1,
   SHELLY2,
   BLITZWOLF_BWSHP,    // Socket Relay Devices with Energy Monitoring
+  DIGOO,
   TECKIN,
   TECKIN_US,
   APLIC_WDP303075,
@@ -1693,6 +1695,27 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO13 Button
      GPIO_IRSEND,      // GPIO14 IR Transmitter
      0, 0, 0
+  },
+  { "Digoo DG-SP202",  // Digoo DG-SP202
+                       // https://www.banggood.com/DIGOO-DG-SP202-Dual-EU-Plug-Smart-WIFI-Socket-Individual-Controllable-Energy-Monitor-Remote-Control-Timing-Smart-Home-Outlet-let-p-1375323.html
+     GPIO_KEY1,        // GPIO00 Button1
+     0,                // GPIO01 Serial RXD
+     0,                // GPIO02
+     0,                // GPIO03 Serial TXD
+     GPIO_HJL_CF,      // GPIO04 BL0937 or HJL-01 CF power
+     GPIO_NRG_CF1,     // GPIO05 BL0937 or HJL-01 CF1 current / voltage
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_NRG_SEL_INV, // GPIO12 BL0937 or HJL-01 Sel output (0 = Voltage)
+     GPIO_LED1,        // GPIO13 Blue Leds - Link Status
+     GPIO_REL2,        // GPIO14 Relay2 (0 = Off, 1 = On) and Red Led
+     GPIO_REL1,        // GPIO15 Relay1 (0 = Off, 1 = On) and Red Led
+     GPIO_KEY2_NP,     // GPIO16 Button2, externally pulled up
+     0
   }
 };
 
