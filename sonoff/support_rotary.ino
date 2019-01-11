@@ -32,7 +32,7 @@ uint8_t interrupts_in_use = 0;
 
 /********************************************************************************************/
 
-void update_position() {
+void update_position(void) {
   uint8_t s;
 
   /*
@@ -57,7 +57,7 @@ void update_position() {
   rotary_state = (s >> 2);
 }
 
-void update_rotary() {
+void update_rotary(void) {
   if (MI_DESK_LAMP == Settings.module){
     if (light_power) {
       update_position();
