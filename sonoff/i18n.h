@@ -214,7 +214,6 @@
 #define D_CMND_COUNTERDEBOUNCE "CounterDebounce"
 #define D_CMND_BUTTONDEBOUNCE "ButtonDebounce"
 #define D_CMND_SWITCHDEBOUNCE "SwitchDebounce"
-#define D_CMND_ROTARYDEBOUNCE "RotaryDebounce"
 #define D_CMND_SLEEP "Sleep"
 #define D_CMND_UPLOAD "Upload"
 #define D_CMND_UPGRADE "Upgrade"

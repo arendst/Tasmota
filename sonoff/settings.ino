@@ -789,7 +789,6 @@ void SettingsDefaultSet2(void)
   SettingsDefaultSet_5_13_1c();  // Time STD/DST settings
 
   Settings.button_debounce = KEY_DEBOUNCE_TIME;
-  Settings.rotary_debounce = ROTARY_DEBOUNCE_TIME;
   Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
 
   for (byte j = 0; j < 5; j++) {
@@ -1022,10 +1021,6 @@ void SettingsDelta(void)
     if (Settings.version < 0x06040105) {
       Settings.flag3.mdns_enabled = MDNS_ENABLED;
       Settings.param[P_MDNS_DELAYED_START] = 0;
-    }
-
-    if (Settings.version < 0x06040109) {
-      Settings.rotary_debounce = ROTARY_DEBOUNCE_TIME;
     }
 
     Settings.version = VERSION;

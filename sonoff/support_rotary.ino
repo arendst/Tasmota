@@ -125,7 +125,7 @@ void RotaryLoop(void)
 {
   if (rotaries_found) {
     if (TimeReached(rotary_debounce)) {
-      SetNextTimeInterval(rotary_debounce, Settings.rotary_debounce);
+      SetNextTimeInterval(rotary_debounce, Settings.button_debounce); // Using button_debounce setting for this as well
       RotaryHandler();
     }
   }
