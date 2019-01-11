@@ -68,7 +68,7 @@ void update_rotary(void) {
 void RotaryInit(void)
 {
   rotaries_found = 0;
-  if (pin[GPIO_ROT_A] < 99 && pin[GPIO_ROT_B] < 99) {
+  if ((pin[GPIO_ROT_A] < 99) && (pin[GPIO_ROT_B] < 99)) {
     rotaries_found++;
     pinMode(pin[GPIO_ROT_A], INPUT_PULLUP);
     pinMode(pin[GPIO_ROT_B], INPUT_PULLUP);
@@ -76,11 +76,11 @@ void RotaryInit(void)
     // GPIO6-GPIO11 are typically used to interface with the flash memory IC on
     // most esp8266 modules, so we should avoid adding interrupts to these pins.
 
-    if (pin[GPIO_ROT_A] < 6 || pin[GPIO_ROT_A] > 11) {
+    if ((pin[GPIO_ROT_A] < 6) || (pin[GPIO_ROT_A] > 11)) {
       attachInterrupt(digitalPinToInterrupt(pin[GPIO_ROT_A]), update_rotary, CHANGE);
       interrupts_in_use++;
     }
-    if (pin[GPIO_ROT_B] < 6 || pin[GPIO_ROT_B] > 11) {
+    if ((pin[GPIO_ROT_B] < 6) || (pin[GPIO_ROT_B] > 11)) {
       attachInterrupt(digitalPinToInterrupt(pin[GPIO_ROT_B]), update_rotary, CHANGE);
       interrupts_in_use++;
     }
