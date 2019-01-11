@@ -146,6 +146,8 @@ enum UserSelectablePins {
   GPIO_MAX31855CS,     // MAX31855 Serial interface
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
+  GPIO_ROT_A,         // Rotary switch A Pin
+  GPIO_ROT_B,         // Rotary switch B Pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -278,6 +280,7 @@ enum SupportedModules {
   DIGOO,
   KA10,
   ZX2820,
+  MI_DESK_LAMP,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -503,6 +506,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
 #endif
+  GPIO_ROT_A,       // Rotary switch A pin
+  GPIO_ROT_B,       // Rotary switch B pin
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
@@ -565,6 +570,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   ARILUX_LC11,
   ZENGGE_ZF_WF017,
   HUAFAN_SS,
+  MI_DESK_LAMP,
   KMC_70011,
   AILIGHT,             // Light Bulbs
   PHILIPS,
@@ -1754,6 +1760,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Green Led - Link and Power status
      GPIO_REL1,        // GPIO14 Relay
      0, 0, 0
+  },
+  { "Mi Desk Lamp",    // Mi LED Desk Lamp
+                       // https://www.mi.com/global/smartlamp/
+     0, 0,
+     GPIO_KEY1,        // GPIO02 Button
+     0,
+     GPIO_PWM1,        // GPIO04 Cold White
+     GPIO_PWM2,        // GPIO05 Warm White
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,
+     0,
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_ROT_A,      // GPIO12 Rotary switch A pin
+     GPIO_ROT_B,      // GPIO13 Rotary switch B pin
+     0, 0, 0, 0
   }
 };
 

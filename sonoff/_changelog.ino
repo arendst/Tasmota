@@ -1,4 +1,8 @@
-/* 6.4.1.8 20190107
+/* 6.4.1.9 20190111
+ * Add support for rotary switch
+ * Add support for Mi Desk Lamp
+ *
+ * 6.4.1.8 20190107
  * Change sonoff_template.h layout regarding optional module flags like ADC0
  * Add command SetOption62 1 to force no Button/Switch pullup on dedicated modules. Currently only supported on Shelly2 (#4841)
  * Fix Display exception 28 when JSON value is NULL received
