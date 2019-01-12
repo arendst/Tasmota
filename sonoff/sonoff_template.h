@@ -276,6 +276,7 @@ enum SupportedModules {
   OBI2,
   YTF_IR_BRIDGE,
   DIGOO,
+  KA10,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -497,9 +498,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_AZ_RXD,         // AZ-Instrument 7798 CO2 datalogger Serial interface
 #endif
 #ifdef USE_MAX31855
-  GPIO_MAX31855CS,   // MAX31855 Serial interface
-  GPIO_MAX31855CLK,  // MAX31855 Serial interface
-  GPIO_MAX31855DO,   // MAX31855 Serial interface
+  GPIO_MAX31855CS,     // MAX31855 Serial interface
+  GPIO_MAX31855CLK,    // MAX31855 Serial interface
+  GPIO_MAX31855DO,     // MAX31855 Serial interface
 #endif
 };
 
@@ -539,22 +540,23 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   WION,
   SHELLY1,
   SHELLY2,
-  BLITZWOLF_BWSHP,    // Socket Relay Devices with Energy Monitoring
+  BLITZWOLF_BWSHP,     // Socket Relay Devices with Energy Monitoring
   TECKIN,
   TECKIN_US,
   APLIC_WDP303075,
   GOSUND,
   SK03_TUYA,
   DIGOO,
-  NEO_COOLCAM,        // Socket Relay Devices
+  KA10,
+  NEO_COOLCAM,         // Socket Relay Devices
   OBI,
   OBI2,
   MANZOKU_EU_4,
-  ESP_SWITCH,         // Switch Devices
-  TUYA_DIMMER,        // Dimmer Devices
+  ESP_SWITCH,          // Switch Devices
+  TUYA_DIMMER,         // Dimmer Devices
   ARMTRONIX_DIMMERS,
   PS_16_DZ,
-  H801,               // Light Devices
+  H801,                // Light Devices
   MAGICHOME,
   ARILUX_LC01,
   ARILUX_LC06,
@@ -562,10 +564,10 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   ZENGGE_ZF_WF017,
   HUAFAN_SS,
   KMC_70011,
-  AILIGHT,            // Light Bulbs
+  AILIGHT,             // Light Bulbs
   PHILIPS,
   YTF_IR_BRIDGE,
-  WITTY,              // Development Devices
+  WITTY,               // Development Devices
   WEMOS
 };
 
@@ -1716,12 +1718,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO15 Relay1 (0 = Off, 1 = On) and Red Led
      GPIO_KEY2_NP,     // GPIO16 Button2, externally pulled up
      0
-  }
-};
-
-/*
-  Optionals
-
+  },
   { "KA10",            // SMANERGY KA10 (ESP8285 - BL0937 Energy Monitoring) - https://www.amazon.es/dp/B07MBTCH2Y
      0,                // GPIO00
      GPIO_LED1_INV,    // GPIO01 Blue LED - Link status
@@ -1740,6 +1737,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO14 Relay 1
      0, 0, 0
   }
+};
+
+/*
+  Optionals
 
   { "N0DY Relay",      // N0DY Wifi Dual Relay (ESP-07)
                        // https://www.n0dy.com/product/web-controlled-dual-relay/
