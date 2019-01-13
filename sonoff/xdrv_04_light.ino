@@ -111,6 +111,7 @@ uint8_t light_wheel = 0;
 uint8_t light_subtype = 0;
 uint8_t light_device = 0;
 uint8_t light_power = 0;
+uint8_t light_old_power = 1;
 uint8_t light_update = 1;
 uint8_t light_wakeup_active = 0;
 uint8_t light_wakeup_dimmer = 0;
@@ -715,11 +716,12 @@ void LightRandomColor(void)
 void LightSetPower(void)
 {
 //  light_power = XdrvMailbox.index;
+  light_old_power = light_power;
   light_power = bitRead(XdrvMailbox.index, light_device -1);
   if (light_wakeup_active) {
     light_wakeup_active--;
   }
-  if (light_power) {
+  if (light_power && !light_old_power) {
     light_update = 1;
   }
   LightAnimate();
@@ -828,7 +830,10 @@ void LightAnimate(void)
           }
         }
       }
-      XdrvMailbox.index = light_device;
+
+      char *tmp_data = XdrvMailbox.data;
+      uint16_t tmp_data_len = XdrvMailbox.data_len;
+
       XdrvMailbox.data = (char*)cur_col;
       XdrvMailbox.data_len = sizeof(cur_col);
       if (XdrvCall(FUNC_SET_CHANNELS)) {
@@ -842,6 +847,8 @@ void LightAnimate(void)
       else if (light_type > LT_WS2812) {
         LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
       }
+      XdrvMailbox.data = tmp_data;
+      XdrvMailbox.data_len = tmp_data_len;
     }
   }
 }
