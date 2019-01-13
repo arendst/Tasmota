@@ -52,6 +52,7 @@ TasmotaSerial *NovaSdsSerial;
 
 uint8_t novasds_type = 1;
 uint8_t novasds_valid = 0;
+uint8_t novasds_working_period = WORKING_PERIOD;
 
 
 struct sds011data {
@@ -127,9 +128,9 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
 void NovaSdsSetWorkPeriod(void)
 {
   // set sensor working period
-  NovaSdsCommand(NOVA_SDS_WORKING_PERIOD, NOVA_SDS_SET_MODE, WORKING_PERIOD,        NOVA_SDS_DEVICE_ID, NULL);
+  NovaSdsCommand(NOVA_SDS_WORKING_PERIOD, NOVA_SDS_SET_MODE, novasds_working_period, NOVA_SDS_DEVICE_ID, NULL);
   // set sensor report only on query
-  NovaSdsCommand(NOVA_SDS_REPORTING_MODE, NOVA_SDS_SET_MODE, NOVA_SDS_REPORT_QUERY, NOVA_SDS_DEVICE_ID, NULL);
+  NovaSdsCommand(NOVA_SDS_REPORTING_MODE, NOVA_SDS_SET_MODE, NOVA_SDS_REPORT_QUERY,  NOVA_SDS_DEVICE_ID, NULL);
 }
 
 bool NovaSdsReadData(void)
@@ -211,6 +212,28 @@ void NovaSdsShow(boolean json)
   }
 }
 
+boolean NovaSdsExternalCommand() {
+  boolean serviced = false;
+  char sub_string[XdrvMailbox.data_len];
+
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "SETPERIOD")) {
+    uint8_t novasds_period = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+    if (novasds_period > 0 && novasds_period <= 30) {
+      Settings.novasds_period = novasds_period;
+      novasds_working_period = Settings.novasds_period;
+      NovaSdsSetWorkPeriod();
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_NVALUE, XSNS_20, Settings.novasds_period);
+      serviced = true;
+    }
+  }
+  if (!strcmp(XdrvMailbox.data, "GETPERIOD")) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_NVALUE, XSNS_20, novasds_working_period);
+    serviced = true;
+  }
+  return serviced;
+}
+
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -229,6 +252,11 @@ boolean Xsns20(byte function)
         break;
       case FUNC_JSON_APPEND:
         NovaSdsShow(1);
+        break;
+      case FUNC_COMMAND:
+        if (XSNS_20 == XdrvMailbox.index) {
+          result = NovaSdsExternalCommand();
+        }
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_APPEND:
