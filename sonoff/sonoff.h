@@ -83,6 +83,8 @@ typedef unsigned long power_t;              // Power (Relay) type
 
 #define WIFI_HOSTNAME          "%s-%04d"    // Expands to <MQTT_TOPIC>-<last 4 decimal chars of MAC address>
 
+#define DISCOVERY_ENABLED      0            // If set, MDNS will be enabled. Otherwise, it needs to be enable via SetOption55.
+
 #define CONFIG_FILE_SIGN       0xA5         // Configuration file signature
 #define CONFIG_FILE_XOR        0x5A         // Configuration file xor (0 = No Xor)
 

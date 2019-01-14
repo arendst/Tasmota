@@ -622,6 +622,9 @@ void SettingsDefaultSet2(void)
   Settings.weblog_level = WEB_LOG_LEVEL;
   strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
 
+  // MDNS host discovery
+  Settings.flag3.mdns_enabled = DISCOVERY_ENABLED;
+
   // Button
 //  Settings.flag.button_restrict = 0;
 //  Settings.flag.button_swap = 0;
@@ -1018,7 +1021,7 @@ void SettingsDelta(void)
       }
     }
     if (Settings.version < 0x06040105) {
-      Settings.flag3.mdns_enabled = 0;
+      Settings.flag3.mdns_enabled = DISCOVERY_ENABLED;
       Settings.param[P_MDNS_DELAYED_START] = 0;
     }
 
