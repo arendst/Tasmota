@@ -8,6 +8,9 @@
  * Change web authentication (#4865)
  * Add support for Digoo DG-SP202 Smart Socket with Energy monitoring (#4891)
  * Add support for Smanergy KA10 Smart Wall Socket with Energy monitoring
+ * Add support for Luminea ZX2820 Smart Socket with Energy monitoring (#4921)
+ * Add define MDNS_ENABLE to control initial mDNS state (#4923)
+ * Add split interlock part 1 (#4910)
  *
  * 6.4.1.7 20190106
  * Fix HLW8012, HJL01 and BL0937 based energy sensors low Power (below 10W) measurement regression from 6.4.1.6

@@ -546,6 +546,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   TECKIN_US,
   APLIC_WDP303075,
   GOSUND,
+  ZX2820,
   SK03_TUYA,
   DIGOO,
   KA10,
@@ -569,7 +570,6 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   PHILIPS,
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
-  ZX2820,
   WEMOS
 };
 
@@ -1740,7 +1740,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0
   },
   { "Luminea ZX2820",
-    GPIO_KEY1,        // GPIO00 Button
+     GPIO_KEY1,        // GPIO00 Button
      0, 0, 0,
      GPIO_HLW_CF,      // GPIO04 HLW8012 CF power
      GPIO_NRG_CF1,     // GPIO05 HLW8012 CF1 voltage / current
@@ -1754,7 +1754,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Green Led - Link and Power status
      GPIO_REL1,        // GPIO14 Relay
      0, 0, 0
-  }  
+  }
 };
 
 /*
