@@ -277,6 +277,7 @@ enum SupportedModules {
   YTF_IR_BRIDGE,
   DIGOO,
   KA10,
+  ZX2820,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -568,6 +569,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   PHILIPS,
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
+  ZX2820,
   WEMOS
 };
 
@@ -1736,7 +1738,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED2,        // GPIO13 Red LED - Power status
      GPIO_REL1,        // GPIO14 Relay 1
      0, 0, 0
-  }
+  },
+  { "Luminea ZX2820",
+    GPIO_KEY1,        // GPIO00 Button
+     0, 0, 0,
+     GPIO_HLW_CF,      // GPIO04 HLW8012 CF power
+     GPIO_NRG_CF1,     // GPIO05 HLW8012 CF1 voltage / current
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_NRG_SEL_INV, // GPIO12 HLW8012 SEL (0 = Voltage)
+     GPIO_LED1_INV,    // GPIO13 Green Led - Link and Power status
+     GPIO_REL1,        // GPIO14 Relay
+     0, 0, 0
+  }  
 };
 
 /*
