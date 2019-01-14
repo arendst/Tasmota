@@ -1738,7 +1738,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED2,        // GPIO13 Red LED - Power status
      GPIO_REL1,        // GPIO14 Relay 1
      0, 0, 0
-  }
+  },
   { "Luminea ZX2820",
     GPIO_KEY1,        // GPIO00 Button
      0, 0, 0,
