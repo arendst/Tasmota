@@ -621,6 +621,7 @@ void SettingsDefaultSet2(void)
   Settings.webserver = WEB_SERVER;
   Settings.weblog_level = WEB_LOG_LEVEL;
   strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
+  Settings.flag3.mdns_enabled = MDNS_ENABLED;
 
   // Button
 //  Settings.flag.button_restrict = 0;
@@ -1018,7 +1019,7 @@ void SettingsDelta(void)
       }
     }
     if (Settings.version < 0x06040105) {
-      Settings.flag3.mdns_enabled = 0;
+      Settings.flag3.mdns_enabled = MDNS_ENABLED;
       Settings.param[P_MDNS_DELAYED_START] = 0;
     }
 

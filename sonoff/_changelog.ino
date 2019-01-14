@@ -1,10 +1,20 @@
 /* 6.4.1.8 20190107
  * Change sonoff_template.h layout regarding optional module flags like ADC0
  * Add command SetOption62 1 to force no Button/Switch pullup on dedicated modules. Currently only supported on Shelly2 (#4841)
+ * Fix Display exception 28 when JSON value is NULL received
+ * Fix Home Assistant Sensor Discovery Software Watchdog restart (#4831)
+ * Add support for OBI Power Socket 2 (#4829)
+ * Add support for YTF IR Bridge (#4855)
+ * Change web authentication (#4865)
+ * Add support for Digoo DG-SP202 Smart Socket with Energy monitoring (#4891)
+ * Add support for Smanergy KA10 Smart Wall Socket with Energy monitoring
+ * Add support for Luminea ZX2820 Smart Socket with Energy monitoring (#4921)
+ * Add define MDNS_ENABLE to control initial mDNS state (#4923)
+ * Add split interlock part 1 (#4910)
  *
  * 6.4.1.7 20190106
  * Fix HLW8012, HJL01 and BL0937 based energy sensors low Power (below 10W) measurement regression from 6.4.1.6
- * Add relay status functionality to LED2 when configured leaving LED1 for (wifi/mqtt) status indication
+ * Add Power status functionality to LED2 when configured leaving LED1 for Link status indication
  * Add no pull-up control to Shelly 2 module (default is pull-up, change GPIO2 to Switch3n for no pull-up) (#4841)
  * Add 4 seconds startup delay to button control (#4829)
  * Change button driver making it modular

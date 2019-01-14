@@ -319,6 +319,23 @@ void SetDevicePower(power_t rpower, int source)
     power = (1 << devices_present) -1;
     rpower = power;
   }
+ if (Settings.flag3.split_interlock) {
+    Settings.flag.interlock = 1; // prevent the situation where interlock is off and split-interlock is on
+    uint8_t mask = 0x01;
+    uint8_t count = 0;
+    byte result1 = 0;
+    byte result2 = 0;
+    for (byte i = 0; i < devices_present; i++) {
+      if (rpower & mask) {
+        if (i <2) { result1++;}//increment if low part is ON
+        if (i >1) { result2++;}//increment if high part is ON
+      }
+       mask <<= 1; // shift the bitmask one left (1,2,4,8) to find out what is on
+    }
+    if ((result1) >1 && (result2 >1)) {power = 0; rpower = 0;} // all 4 switch are on, something is wrong, so we turn all off
+    if ((result1) >1 && (result2 <2)) {power = power & 0x0C; rpower = power;} // 1/2 are both on and 3/4 max one is on
+    if ((result1) <2 && (result2 >1)) {power = power & 0x03; rpower = power;} // 1/2 max one is on and 3/4 both are on
+  } else {
   if (Settings.flag.interlock) {     // Allow only one or no relay set
     power_t mask = 1;
     uint8_t count = 0;
@@ -330,6 +347,7 @@ void SetDevicePower(power_t rpower, int source)
       power = 0;
       rpower = 0;
     }
+  }
   }
 
   XdrvMailbox.index = rpower;
@@ -371,7 +389,7 @@ void SetLedPower(uint8_t state)
   digitalWrite(pin[GPIO_LED1 + led_pin], (bitRead(led_inverted, led_pin)) ? !state : state);
 }
 
-void SetLedWifi(uint8_t state)
+void SetLedLink(uint8_t state)
 {
   if (state) state = 1;
   digitalWrite(pin[GPIO_LED1], (bitRead(led_inverted, 0)) ? !state : state);
@@ -1283,7 +1301,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
         Settings.ledstate = payload;
         if (!Settings.ledstate) {
           SetLedPower(0);
-          SetLedWifi(0);
+          SetLedLink(0);
         }
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.ledstate);
@@ -1389,7 +1407,28 @@ void ExecuteCommandPower(byte device, byte state, int source)
       blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
       MqttPublishPowerBlinkState(device);
     }
-    if (Settings.flag.interlock && !interlock_mutex) {  // Clear all but masked relay
+  if (Settings.flag3.split_interlock && !Settings.flag.interlock ) Settings.flag.interlock=1; // ensure interlock is on, in case split_interlock is on
+  // check if channel 1/2 or 3/4 are to be changed
+  if (device <= 2 && Settings.flag3.split_interlock ) { // channel 1/2 are changed
+    if (Settings.flag3.split_interlock && !interlock_mutex) { // Clear all but masked relay, but only if we are not already doing something
+      interlock_mutex = 1;
+        for (byte i = 0; i < 2; i++) {
+          byte imask = 0x01 << i;
+          if ((power & imask) && (mask != imask)) { ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE); delay(50); }// example, first power is ON but the pushed button is not the first, then powerOFF the first one
+        }
+      interlock_mutex = 0; // avoid infinite loop due to recursive requests
+    }
+  } else {  // channel 3/4 are changed
+    if (Settings.flag3.split_interlock && !interlock_mutex) {  // only start if we are on interlock split and have no re-call
+    interlock_mutex = 1;
+      for (byte i = 2; i < devices_present; i++) {
+        byte imask = 0x01 << i;
+        if ((power & imask) && (mask != imask)) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
+      }
+      interlock_mutex = 0;
+    }
+  }
+    if ( Settings.flag.interlock && !interlock_mutex && !Settings.flag3.split_interlock) {  //execute regular interlock-mode as interlock-split is off    
       interlock_mutex = 1;
       for (byte i = 0; i < devices_present; i++) {
         power_t imask = 1 << i;
@@ -1827,7 +1866,7 @@ void Every250mSeconds(void)
     if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) {
 //    if ( (!Settings.flag.global_state && global_state.data) || ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) ) {
 //      SetLedPower(blinkstate);                            // Set led on or off
-      SetLedWifi(blinkstate);                            // Set led on or off
+      SetLedLink(blinkstate);                            // Set led on or off
     }
     if (!blinkstate) {
       blinks--;
@@ -2341,7 +2380,7 @@ void GpioInit(void)
   }
 
   SetLedPower(Settings.ledstate &8);
-  SetLedWifi(Settings.ledstate &8);
+  SetLedLink(Settings.ledstate &8);
 
   XdrvCall(FUNC_PRE_INIT);
 }

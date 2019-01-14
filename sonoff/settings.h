@@ -76,7 +76,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60 - Enable normal sleep instead of dynamic sleep
     uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61 - Force local operation when button/switch topic is set
     uint32_t no_pullup : 1;                // bit 12 (v6.4.1.7)  - SetOption62 - Force no pull-up (0 = (no)pull-up, 1 = no pull-up)
-    uint32_t spare13 : 1;
+    uint32_t split_interlock : 1;          // bit 13 (v6.4.1.8)  - SetOption63 - Split interlock on CH4
     uint32_t spare14 : 1;
     uint32_t spare15 : 1;
     uint32_t spare16 : 1;

@@ -54,7 +54,7 @@ void ButtonInit(void)
   for (byte i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
       buttons_found++;
-      pinMode(pin[GPIO_KEY1 +i], (16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : bitRead(key_no_pullup, i) ? INPUT : INPUT_PULLUP);
+      pinMode(pin[GPIO_KEY1 +i], bitRead(key_no_pullup, i) ? INPUT : ((16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
     }
   }
 }

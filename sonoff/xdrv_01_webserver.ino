@@ -755,11 +755,17 @@ void HandleAjaxStatusRefresh(void)
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), mqtt_data);
 }
 
-boolean HttpUser(void)
+boolean HttpCheckPriviledgedAccess(boolean autorequestauth = true)
 {
-  boolean status = (HTTP_USER == webserver_state);
-  if (status) { HandleRoot(); }
-  return status;
+  if (HTTP_USER == webserver_state) {
+    HandleRoot();
+    return false;
+  }
+  if (autorequestauth && !WebAuthenticate()) {
+    WebServer->requestAuthentication();
+    return false;
+  }
+  return true;
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -768,8 +774,8 @@ boolean HttpUser(void)
 
 void HandleConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURATION);
 
   String page = FPSTR(HTTP_HEAD);
@@ -791,8 +797,7 @@ void HandleConfiguration(void)
 
 void HandleModuleConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
 
   if (WebServer->hasArg("save")) {
     ModuleSaveSettings();
@@ -910,8 +915,7 @@ String htmlEscape(String s)
 
 void HandleWifiConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_WIFI);
 
@@ -1038,8 +1042,8 @@ void WifiSaveSettings(void)
 
 void HandleLoggingConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_LOGGING);
 
   if (WebServer->hasArg("save")) {
@@ -1121,8 +1125,8 @@ void LoggingSaveSettings(void)
 
 void HandleOtherConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_OTHER);
 
   if (WebServer->hasArg("save")) {
@@ -1193,8 +1197,8 @@ void OtherSaveSettings(void)
 
 void HandleBackupConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
 
   if (!SettingsBufferAlloc()) { return; }
@@ -1237,8 +1241,7 @@ void HandleBackupConfiguration(void)
 
 void HandleResetConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
 
   char svalue[33];
 
@@ -1258,8 +1261,8 @@ void HandleResetConfiguration(void)
 
 void HandleRestoreConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTORE_CONFIGURATION);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1279,8 +1282,8 @@ void HandleRestoreConfiguration(void)
 
 void HandleInformation(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_INFORMATION);
 
   char stopic[TOPSZ];
@@ -1402,8 +1405,8 @@ void HandleInformation(void)
 
 void HandleUpgradeFirmware(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_FIRMWARE_UPGRADE);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1422,8 +1425,8 @@ void HandleUpgradeFirmware(void)
 
 void HandleUpgradeFirmwareStart(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   char svalue[100];
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
@@ -1451,8 +1454,8 @@ void HandleUpgradeFirmwareStart(void)
 
 void HandleUploadDone(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 
   char error[100];
@@ -1709,8 +1712,8 @@ void HandlePreflightRequest(void)
 
 void HandleHttpCommand(void)
 {
-  if (HttpUser()) { return; }
-//  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess(false)) { return; }
+
   char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
@@ -1769,8 +1772,8 @@ void HandleHttpCommand(void)
 
 void HandleConsole(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONSOLE);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1785,8 +1788,8 @@ void HandleConsole(void)
 
 void HandleAjaxConsoleRefresh(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
   byte cflg = 1;
   byte counter = 0;                // Initial start, should never be 0 again
