@@ -2362,6 +2362,7 @@ void GpioInit(void)
 
   ButtonInit();
   SwitchInit();
+  RotaryInit();
 
 #ifdef USE_WS2812
   if (!light_type && (pin[GPIO_WS2812] < 99)) {  // RGB led
@@ -2548,6 +2549,7 @@ void loop(void)
 
   ButtonLoop();
   SwitchLoop();
+  RotaryLoop();
 
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
