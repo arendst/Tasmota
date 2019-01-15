@@ -29,6 +29,7 @@ uint8_t rotary_state = 0;
 uint8_t rotary_position = 128;
 uint8_t rotary_last_position = 128;
 uint8_t interrupts_in_use = 0;
+uint8_t rotary_changed = 0;
 
 /********************************************************************************************/
 
@@ -99,26 +100,42 @@ void RotaryHandler(void)
   } else {
     noInterrupts();
   }
-  interrupts();
-
   if (rotary_last_position != rotary_position) {
     if (MI_DESK_LAMP == Settings.module) { // Mi Desk lamp
-      int8_t d = Settings.light_dimmer;
-      d = d + (rotary_position - rotary_last_position);
-      if (d < 1) {
-        d = 1;
-      }
-      if (d > 100) {
-        d = 100;
-      }
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_CMND_DIMMER " %d"), rotary_position - rotary_last_position);
-      AddLog(LOG_LEVEL_DEBUG);
+      if (holdbutton[0]) {
+        rotary_changed = 1;
+        // button1 is pressed: set color temperature
+        int16_t t = LightGetColorTemp();
+        t = t + (rotary_position - rotary_last_position);
+        if (t < 153) {
+          t = 153;
+        }
+        if (t > 500) {
+          t = 500;
+        }
+        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_CMND_COLORTEMPERATURE " %d"), rotary_position - rotary_last_position);
+        AddLog(LOG_LEVEL_DEBUG);
+        LightSetColorTemp((uint16_t)t);
+      } else {
+        int8_t d = Settings.light_dimmer;
+        d = d + (rotary_position - rotary_last_position);
+        if (d < 1) {
+          d = 1;
+        }
+        if (d > 100) {
+          d = 100;
+        }
+        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_CMND_DIMMER " %d"), rotary_position - rotary_last_position);
+        AddLog(LOG_LEVEL_DEBUG);
 
-      LightSetDimmer(d);
-      Settings.light_dimmer = d;
+        LightSetDimmer((uint8_t)d);
+        Settings.light_dimmer = d;
+      }
     }
-    rotary_last_position = rotary_position;
+    rotary_last_position = 128; 
+    rotary_position = 128;
   }
+  interrupts();
 }
 
 void RotaryLoop(void)

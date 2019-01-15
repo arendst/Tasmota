@@ -203,19 +203,23 @@ void ButtonHandler(void)
                   multipress[button_index] = 1;
                 }
               }
+              if ((MI_DESK_LAMP == Settings.module) && (button_index == 0) && (rotary_changed) && (light_power)) {
+                rotary_changed = 0; // Color temp changed, no need to turn of the light
+              } else {
               if (single_press && SendKey(0, button_index + multipress[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                 // Success
               } else {
-                if (multipress[button_index] < 3) {            // Single or Double press
-                  if (WifiState() > WIFI_RESTART) {            // WPSconfig, Smartconfig or Wifimanager active
-                    restart_flag = 1;
-                  } else {
-                    ExecuteCommandPower(button_index + multipress[button_index], POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
-                  }
-                } else {                                       // 3 - 7 press
-                  if (!Settings.flag.button_restrict) {
-                    snprintf_P(scmnd, sizeof(scmnd), kCommands[multipress[button_index] -3]);
-                    ExecuteCommand(scmnd, SRC_BUTTON);
+                  if (multipress[button_index] < 3) {            // Single or Double press
+                    if (WifiState() > WIFI_RESTART) {            // WPSconfig, Smartconfig or Wifimanager active
+                      restart_flag = 1;
+                    } else {
+                      ExecuteCommandPower(button_index + multipress[button_index], POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
+                    }
+                  } else {                                       // 3 - 7 press
+                    if (!Settings.flag.button_restrict) {
+                      snprintf_P(scmnd, sizeof(scmnd), kCommands[multipress[button_index] -3]);
+                      ExecuteCommand(scmnd, SRC_BUTTON);
+                    }
                   }
                 }
               }
