@@ -146,8 +146,6 @@ enum UserSelectablePins {
   GPIO_MAX31855CS,     // MAX31855 Serial interface
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
-  GPIO_ROT_A,         // Rotary switch A Pin
-  GPIO_ROT_B,         // Rotary switch B Pin
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -165,6 +163,8 @@ enum ProgramSelectablePins {
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
   GPIO_ARIRFRCV,       // AliLux RF Receive input
+  GPIO_ROT_A,          // Rotary switch A Pin
+  GPIO_ROT_B,          // Rotary switch B Pin
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
@@ -506,8 +506,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
 #endif
-  GPIO_ROT_A,       // Rotary switch A pin
-  GPIO_ROT_B,       // Rotary switch B pin
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
