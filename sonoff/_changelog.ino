@@ -1,4 +1,8 @@
-/* 6.4.1.8 20190107
+/* 6.4.1.9 20190115
+ * Add support for Mi LED Desk Lamp with rotary switch (#4887)
+ * Fix mDNS addService (#4938)
+ *
+ * 6.4.1.8 20190107
  * Change sonoff_template.h layout regarding optional module flags like ADC0
  * Add command SetOption62 1 to force no Button/Switch pullup on dedicated modules. Currently only supported on Shelly2 (#4841)
  * Fix Display exception 28 when JSON value is NULL received
@@ -11,9 +15,7 @@
  * Add support for Luminea ZX2820 Smart Socket with Energy monitoring (#4921)
  * Add define MDNS_ENABLE to control initial mDNS state (#4923)
  * Add split interlock part 1 (#4910)
- * Add support for rotary switch
- * Add support for Mi Desk Lamp
- * 
+ *
  * 6.4.1.7 20190106
  * Fix HLW8012, HJL01 and BL0937 based energy sensors low Power (below 10W) measurement regression from 6.4.1.6
  * Add Power status functionality to LED2 when configured leaving LED1 for Link status indication

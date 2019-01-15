@@ -33,7 +33,8 @@ uint8_t rotary_changed = 0;
 
 /********************************************************************************************/
 
-void update_position(void) {
+void update_position(void)
+{
   uint8_t s;
 
   /*
@@ -58,7 +59,8 @@ void update_position(void) {
   rotary_state = (s >> 2);
 }
 
-void update_rotary(void) {
+void update_rotary(void)
+{
   if (MI_DESK_LAMP == Settings.module){
     if (light_power) {
       update_position();
@@ -132,7 +134,7 @@ void RotaryHandler(void)
         Settings.light_dimmer = d;
       }
     }
-    rotary_last_position = 128; 
+    rotary_last_position = 128;
     rotary_position = 128;
   }
   interrupts();

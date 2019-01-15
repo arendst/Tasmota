@@ -1759,8 +1759,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO14 Relay
      0, 0, 0
   },
-  { "Mi Desk Lamp",    // Mi LED Desk Lamp
-                       // https://www.mi.com/global/smartlamp/
+  { "Mi Desk Lamp",    // Mi LED Desk Lamp - https://www.mi.com/global/smartlamp/
      0, 0,
      GPIO_KEY1,        // GPIO02 Button
      0,
@@ -1769,11 +1768,11 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
                        // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
-     0,
-     0,
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     GPIO_ROT_A,      // GPIO12 Rotary switch A pin
-     GPIO_ROT_B,      // GPIO13 Rotary switch B pin
+     GPIO_ROT_A,       // GPIO12 Rotary switch A pin
+     GPIO_ROT_B,       // GPIO13 Rotary switch B pin
      0, 0, 0, 0
   }
 };

@@ -167,7 +167,6 @@ byte syslog_level;                          // Current copy of Settings.syslog_l
 //byte mdns_delayed_start = 0;                // mDNS delayed start
 boolean latest_uptime_flag = true;          // Signal latest uptime
 boolean pwm_present = false;                // Any PWM channel configured with SetOption15 0
-boolean mdns_begun = false;                 // mDNS active
 myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
 gpio_flag my_module_flag;                   // Active copy of Module GPIO flags
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
