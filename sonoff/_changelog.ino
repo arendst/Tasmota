@@ -1,6 +1,7 @@
 /* 6.4.1.9 20190115
  * Add support for Mi LED Desk Lamp with rotary switch (#4887)
  * Fix mDNS addService (#4938)
+ * Fix allowable MAX_RULE_VARS to 16 (#4933)
  *
  * 6.4.1.8 20190107
  * Change sonoff_template.h layout regarding optional module flags like ADC0
