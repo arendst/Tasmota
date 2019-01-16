@@ -406,7 +406,13 @@ void PN532_ScanForTag(void)
         uint8_t keyuniversal[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
         if (mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
           if (mifareclassic_ReadDataBlock(1, card_data)) {
-            memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
+            for (uint8_t i = 0;i < sizeof(card_data);i++) {
+              if ((isalpha(card_data[i])) || ((isdigit(card_data[i])))) {
+                card_datas[i] = char(card_data[i]);
+              } else {
+                card_datas[i] = '\0';
+              }
+            }
           }
           if (pn532_i2c_function == 1) { // erase block 1 of card
             for (uint8_t i = 0;i<16;i++) {
