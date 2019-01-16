@@ -295,7 +295,7 @@ struct SYSCFG {
   byte          ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
   uint16_t      button_debounce;           // 542
-  uint32_t      ip_address[4];             // 544
+  IPAddress     ip_address[4];             // 544 // Breaking hack for testing only
   unsigned long energy_kWhtotal;           // 554
   char          mqtt_fulltopic[100];       // 558
   SysBitfield2  flag2;                     // 5BC

@@ -470,7 +470,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
 //  uint8_t user_append_index = 0;
   uint16_t i = 0;
   uint16_t index;
-  uint32_t address;
+  IPAddress address;
 
   ShowFreeMem(PSTR("MqttDataHandler"));
 

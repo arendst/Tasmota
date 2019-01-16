@@ -33,6 +33,7 @@
 #define WIFI_RETRY_OFFSET_SEC  20   // seconds
 
 #include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
+#include <AddrList.h>               // IPv6 DualStack
 
 uint8_t wifi_counter;
 uint8_t wifi_retry_init;
@@ -228,6 +229,42 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   } else {
     WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active]);
   }
+
+#if LWIP_IPV6
+	  Serial.printf("IPV6 is enabled\n");
+#else
+		  Serial.printf("IPV6 is not enabled\n");
+#endif
+
+  for (bool configured = false; !configured;) {
+	  for (auto addr : addrList)
+		  if ((configured = !addr.isLocal()
+									       && addr.isV6() // uncomment when IPv6 is mandatory
+												                // && addr.ifnumber() == STATION_IF
+				))
+			{
+				break;
+			}
+			Serial.print('.');
+			delay(500);
+	}
+
+  for (auto a : addrList) {
+		Serial.printf("IF='%s' IPv6=%d local=%d hostname='%s' addr= %s",
+		               a.ifname().c_str(),
+		               a.isV6(),
+		               a.isLocal(),
+		               a.ifhostname(),
+		               a.toString().c_str());
+
+		if (a.isLegacy()) {
+		  Serial.printf(" / mask:%s / gw:%s",
+		                a.netmask().toString().c_str(),
+		                a.gw().toString().c_str());
+		}
+		Serial.println();
+  }
+
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
     Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
   AddLog(LOG_LEVEL_INFO);

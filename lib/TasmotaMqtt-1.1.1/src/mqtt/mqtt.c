@@ -85,9 +85,9 @@ mqtt_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
             *((uint8 *) &ipaddr->addr + 2),
             *((uint8 *) &ipaddr->addr + 3));
 
-  if (client->ip.addr == 0 && ipaddr->addr != 0)
+  if (client->ip.u_addr.ip4.addr == 0 && ipaddr->u_addr.ip4.addr != 0)
   {
-    os_memcpy(client->pCon->proto.tcp->remote_ip, &ipaddr->addr, 4);
+    os_memcpy(client->pCon->proto.tcp->remote_ip, &ipaddr->u_addr.ip4.addr, 4);
     if (client->security) {
 #ifdef MQTT_SSL_ENABLE
       espconn_secure_set_size(ESPCONN_CLIENT, MQTT_SSL_SIZE);

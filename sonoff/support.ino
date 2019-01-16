@@ -361,9 +361,9 @@ uint8_t Shortcut(const char* str)
   return result;
 }
 
-boolean ParseIp(uint32_t* addr, const char* str)
+boolean ParseIp(IPAddress* addr, const char* str)
 {
-  uint8_t *part = (uint8_t*)addr;
+/*  uint8_t *part = (uint8_t*)addr;
   byte i;
 
   *addr = 0;
@@ -375,7 +375,7 @@ boolean ParseIp(uint32_t* addr, const char* str)
     }
     str++;                                   // Point to next character after separator
   }
-  return (3 == i);
+  return (3 == i); */
 }
 
 void MakeValidMqtt(byte option, char* str)
