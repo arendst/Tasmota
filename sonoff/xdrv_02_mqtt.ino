@@ -513,13 +513,11 @@ void MqttReconnect(void)
   mqtt_retry_counter = Settings.mqtt_retry;
   global_state.mqtt_down = 1;
 
-#ifndef USE_MQTT_TLS
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
   if (!MqttDiscoverServer() && !strlen(Settings.mqtt_host)) { return; }
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
-#endif  // USE_MQTT_TLS
 
   char *mqtt_user = NULL;
   char *mqtt_pwd = NULL;
@@ -585,13 +583,11 @@ void MqttCheck(void)
     if (!MqttIsConnected()) {
       global_state.mqtt_down = 1;
       if (!mqtt_retry_counter) {
-#ifndef USE_MQTT_TLS
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
         if (!strlen(Settings.mqtt_host) && !mdns_begun) { return; }
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
-#endif  // USE_MQTT_TLS
         MqttReconnect();
       } else {
         mqtt_retry_counter--;
