@@ -516,7 +516,7 @@ void MqttReconnect(void)
 #ifndef USE_MQTT_TLS
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
-  if (!strlen(Settings.mqtt_host) && !MqttDiscoverServer()) { return; }
+  if (!MqttDiscoverServer() && !strlen(Settings.mqtt_host)) { return; }
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
 #endif  // USE_MQTT_TLS
