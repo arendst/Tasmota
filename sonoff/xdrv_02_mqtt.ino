@@ -220,9 +220,19 @@ boolean MqttDiscoverServer(void)
   AddLog(LOG_LEVEL_INFO);
 
   if (n > 0) {
-    // Note: current strategy is to get the first MQTT service (even when many are found)
+    #ifdef MDNS_HOSTNAME
+    for (int i = 0; i < n; i++) {
+      if (!strcmp(MDNS.hostname(i).c_str(), MDNS_HOSTNAME)) {
+         snprintf_P(Settings.mqtt_host, sizeof(Settings.mqtt_host), MDNS.IP(i).toString().c_str());
+         Settings.mqtt_port = MDNS.port(i);
+         break;  // stop at the first matching record
+      }
+    }
+    #else
+    // If the hostname isn't set, use the first record found.
     snprintf_P(Settings.mqtt_host, sizeof(Settings.mqtt_host), MDNS.IP(0).toString().c_str());
     Settings.mqtt_port = MDNS.port(0);
+    #endif  // MDNS_HOSTNAME
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"),
       MDNS.hostname(0).c_str(), Settings.mqtt_host, Settings.mqtt_port);
