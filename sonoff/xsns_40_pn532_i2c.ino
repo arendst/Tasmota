@@ -67,6 +67,7 @@ uint8_t pn532_i2c_disable = 0;
 #ifdef USE_PN532_DATA_FUNCTION
 uint8_t pn532_i2c_function = 0;
 uint8_t pn532_i2c_newdata[16];
+uint8_t pn532_i2c_newdata_len = 0;
 #endif // USE_PN532_DATA_FUNCTION
 
 const uint8_t PROGMEM pn532_global_timeout = 10;
@@ -426,12 +427,23 @@ void PN532_ScanForTag(void)
             }
           }
           if (pn532_i2c_function == 2) {
-            memcpy(&card_data,&pn532_i2c_newdata,sizeof(card_data));
-            if (mifareclassic_WriteDataBlock(1, card_data)) {
-              set_success = true;
-              snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data write successful");
+            boolean IsAlphaNumeric = true;
+            for (uint8_t i = 0;i < pn532_i2c_newdata_len;i++) {
+              if ((!isalpha(pn532_i2c_newdata[i])) || (!isdigit(pn532_i2c_newdata[i]))) {
+                IsAlphaNumeric = false;
+              }
+            }
+            if (IsAlphaNumeric) {
+              if (mifareclassic_WriteDataBlock(1, card_data)) {
+                memcpy(&card_data,&pn532_i2c_newdata,sizeof(card_data));
+                set_success = true;
+                snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data write successful");
+                AddLog(LOG_LEVEL_INFO);
+                memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
+              }
+            } else {
+              snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data must be alphanumeric");
               AddLog(LOG_LEVEL_INFO);
-              memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
             }
           }
         } else {
@@ -518,10 +530,10 @@ boolean PN532_Command(void)
         return serviced;
       }
       sprintf(sub_string_tmp,subStr(sub_string, XdrvMailbox.data, ",", 2));
-      uint8_t dlen = strlen(sub_string_tmp);
-      if (dlen > 15) { dlen = 15; }
-      memcpy(&pn532_i2c_newdata,&sub_string_tmp,dlen);
-      pn532_i2c_newdata[dlen] = 0x00; // Null terminate the string
+      pn532_i2c_newdata_len = strlen(sub_string_tmp);
+      if (pn532_i2c_newdata_len > 15) { pn532_i2c_newdata_len = 15; }
+      memcpy(&pn532_i2c_newdata,&sub_string_tmp,pn532_i2c_newdata_len);
+      pn532_i2c_newdata[pn532_i2c_newdata_len] = 0x00; // Null terminate the string
       pn532_i2c_function = 2;
       snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Next scanned tag data block 1 will be set to '%s'",pn532_i2c_newdata);
       AddLog(LOG_LEVEL_INFO);
