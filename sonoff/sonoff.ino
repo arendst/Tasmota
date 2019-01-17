@@ -2410,6 +2410,7 @@ void setup(void)
 
   char code_image[20];
   snprintf_P(my_image, sizeof(my_image), PSTR("(%s)"), GetTextIndexed(code_image, sizeof(code_image), CODE_IMAGE, kCodeImage));
+  //snprintf_P(my_image, sizeof(my_image), PSTR("(%s)"), "");
 
   SettingsLoad();
   SettingsDelta();
