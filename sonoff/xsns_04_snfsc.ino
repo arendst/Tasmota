@@ -1,7 +1,7 @@
 /*
   xsns_04_snfsc.ino - sonoff SC support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -113,12 +113,12 @@ const char HTTP_SNS_SCPLUS[] PROGMEM =
 void SonoffScShow(boolean json)
 {
   if (sc_value[0] > 0) {
-    char temperature[10];
-    char humidity[10];
-
     float t = ConvertTemp(sc_value[1]);
     float h = sc_value[0];
+
+    char temperature[33];
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+    char humidity[33];
     dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {

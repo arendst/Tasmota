@@ -1,7 +1,7 @@
 /*
   xnrg_02_cse7766.ino - CSE7766 energy sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ uint8_t cse_receive_flag = 0;
 long voltage_cycle = 0;
 long current_cycle = 0;
 long power_cycle = 0;
-unsigned long power_cycle_first = 0;
+long power_cycle_first = 0;
 long cf_pulses = 0;
 long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 uint8_t cse_power_invalid = CSE_MAX_INVALID_POWER;

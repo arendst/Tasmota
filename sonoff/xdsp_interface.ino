@@ -1,7 +1,7 @@
 /*
   xdsp_interface.ino - Display interface support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#ifdef USE_DISPLAY
 
 #ifdef XFUNC_PTR_IN_ROM
 boolean (* const xdsp_func_ptr[])(byte) PROGMEM = {   // Display Function Pointers
@@ -123,8 +125,13 @@ boolean XdspCall(byte Function)
 
   for (byte x = 0; x < xdsp_present; x++) {
     result = xdsp_func_ptr[x](Function);
-    if (result) break;
+
+    if (result && (FUNC_DISPLAY_MODEL == Function)) {
+      break;
+    }
   }
 
   return result;
 }
+
+#endif  // USE_DISPLAY

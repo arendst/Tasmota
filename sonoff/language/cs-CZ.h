@@ -1,7 +1,7 @@
 /*
   cs-CZ.h - localization for Czech with diacritics - Czech for Sonoff-Tasmota
 
-  Copyright (C) 2018  Vladimír Synek
+  Copyright (C) 2019  Vladimír Synek
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -253,6 +253,7 @@
 
 #define D_MODULE_PARAMETERS "Nastavení modulu"
 #define D_MODULE_TYPE "Typ modulu"
+#define D_PULLUP_ENABLE "No Button/Switch pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
@@ -540,6 +541,9 @@
 #define D_SENSOR_RF_SENSOR "RF Sensor"
 #define D_SENSOR_AZ_RX   "AZ Rx"
 #define D_SENSOR_AZ_TX   "AZ Tx"
+#define D_SENSOR_MAX31855_CS  "MAX31855 CS"
+#define D_SENSOR_MAX31855_CLK "MAX31855 CLK"
+#define D_SENSOR_MAX31855_DO  "MAX31855 DO"
 
 // Units
 #define D_UNIT_AMPERE "A"

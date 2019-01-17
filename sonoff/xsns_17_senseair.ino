@@ -1,7 +1,7 @@
 /*
   xsns_17_senseair.ino - SenseAir CO2 sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -147,9 +147,9 @@ void SenseairInit(void)
 
 void SenseairShow(boolean json)
 {
-  char temperature[10];
-  char humidity[10];
+  char temperature[33];
   dtostrfd(senseair_temperature, Settings.flag2.temperature_resolution, temperature);
+  char humidity[33];
   dtostrfd(senseair_humidity, Settings.flag2.temperature_resolution, humidity);
   GetTextIndexed(senseair_types, sizeof(senseair_types), senseair_type -1, kSenseairTypes);
 

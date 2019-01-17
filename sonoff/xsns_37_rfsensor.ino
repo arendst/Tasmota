@@ -1,7 +1,7 @@
 /*
   xsns_37_rfsensor.ino - RF sensor receiver for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -264,7 +264,7 @@ void RfSnsTheoV2Show(bool json)
     if (rfsns_theo_v2_t1[i].time) {
       char sensor[10];
       snprintf_P(sensor, sizeof(sensor), PSTR("TV2T1C%d"), i +1);
-      char voltage[10];
+      char voltage[33];
       dtostrfd((float)rfsns_theo_v2_t1[i].volt / 10, 1, voltage);
 
       if (rfsns_theo_v2_t1[i].time < LocalTime() - RFSNS_VALID_WINDOW) {
@@ -273,7 +273,7 @@ void RfSnsTheoV2Show(bool json)
             mqtt_data, sensor, GetDT(rfsns_theo_v2_t1[i].time).c_str(), voltage);
         }
       } else {
-        char temperature[10];
+        char temperature[33];
         dtostrfd(ConvertTemp((float)rfsns_theo_v2_t1[i].temp / 100), Settings.flag2.temperature_resolution, temperature);
 
         if (json) {
@@ -301,7 +301,7 @@ void RfSnsTheoV2Show(bool json)
     if (rfsns_theo_v2_t2[i].time) {
       char sensor[10];
       snprintf_P(sensor, sizeof(sensor), PSTR("TV2T2C%d"), i +1);
-      char voltage[10];
+      char voltage[33];
       dtostrfd((float)rfsns_theo_v2_t2[i].volt / 10, 1, voltage);
 
       if (rfsns_theo_v2_t2[i].time < LocalTime() - RFSNS_VALID_WINDOW) {
@@ -311,10 +311,10 @@ void RfSnsTheoV2Show(bool json)
         }
       } else {
         float temp = ConvertTemp((float)rfsns_theo_v2_t2[i].temp / 100);
-        char temperature[10];
-        dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
         float humi = (float)rfsns_theo_v2_t2[i].hum / 100;
-        char humidity[10];
+        char temperature[33];
+        dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
+        char humidity[33];
         dtostrfd(humi, Settings.flag2.humidity_resolution, humidity);
 
         if (json) {
@@ -559,16 +559,16 @@ void RfSnsAlectoV2Show(bool json)
       }
     } else {
       float temp = ConvertTemp(rfsns_alecto_v2->temp);
-      char temperature[10];
+      char temperature[33];
       dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
       float humi = (float)rfsns_alecto_v2->humi;
-      char humidity[10];
+      char humidity[33];
       dtostrfd(humi, Settings.flag2.humidity_resolution, humidity);
-      char rain[10];
+      char rain[33];
       dtostrfd(rfsns_alecto_v2->rain, 2, rain);
-      char wind[10];
+      char wind[33];
       dtostrfd(rfsns_alecto_v2->wind, 2, wind);
-      char gust[10];
+      char gust[33];
       dtostrfd(rfsns_alecto_v2->gust, 2, gust);
       char wdir[4];
       char direction[20];
@@ -607,6 +607,7 @@ void RfSnsInit(void)
 {
   rfsns_raw_signal = (raw_signal_t*)(malloc(sizeof(raw_signal_t)));
   if (rfsns_raw_signal) {
+    memset(rfsns_raw_signal, 0, sizeof(raw_signal_t));  // Init defaults to 0
 #ifdef USE_THEO_V2
     RfSnsInitTheoV2();
 #endif

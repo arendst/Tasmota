@@ -1,7 +1,7 @@
 /*
   xdrv_01_webserver.ino - webserver for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,6 +26,10 @@
 \*********************************************************************************************/
 
 #define XDRV_01                               1
+
+#ifndef WIFI_SOFT_AP_CHANNEL
+#define WIFI_SOFT_AP_CHANNEL                  1   // Soft Access Point Channel number between 1 and 11 as used by SmartConfig web GUI
+#endif
 
 #define HTTP_REFRESH_TIME                  2345   // milliseconds
 #define HTTP_RESTART_RECONNECT_TIME        9000   // milliseconds
@@ -167,7 +171,7 @@ const char HTTP_SCRIPT_MODULE2[] PROGMEM =
     "x.send();"
   "}";
 const char HTTP_SCRIPT_MODULE3[] PROGMEM =
-  "}1'%d'>%s (%02d)}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
+  "}1'%d'>%s (%d)}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
 
 const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
   "function i(){"
@@ -254,6 +258,10 @@ const char HTTP_BTN_CONF[] PROGMEM =
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend><form method='get' action='md'>"
   "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
+
+const char HTTP_FORM_MODULE_PULLUP[] PROGMEM =
+  "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_PULLUP_ENABLE "</b><br/>";
+
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;({w})&nbsp<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
@@ -445,7 +453,11 @@ void WifiManagerBegin(void)
   StopWebserver();
 
   DnsServer = new DNSServer();
-  WiFi.softAP(my_hostname);
+
+  int channel = WIFI_SOFT_AP_CHANNEL;
+  if ((channel < 1) || (channel > 13)) { channel = 1; }
+  WiFi.softAP(my_hostname, NULL, channel);
+
   delay(500); // Without delay I've seen the IP address blank
   /* Setup the DNS server redirecting all the domains to the apIP */
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);
@@ -488,7 +500,7 @@ void ShowPage(String &page, bool auth)
   }
 
   page.replace(F("{a}"), String(Settings.web_refresh));
-  page.replace(F("{ha"), my_module.name);
+  page.replace(F("{ha"), ModuleName());
   page.replace(F("{h}"), Settings.friendlyname[0]);
 
   String info = "";
@@ -748,11 +760,17 @@ void HandleAjaxStatusRefresh(void)
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), mqtt_data);
 }
 
-boolean HttpUser(void)
+boolean HttpCheckPriviledgedAccess(boolean autorequestauth = true)
 {
-  boolean status = (HTTP_USER == webserver_state);
-  if (status) { HandleRoot(); }
-  return status;
+  if (HTTP_USER == webserver_state) {
+    HandleRoot();
+    return false;
+  }
+  if (autorequestauth && !WebAuthenticate()) {
+    WebServer->requestAuthentication();
+    return false;
+  }
+  return true;
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -761,8 +779,8 @@ boolean HttpUser(void)
 
 void HandleConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURATION);
 
   String page = FPSTR(HTTP_HEAD);
@@ -784,8 +802,7 @@ void HandleConfiguration(void)
 
 void HandleModuleConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
 
   if (WebServer->hasArg("save")) {
     ModuleSaveSettings();
@@ -795,21 +812,20 @@ void HandleModuleConfiguration(void)
 
   char stemp[20];
   uint8_t midx;
-  mytmplt cmodule;
-  memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
+  myio cmodule;
+  ModuleGpios(&cmodule);
 
   if (WebServer->hasArg("m")) {
     String page = "";
     for (byte i = 0; i < MAXMODULE; i++) {
       midx = pgm_read_byte(kModuleNiceList + i);
-      snprintf_P(stemp, sizeof(stemp), kModules[midx].name);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, stemp, midx +1);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, AnyModuleName(midx).c_str(), midx +1);
       page += mqtt_data;
     }
     page += "}3";  // String separator means do not use "}3" in Module name and Sensor name
     for (byte j = 0; j < sizeof(kGpioNiceList); j++) {
       midx = pgm_read_byte(kGpioNiceList + j);
-      if (!GetUsedInModule(midx, cmodule.gp.io)) {
+      if (!GetUsedInModule(midx, cmodule.io)) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
         page += mqtt_data;
       }
@@ -824,9 +840,9 @@ void HandleModuleConfiguration(void)
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
   page += FPSTR(HTTP_SCRIPT_MODULE1);
   page.replace(F("}4"), String(Settings.module));
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.gp.io[i], i);  // g0 - g16
+  for (byte i = 0; i < sizeof(cmodule); i++) {
+    if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g16
       page += mqtt_data;
     }
   }
@@ -834,11 +850,16 @@ void HandleModuleConfiguration(void)
   page += FPSTR(HTTP_HEAD_STYLE);
   page.replace(F("<body>"), F("<body onload='sl()'>"));
   page += FPSTR(HTTP_FORM_MODULE);
-  snprintf_P(stemp, sizeof(stemp), kModules[MODULE].name);
-  page.replace(F("{mt"), stemp);
-  page += F("<br/><table style='width: 100%;'>");
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-    if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
+  page.replace(F("{mt"), AnyModuleName(MODULE));
+
+  if (my_module_flag.pullup) {
+    page += FPSTR(HTTP_FORM_MODULE_PULLUP);
+    page.replace(F("{r1"), (Settings.flag3.no_pullup) ? F(" checked") : F(""));
+  }
+
+  page += F("<br/><table style='width:100%%;'>");
+  for (byte i = 0; i < sizeof(cmodule); i++) {
+    if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:160px'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(9==i)? "<font color='red'>ESP8285</font>" :(10==i)? "<font color='red'>ESP8285</font>" :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
@@ -860,14 +881,19 @@ void ModuleSaveSettings(void)
   byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
   Settings.last_module = Settings.module;
   Settings.module = new_module;
-  mytmplt cmodule;
-  memcpy_P(&cmodule, &kModules[Settings.module], sizeof(cmodule));
+  if (Settings.last_module == new_module) {
+    if (my_module_flag.pullup) {
+      Settings.flag3.no_pullup = WebServer->hasArg("b1");
+    }
+  }
+  myio cmodule;
+  ModuleGpios(&cmodule);
   String gpios = "";
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+  for (byte i = 0; i < sizeof(cmodule); i++) {
     if (Settings.last_module != new_module) {
       Settings.my_gp.io[i] = 0;
     } else {
-      if (GPIO_USER == ValidGPIO(i, cmodule.gp.io[i])) {
+      if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
         snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
         WebGetArg(stemp, tmp, sizeof(tmp));
         Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
@@ -875,8 +901,7 @@ void ModuleSaveSettings(void)
       }
     }
   }
-  snprintf_P(stemp, sizeof(stemp), kModules[Settings.module].name);
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MODULE "%s " D_CMND_MODULE "%s"), stemp, gpios.c_str());
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MODULE "%s " D_CMND_MODULE "%s"), ModuleName().c_str(), gpios.c_str());
   AddLog(LOG_LEVEL_INFO);
 }
 
@@ -895,8 +920,7 @@ String htmlEscape(String s)
 
 void HandleWifiConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_WIFI);
 
@@ -1023,8 +1047,8 @@ void WifiSaveSettings(void)
 
 void HandleLoggingConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_LOGGING);
 
   if (WebServer->hasArg("save")) {
@@ -1106,8 +1130,8 @@ void LoggingSaveSettings(void)
 
 void HandleOtherConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_OTHER);
 
   if (WebServer->hasArg("save")) {
@@ -1123,6 +1147,7 @@ void HandleOtherConfiguration(void)
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_OTHER);
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
+
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
   if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
   for (byte i = 0; i < maxfn; i++) {
@@ -1177,8 +1202,8 @@ void OtherSaveSettings(void)
 
 void HandleBackupConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_BACKUP_CONFIGURATION));
 
   if (!SettingsBufferAlloc()) { return; }
@@ -1221,8 +1246,7 @@ void HandleBackupConfiguration(void)
 
 void HandleResetConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
 
   char svalue[33];
 
@@ -1242,8 +1266,8 @@ void HandleResetConfiguration(void)
 
 void HandleRestoreConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTORE_CONFIGURATION);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1263,8 +1287,8 @@ void HandleRestoreConfiguration(void)
 
 void HandleInformation(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_INFORMATION);
 
   char stopic[TOPSZ];
@@ -1320,13 +1344,12 @@ void HandleInformation(void)
   if (Settings.flag.mqtt_enabled) {
     func += F("}1" D_MQTT_HOST "}2"); func += Settings.mqtt_host;
     func += F("}1" D_MQTT_PORT "}2"); func += String(Settings.mqtt_port);
-    func += F("}1" D_MQTT_CLIENT " &<br/>&nbsp;" D_FALLBACK_TOPIC "}2"); func += mqtt_client;
     func += F("}1" D_MQTT_USER "}2"); func += Settings.mqtt_user;
+    func += F("}1" D_MQTT_CLIENT "}2"); func += mqtt_client;
     func += F("}1" D_MQTT_TOPIC "}2"); func += Settings.mqtt_topic;
     func += F("}1" D_MQTT_GROUP_TOPIC "}2"); func += Settings.mqtt_grptopic;
-    GetTopic_P(stopic, CMND, mqtt_topic, "");
-    func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += stopic;
-
+    func += F("}1" D_MQTT_FULL_TOPIC "}2"); func += GetTopic_P(stopic, CMND, mqtt_topic, "");
+    func += F("}1" D_MQTT " " D_FALLBACK_TOPIC "}2"); func += GetFallbackTopic_P(stopic, CMND, "");
   } else {
     func += F("}1" D_MQTT "}2" D_DISABLED);
   }
@@ -1346,16 +1369,19 @@ void HandleInformation(void)
 #else
   func += F(D_DISABLED);
 #endif // USE_EMULATION
-
   func += F("}1" D_MDNS_DISCOVERY "}2");
 #ifdef USE_DISCOVERY
-  func += F(D_ENABLED);
-  func += F("}1" D_MDNS_ADVERTISE "}2");
+  if (Settings.flag3.mdns_enabled) {
+    func += F(D_ENABLED);
+    func += F("}1" D_MDNS_ADVERTISE "}2");
 #ifdef WEBSERVER_ADVERTISE
-  func += F(D_WEB_SERVER);
+    func += F(D_WEB_SERVER);
 #else
-  func += F(D_DISABLED);
+    func += F(D_DISABLED);
 #endif // WEBSERVER_ADVERTISE
+  } else {
+    func += F(D_DISABLED);
+  }
 #else
   func += F(D_DISABLED);
 #endif // USE_DISCOVERY
@@ -1384,8 +1410,8 @@ void HandleInformation(void)
 
 void HandleUpgradeFirmware(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_FIRMWARE_UPGRADE);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1404,8 +1430,8 @@ void HandleUpgradeFirmware(void)
 
 void HandleUpgradeFirmwareStart(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   char svalue[100];
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
@@ -1433,8 +1459,8 @@ void HandleUpgradeFirmwareStart(void)
 
 void HandleUploadDone(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPLOAD_DONE));
 
   char error[100];
@@ -1589,7 +1615,7 @@ void HandleUploadLoop(void)
         upload_error = abs(result);
         return;
       } else if (result > 0) {
-        if (result > upload.currentSize) {
+        if ((size_t)result > upload.currentSize) {
           // Offset is larger than the buffer supplied, this should not happen
           upload_error = 9;  // File too large - Failed to decode RF firmware
           return;
@@ -1691,8 +1717,8 @@ void HandlePreflightRequest(void)
 
 void HandleHttpCommand(void)
 {
-  if (HttpUser()) { return; }
-//  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess(false)) { return; }
+
   char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
@@ -1751,8 +1777,8 @@ void HandleHttpCommand(void)
 
 void HandleConsole(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONSOLE);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1767,8 +1793,8 @@ void HandleConsole(void)
 
 void HandleAjaxConsoleRefresh(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
   byte cflg = 1;
   byte counter = 0;                // Initial start, should never be 0 again

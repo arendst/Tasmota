@@ -1,7 +1,7 @@
 /*
   xsns_11_veml6070.ino - VEML6070 ultra violet light sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -273,12 +273,12 @@ double Veml6070UvPower(double uvrisk)
 void Veml6070Show(boolean json)
 {
   if (veml6070_type) {
-    char str_uvlevel[6];      // e.g. 99999 inc  = UVLevel
-    char str_uvrisk[6];       // e.g. 25.99 text = UvIndex
-    char str_uvpower[6];      // e.g. 0.399 W/m² = UvPower
     // convert double values to string
+    char str_uvlevel[33];      // e.g. 99999 inc  = UVLevel
     dtostrfd((double)uvlevel, 0, str_uvlevel);
+    char str_uvrisk[33];       // e.g. 25.99 text = UvIndex
     dtostrfd(uvrisk, 2, str_uvrisk);
+    char str_uvpower[33];      // e.g. 0.399 W/m² = UvPower
     dtostrfd(uvpower, 3, str_uvpower);
     if (json) {
 #ifdef USE_VEML6070_SHOW_RAW

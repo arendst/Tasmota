@@ -1,7 +1,7 @@
 /*
   xsns_06_dht.ino - DHTxx, AM23xx and SI7021 temperature and humidity sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -207,11 +207,10 @@ void DhtEverySecond(void)
 
 void DhtShow(boolean json)
 {
-  char temperature[10];
-  char humidity[10];
-
   for (byte i = 0; i < dht_sensors; i++) {
+    char temperature[33];
     dtostrfd(Dht[i].t, Settings.flag2.temperature_resolution, temperature);
+    char humidity[33];
     dtostrfd(Dht[i].h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {

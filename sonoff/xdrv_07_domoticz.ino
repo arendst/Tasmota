@@ -1,7 +1,7 @@
 /*
   xdrv_07_domoticz.ino - domoticz support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ void MqttPublishDomoticzFanState()
     int fan_speed = GetFanspeed();
     snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fan_speed * 10);
     snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-      Settings.domoticz_relay_idx[1], (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
+      (int)Settings.domoticz_relay_idx[1], (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
     MqttPublish(domoticz_in_topic);
 
     fan_debounce = millis();
@@ -107,7 +107,7 @@ void MqttPublishDomoticzPowerState(byte device)
 
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), Settings.light_dimmer);
         snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-          Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
+          (int)Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
         MqttPublish(domoticz_in_topic);
       }
     }
@@ -448,8 +448,8 @@ const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
 
 void HandleDomoticzConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_DOMOTICZ);
 
   if (WebServer->hasArg("save")) {

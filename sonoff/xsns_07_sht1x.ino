@@ -1,7 +1,7 @@
 /*
   xsns_07_sht1x.ino - SHT1x temperature and sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -188,10 +188,9 @@ void ShtEverySecond(void)
 void ShtShow(boolean json)
 {
   if (sht_valid) {
-    char temperature[10];
-    char humidity[10];
-
+    char temperature[33];
     dtostrfd(sht_temperature, Settings.flag2.temperature_resolution, temperature);
+    char humidity[33];
     dtostrfd(sht_humidity, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {

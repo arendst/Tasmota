@@ -1,7 +1,7 @@
 /*
   xsns_interface.ino - Sensor interface support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends inspired by ESPEasy
+  Copyright (C) 2019  Theo Arends inspired by ESPEasy
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -311,7 +311,9 @@ boolean XsnsCall(byte Function)
       }
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
 
-      if (result) break;
+      if (result && (FUNC_COMMAND == Function)) {
+        break;
+      }
 #ifdef USE_DEBUG_DRIVER
     }
 #endif

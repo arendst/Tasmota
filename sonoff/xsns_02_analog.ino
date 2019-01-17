@@ -1,7 +1,7 @@
 /*
   xsns_02_analog.ino - ESP8266 ADC support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ boolean Xsns02(byte function)
 {
   boolean result = false;
 
-  if (pin[GPIO_ADC0] < 99) {
+  if (my_module_flag.adc0) {
     switch (function) {
 #ifdef USE_RULES
       case FUNC_EVERY_250_MSECOND:

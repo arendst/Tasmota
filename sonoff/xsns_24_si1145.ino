@@ -1,7 +1,7 @@
 /*
   xsns_24_si1145.ino - SI1145/46/47 UV Index / IR / Visible light sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
