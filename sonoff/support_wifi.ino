@@ -350,6 +350,14 @@ void WifiCheckIp(void)
       Settings.ip_address[3] = (uint32_t)WiFi.dnsIP();
     }
     wifi_status = WL_CONNECTED;
+#ifdef USE_DISCOVERY
+#ifdef WEBSERVER_ADVERTISE
+    if (2 == mdns_begun) {
+      MDNS.update();
+      AddLog_P(LOG_LEVEL_DEBUG_MORE, D_LOG_MDNS, "MDNS.update");
+    }
+#endif  // USE_DISCOVERY
+#endif  // WEBSERVER_ADVERTISE
   } else {
     WifiSetState(0);
     uint8_t wifi_config_tool = Settings.sta_config;
