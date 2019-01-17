@@ -210,9 +210,11 @@ char* Unescape(char* buffer, uint16_t* size)
 {
   uint8_t* read = (uint8_t*)buffer;
   uint8_t* write = (uint8_t*)buffer;
-  uint16_t start_size = *size;
-  uint16_t end_size = *size;
+  int16_t start_size = *size;
+  int16_t end_size = *size;
   uint8_t che = 0;
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
 
   while (start_size > 0) {
     uint8_t ch = *read++;
@@ -235,6 +237,14 @@ char* Unescape(char* buffer, uint16_t* size)
           case 's': che = ' ';  break;   // 20 Space
           case 't': che = '\t'; break;   // 09 Horizontal tab
           case 'v': che = '\v'; break;   // 0B Vertical tab
+          case 'x': {
+            uint8_t* start = read;
+            che = (uint8_t)strtol((const char*)read, (char**)&read, 16);
+            start_size -= (uint16_t)(read - start);
+            end_size -= (uint16_t)(read - start);
+            break;
+          }
+          case '"': che = '\"'; break;   // 22 Quotation mark
 //          case '?': che = '\?'; break;   // 3F Question mark
           default : {
             che = chi;
@@ -247,6 +257,9 @@ char* Unescape(char* buffer, uint16_t* size)
     }
   }
   *size = end_size;
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
+
   return buffer;
 }
 
@@ -511,7 +524,7 @@ void ModuleGpios(myio *gp)
   memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
   // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
 
-//  AddLogSerial(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
 
   for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
     if (i < 6) {
@@ -526,7 +539,7 @@ void ModuleGpios(myio *gp)
   }
   // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
 
-//  AddLogSerial(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
 }
 
 gpio_flag ModuleFlag()
@@ -1197,9 +1210,9 @@ void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
-void AddLogSerial(byte loglevel, uint8_t *buffer, int count)
+void AddLogBuffer(byte loglevel, uint8_t *buffer, int count)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_RECEIVED));
+  snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
   for (int i = 0; i < count; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer++));
   }
@@ -1208,7 +1221,7 @@ void AddLogSerial(byte loglevel, uint8_t *buffer, int count)
 
 void AddLogSerial(byte loglevel)
 {
-  AddLogSerial(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
+  AddLogBuffer(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
 }
 
 void AddLogMissed(char *sensor, uint8_t misses)

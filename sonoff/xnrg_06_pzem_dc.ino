@@ -46,7 +46,7 @@ void PzemDcEverySecond(void)
     uint8_t buffer[22];
 
     uint8_t error = PzemDcModbus->ReceiveBuffer(buffer, 8);
-    AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
 
     if (error) {
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "PzemDc response error %d"), error);

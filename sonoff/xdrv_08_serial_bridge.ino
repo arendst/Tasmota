@@ -99,17 +99,33 @@ boolean SerialBridgeCommand(void)
   if (-1 == command_code) {
     serviced = false;  // Unknown command
   }
-  else if ((CMND_SSERIALSEND == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
-    if (XdrvMailbox.data_len > 0) {
+  else if ((CMND_SSERIALSEND == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
+    if (XdrvMailbox.data_len > 0) {       // "Hello Tiger\n"
       if (1 == XdrvMailbox.index) {
         SerialBridgeSerial->write(XdrvMailbox.data, XdrvMailbox.data_len);
         SerialBridgeSerial->write("\n");
       }
-      else if (2 == XdrvMailbox.index) {
+      else if ((2 == XdrvMailbox.index) || (4 == XdrvMailbox.index)) {  // "Hello Tiger" or "A0"
         SerialBridgeSerial->write(XdrvMailbox.data, XdrvMailbox.data_len);
       }
-      else if (3 == XdrvMailbox.index) {
+      else if (3 == XdrvMailbox.index) {  // "Hello\f"
         SerialBridgeSerial->write(Unescape(XdrvMailbox.data, &XdrvMailbox.data_len), XdrvMailbox.data_len);
+      }
+      else if (5 == XdrvMailbox.index) {  // "AA004566" as hex values
+        char *p;
+        char stemp[3];
+        uint8_t code;
+
+        char *codes = RemoveSpace(XdrvMailbox.data);
+        int size = strlen(XdrvMailbox.data);
+
+        while (size > 0) {
+          snprintf(stemp, sizeof(stemp), codes);
+          code = strtol(stemp, &p, 16);
+          SerialBridgeSerial->write(code);
+          size -= 2;
+          codes += 2;
+        }
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
     }

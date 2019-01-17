@@ -143,7 +143,7 @@ void McpSend(uint8_t *data)
   data[0] = MCP_START_FRAME;
   data[data[1] -1] = McpChecksum(data);
 
-//  AddLogSerial(LOG_LEVEL_DEBUG_MORE, data, data[1]);
+//  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, data, data[1]);
 
   for (byte i = 0; i < data[1]; i++) {
     Serial.write(data[i]);
