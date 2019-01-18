@@ -495,7 +495,19 @@ boolean MqttCheckTls(void)
       AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "2"));
       result = true;
     }
-#endif
+#ifdef MDNS_HOSTNAME
+    // If the hostname is set, check that as well.
+    // This lets certs with the hostname for the CN be used.
+    else if (EspClient.verify(fingerprint1, MDNS_HOSTNAME)) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "1"));
+      result = true;
+    }
+    else if (EspClient.verify(fingerprint2, MDNS_HOSTNAME)) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "2"));
+      result = true;
+    }
+#endif  // MDNS_HOSTNAME
+#endif  // USE_MQTT_TLS_CA_CERT
   }
   if (!result) AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FAILED));
   EspClient.stop();
