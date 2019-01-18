@@ -2445,11 +2445,13 @@ void setup(void)
       Settings.rule_enabled = 0;                  // Disable all rules
     }
     if (RtcReboot.fast_reboot_count > 4) {        // Restarted 5 times
-      Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
-//      Settings.last_module = SONOFF_BASIC;
       for (byte i = 0; i < sizeof(Settings.my_gp); i++) {
         Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
       }
+    }
+    if (RtcReboot.fast_reboot_count > 5) {        // Restarted 6 times
+      Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
+//      Settings.last_module = SONOFF_BASIC;
     }
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     AddLog(LOG_LEVEL_DEBUG);
