@@ -146,6 +146,8 @@ enum UserSelectablePins {
   GPIO_MAX31855CS,     // MAX31855 Serial interface
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
+  GPIO_SM16716_CLK,    // SM16716 CLK
+  GPIO_SM16716_DAT,    // SM16716 DAT
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -209,7 +211,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SSPI_MISO "|" D_SENSOR_SSPI_MOSI "|" D_SENSOR_SSPI_SCLK "|" D_SENSOR_SSPI_CS "|" D_SENSOR_SSPI_DC "|"
   D_SENSOR_RF_SENSOR "|"
   D_SENSOR_AZ_TX "|" D_SENSOR_AZ_RX "|"
-  D_SENSOR_MAX31855_CS "|" D_SENSOR_MAX31855_CLK "|" D_SENSOR_MAX31855_DO;
+  D_SENSOR_MAX31855_CS "|" D_SENSOR_MAX31855_CLK "|" D_SENSOR_MAX31855_DO "|"
+  D_SENSOR_SM16716_CLK "|" D_SENSOR_SM16716_DAT;
 
 /********************************************************************************************/
 
@@ -281,6 +284,7 @@ enum SupportedModules {
   KA10,
   ZX2820,
   MI_DESK_LAMP,
+  SYF05,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -506,6 +510,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
 #endif
+#ifdef USE_SM16716
+  GPIO_SM16716_CLK,    // SM16716 CLK
+  GPIO_SM16716_DAT,    // SM16716 DAT
+#endif // USE_SM16716
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
@@ -574,7 +582,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   PHILIPS,
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
-  WEMOS
+  WEMOS,
+  SYF05
 };
 
 // Default module settings
@@ -1774,6 +1783,30 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_ROT_A,       // GPIO12 Rotary switch A pin
      GPIO_ROT_B,       // GPIO13 Rotary switch B pin
      0, 0, 0, 0
+  },
+  { "SYF05",           // Sunyesmart SYF05 (a.k.a. Fcmila) = TYWE3S + SM16726
+                       // https://www.flipkart.com/fc-mila-bxav-xs-ad-smart-bulb/p/itmf85zgs45fzr7n
+                       // https://docs.tuya.com/en/hardware/WiFi-module/wifi-e3s-module.html
+                       // http://www.datasheet-pdf.com/PDF/SM16716-Datasheet-Sunmoon-932771
+     GPIO_USER,        // GPIO00 N.C.
+     0,
+     GPIO_USER,        // GPIO02 N.C.
+     0,
+     GPIO_SM16716_CLK, // GPIO04
+     GPIO_PWM1,        // GPIO05 Cold White
+                       // GPIO06
+                       // GPIO07
+                       // GPIO08
+     0,                // GPIO09
+     0,                // GPIO10
+                       // GPIO11
+     GPIO_USER,        // GPIO12 Warm White, not used on the LED panel
+     GPIO_USER,        // GPIO13 N.C. (used as LED if you add it)
+     GPIO_SM16716_DAT, // GPIO14
+     0,                // GPIO15
+     GPIO_USER,        // GPIO16 N.C.
+     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
+//   + GPIO_FLAG_PULLUP  // Allow input pull-up control
   }
 };
 
