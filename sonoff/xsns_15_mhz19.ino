@@ -70,7 +70,7 @@ enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILT
 
 TasmotaSerial *MhzSerial;
 
-const char kMhzTypes[] PROGMEM = "MHZ19|MHZ19B";
+const char kMhzModels[] PROGMEM = "|B";
 
 enum MhzCommands { MHZ_CMND_READPPM, MHZ_CMND_ABCENABLE, MHZ_CMND_ABCDISABLE, MHZ_CMND_ZEROPOINT, MHZ_CMND_RESET, MHZ_CMND_RANGE_1000, MHZ_CMND_RANGE_2000, MHZ_CMND_RANGE_3000, MHZ_CMND_RANGE_5000 };
 const uint8_t kMhzCommands[][4] PROGMEM = {
@@ -90,7 +90,6 @@ uint16_t mhz_last_ppm = 0;
 uint8_t mhz_filter = MHZ19_FILTER_OPTION;
 bool mhz_abc_enable = MHZ19_ABC_ENABLE;
 bool mhz_abc_must_apply = false;
-char mhz_types[7];
 
 float mhz_temperature = 0;
 uint8_t mhz_retry = MHZ19_RETRY_COUNT;
@@ -322,19 +321,21 @@ void MhzInit(void)
 
 void MhzShow(boolean json)
 {
+  char types[7] = "MHZ19B";  // MHZ19B for legacy reasons. Prefered is MHZ19
   char temperature[33];
   dtostrfd(mhz_temperature, Settings.flag2.temperature_resolution, temperature);
-  GetTextIndexed(mhz_types, sizeof(mhz_types), mhz_type -1, kMhzTypes);
+  char model[3];
+  GetTextIndexed(model, sizeof(model), mhz_type -1, kMhzModels);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, mhz_types, mhz_last_ppm, temperature);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, types, model, mhz_last_ppm, temperature);
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, mhz_types, mhz_last_ppm);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, mhz_types, temperature, TempUnit());
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, types, mhz_last_ppm);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, types, temperature, TempUnit());
 #endif  // USE_WEBSERVER
   }
 }
