@@ -1800,10 +1800,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09
      0,                // GPIO10
                        // GPIO11
-     GPIO_USER,        // GPIO12 Warm White, not used on the LED panel
+     GPIO_PWM2,        // GPIO12 Warm White
      GPIO_USER,        // GPIO13 N.C. (used as LED if you add it)
      GPIO_SM16716_DAT, // GPIO14
-     0,                // GPIO15
+     0,                // GPIO15 wired to GND
      GPIO_USER,        // GPIO16 N.C.
      GPIO_FLAG_ADC0    // ADC0 A0 Analog input
 //   + GPIO_FLAG_PULLUP  // Allow input pull-up control

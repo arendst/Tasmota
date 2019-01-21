@@ -147,8 +147,9 @@ boolean SM16716_Init(void)
 {
   uint8_t t_init;
 
-  if (!SM16716_ModuleSelected())
+  if (!SM16716_ModuleSelected()) {
     return false;
+  }
 
   pinMode(sm16716_pin_clk, OUTPUT);
   digitalWrite(sm16716_pin_clk, LOW);
@@ -156,14 +157,18 @@ boolean SM16716_Init(void)
   pinMode(sm16716_pin_dat, OUTPUT);
   digitalWrite(sm16716_pin_dat, LOW);
 
-  for (t_init = 0; t_init < 50; ++t_init)
+  for (t_init = 0; t_init < 50; ++t_init) {
     SM16716_SendBit(0);
+  }
 
   return true;
 }
 
 
 /*********************************************************************************************/
+/* Try to parse a string as 'RRGGBB' hex-encoded color value
+ * Accept only exact match (i.e. there can be no leftover chars)
+ */
 boolean SM16716_Parse_RRGGBB(const char *data, int data_len) {
   char component[3];
   char *endptr = NULL;
@@ -177,20 +182,30 @@ boolean SM16716_Parse_RRGGBB(const char *data, int data_len) {
   AddLog(LOG_LEVEL_DEBUG);
 #endif // D_LOG_SM16716
 
-  if (data_len != 6)
+  if (data_len != 6) {
+    // too long or too short
     return false;
+  }
 
+  // a component is exactly 3 chars, so terminate the string now
   component[2] = '\0';
 
+  // try to parse 3 components
   for (i = 0; i < 3; ++i) {
+    // copy the value to the temp string
     component[0] = data[0];
     component[1] = data[1];
+    // try to interpret it as a hex number
     candidate[i] = (uint8_t)strtoul(component, &endptr, 16);
-    if (!endptr || *endptr)
+    if (!endptr || *endptr) {
+      // not a valid hex number
       return false;
+    }
+    // advance to the next 2 characters
     data += 2;
   }
 
+  // now that we have all 3, we may change sm16716_color[]
   sm16716_color[0] = candidate[0];
   sm16716_color[1] = candidate[1];
   sm16716_color[2] = candidate[2];
@@ -210,61 +225,87 @@ boolean SM16716_Parse_Color(char *data, int data_len) {
   AddLog(LOG_LEVEL_DEBUG);
 #endif // D_LOG_SM16716
 
-  if (data_len < 3) { // a color preset
+  if (data_len < 3) { // too short for color literal: try to interpret as a color preset
+    // check for '+' and '-' commands first
     switch (data[0]) {
-      case '+':
+      case '+': // advance to the next preset, handle wrap-around
         ++sm16716_color_preset;
-        if (sm16716_color_preset >= MAX_FIXED_COLOR)
+        if (sm16716_color_preset >= MAX_FIXED_COLOR) {
           sm16716_color_preset = 0;
+        }
         break;
 
-      case '-':
+      case '-': // return to the previous preset, handle wrap-around
         --sm16716_color_preset;
-        if (sm16716_color_preset < 0)
+        if (sm16716_color_preset < 0) {
           sm16716_color_preset = MAX_FIXED_COLOR - 1;
+        }
         break;
 
       default:
+        // try to interpret it as a decimal integer
         {
           char *endptr = NULL;
           uint8_t candidate = (uint8_t)strtoul(data, &endptr, 10);
-          if (!endptr || *endptr || (candidate < 0) || (MAX_FIXED_COLOR <= candidate))
+          if (!endptr || *endptr || (candidate < 0) || (MAX_FIXED_COLOR <= candidate)) {
+            // it's not a valid integer (and nothing else), or the number is not a valid preset index
             return false;
+          }
+          // we have the requested preset index
           sm16716_color_preset = candidate;
         }
         break;
     }
+
 #ifdef D_LOG_SM16716
     snprintf_P(log_data, sizeof(log_data),
         PSTR(D_LOG_SM16716 "Parse_Color; preset=%d"),
         sm16716_color_preset);
     AddLog(LOG_LEVEL_DEBUG);
 #endif // D_LOG_SM16716
+
+    // copy the requested preset values
     memcpy_P(sm16716_color, &kFixedColor[sm16716_color_preset], 3);
   }
-  else if (data[0] == '#') { // #RRGGBB
-    if (!SM16716_Parse_RRGGBB(data + 1, data_len - 1))
+  else if (data[0] == '#') { // starts with #, so try to interpret as #RRGGBB
+    if (!SM16716_Parse_RRGGBB(data + 1, data_len - 1)) {
+      // not a valid RRGGBB after the #
       return false;
+    }
   }
-  else if (SM16716_Parse_RRGGBB(data, data_len)) { // RRGGBB
+  // two more formats left: RRGGBB (without #) and comma separated color components
+  else if (SM16716_Parse_RRGGBB(data, data_len)) { // try to interpret as RRGGBB
+    // parsed successfully as RRGGBB, nothing more to do
   }
-  else { // rrr,g,bb
+  else { // try to interpret as rrr,g,bb
     uint8_t candidate[3];
     char *tok, *last, *endptr = NULL;
     int i;
 
+    // try to parse the first 3 comma-separated tokens
     for (i = 0; i < 3; ++i) {
+      // try to isolate the next token
       tok = strtok_r(data, ",", &last);
-      if (!tok)
+      if (!tok) {
+        // we're beyond the end of string: there were too few tokens
         return false;
+      }
+      // try to interpret the token as integer
       candidate[i] = (uint8_t)strtoul(tok, &endptr, 0);
-      if (!endptr || *endptr)
+      if (!endptr || *endptr) {
+        // not a valid integer
         return false;
+      }
+      // in the next cycle just continue this token-processing session
       data = NULL;
     }
+    // there shouldn't be any leftover characters (i.e. we need exactly 3 components)
     tok = strtok_r(NULL, ",", &last);
-    if (tok)
-      return false; // junk at the end
+    if (tok) {
+      // too many components
+      return false;
+    }
+    // now that we have all 3 components, we may change sm16716_color
     sm16716_color[0] = candidate[0];
     sm16716_color[1] = candidate[1];
     sm16716_color[2] = candidate[2];
@@ -288,10 +329,12 @@ bool SM16716_Command(void)
 
   switch (command_code) {
     case CMND_SM16716_COLOR:
-      if (XdrvMailbox.data_len == 0)
+      if (XdrvMailbox.data_len == 0) {
         return SM16716_Show_State();
-      if (!SM16716_Parse_Color(XdrvMailbox.data, XdrvMailbox.data_len))
+      }
+      if (!SM16716_Parse_Color(XdrvMailbox.data, XdrvMailbox.data_len)) {
         return false;
+      }
       SM16716_Update();
       return true;
   }
@@ -308,8 +351,9 @@ boolean Xdrv20(byte function)
       return SM16716_ModuleSelected();
   }
 
-  if (!sm16716_is_selected)
+  if (!sm16716_is_selected) {
     return false;
+  }
 
   switch (function) {
     case FUNC_INIT:
