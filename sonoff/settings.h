@@ -199,7 +199,7 @@ struct SYSCFG {
 
   byte          free_1D5[20];              // 1D5  Free since 5.12.0e
 
-  char          mqtt_host[33];             // 1E9
+  char          mqtt_host[50];             // 1E9
   uint16_t      mqtt_port;                 // 20A
   char          mqtt_client[33];           // 20C
   char          mqtt_user[33];             // 22D
