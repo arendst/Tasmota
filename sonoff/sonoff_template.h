@@ -146,9 +146,6 @@ enum UserSelectablePins {
   GPIO_MAX31855CS,     // MAX31855 Serial interface
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
-//STB mod
-  GPIO_SEN_SLEEP,
-//end
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -212,10 +209,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SSPI_MISO "|" D_SENSOR_SSPI_MOSI "|" D_SENSOR_SSPI_SCLK "|" D_SENSOR_SSPI_CS "|" D_SENSOR_SSPI_DC "|"
   D_SENSOR_RF_SENSOR "|"
   D_SENSOR_AZ_TX "|" D_SENSOR_AZ_RX "|"
-  D_SENSOR_MAX31855_CS "|" D_SENSOR_MAX31855_CLK "|" D_SENSOR_MAX31855_DO "|"
-  //STB mod
-  D_SENSOR_DEEPSLEEP;
-  //end
+  D_SENSOR_MAX31855_CS "|" D_SENSOR_MAX31855_CLK "|" D_SENSOR_MAX31855_DO;
 
 /********************************************************************************************/
 
@@ -401,9 +395,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_CNTR3_NP,
   GPIO_CNTR4,
   GPIO_CNTR4_NP,
-  // stb model
-  GPIO_SEN_SLEEP,
-  //end
 #ifdef USE_I2C
   GPIO_I2C_SCL,        // I2C SCL
   GPIO_I2C_SDA,        // I2C SDA

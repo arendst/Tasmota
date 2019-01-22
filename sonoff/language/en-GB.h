@@ -21,29 +21,10 @@
 #define _LANGUAGE_EN_GB_H_
 
 //STB mod
-#define D_JSON_MOISTURE "Moisture"
-#define D_JSON_DISTANCE "Distance"
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
-#define D_CMND_MQTTENABLE "MqttEnable"
-#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
-#define D_CMND_OPEN "shutteropen"
-#define D_CMND_CLOSE "shutterclose"
-#define D_CMND_STOP "shutterstop"
-#define D_CMND_POSITION "shutterposition"
-#define D_CMND_OPENTIME "shutteropenduration"
-#define D_CMND_CLOSETIME "shuttercloseduration"
-#define D_CMND_SHUTTERRELAY "shutterrelay"
-#define D_CMND_CALIBRATIONMATIX "shuttercalibration"
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_SHUTTER "SHUTTER"
+
 #define D_CMND_INTERLOCKMASK "INTERLOCKMASK"
-#define D_CMND_SET50PERCENT "shutter50percent"
-#define D_CMND_SHUTTERSETCLOSE "shuttersetclose"
-#define D_CMND_SHUTTERINVERT "shutterinvert"
 #define D_CMND_INTERLOCKBUCKETSIZE "bucketsize"
-#define D_DOMOTICZ_SHUTTER "Shutter"
+
 //end
 
 /*************************** ATTENTION *******************************\

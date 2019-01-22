@@ -93,11 +93,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
-// STB mod
-    uint32_t shutter_mode : 1;
+    uint32_t spare30 : 1;
     uint32_t paired_interlock : 1;
-
-// end
   };
 } SysBitfield3;
 
@@ -340,30 +337,6 @@ struct SYSCFG {
   uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
-  //STB mod
-  byte          free_680[130];             // A80  give me some space to do configuration without override
-  //uint16_t      pid_parameter[4][]             // PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR
-  //float         pid_setpoint[4];
-  //float         pid_initial_int[4];
-  //uint16_t      pid_update_secs;
-  //uint8_t       pid_auto;
-  //uint8_t       pid_manual_power;  
-  uint8_t       shutter_accuracy;
-  int16_t       shuttercoeff[5][MAX_SHUTTERS];
-  uint8_t       interlock_bucket_size;  // size if the bucket for an interlock. Typically 1..4
-  uint8_t       shutter_invert[MAX_SHUTTERS];
-  uint8_t       shutter_set50percent[MAX_SHUTTERS];
-  power_t       interlock_mask;            // 32 bit array. 1 = relay effected by interlock 0 = relay not effected
-  uint8_t       shutter_startrelay[MAX_SHUTTERS];
-  uint16_t      shutter_opentime[MAX_SHUTTERS];
-  uint16_t      shutter_closetime[MAX_SHUTTERS];
-  uint8_t       shutter_position[MAX_SHUTTERS];              // 49E
-  unsigned long uptime;                    // 748
-  uint8_t       pcf8574_config[8];         // 74B
-  uint8_t       all_relays_inverted;       //
-  uint32_t      deepsleep;                 //
-  uint16_t      pulse_devider[MAX_COUNTERS];     //
-  //end
                                            // E00 - FFF free locations
 } Settings;
 
@@ -381,11 +354,8 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 298
   unsigned long pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
-  uint8_t       free_020[52];              // 2B0
-  //STB mod
-  unsigned long uptime;
-  uint32_t      ultradeepsleep;
-  //end
+  uint8_t       free_020[60];              // 2B0
+                                           // 2EC - 2FF free locations
 } RtcSettings;
 
 struct TIME_T {
@@ -404,7 +374,7 @@ struct TIME_T {
 
 struct XDRVMAILBOX {
   uint16_t      valid;
-  power_t      index;
+  uint16_t      index;
   uint16_t      data_len;
   uint16_t      payload16;
   int16_t       payload;

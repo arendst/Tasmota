@@ -92,6 +92,7 @@
 #define D_JSON_MAC "Mac"
 #define D_JSON_MASK "Mask"
 #define D_JSON_MINIMAL "minimal"
+#define D_JSON_MODEL "Model"
 #define D_JSON_NO "No"
 #define D_JSON_NOISE "Noise"
 #define D_JSON_NONE "None"
@@ -167,13 +168,6 @@
 #define D_RSLT_WARNING "WARNING"
 
 // Commands sonoff.ino
-
-//stb mode
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
-#define D_CMND_MQTTENABLE "MqttEnable"
-#define D_CMND_DEEPSLEEP "DeepSleep"
-// end
-
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
 #define D_CMND_STATUS "Status"

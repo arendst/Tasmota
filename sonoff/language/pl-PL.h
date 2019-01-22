@@ -20,32 +20,6 @@
 #ifndef _LANGUAGE_PL_PL_D_H_
 #define _LANGUAGE_PL_PL_D_H_
 
-//STB mod
-#define D_JSON_MOISTURE "Wilgoc"
-#define D_JSON_DISTANCE "Odleglosc"
-#define D_CONFIGURE_PCF8574 "Konfiguruj PCF8574"
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
-#define D_CMND_MQTTENABLE "MqttEnable"
-#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
-#define D_CMND_OPEN "shutteropen"
-#define D_CMND_CLOSE "shutterclose"
-#define D_CMND_STOP "shutterstop"
-#define D_CMND_POSITION "shutterposition"
-#define D_CMND_OPENTIME "shutteropenduration"
-#define D_CMND_CLOSETIME "shuttercloseduration"
-#define D_CMND_SHUTTERRELAY "shutterrelay"
-#define D_CMND_CALIBRATIONMATIX "shuttercalibration"
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_SHUTTER "SHUTTER"
-#define D_CMND_INTERLOCKMASK "INTERLOCKMASK"
-#define D_CMND_SET50PERCENT "shutter50percent"
-#define D_CMND_SHUTTERSETCLOSE "shuttersetclose"
-#define D_CMND_SHUTTERINVERT "shutterinvert"
-#define D_CMND_INTERLOCKBUCKETSIZE "bucketsize"
-#define D_DOMOTICZ_SHUTTER "Shutter"
-//end
-
 /*************************** ATTENTION *******************************\
  *
  * Due to memory constraints only UTF-8 is supported.
@@ -88,7 +62,7 @@
 #define D_BRIGHTLIGHT "Jasny"
 #define D_BSSID "BSSId"
 #define D_BUTTON "Przycisk"
-#define D_BY "przez"                    // Written by me
+#define D_BY "by"                    // Written by me
 #define D_BYTES "Bajtow"
 #define D_CELSIUS "Celsiusza"
 #define D_CHANNEL "Kanał"
@@ -165,7 +139,7 @@
 #define D_RESTART_REASON "Przyczyna restartu"
 #define D_RESTORE "Przywracanie"
 #define D_RETAINED "Zachowane"
-#define D_RULE "Rule"
+#define D_RULE "Reguła"
 #define D_SAVE "Zapisz"
 #define D_SENSOR "Czujnik"
 #define D_SSID "SSID"
@@ -261,7 +235,7 @@
 #define D_BUTTON_TOGGLE "Przełącznik"
 #define D_CONFIGURATION "Konfiguracja"
 #define D_INFORMATION "Informacje"
-#define D_FIRMWARE_UPGRADE "Uaktualnienie oprogramowania"
+#define D_FIRMWARE_UPGRADE "Aktualizacja oprogramowania"
 #define D_CONSOLE "Konsola"
 #define D_CONFIRM_RESTART "Potwierdź restart"
 
@@ -274,10 +248,10 @@
 #define D_CONFIRM_RESET_CONFIGURATION "Potwierdź reset ustawień"
 #define D_RESET_CONFIGURATION "Reset ustawień"
 #define D_BACKUP_CONFIGURATION "Kopia ustawień"
-#define D_RESTORE_CONFIGURATION "Przywrócenie ustawień"
+#define D_RESTORE_CONFIGURATION "Przywracanie ustawień"
 #define D_MAIN_MENU "Menu główne"
 
-#define D_MODULE_PARAMETERS "Parametery modułu"
+#define D_MODULE_PARAMETERS "Parametry modułu"
 #define D_MODULE_TYPE "Typ modułu"
 #define D_PULLUP_ENABLE "No Button/Switch pull-up"
 #define D_GPIO "GPIO"
@@ -300,23 +274,23 @@
 #define D_AP2_SSID "AP2 SSID"
 #define D_AP2_PASSWORD "Hasło AP2"
 
-#define D_MQTT_PARAMETERS "Parametery MQTT"
+#define D_MQTT_PARAMETERS "Parametry MQTT"
 #define D_CLIENT "Klient"
-#define D_FULL_TOPIC "Pełen temat"
+#define D_FULL_TOPIC "Pełny temat"
 
 #define D_LOGGING_PARAMETERS "Opcje dziennika"
 #define D_SERIAL_LOG_LEVEL "Serial poziom dziennika"
 #define D_WEB_LOG_LEVEL "Web poziom dziennika"
 #define D_SYS_LOG_LEVEL "System poziom dziennika"
-#define D_MORE_DEBUG "Więcej informacji debugujacych"
+#define D_MORE_DEBUG "Więcej informacji debug"
 #define D_SYSLOG_HOST "Syslog host"
 #define D_SYSLOG_PORT "Syslog port"
 #define D_TELEMETRY_PERIOD "Okres telemetrii"
 
-#define D_OTHER_PARAMETERS "Inne parametery"
+#define D_OTHER_PARAMETERS "Inne parametry"
 #define D_WEB_ADMIN_PASSWORD "Hasło administratora Web"
 #define D_MQTT_ENABLE "MQTT aktywne"
-#define D_FRIENDLY_NAME "Przyjazna nazwa"
+#define D_FRIENDLY_NAME "Twoja nazwa"
 #define D_BELKIN_WEMO "Belkin WeMo"
 #define D_HUE_BRIDGE "Hue Bridge"
 #define D_SINGLE_DEVICE "single device"
@@ -417,18 +391,18 @@
 #define D_DOMOTICZ_UPDATE_TIMER "Zaktualizuj czasomierz"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Skonfiguruj harmonogram"
+#define D_CONFIGURE_TIMER "Konfiguruj harmonogram"
 #define D_TIMER_PARAMETERS "Parametry harmonogramów"
 #define D_TIMER_ENABLE "Włącz Harmonogramy"
 #define D_TIMER_ARM "Włącz"
-#define D_TIMER_TIME "Czas"
+#define D_TIMER_TIME "Według godziny"
 #define D_TIMER_DAYS "Dni"
 #define D_TIMER_REPEAT "Powtarzaj"
 #define D_TIMER_OUTPUT "Wyjście"
 #define D_TIMER_ACTION "Akcja"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "Skonfiguruj KNX"
+#define D_CONFIGURE_KNX "Konfiguruj KNX"
 #define D_KNX_PARAMETERS "Parametry KNX"
 #define D_KNX_GENERAL_CONFIG "Ogólne"
 #define D_KNX_PHYSICAL_ADDRESS "Adres Fizyczny"

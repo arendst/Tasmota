@@ -73,7 +73,7 @@ enum TasmotaCommands {
   CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SENSOR, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
   CMND_PRESSURE_RESOLUTION, CMND_POWER_RESOLUTION, CMND_VOLTAGE_RESOLUTION, CMND_FREQUENCY_RESOLUTION, CMND_CURRENT_RESOLUTION, CMND_ENERGY_RESOLUTION, CMND_WEIGHT_RESOLUTION,
 //STB mod
-  CMND_MODULE, CMND_MODULES, CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE, CMND_COUNTERDEVIDER, CMND_MQTTENABLE,CMND_DEEPSLEEP,CMND_INTERLOCKMASK,CMND_INTERLOCKBUCKETSIZE,
+  CMND_MODULE, CMND_MODULES, CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE, CMND_INTERLOCKMASK,CMND_INTERLOCKBUCKETSIZE,
 //end
   CMND_COUNTERDEBOUNCE, CMND_BUTTONDEBOUNCE, CMND_SWITCHDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
@@ -85,7 +85,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_FREQUENCY_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_WEIGHT_RESOLUTION "|"
   //STB mod
-  D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|" D_CMND_COUNTERDEVIDER "|" D_CMND_MQTTENABLE "|" D_CMND_DEEPSLEEP "|" D_CMND_INTERLOCKMASK "|" D_CMND_INTERLOCKBUCKETSIZE "|"
+  D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|" D_CMND_INTERLOCKMASK "|" D_CMND_INTERLOCKBUCKETSIZE "|"
   //end
   D_CMND_COUNTERDEBOUNCE "|" D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
@@ -146,16 +146,6 @@ uint8_t backlog_index = 0;                  // Command backlog index
 uint8_t backlog_pointer = 0;                // Command backlog pointer
 uint8_t backlog_mutex = 0;                  // Command backlog pending
 uint8_t interlock_mutex = 0;                // Interlock power command pending
-
-
-//STB mod
-byte max_pcf8574_connected_ports = 0;       // Max numbers of devices comming from PCF8574 modules
-int prep_called = 0;                        // additional flag to detect a proper start of initialize sensors.
-unsigned long last_save_uptime = 0;         // Loop timer to calculate ontime
-uint8_t last_source = 0;
-byte max_pcf8574_devices = 0;               // Max numbers of PCF8574 modules
-uint8_t shutters_present = 0;
-//end
 uint8_t sleep;                              // Current copy of Settings.sleep
 uint8_t stop_flash_rotate = 0;              // Allow flash configuration rotation
 uint8_t blinkstate = 0;                     // LED state
@@ -327,10 +317,6 @@ void SetDevicePower(power_t rpower, int source)
   uint8_t state;
 
   ShowSource(source);
-
-  //STB mod
-  last_source = source;
-  //END
 
   if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {  // All on and stay on
     power = (1 << devices_present) -1;
@@ -775,7 +761,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
             }
 #ifdef USE_HOME_ASSISTANT
             if ((19 == pindex) || (30 == pindex)) {
-              HAssDiscovery(1);  // hass_discovery or hass_light
+              HAssDiscover();    // Delayed execution to provide enough resources during hass_discovery or hass_light
             }
 #endif  // USE_HOME_ASSISTANT
           }
@@ -992,19 +978,15 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
     }
     else if ((CMND_COUNTER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
       if ((data_len > 0) && (pin[GPIO_CNTR1 + index -1] < 99)) {
-        //STB mod
-        Settings.pulse_devider[index -1] = Settings.pulse_devider[index -1] == 0 ? COUNTERDEVIDER : Settings.pulse_devider[index -1];
         if ((dataBuf[0] == '-') || (dataBuf[0] == '+')) {
-          RtcSettings.pulse_counter[index -1] += payload32 * Settings.pulse_devider[index -1];
-          Settings.pulse_counter[index -1] += payload32 * Settings.pulse_devider[index -1];
+          RtcSettings.pulse_counter[index -1] += payload32;
+          Settings.pulse_counter[index -1] += payload32;
         } else {
-          RtcSettings.pulse_counter[index -1] = payload32 * Settings.pulse_devider[index -1];
-          Settings.pulse_counter[index -1] = payload32 * Settings.pulse_devider[index -1];
+          RtcSettings.pulse_counter[index -1] = payload32;
+          Settings.pulse_counter[index -1] = payload32;
         }
       }
-
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_LVALUE, command, index, RtcSettings.pulse_counter[index -1]/Settings.pulse_devider[index -1]);
-      //end
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_LVALUE, command, index, RtcSettings.pulse_counter[index -1]);
     }
     else if ((CMND_COUNTERTYPE == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
       if ((payload >= 0) && (payload <= 1) && (pin[GPIO_CNTR1 + index -1] < 99)) {
@@ -1020,35 +1002,8 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.pulse_counter_debounce);
     }
-//STB mod
-    else if ((CMND_COUNTERDEVIDER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
-      if (data_len > 0) {
-        unsigned long _counter;
-        Settings.pulse_devider[index -1] = Settings.pulse_devider[index -1] == 0 ? COUNTERDEVIDER : Settings.pulse_devider[index -1];
-        _counter = RtcSettings.pulse_counter[index -1]/Settings.pulse_devider[index -1];
-        Settings.pulse_devider[index -1] = payload16;
-        RtcSettings.pulse_counter[index -1] = _counter * Settings.pulse_devider[index -1];
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.pulse_devider[index -1]);
-    }
-    else if (CMND_MQTTENABLE == command_code) {
-      if ((payload >= 0) && (payload <= 1)) {
-        Settings.flag.mqtt_enabled = payload;
-        restart_flag = 2;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
-          (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
-        if (Settings.webserver == 0 && Settings.flag.mqtt_enabled == 0) {
-          Settings.webserver = 2;
-        }
-      }
-    }
-    else if(CMND_DEEPSLEEP == command_code) {
-      if ((data_len > 0) && (payload32 >= 0) ) {
-        Settings.deepsleep = payload32;
-      }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"DeepSleep\":\"%d%s (%d%s)\"}"), Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "", Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "");
-    }
-    else if(CMND_INTERLOCKMASK == command_code) {
+    //STB mod
+       else if(CMND_INTERLOCKMASK == command_code) {
       if (data_len > 0) {
         for (uint i = 0; i < sizeof(power_t)*8; i++) {
             bitWrite(Settings.interlock_mask, i , (i < data_len ? ( (int)dataBuf[i] - 48 ) : 0 ) ); // convert ASCII code 48 = "0" and 49="1"
@@ -1642,10 +1597,8 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (4 == payload)) {
-    //STB Mod
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHMODE "\":%d,\"" D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]}}"),
-      ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap(), ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipId(), ESP.getFlashChipMode(), LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2);
-    //end
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS4_MEMORY "\":{\"" D_JSON_PROGRAMSIZE "\":%d,\"" D_JSON_FREEMEMORY "\":%d,\"" D_JSON_HEAPSIZE "\":%d,\"" D_JSON_PROGRAMFLASHSIZE "\":%d,\"" D_JSON_FLASHSIZE "\":%d,\"" D_JSON_FLASHCHIPID "\":\"%06X\",\"" D_JSON_FLASHMODE "\":%d,\"" D_JSON_FEATURES "\":[\"%08X\",\"%08X\",\"%08X\",\"%08X\",\"%08X\"]}}"),
+      ESP.getSketchSize()/1024, ESP.getFreeSketchSpace()/1024, ESP.getFreeHeap()/1024, ESP.getFlashChipSize()/1024, ESP.getFlashChipRealSize()/1024, ESP.getFlashChipId(), ESP.getFlashChipMode(), LANGUAGE_LCID, feature_drv1, feature_drv2, feature_sns1, feature_sns2);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "4"));
   }
 
@@ -1750,11 +1703,8 @@ void MqttShowState(void)
     MqttShowPWMState();
   }
 
-  //STB mod
-  //snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s, \""D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d, \""D_JSON_SSID"\":\"%s\", \""D_JSON_BSSID "\":\"%s\", \"" D_JSON_CHANNEL "\":%d, \"" D_JSON_RSSI "\":%d}, \"" D_CMND_DEEPSLEEP "\":%d, \"" D_JSON_HEAPSIZE "\":%d}"),
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d},\"" D_CMND_DEEPSLEEP "\":%d,\"" D_JSON_HEAPSIZE "\":%d}"),
-    mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WiFi.BSSIDstr().c_str(), WiFi.channel(), WifiGetRssiAsQuality(WiFi.RSSI()), Settings.deepsleep, ESP.getFreeHeap());
-  //end
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d}}"),
+    mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WiFi.BSSIDstr().c_str(), WiFi.channel(), WifiGetRssiAsQuality(WiFi.RSSI()));
 }
 
 boolean MqttShowSensor(void)
@@ -1772,9 +1722,6 @@ boolean MqttShowSensor(void)
     }
   }
   XsnsCall(FUNC_JSON_APPEND);
-  //stb mod
-  XdrvCall(FUNC_JSON_APPEND);
-  //
   boolean json_data_available = (strlen(mqtt_data) - json_data_start);
   if (strstr_P(mqtt_data, PSTR(D_JSON_PRESSURE))) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_PRESSURE_UNIT "\":\"%s\""), mqtt_data, PressureUnit().c_str());
@@ -1807,13 +1754,6 @@ void PerformEverySecond(void)
     SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
     SetDevicePower(power, SRC_RETRY);  // Set required power on state
   }
-  //STB mod
-  RtcSettings.uptime += ((millis() - last_save_uptime) / 1000) ;
-  //snprintf_P(svalue, sizeof(svalue), PSTR("Uptime dump: %ld, last save: %ld"), RtcSettings.uptime, last_save_uptime);
-  last_save_uptime = millis() ;
-  //AddLog(LOG_LEVEL_DEBUG, svalue);
-  //end
-
 
   if (seriallog_timer) {
     seriallog_timer--;
@@ -1839,15 +1779,12 @@ void PerformEverySecond(void)
 
   if (Settings.tele_period) {
     tele_period++;
-    if (tele_period >= Settings.tele_period -1 && prep_called == 0) {
+    if (tele_period == Settings.tele_period -1) {
       XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
-      //STB mode
-      prep_called = 1;
-      // end stb mod
     }
     if (tele_period >= Settings.tele_period) {
       tele_period = 0;
-      prep_called = 0;
+
       mqtt_data[0] = '\0';
       MqttShowState();
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
@@ -1859,38 +1796,6 @@ void PerformEverySecond(void)
         RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_RULES
       }
-      //STB mod
-      uint8 disbale_deepsleep_switch = 0;
-      if (pin[GPIO_SEN_SLEEP] < 99) {
-        disbale_deepsleep_switch = !digitalRead(pin[GPIO_SEN_SLEEP]);
-      }
-      if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295 && !disbale_deepsleep_switch) {
-        //TODO STEFAN
-        yield();
-        if (Settings.deepsleep > MAX_DEEPSLEEP_CYCLE) {
-          RtcSettings.ultradeepsleep = Settings.deepsleep;
-        } else {
-            RtcSettings.ultradeepsleep = 0;
-        }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_OFFLINE);
-        MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), false);  // Offline or remove previous retained topic
-
-        yield();
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Time\":\"%s\", \"Uptime_s\":%d}"), GetDateAndTime(DT_LOCAL).c_str(), RtcSettings.uptime);
-        MqttPublishPrefixTopic_P(TELE, PSTR("UPTIME_S"));
-        yield();
-        delay(300);
-        RtcSettings.uptime = 0;
-        RtcSettingsSave();
-        // 10% of deepsleep to retry
-        if (MAX_DEEPSLEEP_CYCLE < Settings.deepsleep) {
-          ESP.deepSleep(1000000 * (uint32_t)MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
-        } else {
-          ESP.deepSleep(1000000 * Settings.deepsleep, WAKE_RF_DEFAULT);
-        }
-        yield();
-      }
-      //end
     }
   }
 
@@ -2531,44 +2436,12 @@ void setup(void)
   snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
   if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
     snprintf_P(my_version, sizeof(my_version), PSTR("%s.%d"), my_version, VERSION & 0xff);
-    //stb mod
-    if (STB_VERSION & 0xff) {
-      snprintf_P(my_version, sizeof(my_version), PSTR("%s stb-%d.%d"), my_version, STB_VERSION >> 8 & 0xff, STB_VERSION & 0xff);
-    }
-    //end
   }
   char code_image[20];
   snprintf_P(my_image, sizeof(my_image), PSTR("(%s)"), GetTextIndexed(code_image, sizeof(code_image), CODE_IMAGE, kCodeImage));
 
   SettingsLoad();
   SettingsDelta();
-
-  //STB mod
-  uint8 disbale_deepsleep_switch = 0;
-  if (pin[GPIO_SEN_SLEEP] < 99) {
-    disbale_deepsleep_switch = !digitalRead(pin[GPIO_SEN_SLEEP]);
-    if (disbale_deepsleep_switch) {
-      RtcSettings.ultradeepsleep = 0;
-    }
-  }
-  if (RtcSettings.ultradeepsleep > 0 && RtcSettings.ultradeepsleep < 4294967295) {
-     RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
-     snprintf_P(log_data, sizeof(log_data), PSTR("APP: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
-     AddLog(LOG_LEVEL_INFO);
-     snprintf_P(log_data, sizeof(log_data), PSTR("APP: online %d"), millis());
-     AddLog(LOG_LEVEL_INFO);
-     if (MAX_DEEPSLEEP_CYCLE < RtcSettings.ultradeepsleep) {
-       RtcSettingsSave();
-       ESP.deepSleep(1000000 * (uint32_t)MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
-     } else {
-       unsigned long remaining_time = RtcSettings.ultradeepsleep;
-       RtcSettings.ultradeepsleep = 0;
-       RtcSettingsSave();
-       ESP.deepSleep(1000000 * remaining_time, WAKE_RF_DEFAULT);
-     }
-     yield();
-  }
-  //end
 
   OsWatchInit();
 
@@ -2668,15 +2541,10 @@ void setup(void)
   }
 
   // Issue #526 and #909
-  //STB mod
-  uint8_t max_val = (devices_present>MAX_PULSETIMERS?MAX_PULSETIMERS:devices_present);
-
-  for (byte i = 0; i < max_val; i++) {
-
-    //if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
-    //  bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
-    //}
-    //end
+  for (byte i = 0; i < devices_present; i++) {
+    if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
+      bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
+    }
     if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
       SetPulseTimer(i, Settings.pulse_timer[i]);
     }

@@ -95,10 +95,6 @@ void RtcSettingsLoad(void)
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RTCMEM));
     RtcSettings.valid = RTC_MEM_VALID;
-    //STB mod
-    RtcSettings.uptime = Settings.uptime;
-    RtcSettings.ultradeepsleep = 0;
-    //end
     RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
     RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
     for (byte i = 0; i < MAX_COUNTERS; i++) {
@@ -752,11 +748,6 @@ void SettingsDefaultSet2(void)
   //Settings.flag.decimal_text = 0;
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
-
-//STB mod
-  Settings.deepsleep = 0;
-//end
-
   for (byte i = 0; i < MAX_PWMS; i++) {
     Settings.light_color[i] = 255;
 //    Settings.pwm_value[i] = 0;

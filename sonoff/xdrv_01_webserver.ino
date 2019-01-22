@@ -92,21 +92,8 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "}"
   "function lc(p){"
     "la('?t='+p);"              // ?t related to WebGetArg("t", tmp, sizeof(tmp));
-  "}"
-//stb nod
-  "function ld1(p){"
-    "la('?u1='+p);"
-  "}"
-  "function ld2(p){"
-    "la('?u2='+p);"
-  "}"
-  "function ld3(p){"
-    "la('?u3='+p);"
-  "}"
-  "function ld4(p){"
-    "la('?u4='+p);"
   "}";
-//end
+
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "function c(l){"
     "eb('s1').value=l.innerText||l.textContent;"
@@ -234,11 +221,6 @@ const char HTTP_MSG_SLIDER1[] PROGMEM =
 const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><span class='p'>" D_DARKLIGHT "</span><span class='q'>" D_BRIGHTLIGHT "</span></div>"
   "<div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>";
-//stb mod
-const char HTTP_MSG_SLIDER3[] PROGMEM =
-  "<div><span class='p'>" D_CLOSE "</span><span class='q'>" D_OPEN "</span></div>"
-  "<div><input type='range' min='0' max='100' value='%d' onchange='ld%d(value)'></div>";
-//end
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
@@ -262,16 +244,6 @@ const char HTTP_BTN_MENU4[] PROGMEM =
   "<br/><form action='rs' method='get'><button>" D_RESTORE_CONFIGURATION "</button></form>";
 const char HTTP_BTN_MAIN[] PROGMEM =
   "<br/><br/><form action='.' method='get'><button>" D_MAIN_MENU "</button></form>";
-
-  //STB mod
-  #ifdef USE_I2C
-  #ifdef USE_PCF8574
-  const char HTTP_BTN_PCF[] PROGMEM =
-    "<br/><form action='i2c' method='get'><button>" D_CONFIGURE_PCF8574 "</button></form>";
-  #endif // USE_PCF8574
-  #endif
-  //end
-
 const char HTTP_FORM_LOGIN[] PROGMEM =
   "<form method='post' action='/'>"
   "<br/><b>" D_USER "</b><br/><input name='USER1' placeholder='" D_USER "'><br/>"
@@ -407,9 +379,6 @@ void ShowWebSource(int source)
 void ExecuteWebCommand(char* svalue, int source)
 {
   ShowWebSource(source);
-  //STB mode
-  last_source = source;
-  //end
   ExecuteCommand(svalue, SRC_IGNORE);
 }
 
@@ -439,15 +408,6 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/rs", HandleRestoreConfiguration);
       WebServer->on("/rt", HandleResetConfiguration);
       WebServer->on("/in", HandleInformation);
-//STB mod
-#ifdef USE_I2C
-#ifdef USE_PCF8574
-      if (max_pcf8574_devices > 0) {
-        WebServer->on("/i2c", handleI2C);
-      }
-#endif
-#endif
-//end
 #ifdef USE_EMULATION
       HueWemoAddHandlers();
 #endif  // USE_EMULATION
@@ -677,14 +637,6 @@ void HandleRoot(void)
       }
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
-      // stb mod
-      if (Settings.flag3.shutter_mode) {
-        for (byte i=0; i < shutters_present; i++) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER3, Settings.shutter_position[i], i+1);
-          page += mqtt_data;
-        }
-      }
-      //end
       if (SONOFF_IFAN02 == Settings.module) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
         page += mqtt_data;
@@ -765,28 +717,6 @@ void HandleAjaxStatusRefresh(void)
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  //stb mod
-  WebGetArg("u1", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "1 %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
-  }
-  WebGetArg("u2", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "2 %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
-  }
-  WebGetArg("u3", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "3 %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
-  }
-  WebGetArg("u4", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "4 %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
-  }
-  // end
   WebGetArg("k", tmp, sizeof(tmp));
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);
@@ -858,15 +788,6 @@ void HandleConfiguration(void)
   XsnsCall(FUNC_WEB_ADD_BUTTON);
   page += String(mqtt_data);
 
-//STB mod
-#ifdef USE_I2C
-#ifdef USE_PCF8574
-  if (max_pcf8574_devices) {
-    page += FPSTR(HTTP_BTN_PCF);
-  }
-#endif
-#endif
-  //end
   page += FPSTR(HTTP_BTN_MENU4);
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
