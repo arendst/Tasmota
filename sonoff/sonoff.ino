@@ -318,7 +318,7 @@ void SetDevicePower(power_t rpower, int source)
     power = (1 << devices_present) -1;
     rpower = power;
   }
- if (Settings.flag3.split_interlock) {
+  if (Settings.flag3.split_interlock) {
     Settings.flag.interlock = 1; // prevent the situation where interlock is off and split-interlock is on
     uint8_t mask = 0x01;
     uint8_t count = 0;
@@ -335,18 +335,18 @@ void SetDevicePower(power_t rpower, int source)
     if ((result1) >1 && (result2 <2)) {power = power & 0x0C; rpower = power;} // 1/2 are both on and 3/4 max one is on
     if ((result1) <2 && (result2 >1)) {power = power & 0x03; rpower = power;} // 1/2 max one is on and 3/4 both are on
   } else {
-  if (Settings.flag.interlock) {     // Allow only one or no relay set
-    power_t mask = 1;
-    uint8_t count = 0;
-    for (byte i = 0; i < devices_present; i++) {
-      if (rpower & mask) count++;
-      mask <<= 1;
+    if (Settings.flag.interlock) {     // Allow only one or no relay set
+      power_t mask = 1;
+      uint8_t count = 0;
+      for (byte i = 0; i < devices_present; i++) {
+        if (rpower & mask) count++;
+        mask <<= 1;
+      }
+      if (count > 1) {
+        power = 0;
+        rpower = 0;
+      }
     }
-    if (count > 1) {
-      power = 0;
-      rpower = 0;
-    }
-  }
   }
 
   XdrvMailbox.index = rpower;
@@ -772,7 +772,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
             }
 #ifdef USE_HOME_ASSISTANT
             if ((19 == pindex) || (30 == pindex)) {
-              HAssDiscovery(1);  // hass_discovery or hass_light
+              HAssDiscover();    // Delayed execution to provide enough resources during hass_discovery or hass_light
             }
 #endif  // USE_HOME_ASSISTANT
           }

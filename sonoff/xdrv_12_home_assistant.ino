@@ -133,6 +133,9 @@ const char HASS_DISCOVER_DEVICE_INFO[] PROGMEM =
 const char HASS_DISCOVER_TOPIC_PREFIX[] PROGMEM =
   "%s, \"~\":\"%s\"";
 
+uint8_t hass_init_step = 0;
+uint8_t hass_mode = 0;
+
 static void FindPrefix(char* s1, char* s2, char* out)
 {
   int prefixlen = 0;
@@ -423,6 +426,7 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
 void HAssAnnounceSensors(void)
 {
   uint8_t hass_xsns_index = 0;
+
   do {
     mqtt_data[0] = '\0';
     int tele_period_save = tele_period;
@@ -430,14 +434,18 @@ void HAssAnnounceSensors(void)
     XsnsNextCall(FUNC_JSON_APPEND, hass_xsns_index);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
     tele_period = tele_period_save;
 
-    char sensordata[256]; // Copy because we need to write to mqtt_data
+    char sensordata[256];                             // Copy because we need to write to mqtt_data
     strlcpy(sensordata, mqtt_data, sizeof(sensordata));
 
     if (strlen(sensordata)) {
       sensordata[0] = '{';                             // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-      snprintf_P(sensordata, sizeof(sensordata), PSTR("%s}"), sensordata);
+      snprintf_P(sensordata, sizeof(sensordata), PSTR("%s}"), sensordata);  // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
 
-      StaticJsonBuffer<256> jsonBuffer;
+      // JsonBuffer size calculation (https://arduinojson.org/v5/assistant/)
+      // 383 = {"MCP230XX":{"D0":0,"D1":0,"D2":0,"D3":0,"D4":0,"D5":0,"D6":0,"D7":0,"D8":0,"D9":0,"D10":0,"D11":0,"D12":0,"D13":0,"D14":0,"D15":0}}
+      // 381 = {"MPR121A":{"Button0":0,"Button1":0,"Button2":0,"Button3":0,"Button4":0,"Button5":0,"Button6":0,"Button7":0,"Button8":0,"Button9":0,"Button10":0,"Button11":0,"Button12":0}}
+      // 420 = {"ENERGY":{"TotalStartTime":"2018-10-30T17:09:47","Total":2.684,"Yesterday":0.020,"Today":0.006,"Period":0.04,"Power":0.49,"ApparentPower":4.71,"ReactivePower":4.70,"Factor":0.10,"Frequency":50.04,"Voltage":226.3,"Current":0.021}}
+      StaticJsonBuffer<500> jsonBuffer;
       JsonObject& root = jsonBuffer.parseObject(sensordata);
       if (!root.success()) {
         snprintf_P(log_data, sizeof(log_data), PSTR("HASS: failed to parse '%s'"), sensordata);
@@ -469,21 +477,22 @@ static int string_ends_with(const char * str, const char * suffix)
   return (str_len >= suffix_len) && (0 == strcmp(str + (str_len-suffix_len), suffix));
 }
 
-void HAssDiscovery(uint8_t mode)
+void HAssDiscovery(void)
 {
   // Configure Tasmota for default Home Assistant parameters to keep discovery message as short as possible
   if (Settings.flag.hass_discovery) {
-    Settings.flag.mqtt_response = 0;        // Response always as RESULT and not as uppercase command
-    Settings.flag.decimal_text = 1;         // Respond with decimal color values
-    Settings.flag3.hass_tele_on_power = 1; // send tele/STATE message as stat/RESULT
-//    Settings.light_scheme = 0;           // To just control color it needs to be Scheme 0
+    Settings.flag.mqtt_response = 0;         // Response always as RESULT and not as uppercase command
+    Settings.flag.decimal_text = 1;          // Respond with decimal color values
+    Settings.flag3.hass_tele_on_power = 1;   // send tele/STATE message as stat/RESULT
+//    Settings.light_scheme = 0;             // To just control color it needs to be Scheme 0
     if (!string_ends_with(Settings.mqtt_fulltopic, "%prefix%/")) {
       strncpy_P(Settings.mqtt_fulltopic, PSTR("%topic%/%prefix%/"), sizeof(Settings.mqtt_fulltopic));
       restart_flag = 2;
+      return;                                // As full topic has changed do restart first before sending discovery data
     }
   }
 
-  if (Settings.flag.hass_discovery || (1 == mode)) {
+  if (Settings.flag.hass_discovery || (1 == hass_mode)) {
     // Send info about relays and lights
     HAssAnnounceRelayLight();
 
@@ -498,49 +507,11 @@ void HAssDiscovery(uint8_t mode)
   }
 }
 
-/*
-#define D_CMND_HASSDISCOVER "HassDiscover"
-
-enum HassCommands { CMND_HASSDISCOVER };
-const char kHassCommands[] PROGMEM = D_CMND_HASSDISCOVER ;
-
-boolean HassCommand(void)
+void HAssDiscover(void)
 {
-  char command[CMDSZ];
-  boolean serviced = true;
-
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kHassCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
-  }
-  else if (CMND_HASSDISCOVER == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      switch (XdrvMailbox.payload) {
-      case 0: // Off
-      case 1: // On
-        Settings.flag.hass_discovery = XdrvMailbox.payload;
-        break;
-      case 2: // Toggle
-        Settings.flag.hass_discovery ^= 1;
-        break;
-      case 4: // Off
-      case 5: // On
-        Settings.flag.hass_light = XdrvMailbox.payload &1;
-        break;
-      case 6: // Toggle
-        Settings.flag.hass_light ^= 1;
-        break;
-      }
-      HAssDiscovery(1);
-    }
-    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"Force light\":\"%s\"}"),
-      command, GetStateText(Settings.flag.hass_discovery), GetStateText(Settings.flag.hass_light));
-  }
-  else serviced = false;  // Unknown command
-
-  return serviced;
+  hass_mode = 1;                             // Force discovery
+  hass_init_step = 1;                        // Delayed discovery
 }
-*/
 
 /*********************************************************************************************\
  * Interface
@@ -553,13 +524,17 @@ boolean Xdrv12(byte function)
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
       case FUNC_MQTT_INIT:
-        HAssDiscovery(0);
+        hass_mode = 0;                       // Discovery only if Settings.flag.hass_discovery is set
+        hass_init_step = 2;                  // Delayed discovery
         break;
-/*
-      case FUNC_COMMAND:
-        result = HassCommand();
+      case FUNC_EVERY_SECOND:
+        if (hass_init_step) {
+          hass_init_step--;
+          if (!hass_init_step) {
+            HAssDiscovery();                 // Scheduled discovery using available resources
+          }
+        }
         break;
-*/
     }
   }
   return result;

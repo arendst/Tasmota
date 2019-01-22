@@ -1,5 +1,6 @@
 /* 6.4.1.10 20190121
  * Fix Hass discovery of MHZ19(B) sensors (#4992)
+ * Fix Hass Software Watchdog exception during discovery (#4988)
  *
  * 6.4.1.9 20190115
  * Add support for Mi LED Desk Lamp with rotary switch (#4887)
