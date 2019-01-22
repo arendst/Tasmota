@@ -1,7 +1,7 @@
 /*
   xdrv_12_home_assistant.ino - home assistant support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -128,7 +128,7 @@ const char HASS_DISCOVER_DEVICE_INFO[] PROGMEM =
   "\"name\":\"%s\","
   "\"model\":\"%s\","
   "\"sw_version\":\"%s%s\","
-  "\"manufacturer\":\"%s\"}";
+  "\"manufacturer\":\"Tasmota\"}";
 
 const char HASS_DISCOVER_TOPIC_PREFIX[] PROGMEM =
   "%s, \"~\":\"%s\"";
@@ -147,7 +147,7 @@ static void Shorten(char** s, char *prefix)
 {
   size_t len = strlen(*s);
   size_t prefixlen = strlen(prefix);
-  if (len > prefixlen && !strncmp(*s, prefix, prefixlen)) {
+  if (len > prefixlen && prefixlen != 0 && !strncmp(*s, prefix, prefixlen)) {
     *s += prefixlen-1;
     *s[0] = '~';
   }
@@ -237,10 +237,9 @@ void HAssAnnounceRelayLight(void)
           snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_CT, mqtt_data, color_temp_command_topic, state_topic);
         }
       }
-      snprintf_P(stemp1, sizeof(stemp1), kModules[Settings.module].name);
       snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
                  unique_id, ESP.getChipId(),
-                 Settings.friendlyname[0], stemp1, my_version, my_image, "Tasmota");
+                 Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
       snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
@@ -287,11 +286,10 @@ void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, 
     if (toggle) snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_BUTTON_SWITCH_TOGGLE, mqtt_data);
     else snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_BUTTON_SWITCH_ONOFF, mqtt_data, Settings.state_text[0]);
 
-    snprintf_P(stemp1, sizeof(stemp1), kModules[Settings.module].name);
     snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
                unique_id, ESP.getChipId(),
-               Settings.friendlyname[0], stemp1, my_version, my_image, "Tasmota");
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
+               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
+    if (strlen(prefix) > 0 ) snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
   MqttPublish(stopic, true);
@@ -309,7 +307,7 @@ void HAssAnnounceSwitches(void)
       byte switch_present = 0;
       byte toggle = 1;
 
-      if ((pin[GPIO_SWT1 + switch_index] < 99) || (pin[GPIO_SWT1_NP + switch_index] < 99)) {
+      if (pin[GPIO_SWT1 + switch_index] < 99) {
         switch_present = 1;
       }
 
@@ -341,7 +339,7 @@ void HAssAnnounceButtons(void)
       if (!button_index && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
         button_present = 1;
       } else {
-        if ((pin[GPIO_KEY1 + button_index] < 99) || (pin[GPIO_KEY1_NP + button_index] < 99)) {
+        if (pin[GPIO_KEY1 + button_index] < 99) {
           button_present = 1;
         }
       }
@@ -413,10 +411,9 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
       snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SENSOR_ANY,
                  mqtt_data, sensorname, subsensortype);
     }
-    snprintf_P(stemp1, sizeof(stemp1), kModules[Settings.module].name);
     snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
                unique_id, ESP.getChipId(),
-               Settings.friendlyname[0], stemp1, my_version, my_image, "Tasmota");
+               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
     snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
@@ -460,6 +457,7 @@ void HAssAnnounceSensors(void)
         }
       }
     }
+    yield();
   } while (hass_xsns_index != 0);
 }
 

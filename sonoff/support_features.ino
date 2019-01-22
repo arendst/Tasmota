@@ -1,7 +1,7 @@
 /*
   support_features.ino - feature support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -365,16 +365,20 @@ void GetFeatures(void)
   feature_sns2 |= 0x00008000;  // xsns_37_rfsensor.ino
 #endif
 #ifdef USE_THEO_V2
-  feature_sns2 |= 0x00010000;
+  feature_sns2 |= 0x00010000;  // xsns_37_rfsensor.ino
 #endif
 #ifdef USE_ALECTO_V2
-  feature_sns2 |= 0x00020000;
+  feature_sns2 |= 0x00020000;  // xsns_37_rfsensor.ino
 #endif
 #ifdef USE_AZ7798
-  feature_sns2 |= 0x00040000;
+  feature_sns2 |= 0x00040000;  // xsns_38_az7798.ino
 #endif
-//  feature_sns2 |= 0x00080000;
-//  feature_sns2 |= 0x00100000;
+#ifdef USE_MAX31855
+  feature_sns2 |= 0x00080000;  // xsns_39_max31855.ino
+#endif
+#ifdef USE_PN532_I2C
+  feature_sns2 |= 0x00100000;  // xsns_40_pn532_i2c.ino
+#endif
 //  feature_sns2 |= 0x00200000;
 //  feature_sns2 |= 0x00400000;
 //  feature_sns2 |= 0x00800000;

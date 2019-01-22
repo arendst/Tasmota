@@ -1,7 +1,7 @@
 /*
   i18n.h - internationalization for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -106,8 +106,10 @@
 #define D_JSON_PRESSURE "Pressure"
 #define D_JSON_PRESSUREATSEALEVEL "SeaPressure"
 #define D_JSON_PRESSURE_UNIT "PressureUnit"
+#define D_JSON_PROBETEMPERATURE "ProbeTemperature"
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
+#define D_JSON_REFERENCETEMPERATURE "ReferenceTemperature"
 #define D_JSON_RESET "Reset"
 #define D_JSON_RESTARTING "Restarting"
 #define D_JSON_RESTARTREASON "RestartReason"
@@ -165,6 +167,13 @@
 #define D_RSLT_WARNING "WARNING"
 
 // Commands sonoff.ino
+
+//stb mode
+#define D_CMND_COUNTERDEVIDER "CounterDevider"
+#define D_CMND_MQTTENABLE "MqttEnable"
+#define D_CMND_DEEPSLEEP "DeepSleep"
+// end
+
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
 #define D_CMND_STATUS "Status"

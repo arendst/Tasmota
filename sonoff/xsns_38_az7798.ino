@@ -1,7 +1,7 @@
 /*
   xsns_38_az7798.ino - AZ_Instrument 7798 CO2/temperature/humidity meter support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -107,9 +107,7 @@
  *
  * :  responds with : T19.9C:C2167ppm:H57.4%
  *    This one gives the current readings.
- **********************************************************************************************
-
-/*********************************************************************************************/
+\*********************************************************************************************/
 
 #include <TasmotaSerial.h>
 
@@ -160,7 +158,7 @@ void AzEverySecond(void)
       }
     } while(((millis() - start) < AZ_READ_TIMEOUT) && (counter < sizeof(az_response)) && !az_received);
 
-    AddLogSerial(LOG_LEVEL_DEBUG_MORE, az_response, counter);
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, az_response, counter);
 
     if (!az_received) {
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 comms timeout"));

@@ -1,7 +1,7 @@
 /*
   sonoff_version.h - Version header file for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -20,14 +20,13 @@
 #ifndef _SONOFF_VERSION_H_
 #define _SONOFF_VERSION_H_
 
-<<<<<<< HEAD
-#define VERSION            0x06040100
-=======
 #define VERSION            0x06040109
->>>>>>> 8f585b7f5354b19aff4bc6d1f238df4588d5693f
+//STB mod
+#define STB_VERSION         0x0101
+//end
 
 #define D_PROGRAMNAME      "Sonoff-Tasmota"
-#define D_AUTHOR           "Theo Arends"
+#define D_AUTHOR           "Theo Arends/Stefan Bode"
 //#define D_WEBLINK          "https://github.com/arendst/Sonoff-Tasmota"
 #define D_WEBLINK          "https://bit.ly/tasmota"
 

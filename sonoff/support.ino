@@ -1,7 +1,7 @@
 /*
   support.ino - support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -140,7 +140,7 @@ size_t strchrspn(const char *str1, int character)
 char* subStr(char* dest, char* str, const char *delim, int index)
 {
   char *act;
-  char *sub;
+  char *sub = NULL;
   char *ptr;
   int i;
 
@@ -210,9 +210,11 @@ char* Unescape(char* buffer, uint16_t* size)
 {
   uint8_t* read = (uint8_t*)buffer;
   uint8_t* write = (uint8_t*)buffer;
-  uint16_t start_size = *size;
-  uint16_t end_size = *size;
+  int16_t start_size = *size;
+  int16_t end_size = *size;
   uint8_t che = 0;
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
 
   while (start_size > 0) {
     uint8_t ch = *read++;
@@ -235,6 +237,14 @@ char* Unescape(char* buffer, uint16_t* size)
           case 's': che = ' ';  break;   // 20 Space
           case 't': che = '\t'; break;   // 09 Horizontal tab
           case 'v': che = '\v'; break;   // 0B Vertical tab
+          case 'x': {
+            uint8_t* start = read;
+            che = (uint8_t)strtol((const char*)read, (char**)&read, 16);
+            start_size -= (uint16_t)(read - start);
+            end_size -= (uint16_t)(read - start);
+            break;
+          }
+          case '"': che = '\"'; break;   // 22 Quotation mark
 //          case '?': che = '\?'; break;   // 3F Question mark
           default : {
             che = chi;
@@ -247,6 +257,9 @@ char* Unescape(char* buffer, uint16_t* size)
     }
   }
   *size = end_size;
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
+
   return buffer;
 }
 
@@ -490,6 +503,51 @@ float ConvertPressure(float p)
 String PressureUnit(void)
 {
   return (Settings.flag.pressure_conversion) ? String(D_UNIT_MILLIMETER_MERCURY) : String(D_UNIT_PRESSURE);
+}
+
+String AnyModuleName(uint8_t index)
+{
+  return FPSTR(kModules[index].name);
+}
+
+String ModuleName()
+{
+  return FPSTR(kModules[Settings.module].name);
+}
+
+void ModuleGpios(myio *gp)
+{
+  uint8_t *dest = (uint8_t *)gp;
+  memset(dest, GPIO_NONE, sizeof(myio));
+
+  uint8_t src[sizeof(mycfgio)];
+  memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
+  // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
+
+  for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+    if (i < 6) {
+      dest[i] = src[i];     // GPIO00 - GPIO05
+    }
+    else if (i < 8) {
+      dest[i +3] = src[i];  // GPIO09 - GPIO10
+    }
+    else {
+      dest[i +4] = src[i];  // GPIO12 - GPIO16 and ADC0
+    }
+  }
+  // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
+}
+
+gpio_flag ModuleFlag()
+{
+  gpio_flag flag;
+
+  memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
+  return flag;
 }
 
 void SetGlobalValues(float temperature, float humidity)
@@ -1152,9 +1210,9 @@ void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
-void AddLogSerial(byte loglevel, uint8_t *buffer, int count)
+void AddLogBuffer(byte loglevel, uint8_t *buffer, int count)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_RECEIVED));
+  snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
   for (int i = 0; i < count; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer++));
   }
@@ -1163,7 +1221,7 @@ void AddLogSerial(byte loglevel, uint8_t *buffer, int count)
 
 void AddLogSerial(byte loglevel)
 {
-  AddLogSerial(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
+  AddLogBuffer(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
 }
 
 void AddLogMissed(char *sensor, uint8_t misses)

@@ -1,7 +1,7 @@
 /*
   xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Maarten Damen and Theo Arends
+  Copyright (C) 2019  Maarten Damen and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -81,6 +81,12 @@ void CounterInit(void)
     if (pin[GPIO_CNTR1 +i] < 99) {
       pinMode(pin[GPIO_CNTR1 +i], bitRead(counter_no_pullup, i) ? INPUT : INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
+// STB mode
+      //avoid DIV 0 on unitiialized
+      if (Settings.pulse_devider[i] == 0 || Settings.pulse_devider[i] == 65535 ) {
+        Settings.pulse_devider[i] = COUNTERDEVIDER;
+      }
+// end
     }
   }
 }
@@ -93,6 +99,7 @@ const char HTTP_SNS_COUNTER[] PROGMEM =
 void CounterShow(boolean json)
 {
   char stemp[10];
+  char counter[16];
 
   byte dsxflg = 0;
   byte header = 0;
@@ -103,7 +110,9 @@ void CounterShow(boolean json)
         dtostrfd((double)RtcSettings.pulse_counter[i] / 1000000, 6, counter);
       } else {
         dsxflg++;
-        dtostrfd(RtcSettings.pulse_counter[i], 0, counter);
+	//STB mod
+        dtostrfd(RtcSettings.pulse_counter[i]/Settings.pulse_devider[i], 0, counter);
+	//end
       }
 
       if (json) {
@@ -116,7 +125,10 @@ void CounterShow(boolean json)
         strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
-          DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
+
+	  //STB mod
+          DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]/Settings.pulse_devider[i]);
+	  //end
           dsxflg++;
         }
 #endif  // USE_DOMOTICZ

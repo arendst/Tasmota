@@ -1,7 +1,7 @@
 /*
   xdrv_09_timers.ino - timer support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -135,7 +135,6 @@ void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8
 //  double Zeitzone = 2.0;   //Sommerzeit
   double Zeitzone = ((double)time_timezone) / 60;
   double Zeitgleichung = BerechneZeitgleichung(&DK, T);
-  double Minuten = Zeitgleichung * 60.0;
   double Zeitdifferenz = 12.0*acos((sin(h) - sin(B)*sin(DK)) / (cos(B)*cos(DK)))/pi;
   double AufgangOrtszeit = 12.0 - Zeitdifferenz - Zeitgleichung;
   double UntergangOrtszeit = 12.0 + Zeitdifferenz - Zeitgleichung;
@@ -683,8 +682,8 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
 
 void HandleTimerConfiguration(void)
 {
-  if (HttpUser()) { return; }
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TIMER);
 
   if (WebServer->hasArg("save")) {

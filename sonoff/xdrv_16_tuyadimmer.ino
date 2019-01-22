@@ -1,7 +1,7 @@
 /*
   xdrv_16_tuyadimmer.ino - Tuya dimmer support for Sonoff-Tasmota
 
-  Copyright (C) 2018  digiblur, Joel Stein and Theo Arends
+  Copyright (C) 2019  digiblur, Joel Stein and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -248,7 +248,7 @@ void TuyaPacketProcess(void)
         uint8_t key1_gpio = tuya_buffer[7];
         boolean key1_set = false;
         boolean led1_set = false;
-        for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+        for (byte i = 0; i < sizeof(Settings.my_gp); i++) {
           if (Settings.my_gp.io[i] == GPIO_LED1) led1_set = true;
           else if (Settings.my_gp.io[i] == GPIO_KEY1) key1_set = true;
         }
