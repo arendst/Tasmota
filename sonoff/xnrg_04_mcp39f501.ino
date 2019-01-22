@@ -1,7 +1,7 @@
 /*
   xnrg_04_mcp39f501.ino - MCP39F501 energy sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -143,7 +143,7 @@ void McpSend(uint8_t *data)
   data[0] = MCP_START_FRAME;
   data[data[1] -1] = McpChecksum(data);
 
-//  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, data, data[1]);
+//  AddLogSerial(LOG_LEVEL_DEBUG_MORE, data, data[1]);
 
   for (byte i = 0; i < data[1]; i++) {
     Serial.write(data[i]);

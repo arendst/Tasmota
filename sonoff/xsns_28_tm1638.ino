@@ -1,7 +1,7 @@
 /*
   xsns_28_tm1638.ino - TM1638 8 switch, led and 7 segment unit support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -176,8 +176,8 @@ void TmLoop(void)
   if (tm1638_state) {
     byte buttons = Tm1638GetButtons();
     for (byte i = 0; i < MAX_SWITCHES; i++) {
-      SwitchSetVirtual(i, (buttons &1) ^1);
-      byte color = (SwitchGetVirtual(i)) ? TM1638_COLOR_NONE : TM1638_COLOR_RED;
+      virtualswitch[i] = (buttons &1) ^1;
+      byte color = (virtualswitch[i]) ? TM1638_COLOR_NONE : TM1638_COLOR_RED;
       Tm1638SetLED(color, i);
       buttons >>= 1;
     }

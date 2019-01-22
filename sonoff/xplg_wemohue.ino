@@ -1,7 +1,7 @@
 /*
   xplg_wemohue.ino - wemo and hue support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Heiko Krupp and Theo Arends
+  Copyright (C) 2018  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -570,23 +570,13 @@ void HueLightStatus1(byte device, String *response)
   float sat = 0;
   float bri = 254;
   uint16_t ct = 500;
-//stb mod
-  bool on = power & (1 << (device-1));
-#ifdef USE_SHUTTER
-  if(Settings.flag3.shutter_mode &&  (shutter_mask & (1 << (Settings.shutter_startrelay[device-1]-1))) ) {
-    bri = (float)(Settings.shutter_invert[device-1] ? 100 - Settings.shutter_position[device-1]: Settings.shutter_position[device-1]) / 100;
-    on = bri > 0 ? 1 : 0;
-  } else
-#endif
-//end
+
   if (light_type) {
     LightGetHsb(&hue, &sat, &bri, g_gotct);
     ct = LightGetColorTemp();
   }
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON);
-//Stb mod
-  response->replace("{state}", on ? "true" : "false");
-//end
+  response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
   response->replace("{h}", String((uint16_t)(65535.0f * hue)));
   response->replace("{s}", String((uint8_t)(254.0f * sat)));
   response->replace("{b}", String((uint8_t)(254.0f * bri)));
@@ -609,17 +599,6 @@ void HueGlobalConfig(String *path)
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
   for (uint8_t i = 1; i <= maxhue; i++) {
-//stb mod
-// skip broadcast for devices named Sonoff*
-    if (strncmp (Settings.friendlyname[i-1], "Sonoff", 6) == 0) {
-      snprintf_P(log_data, sizeof(log_data), PSTR("Skip broadcasting default device: %s"),Settings.friendlyname[i-1]);
-      AddLog(LOG_LEVEL_ERROR);
-      continue;
-    } else {
-      snprintf_P(log_data, sizeof(log_data), PSTR("Broadcast OK device: %s"),Settings.friendlyname[i-1]);
-      AddLog(LOG_LEVEL_ERROR);
-    }
-// end
     response += i;
     response += F("\":{\"state\":");
     HueLightStatus1(i, &response);
@@ -663,18 +642,6 @@ void HueLights(String *path)
   if (path->endsWith("/lights")) {                   // Got /lights
     response = "{\"";
     for (uint8_t i = 1; i <= maxhue; i++) {
-      //stb mode
-      // skip broadcast for devices named Sonoff*
-          if (strncmp (Settings.friendlyname[i-1], "Sonoff", 6) == 0) {
-            snprintf_P(log_data, sizeof(log_data), PSTR("2Skip broadcasting default device: %s"),Settings.friendlyname[i-1]);
-            AddLog(LOG_LEVEL_ERROR);
-            continue;
-          } else {
-            snprintf_P(log_data, sizeof(log_data), PSTR("2Broadcast OK device: %s"),Settings.friendlyname[i-1]);
-            AddLog(LOG_LEVEL_ERROR);
-          }
-      // end
-
       response += i;
       response += F("\":{\"state\":");
       HueLightStatus1(i, &response);
@@ -703,37 +670,21 @@ void HueLights(String *path)
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
         response.replace("{id", String(device));
         response.replace("{cm", "on");
-//stb mod
-#ifdef USE_SHUTTER
-      if(Settings.flag3.shutter_mode &&  (shutter_mask & (1 << (Settings.shutter_startrelay[device-1]-1))) ) {
-          if(!change) {
-            on = hue_json["on"];
-            bri = on ? 1.0f : 0.0f; // when bri is not part of this request then calculate it
-            change = true;
-          }
-          response.replace("{re", on ? "true" : "false");
-        }
-        else
+
+        on = hue_json["on"];
+        switch(on)
         {
-#endif
-//end
-          on = hue_json["on"];
-          switch(on)
-          {
-            case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
-                         response.replace("{re", "false");
-                         break;
-            case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
-                         response.replace("{re", "true");
-                         break;
-            default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
-                         break;
-          }
+          case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
+                       response.replace("{re", "false");
+                       break;
+          case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
+                       response.replace("{re", "true");
+                       break;
+          default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
+                       break;
         }
         resp = true;
-#ifdef USE_SHUTTER
       }
-#endif
 
       if (light_type) {
         LightGetHsb(&hue, &sat, &bri, g_gotct);
@@ -797,15 +748,6 @@ void HueLights(String *path)
         change = true;
       }
       if (change) {
-//stb mode
-#ifdef USE_SHUTTER
-        if(Settings.flag3.shutter_mode &&  (shutter_mask & (1 << (Settings.shutter_startrelay[device-1]-1))) ) {
-          snprintf_P(log_data, sizeof(log_data), PSTR("Settings.shutter_invert: %d"),Settings.shutter_invert[device-1]);
-          AddLog(LOG_LEVEL_DEBUG);
-          SetShutterPosition(device,  bri  * 100.0f );
-        } else
-#endif
-//end
         if (light_type) {
           LightSetHsb(hue, sat, bri, ct, g_gotct);
         }

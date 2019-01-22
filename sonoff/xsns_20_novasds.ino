@@ -1,7 +1,7 @@
 /*
   xsns_20_novasds.ino - Nova SDS011/SDS021 particle concentration sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -108,7 +108,7 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
 
   // read rest (9 of 10 bytes) of message
   NovaSdsSerial->readBytes(&recbuf[1], 9);
-  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, recbuf, sizeof(recbuf));
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, recbuf, sizeof(recbuf));
 
   if ( NULL != buffer ) {
     // return data to buffer

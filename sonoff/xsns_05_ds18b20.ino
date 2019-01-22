@@ -1,7 +1,7 @@
 /*
   xsns_05_ds18b20.ino - DS18B20 temperature sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -42,11 +42,7 @@ uint8_t OneWireReset(void)
   uint8_t retries = 125;
 
   //noInterrupts();
-#ifdef DS18B20_INTERNAL_PULLUP
-  pinMode(ds18x20_pin, INPUT_PULLUP);
-#else
   pinMode(ds18x20_pin, INPUT);
-#endif
   do {
     if (--retries == 0) {
       return 0;
@@ -56,11 +52,7 @@ uint8_t OneWireReset(void)
   pinMode(ds18x20_pin, OUTPUT);
   digitalWrite(ds18x20_pin, LOW);
   delayMicroseconds(480);
-#ifdef DS18B20_INTERNAL_PULLUP
-  pinMode(ds18x20_pin, INPUT_PULLUP);
-#else
   pinMode(ds18x20_pin, INPUT);
-#endif
   delayMicroseconds(70);
   uint8_t r = !digitalRead(ds18x20_pin);
   //interrupts();
@@ -89,11 +81,7 @@ uint8_t OneWireReadBit(void)
   pinMode(ds18x20_pin, OUTPUT);
   digitalWrite(ds18x20_pin, LOW);
   delayMicroseconds(3);
-#ifdef DS18B20_INTERNAL_PULLUP
-  pinMode(ds18x20_pin, INPUT_PULLUP);
-#else
   pinMode(ds18x20_pin, INPUT);
-#endif
   delayMicroseconds(10);
   uint8_t r = digitalRead(ds18x20_pin);
   //interrupts();

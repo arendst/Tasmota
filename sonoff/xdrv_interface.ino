@@ -1,7 +1,7 @@
 /*
   xdrv_interface.ino - Driver interface support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends inspired by ESPEasy
+  Copyright (C) 2018  Theo Arends inspired by ESPEasy
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -240,18 +240,7 @@ boolean XdrvCall(byte Function)
   for (byte x = 0; x < xdrv_present; x++) {
 //    WifiAddDelayWhenDisconnected();
     result = xdrv_func_ptr[x](Function);
-
-    if (result && ((FUNC_COMMAND == Function) ||
-                   (FUNC_MQTT_DATA == Function) ||
-                   (FUNC_RULES_PROCESS == Function) ||
-                   (FUNC_BUTTON_PRESSED == Function) ||
-                   (FUNC_SERIAL == Function) ||
-                   (FUNC_MODULE_INIT == Function) ||
-                   (FUNC_SET_CHANNELS == Function) ||
-                   (FUNC_SET_DEVICE_POWER == Function)
-                  )) {
-      break;
-    }
+    if (result) break;
   }
 
   return result;

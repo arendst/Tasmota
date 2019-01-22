@@ -1,7 +1,7 @@
 /*
   xsns_34_hx711.ino - HX711 load cell support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -270,7 +270,7 @@ void HxEvery100mSecond(void)
       }
       else if (HX_CAL_RESET == hx_calibrate_step) {  // Wait for stable reset
         if (hx_calibrate_timer) {
-          if (hx_weight < (long)Settings.weight_reference) {
+          if (hx_weight < Settings.weight_reference) {
             hx_calibrate_step--;
             hx_calibrate_timer = HX_CAL_TIMEOUT * (10 / HX_SAMPLES);
             HxCalibrationStateTextJson(2);
@@ -281,7 +281,7 @@ void HxEvery100mSecond(void)
       }
       else if (HX_CAL_FIRST == hx_calibrate_step) {  // Wait for first reference weight
         if (hx_calibrate_timer) {
-          if (hx_weight > (long)Settings.weight_reference) {
+          if (hx_weight > Settings.weight_reference) {
             hx_calibrate_step--;
           }
         } else {
@@ -289,7 +289,7 @@ void HxEvery100mSecond(void)
         }
       }
       else if (HX_CAL_DONE == hx_calibrate_step) {   // Second stable reference weight
-        if (hx_weight > (long)Settings.weight_reference) {
+        if (hx_weight > Settings.weight_reference) {
           hx_calibrate_step = HX_CAL_FINISH;         // Calibration done
           Settings.weight_calibration = hx_weight / Settings.weight_reference;
           hx_weight = 0;                             // Reset calibration value
@@ -393,8 +393,8 @@ const char HTTP_FORM_HX711[] PROGMEM =
 
 void HandleHxAction(void)
 {
-  if (!HttpCheckPriviledgedAccess()) { return; }
-
+  if (HttpUser()) { return; }
+  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_HX711);
 
   if (WebServer->hasArg("save")) {

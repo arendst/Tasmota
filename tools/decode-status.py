@@ -3,7 +3,7 @@
 """
   decode-status.py - decode status for Sonoff-Tasmota
 
-  Copyright (C) 2019 Theo Arends
+  Copyright (C) 2018 Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -89,15 +89,14 @@ a_setoption = [[
     "Add UTC time offset to JSON message",
     "Show hostname and IP address in GUI",
     "Apply SetOption20 to Tuya",
-    "mDNS enabled",
+    "Use short Hass discovery messages",
     "Use wifi network scan at restart",
     "Use wifi network rescan regularly",
     "Add IR raw data to JSON message",
     "Change state topic from tele/STATE to stat/RESULT",
     "Enable normal sleep instead of dynamic sleep",
-    "Force local operation when button/switch topic is set",
-    "Force no pull-up",
-    "","","",
+    "",
+    "","","","",
     "","","","",
     "","","","",
     "","","","",
@@ -136,8 +135,8 @@ a_features = [[
     "USE_MCP230xx_OUTPUT","USE_MCP230xx_DISPLAYOUTPUT","USE_HLW8012","USE_CSE7766",
     "USE_MCP39F501","USE_PZEM_AC","USE_DS3231","USE_HX711",
     "USE_PZEM_DC","USE_TX20_WIND_SENSOR","USE_MGC3130","USE_RF_SENSOR",
-    "USE_THEO_V2","USE_ALECTO_V2","USE_AZ7798","USE_MAX31855",
-    "USE_PN532_I2C","","","",
+    "USE_THEO_V2","USE_ALECTO_V2","","",
+    "","","","",
     "","","","",
     "","","",""]]
 

@@ -1,7 +1,7 @@
 /*
   xdrv_07_domoticz.ino - domoticz support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -32,10 +32,8 @@ const char kDomoticzCommands[] PROGMEM = D_CMND_IDX "|" D_CMND_KEYIDX "|" D_CMND
   #error "Domoticz: Too many sensors or change settings.h layout"
 #endif
 
-//stb mod
 const char kDomoticzSensors[] PROGMEM =
-  D_DOMOTICZ_TEMP "|" D_DOMOTICZ_TEMP_HUM "|" D_DOMOTICZ_TEMP_HUM_BARO "|" D_DOMOTICZ_POWER_ENERGY "|" D_DOMOTICZ_ILLUMINANCE "|" D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT "|" D_DOMOTICZ_AIRQUALITY "|" D_DOMOTICZ_SHUTTER;
-//end
+  D_DOMOTICZ_TEMP "|" D_DOMOTICZ_TEMP_HUM "|" D_DOMOTICZ_TEMP_HUM_BARO "|" D_DOMOTICZ_POWER_ENERGY "|" D_DOMOTICZ_ILLUMINANCE "|" D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT "|" D_DOMOTICZ_AIRQUALITY ;
 
 const char S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE[] PROGMEM = "{\"" D_CMND_DOMOTICZ "%s%d\":%d}";
 const char S_JSON_DOMOTICZ_COMMAND_INDEX_LVALUE[] PROGMEM = "{\"" D_CMND_DOMOTICZ "%s%d\":%lu}";
@@ -82,7 +80,7 @@ void MqttPublishDomoticzFanState()
     int fan_speed = GetFanspeed();
     snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fan_speed * 10);
     snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-      (int)Settings.domoticz_relay_idx[1], (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
+      Settings.domoticz_relay_idx[1], (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
     MqttPublish(domoticz_in_topic);
 
     fan_debounce = millis();
@@ -109,7 +107,7 @@ void MqttPublishDomoticzPowerState(byte device)
 
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), Settings.light_dimmer);
         snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-          (int)Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
+          Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
         MqttPublish(domoticz_in_topic);
       }
     }
@@ -385,13 +383,6 @@ void DomoticzSensor(byte idx, char *data)
     if (DZ_AIRQUALITY == idx) {
       snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"),
         Settings.domoticz_sensor_idx[idx], data, DomoticzBatteryQuality(), DomoticzRssiQuality());
-//STB mod
-} else if (DZ_SHUTTER == idx) {
-  byte position;
-  position = atoi(data);
-  snprintf_P(mqtt_data, sizeof(dmess), DOMOTICZ_MESSAGE,
-    Settings.domoticz_sensor_idx[idx], position < 2 ? 0 : ( position == 100 ? 1 : 2), data, DomoticzBatteryQuality(), DomoticzRssiQuality());
-//end
     } else {
       snprintf_P(mqtt_data, sizeof(dmess), DOMOTICZ_MESSAGE,
         Settings.domoticz_sensor_idx[idx], 0, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
@@ -457,8 +448,8 @@ const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
 
 void HandleDomoticzConfiguration(void)
 {
-  if (!HttpCheckPriviledgedAccess()) { return; }
-
+  if (HttpUser()) { return; }
+  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_DOMOTICZ);
 
   if (WebServer->hasArg("save")) {

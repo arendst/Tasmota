@@ -1,7 +1,7 @@
 /*
   xsns_36_MGC3130.ino - Support for I2C MGC3130 Electric Field Sensor for Sonoff-Tasmota
 
-  Copyright (C) 2019  Christian Baars & Theo Arends
+  Copyright (C) 2018  Christian Baars & Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

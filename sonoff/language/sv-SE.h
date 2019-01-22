@@ -1,7 +1,7 @@
 /*
   sv-SE.h - localization for Swedish - Svenska for Sonoff-Tasmota
 
-  Copyright (C) 2019  Gunnar Norin
+  Copyright (C) 2018  Gunnar Norin
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -30,31 +30,6 @@
  *
  * Updated until v6.2.1.11
 \*********************************************************************/
-//STB mod
-#define D_JSON_MOISTURE "Moisture"
-#define D_JSON_DISTANCE "Distance"
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
-#define D_CMND_MQTTENABLE "MqttEnable"
-#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
-#define D_CMND_OPEN "shutteropen"
-#define D_CMND_CLOSE "shutterclose"
-#define D_CMND_STOP "shutterstop"
-#define D_CMND_POSITION "shutterposition"
-#define D_CMND_OPENTIME "shutteropenduration"
-#define D_CMND_CLOSETIME "shuttercloseduration"
-#define D_CMND_SHUTTERRELAY "shutterrelay"
-#define D_CMND_CALIBRATIONMATIX "shuttercalibration"
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_SHUTTER "SHUTTER"
-#define D_CMND_INTERLOCKMASK "INTERLOCKMASK"
-#define D_CMND_SET50PERCENT "shutter50percent"
-#define D_CMND_SHUTTERSETCLOSE "shuttersetclose"
-#define D_CMND_SHUTTERINVERT "shutterinvert"
-#define D_CMND_INTERLOCKBUCKETSIZE "bucketsize"
-#define D_DOMOTICZ_SHUTTER "Shutter"
-//end
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 // https://www.science.co.il/language/Locale-codes.php
@@ -157,11 +132,11 @@
 #define D_PROGRAM_FLASH_SIZE "Program-flashstorlek"
 #define D_PROGRAM_SIZE "Programstorlek"
 #define D_PROJECT "Projekt"
-#define D_RAIN "Regn"
+#define D_RAIN "Rain"
 #define D_RECEIVED "Mottagen"
 #define D_RESTART "Omstart"
 #define D_RESTARTING "Startar om"
-#define D_RESTART_REASON "Omstartsorsak"
+#define D_RESTART_REASON "Restart Reason"
 #define D_RESTORE "återställ"
 #define D_RETAINED "bevarad"
 #define D_RULE "Regel"
@@ -193,13 +168,13 @@
 #define D_UV_INDEX_2 "Med"
 #define D_UV_INDEX_3 "Hög"
 #define D_UV_INDEX_4 "Farligt"
-#define D_UV_INDEX_5 "Skadligt"
-#define D_UV_INDEX_6 "Extremt"
-#define D_UV_INDEX_7 "UO"         // Out of Range
+#define D_UV_INDEX_5 "BurnL1/2"
+#define D_UV_INDEX_6 "BurnL3"
+#define D_UV_INDEX_7 "OoR"         // Out of Range
 #define D_UV_LEVEL "UV nivå"
 #define D_UV_POWER "UV kraft"
 #define D_VERSION "Version"
-#define D_VOLTAGE "Volttal"
+#define D_VOLTAGE "Voltage"
 #define D_WEIGHT "Vikt"
 #define D_WARMLIGHT "Varm"
 #define D_WEB_SERVER "Webbserver"
@@ -222,7 +197,7 @@
 #define D_WPS_FAILED_WITH_STATUS "WPS-konfigurering MISSLYCKADES med status"
 #define D_ACTIVE_FOR_3_MINUTES "aktiv för 3 minuter"
 #define D_FAILED_TO_START "misslyckades att starta"
-#define D_PATCH_ISSUE_2186 "Laga problem 2186"
+#define D_PATCH_ISSUE_2186 "Patch issue 2186"
 #define D_CONNECTING_TO_AP "Ansluter till AP"
 #define D_IN_MODE "i läge"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Anslutning misslyckades mottog ingen IP-adress"
@@ -278,7 +253,6 @@
 
 #define D_MODULE_PARAMETERS "Modulparameterar"
 #define D_MODULE_TYPE "Modultyp"
-#define D_PULLUP_ENABLE "Ingen knapp/brytare pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Seriell in"
 #define D_SERIAL_OUT "Seriell ut"
@@ -306,7 +280,7 @@
 #define D_LOGGING_PARAMETERS "Loggningsparametrar"
 #define D_SERIAL_LOG_LEVEL "Seriell loggnivå"
 #define D_WEB_LOG_LEVEL "Webb loggnivå"
-#define D_SYS_LOG_LEVEL "Syslog-nivå"
+#define D_SYS_LOG_LEVEL "Syslog-nivp"
 #define D_MORE_DEBUG "Mer debugging"
 #define D_SYSLOG_HOST "Syslog-värd"
 #define D_SYSLOG_PORT "Syslog-port"
@@ -326,8 +300,8 @@
 #define D_CONFIGURATION_RESET "Konfiguration nollställd"
 
 #define D_PROGRAM_VERSION "Programversion"
-#define D_BUILD_DATE_AND_TIME "Kompilerings datum & tid"
-#define D_CORE_AND_SDK_VERSION "Core/SDK version"
+#define D_BUILD_DATE_AND_TIME "Build datum & tid"
+#define D_CORE_AND_SDK_VERSION "Core/SDK Version"
 #define D_FLASH_WRITE_COUNT "Flash-skrivningsräknare"
 #define D_MAC_ADDRESS "MAC-adress"
 #define D_MQTT_HOST "MQTT-värd"
@@ -364,11 +338,11 @@
 #define D_UPLOAD_ERR_11 "Misslyckades rensa RF chip"
 #define D_UPLOAD_ERR_12 "Misslyckades skriva till RF chip"
 #define D_UPLOAD_ERR_13 "Misslyckades avkoda RF firmware"
-#define D_UPLOAD_ERROR_CODE "Uppladdningsfelkod"
+#define D_UPLOAD_ERROR_CODE "Upladdningsfelkod"
 
 #define D_ENTER_COMMAND "Ange kommando"
-#define D_ENABLE_WEBLOG_FOR_RESPONSE "Aktivera webblogg 2 om svar förväntas"
-#define D_NEED_USER_AND_PASSWORD "Behöver user=<användarnamn>&password=<lösenord>"
+#define D_ENABLE_WEBLOG_FOR_RESPONSE "Aktivera weblog 2 om svar förväntas"
+#define D_NEED_USER_AND_PASSWORD "Behöver användarnamn=<användarnamn>&lösenord=<lösenord>"
 
 // xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Verifierar TLS fingeravtryck..."
@@ -417,14 +391,14 @@
 
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Konfigurera timer"
-#define D_TIMER_PARAMETERS "Timerparametrar"
+#define D_TIMER_PARAMETERS "timerparametrar"
 #define D_TIMER_ENABLE "Aktivera timer"
 #define D_TIMER_ARM "Aktivera"
 #define D_TIMER_TIME "Tid"
 #define D_TIMER_DAYS "Dagar"
 #define D_TIMER_REPEAT "Repetera"
-#define D_TIMER_OUTPUT "Utgång"
-#define D_TIMER_ACTION "Åtgärd"
+#define D_TIMER_OUTPUT "Output"
+#define D_TIMER_ACTION "Action"
 
 // xdrv_10_knx.ino
 #define D_CONFIGURE_KNX "Konfigurera KNX"
@@ -502,9 +476,9 @@
 #define D_TX20_WIND_SPEED_AVG "Vindstyrka medel"
 #define D_TX20_WIND_SPEED_MAX "Vindstyrka max"
 #define D_TX20_NORTH "N"
-#define D_TX20_EAST "Ö"
+#define D_TX20_EAST "E"
 #define D_TX20_SOUTH "S"
-#define D_TX20_WEST "V"
+#define D_TX20_WEST "W"
 
 // sonoff_template.h
 #define D_SENSOR_NONE     "Ingen"
@@ -566,16 +540,13 @@
 #define D_SENSOR_RF_SENSOR "RF Sensor"
 #define D_SENSOR_AZ_RX   "AZ Rx"
 #define D_SENSOR_AZ_TX   "AZ Tx"
-#define D_SENSOR_MAX31855_CS  "MAX31855 CS"
-#define D_SENSOR_MAX31855_CLK "MAX31855 CLK"
-#define D_SENSOR_MAX31855_DO  "MAX31855 DO"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
-#define D_UNIT_HOUR "Tim"
-#define D_UNIT_INCREMENTS "ink"
+#define D_UNIT_HOUR "Hr"
+#define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
 #define D_UNIT_KILOOHM "kOhm"
@@ -628,12 +599,12 @@
 #define D_LOG_WIFI "WIF: "         // Wifi
 
 //SDM220
-#define D_PHASE_ANGLE     "Fasvinkel"
-#define D_IMPORT_ACTIVE   "Import aktiv"
-#define D_EXPORT_ACTIVE   "Export aktiv"
-#define D_IMPORT_REACTIVE "Import reaktiv"
-#define D_EXPORT_REACTIVE "Export reaktiv"
-#define D_TOTAL_REACTIVE  "Total reaktiv"
+#define D_PHASE_ANGLE     "Phase Angle"
+#define D_IMPORT_ACTIVE   "Import Active"
+#define D_EXPORT_ACTIVE   "Export Active"
+#define D_IMPORT_REACTIVE "Import Reactive"
+#define D_EXPORT_REACTIVE "Export Reactive"
+#define D_TOTAL_REACTIVE  "Total Reactive"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
 

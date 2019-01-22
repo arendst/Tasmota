@@ -1,7 +1,7 @@
 /*
   xnrg_06_pzem_dc.ino - PZEM-003,017 Modbus DC energy sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ void PzemDcEverySecond(void)
     uint8_t buffer[22];
 
     uint8_t error = PzemDcModbus->ReceiveBuffer(buffer, 8);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
+    AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
 
     if (error) {
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "PzemDc response error %d"), error);

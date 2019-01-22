@@ -1,7 +1,7 @@
 /*
   xnrg_interface.ino - Energy driver interface support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends inspired by ESPEasy
+  Copyright (C) 2018  Theo Arends inspired by ESPEasy
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -16,8 +16,6 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-#ifdef USE_ENERGY_SENSOR
 
 #ifdef XFUNC_PTR_IN_ROM
 int (* const xnrg_func_ptr[])(byte) PROGMEM = {   // Energy driver Function Pointers
@@ -98,14 +96,7 @@ int XnrgCall(byte Function)
 
   for (byte x = 0; x < xnrg_present; x++) {
     result = xnrg_func_ptr[x](Function);
-
-    if (result && ((FUNC_SERIAL == Function) ||
-                   (FUNC_COMMAND == Function)
-                  )) {
-      break;
-    }
+    if (result) break;
   }
   return result;
 }
-
-#endif  // USE_ENERGY_SENSOR

@@ -1,7 +1,7 @@
 /*
   xnrg_03_pzem004t.ino - PZEM004T energy sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -122,7 +122,7 @@ bool PzemRecieve(uint8_t resp, float *data)
     }
   }
 
-  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, len);
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, len);
 
   if (len != sizeof(PZEMCommand)) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem comms timeout"));

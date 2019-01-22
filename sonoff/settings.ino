@@ -1,7 +1,7 @@
 /*
   settings.ino - user settings for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -95,10 +95,6 @@ void RtcSettingsLoad(void)
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RTCMEM));
     RtcSettings.valid = RTC_MEM_VALID;
-    //STB mod
-    RtcSettings.uptime = Settings.uptime;
-    RtcSettings.ultradeepsleep = 0;
-    //end
     RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
     RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
     for (byte i = 0; i < MAX_COUNTERS; i++) {
@@ -175,139 +171,6 @@ extern "C" uint32_t _SPIFFS_end;
 // Version 5.2 allow for more flash space
 #define CFG_ROTATES         8           // Number of flash sectors used (handles uploads)
 
-/*********************************************************************************************\
- * EEPROM support based on EEPROM library and tuned for Tasmota
-\*********************************************************************************************/
-
-uint32_t eeprom_sector = SPIFFS_END;
-uint8_t* eeprom_data = 0;
-size_t eeprom_size = 0;
-bool eeprom_dirty = false;
-
-void EepromBegin(size_t size)
-{
-  if (size <= 0) { return; }
-  if (size > SPI_FLASH_SEC_SIZE - sizeof(Settings) -4) { size = SPI_FLASH_SEC_SIZE - sizeof(Settings) -4; }
-  size = (size + 3) & (~3);
-
-  // In case begin() is called a 2nd+ time, don't reallocate if size is the same
-  if (eeprom_data && size != eeprom_size) {
-    delete[] eeprom_data;
-    eeprom_data = new uint8_t[size];
-  } else if (!eeprom_data) {
-    eeprom_data = new uint8_t[size];
-  }
-  eeprom_size = size;
-
-  size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
-  uint8_t* flash_buffer;
-  flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
-  noInterrupts();
-  spi_flash_read(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE);
-  interrupts();
-  memcpy(eeprom_data, flash_buffer + flash_offset, eeprom_size);
-  delete[] flash_buffer;
-
-  eeprom_dirty = false;  // make sure dirty is cleared in case begin() is called 2nd+ time
-}
-
-size_t EepromLength(void)
-{
-  return eeprom_size;
-}
-
-uint8_t EepromRead(int const address)
-{
-  if (address < 0 || (size_t)address >= eeprom_size) { return 0; }
-  if (!eeprom_data) { return 0; }
-
-  return eeprom_data[address];
-}
-
-// Prototype needed for Arduino IDE - https://forum.arduino.cc/index.php?topic=406509.0
-template<typename T> T EepromGet(int const address, T &t);
-template<typename T> T EepromGet(int const address, T &t)
-{
-  if (address < 0 || address + sizeof(T) > eeprom_size) { return t; }
-  if (!eeprom_data) { return 0; }
-
-  memcpy((uint8_t*) &t, eeprom_data + address, sizeof(T));
-  return t;
-}
-
-void EepromWrite(int const address, uint8_t const value)
-{
-  if (address < 0 || (size_t)address >= eeprom_size) { return; }
-  if (!eeprom_data) { return; }
-
-  // Optimise eeprom_dirty. Only flagged if data written is different.
-  uint8_t* pData = &eeprom_data[address];
-  if (*pData != value) {
-    *pData = value;
-    eeprom_dirty = true;
-  }
-}
-
-// Prototype needed for Arduino IDE - https://forum.arduino.cc/index.php?topic=406509.0
-template<typename T> void EepromPut(int const address, const T &t);
-template<typename T> void EepromPut(int const address, const T &t)
-{
-  if (address < 0 || address + sizeof(T) > eeprom_size) { return; }
-  if (!eeprom_data) { return; }
-
-  // Optimise eeprom_dirty. Only flagged if data written is different.
-  if (memcmp(eeprom_data + address, (const uint8_t*)&t, sizeof(T)) != 0) {
-    eeprom_dirty = true;
-    memcpy(eeprom_data + address, (const uint8_t*)&t, sizeof(T));
-  }
-}
-
-bool EepromCommit(void)
-{
-  bool ret = false;
-  if (!eeprom_size) { return false; }
-  if (!eeprom_dirty) { return true; }
-  if (!eeprom_data) { return false; }
-
-  size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
-  uint8_t* flash_buffer;
-  flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
-  noInterrupts();
-  spi_flash_read(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE);
-  memcpy(flash_buffer + flash_offset, eeprom_data, eeprom_size);
-  if (spi_flash_erase_sector(eeprom_sector) == SPI_FLASH_RESULT_OK) {
-    if (spi_flash_write(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE) == SPI_FLASH_RESULT_OK) {
-      eeprom_dirty = false;
-      ret = true;
-    }
-  }
-  interrupts();
-  delete[] flash_buffer;
-
-  return ret;
-}
-
-uint8_t * EepromGetDataPtr()
-{
-  eeprom_dirty = true;
-  return &eeprom_data[0];
-}
-
-void EepromEnd(void)
-{
-  if (!eeprom_size) { return; }
-
-  EepromCommit();
-  if (eeprom_data) {
-    delete[] eeprom_data;
-  }
-  eeprom_data = 0;
-  eeprom_size = 0;
-  eeprom_dirty = false;
-}
-
-/********************************************************************************************/
-
 uint16_t settings_crc = 0;
 uint32_t settings_location = SETTINGS_LOCATION;
 uint8_t *settings_buffer = NULL;
@@ -372,7 +235,6 @@ void SettingsSaveAll(void)
     Settings.power = 0;
   }
   XsnsCall(FUNC_SAVE_BEFORE_RESTART);
-  EepromCommit();
   SettingsSave(0);
 }
 
@@ -414,25 +276,8 @@ void SettingsSave(byte rotate)
     Settings.save_flag++;
     Settings.cfg_size = sizeof(SYSCFG);
     Settings.cfg_crc = GetSettingsCrc();
-
-    if (SPIFFS_END == settings_location) {
-      uint8_t* flash_buffer;
-      flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
-      if (eeprom_data && eeprom_size) {
-        size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
-        memcpy(flash_buffer + flash_offset, eeprom_data, eeprom_size);  // Write dirty EEPROM data
-      } else {
-        ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)flash_buffer, SPI_FLASH_SEC_SIZE);   // Read EEPROM area
-      }
-      memcpy(flash_buffer, &Settings, sizeof(Settings));
-      ESP.flashEraseSector(settings_location);
-      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)flash_buffer, SPI_FLASH_SEC_SIZE);
-      delete[] flash_buffer;
-    } else {
-      ESP.flashEraseSector(settings_location);
-      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    }
-
+    ESP.flashEraseSector(settings_location);
+    ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     if (!stop_flash_rotate && rotate) {
       for (byte i = 1; i < CFG_ROTATES; i++) {
         ESP.flashEraseSector(settings_location -i);  // Delete previous configurations by resetting to 0xFF
@@ -579,7 +424,7 @@ void SettingsDefaultSet2(void)
   // Module
 //  Settings.flag.interlock = 0;
   Settings.module = MODULE;
-//  for (byte i = 0; i < sizeof(Settings.my_gp); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
+//  for (byte i = 0; i < MAX_GPIO_PIN; i++) { Settings.my_gp.io[i] = 0; }
   strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
   strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
   strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
@@ -625,7 +470,6 @@ void SettingsDefaultSet2(void)
   Settings.webserver = WEB_SERVER;
   Settings.weblog_level = WEB_LOG_LEVEL;
   strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
-  Settings.flag3.mdns_enabled = MDNS_ENABLED;
 
   // Button
 //  Settings.flag.button_restrict = 0;
@@ -752,11 +596,6 @@ void SettingsDefaultSet2(void)
   //Settings.flag.decimal_text = 0;
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
-
-//STB mod
-  Settings.deepsleep = 0;
-//end
-
   for (byte i = 0; i < MAX_PWMS; i++) {
     Settings.light_color[i] = 255;
 //    Settings.pwm_value[i] = 0;
@@ -903,7 +742,7 @@ void SettingsDelta(void)
       Settings.altitude = 0;
     }
     if (Settings.version < 0x0508000B) {
-      for (byte i = 0; i < sizeof(Settings.my_gp); i++) {  // Move GPIO_LEDs
+      for (byte i = 0; i < MAX_GPIO_PIN; i++) {  // Move GPIO_LEDs
         if ((Settings.my_gp.io[i] >= 25) && (Settings.my_gp.io[i] <= 32)) {  // Was GPIO_LED1
           Settings.my_gp.io[i] += 23;  // Move GPIO_LED1
         }
@@ -990,7 +829,7 @@ void SettingsDelta(void)
           Settings.switchmode[i] = SWITCH_MODE;
         }
       }
-      for (byte i = 0; i < sizeof(Settings.my_gp); i++) {
+      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
         if (Settings.my_gp.io[i] >= GPIO_SWT5) {  // Move up from GPIO_SWT5 to GPIO_KEY1
           Settings.my_gp.io[i] += 4;
         }
@@ -1026,10 +865,6 @@ void SettingsDelta(void)
       if (Settings.sleep < 50) {
         Settings.sleep = 50;                // Default to 50 for sleep, for now
       }
-    }
-    if (Settings.version < 0x06040105) {
-      Settings.flag3.mdns_enabled = MDNS_ENABLED;
-      Settings.param[P_MDNS_DELAYED_START] = 0;
     }
 
     Settings.version = VERSION;

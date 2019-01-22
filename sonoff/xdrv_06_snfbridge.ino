@@ -1,7 +1,7 @@
 /*
   xdrv_06_snfbridge.ino - sonoff RF bridge 433 support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends and Erik Andrén Zachrisson (fw update)
+  Copyright (C) 2018  Theo Arends and Erik Andrén Zachrisson (fw update)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ unsigned long sonoff_bridge_last_learn_time = 0;
 
 ssize_t rf_find_hex_record_start(uint8_t *buf, size_t size)
 {
-  for (size_t i = 0; i < size; i++) {
+  for (int i = 0; i < size; i++) {
     if (buf[i] == ':') {
       return i;
     }
@@ -66,7 +66,7 @@ ssize_t rf_find_hex_record_start(uint8_t *buf, size_t size)
 
 ssize_t rf_find_hex_record_end(uint8_t *buf, size_t size)
 {
-  for (size_t i = 0; i < size; i++) {
+  for (ssize_t i = 0; i < size; i++) {
     if (buf[i] == '\n') {
       return i;
     }

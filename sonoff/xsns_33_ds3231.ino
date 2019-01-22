@@ -1,7 +1,7 @@
 /*
   xsns_33_ds3231.ino - ds3231 RTC chip, act like sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Guy Elgabsi (guy.elg AT gmail.com)
+  Copyright (C) 2018  Guy Elgabsi (guy.elg AT gmail.com)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -62,23 +62,27 @@
 #define HR1224 6                   //Hours register 12 or 24 hour mode (24 hour mode==0)
 #define CENTURY 7                  //Century bit in Month register
 #define DYDT 6                     //Day/Date flag bit in alarm Day/Date registers
-boolean ds3231ReadStatus = false;
-boolean ds3231WriteStatus = false; //flag, we want to wriet/write to DS3231 onlu once
-boolean DS3231chipDetected = false;
+boolean ds3231ReadStatus = false , ds3231WriteStatus = false; //flag, we want to wriet/write to DS3231 onlu once
+boolean DS3231chipDetected;
+
 
 /*----------------------------------------------------------------------*
   Detect the DS3231 Chip
   ----------------------------------------------------------------------*/
-void DS3231Detect(void)
+boolean DS3231Detect(void)
 {
-  DS3231chipDetected = false;
-  if (I2cValidRead(USE_RTC_ADDR, RTC_STATUS, 1)) {
+  if (I2cValidRead(USE_RTC_ADDR, RTC_STATUS, 1))
+  {
     snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "DS3231", USE_RTC_ADDR);
-    DS3231chipDetected = true;
-  } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s *NOT* " D_FOUND_AT " 0x%x"), "DS3231", USE_RTC_ADDR);
+    AddLog(LOG_LEVEL_INFO);
+    return true;
   }
-  AddLog(LOG_LEVEL_INFO);
+  else
+  {
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s *NOT* " D_FOUND_AT " 0x%x"), "DS3231", USE_RTC_ADDR);
+    AddLog(LOG_LEVEL_INFO);
+    return false;
+  }
 }
 
 /*----------------------------------------------------------------------*
@@ -139,8 +143,10 @@ boolean Xsns33(byte function)
   if (i2c_flg) {
     switch (function) {
       case FUNC_INIT:
-        DS3231Detect();
+        DS3231chipDetected = DS3231Detect();
+        result = DS3231chipDetected;
         break;
+
       case FUNC_EVERY_SECOND:
         TIME_T tmpTime;
         if (!ds3231ReadStatus && DS3231chipDetected && utc_time < 1451602800 ) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
@@ -163,6 +169,7 @@ boolean Xsns33(byte function)
           } else {
             rules_flag.time_set = 1;
           }
+          result = true;
         }
         else if (!ds3231WriteStatus && DS3231chipDetected &&  utc_time > 1451602800 && abs(utc_time - ReadFromDS3231()) > 60) {//if time is valid and is drift from RTC in more that 60 second
           snprintf_P(log_data, sizeof(log_data), PSTR("Write Time TO DS3231 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
@@ -170,6 +177,9 @@ boolean Xsns33(byte function)
           AddLog(LOG_LEVEL_INFO);
           SetDS3231Time (utc_time); //update the DS3231 time
           ds3231WriteStatus = true;
+        }
+        else {
+          result = false;
         }
         break;
     }

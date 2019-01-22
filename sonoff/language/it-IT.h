@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Sonoff-Tasmota
 
-  Copyright (C) 2019 Gennaro Tortone - some mods by Antonio Fragola
+  Copyright (C) 2018 Gennaro Tortone - some mods by Antonio Fragola
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,32 +19,6 @@
 
 #ifndef _LANGUAGE_IT_IT_H_
 #define _LANGUAGE_IT_IT_H_
-
-//STB mod
-#define D_JSON_MOISTURE "Moisture"
-#define D_JSON_DISTANCE "Distance"
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
-#define D_CMND_MQTTENABLE "MqttEnable"
-#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
-#define D_CMND_OPEN "shutteropen"
-#define D_CMND_CLOSE "shutterclose"
-#define D_CMND_STOP "shutterstop"
-#define D_CMND_POSITION "shutterposition"
-#define D_CMND_OPENTIME "shutteropenduration"
-#define D_CMND_CLOSETIME "shuttercloseduration"
-#define D_CMND_SHUTTERRELAY "shutterrelay"
-#define D_CMND_CALIBRATIONMATIX "shuttercalibration"
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_SHUTTER "SHUTTER"
-#define D_CMND_INTERLOCKMASK "INTERLOCKMASK"
-#define D_CMND_SET50PERCENT "shutter50percent"
-#define D_CMND_SHUTTERSETCLOSE "shuttersetclose"
-#define D_CMND_SHUTTERINVERT "shutterinvert"
-#define D_CMND_INTERLOCKBUCKETSIZE "bucketsize"
-#define D_DOMOTICZ_SHUTTER "Shutter"
-//end
 
 /*************************** ATTENTION *******************************\
  *
@@ -279,7 +253,6 @@
 
 #define D_MODULE_PARAMETERS "Parametri del modulo"
 #define D_MODULE_TYPE "Tipo modulo"
-#define D_PULLUP_ENABLE "No Button/Switch pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
@@ -567,9 +540,6 @@
 #define D_SENSOR_RF_SENSOR "RF Sensor"
 #define D_SENSOR_AZ_RX   "AZ Rx"
 #define D_SENSOR_AZ_TX   "AZ Tx"
-#define D_SENSOR_MAX31855_CS  "MAX31855 CS"
-#define D_SENSOR_MAX31855_CLK "MAX31855 CLK"
-#define D_SENSOR_MAX31855_DO  "MAX31855 DO"
 
 // Units
 #define D_UNIT_AMPERE "A"

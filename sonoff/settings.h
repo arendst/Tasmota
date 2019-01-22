@@ -1,7 +1,7 @@
 /*
   settings.h - setting variables for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -68,15 +68,15 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)
     uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)
     uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)
-    uint32_t mdns_enabled : 1;             // bit 5 (v6.4.1.4)   - SetOption55
+    uint32_t spare5 : 1;
     uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)
     uint32_t use_wifi_rescan : 1;          // bit 7 (v6.3.0.10)
     uint32_t receive_raw : 1;              // bit 8 (v6.3.0.11)
     uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)
     uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60 - Enable normal sleep instead of dynamic sleep
-    uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61 - Force local operation when button/switch topic is set
-    uint32_t no_pullup : 1;                // bit 12 (v6.4.1.7)  - SetOption62 - Force no pull-up (0 = (no)pull-up, 1 = no pull-up)
-    uint32_t split_interlock : 1;          // bit 13 (v6.4.1.8)  - SetOption63 - Split interlock on CH4
+    uint32_t button_switch_force_local : 1;// bit 11
+    uint32_t spare12 : 1;
+    uint32_t spare13 : 1;
     uint32_t spare14 : 1;
     uint32_t spare15 : 1;
     uint32_t spare16 : 1;
@@ -93,11 +93,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
-// STB mod
-    uint32_t shutter_mode : 1;
-    uint32_t paired_interlock : 1;
-
-// end
+    uint32_t spare30 : 1;
+    uint32_t spare31 : 1;
   };
 } SysBitfield3;
 
@@ -274,7 +271,6 @@ struct SYSCFG {
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
   myio          my_gp;                     // 484
-  uint8_t       test_step;                 // 495
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
   uint8_t       light_correction;          // 49D
@@ -340,30 +336,6 @@ struct SYSCFG {
   uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
-  //STB mod
-  byte          free_680[130];             // A80  give me some space to do configuration without override
-  //uint16_t      pid_parameter[4][]             // PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR
-  //float         pid_setpoint[4];
-  //float         pid_initial_int[4];
-  //uint16_t      pid_update_secs;
-  //uint8_t       pid_auto;
-  //uint8_t       pid_manual_power;  
-  uint8_t       shutter_accuracy;
-  int16_t       shuttercoeff[5][MAX_SHUTTERS];
-  uint8_t       interlock_bucket_size;  // size if the bucket for an interlock. Typically 1..4
-  uint8_t       shutter_invert[MAX_SHUTTERS];
-  uint8_t       shutter_set50percent[MAX_SHUTTERS];
-  power_t       interlock_mask;            // 32 bit array. 1 = relay effected by interlock 0 = relay not effected
-  uint8_t       shutter_startrelay[MAX_SHUTTERS];
-  uint16_t      shutter_opentime[MAX_SHUTTERS];
-  uint16_t      shutter_closetime[MAX_SHUTTERS];
-  uint8_t       shutter_position[MAX_SHUTTERS];              // 49E
-  unsigned long uptime;                    // 748
-  uint8_t       pcf8574_config[8];         // 74B
-  uint8_t       all_relays_inverted;       //
-  uint32_t      deepsleep;                 //
-  uint16_t      pulse_devider[MAX_COUNTERS];     //
-  //end
                                            // E00 - FFF free locations
 } Settings;
 
@@ -381,11 +353,8 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 298
   unsigned long pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
-  uint8_t       free_020[52];              // 2B0
-  //STB mod
-  unsigned long uptime;
-  uint32_t      ultradeepsleep;
-  //end
+  uint8_t       free_020[60];              // 2B0
+                                           // 2EC - 2FF free locations
 } RtcSettings;
 
 struct TIME_T {
@@ -404,7 +373,7 @@ struct TIME_T {
 
 struct XDRVMAILBOX {
   uint16_t      valid;
-  power_t      index;
+  uint16_t      index;
   uint16_t      data_len;
   uint16_t      payload16;
   int16_t       payload;

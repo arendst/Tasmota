@@ -1,7 +1,7 @@
 /*
   xsns_18_pms5003.ino - PMS5003-7003 particle concentration sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ boolean PmsReadData(void)
   PmsSerial->readBytes(buffer, 32);
   PmsSerial->flush();  // Make room for another burst
 
-  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 32);
+  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, 32);
 
   // get checksum ready
   for (uint8_t i = 0; i < 30; i++) {

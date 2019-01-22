@@ -1,7 +1,7 @@
 /*
   xdrv_02_mqtt.ino - mqtt support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2018  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -76,7 +76,6 @@ const char kMqttCommands[] PROGMEM =
 uint16_t mqtt_retry_counter = 1;            // MQTT connection retry counter
 uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
 bool mqtt_connected = false;                // MQTT virtual connection status
-bool mqtt_allowed = false;                  // MQTT enabled and parameters valid
 
 /*********************************************************************************************\
  * MQTT driver specific code need to provide the following functions:
@@ -211,9 +210,9 @@ void MqttLoop(void)
 
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
-void MqttDiscoverServer(void)
+boolean MqttDiscoverServer(void)
 {
-  if (!mdns_begun) { return; }
+  if (!mdns_begun) { return false; }
 
   int n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
 
@@ -221,21 +220,16 @@ void MqttDiscoverServer(void)
   AddLog(LOG_LEVEL_INFO);
 
   if (n > 0) {
-    uint8_t i = 0;             // If the hostname isn't set, use the first record found.
-#ifdef MDNS_HOSTNAME
-    for (i = n; i > 0; i--) {  // Search from last to first and use first if not found
-      if (!strcmp(MDNS.hostname(i).c_str(), MDNS_HOSTNAME)) {
-        break;                 // Stop at matching record
-      }
-    }
-#endif  // MDNS_HOSTNAME
-    snprintf_P(Settings.mqtt_host, sizeof(Settings.mqtt_host), MDNS.IP(i).toString().c_str());
-    Settings.mqtt_port = MDNS.port(i);
+    // Note: current strategy is to get the first MQTT service (even when many are found)
+    snprintf_P(Settings.mqtt_host, sizeof(Settings.mqtt_host), MDNS.IP(0).toString().c_str());
+    Settings.mqtt_port = MDNS.port(0);
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"),
-      MDNS.hostname(i).c_str(), Settings.mqtt_host, Settings.mqtt_port);
+      MDNS.hostname(0).c_str(), Settings.mqtt_host, Settings.mqtt_port);
     AddLog(LOG_LEVEL_INFO);
   }
+
+  return n > 0;
 }
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
@@ -394,7 +388,7 @@ void MqttConnected(void)
 {
   char stopic[TOPSZ];
 
-  if (mqtt_allowed) {
+  if (Settings.flag.mqtt_enabled) {
     AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
     mqtt_connected = true;
     mqtt_retry_counter = 0;
@@ -421,7 +415,8 @@ void MqttConnected(void)
 
   if (mqtt_initial_connection_state) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
-      ModuleName().c_str(), my_version, my_image, GetFallbackTopic_P(stopic, CMND, ""), Settings.mqtt_grptopic);
+      my_module.name, my_version, my_image, GetFallbackTopic_P(stopic, CMND, ""), Settings.mqtt_grptopic);
+//      my_module.name, my_version, my_image, mqtt_client, Settings.mqtt_grptopic);
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
     if (Settings.webserver) {
@@ -491,19 +486,7 @@ boolean MqttCheckTls(void)
       AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "2"));
       result = true;
     }
-#ifdef MDNS_HOSTNAME
-    // If the hostname is set, check that as well.
-    // This lets certs with the hostname for the CN be used.
-    else if (EspClient.verify(fingerprint1, MDNS_HOSTNAME)) {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "1"));
-      result = true;
-    }
-    else if (EspClient.verify(fingerprint2, MDNS_HOSTNAME)) {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "2"));
-      result = true;
-    }
-#endif  // MDNS_HOSTNAME
-#endif  // USE_MQTT_TLS_CA_CERT
+#endif
   }
   if (!result) AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FAILED));
   EspClient.stop();
@@ -516,18 +499,7 @@ void MqttReconnect(void)
 {
   char stopic[TOPSZ];
 
-  mqtt_allowed = Settings.flag.mqtt_enabled;
-  if (mqtt_allowed) {
-#ifdef USE_DISCOVERY
-#ifdef MQTT_HOST_DISCOVERY
-    MqttDiscoverServer();
-#endif  // MQTT_HOST_DISCOVERY
-#endif  // USE_DISCOVERY
-    if (!strlen(Settings.mqtt_host) || !Settings.mqtt_port) {
-      mqtt_allowed = false;
-    }
-  }
-  if (!mqtt_allowed) {
+  if (!Settings.flag.mqtt_enabled) {
     MqttConnected();
     return;
   }
@@ -541,6 +513,14 @@ void MqttReconnect(void)
   mqtt_connected = false;
   mqtt_retry_counter = Settings.mqtt_retry;
   global_state.mqtt_down = 1;
+
+#ifndef USE_MQTT_TLS
+#ifdef USE_DISCOVERY
+#ifdef MQTT_HOST_DISCOVERY
+  if (!strlen(Settings.mqtt_host) && !MqttDiscoverServer()) { return; }
+#endif  // MQTT_HOST_DISCOVERY
+#endif  // USE_DISCOVERY
+#endif  // USE_MQTT_TLS
 
   char *mqtt_user = NULL;
   char *mqtt_pwd = NULL;
@@ -606,11 +586,13 @@ void MqttCheck(void)
     if (!MqttIsConnected()) {
       global_state.mqtt_down = 1;
       if (!mqtt_retry_counter) {
+#ifndef USE_MQTT_TLS
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
         if (!strlen(Settings.mqtt_host) && !mdns_begun) { return; }
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
+#endif  // USE_MQTT_TLS
         MqttReconnect();
       } else {
         mqtt_retry_counter--;
@@ -882,8 +864,8 @@ const char HTTP_FORM_MQTT[] PROGMEM =
 
 void HandleMqttConfiguration(void)
 {
-  if (!HttpCheckPriviledgedAccess()) { return; }
-
+  if (HttpUser()) { return; }
+  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_MQTT);
 
   if (WebServer->hasArg("save")) {
