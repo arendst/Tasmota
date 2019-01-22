@@ -469,14 +469,6 @@ void HAssAnnounceSensors(void)
   } while (hass_xsns_index != 0);
 }
 
-static int string_ends_with(const char * str, const char * suffix)
-{
-  int str_len = strlen(str);
-  int suffix_len = strlen(suffix);
-
-  return (str_len >= suffix_len) && (0 == strcmp(str + (str_len-suffix_len), suffix));
-}
-
 void HAssDiscovery(void)
 {
   // Configure Tasmota for default Home Assistant parameters to keep discovery message as short as possible
@@ -485,7 +477,7 @@ void HAssDiscovery(void)
     Settings.flag.decimal_text = 1;          // Respond with decimal color values
     Settings.flag3.hass_tele_on_power = 1;   // send tele/STATE message as stat/RESULT
 //    Settings.light_scheme = 0;             // To just control color it needs to be Scheme 0
-    if (!string_ends_with(Settings.mqtt_fulltopic, "%prefix%/")) {
+    if (strcmp_P(Settings.mqtt_fulltopic, PSTR("%topic%/%prefix%/"))) {
       strncpy_P(Settings.mqtt_fulltopic, PSTR("%topic%/%prefix%/"), sizeof(Settings.mqtt_fulltopic));
       restart_flag = 2;
       return;                                // As full topic has changed do restart first before sending discovery data
