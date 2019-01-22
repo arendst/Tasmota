@@ -143,6 +143,12 @@ enum UserSelectablePins {
   GPIO_RF_SENSOR,      // Rf receiver with sensor decoding
   GPIO_AZ_TXD,         // AZ-Instrument 7798 Serial interface
   GPIO_AZ_RXD,         // AZ-Instrument 7798 Serial interface
+<<<<<<< HEAD
+=======
+  GPIO_MAX31855CS,     // MAX31855 Serial interface
+  GPIO_MAX31855CLK,    // MAX31855 Serial interface
+  GPIO_MAX31855DO,     // MAX31855 Serial interface
+>>>>>>> 8f585b7f5354b19aff4bc6d1f238df4588d5693f
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -204,7 +210,12 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MGC3130_XFER "|" D_SENSOR_MGC3130_RESET "|"
   D_SENSOR_SSPI_MISO "|" D_SENSOR_SSPI_MOSI "|" D_SENSOR_SSPI_SCLK "|" D_SENSOR_SSPI_CS "|" D_SENSOR_SSPI_DC "|"
   D_SENSOR_RF_SENSOR "|"
+<<<<<<< HEAD
   D_SENSOR_AZ_TX "|" D_SENSOR_AZ_RX;
+=======
+  D_SENSOR_AZ_TX "|" D_SENSOR_AZ_RX "|"
+  D_SENSOR_MAX31855_CS "|" D_SENSOR_MAX31855_CLK "|" D_SENSOR_MAX31855_DO;
+>>>>>>> 8f585b7f5354b19aff4bc6d1f238df4588d5693f
 
 /********************************************************************************************/
 

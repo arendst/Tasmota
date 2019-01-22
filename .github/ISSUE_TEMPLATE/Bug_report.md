@@ -4,6 +4,14 @@ about: Create a report to help us improve
 
 ---
 
+<<<<<<< HEAD
+=======
+**IMPORTANT NOTICE**
+If you do not complete the template below it is likely that your issue will not be addressed. When providing information about your issue please be as extensive as possible so that it can be solved by as little as possible responses.
+
+**FAILURE TO COMPLETE THE REQUESTED INFORMATION WILL RESULT IN YOUR ISSUE BEING CLOSED**
+
+>>>>>>> 8f585b7f5354b19aff4bc6d1f238df4588d5693f
 **Describe the bug**
 _A clear and concise description of what the bug is._
 
@@ -11,9 +19,15 @@ _A clear and concise description of what the bug is._
 _Also, make sure these boxes are checked [x] before submitting your issue - Thank you!_
 - [ ] _Searched the problem in issues and in the wiki_
 - [ ] _Hardware used_ : 
+<<<<<<< HEAD
+=======
+- [ ] _Development/Compiler/Upload tools used_ :
+- [ ] _If a pre-compiled release or development binary was used, which one?_ :
+- [ ] _You have tried latest release or development binaries?_ :
+>>>>>>> 8f585b7f5354b19aff4bc6d1f238df4588d5693f
 - [ ] _Provide the output of command_``status 0`` :
 ```
-STATUS 0 OUTPUT HERE
+STATUS 0 OUTPUT HERE - DO NOT DELETE THE MARKERS ABOVE AND BELOW THIS LINE
 ```
 
 **To Reproduce**
