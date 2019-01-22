@@ -187,11 +187,6 @@
 #define ENERGY_RESOLUTION      3                 // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
 #define CALC_RESOLUTION        3                 // [CalcRes] Maximum number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE
 
-//STB mod
-#define COUNTERDEVIDER         1                 // counter divider or set CounterDevider 1-4 (+3.8k code)
-#define USE_SHUTTER                              // Use Shutter support for up to 4 shutter with different motortypes
-//end
-
 /*********************************************************************************************\
  * END OF SECTION 1
  *

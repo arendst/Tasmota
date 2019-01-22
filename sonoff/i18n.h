@@ -167,13 +167,6 @@
 #define D_RSLT_WARNING "WARNING"
 
 // Commands sonoff.ino
-
-//stb mode
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
-#define D_CMND_MQTTENABLE "MqttEnable"
-#define D_CMND_DEEPSLEEP "DeepSleep"
-// end
-
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
 #define D_CMND_STATUS "Status"
