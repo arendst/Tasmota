@@ -235,7 +235,7 @@
 #define D_BUTTON_TOGGLE "Przełącznik"
 #define D_CONFIGURATION "Konfiguracja"
 #define D_INFORMATION "Informacje"
-#define D_FIRMWARE_UPGRADE "Aktualnizacja oprogramowania"
+#define D_FIRMWARE_UPGRADE "Aktualizacja oprogramowania"
 #define D_CONSOLE "Konsola"
 #define D_CONFIRM_RESTART "Potwierdź restart"
 
