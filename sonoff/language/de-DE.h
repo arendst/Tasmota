@@ -1,7 +1,7 @@
 /*
   de-DE.h - localization for German - Germany for Sonoff-Tasmota
 
-  Copyright (C) 2018  VinceMasuka
+  Copyright (C) 2019  VinceMasuka
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0l
+ * Updated until v6.3.0.17
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -158,6 +158,7 @@
 #define D_PROGRAM_FLASH_SIZE "Ges. Flash Speicher"
 #define D_PROGRAM_SIZE "Ben. Flash Speicher"
 #define D_PROJECT "Projekt"
+#define D_RAIN "Regen"
 #define D_RECEIVED "erhalten"
 #define D_RESTART "Neustart"
 #define D_RESTARTING "starte neu"
@@ -278,6 +279,7 @@
 
 #define D_MODULE_PARAMETERS "Geräte-Einstellungen"
 #define D_MODULE_TYPE "Gerätetyp"
+#define D_PULLUP_ENABLE "Kein Taster/Schalter Pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "serieller Eingang [serial in]"
 #define D_SERIAL_OUT "serieller Ausgang [serial out]"
@@ -541,8 +543,8 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-#define D_SENSOR_SDM120_TX "SDM120 Tx"
-#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM120_TX "SDM120/220 Tx"
+#define D_SENSOR_SDM120_RX "SDM120/220 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
@@ -562,6 +564,12 @@
 #define D_SENSOR_SSPI_SCLK "SSPI SCLK"
 #define D_SENSOR_SSPI_CS   "SSPI CS"
 #define D_SENSOR_SSPI_DC   "SSPI DC"
+#define D_SENSOR_RF_SENSOR "RF Sensor"
+#define D_SENSOR_AZ_RX   "AZ Rx"
+#define D_SENSOR_AZ_TX   "AZ Tx"
+#define D_SENSOR_MAX31855_CS  "MAX31855 CS"
+#define D_SENSOR_MAX31855_CLK "MAX31855 CLK"
+#define D_SENSOR_MAX31855_DO  "MAX31855 DO"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -578,6 +586,7 @@
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "min"
@@ -618,5 +627,15 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+
+//SDM220
+#define D_PHASE_ANGLE     "Phasenwinkel"
+#define D_IMPORT_ACTIVE   "Importiere Wirk"
+#define D_EXPORT_ACTIVE   "Exportiere Wirk"
+#define D_IMPORT_REACTIVE "Importiere Blind"
+#define D_EXPORT_REACTIVE "Exportiere Blind"
+#define D_TOTAL_REACTIVE  "Total Blind"
+#define D_UNIT_KWARH      "kVArh"
+#define D_UNIT_ANGLE      "Grad"
 
 #endif  // _LANGUAGE_DE_DE_H_

@@ -153,7 +153,7 @@ boolean NewPing::ping_trigger() {
 	#if ONE_PIN_ENABLED == true
 		pinMode(_triggerPin, OUTPUT); // Set trigger pin to output.
 	#endif
-	
+
 	digitalWrite(_triggerPin, LOW);   // Set the trigger pin low, should already be low, but this will make sure it is.
 	delayMicroseconds(4);             // Wait for pin to go low.
 	digitalWrite(_triggerPin, HIGH);  // Set trigger pin high, this tells the sensor to send out a ping.

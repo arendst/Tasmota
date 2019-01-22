@@ -1,7 +1,7 @@
 /*
   xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Maarten Damen and Theo Arends
+  Copyright (C) 2019  Maarten Damen and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -105,6 +105,7 @@ void CounterShow(boolean json)
   byte header = 0;
   for (byte i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
+      char counter[33];
       if (bitRead(Settings.pulse_counter_type, i)) {
         dtostrfd((double)RtcSettings.pulse_counter[i] / 1000000, 6, counter);
       } else {

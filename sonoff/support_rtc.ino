@@ -1,7 +1,7 @@
 /*
   support_rtc.ino - Real Time Clock support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -87,6 +87,20 @@ String GetTimeZone(void)
   return String(tz);  // -03:45
 }
 
+String GetDT(uint32_t time)
+{
+  // "2017-03-07T11:08:02" - ISO8601:2004
+
+  char dt[20];
+  TIME_T tmpTime;
+
+  BreakTime(time, tmpTime);
+  snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
+    tmpTime.year +1970, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
+
+  return String(dt);  // 2017-03-07T11:08:02
+}
+
 /*
  * timestamps in https://en.wikipedia.org/wiki/ISO_8601 format
  *
@@ -101,39 +115,27 @@ String GetTimeZone(void)
 String GetDateAndTime(byte time_type)
 {
   // "2017-03-07T11:08:02-07:00" - ISO8601:2004
-  char dt[27];
-  TIME_T tmpTime;
+  uint32_t time = local_time;
 
   switch (time_type) {
     case DT_ENERGY:
-      BreakTime(Settings.energy_kWhtotal_time, tmpTime);
-      tmpTime.year += 1970;
+      time = Settings.energy_kWhtotal_time;
       break;
     case DT_UTC:
-      BreakTime(utc_time, tmpTime);
-      tmpTime.year += 1970;
+      time = utc_time;
       break;
     case DT_RESTART:
       if (restart_time == 0) {
         return "";
       }
-      BreakTime(restart_time, tmpTime);
-      tmpTime.year += 1970;
+      time = restart_time;
       break;
-    default:
-      tmpTime = RtcTime;
   }
-
-
-  snprintf_P(dt, sizeof(dt), PSTR("%04d-%02d-%02dT%02d:%02d:%02d"),
-    tmpTime.year, tmpTime.month, tmpTime.day_of_month, tmpTime.hour, tmpTime.minute, tmpTime.second);
-
+  String dt = GetDT(time);  // 2017-03-07T11:08:02
   if (Settings.flag3.time_append_timezone && (DT_LOCAL == time_type)) {
-//  if (Settings.flag3.time_append_timezone && ((DT_LOCAL == time_type) || (DT_ENERGY == time_type))) {
-    strncat(dt, GetTimeZone().c_str(), sizeof(dt) - strlen(dt) -1);
+    dt += GetTimeZone();    // 2017-03-07T11:08:02-07:00
   }
-
-  return String(dt);  // 2017-03-07T11:08:02-07:00
+  return dt;  // 2017-03-07T11:08:02-07:00
 }
 
 String GetTime(int type)

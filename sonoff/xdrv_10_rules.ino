@@ -1,7 +1,7 @@
 /*
   xdrv_10_rules.ino - rule support for Sonoff-Tasmota
 
-  Copyright (C) 2018  ESP Easy Group and Theo Arends
+  Copyright (C) 2019  ESP Easy Group and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -94,7 +94,15 @@ uint8_t rules_trigger_count[MAX_RULE_SETS] = { 0 };
 uint8_t rules_teleperiod = 0;
 
 char event_data[100];
-char vars[MAX_RULE_VARS][10] = { 0 };
+char vars[MAX_RULE_VARS][33] = { 0 };
+#if (MAX_RULE_VARS>16)
+#error MAX_RULE_VARS is bigger than 16
+#endif
+#if (MAX_RULE_MEMS>5)
+#error MAX_RULE_MEMS is bigger than 5
+#endif
+uint16_t vars_event = 0;
+uint8_t mems_event = 0;
 
 /*******************************************************************************************/
 
@@ -166,6 +174,10 @@ bool RulesRuleMatch(byte rule_set, String &event, String &rule)
     snprintf_P(stemp, sizeof(stemp), PSTR("%%UPTIME%%"));
     if (rule_param.startsWith(stemp)) {
       rule_param = String(GetMinutesUptime());
+    }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMESTAMP%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = GetDateAndTime(DT_LOCAL).c_str();
     }
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
     snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNRISE%%"));
@@ -313,6 +325,7 @@ bool RuleSetProcess(byte rule_set, String &event_saved)
       }
       commands.replace(F("%time%"), String(GetMinutesPastMidnight()));
       commands.replace(F("%uptime%"), String(GetMinutesUptime()));
+      commands.replace(F("%timestamp%"), GetDateAndTime(DT_LOCAL).c_str());
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       commands.replace(F("%sunrise%"), String(GetSunMinutes(0)));
       commands.replace(F("%sunset%"), String(GetSunMinutes(1)));
@@ -405,7 +418,7 @@ void RulesEvery50ms(void)
           if (pin[GPIO_SWT1 +i] < 99) {
 #endif // USE_TM1638
             boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
-            snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (swm ^ lastwallswitch[i]));
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (swm ^ SwitchLastState(i)));
             RulesProcessEvent(json_event);
           }
         }
@@ -438,6 +451,26 @@ void RulesEvery50ms(void)
         RulesProcessEvent(json_event);
       } else {
         event_data[0] ='\0';
+      }
+    }
+    else if (vars_event) {
+      for (byte i = 0; i < MAX_RULE_VARS-1; i++) {
+        if (bitRead(vars_event, i)) {
+          bitClear(vars_event, i);
+          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
+          RulesProcessEvent(json_event);
+          break;
+        }
+      }
+    }
+    else if (mems_event) {
+      for (byte i = 0; i < MAX_RULE_MEMS-1; i++) {
+        if (bitRead(mems_event, i)) {
+          bitClear(mems_event, i);
+          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
+          RulesProcessEvent(json_event);
+          break;
+        }
       }
     }
     else if (rules_flag.data) {
@@ -595,12 +628,14 @@ boolean RulesCommand(void)
   else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
+      bitSet(vars_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
     if (XdrvMailbox.data_len > 0) {
       strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
+      bitSet(mems_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
@@ -614,6 +649,7 @@ boolean RulesCommand(void)
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) + CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
+      bitSet(vars_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
@@ -621,6 +657,7 @@ boolean RulesCommand(void)
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) - CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
+      bitSet(vars_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
@@ -628,6 +665,7 @@ boolean RulesCommand(void)
     if (XdrvMailbox.data_len > 0) {
       double tempvar = CharToDouble(vars[index -1]) * CharToDouble(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
+      bitSet(vars_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
@@ -643,6 +681,7 @@ boolean RulesCommand(void)
         double toHigh = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 5));
         double value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
         dtostrfd(value, Settings.flag2.calc_resolution, vars[index -1]);
+        bitSet(vars_event, index -1);
       }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);

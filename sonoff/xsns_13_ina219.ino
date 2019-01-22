@@ -1,7 +1,7 @@
 /*
   xsns_13_ina219.ino - INA219 Current Sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Stefan Bode and Theo Arends
+  Copyright (C) 2019  Stefan Bode and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -232,13 +232,12 @@ const char HTTP_SNS_INA219_DATA[] PROGMEM = "%s"
 void Ina219Show(boolean json)
 {
   if (ina219_valid) {
-    char voltage[10];
-    char current[10];
-    char power[10];
-
     float fpower = ina219_voltage * ina219_current;
+    char voltage[33];
     dtostrfd(ina219_voltage, Settings.flag2.voltage_resolution, voltage);
+    char power[33];
     dtostrfd(fpower, Settings.flag2.wattage_resolution, power);
+    char current[33];
     dtostrfd(ina219_current, Settings.flag2.current_resolution, current);
 
     if (json) {

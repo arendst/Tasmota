@@ -2,7 +2,7 @@
 /*
   el-GR.h - localization for Greek - Greece for Sonoff-Tasmota
 
-  Copyright (C) 2018  Kan3Nas
+  Copyright (C) 2019  Theo Arends (translated by Nick Galfas)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -159,6 +159,7 @@
 #define D_PROGRAM_FLASH_SIZE "Μέγεθος προγράμματος στη Flash"
 #define D_PROGRAM_SIZE "Μέγεθος προγράμματος"
 #define D_PROJECT "Έργο"
+#define D_RAIN "Rain"
 #define D_RECEIVED "Ελήφθη"
 #define D_RESTART "Επανεκκίνηση"
 #define D_RESTARTING "Επανεκκινεί"
@@ -279,6 +280,7 @@
 
 #define D_MODULE_PARAMETERS "Παράμετροι μονάδας"
 #define D_MODULE_TYPE "Τύπος μονάδας"
+#define D_PULLUP_ENABLE "No Button/Switch pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
@@ -542,8 +544,8 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-#define D_SENSOR_SDM120_TX "SDM120 Tx"
-#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM120_TX "SDM120/220 Tx"
+#define D_SENSOR_SDM120_RX "SDM120/220 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
@@ -563,6 +565,12 @@
 #define D_SENSOR_SSPI_SCLK "SSPI SCLK"
 #define D_SENSOR_SSPI_CS   "SSPI CS"
 #define D_SENSOR_SSPI_DC   "SSPI DC"
+#define D_SENSOR_RF_SENSOR "RF Sensor"
+#define D_SENSOR_AZ_RX   "AZ Rx"
+#define D_SENSOR_AZ_TX   "AZ Tx"
+#define D_SENSOR_MAX31855_CS  "MAX31855 CS"
+#define D_SENSOR_MAX31855_CLK "MAX31855 CLK"
+#define D_SENSOR_MAX31855_DO  "MAX31855 DO"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -579,6 +587,7 @@
 #define D_UNIT_MICROMETER "um"
 #define D_UNIT_MICROSECOND "us"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
@@ -619,5 +628,15 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+
+//SDM220
+#define D_PHASE_ANGLE     "Phase Angle"
+#define D_IMPORT_ACTIVE   "Import Active"
+#define D_EXPORT_ACTIVE   "Export Active"
+#define D_IMPORT_REACTIVE "Import Reactive"
+#define D_EXPORT_REACTIVE "Export Reactive"
+#define D_TOTAL_REACTIVE  "Total Reactive"
+#define D_UNIT_KWARH      "kVArh"
+#define D_UNIT_ANGLE      "Deg"
 
 #endif  // _LANGUAGE_EL_GR_H_

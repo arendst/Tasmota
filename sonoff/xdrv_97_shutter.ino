@@ -1,18 +1,14 @@
 /*
   xdrv_19_Shutter.ino - Shutter/Blind support for Sonoff-TasmotaS
-
   Copyright (C) 2018  Stefan Bode
-
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -28,7 +24,7 @@ const char kShutterCommands[] PROGMEM =
 
 enum ShutterModes { OFF_OPEN__OFF_CLOSE, OFF_ON__OPEN_CLOSE, PULSE_OPEN__PULSE_CLOSE };
 
-const char JSON_SHUTTER_POS[] PROGMEM = "%s,\"%s-%d\":%d";                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char JSON_SHUTTER_POS[] PROGMEM = "%s,\"%s-%d\":{\"position\":%d, \"direction\":%d}";                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const uint16_t MOTOR_STOP_TIME=500; // in mS
 
 uint16_t Shutter_Open_Time[MAX_SHUTTERS] ;               // duration to open the shutter
@@ -205,6 +201,11 @@ void Schutter_Update_Position()
           break;
         }
         Shutter_Direction[i] = 0;
+        byte position =  Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i];
+//        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, position);
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s-%d\":{\"position\":%d, \"direction\":%d}}"), D_SHUTTER, i+1, position, 0/*Shutter_Direction[i]*/);
+          MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
+          XdrvRulesProcess();
       }
     }
   }
@@ -493,10 +494,11 @@ boolean Xdrv97(byte function)
       case FUNC_JSON_APPEND:
         for (byte i=0; i < shutters_present; i++) {
           byte position =  Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i];
-          snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, position);
+         snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, position, Shutter_Direction[i]);
+
           #ifdef USE_DOMOTICZ
             if ((0 == tele_period) ) {
-              DomoticzSensor(DZ_SHUTTER, position);
+               DomoticzSensor(DZ_SHUTTER, position);
             }
           #endif  // USE_DOMOTICZ
         }

@@ -1,7 +1,7 @@
 /*
   xdrv_05_irremote.ino - infra red support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Heiko Krupp, Lazar Obradovic and Theo Arends
+  Copyright (C) 2019  Heiko Krupp, Lazar Obradovic and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

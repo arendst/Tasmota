@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Sonoff-Tasmota
 
-  Copyright (C) 2018 Gennaro Tortone - some mods by Antonio Fragola
+  Copyright (C) 2019 Gennaro Tortone - some mods by Antonio Fragola
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -158,6 +158,7 @@
 #define D_PROGRAM_FLASH_SIZE "Dimensione Flash Programma"
 #define D_PROGRAM_SIZE "Dimensione Programma"
 #define D_PROJECT "Progetto"
+#define D_RAIN "Rain"
 #define D_RECEIVED "Ricevuto"
 #define D_RESTART "Riavvio"
 #define D_RESTARTING "Riavviando"
@@ -197,10 +198,10 @@
 #define D_UV_INDEX_6 "BurnL3"
 #define D_UV_INDEX_7 "OoR"
 #define D_UV_LEVEL "Livello UV"
-#define D_UV_POWER "UV Power"
+#define D_UV_POWER "Intensità UV"
 #define D_VERSION "Versione"
 #define D_VOLTAGE "Tensione"
-#define D_WEIGHT "Weight"
+#define D_WEIGHT "Peso"
 #define D_WARMLIGHT "Calda"
 #define D_WEB_SERVER "Web Server"
 
@@ -243,7 +244,7 @@
 #define D_ERASED_SECTOR "Settore cancellato"
 
 // xdrv_02_webserver.ino
-#define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
+#define D_NOSCRIPT "Abilitare JavaScript per utilizzare Tasmota"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - effettuare aggiornamento"
 #define D_WEBSERVER_ACTIVE_ON "Web server attivo su"
 #define D_WITH_IP_ADDRESS "con indirizzo IP"
@@ -278,6 +279,7 @@
 
 #define D_MODULE_PARAMETERS "Parametri del modulo"
 #define D_MODULE_TYPE "Tipo modulo"
+#define D_PULLUP_ENABLE "No Button/Switch pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
@@ -417,7 +419,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configura Timer"
 #define D_TIMER_PARAMETERS "Parametri Timer"
-#define D_TIMER_ENABLE "Abilita Timers"
+#define D_TIMER_ENABLE "Abilita Timer"
 #define D_TIMER_ARM "Attiva"
 #define D_TIMER_TIME "Ora"
 #define D_TIMER_DAYS "Giorni"
@@ -483,23 +485,23 @@
 #define D_GZ_AXIS "Gyro Z-Axis"
 
 // xsns_34_hx711.ino
-#define D_HX_CAL_REMOVE "Remove weigth"
-#define D_HX_CAL_REFERENCE "Load reference weigth"
-#define D_HX_CAL_DONE "Calibrated"
-#define D_HX_CAL_FAIL "Calibration failed"
-#define D_RESET_HX711 "Reset Scale"
-#define D_CONFIGURE_HX711 "Configure Scale"
-#define D_HX711_PARAMETERS "Scale parameters"
-#define D_ITEM_WEIGHT "Item weight"
-#define D_REFERENCE_WEIGHT "Reference weigth"
-#define D_CALIBRATE "Calibrate"
-#define D_CALIBRATION "Calibration"
+#define D_HX_CAL_REMOVE "Rimuovere peso"
+#define D_HX_CAL_REFERENCE "Caricare peso di riferimento"
+#define D_HX_CAL_DONE "Calibrato"
+#define D_HX_CAL_FAIL "Calibrazione fallita"
+#define D_RESET_HX711 "Reset Scala"
+#define D_CONFIGURE_HX711 "Configura Scala"
+#define D_HX711_PARAMETERS "Parametri Scala"
+#define D_ITEM_WEIGHT "Peso oggetto"
+#define D_REFERENCE_WEIGHT "Peso di riferimento"
+#define D_CALIBRATE "Calibrato"
+#define D_CALIBRATION "Calibrazione"
 
 //xsns_35_tx20.ino
-#define D_TX20_WIND_DIRECTION "Wind Direction"
-#define D_TX20_WIND_SPEED "Wind Speed"
-#define D_TX20_WIND_SPEED_AVG "Wind Speed Avg"
-#define D_TX20_WIND_SPEED_MAX "Wind Speed Max"
+#define D_TX20_WIND_DIRECTION "Direzione Vento"
+#define D_TX20_WIND_SPEED "Velocità Vento"
+#define D_TX20_WIND_SPEED_AVG "Velocità Media Vento"
+#define D_TX20_WIND_SPEED_MAX "Velocità Massima Vento"
 #define D_TX20_NORTH "N"
 #define D_TX20_EAST "E"
 #define D_TX20_SOUTH "S"
@@ -541,8 +543,8 @@
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-#define D_SENSOR_SDM120_TX "SDM120 Tx"
-#define D_SENSOR_SDM120_RX "SDM120 Rx"
+#define D_SENSOR_SDM120_TX "SDM120/220 Tx"
+#define D_SENSOR_SDM120_RX "SDM120/220 Rx"
 #define D_SENSOR_SDM630_TX "SDM630 Tx"
 #define D_SENSOR_SDM630_RX "SDM630 Rx"
 #define D_SENSOR_TM1638_CLK "TM16 CLK"
@@ -562,6 +564,12 @@
 #define D_SENSOR_SSPI_SCLK "SSPI SCLK"
 #define D_SENSOR_SSPI_CS   "SSPI CS"
 #define D_SENSOR_SSPI_DC   "SSPI DC"
+#define D_SENSOR_RF_SENSOR "RF Sensor"
+#define D_SENSOR_AZ_RX   "AZ Rx"
+#define D_SENSOR_AZ_TX   "AZ Tx"
+#define D_SENSOR_MAX31855_CS  "MAX31855 CS"
+#define D_SENSOR_MAX31855_CLK "MAX31855 CLK"
+#define D_SENSOR_MAX31855_DO  "MAX31855 DO"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -578,6 +586,7 @@
 #define D_UNIT_MICROMETER "um"
 #define D_UNIT_MICROSECOND "us"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
@@ -618,5 +627,15 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+
+//SDM220
+#define D_PHASE_ANGLE     "Angolo Fase"
+#define D_IMPORT_ACTIVE   "Potenza Attiva Importata"
+#define D_EXPORT_ACTIVE   "Potenza Attiva Esportata"
+#define D_IMPORT_REACTIVE "Potenza Reattiva Importata"
+#define D_EXPORT_REACTIVE "Potenza Reattiva Esportata"
+#define D_TOTAL_REACTIVE  "Potenza Reattiva Totale"
+#define D_UNIT_KWARH      "kVArh"
+#define D_UNIT_ANGLE      "°"
 
 #endif  // _LANGUAGE_IT_IT_H_

@@ -35,7 +35,7 @@ See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development
 In addition to the [release webpage](https://github.com/arendst/Sonoff-Tasmota/releases/latest) the binaries can also be OTA downloaded from http://thehackbox.org/tasmota/release/
 
 ### Development
-[![Dev Version](https://img.shields.io/badge/development%20version-6.3.0.x-blue.svg)](https://github.com/arendst/Sonoff-Tasmota)
+[![Dev Version](https://img.shields.io/badge/development%20version-6.4.1.x-blue.svg)](https://github.com/arendst/Sonoff-Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
@@ -58,7 +58,7 @@ If you want to compile Sonoff-Tasmota yourself keep in mind the following:
 
 - Only Flash Mode **DOUT** is supported. Do not use Flash Mode DIO / QIO / QOUT as it might seem to brick your device. See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips) for background information.
 - Sonoff-Tasmota uses a 1M linker script WITHOUT spiffs **1M (no SPIFFS)** for optimal code space. If you compile using ESP/Arduino library 2.3.0 then download the provided new linker script to your Arduino IDE or Platformio base folder. Later version of ESP/Arduino library already contain the correct linker script. See [Wiki > Prerequisite](https://github.com/arendst/Sonoff-Tasmota/wiki/Prerequisite).
-- To make compile time changes to Sonoff-Tasmota it can use the ``user_config_override.h`` file. It assures keeping your settings when you download and compile a new version. To use ``user_config.override.h`` you will have to make a copy of the provided ``user_config.override_sample.h`` file and add your setting overrides. To enable the override file you will need to use a compile define as documented in the ``user_config_override_sample.h`` file.
+- To make compile time changes to Sonoff-Tasmota it can use the ``user_config_override.h`` file. It assures keeping your settings when you download and compile a new version. To use ``user_config.override.h`` you will have to make a copy of the provided ``user_config_override_sample.h`` file and add your setting overrides. To enable the override file you will need to use a compile define as documented in the ``user_config_override_sample.h`` file.
 
 ### Version Information
 - Sonoff-Tasmota provides all (Sonoff) modules in one file and starts with module Sonoff Basic.
@@ -145,6 +145,7 @@ Libraries used with Sonoff-Tasmota are:
 - [arduino mqtt](https://github.com/256dpi/arduino-mqtt)
 - [Bosch BME680](https://github.com/BoschSensortec/BME680_driver)
 - [C2 Programmer](http://app.cear.ufpb.br/~lucas.hartmann/tag/efm8bb1/)
+- [esp-epaper-29-ws-20171230-gemu](https://github.com/gemu2015/Sonoff-Tasmota/tree/displays/lib)
 - [esp-knx-ip](https://github.com/envy/esp-knx-ip)
 - [I2Cdevlib](https://github.com/jrowberg/i2cdevlib)
 - [IRremoteEsp8266](https://github.com/markszabo/IRremoteESP8266)
@@ -152,10 +153,10 @@ Libraries used with Sonoff-Tasmota are:
 - [Liquid Cristal](https://github.com/marcoschwartz/LiquidCrystal_I2C)
 - [MultiChannelGasSensor](http://wiki.seeedstudio.com/Grove-Multichannel_Gas_Sensor/)
 - [NeoPixelBus](https://github.com/Makuna/NeoPixelBus)
+- [NewPing](https://bitbucket.org/teckel12/arduino-new-ping/wiki/Home)
 - [OneWire](https://github.com/PaulStoffregen/OneWire)
 - [PubSubClient](https://github.com/knolleary/pubsubclient)
 - [rc-switch](https://github.com/sui77/rc-switch)
-- [NewPing](https://bitbucket.org/teckel12/arduino-new-ping/wiki/Home)
 
 #### People inspiring me
 People helping to keep the show on the road:

@@ -1,7 +1,7 @@
 /*
   xplg_wemohue.ino - wemo and hue support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Heiko Krupp and Theo Arends
+  Copyright (C) 2019  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -568,7 +568,7 @@ void HueLightStatus1(byte device, String *response)
 {
   float hue = 0;
   float sat = 0;
-  float bri = 0;
+  float bri = 254;
   uint16_t ct = 500;
 //stb mod
   bool on = power & (1 << (device-1));

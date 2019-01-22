@@ -1,7 +1,7 @@
 /*
   xdrv_18_armtronix_dimmers.ino - Armtronix dimmers support for Sonoff-Tasmota
 
-  Copyright (C) 2018  wvdv2002 and Theo Arends
+  Copyright (C) 2019  wvdv2002 and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -39,6 +39,12 @@ int8_t armtronix_knobState[2];                   // Dimmer state values.
 /*********************************************************************************************\
  * Internal Functions
 \*********************************************************************************************/
+
+boolean ArmtronixSetChannels(void)
+{
+  LightSerial2Duty(((uint8_t*)XdrvMailbox.data)[0], ((uint8_t*)XdrvMailbox.data)[1]);
+  return true;
+}
 
 void LightSerial2Duty(uint8_t duty1, uint8_t duty2)
 {
@@ -149,11 +155,11 @@ void ArmtronixSetWifiLed(void)
   snprintf_P(log_data, sizeof(log_data), "ARM: Set WiFi LED to state %d (%d)", wifi_state, WifiState());
   AddLog(LOG_LEVEL_DEBUG);
 
-  char state = '0' + (wifi_state & 1 > 0);
+  char state = '0' + ((wifi_state & 1) > 0);
   ArmtronixSerial->print("Setled:");
   ArmtronixSerial->write(state);
   ArmtronixSerial->write(',');
-  state = '0' + (wifi_state & 2 > 0);
+  state = '0' + ((wifi_state & 2) > 0);
   ArmtronixSerial->write(state);
   ArmtronixSerial->write(10);
   armtronix_wifi_state = WifiState();
@@ -185,6 +191,9 @@ boolean Xdrv18(byte function)
             ArmtronixSerial->println("Status");
           }
         }
+        break;
+      case FUNC_SET_CHANNELS:
+        result = ArmtronixSetChannels();
         break;
     }
   }

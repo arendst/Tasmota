@@ -1,7 +1,7 @@
 /*
   xsns_26_lm75ad.ino - Support for I2C LM75AD Temperature Sensor
 
-  Copyright (C) 2018  Andre Thomas and Theo Arends
+  Copyright (C) 2019  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -81,9 +81,8 @@ float LM75ADGetTemp(void) {
 void LM75ADShow(boolean json)
 {
   if (lm75ad_type) {
-    char temperature[10];
-
     float t = LM75ADGetTemp();
+    char temperature[33];
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
     if (json) {

@@ -1,7 +1,7 @@
 /*
   xsns_35_Tx20.ino - La Crosse Tx20 wind sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Thomas Eckerstorfer and Theo Arends
+  Copyright (C) 2019  Thomas Eckerstorfer and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -172,14 +172,13 @@ void Tx20Init(void) {
 
 void Tx20Show(boolean json)
 {
-  char wind_speed_string[10];
-  char wind_speed_max_string[10];
-  char wind_speed_avg_string[10];
-  char wind_direction_string[4];
-
+  char wind_speed_string[33];
   dtostrfd(tx20_wind_speed_kmh, 2, wind_speed_string);
+  char wind_speed_max_string[33];
   dtostrfd(tx20_wind_speed_max, 2, wind_speed_max_string);
+  char wind_speed_avg_string[33];
   dtostrfd(tx20_wind_speed_avg, 2, wind_speed_avg_string);
+  char wind_direction_string[4];
   GetTextIndexed(wind_direction_string, sizeof(wind_direction_string), tx20_wind_direction, kTx20Directions);
 
   if (json) {

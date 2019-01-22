@@ -1,7 +1,7 @@
 /*
   xdrv_03_energy.ino - Energy sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,9 +31,14 @@
 
 #include <Ticker.h>
 
+#define D_CMND_POWERCAL "PowerCal"
+#define D_CMND_VOLTAGECAL "VoltageCal"
+#define D_CMND_CURRENTCAL "CurrentCal"
+
 enum EnergyCommands {
   CMND_POWERDELTA,
   CMND_POWERLOW, CMND_POWERHIGH, CMND_VOLTAGELOW, CMND_VOLTAGEHIGH, CMND_CURRENTLOW, CMND_CURRENTHIGH,
+  CMND_POWERCAL, CMND_VOLTAGECAL, CMND_CURRENTCAL,
   CMND_POWERSET, CMND_VOLTAGESET, CMND_CURRENTSET, CMND_FREQUENCYSET,
   CMND_ENERGYRESET, CMND_MAXENERGY, CMND_MAXENERGYSTART,
   CMND_MAXPOWER, CMND_MAXPOWERHOLD, CMND_MAXPOWERWINDOW,
@@ -41,6 +46,7 @@ enum EnergyCommands {
 const char kEnergyCommands[] PROGMEM =
   D_CMND_POWERDELTA "|"
   D_CMND_POWERLOW "|" D_CMND_POWERHIGH "|" D_CMND_VOLTAGELOW "|" D_CMND_VOLTAGEHIGH "|" D_CMND_CURRENTLOW "|" D_CMND_CURRENTHIGH "|"
+  D_CMND_POWERCAL "|" D_CMND_VOLTAGECAL "|" D_CMND_CURRENTCAL "|"
   D_CMND_POWERSET "|" D_CMND_VOLTAGESET "|" D_CMND_CURRENTSET "|" D_CMND_FREQUENCYSET "|"
   D_CMND_ENERGYRESET "|" D_CMND_MAXENERGY "|" D_CMND_MAXENERGYSTART "|"
   D_CMND_MAXPOWER "|" D_CMND_MAXPOWERHOLD "|" D_CMND_MAXPOWERWINDOW "|"
@@ -402,33 +408,47 @@ boolean EnergyCommand(void)
         break;
       }
     }
-    char energy_yesterday_chr[10];
-    char energy_daily_chr[10];
-    char energy_total_chr[10];
-
+    char energy_total_chr[33];
     dtostrfd(energy_total, Settings.flag2.energy_resolution, energy_total_chr);
+    char energy_daily_chr[33];
     dtostrfd(energy_daily, Settings.flag2.energy_resolution, energy_daily_chr);
+    char energy_yesterday_chr[33];
     dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
 
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}}"),
       command, energy_total_chr, energy_yesterday_chr, energy_daily_chr);
     status_flag = 1;
   }
-  else if ((CMND_POWERSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // Watt
+  else if ((CMND_POWERCAL == command_code) && XnrgCall(FUNC_COMMAND)) {  // microseconds
+    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) { Settings.energy_power_calibration = XdrvMailbox.payload; }
     nvalue = Settings.energy_power_calibration;
     unit = UNIT_MICROSECOND;
   }
-  else if ((CMND_VOLTAGESET == command_code) && XnrgCall(FUNC_COMMAND)) {  // Volt
+  else if ((CMND_VOLTAGECAL == command_code) && XnrgCall(FUNC_COMMAND)) {  // microseconds
+    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) { Settings.energy_voltage_calibration = XdrvMailbox.payload; }
     nvalue = Settings.energy_voltage_calibration;
     unit = UNIT_MICROSECOND;
   }
-  else if ((CMND_CURRENTSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // milliAmpere
+  else if ((CMND_CURRENTCAL == command_code) && XnrgCall(FUNC_COMMAND)) {  // microseconds
+    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) { Settings.energy_current_calibration = XdrvMailbox.payload; }
     nvalue = Settings.energy_current_calibration;
     unit = UNIT_MICROSECOND;
   }
+  else if ((CMND_POWERSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // Watt
+    nvalue = Settings.energy_power_calibration;
+    unit = UNIT_MILLISECOND;
+  }
+  else if ((CMND_VOLTAGESET == command_code) && XnrgCall(FUNC_COMMAND)) {  // Volt
+    nvalue = Settings.energy_voltage_calibration;
+    unit = UNIT_MILLISECOND;
+  }
+  else if ((CMND_CURRENTSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // milliAmpere
+    nvalue = Settings.energy_current_calibration;
+    unit = UNIT_MILLISECOND;
+  }
   else if ((CMND_FREQUENCYSET == command_code) && XnrgCall(FUNC_COMMAND)) {  // Hz
     nvalue = Settings.energy_frequency_calibration;
-    unit = UNIT_MICROSECOND;
+    unit = UNIT_MILLISECOND;
   }
 
 #if FEATURE_POWER_LIMIT
@@ -494,8 +514,9 @@ boolean EnergyCommand(void)
 
   if (serviced && !status_flag) {
 
-    if (UNIT_MICROSECOND == unit) {
+    if (UNIT_MILLISECOND == unit) {
       snprintf_P(command, sizeof(command), PSTR("%sCal"), command);
+      unit = UNIT_MICROSECOND;
     }
 
     if (Settings.flag.value_units) {
@@ -549,18 +570,6 @@ const char HTTP_ENERGY_SNS4[] PROGMEM = "%s"
 
 void EnergyShow(boolean json)
 {
-  char voltage_chr[10];
-  char current_chr[10];
-  char active_power_chr[10];
-  char apparent_power_chr[10];
-  char reactive_power_chr[10];
-  char power_factor_chr[10];
-  char frequency_chr[10];
-  char energy_daily_chr[10];
-  char energy_period_chr[10];
-  char energy_yesterday_chr[10];
-  char energy_total_chr[10];
-
   char speriod[20];
   char sfrequency[20];
 
@@ -568,6 +577,10 @@ void EnergyShow(boolean json)
 
   float power_factor = energy_power_factor;
 
+  char apparent_power_chr[33];
+  char reactive_power_chr[33];
+  char power_factor_chr[33];
+  char frequency_chr[33];
   if (!energy_type_dc) {
     float apparent_power = energy_apparent_power;
     if (isnan(apparent_power)) {
@@ -602,14 +615,21 @@ void EnergyShow(boolean json)
     }
   }
 
+  char voltage_chr[33];
   dtostrfd(energy_voltage, Settings.flag2.voltage_resolution, voltage_chr);
+  char current_chr[33];
   dtostrfd(energy_current, Settings.flag2.current_resolution, current_chr);
+  char active_power_chr[33];
   dtostrfd(energy_active_power, Settings.flag2.wattage_resolution, active_power_chr);
+  char energy_daily_chr[33];
   dtostrfd(energy_daily, Settings.flag2.energy_resolution, energy_daily_chr);
+  char energy_yesterday_chr[33];
   dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
+  char energy_total_chr[33];
   dtostrfd(energy_total, Settings.flag2.energy_resolution, energy_total_chr);
 
   float energy = 0;
+  char energy_period_chr[33];
   if (show_energy_period) {
     if (energy_period) energy = (float)(energy_kWhtoday - energy_period) / 100;
     energy_period = energy_kWhtoday;

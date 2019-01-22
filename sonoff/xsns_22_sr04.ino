@@ -1,7 +1,7 @@
 /*
   xsns_22_sr04.ino - SR04 ultrasonic sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Nuno Ferreira and Theo Arends
+  Copyright (C) 2019  Nuno Ferreira and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -51,8 +51,7 @@ void Sr04Show(boolean json)
   distance = (real64_t)(sonar->ping_median(5))/ US_ROUNDTRIP_CM;
 
   if (distance != 0) {                // Check if read failed
-    char distance_chr[10];
-
+    char distance_chr[33];
     dtostrfd(distance, 3, distance_chr);
 
     if(json) {
