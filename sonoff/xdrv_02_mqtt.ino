@@ -76,6 +76,7 @@ const char kMqttCommands[] PROGMEM =
 uint16_t mqtt_retry_counter = 1;            // MQTT connection retry counter
 uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
 bool mqtt_connected = false;                // MQTT virtual connection status
+bool mqtt_allowed = false;                  // MQTT enabled and parameters valid
 
 /*********************************************************************************************\
  * MQTT driver specific code need to provide the following functions:
@@ -210,9 +211,9 @@ void MqttLoop(void)
 
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
-boolean MqttDiscoverServer(void)
+void MqttDiscoverServer(void)
 {
-  if (!mdns_begun) { return false; }
+  if (!mdns_begun) { return; }
 
   int n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
 
@@ -220,26 +221,21 @@ boolean MqttDiscoverServer(void)
   AddLog(LOG_LEVEL_INFO);
 
   if (n > 0) {
-    #ifdef MDNS_HOSTNAME
-    for (int i = 0; i < n; i++) {
+    uint8_t i = 0;             // If the hostname isn't set, use the first record found.
+#ifdef MDNS_HOSTNAME
+    for (i = n; i > 0; i--) {  // Search from last to first and use first if not found
       if (!strcmp(MDNS.hostname(i).c_str(), MDNS_HOSTNAME)) {
-         snprintf_P(Settings.mqtt_host, sizeof(Settings.mqtt_host), MDNS.IP(i).toString().c_str());
-         Settings.mqtt_port = MDNS.port(i);
-         break;  // stop at the first matching record
+        break;                 // Stop at matching record
       }
     }
-    #else
-    // If the hostname isn't set, use the first record found.
-    snprintf_P(Settings.mqtt_host, sizeof(Settings.mqtt_host), MDNS.IP(0).toString().c_str());
-    Settings.mqtt_port = MDNS.port(0);
-    #endif  // MDNS_HOSTNAME
+#endif  // MDNS_HOSTNAME
+    snprintf_P(Settings.mqtt_host, sizeof(Settings.mqtt_host), MDNS.IP(i).toString().c_str());
+    Settings.mqtt_port = MDNS.port(i);
 
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"),
-      MDNS.hostname(0).c_str(), Settings.mqtt_host, Settings.mqtt_port);
+      MDNS.hostname(i).c_str(), Settings.mqtt_host, Settings.mqtt_port);
     AddLog(LOG_LEVEL_INFO);
   }
-
-  return n > 0;
 }
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
@@ -398,7 +394,7 @@ void MqttConnected(void)
 {
   char stopic[TOPSZ];
 
-  if (Settings.flag.mqtt_enabled) {
+  if (mqtt_allowed) {
     AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
     mqtt_connected = true;
     mqtt_retry_counter = 0;
@@ -495,7 +491,19 @@ boolean MqttCheckTls(void)
       AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "2"));
       result = true;
     }
-#endif
+#ifdef MDNS_HOSTNAME
+    // If the hostname is set, check that as well.
+    // This lets certs with the hostname for the CN be used.
+    else if (EspClient.verify(fingerprint1, MDNS_HOSTNAME)) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "1"));
+      result = true;
+    }
+    else if (EspClient.verify(fingerprint2, MDNS_HOSTNAME)) {
+      AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_VERIFIED "2"));
+      result = true;
+    }
+#endif  // MDNS_HOSTNAME
+#endif  // USE_MQTT_TLS_CA_CERT
   }
   if (!result) AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_FAILED));
   EspClient.stop();
@@ -508,7 +516,18 @@ void MqttReconnect(void)
 {
   char stopic[TOPSZ];
 
-  if (!Settings.flag.mqtt_enabled) {
+  mqtt_allowed = Settings.flag.mqtt_enabled;
+  if (mqtt_allowed) {
+#ifdef USE_DISCOVERY
+#ifdef MQTT_HOST_DISCOVERY
+    MqttDiscoverServer();
+#endif  // MQTT_HOST_DISCOVERY
+#endif  // USE_DISCOVERY
+    if (!strlen(Settings.mqtt_host) || !Settings.mqtt_port) {
+      mqtt_allowed = false;
+    }
+  }
+  if (!mqtt_allowed) {
     MqttConnected();
     return;
   }
@@ -522,12 +541,6 @@ void MqttReconnect(void)
   mqtt_connected = false;
   mqtt_retry_counter = Settings.mqtt_retry;
   global_state.mqtt_down = 1;
-
-#ifdef USE_DISCOVERY
-#ifdef MQTT_HOST_DISCOVERY
-  if (!MqttDiscoverServer() && !strlen(Settings.mqtt_host)) { return; }
-#endif  // MQTT_HOST_DISCOVERY
-#endif  // USE_DISCOVERY
 
   char *mqtt_user = NULL;
   char *mqtt_pwd = NULL;

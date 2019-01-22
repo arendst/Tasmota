@@ -122,7 +122,7 @@ bool PzemRecieve(uint8_t resp, float *data)
     }
   }
 
-  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, len);
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, len);
 
   if (len != sizeof(PZEMCommand)) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem comms timeout"));

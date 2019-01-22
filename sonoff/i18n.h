@@ -92,6 +92,7 @@
 #define D_JSON_MAC "Mac"
 #define D_JSON_MASK "Mask"
 #define D_JSON_MINIMAL "minimal"
+#define D_JSON_MODEL "Model"
 #define D_JSON_NO "No"
 #define D_JSON_NOISE "Noise"
 #define D_JSON_NONE "None"
