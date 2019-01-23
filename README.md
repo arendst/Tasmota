@@ -1,20 +1,3 @@
-## Stefan Bode fork of Tasmota-Master
-I keep this version in sync with the current development of the master. Anyhow my use case is a little bit different. Even, if I have some SONOFF devices, I like to build(solder) my own based on different versions of the ESP8266, depending on my different requirements (batterie, external Antenna, add on I2C devices and others). Additionally I try to improve the overall project.
-
-Additional features:
-- DeepSleep support up to 136 Years (deepsleep=xxx [sec]). Support also 1day or more deepsleep. Just define deepsleep e.g. 1 day = 86400. (wakes up every hour for <0.3 seconds until time reached. just set deepsleep through serial or MQTT to a value in sec from 10 - 4.294.967.295 (136 Years :-))
-- Improved Startuptime incl TLS MQTT and measurement in <9 sek
-- Support for I2C 8-channel DIO extension board PCF-8574 (large extension to support 32 relays and pulsetimers on 8 relays (can be changed by changing constant MAX_PULSETIMER).
-- Support CHIRP moisture sensor.
-- Report total UPTIME (seconds) between two deepsleep cycle. This allows to see uptime, even if connect was not successfull or there was a reboot. Using RTC memory to ensure correct uptime
-- Added support of "counterdevider[1..MAX_COUNTERS]" (serial and MQTT command), to count only the 1 count every counterdeviderX impulses (max 65.000 impulses = 1 count, default 1s).
-- Added Support for Shutter use-Case. In this case two relays are paired into one switch. Based on the value on the first relay the second relay will set automatically. Use Setoption14 and Setoption81 to set it. See Wiki. Additionally you can define a MASK to exclude relays from the INTERLOCK behaviour.
-- Added more support for the shutter Use-Case. The Setoption80 is required, if someone changes the target position if the shutter is still operating. Please see Shutter wiki for more details.
-- Added Alexa support for shutters through HUE Dimmer functionality. Not perfect but ok.
-- Enhanced Interlock functionality to define other BUCKETSIZE instead of 2 used for the shutter. E.g. to control a fan
-
-**Note that deep sleep on ESP-01 is not possible without hardware modifications because it's required to connect GPIO16 to RST, see https://github.com/stefanbode/Sonoff-Tasmota/issues/40. The same applies most likely to other modules like ESP-02, ESP-04 etc**
-
 ## Sonoff-Tasmota
 
 Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web**, **timers**, 'Over The Air' (**OTA**) firmware updates and **sensors support**, allowing control under **Serial**, **HTTP**, **MQTT** and **KNX**, so as to be used on **Smart Home Systems**. Written for Arduino IDE and PlatformIO.
