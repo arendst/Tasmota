@@ -22,7 +22,7 @@
 /*********************************************************************************************\
  * MAX44009 - Ambient Light Intensity
  *
- * I2C Address: 0x23 or 0x5C
+ * I2C Address: 0x4a or 0x4b
 \*********************************************************************************************/
 
 #define XSNS_91			91
@@ -91,9 +91,9 @@ void Max4409Detect(void)
     // supported for illiminance registers
     for (byte r = 0; r < MAX44009_NO_REGISTERS; r++) {
       if (false == Max4409Read_register(r, &reg[r])) {
-        snprintf_P(log_data, sizeof(log_data), "MAX44009 at %x: Failed to read register %d",
-                   max44009_address, (int)r);
-        AddLog(LOG_LEVEL_DEBUG);
+        // snprintf_P(log_data, sizeof(log_data), "MAX44009 at %x: Failed to read register %d",
+        //            max44009_address, (int)r);
+        // AddLog(LOG_LEVEL_DEBUG_MORE);
         failed = true;
         break;
       }
@@ -102,19 +102,22 @@ void Max4409Detect(void)
       continue;
     }
       
-    snprintf_P(log_data, sizeof(log_data), "MAX44009 at %x: Read %x %x %x %x %x %x %x %x",
-	    (int) max44009_address, (int)reg[0], (int)reg[1], (int)reg[2], (int)reg[3], 
-            (int)reg[4], (int)reg[5], (int)reg[6], (int)reg[7]);
-    AddLog(LOG_LEVEL_DEBUG);
+    // snprintf_P(log_data, sizeof(log_data), "MAX44009 at %x: Read %x %x %x %x %x %x %x %x",
+    //           (int) max44009_address, (int)reg[0], (int)reg[1], (int)reg[2], (int)reg[3], 
+    //         (int)reg[4], (int)reg[5], (int)reg[6], (int)reg[7]);
+    // AddLog(LOG_LEVEL_DEBUG_MORE);
 
     if ( (0x00 == reg[0]) &&
          (0x00 == reg[1]) &&
-         ( (0x00 == (reg[2] & 0xc0)) || (MAX44009_CONTINUOUS_AUTO_MODE == (reg[2] & 0xc0)) ) &&
-         (0xef == reg[5]) &&
+         // reg[2] is written at configuration, so we cannot rely on its value after restart
+         // reg[3] and reg[4] will always contain lux values
+         // Datasheet says reg[5] is on power-up is  0xff, but we get 0xef?
+         // This makes sense as 0xf for exponent means invalid, so we accept both
+         ( (0xef == reg[5]) || (0xff == reg[5]) ) &&
          (0x00 == reg[6]) &&
          (0xff == reg[7])) {
 
-      // looks reasonable, try to initialize 
+      // looks like a MAX44009, try to initialize 
 
       Wire.beginTransmission(max44009_address);
 
@@ -127,27 +130,20 @@ void Max4409Detect(void)
         AddLog(LOG_LEVEL_DEBUG);
         break;
       }  else {
-        snprintf_P(log_data, sizeof(log_data), "MAX44009 at %x: config failed!", max44009_address);
-        AddLog(LOG_LEVEL_DEBUG);
+      //  snprintf_P(log_data, sizeof(log_data), "MAX44009 at %x: config failed!", max44009_address);
+      //  AddLog(LOG_LEVEL_DEBUG_MORE);
       }
     } else {
-      snprintf_P(log_data, sizeof(log_data), "Reading initial data failed: No MAX44009 at %x", max44009_address);
-      AddLog(LOG_LEVEL_DEBUG);
+      //snprintf_P(log_data, sizeof(log_data), "Reading initial data failed: No MAX44009 at %x", max44009_address);
+      //AddLog(LOG_LEVEL_DEBUG_MORE);
     }
   }
 }
 
 void Max4409EverySecond(void)
 {
-  if (90 == (uptime %100)) {
-    // 1mS
-    Max4409Detect();
-  }
-  else {
-    // 1mS
-    if (max44009_found) {
-      Max4409Read_lum();
-    }
+  if (max44009_found) {
+    Max4409Read_lum();
   }
 }
 
@@ -157,7 +153,7 @@ void Max4409Show(boolean json)
 
   if (max44009_valid) {
 
-    /* convert illuminance to fixed size string */
+    /* convert illuminance to string with suitable accuracy */
     if (max44009_illuminance < 10) {
       dtostrf(max44009_illuminance, sizeof(illum_str) -1, 3, illum_str);
     } else if (max44009_illuminance < 100) {
@@ -169,7 +165,9 @@ void Max4409Show(boolean json)
     }
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"), mqtt_data, max44009_types, illum_str);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), 
+                 PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"), 
+                 mqtt_data, max44009_types, illum_str);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_ILLUMINANCE, illum_str);
@@ -177,7 +175,9 @@ void Max4409Show(boolean json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE_S, mqtt_data, max44009_types, illum_str);
+      // show integer value for lx on web-server
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, 
+                 mqtt_data, max44009_types, (int)max44009_illuminance);
 #endif  // USE_WEBSERVER
     }
   }
@@ -193,9 +193,9 @@ boolean Xsns91(byte function)
 
   if (i2c_flg) {
     switch (function) {
-//      case FUNC_INIT:
-//        Max4409Detect();
-//        break;
+      case FUNC_INIT:
+        Max4409Detect();
+        break;
       case FUNC_EVERY_SECOND:
         Max4409EverySecond();
         break;
