@@ -30,8 +30,11 @@
 #define MAX44009_ADDR1         0x4A
 #define MAX44009_ADDR2         0x4B
 #define MAX44009_NO_REGISTERS  8
-#define REG_CONFIG 0x02
-#define REG_LUMINANCE 0x03
+#define REG_CONFIG             0x02
+#define REG_LUMINANCE          0x03
+#define REG_LOWER_THRESHOLD    0x06
+#define REG_THRESHOLD_TIMER    0x07
+
 #define MAX44009_CONTINUOUS_AUTO_MODE 0x80 // Start measurement in automatic, continous mode
 
 uint8_t max44009_address;
@@ -44,33 +47,18 @@ char max44009_types[] = "MAX44009";
 bool Max4409Read_lum(void)
 {
   max44009_valid = 0;
-  /* Select luminance start register */
-  Wire.beginTransmission(max44009_address);
-  Wire.write(REG_LUMINANCE);
-  Wire.endTransmission();
+  uint8_t regdata[2];
 
-  if (2 != Wire.requestFrom(max44009_address, (uint8_t)2)) { 
-    return false; 
+  /* Read 2 bytes luminance */
+  if (I2cValidRead16((uint16_t *)&regdata, max44009_address, REG_LUMINANCE)) {
+    int exponent = (regdata[0] & 0xF0) >> 4;
+    int mantissa = ((regdata[0] & 0x0F) << 4) | (regdata[1] & 0x0F);
+    max44009_illuminance = (float)(((0x00000001 << exponent) * (float)mantissa) * 0.045); 
+    max44009_valid = 1;
+    return true;
+  } else {
+    return false;
   }
-  byte msb = Wire.read();
-  byte lsb = Wire.read();
-  int exponent = (msb & 0xF0) >> 4;
-  int mantissa = ((msb & 0x0F) << 4) | (lsb & 0x0F);
-  max44009_illuminance = pow(2, exponent) * mantissa * 0.045;
-  
-  max44009_valid = 1;
-  return true;
-}
-
-bool Max4409Read_register(uint8_t regno, byte *value) {
-  Wire.beginTransmission(max44009_address);
-  Wire.write(regno);
-  if ((0 != Wire.endTransmission()) ||
-      (1 != Wire.requestFrom(max44009_address, (uint8_t)1))) { 
-    return false; 
-  } 
-  *value = (byte)Wire.read();
-  return true;
 }
 
 /********************************************************************************************/
@@ -84,58 +72,33 @@ void Max4409Detect(void)
     return;
   }
 
+  uint8_t buffer1;
+  uint8_t buffer2;
   for (byte i = 0; 0 != max44009_addresses[i]; i++) {
+
     max44009_address = max44009_addresses[i];
 
-    // we need to read each register separately, as auto-increment is only 
-    // supported for illiminance registers
-    for (byte r = 0; r < MAX44009_NO_REGISTERS; r++) {
-      if (false == Max4409Read_register(r, &reg[r])) {
-        // snprintf_P(log_data, sizeof(log_data), "MAX44009 at %x: Failed to read register %d",
-        //            max44009_address, (int)r);
-        // AddLog(LOG_LEVEL_DEBUG_MORE);
-        failed = true;
-        break;
-      }
-    }
-    if (failed) {
-      continue;
-    }
-      
-    // snprintf_P(log_data, sizeof(log_data), "MAX44009 at %x: Read %x %x %x %x %x %x %x %x",
-    //           (int) max44009_address, (int)reg[0], (int)reg[1], (int)reg[2], (int)reg[3], 
-    //         (int)reg[4], (int)reg[5], (int)reg[6], (int)reg[7]);
-    // AddLog(LOG_LEVEL_DEBUG_MORE);
-
-    if ( (0x00 == reg[0]) &&
-         (0x00 == reg[1]) &&
-         // reg[2] is written at configuration, so we cannot rely on its value after restart
-         // reg[3] and reg[4] will always contain lux values
-         // Datasheet says reg[5] is on power-up is  0xff, but we get 0xef?
-         // This makes sense as 0xf for exponent means invalid, so we accept both
-         ( (0xef == reg[5]) || (0xff == reg[5]) ) &&
-         (0x00 == reg[6]) &&
-         (0xff == reg[7])) {
-
-      // looks like a MAX44009, try to initialize 
-
-      Wire.beginTransmission(max44009_address);
-
-      // select configuration register and set mode 
-      Wire.write(REG_CONFIG);
-      Wire.write(MAX44009_CONTINUOUS_AUTO_MODE);
-      if (0 == Wire.endTransmission()) {
-        max44009_found = 1;
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, max44009_types, max44009_address);
-        AddLog(LOG_LEVEL_DEBUG);
-        break;
-      }  else {
-      //  snprintf_P(log_data, sizeof(log_data), "MAX44009 at %x: config failed!", max44009_address);
-      //  AddLog(LOG_LEVEL_DEBUG_MORE);
-      }
-    } else {
-      //snprintf_P(log_data, sizeof(log_data), "Reading initial data failed: No MAX44009 at %x", max44009_address);
+    if ((I2cValidRead8(&buffer1, max44009_address, REG_LOWER_THRESHOLD)) &&
+        (I2cValidRead8(&buffer2, max44009_address, REG_THRESHOLD_TIMER))) {
+      //snprintf(log_data, sizeof(log_data), "MAX44009 %x: %x, %x", max44009_address, (int)buffer1, (int)buffer2);
       //AddLog(LOG_LEVEL_DEBUG_MORE);
+      if ((0x00 == buffer1) &&
+          (0xFF == buffer2)) {
+          
+        // looks like a MAX44009, try to initialize 
+      
+        Wire.beginTransmission(max44009_address);
+
+        // select configuration register and set mode 
+        Wire.write(REG_CONFIG);
+        Wire.write(MAX44009_CONTINUOUS_AUTO_MODE);
+        if (0 == Wire.endTransmission()) {
+          max44009_found = 1;
+          snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, max44009_types, max44009_address);
+          AddLog(LOG_LEVEL_DEBUG);
+          break;
+        }
+      }
     }
   }
 }
@@ -154,15 +117,16 @@ void Max4409Show(boolean json)
   if (max44009_valid) {
 
     /* convert illuminance to string with suitable accuracy */
-    if (max44009_illuminance < 10) {
-      dtostrf(max44009_illuminance, sizeof(illum_str) -1, 3, illum_str);
-    } else if (max44009_illuminance < 100) {
-      dtostrf(max44009_illuminance, sizeof(illum_str) -1, 2, illum_str);
-    } else if (max44009_illuminance < 1000) {
-      dtostrf(max44009_illuminance, sizeof(illum_str) -1, 1, illum_str);
-    } else {
-      dtostrf(max44009_illuminance, sizeof(illum_str) -1, 0, illum_str);
+
+    uint8_t prec = 0;
+    if (10 > max44009_illuminance ) { 
+      prec = 3;
+    } else if (100 > max44009_illuminance) {
+      prec = 2;
+    } else if (1000 > max44009_illuminance) {
+      prec = 1;
     }
+    dtostrf(max44009_illuminance, sizeof(illum_str) -1, prec, illum_str);
 
     if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), 

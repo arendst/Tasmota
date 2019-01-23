@@ -342,7 +342,7 @@
       #define MTX_ADDRESS6     0x76              // [DisplayAddress6] I2C address of sixth 8x8 matrix module
       #define MTX_ADDRESS7     0x00              // [DisplayAddress7] I2C address of seventh 8x8 matrix module
       #define MTX_ADDRESS8     0x00              // [DisplayAddress8] I2C address of eigth 8x8 matrix module
-  #define USE_MAX44009                           // Enable MAX44009 sensor ((I2C address 0x4a 0x4b) +6k1 code)
+  #define USE_MAX44009                           // Enable MAX44009 sensor ((I2C address 0x4a 0x4b) +0k8 code)
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------
