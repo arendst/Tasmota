@@ -1,5 +1,5 @@
 /*
-  xsns_91_max44009.ino - MAX44009 ambient light sensor support for Sonoff-Tasmota
+  xsns_41_max44009.ino - MAX44009 ambient light sensor support for Sonoff-Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -25,7 +25,7 @@
  * I2C Address: 0x4a or 0x4b
 \*********************************************************************************************/
 
-#define XSNS_91			91
+#define XSNS_41			           41
 
 #define MAX44009_ADDR1         0x4A
 #define MAX44009_ADDR2         0x4B
@@ -41,7 +41,7 @@ uint8_t max44009_address;
 uint8_t max44009_addresses[] = { MAX44009_ADDR1, MAX44009_ADDR2, 0 }; //0 terminated list
 uint8_t max44009_found = 0;
 uint8_t max44009_valid = 0;
-float max44009_illuminance = 0;   
+float max44009_illuminance = 0;
 char max44009_types[] = "MAX44009";
 
 bool Max4409Read_lum(void)
@@ -53,7 +53,7 @@ bool Max4409Read_lum(void)
   if (I2cValidRead16((uint16_t *)&regdata, max44009_address, REG_LUMINANCE)) {
     int exponent = (regdata[0] & 0xF0) >> 4;
     int mantissa = ((regdata[0] & 0x0F) << 4) | (regdata[1] & 0x0F);
-    max44009_illuminance = (float)(((0x00000001 << exponent) * (float)mantissa) * 0.045); 
+    max44009_illuminance = (float)(((0x00000001 << exponent) * (float)mantissa) * 0.045);
     max44009_valid = 1;
     return true;
   } else {
@@ -84,12 +84,12 @@ void Max4409Detect(void)
       //AddLog(LOG_LEVEL_DEBUG_MORE);
       if ((0x00 == buffer1) &&
           (0xFF == buffer2)) {
-          
-        // looks like a MAX44009, try to initialize 
-      
+
+        // looks like a MAX44009, try to initialize
+
         Wire.beginTransmission(max44009_address);
 
-        // select configuration register and set mode 
+        // select configuration register and set mode
         Wire.write(REG_CONFIG);
         Wire.write(MAX44009_CONTINUOUS_AUTO_MODE);
         if (0 == Wire.endTransmission()) {
@@ -119,7 +119,7 @@ void Max4409Show(boolean json)
     /* convert illuminance to string with suitable accuracy */
 
     uint8_t prec = 0;
-    if (10 > max44009_illuminance ) { 
+    if (10 > max44009_illuminance ) {
       prec = 3;
     } else if (100 > max44009_illuminance) {
       prec = 2;
@@ -129,8 +129,8 @@ void Max4409Show(boolean json)
     dtostrf(max44009_illuminance, sizeof(illum_str) -1, prec, illum_str);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), 
-                 PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"), 
+      snprintf_P(mqtt_data, sizeof(mqtt_data),
+                 PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"),
                  mqtt_data, max44009_types, illum_str);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
@@ -140,7 +140,7 @@ void Max4409Show(boolean json)
 #ifdef USE_WEBSERVER
     } else {
       // show integer value for lx on web-server
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, 
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE,
                  mqtt_data, max44009_types, (int)max44009_illuminance);
 #endif  // USE_WEBSERVER
     }
@@ -151,7 +151,7 @@ void Max4409Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns91(byte function)
+boolean Xsns41(byte function)
 {
   boolean result = false;
 
