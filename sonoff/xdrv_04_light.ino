@@ -1203,7 +1203,7 @@ boolean LightCommand(void)
         if (LightColorEntry(color, strlen(color))) {
           Ws2812SetColor(idx, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
           idx++;
-          if (idx >= Settings.light_pixels) break;
+          if (idx > Settings.light_pixels) break;
         } else {
           break;
         }
