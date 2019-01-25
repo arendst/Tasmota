@@ -75,7 +75,7 @@ enum TasmotaCommands {
   CMND_MODULE, CMND_MODULES, CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
   CMND_COUNTERDEBOUNCE, CMND_BUTTONDEBOUNCE, CMND_SWITCHDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
-  CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE,
+  CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE, CMND_INTERLOCK,
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_TIMESTD, CMND_TIMEDST, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
   CMND_I2CSCAN, CMND_SERIALSEND, CMND_BAUDRATE, CMND_SERIALDELIMITER, CMND_DRIVER };
 const char kTasmotaCommands[] PROGMEM =
@@ -85,7 +85,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|"
   D_CMND_COUNTERDEBOUNCE "|" D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
-  D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|"
+  D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
   D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER "|" D_CMND_DRIVER;
 
@@ -318,33 +318,19 @@ void SetDevicePower(power_t rpower, int source)
     power = (1 << devices_present) -1;
     rpower = power;
   }
-  if (Settings.flag3.split_interlock) {
-    Settings.flag.interlock = 1; // prevent the situation where interlock is off and split-interlock is on
-    uint8_t mask = 0x01;
-    uint8_t count = 0;
-    byte result1 = 0;
-    byte result2 = 0;
-    for (byte i = 0; i < devices_present; i++) {
-      if (rpower & mask) {
-        if (i <2) { result1++;}//increment if low part is ON
-        if (i >1) { result2++;}//increment if high part is ON
-      }
-       mask <<= 1; // shift the bitmask one left (1,2,4,8) to find out what is on
-    }
-    if ((result1) >1 && (result2 >1)) {power = 0; rpower = 0;} // all 4 switch are on, something is wrong, so we turn all off
-    if ((result1) >1 && (result2 <2)) {power = power & 0x0C; rpower = power;} // 1/2 are both on and 3/4 max one is on
-    if ((result1) <2 && (result2 >1)) {power = power & 0x03; rpower = power;} // 1/2 max one is on and 3/4 both are on
-  } else {
-    if (Settings.flag.interlock) {     // Allow only one or no relay set
+
+  if (Settings.flag.interlock) {          // Allow only one or no relay set
+    for (byte i = 0; i < MAX_INTERLOCKS; i++) {
       power_t mask = 1;
       uint8_t count = 0;
-      for (byte i = 0; i < devices_present; i++) {
-        if (rpower & mask) count++;
+      for (byte j = 0; j < devices_present; j++) {
+        if ((Settings.interlock[i] & mask) && (rpower & mask)) { count++; }
         mask <<= 1;
       }
       if (count > 1) {
-        power = 0;
-        rpower = 0;
+        mask = ~Settings.interlock[i];    // Turn interlocked group off as there would be multiple relays on
+        power &= mask;
+        rpower &= mask;
       }
     }
   }
@@ -754,6 +740,7 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
               case 6:            // mqtt_button_retain (CMND_BUTTONRETAIN)
               case 7:            // mqtt_switch_retain (CMND_SWITCHRETAIN)
               case 9:            // mqtt_sensor_retain (CMND_SENSORRETAIN)
+              case 14:           // interlock (CMND_INTERLOCK)
               case 22:           // mqtt_serial (SerialSend and SerialLog)
               case 23:           // mqtt_serial_raw (SerialSend)
               case 25:           // knx_enabled (Web config)
@@ -1181,6 +1168,74 @@ void MqttDataHandler(char* topic, byte* data, unsigned int data_len)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.switchmode[index-1]);
     }
+    else if (CMND_INTERLOCK == command_code) {                      // Interlock 0 - Off, Interlock 1 - On, Interlock 1,2 3,4 5,6,7
+      uint8_t max_relays = devices_present;
+      if (light_type) { max_relays--; }
+      if (max_relays > sizeof(Settings.interlock[0]) * 8) { max_relays = sizeof(Settings.interlock[0]) * 8; }
+      if (max_relays > 1) {                                         // Only interlock with more than 1 relay
+        if (data_len > 0) {
+          if (strstr(dataBuf, ",")) {                               // Interlock entry
+            for (byte i = 0; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }  // Reset current interlocks
+            char *group;
+            char *q;
+            uint8_t group_index = 0;
+            power_t relay_mask = 0;
+            for (group = strtok_r(dataBuf, " ", &q); group && group_index < MAX_INTERLOCKS; group = strtok_r(NULL, " ", &q)) {
+              char *str;
+              for (str = strtok_r(group, ",", &p); str; str = strtok_r(NULL, ",", &p)) {
+                int pbit = atoi(str);
+                if ((pbit > 0) && (pbit <= max_relays)) {           // Only valid relays
+                  pbit--;
+                  if (!bitRead(relay_mask, pbit)) {                 // Only relay once
+                    bitSet(relay_mask, pbit);
+                    bitSet(Settings.interlock[group_index], pbit);
+                  }
+                }
+              }
+              group_index++;
+            }
+            for (byte i = 0; i < group_index; i++) {
+              uint8_t minimal_bits = 0;
+              for (byte j = 0; j < max_relays; j++) {
+                if (bitRead(Settings.interlock[i], j)) { minimal_bits++; }
+              }
+              if (minimal_bits < 2) { Settings.interlock[i] = 0; }  // Discard single relay as interlock
+            }
+          } else {
+            Settings.flag.interlock = payload &1;                   // Enable/disable interlock
+            if (Settings.flag.interlock) {
+              SetDevicePower(power, SRC_IGNORE);                    // Remove multiple relays if set
+            }
+          }
+        }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_INTERLOCK "\":\"%s\",\"" D_JSON_GROUPS "\":\""), GetStateText(Settings.flag.interlock));
+        uint8_t anygroup = 0;
+        for (byte i = 0; i < MAX_INTERLOCKS; i++) {
+          if (Settings.interlock[i]) {
+            anygroup++;
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s"), mqtt_data, (anygroup > 1) ? " " : "");
+            uint8_t anybit = 0;
+            power_t mask = 1;
+            for (byte j = 0; j < max_relays; j++) {
+              if (Settings.interlock[i] & mask) {
+                anybit++;
+                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (anybit > 1) ? "," : "", j +1);
+              }
+              mask <<= 1;
+            }
+          }
+        }
+        if (!anygroup) {
+          for (byte j = 1; j <= max_relays; j++) {
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (j > 1) ? "," : "", j);
+          }
+        }
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+      } else {
+        Settings.flag.interlock = 0;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag.interlock));
+      }
+    }
     else if (CMND_TELEPERIOD == command_code) {
       if ((payload >= 0) && (payload < 3601)) {
         Settings.tele_period = (1 == payload) ? TELE_PERIOD : payload;
@@ -1400,41 +1455,29 @@ void ExecuteCommandPower(byte device, byte state, int source)
   }
   if ((device < 1) || (device > devices_present)) device = 1;
   if (device <= MAX_PULSETIMERS) { SetPulseTimer(device -1, 0); }
-  power_t mask = 1 << (device -1);
+  power_t mask = 1 << (device -1);        // Device to control
   if (state <= POWER_TOGGLE) {
     if ((blink_mask & mask)) {
       blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
       MqttPublishPowerBlinkState(device);
     }
-  if (Settings.flag3.split_interlock && !Settings.flag.interlock ) Settings.flag.interlock=1; // ensure interlock is on, in case split_interlock is on
-  // check if channel 1/2 or 3/4 are to be changed
-  if (device <= 2 && Settings.flag3.split_interlock ) { // channel 1/2 are changed
-    if (Settings.flag3.split_interlock && !interlock_mutex) { // Clear all but masked relay, but only if we are not already doing something
+
+    if (Settings.flag.interlock && !interlock_mutex) {  // Clear all but masked relay in interlock group
       interlock_mutex = 1;
-        for (byte i = 0; i < 2; i++) {
-          byte imask = 0x01 << i;
-          if ((power & imask) && (mask != imask)) { ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE); delay(50); }// example, first power is ON but the pushed button is not the first, then powerOFF the first one
+      for (byte i = 0; i < MAX_INTERLOCKS; i++) {
+        if (Settings.interlock[i] & mask) {             // Find interlock group
+          for (byte j = 0; j < devices_present; j++) {
+            power_t imask = 1 << j;
+            if ((Settings.interlock[i] & imask) && (power & imask) && (mask != imask)) {
+              ExecuteCommandPower(j +1, POWER_OFF, SRC_IGNORE);
+            }
+          }
+          break;                                        // An interlocked relay is only present in one group so quit
         }
-      interlock_mutex = 0; // avoid infinite loop due to recursive requests
-    }
-  } else {  // channel 3/4 are changed
-    if (Settings.flag3.split_interlock && !interlock_mutex) {  // only start if we are on interlock split and have no re-call
-    interlock_mutex = 1;
-      for (byte i = 2; i < devices_present; i++) {
-        byte imask = 0x01 << i;
-        if ((power & imask) && (mask != imask)) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
       }
       interlock_mutex = 0;
     }
-  }
-    if ( Settings.flag.interlock && !interlock_mutex && !Settings.flag3.split_interlock) {  //execute regular interlock-mode as interlock-split is off
-      interlock_mutex = 1;
-      for (byte i = 0; i < devices_present; i++) {
-        power_t imask = 1 << i;
-        if ((power & imask) && (mask != imask)) ExecuteCommandPower(i +1, POWER_OFF, SRC_IGNORE);
-      }
-      interlock_mutex = 0;
-    }
+
     switch (state) {
     case POWER_OFF: {
       power &= (POWER_MASK ^ mask);
