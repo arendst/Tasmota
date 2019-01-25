@@ -1470,6 +1470,7 @@ void ExecuteCommandPower(byte device, byte state, int source)
             power_t imask = 1 << j;
             if ((Settings.interlock[i] & imask) && (power & imask) && (mask != imask)) {
               ExecuteCommandPower(j +1, POWER_OFF, SRC_IGNORE);
+              delay(50);                                // Add some delay to make sure never have more than one relay on
             }
           }
           break;                                        // An interlocked relay is only present in one group so quit
