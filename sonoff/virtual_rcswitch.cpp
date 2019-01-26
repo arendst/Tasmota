@@ -532,5 +532,7 @@ String VirtualRCSwitch::toString()
     }
     result+=rfdata.substring(frdatalen - 2);
     result+=rfdata.substring(0,frdatalen - 2);
+    result+=" 55";
+    
     return result;
 }

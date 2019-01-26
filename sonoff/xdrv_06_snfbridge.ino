@@ -438,6 +438,10 @@ VirtualRCSwitch rcsw = VirtualRCSwitch();
 RCSwitch translator to use it with the Portisch firmware
 
 examples:
+  RFSwitchOn address, channel, protocol, repeats, pulse
+  RFSwitchOff address, channel, protocol, repeats, pulse
+  RFSwitchSend data, bits, protocol, repeat, pulse
+  
   RFSwitchOn 10001, 2
   RFSwitchOff 10001, 2
 
@@ -453,14 +457,17 @@ boolean SonoffBridgeCommandRCSwitch(void){
   // Handle switch on, switch off
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kRfSwitchCommands);
   if (-1 != command_code) {
-      // RFSwitchOn, address, channel, repeats
-      // RFSwitchOff, address, channel, repeats
+      // RFSwitchOn, address, channel, protocol, repeats, pulse
+      // RFSwitchOff, address, channel, protocol, repeats, pulse
 
       char param_family = 0;
       int param_groupNumber = -1;
       char param_groupString[6]="";
       int param_device = -1;
-      int param_repeats = 4;
+      int param_repeats = 10;
+      int param_protocol = 1;      
+      int param_pulse = 350;
+
 
       char *p;
       byte i = 0;
@@ -494,12 +501,17 @@ boolean SonoffBridgeCommandRCSwitch(void){
           break;
         }
         case 1:
-          param_device = atoi(str);
-          
-          break;
+          param_device = atoi(str);          
+          break;          
         case 2:
+          param_protocol = atoi(str);
+          break;
+        case 3:
           param_repeats = atoi(str);
           break;
+        case 4:
+          param_pulse = atoi(str);
+
         }
       }
 
@@ -507,10 +519,11 @@ boolean SonoffBridgeCommandRCSwitch(void){
           return true;
       }
 
-      if(param_repeats<0){
-        param_repeats = 4;
-      }
-
+      if (!param_protocol) { param_protocol = 1; }
+      rcsw.setProtocol(param_protocol);
+      if (!param_pulse) { param_pulse = 350; }      // Default pulse length for protocol 1
+      rcsw.setPulseLength(param_pulse);
+      if (!param_repeats) { param_repeats = 10; }     // Default at init     
       rcsw.setRepeatTransmit(param_repeats);
 
       switch(command_code){
@@ -619,7 +632,7 @@ boolean SonoffBridgeCommand(void)
 
   char command [CMDSZ];
   boolean serviced = true;
-  
+
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSonoffBridgeCommands);
   if (-1 == command_code) {
     serviced = false;  // Unknown command
