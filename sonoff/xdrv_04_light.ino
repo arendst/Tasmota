@@ -756,7 +756,11 @@ void LightAnimate(void)
     }
   }
   else {
-    sleep = 0;
+    if (Settings.light_scheme > 0) {
+      sleep = 0;
+    } else {
+      sleep = Settings.sleep;
+    }
     switch (Settings.light_scheme) {
       case LS_POWER:
         LightSetDimmer(Settings.light_dimmer);
