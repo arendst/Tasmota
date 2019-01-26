@@ -281,6 +281,7 @@ enum SupportedModules {
   KA10,
   ZX2820,
   MI_DESK_LAMP,
+  RGBWW_CONTROLLER,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -574,7 +575,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   PHILIPS,
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
-  WEMOS
+  WEMOS,
+  RGBWW_CONTROLLER
 };
 
 // Default module settings
@@ -1774,6 +1776,26 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_ROT_A,       // GPIO12 Rotary switch A pin
      GPIO_ROT_B,       // GPIO13 Rotary switch B pin
      0, 0, 0, 0
+  },
+  { "ESP RGBWWC",      // esp rgbww controller https://github.com/pljakobs/esp_rgbww_controller/tree/v2.3
+     GPIO_KEY1,        // GPIO00 Button
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     0,                // GPIO02
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_PWM5,        // GPIO04 LED Warm White
+     GPIO_PWM4,        // GPIO05 LED Cold White
+     0,                // GPIO06 (SD_CLK   Flash)
+     0,                // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+     0,                // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO)
+     0,                // GPIO10 (SD_DATA3 Flash QIO)
+     0,                // GPIO11 (SD_CMD   Flash)
+     GPIO_PWM2,        // GPIO12 LED Green
+     GPIO_PWM1,        // GPIO13 LED Red
+     GPIO_PWM3,        // GPIO14 LED Blue
+     0,                // GPIO15
+     GPIO_KEY2,        // GPIO16 Button
+     0                 // ADC0 Analog input
   }
 };
 
