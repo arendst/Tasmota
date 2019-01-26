@@ -1784,12 +1784,12 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_PWM5,        // GPIO04 LED Warm White
      GPIO_PWM4,        // GPIO05 LED Cold White
-     0,                // GPIO06 (SD_CLK   Flash)
-     0,                // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
-     0,                // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
      0,                // GPIO09 (SD_DATA2 Flash QIO)
      0,                // GPIO10 (SD_DATA3 Flash QIO)
-     0,                // GPIO11 (SD_CMD   Flash)
+                       // GPIO11 (SD_CMD   Flash)
      GPIO_PWM2,        // GPIO12 LED Green
      GPIO_PWM1,        // GPIO13 LED Red
      GPIO_PWM3,        // GPIO14 LED Blue
