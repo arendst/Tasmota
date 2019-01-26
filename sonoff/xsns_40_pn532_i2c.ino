@@ -433,7 +433,6 @@ void PN532_ScanForTag(void)
           if (pn532_i2c_function == 2) {
 #ifdef USE_PN532_DATA_RAW
             if (mifareclassic_WriteDataBlock(1, card_data)) {
-              memcpy(&card_data,&pn532_i2c_newdata,sizeof(card_data));
               set_success = true;
               snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data write successful");
               AddLog(LOG_LEVEL_INFO);
