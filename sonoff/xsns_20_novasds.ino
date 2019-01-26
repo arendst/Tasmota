@@ -108,7 +108,7 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
 
   // read rest (9 of 10 bytes) of message
   NovaSdsSerial->readBytes(&recbuf[1], 9);
-  AddLogSerial(LOG_LEVEL_DEBUG_MORE, recbuf, sizeof(recbuf));
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, recbuf, sizeof(recbuf));
 
   if ( NULL != buffer ) {
     // return data to buffer

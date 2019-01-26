@@ -95,13 +95,13 @@ uint8_t rules_teleperiod = 0;
 
 char event_data[100];
 char vars[MAX_RULE_VARS][33] = { 0 };
-#if (MAX_RULE_VARS>8)
-#error MAX_RULE_VARS is bigger than 8
+#if (MAX_RULE_VARS>16)
+#error MAX_RULE_VARS is bigger than 16
 #endif
-#if (MAX_RULE_MEMS>8)
-#error MAX_RULE_MEMS is bigger than 8
+#if (MAX_RULE_MEMS>5)
+#error MAX_RULE_MEMS is bigger than 5
 #endif
-uint8_t vars_event = 0;
+uint16_t vars_event = 0;
 uint8_t mems_event = 0;
 
 /*******************************************************************************************/

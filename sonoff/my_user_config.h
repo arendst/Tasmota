@@ -325,8 +325,10 @@
 //  #define USE_DS3231                             // Enable DS3231 external RTC in case no Wifi is avaliable. See docs in the source file (+1k2 code)
 //    #define USE_RTC_ADDR  0x68                   // Default I2C address 0x68
 //  #define USE_MGC3130                            // Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
-//  #define USE_PN532_I2C                          // Enable PN532 - Near Field Communication (NFC) controller (+3k3 code, 508 bytes of mem)
-//    #define USE_PN532_CAUSE_EVENTS               // Enable PN532 driver to cause event's on card read in addition to immediate telemetry
+//  #define USE_PN532_I2C                          // Enable PN532 - Near Field Communication (NFC) controller (+1k7 code, 164 bytes of mem)
+//    #define USE_PN532_DATA_FUNCTION              // Enable PN532 DATA Usage using Sensor15 command (+1k6 code, 316 bytes of mem)
+//    #define USE_PN532_CAUSE_EVENTS               // Enable PN532 driver to cause event's on card read in addition to immediate telemetry (+64 bytes code, 48 bytes mem)
+//  #define USE_MAX44009                           // Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
 
 //  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
@@ -341,7 +343,6 @@
       #define MTX_ADDRESS6     0x76              // [DisplayAddress6] I2C address of sixth 8x8 matrix module
       #define MTX_ADDRESS7     0x00              // [DisplayAddress7] I2C address of seventh 8x8 matrix module
       #define MTX_ADDRESS8     0x00              // [DisplayAddress8] I2C address of eigth 8x8 matrix module
-
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------

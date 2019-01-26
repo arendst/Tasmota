@@ -61,9 +61,14 @@ uint8_t pn532_i2c_detected = 0;
 uint8_t pn532_i2c_packetbuffer[64];
 uint8_t pn532_i2c_scan_defer_report = 0;         // If a valid card was found we will not scan for one again in the same two seconds so we set this to 19 if a card was found
 uint8_t pn532_i2c_command = 0;
+
 uint8_t pn532_i2c_disable = 0;
+
+#ifdef USE_PN532_DATA_FUNCTION
 uint8_t pn532_i2c_function = 0;
 uint8_t pn532_i2c_newdata[16];
+uint8_t pn532_i2c_newdata_len = 0;
+#endif // USE_PN532_DATA_FUNCTION
 
 const uint8_t PROGMEM pn532_global_timeout = 10;
 
@@ -285,6 +290,8 @@ boolean PN532_readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *u
   return true;
 }
 
+#ifdef USE_PN532_DATA_FUNCTION
+
 uint8_t mifareclassic_AuthenticateBlock (uint8_t *uid, uint8_t uidLen, uint32_t blockNumber, uint8_t keyNumber, uint8_t *keyData)
 {
     uint8_t i;
@@ -370,6 +377,7 @@ uint8_t mifareclassic_WriteDataBlock (uint8_t blockNumber, uint8_t *data)
     return (0 < PN532_readResponse(pn532_i2c_packetbuffer, sizeof(pn532_i2c_packetbuffer)));
 }
 
+#endif // USE_PN532_DATA_FUNCTION
 
 void PN532_ScanForTag(void)
 {
@@ -384,16 +392,28 @@ void PN532_ScanForTag(void)
       pn532_i2c_scan_defer_report--;
     } else {
       char uids[15];
+      
+#ifdef USE_PN532_DATA_FUNCTION      
       char card_datas[34];
+#endif // USE_PN532_DATA_FUNCTION      
+
       sprintf(uids,"");
       for (uint8_t i = 0;i < uid_len;i++) {
         sprintf(uids,"%s%02X",uids,uid[i]);
       }
+      
+#ifdef USE_PN532_DATA_FUNCTION      
       if (uid_len == 4) { // Lets try to read block 0 of the mifare classic card for more information
         uint8_t keyuniversal[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
         if (mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
           if (mifareclassic_ReadDataBlock(1, card_data)) {
-            memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
+            for (uint8_t i = 0;i < sizeof(card_data);i++) {
+              if ((isalpha(card_data[i])) || ((isdigit(card_data[i])))) {
+                card_datas[i] = char(card_data[i]);
+              } else {
+                card_datas[i] = '\0';
+              }
+            }
           }
           if (pn532_i2c_function == 1) { // erase block 1 of card
             for (uint8_t i = 0;i<16;i++) {
@@ -407,12 +427,23 @@ void PN532_ScanForTag(void)
             }
           }
           if (pn532_i2c_function == 2) {
-            memcpy(&card_data,&pn532_i2c_newdata,sizeof(card_data));
-            if (mifareclassic_WriteDataBlock(1, card_data)) {
-              set_success = true;
-              snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data write successful");
+            boolean IsAlphaNumeric = true;
+            for (uint8_t i = 0;i < pn532_i2c_newdata_len;i++) {
+              if ((!isalpha(pn532_i2c_newdata[i])) || (!isdigit(pn532_i2c_newdata[i]))) {
+                IsAlphaNumeric = false;
+              }
+            }
+            if (IsAlphaNumeric) {
+              if (mifareclassic_WriteDataBlock(1, card_data)) {
+                memcpy(&card_data,&pn532_i2c_newdata,sizeof(card_data));
+                set_success = true;
+                snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data write successful");
+                AddLog(LOG_LEVEL_INFO);
+                memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
+              }
+            } else {
+              snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data must be alphanumeric");
               AddLog(LOG_LEVEL_INFO);
-              memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
             }
           }
         } else {
@@ -435,17 +466,28 @@ void PN532_ScanForTag(void)
           break;
       }
       pn532_i2c_function = 0;
+#endif // USE_PN532_DATA_FUNCTION      
+      
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
+
+#ifdef USE_PN532_DATA_FUNCTION
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PN532\":{\"UID\":\"%s\", \"DATA\":\"%s\"}}"), mqtt_data, uids, card_datas);
+#else
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PN532\":{\"UID\":\"%s\"}}"), mqtt_data, uids);
+#endif // USE_PN532_DATA_FUNCTION      
+
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
 
-#ifdef USE_PN532_CAUSE_EVENTS      
+#ifdef USE_PN532_CAUSE_EVENTS
 
       char command[71];
+#ifdef USE_PN532_DATA_FUNCTION
       sprintf(command,"backlog event PN532_UID=%s;event PN532_DATA=%s",uids,card_datas);
+#else
+      sprintf(command,"event PN532_UID=%s",uids);
+#endif // USE_PN532_DATA_FUNCTION      
       ExecuteCommand(command, SRC_RULE);
-      
-#endif
+#endif // USE_PN532_CAUSE_EVENTS
       
       pn532_i2c_scan_defer_report = 7; // Ignore tags found for two seconds
     }
@@ -453,6 +495,8 @@ void PN532_ScanForTag(void)
     if (pn532_i2c_scan_defer_report > 0) { pn532_i2c_scan_defer_report--; }
   }
 }
+
+#ifdef USE_PN532_DATA_FUNCTION
 
 boolean PN532_Command(void)
 {
@@ -486,10 +530,10 @@ boolean PN532_Command(void)
         return serviced;
       }
       sprintf(sub_string_tmp,subStr(sub_string, XdrvMailbox.data, ",", 2));
-      uint8_t dlen = strlen(sub_string_tmp);
-      if (dlen > 15) { dlen = 15; }
-      memcpy(&pn532_i2c_newdata,&sub_string_tmp,dlen);
-      pn532_i2c_newdata[dlen] = 0x00; // Null terminate the string
+      pn532_i2c_newdata_len = strlen(sub_string_tmp);
+      if (pn532_i2c_newdata_len > 15) { pn532_i2c_newdata_len = 15; }
+      memcpy(&pn532_i2c_newdata,&sub_string_tmp,pn532_i2c_newdata_len);
+      pn532_i2c_newdata[pn532_i2c_newdata_len] = 0x00; // Null terminate the string
       pn532_i2c_function = 2;
       snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Next scanned tag data block 1 will be set to '%s'",pn532_i2c_newdata);
       AddLog(LOG_LEVEL_INFO);
@@ -499,6 +543,8 @@ boolean PN532_Command(void)
     }
   }
 }
+
+#endif // USE_PN532_DATA_FUNCTION
 
 /*********************************************************************************************\
  * Interface
@@ -518,11 +564,15 @@ boolean Xsns40(byte function)
       case FUNC_EVERY_SECOND:
         PN532_Detect();
         break;
+
+#ifdef USE_PN532_DATA_FUNCTION        
       case FUNC_COMMAND:
         if (XSNS_40 == XdrvMailbox.index) {
           result = PN532_Command();
         }
         break;
+#endif // USE_PN532_DATA_FUNCTION        
+
       case FUNC_SAVE_BEFORE_RESTART:
         if (!pn532_i2c_disable) {
           pn532_i2c_disable = 1;

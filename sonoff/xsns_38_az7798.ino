@@ -158,7 +158,7 @@ void AzEverySecond(void)
       }
     } while(((millis() - start) < AZ_READ_TIMEOUT) && (counter < sizeof(az_response)) && !az_received);
 
-    AddLogSerial(LOG_LEVEL_DEBUG_MORE, az_response, counter);
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, az_response, counter);
 
     if (!az_received) {
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 comms timeout"));

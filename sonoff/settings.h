@@ -76,7 +76,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60 - Enable normal sleep instead of dynamic sleep
     uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61 - Force local operation when button/switch topic is set
     uint32_t no_pullup : 1;                // bit 12 (v6.4.1.7)  - SetOption62 - Force no pull-up (0 = (no)pull-up, 1 = no pull-up)
-    uint32_t split_interlock : 1;          // bit 13 (v6.4.1.8)  - SetOption63 - Split interlock on CH4
+    uint32_t spare13 : 1;
     uint32_t spare14 : 1;
     uint32_t spare15 : 1;
     uint32_t spare16 : 1;
@@ -271,9 +271,7 @@ struct SYSCFG {
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
   myio          my_gp;                     // 484
-
-  byte          free_495[1];               // 495
-
+  uint8_t       test_step;                 // 495
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
   uint8_t       light_correction;          // 49D
@@ -288,9 +286,7 @@ struct SYSCFG {
   uint16_t      light_wakeup;              // 4A6
   byte          knx_CB_registered;         // 4A8  Number of Group Address to write
   char          web_password[33];          // 4A9
-
-  uint8_t       ex_switchmode[4];          // 4CA  Free since 6.0.0a
-
+  uint8_t       interlock[MAX_INTERLOCKS]; // 4CA
   char          ntp_server[3][33];         // 4CE
   byte          ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532

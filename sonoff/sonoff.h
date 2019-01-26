@@ -51,6 +51,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 // Changes to the following MAX_ defines will impact settings layout
 #define MAX_SWITCHES           8            // Max number of switches
 #define MAX_RELAYS             8            // Max number of relays
+#define MAX_INTERLOCKS         4            // Max number of interlock groups (MAX_RELAYS / 2)
 #define MAX_LEDS               4            // Max number of leds
 #define MAX_KEYS               4            // Max number of keys or buttons
 #define MAX_PWMS               5            // Max number of PWM channels
@@ -260,5 +261,7 @@ const uint8_t kIFan02Speed[MAX_FAN_SPEED][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,
 \*********************************************************************************************/
 
 extern uint8_t light_device;  // Light device number
+extern uint8_t light_power;  // Light power
+extern uint8_t rotary_changed; // Rotary switch changed
 
 #endif  // _SONOFF_H_

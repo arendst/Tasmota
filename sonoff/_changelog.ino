@@ -1,4 +1,21 @@
-/* 6.4.1.8 20190107
+/* 6.4.1.11 20190124
+ * Remove command SetOption14 as it has been superseded by command Interlock
+ * Remove command SetOption63 as it has been superseded by command Interlock
+ * Add command Interlock 0 / 1 / 1,2 3,4 .. to control interlock ON/OFF and add up to 8 relays in 1 to 4 interlock groups (#5014)
+ *
+ * 6.4.1.10 20190121
+ * Fix Hass discovery of MHZ19(B) sensors (#4992)
+ * Fix Hass Software Watchdog exception during discovery (#4988)
+ * Add support for MAX44009 Ambient Light sensor (#4907)
+ *
+ * 6.4.1.9 20190115
+ * Add support for Mi LED Desk Lamp with rotary switch (#4887)
+ * Fix mDNS addService (#4938, #4951)
+ * Fix allowable MAX_RULE_VARS to 16 (#4933)
+ * Add (S)SerialSend3 escape sequence \x to allow hexadecimal byte value (#3560, #4947)
+ * Add SerialBridge command SSerialSend5 <hexdata>
+ *
+ * 6.4.1.8 20190107
  * Change sonoff_template.h layout regarding optional module flags like ADC0
  * Add command SetOption62 1 to force no Button/Switch pullup on dedicated modules. Currently only supported on Shelly2 (#4841)
  * Fix Display exception 28 when JSON value is NULL received

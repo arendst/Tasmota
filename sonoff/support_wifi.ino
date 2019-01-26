@@ -41,6 +41,7 @@ uint8_t wifi_status;
 uint8_t wps_result;
 uint8_t wifi_config_type = 0;
 uint8_t wifi_config_counter = 0;
+uint8_t mdns_begun = 0;             // mDNS active
 
 uint8_t wifi_scan_state;
 uint8_t wifi_bssid[6];
@@ -349,6 +350,14 @@ void WifiCheckIp(void)
       Settings.ip_address[3] = (uint32_t)WiFi.dnsIP();
     }
     wifi_status = WL_CONNECTED;
+#ifdef USE_DISCOVERY
+#ifdef WEBSERVER_ADVERTISE
+    if (2 == mdns_begun) {
+      MDNS.update();
+      AddLog_P(LOG_LEVEL_DEBUG_MORE, D_LOG_MDNS, "MDNS.update");
+    }
+#endif  // USE_DISCOVERY
+#endif  // WEBSERVER_ADVERTISE
   } else {
     WifiSetState(0);
     uint8_t wifi_config_tool = Settings.sta_config;
@@ -492,7 +501,7 @@ void WifiCheck(uint8_t param)
 //              mdns_delayed_start--;
 //            } else {
 //              mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
-              mdns_begun = MDNS.begin(my_hostname);
+              mdns_begun = (uint8_t)MDNS.begin(my_hostname);
               snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS "%s"), (mdns_begun) ? D_INITIALIZED : D_FAILED);
               AddLog(LOG_LEVEL_INFO);
 //            }
@@ -505,7 +514,8 @@ void WifiCheck(uint8_t param)
           StartWebserver(Settings.webserver, WiFi.localIP());
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
-          if (mdns_begun) {
+          if (1 == mdns_begun) {
+            mdns_begun = 2;
             MDNS.addService("http", "tcp", WEB_PORT);
           }
 #endif  // WEBSERVER_ADVERTISE
@@ -530,7 +540,7 @@ void WifiCheck(uint8_t param)
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION
-        mdns_begun = false;
+        mdns_begun = 0;
 #ifdef USE_KNX
         knx_started = false;
 #endif  // USE_KNX
