@@ -413,16 +413,213 @@ void SonoffBridgeLearn(uint8_t key)
   Serial.write(0xA1);  // Start learning
   Serial.write(0x55);  // End of Text
 }
-
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
+#include "virtual_rcswitch.h"
+#define D_CMND_RFSWITCHON "RFSwitchOn"
+#define D_CMND_RFSWITCHOFF "RFSwitchOff"
+#define D_CMND_RFSWITCHSEND "RFSwitchSend"
+
+#define D_JSON_RF_PROTOCOL "Protocol"
+#define D_JSON_RF_BITS "Bits"
+#define D_JSON_RF_DATA "Data"
+
+#define D_CMND_RFSEND "RFSend"
+#define D_JSON_RF_PULSE "Pulse"
+#define D_JSON_RF_REPEAT "Repeat"
+
+enum RfSwitchCommands { CMND_RFSWITCHON, CMND_RFSWITCHOFF };
+const char kRfSwitchCommands[] PROGMEM = D_CMND_RFSWITCHON "|" D_CMND_RFSWITCHOFF ;
+VirtualRCSwitch rcsw = VirtualRCSwitch();
+
+/*
+RCSwitch translator to use it with the Portisch firmware
+
+examples:
+  RFSwitchOn 10001, 2
+  RFSwitchOff 10001, 2
+
+  RFSwitchOn a, 2
+  RFSwitchOff a, 2
+
+  RFSwitchSend 0x501014, 24, 1, 10, 350
+*/
+boolean SonoffBridgeCommandRCSwitch(void){
+  char command [CMDSZ];
+  boolean serviced = false;
+
+  // Handle switch on, switch off
+  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kRfSwitchCommands);
+  if (-1 != command_code) {
+      // RFSwitchOn, address, channel, repeats
+      // RFSwitchOff, address, channel, repeats
+
+      char param_family = 0;
+      int param_groupNumber = -1;
+      char param_groupString[6]="";
+      int param_device = -1;
+      int param_repeats = 4;
+
+      char *p;
+      byte i = 0;
+      for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 5; str = strtok_r(NULL, ", ", &p)) {
+        switch (i++) {
+        case 0:
+        {
+          int slen = strlen(str);
+          switch(slen){
+            case 1: // simple address mode as char or int
+            {
+              if(str[0]>='a' && str[0]<= 'd')
+              {
+                param_family =str[0]; 
+              }
+              if(str[0]>='1' && str[0]<= '4')
+              {
+                param_groupNumber = strtoul(str, NULL, 0);
+              }
+              break;
+            }
+            case 5: // addressed by string
+            {
+                strcpy(param_groupString,str);
+                break;
+            }
+            default:
+              // invalid adress
+              return true;
+          }          
+          break;
+        }
+        case 1:
+          param_device = atoi(str);
+          
+          break;
+        case 2:
+          param_repeats = atoi(str);
+          break;
+        }
+      }
+
+      if(param_device<0 || param_device >5){
+          return true;
+      }
+
+      if(param_repeats<0){
+        param_repeats = 4;
+      }
+
+      rcsw.setRepeatTransmit(param_repeats);
+
+      switch(command_code){
+        case CMND_RFSWITCHON:{
+          if(param_family!=0) {rcsw.switchOn(param_family,param_device);}
+          else if (param_groupNumber!=-1 ){rcsw.switchOn(param_groupNumber,param_device);}
+          else {rcsw.switchOn(param_groupString,param_device);}
+          break;
+        }
+        
+        case CMND_RFSWITCHOFF:{
+          if(param_family!=0) {rcsw.switchOff(param_family,param_device);}
+          else if (param_groupNumber!=-1 ){rcsw.switchOff(param_groupNumber,param_device);}
+          else {rcsw.switchOff(param_groupString,param_device);}
+          break;
+        }
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(sonoff_bridge_receive_raw_flag));      
+      serviced = true;
+  }
+
+  if (!serviced && !strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_RFSWITCHSEND))) {
+    if (XdrvMailbox.data_len) {
+      unsigned long data = 0;
+      unsigned int bits = 24;
+      int protocol = 1;
+      int repeat = 10;
+      int pulse = 350;
+
+      char dataBufUc[XdrvMailbox.data_len];
+      UpperCase(dataBufUc, XdrvMailbox.data);
+      StaticJsonBuffer<150> jsonBuf;  // ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(5) + 40 = 134
+      JsonObject &root = jsonBuf.parseObject(dataBufUc);
+      if (root.success()) {
+        // RFsend {"data":0x501014,"bits":24,"protocol":1,"repeat":10,"pulse":350}
+        char parm_uc[10];
+        data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_DATA))], NULL, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+        bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_BITS))];
+        protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_PROTOCOL))];
+        repeat = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_REPEAT))];
+        pulse = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_PULSE))];
+      } else {
+        //  RFsend data, bits, protocol, repeat, pulse
+        char *p;
+        byte i = 0;
+        for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 5; str = strtok_r(NULL, ", ", &p)) {
+          switch (i++) {
+          case 0:
+            data = strtoul(str, NULL, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+            break;
+          case 1:
+            bits = atoi(str);
+            break;
+          case 2:
+            protocol = atoi(str);
+            break;
+          case 3:
+            repeat = atoi(str);
+            break;
+          case 4:
+            pulse = atoi(str);
+          }
+        }
+      }
+
+      if (!protocol) { protocol = 1; }
+      rcsw.setProtocol(protocol);
+      if (!pulse) { pulse = 350; }      // Default pulse length for protocol 1
+      rcsw.setPulseLength(pulse);
+      if (!repeat) { repeat = 10; }     // Default at init
+      rcsw.setRepeatTransmit(repeat);
+      if (!bits) { bits = 24; }         // Default 24 bits
+      if (data) {
+        rcsw.send(data, bits);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFSWITCHSEND "\":\"" D_JSON_DONE "\"}"));        
+      }
+    }
+    serviced = true; 
+  }
+
+  if(serviced){
+    String buffer = rcsw.toString(); 
+    if(buffer.length()>0){ 
+      char *data = (char*) malloc (buffer.length() + 1);      
+      buffer.toCharArray(data,buffer.length() + 1);
+      rcsw.resetRecording();
+
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_IRR "RfRaw %s"), data);
+      AddLog(LOG_LEVEL_DEBUG);
+
+      SerialSendRaw(RemoveSpace(data));        
+      sonoff_bridge_receive_raw_flag = 1;
+      free(data);
+    }
+  }
+
+  return serviced;
+}
+
+
 boolean SonoffBridgeCommand(void)
 {
+  if(SonoffBridgeCommandRCSwitch()){
+    return true;
+  }
+
   char command [CMDSZ];
   boolean serviced = true;
-
+  
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSonoffBridgeCommands);
   if (-1 == command_code) {
     serviced = false;  // Unknown command
