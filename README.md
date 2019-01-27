@@ -1,3 +1,42 @@
+## Sonoff-Tasmota RCSwitch Modification
+
+## Info
+Send RC codes
+Use your Sonoff RF Bridge to operate remote radio controlled devices. This will most likely work with all popular low cost power outlet sockets (see: https://github.com/sui77/rc-switch):<br />
+All you need is a Sonoff RF Bridge with Portisch RF-Bridge-EFM8BB1 updated firmware and one or more devices with one of the supported chipsets:
+- SC5262 / SC5272
+- HX2262 / HX2272
+- PT2262 / PT2272
+- EV1527 / RT1527 / FP1527 / HS1527
+- Intertechno outlets
+- HT6P20X
+<br />
+If yours doesn't work, you might need to adjust the pulse length.<br />
+
+## Details
+Since the Portisch firmware with RfRaw (see https://github.com/arendst/Sonoff-Tasmota/wiki/Commands) is able to directly send data directly to the RF chip, this modification uses the RfRaw command and translates the output of the RCSwitch library.
+For exmaple the new command **"RFSwitchOn 10001, 2"** will be internally translated to: **"rfraw AA B0 21 03 04 015E 041A 2A62 02010101100110011001010110010101100110011001010110 55"**<br />
+So instead of having to get or set up a remote control before having to record the code, the configurations set on the device can simply be used as parameters.<br /><br />
+For this I have added three new commands: (The last three parameters are optional!)<br />
+- **RFSwitchOn address, channel**[, protocol][, repeats][, pulse]<br />
+- **RFSwitchOff address, channel**[, protocol][, repeats][, pulse]<br />
+- **RFSwitchSend data, bits**[, protocol][, repeats][, pulse]<br />
+
+More Examples:<br />
+  - RFSwitchOn 10001, 2 <br />
+  - RFSwitchOff 10001, 2 <br />
+  - RFSwitchOn a, 2 <br />
+  - RFSwitchOff a, 2 <br />
+  - RFSwitchSend 0x501014, 24, 1, 10, 350 <br />
+  
+## Thanks
+This modification based on the great work from the Tasmota Firmware, the Portisch RF Firmware and the RCSwitch Library.<br />
+https://github.com/sui77/rc-switch<br />
+https://github.com/Portisch/RF-Bridge-EFM8BB1<br />
+https://github.com/sui77/rc-switch/<br />
+<br />
+<br />
+<br />
 ## Sonoff-Tasmota
 
 Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web**, **timers**, 'Over The Air' (**OTA**) firmware updates and **sensors support**, allowing control under **Serial**, **HTTP**, **MQTT** and **KNX**, so as to be used on **Smart Home Systems**. Written for Arduino IDE and PlatformIO.
