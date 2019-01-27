@@ -2279,8 +2279,17 @@ void GpioInit(void)
         mpin -= (GPIO_SWT1_NP - GPIO_SWT1);
       }
       else if ((mpin >= GPIO_KEY1_NP) && (mpin < (GPIO_KEY1_NP + MAX_KEYS))) {
-        ButtonPullupFlag(mpin - GPIO_KEY1_NP);
+        ButtonPullupFlag(mpin - GPIO_KEY1_NP);       //  0 .. 3
         mpin -= (GPIO_KEY1_NP - GPIO_KEY1);
+      }
+      else if ((mpin >= GPIO_KEY1_INV) && (mpin < (GPIO_KEY1_INV + MAX_KEYS))) {
+        ButtonInvertFlag(mpin - GPIO_KEY1_INV);      //  0 .. 3
+        mpin -= (GPIO_KEY1_INV - GPIO_KEY1);
+      }
+      else if ((mpin >= GPIO_KEY1_INV_NP) && (mpin < (GPIO_KEY1_INV_NP + MAX_KEYS))) {
+        ButtonPullupFlag(mpin - GPIO_KEY1_INV_NP);   //  0 .. 3
+        ButtonInvertFlag(mpin - GPIO_KEY1_INV_NP);   //  0 .. 3
+        mpin -= (GPIO_KEY1_INV_NP - GPIO_KEY1);
       }
       else if ((mpin >= GPIO_REL1_INV) && (mpin < (GPIO_REL1_INV + MAX_RELAYS))) {
         bitSet(rel_inverted, mpin - GPIO_REL1_INV);

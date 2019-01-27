@@ -32,14 +32,20 @@ uint8_t multiwindow[MAX_KEYS] = { 0 };      // Max time between button presses t
 uint8_t multipress[MAX_KEYS] = { 0 };       // Number of button presses within multiwindow
 
 uint8_t dual_hex_code = 0;                  // Sonoff dual input flag
-uint8_t key_no_pullup = 0;
-uint8_t buttons_found = 0;
+uint8_t key_no_pullup = 0;                  // key no pullup flag (1 = no pullup)
+uint8_t key_inverted = 0;                   // Key inverted flag (1 = inverted)
+uint8_t buttons_found = 0;                  // Number of buttons found flag
 
 /********************************************************************************************/
 
 void ButtonPullupFlag(uint8 button_bit)
 {
   bitSet(key_no_pullup, button_bit);
+}
+
+void ButtonInvertFlag(uint8 button_bit)
+{
+  bitSet(key_inverted, button_bit);
 }
 
 void ButtonInit(void)
@@ -115,7 +121,7 @@ void ButtonHandler(void)
     } else {
       if (pin[GPIO_KEY1 +button_index] < 99) {
         button_present = 1;
-        button = digitalRead(pin[GPIO_KEY1 +button_index]);
+        button = (digitalRead(pin[GPIO_KEY1 +button_index]) != key_inverted);
       }
     }
 
