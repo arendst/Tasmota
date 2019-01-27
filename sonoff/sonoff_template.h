@@ -1669,23 +1669,26 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO16
      0
   },
-  { "OBI Socket 2",    // OBI socket (ESP8266) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko-2-stueck-weiss/p/4077673
-     0,                // GPIO00
-     0,                // GPIO01 Serial RXD
-     0,
-     0,                // GPIO03 Serial TXD
-     GPIO_REL1,        // GPIO04 Relay 1
-     GPIO_KEY1,        // GPIO05 Button
+  { "OBI Socket 2",    // OBI socket (esp8266 wroom 2) - https://www.obi.de/hausfunksteuerung/wifi-stecker-schuko-weiss/p/4077806
+     GPIO_USER,        // GPIO00
+     GPIO_USER,        // GPIO01 Serial RXD
+     0,                // GPIO02 Serial UART0_TXD
+     GPIO_USER,        // GPIO03 Serial TXD
+     GPIO_REL1,        // GPIO04 Relay1
+     GPIO_KEY1,        // GPIO05 (Relay Switch)
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
                        // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
      0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     GPIO_LED1,        // GPIO12 Green LED - Link status
-     GPIO_LED2,        // GPIO13 Red LED - Power status
-     0, 0, 0, 0
-  },
+     GPIO_LED1_INV,    // GPIO12 (Green LED - Link status)
+     GPIO_LED2,        // GPIO13 (Red LED)
+     GPIO_USER,        // GPIO14 (Temperatursensor Luftfeuchtigkeit)
+     GPIO_USER,        // GPIO15 
+     GPIO_USER,        // GPIO16
+     GPIO_FLAG_ADC0    // ADC0   A0 Analog input
+  }
   { "YTF IR Bridge",   // https://www.aliexpress.com/item/Tuya-universal-Smart-IR-Hub-remote-control-Voice-Control-AC-TV-Work-With-Alexa-Google-Home/32951202513.html
      GPIO_USER,        // GPIO00
      GPIO_USER,        // GPIO01 Serial RXD
