@@ -1688,7 +1688,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO15 
      GPIO_USER,        // GPIO16
      GPIO_FLAG_ADC0    // ADC0   A0 Analog input
-  }
+  },
   { "YTF IR Bridge",   // https://www.aliexpress.com/item/Tuya-universal-Smart-IR-Hub-remote-control-Voice-Control-AC-TV-Work-With-Alexa-Google-Home/32951202513.html
      GPIO_USER,        // GPIO00
      GPIO_USER,        // GPIO01 Serial RXD
