@@ -574,6 +574,7 @@ void SettingsDefaultSet2(void)
 
   // Module
 //  Settings.flag.interlock = 0;
+  Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
   Settings.module = MODULE;
 //  for (byte i = 0; i < sizeof(Settings.my_gp); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
   strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
@@ -1023,7 +1024,8 @@ void SettingsDelta(void)
       Settings.param[P_MDNS_DELAYED_START] = 0;
     }
     if (Settings.version < 0x0604010B) {
-      for (byte i = 0; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }
+      Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
+      for (byte i = 1; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }
     }
 
     Settings.version = VERSION;
