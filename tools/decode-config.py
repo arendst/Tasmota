@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0018'
+VER = '2.1.0019'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -829,7 +829,14 @@ Setting_6_4_1_8['flag3'][0].update ({
         'split_interlock':          ('<L', (0x3A0,1,13), (None, None,                           ('SetOption',   '"SetOption63 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_4_1_11 = copy.deepcopy(Setting_6_4_1_8)
+Setting_6_4_1_11['flag3'][0].pop('split_interlock',None)
+Setting_6_4_1_11.update            ({
+    'interlock':                    ('B',   0x4CA,       ([4],  None,                           ('Main',        None)), '"0x{:02x}".format($)' ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x604010B, 0xe00, Setting_6_4_1_11),
             (0x6040108, 0xe00, Setting_6_4_1_8),
             (0x6040107, 0xe00, Setting_6_4_1_7),
             (0x6040104, 0xe00, Setting_6_4_1_4),
