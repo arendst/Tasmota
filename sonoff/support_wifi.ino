@@ -32,6 +32,21 @@
 #define WIFI_CHECK_SEC         20   // seconds
 #define WIFI_RETRY_OFFSET_SEC  20   // seconds
 
+/*
+// This worked for 2_5_0_BETA2 but fails since then. Waiting for a solution from core team (#4952)
+#ifdef USE_MQTT_TLS
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
+#else
+#define USING_AXTLS
+#include <ESP8266WiFi.h>
+// force use of AxTLS (BearSSL is now default) which uses less memory (#4952)
+#include <WiFiClientSecureAxTLS.h>
+using namespace axTLS;
+#endif  // ARDUINO_ESP8266_RELEASE prior to 2_5_0
+#else
+#include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
+#endif  // USE_MQTT_TLS
+*/
 #include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
 
 uint8_t wifi_counter;
