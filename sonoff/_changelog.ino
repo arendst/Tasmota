@@ -1,7 +1,13 @@
-/* 6.4.1.11 20190124
+/* 6.4.1.12 20190128
+ * Change code use of boolean to bool and byte to uint8_t
+ * Change code uint8_t flags to bool flags
+ *
+ * 6.4.1.11 20190124
  * Remove command SetOption14 as it has been superseded by command Interlock
  * Remove command SetOption63 as it has been superseded by command Interlock
  * Add command Interlock 0 / 1 / 1,2 3,4 .. to control interlock ON/OFF and add up to 8 relays in 1 to 4 interlock groups (#5014)
+ * Add core version conditional compile options to provided PWM files (#4917)
+ * Add support for inverted buttons and inverted buttons without pullup (#4914)
  *
  * 6.4.1.10 20190121
  * Fix Hass discovery of MHZ19(B) sensors (#4992)

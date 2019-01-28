@@ -226,7 +226,7 @@ void PzemDrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg03(byte function)
+int Xnrg03(uint8_t function)
 {
   int result = 0;
 

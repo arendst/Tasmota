@@ -70,7 +70,7 @@ const char HTTP_SNS_SGP30[] PROGMEM = "%s"
   "{s}SGP30 " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}SGP30 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
-void Sgp30Show(boolean json)
+void Sgp30Show(bool json)
 {
   if (sgp30_ready) {
     if (json) {
@@ -90,9 +90,9 @@ void Sgp30Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns21(byte function)
+bool Xsns21(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

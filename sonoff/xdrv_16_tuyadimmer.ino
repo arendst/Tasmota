@@ -47,7 +47,7 @@
 TasmotaSerial *TuyaSerial = nullptr;
 
 uint8_t tuya_new_dim = 0;                   // Tuya dimmer value temp
-boolean tuya_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
+bool tuya_ignore_dim = false;               // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
 uint8_t tuya_cmd_status = 0;                // Current status of serial-read
 uint8_t tuya_cmd_checksum = 0;              // Checksum of tuya command
 uint8_t tuya_data_len = 0;                  // Data lenght of command
@@ -106,17 +106,17 @@ void TuyaSendState(uint8_t id, uint8_t type, uint8_t* value){
   TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, payload_len);
 }
 
-void TuyaSendBool(uint8_t id, boolean value){
-    TuyaSendState(id, TUYA_TYPE_BOOL, &value);
+void TuyaSendBool(uint8_t id, bool value){
+    TuyaSendState(id, TUYA_TYPE_BOOL, (uint8_t*)&value);
 }
 
 void TuyaSendValue(uint8_t id, uint32_t value){
     TuyaSendState(id, TUYA_TYPE_VALUE, (uint8_t*)(&value));
 }
 
-boolean TuyaSetPower(void)
+bool TuyaSetPower(void)
 {
-  boolean status = false;
+  bool status = false;
 
   uint8_t rpower = XdrvMailbox.index;
   int16_t source = XdrvMailbox.payload;
@@ -133,7 +133,7 @@ boolean TuyaSetPower(void)
   return status;
 }
 
-boolean TuyaSetChannels(void)
+bool TuyaSetChannels(void)
 {
   LightSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
   return true;
@@ -246,9 +246,9 @@ void TuyaPacketProcess(void)
       if (tuya_buffer[5] == 2) {
         uint8_t led1_gpio = tuya_buffer[6];
         uint8_t key1_gpio = tuya_buffer[7];
-        boolean key1_set = false;
-        boolean led1_set = false;
-        for (byte i = 0; i < sizeof(Settings.my_gp); i++) {
+        bool key1_set = false;
+        bool led1_set = false;
+        for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) {
           if (Settings.my_gp.io[i] == GPIO_LED1) led1_set = true;
           else if (Settings.my_gp.io[i] == GPIO_KEY1) key1_set = true;
         }
@@ -273,7 +273,7 @@ void TuyaPacketProcess(void)
  * API Functions
 \*********************************************************************************************/
 
-boolean TuyaModuleSelected(void)
+bool TuyaModuleSelected(void)
 {
   if (!(pin[GPIO_TUYA_RX] < 99) || !(pin[GPIO_TUYA_TX] < 99)) {  // fallback to hardware-serial if not explicitly selected
     pin[GPIO_TUYA_TX] = 1;
@@ -309,7 +309,7 @@ void TuyaSerialInput(void)
 {
   while (TuyaSerial->available()) {
     yield();
-    byte serial_in_byte = TuyaSerial->read();
+    uint8_t serial_in_byte = TuyaSerial->read();
 
     if (serial_in_byte == 0x55) {            // Start TUYA Packet
       tuya_cmd_status = 1;
@@ -361,7 +361,7 @@ void TuyaSerialInput(void)
 }
 
 
-boolean TuyaButtonPressed(void)
+bool TuyaButtonPressed(void)
 {
   if (!XdrvMailbox.index && ((PRESSED == XdrvMailbox.payload) && (NOT_PRESSED == lastbutton[XdrvMailbox.index]))) {
     snprintf_P(log_data, sizeof(log_data), PSTR("TYA: Reset GPIO triggered"));
@@ -398,9 +398,9 @@ void TuyaSetWifiLed(void){
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv16(byte function)
+bool Xdrv16(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (TUYA_DIMMER == Settings.module) {
     switch (function) {

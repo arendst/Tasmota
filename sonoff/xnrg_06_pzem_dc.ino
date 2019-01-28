@@ -103,7 +103,7 @@ void PzemDcDrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg06(byte function)
+int Xnrg06(uint8_t function)
 {
   int result = 0;
 

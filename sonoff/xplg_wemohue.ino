@@ -31,7 +31,7 @@
 #include <Ticker.h>
 Ticker TickerMSearch;
 
-boolean udp_connected = false;
+bool udp_connected = false;
 
 char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP packet
 IPAddress ipMulticast(239,255,255,250);  // Simple Service Discovery Protocol (SSDP)
@@ -197,7 +197,7 @@ void HueRespondToMSearch(void)
  * Belkin WeMo and Philips Hue bridge UDP multicast support
 \*********************************************************************************************/
 
-boolean UdpDisconnect(void)
+bool UdpDisconnect(void)
 {
   if (udp_connected) {
     WiFiUDP::stopAll();
@@ -207,7 +207,7 @@ boolean UdpDisconnect(void)
   return udp_connected;
 }
 
-boolean UdpConnect(void)
+bool UdpConnect(void)
 {
   if (!udp_connected) {
     if (PortUdp.beginMulticast(WiFi.localIP(), ipMulticast, port_multicast)) {
@@ -302,7 +302,7 @@ const char WEMO_EVENTSERVICE_XML[] PROGMEM =
     "<serviceStateTable>"
       "<stateVariable sendEvents=\"yes\">"
         "<name>BinaryState</name>"
-        "<dataType>Boolean</dataType>"
+        "<dataType>bool</dataType>"
         "<defaultValue>0</defaultValue>"
       "</stateVariable>"
       "<stateVariable sendEvents=\"yes\">"
@@ -564,7 +564,7 @@ void HueConfig(String *path)
 
 bool g_gotct = false;
 
-void HueLightStatus1(byte device, String *response)
+void HueLightStatus1(uint8_t device, String *response)
 {
   float hue = 0;
   float sat = 0;
@@ -584,7 +584,7 @@ void HueLightStatus1(byte device, String *response)
   response->replace("{m}", g_gotct?"ct":"hs");
 }
 
-void HueLightStatus2(byte device, String *response)
+void HueLightStatus2(uint8_t device, String *response)
 {
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON2);
   response->replace("{j1", Settings.friendlyname[device-1]);

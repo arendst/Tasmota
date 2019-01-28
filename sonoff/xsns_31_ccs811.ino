@@ -83,7 +83,7 @@ const char HTTP_SNS_CCS811[] PROGMEM = "%s"
   "{s}CCS811 " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}CCS811 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
-void CCS811Show(boolean json)
+void CCS811Show(bool json)
 {
   if (CCS811_ready) {
     if (json) {
@@ -103,9 +103,9 @@ void CCS811Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns31(byte function)
+bool Xsns31(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

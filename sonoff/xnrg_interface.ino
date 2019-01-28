@@ -20,9 +20,9 @@
 #ifdef USE_ENERGY_SENSOR
 
 #ifdef XFUNC_PTR_IN_ROM
-int (* const xnrg_func_ptr[])(byte) PROGMEM = {   // Energy driver Function Pointers
+int (* const xnrg_func_ptr[])(uint8_t) PROGMEM = {   // Energy driver Function Pointers
 #else
-int (* const xnrg_func_ptr[])(byte) = {   // Energy driver Function Pointers
+int (* const xnrg_func_ptr[])(uint8_t) = {   // Energy driver Function Pointers
 #endif
 
 #ifdef XNRG_01
@@ -92,11 +92,11 @@ int (* const xnrg_func_ptr[])(byte) = {   // Energy driver Function Pointers
 
 const uint8_t xnrg_present = sizeof(xnrg_func_ptr) / sizeof(xnrg_func_ptr[0]);  // Number of drivers found
 
-int XnrgCall(byte Function)
+int XnrgCall(uint8_t Function)
 {
   int result = 0;
 
-  for (byte x = 0; x < xnrg_present; x++) {
+  for (uint8_t x = 0; x < xnrg_present; x++) {
     result = xnrg_func_ptr[x](Function);
 
     if (result && ((FUNC_SERIAL == Function) ||

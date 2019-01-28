@@ -367,7 +367,7 @@ void LightInit(void)
     Settings.light_color[0] = 255;      // One channel only supports Dimmer but needs max color
   }
   if (light_type < LT_PWM6) {           // PWM
-    for (byte i = 0; i < light_type; i++) {
+    for (uint8_t i = 0; i < light_type; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
       if (pin[GPIO_PWM1 +i] < 99) {
         pinMode(pin[GPIO_PWM1 +i], OUTPUT);
@@ -487,7 +487,7 @@ void LightSetDimmer(uint8_t myDimmer)
     Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
   }
   float dimmer = 100 / (float)myDimmer;
-  for (byte i = 0; i < light_subtype; i++) {
+  for (uint8_t i = 0; i < light_subtype; i++) {
     if (Settings.flag.light_signal) {
       temp = (float)light_signal_color[i] / dimmer;
     } else {
@@ -501,7 +501,7 @@ void LightSetColor(void)
 {
   uint8_t highest = 0;
 
-  for (byte i = 0; i < light_subtype; i++) {
+  for (uint8_t i = 0; i < light_subtype; i++) {
     if (highest < light_current_color[i]) {
       highest = light_current_color[i];
     }
@@ -509,7 +509,7 @@ void LightSetColor(void)
   float mDim = (float)highest / 2.55;
   Settings.light_dimmer = (uint8_t)mDim;
   float dimmer = 100 / mDim;
-  for (byte i = 0; i < light_subtype; i++) {
+  for (uint8_t i = 0; i < light_subtype; i++) {
     float temp = (float)light_current_color[i] * dimmer;
     Settings.light_color[i] = (uint8_t)temp;
   }
@@ -547,7 +547,7 @@ char* LightGetColor(uint8_t type, char* scolor)
 {
   LightSetDimmer(Settings.light_dimmer);
   scolor[0] = '\0';
-  for (byte i = 0; i < light_subtype; i++) {
+  for (uint8_t i = 0; i < light_subtype; i++) {
     if (!type && Settings.flag.decimal_text) {
       snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", light_current_color[i]);
     } else {
@@ -590,7 +590,7 @@ void LightState(uint8_t append)
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), mqtt_data, h,s,b);
     // Add status for each channel
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_CHANNEL "\":[" ), mqtt_data);
-    for (byte i = 0; i < light_subtype; i++) {
+    for (uint8_t i = 0; i < light_subtype; i++) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d" ), mqtt_data, (i > 0 ? "," : ""), light_current_color[i] * 100 / 255);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]" ), mqtt_data);
@@ -637,7 +637,7 @@ void LightPreparePower(void)
 void LightFade(void)
 {
   if (0 == Settings.light_fade) {
-    for (byte i = 0; i < light_subtype; i++) {
+    for (uint8_t i = 0; i < light_subtype; i++) {
       light_new_color[i] = light_current_color[i];
     }
   } else {
@@ -646,7 +646,7 @@ void LightFade(void)
       shift = (strip_timer_counter % (Settings.light_speed -6)) ? 0 : 8;
     }
     if (shift) {
-      for (byte i = 0; i < light_subtype; i++) {
+      for (uint8_t i = 0; i < light_subtype; i++) {
         if (light_new_color[i] != light_current_color[i]) {
           if (light_new_color[i] < light_current_color[i]) {
             light_new_color[i] += ((light_current_color[i] - light_new_color[i]) >> shift) +1;
@@ -681,7 +681,7 @@ void LightWheel(uint8_t wheel_pos)
   light_entry_color[3] = 0;
   light_entry_color[4] = 0;
   float dimmer = 100 / (float)Settings.light_dimmer;
-  for (byte i = 0; i < LST_RGB; i++) {
+  for (uint8_t i = 0; i < LST_RGB; i++) {
     float temp = (float)light_entry_color[i] / dimmer;
     light_entry_color[i] = (uint8_t)temp;
   }
@@ -700,7 +700,7 @@ void LightCycleColor(int8_t direction)
 void LightRandomColor(void)
 {
   uint8_t light_update = 0;
-  for (byte i = 0; i < LST_RGB; i++) {
+  for (uint8_t i = 0; i < LST_RGB; i++) {
     if (light_new_color[i] != light_current_color[i]) {
       light_update = 1;
     }
@@ -736,7 +736,7 @@ void LightAnimate(void)
   if (!light_power) {                   // Power Off
     sleep = Settings.sleep;
     strip_timer_counter = 0;
-    for (byte i = 0; i < light_subtype; i++) {
+    for (uint8_t i = 0; i < light_subtype; i++) {
       light_still_on += light_new_color[i];
     }
     if (light_still_on && Settings.light_fade && (Settings.light_scheme < LS_MAX)) {
@@ -744,19 +744,19 @@ void LightAnimate(void)
       if (speed > 6) {
         speed = 6;
       }
-      for (byte i = 0; i < light_subtype; i++) {
+      for (uint8_t i = 0; i < light_subtype; i++) {
         if (light_new_color[i] > 0) {
           light_new_color[i] -= (light_new_color[i] >> speed) +1;
         }
       }
     } else {
-      for (byte i = 0; i < light_subtype; i++) {
+      for (uint8_t i = 0; i < light_subtype; i++) {
         light_new_color[i] = 0;
       }
     }
   }
   else {
-    sleep = 0;
+    sleep = (LS_POWER == Settings.light_scheme) ? Settings.sleep : 0;  // If no animation then use sleep as is
     switch (Settings.light_scheme) {
       case LS_POWER:
         LightSetDimmer(Settings.light_dimmer);
@@ -765,7 +765,7 @@ void LightAnimate(void)
       case LS_WAKEUP:
         if (2 == light_wakeup_active) {
           light_wakeup_active = 1;
-          for (byte i = 0; i < light_subtype; i++) {
+          for (uint8_t i = 0; i < light_subtype; i++) {
             light_new_color[i] = 0;
           }
           light_wakeup_counter = 0;
@@ -777,7 +777,7 @@ void LightAnimate(void)
           light_wakeup_dimmer++;
           if (light_wakeup_dimmer <= Settings.light_dimmer) {
             LightSetDimmer(light_wakeup_dimmer);
-            for (byte i = 0; i < light_subtype; i++) {
+            for (uint8_t i = 0; i < light_subtype; i++) {
               light_new_color[i] = light_current_color[i];
             }
           } else {
@@ -807,14 +807,14 @@ void LightAnimate(void)
   }
 
   if ((Settings.light_scheme < LS_MAX) || !light_power) {
-    for (byte i = 0; i < light_subtype; i++) {
+    for (uint8_t i = 0; i < light_subtype; i++) {
       if (light_last_color[i] != light_new_color[i]) {
         light_update = 1;
       }
     }
     if (light_update) {
       light_update = 0;
-      for (byte i = 0; i < light_subtype; i++) {
+      for (uint8_t i = 0; i < light_subtype; i++) {
         light_last_color[i] = light_new_color[i];
         cur_col[i] = light_last_color[i]*Settings.rgbwwTable[i]/255;
         cur_col[i] = (Settings.light_correction) ? ledTable[cur_col[i]] : cur_col[i];
@@ -1012,7 +1012,7 @@ void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
  * Commands
 \*********************************************************************************************/
 
-boolean LightColorEntry(char *buffer, uint8_t buffer_length)
+bool LightColorEntry(char *buffer, uint8_t buffer_length)
 {
   char scolor[10];
   char *p;
@@ -1048,7 +1048,7 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
     entry_type = 2;                                 // Decimal
   }
   else if (((2 * light_subtype) == buffer_length) || (buffer_length > 3)) {  // Hexadecimal entry
-    for (byte i = 0; i < buffer_length / 2; i++) {
+    for (uint8_t i = 0; i < buffer_length / 2; i++) {
       strlcpy(scolor, buffer + (i *2), 3);
       light_entry_color[i] = (uint8_t)strtol(scolor, &p, 16);
     }
@@ -1081,12 +1081,12 @@ boolean LightColorEntry(char *buffer, uint8_t buffer_length)
 
 /********************************************************************************************/
 
-boolean LightCommand(void)
+bool LightCommand(void)
 {
   char command [CMDSZ];
-  boolean serviced = true;
-  boolean coldim = false;
-  boolean valid_entry = false;
+  bool serviced = true;
+  bool coldim = false;
+  bool valid_entry = false;
   char scolor[25];
   char option = (1 == XdrvMailbox.data_len) ? XdrvMailbox.data[0] : '\0';
 
@@ -1118,7 +1118,7 @@ boolean LightCommand(void)
           Settings.light_scheme = 0;
           coldim = true;
         } else {             // Color3, 4, 5 and 6
-          for (byte i = 0; i < LST_RGB; i++) {
+          for (uint8_t i = 0; i < LST_RGB; i++) {
             Settings.ws_color[XdrvMailbox.index -3][i] = light_entry_color[i];
           }
         }
@@ -1129,7 +1129,7 @@ boolean LightCommand(void)
     }
     if (XdrvMailbox.index >= 3) {
       scolor[0] = '\0';
-      for (byte i = 0; i < LST_RGB; i++) {
+      for (uint8_t i = 0; i < LST_RGB; i++) {
         if (Settings.flag.decimal_text) {
           snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.ws_color[XdrvMailbox.index -3][i]);
         } else {
@@ -1343,7 +1343,7 @@ boolean LightCommand(void)
       light_update = 1;
     }
     scolor[0] = '\0';
-    for (byte i = 0; i < LST_RGBWC; i++) {
+    for (uint8_t i = 0; i < LST_RGBWC; i++) {
       snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.rgbwwTable[i]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, scolor);
@@ -1402,9 +1402,9 @@ boolean LightCommand(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv04(byte function)
+bool Xdrv04(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (light_type) {
     switch (function) {

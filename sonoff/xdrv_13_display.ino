@@ -495,7 +495,7 @@ void DisplayText(void)
 void DisplayClearScreenBuffer(void)
 {
   if (disp_screen_buffer_cols) {
-    for (byte i = 0; i < disp_screen_buffer_rows; i++) {
+    for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
       memset(disp_screen_buffer[i], 0, disp_screen_buffer_cols);
     }
   }
@@ -504,7 +504,7 @@ void DisplayClearScreenBuffer(void)
 void DisplayFreeScreenBuffer(void)
 {
   if (disp_screen_buffer != NULL) {
-    for (byte i = 0; i < disp_screen_buffer_rows; i++) {
+    for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
       if (disp_screen_buffer[i] != NULL) { free(disp_screen_buffer[i]); }
     }
     free(disp_screen_buffer);
@@ -519,7 +519,7 @@ void DisplayAllocScreenBuffer(void)
     disp_screen_buffer_rows = Settings.display_rows;
     disp_screen_buffer = (char**)malloc(sizeof(*disp_screen_buffer) * disp_screen_buffer_rows);
     if (disp_screen_buffer != NULL) {
-      for (byte i = 0; i < disp_screen_buffer_rows; i++) {
+      for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
         disp_screen_buffer[i] = (char*)malloc(sizeof(*disp_screen_buffer[i]) * (Settings.display_cols[0] +1));
         if (disp_screen_buffer[i] == NULL) {
           DisplayFreeScreenBuffer();
@@ -542,7 +542,7 @@ void DisplayReAllocScreenBuffer(void)
 
 void DisplayFillScreen(uint8_t line)
 {
-  byte len = disp_screen_buffer_cols - strlen(disp_screen_buffer[line]);
+  uint8_t len = disp_screen_buffer_cols - strlen(disp_screen_buffer[line]);
   if (len) {
     memset(disp_screen_buffer[line] + strlen(disp_screen_buffer[line]), 0x20, len);
     disp_screen_buffer[line][disp_screen_buffer_cols -1] = 0;
@@ -554,7 +554,7 @@ void DisplayFillScreen(uint8_t line)
 void DisplayClearLogBuffer(void)
 {
   if (disp_log_buffer_cols) {
-    for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
+    for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
       memset(disp_log_buffer[i], 0, disp_log_buffer_cols);
     }
   }
@@ -563,7 +563,7 @@ void DisplayClearLogBuffer(void)
 void DisplayFreeLogBuffer(void)
 {
   if (disp_log_buffer != NULL) {
-    for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
+    for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
       if (disp_log_buffer[i] != NULL) { free(disp_log_buffer[i]); }
     }
     free(disp_log_buffer);
@@ -576,7 +576,7 @@ void DisplayAllocLogBuffer(void)
   if (!disp_log_buffer_cols) {
     disp_log_buffer = (char**)malloc(sizeof(*disp_log_buffer) * DISPLAY_LOG_ROWS);
     if (disp_log_buffer != NULL) {
-      for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
+      for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
         disp_log_buffer[i] = (char*)malloc(sizeof(*disp_log_buffer[i]) * (Settings.display_cols[0] +1));
         if (disp_log_buffer[i] == NULL) {
           DisplayFreeLogBuffer();
@@ -845,7 +845,7 @@ void DisplayMqttSubscribe(void)
   }
 }
 
-boolean DisplayMqttData(void)
+bool DisplayMqttData(void)
 {
   if (disp_subscribed) {
     char stopic[TOPSZ];
@@ -908,10 +908,10 @@ void DisplaySetPower(void)
  * Commands
 \*********************************************************************************************/
 
-boolean DisplayCommand(void)
+bool DisplayCommand(void)
 {
   char command [CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t disp_len = strlen(D_CMND_DISPLAY);  // Prep for string length change
 
   if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_DISPLAY), disp_len)) {  // Prefix
@@ -1076,9 +1076,9 @@ boolean DisplayCommand(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv13(byte function)
+bool Xdrv13(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if ((i2c_flg || spi_flg || soft_spi_flg) && XdspPresent()) {
     switch (function) {

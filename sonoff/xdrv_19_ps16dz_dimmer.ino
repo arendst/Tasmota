@@ -31,7 +31,7 @@
 
 TasmotaSerial *PS16DZSerial = nullptr;
 
-boolean ps16dz_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
+bool ps16dz_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
 
 //uint64_t ps16dz_seq = 0;
 
@@ -75,9 +75,9 @@ void PS16DZSendCommand(char type = 0, uint8_t value = 0)
     PS16DZSerial->flush();
 }
 
-boolean PS16DZSetPower(void)
+bool PS16DZSetPower(void)
 {
-  boolean status = false;
+  bool status = false;
 
   uint8_t rpower = XdrvMailbox.index;
   int16_t source = XdrvMailbox.payload;
@@ -91,7 +91,7 @@ boolean PS16DZSetPower(void)
   return status;
 }
 
-boolean PS16DZSetChannels(void)
+bool PS16DZSetChannels(void)
 {
   PS16DZSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
   return true;
@@ -128,7 +128,7 @@ void PS16DZResetWifi(void)
  * API Functions
 \*********************************************************************************************/
 
-boolean PS16DZModuleSelected(void)
+bool PS16DZModuleSelected(void)
 {
   light_type = LT_SERIAL1;
   return true;
@@ -153,7 +153,7 @@ void PS16DZSerialInput(void)
   char scmnd[20];
   while (PS16DZSerial->available()) {
     yield();
-    byte serial_in_byte = PS16DZSerial->read();
+    uint8_t serial_in_byte = PS16DZSerial->read();
     if (serial_in_byte != 0x1B){
       if (ps16dz_byte_counter >= PS16DZ_BUFFER_SIZE - 1) {
         memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);
@@ -176,7 +176,7 @@ void PS16DZSerialInput(void)
           char* token2 = strtok_r(token, ":", &end_token);
           char* token3 = strtok_r(NULL, ":", &end_token);
           if(!strncmp(token2, "\"switch\"", 8)){
-            boolean ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
+            bool ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
             snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: power received: %s"), token3);
             AddLog(LOG_LEVEL_DEBUG);
             if((power || Settings.light_dimmer > 0) && (power !=ps16dz_power)) {
@@ -225,9 +225,9 @@ void PS16DZSerialInput(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv19(byte function)
+bool Xdrv19(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (PS_16_DZ == Settings.module) {
     switch (function) {

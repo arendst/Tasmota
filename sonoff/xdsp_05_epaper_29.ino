@@ -165,6 +165,7 @@ void EpdDisplayFrame(void)
 {
   epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
   epd.DisplayFrame();
+  epd.Sleep();
 }
 
 void EpdDrawStringAt(uint16_t x, uint16_t y, char *str, uint8_t color, uint8_t flag)
@@ -202,7 +203,7 @@ void EpdPrintLog(void)
 
     char* txt = DisplayLogBuffer('\040');
     if (txt != NULL) {
-      byte size = Settings.display_size;
+      uint8_t size = Settings.display_size;
       uint16_t theight = size * EPD_FONT_HEIGTH;
 
       EpdSetFont(size);
@@ -210,7 +211,7 @@ void EpdPrintLog(void)
 
 //      epd_scroll = theight;  // Start below header
       epd_scroll = 0;  // Start at top with no header
-      for (byte i = 0; i < last_row; i++) {
+      for (uint8_t i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
         EpdDrawStringAt(0, epd_scroll, disp_screen_buffer[i], COLORED, 0);
         epd_scroll += theight;
@@ -266,9 +267,9 @@ void EpdRefresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-boolean Xdsp05(byte function)
+bool Xdsp05(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (spi_flg || soft_spi_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {

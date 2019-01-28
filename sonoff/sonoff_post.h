@@ -228,6 +228,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define CODE_IMAGE 6
 
 #undef USE_ENERGY_SENSOR                      // Disable energy sensors (-14k code)
+  #undef USE_PZEM004T                         // Disable PZEM004T energy sensor
+  #undef USE_PZEM_AC                          // Disable PZEM014,016 Energy monitor
+  #undef USE_PZEM_DC                          // Disable PZEM003,017 Energy monitor
+  #undef USE_MCP39F501                        // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_DOMOTICZ                           // Disable Domoticz
 #undef USE_HOME_ASSISTANT                     // Disable Home Assistant

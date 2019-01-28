@@ -1903,7 +1903,7 @@ bool APDS9960_detect(void)
     return true;
   }
 
-  boolean success = false;
+  bool success = false;
   APDS9960type = I2cRead8(APDS9960_I2C_ADDR, APDS9960_ID);
 
   if (APDS9960type == APDS9960_CHIPID_1 || APDS9960type == APDS9960_CHIPID_2) {
@@ -1935,7 +1935,7 @@ bool APDS9960_detect(void)
  * Presentation
 \*********************************************************************************************/
 
-void APDS9960_show(boolean json)
+void APDS9960_show(bool json)
 {
   if (!APDS9960type) {
     return;
@@ -1993,7 +1993,7 @@ void APDS9960_show(boolean json)
 
 bool APDS9960CommandSensor(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   switch (XdrvMailbox.payload) {
     case 0: // Off
@@ -2039,9 +2039,9 @@ bool APDS9960CommandSensor(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns27(byte function)
+bool Xsns27(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     if (FUNC_INIT == function) {

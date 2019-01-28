@@ -47,14 +47,14 @@ uint8_t mtx_done = 0;
 
 void MatrixWrite(void)
 {
-  for (byte i = 0; i < mtx_matrices; i++) {
+  for (uint8_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->writeDisplay();
   }
 }
 
 void MatrixClear(void)
 {
-  for (byte i = 0; i < mtx_matrices; i++) {
+  for (uint8_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
   }
   MatrixWrite();
@@ -62,7 +62,7 @@ void MatrixClear(void)
 
 void MatrixFixed(char* txt)
 {
-  for (byte i = 0; i < mtx_matrices; i++) {
+  for (uint8_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
     matrix[i]->setCursor(-i *8, 0);
     matrix[i]->print(txt);
@@ -77,7 +77,7 @@ void MatrixCenter(char* txt)
 
   int len = strlen(txt);
   offset = (len < 8) ? offset = ((mtx_matrices *8) - (len *6)) / 2 : 0;
-  for (byte i = 0; i < mtx_matrices; i++) {
+  for (uint8_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
     matrix[i]->setCursor(-(i *8)+offset, 0);
     matrix[i]->print(txt);
@@ -102,7 +102,7 @@ void MatrixScrollLeft(char* txt, int loop)
   disp_refresh--;
     if (!disp_refresh) {
       disp_refresh = Settings.display_refresh;
-      for (byte i = 0; i < mtx_matrices; i++) {
+      for (uint8_t i = 0; i < mtx_matrices; i++) {
         matrix[i]->clear();
         matrix[i]->setCursor(mtx_x - i *8, 0);
         matrix[i]->print(txt);
@@ -145,9 +145,9 @@ void MatrixScrollUp(char* txt, int loop)
         words[wordcounter++] = p;
         p = strtok(NULL, separators);
       }
-      for (byte i = 0; i < mtx_matrices; i++) {
+      for (uint8_t i = 0; i < mtx_matrices; i++) {
         matrix[i]->clear();
-        for (byte j = 0; j < wordcounter; j++) {
+        for (uint8_t j = 0; j < wordcounter; j++) {
           matrix[i]->setCursor(-i *8, mtx_y + (j *8));
           matrix[i]->println(words[j]);
         }
@@ -170,7 +170,7 @@ void MatrixScrollUp(char* txt, int loop)
 
 void MatrixInitMode(void)
 {
-  for (byte i = 0; i < mtx_matrices; i++) {
+  for (uint8_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->setRotation(Settings.display_rotate);  // 1
     matrix[i]->setBrightness(Settings.display_dimmer);
     matrix[i]->blinkRate(0);               // 0 - 3
@@ -327,9 +327,9 @@ void MatrixRefresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-boolean Xdsp03(byte function)
+bool Xdsp03(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {

@@ -88,10 +88,10 @@ void RfInit(void)
  * Commands
 \*********************************************************************************************/
 
-boolean RfSendCommand(void)
+bool RfSendCommand(void)
 {
-  boolean serviced = true;
-  boolean error = false;
+  bool serviced = true;
+  bool error = false;
 
   if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_RFSEND))) {
     if (XdrvMailbox.data_len) {
@@ -116,7 +116,7 @@ boolean RfSendCommand(void)
       } else {
         //  RFsend data, bits, protocol, repeat, pulse
         char *p;
-        byte i = 0;
+        uint8_t i = 0;
         for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 5; str = strtok_r(NULL, ", ", &p)) {
           switch (i++) {
           case 0:
@@ -166,9 +166,9 @@ boolean RfSendCommand(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv17(byte function)
+bool Xdrv17(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if ((pin[GPIO_RFSEND] < 99) || (pin[GPIO_RFRECV] < 99)) {
     switch (function) {

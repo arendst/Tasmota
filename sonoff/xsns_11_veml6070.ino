@@ -187,7 +187,7 @@ void Veml6070EverySecond(void)
 
 /********************************************************************************************/
 
-void Veml6070ModeCmd(boolean mode_cmd)
+void Veml6070ModeCmd(bool mode_cmd)
 {
   // mode_cmd 1 = on  = 1[ms]
   // mode_cmd 0 = off = 2[ms]
@@ -270,7 +270,7 @@ double Veml6070UvPower(double uvrisk)
 
 /********************************************************************************************/
 
-void Veml6070Show(boolean json)
+void Veml6070Show(bool json)
 {
   if (veml6070_type) {
     // convert double values to string
@@ -307,9 +307,9 @@ void Veml6070Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns11(byte function)
+bool Xsns11(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

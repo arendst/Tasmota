@@ -42,7 +42,7 @@ void SerialBridgeInput(void)
 {
   while (SerialBridgeSerial->available()) {
     yield();
-    uint8_t serial_in_byte = SerialBridgeSerial->read();
+    uint8_t serial_in_uint8_t = SerialBridgeSerial->read();
 
     if (serial_in_byte > 127) {                   // binary data...
       serial_bridge_in_byte_counter = 0;
@@ -90,10 +90,10 @@ void SerialBridgeInit(void)
  * Commands
 \*********************************************************************************************/
 
-boolean SerialBridgeCommand(void)
+bool SerialBridgeCommand(void)
 {
   char command [CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSerialBridgeCommands);
   if (-1 == command_code) {
@@ -149,9 +149,9 @@ boolean SerialBridgeCommand(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv08(byte function)
+bool Xdrv08(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (serial_bridge_active) {
     switch (function) {

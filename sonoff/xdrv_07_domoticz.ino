@@ -41,8 +41,8 @@ const char S_JSON_DOMOTICZ_COMMAND_INDEX_LVALUE[] PROGMEM = "{\"" D_CMND_DOMOTIC
 char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
 char domoticz_out_topic[] = DOMOTICZ_OUT_TOPIC;
 
-boolean domoticz_subscribe = false;
-byte domoticz_update_flag = 1;
+bool domoticz_subscribe = false;
+uint8_t domoticz_update_flag = 1;
 int domoticz_update_timer = 0;
 unsigned long fan_debounce = 0;             // iFan02 state debounce timer
 
@@ -95,7 +95,7 @@ void DomoticzUpdateFanState()
   domoticz_update_flag = 1;
 }
 
-void MqttPublishDomoticzPowerState(byte device)
+void MqttPublishDomoticzPowerState(uint8_t device)
 {
   if (Settings.flag.mqtt_enabled) {
     if ((device < 1) || (device > devices_present)) { device = 1; }
@@ -114,7 +114,7 @@ void MqttPublishDomoticzPowerState(byte device)
   }
 }
 
-void DomoticzUpdatePowerState(byte device)
+void DomoticzUpdatePowerState(uint8_t device)
 {
   if (domoticz_update_flag) {
     MqttPublishDomoticzPowerState(device);
@@ -128,7 +128,7 @@ void DomoticzMqttUpdate(void)
     domoticz_update_timer--;
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = Settings.domoticz_update_timer;
-      for (byte i = 1; i <= devices_present; i++) {
+      for (uint8_t i = 1; i <= devices_present; i++) {
         if ((SONOFF_IFAN02 == Settings.module) && (i > 1)) {
           MqttPublishDomoticzFanState();
           break;
@@ -143,7 +143,7 @@ void DomoticzMqttUpdate(void)
 void DomoticzMqttSubscribe(void)
 {
   uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
-  for (byte i = 0; i < maxdev; i++) {
+  for (uint8_t i = 0; i < maxdev; i++) {
     if (Settings.domoticz_relay_idx[i]) {
       domoticz_subscribe = true;
     }
@@ -181,7 +181,7 @@ void DomoticzMqttSubscribe(void)
 }
 */
 
-boolean DomoticzMqttData(void)
+bool DomoticzMqttData(void)
 {
   char stemp1[10];
   unsigned long idx = 0;
@@ -211,7 +211,7 @@ boolean DomoticzMqttData(void)
 
     if ((idx > 0) && (nvalue >= 0) && (nvalue <= 15)) {
       uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
-      for (byte i = 0; i < maxdev; i++) {
+      for (uint8_t i = 0; i < maxdev; i++) {
         if (idx == Settings.domoticz_relay_idx[i]) {
           bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
@@ -287,10 +287,10 @@ boolean DomoticzMqttData(void)
  * Commands
 \*********************************************************************************************/
 
-boolean DomoticzCommand(void)
+bool DomoticzCommand(void)
 {
   char command [CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t dmtcz_len = strlen(D_CMND_DOMOTICZ);  // Prep for string length change
 
   if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_DOMOTICZ), dmtcz_len)) {  // Prefix
@@ -336,9 +336,9 @@ boolean DomoticzCommand(void)
   return serviced;
 }
 
-boolean DomoticzSendKey(byte key, byte device, byte state, byte svalflg)
+bool DomoticzSendKey(uint8_t key, uint8_t device, uint8_t state, uint8_t svalflg)
 {
-  boolean result = 0;
+  bool result = 0;
 
   if (device <= MAX_DOMOTICZ_IDX) {
     if ((Settings.domoticz_key_idx[device -1] || Settings.domoticz_switch_idx[device -1]) && (svalflg)) {
@@ -374,7 +374,7 @@ uint8_t DomoticzHumidityState(char *hum)
   return (!h) ? 0 : (h < 40) ? 2 : (h > 70) ? 3 : 1;
 }
 
-void DomoticzSensor(byte idx, char *data)
+void DomoticzSensor(uint8_t idx, char *data)
 {
   if (Settings.domoticz_sensor_idx[idx]) {
     char dmess[90];
@@ -392,7 +392,7 @@ void DomoticzSensor(byte idx, char *data)
   }
 }
 
-void DomoticzSensor(byte idx, uint32_t value)
+void DomoticzSensor(uint8_t idx, uint32_t value)
 {
   char data[16];
   snprintf_P(data, sizeof(data), PSTR("%d"), value);
@@ -497,7 +497,7 @@ void DomoticzSaveSettings(void)
   char ssensor_indices[6 * MAX_DOMOTICZ_SNS_IDX];
   char tmp[100];
 
-  for (byte i = 0; i < MAX_DOMOTICZ_IDX; i++) {
+  for (uint8_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("r%d"), i +1);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_relay_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
@@ -509,7 +509,7 @@ void DomoticzSaveSettings(void)
     Settings.domoticz_switch_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
   }
   ssensor_indices[0] = '\0';
-  for (byte i = 0; i < DZ_MAX_SENSORS; i++) {
+  for (uint8_t i = 0; i < DZ_MAX_SENSORS; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("l%d"), i +1);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_sensor_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
@@ -531,9 +531,9 @@ void DomoticzSaveSettings(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv07(byte function)
+bool Xdrv07(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {

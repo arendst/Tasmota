@@ -177,7 +177,7 @@ bool Ina219Read(void)
 
 bool Ina219CommandSensor(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
     Settings.ina219_mode = XdrvMailbox.payload;
@@ -194,7 +194,7 @@ void Ina219Detect(void)
 {
   if (ina219_type) { return; }
 
-  for (byte i = 0; i < sizeof(ina219_addresses); i++) {
+  for (uint8_t i = 0; i < sizeof(ina219_addresses); i++) {
     ina219_address = ina219_addresses[i];
     if (Ina219SetCalibration(Settings.ina219_mode)) {
       ina219_type = 1;
@@ -229,7 +229,7 @@ const char HTTP_SNS_INA219_DATA[] PROGMEM = "%s"
   "{s}INA219 " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
 #endif  // USE_WEBSERVER
 
-void Ina219Show(boolean json)
+void Ina219Show(bool json)
 {
   if (ina219_valid) {
     float fpower = ina219_voltage * ina219_current;
@@ -261,9 +261,9 @@ void Ina219Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns13(byte function)
+bool Xsns13(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

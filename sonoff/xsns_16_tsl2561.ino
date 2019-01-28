@@ -97,7 +97,7 @@ const char HTTP_SNS_TSL2561[] PROGMEM =
   "%s{s}TSL2561 " D_ILLUMINANCE "{m}%u.%03u " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
-void Tsl2561Show(boolean json)
+void Tsl2561Show(bool json)
 {
   if (tsl2561_valid) {
     if (json) {
@@ -118,9 +118,9 @@ void Tsl2561Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns16(byte function)
+bool Xsns16(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

@@ -318,7 +318,7 @@ void Mpr121Init(struct mpr121 *pS)
  * @post    None.
  *
  */
-void Mpr121Show(struct mpr121 *pS, byte function)
+void Mpr121Show(struct mpr121 *pS, uint8_t function)
 {
 
 	// Loop through sensors
@@ -384,7 +384,7 @@ void Mpr121Show(struct mpr121 *pS, byte function)
 			}
 		}		// if->running
 	}			// for-loop i
-}				// void Mpr121Show(byte function)
+}				// void Mpr121Show(uint8_t function)
 
 /*********************************************************************************************\
  * Interface
@@ -400,15 +400,15 @@ void Mpr121Show(struct mpr121 *pS, byte function)
  * FUNC_WEB_APPEND for displaying data in the Tasmota web-interface
  *
  * @param   byte    function  Tasmota function ID.
- * @return  boolean           ???
+ * @return  bool           ???
  * @pre     None.
  * @post    None.
  *
  */
-boolean Xsns30(byte function)
+bool Xsns30(uint8_t function)
 {
 	// ???
-	boolean result = false;
+	bool result = false;
 
 	// Sensor state/data struct
 	static struct mpr121 mpr121;
@@ -440,7 +440,7 @@ boolean Xsns30(byte function)
 #endif				// USE_WEBSERVER
 		}
 	}
-	// Return boolean result
+	// Return bool result
 	return result;
 }
 
