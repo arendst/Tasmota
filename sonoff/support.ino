@@ -713,6 +713,12 @@ bool GetUsedInModule(uint8_t val, uint8_t *arr)
   if ((val >= GPIO_KEY1_NP) && (val < GPIO_KEY1_NP + MAX_KEYS)) {
     offset = -(GPIO_KEY1_NP - GPIO_KEY1);
   }
+  if ((val >= GPIO_KEY1_INV) && (val < GPIO_KEY1_INV + MAX_KEYS)) {
+    offset = -(GPIO_KEY1_INV - GPIO_KEY1);
+  }
+  if ((val >= GPIO_KEY1_INV_NP) && (val < GPIO_KEY1_INV_NP + MAX_KEYS)) {
+    offset = -(GPIO_KEY1_INV_NP - GPIO_KEY1);
+  }
 
   if ((val >= GPIO_SWT1) && (val < GPIO_SWT1 + MAX_SWITCHES)) {
     offset = (GPIO_SWT1_NP - GPIO_SWT1);
