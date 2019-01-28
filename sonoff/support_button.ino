@@ -121,7 +121,7 @@ void ButtonHandler(void)
     } else {
       if (pin[GPIO_KEY1 +button_index] < 99) {
         button_present = 1;
-        button = (digitalRead(pin[GPIO_KEY1 +button_index]) != key_inverted);
+        button = (digitalRead(pin[GPIO_KEY1 +button_index]) != bitRead(key_inverted, button_index));
       }
     }
 
