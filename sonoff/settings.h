@@ -183,21 +183,21 @@ struct SYSCFG {
   char          ota_url[101];              // 017
   char          mqtt_prefix[3][11];        // 07C
   uint8_t       baudrate;                  // 09D
-  byte          seriallog_level;           // 09E
+  uint8_t       seriallog_level;           // 09E
   uint8_t       sta_config;                // 09F
-  byte          sta_active;                // 0A0
+  uint8_t       sta_active;                // 0A0
   char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 4/5
   char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 4/5
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
   uint8_t       rule_stop;                 // 1A7
   uint16_t      syslog_port;               // 1A8
-  byte          syslog_level;              // 1AA
+  uint8_t       syslog_level;              // 1AA
   uint8_t       webserver;                 // 1AB
-  byte          weblog_level;              // 1AC
+  uint8_t       weblog_level;              // 1AC
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
 
-  byte          free_1D5[20];              // 1D5  Free since 5.12.0e
+  uint8_t       free_1D5[20];              // 1D5  Free since 5.12.0e
 
   char          mqtt_host[33];             // 1E9
   uint16_t      mqtt_port;                 // 20A
@@ -282,13 +282,13 @@ struct SYSCFG {
   uint8_t       light_speed;               // 4A2
   uint8_t       light_scheme;              // 4A3
   uint8_t       light_width;               // 4A4
-  byte          knx_GA_registered;         // 4A5  Number of Group Address to read
+  uint8_t       knx_GA_registered;         // 4A5  Number of Group Address to read
   uint16_t      light_wakeup;              // 4A6
-  byte          knx_CB_registered;         // 4A8  Number of Group Address to write
+  uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
   char          web_password[33];          // 4A9
   uint8_t       interlock[MAX_INTERLOCKS]; // 4CA
   char          ntp_server[3][33];         // 4CE
-  byte          ina219_mode;               // 531
+  uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
   uint16_t      button_debounce;           // 542
   uint32_t      ip_address[4];             // 544
@@ -307,17 +307,17 @@ struct SYSCFG {
   uint16_t      knx_physsical_addr;        // 6B8  (address_t is a uint16_t)
   uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6BA  (address_t is a uint16_t) x KNX_max_GA
   uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6CE  (address_t is a uint16_t) x KNX_max_CB
-  byte          knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
-  byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
+  uint8_t       knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
+  uint8_t       knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
   Mcp230xxCfg   mcp230xx_config[16];       // 6F6
   uint8_t       mcp230xx_int_prio;         // 716
 
-  byte          free_717[1];               // 717
+  uint8_t       free_717[1];               // 717
 
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
 
-  byte          free_71F[117];             // 71F
+  uint8_t       free_71F[117];             // 71F
 
   uint32_t      drivers[3];                // 794
   uint32_t      monitors;                  // 7A0
@@ -326,7 +326,7 @@ struct SYSCFG {
   uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
 
-  byte          free_7BC[2];               // 7BC
+  uint8_t       free_7BC[2];               // 7BC
 
   uint16_t      weight_max;                // 7BE Total max weight in kilogram
   unsigned long weight_reference;          // 7C0 Reference weight in gram
@@ -346,7 +346,7 @@ struct RTCRBT {
 
 struct RTCMEM {
   uint16_t      valid;                     // 290 (RTC memory offset 100)
-  byte          oswatch_blocked_loop;      // 292
+  uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
   unsigned long energy_kWhtoday;              // 294
   unsigned long energy_kWhtotal;              // 298
@@ -376,7 +376,7 @@ struct XDRVMAILBOX {
   uint16_t      data_len;
   uint16_t      payload16;
   int16_t       payload;
-  uint8_t       grpflg;
+  bool          grpflg;
   uint8_t       notused;
   char         *topic;
   char         *data;

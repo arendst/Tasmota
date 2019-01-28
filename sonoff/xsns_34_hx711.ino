@@ -67,12 +67,12 @@ long hx_offset = 0;
 long hx_scale = 1;
 uint8_t hx_type = 1;
 uint8_t hx_sample_count = 0;
-uint8_t hx_tare_flg = 0;
 uint8_t hx_calibrate_step = HX_CAL_END;
 uint8_t hx_calibrate_timer = 0;
 uint8_t hx_calibrate_msg = 0;
 uint8_t hx_pin_sck;
 uint8_t hx_pin_dout;
+bool hx_tare_flg = false;
 
 /*********************************************************************************************/
 
@@ -118,7 +118,7 @@ long HxRead()
 
 void HxReset(void)
 {
-  hx_tare_flg = 1;
+  hx_tare_flg = true;
   hx_sum_weight = 0;
   hx_sample_count = 0;
 }
@@ -155,7 +155,7 @@ bool HxCommand(void)
   bool show_parms = false;
   char sub_string[XdrvMailbox.data_len +1];
 
-  for (byte ca = 0; ca < XdrvMailbox.data_len; ca++) {
+  for (uint8_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
   }
 
@@ -257,7 +257,7 @@ void HxEvery100mSecond(void)
     if (hx_weight < 0) { hx_weight = 0; }
 
     if (hx_tare_flg) {
-      hx_tare_flg = 0;
+      hx_tare_flg = false;
       hx_offset = average;                           // grams
     }
 
@@ -301,7 +301,7 @@ void HxEvery100mSecond(void)
 
       if (HX_CAL_FAIL == hx_calibrate_step) {        // Calibration failed
         hx_calibrate_step--;
-        hx_tare_flg = 1;                             // Perform a reset using old scale
+        hx_tare_flg = true;                          // Perform a reset using old scale
         HxCalibrationStateTextJson(0);
       }
       if (HX_CAL_FINISH == hx_calibrate_step) {      // Calibration finished
@@ -329,7 +329,7 @@ const char HTTP_HX711_CAL[] PROGMEM = "%s"
   "{s}HX711 %s{m}{e}";
 #endif  // USE_WEBSERVER
 
-void HxShow(boolean json)
+void HxShow(bool json)
 {
   char scount[30] = { 0 };
 
@@ -469,9 +469,9 @@ void HxLogUpdates(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns34(byte function)
+bool Xsns34(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (hx_type) {
     switch (function) {

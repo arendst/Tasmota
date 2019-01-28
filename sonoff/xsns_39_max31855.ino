@@ -148,9 +148,9 @@ void MAX31855_Show(bool Json){
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns39(byte function)
+bool Xsns39(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
   if((pin[GPIO_MAX31855CS] < 99) && (pin[GPIO_MAX31855CLK] < 99) && (pin[GPIO_MAX31855DO] < 99)){
 
     switch (function) {

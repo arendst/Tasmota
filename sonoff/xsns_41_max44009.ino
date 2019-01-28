@@ -65,7 +65,7 @@ bool Max4409Read_lum(void)
 
 void Max4409Detect(void)
 {
-  byte reg[8];
+  uint8_t reg[8];
   bool failed = false;
 
   if (max44009_found) {
@@ -74,7 +74,7 @@ void Max4409Detect(void)
 
   uint8_t buffer1;
   uint8_t buffer2;
-  for (byte i = 0; 0 != max44009_addresses[i]; i++) {
+  for (uint8_t i = 0; 0 != max44009_addresses[i]; i++) {
 
     max44009_address = max44009_addresses[i];
 
@@ -110,7 +110,7 @@ void Max4409EverySecond(void)
   }
 }
 
-void Max4409Show(boolean json)
+void Max4409Show(bool json)
 {
   char illum_str[8];
 
@@ -151,9 +151,9 @@ void Max4409Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns41(byte function)
+bool Xsns41(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

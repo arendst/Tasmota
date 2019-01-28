@@ -137,7 +137,7 @@ bool CseSerialInput(void)
       AddLogSerial(LOG_LEVEL_DEBUG_MORE);
 
       uint8_t checksum = 0;
-      for (byte i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
+      for (uint8_t i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
       if (checksum == serial_in_buffer[23]) {
         CseReceived();
         cse_receive_flag = 0;
@@ -199,9 +199,9 @@ void CseDrvInit(void)
   }
 }
 
-boolean CseCommand(void)
+bool CseCommand(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   if (CMND_POWERSET == energy_command_code) {
     if (XdrvMailbox.data_len && power_cycle) {
@@ -227,7 +227,7 @@ boolean CseCommand(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg02(byte function)
+int Xnrg02(uint8_t function)
 {
   int result = 0;
 

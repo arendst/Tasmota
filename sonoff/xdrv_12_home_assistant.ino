@@ -250,7 +250,7 @@ void HAssAnnounceRelayLight(void)
   }
 }
 
-void HAssAnnounceButtonSwitch(byte device, char* topic, byte present, byte key, byte toggle)
+void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint8_t key, uint8_t toggle)
 {
 // key 0 = button
 // key 1 = switch
@@ -306,9 +306,9 @@ void HAssAnnounceSwitches(void)
   char *tmp = Settings.switch_topic;
   Format(sw_topic, tmp, sizeof(sw_topic));
   if ((strlen(sw_topic) != 0) && strcmp(sw_topic, "0")) {
-    for (byte switch_index = 0; switch_index < MAX_SWITCHES; switch_index++) {
-      byte switch_present = 0;
-      byte toggle = 1;
+    for (uint8_t switch_index = 0; switch_index < MAX_SWITCHES; switch_index++) {
+      uint8_t switch_present = 0;
+      uint8_t toggle = 1;
 
       if (pin[GPIO_SWT1 + switch_index] < 99) {
         switch_present = 1;
@@ -335,9 +335,9 @@ void HAssAnnounceButtons(void)
   char *tmp = Settings.button_topic;
   Format(key_topic, tmp, sizeof(key_topic));
   if ((strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
-    for (byte button_index = 0; button_index < MAX_KEYS; button_index++) {
-      byte button_present = 0;
-      byte toggle = 1;
+    for (uint8_t button_index = 0; button_index < MAX_KEYS; button_index++) {
+      uint8_t button_present = 0;
+      uint8_t toggle = 1;
 
       if (!button_index && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
         button_present = 1;
@@ -509,9 +509,9 @@ void HAssDiscover(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv12(byte function)
+bool Xdrv12(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {

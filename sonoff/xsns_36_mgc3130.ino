@@ -497,7 +497,7 @@ bool MGC3130_detect(void)
   digitalWrite(MGC3130_reset, HIGH);
   delay(50);
 
-  boolean success = false;
+  bool success = false;
   success = MGC3130_receiveMessage(); // This should read the firmware info
   if (success) {
     strcpy_P(MGC3130stype, PSTR("MGC3130"));
@@ -516,7 +516,7 @@ bool MGC3130_detect(void)
  * Presentation
 \*********************************************************************************************/
 
-void MGC3130_show(boolean json)
+void MGC3130_show(bool json)
 {
   if (!MGC3130_type) { return; }
 
@@ -576,7 +576,7 @@ void MGC3130_show(boolean json)
 
 bool MGC3130CommandSensor()
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   switch (XdrvMailbox.payload) {
     case 0: // cycle through the modes
@@ -602,9 +602,9 @@ bool MGC3130CommandSensor()
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns36(byte function)
+bool Xsns36(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     if ((FUNC_INIT == function) && (pin[GPIO_MGC3130_XFER] < 99) && (pin[GPIO_MGC3130_RESET] < 99)) {

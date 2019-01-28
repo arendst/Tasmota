@@ -120,7 +120,7 @@ void MPU_6050Detect(void)
     return;
   }
 
-  for (byte i = 0; i < sizeof(MPU_6050_addresses); i++)
+  for (uint8_t i = 0; i < sizeof(MPU_6050_addresses); i++)
   {
     if(!I2cDevice(MPU_6050_addresses[i]))
       {
@@ -171,7 +171,7 @@ const char HTTP_SNS_GZ_AXIS[] PROGMEM = "%s{s}%s " D_GZ_AXIS "{m}%s{e}";        
 #define D_JSON_AXIS_GY "GyroYAxis"
 #define D_JSON_AXIS_GZ "GyroZAxis"
 
-void MPU_6050Show(boolean json)
+void MPU_6050Show(bool json)
 {
   if (MPU_6050_found) {
     MPU_6050PerformReading();
@@ -228,9 +228,9 @@ void MPU_6050Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns32(byte function)
+bool Xsns32(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

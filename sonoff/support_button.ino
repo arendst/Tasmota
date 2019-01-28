@@ -57,7 +57,7 @@ void ButtonInit(void)
   }
 
   buttons_found = 0;
-  for (byte i = 0; i < MAX_KEYS; i++) {
+  for (uint8_t i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
       buttons_found++;
       pinMode(pin[GPIO_KEY1 +i], bitRead(key_no_pullup, i) ? INPUT : ((16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
@@ -65,7 +65,7 @@ void ButtonInit(void)
   }
 }
 
-byte ButtonSerial(byte serial_in_byte)
+uint8_t ButtonSerial(uint8_t serial_in_byte)
 {
   if (dual_hex_code) {
     dual_hex_code--;
@@ -102,7 +102,7 @@ void ButtonHandler(void)
   char scmnd[20];
 
   uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
-  for (byte button_index = 0; button_index < maxdev; button_index++) {
+  for (uint8_t button_index = 0; button_index < maxdev; button_index++) {
     button = NOT_PRESSED;
     button_present = 0;
 
@@ -134,7 +134,7 @@ void ButtonHandler(void)
       else if (SONOFF_4CHPRO == Settings.module) {
         if (holdbutton[button_index]) { holdbutton[button_index]--; }
 
-        boolean button_pressed = false;
+        bool button_pressed = false;
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
           snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), button_index +1);
           AddLog(LOG_LEVEL_DEBUG);
@@ -200,7 +200,7 @@ void ButtonHandler(void)
             multiwindow[button_index]--;
           } else {
             if (!restart_flag && !holdbutton[button_index] && (multipress[button_index] > 0) && (multipress[button_index] < MAX_BUTTON_COMMANDS +3)) {
-              boolean single_press = false;
+              bool single_press = false;
               if (multipress[button_index] < 3) {              // Single or Double press
                 if ((SONOFF_DUAL_R2 == Settings.module) || (SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
                   single_press = true;

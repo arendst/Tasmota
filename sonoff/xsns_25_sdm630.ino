@@ -267,7 +267,7 @@ const char HTTP_SNS_SDM630_DATA[] PROGMEM = "%s"
   "{s}SDM630 " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
 #endif  // USE_WEBSERVER
 
-void SDM630Show(boolean json)
+void SDM630Show(bool json)
 {
   char voltage_l1[33];
   dtostrfd(sdm630_voltage[0], Settings.flag2.voltage_resolution, voltage_l1);
@@ -326,9 +326,9 @@ void SDM630Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns25(byte function)
+bool Xsns25(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (sdm630_type) {
     switch (function) {

@@ -31,7 +31,7 @@
 
 TasmotaSerial *ArmtronixSerial = nullptr;
 
-boolean armtronix_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
+bool armtronix_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
 int8_t armtronix_wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()
 int8_t armtronix_dimState[2];                    // Dimmer state values.
 int8_t armtronix_knobState[2];                   // Dimmer state values.
@@ -40,7 +40,7 @@ int8_t armtronix_knobState[2];                   // Dimmer state values.
  * Internal Functions
 \*********************************************************************************************/
 
-boolean ArmtronixSetChannels(void)
+bool ArmtronixSetChannels(void)
 {
   LightSerial2Duty(((uint8_t*)XdrvMailbox.data)[0], ((uint8_t*)XdrvMailbox.data)[1]);
   return true;
@@ -84,7 +84,7 @@ void ArmtronixRequestState(void)
  * API Functions
 \*********************************************************************************************/
 
-boolean ArmtronixModuleSelected(void)
+bool ArmtronixModuleSelected(void)
 {
   light_type = LT_SERIAL2;
   return true;
@@ -169,9 +169,9 @@ void ArmtronixSetWifiLed(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv18(byte function)
+bool Xdrv18(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (ARMTRONIX_DIMMERS == Settings.module) {
     switch (function) {

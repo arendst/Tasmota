@@ -25,7 +25,7 @@
 
 unsigned long last_counter_timer[MAX_COUNTERS]; // Last counter time in micro seconds
 
-void CounterUpdate(byte index)
+void CounterUpdate(uint8_t index)
 {
   unsigned long counter_debounce_time = micros() - last_counter_timer[index -1];
   if (counter_debounce_time > Settings.pulse_counter_debounce * 1000) {
@@ -65,7 +65,7 @@ void CounterUpdate4(void)
 
 void CounterSaveState(void)
 {
-  for (byte i = 0; i < MAX_COUNTERS; i++) {
+  for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
     }
@@ -77,7 +77,7 @@ void CounterInit(void)
   typedef void (*function) () ;
   function counter_callbacks[] = { CounterUpdate1, CounterUpdate2, CounterUpdate3, CounterUpdate4 };
 
-  for (byte i = 0; i < MAX_COUNTERS; i++) {
+  for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       pinMode(pin[GPIO_CNTR1 +i], bitRead(counter_no_pullup, i) ? INPUT : INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
@@ -90,13 +90,13 @@ const char HTTP_SNS_COUNTER[] PROGMEM =
   "%s{s}" D_COUNTER "%d{m}%s%s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
-void CounterShow(boolean json)
+void CounterShow(bool json)
 {
   char stemp[10];
 
-  byte dsxflg = 0;
-  byte header = 0;
-  for (byte i = 0; i < MAX_COUNTERS; i++) {
+  uint8_t dsxflg = 0;
+  uint8_t header = 0;
+  for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       char counter[33];
       if (bitRead(Settings.pulse_counter_type, i)) {
@@ -141,9 +141,9 @@ void CounterShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns01(byte function)
+bool Xsns01(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   switch (function) {
     case FUNC_INIT:

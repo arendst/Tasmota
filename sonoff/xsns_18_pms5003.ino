@@ -45,7 +45,7 @@ struct pms5003data {
 
 /*********************************************************************************************/
 
-boolean PmsReadData(void)
+bool PmsReadData(void)
 {
   if (! PmsSerial->available()) {
     return false;
@@ -128,7 +128,7 @@ const char HTTP_PMS5003_SNS[] PROGMEM = "%s"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
-void PmsShow(boolean json)
+void PmsShow(bool json)
 {
   if (pms_valid) {
     if (json) {
@@ -158,9 +158,9 @@ void PmsShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns18(byte function)
+bool Xsns18(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pms_type) {
     switch (function) {

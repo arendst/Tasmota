@@ -60,7 +60,7 @@ int WifiGetRssiAsQuality(int rssi)
   return quality;
 }
 
-boolean WifiConfigCounter(void)
+bool WifiConfigCounter(void)
 {
   if (wifi_config_counter) {
     wifi_config_counter = WIFI_CONFIG_SEC;
@@ -95,12 +95,12 @@ void WifiWpsStatusCallback(wps_cb_status status)
   }
 }
 
-boolean WifiWpsConfigDone(void)
+bool WifiWpsConfigDone(void)
 {
   return (!wps_result);
 }
 
-boolean WifiWpsConfigBegin(void)
+bool WifiWpsConfigBegin(void)
 {
   wps_result = 99;
   if (!wifi_wps_disable()) { return false; }

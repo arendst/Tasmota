@@ -250,7 +250,7 @@ void AzInit(void)
   }
 }
 
-void AzShow(boolean json)
+void AzShow(bool json)
 {
   char temperature[33];
   dtostrfd(az_temperature, Settings.flag2.temperature_resolution, temperature);
@@ -275,9 +275,9 @@ void AzShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns38(byte function)
+bool Xsns38(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if(az_type){
     switch (function) {

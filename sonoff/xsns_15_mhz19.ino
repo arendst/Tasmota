@@ -98,17 +98,17 @@ uint8_t mhz_state = 0;
 
 /*********************************************************************************************/
 
-byte MhzCalculateChecksum(byte *array)
+uint8_t MhzCalculateChecksum(uint8_t *array)
 {
-  byte checksum = 0;
-  for (byte i = 1; i < 8; i++) {
+  uint8_t checksum = 0;
+  for (uint8_t i = 1; i < 8; i++) {
     checksum += array[i];
   }
   checksum = 255 - checksum;
   return (checksum +1);
 }
 
-size_t MhzSendCmd(byte command_id)
+size_t MhzSendCmd(uint8_t command_id)
 {
   uint8_t mhz_send[9] = { 0 };
 
@@ -204,7 +204,7 @@ void MhzEverySecond(void)
       return;
     }
 
-    byte crc = MhzCalculateChecksum(mhz_response);
+    uint8_t crc = MhzCalculateChecksum(mhz_response);
     if (mhz_response[8] != crc) {
 //      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 crc error"));
       return;
@@ -270,7 +270,7 @@ void MhzEverySecond(void)
 
 bool MhzCommandSensor(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   switch (XdrvMailbox.payload) {
     case 2:
@@ -319,7 +319,7 @@ void MhzInit(void)
   }
 }
 
-void MhzShow(boolean json)
+void MhzShow(bool json)
 {
   char types[7] = "MHZ19B";  // MHZ19B for legacy reasons. Prefered is MHZ19
   char temperature[33];
@@ -344,9 +344,9 @@ void MhzShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns15(byte function)
+bool Xsns15(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (mhz_type) {
     switch (function) {

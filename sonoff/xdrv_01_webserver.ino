@@ -349,7 +349,7 @@ enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
 DNSServer *DnsServer;
 ESP8266WebServer *WebServer;
 
-boolean remove_duplicate_access_points = true;
+bool remove_duplicate_access_points = true;
 int minimum_signal_quality = -1;
 uint8_t webserver_state = HTTP_OFF;
 uint8_t upload_error = 0;
@@ -415,7 +415,7 @@ void StartWebserver(int type, IPAddress ipweb)
       XsnsCall(FUNC_WEB_ADD_HANDLER);
 #endif  // Not BE_MINIMAL
     }
-    reset_web_log_flag = 0;
+    reset_web_log_flag = false;
     WebServer->begin(); // Web server start
   }
   if (webserver_state != type) {
@@ -640,13 +640,13 @@ void HandleRoot(void)
       if (SONOFF_IFAN02 == Settings.module) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
         page += mqtt_data;
-        for (byte i = 0; i < MAX_FAN_SPEED; i++) {
+        for (uint8_t i = 0; i < MAX_FAN_SPEED; i++) {
           snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
           snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 16, i +2, stemp, "");
           page += mqtt_data;
         }
       } else {
-        for (byte idx = 1; idx <= devices_present; idx++) {
+        for (uint8_t idx = 1; idx <= devices_present; idx++) {
           snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
           snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL,
             100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
@@ -658,10 +658,10 @@ void HandleRoot(void)
     if (SONOFF_BRIDGE == Settings.module) {
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
-      byte idx = 0;
-      for (byte i = 0; i < 4; i++) {
+      uint8_t idx = 0;
+      for (uint8_t i = 0; i < 4; i++) {
         if (idx > 0) { page += F("</tr><tr>"); }
-        for (byte j = 0; j < 4; j++) {
+        for (uint8_t j = 0; j < 4; j++) {
           idx++;
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);  // ?k is related to WebGetArg("k", tmp, sizeof(tmp));
           page += mqtt_data;
@@ -744,7 +744,7 @@ void HandleAjaxStatusRefresh(void)
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
         mqtt_data, 64, (fanspeed) ? "bold" : "normal", 54, (fanspeed) ? svalue : GetStateText(0));
     } else {
-      for (byte idx = 1; idx <= devices_present; idx++) {
+      for (uint8_t idx = 1; idx <= devices_present; idx++) {
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
           mqtt_data, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
@@ -755,7 +755,7 @@ void HandleAjaxStatusRefresh(void)
   WebServer->send(200, FPSTR(HDR_CTYPE_HTML), mqtt_data);
 }
 
-boolean HttpCheckPriviledgedAccess(boolean autorequestauth = true)
+bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
 {
   if (HTTP_USER == webserver_state) {
     HandleRoot();
@@ -812,13 +812,13 @@ void HandleModuleConfiguration(void)
 
   if (WebServer->hasArg("m")) {
     String page = "";
-    for (byte i = 0; i < MAXMODULE; i++) {
+    for (uint8_t i = 0; i < MAXMODULE; i++) {
       midx = pgm_read_byte(kModuleNiceList + i);
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, AnyModuleName(midx).c_str(), midx +1);
       page += mqtt_data;
     }
     page += "}3";  // String separator means do not use "}3" in Module name and Sensor name
-    for (byte j = 0; j < sizeof(kGpioNiceList); j++) {
+    for (uint8_t j = 0; j < sizeof(kGpioNiceList); j++) {
       midx = pgm_read_byte(kGpioNiceList + j);
       if (!GetUsedInModule(midx, cmodule.io)) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
@@ -835,7 +835,7 @@ void HandleModuleConfiguration(void)
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
   page += FPSTR(HTTP_SCRIPT_MODULE1);
   page.replace(F("}4"), String(Settings.module));
-  for (byte i = 0; i < sizeof(cmodule); i++) {
+  for (uint8_t i = 0; i < sizeof(cmodule); i++) {
     if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g16
       page += mqtt_data;
@@ -853,7 +853,7 @@ void HandleModuleConfiguration(void)
   }
 
   page += F("<br/><table>");
-  for (byte i = 0; i < sizeof(cmodule); i++) {
+  for (uint8_t i = 0; i < sizeof(cmodule); i++) {
     if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:160px'><select id='g%d' name='g%d'></select></td></tr>"),
@@ -873,7 +873,7 @@ void ModuleSaveSettings(void)
   char stemp[TOPSZ];
 
   WebGetArg("g99", tmp, sizeof(tmp));
-  byte new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
+  uint8_t new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
   Settings.last_module = Settings.module;
   Settings.module = new_module;
   if (Settings.last_module == new_module) {
@@ -884,7 +884,7 @@ void ModuleSaveSettings(void)
   myio cmodule;
   ModuleGpios(&cmodule);
   String gpios = "";
-  for (byte i = 0; i < sizeof(cmodule); i++) {
+  for (uint8_t i = 0; i < sizeof(cmodule); i++) {
     if (Settings.last_module != new_module) {
       Settings.my_gp.io[i] = 0;
     } else {
@@ -1057,14 +1057,14 @@ void HandleLoggingConfiguration(void)
   page += FPSTR(HTTP_HEAD_STYLE);
 
   page += FPSTR(HTTP_FORM_LOG1);
-  for (byte idx = 0; idx < 3; idx++) {
+  for (uint8_t idx = 0; idx < 3; idx++) {
     page += FPSTR(HTTP_FORM_LOG2);
     switch (idx) {
     case 0:
       page.replace(F("{b0"), F(D_SERIAL_LOG_LEVEL));
       page.replace(F("{b1"), STR(SERIAL_LOG_LEVEL));
       page.replace(F("{b2"), F("ls"));
-      for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
+      for (uint8_t i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
         page.replace("{a" + String(i), (i == Settings.seriallog_level) ? F(" selected ") : F(" "));
       }
       break;
@@ -1072,7 +1072,7 @@ void HandleLoggingConfiguration(void)
       page.replace(F("{b0"), F(D_WEB_LOG_LEVEL));
       page.replace(F("{b1"), STR(WEB_LOG_LEVEL));
       page.replace(F("{b2"), F("lw"));
-      for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
+      for (uint8_t i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
         page.replace("{a" + String(i), (i == Settings.weblog_level) ? F(" selected ") : F(" "));
       }
       break;
@@ -1080,7 +1080,7 @@ void HandleLoggingConfiguration(void)
       page.replace(F("{b0"), F(D_SYS_LOG_LEVEL));
       page.replace(F("{b1"), STR(SYS_LOG_LEVEL));
       page.replace(F("{b2"), F("ll"));
-      for (byte i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
+      for (uint8_t i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
         page.replace("{a" + String(i), (i == Settings.syslog_level) ? F(" selected ") : F(" "));
       }
       break;
@@ -1145,7 +1145,7 @@ void HandleOtherConfiguration(void)
 
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
   if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
-  for (byte i = 0; i < maxfn; i++) {
+  for (uint8_t i = 0; i < maxfn; i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
     page.replace(F("{1"), String(i +1));
     snprintf_P(stemp, sizeof(stemp), PSTR(FRIENDLY_NAME"%d"), i +1);
@@ -1154,7 +1154,7 @@ void HandleOtherConfiguration(void)
   }
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3a);
-  for (byte i = 0; i < EMUL_MAX; i++) {
+  for (uint8_t i = 0; i < EMUL_MAX; i++) {
     page += FPSTR(HTTP_FORM_OTHER3b);
     page.replace(F("{1"), String(i));
     page.replace(F("{2"), (i == Settings.flag2.emulation) ? F(" checked") : F(""));
@@ -1183,7 +1183,7 @@ void OtherSaveSettings(void)
   Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
 #endif  // USE_EMULATION
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
-  for (byte i = 0; i < MAX_FRIENDLYNAMES; i++) {
+  for (uint8_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("a%d"), i +1);
     WebGetArg(stemp, tmp, sizeof(tmp));
     snprintf_P(stemp2, sizeof(stemp2), PSTR(FRIENDLY_NAME"%d"), i +1);
@@ -1313,7 +1313,7 @@ void HandleInformation(void)
   func += F("}1" D_RESTART_REASON "}2"); func += GetResetReason();
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
   if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
-  for (byte i = 0; i < maxfn; i++) {
+  for (uint8_t i = 0; i < maxfn; i++) {
     func += F("}1" D_FRIENDLY_NAME " "); func += i +1; func += F("}2"); func += Settings.friendlyname[i];
   }
 
@@ -1509,7 +1509,7 @@ void HandleUploadDone(void)
 void HandleUploadLoop(void)
 {
   // Based on ESP8266HTTPUpdateServer.cpp uses ESP8266WebServer Parsing.cpp and Cores Updater.cpp (Update)
-  boolean _serialoutput = (LOG_LEVEL_DEBUG <= seriallog_level);
+  bool _serialoutput = (LOG_LEVEL_DEBUG <= seriallog_level);
 
   if (HTTP_USER == webserver_state) { return; }
   if (upload_error) {
@@ -1729,13 +1729,13 @@ void HandleHttpCommand(void)
 
   String message = F("{\"" D_RSLT_WARNING "\":\"");
   if (valid) {
-    byte curridx = web_log_index;
+    uint8_t curridx = web_log_index;
     WebGetArg("cmnd", svalue, sizeof(svalue));
     if (strlen(svalue)) {
       ExecuteWebCommand(svalue, SRC_WEBCOMMAND);
 
       if (web_log_index != curridx) {
-        byte counter = curridx;
+        uint8_t counter = curridx;
         message = F("{");
         do {
           char* tmp;
@@ -1791,8 +1791,8 @@ void HandleAjaxConsoleRefresh(void)
   if (!HttpCheckPriviledgedAccess()) { return; }
 
   char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
-  byte cflg = 1;
-  byte counter = 0;                // Initial start, should never be 0 again
+  bool cflg = true;
+  uint8_t counter = 0;                // Initial start, should never be 0 again
 
   WebGetArg("c1", svalue, sizeof(svalue));
   if (strlen(svalue)) {
@@ -1804,16 +1804,16 @@ void HandleAjaxConsoleRefresh(void)
   WebGetArg("c2", svalue, sizeof(svalue));
   if (strlen(svalue)) { counter = atoi(svalue); }
 
-  byte last_reset_web_log_flag = reset_web_log_flag;
+  bool last_reset_web_log_flag = reset_web_log_flag;
   String message = F("}9");  // Cannot load mqtt_data here as <> will be encoded by replacements below
   if (!reset_web_log_flag) {
     counter = 0;
-    reset_web_log_flag = 1;
+    reset_web_log_flag = true;
   }
   if (counter != web_log_index) {
     if (!counter) {
       counter = web_log_index;
-      cflg = 0;
+      cflg = false;
     }
     do {
       char* tmp;
@@ -1823,7 +1823,7 @@ void HandleAjaxConsoleRefresh(void)
         if (cflg) {
           message += F("\n");
         } else {
-          cflg = 1;
+          cflg = true;
         }
         strlcpy(mqtt_data, tmp, len);
         message += mqtt_data;
@@ -1870,7 +1870,7 @@ void HandleNotFound(void)
 }
 
 /* Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
-boolean CaptivePortal(void)
+bool CaptivePortal(void)
 {
   if ((HTTP_MANAGER == webserver_state) && !ValidIpAddress(WebServer->hostHeader())) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_REDIRECTED));
@@ -1884,7 +1884,7 @@ boolean CaptivePortal(void)
 }
 
 /** Is this an IP? */
-boolean ValidIpAddress(String str)
+bool ValidIpAddress(String str)
 {
   for (uint16_t i = 0; i < str.length(); i++) {
     int c = str.charAt(i);
@@ -1984,7 +1984,7 @@ int WebSend(char *buffer)
       WiFiClient client;
 
       bool connected = false;
-      byte retry = 2;
+      uint8_t retry = 2;
       while ((retry > 0) && !connected) {
         --retry;
         connected = client.connect(host_ip, nport);
@@ -2085,9 +2085,9 @@ bool WebCommand(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv01(byte function)
+bool Xdrv01(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   switch (function) {
     case FUNC_LOOP:
