@@ -187,6 +187,19 @@
 #define ENERGY_RESOLUTION      3                 // [EnergyRes] Maximum number of decimals (0 - 5) showing energy usage in kWh
 #define CALC_RESOLUTION        3                 // [CalcRes] Maximum number of decimals (0 - 7) used in commands ADD, SUB, MULT and SCALE
 
+
+/*  boot-loop mechanism  
+   The objective of this mechanism is to protect against endless-loop of reboots (crash?) in a short time. 
+   In such cases the device will get back to default configuration and disable rules.
+
+   To disable it define BOOT_LOOP_DISABLE 
+   To tune it, BOOT_LOOP_MIN  will be taken as the min threshold to start this mechanism. Default is 1 
+*/
+
+#undef BOOT_LOOP_DISABLE
+#define BOOT_LOOP_MIN          1
+
+
 /*********************************************************************************************\
  * END OF SECTION 1
  *
@@ -286,7 +299,7 @@
 //#define USE_DS18x20_LEGACY                       // Optional for more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 #define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //  #define W1_PARASITE_POWER                      // If using USE_DS18x20 then optimize for parasite powered sensors
-//  #define DS18B20_INTERNAL_PULLUP	               // Use INPUT_PULLUP internal pullup resistors for single DS18B20
+//  #define DS18B20_INTERNAL_PULLUP                // Use INPUT_PULLUP internal pullup resistors for single DS18B20
 
 // -- I2C sensors ---------------------------------
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)

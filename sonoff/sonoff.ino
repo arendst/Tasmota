@@ -2134,7 +2134,7 @@ void ArduinoOTAInit(void)
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA " D_SUCCESSFUL ". " D_RESTARTING));
     AddLog(LOG_LEVEL_INFO);
     EspRestart();
-	});
+    });
 
   ArduinoOTA.begin();
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA " D_ENABLED " " D_PORT " 8266"));
@@ -2442,6 +2442,12 @@ extern "C" {
 extern struct rst_info resetInfo;
 }
 
+/* get boot loop minimum threshold */
+static int get_bl_th(int level){
+   return (BOOT_LOOP_MIN+level);
+}
+
+
 void setup(void)
 {
   RtcRebootLoad();
@@ -2484,31 +2490,33 @@ void setup(void)
   Settings.flag2.emulation = 0;
 #endif  // USE_EMULATION
 
+#ifndef BOOT_LOOP_DISABLE
   // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
-  if (RtcReboot.fast_reboot_count > 1) {          // Restart twice
+  if (RtcReboot.fast_reboot_count > get_bl_th(1))  {          // Restart twice
     Settings.flag3.user_esp8285_enable = 0;       // Disable ESP8285 Generic GPIOs interfering with flash SPI
-    if (RtcReboot.fast_reboot_count > 2) {        // Restart 3 times
+    if (RtcReboot.fast_reboot_count > get_bl_th(2)) {        // Restart 3 times
       for (uint8_t i = 0; i < MAX_RULE_SETS; i++) {
         if (bitRead(Settings.rule_stop, i)) {
           bitWrite(Settings.rule_enabled, i, 0);  // Disable rules causing boot loop
         }
       }
     }
-    if (RtcReboot.fast_reboot_count > 3) {        // Restarted 4 times
+    if (RtcReboot.fast_reboot_count > get_bl_th(3)) {        // Restarted 4 times
       Settings.rule_enabled = 0;                  // Disable all rules
     }
-    if (RtcReboot.fast_reboot_count > 4) {        // Restarted 5 times
+    if (RtcReboot.fast_reboot_count > get_bl_th(4)) {        // Restarted 5 times
       for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) {
         Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
       }
     }
-    if (RtcReboot.fast_reboot_count > 5) {        // Restarted 6 times
+    if (RtcReboot.fast_reboot_count > get_bl_th(5)) {        // Restarted 6 times
       Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
 //      Settings.last_module = SONOFF_BASIC;
     }
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     AddLog(LOG_LEVEL_DEBUG);
   }
+#endif
 
   Format(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
   Format(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));

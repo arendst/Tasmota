@@ -87,6 +87,12 @@ Examples :
 #define WIFI_DNS          MY_DNS                 // If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 #endif
 
+#ifdef MY_BOOT_LOOP_CFG
+#undef BOOT_LOOP_DISABLE
+#undef BOOT_LOOP_MIN  
+#define BOOT_LOOP_MIN  20
+#endif
+
 */
 
 
