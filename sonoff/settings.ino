@@ -445,33 +445,44 @@ void SettingsSave(uint8_t rotate)
   RtcSettingsSave();
 }
 
+/* try to find any valid sector 
+ 1. valid crc
+ 2. valid cfg_holder 
+ 3. latest sector (Settings.save_flag is the highest)
+*/
 void SettingsLoad(void)
 {
-/* Load configuration from eeprom or one of 7 slots below if first load does not stop_flash_rotate
- */
-  struct SYSCFGH {
-    uint16_t cfg_holder;                     // 000
-    uint16_t cfg_size;                       // 002
-    unsigned long save_flag;                 // 004
-  } _SettingsH;
-
-  bool bad_crc = false;
   settings_location = SETTINGS_LOCATION +1;
-  for (uint8_t i = 0; i < CFG_ROTATES; i++) {
+  int last_index = -1;
+  int last_flags = -1;
+
+  for (byte i = 0; i < CFG_ROTATES; i++) {
     settings_location--;
-    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    ESP.flashRead((settings_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
-    if (Settings.version > 0x06000000) { bad_crc = (Settings.cfg_crc != GetSettingsCrc()); }
-    if (Settings.flag.stop_flash_rotate || bad_crc || (Settings.cfg_holder != _SettingsH.cfg_holder) || (Settings.save_flag > _SettingsH.save_flag)) {
-      break;
+    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32_t*)&Settings, sizeof(SYSCFG));
+
+    bool bad_crc = false;
+    if (Settings.version > 0x06000000) { 
+        bad_crc = (Settings.cfg_crc != GetSettingsCrc()); 
+    }
+    if ( (bad_crc==false) && (Settings.cfg_holder == (uint16_t)CFG_HOLDER) ) {
+        if (Settings.save_flag > last_flags ) {
+            last_flags = Settings.save_flag;
+            last_index = settings_location;
+        }
     }
     delay(1);
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"), settings_location, Settings.save_flag);
+
+  if (last_index  >=0) {
+      ESP.flashRead(last_index * SPI_FLASH_SEC_SIZE, (uint32_t*)&Settings, sizeof(SYSCFG));
+  }
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"), last_index, Settings.save_flag);
   AddLog(LOG_LEVEL_DEBUG);
 
 #ifndef BE_MINIMAL
-  if (bad_crc || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) { SettingsDefault(); }
+  if ( last_index == -1 ) { 
+    SettingsDefault(); 
+  }
   settings_crc = GetSettingsCrc();
 #endif  // BE_MINIMAL
 
