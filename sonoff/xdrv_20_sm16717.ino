@@ -369,8 +369,8 @@ boolean Xdrv20(byte function)
       snprintf_P(log_data, sizeof(log_data),
           PSTR(D_LOG_SM16716 "Entry; function=FUNC_COMMAND"));
       AddLog(LOG_LEVEL_DEBUG);
-      return SM16716_Command();
 #endif
+      return SM16716_Command();
 
     //case FUNC_SET_POWER:
     case FUNC_SET_DEVICE_POWER:
