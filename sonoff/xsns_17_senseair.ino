@@ -145,7 +145,7 @@ void SenseairInit(void)
   }
 }
 
-void SenseairShow(boolean json)
+void SenseairShow(bool json)
 {
   char temperature[33];
   dtostrfd(senseair_temperature, Settings.flag2.temperature_resolution, temperature);
@@ -177,9 +177,9 @@ void SenseairShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns17(byte function)
+bool Xsns17(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (senseair_type) {
     switch (function) {

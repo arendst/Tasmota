@@ -148,7 +148,7 @@ void Ili9341PrintLog(void)
 
     char* txt = DisplayLogBuffer('\370');
     if (txt != NULL) {
-      byte size = Settings.display_size;
+      uint8_t size = Settings.display_size;
       uint16_t theight = size * TFT_FONT_HEIGTH;
 
       tft->setTextSize(size);
@@ -167,7 +167,7 @@ void Ili9341PrintLog(void)
 
         tft_scroll = theight;  // Start below header
         tft->setCursor(0, tft_scroll);
-        for (byte i = 0; i < last_row; i++) {
+        for (uint8_t i = 0; i < last_row; i++) {
           strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
 //          tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);  // Erase line
           tft->print(disp_screen_buffer[i]);
@@ -222,9 +222,9 @@ void Ili9341Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-boolean Xdsp04(byte function)
+bool Xdsp04(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (spi_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {

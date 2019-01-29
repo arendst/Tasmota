@@ -281,7 +281,7 @@ const char HTTP_SNS_SDM120_DATA[] PROGMEM = "%s"
   ;
 #endif  // USE_WEBSERVER
 
-void SDM120Show(boolean json)
+void SDM120Show(bool json)
 {
   char voltage[33];
   dtostrfd(sdm120_voltage,        Settings.flag2.voltage_resolution, voltage);
@@ -343,9 +343,9 @@ void SDM120Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns23(byte function)
+bool Xsns23(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (sdm120_type) {
     switch (function) {

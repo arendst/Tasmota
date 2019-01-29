@@ -82,7 +82,7 @@ void Sht3xDetect(void)
 
   float t;
   float h;
-  for (byte i = 0; i < SHT3X_MAX_SENSORS; i++) {
+  for (uint8_t i = 0; i < SHT3X_MAX_SENSORS; i++) {
     if (Sht3xRead(t, h, sht3x_addresses[i])) {
       sht3x_sensors[sht3x_count].address = sht3x_addresses[i];
       GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), i, kShtTypes);
@@ -93,13 +93,13 @@ void Sht3xDetect(void)
   }
 }
 
-void Sht3xShow(boolean json)
+void Sht3xShow(bool json)
 {
   if (sht3x_count) {
     float t;
     float h;
     char types[11];
-    for (byte i = 0; i < sht3x_count; i++) {
+    for (uint8_t i = 0; i < sht3x_count; i++) {
       if (Sht3xRead(t, h, sht3x_sensors[i].address)) {
 
         if (0 == i) { SetGlobalValues(t, h); }
@@ -140,9 +140,9 @@ void Sht3xShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns14(byte function)
+bool Xsns14(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

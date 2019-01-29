@@ -71,7 +71,7 @@ uint8_t CPU_show_freemem = 0;
 /*******************************************************************************************/
 
 #ifdef DEBUG_THEO
-void ExceptionTest(byte type)
+void ExceptionTest(uint8_t type)
 {
 /*
 Exception (28):
@@ -334,11 +334,11 @@ void DebugCfgPeek(char* parms)
   uint32_t data32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + data16;
 
   snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), address);
-  for (byte i = 0; i < 4; i++) {
+  for (uint8_t i = 0; i < 4; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[address +i]);
   }
   snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
-  for (byte i = 0; i < 4; i++) {
+  for (uint8_t i = 0; i < 4; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[address +i] > 0x20) && (buffer[address +i] < 0x7F)) ? (char)buffer[address +i] : ' ');
   }
   snprintf_P(log_data, sizeof(log_data), PSTR("%s| 0x%02X (%d), 0x%04X (%d), 0x%0LX (%lu)"), log_data, data8, data8, data16, data16, data32, data32);
@@ -359,7 +359,7 @@ void DebugCfgPoke(char* parms)
   uint32_t data32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + (buffer[address +1] << 8) + buffer[address];
 
   uint8_t *nbuffer = (uint8_t *) &data;
-  for (byte i = 0; i < 4; i++) { buffer[address +i] = nbuffer[+i]; }
+  for (uint8_t i = 0; i < 4; i++) { buffer[address +i] = nbuffer[+i]; }
 
   uint32_t ndata32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + (buffer[address +1] << 8) + buffer[address];
 
@@ -433,10 +433,10 @@ void SetFlashMode(uint8_t mode)
 
 /*******************************************************************************************/
 
-boolean DebugCommand(void)
+bool DebugCommand(void)
 {
   char command[CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kDebugCommands);
   if (-1 == command_code) {
@@ -516,9 +516,9 @@ boolean DebugCommand(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv99(byte function)
+bool Xdrv99(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   switch (function) {
     case FUNC_PRE_INIT:

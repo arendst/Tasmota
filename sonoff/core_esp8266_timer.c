@@ -19,10 +19,10 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-// Use PWM from core 2.4.0 as all other version produce LED flickering when settings are saved to flash. Still true for 2.5.0
-//#include <core_version.h>
-//#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
-//#warning **** Tasmota is using v2.4.0 timer.c as planned ****
+// Use PWM from core 2.4.0 as all versions below 2.5.0-beta3 produce LED flickering when settings are saved to flash
+#include <core_version.h>
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
+#warning **** Tasmota is using v2.4.0 timer.c as planned ****
 
 #include "wiring_private.h"
 #include "pins_arduino.h"
@@ -108,4 +108,4 @@ void ICACHE_RAM_ATTR timer0_detachInterrupt(void) {
     ETS_CCOMPARE0_DISABLE();
 }
 
-//#endif  // ARDUINO_ESP8266_RELEASE
+#endif  // ARDUINO_ESP8266_RELEASE

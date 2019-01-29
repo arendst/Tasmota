@@ -53,7 +53,7 @@ void LM75ADDetect(void)
   if (lm75ad_type) { return; }
 
   uint16_t buffer;
-  for (byte i = 0; i < sizeof(lm75ad_addresses); i++) {
+  for (uint8_t i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
     if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
       if (buffer == 0x4B00) {
@@ -78,7 +78,7 @@ float LM75ADGetTemp(void) {
   return ConvertTemp(sign * t * 0.125);
 }
 
-void LM75ADShow(boolean json)
+void LM75ADShow(bool json)
 {
   if (lm75ad_type) {
     float t = LM75ADGetTemp();
@@ -102,9 +102,9 @@ void LM75ADShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns26(byte function)
+bool Xsns26(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

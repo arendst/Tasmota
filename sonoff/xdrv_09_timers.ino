@@ -219,7 +219,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
   duskdawn->time = timeBuffer;
 }
 
-String GetSun(byte dawn)
+String GetSun(uint8_t dawn)
 {
   char stime[6];
 
@@ -232,7 +232,7 @@ String GetSun(byte dawn)
   return String(stime);
 }
 
-uint16_t GetSunMinutes(byte dawn)
+uint16_t GetSunMinutes(uint8_t dawn)
 {
   uint8_t hour[2];
   uint8_t minute[2];
@@ -246,7 +246,7 @@ uint16_t GetSunMinutes(byte dawn)
 
 /*******************************************************************************************/
 
-void TimerSetRandomWindow(byte index)
+void TimerSetRandomWindow(uint8_t index)
 {
   timer_window[index] = 0;
   if (Settings.timer[index].window) {
@@ -256,7 +256,7 @@ void TimerSetRandomWindow(byte index)
 
 void TimerSetRandomWindows(void)
 {
-  for (byte i = 0; i < MAX_TIMERS; i++) { TimerSetRandomWindow(i); }
+  for (uint8_t i = 0; i < MAX_TIMERS; i++) { TimerSetRandomWindow(i); }
 }
 
 void TimerEverySecond(void)
@@ -268,7 +268,7 @@ void TimerEverySecond(void)
       int16_t time = (RtcTime.hour *60) + RtcTime.minute;
       uint8_t days = 1 << (RtcTime.day_of_week -1);
 
-      for (byte i = 0; i < MAX_TIMERS; i++) {
+      for (uint8_t i = 0; i < MAX_TIMERS; i++) {
 //        if (Settings.timer[i].device >= devices_present) Settings.timer[i].data = 0;  // Reset timer due to change in devices present
         Timer xtimer = Settings.timer[i];
         uint16_t set_time = xtimer.time;
@@ -308,7 +308,7 @@ void PrepShowTimer(uint8_t index)
 
   Timer xtimer = Settings.timer[index -1];
 
-  for (byte i = 0; i < 7; i++) {
+  for (uint8_t i = 0; i < 7; i++) {
     uint8_t mask = 1 << i;
     snprintf(days, sizeof(days), "%s%d", days, ((xtimer.days & mask) > 0));
   }
@@ -337,11 +337,11 @@ void PrepShowTimer(uint8_t index)
  * Commands
 \*********************************************************************************************/
 
-boolean TimerCommand(void)
+bool TimerCommand(void)
 {
   char command[CMDSZ];
   char dataBufUc[XdrvMailbox.data_len];
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t index = XdrvMailbox.index;
 
   UpperCase(dataBufUc, XdrvMailbox.data);
@@ -464,9 +464,9 @@ boolean TimerCommand(void)
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag3.timers_enable));
     MqttPublishPrefixTopic_P(RESULT_OR_STAT, command);
 
-    byte jsflg = 0;
-    byte lines = 1;
-    for (byte i = 0; i < MAX_TIMERS; i++) {
+    uint8_t jsflg = 0;
+    uint8_t lines = 1;
+    for (uint8_t i = 0; i < MAX_TIMERS; i++) {
       if (!jsflg) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMERS "%d\":{"), lines++);
       } else {
@@ -699,7 +699,7 @@ void HandleTimerConfiguration(void)
   page.replace(F("</style>"), FPSTR(HTTP_TIMER_STYLE));
   page += FPSTR(HTTP_FORM_TIMER);
   page.replace(F("{e0"), (Settings.flag3.timers_enable) ? F(" checked") : F(""));
-  for (byte i = 0; i < MAX_TIMERS; i++) {
+  for (uint8_t i = 0; i < MAX_TIMERS; i++) {
     if (i > 0) { page += F(","); }
     page += String(Settings.timer[i].data);
   }
@@ -725,7 +725,7 @@ void TimerSaveSettings(void)
   WebGetArg("t0", tmp, sizeof(tmp));
   char *p = tmp;
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);
-  for (byte i = 0; i < MAX_TIMERS; i++) {
+  for (uint8_t i = 0; i < MAX_TIMERS; i++) {
     timer.data = strtol(p, &p, 10);
     p++;  // Skip comma
     if (timer.time < 1440) {
@@ -744,9 +744,9 @@ void TimerSaveSettings(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv09(byte function)
+bool Xdrv09(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   switch (function) {
     case FUNC_PRE_INIT:

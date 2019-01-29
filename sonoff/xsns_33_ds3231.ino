@@ -62,9 +62,9 @@
 #define HR1224 6                   //Hours register 12 or 24 hour mode (24 hour mode==0)
 #define CENTURY 7                  //Century bit in Month register
 #define DYDT 6                     //Day/Date flag bit in alarm Day/Date registers
-boolean ds3231ReadStatus = false;
-boolean ds3231WriteStatus = false; //flag, we want to wriet/write to DS3231 onlu once
-boolean DS3231chipDetected = false;
+bool ds3231ReadStatus = false;
+bool ds3231WriteStatus = false; //flag, we want to wriet/write to DS3231 onlu once
+bool DS3231chipDetected = false;
 
 /*----------------------------------------------------------------------*
   Detect the DS3231 Chip
@@ -132,9 +132,9 @@ void SetDS3231Time (uint32_t epoch_time) {
    Interface
   \*********************************************************************************************/
 
-boolean Xsns33(byte function)
+bool Xsns33(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -144,7 +144,7 @@ boolean Xsns33(byte function)
       case FUNC_EVERY_SECOND:
         TIME_T tmpTime;
         if (!ds3231ReadStatus && DS3231chipDetected && utc_time < 1451602800 ) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
-          ntp_force_sync = 1; //force to sync with ntp
+          ntp_force_sync = true; //force to sync with ntp
           utc_time = ReadFromDS3231(); //we read UTC TIME from DS3231
           // from this line, we just copy the function from "void RtcSecond()" at the support.ino ,line 2143 and above
           // We need it to set rules etc.

@@ -87,7 +87,7 @@ void SonoffScSerialInput(char *rcvstat)
       value[i++] = atoi(str);
     }
     if (value[0] > 0) {
-      for (byte i = 0; i < 5; i++) {
+      for (uint8_t i = 0; i < 5; i++) {
         sc_value[i] = value[i];
       }
       sc_value[2] = (11 - sc_value[2]) * 10;  // Invert light level
@@ -110,7 +110,7 @@ const char HTTP_SNS_SCPLUS[] PROGMEM =
   "%s{s}" D_LIGHT "{m}%d%%{e}{s}" D_NOISE "{m}%d%%{e}{s}" D_AIR_QUALITY "{m}%d%%{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
-void SonoffScShow(boolean json)
+void SonoffScShow(bool json)
 {
   if (sc_value[0] > 0) {
     float t = ConvertTemp(sc_value[1]);
@@ -154,9 +154,9 @@ void SonoffScShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns04(byte function)
+bool Xsns04(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (SONOFF_SC == Settings.module) {
     switch (function) {

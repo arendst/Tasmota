@@ -104,7 +104,7 @@ void PzemAcDrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg05(byte function)
+int Xnrg05(uint8_t function)
 {
   int result = 0;
 

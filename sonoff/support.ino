@@ -31,7 +31,7 @@ Ticker tickerOSWatch;
 #define OSWATCH_RESET_TIME 120
 
 static unsigned long oswatch_last_loop_time;
-byte oswatch_blocked_loop = 0;
+uint8_t oswatch_blocked_loop = 0;
 
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
 //void OsWatchTicker() ICACHE_RAM_ATTR;
@@ -84,7 +84,7 @@ String GetResetReason(void)
   }
 }
 
-boolean OsWatchBlockedLoop(void)
+bool OsWatchBlockedLoop(void)
 {
   return oswatch_blocked_loop;
 }
@@ -374,10 +374,10 @@ uint8_t Shortcut(const char* str)
   return result;
 }
 
-boolean ParseIp(uint32_t* addr, const char* str)
+bool ParseIp(uint32_t* addr, const char* str)
 {
   uint8_t *part = (uint8_t*)addr;
-  byte i;
+  uint8_t i;
 
   *addr = 0;
   for (i = 0; i < 4; i++) {
@@ -391,7 +391,7 @@ boolean ParseIp(uint32_t* addr, const char* str)
   return (3 == i);
 }
 
-void MakeValidMqtt(byte option, char* str)
+void MakeValidMqtt(uint8_t option, char* str)
 {
 // option 0 = replace by underscore
 // option 1 = delete character
@@ -701,7 +701,7 @@ int GetStateNumber(char *state_text)
   return state_number;
 }
 
-boolean GetUsedInModule(byte val, uint8_t *arr)
+bool GetUsedInModule(uint8_t val, uint8_t *arr)
 {
   int offset = 0;
 
@@ -712,6 +712,12 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   }
   if ((val >= GPIO_KEY1_NP) && (val < GPIO_KEY1_NP + MAX_KEYS)) {
     offset = -(GPIO_KEY1_NP - GPIO_KEY1);
+  }
+  if ((val >= GPIO_KEY1_INV) && (val < GPIO_KEY1_INV + MAX_KEYS)) {
+    offset = -(GPIO_KEY1_INV - GPIO_KEY1);
+  }
+  if ((val >= GPIO_KEY1_INV_NP) && (val < GPIO_KEY1_INV_NP + MAX_KEYS)) {
+    offset = -(GPIO_KEY1_INV_NP - GPIO_KEY1);
   }
 
   if ((val >= GPIO_SWT1) && (val < GPIO_SWT1 + MAX_SWITCHES)) {
@@ -749,7 +755,7 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
     offset = -(GPIO_CNTR1_NP - GPIO_CNTR1);
   }
 
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+  for (uint8_t i = 0; i < MAX_GPIO_PIN; i++) {
     if (arr[i] == val) { return true; }
     if (arr[i] == val + offset) { return true; }
   }
@@ -774,7 +780,7 @@ void SetSerialBaudrate(int baudrate)
 
 void ClaimSerial(void)
 {
-  serial_local = 1;
+  serial_local = true;
   AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
   baudrate = Serial.baudRate();
@@ -899,7 +905,7 @@ uint32_t i2c_buffer = 0;
 
 bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
 {
-  byte x = I2C_RETRY_COUNTER;
+  uint8_t x = I2C_RETRY_COUNTER;
 
   i2c_buffer = 0;
   do {
@@ -908,7 +914,7 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
     if (0 == Wire.endTransmission(false)) {             // Try to become I2C Master, send data and collect bytes, keep master status for next request...
       Wire.requestFrom((int)addr, (int)size);           // send data n-bytes read
       if (Wire.available() == size) {
-        for (byte i = 0; i < size; i++) {
+        for (uint8_t i = 0; i < size; i++) {
           i2c_buffer = i2c_buffer << 8 | Wire.read();   // receive DATA
         }
       }
@@ -1000,7 +1006,7 @@ int32_t I2cRead24(uint8_t addr, uint8_t reg)
 
 bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size)
 {
-  byte x = I2C_RETRY_COUNTER;
+  uint8_t x = I2C_RETRY_COUNTER;
 
   do {
     Wire.beginTransmission((uint8_t)addr);              // start transmission to device
@@ -1029,7 +1035,7 @@ int8_t I2cReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len)
   Wire.beginTransmission((uint8_t)addr);
   Wire.write((uint8_t)reg);
   Wire.endTransmission();
-  if (len != Wire.requestFrom((uint8_t)addr, (byte)len)) {
+  if (len != Wire.requestFrom((uint8_t)addr, (uint8_t)len)) {
     return 1;
   }
   while (len--) {
@@ -1060,9 +1066,9 @@ void I2cScan(char *devs, unsigned int devs_len)
   // I2C_SDA_HELD_LOW            3 = I2C bus error. SDA line held low by slave/another_master after n bits
   // I2C_SDA_HELD_LOW_AFTER_INIT 4 = line busy. SDA again held low by another device. 2nd master?
 
-  byte error = 0;
-  byte address = 0;
-  byte any = 0;
+  uint8_t error = 0;
+  uint8_t address = 0;
+  uint8_t any = 0;
 
   snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_DEVICES_FOUND_AT));
   for (address = 1; address <= 127; address++) {
@@ -1086,9 +1092,9 @@ void I2cScan(char *devs, unsigned int devs_len)
   }
 }
 
-boolean I2cDevice(byte addr)
+bool I2cDevice(uint8_t addr)
 {
-  for (byte address = 1; address <= 127; address++) {
+  for (uint8_t address = 1; address <= 127; address++) {
     Wire.beginTransmission(address);
     if (!Wire.endTransmission() && (address == addr)) {
       return true;
@@ -1107,7 +1113,7 @@ boolean I2cDevice(byte addr)
  *
 \*********************************************************************************************/
 
-void SetSeriallog(byte loglevel)
+void SetSeriallog(uint8_t loglevel)
 {
   Settings.seriallog_level = loglevel;
   seriallog_level = loglevel;
@@ -1115,7 +1121,7 @@ void SetSeriallog(byte loglevel)
 }
 
 #ifdef USE_WEBSERVER
-void GetLog(byte idx, char** entry_pp, size_t* len_p)
+void GetLog(uint8_t idx, char** entry_pp, size_t* len_p)
 {
   char* entry_p = NULL;
   size_t len = 0;
@@ -1123,7 +1129,7 @@ void GetLog(byte idx, char** entry_pp, size_t* len_p)
   if (idx) {
     char* it = web_log;
     do {
-      byte cur_idx = *it;
+      uint8_t cur_idx = *it;
       it++;
       size_t tmp = strchrspn(it, '\1');
       tmp++;                             // Skip terminating '\1'
@@ -1164,7 +1170,7 @@ void Syslog(void)
   }
 }
 
-void AddLog(byte loglevel)
+void AddLog(uint8_t loglevel)
 {
   char mxtime[10];  // "13:45:21 "
 
@@ -1194,13 +1200,13 @@ void AddLog(byte loglevel)
   if (!global_state.wifi_down && (loglevel <= syslog_level)) { Syslog(); }
 }
 
-void AddLog_P(byte loglevel, const char *formatP)
+void AddLog_P(uint8_t loglevel, const char *formatP)
 {
   snprintf_P(log_data, sizeof(log_data), formatP);
   AddLog(loglevel);
 }
 
-void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
+void AddLog_P(uint8_t loglevel, const char *formatP, const char *formatP2)
 {
   char message[100];
 
@@ -1210,7 +1216,7 @@ void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
-void AddLogBuffer(byte loglevel, uint8_t *buffer, int count)
+void AddLogBuffer(uint8_t loglevel, uint8_t *buffer, int count)
 {
   snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
   for (int i = 0; i < count; i++) {
@@ -1219,7 +1225,7 @@ void AddLogBuffer(byte loglevel, uint8_t *buffer, int count)
   AddLog(loglevel);
 }
 
-void AddLogSerial(byte loglevel)
+void AddLogSerial(uint8_t loglevel)
 {
   AddLogBuffer(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
 }

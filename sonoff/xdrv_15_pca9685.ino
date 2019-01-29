@@ -103,8 +103,8 @@ void PCA9685_SetPWM(uint8_t pin, uint16_t pwm, bool inverted) {
 
 bool PCA9685_Command(void) 
 {
-  boolean serviced = true;
-  boolean validpin = false;
+  bool serviced = true;
+  bool validpin = false;
   uint8_t paramcount = 0;
   if (XdrvMailbox.data_len > 0) {
     paramcount=1;
@@ -178,9 +178,9 @@ void PCA9685_OutputTelemetry(bool telemetry) {
   }
 }
 
-boolean Xdrv15(byte function)
+bool Xdrv15(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

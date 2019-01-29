@@ -60,7 +60,7 @@ String GetBuildDateAndTime(void)
   int year = 0;
 
   // sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too much code
-  byte i = 0;
+  uint8_t i = 0;
   for (char *str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
     switch (i++) {
     case 0:  // Month
@@ -112,7 +112,7 @@ String GetDT(uint32_t time)
  *  "2017-03-07T11:08:02-07:00" - if DT_LOCAL and SetOption52 = 1
  *  "2017-03-07T11:08:02"       - otherwise
  */
-String GetDateAndTime(byte time_type)
+String GetDateAndTime(uint8_t time_type)
 {
   // "2017-03-07T11:08:02-07:00" - ISO8601:2004
   uint32_t time = local_time;
@@ -332,9 +332,9 @@ uint32_t Midnight(void)
   return midnight;
 }
 
-boolean MidnightNow(void)
+bool MidnightNow(void)
 {
-  boolean mnflg = midnight_now;
+  bool mnflg = midnight_now;
   if (mnflg) midnight_now = 0;
   return mnflg;
 }
@@ -348,7 +348,7 @@ void RtcSecond(void)
   if (!global_state.wifi_down && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute) || ntp_force_sync)) {
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
-      ntp_force_sync = 0;
+      ntp_force_sync = false;
       utc_time = ntp_time;
       ntp_sync_minute = 60;  // Sync so block further requests
       if (restart_time == 0) {

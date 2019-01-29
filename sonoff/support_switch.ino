@@ -71,7 +71,7 @@ void SwitchProbe(void)
   uint8_t force_high = (Settings.switch_debounce % 50) &1;                   // 51, 101, 151 etc
   uint8_t force_low = (Settings.switch_debounce % 50) &2;                    // 52, 102, 152 etc
 
-  for (byte i = 0; i < MAX_SWITCHES; i++) {
+  for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
       // Olimex user_switch2.c code to fix 50Hz induced pulses
       if (1 == digitalRead(pin[GPIO_SWT1 +i])) {
@@ -117,7 +117,7 @@ void SwitchInit(void)
   }
 
   switches_found = 0;
-  for (byte i = 0; i < MAX_SWITCHES; i++) {
+  for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
     lastwallswitch[i] = 1;  // Init global to virtual switch state;
     if (pin[GPIO_SWT1 +i] < 99) {
       switches_found++;
@@ -133,7 +133,7 @@ void SwitchInit(void)
  * Switch handler
 \*********************************************************************************************/
 
-void SwitchHandler(byte mode)
+void SwitchHandler(uint8_t mode)
 {
   if (uptime < 4) { return; }                                  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
@@ -141,7 +141,7 @@ void SwitchHandler(byte mode)
   uint8_t switchflag;
   uint16_t loops_per_second = 1000 / Settings.switch_debounce;
 
-  for (byte i = 0; i < MAX_SWITCHES; i++) {
+  for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
     if ((pin[GPIO_SWT1 +i] < 99) || (mode)) {
 
       if (holdwallswitch[i]) {

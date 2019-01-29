@@ -147,7 +147,7 @@ void Ssd1306PrintLog(void)
       oled->clearDisplay();
       oled->setTextSize(Settings.display_size);
       oled->setCursor(0,0);
-      for (byte i = 0; i < last_row; i++) {
+      for (uint8_t i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
         oled->println(disp_screen_buffer[i]);
       }
@@ -200,9 +200,9 @@ void Ssd1306Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-boolean Xdsp02(byte function)
+bool Xdsp02(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {

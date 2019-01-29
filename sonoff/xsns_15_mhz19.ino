@@ -70,7 +70,7 @@ enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILT
 
 TasmotaSerial *MhzSerial;
 
-const char kMhzTypes[] PROGMEM = "MHZ19|MHZ19B";
+const char kMhzModels[] PROGMEM = "|B";
 
 enum MhzCommands { MHZ_CMND_READPPM, MHZ_CMND_ABCENABLE, MHZ_CMND_ABCDISABLE, MHZ_CMND_ZEROPOINT, MHZ_CMND_RESET, MHZ_CMND_RANGE_1000, MHZ_CMND_RANGE_2000, MHZ_CMND_RANGE_3000, MHZ_CMND_RANGE_5000 };
 const uint8_t kMhzCommands[][4] PROGMEM = {
@@ -90,7 +90,6 @@ uint16_t mhz_last_ppm = 0;
 uint8_t mhz_filter = MHZ19_FILTER_OPTION;
 bool mhz_abc_enable = MHZ19_ABC_ENABLE;
 bool mhz_abc_must_apply = false;
-char mhz_types[7];
 
 float mhz_temperature = 0;
 uint8_t mhz_retry = MHZ19_RETRY_COUNT;
@@ -99,17 +98,17 @@ uint8_t mhz_state = 0;
 
 /*********************************************************************************************/
 
-byte MhzCalculateChecksum(byte *array)
+uint8_t MhzCalculateChecksum(uint8_t *array)
 {
-  byte checksum = 0;
-  for (byte i = 1; i < 8; i++) {
+  uint8_t checksum = 0;
+  for (uint8_t i = 1; i < 8; i++) {
     checksum += array[i];
   }
   checksum = 255 - checksum;
   return (checksum +1);
 }
 
-size_t MhzSendCmd(byte command_id)
+size_t MhzSendCmd(uint8_t command_id)
 {
   uint8_t mhz_send[9] = { 0 };
 
@@ -205,7 +204,7 @@ void MhzEverySecond(void)
       return;
     }
 
-    byte crc = MhzCalculateChecksum(mhz_response);
+    uint8_t crc = MhzCalculateChecksum(mhz_response);
     if (mhz_response[8] != crc) {
 //      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 crc error"));
       return;
@@ -271,7 +270,7 @@ void MhzEverySecond(void)
 
 bool MhzCommandSensor(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   switch (XdrvMailbox.payload) {
     case 2:
@@ -320,21 +319,23 @@ void MhzInit(void)
   }
 }
 
-void MhzShow(boolean json)
+void MhzShow(bool json)
 {
+  char types[7] = "MHZ19B";  // MHZ19B for legacy reasons. Prefered is MHZ19
   char temperature[33];
   dtostrfd(mhz_temperature, Settings.flag2.temperature_resolution, temperature);
-  GetTextIndexed(mhz_types, sizeof(mhz_types), mhz_type -1, kMhzTypes);
+  char model[3];
+  GetTextIndexed(model, sizeof(model), mhz_type -1, kMhzModels);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, mhz_types, mhz_last_ppm, temperature);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, types, model, mhz_last_ppm, temperature);
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, mhz_types, mhz_last_ppm);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, mhz_types, temperature, TempUnit());
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, types, mhz_last_ppm);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, types, temperature, TempUnit());
 #endif  // USE_WEBSERVER
   }
 }
@@ -343,9 +344,9 @@ void MhzShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns15(byte function)
+bool Xsns15(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (mhz_type) {
     switch (function) {

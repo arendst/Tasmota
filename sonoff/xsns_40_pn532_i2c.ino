@@ -265,7 +265,7 @@ void PN532_Detect(void)
   }
 }
 
-boolean PN532_readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength)
+bool PN532_readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength)
 {
   pn532_i2c_packetbuffer[0] = PN532_COMMAND_INLISTPASSIVETARGET;
   pn532_i2c_packetbuffer[1] = 1;
@@ -385,8 +385,8 @@ void PN532_ScanForTag(void)
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
   uint8_t uid_len = 0;
   uint8_t card_data[16];
-  boolean erase_success = false;
-  boolean set_success = false;
+  bool erase_success = false;
+  bool set_success = false;
   if (PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uid_len)) {
     if (pn532_i2c_scan_defer_report > 0) {
       pn532_i2c_scan_defer_report--;
@@ -407,6 +407,9 @@ void PN532_ScanForTag(void)
         uint8_t keyuniversal[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
         if (mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
           if (mifareclassic_ReadDataBlock(1, card_data)) {
+#ifdef USE_PN532_DATA_RAW
+            memcpy(&card_datas,&card_data,sizeof(card_data));
+#else
             for (uint8_t i = 0;i < sizeof(card_data);i++) {
               if ((isalpha(card_data[i])) || ((isdigit(card_data[i])))) {
                 card_datas[i] = char(card_data[i]);
@@ -414,6 +417,7 @@ void PN532_ScanForTag(void)
                 card_datas[i] = '\0';
               }
             }
+#endif // USE_PN532_DATA_RAW
           }
           if (pn532_i2c_function == 1) { // erase block 1 of card
             for (uint8_t i = 0;i<16;i++) {
@@ -427,7 +431,15 @@ void PN532_ScanForTag(void)
             }
           }
           if (pn532_i2c_function == 2) {
-            boolean IsAlphaNumeric = true;
+#ifdef USE_PN532_DATA_RAW
+            if (mifareclassic_WriteDataBlock(1, card_data)) {
+              set_success = true;
+              snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data write successful");
+              AddLog(LOG_LEVEL_INFO);
+              memcpy(&card_datas,&card_data,sizeof(card_data)); // Cast block 1 to a string
+            }
+#else
+            bool IsAlphaNumeric = true;
             for (uint8_t i = 0;i < pn532_i2c_newdata_len;i++) {
               if ((!isalpha(pn532_i2c_newdata[i])) || (!isdigit(pn532_i2c_newdata[i]))) {
                 IsAlphaNumeric = false;
@@ -445,6 +457,7 @@ void PN532_ScanForTag(void)
               snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data must be alphanumeric");
               AddLog(LOG_LEVEL_INFO);
             }
+#endif // USE_PN532_DATA_RAW
           }
         } else {
           sprintf(card_datas,"AUTHFAIL");
@@ -498,9 +511,9 @@ void PN532_ScanForTag(void)
 
 #ifdef USE_PN532_DATA_FUNCTION
 
-boolean PN532_Command(void)
+bool PN532_Command(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t paramcount = 0;
   if (XdrvMailbox.data_len > 0) {
     paramcount=1;
@@ -550,9 +563,9 @@ boolean PN532_Command(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns40(byte function)
+bool Xsns40(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

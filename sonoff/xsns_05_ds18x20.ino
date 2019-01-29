@@ -233,7 +233,7 @@ uint8_t OneWireSearch(uint8_t *newAddr)
   return search_result;
 }
 
-boolean OneWireCrc8(uint8_t *addr)
+bool OneWireCrc8(uint8_t *addr)
 {
   uint8_t crc = 0;
   uint8_t len = 8;
@@ -424,7 +424,7 @@ void Ds18x20EverySecond(void)
   }
 }
 
-void Ds18x20Show(boolean json)
+void Ds18x20Show(bool json)
 {
   for (uint8_t i = 0; i < ds18x20_sensors; i++) {
     uint8_t index = ds18x20_sensor[i].index;
@@ -440,7 +440,7 @@ void Ds18x20Show(boolean json)
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, temperature);
         } else {
           char address[17];
-          for (byte j = 0; j < 6; j++) {
+          for (uint8_t j = 0; j < 6; j++) {
             sprintf(address+2*j, "%02X", ds18x20_sensor[index].address[6-j]);  // Skip sensor type and crc
           }
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, address, temperature);
@@ -468,9 +468,9 @@ void Ds18x20Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns05(byte function)
+bool Xsns05(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pin[GPIO_DSB] < 99) {
     switch (function) {

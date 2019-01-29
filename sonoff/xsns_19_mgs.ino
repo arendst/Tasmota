@@ -38,7 +38,7 @@ void MGSInit(void) {
   gas.begin(MGS_SENSOR_ADDR);
 }
 
-boolean MGSPrepare(void)
+bool MGSPrepare(void)
 {
   gas.begin(MGS_SENSOR_ADDR);
   if (!gas.isError()) {
@@ -61,7 +61,7 @@ char* measure_gas(int gas_type, char* buffer)
 const char HTTP_MGS_GAS[] PROGMEM = "%s{s}MGS %s{m}%s " D_UNIT_PARTS_PER_MILLION "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif // USE_WEBSERVER
 
-void MGSShow(boolean json)
+void MGSShow(bool json)
 {
   char buffer[33];
   if (json) {
@@ -91,9 +91,9 @@ void MGSShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns19(byte function)
+bool Xsns19(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
   static int detected = false;
 
   if (i2c_flg) {

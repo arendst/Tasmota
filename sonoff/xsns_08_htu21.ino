@@ -140,7 +140,7 @@ void HtuInit(void)
   HtuSetResolution(HTU21_RES_RH12_T14);
 }
 
-boolean HtuRead(void)
+bool HtuRead(void)
 {
   uint8_t  checksum = 0;
   uint16_t sensorval = 0;
@@ -246,7 +246,7 @@ void HtuEverySecond(void)
   }
 }
 
-void HtuShow(boolean json)
+void HtuShow(bool json)
 {
   if (htu_valid) {
     char temperature[33];
@@ -280,9 +280,9 @@ void HtuShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns08(byte function)
+bool Xsns08(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
