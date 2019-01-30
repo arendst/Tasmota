@@ -500,6 +500,13 @@ void LightInit(void)
 #endif  // USE_WS2812 ************************************************************************
 #ifdef USE_SM16716
   else if (16 & light_type) {
+    // init PWM
+    for (uint8_t i = 0; i < light_subtype; i++) {
+      Settings.pwm_value[i] = 0;        // Disable direct PWM control
+      if (pin[GPIO_PWM1 +i] < 99) {
+        pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+      }
+    }
     SM16716_Init();
   }
 #endif  // ifdef USE_SM16716
@@ -919,7 +926,7 @@ void LightAnimate(void)
         light_last_color[i] = light_new_color[i];
         cur_col[i] = light_last_color[i]*Settings.rgbwwTable[i]/255;
         cur_col[i] = (Settings.light_correction) ? ledTable[cur_col[i]] : cur_col[i];
-        if (light_type < LT_PWM6) {
+        if (light_type < LT_PWM6 || light_type & 16) {
           if (pin[GPIO_PWM1 +i] < 99) {
             if (cur_col[i] > 0xFC) {
               cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
