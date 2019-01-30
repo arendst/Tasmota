@@ -432,21 +432,11 @@ bool SM16716_ModuleSelected(void)
   return (sm16716_pin_clk < 99) && (sm16716_pin_dat < 99);
 }
 
-bool SM16716_Init(void)
+void SM16716_Init(void)
 {
-  uint8_t t_init;
-
-  pinMode(sm16716_pin_clk, OUTPUT);
-  digitalWrite(sm16716_pin_clk, LOW);
-
-  pinMode(sm16716_pin_dat, OUTPUT);
-  digitalWrite(sm16716_pin_dat, LOW);
-
-  for (t_init = 0; t_init < 50; ++t_init) {
+  for (uint8_t t_init = 0; t_init < 50; ++t_init) {
     SM16716_SendBit(0);
   }
-
-  return true;
 }
 
 #endif  // ifdef USE_SM16716
@@ -508,6 +498,13 @@ void LightInit(void)
         pinMode(pin[GPIO_PWM1 +i], OUTPUT);
       }
     }
+    // init sm16716
+    pinMode(sm16716_pin_clk, OUTPUT);
+    digitalWrite(sm16716_pin_clk, LOW);
+
+    pinMode(sm16716_pin_dat, OUTPUT);
+    digitalWrite(sm16716_pin_dat, LOW);
+
     SM16716_Init();
   }
 #endif  // ifdef USE_SM16716
@@ -955,7 +952,6 @@ void LightAnimate(void)
 #endif  // USE_ES2812 ************************************************************************
 #ifdef USE_SM16716
       else if (16 & light_type) {
-        SM16716_Update(cur_col[0], cur_col[1], cur_col[2]);
         for (uint8_t i = 3; i < light_subtype; i++) {
           if (pin[GPIO_PWM1 +i-3] < 99) {
             if (cur_col[i] > 0xFC) {
@@ -967,6 +963,10 @@ void LightAnimate(void)
             analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - curcol : curcol);
           }
         }
+        if(cur_col[0] | cur_col[1] | cur_col[2]){
+          SM16716_Init();
+        }
+        SM16716_Update(cur_col[0], cur_col[1], cur_col[2]);
       }
 #endif  // ifdef USE_SM16716
       else if (light_type > LT_WS2812) {
