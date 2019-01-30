@@ -567,6 +567,7 @@ void SettingsDefaultSet2(void)
 //  Settings.flag.value_units = 0;
 //  Settings.flag.stop_flash_rotate = 0;
   Settings.save_data = SAVE_DATA;
+  Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;
   Settings.sleep = APP_SLEEP;
   if (Settings.sleep < 50) {
     Settings.sleep = 50;                // Default to 50 for sleep, for now
