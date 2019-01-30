@@ -2422,6 +2422,12 @@ void GpioInit(void)
     light_type = LT_WS2812;
   }
 #endif  // USE_WS2812
+#ifdef USE_SM16716
+  if (SM16716_ModuleSelected()) {
+    light_type += 3;
+    light_type |= 16;
+  }
+#endif  // ifdef USE_SM16716
   if (!light_type) {
     for (uint8_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
       if (pin[GPIO_PWM1 +i] < 99) {
