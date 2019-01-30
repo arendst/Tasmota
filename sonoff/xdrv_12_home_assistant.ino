@@ -67,7 +67,7 @@ const char HASS_DISCOVER_LIGHT_WHITE[] PROGMEM =
   "%s,\"whit_val_cmd_t\":\"%s\","                  // cmnd/led2/White
   "\"whit_val_stat_t\":\"%s\","                    // stat/led2/RESULT
   "\"white_value_scale\":100,"                     // (No abbreviation defined)
-  "\"whit_val_tpl\":\"{{ value_json.Channel[3] }}\"";
+  "\"whit_val_tpl\":\"{{value_json.Channel[3]}}\"";
 
 const char HASS_DISCOVER_LIGHT_CT[] PROGMEM =
   "%s,\"clr_temp_cmd_t\":\"%s\","                  // cmnd/led2/CT
