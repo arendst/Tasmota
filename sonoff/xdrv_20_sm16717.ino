@@ -40,8 +40,8 @@ const char k_SM16716_Commands[] PROGMEM =
 uint8_t sm16716_pin_clk     = 100;
 uint8_t sm16716_pin_dat     = 100;
 
-boolean sm16716_is_selected = false;
-boolean sm16716_is_on       = false;
+bool sm16716_is_selected = false;
+bool sm16716_is_on       = false;
 uint8_t sm16716_color[3]    = {0, 0, 0};
 int8_t sm16716_color_preset = 0;
 
@@ -83,7 +83,7 @@ void SM16716_Append_JSON(void)
 
 
 /*********************************************************************************************/
-boolean SM16716_Show_State(void)
+bool SM16716_Show_State(void)
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data),
       PSTR("{\"" D_CMND_COLOR "\":\"%02x%02x%02x\"}"),
@@ -127,7 +127,7 @@ void SM16716_Update()
 
 
 /*********************************************************************************************/
-boolean SM16716_ModuleSelected(void)
+bool SM16716_ModuleSelected(void)
 {
   sm16716_pin_clk = pin[GPIO_SM16716_CLK];
   sm16716_pin_dat = pin[GPIO_SM16716_DAT];
@@ -143,7 +143,7 @@ boolean SM16716_ModuleSelected(void)
 
 
 /*********************************************************************************************/
-boolean SM16716_Init(void)
+bool SM16716_Init(void)
 {
   uint8_t t_init;
 
@@ -169,7 +169,7 @@ boolean SM16716_Init(void)
 /* Try to parse a string as 'RRGGBB' hex-encoded color value
  * Accept only exact match (i.e. there can be no leftover chars)
  */
-boolean SM16716_Parse_RRGGBB(const char *data, int data_len) {
+bool SM16716_Parse_RRGGBB(const char *data, int data_len) {
   char component[3];
   char *endptr = NULL;
   uint8_t candidate[3];
@@ -214,7 +214,7 @@ boolean SM16716_Parse_RRGGBB(const char *data, int data_len) {
 
 
 /*********************************************************************************************/
-boolean SM16716_Parse_Color(char *data, int data_len) {
+bool SM16716_Parse_Color(char *data, int data_len) {
   /* NOTE: Very similar to 'LightColorEntry', but can't reuse it here, because 
    * 'light_type' must be PWM, and then it won't parse the color components. */
 
@@ -345,7 +345,7 @@ bool SM16716_Command(void)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-boolean Xdrv20(byte function)
+bool Xdrv20(uint8_t function)
 {
   if (function == FUNC_MODULE_INIT) {
       return SM16716_ModuleSelected();
