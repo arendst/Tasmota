@@ -367,7 +367,7 @@ void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t dut
 \*********************************************************************************************/
 
 // Enable this for debug logging
-//#define D_LOG_SM16716       "SM16716: "
+#define D_LOG_SM16716       "SM16716: "
 
 uint8_t sm16716_pin_clk     = 100;
 uint8_t sm16716_pin_dat     = 100;
@@ -927,7 +927,7 @@ void LightAnimate(void)
         light_last_color[i] = light_new_color[i];
         cur_col[i] = light_last_color[i]*Settings.rgbwwTable[i]/255;
         cur_col[i] = (Settings.light_correction) ? ledTable[cur_col[i]] : cur_col[i];
-        if (light_type < LT_PWM6 || light_type & 16) {
+        if (light_type < LT_PWM6) {
           if (pin[GPIO_PWM1 +i] < 99) {
             if (cur_col[i] > 0xFC) {
               cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
@@ -956,6 +956,17 @@ void LightAnimate(void)
 #ifdef USE_SM16716
       else if (16 & light_type) {
         SM16716_Update(cur_col[0], cur_col[1], cur_col[2]);
+        for (uint8_t i = 3; i < light_subtype; i++) {
+          if (pin[GPIO_PWM1 +i-3] < 99) {
+            if (cur_col[i] > 0xFC) {
+              cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
+            }
+            uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
+//            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
+//            AddLog(LOG_LEVEL_DEBUG);
+            analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - curcol : curcol);
+          }
+        }
       }
 #endif  // ifdef USE_SM16716
       else if (light_type > LT_WS2812) {
