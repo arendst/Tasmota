@@ -1,5 +1,6 @@
 /* 6.4.1.13 20190130
  * Add command SetOption36 to control boot loop default restoration (#4645, #5063)
+ * Add resiliency to saved Settings (#5065)
  *
  * 6.4.1.12 20190128
  * Change code use of boolean to bool and byte to uint8_t
