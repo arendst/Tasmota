@@ -417,7 +417,6 @@ void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
   SM16716_SendByte(0);
   SM16716_SendByte(0);
   SM16716_SendByte(0);
-  SM16716_Show_State();
 }
 
 bool SM16716_ModuleSelected(void)
@@ -449,6 +448,8 @@ bool SM16716_Init(void)
 
   return true;
 }
+
+#endif  // ifdef USE_SM16716
 
 /********************************************************************************************/
 
