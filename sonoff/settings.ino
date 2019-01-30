@@ -1027,6 +1027,9 @@ void SettingsDelta(void)
       Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
       for (uint8_t i = 1; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }
     }
+    if (Settings.version < 0x0604010D) {
+      Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);
