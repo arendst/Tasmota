@@ -432,6 +432,7 @@ void PN532_ScanForTag(void)
           }
           if (pn532_i2c_function == 2) {
 #ifdef USE_PN532_DATA_RAW
+            memcpy(&card_data,&pn532_i2c_newdata,sizeof(card_data));
             if (mifareclassic_WriteDataBlock(1, card_data)) {
               set_success = true;
               snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data write successful");
@@ -441,13 +442,14 @@ void PN532_ScanForTag(void)
 #else
             bool IsAlphaNumeric = true;
             for (uint8_t i = 0;i < pn532_i2c_newdata_len;i++) {
-              if ((!isalpha(pn532_i2c_newdata[i])) || (!isdigit(pn532_i2c_newdata[i]))) {
+              if ((!isalpha(pn532_i2c_newdata[i])) && (!isdigit(pn532_i2c_newdata[i]))) {
                 IsAlphaNumeric = false;
               }
             }
             if (IsAlphaNumeric) {
+              memcpy(&card_data,&pn532_i2c_newdata,pn532_i2c_newdata_len);
+              card_data[pn532_i2c_newdata_len] = '\0'; // Enforce null termination
               if (mifareclassic_WriteDataBlock(1, card_data)) {
-                memcpy(&card_data,&pn532_i2c_newdata,sizeof(card_data));
                 set_success = true;
                 snprintf_P(log_data, sizeof(log_data),"I2C: PN532 NFC - Data write successful");
                 AddLog(LOG_LEVEL_INFO);
