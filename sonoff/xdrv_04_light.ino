@@ -371,6 +371,7 @@ void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t dut
 
 uint8_t sm16716_pin_clk     = 100;
 uint8_t sm16716_pin_dat     = 100;
+uint8_t sm16716_pin_sel     = 100;
 
 void SM16716_SendBit(uint8_t v)
 {
@@ -397,6 +398,23 @@ void SM16716_SendByte(uint8_t v)
 
 void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
 {
+  if (sm16716_pin_sel < 99) {
+    if (duty_r | duty_g | duty_b) {
+#ifdef D_LOG_SM16716
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SM16716 "turning color on"));
+      AddLog(LOG_LEVEL_DEBUG);
+#endif // D_LOG_SM16716
+      digitalWrite(sm16716_pin_sel, HIGH);
+      delayMicroseconds(20);
+      SM16716_Init();
+    } else {
+#ifdef D_LOG_SM16716
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SM16716 "turning color off"));
+      AddLog(LOG_LEVEL_DEBUG);
+#endif // D_LOG_SM16716
+      digitalWrite(sm16716_pin_sel, LOW);
+    }
+  }
 #ifdef D_LOG_SM16716
   snprintf_P(log_data, sizeof(log_data),
       PSTR(D_LOG_SM16716 "Update; rgb=%02x%02x%02x"),
@@ -409,10 +427,11 @@ void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
   // send 24-bit rgb data
   SM16716_SendByte(duty_r);
   SM16716_SendByte(duty_g);
-  SM16716_SendByte(duty_g);
+  SM16716_SendByte(duty_b);
   // send a 'do it' pulse
   // (if multiple chips are chained, each one processes the 1st '1rgb' 25-bit block and
   // passes on the rest, right until the one starting with 0)
+  //SM16716_Init();
   SM16716_SendBit(0);
   SM16716_SendByte(0);
   SM16716_SendByte(0);
@@ -423,6 +442,7 @@ bool SM16716_ModuleSelected(void)
 {
   sm16716_pin_clk = pin[GPIO_SM16716_CLK];
   sm16716_pin_dat = pin[GPIO_SM16716_DAT];
+  sm16716_pin_sel = pin[GPIO_SM16716_SEL];
 #ifdef D_LOG_SM16716
   snprintf_P(log_data, sizeof(log_data),
       PSTR(D_LOG_SM16716 "ModuleSelected; clk_pin=%d, dat_pin=%d)"),
@@ -504,6 +524,11 @@ void LightInit(void)
 
     pinMode(sm16716_pin_dat, OUTPUT);
     digitalWrite(sm16716_pin_dat, LOW);
+
+    if (sm16716_pin_sel < 99) {
+      pinMode(sm16716_pin_sel, OUTPUT);
+      digitalWrite(sm16716_pin_sel, LOW);
+    }
 
     SM16716_Init();
   }
@@ -962,9 +987,6 @@ void LightAnimate(void)
 //            AddLog(LOG_LEVEL_DEBUG);
             analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - curcol : curcol);
           }
-        }
-        if(cur_col[0] | cur_col[1] | cur_col[2]){
-          SM16716_Init();
         }
         SM16716_Update(cur_col[0], cur_col[1], cur_col[2]);
       }
