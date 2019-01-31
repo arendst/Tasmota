@@ -292,6 +292,7 @@ enum SupportedModules {
   KA10,
   ZX2820,
   MI_DESK_LAMP,
+  SP10,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -572,6 +573,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SK03_TUYA,
   DIGOO,
   KA10,
+  SP10,
   NEO_COOLCAM,         // Socket Relay Devices
   OBI,
   OBI2,
@@ -1793,6 +1795,25 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_ROT_A,       // GPIO12 Rotary switch A pin
      GPIO_ROT_B,       // GPIO13 Rotary switch B pin
      0, 0, 0, 0
+  },
+  { "SP10",            // Tuya SP10 (ESP8285 - BL0937 Energy Monitoring)
+                       // https://www.aliexpress.com/item/Smart-Mini-WiFi-Plug-Outlet-Switch-Work-With-ForEcho-Alexa-Google-Home-Remote-EU-Smart-Socket/32963670423.html
+     0,                // GPIO00
+     GPIO_PWM1,        // GPIO01 Nightlight
+     0,                // GPIO02
+     GPIO_KEY1,        // GPIO03 Button
+     GPIO_HJL_CF,      // GPIO04 BL0937 CF power
+     GPIO_NRG_CF1,     // GPIO05 BL0937 CF1 voltage / current
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_NRG_SEL_INV, // GPIO12 BL0937 Sel output (1 = Voltage)
+     GPIO_LED1,        // GPIO13 Blue LED - Link status
+     GPIO_REL1,        // GPIO14 Relay 1 and red LED
+     0, 0, 0
   }
 };
 
