@@ -1798,7 +1798,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_ROT_B,       // GPIO13 Rotary switch B pin
      0, 0, 0, 0
   },
-  { "SP10",            // Tuya SP10 (ESP8285 - BL0937 Energy Monitoring)
+  { "SP10",            // Tuya SP10 (BL0937 Energy Monitoring)
                        // https://www.aliexpress.com/item/Smart-Mini-WiFi-Plug-Outlet-Switch-Work-With-ForEcho-Alexa-Google-Home-Remote-EU-Smart-Socket/32963670423.html
      0,                // GPIO00
      GPIO_PWM1,        // GPIO01 Nightlight
@@ -1814,7 +1814,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        // GPIO11 (SD_CMD   Flash)
      GPIO_NRG_SEL_INV, // GPIO12 BL0937 Sel output (1 = Voltage)
      GPIO_LED1,        // GPIO13 Blue LED - Link status
-     GPIO_REL1,        // GPIO14 Relay 1 and red LED
+     GPIO_REL1,        // GPIO14 Relay and red LED
      0, 0, 0
   },
   { "WAGA CHCZ02MB",   // WAGA life CHCZ02MB (HJL-01 Energy Monitoring)
