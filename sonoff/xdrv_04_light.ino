@@ -408,7 +408,9 @@ void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
 #endif // D_LOG_SM16716
       sm16716_enabled = 1;
       digitalWrite(sm16716_pin_sel, HIGH);
-      //delayMicroseconds(20);
+      // in testing I found it takes a minimum of ~380us to wake up the chip
+      // tested on a Merkury RGBW with an SM726EB
+      delayMicroseconds(400);
       SM16716_Init();
     }
     else if (sm16716_enabled && !sm16716_should_enable) {
