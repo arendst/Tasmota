@@ -535,9 +535,11 @@ void LightInit(void)
     if (sm16716_pin_sel < 99) {
       pinMode(sm16716_pin_sel, OUTPUT);
       digitalWrite(sm16716_pin_sel, LOW);
+      // no need to call SM16716_Init here, it will be called after sel goes HIGH
+    } else {
+      // no sel pin means you have an 'always on' chip, so init right away
+      SM16716_Init();
     }
-
-    SM16716_Init();
   }
 #endif  // ifdef USE_SM16716
   else {
