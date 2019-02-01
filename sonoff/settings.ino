@@ -447,31 +447,50 @@ void SettingsSave(uint8_t rotate)
 
 void SettingsLoad(void)
 {
-/* Load configuration from eeprom or one of 7 slots below if first load does not stop_flash_rotate
- */
+  // Load configuration from eeprom or one of 7 slots below if first valid load does not stop_flash_rotate
   struct SYSCFGH {
     uint16_t cfg_holder;                     // 000
     uint16_t cfg_size;                       // 002
     unsigned long save_flag;                 // 004
   } _SettingsH;
+  unsigned long save_flag = 0;
 
-  bool bad_crc = false;
-  settings_location = SETTINGS_LOCATION +1;
+  settings_location = 0;
+  uint32_t flash_location = SETTINGS_LOCATION +1;
   for (uint8_t i = 0; i < CFG_ROTATES; i++) {
-    settings_location--;
-    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    ESP.flashRead((settings_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
-    if (Settings.version > 0x06000000) { bad_crc = (Settings.cfg_crc != GetSettingsCrc()); }
-    if (Settings.flag.stop_flash_rotate || bad_crc || (Settings.cfg_holder != _SettingsH.cfg_holder) || (Settings.save_flag > _SettingsH.save_flag)) {
-      break;
+    flash_location--;
+    ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+
+    bool valid = false;
+    if (Settings.version > 0x06000000) {
+      valid = (Settings.cfg_crc == GetSettingsCrc());
+    } else {
+      ESP.flashRead((flash_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
+      valid = (Settings.cfg_holder == _SettingsH.cfg_holder);
     }
+    if (valid) {
+      if (Settings.save_flag > save_flag) {
+        save_flag = Settings.save_flag;
+        settings_location = flash_location;
+        if (Settings.flag.stop_flash_rotate) {
+          break;
+        }
+      }
+    }
+
     delay(1);
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"), settings_location, Settings.save_flag);
-  AddLog(LOG_LEVEL_DEBUG);
+  if (settings_location > 0) {
+    ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"),
+      settings_location, Settings.save_flag);
+    AddLog(LOG_LEVEL_DEBUG);
+  }
 
 #ifndef BE_MINIMAL
-  if (bad_crc || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) { SettingsDefault(); }
+  if (!settings_location || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
+    SettingsDefault();
+  }
   settings_crc = GetSettingsCrc();
 #endif  // BE_MINIMAL
 
@@ -567,6 +586,7 @@ void SettingsDefaultSet2(void)
 //  Settings.flag.value_units = 0;
 //  Settings.flag.stop_flash_rotate = 0;
   Settings.save_data = SAVE_DATA;
+  Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;
   Settings.sleep = APP_SLEEP;
   if (Settings.sleep < 50) {
     Settings.sleep = 50;                // Default to 50 for sleep, for now
@@ -1026,6 +1046,9 @@ void SettingsDelta(void)
     if (Settings.version < 0x0604010B) {
       Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
       for (uint8_t i = 1; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }
+    }
+    if (Settings.version < 0x0604010D) {
+      Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;
     }
 
     Settings.version = VERSION;
