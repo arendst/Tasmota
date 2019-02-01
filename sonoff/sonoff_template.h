@@ -1819,7 +1819,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "WAGA CHCZ02MB",   // WAGA life CHCZ02MB (HJL-01 Energy Monitoring)
                        // https://www.ebay.com/itm/332595697006
-     GPIO_LED1,        // GPIO00 Red LED
+     GPIO_LED2,        // GPIO00 Red LED
      0,                // GPIO01 Serial TX
      0,                // GPIO02
      GPIO_NRG_SEL_INV, // GPIO03 HJL-01 Sel output (1 = Voltage)
@@ -1834,7 +1834,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Relay
      GPIO_KEY1,        // GPIO13 Button
      GPIO_NRG_CF1,     // GPIO14 HJL-01 CF1 voltage / current
-     GPIO_LED2,        // GPIO15 Blue LED - Link status
+     GPIO_LED1,        // GPIO15 Blue LED - Link status
      0, 0
   }
 };
