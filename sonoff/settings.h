@@ -163,6 +163,20 @@ typedef union {
   };
 } Mcp230xxCfg;
 
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t spare0 : 1;
+    uint8_t spare1 : 1;
+    uint8_t spare2 : 1;
+    uint8_t spare3 : 1;
+    uint8_t spare4 : 1;
+    uint8_t spare5 : 1;
+    uint8_t spare6 : 1;
+    uint8_t mhz19b_abc_disable : 1;        // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
+  };
+} SensorCfg1;
+    
 /*
 struct SYSCFG {
   unsigned long cfg_holder;                // 000 Pre v6 header
@@ -311,8 +325,7 @@ struct SYSCFG {
   uint8_t       knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
   Mcp230xxCfg   mcp230xx_config[16];       // 6F6
   uint8_t       mcp230xx_int_prio;         // 716
-
-  uint8_t       free_717[1];               // 717
+  SensorCfg1    SensorBits1;               // 717  On/Off settings used by Sensor Commands
 
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
