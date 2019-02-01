@@ -154,8 +154,9 @@ enum UserSelectablePins {
   GPIO_KEY2_INV_NP,
   GPIO_KEY3_INV_NP,
   GPIO_KEY4_INV_NP,
-  GPIO_SM16716_CLK,    // SM16716 CLK
-  GPIO_SM16716_DAT,    // SM16716 DAT
+  GPIO_SM16716_CLK,    // SM16716 CLOCK
+  GPIO_SM16716_DAT,    // SM16716 DATA
+  GPIO_SM16716_SEL,    // SM16716 SELECT
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -221,8 +222,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_AZ_TX "|" D_SENSOR_AZ_RX "|"
   D_SENSOR_MAX31855_CS "|" D_SENSOR_MAX31855_CLK "|" D_SENSOR_MAX31855_DO "|"
   D_SENSOR_BUTTON "1i|" D_SENSOR_BUTTON "2i|" D_SENSOR_BUTTON "3i|" D_SENSOR_BUTTON "4i|"
-  D_SENSOR_BUTTON "1in|" D_SENSOR_BUTTON "2in|" D_SENSOR_BUTTON "3in|" D_SENSOR_BUTTON "4in"
-  D_SENSOR_SM16716_CLK "|" D_SENSOR_SM16716_DAT
+  D_SENSOR_BUTTON "1in|" D_SENSOR_BUTTON "2in|" D_SENSOR_BUTTON "3in|" D_SENSOR_BUTTON "4in|"
+  D_SENSOR_SM16716_CLK "|" D_SENSOR_SM16716_DAT "|" D_SENSOR_SM16716_SEL
   ;
 
 /********************************************************************************************/
@@ -530,8 +531,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855DO,     // MAX31855 Serial interface
 #endif
 #ifdef USE_SM16716
-  GPIO_SM16716_CLK,    // SM16716 CLK
-  GPIO_SM16716_DAT,    // SM16716 DAT
+  GPIO_SM16716_CLK,    // SM16716 CLOCK
+  GPIO_SM16716_DAT,    // SM16716 DATA
+  GPIO_SM16716_SEL,    // SM16716 SELECT
 #endif // USE_SM16716
 };
 

@@ -32,6 +32,9 @@
  * 11          +WS2812    RGB(W) no         (One WS2812 RGB or RGBW ledstrip)
  * 12          AiLight    RGBW   no
  * 13          Sonoff B1  RGBCW  yes
+ * 19          SM16716    RGB    no
+ * 20          SM16716+W  RGBW   no
+ * 21          SM16716+CW RGBCW  yes
  *
  * light_scheme  WS2812  3+ Colors  1+2 Colors  Effect
  * ------------  ------  ---------  ----------  -----------------
@@ -354,6 +357,110 @@ void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t dut
   os_delay_us(12);                      // TStop > 12us.
 }
 
+#ifdef USE_SM16716
+/*********************************************************************************************\
+ * SM16716 - Controlling RGB over a synchronous serial line
+ * Copyright (C) 2019  Gabor Simon
+ *
+ * Source: https://community.home-assistant.io/t/cheap-uk-wifi-bulbs-with-tasmota-teardown-help-tywe3s/40508/27
+ *
+\*********************************************************************************************/
+
+// Enable this for debug logging
+#define D_LOG_SM16716       "SM16716: "
+
+uint8_t sm16716_pin_clk     = 100;
+uint8_t sm16716_pin_dat     = 100;
+uint8_t sm16716_pin_sel     = 100;
+
+void SM16716_SendBit(uint8_t v)
+{
+  /* NOTE:
+   * According to the spec sheet, max freq is 30 MHz, that is 16.6 ns per high/low half of the
+   * clk square wave. That is less than the overhead of 'digitalWrite' at this clock rate,
+   * so no additional delays are needed yet. */
+
+  digitalWrite(sm16716_pin_dat, (v != 0) ? HIGH : LOW);
+  //delayMicroseconds(1);
+  digitalWrite(sm16716_pin_clk, HIGH);
+  //delayMicroseconds(1);
+  digitalWrite(sm16716_pin_clk, LOW);
+}
+
+void SM16716_SendByte(uint8_t v)
+{
+  uint8_t mask;
+
+  for (mask = 0x80; mask; mask >>= 1) {
+    SM16716_SendBit(v & mask);
+  }
+}
+
+void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
+{
+  if (sm16716_pin_sel < 99) {
+    if (duty_r | duty_g | duty_b) {
+#ifdef D_LOG_SM16716
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SM16716 "turning color on"));
+      AddLog(LOG_LEVEL_DEBUG);
+#endif // D_LOG_SM16716
+      digitalWrite(sm16716_pin_sel, HIGH);
+      delayMicroseconds(20);
+      SM16716_Init();
+    } else {
+#ifdef D_LOG_SM16716
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SM16716 "turning color off"));
+      AddLog(LOG_LEVEL_DEBUG);
+#endif // D_LOG_SM16716
+      digitalWrite(sm16716_pin_sel, LOW);
+    }
+  }
+#ifdef D_LOG_SM16716
+  snprintf_P(log_data, sizeof(log_data),
+      PSTR(D_LOG_SM16716 "Update; rgb=%02x%02x%02x"),
+      duty_r, duty_g, duty_b);
+  AddLog(LOG_LEVEL_DEBUG);
+#endif // D_LOG_SM16716
+
+  // send start bit
+  SM16716_SendBit(1);
+  // send 24-bit rgb data
+  SM16716_SendByte(duty_r);
+  SM16716_SendByte(duty_g);
+  SM16716_SendByte(duty_b);
+  // send a 'do it' pulse
+  // (if multiple chips are chained, each one processes the 1st '1rgb' 25-bit block and
+  // passes on the rest, right until the one starting with 0)
+  //SM16716_Init();
+  SM16716_SendBit(0);
+  SM16716_SendByte(0);
+  SM16716_SendByte(0);
+  SM16716_SendByte(0);
+}
+
+bool SM16716_ModuleSelected(void)
+{
+  sm16716_pin_clk = pin[GPIO_SM16716_CLK];
+  sm16716_pin_dat = pin[GPIO_SM16716_DAT];
+  sm16716_pin_sel = pin[GPIO_SM16716_SEL];
+#ifdef D_LOG_SM16716
+  snprintf_P(log_data, sizeof(log_data),
+      PSTR(D_LOG_SM16716 "ModuleSelected; clk_pin=%d, dat_pin=%d)"),
+      sm16716_pin_clk, sm16716_pin_dat);
+  AddLog(LOG_LEVEL_DEBUG);
+#endif // D_LOG_SM16716
+  return (sm16716_pin_clk < 99) && (sm16716_pin_dat < 99);
+}
+
+void SM16716_Init(void)
+{
+  for (uint8_t t_init = 0; t_init < 50; ++t_init) {
+    SM16716_SendBit(0);
+  }
+}
+
+#endif  // ifdef USE_SM16716
+
 /********************************************************************************************/
 
 void LightInit(void)
@@ -402,6 +509,30 @@ void LightInit(void)
     max_scheme = LS_MAX + WS2812_SCHEMES;
   }
 #endif  // USE_WS2812 ************************************************************************
+#ifdef USE_SM16716
+  else if (16 & light_type) {
+    // init PWM
+    for (uint8_t i = 0; i < light_subtype; i++) {
+      Settings.pwm_value[i] = 0;        // Disable direct PWM control
+      if (pin[GPIO_PWM1 +i] < 99) {
+        pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+      }
+    }
+    // init sm16716
+    pinMode(sm16716_pin_clk, OUTPUT);
+    digitalWrite(sm16716_pin_clk, LOW);
+
+    pinMode(sm16716_pin_dat, OUTPUT);
+    digitalWrite(sm16716_pin_dat, LOW);
+
+    if (sm16716_pin_sel < 99) {
+      pinMode(sm16716_pin_sel, OUTPUT);
+      digitalWrite(sm16716_pin_sel, LOW);
+    }
+
+    SM16716_Init();
+  }
+#endif  // ifdef USE_SM16716
   else {
     light_pdi_pin = pin[GPIO_DI];
     light_pdcki_pin = pin[GPIO_DCKI];
@@ -844,6 +975,22 @@ void LightAnimate(void)
         Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
       }
 #endif  // USE_ES2812 ************************************************************************
+#ifdef USE_SM16716
+      else if (16 & light_type) {
+        for (uint8_t i = 3; i < light_subtype; i++) {
+          if (pin[GPIO_PWM1 +i-3] < 99) {
+            if (cur_col[i] > 0xFC) {
+              cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
+            }
+            uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
+//            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
+//            AddLog(LOG_LEVEL_DEBUG);
+            analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - curcol : curcol);
+          }
+        }
+        SM16716_Update(cur_col[0], cur_col[1], cur_col[2]);
+      }
+#endif  // ifdef USE_SM16716
       else if (light_type > LT_WS2812) {
         LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
       }
