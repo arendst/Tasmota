@@ -472,7 +472,7 @@ void SettingsLoad(void)
       if (Settings.save_flag > save_flag) {
         save_flag = Settings.save_flag;
         settings_location = flash_location;
-        if (Settings.flag.stop_flash_rotate) {
+        if (Settings.flag.stop_flash_rotate && (0 == i)) {  // Stop only if eeprom area should be used and it is valid
           break;
         }
       }
