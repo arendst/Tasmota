@@ -293,6 +293,7 @@ enum SupportedModules {
   ZX2820,
   MI_DESK_LAMP,
   SP10,
+  WAGA,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -574,6 +575,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   DIGOO,
   KA10,
   SP10,
+  WAGA,
   NEO_COOLCAM,         // Socket Relay Devices
   OBI,
   OBI2,
@@ -1814,6 +1816,26 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1,        // GPIO13 Blue LED - Link status
      GPIO_REL1,        // GPIO14 Relay 1 and red LED
      0, 0, 0
+  },
+  { "WAGA CHCZ02MB",   // WAGA life CHCZ02MB (HJL-01 Energy Monitoring)
+                       // https://www.ebay.com/itm/332595697006
+     GPIO_LED1,        // GPIO00 Red LED
+     0,                // GPIO01 Serial TX
+     0,                // GPIO02
+     GPIO_NRG_SEL_INV, // GPIO03 HJL-01 Sel output (1 = Voltage)
+     0,                // GPIO04 
+     GPIO_HJL_CF,      // GPIO05 HJL-01 CF power
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_REL1,        // GPIO12 Relay
+     GPIO_KEY1,        // GPIO13 Button
+     GPIO_NRG_CF1,     // GPIO14 HJL-01 CF1 voltage / current
+     GPIO_LED2,        // GPIO15 Blue LED - Link status
+     0, 0
   }
 };
 
