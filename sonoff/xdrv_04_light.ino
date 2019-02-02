@@ -367,11 +367,12 @@ void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t dut
 \*********************************************************************************************/
 
 // Enable this for debug logging
-#define D_LOG_SM16716       "SM16716: "
+//#define D_LOG_SM16716       "SM16716: "
 
 uint8_t sm16716_pin_clk     = 100;
 uint8_t sm16716_pin_dat     = 100;
 uint8_t sm16716_pin_sel     = 100;
+uint8_t sm16716_enabled     = 0;
 
 void SM16716_SendBit(uint8_t v)
 {
@@ -399,19 +400,25 @@ void SM16716_SendByte(uint8_t v)
 void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
 {
   if (sm16716_pin_sel < 99) {
-    if (duty_r | duty_g | duty_b) {
+    uint8_t sm16716_should_enable = (duty_r | duty_g | duty_b);
+    if (!sm16716_enabled && sm16716_should_enable) {
 #ifdef D_LOG_SM16716
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SM16716 "turning color on"));
       AddLog(LOG_LEVEL_DEBUG);
 #endif // D_LOG_SM16716
+      sm16716_enabled = 1;
       digitalWrite(sm16716_pin_sel, HIGH);
-      delayMicroseconds(20);
+      // in testing I found it takes a minimum of ~380us to wake up the chip
+      // tested on a Merkury RGBW with an SM726EB
+      delayMicroseconds(400);
       SM16716_Init();
-    } else {
+    }
+    else if (sm16716_enabled && !sm16716_should_enable) {
 #ifdef D_LOG_SM16716
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SM16716 "turning color off"));
       AddLog(LOG_LEVEL_DEBUG);
 #endif // D_LOG_SM16716
+      sm16716_enabled = 0;
       digitalWrite(sm16716_pin_sel, LOW);
     }
   }
@@ -510,7 +517,7 @@ void LightInit(void)
   }
 #endif  // USE_WS2812 ************************************************************************
 #ifdef USE_SM16716
-  else if (16 & light_type) {
+  else if (LT_SM16716 == light_type - light_subtype) {
     // init PWM
     for (uint8_t i = 0; i < light_subtype; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
@@ -528,9 +535,11 @@ void LightInit(void)
     if (sm16716_pin_sel < 99) {
       pinMode(sm16716_pin_sel, OUTPUT);
       digitalWrite(sm16716_pin_sel, LOW);
+      // no need to call SM16716_Init here, it will be called after sel goes HIGH
+    } else {
+      // no sel pin means you have an 'always on' chip, so init right away
+      SM16716_Init();
     }
-
-    SM16716_Init();
   }
 #endif  // ifdef USE_SM16716
   else {
@@ -976,7 +985,8 @@ void LightAnimate(void)
       }
 #endif  // USE_ES2812 ************************************************************************
 #ifdef USE_SM16716
-      else if (16 & light_type) {
+      else if (LT_SM16716 == light_type - light_subtype) {
+        // handle any PWM pins, skipping the first 3 values for sm16716
         for (uint8_t i = 3; i < light_subtype; i++) {
           if (pin[GPIO_PWM1 +i-3] < 99) {
             if (cur_col[i] > 0xFC) {
@@ -988,6 +998,7 @@ void LightAnimate(void)
             analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - curcol : curcol);
           }
         }
+        // handle sm16716 update
         SM16716_Update(cur_col[0], cur_col[1], cur_col[2]);
       }
 #endif  // ifdef USE_SM16716
