@@ -1827,6 +1827,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0, 0
   },
   { "SYF05",           // Sunyesmart SYF05 (a.k.a. Fcmila) = TYWE3S + SM16726
+                       // Also works with Merkury 904 RGBW Bulbs with 13 set to GPIO_SM16716_SEL
                        // https://www.flipkart.com/fc-mila-bxav-xs-ad-smart-bulb/p/itmf85zgs45fzr7n
                        // https://docs.tuya.com/en/hardware/WiFi-module/wifi-e3s-module.html
                        // http://www.datasheet-pdf.com/PDF/SM16716-Datasheet-Sunmoon-932771
@@ -1834,17 +1835,17 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,
      GPIO_USER,        // GPIO02 N.C.
      0,
-     GPIO_SM16716_CLK, // GPIO04
-     GPIO_PWM1,        // GPIO05 Cold White
+     GPIO_SM16716_CLK, // GPIO04 SM16716 Clock
+     GPIO_PWM1,        // GPIO05 White
                        // GPIO06
                        // GPIO07
                        // GPIO08
      0,                // GPIO09
      0,                // GPIO10
                        // GPIO11
-     GPIO_PWM2,        // GPIO12 Warm White
-     GPIO_SM16716_SEL, // GPIO13
-     GPIO_SM16716_DAT, // GPIO14
+     GPIO_USER,        // GPIO12 Alt. White on some devices
+     GPIO_USER,        // GPIO13 SM16716 Select on some devices
+     GPIO_SM16716_DAT, // GPIO14 SM16716 Data
      0,                // GPIO15 wired to GND
      GPIO_USER,        // GPIO16 N.C.
      GPIO_FLAG_ADC0    // ADC0 A0 Analog input
