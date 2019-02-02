@@ -2425,7 +2425,7 @@ void GpioInit(void)
 #ifdef USE_SM16716
   if (SM16716_ModuleSelected()) {
     light_type += 3;
-    light_type |= 16;
+    light_type |= LT_SM16716;
   }
 #endif  // ifdef USE_SM16716
   if (!light_type) {

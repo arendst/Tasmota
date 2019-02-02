@@ -517,7 +517,7 @@ void LightInit(void)
   }
 #endif  // USE_WS2812 ************************************************************************
 #ifdef USE_SM16716
-  else if (16 & light_type) {
+  else if (LT_SM16716 == light_type - light_subtype) {
     // init PWM
     for (uint8_t i = 0; i < light_subtype; i++) {
       Settings.pwm_value[i] = 0;        // Disable direct PWM control
@@ -985,7 +985,7 @@ void LightAnimate(void)
       }
 #endif  // USE_ES2812 ************************************************************************
 #ifdef USE_SM16716
-      else if (16 & light_type) {
+      else if (LT_SM16716 == light_type - light_subtype) {
         // handle any PWM pins, skipping the first 3 values for sm16716
         for (uint8_t i = 3; i < light_subtype; i++) {
           if (pin[GPIO_PWM1 +i-3] < 99) {
