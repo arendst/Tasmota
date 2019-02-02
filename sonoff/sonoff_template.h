@@ -281,6 +281,7 @@ enum SupportedModules {
   APLIC_WDP303075,
   TUYA_DIMMER,
   GOSUND,
+  EFUN,
   ARMTRONIX_DIMMERS,
   SK03_TUYA,
   PS_16_DZ,
@@ -569,6 +570,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   TECKIN_US,
   APLIC_WDP303075,
   GOSUND,
+  EFUN,
   ZX2820,
   SK03_TUYA,
   DIGOO,
@@ -1587,6 +1589,26 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED2_INV,    // GPIO13 LED2 (red) inv - Power status
      GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
      0, 0, 0
+  },
+  { "EFUN",            // EFUN Tuya based smart plugin
+                       // https://www.amazon.com/EFUN-Required-Protection-Retardant-Assistant/dp/B07DCH8SSJ/ref=sr_1_1?ie=UTF8&qid=1549087358&sr=8-1&keywords=efun
+     GPIO_LED2_INV,    // GPIO00 Blue Led (1 = On, 0 = Off) - Link status
+     0,                // GPIO01
+     0,                // GPIO02 
+     0,                // GPIO03
+     0,
+     0,                // GPIO05
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     0,                // GPIO12
+     GPIO_KEY1,        // GPIO13 Button
+     0,                // GPIO14
+     GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
+     0, 0
   },
   { "ARMTR Dimmer",    // ARMTRONIX Dimmer, one or two channel (ESP8266 w/ separate MCU dimmer)
                        // https://www.tindie.com/products/Armtronix/wifi-ac-dimmer-two-triac-board/
