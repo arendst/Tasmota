@@ -2368,6 +2368,9 @@ void GpioInit(void)
   if (XdrvCall(FUNC_MODULE_INIT)) {
     // Serviced
   }
+  else if (YTF_IR_BRIDGE == Settings.module) {
+    ClaimSerial();  // Stop serial loopback mode
+  }
   else if (SONOFF_DUAL == Settings.module) {
     Settings.flag.mqtt_serial = 0;
     devices_present = 2;
