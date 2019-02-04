@@ -695,9 +695,6 @@ bool Xdrv03(uint8_t function)
       case FUNC_SET_POWER:
         EnergySetPowerSteadyCounter();
         break;
-      case FUNC_LOOP:
-        XnrgCall(FUNC_LOOP);
-        break;
       case FUNC_SERIAL:
         result = XnrgCall(FUNC_SERIAL);
         break;
