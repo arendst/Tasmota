@@ -544,15 +544,19 @@ void McpEverySecond(void)
 void McpSnsInit(void)
 {
   SetSeriallog(LOG_LEVEL_NONE);      // Free serial interface from logging interference
-  digitalWrite(15, 1);               // GPIO15 - MCP enable
+  if (pin[GPIO_MCP39_RST] < 99) {
+    digitalWrite(pin[GPIO_MCP39_RST], 1);  // MCP enable
+  }
 }
 
 void McpDrvInit(void)
 {
   if (!energy_flg) {
-    if (SHELLY2 == Settings.module) {
-      pinMode(15, OUTPUT);
-      digitalWrite(15, 0);           // GPIO15 - MCP disable - Reset Delta Sigma ADC's
+    if ((pin[GPIO_MCP39_RX] < 99) && (pin[GPIO_MCP39_TX] < 99)) {
+      if (pin[GPIO_MCP39_RST] < 99) {
+        pinMode(pin[GPIO_MCP39_RST], OUTPUT);
+        digitalWrite(pin[GPIO_MCP39_RST], 0);  // MCP disable - Reset Delta Sigma ADC's
+      }
       baudrate = 4800;
       mcp_calibrate = 0;
       mcp_timeout = 2;               // Initial wait

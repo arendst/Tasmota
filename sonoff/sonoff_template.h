@@ -173,6 +173,11 @@ enum ProgramSelectablePins {
   GPIO_ARIRFRCV,       // AliLux RF Receive input
   GPIO_ROT_A,          // Rotary switch A Pin
   GPIO_ROT_B,          // Rotary switch B Pin
+  GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
+  GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
+  GPIO_MCP39_TX,       // MCP39F501 Serial interface (Shelly2)
+  GPIO_MCP39_RX,       // MCP39F501 Serial interface (Shelly2)
+  GPIO_MCP39_RST,      // MCP39F501 Reset (Shelly2)
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
@@ -1329,9 +1334,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Sonoff S31",      // Sonoff S31 (ESP8266 - CSE7766)
      GPIO_KEY1,        // GPIO00 Button
-     0,                // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
+     GPIO_CSE7766_TX,  // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
      0,
-     0,                // GPIO03 Serial TXD
+     GPIO_CSE7766_RX,  // GPIO03 Serial TXD
      0, 0,
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
@@ -1364,9 +1369,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Sonoff Pow R2",   // Sonoff Pow R2 (ESP8285 - CSE7766)
      GPIO_KEY1,        // GPIO00 Button
-     0,                // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
+     GPIO_CSE7766_TX,  // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
      0,
-     0,                // GPIO03 Serial TXD
+     GPIO_CSE7766_RX,  // GPIO03 Serial TXD
      0, 0,
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
@@ -1437,9 +1442,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Shelly 2",        // Shelly2 (ESP8266 - 2MB) - https://shelly.cloud/shelly2/
      0,
-     GPIO_TXD,         // GPIO01 MCP39F501 Serial input
+     GPIO_MCP39_TX,    // GPIO01 MCP39F501 Serial input
      0,
-     GPIO_RXD,         // GPIO03 MCP39F501 Serial output
+     GPIO_MCP39_RX,    // GPIO03 MCP39F501 Serial output
      GPIO_REL1,        // GPIO04
      GPIO_REL2,        // GPIO05
                        // GPIO06 (SD_CLK   Flash)
@@ -1451,7 +1456,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_SWT1,        // GPIO12
      0,
      GPIO_SWT2,        // GPIO14
-     0,                // GPIO15 MCP39F501 Reset
+     GPIO_MCP39_RST,   // GPIO15 MCP39F501 Reset
      0,
      GPIO_FLAG_PULLUP  // Allow input pull-up control
   },
