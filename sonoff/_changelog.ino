@@ -2,7 +2,8 @@
  * Add SetOption32 until SetOption49 diagnostic information to Status 3 report as replacement for second property value in SetOption property name
  * Add Resolution property to Status 3 report providing previous SetOption second value property
  * Fix IR local echo
- * Add user configuration of HLW8012 and HJL-01/BL0937 Energy Monitoring
+ * Add user configuration of HLW8012 and HJL-01/BL0937 Energy Monitoring as used in Sonoff S31, Pow Ra and many Tuya based devices
+ * Add user configuration of MCP39F501 Energy Monitoring as used in Shelly2
  *
  * 6.4.1.13 20190130
  * Add command SetOption36 to control boot loop default restoration (#4645, #5063)
