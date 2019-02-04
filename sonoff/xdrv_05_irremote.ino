@@ -58,7 +58,7 @@ IRMitsubishiAC *mitsubir = NULL;
 
 const char kFanSpeedOptions[] = "A12345S";
 const char kHvacModeOptions[] = "HDCA";
-#endif
+#endif  // USE_IR_HVAC
 
 /*********************************************************************************************\
  * IR Send
@@ -67,6 +67,7 @@ const char kHvacModeOptions[] = "HDCA";
 #include <IRsend.h>
 
 IRsend *irsend = NULL;
+bool irsend_active = false;
 
 void IrSendInit(void)
 {
@@ -113,13 +114,13 @@ void IrReceiveCheck(void)
 
   if (irrecv->decode(&results)) {
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_IRR "RawLen %d, Overflow %d, Bits %d, Value %08X, Decode %d"),
-               results.rawlen, results.overflow, results.bits, results.value, results.decode_type);
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value %08X, Decode %d"),
+               irsend_active, results.rawlen, results.overflow, results.bits, results.value, results.decode_type);
     AddLog(LOG_LEVEL_DEBUG);
 
     unsigned long now = millis();
 //    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
-    if (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) {
+    if (!irsend_active && (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE)) {
       ir_lasttime = now;
 
       iridx = results.decode_type;
@@ -262,10 +263,11 @@ bool IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Po
   rawdata[i++] = HVAC_TOSHIBA_RPT_MARK;
   rawdata[i++] = HVAC_TOSHIBA_RPT_SPACE;
 
-  noInterrupts();
+//  noInterrupts();
+  irsend_active = true;
   irsend->sendRaw(rawdata, i, 38);
   irsend->sendRaw(rawdata, i, 38);
-  interrupts();
+//  interrupts();
 
   return false;
 }
@@ -430,9 +432,10 @@ bool IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Power, 
 //  AddLog(LOG_LEVEL_DEBUG);
 
   // Send LG IR Code
-  noInterrupts();
+//  noInterrupts();
+  irsend_active = true;
   irsend->sendLG(LG_Code, 28);
-  interrupts();
+//  interrupts();
 
   return false;
 }
@@ -450,6 +453,8 @@ bool IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Po
 //  AddLog(LOG_LEVEL_DEBUG);
 
   IRFujitsuAC ac(pin[GPIO_IRSEND]);
+
+  irsend_active = true;
 
   if (0 == HVAC_Power) {
     ac.off();
@@ -540,6 +545,7 @@ bool IrSendCommand(void)
 //            count, freq, raw_array[0], raw_array[count -1]);
 //          AddLog(LOG_LEVEL_DEBUG);
 
+          irsend_active = true;
           irsend->sendRaw(raw_array, count, freq);
           if (!count) {
             snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_FAILED);
@@ -571,6 +577,7 @@ bool IrSendCommand(void)
               protocol_text, protocol, bits, data, data, protocol_code);
             AddLog(LOG_LEVEL_DEBUG);
 
+            irsend_active = true;
             switch (protocol_code) {
               case NEC:
                 irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits); break;
@@ -589,6 +596,7 @@ bool IrSendCommand(void)
               case PANASONIC:
                 irsend->sendPanasonic(bits, data); break;
               default:
+                irsend_active = false;
                 snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_PROTOCOL_NOT_SUPPORTED);
             }
           }
@@ -688,6 +696,7 @@ bool Xdrv05(uint8_t function)
           IrReceiveCheck();  // check if there's anything on IR side
         }
 #endif  // USE_IR_RECEIVE
+        irsend_active = false;  // re-enable IR reception
         break;
       case FUNC_COMMAND:
         if (pin[GPIO_IRSEND] < 99) {

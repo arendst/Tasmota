@@ -154,6 +154,11 @@ enum UserSelectablePins {
   GPIO_KEY2_INV_NP,
   GPIO_KEY3_INV_NP,
   GPIO_KEY4_INV_NP,
+  GPIO_NRG_SEL,        // HLW8012/HLJ-01 Sel output (1 = Voltage)
+  GPIO_NRG_SEL_INV,    // HLW8012/HLJ-01 Sel output (0 = Voltage)
+  GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
+  GPIO_HLW_CF,         // HLW8012 CF power
+  GPIO_HJL_CF,         // HJL-01/BL0937 CF power
   GPIO_SM16716_CLK,    // SM16716 CLOCK
   GPIO_SM16716_DAT,    // SM16716 DATA
   GPIO_SM16716_SEL,    // SM16716 SELECT
@@ -166,11 +171,6 @@ enum ProgramSelectablePins {
   GPIO_SPI_MISO,       // SPI MISO library fixed pin GPIO12
   GPIO_SPI_MOSI,       // SPI MOSI library fixed pin GPIO13
   GPIO_SPI_CLK,        // SPI Clk library fixed pin GPIO14
-  GPIO_NRG_SEL,        // HLW8012/HLJ-01 Sel output (1 = Voltage)
-  GPIO_NRG_SEL_INV,    // HLW8012/HLJ-01 Sel output (0 = Voltage)
-  GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
-  GPIO_HLW_CF,         // HLW8012 CF power
-  GPIO_HJL_CF,         // HJL-01/BL0937 CF power
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
   GPIO_ARIRFRCV,       // AliLux RF Receive input
@@ -223,6 +223,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MAX31855_CS "|" D_SENSOR_MAX31855_CLK "|" D_SENSOR_MAX31855_DO "|"
   D_SENSOR_BUTTON "1i|" D_SENSOR_BUTTON "2i|" D_SENSOR_BUTTON "3i|" D_SENSOR_BUTTON "4i|"
   D_SENSOR_BUTTON "1in|" D_SENSOR_BUTTON "2in|" D_SENSOR_BUTTON "3in|" D_SENSOR_BUTTON "4in|"
+  D_SENSOR_NRG_SEL "|" D_SENSOR_NRG_SEL "i|" D_SENSOR_NRG_CF1 "|" D_SENSOR_HLW_CF "|" D_SENSOR_HJL_CF "|"
   D_SENSOR_SM16716_CLK "|" D_SENSOR_SM16716_DAT "|" D_SENSOR_SM16716_SEL
   ;
 
@@ -531,6 +532,13 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855CS,     // MAX31855 Serial interface
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
+#endif
+#if defined(USE_ENERGY_SENSOR) && defined(USE_HLW8012)
+  GPIO_NRG_SEL,        // HLW8012/HLJ-01 Sel output (1 = Voltage)
+  GPIO_NRG_SEL_INV,    // HLW8012/HLJ-01 Sel output (0 = Voltage)
+  GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
+  GPIO_HLW_CF,         // HLW8012 CF power
+  GPIO_HJL_CF,         // HJL-01/BL0937 CF power
 #endif
 #ifdef USE_SM16716
   GPIO_SM16716_CLK,    // SM16716 CLOCK
@@ -1834,7 +1842,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO01 Serial TX
      0,                // GPIO02
      GPIO_NRG_SEL_INV, // GPIO03 HJL-01 Sel output (1 = Voltage)
-     0,                // GPIO04 
+     0,                // GPIO04
      GPIO_HJL_CF,      // GPIO05 HJL-01 CF power
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)

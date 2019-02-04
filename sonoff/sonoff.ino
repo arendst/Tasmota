@@ -1566,7 +1566,7 @@ void PublishStatus(uint8_t payload)
 {
   uint8_t option = STAT;
   char stemp[MAX_FRIENDLYNAMES * (sizeof(Settings.friendlyname[0]) +MAX_FRIENDLYNAMES)];
-  char stemp2[MAX_SWITCHES * 3];
+  char stemp2[64];
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
   if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1]) && (!payload)) { option++; }  // TELE
@@ -1603,8 +1603,12 @@ void PublishStatus(uint8_t payload)
   }
 
   if ((0 == payload) || (3 == payload)) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d,\"" D_CMND_WEBLOG "\":%d,\"" D_CMND_SYSLOG "\":%d,\"" D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\"" D_CMND_SETOPTION "\":[\"%08X\",\"%08X\",\"%08X\"]}}"),
-      Settings.seriallog_level, Settings.weblog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.sta_ssid[0], Settings.sta_ssid[1], Settings.tele_period, Settings.flag.data, Settings.flag2.data, Settings.flag3.data);
+    stemp2[0] = '\0';
+    for (int8_t i = 0; i < PARAM8_SIZE; i++) {
+      snprintf_P(stemp2, sizeof(stemp2), PSTR("%s%02X"), stemp2, Settings.param[i]);
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d,\"" D_CMND_WEBLOG "\":%d,\"" D_CMND_SYSLOG "\":%d,\"" D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\"" D_JSON_RESOLUTION "\":\"%08X\",\"" D_CMND_SETOPTION "\":[\"%08X\",\"%s\",\"%08X\"]}}"),
+      Settings.seriallog_level, Settings.weblog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.sta_ssid[0], Settings.sta_ssid[1], Settings.tele_period, Settings.flag2.data, Settings.flag.data, stemp2, Settings.flag3.data);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "3"));
   }
 
@@ -2363,6 +2367,9 @@ void GpioInit(void)
 
   if (XdrvCall(FUNC_MODULE_INIT)) {
     // Serviced
+  }
+  else if (YTF_IR_BRIDGE == Settings.module) {
+    ClaimSerial();  // Stop serial loopback mode
   }
   else if (SONOFF_DUAL == Settings.module) {
     Settings.flag.mqtt_serial = 0;
