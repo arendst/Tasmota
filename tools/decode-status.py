@@ -87,7 +87,9 @@ a_setoption = [[
     "Key hold time (ms)",
     "Sonoff POW Max_Power_Retry",
     "Tuya dimmer device id",
-    "","","",
+    "(not used) mDNS delayed start (Sec)",
+    "Boot loop retry offset (0 = disable)",
+    "",
     "","","","","","",
     "","","","","","",
     ],[
@@ -175,11 +177,11 @@ if (options.device):
     obj = json.loads(body)
 else:
     jsonfile = options.jsonfile
-    with open(jsonfile, "r") as fp:    
+    with open(jsonfile, "r") as fp:
         obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20180730 by Theo Arends ***")
+    print ("\n*** decode-status.py v20190204 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
@@ -194,33 +196,33 @@ def StartDecode():
     if "StatusLOG" in obj:
         if "SetOption" in obj["StatusLOG"]:
             options = []
-                        
+
             i = 0
-            for r,opt_group in enumerate(a_setoption):                
+            for r,opt_group in enumerate(a_setoption):
                 register = obj["StatusLOG"]["SetOption"][r]
-                    
+
                 if r > 0 and len(obj["StatusLOG"]["SetOption"]) == 2: # old firmware: array consisted only of SetOptions 0..31 and resolution
-                    break       
-                    
+                    break
+
                 if r == 1:
                     if len(register) == 8:            # pre 6.1.1.14: array consisted of SetOptions 0..31, resolution, and SetOptions 50..81
                         i += 18                       # adjust option index and skip 2nd register
                         continue
-                    
-                    elif len(register) == 36:         # 6.1.1.14: array consists of SetOptions 0..31, SetOptions 32..49, and SetOptions 50..81                                                
+
+                    elif len(register) == 36:         # 6.1.1.14: array consists of SetOptions 0..31, SetOptions 32..49, and SetOptions 50..81
                         split_register = [int(register[opt*2:opt*2+2],16) for opt in range(18)] # split register into 18 values
-                                                        
+
                         for opt_idx, option in enumerate(opt_group):
-                            options.append(str("{0:2d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))                        
+                            options.append(str("{0:2d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))
                             i += 1
-                
+
                 if r in (0, 2): #registers 1 and 3 hold binary values
                     for opt_idx, option in enumerate(opt_group):
                         i_register = int(register,16)
                         state = (i_register >> opt_idx) & 1
-                        options.append(str("{0:2d} ({1}) {2}".format(i, a_on_off[state], option)))                        
+                        options.append(str("{0:2d} ({1}) {2}".format(i, a_on_off[state], option)))
                         i += 1
-                
+
             print("\nOptions")
             for o in options:
                 print("  {}".format(o))
