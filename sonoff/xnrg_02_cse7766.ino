@@ -191,7 +191,7 @@ void CseEverySecond(void)
 void CseDrvInit(void)
 {
   if (!energy_flg) {
-    if ((SONOFF_S31 == Settings.module) || (SONOFF_POW_R2 == Settings.module)) {     // Sonoff S31 or Sonoff Pow R2
+    if ((3 == pin[GPIO_CSE7766_RX]) && (1 == pin[GPIO_CSE7766_TX])) {  // As it uses 8E1 currently only hardware serial is supported
       baudrate = 4800;
       serial_config = SERIAL_8E1;
       energy_flg = XNRG_02;

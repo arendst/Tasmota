@@ -159,6 +159,9 @@ enum UserSelectablePins {
   GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
   GPIO_HLW_CF,         // HLW8012 CF power
   GPIO_HJL_CF,         // HJL-01/BL0937 CF power
+  GPIO_MCP39F5_TX,     // MCP39F501 Serial interface (Shelly2)
+  GPIO_MCP39F5_RX,     // MCP39F501 Serial interface (Shelly2)
+  GPIO_MCP39F5_RST,    // MCP39F501 Reset (Shelly2)
   GPIO_SM16716_CLK,    // SM16716 CLOCK
   GPIO_SM16716_DAT,    // SM16716 DATA
   GPIO_SM16716_SEL,    // SM16716 SELECT
@@ -176,6 +179,8 @@ enum ProgramSelectablePins {
   GPIO_ARIRFRCV,       // AliLux RF Receive input
   GPIO_ROT_A,          // Rotary switch A Pin
   GPIO_ROT_B,          // Rotary switch B Pin
+  GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
+  GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_USER,           // User configurable
   GPIO_MAX };
 
@@ -224,6 +229,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BUTTON "1i|" D_SENSOR_BUTTON "2i|" D_SENSOR_BUTTON "3i|" D_SENSOR_BUTTON "4i|"
   D_SENSOR_BUTTON "1in|" D_SENSOR_BUTTON "2in|" D_SENSOR_BUTTON "3in|" D_SENSOR_BUTTON "4in|"
   D_SENSOR_NRG_SEL "|" D_SENSOR_NRG_SEL "i|" D_SENSOR_NRG_CF1 "|" D_SENSOR_HLW_CF "|" D_SENSOR_HJL_CF "|"
+  D_SENSOR_MCP39F5_TX "|" D_SENSOR_MCP39F5_RX "|" D_SENSOR_MCP39F5_RST "|"
   D_SENSOR_SM16716_CLK "|" D_SENSOR_SM16716_DAT "|" D_SENSOR_SM16716_SEL
   ;
 
@@ -471,21 +477,17 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_HX711_SCK,      // HX711 Load Cell clock
   GPIO_HX711_DAT,      // HX711 Load Cell data
 #endif
-#ifdef USE_SERIAL_BRIDGE
-  GPIO_SBR_TX,         // Serial Bridge Serial interface
-  GPIO_SBR_RX,         // Serial Bridge Serial interface
+#if defined(USE_ENERGY_SENSOR) && defined(USE_HLW8012)
+  GPIO_NRG_SEL,        // HLW8012/HLJ-01 Sel output (1 = Voltage)
+  GPIO_NRG_SEL_INV,    // HLW8012/HLJ-01 Sel output (0 = Voltage)
+  GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
+  GPIO_HLW_CF,         // HLW8012 CF power
+  GPIO_HJL_CF,         // HJL-01/BL0937 CF power
 #endif
-#ifdef USE_MHZ19
-  GPIO_MHZ_TXD,        // MH-Z19 Serial interface
-  GPIO_MHZ_RXD,        // MH-Z19 Serial interface
-#endif
-#ifdef USE_SENSEAIR
-  GPIO_SAIR_TX,        // SenseAir Serial interface
-  GPIO_SAIR_RX,        // SenseAir Serial interface
-#endif
-#ifdef USE_NOVA_SDS
-  GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
-  GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
+#if defined(USE_ENERGY_SENSOR) && defined(USE_MCP39F501)
+  GPIO_MCP39F5_TX,     // MCP39F501 Serial interface (Shelly2)
+  GPIO_MCP39F5_RX,     // MCP39F501 Serial interface (Shelly2)
+  GPIO_MCP39F5_RST,    // MCP39F501 Reset (Shelly2)
 #endif
 #if defined(USE_PZEM004T) || defined(USE_PZEM_AC) || defined(USE_PZEM_DC)
   GPIO_PZEM0XX_TX,     // PZEM0XX Serial interface
@@ -506,6 +508,22 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SDM630
   GPIO_SDM630_TX,      // SDM630 Serial interface
   GPIO_SDM630_RX,      // SDM630 Serial interface
+#endif
+#ifdef USE_SERIAL_BRIDGE
+  GPIO_SBR_TX,         // Serial Bridge Serial interface
+  GPIO_SBR_RX,         // Serial Bridge Serial interface
+#endif
+#ifdef USE_MHZ19
+  GPIO_MHZ_TXD,        // MH-Z19 Serial interface
+  GPIO_MHZ_RXD,        // MH-Z19 Serial interface
+#endif
+#ifdef USE_SENSEAIR
+  GPIO_SAIR_TX,        // SenseAir Serial interface
+  GPIO_SAIR_RX,        // SenseAir Serial interface
+#endif
+#ifdef USE_NOVA_SDS
+  GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
+  GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
 #endif
 #ifdef USE_PMS5003
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
@@ -533,6 +551,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
 #endif
+#ifdef USE_SM16716
+  GPIO_SM16716_CLK,    // SM16716 CLOCK
+  GPIO_SM16716_DAT,    // SM16716 DATA
+  GPIO_SM16716_SEL,    // SM16716 SELECT
+#endif // USE_SM16716
 #if defined(USE_ENERGY_SENSOR) && defined(USE_HLW8012)
   GPIO_NRG_SEL,        // HLW8012/HLJ-01 Sel output (1 = Voltage)
   GPIO_NRG_SEL_INV,    // HLW8012/HLJ-01 Sel output (0 = Voltage)
@@ -540,11 +563,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_HLW_CF,         // HLW8012 CF power
   GPIO_HJL_CF,         // HJL-01/BL0937 CF power
 #endif
-#ifdef USE_SM16716
-  GPIO_SM16716_CLK,    // SM16716 CLOCK
-  GPIO_SM16716_DAT,    // SM16716 DATA
-  GPIO_SM16716_SEL,    // SM16716 SELECT
-#endif // USE_SM16716
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
@@ -1340,9 +1358,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Sonoff S31",      // Sonoff S31 (ESP8266 - CSE7766)
      GPIO_KEY1,        // GPIO00 Button
-     0,                // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
+     GPIO_CSE7766_TX,  // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
      0,
-     0,                // GPIO03 Serial TXD
+     GPIO_CSE7766_RX,  // GPIO03 Serial TXD
      0, 0,
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
@@ -1375,9 +1393,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Sonoff Pow R2",   // Sonoff Pow R2 (ESP8285 - CSE7766)
      GPIO_KEY1,        // GPIO00 Button
-     0,                // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
+     GPIO_CSE7766_TX,  // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
      0,
-     0,                // GPIO03 Serial TXD
+     GPIO_CSE7766_RX,  // GPIO03 Serial TXD
      0, 0,
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
@@ -1448,9 +1466,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Shelly 2",        // Shelly2 (ESP8266 - 2MB) - https://shelly.cloud/shelly2/
      0,
-     GPIO_TXD,         // GPIO01 MCP39F501 Serial input
+     GPIO_MCP39F5_TX,  // GPIO01 MCP39F501 Serial input
      0,
-     GPIO_RXD,         // GPIO03 MCP39F501 Serial output
+     GPIO_MCP39F5_RX,  // GPIO03 MCP39F501 Serial output
      GPIO_REL1,        // GPIO04
      GPIO_REL2,        // GPIO05
                        // GPIO06 (SD_CLK   Flash)
@@ -1462,7 +1480,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_SWT1,        // GPIO12
      0,
      GPIO_SWT2,        // GPIO14
-     0,                // GPIO15 MCP39F501 Reset
+     GPIO_MCP39F5_RST, // GPIO15 MCP39F501 Reset
      0,
      GPIO_FLAG_PULLUP  // Allow input pull-up control
   },
