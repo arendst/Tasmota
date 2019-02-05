@@ -92,8 +92,8 @@ typedef struct mcp_cal_registers_type {
   uint16_t accumulation_interval;
 } mcp_cal_registers_type;
 
-char *mcp_buffer = NULL;                   // Serial receive buffer
-
+char *mcp_buffer = NULL;
+unsigned long mcp_window = 0;
 unsigned long mcp_kWhcounter = 0;
 uint32_t mcp_system_configuration = 0x03000000;
 uint32_t mcp_active_power;
@@ -108,6 +108,7 @@ uint8_t mcp_calibration_active = 0;
 uint8_t mcp_init = 0;
 uint8_t mcp_timeout = 0;
 uint8_t mcp_calibrate = 0;
+uint8_t mcp_byte_counter = 0;
 
 /*********************************************************************************************\
  * Olimex tools
@@ -474,21 +475,20 @@ void McpParseData(void)
 
 void McpSerialInput(void)
 {
-  if (McpSerial->available()) {
-    int mcp_byte_counter = 0;
+  while ((McpSerial->available()) && (mcp_byte_counter < MCP_BUFFER_SIZE)) {
+    yield();
+    mcp_buffer[mcp_byte_counter++] = McpSerial->read();
+    mcp_window = millis();
+  }
 
-    unsigned long start = millis();
-    while ((millis() - start < (24000 / MCP_BAUDRATE) +1) && (mcp_byte_counter < MCP_BUFFER_SIZE)) {
-      yield();
-      if (McpSerial->available()) {
-        mcp_buffer[mcp_byte_counter++] = McpSerial->read();
-        start = millis();
-      }
-    }
-
+  // Ignore until non received after 2 chars (= 12 bits/char) time
+  if ((mcp_byte_counter) && (millis() - mcp_window > (24000 / MCP_BAUDRATE) +1)) {
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)mcp_buffer, mcp_byte_counter);
 
-    if (1 == mcp_byte_counter) {
+    if (MCP_BUFFER_SIZE == mcp_byte_counter) {
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: Overflow"));
+    }
+    else if (1 == mcp_byte_counter) {
       if (MCP_ERROR_CRC == mcp_buffer[0]) {
 //        AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: Send " D_CHECKSUM_FAILURE));
         mcp_timeout = 0;
@@ -517,6 +517,7 @@ void McpSerialInput(void)
       mcp_timeout = 0;
     }
 
+    mcp_byte_counter = 0;
     McpSerial->flush();
   }
 }
@@ -558,7 +559,12 @@ void McpSnsInit(void)
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
   McpSerial = new TasmotaSerial(pin[GPIO_MCP39F5_RX], pin[GPIO_MCP39F5_TX], 1);
   if (McpSerial->begin(MCP_BAUDRATE)) {
-    if (McpSerial->hardwareSerial()) { ClaimSerial(); }
+    if (McpSerial->hardwareSerial()) {
+      ClaimSerial();
+      mcp_buffer = serial_in_buffer;  // Use idle serial buffer to save RAM
+    } else {
+      mcp_buffer = (char*)(malloc(MCP_BUFFER_SIZE));
+    }
     if (pin[GPIO_MCP39F5_RST] < 99) {
       digitalWrite(pin[GPIO_MCP39F5_RST], 1);  // MCP enable
     }
@@ -571,17 +577,14 @@ void McpDrvInit(void)
 {
   if (!energy_flg) {
     if ((pin[GPIO_MCP39F5_RX] < 99) && (pin[GPIO_MCP39F5_TX] < 99)) {
-      mcp_buffer = (char*)(malloc(MCP_BUFFER_SIZE));
-      if (mcp_buffer != NULL) {
-        if (pin[GPIO_MCP39F5_RST] < 99) {
-          pinMode(pin[GPIO_MCP39F5_RST], OUTPUT);
-          digitalWrite(pin[GPIO_MCP39F5_RST], 0);  // MCP disable - Reset Delta Sigma ADC's
-        }
-        mcp_calibrate = 0;
-        mcp_timeout = 2;               // Initial wait
-        mcp_init = 2;                  // Initial setup steps
-        energy_flg = XNRG_04;
+      if (pin[GPIO_MCP39F5_RST] < 99) {
+        pinMode(pin[GPIO_MCP39F5_RST], OUTPUT);
+        digitalWrite(pin[GPIO_MCP39F5_RST], 0);  // MCP disable - Reset Delta Sigma ADC's
       }
+      mcp_calibrate = 0;
+      mcp_timeout = 2;               // Initial wait
+      mcp_init = 2;                  // Initial setup steps
+      energy_flg = XNRG_04;
     }
   }
 }
