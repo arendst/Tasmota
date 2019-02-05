@@ -1,7 +1,7 @@
 /*
   TasmotaSerial.h - Minimal implementation of software serial for Tasmota
 
-  Copyright (C) 2018 Theo Arends
+  Copyright (C) 2019 Theo Arends
 
   This library is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 /*********************************************************************************************\
  * TasmotaSerial supports up to 115200 baud with fixed buffer size of 64 bytes using optional no iram
  *
- * Based on EspSoftwareSerial v3.3.1 by Peter Lerup (https://github.com/plerup/espsoftwareserial)
+ * Based on EspSoftwareSerial v3.4.3 by Peter Lerup (https://github.com/plerup/espsoftwareserial)
 \*********************************************************************************************/
 
 #define TM_SERIAL_BAUDRATE           9600   // Default baudrate
