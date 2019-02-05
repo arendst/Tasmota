@@ -28,6 +28,7 @@
 
 #define XNRG_04                 4
 
+#define MCP_BAUDRATE            4800
 #define MCP_TIMEOUT             4
 #define MCP_CALIBRATION_TIMEOUT 2
 
@@ -66,7 +67,7 @@
 #define MCP_BUFFER_SIZE         60
 
 #include <TasmotaSerial.h>
-TasmotaSerial *McpSerial;
+TasmotaSerial *McpSerial = NULL;
 
 typedef struct mcp_cal_registers_type {
   uint16_t gain_current_rms;
@@ -92,7 +93,6 @@ typedef struct mcp_cal_registers_type {
 } mcp_cal_registers_type;
 
 char *mcp_buffer = NULL;                   // Serial receive buffer
-int mcp_byte_counter = 0;                  // Index in serial receive buffer
 
 unsigned long mcp_kWhcounter = 0;
 uint32_t mcp_system_configuration = 0x03000000;
@@ -475,8 +475,10 @@ void McpParseData(void)
 void McpSerialInput(void)
 {
   if (McpSerial->available()) {
+    int mcp_byte_counter = 0;
+
     unsigned long start = millis();
-    while (millis() - start < 20) {
+    while ((millis() - start < (24000 / MCP_BAUDRATE) +1) && (mcp_byte_counter < MCP_BUFFER_SIZE)) {
       yield();
       if (McpSerial->available()) {
         mcp_buffer[mcp_byte_counter++] = McpSerial->read();
@@ -515,7 +517,6 @@ void McpSerialInput(void)
       mcp_timeout = 0;
     }
 
-    mcp_byte_counter = 0;
     McpSerial->flush();
   }
 }
@@ -556,7 +557,7 @@ void McpSnsInit(void)
 {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
   McpSerial = new TasmotaSerial(pin[GPIO_MCP39F5_RX], pin[GPIO_MCP39F5_TX], 1);
-  if (McpSerial->begin(4800)) {
+  if (McpSerial->begin(MCP_BAUDRATE)) {
     if (McpSerial->hardwareSerial()) { ClaimSerial(); }
     if (pin[GPIO_MCP39F5_RST] < 99) {
       digitalWrite(pin[GPIO_MCP39F5_RST], 1);  // MCP enable
@@ -652,10 +653,10 @@ int Xnrg04(uint8_t function)
         McpSnsInit();
         break;
       case FUNC_LOOP:
-        McpSerialInput();
+        if (McpSerial) { McpSerialInput(); }
         break;
       case FUNC_EVERY_SECOND:
-        McpEverySecond();
+        if (McpSerial) { McpEverySecond(); }
         break;
       case FUNC_COMMAND:
         result = McpCommand();
