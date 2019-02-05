@@ -8,6 +8,7 @@
 .clang_complete
 .gcc-flags.json
 sonoff/user_config_override.h
+myoverrides/user_config_override.h
 build
 
 ## Visual Studio Code specific ######
