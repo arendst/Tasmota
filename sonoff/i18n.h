@@ -160,6 +160,7 @@
 #define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
 
 #define D_RSLT_ENERGY "ENERGY"
+#define D_RSLT_HASS_STATE "HASS_STATE"
 #define D_RSLT_INFO "INFO"
 #define D_RSLT_MARGINS "MARGINS"
 #define D_RSLT_POWER "POWER"

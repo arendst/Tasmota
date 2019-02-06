@@ -122,6 +122,11 @@ const char HASS_DISCOVER_SENSOR_ANY[] PROGMEM =
   "%s,\"unit_of_meas\":\" \","                        // " " As unit of measurement to get a value graph in Hass
   "\"val_tpl\":\"{{value_json['%s'].%s}}\"";          // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
 
+const char HASS_DISCOVER_SENSOR_HASS_STATUS[] PROGMEM =
+  "%s,\"json_attributes_topic\":\"%s\","
+  "\"unit_of_meas\":\" \","                          // " " As unit of measurement to get a value graph in Hass
+  "\"val_tpl\":\"{{value_json['" D_JSON_RSSI "']}}\"";// "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
+
 const char HASS_DISCOVER_DEVICE_INFO[] PROGMEM =
   "%s,\"uniq_id\":\"%s\","
   "\"device\":{\"identifiers\":[\"%06X\"],"
@@ -130,11 +135,16 @@ const char HASS_DISCOVER_DEVICE_INFO[] PROGMEM =
   "\"sw_version\":\"%s%s\","
   "\"manufacturer\":\"Tasmota\"}";
 
+const char HASS_DISCOVER_DEVICE_INFO_SHORT[] PROGMEM =
+  "%s,\"uniq_id\":\"%s\","
+  "\"device\":{\"identifiers\":[\"%06X\"]}";
+
 const char HASS_DISCOVER_TOPIC_PREFIX[] PROGMEM =
   "%s, \"~\":\"%s\"";
 
 uint8_t hass_init_step = 0;
 uint8_t hass_mode = 0;
+int hass_tele_period = 0;
 
 static void FindPrefix(char* s1, char* s2, char* out)
 {
@@ -156,6 +166,23 @@ static void Shorten(char** s, char *prefix)
   }
 }
 
+int try_snprintf_P(char *s, size_t n, const char *format, ... )
+{
+  va_list args;
+  va_start(args, format);
+  int len = vsnprintf_P(NULL, 0, format, args);
+  if (len >= n) {
+    snprintf_P(log_data, sizeof(log_data),
+               PSTR("ERROR: MQTT discovery failed due to too long topic or friendly name. \
+                    Please shorten topic and friendly name."));
+    AddLog(LOG_LEVEL_ERROR);
+  } else {
+    va_start(args, format);
+    vsnprintf_P(s, n, format, args);
+  }
+  va_end(args);
+}
+
 void HAssAnnounceRelayLight(void)
 {
   char stopic[TOPSZ];
@@ -174,11 +201,13 @@ void HAssAnnounceRelayLight(void)
 
     // Clear "other" topic first in case the device has been reconfigured from ligth to switch or vice versa
     snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%d"), ESP.getChipId(), (is_topic_light) ? "RL" : "LI", i);
-    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s/config"), (is_topic_light) ? "switch" : "light", unique_id);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s/config"),
+               (is_topic_light) ? "switch" : "light", unique_id);
     MqttPublish(stopic, true);
     // Clear or Set topic
     snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%d"), ESP.getChipId(), (is_topic_light) ? "LI" : "RL", i);
-    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s/config"), (is_topic_light) ? "light" : "switch", unique_id);
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s/config"),
+               (is_topic_light) ? "light" : "switch", unique_id);
 
     if (Settings.flag.hass_discovery && (i <= devices_present)) {
       char name[33];
@@ -202,27 +231,30 @@ void HAssAnnounceRelayLight(void)
       Shorten(&command_topic, prefix);
       Shorten(&state_topic, prefix);
       Shorten(&availability_topic, prefix);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_RELAY,
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_RELAY,
                  name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_DEVICE_INFO_SHORT, mqtt_data,
+                 unique_id, ESP.getChipId());
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
 
       if (is_light) {
         char *brightness_command_topic = stemp1;
 
         GetTopic_P(brightness_command_topic, CMND, mqtt_topic, D_CMND_DIMMER);
         Shorten(&brightness_command_topic, prefix);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_DIMMER, mqtt_data, brightness_command_topic, state_topic);
+        try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_LIGHT_DIMMER, mqtt_data, brightness_command_topic, state_topic);
 
         if (light_subtype >= LST_RGB) {
           char *rgb_command_topic = stemp1;
 
           GetTopic_P(rgb_command_topic, CMND, mqtt_topic, D_CMND_COLOR);
           Shorten(&rgb_command_topic, prefix);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_COLOR, mqtt_data, rgb_command_topic, state_topic);
+          try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_LIGHT_COLOR, mqtt_data, rgb_command_topic, state_topic);
 
           char *effect_command_topic = stemp1;
           GetTopic_P(effect_command_topic, CMND, mqtt_topic, D_CMND_SCHEME);
           Shorten(&effect_command_topic, prefix);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_SCHEME, mqtt_data, effect_command_topic, state_topic);
+          try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_LIGHT_SCHEME, mqtt_data, effect_command_topic, state_topic);
 
         }
         if (LST_RGBW == light_subtype) {
@@ -230,21 +262,17 @@ void HAssAnnounceRelayLight(void)
 
           GetTopic_P(white_temp_command_topic, CMND, mqtt_topic, D_CMND_WHITE);
           Shorten(&white_temp_command_topic, prefix);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_WHITE, mqtt_data, white_temp_command_topic, state_topic);
+          try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_LIGHT_WHITE, mqtt_data, white_temp_command_topic, state_topic);
         }
         if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
           char *color_temp_command_topic = stemp1;
 
           GetTopic_P(color_temp_command_topic, CMND, mqtt_topic, D_CMND_COLORTEMPERATURE);
           Shorten(&color_temp_command_topic, prefix);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_LIGHT_CT, mqtt_data, color_temp_command_topic, state_topic);
+          try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_LIGHT_CT, mqtt_data, color_temp_command_topic, state_topic);
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
-                 unique_id, ESP.getChipId(),
-                 Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
     }
     MqttPublish(stopic, true);
   }
@@ -284,16 +312,15 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
     FindPrefix(state_topic, availability_topic, prefix);
     Shorten(&state_topic, prefix);
     Shorten(&availability_topic, prefix);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_BUTTON_SWITCH,
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_BUTTON_SWITCH,
                name, state_topic, Settings.state_text[toggle?2:1], availability_topic);
-    if (toggle) snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_BUTTON_SWITCH_TOGGLE, mqtt_data);
-    else snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_BUTTON_SWITCH_ONOFF, mqtt_data, Settings.state_text[0]);
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_DEVICE_INFO_SHORT, mqtt_data,
+               unique_id, ESP.getChipId());
+    if (strlen(prefix) > 0 ) try_snprintf_P(mqtt_data-1, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
+    if (toggle) try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_BUTTON_SWITCH_TOGGLE, mqtt_data);
+    else try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_BUTTON_SWITCH_ONOFF, mqtt_data, Settings.state_text[0]);
 
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
-               unique_id, ESP.getChipId(),
-               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
-    if (strlen(prefix) > 0 ) snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
   MqttPublish(stopic, true);
 }
@@ -386,39 +413,40 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     Shorten(&state_topic, prefix);
     Shorten(&availability_topic, prefix);
 
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SENSOR,
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_SENSOR,
                name, state_topic, availability_topic);
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_DEVICE_INFO_SHORT, mqtt_data,
+               unique_id, ESP.getChipId());
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
     if (!strcmp_P(subsensortype, PSTR(D_JSON_TEMPERATURE))) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SENSOR_TEMP,
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_SENSOR_TEMP,
                  mqtt_data, TempUnit(), sensorname);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_HUMIDITY))) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SENSOR_HUM,
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_SENSOR_HUM,
                  mqtt_data, sensorname);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_PRESSURE))) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SENSOR_PRESS,
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_SENSOR_PRESS,
                  mqtt_data, PressureUnit().c_str(), sensorname);
-    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_TOTAL)) || !strcmp_P(subsensortype, PSTR(D_JSON_TODAY)) || !strcmp_P(subsensortype, PSTR(D_JSON_YESTERDAY))){
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SENSOR_KWH,
+    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_TOTAL))
+               || !strcmp_P(subsensortype, PSTR(D_JSON_TODAY))
+               || !strcmp_P(subsensortype, PSTR(D_JSON_YESTERDAY))){
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_SENSOR_KWH,
                  mqtt_data, sensorname, subsensortype);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_POWERUSAGE))){
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SENSOR_WATT,
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_SENSOR_WATT,
                  mqtt_data, sensorname, subsensortype);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_VOLTAGE))){
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SENSOR_VOLTAGE,
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_SENSOR_VOLTAGE,
                  mqtt_data, sensorname, subsensortype);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_CURRENT))){
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SENSOR_AMPERE,
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_SENSOR_AMPERE,
                  mqtt_data, sensorname, subsensortype);
     }
     else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_SENSOR_ANY,
+      try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_SENSOR_ANY,
                  mqtt_data, sensorname, subsensortype);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_DEVICE_INFO, mqtt_data,
-               unique_id, ESP.getChipId(),
-               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
   }
   MqttPublish(stopic, true);
 }
@@ -469,6 +497,57 @@ void HAssAnnounceSensors(void)
   } while (hass_xsns_index != 0);
 }
 
+void HAssAnnounceStatusSensor(void)
+{
+  char stopic[TOPSZ];
+  char stemp1[TOPSZ];
+  char stemp2[TOPSZ];
+  char unique_id[30];
+
+  // Announce sensor
+  mqtt_data[0] = '\0';  // Clear retained message
+
+  // Clear or Set topic
+  snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s"), ESP.getChipId(), "status");
+  snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
+
+  if (Settings.flag.hass_discovery) {
+    char name[33];
+    char prefix[TOPSZ];
+    char *state_topic = stemp1;
+    char *availability_topic = stemp2;
+
+    snprintf_P(name, sizeof(name), PSTR("%s %s"), Settings.friendlyname[0], "status");
+    GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_HASS_STATE));
+    GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
+    FindPrefix(state_topic, availability_topic, prefix);
+    Shorten(&state_topic, prefix);
+    Shorten(&availability_topic, prefix);
+
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_SENSOR,
+               name, state_topic, availability_topic);
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_SENSOR_HASS_STATUS,
+                 mqtt_data, state_topic);
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_DEVICE_INFO, mqtt_data,
+               unique_id, ESP.getChipId(),
+               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
+    try_snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+  }
+  MqttPublish(stopic, true);
+}
+
+void HAssPublishStatus(void)
+{
+  snprintf_P(mqtt_data, sizeof(mqtt_data),
+             PSTR("{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_RESTARTREASON "\":\"%s\",\""
+             D_JSON_UPTIME "\":\"%s\",\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\""
+             D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_RSSI "\":\"%d\",\"LoadAvg\":%lu}"),
+             my_version, my_image, ModuleName().c_str(), GetResetReason().c_str(), GetUptime().c_str(), Settings.bootcount,
+             Settings.save_flag, WiFi.localIP().toString().c_str(), WifiGetRssiAsQuality(WiFi.RSSI()), loop_load_avg);
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_HASS_STATE));
+}
+
 void HAssDiscovery(void)
 {
   // Configure Tasmota for default Home Assistant parameters to keep discovery message as short as possible
@@ -496,6 +575,9 @@ void HAssDiscovery(void)
 
     // Send info about sensors
     HAssAnnounceSensors();
+
+    // Send info about status sensor
+    HAssAnnounceStatusSensor();
   }
 }
 
@@ -524,6 +606,14 @@ bool Xdrv12(uint8_t function)
           hass_init_step--;
           if (!hass_init_step) {
             HAssDiscovery();                 // Scheduled discovery using available resources
+          }
+        } else if (Settings.flag.hass_discovery && Settings.tele_period) {
+          hass_tele_period++;
+          if (hass_tele_period >= Settings.tele_period) {
+            hass_tele_period = 0;
+
+            mqtt_data[0] = '\0';
+            HAssPublishStatus();
           }
         }
         break;
