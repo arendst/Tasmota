@@ -1839,10 +1839,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "WAGA CHCZ02MB",   // WAGA life CHCZ02MB (HJL-01 Energy Monitoring)
                        // https://www.ebay.com/itm/332595697006
      GPIO_LED2_INV,    // GPIO00 Red LED
-     0,                // GPIO01 Serial TX
-     0,                // GPIO02
+     GPIO_USER,        // GPIO01 Serial TX and Optional sensor
+     GPIO_USER,        // GPIO02 Optional sensor
      GPIO_NRG_SEL_INV, // GPIO03 HJL-01 Sel output (1 = Voltage)
-     0,                // GPIO04
+     GPIO_USER,        // GPIO04 Optional sensor
      GPIO_HJL_CF,      // GPIO05 HJL-01 CF power
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
