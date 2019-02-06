@@ -1749,9 +1749,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Digoo DG-SP202",  // Digoo DG-SP202
                        // https://www.banggood.com/DIGOO-DG-SP202-Dual-EU-Plug-Smart-WIFI-Socket-Individual-Controllable-Energy-Monitor-Remote-Control-Timing-Smart-Home-Outlet-let-p-1375323.html
      GPIO_KEY1,        // GPIO00 Button1
-     0,                // GPIO01 Serial RXD
+     GPIO_USER,        // GPIO01 Serial RXD Optional sensor
      0,                // GPIO02
-     0,                // GPIO03 Serial TXD
+     GPIO_USER,        // GPIO03 Serial TXD Optional sensor
      GPIO_HJL_CF,      // GPIO04 BL0937 or HJL-01 CF power
      GPIO_NRG_CF1,     // GPIO05 BL0937 or HJL-01 CF1 current / voltage
                        // GPIO06 (SD_CLK   Flash)
