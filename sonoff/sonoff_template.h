@@ -1054,9 +1054,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09
      0,                // GPIO10
                        // GPIO11 (SD_CMD   Flash)
-     0,
+     GPIO_USER,        // GPIO12 Optional sensor
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off) - Link and Power status
-     0, 0, 0, 0
+     GPIO_USER,        // GPIO14 Optional sensor
+     0, 0, 0
   },
   { "Sonoff B1",       // Sonoff B1 (ESP8285 - my9231)
      GPIO_KEY1,        // GPIO00 Pad
