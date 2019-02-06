@@ -230,7 +230,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BUTTON "1in|" D_SENSOR_BUTTON "2in|" D_SENSOR_BUTTON "3in|" D_SENSOR_BUTTON "4in|"
   D_SENSOR_NRG_SEL "|" D_SENSOR_NRG_SEL "i|" D_SENSOR_NRG_CF1 "|" D_SENSOR_HLW_CF "|" D_SENSOR_HJL_CF "|"
   D_SENSOR_MCP39F5_TX "|" D_SENSOR_MCP39F5_RX "|" D_SENSOR_MCP39F5_RST "|"
-  D_SENSOR_SM16716_CLK "|" D_SENSOR_SM16716_DAT "|" D_SENSOR_SM16716_SEL
+  D_SENSOR_SM16716_CLK "|" D_SENSOR_SM16716_DAT "|" D_SENSOR_SM16716_POWER
   ;
 
 /********************************************************************************************/
@@ -1892,7 +1892,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO10
                        // GPIO11
      GPIO_USER,        // GPIO12 Alt. White on some devices
-     GPIO_USER,        // GPIO13 SM16716 Select on some devices
+     GPIO_USER,        // GPIO13 SM16716 Enable on some devices
      GPIO_SM16716_DAT, // GPIO14 SM16716 Data
      0,                // GPIO15 wired to GND
      GPIO_USER,        // GPIO16 N.C.
