@@ -67,7 +67,7 @@ void Tsl2561Detect(void)
   uint8_t id;
 
   if (I2cDevice(0x29) || I2cDevice(0x39) || I2cDevice(0x49)) {
-    if (!Tsl.id(&id)) return;
+    if (!Tsl.id(id)) return;
     Tsl.begin();
     if (Tsl.on()) {
       tsl2561_type = 1;
