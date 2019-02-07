@@ -162,6 +162,8 @@ enum UserSelectablePins {
   GPIO_MCP39F5_TX,     // MCP39F501 Serial interface (Shelly2)
   GPIO_MCP39F5_RX,     // MCP39F501 Serial interface (Shelly2)
   GPIO_MCP39F5_RST,    // MCP39F501 Reset (Shelly2)
+  GPIO_PN532_RXD,      // PN532 NFC Serial Rx
+  GPIO_PN532_TXD,      // PN532 NFC Serial Tx
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -227,6 +229,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BUTTON "1in|" D_SENSOR_BUTTON "2in|" D_SENSOR_BUTTON "3in|" D_SENSOR_BUTTON "4in|"
   D_SENSOR_NRG_SEL "|" D_SENSOR_NRG_SEL "i|" D_SENSOR_NRG_CF1 "|" D_SENSOR_HLW_CF "|" D_SENSOR_HJL_CF "|"
   D_SENSOR_MCP39F5_TX "|" D_SENSOR_MCP39F5_RX "|" D_SENSOR_MCP39F5_RST
+  D_SENSOR_PN532_TX "|" D_SENSOR_PN532_RX
   ;
 
 /********************************************************************************************/
@@ -545,6 +548,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855CS,     // MAX31855 Serial interface
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
+#endif
+#ifdef USE_PN532_HSU
+  GPIO_PN532_RXD,      // PN532 HSU Rx
+  GPIO_PN532_TXD,      // PN532 HSU Tx
 #endif
 };
 
