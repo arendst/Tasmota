@@ -161,6 +161,7 @@ int16_t Ads1115GetConversion(uint8_t channel)
 void Ads1115Detect(void)
 {
   uint16_t buffer;
+  uint16_t conf_buffer;
 
   //if (ads1115_type) {
     //return;
@@ -168,7 +169,9 @@ void Ads1115Detect(void)
 
   for (uint8_t i = 0; i < sizeof(ads1115_addresses); i++) {
     ads1115_address = ads1115_addresses[i];
-    if (I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONVERT)) {
+    if (I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONVERT) && 
+        I2cValidRead16(&conf_buffer, ads1115_address, ADS1115_REG_POINTER_CONFIG)) {
+
       Ads1115StartComparator(i, ADS1115_REG_CONFIG_MODE_CONTIN);
       ads1115_type = 1;
       ads1115_found[i] = 1;
@@ -184,8 +187,8 @@ void Ads1115GetValues(uint8_t address) {
     ads1115_address = address;
     for (uint8_t i = 0; i < 4; i++) {
         ads1115_values[i] = Ads1115GetConversion(i);
-        snprintf_P(log_data, sizeof(log_data), "Logging ADS1115 %02x (%i) = %i", address, i, ads1115_values[i] );
-        AddLog(LOG_LEVEL_INFO);
+        //snprintf_P(log_data, sizeof(log_data), "Logging ADS1115 %02x (%i) = %i", address, i, ads1115_values[i] );
+        //AddLog(LOG_LEVEL_INFO);
         }
     ads1115_address = old_address;
 }
@@ -220,8 +223,8 @@ void Ads1115Show(bool json)
   char *comma = (char*)"";
 
   for (uint8_t t = 0; t < sizeof(ads1115_addresses); t++) {
-    snprintf_P(log_data, sizeof(log_data), "Logging ADS1115 %02x", ads1115_addresses[t]);
-    AddLog(LOG_LEVEL_INFO);
+    //snprintf_P(log_data, sizeof(log_data), "Logging ADS1115 %02x", ads1115_addresses[t]);
+    //AddLog(LOG_LEVEL_INFO);
     if (ads1115_found[t]) {
       Ads1115GetValues(ads1115_addresses[t]);
       if (json) {

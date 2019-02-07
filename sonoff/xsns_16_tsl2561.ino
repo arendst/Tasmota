@@ -65,8 +65,7 @@ void Tsl2561Detect(void)
 {
   if (tsl2561_type) { return; }
 
-  if (I2cDevice(0x29) || I2cDevice(0x39) || I2cDevice(0x49)) {
-    Tsl.begin();
+  if ((I2cDevice(0x29) || I2cDevice(0x39) || I2cDevice(0x49))&&Tsl.begin()) {
     if (Tsl.on()) {
       tsl2561_type = 1;
       snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, tsl2561_types, Tsl.address());
