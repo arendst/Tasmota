@@ -173,8 +173,11 @@ int try_snprintf_P(char *s, size_t n, const char *format, ... )
   int len = vsnprintf_P(NULL, 0, format, args);
   if (len >= n) {
     snprintf_P(log_data, sizeof(log_data),
-               PSTR("ERROR: MQTT discovery failed due to too long topic or friendly name. \
-                    Please shorten topic and friendly name."));
+               PSTR("ERROR: MQTT discovery failed due to too long topic or friendly name. "
+                    "Please shorten topic and friendly name. Failed to format(%u/%u):"), len, n);
+    AddLog(LOG_LEVEL_ERROR);
+    va_start(args, format);
+    vsnprintf_P(log_data, sizeof(log_data), format, args);
     AddLog(LOG_LEVEL_ERROR);
   } else {
     va_start(args, format);
@@ -210,7 +213,7 @@ void HAssAnnounceRelayLight(void)
                (is_topic_light) ? "light" : "switch", unique_id);
 
     if (Settings.flag.hass_discovery && (i <= devices_present)) {
-      char name[33];
+      char name[33+2]; // friendlyname(33) + " " + index
       char value_template[33];
       char prefix[TOPSZ];
       char *command_topic = stemp1;
@@ -294,7 +297,7 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
   snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/binary_sensor/%s/config"), unique_id);
 
   if (Settings.flag.hass_discovery && present) {
-    char name[33];
+    char name[33+6]; // friendlyname(33) + " " + "BTN" + " " + index
     char value_template[33];
     char prefix[TOPSZ];
     char *state_topic = stemp1;
@@ -401,7 +404,7 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
   snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
 
   if (Settings.flag.hass_discovery) {
-    char name[33];
+    char name[33+42]; // friendlyname(33) + " " + sensorname(20?) + " " + sensortype(20?)
     char prefix[TOPSZ];
     char *state_topic = stemp1;
     char *availability_topic = stemp2;
@@ -512,7 +515,7 @@ void HAssAnnounceStatusSensor(void)
   snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
 
   if (Settings.flag.hass_discovery) {
-    char name[33];
+    char name[33+7]; // friendlyname(33) + " " + "status"
     char prefix[TOPSZ];
     char *state_topic = stemp1;
     char *availability_topic = stemp2;
