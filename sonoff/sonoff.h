@@ -160,13 +160,13 @@ typedef unsigned long power_t;              // Power (Relay) type
 #endif
 
 //enum ws2812NeopixelbusFeature { NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_3LED, NEO_RGBW, NEO_GRBW };  // Doesn't work
-#define NEO_RGB                0            // Neopixel RGB leds
-#define NEO_GRB                1            // Neopixel GRB leds
-#define NEO_BRG                2            // Neopixel BRG leds
-#define NEO_RBG                3            // Neopixel RBG leds
-#define NEO_3LED               4            // Placeholder to test for 4 led types
-#define NEO_RGBW               5            // Neopixel RGBW leds
-#define NEO_GRBW               6            // Neopixel GRBW leds
+#define WS2812_NEO_RGB         0            // Neopixel RGB leds
+#define WS2812_NEO_GRB         1            // Neopixel GRB leds
+#define WS2812_NEO_BRG         2            // Neopixel BRG leds
+#define WS2812_NEO_RBG         3            // Neopixel RBG leds
+#define WS2812_NEO_3LED        4            // Placeholder to test for 4 led types
+#define WS2812_NEO_RGBW        5            // Neopixel RGBW leds
+#define WS2812_NEO_GRBW        6            // Neopixel GRBW leds
 
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino - soon obsolete
@@ -236,7 +236,8 @@ enum Ws2812Color { WS_RED, WS_GREEN, WS_BLUE };
 
 enum LightSubtypes { LST_NONE, LST_SINGLE, LST_COLDWARM, LST_RGB,   LST_RGBW, LST_RGBWC };                   // Do not insert new fields
 enum LightTypes    { LT_BASIC, LT_PWM1,    LT_PWM2,      LT_PWM3,   LT_PWM4,  LT_PWM5,  LT_PWM6, LT_PWM7,
-                     LT_NU8,   LT_SERIAL1, LT_SERIAL2,   LT_WS2812, LT_RGBW,  LT_RGBWC, LT_NU14, LT_NU15 };  // Do not insert new fields
+                     LT_NU8,   LT_SERIAL1, LT_SERIAL2,   LT_WS2812, LT_NEOTRELLIS, LT_RGBW,  LT_RGBWC,
+                     LT_NU14, LT_NU15 };  // Do not insert new fields
 
 enum LightSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX};
 

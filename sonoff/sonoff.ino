@@ -2423,6 +2423,12 @@ void GpioInit(void)
   SwitchInit();
   RotaryInit();
 
+#if defined(USE_NEOTRELLIS) && defined(USE_I2C)
+  if (!light_type) {
+    devices_present++;
+    light_type = LT_NEOTRELLIS;
+  }
+#endif  // USE_NEOTRELLIS && USE_I2C
 #ifdef USE_WS2812
   if (!light_type && (pin[GPIO_WS2812] < 99)) {  // RGB led
     devices_present++;

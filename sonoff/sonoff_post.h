@@ -124,9 +124,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
   #define USE_IR_RECEIVE                      // Support for IR receiver (+5k5 code, 264 iram)
 #define USE_WS2812                            // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
 #ifndef USE_WS2812_CTYPE
-  #define USE_WS2812_CTYPE     NEO_GRB        // WS2812 Color type (NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_RGBW, NEO_GRBW)
+  #define USE_WS2812_CTYPE     WS2812_NEO_GRB // WS2812 Color type (WS2812_NEO_RGB, WS2812_NEO_GRB, WS2812_NEO_BRG, WS2812_NEO_RBG, WS2812_NEO_RGBW, WS2812_NEO_GRBW)
 #endif
 //  #define USE_WS2812_DMA                      // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
+#define USE_NEOTRELLIS                        // Add support for Adafruit Neotrellis RGB driver PCB
 #define USE_ARILUX_RF                         // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
 #define USE_SR04                              // Add support for HC-SR04 ultrasonic devices (+1k code)
 #define USE_TM1638                            // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
@@ -199,6 +200,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
+#undef USE_NEOTRELLIS                         // Disable Adafruit Neotrellis RGB driver PCB
 #endif  // USE_CLASSIC
 
 /*********************************************************************************************\
@@ -314,6 +316,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
+#undef USE_NEOTRELLIS                         // Disable Adafruit Neotrellis RGB driver PCB
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
@@ -378,6 +381,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MAX31855                           // DIsable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
+#undef USE_NEOTRELLIS                         // Disable Adafruit Neotrellis RGB driver PCB
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8

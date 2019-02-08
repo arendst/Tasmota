@@ -1,0 +1,33 @@
+language: c
+sudo: false
+cache:
+  directories:
+    - ~/arduino_ide
+    - ~/.arduino15/packages/
+git:
+  depth: false
+  quiet: true
+
+# Blacklist
+branches:
+  except:
+    - gh-pages
+
+env:
+  global:
+    - PRETTYNAME="Adafruit Seesaw Arduino Library"
+    - DOXYFILE: $TRAVIS_BUILD_DIR/Doxyfile
+
+before_install:
+   - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
+
+install:
+   - arduino --install-library "Adafruit ST7735 and ST7789 Library","Adafruit GFX Library"
+
+script:
+   - build_main_platforms
+
+# Generate and deploy documentation
+after_success:
+  - source <(curl -SLs  https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/library_check.sh)
+  - source <(curl -SLs  https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/doxy_gen_and_deploy.sh)

@@ -395,13 +395,19 @@ void LightInit(void)
   }
 #ifdef USE_WS2812  // ************************************************************************
   else if (LT_WS2812 == light_type) {
-#if (USE_WS2812_CTYPE > NEO_3LED)
+#if (USE_WS2812_CTYPE > WS2812_NEO_3LED)
     light_subtype++;  // from RGB to RGBW
 #endif
     Ws2812Init();
     max_scheme = LS_MAX + WS2812_SCHEMES;
   }
 #endif  // USE_WS2812 ************************************************************************
+#ifdef USE_NEOTRELLIS  // ************************************************************************
+  else if (LT_NEOTRELLIS == light_type) {
+    NeotrellisInit();
+    max_scheme = LS_MAX + WS2812_SCHEMES;
+  }
+#endif  // USE_NEOTRELLIS ************************************************************************
   else {
     light_pdi_pin = pin[GPIO_DI];
     light_pdcki_pin = pin[GPIO_DCKI];
@@ -843,8 +849,13 @@ void LightAnimate(void)
       else if (LT_WS2812 == light_type) {
         Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
       }
-#endif  // USE_ES2812 ************************************************************************
-      else if (light_type > LT_WS2812) {
+#endif  // USE_WS2812 ************************************************************************
+#ifdef USE_NEOTRELLIS  // ************************************************************************
+      else if (LT_NEOTRELLIS == light_type) {
+        NeotrellisSetColor(0, cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
+      }
+#endif  // USE_NEOTRELLIS ************************************************************************
+      else if (light_type > LT_NEOTRELLIS) {
         LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
       }
       XdrvMailbox.data = tmp_data;
@@ -1242,6 +1253,55 @@ bool LightCommand(void)
     }
   }
 #endif  // USE_WS2812 ************************************************************************
+#ifdef USE_NEOTRELLIS  //  ***********************************************************************
+  else if ((CMND_LED == command_code) && (LT_NEOTRELLIS == light_type) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= Settings.light_pixels)) {
+    if (XdrvMailbox.data_len > 0) {
+      char *p;
+      uint16_t idx = XdrvMailbox.index;
+      NeotrellisForceSuspend();
+      for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(NULL, " ", &p)) {
+        if (LightColorEntry(color, strlen(color))) {
+          NeotrellisSetColor(idx, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
+          idx++;
+          if (idx >= Settings.light_pixels) break;
+        } else {
+          break;
+        }
+      }
+
+      NeotrellisForceUpdate();
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, NeotrellisGetColor(XdrvMailbox.index, scolor));
+  }
+  else if ((CMND_PIXELS == command_code) && (LT_NEOTRELLIS == light_type)) {
+    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= WS2812_MAX_LEDS)) {
+      Settings.light_pixels = XdrvMailbox.payload;
+      Settings.light_rotation = 0;
+      NeotrellisClear();
+      light_update = 1;
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_pixels);
+  }
+  else if ((CMND_ROTATION == command_code) && (LT_NEOTRELLIS == light_type)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < Settings.light_pixels)) {
+      Settings.light_rotation = XdrvMailbox.payload;
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_rotation);
+  }
+  else if ((CMND_WIDTH == command_code) && (LT_NEOTRELLIS == light_type) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
+    if (1 == XdrvMailbox.index) {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 4)) {
+        Settings.light_width = XdrvMailbox.payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_width);
+    } else {
+      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 32)) {
+        Settings.ws_width[XdrvMailbox.index -2] = XdrvMailbox.payload;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.ws_width[XdrvMailbox.index -2]);
+    }
+  }
+#endif  // USE_NEOTRELLIS ************************************************************************
   else if ((CMND_SCHEME == command_code) && (light_subtype >= LST_RGB)) {
     uint8_t max_scheme = (LT_WS2812 == light_type) ? LS_MAX + WS2812_SCHEMES : LS_MAX -1;
     if (('+' == option) && (Settings.light_scheme < max_scheme)) {
