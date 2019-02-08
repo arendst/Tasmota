@@ -391,7 +391,7 @@ void SettingsSave(uint8_t rotate)
  * stop_flash_rotate 0 = Allow flash slot rotation (SetOption12 0)
  * stop_flash_rotate 1 = Allow only eeprom flash slot use (SetOption12 1)
  */
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
   if ((GetSettingsCrc() != settings_crc) || rotate) {
     if (1 == rotate) {   // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
       stop_flash_rotate = 1;
@@ -441,7 +441,7 @@ void SettingsSave(uint8_t rotate)
 
     settings_crc = Settings.cfg_crc;
   }
-#endif  // BE_MINIMAL
+#endif  // FIRMWARE_MINIMAL
   RtcSettingsSave();
 }
 
@@ -487,12 +487,12 @@ void SettingsLoad(void)
     AddLog(LOG_LEVEL_DEBUG);
   }
 
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
   if (!settings_location || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
     SettingsDefault();
   }
   settings_crc = GetSettingsCrc();
-#endif  // BE_MINIMAL
+#endif  // FIRMWARE_MINIMAL
 
   RtcSettingsLoad();
 }
@@ -504,7 +504,7 @@ void SettingsErase(uint8_t type)
     1 = Erase SDK parameter area at end of linker memory model (0x0FDxxx - 0x0FFFFF) solving possible wifi errors
   */
 
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
   bool result;
 
   uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
@@ -533,7 +533,7 @@ void SettingsErase(uint8_t type)
     }
     OsWatchLoop();
   }
-#endif  // BE_MINIMAL
+#endif  // FIRMWARE_MINIMAL
 }
 
 // Copied from 2.4.0 as 2.3.0 is incomplete

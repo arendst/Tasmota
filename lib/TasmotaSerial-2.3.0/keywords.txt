@@ -14,6 +14,7 @@ TasmotaSerial	KEYWORD1
 #######################################
 
 begin	KEYWORD2
+hardwareSerial  KEYWORD2
 read	KEYWORD2
 write	KEYWORD2
 available	KEYWORD2

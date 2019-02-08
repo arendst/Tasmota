@@ -126,16 +126,16 @@ void GetFeatures(void)
 #ifdef USE_CONFIG_OVERRIDE
   feature_drv2 |= 0x00000001;  // user_config(_override).h
 #endif
-#ifdef BE_MINIMAL
+#ifdef FIRMWARE_MINIMAL
   feature_drv2 |= 0x00000002;  // user_config(_override).h
 #endif
-#ifdef USE_SENSORS
+#ifdef FIRMWARE_SENSORS
   feature_drv2 |= 0x00000004;  // user_config(_override).h
 #endif
-#ifdef USE_CLASSIC
+#ifdef FIRMWARE_CLASSIC
   feature_drv2 |= 0x00000008;  // user_config(_override).h
 #endif
-#ifdef USE_KNX_NO_EMULATION
+#ifdef FIRMWARE_KNX_NO_EMULATION
   feature_drv2 |= 0x00000010;  // user_config(_override).h
 #endif
 #ifdef USE_DISPLAY_MODES1TO5
@@ -378,8 +378,8 @@ void GetFeatures(void)
 #ifdef USE_MAX31855
   feature_sns2 |= 0x00080000;  // xsns_39_max31855.ino
 #endif
-#ifdef USE_PN532_I2C
-  feature_sns2 |= 0x00100000;  // xsns_40_pn532_i2c.ino
+#ifdef USE_PN532_HSU
+  feature_sns2 |= 0x00100000;  // xsns_40_pn532.ino
 #endif
 #ifdef USE_MAX44009
   feature_sns2 |= 0x00200000;

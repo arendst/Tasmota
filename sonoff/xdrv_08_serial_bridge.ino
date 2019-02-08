@@ -42,7 +42,7 @@ void SerialBridgeInput(void)
 {
   while (SerialBridgeSerial->available()) {
     yield();
-    uint8_t serial_in_uint8_t = SerialBridgeSerial->read();
+    uint8_t serial_in_byte = SerialBridgeSerial->read();
 
     if (serial_in_byte > 127) {                   // binary data...
       serial_bridge_in_byte_counter = 0;

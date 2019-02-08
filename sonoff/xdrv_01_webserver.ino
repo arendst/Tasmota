@@ -129,11 +129,11 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "x.onreadystatechange=function(){"
         "if(x.readyState==4&&x.status==200){"
           "var z,d;"
-          "d=x.responseXML;"
-          "id=d.getElementsByTagName('i')[0].childNodes[0].nodeValue;"
-          "if(d.getElementsByTagName('j')[0].childNodes[0].nodeValue==0){t.value='';}"
-          "z=d.getElementsByTagName('l')[0].childNodes;"
-          "if(z.length>0){t.value+=decodeURIComponent(z[0].nodeValue);}"
+          "d=x.responseText.split(/\1/);"
+          "id=d.shift();"
+          "if(d.shift()==0){t.value='';}"
+          "z=d.shift();"
+          "if(z.length>0){t.value+=z;}"
           "t.scrollTop=99999;"
           "sn=t.scrollTop;"
         "}"
@@ -208,7 +208,7 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
   "</head>"
   "<body>"
   "<div style='text-align:left;display:inline-block;min-width:340px;'>"
-#ifdef BE_MINIMAL
+#ifdef FIRMWARE_MINIMAL
   "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
   "<div style='text-align:center;'><noscript>" D_NOSCRIPT "<br/></noscript>"
@@ -227,7 +227,7 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
   "<br/><form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>"
   "<br/><form action='in' method='get'><button>" D_INFORMATION "</button></form>"
 #endif
@@ -401,7 +401,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/ay", HandleAjaxStatusRefresh);
       WebServer->on("/cm", HandleHttpCommand);
       WebServer->onNotFound(HandleNotFound);
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
       WebServer->on("/wi", HandleWifiConfiguration);
@@ -416,7 +416,7 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // USE_EMULATION
       XdrvCall(FUNC_WEB_ADD_HANDLER);
       XsnsCall(FUNC_WEB_ADD_HANDLER);
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
     }
     reset_web_log_flag = false;
     WebServer->begin(); // Web server start
@@ -601,7 +601,7 @@ void HandleRoot(void)
   }
 
   if (HTTP_MANAGER == webserver_state) {
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
     if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1"))) {
       HandleWifiLogin();
     } else {
@@ -619,7 +619,7 @@ void HandleRoot(void)
         HandleWifiLogin();
       }
     }
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
   } else {
     char stemp[10];
     String page = FPSTR(HTTP_HEAD);
@@ -673,12 +673,12 @@ void HandleRoot(void)
       page += F("</tr></table>");
     }
 
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
     mqtt_data[0] = '\0';
     XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
     XsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
     page += String(mqtt_data);
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
 
     if (HTTP_ADMIN == webserver_state) {
       page += FPSTR(HTTP_BTN_MENU1);
@@ -773,7 +773,7 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
 
 /*-------------------------------------------------------------------------------------------*/
 
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
 
 void HandleConfiguration(void)
 {
@@ -1407,7 +1407,7 @@ void HandleInformation(void)
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
 }
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
 
 /*-------------------------------------------------------------------------------------------*/
 
@@ -1813,7 +1813,9 @@ void HandleAjaxConsoleRefresh(void)
   if (strlen(svalue)) { counter = atoi(svalue); }
 
   bool last_reset_web_log_flag = reset_web_log_flag;
-  String message = F("}9");  // Cannot load mqtt_data here as <> will be encoded by replacements below
+  // mqtt_data used as scratch space
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%d\1%d\1"), web_log_index, last_reset_web_log_flag);
+  String message = mqtt_data;
   if (!reset_web_log_flag) {
     counter = 0;
     reset_web_log_flag = true;
@@ -1834,20 +1836,13 @@ void HandleAjaxConsoleRefresh(void)
           cflg = true;
         }
         strlcpy(mqtt_data, tmp, len);
-        message += mqtt_data;
+        message += mqtt_data; // mqtt_data used as scratch space
       }
       counter++;
-      if (!counter) { counter++; } // Skip 0 as it is not allowed
+      if (!counter) { counter++; } // Skip log index 0 as it is not allowed
     } while (counter != web_log_index);
-    // XML encoding to fix blank console log in concert with javascript decodeURIComponent
-    message.replace(F("%"), F("%25"));  // Needs to be done first as otherwise the % in %26 will also be converted
-    message.replace(F("&"), F("%26"));
-    message.replace(F("<"), F("%3C"));
-    message.replace(F(">"), F("%3E"));
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<r><i>%d</i><j>%d</j><l>"), web_log_index, last_reset_web_log_flag);
-  message.replace(F("}9"), mqtt_data);  // Save to load here
-  message += F("</l></r>");
+  message += F("\1");
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), message);
 }
 
