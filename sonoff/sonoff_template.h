@@ -164,6 +164,9 @@ enum UserSelectablePins {
   GPIO_MCP39F5_RST,    // MCP39F501 Reset (Shelly2)
   GPIO_PN532_TXD,      // PN532 NFC Serial Tx
   GPIO_PN532_RXD,      // PN532 NFC Serial Rx
+  GPIO_SM16716_CLK,    // SM16716 CLOCK
+  GPIO_SM16716_DAT,    // SM16716 DATA
+  GPIO_SM16716_SEL,    // SM16716 SELECT
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality offset by user selectable GPIOs
@@ -229,7 +232,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_BUTTON "1in|" D_SENSOR_BUTTON "2in|" D_SENSOR_BUTTON "3in|" D_SENSOR_BUTTON "4in|"
   D_SENSOR_NRG_SEL "|" D_SENSOR_NRG_SEL "i|" D_SENSOR_NRG_CF1 "|" D_SENSOR_HLW_CF "|" D_SENSOR_HJL_CF "|"
   D_SENSOR_MCP39F5_TX "|" D_SENSOR_MCP39F5_RX "|" D_SENSOR_MCP39F5_RST "|"
-  D_SENSOR_PN532_TX "|" D_SENSOR_PN532_RX
+  D_SENSOR_PN532_TX "|" D_SENSOR_PN532_RX "|"
+  D_SENSOR_SM16716_CLK "|" D_SENSOR_SM16716_DAT "|" D_SENSOR_SM16716_POWER
   ;
 
 /********************************************************************************************/
@@ -304,6 +308,7 @@ enum SupportedModules {
   MI_DESK_LAMP,
   SP10,
   WAGA,
+  SYF05,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -553,6 +558,18 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
 #endif
+#ifdef USE_SM16716
+  GPIO_SM16716_CLK,    // SM16716 CLOCK
+  GPIO_SM16716_DAT,    // SM16716 DATA
+  GPIO_SM16716_SEL,    // SM16716 SELECT
+#endif // USE_SM16716
+#if defined(USE_ENERGY_SENSOR) && defined(USE_HLW8012)
+  GPIO_NRG_SEL,        // HLW8012/HLJ-01 Sel output (1 = Voltage)
+  GPIO_NRG_SEL_INV,    // HLW8012/HLJ-01 Sel output (0 = Voltage)
+  GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
+  GPIO_HLW_CF,         // HLW8012 CF power
+  GPIO_HJL_CF,         // HJL-01/BL0937 CF power
+#endif
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
@@ -623,7 +640,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   PHILIPS,
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
-  WEMOS
+  WEMOS,
+  SYF05
 };
 
 // Default module settings
@@ -1863,6 +1881,31 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_NRG_CF1,     // GPIO14 HJL-01 CF1 voltage / current
      GPIO_LED1_INV,    // GPIO15 Blue LED - Link status
      0, 0
+  },
+  { "SYF05",           // Sunyesmart SYF05 (a.k.a. Fcmila) = TYWE3S + SM16726
+                       // Also works with Merkury 904 RGBW Bulbs with 13 set to GPIO_SM16716_SEL
+                       // https://www.flipkart.com/fc-mila-bxav-xs-ad-smart-bulb/p/itmf85zgs45fzr7n
+                       // https://docs.tuya.com/en/hardware/WiFi-module/wifi-e3s-module.html
+                       // http://www.datasheet-pdf.com/PDF/SM16716-Datasheet-Sunmoon-932771
+     GPIO_USER,        // GPIO00 N.C.
+     0,
+     GPIO_USER,        // GPIO02 N.C.
+     0,
+     GPIO_SM16716_CLK, // GPIO04 SM16716 Clock
+     GPIO_PWM1,        // GPIO05 White
+                       // GPIO06
+                       // GPIO07
+                       // GPIO08
+     0,                // GPIO09
+     0,                // GPIO10
+                       // GPIO11
+     GPIO_USER,        // GPIO12 Alt. White on some devices
+     GPIO_USER,        // GPIO13 SM16716 Enable on some devices
+     GPIO_SM16716_DAT, // GPIO14 SM16716 Data
+     0,                // GPIO15 wired to GND
+     GPIO_USER,        // GPIO16 N.C.
+     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
+//   + GPIO_FLAG_PULLUP  // Allow input pull-up control
   }
 };
 

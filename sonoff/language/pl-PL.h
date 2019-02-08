@@ -481,6 +481,7 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Brak"
 #define D_SENSOR_DHT11         "DHT11"
@@ -555,6 +556,9 @@
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
 #define D_SENSOR_PN532_TX      "PN532 Tx"
 #define D_SENSOR_PN532_RX      "PN532 Rx"
+#define D_SENSOR_SM16716_CLK   "SM16716 CLK"
+#define D_SENSOR_SM16716_DAT   "SM16716 DAT"
+#define D_SENSOR_SM16716_POWER "SM16716 PWR"
 
 // Units
 #define D_UNIT_AMPERE "A"
