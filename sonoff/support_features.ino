@@ -376,8 +376,8 @@ void GetFeatures(void)
 #ifdef USE_MAX31855
   feature_sns2 |= 0x00080000;  // xsns_39_max31855.ino
 #endif
-#ifdef USE_PN532_I2C
-  feature_sns2 |= 0x00100000;  // xsns_40_pn532_i2c.ino
+#ifdef USE_PN532_HSU
+  feature_sns2 |= 0x00100000;  // xsns_40_pn532.ino
 #endif
 #ifdef USE_MAX44009
   feature_sns2 |= 0x00200000;
