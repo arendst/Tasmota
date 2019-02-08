@@ -96,7 +96,7 @@ int8_t PN532_receive(uint8_t *buf, int len, uint16_t timeout)
         break;
       }
     } while((timeout == 0) || ((millis()- start_millis ) < timeout));
-    
+
     if (ret < 0) {
       if (read_bytes) {
         return read_bytes;
@@ -114,7 +114,7 @@ int8_t PN532_readAckFrame(void)
 {
   const uint8_t PN532_ACK[] = {0, 0, 0xFF, 0, 0xFF, 0};
   uint8_t ackBuf[sizeof(PN532_ACK)];
-    
+
   if (PN532_receive(ackBuf, sizeof(PN532_ACK), PN532_ACK_WAIT_TIME) <= 0) {
     return PN532_TIMEOUT;
   }
@@ -128,7 +128,7 @@ int8_t PN532_readAckFrame(void)
 int8_t PN532_writeCommand(const uint8_t *header, uint8_t hlen, const uint8_t *body = 0, uint8_t blen = 0)
 {
   // Clear the serial buffer just in case
-  while(PN532_Serial->available()) { PN532_Serial->read(); }
+  PN532_Serial->flush();
 
   pn532_command = header[0];
   PN532_Serial->write((uint8_t)PN532_PREAMBLE);
@@ -155,7 +155,7 @@ int8_t PN532_writeCommand(const uint8_t *header, uint8_t hlen, const uint8_t *bo
   uint8_t checksum = ~sum + 1;            // checksum of TFI + DATA
   PN532_Serial->write(checksum);
   PN532_Serial->write((uint8_t)PN532_POSTAMBLE);
-  
+
   return PN532_readAckFrame();
 }
 
@@ -197,7 +197,7 @@ int16_t PN532_readResponse(uint8_t buf[], uint8_t len, uint16_t timeout = 50)
   if (PN532_receive(buf, length[0], timeout) != length[0]) { // Timed out
     return PN532_TIMEOUT;
   }
-  
+
   uint8_t sum = PN532_PN532TOHOST + cmd;
   for (uint8_t i=0; i<length[0]; i++) {
     sum += buf[i];
@@ -247,7 +247,7 @@ void PN532_wakeup(void)
   PN532_Serial->write(wakeup,sizeof(wakeup));
 
   // Flush the serial buffer just in case there's garbage in there
-  while(PN532_Serial->available()) { PN532_Serial->read(); }
+  PN532_Serial->flush();
 }
 
 bool PN532_readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidLength, uint16_t timeout = 50)
@@ -413,17 +413,17 @@ void PN532_ScanForTag(void)
   bool set_success = false;
   if (PN532_readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uid_len)) {
       char uids[15];
-      
-#ifdef USE_PN532_DATA_FUNCTION      
+
+#ifdef USE_PN532_DATA_FUNCTION
       char card_datas[34];
-#endif // USE_PN532_DATA_FUNCTION      
+#endif // USE_PN532_DATA_FUNCTION
 
       sprintf(uids,"");
       for (uint8_t i = 0;i < uid_len;i++) {
         sprintf(uids,"%s%02X",uids,uid[i]);
       }
-      
-#ifdef USE_PN532_DATA_FUNCTION      
+
+#ifdef USE_PN532_DATA_FUNCTION
       if (uid_len == 4) { // Lets try to read block 1 of the mifare classic card for more information
         uint8_t keyuniversal[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
         if (mifareclassic_AuthenticateBlock (uid, uid_len, 1, 1, keyuniversal)) {
@@ -502,15 +502,15 @@ void PN532_ScanForTag(void)
           break;
       }
       pn532_function = 0;
-#endif // USE_PN532_DATA_FUNCTION      
-      
+#endif // USE_PN532_DATA_FUNCTION
+
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
 
 #ifdef USE_PN532_DATA_FUNCTION
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PN532\":{\"UID\":\"%s\", \"DATA\":\"%s\"}}"), mqtt_data, uids, card_datas);
 #else
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PN532\":{\"UID\":\"%s\"}}"), mqtt_data, uids);
-#endif // USE_PN532_DATA_FUNCTION      
+#endif // USE_PN532_DATA_FUNCTION
 
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
 
@@ -521,10 +521,10 @@ void PN532_ScanForTag(void)
       sprintf(command,"backlog event PN532_UID=%s;event PN532_DATA=%s",uids,card_datas);
 #else
       sprintf(command,"event PN532_UID=%s",uids);
-#endif // USE_PN532_DATA_FUNCTION      
+#endif // USE_PN532_DATA_FUNCTION
       ExecuteCommand(command, SRC_RULE);
 #endif // USE_PN532_CAUSE_EVENTS
-      
+
       pn532_scantimer = 7; // Ignore tags found for two seconds
   }
 }
@@ -582,7 +582,7 @@ bool PN532_Command(void)
 bool Xsns40(uint8_t function)
 {
   bool result = false;
-  
+
   switch (function) {
     case FUNC_INIT:
       PN532_Init();
@@ -601,13 +601,13 @@ bool Xsns40(uint8_t function)
       break;
     case FUNC_EVERY_SECOND:
       break;
-#ifdef USE_PN532_DATA_FUNCTION      
+#ifdef USE_PN532_DATA_FUNCTION
     case FUNC_COMMAND:
       if (XSNS_40 == XdrvMailbox.index) {
         result = PN532_Command();
       }
       break;
-#endif      
+#endif
   }
   return result;
 }
