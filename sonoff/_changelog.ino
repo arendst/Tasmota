@@ -4,6 +4,12 @@
  * Fix IR local echo
  * Add user configuration of HLW8012 and HJL-01/BL0937 Energy Monitoring as used in Sonoff S31, Pow Ra and many Tuya based devices
  * Add user configuration of MCP39F501 Energy Monitoring as used in Shelly2
+ * Add support for multiple ADS1115 I2C devices (#5083)
+ * Add rule support for "==", "!=" ">=" and "<=" (#5122)
+ * Add Hass status sensor (#5139)
+ * Change GUI weblog solving possible empty screens (#5154)
+ * Change PN532 support from I2C to Serial for more stability (#5162)
+ * Add MHZ19 Temperature as Domoticz Temperature selection (#5128)
  *
  * 6.4.1.13 20190130
  * Add command SetOption36 to control boot loop default restoration (#4645, #5063)
