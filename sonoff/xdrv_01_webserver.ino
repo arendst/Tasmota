@@ -208,7 +208,7 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
   "</head>"
   "<body>"
   "<div style='text-align:left;display:inline-block;min-width:340px;'>"
-#ifdef BE_MINIMAL
+#ifdef FIRMWARE_MINIMAL
   "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
   "<div style='text-align:center;'><noscript>" D_NOSCRIPT "<br/></noscript>"
@@ -227,7 +227,7 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
   "<br/><form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>"
   "<br/><form action='in' method='get'><button>" D_INFORMATION "</button></form>"
 #endif
@@ -401,7 +401,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/ay", HandleAjaxStatusRefresh);
       WebServer->on("/cm", HandleHttpCommand);
       WebServer->onNotFound(HandleNotFound);
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
       WebServer->on("/wi", HandleWifiConfiguration);
@@ -416,7 +416,7 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // USE_EMULATION
       XdrvCall(FUNC_WEB_ADD_HANDLER);
       XsnsCall(FUNC_WEB_ADD_HANDLER);
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
     }
     reset_web_log_flag = false;
     WebServer->begin(); // Web server start
@@ -601,7 +601,7 @@ void HandleRoot(void)
   }
 
   if (HTTP_MANAGER == webserver_state) {
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
     if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1"))) {
       HandleWifiLogin();
     } else {
@@ -619,7 +619,7 @@ void HandleRoot(void)
         HandleWifiLogin();
       }
     }
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
   } else {
     char stemp[10];
     String page = FPSTR(HTTP_HEAD);
@@ -673,12 +673,12 @@ void HandleRoot(void)
       page += F("</tr></table>");
     }
 
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
     mqtt_data[0] = '\0';
     XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
     XsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
     page += String(mqtt_data);
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
 
     if (HTTP_ADMIN == webserver_state) {
       page += FPSTR(HTTP_BTN_MENU1);
@@ -773,7 +773,7 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
 
 /*-------------------------------------------------------------------------------------------*/
 
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
 
 void HandleConfiguration(void)
 {
@@ -1407,7 +1407,7 @@ void HandleInformation(void)
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
 }
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
 
 /*-------------------------------------------------------------------------------------------*/
 

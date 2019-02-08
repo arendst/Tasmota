@@ -55,7 +55,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
  * Provide an image with useful supported sensors enabled
 \*********************************************************************************************/
 
-#ifdef USE_SENSORS
+#ifdef FIRMWARE_SENSORS
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 3
@@ -139,14 +139,14 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_RF_SENSOR                         // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 //  #define USE_THEO_V2                         // Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver (+1k4 code)
   #define USE_ALECTO_V2                       // Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver (+1k7 code)
-#endif  // USE_SENSORS
+#endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
  * [sonoff-classic.bin]
  * Provide an image close to version 5.12.0 but still within 499k program space to allow one time OTA
 \*********************************************************************************************/
 
-#ifdef USE_CLASSIC
+#ifdef FIRMWARE_CLASSIC
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 2
@@ -200,14 +200,14 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
-#endif  // USE_CLASSIC
+#endif  // FIRMWARE_CLASSIC
 
 /*********************************************************************************************\
  * [sonoff-knx.bin]
  * Provide a dedicated KNX image allowing enough code and memory space
 \*********************************************************************************************/
 
-#ifdef USE_KNX_NO_EMULATION
+#ifdef FIRMWARE_KNX_NO_EMULATION
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 4
@@ -216,14 +216,14 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_KNX                               // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
 #endif
 #undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
-#endif  // USE_KNX_NO_EMULATION
+#endif  // FIRMWARE_KNX_NO_EMULATION
 
 /*********************************************************************************************\
  * [sonoff-display.bin]
  * Provide an image with display drivers enabled
 \*********************************************************************************************/
 
-#ifdef USE_DISPLAYS
+#ifdef FIRMWARE_DISPLAYS
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 6
@@ -250,7 +250,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #undef USE_ARILUX_RF                          // Remove support for Arilux RF remote controller (-0k8 code, 252 iram (non 2.3.0))
 #undef USE_RF_FLASH                           // Remove support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (-3k code)
-#endif  // USE_DISPLAYS
+#endif  // FIRMWARE_DISPLAYS
 
 /*********************************************************************************************\
  * Mandatory define for DS18x20 if changed by above image selections
@@ -266,13 +266,13 @@ void KNX_CB_Action(message_t const &msg, void *arg);
  * Provide an image without sensors
 \*********************************************************************************************/
 
-#ifdef USE_BASIC
+#ifdef FIRMWARE_BASIC
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 5
 
 #undef APP_SLEEP
-#define APP_SLEEP 1                          // Default to sleep = 1 for USE_BASIC
+#define APP_SLEEP 1                          // Default to sleep = 1 for FIRMWARE_BASIC
 
 //#undef USE_ENERGY_SENSOR                      // Disable energy sensors
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
@@ -327,14 +327,14 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
-#endif  // USE_BASIC
+#endif  // FIRMWARE_BASIC
 
 /*********************************************************************************************\
  * [sonoff-minimal.bin]
  * Provide the smallest image possible while still enabling a webserver for intermediate image load
 \*********************************************************************************************/
 
-#ifdef BE_MINIMAL
+#ifdef FIRMWARE_MINIMAL
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 1
@@ -392,7 +392,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
-#endif  // BE_MINIMAL
+#endif  // FIRMWARE_MINIMAL
 
 /*********************************************************************************************\
  * Mandatory defines satisfying possible disabled defines

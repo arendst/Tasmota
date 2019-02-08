@@ -126,16 +126,16 @@ void GetFeatures(void)
 #ifdef USE_CONFIG_OVERRIDE
   feature_drv2 |= 0x00000001;  // user_config(_override).h
 #endif
-#ifdef BE_MINIMAL
+#ifdef FIRMWARE_MINIMAL
   feature_drv2 |= 0x00000002;  // user_config(_override).h
 #endif
-#ifdef USE_SENSORS
+#ifdef FIRMWARE_SENSORS
   feature_drv2 |= 0x00000004;  // user_config(_override).h
 #endif
-#ifdef USE_CLASSIC
+#ifdef FIRMWARE_CLASSIC
   feature_drv2 |= 0x00000008;  // user_config(_override).h
 #endif
-#ifdef USE_KNX_NO_EMULATION
+#ifdef FIRMWARE_KNX_NO_EMULATION
   feature_drv2 |= 0x00000010;  // user_config(_override).h
 #endif
 #ifdef USE_DISPLAY_MODES1TO5

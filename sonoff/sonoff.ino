@@ -1957,7 +1957,7 @@ void Every250mSeconds(void)
         ota_retry_counter--;
         if (ota_retry_counter) {
           strlcpy(mqtt_data, GetOtaUrl(log_data, sizeof(log_data)), sizeof(mqtt_data));
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
           if (RtcSettings.ota_loader) {
             char *bch = strrchr(mqtt_data, '/');                        // Only consider filename after last backslash prevent change of urls having "-" in it
             char *pch = strrchr((bch != NULL) ? bch : mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
@@ -1969,7 +1969,7 @@ void Every250mSeconds(void)
               snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ech);  // Minimal filename must be filename-minimal
             }
           }
-#endif  // BE_MINIMAL
+#endif  // FIRMWARE_MINIMAL
           snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "%s"), mqtt_data);
           AddLog(LOG_LEVEL_DEBUG);
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
@@ -1980,14 +1980,14 @@ void Every250mSeconds(void)
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(OTAclient, mqtt_data));
 #endif
           if (!ota_result) {
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
             int ota_error = ESPhttpUpdate.getLastError();
 //            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Ota error %d"), ota_error);
 //            AddLog(LOG_LEVEL_DEBUG);
             if ((HTTP_UE_TOO_LESS_SPACE == ota_error) || (HTTP_UE_BIN_FOR_WRONG_FLASH == ota_error)) {
               RtcSettings.ota_loader = 1;  // Try minimal image next
             }
-#endif  // BE_MINIMAL
+#endif  // FIRMWARE_MINIMAL
             ota_state_flag = 2;    // Upgrade failed - retry
           }
         }
@@ -2584,10 +2584,10 @@ void setup(void)
   snprintf_P(log_data, sizeof(log_data), PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE),
     PROJECT, Settings.friendlyname[0], my_version, my_image);
   AddLog(LOG_LEVEL_INFO);
-#ifdef BE_MINIMAL
+#ifdef FIRMWARE_MINIMAL
   snprintf_P(log_data, sizeof(log_data), PSTR(D_WARNING_MINIMAL_VERSION));
   AddLog(LOG_LEVEL_INFO);
-#endif  // BE_MINIMAL
+#endif  // FIRMWARE_MINIMAL
 
   RtcInit();
 

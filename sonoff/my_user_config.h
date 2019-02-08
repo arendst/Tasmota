@@ -429,12 +429,12 @@
  * See RELEASENOTES.md for selected features
 \*********************************************************************************************/
 
-//#define USE_CLASSIC                              // Create sonoff-classic with initial configuration tools WPS, SmartConfig and WifiManager
-//#define USE_BASIC                                // Create sonoff-basic with no sensors
-//#define USE_SENSORS                              // Create sonoff-sensors with useful sensors enabled
-//#define USE_KNX_NO_EMULATION                     // Create sonoff-knx with KNX but without Emulation
-//#define USE_DISPLAYS                             // Create sonoff-display with display drivers enabled
-//#define BE_MINIMAL                               // Create sonoff-minimal as intermediate firmware for OTA-MAGIC
+//#define FIRMWARE_CLASSIC                         // Create sonoff-classic with initial configuration tools WPS, SmartConfig and WifiManager
+//#define FIRMWARE_BASIC                           // Create sonoff-basic with no sensors
+//#define FIRMWARE_SENSORS                         // Create sonoff-sensors with useful sensors enabled
+//#define FIRMWARE_KNX_NO_EMULATION                // Create sonoff-knx with KNX but without Emulation
+//#define FIRMWARE_DISPLAYS                        // Create sonoff-display with display drivers enabled
+//#define FIRMWARE_MINIMAL                         // Create sonoff-minimal as intermediate firmware for OTA-MAGIC
 
 /*********************************************************************************************\
  * No user configurable items below

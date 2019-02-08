@@ -1,4 +1,8 @@
-/* 6.4.1.14 20190203
+/* 6.4.1.15 20190208
+ * Change image name BE_MINIMAL to FIRMWARE_MINIMAL (#5106)
+ * Change image names USE_xyz to FIRMWARE_xyz (#5106)
+ *
+ * 6.4.1.14 20190203
  * Add SetOption32 until SetOption49 diagnostic information to Status 3 report as replacement for second property value in SetOption property name
  * Add Resolution property to Status 3 report providing previous SetOption second value property
  * Fix IR local echo
