@@ -88,7 +88,18 @@
 #define COMPARE_OPERATOR_BIGGER_EQUAL     6
 #define COMPARE_OPERATOR_SMALLER_EQUAL    7
 #define MAXIMUM_COMPARE_OPERATOR          COMPARE_OPERATOR_SMALLER_EQUAL
+
+#define RULE_VARIABLE_TYPE_NONE 0
+#define RULE_VARIABLE_TYPE_VAR  1
+#define RULE_VARIABLE_TYPE_MEM  2
+
+#define EXPRESSION_OPERATOR_NONE               -1
+
+
 const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
+
+const char kExpressionOperators[] PROGMEM = "+-*/%^";
+const uint8_t kExpressionOperatorsPriorities[] PROGMEM = {1, 1, 2, 2, 3, 4};
 
 enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_MULT, CMND_SCALE, CMND_CALC_RESOLUTION };
 const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION ;
@@ -560,6 +571,251 @@ void RulesTeleperiod(void)
   rules_teleperiod = 1;
   RulesProcess();
   rules_teleperiod = 0;
+}
+
+/********************************************************************************************/
+/*
+ * Parse the variable name
+ * Input:
+ *      varName - A string should contain a variable name like "var15", "mem2"
+ * Output:
+ *      var     - The variable, include type and index
+ * Return:
+ *      true    - Parse succeed
+ *      false   - Failed to parse the variable name
+ */
+bool getVariable(const char * varName, RuleVariable &var)
+{
+  bool succeed = false;
+  String sVarName = varName;
+  sVarName.trim();
+  if (sVarName.startsWith("VAR")) {
+    var.type = RULE_VARIABLE_TYPE_VAR;
+    succeed = true;
+  } else if (sVarName.startsWith("MEM")) {
+    var.type = RULE_VARIABLE_TYPE_MEM;
+    succeed = true;
+  } else {
+    var.type = RULE_VARIABLE_TYPE_NONE;
+  }
+  if (succeed)
+    var.index = sVarName.substring(3).toInt();
+  return succeed;
+}
+
+/********************************************************************************************/
+/*
+ * Get the content of a specified variable
+ * Input:
+ *      var     - The variable, include type and index
+ * Return:
+ *      The string content of the variable
+ *      NULL    - Failed
+ */
+char * getVariableString(RuleVariable var)
+{
+  switch (var.type) {
+    case RULE_VARIABLE_TYPE_VAR:
+      if (var.index > 0 && var.index <= MAX_RULE_VARS)
+        return vars[var.index -1];
+    case RULE_VARIABLE_TYPE_MEM:
+      if (var.index > 0 && var.index <= MAX_RULE_MEMS)
+        return Settings.mems[var.index -1];
+  }
+  return NULL;
+}
+
+/********************************************************************************************/
+/*
+ * Get the value of a specified variable
+ * Input:
+ *      var     - The variable, include type and index
+ * Return:
+ *      The number value of the variable
+ *      0       - Default value
+ */
+double getVariableValue(RuleVariable var)
+{
+  char * strVar = getVariableString(var);
+  if (strVar) {
+    return CharToDouble(strVar);
+  }
+  return 0;
+}
+
+/********************************************************************************************/
+/*
+ * Set the value for a specified variable
+ * Input:
+ *      var     - The variable, include type and index
+ *      value   - Number value to be set
+ * Return:
+ *      true    - succeed
+ *      false   - failed
+ */
+bool setVariableValue(RuleVariable var, double value)
+{
+  bool bSucceed = false;
+  switch (var.type) {
+    case RULE_VARIABLE_TYPE_VAR:
+      if (var.index > 0 && var.index <= MAX_RULE_VARS) {
+        dtostrfd(value, Settings.flag2.calc_resolution, vars[var.index -1]);
+        bitSet(vars_event, var.index -1);
+        bSucceed = true;
+      }
+      break;
+    case RULE_VARIABLE_TYPE_MEM:
+      if (var.index > 0 && var.index <= MAX_RULE_MEMS) {
+        dtostrfd(value, Settings.flag2.calc_resolution, Settings.mems[var.index -1]);
+        bitSet(mems_event, var.index -1);
+        bSucceed = true;
+      }
+      break;
+  }
+  return bSucceed;
+}
+
+double ParseNumber(char * &pNumber)
+{
+  double result = 0;
+  String sNumber = "";
+  while (*pNumber) {
+    if (isdigit(*pNumber) || (*pNumber == '.')) {
+      sNumber += *pNumber;
+      pNumber++;
+    } else {
+      break;
+    }
+  }
+  if (sNumber.length() > 0) {
+    return CharToDouble(sNumber.c_str());
+  }
+  return 0;
+}
+
+RuleVariable ParseVariable(char * &pVarname)
+{
+  RuleVariable var;
+  String sVarName = "";
+  while (*pVarname) {
+    if (isalpha(*pVarname) || isdigit(*pVarname)) {
+      sVarName += *pVarname;
+      pVarname++;
+    } else {
+      break;
+    }
+  }
+  if (sVarName.length() > 0 && getVariable(sVarName.c_str(), var)) {
+    //return var;
+  } else {
+    var.type = RULE_VARIABLE_TYPE_NONE;
+  }
+  return var;
+}
+
+double NextObjectValue(char * &pointer)
+{
+  while (*pointer) 
+  {
+    if (isspace(*pointer)) {      //Skip leading spaces
+      pointer++;
+      continue;
+    }
+    if (isdigit(*pointer)) {      //This object is a number
+      return ParseNumber(pointer);
+    } else if (isalpha(*pointer)) {     //Should be a variable like VAR12, MEM1
+      return getVariableValue(ParseVariable(pointer));
+    } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
+      pointer++;
+      char * sub_exp_start = pointer; //Find out the sub expression between a pair of parenthesis. "()"
+      unsigned int sub_exp_len = 0;
+      //Look for the matched closure parenthesis.")"
+      bool bFindClosures = false;
+      uint8_t matchClosures = 1;
+      while (*pointer)
+      {
+        if (*pointer == ')') {
+          matchClosures--;
+          if (matchClosures == 0) {
+            sub_exp_len = pointer - sub_exp_start;
+            bFindClosures = true;
+            break;
+          }
+        } else if (*pointer == '(') {
+          matchClosures++;
+        }
+        pointer++;
+      }
+      if (bFindClosures) {
+        //return ExpressionEvaluate(sub_exp_start, sub_exp_len);
+      }
+    }
+  }
+  return 0;
+}
+
+int8_t ParseOperator(char * &pointer)
+{
+  int8_t op = EXPRESSION_OPERATOR_NONE;
+  while (*pointer) 
+  {
+    if (isspace(*pointer)) {      //Skip leading spaces
+      pointer++;
+      continue;
+    }
+    if (char *pch = strchr(kExpressionOperators, *pointer)) {      //If it is an operator
+      op = pch - kExpressionOperators;
+      pointer++;
+      break;
+    } else {      //Invalid, expect an operator but find something else
+      break;
+    }
+  }
+  return op;
+}
+
+/********************************************************************************************/
+/*
+ * Parse and evaluate an expression.
+ * For example: "10 * ( MEM2 + 1) / 2"
+ * Right now, only support operators listed here:  (order by priority)
+ *      Priority 4: ^ (power)
+ *      Priority 3: % (modulo, always get integer result)
+ *      Priority 2: *, /
+ *      Priority 1: +, -
+ * Input:
+ *      expression  - The expression to be evaluated
+ *      len         - Length of the expression
+ * Return:
+ *      double      - result. 
+ *      0           - if the expression is invalid
+ */
+double ExpressionEvaluate(const char * expression, unsigned int len)
+{
+  char expbuf[len + 1];
+  memcpy(expbuf, expression, len);
+  expbuf[len] = '\0';
+  char * scan_pointer = expbuf;
+  char * next_pointer;
+  double result = 0;
+
+  //We are going to scan the whole expression, find out all the objects value and operators
+  LinkedList<double> object_values;
+  LinkedList<int8_t> operators;
+
+  object_values.add(NextObjectValue(scan_pointer));
+  while (*scan_pointer)
+  {
+    int8_t op = ParseOperator(scan_pointer);
+    if (op == EXPRESSION_OPERATOR_NONE) {
+      break;
+    }
+    operators.add(op);
+    if (*scan_pointer) {
+      object_values.add(NextObjectValue(scan_pointer));
+    }
+  }
+  return result;
 }
 
 bool RulesCommand(void)
