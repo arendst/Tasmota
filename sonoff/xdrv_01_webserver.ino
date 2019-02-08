@@ -129,11 +129,11 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "x.onreadystatechange=function(){"
         "if(x.readyState==4&&x.status==200){"
           "var z,d;"
-          "d=x.responseXML;"
-          "id=d.getElementsByTagName('i')[0].childNodes[0].nodeValue;"
-          "if(d.getElementsByTagName('j')[0].childNodes[0].nodeValue==0){t.value='';}"
-          "z=d.getElementsByTagName('l')[0].childNodes;"
-          "if(z.length>0){t.value+=decodeURIComponent(z[0].nodeValue);}"
+          "d=x.responseText.split(/\1/);"
+          "id=d.shift();"
+          "if(d.shift()==0){t.value='';}"
+          "z=d.shift();"
+          "if(z.length>0){t.value+=z;}"
           "t.scrollTop=99999;"
           "sn=t.scrollTop;"
         "}"
@@ -1813,7 +1813,9 @@ void HandleAjaxConsoleRefresh(void)
   if (strlen(svalue)) { counter = atoi(svalue); }
 
   bool last_reset_web_log_flag = reset_web_log_flag;
-  String message = F("}9");  // Cannot load mqtt_data here as <> will be encoded by replacements below
+  // mqtt_data used as scratch space
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%d\1%d\1"), web_log_index, last_reset_web_log_flag);
+  String message = mqtt_data;
   if (!reset_web_log_flag) {
     counter = 0;
     reset_web_log_flag = true;
@@ -1834,20 +1836,13 @@ void HandleAjaxConsoleRefresh(void)
           cflg = true;
         }
         strlcpy(mqtt_data, tmp, len);
-        message += mqtt_data;
+        message += mqtt_data; // mqtt_data used as scratch space
       }
       counter++;
-      if (!counter) { counter++; } // Skip 0 as it is not allowed
+      if (!counter) { counter++; } // Skip log index 0 as it is not allowed
     } while (counter != web_log_index);
-    // XML encoding to fix blank console log in concert with javascript decodeURIComponent
-    message.replace(F("%"), F("%25"));  // Needs to be done first as otherwise the % in %26 will also be converted
-    message.replace(F("&"), F("%26"));
-    message.replace(F("<"), F("%3C"));
-    message.replace(F(">"), F("%3E"));
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<r><i>%d</i><j>%d</j><l>"), web_log_index, last_reset_web_log_flag);
-  message.replace(F("}9"), mqtt_data);  // Save to load here
-  message += F("</l></r>");
+  message += F("\1");
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), message);
 }
 
