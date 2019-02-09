@@ -563,13 +563,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SM16716_DAT,    // SM16716 DATA
   GPIO_SM16716_SEL,    // SM16716 SELECT
 #endif // USE_SM16716
-#if defined(USE_ENERGY_SENSOR) && defined(USE_HLW8012)
-  GPIO_NRG_SEL,        // HLW8012/HLJ-01 Sel output (1 = Voltage)
-  GPIO_NRG_SEL_INV,    // HLW8012/HLJ-01 Sel output (0 = Voltage)
-  GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
-  GPIO_HLW_CF,         // HLW8012 CF power
-  GPIO_HJL_CF,         // HJL-01/BL0937 CF power
-#endif
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
@@ -1865,7 +1858,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "WAGA CHCZ02MB",   // WAGA life CHCZ02MB (HJL-01 Energy Monitoring)
                        // https://www.ebay.com/itm/332595697006
      GPIO_LED2_INV,    // GPIO00 Red LED
-     0,                // GPIO01 Serial TX
+     0,                // GPIO01 Serial RXD
      0,                // GPIO02
      GPIO_NRG_SEL_INV, // GPIO03 HJL-01 Sel output (1 = Voltage)
      0,                // GPIO04
@@ -1888,24 +1881,23 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        // https://docs.tuya.com/en/hardware/WiFi-module/wifi-e3s-module.html
                        // http://www.datasheet-pdf.com/PDF/SM16716-Datasheet-Sunmoon-932771
      GPIO_USER,        // GPIO00 N.C.
-     0,
+     0,                // GPIO01 Serial RXD
      GPIO_USER,        // GPIO02 N.C.
-     0,
+     0,                // GPIO03 Serial TXD
      GPIO_SM16716_CLK, // GPIO04 SM16716 Clock
      GPIO_PWM1,        // GPIO05 White
-                       // GPIO06
-                       // GPIO07
-                       // GPIO08
-     0,                // GPIO09
-     0,                // GPIO10
-                       // GPIO11
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
      GPIO_USER,        // GPIO12 Alt. White on some devices
      GPIO_USER,        // GPIO13 SM16716 Enable on some devices
      GPIO_SM16716_DAT, // GPIO14 SM16716 Data
      0,                // GPIO15 wired to GND
      GPIO_USER,        // GPIO16 N.C.
      GPIO_FLAG_ADC0    // ADC0 A0 Analog input
-//   + GPIO_FLAG_PULLUP  // Allow input pull-up control
   }
 };
 
