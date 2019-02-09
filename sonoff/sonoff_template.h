@@ -309,6 +309,7 @@ enum SupportedModules {
   SP10,
   WAGA,
   SYF05,
+  SP201,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -641,7 +642,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
   WEMOS,
-  SYF05
+  SYF05,
+  SP201
 };
 
 // Default module settings
@@ -1906,6 +1908,28 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO16 N.C.
      GPIO_FLAG_ADC0    // ADC0 A0 Analog input
 //   + GPIO_FLAG_PULLUP  // Allow input pull-up control
+  },
+  { "SP201",           // Two mini smart plugs with Energy Monitoring
+                       // https://www.amazon.com/Outlet-Compatible-Monitoring-Function-Required/dp/B079Q5W22B
+                       // used https://github.com/arendst/Sonoff-Tasmota/wiki/Tuya-OTA for flashing Tasmota via OTA
+     GPIO_LED1_INV,    // GPIO00 Red Led (1 = On, 0 = Off) - Power status
+     0,
+     0,    // GPIO02 Blue Led (1 = On, 0 = Off) - Link status
+     GPIO_NRG_SEL_INV, // GPIO03 HLWBL HJL-01 Sel output (1 = Voltage)
+     GPIO_KEY1,        // GPIO04 Button 1
+     GPIO_HJL_CF,      // GPIO05 HLW8012 BL0937 or HJL-01 CF power
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_REL1,        // GPIO12 Relay1 (0 = Off, 1 = On)
+     GPIO_KEY2,        // GPIO13 Button 2
+     GPIO_NRG_CF1,     // GPIO14  HLWBL BL0937 or HJL-01 CF1 current / voltage
+     GPIO_REL2,        // GPIO15 Relay2 (0 = Off, 1 = On)
+     0,                // GPIO16
+     0
   }
 };
 
