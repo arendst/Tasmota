@@ -694,8 +694,8 @@ bool MqttCommand(void)
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, fingerprint);
   }
 #endif
-  else if ((CMND_MQTTCLIENT == command_code) && !grpflg) {
-    if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_client))) {
+  else if (CMND_MQTTCLIENT == command_code) {
+    if (!grpflg && (data_len > 0) && (data_len < sizeof(Settings.mqtt_client))) {
       strlcpy(Settings.mqtt_client, (SC_DEFAULT == Shortcut(dataBuf)) ? MQTT_CLIENT_ID : dataBuf, sizeof(Settings.mqtt_client));
       restart_flag = 2;
     }
@@ -766,8 +766,8 @@ bool MqttCommand(void)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_grptopic);
   }
-  else if ((CMND_TOPIC == command_code) && !grpflg) {
-    if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_topic))) {
+  else if (CMND_TOPIC == command_code) {
+    if (!grpflg && (data_len > 0) && (data_len < sizeof(Settings.mqtt_topic))) {
       MakeValidMqtt(0, dataBuf);
       if (!strcmp(dataBuf, mqtt_client)) SetShortcut(dataBuf, SC_DEFAULT);
       strlcpy(stemp1, (SC_DEFAULT == Shortcut(dataBuf)) ? MQTT_TOPIC : dataBuf, sizeof(stemp1));
@@ -780,8 +780,8 @@ bool MqttCommand(void)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_topic);
   }
-  else if ((CMND_BUTTONTOPIC == command_code) && !grpflg) {
-    if ((data_len > 0) && (data_len < sizeof(Settings.button_topic))) {
+  else if (CMND_BUTTONTOPIC == command_code) {
+    if (!grpflg && (data_len > 0) && (data_len < sizeof(Settings.button_topic))) {
       MakeValidMqtt(0, dataBuf);
       if (!strcmp(dataBuf, mqtt_client)) SetShortcut(dataBuf, SC_DEFAULT);
       switch (Shortcut(dataBuf)) {

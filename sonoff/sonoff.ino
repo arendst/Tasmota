@@ -1126,8 +1126,8 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_ASTERIX, command, index);
       }
     }
-    else if ((CMND_HOSTNAME == command_code) && !grpflg) {
-      if ((data_len > 0) && (data_len < sizeof(Settings.hostname))) {
+    else if (CMND_HOSTNAME == command_code) {
+      if (!grpflg && (data_len > 0) && (data_len < sizeof(Settings.hostname))) {
         strlcpy(Settings.hostname, (SC_DEFAULT == Shortcut(dataBuf)) ? WIFI_HOSTNAME : dataBuf, sizeof(Settings.hostname));
         if (strstr(Settings.hostname,"%")) {
           strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
