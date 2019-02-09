@@ -263,9 +263,5 @@ const uint8_t kIFan02Speed[MAX_FAN_SPEED][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,
 extern uint8_t light_device;  // Light device number
 extern uint8_t light_power;  // Light power
 extern uint8_t rotary_changed; // Rotary switch changed
-struct RuleVariable {
-  int8_t  type;
-  int8_t  index;
-};
 
 #endif  // _SONOFF_H_

@@ -64,7 +64,9 @@
 #ifdef USE_SPI
   #include <SPI.h>                          // SPI support, TFT
 #endif  // USE_SPI
-
+#ifdef USE_RULES
+  #include <LinkedList.h>                 // Import LinkedList library 
+#endif
 // Structs
 #include "settings.h"
 
