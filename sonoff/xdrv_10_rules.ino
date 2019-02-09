@@ -930,7 +930,7 @@ bool RulesCommand(void)
   }
   else if ((CMND_RULETIMER == command_code) && (index > 0) && (index <= MAX_RULE_TIMERS)) {
     if (XdrvMailbox.data_len > 0) {
-      double timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len) * 1000;
+      double timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
       rules_timer[index -1] = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
     }
     mqtt_data[0] = '\0';
