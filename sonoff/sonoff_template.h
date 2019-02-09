@@ -1909,12 +1909,11 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_FLAG_ADC0    // ADC0 A0 Analog input
 //   + GPIO_FLAG_PULLUP  // Allow input pull-up control
   },
-  { "SP201",           // Two mini smart plugs with Energy Monitoring
-                       // https://www.amazon.com/Outlet-Compatible-Monitoring-Function-Required/dp/B079Q5W22B
+  { "SP201",           // Orange Tech 2 in 1 Smart Socket Wifi Mini Outlet  with Energy Monitoring
+                       // https://www.amazon.com/gp/product/B07L63S731
                        // used https://github.com/arendst/Sonoff-Tasmota/wiki/Tuya-OTA for flashing Tasmota via OTA
-     GPIO_LED1_INV,    // GPIO00 Red Led (1 = On, 0 = Off) - Power status
-     0,
-     0,    // GPIO02 Blue Led (1 = On, 0 = Off) - Link status
+     GPIO_LED1_INV,    // GPIO00 Led (1 = On, 0 = Off) - Power status
+     0, 0,  
      GPIO_NRG_SEL_INV, // GPIO03 HLWBL HJL-01 Sel output (1 = Voltage)
      GPIO_KEY1,        // GPIO04 Button 1
      GPIO_HJL_CF,      // GPIO05 HLW8012 BL0937 or HJL-01 CF power
@@ -1928,8 +1927,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY2,        // GPIO13 Button 2
      GPIO_NRG_CF1,     // GPIO14  HLWBL BL0937 or HJL-01 CF1 current / voltage
      GPIO_REL2,        // GPIO15 Relay2 (0 = Off, 1 = On)
-     0,                // GPIO16
-     0
+     0, 0
   }
 };
 
