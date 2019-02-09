@@ -2171,27 +2171,29 @@ void SerialInput(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
-    if (serial_in_byte > 127 && !Settings.flag.mqtt_serial_raw) { // binary data...
+    if (serial_in_byte > 127 && !Settings.flag.mqtt_serial_raw) {                // Discard binary data above 127 if no raw reception allowed
       serial_in_byte_counter = 0;
       Serial.flush();
       return;
     }
-    if (!Settings.flag.mqtt_serial) {
-      if (isprint(serial_in_byte)) {
-        if (serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {  // add char to string if it still fits
+    if (!Settings.flag.mqtt_serial) {                                            // SerialSend active
+      if (isprint(serial_in_byte)) {                                             // Any char between 32 and 127
+        if (serial_in_byte_counter < INPUT_BUFFER_SIZE -1) {                     // Add char to string if it still fits
           serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
         } else {
           serial_in_byte_counter = 0;
         }
       }
     } else {
-      if (serial_in_byte || Settings.flag.mqtt_serial_raw) {
-        if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&
-            ((serial_in_byte != Settings.serial_delimiter) || Settings.flag.mqtt_serial_raw)) {  // add char to string if it still fits
+      if (serial_in_byte || Settings.flag.mqtt_serial_raw) {                     // Any char between 1 and 127 or any char (0 - 255)
+        if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&                   // Add char to string if it still fits and ...
+            ((isprint(serial_in_byte) && (128 == Settings.serial_delimiter)) ||  // Any char between 32 and 127
+             (serial_in_byte != Settings.serial_delimiter) ||                    // Any char between 1 and 127 and not being delimiter
+              Settings.flag.mqtt_serial_raw)) {                                  // Any char between 0 and 255
           serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
           serial_polling_window = millis();
         } else {
-          serial_polling_window = 0;
+          serial_polling_window = 0;                                             // Reception done - send mqtt
           break;
         }
       }
@@ -2201,8 +2203,8 @@ void SerialInput(void)
  * Sonoff SC 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
     if (SONOFF_SC == Settings.module) {
-      if (serial_in_byte == '\x1B') {            // Sonoff SC status from ATMEGA328P
-        serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
+      if (serial_in_byte == '\x1B') {                                            // Sonoff SC status from ATMEGA328P
+        serial_in_buffer[serial_in_byte_counter] = 0;                            // Serial data completed
         SonoffScSerialInput(serial_in_buffer);
         serial_in_byte_counter = 0;
         Serial.flush();
@@ -2213,7 +2215,7 @@ void SerialInput(void)
 /*-------------------------------------------------------------------------------------------*/
 
     else if (!Settings.flag.mqtt_serial && (serial_in_byte == '\n')) {
-      serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
+      serial_in_buffer[serial_in_byte_counter] = 0;                              // Serial data completed
       seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings.seriallog_level;
       snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
       AddLog(LOG_LEVEL_INFO);
@@ -2226,7 +2228,7 @@ void SerialInput(void)
   }
 
   if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {
-    serial_in_buffer[serial_in_byte_counter] = 0;  // serial data completed
+    serial_in_buffer[serial_in_byte_counter] = 0;                                // Serial data completed
     if (!Settings.flag.mqtt_serial_raw) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
     } else {
