@@ -638,10 +638,10 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,             // Light Bulbs
   PHILIPS,
+  SYF05,
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
-  WEMOS,
-  SYF05
+  WEMOS
 };
 
 // Default module settings
