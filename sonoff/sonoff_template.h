@@ -309,6 +309,7 @@ enum SupportedModules {
   SP10,
   WAGA,
   SYF05,
+  RGB_SMART_PLUG,
   MAXMODULE };
 
 /********************************************************************************************/
@@ -612,6 +613,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   KA10,
   SP10,
   WAGA,
+  RGB_SMART_PLUG,
   NEO_COOLCAM,         // Socket Relay Devices
   OBI,
   OBI2,
@@ -1898,6 +1900,27 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO15 wired to GND
      GPIO_USER,        // GPIO16 N.C.
      GPIO_FLAG_ADC0    // ADC0 A0 Analog input
+  },
+  { "RGB Smart Plug",  // Tuya based smart plug with power monitoring and RGB light
+                       // https://www.aliexpress.com/item/ET-Smart-Plug-Wifi-Socket-With-Switch-Phone-APP-Voice-Remote-Control-Monitor-Smart-Timing-Switch/32964036349.html?spm=a2g0s.9042311.0.0.439c4c4d4N8N2Q
+                       // https://xiangshangcn.en.alibaba.com/product/60844251239-807590977/RGB_wifi_smart_plug_smart_socket_smart_outlet_EU_works_with_Amazon_alexa_google_home_mobile_app_tuya_solution_smart_life.html?spm=a2700.icbuShop.41413.24.4e996767oFAAmO
+     GPIO_PWM1,        // GPIO00 Red
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_PWM3,        // GPIO02 Blue
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_PWM2,        // GPIO04 Green
+     GPIO_HJL_CF,      // GPIO05 BL0937 or HJL-01 CF power
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_NRG_SEL_INV, // GPIO12 BL0937 or HJL-01 Sel output (0 = Voltage)
+     GPIO_KEY1,        // GPIO13 Button
+     GPIO_NRG_CF1,     // GPIO14 BL0937 or HJL-01 CF1 current / voltage
+     GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
+     0, 0
   }
 };
 
