@@ -89,10 +89,6 @@
 #define COMPARE_OPERATOR_SMALLER_EQUAL    7
 #define MAXIMUM_COMPARE_OPERATOR          COMPARE_OPERATOR_SMALLER_EQUAL
 
-#define RULE_VARIABLE_TYPE_NONE 0
-#define RULE_VARIABLE_TYPE_VAR  1
-#define RULE_VARIABLE_TYPE_MEM  2
-
 const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
 
 const char kExpressionOperators[] PROGMEM = "+-*/%^";
