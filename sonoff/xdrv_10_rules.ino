@@ -649,7 +649,22 @@ bool findNextVariableValue(char * &pVarname, double &value)
       value = CharToDouble(Settings.mems[index -1]);
       succeed = true;
     }
+  } else if (sVarName.equals("TIME")) {
+    value = GetMinutesPastMidnight();
+    succeed = true;
+  } else if (sVarName.equals("UPTIME")) {
+    value = GetMinutesUptime();
+    succeed = true;
+#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+  } else if (sVarName.equals("SUNRISE")) {
+    value = GetSunMinutes(0);
+    succeed = true;
+  } else if (sVarName.equals("SUNSET")) {
+    value = GetSunMinutes(1);
+    succeed = true;
+#endif
   }
+
   return succeed;
 }
 
@@ -752,11 +767,7 @@ bool findNextOperator(char * &pointer, int8_t &op)
 }
 /********************************************************************************************/
 /*
- * Calculate a simple expression like 2 * 3
- *     An object could be:
- *     - A float number start with a digit, like 0.787
- *     - A variable name, like VAR1, MEM3
- *     - An expression enclosed with a pair of round brackets, (.....)
+ * Calculate a simple expression composed by 2 value and 1 operator, like 2 * 3
  * Input:
  *      pointer     - A char pointer point to a place of the expression string
  *      value       - Reference a double variable used to accept the result
@@ -767,7 +778,7 @@ bool findNextOperator(char * &pointer, int8_t &op)
  *      true    - succeed
  *      false   - failed
  */
-double CalculateTwoValues(double v1, double v2, uint8_t op)
+double calculateTwoValues(double v1, double v2, uint8_t op)
 {
   switch (op)
   {
@@ -802,17 +813,7 @@ double CalculateTwoValues(double v1, double v2, uint8_t op)
  * Return:
  *      double      - result. 
  *      0           - if the expression is invalid
- */
-double evaluateExpression(const char * expression, unsigned int len)
-{
-  char expbuf[len + 1];
-  memcpy(expbuf, expression, len);
-  expbuf[len] = '\0';
-  char * scan_pointer = expbuf;
-snprintf_P(log_data, sizeof(log_data), PSTR("Expression: %s"),scan_pointer);
-AddLog(LOG_LEVEL_DEBUG);
-
-/*
+ * An example:
  * MEM1 = 3, MEM2 = 6, VAR2 = 15, VAR10 = 80
  * At beginning, the expression might be complicated like: 3.14 * (MEM1 * (10 + VAR2 ^2) - 100) % 10 + VAR10 / (2 + MEM2)
  * We are going to scan the whole expression, evaluate each object.
@@ -830,6 +831,13 @@ AddLog(LOG_LEVEL_DEBUG);
  *  2             +                                   1
  *  3             /                                   2
  */
+double evaluateExpression(const char * expression, unsigned int len)
+{
+  char expbuf[len + 1];
+  memcpy(expbuf, expression, len);
+  expbuf[len] = '\0';
+  char * scan_pointer = expbuf;
+
   LinkedList<double> object_values;
   LinkedList<int8_t> operators;
   int8_t op;
@@ -855,13 +863,13 @@ AddLog(LOG_LEVEL_DEBUG);
   }
 
   //Going to evaluate the whole expression
-  //Calculate by order of operator priorities
+  //Calculate by order of operator priorities. Looking for all operators with specified priority (from High to Low)
   for (int8_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
     int index = 0;
     while (index < operators.size()) {
       if (priority == kExpressionOperatorsPriorities[(operators.get(index))]) {     //need to calculate the operator first
         //get current object value and remove the next object with current operator
-        va = CalculateTwoValues(object_values.get(index), object_values.remove(index + 1), operators.remove(index));
+        va = calculateTwoValues(object_values.get(index), object_values.remove(index + 1), operators.remove(index));
         //Replace the current value with the result
         object_values.set(index, va);
       } else {
@@ -959,21 +967,6 @@ bool RulesCommand(void)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
-  /*
-  else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
-    if (XdrvMailbox.data_len > 0) {
-      strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
-      bitSet(vars_event, index -1);
-    }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
-  }
-  else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
-    if (XdrvMailbox.data_len > 0) {
-      strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
-      bitSet(mems_event, index -1);
-    }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
-  }*/
   else if (CMND_CALC_RESOLUTION == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
       Settings.flag2.calc_resolution = XdrvMailbox.payload;
