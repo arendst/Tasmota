@@ -107,7 +107,7 @@ void LcdCenter(uint8_t row, char* txt)
   line[Settings.display_cols[0]] = 0;
   len = strlen(txt);
   offset = (len < Settings.display_cols[0]) ? offset = (Settings.display_cols[0] - len) / 2 : 0;
-  strlcpy(line +offset, txt, len);
+  strlcpy(line +offset, txt, len +1);
   lcd->setCursor(0, row);
   lcd->print(line);
 }
