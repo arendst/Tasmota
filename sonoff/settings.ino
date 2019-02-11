@@ -596,6 +596,7 @@ void SettingsDefaultSet2(void)
 //  Settings.flag.interlock = 0;
   Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
   Settings.module = MODULE;
+  ModuleDefault(WEMOS);
 //  for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
   strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
   strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
@@ -1049,6 +1050,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x0604010D) {
       Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;
+    }
+    if (Settings.version < 0x06040110) {
+      ModuleDefault(WEMOS);
     }
 
     Settings.version = VERSION;

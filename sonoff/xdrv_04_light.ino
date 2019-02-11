@@ -487,7 +487,7 @@ void LightInit(void)
         pinMode(pin[GPIO_PWM1 +i], OUTPUT);
       }
     }
-    if (SONOFF_LED == Settings.module) { // Fix Sonoff Led instabilities
+    if (SONOFF_LED == my_module_type) { // Fix Sonoff Led instabilities
       if (!my_module.io[4]) {
         pinMode(4, OUTPUT);             // Stop floating outputs
         digitalWrite(4, LOW);
@@ -578,7 +578,7 @@ void LightSetColorTemp(uint16_t ct)
   }
   uint16_t icold = (100 * (347 - my_ct)) / 136;
   uint16_t iwarm = (100 * my_ct) / 136;
-  if (PHILIPS == Settings.module) {
+  if (PHILIPS == my_module_type) {
     // Xiaomi Philips bulbs follow a different scheme:
     // channel 0=intensity, channel2=temperature
     Settings.light_color[1] = (uint8_t)icold;
@@ -614,7 +614,7 @@ void LightSetDimmer(uint8_t myDimmer)
 {
   float temp;
 
-  if (PHILIPS == Settings.module) {
+  if (PHILIPS == my_module_type) {
     // Xiaomi Philips bulbs use two PWM channels with a different scheme:
     float dimmer = 100 / (float)myDimmer;
     temp = (float)Settings.light_color[0] / dimmer; // channel 1 is intensity

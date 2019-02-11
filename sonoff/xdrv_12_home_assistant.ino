@@ -369,7 +369,7 @@ void HAssAnnounceButtons(void)
       uint8_t button_present = 0;
       uint8_t toggle = 1;
 
-      if (!button_index && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
+      if (!button_index && ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type))) {
         button_present = 1;
       } else {
         if (pin[GPIO_KEY1 + button_index] < 99) {

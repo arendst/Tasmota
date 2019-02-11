@@ -342,7 +342,7 @@ void MqttPublishPowerState(uint8_t device)
 
   if ((device < 1) || (device > devices_present)) { device = 1; }
 
-  if ((SONOFF_IFAN02 == Settings.module) && (device > 1)) {
+  if ((SONOFF_IFAN02 == my_module_type) && (device > 1)) {
     if (GetFanspeed() < MAX_FAN_SPEED) {  // 4 occurs when fanspeed is 3 and RC button 2 is pressed
 #ifdef USE_DOMOTICZ
       DomoticzUpdateFanState();  // RC Button feedback
@@ -435,7 +435,7 @@ void MqttConnected(void)
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
     for (uint8_t i = 1; i <= devices_present; i++) {
       MqttPublishPowerState(i);
-      if (SONOFF_IFAN02 == Settings.module) { break; }  // Report status of light relay only
+      if (SONOFF_IFAN02 == my_module_type) { break; }  // Report status of light relay only
     }
     if (Settings.tele_period) { tele_period = Settings.tele_period -9; }  // Enable TelePeriod in 9 seconds
     rules_flag.system_boot = 1;
