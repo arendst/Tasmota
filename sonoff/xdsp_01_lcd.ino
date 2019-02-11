@@ -99,15 +99,20 @@ void LcdDisplayOnOff(uint8_t on)
 
 void LcdCenter(uint8_t row, char* txt)
 {
-  int offset;
-  int len;
   char line[Settings.display_cols[0] +2];
 
+  int len = strlen(txt);
+  int offset = 0;
+  if (len >= Settings.display_cols[0]) {
+    len = Settings.display_cols[0]
+  } else {
+    offset = (Settings.display_cols[0] - len) / 2;
+  }
   memset(line, 0x20, Settings.display_cols[0]);
   line[Settings.display_cols[0]] = 0;
-  len = strlen(txt);
-  offset = (len < Settings.display_cols[0]) ? offset = (Settings.display_cols[0] - len) / 2 : 0;
-  strlcpy(line +offset, txt, len +1);
+  for (uint8_t i = 0; i < len; i++) {
+    line[offset +i] = txt[i];
+  }
   lcd->setCursor(0, row);
   lcd->print(line);
 }
