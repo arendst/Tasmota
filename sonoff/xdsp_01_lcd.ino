@@ -104,7 +104,7 @@ void LcdCenter(uint8_t row, char* txt)
   int len = strlen(txt);
   int offset = 0;
   if (len >= Settings.display_cols[0]) {
-    len = Settings.display_cols[0]
+    len = Settings.display_cols[0];
   } else {
     offset = (Settings.display_cols[0] - len) / 2;
   }
