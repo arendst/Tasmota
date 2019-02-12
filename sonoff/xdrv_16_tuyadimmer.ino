@@ -402,7 +402,7 @@ bool Xdrv16(uint8_t function)
 {
   bool result = false;
 
-  if (TUYA_DIMMER == my_module_type) {
+  if (TUYA_DIMMER == Settings.module) {
     switch (function) {
       case FUNC_MODULE_INIT:
         result = TuyaModuleSelected();

@@ -173,7 +173,7 @@ bool Xdrv18(uint8_t function)
 {
   bool result = false;
 
-  if (ARMTRONIX_DIMMERS == my_module_type) {
+  if (ARMTRONIX_DIMMERS == Settings.module) {
     switch (function) {
       case FUNC_MODULE_INIT:
         result = ArmtronixModuleSelected();

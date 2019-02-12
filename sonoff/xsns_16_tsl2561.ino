@@ -64,14 +64,12 @@ bool Tsl2561Read(void)
 void Tsl2561Detect(void)
 {
   if (tsl2561_type) { return; }
-  uint8_t id;
 
   if (I2cDevice(0x29) || I2cDevice(0x39) || I2cDevice(0x49)) {
     Tsl.begin();
-    if (!Tsl.id(id)) return;
     if (Tsl.on()) {
       tsl2561_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, tsl2561_types, Tsl.address(), id);
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, tsl2561_types, Tsl.address());
       AddLog(LOG_LEVEL_DEBUG);
     }
   }

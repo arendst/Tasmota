@@ -553,17 +553,6 @@
 #define D_SENSOR_MCP39F5_RST   "MCP39F5 Rst"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
-#define D_SENSOR_PN532_TX      "PN532 Tx"
-#define D_SENSOR_PN532_RX      "PN532 Rx"
-#define D_SENSOR_SM16716_CLK   "SM16716 CLK"
-#define D_SENSOR_SM16716_DAT   "SM16716 DAT"
-#define D_SENSOR_SM16716_POWER "SM16716 PWR"
-#define D_SENSOR_MY92X1_DI     "MY92x1 DI"
-#define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
-#define D_SENSOR_ARIRFRCV      "ALux IrRcv"
-#define D_SENSOR_TXD           "Serial Tx"
-#define D_SENSOR_RXD           "Serial Rx"
-#define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
 
 // Units
 #define D_UNIT_AMPERE "A"

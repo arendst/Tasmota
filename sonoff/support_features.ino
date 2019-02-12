@@ -126,16 +126,16 @@ void GetFeatures(void)
 #ifdef USE_CONFIG_OVERRIDE
   feature_drv2 |= 0x00000001;  // user_config(_override).h
 #endif
-#ifdef FIRMWARE_MINIMAL
+#ifdef BE_MINIMAL
   feature_drv2 |= 0x00000002;  // user_config(_override).h
 #endif
-#ifdef FIRMWARE_SENSORS
+#ifdef USE_SENSORS
   feature_drv2 |= 0x00000004;  // user_config(_override).h
 #endif
-#ifdef FIRMWARE_CLASSIC
+#ifdef USE_CLASSIC
   feature_drv2 |= 0x00000008;  // user_config(_override).h
 #endif
-#ifdef FIRMWARE_KNX_NO_EMULATION
+#ifdef USE_KNX_NO_EMULATION
   feature_drv2 |= 0x00000010;  // user_config(_override).h
 #endif
 #ifdef USE_DISPLAY_MODES1TO5
@@ -177,10 +177,8 @@ void GetFeatures(void)
 #ifdef USE_ARMTRONIX_DIMMERS
   feature_drv2 |= 0x00020000;  // xdrv_18_armtronixdimmer.ino
 #endif
-#ifdef USE_SM16716
-  feature_drv2 |= 0x00040000;  // xdrv_04_light.ino
-#endif
 
+//  feature_drv2 |= 0x00040000;
 //  feature_drv2 |= 0x00080000;
 //  feature_drv2 |= 0x00100000;
 //  feature_drv2 |= 0x00200000;
@@ -378,8 +376,8 @@ void GetFeatures(void)
 #ifdef USE_MAX31855
   feature_sns2 |= 0x00080000;  // xsns_39_max31855.ino
 #endif
-#ifdef USE_PN532_HSU
-  feature_sns2 |= 0x00100000;  // xsns_40_pn532.ino
+#ifdef USE_PN532_I2C
+  feature_sns2 |= 0x00100000;  // xsns_40_pn532_i2c.ino
 #endif
 #ifdef USE_MAX44009
   feature_sns2 |= 0x00200000;

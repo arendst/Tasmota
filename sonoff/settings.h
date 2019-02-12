@@ -176,7 +176,7 @@ typedef union {
     uint8_t mhz19b_abc_disable : 1;        // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
   };
 } SensorCfg1;
-
+    
 /*
 struct SYSCFG {
   unsigned long cfg_holder;                // 000 Pre v6 header
@@ -326,12 +326,11 @@ struct SYSCFG {
   Mcp230xxCfg   mcp230xx_config[16];       // 6F6
   uint8_t       mcp230xx_int_prio;         // 716
   SensorCfg1    SensorBits1;               // 717  On/Off settings used by Sensor Commands
+
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
-  uint8_t       user_template_base;        // 71F
-  mytmplt       user_template;             // 720  29 bytes
 
-  uint8_t       free_73D[87];              // 73D
+  uint8_t       free_71F[117];             // 71F
 
   uint32_t      drivers[3];                // 794
   uint32_t      monitors;                  // 7A0

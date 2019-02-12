@@ -119,8 +119,7 @@ CONFIG REGISTER
 uint8_t ads1115_type = 0;
 uint8_t ads1115_address;
 uint8_t ads1115_addresses[] = { ADS1115_ADDRESS_ADDR_GND, ADS1115_ADDRESS_ADDR_VDD, ADS1115_ADDRESS_ADDR_SDA, ADS1115_ADDRESS_ADDR_SCL };
-uint8_t ads1115_found[] = {false,false,false,false};
-int16_t ads1115_values[4];
+
 //Ads1115StartComparator(channel, ADS1115_REG_CONFIG_MODE_SINGLE);
 //Ads1115StartComparator(channel, ADS1115_REG_CONFIG_MODE_CONTIN);
 void Ads1115StartComparator(uint8_t channel, uint16_t mode)
@@ -161,83 +160,51 @@ int16_t Ads1115GetConversion(uint8_t channel)
 void Ads1115Detect(void)
 {
   uint16_t buffer;
+
+  if (ads1115_type) {
+    return;
+  }
+
   for (uint8_t i = 0; i < sizeof(ads1115_addresses); i++) {
-    if (!ads1115_found[i]) {
-      ads1115_address = ads1115_addresses[i];
-      if (I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONVERT) && 
-          I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONFIG)) {
-        Ads1115StartComparator(i, ADS1115_REG_CONFIG_MODE_CONTIN);
-        ads1115_type = 1;
-        ads1115_found[i] = 1;
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
-        AddLog(LOG_LEVEL_DEBUG);
-      }
+    ads1115_address = ads1115_addresses[i];
+    if (I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONVERT)) {
+      Ads1115StartComparator(i, ADS1115_REG_CONFIG_MODE_CONTIN);
+      ads1115_type = 1;
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
+      AddLog(LOG_LEVEL_DEBUG);
+      break;
     }
-  }
-}
-
-void Ads1115GetValues(uint8_t address)
-{
-  uint8_t old_address = ads1115_address;
-  ads1115_address = address;
-  for (uint8_t i = 0; i < 4; i++) {
-    ads1115_values[i] = Ads1115GetConversion(i);
-    //snprintf_P(log_data, sizeof(log_data), "Logging ADS1115 %02x (%i) = %i", address, i, ads1115_values[i] );
-    //AddLog(LOG_LEVEL_INFO);
-  }
-  ads1115_address = old_address;
-}
-
-void Ads1115toJSON(char *comma_j)
-{
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s{"), mqtt_data,comma_j);
-  char *comma = (char*)"";
-  for (uint8_t i = 0; i < 4; i++) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, comma, i, ads1115_values[i]);
-    comma = (char*)",";
-  }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
-}
-
-void Ads1115toString(uint8_t address)
-{
-  char label[15];
-  snprintf_P(label, sizeof(label), "ADS1115(%02x)", address);
-
-  for (uint8_t i = 0; i < 4; i++) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, label, i, ads1115_values[i]);
   }
 }
 
 void Ads1115Show(bool json)
 {
-  if (!ads1115_type) { return; }
+  if (ads1115_type) {
+    char stemp[10];
 
-  if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ADS1115\":["), mqtt_data);
-  }
+    uint8_t dsxflg = 0;
+    for (uint8_t i = 0; i < 4; i++) {
+      int16_t adc_value = Ads1115GetConversion(i);
 
-  char *comma = (char*)"";
-
-  for (uint8_t t = 0; t < sizeof(ads1115_addresses); t++) {
-    //snprintf_P(log_data, sizeof(log_data), "Logging ADS1115 %02x", ads1115_addresses[t]);
-    //AddLog(LOG_LEVEL_INFO);
-    if (ads1115_found[t]) {
-      Ads1115GetValues(ads1115_addresses[t]);
       if (json) {
-        Ads1115toJSON(comma);
-        comma = (char*)",";
-      }
+        if (!dsxflg  ) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ADS1115\":{"), mqtt_data);
+          stemp[0] = '\0';
+        }
+        dsxflg++;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, stemp, i, adc_value);
+        strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_WEBSERVER
-      else {
-        Ads1115toString(ads1115_addresses[t]);
-      }
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
 #endif  // USE_WEBSERVER
+      }
     }
-  }
-
-  if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]"), mqtt_data);
+    if (json) {
+      if (dsxflg) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      }
+    }
   }
 }
 
