@@ -612,26 +612,34 @@ uint16_t LightGetColorTemp(void)
 
 void LightSetDimmer(uint8_t myDimmer)
 {
-  float temp;
+  uint16_t temp;
 
   if (PHILIPS == my_module_type) {
     // Xiaomi Philips bulbs use two PWM channels with a different scheme:
-    float dimmer = 100 / (float)myDimmer;
-    temp = (float)Settings.light_color[0] / dimmer; // channel 1 is intensity
+    temp = (uint16_t)Settings.light_color[0] * myDimmer / 255; // channel 1 is intensity
     light_current_color[0] = (uint8_t)temp;
-    temp = (float)Settings.light_color[1];          // channel 2 is temperature
+    temp = (uint16_t)Settings.light_color[1];          // channel 2 is temperature
     light_current_color[1] = (uint8_t)temp;
     return;
   }
   if (LT_PWM1 == light_type) {
     Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
   }
-  float dimmer = 100 / (float)myDimmer;
+
+  //determine highest color to premultiply dimmer with
+  uint8_t highest = 0;
+  for (uint8_t i = 0; i < light_subtype; i++) {
+    if (highest < Settings.light_color[i]) {
+      highest = Settings.light_color[i];
+    }
+  }
+
+  //scale the originally stored color to full range using highest value, then dim using dimmer
   for (uint8_t i = 0; i < light_subtype; i++) {
     if (Settings.flag.light_signal) {
-      temp = (float)light_signal_color[i] / dimmer;
+      temp = ((uint16_t)light_signal_color[i]) * myDimmer / highest;
     } else {
-      temp = (float)Settings.light_color[i] / dimmer;
+      temp = ((uint16_t)Settings.light_color[i]) * myDimmer / highest;
     }
     light_current_color[i] = (uint8_t)temp;
   }
@@ -645,14 +653,10 @@ void LightSetColor(void)
     if (highest < light_current_color[i]) {
       highest = light_current_color[i];
     }
+    Settings.light_color[i] = light_current_color[i];
   }
-  float mDim = (float)highest / 2.55;
-  Settings.light_dimmer = (uint8_t)mDim;
-  float dimmer = 100 / mDim;
-  for (uint8_t i = 0; i < light_subtype; i++) {
-    float temp = (float)light_current_color[i] * dimmer;
-    Settings.light_color[i] = (uint8_t)temp;
-  }
+
+  Settings.light_dimmer = highest;
 }
 
 void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
@@ -678,7 +682,7 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
 
     Settings.light_scheme = 0;
     if (!Settings.light_dimmer) {
-      Settings.light_dimmer = 20;
+      Settings.light_dimmer = 51;
     }
   }
 }
@@ -718,7 +722,7 @@ void LightState(uint8_t append)
   }
   GetPowerDevice(scommand, light_device, sizeof(scommand), Settings.flag.device_index_enable);
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"),
-    mqtt_data, scommand, GetStateText(light_power), Settings.light_dimmer);
+    mqtt_data, scommand, GetStateText(light_power), ((uint16_t)Settings.light_dimmer + 1) * 100 / 255); //+1 fixes rounding error, 0 is still 0
   if (light_subtype > LST_SINGLE) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLOR "\":\"%s\""), mqtt_data, LightGetColor(0, scolor));
     //  Add status for HSB
@@ -731,7 +735,7 @@ void LightState(uint8_t append)
     // Add status for each channel
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_CHANNEL "\":[" ), mqtt_data);
     for (uint8_t i = 0; i < light_subtype; i++) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d" ), mqtt_data, (i > 0 ? "," : ""), light_current_color[i] * 100 / 255);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d" ), mqtt_data, (i > 0 ? "," : ""), ((uint16_t)light_current_color[i] + 1) * 100 / 255); //+1 fixes rounding error, 0 is still 0
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]" ), mqtt_data);
   }
@@ -820,9 +824,8 @@ void LightWheel(uint8_t wheel_pos)
   }
   light_entry_color[3] = 0;
   light_entry_color[4] = 0;
-  float dimmer = 100 / (float)Settings.light_dimmer;
   for (uint8_t i = 0; i < LST_RGB; i++) {
-    float temp = (float)light_entry_color[i] / dimmer;
+    uint16_t temp = (uint16_t)light_entry_color[i] * Settings.light_dimmer / 255;
     light_entry_color[i] = (uint8_t)temp;
   }
 }
@@ -1128,7 +1131,7 @@ void LightGetHsb(float *hue, float *sat, float *bri, bool gotct)
   } else {
     *hue = 0;
     *sat = 0;
-    *bri = (0.01f * (float)Settings.light_dimmer);
+    *bri = ((float)Settings.light_dimmer / 255.0f);
   }
 }
 
@@ -1136,7 +1139,7 @@ void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
 {
   if (light_subtype > LST_COLDWARM) {
     if ((LST_RGBWC == light_subtype) && (gotct)) {
-      uint8_t tmp = (uint8_t)(bri * 100);
+      uint8_t tmp = (uint8_t)(bri * 255);
       Settings.light_dimmer = tmp;
       if (ct > 0) {
         LightSetColorTemp(ct);
@@ -1151,7 +1154,7 @@ void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
     LightPreparePower();
     MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
   } else {
-    uint8_t tmp = (uint8_t)(bri * 100);
+    uint8_t tmp = (uint8_t)(bri * 255);
     Settings.light_dimmer = tmp;
     if (LST_COLDWARM == light_subtype) {
       if (ct > 0) {
@@ -1300,11 +1303,11 @@ bool LightCommand(void)
   else if ((CMND_CHANNEL == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= light_subtype ) ) {
     //  Set "Channel" directly - this allows Color and Direct PWM control to coexist
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      light_current_color[XdrvMailbox.index-1] = XdrvMailbox.payload * 255 / 100;
+      light_current_color[XdrvMailbox.index-1] = (uint16_t)XdrvMailbox.payload * 255 / 100;
       LightSetColor();
       coldim = true;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, light_current_color[XdrvMailbox.index -1] * 100 / 255);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, ((uint16_t)light_current_color[XdrvMailbox.index -1] + 1) * 100 / 255); //+1 fixes rounding error, 0 is still 0
   }
   else if ((CMND_HSBCOLOR == command_code) && ( light_subtype >= LST_RGB)) {
     bool validHSB = (XdrvMailbox.data_len > 0);
@@ -1426,7 +1429,7 @@ bool LightCommand(void)
   }
   else if (CMND_WAKEUP == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      Settings.light_dimmer = XdrvMailbox.payload;
+      Settings.light_dimmer = (uint16_t)XdrvMailbox.payload * 255 / 100;
     }
     light_wakeup_active = 3;
     Settings.light_scheme = LS_WAKEUP;
@@ -1452,17 +1455,17 @@ bool LightCommand(void)
   }
   else if (CMND_DIMMER == command_code) {
     if ('+' == option) {
-      XdrvMailbox.payload = (Settings.light_dimmer > 89) ? 100 : Settings.light_dimmer + 10;
+      XdrvMailbox.payload = (Settings.light_dimmer > 227) ? 255 : Settings.light_dimmer + 25;
     }
     else if ('-' == option) {
-      XdrvMailbox.payload = (Settings.light_dimmer < 11) ? 1 : Settings.light_dimmer - 10;
+      XdrvMailbox.payload = (Settings.light_dimmer < 28) ? 1 : Settings.light_dimmer - 25;
     }
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      Settings.light_dimmer = XdrvMailbox.payload;
+      Settings.light_dimmer = (uint16_t)XdrvMailbox.payload * 255 / 100;
       light_update = 1;
       coldim = true;
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_dimmer);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, ((uint16_t)Settings.light_dimmer + 1) * 100 / 255);  //+1 fixes rounding error, 0 is still 0
     }
   }
   else if (CMND_LEDTABLE == command_code) {
