@@ -627,7 +627,7 @@ void LightSetDimmer(uint8_t myDimmer)
   }
 
   //determine highest color to premultiply dimmer with
-  uint8_t highest = 0;
+  uint8_t highest = 1;
   for (uint8_t i = 0; i < light_subtype; i++) {
     if (highest < Settings.light_color[i]) {
       highest = Settings.light_color[i];
