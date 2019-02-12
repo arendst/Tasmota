@@ -106,7 +106,7 @@ void ButtonHandler(void)
     button = NOT_PRESSED;
     button_present = 0;
 
-    if (!button_index && ((SONOFF_DUAL == Settings.module) || (CH4 == Settings.module))) {
+    if (!button_index && ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type))) {
       button_present = 1;
       if (dual_button_code) {
         snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), dual_button_code);
@@ -131,7 +131,7 @@ void ButtonHandler(void)
       if (XdrvCall(FUNC_BUTTON_PRESSED)) {
         // Serviced
       }
-      else if (SONOFF_4CHPRO == Settings.module) {
+      else if (SONOFF_4CHPRO == my_module_type) {
         if (holdbutton[button_index]) { holdbutton[button_index]--; }
 
         bool button_pressed = false;
@@ -202,14 +202,14 @@ void ButtonHandler(void)
             if (!restart_flag && !holdbutton[button_index] && (multipress[button_index] > 0) && (multipress[button_index] < MAX_BUTTON_COMMANDS +3)) {
               bool single_press = false;
               if (multipress[button_index] < 3) {              // Single or Double press
-                if ((SONOFF_DUAL_R2 == Settings.module) || (SONOFF_DUAL == Settings.module) || (CH4 == Settings.module)) {
+                if ((SONOFF_DUAL_R2 == my_module_type) || (SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)) {
                   single_press = true;
                 } else  {
                   single_press = (Settings.flag.button_swap +1 == multipress[button_index]);
                   multipress[button_index] = 1;
                 }
               }
-              if ((MI_DESK_LAMP == Settings.module) && (button_index == 0) && (rotary_changed) && (light_power)) {
+              if ((MI_DESK_LAMP == my_module_type) && (button_index == 0) && (rotary_changed) && (light_power)) {
                 rotary_changed = 0;                            // Color temp changed, no need to turn of the light
               } else {
                 if (single_press && SendKey(0, button_index + multipress[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
