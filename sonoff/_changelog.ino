@@ -1,5 +1,5 @@
 /* 6.4.1.16 20190211
- * Initial support for online template change using command Template (#5177)
+ * Initial support for online template change using command Template or GUI Configure Other (#5177)
  *
  * 6.4.1.15 20190208
  * Change image name BE_MINIMAL to FIRMWARE_MINIMAL (#5106)

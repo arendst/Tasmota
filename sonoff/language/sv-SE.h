@@ -288,6 +288,7 @@
 #define D_TELEMETRY_PERIOD "Telemetriperiod"
 
 #define D_OTHER_PARAMETERS "Andra parametrar"
+#define D_TEMPLATE "Template"
 #define D_WEB_ADMIN_PASSWORD "Webbadmin-lösenord"
 #define D_MQTT_ENABLE "MQTT aktivera"
 #define D_FRIENDLY_NAME "Läsbart namn"

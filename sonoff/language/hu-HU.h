@@ -288,6 +288,7 @@
 #define D_TELEMETRY_PERIOD "Telemetria (mp.)"
 
 #define D_OTHER_PARAMETERS "Egyéb beállítások"
+#define D_TEMPLATE "Template"
 #define D_WEB_ADMIN_PASSWORD "Web admin jelszó"
 #define D_MQTT_ENABLE "MQTT engedélyezése"
 #define D_FRIENDLY_NAME "Név"

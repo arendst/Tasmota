@@ -289,7 +289,7 @@ const char HTTP_FORM_LOG3[] PROGMEM =
   "<br/><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' placeholder='" STR(TELE_PERIOD) "' value='{l4'><br/>";
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='co'>"
-//  "<input id='w' name='w' value='5,1' hidden>"
+  "<br/><b>" D_TEMPLATE "</b><br/><input id='t1' name='t1' placeholder='" D_TEMPLATE "' value='{t1'><br/>"
   "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
   "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>";
   const char HTTP_FORM_OTHER2[] PROGMEM =
@@ -309,7 +309,7 @@ const char HTTP_FORM_UPG[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_WEBSERVER "&nbsp;</b></legend>"
   "<form method='get' action='u1'>"
-  "<br/>" D_OTA_URL "<br/><input id='o' name='o' placeholder='OTA_URL' value='{o1'><br/>"
+  "<br/><b>" D_OTA_URL "</b><br/><input id='o' name='o' placeholder='OTA_URL' value='{o1'><br/>"
   "<br/><button type='submit'>" D_START_UPGRADE "</button></form>"
   "</fieldset><br/><br/>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_FILE_UPLOAD "&nbsp;</b></legend>";
@@ -1164,6 +1164,8 @@ void HandleOtherConfiguration(void)
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_OTHER));
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_OTHER);
+  TemplateJson();
+  page.replace(F("{t1"), mqtt_data);
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
 
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
@@ -1194,7 +1196,7 @@ void HandleOtherConfiguration(void)
 
 void OtherSaveSettings(void)
 {
-  char tmp[100];
+  char tmp[128];
   char stemp[TOPSZ];
   char stemp2[TOPSZ];
 
@@ -1214,6 +1216,12 @@ void OtherSaveSettings(void)
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%s %s"), log_data, (i) ? "," : "", Settings.friendlyname[i]);
   }
   AddLog(LOG_LEVEL_INFO);
+  WebGetArg("t1", tmp, sizeof(tmp));
+  if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
+    char svalue[128];
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
 }
 
 /*-------------------------------------------------------------------------------------------*/

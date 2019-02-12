@@ -288,6 +288,7 @@
 #define D_TELEMETRY_PERIOD "Interval telemetrie"
 
 #define D_OTHER_PARAMETERS "Další nastavení"
+#define D_TEMPLATE "Template"
 #define D_WEB_ADMIN_PASSWORD "Heslo Web administrátora"
 #define D_MQTT_ENABLE "MQTT aktivní"
 #define D_FRIENDLY_NAME "Friendly Name"

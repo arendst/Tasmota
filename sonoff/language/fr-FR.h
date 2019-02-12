@@ -288,6 +288,7 @@
 #define D_TELEMETRY_PERIOD "Période télémétrie"
 
 #define D_OTHER_PARAMETERS "Autres paramètres"
+#define D_TEMPLATE "Template"
 #define D_WEB_ADMIN_PASSWORD "Mot de passe Web Admin"
 #define D_MQTT_ENABLE "MQTT activé"
 #define D_FRIENDLY_NAME "Surnom"

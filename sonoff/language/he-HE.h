@@ -288,6 +288,7 @@
 #define D_TELEMETRY_PERIOD "Telemetry period"
 
 #define D_OTHER_PARAMETERS "פרמטרים שונים"
+#define D_TEMPLATE "Template"
 #define D_WEB_ADMIN_PASSWORD "סיסמת מנהל - אתר"
 #define D_MQTT_ENABLE "MQTT אפשר"
 #define D_FRIENDLY_NAME "שם ידידותי"

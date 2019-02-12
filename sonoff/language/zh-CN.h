@@ -288,6 +288,7 @@
 #define D_TELEMETRY_PERIOD "上报周期"
 
 #define D_OTHER_PARAMETERS "其他设置"
+#define D_TEMPLATE "Template"
 #define D_WEB_ADMIN_PASSWORD "WEB 管理密码"
 #define D_MQTT_ENABLE "启用MQTT"
 #define D_FRIENDLY_NAME "昵称"

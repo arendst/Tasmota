@@ -952,7 +952,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       mqtt_data[0] = '\0';
     }
     else if (CMND_TEMPLATE == command_code) {
-      // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"TYPE":255}
+      // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
       bool error = false;
       if (!strstr(dataBuf, "{")) {      // If no JSON it must be parameter
         bool update = false;
@@ -1021,16 +1021,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
           if (USER_MODULE == Settings.module) { restart_flag = 2; }
         }
       }
-      if (!error) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
-        for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (i>0)?",":"", Settings.user_template.gp.io[i]);
-        }
-//        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":\"%d (%s)\"}"),
-//          mqtt_data, Settings.user_template.flag, Settings.user_template_base +1, AnyModuleName(Settings.user_template_base).c_str());
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"),
-          mqtt_data, Settings.user_template.flag, Settings.user_template_base +1);
-      }
+      if (!error) { TemplateJson(); }
     }
     else if ((CMND_PWM == command_code) && pwm_present && (index > 0) && (index <= MAX_PWMS)) {
       if ((payload >= 0) && (payload <= Settings.pwm_range) && (pin[GPIO_PWM1 + index -1] < 99)) {
