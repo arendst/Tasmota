@@ -168,8 +168,6 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define NEO_RGBW               5            // Neopixel RGBW leds
 #define NEO_GRBW               6            // Neopixel GRBW leds
 
-#define LT_SM16716             16           // Lights that use SM16716 will have this bit set in light_type
-
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino - soon obsolete
 #define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf - obsolete but define is present for debugging purposes

@@ -158,7 +158,7 @@ bool Xsns04(uint8_t function)
 {
   bool result = false;
 
-  if (SONOFF_SC == my_module_type) {
+  if (SONOFF_SC == Settings.module) {
     switch (function) {
       case FUNC_INIT:
         SonoffScInit();

@@ -229,7 +229,7 @@ bool Xdrv19(uint8_t function)
 {
   bool result = false;
 
-  if (PS_16_DZ == my_module_type) {
+  if (PS_16_DZ == Settings.module) {
     switch (function) {
       case FUNC_MODULE_INIT:
         result = PS16DZModuleSelected();
