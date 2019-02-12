@@ -501,12 +501,12 @@ void WifiCheck(uint8_t param)
           }
         }
 
-#ifdef BE_MINIMAL
+#ifdef FIRMWARE_MINIMAL
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
           ota_state_flag = 3;
         }
-#endif  // BE_MINIMAL
+#endif  // FIRMWARE_MINIMAL
 
 #ifdef USE_DISCOVERY
         if (Settings.flag3.mdns_enabled) {

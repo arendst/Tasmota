@@ -129,11 +129,11 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "x.onreadystatechange=function(){"
         "if(x.readyState==4&&x.status==200){"
           "var z,d;"
-          "d=x.responseXML;"
-          "id=d.getElementsByTagName('i')[0].childNodes[0].nodeValue;"
-          "if(d.getElementsByTagName('j')[0].childNodes[0].nodeValue==0){t.value='';}"
-          "z=d.getElementsByTagName('l')[0].childNodes;"
-          "if(z.length>0){t.value+=decodeURIComponent(z[0].nodeValue);}"
+          "d=x.responseText.split(/\1/);"
+          "id=d.shift();"
+          "if(d.shift()==0){t.value='';}"
+          "z=d.shift();"
+          "if(z.length>0){t.value+=z;}"
           "t.scrollTop=99999;"
           "sn=t.scrollTop;"
         "}"
@@ -208,7 +208,7 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
   "</head>"
   "<body>"
   "<div style='text-align:left;display:inline-block;min-width:340px;'>"
-#ifdef BE_MINIMAL
+#ifdef FIRMWARE_MINIMAL
   "<div style='text-align:center;color:red;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"
 #endif
   "<div style='text-align:center;'><noscript>" D_NOSCRIPT "<br/></noscript>"
@@ -227,7 +227,7 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
 const char HTTP_BTN_MENU1[] PROGMEM =
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
   "<br/><form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>"
   "<br/><form action='in' method='get'><button>" D_INFORMATION "</button></form>"
 #endif
@@ -401,7 +401,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/ay", HandleAjaxStatusRefresh);
       WebServer->on("/cm", HandleHttpCommand);
       WebServer->onNotFound(HandleNotFound);
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
       WebServer->on("/cn", HandleConfiguration);
       WebServer->on("/md", HandleModuleConfiguration);
       WebServer->on("/wi", HandleWifiConfiguration);
@@ -416,7 +416,7 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // USE_EMULATION
       XdrvCall(FUNC_WEB_ADD_HANDLER);
       XsnsCall(FUNC_WEB_ADD_HANDLER);
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
     }
     reset_web_log_flag = false;
     WebServer->begin(); // Web server start
@@ -601,7 +601,7 @@ void HandleRoot(void)
   }
 
   if (HTTP_MANAGER == webserver_state) {
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
     if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1"))) {
       HandleWifiLogin();
     } else {
@@ -619,7 +619,7 @@ void HandleRoot(void)
         HandleWifiLogin();
       }
     }
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
   } else {
     char stemp[10];
     String page = FPSTR(HTTP_HEAD);
@@ -640,7 +640,7 @@ void HandleRoot(void)
       }
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
-      if (SONOFF_IFAN02 == Settings.module) {
+      if (SONOFF_IFAN02 == my_module_type) {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
         page += mqtt_data;
         for (uint8_t i = 0; i < MAX_FAN_SPEED; i++) {
@@ -658,7 +658,7 @@ void HandleRoot(void)
       }
       page += F("</tr></table>");
     }
-    if (SONOFF_BRIDGE == Settings.module) {
+    if (SONOFF_BRIDGE == my_module_type) {
       page += FPSTR(HTTP_TABLE100);
       page += F("<tr>");
       uint8_t idx = 0;
@@ -673,12 +673,12 @@ void HandleRoot(void)
       page += F("</tr></table>");
     }
 
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
     mqtt_data[0] = '\0';
     XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
     XsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
     page += String(mqtt_data);
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
 
     if (HTTP_ADMIN == webserver_state) {
       page += FPSTR(HTTP_BTN_MENU1);
@@ -699,7 +699,7 @@ void HandleAjaxStatusRefresh(void)
   if (strlen(tmp)) {
     ShowWebSource(SRC_WEBGUI);
     uint8_t device = atoi(tmp);
-    if (SONOFF_IFAN02 == Settings.module) {
+    if (SONOFF_IFAN02 == my_module_type) {
       if (device < 2) {
         ExecuteCommandPower(1, POWER_TOGGLE, SRC_IGNORE);
       } else {
@@ -739,7 +739,7 @@ void HandleAjaxStatusRefresh(void)
   if (devices_present) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{t}<tr>"), mqtt_data);
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
-    if (SONOFF_IFAN02 == Settings.module) {
+    if (SONOFF_IFAN02 == my_module_type) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
         mqtt_data, 36, (bitRead(power, 0)) ? "bold" : "normal", 54, GetStateText(bitRead(power, 0)));
       uint8_t fanspeed = GetFanspeed();
@@ -773,7 +773,7 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
 
 /*-------------------------------------------------------------------------------------------*/
 
-#ifndef BE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
 
 void HandleConfiguration(void)
 {
@@ -815,9 +815,23 @@ void HandleModuleConfiguration(void)
 
   if (WebServer->hasArg("m")) {
     String page = "";
-    for (uint8_t i = 0; i < MAXMODULE; i++) {
+/*
+    for (uint8_t i = 0; i < MAXMODULE; i++) {  // "}1'%d'>%s (%d)}2" - "}1'0'>Sonoff Basic (1)}2"
       midx = pgm_read_byte(kModuleNiceList + i);
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, AnyModuleName(midx).c_str(), midx +1);
+      page += mqtt_data;
+    }
+*/
+    uint8_t vidx = 0;
+    for (uint8_t i = 0; i <= MAXMODULE; i++) {  // "}1'%d'>%s (%d)}2" - "}1'255'>UserTemplate (0)}2" - "}1'0'>Sonoff Basic (1)}2"
+      if (0 == i) {
+        midx = USER_MODULE;
+        vidx = 0;
+      } else {
+        midx = pgm_read_byte(kModuleNiceList + i -1);
+        vidx = midx +1;
+      }
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, AnyModuleName(midx).c_str(), vidx);
       page += mqtt_data;
     }
     WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), page);
@@ -844,7 +858,7 @@ void HandleModuleConfiguration(void)
   page += FPSTR(HTTP_SCRIPT_MODULE1);
   page.replace(F("}4"), String(Settings.module));
   for (uint8_t i = 0; i < sizeof(cmodule); i++) {
-    if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
+    if (ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g16
       page += mqtt_data;
     }
@@ -862,10 +876,10 @@ void HandleModuleConfiguration(void)
 
   page += F("<br/><table>");
   for (uint8_t i = 0; i < sizeof(cmodule); i++) {
-    if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
+    if (ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:176px'><select id='g%d' name='g%d'></select></td></tr>"),
-        (WEMOS==Settings.module)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(9==i)? "<font color='red'>ESP8285</font>" :(10==i)? "<font color='red'>ESP8285</font>" :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
+        (WEMOS==my_module_type)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(9==i)? "<font color='red'>ESP8285</font>" :(10==i)? "<font color='red'>ESP8285</font>" :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += mqtt_data;
     }
   }
@@ -884,6 +898,7 @@ void ModuleSaveSettings(void)
   uint8_t new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
   Settings.last_module = Settings.module;
   Settings.module = new_module;
+  SetModuleType();
   if (Settings.last_module == new_module) {
     if (my_module_flag.pullup) {
       Settings.flag3.no_pullup = WebServer->hasArg("b1");
@@ -894,9 +909,9 @@ void ModuleSaveSettings(void)
   String gpios = "";
   for (uint8_t i = 0; i < sizeof(cmodule); i++) {
     if (Settings.last_module != new_module) {
-      Settings.my_gp.io[i] = 0;
+      Settings.my_gp.io[i] = GPIO_NONE;
     } else {
-      if (GPIO_USER == ValidGPIO(i, cmodule.io[i])) {
+      if (ValidGPIO(i, cmodule.io[i])) {
         snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
         WebGetArg(stemp, tmp, sizeof(tmp));
         Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
@@ -1152,7 +1167,7 @@ void HandleOtherConfiguration(void)
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
 
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
-  if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
+  if (SONOFF_IFAN02 == my_module_type) { maxfn = 1; }
   for (uint8_t i = 0; i < maxfn; i++) {
     page += FPSTR(HTTP_FORM_OTHER2);
     page.replace(F("{1"), String(i +1));
@@ -1320,7 +1335,7 @@ void HandleInformation(void)
   func += F("}1" D_BOOT_COUNT "}2"); func += String(Settings.bootcount);
   func += F("}1" D_RESTART_REASON "}2"); func += GetResetReason();
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
-  if (SONOFF_IFAN02 == Settings.module) { maxfn = 1; }
+  if (SONOFF_IFAN02 == my_module_type) { maxfn = 1; }
   for (uint8_t i = 0; i < maxfn; i++) {
     func += F("}1" D_FRIENDLY_NAME " "); func += i +1; func += F("}2"); func += Settings.friendlyname[i];
   }
@@ -1407,7 +1422,7 @@ void HandleInformation(void)
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
 }
-#endif  // Not BE_MINIMAL
+#endif  // Not FIRMWARE_MINIMAL
 
 /*-------------------------------------------------------------------------------------------*/
 
@@ -1570,7 +1585,7 @@ void HandleUploadLoop(void)
       }
       else {
 #ifdef USE_RF_FLASH
-        if ((SONOFF_BRIDGE == Settings.module) && (upload.buf[0] == ':')) {  // Check if this is a RF bridge FW file
+        if ((SONOFF_BRIDGE == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a RF bridge FW file
           Update.end();              // End esp8266 update session
           upload_file_type = UPL_EFM8BB1;
 
@@ -1813,7 +1828,9 @@ void HandleAjaxConsoleRefresh(void)
   if (strlen(svalue)) { counter = atoi(svalue); }
 
   bool last_reset_web_log_flag = reset_web_log_flag;
-  String message = F("}9");  // Cannot load mqtt_data here as <> will be encoded by replacements below
+  // mqtt_data used as scratch space
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%d\1%d\1"), web_log_index, last_reset_web_log_flag);
+  String message = mqtt_data;
   if (!reset_web_log_flag) {
     counter = 0;
     reset_web_log_flag = true;
@@ -1834,20 +1851,13 @@ void HandleAjaxConsoleRefresh(void)
           cflg = true;
         }
         strlcpy(mqtt_data, tmp, len);
-        message += mqtt_data;
+        message += mqtt_data; // mqtt_data used as scratch space
       }
       counter++;
-      if (!counter) { counter++; } // Skip 0 as it is not allowed
+      if (!counter) { counter++; } // Skip log index 0 as it is not allowed
     } while (counter != web_log_index);
-    // XML encoding to fix blank console log in concert with javascript decodeURIComponent
-    message.replace(F("%"), F("%25"));  // Needs to be done first as otherwise the % in %26 will also be converted
-    message.replace(F("&"), F("%26"));
-    message.replace(F("<"), F("%3C"));
-    message.replace(F(">"), F("%3E"));
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<r><i>%d</i><j>%d</j><l>"), web_log_index, last_reset_web_log_flag);
-  message.replace(F("}9"), mqtt_data);  // Save to load here
-  message += F("</l></r>");
+  message += F("\1");
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), message);
 }
 
