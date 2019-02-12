@@ -273,7 +273,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef APP_SLEEP
 #define APP_SLEEP 1                          // Default to sleep = 1 for USE_BASIC
 
-//#undef USE_ENERGY_SENSOR                      // Disable energy sensors
+#undef USE_ENERGY_SENSOR                      // Disable energy sensors
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
 #undef USE_WPS                                // Disable support for WPS as initial wifi configuration tool
 #undef USE_SMARTCONFIG                        // Disable support for Wifi SmartConfig as initial wifi configuration tool
@@ -282,7 +282,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MQTT_TLS                           // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                          // Disable Webserver
-//#undef USE_EMULATION                          // Disable Wemo or Hue emulation
+#undef USE_EMULATION                          // Disable Wemo or Hue emulation
 #undef USE_CUSTOM                             // Disable Custom features
 #undef USE_DISCOVERY                          // Disable Discovery services for both MQTT and web server
 //#undef USE_TIMERS                             // Disable support for up to 16 timers
@@ -304,13 +304,13 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
-//#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
-//#undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
+#undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
