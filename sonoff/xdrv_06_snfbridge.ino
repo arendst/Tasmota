@@ -570,7 +570,7 @@ bool Xdrv06(uint8_t function)
 {
   bool result = false;
 
-  if (SONOFF_BRIDGE == Settings.module) {
+  if (SONOFF_BRIDGE == my_module_type) {
     switch (function) {
       case FUNC_INIT:
         SonoffBridgeInit();
