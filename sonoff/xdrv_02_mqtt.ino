@@ -342,7 +342,7 @@ void MqttPublishPowerState(uint8_t device)
 
   if ((device < 1) || (device > devices_present)) { device = 1; }
 
-  if ((SONOFF_IFAN02 == Settings.module) && (device > 1)) {
+  if ((SONOFF_IFAN02 == my_module_type) && (device > 1)) {
     if (GetFanspeed() < MAX_FAN_SPEED) {  // 4 occurs when fanspeed is 3 and RC button 2 is pressed
 #ifdef USE_DOMOTICZ
       DomoticzUpdateFanState();  // RC Button feedback
@@ -435,7 +435,7 @@ void MqttConnected(void)
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
     for (uint8_t i = 1; i <= devices_present; i++) {
       MqttPublishPowerState(i);
-      if (SONOFF_IFAN02 == Settings.module) { break; }  // Report status of light relay only
+      if (SONOFF_IFAN02 == my_module_type) { break; }  // Report status of light relay only
     }
     if (Settings.tele_period) { tele_period = Settings.tele_period -9; }  // Enable TelePeriod in 9 seconds
     rules_flag.system_boot = 1;
@@ -694,8 +694,8 @@ bool MqttCommand(void)
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, fingerprint);
   }
 #endif
-  else if ((CMND_MQTTCLIENT == command_code) && !grpflg) {
-    if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_client))) {
+  else if (CMND_MQTTCLIENT == command_code) {
+    if (!grpflg && (data_len > 0) && (data_len < sizeof(Settings.mqtt_client))) {
       strlcpy(Settings.mqtt_client, (SC_DEFAULT == Shortcut(dataBuf)) ? MQTT_CLIENT_ID : dataBuf, sizeof(Settings.mqtt_client));
       restart_flag = 2;
     }
@@ -766,8 +766,8 @@ bool MqttCommand(void)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_grptopic);
   }
-  else if ((CMND_TOPIC == command_code) && !grpflg) {
-    if ((data_len > 0) && (data_len < sizeof(Settings.mqtt_topic))) {
+  else if (CMND_TOPIC == command_code) {
+    if (!grpflg && (data_len > 0) && (data_len < sizeof(Settings.mqtt_topic))) {
       MakeValidMqtt(0, dataBuf);
       if (!strcmp(dataBuf, mqtt_client)) SetShortcut(dataBuf, SC_DEFAULT);
       strlcpy(stemp1, (SC_DEFAULT == Shortcut(dataBuf)) ? MQTT_TOPIC : dataBuf, sizeof(stemp1));
@@ -780,8 +780,8 @@ bool MqttCommand(void)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.mqtt_topic);
   }
-  else if ((CMND_BUTTONTOPIC == command_code) && !grpflg) {
-    if ((data_len > 0) && (data_len < sizeof(Settings.button_topic))) {
+  else if (CMND_BUTTONTOPIC == command_code) {
+    if (!grpflg && (data_len > 0) && (data_len < sizeof(Settings.button_topic))) {
       MakeValidMqtt(0, dataBuf);
       if (!strcmp(dataBuf, mqtt_client)) SetShortcut(dataBuf, SC_DEFAULT);
       switch (Shortcut(dataBuf)) {

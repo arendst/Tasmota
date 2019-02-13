@@ -113,6 +113,7 @@
 #define D_JSON_PROGRAMSIZE "ProgramSize"
 #define D_JSON_REFERENCETEMPERATURE "ReferenceTemperature"
 #define D_JSON_RESET "Reset"
+#define D_JSON_RESOLUTION "Resolution"
 #define D_JSON_RESTARTING "Restarting"
 #define D_JSON_RESTARTREASON "RestartReason"
 #define D_JSON_RSSI "RSSI"
@@ -159,6 +160,7 @@
 #define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
 
 #define D_RSLT_ENERGY "ENERGY"
+#define D_RSLT_HASS_STATE "HASS_STATE"
 #define D_RSLT_INFO "INFO"
 #define D_RSLT_MARGINS "MARGINS"
 #define D_RSLT_POWER "POWER"
@@ -167,6 +169,8 @@
 #define D_RSLT_STATE "STATE"
 #define D_RSLT_UPTIME "UPTIME"
 #define D_RSLT_WARNING "WARNING"
+
+#define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 
 // Commands sonoff.ino
 #define D_CMND_BACKLOG "Backlog"
@@ -259,7 +263,11 @@
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
-#define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
+#define D_CMND_TEMPLATE "Template"
+  #define D_JSON_NAME "NAME"
+  #define D_JSON_GPIO "GPIO"
+  #define D_JSON_FLAG "FLAG"
+  #define D_JSON_BASE "BASE"
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTHOST "MqttHost"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0019'
+VER = '2.1.0020'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -835,7 +835,16 @@ Setting_6_4_1_11.update            ({
     'interlock':                    ('B',   0x4CA,       ([4],  None,                           ('Main',        None)), '"0x{:02x}".format($)' ),
                                     })
 # ======================================================================
+Setting_6_4_1_13 = copy.deepcopy(Setting_6_4_1_11)
+Setting_6_4_1_13.update            ({
+    'SensorBits1':                 ({
+        'mhz19b_abc_disable':       ('B',  (0x717,1, 7), (None, None,                           ('Sensor',      '"Sensor15 {}".format($)')) ),
+                                    },      0x717,       (None, None,                           ('*',           None)), (None,      False) ),
+                                    })
+
+# ======================================================================
 Settings = [
+            (0x604010D, 0xe00, Setting_6_4_1_13),
             (0x604010B, 0xe00, Setting_6_4_1_11),
             (0x6040108, 0xe00, Setting_6_4_1_8),
             (0x6040107, 0xe00, Setting_6_4_1_7),

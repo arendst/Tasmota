@@ -154,26 +154,39 @@ enum UserSelectablePins {
   GPIO_KEY2_INV_NP,
   GPIO_KEY3_INV_NP,
   GPIO_KEY4_INV_NP,
-  GPIO_SENSOR_END };
-
-// Programmer selectable GPIO functionality offset by user selectable GPIOs
-enum ProgramSelectablePins {
-  GPIO_RXD = GPIO_SENSOR_END,  // Serial interface
-  GPIO_TXD,            // Serial interface
-  GPIO_SPI_MISO,       // SPI MISO library fixed pin GPIO12
-  GPIO_SPI_MOSI,       // SPI MOSI library fixed pin GPIO13
-  GPIO_SPI_CLK,        // SPI Clk library fixed pin GPIO14
   GPIO_NRG_SEL,        // HLW8012/HLJ-01 Sel output (1 = Voltage)
   GPIO_NRG_SEL_INV,    // HLW8012/HLJ-01 Sel output (0 = Voltage)
   GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
   GPIO_HLW_CF,         // HLW8012 CF power
   GPIO_HJL_CF,         // HJL-01/BL0937 CF power
+  GPIO_MCP39F5_TX,     // MCP39F501 Serial interface (Shelly2)
+  GPIO_MCP39F5_RX,     // MCP39F501 Serial interface (Shelly2)
+  GPIO_MCP39F5_RST,    // MCP39F501 Reset (Shelly2)
+  GPIO_PN532_TXD,      // PN532 NFC Serial Tx
+  GPIO_PN532_RXD,      // PN532 NFC Serial Rx
+  GPIO_SM16716_CLK,    // SM16716 CLOCK
+  GPIO_SM16716_DAT,    // SM16716 DATA
+  GPIO_SM16716_SEL,    // SM16716 SELECT
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
+  GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
+  GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_ARIRFRCV,       // AliLux RF Receive input
-  GPIO_ROT_A,          // Rotary switch A Pin
-  GPIO_ROT_B,          // Rotary switch B Pin
-  GPIO_USER,           // User configurable
+  GPIO_TXD,            // Serial interface
+  GPIO_RXD,            // Serial interface
+  GPIO_ROT1A,          // Rotary switch1 A Pin
+  GPIO_ROT1B,          // Rotary switch1 B Pin
+  GPIO_ROT2A,          // Rotary switch2 A Pin
+  GPIO_ROT2B,          // Rotary switch2 B Pin
+  GPIO_SENSOR_END };
+
+// Programmer selectable GPIO functionality
+enum ProgramSelectablePins {
+  GPIO_FIX_START = 251,
+  GPIO_SPI_MISO,       // SPI MISO library fixed pin GPIO12
+  GPIO_SPI_MOSI,       // SPI MOSI library fixed pin GPIO13
+  GPIO_SPI_CLK,        // SPI Clk library fixed pin GPIO14
+  GPIO_USER,           // User configurable needs to be 255
   GPIO_MAX };
 
 // Text in webpage Module Parameters and commands GPIOS and GPIO
@@ -219,7 +232,15 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_AZ_TX "|" D_SENSOR_AZ_RX "|"
   D_SENSOR_MAX31855_CS "|" D_SENSOR_MAX31855_CLK "|" D_SENSOR_MAX31855_DO "|"
   D_SENSOR_BUTTON "1i|" D_SENSOR_BUTTON "2i|" D_SENSOR_BUTTON "3i|" D_SENSOR_BUTTON "4i|"
-  D_SENSOR_BUTTON "1in|" D_SENSOR_BUTTON "2in|" D_SENSOR_BUTTON "3in|" D_SENSOR_BUTTON "4in"
+  D_SENSOR_BUTTON "1in|" D_SENSOR_BUTTON "2in|" D_SENSOR_BUTTON "3in|" D_SENSOR_BUTTON "4in|"
+  D_SENSOR_NRG_SEL "|" D_SENSOR_NRG_SEL "i|" D_SENSOR_NRG_CF1 "|" D_SENSOR_HLW_CF "|" D_SENSOR_HJL_CF "|"
+  D_SENSOR_MCP39F5_TX "|" D_SENSOR_MCP39F5_RX "|" D_SENSOR_MCP39F5_RST "|"
+  D_SENSOR_PN532_TX "|" D_SENSOR_PN532_RX "|"
+  D_SENSOR_SM16716_CLK "|" D_SENSOR_SM16716_DAT "|" D_SENSOR_SM16716_POWER "|"
+  D_SENSOR_MY92X1_DI "|" D_SENSOR_MY92X1_DCKI "|"
+  D_SENSOR_CSE7766_TX "|" D_SENSOR_CSE7766_RX "|"
+  D_SENSOR_ARIRFRCV "|" D_SENSOR_TXD "|" D_SENSOR_RXD "|"
+  D_SENSOR_ROTARY "1a|" D_SENSOR_ROTARY "1b|" D_SENSOR_ROTARY "2a|" D_SENSOR_ROTARY "2b|"
   ;
 
 /********************************************************************************************/
@@ -292,7 +313,12 @@ enum SupportedModules {
   KA10,
   ZX2820,
   MI_DESK_LAMP,
+  SP10,
+  WAGA,
+  SYF05,
   MAXMODULE };
+
+#define USER_MODULE        255
 
 /********************************************************************************************/
 
@@ -414,6 +440,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_CNTR3_NP,
   GPIO_CNTR4,
   GPIO_CNTR4_NP,
+  GPIO_TXD,            // Serial interface
+  GPIO_RXD,            // Serial interface
 #ifdef USE_I2C
   GPIO_I2C_SCL,        // I2C SCL
   GPIO_I2C_SDA,        // I2C SDA
@@ -463,21 +491,19 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_HX711_SCK,      // HX711 Load Cell clock
   GPIO_HX711_DAT,      // HX711 Load Cell data
 #endif
-#ifdef USE_SERIAL_BRIDGE
-  GPIO_SBR_TX,         // Serial Bridge Serial interface
-  GPIO_SBR_RX,         // Serial Bridge Serial interface
+#if defined(USE_ENERGY_SENSOR) && defined(USE_HLW8012)
+  GPIO_NRG_SEL,        // HLW8012/HLJ-01 Sel output (1 = Voltage)
+  GPIO_NRG_SEL_INV,    // HLW8012/HLJ-01 Sel output (0 = Voltage)
+  GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
+  GPIO_HLW_CF,         // HLW8012 CF power
+  GPIO_HJL_CF,         // HJL-01/BL0937 CF power
 #endif
-#ifdef USE_MHZ19
-  GPIO_MHZ_TXD,        // MH-Z19 Serial interface
-  GPIO_MHZ_RXD,        // MH-Z19 Serial interface
-#endif
-#ifdef USE_SENSEAIR
-  GPIO_SAIR_TX,        // SenseAir Serial interface
-  GPIO_SAIR_RX,        // SenseAir Serial interface
-#endif
-#ifdef USE_NOVA_SDS
-  GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
-  GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
+  GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
+  GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
+#if defined(USE_ENERGY_SENSOR) && defined(USE_MCP39F501)
+  GPIO_MCP39F5_TX,     // MCP39F501 Serial interface (Shelly2)
+  GPIO_MCP39F5_RX,     // MCP39F501 Serial interface (Shelly2)
+  GPIO_MCP39F5_RST,    // MCP39F501 Reset (Shelly2)
 #endif
 #if defined(USE_PZEM004T) || defined(USE_PZEM_AC) || defined(USE_PZEM_DC)
   GPIO_PZEM0XX_TX,     // PZEM0XX Serial interface
@@ -499,6 +525,22 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SDM630_TX,      // SDM630 Serial interface
   GPIO_SDM630_RX,      // SDM630 Serial interface
 #endif
+#ifdef USE_SERIAL_BRIDGE
+  GPIO_SBR_TX,         // Serial Bridge Serial interface
+  GPIO_SBR_RX,         // Serial Bridge Serial interface
+#endif
+#ifdef USE_MHZ19
+  GPIO_MHZ_TXD,        // MH-Z19 Serial interface
+  GPIO_MHZ_RXD,        // MH-Z19 Serial interface
+#endif
+#ifdef USE_SENSEAIR
+  GPIO_SAIR_TX,        // SenseAir Serial interface
+  GPIO_SAIR_RX,        // SenseAir Serial interface
+#endif
+#ifdef USE_NOVA_SDS
+  GPIO_SDS0X1_TX,      // Nova Fitness SDS011 Serial interface
+  GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
+#endif
 #ifdef USE_PMS5003
   GPIO_PMS5003,        // Plantower PMS5003 Serial interface
 #endif
@@ -512,19 +554,35 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_TUYA_TX,        // Tuya Serial interface
   GPIO_TUYA_RX,        // Tuya Serial interface
 #endif
-#ifdef USE_MGC3130
-  GPIO_MGC3130_XFER,
-  GPIO_MGC3130_RESET,
-#endif
 #ifdef USE_AZ7798
   GPIO_AZ_TXD,         // AZ-Instrument 7798 CO2 datalogger Serial interface
   GPIO_AZ_RXD,         // AZ-Instrument 7798 CO2 datalogger Serial interface
+#endif
+#ifdef USE_PN532_HSU
+  GPIO_PN532_TXD,      // PN532 HSU Tx
+  GPIO_PN532_RXD,      // PN532 HSU Rx
+#endif
+#ifdef USE_MGC3130
+  GPIO_MGC3130_XFER,
+  GPIO_MGC3130_RESET,
 #endif
 #ifdef USE_MAX31855
   GPIO_MAX31855CS,     // MAX31855 Serial interface
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
 #endif
+  GPIO_DI,             // my92x1 PWM input
+  GPIO_DCKI,           // my92x1 CLK input
+#ifdef USE_SM16716
+  GPIO_SM16716_CLK,    // SM16716 CLOCK
+  GPIO_SM16716_DAT,    // SM16716 DATA
+  GPIO_SM16716_SEL,    // SM16716 SELECT
+#endif // USE_SM16716
+  GPIO_ROT1A,          // Rotary switch1 A Pin
+  GPIO_ROT1B,          // Rotary switch1 B Pin
+  GPIO_ROT2A,          // Rotary switch2 A Pin
+  GPIO_ROT2B,          // Rotary switch2 B Pin
+  GPIO_ARIRFRCV        // AliLux RF Receive input
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
@@ -572,6 +630,8 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SK03_TUYA,
   DIGOO,
   KA10,
+  SP10,
+  WAGA,
   NEO_COOLCAM,         // Socket Relay Devices
   OBI,
   OBI2,
@@ -591,6 +651,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   KMC_70011,
   AILIGHT,             // Light Bulbs
   PHILIPS,
+  SYF05,
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
   WEMOS
@@ -1031,9 +1092,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09
      0,                // GPIO10
                        // GPIO11 (SD_CMD   Flash)
-     0,
+     GPIO_USER,        // GPIO12 Optional sensor
      GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off) - Link and Power status
-     0, 0, 0, 0
+     GPIO_USER,        // GPIO14 Optional sensor
+     0, 0, 0
   },
   { "Sonoff B1",       // Sonoff B1 (ESP8285 - my9231)
      GPIO_KEY1,        // GPIO00 Pad
@@ -1317,9 +1379,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Sonoff S31",      // Sonoff S31 (ESP8266 - CSE7766)
      GPIO_KEY1,        // GPIO00 Button
-     0,                // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
+     GPIO_CSE7766_TX,  // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
      0,
-     0,                // GPIO03 Serial TXD
+     GPIO_CSE7766_RX,  // GPIO03 Serial TXD
      0, 0,
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
@@ -1352,9 +1414,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Sonoff Pow R2",   // Sonoff Pow R2 (ESP8285 - CSE7766)
      GPIO_KEY1,        // GPIO00 Button
-     0,                // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
+     GPIO_CSE7766_TX,  // GPIO01 Serial RXD 4800 baud 8E1 CSE7766 energy sensor
      0,
-     0,                // GPIO03 Serial TXD
+     GPIO_CSE7766_RX,  // GPIO03 Serial TXD
      0, 0,
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
@@ -1425,9 +1487,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Shelly 2",        // Shelly2 (ESP8266 - 2MB) - https://shelly.cloud/shelly2/
      0,
-     GPIO_TXD,         // GPIO01 MCP39F501 Serial input
+     GPIO_MCP39F5_TX,  // GPIO01 MCP39F501 Serial input
      0,
-     GPIO_RXD,         // GPIO03 MCP39F501 Serial output
+     GPIO_MCP39F5_RX,  // GPIO03 MCP39F501 Serial output
      GPIO_REL1,        // GPIO04
      GPIO_REL2,        // GPIO05
                        // GPIO06 (SD_CLK   Flash)
@@ -1439,7 +1501,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_SWT1,        // GPIO12
      0,
      GPIO_SWT2,        // GPIO14
-     0,                // GPIO15 MCP39F501 Reset
+     GPIO_MCP39F5_RST, // GPIO15 MCP39F501 Reset
      0,
      GPIO_FLAG_PULLUP  // Allow input pull-up control
   },
@@ -1790,14 +1852,99 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     GPIO_ROT_A,       // GPIO12 Rotary switch A pin
-     GPIO_ROT_B,       // GPIO13 Rotary switch B pin
+     GPIO_ROT1A,       // GPIO12 Rotary switch A pin
+     GPIO_ROT1B,       // GPIO13 Rotary switch B pin
      0, 0, 0, 0
+  },
+  { "SP10",            // Tuya SP10 (BL0937 Energy Monitoring)
+                       // https://www.aliexpress.com/item/Smart-Mini-WiFi-Plug-Outlet-Switch-Work-With-ForEcho-Alexa-Google-Home-Remote-EU-Smart-Socket/32963670423.html
+     0,                // GPIO00
+     GPIO_PWM1,        // GPIO01 Nightlight
+     0,                // GPIO02
+     GPIO_KEY1,        // GPIO03 Button
+     GPIO_HJL_CF,      // GPIO04 BL0937 CF power
+     GPIO_NRG_CF1,     // GPIO05 BL0937 CF1 voltage / current
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_NRG_SEL_INV, // GPIO12 BL0937 Sel output (1 = Voltage)
+     GPIO_LED1,        // GPIO13 Blue LED - Link status
+     GPIO_REL1,        // GPIO14 Relay and red LED
+     0, 0, 0
+  },
+  { "WAGA CHCZ02MB",   // WAGA life CHCZ02MB (HJL-01 Energy Monitoring)
+                       // https://www.ebay.com/itm/332595697006
+     GPIO_LED2_INV,    // GPIO00 Red LED
+     0,                // GPIO01 Serial RXD
+     0,                // GPIO02
+     GPIO_NRG_SEL_INV, // GPIO03 HJL-01 Sel output (1 = Voltage)
+     0,                // GPIO04
+     GPIO_HJL_CF,      // GPIO05 HJL-01 CF power
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_REL1,        // GPIO12 Relay
+     GPIO_KEY1,        // GPIO13 Button
+     GPIO_NRG_CF1,     // GPIO14 HJL-01 CF1 voltage / current
+     GPIO_LED1_INV,    // GPIO15 Blue LED - Link status
+     0, 0
+  },
+  { "SYF05",           // Sunyesmart SYF05 (a.k.a. Fcmila) = TYWE3S + SM16726
+                       // Also works with Merkury 904 RGBW Bulbs with 13 set to GPIO_SM16716_SEL
+                       // https://www.flipkart.com/fc-mila-bxav-xs-ad-smart-bulb/p/itmf85zgs45fzr7n
+                       // https://docs.tuya.com/en/hardware/WiFi-module/wifi-e3s-module.html
+                       // http://www.datasheet-pdf.com/PDF/SM16716-Datasheet-Sunmoon-932771
+     GPIO_USER,        // GPIO00 N.C.
+     0,                // GPIO01 Serial RXD
+     GPIO_USER,        // GPIO02 N.C.
+     0,                // GPIO03 Serial TXD
+     GPIO_SM16716_CLK, // GPIO04 SM16716 Clock
+     GPIO_PWM1,        // GPIO05 White
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_USER,        // GPIO12 Alt. White on some devices
+     GPIO_USER,        // GPIO13 SM16716 Enable on some devices
+     GPIO_SM16716_DAT, // GPIO14 SM16716 Data
+     0,                // GPIO15 wired to GND
+     GPIO_USER,        // GPIO16 N.C.
+     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
   }
 };
 
 /*
   Optionals
+
+  { "RGB Smart Plug",  // Tuya based smart plug with power monitoring and RGB light
+                       // https://www.aliexpress.com/item/ET-Smart-Plug-Wifi-Socket-With-Switch-Phone-APP-Voice-Remote-Control-Monitor-Smart-Timing-Switch/32964036349.html?spm=a2g0s.9042311.0.0.439c4c4d4N8N2Q
+                       // https://xiangshangcn.en.alibaba.com/product/60844251239-807590977/RGB_wifi_smart_plug_smart_socket_smart_outlet_EU_works_with_Amazon_alexa_google_home_mobile_app_tuya_solution_smart_life.html?spm=a2700.icbuShop.41413.24.4e996767oFAAmO
+     GPIO_PWM1,        // GPIO00 Red
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
+     GPIO_PWM3,        // GPIO02 Blue
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
+     GPIO_PWM2,        // GPIO04 Green
+     GPIO_HJL_CF,      // GPIO05 BL0937 or HJL-01 CF power
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_NRG_SEL_INV, // GPIO12 BL0937 or HJL-01 Sel output (0 = Voltage)
+     GPIO_KEY1,        // GPIO13 Button
+     GPIO_NRG_CF1,     // GPIO14 BL0937 or HJL-01 CF1 current / voltage
+     GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
+     0, 0
+  }
 
   { "ESP RGBWWC",      // esp rgbww controller https://github.com/pljakobs/esp_rgbww_controller/tree/v2.3
      GPIO_KEY1,        // GPIO00 Button

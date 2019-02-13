@@ -305,27 +305,6 @@ char* UpperCase_P(char* dest, const char* source)
   return dest;
 }
 
-/*
-char* LTrim(char* p)
-{
-  while ((*p != '\0') && (isblank(*p))) {
-    p++;                                     // Trim leading spaces
-  }
-  return p;
-}
-
-char* RTrim(char* p)
-{
-  char* q = p + strlen(p) -1;
-  while ((q >= p) && (isblank(*q))) {
-    q--;                                     // Trim trailing spaces
-  }
-  q++;
-  *q = '\0';
-  return p;
-}
-*/
-
 char* Trim(char* p)
 {
   while ((*p != '\0') && isblank(*p)) { p++; }  // Trim leading spaces
@@ -505,51 +484,6 @@ String PressureUnit(void)
   return (Settings.flag.pressure_conversion) ? String(D_UNIT_MILLIMETER_MERCURY) : String(D_UNIT_PRESSURE);
 }
 
-String AnyModuleName(uint8_t index)
-{
-  return FPSTR(kModules[index].name);
-}
-
-String ModuleName()
-{
-  return FPSTR(kModules[Settings.module].name);
-}
-
-void ModuleGpios(myio *gp)
-{
-  uint8_t *dest = (uint8_t *)gp;
-  memset(dest, GPIO_NONE, sizeof(myio));
-
-  uint8_t src[sizeof(mycfgio)];
-  memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
-  // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
-
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
-
-  for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
-    if (i < 6) {
-      dest[i] = src[i];     // GPIO00 - GPIO05
-    }
-    else if (i < 8) {
-      dest[i +3] = src[i];  // GPIO09 - GPIO10
-    }
-    else {
-      dest[i +4] = src[i];  // GPIO12 - GPIO16 and ADC0
-    }
-  }
-  // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
-
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
-}
-
-gpio_flag ModuleFlag()
-{
-  gpio_flag flag;
-
-  memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
-  return flag;
-}
-
 void SetGlobalValues(float temperature, float humidity)
 {
   global_update = uptime;
@@ -701,61 +635,6 @@ int GetStateNumber(char *state_text)
   return state_number;
 }
 
-bool GetUsedInModule(uint8_t val, uint8_t *arr)
-{
-  int offset = 0;
-
-  if (!val) { return false; }  // None
-
-  if ((val >= GPIO_KEY1) && (val < GPIO_KEY1 + MAX_KEYS)) {
-    offset = (GPIO_KEY1_NP - GPIO_KEY1);
-  }
-  if ((val >= GPIO_KEY1_NP) && (val < GPIO_KEY1_NP + MAX_KEYS)) {
-    offset = -(GPIO_KEY1_NP - GPIO_KEY1);
-  }
-
-  if ((val >= GPIO_SWT1) && (val < GPIO_SWT1 + MAX_SWITCHES)) {
-    offset = (GPIO_SWT1_NP - GPIO_SWT1);
-  }
-  if ((val >= GPIO_SWT1_NP) && (val < GPIO_SWT1_NP + MAX_SWITCHES)) {
-    offset = -(GPIO_SWT1_NP - GPIO_SWT1);
-  }
-
-  if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
-    offset = (GPIO_REL1_INV - GPIO_REL1);
-  }
-  if ((val >= GPIO_REL1_INV) && (val < GPIO_REL1_INV + MAX_RELAYS)) {
-    offset = -(GPIO_REL1_INV - GPIO_REL1);
-  }
-
-  if ((val >= GPIO_LED1) && (val < GPIO_LED1 + MAX_LEDS)) {
-    offset = (GPIO_LED1_INV - GPIO_LED1);
-  }
-  if ((val >= GPIO_LED1_INV) && (val < GPIO_LED1_INV + MAX_LEDS)) {
-    offset = -(GPIO_LED1_INV - GPIO_LED1);
-  }
-
-  if ((val >= GPIO_PWM1) && (val < GPIO_PWM1 + MAX_PWMS)) {
-    offset = (GPIO_PWM1_INV - GPIO_PWM1);
-  }
-  if ((val >= GPIO_PWM1_INV) && (val < GPIO_PWM1_INV + MAX_PWMS)) {
-    offset = -(GPIO_PWM1_INV - GPIO_PWM1);
-  }
-
-  if ((val >= GPIO_CNTR1) && (val < GPIO_CNTR1 + MAX_COUNTERS)) {
-    offset = (GPIO_CNTR1_NP - GPIO_CNTR1);
-  }
-  if ((val >= GPIO_CNTR1_NP) && (val < GPIO_CNTR1_NP + MAX_COUNTERS)) {
-    offset = -(GPIO_CNTR1_NP - GPIO_CNTR1);
-  }
-
-  for (uint8_t i = 0; i < MAX_GPIO_PIN; i++) {
-    if (arr[i] == val) { return true; }
-    if (arr[i] == val + offset) { return true; }
-  }
-  return false;
-}
-
 void SetSerialBaudrate(int baudrate)
 {
   Settings.baudrate = baudrate / 1200;
@@ -816,13 +695,176 @@ void ShowSource(int source)
   }
 }
 
-uint8_t ValidGPIO(uint8_t pin, uint8_t gpio)
+/*********************************************************************************************\
+ * GPIO Module and Template management
+\*********************************************************************************************/
+
+String AnyModuleName(uint8_t index)
+{
+  if (USER_MODULE == index) {
+    return String(Settings.user_template.name);
+  } else {
+    return FPSTR(kModules[index].name);
+  }
+}
+
+String ModuleName()
+{
+  return AnyModuleName(Settings.module);
+}
+
+void ModuleGpios(myio *gp)
+{
+  uint8_t *dest = (uint8_t *)gp;
+  memset(dest, GPIO_NONE, sizeof(myio));
+
+  uint8_t src[sizeof(mycfgio)];
+  if (USER_MODULE == Settings.module) {
+//    src = Settings.user_template.gp;
+    memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
+  } else {
+    memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
+  }
+  // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
+
+  uint8_t j = 0;
+  for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+    if (6 == i) { j = 9; }
+    if (8 == i) { j = 12; }
+    dest[j] = src[i];
+    j++;
+  }
+  // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
+}
+
+gpio_flag ModuleFlag()
+{
+  gpio_flag flag;
+
+  if (USER_MODULE == Settings.module) {
+    flag = Settings.user_template.flag;
+  } else {
+    memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
+  }
+
+  return flag;
+}
+
+void ModuleDefault(uint8_t module)
+{
+  if (USER_MODULE == module) { module = WEMOS; }  // Generic
+  Settings.user_template_base = module;
+  memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
+}
+
+void SetModuleType()
+{
+  my_module_type = (USER_MODULE == Settings.module) ? Settings.user_template_base : Settings.module;
+}
+
+uint8_t ValidPin(uint8_t pin, uint8_t gpio)
 {
   uint8_t result = gpio;
-  if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {
-    if ((pin == 9) || (pin == 10)) { result = GPIO_NONE; }  // Disable possible flash GPIO9 and GPIO10
+  if ((pin > 5) && (pin < 12)) {
+    result = GPIO_NONE;  // Disable all flash pins
+  }
+  if (Settings.flag3.user_esp8285_enable) {
+    if ((pin == 9) || (pin == 10)) {
+      result = gpio;     // Allow optional flash pins
+    }
   }
   return result;
+}
+
+bool ValidGPIO(uint8_t pin, uint8_t gpio)
+{
+  bool result = false;
+
+  if (USER_MODULE == Settings.module) {
+    result = (ValidPin(pin, gpio) > GPIO_NONE);  // Allow any pin
+  } else {
+    result = (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
+  }
+  return result;
+}
+
+bool GetUsedInModule(uint8_t val, uint8_t *arr)
+{
+  int offset = 0;
+
+  if (USER_MODULE == Settings.module) { return false; }
+
+  if (!val) { return false; }  // None
+
+  if ((val >= GPIO_KEY1) && (val < GPIO_KEY1 + MAX_KEYS)) {
+    offset = (GPIO_KEY1_NP - GPIO_KEY1);
+  }
+  if ((val >= GPIO_KEY1_NP) && (val < GPIO_KEY1_NP + MAX_KEYS)) {
+    offset = -(GPIO_KEY1_NP - GPIO_KEY1);
+  }
+  if ((val >= GPIO_KEY1_INV) && (val < GPIO_KEY1_INV + MAX_KEYS)) {
+    offset = -(GPIO_KEY1_INV - GPIO_KEY1);
+  }
+  if ((val >= GPIO_KEY1_INV_NP) && (val < GPIO_KEY1_INV_NP + MAX_KEYS)) {
+    offset = -(GPIO_KEY1_INV_NP - GPIO_KEY1);
+  }
+
+  if ((val >= GPIO_SWT1) && (val < GPIO_SWT1 + MAX_SWITCHES)) {
+    offset = (GPIO_SWT1_NP - GPIO_SWT1);
+  }
+  if ((val >= GPIO_SWT1_NP) && (val < GPIO_SWT1_NP + MAX_SWITCHES)) {
+    offset = -(GPIO_SWT1_NP - GPIO_SWT1);
+  }
+
+  if ((val >= GPIO_REL1) && (val < GPIO_REL1 + MAX_RELAYS)) {
+    offset = (GPIO_REL1_INV - GPIO_REL1);
+  }
+  if ((val >= GPIO_REL1_INV) && (val < GPIO_REL1_INV + MAX_RELAYS)) {
+    offset = -(GPIO_REL1_INV - GPIO_REL1);
+  }
+
+  if ((val >= GPIO_LED1) && (val < GPIO_LED1 + MAX_LEDS)) {
+    offset = (GPIO_LED1_INV - GPIO_LED1);
+  }
+  if ((val >= GPIO_LED1_INV) && (val < GPIO_LED1_INV + MAX_LEDS)) {
+    offset = -(GPIO_LED1_INV - GPIO_LED1);
+  }
+
+  if ((val >= GPIO_PWM1) && (val < GPIO_PWM1 + MAX_PWMS)) {
+    offset = (GPIO_PWM1_INV - GPIO_PWM1);
+  }
+  if ((val >= GPIO_PWM1_INV) && (val < GPIO_PWM1_INV + MAX_PWMS)) {
+    offset = -(GPIO_PWM1_INV - GPIO_PWM1);
+  }
+
+  if ((val >= GPIO_CNTR1) && (val < GPIO_CNTR1 + MAX_COUNTERS)) {
+    offset = (GPIO_CNTR1_NP - GPIO_CNTR1);
+  }
+  if ((val >= GPIO_CNTR1_NP) && (val < GPIO_CNTR1_NP + MAX_COUNTERS)) {
+    offset = -(GPIO_CNTR1_NP - GPIO_CNTR1);
+  }
+
+  for (uint8_t i = 0; i < MAX_GPIO_PIN; i++) {
+    if (arr[i] == val) { return true; }
+    if (arr[i] == val + offset) { return true; }
+  }
+  return false;
+}
+
+void TemplateJson()
+{
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
+  for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (i>0)?",":"", Settings.user_template.gp.io[i]);
+  }
+//  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":\"%d (%s)\"}"),
+//    mqtt_data, Settings.user_template.flag, Settings.user_template_base +1, AnyModuleName(Settings.user_template_base).c_str());
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"),
+    mqtt_data, Settings.user_template.flag, Settings.user_template_base +1);
 }
 
 /*********************************************************************************************\

@@ -1,4 +1,30 @@
-/* 6.4.1.12 20190128
+/* 6.4.1.16 20190211
+ * Initial support for online template change using command Template or GUI Configure Other (#5177)
+ *
+ * 6.4.1.15 20190208
+ * Change image name BE_MINIMAL to FIRMWARE_MINIMAL (#5106)
+ * Change image names USE_xyz to FIRMWARE_xyz (#5106)
+ * Add command SerialDelimiter 128 to filter reception of only characters between ASCII 32 and 127 (#5131)
+ * Add status message to former declined group commands (#5145)
+ *
+ * 6.4.1.14 20190203
+ * Add SetOption32 until SetOption49 diagnostic information to Status 3 report as replacement for second property value in SetOption property name
+ * Add Resolution property to Status 3 report providing previous SetOption second value property
+ * Fix IR local echo
+ * Add user configuration of HLW8012 and HJL-01/BL0937 Energy Monitoring as used in Sonoff S31, Pow Ra and many Tuya based devices
+ * Add user configuration of MCP39F501 Energy Monitoring as used in Shelly2
+ * Add support for multiple ADS1115 I2C devices (#5083)
+ * Add rule support for "==", "!=" ">=" and "<=" (#5122)
+ * Add Hass status sensor (#5139)
+ * Change GUI weblog solving possible empty screens (#5154)
+ * Change PN532 support from I2C to Serial for more stability (#5162)
+ * Add MHZ19 Temperature as Domoticz Temperature selection (#5128)
+ *
+ * 6.4.1.13 20190130
+ * Add command SetOption36 to control boot loop default restoration (#4645, #5063)
+ * Add resiliency to saved Settings (#5065)
+ *
+ * 6.4.1.12 20190128
  * Change code use of boolean to bool and byte to uint8_t
  * Change code uint8_t flags to bool flags
  *

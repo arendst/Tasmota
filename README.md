@@ -34,7 +34,7 @@ A Sonoff device is not a toy. It uses Mains AC so there is a danger of electrocu
 We don't take any responsibility nor liability for using this software nor for the installation or any tips, advice, videos, etc. given by any member of this site or any related site.
 
 ### Note
-Please dont ask too add devices where you cant provide a basic working configuration (other than sonoff). Since there are thousands of them..
+Please do not ask to add devices where you can't provide a basic working configuration (other than sonoff). Since there are thousands of them..
 
 ### Quick Install
 Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as documented in the wiki.

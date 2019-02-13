@@ -78,6 +78,18 @@
 
 #define D_JSON_INITIATED "Initiated"
 
+#define COMPARE_OPERATOR_NONE            -1
+#define COMPARE_OPERATOR_EQUAL            0
+#define COMPARE_OPERATOR_BIGGER           1
+#define COMPARE_OPERATOR_SMALLER          2
+#define COMPARE_OPERATOR_EXACT_DIVISION   3
+#define COMPARE_OPERATOR_NUMBER_EQUAL     4
+#define COMPARE_OPERATOR_NOT_EQUAL        5
+#define COMPARE_OPERATOR_BIGGER_EQUAL     6
+#define COMPARE_OPERATOR_SMALLER_EQUAL    7
+#define MAXIMUM_COMPARE_OPERATOR          COMPARE_OPERATOR_SMALLER_EQUAL
+const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
+
 enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_MULT, CMND_SCALE, CMND_CALC_RESOLUTION };
 const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION ;
 
@@ -128,31 +140,20 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 
   String rule_name = rule.substring(pos +1);           // "CURRENT>0.100" or "BOOT" or "%var1%" or "MINUTE|5"
 
-  char compare = ' ';
-  pos = rule_name.indexOf(">");
-  if (pos > 0) {
-    compare = '>';
-  } else {
-    pos = rule_name.indexOf("<");
-    if (pos > 0) {
-      compare = '<';
-    } else {
-      pos = rule_name.indexOf("=");
-      if (pos > 0) {
-        compare = '=';
-      } else {
-        pos = rule_name.indexOf("|");                  // Modulo, cannot use % easily as it is used for variable detection
-        if (pos > 0) {
-          compare = '%';
-        }
-      }
+  char compare_operator[3];
+  int8_t compare = COMPARE_OPERATOR_NONE;
+  for (int8_t i = MAXIMUM_COMPARE_OPERATOR; i >= 0; i--) {
+    snprintf_P(compare_operator, sizeof(compare_operator), kCompareOperators + (i *2));
+    if ((pos = rule_name.indexOf(compare_operator)) > 0) {
+      compare = i;
+      break;
     }
   }
 
   char rule_svalue[CMDSZ] = { 0 };
   double rule_value = 0;
-  if (pos > 0) {
-    String rule_param = rule_name.substring(pos + 1);
+  if (compare != COMPARE_OPERATOR_NONE) {
+    String rule_param = rule_name.substring(pos + strlen(compare_operator));
     for (uint8_t i = 0; i < MAX_RULE_VARS; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%%VAR%d%%"), i +1);
       if (rule_param.startsWith(stemp)) {
@@ -224,24 +225,32 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     int int_value = int(value);
     int int_rule_value = int(rule_value);
     switch (compare) {
-      case '%':
-        if ((int_value > 0) && (int_rule_value > 0)) {
-          if ((int_value % int_rule_value) == 0) { match = true; }
-        }
+      case COMPARE_OPERATOR_EXACT_DIVISION:
+        match = (int_rule_value && (int_value % int_rule_value) == 0);
         break;
-      case '>':
-        if (value > rule_value) { match = true; }
+      case COMPARE_OPERATOR_EQUAL:
+        match = (!strcasecmp(str_value, rule_svalue));  // Compare strings - this also works for hexadecimals
         break;
-      case '<':
-        if (value < rule_value) { match = true; }
+      case COMPARE_OPERATOR_BIGGER:
+        match = (value > rule_value);
         break;
-      case '=':
-//        if (value == rule_value) { match = true; }     // Compare values - only decimals or partly hexadecimals
-        if (!strcasecmp(str_value, rule_svalue)) { match = true; }  // Compare strings - this also works for hexadecimals
+      case COMPARE_OPERATOR_SMALLER:
+        match = (value < rule_value);
         break;
-      case ' ':
-        match = true;                                  // Json value but not needed
+      case COMPARE_OPERATOR_NUMBER_EQUAL:
+        match = (value == rule_value);
         break;
+      case COMPARE_OPERATOR_NOT_EQUAL:
+        match = (value != rule_value);
+        break;
+      case COMPARE_OPERATOR_BIGGER_EQUAL:
+        match = (value >= rule_value);
+        break;
+      case COMPARE_OPERATOR_SMALLER_EQUAL:
+        match = (value <= rule_value);
+        break;
+      default:
+        match = true;
     }
   } else match = true;
 
