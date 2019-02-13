@@ -278,6 +278,9 @@
 
 // -- Rules ---------------------------------------
 #define USE_RULES                                // Add support for rules (+4k4 code)
+#ifdef USE_RULES
+  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k1 code, +28 bytes mem)
+#endif
 
 // -- Internal Analog input -----------------------
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
