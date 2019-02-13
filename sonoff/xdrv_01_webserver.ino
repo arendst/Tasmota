@@ -189,7 +189,7 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
 
   "<style>"
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
-  "fieldset{background-color:#f2f2f2;}"
+  "fieldset{background-color:#f2f2f2;}"  // Also update HTTP_TIMER_STYLE
   "p{margin:0.5em 0;}"
   "input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;}"
   "input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}"

@@ -593,8 +593,8 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "if(ct<99){st();}"                                            // Save changes
     "ct=t;"
     "o=document.getElementsByClassName('tl');"                    // Restore style to all tabs/buttons
-    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background-color:#ccc;color:#fff;font-weight:normal;\"}"
-    "e.style.cssText=\"background-color:#fff;color:#000;font-weight:bold;\";"  // Change style to tab/button used to open content
+    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background-color:#999;color:#fff;font-weight:normal;\"}"
+    "e.style.cssText=\"background-color:transparent;color:#000;font-weight:bold;\";"  // Change style to tab/button used to open content
     "s=pt[ct];"                                                   // Get parameters from array
 #ifdef USE_SUNRISE
     "p=(s>>29)&3;eb('b'+p).checked=1;"                            // Set mode
@@ -642,7 +642,7 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "eb('dP').click();"                                           // Get the element with id='dP' and click on it
   "}";
 const char HTTP_TIMER_STYLE[] PROGMEM =
-  ".tl{float:left;border-radius:0;border:1px solid #fff;padding:1px;width:6.25%;}"
+  ".tl{float:left;border-radius:0;border:1px solid #f2f2f2;padding:1px;width:6.25%;}"  // Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE (transparent won't work)
   "</style>";
 const char HTTP_FORM_TIMER[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'>"
