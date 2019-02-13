@@ -752,20 +752,21 @@ void KnxSensor(uint8_t sensor_type, float value)
 const char S_CONFIGURE_KNX[] PROGMEM = D_CONFIGURE_KNX;
 
 const char HTTP_BTN_MENU_KNX[] PROGMEM =
-  "<br/><form action='kn' method='get'><button>" D_CONFIGURE_KNX "</button></form>";
+  "<p><form action='kn' method='get'><button>" D_CONFIGURE_KNX "</button></form></p>";
 
 const char HTTP_FORM_KNX[] PROGMEM =
-  "<fieldset><legend style='text-align:left;'><b>&nbsp;" D_KNX_PARAMETERS "&nbsp;</b></legend><form method='post' action='kn'>"
+  "<fieldset><legend style='text-align:left;'><b>&nbsp;" D_KNX_PARAMETERS "&nbsp;</b>"
+  "</legend><form method='post' action='kn'>"
   "<br/><center>"
   "<b>" D_KNX_PHYSICAL_ADDRESS " </b>"
   "<input style='width:12%;' type='number' name='area' min='0' max='15' value='{kna'> . "
   "<input style='width:12%;' type='number' name='line' min='0' max='15' value='{knl'> . "
   "<input style='width:12%;' type='number' name='member' min='0' max='255' value='{knm'>"
   "<br/><br/>" D_KNX_PHYSICAL_ADDRESS_NOTE "<br/><br/>"
-  "<input style='width:10%;' id='b1' name='b1' type='checkbox'";
+  "<input id='b1' name='b1' type='checkbox'";
 
 const char HTTP_FORM_KNX1[] PROGMEM =
-  "><b>" D_KNX_ENABLE "   </b><input style='width:10%;' id='b2' name='b2' type='checkbox'";
+  "><b>" D_KNX_ENABLE "</b>&emsp;<input id='b2' name='b2' type='checkbox'";
 
 const char HTTP_FORM_KNX2[] PROGMEM =
   "><b>" D_KNX_ENHANCEMENT "</b><br/></center><br/>"

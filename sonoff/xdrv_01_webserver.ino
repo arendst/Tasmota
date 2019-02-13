@@ -189,7 +189,10 @@ const char HTTP_HEAD_STYLE[] PROGMEM =
 
   "<style>"
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
+  "fieldset{background-color:#f2f2f2;}"
+  "p{margin-block-start:0.5em;margin-block-end:0.5em;}"
   "input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;}"
+  "input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}"
   "select{width:100%;}"
   "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
   "body{text-align:center;font-family:verdana;}"
@@ -226,82 +229,108 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
+
 const char HTTP_BTN_MENU1[] PROGMEM =
-#ifndef FIRMWARE_MINIMAL
-  "<br/><form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>"
-  "<br/><form action='in' method='get'><button>" D_INFORMATION "</button></form>"
-#endif
-  "<br/><form action='up' method='get'><button>" D_FIRMWARE_UPGRADE "</button></form>"
-  "<br/><form action='cs' method='get'><button>" D_CONSOLE "</button></form>";
-const char HTTP_BTN_RSTRT[] PROGMEM =
-  "<br/><form action='.' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button name='rstrt' class='button bred'>" D_RESTART "</button></form>";
-const char HTTP_BTN_MENU_MODULE[] PROGMEM =
-  "<br/><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form>"
-  "<br/><form action='wi' method='get'><button>" D_CONFIGURE_WIFI "</button></form>";
-const char HTTP_BTN_MENU4[] PROGMEM =
-  "<br/><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form>"
-  "<br/><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form>"
   "<br/>"
-  "<br/><form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button class='button bred'>" D_RESET_CONFIGURATION "</button></form>"
-  "<br/><form action='dl' method='get'><button>" D_BACKUP_CONFIGURATION "</button></form>"
-  "<br/><form action='rs' method='get'><button>" D_RESTORE_CONFIGURATION "</button></form>";
+#ifndef FIRMWARE_MINIMAL
+  "<form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>"
+  "<p><form action='in' method='get'><button>" D_INFORMATION "</button></form></p>"
+#endif
+  "<form action='up' method='get'><button>" D_FIRMWARE_UPGRADE "</button></form>"
+  "<p><form action='cs' method='get'><button>" D_CONSOLE "</button></form></p>";
+const char HTTP_BTN_RSTRT[] PROGMEM =
+  "<form action='.' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button name='rstrt' class='button bred'>" D_RESTART "</button></form>";
+
+const char HTTP_BTN_MENU_MODULE[] PROGMEM =
+  "<p><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form></p>"
+  "<p><form action='wi' method='get'><button>" D_CONFIGURE_WIFI "</button></form></p>";
+const char HTTP_BTN_MENU4[] PROGMEM =
+  "<p><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form></p>"
+  "<p><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form></p>"
+  "<br/>"
+  "<form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button class='button bred'>" D_RESET_CONFIGURATION "</button></form>"
+  "<p><form action='dl' method='get'><button>" D_BACKUP_CONFIGURATION "</button></form></p>"
+  "<p><form action='rs' method='get'><button>" D_RESTORE_CONFIGURATION "</button></form></p>";
 const char HTTP_BTN_MAIN[] PROGMEM =
-  "<br/><br/><form action='.' method='get'><button>" D_MAIN_MENU "</button></form>";
+  "<br/>"
+  "<form action='.' method='get'><button>" D_MAIN_MENU "</button></form>";
+
 const char HTTP_FORM_LOGIN[] PROGMEM =
   "<form method='post' action='/'>"
   "<br/><b>" D_USER "</b><br/><input name='USER1' placeholder='" D_USER "'><br/>"
   "<br/><b>" D_PASSWORD "</b><br/><input name='PASS1' type='password' placeholder='" D_PASSWORD "'><br/>"
   "<br/>"
   "<br/><button>" D_OK "</button></form>";
+
 const char HTTP_BTN_CONF[] PROGMEM =
-  "<br/><br/><form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>";
+  "<br/>"
+  "<form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>";
+
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend><form method='get' action='md'>"
-  "<br/><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
-
+  "<p></p><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
 const char HTTP_FORM_MODULE_PULLUP[] PROGMEM =
-  "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_PULLUP_ENABLE "</b><br/>";
+  "<br/><input id='b1' name='b1' type='checkbox'{r1><b>" D_PULLUP_ENABLE "</b><br/>";
 
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;({w})&nbsp<span class='q'>{i} {r}%</span></div>";
 const char HTTP_LNK_SCAN[] PROGMEM =
   "<div><a href='/wi?scan='>" D_SCAN_FOR_WIFI_NETWORKS "</a></div><br/>";
 const char HTTP_FORM_WIFI[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend><form method='get' action='wi'>"
-  "<br/><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br/><input id='s1' name='s1' placeholder='" STA_SSID1 "' value='{s1'><br/>"
-  "<br/><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='" D_ASTERIX "'><br/>"
-  "<br/><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' placeholder='" STA_SSID2 "' value='{s2'><br/>"
-  "<br/><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='" D_ASTERIX "'><br/>"
-  "<br/><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' placeholder='" WIFI_HOSTNAME" ' value='{h1'><br/>";
+  "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend>"
+  "<form method='get' action='wi'>"
+  "<p><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br/><input id='s1' name='s1' placeholder='" STA_SSID1 "' value='{s1'></p>"
+  "<p><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='" D_ASTERIX "'></p>"
+  "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' placeholder='" STA_SSID2 "' value='{s2'></p>"
+  "<p><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='" D_ASTERIX "'></p>"
+  "<p><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' placeholder='" WIFI_HOSTNAME" ' value='{h1'></p>";
+
 const char HTTP_FORM_LOG1[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b></legend><form method='get' action='lg'>";
+  "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b>"
+  "</legend><form method='get' action='lg'>";
 const char HTTP_FORM_LOG2[] PROGMEM =
-  "<br/><b>{b0</b> ({b1)<br/><select id='{b2' name='{b2'>"
+  "<p><b>{b0</b> ({b1)<br/><select id='{b2' name='{b2'>"
   "<option{a0value='0'>0 " D_NONE "</option>"
   "<option{a1value='1'>1 " D_ERROR "</option>"
   "<option{a2value='2'>2 " D_INFO "</option>"
   "<option{a3value='3'>3 " D_DEBUG "</option>"
   "<option{a4value='4'>4 " D_MORE_DEBUG "</option>"
-  "</select><br/>";
+  "</select></p>";
 const char HTTP_FORM_LOG3[] PROGMEM =
-  "<br/><b>" D_SYSLOG_HOST "</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' placeholder='" SYS_LOG_HOST "' value='{l2'><br/>"
-  "<br/><b>" D_SYSLOG_PORT "</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' placeholder='" STR(SYS_LOG_PORT) "' value='{l3'><br/>"
-  "<br/><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' placeholder='" STR(TELE_PERIOD) "' value='{l4'><br/>";
+  "<p><b>" D_SYSLOG_HOST "</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' placeholder='" SYS_LOG_HOST "' value='{l2'></p>"
+  "<p><b>" D_SYSLOG_PORT "</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' placeholder='" STR(SYS_LOG_PORT) "' value='{l3'></p>"
+  "<p><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' placeholder='" STR(TELE_PERIOD) "' value='{l4'></p>";
+
 const char HTTP_FORM_OTHER[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend><form method='get' action='co'>"
-  "<br/><b>" D_TEMPLATE "</b><br/><input id='t1' name='t1' placeholder='" D_TEMPLATE "' value='{t1'><br/>"
-  "<br/><b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
-  "<br/><input style='width:10%;' id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>";
+  "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend>"
+  "<form method='get' action='co'>"
+  "<p></p>"
+  "<fieldset><legend><b>&nbsp;" D_TEMPLATE "&nbsp;</b></legend>"
+  "<p><input id='t1' name='t1' placeholder='" D_TEMPLATE "' value='{t1'></p>"
+  "<p><input id='t2' name='t2' type='checkbox'><b>" D_ACTIVATE "</b></p>"
+  "</fieldset>"
+  "<br/>"
+  "<b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
+  "<br>"
+  "<input id='b1' name='b1' type='checkbox'{r1><b>" D_MQTT_ENABLE "</b><br/>"
+  "<br/>";
   const char HTTP_FORM_OTHER2[] PROGMEM =
-  "<br/><b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' placeholder='{2' value='{3'><br/>";
+  "<b>" D_FRIENDLY_NAME " {1</b> ({2)<br/><input id='a{1' name='a{1' placeholder='{2' value='{3'><p></p>";
 #ifdef USE_EMULATION
 const char HTTP_FORM_OTHER3a[] PROGMEM =
-  "<br/><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend>";
+  "<p></p>"  // Keep close to Friendlynames so do not use <br/>
+  "<fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend><p>";
 const char HTTP_FORM_OTHER3b[] PROGMEM =
-  "<br/><input style='width:10%;' id='r{1' name='b2' type='radio' value='{1'{2><b>{3</b>{4";  // Different id only used for labels
+  "<input id='r{1' name='b2' type='radio' value='{1'{2><b>{3</b>{4<br/>";  // Different id only used for labels
+const char HTTP_FORM_OTHER3c[] PROGMEM =
+  "</p></fieldset>";
 #endif  // USE_EMULATION
+
 const char HTTP_FORM_END[] PROGMEM =
-  "<br/><button name='save' type='submit' class='button bgrn'>" D_SAVE "</button></form></fieldset>";
+  "<br/>"
+  "<button name='save' type='submit' class='button bgrn'>" D_SAVE "</button>"
+  "</form></fieldset>";
+
 const char HTTP_FORM_RST[] PROGMEM =
   "<div id='f1' name='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;" D_RESTORE_CONFIGURATION "&nbsp;</b></legend>";
@@ -1177,6 +1206,7 @@ void HandleOtherConfiguration(void)
     page.replace(F("{2"), (i) ? stemp : FRIENDLY_NAME);
     page.replace(F("{3"), Settings.friendlyname[i]);
   }
+
 #ifdef USE_EMULATION
   page += FPSTR(HTTP_FORM_OTHER3a);
   for (uint8_t i = 0; i < EMUL_MAX; i++) {
@@ -1186,9 +1216,9 @@ void HandleOtherConfiguration(void)
     page.replace(F("{3"), (i == EMUL_NONE) ? F(D_NONE) : (i == EMUL_WEMO) ? F(D_BELKIN_WEMO) : F(D_HUE_BRIDGE));
     page.replace(F("{4"), (i == EMUL_NONE) ? F("") : (i == EMUL_WEMO) ? F(" " D_SINGLE_DEVICE) : F(" " D_MULTI_DEVICE));
   }
-  page += F("<br/>");
-  page += F("<br/></fieldset>");
+  page += FPSTR(HTTP_FORM_OTHER3c);
 #endif  // USE_EMULATION
+
   page += FPSTR(HTTP_FORM_END);
   page += FPSTR(HTTP_BTN_CONF);
   ShowPage(page);
@@ -1221,6 +1251,12 @@ void OtherSaveSettings(void)
     char svalue[128];
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
+
+    if (WebServer->hasArg("t2")) {
+      snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_MODULE " 0"));
+      ExecuteWebCommand(svalue, SRC_WEBGUI);
+    }
+
   }
 }
 
