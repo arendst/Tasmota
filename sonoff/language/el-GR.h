@@ -289,6 +289,7 @@
 
 #define D_OTHER_PARAMETERS "Άλλες παράμετροι"
 #define D_TEMPLATE "Template"
+#define D_ACTIVATE "Activate"
 #define D_WEB_ADMIN_PASSWORD "Κωδικός διαχειριστή"
 #define D_MQTT_ENABLE "Ενεργοποίηση MQTT"
 #define D_FRIENDLY_NAME "Φιλική ονομασία"

@@ -289,6 +289,7 @@
 
 #define D_OTHER_PARAMETERS "Други параметри"
 #define D_TEMPLATE "Template"
+#define D_ACTIVATE "Activate"
 #define D_WEB_ADMIN_PASSWORD "Парола на уеб администратора"
 #define D_MQTT_ENABLE "Активиране на MQTT"
 #define D_FRIENDLY_NAME "Приятелско име"

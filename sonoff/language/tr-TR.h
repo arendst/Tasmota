@@ -289,6 +289,7 @@
 
 #define D_OTHER_PARAMETERS "Diğer parametreler"
 #define D_TEMPLATE "Template"
+#define D_ACTIVATE "Activate"
 #define D_WEB_ADMIN_PASSWORD "Web Yönetici Şifresi"
 #define D_MQTT_ENABLE "MQTT aktif"
 #define D_FRIENDLY_NAME "Kullanıcı Dostu İsim"

@@ -289,6 +289,7 @@
 
 #define D_OTHER_PARAMETERS "Overige parameters"
 #define D_TEMPLATE "Template"
+#define D_ACTIVATE "Activate"
 #define D_WEB_ADMIN_PASSWORD "Web Admin Wachtwoord"
 #define D_MQTT_ENABLE "MQTT ingeschakeld"
 #define D_FRIENDLY_NAME "Beschrijvende naam"
