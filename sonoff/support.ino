@@ -783,15 +783,12 @@ uint8_t ValidPin(uint8_t pin, uint8_t gpio)
 bool ValidGPIO(uint8_t pin, uint8_t gpio)
 {
   bool result = false;
-/*
+
   if (USER_MODULE == Settings.module) {
     result = (ValidPin(pin, gpio) > GPIO_NONE);  // Allow any pin
   } else {
     result = (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
   }
-*/
-  result = (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
-
   return result;
 }
 
