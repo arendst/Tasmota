@@ -954,7 +954,10 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     else if (CMND_TEMPLATE == command_code) {
       // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
       bool error = false;
+
       if (!strstr(dataBuf, "{")) {      // If no JSON it must be parameter
+/*
+        // Version 6.4.1.16 - Add user module config data to template
         bool update = false;
         if ((payload > 0) && (payload <= MAXMODULE)) {
           ModuleDefault(payload -1);    // Copy template module
@@ -981,6 +984,17 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
               }
             }
             src++;
+          }
+        }
+*/
+        // Version 6.4.1.17 use template as defined
+        if ((payload > 0) && (payload <= MAXMODULE)) {
+          ModuleDefault(payload -1);    // Copy template module
+          if (USER_MODULE == Settings.module) { restart_flag = 2; }
+        }
+        else if (0 == payload) {        // Copy current module with user configured GPIO
+          if (Settings.module != USER_MODULE) {
+            ModuleDefault(Settings.module);
           }
         }
       }

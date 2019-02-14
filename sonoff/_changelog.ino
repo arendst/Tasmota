@@ -1,4 +1,7 @@
-/* 6.4.1.16 20190211
+/* 6.4.1.17 20190214
+ * Change template update by removing possibility to add user module config keeping template as defined (#5222)
+ *
+ * 6.4.1.16 20190211
  * Initial support for online template change using command Template or GUI Configure Other (#5177)
  * Add parameter CFG_HOLDER to status 1 message (#5206)
  * Update GUI
