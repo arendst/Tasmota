@@ -419,7 +419,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 
 #ifndef MQTT_MAX_PACKET_SIZE
-#define MQTT_MAX_PACKET_SIZE   1000           // Bytes
+#define MQTT_MAX_PACKET_SIZE   2000           // Bytes
 #endif
 #ifndef MQTT_KEEPALIVE
 #define MQTT_KEEPALIVE         15             // Seconds
