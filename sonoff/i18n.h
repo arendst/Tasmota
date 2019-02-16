@@ -419,6 +419,7 @@
 /********************************************************************************************/
 
 #define D_ASTERIX "********"
+#define D_ASTERISK_PWD "****"
 
 #ifndef MY_LANGUAGE
   #include "language/en-GB.h"
