@@ -788,8 +788,6 @@ bool GetUsedInModule(uint8_t val, uint8_t *arr)
 {
   int offset = 0;
 
-  if (USER_MODULE == Settings.module) { return false; }
-
   if (!val) { return false; }  // None
 
   if ((val >= GPIO_KEY1) && (val < GPIO_KEY1 + MAX_KEYS)) {
