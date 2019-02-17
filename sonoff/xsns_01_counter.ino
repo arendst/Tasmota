@@ -22,6 +22,11 @@
 \*********************************************************************************************/
 
 #define XSNS_01             1
+#define GPIO_LEVEL (99)
+
+static inline bool is_gpio_cnt_low(int index){
+   return ((pin[GPIO_CNTR1 + index] < GPIO_LEVEL)?true:false);
+}
 
 unsigned long last_counter_timer[MAX_COUNTERS]; // Last counter time in micro seconds
 
@@ -66,7 +71,7 @@ void CounterUpdate4(void)
 void CounterSaveState(void)
 {
   for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
-    if (pin[GPIO_CNTR1 +i] < 99) {
+    if (is_gpio_cnt_low(i)) {
       Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
     }
   }
@@ -78,7 +83,7 @@ void CounterInit(void)
   function counter_callbacks[] = { CounterUpdate1, CounterUpdate2, CounterUpdate3, CounterUpdate4 };
 
   for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
-    if (pin[GPIO_CNTR1 +i] < 99) {
+    if (is_gpio_cnt_low(i)) {
       pinMode(pin[GPIO_CNTR1 +i], bitRead(counter_no_pullup, i) ? INPUT : INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
     }
@@ -97,13 +102,14 @@ void CounterShow(bool json)
   uint8_t dsxflg = 0;
   uint8_t header = 0;
   for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
-    if (pin[GPIO_CNTR1 +i] < 99) {
+    uint32_t cnt = RtcSettings.pulse_counter[i];
+    if (is_gpio_cnt_low(i)) {
       char counter[33];
       if (bitRead(Settings.pulse_counter_type, i)) {
-        dtostrfd((double)RtcSettings.pulse_counter[i] / 1000000, 6, counter);
+        dtostrfd((double)cnt / 1000000, 6, counter);
       } else {
         dsxflg++;
-        dtostrfd(RtcSettings.pulse_counter[i], 0, counter);
+        snprintf_P(counter, sizeof(counter), PSTR("%lu"), (unsigned long)cnt);
       }
 
       if (json) {
@@ -116,7 +122,7 @@ void CounterShow(bool json)
         strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
-          DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
+          DomoticzSensor(DZ_COUNT, cnt);
           dsxflg++;
         }
 #endif  // USE_DOMOTICZ
