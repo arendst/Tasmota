@@ -377,6 +377,19 @@ void MqttPublishPowerBlinkState(uint8_t device)
   MqttPublishPrefixTopic_P(RESULT_OR_STAT, S_RSLT_POWER);
 }
 
+#ifdef USE_OFFLINESTAT
+void MqttPublishWifiDownStat(void)
+ // Publish Offline duration since startup and timestamp of connexion recovery
+{
+  char stopic[TOPSZ];
+
+  GetTopic_P(stopic, STAT, mqtt_topic, PSTR(D_RSLT_INFO));
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_OFFLINE "\":\"%s\",\"" D_JSON_ONLINE "\":\"%s\"}"),
+    WifiGetOfflineDuration().c_str(), WifiGetLastTime().c_str());
+  MqttPublish(stopic);
+}
+#endif  // USE_OFFLINESTAT
+
 /*********************************************************************************************/
 
 void MqttDisconnected(int state)
@@ -406,6 +419,10 @@ void MqttConnected(void)
     // Satisfy iobroker (#299)
     mqtt_data[0] = '\0';
     MqttPublishPrefixTopic_P(CMND, S_RSLT_POWER);
+
+#ifdef USE_OFFLINESTAT
+    MqttPublishWifiDownStat();
+#endif  // USE_OFFLINESTAT
 
     GetTopic_P(stopic, CMND, mqtt_topic, PSTR("#"));
     MqttSubscribe(stopic);

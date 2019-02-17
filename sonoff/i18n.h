@@ -236,6 +236,7 @@
 #define D_CMND_SSID "SSId"
 #define D_CMND_PASSWORD "Password"
 #define D_CMND_HOSTNAME "Hostname"
+#define D_CMND_WIFIDOWNSTAT "OfflineStat"
 #define D_CMND_WIFICONFIG "WifiConfig"
   #define WCFG_MAX_STRING_LENGTH 12
   #define D_WCFG_0_RESTART "Restart"
@@ -294,6 +295,8 @@
 #define D_CMND_POWERRETAIN "PowerRetain"
 #define D_CMND_SENSORRETAIN "SensorRetain"
 #define D_CMND_PUBLISH "Publish"
+  #define D_JSON_ONLINE "Online"
+  #define D_JSON_OFFLINE "Offline"
 
 // Commands xdrv_02_webserver.ino
 #define D_CMND_WEBSERVER "Webserver"

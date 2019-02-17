@@ -49,6 +49,11 @@ using namespace axTLS;
 */
 #include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
 
+#ifdef USE_OFFLINESTAT
+  uint32_t wifi_last_time = 0;        // Record last Wifi ON/OFF UTC timestamp (but only displayed when online)
+  uint32_t wifi_off_duration = 0;     // Gather Wifi Offline duration since RTC.valid using period between 2 wifi_last_time timestamps
+#endif  // USE_OFFLINESTAT
+
 uint8_t wifi_counter;
 uint8_t wifi_retry_init;
 uint8_t wifi_retry;
@@ -344,9 +349,15 @@ void WifiSetState(uint8_t state)
   if (state == global_state.wifi_down) {
     if (state) {
       rules_flag.wifi_connected = 1;
+#ifdef USE_OFFLINESTAT
+      wifi_off_duration += LocalTime() - wifi_last_time;  // Record Wifi#Connected timestamp
+#endif  // USE_OFFLINESTAT
     } else {
       rules_flag.wifi_disconnected = 1;
     }
+#ifdef USE_OFFLINESTAT
+    wifi_last_time = LocalTime();                   // Record last event
+#endif //USE_OFFLINESTAT
   }
   global_state.wifi_down = state ^1;
 }
@@ -594,6 +605,31 @@ void WifiDisconnect(void)
   ETS_UART_INTR_ENABLE();
   WiFi.persistent(false);     // Do not use SDK storage of SSID/WPA parameters
 }
+
+#ifdef USE_OFFLINESTAT
+void WifiDownStatRst(void)
+{
+  wifi_off_duration = 0;
+  wifi_last_time = UtcTime(); // Needs a linear clock,   
+}
+
+uint32_t WifiOfflineDuration(void)
+{
+  return  wifi_off_duration;
+}
+
+String WifiGetLastTime(void)
+{
+//Returns a timestamp of latest wifi connection event converted from UTC to local time
+  return  GetDT(UtcToLocal(wifi_last_time));
+}
+
+String WifiGetOfflineDuration(void)
+{
+//Returns the formated wifi offline duration 
+  return  GetDuration(DTD_DOWN);
+}
+#endif  // USE_OFFLINESTAT
 
 void EspRestart(void)
 {

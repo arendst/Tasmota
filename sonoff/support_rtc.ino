@@ -45,7 +45,7 @@ uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 1451602800;
 uint32_t restart_time = 0;
-int32_t  time_timezone = 0;
+int32_t  time_timezone = 0;     // (local_time - utc_time) in minutes
 uint8_t  midnight_now = 0;
 uint8_t  ntp_sync_minute = 0;
 
@@ -138,9 +138,10 @@ String GetDateAndTime(uint8_t time_type)
   return dt;  // 2017-03-07T11:08:02-07:00
 }
 
-String GetTime(int type)
+String GetTime(uint8_t type)
 {
-  /* type 1 - Local time
+  /* type 0 - UTC time
+   * type 1 - Local time
    * type 2 - Daylight Savings time
    * type 3 - Standard time
    */
@@ -155,6 +156,32 @@ String GetTime(int type)
   return String(stime);  // Thu Nov 01 11:41:02 2018
 }
 
+#ifdef USE_OFFLINESTAT
+String GetUptime(void)
+{
+  return GetDuration(DTD_UP);
+}
+
+String GetDuration(uint8_t duration_type)
+{
+  char dt[16];
+ 
+  TIME_T ut;
+
+  switch (duration_type) {
+    case DTD_DOWN:
+      BreakTime(WifiOfflineDuration(), ut);
+      break;
+    case DTD_UP:
+    default:
+      if (restart_time)
+        BreakTime(utc_time - restart_time, ut);
+      else
+        BreakTime(uptime, ut);
+      break;
+  }
+
+#else  //USE_OFFLINESTAT
 String GetUptime(void)
 {
   char dt[16];
@@ -166,9 +193,10 @@ String GetUptime(void)
   } else {
     BreakTime(uptime, ut);
   }
-
+#endif  // USE_OFFLINESTAT
+  
   // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
-//  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
+  //  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
 
   // "128 14:35:44" - OpenVMS
   // "128T14:35:44" - Tasmota
@@ -322,6 +350,18 @@ uint32_t RuleToTime(TimeRule r, int yr)
   return t;
 }
 
+#ifdef USE_OFFLINESTAT
+uint32_t UtcTime(void)
+{
+  return utc_time;
+}
+
+uint32_t UtcToLocal(uint32_t utime)
+{
+  return utime + (time_timezone * 60);
+}
+#endif //USE_OFFLINESTAT
+
 uint32_t LocalTime(void)
 {
   return local_time;
@@ -362,7 +402,10 @@ void RtcSecond(void)
         GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       AddLog(LOG_LEVEL_DEBUG);
       if (local_time < 1451602800) {  // 2016-01-01
-        rules_flag.time_init = 1;
+        rules_flag.time_init = 1;     // First utc_time sync because local_time is not yet
+#ifdef USE_OFFLINESTAT
+        WifiDownStatRst();            // Wifi first connection delayed to first NTP sync
+#endif  // USE_OFFLINESTAT
       } else {
         rules_flag.time_set = 1;
       }

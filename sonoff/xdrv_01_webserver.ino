@@ -1390,6 +1390,11 @@ void HandleInformation(void)
   func += F("}1" D_HOSTNAME "}2"); func += my_hostname;
   if (mdns_begun) { func += F(".local"); }
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
+    
+#ifdef USE_OFFLINESTAT
+    func += F("}1" D_ONLINE "}2"); func += WifiGetLastTime();		             // Display last WiFi connection timestamp
+    func += F("}1" D_OFFLINE "}2"); func += WifiGetOfflineDuration();               // Display Offline duration since startup or counter reset
+#endif  // USE_OFFLINESTAT
     func += F("}1" D_IP_ADDRESS "}2"); func += WiFi.localIP().toString();
     func += F("}1" D_GATEWAY "}2"); func += IPAddress(Settings.ip_address[1]).toString();
     func += F("}1" D_SUBNET_MASK "}2"); func += IPAddress(Settings.ip_address[2]).toString();
