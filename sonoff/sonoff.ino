@@ -64,9 +64,6 @@
 #ifdef USE_SPI
   #include <SPI.h>                          // SPI support, TFT
 #endif  // USE_SPI
-#ifdef USE_EXPRESSION
-  #include <LinkedList.h>                   // Import LinkedList library 
-#endif  // USE_EXPRESSION
 
 // Structs
 #include "settings.h"
@@ -959,38 +956,6 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       bool error = false;
 
       if (!strstr(dataBuf, "{")) {      // If no JSON it must be parameter
-/*
-        // Version 6.4.1.16 - Add user module config data to template
-        bool update = false;
-        if ((payload > 0) && (payload <= MAXMODULE)) {
-          ModuleDefault(payload -1);    // Copy template module
-          if (USER_MODULE == Settings.module) { restart_flag = 2; }
-        }
-        else if (0 == payload) {        // Copy current module with user configured GPIO
-          if (Settings.module < USER_MODULE) {
-            ModuleDefault(Settings.module);
-            update = true;
-          }
-        }
-        if (USER_MODULE == Settings.module) {  // Update with latest changes
-          update = true;
-        }
-        if (update) {
-          uint8_t src = 0;
-          for (uint8_t dst = 0; dst < sizeof(mycfgio); dst++) {
-            if (6 == dst) { src = 9; }
-            if (8 == dst) { src = 12; }
-            if (Settings.my_gp.io[src] > GPIO_NONE) {
-              if (Settings.user_template.gp.io[dst] != Settings.my_gp.io[src]) {
-                Settings.user_template.gp.io[dst] = Settings.my_gp.io[src];
-                if (USER_MODULE == Settings.module) { restart_flag = 2; }
-              }
-            }
-            src++;
-          }
-        }
-*/
-        // Version 6.4.1.17 use template as defined
         if ((payload > 0) && (payload <= MAXMODULE)) {
           ModuleDefault(payload -1);    // Copy template module
           if (USER_MODULE == Settings.module) { restart_flag = 2; }

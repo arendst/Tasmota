@@ -66,6 +66,7 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
       "setTimeout(u,1000);"
     "}"
   "}"
+  "window.onload=u;"
   "</script>";
 
 const char HTTP_SCRIPT_ROOT[] PROGMEM =
@@ -92,7 +93,8 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "}"
   "function lc(p){"
     "la('?t='+p);"              // ?t related to WebGetArg("t", tmp, sizeof(tmp));
-  "}";
+  "}"
+  "window.onload=la;";
 
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "function c(l){"
@@ -144,13 +146,63 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "lt=setTimeout(l,{a});"
     "return false;"
   "}"
+  "window.onload=l;"
   "</script>";
-const char HTTP_SCRIPT_MODULE1[] PROGMEM =
+
+const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
   "var os;"
-  "function sk(s,g){"            // s = value, g = id and name
+  "function sk(s,g){"                       // s = value, g = id and name
     "var o=os.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\").replace(\"value='\"+s+\"'\",\"selected value='\"+s+\"'\");"
     "eb('g'+g).innerHTML=o;"
+  "}";
+
+const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
+  "function st(t){"
+    "b=new XMLHttpRequest();"
+    "b.onreadystatechange=function(){"
+      "if(b.readyState==4&&b.status==200){"
+        "var i,j,g,k,m,o=b.responseText;"
+        "k=o.indexOf(\"}1\");"              // Template name until }1
+        "if(eb('s1').value==''){"
+          "eb('s1').value=o.substring(0,k);"  // Set NAME if not yet set
+        "}"
+        "m=o.indexOf(\"}3\");"              // Sensor names until }3
+        "os=o.substring(k,m);"              // Complete GPIO sensor list
+        "g=o.substring(m+2).split(',');"    // +2 is length "}3"
+        "j=0;"
+        "for(i=0;i<13;i++){"
+          "if(6==i){j=9;}"
+          "if(8==i){j=12;}"
+          "sk(g[i],j);"                     // Set GPIO
+          "j++;"
+        "}"
+        "for(i=0;i<2;i++){"
+          "p=(g[13]>>i)&1;"
+          "eb('c'+i).checked=p;"            // Set FLAG checkboxes
+        "}"
+        "if(255==t){"
+          "eb('g99').value=g[14];"          // Set BASE for initial select
+        "}"
+      "}"
+    "};"
+    "b.open('GET','tp?t='+t,true);"         // ?t related to WebGetArg("t", stemp, sizeof(stemp));
+    "b.send();"
   "}"
+  "function sl(){"
+    "a=new XMLHttpRequest();"
+    "a.onreadystatechange=function(){"
+      "if(a.readyState==4&&a.status==200){"
+        "os=a.responseText;"
+        "sk(17,99);"
+        "st(255);"
+      "}"
+    "};"
+    "a.open('GET','tp?m=1',true);"          // ?m related to WebServer->hasArg("m")
+    "a.send();"
+  "}"
+  "window.onload=sl;";
+
+const char HTTP_SCRIPT_MODULE1[] PROGMEM =
   "function sl(){"
     "a=new XMLHttpRequest();"
     "a.onreadystatechange=function(){"
@@ -170,7 +222,8 @@ const char HTTP_SCRIPT_MODULE2[] PROGMEM =
     "};"
     "b.open('GET','md?g=1',true);"  // ?g related to WebServer->hasArg("g")
     "b.send();"
-  "}";
+  "}"
+  "window.onload=sl;";
 const char HTTP_SCRIPT_MODULE3[] PROGMEM =
   "}1'%d'>%s (%d)}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
 
@@ -182,6 +235,7 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
     "s=o.replace(/}1/g,\"</td></tr><tr><th>\").replace(/}2/g,\"</th><td>\");"
     "eb('i').innerHTML=s;"
   "}"
+  "window.onload=i;"
   "</script>";
 
 const char HTTP_HEAD_STYLE[] PROGMEM =
@@ -247,6 +301,7 @@ const char HTTP_BTN_MENU_MODULE[] PROGMEM =
 const char HTTP_BTN_MENU4[] PROGMEM =
   "<p><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form></p>"
   "<p><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form></p>"
+  "<p><form action='tp' method='get'><button>" D_CONFIGURE_TEMPLATE "</button></form></p>"
   "<br/>"
   "<form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button class='button bred'>" D_RESET_CONFIGURATION "</button></form>"
   "<p><form action='dl' method='get'><button>" D_BACKUP_CONFIGURATION "</button></form></p>"
@@ -266,8 +321,21 @@ const char HTTP_BTN_CONF[] PROGMEM =
   "<br/>"
   "<form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>";
 
+const char HTTP_FORM_TEMPLATE[] PROGMEM =
+  "<fieldset><legend><b>&nbsp;" D_TEMPLATE_PARAMETERS "&nbsp;</b></legend>"
+  "<form method='get' action='tp'>"
+  "<p><b>" D_TEMPLATE_NAME "</b><br/><input id='s1' name='s1' placeholder='" D_TEMPLATE_NAME "'></p>"
+  "<p></p><b>" D_BASE_TYPE "</b><br/><select id='g99' name='g99' onchange='st(this.value)'></select><br/>";
+const char HTTP_FORM_TEMPLATE_FLAG[] PROGMEM =
+  "<p></p>"  // Keep close so do not use <br/>
+  "<fieldset><legend><b>&nbsp;" D_TEMPLATE_FLAGS "&nbsp;</b></legend><p>"
+  "<input id='c0' name='c0' type='checkbox'><b>" D_ALLOW_ADC0 "</b><br/>"
+  "<input id='c1' name='c1' type='checkbox'><b>" D_ALLOW_PULLUP "</b><br/>"
+  "</p></fieldset>";
+
 const char HTTP_FORM_MODULE[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend><form method='get' action='md'>"
+  "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend>"
+  "<form method='get' action='md'>"
   "<p></p><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
 const char HTTP_FORM_MODULE_PULLUP[] PROGMEM =
   "<br/><input id='b1' name='b1' type='checkbox'{r1><b>" D_PULLUP_ENABLE "</b><br/>";
@@ -435,6 +503,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/md", HandleModuleConfiguration);
       WebServer->on("/wi", HandleWifiConfiguration);
       WebServer->on("/lg", HandleLoggingConfiguration);
+      WebServer->on("/tp", HandleTemplateConfiguration);
       WebServer->on("/co", HandleOtherConfiguration);
       WebServer->on("/dl", HandleBackupConfiguration);
       WebServer->on("/rs", HandleRestoreConfiguration);
@@ -552,7 +621,6 @@ void ShowPage(String &page, bool auth)
   if (HTTP_MANAGER == webserver_state) {
     if (WifiConfigCounter()) {
       page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_COUNTER));
-      page.replace(F("<body>"), F("<body onload='u()'>"));
       page += FPSTR(HTTP_COUNTER);
     }
   }
@@ -634,13 +702,6 @@ void HandleRoot(void)
     if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1"))) {
       HandleWifiLogin();
     } else {
-/*
-      char tmp1[100];
-      WebGetArg("USER1", tmp1, sizeof(tmp1));
-      char tmp2[100];
-      WebGetArg("PASS1", tmp2, sizeof(tmp2));
-      if (!(Settings.web_password[0] != 0) || (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, Settings.web_password)))) {
-*/
       if (!(Settings.web_password[0] != 0) || ((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == Settings.web_password ))) {
         HandleWifiConfiguration();
       } else {
@@ -655,7 +716,6 @@ void HandleRoot(void)
     page.replace(F("{v}"), FPSTR(S_MAIN_MENU));
     page += FPSTR(HTTP_SCRIPT_ROOT);
     page += FPSTR(HTTP_HEAD_STYLE);
-    page.replace(F("<body>"), F("<body onload='la()'>"));
 
     page += F("<div id='l1' name='l1'></div>");
     if (devices_present) {
@@ -827,6 +887,128 @@ void HandleConfiguration(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
+void HandleTemplateConfiguration(void)
+{
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  if (WebServer->hasArg("save")) {
+    TemplateSaveSettings();
+    if (USER_MODULE == Settings.module) {
+      WebRestart(1);
+    }
+    return;
+  }
+
+  char stemp[20];
+
+  if (WebServer->hasArg("m")) {
+    String page = "";
+    for (uint8_t i = 0; i < MAXMODULE; i++) {               // "}1'%d'>%s (%d)}2" - "}1'0'>Sonoff Basic (1)}2"
+      uint8_t midx = pgm_read_byte(kModuleNiceList + i);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, AnyModuleName(midx).c_str(), midx +1);
+      page += mqtt_data;
+    }
+    WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), page);
+    return;
+  }
+
+  WebGetArg("t", stemp, sizeof(stemp));
+  if (strlen(stemp)) {
+    uint8_t module = atoi(stemp);
+    uint8_t module_save = Settings.module;
+    Settings.module = module;
+    myio cmodule;
+    ModuleGpios(&cmodule);
+    gpio_flag flag = ModuleFlag();
+    Settings.module = module_save;
+
+    String page = AnyModuleName(module);                    // NAME: Generic
+
+//    page += F("}1'255'>" D_SENSOR_USER " (255)}2");         // GPIO: }1'255'>User (255)}2
+    for (uint8_t i = 0; i < sizeof(kGpioNiceList); i++) {   // GPIO: }1'0'>None (0)}2}1'17'>Button1 (17)}2...
+
+      if (1 == i) {
+        page += F("}1'255'>" D_SENSOR_USER " (255)}2");     // }1'255'>User (255)}2
+      }
+
+      uint8_t midx = pgm_read_byte(kGpioNiceList + i);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
+      page += mqtt_data;
+    }
+    page += F("}3");                                        // }3
+
+    mqtt_data[0] = '\0';
+    for (uint8_t i = 0; i < sizeof(cmodule); i++) {         // 17,148,29,149,7,255,255,255,138,255,139,255,255
+      if ((i < 6) || ((i > 8) && (i < 11)) || (i > 11)) {   // Ignore flash pins GPIO06, 7, 8 and 11
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (i>0)?",":"", cmodule.io[i]);
+      }
+    }
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,%d,%d"), mqtt_data, flag, Settings.user_template_base);  // FLAG: ,1  BASE: ,17
+    page += mqtt_data;
+
+    WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), page);
+    return;
+  }
+
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TEMPLATE);
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_CONFIGURE_TEMPLATE));
+  page += FPSTR(HTTP_SCRIPT_MODULE_TEMPLATE);
+  page += FPSTR(HTTP_SCRIPT_TEMPLATE);
+  page += FPSTR(HTTP_HEAD_STYLE);
+  page += FPSTR(HTTP_FORM_TEMPLATE);
+  page += F("<br/><table>");
+  for (uint8_t i = 0; i < 17; i++) {
+    if ((i < 6) || ((i > 8) && (i < 11)) || (i > 11)) {  // Ignore flash pins GPIO06, 7, 8 and 11
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td%s><b>" D_GPIO "%d</b></td><td>%s</td><td%s><select id='g%d' name='g%d'></select></td></tr>"),
+        (0==i)?" style='width:80px'":"", i, ((9==i)||(10==i))? "<font color='red'>ESP8285</font>" :"", (0==i)?" style='width:176px'":"", i, i);
+      page += mqtt_data;
+    }
+  }
+  page += F("</table>");
+  page += FPSTR(HTTP_FORM_TEMPLATE_FLAG);
+  page += FPSTR(HTTP_FORM_END);
+  page += FPSTR(HTTP_BTN_CONF);
+  ShowPage(page);
+}
+
+void TemplateSaveSettings(void)
+{
+  char svalue[128];
+  char tmp[100];
+  char stemp[20];
+
+  WebGetArg("s1", tmp, sizeof(tmp));                 // NAME
+  snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
+
+  uint8_t j = 0;
+  for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+    if (6 == i) { j = 9; }
+    if (8 == i) { j = 12; }
+    snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), j);
+    WebGetArg(stemp, tmp, sizeof(tmp));              // GPIO
+    uint8_t gpio = atoi(tmp);
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s%s%d"), svalue, (i>0)?",":"", gpio);
+    j++;
+  }
+
+  uint8_t flag = 0;
+  for (uint8_t i = 0; i < 2; i++) {
+    snprintf_P(stemp, sizeof(stemp), PSTR("c%d"), i);
+    uint8_t state = WebServer->hasArg(stemp) << i;   // FLAG
+    flag += state;
+  }
+  WebGetArg("g99", tmp, sizeof(tmp));                // BASE
+  uint8_t base = atoi(tmp) +1;
+
+  snprintf_P(svalue, sizeof(svalue), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"),
+    svalue, flag, base);
+  ExecuteWebCommand(svalue, SRC_WEBGUI);
+}
+
+/*-------------------------------------------------------------------------------------------*/
+
 void HandleModuleConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
@@ -844,13 +1026,6 @@ void HandleModuleConfiguration(void)
 
   if (WebServer->hasArg("m")) {
     String page = "";
-/*
-    for (uint8_t i = 0; i < MAXMODULE; i++) {  // "}1'%d'>%s (%d)}2" - "}1'0'>Sonoff Basic (1)}2"
-      midx = pgm_read_byte(kModuleNiceList + i);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, AnyModuleName(midx).c_str(), midx +1);
-      page += mqtt_data;
-    }
-*/
     uint8_t vidx = 0;
     for (uint8_t i = 0; i <= MAXMODULE; i++) {  // "}1'%d'>%s (%d)}2" - "}1'255'>UserTemplate (0)}2" - "}1'0'>Sonoff Basic (1)}2"
       if (0 == i) {
@@ -884,6 +1059,7 @@ void HandleModuleConfiguration(void)
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_MODULE));
+  page += FPSTR(HTTP_SCRIPT_MODULE_TEMPLATE);
   page += FPSTR(HTTP_SCRIPT_MODULE1);
   page.replace(F("}4"), String(Settings.module));
   for (uint8_t i = 0; i < sizeof(cmodule); i++) {
@@ -894,7 +1070,6 @@ void HandleModuleConfiguration(void)
   }
   page += FPSTR(HTTP_SCRIPT_MODULE2);
   page += FPSTR(HTTP_HEAD_STYLE);
-  page.replace(F("<body>"), F("<body onload='sl()'>"));
   page += FPSTR(HTTP_FORM_MODULE);
   page.replace(F("{mt"), AnyModuleName(MODULE));
 
@@ -908,7 +1083,7 @@ void HandleModuleConfiguration(void)
     if (ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:176px'><select id='g%d' name='g%d'></select></td></tr>"),
-        (WEMOS==my_module_type)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :(9==i)? "<font color='red'>ESP8285</font>" :(10==i)? "<font color='red'>ESP8285</font>" :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
+        (WEMOS==my_module_type)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :((9==i)||(10==i))? "<font color='red'>ESP8285</font>" :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
       page += mqtt_data;
     }
   }
@@ -1465,7 +1640,6 @@ void HandleInformation(void)
   func += F("</td></tr></table>");
   func += FPSTR(HTTP_SCRIPT_INFO_END);
   page.replace(F("</script>"), func);
-  page.replace(F("<body>"), F("<body onload='i()'>"));
 
   //  page += F("</fieldset>");
   page += FPSTR(HTTP_BTN_MAIN);
@@ -1852,7 +2026,6 @@ void HandleConsole(void)
   page.replace(F("{v}"), FPSTR(S_CONSOLE));
   page += FPSTR(HTTP_HEAD_STYLE);
   page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_CONSOL));
-  page.replace(F("<body>"), F("<body onload='l()'>"));
   page += FPSTR(HTTP_FORM_CMND);
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
