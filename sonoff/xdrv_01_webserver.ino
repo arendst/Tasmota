@@ -94,7 +94,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "function lc(p){"
     "la('?t='+p);"              // ?t related to WebGetArg("t", tmp, sizeof(tmp));
   "}"
-  "window.onload=la;";
+  "window.onload=la();";
 
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "function c(l){"
@@ -152,8 +152,9 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
 const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
   "var os;"
   "function sk(s,g){"                       // s = value, g = id and name
-    "var o=os.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\").replace(\"value='\"+s+\"'\",\"selected value='\"+s+\"'\");"
+    "var o=os.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");"
     "eb('g'+g).innerHTML=o;"
+    "eb('g'+g).value=s;"
   "}";
 
 const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
