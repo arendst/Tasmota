@@ -138,7 +138,7 @@
 #define D_RESTARTING "Redémarre"
 #define D_RESTART_REASON "Raison du redémarrage"
 #define D_RESTORE "restaurer"
-#define D_RETAINED "retenu"
+#define D_RETAINED "persistant"		// MQTT
 #define D_RULE "Règle"
 #define D_SAVE "Enregistrer"
 #define D_SENSOR "Capteur"
@@ -253,7 +253,7 @@
 
 #define D_MODULE_PARAMETERS "Paramètres module"
 #define D_MODULE_TYPE "Type de module"
-#define D_PULLUP_ENABLE "No Button/Switch pull-up"
+#define D_PULLUP_ENABLE "Inter. sans pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Entrée série"
 #define D_SERIAL_OUT "Sortie série"
@@ -288,8 +288,8 @@
 #define D_TELEMETRY_PERIOD "Période télémétrie"
 
 #define D_OTHER_PARAMETERS "Autres paramètres"
-#define D_TEMPLATE "Template"
-#define D_ACTIVATE "Activate"
+#define D_TEMPLATE "Modèle"
+#define D_ACTIVATE "Activer"
 #define D_WEB_ADMIN_PASSWORD "Mot de passe Web Admin"
 #define D_MQTT_ENABLE "MQTT activé"
 #define D_FRIENDLY_NAME "Surnom"
