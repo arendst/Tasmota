@@ -2733,7 +2733,7 @@ void loop(void)
       delay((uint32_t)sleep - my_activity);  // Provide time for background tasks like wifi
     } else {
       if (global_state.wifi_down) {
-        delay(my_activity /2); // If wifi down and my_activity > setoption36 then force loop delay to 1/2 of my_activity period
+        delay(my_activity /2); // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
       }
     }
   }
