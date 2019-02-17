@@ -98,8 +98,8 @@
 #define D_GAS "Gaz"
 #define D_GATEWAY "Passerelle"
 #define D_GROUP "Groupe"
-#define D_HOST "Host"
-#define D_HOSTNAME "Hostname"
+#define D_HOST "Hôte"
+#define D_HOSTNAME "Nom d'Hôte"
 #define D_HUMIDITY "Humidité"
 #define D_ILLUMINANCE "Éclairement"
 #define D_IMMEDIATE "immédiat"      // Button immediate
@@ -184,7 +184,7 @@
 #define D_LEVEL_10 "level 1-0"
 #define D_LEVEL_01 "level 0-1"
 #define D_SERIAL_LOGGING_DISABLED "Journalisation série désactivée"
-#define D_SYSLOG_LOGGING_REENABLED "Jounalisation syslog réactivée"
+#define D_SYSLOG_LOGGING_REENABLED "Jounalisation SysLog réactivée"
 
 #define D_SET_BAUDRATE_TO "Définir le débit à"
 #define D_RECEIVED_TOPIC "Topic reçu"  // Terme MQTT
@@ -209,7 +209,7 @@
 #define D_QUERY_DONE "Requête terminée. Services MQTT trouvés"
 #define D_MQTT_SERVICE_FOUND "Service MQTT trouvé sur"
 #define D_FOUND_AT "trouvé à"
-#define D_SYSLOG_HOST_NOT_FOUND "Host syslog introuvable"
+#define D_SYSLOG_HOST_NOT_FOUND "Hôte SysLog introuvable"
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "Enregistré en flash à"
@@ -281,10 +281,10 @@
 #define D_LOGGING_PARAMETERS "Paramètres du journal"
 #define D_SERIAL_LOG_LEVEL "Niveau de journalisation série"
 #define D_WEB_LOG_LEVEL "Niveau de journalisation web"
-#define D_SYS_LOG_LEVEL "Niveau Syslog"
+#define D_SYS_LOG_LEVEL "Niveau SysLog"
 #define D_MORE_DEBUG "Plus de debug"
-#define D_SYSLOG_HOST "Hôte Syslog"
-#define D_SYSLOG_PORT "Port Syslog"
+#define D_SYSLOG_HOST "Hôte SysLog"
+#define D_SYSLOG_PORT "Port SysLog"
 #define D_TELEMETRY_PERIOD "Période télémétrie"
 
 #define D_OTHER_PARAMETERS "Autres paramètres"
@@ -298,13 +298,13 @@
 #define D_SINGLE_DEVICE "module unique"
 #define D_MULTI_DEVICE "multi module"
 
-#define D_CONFIGURE_TEMPLATE "Configure Template"
-#define D_TEMPLATE_PARAMETERS "Template parameters"
-#define D_TEMPLATE_NAME "Name"
-#define D_BASE_TYPE "Based on"
+#define D_CONFIGURE_TEMPLATE "Configuration du modèle"
+#define D_TEMPLATE_PARAMETERS "Paramètres du modèle"
+#define D_TEMPLATE_NAME "Nom"
+#define D_BASE_TYPE "Basé sur"
 #define D_TEMPLATE_FLAGS "Flags"
-#define D_ALLOW_ADC0 "ADC0 input"
-#define D_ALLOW_PULLUP "User pull-up selection"
+#define D_ALLOW_ADC0 "Entrée ADC0"
+#define D_ALLOW_PULLUP "Choix de pull-up utilisateur"
 
 #define D_SAVE_CONFIGURATION "Enregistrer la configuration"
 #define D_CONFIGURATION_SAVED "Configuration enregistrée"
@@ -341,7 +341,7 @@
 #define D_UPLOAD_ERR_3 "L'octet magique n'est pas 0xE9"
 #define D_UPLOAD_ERR_4 "La taille du programme à flasher est plus grande que la taille réelle de la mémoire flash"
 #define D_UPLOAD_ERR_5 "Erreur de comparaison du buffer de téléchargement"
-#define D_UPLOAD_ERR_6 "Téléchargement échoué. Activer Weblog 3"
+#define D_UPLOAD_ERR_6 "Téléchargement échoué. Activer WebLog 3"
 #define D_UPLOAD_ERR_7 "Téléchargement annulé"
 #define D_UPLOAD_ERR_8 "Fichier invalide"
 #define D_UPLOAD_ERR_9 "Fichier trop grand"
@@ -352,7 +352,7 @@
 #define D_UPLOAD_ERROR_CODE "Code d'erreur téléchargement"
 
 #define D_ENTER_COMMAND "Saisir une commande"
-#define D_ENABLE_WEBLOG_FOR_RESPONSE "Activer Weblog 2 si une réponse est attendue"
+#define D_ENABLE_WEBLOG_FOR_RESPONSE "Activer WebLog 2 si une réponse est attendue"
 #define D_NEED_USER_AND_PASSWORD "Nécessite utilisateur=<username>&password=<password>"
 
 // xdrv_01_mqtt.ino
@@ -493,7 +493,7 @@
 
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Aucun"
-#define D_SENSOR_USER          "User"
+#define D_SENSOR_USER          "Utilisateur"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
