@@ -4,6 +4,7 @@
  * Fix GUI wifi password acception starting with asteriks (*) (#5231, #5242)
  * Add rule expression enabled  by define USE_EXPRESSION in my_user_config.h (#5210)
  * Add Configure Template menu option to GUI (#5222)
+ * Remove command SetOption62 as it's functionality is replaced by user changing the device template (#5255)
  *
  * 6.4.1.16 20190211
  * Initial support for online template change using command Template or GUI Configure Other (#5177)

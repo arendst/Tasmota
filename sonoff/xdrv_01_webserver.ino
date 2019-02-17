@@ -177,7 +177,7 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
           "sk(g[i],j);"                     // Set GPIO
           "j++;"
         "}"
-        "for(i=0;i<2;i++){"
+        "for(i=0;i<1;i++){"
           "p=(g[13]>>i)&1;"
           "eb('c'+i).checked=p;"            // Set FLAG checkboxes
         "}"
@@ -331,15 +331,12 @@ const char HTTP_FORM_TEMPLATE_FLAG[] PROGMEM =
   "<p></p>"  // Keep close so do not use <br/>
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE_FLAGS "&nbsp;</b></legend><p>"
   "<input id='c0' name='c0' type='checkbox'><b>" D_ALLOW_ADC0 "</b><br/>"
-  "<input id='c1' name='c1' type='checkbox'><b>" D_ALLOW_PULLUP "</b><br/>"
   "</p></fieldset>";
 
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='md'>"
   "<p></p><b>" D_MODULE_TYPE "</b> ({mt)<br/><select id='g99' name='g99'></select><br/>";
-const char HTTP_FORM_MODULE_PULLUP[] PROGMEM =
-  "<br/><input id='b1' name='b1' type='checkbox'{r1><b>" D_PULLUP_ENABLE "</b><br/>";
 
 const char HTTP_LNK_ITEM[] PROGMEM =
   "<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;({w})&nbsp<span class='q'>{i} {r}%</span></div>";
@@ -1073,12 +1070,6 @@ void HandleModuleConfiguration(void)
   page += FPSTR(HTTP_HEAD_STYLE);
   page += FPSTR(HTTP_FORM_MODULE);
   page.replace(F("{mt"), AnyModuleName(MODULE));
-
-  if (my_module_flag.pullup) {
-    page += FPSTR(HTTP_FORM_MODULE_PULLUP);
-    page.replace(F("{r1"), (Settings.flag3.no_pullup) ? F(" checked") : F(""));
-  }
-
   page += F("<br/><table>");
   for (uint8_t i = 0; i < sizeof(cmodule); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
@@ -1104,11 +1095,6 @@ void ModuleSaveSettings(void)
   Settings.last_module = Settings.module;
   Settings.module = new_module;
   SetModuleType();
-  if (Settings.last_module == new_module) {
-    if (my_module_flag.pullup) {
-      Settings.flag3.no_pullup = WebServer->hasArg("b1");
-    }
-  }
   myio cmodule;
   ModuleGpios(&cmodule);
   String gpios = "";

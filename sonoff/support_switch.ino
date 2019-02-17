@@ -110,12 +110,6 @@ void SwitchProbe(void)
 
 void SwitchInit(void)
 {
-  if (my_module_flag.pullup) {
-    if (Settings.flag3.no_pullup) {
-      switch_no_pullup = 0xffff;
-    }
-  }
-
   switches_found = 0;
   for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
     lastwallswitch[i] = 1;  // Init global to virtual switch state;

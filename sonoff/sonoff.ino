@@ -776,9 +776,6 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
             if (10 == pindex) {  // SetOption60 enable or disable traditional sleep
               WiFiSetSleepMode();  // Update WiFi sleep mode accordingly
             }
-            if ((12 == pindex) && (my_module_flag.pullup)) {  // SetOption62 change input pull-up
-              restart_flag = 2;    // Only restart if module supports it
-            }
           }
         }
         else {                   // SetOption32 .. 49

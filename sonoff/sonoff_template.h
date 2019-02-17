@@ -336,7 +336,7 @@ typedef struct MYCFGIO {
 } mycfgio;
 
 #define GPIO_FLAG_ADC0       1  // Allow ADC0 when define USE_ADC_VCC is disabled
-#define GPIO_FLAG_PULLUP     2  // Allow input pull-up control using SetOption62
+#define GPIO_FLAG_SPARE01    2  // Allow input pull-up control using SetOption62 - Superseded by user template editing
 #define GPIO_FLAG_SPARE02    4
 #define GPIO_FLAG_SPARE03    8
 #define GPIO_FLAG_SPARE04   16
@@ -348,7 +348,7 @@ typedef union {
   uint8_t data;
   struct {
     uint8_t adc0 : 1;            // Allow ADC0 when define USE_ADC_VCC is disabled
-    uint8_t pullup : 1;          // Allow input pull-up control using SetOption62
+    uint8_t spare01 : 1;
     uint8_t spare02 : 1;
     uint8_t spare03 : 1;
     uint8_t spare04 : 1;
@@ -974,7 +974,6 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO15 D8
      GPIO_USER,        // GPIO16 D0 Wemos Wake
      GPIO_FLAG_ADC0    // ADC0 A0 Analog input
-//   + GPIO_FLAG_PULLUP  // Allow input pull-up control
   },
   { "Sonoff Dev",      // Sonoff Dev (ESP8266)
      GPIO_KEY1,        // GPIO00 E-FW Button
@@ -1503,7 +1502,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_SWT2,        // GPIO14
      GPIO_MCP39F5_RST, // GPIO15 MCP39F501 Reset
      0,
-     GPIO_FLAG_PULLUP  // Allow input pull-up control
+     0
   },
   { "Xiaomi Philips",  // Xiaomi Philips bulb (ESP8266)
      0, 0, 0, 0, 0, 0,
