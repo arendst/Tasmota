@@ -3,6 +3,7 @@
  * Fix regression from 6.4.1.16 where GPIO9 and GPIO10 connected devices did not work (#5197)
  * Fix GUI wifi password acception starting with asteriks (*) (#5231, #5242)
  * Add rule expression enabled  by define USE_EXPRESSION in my_user_config.h (#5210)
+ * Add Configure Template menu option to GUI (#5222)
  *
  * 6.4.1.16 20190211
  * Initial support for online template change using command Template or GUI Configure Other (#5177)

@@ -298,6 +298,14 @@
 #define D_SINGLE_DEVICE "התקן בודד"
 #define D_MULTI_DEVICE "התקנים"
 
+#define D_CONFIGURE_TEMPLATE "Configure Template"
+#define D_TEMPLATE_PARAMETERS "Template parameters"
+#define D_TEMPLATE_NAME "Name"
+#define D_BASE_TYPE "Based on"
+#define D_TEMPLATE_FLAGS "Flags"
+#define D_ALLOW_ADC0 "ADC0 input"
+#define D_ALLOW_PULLUP "User pull-up selection"
+
 #define D_SAVE_CONFIGURATION "שמירת הגדרות"
 #define D_CONFIGURATION_SAVED "הגדרות נשמרו"
 #define D_CONFIGURATION_RESET "איפוס הגדרות"
@@ -485,6 +493,7 @@
 
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "None"
+#define D_SENSOR_USER          "User"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
