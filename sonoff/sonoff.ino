@@ -2316,17 +2316,23 @@ void GpioInit(void)
     baudrate = APP_BAUDRATE;
   }
 
+  for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+    if ((Settings.user_template.gp.io[i] >= GPIO_SENSOR_END) && (Settings.user_template.gp.io[i] < GPIO_USER)) {
+      Settings.user_template.gp.io[i] = GPIO_USER;  // Fix not supported sensor ids in template
+    }
+  }
+
   myio def_gp;
   ModuleGpios(&def_gp);
   for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) {
-    if (Settings.my_gp.io[i] > GPIO_NONE) {
+    if ((Settings.my_gp.io[i] >= GPIO_SENSOR_END) && (Settings.my_gp.io[i] < GPIO_USER)) {
+      Settings.my_gp.io[i] = GPIO_NONE;             // Fix not supported sensor ids in module
+    }
+    else if (Settings.my_gp.io[i] > GPIO_NONE) {
       my_module.io[i] = Settings.my_gp.io[i];
     }
     if ((def_gp.io[i] > GPIO_NONE) && (def_gp.io[i] < GPIO_USER)) {
       my_module.io[i] = def_gp.io[i];
-      if (USER_MODULE == Settings.module) {
-        Settings.my_gp.io[i] = def_gp.io[i];  // Copy user template settings
-      }
     }
   }
   my_module_flag = ModuleFlag();
