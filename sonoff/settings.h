@@ -309,7 +309,7 @@ struct SYSCFG {
   unsigned long energy_kWhtotal;           // 554
   char          mqtt_fulltopic[100];       // 558
   SysBitfield2  flag2;                     // 5BC
-  unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
+  uint32_t      pulse_counter[MAX_COUNTERS];  // 5C0
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
@@ -364,7 +364,7 @@ struct RTCMEM {
   uint8_t       ota_loader;                // 293
   unsigned long energy_kWhtoday;              // 294
   unsigned long energy_kWhtotal;              // 298
-  unsigned long pulse_counter[MAX_COUNTERS];  // 29C
+  uint32_t      pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
   uint8_t       free_020[60];              // 2B0
                                            // 2EC - 2FF free locations
