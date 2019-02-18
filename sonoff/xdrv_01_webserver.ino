@@ -185,7 +185,7 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
       "sk(g[i],j);"                       // Set GPIO
       "j++;"
     "}"
-    "for(i=0;i<1;i++){"                   // Supports 1 FLAG
+    "for(i=0;i<" STR(GPIO_FLAG_USED) ";i++){"
       "p=(g[13]>>i)&1;"
       "eb('c'+i).checked=p;"              // Set FLAG checkboxes
     "}"
@@ -886,9 +886,7 @@ void HandleTemplateConfiguration(void)
 
   if (WebServer->hasArg("save")) {
     TemplateSaveSettings();
-    if (USER_MODULE == Settings.module) {
-      WebRestart(1);
-    }
+    WebRestart(1);
     return;
   }
 
@@ -917,7 +915,6 @@ void HandleTemplateConfiguration(void)
 
     String page = AnyModuleName(module);                    // NAME: Generic
 
-//    page += F("}1'255'>" D_SENSOR_USER " (255)}2");         // GPIO: }1'255'>User (255)}2
     for (uint8_t i = 0; i < sizeof(kGpioNiceList); i++) {   // GPIO: }1'0'>None (0)}2}1'17'>Button1 (17)}2...
 
       if (1 == i) {
@@ -932,7 +929,7 @@ void HandleTemplateConfiguration(void)
 
     mqtt_data[0] = '\0';
     for (uint8_t i = 0; i < sizeof(cmodule); i++) {         // 17,148,29,149,7,255,255,255,138,255,139,255,255
-      if ((i < 6) || ((i > 8) && (i < 11)) || (i > 11)) {   // Ignore flash pins GPIO06, 7, 8 and 11
+      if ((i < 6) || ((i > 8) && (i != 11))) {              // Ignore flash pins GPIO06, 7, 8 and 11
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (i>0)?",":"", cmodule.io[i]);
       }
     }
@@ -953,9 +950,9 @@ void HandleTemplateConfiguration(void)
   page += FPSTR(HTTP_FORM_TEMPLATE);
   page += F("<br/><table>");
   for (uint8_t i = 0; i < 17; i++) {
-    if ((i < 6) || ((i > 8) && (i < 11)) || (i > 11)) {  // Ignore flash pins GPIO06, 7, 8 and 11
+    if ((i < 6) || ((i > 8) && (i != 11))) {                // Ignore flash pins GPIO06, 7, 8 and 11
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<tr><td%s><b>" D_GPIO "%d</b></td><td>%s</td><td%s><select id='g%d' name='g%d'></select></td></tr>"),
-        (0==i)?" style='width:80px'":"", i, ((9==i)||(10==i))? "<font color='red'>ESP8285</font>" :"", (0==i)?" style='width:176px'":"", i, i);
+        (0==i)?" style='width:74px'":"", i, ((9==i)||(10==i))? "<font color='red'>ESP8285</font>" :"", (0==i)?" style='width:176px'":"", i, i);
       page += mqtt_data;
     }
   }
@@ -987,7 +984,7 @@ void TemplateSaveSettings(void)
   }
 
   uint8_t flag = 0;
-  for (uint8_t i = 0; i < 2; i++) {
+  for (uint8_t i = 0; i < GPIO_FLAG_USED; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("c%d"), i);
     uint8_t state = WebServer->hasArg(stemp) << i;   // FLAG
     flag += state;
