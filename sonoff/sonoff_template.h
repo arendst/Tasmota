@@ -335,6 +335,8 @@ typedef struct MYCFGIO {
   uint8_t      io[MAX_GPIO_PIN - MIN_FLASH_PINS];
 } mycfgio;
 
+#define GPIO_FLAG_USED       1  // Currently only one flag used
+
 #define GPIO_FLAG_ADC0       1  // Allow ADC0 when define USE_ADC_VCC is disabled
 #define GPIO_FLAG_SPARE01    2  // Allow input pull-up control using SetOption62 - Superseded by user template editing
 #define GPIO_FLAG_SPARE02    4
