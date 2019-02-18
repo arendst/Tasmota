@@ -7,6 +7,7 @@
  * Remove command SetOption62 as it's functionality is replaced by user changing the device template (#5255)
  * Add property LinkCount to state and status 11 message representing number of Wifi Link re-connections
  * Add property MqttCount to status 6 message representing number of Mqtt re-connections
+ * Add property Downtime to state and status 11 message representing the duration of wifi connection loss
  *
  * 6.4.1.16 20190211
  * Initial support for online template change using command Template or GUI Configure Other (#5177)

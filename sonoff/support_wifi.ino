@@ -49,7 +49,9 @@ using namespace axTLS;
 */
 #include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
 
-uint16_t wifi_link_count = 0;
+uint32_t wifi_last_event = 0;       // Last wifi connection event
+uint32_t wifi_downtime = 0;         // Wifi down duration
+uint16_t wifi_link_count = 0;       // Number of wifi re-connect
 uint8_t wifi_counter;
 uint8_t wifi_retry_init;
 uint8_t wifi_retry;
@@ -346,14 +348,21 @@ uint16_t WifiLinkCount()
   return wifi_link_count;
 }
 
+String WifiDowntime()
+{
+  return GetDuration(wifi_downtime);
+}
+
 void WifiSetState(uint8_t state)
 {
   if (state == global_state.wifi_down) {
     if (state) {
       rules_flag.wifi_connected = 1;
       wifi_link_count++;
+      wifi_downtime += UpTime() - wifi_last_event;
     } else {
       rules_flag.wifi_disconnected = 1;
+      wifi_last_event = UpTime();
     }
   }
   global_state.wifi_down = state ^1;

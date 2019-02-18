@@ -87,6 +87,23 @@ String GetTimeZone(void)
   return String(tz);  // -03:45
 }
 
+String GetDuration(uint32_t time)
+{
+  char dt[16];
+
+  TIME_T ut;
+  BreakTime(time, ut);
+
+  // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
+//  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
+
+  // "128 14:35:44" - OpenVMS
+  // "128T14:35:44" - Tasmota
+  snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"), ut.days, ut.hour, ut.minute, ut.second);
+
+  return String(dt);  // 128T14:35:44
+}
+
 String GetDT(uint32_t time)
 {
   // "2017-03-07T11:08:02" - ISO8601:2004
@@ -155,37 +172,24 @@ String GetTime(int type)
   return String(stime);  // Thu Nov 01 11:41:02 2018
 }
 
+uint32_t UpTime(void)
+{
+  if (restart_time) {
+    return utc_time - restart_time;
+  } else {
+    return uptime;
+  }
+}
+
 String GetUptime(void)
 {
-  char dt[16];
-
-  TIME_T ut;
-
-  if (restart_time) {
-    BreakTime(utc_time - restart_time, ut);
-  } else {
-    BreakTime(uptime, ut);
-  }
-
-  // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
-//  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
-
-  // "128 14:35:44" - OpenVMS
-  // "128T14:35:44" - Tasmota
-  snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"), ut.days, ut.hour, ut.minute, ut.second);
-
-  return String(dt);  // 128T14:35:44
+  return GetDuration(UpTime());
 }
 
 uint32_t GetMinutesUptime(void)
 {
   TIME_T ut;
-
-  if (restart_time) {
-    BreakTime(utc_time - restart_time, ut);
-  } else {
-    BreakTime(uptime, ut);
-  }
+  BreakTime(UpTime(), ut);
 
   return (ut.days *1440) + (ut.hour *60) + ut.minute;
 }
