@@ -368,7 +368,7 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "<p></p>"
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE "&nbsp;</b></legend>"
   "<p><input id='t1' name='t1' placeholder='" D_TEMPLATE "' value='{t1'></p>"
-  "<p><input id='t2' name='t2' type='checkbox'><b>" D_ACTIVATE "</b></p>"
+  "<p><input id='t2' name='t2' type='checkbox'{t2><b>" D_ACTIVATE "</b></p>"
   "</fieldset>"
   "<br/>"
   "<b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
@@ -1352,6 +1352,7 @@ void HandleOtherConfiguration(void)
   page += FPSTR(HTTP_FORM_OTHER);
   TemplateJson();
   page.replace(F("{t1"), mqtt_data);
+  page.replace(F("{t2"), (USER_MODULE == Settings.module) ? F(" checked disabled") : F(""));
   page.replace(F("{r1"), (Settings.flag.mqtt_enabled) ? F(" checked") : F(""));
 
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;

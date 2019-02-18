@@ -302,7 +302,7 @@
 #define D_TEMPLATE_PARAMETERS "Paramètres du modèle"
 #define D_TEMPLATE_NAME "Nom"
 #define D_BASE_TYPE "Basé sur"
-#define D_TEMPLATE_FLAGS "Flags"
+#define D_TEMPLATE_FLAGS "Options"
 #define D_ALLOW_ADC0 "Entrée ADC0"
 #define D_ALLOW_PULLUP "Choix de pull-up utilisateur"
 
