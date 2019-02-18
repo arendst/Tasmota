@@ -49,7 +49,7 @@ using namespace axTLS;
 */
 #include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
 
-uint32_t wifi_link_down = 0;
+uint16_t wifi_link_count = 0;
 uint8_t wifi_counter;
 uint8_t wifi_retry_init;
 uint8_t wifi_retry;
@@ -341,9 +341,9 @@ void WifiBeginAfterScan()
   }
 }
 
-uint32_t WifiLinkDown()
+uint16_t WifiLinkCount()
 {
-  return wifi_link_down;
+  return wifi_link_count;
 }
 
 void WifiSetState(uint8_t state)
@@ -351,9 +351,9 @@ void WifiSetState(uint8_t state)
   if (state == global_state.wifi_down) {
     if (state) {
       rules_flag.wifi_connected = 1;
+      wifi_link_count++;
     } else {
       rules_flag.wifi_disconnected = 1;
-      wifi_link_down++;
     }
   }
   global_state.wifi_down = state ^1;

@@ -73,6 +73,7 @@ const char kMqttCommands[] PROGMEM =
   D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
 
+uint16_t mqtt_connect_count = 0;            // MQTT re-connect count
 uint16_t mqtt_retry_counter = 1;            // MQTT connection retry counter
 uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
 bool mqtt_connected = false;                // MQTT virtual connection status
@@ -379,6 +380,11 @@ void MqttPublishPowerBlinkState(uint8_t device)
 
 /*********************************************************************************************/
 
+uint16_t MqttConnectCount()
+{
+  return mqtt_connect_count;
+}
+
 void MqttDisconnected(int state)
 {
   mqtt_connected = false;
@@ -398,6 +404,7 @@ void MqttConnected(void)
     AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
     mqtt_connected = true;
     mqtt_retry_counter = 0;
+    mqtt_connect_count++;
 
     GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_ONLINE));
