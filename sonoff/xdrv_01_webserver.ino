@@ -52,13 +52,13 @@ const char HTTP_HEAD[] PROGMEM =
   "<title>{h} - {v}</title>"
 
   "<script>"
-  "var x=null,lt,to,tp,pc='';"   // x=null allow for abortion
+  "var x=null,lt,to,tp,pc='';"            // x=null allow for abortion
   "function eb(s){"
     "return document.getElementById(s);"  // Save code space
   "}";
 
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
-  "var cn=180;"                  // seconds
+  "var cn=180;"                           // seconds
   "function u(){"
     "if(cn>=0){"
       "eb('t').innerHTML='" D_RESTART_IN " '+cn+' " D_SECONDS "';"
@@ -76,7 +76,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
       "a=p;"
       "clearTimeout(lt);"
     "}"
-    "if(x!=null){x.abort();}"    // Abort if no response within 2 seconds (happens on restart 1)
+    "if(x!=null){x.abort();}"             // Abort if no response within 2 seconds (happens on restart 1)
     "x=new XMLHttpRequest();"
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
@@ -86,13 +86,13 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "};"
     "x.open('GET','ay'+a,true);"
     "x.send();"
-    "lt=setTimeout(la,{a});"    // Settings.web_refresh
+    "lt=setTimeout(la,{a});"              // Settings.web_refresh
   "}"
   "function lb(p){"
-    "la('?d='+p);"              // ?d related to WebGetArg("d", tmp, sizeof(tmp));
+    "la('?d='+p);"                        // ?d related to WebGetArg("d", tmp, sizeof(tmp));
   "}"
   "function lc(p){"
-    "la('?t='+p);"              // ?t related to WebGetArg("t", tmp, sizeof(tmp));
+    "la('?t='+p);"                        // ?t related to WebGetArg("t", tmp, sizeof(tmp));
   "}"
   "window.onload=la();";
 
@@ -112,9 +112,9 @@ const char HTTP_SCRIPT_RELOAD_OTA[] PROGMEM =
   "</script>";
 
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
-  "var sn=0;"                    // Scroll position
-  "var id=0;"                    // Get most of weblog initially
-  "function l(p){"               // Console log and command service
+  "var sn=0;"                             // Scroll position
+  "var id=0;"                             // Get most of weblog initially
+  "function l(p){"                        // Console log and command service
     "var c,o,t;"
     "clearTimeout(lt);"
     "o='';"
@@ -125,8 +125,8 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "c.value='';"
       "t.scrollTop=sn;"
     "}"
-    "if(t.scrollTop>=sn){"       // User scrolled back so no updates
-      "if(x!=null){x.abort();}"  // Abort if no response within 2 seconds (happens on restart 1)
+    "if(t.scrollTop>=sn){"                // User scrolled back so no updates
+      "if(x!=null){x.abort();}"           // Abort if no response within 2 seconds (happens on restart 1)
       "x=new XMLHttpRequest();"
       "x.onreadystatechange=function(){"
         "if(x.readyState==4&&x.status==200){"
@@ -151,88 +151,83 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
 
 const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
   "var os;"
-  "function sk(s,g){"                       // s = value, g = id and name
+  "function sk(s,g){"                     // s = value, g = id and name
     "var o=os.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");"
     "eb('g'+g).innerHTML=o;"
     "eb('g'+g).value=s;"
+  "}"
+  "function ld(u,f){"
+    "var x=new XMLHttpRequest();"
+    "x.onreadystatechange=function(){"
+      "if(this.readyState==4&&this.status==200){"
+        "f(this);"
+      "}"
+    "};"
+    "x.open('GET',u,true);"
+    "x.send();"
   "}";
 
 const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
+  "var c;"                                // Need a global for BASE
+  "function x1(b){"
+    "var i,j,g,k,m,o=b.responseText;"
+    "k=o.indexOf(\"}1\");"                // Template name until }1
+    "if(eb('s1').value==''){"
+      "eb('s1').value=o.substring(0,k);"  // Set NAME if not yet set
+    "}"
+    "m=o.indexOf(\"}3\");"                // Sensor names until }3
+    "os=o.substring(k,m);"                // Complete GPIO sensor list
+    "g=o.substring(m+2).split(',');"      // +2 is length "}3"
+    "j=0;"
+    "for(i=0;i<13;i++){"                  // Supports 13 GPIOs
+      "if(6==i){j=9;}"
+      "if(8==i){j=12;}"
+      "sk(g[i],j);"                       // Set GPIO
+      "j++;"
+    "}"
+    "for(i=0;i<1;i++){"                   // Supports 1 FLAG
+      "p=(g[13]>>i)&1;"
+      "eb('c'+i).checked=p;"              // Set FLAG checkboxes
+    "}"
+    "if(" STR(USER_MODULE) "==c){"
+      "eb('g99').value=g[14];"            // Set BASE for initial select
+    "}"
+  "}"
   "function st(t){"
-    "b=new XMLHttpRequest();"
-    "b.onreadystatechange=function(){"
-      "if(b.readyState==4&&b.status==200){"
-        "var i,j,g,k,m,o=b.responseText;"
-        "k=o.indexOf(\"}1\");"              // Template name until }1
-        "if(eb('s1').value==''){"
-          "eb('s1').value=o.substring(0,k);"  // Set NAME if not yet set
-        "}"
-        "m=o.indexOf(\"}3\");"              // Sensor names until }3
-        "os=o.substring(k,m);"              // Complete GPIO sensor list
-        "g=o.substring(m+2).split(',');"    // +2 is length "}3"
-        "j=0;"
-        "for(i=0;i<13;i++){"
-          "if(6==i){j=9;}"
-          "if(8==i){j=12;}"
-          "sk(g[i],j);"                     // Set GPIO
-          "j++;"
-        "}"
-        "for(i=0;i<1;i++){"
-          "p=(g[13]>>i)&1;"
-          "eb('c'+i).checked=p;"            // Set FLAG checkboxes
-        "}"
-        "if(255==t){"
-          "eb('g99').value=g[14];"          // Set BASE for initial select
-        "}"
-      "}"
-    "};"
-    "b.open('GET','tp?t='+t,true);"         // ?t related to WebGetArg("t", stemp, sizeof(stemp));
-    "b.send();"
+    "c=t;"                                // Needed for initial BASE select
+    "var a='tp?t='+t;"
+    "ld(a,x1);"                           // ?t related to WebGetArg("t", stemp, sizeof(stemp));
   "}"
-  "function sl(){"
-    "a=new XMLHttpRequest();"
-    "a.onreadystatechange=function(){"
-      "if(a.readyState==4&&a.status==200){"
-        "os=a.responseText;"
-        "sk(17,99);"
-        "st(255);"
-      "}"
-    "};"
-    "a.open('GET','tp?m=1',true);"          // ?m related to WebServer->hasArg("m")
-    "a.send();"
+
+  "function x2(a){"
+    "os=a.responseText;"
+    "sk(17,99);"                          // 17 = WEMOS
+    "st(" STR(USER_MODULE) ");"
   "}"
-  "window.onload=sl;";
+  "window.onload=ld('tp?m=1',x2);";       // ?m related to WebServer->hasArg("m")
 
 const char HTTP_SCRIPT_MODULE1[] PROGMEM =
-  "function sl(){"
-    "a=new XMLHttpRequest();"
-    "a.onreadystatechange=function(){"
-      "if(a.readyState==4&&a.status==200){"
-        "os=a.responseText;"
-        "sk(}4,99);"
-      "}"
-    "};"
-    "a.open('GET','md?m=1',true);"  // ?m related to WebServer->hasArg("m")
-    "a.send();"
-    "b=new XMLHttpRequest();"
-    "b.onreadystatechange=function(){"
-      "if(b.readyState==4&&b.status==200){"
-        "os=b.responseText;";
+  "function x1(a){"
+    "os=a.responseText;"
+    "sk(}4,99);"
+  "}"
+  "function x2(b){"
+    "os=b.responseText;";
 const char HTTP_SCRIPT_MODULE2[] PROGMEM =
-      "}"
-    "};"
-    "b.open('GET','md?g=1',true);"  // ?g related to WebServer->hasArg("g")
-    "b.send();"
+  "}"
+  "function sl(){"
+    "ld('md?m=1',x1);"                     // ?m related to WebServer->hasArg("m")
+    "ld('md?g=1',x2);"                     // ?m related to WebServer->hasArg("m")
   "}"
   "window.onload=sl;";
 const char HTTP_SCRIPT_MODULE3[] PROGMEM =
-  "}1'%d'>%s (%d)}2";            // "}1" and "}2" means do not use "}x" in Module name and Sensor name
+  "}1'%d'>%s (%d)}2";                      // "}1" and "}2" means do not use "}x" in Module name and Sensor name
 
 const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
   "function i(){"
     "var s,o=\"";
 const char HTTP_SCRIPT_INFO_END[] PROGMEM =
-    "\";"                        // "}1" and "}2" means do not use "}x" in Information text
+    "\";"                                   // "}1" and "}2" means do not use "}x" in Information text
     "s=o.replace(/}1/g,\"</td></tr><tr><th>\").replace(/}2/g,\"</th><td>\");"
     "eb('i').innerHTML=s;"
   "}"
