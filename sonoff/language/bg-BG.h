@@ -493,7 +493,7 @@
 
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Няма"
-#define D_SENSOR_USER          "Потребителски"
+#define D_SENSOR_USER          "Потребит."
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
