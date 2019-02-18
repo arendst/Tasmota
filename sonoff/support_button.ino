@@ -50,12 +50,6 @@ void ButtonInvertFlag(uint8 button_bit)
 
 void ButtonInit(void)
 {
-  if (my_module_flag.pullup) {
-    if (Settings.flag3.no_pullup) {
-      key_no_pullup = 0xff;
-    }
-  }
-
   buttons_found = 0;
   for (uint8_t i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {

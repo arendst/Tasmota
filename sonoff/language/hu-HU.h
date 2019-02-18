@@ -298,6 +298,14 @@
 #define D_SINGLE_DEVICE "single device"
 #define D_MULTI_DEVICE "multi device"
 
+#define D_CONFIGURE_TEMPLATE "Configure Template"
+#define D_TEMPLATE_PARAMETERS "Template parameters"
+#define D_TEMPLATE_NAME "Name"
+#define D_BASE_TYPE "Based on"
+#define D_TEMPLATE_FLAGS "Options"
+#define D_ALLOW_ADC0 "ADC0 input"
+#define D_ALLOW_PULLUP "User pull-up selection"
+
 #define D_SAVE_CONFIGURATION "Beállítások mentése"
 #define D_CONFIGURATION_SAVED "Beállítások elmentve"
 #define D_CONFIGURATION_RESET "Beállítások visszaállítása"
@@ -485,6 +493,7 @@
 
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Nincs"
+#define D_SENSOR_USER          "User"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"

@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.4.0.1
+ * Updated until v6.4.1.17 (up to commit 590c883b)
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -253,7 +253,7 @@
 
 #define D_MODULE_PARAMETERS "Параметри на модула"
 #define D_MODULE_TYPE "Тип на модула"
-#define D_PULLUP_ENABLE "No Button/Switch pull-up"
+#define D_PULLUP_ENABLE "Без pull-up за бутон/ключ"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Сериен вход"
 #define D_SERIAL_OUT "Сериен изход"
@@ -288,8 +288,8 @@
 #define D_TELEMETRY_PERIOD "Период на телеметрия"
 
 #define D_OTHER_PARAMETERS "Други параметри"
-#define D_TEMPLATE "Template"
-#define D_ACTIVATE "Activate"
+#define D_TEMPLATE "Модел"
+#define D_ACTIVATE "Активирай"
 #define D_WEB_ADMIN_PASSWORD "Парола на уеб администратора"
 #define D_MQTT_ENABLE "Активиране на MQTT"
 #define D_FRIENDLY_NAME "Приятелско име"
@@ -297,6 +297,14 @@
 #define D_HUE_BRIDGE "Hue Bridge"
 #define D_SINGLE_DEVICE "Единично"
 #define D_MULTI_DEVICE "Мулти"
+
+#define D_CONFIGURE_TEMPLATE "Конфигуриране на модел"
+#define D_TEMPLATE_PARAMETERS "Параметри на модел"
+#define D_TEMPLATE_NAME "Име"
+#define D_BASE_TYPE "Базиран на"
+#define D_TEMPLATE_FLAGS "Флагове"
+#define D_ALLOW_ADC0 "ADC0 вход"
+#define D_ALLOW_PULLUP "Потребителски избор на pull-up"
 
 #define D_SAVE_CONFIGURATION "Запазване на конфигурацията"
 #define D_CONFIGURATION_SAVED "Конфигурацията е запазена"
@@ -485,6 +493,7 @@
 
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Няма"
+#define D_SENSOR_USER          "Потребит."
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"

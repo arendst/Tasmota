@@ -104,6 +104,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define PWM_MIN                100          // [PWM_MIN] Minimum frequency - Default: 100
                                             //    For Dimmers use double of your mains AC frequecy (100 for 50Hz and 120 for 60Hz)
                                             //    For Controlling Servos use 50 and also set PWM_FREQ as 50 (DO NOT USE THESE VALUES FOR DIMMERS)
+//#define PWM_LIGHTSCHEME0_IGNORE_SLEEP       // Do not change sleep value for LightAnimate() scheme 0
 
 #define DEFAULT_POWER_DELTA    80           // Power change percentage
 #define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power

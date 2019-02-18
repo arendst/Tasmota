@@ -1,5 +1,13 @@
 /* 6.4.1.17 20190214
  * Change template update by removing possibility to add user module config keeping template as defined (#5222)
+ * Fix regression from 6.4.1.16 where GPIO9 and GPIO10 connected devices did not work (#5197)
+ * Fix GUI wifi password acception starting with asteriks (*) (#5231, #5242)
+ * Add rule expression enabled  by define USE_EXPRESSION in my_user_config.h (#5210)
+ * Add Configure Template menu option to GUI (#5222)
+ * Remove command SetOption62 as it's functionality is replaced by user changing the device template (#5255)
+ * Add property LinkCount to state and status 11 message representing number of Wifi Link re-connections
+ * Add property MqttCount to status 6 message representing number of Mqtt re-connections
+ * Add property Downtime to state and status 11 message representing the duration of wifi connection loss
  *
  * 6.4.1.16 20190211
  * Initial support for online template change using command Template or GUI Configure Other (#5177)

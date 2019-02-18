@@ -90,6 +90,21 @@
 #define MAXIMUM_COMPARE_OPERATOR          COMPARE_OPERATOR_SMALLER_EQUAL
 const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
 
+#ifdef USE_EXPRESSION
+  #include <LinkedList.h>                 // Import LinkedList library
+
+  const char kExpressionOperators[] PROGMEM = "+-*/%^";
+  #define EXPRESSION_OPERATOR_ADD         0
+  #define EXPRESSION_OPERATOR_SUBTRACT    1
+  #define EXPRESSION_OPERATOR_MULTIPLY    2
+  #define EXPRESSION_OPERATOR_DIVIDEDBY   3
+  #define EXPRESSION_OPERATOR_MODULO      4
+  #define EXPRESSION_OPERATOR_POWER       5
+
+  const uint8_t kExpressionOperatorsPriorities[] PROGMEM = {1, 1, 2, 2, 3, 4};
+  #define MAX_EXPRESSION_OPERATOR_PRIORITY    4
+#endif  // USE_EXPRESSION
+
 enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_MULT, CMND_SCALE, CMND_CALC_RESOLUTION };
 const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION ;
 
@@ -562,6 +577,310 @@ void RulesTeleperiod(void)
   rules_teleperiod = 0;
 }
 
+#ifdef USE_EXPRESSION
+/********************************************************************************************/
+/*
+ * Parse a number value
+ * Input:
+ *      pNumber     - A char pointer point to a digit started string (guaranteed)
+ *      value       - Reference a double variable used to accept the result
+ * Output:
+ *      pNumber     - Pointer forward to next character after the number
+ *      value       - double type, the result value
+ * Return:
+ *      true    - succeed
+ *      false   - failed
+ */
+bool findNextNumber(char * &pNumber, double &value)
+{
+  bool bSucceed = false;
+  String sNumber = "";
+  while (*pNumber) {
+    if (isdigit(*pNumber) || (*pNumber == '.')) {
+      sNumber += *pNumber;
+      pNumber++;
+    } else {
+      break;
+    }
+  }
+  if (sNumber.length() > 0) {
+    value = CharToDouble(sNumber.c_str());
+    bSucceed = true;
+  }
+  return bSucceed;
+}
+
+/********************************************************************************************/
+/*
+ * Parse a variable (like VAR1, MEM3) and get its value (double type)
+ * Input:
+ *      pVarname    - A char pointer point to a variable name string
+ *      value       - Reference a double variable used to accept the result
+ * Output:
+ *      pVarname    - Pointer forward to next character after the variable
+ *      value       - double type, the result value
+ * Return:
+ *      true    - succeed
+ *      false   - failed
+ */
+bool findNextVariableValue(char * &pVarname, double &value)
+{
+  bool succeed = false;
+  value = 0;
+  String sVarName = "";
+  while (*pVarname) {
+    if (isalpha(*pVarname) || isdigit(*pVarname)) {
+      sVarName.concat(*pVarname);
+      pVarname++;
+    } else {
+      break;
+    }
+  }
+  sVarName.toUpperCase();
+  if (sVarName.startsWith("VAR")) {
+    int index = sVarName.substring(3).toInt();
+    if (index > 0 && index <= MAX_RULE_VARS) {
+      value = CharToDouble(vars[index -1]);
+      succeed = true;
+    }
+  } else if (sVarName.startsWith("MEM")) {
+    int index = sVarName.substring(3).toInt();
+    if (index > 0 && index <= MAX_RULE_MEMS) {
+      value = CharToDouble(Settings.mems[index -1]);
+      succeed = true;
+    }
+  } else if (sVarName.equals("TIME")) {
+    value = GetMinutesPastMidnight();
+    succeed = true;
+  } else if (sVarName.equals("UPTIME")) {
+    value = GetMinutesUptime();
+    succeed = true;
+#if defined(USE_TIMERS) && defined(USE_SUNRISE)
+  } else if (sVarName.equals("SUNRISE")) {
+    value = GetSunMinutes(0);
+    succeed = true;
+  } else if (sVarName.equals("SUNSET")) {
+    value = GetSunMinutes(1);
+    succeed = true;
+#endif
+  }
+
+  return succeed;
+}
+
+/********************************************************************************************/
+/*
+ * Find next object in expression and evaluate it
+ *     An object could be:
+ *     - A float number start with a digit, like 0.787
+ *     - A variable name, like VAR1, MEM3
+ *     - An expression enclosed with a pair of round brackets, (.....)
+ * Input:
+ *      pointer     - A char pointer point to a place of the expression string
+ *      value       - Reference a double variable used to accept the result
+ * Output:
+ *      pointer     - Pointer forward to next character after next object
+ *      value       - double type, the result value
+ * Return:
+ *      true    - succeed
+ *      false   - failed
+ */
+bool findNextObjectValue(char * &pointer, double &value)
+{
+  bool bSucceed = false;
+  while (*pointer)
+  {
+    if (isspace(*pointer)) {      //Skip leading spaces
+      pointer++;
+      continue;
+    }
+    if (isdigit(*pointer)) {      //This object is a number
+      bSucceed = findNextNumber(pointer, value);
+      break;
+    } else if (isalpha(*pointer)) {     //Should be a variable like VAR12, MEM1
+      bSucceed = findNextVariableValue(pointer, value);
+      break;
+    } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
+      pointer++;
+      char * sub_exp_start = pointer; //Find out the sub expression between a pair of parenthesis. "()"
+      unsigned int sub_exp_len = 0;
+      //Look for the matched closure parenthesis.")"
+      bool bFindClosures = false;
+      uint8_t matchClosures = 1;
+      while (*pointer)
+      {
+        if (*pointer == ')') {
+          matchClosures--;
+          if (matchClosures == 0) {
+            sub_exp_len = pointer - sub_exp_start;
+            bFindClosures = true;
+            break;
+          }
+        } else if (*pointer == '(') {
+          matchClosures++;
+        }
+        pointer++;
+      }
+      if (bFindClosures) {
+        value = evaluateExpression(sub_exp_start, sub_exp_len);
+        bSucceed = true;
+      }
+      break;
+    } else {          //No number, no variable, no expression, then invalid object.
+      break;
+    }
+  }
+  return bSucceed;
+}
+
+/********************************************************************************************/
+/*
+ * Find next operator in expression
+ *     An operator could be: +, - , * , / , %, ^
+ * Input:
+ *      pointer     - A char pointer point to a place of the expression string
+ *      op          - Reference to a variable used to accept the result
+ * Output:
+ *      pointer     - Pointer forward to next character after next operator
+ *      op          - The operator. 0, 1, 2, 3, 4, 5
+ * Return:
+ *      true    - succeed
+ *      false   - failed
+ */
+bool findNextOperator(char * &pointer, int8_t &op)
+{
+  bool bSucceed = false;
+  while (*pointer)
+  {
+    if (isspace(*pointer)) {      //Skip leading spaces
+      pointer++;
+      continue;
+    }
+    if (char *pch = strchr(kExpressionOperators, *pointer)) {      //If it is an operator
+      op = (int8_t)(pch - kExpressionOperators);
+      pointer++;
+      bSucceed = true;
+    }
+    break;
+  }
+  return bSucceed;
+}
+/********************************************************************************************/
+/*
+ * Calculate a simple expression composed by 2 value and 1 operator, like 2 * 3
+ * Input:
+ *      pointer     - A char pointer point to a place of the expression string
+ *      value       - Reference a double variable used to accept the result
+ * Output:
+ *      pointer     - Pointer forward to next character after next object
+ *      value       - double type, the result value
+ * Return:
+ *      true    - succeed
+ *      false   - failed
+ */
+double calculateTwoValues(double v1, double v2, uint8_t op)
+{
+  switch (op)
+  {
+    case EXPRESSION_OPERATOR_ADD:
+      return v1 + v2;
+    case EXPRESSION_OPERATOR_SUBTRACT:
+      return v1 - v2;
+    case EXPRESSION_OPERATOR_MULTIPLY:
+      return v1 * v2;
+    case EXPRESSION_OPERATOR_DIVIDEDBY:
+      return (0 == v2) ? 0 : (v1 / v2);
+    case EXPRESSION_OPERATOR_MODULO:
+      return (0 == v2) ? 0 : (int(v1) % int(v2));
+    case EXPRESSION_OPERATOR_POWER:
+      return FastPrecisePow(v1, v2);
+  }
+  return 0;
+}
+
+/********************************************************************************************/
+/*
+ * Parse and evaluate an expression.
+ * For example: "10 * ( MEM2 + 1) / 2"
+ * Right now, only support operators listed here:  (order by priority)
+ *      Priority 4: ^ (power)
+ *      Priority 3: % (modulo, always get integer result)
+ *      Priority 2: *, /
+ *      Priority 1: +, -
+ * Input:
+ *      expression  - The expression to be evaluated
+ *      len         - Length of the expression
+ * Return:
+ *      double      - result.
+ *      0           - if the expression is invalid
+ * An example:
+ * MEM1 = 3, MEM2 = 6, VAR2 = 15, VAR10 = 80
+ * At beginning, the expression might be complicated like: 3.14 * (MEM1 * (10 + VAR2 ^2) - 100) % 10 + VAR10 / (2 + MEM2)
+ * We are going to scan the whole expression, evaluate each object.
+ * Finally we will have a value list:.
+ * Order          Object                              Value
+ *  0             3.14                                3.14
+ *  1             (MEM1 * (10 + VAR2 ^2) - 100)       605
+ *  2             10                                  10
+ *  3             VAR10                               80
+ *  4             (2 + MEM2)                          8
+ * And an operator list:
+ * Order          Operator                            Priority
+ *  0             *                                   2
+ *  1             %                                   3
+ *  2             +                                   1
+ *  3             /                                   2
+ */
+double evaluateExpression(const char * expression, unsigned int len)
+{
+  char expbuf[len + 1];
+  memcpy(expbuf, expression, len);
+  expbuf[len] = '\0';
+  char * scan_pointer = expbuf;
+
+  LinkedList<double> object_values;
+  LinkedList<int8_t> operators;
+  int8_t op;
+  double va;
+  //Find and add the value of first object
+  if (findNextObjectValue(scan_pointer, va)) {
+    object_values.add(va);
+  } else {
+    return 0;
+  }
+  while (*scan_pointer)
+  {
+    if (findNextOperator(scan_pointer, op)
+        && *scan_pointer
+        && findNextObjectValue(scan_pointer, va))
+    {
+      operators.add(op);
+      object_values.add(va);
+    } else {
+      //No operator followed or no more object after this operator, we done.
+      break;
+    }
+  }
+
+  //Going to evaluate the whole expression
+  //Calculate by order of operator priorities. Looking for all operators with specified priority (from High to Low)
+  for (int8_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
+    int index = 0;
+    while (index < operators.size()) {
+      if (priority == kExpressionOperatorsPriorities[(operators.get(index))]) {     //need to calculate the operator first
+        //get current object value and remove the next object with current operator
+        va = calculateTwoValues(object_values.get(index), object_values.remove(index + 1), operators.remove(index));
+        //Replace the current value with the result
+        object_values.set(index, va);
+      } else {
+        index++;
+      }
+    }
+  }
+  return object_values.get(0);
+}
+#endif          //USE_EXPRESSION
+
 bool RulesCommand(void)
 {
   char command[CMDSZ];
@@ -620,7 +939,12 @@ bool RulesCommand(void)
   }
   else if ((CMND_RULETIMER == command_code) && (index > 0) && (index <= MAX_RULE_TIMERS)) {
     if (XdrvMailbox.data_len > 0) {
+#ifdef USE_EXPRESSION
+      double timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
+      rules_timer[index -1] = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
+#else
       rules_timer[index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
+#endif      //USE_EXPRESSION
     }
     mqtt_data[0] = '\0';
     for (uint8_t i = 0; i < MAX_RULE_TIMERS; i++) {
@@ -636,14 +960,22 @@ bool RulesCommand(void)
   }
   else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
+#ifdef USE_EXPRESSION
+      dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, vars[index -1]);
+#else
       strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
+#endif      //USE_EXPRESSION
       bitSet(vars_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
     if (XdrvMailbox.data_len > 0) {
+#ifdef USE_EXPRESSION
+      dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, Settings.mems[index -1]);
+#else
       strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
+#endif      //USE_EXPRESSION
       bitSet(mems_event, index -1);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);

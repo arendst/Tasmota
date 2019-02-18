@@ -73,6 +73,7 @@ const char kMqttCommands[] PROGMEM =
   D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
 
+uint16_t mqtt_connect_count = 0;            // MQTT re-connect count
 uint16_t mqtt_retry_counter = 1;            // MQTT connection retry counter
 uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
 bool mqtt_connected = false;                // MQTT virtual connection status
@@ -379,6 +380,11 @@ void MqttPublishPowerBlinkState(uint8_t device)
 
 /*********************************************************************************************/
 
+uint16_t MqttConnectCount()
+{
+  return mqtt_connect_count;
+}
+
 void MqttDisconnected(int state)
 {
   mqtt_connected = false;
@@ -398,6 +404,7 @@ void MqttConnected(void)
     AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
     mqtt_connected = true;
     mqtt_retry_counter = 0;
+    mqtt_connect_count++;
 
     GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_ONLINE));
@@ -877,7 +884,7 @@ const char HTTP_FORM_MQTT[] PROGMEM =
   "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' placeholder='" STR(MQTT_PORT) "' value='{m2'></p>"
   "<p><b>" D_CLIENT "</b> ({m0)<br/><input id='mc' name='mc' placeholder='" MQTT_CLIENT_ID "' value='{m3'></p>"
   "<p><b>" D_USER "</b> (" MQTT_USER ")<br/><input id='mu' name='mu' placeholder='" MQTT_USER "' value='{m4'></p>"
-  "<p><b>" D_PASSWORD "</b><br/><input id='mp' name='mp' type='password' placeholder='" D_PASSWORD "' value='" D_ASTERIX "'></p>"
+  "<p><b>" D_PASSWORD "</b><br/><input id='mp' name='mp' type='password' placeholder='" D_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
   "<p><b>" D_TOPIC "</b> = %topic% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' placeholder='" MQTT_TOPIC" ' value='{m6'></p>"
   "<p><b>" D_FULL_TOPIC "</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' placeholder='" MQTT_FULLTOPIC" ' value='{m7'></p>";
 
@@ -939,7 +946,7 @@ void MqttSaveSettings(void)
   WebGetArg("mu", tmp, sizeof(tmp));
   strlcpy(Settings.mqtt_user, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_user));
   WebGetArg("mp", tmp, sizeof(tmp));
-  strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.mqtt_pwd : tmp, sizeof(Settings.mqtt_pwd));
+  strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? "" : (!strcmp(tmp, D_ASTERISK_PWD)) ? Settings.mqtt_pwd : tmp, sizeof(Settings.mqtt_pwd));
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
     Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_user, Settings.mqtt_topic, Settings.mqtt_fulltopic);
   AddLog(LOG_LEVEL_INFO);

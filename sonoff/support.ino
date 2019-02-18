@@ -154,7 +154,7 @@ char* subStr(char* dest, char* str, const char *delim, int index)
   return sub;
 }
 
-double CharToDouble(char *str)
+double CharToDouble(const char *str)
 {
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
@@ -769,39 +769,24 @@ void SetModuleType()
 uint8_t ValidPin(uint8_t pin, uint8_t gpio)
 {
   uint8_t result = gpio;
-  if ((pin > 5) && (pin < 12)) {
-    result = GPIO_NONE;  // Disable all flash pins
+
+  if (((pin > 5) && (pin < 9)) || (11 == pin)) {
+    result = GPIO_NONE;  // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
-  if (Settings.flag3.user_esp8285_enable) {
-    if ((pin == 9) || (pin == 10)) {
-      result = gpio;     // Allow optional flash pins
-    }
+  if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {
+    if ((pin == 9) || (pin == 10)) { result = GPIO_NONE; }  // Disable possible flash GPIO9 and GPIO10
   }
   return result;
 }
 
 bool ValidGPIO(uint8_t pin, uint8_t gpio)
 {
-  bool result = false;
-/*
-  // Version 6.4.1.16 - Use user module config in template
-  if (USER_MODULE == Settings.module) {
-    result = (ValidPin(pin, gpio) > GPIO_NONE);  // Allow any pin
-  } else {
-    result = (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
-  }
-*/
-  // Version 6.4.1.17 - Use template as defined
-  result = (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
-
-  return result;
+  return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
 }
 
 bool GetUsedInModule(uint8_t val, uint8_t *arr)
 {
   int offset = 0;
-
-  if (USER_MODULE == Settings.module) { return false; }
 
   if (!val) { return false; }  // None
 

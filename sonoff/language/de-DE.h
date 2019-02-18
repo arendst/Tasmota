@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.3.0.17
+ * Updated until v6.4.1.17
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -298,6 +298,14 @@
 #define D_SINGLE_DEVICE "Einzelnes Gerät"
 #define D_MULTI_DEVICE "Mehrfachgerät"
 
+#define D_CONFIGURE_TEMPLATE "Vorlage konfigurieren"
+#define D_TEMPLATE_PARAMETERS "Vorlage Parameter"
+#define D_TEMPLATE_NAME "Name"
+#define D_BASE_TYPE "basiert auf"
+#define D_TEMPLATE_FLAGS "Options"
+#define D_ALLOW_ADC0 "ADC0 input"
+#define D_ALLOW_PULLUP "Nutzer pull-up Auswahl"
+
 #define D_SAVE_CONFIGURATION "Konfiguration speichern"
 #define D_CONFIGURATION_SAVED "Konfiguration gespeichert"
 #define D_CONFIGURATION_RESET "Konfiguration zurücksetzen"
@@ -485,6 +493,7 @@
 
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "None"
+#define D_SENSOR_USER          "User"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
