@@ -49,6 +49,7 @@ using namespace axTLS;
 */
 #include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
 
+uint32_t wifi_link_down = 0;
 uint8_t wifi_counter;
 uint8_t wifi_retry_init;
 uint8_t wifi_retry;
@@ -222,7 +223,8 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
   WiFiSetSleepMode();
-//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }
+//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
+//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
 //  WiFi.setAutoReconnect(true);
   switch (flag) {
@@ -339,6 +341,11 @@ void WifiBeginAfterScan()
   }
 }
 
+uint32_t WifiLinkDown()
+{
+  return wifi_link_down;
+}
+
 void WifiSetState(uint8_t state)
 {
   if (state == global_state.wifi_down) {
@@ -346,6 +353,7 @@ void WifiSetState(uint8_t state)
       rules_flag.wifi_connected = 1;
     } else {
       rules_flag.wifi_disconnected = 1;
+      wifi_link_down++;
     }
   }
   global_state.wifi_down = state ^1;

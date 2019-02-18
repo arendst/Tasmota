@@ -89,6 +89,7 @@
 #define D_JSON_INFRARED "Infrared"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
+#define D_JSON_LINK_DOWN "LinkCount"
 #define D_JSON_LOCAL_TIME "Local"
 #define D_JSON_LOW "Low"
 #define D_JSON_MAC "Mac"
