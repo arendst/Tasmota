@@ -625,7 +625,7 @@ bool findNextNumber(char * &pNumber, double &value)
  */
 bool findNextVariableValue(char * &pVarname, double &value)
 {
-  bool succeed = false;
+  bool succeed = true;
   value = 0;
   String sVarName = "";
   while (*pVarname) {
@@ -637,32 +637,28 @@ bool findNextVariableValue(char * &pVarname, double &value)
     }
   }
   sVarName.toUpperCase();
-  if (sVarName.startsWith("VAR")) {
+  if (sVarName.startsWith(F("VAR"))) {
     int index = sVarName.substring(3).toInt();
     if (index > 0 && index <= MAX_RULE_VARS) {
       value = CharToDouble(vars[index -1]);
-      succeed = true;
     }
-  } else if (sVarName.startsWith("MEM")) {
+  } else if (sVarName.startsWith(F("MEM"))) {
     int index = sVarName.substring(3).toInt();
     if (index > 0 && index <= MAX_RULE_MEMS) {
       value = CharToDouble(Settings.mems[index -1]);
-      succeed = true;
     }
-  } else if (sVarName.equals("TIME")) {
+  } else if (sVarName.equals(F("TIME"))) {
     value = GetMinutesPastMidnight();
-    succeed = true;
-  } else if (sVarName.equals("UPTIME")) {
+  } else if (sVarName.equals(F("UPTIME"))) {
     value = GetMinutesUptime();
-    succeed = true;
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
-  } else if (sVarName.equals("SUNRISE")) {
+  } else if (sVarName.equals(F("SUNRISE"))) {
     value = GetSunMinutes(0);
-    succeed = true;
-  } else if (sVarName.equals("SUNSET")) {
+  } else if (sVarName.equals(F("SUNSET"))) {
     value = GetSunMinutes(1);
-    succeed = true;
 #endif
+  } else {
+    succeed = false;
   }
 
   return succeed;
