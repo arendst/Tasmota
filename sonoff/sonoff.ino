@@ -1306,10 +1306,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         restart_flag = 211;
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command , D_JSON_RESET_AND_RESTARTING);
         break;
-      case 2:
-      case 3:
-      case 4:
-      case 5 ... 6:
+      case 2 ... 6:
         restart_flag = 210 + payload;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
         break;

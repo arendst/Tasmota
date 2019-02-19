@@ -181,17 +181,14 @@ uint32_t UpTime(void)
   }
 }
 
+uint32_t GetMinutesUptime(void)
+{
+  return (UpTime() / 60);
+}
+
 String GetUptime(void)
 {
   return GetDuration(UpTime());
-}
-
-uint32_t GetMinutesUptime(void)
-{
-  TIME_T ut;
-  BreakTime(UpTime(), ut);
-
-  return (ut.days *1440) + (ut.hour *60) + ut.minute;
 }
 
 uint32_t GetMinutesPastMidnight(void)
@@ -324,6 +321,11 @@ uint32_t RuleToTime(TimeRule r, int yr)
     t -= 7 * SECS_PER_DAY;  // back up a week if this is a "Last" rule
   }
   return t;
+}
+
+uint32_t UtcTime(void)
+{
+  return utc_time;
 }
 
 uint32_t LocalTime(void)
