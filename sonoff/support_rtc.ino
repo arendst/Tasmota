@@ -181,7 +181,7 @@ uint32_t UpTime(void)
   }
 }
 
-uint32_t GetMinutesUptime(void)
+uint32_t MinutesUptime(void)
 {
   return (UpTime() / 60);
 }
@@ -191,7 +191,7 @@ String GetUptime(void)
   return GetDuration(UpTime());
 }
 
-uint32_t GetMinutesPastMidnight(void)
+uint32_t MinutesPastMidnight(void)
 {
   uint32_t minutes = 0;
 
