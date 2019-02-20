@@ -1306,10 +1306,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         restart_flag = 211;
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command , D_JSON_RESET_AND_RESTARTING);
         break;
-      case 2:
-      case 3:
-      case 4:
-      case 5:
+      case 2 ... 6:
         restart_flag = 210 + payload;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
         break;
@@ -2084,14 +2081,33 @@ void Every250mSeconds(void)
       }
     }
     if (restart_flag && (backlog_pointer == backlog_index)) {
-      if ((214 == restart_flag) || (215 == restart_flag)) {
+      if ((214 == restart_flag) || (215 == restart_flag) || (216 == restart_flag)) {
         char storage[sizeof(Settings.sta_ssid) + sizeof(Settings.sta_pwd)];
+        char storage_mqtt_host[sizeof(Settings.mqtt_host)];
+        uint16_t storage_mqtt_port;
+        char storage_mqtt_user[sizeof(Settings.mqtt_user)];
+        char storage_mqtt_pwd[sizeof(Settings.mqtt_pwd)];
+        char storage_mqtt_topic[sizeof(Settings.mqtt_topic)];
         memcpy(storage, Settings.sta_ssid, sizeof(storage));  // Backup current SSIDs and Passwords
-        if (215 == restart_flag) {
+        if (216 == restart_flag) {
+          memcpy(storage_mqtt_host, Settings.mqtt_host, sizeof(Settings.mqtt_host));
+          storage_mqtt_port = Settings.mqtt_port;
+          memcpy(storage_mqtt_user, Settings.mqtt_user, sizeof(Settings.mqtt_user));
+          memcpy(storage_mqtt_pwd, Settings.mqtt_pwd, sizeof(Settings.mqtt_pwd));
+          memcpy(storage_mqtt_topic, Settings.mqtt_topic, sizeof(Settings.mqtt_topic));
+        }
+        if ((215 == restart_flag) || (216 == restart_flag)) {
           SettingsErase(0);  // Erase all flash from program end to end of physical flash
         }
         SettingsDefault();
         memcpy(Settings.sta_ssid, storage, sizeof(storage));  // Restore current SSIDs and Passwords
+        if (216 == restart_flag) {                            // Restore the mqtt host, port, username and password
+          memcpy(Settings.mqtt_host, storage_mqtt_host, sizeof(Settings.mqtt_host));
+          Settings.mqtt_port = storage_mqtt_port;
+          memcpy(Settings.mqtt_user, storage_mqtt_user, sizeof(Settings.mqtt_user));
+          memcpy(Settings.mqtt_pwd, storage_mqtt_pwd, sizeof(Settings.mqtt_pwd));
+          memcpy(Settings.mqtt_topic, storage_mqtt_topic, sizeof(Settings.mqtt_topic));
+        }
         restart_flag = 2;
       }
       else if (213 == restart_flag) {

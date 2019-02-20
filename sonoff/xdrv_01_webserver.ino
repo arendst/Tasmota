@@ -2146,23 +2146,22 @@ String UrlEncode(const String& text)
 
 int WebSend(char *buffer)
 {
-  /* [sonoff] POWER1 ON                                               --> Sends http://sonoff/cm?cmnd=POWER1 ON
-   * [192.168.178.86:80,admin:joker] POWER1 ON                        --> Sends http://hostname:80/cm?user=admin&password=joker&cmnd=POWER1 ON
-   * [sonoff] /any/link/starting/with/a/slash.php?log=123             --> Sends http://sonoff/any/link/starting/with/a/slash.php?log=123
-   * [sonoff,admin:joker] /any/link/starting/with/a/slash.php?log=123 --> Sends http://sonoff/any/link/starting/with/a/slash.php?log=123
-   */
+  // [sonoff] POWER1 ON                                               --> Sends http://sonoff/cm?cmnd=POWER1 ON
+  // [192.168.178.86:80,admin:joker] POWER1 ON                        --> Sends http://hostname:80/cm?user=admin&password=joker&cmnd=POWER1 ON
+  // [sonoff] /any/link/starting/with/a/slash.php?log=123             --> Sends http://sonoff/any/link/starting/with/a/slash.php?log=123
+  // [sonoff,admin:joker] /any/link/starting/with/a/slash.php?log=123 --> Sends http://sonoff/any/link/starting/with/a/slash.php?log=123
 
   char *host;
   char *port;
   char *user;
   char *password;
   char *command;
-  uint16_t nport = 80;
   int status = 1;                             // Wrong parameters
 
                                               // buffer = |  [  192.168.178.86  :  80  ,  admin  :  joker  ]    POWER1 ON   |
   host = strtok_r(buffer, "]", &command);     // host = |  [  192.168.178.86  :  80  ,  admin  :  joker  |, command = |    POWER1 ON   |
   if (host && command) {
+    String url = F("http:");                  // url = |http:|
     host = Trim(host);                        // host = |[  192.168.178.86  :  80  ,  admin  :  joker|
     host++;                                   // host = |  192.168.178.86  :  80  ,  admin  :  joker| - Skip [
     host = strtok_r(host, ",", &user);        // host = |  192.168.178.86  :  80  |, user = |  admin  :  joker|
@@ -2170,66 +2169,62 @@ int WebSend(char *buffer)
     host = Trim(host);                        // host = |192.168.178.86|
     if (port) {
       port = Trim(port);                      // port = |80|
-      nport = atoi(port);
+      url += port;                            // url = |http:80|
     }
+    url += F("//");                           // url = |http://| or |http:80//|
+    url += host;                              // url = |http://192.168.178.86|
+
     if (user) {
       user = strtok_r(user, ":", &password);  // user = |  admin  |, password = |  joker|
       user = Trim(user);                      // user = |admin|
       if (password) { password = Trim(password); }  // password = |joker|
     }
+    
     command = Trim(command);                  // command = |POWER1 ON| or |/any/link/starting/with/a/slash.php?log=123|
-
-    String nuri = "";
     if (command[0] != '/') {
-      nuri = "/cm?";
+      url += F("/cm?");                       // url = |http://192.168.178.86/cm?|
       if (user && password) {
-        nuri += F("user=");
-        nuri += user;
-        nuri += F("&password=");
-        nuri += password;
-        nuri += F("&");
+        url += F("user=");                    // url = |http://192.168.178.86/cm?user=|
+        url += user;                          // url = |http://192.168.178.86/cm?user=admin|
+        url += F("&password=");               // url = |http://192.168.178.86/cm?user=admin&password=|
+        url += password;                      // url = |http://192.168.178.86/cm?user=admin&password=joker|
+        url += F("&");                        // url = |http://192.168.178.86/cm?user=admin&password=joker&|
       }
-      nuri += F("cmnd=");
+      url += F("cmnd=");                      // url = |http://192.168.178.86/cm?cmnd=| or |http://192.168.178.86/cm?user=admin&password=joker&cmnd=|
     }
-    nuri += command;
-    String uri = UrlEncode(nuri);
+    url += command;                           // url = |http://192.168.178.86/cm?cmnd=POWER1 ON|
 
-    IPAddress host_ip;
-    if (WiFi.hostByName(host, host_ip)) {
-      WiFiClient client;
-
-      bool connected = false;
-      uint8_t retry = 2;
-      while ((retry > 0) && !connected) {
-        --retry;
-        connected = client.connect(host_ip, nport);
-        if (connected) break;
-      }
-
-      if (connected) {
-        String url = F("GET ");
-        url += uri;
-        url += F(" HTTP/1.1\r\nHost: ");
-//        url += IPAddress(host_ip).toString();
-        url += host;   // https://tools.ietf.org/html/rfc7230#section-5.4 (#4331)
-        if (port) {
-          url += F(":");
-          url += port;
-        }
-        url += F("\r\nConnection: close\r\n\r\n");
-
-//snprintf_P(log_data, sizeof(log_data), PSTR("DBG: Url |%s|"), url.c_str());
+//snprintf_P(log_data, sizeof(log_data), PSTR("DBG: Uri |%s|"), url.c_str());
 //AddLog(LOG_LEVEL_DEBUG);
 
-        client.print(url.c_str());
-        client.flush();
-        client.stop();
+    HTTPClient http;
+    if (http.begin(UrlEncode(url))) {         // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
+      int http_code = http.GET();             // Start connection and send HTTP header
+      if (http_code > 0) {                    // http_code will be negative on error
+        if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
+/*
+          // Return received data to the user - Adds 900+ bytes to the code
+          String result = http.getString();   // File found at server - may need lot of ram or trigger out of memory!
+          uint16_t j = 0;
+          for (uint16_t i = 0; i < result.length(); i++) {
+            char text = result.charAt(i);
+            if (text > 31) {                  // Remove control characters like linefeed
+              mqtt_data[j] = result.charAt(i);
+              j++;
+              if (j == sizeof(mqtt_data) -2) { break; }
+            }
+          }
+          mqtt_data[j] = '\0';
+          MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_WEBSEND));
+*/
+        }
         status = 0;                           // No error - Done
       } else {
         status = 2;                           // Connection failed
       }
+      http.end();
     } else {
-      status = 3;                             // Host not found
+      status = 3;                             // Host not found or connection error
     }
   }
   return status;

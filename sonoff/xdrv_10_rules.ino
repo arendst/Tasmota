@@ -185,11 +185,11 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     }
     snprintf_P(stemp, sizeof(stemp), PSTR("%%TIME%%"));
     if (rule_param.startsWith(stemp)) {
-      rule_param = String(GetMinutesPastMidnight());
+      rule_param = String(MinutesPastMidnight());
     }
     snprintf_P(stemp, sizeof(stemp), PSTR("%%UPTIME%%"));
     if (rule_param.startsWith(stemp)) {
-      rule_param = String(GetMinutesUptime());
+      rule_param = String(MinutesUptime());
     }
     snprintf_P(stemp, sizeof(stemp), PSTR("%%TIMESTAMP%%"));
     if (rule_param.startsWith(stemp)) {
@@ -198,11 +198,11 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
     snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNRISE%%"));
     if (rule_param.startsWith(stemp)) {
-      rule_param = String(GetSunMinutes(0));
+      rule_param = String(SunMinutes(0));
     }
     snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNSET%%"));
     if (rule_param.startsWith(stemp)) {
-      rule_param = String(GetSunMinutes(1));
+      rule_param = String(SunMinutes(1));
     }
 #endif  // USE_TIMERS and USE_SUNRISE
     rule_param.toUpperCase();
@@ -347,12 +347,12 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
         snprintf_P(stemp, sizeof(stemp), PSTR("%%mem%d%%"), i +1);
         commands.replace(stemp, Settings.mems[i]);
       }
-      commands.replace(F("%time%"), String(GetMinutesPastMidnight()));
-      commands.replace(F("%uptime%"), String(GetMinutesUptime()));
+      commands.replace(F("%time%"), String(MinutesPastMidnight()));
+      commands.replace(F("%uptime%"), String(MinutesUptime()));
       commands.replace(F("%timestamp%"), GetDateAndTime(DT_LOCAL).c_str());
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
-      commands.replace(F("%sunrise%"), String(GetSunMinutes(0)));
-      commands.replace(F("%sunset%"), String(GetSunMinutes(1)));
+      commands.replace(F("%sunrise%"), String(SunMinutes(0)));
+      commands.replace(F("%sunset%"), String(SunMinutes(1)));
 #endif  // USE_TIMERS and USE_SUNRISE
 
       char command[commands.length() +1];
@@ -505,8 +505,8 @@ void RulesEvery50ms(void)
           json_event[0] = '\0';
           switch (i) {
             case 0: strncpy_P(json_event, PSTR("{\"System\":{\"Boot\":1}}"), sizeof(json_event)); break;
-            case 1: snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Initialized\":%d}}"), GetMinutesPastMidnight()); break;
-            case 2: snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Set\":%d}}"), GetMinutesPastMidnight()); break;
+            case 1: snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Initialized\":%d}}"), MinutesPastMidnight()); break;
+            case 2: snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Set\":%d}}"), MinutesPastMidnight()); break;
             case 3: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Connected\":1}}"), sizeof(json_event)); break;
             case 4: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
             case 5: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event)); break;
@@ -549,7 +549,7 @@ void RulesEverySecond(void)
     if (RtcTime.valid) {
       if ((uptime > 60) && (RtcTime.minute != rules_last_minute)) {  // Execute from one minute after restart every minute only once
         rules_last_minute = RtcTime.minute;
-        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Minute\":%d}}"), GetMinutesPastMidnight());
+        snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Minute\":%d}}"), MinutesPastMidnight());
         RulesProcessEvent(json_event);
       }
     }
@@ -648,18 +648,18 @@ bool findNextVariableValue(char * &pVarname, double &value)
       value = CharToDouble(Settings.mems[index -1]);
     }
   } else if (sVarName.equals(F("TIME"))) {
-    value = GetMinutesPastMidnight();
+    value = MinutesPastMidnight();
   } else if (sVarName.equals(F("UPTIME"))) {
-    value = GetMinutesUptime();
+    value = MinutesUptime();
   } else if (sVarName.equals(F("UTCTIME"))) {
     value = UtcTime();
   } else if (sVarName.equals(F("LOCALTIME"))) {
     value = LocalTime();
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
   } else if (sVarName.equals(F("SUNRISE"))) {
-    value = GetSunMinutes(0);
+    value = SunMinutes(0);
   } else if (sVarName.equals(F("SUNSET"))) {
-    value = GetSunMinutes(1);
+    value = SunMinutes(1);
 #endif
   } else {
     succeed = false;

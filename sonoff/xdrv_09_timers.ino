@@ -232,7 +232,7 @@ String GetSun(uint8_t dawn)
   return String(stime);
 }
 
-uint16_t GetSunMinutes(uint8_t dawn)
+uint16_t SunMinutes(uint8_t dawn)
 {
   uint8_t hour[2];
   uint8_t minute[2];
