@@ -2179,7 +2179,7 @@ int WebSend(char *buffer)
       user = Trim(user);                      // user = |admin|
       if (password) { password = Trim(password); }  // password = |joker|
     }
-    
+
     command = Trim(command);                  // command = |POWER1 ON| or |/any/link/starting/with/a/slash.php?log=123|
     if (command[0] != '/') {
       url += F("/cm?");                       // url = |http://192.168.178.86/cm?|
@@ -2197,8 +2197,14 @@ int WebSend(char *buffer)
 //snprintf_P(log_data, sizeof(log_data), PSTR("DBG: Uri |%s|"), url.c_str());
 //AddLog(LOG_LEVEL_DEBUG);
 
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
     HTTPClient http;
     if (http.begin(UrlEncode(url))) {         // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
+#else
+    WiFiClient http_client;
+    HTTPClient http;
+    if (http.begin(client, UrlEncode(url))) {  // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
+#endif
       int http_code = http.GET();             // Start connection and send HTTP header
       if (http_code > 0) {                    // http_code will be negative on error
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
@@ -2209,8 +2215,7 @@ int WebSend(char *buffer)
           for (uint16_t i = 0; i < result.length(); i++) {
             char text = result.charAt(i);
             if (text > 31) {                  // Remove control characters like linefeed
-              mqtt_data[j] = result.charAt(i);
-              j++;
+              mqtt_data[j++] = text;
               if (j == sizeof(mqtt_data) -2) { break; }
             }
           }
@@ -2222,7 +2227,7 @@ int WebSend(char *buffer)
       } else {
         status = 2;                           // Connection failed
       }
-      http.end();
+      http.end();                             // Clean up connection data
     } else {
       status = 3;                             // Host not found or connection error
     }
