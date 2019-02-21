@@ -1968,6 +1968,7 @@ void HandleHttpCommand(void)
             if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
               if (message.length() > 1) { message += F(","); }
               size_t JSONlen = len - (JSON - tmp);
+              if (JSONlen > sizeof(mqtt_data)) { JSONlen = sizeof(mqtt_data); }
               strlcpy(mqtt_data, JSON +1, JSONlen -2);
               message += mqtt_data;
             }
@@ -2047,6 +2048,7 @@ void HandleAjaxConsoleRefresh(void)
         } else {
           cflg = true;
         }
+        if (len > sizeof(mqtt_data) -2) { len = sizeof(mqtt_data); }
         strlcpy(mqtt_data, tmp, len);
         message += mqtt_data; // mqtt_data used as scratch space
       }

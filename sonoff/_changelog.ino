@@ -1,4 +1,7 @@
-/* 6.4.1.17 20190214
+/* 6.4.1.18 20191221
+ * Fix some exceptions and watchdogs due to lack of stack space - part 1 (#5215)
+ *
+ * 6.4.1.17 20190214
  * Change template update by removing possibility to add user module config keeping template as defined (#5222)
  * Fix regression from 6.4.1.16 where GPIO9 and GPIO10 connected devices did not work (#5197)
  * Fix GUI wifi password acception starting with asteriks (*) (#5231, #5242)

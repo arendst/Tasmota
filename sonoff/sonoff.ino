@@ -963,41 +963,12 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
           }
         }
       }
-      else if (data_len > 9) {     // Workaround exception if empty JSON like {} - Needs checks
-        StaticJsonBuffer<350> jb;  // 331 from https://arduinojson.org/v5/assistant/
-        JsonObject& obj = jb.parseObject(dataBuf);
-        if (!obj.success()) {
+      else if (data_len > 9) {          // Workaround exception if empty JSON like {} - Needs checks
+        if (JsonTemplate(dataBuf)) {    // Free 336 bytes StaticJsonBuffer stack space by moving code to function
+          if (USER_MODULE == Settings.module) { restart_flag = 2; }
+        } else {
           snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_INVALID_JSON);
           error = true;
-        } else {
-          // All parameters are optional allowing for partial changes
-          const char* name = obj[D_JSON_NAME];
-          if (name != nullptr) {
-            strlcpy(Settings.user_template.name, name, sizeof(Settings.user_template.name));
-          }
-          if (obj[D_JSON_GPIO].success()) {
-            for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
-              Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
-            }
-          }
-          if (obj[D_JSON_FLAG].success()) {
-            uint8_t flag = obj[D_JSON_FLAG] | 0;
-            memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
-          }
-          if (obj[D_JSON_BASE].success()) {
-            uint8_t base = obj[D_JSON_BASE];
-            if ((0 == base) || (base >= MAXMODULE)) { base = 17; } else { base--; }
-            Settings.user_template_base = base;  // Default WEMOS
-          }
-
-          // Validate GPIO
-//          for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
-            // For now do not allow non-user configurable GPIO
-//            if ((Settings.user_template.gp.io[i] > GPIO_FIX_START) && (Settings.user_template.gp.io[i] < GPIO_USER)) {
-//              Settings.user_template.gp.io[i] = GPIO_NONE;
-//            };
-//          }
-          if (USER_MODULE == Settings.module) { restart_flag = 2; }
         }
       }
       if (!error) { TemplateJson(); }
@@ -2223,7 +2194,8 @@ void ArduinoOTAInit(void)
 void SerialInput(void)
 {
   while (Serial.available()) {
-    yield();
+//    yield();
+    delay(0);
     serial_in_byte = Serial.read();
 
 /*-------------------------------------------------------------------------------------------*\
