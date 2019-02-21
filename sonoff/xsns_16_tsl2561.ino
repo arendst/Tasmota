@@ -22,74 +22,22 @@
 /*********************************************************************************************\
  * TSL2561 - Light Intensity
  *
- * Using library https://github.com/joba-1/Joba_Tsl2561
- *
  * I2C Addresses: 0x29 (low), 0x39 (float) or 0x49 (high)
+ *
+ * Using library https://github.com/joba-1/Joba_Tsl2561
 \*********************************************************************************************/
-
-#define XSNS_16             16
 
 #include <Tsl2561Util.h>
 
 Tsl2561 Tsl(Wire);
 
-uint8_t tsl2561_type = 0;
-uint8_t tsl2561_valid = 0;
-uint32_t tsl2561_milliLux = 0;
-char tsl2561_types[] = "TSL2561";
-
-bool Tsl2561Read(void)
+void Tsl2561Detect()
 {
-  if (tsl2561_valid) { tsl2561_valid--; }
-
-  uint8_t id;
-  bool gain;
-  Tsl2561::exposure_t exposure;
-  uint16_t scaledFull, scaledIr;
-  uint32_t full, ir;
-
-  if (Tsl.available()) {
-    if (Tsl.on()) {
-      if (Tsl.id(id)
-        && Tsl2561Util::autoGain(Tsl, gain, exposure, scaledFull, scaledIr)
-        && Tsl2561Util::normalizedLuminosity(gain, exposure, full = scaledFull, ir = scaledIr)
-        && Tsl2561Util::milliLux(full, ir, tsl2561_milliLux, Tsl2561::packageCS(id))) {
-      } else{
-        tsl2561_milliLux = 0;
-      }
-    }
-  }
-  tsl2561_valid = SENSOR_MAX_MISS;
-  return true;
-}
-
-void Tsl2561Detect(void)
-{
-  if (tsl2561_type) { return; }
-
   if (!Tsl.available()) {
     Tsl.begin();
     if (Tsl.available()) {
-      tsl2561_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, tsl2561_types, Tsl.address());
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "TSL2561", Tsl.address());
       AddLog(LOG_LEVEL_DEBUG);
-    }
-  }
-}
-
-void Tsl2561EverySecond(void)
-{
-  if (90 == (uptime %100)) {
-    // 1mS
-    Tsl2561Detect();
-  }
-  else if (!(uptime %2)) {  // Update every 2 seconds
-    // ?mS - 4Sec
-    if (tsl2561_type) {
-      if (!Tsl2561Read()) {
-        AddLogMissed(tsl2561_types, tsl2561_valid);
-//        if (!tsl2561_valid) { tsl2561_type = 0; }
-      }
     }
   }
 }
@@ -101,17 +49,37 @@ const char HTTP_SNS_TSL2561[] PROGMEM =
 
 void Tsl2561Show(boolean json)
 {
-  if (tsl2561_valid) {
-    if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),
-        mqtt_data, tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
+  uint8_t id;
+  bool gain;
+  Tsl2561::exposure_t exposure;
+  uint16_t scaledFull, scaledIr;
+  uint32_t full, ir;
+  uint32_t milliLux;
+
+  if (Tsl.available()) {
+    if (Tsl.on()) {
+      if( Tsl.id(id)
+       && Tsl2561Util::autoGain(Tsl, gain, exposure, scaledFull, scaledIr)
+       && Tsl2561Util::normalizedLuminosity(gain, exposure, full = scaledFull, ir = scaledIr)
+       && Tsl2561Util::milliLux(full, ir, milliLux, Tsl2561::packageCS(id))) {
+
+        snprintf_P(log_data, sizeof(log_data), PSTR(D_ILLUMINANCE " g:%d, e:%d, f:%u, i:%u -> %u.%03u " D_UNIT_LUX),
+          gain, exposure, full, ir, milliLux/1000, milliLux%1000);
+        AddLog(LOG_LEVEL_DEBUG);
+
+        if (json) {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),
+            mqtt_data, milliLux/1000, milliLux%1000);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, (tsl2561_milliLux + 500) / 1000); }
+          if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, (milliLux+500)/1000);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-    } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TSL2561, mqtt_data, tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
+        } else {
+          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TSL2561, mqtt_data, milliLux/1000, milliLux%1000);
 #endif  // USE_WEBSERVER
+        }
+      }
+      Tsl.off();
     }
   }
 }
@@ -120,17 +88,16 @@ void Tsl2561Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
+#define XSNS_16
+
 boolean Xsns16(byte function)
 {
   boolean result = false;
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         Tsl2561Detect();
-        break;
-      case FUNC_EVERY_SECOND:
-        Tsl2561EverySecond();
         break;
       case FUNC_JSON_APPEND:
         Tsl2561Show(1);
@@ -145,5 +112,5 @@ boolean Xsns16(byte function)
   return result;
 }
 
-#endif  // USE_TSL2561
+#endif  // USE_TSL2561_JOBA
 #endif  // USE_I2C

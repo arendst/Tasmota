@@ -21,11 +21,7 @@
 /*********************************************************************************************\
  * PlanTower PMS5003 and PMS7003 particle concentration sensor
  * For background information see http://aqicn.org/sensor/pms5003-7003/
- *
- * Hardware Serial will be selected if GPIO3 = [PMS5003]
 \*********************************************************************************************/
-
-#define XSNS_18             18
 
 #include <TasmotaSerial.h>
 
@@ -43,9 +39,7 @@ struct pms5003data {
   uint16_t checksum;
 } pms_data;
 
-/*********************************************************************************************/
-
-boolean PmsReadData(void)
+boolean PmsReadData()
 {
   if (! PmsSerial->available()) {
     return false;
@@ -87,7 +81,7 @@ boolean PmsReadData(void)
 
 /*********************************************************************************************/
 
-void PmsSecond(void)                 // Every second
+void PmsSecond()                 // Every second
 {
   if (PmsReadData()) {
     pms_valid = 10;
@@ -100,13 +94,13 @@ void PmsSecond(void)                 // Every second
 
 /*********************************************************************************************/
 
-void PmsInit(void)
+void PmsInit()
 {
   pms_type = 0;
+
   if (pin[GPIO_PMS5003] < 99) {
-    PmsSerial = new TasmotaSerial(pin[GPIO_PMS5003], -1, 1);
-    if (PmsSerial->begin(9600)) {
-      if (PmsSerial->hardwareSerial()) { ClaimSerial(); }
+    PmsSerial = new TasmotaSerial(pin[GPIO_PMS5003], -1);
+    if (PmsSerial->begin()) {
       pms_type = 1;
     }
   }
@@ -157,6 +151,8 @@ void PmsShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
+
+#define XSNS_18
 
 boolean Xsns18(byte function)
 {
