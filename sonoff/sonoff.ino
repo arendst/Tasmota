@@ -1144,7 +1144,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.sta_ssid[index -1]);
     }
     else if ((CMND_PASSWORD == command_code) && (index > 0) && (index <= 2)) {
-      if ((data_len > 0) && (data_len < sizeof(Settings.sta_pwd[0]))) {
+      if ((data_len > 4 || SC_CLEAR == Shortcut(dataBuf) || SC_DEFAULT == Shortcut(dataBuf)) && (data_len < sizeof(Settings.sta_pwd[0]))) {
         strlcpy(Settings.sta_pwd[index -1], (SC_CLEAR == Shortcut(dataBuf)) ? "" : (SC_DEFAULT == Shortcut(dataBuf)) ? (1 == index) ? STA_PASS1 : STA_PASS2 : dataBuf, sizeof(Settings.sta_pwd[0]));
         Settings.sta_active = index -1;
         restart_flag = 2;
