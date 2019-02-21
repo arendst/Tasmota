@@ -666,14 +666,16 @@ void WebRestart(uint8_t type)
     page.replace(F("{v}"), FPSTR(S_RESTART));
   }
 
+  bool reset_only = (HTTP_MANAGER_RESET_ONLY == webserver_state);
+
   page += FPSTR(HTTP_MSG_RSTRT);
-  if (HTTP_MANAGER == webserver_state) {
+  if (HTTP_MANAGER == webserver_state || reset_only) {
     webserver_state = HTTP_ADMIN;
   } else {
     page += FPSTR(HTTP_BTN_MAIN);
   }
   page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD));
-  ShowPage(page);
+  ShowPage(page, !reset_only);
 
   ShowWebSource(SRC_WEBGUI);
   restart_flag = 2;
@@ -1494,7 +1496,7 @@ void HandleResetConfiguration(void)
   page += F("<div style='text-align:center;'>" D_CONFIGURATION_RESET "</div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
-  ShowPage(page);
+  ShowPage(page, HTTP_MANAGER_RESET_ONLY != webserver_state);
 
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RESET " 1"));
   ExecuteWebCommand(svalue, SRC_WEBGUI);
