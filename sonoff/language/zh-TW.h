@@ -33,7 +33,6 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
-#define LANGUAGE_LCID 1028
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "zh"
 
@@ -60,12 +59,10 @@
 #define D_BLINKOFF "閃爍關"
 #define D_BOOT_COUNT "啟動次數"
 #define D_BRIGHTLIGHT "亮度"
-#define D_BSSID "BSSId"
 #define D_BUTTON "按鈕"
 #define D_BY "by"                    // Written by me
 #define D_BYTES "大小:"
 #define D_CELSIUS "攝氏"
-#define D_CHANNEL "Channel"
 #define D_CO2 "二氧化碳"
 #define D_CODE "代碼"                // Button code
 #define D_COLDLIGHT "冷"
@@ -94,7 +91,6 @@
 #define D_FALSE "False"
 #define D_FILE "文件:"
 #define D_FREE_MEMORY "可用記憶體"
-#define D_FREQUENCY "Frequency"
 #define D_GAS "氣體"
 #define D_GATEWAY "網關"
 #define D_GROUP "組:"
@@ -105,7 +101,6 @@
 #define D_IMMEDIATE "immediate"      // Button immediate
 #define D_INDEX "索引:"
 #define D_INFO "信息"
-#define D_INFRARED "Infrared"
 #define D_INITIALIZED "初始化完成"
 #define D_IP_ADDRESS "IP地址"
 #define D_LIGHT "燈"
@@ -124,15 +119,11 @@
 #define D_PORT "端口"
 #define D_POWER_FACTOR "功率因數"
 #define D_POWERUSAGE "功率"
-#define D_POWERUSAGE_ACTIVE "Active Power"
-#define D_POWERUSAGE_APPARENT "Apparent Power"
-#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "氣壓"
 #define D_PRESSUREATSEALEVEL "海平面氣壓"
 #define D_PROGRAM_FLASH_SIZE "韌體 Flash 大小"
 #define D_PROGRAM_SIZE "韌體大小"
 #define D_PROJECT "項目:"
-#define D_RAIN "Rain"
 #define D_RECEIVED "已接收"
 #define D_RESTART "重啟"
 #define D_RESTARTING "正在重啟"
@@ -163,19 +154,9 @@
 #define D_UPTIME "運行時間"
 #define D_USER "用戶名"
 #define D_UTC_TIME "UTC"
-#define D_UV_INDEX "UV Index"
-#define D_UV_INDEX_1 "Low"
-#define D_UV_INDEX_2 "Mid"
-#define D_UV_INDEX_3 "High"
-#define D_UV_INDEX_4 "Danger"
-#define D_UV_INDEX_5 "BurnL1/2"
-#define D_UV_INDEX_6 "BurnL3"
-#define D_UV_INDEX_7 "OoR"
 #define D_UV_LEVEL "紫外線等級"
-#define D_UV_POWER "UV Power"
 #define D_VERSION "版本"
 #define D_VOLTAGE "電壓"
-#define D_WEIGHT "Weight"
 #define D_WARMLIGHT "暖"
 #define D_WEB_SERVER "Web Server"
 
@@ -217,8 +198,7 @@
 #define D_USE_DEFAULTS "使用默認設置"
 #define D_ERASED_SECTOR "擦除刪除"
 
-// xdrv_02_webserver.ino
-#define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
+// webserver.ino
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "固件版本過低 - 請升級"
 #define D_WEBSERVER_ACTIVE_ON "Web服務器:"
 #define D_WITH_IP_ADDRESS "IP地址:"
@@ -334,17 +314,13 @@
 #define D_UPLOAD_ERR_7 "上傳取消"
 #define D_UPLOAD_ERR_8 "錯誤的固件"
 #define D_UPLOAD_ERR_9 "固件太大"
-#define D_UPLOAD_ERR_10 "Failed to init RF chip"
-#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
-#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
-#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "上傳錯誤代碼"
 
 #define D_ENTER_COMMAND "輸入命令"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "如果預期響應，則啟用Weblog 2"
 #define D_NEED_USER_AND_PASSWORD "需要 user=<用戶名>&password=<密碼>"
 
-// xdrv_01_mqtt.ino
+// xdrv_00_mqtt.ino
 #define D_FINGERPRINT "驗證 TLS 指紋..."
 #define D_TLS_CONNECT_FAILED_TO "TLS 連接失敗"
 #define D_RETRY_IN "重試倒計時:"
@@ -352,7 +328,7 @@
 #define D_INSECURE "指紋無效導致連接不安全"
 #define D_CONNECT_FAILED_TO "連接失敗:"
 
-// xplg_wemohue.ino
+// xdrv_wemohue.ino
 #define D_MULTICAST_DISABLED "組播已禁用"
 #define D_MULTICAST_REJOINED "組播已(重新)加入"
 #define D_MULTICAST_JOIN_FAILED "組播加入失敗"
@@ -372,7 +348,7 @@
 #define D_HUE_POST_ARGS "Hue POST 參數"
 #define D_3_RESPONSE_PACKETS_SENT "3 請求包發送"
 
-// xdrv_07_domoticz.ino
+// xdrv_05_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz 設置"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -392,7 +368,6 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configure Timer"
 #define D_TIMER_PARAMETERS "Timer parameters"
-#define D_TIMER_ENABLE "Enable Timers"
 #define D_TIMER_ARM "Arm"
 #define D_TIMER_TIME "Time"
 #define D_TIMER_DAYS "Days"
@@ -419,9 +394,6 @@
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
 #define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
-#define D_KNX_ENHANCEMENT "Communication Enhancement"
-#define D_KNX_TX_SLOT "KNX TX"
-#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "今日用電量"
@@ -449,37 +421,6 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "顆粒物直徑大於"
 
-// xsns_32_mpu6050.ino
-#define D_AX_AXIS "Accel. X-Axis"
-#define D_AY_AXIS "Accel. Y-Axis"
-#define D_AZ_AXIS "Accel. Z-Axis"
-#define D_GX_AXIS "Gyro X-Axis"
-#define D_GY_AXIS "Gyro Y-Axis"
-#define D_GZ_AXIS "Gyro Z-Axis"
-
-// xsns_34_hx711.ino
-#define D_HX_CAL_REMOVE "Remove weigth"
-#define D_HX_CAL_REFERENCE "Load reference weigth"
-#define D_HX_CAL_DONE "Calibrated"
-#define D_HX_CAL_FAIL "Calibration failed"
-#define D_RESET_HX711 "Reset Scale"
-#define D_CONFIGURE_HX711 "Configure Scale"
-#define D_HX711_PARAMETERS "Scale parameters"
-#define D_ITEM_WEIGHT "Item weight"
-#define D_REFERENCE_WEIGHT "Reference weigth"
-#define D_CALIBRATE "Calibrate"
-#define D_CALIBRATION "Calibration"
-
-//xsns_35_tx20.ino
-#define D_TX20_WIND_DIRECTION "Wind Direction"
-#define D_TX20_WIND_SPEED "Wind Speed"
-#define D_TX20_WIND_SPEED_AVG "Wind Speed Avg"
-#define D_TX20_WIND_SPEED_MAX "Wind Speed Max"
-#define D_TX20_NORTH "N"
-#define D_TX20_EAST "E"
-#define D_TX20_SOUTH "S"
-#define D_TX20_WEST "W"
-
 // sonoff_template.h
 #define D_SENSOR_NONE     "None"
 #define D_SENSOR_DHT11    "DHT11"
@@ -489,7 +430,6 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
-#define D_SENSOR_DFR562   "MP3 Player"
 #define D_SENSOR_IRSEND   "IRsend"
 #define D_SENSOR_SWITCH   "Switch"   // Suffix "1"
 #define D_SENSOR_BUTTON   "Button"   // Suffix "1"
@@ -500,55 +440,24 @@
 #define D_SENSOR_IRRECV   "IRrecv"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
-#define D_SENSOR_PZEM004_RX  "PZEM004 Rx"
-#define D_SENSOR_PZEM016_RX  "PZEM016 Rx"
-#define D_SENSOR_PZEM017_RX  "PZEM017 Rx"
-#define D_SENSOR_PZEM0XX_TX  "PZEM0XX Tx"
+#define D_SENSOR_PZEM_RX  "PZEM Rx"
+#define D_SENSOR_PZEM_TX  "PZEM Tx"
 #define D_SENSOR_SAIR_RX  "SAir Rx"
 #define D_SENSOR_SAIR_TX  "SAir Tx"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "BkLight"
 #define D_SENSOR_PMS5003  "PMS5003"
-#define D_SENSOR_SDS0X1_RX "SDS0X1 Rx"
-#define D_SENSOR_SDS0X1_TX "SDS0X1 Tx"
+#define D_SENSOR_SDS0X1   "SDS0X1"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
-#define D_SENSOR_SDM120_TX "SDM120/220 Tx"
-#define D_SENSOR_SDM120_RX "SDM120/220 Rx"
-#define D_SENSOR_SDM630_TX "SDM630 Tx"
-#define D_SENSOR_SDM630_RX "SDM630 Rx"
-#define D_SENSOR_TM1638_CLK "TM16 CLK"
-#define D_SENSOR_TM1638_DIO "TM16 DIO"
-#define D_SENSOR_TM1638_STB "TM16 STB"
-#define D_SENSOR_HX711_SCK "HX711 SCK"
-#define D_SENSOR_HX711_DAT "HX711 DAT"
-#define D_SENSOR_TX20_TX "TX20"
-#define D_SENSOR_RFSEND "RFSend"
-#define D_SENSOR_RFRECV "RFrecv"
-#define D_SENSOR_TUYA_TX "Tuya Tx"
-#define D_SENSOR_TUYA_RX "Tuya Rx"
-#define D_SENSOR_MGC3130_XFER "MGC3130 Xfer"
-#define D_SENSOR_MGC3130_RESET "MGC3130 Reset"
-#define D_SENSOR_SSPI_MISO "SSPI MISO"
-#define D_SENSOR_SSPI_MOSI "SSPI MOSI"
-#define D_SENSOR_SSPI_SCLK "SSPI SCLK"
-#define D_SENSOR_SSPI_CS   "SSPI CS"
-#define D_SENSOR_SSPI_DC   "SSPI DC"
-#define D_SENSOR_RF_SENSOR "RF Sensor"
-#define D_SENSOR_AZ_RX   "AZ Rx"
-#define D_SENSOR_AZ_TX   "AZ Tx"
 
 // Units
 #define D_UNIT_AMPERE "安"
 #define D_UNIT_CENTIMETER "cm"
-#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "時"
-#define D_UNIT_INCREMENTS "inc"
-#define D_UNIT_KILOGRAM "kg"
-#define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
 #define D_UNIT_KILOOHM "千歐"
 #define D_UNIT_KILOWATTHOUR "千瓦時"
 #define D_UNIT_LUX "勒克斯"
@@ -556,8 +465,6 @@
 #define D_UNIT_MICROMETER "微米"
 #define D_UNIT_MICROSECOND "微秒"
 #define D_UNIT_MILLIAMPERE "毫安"
-#define D_UNIT_MILLIMETER "mm"
-#define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "毫秒"
 #define D_UNIT_MINUTE "分"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
@@ -566,12 +473,9 @@
 #define D_UNIT_PRESSURE "百帕"
 #define D_UNIT_SECOND "秒"
 #define D_UNIT_SECTORS "扇區"
-#define D_UNIT_VA "VA"
-#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "伏"
 #define D_UNIT_WATT "瓦"
 #define D_UNIT_WATTHOUR "瓦時"
-#define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application
@@ -597,15 +501,5 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
-
-//SDM220
-#define D_PHASE_ANGLE     "Phase Angle"
-#define D_IMPORT_ACTIVE   "Import Active"
-#define D_EXPORT_ACTIVE   "Export Active"
-#define D_IMPORT_REACTIVE "Import Reactive"
-#define D_EXPORT_REACTIVE "Export Reactive"
-#define D_TOTAL_REACTIVE  "Total Reactive"
-#define D_UNIT_KWARH      "kVArh"
-#define D_UNIT_ANGLE      "Deg"
 
 #endif  // _LANGUAGE_ZH_TW_H_

@@ -25,8 +25,6 @@
  * I2C Address: 0x44, 0x45 or 0x70 (SHTC3)
 \*********************************************************************************************/
 
-#define XSNS_14             14
-
 #define SHT3X_ADDR_GND      0x44       // address pin low (GND)
 #define SHT3X_ADDR_VDD      0x45       // address pin high (VDD)
 #define SHTC3_ADDR          0x70       // address for shtc3 sensor
@@ -76,7 +74,7 @@ bool Sht3xRead(float &t, float &h, uint8_t sht3x_address)
 
 /********************************************************************************************/
 
-void Sht3xDetect(void)
+void Sht3xDetect()
 {
   if (sht3x_count) return;
 
@@ -98,18 +96,14 @@ void Sht3xShow(boolean json)
   if (sht3x_count) {
     float t;
     float h;
+    char temperature[10];
+    char humidity[10];
     char types[11];
     for (byte i = 0; i < sht3x_count; i++) {
       if (Sht3xRead(t, h, sht3x_sensors[i].address)) {
-
-        if (0 == i) { SetGlobalValues(t, h); }
-
-        char temperature[33];
         dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-        char humidity[33];
         dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
         snprintf_P(types, sizeof(types), PSTR("%s-0x%02X"), sht3x_sensors[i].types, sht3x_sensors[i].address);  // "SHT3X-0xXX"
-
         if (json) {
           snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, types, temperature, humidity);
 #ifdef USE_DOMOTICZ
@@ -139,6 +133,8 @@ void Sht3xShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
+
+#define XSNS_14
 
 boolean Xsns14(byte function)
 {

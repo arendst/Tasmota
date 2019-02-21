@@ -40,8 +40,6 @@
  * ADS1115_REG_CONFIG_PGA_0_256V  // 16x gain  +/- 0.256V  1 bit = 0.0078125mV
 \*********************************************************************************************/
 
-#define XSNS_12                         12
-
 #define ADS1115_ADDRESS_ADDR_GND        0x48      // address pin low (GND)
 #define ADS1115_ADDRESS_ADDR_VDD        0x49      // address pin high (VCC)
 #define ADS1115_ADDRESS_ADDR_SDA        0x4A      // address pin tied to SDA pin
@@ -157,7 +155,7 @@ int16_t Ads1115GetConversion(uint8_t channel)
 
 /********************************************************************************************/
 
-void Ads1115Detect(void)
+void Ads1115Detect()
 {
   uint16_t buffer;
 
@@ -192,8 +190,8 @@ void Ads1115Show(boolean json)
           stemp[0] = '\0';
         }
         dsxflg++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, stemp, i, adc_value);
-        strlcpy(stemp, ",", sizeof(stemp));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"" D_JSON_ANALOG_INPUT "%d\":%d"), mqtt_data, stemp, i, adc_value);
+        strcpy(stemp, ",");
 #ifdef USE_WEBSERVER
       } else {
         snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
@@ -211,6 +209,8 @@ void Ads1115Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
+
+#define XSNS_12
 
 boolean Xsns12(byte function)
 {

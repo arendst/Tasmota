@@ -85,7 +85,7 @@ uint8_t kWidth[5] = {
     4,     // Large
     8,     // Largest
   255 };   // All
-uint8_t kWsRepeat[5] = {
+uint8_t kRepeat[5] = {
     8,     // Small
     6,     // Medium
     4,     // Large
@@ -93,10 +93,10 @@ uint8_t kWsRepeat[5] = {
     1 };   // All
 
 uint8_t ws_show_next = 1;
-bool ws_suspend_update = false;
+
 /********************************************************************************************/
 
-void Ws2812StripShow(void)
+void Ws2812StripShow()
 {
 #if (USE_WS2812_CTYPE > NEO_3LED)
   RgbwColor c;
@@ -126,6 +126,7 @@ int mod(int a, int b)
    return ret;
 }
 
+#define cmin(a,b) ((a)<(b)?(a):(b))
 
 void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, float offset)
 {
@@ -139,9 +140,9 @@ void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, float offse
 
   color = strip->GetPixelColor(mod_position);
   float dimmer = 100 / (float)Settings.light_dimmer;
-  color.R = tmin(color.R + ((hand_color.red / dimmer) * offset), 255);
-  color.G = tmin(color.G + ((hand_color.green / dimmer) * offset), 255);
-  color.B = tmin(color.B + ((hand_color.blue / dimmer) * offset), 255);
+  color.R = cmin(color.R + ((hand_color.red / dimmer) * offset), 255);
+  color.G = cmin(color.G + ((hand_color.green / dimmer) * offset), 255);
+  color.B = cmin(color.B + ((hand_color.blue / dimmer) * offset), 255);
   strip->SetPixelColor(mod_position, color);
 }
 
@@ -163,7 +164,7 @@ void Ws2812UpdateHand(int position, uint8_t index)
   }
 }
 
-void Ws2812Clock(void)
+void Ws2812Clock()
 {
   strip->ClearTo(0); // Reset strip
   int clksize = 60000 / (int)Settings.light_pixels;
@@ -222,7 +223,7 @@ void Ws2812Gradient(uint8_t schemenr)
   ColorScheme scheme = kSchemes[schemenr];
   if (scheme.count < 2) return;
 
-  uint8_t repeat = kWsRepeat[Settings.light_width];  // number of scheme.count per ledcount
+  uint8_t repeat = kRepeat[Settings.light_width];  // number of scheme.count per ledcount
   uint16_t range = (uint16_t)ceil((float)Settings.light_pixels / (float)repeat);
   uint16_t gradRange = (uint16_t)ceil((float)range / (float)(scheme.count - 1));
   uint16_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
@@ -232,7 +233,7 @@ void Ws2812Gradient(uint8_t schemenr)
   Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
   currentColor = oldColor;
   for (uint16_t i = 0; i < Settings.light_pixels; i++) {
-    if (kWsRepeat[Settings.light_width] > 1) {
+    if (kRepeat[Settings.light_width] > 1) {
       Ws2812GradientColor(schemenr, &currentColor, range, gradRange, i +offset);
     }
     if (Settings.light_speed > 0) {
@@ -302,7 +303,7 @@ void Ws2812Bars(uint8_t schemenr)
  * Public
 \*********************************************************************************************/
 
-void Ws2812Init(void)
+void Ws2812Init()
 {
 #ifdef USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == NEO_GRB)
@@ -337,7 +338,7 @@ void Ws2812Init(void)
   Ws2812Clear();
 }
 
-void Ws2812Clear(void)
+void Ws2812Clear()
 {
   strip->ClearTo(0);
   strip->Show();
@@ -364,19 +365,6 @@ void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint
       strip->SetPixelColor(i, lcolor);
     }
   }
-
-  if (!ws_suspend_update) {
-    strip->Show();
-    ws_show_next = 1;
-  }
-}
-
-void Ws2812ForceSuspend (void) {
-  ws_suspend_update = true;
-}
-
-void Ws2812ForceUpdate (void) {
-  ws_suspend_update = false;
   strip->Show();
   ws_show_next = 1;
 }
@@ -409,7 +397,7 @@ void Ws2812ShowScheme(uint8_t scheme)
 {
   switch (scheme) {
     case 0:  // Clock
-      if ((1 == state_250mS) || (ws_show_next)) {
+      if (((STATES/10)*2 == state) || (ws_show_next)) {
         Ws2812Clock();
         ws_show_next = 0;
       }

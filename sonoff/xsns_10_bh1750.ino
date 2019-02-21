@@ -25,8 +25,6 @@
  * I2C Address: 0x23 or 0x5C
 \*********************************************************************************************/
 
-#define XSNS_10              10
-
 #define BH1750_ADDR1         0x23
 #define BH1750_ADDR2         0x5C
 
@@ -35,25 +33,19 @@
 uint8_t bh1750_address;
 uint8_t bh1750_addresses[] = { BH1750_ADDR1, BH1750_ADDR2 };
 uint8_t bh1750_type = 0;
-uint8_t bh1750_valid = 0;
-uint16_t bh1750_illuminance = 0;
-char bh1750_types[] = "BH1750";
 
-bool Bh1750Read(void)
+uint16_t Bh1750ReadLux()
 {
-  if (bh1750_valid) { bh1750_valid--; }
-
-  if (2 != Wire.requestFrom(bh1750_address, (uint8_t)2)) { return false; }
+  Wire.requestFrom(bh1750_address, (uint8_t)2);
   byte msb = Wire.read();
   byte lsb = Wire.read();
-  bh1750_illuminance = ((msb << 8) | lsb) / 1.2;
-  bh1750_valid = SENSOR_MAX_MISS;
-  return true;
+  uint16_t value = ((msb << 8) | lsb) / 1.2;
+  return value;
 }
 
 /********************************************************************************************/
 
-void Bh1750Detect(void)
+void Bh1750Detect()
 {
   if (bh1750_type) {
     return;
@@ -65,43 +57,31 @@ void Bh1750Detect(void)
     Wire.write(BH1750_CONTINUOUS_HIGH_RES_MODE);
     if (!Wire.endTransmission()) {
       bh1750_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bh1750_types, bh1750_address);
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "BH1750", bh1750_address);
       AddLog(LOG_LEVEL_DEBUG);
       break;
     }
   }
 }
 
-void Bh1750EverySecond(void)
-{
-  if (90 == (uptime %100)) {
-    // 1mS
-    Bh1750Detect();
-  }
-  else {
-    // 1mS
-    if (bh1750_type) {
-      if (!Bh1750Read()) {
-        AddLogMissed(bh1750_types, bh1750_valid);
-//        if (!bh1750_valid) { bh1750_type = 0; }
-      }
-    }
-  }
-}
+#ifdef USE_WEBSERVER
+const char HTTP_SNS_ILLUMINANCE[] PROGMEM =
+  "%s{s}BH1750 " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // USE_WEBSERVER
 
 void Bh1750Show(boolean json)
 {
-  if (bh1750_valid) {
+  if (bh1750_type) {
+    uint16_t illuminance = Bh1750ReadLux();
+
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}"), mqtt_data, bh1750_types, bh1750_illuminance);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"BH1750\":{\"" D_JSON_ILLUMINANCE "\":%d}"), mqtt_data, illuminance);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) {
-        DomoticzSensor(DZ_ILLUMINANCE, bh1750_illuminance);
-      }
+      if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, illuminance);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, bh1750_types, bh1750_illuminance);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, illuminance);
 #endif  // USE_WEBSERVER
     }
   }
@@ -111,17 +91,16 @@ void Bh1750Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
+#define XSNS_10
+
 boolean Xsns10(byte function)
 {
   boolean result = false;
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_INIT:
+      case FUNC_PREP_BEFORE_TELEPERIOD:
         Bh1750Detect();
-        break;
-      case FUNC_EVERY_SECOND:
-        Bh1750EverySecond();
         break;
       case FUNC_JSON_APPEND:
         Bh1750Show(1);

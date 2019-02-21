@@ -17,12 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef XFUNC_PTR_IN_ROM
 boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers for simple implementation of sensors
-#else
-boolean (* const xsns_func_ptr[])(byte) = {  // Sensor Function Pointers for simple implementation of sensors
-#endif
-
 #ifdef XSNS_01
   &Xsns01,
 #endif
@@ -151,78 +146,6 @@ boolean (* const xsns_func_ptr[])(byte) = {  // Sensor Function Pointers for sim
   &Xsns32,
 #endif
 
-#ifdef XSNS_33
-  &Xsns33,
-#endif
-
-#ifdef XSNS_34
-  &Xsns34,
-#endif
-
-#ifdef XSNS_35
-  &Xsns35,
-#endif
-
-#ifdef XSNS_36
-  &Xsns36,
-#endif
-
-#ifdef XSNS_37
-  &Xsns37,
-#endif
-
-#ifdef XSNS_38
-  &Xsns38,
-#endif
-
-#ifdef XSNS_39
-  &Xsns39,
-#endif
-
-#ifdef XSNS_40
-  &Xsns40,
-#endif
-
-#ifdef XSNS_41
-  &Xsns41,
-#endif
-
-#ifdef XSNS_42
-  &Xsns42,
-#endif
-
-#ifdef XSNS_43
-  &Xsns43,
-#endif
-
-#ifdef XSNS_44
-  &Xsns44,
-#endif
-
-#ifdef XSNS_45
-  &Xsns45,
-#endif
-
-#ifdef XSNS_46
-  &Xsns46,
-#endif
-
-#ifdef XSNS_47
-  &Xsns47,
-#endif
-
-#ifdef XSNS_48
-  &Xsns48,
-#endif
-
-#ifdef XSNS_49
-  &Xsns49,
-#endif
-
-#ifdef XSNS_50
-  &Xsns50,
-#endif
-
 // Optional user defined sensors in range 91 - 99
 
 #ifdef XSNS_91
@@ -263,22 +186,30 @@ boolean (* const xsns_func_ptr[])(byte) = {  // Sensor Function Pointers for sim
 };
 
 const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  // Number of External Sensors found
+uint8_t xsns_index = 0;
 
 /*********************************************************************************************\
  * Function call to all xsns
+ *
+ * FUNC_INIT
+ * FUNC_PREP_BEFORE_TELEPERIOD
+ * FUNC_SAVE_BEFORE_RESTART
+ * FUNC_JSON_APPEND
+ * FUNC_WEB_APPEND
+ * return FUNC_COMMAND
+ * FUNC_EVERY_SECOND
+ * FUNC_EVERY_50_MSECOND
 \*********************************************************************************************/
 
-boolean XsnsNextCall(byte Function, uint8_t &xsns_index)
+uint8_t XsnsPresent()
+{
+  return xsns_present;
+}
+
+boolean XsnsNextCall(byte Function)
 {
   xsns_index++;
-  if (xsns_index == xsns_present) { xsns_index = 0; }
-#ifdef USE_DEBUG_DRIVER
-  while (!XsnsEnabled(xsns_index) && !xsns_index) {  // Perform at least first sensor (counter)
-    xsns_index++;
-    if (xsns_index == xsns_present) { xsns_index = 0; }
-  }
-#endif
-//  WifiAddDelayWhenDisconnected();
+  if (xsns_index == xsns_present) xsns_index = 0;
   return xsns_func_ptr[xsns_index](Function);
 }
 
@@ -286,46 +217,10 @@ boolean XsnsCall(byte Function)
 {
   boolean result = false;
 
-#ifdef PROFILE_XSNS_EVERY_SECOND
-  uint32_t profile_start_millis = millis();
-#endif  // PROFILE_XSNS_EVERY_SECOND
-
   for (byte x = 0; x < xsns_present; x++) {
-#ifdef USE_DEBUG_DRIVER
-    if (XsnsEnabled(x)) {
-#endif
-
-#ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
-      uint32_t profile_start_millis = millis();
-#endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
-//      WifiAddDelayWhenDisconnected();
-      result = xsns_func_ptr[x](Function);
-
-#ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
-      uint32_t profile_millis = millis() - profile_start_millis;
-      if (profile_millis) {
-        if (FUNC_EVERY_SECOND == Function) {
-          snprintf_P(log_data, sizeof(log_data), PSTR("PRF: At %08u XsnsCall %d to Sensor %d took %u mS"), uptime, Function, x, profile_millis);
-          AddLog(LOG_LEVEL_DEBUG);
-        }
-      }
-#endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
-
-      if (result) break;
-#ifdef USE_DEBUG_DRIVER
-    }
-#endif
+    result = xsns_func_ptr[x](Function);
+    if (result) break;
   }
-
-#ifdef PROFILE_XSNS_EVERY_SECOND
-  uint32_t profile_millis = millis() - profile_start_millis;
-  if (profile_millis) {
-    if (FUNC_EVERY_SECOND == Function) {
-      snprintf_P(log_data, sizeof(log_data), PSTR("PRF: At %08u XsnsCall %d took %u mS"), uptime, Function, profile_millis);
-      AddLog(LOG_LEVEL_DEBUG);
-    }
-  }
-#endif  // PROFILE_XSNS_EVERY_SECOND
 
   return result;
 }
