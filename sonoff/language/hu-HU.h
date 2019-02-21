@@ -33,6 +33,7 @@
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1038
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "hu"
 
@@ -59,10 +60,12 @@
 #define D_BLINKOFF "Villogás Ki"
 #define D_BOOT_COUNT "Bootolások száma"
 #define D_BRIGHTLIGHT "Max. fényerő"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Gomb"
 #define D_BY "tőle:"                    // Written by me
 #define D_BYTES "Byte-ok"
 #define D_CELSIUS "Celsius"
+#define D_CHANNEL "Channel"
 #define D_CO2 "Szén-dioxid"
 #define D_CODE "kód"                // Button code
 #define D_COLDLIGHT "Hideg"
@@ -91,6 +94,7 @@
 #define D_FALSE "Hamis"
 #define D_FILE "File"
 #define D_FREE_MEMORY "Szabad Memória"
+#define D_FREQUENCY "Frequency"
 #define D_GAS "Gáz"
 #define D_GATEWAY "Gateway"
 #define D_GROUP "Csoport"
@@ -101,6 +105,7 @@
 #define D_IMMEDIATE "azonnali"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
+#define D_INFRARED "Infrared"
 #define D_INITIALIZED "Inicializálva"
 #define D_IP_ADDRESS "IP Cím"
 #define D_LIGHT "Fény"
@@ -119,11 +124,15 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Teljesítmény tényező"
 #define D_POWERUSAGE "Energiafelhasználás"
+#define D_POWERUSAGE_ACTIVE "Active Power"
+#define D_POWERUSAGE_APPARENT "Apparent Power"
+#define D_POWERUSAGE_REACTIVE "Reactive Power"
 #define D_PRESSURE "Nyomás"
 #define D_PRESSUREATSEALEVEL "Tengerszinti nyomás"
 #define D_PROGRAM_FLASH_SIZE "Program Flash Méret"
 #define D_PROGRAM_SIZE "Program Méret"
 #define D_PROJECT "Projekt"
+#define D_RAIN "Rain"
 #define D_RECEIVED "Érkezett"
 #define D_RESTART "Újraindítás"
 #define D_RESTARTING "Újraindítás"
@@ -154,9 +163,19 @@
 #define D_UPTIME "Üzemidő"
 #define D_USER "Felhasználó"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "UV Index"
+#define D_UV_INDEX_1 "Low"
+#define D_UV_INDEX_2 "Mid"
+#define D_UV_INDEX_3 "High"
+#define D_UV_INDEX_4 "Danger"
+#define D_UV_INDEX_5 "BurnL1/2"
+#define D_UV_INDEX_6 "BurnL3"
+#define D_UV_INDEX_7 "OoR"
 #define D_UV_LEVEL "UV Szint"
+#define D_UV_POWER "UV Power"
 #define D_VERSION "Verzió"
 #define D_VOLTAGE "Feszültség"
+#define D_WEIGHT "Weight"
 #define D_WARMLIGHT "Meleg"
 #define D_WEB_SERVER "Web Szerver"
 
@@ -198,7 +217,8 @@
 #define D_USE_DEFAULTS "Alapértelmezett beáll. használata"
 #define D_ERASED_SECTOR "Szektor törlése"
 
-// webserver.ino
+// xdrv_02_webserver.ino
+#define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - frissítsd!"
 #define D_WEBSERVER_ACTIVE_ON "Web szerver aktív a"
 #define D_WITH_IP_ADDRESS "IP címe:"
@@ -314,13 +334,17 @@
 #define D_UPLOAD_ERR_7 "Feltöltés megszakítva"
 #define D_UPLOAD_ERR_8 "Érvénytelen file"
 #define D_UPLOAD_ERR_9 "File túl nagy"
+#define D_UPLOAD_ERR_10 "Failed to init RF chip"
+#define D_UPLOAD_ERR_11 "Failed to erase RF chip"
+#define D_UPLOAD_ERR_12 "Failed to write to RF chip"
+#define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
 #define D_UPLOAD_ERROR_CODE "Feltöltés hiba kód"
 
 #define D_ENTER_COMMAND "Parancsolj"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Engedélyezz 2-es weblogolást több információért"
 #define D_NEED_USER_AND_PASSWORD "Kell felhasználó=<felhasználónév>&jelszó=<jelszó>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "TLS fingerprint hitelesítése..."
 #define D_TLS_CONNECT_FAILED_TO "TLS Csatlakozás sikertelen a"
 #define D_RETRY_IN "Újrapróbálás"
@@ -328,7 +352,7 @@
 #define D_INSECURE "Nem biztonságos kapcsolat érvénytelen Fingerprint miatt"
 #define D_CONNECT_FAILED_TO "Sikertelen csatlakozás a"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast kikapcsolva"
 #define D_MULTICAST_REJOINED "Multicast (újra)csatlakozás"
 #define D_MULTICAST_JOIN_FAILED "Multicast csatlakozás sikertelen"
@@ -348,7 +372,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 válaszcsomagok elküldve"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Domoticz paraméterek"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -368,6 +392,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configure Timer"
 #define D_TIMER_PARAMETERS "Timer parameters"
+#define D_TIMER_ENABLE "Enable Timers"
 #define D_TIMER_ARM "Arm"
 #define D_TIMER_TIME "Time"
 #define D_TIMER_DAYS "Days"
@@ -394,6 +419,9 @@
 #define D_KNX_COMMAND_OTHER "Other"
 #define D_SENT_TO "sent to"
 #define D_KNX_WARNING "The group address ( 0 / 0 / 0 ) is reserved and can not be used."
+#define D_KNX_ENHANCEMENT "Communication Enhancement"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xdrv_03_energy.ino
 #define D_ENERGY_TODAY "Mai Energia"
@@ -421,6 +449,37 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Részecskék"
 
+// xsns_32_mpu6050.ino
+#define D_AX_AXIS "Accel. X-Axis"
+#define D_AY_AXIS "Accel. Y-Axis"
+#define D_AZ_AXIS "Accel. Z-Axis"
+#define D_GX_AXIS "Gyro X-Axis"
+#define D_GY_AXIS "Gyro Y-Axis"
+#define D_GZ_AXIS "Gyro Z-Axis"
+
+// xsns_34_hx711.ino
+#define D_HX_CAL_REMOVE "Remove weigth"
+#define D_HX_CAL_REFERENCE "Load reference weigth"
+#define D_HX_CAL_DONE "Calibrated"
+#define D_HX_CAL_FAIL "Calibration failed"
+#define D_RESET_HX711 "Reset Scale"
+#define D_CONFIGURE_HX711 "Configure Scale"
+#define D_HX711_PARAMETERS "Scale parameters"
+#define D_ITEM_WEIGHT "Item weight"
+#define D_REFERENCE_WEIGHT "Reference weigth"
+#define D_CALIBRATE "Calibrate"
+#define D_CALIBRATION "Calibration"
+
+//xsns_35_tx20.ino
+#define D_TX20_WIND_DIRECTION "Wind Direction"
+#define D_TX20_WIND_SPEED "Wind Speed"
+#define D_TX20_WIND_SPEED_AVG "Wind Speed Avg"
+#define D_TX20_WIND_SPEED_MAX "Wind Speed Max"
+#define D_TX20_NORTH "N"
+#define D_TX20_EAST "E"
+#define D_TX20_SOUTH "S"
+#define D_TX20_WEST "W"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Nincs"
 #define D_SENSOR_DHT11    "DHT11"
@@ -430,6 +489,7 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
+#define D_SENSOR_DFR562   "MP3 Player"
 #define D_SENSOR_IRSEND   "IRadó"
 #define D_SENSOR_SWITCH   "Kapcsoló"   // Suffix "1"
 #define D_SENSOR_BUTTON   "Gomb"   // Suffix "1"
@@ -440,24 +500,55 @@
 #define D_SENSOR_IRRECV   "IRvevő"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
-#define D_SENSOR_PZEM_RX  "PZEM Rx"
-#define D_SENSOR_PZEM_TX  "PZEM Tx"
+#define D_SENSOR_PZEM004_RX  "PZEM004 Rx"
+#define D_SENSOR_PZEM016_RX  "PZEM016 Rx"
+#define D_SENSOR_PZEM017_RX  "PZEM017 Rx"
+#define D_SENSOR_PZEM0XX_TX  "PZEM0XX Tx"
 #define D_SENSOR_SAIR_RX  "SAir Rx"
 #define D_SENSOR_SAIR_TX  "SAir Tx"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "Háttérvil"
 #define D_SENSOR_PMS5003  "PMS5003"
-#define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SDS0X1_RX "SDS0X1 Rx"
+#define D_SENSOR_SDS0X1_TX "SDS0X1 Tx"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120/220 Tx"
+#define D_SENSOR_SDM120_RX "SDM120/220 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
+#define D_SENSOR_HX711_SCK "HX711 SCK"
+#define D_SENSOR_HX711_DAT "HX711 DAT"
+#define D_SENSOR_TX20_TX "TX20"
+#define D_SENSOR_RFSEND "RFSend"
+#define D_SENSOR_RFRECV "RFrecv"
+#define D_SENSOR_TUYA_TX "Tuya Tx"
+#define D_SENSOR_TUYA_RX "Tuya Rx"
+#define D_SENSOR_MGC3130_XFER "MGC3130 Xfer"
+#define D_SENSOR_MGC3130_RESET "MGC3130 Reset"
+#define D_SENSOR_SSPI_MISO "SSPI MISO"
+#define D_SENSOR_SSPI_MOSI "SSPI MOSI"
+#define D_SENSOR_SSPI_SCLK "SSPI SCLK"
+#define D_SENSOR_SSPI_CS   "SSPI CS"
+#define D_SENSOR_SSPI_DC   "SSPI DC"
+#define D_SENSOR_RF_SENSOR "RF Sensor"
+#define D_SENSOR_AZ_RX   "AZ Rx"
+#define D_SENSOR_AZ_TX   "AZ Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "ó"
+#define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOGRAM "kg"
+#define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
@@ -465,6 +556,8 @@
 #define D_UNIT_MICROMETER "um"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLIMETER "mm"
+#define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "p"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
@@ -473,9 +566,12 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "m"
 #define D_UNIT_SECTORS "szektorok"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
+#define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application
@@ -501,5 +597,15 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+
+//SDM220
+#define D_PHASE_ANGLE     "Phase Angle"
+#define D_IMPORT_ACTIVE   "Import Active"
+#define D_EXPORT_ACTIVE   "Export Active"
+#define D_IMPORT_REACTIVE "Import Reactive"
+#define D_EXPORT_REACTIVE "Export Reactive"
+#define D_TOTAL_REACTIVE  "Total Reactive"
+#define D_UNIT_KWARH      "kVArh"
+#define D_UNIT_ANGLE      "Deg"
 
 #endif  // _LANGUAGE_HU_HU_H_

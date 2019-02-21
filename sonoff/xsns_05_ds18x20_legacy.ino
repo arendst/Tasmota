@@ -22,6 +22,8 @@
  * DS18B20 - Temperature
 \*********************************************************************************************/
 
+#define XSNS_05              5
+
 #define DS18S20_CHIPID       0x10
 #define DS18B20_CHIPID       0x28
 #define MAX31850_CHIPID      0x3B
@@ -41,12 +43,12 @@ uint8_t ds18x20_index[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_sensors = 0;
 char ds18x20_types[9];
 
-void Ds18x20Init()
+void Ds18x20Init(void)
 {
   ds = new OneWire(pin[GPIO_DSB]);
 }
 
-void Ds18x20Search()
+void Ds18x20Search(void)
 {
   uint8_t num_sensors=0;
   uint8_t sensor = 0;
@@ -76,7 +78,7 @@ void Ds18x20Search()
   ds18x20_sensors = num_sensors;
 }
 
-uint8_t Ds18x20Sensors()
+uint8_t Ds18x20Sensors(void)
 {
   return ds18x20_sensors;
 }
@@ -91,7 +93,7 @@ String Ds18x20Addresses(uint8_t sensor)
   return String(address);
 }
 
-void Ds18x20Convert()
+void Ds18x20Convert(void)
 {
   ds->reset();
   ds->write(W1_SKIP_ROM);        // Address all Sensors on Bus
@@ -168,7 +170,6 @@ void Ds18x20Type(uint8_t sensor)
 
 void Ds18x20Show(boolean json)
 {
-  char temperature[10];
   char stemp[10];
   float t;
 
@@ -176,6 +177,7 @@ void Ds18x20Show(boolean json)
   for (byte i = 0; i < Ds18x20Sensors(); i++) {
     if (Ds18x20Read(i, t)) {           // Check if read failed
       Ds18x20Type(i);
+      char temperature[33];
       dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
       if (json) {
@@ -186,12 +188,17 @@ void Ds18x20Show(boolean json)
         dsxflg++;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_JSON_TYPE "\":\"%s\",\"" D_JSON_ADDRESS "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"),
           mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
-        strcpy(stemp, ",");
+        strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
           DomoticzSensor(DZ_TEMP, temperature);
         }
 #endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+        if ((0 == tele_period) && (1 == dsxflg)) {
+          KnxSensor(KNX_TEMPERATURE, t);
+        }
+#endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
         snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
@@ -212,8 +219,6 @@ void Ds18x20Show(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_05
 
 boolean Xsns05(byte function)
 {

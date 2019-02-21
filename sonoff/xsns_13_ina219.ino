@@ -19,9 +19,6 @@
 
 #ifdef USE_I2C
 #ifdef USE_INA219
-
-#define XSNS_13 13
-
 /*********************************************************************************************\
  * INA219 - Low voltage (max 32V!) Current sensor
  *
@@ -29,6 +26,8 @@
  *
  * I2C Address: 0x40, 0x41 0x44 or 0x45
 \*********************************************************************************************/
+
+#define XSNS_13                                 13
 
 #define INA219_ADDRESS1                         (0x40)    // 1000000 (A0+A1=GND)
 #define INA219_ADDRESS2                         (0x41)    // 1000000 (A0=Vcc, A1=GND)
@@ -93,6 +92,11 @@ uint32_t ina219_cal_value = 0;
 // The following multiplier is used to convert raw current values to mA, taking into account the current config settings
 uint32_t ina219_current_divider_ma = 0;
 
+uint8_t ina219_valid = 0;
+float ina219_voltage = 0;
+float ina219_current = 0;
+char ina219_types[] = "INA219";
+
 bool Ina219SetCalibration(uint8_t mode)
 {
   uint16_t config = 0;
@@ -124,7 +128,7 @@ bool Ina219SetCalibration(uint8_t mode)
   return success;
 }
 
-float Ina219GetShuntVoltage_mV()
+float Ina219GetShuntVoltage_mV(void)
 {
   // raw shunt voltage (16-bit signed integer, so +-32767)
   int16_t value = I2cReadS16(ina219_address, INA219_REG_SHUNTVOLTAGE);
@@ -132,7 +136,7 @@ float Ina219GetShuntVoltage_mV()
   return value * 0.01;
 }
 
-float Ina219GetBusVoltage_V()
+float Ina219GetBusVoltage_V(void)
 {
   // Shift to the right 3 to drop CNVR and OVF and multiply by LSB
   // raw bus voltage (16-bit signed integer, so +-32767)
@@ -141,7 +145,7 @@ float Ina219GetBusVoltage_V()
   return value * 0.001;
 }
 
-float Ina219GetCurrent_mA()
+float Ina219GetCurrent_mA(void)
 {
   // Sometimes a sharp load will reset the INA219, which will reset the cal register,
   // meaning CURRENT and POWER will not be available ... avoid this by always setting
@@ -155,11 +159,23 @@ float Ina219GetCurrent_mA()
   return value;
 }
 
+bool Ina219Read(void)
+{
+  ina219_voltage = Ina219GetBusVoltage_V() + (Ina219GetShuntVoltage_mV() / 1000);
+  ina219_current = Ina219GetCurrent_mA() / 1000;
+  ina219_valid = SENSOR_MAX_MISS;
+  return true;
+}
+
 /*********************************************************************************************\
  * Command Sensor13
+ *
+ * 0 - Max 32V 2A range
+ * 1 - Max 32V 1A range
+ * 2 - Max 16V 0.4A range
 \*********************************************************************************************/
 
-bool Ina219CommandSensor()
+bool Ina219CommandSensor(void)
 {
   boolean serviced = true;
 
@@ -174,19 +190,34 @@ bool Ina219CommandSensor()
 
 /********************************************************************************************/
 
-void Ina219Detect()
+void Ina219Detect(void)
 {
-  if (ina219_type) {
-    return;
-  }
+  if (ina219_type) { return; }
 
   for (byte i = 0; i < sizeof(ina219_addresses); i++) {
     ina219_address = ina219_addresses[i];
     if (Ina219SetCalibration(Settings.ina219_mode)) {
       ina219_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "INA219", ina219_address);
+      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, ina219_types, ina219_address);
       AddLog(LOG_LEVEL_DEBUG);
       break;
+    }
+  }
+}
+
+void Ina219EverySecond(void)
+{
+  if (87 == (uptime %100)) {
+    // 2mS
+    Ina219Detect();
+  }
+  else {
+    // 3mS
+    if (ina219_type) {
+      if (!Ina219Read()) {
+        AddLogMissed(ina219_types, ina219_valid);
+//        if (!ina219_valid) { ina219_type = 0; }
+      }
     }
   }
 }
@@ -200,21 +231,18 @@ const char HTTP_SNS_INA219_DATA[] PROGMEM = "%s"
 
 void Ina219Show(boolean json)
 {
-  if (ina219_type) {
-    char voltage[10];
-    char current[10];
-    char power[10];
-
-    float fvoltage = Ina219GetBusVoltage_V() + (Ina219GetShuntVoltage_mV() / 1000);
-    float fcurrent = Ina219GetCurrent_mA() / 1000;
-    float fpower = fvoltage * fcurrent;
-    dtostrfd(fvoltage, Settings.flag2.voltage_resolution, voltage);
+  if (ina219_valid) {
+    float fpower = ina219_voltage * ina219_current;
+    char voltage[33];
+    dtostrfd(ina219_voltage, Settings.flag2.voltage_resolution, voltage);
+    char power[33];
     dtostrfd(fpower, Settings.flag2.wattage_resolution, power);
-    dtostrfd(fcurrent, Settings.flag2.current_resolution, current);
+    char current[33];
+    dtostrfd(ina219_current, Settings.flag2.current_resolution, current);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"INA219\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
-        mqtt_data, voltage, current, power);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
+        mqtt_data, ina219_types, voltage, current, power);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_VOLTAGE, voltage);
@@ -244,8 +272,11 @@ boolean Xsns13(byte function)
           result = Ina219CommandSensor();
         }
         break;
-      case FUNC_PREP_BEFORE_TELEPERIOD:
+      case FUNC_INIT:
         Ina219Detect();
+        break;
+      case FUNC_EVERY_SECOND:
+        Ina219EverySecond();
         break;
       case FUNC_JSON_APPEND:
         Ina219Show(1);

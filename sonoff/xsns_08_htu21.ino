@@ -27,6 +27,8 @@
  * I2C Address: 0x40
 \*********************************************************************************************/
 
+#define XSNS_08             8
+
 #define HTU21_ADDR          0x40
 
 #define SI7013_CHIPID       0x0D
@@ -58,8 +60,11 @@ const char kHtuTypes[] PROGMEM = "HTU21|SI7013|SI7020|SI7021|T/RH?";
 
 uint8_t htu_address;
 uint8_t htu_type = 0;
-uint8_t delay_temp;
-uint8_t delay_humidity = 50;
+uint8_t htu_delay_temp;
+uint8_t htu_delay_humidity = 50;
+uint8_t htu_valid = 0;
+float htu_temperature = 0;
+float htu_humidity = 0;
 char htu_types[7];
 
 uint8_t HtuCheckCrc8(uint16_t data)
@@ -128,94 +133,71 @@ void HtuHeater(uint8_t heater)
   I2cWrite8(HTU21_ADDR, HTU21_WRITEREG, current);
 }
 
-void HtuInit()
+void HtuInit(void)
 {
   HtuReset();
   HtuHeater(HTU21_HEATER_OFF);
   HtuSetResolution(HTU21_RES_RH12_T14);
 }
 
-float HtuReadHumidity(void)
+boolean HtuRead(void)
 {
   uint8_t  checksum = 0;
   uint16_t sensorval = 0;
-  float    humidity = 0.0;
 
-  Wire.beginTransmission(HTU21_ADDR);
-  Wire.write(HTU21_READHUM);
-  if (Wire.endTransmission() != 0) {
-    return 0.0; // In case of error
-  }
-  delay(delay_humidity);                              // Sensor time at max resolution
-
-  Wire.requestFrom(HTU21_ADDR, 3);
-  if (3 <= Wire.available()) {
-    sensorval = Wire.read() << 8;             // MSB
-    sensorval |= Wire.read();                 // LSB
-    checksum = Wire.read();
-  }
-  if (HtuCheckCrc8(sensorval) != checksum) {
-    return 0.0; // Checksum mismatch
-  }
-
-  sensorval ^= 0x02;      // clear status bits
-  humidity = 0.001907 * (float)sensorval - 6;
-
-  if (humidity > 100) {
-    return 100.0;
-  }
-  if (humidity < 0) {
-    return 0.01;
-  }
-
-  return humidity;
-}
-
-float HtuReadTemperature()
-{
-  uint8_t  checksum=0;
-  uint16_t sensorval=0;
-  float t;
+  if (htu_valid) { htu_valid--; }
 
   Wire.beginTransmission(HTU21_ADDR);
   Wire.write(HTU21_READTEMP);
-  if (Wire.endTransmission() != 0) {
-    return 0.0; // In case of error
-  }
-  delay(delay_temp);                          // Sensor time at max resolution
+  if (Wire.endTransmission() != 0) { return false; }           // In case of error
+  delay(htu_delay_temp);                                       // Sensor time at max resolution
 
   Wire.requestFrom(HTU21_ADDR, 3);
   if (3 == Wire.available()) {
-    sensorval = Wire.read() << 8;         // MSB
-    sensorval |= Wire.read();             // LSB
+    sensorval = Wire.read() << 8;                              // MSB
+    sensorval |= Wire.read();                                  // LSB
     checksum = Wire.read();
   }
-  if (HtuCheckCrc8(sensorval) != checksum) {
-    return 0.0; // Checksum mismatch
+  if (HtuCheckCrc8(sensorval) != checksum) { return false; }   // Checksum mismatch
+
+  htu_temperature = ConvertTemp(0.002681 * (float)sensorval - 46.85);
+
+  Wire.beginTransmission(HTU21_ADDR);
+  Wire.write(HTU21_READHUM);
+  if (Wire.endTransmission() != 0) { return false; }           // In case of error
+  delay(htu_delay_humidity);                                   // Sensor time at max resolution
+
+  Wire.requestFrom(HTU21_ADDR, 3);
+  if (3 <= Wire.available()) {
+    sensorval = Wire.read() << 8;                              // MSB
+    sensorval |= Wire.read();                                  // LSB
+    checksum = Wire.read();
+  }
+  if (HtuCheckCrc8(sensorval) != checksum) { return false; }   // Checksum mismatch
+
+  sensorval ^= 0x02;                                           // clear status bits
+  htu_humidity = 0.001907 * (float)sensorval - 6;
+  if (htu_humidity > 100) { htu_humidity = 100.0; }
+  if (htu_humidity < 0) { htu_humidity = 0.01; }
+
+  if ((0.00 == htu_humidity) && (0.00 == htu_temperature)) {
+    htu_humidity = 0.0;
+  }
+  if ((htu_temperature > 0.00) && (htu_temperature < 80.00)) {
+    htu_humidity = (-0.15) * (25 - htu_temperature) + htu_humidity;
   }
 
-  t = ConvertTemp(0.002681 * (float)sensorval - 46.85);
-  return t;
-}
+  SetGlobalValues(htu_temperature, htu_humidity);
 
-float HtuCompensatedHumidity(float humidity, float temperature)
-{
-  if(humidity == 0.00 && temperature == 0.00) {
-    return 0.0;
-  }
-  if(temperature > 0.00 && temperature < 80.00) {
-    return (-0.15)*(25-temperature)+humidity;
-  }
-  return humidity;
+  htu_valid = SENSOR_MAX_MISS;
+  return true;
 }
 
 /********************************************************************************************/
 
-void HtuDetect()
+void HtuDetect(void)
 {
-  if (htu_type) {
-    return;
-  }
+  if (htu_type) { return; }
 
   htu_address = HTU21_ADDR;
   htu_type = HtuReadDeviceId();
@@ -224,8 +206,8 @@ void HtuDetect()
     HtuInit();
     switch (htu_type) {
       case HTU21_CHIPID:
-        delay_temp = 50;
-        delay_humidity = 16;
+        htu_delay_temp = 50;
+        htu_delay_humidity = 16;
         break;
       case SI7021_CHIPID:
         index++;  // 3
@@ -233,13 +215,13 @@ void HtuDetect()
         index++;  // 2
       case SI7013_CHIPID:
         index++;  // 1
-        delay_temp = 12;
-        delay_humidity = 23;
+        htu_delay_temp = 12;
+        htu_delay_humidity = 23;
         break;
       default:
         index = 4;
-        delay_temp = 50;
-        delay_humidity = 23;
+        htu_delay_temp = 50;
+        htu_delay_humidity = 23;
     }
     GetTextIndexed(htu_types, sizeof(htu_types), index, kHtuTypes);
     snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, htu_types, htu_address);
@@ -247,31 +229,44 @@ void HtuDetect()
   }
 }
 
+void HtuEverySecond(void)
+{
+  if (92 == (uptime %100)) {
+    // 1mS
+    HtuDetect();
+  }
+  else if (uptime &1) {
+    // HTU21: 68mS, SI70xx: 37mS
+    if (htu_type) {
+      if (!HtuRead()) {
+        AddLogMissed(htu_types, htu_valid);
+//        if (!htu_valid) { htu_type = 0; }
+      }
+    }
+  }
+}
+
 void HtuShow(boolean json)
 {
-  if (htu_type) {
-    char temperature[10];
-    char humidity[10];
-
-    float t = HtuReadTemperature();
-    float h = HtuReadHumidity();
-    h = HtuCompensatedHumidity(h, t);
-    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
-    dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
+  if (htu_valid) {
+    char temperature[33];
+    dtostrfd(htu_temperature, Settings.flag2.temperature_resolution, temperature);
+    char humidity[33];
+    dtostrfd(htu_humidity, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, htu_types, temperature, humidity);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) DomoticzTempHumSensor(temperature, humidity);
+      if (0 == tele_period) {
+        DomoticzTempHumSensor(temperature, humidity);
+      }
 #endif  // USE_DOMOTICZ
-
 #ifdef USE_KNX
       if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, t);
-        KnxSensor(KNX_HUMIDITY, h);
+        KnxSensor(KNX_TEMPERATURE, htu_temperature);
+        KnxSensor(KNX_HUMIDITY, htu_humidity);
       }
 #endif  // USE_KNX
-
 #ifdef USE_WEBSERVER
     } else {
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, htu_types, temperature, TempUnit());
@@ -285,16 +280,17 @@ void HtuShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_08
-
 boolean Xsns08(byte function)
 {
   boolean result = false;
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_PREP_BEFORE_TELEPERIOD:
+      case FUNC_INIT:
         HtuDetect();
+        break;
+      case FUNC_EVERY_SECOND:
+        HtuEverySecond();
         break;
       case FUNC_JSON_APPEND:
         HtuShow(1);

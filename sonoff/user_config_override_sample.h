@@ -1,5 +1,5 @@
 /*
-  user_config_override.h - user configuration overrides user_config.h for Sonoff-Tasmota
+  user_config_override.h - user configuration overrides my_user_config.h for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends
 
@@ -25,7 +25,7 @@
 
 /*****************************************************************************************************\
  * USAGE:
- *   To modify the stock configuration without changing the user_config.h file:
+ *   To modify the stock configuration without changing the my_user_config.h file:
  *   (1) copy this file to "user_config_override.h" (It will be ignored by Git)
  *   (2) define your own settings below
  *   (3) for platformio:
@@ -33,12 +33,12 @@
  *         ie1 : export PLATFORMIO_BUILD_FLAGS='-DUSE_CONFIG_OVERRIDE'
  *         ie2 : enable in file platformio.ini "build_flags = -Wl,-Tesp8266.flash.1m0.ld -DUSE_CONFIG_OVERRIDE"
  *       for Arduino IDE:
- *         enable define USE_CONFIG_OVERRIDE in user_config.h
+ *         enable define USE_CONFIG_OVERRIDE in my_user_config.h
  ******************************************************************************************************
  * ATTENTION:
  *   - Changes to SECTION1 PARAMETER defines will only override flash settings if you change define CFG_HOLDER.
  *   - Expect compiler warnings when no ifdef/undef/endif sequence is used.
- *   - You still need to update user_config.h for major define USE_MQTT_TLS.
+ *   - You still need to update my_user_config.h for major define USE_MQTT_TLS.
  *   - All parameters can be persistent changed online using commands via MQTT, WebConsole or Serial.
 \*****************************************************************************************************/
 
@@ -47,7 +47,7 @@ Examples :
 
 // -- Master parameter control --------------------
 #undef  CFG_HOLDER
-#define CFG_HOLDER        0x20161209             // [Reset 1] Change this value to load SECTION1 configuration parameters to flash
+#define CFG_HOLDER        4617                   // [Reset 1] Change this value to load SECTION1 configuration parameters to flash
 
 // -- Setup your own Wifi settings  ---------------
 #undef  STA_SSID1

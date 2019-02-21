@@ -28,11 +28,12 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v5.12.0m
+ * Updated until v6.3.0.17
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
+#define LANGUAGE_LCID 1036
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "fr"
 
@@ -59,10 +60,12 @@
 #define D_BLINKOFF "BlinkOff"
 #define D_BOOT_COUNT "Nombre de boot"
 #define D_BRIGHTLIGHT "Luminosité"
+#define D_BSSID "BSSId"
 #define D_BUTTON "Bouton"
 #define D_BY "par"                    // Written by me
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
+#define D_CHANNEL "Canal"
 #define D_CO2 "Dioxyde de carbone"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "Froid"
@@ -91,6 +94,7 @@
 #define D_FALSE "Faux"
 #define D_FILE "Fichier"
 #define D_FREE_MEMORY "Mémoire libre"
+#define D_FREQUENCY "Fréquence"
 #define D_GAS "Gaz"
 #define D_GATEWAY "Passerelle"
 #define D_GROUP "Groupe"
@@ -101,6 +105,7 @@
 #define D_IMMEDIATE "immédiat"      // Button immediate
 #define D_INDEX "Index"
 #define D_INFO "Info"
+#define D_INFRARED "Infra-rouge"
 #define D_INITIALIZED "Initialisé"
 #define D_IP_ADDRESS "Adresse IP"
 #define D_LIGHT "Lumière"
@@ -117,13 +122,17 @@
 #define D_ONLINE "Connecté"
 #define D_PASSWORD "Mot de passe"
 #define D_PORT "Port"
-#define D_POWER_FACTOR "Facteur de puissance"
+#define D_POWER_FACTOR "Fact de puiss"
 #define D_POWERUSAGE "Puissance"
+#define D_POWERUSAGE_ACTIVE "Puiss act"
+#define D_POWERUSAGE_APPARENT "Puiss app"
+#define D_POWERUSAGE_REACTIVE "Puiss réactive"
 #define D_PRESSURE "Pression"
 #define D_PRESSUREATSEALEVEL "PressionMer"
 #define D_PROGRAM_FLASH_SIZE "Taille Flash Programme"
 #define D_PROGRAM_SIZE "Taille programme"
 #define D_PROJECT "Projet"
+#define D_RAIN "Pluie"
 #define D_RECEIVED "Reçu"
 #define D_RESTART "Redémarrage"
 #define D_RESTARTING "Redémarre"
@@ -154,9 +163,19 @@
 #define D_UPTIME "Durée d'activité"
 #define D_USER "Utilisateur"
 #define D_UTC_TIME "UTC"
+#define D_UV_INDEX "Indice UV"
+#define D_UV_INDEX_1 "Faible"
+#define D_UV_INDEX_2 "Modéré"
+#define D_UV_INDEX_3 "Élevé"
+#define D_UV_INDEX_4 "Très élevé"
+#define D_UV_INDEX_5 "Brûlure niv.1/2"
+#define D_UV_INDEX_6 "Brûlure niv.3"
+#define D_UV_INDEX_7 "Hors échelle"
 #define D_UV_LEVEL "Niveau UV"
+#define D_UV_POWER "Puissance UV"
 #define D_VERSION "Version"
 #define D_VOLTAGE "Tension"
+#define D_WEIGHT "Poids"
 #define D_WARMLIGHT "Chaud"
 #define D_WEB_SERVER "Serveur web"
 
@@ -167,7 +186,7 @@
 #define D_SERIAL_LOGGING_DISABLED "Journalisation série désactivée"
 #define D_SYSLOG_LOGGING_REENABLED "Jounalisation syslog réactivée"
 
-#define D_SET_BAUDRATE_TO "Définir baudrate à"
+#define D_SET_BAUDRATE_TO "Définir le débit à"
 #define D_RECEIVED_TOPIC "Topic reçu"  // Terme MQTT
 #define D_DATA_SIZE "Taille données"
 #define D_ANALOG_INPUT "Analogique"
@@ -198,7 +217,8 @@
 #define D_USE_DEFAULTS "Utiliser par défaut"
 #define D_ERASED_SECTOR "Secteur effacé"
 
-// webserver.ino
+// xdrv_02_webserver.ino
+#define D_NOSCRIPT "Pour utiliser Tasmota, veuillez activer JavaScript"
 #define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMAL - merci de mettre à jour"
 #define D_WEBSERVER_ACTIVE_ON "Serveur web actif sur"
 #define D_WITH_IP_ADDRESS "avec l'adresse IP"
@@ -214,7 +234,7 @@
 #define D_DEVICE_WILL_RESTART "Le module va redémarrer dans quelques secondes"
 #define D_BUTTON_TOGGLE "on/off"
 #define D_CONFIGURATION "Configuration"
-#define D_INFORMATION "Information"
+#define D_INFORMATION "Informations"
 #define D_FIRMWARE_UPGRADE "Mise à jour du Firmware"
 #define D_CONSOLE "Console"
 #define D_CONFIRM_RESTART "Confirmer redémarrage"
@@ -225,7 +245,7 @@
 #define D_CONFIGURE_DOMOTICZ "Configuration Domoticz"
 #define D_CONFIGURE_LOGGING "Configuration du journal"
 #define D_CONFIGURE_OTHER "Autre configuration"
-#define D_CONFIRM_RESET_CONFIGURATION "Confirmer réinitialisation configuration"
+#define D_CONFIRM_RESET_CONFIGURATION "Confirmer la réinit. de la config."
 #define D_RESET_CONFIGURATION "Configuration par défaut"
 #define D_BACKUP_CONFIGURATION "Sauvegarde de la config."
 #define D_RESTORE_CONFIGURATION "Restauration de la config."
@@ -234,8 +254,8 @@
 #define D_MODULE_PARAMETERS "Paramètres module"
 #define D_MODULE_TYPE "Type de module"
 #define D_GPIO "GPIO"
-#define D_SERIAL_IN "Serial In"
-#define D_SERIAL_OUT "Serial Out"
+#define D_SERIAL_IN "Entrée série"
+#define D_SERIAL_OUT "Sortie série"
 
 #define D_WIFI_PARAMETERS "Paramètres Wifi"
 #define D_SCAN_FOR_WIFI_NETWORKS "Scan des réseaux wifi"
@@ -314,13 +334,17 @@
 #define D_UPLOAD_ERR_7 "Téléchargement annulé"
 #define D_UPLOAD_ERR_8 "Fichier invalide"
 #define D_UPLOAD_ERR_9 "Fichier trop grand"
+#define D_UPLOAD_ERR_10 "Erreur d'initialisation du chip RF"
+#define D_UPLOAD_ERR_11 "Erreur d'effacement du chip RF"
+#define D_UPLOAD_ERR_12 "Erreur d'accès en écriture au chip RF"
+#define D_UPLOAD_ERR_13 "Erreur de décodage du firmware RF"
 #define D_UPLOAD_ERROR_CODE "Code d'erreur téléchargement"
 
 #define D_ENTER_COMMAND "Saisir une commande"
 #define D_ENABLE_WEBLOG_FOR_RESPONSE "Activer Weblog 2 si une réponse est attendue"
 #define D_NEED_USER_AND_PASSWORD "Nécessite utilisateur=<username>&password=<password>"
 
-// xdrv_00_mqtt.ino
+// xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Vérification d'empreinte TLS ..."
 #define D_TLS_CONNECT_FAILED_TO "Échec de connexion TLS à"
 #define D_RETRY_IN "Nouvelle tentative dans"
@@ -328,7 +352,7 @@
 #define D_INSECURE "Connexion non sécurisée car empreinte non vérifiée"
 #define D_CONNECT_FAILED_TO "Échec de connexion à"
 
-// xdrv_wemohue.ino
+// xplg_wemohue.ino
 #define D_MULTICAST_DISABLED "Multicast désactivé"
 #define D_MULTICAST_REJOINED "Multicast (re)joint"
 #define D_MULTICAST_JOIN_FAILED "Multicast échec abonnement"
@@ -348,7 +372,7 @@
 #define D_HUE_POST_ARGS "Hue POST args"
 #define D_3_RESPONSE_PACKETS_SENT "3 paquets de réponse envoyés"
 
-// xdrv_05_domoticz.ino
+// xdrv_07_domoticz.ino
 #define D_DOMOTICZ_PARAMETERS "Paramètres Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
@@ -368,6 +392,7 @@
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Configuration des Timers"
 #define D_TIMER_PARAMETERS "Paramètres Timer"
+#define D_TIMER_ENABLE "Activer les Timers"
 #define D_TIMER_ARM "Armer"
 #define D_TIMER_TIME "Temps"
 #define D_TIMER_DAYS "Jours"
@@ -394,6 +419,9 @@
 #define D_KNX_COMMAND_OTHER "Autre"
 #define D_SENT_TO "envoyé à"
 #define D_KNX_WARNING "L'Adresse de Groupe ( 0 / 0 / 0 ) est réservée et ne peut être utilisée."
+#define D_KNX_ENHANCEMENT "Amélioration de la communication"
+#define D_KNX_TX_SLOT "KNX TX"
+#define D_KNX_RX_SLOT "KNX RX"
 
 // xsns_03_energy.ino
 #define D_ENERGY_TODAY "Énergie aujourd'hui"
@@ -421,6 +449,37 @@
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
 #define D_PARTICALS_BEYOND "Particules"
 
+// xsns_32_mpu6050.ino
+#define D_AX_AXIS "Accél. Axe-X"
+#define D_AY_AXIS "Accél. Axe-Y"
+#define D_AZ_AXIS "Accél. Axe-Z"
+#define D_GX_AXIS "Gyro Axe-X"
+#define D_GY_AXIS "Gyro Axe-Y"
+#define D_GZ_AXIS "Gyro Axe-Z"
+
+// xsns_34_hx711.ino
+#define D_HX_CAL_REMOVE "Retirer la charge"
+#define D_HX_CAL_REFERENCE "Charger l'étalon de poids"
+#define D_HX_CAL_DONE "Étalonné"
+#define D_HX_CAL_FAIL "L'étalonnage a échoué"
+#define D_RESET_HX711 "Réinitialiser le capteur"
+#define D_CONFIGURE_HX711 "Configurer le capteur"
+#define D_HX711_PARAMETERS "Paramètres capteur"
+#define D_ITEM_WEIGHT "Poids de l'objet"
+#define D_REFERENCE_WEIGHT "Poids de référence"
+#define D_CALIBRATE "Étalonner"
+#define D_CALIBRATION "Étalonnage"
+
+//xsns_35_tx20.ino
+#define D_TX20_WIND_DIRECTION "Direction du vent"
+#define D_TX20_WIND_SPEED "Vitesse du vent"
+#define D_TX20_WIND_SPEED_AVG "Vitesse Moy."
+#define D_TX20_WIND_SPEED_MAX "Vitesse Max"
+#define D_TX20_NORTH "N"
+#define D_TX20_EAST "E"
+#define D_TX20_SOUTH "S"
+#define D_TX20_WEST "O"
+
 // sonoff_template.h
 #define D_SENSOR_NONE     "Aucun"
 #define D_SENSOR_DHT11    "DHT11"
@@ -430,6 +489,7 @@
 #define D_SENSOR_I2C_SCL  "I2C SCL"
 #define D_SENSOR_I2C_SDA  "I2C SDA"
 #define D_SENSOR_WS2812   "WS2812"
+#define D_SENSOR_DFR562   "MP3 Player"
 #define D_SENSOR_IRSEND   "ÉmetIR"
 #define D_SENSOR_SWITCH   "Inter."     // Suffix "1"
 #define D_SENSOR_BUTTON   "Bouton"     // Suffix "1"
@@ -440,24 +500,55 @@
 #define D_SENSOR_IRRECV   "RécptIR"
 #define D_SENSOR_MHZ_RX   "MHZ Rx"
 #define D_SENSOR_MHZ_TX   "MHZ Tx"
-#define D_SENSOR_PZEM_RX  "PZEM Rx"
-#define D_SENSOR_PZEM_TX  "PZEM Tx"
+#define D_SENSOR_PZEM004_RX  "PZEM004 Rx"
+#define D_SENSOR_PZEM016_RX  "PZEM016 Rx"
+#define D_SENSOR_PZEM017_RX  "PZEM017 Rx"
+#define D_SENSOR_PZEM0XX_TX  "PZEM0XX Tx"
 #define D_SENSOR_SAIR_RX  "SAir Rx"
 #define D_SENSOR_SAIR_TX  "SAir Tx"
 #define D_SENSOR_SPI_CS   "SPI CS"
 #define D_SENSOR_SPI_DC   "SPI DC"
 #define D_SENSOR_BACKLIGHT "RétroÉcl"
 #define D_SENSOR_PMS5003  "PMS5003"
-#define D_SENSOR_SDS0X1   "SDS0X1"
+#define D_SENSOR_SDS0X1_RX "SDS0X1 Rx"
+#define D_SENSOR_SDS0X1_TX "SDS0X1 Tx"
 #define D_SENSOR_SBR_RX   "SerBr Rx"
 #define D_SENSOR_SBR_TX   "SerBr Tx"
 #define D_SENSOR_SR04_TRIG "SR04 Tri"
 #define D_SENSOR_SR04_ECHO "SR04 Ech"
+#define D_SENSOR_SDM120_TX "SDM120/220 Tx"
+#define D_SENSOR_SDM120_RX "SDM120/220 Rx"
+#define D_SENSOR_SDM630_TX "SDM630 Tx"
+#define D_SENSOR_SDM630_RX "SDM630 Rx"
+#define D_SENSOR_TM1638_CLK "TM16 CLK"
+#define D_SENSOR_TM1638_DIO "TM16 DIO"
+#define D_SENSOR_TM1638_STB "TM16 STB"
+#define D_SENSOR_HX711_SCK "HX711 SCK"
+#define D_SENSOR_HX711_DAT "HX711 DAT"
+#define D_SENSOR_TX20_TX "TX20"
+#define D_SENSOR_RFSEND "RFSend"
+#define D_SENSOR_RFRECV "RFrecv"
+#define D_SENSOR_TUYA_TX "Tuya Tx"
+#define D_SENSOR_TUYA_RX "Tuya Rx"
+#define D_SENSOR_MGC3130_XFER "MGC3130 Xfer"
+#define D_SENSOR_MGC3130_RESET "MGC3130 Reset"
+#define D_SENSOR_SSPI_MISO "SSPI MISO"
+#define D_SENSOR_SSPI_MOSI "SSPI MOSI"
+#define D_SENSOR_SSPI_SCLK "SSPI SCLK"
+#define D_SENSOR_SSPI_CS   "SSPI CS"
+#define D_SENSOR_SSPI_DC   "SSPI DC"
+#define D_SENSOR_RF_SENSOR "RF Sensor"
+#define D_SENSOR_AZ_RX   "AZ Rx"
+#define D_SENSOR_AZ_TX   "AZ Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
+#define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
+#define D_UNIT_INCREMENTS "inc"
+#define D_UNIT_KILOGRAM "kg"
+#define D_UNIT_KILOMETER_PER_HOUR "km/h"
 #define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
@@ -465,6 +556,8 @@
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
+#define D_UNIT_MILLIMETER "mm"
+#define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
 #define D_UNIT_MINUTE "Min"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
@@ -473,9 +566,12 @@
 #define D_UNIT_PRESSURE "hPa"
 #define D_UNIT_SECOND "sec"
 #define D_UNIT_SECTORS "secteurs"
+#define D_UNIT_VA "VA"
+#define D_UNIT_VAR "VAr"
 #define D_UNIT_VOLT "V"
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
+#define D_UNIT_WATT_METER_QUADRAT "W/m²"
 
 // Log message prefix
 #define D_LOG_APPLICATION "APP: "  // Application
@@ -501,5 +597,15 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+
+//SDM220
+#define D_PHASE_ANGLE     "Angle de phase"
+#define D_IMPORT_ACTIVE   "Puiss act conso"
+#define D_EXPORT_ACTIVE   "Puiss act fournie"
+#define D_IMPORT_REACTIVE "Puiss réa conso"
+#define D_EXPORT_REACTIVE "Puiss réa fournie"
+#define D_TOTAL_REACTIVE  "Puiss réa totale"
+#define D_UNIT_KWARH      "kVArh"
+#define D_UNIT_ANGLE      "°"
 
 #endif  // _LANGUAGE_FR_FR_H_

@@ -67,39 +67,31 @@
 
 #define RTC_MEM_VALID 0xA55A
 
-uint32_t rtc_settings_hash = 0;
+uint32_t rtc_settings_crc = 0;
 
-uint32_t GetRtcSettingsHash()
+uint32_t GetRtcSettingsCrc(void)
 {
-  uint32_t hash = 0;
+  uint32_t crc = 0;
   uint8_t *bytes = (uint8_t*)&RtcSettings;
 
   for (uint16_t i = 0; i < sizeof(RTCMEM); i++) {
-    hash += bytes[i]*(i+1);
+    crc += bytes[i]*(i+1);
   }
-  return hash;
+  return crc;
 }
 
-void RtcSettingsSave()
+void RtcSettingsSave(void)
 {
-  if (GetRtcSettingsHash() != rtc_settings_hash) {
+  if (GetRtcSettingsCrc() != rtc_settings_crc) {
     RtcSettings.valid = RTC_MEM_VALID;
     ESP.rtcUserMemoryWrite(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
-    rtc_settings_hash = GetRtcSettingsHash();
-#ifdef DEBUG_THEO
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Save"));
-    RtcSettingsDump();
-#endif  // DEBUG_THEO
+    rtc_settings_crc = GetRtcSettingsCrc();
   }
 }
 
-void RtcSettingsLoad()
+void RtcSettingsLoad(void)
 {
-  ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));
-#ifdef DEBUG_THEO
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Dump: Load"));
-  RtcSettingsDump();
-#endif  // DEBUG_THEO
+  ESP.rtcUserMemoryRead(100, (uint32_t*)&RtcSettings, sizeof(RTCMEM));  // 0x290
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RTCMEM));
     RtcSettings.valid = RTC_MEM_VALID;
@@ -111,12 +103,53 @@ void RtcSettingsLoad()
     RtcSettings.power = Settings.power;
     RtcSettingsSave();
   }
-  rtc_settings_hash = GetRtcSettingsHash();
+  rtc_settings_crc = GetRtcSettingsCrc();
 }
 
-boolean RtcSettingsValid()
+boolean RtcSettingsValid(void)
 {
   return (RTC_MEM_VALID == RtcSettings.valid);
+}
+
+/********************************************************************************************/
+
+uint32_t rtc_reboot_crc = 0;
+
+uint32_t GetRtcRebootCrc(void)
+{
+  uint32_t crc = 0;
+  uint8_t *bytes = (uint8_t*)&RtcReboot;
+
+  for (uint16_t i = 0; i < sizeof(RTCRBT); i++) {
+    crc += bytes[i]*(i+1);
+  }
+  return crc;
+}
+
+void RtcRebootSave(void)
+{
+  if (GetRtcRebootCrc() != rtc_reboot_crc) {
+    RtcReboot.valid = RTC_MEM_VALID;
+    ESP.rtcUserMemoryWrite(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));
+    rtc_reboot_crc = GetRtcRebootCrc();
+  }
+}
+
+void RtcRebootLoad(void)
+{
+  ESP.rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));  // 0x280
+  if (RtcReboot.valid != RTC_MEM_VALID) {
+    memset(&RtcReboot, 0, sizeof(RTCRBT));
+    RtcReboot.valid = RTC_MEM_VALID;
+//    RtcReboot.fast_reboot_count = 0;  // Explicit by memset
+    RtcRebootSave();
+  }
+  rtc_reboot_crc = GetRtcRebootCrc();
+}
+
+boolean RtcRebootValid(void)
+{
+  return (RTC_MEM_VALID == RtcReboot.valid);
 }
 
 /*********************************************************************************************\
@@ -133,22 +166,20 @@ extern "C" uint32_t _SPIFFS_end;
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
 #define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
 
-// Version 3.x config
-#define SETTINGS_LOCATION_3 SPIFFS_END - 4
-
 // Version 4.2 config = eeprom area
 #define SETTINGS_LOCATION   SPIFFS_END  // No need for SPIFFS as it uses EEPROM area
 // Version 5.2 allow for more flash space
 #define CFG_ROTATES         8           // Number of flash sectors used (handles uploads)
 
-uint32_t settings_hash = 0;
+uint16_t settings_crc = 0;
 uint32_t settings_location = SETTINGS_LOCATION;
+uint8_t *settings_buffer = NULL;
 
 /********************************************************************************************/
 /*
  * Based on cores/esp8266/Updater.cpp
  */
-void SetFlashModeDout()
+void SetFlashModeDout(void)
 {
   uint8_t *_buffer;
   uint32_t address;
@@ -167,18 +198,36 @@ void SetFlashModeDout()
   delete[] _buffer;
 }
 
-uint32_t GetSettingsHash()
+void SettingsBufferFree(void)
 {
-  uint32_t hash = 0;
+  if (settings_buffer != NULL) {
+    free(settings_buffer);
+    settings_buffer = NULL;
+  }
+}
+
+bool SettingsBufferAlloc(void)
+{
+  SettingsBufferFree();
+  if (!(settings_buffer = (uint8_t *)malloc(sizeof(Settings)))) {
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_UPLOAD_ERR_2));  // Not enough (memory) space
+    return false;
+  }
+  return true;
+}
+
+uint16_t GetSettingsCrc(void)
+{
+  uint16_t crc = 0;
   uint8_t *bytes = (uint8_t*)&Settings;
 
   for (uint16_t i = 0; i < sizeof(SYSCFG); i++) {
-    hash += bytes[i]*(i+1);
+    if ((i < 14) || (i > 15)) { crc += bytes[i]*(i+1); }  // Skip crc
   }
-  return hash;
+  return crc;
 }
 
-void SettingsSaveAll()
+void SettingsSaveAll(void)
 {
   if (Settings.flag.save_state) {
     Settings.power = power;
@@ -193,7 +242,7 @@ void SettingsSaveAll()
  * Config Save - Save parameters to Flash ONLY if any parameter has changed
 \*********************************************************************************************/
 
-uint32_t GetSettingsAddress()
+uint32_t GetSettingsAddress(void)
 {
   return settings_location * SPI_FLASH_SEC_SIZE;
 }
@@ -209,7 +258,7 @@ void SettingsSave(byte rotate)
  * stop_flash_rotate 1 = Allow only eeprom flash slot use (SetOption12 1)
  */
 #ifndef BE_MINIMAL
-  if ((GetSettingsHash() != settings_hash) || rotate) {
+  if ((GetSettingsCrc() != settings_crc) || rotate) {
     if (1 == rotate) {   // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
       stop_flash_rotate = 1;
     }
@@ -225,6 +274,8 @@ void SettingsSave(byte rotate)
       }
     }
     Settings.save_flag++;
+    Settings.cfg_size = sizeof(SYSCFG);
+    Settings.cfg_crc = GetSettingsCrc();
     ESP.flashEraseSector(settings_location);
     ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     if (!stop_flash_rotate && rotate) {
@@ -236,47 +287,42 @@ void SettingsSave(byte rotate)
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"),
        settings_location, Settings.save_flag, sizeof(SYSCFG));
     AddLog(LOG_LEVEL_DEBUG);
-    settings_hash = GetSettingsHash();
+
+    settings_crc = Settings.cfg_crc;
   }
 #endif  // BE_MINIMAL
   RtcSettingsSave();
 }
 
-void SettingsLoad()
+void SettingsLoad(void)
 {
 /* Load configuration from eeprom or one of 7 slots below if first load does not stop_flash_rotate
  */
   struct SYSCFGH {
-    unsigned long cfg_holder;
-    unsigned long save_flag;
+    uint16_t cfg_holder;                     // 000
+    uint16_t cfg_size;                       // 002
+    unsigned long save_flag;                 // 004
   } _SettingsH;
 
+  bool bad_crc = false;
   settings_location = SETTINGS_LOCATION +1;
   for (byte i = 0; i < CFG_ROTATES; i++) {
     settings_location--;
     ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     ESP.flashRead((settings_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
-
-//  snprintf_P(log_data, sizeof(log_data), PSTR("Cnfg: Check at %X with count %d and holder %X"), settings_location -1, _SettingsH.save_flag, _SettingsH.cfg_holder);
-//  AddLog(LOG_LEVEL_DEBUG);
-
-    if (((Settings.version > 0x05000200) && Settings.flag.stop_flash_rotate) || (Settings.cfg_holder != _SettingsH.cfg_holder) || (Settings.save_flag > _SettingsH.save_flag)) {
+    if (Settings.version > 0x06000000) { bad_crc = (Settings.cfg_crc != GetSettingsCrc()); }
+    if (Settings.flag.stop_flash_rotate || bad_crc || (Settings.cfg_holder != _SettingsH.cfg_holder) || (Settings.save_flag > _SettingsH.save_flag)) {
       break;
     }
     delay(1);
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"),
-    settings_location, Settings.save_flag);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"), settings_location, Settings.save_flag);
   AddLog(LOG_LEVEL_DEBUG);
-  if (Settings.cfg_holder != CFG_HOLDER) {
-    // Auto upgrade
-    ESP.flashRead((SETTINGS_LOCATION_3) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    ESP.flashRead((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
-    if (Settings.save_flag < _SettingsH.save_flag) ESP.flashRead((SETTINGS_LOCATION_3 + 1) * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    if ((Settings.cfg_holder != CFG_HOLDER) || (Settings.version >= 0x04020000)) SettingsDefault();
-  }
 
-  settings_hash = GetSettingsHash();
+#ifndef BE_MINIMAL
+  if (bad_crc || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) { SettingsDefault(); }
+  settings_crc = GetSettingsCrc();
+#endif  // BE_MINIMAL
 
   RtcSettingsLoad();
 }
@@ -288,6 +334,7 @@ void SettingsErase(uint8_t type)
     1 = Erase SDK parameter area at end of linker memory model (0x0FDxxx - 0x0FFFFF) solving possible wifi errors
   */
 
+#ifndef BE_MINIMAL
   bool result;
 
   uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
@@ -316,6 +363,7 @@ void SettingsErase(uint8_t type)
     }
     OsWatchLoop();
   }
+#endif  // BE_MINIMAL
 }
 
 // Copied from 2.4.0 as 2.3.0 is incomplete
@@ -331,7 +379,7 @@ bool SettingsEraseConfig(void) {
   return true;
 }
 
-void SettingsSdkErase()
+void SettingsSdkErase(void)
 {
   WiFi.disconnect(true);    // Delete SDK wifi config
   SettingsErase(1);
@@ -341,7 +389,7 @@ void SettingsSdkErase()
 
 /********************************************************************************************/
 
-void SettingsDefault()
+void SettingsDefault(void)
 {
   AddLog_P(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_USE_DEFAULTS));
   SettingsDefaultSet1();
@@ -349,54 +397,118 @@ void SettingsDefault()
   SettingsSave(2);
 }
 
-void SettingsDefaultSet1()
+void SettingsDefaultSet1(void)
 {
   memset(&Settings, 0x00, sizeof(SYSCFG));
 
-  Settings.cfg_holder = CFG_HOLDER;
+  Settings.cfg_holder = (uint16_t)CFG_HOLDER;
+  Settings.cfg_size = sizeof(SYSCFG);
 //  Settings.save_flag = 0;
   Settings.version = VERSION;
 //  Settings.bootcount = 0;
+//  Settings.cfg_crc = 0;
 }
 
-void SettingsDefaultSet2()
+void SettingsDefaultSet2(void)
 {
   memset((char*)&Settings +16, 0x00, sizeof(SYSCFG) -16);
 
-  Settings.flag.save_state = SAVE_STATE;
-  //Settings.flag.button_restrict = 0;
-  //Settings.flag.value_units = 0;
-  Settings.flag.mqtt_enabled = MQTT_USE;
-  //Settings.flag.mqtt_response = 0;
-  Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
-  Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
-  Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-  Settings.flag.pwm_control = 1;
-  Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
-
-  Settings.flag2.emulation = EMULATION;
-
+//  Settings.flag.value_units = 0;
+//  Settings.flag.stop_flash_rotate = 0;
   Settings.save_data = SAVE_DATA;
-  Settings.timezone = APP_TIMEZONE;
+  Settings.sleep = APP_SLEEP;
+  if (Settings.sleep < 50) {
+    Settings.sleep = 50;                // Default to 50 for sleep, for now
+  }
+
+  // Module
+//  Settings.flag.interlock = 0;
+  Settings.module = MODULE;
+//  for (byte i = 0; i < MAX_GPIO_PIN; i++) { Settings.my_gp.io[i] = 0; }
+  strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
+  strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
+  strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
+  strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));
   strlcpy(Settings.ota_url, OTA_URL, sizeof(Settings.ota_url));
+
+  // Power
+  Settings.flag.save_state = SAVE_STATE;
+  Settings.power = APP_POWER;
+  Settings.poweronstate = APP_POWERON_STATE;
+  Settings.blinktime = APP_BLINKTIME;
+  Settings.blinkcount = APP_BLINKCOUNT;
+  Settings.ledstate = APP_LEDSTATE;
+  Settings.pulse_timer[0] = APP_PULSETIME;
+//  for (byte i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
+
+  // Serial
   Settings.baudrate = APP_BAUDRATE / 1200;
   Settings.sbaudrate = SOFT_BAUDRATE / 1200;
   Settings.serial_delimiter = 0xff;
-
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
+
+  // Wifi
+  ParseIp(&Settings.ip_address[0], WIFI_IP_ADDRESS);
+  ParseIp(&Settings.ip_address[1], WIFI_GATEWAY);
+  ParseIp(&Settings.ip_address[2], WIFI_SUBNETMASK);
+  ParseIp(&Settings.ip_address[3], WIFI_DNS);
+  Settings.sta_config = WIFI_CONFIG_TOOL;
 //  Settings.sta_active = 0;
   strlcpy(Settings.sta_ssid[0], STA_SSID1, sizeof(Settings.sta_ssid[0]));
   strlcpy(Settings.sta_pwd[0], STA_PASS1, sizeof(Settings.sta_pwd[0]));
   strlcpy(Settings.sta_ssid[1], STA_SSID2, sizeof(Settings.sta_ssid[1]));
   strlcpy(Settings.sta_pwd[1], STA_PASS2, sizeof(Settings.sta_pwd[1]));
   strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
-  Settings.sta_config = WIFI_CONFIG_TOOL;
+
+  // Syslog
   strlcpy(Settings.syslog_host, SYS_LOG_HOST, sizeof(Settings.syslog_host));
   Settings.syslog_port = SYS_LOG_PORT;
   Settings.syslog_level = SYS_LOG_LEVEL;
+
+  // Webserver
+  Settings.flag2.emulation = EMULATION;
   Settings.webserver = WEB_SERVER;
   Settings.weblog_level = WEB_LOG_LEVEL;
+  strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
 
+  // Button
+//  Settings.flag.button_restrict = 0;
+//  Settings.flag.button_swap = 0;
+//  Settings.flag.button_single = 0;
+  Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
+
+  // Switch
+  for (byte i = 0; i < MAX_SWITCHES; i++) { Settings.switchmode[i] = SWITCH_MODE; }
+
+  // MQTT
+  Settings.flag.mqtt_enabled = MQTT_USE;
+//  Settings.flag.mqtt_response = 0;
+  Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
+  Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
+  Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
+  Settings.flag3.button_switch_force_local = MQTT_BUTTON_SWITCH_FORCE_LOCAL;
+//  Settings.flag.mqtt_sensor_retain = 0;
+//  Settings.flag.mqtt_offline = 0;
+//  Settings.flag.mqtt_serial = 0;
+//  Settings.flag.device_index_enable = 0;
+  strlcpy(Settings.mqtt_host, MQTT_HOST, sizeof(Settings.mqtt_host));
+  Settings.mqtt_port = MQTT_PORT;
+  strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));
+  strlcpy(Settings.mqtt_user, MQTT_USER, sizeof(Settings.mqtt_user));
+  strlcpy(Settings.mqtt_pwd, MQTT_PASS, sizeof(Settings.mqtt_pwd));
+  strlcpy(Settings.mqtt_topic, MQTT_TOPIC, sizeof(Settings.mqtt_topic));
+  strlcpy(Settings.button_topic, MQTT_BUTTON_TOPIC, sizeof(Settings.button_topic));
+  strlcpy(Settings.switch_topic, MQTT_SWITCH_TOPIC, sizeof(Settings.switch_topic));
+  strlcpy(Settings.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(Settings.mqtt_grptopic));
+  strlcpy(Settings.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(Settings.mqtt_fulltopic));
+  Settings.mqtt_retry = MQTT_RETRY_SECS;
+  strlcpy(Settings.mqtt_prefix[0], SUB_PREFIX, sizeof(Settings.mqtt_prefix[0]));
+  strlcpy(Settings.mqtt_prefix[1], PUB_PREFIX, sizeof(Settings.mqtt_prefix[1]));
+  strlcpy(Settings.mqtt_prefix[2], PUB_PREFIX2, sizeof(Settings.mqtt_prefix[2]));
+  strlcpy(Settings.state_text[0], MQTT_STATUS_OFF, sizeof(Settings.state_text[0]));
+  strlcpy(Settings.state_text[1], MQTT_STATUS_ON, sizeof(Settings.state_text[1]));
+  strlcpy(Settings.state_text[2], MQTT_CMND_TOGGLE, sizeof(Settings.state_text[2]));
+  strlcpy(Settings.state_text[3], MQTT_CMND_HOLD, sizeof(Settings.state_text[3]));
   char fingerprint[60];
   strlcpy(fingerprint, MQTT_FINGERPRINT1, sizeof(fingerprint));
   char *p = fingerprint;
@@ -408,32 +520,14 @@ void SettingsDefaultSet2()
   for (byte i = 0; i < 20; i++) {
     Settings.mqtt_fingerprint[1][i] = strtol(p, &p, 16);
   }
-
-  strlcpy(Settings.mqtt_host, MQTT_HOST, sizeof(Settings.mqtt_host));
-  Settings.mqtt_port = MQTT_PORT;
-  strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));
-  strlcpy(Settings.mqtt_user, MQTT_USER, sizeof(Settings.mqtt_user));
-  strlcpy(Settings.mqtt_pwd, MQTT_PASS, sizeof(Settings.mqtt_pwd));
-  strlcpy(Settings.mqtt_topic, MQTT_TOPIC, sizeof(Settings.mqtt_topic));
-  strlcpy(Settings.button_topic, "0", sizeof(Settings.button_topic));
-  strlcpy(Settings.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(Settings.mqtt_grptopic));
   Settings.tele_period = TELE_PERIOD;
 
-  Settings.power = APP_POWER;
-  Settings.poweronstate = APP_POWERON_STATE;
-  Settings.ledstate = APP_LEDSTATE;
-  Settings.blinktime = APP_BLINKTIME;
-  Settings.blinkcount = APP_BLINKCOUNT;
-  Settings.sleep = APP_SLEEP;
-
-  Settings.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
-  for (byte i = 0; i < MAX_SWITCHES; i++) {
-    Settings.switchmode[i] = SWITCH_MODE;
-//    Settings.domoticz_relay_idx[i] = 0;
-//    Settings.domoticz_key_idx[i] = 0;
-//    Settings.domoticz_switch_idx[i] = 0;
-  }
-
+  // Energy
+  Settings.flag2.current_resolution = 3;
+//  Settings.flag2.voltage_resolution = 0;
+//  Settings.flag2.wattage_resolution = 0;
+  Settings.flag2.energy_resolution = ENERGY_RESOLUTION;
+  Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
   Settings.energy_power_delta = DEFAULT_POWER_DELTA;
   Settings.energy_power_calibration = HLW_PREF_PULSE;
   Settings.energy_voltage_calibration = HLW_UREF_PULSE;
@@ -455,120 +549,79 @@ void SettingsDefaultSet2()
   Settings.energy_max_power_safe_limit_window = SAFE_POWER_WINDOW;
 //  Settings.energy_max_energy = 0;                                 // MaxEnergy
 //  Settings.energy_max_energy_start = 0;                           // MaxEnergyStart
-
-  SettingsDefaultSet_3_2_4();
-
-  strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
-  strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
-  strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
-  strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));
-
-  SettingsDefaultSet_3_9_3();
-
-  strlcpy(Settings.switch_topic, "0", sizeof(Settings.switch_topic));
-
-  strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
-
-  SettingsDefaultSet_4_0_4();
-  Settings.pulse_timer[0] = APP_PULSETIME;
-
-  // 4.0.7
-//  for (byte i = 0; i < MAX_PWMS; i++) Settings.pwm_value[i] = 0;
-
-  // 4.0.9
-  SettingsDefaultSet_4_0_9();
-
-  // 4.1.1 + 5.1.6
-  SettingsDefaultSet_4_1_1();
-
-  // 5.0.2
-  SettingsDefaultSet_5_0_2();
-
-  // 5.0.4
 //  Settings.energy_kWhtotal = 0;
   RtcSettings.energy_kWhtotal = 0;
 
-  // 5.0.5
-  strlcpy(Settings.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(Settings.mqtt_fulltopic));
-
-  // 5.0.6
-  Settings.mqtt_retry = MQTT_RETRY_SECS;
-
-  // 5.1.7
-  Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
-
-  // 5.2.0
-  Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
-
-  // 5.4.1
+  // RF Bridge
+//  for (byte i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
   memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
 
-  // 5.8.0
-  Settings.light_pixels = WS2812_LEDS;
-//  Settings.light_rotation = 0;
+  // Domoticz
+  Settings.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
+//  for (byte i = 0; i < MAX_DOMOTICZ_IDX; i++) {
+//    Settings.domoticz_relay_idx[i] = 0;
+//    Settings.domoticz_key_idx[i] = 0;
+//    Settings.domoticz_switch_idx[i] = 0;
+//  }
+//  for (byte i = 0; i < MAX_DOMOTICZ_SNS_IDX; i++) {
+//    Settings.domoticz_sensor_idx[i] = 0;
+//  }
 
-  // 5.8.1
+  // Sensor
+  Settings.flag.temperature_conversion = TEMP_CONVERSION;
+  Settings.flag.pressure_conversion = PRESSURE_CONVERSION;
+  Settings.flag2.pressure_resolution = PRESSURE_RESOLUTION;
+  Settings.flag2.humidity_resolution = HUMIDITY_RESOLUTION;
+  Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
 //  Settings.altitude = 0;
+
+  // Rules
+//  Settings.rule_enabled = 0;
+//  Settings.rule_once = 0;
+//  for (byte i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
+  Settings.flag2.calc_resolution = CALC_RESOLUTION;
+
+  // Home Assistant
+  Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
+
+  // Knx
+//  Settings.flag.knx_enabled = 0;
+//  Settings.flag.knx_enable_enhancement = 0;
+
+  // Light
+  Settings.flag.pwm_control = 1;
+  //Settings.flag.ws_clock_reverse = 0;
+  //Settings.flag.light_signal = 0;
+  //Settings.flag.not_power_linked = 0;
+  //Settings.flag.decimal_text = 0;
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
-  SettingsDefaultSet_5_8_1();
-
-  // 5.9.2
-  Settings.flag2.current_resolution = 3;
-
-  // 5.10.1
-  SettingsDefaultSet_5_10_1();
-
-  Settings.latitude = (int)((double)LATITUDE * 1000000);
-  Settings.longitude = (int)((double)LONGITUDE * 1000000);
-}
-
-/********************************************************************************************/
-
-void SettingsDefaultSet_3_2_4()
-{
-  Settings.ws_red = 255;
-  Settings.ws_green = 0;
-  Settings.ws_blue = 0;
-  Settings.ws_ledtable = 0;
-  Settings.ws_dimmer = 8;
-  Settings.ws_fade = 0;
-  Settings.ws_speed = 1;
-  Settings.ws_scheme = 0;
-  Settings.ex_ws_width = 1;
-  Settings.ws_wakeup = 0;
-}
-
-void SettingsDefaultSet_3_9_3()
-{
-  for (byte i = 0; i < MAX_DOMOTICZ_IDX; i++) {
-    Settings.domoticz_switch_idx[i] = 0;
-  }
-  for (byte i = 0; i < 12; i++) {
-    Settings.domoticz_sensor_idx[i] = 0;
-  }
-
-  Settings.module = MODULE;
-  for (byte i = 0; i < MAX_GPIO_PIN; i++){
-    Settings.my_gp.io[i] = 0;
-  }
-
-  Settings.light_pixels = WS2812_LEDS;
-  Settings.light_rotation = 0;
   for (byte i = 0; i < MAX_PWMS; i++) {
     Settings.light_color[i] = 255;
+//    Settings.pwm_value[i] = 0;
   }
-  Settings.light_correction = 0;
+//  Settings.light_correction = 0;
   Settings.light_dimmer = 10;
-  Settings.light_fade = 0;
+//  Settings.light_fade = 0;
   Settings.light_speed = 1;
-  Settings.light_scheme = 0;
+//  Settings.light_scheme = 0;
   Settings.light_width = 1;
-  Settings.light_wakeup = 0;
-}
+//  Settings.light_wakeup = 0;
+  Settings.light_pixels = WS2812_LEDS;
+//  Settings.light_rotation = 0;
+  SettingsDefaultSet_5_8_1();    // Clock color
 
-void SettingsDefaultSet_4_0_4()
-{
+  // Display
+  SettingsDefaultSet_5_10_1();   // Display settings
+
+  // Time
+  if (((APP_TIMEZONE > -14) && (APP_TIMEZONE < 15)) || (99 == APP_TIMEZONE)) {
+    Settings.timezone = APP_TIMEZONE;
+    Settings.timezone_minutes = 0;
+  } else {
+    Settings.timezone = APP_TIMEZONE / 60;
+    Settings.timezone_minutes = abs(APP_TIMEZONE % 60);
+  }
   strlcpy(Settings.ntp_server[0], NTP_SERVER1, sizeof(Settings.ntp_server[0]));
   strlcpy(Settings.ntp_server[1], NTP_SERVER2, sizeof(Settings.ntp_server[1]));
   strlcpy(Settings.ntp_server[2], NTP_SERVER3, sizeof(Settings.ntp_server[2]));
@@ -579,41 +632,23 @@ void SettingsDefaultSet_4_0_4()
       }
     }
   }
-  Settings.pulse_timer[0] = APP_PULSETIME;
-  for (byte i = 1; i < MAX_PULSETIMERS; i++) {
-    Settings.pulse_timer[i] = 0;
+  Settings.latitude = (int)((double)LATITUDE * 1000000);
+  Settings.longitude = (int)((double)LONGITUDE * 1000000);
+  SettingsDefaultSet_5_13_1c();  // Time STD/DST settings
+
+  Settings.button_debounce = KEY_DEBOUNCE_TIME;
+  Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
+
+  for (byte j = 0; j < 5; j++) {
+    Settings.rgbwwTable[j] = 255;
   }
+
+  memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
 }
 
-void SettingsDefaultSet_4_0_9()
-{
-  strlcpy(Settings.mqtt_prefix[0], SUB_PREFIX, sizeof(Settings.mqtt_prefix[0]));
-  strlcpy(Settings.mqtt_prefix[1], PUB_PREFIX, sizeof(Settings.mqtt_prefix[1]));
-  strlcpy(Settings.mqtt_prefix[2], PUB_PREFIX2, sizeof(Settings.mqtt_prefix[2]));
-  ParseIp(&Settings.ip_address[0], WIFI_IP_ADDRESS);
-  ParseIp(&Settings.ip_address[1], WIFI_GATEWAY);
-  ParseIp(&Settings.ip_address[2], WIFI_SUBNETMASK);
-  ParseIp(&Settings.ip_address[3], WIFI_DNS);
-}
+/********************************************************************************************/
 
-void SettingsDefaultSet_4_1_1()
-{
-  strlcpy(Settings.state_text[0], MQTT_STATUS_OFF, sizeof(Settings.state_text[0]));
-  strlcpy(Settings.state_text[1], MQTT_STATUS_ON, sizeof(Settings.state_text[1]));
-  strlcpy(Settings.state_text[2], MQTT_CMND_TOGGLE, sizeof(Settings.state_text[2]));
-  strlcpy(Settings.state_text[3], MQTT_CMND_HOLD, sizeof(Settings.state_text[3]));  // v5.1.6
-}
-
-void SettingsDefaultSet_5_0_2()
-{
-  Settings.flag.temperature_conversion = TEMP_CONVERSION;
-  Settings.flag2.temperature_resolution = TEMP_RESOLUTION;
-  Settings.flag2.humidity_resolution = HUMIDITY_RESOLUTION;
-  Settings.flag2.pressure_resolution = PRESSURE_RESOLUTION;
-  Settings.flag2.energy_resolution = ENERGY_RESOLUTION;
-}
-
-void SettingsDefaultSet_5_8_1()
+void SettingsDefaultSet_5_8_1(void)
 {
 //  Settings.flag.ws_clock_reverse = 0;
   Settings.ws_width[WS_SECOND] = 1;
@@ -630,7 +665,7 @@ void SettingsDefaultSet_5_8_1()
   Settings.ws_color[WS_HOUR][WS_BLUE] = 0;
 }
 
-void SettingsDefaultSet_5_10_1()
+void SettingsDefaultSet_5_10_1(void)
 {
   Settings.display_model = 0;
   Settings.display_mode = 1;
@@ -638,7 +673,10 @@ void SettingsDefaultSet_5_10_1()
   Settings.display_rows = 2;
   Settings.display_cols[0] = 16;
   Settings.display_cols[1] = 8;
-//#if defined(USE_I2C) && defined(USE_DISPLAY)
+  Settings.display_dimmer = 1;
+  Settings.display_size = 1;
+  Settings.display_font = 1;
+  Settings.display_rotate = 0;
   Settings.display_address[0] = MTX_ADDRESS1;
   Settings.display_address[1] = MTX_ADDRESS2;
   Settings.display_address[2] = MTX_ADDRESS3;
@@ -647,142 +685,60 @@ void SettingsDefaultSet_5_10_1()
   Settings.display_address[5] = MTX_ADDRESS6;
   Settings.display_address[6] = MTX_ADDRESS7;
   Settings.display_address[7] = MTX_ADDRESS8;
-//#endif  // USE_DISPLAY
-  Settings.display_dimmer = 1;
-  Settings.display_size = 1;
+}
+
+void SettingsResetStd(void)
+{
+  Settings.tflag[0].hemis = TIME_STD_HEMISPHERE;
+  Settings.tflag[0].week = TIME_STD_WEEK;
+  Settings.tflag[0].dow = TIME_STD_DAY;
+  Settings.tflag[0].month = TIME_STD_MONTH;
+  Settings.tflag[0].hour = TIME_STD_HOUR;
+  Settings.toffset[0] = TIME_STD_OFFSET;
+}
+
+void SettingsResetDst(void)
+{
+  Settings.tflag[1].hemis = TIME_DST_HEMISPHERE;
+  Settings.tflag[1].week = TIME_DST_WEEK;
+  Settings.tflag[1].dow = TIME_DST_DAY;
+  Settings.tflag[1].month = TIME_DST_MONTH;
+  Settings.tflag[1].hour = TIME_DST_HOUR;
+  Settings.toffset[1] = TIME_DST_OFFSET;
+}
+
+void SettingsDefaultSet_5_13_1c(void)
+{
+  SettingsResetStd();
+  SettingsResetDst();
 }
 
 /********************************************************************************************/
 
-void SettingsDelta()
+void SettingsDelta(void)
 {
   if (Settings.version != VERSION) {      // Fix version dependent changes
-    if (Settings.version < 0x03010200) {  // 3.1.2 - Add parameter
-      Settings.poweronstate = APP_POWERON_STATE;
-    }
-    if (Settings.version < 0x03010600) {  // 3.1.6 - Add parameter
-      Settings.blinktime = APP_BLINKTIME;
-      Settings.blinkcount = APP_BLINKCOUNT;
-    }
-    if (Settings.version < 0x03020400) {  // 3.2.4 - Add parameter
-      SettingsDefaultSet_3_2_4();
-    }
-    if (Settings.version < 0x03020500) {  // 3.2.5 - Add parameter
-      Format(Settings.friendlyname[0], Settings.mqtt_client, sizeof(Settings.friendlyname[0]));
-      strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
-      strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
-      strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));
-    }
-    if (Settings.version < 0x03020800) {  // 3.2.8 - Add parameter
-      strlcpy(Settings.switch_topic, Settings.button_topic, sizeof(Settings.switch_topic));
-    }
-    if (Settings.version < 0x03020C00) {  // 3.2.12 - Add parameter
-      Settings.sleep = APP_SLEEP;
-    }
-    if (Settings.version < 0x03090300) {  // 3.9.2d - Add parameter
-      SettingsDefaultSet_3_9_3();
-    }
-    if (Settings.version < 0x03091400) {
-      strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
-    }
-    if (Settings.version < 0x03091500) {
-      for (byte i = 0; i < MAX_SWITCHES; i++) {
-        Settings.switchmode[i] = SWITCH_MODE;
-      }
-    }
-    if (Settings.version < 0x04000400) {
-      SettingsDefaultSet_4_0_4();
-    }
-    if (Settings.version < 0x04000500) {
-      memmove(Settings.my_gp.io, Settings.my_gp.io +1, MAX_GPIO_PIN -1);  // move myio 1 byte to front
-      Settings.my_gp.io[MAX_GPIO_PIN -1] = 0;  // Clear ADC0
-    }
-    if (Settings.version < 0x04000700) {
-      for (byte i = 0; i < MAX_PWMS; i++) {
-        Settings.pwm_value[i] = 0;
-      }
-    }
-    if (Settings.version < 0x04000804) {
-      SettingsDefaultSet_4_0_9();
-    }
-    if (Settings.version < 0x04010100) {
-      SettingsDefaultSet_4_1_1();
-    }
-    if (Settings.version < 0x05000105) {
-      Settings.flag = { 0 };
-      Settings.flag.save_state = SAVE_STATE;
-//      Settings.flag.button_restrict = 0;
-//      Settings.flag.value_units = 0;
-      Settings.flag.mqtt_enabled = MQTT_USE;
-//      Settings.flag.mqtt_response = 0;
-//      Settings.flag.mqtt_power_retain = 0;
-//      Settings.flag.mqtt_button_retain = 0;
-      Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-      Settings.flag2.emulation = EMULATION;
 
-      SettingsDefaultSet_5_0_2();
-
-      Settings.save_data = SAVE_DATA;
-    }
-    if (Settings.version < 0x05000400) {
-      Settings.energy_kWhtotal = 0;
-      RtcSettings.energy_kWhtotal = 0;
-    }
-    if (Settings.version < 0x05000500) {
-      strlcpy(Settings.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(Settings.mqtt_fulltopic));
-    }
-    if (Settings.version < 0x05000600) {
-      Settings.mqtt_retry = MQTT_RETRY_SECS;
-    }
-    if (Settings.version < 0x05010100) {
-      Settings.pulse_counter_type = 0;
-      Settings.pulse_counter_debounce = 0;
-      for (byte i = 0; i < MAX_COUNTERS; i++) {
-        Settings.pulse_counter[i] = 0;
-        RtcSettings.pulse_counter[i] = 0;
-      }
-    }
-    if (Settings.version < 0x05010600) {
-      SettingsDefaultSet_4_1_1();
-    }
-    if (Settings.version < 0x05010700) {
-      Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
-    }
-    if (Settings.version < 0x05020000) {
-      Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
-    }
     if (Settings.version < 0x05050000) {
-      for (byte i = 0; i < 17; i++) {
-        Settings.rf_code[i][0] = 0;
-      }
+      for (byte i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
       memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
     }
     if (Settings.version < 0x05080000) {
-      uint8_t cfg_wsflg = 0;
-      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
-        if (GPIO_WS2812 == Settings.my_gp.io[i]) {
-          cfg_wsflg = 1;
-        }
-      }
-      if (!Settings.light_pixels && cfg_wsflg) {
-        Settings.light_pixels = WS2812_LEDS;
-        Settings.light_color[0] = Settings.ws_red;
-        Settings.light_color[1] = Settings.ws_green;
-        Settings.light_color[2] = Settings.ws_blue;
-        Settings.light_dimmer = Settings.ws_dimmer;
-        Settings.light_correction = Settings.ws_ledtable;
-        Settings.light_fade = Settings.ws_fade;
-        Settings.light_speed = Settings.ws_speed;
-        Settings.light_scheme = Settings.ws_scheme;
-        Settings.light_width = Settings.ex_ws_width;
-        Settings.light_wakeup = Settings.ws_wakeup;
-      } else {
-        Settings.light_pixels = WS2812_LEDS;
-        Settings.light_width = 1;
-      }
+      Settings.light_pixels = WS2812_LEDS;
+      Settings.light_width = 1;
+      Settings.light_color[0] = 255;
+      Settings.light_color[1] = 0;
+      Settings.light_color[2] = 0;
+      Settings.light_dimmer = 10;
+      Settings.light_correction = 0;
+      Settings.light_fade = 0;
+      Settings.light_speed = 1;
+      Settings.light_scheme = 0;
+      Settings.light_width = 1;
+      Settings.light_wakeup = 0;
     }
     if (Settings.version < 0x0508000A) {
-      Settings.power = Settings.ex_power;
+      Settings.power = 0;
       Settings.altitude = 0;
     }
     if (Settings.version < 0x0508000B) {
@@ -834,15 +790,12 @@ void SettingsDelta()
       Settings.sbaudrate = SOFT_BAUDRATE / 1200;
       Settings.serial_delimiter = 0xff;
     }
-//    if (Settings.version < 0x050C0009) {
-//      memset(&Settings.timer, 0x00, sizeof(Timer) * MAX_TIMERS);
-//    }
     if (Settings.version < 0x050C000A) {
       Settings.latitude = (int)((double)LATITUDE * 1000000);
       Settings.longitude = (int)((double)LONGITUDE * 1000000);
     }
     if (Settings.version < 0x050C000B) {
-      memset(&Settings.rules, 0x00, sizeof(Settings.rules));
+      Settings.rules[0][0] = '\0';
     }
     if (Settings.version < 0x050C000D) {
       memmove(Settings.rules, Settings.rules -256, sizeof(Settings.rules));  // move rules up by 256 bytes
@@ -850,6 +803,68 @@ void SettingsDelta()
       Settings.knx_GA_registered = 0;
       Settings.knx_CB_registered = 0;
       memset(&Settings.knx_physsical_addr, 0x00, 0x800 - 0x6b8);  // Reset until 0x800 for future use
+    }
+    if (Settings.version < 0x050C000F) {
+      Settings.energy_kWhtoday /= 1000;
+      Settings.energy_kWhyesterday /= 1000;
+      RtcSettings.energy_kWhtoday /= 1000;
+    }
+    if (Settings.version < 0x050D0103) {
+      SettingsDefaultSet_5_13_1c();
+    }
+    if (Settings.version < 0x050E0002) {
+      for (byte i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
+      Settings.rule_enabled = Settings.flag.mqtt_serial_raw;   // Was rules_enabled until 5.14.0b
+      Settings.rule_once = Settings.flag.pressure_conversion;  // Was rules_once until 5.14.0b
+    }
+    if (Settings.version < 0x06000000) {
+      Settings.cfg_size = sizeof(SYSCFG);
+      Settings.cfg_crc = GetSettingsCrc();
+    }
+    if (Settings.version < 0x06000002) {
+      for (byte i = 0; i < MAX_SWITCHES; i++) {
+        if (i < 4) {
+          Settings.switchmode[i] = Settings.ex_switchmode[i];
+        } else {
+          Settings.switchmode[i] = SWITCH_MODE;
+        }
+      }
+      for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+        if (Settings.my_gp.io[i] >= GPIO_SWT5) {  // Move up from GPIO_SWT5 to GPIO_KEY1
+          Settings.my_gp.io[i] += 4;
+        }
+      }
+    }
+    if (Settings.version < 0x06000003) {
+      Settings.flag.mqtt_serial_raw = 0;      // Was rules_enabled until 5.14.0b
+      Settings.flag.pressure_conversion = 0;  // Was rules_once until 5.14.0b
+      Settings.flag3.data = 0;
+    }
+    if (Settings.version < 0x06010103) {
+      Settings.flag3.timers_enable = 1;
+    }
+    if (Settings.version < 0x0601010C) {
+      Settings.button_debounce = KEY_DEBOUNCE_TIME;
+      Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
+    }
+    if (Settings.version < 0x0602010A) {
+      for (byte j = 0; j < 5; j++) {
+        Settings.rgbwwTable[j] = 255;
+      }
+    }
+    if (Settings.version < 0x06030002) {
+      Settings.timezone_minutes = 0;
+    }
+    if (Settings.version < 0x06030004) {
+      memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
+    }
+    if (Settings.version < 0x0603000E) {
+      Settings.flag2.calc_resolution = CALC_RESOLUTION;
+    }
+    if (Settings.version < 0x0603000F) {
+      if (Settings.sleep < 50) {
+        Settings.sleep = 50;                // Default to 50 for sleep, for now
+      }
     }
 
     Settings.version = VERSION;

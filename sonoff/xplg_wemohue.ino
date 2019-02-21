@@ -17,6 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//#define min(a,b) ((a)<(b)?(a):(b))
+//#define max(a,b) ((a)>(b)?(a):(b))
+
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
 /*********************************************************************************************\
  * Belkin WeMo and Philips Hue bridge emulation
@@ -56,7 +59,7 @@ const char WEMO_MSEARCH[] PROGMEM =
   "X-User-Agent: redsonic\r\n"
   "\r\n";
 
-String WemoSerialnumber()
+String WemoSerialnumber(void)
 {
   char serial[16];
 
@@ -64,7 +67,7 @@ String WemoSerialnumber()
   return String(serial);
 }
 
-String WemoUuid()
+String WemoUuid(void)
 {
   char uuid[27];
 
@@ -128,7 +131,7 @@ const char HUE_ST3[] PROGMEM =
   "USN: uuid:{r3\r\n"
   "\r\n";
 
-String HueBridgeId()
+String HueBridgeId(void)
 {
   String temp = WiFi.macAddress();
   temp.replace(":", "");
@@ -136,7 +139,7 @@ String HueBridgeId()
   return bridgeid;  // 5CCF7FFFFE139F3D
 }
 
-String HueSerialnumber()
+String HueSerialnumber(void)
 {
   String serial = WiFi.macAddress();
   serial.replace(":", "");
@@ -144,14 +147,14 @@ String HueSerialnumber()
   return serial;  // 5ccf7f139f3d
 }
 
-String HueUuid()
+String HueUuid(void)
 {
   String uuid = F("f6543a06-da50-11ba-8d8f-");
   uuid += HueSerialnumber();
   return uuid;  // f6543a06-da50-11ba-8d8f-5ccf7f139f3d
 }
 
-void HueRespondToMSearch()
+void HueRespondToMSearch(void)
 {
   char message[TOPSZ];
 
@@ -194,7 +197,7 @@ void HueRespondToMSearch()
  * Belkin WeMo and Philips Hue bridge UDP multicast support
 \*********************************************************************************************/
 
-boolean UdpDisconnect()
+boolean UdpDisconnect(void)
 {
   if (udp_connected) {
     WiFiUDP::stopAll();
@@ -204,7 +207,7 @@ boolean UdpDisconnect()
   return udp_connected;
 }
 
-boolean UdpConnect()
+boolean UdpConnect(void)
 {
   if (!udp_connected) {
     if (PortUdp.beginMulticast(WiFi.localIP(), ipMulticast, port_multicast)) {
@@ -219,7 +222,7 @@ boolean UdpConnect()
   return udp_connected;
 }
 
-void PollUdp()
+void PollUdp(void)
 {
   if (udp_connected && !udp_response_mutex) {
     if (PortUdp.parsePacket()) {
@@ -378,7 +381,7 @@ const char WEMO_SETUP_XML[] PROGMEM =
 
 /********************************************************************************************/
 
-void HandleUpnpEvent()
+void HandleUpnpEvent(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
 
@@ -386,11 +389,16 @@ void HandleUpnpEvent()
   String state_xml = FPSTR(WEMO_RESPONSE_STATE_SOAP);
   //differentiate get and set state
   if (request.indexOf(F("SetBinaryState")) > 0) {
+    uint8_t power = POWER_TOGGLE;
     if (request.indexOf(F("State>1</Binary")) > 0) {
-      ExecuteCommandPower(devices_present, POWER_ON);
+      power = POWER_ON;
     }
     else if (request.indexOf(F("State>0</Binary")) > 0) {
-      ExecuteCommandPower(devices_present, POWER_OFF);
+      power = POWER_OFF;
+    }
+    if (power != POWER_TOGGLE) {
+      uint8_t device = (light_type) ? devices_present : 1;  // Select either a configured light or relay1
+      ExecuteCommandPower(device, power, SRC_WEMO);
     }
   }
   else if(request.indexOf(F("GetBinaryState")) > 0){
@@ -400,21 +408,21 @@ void HandleUpnpEvent()
   WebServer->send(200, FPSTR(HDR_CTYPE_XML), state_xml);
 }
 
-void HandleUpnpService()
+void HandleUpnpService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_EVENT_SERVICE));
 
   WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), FPSTR(WEMO_EVENTSERVICE_XML));
 }
 
-void HandleUpnpMetaService()
+void HandleUpnpMetaService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_META_SERVICE));
 
   WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), FPSTR(WEMO_METASERVICE_XML));
 }
 
-void HandleUpnpSetupWemo()
+void HandleUpnpSetupWemo(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_SETUP));
 
@@ -457,10 +465,10 @@ const char HUE_LIGHTS_STATUS_JSON[] PROGMEM =
   "\"hue\":{h},"
   "\"sat\":{s},"
   "\"xy\":[0.5, 0.5],"
-  "\"ct\":500,"
+  "\"ct\":{t},"
   "\"alert\":\"none\","
   "\"effect\":\"none\","
-  "\"colormode\":\"hs\","
+  "\"colormode\":\"{m}\","
   "\"reachable\":true}";
 const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
   ",\"type\":\"Extended color light\","
@@ -489,7 +497,7 @@ const char HueConfigResponse_JSON[] PROGMEM =
      "\"last use date\":\"{dt\","
      "\"create date\":\"{dt\","
      "\"name\":\"Remote\"}},"
-   "\"swversion\":\"01039019\","
+   "\"swversion\":\"01041302\","
    "\"apiversion\":\"1.17.0\","
    "\"swupdate\":{\"updatestate\":0,\"url\":\"\",\"text\":\"\",\"notify\": false},"
    "\"linkbutton\":false,"
@@ -509,7 +517,7 @@ String GetHueDeviceId(uint8_t id)
   return deviceid;  // 5c:cf:7f:13:9f:3d:00:11-1
 }
 
-String GetHueUserId()
+String GetHueUserId(void)
 {
   char userid[7];
 
@@ -517,7 +525,7 @@ String GetHueUserId()
   return String(userid);
 }
 
-void HandleUpnpSetupHue()
+void HandleUpnpSetupHue(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_HUE_BRIDGE_SETUP));
   String description_xml = FPSTR(HUE_DESCRIPTION_XML);
@@ -554,20 +562,26 @@ void HueConfig(String *path)
   WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
 }
 
+bool g_gotct = false;
+
 void HueLightStatus1(byte device, String *response)
 {
   float hue = 0;
   float sat = 0;
-  float bri = 0;
+  float bri = 254;
+  uint16_t ct = 500;
 
   if (light_type) {
-    LightGetHsb(&hue, &sat, &bri);
+    LightGetHsb(&hue, &sat, &bri, g_gotct);
+    ct = LightGetColorTemp();
   }
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON);
   response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
   response->replace("{h}", String((uint16_t)(65535.0f * hue)));
   response->replace("{s}", String((uint8_t)(254.0f * sat)));
   response->replace("{b}", String((uint8_t)(254.0f * bri)));
+  response->replace("{t}", String(ct));
+  response->replace("{m}", g_gotct?"ct":"hs");
 }
 
 void HueLightStatus2(byte device, String *response)
@@ -646,11 +660,11 @@ void HueLights(String *path)
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
-    if (1 == WebServer->args()) {
+    if (WebServer->args()) {
       response = "[";
 
       StaticJsonBuffer<400> jsonBuffer;
-      JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg(0));
+      JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg((WebServer->args())-1));
       if (hue_json.containsKey("on")) {
 
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
@@ -660,10 +674,10 @@ void HueLights(String *path)
         on = hue_json["on"];
         switch(on)
         {
-          case false : ExecuteCommandPower(device, POWER_OFF);
+          case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
                        response.replace("{re", "false");
                        break;
-          case true  : ExecuteCommandPower(device, POWER_ON);
+          case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
                        response.replace("{re", "true");
                        break;
           default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
@@ -673,11 +687,13 @@ void HueLights(String *path)
       }
 
       if (light_type) {
-        LightGetHsb(&hue, &sat, &bri);
+        LightGetHsb(&hue, &sat, &bri, g_gotct);
       }
 
-      if (hue_json.containsKey("bri")) {
+      if (hue_json.containsKey("bri")) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
         tmp = hue_json["bri"];
+        tmp = tmax(tmp, 1);
+        tmp = tmin(tmp, 254);
         bri = (float)tmp / 254.0f;
         if (resp) {
           response += ",";
@@ -689,7 +705,7 @@ void HueLights(String *path)
         resp = true;
         change = true;
       }
-      if (hue_json.containsKey("hue")) {
+      if (hue_json.containsKey("hue")) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
         tmp = hue_json["hue"];
         hue = (float)tmp / 65535.0f;
         if (resp) {
@@ -699,11 +715,14 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "hue");
         response.replace("{re", String(tmp));
+        g_gotct = false;
         resp = true;
         change = true;
       }
-      if (hue_json.containsKey("sat")) {
+      if (hue_json.containsKey("sat")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
         tmp = hue_json["sat"];
+        tmp = tmax(tmp, 0);
+        tmp = tmin(tmp, 254);
         sat = (float)tmp / 254.0f;
         if (resp) {
           response += ",";
@@ -712,6 +731,8 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "sat");
         response.replace("{re", String(tmp));
+        g_gotct = false;
+        resp = true;
         change = true;
       }
       if (hue_json.containsKey("ct")) {              // Color temperature 153 (Cold) to 500 (Warm)
@@ -723,11 +744,12 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "ct");
         response.replace("{re", String(ct));
+        g_gotct = true;
         change = true;
       }
       if (change) {
         if (light_type) {
-          LightSetHsb(hue, sat, bri, ct);
+          LightSetHsb(hue, sat, bri, ct, g_gotct);
         }
         change = false;
       }
@@ -787,6 +809,11 @@ void HandleHueApi(String *path)
    * user part and allow every caller as with Web or WeMo.
    *
    * (c) Heiko Krupp, 2017
+   *
+   * Hue URL
+   * http://sonoff/api/username/lights/1/state with post data {"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
+   * is converted by webserver to
+   * http://sonoff/api/username/lights/1/state with arg plain={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
    */
 
   uint8_t args = 0;
@@ -813,4 +840,18 @@ void HandleHueApi(String *path)
   else if (path->endsWith("/rules")) HueNotImplemented(path);
   else HueGlobalConfig(path);
 }
+
+void HueWemoAddHandlers(void)
+{
+  if (EMUL_WEMO == Settings.flag2.emulation) {
+    WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
+    WebServer->on("/eventservice.xml", HandleUpnpService);
+    WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
+    WebServer->on("/setup.xml", HandleUpnpSetupWemo);
+  }
+  if (EMUL_HUE == Settings.flag2.emulation) {
+    WebServer->on("/description.xml", HandleUpnpSetupHue);
+  }
+}
+
 #endif  // USE_WEBSERVER && USE_EMULATION

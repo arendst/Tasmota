@@ -18,18 +18,19 @@
 */
 
 #ifdef USE_MHZ19
-
-#define XSNS_15 15
-
 /*********************************************************************************************\
  * MH-Z19 - CO2 sensor
  *
- * Adapted from  EspEasy plugin P049 by Dmitry (rel22 ___ inbox.ru)
+ * Adapted from EspEasy plugin P049 by Dmitry (rel22 ___ inbox.ru)
+ *
+ * Hardware Serial will be selected if GPIO1 = [MHZ Rx] and GPIO3 = [MHZ Tx]
  **********************************************************************************************
  * Filter usage
  *
  * Select filter usage on low stability readings
 \*********************************************************************************************/
+
+#define XSNS_15                      15
 
 enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILTER_FAST, MHZ19_FILTER_MEDIUM, MHZ19_FILTER_SLOW};
 
@@ -64,17 +65,25 @@ enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILT
 #define CO2_HIGH                     1200    // Above this CO2 value show red light
 #endif
 
-#define MHZ19_READ_TIMEOUT           500     // Must be way less than 1000
+#define MHZ19_READ_TIMEOUT           400     // Must be way less than 1000 but enough to read 9 bytes at 9600 bps
 #define MHZ19_RETRY_COUNT            8
 
 TasmotaSerial *MhzSerial;
 
 const char kMhzTypes[] PROGMEM = "MHZ19|MHZ19B";
 
-const uint8_t mhz_cmnd_read_ppm[9] =    {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
-const uint8_t mhz_cmnd_abc_enable[9] =  {0xFF, 0x01, 0x79, 0xA0, 0x00, 0x00, 0x00, 0x00, 0xE6};
-const uint8_t mhz_cmnd_abc_disable[9] = {0xFF, 0x01, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x86};
-const uint8_t mhz_cmnd_zeropoint[9] =   {0xff, 0x01, 0x87, 0x00, 0x00, 0x00, 0x00, 0x00, 0x78};
+enum MhzCommands { MHZ_CMND_READPPM, MHZ_CMND_ABCENABLE, MHZ_CMND_ABCDISABLE, MHZ_CMND_ZEROPOINT, MHZ_CMND_RESET, MHZ_CMND_RANGE_1000, MHZ_CMND_RANGE_2000, MHZ_CMND_RANGE_3000, MHZ_CMND_RANGE_5000 };
+const uint8_t kMhzCommands[][4] PROGMEM = {
+//  2     3    6    7
+  {0x86,0x00,0x00,0x00},   // mhz_cmnd_read_ppm
+  {0x79,0xA0,0x00,0x00},   // mhz_cmnd_abc_enable
+  {0x79,0x00,0x00,0x00},   // mhz_cmnd_abc_disable
+  {0x87,0x00,0x00,0x00},   // mhz_cmnd_zeropoint
+  {0x8D,0x00,0x00,0x00},   // mhz_cmnd_reset
+  {0x99,0x00,0x03,0xE8},   // mhz_cmnd_set_range_1000
+  {0x99,0x00,0x07,0xD0},   // mhz_cmnd_set_range_2000
+  {0x99,0x00,0x0B,0xB8},   // mhz_cmnd_set_range_3000
+  {0x99,0x00,0x13,0x88}};  // mhz_cmnd_set_range_5000
 
 uint8_t mhz_type = 1;
 uint16_t mhz_last_ppm = 0;
@@ -84,10 +93,41 @@ bool mhz_abc_must_apply = false;
 char mhz_types[7];
 
 float mhz_temperature = 0;
-uint8_t mhz_timer = 0;
 uint8_t mhz_retry = MHZ19_RETRY_COUNT;
-
+uint8_t mhz_received = 0;
 uint8_t mhz_state = 0;
+
+/*********************************************************************************************/
+
+byte MhzCalculateChecksum(byte *array)
+{
+  byte checksum = 0;
+  for (byte i = 1; i < 8; i++) {
+    checksum += array[i];
+  }
+  checksum = 255 - checksum;
+  return (checksum +1);
+}
+
+size_t MhzSendCmd(byte command_id)
+{
+  uint8_t mhz_send[9] = { 0 };
+
+  mhz_send[0] = 0xFF;  // Start byte, fixed
+  mhz_send[1] = 0x01;  // Sensor number, 0x01 by default
+  memcpy_P(&mhz_send[2], kMhzCommands[command_id], sizeof(uint16_t));
+/*
+  mhz_send[4] = 0x00;
+  mhz_send[5] = 0x00;
+*/
+  memcpy_P(&mhz_send[6], kMhzCommands[command_id] + sizeof(uint16_t), sizeof(uint16_t));
+  mhz_send[8] = MhzCalculateChecksum(mhz_send);
+
+  snprintf_P(log_data, sizeof(log_data), PSTR("Final MhzCommand: %x %x %x %x %x %x %x %x %x"),mhz_send[0],mhz_send[1],mhz_send[2],mhz_send[3],mhz_send[4],mhz_send[5],mhz_send[6],mhz_send[7],mhz_send[8]);
+  AddLog(LOG_LEVEL_DEBUG);
+
+  return MhzSerial->write(mhz_send, sizeof(mhz_send));
+}
 
 /*********************************************************************************************/
 
@@ -126,89 +166,84 @@ bool MhzCheckAndApplyFilter(uint16_t ppm, uint8_t s)
   return true;
 }
 
-void Mhz50ms()
+void MhzEverySecond(void)
 {
   mhz_state++;
-  if (4 == mhz_state) {  // Every 200 mSec
+  if (8 == mhz_state) {                   // Every 8 sec start a MH-Z19 measuring cycle (which takes 1005 +5% ms)
     mhz_state = 0;
 
-    uint8_t mhz_response[9];
-
-    mhz_timer++;
-    if (6 == mhz_timer) {  // MH-Z19 measuring cycle takes 1005 +5% ms
-      mhz_timer = 0;
-
-      MhzSerial->flush();
-      MhzSerial->write(mhz_cmnd_read_ppm, 9);
+    if (mhz_retry) {
+      mhz_retry--;
+      if (!mhz_retry) {
+        mhz_last_ppm = 0;
+        mhz_temperature = 0;
+      }
     }
 
-    if (1 == mhz_timer) {
-      if (mhz_retry) {
-        mhz_retry--;
-        if (!mhz_retry) {
-          mhz_last_ppm = 0;
-          mhz_temperature = 0;
-        }
-      }
+    MhzSerial->flush();                    // Sync reception
+    MhzSendCmd(MHZ_CMND_READPPM);
+    mhz_received = 0;
+  }
 
-      unsigned long  start = millis();
-      uint8_t counter = 0;
-      while (((millis() - start) < MHZ19_READ_TIMEOUT) && (counter < 9)) {
-        if (MhzSerial->available() > 0) {
-          mhz_response[counter++] = MhzSerial->read();
-        }
-      }
+  if ((mhz_state > 2) && !mhz_received) {  // Start reading response after 3 seconds every second until received
+    uint8_t mhz_response[9];
 
-      AddLogSerial(LOG_LEVEL_DEBUG_MORE, mhz_response, counter);
-
-      if (counter < 9) {
-//        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 comms timeout"));
-        return;
-      }
-
-      byte crc = 0;
-      for (uint8_t i = 1; i < 8; i++) {
-        crc += mhz_response[i];
-      }
-      crc = 255 - crc;
-      crc++;
-      if (mhz_response[8] != crc) {
-//        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 crc error"));
-        return;
-      }
-      if (0xFF != mhz_response[0] || 0x86 != mhz_response[1]) {
-//        AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 bad response"));
-        return;
-      }
-
-      uint16_t u = (mhz_response[6] << 8) | mhz_response[7];
-      if (15000 == u) {      // During (and only ever at) sensor boot, 'u' is reported as 15000
-        if (!mhz_abc_enable) {
-          // After bootup of the sensor the ABC will be enabled.
-          // Thus only actively disable after bootup.
-          mhz_abc_must_apply = true;
-        }
+    unsigned long start = millis();
+    uint8_t counter = 0;
+    while (((millis() - start) < MHZ19_READ_TIMEOUT) && (counter < 9)) {
+      if (MhzSerial->available() > 0) {
+        mhz_response[counter++] = MhzSerial->read();
       } else {
-        uint16_t ppm = (mhz_response[2] << 8) | mhz_response[3];
-        mhz_temperature = ConvertTemp((float)mhz_response[4] - 40);
-        uint8_t s = mhz_response[5];
-        mhz_type = (s) ? 1 : 2;
-        if (MhzCheckAndApplyFilter(ppm, s)) {
-          mhz_retry = MHZ19_RETRY_COUNT;
-          LightSetSignal(CO2_LOW, CO2_HIGH, mhz_last_ppm);
+        delay(5);
+      }
+    }
 
-          if (0 == s || 64 == s) {  // Reading is stable.
-            if (mhz_abc_must_apply) {
-              mhz_abc_must_apply = false;
-              if (mhz_abc_enable) {
-                MhzSerial->write(mhz_cmnd_abc_enable, 9);   // Sent sensor ABC Enable
-              } else {
-                MhzSerial->write(mhz_cmnd_abc_disable, 9);  // Sent sensor ABC Disable
-              }
+    AddLogSerial(LOG_LEVEL_DEBUG_MORE, mhz_response, counter);
+
+    if (counter < 9) {
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 comms timeout"));
+      return;
+    }
+
+    byte crc = MhzCalculateChecksum(mhz_response);
+    if (mhz_response[8] != crc) {
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 crc error"));
+      return;
+    }
+    if (0xFF != mhz_response[0] || 0x86 != mhz_response[1]) {
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 bad response"));
+      return;
+    }
+
+    mhz_received = 1;
+
+    uint16_t u = (mhz_response[6] << 8) | mhz_response[7];
+    if (15000 == u) {      // During (and only ever at) sensor boot, 'u' is reported as 15000
+      if (!mhz_abc_enable) {
+        // After bootup of the sensor the ABC will be enabled.
+        // Thus only actively disable after bootup.
+        mhz_abc_must_apply = true;
+      }
+    } else {
+      uint16_t ppm = (mhz_response[2] << 8) | mhz_response[3];
+      mhz_temperature = ConvertTemp((float)mhz_response[4] - 40);
+      uint8_t s = mhz_response[5];
+      mhz_type = (s) ? 1 : 2;
+      if (MhzCheckAndApplyFilter(ppm, s)) {
+        mhz_retry = MHZ19_RETRY_COUNT;
+        LightSetSignal(CO2_LOW, CO2_HIGH, mhz_last_ppm);
+
+        if (0 == s || 64 == s) {  // Reading is stable.
+          if (mhz_abc_must_apply) {
+            mhz_abc_must_apply = false;
+            if (mhz_abc_enable) {
+              MhzSendCmd(MHZ_CMND_ABCENABLE);
+            } else {
+              MhzSendCmd(MHZ_CMND_ABCDISABLE);
             }
           }
-
         }
+
       }
     }
 
@@ -217,24 +252,51 @@ void Mhz50ms()
 
 /*********************************************************************************************\
  * Command Sensor15
+ *
+ * 0    - (Not implemented) ABC Off
+ * 1    - (Not implemented) ABC On
+ * 2    - Manual start = ABC Off
+ * 3    - (Not implemented) Optional filter settings
+ * 9    - Reset
+ * 1000 - Range
+ * 2000 - Range
+ * 3000 - Range
+ * 5000 - Range
 \*********************************************************************************************/
 
-/*
-  0 - ABC Off
-  1 - ABC On
-  2 - Manual start = ABC Off
+#define D_JSON_RANGE_1000 "1000 ppm range"
+#define D_JSON_RANGE_2000 "2000 ppm range"
+#define D_JSON_RANGE_3000 "3000 ppm range"
+#define D_JSON_RANGE_5000 "5000 ppm range"
 
-  3 - Optional filter settings
-*/
-
-bool MhzCommandSensor()
+bool MhzCommandSensor(void)
 {
   boolean serviced = true;
 
   switch (XdrvMailbox.payload) {
     case 2:
-      MhzSerial->write(mhz_cmnd_zeropoint, 9);
+      MhzSendCmd(MHZ_CMND_ZEROPOINT);
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_ZERO_POINT_CALIBRATION);
+      break;
+    case 9:
+      MhzSendCmd(MHZ_CMND_RESET);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET);
+      break;
+    case 1000:
+      MhzSendCmd(MHZ_CMND_RANGE_1000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_1000);
+      break;
+    case 2000:
+      MhzSendCmd(MHZ_CMND_RANGE_2000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_2000);
+      break;
+    case 3000:
+      MhzSendCmd(MHZ_CMND_RANGE_3000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_3000);
+      break;
+    case 5000:
+      MhzSendCmd(MHZ_CMND_RANGE_5000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_5000);
       break;
     default:
       serviced = false;
@@ -245,20 +307,22 @@ bool MhzCommandSensor()
 
 /*********************************************************************************************/
 
-void MhzInit()
+void MhzInit(void)
 {
   mhz_type = 0;
   if ((pin[GPIO_MHZ_RXD] < 99) && (pin[GPIO_MHZ_TXD] < 99)) {
-    MhzSerial = new TasmotaSerial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD]);
-    if (MhzSerial->begin()) {
+    MhzSerial = new TasmotaSerial(pin[GPIO_MHZ_RXD], pin[GPIO_MHZ_TXD], 1);
+    if (MhzSerial->begin(9600)) {
+      if (MhzSerial->hardwareSerial()) { ClaimSerial(); }
       mhz_type = 1;
     }
+
   }
 }
 
 void MhzShow(boolean json)
 {
-  char temperature[10];
+  char temperature[33];
   dtostrfd(mhz_temperature, Settings.flag2.temperature_resolution, temperature);
   GetTextIndexed(mhz_types, sizeof(mhz_types), mhz_type -1, kMhzTypes);
 
@@ -288,8 +352,8 @@ boolean Xsns15(byte function)
       case FUNC_INIT:
         MhzInit();
         break;
-      case FUNC_EVERY_50_MSECOND:
-        Mhz50ms();
+      case FUNC_EVERY_SECOND:
+        MhzEverySecond();
         break;
       case FUNC_COMMAND:
         if (XSNS_15 == XdrvMailbox.index) {

@@ -53,6 +53,8 @@
 
 \*********************************************************************************************/
 
+#define XSNS_04             4
+
 uint16_t sc_value[5] = { 0 };
 
 void SonoffScSend(const char *data)
@@ -63,7 +65,7 @@ void SonoffScSend(const char *data)
   AddLog(LOG_LEVEL_DEBUG);
 }
 
-void SonoffScInit()
+void SonoffScInit(void)
 {
 //  SonoffScSend("AT+DEVCONFIG=\"uploadFreq\":1800");
   SonoffScSend("AT+START");
@@ -111,12 +113,12 @@ const char HTTP_SNS_SCPLUS[] PROGMEM =
 void SonoffScShow(boolean json)
 {
   if (sc_value[0] > 0) {
-    char temperature[10];
-    char humidity[10];
-
     float t = ConvertTemp(sc_value[1]);
     float h = sc_value[0];
+
+    char temperature[33];
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+    char humidity[33];
     dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
@@ -151,8 +153,6 @@ void SonoffScShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-#define XSNS_04
 
 boolean Xsns04(byte function)
 {
