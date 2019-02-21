@@ -1257,9 +1257,9 @@ void WifiSaveSettings(void)
   WebGetArg("s2", tmp, sizeof(tmp));
   strlcpy(Settings.sta_ssid[1], (!strlen(tmp)) ? STA_SSID2 : tmp, sizeof(Settings.sta_ssid[1]));
   WebGetArg("p1", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_pwd[0], (!strlen(tmp)) ? "" : (!strcmp(tmp,D_ASTERISK_PWD)) ? Settings.sta_pwd[0] : tmp, sizeof(Settings.sta_pwd[0]));
+  strlcpy(Settings.sta_pwd[0], (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? Settings.sta_pwd[0] : tmp, sizeof(Settings.sta_pwd[0]));
   WebGetArg("p2", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_pwd[1], (!strlen(tmp)) ? "" : (!strcmp(tmp,D_ASTERISK_PWD)) ? Settings.sta_pwd[1] : tmp, sizeof(Settings.sta_pwd[1]));
+  strlcpy(Settings.sta_pwd[1], (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? Settings.sta_pwd[1] : tmp, sizeof(Settings.sta_pwd[1]));
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_SSID "2 %s"),
     Settings.hostname, Settings.sta_ssid[0], Settings.sta_ssid[1]);
   AddLog(LOG_LEVEL_INFO);
@@ -2202,7 +2202,7 @@ int WebSend(char *buffer)
       user = Trim(user);                      // user = |admin|
       if (password) { password = Trim(password); }  // password = |joker|
     }
-
+    
     command = Trim(command);                  // command = |POWER1 ON| or |/any/link/starting/with/a/slash.php?log=123|
     if (command[0] != '/') {
       url += F("/cm?");                       // url = |http://192.168.178.86/cm?|
