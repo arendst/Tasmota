@@ -866,11 +866,15 @@ Setting_6_4_1_16.update({
             'pullup':                       ('B',  (0x73C,1,1),  (None, None,                   ('Management',  None)) ),
                                          },      0x73C,       (None, None,                      ('Management',  None))
                                         ),
-                                    },      0x720,       (None, None,                           ('Management',  '"Template GPIO:{}".format(@["user_template"]["gp"][0])')) 
+                                    },      0x720,       (None, None,                           ('Management',  None)) 
                                    ),
 })
 # ======================================================================
+Setting_6_4_1_17 = copy.deepcopy(Setting_6_4_1_16)
+Setting_6_4_1_17['flag3'][0].pop('no_pullup',None)
+# ======================================================================
 Settings = [
+            (0x6040111, 0xe00, Setting_6_4_1_17),
             (0x6040110, 0xe00, Setting_6_4_1_16),
             (0x604010D, 0xe00, Setting_6_4_1_13),
             (0x604010B, 0xe00, Setting_6_4_1_11),
