@@ -1956,8 +1956,6 @@ void HandleHttpCommand(void)
 {
   if (!HttpCheckPriviledgedAccess(false)) { return; }
 
-  char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
-
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
 
   uint8_t valid = 1;
@@ -1972,9 +1970,9 @@ void HandleHttpCommand(void)
   String message = F("{\"" D_RSLT_WARNING "\":\"");
   if (valid) {
     uint8_t curridx = web_log_index;
-    WebGetArg("cmnd", svalue, sizeof(svalue));
-    if (strlen(svalue)) {
-      ExecuteWebCommand(svalue, SRC_WEBCOMMAND);
+    String svalue = WebServer->arg("cmnd");
+    if (svalue.length() && (svalue.length() < INPUT_BUFFER_SIZE)) {
+      ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
 
       if (web_log_index != curridx) {
         uint8_t counter = curridx;
@@ -2032,19 +2030,19 @@ void HandleAjaxConsoleRefresh(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
   bool cflg = true;
   uint8_t counter = 0;                // Initial start, should never be 0 again
 
-  WebGetArg("c1", svalue, sizeof(svalue));
-  if (strlen(svalue)) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), svalue);
+  String svalue = WebServer->arg("c1");
+  if (svalue.length() && (svalue.length() < INPUT_BUFFER_SIZE)) {
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
     AddLog(LOG_LEVEL_INFO);
-    ExecuteWebCommand(svalue, SRC_WEBCONSOLE);
+    ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
   }
 
-  WebGetArg("c2", svalue, sizeof(svalue));
-  if (strlen(svalue)) { counter = atoi(svalue); }
+  char stmp[10];
+  WebGetArg("c2", stmp, sizeof(stmp));
+  if (strlen(stmp)) { counter = atoi(stmp); }
 
   bool last_reset_web_log_flag = reset_web_log_flag;
   // mqtt_data used as scratch space
@@ -2202,7 +2200,7 @@ int WebSend(char *buffer)
       user = Trim(user);                      // user = |admin|
       if (password) { password = Trim(password); }  // password = |joker|
     }
-    
+
     command = Trim(command);                  // command = |POWER1 ON| or |/any/link/starting/with/a/slash.php?log=123|
     if (command[0] != '/') {
       url += F("/cm?");                       // url = |http://192.168.178.86/cm?|
