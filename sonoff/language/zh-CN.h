@@ -288,6 +288,8 @@
 #define D_TELEMETRY_PERIOD "上报周期"
 
 #define D_OTHER_PARAMETERS "其他设置"
+#define D_TEMPLATE "Template"
+#define D_ACTIVATE "Activate"
 #define D_WEB_ADMIN_PASSWORD "WEB 管理密码"
 #define D_MQTT_ENABLE "启用MQTT"
 #define D_FRIENDLY_NAME "昵称"
@@ -295,6 +297,14 @@
 #define D_HUE_BRIDGE "飞利浦 Hue 网桥"
 #define D_SINGLE_DEVICE "单设备"
 #define D_MULTI_DEVICE "多设备"
+
+#define D_CONFIGURE_TEMPLATE "Configure Template"
+#define D_TEMPLATE_PARAMETERS "Template parameters"
+#define D_TEMPLATE_NAME "Name"
+#define D_BASE_TYPE "Based on"
+#define D_TEMPLATE_FLAGS "Options"
+#define D_ALLOW_ADC0 "ADC0 input"
+#define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "保存设置"
 #define D_CONFIGURATION_SAVED "设置已保存"
@@ -483,6 +493,7 @@
 
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "无"
+#define D_SENSOR_USER          "User"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
