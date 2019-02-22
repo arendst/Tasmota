@@ -699,6 +699,13 @@ void ShowSource(int source)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
+uint8_t ModuleNr()
+{
+  // 0    = User module (255)
+  // 1 up = Template module 0 up
+  return (USER_MODULE == Settings.module) ? 0 : Settings.module +1;
+}
+
 String AnyModuleName(uint8_t index)
 {
   if (USER_MODULE == index) {
@@ -720,7 +727,6 @@ void ModuleGpios(myio *gp)
 
   uint8_t src[sizeof(mycfgio)];
   if (USER_MODULE == Settings.module) {
-//    src = Settings.user_template.gp;
     memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
   } else {
     memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
@@ -870,14 +876,6 @@ bool JsonTemplate(const char* dataBuf)
     if ((0 == base) || (base >= MAXMODULE)) { base = 17; } else { base--; }
     Settings.user_template_base = base;  // Default WEMOS
   }
-
-  // Validate GPIO
-//          for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
-    // For now do not allow non-user configurable GPIO
-//            if ((Settings.user_template.gp.io[i] > GPIO_FIX_START) && (Settings.user_template.gp.io[i] < GPIO_USER)) {
-//              Settings.user_template.gp.io[i] = GPIO_NONE;
-//            };
-//          }
   return true;
 }
 
@@ -887,8 +885,6 @@ void TemplateJson()
   for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (i>0)?",":"", Settings.user_template.gp.io[i]);
   }
-//  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":\"%d (%s)\"}"),
-//    mqtt_data, Settings.user_template.flag, Settings.user_template_base +1, AnyModuleName(Settings.user_template_base).c_str());
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"),
     mqtt_data, Settings.user_template.flag, Settings.user_template_base +1);
 }
