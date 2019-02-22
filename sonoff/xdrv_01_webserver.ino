@@ -2182,18 +2182,19 @@ int WebSend(char *buffer)
                                               // buffer = |  [  192.168.178.86  :  80  ,  admin  :  joker  ]    POWER1 ON   |
   host = strtok_r(buffer, "]", &command);     // host = |  [  192.168.178.86  :  80  ,  admin  :  joker  |, command = |    POWER1 ON   |
   if (host && command) {
-    String url = F("http:");                  // url = |http:|
+    String url = F("http://");                // url = |http://|
     host = Trim(host);                        // host = |[  192.168.178.86  :  80  ,  admin  :  joker|
     host++;                                   // host = |  192.168.178.86  :  80  ,  admin  :  joker| - Skip [
     host = strtok_r(host, ",", &user);        // host = |  192.168.178.86  :  80  |, user = |  admin  :  joker|
     host = strtok_r(host, ":", &port);        // host = |  192.168.178.86  |, port = |  80  |
     host = Trim(host);                        // host = |192.168.178.86|
+    url += host;                              // url = |http://192.168.178.86|
+
     if (port) {
       port = Trim(port);                      // port = |80|
-      url += port;                            // url = |http:80|
+      url += F(":");                          // url = |http://192.168.178.86:|
+      url += port;                            // url = |http://192.168.178.86:80|
     }
-    url += F("//");                           // url = |http://| or |http:80//|
-    url += host;                              // url = |http://192.168.178.86|
 
     if (user) {
       user = strtok_r(user, ":", &password);  // user = |  admin  |, password = |  joker|
