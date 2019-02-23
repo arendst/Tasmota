@@ -9,6 +9,7 @@
 .gcc-flags.json
 sonoff/user_config_override.h
 myoverrides/user_config_override.h
+myoverrides/backup
 build
 
 ## Visual Studio Code specific ######
