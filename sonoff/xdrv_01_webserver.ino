@@ -448,8 +448,8 @@ enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RE
 DNSServer *DnsServer;
 ESP8266WebServer *WebServer;
 
-bool remove_duplicate_access_points = true;
 int minimum_signal_quality = -1;
+bool remove_duplicate_access_points = true;
 uint8_t webserver_state = HTTP_OFF;
 uint8_t upload_error = 0;
 uint8_t upload_file_type;
@@ -496,7 +496,7 @@ void StartWebserver(int type, IPAddress ipweb)
 #ifndef FIRMWARE_MINIMAL
       WebServer->on("/rt", HandleResetConfiguration);
 #endif // FIRMWARE_MINIMAL
-      if(HTTP_MANAGER_RESET_ONLY != type){
+      if (HTTP_MANAGER_RESET_ONLY != type) {
         WebServer->on("/up", HandleUpgradeFirmware);
         WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
         WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
@@ -727,7 +727,8 @@ void HandleRoot(void)
     }
 #endif  // Not FIRMWARE_MINIMAL
   } else {
-    char stemp[10];
+    char stemp[5];
+
     String page = FPSTR(HTTP_HEAD);
     page.replace(F("{v}"), FPSTR(S_MAIN_MENU));
     page += FPSTR(HTTP_SCRIPT_ROOT);
@@ -797,10 +798,10 @@ void HandleAjaxStatusRefresh(void)
 {
   if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
 
-  char svalue[80];
-  char tmp[100];
+  char tmp[8];                       // WebGetArg numbers only
+  char svalue[32];                   // Command and number parameter
 
-  WebGetArg("o", tmp, sizeof(tmp));
+  WebGetArg("o", tmp, sizeof(tmp));  // 1 - 16 Device number for button Toggle or Fanspeed
   if (strlen(tmp)) {
     ShowWebSource(SRC_WEBGUI);
     uint8_t device = atoi(tmp);
@@ -815,17 +816,17 @@ void HandleAjaxStatusRefresh(void)
       ExecuteCommandPower(device, POWER_TOGGLE, SRC_IGNORE);
     }
   }
-  WebGetArg("d", tmp, sizeof(tmp));
+  WebGetArg("d", tmp, sizeof(tmp));  // 0 - 100 Dimmer value
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  WebGetArg("t", tmp, sizeof(tmp));
+  WebGetArg("t", tmp, sizeof(tmp));  // 153 - 500 Color temperature
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  WebGetArg("k", tmp, sizeof(tmp));
+  WebGetArg("k", tmp, sizeof(tmp));  // 1 - 16 Pre defined RF keys
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
@@ -915,7 +916,7 @@ void HandleTemplateConfiguration(void)
     return;
   }
 
-  char stemp[20];
+  char stemp[20];                                           // Template number and Sensor name
 
   if (WebServer->hasArg("m")) {
     String page = "";
@@ -928,7 +929,7 @@ void HandleTemplateConfiguration(void)
     return;
   }
 
-  WebGetArg("t", stemp, sizeof(stemp));
+  WebGetArg("t", stemp, sizeof(stemp));                     // 0 - 69 Template number
   if (strlen(stemp)) {
     uint8_t module = atoi(stemp);
     uint8_t module_save = Settings.module;
@@ -990,9 +991,9 @@ void HandleTemplateConfiguration(void)
 
 void TemplateSaveSettings(void)
 {
-  char svalue[128];
-  char tmp[100];
-  char stemp[20];
+  char tmp[15];                                      // WebGetArg NAME and GPIO/BASE/FLAG byte value
+  char webindex[5];                                  // WebGetArg name
+  char svalue[128];                                  // Template command string
 
   WebGetArg("s1", tmp, sizeof(tmp));                 // NAME
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
@@ -1001,8 +1002,8 @@ void TemplateSaveSettings(void)
   for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
-    snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), j);
-    WebGetArg(stemp, tmp, sizeof(tmp));              // GPIO
+    snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), j);
+    WebGetArg(webindex, tmp, sizeof(tmp));              // GPIO
     uint8_t gpio = atoi(tmp);
     snprintf_P(svalue, sizeof(svalue), PSTR("%s%s%d"), svalue, (i>0)?",":"", gpio);
     j++;
@@ -1010,8 +1011,8 @@ void TemplateSaveSettings(void)
 
   uint8_t flag = 0;
   for (uint8_t i = 0; i < GPIO_FLAG_USED; i++) {
-    snprintf_P(stemp, sizeof(stemp), PSTR("c%d"), i);
-    uint8_t state = WebServer->hasArg(stemp) << i;   // FLAG
+    snprintf_P(webindex, sizeof(webindex), PSTR("c%d"), i);
+    uint8_t state = WebServer->hasArg(webindex) << i;   // FLAG
     flag += state;
   }
   WebGetArg("g99", tmp, sizeof(tmp));                // BASE
@@ -1034,7 +1035,7 @@ void HandleModuleConfiguration(void)
     return;
   }
 
-  char stemp[20];
+  char stemp[20];  // Sensor name
   uint8_t midx;
   myio cmodule;
   ModuleGpios(&cmodule);
@@ -1104,8 +1105,8 @@ void HandleModuleConfiguration(void)
 
 void ModuleSaveSettings(void)
 {
-  char tmp[100];
-  char stemp[TOPSZ];
+  char tmp[8];         // WebGetArg numbers only
+  char webindex[5];    // WebGetArg name
 
   WebGetArg("g99", tmp, sizeof(tmp));
   uint8_t new_module = (!strlen(tmp)) ? MODULE : atoi(tmp);
@@ -1120,8 +1121,8 @@ void ModuleSaveSettings(void)
       Settings.my_gp.io[i] = GPIO_NONE;
     } else {
       if (ValidGPIO(i, cmodule.io[i])) {
-        snprintf_P(stemp, sizeof(stemp), PSTR("g%d"), i);
-        WebGetArg(stemp, tmp, sizeof(tmp));
+        snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), i);
+        WebGetArg(webindex, tmp, sizeof(tmp));
         Settings.my_gp.io[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
         gpios += F(", " D_GPIO ); gpios += String(i); gpios += F(" "); gpios += String(Settings.my_gp.io[i]);
       }
@@ -1135,13 +1136,13 @@ void ModuleSaveSettings(void)
 
 String htmlEscape(String s)
 {
-    s.replace("&", "&amp;");
-    s.replace("<", "&lt;");
-    s.replace(">", "&gt;");
-    s.replace("\"", "&quot;");
-    s.replace("'", "&#x27;");
-    s.replace("/", "&#x2F;");
-    return s;
+  s.replace("&", "&amp;");
+  s.replace("<", "&lt;");
+  s.replace(">", "&gt;");
+  s.replace("\"", "&quot;");
+  s.replace("'", "&#x27;");
+  s.replace("/", "&#x2F;");
+  return s;
 }
 
 void HandleWifiConfiguration(void)
@@ -1161,12 +1162,11 @@ void HandleWifiConfiguration(void)
   page += FPSTR(HTTP_SCRIPT_WIFI);
   page += FPSTR(HTTP_HEAD_STYLE);
 
-
-  if(HTTP_MANAGER_RESET_ONLY != webserver_state){
+  if (HTTP_MANAGER_RESET_ONLY != webserver_state) {
     if (WebServer->hasArg("scan")) {
-  #ifdef USE_EMULATION
+#ifdef USE_EMULATION
       UdpDisconnect();
-  #endif  // USE_EMULATION
+#endif  // USE_EMULATION
       int n = WiFi.scanNetworks();
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_SCAN_DONE));
 
@@ -1243,9 +1243,9 @@ void HandleWifiConfiguration(void)
   }
   if (WifiIsInManagerMode()) {
     page += FPSTR(HTTP_BTN_RSTRT);
-  #ifndef FIRMWARE_MINIMAL
+#ifndef FIRMWARE_MINIMAL
     page += FPSTR(HTTP_BTN_RESET);
-  #endif // FIRMWARE_MINIMAL
+#endif // FIRMWARE_MINIMAL
   } else {
     page += FPSTR(HTTP_BTN_CONF);
   }
@@ -1255,7 +1255,7 @@ void HandleWifiConfiguration(void)
 
 void WifiSaveSettings(void)
 {
-  char tmp[100];
+  char tmp[sizeof(Settings.sta_pwd[0])];  // Max length is currently 65
 
   WebGetArg("h", tmp, sizeof(tmp));
   strlcpy(Settings.hostname, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp, sizeof(Settings.hostname));
@@ -1334,7 +1334,7 @@ void HandleLoggingConfiguration(void)
 
 void LoggingSaveSettings(void)
 {
-  char tmp[100];
+  char tmp[sizeof(Settings.syslog_host)];  // Max length is currently 33
 
   WebGetArg("ls", tmp, sizeof(tmp));
   Settings.seriallog_level = (!strlen(tmp)) ? SERIAL_LOG_LEVEL : atoi(tmp);
@@ -1372,7 +1372,7 @@ void HandleOtherConfiguration(void)
     return;
   }
 
-  char stemp[40];
+  char stemp[sizeof(Settings.friendlyname[0])];  // Max length is currently 33
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONFIGURE_OTHER));
@@ -1413,8 +1413,8 @@ void HandleOtherConfiguration(void)
 void OtherSaveSettings(void)
 {
   char tmp[128];
-  char stemp[TOPSZ];
-  char stemp2[TOPSZ];
+  char webindex[5];
+  char friendlyname[sizeof(Settings.friendlyname[0])];
 
   WebGetArg("p1", tmp, sizeof(tmp));
   strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
@@ -1425,10 +1425,10 @@ void OtherSaveSettings(void)
 #endif  // USE_EMULATION
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
   for (uint8_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
-    snprintf_P(stemp, sizeof(stemp), PSTR("a%d"), i +1);
-    WebGetArg(stemp, tmp, sizeof(tmp));
-    snprintf_P(stemp2, sizeof(stemp2), PSTR(FRIENDLY_NAME"%d"), i +1);
-    strlcpy(Settings.friendlyname[i], (!strlen(tmp)) ? (i) ? stemp2 : FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[i]));
+    snprintf_P(webindex, sizeof(webindex), PSTR("a%d"), i +1);
+    WebGetArg(webindex, tmp, sizeof(tmp));
+    snprintf_P(friendlyname, sizeof(friendlyname), PSTR(FRIENDLY_NAME"%d"), i +1);
+    strlcpy(Settings.friendlyname[i], (!strlen(tmp)) ? (i) ? friendlyname : FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[i]));
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%s %s"), log_data, (i) ? "," : "", Settings.friendlyname[i]);
   }
   AddLog(LOG_LEVEL_INFO);
@@ -1496,8 +1496,6 @@ void HandleResetConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  char svalue[33];
-
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESET_CONFIGURATION);
 
   String page = FPSTR(HTTP_HEAD);
@@ -1508,8 +1506,9 @@ void HandleResetConfiguration(void)
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page, HTTP_MANAGER_RESET_ONLY != webserver_state);
 
-  snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RESET " 1"));
-  ExecuteWebCommand(svalue, SRC_WEBGUI);
+  char command[CMDSZ];
+  snprintf_P(command, sizeof(command), PSTR(D_CMND_RESET " 1"));
+  ExecuteWebCommand(command, SRC_WEBGUI);
 }
 
 void HandleRestoreConfiguration(void)
@@ -1679,16 +1678,16 @@ void HandleUpgradeFirmwareStart(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  char svalue[100];
+  char command[sizeof(Settings.ota_url) + 10];  // OtaUrl
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
   WifiConfigCounter();
 
-  char tmp[100];
-  WebGetArg("o", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_OTAURL " %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  char otaurl[sizeof(Settings.ota_url)];
+  WebGetArg("o", otaurl, sizeof(otaurl));
+  if (strlen(otaurl)) {
+    snprintf_P(command, sizeof(command), PSTR(D_CMND_OTAURL " %s"), otaurl);
+    ExecuteWebCommand(command, SRC_WEBGUI);
   }
 
   String page = FPSTR(HTTP_HEAD);
@@ -1700,8 +1699,8 @@ void HandleUpgradeFirmwareStart(void)
   page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD_OTA));
   ShowPage(page);
 
-  snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_UPGRADE " 1"));
-  ExecuteWebCommand(svalue, SRC_WEBGUI);
+  snprintf_P(command, sizeof(command), PSTR(D_CMND_UPGRADE " 1"));
+  ExecuteWebCommand(command, SRC_WEBGUI);
 }
 
 void HandleUploadDone(void)
@@ -1960,9 +1959,9 @@ void HandleHttpCommand(void)
 
   uint8_t valid = 1;
   if (Settings.web_password[0] != 0) {
-    char tmp1[100];
+    char tmp1[sizeof(Settings.web_password)];
     WebGetArg("user", tmp1, sizeof(tmp1));
-    char tmp2[100];
+    char tmp2[sizeof(Settings.web_password)];
     WebGetArg("password", tmp2, sizeof(tmp2));
     if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, Settings.web_password))) { valid = 0; }
   }
@@ -2039,7 +2038,7 @@ void HandleAjaxConsoleRefresh(void)
     ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
   }
 
-  char stmp[10];
+  char stmp[8];
   WebGetArg("c2", stmp, sizeof(stmp));
   if (strlen(stmp)) { counter = atoi(stmp); }
 
@@ -2075,7 +2074,7 @@ void HandleAjaxConsoleRefresh(void)
     } while (counter != web_log_index);
   }
   message += F("\1");
-  WSSend(200, CT_XML, message);
+  WSSend(200, CT_PLAIN, message);
 }
 
 /********************************************************************************************/
