@@ -294,12 +294,14 @@ const char HTTP_BTN_RSTRT[] PROGMEM =
 const char HTTP_BTN_MENU_MODULE[] PROGMEM =
   "<p><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form></p>"
   "<p><form action='wi' method='get'><button>" D_CONFIGURE_WIFI "</button></form></p>";
+const char HTTP_BTN_RESET[] PROGMEM =
+  "<br/>"
+  "<form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button class='button bred'>" D_RESET_CONFIGURATION "</button></form>";
 const char HTTP_BTN_MENU4[] PROGMEM =
   "<p><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form></p>"
   "<p><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form></p>"
-  "<p><form action='tp' method='get'><button>" D_CONFIGURE_TEMPLATE "</button></form></p>"
-  "<br/>"
-  "<form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button class='button bred'>" D_RESET_CONFIGURATION "</button></form>"
+  "<p><form action='tp' method='get'><button>" D_CONFIGURE_TEMPLATE "</button></form></p>";
+const char HTTP_BTN_MENU5[] PROGMEM =
   "<p><form action='dl' method='get'><button>" D_BACKUP_CONFIGURATION "</button></form></p>"
   "<p><form action='rs' method='get'><button>" D_RESTORE_CONFIGURATION "</button></form></p>";
 const char HTTP_BTN_MAIN[] PROGMEM =
@@ -437,7 +439,7 @@ const char HDR_CTYPE_JSON[] PROGMEM = "application/json";
 const char HDR_CTYPE_STREAM[] PROGMEM = "application/octet-stream";
 
 #define DNS_PORT 53
-enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER};
+enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
 
 DNSServer *DnsServer;
 ESP8266WebServer *WebServer;
@@ -460,6 +462,10 @@ static void WebGetArg(const char* arg, char* out, size_t max)
 //  out[max-1] = '\0';  // Ensure terminating NUL
 }
 
+static bool WifiIsInManagerMode(){
+  return (HTTP_MANAGER == webserver_state || HTTP_MANAGER_RESET_ONLY == webserver_state);
+}
+
 void ShowWebSource(int source)
 {
   if ((source > 0) && (source < SRC_MAX)) {
@@ -480,34 +486,39 @@ void StartWebserver(int type, IPAddress ipweb)
   if (!Settings.web_refresh) { Settings.web_refresh = HTTP_REFRESH_TIME; }
   if (!webserver_state) {
     if (!WebServer) {
-      WebServer = new ESP8266WebServer((HTTP_MANAGER==type) ? 80 : WEB_PORT);
+      WebServer = new ESP8266WebServer((HTTP_MANAGER==type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
       WebServer->on("/", HandleRoot);
-      WebServer->on("/up", HandleUpgradeFirmware);
-      WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
-      WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
-      WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
-      WebServer->on("/cs", HandleConsole);
-      WebServer->on("/ax", HandleAjaxConsoleRefresh);
-      WebServer->on("/ay", HandleAjaxStatusRefresh);
-      WebServer->on("/cm", HandleHttpCommand);
       WebServer->onNotFound(HandleNotFound);
 #ifndef FIRMWARE_MINIMAL
-      WebServer->on("/cn", HandleConfiguration);
-      WebServer->on("/md", HandleModuleConfiguration);
-      WebServer->on("/wi", HandleWifiConfiguration);
-      WebServer->on("/lg", HandleLoggingConfiguration);
-      WebServer->on("/tp", HandleTemplateConfiguration);
-      WebServer->on("/co", HandleOtherConfiguration);
-      WebServer->on("/dl", HandleBackupConfiguration);
-      WebServer->on("/rs", HandleRestoreConfiguration);
       WebServer->on("/rt", HandleResetConfiguration);
-      WebServer->on("/in", HandleInformation);
+#endif // FIRMWARE_MINIMAL
+      if(HTTP_MANAGER_RESET_ONLY != type){
+        WebServer->on("/up", HandleUpgradeFirmware);
+        WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
+        WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
+        WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
+        WebServer->on("/cs", HandleConsole);
+        WebServer->on("/ax", HandleAjaxConsoleRefresh);
+        WebServer->on("/ay", HandleAjaxStatusRefresh);
+        WebServer->on("/cm", HandleHttpCommand);
+#ifndef FIRMWARE_MINIMAL
+        WebServer->on("/cn", HandleConfiguration);
+        WebServer->on("/md", HandleModuleConfiguration);
+        WebServer->on("/wi", HandleWifiConfiguration);
+        WebServer->on("/lg", HandleLoggingConfiguration);
+        WebServer->on("/tp", HandleTemplateConfiguration);
+        WebServer->on("/co", HandleOtherConfiguration);
+        WebServer->on("/dl", HandleBackupConfiguration);
+        WebServer->on("/rs", HandleRestoreConfiguration);
+        WebServer->on("/rt", HandleResetConfiguration);
+        WebServer->on("/in", HandleInformation);
 #ifdef USE_EMULATION
-      HueWemoAddHandlers();
+        HueWemoAddHandlers();
 #endif  // USE_EMULATION
-      XdrvCall(FUNC_WEB_ADD_HANDLER);
-      XsnsCall(FUNC_WEB_ADD_HANDLER);
+        XdrvCall(FUNC_WEB_ADD_HANDLER);
+        XsnsCall(FUNC_WEB_ADD_HANDLER);
 #endif  // Not FIRMWARE_MINIMAL
+      }
     }
     reset_web_log_flag = false;
     WebServer->begin(); // Web server start
@@ -529,7 +540,7 @@ void StopWebserver(void)
   }
 }
 
-void WifiManagerBegin(void)
+void WifiManagerBegin(bool reset_only)
 {
   // setup AP
   if (!global_state.wifi_down) {
@@ -553,7 +564,7 @@ void WifiManagerBegin(void)
   DnsServer->setErrorReplyCode(DNSReplyCode::NoError);
   DnsServer->start(DNS_PORT, "*", WiFi.softAPIP());
 
-  StartWebserver(HTTP_MANAGER, WiFi.softAPIP());
+  StartWebserver((reset_only ? HTTP_MANAGER_RESET_ONLY : HTTP_MANAGER), WiFi.softAPIP());
 }
 
 void PollDnsWebserver(void)
@@ -576,7 +587,7 @@ void SetHeader(void)
 
 bool WebAuthenticate(void)
 {
-  if (Settings.web_password[0] != 0) {
+  if (Settings.web_password[0] != 0 && HTTP_MANAGER_RESET_ONLY != webserver_state) {
     return WebServer->authenticate(WEB_USERNAME, Settings.web_password);
   } else {
     return true;
@@ -611,7 +622,7 @@ void ShowPage(String &page, bool auth)
   }
   page.replace(F("{j}"), info);
 
-  if (HTTP_MANAGER == webserver_state) {
+  if (WifiIsInManagerMode()) {
     if (WifiConfigCounter()) {
       page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_COUNTER));
       page += FPSTR(HTTP_COUNTER);
@@ -655,14 +666,16 @@ void WebRestart(uint8_t type)
     page.replace(F("{v}"), FPSTR(S_RESTART));
   }
 
+  bool reset_only = (HTTP_MANAGER_RESET_ONLY == webserver_state);
+
   page += FPSTR(HTTP_MSG_RSTRT);
-  if (HTTP_MANAGER == webserver_state) {
+  if (HTTP_MANAGER == webserver_state || reset_only) {
     webserver_state = HTTP_ADMIN;
   } else {
     page += FPSTR(HTTP_BTN_MAIN);
   }
   page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD));
-  ShowPage(page);
+  ShowPage(page, !reset_only);
 
   ShowWebSource(SRC_WEBGUI);
   restart_flag = 2;
@@ -690,12 +703,12 @@ void HandleRoot(void)
     return;
   }
 
-  if (HTTP_MANAGER == webserver_state) {
+  if (WifiIsInManagerMode()) {
 #ifndef FIRMWARE_MINIMAL
-    if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1"))) {
+    if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1")) && HTTP_MANAGER_RESET_ONLY != webserver_state) {
       HandleWifiLogin();
     } else {
-      if (!(Settings.web_password[0] != 0) || ((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == Settings.web_password ))) {
+      if (!(Settings.web_password[0] != 0) || ((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == Settings.web_password ) || HTTP_MANAGER_RESET_ONLY == webserver_state)) {
         HandleWifiConfiguration();
       } else {
         // wrong user and pass
@@ -874,6 +887,8 @@ void HandleConfiguration(void)
   page += String(mqtt_data);
 
   page += FPSTR(HTTP_BTN_MENU4);
+  page += FPSTR(HTTP_BTN_RESET);
+  page += FPSTR(HTTP_BTN_MENU5);
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);
 }
@@ -1125,7 +1140,7 @@ void HandleWifiConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_WIFI);
 
-  if (WebServer->hasArg("save")) {
+  if (WebServer->hasArg("save") && HTTP_MANAGER_RESET_ONLY != webserver_state) {
     WifiSaveSettings();
     WebRestart(2);
     return;
@@ -1136,90 +1151,96 @@ void HandleWifiConfiguration(void)
   page += FPSTR(HTTP_SCRIPT_WIFI);
   page += FPSTR(HTTP_HEAD_STYLE);
 
-  if (WebServer->hasArg("scan")) {
-#ifdef USE_EMULATION
-    UdpDisconnect();
-#endif  // USE_EMULATION
-    int n = WiFi.scanNetworks();
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_SCAN_DONE));
 
-    if (0 == n) {
-      AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, S_NO_NETWORKS_FOUND);
-      page += FPSTR(S_NO_NETWORKS_FOUND);
-      page += F(". " D_REFRESH_TO_SCAN_AGAIN ".");
-    } else {
-      //sort networks
-      int indices[n];
-      for (int i = 0; i < n; i++) {
-        indices[i] = i;
-      }
+  if(HTTP_MANAGER_RESET_ONLY != webserver_state){
+    if (WebServer->hasArg("scan")) {
+  #ifdef USE_EMULATION
+      UdpDisconnect();
+  #endif  // USE_EMULATION
+      int n = WiFi.scanNetworks();
+      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_SCAN_DONE));
 
-      // RSSI SORT
-      for (int i = 0; i < n; i++) {
-        for (int j = i + 1; j < n; j++) {
-          if (WiFi.RSSI(indices[j]) > WiFi.RSSI(indices[i])) {
-            std::swap(indices[i], indices[j]);
-          }
-        }
-      }
-
-      // remove duplicates ( must be RSSI sorted )
-      if (remove_duplicate_access_points) {
-        String cssid;
+      if (0 == n) {
+        AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, S_NO_NETWORKS_FOUND);
+        page += FPSTR(S_NO_NETWORKS_FOUND);
+        page += F(". " D_REFRESH_TO_SCAN_AGAIN ".");
+      } else {
+        //sort networks
+        int indices[n];
         for (int i = 0; i < n; i++) {
-          if (-1 == indices[i]) { continue; }
-          cssid = WiFi.SSID(indices[i]);
+          indices[i] = i;
+        }
+
+        // RSSI SORT
+        for (int i = 0; i < n; i++) {
           for (int j = i + 1; j < n; j++) {
-            if (cssid == WiFi.SSID(indices[j])) {
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_DUPLICATE_ACCESSPOINT " %s"), WiFi.SSID(indices[j]).c_str());
-              AddLog(LOG_LEVEL_DEBUG);
-              indices[j] = -1;  // set dup aps to index -1
+            if (WiFi.RSSI(indices[j]) > WiFi.RSSI(indices[i])) {
+              std::swap(indices[i], indices[j]);
             }
           }
         }
-      }
 
-      //display networks in page
-      for (int i = 0; i < n; i++) {
-        if (-1 == indices[i]) { continue; }  // skip dups
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"), WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), WiFi.RSSI(indices[i]));
-        AddLog(LOG_LEVEL_DEBUG);
-        int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
-
-        if (minimum_signal_quality == -1 || minimum_signal_quality < quality) {
-          String item = FPSTR(HTTP_LNK_ITEM);
-          String rssiQ;
-          rssiQ += quality;
-          item.replace(F("{v}"), htmlEscape(WiFi.SSID(indices[i])));
-          item.replace(F("{w}"), String(WiFi.channel(indices[i])));
-          item.replace(F("{r}"), rssiQ);
-          uint8_t auth = WiFi.encryptionType(indices[i]);
-          item.replace(F("{i}"), (ENC_TYPE_WEP == auth) ? F(D_WEP) : (ENC_TYPE_TKIP == auth) ? F(D_WPA_PSK) : (ENC_TYPE_CCMP == auth) ? F(D_WPA2_PSK) : (ENC_TYPE_AUTO == auth) ? F(D_AUTO) : F(""));
-          page += item;
-          delay(0);
-        } else {
-          AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_SKIPPING_LOW_QUALITY));
+        // remove duplicates ( must be RSSI sorted )
+        if (remove_duplicate_access_points) {
+          String cssid;
+          for (int i = 0; i < n; i++) {
+            if (-1 == indices[i]) { continue; }
+            cssid = WiFi.SSID(indices[i]);
+            for (int j = i + 1; j < n; j++) {
+              if (cssid == WiFi.SSID(indices[j])) {
+                snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_DUPLICATE_ACCESSPOINT " %s"), WiFi.SSID(indices[j]).c_str());
+                AddLog(LOG_LEVEL_DEBUG);
+                indices[j] = -1;  // set dup aps to index -1
+              }
+            }
+          }
         }
 
-      }
-      page += "<br/>";
-    }
-  } else {
-    page += FPSTR(HTTP_LNK_SCAN);
-  }
+        //display networks in page
+        for (int i = 0; i < n; i++) {
+          if (-1 == indices[i]) { continue; }  // skip dups
+          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"), WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), WiFi.RSSI(indices[i]));
+          AddLog(LOG_LEVEL_DEBUG);
+          int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
 
-  page += FPSTR(HTTP_FORM_WIFI);
-  page.replace(F("{h1"), Settings.hostname);
-  page.replace(F("{s1"), Settings.sta_ssid[0]);
-  page.replace(F("{s2"), Settings.sta_ssid[1]);
-  page += FPSTR(HTTP_FORM_END);
-  if (HTTP_MANAGER == webserver_state) {
+          if (minimum_signal_quality == -1 || minimum_signal_quality < quality) {
+            String item = FPSTR(HTTP_LNK_ITEM);
+            String rssiQ;
+            rssiQ += quality;
+            item.replace(F("{v}"), htmlEscape(WiFi.SSID(indices[i])));
+            item.replace(F("{w}"), String(WiFi.channel(indices[i])));
+            item.replace(F("{r}"), rssiQ);
+            uint8_t auth = WiFi.encryptionType(indices[i]);
+            item.replace(F("{i}"), (ENC_TYPE_WEP == auth) ? F(D_WEP) : (ENC_TYPE_TKIP == auth) ? F(D_WPA_PSK) : (ENC_TYPE_CCMP == auth) ? F(D_WPA2_PSK) : (ENC_TYPE_AUTO == auth) ? F(D_AUTO) : F(""));
+            page += item;
+            delay(0);
+          } else {
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_SKIPPING_LOW_QUALITY));
+          }
+
+        }
+        page += "<br/>";
+      }
+    } else {
+      page += FPSTR(HTTP_LNK_SCAN);
+    }
+
+    page += FPSTR(HTTP_FORM_WIFI);
+    page.replace(F("{h1"), Settings.hostname);
+    page.replace(F("{s1"), Settings.sta_ssid[0]);
+    page.replace(F("{s2"), Settings.sta_ssid[1]);
+    page += FPSTR(HTTP_FORM_END);
+  }
+  if (WifiIsInManagerMode()) {
     page += FPSTR(HTTP_BTN_RSTRT);
+  #ifndef FIRMWARE_MINIMAL
+    page += FPSTR(HTTP_BTN_RESET);
+  #endif // FIRMWARE_MINIMAL
   } else {
     page += FPSTR(HTTP_BTN_CONF);
   }
 //  ShowPage(page);
-  ShowPage(page, !(HTTP_MANAGER == webserver_state));
+  ShowPage(page, !(WifiIsInManagerMode()));
 }
 
 void WifiSaveSettings(void)
@@ -1236,9 +1257,9 @@ void WifiSaveSettings(void)
   WebGetArg("s2", tmp, sizeof(tmp));
   strlcpy(Settings.sta_ssid[1], (!strlen(tmp)) ? STA_SSID2 : tmp, sizeof(Settings.sta_ssid[1]));
   WebGetArg("p1", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_pwd[0], (!strlen(tmp)) ? "" : (!strcmp(tmp,D_ASTERISK_PWD)) ? Settings.sta_pwd[0] : tmp, sizeof(Settings.sta_pwd[0]));
+  strlcpy(Settings.sta_pwd[0], (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? Settings.sta_pwd[0] : tmp, sizeof(Settings.sta_pwd[0]));
   WebGetArg("p2", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_pwd[1], (!strlen(tmp)) ? "" : (!strcmp(tmp,D_ASTERISK_PWD)) ? Settings.sta_pwd[1] : tmp, sizeof(Settings.sta_pwd[1]));
+  strlcpy(Settings.sta_pwd[1], (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? Settings.sta_pwd[1] : tmp, sizeof(Settings.sta_pwd[1]));
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_SSID "2 %s"),
     Settings.hostname, Settings.sta_ssid[0], Settings.sta_ssid[1]);
   AddLog(LOG_LEVEL_INFO);
@@ -1475,7 +1496,7 @@ void HandleResetConfiguration(void)
   page += F("<div style='text-align:center;'>" D_CONFIGURATION_RESET "</div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
-  ShowPage(page);
+  ShowPage(page, HTTP_MANAGER_RESET_ONLY != webserver_state);
 
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RESET " 1"));
   ExecuteWebCommand(svalue, SRC_WEBGUI);
@@ -1935,8 +1956,6 @@ void HandleHttpCommand(void)
 {
   if (!HttpCheckPriviledgedAccess(false)) { return; }
 
-  char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
-
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
 
   uint8_t valid = 1;
@@ -1951,9 +1970,9 @@ void HandleHttpCommand(void)
   String message = F("{\"" D_RSLT_WARNING "\":\"");
   if (valid) {
     uint8_t curridx = web_log_index;
-    WebGetArg("cmnd", svalue, sizeof(svalue));
-    if (strlen(svalue)) {
-      ExecuteWebCommand(svalue, SRC_WEBCOMMAND);
+    String svalue = WebServer->arg("cmnd");
+    if (svalue.length() && (svalue.length() < INPUT_BUFFER_SIZE)) {
+      ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
 
       if (web_log_index != curridx) {
         uint8_t counter = curridx;
@@ -1968,6 +1987,7 @@ void HandleHttpCommand(void)
             if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
               if (message.length() > 1) { message += F(","); }
               size_t JSONlen = len - (JSON - tmp);
+              if (JSONlen > sizeof(mqtt_data)) { JSONlen = sizeof(mqtt_data); }
               strlcpy(mqtt_data, JSON +1, JSONlen -2);
               message += mqtt_data;
             }
@@ -2010,19 +2030,19 @@ void HandleAjaxConsoleRefresh(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  char svalue[INPUT_BUFFER_SIZE];  // Large to serve Backlog
   bool cflg = true;
   uint8_t counter = 0;                // Initial start, should never be 0 again
 
-  WebGetArg("c1", svalue, sizeof(svalue));
-  if (strlen(svalue)) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), svalue);
+  String svalue = WebServer->arg("c1");
+  if (svalue.length() && (svalue.length() < INPUT_BUFFER_SIZE)) {
+    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), svalue.c_str());
     AddLog(LOG_LEVEL_INFO);
-    ExecuteWebCommand(svalue, SRC_WEBCONSOLE);
+    ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
   }
 
-  WebGetArg("c2", svalue, sizeof(svalue));
-  if (strlen(svalue)) { counter = atoi(svalue); }
+  char stmp[10];
+  WebGetArg("c2", stmp, sizeof(stmp));
+  if (strlen(stmp)) { counter = atoi(stmp); }
 
   bool last_reset_web_log_flag = reset_web_log_flag;
   // mqtt_data used as scratch space
@@ -2047,6 +2067,7 @@ void HandleAjaxConsoleRefresh(void)
         } else {
           cflg = true;
         }
+        if (len > sizeof(mqtt_data) -2) { len = sizeof(mqtt_data); }
         strlcpy(mqtt_data, tmp, len);
         message += mqtt_data; // mqtt_data used as scratch space
       }
@@ -2087,7 +2108,7 @@ void HandleNotFound(void)
 /* Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
 bool CaptivePortal(void)
 {
-  if ((HTTP_MANAGER == webserver_state) && !ValidIpAddress(WebServer->hostHeader())) {
+  if ((WifiIsInManagerMode()) && !ValidIpAddress(WebServer->hostHeader())) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_REDIRECTED));
 
     WebServer->sendHeader(F("Location"), String("http://") + WebServer->client().localIP().toString(), true);
@@ -2161,25 +2182,26 @@ int WebSend(char *buffer)
                                               // buffer = |  [  192.168.178.86  :  80  ,  admin  :  joker  ]    POWER1 ON   |
   host = strtok_r(buffer, "]", &command);     // host = |  [  192.168.178.86  :  80  ,  admin  :  joker  |, command = |    POWER1 ON   |
   if (host && command) {
-    String url = F("http:");                  // url = |http:|
+    String url = F("http://");                // url = |http://|
     host = Trim(host);                        // host = |[  192.168.178.86  :  80  ,  admin  :  joker|
     host++;                                   // host = |  192.168.178.86  :  80  ,  admin  :  joker| - Skip [
     host = strtok_r(host, ",", &user);        // host = |  192.168.178.86  :  80  |, user = |  admin  :  joker|
     host = strtok_r(host, ":", &port);        // host = |  192.168.178.86  |, port = |  80  |
     host = Trim(host);                        // host = |192.168.178.86|
+    url += host;                              // url = |http://192.168.178.86|
+
     if (port) {
       port = Trim(port);                      // port = |80|
-      url += port;                            // url = |http:80|
+      url += F(":");                          // url = |http://192.168.178.86:|
+      url += port;                            // url = |http://192.168.178.86:80|
     }
-    url += F("//");                           // url = |http://| or |http:80//|
-    url += host;                              // url = |http://192.168.178.86|
 
     if (user) {
       user = strtok_r(user, ":", &password);  // user = |  admin  |, password = |  joker|
       user = Trim(user);                      // user = |admin|
       if (password) { password = Trim(password); }  // password = |joker|
     }
-    
+
     command = Trim(command);                  // command = |POWER1 ON| or |/any/link/starting/with/a/slash.php?log=123|
     if (command[0] != '/') {
       url += F("/cm?");                       // url = |http://192.168.178.86/cm?|
@@ -2197,8 +2219,14 @@ int WebSend(char *buffer)
 //snprintf_P(log_data, sizeof(log_data), PSTR("DBG: Uri |%s|"), url.c_str());
 //AddLog(LOG_LEVEL_DEBUG);
 
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
     HTTPClient http;
     if (http.begin(UrlEncode(url))) {         // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
+#else
+    WiFiClient http_client;
+    HTTPClient http;
+    if (http.begin(http_client, UrlEncode(url))) {  // UrlEncode(url) = |http://192.168.178.86/cm?cmnd=POWER1%20ON|
+#endif
       int http_code = http.GET();             // Start connection and send HTTP header
       if (http_code > 0) {                    // http_code will be negative on error
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
@@ -2209,8 +2237,7 @@ int WebSend(char *buffer)
           for (uint16_t i = 0; i < result.length(); i++) {
             char text = result.charAt(i);
             if (text > 31) {                  // Remove control characters like linefeed
-              mqtt_data[j] = result.charAt(i);
-              j++;
+              mqtt_data[j++] = text;
               if (j == sizeof(mqtt_data) -2) { break; }
             }
           }
@@ -2222,7 +2249,7 @@ int WebSend(char *buffer)
       } else {
         status = 2;                           // Connection failed
       }
-      http.end();
+      http.end();                             // Clean up connection data
     } else {
       status = 3;                             // Host not found or connection error
     }

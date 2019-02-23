@@ -866,9 +866,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         }
         restart_flag = 2;
       }
-      uint8_t module = Settings.module;
-      if (USER_MODULE == Settings.module) { module = 0; } else { module++; }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_SVALUE, command, module, ModuleName().c_str());
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE_SVALUE, command, ModuleNr(), ModuleName().c_str());
     }
     else if (CMND_MODULES == command_code) {
       for (uint8_t i = 0; i <= MAXMODULE; i++) {
@@ -963,41 +961,12 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
           }
         }
       }
-      else if (data_len > 9) {     // Workaround exception if empty JSON like {} - Needs checks
-        StaticJsonBuffer<350> jb;  // 331 from https://arduinojson.org/v5/assistant/
-        JsonObject& obj = jb.parseObject(dataBuf);
-        if (!obj.success()) {
+      else if (data_len > 9) {          // Workaround exception if empty JSON like {} - Needs checks
+        if (JsonTemplate(dataBuf)) {    // Free 336 bytes StaticJsonBuffer stack space by moving code to function
+          if (USER_MODULE == Settings.module) { restart_flag = 2; }
+        } else {
           snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_INVALID_JSON);
           error = true;
-        } else {
-          // All parameters are optional allowing for partial changes
-          const char* name = obj[D_JSON_NAME];
-          if (name != nullptr) {
-            strlcpy(Settings.user_template.name, name, sizeof(Settings.user_template.name));
-          }
-          if (obj[D_JSON_GPIO].success()) {
-            for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
-              Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
-            }
-          }
-          if (obj[D_JSON_FLAG].success()) {
-            uint8_t flag = obj[D_JSON_FLAG] | 0;
-            memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
-          }
-          if (obj[D_JSON_BASE].success()) {
-            uint8_t base = obj[D_JSON_BASE];
-            if ((0 == base) || (base >= MAXMODULE)) { base = 17; } else { base--; }
-            Settings.user_template_base = base;  // Default WEMOS
-          }
-
-          // Validate GPIO
-//          for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
-            // For now do not allow non-user configurable GPIO
-//            if ((Settings.user_template.gp.io[i] > GPIO_FIX_START) && (Settings.user_template.gp.io[i] < GPIO_USER)) {
-//              Settings.user_template.gp.io[i] = GPIO_NONE;
-//            };
-//          }
-          if (USER_MODULE == Settings.module) { restart_flag = 2; }
         }
       }
       if (!error) { TemplateJson(); }
@@ -1173,7 +1142,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.sta_ssid[index -1]);
     }
     else if ((CMND_PASSWORD == command_code) && (index > 0) && (index <= 2)) {
-      if ((data_len > 0) && (data_len < sizeof(Settings.sta_pwd[0]))) {
+      if ((data_len > 4 || SC_CLEAR == Shortcut(dataBuf) || SC_DEFAULT == Shortcut(dataBuf)) && (data_len < sizeof(Settings.sta_pwd[0]))) {
         strlcpy(Settings.sta_pwd[index -1], (SC_CLEAR == Shortcut(dataBuf)) ? "" : (SC_DEFAULT == Shortcut(dataBuf)) ? (1 == index) ? STA_PASS1 : STA_PASS2 : dataBuf, sizeof(Settings.sta_pwd[0]));
         Settings.sta_active = index -1;
         restart_flag = 2;
@@ -1463,10 +1432,10 @@ bool SendKey(uint8_t key, uint8_t device, uint8_t state)
     }
 #ifdef USE_DOMOTICZ
     if (!(DomoticzSendKey(key, device, state, strlen(mqtt_data)))) {
-      MqttPublishDirect(stopic, (key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain);
+      MqttPublishDirect(stopic, ((key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain) && (state != 3 || !Settings.flag3.no_hold_retain));
     }
 #else
-    MqttPublishDirect(stopic, (key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain);
+    MqttPublishDirect(stopic, ((key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain) && (state != 3 || !Settings.flag3.no_hold_retain));
 #endif  // USE_DOMOTICZ
     result = !Settings.flag3.button_switch_force_local;
   } else {
@@ -1595,8 +1564,6 @@ void StopAllPowerBlink(void)
 
 void ExecuteCommand(char *cmnd, int source)
 {
-  char stopic[CMDSZ];
-  char svalue[INPUT_BUFFER_SIZE];
   char *start;
   char *token;
 
@@ -1608,9 +1575,13 @@ void ExecuteCommand(char *cmnd, int source)
     start = strrchr(token, '/');   // Skip possible cmnd/sonoff/ preamble
     if (start) { token = start +1; }
   }
+  uint16_t size = (token != NULL) ? strlen(token) : 0;
+  char stopic[size +2];  // / + \0
   snprintf_P(stopic, sizeof(stopic), PSTR("/%s"), (token == NULL) ? "" : token);
+
   token = strtok(NULL, "");
-//  snprintf_P(svalue, sizeof(svalue), (token == NULL) ? "" : token);  // Fails with command FullTopic home/%prefix%/%topic% as it processes %p of %prefix%
+  size = (token != NULL) ? strlen(token) : 0;
+  char svalue[size +1];
   strlcpy(svalue, (token == NULL) ? "" : token, sizeof(svalue));       // Fixed 5.8.0b
   MqttDataHandler(stopic, (uint8_t*)svalue, strlen(svalue));
 }
@@ -1639,7 +1610,7 @@ void PublishStatus(uint8_t payload)
       snprintf_P(stemp2, sizeof(stemp2), PSTR("%s%s%d" ), stemp2, (i > 0 ? "," : ""), Settings.switchmode[i]);
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS "\":{\"" D_CMND_MODULE "\":%d,\"" D_CMND_FRIENDLYNAME "\":[%s],\"" D_CMND_TOPIC "\":\"%s\",\"" D_CMND_BUTTONTOPIC "\":\"%s\",\"" D_CMND_POWER "\":%d,\"" D_CMND_POWERONSTATE "\":%d,\"" D_CMND_LEDSTATE "\":%d,\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\"" D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d}}"),
-      (USER_MODULE == Settings.module)?0:Settings.module +1, stemp, mqtt_topic, Settings.button_topic, power, Settings.poweronstate, Settings.ledstate, Settings.save_data, Settings.flag.save_state, Settings.switch_topic, stemp2, Settings.flag.mqtt_button_retain, Settings.flag.mqtt_switch_retain, Settings.flag.mqtt_sensor_retain, Settings.flag.mqtt_power_retain);
+      ModuleNr(), stemp, mqtt_topic, Settings.button_topic, power, Settings.poweronstate, Settings.ledstate, Settings.save_data, Settings.flag.save_state, Settings.switch_topic, stemp2, Settings.flag.mqtt_button_retain, Settings.flag.mqtt_switch_retain, Settings.flag.mqtt_sensor_retain, Settings.flag.mqtt_power_retain);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS));
   }
 
@@ -2223,7 +2194,8 @@ void ArduinoOTAInit(void)
 void SerialInput(void)
 {
   while (Serial.available()) {
-    yield();
+//    yield();
+    delay(0);
     serial_in_byte = Serial.read();
 
 /*-------------------------------------------------------------------------------------------*\

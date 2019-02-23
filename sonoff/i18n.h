@@ -248,6 +248,7 @@
   #define D_WCFG_4_RETRY "Retry"
   #define D_WCFG_5_WAIT "Wait"
   #define D_WCFG_6_SERIAL "Serial"
+  #define D_WCFG_7_WIFIMANAGER_RESET_ONLY "ManagerRst"
 #define D_CMND_FRIENDLYNAME "FriendlyName"
 #define D_CMND_SWITCHMODE "SwitchMode"
 #define D_CMND_INTERLOCK "Interlock"
@@ -540,7 +541,8 @@ const char kWifiConfig[MAX_WIFI_OPTION][WCFG_MAX_STRING_LENGTH] PROGMEM = {
   D_WCFG_3_WPSCONFIG,
   D_WCFG_4_RETRY,
   D_WCFG_5_WAIT,
-  D_WCFG_6_SERIAL };
+  D_WCFG_6_SERIAL,
+  D_WCFG_7_WIFIMANAGER_RESET_ONLY };
 const char kPrefixes[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
   D_CMND,
   D_STAT,

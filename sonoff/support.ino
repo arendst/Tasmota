@@ -699,6 +699,13 @@ void ShowSource(int source)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
+uint8_t ModuleNr()
+{
+  // 0    = User module (255)
+  // 1 up = Template module 0 up
+  return (USER_MODULE == Settings.module) ? 0 : Settings.module +1;
+}
+
 String AnyModuleName(uint8_t index)
 {
   if (USER_MODULE == index) {
@@ -720,7 +727,6 @@ void ModuleGpios(myio *gp)
 
   uint8_t src[sizeof(mycfgio)];
   if (USER_MODULE == Settings.module) {
-//    src = Settings.user_template.gp;
     memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
   } else {
     memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
@@ -845,14 +851,40 @@ bool GetUsedInModule(uint8_t val, uint8_t *arr)
   return false;
 }
 
+bool JsonTemplate(const char* dataBuf)
+{
+  StaticJsonBuffer<350> jb;  // 331 from https://arduinojson.org/v5/assistant/
+  JsonObject& obj = jb.parseObject(dataBuf);
+  if (!obj.success()) { return false; }
+
+  // All parameters are optional allowing for partial changes
+  const char* name = obj[D_JSON_NAME];
+  if (name != nullptr) {
+    strlcpy(Settings.user_template.name, name, sizeof(Settings.user_template.name));
+  }
+  if (obj[D_JSON_GPIO].success()) {
+    for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+      Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
+    }
+  }
+  if (obj[D_JSON_FLAG].success()) {
+    uint8_t flag = obj[D_JSON_FLAG] | 0;
+    memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
+  }
+  if (obj[D_JSON_BASE].success()) {
+    uint8_t base = obj[D_JSON_BASE];
+    if ((0 == base) || (base >= MAXMODULE)) { base = 17; } else { base--; }
+    Settings.user_template_base = base;  // Default WEMOS
+  }
+  return true;
+}
+
 void TemplateJson()
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
   for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (i>0)?",":"", Settings.user_template.gp.io[i]);
   }
-//  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":\"%d (%s)\"}"),
-//    mqtt_data, Settings.user_template.flag, Settings.user_template_base +1, AnyModuleName(Settings.user_template_base).c_str());
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"),
     mqtt_data, Settings.user_template.flag, Settings.user_template_base +1);
 }
