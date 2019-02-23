@@ -1,4 +1,4 @@
-/* 6.4.1.18 20191221
+/* 6.4.1.18 20190221
  * Fix some exceptions and watchdogs due to lack of stack space - part 1 (#5215)
  * Fix some exceptions and watchdogs due to lack of stack space - part 2
  * Add command SetOption62 0/1 to disable retain on Button or Swith hold messages (#5299)
