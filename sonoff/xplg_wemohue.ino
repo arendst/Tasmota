@@ -405,21 +405,21 @@ void HandleUpnpEvent(void)
     state_xml.replace(F("Set"), F("Get"));
   }
   state_xml.replace("{x1", String(bitRead(power, devices_present -1)));
-  WebServer->send(200, FPSTR(HDR_CTYPE_XML), state_xml);
+  WSSend(200, CT_XML, state_xml);
 }
 
 void HandleUpnpService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_EVENT_SERVICE));
 
-  WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), FPSTR(WEMO_EVENTSERVICE_XML));
+  WSSend(200, CT_PLAIN, FPSTR(WEMO_EVENTSERVICE_XML));
 }
 
 void HandleUpnpMetaService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_META_SERVICE));
 
-  WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), FPSTR(WEMO_METASERVICE_XML));
+  WSSend(200, CT_PLAIN, FPSTR(WEMO_METASERVICE_XML));
 }
 
 void HandleUpnpSetupWemo(void)
@@ -430,7 +430,7 @@ void HandleUpnpSetupWemo(void)
   setup_xml.replace("{x1", Settings.friendlyname[0]);
   setup_xml.replace("{x2", WemoUuid());
   setup_xml.replace("{x3", WemoSerialnumber());
-  WebServer->send(200, FPSTR(HDR_CTYPE_XML), setup_xml);
+  WSSend(200, CT_XML, setup_xml);
 }
 
 /*********************************************************************************************\
@@ -532,7 +532,7 @@ void HandleUpnpSetupHue(void)
   description_xml.replace("{x1", WiFi.localIP().toString());
   description_xml.replace("{x2", HueUuid());
   description_xml.replace("{x3", HueSerialnumber());
-  WebServer->send(200, FPSTR(HDR_CTYPE_XML), description_xml);
+  WSSend(200, CT_XML, description_xml);
 }
 
 void HueNotImplemented(String *path)
@@ -540,7 +540,7 @@ void HueNotImplemented(String *path)
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_HUE_API_NOT_IMPLEMENTED " (%s)"), path->c_str());
   AddLog(LOG_LEVEL_DEBUG_MORE);
 
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), "{}");
+  WSSend(200, CT_JSON, "{}");
 }
 
 void HueConfigResponse(String *response)
@@ -559,7 +559,7 @@ void HueConfig(String *path)
 {
   String response = "";
   HueConfigResponse(&response);
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+  WSSend(200, CT_JSON, response);
 }
 
 bool g_gotct = false;
@@ -610,7 +610,7 @@ void HueGlobalConfig(String *path)
   response += F("},\"groups\":{},\"schedules\":{},\"config\":");
   HueConfigResponse(&response);
   response += "}";
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+  WSSend(200, CT_JSON, response);
 }
 
 void HueAuthentication(String *path)
@@ -618,7 +618,7 @@ void HueAuthentication(String *path)
   char response[38];
 
   snprintf_P(response, sizeof(response), PSTR("[{\"success\":{\"username\":\"%s\"}}]"), GetHueUserId().c_str());
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+  WSSend(200, CT_JSON, response);
 }
 
 void HueLights(String *path)
@@ -627,15 +627,16 @@ void HueLights(String *path)
  * http://sonoff/api/username/lights/1/state?1={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
  */
   String response;
-  uint8_t device = 1;
-  uint16_t tmp = 0;
+  int code = 200;
   float bri = 0;
   float hue = 0;
   float sat = 0;
+  uint16_t tmp = 0;
   uint16_t ct = 0;
   bool resp = false;
   bool on = false;
   bool change = false;
+  uint8_t device = 1;
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
 
   path->remove(0,path->indexOf("/lights"));          // Remove until /lights
@@ -651,7 +652,6 @@ void HueLights(String *path)
       }
     }
     response += "}";
-    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
   else if (path->endsWith("/state")) {               // Got ID/state
     path->remove(0,8);                               // Remove /lights/
@@ -761,8 +761,6 @@ void HueLights(String *path)
     else {
       response = FPSTR(HUE_ERROR_JSON);
     }
-
-    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
   else if(path->indexOf("/lights/") >= 0) {          // Got /lights/ID
     path->remove(0,8);                               // Remove /lights/
@@ -773,11 +771,12 @@ void HueLights(String *path)
     response += F("{\"state\":");
     HueLightStatus1(device, &response);
     HueLightStatus2(device, &response);
-    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
   else {
-    WebServer->send(406, FPSTR(HDR_CTYPE_JSON), "{}");
+    response = "{}";
+    code = 406;
   }
+  WSSend(code, CT_JSON, response);
 }
 
 void HueGroups(String *path)
@@ -799,7 +798,7 @@ void HueGroups(String *path)
     response += F("}");
   }
 
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+  WSSend(200, CT_JSON, response);
 }
 
 void HandleHueApi(String *path)

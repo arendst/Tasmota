@@ -49,6 +49,9 @@ using namespace axTLS;
 */
 #include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
 
+uint32_t wifi_last_event = 0;       // Last wifi connection event
+uint32_t wifi_downtime = 0;         // Wifi down duration
+uint16_t wifi_link_count = 0;       // Number of wifi re-connect
 uint8_t wifi_counter;
 uint8_t wifi_retry_init;
 uint8_t wifi_retry;
@@ -171,9 +174,9 @@ void WifiConfig(uint8_t type)
     }
 #endif  // USE_WPS
 #ifdef USE_WEBSERVER
-    else if (WIFI_MANAGER == wifi_config_type) {
+    else if (WIFI_MANAGER == wifi_config_type || WIFI_MANAGER_RESET_ONLY == wifi_config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES));
-      WifiManagerBegin();
+      WifiManagerBegin(WIFI_MANAGER_RESET_ONLY == wifi_config_type);
     }
 #endif  // USE_WEBSERVER
   }
@@ -222,7 +225,8 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
   WiFiSetSleepMode();
-//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }
+//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
+//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
 //  WiFi.setAutoReconnect(true);
   switch (flag) {
@@ -339,13 +343,26 @@ void WifiBeginAfterScan()
   }
 }
 
+uint16_t WifiLinkCount()
+{
+  return wifi_link_count;
+}
+
+String WifiDowntime()
+{
+  return GetDuration(wifi_downtime);
+}
+
 void WifiSetState(uint8_t state)
 {
   if (state == global_state.wifi_down) {
     if (state) {
       rules_flag.wifi_connected = 1;
+      wifi_link_count++;
+      wifi_downtime += UpTime() - wifi_last_event;
     } else {
       rules_flag.wifi_disconnected = 1;
+      wifi_last_event = UpTime();
     }
   }
   global_state.wifi_down = state ^1;
@@ -501,12 +518,12 @@ void WifiCheck(uint8_t param)
           }
         }
 
-#ifdef BE_MINIMAL
+#ifdef FIRMWARE_MINIMAL
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
           ota_state_flag = 3;
         }
-#endif  // BE_MINIMAL
+#endif  // FIRMWARE_MINIMAL
 
 #ifdef USE_DISCOVERY
         if (Settings.flag3.mdns_enabled) {

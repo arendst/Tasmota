@@ -75,7 +75,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)
     uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60 - Enable normal sleep instead of dynamic sleep
     uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61 - Force local operation when button/switch topic is set
-    uint32_t no_pullup : 1;                // bit 12 (v6.4.1.7)  - SetOption62 - Force no pull-up (0 = (no)pull-up, 1 = no pull-up)
+    uint32_t no_hold_retain : 1;           // bit 12 (v6.4.1.19) - SetOption62 - Don't use retain flag on HOLD messages
     uint32_t spare13 : 1;
     uint32_t spare14 : 1;
     uint32_t spare15 : 1;
@@ -176,7 +176,7 @@ typedef union {
     uint8_t mhz19b_abc_disable : 1;        // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
   };
 } SensorCfg1;
-    
+
 /*
 struct SYSCFG {
   unsigned long cfg_holder;                // 000 Pre v6 header
@@ -326,11 +326,12 @@ struct SYSCFG {
   Mcp230xxCfg   mcp230xx_config[16];       // 6F6
   uint8_t       mcp230xx_int_prio;         // 716
   SensorCfg1    SensorBits1;               // 717  On/Off settings used by Sensor Commands
-
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
+  uint8_t       user_template_base;        // 71F
+  mytmplt       user_template;             // 720  29 bytes
 
-  uint8_t       free_71F[117];             // 71F
+  uint8_t       free_73D[87];              // 73D
 
   uint32_t      drivers[3];                // 794
   uint32_t      monitors;                  // 7A0

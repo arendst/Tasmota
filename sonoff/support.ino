@@ -154,7 +154,7 @@ char* subStr(char* dest, char* str, const char *delim, int index)
   return sub;
 }
 
-double CharToDouble(char *str)
+double CharToDouble(const char *str)
 {
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
@@ -275,7 +275,7 @@ char* RemoveSpace(char* p)
       *write++ = ch;
     }
   }
-  *write = '\0';
+//  *write = '\0';  // Removed 20190223 as it buffer overflows on no isspace found - no need either
   return p;
 }
 
@@ -304,27 +304,6 @@ char* UpperCase_P(char* dest, const char* source)
   }
   return dest;
 }
-
-/*
-char* LTrim(char* p)
-{
-  while ((*p != '\0') && (isblank(*p))) {
-    p++;                                     // Trim leading spaces
-  }
-  return p;
-}
-
-char* RTrim(char* p)
-{
-  char* q = p + strlen(p) -1;
-  while ((q >= p) && (isblank(*q))) {
-    q--;                                     // Trim trailing spaces
-  }
-  q++;
-  *q = '\0';
-  return p;
-}
-*/
 
 char* Trim(char* p)
 {
@@ -505,51 +484,6 @@ String PressureUnit(void)
   return (Settings.flag.pressure_conversion) ? String(D_UNIT_MILLIMETER_MERCURY) : String(D_UNIT_PRESSURE);
 }
 
-String AnyModuleName(uint8_t index)
-{
-  return FPSTR(kModules[index].name);
-}
-
-String ModuleName()
-{
-  return FPSTR(kModules[Settings.module].name);
-}
-
-void ModuleGpios(myio *gp)
-{
-  uint8_t *dest = (uint8_t *)gp;
-  memset(dest, GPIO_NONE, sizeof(myio));
-
-  uint8_t src[sizeof(mycfgio)];
-  memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
-  // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
-
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
-
-  for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
-    if (i < 6) {
-      dest[i] = src[i];     // GPIO00 - GPIO05
-    }
-    else if (i < 8) {
-      dest[i +3] = src[i];  // GPIO09 - GPIO10
-    }
-    else {
-      dest[i +4] = src[i];  // GPIO12 - GPIO16 and ADC0
-    }
-  }
-  // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
-
-//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
-}
-
-gpio_flag ModuleFlag()
-{
-  gpio_flag flag;
-
-  memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
-  return flag;
-}
-
 void SetGlobalValues(float temperature, float humidity)
 {
   global_update = uptime;
@@ -701,6 +635,161 @@ int GetStateNumber(char *state_text)
   return state_number;
 }
 
+void SetSerialBaudrate(int baudrate)
+{
+  Settings.baudrate = baudrate / 1200;
+  if (Serial.baudRate() != baudrate) {
+    if (seriallog_level) {
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
+      AddLog(LOG_LEVEL_INFO);
+    }
+    delay(100);
+    Serial.flush();
+    Serial.begin(baudrate, serial_config);
+    delay(10);
+    Serial.println();
+  }
+}
+
+void ClaimSerial(void)
+{
+  serial_local = true;
+  AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
+  SetSeriallog(LOG_LEVEL_NONE);
+  baudrate = Serial.baudRate();
+  Settings.baudrate = baudrate / 1200;
+}
+
+void SerialSendRaw(char *codes)
+{
+  char *p;
+  char stemp[3];
+  uint8_t code;
+
+  int size = strlen(codes);
+
+  while (size > 0) {
+    snprintf(stemp, sizeof(stemp), codes);
+    code = strtol(stemp, &p, 16);
+    Serial.write(code);
+    size -= 2;
+    codes += 2;
+  }
+}
+
+uint32_t GetHash(const char *buffer, size_t size)
+{
+  uint32_t hash = 0;
+  for (uint16_t i = 0; i <= size; i++) {
+    hash += (uint8_t)*buffer++ * (i +1);
+  }
+  return hash;
+}
+
+void ShowSource(int source)
+{
+  if ((source > 0) && (source < SRC_MAX)) {
+    char stemp1[20];
+    snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
+    AddLog(LOG_LEVEL_DEBUG);
+  }
+}
+
+/*********************************************************************************************\
+ * GPIO Module and Template management
+\*********************************************************************************************/
+
+uint8_t ModuleNr()
+{
+  // 0    = User module (255)
+  // 1 up = Template module 0 up
+  return (USER_MODULE == Settings.module) ? 0 : Settings.module +1;
+}
+
+String AnyModuleName(uint8_t index)
+{
+  if (USER_MODULE == index) {
+    return String(Settings.user_template.name);
+  } else {
+    return FPSTR(kModules[index].name);
+  }
+}
+
+String ModuleName()
+{
+  return AnyModuleName(Settings.module);
+}
+
+void ModuleGpios(myio *gp)
+{
+  uint8_t *dest = (uint8_t *)gp;
+  memset(dest, GPIO_NONE, sizeof(myio));
+
+  uint8_t src[sizeof(mycfgio)];
+  if (USER_MODULE == Settings.module) {
+    memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
+  } else {
+    memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
+  }
+  // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
+
+  uint8_t j = 0;
+  for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+    if (6 == i) { j = 9; }
+    if (8 == i) { j = 12; }
+    dest[j] = src[i];
+    j++;
+  }
+  // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
+}
+
+gpio_flag ModuleFlag()
+{
+  gpio_flag flag;
+
+  if (USER_MODULE == Settings.module) {
+    flag = Settings.user_template.flag;
+  } else {
+    memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
+  }
+
+  return flag;
+}
+
+void ModuleDefault(uint8_t module)
+{
+  if (USER_MODULE == module) { module = WEMOS; }  // Generic
+  Settings.user_template_base = module;
+  memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
+}
+
+void SetModuleType()
+{
+  my_module_type = (USER_MODULE == Settings.module) ? Settings.user_template_base : Settings.module;
+}
+
+uint8_t ValidPin(uint8_t pin, uint8_t gpio)
+{
+  uint8_t result = gpio;
+
+  if (((pin > 5) && (pin < 9)) || (11 == pin)) {
+    result = GPIO_NONE;  // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
+  }
+  if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {
+    if ((pin == 9) || (pin == 10)) { result = GPIO_NONE; }  // Disable possible flash GPIO9 and GPIO10
+  }
+  return result;
+}
+
+bool ValidGPIO(uint8_t pin, uint8_t gpio)
+{
+  return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
+}
+
 bool GetUsedInModule(uint8_t val, uint8_t *arr)
 {
   int offset = 0;
@@ -762,73 +851,42 @@ bool GetUsedInModule(uint8_t val, uint8_t *arr)
   return false;
 }
 
-void SetSerialBaudrate(int baudrate)
+bool JsonTemplate(const char* dataBuf)
 {
-  Settings.baudrate = baudrate / 1200;
-  if (Serial.baudRate() != baudrate) {
-    if (seriallog_level) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
-      AddLog(LOG_LEVEL_INFO);
+  StaticJsonBuffer<350> jb;  // 331 from https://arduinojson.org/v5/assistant/
+  JsonObject& obj = jb.parseObject(dataBuf);
+  if (!obj.success()) { return false; }
+
+  // All parameters are optional allowing for partial changes
+  const char* name = obj[D_JSON_NAME];
+  if (name != nullptr) {
+    strlcpy(Settings.user_template.name, name, sizeof(Settings.user_template.name));
+  }
+  if (obj[D_JSON_GPIO].success()) {
+    for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+      Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
     }
-    delay(100);
-    Serial.flush();
-    Serial.begin(baudrate, serial_config);
-    delay(10);
-    Serial.println();
   }
+  if (obj[D_JSON_FLAG].success()) {
+    uint8_t flag = obj[D_JSON_FLAG] | 0;
+    memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
+  }
+  if (obj[D_JSON_BASE].success()) {
+    uint8_t base = obj[D_JSON_BASE];
+    if ((0 == base) || (base >= MAXMODULE)) { base = 17; } else { base--; }
+    Settings.user_template_base = base;  // Default WEMOS
+  }
+  return true;
 }
 
-void ClaimSerial(void)
+void TemplateJson()
 {
-  serial_local = true;
-  AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
-  SetSeriallog(LOG_LEVEL_NONE);
-  baudrate = Serial.baudRate();
-  Settings.baudrate = baudrate / 1200;
-}
-
-void SerialSendRaw(char *codes)
-{
-  char *p;
-  char stemp[3];
-  uint8_t code;
-
-  int size = strlen(codes);
-
-  while (size > 0) {
-    snprintf(stemp, sizeof(stemp), codes);
-    code = strtol(stemp, &p, 16);
-    Serial.write(code);
-    size -= 2;
-    codes += 2;
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
+  for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (i>0)?",":"", Settings.user_template.gp.io[i]);
   }
-}
-
-uint32_t GetHash(const char *buffer, size_t size)
-{
-  uint32_t hash = 0;
-  for (uint16_t i = 0; i <= size; i++) {
-    hash += (uint8_t)*buffer++ * (i +1);
-  }
-  return hash;
-}
-
-void ShowSource(int source)
-{
-  if ((source > 0) && (source < SRC_MAX)) {
-    char stemp1[20];
-    snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
-    AddLog(LOG_LEVEL_DEBUG);
-  }
-}
-
-uint8_t ValidGPIO(uint8_t pin, uint8_t gpio)
-{
-  uint8_t result = gpio;
-  if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {
-    if ((pin == 9) || (pin == 10)) { result = GPIO_NONE; }  // Disable possible flash GPIO9 and GPIO10
-  }
-  return result;
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"),
+    mqtt_data, Settings.user_template.flag, Settings.user_template_base +1);
 }
 
 /*********************************************************************************************\

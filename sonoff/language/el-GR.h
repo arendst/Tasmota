@@ -288,6 +288,8 @@
 #define D_TELEMETRY_PERIOD "Περίοδος τηλεμετρίας"
 
 #define D_OTHER_PARAMETERS "Άλλες παράμετροι"
+#define D_TEMPLATE "Template"
+#define D_ACTIVATE "Activate"
 #define D_WEB_ADMIN_PASSWORD "Κωδικός διαχειριστή"
 #define D_MQTT_ENABLE "Ενεργοποίηση MQTT"
 #define D_FRIENDLY_NAME "Φιλική ονομασία"
@@ -295,6 +297,14 @@
 #define D_HUE_BRIDGE "Hue Bridge"
 #define D_SINGLE_DEVICE "μονή συσκευή"
 #define D_MULTI_DEVICE "πολλαπλές συσκευές"
+
+#define D_CONFIGURE_TEMPLATE "Configure Template"
+#define D_TEMPLATE_PARAMETERS "Template parameters"
+#define D_TEMPLATE_NAME "Name"
+#define D_BASE_TYPE "Based on"
+#define D_TEMPLATE_FLAGS "Options"
+#define D_ALLOW_ADC0 "ADC0 input"
+#define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "Αποθήκευση ρυθμίσεων"
 #define D_CONFIGURATION_SAVED "Οι ρυθμίσεις αποθηκεύτηκαν"
@@ -483,6 +493,7 @@
 
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Κανένα"
+#define D_SENSOR_USER          "User"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
@@ -553,6 +564,17 @@
 #define D_SENSOR_MCP39F5_RST   "MCP39F5 Rst"
 #define D_SENSOR_CSE7766_TX    "CSE7766 Tx"
 #define D_SENSOR_CSE7766_RX    "CSE7766 Rx"
+#define D_SENSOR_PN532_TX      "PN532 Tx"
+#define D_SENSOR_PN532_RX      "PN532 Rx"
+#define D_SENSOR_SM16716_CLK   "SM16716 CLK"
+#define D_SENSOR_SM16716_DAT   "SM16716 DAT"
+#define D_SENSOR_SM16716_POWER "SM16716 PWR"
+#define D_SENSOR_MY92X1_DI     "MY92x1 DI"
+#define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
+#define D_SENSOR_ARIRFRCV      "ALux IrRcv"
+#define D_SENSOR_TXD           "Serial Tx"
+#define D_SENSOR_RXD           "Serial Rx"
+#define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
 
 // Units
 #define D_UNIT_AMPERE "A"

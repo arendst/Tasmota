@@ -1,9 +1,45 @@
-/* 6.4.1.14 20190203
+/* 6.4.1.18 20190221
+ * Fix some exceptions and watchdogs due to lack of stack space - part 1 (#5215)
+ * Fix some exceptions and watchdogs due to lack of stack space - part 2
+ * Add command SetOption62 0/1 to disable retain on Button or Swith hold messages (#5299)
+ * Add option WifiConfig 7 to allow reset of device in AP mode without admin password (#5297)
+ * Fix command WebSend when using a port number as regression from 6.4.1.17 (#5304)
+ *
+ * 6.4.1.17 20190214
+ * Change template update by removing possibility to add user module config keeping template as defined (#5222)
+ * Fix regression from 6.4.1.16 where GPIO9 and GPIO10 connected devices did not work (#5197)
+ * Fix GUI wifi password acception starting with asteriks (*) (#5231, #5242)
+ * Add rule expression enabled  by define USE_EXPRESSION in my_user_config.h (#5210)
+ * Add Configure Template menu option to GUI (#5222)
+ * Remove command SetOption62 as it's functionality is replaced by user changing the device template (#5255)
+ * Add property LinkCount to state and status 11 message representing number of Wifi Link re-connections
+ * Add property MqttCount to status 6 message representing number of Mqtt re-connections
+ * Add property Downtime to state and status 11 message representing the duration of wifi connection loss
+ * Fix command WebSend intermittent results (#5273)
+ *
+ * 6.4.1.16 20190211
+ * Initial support for online template change using command Template or GUI Configure Other (#5177)
+ * Add parameter CFG_HOLDER to status 1 message (#5206)
+ * Update GUI
+ *
+ * 6.4.1.15 20190208
+ * Change image name BE_MINIMAL to FIRMWARE_MINIMAL (#5106)
+ * Change image names USE_xyz to FIRMWARE_xyz (#5106)
+ * Add command SerialDelimiter 128 to filter reception of only characters between ASCII 32 and 127 (#5131)
+ * Add status message to former declined group commands (#5145)
+ *
+ * 6.4.1.14 20190203
  * Add SetOption32 until SetOption49 diagnostic information to Status 3 report as replacement for second property value in SetOption property name
  * Add Resolution property to Status 3 report providing previous SetOption second value property
  * Fix IR local echo
  * Add user configuration of HLW8012 and HJL-01/BL0937 Energy Monitoring as used in Sonoff S31, Pow Ra and many Tuya based devices
  * Add user configuration of MCP39F501 Energy Monitoring as used in Shelly2
+ * Add support for multiple ADS1115 I2C devices (#5083)
+ * Add rule support for "==", "!=" ">=" and "<=" (#5122)
+ * Add Hass status sensor (#5139)
+ * Change GUI weblog solving possible empty screens (#5154)
+ * Change PN532 support from I2C to Serial for more stability (#5162)
+ * Add MHZ19 Temperature as Domoticz Temperature selection (#5128)
  *
  * 6.4.1.13 20190130
  * Add command SetOption36 to control boot loop default restoration (#4645, #5063)

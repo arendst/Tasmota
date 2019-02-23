@@ -752,20 +752,21 @@ void KnxSensor(uint8_t sensor_type, float value)
 const char S_CONFIGURE_KNX[] PROGMEM = D_CONFIGURE_KNX;
 
 const char HTTP_BTN_MENU_KNX[] PROGMEM =
-  "<br/><form action='kn' method='get'><button>" D_CONFIGURE_KNX "</button></form>";
+  "<p><form action='kn' method='get'><button>" D_CONFIGURE_KNX "</button></form></p>";
 
 const char HTTP_FORM_KNX[] PROGMEM =
-  "<fieldset><legend style='text-align:left;'><b>&nbsp;" D_KNX_PARAMETERS "&nbsp;</b></legend><form method='post' action='kn'>"
+  "<fieldset><legend style='text-align:left;'><b>&nbsp;" D_KNX_PARAMETERS "&nbsp;</b>"
+  "</legend><form method='post' action='kn'>"
   "<br/><center>"
   "<b>" D_KNX_PHYSICAL_ADDRESS " </b>"
   "<input style='width:12%;' type='number' name='area' min='0' max='15' value='{kna'> . "
   "<input style='width:12%;' type='number' name='line' min='0' max='15' value='{knl'> . "
   "<input style='width:12%;' type='number' name='member' min='0' max='255' value='{knm'>"
   "<br/><br/>" D_KNX_PHYSICAL_ADDRESS_NOTE "<br/><br/>"
-  "<input style='width:10%;' id='b1' name='b1' type='checkbox'";
+  "<input id='b1' name='b1' type='checkbox'";
 
 const char HTTP_FORM_KNX1[] PROGMEM =
-  "><b>" D_KNX_ENABLE "   </b><input style='width:10%;' id='b2' name='b2' type='checkbox'";
+  "><b>" D_KNX_ENABLE "</b>&emsp;<input id='b2' name='b2' type='checkbox'";
 
 const char HTTP_FORM_KNX2[] PROGMEM =
   "><b>" D_KNX_ENHANCEMENT "</b><br/></center><br/>"
@@ -979,18 +980,18 @@ void HandleKNXConfiguration(void)
     page.replace( F("</script>"),
       F("function GAwarning()"
         "{"
-          "var GA_FNUM = document.getElementById('GA_FNUM');"
-          "var GA_AREA = document.getElementById('GA_AREA');"
-          "var GA_FDEF = document.getElementById('GA_FDEF');"
+          "var GA_FNUM = eb('GA_FNUM');"
+          "var GA_AREA = eb('GA_AREA');"
+          "var GA_FDEF = eb('GA_FDEF');"
           "if ( GA_FNUM != null && GA_FNUM.value == '0' && GA_AREA.value == '0' && GA_FDEF.value == '0' ) {"
             "alert('" D_KNX_WARNING "');"
           "}"
         "}"
         "function CBwarning()"
         "{"
-          "var CB_FNUM = document.getElementById('CB_FNUM');"
-          "var CB_AREA = document.getElementById('CB_AREA');"
-          "var CB_FDEF = document.getElementById('CB_FDEF');"
+          "var CB_FNUM = eb('CB_FNUM');"
+          "var CB_AREA = eb('CB_AREA');"
+          "var CB_FDEF = eb('CB_FDEF');"
           "if ( CB_FNUM != null && CB_FNUM.value == '0' && CB_AREA.value == '0' && CB_FDEF.value == '0' ) {"
             "alert('" D_KNX_WARNING "');"
           "}"

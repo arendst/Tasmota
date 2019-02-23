@@ -232,7 +232,7 @@ String GetSun(uint8_t dawn)
   return String(stime);
 }
 
-uint16_t GetSunMinutes(uint8_t dawn)
+uint16_t SunMinutes(uint8_t dawn)
 {
   uint8_t hour[2];
   uint8_t minute[2];
@@ -517,7 +517,7 @@ bool TimerCommand(void)
 const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
 
 const char HTTP_BTN_MENU_TIMER[] PROGMEM =
-  "<br/><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form>";
+  "<p><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form></p>";
 
 const char HTTP_TIMER_SCRIPT[] PROGMEM =
   "var pt=[],ct=99;"
@@ -593,8 +593,8 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "if(ct<99){st();}"                                            // Save changes
     "ct=t;"
     "o=document.getElementsByClassName('tl');"                    // Restore style to all tabs/buttons
-    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background-color:#ccc;color:#fff;font-weight:normal;\"}"
-    "e.style.cssText=\"background-color:#fff;color:#000;font-weight:bold;\";"  // Change style to tab/button used to open content
+    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background-color:#999;color:#fff;font-weight:normal;\"}"
+    "e.style.cssText=\"background-color:transparent;color:#000;font-weight:bold;\";"  // Change style to tab/button used to open content
     "s=pt[ct];"                                                   // Get parameters from array
 #ifdef USE_SUNRISE
     "p=(s>>29)&3;eb('b'+p).checked=1;"                            // Set mode
@@ -637,36 +637,34 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "o=qs('#mw');for(i=0;i<=15;i++){ce((i<10)?('0'+i):i,o);}"     // Create window minutes select options
     "o=qs('#d1');for(i=0;i<}1;i++){ce(i+1,o);}"                   // Create outputs
     "var a='" D_DAY3LIST "';"
-    "s='';for(i=0;i<7;i++){s+=\"<input style='width:5%;' id='w\"+i+\"' name='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b>\"}"
+    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' name='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b> \"}"
     "eb('ds').innerHTML=s;"                                       // Create weekdays
     "eb('dP').click();"                                           // Get the element with id='dP' and click on it
   "}";
 const char HTTP_TIMER_STYLE[] PROGMEM =
-  ".tl{float:left;border-radius:0;border:1px solid #fff;padding:1px;width:6.25%;}"
-#ifdef USE_SUNRISE
-  "input[type='radio']{width:13px;height:24px;margin-top:-1px;margin-right:8px;vertical-align:middle;}"
-#endif
+  ".tl{float:left;border-radius:0;border:1px solid #f2f2f2;padding:1px;width:6.25%;}"  // Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE (transparent won't work)
   "</style>";
 const char HTTP_FORM_TIMER[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
-  "<br/><input style='width:5%;' id='e0' name='e0' type='checkbox'{e0><b>" D_TIMER_ENABLE "</b><br/><br/><hr/>"
+  "<br/><input id='e0' name='e0' type='checkbox'{e0><b>" D_TIMER_ENABLE "</b><br/><br/><hr/>"
   "<input id='t0' name='t0' value='";
 const char HTTP_FORM_TIMER1[] PROGMEM =
   "' hidden><div id='bt' name='bt'></div><br/><br/><br/>"
   "<div id='oa' name='oa'></div><br/>"
   "<div>"
-  "<input style='width:5%;' id='a0' name='a0' type='checkbox'><b>" D_TIMER_ARM "</b>&emsp;"
-  "<input style='width:5%;' id='r0' name='r0' type='checkbox'><b>" D_TIMER_REPEAT "</b>"
+  "<input id='a0' name='a0' type='checkbox'><b>" D_TIMER_ARM "</b>&emsp;"
+  "<input id='r0' name='r0' type='checkbox'><b>" D_TIMER_REPEAT "</b>"
   "</div><br/>"
   "<div>"
 #ifdef USE_SUNRISE
-  "<fieldset style='width:299px;margin:auto;text-align:left;border:0;'>"
+  "<fieldset style='width:299px;margin:auto;text-align:left;border:0;'>"  // 299 used in page.replace(F("299")
   "<input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b><br/>"
   "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b> (}8)<br/>"
   "<input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b> (}9)<br/>"
   "</fieldset>"
+  "<p></p>"
   "<span><select style='width:46px;' id='dr' name='dr'></select></span>"
   "&nbsp;"
 #else

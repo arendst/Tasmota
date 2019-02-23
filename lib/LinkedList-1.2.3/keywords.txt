@@ -1,26 +1,28 @@
 #######################################
-# Syntax Coloring Map for TasmotaSerial
-# (esp8266)
+# Syntax Coloring
 #######################################
 
 #######################################
 # Datatypes (KEYWORD1)
 #######################################
 
-TasmotaSerial	KEYWORD1
+LinkedList	KEYWORD1
+ListNode	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-begin	KEYWORD2
-read	KEYWORD2
-write	KEYWORD2
-available	KEYWORD2
-flush	KEYWORD2
-peek	KEYWORD2
+size	KEYWORD2
+add	KEYWORD2
+unshift	KEYWORD2
+set	KEYWORD2
+remove	KEYWORD2
+pop	KEYWORD2
+shift	KEYWORD2
+get	KEYWORD2
+clear	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
-

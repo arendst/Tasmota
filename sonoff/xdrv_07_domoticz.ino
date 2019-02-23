@@ -100,7 +100,7 @@ void MqttPublishDomoticzPowerState(uint8_t device)
   if (Settings.flag.mqtt_enabled) {
     if ((device < 1) || (device > devices_present)) { device = 1; }
     if (Settings.domoticz_relay_idx[device -1]) {
-      if ((SONOFF_IFAN02 == Settings.module) && (device > 1)) {
+      if ((SONOFF_IFAN02 == my_module_type) && (device > 1)) {
         // Fan handled by MqttPublishDomoticzFanState
       } else {
         char svalue[8];  // Dimmer value
@@ -129,7 +129,7 @@ void DomoticzMqttUpdate(void)
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = Settings.domoticz_update_timer;
       for (uint8_t i = 1; i <= devices_present; i++) {
-        if ((SONOFF_IFAN02 == Settings.module) && (i > 1)) {
+        if ((SONOFF_IFAN02 == my_module_type) && (i > 1)) {
           MqttPublishDomoticzFanState();
           break;
         } else {
@@ -215,7 +215,7 @@ bool DomoticzMqttData(void)
         if (idx == Settings.domoticz_relay_idx[i]) {
           bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
-          if ((SONOFF_IFAN02 == Settings.module) && (1 == i)) {  // Idx 2 is fanspeed
+          if ((SONOFF_IFAN02 == my_module_type) && (1 == i)) {  // Idx 2 is fanspeed
             uint8_t svalue = 0;
             if (domoticz.containsKey("svalue1")) {
               svalue = domoticz["svalue1"];
@@ -431,11 +431,13 @@ void DomoticzSensorPowerEnergy(int power, char *energy)
 const char S_CONFIGURE_DOMOTICZ[] PROGMEM = D_CONFIGURE_DOMOTICZ;
 
 const char HTTP_BTN_MENU_DOMOTICZ[] PROGMEM =
-  "<br/><form action='" WEB_HANDLE_DOMOTICZ "' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form>";
+  "<p><form action='" WEB_HANDLE_DOMOTICZ "' method='get'><button>" D_CONFIGURE_DOMOTICZ "</button></form></p>";
 
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend><form method='post' action='" WEB_HANDLE_DOMOTICZ "'>"
-  "<br/><table>";
+  "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend>"
+  "<form method='post' action='" WEB_HANDLE_DOMOTICZ "'>"
+  "<br/>"
+  "<table>";
 const char HTTP_FORM_DOMOTICZ_RELAY[] PROGMEM =
   "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " {1</b></td><td style='width:70px'><input id='r{1' name='r{1' placeholder='0' value='{2'></td></tr>"
   "<tr><td style='width:260px'><b>" D_DOMOTICZ_KEY_IDX " {1</b></td><td style='width:70px'><input id='k{1' name='k{1' placeholder='0' value='{3'></td></tr>";
@@ -475,7 +477,7 @@ void HandleDomoticzConfiguration(void)
       page.replace("{4", String((int)Settings.domoticz_switch_idx[i]));
     }
     page.replace("{1", String(i +1));
-    if ((SONOFF_IFAN02 == Settings.module) && (1 == i)) { break; }
+    if ((SONOFF_IFAN02 == my_module_type) && (1 == i)) { break; }
   }
   for (int i = 0; i < DZ_MAX_SENSORS; i++) {
     page += FPSTR(HTTP_FORM_DOMOTICZ_SENSOR);
