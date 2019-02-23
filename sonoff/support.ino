@@ -275,7 +275,7 @@ char* RemoveSpace(char* p)
       *write++ = ch;
     }
   }
-  *write = '\0';
+//  *write = '\0';  // Removed 20190223 as it buffer overflows on no isspace found - no need either
   return p;
 }
 

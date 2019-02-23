@@ -1972,8 +1972,7 @@ void HandleHttpCommand(void)
     uint8_t curridx = web_log_index;
     String svalue = WebServer->arg("cmnd");
     if (svalue.length() && (svalue.length() < INPUT_BUFFER_SIZE)) {
-      ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCONSOLE);
-
+      ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCOMMAND);
       if (web_log_index != curridx) {
         uint8_t counter = curridx;
         message = F("{");
@@ -2173,7 +2172,6 @@ int WebSend(char *buffer)
   // [sonoff,admin:joker] /any/link/starting/with/a/slash.php?log=123 --> Sends http://sonoff/any/link/starting/with/a/slash.php?log=123
 
   char *host;
-  char *port;
   char *user;
   char *password;
   char *command;
@@ -2182,35 +2180,22 @@ int WebSend(char *buffer)
                                               // buffer = |  [  192.168.178.86  :  80  ,  admin  :  joker  ]    POWER1 ON   |
   host = strtok_r(buffer, "]", &command);     // host = |  [  192.168.178.86  :  80  ,  admin  :  joker  |, command = |    POWER1 ON   |
   if (host && command) {
+    RemoveSpace(host);                        // host = |[192.168.178.86:80,admin:joker|
+    host++;                                   // host = |192.168.178.86:80,admin:joker| - Skip [
+    host = strtok_r(host, ",", &user);        // host = |192.168.178.86:80|, user = |admin:joker|
     String url = F("http://");                // url = |http://|
-    host = Trim(host);                        // host = |[  192.168.178.86  :  80  ,  admin  :  joker|
-    host++;                                   // host = |  192.168.178.86  :  80  ,  admin  :  joker| - Skip [
-    host = strtok_r(host, ",", &user);        // host = |  192.168.178.86  :  80  |, user = |  admin  :  joker|
-    host = strtok_r(host, ":", &port);        // host = |  192.168.178.86  |, port = |  80  |
-    host = Trim(host);                        // host = |192.168.178.86|
-    url += host;                              // url = |http://192.168.178.86|
-
-    if (port) {
-      port = Trim(port);                      // port = |80|
-      url += F(":");                          // url = |http://192.168.178.86:|
-      url += port;                            // url = |http://192.168.178.86:80|
-    }
-
-    if (user) {
-      user = strtok_r(user, ":", &password);  // user = |  admin  |, password = |  joker|
-      user = Trim(user);                      // user = |admin|
-      if (password) { password = Trim(password); }  // password = |joker|
-    }
+    url += host;                              // url = |http://192.168.178.86:80|
 
     command = Trim(command);                  // command = |POWER1 ON| or |/any/link/starting/with/a/slash.php?log=123|
     if (command[0] != '/') {
       url += F("/cm?");                       // url = |http://192.168.178.86/cm?|
-      if (user && password) {
-        url += F("user=");                    // url = |http://192.168.178.86/cm?user=|
-        url += user;                          // url = |http://192.168.178.86/cm?user=admin|
-        url += F("&password=");               // url = |http://192.168.178.86/cm?user=admin&password=|
-        url += password;                      // url = |http://192.168.178.86/cm?user=admin&password=joker|
-        url += F("&");                        // url = |http://192.168.178.86/cm?user=admin&password=joker&|
+      if (user) {
+        user = strtok_r(user, ":", &password);  // user = |admin|, password = |joker|
+        if (user && password) {
+          char userpass[128];
+          snprintf_P(userpass, sizeof(userpass), PSTR("user=%s&password=%s&"), user, password);
+          url += userpass;                    // url = |http://192.168.178.86/cm?user=admin&password=joker&|
+        }
       }
       url += F("cmnd=");                      // url = |http://192.168.178.86/cm?cmnd=| or |http://192.168.178.86/cm?user=admin&password=joker&cmnd=|
     }
