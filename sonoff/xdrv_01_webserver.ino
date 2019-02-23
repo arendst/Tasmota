@@ -438,6 +438,13 @@ const char HDR_CTYPE_XML[] PROGMEM = "text/xml";
 const char HDR_CTYPE_JSON[] PROGMEM = "application/json";
 const char HDR_CTYPE_STREAM[] PROGMEM = "application/octet-stream";
 
+const char kUploadErrors[] PROGMEM =
+  D_UPLOAD_ERR_1 "|" D_UPLOAD_ERR_2 "|" D_UPLOAD_ERR_3 "|" D_UPLOAD_ERR_4 "|" D_UPLOAD_ERR_5 "|" D_UPLOAD_ERR_6 "|" D_UPLOAD_ERR_7 "|" D_UPLOAD_ERR_8 "|" D_UPLOAD_ERR_9
+#ifdef USE_RF_FLASH
+  "|" D_UPLOAD_ERR_10 "|" D_UPLOAD_ERR_11 "|" D_UPLOAD_ERR_12 "|" D_UPLOAD_ERR_13
+#endif
+  ;
+
 #define DNS_PORT 53
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
 
@@ -1712,24 +1719,14 @@ void HandleUploadDone(void)
   page += F("<div style='text-align:center;'><b>" D_UPLOAD " <font color='");
   if (upload_error) {
     page += F("red'>" D_FAILED "</font></b><br/><br/>");
-    switch (upload_error) {
-      case 1: strncpy_P(error, PSTR(D_UPLOAD_ERR_1), sizeof(error)); break;
-      case 2: strncpy_P(error, PSTR(D_UPLOAD_ERR_2), sizeof(error)); break;
-      case 3: strncpy_P(error, PSTR(D_UPLOAD_ERR_3), sizeof(error)); break;
-      case 4: strncpy_P(error, PSTR(D_UPLOAD_ERR_4), sizeof(error)); break;
-      case 5: strncpy_P(error, PSTR(D_UPLOAD_ERR_5), sizeof(error)); break;
-      case 6: strncpy_P(error, PSTR(D_UPLOAD_ERR_6), sizeof(error)); break;
-      case 7: strncpy_P(error, PSTR(D_UPLOAD_ERR_7), sizeof(error)); break;
-      case 8: strncpy_P(error, PSTR(D_UPLOAD_ERR_8), sizeof(error)); break;
-      case 9: strncpy_P(error, PSTR(D_UPLOAD_ERR_9), sizeof(error)); break;
 #ifdef USE_RF_FLASH
-      case 10: strncpy_P(error, PSTR(D_UPLOAD_ERR_10), sizeof(error)); break;
-      case 11: strncpy_P(error, PSTR(D_UPLOAD_ERR_11), sizeof(error)); break;
-      case 12: strncpy_P(error, PSTR(D_UPLOAD_ERR_12), sizeof(error)); break;
-      case 13: strncpy_P(error, PSTR(D_UPLOAD_ERR_13), sizeof(error)); break;
+    if (upload_error < 14) {
+#else
+    if (upload_error < 10) {
 #endif
-      default:
-        snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), upload_error);
+      GetTextIndexed(error, sizeof(error), upload_error -1, kUploadErrors);
+    } else {
+      snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), upload_error);
     }
     page += error;
     snprintf_P(log_data, sizeof(log_data), PSTR(D_UPLOAD ": %s"), error);
