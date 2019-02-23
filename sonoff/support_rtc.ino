@@ -333,11 +333,6 @@ uint32_t LocalTime(void)
   return local_time;
 }
 
-uint32_t UtcTime(void)
-{
-  return utc_time;
-}
-
 uint32_t Midnight(void)
 {
   return midnight;
