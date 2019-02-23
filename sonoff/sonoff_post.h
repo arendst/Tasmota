@@ -37,10 +37,10 @@ void WifiWpsStatusCallback(wps_cb_status status);
 }
 #endif
 
-//#ifdef USE_KNX  // Enabling this will fail compilation. It has no impact if not used. (20180417)
+#ifdef USE_KNX  // Enabling this will fail compilation. It has no impact if not used. (20180417)
 #include <esp-knx-ip.h>
 void KNX_CB_Action(message_t const &msg, void *arg);
-//#endif  // USE_KNX
+#endif  // USE_KNX
 
 /*********************************************************************************************\
  * Default global defines
