@@ -432,11 +432,8 @@ const char HTTP_END[] PROGMEM =
 const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg("o", tmp, sizeof(tmp));
 const char HTTP_DEVICE_STATE[] PROGMEM = "%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>";  // {c} = %'><div style='text-align:center;font-weight:
 
-const char HDR_CTYPE_PLAIN[] PROGMEM = "text/plain";
-const char HDR_CTYPE_HTML[] PROGMEM = "text/html";
-const char HDR_CTYPE_XML[] PROGMEM = "text/xml";
-const char HDR_CTYPE_JSON[] PROGMEM = "application/json";
-const char HDR_CTYPE_STREAM[] PROGMEM = "application/octet-stream";
+enum CTypes { CT_HTML, CT_PLAIN, CT_XML, CT_JSON, CT_STREAM };
+const char kContentTypes[] PROGMEM = "text/html|text/plain|text/xml|application/json|application/octet-stream";
 
 const char kUploadErrors[] PROGMEM =
   D_UPLOAD_ERR_1 "|" D_UPLOAD_ERR_2 "|" D_UPLOAD_ERR_3 "|" D_UPLOAD_ERR_4 "|" D_UPLOAD_ERR_5 "|" D_UPLOAD_ERR_6 "|" D_UPLOAD_ERR_7 "|" D_UPLOAD_ERR_8 "|" D_UPLOAD_ERR_9
@@ -582,6 +579,12 @@ void PollDnsWebserver(void)
 
 /*********************************************************************************************/
 
+void WSSend(int code, int ctype, const String& content)
+{
+  char ct[25];  // strlen("application/octet-stream") +1 = Longest Content type string
+  WebServer->send(code, GetTextIndexed(ct, sizeof(ct), ctype, kContentTypes), content);
+}
+
 void SetHeader(void)
 {
   WebServer->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
@@ -641,7 +644,7 @@ void ShowPage(String &page, bool auth)
 
   ShowFreeMem(PSTR("ShowPage"));
 
-  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), page);
+  WSSend(200, CT_HTML, page);
 }
 
 void ShowPage(String &page)
@@ -857,7 +860,7 @@ void HandleAjaxStatusRefresh(void)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s</tr></table>"), mqtt_data);
   }
-  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), mqtt_data);
+  WSSend(200, CT_HTML, mqtt_data);
 }
 
 bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
@@ -921,7 +924,7 @@ void HandleTemplateConfiguration(void)
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, AnyModuleName(midx).c_str(), midx +1);
       page += mqtt_data;
     }
-    WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), page);
+    WSSend(200, CT_PLAIN, page);
     return;
   }
 
@@ -958,7 +961,7 @@ void HandleTemplateConfiguration(void)
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,%d,%d"), mqtt_data, flag, Settings.user_template_base);  // FLAG: ,1  BASE: ,17
     page += mqtt_data;
 
-    WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), page);
+    WSSend(200, CT_PLAIN, page);
     return;
   }
 
@@ -1050,7 +1053,7 @@ void HandleModuleConfiguration(void)
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, AnyModuleName(midx).c_str(), vidx);
       page += mqtt_data;
     }
-    WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), page);
+    WSSend(200, CT_PLAIN, page);
     return;
   }
 
@@ -1063,7 +1066,7 @@ void HandleModuleConfiguration(void)
         page += mqtt_data;
       }
     }
-    WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), page);
+    WSSend(200, CT_PLAIN, page);
     return;
   }
 
@@ -1461,7 +1464,7 @@ void HandleBackupConfiguration(void)
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, Settings.friendlyname[0]), my_version);
   WebServer->sendHeader(F("Content-Disposition"), attachment);
 
-  WebServer->send(200, FPSTR(HDR_CTYPE_STREAM), "");
+  WSSend(200, CT_STREAM, "");
 
   uint16_t cfg_crc = Settings.cfg_crc;
   Settings.cfg_crc = GetSettingsCrc();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
@@ -1944,7 +1947,7 @@ void HandlePreflightRequest(void)
   WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
   WebServer->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST"));
   WebServer->sendHeader(F("Access-Control-Allow-Headers"), F("authorization"));
-  WebServer->send(200, FPSTR(HDR_CTYPE_HTML), "");
+  WSSend(200, CT_HTML, "");
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -2002,7 +2005,7 @@ void HandleHttpCommand(void)
     message += F(D_NEED_USER_AND_PASSWORD "\"}");
   }
   SetHeader();
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), message);
+  WSSend(200, CT_JSON, message);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -2072,7 +2075,7 @@ void HandleAjaxConsoleRefresh(void)
     } while (counter != web_log_index);
   }
   message += F("\1");
-  WebServer->send(200, FPSTR(HDR_CTYPE_XML), message);
+  WSSend(200, CT_XML, message);
 }
 
 /********************************************************************************************/
@@ -2097,7 +2100,7 @@ void HandleNotFound(void)
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s %s: %s\n"), mqtt_data, WebServer->argName(i).c_str(), WebServer->arg(i).c_str());
     }
     SetHeader();
-    WebServer->send(404, FPSTR(HDR_CTYPE_PLAIN), mqtt_data);
+    WSSend(404, CT_PLAIN, mqtt_data);
   }
 }
 
@@ -2108,7 +2111,7 @@ bool CaptivePortal(void)
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_REDIRECTED));
 
     WebServer->sendHeader(F("Location"), String("http://") + WebServer->client().localIP().toString(), true);
-    WebServer->send(302, FPSTR(HDR_CTYPE_PLAIN), "");  // Empty content inhibits Content-length header so we have to close the socket ourselves.
+    WSSend(302, CT_PLAIN, "");  // Empty content inhibits Content-length header so we have to close the socket ourselves.
     WebServer->client().stop();  // Stop is needed because we sent no content length
     return true;
   }
