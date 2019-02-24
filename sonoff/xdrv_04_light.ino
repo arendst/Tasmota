@@ -86,6 +86,8 @@ struct LCwColor {
 #define MAX_FIXED_COLD_WARM  4
 const LCwColor kFixedColdWarm[MAX_FIXED_COLD_WARM] PROGMEM = { 0,0, 255,0, 0,255, 128,128 };
 
+uint8_t remap[5];
+
 uint8_t ledTable[] = {
   0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -563,6 +565,26 @@ void LightInit(void)
   light_power = 0;
   light_update = 1;
   light_wakeup_active = 0;
+
+  uint8_t param = Settings.param[P_RGB_REMAP];
+  if(param > 119){
+    param = 119;
+  }
+  std::vector<uint8_t> tmp = {0,1,2,3,4};
+  remap[0] = tmp[param / 24];
+  tmp.erase(tmp.begin() + (param / 24));
+  param = param % 24;
+  remap[1] = tmp[(param / 6)];
+  tmp.erase(tmp.begin() + (param / 6));
+  param = param % 6;
+  remap[2] = tmp[(param / 2)];
+  tmp.erase(tmp.begin() + (param / 2));
+  param = param % 2;
+  remap[3] = tmp[param];
+  remap[4] = tmp[1-param];
+
+  //snprintf_P(log_data, sizeof(log_data), "%d colors: %d %d %d %d %d",Settings.param[P_RGB_REMAP], remap[0],remap[1],remap[2],remap[3],remap[4]);
+  //AddLog(LOG_LEVEL_DEBUG);
 }
 
 void LightSetColorTemp(uint16_t ct)
@@ -964,16 +986,11 @@ void LightAnimate(void)
         cur_col[i] = (Settings.light_correction) ? ledTable[cur_col[i]] : cur_col[i];
       }
 
-      // RGB remapping
-      uint8_t rgb_mapping = Settings.param[P_RGB_REMAP];
-
-      if (rgb_mapping != RGB_REMAP_RGB) {
-        uint8_t orig_col[3];
-        memcpy(orig_col, cur_col, sizeof(orig_col));
-        for (uint8_t i = 0; i < 3; i++) {
-          cur_col[i] = orig_col[rgb_mapping % 3];
-          rgb_mapping /= 3;
-        }
+      // color remapping
+      uint8_t orig_col[5];
+      memcpy(orig_col, cur_col, sizeof(orig_col));
+      for (uint8_t i = 0; i < 5; i++) {
+        cur_col[i] = orig_col[remap[i]];
       }
 
       for (uint8_t i = 0; i < light_subtype; i++) {

@@ -171,17 +171,6 @@ typedef unsigned long power_t;              // Power (Relay) type
 
 #define LT_SM16716             16           // Lights that use SM16716 will have this bit set in light_type
 
-// Remap constants are 3-digit ternary numbers, each digit tells where the corresponding color component is mapped *from*
-// digit 0 = ( n    % 3) tells where the red is mapped from (0=red, 1=green, 2=blue)
-// digit 1 = ((n/3) % 3) tells where the green is mapped from
-// digit 2 = ((n/9) % 3) tells where the blue is mapped from
-#define RGB_REMAP_RGB          (0*1 + 1*3 + 2*9)
-#define RGB_REMAP_RBG          (0*1 + 2*3 + 1*9)
-#define RGB_REMAP_GRB          (1*1 + 0*3 + 2*9)
-#define RGB_REMAP_GBR          (1*1 + 2*3 + 0*9)
-#define RGB_REMAP_BRG          (2*1 + 0*3 + 1*9)
-#define RGB_REMAP_BGR          (2*1 + 1*3 + 0*9)
-
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino - soon obsolete
 #define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf - obsolete but define is present for debugging purposes

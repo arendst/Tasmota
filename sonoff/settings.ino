@@ -587,7 +587,6 @@ void SettingsDefaultSet2(void)
 //  Settings.flag.stop_flash_rotate = 0;
   Settings.save_data = SAVE_DATA;
   Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;
-  Settings.param[P_RGB_REMAP] = RGB_REMAP_RGB;
   Settings.sleep = APP_SLEEP;
   if (Settings.sleep < 50) {
     Settings.sleep = 50;                // Default to 50 for sleep, for now
@@ -1055,9 +1054,6 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06040110) {
       ModuleDefault(WEMOS);
-    }
-    if (Settings.version < 0x06040112) {
-      Settings.param[P_RGB_REMAP] = RGB_REMAP_RGB;
     }
 
     Settings.version = VERSION;
