@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.4.1.17
+ * Updated until v6.4.1.18
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -147,8 +147,8 @@
 #define D_STD_TIME "STD"
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Masque sous-réseau"
-#define D_SUBSCRIBE_TO "Souscrire à"
-#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
+#define D_SUBSCRIBE_TO "S'abonner à"
+#define D_UNSUBSCRIBE_FROM "Se désabonner de"
 #define D_SUCCESSFUL "Réussi"
 #define D_SUNRISE "Lever du jour"
 #define D_SUNSET "Tombée de la nuit"
@@ -305,7 +305,7 @@
 #define D_BASE_TYPE "Basé sur"
 #define D_TEMPLATE_FLAGS "Options"
 #define D_ALLOW_ADC0 "Entrée ADC0"
-#define D_ALLOW_PULLUP "Choix de pull-up utilisateur"
+#define D_ALLOW_PULLUP "Pull-up utilisateur"
 
 #define D_SAVE_CONFIGURATION "Enregistrer la configuration"
 #define D_CONFIGURATION_SAVED "Configuration enregistrée"
