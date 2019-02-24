@@ -687,7 +687,7 @@ const char kSensorQuantity[] PROGMEM =
   D_JSON_CO2 "|"                                                                // ppm
   D_JSON_FREQUENCY ;                                                            // Hz
 
-void DisplayJsonValue(const char *topic, const char* device, const char* mkey, const char* value)
+void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value)
 {
   char quantity[TOPSZ];
   char buffer[Settings.display_cols[0] +1];
@@ -699,7 +699,7 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
 
   memset(spaces, 0x20, sizeof(spaces));
   spaces[sizeof(spaces) -1] = '\0';
-  snprintf_P(source, sizeof(source), PSTR("%s/%s%s"), topic, mkey, spaces);  // pow1/Voltage
+  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), topic, (strlen(topic))?"/":"", mkey, spaces);  // pow1/Voltage or Voltage if topic is empty (local sensor)
 
   int quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
   if ((-1 == quantity_code) || !strcmp_P(mkey, S_RSLT_POWER)) {  // Ok: Power, Not ok: POWER
@@ -867,7 +867,9 @@ bool DisplayMqttData(void)
 void DisplayLocalSensor(void)
 {
   if ((Settings.display_mode &0x02) && (0 == tele_period)) {
-    DisplayAnalyzeJson(mqtt_topic, mqtt_data);
+    char no_topic[1] = { 0 };
+//    DisplayAnalyzeJson(mqtt_topic, mqtt_data);  // Add local topic
+    DisplayAnalyzeJson(no_topic, mqtt_data);    // Discard any topic
   }
 }
 
