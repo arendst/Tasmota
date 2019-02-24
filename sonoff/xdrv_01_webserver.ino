@@ -996,11 +996,11 @@ void HandleTemplateConfiguration(void)
 
 void TemplateSaveSettings(void)
 {
-  char tmp[15];                                      // WebGetArg NAME and GPIO/BASE/FLAG byte value
-  char webindex[5];                                  // WebGetArg name
-  char svalue[128];                                  // Template command string
+  char tmp[sizeof(Settings.user_template.name)];            // WebGetArg NAME and GPIO/BASE/FLAG byte value
+  char webindex[5];                                         // WebGetArg name
+  char svalue[128];                                         // Template command string
 
-  WebGetArg("s1", tmp, sizeof(tmp));                 // NAME
+  WebGetArg("s1", tmp, sizeof(tmp));                        // NAME
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
 
   uint8_t j = 0;
@@ -1008,7 +1008,7 @@ void TemplateSaveSettings(void)
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), j);
-    WebGetArg(webindex, tmp, sizeof(tmp));              // GPIO
+    WebGetArg(webindex, tmp, sizeof(tmp));                  // GPIO
     uint8_t gpio = atoi(tmp);
     snprintf_P(svalue, sizeof(svalue), PSTR("%s%s%d"), svalue, (i>0)?",":"", gpio);
     j++;
@@ -1017,14 +1017,13 @@ void TemplateSaveSettings(void)
   uint8_t flag = 0;
   for (uint8_t i = 0; i < GPIO_FLAG_USED; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("c%d"), i);
-    uint8_t state = WebServer->hasArg(webindex) << i;   // FLAG
+    uint8_t state = WebServer->hasArg(webindex) << i;       // FLAG
     flag += state;
   }
-  WebGetArg("g99", tmp, sizeof(tmp));                // BASE
+  WebGetArg("g99", tmp, sizeof(tmp));                       // BASE
   uint8_t base = atoi(tmp) +1;
 
-  snprintf_P(svalue, sizeof(svalue), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"),
-    svalue, flag, base);
+  snprintf_P(svalue, sizeof(svalue), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), svalue, flag, base);
   ExecuteWebCommand(svalue, SRC_WEBGUI);
 }
 
