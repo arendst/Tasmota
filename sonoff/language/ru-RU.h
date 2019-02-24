@@ -148,6 +148,7 @@
 #define D_STOP "Стоп"
 #define D_SUBNET_MASK "Маска Подсети"
 #define D_SUBSCRIBE_TO "Подписаться на"
+#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "Успешно"
 #define D_SUNRISE "Sunrise"
 #define D_SUNSET "Sunset"

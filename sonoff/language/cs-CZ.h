@@ -148,6 +148,7 @@
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Maska podsítě"
 #define D_SUBSCRIBE_TO "Přihlaš se do"
+#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "úspěšné."
 #define D_SUNRISE "Svítání"
 #define D_SUNSET "Soumrak"

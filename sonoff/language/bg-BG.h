@@ -148,6 +148,7 @@
 #define D_STOP "Стоп"
 #define D_SUBNET_MASK "Маска на подмрежата"
 #define D_SUBSCRIBE_TO "Записване за"
+#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "Успешно"
 #define D_SUNRISE "Изгрев"
 #define D_SUNSET "Залез"
