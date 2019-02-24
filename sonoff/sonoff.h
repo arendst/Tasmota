@@ -171,6 +171,13 @@ typedef unsigned long power_t;              // Power (Relay) type
 
 #define LT_SM16716             16           // Lights that use SM16716 will have this bit set in light_type
 
+#define SM16716_RGB            0
+#define SM16716_RBG            1
+#define SM16716_GRB            2
+#define SM16716_GBR            3
+#define SM16716_BRG            4
+#define SM16716_BGR            5
+
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino - soon obsolete
 #define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf - obsolete but define is present for debugging purposes
