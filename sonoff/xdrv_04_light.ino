@@ -397,6 +397,12 @@ void SM16716_SendByte(uint8_t v)
   }
 }
 
+void SM16716_SendRGB(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b) {
+  SM16716_SendByte(duty_r);
+  SM16716_SendByte(duty_g);
+  SM16716_SendByte(duty_b);
+}
+
 void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
 {
   if (sm16716_pin_sel < 99) {
@@ -432,17 +438,29 @@ void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
   // send start bit
   SM16716_SendBit(1);
   // send 24-bit rgb data
-  SM16716_SendByte(duty_r);
-  SM16716_SendByte(duty_g);
-  SM16716_SendByte(duty_b);
+#if USE_SM16716_RGB_ORDER == SM16716_RGB
+  SM16716_SendRGB(duty_r, duty_g, duty_b);
+#elif USE_SM16716_RGB_ORDER == SM16716_RBG
+  SM16716_SendRGB(duty_r, duty_b, duty_g);
+#elif USE_SM16716_RGB_ORDER == SM16716_GRB
+  SM16716_SendRGB(duty_g, duty_r, duty_b);
+#elif USE_SM16716_RGB_ORDER == SM16716_GBR
+  SM16716_SendRGB(duty_g, duty_b, duty_r);
+#elif USE_SM16716_RGB_ORDER == SM16716_BRG
+  SM16716_SendRGB(duty_b, duty_r, duty_g);
+#elif USE_SM16716_RGB_ORDER == SM16716_BGR
+  SM16716_SendRGB(duty_b, duty_g, duty_r);
+#else
+  // fall back to RGB
+  SM16716_SendRGB(duty_r, duty_g, duty_b);
+#endif
+
   // send a 'do it' pulse
   // (if multiple chips are chained, each one processes the 1st '1rgb' 25-bit block and
   // passes on the rest, right until the one starting with 0)
   //SM16716_Init();
   SM16716_SendBit(0);
-  SM16716_SendByte(0);
-  SM16716_SendByte(0);
-  SM16716_SendByte(0);
+  SM16716_SendRGB(0, 0, 0);
 }
 
 bool SM16716_ModuleSelected(void)
