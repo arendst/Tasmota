@@ -148,6 +148,7 @@
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Subnet Mask"
 #define D_SUBSCRIBE_TO "Subscribe to"
+#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "Successful"
 #define D_SUNRISE "Sunrise"
 #define D_SUNSET "Sunset"
