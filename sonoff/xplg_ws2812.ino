@@ -145,7 +145,7 @@ void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, float offse
   strip->SetPixelColor(mod_position, color);
 }
 
-void Ws2812UpdateHand(int position, uint8_t index)
+void Ws2812UpdateHand(int position, uint8_t index, uint8_t odd)
 {
   position = (position + Settings.light_rotation) % Settings.light_pixels;
 
@@ -161,19 +161,25 @@ void Ws2812UpdateHand(int position, uint8_t index)
     Ws2812UpdatePixelColor(position -h, hand_color, offset);
     Ws2812UpdatePixelColor(position +h, hand_color, offset);
   }
+  if (odd && !(Settings.ws_width[index] & 0x1)){  // one extra pixel for even width and real pos > position+0.5
+    float offset = (float)(1) / (float)range;
+    Ws2812UpdatePixelColor(position +range, hand_color, offset);
+  }
 }
 
 void Ws2812Clock(void)
 {
   strip->ClearTo(0); // Reset strip
   int clksize = 60000 / (int)Settings.light_pixels;
-
-  Ws2812UpdateHand((RtcTime.second * 1000) / clksize, WS_SECOND);
-  Ws2812UpdateHand((RtcTime.minute * 1000) / clksize, WS_MINUTE);
-  Ws2812UpdateHand((((RtcTime.hour % 12) * 5000) + ((RtcTime.minute * 1000) / 12 )) / clksize, WS_HOUR);
+  int secondPosDouble = (RtcTime.second * 2000) / clksize;
+  Ws2812UpdateHand(secondPosDouble/2, WS_SECOND, secondPosDouble & 0x1);
+  int minutePosDouble = (RtcTime.minute * 2000) / clksize;
+  Ws2812UpdateHand(minutePosDouble/2, WS_MINUTE, minutePosDouble & 0x1);
+  int hourPosDouble = (((RtcTime.hour % 12) * 10000) + ((RtcTime.minute * 2000) / 12 )) / clksize;
+  Ws2812UpdateHand(hourPosDouble/2, WS_HOUR, hourPosDouble & 0x1);
   if (Settings.ws_color[WS_MARKER][WS_RED] + Settings.ws_color[WS_MARKER][WS_GREEN] + Settings.ws_color[WS_MARKER][WS_BLUE]) {
     for (uint8_t i = 0; i < 12; i++) {
-      Ws2812UpdateHand((i * 5000) / clksize, WS_MARKER);
+      Ws2812UpdateHand((i * 5000) / clksize, WS_MARKER, 0);
     }
   }
 
