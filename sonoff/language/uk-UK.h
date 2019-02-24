@@ -148,6 +148,7 @@
 #define D_STOP "Стоп"
 #define D_SUBNET_MASK "Маска Підмережі"
 #define D_SUBSCRIBE_TO "Підписатись на"
+#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "Успішно"
 #define D_SUNRISE "Схід сонця"
 #define D_SUNSET "Захід сонця"
