@@ -131,7 +131,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "x.onreadystatechange=function(){"
         "if(x.readyState==4&&x.status==200){"
           "var z,d;"
-          "d=x.responseText.split(/\1/);"
+          "d=x.responseText.split(/\1/);"  // Field separator
           "id=d.shift();"
           "if(d.shift()==0){t.value='';}"
           "z=d.shift();"
@@ -149,10 +149,13 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "window.onload=l;"
   "</script>";
 
+const char HTTP_MODULE_TEMPLATE_REPLACE[] PROGMEM =
+  "\2%d'>%s (%d\3";                       // \2 and \3 are used in below os.replace
+
 const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
   "var os;"
   "function sk(s,g){"                     // s = value, g = id and name
-    "var o=os.replace(/}1/g,\"<option value=\").replace(/}2/g,\"</option>\");"
+    "var o=os.replace(/\2/g,\"<option value='\").replace(/\3/g,\")</option>\");"
     "eb('g'+g).innerHTML=o;"
     "eb('g'+g).value=s;"
   "}"
@@ -170,14 +173,14 @@ const char HTTP_SCRIPT_MODULE_TEMPLATE[] PROGMEM =
 const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
   "var c;"                                // Need a global for BASE
   "function x1(b){"
-    "var i,j,g,k,m,o=b.responseText;"
-    "k=o.indexOf(\"}1\");"                // Template name until }1
+    "var i,j,g,k,o;"
+    "o=b.responseText.split(/\1/);"       // Field separator
+    "k=o.shift();"                        // Template name
     "if(eb('s1').value==''){"
-      "eb('s1').value=o.substring(0,k);"  // Set NAME if not yet set
+      "eb('s1').value=k;"                 // Set NAME if not yet set
     "}"
-    "m=o.indexOf(\"}3\");"                // Sensor names until }3
-    "os=o.substring(k,m);"                // Complete GPIO sensor list
-    "g=o.substring(m+2).split(',');"      // +2 is length "}3"
+    "os=o.shift();"                       // Complete GPIO sensor list
+    "g=o.shift().split(',');"             // Array separator
     "j=0;"
     "for(i=0;i<13;i++){"                  // Supports 13 GPIOs
       "if(6==i){j=9;}"
@@ -185,12 +188,14 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
       "sk(g[i],j);"                       // Set GPIO
       "j++;"
     "}"
+    "g=o.shift();"
     "for(i=0;i<" STR(GPIO_FLAG_USED) ";i++){"
-      "p=(g[13]>>i)&1;"
+      "p=(g>>i)&1;"
       "eb('c'+i).checked=p;"              // Set FLAG checkboxes
     "}"
     "if(" STR(USER_MODULE) "==c){"
-      "eb('g99').value=g[14];"            // Set BASE for initial select
+      "g=o.shift();"
+      "eb('g99').value=g;"                // Set BASE for initial select
     "}"
   "}"
   "function st(t){"
@@ -220,8 +225,6 @@ const char HTTP_SCRIPT_MODULE2[] PROGMEM =
     "ld('md?g=1',x2);"                     // ?m related to WebServer->hasArg("m")
   "}"
   "window.onload=sl;";
-const char HTTP_SCRIPT_MODULE3[] PROGMEM =
-  "}1'%d'>%s (%d)}2";                      // "}1" and "}2" means do not use "}x" in Module name and Sensor name
 
 const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
   "function i(){"
@@ -920,9 +923,9 @@ void HandleTemplateConfiguration(void)
 
   if (WebServer->hasArg("m")) {
     String page = "";
-    for (uint8_t i = 0; i < MAXMODULE; i++) {               // "}1'%d'>%s (%d)}2" - "}1'0'>Sonoff Basic (1)}2"
+    for (uint8_t i = 0; i < MAXMODULE; i++) {               // "\2'%d'>%s (%d)\3" - "\2'0'>Sonoff Basic (1)\3"
       uint8_t midx = pgm_read_byte(kModuleNiceList + i);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, AnyModuleName(midx).c_str(), midx +1);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), midx +1);
       page += mqtt_data;
     }
     WSSend(200, CT_PLAIN, page);
@@ -940,26 +943,28 @@ void HandleTemplateConfiguration(void)
     Settings.module = module_save;
 
     String page = AnyModuleName(module);                    // NAME: Generic
+    page += F("\1");                                        // Field separator
 
-    for (uint8_t i = 0; i < sizeof(kGpioNiceList); i++) {   // GPIO: }1'0'>None (0)}2}1'17'>Button1 (17)}2...
+    for (uint8_t i = 0; i < sizeof(kGpioNiceList); i++) {   // GPIO: \2'0'>None (0)\3\2'17'>Button1 (17)\3...
 
       if (1 == i) {
-        page += F("}1'255'>" D_SENSOR_USER " (255)}2");     // }1'255'>User (255)}2
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MODULE_TEMPLATE_REPLACE, 255, D_SENSOR_USER, 255);  // \2'255'>User (255)\3
+        page += mqtt_data;
       }
 
       uint8_t midx = pgm_read_byte(kGpioNiceList + i);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
       page += mqtt_data;
     }
-    page += F("}3");                                        // }3
 
-    mqtt_data[0] = '\0';
+    mqtt_data[0] = '\1';                                    // Field separator
+    mqtt_data[1] = '\0';                                    // Char eot
     for (uint8_t i = 0; i < sizeof(cmodule); i++) {         // 17,148,29,149,7,255,255,255,138,255,139,255,255
       if ((i < 6) || ((i > 8) && (i != 11))) {              // Ignore flash pins GPIO06, 7, 8 and 11
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (i>0)?",":"", cmodule.io[i]);
       }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,%d,%d"), mqtt_data, flag, Settings.user_template_base);  // FLAG: ,1  BASE: ,17
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\1%d\1%d"), mqtt_data, flag, Settings.user_template_base);  // FLAG: 1  BASE: 17
     page += mqtt_data;
 
     WSSend(200, CT_PLAIN, page);
@@ -1043,7 +1048,7 @@ void HandleModuleConfiguration(void)
   if (WebServer->hasArg("m")) {
     String page = "";
     uint8_t vidx = 0;
-    for (uint8_t i = 0; i <= MAXMODULE; i++) {  // "}1'%d'>%s (%d)}2" - "}1'255'>UserTemplate (0)}2" - "}1'0'>Sonoff Basic (1)}2"
+    for (uint8_t i = 0; i <= MAXMODULE; i++) {  // "\2'%d'>%s (%d)\3" - "\2'255'>UserTemplate (0)\3" - "\2'0'>Sonoff Basic (1)\3"
       if (0 == i) {
         midx = USER_MODULE;
         vidx = 0;
@@ -1051,7 +1056,7 @@ void HandleModuleConfiguration(void)
         midx = pgm_read_byte(kModuleNiceList + i -1);
         vidx = midx +1;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, AnyModuleName(midx).c_str(), vidx);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), vidx);
       page += mqtt_data;
     }
     WSSend(200, CT_PLAIN, page);
@@ -1063,7 +1068,7 @@ void HandleModuleConfiguration(void)
     for (uint8_t j = 0; j < sizeof(kGpioNiceList); j++) {
       midx = pgm_read_byte(kGpioNiceList + j);
       if (!GetUsedInModule(midx, cmodule.io)) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SCRIPT_MODULE3, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
         page += mqtt_data;
       }
     }
