@@ -570,15 +570,21 @@ void LightInit(void)
   if(param > 119){
     param = 119;
   }
-  std::vector<uint8_t> tmp = {0,1,2,3,4};
+  uint8_t tmp[] = {0,1,2,3,4};
   remap[0] = tmp[param / 24];
-  tmp.erase(tmp.begin() + (param / 24));
+  for (uint8_t i = param / 24; i<4; ++i){
+    tmp[i] = tmp[i+1];
+  }
   param = param % 24;
   remap[1] = tmp[(param / 6)];
-  tmp.erase(tmp.begin() + (param / 6));
+  for (uint8_t i = param / 6; i<3; ++i){
+    tmp[i] = tmp[i+1];
+  }
   param = param % 6;
   remap[2] = tmp[(param / 2)];
-  tmp.erase(tmp.begin() + (param / 2));
+  for (uint8_t i = param / 2; i<2; ++i){
+    tmp[i] = tmp[i+1];
+  }
   param = param % 2;
   remap[3] = tmp[param];
   remap[4] = tmp[1-param];
