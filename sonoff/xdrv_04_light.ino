@@ -86,7 +86,7 @@ struct LCwColor {
 #define MAX_FIXED_COLD_WARM  4
 const LCwColor kFixedColdWarm[MAX_FIXED_COLD_WARM] PROGMEM = { 0,0, 255,0, 0,255, 128,128 };
 
-uint8_t remap[5];
+uint8_t color_remap[5];
 
 uint8_t ledTable[] = {
   0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -566,30 +566,35 @@ void LightInit(void)
   light_update = 1;
   light_wakeup_active = 0;
 
+  LightUpdateColorMapping();
+}
+
+void LightUpdateColorMapping(void)
+{
   uint8_t param = Settings.param[P_RGB_REMAP];
   if(param > 119){
     param = 119;
   }
   uint8_t tmp[] = {0,1,2,3,4};
-  remap[0] = tmp[param / 24];
+  color_remap[0] = tmp[param / 24];
   for (uint8_t i = param / 24; i<4; ++i){
     tmp[i] = tmp[i+1];
   }
   param = param % 24;
-  remap[1] = tmp[(param / 6)];
+  color_remap[1] = tmp[(param / 6)];
   for (uint8_t i = param / 6; i<3; ++i){
     tmp[i] = tmp[i+1];
   }
   param = param % 6;
-  remap[2] = tmp[(param / 2)];
+  color_remap[2] = tmp[(param / 2)];
   for (uint8_t i = param / 2; i<2; ++i){
     tmp[i] = tmp[i+1];
   }
   param = param % 2;
-  remap[3] = tmp[param];
-  remap[4] = tmp[1-param];
+  color_remap[3] = tmp[param];
+  color_remap[4] = tmp[1-param];
 
-  //snprintf_P(log_data, sizeof(log_data), "%d colors: %d %d %d %d %d",Settings.param[P_RGB_REMAP], remap[0],remap[1],remap[2],remap[3],remap[4]);
+  //snprintf_P(log_data, sizeof(log_data), "%d colors: %d %d %d %d %d",Settings.param[P_RGB_REMAP], color_remap[0],color_remap[1],color_remap[2],color_remap[3],color_remap[4]);
   //AddLog(LOG_LEVEL_DEBUG);
 }
 
@@ -996,7 +1001,7 @@ void LightAnimate(void)
       uint8_t orig_col[5];
       memcpy(orig_col, cur_col, sizeof(orig_col));
       for (uint8_t i = 0; i < 5; i++) {
-        cur_col[i] = orig_col[remap[i]];
+        cur_col[i] = orig_col[color_remap[i]];
       }
 
       for (uint8_t i = 0; i < light_subtype; i++) {
