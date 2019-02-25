@@ -422,7 +422,6 @@
 //  #define USE_ALECTO_V2                          // Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 weather stations using 868MHz RF sensor receiver (+1k7 code)
 
 #define USE_SM16716                              // Add support for SM16716 RGB LED controller (+0k7 code)
-  #define USE_SM16716_RGB_ORDER     SM16716_RGB  // SM16716 RGB order (SM16716_RGB, SM16716_RBG, SM16716_GRB, SM16716_GBR, SM16716_BRG, SM16716_BGR) 
 
 /*********************************************************************************************\
  * Debug features are only supported in development branch
