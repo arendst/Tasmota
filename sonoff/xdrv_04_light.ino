@@ -111,6 +111,8 @@ uint8_t light_last_color[5];
 uint8_t light_signal_color[5];
 uint8_t light_color_remap[5];
 
+bool light_ct_rgb_linked;
+
 uint8_t light_wheel = 0;
 uint8_t light_subtype = 0;
 uint8_t light_device = 0;
@@ -570,9 +572,9 @@ void LightInit(void)
 
 void LightUpdateColorMapping(void)
 {
-  uint8_t param = Settings.param[P_RGB_REMAP];
+  uint8_t param = Settings.param[P_RGB_REMAP] & 127;
   if(param > 119){
-    param = 119;
+    param = 0;
   }
   uint8_t tmp[] = {0,1,2,3,4};
   light_color_remap[0] = tmp[param / 24];
@@ -592,6 +594,8 @@ void LightUpdateColorMapping(void)
   param = param % 2;
   light_color_remap[3] = tmp[param];
   light_color_remap[4] = tmp[1-param];
+
+  light_ct_rgb_linked = !(Settings.param[P_RGB_REMAP] & 128);
 
   light_update = 1;
   //snprintf_P(log_data, sizeof(log_data), "%d colors: %d %d %d %d %d",Settings.param[P_RGB_REMAP], light_color_remap[0],light_color_remap[1],light_color_remap[2],light_color_remap[3],light_color_remap[4]);
@@ -617,9 +621,11 @@ void LightSetColorTemp(uint16_t ct)
     Settings.light_color[1] = (uint8_t)icold;
   } else
   if (LST_RGBWC == light_subtype) {
+    if(light_ct_rgb_linked){
     Settings.light_color[0] = 0;
     Settings.light_color[1] = 0;
     Settings.light_color[2] = 0;
+    }
     Settings.light_color[3] = (uint8_t)icold;
     Settings.light_color[4] = (uint8_t)iwarm;
   } else {
@@ -1157,8 +1163,10 @@ void LightHsbToRgb(void)
   light_current_color[0] = (uint8_t)(r * 255.0f);
   light_current_color[1] = (uint8_t)(g * 255.0f);
   light_current_color[2] = (uint8_t)(b * 255.0f);
+  if(light_ct_rgb_linked){
   light_current_color[3] = 0;
   light_current_color[4] = 0;
+}
 }
 
 /********************************************************************************************/
