@@ -984,10 +984,8 @@ void LightAnimate(void)
   }
 
   if ((Settings.light_scheme < LS_MAX) || !light_power) {
-    for (uint8_t i = 0; i < light_subtype; i++) {
-      if (light_last_color[i] != light_new_color[i]) {
+    if (memcmp(light_last_color, light_new_color, light_subtype)) {
         light_update = 1;
-      }
     }
     if (light_update) {
       light_update = 0;
