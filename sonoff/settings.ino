@@ -1056,7 +1056,7 @@ void SettingsDelta(void)
     if (Settings.version < 0x06040110) {
       ModuleDefault(WEMOS);
     }
-    if (Settings.version < 0x06040112) {
+    if (Settings.version < 0x06040113) {
       Settings.param[P_RGB_REMAP] = RGB_REMAP_RGBW;
     }
 
