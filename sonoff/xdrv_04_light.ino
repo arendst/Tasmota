@@ -593,6 +593,7 @@ void LightUpdateColorMapping(void)
   light_color_remap[3] = tmp[param];
   light_color_remap[4] = tmp[1-param];
 
+  light_update = 1;
   //snprintf_P(log_data, sizeof(log_data), "%d colors: %d %d %d %d %d",Settings.param[P_RGB_REMAP], light_color_remap[0],light_color_remap[1],light_color_remap[2],light_color_remap[3],light_color_remap[4]);
   //AddLog(LOG_LEVEL_DEBUG);
 }
