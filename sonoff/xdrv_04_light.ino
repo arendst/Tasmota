@@ -1252,11 +1252,7 @@ bool LightColorEntry(char *buffer, uint8_t buffer_length)
     entry_type = 2;                                 // Decimal
   }
   else if (((2 * light_subtype) == buffer_length) || (buffer_length > 3)) {  // Hexadecimal entry
-    uint8_t limit = buffer_length / 2;
-    if (limit > sizeof(light_entry_color)) {        // Fix buffer overflow due to too many parameters
-      limit = sizeof(light_entry_color);
-    }
-    for (uint8_t i = 0; i < limit; i++) {
+    for (uint8_t i = 0; i < min((uint)(buffer_length / 2), sizeof(light_entry_color)); i++) {
       strlcpy(scolor, buffer + (i *2), 3);
       light_entry_color[i] = (uint8_t)strtol(scolor, &p, 16);
     }
