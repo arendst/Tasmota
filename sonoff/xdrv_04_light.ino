@@ -622,9 +622,9 @@ void LightSetColorTemp(uint16_t ct)
   } else
   if (LST_RGBWC == light_subtype) {
     if(light_ct_rgb_linked){
-    Settings.light_color[0] = 0;
-    Settings.light_color[1] = 0;
-    Settings.light_color[2] = 0;
+      Settings.light_color[0] = 0;
+      Settings.light_color[1] = 0;
+      Settings.light_color[2] = 0;
     }
     Settings.light_color[3] = (uint8_t)icold;
     Settings.light_color[4] = (uint8_t)iwarm;
@@ -1164,9 +1164,9 @@ void LightHsbToRgb(void)
   light_current_color[1] = (uint8_t)(g * 255.0f);
   light_current_color[2] = (uint8_t)(b * 255.0f);
   if(light_ct_rgb_linked){
-  light_current_color[3] = 0;
-  light_current_color[4] = 0;
-}
+    light_current_color[3] = 0;
+    light_current_color[4] = 0;
+  }
 }
 
 /********************************************************************************************/
