@@ -111,6 +111,8 @@ uint8_t light_last_color[5];
 uint8_t light_signal_color[5];
 uint8_t light_color_remap[5];
 
+bool light_ct_rgb_linked;
+
 uint8_t light_wheel = 0;
 uint8_t light_subtype = 0;
 uint8_t light_device = 0;
@@ -570,9 +572,9 @@ void LightInit(void)
 
 void LightUpdateColorMapping(void)
 {
-  uint8_t param = Settings.param[P_RGB_REMAP];
+  uint8_t param = Settings.param[P_RGB_REMAP] & 127;
   if(param > 119){
-    param = 119;
+    param = 0;
   }
   uint8_t tmp[] = {0,1,2,3,4};
   light_color_remap[0] = tmp[param / 24];
@@ -593,6 +595,9 @@ void LightUpdateColorMapping(void)
   light_color_remap[3] = tmp[param];
   light_color_remap[4] = tmp[1-param];
 
+  light_ct_rgb_linked = !(Settings.param[P_RGB_REMAP] & 128);
+
+  light_update = 1;
   //snprintf_P(log_data, sizeof(log_data), "%d colors: %d %d %d %d %d",Settings.param[P_RGB_REMAP], light_color_remap[0],light_color_remap[1],light_color_remap[2],light_color_remap[3],light_color_remap[4]);
   //AddLog(LOG_LEVEL_DEBUG);
 }
@@ -616,9 +621,11 @@ void LightSetColorTemp(uint16_t ct)
     Settings.light_color[1] = (uint8_t)icold;
   } else
   if (LST_RGBWC == light_subtype) {
-    Settings.light_color[0] = 0;
-    Settings.light_color[1] = 0;
-    Settings.light_color[2] = 0;
+    if(light_ct_rgb_linked){
+      Settings.light_color[0] = 0;
+      Settings.light_color[1] = 0;
+      Settings.light_color[2] = 0;
+    }
     Settings.light_color[3] = (uint8_t)icold;
     Settings.light_color[4] = (uint8_t)iwarm;
   } else {
@@ -983,10 +990,8 @@ void LightAnimate(void)
   }
 
   if ((Settings.light_scheme < LS_MAX) || !light_power) {
-    for (uint8_t i = 0; i < light_subtype; i++) {
-      if (light_last_color[i] != light_new_color[i]) {
+    if (memcmp(light_last_color, light_new_color, light_subtype)) {
         light_update = 1;
-      }
     }
     if (light_update) {
       light_update = 0;
@@ -1158,8 +1163,10 @@ void LightHsbToRgb(void)
   light_current_color[0] = (uint8_t)(r * 255.0f);
   light_current_color[1] = (uint8_t)(g * 255.0f);
   light_current_color[2] = (uint8_t)(b * 255.0f);
-  light_current_color[3] = 0;
-  light_current_color[4] = 0;
+  if(light_ct_rgb_linked){
+    light_current_color[3] = 0;
+    light_current_color[4] = 0;
+  }
 }
 
 /********************************************************************************************/
@@ -1252,11 +1259,7 @@ bool LightColorEntry(char *buffer, uint8_t buffer_length)
     entry_type = 2;                                 // Decimal
   }
   else if (((2 * light_subtype) == buffer_length) || (buffer_length > 3)) {  // Hexadecimal entry
-    uint8_t limit = buffer_length / 2;
-    if (limit > sizeof(light_entry_color)) {        // Fix buffer overflow due to too many parameters
-      limit = sizeof(light_entry_color);
-    }
-    for (uint8_t i = 0; i < limit; i++) {
+    for (uint8_t i = 0; i < min((uint)(buffer_length / 2), sizeof(light_entry_color)); i++) {
       strlcpy(scolor, buffer + (i *2), 3);
       light_entry_color[i] = (uint8_t)strtol(scolor, &p, 16);
     }
