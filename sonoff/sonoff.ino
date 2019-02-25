@@ -789,8 +789,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
               param_low = 1;
               param_high = 250;
               break;
-
-	    case P_RGB_REMAP:
+            case P_RGB_REMAP:
               param_low = 0;
               param_high = 119;
               break;
@@ -798,8 +797,8 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
           if ((payload >= param_low) && (payload <= param_high)) {
             Settings.param[pindex] = payload;
             switch (pindex) {
-	      case P_RGB_REMAP:
-	        LightUpdateColorMapping();
+              case P_RGB_REMAP:
+                LightUpdateColorMapping();
                 break;
             }
           }
