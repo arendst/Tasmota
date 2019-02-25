@@ -86,6 +86,8 @@ struct LCwColor {
 #define MAX_FIXED_COLD_WARM  4
 const LCwColor kFixedColdWarm[MAX_FIXED_COLD_WARM] PROGMEM = { 0,0, 255,0, 0,255, 128,128 };
 
+uint8_t color_remap[5];
+
 uint8_t ledTable[] = {
   0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
@@ -397,12 +399,6 @@ void SM16716_SendByte(uint8_t v)
   }
 }
 
-void SM16716_SendRGB(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b) {
-  SM16716_SendByte(duty_r);
-  SM16716_SendByte(duty_g);
-  SM16716_SendByte(duty_b);
-}
-
 void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
 {
   if (sm16716_pin_sel < 99) {
@@ -437,30 +433,18 @@ void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
 
   // send start bit
   SM16716_SendBit(1);
-  // send 24-bit rgb data
-#if USE_SM16716_RGB_ORDER == SM16716_RGB
-  SM16716_SendRGB(duty_r, duty_g, duty_b);
-#elif USE_SM16716_RGB_ORDER == SM16716_RBG
-  SM16716_SendRGB(duty_r, duty_b, duty_g);
-#elif USE_SM16716_RGB_ORDER == SM16716_GRB
-  SM16716_SendRGB(duty_g, duty_r, duty_b);
-#elif USE_SM16716_RGB_ORDER == SM16716_GBR
-  SM16716_SendRGB(duty_g, duty_b, duty_r);
-#elif USE_SM16716_RGB_ORDER == SM16716_BRG
-  SM16716_SendRGB(duty_b, duty_r, duty_g);
-#elif USE_SM16716_RGB_ORDER == SM16716_BGR
-  SM16716_SendRGB(duty_b, duty_g, duty_r);
-#else
-  // fall back to RGB
-  SM16716_SendRGB(duty_r, duty_g, duty_b);
-#endif
+  SM16716_SendByte(duty_r);
+  SM16716_SendByte(duty_g);
+  SM16716_SendByte(duty_b);
 
   // send a 'do it' pulse
   // (if multiple chips are chained, each one processes the 1st '1rgb' 25-bit block and
   // passes on the rest, right until the one starting with 0)
   //SM16716_Init();
   SM16716_SendBit(0);
-  SM16716_SendRGB(0, 0, 0);
+  SM16716_SendByte(0);
+  SM16716_SendByte(0);
+  SM16716_SendByte(0);
 }
 
 bool SM16716_ModuleSelected(void)
@@ -581,6 +565,37 @@ void LightInit(void)
   light_power = 0;
   light_update = 1;
   light_wakeup_active = 0;
+
+  LightUpdateColorMapping();
+}
+
+void LightUpdateColorMapping(void)
+{
+  uint8_t param = Settings.param[P_RGB_REMAP];
+  if(param > 119){
+    param = 119;
+  }
+  uint8_t tmp[] = {0,1,2,3,4};
+  color_remap[0] = tmp[param / 24];
+  for (uint8_t i = param / 24; i<4; ++i){
+    tmp[i] = tmp[i+1];
+  }
+  param = param % 24;
+  color_remap[1] = tmp[(param / 6)];
+  for (uint8_t i = param / 6; i<3; ++i){
+    tmp[i] = tmp[i+1];
+  }
+  param = param % 6;
+  color_remap[2] = tmp[(param / 2)];
+  for (uint8_t i = param / 2; i<2; ++i){
+    tmp[i] = tmp[i+1];
+  }
+  param = param % 2;
+  color_remap[3] = tmp[param];
+  color_remap[4] = tmp[1-param];
+
+  //snprintf_P(log_data, sizeof(log_data), "%d colors: %d %d %d %d %d",Settings.param[P_RGB_REMAP], color_remap[0],color_remap[1],color_remap[2],color_remap[3],color_remap[4]);
+  //AddLog(LOG_LEVEL_DEBUG);
 }
 
 void LightSetColorTemp(uint16_t ct)
@@ -980,6 +995,16 @@ void LightAnimate(void)
         light_last_color[i] = light_new_color[i];
         cur_col[i] = light_last_color[i]*Settings.rgbwwTable[i]/255;
         cur_col[i] = (Settings.light_correction) ? ledTable[cur_col[i]] : cur_col[i];
+      }
+
+      // color remapping
+      uint8_t orig_col[5];
+      memcpy(orig_col, cur_col, sizeof(orig_col));
+      for (uint8_t i = 0; i < 5; i++) {
+        cur_col[i] = orig_col[color_remap[i]];
+      }
+
+      for (uint8_t i = 0; i < light_subtype; i++) {
         if (light_type < LT_PWM6) {
           if (pin[GPIO_PWM1 +i] < 99) {
             if (cur_col[i] > 0xFC) {

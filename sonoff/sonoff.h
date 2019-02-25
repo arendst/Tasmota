@@ -171,12 +171,12 @@ typedef unsigned long power_t;              // Power (Relay) type
 
 #define LT_SM16716             16           // Lights that use SM16716 will have this bit set in light_type
 
-#define SM16716_RGB            0
-#define SM16716_RBG            1
-#define SM16716_GRB            2
-#define SM16716_GBR            3
-#define SM16716_BRG            4
-#define SM16716_BGR            5
+#define RGB_REMAP_RGBW         0
+#define RGB_REMAP_RBGW         6
+#define RGB_REMAP_GRBW         24
+#define RGB_REMAP_GBRW         30
+#define RGB_REMAP_BRGW         48
+#define RGB_REMAP_BGRW         54
 
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino - soon obsolete
@@ -237,7 +237,7 @@ enum ButtonStates { PRESSED, NOT_PRESSED };
 
 enum Shortcuts { SC_CLEAR, SC_DEFAULT, SC_USER };
 
-enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_TUYA_DIMMER_ID, P_MDNS_DELAYED_START, P_BOOT_LOOP_OFFSET, P_MAX_PARAM8};  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
+enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_TUYA_DIMMER_ID, P_MDNS_DELAYED_START, P_BOOT_LOOP_OFFSET, P_RGB_REMAP, P_MAX_PARAM8};  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
 
 enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_AIRQUALITY, DZ_MAX_SENSORS};
 
