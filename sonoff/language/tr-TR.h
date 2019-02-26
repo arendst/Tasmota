@@ -148,6 +148,7 @@
 #define D_STOP "Durdur"
 #define D_SUBNET_MASK "Altağ Geçidi Maskesi"
 #define D_SUBSCRIBE_TO "Abone olunan"
+#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "Başarıyla Tamamlandı"
 #define D_SUNRISE "Gün doğumu"
 #define D_SUNSET "Gün batımı"

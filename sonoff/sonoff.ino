@@ -431,6 +431,8 @@ uint16_t GetPulseTimer(uint8_t index)
 
 void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
 {
+  if (data_len > MQTT_MAX_PACKET_SIZE) { return; }  // Do not allow more data than would be feasable within stack space
+
   char *str;
 
   if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1])) {
@@ -790,6 +792,11 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
           }
           if ((payload >= param_low) && (payload <= param_high)) {
             Settings.param[pindex] = payload;
+            switch (pindex) {
+              case P_RGB_REMAP:
+                LightUpdateColorMapping();
+                break;
+            }
           }
         }
       }

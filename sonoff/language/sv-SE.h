@@ -148,6 +148,7 @@
 #define D_STOP "Stoppa"
 #define D_SUBNET_MASK "Nätmask"
 #define D_SUBSCRIBE_TO "Prenumera på"
+#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "Lyckat"
 #define D_SUNRISE "Soluppgång"
 #define D_SUNSET "Solnedgång"

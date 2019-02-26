@@ -148,6 +148,7 @@
 #define D_STOP "עצירה"
 #define D_SUBNET_MASK "רשת מסכת משנה"
 #define D_SUBSCRIBE_TO "הרשם ל"
+#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "הצליח"
 #define D_SUNRISE "זריחה"
 #define D_SUNSET "שקיעה"

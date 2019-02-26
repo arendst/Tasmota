@@ -148,6 +148,7 @@
 #define D_STOP "停止"
 #define D_SUBNET_MASK "子网掩码"
 #define D_SUBSCRIBE_TO "订阅"
+#define D_UNSUBSCRIBE_FROM "退订"
 #define D_SUCCESSFUL "成功"
 #define D_SUNRISE "日出"
 #define D_SUNSET "日落"
