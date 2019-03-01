@@ -76,7 +76,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
       "a=p;"
       "clearTimeout(lt);"
     "}"
-    "if(x!=null){x.abort();}"             // Abort if no response within 2 seconds (happens on restart 1)
+    "if(x!=null){x.abort();}"             // Abort if no response within Settings.web_refresh milliseconds (happens on restart 1)
     "x=new XMLHttpRequest();"
     "x.onreadystatechange=function(){"
       "if(x.readyState==4&&x.status==200){"
@@ -84,15 +84,15 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
         "eb('l1').innerHTML=s;"
       "}"
     "};"
-    "x.open('GET','ay'+a,true);"
+    "x.open('GET','?m=1'+a,true);"        // ?m related to WebServer->hasArg("m")
     "x.send();"
     "lt=setTimeout(la,{a});"              // Settings.web_refresh
   "}"
   "function lb(p){"
-    "la('?d='+p);"                        // ?d related to WebGetArg("d", tmp, sizeof(tmp));
+    "la('&d='+p);"                        // &d related to WebGetArg("d", tmp, sizeof(tmp));
   "}"
   "function lc(p){"
-    "la('?t='+p);"                        // ?t related to WebGetArg("t", tmp, sizeof(tmp));
+    "la('&t='+p);"                        // &t related to WebGetArg("t", tmp, sizeof(tmp));
   "}"
   "window.onload=la();";
 
@@ -140,7 +140,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
           "sn=t.scrollTop;"
         "}"
       "};"
-      "x.open('GET','ax?c2='+id+o,true);"
+      "x.open('GET','cs?c2='+id+o,true);"  // Related to WebServer->hasArg("c2") and WebGetArg("c2", stmp, sizeof(stmp))
       "x.send();"
     "}"
     "lt=setTimeout(l,{a});"
@@ -431,7 +431,7 @@ const char HTTP_END[] PROGMEM =
   "</body>"
   "</html>";
 
-const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"?o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg("o", tmp, sizeof(tmp));
+const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg("o", tmp, sizeof(tmp));
 const char HTTP_DEVICE_STATE[] PROGMEM = "%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>";  // {c} = %'><div style='text-align:center;font-weight:
 
 enum CTypes { CT_HTML, CT_PLAIN, CT_XML, CT_JSON, CT_STREAM };
@@ -504,8 +504,6 @@ void StartWebserver(int type, IPAddress ipweb)
         WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
         WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
         WebServer->on("/cs", HandleConsole);
-        WebServer->on("/ax", HandleAjaxConsoleRefresh);
-        WebServer->on("/ay", HandleAjaxStatusRefresh);
         WebServer->on("/cm", HandleHttpCommand);
 #ifndef FIRMWARE_MINIMAL
         WebServer->on("/cn", HandleConfiguration);
@@ -601,9 +599,8 @@ bool WebAuthenticate(void)
 {
   if (Settings.web_password[0] != 0 && HTTP_MANAGER_RESET_ONLY != webserver_state) {
     return WebServer->authenticate(WEB_USERNAME, Settings.web_password);
-  } else {
-    return true;
   }
+  return true;
 }
 
 void ShowPage(String &page, bool auth)
@@ -706,11 +703,9 @@ void HandleWifiLogin(void)
 
 void HandleRoot(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_MAIN_MENU);
-
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
 
-  if ( WebServer->hasArg("rstrt") ) {
+  if (WebServer->hasArg("rstrt")) {
     WebRestart(0);
     return;
   }
@@ -728,77 +723,91 @@ void HandleRoot(void)
       }
     }
 #endif  // Not FIRMWARE_MINIMAL
-  } else {
-    char stemp[5];
+    return;
+  }
 
-    String page = FPSTR(HTTP_HEAD);
-    page.replace(F("{v}"), FPSTR(S_MAIN_MENU));
-    page += FPSTR(HTTP_SCRIPT_ROOT);
-    page += FPSTR(HTTP_HEAD_STYLE);
+  if (HandleRootStatusRefresh()) {
+    return;
+  }
 
-    page += F("<div id='l1' name='l1'></div>");
-    if (devices_present) {
-      if (light_type) {
-        if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER1, LightGetColorTemp());
-          page += mqtt_data;
-        }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER2, Settings.light_dimmer);
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_MAIN_MENU);
+
+  char stemp[5];
+
+  String page = FPSTR(HTTP_HEAD);
+  page.replace(F("{v}"), FPSTR(S_MAIN_MENU));
+  page += FPSTR(HTTP_SCRIPT_ROOT);
+  page += FPSTR(HTTP_HEAD_STYLE);
+
+  page += F("<div id='l1' name='l1'></div>");
+  if (devices_present) {
+    if (light_type) {
+      if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER1, LightGetColorTemp());
         page += mqtt_data;
       }
-      page += FPSTR(HTTP_TABLE100);
-      page += F("<tr>");
-      if (SONOFF_IFAN02 == my_module_type) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MSG_SLIDER2, Settings.light_dimmer);
+      page += mqtt_data;
+    }
+    page += FPSTR(HTTP_TABLE100);
+    page += F("<tr>");
+    if (SONOFF_IFAN02 == my_module_type) {
+      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
+      page += mqtt_data;
+      for (uint8_t i = 0; i < MAX_FAN_SPEED; i++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 16, i +2, stemp, "");
         page += mqtt_data;
-        for (uint8_t i = 0; i < MAX_FAN_SPEED; i++) {
-          snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL, 16, i +2, stemp, "");
-          page += mqtt_data;
-        }
-      } else {
-        for (uint8_t idx = 1; idx <= devices_present; idx++) {
-          snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL,
-            100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
-          page += mqtt_data;
-        }
       }
-      page += F("</tr></table>");
-    }
-    if (SONOFF_BRIDGE == my_module_type) {
-      page += FPSTR(HTTP_TABLE100);
-      page += F("<tr>");
-      uint8_t idx = 0;
-      for (uint8_t i = 0; i < 4; i++) {
-        if (idx > 0) { page += F("</tr><tr>"); }
-        for (uint8_t j = 0; j < 4; j++) {
-          idx++;
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:25%%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);  // ?k is related to WebGetArg("k", tmp, sizeof(tmp));
-          page += mqtt_data;
-        }
+    } else {
+      for (uint8_t idx = 1; idx <= devices_present; idx++) {
+        snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_CONTROL,
+          100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
+        page += mqtt_data;
       }
-      page += F("</tr></table>");
     }
+    page += F("</tr></table>");
+  }
+  if (SONOFF_BRIDGE == my_module_type) {
+    page += FPSTR(HTTP_TABLE100);
+    page += F("<tr>");
+    uint8_t idx = 0;
+    for (uint8_t i = 0; i < 4; i++) {
+      if (idx > 0) { page += F("</tr><tr>"); }
+      for (uint8_t j = 0; j < 4; j++) {
+        idx++;
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:25%%'><button onclick='la(\"&k=%d\");'>%d</button></td>"), idx, idx);  // ?k is related to WebGetArg("k", tmp, sizeof(tmp));
+        page += mqtt_data;
+      }
+    }
+    page += F("</tr></table>");
+  }
 
 #ifndef FIRMWARE_MINIMAL
-    mqtt_data[0] = '\0';
-    XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
-    XsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
-    page += String(mqtt_data);
+  mqtt_data[0] = '\0';
+  XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
+  XsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
+  page += String(mqtt_data);
 #endif  // Not FIRMWARE_MINIMAL
 
-    if (HTTP_ADMIN == webserver_state) {
-      page += FPSTR(HTTP_BTN_MENU1);
-      page += FPSTR(HTTP_BTN_RSTRT);
-    }
-    ShowPage(page);
+  if (HTTP_ADMIN == webserver_state) {
+    page += FPSTR(HTTP_BTN_MENU1);
+    page += FPSTR(HTTP_BTN_RSTRT);
   }
+  ShowPage(page);
 }
 
-void HandleAjaxStatusRefresh(void)
+bool HandleRootStatusRefresh(void)
 {
-  if (!WebAuthenticate()) { return WebServer->requestAuthentication(); }
+  if (!WebAuthenticate()) {
+    WebServer->requestAuthentication();
+    return true;
+  }
+
+  if (!WebServer->hasArg("m")) {     // Status refresh requested
+    return false;
+  }
 
   char tmp[8];                       // WebGetArg numbers only
   char svalue[32];                   // Command and number parameter
@@ -864,6 +873,7 @@ void HandleAjaxStatusRefresh(void)
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s</tr></table>"), mqtt_data);
   }
   WSSend(200, CT_HTML, mqtt_data);
+  return true;
 }
 
 bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
@@ -2016,6 +2026,11 @@ void HandleConsole(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
+  if (WebServer->hasArg("c2")) {      // Console refresh requested
+    HandleConsoleRefresh();
+    return;
+  }
+
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONSOLE);
 
   String page = FPSTR(HTTP_HEAD);
@@ -2027,10 +2042,8 @@ void HandleConsole(void)
   ShowPage(page);
 }
 
-void HandleAjaxConsoleRefresh(void)
+void HandleConsoleRefresh(void)
 {
-  if (!HttpCheckPriviledgedAccess()) { return; }
-
   bool cflg = true;
   uint8_t counter = 0;                // Initial start, should never be 0 again
 
