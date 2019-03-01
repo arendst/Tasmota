@@ -774,7 +774,7 @@ void HandleRoot(void)
         if (idx > 0) { page += F("</tr><tr>"); }
         for (uint8_t j = 0; j < 4; j++) {
           idx++;
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:25%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);  // ?k is related to WebGetArg("k", tmp, sizeof(tmp));
+          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("<td style='width:25%%'><button onclick='la(\"?k=%d\");'>%d</button></td>"), idx, idx);  // ?k is related to WebGetArg("k", tmp, sizeof(tmp));
           page += mqtt_data;
         }
       }
