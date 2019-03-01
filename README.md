@@ -170,7 +170,8 @@ People helping to keep the show on the road:
 - Andre Thomas for providing [thehackbox](http://thehackbox.org/tasmota/) OTA support and daily development builds
 - Joel Stein and digiblur for their Tuya research and driver
 - Frogmore42 and Jason2866 for providing many issue answers
-- Many more providing Tips, Pocs or PRs
+- Blakadder for editing the wiki and providing template management
+- Many more providing Tips, Wips, Pocs or PRs
 
 ### License
 
