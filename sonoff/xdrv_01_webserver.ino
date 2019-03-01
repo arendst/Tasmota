@@ -146,8 +146,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "lt=setTimeout(l,{a});"
     "return false;"
   "}"
-  "window.onload=l;"
-  "</script>";
+  "window.onload=l;";
 
 const char HTTP_MODULE_TEMPLATE_REPLACE[] PROGMEM =
   "\2%d'>%s (%d\3";                       // \2 and \3 are used in below os.replace
@@ -2021,8 +2020,8 @@ void HandleConsole(void)
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_CONSOLE));
+  page += FPSTR(HTTP_SCRIPT_CONSOL);
   page += FPSTR(HTTP_HEAD_STYLE);
-  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_CONSOL));
   page += FPSTR(HTTP_FORM_CMND);
   page += FPSTR(HTTP_BTN_MAIN);
   ShowPage(page);

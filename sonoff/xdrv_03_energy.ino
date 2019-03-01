@@ -395,6 +395,7 @@ bool EnergyCommand(void)
         Settings.energy_kWhtoday = energy_kWhtoday;
         RtcSettings.energy_kWhtoday = energy_kWhtoday;
         energy_daily = (float)energy_kWhtoday / 100000;
+        if (!RtcSettings.energy_kWhtotal && !energy_kWhtoday) { Settings.energy_kWhtotal_time = LocalTime(); }
         break;
       case 2:
         Settings.energy_kWhyesterday = lnum *100;
@@ -403,7 +404,7 @@ bool EnergyCommand(void)
         RtcSettings.energy_kWhtotal = lnum *100;
         Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
         energy_total = (float)(RtcSettings.energy_kWhtotal + energy_kWhtoday) / 100000;
-        if (!energy_total) { Settings.energy_kWhtotal_time = LocalTime(); }
+        Settings.energy_kWhtotal_time = (!energy_kWhtoday) ? LocalTime() : Midnight();
         break;
       }
     }
