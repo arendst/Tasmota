@@ -126,11 +126,7 @@ bool Ds18x20Read(uint8_t sensor, float &t)
         data[0] = (~data[0]) +1;
         sign = -1;  // App-Note fix possible sign error
       }
-      if (data[0] & 1) {
-        temp9 = ((data[0] >> 1) + 0.5) * sign;
-      } else {
-        temp9 = (data[0] >> 1) * sign;
-      }
+      temp9 = (float)(data[0] >> 1) * sign;
       t = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
       break;
     case DS18B20_CHIPID:
