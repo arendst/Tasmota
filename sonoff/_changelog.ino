@@ -2,6 +2,7 @@
  * Add command SetOption37 for RGBCW color mapping (#5326)
  * Add Korean language translations (#5344)
  * Fix Energy TotalStartTime when commands EnergyReset0 and/or EnergyReset3 used (#5373)
+ * Fix DS18S20 temperature calculation (#5375)
  *
  * 6.4.1.18 20190221
  * Fix some exceptions and watchdogs due to lack of stack space - part 1 (#5215)
