@@ -755,13 +755,14 @@ const char HTTP_BTN_MENU_KNX[] PROGMEM =
   "<p><form action='kn' method='get'><button>" D_CONFIGURE_KNX "</button></form></p>";
 
 const char HTTP_FORM_KNX[] PROGMEM =
-  "<fieldset><legend style='text-align:left;'><b>&nbsp;" D_KNX_PARAMETERS "&nbsp;</b>"
-  "</legend><form method='post' action='kn'>"
+  "<fieldset style='min-width:530px;'>"
+  "<legend style='text-align:left;'><b>&nbsp;" D_KNX_PARAMETERS "&nbsp;</b></legend>"
+  "<form method='post' action='kn'>"
   "<br/><center>"
   "<b>" D_KNX_PHYSICAL_ADDRESS " </b>"
-  "<input style='width:12%;' type='number' name='area' min='0' max='15' value='{kna'> . "
-  "<input style='width:12%;' type='number' name='line' min='0' max='15' value='{knl'> . "
-  "<input style='width:12%;' type='number' name='member' min='0' max='255' value='{knm'>"
+  "<input style='width:12%%;' type='number' name='area' min='0' max='15' value='%d'> . "
+  "<input style='width:12%%;' type='number' name='line' min='0' max='15' value='%d'> . "
+  "<input style='width:12%%;' type='number' name='member' min='0' max='255' value='%d'>"
   "<br/><br/>" D_KNX_PHYSICAL_ADDRESS_NOTE "<br/><br/>"
   "<input id='b1' name='b1' type='checkbox'";
 
@@ -777,20 +778,20 @@ const char HTTP_FORM_KNX2[] PROGMEM =
   "<select name='GAop' style='width:25%;'>";
 
 const char HTTP_FORM_KNX_OPT[] PROGMEM =
-  "<option value='{vop}'>{nop}</option>";
+  "<option value='%d'>%s</option>";
 
 const char HTTP_FORM_KNX_GA[] PROGMEM =
-  "<input style='width:12%;' type='number' id='GAfnum' name='GAfnum' min='0' max='31' value='0'> / "
-  "<input style='width:12%;' type='number' id='GAarea' name='GAarea' min='0' max='7' value='0'> / "
-  "<input style='width:12%;' type='number' id='GAfdef' name='GAfdef' min='0' max='255' value='0'> ";
+  "<input style='width:12%%;' type='number' id='%s' name='%s' min='0' max='31' value='0'> / "
+  "<input style='width:12%%;' type='number' id='%s' name='%s' min='0' max='7' value='0'> / "
+  "<input style='width:12%%;' type='number' id='%s' name='%s' min='0' max='255' value='0'> ";
 
 const char HTTP_FORM_KNX_ADD_BTN[] PROGMEM =
-  "<button type='submit' onclick='fncbtnadd()' btndis name='btn_add' value='{btnval}' style='width:18%;'>" D_ADD "</button><br/><br/>"
-  "<table style='width:80%; font-size: 14px;'><col width='250'><col width='30'>";
+  "<button type='submit' onclick='%s()' %s name='btn_add' value='%d' style='width:18%%;'>" D_ADD "</button><br/><br/>"
+  "<table style='width:80%%; font-size: 14px;'><col width='250'><col width='30'>";
 
 const char HTTP_FORM_KNX_ADD_TABLE_ROW[] PROGMEM =
-  "<tr><td><b>{optex} -> GAfnum / GAarea / GAfdef </b></td>"
-  "<td><button type='submit' name='btn_del_ga' value='{opval}' class='button bred'> " D_DELETE " </button></td></tr>";
+  "<tr><td><b>%s -> %d / %d / %d </b></td>"
+  "<td><button type='submit' name='btn_del_ga' value='%d' class='button bred'> " D_DELETE " </button></td></tr>";
 
 const char HTTP_FORM_KNX3[] PROGMEM =
   "</table></center></fieldset><br/>"
@@ -801,8 +802,8 @@ const char HTTP_FORM_KNX4[] PROGMEM =
   "-> <select name='CBop' style='width:25%;'>";
 
 const char HTTP_FORM_KNX_ADD_TABLE_ROW2[] PROGMEM =
-  "<tr><td><b>GAfnum / GAarea / GAfdef -> {optex}</b></td>"
-  "<td><button type='submit' name='btn_del_cb' value='{opval}' class='button bred'> " D_DELETE " </button></td></tr>";
+  "<tr><td><b>%d / %d / %d -> %s</b></td>"
+  "<td><button type='submit' name='btn_del_cb' value='%d' class='button bred'> " D_DELETE " </button></td></tr>";
 
 void HandleKNXConfiguration(void)
 {
@@ -871,113 +872,8 @@ void HandleKNXConfiguration(void)
 
     }
 
-    String page = FPSTR(HTTP_HEAD);
-    page.replace(F("{v}"), FPSTR(S_CONFIGURE_KNX));
-    page += FPSTR(HTTP_HEAD_STYLE);
-    page.replace(F("340px"), F("530px"));
-    page += FPSTR(HTTP_FORM_KNX);
-    KNX_physs_addr.value = Settings.knx_physsical_addr;
-    page.replace(F("{kna"), String(KNX_physs_addr.pa.area));
-    page.replace(F("{knl"), String(KNX_physs_addr.pa.line));
-    page.replace(F("{knm"), String(KNX_physs_addr.pa.member));
-    if ( Settings.flag.knx_enabled ) { page += F(" checked"); }
-    page += FPSTR(HTTP_FORM_KNX1);
-    if ( Settings.flag.knx_enable_enhancement ) { page += F(" checked"); }
-
-    page += FPSTR(HTTP_FORM_KNX2);
-    for (uint8_t i = 0; i < KNX_MAX_device_param ; i++)
-    {
-      if ( device_param[i].show )
-      {
-        page += FPSTR(HTTP_FORM_KNX_OPT);
-        page.replace(F("{vop}"), String(device_param[i].type));
-        page.replace(F("{nop}"), String(device_param_ga[i]));
-      }
-    }
-    page += F("</select> -> ");
-    page += FPSTR(HTTP_FORM_KNX_GA);
-    page.replace(F("GAfnum"), F("GA_FNUM"));
-    page.replace(F("GAarea"), F("GA_AREA"));
-    page.replace(F("GAfdef"), F("GA_FDEF"));
-    page.replace(F("GAfnum"), F("GA_FNUM"));
-    page.replace(F("GAarea"), F("GA_AREA"));
-    page.replace(F("GAfdef"), F("GA_FDEF"));
-    page += FPSTR(HTTP_FORM_KNX_ADD_BTN);
-    page.replace(F("{btnval}"), String(1));
-    if (Settings.knx_GA_registered < MAX_KNX_GA) {
-      page.replace(F("btndis"), F(" "));
-    }
-    else
-    {
-      page.replace(F("btndis"), F("disabled"));
-    }
-    page.replace(F("fncbtnadd"), F("GAwarning"));
-    for (uint8_t i = 0; i < Settings.knx_GA_registered ; ++i)
-    {
-      if ( Settings.knx_GA_param[i] )
-      {
-        page += FPSTR(HTTP_FORM_KNX_ADD_TABLE_ROW);
-        page.replace(F("{opval}"), String(i+1));
-        page.replace(F("{optex}"), String(device_param_ga[Settings.knx_GA_param[i]-1]));
-        KNX_addr.value = Settings.knx_GA_addr[i];
-        page.replace(F("GAfnum"), String(KNX_addr.ga.area));
-        page.replace(F("GAarea"), String(KNX_addr.ga.line));
-        page.replace(F("GAfdef"), String(KNX_addr.ga.member));
-      }
-    }
-
-    page += FPSTR(HTTP_FORM_KNX3);
-    page += FPSTR(HTTP_FORM_KNX_GA);
-    page.replace(F("GAfnum"), F("CB_FNUM"));
-    page.replace(F("GAarea"), F("CB_AREA"));
-    page.replace(F("GAfdef"), F("CB_FDEF"));
-    page.replace(F("GAfnum"), F("CB_FNUM"));
-    page.replace(F("GAarea"), F("CB_AREA"));
-    page.replace(F("GAfdef"), F("CB_FDEF"));
-    page += FPSTR(HTTP_FORM_KNX4);
-    uint8_t j;
-    for (uint8_t i = 0; i < KNX_MAX_device_param ; i++)
-    {
-      // Check How many Relays are available and add: RelayX and TogleRelayX
-      if ( (i > 8) && (i < 16) ) { j=i-8; } else { j=i; }
-      if ( i == 8 ) { j = 0; }
-      if ( device_param[j].show )
-      {
-        page += FPSTR(HTTP_FORM_KNX_OPT);
-        page.replace(F("{vop}"), String(device_param[i].type));
-        page.replace(F("{nop}"), String(device_param_cb[i]));
-      }
-    }
-    page += F("</select> ");
-    page += FPSTR(HTTP_FORM_KNX_ADD_BTN);
-    page.replace(F("{btnval}"), String(2));
-    if (Settings.knx_CB_registered < MAX_KNX_CB) {
-      page.replace(F("btndis"), F(" "));
-    }
-    else
-    {
-      page.replace(F("btndis"), F("disabled"));
-    }
-    page.replace(F("fncbtnadd"), F("CBwarning"));
-
-    for (uint8_t i = 0; i < Settings.knx_CB_registered ; ++i)
-    {
-      if ( Settings.knx_CB_param[i] )
-      {
-        page += FPSTR(HTTP_FORM_KNX_ADD_TABLE_ROW2);
-        page.replace(F("{opval}"), String(i+1));
-        page.replace(F("{optex}"), String(device_param_cb[Settings.knx_CB_param[i]-1]));
-        KNX_addr.value = Settings.knx_CB_addr[i];
-        page.replace(F("GAfnum"), String(KNX_addr.ga.area));
-        page.replace(F("GAarea"), String(KNX_addr.ga.line));
-        page.replace(F("GAfdef"), String(KNX_addr.ga.member));
-      }
-    }
-    page += F("</table></center></fieldset>");
-    page += F("<br/><button name='save' type='submit' class='button bgrn'>" D_SAVE "</button></form></fieldset>");
-    page += FPSTR(HTTP_BTN_CONF);
-
-    page.replace( F("</script>"),
+    WSContentStart(FPSTR(S_CONFIGURE_KNX));
+    WSContentSend(
       F("function GAwarning()"
         "{"
           "var GA_FNUM = eb('GA_FNUM');"
@@ -995,9 +891,63 @@ void HandleKNXConfiguration(void)
           "if ( CB_FNUM != null && CB_FNUM.value == '0' && CB_AREA.value == '0' && CB_FDEF.value == '0' ) {"
             "alert('" D_KNX_WARNING "');"
           "}"
-        "}"
-      "</script>") );
-    ShowPage(page);
+        "}"));
+    WSContentSendStyle();
+    WSContentSend_P(HTTP_FORM_KNX, KNX_physs_addr.pa.area, KNX_physs_addr.pa.line, KNX_physs_addr.pa.member);
+    if ( Settings.flag.knx_enabled ) { WSContentSend(F(" checked")); }
+    WSContentSend(FPSTR(HTTP_FORM_KNX1));
+    if ( Settings.flag.knx_enable_enhancement ) { WSContentSend(F(" checked")); }
+
+    WSContentSend(FPSTR(HTTP_FORM_KNX2));
+    for (uint8_t i = 0; i < KNX_MAX_device_param ; i++)
+    {
+      if ( device_param[i].show )
+      {
+        WSContentSend_P(HTTP_FORM_KNX_OPT, device_param[i].type, device_param_ga[i]);
+      }
+    }
+    WSContentSend(F("</select> -> "));
+    WSContentSend_P(HTTP_FORM_KNX_GA, "GA_FNUM", "GA_FNUM", "GA_AREA", "GA_AREA", "GA_FDEF", "GA_FDEF");
+    WSContentSend_P(HTTP_FORM_KNX_ADD_BTN, "GAwarning", (Settings.knx_GA_registered < MAX_KNX_GA) ? "" : "disabled", 1);
+    for (uint8_t i = 0; i < Settings.knx_GA_registered ; ++i)
+    {
+      if ( Settings.knx_GA_param[i] )
+      {
+        KNX_addr.value = Settings.knx_GA_addr[i];
+        WSContentSend_P(HTTP_FORM_KNX_ADD_TABLE_ROW, device_param_ga[Settings.knx_GA_param[i]-1], KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member, i +1);
+      }
+    }
+
+    WSContentSend(FPSTR(HTTP_FORM_KNX3));
+    WSContentSend_P(HTTP_FORM_KNX_GA, "CB_FNUM", "CB_FNUM", "CB_AREA", "CB_AREA", "CB_FDEF", "CB_FDEF");
+    WSContentSend(FPSTR(HTTP_FORM_KNX4));
+
+    uint8_t j;
+    for (uint8_t i = 0; i < KNX_MAX_device_param ; i++)
+    {
+      // Check How many Relays are available and add: RelayX and TogleRelayX
+      if ( (i > 8) && (i < 16) ) { j=i-8; } else { j=i; }
+      if ( i == 8 ) { j = 0; }
+      if ( device_param[j].show )
+      {
+        WSContentSend_P(HTTP_FORM_KNX_OPT, device_param[i].type, device_param_cb[i]);
+      }
+    }
+    WSContentSend(F("</select> "));
+    WSContentSend_P(HTTP_FORM_KNX_ADD_BTN, "CBwarning", (Settings.knx_CB_registered < MAX_KNX_CB) ? "" : "disabled", 2);
+
+    for (uint8_t i = 0; i < Settings.knx_CB_registered ; ++i)
+    {
+      if ( Settings.knx_CB_param[i] )
+      {
+        KNX_addr.value = Settings.knx_CB_addr[i];
+        WSContentSend_P(HTTP_FORM_KNX_ADD_TABLE_ROW2, KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member, device_param_cb[Settings.knx_CB_param[i]-1], i +1);
+      }
+    }
+    WSContentSend(F("</table></center></fieldset>"));
+    WSContentSend(FPSTR(HTTP_FORM_END));
+    WSContentSend(FPSTR(HTTP_BTN_CONF));
+    WSContentStop();
   }
 
 }

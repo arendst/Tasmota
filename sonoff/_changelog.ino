@@ -1,4 +1,7 @@
-/* 6.4.1.19 20190222
+/* 6.4.1.20 20190304
+ * Changed webserver content handling from single String to small Chunks increasing RAM
+ * 
+ * 6.4.1.19 20190222
  * Add command SetOption37 for RGBCW color mapping (#5326)
  * Add Korean language translations (#5344)
  * Fix Energy TotalStartTime when commands EnergyReset0 and/or EnergyReset3 used (#5373)

@@ -382,14 +382,14 @@ const char HTTP_BTN_MENU_HX711[] PROGMEM =
 const char HTTP_FORM_HX711[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_CALIBRATION "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_HX711 "'>"
-  "<p><b>" D_REFERENCE_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br/><input type='number' step='0.001' id='p1' name='p1' placeholder='0' value='{1'></p>"
+  "<p><b>" D_REFERENCE_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br/><input type='number' step='0.001' id='p1' name='p1' placeholder='0' value='%s'></p>"
   "<br/><button name='calibrate' type='submit'>" D_CALIBRATE "</button>"
   "</form>"
   "</fieldset><br/><br/>"
 
   "<fieldset><legend><b>&nbsp;" D_HX711_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_HX711 "'>"
-  "<p><b>" D_ITEM_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br/><input type='number' max='6.5535' step='0.0001' id='p2' name='p2' placeholder='0.0' value='{2'></p>";
+  "<p><b>" D_ITEM_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br/><input type='number' max='6.5535' step='0.0001' id='p2' name='p2' placeholder='0.0' value='%s'></p>";
 
 void HandleHxAction(void)
 {
@@ -403,41 +403,38 @@ void HandleHxAction(void)
     return;
   }
 
-  char tmp[100];
+  char stemp1[20];
 
   if (WebServer->hasArg("reset")) {
-    snprintf_P(tmp, sizeof(tmp), PSTR("Sensor34 1"));  // Reset
-    ExecuteWebCommand(tmp, SRC_WEBGUI);
+    snprintf_P(stemp1, sizeof(stemp1), PSTR("Sensor34 1"));  // Reset
+    ExecuteWebCommand(stemp1, SRC_WEBGUI);
 
     HandleRoot();  // Return to main screen
     return;
   }
 
   if (WebServer->hasArg("calibrate")) {
-    WebGetArg("p1", tmp, sizeof(tmp));
-    Settings.weight_reference = (!strlen(tmp)) ? 0 : (unsigned long)(CharToDouble(tmp) * 1000);
+    WebGetArg("p1", stemp1, sizeof(stemp1));
+    Settings.weight_reference = (!strlen(stemp1)) ? 0 : (unsigned long)(CharToDouble(stemp1) * 1000);
 
     HxLogUpdates();
 
-    snprintf_P(tmp, sizeof(tmp), PSTR("Sensor34 2"));  // Start calibration
-    ExecuteWebCommand(tmp, SRC_WEBGUI);
+    snprintf_P(stemp1, sizeof(stemp1), PSTR("Sensor34 2"));  // Start calibration
+    ExecuteWebCommand(stemp1, SRC_WEBGUI);
 
     HandleRoot();  // Return to main screen
     return;
   }
 
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(D_CONFIGURE_HX711));
-  page += FPSTR(HTTP_HEAD_STYLE);
-  page += FPSTR(HTTP_FORM_HX711);
-  dtostrfd((float)Settings.weight_reference / 1000, 3, tmp);
-  page.replace("{1", String(tmp));
-  dtostrfd((float)Settings.weight_item / 10000, 4, tmp);
-  page.replace("{2", String(tmp));
-
-  page += FPSTR(HTTP_FORM_END);
-  page += FPSTR(HTTP_BTN_CONF);
-  ShowPage(page);
+  WSContentStart(FPSTR(D_CONFIGURE_HX711));
+  WSContentSendStyle();
+  dtostrfd((float)Settings.weight_reference / 1000, 3, stemp1);
+  char stemp2[20];
+  dtostrfd((float)Settings.weight_item / 10000, 4, stemp2);
+  WSContentSend_P(HTTP_FORM_HX711, stemp1, stemp2);
+  WSContentSend(FPSTR(HTTP_FORM_END));
+  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentStop();
 }
 
 void HxSaveSettings(void)
