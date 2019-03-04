@@ -492,10 +492,10 @@ bool Xsns34(uint8_t function)
         break;
 #ifdef USE_HX711_GUI
       case FUNC_WEB_ADD_MAIN_BUTTON:
-        strncat_P(mqtt_data, HTTP_BTN_MENU_MAIN_HX711, sizeof(mqtt_data) - strlen(mqtt_data) -1);
+        WSContentSend(FPSTR(HTTP_BTN_MENU_MAIN_HX711));
         break;
       case FUNC_WEB_ADD_BUTTON:
-        strncat_P(mqtt_data, HTTP_BTN_MENU_HX711, sizeof(mqtt_data) - strlen(mqtt_data) -1);
+        WSContentSend(FPSTR(HTTP_BTN_MENU_HX711));
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/" WEB_HANDLE_HX711, HandleHxAction);

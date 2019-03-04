@@ -536,7 +536,7 @@ bool Xdrv07(uint8_t function)
     switch (function) {
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
-        strncat_P(mqtt_data, HTTP_BTN_MENU_DOMOTICZ, sizeof(mqtt_data) - strlen(mqtt_data) -1);
+        WSContentSend(FPSTR(HTTP_BTN_MENU_DOMOTICZ));
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/" WEB_HANDLE_DOMOTICZ, HandleDomoticzConfiguration);

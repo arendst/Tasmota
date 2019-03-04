@@ -859,10 +859,8 @@ void HandleRoot(void)
   }
 
 #ifndef FIRMWARE_MINIMAL
-  mqtt_data[0] = '\0';
   XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
   XsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
-  WSContentSend(mqtt_data);
 #endif  // Not FIRMWARE_MINIMAL
 
   if (HTTP_ADMIN == webserver_state) {
@@ -964,10 +962,8 @@ void HandleConfiguration(void)
   WSContentSendStyle();
   WSContentSend(FPSTR(HTTP_BTN_MENU_MODULE));
 
-  mqtt_data[0] = '\0';
   XdrvCall(FUNC_WEB_ADD_BUTTON);
   XsnsCall(FUNC_WEB_ADD_BUTTON);
-  WSContentSend(mqtt_data);
 
   WSContentSend(FPSTR(HTTP_BTN_MENU4));
   WSContentSend(FPSTR(HTTP_BTN_RESET));

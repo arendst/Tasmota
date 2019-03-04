@@ -764,9 +764,9 @@ bool Xdrv09(uint8_t function)
 #ifdef USE_TIMERS_WEB
     case FUNC_WEB_ADD_BUTTON:
 #ifdef USE_RULES
-      strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data) - strlen(mqtt_data) -1);
+      WSContentSend(FPSTR(HTTP_BTN_MENU_TIMER));
 #else
-      if (devices_present) { strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data) - strlen(mqtt_data) -1); }
+      if (devices_present) { WSContentSend(FPSTR(HTTP_BTN_MENU_TIMER)); }
 #endif  // USE_RULES
       break;
     case FUNC_WEB_ADD_HANDLER:
