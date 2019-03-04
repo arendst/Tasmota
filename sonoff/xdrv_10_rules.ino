@@ -412,7 +412,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
 //      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
-#ifdef USE_EXPRESSION
+#ifdef SUPPORT_IF_STATEMENT
       char *pCmd = command;
       RulesPreprocessCommand(pCmd);      //Do pre-process for IF statement
 #endif
@@ -1136,6 +1136,9 @@ double evaluateExpression(const char * expression, unsigned int len)
   }
   return object_values.get(0);
 }
+#endif  // USE_EXPRESSION
+
+#ifdef  SUPPORT_IF_STATEMENT
 
 /********************************************************************************************/
 /*
@@ -1592,7 +1595,7 @@ void RulesPreprocessCommand(char *pCommands)
   }
   return;
 }
-#endif          //USE_EXPRESSION
+#endif          //SUPPORT_IF_STATEMENT
 
 bool RulesCommand(void)
 {
@@ -1747,7 +1750,7 @@ bool RulesCommand(void)
     String result = RulesUnsubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, result.c_str());
 #endif        //SUPPORT_MQTT_EVENT
-#ifdef USE_EXPRESSION
+#ifdef SUPPORT_IF_STATEMENT
   } else if (CMND_IF == command_code) {
     if (XdrvMailbox.data_len > 0) {
       ProcessIfStatement(XdrvMailbox.data);

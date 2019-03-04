@@ -178,7 +178,7 @@ char serial_in_buffer[INPUT_BUFFER_SIZE];   // Receive buffer
 char mqtt_data[MESSZ];                      // MQTT publish buffer and web page ajax buffer
 char log_data[LOGSZ];                       // Logging
 char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
-#ifdef USE_EXPRESSION
+#ifdef SUPPORT_IF_STATEMENT
   #include <LinkedList.h>
   LinkedList<String> backlog;                // Command backlog implemented with LinkedList
   #define BACKLOG_EMPTY (backlog.size() == 0)
@@ -544,7 +544,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     }
     else if (CMND_BACKLOG == command_code) {
       if (data_len) {
-#ifdef USE_EXPRESSION
+#ifdef SUPPORT_IF_STATEMENT
         char *blcommand = strtok(dataBuf, ";");
         while ((blcommand != NULL) && (backlog.size() < MAX_BACKLOG))
 #else
@@ -563,7 +563,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
             }
           }
           if (*blcommand != '\0') {
-#ifdef USE_EXPRESSION
+#ifdef SUPPORT_IF_STATEMENT
             if (backlog.size() < MAX_BACKLOG) {
               backlog.add(blcommand);
             }
@@ -579,7 +579,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         mqtt_data[0] = '\0';
       } else {
         uint8_t blflag = BACKLOG_EMPTY;
-#ifdef USE_EXPRESSION
+#ifdef SUPPORT_IF_STATEMENT
         backlog.clear();
 #else
         backlog_pointer = backlog_index;
@@ -1919,7 +1919,7 @@ void Every100mSeconds(void)
   if (TimeReached(backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {
       backlog_mutex = true;
-#ifdef USE_EXPRESSION
+#ifdef SUPPORT_IF_STATEMENT
       ExecuteCommand((char*)backlog.pop().c_str(), SRC_BACKLOG);
 #else
       ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
@@ -1990,7 +1990,7 @@ void Every250mSeconds(void)
     PerformEverySecond();
 
     if (ota_state_flag &&
-#ifdef USE_EXPRESSION
+#ifdef SUPPORT_IF_STATEMENT
         (backlog.size() == 0)
 #else
        (backlog_pointer == backlog_index)
