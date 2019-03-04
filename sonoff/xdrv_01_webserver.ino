@@ -84,7 +84,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
         "eb('l1').innerHTML=s;"
       "}"
     "};"
-    "x.open('GET','?m=1'+a,true);"        // ?m related to WebServer->hasArg("m")
+    "x.open('GET','.?m=1'+a,true);"       // ?m related to WebServer->hasArg("m")
     "x.send();"
     "lt=setTimeout(la,{a});"              // Settings.web_refresh
   "}"
@@ -103,13 +103,11 @@ const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "}";
 
 const char HTTP_SCRIPT_RELOAD[] PROGMEM =
-  "setTimeout(function(){location.href='.';}," STR(HTTP_RESTART_RECONNECT_TIME) ");"
-  "</script>";
+  "setTimeout(function(){location.href='.';}," STR(HTTP_RESTART_RECONNECT_TIME) ");";
 
 // Local OTA upgrade requires more time to complete cp: before web ui should be reloaded
 const char HTTP_SCRIPT_RELOAD_OTA[] PROGMEM =
-  "setTimeout(function(){location.href='.';}," STR(HTTP_OTA_RESTART_RECONNECT_TIME) ");"
-  "</script>";
+  "setTimeout(function(){location.href='.';}," STR(HTTP_OTA_RESTART_RECONNECT_TIME) ");";
 
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
   "var sn=0;"                             // Scroll position
@@ -348,7 +346,7 @@ const char HTTP_FORM_WIFI[] PROGMEM =
   "<p><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
   "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' placeholder='" STA_SSID2 "' value='{s2'></p>"
   "<p><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
-  "<p><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' placeholder='" WIFI_HOSTNAME" ' value='{h1'></p>";
+  "<p><b>" D_HOSTNAME "</b> (" WIFI_HOSTNAME ")<br/><input id='h' name='h' placeholder='" WIFI_HOSTNAME "' value='{h1'></p>";
 
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b>"
@@ -661,6 +659,7 @@ void WebRestart(uint8_t type)
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTART);
 
   String page = FPSTR(HTTP_HEAD);
+  page += FPSTR(HTTP_SCRIPT_RELOAD);
   page += FPSTR(HTTP_HEAD_STYLE);
 
   if (type) {
@@ -683,7 +682,6 @@ void WebRestart(uint8_t type)
   } else {
     page += FPSTR(HTTP_BTN_MAIN);
   }
-  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD));
   ShowPage(page, !reset_only);
 
   ShowWebSource(SRC_WEBGUI);
@@ -1705,11 +1703,11 @@ void HandleUpgradeFirmwareStart(void)
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_INFORMATION));
+  page += FPSTR(HTTP_SCRIPT_RELOAD_OTA);
   page += FPSTR(HTTP_HEAD_STYLE);
   page += F("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>");
   page += FPSTR(HTTP_MSG_RSTRT);
   page += FPSTR(HTTP_BTN_MAIN);
-  page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD_OTA));
   ShowPage(page);
 
   snprintf_P(command, sizeof(command), PSTR(D_CMND_UPGRADE " 1"));
@@ -1730,6 +1728,9 @@ void HandleUploadDone(void)
 
   String page = FPSTR(HTTP_HEAD);
   page.replace(F("{v}"), FPSTR(S_INFORMATION));
+  if (!upload_error) {
+    page += FPSTR(HTTP_SCRIPT_RELOAD_OTA);  // Refesh main web ui after OTA upgrade
+  }
   page += FPSTR(HTTP_HEAD_STYLE);
   page += F("<div style='text-align:center;'><b>" D_UPLOAD " <font color='");
   if (upload_error) {
@@ -1750,7 +1751,6 @@ void HandleUploadDone(void)
   } else {
     page += F("green'>" D_SUCCESSFUL "</font></b><br/>");
     page += FPSTR(HTTP_MSG_RSTRT);
-    page.replace(F("</script>"), FPSTR(HTTP_SCRIPT_RELOAD_OTA)); // Refesh main web ui after OTA upgrade
     ShowWebSource(SRC_WEBGUI);
     restart_flag = 2;  // Always restart to re-enable disabled features during update
   }
