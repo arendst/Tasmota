@@ -4,7 +4,7 @@
 
 Everybody is welcome and invited to contribute to Sonoff-Tasmota Project by:
 
-* Testing new released features and reporting issues.
+* Testing newly released features and reporting issues.
 * Providing Pull Requests (Features, Proof of Concepts, Language files or Fixes)
 * Contributing missing documentation for features and devices on our [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Contributing)
 
@@ -12,9 +12,10 @@ This document describes rules that are in effect for this repository, meant for 
 
 ## Opening New Issues
 
-1. The issue tracker is precisely that: a tool to track issues in the Tasmota code, and not a discussion forum. Opening an issue means that a problem has been found in the code, and that it should be addressed by a contributor.
-2. When opening an issue, a template is presented with fields to fill out. The requested information is important. If the template is ignored, or not enough info about the issue is provided, the issue may be closed due to lack of info.
-3. Questions of type "How do I..." or "Can you please help me with..." or "Can the Tasmota do..." won't be handled here. Such questions should be directed at a discussion forum or to the Tasmota Support Chat. All issues of this type will be closed with a simple reference to this contributing policy.
+**Issue tracker is NOT a general discussion forum!**
+1. Opening an issue means that a problem exists in the code and should be addressed by the project contributors.
+2. When opening an issue, it is required to fill out the presented template. The requested information is important! If the template is ignored or insufficient info about the issue is provided, the issue may be closed.
+3. Questions of type "How do I..." or "Can you please help me with..." or "Can Tasmota do..." WILL NOT be handled here. Such questions should be directed at a discussion forum or to the Tasmota Support Chat. All issues of this type will be closed with a simple reference to this contributing policy.
 4. Issues about topics already handled in the documentation will be closed in a similar manner.
 5. Issues for unmerged PRs will be closed. If there is an issue with a PR, the explanation should be added to the PR itself.
 6. Issues with accompanied investigation that shows the root of the problem should be given priority.
@@ -22,7 +23,7 @@ This document describes rules that are in effect for this repository, meant for 
 
 ## Triaging of Issues/PR's
 
-1.	Any contributor of the project can participate in the triaging process, if he/she chooses to do so.
+1.	Any contributor to the project can participate in the triaging process, if he/she chooses to do so.
 2.	An issue that needs to be closed, either due to not complying with this policy, or for other reasons, should be closed by a contributor.
 3.	Issues that are accepted should be marked with appropriate labels.
 4.	Issues that could impact functionality for many users should be considered severe. 
