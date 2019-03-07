@@ -900,16 +900,17 @@ const char S_CONFIGURE_MQTT[] PROGMEM = D_CONFIGURE_MQTT;
 const char HTTP_BTN_MENU_MQTT[] PROGMEM =
   "<p><form action='" WEB_HANDLE_MQTT "' method='get'><button>" D_CONFIGURE_MQTT "</button></form></p>";
 
-const char HTTP_FORM_MQTT[] PROGMEM =
+const char HTTP_FORM_MQTT1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MQTT_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='" WEB_HANDLE_MQTT "'>"
-  "<p><b>" D_HOST "</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' placeholder='" MQTT_HOST" ' value='{m1'></p>"
-  "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' placeholder='" STR(MQTT_PORT) "' value='{m2'></p>"
-  "<p><b>" D_CLIENT "</b> ({m0)<br/><input id='mc' name='mc' placeholder='" MQTT_CLIENT_ID "' value='{m3'></p>"
-  "<p><b>" D_USER "</b> (" MQTT_USER ")<br/><input id='mu' name='mu' placeholder='" MQTT_USER "' value='{m4'></p>"
+  "<p><b>" D_HOST "</b> (" MQTT_HOST ")<br/><input id='mh' name='mh' placeholder='" MQTT_HOST" ' value='%s'></p>"
+  "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br/><input id='ml' name='ml' placeholder='" STR(MQTT_PORT) "' value='%d'></p>"
+  "<p><b>" D_CLIENT "</b> (%s)<br/><input id='mc' name='mc' placeholder='%s' value='%s'></p>";
+const char HTTP_FORM_MQTT2[] PROGMEM =
+  "<p><b>" D_USER "</b> (" MQTT_USER ")<br/><input id='mu' name='mu' placeholder='" MQTT_USER "' value='%s'></p>"
   "<p><b>" D_PASSWORD "</b><br/><input id='mp' name='mp' type='password' placeholder='" D_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
-  "<p><b>" D_TOPIC "</b> = %topic% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' placeholder='" MQTT_TOPIC" ' value='{m6'></p>"
-  "<p><b>" D_FULL_TOPIC "</b> (" MQTT_FULLTOPIC ")<br/><input id='mf' name='mf' placeholder='" MQTT_FULLTOPIC" ' value='{m7'></p>";
+  "<p><b>" D_TOPIC "</b> = %%topic%% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' placeholder='" MQTT_TOPIC "' value='%s'></p>"
+  "<p><b>" D_FULL_TOPIC "</b> (%s)<br/><input id='mf' name='mf' placeholder='%s' value='%s'></p>";
 
 void HandleMqttConfiguration(void)
 {
@@ -923,23 +924,24 @@ void HandleMqttConfiguration(void)
     return;
   }
 
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_CONFIGURE_MQTT));
-  page += FPSTR(HTTP_HEAD_STYLE);
-
-  page += FPSTR(HTTP_FORM_MQTT);
   char str[sizeof(Settings.mqtt_client)];
-  page.replace(F("{m0"), Format(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client)));
-  page.replace(F("{m1"), Settings.mqtt_host);
-  page.replace(F("{m2"), String(Settings.mqtt_port));
-  page.replace(F("{m3"), Settings.mqtt_client);
-  page.replace(F("{m4"), (Settings.mqtt_user[0] == '\0')?"0":Settings.mqtt_user);
-  page.replace(F("{m6"), Settings.mqtt_topic);
-  page.replace(F("{m7"), Settings.mqtt_fulltopic);
 
-  page += FPSTR(HTTP_FORM_END);
-  page += FPSTR(HTTP_BTN_CONF);
-  ShowPage(page);
+  WSContentStart(FPSTR(S_CONFIGURE_MQTT));
+  WSContentSendStyle();
+  WSContentSend_P(HTTP_FORM_MQTT1,
+    Settings.mqtt_host,
+    Settings.mqtt_port,
+    Format(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client)),
+    MQTT_CLIENT_ID,
+    Settings.mqtt_client);
+  WSContentSend_P(HTTP_FORM_MQTT2,
+    (Settings.mqtt_user[0] == '\0') ? "0" : Settings.mqtt_user,
+    Settings.mqtt_topic,
+    MQTT_FULLTOPIC, MQTT_FULLTOPIC,
+    Settings.mqtt_fulltopic);
+  WSContentSend(FPSTR(HTTP_FORM_END));
+  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentEnd();
 }
 
 void MqttSaveSettings(void)
@@ -988,7 +990,7 @@ bool Xdrv02(uint8_t function)
     switch (function) {
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
-        strncat_P(mqtt_data, HTTP_BTN_MENU_MQTT, sizeof(mqtt_data) - strlen(mqtt_data) -1);
+        WSContentSend(FPSTR(HTTP_BTN_MENU_MQTT));
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/" WEB_HANDLE_MQTT, HandleMqttConfiguration);

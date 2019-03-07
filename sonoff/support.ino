@@ -1279,6 +1279,17 @@ void AddLog_P(uint8_t loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
+void AddLog_P2(uint8_t loglevel, PGM_P formatP, ...)
+{
+  // This uses char strings. Be aware of sending %% if % is needed
+  va_list arg;
+  va_start(arg, formatP);
+  int len = vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  va_end(arg);
+
+  AddLog(loglevel);
+}
+
 void AddLogBuffer(uint8_t loglevel, uint8_t *buffer, int count)
 {
   snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
