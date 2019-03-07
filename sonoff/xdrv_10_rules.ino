@@ -1159,7 +1159,11 @@ bool RulesCommand(void)
   else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-      dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, vars[index -1]);
+      if (XdrvMailbox.data[0] == '=') {     //spaces already been skipped in data
+        dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, vars[index -1]);
+      } else {
+        strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
+      }
 #else
       strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
 #endif      //USE_EXPRESSION
@@ -1170,7 +1174,11 @@ bool RulesCommand(void)
   else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
     if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-      dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, Settings.mems[index -1]);
+      if (XdrvMailbox.data[0] == '=') {     //spaces already been skipped in data
+        dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, Settings.mems[index -1]);
+      } else {
+        strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
+      }
 #else
       strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
 #endif      //USE_EXPRESSION
