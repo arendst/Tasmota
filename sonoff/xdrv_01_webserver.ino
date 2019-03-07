@@ -283,10 +283,11 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
 
-const char HTTP_BTN_MENU1[] PROGMEM =
+const char HTTP_BTN_CONF[] PROGMEM =
   "<br/>"
+  "<form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>";
+const char HTTP_BTN_MENU1[] PROGMEM =
 #ifndef FIRMWARE_MINIMAL
-  "<form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>"
   "<p><form action='in' method='get'><button>" D_INFORMATION "</button></form></p>"
 #endif
   "<form action='up' method='get'><button>" D_FIRMWARE_UPGRADE "</button></form>"
@@ -297,30 +298,30 @@ const char HTTP_BTN_RSTRT[] PROGMEM =
 const char HTTP_BTN_MENU_MODULE[] PROGMEM =
   "<p><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form></p>"
   "<p><form action='wi' method='get'><button>" D_CONFIGURE_WIFI "</button></form></p>";
-const char HTTP_BTN_RESET[] PROGMEM =
-  "<br/>"
-  "<form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button class='button bred'>" D_RESET_CONFIGURATION "</button></form>";
 const char HTTP_BTN_MENU4[] PROGMEM =
   "<p><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form></p>"
   "<p><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form></p>"
   "<p><form action='tp' method='get'><button>" D_CONFIGURE_TEMPLATE "</button></form></p>";
+
+const char HTTP_BTN_RESET[] PROGMEM =
+  "<br/>"
+  "<form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button class='button bred'>" D_RESET_CONFIGURATION "</button></form>";
 const char HTTP_BTN_MENU5[] PROGMEM =
   "<p><form action='dl' method='get'><button>" D_BACKUP_CONFIGURATION "</button></form></p>"
   "<p><form action='rs' method='get'><button>" D_RESTORE_CONFIGURATION "</button></form></p>";
+
 const char HTTP_BTN_MAIN[] PROGMEM =
   "<br/>"
   "<form action='.' method='get'><button>" D_MAIN_MENU "</button></form>";
 
 const char HTTP_FORM_LOGIN[] PROGMEM =
+  "<fieldset>"
   "<form method='post' action='/'>"
-  "<br/><b>" D_USER "</b><br/><input name='USER1' placeholder='" D_USER "'><br/>"
-  "<br/><b>" D_PASSWORD "</b><br/><input name='PASS1' type='password' placeholder='" D_PASSWORD "'><br/>"
+  "<p><b>" D_USER "</b><br/><input name='USER1' placeholder='" D_USER "'></p>"
+  "<p><b>" D_PASSWORD "</b><br/><input name='PASS1' type='password' placeholder='" D_PASSWORD "'></p>"
   "<br/>"
-  "<br/><button>" D_OK "</button></form>";
-
-const char HTTP_BTN_CONF[] PROGMEM =
-  "<br/>"
-  "<form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>";
+  "<button>" D_OK "</button>"
+  "</form></fieldset>";
 
 const char HTTP_FORM_TEMPLATE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE_PARAMETERS "&nbsp;</b></legend>"
@@ -481,37 +482,32 @@ void StartWebserver(int type, IPAddress ipweb)
   if (!Settings.web_refresh) { Settings.web_refresh = HTTP_REFRESH_TIME; }
   if (!webserver_state) {
     if (!WebServer) {
-      WebServer = new ESP8266WebServer((HTTP_MANAGER==type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
+      WebServer = new ESP8266WebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
       WebServer->on("/", HandleRoot);
       WebServer->onNotFound(HandleNotFound);
+      WebServer->on("/up", HandleUpgradeFirmware);
+      WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
+      WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
+      WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
+      WebServer->on("/cs", HandleConsole);
+      WebServer->on("/cm", HandleHttpCommand);
 #ifndef FIRMWARE_MINIMAL
+      WebServer->on("/cn", HandleConfiguration);
+      WebServer->on("/md", HandleModuleConfiguration);
+      WebServer->on("/wi", HandleWifiConfiguration);
+      WebServer->on("/lg", HandleLoggingConfiguration);
+      WebServer->on("/tp", HandleTemplateConfiguration);
+      WebServer->on("/co", HandleOtherConfiguration);
+      WebServer->on("/dl", HandleBackupConfiguration);
+      WebServer->on("/rs", HandleRestoreConfiguration);
       WebServer->on("/rt", HandleResetConfiguration);
-#endif // FIRMWARE_MINIMAL
-      if (HTTP_MANAGER_RESET_ONLY != type) {
-        WebServer->on("/up", HandleUpgradeFirmware);
-        WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
-        WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
-        WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
-        WebServer->on("/cs", HandleConsole);
-        WebServer->on("/cm", HandleHttpCommand);
-#ifndef FIRMWARE_MINIMAL
-        WebServer->on("/cn", HandleConfiguration);
-        WebServer->on("/md", HandleModuleConfiguration);
-        WebServer->on("/wi", HandleWifiConfiguration);
-        WebServer->on("/lg", HandleLoggingConfiguration);
-        WebServer->on("/tp", HandleTemplateConfiguration);
-        WebServer->on("/co", HandleOtherConfiguration);
-        WebServer->on("/dl", HandleBackupConfiguration);
-        WebServer->on("/rs", HandleRestoreConfiguration);
-        WebServer->on("/rt", HandleResetConfiguration);
-        WebServer->on("/in", HandleInformation);
+      WebServer->on("/in", HandleInformation);
 #ifdef USE_EMULATION
-        HueWemoAddHandlers();
+      HueWemoAddHandlers();
 #endif  // USE_EMULATION
-        XdrvCall(FUNC_WEB_ADD_HANDLER);
-        XsnsCall(FUNC_WEB_ADD_HANDLER);
+      XdrvCall(FUNC_WEB_ADD_HANDLER);
+      XsnsCall(FUNC_WEB_ADD_HANDLER);
 #endif  // Not FIRMWARE_MINIMAL
-      }
     }
     reset_web_log_flag = false;
     WebServer->begin(); // Web server start
@@ -727,7 +723,7 @@ void WSContentSendStyle()
   WSContentSendStyle(F(""));
 }
 
-void WSContentStop(void)
+void WSContentEnd(void)
 {
   if (WifiIsInManagerMode()) {
     if (WifiConfigCounter()) {
@@ -767,7 +763,7 @@ void WebRestart(uint8_t type)
   } else {
     WSContentSend(FPSTR(HTTP_BTN_MAIN));
   }
-  WSContentStop();
+  WSContentEnd();
 
   ShowWebSource(SRC_WEBGUI);
   restart_flag = 2;
@@ -780,7 +776,16 @@ void HandleWifiLogin(void)
   WSContentStart(FPSTR(D_CONFIGURE_WIFI), false);  // false means show page no matter if the client has or has not credentials
   WSContentSendStyle();
   WSContentSend(FPSTR(HTTP_FORM_LOGIN));
-  WSContentStop();
+
+  if (WifiIsInManagerMode()) {
+    WSContentSend(F("<br/>"));
+    WSContentSend(FPSTR(HTTP_BTN_RSTRT));
+#ifndef FIRMWARE_MINIMAL
+    WSContentSend(FPSTR(HTTP_BTN_RESET));
+#endif  // FIRMWARE_MINIMAL
+  }
+
+  WSContentEnd();
 }
 
 void HandleRoot(void)
@@ -864,10 +869,15 @@ void HandleRoot(void)
 #endif  // Not FIRMWARE_MINIMAL
 
   if (HTTP_ADMIN == webserver_state) {
+#ifndef FIRMWARE_MINIMAL
+    WSContentSend(FPSTR(HTTP_BTN_CONF));
+#else
+    WSContentSend(F("<br/>"));
+#endif  // Not FIRMWARE_MINIMAL
     WSContentSend(FPSTR(HTTP_BTN_MENU1));
     WSContentSend(FPSTR(HTTP_BTN_RSTRT));
   }
-  WSContentStop();
+  WSContentEnd();
 }
 
 bool HandleRootStatusRefresh(void)
@@ -969,7 +979,7 @@ void HandleConfiguration(void)
   WSContentSend(FPSTR(HTTP_BTN_RESET));
   WSContentSend(FPSTR(HTTP_BTN_MENU5));
   WSContentSend(FPSTR(HTTP_BTN_MAIN));
-  WSContentStop();
+  WSContentEnd();
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1056,7 +1066,7 @@ void HandleTemplateConfiguration(void)
   WSContentSend(FPSTR(HTTP_FORM_TEMPLATE_FLAG));
   WSContentSend(FPSTR(HTTP_FORM_END));
   WSContentSend(FPSTR(HTTP_BTN_CONF));
-  WSContentStop();
+  WSContentEnd();
 }
 
 void TemplateSaveSettings(void)
@@ -1163,7 +1173,7 @@ void HandleModuleConfiguration(void)
   WSContentSend(F("</table>"));
   WSContentSend(FPSTR(HTTP_FORM_END));
   WSContentSend(FPSTR(HTTP_BTN_CONF));
-  WSContentStop();
+  WSContentEnd();
 }
 
 void ModuleSaveSettings(void)
@@ -1210,7 +1220,7 @@ String htmlEscape(String s)
 
 void HandleWifiConfiguration(void)
 {
-  if (!HttpCheckPriviledgedAccess()) { return; }
+  if (!HttpCheckPriviledgedAccess(!WifiIsInManagerMode())) { return; }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_WIFI);
 
@@ -1220,7 +1230,7 @@ void HandleWifiConfiguration(void)
     return;
   }
 
-  WSContentStart(FPSTR(S_CONFIGURE_WIFI));
+  WSContentStart(FPSTR(S_CONFIGURE_WIFI), !WifiIsInManagerMode());
   WSContentSend(FPSTR(HTTP_SCRIPT_WIFI));
   WSContentSendStyle();
 
@@ -1303,6 +1313,7 @@ void HandleWifiConfiguration(void)
   }
 
   if (WifiIsInManagerMode()) {
+    WSContentSend(F("<br/>"));
     WSContentSend(FPSTR(HTTP_BTN_RSTRT));
 #ifndef FIRMWARE_MINIMAL
     WSContentSend(FPSTR(HTTP_BTN_RESET));
@@ -1310,7 +1321,7 @@ void HandleWifiConfiguration(void)
   } else {
     WSContentSend(FPSTR(HTTP_BTN_CONF));
   }
-  WSContentStop();
+  WSContentEnd();
 }
 
 void WifiSaveSettings(void)
@@ -1371,7 +1382,7 @@ void HandleLoggingConfiguration(void)
   WSContentSend_P(HTTP_FORM_LOG2, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
   WSContentSend(FPSTR(HTTP_FORM_END));
   WSContentSend(FPSTR(HTTP_BTN_CONF));
-  WSContentStop();
+  WSContentEnd();
 }
 
 void LoggingSaveSettings(void)
@@ -1448,7 +1459,7 @@ void HandleOtherConfiguration(void)
 
   WSContentSend(FPSTR(HTTP_FORM_END));
   WSContentSend(FPSTR(HTTP_BTN_CONF));
-  WSContentStop();
+  WSContentEnd();
 }
 
 void OtherSaveSettings(void)
@@ -1535,16 +1546,16 @@ void HandleBackupConfiguration(void)
 
 void HandleResetConfiguration(void)
 {
-  if (!HttpCheckPriviledgedAccess()) { return; }
+  if (!HttpCheckPriviledgedAccess(!WifiIsInManagerMode())) { return; }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESET_CONFIGURATION);
 
-  WSContentStart(FPSTR(S_RESET_CONFIGURATION), (HTTP_MANAGER_RESET_ONLY != webserver_state));
+  WSContentStart(FPSTR(S_RESET_CONFIGURATION), !WifiIsInManagerMode());
   WSContentSendStyle();
   WSContentSend(F("<div style='text-align:center;'>" D_CONFIGURATION_RESET "</div>"));
   WSContentSend(FPSTR(HTTP_MSG_RSTRT));
   WSContentSend(FPSTR(HTTP_BTN_MAIN));
-  WSContentStop();
+  WSContentEnd();
 
   char command[CMDSZ];
   snprintf_P(command, sizeof(command), PSTR(D_CMND_RESET " 1"));
@@ -1562,7 +1573,7 @@ void HandleRestoreConfiguration(void)
   WSContentSend(FPSTR(HTTP_FORM_RST));
   WSContentSend_P(HTTP_FORM_RST_UPG, D_RESTORE);
   WSContentSend(FPSTR(HTTP_BTN_CONF));
-  WSContentStop();
+  WSContentEnd();
 
   upload_error = 0;
   upload_file_type = UPL_SETTINGS;
@@ -1664,7 +1675,7 @@ void HandleInformation(void)
                        "<div id='i' name='i'></div>"));
   //   WSContentSend(F("</fieldset>"));
   WSContentSend(FPSTR(HTTP_BTN_MAIN));
-  WSContentStop();
+  WSContentEnd();
 }
 #endif  // Not FIRMWARE_MINIMAL
 
@@ -1681,7 +1692,7 @@ void HandleUpgradeFirmware(void)
   WSContentSend_P(HTTP_FORM_UPG, Settings.ota_url);
   WSContentSend_P(HTTP_FORM_RST_UPG, D_UPGRADE);
   WSContentSend(FPSTR(HTTP_BTN_MAIN));
-  WSContentStop();
+  WSContentEnd();
 
   upload_error = 0;
   upload_file_type = UPL_TASMOTA;
@@ -1709,7 +1720,7 @@ void HandleUpgradeFirmwareStart(void)
   WSContentSend(F("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>"));
   WSContentSend(FPSTR(HTTP_MSG_RSTRT));
   WSContentSend(FPSTR(HTTP_BTN_MAIN));
-  WSContentStop();
+  WSContentEnd();
 
   snprintf_P(command, sizeof(command), PSTR(D_CMND_UPGRADE " 1"));
   ExecuteWebCommand(command, SRC_WEBGUI);
@@ -1757,7 +1768,7 @@ void HandleUploadDone(void)
   SettingsBufferFree();
   WSContentSend(F("</div><br/>"));
   WSContentSend(FPSTR(HTTP_BTN_MAIN));
-  WSContentStop();
+  WSContentEnd();
 }
 
 void HandleUploadLoop(void)
@@ -2038,7 +2049,7 @@ void HandleConsole(void)
   WSContentSendStyle();
   WSContentSend(FPSTR(HTTP_FORM_CMND));
   WSContentSend(FPSTR(HTTP_BTN_MAIN));
-  WSContentStop();
+  WSContentEnd();
 }
 
 void HandleConsoleRefresh(void)

@@ -947,7 +947,7 @@ void HandleKNXConfiguration(void)
     WSContentSend(F("</table></center></fieldset>"));
     WSContentSend(FPSTR(HTTP_FORM_END));
     WSContentSend(FPSTR(HTTP_BTN_CONF));
-    WSContentStop();
+    WSContentEnd();
   }
 
 }

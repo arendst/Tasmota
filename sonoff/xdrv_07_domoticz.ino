@@ -485,7 +485,7 @@ void HandleDomoticzConfiguration(void)
   WSContentSend(F("</table>"));
   WSContentSend(FPSTR(HTTP_FORM_END));
   WSContentSend(FPSTR(HTTP_BTN_CONF));
-  WSContentStop();
+  WSContentEnd();
 }
 
 void DomoticzSaveSettings(void)

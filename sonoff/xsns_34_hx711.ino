@@ -434,7 +434,7 @@ void HandleHxAction(void)
   WSContentSend_P(HTTP_FORM_HX711, stemp1, stemp2);
   WSContentSend(FPSTR(HTTP_FORM_END));
   WSContentSend(FPSTR(HTTP_BTN_CONF));
-  WSContentStop();
+  WSContentEnd();
 }
 
 void HxSaveSettings(void)

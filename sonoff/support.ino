@@ -160,28 +160,33 @@ double CharToDouble(const char *str)
   char strbuf[24];
 
   strlcpy(strbuf, str, sizeof(strbuf));
-  char *pt;
-  double left = atoi(strbuf);
+  char *pt = strbuf;
+  while ((*pt != '\0') && isblank(*pt)) { pt++; }  // Trim leading spaces
+
+  signed char sign = 1;
+  if (*pt == '-') { sign = -1; }
+  if (*pt == '-' || *pt=='+') { pt++; }            // Skip any sign
+
+  double left = 0;
+  if (*pt != '.') {
+    left = atoi(pt);                               // Get left part
+    while (isdigit(*pt)) { pt++; }                 // Skip number
+  }
+
   double right = 0;
-  short len = 0;
-  pt = strtok (strbuf, ".");
-  if (pt) {
-    pt = strtok (NULL, ".");
-    if (pt) {
-      right = atoi(pt);
-      len = strlen(pt);
-      double fac = 1;
-      while (len) {
-        fac /= 10.0;
-        len--;
-      }
-      // pow is also very large
-      //double fac=pow(10,-len);
-      right *= fac;
+  if (*pt == '.') {
+    pt++;
+    right = atoi(pt);                              // Decimal part
+    while (isdigit(*pt)) {
+      pt++;
+      right /= 10.0;
     }
   }
+
   double result = left + right;
-  if (left < 0) { result = left - right; }
+  if (sign < 0) {
+    return -result;                                // Add negative sign
+  }
   return result;
 }
 
@@ -1271,6 +1276,17 @@ void AddLog_P(uint8_t loglevel, const char *formatP, const char *formatP2)
   snprintf_P(log_data, sizeof(log_data), formatP);
   snprintf_P(message, sizeof(message), formatP2);
   strncat(log_data, message, sizeof(log_data) - strlen(log_data) -1);
+  AddLog(loglevel);
+}
+
+void AddLog_P2(uint8_t loglevel, PGM_P formatP, ...)
+{
+  // This uses char strings. Be aware of sending %% if % is needed
+  va_list arg;
+  va_start(arg, formatP);
+  int len = vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  va_end(arg);
+
   AddLog(loglevel);
 }
 

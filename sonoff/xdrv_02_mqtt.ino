@@ -941,7 +941,7 @@ void HandleMqttConfiguration(void)
     Settings.mqtt_fulltopic);
   WSContentSend(FPSTR(HTTP_FORM_END));
   WSContentSend(FPSTR(HTTP_BTN_CONF));
-  WSContentStop();
+  WSContentEnd();
 }
 
 void MqttSaveSettings(void)
