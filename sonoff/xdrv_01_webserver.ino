@@ -777,7 +777,7 @@ void HandleWifiLogin(void)
   WSContentSendStyle();
   WSContentSend(FPSTR(HTTP_FORM_LOGIN));
 
-  if (WifiIsInManagerMode()) {
+  if (HTTP_MANAGER_RESET_ONLY == webserver_state) {
     WSContentSend(F("<br/>"));
     WSContentSend(FPSTR(HTTP_BTN_RSTRT));
 #ifndef FIRMWARE_MINIMAL
