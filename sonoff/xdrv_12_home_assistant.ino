@@ -319,7 +319,7 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
                name, state_topic, Settings.state_text[toggle?2:1], availability_topic);
     try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_DEVICE_INFO_SHORT, mqtt_data,
                unique_id, ESP.getChipId());
-    if (strlen(prefix) > 0 ) try_snprintf_P(mqtt_data-1, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
+    if (strlen(prefix) > 0 ) try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
     if (toggle) try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_BUTTON_SWITCH_TOGGLE, mqtt_data);
     else try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_BUTTON_SWITCH_ONOFF, mqtt_data, Settings.state_text[0]);
 
