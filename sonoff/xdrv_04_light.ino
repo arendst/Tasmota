@@ -1397,7 +1397,7 @@ bool LightCommand(void)
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_width);
     } else {
-      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 32)) {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32)) {
         Settings.ws_width[XdrvMailbox.index -2] = XdrvMailbox.payload;
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.ws_width[XdrvMailbox.index -2]);

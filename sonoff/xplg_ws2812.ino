@@ -147,9 +147,16 @@ void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, float offse
 
 void Ws2812UpdateHand(int position, uint8_t index, uint8_t odd)
 {
+  if (Settings.ws_width[index]== 0){ // do not display
+      return;
+  }
   position = (position + Settings.light_rotation) % Settings.light_pixels;
-
-  if (Settings.flag.ws_clock_reverse) position = Settings.light_pixels -position;
+  uint8_t direction = 1;
+  if (Settings.flag.ws_clock_reverse){
+      position = Settings.light_pixels -position;
+      direction = -1;
+  }
+      
   WsColor hand_color = { Settings.ws_color[index][WS_RED], Settings.ws_color[index][WS_GREEN], Settings.ws_color[index][WS_BLUE] };
 
   Ws2812UpdatePixelColor(position, hand_color, 1);
@@ -163,7 +170,7 @@ void Ws2812UpdateHand(int position, uint8_t index, uint8_t odd)
   }
   if (odd && !(Settings.ws_width[index] & 0x1)){  // one extra pixel for even width and real pos > position+0.5
     float offset = (float)(1) / (float)range;
-    Ws2812UpdatePixelColor(position +range, hand_color, offset);
+    Ws2812UpdatePixelColor(position +direction*range, hand_color, offset);
   }
 }
 
@@ -182,7 +189,24 @@ void Ws2812Clock(void)
       Ws2812UpdateHand((i * 5000) / clksize, WS_MARKER, 0);
     }
   }
-
+  if (Settings.light_pixels <= 24 && Settings.ws_width[WS_SECOND] == 0){
+    // special behaviour for small sizes (Pixels<=24 and width2==0): use seconds color to indicate minute more precisely
+    // by lighting 0..4 extra pixels ahead of the minute pointer.
+    // can display minute-precision time using just 6 pixels. 
+    // 6 Pixels: widths 0 2 2
+    // 12 Pixels: widths 0 1 2
+    // 24 Pixels: widths 0 1 2  or widths 0 3 2
+    uint8_t direction = 1;
+    if (Settings.flag.ws_clock_reverse){
+      direction = -1;
+    }
+    uint8_t minutes_mod_5 = RtcTime.minute % 5;
+    uint8_t start = minutePosDouble/2 + (minutePosDouble & 0x1) & ~(Settings.ws_width[WS_MINUTE] & 0x1);
+    WsColor hand_color = { Settings.ws_color[WS_SECOND][WS_RED], Settings.ws_color[WS_SECOND][WS_GREEN], Settings.ws_color[WS_SECOND][WS_BLUE] };
+    for (uint8_t i = 1; i <= minutes_mod_5; i++){
+      Ws2812UpdatePixelColor((start+direction*i+Settings.light_pixels+Settings.light_rotation)%Settings.light_pixels, hand_color, 1.0);
+    }
+  }
   Ws2812StripShow();
 }
 
