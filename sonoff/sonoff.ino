@@ -200,12 +200,13 @@ char* Format(char* output, const char* input, int size)
     if (token != NULL) {
       digits = atoi(token);
       if (digits) {
+        char tmp[size];
         if (strchr(token, 'd')) {
-          snprintf_P(output, size, PSTR("%s%c0%dd"), output, '%', digits);
-          snprintf_P(output, size, output, ESP.getChipId() & 0x1fff);       // %04d - short chip ID in dec, like in hostname
+          snprintf_P(tmp, size, PSTR("%s%c0%dd"), output, '%', digits);
+          snprintf(output, size, tmp, ESP.getChipId() & 0x1fff);            // %04d - short chip ID in dec, like in hostname
         } else {
-          snprintf_P(output, size, PSTR("%s%c0%dX"), output, '%', digits);
-          snprintf_P(output, size, output, ESP.getChipId());                // %06X - full chip ID in hex
+          snprintf_P(tmp, size, PSTR("%s%c0%dX"), output, '%', digits);
+          snprintf_P(output, size, tmp, ESP.getChipId());                   // %06X - full chip ID in hex
         }
       } else {
         if (strchr(token, 'd')) {
@@ -624,9 +625,9 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       //   We also need at least 3 chars to make a valid version number string.
       if (((1 == data_len) && (1 == payload)) || ((data_len >= 3) && NewerVersion(dataBuf))) {
         ota_state_flag = 3;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}", command, my_version, GetOtaUrl(stemp1, sizeof(stemp1)));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}"), command, my_version, GetOtaUrl(stemp1, sizeof(stemp1)));
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_ONE_OR_GT "\"}", command, my_version);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"" D_JSON_ONE_OR_GT "\"}"), command, my_version);
       }
     }
     else if (CMND_OTAURL == command_code) {
