@@ -49,8 +49,7 @@ void PzemDcEverySecond(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
 
     if (error) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "PzemDc response error %d"), error);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "PzemDc response error %d"), error);
     } else {
       //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
       // 01 04 10 05 40 00 0A 00 0D 00 00 00 02 00 00 00 00 00 00 D6 29

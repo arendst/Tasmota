@@ -44,10 +44,8 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
   if (!sgp30_type) {
     if (sgp.begin()) {
       sgp30_type = 1;
-//      snprintf_P(log_data, sizeof(log_data), PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
-//      AddLog(LOG_LEVEL_DEBUG);
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "SGP30", 0x58);
-      AddLog(LOG_LEVEL_DEBUG);
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "SGP30", 0x58);
     }
   } else {
     if (!sgp.IAQmeasure()) return;  // Measurement failed
@@ -59,8 +57,7 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
       uint16_t eCO2_base;
 
       if (!sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) return;  // Failed to get baseline readings
-//      snprintf_P(log_data, sizeof(log_data), PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
-//      AddLog(LOG_LEVEL_DEBUG);
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
     }
     sgp30_ready = 1;
   }

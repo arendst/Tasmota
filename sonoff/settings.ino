@@ -435,9 +435,8 @@ void SettingsSave(uint8_t rotate)
         delay(1);
       }
     }
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"),
-       settings_location, Settings.save_flag, sizeof(SYSCFG));
-    AddLog(LOG_LEVEL_DEBUG);
+
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(SYSCFG));
 
     settings_crc = Settings.cfg_crc;
   }
@@ -482,9 +481,7 @@ void SettingsLoad(void)
   }
   if (settings_location > 0) {
     ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"),
-      settings_location, Settings.save_flag);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"), settings_location, Settings.save_flag);
   }
 
 #ifndef FIRMWARE_MINIMAL
@@ -516,8 +513,7 @@ void SettingsErase(uint8_t type)
 
   bool _serialoutput = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
 
   for (uint32_t _sector = _sectorStart; _sector < _sectorEnd; _sector++) {
     result = ESP.flashEraseSector(_sector);

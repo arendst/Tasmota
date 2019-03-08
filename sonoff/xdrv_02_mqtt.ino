@@ -234,8 +234,7 @@ void MqttDiscoverServer(void)
 
   int n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
 
   if (n > 0) {
     uint8_t i = 0;             // If the hostname isn't set, use the first record found.
@@ -249,9 +248,7 @@ void MqttDiscoverServer(void)
     snprintf_P(Settings.mqtt_host, sizeof(Settings.mqtt_host), MDNS.IP(i).toString().c_str());
     Settings.mqtt_port = MDNS.port(i);
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"),
-      MDNS.hostname(i).c_str(), Settings.mqtt_host, Settings.mqtt_port);
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_MQTT_SERVICE_FOUND " %s, " D_IP_ADDRESS " %s, " D_PORT " %d"), MDNS.hostname(i).c_str(), Settings.mqtt_host, Settings.mqtt_port);
   }
 }
 #endif  // MQTT_HOST_DISCOVERY
@@ -269,15 +266,13 @@ void MqttRetryCounter(uint8_t value)
 
 void MqttSubscribe(const char *topic)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_SUBSCRIBE_TO " %s"), topic);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT D_SUBSCRIBE_TO " %s"), topic);
   MqttSubscribeLib(topic);
 }
 
 void MqttUnsubscribe(const char *topic)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_UNSUBSCRIBE_FROM " %s"), topic);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT D_UNSUBSCRIBE_FROM " %s"), topic);
   MqttUnsubscribeLib(topic);
 }
 
@@ -308,8 +303,8 @@ void MqttPublishDirect(const char* topic, bool retained)
     snprintf_P(log_data, sizeof(log_data), PSTR("%s ..."), log_data);
   }
   snprintf_P(log_data, sizeof(log_data), PSTR("%s%s"), log_data, sretained);
-
   AddLog(LOG_LEVEL_INFO);
+
   if (Settings.ledstate &0x04) {
     blinks++;
   }
@@ -413,9 +408,7 @@ void MqttDisconnected(int state)
   mqtt_connected = false;
   mqtt_retry_counter = Settings.mqtt_retry;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND),
-    Settings.mqtt_host, Settings.mqtt_port, state, mqtt_retry_counter);
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), Settings.mqtt_host, Settings.mqtt_port, state, mqtt_retry_counter);
   rules_flag.mqtt_disconnected = 1;
 }
 
@@ -500,9 +493,7 @@ bool MqttCheckTls(void)
 //#endif
 
   if (!EspClient.connect(Settings.mqtt_host, Settings.mqtt_port)) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_TLS_CONNECT_FAILED_TO " %s:%d. " D_RETRY_IN " %d " D_UNIT_SECOND),
-      Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT D_TLS_CONNECT_FAILED_TO " %s:%d. " D_RETRY_IN " %d " D_UNIT_SECOND), Settings.mqtt_host, Settings.mqtt_port, mqtt_retry_counter);
   } else {
 #ifdef USE_MQTT_TLS_CA_CERT
     unsigned char tls_ca_cert[] = MQTT_TLS_CA_CERT;
@@ -972,9 +963,8 @@ void MqttSaveSettings(void)
   strlcpy(Settings.mqtt_user, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp, sizeof(Settings.mqtt_user));
   WebGetArg("mp", tmp, sizeof(tmp));
   strlcpy(Settings.mqtt_pwd, (!strlen(tmp)) ? "" : (!strcmp(tmp, D_ASTERISK_PWD)) ? Settings.mqtt_pwd : tmp, sizeof(Settings.mqtt_pwd));
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
     Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, Settings.mqtt_user, Settings.mqtt_topic, Settings.mqtt_fulltopic);
-  AddLog(LOG_LEVEL_INFO);
 }
 #endif  // USE_WEBSERVER
 

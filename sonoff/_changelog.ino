@@ -1,6 +1,7 @@
 /* 6.4.1.20 20190304
  * Changed webserver content handling from single String to small Chunks increasing RAM
- * 
+ * Changed logging message handling
+ *
  * 6.4.1.19 20190222
  * Add command SetOption37 for RGBCW color mapping (#5326)
  * Add Korean language translations (#5344)

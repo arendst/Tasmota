@@ -247,11 +247,10 @@ void KNX_ADD_GA( uint8_t GAop, uint8_t GA_FNUM, uint8_t GA_AREA, uint8_t GA_FDEF
 
   Settings.knx_GA_registered++;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ADD " GA #%d: %s " D_TO " %d/%d/%d"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_ADD " GA #%d: %s " D_TO " %d/%d/%d"),
    Settings.knx_GA_registered,
    device_param_ga[GAop-1],
    GA_FNUM, GA_AREA, GA_FDEF );
-  AddLog(LOG_LEVEL_DEBUG);
 }
 
 
@@ -297,9 +296,8 @@ void KNX_DEL_GA( uint8_t GAnum )
 
   Settings.knx_GA_registered--;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_DELETE " GA #%d"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_DELETE " GA #%d"),
     GAnum );
-  AddLog(LOG_LEVEL_DEBUG);
 }
 
 
@@ -330,11 +328,10 @@ void KNX_ADD_CB( uint8_t CBop, uint8_t CB_FNUM, uint8_t CB_AREA, uint8_t CB_FDEF
 
   Settings.knx_CB_registered++;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ADD " CB #%d: %d/%d/%d " D_TO " %s"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_ADD " CB #%d: %d/%d/%d " D_TO " %s"),
    Settings.knx_CB_registered,
    CB_FNUM, CB_AREA, CB_FDEF,
    device_param_cb[CBop-1] );
-  AddLog(LOG_LEVEL_DEBUG);
 }
 
 
@@ -387,8 +384,7 @@ void KNX_DEL_CB( uint8_t CBnum )
     device_param[oldparam-1].CB_id =  KNX_Empty;
   }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_DELETE " CB #%d"), CBnum );
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_DELETE " CB #%d"), CBnum );
 }
 
 
@@ -445,8 +441,7 @@ bool KNX_CONFIG_NOT_MATCH(void)
 void KNXStart(void)
 {
   knx.start(nullptr);
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_START));
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_START));
 }
 
 
@@ -522,8 +517,7 @@ void KNX_INIT(void)
   if (KNX_CONFIG_NOT_MATCH()) {
     Settings.knx_GA_registered = 0;
     Settings.knx_CB_registered = 0;
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_DELETE " " D_KNX_PARAMETERS ));
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_DELETE " " D_KNX_PARAMETERS));
   }
 
   // Register Group Addresses to listen to
@@ -555,22 +549,18 @@ void KNX_CB_Action(message_t const &msg, void *arg)
 
   if (msg.data_len == 1) {
     // COMMAND
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_RECEIVED_FROM " %d.%d.%d " D_COMMAND " %s: %d " D_TO " %s"),
-     msg.received_on.ga.area, msg.received_on.ga.line, msg.received_on.ga.member,
-     (msg.ct == KNX_CT_WRITE) ? D_KNX_COMMAND_WRITE : (msg.ct == KNX_CT_READ) ? D_KNX_COMMAND_READ : D_KNX_COMMAND_OTHER,
-     msg.data[0],
-     device_param_cb[(chan->type)-1]);
+    tempchar[0] = msg.data[0];
+    tempchar[1] = '\0';
   }  else  {
     // VALUE
     float tempvar = knx.data_to_2byte_float(msg.data);
     dtostrfd(tempvar,2,tempchar);
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_RECEIVED_FROM " %d.%d.%d " D_COMMAND " %s: %s " D_TO " %s"),
-     msg.received_on.ga.area, msg.received_on.ga.line, msg.received_on.ga.member,
-     (msg.ct == KNX_CT_WRITE) ? D_KNX_COMMAND_WRITE : (msg.ct == KNX_CT_READ) ? D_KNX_COMMAND_READ : D_KNX_COMMAND_OTHER,
-     tempchar,
-     device_param_cb[(chan->type)-1]);
   }
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX D_RECEIVED_FROM " %d.%d.%d " D_COMMAND " %s: %s " D_TO " %s"),
+   msg.received_on.ga.area, msg.received_on.ga.line, msg.received_on.ga.member,
+   (msg.ct == KNX_CT_WRITE) ? D_KNX_COMMAND_WRITE : (msg.ct == KNX_CT_READ) ? D_KNX_COMMAND_READ : D_KNX_COMMAND_OTHER,
+   tempchar,
+   device_param_cb[(chan->type)-1]);
 
   switch (msg.ct)
   {
@@ -668,10 +658,9 @@ void KnxUpdatePowerState(uint8_t device, power_t state)
       knx.write_1bit(KNX_addr, device_param[device -1].last_state);
     }
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
      device_param_ga[device -1], device_param[device -1].last_state,
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
-    AddLog(LOG_LEVEL_INFO);
 
     i = KNX_GA_Search(device, i + 1);
   }
@@ -701,10 +690,9 @@ void KnxSendButtonPower(uint8_t key, uint8_t device, uint8_t state)
       knx.write_1bit(KNX_addr, !(state == 0));
     }
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
      device_param_ga[device + 7], !(state == 0),
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
-    AddLog(LOG_LEVEL_INFO);
 
     i = KNX_GA_Search(device + 8, i + 1);
   }
@@ -733,10 +721,9 @@ void KnxSensor(uint8_t sensor_type, float value)
       knx.write_2byte_float(KNX_addr, value);
     }
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s " D_SENT_TO " %d.%d.%d "),
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s " D_SENT_TO " %d.%d.%d "),
      device_param_ga[sensor_type -1],
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
-    AddLog(LOG_LEVEL_INFO);
 
     i = KNX_GA_Search(sensor_type, i+1);
   }
@@ -960,9 +947,8 @@ void KNX_Save_Settings(void)
 
   Settings.flag.knx_enabled = WebServer->hasArg("b1");
   Settings.flag.knx_enable_enhancement = WebServer->hasArg("b2");
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_ENABLED ": %d, " D_KNX_ENHANCEMENT ": %d"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_ENABLED ": %d, " D_KNX_ENHANCEMENT ": %d"),
    Settings.flag.knx_enabled, Settings.flag.knx_enable_enhancement );
-  AddLog(LOG_LEVEL_DEBUG);
 
   stmp = WebServer->arg("area");
   KNX_addr.pa.area = stmp.toInt();
@@ -972,33 +958,29 @@ void KNX_Save_Settings(void)
   KNX_addr.pa.member = stmp.toInt();
   Settings.knx_physsical_addr = KNX_addr.value;
   knx.physical_address_set( KNX_addr ); // Set Physical KNX Address of the device
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX D_KNX_PHYSICAL_ADDRESS ": %d.%d.%d "),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_KNX_PHYSICAL_ADDRESS ": %d.%d.%d "),
    KNX_addr.pa.area, KNX_addr.pa.line, KNX_addr.pa.member );
-  AddLog(LOG_LEVEL_DEBUG);
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "GA: %d"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "GA: %d"),
    Settings.knx_GA_registered );
-  AddLog(LOG_LEVEL_DEBUG);
   for (uint8_t i = 0; i < Settings.knx_GA_registered ; ++i)
   {
     KNX_addr.value = Settings.knx_GA_addr[i];
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "GA #%d: %s " D_TO " %d/%d/%d"),
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "GA #%d: %s " D_TO " %d/%d/%d"),
      i+1, device_param_ga[Settings.knx_GA_param[i]-1],
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member );
-    AddLog(LOG_LEVEL_DEBUG);
+
   }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "CB: %d"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "CB: %d"),
    Settings.knx_CB_registered );
-  AddLog(LOG_LEVEL_DEBUG);
   for (uint8_t i = 0; i < Settings.knx_CB_registered ; ++i)
   {
     KNX_addr.value = Settings.knx_CB_addr[i];
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "CB #%d: %d/%d/%d " D_TO " %s"),
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "CB #%d: %d/%d/%d " D_TO " %s"),
      i+1,
      KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member,
      device_param_cb[Settings.knx_CB_param[i]-1] );
-    AddLog(LOG_LEVEL_DEBUG);
   }
 }
 
@@ -1028,10 +1010,9 @@ bool KnxCommand(void)
         knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
       }
 
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
        device_param_ga[index + KNX_SLOT1 -2], !(XdrvMailbox.payload == 0),
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
-      AddLog(LOG_LEVEL_INFO);
 
       i = KNX_GA_Search(index + KNX_SLOT1 -1, i + 1);
     }
@@ -1057,10 +1038,9 @@ bool KnxCommand(void)
         knx.write_2byte_float(KNX_addr, tempvar);
       }
 
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d.%d.%d"),
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d.%d.%d"),
        device_param_ga[index + KNX_SLOT1 -2], XdrvMailbox.data,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
-      AddLog(LOG_LEVEL_INFO);
 
       i = KNX_GA_Search(index + KNX_SLOT1 -1, i + 1);
     }

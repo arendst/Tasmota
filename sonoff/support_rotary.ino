@@ -115,8 +115,7 @@ void RotaryHandler(void)
         if (t > 500) {
           t = 500;
         }
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_CMND_COLORTEMPERATURE " %d"), rotary_position - rotary_last_position);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_CMND_COLORTEMPERATURE " %d"), rotary_position - rotary_last_position);
         LightSetColorTemp((uint16_t)t);
       } else {
         int8_t d = Settings.light_dimmer;
@@ -127,8 +126,7 @@ void RotaryHandler(void)
         if (d > 100) {
           d = 100;
         }
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_CMND_DIMMER " %d"), rotary_position - rotary_last_position);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_CMND_DIMMER " %d"), rotary_position - rotary_last_position);
 
         LightSetDimmer((uint8_t)d);
         Settings.light_dimmer = d;

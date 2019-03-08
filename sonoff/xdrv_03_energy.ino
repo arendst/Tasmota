@@ -199,8 +199,7 @@ void EnergyMarginCheck(void)
     energy_voltage_u = (uint16_t)(energy_voltage);
     energy_current_u = (uint16_t)(energy_current * 1000);
 
-//    snprintf_P(log_data, sizeof(log_data), PSTR("NRG: W %d, U %d, I %d"), energy_power_u, energy_voltage_u, energy_current_u);
-//    AddLog(LOG_LEVEL_DEBUG);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: W %d, U %d, I %d"), energy_power_u, energy_voltage_u, energy_current_u);
 
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
     jsonflg = false;

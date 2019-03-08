@@ -172,10 +172,8 @@ int try_snprintf_P(char *s, size_t n, const char *format, ... )
   va_start(args, format);
   int len = vsnprintf_P(NULL, 0, format, args);
   if (len >= n) {
-    snprintf_P(log_data, sizeof(log_data),
-               PSTR("ERROR: MQTT discovery failed due to too long topic or friendly name. "
-                    "Please shorten topic and friendly name. Failed to format(%u/%u):"), len, n);
-    AddLog(LOG_LEVEL_ERROR);
+    AddLog_P2(LOG_LEVEL_ERROR, PSTR("ERROR: MQTT discovery failed due to too long topic or friendly name. "
+                                    "Please shorten topic and friendly name. Failed to format(%u/%u):"), len, n);
     va_start(args, format);
     vsnprintf_P(log_data, sizeof(log_data), format, args);
     AddLog(LOG_LEVEL_ERROR);
@@ -479,16 +477,14 @@ void HAssAnnounceSensors(void)
       StaticJsonBuffer<500> jsonBuffer;
       JsonObject& root = jsonBuffer.parseObject(sensordata);
       if (!root.success()) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("HASS: failed to parse '%s'"), sensordata);
-        AddLog(LOG_LEVEL_ERROR);
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: failed to parse '%s'"), sensordata);
         continue;
       }
       for (auto sensor : root) {
         const char* sensorname = sensor.key;
         JsonObject& sensors = sensor.value.as<JsonObject>();
         if (!sensors.success()) {
-          snprintf_P(log_data, sizeof(log_data), PSTR("HASS: failed to parse '%s'"), sensordata);
-          AddLog(LOG_LEVEL_ERROR);
+          AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: failed to parse '%s'"), sensordata);
           continue;
         }
         for (auto subsensor : sensors) {
