@@ -203,7 +203,7 @@ char* Format(char* output, const char* input, int size)
         char tmp[size];
         if (strchr(token, 'd')) {
           snprintf_P(tmp, size, PSTR("%s%c0%dd"), output, '%', digits);
-          snprintf(output, size, tmp, ESP.getChipId() & 0x1fff);            // %04d - short chip ID in dec, like in hostname
+          snprintf_P(output, size, tmp, ESP.getChipId() & 0x1fff);            // %04d - short chip ID in dec, like in hostname
         } else {
           snprintf_P(tmp, size, PSTR("%s%c0%dX"), output, '%', digits);
           snprintf_P(output, size, tmp, ESP.getChipId());                   // %06X - full chip ID in hex
@@ -958,9 +958,24 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
           ModuleDefault(payload -1);    // Copy template module
           if (USER_MODULE == Settings.module) { restart_flag = 2; }
         }
-        else if (0 == payload) {        // Copy current module with user configured GPIO
+        else if (0 == payload) {        // Copy current template to user template
           if (Settings.module != USER_MODULE) {
             ModuleDefault(Settings.module);
+          }
+        }
+        else if (255 == payload) {      // Copy current module with user configured GPIO
+          if (Settings.module != USER_MODULE) {
+            ModuleDefault(Settings.module);
+          }
+          snprintf_P(Settings.user_template.name, sizeof(Settings.user_template.name), PSTR("Merged"));
+          uint8_t j = 0;
+          for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+            if (6 == i) { j = 9; }
+            if (8 == i) { j = 12; }
+            if (my_module.io[j] > GPIO_NONE) {
+              Settings.user_template.gp.io[i] = my_module.io[j];
+            }
+            j++;
           }
         }
       }

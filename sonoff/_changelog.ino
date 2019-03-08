@@ -2,6 +2,7 @@
  * Changed webserver content handling from single String to small Chunks increasing RAM
  * Changed logging message handling
  * Fix additional characters in fallbacktopic, hostname and mqttclient on core 2.5.0 (#5359, #5417)
+ * Add command Template 255 to copy module configuration over to current active template and store as user template named Merged (#5371)
  *
  * 6.4.1.19 20190222
  * Add command SetOption37 for RGBCW color mapping (#5326)
