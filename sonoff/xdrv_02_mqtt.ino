@@ -765,10 +765,10 @@ bool MqttCommand(void)
     if (data_len > 0) {
       char *mqtt_part = strtok(dataBuf, " ");
       if (mqtt_part) {
-        snprintf(stemp1, sizeof(stemp1), mqtt_part);
+        strlcpy(stemp1, mqtt_part, sizeof(stemp1));
         mqtt_part = strtok(NULL, " ");
         if (mqtt_part) {
-          snprintf(mqtt_data, sizeof(mqtt_data), mqtt_part);
+          strlcpy(mqtt_data, mqtt_part, sizeof(mqtt_data));
         } else {
           mqtt_data[0] = '\0';
         }

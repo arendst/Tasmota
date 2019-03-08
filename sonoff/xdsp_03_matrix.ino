@@ -226,7 +226,7 @@ void MatrixOnOff(void)
 
 void MatrixDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
 {
-  snprintf(mtx_buffer, MTX_MAX_SCREEN_BUFFER, str);
+  strlcpy(mtx_buffer, str, MTX_MAX_SCREEN_BUFFER);
   mtx_mode = x &1;  // Use x for selecting scroll up (0) or scroll left (1)
   mtx_loop = y &1;  // Use y for selecting no loop (0) or loop (1)
   if (!mtx_state) { mtx_state = 1; }

@@ -385,7 +385,7 @@ bool TimerCommand(void)
               uint8_t sign = 0;
               char time_str[10];
 
-              snprintf(time_str, sizeof(time_str), root[parm_uc]);
+              strlcpy(time_str, root[parm_uc], sizeof(time_str));
               const char *substr = strtok(time_str, ":");
               if (substr != NULL) {
                 if (strchr(substr, '-')) {

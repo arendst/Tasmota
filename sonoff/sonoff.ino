@@ -229,7 +229,7 @@ char* GetOtaUrl(char *otaurl, size_t otaurl_size)
     snprintf_P(otaurl, otaurl_size, Settings.ota_url, ESP.getChipId());
   }
   else {
-    snprintf(otaurl, otaurl_size, Settings.ota_url);
+    strlcpy(otaurl, Settings.ota_url, otaurl_size);
   }
   return otaurl;
 }

@@ -539,7 +539,7 @@ void BmpShow(bool json)
       float bmp_pressure = ConvertPressure(bmp_sensors[bmp_idx].bmp_pressure);
 
       char name[10];
-      snprintf(name, sizeof(name), bmp_sensors[bmp_idx].bmp_name);
+      strlcpy(name, bmp_sensors[bmp_idx].bmp_name, sizeof(name));
       if (bmp_count > 1) {
         snprintf_P(name, sizeof(name), PSTR("%s-%02X"), name, bmp_sensors[bmp_idx].bmp_address);  // BMXXXX-XX
       }
