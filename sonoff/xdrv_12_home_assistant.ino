@@ -202,7 +202,7 @@ void HAssAnnounceRelayLight(void)
 
     mqtt_data[0] = '\0';  // Clear retained message
 
-    // Clear "other" topic first in case the device has been reconfigured from ligth to switch or vice versa
+    // Clear "other" topic first in case the device has been reconfigured from light to switch or vice versa
     snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%d"), ESP.getChipId(), (is_topic_light) ? "RL" : "LI", i);
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s/config"),
                (is_topic_light) ? "switch" : "light", unique_id);
@@ -543,11 +543,16 @@ void HAssAnnounceStatusSensor(void)
 void HAssPublishStatus(void)
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data),
-             PSTR("{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_RESTARTREASON "\":\"%s\",\""
-             D_JSON_UPTIME "\":\"%s\",\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\""
-             D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_RSSI "\":\"%d\",\"LoadAvg\":%lu}"),
-             my_version, my_image, ModuleName().c_str(), GetResetReason().c_str(), GetUptime().c_str(), Settings.bootcount,
-             Settings.save_flag, WiFi.localIP().toString().c_str(), WifiGetRssiAsQuality(WiFi.RSSI()), loop_load_avg);
+             PSTR("{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\","
+             "\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
+             "\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\","
+             "\"WiFi " D_JSON_LINK_COUNT "\":%d,\"WiFi " D_JSON_DOWNTIME "\":\"%s\","
+             "\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_CMND_IPADDRESS "\":\"%s\","
+             "\"" D_JSON_RSSI "\":\"%d\",\"LoadAvg\":%lu}"),
+             my_version, my_image, GetBuildDateAndTime().c_str(), ESP.getSdkVersion(), ModuleName().c_str(),
+             GetResetReason().c_str(), GetUptime().c_str(), WifiLinkCount(), WifiDowntime().c_str(),
+             Settings.bootcount, Settings.save_flag, WiFi.localIP().toString().c_str(),
+             WifiGetRssiAsQuality(WiFi.RSSI()), loop_load_avg);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_HASS_STATE));
 }
 
