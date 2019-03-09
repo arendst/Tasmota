@@ -137,7 +137,7 @@ bool SerialBridgeCommand(void)
         int size = strlen(XdrvMailbox.data);
 
         while (size > 0) {
-          snprintf(stemp, sizeof(stemp), codes);
+          strlcpy(stemp, codes, sizeof(stemp));
           code = strtol(stemp, &p, 16);
           SerialBridgeSerial->write(code);                                  // "AA004566" as hex values
           size -= 2;

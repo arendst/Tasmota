@@ -218,7 +218,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     }
 #endif  // USE_TIMERS and USE_SUNRISE
     rule_param.toUpperCase();
-    snprintf(rule_svalue, sizeof(rule_svalue), rule_param.c_str());
+    strlcpy(rule_svalue, rule_param.c_str(), sizeof(rule_svalue));
 
     int temp_value = GetStateNumber(rule_svalue);
     if (temp_value > -1) {
@@ -365,7 +365,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 #endif  // USE_TIMERS and USE_SUNRISE
 
       char command[commands.length() +1];
-      snprintf(command, sizeof(command), commands.c_str());
+      strlcpy(command, commands.c_str(), sizeof(command));
 
       AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
 
