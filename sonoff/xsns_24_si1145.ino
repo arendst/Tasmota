@@ -1,7 +1,7 @@
 /*
   xsns_24_si1145.ino - SI1145/46/47 UV Index / IR / Visible light sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,9 +27,7 @@
  * I2C Addresses: 0x60
 \*********************************************************************************************/
 
-uint8_t si1145_type = 0;
-
-/********************************************************************************************/
+#define XSNS_24                             24
 
 #define SI114X_ADDR                         0X60
 //
@@ -184,6 +182,8 @@ uint8_t si1145_type = 0;
 #define SI114X_IRQEN_PS2                    0x08
 #define SI114X_IRQEN_PS3                    0x10
 
+uint8_t si1145_type = 0;
+
 /********************************************************************************************/
 
 uint8_t Si1145ReadByte(uint8_t reg)
@@ -210,12 +210,12 @@ uint8_t Si1145WriteParamData(uint8_t p, uint8_t v)
 
 /********************************************************************************************/
 
-bool Si1145Present()
+bool Si1145Present(void)
 {
   return (Si1145ReadByte(SI114X_PART_ID) == 0X45);
 }
 
-void Si1145Reset()
+void Si1145Reset(void)
 {
   Si1145WriteByte(SI114X_MEAS_RATE0, 0);
   Si1145WriteByte(SI114X_MEAS_RATE1, 0);
@@ -231,7 +231,7 @@ void Si1145Reset()
   delay(10);
 }
 
-void Si1145DeInit()
+void Si1145DeInit(void)
 {
   //ENABLE UV reading
   //these reg must be set to the fixed value
@@ -276,7 +276,7 @@ void Si1145DeInit()
   Si1145WriteByte(SI114X_COMMAND, SI114X_PSALS_AUTO);
 }
 
-boolean Si1145Begin()
+bool Si1145Begin(void)
 {
   if (!Si1145Present()) { return false; }
 
@@ -286,26 +286,26 @@ boolean Si1145Begin()
 }
 
 // returns the UV index * 100 (divide by 100 to get the index)
-uint16_t Si1145ReadUV()
+uint16_t Si1145ReadUV(void)
 {
   return Si1145ReadHalfWord(SI114X_AUX_DATA0_UVINDEX0);
 }
 
 // returns visible+IR light levels
-uint16_t Si1145ReadVisible()
+uint16_t Si1145ReadVisible(void)
 {
   return Si1145ReadHalfWord(SI114X_ALS_VIS_DATA0);
 }
 
 // returns IR light levels
-uint16_t Si1145ReadIR()
+uint16_t Si1145ReadIR(void)
 {
   return Si1145ReadHalfWord(SI114X_ALS_IR_DATA0);
 }
 
 /********************************************************************************************/
 
-void Si1145Update()
+void Si1145Update(void)
 {
   if (!si1145_type) {
     if (Si1145Begin()) {
@@ -323,14 +323,14 @@ const char HTTP_SNS_SI1145[] PROGMEM = "%s"
   "{s}SI1145 " D_UV_INDEX "{m}%d.%d{e}";
 #endif  // USE_WEBSERVER
 
-void Si1145Show(boolean json)
+void Si1145Show(bool json)
 {
   if (si1145_type && Si1145Present()) {
     uint16_t visible = Si1145ReadVisible();
     uint16_t infrared = Si1145ReadIR();
     uint16_t uvindex = Si1145ReadUV();
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SI1145\":{\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_INFRARED "\":%d,\"" D_JSON_UVINDEX "\":%d.%d}"),
+      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SI1145\":{\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_INFRARED "\":%d,\"" D_JSON_UV_INDEX "\":%d.%d}"),
         mqtt_data, visible, infrared, uvindex /100, uvindex %100);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, visible);
@@ -349,11 +349,9 @@ void Si1145Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_24
-
-boolean Xsns24(byte function)
+bool Xsns24(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

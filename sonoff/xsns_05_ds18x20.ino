@@ -1,7 +1,7 @@
 /*
   xsns_05_ds18x20.ino - DS18x20 temperature sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,6 +21,9 @@
 /*********************************************************************************************\
  * DS18B20 - Temperature - Multiple sensors
 \*********************************************************************************************/
+
+#define XSNS_05              5
+
 //#define USE_DS18x20_RECONFIGURE    // When sensor is lost keep retrying or re-configure
 
 #define DS18S20_CHIPID       0x10  // +/-0.5C 9-bit
@@ -49,6 +52,10 @@ struct DS18X20STRUCT {
 uint8_t ds18x20_sensors = 0;
 uint8_t ds18x20_pin = 0;
 char ds18x20_types[12];
+#ifdef W1_PARASITE_POWER
+uint8_t ds18x20_sensor_curr = 0;
+unsigned long w1_power_until = 0;
+#endif
 
 /*********************************************************************************************\
  * Embedded tuned OneWire library
@@ -62,7 +69,7 @@ uint8_t onewire_last_family_discrepancy = 0;
 bool onewire_last_device_flag = false;
 unsigned char onewire_rom_id[8] = { 0 };
 
-uint8_t OneWireReset()
+uint8_t OneWireReset(void)
 {
   uint8_t retries = 125;
 
@@ -100,7 +107,7 @@ void OneWireWriteBit(uint8_t v)
   delayMicroseconds(delay_high[v]);
 }
 
-uint8_t OneWireReadBit()
+uint8_t OneWireReadBit(void)
 {
   //noInterrupts();
   pinMode(ds18x20_pin, OUTPUT);
@@ -121,7 +128,7 @@ void OneWireWrite(uint8_t v)
   }
 }
 
-uint8_t OneWireRead()
+uint8_t OneWireRead(void)
 {
   uint8_t r = 0;
 
@@ -141,7 +148,7 @@ void OneWireSelect(const uint8_t rom[8])
   }
 }
 
-void OneWireResetSearch()
+void OneWireResetSearch(void)
 {
   onewire_last_discrepancy = 0;
   onewire_last_device_flag = false;
@@ -226,7 +233,7 @@ uint8_t OneWireSearch(uint8_t *newAddr)
   return search_result;
 }
 
-boolean OneWireCrc8(uint8_t *addr)
+bool OneWireCrc8(uint8_t *addr)
 {
   uint8_t crc = 0;
   uint8_t len = 8;
@@ -247,14 +254,16 @@ boolean OneWireCrc8(uint8_t *addr)
 
 /********************************************************************************************/
 
-void Ds18x20Init()
+void Ds18x20Init(void)
 {
   uint64_t ids[DS18X20_MAX_SENSORS];
 
   ds18x20_pin = pin[GPIO_DSB];
 
   OneWireResetSearch();
-  for (ds18x20_sensors = 0; ds18x20_sensors < DS18X20_MAX_SENSORS; ds18x20_sensors) {
+
+  ds18x20_sensors = 0;
+  while (ds18x20_sensors < DS18X20_MAX_SENSORS) {
     if (!OneWireSearch(ds18x20_sensor[ds18x20_sensors].address)) {
       break;
     }
@@ -282,10 +291,17 @@ void Ds18x20Init()
   AddLog(LOG_LEVEL_DEBUG);
 }
 
-void Ds18x20Convert()
+void Ds18x20Convert(void)
 {
   OneWireReset();
+#ifdef W1_PARASITE_POWER
+  // With parasite power address one sensor at a time
+  if (++ds18x20_sensor_curr >= ds18x20_sensors)
+    ds18x20_sensor_curr = 0;
+  OneWireSelect(ds18x20_sensor[ds18x20_sensor_curr].address);
+#else
   OneWireWrite(W1_SKIP_ROM);           // Address all Sensors on Bus
+#endif
   OneWireWrite(W1_CONVERT_TEMP);       // start conversion, no parasite power on at the end
 //  delay(750);                          // 750ms should be enough for 12bit conv
 }
@@ -334,6 +350,9 @@ bool Ds18x20Read(uint8_t sensor)
           OneWireWrite(data[4]);          // Configuration Register
           OneWireSelect(ds18x20_sensor[index].address);
           OneWireWrite(W1_WRITE_EEPROM);  // Save scratchpad to EEPROM
+#ifdef W1_PARASITE_POWER
+          w1_power_until = millis() + 10; // 10ms specified duration for EEPROM write
+#endif
         }
         temp12 = (data[1] << 8) + data[0];
         if (temp12 > 2047) {
@@ -372,9 +391,20 @@ void Ds18x20Name(uint8_t sensor)
 
 /********************************************************************************************/
 
-void Ds18x20EverySecond()
+void Ds18x20EverySecond(void)
 {
-  if (uptime &1) {
+#ifdef W1_PARASITE_POWER
+  // skip access if there is still an eeprom write ongoing
+  unsigned long now = millis();
+  if (now < w1_power_until)
+    return;
+#endif
+  if (uptime & 1
+#ifdef W1_PARASITE_POWER
+      // if more than 1 sensor and only parasite power: convert every cycle
+      || ds18x20_sensors >= 2
+#endif
+  ) {
     // 2mS
     Ds18x20Convert();          // Start conversion, takes up to one second
   } else {
@@ -394,14 +424,13 @@ void Ds18x20EverySecond()
   }
 }
 
-void Ds18x20Show(boolean json)
+void Ds18x20Show(bool json)
 {
-  char temperature[10];
-
   for (uint8_t i = 0; i < ds18x20_sensors; i++) {
     uint8_t index = ds18x20_sensor[i].index;
 
     if (ds18x20_sensor[index].valid) {   // Check for valid temperature
+      char temperature[33];
       dtostrfd(ds18x20_sensor[index].temperature, Settings.flag2.temperature_resolution, temperature);
 
       Ds18x20Name(i);
@@ -411,7 +440,7 @@ void Ds18x20Show(boolean json)
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, temperature);
         } else {
           char address[17];
-          for (byte j = 0; j < 6; j++) {
+          for (uint8_t j = 0; j < 6; j++) {
             sprintf(address+2*j, "%02X", ds18x20_sensor[index].address[6-j]);  // Skip sensor type and crc
           }
           snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, address, temperature);
@@ -439,11 +468,9 @@ void Ds18x20Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_05
-
-boolean Xsns05(byte function)
+bool Xsns05(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pin[GPIO_DSB] < 99) {
     switch (function) {

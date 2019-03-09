@@ -1,7 +1,7 @@
 /*
   xsns_15_mhz19.ino - MH-Z19(B) CO2 sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,9 +18,6 @@
 */
 
 #ifdef USE_MHZ19
-
-#define XSNS_15 15
-
 /*********************************************************************************************\
  * MH-Z19 - CO2 sensor
  *
@@ -33,6 +30,8 @@
  * Select filter usage on low stability readings
 \*********************************************************************************************/
 
+#define XSNS_15                      15
+
 enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILTER_FAST, MHZ19_FILTER_MEDIUM, MHZ19_FILTER_SLOW};
 
 #define MHZ19_FILTER_OPTION          MHZ19_FILTER_FAST
@@ -40,7 +39,10 @@ enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILT
 /*********************************************************************************************\
  * Source: http://www.winsen-sensor.com/d/files/infrared-gas-sensor/mh-z19b-co2-ver1_0.pdf
  *
- * Automatic Baseline Correction (ABC logic function)
+ * Automatic Baseline Correction (ABC logic function) is enabled by default but may be disabled with command
+ * Sensor15 0
+ * and enabled again with command
+ * Sensor15 1
  *
  * ABC logic function refers to that sensor itself do zero point judgment and automatic calibration procedure
  * intelligently after a continuous operation period. The automatic calibration cycle is every 24 hours after powered on.
@@ -52,10 +54,6 @@ enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILT
  *
  * Please do zero calibration timely, such as manual or commend calibration.
 \*********************************************************************************************/
-
-#define MHZ19_ABC_ENABLE             1       // Automatic Baseline Correction (0 = off, 1 = on (default))
-
-/*********************************************************************************************/
 
 #include <TasmotaSerial.h>
 
@@ -71,22 +69,28 @@ enum MhzFilterOptions {MHZ19_FILTER_OFF, MHZ19_FILTER_OFF_ALLSAMPLES, MHZ19_FILT
 
 TasmotaSerial *MhzSerial;
 
-const char kMhzTypes[] PROGMEM = "MHZ19|MHZ19B";
+const char kMhzModels[] PROGMEM = "|B";
 
-enum MhzCommands { MHZ_CMND_READPPM, MHZ_CMND_ABCENABLE, MHZ_CMND_ABCDISABLE, MHZ_CMND_ZEROPOINT, MHZ_CMND_RESET };
-const uint8_t kMhzCommands[][2] PROGMEM = {
-  {0x86,0x00},   // mhz_cmnd_read_ppm
-  {0x79,0xA0},   // mhz_cmnd_abc_enable
-  {0x79,0x00},   // mhz_cmnd_abc_disable
-  {0x87,0x00},   // mhz_cmnd_zeropoint
-  {0x8D,0x00}};  // mhz_cmnd_reset
+const char ABC_ENABLED[] PROGMEM = "ABC is Enabled";
+const char ABC_DISABLED[] PROGMEM = "ABC is Enabled";
+
+enum MhzCommands { MHZ_CMND_READPPM, MHZ_CMND_ABCENABLE, MHZ_CMND_ABCDISABLE, MHZ_CMND_ZEROPOINT, MHZ_CMND_RESET, MHZ_CMND_RANGE_1000, MHZ_CMND_RANGE_2000, MHZ_CMND_RANGE_3000, MHZ_CMND_RANGE_5000 };
+const uint8_t kMhzCommands[][4] PROGMEM = {
+//  2     3    6    7
+  {0x86,0x00,0x00,0x00},   // mhz_cmnd_read_ppm
+  {0x79,0xA0,0x00,0x00},   // mhz_cmnd_abc_enable
+  {0x79,0x00,0x00,0x00},   // mhz_cmnd_abc_disable
+  {0x87,0x00,0x00,0x00},   // mhz_cmnd_zeropoint
+  {0x8D,0x00,0x00,0x00},   // mhz_cmnd_reset
+  {0x99,0x00,0x03,0xE8},   // mhz_cmnd_set_range_1000
+  {0x99,0x00,0x07,0xD0},   // mhz_cmnd_set_range_2000
+  {0x99,0x00,0x0B,0xB8},   // mhz_cmnd_set_range_3000
+  {0x99,0x00,0x13,0x88}};  // mhz_cmnd_set_range_5000
 
 uint8_t mhz_type = 1;
 uint16_t mhz_last_ppm = 0;
 uint8_t mhz_filter = MHZ19_FILTER_OPTION;
-bool mhz_abc_enable = MHZ19_ABC_ENABLE;
 bool mhz_abc_must_apply = false;
-char mhz_types[7];
 
 float mhz_temperature = 0;
 uint8_t mhz_retry = MHZ19_RETRY_COUNT;
@@ -95,30 +99,32 @@ uint8_t mhz_state = 0;
 
 /*********************************************************************************************/
 
-byte MhzCalculateChecksum(byte *array)
+uint8_t MhzCalculateChecksum(uint8_t *array)
 {
-  byte checksum = 0;
-  for (byte i = 1; i < 8; i++) {
+  uint8_t checksum = 0;
+  for (uint8_t i = 1; i < 8; i++) {
     checksum += array[i];
   }
   checksum = 255 - checksum;
   return (checksum +1);
 }
 
-size_t MhzSendCmd(byte command_id)
+size_t MhzSendCmd(uint8_t command_id)
 {
   uint8_t mhz_send[9] = { 0 };
 
   mhz_send[0] = 0xFF;  // Start byte, fixed
   mhz_send[1] = 0x01;  // Sensor number, 0x01 by default
-  memcpy_P(&mhz_send[2], kMhzCommands[command_id], sizeof(kMhzCommands[0]));
+  memcpy_P(&mhz_send[2], kMhzCommands[command_id], sizeof(uint16_t));
 /*
   mhz_send[4] = 0x00;
   mhz_send[5] = 0x00;
-  mhz_send[6] = 0x00;
-  mhz_send[7] = 0x00;
 */
+  memcpy_P(&mhz_send[6], kMhzCommands[command_id] + sizeof(uint16_t), sizeof(uint16_t));
   mhz_send[8] = MhzCalculateChecksum(mhz_send);
+
+//  snprintf_P(log_data, sizeof(log_data), PSTR("Final MhzCommand: %x %x %x %x %x %x %x %x %x"),mhz_send[0],mhz_send[1],mhz_send[2],mhz_send[3],mhz_send[4],mhz_send[5],mhz_send[6],mhz_send[7],mhz_send[8]);
+//  AddLog(LOG_LEVEL_DEBUG);
 
   return MhzSerial->write(mhz_send, sizeof(mhz_send));
 }
@@ -160,7 +166,7 @@ bool MhzCheckAndApplyFilter(uint16_t ppm, uint8_t s)
   return true;
 }
 
-void MhzEverySecond()
+void MhzEverySecond(void)
 {
   mhz_state++;
   if (8 == mhz_state) {                   // Every 8 sec start a MH-Z19 measuring cycle (which takes 1005 +5% ms)
@@ -192,14 +198,14 @@ void MhzEverySecond()
       }
     }
 
-    AddLogSerial(LOG_LEVEL_DEBUG_MORE, mhz_response, counter);
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, mhz_response, counter);
 
     if (counter < 9) {
 //      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 comms timeout"));
       return;
     }
 
-    byte crc = MhzCalculateChecksum(mhz_response);
+    uint8_t crc = MhzCalculateChecksum(mhz_response);
     if (mhz_response[8] != crc) {
 //      AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "MH-Z19 crc error"));
       return;
@@ -213,7 +219,7 @@ void MhzEverySecond()
 
     uint16_t u = (mhz_response[6] << 8) | mhz_response[7];
     if (15000 == u) {      // During (and only ever at) sensor boot, 'u' is reported as 15000
-      if (!mhz_abc_enable) {
+      if (Settings.SensorBits1.mhz19b_abc_disable) {
         // After bootup of the sensor the ABC will be enabled.
         // Thus only actively disable after bootup.
         mhz_abc_must_apply = true;
@@ -230,7 +236,7 @@ void MhzEverySecond()
         if (0 == s || 64 == s) {  // Reading is stable.
           if (mhz_abc_must_apply) {
             mhz_abc_must_apply = false;
-            if (mhz_abc_enable) {
+            if (!Settings.SensorBits1.mhz19b_abc_disable) {
               MhzSendCmd(MHZ_CMND_ABCENABLE);
             } else {
               MhzSendCmd(MHZ_CMND_ABCDISABLE);
@@ -246,23 +252,38 @@ void MhzEverySecond()
 
 /*********************************************************************************************\
  * Command Sensor15
+ *
+ * 0    - ABC Off
+ * 1    - ABC On (Default)
+ * 2    - Manual start = ABC Off
+ * 3    - (Not implemented) Optional filter settings
+ * 9    - Reset
+ * 1000 - Range
+ * 2000 - Range
+ * 3000 - Range
+ * 5000 - Range
 \*********************************************************************************************/
 
-/*
-  0 - ABC Off
-  1 - ABC On
-  2 - Manual start = ABC Off
+#define D_JSON_RANGE_1000 "1000 ppm range"
+#define D_JSON_RANGE_2000 "2000 ppm range"
+#define D_JSON_RANGE_3000 "3000 ppm range"
+#define D_JSON_RANGE_5000 "5000 ppm range"
 
-  3 - Optional filter settings
-
-  9 - Reset
-*/
-
-bool MhzCommandSensor()
+bool MhzCommandSensor(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   switch (XdrvMailbox.payload) {
+    case 0:
+      Settings.SensorBits1.mhz19b_abc_disable = true;
+      MhzSendCmd(MHZ_CMND_ABCDISABLE);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_DISABLED);
+      break;
+    case 1:
+      Settings.SensorBits1.mhz19b_abc_disable = false;
+      MhzSendCmd(MHZ_CMND_ABCENABLE);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_ENABLED);
+      break;
     case 2:
       MhzSendCmd(MHZ_CMND_ZEROPOINT);
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_ZERO_POINT_CALIBRATION);
@@ -271,8 +292,28 @@ bool MhzCommandSensor()
       MhzSendCmd(MHZ_CMND_RESET);
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET);
       break;
+    case 1000:
+      MhzSendCmd(MHZ_CMND_RANGE_1000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_1000);
+      break;
+    case 2000:
+      MhzSendCmd(MHZ_CMND_RANGE_2000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_2000);
+      break;
+    case 3000:
+      MhzSendCmd(MHZ_CMND_RANGE_3000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_3000);
+      break;
+    case 5000:
+      MhzSendCmd(MHZ_CMND_RANGE_5000);
+      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_5000);
+      break;
     default:
-      serviced = false;
+      if (!Settings.SensorBits1.mhz19b_abc_disable) {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_ENABLED);
+      } else {
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_DISABLED);
+      }
   }
 
   return serviced;
@@ -280,7 +321,7 @@ bool MhzCommandSensor()
 
 /*********************************************************************************************/
 
-void MhzInit()
+void MhzInit(void)
 {
   mhz_type = 0;
   if ((pin[GPIO_MHZ_RXD] < 99) && (pin[GPIO_MHZ_TXD] < 99)) {
@@ -293,21 +334,26 @@ void MhzInit()
   }
 }
 
-void MhzShow(boolean json)
+void MhzShow(bool json)
 {
-  char temperature[10];
+  char types[7] = "MHZ19B";  // MHZ19B for legacy reasons. Prefered is MHZ19
+  char temperature[33];
   dtostrfd(mhz_temperature, Settings.flag2.temperature_resolution, temperature);
-  GetTextIndexed(mhz_types, sizeof(mhz_types), mhz_type -1, kMhzTypes);
+  char model[3];
+  GetTextIndexed(model, sizeof(model), mhz_type -1, kMhzModels);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, mhz_types, mhz_last_ppm, temperature);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, types, model, mhz_last_ppm, temperature);
 #ifdef USE_DOMOTICZ
-    if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
+    if (0 == tele_period) {
+      DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
+      DomoticzSensor(DZ_TEMP, temperature);
+    }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, mhz_types, mhz_last_ppm);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, mhz_types, temperature, TempUnit());
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, types, mhz_last_ppm);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, types, temperature, TempUnit());
 #endif  // USE_WEBSERVER
   }
 }
@@ -316,9 +362,9 @@ void MhzShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns15(byte function)
+bool Xsns15(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (mhz_type) {
     switch (function) {

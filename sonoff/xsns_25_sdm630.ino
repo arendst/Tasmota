@@ -1,7 +1,7 @@
 /*
   xsns_25_sdm630.ino - Eastron SDM630-Modbus energy meter support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Gennaro Tortone
+  Copyright (C) 2019  Gennaro Tortone
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,12 +25,14 @@
  * Based on: https://github.com/reaper7/SDM_Energy_Meter
 \*********************************************************************************************/
 
+#define XSNS_25             25
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *SDM630Serial;
 
 uint8_t sdm630_type = 1;
-uint8_t sdm630_state = 0;
+//uint8_t sdm630_state = 0;
 
 float sdm630_voltage[] = {0,0,0};
 float sdm630_current[] = {0,0,0};
@@ -39,7 +41,7 @@ float sdm630_reactive_power[] = {0,0,0};
 float sdm630_power_factor[] = {0,0,0};
 float sdm630_energy_total = 0;
 
-bool SDM630_ModbusReceiveReady()
+bool SDM630_ModbusReceiveReady(void)
 {
   return (SDM630Serial->available() > 1);
 }
@@ -141,11 +143,11 @@ const uint16_t sdm630_start_addresses[] {
 uint8_t sdm630_read_state = 0;
 uint8_t sdm630_send_retry = 0;
 
-void SDM63050ms()              // Every 50 mSec
+void SDM630250ms(void)              // Every 250 mSec
 {
-  sdm630_state++;
-  if (6 == sdm630_state) {     // Every 300 mSec
-    sdm630_state = 0;
+//  sdm630_state++;
+//  if (6 == sdm630_state) {     // Every 300 mSec
+//    sdm630_state = 0;
 
     float value = 0;
     bool data_ready = SDM630_ModbusReceiveReady();
@@ -236,10 +238,10 @@ void SDM63050ms()              // Every 50 mSec
     } else {
       sdm630_send_retry--;
     }
-  } // end 300 ms
+//  } // end 300 ms
 }
 
-void SDM630Init()
+void SDM630Init(void)
 {
   sdm630_type = 0;
   if ((pin[GPIO_SDM630_RX] < 99) && (pin[GPIO_SDM630_TX] < 99)) {
@@ -265,40 +267,39 @@ const char HTTP_SNS_SDM630_DATA[] PROGMEM = "%s"
   "{s}SDM630 " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
 #endif  // USE_WEBSERVER
 
-void SDM630Show(boolean json)
+void SDM630Show(bool json)
 {
-  char voltage_l1[10];
-  char voltage_l2[10];
-  char voltage_l3[10];
-  char current_l1[10];
-  char current_l2[10];
-  char current_l3[10];
-  char active_power_l1[10];
-  char active_power_l2[10];
-  char active_power_l3[10];
-  char reactive_power_l1[10];
-  char reactive_power_l2[10];
-  char reactive_power_l3[10];
-  char power_factor_l1[10];
-  char power_factor_l2[10];
-  char power_factor_l3[10];
-  char energy_total[10];
-
+  char voltage_l1[33];
   dtostrfd(sdm630_voltage[0], Settings.flag2.voltage_resolution, voltage_l1);
+  char voltage_l2[33];
   dtostrfd(sdm630_voltage[1], Settings.flag2.voltage_resolution, voltage_l2);
+  char voltage_l3[33];
   dtostrfd(sdm630_voltage[2], Settings.flag2.voltage_resolution, voltage_l3);
+  char current_l1[33];
   dtostrfd(sdm630_current[0], Settings.flag2.current_resolution, current_l1);
+  char current_l2[33];
   dtostrfd(sdm630_current[1], Settings.flag2.current_resolution, current_l2);
+  char current_l3[33];
   dtostrfd(sdm630_current[2], Settings.flag2.current_resolution, current_l3);
+  char active_power_l1[33];
   dtostrfd(sdm630_active_power[0], Settings.flag2.wattage_resolution, active_power_l1);
+  char active_power_l2[33];
   dtostrfd(sdm630_active_power[1], Settings.flag2.wattage_resolution, active_power_l2);
+  char active_power_l3[33];
   dtostrfd(sdm630_active_power[2], Settings.flag2.wattage_resolution, active_power_l3);
+  char reactive_power_l1[33];
   dtostrfd(sdm630_reactive_power[0], Settings.flag2.wattage_resolution, reactive_power_l1);
+  char reactive_power_l2[33];
   dtostrfd(sdm630_reactive_power[1], Settings.flag2.wattage_resolution, reactive_power_l2);
+  char reactive_power_l3[33];
   dtostrfd(sdm630_reactive_power[2], Settings.flag2.wattage_resolution, reactive_power_l3);
+  char power_factor_l1[33];
   dtostrfd(sdm630_power_factor[0], 2, power_factor_l1);
+  char power_factor_l2[33];
   dtostrfd(sdm630_power_factor[1], 2, power_factor_l2);
+  char power_factor_l3[33];
   dtostrfd(sdm630_power_factor[2], 2, power_factor_l3);
+  char energy_total[33];
   dtostrfd(sdm630_energy_total, Settings.flag2.energy_resolution, energy_total);
 
   if (json) {
@@ -325,19 +326,17 @@ void SDM630Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_25
-
-boolean Xsns25(byte function)
+bool Xsns25(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (sdm630_type) {
     switch (function) {
       case FUNC_INIT:
         SDM630Init();
         break;
-      case FUNC_EVERY_50_MSECOND:
-        SDM63050ms();
+      case FUNC_EVERY_250_MSECOND:
+        SDM630250ms();
         break;
       case FUNC_JSON_APPEND:
         SDM630Show(1);

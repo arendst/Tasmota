@@ -1,7 +1,7 @@
 /*
   xsns_31_ccs811.ino - CCS811 gas and air quality sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Gerhard Mutz and Theo Arends
+  Copyright (C) 2019  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -20,12 +20,14 @@
 #ifdef USE_I2C
 #ifdef USE_CCS811
 /*********************************************************************************************\
- * SGP30 - Gas (TVOC - Total Volatile Organic Compounds) and Air Quality (CO2)
+ * CCS811 - Gas (TVOC - Total Volatile Organic Compounds) and Air Quality (CO2)
  *
  * Source: Adafruit
  *
  * I2C Address: 0x5A assumes ADDR connected to Gnd, Wake also must be grounded
 \*********************************************************************************************/
+
+#define XSNS_31             31
 
 #include "Adafruit_CCS811.h"
 
@@ -40,7 +42,7 @@ uint8_t ecnt = 0;
 /********************************************************************************************/
 #define EVERYNSECONDS 5
 
-void CCS811Update()  // Perform every n second
+void CCS811Update(void)  // Perform every n second
 {
   tcnt++;
   if (tcnt >= EVERYNSECONDS) {
@@ -81,7 +83,7 @@ const char HTTP_SNS_CCS811[] PROGMEM = "%s"
   "{s}CCS811 " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}CCS811 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
-void CCS811Show(boolean json)
+void CCS811Show(bool json)
 {
   if (CCS811_ready) {
     if (json) {
@@ -101,11 +103,9 @@ void CCS811Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_31
-
-boolean Xsns31(byte function)
+bool Xsns31(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

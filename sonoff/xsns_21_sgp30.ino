@@ -1,7 +1,7 @@
 /*
   xsns_21_sgp30.ino - SGP30 gas and air quality sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -27,6 +27,8 @@
  * I2C Address: 0x58
 \*********************************************************************************************/
 
+#define XSNS_21             21
+
 #include "Adafruit_SGP30.h"
 Adafruit_SGP30 sgp;
 
@@ -36,7 +38,7 @@ uint8_t sgp30_counter = 0;
 
 /********************************************************************************************/
 
-void Sgp30Update()  // Perform every second to ensure proper operation of the baseline compensation algorithm
+void Sgp30Update(void)  // Perform every second to ensure proper operation of the baseline compensation algorithm
 {
   sgp30_ready = 0;
   if (!sgp30_type) {
@@ -68,7 +70,7 @@ const char HTTP_SNS_SGP30[] PROGMEM = "%s"
   "{s}SGP30 " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}SGP30 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
-void Sgp30Show(boolean json)
+void Sgp30Show(bool json)
 {
   if (sgp30_ready) {
     if (json) {
@@ -88,11 +90,9 @@ void Sgp30Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_21
-
-boolean Xsns21(byte function)
+bool Xsns21(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

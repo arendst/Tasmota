@@ -1,7 +1,7 @@
 /*
   xsns_04_snfsc.ino - sonoff SC support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -53,6 +53,8 @@
 
 \*********************************************************************************************/
 
+#define XSNS_04             4
+
 uint16_t sc_value[5] = { 0 };
 
 void SonoffScSend(const char *data)
@@ -63,7 +65,7 @@ void SonoffScSend(const char *data)
   AddLog(LOG_LEVEL_DEBUG);
 }
 
-void SonoffScInit()
+void SonoffScInit(void)
 {
 //  SonoffScSend("AT+DEVCONFIG=\"uploadFreq\":1800");
   SonoffScSend("AT+START");
@@ -85,7 +87,7 @@ void SonoffScSerialInput(char *rcvstat)
       value[i++] = atoi(str);
     }
     if (value[0] > 0) {
-      for (byte i = 0; i < 5; i++) {
+      for (uint8_t i = 0; i < 5; i++) {
         sc_value[i] = value[i];
       }
       sc_value[2] = (11 - sc_value[2]) * 10;  // Invert light level
@@ -108,15 +110,15 @@ const char HTTP_SNS_SCPLUS[] PROGMEM =
   "%s{s}" D_LIGHT "{m}%d%%{e}{s}" D_NOISE "{m}%d%%{e}{s}" D_AIR_QUALITY "{m}%d%%{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
-void SonoffScShow(boolean json)
+void SonoffScShow(bool json)
 {
   if (sc_value[0] > 0) {
-    char temperature[10];
-    char humidity[10];
-
     float t = ConvertTemp(sc_value[1]);
     float h = sc_value[0];
+
+    char temperature[33];
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+    char humidity[33];
     dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
@@ -152,13 +154,11 @@ void SonoffScShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_04
-
-boolean Xsns04(byte function)
+bool Xsns04(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
-  if (SONOFF_SC == Settings.module) {
+  if (SONOFF_SC == my_module_type) {
     switch (function) {
       case FUNC_INIT:
         SonoffScInit();

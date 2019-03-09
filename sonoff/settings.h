@@ -1,7 +1,7 @@
 /*
   settings.h - setting variables for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 #define PARAM8_SIZE  18                    // Number of param bytes (SetOption)
 
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption0 .. SetOption31
     uint32_t save_state : 1;               // bit 0
@@ -48,8 +48,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
     uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
     uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
-    uint32_t mqtt_serial_raw : 1;          // bit 23 (v6.1.1c)
-    uint32_t rules_once : 1;               // bit 24 (v5.12.0k) - free since v5.14.0b
+    uint32_t mqtt_serial_raw : 1;          // bit 23 (v6.1.1c)   // Was rules_enabled until 5.14.0b
+    uint32_t pressure_conversion : 1;      // bit 24 (v6.3.0.2)  // Was rules_once until 5.14.0b
     uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
     uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
     uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
@@ -60,22 +60,22 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   };
 } SysBitfield;
 
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption50 .. SetOption81
     uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
-    uint32_t spare01 : 1;
-    uint32_t spare02 : 1;
-    uint32_t spare03 : 1;
-    uint32_t spare04 : 1;
-    uint32_t spare05 : 1;
-    uint32_t spare06 : 1;
-    uint32_t spare07 : 1;
-    uint32_t spare08 : 1;
-    uint32_t spare09 : 1;
-    uint32_t spare10 : 1;
-    uint32_t spare11 : 1;
-    uint32_t spare12 : 1;
+    uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)
+    uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)
+    uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)
+    uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)
+    uint32_t mdns_enabled : 1;             // bit 5 (v6.4.1.4)   - SetOption55
+    uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)
+    uint32_t use_wifi_rescan : 1;          // bit 7 (v6.3.0.10)
+    uint32_t receive_raw : 1;              // bit 8 (v6.3.0.11)
+    uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)
+    uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60 - Enable normal sleep instead of dynamic sleep
+    uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61 - Force local operation when button/switch topic is set
+    uint32_t no_hold_retain : 1;           // bit 12 (v6.4.1.19) - SetOption62 - Don't use retain flag on HOLD messages
     uint32_t spare13 : 1;
     uint32_t spare14 : 1;
     uint32_t spare15 : 1;
@@ -107,13 +107,9 @@ typedef union {
     uint32_t spare03 : 1;
     uint32_t spare04 : 1;
     uint32_t spare05 : 1;
-    uint32_t spare06 : 1;
-    uint32_t spare07 : 1;
-    uint32_t spare08 : 1;
-    uint32_t spare09 : 1;
-    uint32_t spare10 : 1;
-    uint32_t spare11 : 1;
-    uint32_t spare12 : 1;
+    uint32_t calc_resolution : 3;
+    uint32_t weight_resolution : 2;
+    uint32_t frequency_resolution : 2;
     uint32_t axis_resolution : 2;
     uint32_t current_resolution : 2;
     uint32_t voltage_resolution : 2;
@@ -159,13 +155,27 @@ typedef union {
     uint16_t saved_state : 1;               // Save output state, if used.
     uint16_t int_report_mode : 2;           // Interrupt reporting mode 0 = immediate telemetry & event, 1 = immediate event only, 2 = immediate telemetry only
     uint16_t int_report_defer : 4;          // Number of interrupts to ignore until reporting (default 0, max 15)
-    uint16_t int_count_sec : 1;             // 0 = Not, 1 = Report number of interrupts since last FUNC_EVERY_SECOND callback if more than 0 occured (overrides int_report_mode if enabled)
-    uint16_t int_count_min : 1;             // 0 = Not, 1 = Report number of interrupts since last FUNC_EVERY_SECOND*60 callback if more than 0 occured (overrides int_report_mode if enabled)
+    uint16_t int_count_en : 1;              // Enable interrupt counter for this pin
+    uint16_t int_retain_flag : 1;           // Report if interrupt occured for pin in next teleperiod
     uint16_t spare13 : 1;
     uint16_t spare14 : 1;
     uint16_t spare15 : 1;
   };
 } Mcp230xxCfg;
+
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t spare0 : 1;
+    uint8_t spare1 : 1;
+    uint8_t spare2 : 1;
+    uint8_t spare3 : 1;
+    uint8_t spare4 : 1;
+    uint8_t spare5 : 1;
+    uint8_t spare6 : 1;
+    uint8_t mhz19b_abc_disable : 1;        // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
+  };
+} SensorCfg1;
 
 /*
 struct SYSCFG {
@@ -187,23 +197,21 @@ struct SYSCFG {
   char          ota_url[101];              // 017
   char          mqtt_prefix[3][11];        // 07C
   uint8_t       baudrate;                  // 09D
-  byte          seriallog_level;           // 09E
+  uint8_t       seriallog_level;           // 09E
   uint8_t       sta_config;                // 09F
-  byte          sta_active;                // 0A0
-  char          sta_ssid[2][33];           // 0A1
-  char          sta_pwd[2][65];            // 0E3
+  uint8_t       sta_active;                // 0A0
+  char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 4/5
+  char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 4/5
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
-
-  byte          free1A7[1];                // 1A7
-
+  uint8_t       rule_stop;                 // 1A7
   uint16_t      syslog_port;               // 1A8
-  byte          syslog_level;              // 1AA
+  uint8_t       syslog_level;              // 1AA
   uint8_t       webserver;                 // 1AB
-  byte          weblog_level;              // 1AC
+  uint8_t       weblog_level;              // 1AC
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
 
-  byte          free_1D5[20];              // 1D5  Free since 5.12.0e
+  uint8_t       free_1D5[20];              // 1D5  Free since 5.12.0e
 
   char          mqtt_host[33];             // 1E9
   uint16_t      mqtt_port;                 // 20A
@@ -277,6 +285,7 @@ struct SYSCFG {
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
   myio          my_gp;                     // 484
+  uint8_t       test_step;                 // 495
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
   uint8_t       light_correction;          // 49D
@@ -287,19 +296,15 @@ struct SYSCFG {
   uint8_t       light_speed;               // 4A2
   uint8_t       light_scheme;              // 4A3
   uint8_t       light_width;               // 4A4
-  byte          knx_GA_registered;         // 4A5  Number of Group Address to read
+  uint8_t       knx_GA_registered;         // 4A5  Number of Group Address to read
   uint16_t      light_wakeup;              // 4A6
-  byte          knx_CB_registered;         // 4A8  Number of Group Address to write
+  uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
   char          web_password[33];          // 4A9
-
-  uint8_t       ex_switchmode[4];          // 4CA  Free since 6.0.0a
-
+  uint8_t       interlock[MAX_INTERLOCKS]; // 4CA
   char          ntp_server[3][33];         // 4CE
-  byte          ina219_mode;               // 531
+  uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
-
-  byte          free542[2];                // 542
-
+  uint16_t      button_debounce;           // 542
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;           // 554
   char          mqtt_fulltopic[100];       // 558
@@ -308,39 +313,61 @@ struct SYSCFG {
   uint16_t      pulse_counter_type;        // 5D0
   uint16_t      pulse_counter_debounce;    // 5D2
   uint8_t       rf_code[17][9];            // 5D4
-
-  byte          free_66d[3];               // 66D
-
+  uint8_t       timezone_minutes;          // 66D
+  uint16_t      switch_debounce;           // 66E
   Timer         timer[MAX_TIMERS];         // 670
   int           latitude;                  // 6B0
   int           longitude;                 // 6B4
   uint16_t      knx_physsical_addr;        // 6B8  (address_t is a uint16_t)
   uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6BA  (address_t is a uint16_t) x KNX_max_GA
   uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6CE  (address_t is a uint16_t) x KNX_max_CB
-  byte          knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
-  byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
+  uint8_t       knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
+  uint8_t       knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
   Mcp230xxCfg   mcp230xx_config[16];       // 6F6
   uint8_t       mcp230xx_int_prio;         // 716
+  SensorCfg1    SensorBits1;               // 717  On/Off settings used by Sensor Commands
+  uint16_t      mcp230xx_int_timer;        // 718
+  uint8_t       rgbwwTable[5];             // 71A
+  uint8_t       user_template_base;        // 71F
+  mytmplt       user_template;             // 720  29 bytes
 
-  byte          free_717[183];             // 717
+  uint8_t       free_73D[87];              // 73D
 
-  char          mems[MAX_RULE_MEMS][10];  // 7CE
-                                           // 800 Full - no more free locations
+  uint32_t      drivers[3];                // 794
+  uint32_t      monitors;                  // 7A0
+  uint32_t      sensors[3];                // 7A4
+  uint32_t      displays;                  // 7B0
+  uint32_t      energy_kWhtotal_time;      // 7B4
+  unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
 
+  uint8_t       free_7BC[2];               // 7BC
+
+  uint16_t      weight_max;                // 7BE Total max weight in kilogram
+  unsigned long weight_reference;          // 7C0 Reference weight in gram
+  unsigned long weight_calibration;        // 7C4
+  unsigned long energy_frequency_calibration;  // 7C8
+  uint16_t      web_refresh;               // 7CC
+  char          mems[MAX_RULE_MEMS][10];   // 7CE
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
-
                                            // E00 - FFF free locations
 } Settings;
 
+struct RTCRBT {
+  uint16_t      valid;                     // 280 (RTC memory offset 100 - sizeof(RTCRBT))
+  uint8_t       fast_reboot_count;         // 282
+  uint8_t       free_003[1];               // 283
+} RtcReboot;
+
 struct RTCMEM {
-  uint16_t      valid;                     // 000
-  byte          oswatch_blocked_loop;      // 002
-  uint8_t       ota_loader;                // 003
-  unsigned long energy_kWhtoday;              // 004
-  unsigned long energy_kWhtotal;              // 008
-  unsigned long pulse_counter[MAX_COUNTERS];  // 00C
-  power_t       power;                     // 01C
-                                           // 020 next free location
+  uint16_t      valid;                     // 290 (RTC memory offset 100)
+  uint8_t       oswatch_blocked_loop;      // 292
+  uint8_t       ota_loader;                // 293
+  unsigned long energy_kWhtoday;              // 294
+  unsigned long energy_kWhtotal;              // 298
+  unsigned long pulse_counter[MAX_COUNTERS];  // 29C
+  power_t       power;                     // 2AC
+  uint8_t       free_020[60];              // 2B0
+                                           // 2EC - 2FF free locations
 } RtcSettings;
 
 struct TIME_T {
@@ -363,14 +390,14 @@ struct XDRVMAILBOX {
   uint16_t      data_len;
   uint16_t      payload16;
   int16_t       payload;
-  uint8_t       grpflg;
+  bool          grpflg;
   uint8_t       notused;
   char         *topic;
   char         *data;
 } XdrvMailbox;
 
 #define MAX_RULES_FLAG  7                  // Number of bits used in RulesBitfield (tricky I know...)
-typedef union {                            // Restricted by MISRA-C Rule 18.4 but so usefull...
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
     uint16_t system_boot : 1;

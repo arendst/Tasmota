@@ -1,7 +1,7 @@
 /*
   xsns_18_pms5003.ino - PMS5003-7003 particle concentration sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@
  * Hardware Serial will be selected if GPIO3 = [PMS5003]
 \*********************************************************************************************/
 
+#define XSNS_18             18
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *PmsSerial;
@@ -43,7 +45,7 @@ struct pms5003data {
 
 /*********************************************************************************************/
 
-boolean PmsReadData()
+bool PmsReadData(void)
 {
   if (! PmsSerial->available()) {
     return false;
@@ -60,7 +62,7 @@ boolean PmsReadData()
   PmsSerial->readBytes(buffer, 32);
   PmsSerial->flush();  // Make room for another burst
 
-  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, 32);
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 32);
 
   // get checksum ready
   for (uint8_t i = 0; i < 30; i++) {
@@ -85,7 +87,7 @@ boolean PmsReadData()
 
 /*********************************************************************************************/
 
-void PmsSecond()                 // Every second
+void PmsSecond(void)                 // Every second
 {
   if (PmsReadData()) {
     pms_valid = 10;
@@ -98,7 +100,7 @@ void PmsSecond()                 // Every second
 
 /*********************************************************************************************/
 
-void PmsInit()
+void PmsInit(void)
 {
   pms_type = 0;
   if (pin[GPIO_PMS5003] < 99) {
@@ -126,7 +128,7 @@ const char HTTP_PMS5003_SNS[] PROGMEM = "%s"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
-void PmsShow(boolean json)
+void PmsShow(bool json)
 {
   if (pms_valid) {
     if (json) {
@@ -156,11 +158,9 @@ void PmsShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_18
-
-boolean Xsns18(byte function)
+bool Xsns18(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pms_type) {
     switch (function) {

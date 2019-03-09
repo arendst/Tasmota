@@ -1,7 +1,7 @@
 /*
   xsns_19_mgs.ino - Xadow and Grove Mutichannel Gas sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Palich2000 and Theo Arends
+  Copyright (C) 2019  Palich2000 and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,17 +26,19 @@
  * https://github.com/Seeed-Studio/Mutichannel_Gas_Sensor.git
 \*********************************************************************************************/
 
+#define XSNS_19            19
+
 #ifndef MGS_SENSOR_ADDR
 #define MGS_SENSOR_ADDR    0x04             // Default Mutichannel Gas sensor i2c address
 #endif
 
 #include "MutichannelGasSensor.h"
 
-void MGSInit() {
+void MGSInit(void) {
   gas.begin(MGS_SENSOR_ADDR);
 }
 
-boolean MGSPrepare()
+bool MGSPrepare(void)
 {
   gas.begin(MGS_SENSOR_ADDR);
   if (!gas.isError()) {
@@ -59,9 +61,9 @@ char* measure_gas(int gas_type, char* buffer)
 const char HTTP_MGS_GAS[] PROGMEM = "%s{s}MGS %s{m}%s " D_UNIT_PARTS_PER_MILLION "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif // USE_WEBSERVER
 
-void MGSShow(boolean json)
+void MGSShow(bool json)
 {
-  char buffer[25];
+  char buffer[33];
   if (json) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MGS\":{\"NH3\":%s"), mqtt_data, measure_gas(NH3, buffer));
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"CO\":%s"), mqtt_data, measure_gas(CO, buffer));
@@ -89,11 +91,9 @@ void MGSShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_19
-
-boolean Xsns19(byte function)
+bool Xsns19(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
   static int detected = false;
 
   if (i2c_flg) {

@@ -1,29 +1,29 @@
 /**
- * 
+ *
  *  @file        xsns_30_mpr121.ino
- * 
+ *
  *  @package     Sonoff-Tasmota
  *  @subpackage  Sensors
  *  @name        MPR121
- * 
+ *
  *  @description Driver for up to 4x Freescale MPR121 Proximity Capacitive Touch Sensor Controllers (Only touch buttons).
- * 
+ *
  *  @author      Rene 'Renne' Bartsch, B.Sc. Informatics, <rene@bartschnet.de>
  *  @copyright   Rene 'Renne' Bartsch 2018
  *  @date        $Date$
  *  @version     $Id$
- * 
- *  @link        https://github.com/arendst/Sonoff-Tasmota/wiki/MPR121               \endlink 
- *  @link        https://www.sparkfun.com/datasheets/Components/MPR121.pdf           \endlink 
- *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3891.pdf    \endlink 
- *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3892.pdf    \endlink 
- *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3893.pdf    \endlink 
- *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3894.pdf    \endlink 
- *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3895.pdf    \endlink 
- * 
+ *
+ *  @link        https://github.com/arendst/Sonoff-Tasmota/wiki/MPR121               \endlink
+ *  @link        https://www.sparkfun.com/datasheets/Components/MPR121.pdf           \endlink
+ *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3891.pdf    \endlink
+ *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3892.pdf    \endlink
+ *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3893.pdf    \endlink
+ *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3894.pdf    \endlink
+ *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3895.pdf    \endlink
+ *
  *  @license     GNU GPL v.3
  */
- 
+
  /*
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,6 +42,12 @@
 
 #ifdef USE_I2C
 #ifdef USE_MPR121
+
+/**
+ * @ingroup group1
+ * Assign Tasmota sensor model ID
+ */
+#define XSNS_30          30
 
 /** @defgroup group1 MPR121
  *  MPR121 preprocessor directives
@@ -178,9 +184,9 @@
 /**
  * MPR121 sensors status and data struct.
  *
- * The struct mpr121 uses the indices of i2c_addr and id to link the specific sensors to an I2C address and a human-readable ID 
+ * The struct mpr121 uses the indices of i2c_addr and id to link the specific sensors to an I2C address and a human-readable ID
  * and the indices of the arrays connected, running, current and previous to store sensor status and data of a specific sensor.
- * 
+ *
  */
 typedef struct mpr121 mpr121;
 struct mpr121 {
@@ -195,12 +201,12 @@ struct mpr121 {
 
 /**
  * The function Mpr121Init() soft-resets, detects and configures up to 4x MPR121 sensors.
- * 
+ *
  * @param   struct  *pS       Struct with MPR121 status and data.
  * @return  void
  * @pre     None.
  * @post    None.
- * 
+ *
  */
 void Mpr121Init(struct mpr121 *pS)
 {
@@ -301,18 +307,18 @@ void Mpr121Init(struct mpr121 *pS)
 
 /**
  * Publishes the sensor information.
- * 
+ *
  * The function Mpr121Show() reads sensor data, checks for over-current exceptions and
  * creates strings with button states for the web-interface and near real-time/ telemetriy MQTT.
- * 
+ *
  * @param   struct  *pS       Struct with MPR121 status and data.
  * @param   byte    function  Tasmota function ID.
  * @return  void
  * @pre     Call Mpr121Init() once.
  * @post    None.
- * 
+ *
  */
-void Mpr121Show(struct mpr121 *pS, byte function)
+void Mpr121Show(struct mpr121 *pS, uint8_t function)
 {
 
 	// Loop through sensors
@@ -365,7 +371,7 @@ void Mpr121Show(struct mpr121 *pS, byte function)
 
 				// Append JSON message string
 				if (FUNC_JSON_APPEND == function) {
-					snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"Button%i\":%i,"), mqtt_data, j, BITC(i, j));
+					snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"Button%i\":%i"), mqtt_data, (j > 0 ? "," : ""), j, BITC(i, j));
 				}
 			}	// for-loop j
 
@@ -378,37 +384,31 @@ void Mpr121Show(struct mpr121 *pS, byte function)
 			}
 		}		// if->running
 	}			// for-loop i
-}				// void Mpr121Show(byte function)
+}				// void Mpr121Show(uint8_t function)
 
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
 /**
- * @ingroup group1
- * Assign Tasmota sensor model ID
- */
-#define XSNS_30
-
-/**
  * The function Xsns30() interfaces Tasmota with the driver.
- * 
+ *
  * It provides the function IDs
  * FUNC_INIT to initialize a driver,
  * FUNC_EVERY_50_MSECOND for near real-time operation,
  * FUNC_JSON_APPEND for telemetry data and
  * FUNC_WEB_APPEND for displaying data in the Tasmota web-interface
- * 
+ *
  * @param   byte    function  Tasmota function ID.
- * @return  boolean           ???
+ * @return  bool           ???
  * @pre     None.
  * @post    None.
- * 
+ *
  */
-boolean Xsns30(byte function)
+bool Xsns30(uint8_t function)
 {
 	// ???
-	boolean result = false;
+	bool result = false;
 
 	// Sensor state/data struct
 	static struct mpr121 mpr121;
@@ -440,7 +440,7 @@ boolean Xsns30(byte function)
 #endif				// USE_WEBSERVER
 		}
 	}
-	// Return boolean result
+	// Return bool result
 	return result;
 }
 

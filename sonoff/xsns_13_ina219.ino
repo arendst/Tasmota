@@ -1,7 +1,7 @@
 /*
   xsns_13_ina219.ino - INA219 Current Sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Stefan Bode and Theo Arends
+  Copyright (C) 2019  Stefan Bode and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,9 +19,6 @@
 
 #ifdef USE_I2C
 #ifdef USE_INA219
-
-#define XSNS_13 13
-
 /*********************************************************************************************\
  * INA219 - Low voltage (max 32V!) Current sensor
  *
@@ -29,6 +26,8 @@
  *
  * I2C Address: 0x40, 0x41 0x44 or 0x45
 \*********************************************************************************************/
+
+#define XSNS_13                                 13
 
 #define INA219_ADDRESS1                         (0x40)    // 1000000 (A0+A1=GND)
 #define INA219_ADDRESS2                         (0x41)    // 1000000 (A0=Vcc, A1=GND)
@@ -129,7 +128,7 @@ bool Ina219SetCalibration(uint8_t mode)
   return success;
 }
 
-float Ina219GetShuntVoltage_mV()
+float Ina219GetShuntVoltage_mV(void)
 {
   // raw shunt voltage (16-bit signed integer, so +-32767)
   int16_t value = I2cReadS16(ina219_address, INA219_REG_SHUNTVOLTAGE);
@@ -137,7 +136,7 @@ float Ina219GetShuntVoltage_mV()
   return value * 0.01;
 }
 
-float Ina219GetBusVoltage_V()
+float Ina219GetBusVoltage_V(void)
 {
   // Shift to the right 3 to drop CNVR and OVF and multiply by LSB
   // raw bus voltage (16-bit signed integer, so +-32767)
@@ -146,7 +145,7 @@ float Ina219GetBusVoltage_V()
   return value * 0.001;
 }
 
-float Ina219GetCurrent_mA()
+float Ina219GetCurrent_mA(void)
 {
   // Sometimes a sharp load will reset the INA219, which will reset the cal register,
   // meaning CURRENT and POWER will not be available ... avoid this by always setting
@@ -160,7 +159,7 @@ float Ina219GetCurrent_mA()
   return value;
 }
 
-bool Ina219Read()
+bool Ina219Read(void)
 {
   ina219_voltage = Ina219GetBusVoltage_V() + (Ina219GetShuntVoltage_mV() / 1000);
   ina219_current = Ina219GetCurrent_mA() / 1000;
@@ -176,9 +175,9 @@ bool Ina219Read()
  * 2 - Max 16V 0.4A range
 \*********************************************************************************************/
 
-bool Ina219CommandSensor()
+bool Ina219CommandSensor(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
     Settings.ina219_mode = XdrvMailbox.payload;
@@ -191,11 +190,11 @@ bool Ina219CommandSensor()
 
 /********************************************************************************************/
 
-void Ina219Detect()
+void Ina219Detect(void)
 {
   if (ina219_type) { return; }
 
-  for (byte i = 0; i < sizeof(ina219_addresses); i++) {
+  for (uint8_t i = 0; i < sizeof(ina219_addresses); i++) {
     ina219_address = ina219_addresses[i];
     if (Ina219SetCalibration(Settings.ina219_mode)) {
       ina219_type = 1;
@@ -206,7 +205,7 @@ void Ina219Detect()
   }
 }
 
-void Ina219EverySecond()
+void Ina219EverySecond(void)
 {
   if (87 == (uptime %100)) {
     // 2mS
@@ -230,16 +229,15 @@ const char HTTP_SNS_INA219_DATA[] PROGMEM = "%s"
   "{s}INA219 " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
 #endif  // USE_WEBSERVER
 
-void Ina219Show(boolean json)
+void Ina219Show(bool json)
 {
   if (ina219_valid) {
-    char voltage[10];
-    char current[10];
-    char power[10];
-
     float fpower = ina219_voltage * ina219_current;
+    char voltage[33];
     dtostrfd(ina219_voltage, Settings.flag2.voltage_resolution, voltage);
+    char power[33];
     dtostrfd(fpower, Settings.flag2.wattage_resolution, power);
+    char current[33];
     dtostrfd(ina219_current, Settings.flag2.current_resolution, current);
 
     if (json) {
@@ -263,9 +261,9 @@ void Ina219Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns13(byte function)
+bool Xsns13(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

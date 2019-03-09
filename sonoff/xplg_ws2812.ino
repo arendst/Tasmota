@@ -1,7 +1,7 @@
 /*
   xplg_ws2812.ino - ws2812 led string support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Heiko Krupp and Theo Arends
+  Copyright (C) 2019  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -85,7 +85,7 @@ uint8_t kWidth[5] = {
     4,     // Large
     8,     // Largest
   255 };   // All
-uint8_t kRepeat[5] = {
+uint8_t kWsRepeat[5] = {
     8,     // Small
     6,     // Medium
     4,     // Large
@@ -96,7 +96,7 @@ uint8_t ws_show_next = 1;
 bool ws_suspend_update = false;
 /********************************************************************************************/
 
-void Ws2812StripShow()
+void Ws2812StripShow(void)
 {
 #if (USE_WS2812_CTYPE > NEO_3LED)
   RgbwColor c;
@@ -163,16 +163,16 @@ void Ws2812UpdateHand(int position, uint8_t index)
   }
 }
 
-void Ws2812Clock()
+void Ws2812Clock(void)
 {
   strip->ClearTo(0); // Reset strip
   int clksize = 60000 / (int)Settings.light_pixels;
 
   Ws2812UpdateHand((RtcTime.second * 1000) / clksize, WS_SECOND);
   Ws2812UpdateHand((RtcTime.minute * 1000) / clksize, WS_MINUTE);
-  Ws2812UpdateHand(((RtcTime.hour % 12) * (5000 / clksize)) + ((RtcTime.minute * 1000) / (12 * clksize)), WS_HOUR);
+  Ws2812UpdateHand((((RtcTime.hour % 12) * 5000) + ((RtcTime.minute * 1000) / 12 )) / clksize, WS_HOUR);
   if (Settings.ws_color[WS_MARKER][WS_RED] + Settings.ws_color[WS_MARKER][WS_GREEN] + Settings.ws_color[WS_MARKER][WS_BLUE]) {
-    for (byte i = 0; i < 12; i++) {
+    for (uint8_t i = 0; i < 12; i++) {
       Ws2812UpdateHand((i * 5000) / clksize, WS_MARKER);
     }
   }
@@ -222,7 +222,7 @@ void Ws2812Gradient(uint8_t schemenr)
   ColorScheme scheme = kSchemes[schemenr];
   if (scheme.count < 2) return;
 
-  uint8_t repeat = kRepeat[Settings.light_width];  // number of scheme.count per ledcount
+  uint8_t repeat = kWsRepeat[Settings.light_width];  // number of scheme.count per ledcount
   uint16_t range = (uint16_t)ceil((float)Settings.light_pixels / (float)repeat);
   uint16_t gradRange = (uint16_t)ceil((float)range / (float)(scheme.count - 1));
   uint16_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
@@ -232,7 +232,7 @@ void Ws2812Gradient(uint8_t schemenr)
   Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
   currentColor = oldColor;
   for (uint16_t i = 0; i < Settings.light_pixels; i++) {
-    if (kRepeat[Settings.light_width] > 1) {
+    if (kWsRepeat[Settings.light_width] > 1) {
       Ws2812GradientColor(schemenr, &currentColor, range, gradRange, i +offset);
     }
     if (Settings.light_speed > 0) {
@@ -302,7 +302,7 @@ void Ws2812Bars(uint8_t schemenr)
  * Public
 \*********************************************************************************************/
 
-void Ws2812Init()
+void Ws2812Init(void)
 {
 #ifdef USE_WS2812_DMA
 #if (USE_WS2812_CTYPE == NEO_GRB)
@@ -337,7 +337,7 @@ void Ws2812Init()
   Ws2812Clear();
 }
 
-void Ws2812Clear()
+void Ws2812Clear(void)
 {
   strip->ClearTo(0);
   strip->Show();
@@ -371,11 +371,11 @@ void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint
   }
 }
 
-void Ws2812ForceSuspend () {
+void Ws2812ForceSuspend (void) {
   ws_suspend_update = true;
 }
 
-void Ws2812ForceUpdate () {
+void Ws2812ForceUpdate (void) {
   ws_suspend_update = false;
   strip->Show();
   ws_show_next = 1;
@@ -395,7 +395,7 @@ char* Ws2812GetColor(uint16_t led, char* scolor)
   sl_ledcolor[1] = lcolor.G;
   sl_ledcolor[2] = lcolor.B;
   scolor[0] = '\0';
-  for (byte i = 0; i < light_subtype; i++) {
+  for (uint8_t i = 0; i < light_subtype; i++) {
     if (Settings.flag.decimal_text) {
       snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", sl_ledcolor[i]);
     } else {
@@ -409,7 +409,7 @@ void Ws2812ShowScheme(uint8_t scheme)
 {
   switch (scheme) {
     case 0:  // Clock
-      if (((STATES/10)*2 == state) || (ws_show_next)) {
+      if ((1 == state_250mS) || (ws_show_next)) {
         Ws2812Clock();
         ws_show_next = 0;
       }

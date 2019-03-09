@@ -1,0 +1,7 @@
+[Makefile]
+indent_style = tab
+indent_size = 4
+
+[src/*.h,src/*.cpp,examples/**.ino]
+indent_style = space
+indent_size = 2

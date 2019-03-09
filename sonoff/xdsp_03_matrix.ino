@@ -1,7 +1,7 @@
 /*
   xdsp_03_matrix.ino - Display 8x8 matrix support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends and Adafruit
+  Copyright (C) 2019  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -36,22 +36,25 @@ uint8_t mtx_counter = 0;
 int16_t mtx_x = 0;
 int16_t mtx_y = 0;
 
-char mtx_buffer[MTX_MAX_SCREEN_BUFFER];
+//char mtx_buffer[MTX_MAX_SCREEN_BUFFER];
+char *mtx_buffer = NULL;
+
 uint8_t mtx_mode = 0;
 uint8_t mtx_loop = 0;
+uint8_t mtx_done = 0;
 
 /*********************************************************************************************/
 
-void MatrixWrite()
+void MatrixWrite(void)
 {
-  for (byte i = 0; i < mtx_matrices; i++) {
+  for (uint8_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->writeDisplay();
   }
 }
 
-void MatrixClear()
+void MatrixClear(void)
 {
-  for (byte i = 0; i < mtx_matrices; i++) {
+  for (uint8_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
   }
   MatrixWrite();
@@ -59,7 +62,7 @@ void MatrixClear()
 
 void MatrixFixed(char* txt)
 {
-  for (byte i = 0; i < mtx_matrices; i++) {
+  for (uint8_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
     matrix[i]->setCursor(-i *8, 0);
     matrix[i]->print(txt);
@@ -74,7 +77,7 @@ void MatrixCenter(char* txt)
 
   int len = strlen(txt);
   offset = (len < 8) ? offset = ((mtx_matrices *8) - (len *6)) / 2 : 0;
-  for (byte i = 0; i < mtx_matrices; i++) {
+  for (uint8_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
     matrix[i]->setCursor(-(i *8)+offset, 0);
     matrix[i]->print(txt);
@@ -99,7 +102,7 @@ void MatrixScrollLeft(char* txt, int loop)
   disp_refresh--;
     if (!disp_refresh) {
       disp_refresh = Settings.display_refresh;
-      for (byte i = 0; i < mtx_matrices; i++) {
+      for (uint8_t i = 0; i < mtx_matrices; i++) {
         matrix[i]->clear();
         matrix[i]->setCursor(mtx_x - i *8, 0);
         matrix[i]->print(txt);
@@ -109,9 +112,7 @@ void MatrixScrollLeft(char* txt, int loop)
       // Move text position left by 1 pixel.
       mtx_x--;
       int16_t len = strlen(txt);
-      if (mtx_x < -(len *6)) {
-        mtx_state = loop;
-      }
+      if (mtx_x < -(len *6)) { mtx_state = loop; }
     }
     break;
   }
@@ -144,9 +145,9 @@ void MatrixScrollUp(char* txt, int loop)
         words[wordcounter++] = p;
         p = strtok(NULL, separators);
       }
-      for (byte i = 0; i < mtx_matrices; i++) {
+      for (uint8_t i = 0; i < mtx_matrices; i++) {
         matrix[i]->clear();
-        for (byte j = 0; j < wordcounter; j++) {
+        for (uint8_t j = 0; j < wordcounter; j++) {
           matrix[i]->setCursor(-i *8, mtx_y + (j *8));
           matrix[i]->println(words[j]);
         }
@@ -159,9 +160,7 @@ void MatrixScrollUp(char* txt, int loop)
         mtx_y--;                   // Move text position up by 1 pixel.
         mtx_counter = STATES * 1;  // Hold text for 1 seconds
       }
-      if (mtx_y < -(wordcounter *8)) {
-        mtx_state = loop;
-      }
+      if (mtx_y < -(wordcounter *8)) { mtx_state = loop; }
     }
     break;
   }
@@ -169,9 +168,9 @@ void MatrixScrollUp(char* txt, int loop)
 
 /*********************************************************************************************/
 
-void MatrixInitMode()
+void MatrixInitMode(void)
 {
-  for (byte i = 0; i < mtx_matrices; i++) {
+  for (uint8_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->setRotation(Settings.display_rotate);  // 1
     matrix[i]->setBrightness(Settings.display_dimmer);
     matrix[i]->blinkRate(0);               // 0 - 3
@@ -195,41 +194,42 @@ void MatrixInit(uint8_t mode)
   }
 }
 
-void MatrixInitDriver()
+void MatrixInitDriver(void)
 {
-  if (!Settings.display_model) {
-    if (I2cDevice(Settings.display_address[1])) {
-      Settings.display_model = XDSP_03;
-    }
-  }
-
-  if (XDSP_03 == Settings.display_model) {
-    mtx_state = 1;
-    for (mtx_matrices = 0; mtx_matrices < 8; mtx_matrices++) {
-      if (Settings.display_address[mtx_matrices]) {
-        matrix[mtx_matrices] = new Adafruit_8x8matrix();
-        matrix[mtx_matrices]->begin(Settings.display_address[mtx_matrices]);
-      } else {
-        break;
+  mtx_buffer = (char*)(malloc(MTX_MAX_SCREEN_BUFFER));
+  if (mtx_buffer != NULL) {
+    if (!Settings.display_model) {
+      if (I2cDevice(Settings.display_address[1])) {
+        Settings.display_model = XDSP_03;
       }
     }
 
-    MatrixInitMode();
+    if (XDSP_03 == Settings.display_model) {
+      mtx_state = 1;
+      for (mtx_matrices = 0; mtx_matrices < 8; mtx_matrices++) {
+        if (Settings.display_address[mtx_matrices]) {
+          matrix[mtx_matrices] = new Adafruit_8x8matrix();
+          matrix[mtx_matrices]->begin(Settings.display_address[mtx_matrices]);
+        } else {
+          break;
+        }
+      }
+
+      MatrixInitMode();
+    }
   }
 }
 
-void MatrixOnOff()
+void MatrixOnOff(void)
 {
-  if (!disp_power) {
-    MatrixClear();
-  }
+  if (!disp_power) { MatrixClear(); }
 }
 
 void MatrixDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
 {
-  snprintf(mtx_buffer, sizeof(mtx_buffer), str);
-  mtx_mode = x;
-  mtx_loop = y;
+  snprintf(mtx_buffer, MTX_MAX_SCREEN_BUFFER, str);
+  mtx_mode = x &1;  // Use x for selecting scroll up (0) or scroll left (1)
+  mtx_loop = y &1;  // Use y for selecting no loop (0) or loop (1)
   if (!mtx_state) { mtx_state = 1; }
 }
 
@@ -237,40 +237,42 @@ void MatrixDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-void MatrixBufferScroll(uint8_t direction)
+void MatrixPrintLog(uint8_t direction)
 {
-  if (disp_log_buffer_idx != disp_log_buffer_ptr) {
-    if (!mtx_state) {
-      mtx_state = 1;
-    }
+  char* txt = (!mtx_done) ? DisplayLogBuffer('\370') : mtx_buffer;
+  if (txt != NULL) {
+    if (!mtx_state) { mtx_state = 1; }
 
-    char *pch = strchr(disp_log_buffer[disp_log_buffer_ptr],'~');  // = 0x7E (~) Replace degrees character (276 octal)
-    if (pch != NULL) {
-      disp_log_buffer[disp_log_buffer_ptr][pch - disp_log_buffer[disp_log_buffer_ptr]] = '\370';  // = 0xF8
-    }
-
-    if (direction) {
-      MatrixScrollUp(disp_log_buffer[disp_log_buffer_ptr], 0);
-    } else {
+    if (!mtx_done) {
       // Remove extra spaces
       uint8_t space = 0;
       uint8_t max_cols = (disp_log_buffer_cols < MTX_MAX_SCREEN_BUFFER) ? disp_log_buffer_cols : MTX_MAX_SCREEN_BUFFER;
       mtx_buffer[0] = '\0';
-      for (byte i = 0; i < max_cols; i++) {
-        if (disp_log_buffer[disp_log_buffer_ptr][i] == ' ') {
+      uint8_t i = 0;
+      while ((txt[i] != '\0') && (i < max_cols)) {
+        if (txt[i] == ' ') {
           space++;
         } else {
           space = 0;
         }
         if (space < 2) {
-          strncat(mtx_buffer, (const char*)disp_log_buffer[disp_log_buffer_ptr] +i, 1);
+          strncat(mtx_buffer, (const char*)txt +i, (strlen(mtx_buffer) < MTX_MAX_SCREEN_BUFFER -1) ? 1 : 0);
         }
+        i++;
       }
+
+      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "[%s]"), mtx_buffer);
+      AddLog(LOG_LEVEL_DEBUG);
+
+      mtx_done = 1;
+    }
+
+    if (direction) {
+      MatrixScrollUp(mtx_buffer, 0);
+    } else {
       MatrixScrollLeft(mtx_buffer, 0);
     }
-    if (!mtx_state) {
-      DisplayLogBufferPtrInc();
-    }
+    if (!mtx_state) { mtx_done = 0; }
   } else {
     char disp_time[9];    // 13:45:43
 
@@ -281,7 +283,7 @@ void MatrixBufferScroll(uint8_t direction)
 
 #endif  // USE_DISPLAY_MODES1TO5
 
-void MatrixRefresh()  // Every second
+void MatrixRefresh(void)  // Every second
 {
   if (disp_power) {
     switch (Settings.display_mode) {
@@ -310,11 +312,11 @@ void MatrixRefresh()  // Every second
         break;
       }
       case 4:
-        MatrixBufferScroll(0);
+        MatrixPrintLog(0);
         break;
       case 1:  // Time and user text
       case 5:  // Time, user text and MQTT
-        MatrixBufferScroll(1);
+        MatrixPrintLog(1);
         break;
 #endif  // USE_DISPLAY_MODES1TO5
     }
@@ -325,9 +327,9 @@ void MatrixRefresh()  // Every second
  * Interface
 \*********************************************************************************************/
 
-boolean Xdsp03(byte function)
+bool Xdsp03(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {

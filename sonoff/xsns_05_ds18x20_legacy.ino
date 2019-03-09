@@ -1,7 +1,7 @@
 /*
   xsns_05_ds18x20_legacy.ino - DS18x20 temperature sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Heiko Krupp and Theo Arends
+  Copyright (C) 2019  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@
  * DS18B20 - Temperature
 \*********************************************************************************************/
 
+#define XSNS_05              5
+
 #define DS18S20_CHIPID       0x10
 #define DS18B20_CHIPID       0x28
 #define MAX31850_CHIPID      0x3B
@@ -41,12 +43,12 @@ uint8_t ds18x20_index[DS18X20_MAX_SENSORS];
 uint8_t ds18x20_sensors = 0;
 char ds18x20_types[9];
 
-void Ds18x20Init()
+void Ds18x20Init(void)
 {
   ds = new OneWire(pin[GPIO_DSB]);
 }
 
-void Ds18x20Search()
+void Ds18x20Search(void)
 {
   uint8_t num_sensors=0;
   uint8_t sensor = 0;
@@ -63,11 +65,11 @@ void Ds18x20Search()
       num_sensors++;
     }
   }
-  for (byte i = 0; i < num_sensors; i++) {
+  for (uint8_t i = 0; i < num_sensors; i++) {
     ds18x20_index[i] = i;
   }
-  for (byte i = 0; i < num_sensors; i++) {
-    for (byte j = i + 1; j < num_sensors; j++) {
+  for (uint8_t i = 0; i < num_sensors; i++) {
+    for (uint8_t j = i + 1; j < num_sensors; j++) {
       if (uint32_t(ds18x20_address[ds18x20_index[i]]) > uint32_t(ds18x20_address[ds18x20_index[j]])) {
         std::swap(ds18x20_index[i], ds18x20_index[j]);
       }
@@ -76,7 +78,7 @@ void Ds18x20Search()
   ds18x20_sensors = num_sensors;
 }
 
-uint8_t Ds18x20Sensors()
+uint8_t Ds18x20Sensors(void)
 {
   return ds18x20_sensors;
 }
@@ -85,13 +87,13 @@ String Ds18x20Addresses(uint8_t sensor)
 {
   char address[20];
 
-  for (byte i = 0; i < 8; i++) {
+  for (uint8_t i = 0; i < 8; i++) {
     sprintf(address+2*i, "%02X", ds18x20_address[ds18x20_index[sensor]][i]);
   }
   return String(address);
 }
 
-void Ds18x20Convert()
+void Ds18x20Convert(void)
 {
   ds->reset();
   ds->write(W1_SKIP_ROM);        // Address all Sensors on Bus
@@ -99,9 +101,9 @@ void Ds18x20Convert()
 //  delay(750);                   // 750ms should be enough for 12bit conv
 }
 
-boolean Ds18x20Read(uint8_t sensor, float &t)
+bool Ds18x20Read(uint8_t sensor, float &t)
 {
-  byte data[12];
+  uint8_t data[12];
   int8_t sign = 1;
   uint16_t temp12 = 0;
   int16_t temp14 = 0;
@@ -114,7 +116,7 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
   ds->select(ds18x20_address[ds18x20_index[sensor]]);
   ds->write(W1_READ_SCRATCHPAD); // Read Scratchpad
 
-  for (byte i = 0; i < 9; i++) {
+  for (uint8_t i = 0; i < 9; i++) {
     data[i] = ds->read();
   }
   if (OneWire::crc8(data, 8) == data[8]) {
@@ -166,16 +168,16 @@ void Ds18x20Type(uint8_t sensor)
   }
 }
 
-void Ds18x20Show(boolean json)
+void Ds18x20Show(bool json)
 {
-  char temperature[10];
   char stemp[10];
   float t;
 
-  byte dsxflg = 0;
-  for (byte i = 0; i < Ds18x20Sensors(); i++) {
+  uint8_t dsxflg = 0;
+  for (uint8_t i = 0; i < Ds18x20Sensors(); i++) {
     if (Ds18x20Read(i, t)) {           // Check if read failed
       Ds18x20Type(i);
+      char temperature[33];
       dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
       if (json) {
@@ -186,7 +188,7 @@ void Ds18x20Show(boolean json)
         dsxflg++;
         snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_JSON_TYPE "\":\"%s\",\"" D_JSON_ADDRESS "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"),
           mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
-        strcpy(stemp, ",");
+        strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
           DomoticzSensor(DZ_TEMP, temperature);
@@ -218,11 +220,9 @@ void Ds18x20Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_05
-
-boolean Xsns05(byte function)
+bool Xsns05(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pin[GPIO_DSB] < 99) {
     switch (function) {
