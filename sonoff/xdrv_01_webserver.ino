@@ -1368,7 +1368,7 @@ void HandleLoggingConfiguration(void)
         (i == llevel) ? " selected" : "", i, i,
         GetTextIndexed(stemp1, sizeof(stemp1), i, kLoggingLevels));
     }
-    WSContentSend(PSTR("</select></p>"));
+    WSContentSend(F("</select></p>"));
   }
   WSContentSend_P(HTTP_FORM_LOG2, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
   WSContentSend(FPSTR(HTTP_FORM_END));
@@ -1436,7 +1436,7 @@ void HandleOtherConfiguration(void)
   }
 
 #ifdef USE_EMULATION
-  WSContentSend(PSTR("<p></p><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend><p>"));  // Keep close to Friendlynames so do not use <br/>
+  WSContentSend(F("<p></p><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend><p>"));  // Keep close to Friendlynames so do not use <br/>
   for (uint8_t i = 0; i < EMUL_MAX; i++) {
     WSContentSend_P(PSTR("<input id='r%d' name='b2' type='radio' value='%d'%s><b>%s</b> %s<br/>"),  // Different id only used for labels
       i, i,
@@ -1444,7 +1444,7 @@ void HandleOtherConfiguration(void)
       GetTextIndexed(stemp, sizeof(stemp), i, kEmulationOptions),
       (i == EMUL_NONE) ? "" : (i == EMUL_WEMO) ? D_SINGLE_DEVICE : D_MULTI_DEVICE);
   }
-  WSContentSend(PSTR("</p></fieldset>"));
+  WSContentSend(F("</p></fieldset>"));
 #endif  // USE_EMULATION
 
   WSContentSend(FPSTR(HTTP_FORM_END));

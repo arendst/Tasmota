@@ -1,4 +1,7 @@
-/* 6.4.1.20 20190304
+/* 6.4.1.21 20190309
+ * Fix exception on GUI Configure Logging and Configure Other (#5424)
+ *
+ * 6.4.1.20 20190304
  * Changed webserver content handling from single String to small Chunks increasing RAM
  * Changed logging message handling
  * Fix additional characters in fallbacktopic, hostname and mqttclient on core 2.5.0 (#5359, #5417)
