@@ -950,6 +950,7 @@ bool HandleRootStatusRefresh(void)
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s</tr></table>"), mqtt_data);
   }
+  WSHeaderSend();
   WSSend(200, CT_HTML, mqtt_data);
   return true;
 }
