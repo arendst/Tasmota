@@ -207,12 +207,13 @@ char* Format(char* output, const char* input, int size)
     if (token != NULL) {
       digits = atoi(token);
       if (digits) {
+        char tmp[size];
         if (strchr(token, 'd')) {
-          snprintf_P(output, size, PSTR("%s%c0%dd"), output, '%', digits);
-          snprintf_P(output, size, output, ESP.getChipId() & 0x1fff);       // %04d - short chip ID in dec, like in hostname
+          snprintf_P(tmp, size, PSTR("%s%c0%dd"), output, '%', digits);
+          snprintf_P(output, size, tmp, ESP.getChipId() & 0x1fff);            // %04d - short chip ID in dec, like in hostname
         } else {
-          snprintf_P(output, size, PSTR("%s%c0%dX"), output, '%', digits);
-          snprintf_P(output, size, output, ESP.getChipId());                // %06X - full chip ID in hex
+          snprintf_P(tmp, size, PSTR("%s%c0%dX"), output, '%', digits);
+          snprintf_P(output, size, tmp, ESP.getChipId());                   // %06X - full chip ID in hex
         }
       } else {
         if (strchr(token, 'd')) {
@@ -235,7 +236,7 @@ char* GetOtaUrl(char *otaurl, size_t otaurl_size)
     snprintf_P(otaurl, otaurl_size, Settings.ota_url, ESP.getChipId());
   }
   else {
-    snprintf(otaurl, otaurl_size, Settings.ota_url);
+    strlcpy(otaurl, Settings.ota_url, otaurl_size);
   }
   return otaurl;
 }
@@ -480,9 +481,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
 
   if (topicBuf[0] != '/') { ShowSource(SRC_MQTT); }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_RESULT D_RECEIVED_TOPIC " %s, " D_DATA_SIZE " %d, " D_DATA " %s"),
-    topicBuf, data_len, dataBuf);
-  AddLog(LOG_LEVEL_DEBUG_MORE);
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_RESULT D_RECEIVED_TOPIC " %s, " D_DATA_SIZE " %d, " D_DATA " %s"), topicBuf, data_len, dataBuf);
 //  if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) { Serial.println(dataBuf); }
 
   if (XdrvMqttData(topicBuf, sizeof(topicBuf), dataBuf, sizeof(dataBuf))) { return; }
@@ -510,9 +509,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     type[i] = '\0';
   }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_RESULT D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " %s, " D_DATA " %s"),
-    grpflg, index, type, dataBuf);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_RESULT D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " %s, " D_DATA " %s"), grpflg, index, type, dataBuf);
 
   if (type != NULL) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
@@ -533,8 +530,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     int temp_payload = GetStateNumber(dataBuf);
     if (temp_payload > -1) { payload = temp_payload; }
 
-//    snprintf_P(log_data, sizeof(log_data), PSTR("RSLT: Payload %d, Payload16 %d"), payload, payload16);
-//    AddLog(LOG_LEVEL_DEBUG);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RSLT: Payload %d, Payload16 %d"), payload, payload16);
 
     int command_code = GetCommandCode(command, sizeof(command), type, kTasmotaCommands);
     if (-1 == command_code) {
@@ -647,9 +643,9 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       //   We also need at least 3 chars to make a valid version number string.
       if (((1 == data_len) && (1 == payload)) || ((data_len >= 3) && NewerVersion(dataBuf))) {
         ota_state_flag = 3;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}", command, my_version, GetOtaUrl(stemp1, sizeof(stemp1)));
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"" D_JSON_VERSION " %s " D_JSON_FROM " %s\"}"), command, my_version, GetOtaUrl(stemp1, sizeof(stemp1)));
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "{\"%s\":\"" D_JSON_ONE_OR_GT "\"}", command, my_version);
+        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"" D_JSON_ONE_OR_GT "\"}"), command, my_version);
       }
     }
     else if (CMND_OTAURL == command_code) {
@@ -980,9 +976,24 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
           ModuleDefault(payload -1);    // Copy template module
           if (USER_MODULE == Settings.module) { restart_flag = 2; }
         }
-        else if (0 == payload) {        // Copy current module with user configured GPIO
+        else if (0 == payload) {        // Copy current template to user template
           if (Settings.module != USER_MODULE) {
             ModuleDefault(Settings.module);
+          }
+        }
+        else if (255 == payload) {      // Copy current module with user configured GPIO
+          if (Settings.module != USER_MODULE) {
+            ModuleDefault(Settings.module);
+          }
+          snprintf_P(Settings.user_template.name, sizeof(Settings.user_template.name), PSTR("Merged"));
+          uint8_t j = 0;
+          for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+            if (6 == i) { j = 9; }
+            if (8 == i) { j = 12; }
+            if (my_module.io[j] > GPIO_NONE) {
+              Settings.user_template.gp.io[i] = my_module.io[j];
+            }
+            j++;
           }
         }
       }
@@ -1811,8 +1822,7 @@ void PerformEverySecond(void)
     RtcRebootSave();
 
     Settings.bootcount++;              // Moved to here to stop flash writes during start-up
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
   }
 
   if ((4 == uptime) && (SONOFF_IFAN02 == my_module_type)) {  // Microcontroller needs 3 seconds before accepting commands
@@ -2029,8 +2039,7 @@ void Every250mSeconds(void)
             }
           }
 #endif  // FIRMWARE_MINIMAL
-          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "%s"), mqtt_data);
-          AddLog(LOG_LEVEL_DEBUG);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), mqtt_data);
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
           ota_result = (HTTP_UPDATE_FAILED != ESPhttpUpdate.update(mqtt_data));
 #else
@@ -2041,8 +2050,7 @@ void Every250mSeconds(void)
           if (!ota_result) {
 #ifndef FIRMWARE_MINIMAL
             int ota_error = ESPhttpUpdate.getLastError();
-//            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Ota error %d"), ota_error);
-//            AddLog(LOG_LEVEL_DEBUG);
+//            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Ota error %d"), ota_error);
             if ((HTTP_UE_TOO_LESS_SPACE == ota_error) || (HTTP_UE_BIN_FOR_WRONG_FLASH == ota_error)) {
               RtcSettings.ota_loader = 1;  // Try minimal image next
             }
@@ -2173,8 +2181,7 @@ void ArduinoOTAInit(void)
     AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
 #endif  // USE_ARILUX_RF
     if (Settings.flag.mqtt_enabled) { MqttDisconnect(); }
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA " D_UPLOAD_STARTED));
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_UPLOAD_STARTED));
     arduino_ota_triggered = true;
     arduino_ota_progress_dot_count = 0;
     delay(100);       // Allow time for message xfer
@@ -2205,22 +2212,19 @@ void ArduinoOTAInit(void)
       default:
         snprintf_P(error_str, sizeof(error_str), PSTR(D_UPLOAD_ERROR_CODE " %d"), error);
     }
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA  %s. " D_RESTARTING), error_str);
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA  %s. " D_RESTARTING), error_str);
     EspRestart();
   });
 
   ArduinoOTA.onEnd([]()
   {
     if ((LOG_LEVEL_DEBUG <= seriallog_level)) { Serial.println(); }
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA " D_SUCCESSFUL ". " D_RESTARTING));
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_SUCCESSFUL ". " D_RESTARTING));
     EspRestart();
 	});
 
   ArduinoOTA.begin();
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPLOAD "Arduino OTA " D_ENABLED " " D_PORT " 8266"));
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_ENABLED " " D_PORT " 8266"));
 }
 #endif  // USE_ARDUINO_OTA
 
@@ -2296,8 +2300,7 @@ void SerialInput(void)
     else if (!Settings.flag.mqtt_serial && (serial_in_byte == '\n')) {
       serial_in_buffer[serial_in_byte_counter] = 0;                              // Serial data completed
       seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings.seriallog_level;
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
       ExecuteCommand(serial_in_buffer, SRC_SERIAL);
       serial_in_byte_counter = 0;
       serial_polling_window = 0;
@@ -2366,8 +2369,7 @@ void GpioInit(void)
   for (uint8_t i = 0; i < sizeof(my_module.io); i++) {
     mpin = ValidPin(i, my_module.io[i]);
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR("DBG: gpio pin %d, mpin %d"), i, mpin);
-//  AddLog(LOG_LEVEL_DEBUG);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: gpio pin %d, mpin %d"), i, mpin);
 
     if (mpin) {
       if ((mpin >= GPIO_SWT1_NP) && (mpin < (GPIO_SWT1_NP + MAX_SWITCHES))) {
@@ -2612,8 +2614,7 @@ void setup(void)
         Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
   //      Settings.last_module = SONOFF_BASIC;
       }
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }
   }
 
@@ -2679,12 +2680,9 @@ void setup(void)
   }
   blink_powersave = power;
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE),
-    PROJECT, Settings.friendlyname[0], my_version, my_image);
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE), PROJECT, Settings.friendlyname[0], my_version, my_image);
 #ifdef FIRMWARE_MINIMAL
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_WARNING_MINIMAL_VERSION));
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
 
   RtcInit();

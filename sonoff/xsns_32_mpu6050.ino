@@ -134,12 +134,12 @@ void MPU_6050Detect(void)
     mpu6050.setXGyroOffset(220);
     mpu6050.setYGyroOffset(76);
     mpu6050.setZGyroOffset(-85);
-    mpu6050.setZAccelOffset(1788); 
+    mpu6050.setZAccelOffset(1788);
     if (MPU6050_dmp.devStatus == 0) {
       mpu6050.setDMPEnabled(true);
       MPU6050_dmp.packetSize = mpu6050.dmpGetFIFOPacketSize();
       MPU_6050_found = true;
-    } 
+    }
 #else
     mpu6050.initialize();
     MPU_6050_found = mpu6050.testConnection();
@@ -150,8 +150,7 @@ void MPU_6050Detect(void)
 
   if (MPU_6050_found)
   {
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, D_SENSOR_MPU6050, MPU_6050_address);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, D_SENSOR_MPU6050, MPU_6050_address);
   }
 }
 

@@ -222,7 +222,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     }
 #endif  // USE_TIMERS and USE_SUNRISE
     rule_param.toUpperCase();
-    snprintf(rule_svalue, sizeof(rule_svalue), rule_param.c_str());
+    strlcpy(rule_svalue, rule_param.c_str(), sizeof(rule_svalue));
 
     int temp_value = GetStateNumber(rule_svalue);
     if (temp_value > -1) {
@@ -240,9 +240,8 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   double value = 0;
   const char* str_value = root[rule_task][rule_name];
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
 //  rule_task.c_str(), rule_name.c_str(), rule_svalue, rules_trigger_count[rule_set], bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
-//AddLog(LOG_LEVEL_DEBUG);
 
   if (!root[rule_task][rule_name].success()) { return false; }
   // No value but rule_name is ok
@@ -342,8 +341,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
   delay(0);                                               // Prohibit possible loop software watchdog
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
-//AddLog(LOG_LEVEL_DEBUG);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
 
   String rules = Settings.rules[rule_set];
 
@@ -378,8 +376,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     rules_event_value = "";
     String event = event_saved;
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
-//AddLog(LOG_LEVEL_DEBUG);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 
     if (RulesRuleMatch(rule_set, event, event_trigger)) {
       commands.trim();
@@ -405,10 +402,9 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 #endif  // USE_TIMERS and USE_SUNRISE
 
       char command[commands.length() +1];
-      snprintf(command, sizeof(command), commands.c_str());
+      strlcpy(command, commands.c_str(), sizeof(command));
 
-      snprintf_P(log_data, sizeof(log_data), PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
 
 //      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
@@ -436,8 +432,7 @@ bool RulesProcessEvent(char *json_event)
   String event_saved = json_event;
   event_saved.toUpperCase();
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event %s"), event_saved.c_str());
-//AddLog(LOG_LEVEL_DEBUG);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event %s"), event_saved.c_str());
 
   for (uint8_t i = 0; i < MAX_RULE_SETS; i++) {
     if (strlen(Settings.rules[i]) && bitRead(Settings.rule_enabled, i)) {
@@ -648,15 +643,13 @@ bool RulesMqttData(void)
   }
   String sTopic = XdrvMailbox.topic;
   String sData = XdrvMailbox.data;
-  //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
-  //AddLog(LOG_LEVEL_DEBUG);
+  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
   MQTT_Subscription event_item;
   //Looking for matched topic
   for (int index = 0; index < subscriptions.size(); index++) {
     event_item = subscriptions.get(index);
 
-    //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
-    //AddLog(LOG_LEVEL_DEBUG);
+    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
     if (sTopic.startsWith(event_item.Topic)) {
       //This topic is subscribed by us, so serve it
       serviced = true;
@@ -726,8 +719,7 @@ String RulesSubscribe(const char *data, int data_len)
         }
       }
     }
-    //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
-    //AddLog(LOG_LEVEL_DEBUG);
+    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
     event_name.toUpperCase();
     if (event_name.length() > 0 && topic.length() > 0) {
       //Search all subscriptions
@@ -748,8 +740,7 @@ String RulesSubscribe(const char *data, int data_len)
           topic.concat("/#");
         }
       }
-      //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: New topic: %s."), topic.c_str());
-      //AddLog(LOG_LEVEL_DEBUG);
+      //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: New topic: %s."), topic.c_str());
       //MQTT Subscribe
       subscription_item.Event = event_name;
       subscription_item.Topic = topic.substring(0, topic.length() - 2);   //Remove "/#" so easy to match
