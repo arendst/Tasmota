@@ -1580,28 +1580,38 @@ void StopAllPowerBlink(void)
   }
 }
 
-void ExecuteCommand(char *cmnd, int source)
+void ExecuteCommand(const char *cmnd, int source)
 {
-  char *start;
-  char *token;
-
   ShowFreeMem(PSTR("ExecuteCommand"));
   ShowSource(source);
 
-  token = strtok(cmnd, " ");
-  if (token != NULL) {
-    start = strrchr(token, '/');   // Skip possible cmnd/sonoff/ preamble
-    if (start) { token = start +1; }
+  const char *pos = cmnd;
+  //Skip all spaces
+  while (*pos && isspace(*pos)) {
+    pos++;
   }
-  uint16_t size = (token != NULL) ? strlen(token) : 0;
-  char stopic[size +2];  // / + \0
-  snprintf_P(stopic, sizeof(stopic), PSTR("/%s"), (token == NULL) ? "" : token);
 
-  token = strtok(NULL, "");
-  size = (token != NULL) ? strlen(token) : 0;
-  char svalue[size +1];
-  strlcpy(svalue, (token == NULL) ? "" : token, sizeof(svalue));       // Fixed 5.8.0b
-  MqttDataHandler(stopic, (uint8_t*)svalue, strlen(svalue));
+  const char *start = pos;
+  //Get a command. Commands can only use letters, digits and underscores
+  while (*pos && (isalpha(*pos) || isdigit(*pos) || '_' == *pos || '/' == *pos)) {
+    if ('/' == *pos) {            // Skip possible cmnd/sonoff/ preamble
+      start = pos + 1;
+    }
+    pos++;
+  }
+  if (NULL == *start || pos <= start) {   //Did not find any command to execute
+    return;
+  }
+
+  //Copy command into a new buffer.
+  uint16_t size = pos - start;
+  char stopic[size + 2];  // / + \0
+  stopic[0] = '/';
+  memcpy(stopic+1, start, size);
+  stopic[size+1] = '\0';
+
+  //pos point to the start of parameters
+  MqttDataHandler((char *)stopic, (uint8_t *)pos, strlen(pos));
 }
 
 void PublishStatus(uint8_t payload)
