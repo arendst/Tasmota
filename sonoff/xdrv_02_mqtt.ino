@@ -917,7 +917,7 @@ void HandleMqttConfiguration(void)
 
   char str[sizeof(Settings.mqtt_client)];
 
-  WSContentStart(FPSTR(S_CONFIGURE_MQTT));
+  WSContentStart_P(S_CONFIGURE_MQTT);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_MQTT1,
     Settings.mqtt_host,
@@ -930,8 +930,8 @@ void HandleMqttConfiguration(void)
     Settings.mqtt_topic,
     MQTT_FULLTOPIC, MQTT_FULLTOPIC,
     Settings.mqtt_fulltopic);
-  WSContentSend(FPSTR(HTTP_FORM_END));
-  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSend_P(HTTP_BTN_CONF);
   WSContentEnd();
 }
 
@@ -980,7 +980,7 @@ bool Xdrv02(uint8_t function)
     switch (function) {
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend(FPSTR(HTTP_BTN_MENU_MQTT));
+        WSContentSend_P(HTTP_BTN_MENU_MQTT);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/" WEB_HANDLE_MQTT, HandleMqttConfiguration);

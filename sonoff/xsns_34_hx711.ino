@@ -426,14 +426,14 @@ void HandleHxAction(void)
     return;
   }
 
-  WSContentStart(FPSTR(D_CONFIGURE_HX711));
+  WSContentStart_P(S_CONFIGURE_HX711);
   WSContentSendStyle();
   dtostrfd((float)Settings.weight_reference / 1000, 3, stemp1);
   char stemp2[20];
   dtostrfd((float)Settings.weight_item / 10000, 4, stemp2);
   WSContentSend_P(HTTP_FORM_HX711, stemp1, stemp2);
-  WSContentSend(FPSTR(HTTP_FORM_END));
-  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSend_P(HTTP_BTN_CONF);
   WSContentEnd();
 }
 
@@ -490,10 +490,10 @@ bool Xsns34(uint8_t function)
         break;
 #ifdef USE_HX711_GUI
       case FUNC_WEB_ADD_MAIN_BUTTON:
-        WSContentSend(FPSTR(HTTP_BTN_MENU_MAIN_HX711));
+        WSContentSend_P(HTTP_BTN_MENU_MAIN_HX711);
         break;
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend(FPSTR(HTTP_BTN_MENU_HX711));
+        WSContentSend_P(HTTP_BTN_MENU_HX711);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/" WEB_HANDLE_HX711, HandleHxAction);

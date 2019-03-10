@@ -241,14 +241,14 @@ const char HTTP_HEAD_STYLE1[] PROGMEM =
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
   "fieldset{background-color:#f2f2f2;}"  // Also update HTTP_TIMER_STYLE
   "p{margin:0.5em 0;}"
-  "input{width:100%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;}"
+  "input{width:100%%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;}"
   "input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}"
-  "select{width:100%;}"
-  "textarea{resize:none;width:98%;height:318px;padding:5px;overflow:auto;}"
+  "select{width:100%%;}"
+  "textarea{resize:none;width:98%%;height:318px;padding:5px;overflow:auto;}"
   "body{text-align:center;font-family:verdana;}"
   "td{padding:0px;}";
 const char HTTP_HEAD_STYLE2[] PROGMEM =
-  "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"
+  "button{border:0;border-radius:0.3rem;background-color:#1fa3ec;color:#fff;line-height:2.4rem;font-size:1.2rem;width:100%%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"
   "button:hover{background-color:#0e70a4;}"
   ".bred{background-color:#d43535;}"
   ".bred:hover{background-color:#931f1f;}"
@@ -403,7 +403,7 @@ const char HTTP_FORM_CMND[] PROGMEM =
   "</form>";
 
 const char HTTP_TABLE100[] PROGMEM =
-  "<table style='width:100%'>";
+  "<table style='width:100%%'>";
 
 const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
@@ -614,13 +614,21 @@ void WSHeaderSend(void)
 #endif
 }
 
+/**********************************************************************************************
+* HTTP Content Page handler
+**********************************************************************************************/
+
 void WSSend(int code, int ctype, const String& content)
 {
   char ct[25];  // strlen("application/octet-stream") +1 = Longest Content type string
   WebServer->send(code, GetTextIndexed(ct, sizeof(ct), ctype, kContentTypes), content);
 }
 
-void WSContentSendLl(const String& content)       // Low level sendContent for all core versions
+/**********************************************************************************************
+* HTTP Content Chunk handler
+**********************************************************************************************/
+
+void _WSContentSend(const String& content)        // Low level sendContent for all core versions
 {
   size_t len = content.length();
 
@@ -633,40 +641,19 @@ void WSContentSendLl(const String& content)       // Low level sendContent for a
   WebServer->sendContent(content);
 #endif
 
-  ShowFreeMem(PSTR("WSContentSend"));
-
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("WEB: Chunk size %d"), len);
+//  ShowFreeMem(PSTR("WSContentSend"));
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HTP: Chunk size %d"), len);
 }
 
 void WSContentFlush()
 {
   if (chunk_buffer.length() > 0) {
-    WSContentSendLl(chunk_buffer);                // Flush chunk buffer
+    _WSContentSend(chunk_buffer);                  // Flush chunk buffer
     chunk_buffer = "";
   }
 }
 
-void WSContentSend(const String& content)         // Content send string data
-{
-  size_t len = content.length();
-
-  if (0 == len) {                                 // No content
-    return;
-  }
-  else if (len < CHUNKED_BUFFER_SIZE) {           // Append chunk buffer with small content
-    chunk_buffer += content;
-    len = chunk_buffer.length();
-  }
-
-  if (len >= CHUNKED_BUFFER_SIZE) {               // Either content or chunk buffer is oversize
-    WSContentFlush();                             // Send chunk buffer before possible content oversize
-  }
-  if (content.length() >= CHUNKED_BUFFER_SIZE) {  // Content is oversize
-    WSContentSendLl(content);                     // Send content
-  }
-}
-
-void WSContentSend_P(PGM_P formatP, ...)          // Content send snprintf_P char data
+void WSContentSend_P(const char* formatP, ...)     // Content send snprintf_P char data
 {
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
@@ -674,10 +661,26 @@ void WSContentSend_P(PGM_P formatP, ...)          // Content send snprintf_P cha
   int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
   va_end(arg);
 
-  WSContentSend(mqtt_data);
+  if (0 == len) {                                  // No content
+    return;
+  }
+  else if (len == sizeof(mqtt_data)) {
+    AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: Content too large"));
+  }
+  else if (len < CHUNKED_BUFFER_SIZE) {            // Append chunk buffer with small content
+    chunk_buffer += mqtt_data;
+    len = chunk_buffer.length();
+  }
+
+  if (len >= CHUNKED_BUFFER_SIZE) {                // Either content or chunk buffer is oversize
+    WSContentFlush();                              // Send chunk buffer before possible content oversize
+  }
+  if (strlen(mqtt_data) >= CHUNKED_BUFFER_SIZE) {  // Content is oversize
+    _WSContentSend(mqtt_data);                     // Send content
+  }
 }
 
-void WSContentStart(const String& title, bool auth)
+void WSContentStart_P(const char* title, bool auth)
 {
   if (auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
     return WebServer->requestAuthentication();
@@ -690,45 +693,47 @@ void WSContentStart(const String& title, bool auth)
   WebServer->sendHeader(F("Accept-Ranges"),F("none"));
   WebServer->sendHeader(F("Transfer-Encoding"),F("chunked"));
 #endif
-  WSSend(200, CT_HTML, "");                       // Signal start of chunked content
+  WSSend(200, CT_HTML, "");                        // Signal start of chunked content
   chunk_buffer = "";
 
-  WSContentSend_P(HTTP_HEAD, Settings.friendlyname[0], title.c_str());
+  char ctitle[strlen_P(title) +1];
+  strcpy_P(ctitle, title);                         // Get title from flash to RAM
+  WSContentSend_P(HTTP_HEAD, Settings.friendlyname[0], ctitle);
 }
 
-void WSContentStart(const String& title)
+void WSContentStart_P(const char* title)
 {
-  WSContentStart(title, true);
+  WSContentStart_P(title, true);
 }
 
-void WSContentSendStyle(const String& style)
+void WSContentSendStyle_P(const char* style)
 {
   if (WifiIsInManagerMode()) {
     if (WifiConfigCounter()) {
-      WSContentSend(FPSTR(HTTP_SCRIPT_COUNTER));
+      WSContentSend_P(HTTP_SCRIPT_COUNTER);
     }
   }
-  WSContentSend(FPSTR(HTTP_HEAD_STYLE1));
-  WSContentSend(FPSTR(HTTP_HEAD_STYLE2));
-  WSContentSend(style);
+  WSContentSend_P(HTTP_HEAD_STYLE1);
+  WSContentSend_P(HTTP_HEAD_STYLE2);
+  WSContentSend_P(style);
   WSContentSend_P(HTTP_HEAD_STYLE3, ModuleName().c_str(), Settings.friendlyname[0], WSNetworkInfo().c_str());
 }
 
-void WSContentSendStyle()
+void WSContentSendStyle(void)
 {
-  WSContentSendStyle(F(""));
+  WSContentSendStyle_P(PSTR(""));
 }
 
 void WSContentEnd(void)
 {
   if (WifiIsInManagerMode()) {
     if (WifiConfigCounter()) {
-      WSContentSend(FPSTR(HTTP_COUNTER));
+      WSContentSend_P(HTTP_COUNTER);
     }
   }
   WSContentSend_P(HTTP_END, my_version);
-  WSContentFlush();                               // Flush chunk buffer
-  WSContentSendLl("");                            // Signal end of chunked content
+  WSContentFlush();                                // Flush chunk buffer
+  _WSContentSend("");                              // Signal end of chunked content
   WebServer->client().stop();
 }
 
@@ -743,21 +748,21 @@ void WebRestart(uint8_t type)
 
   bool reset_only = (HTTP_MANAGER_RESET_ONLY == webserver_state);
 
-  WSContentStart((type) ? FPSTR(S_SAVE_CONFIGURATION) : FPSTR(S_RESTART), !reset_only);
-  WSContentSend(FPSTR(HTTP_SCRIPT_RELOAD));
+  WSContentStart_P((type) ? S_SAVE_CONFIGURATION : S_RESTART, !reset_only);
+  WSContentSend_P(HTTP_SCRIPT_RELOAD);
   WSContentSendStyle();
   if (type) {
-    WSContentSend(F("<div style='text-align:center;'><b>" D_CONFIGURATION_SAVED "</b><br/>"));
+    WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_CONFIGURATION_SAVED "</b><br/>"));
     if (2 == type) {
-      WSContentSend(F("<br/>" D_TRYING_TO_CONNECT "<br/>"));
+      WSContentSend_P(PSTR("<br/>" D_TRYING_TO_CONNECT "<br/>"));
     }
-    WSContentSend(F("</div>"));
+    WSContentSend_P(PSTR("</div>"));
   }
-  WSContentSend(FPSTR(HTTP_MSG_RSTRT));
+  WSContentSend_P(HTTP_MSG_RSTRT);
   if (HTTP_MANAGER == webserver_state || reset_only) {
     webserver_state = HTTP_ADMIN;
   } else {
-    WSContentSend(FPSTR(HTTP_BTN_MAIN));
+    WSContentSend_P(HTTP_BTN_MAIN);
   }
   WSContentEnd();
 
@@ -769,15 +774,15 @@ void WebRestart(uint8_t type)
 
 void HandleWifiLogin(void)
 {
-  WSContentStart(FPSTR(D_CONFIGURE_WIFI), false);  // false means show page no matter if the client has or has not credentials
+  WSContentStart_P(S_CONFIGURE_WIFI, false);  // false means show page no matter if the client has or has not credentials
   WSContentSendStyle();
-  WSContentSend(FPSTR(HTTP_FORM_LOGIN));
+  WSContentSend_P(HTTP_FORM_LOGIN);
 
   if (HTTP_MANAGER_RESET_ONLY == webserver_state) {
-    WSContentSend(F("<br/>"));
-    WSContentSend(FPSTR(HTTP_BTN_RSTRT));
+    WSContentSend_P(PSTR("<br/>"));
+    WSContentSend_P(HTTP_BTN_RSTRT);
 #ifndef FIRMWARE_MINIMAL
-    WSContentSend(FPSTR(HTTP_BTN_RESET));
+    WSContentSend_P(HTTP_BTN_RESET);
 #endif  // FIRMWARE_MINIMAL
   }
 
@@ -817,11 +822,11 @@ void HandleRoot(void)
 
   char stemp[5];
 
-  WSContentStart(FPSTR(S_MAIN_MENU));
+  WSContentStart_P(S_MAIN_MENU);
   WSContentSend_P(HTTP_SCRIPT_ROOT, Settings.web_refresh);
   WSContentSendStyle();
 
-  WSContentSend(F("<div id='l1' name='l1'></div>"));
+  WSContentSend_P(PSTR("<div id='l1' name='l1'></div>"));
   if (devices_present) {
     if (light_type) {
       if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
@@ -829,8 +834,8 @@ void HandleRoot(void)
       }
       WSContentSend_P(HTTP_MSG_SLIDER2, Settings.light_dimmer);
     }
-    WSContentSend(FPSTR(HTTP_TABLE100));
-    WSContentSend(F("<tr>"));
+    WSContentSend_P(HTTP_TABLE100);
+    WSContentSend_P(PSTR("<tr>"));
     if (SONOFF_IFAN02 == my_module_type) {
       WSContentSend_P(HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
       for (uint8_t i = 0; i < MAX_FAN_SPEED; i++) {
@@ -843,20 +848,20 @@ void HandleRoot(void)
         WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
       }
     }
-    WSContentSend(F("</tr></table>"));
+    WSContentSend_P(PSTR("</tr></table>"));
   }
   if (SONOFF_BRIDGE == my_module_type) {
-    WSContentSend(FPSTR(HTTP_TABLE100));
-    WSContentSend(F("<tr>"));
+    WSContentSend_P(HTTP_TABLE100);
+    WSContentSend_P(PSTR("<tr>"));
     uint8_t idx = 0;
     for (uint8_t i = 0; i < 4; i++) {
-      if (idx > 0) { WSContentSend(F("</tr><tr>")); }
+      if (idx > 0) { WSContentSend_P(PSTR("</tr><tr>")); }
       for (uint8_t j = 0; j < 4; j++) {
         idx++;
         WSContentSend_P(PSTR("<td style='width:25%%'><button onclick='la(\"&k=%d\");'>%d</button></td>"), idx, idx);  // &k is related to WebGetArg("k", tmp, sizeof(tmp));
       }
     }
-    WSContentSend(F("</tr></table>"));
+    WSContentSend_P(PSTR("</tr></table>"));
   }
 
 #ifndef FIRMWARE_MINIMAL
@@ -866,12 +871,12 @@ void HandleRoot(void)
 
   if (HTTP_ADMIN == webserver_state) {
 #ifndef FIRMWARE_MINIMAL
-    WSContentSend(FPSTR(HTTP_BTN_CONF));
+    WSContentSend_P(HTTP_BTN_CONF);
 #else
-    WSContentSend(F("<br/>"));
+    WSContentSend_P(PSTR("<br/>"));
 #endif  // Not FIRMWARE_MINIMAL
-    WSContentSend(FPSTR(HTTP_BTN_MENU1));
-    WSContentSend(FPSTR(HTTP_BTN_RSTRT));
+    WSContentSend_P(HTTP_BTN_MENU1);
+    WSContentSend_P(HTTP_BTN_RSTRT);
   }
   WSContentEnd();
 }
@@ -965,17 +970,17 @@ void HandleConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURATION);
 
-  WSContentStart(FPSTR(S_CONFIGURATION));
+  WSContentStart_P(S_CONFIGURATION);
   WSContentSendStyle();
-  WSContentSend(FPSTR(HTTP_BTN_MENU_MODULE));
+  WSContentSend_P(HTTP_BTN_MENU_MODULE);
 
   XdrvCall(FUNC_WEB_ADD_BUTTON);
   XsnsCall(FUNC_WEB_ADD_BUTTON);
 
-  WSContentSend(FPSTR(HTTP_BTN_MENU4));
-  WSContentSend(FPSTR(HTTP_BTN_RESET));
-  WSContentSend(FPSTR(HTTP_BTN_MENU5));
-  WSContentSend(FPSTR(HTTP_BTN_MAIN));
+  WSContentSend_P(HTTP_BTN_MENU4);
+  WSContentSend_P(HTTP_BTN_RESET);
+  WSContentSend_P(HTTP_BTN_MENU5);
+  WSContentSend_P(HTTP_BTN_MAIN);
   WSContentEnd();
 }
 
@@ -1045,24 +1050,24 @@ void HandleTemplateConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_TEMPLATE);
 
-  WSContentStart(FPSTR(S_CONFIGURE_TEMPLATE));
-  WSContentSend(FPSTR(HTTP_SCRIPT_MODULE_TEMPLATE));
-  WSContentSend(FPSTR(HTTP_SCRIPT_TEMPLATE));
+  WSContentStart_P(S_CONFIGURE_TEMPLATE);
+  WSContentSend_P(HTTP_SCRIPT_MODULE_TEMPLATE);
+  WSContentSend_P(HTTP_SCRIPT_TEMPLATE);
   WSContentSendStyle();
-  WSContentSend(FPSTR(HTTP_FORM_TEMPLATE));
+  WSContentSend_P(HTTP_FORM_TEMPLATE);
 
-  WSContentSend(F("<br/><table>"));
+  WSContentSend_P(PSTR("<br/><table>"));
   for (uint8_t i = 0; i < 17; i++) {
     if ((i < 6) || ((i > 8) && (i != 11))) {          // Ignore flash pins GPIO06, 7, 8 and 11
       WSContentSend_P(PSTR("<tr><td%s><b>" D_GPIO "%d</b></td><td>%s</td><td%s><select id='g%d' name='g%d'></select></td></tr>"),
         (0==i)?" style='width:74px'":"", i, ((9==i)||(10==i))? "<font color='red'>ESP8285</font>" :"", (0==i)?" style='width:176px'":"", i, i);
     }
   }
-  WSContentSend(F("</table>"));
+  WSContentSend_P(PSTR("</table>"));
 
-  WSContentSend(FPSTR(HTTP_FORM_TEMPLATE_FLAG));
-  WSContentSend(FPSTR(HTTP_FORM_END));
-  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentSend_P(HTTP_FORM_TEMPLATE_FLAG);
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSend_P(HTTP_BTN_CONF);
   WSContentEnd();
 }
 
@@ -1149,15 +1154,15 @@ void HandleModuleConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_MODULE);
 
-  WSContentStart(FPSTR(S_CONFIGURE_MODULE));
-  WSContentSend(FPSTR(HTTP_SCRIPT_MODULE_TEMPLATE));
+  WSContentStart_P(S_CONFIGURE_MODULE);
+  WSContentSend_P(HTTP_SCRIPT_MODULE_TEMPLATE);
   WSContentSend_P(HTTP_SCRIPT_MODULE1, Settings.module);
   for (uint8_t i = 0; i < sizeof(cmodule); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
       WSContentSend_P(PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g16
     }
   }
-  WSContentSend(FPSTR(HTTP_SCRIPT_MODULE2));
+  WSContentSend_P(HTTP_SCRIPT_MODULE2);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_MODULE, AnyModuleName(MODULE).c_str());
   for (uint8_t i = 0; i < sizeof(cmodule); i++) {
@@ -1167,9 +1172,9 @@ void HandleModuleConfiguration(void)
         (WEMOS==my_module_type)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :((9==i)||(10==i))? "<font color='red'>ESP8285</font>" :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
     }
   }
-  WSContentSend(F("</table>"));
-  WSContentSend(FPSTR(HTTP_FORM_END));
-  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentSend_P(PSTR("</table>"));
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSend_P(HTTP_BTN_CONF);
   WSContentEnd();
 }
 
@@ -1226,8 +1231,8 @@ void HandleWifiConfiguration(void)
     return;
   }
 
-  WSContentStart(FPSTR(S_CONFIGURE_WIFI), !WifiIsInManagerMode());
-  WSContentSend(FPSTR(HTTP_SCRIPT_WIFI));
+  WSContentStart_P(S_CONFIGURE_WIFI, !WifiIsInManagerMode());
+  WSContentSend_P(HTTP_SCRIPT_WIFI);
   WSContentSendStyle();
 
   if (HTTP_MANAGER_RESET_ONLY != webserver_state) {
@@ -1240,8 +1245,8 @@ void HandleWifiConfiguration(void)
 
       if (0 == n) {
         AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, S_NO_NETWORKS_FOUND);
-        WSContentSend(FPSTR(S_NO_NETWORKS_FOUND));
-        WSContentSend(F(". " D_REFRESH_TO_SCAN_AGAIN "."));
+        WSContentSend_P(S_NO_NETWORKS_FOUND);
+        WSContentSend_P(PSTR(". " D_REFRESH_TO_SCAN_AGAIN "."));
       } else {
         //sort networks
         int indices[n];
@@ -1280,40 +1285,38 @@ void HandleWifiConfiguration(void)
           int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
 
           if (minimum_signal_quality == -1 || minimum_signal_quality < quality) {
-            String item = F("<div><a href='#p' onclick='c(this)'>{v}</a>&nbsp;({w})&nbsp<span class='q'>{i} {r}%</span></div>");
-            String rssiQ;
-            rssiQ += quality;
-            item.replace(F("{v}"), htmlEscape(WiFi.SSID(indices[i])));
-            item.replace(F("{w}"), String(WiFi.channel(indices[i])));
-            item.replace(F("{r}"), rssiQ);
             uint8_t auth = WiFi.encryptionType(indices[i]);
-            item.replace(F("{i}"), (ENC_TYPE_WEP == auth) ? F(D_WEP) : (ENC_TYPE_TKIP == auth) ? F(D_WPA_PSK) : (ENC_TYPE_CCMP == auth) ? F(D_WPA2_PSK) : (ENC_TYPE_AUTO == auth) ? F(D_AUTO) : F(""));
-            WSContentSend(item);
+            WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%s %d%%</span></div>"),
+              htmlEscape(WiFi.SSID(indices[i])).c_str(),
+              WiFi.channel(indices[i]),
+              (ENC_TYPE_WEP == auth) ? D_WEP : (ENC_TYPE_TKIP == auth) ? D_WPA_PSK : (ENC_TYPE_CCMP == auth) ? D_WPA2_PSK : (ENC_TYPE_AUTO == auth) ? D_AUTO : "",
+              quality
+            );
             delay(0);
           } else {
             AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_SKIPPING_LOW_QUALITY));
           }
 
         }
-        WSContentSend(F("<br/>"));
+        WSContentSend_P(PSTR("<br/>"));
       }
     } else {
-      WSContentSend(F("<div><a href='/wi?scan='>" D_SCAN_FOR_WIFI_NETWORKS "</a></div><br/>"));
+      WSContentSend_P(PSTR("<div><a href='/wi?scan='>" D_SCAN_FOR_WIFI_NETWORKS "</a></div><br/>"));
     }
 
     // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
     WSContentSend_P(HTTP_FORM_WIFI, Settings.sta_ssid[0], Settings.sta_ssid[1], WIFI_HOSTNAME, WIFI_HOSTNAME, Settings.hostname);
-    WSContentSend(FPSTR(HTTP_FORM_END));
+    WSContentSend_P(HTTP_FORM_END);
   }
 
   if (WifiIsInManagerMode()) {
-    WSContentSend(F("<br/>"));
-    WSContentSend(FPSTR(HTTP_BTN_RSTRT));
+    WSContentSend_P(PSTR("<br/>"));
+    WSContentSend_P(HTTP_BTN_RSTRT);
 #ifndef FIRMWARE_MINIMAL
-    WSContentSend(FPSTR(HTTP_BTN_RESET));
+    WSContentSend_P(HTTP_BTN_RESET);
 #endif  // FIRMWARE_MINIMAL
   } else {
-    WSContentSend(FPSTR(HTTP_BTN_CONF));
+    WSContentSend_P(HTTP_BTN_CONF);
   }
   WSContentEnd();
 }
@@ -1352,9 +1355,9 @@ void HandleLoggingConfiguration(void)
     return;
   }
 
-  WSContentStart(FPSTR(S_CONFIGURE_LOGGING));
+  WSContentStart_P(S_CONFIGURE_LOGGING);
   WSContentSendStyle();
-  WSContentSend(FPSTR(HTTP_FORM_LOG1));
+  WSContentSend_P(HTTP_FORM_LOG1);
   char stemp1[32];
   char stemp2[32];
   uint8_t dlevel[3] = { LOG_LEVEL_INFO, LOG_LEVEL_INFO, LOG_LEVEL_NONE };
@@ -1369,11 +1372,11 @@ void HandleLoggingConfiguration(void)
         (i == llevel) ? " selected" : "", i, i,
         GetTextIndexed(stemp1, sizeof(stemp1), i, kLoggingLevels));
     }
-    WSContentSend(F("</select></p>"));
+    WSContentSend_P(PSTR("</select></p>"));
   }
   WSContentSend_P(HTTP_FORM_LOG2, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
-  WSContentSend(FPSTR(HTTP_FORM_END));
-  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSend_P(HTTP_BTN_CONF);
   WSContentEnd();
 }
 
@@ -1416,7 +1419,7 @@ void HandleOtherConfiguration(void)
     return;
   }
 
-  WSContentStart(FPSTR(S_CONFIGURE_OTHER));
+  WSContentStart_P(S_CONFIGURE_OTHER);
   WSContentSendStyle();
 
   TemplateJson();
@@ -1437,7 +1440,7 @@ void HandleOtherConfiguration(void)
   }
 
 #ifdef USE_EMULATION
-  WSContentSend(F("<p></p><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend><p>"));  // Keep close to Friendlynames so do not use <br/>
+  WSContentSend_P(PSTR("<p></p><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend><p>"));  // Keep close to Friendlynames so do not use <br/>
   for (uint8_t i = 0; i < EMUL_MAX; i++) {
     WSContentSend_P(PSTR("<input id='r%d' name='b2' type='radio' value='%d'%s><b>%s</b> %s<br/>"),  // Different id only used for labels
       i, i,
@@ -1445,11 +1448,11 @@ void HandleOtherConfiguration(void)
       GetTextIndexed(stemp, sizeof(stemp), i, kEmulationOptions),
       (i == EMUL_NONE) ? "" : (i == EMUL_WEMO) ? D_SINGLE_DEVICE : D_MULTI_DEVICE);
   }
-  WSContentSend(F("</p></fieldset>"));
+  WSContentSend_P(PSTR("</p></fieldset>"));
 #endif  // USE_EMULATION
 
-  WSContentSend(FPSTR(HTTP_FORM_END));
-  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSend_P(HTTP_BTN_CONF);
   WSContentEnd();
 }
 
@@ -1541,11 +1544,11 @@ void HandleResetConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESET_CONFIGURATION);
 
-  WSContentStart(FPSTR(S_RESET_CONFIGURATION), !WifiIsInManagerMode());
+  WSContentStart_P(S_RESET_CONFIGURATION, !WifiIsInManagerMode());
   WSContentSendStyle();
-  WSContentSend(F("<div style='text-align:center;'>" D_CONFIGURATION_RESET "</div>"));
-  WSContentSend(FPSTR(HTTP_MSG_RSTRT));
-  WSContentSend(FPSTR(HTTP_BTN_MAIN));
+  WSContentSend_P(PSTR("<div style='text-align:center;'>" D_CONFIGURATION_RESET "</div>"));
+  WSContentSend_P(HTTP_MSG_RSTRT);
+  WSContentSend_P(HTTP_BTN_MAIN);
   WSContentEnd();
 
   char command[CMDSZ];
@@ -1559,11 +1562,11 @@ void HandleRestoreConfiguration(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTORE_CONFIGURATION);
 
-  WSContentStart(FPSTR(S_RESTORE_CONFIGURATION));
+  WSContentStart_P(S_RESTORE_CONFIGURATION);
   WSContentSendStyle();
-  WSContentSend(FPSTR(HTTP_FORM_RST));
+  WSContentSend_P(HTTP_FORM_RST);
   WSContentSend_P(HTTP_FORM_RST_UPG, D_RESTORE);
-  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentSend_P(HTTP_BTN_CONF);
   WSContentEnd();
 
   upload_error = 0;
@@ -1582,11 +1585,11 @@ void HandleInformation(void)
 
   int freeMem = ESP.getFreeHeap();
 
-  WSContentStart(FPSTR(S_INFORMATION));
+  WSContentStart_P(S_INFORMATION);
   // Save 1k of code space replacing table html with javascript replace codes
   // }1 = </td></tr><tr><th>
   // }2 = </th><td>
-  WSContentSend(FPSTR(HTTP_SCRIPT_INFO_BEGIN));
+  WSContentSend_P(HTTP_SCRIPT_INFO_BEGIN);
   WSContentSend_P(PSTR("<table style='width:100%%'><tr><th>"));
   WSContentSend_P(PSTR(D_PROGRAM_VERSION "}2%s%s"), my_version, my_image);
   WSContentSend_P(PSTR("}1" D_BUILD_DATE_AND_TIME "}2%s"), GetBuildDateAndTime().c_str());
@@ -1659,13 +1662,13 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1" D_FREE_MEMORY "}2%dkB"), freeMem / 1024);
   WSContentSend_P(PSTR("</td></tr></table>"));
 
-  WSContentSend(FPSTR(HTTP_SCRIPT_INFO_END));
+  WSContentSend_P(HTTP_SCRIPT_INFO_END);
   WSContentSendStyle();
-  // WSContentSend(F("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>"));
+  // WSContentSend_P(PSTR("<fieldset><legend><b>&nbsp;Information&nbsp;</b></legend>"));
   WSContentSend_P(PSTR("<style>td{padding:0px 5px;}</style>"
                        "<div id='i' name='i'></div>"));
-  //   WSContentSend(F("</fieldset>"));
-  WSContentSend(FPSTR(HTTP_BTN_MAIN));
+  //   WSContentSend_P(PSTR("</fieldset>"));
+  WSContentSend_P(HTTP_BTN_MAIN);
   WSContentEnd();
 }
 #endif  // Not FIRMWARE_MINIMAL
@@ -1678,11 +1681,11 @@ void HandleUpgradeFirmware(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_FIRMWARE_UPGRADE);
 
-  WSContentStart(FPSTR(S_FIRMWARE_UPGRADE));
+  WSContentStart_P(S_FIRMWARE_UPGRADE);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_UPG, Settings.ota_url);
   WSContentSend_P(HTTP_FORM_RST_UPG, D_UPGRADE);
-  WSContentSend(FPSTR(HTTP_BTN_MAIN));
+  WSContentSend_P(HTTP_BTN_MAIN);
   WSContentEnd();
 
   upload_error = 0;
@@ -1705,12 +1708,12 @@ void HandleUpgradeFirmwareStart(void)
     ExecuteWebCommand(command, SRC_WEBGUI);
   }
 
-  WSContentStart(FPSTR(S_INFORMATION));
-  WSContentSend(FPSTR(HTTP_SCRIPT_RELOAD_OTA));
+  WSContentStart_P(S_INFORMATION);
+  WSContentSend_P(HTTP_SCRIPT_RELOAD_OTA);
   WSContentSendStyle();
-  WSContentSend(F("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>"));
-  WSContentSend(FPSTR(HTTP_MSG_RSTRT));
-  WSContentSend(FPSTR(HTTP_BTN_MAIN));
+  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>"));
+  WSContentSend_P(HTTP_MSG_RSTRT);
+  WSContentSend_P(HTTP_BTN_MAIN);
   WSContentEnd();
 
   snprintf_P(command, sizeof(command), PSTR(D_CMND_UPGRADE " 1"));
@@ -1729,14 +1732,14 @@ void HandleUploadDone(void)
   restart_flag = 0;
   MqttRetryCounter(0);
 
-  WSContentStart(FPSTR(S_INFORMATION));
+  WSContentStart_P(S_INFORMATION);
   if (!upload_error) {
-    WSContentSend(FPSTR(HTTP_SCRIPT_RELOAD_OTA));  // Refesh main web ui after OTA upgrade
+    WSContentSend_P(HTTP_SCRIPT_RELOAD_OTA);  // Refesh main web ui after OTA upgrade
   }
   WSContentSendStyle();
-  WSContentSend(F("<div style='text-align:center;'><b>" D_UPLOAD " <font color='"));
+  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='"));
   if (upload_error) {
-    WSContentSend(F("red'>" D_FAILED "</font></b><br/><br/>"));
+    WSContentSend_P(PSTR("red'>" D_FAILED "</font></b><br/><br/>"));
 #ifdef USE_RF_FLASH
     if (upload_error < 14) {
 #else
@@ -1746,18 +1749,18 @@ void HandleUploadDone(void)
     } else {
       snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), upload_error);
     }
-    WSContentSend(error);
+    WSContentSend_P(error);
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_UPLOAD ": %s"), error);
     stop_flash_rotate = Settings.flag.stop_flash_rotate;
   } else {
-    WSContentSend(F("green'>" D_SUCCESSFUL "</font></b><br/>"));
-    WSContentSend(FPSTR(HTTP_MSG_RSTRT));
+    WSContentSend_P(PSTR("green'>" D_SUCCESSFUL "</font></b><br/>"));
+    WSContentSend_P(HTTP_MSG_RSTRT);
     ShowWebSource(SRC_WEBGUI);
     restart_flag = 2;  // Always restart to re-enable disabled features during update
   }
   SettingsBufferFree();
-  WSContentSend(F("</div><br/>"));
-  WSContentSend(FPSTR(HTTP_BTN_MAIN));
+  WSContentSend_P(PSTR("</div><br/>"));
+  WSContentSend_P(HTTP_BTN_MAIN);
   WSContentEnd();
 }
 
@@ -2032,11 +2035,11 @@ void HandleConsole(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONSOLE);
 
-  WSContentStart(FPSTR(S_CONSOLE));
+  WSContentStart_P(S_CONSOLE);
   WSContentSend_P(HTTP_SCRIPT_CONSOL, Settings.web_refresh);
   WSContentSendStyle();
-  WSContentSend(FPSTR(HTTP_FORM_CMND));
-  WSContentSend(FPSTR(HTTP_BTN_MAIN));
+  WSContentSend_P(HTTP_FORM_CMND);
+  WSContentSend_P(HTTP_BTN_MAIN);
   WSContentEnd();
 }
 
