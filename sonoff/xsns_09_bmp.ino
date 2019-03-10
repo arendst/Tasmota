@@ -482,8 +482,7 @@ void BmpDetect(void)
       }
       if (success) {
         GetTextIndexed(bmp_sensors[bmp_count].bmp_name, sizeof(bmp_sensors[bmp_count].bmp_name), bmp_sensors[bmp_count].bmp_model, kBmpTypes);
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bmp_sensors[bmp_count].bmp_name, bmp_sensors[bmp_count].bmp_address);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, bmp_sensors[bmp_count].bmp_name, bmp_sensors[bmp_count].bmp_address);
         bmp_count++;
       }
     }
@@ -540,7 +539,7 @@ void BmpShow(bool json)
       float bmp_pressure = ConvertPressure(bmp_sensors[bmp_idx].bmp_pressure);
 
       char name[10];
-      snprintf(name, sizeof(name), bmp_sensors[bmp_idx].bmp_name);
+      strlcpy(name, bmp_sensors[bmp_idx].bmp_name, sizeof(name));
       if (bmp_count > 1) {
         snprintf_P(name, sizeof(name), PSTR("%s-%02X"), name, bmp_sensors[bmp_idx].bmp_address);  // BMXXXX-XX
       }

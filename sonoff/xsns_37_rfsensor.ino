@@ -251,9 +251,8 @@ void RfSnsAnalyzeTheov2(void)
     break;
   }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("RFS: TheoV2, ChkCalc %d, Chksum %d, id %d, Type %d, Ch %d, Volt %d, BattLo %d, Pld1 %d, Pld2 %d"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RFS: TheoV2, ChkCalc %d, Chksum %d, id %d, Type %d, Ch %d, Volt %d, BattLo %d, Pld1 %d, Pld2 %d"),
     chksum, Checksum, id, Type, Channel +1, Payload3, (Voltage & 0x80) >> 7, Payload1, Payload2);
-  AddLog(LOG_LEVEL_DEBUG);
 }
 
 void RfSnsTheoV2Show(bool json)
@@ -507,9 +506,8 @@ void RfSnsAnalyzeAlectov2()
     rfsns_alecto_v2->wdir = data[8] & 0xf;
   }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("RFS: " D_ALECTOV2 ", ChkCalc %d, Chksum %d, rc %d, Temp %d, Hum %d, Rain %d, Wind %d, Gust %d, Dir %d, Factor %s"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RFS: " D_ALECTOV2 ", ChkCalc %d, Chksum %d, rc %d, Temp %d, Hum %d, Rain %d, Wind %d, Gust %d, Dir %d, Factor %s"),
     checksumcalc, checksum, rc, ((data[1] & 0x3) * 256 + data[2]) - 400, data[3], (data[6] * 256) + data[7], data[4], data[5], data[8] & 0xf, dtostrfd(factor, 3, buf1));
-  AddLog(LOG_LEVEL_DEBUG);
 }
 
 void RfSnsAlectoResetRain(void)
@@ -627,8 +625,7 @@ void RfSnsInit(void)
 
 void RfSnsAnalyzeRawSignal(void)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR("RFS: Pulses %d"), (int)rfsns_raw_signal->Number);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RFS: Pulses %d"), (int)rfsns_raw_signal->Number);
 
 #ifdef USE_THEO_V2
     RfSnsAnalyzeTheov2();

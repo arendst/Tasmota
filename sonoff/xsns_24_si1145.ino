@@ -310,8 +310,7 @@ void Si1145Update(void)
   if (!si1145_type) {
     if (Si1145Begin()) {
       si1145_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "SI1145", SI114X_ADDR);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "SI1145", SI114X_ADDR);
     }
   }
 }

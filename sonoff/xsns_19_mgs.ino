@@ -42,8 +42,7 @@ bool MGSPrepare(void)
 {
   gas.begin(MGS_SENSOR_ADDR);
   if (!gas.isError()) {
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MultiGasSensor", MGS_SENSOR_ADDR);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "MultiGasSensor", MGS_SENSOR_ADDR);
     return true;
   } else {
     return false;

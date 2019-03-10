@@ -364,9 +364,7 @@ void RtcSecond(void)
       RtcTime.year = tmpTime.year + 1970;
       daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
       standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-        GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       if (local_time < 1451602800) {  // 2016-01-01
         rules_flag.time_init = 1;
       } else {

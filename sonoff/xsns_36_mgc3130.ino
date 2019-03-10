@@ -501,13 +501,11 @@ bool MGC3130_detect(void)
   success = MGC3130_receiveMessage(); // This should read the firmware info
   if (success) {
     strcpy_P(MGC3130stype, PSTR("MGC3130"));
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, MGC3130stype, MGC3130_I2C_ADDR);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, MGC3130stype, MGC3130_I2C_ADDR);
     MGC3130_currentGesture[0] = '\0';
     MGC3130_type = true;
   } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR("MGC3130 did not respond at address 0x%x"), MGC3130_I2C_ADDR);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("MGC3130 did not respond at address 0x%x"), MGC3130_I2C_ADDR);
   }
   return success;
 }

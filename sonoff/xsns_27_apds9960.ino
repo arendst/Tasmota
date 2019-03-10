@@ -1518,8 +1518,7 @@ int16_t readGesture(void)
         if (gesture_loop_counter == APDS9960_MAX_GESTURE_CYCLES){ // We will escape after a few loops
           disableGestureSensor();   // stop the sensor to prevent problems with power consumption/blocking  and return to the main loop
           APDS9960_overload = true; // we report this as "long"-gesture
-          snprintf_P(log_data, sizeof(log_data), PSTR("Sensor overload"));
-          AddLog(LOG_LEVEL_DEBUG);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("Sensor overload"));
         }
         gesture_loop_counter += 1;
         /* Wait some time to collect next batch of FIFO data */
@@ -1794,33 +1793,32 @@ void handleGesture(void) {
     if (isGestureAvailable() ) {
     switch (readGesture()) {
       case DIR_UP:
-        snprintf_P(log_data, sizeof(log_data), PSTR("UP"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("UP"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Up"));
         break;
       case DIR_DOWN:
-        snprintf_P(log_data, sizeof(log_data), PSTR("DOWN"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("DOWN"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Down"));
         break;
       case DIR_LEFT:
-        snprintf_P(log_data, sizeof(log_data), PSTR("LEFT"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("LEFT"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Left"));
         break;
       case DIR_RIGHT:
-        snprintf_P(log_data, sizeof(log_data), PSTR("RIGHT"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("RIGHT"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Right"));
         break;
       default:
       if(APDS9960_overload)
       {
-        snprintf_P(log_data, sizeof(log_data), PSTR("LONG"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("LONG"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Long"));
       }
       else{
-        snprintf_P(log_data, sizeof(log_data), PSTR("NONE"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("NONE"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("None"));
       }
     }
-    AddLog(LOG_LEVEL_DEBUG);
 
     mqtt_data[0] = '\0';
     if (MqttShowSensor()) {
@@ -1908,8 +1906,7 @@ bool APDS9960_detect(void)
 
   if (APDS9960type == APDS9960_CHIPID_1 || APDS9960type == APDS9960_CHIPID_2) {
     strcpy_P(APDS9960stype, PSTR("APDS9960"));
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, APDS9960stype, APDS9960_I2C_ADDR);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, APDS9960stype, APDS9960_I2C_ADDR);
     if (APDS9960_init()) {
       success = true;
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "APDS9960 initialized"));
@@ -1919,12 +1916,10 @@ bool APDS9960_detect(void)
   }
   else {
     if (APDS9960type == APDS9930_CHIPID_1 || APDS9960type == APDS9930_CHIPID_2) {
-      snprintf_P(log_data, sizeof(log_data), PSTR("APDS9930 found at address 0x%x, unsupported chip"), APDS9960_I2C_ADDR);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("APDS9930 found at address 0x%x, unsupported chip"), APDS9960_I2C_ADDR);
     }
     else{
-      snprintf_P(log_data, sizeof(log_data), PSTR("APDS9960 not found at address 0x%x"), APDS9960_I2C_ADDR);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("APDS9960 not found at address 0x%x"), APDS9960_I2C_ADDR);
     }
   }
   currentGesture[0] = '\0';

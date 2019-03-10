@@ -94,8 +94,7 @@ void MatrixScrollLeft(char* txt, int loop)
     // Horiz. position of text -- starts off right edge
     mtx_x = 8 * mtx_matrices;
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "[%s]"), txt);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), txt);
 
     disp_refresh = Settings.display_refresh;
   case 2:
@@ -227,7 +226,7 @@ void MatrixOnOff(void)
 
 void MatrixDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
 {
-  snprintf(mtx_buffer, MTX_MAX_SCREEN_BUFFER, str);
+  strlcpy(mtx_buffer, str, MTX_MAX_SCREEN_BUFFER);
   mtx_mode = x &1;  // Use x for selecting scroll up (0) or scroll left (1)
   mtx_loop = y &1;  // Use y for selecting no loop (0) or loop (1)
   if (!mtx_state) { mtx_state = 1; }
@@ -261,8 +260,7 @@ void MatrixPrintLog(uint8_t direction)
         i++;
       }
 
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "[%s]"), mtx_buffer);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), mtx_buffer);
 
       mtx_done = 1;
     }
