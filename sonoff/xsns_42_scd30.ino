@@ -1,5 +1,5 @@
 /*
-  xdrv_92_scd30.ino - SC30 CO2 sensor support for Sonoff-Tasmota
+  xsns_42_scd30.ino - SC30 CO2 sensor support for Sonoff-Tasmota
 
   Copyright (C) 2019 Frogmore42
 
@@ -20,8 +20,8 @@
 #ifdef USE_I2C
 #ifdef USE_SCD30
 
-#define XDRV_92 92
-#define XSNS_92 92
+#define XSNS_42 42
+
 #define SCD30_MAX_MISSED_READS 3
 #define SONOFF_SCD30_STATE_NO_ERROR 0
 #define SONOFF_SCD30_STATE_ERROR_DATA_CRC 1
@@ -224,7 +224,7 @@ int Scd30Update()
 #endif
           scd30Reset_count++;
           error = scd30.softReset();
-          if (error) 
+          if (error)
           {
 #ifdef SCD30_DEBUG
             snprintf_P(log_data, sizeof(log_data), "SCD30: resetting got error: 0x%lX", error);
@@ -465,21 +465,7 @@ void Scd30Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv92(byte function)
-{
-  bool result = false;
-
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_COMMAND:
-        result = Scd30CommandSensor();
-        break;
-    }
-  }
-  return result;
-}
-
-bool Xsns92(byte function)
+bool Xsns42(byte function)
 {
   bool result = false;
 
@@ -487,6 +473,9 @@ bool Xsns92(byte function)
     switch (function) {
       case FUNC_EVERY_SECOND:
         Scd30Update();
+        break;
+      case FUNC_COMMAND:
+        result = Scd30CommandSensor();
         break;
       case FUNC_JSON_APPEND:
         Scd30Show(1);

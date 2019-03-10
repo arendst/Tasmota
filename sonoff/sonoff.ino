@@ -527,8 +527,18 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
 
     int command_code = GetCommandCode(command, sizeof(command), type, kTasmotaCommands);
     if (-1 == command_code) {
-      if (!XdrvCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
-        type = NULL;  // Unknown command
+//      XdrvMailbox.valid = 1;
+      XdrvMailbox.index = index;
+      XdrvMailbox.data_len = data_len;
+      XdrvMailbox.payload16 = payload16;
+      XdrvMailbox.payload = payload;
+      XdrvMailbox.grpflg = grpflg;
+      XdrvMailbox.topic = type;
+      XdrvMailbox.data = dataBuf;
+      if (!XdrvCall(FUNC_COMMAND)) {
+        if (!XsnsCall(FUNC_COMMAND)) {
+          type = NULL;  // Unknown command
+        }
       }
     }
     else if (CMND_BACKLOG == command_code) {
@@ -711,9 +721,9 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       XdrvMailbox.topic = command;
       XdrvMailbox.data = dataBuf;
       if (CMND_SENSOR == command_code) {
-        XsnsCall(FUNC_COMMAND);
+        XsnsCall(FUNC_COMMAND_SENSOR);
       } else {
-        XdrvCall(FUNC_COMMAND);
+        XdrvCall(FUNC_COMMAND_DRIVER);
       }
     }
     else if ((CMND_SETOPTION == command_code) && (index < 82)) {

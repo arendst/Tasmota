@@ -373,7 +373,7 @@ bool Xsns15(uint8_t function)
       case FUNC_EVERY_SECOND:
         MhzEverySecond();
         break;
-      case FUNC_COMMAND:
+      case FUNC_COMMAND_SENSOR:
         if (XSNS_15 == XdrvMailbox.index) {
           result = MhzCommandSensor();
         }

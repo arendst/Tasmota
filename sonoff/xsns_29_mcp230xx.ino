@@ -814,7 +814,7 @@ bool Xsns29(uint8_t function)
       case FUNC_JSON_APPEND:
         MCP230xx_Show(1);
         break;
-      case FUNC_COMMAND:
+      case FUNC_COMMAND_SENSOR:
         if (XSNS_29 == XdrvMailbox.index) {
           result = MCP230xx_Command();
         }

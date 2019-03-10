@@ -192,20 +192,6 @@ bool (* const xdrv_func_ptr[])(uint8_t) = {   // Driver Function Pointers
 
 const uint8_t xdrv_present = sizeof(xdrv_func_ptr) / sizeof(xdrv_func_ptr[0]);  // Number of drivers found
 
-bool XdrvCommand(bool grpflg, char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, uint16_t payload16)
-{
-//  XdrvMailbox.valid = 1;
-  XdrvMailbox.index = index;
-  XdrvMailbox.data_len = data_len;
-  XdrvMailbox.payload16 = payload16;
-  XdrvMailbox.payload = payload;
-  XdrvMailbox.grpflg = grpflg;
-  XdrvMailbox.topic = type;
-  XdrvMailbox.data = dataBuf;
-
-  return XdrvCall(FUNC_COMMAND);
-}
-
 bool XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t sdataBuf)
 {
   XdrvMailbox.index = stopicBuf;
@@ -242,6 +228,7 @@ bool XdrvCall(uint8_t Function)
     result = xdrv_func_ptr[x](Function);
 
     if (result && ((FUNC_COMMAND == Function) ||
+                   (FUNC_COMMAND_DRIVER == Function) ||
                    (FUNC_MQTT_DATA == Function) ||
                    (FUNC_RULES_PROCESS == Function) ||
                    (FUNC_BUTTON_PRESSED == Function) ||

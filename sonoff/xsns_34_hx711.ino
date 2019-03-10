@@ -476,7 +476,7 @@ bool Xsns34(uint8_t function)
       case FUNC_EVERY_100_MSECOND:
         HxEvery100mSecond();
         break;
-      case FUNC_COMMAND:
+      case FUNC_COMMAND_SENSOR:
         if (XSNS_34 == XdrvMailbox.index) {
           result = HxCommand();
         }
