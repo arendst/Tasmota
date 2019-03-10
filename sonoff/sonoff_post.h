@@ -95,6 +95,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 //#define USE_MAX44009                           // Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
+#define USE_SCD30                             // Add support for Sensiron SCd30 CO2 sensor (+3k6 code)
 #ifndef CO2_LOW
   #define CO2_LOW              800            // Below this CO2 value show green light (needs PWM or WS2812 RG(B) led and enable with SetOption18 1)
 #endif

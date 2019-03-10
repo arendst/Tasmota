@@ -568,9 +568,13 @@ const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_ILLUMINANCE[] PROGMEM = "%s{s}%s " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}";              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
-#if defined(USE_MHZ19) || defined(USE_SENSEAIR) || defined(USE_AZ7798)
+#if defined(USE_MHZ19) || defined(USE_SENSEAIR) || defined(USE_AZ7798) || defined(USE_SCD30)
 const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
+#endif  // USE_MHZ19
+
+#if defined(USE_SCD30)
+const char HTTP_SNS_CO2EAVG[] PROGMEM = "%s{s}%s " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";           // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // USE_SCD30
 
 const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;
 const char S_CONFIGURATION[] PROGMEM = D_CONFIGURATION;
