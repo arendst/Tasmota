@@ -170,7 +170,8 @@ int try_snprintf_P(char *s, size_t n, const char *format, ... )
 {
   va_list args;
   va_start(args, format);
-  int len = vsnprintf_P(NULL, 0, format, args);
+  char dummy[2];
+  int len = vsnprintf_P(dummy, 1, format, args);
   if (len >= n) {
     AddLog_P2(LOG_LEVEL_ERROR, PSTR("ERROR: MQTT discovery failed due to too long topic or friendly name. "
                                     "Please shorten topic and friendly name. Failed to format(%u/%u):"), len, n);
@@ -232,6 +233,7 @@ void HAssAnnounceRelayLight(void)
       Shorten(&command_topic, prefix);
       Shorten(&state_topic, prefix);
       Shorten(&availability_topic, prefix);
+
       try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_RELAY,
                  name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
       try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_DEVICE_INFO_SHORT, mqtt_data,
