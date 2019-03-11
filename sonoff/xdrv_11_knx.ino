@@ -933,7 +933,7 @@ void HandleKNXConfiguration(void)
     }
     WSContentSend_P(PSTR("</table></center></fieldset>"));
     WSContentSend_P(HTTP_FORM_END);
-    WSContentSend_P(HTTP_BTN_CONF);
+    WSContentSpaceButton(BUTTON_CONFIGURATION);
     WSContentEnd();
   }
 

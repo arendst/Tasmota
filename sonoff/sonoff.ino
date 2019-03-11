@@ -462,7 +462,9 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
   uint16_t index;
   uint32_t address;
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("MqttDataHandler"));
+#endif
 
   strlcpy(topicBuf, topic, sizeof(topicBuf));
   for (i = 0; i < data_len; i++) {
@@ -1595,7 +1597,9 @@ void ExecuteCommand(char *cmnd, int source)
   char *start;
   char *token;
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("ExecuteCommand"));
+#endif
   ShowSource(source);
 
   token = strtok(cmnd, " ");

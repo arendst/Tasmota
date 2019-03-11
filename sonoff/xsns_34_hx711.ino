@@ -433,7 +433,7 @@ void HandleHxAction(void)
   dtostrfd((float)Settings.weight_item / 10000, 4, stemp2);
   WSContentSend_P(HTTP_FORM_HX711, stemp1, stemp2);
   WSContentSend_P(HTTP_FORM_END);
-  WSContentSend_P(HTTP_BTN_CONF);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 }
 

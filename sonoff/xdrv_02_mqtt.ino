@@ -281,7 +281,9 @@ void MqttPublishDirect(const char* topic, bool retained)
   char sretained[CMDSZ];
   char slog_type[10];
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("MqttPublishDirect"));
+#endif
 
   sretained[0] = '\0';
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
@@ -931,7 +933,7 @@ void HandleMqttConfiguration(void)
     MQTT_FULLTOPIC, MQTT_FULLTOPIC,
     Settings.mqtt_fulltopic);
   WSContentSend_P(HTTP_FORM_END);
-  WSContentSend_P(HTTP_BTN_CONF);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 }
 

@@ -283,37 +283,6 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
 
-const char HTTP_BTN_CONF[] PROGMEM =
-  "<br/>"
-  "<form action='cn' method='get'><button>" D_CONFIGURATION "</button></form>";
-const char HTTP_BTN_MENU1[] PROGMEM =
-#ifndef FIRMWARE_MINIMAL
-  "<p><form action='in' method='get'><button>" D_INFORMATION "</button></form></p>"
-#endif
-  "<form action='up' method='get'><button>" D_FIRMWARE_UPGRADE "</button></form>"
-  "<p><form action='cs' method='get'><button>" D_CONSOLE "</button></form></p>";
-const char HTTP_BTN_RSTRT[] PROGMEM =
-  "<form action='.' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESTART "\");'><button name='rstrt' class='button bred'>" D_RESTART "</button></form>";
-
-const char HTTP_BTN_MENU_MODULE[] PROGMEM =
-  "<p><form action='md' method='get'><button>" D_CONFIGURE_MODULE "</button></form></p>"
-  "<p><form action='wi' method='get'><button>" D_CONFIGURE_WIFI "</button></form></p>";
-const char HTTP_BTN_MENU4[] PROGMEM =
-  "<p><form action='lg' method='get'><button>" D_CONFIGURE_LOGGING "</button></form></p>"
-  "<p><form action='co' method='get'><button>" D_CONFIGURE_OTHER "</button></form></p>"
-  "<p><form action='tp' method='get'><button>" D_CONFIGURE_TEMPLATE "</button></form></p>";
-
-const char HTTP_BTN_RESET[] PROGMEM =
-  "<br/>"
-  "<form action='rt' method='get' onsubmit='return confirm(\"" D_CONFIRM_RESET_CONFIGURATION "\");'><button class='button bred'>" D_RESET_CONFIGURATION "</button></form>";
-const char HTTP_BTN_MENU5[] PROGMEM =
-  "<p><form action='dl' method='get'><button>" D_BACKUP_CONFIGURATION "</button></form></p>"
-  "<p><form action='rs' method='get'><button>" D_RESTORE_CONFIGURATION "</button></form></p>";
-
-const char HTTP_BTN_MAIN[] PROGMEM =
-  "<br/>"
-  "<form action='.' method='get'><button>" D_MAIN_MENU "</button></form>";
-
 const char HTTP_FORM_LOGIN[] PROGMEM =
   "<fieldset>"
   "<form method='post' action='/'>"
@@ -417,6 +386,20 @@ const char HTTP_END[] PROGMEM =
 
 const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg("o", tmp, sizeof(tmp));
 const char HTTP_DEVICE_STATE[] PROGMEM = "%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>";  // {c} = %'><div style='text-align:center;font-weight:
+
+enum ButtonTitle {
+  BUTTON_RESTART, BUTTON_RESET_CONFIGURATION,
+  BUTTON_MAIN, BUTTON_CONFIGURATION, BUTTON_INFORMATION, BUTTON_FIRMWARE_UPGRADE, BUTTON_CONSOLE,
+  BUTTON_MODULE, BUTTON_WIFI, BUTTON_LOGGING, BUTTON_OTHER, BUTTON_TEMPLATE, BUTTON_BACKUP, BUTTON_RESTORE };
+const char kButtonTitle[] PROGMEM =
+  D_RESTART "|" D_RESET_CONFIGURATION "|"
+  D_MAIN_MENU "|" D_CONFIGURATION "|" D_INFORMATION "|" D_FIRMWARE_UPGRADE "|" D_CONSOLE "|"
+  D_CONFIGURE_MODULE "|" D_CONFIGURE_WIFI"|" D_CONFIGURE_LOGGING "|" D_CONFIGURE_OTHER "|" D_CONFIGURE_TEMPLATE "|" D_BACKUP_CONFIGURATION "|" D_RESTORE_CONFIGURATION;
+const char kButtonAction[] PROGMEM =
+  ".|rt|"
+  ".|cn|in|up|cs|"
+  "md|wi|lg|co|tp|dl|rs";
+const char kButtonConfirm[] PROGMEM = D_CONFIRM_RESTART "|" D_CONFIRM_RESET_CONFIGURATION;
 
 enum CTypes { CT_HTML, CT_PLAIN, CT_XML, CT_JSON, CT_STREAM };
 const char kContentTypes[] PROGMEM = "text/html|text/plain|text/xml|application/json|application/octet-stream";
@@ -641,7 +624,9 @@ void _WSContentSend(const String& content)        // Low level sendContent for a
   WebServer->sendContent(content);
 #endif
 
-//  ShowFreeMem(PSTR("WSContentSend"));
+#ifdef USE_DEBUG_DRIVER
+  ShowFreeMem(PSTR("WSContentSend"));
+#endif
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HTP: Chunk size %d"), len);
 }
 
@@ -724,6 +709,31 @@ void WSContentSendStyle(void)
   WSContentSendStyle_P(PSTR(""));
 }
 
+void WSContentButton(uint8_t title_index)
+{
+  char action[4];
+  char title[32];
+
+  if (title_index <= BUTTON_RESET_CONFIGURATION) {
+    char confirm[64];
+    WSContentSend_P(PSTR("<p><form action='%s' method='get' onsubmit='return confirm(\"%s\");'><button name='%s' class='button bred'>%s</button></form></p>"),
+      GetTextIndexed(action, sizeof(action), title_index, kButtonAction),
+      GetTextIndexed(confirm, sizeof(confirm), title_index, kButtonConfirm),
+      (!title_index) ? "rst" : "non",
+      GetTextIndexed(title, sizeof(title), title_index, kButtonTitle));
+  } else {
+    WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),
+      GetTextIndexed(action, sizeof(action), title_index, kButtonAction),
+      GetTextIndexed(title, sizeof(title), title_index, kButtonTitle));
+  }
+}
+
+void WSContentSpaceButton(uint8_t title_index)
+{
+  WSContentSend_P(PSTR("<div></div>"));            // 5px padding
+  WSContentButton(title_index);
+}
+
 void WSContentEnd(void)
 {
   if (WifiIsInManagerMode()) {
@@ -762,7 +772,7 @@ void WebRestart(uint8_t type)
   if (HTTP_MANAGER == webserver_state || reset_only) {
     webserver_state = HTTP_ADMIN;
   } else {
-    WSContentSend_P(HTTP_BTN_MAIN);
+    WSContentSpaceButton(BUTTON_MAIN);
   }
   WSContentEnd();
 
@@ -779,10 +789,9 @@ void HandleWifiLogin(void)
   WSContentSend_P(HTTP_FORM_LOGIN);
 
   if (HTTP_MANAGER_RESET_ONLY == webserver_state) {
-    WSContentSend_P(PSTR("<br/>"));
-    WSContentSend_P(HTTP_BTN_RSTRT);
+    WSContentSpaceButton(BUTTON_RESTART);
 #ifndef FIRMWARE_MINIMAL
-    WSContentSend_P(HTTP_BTN_RESET);
+    WSContentSpaceButton(BUTTON_RESET_CONFIGURATION);
 #endif  // FIRMWARE_MINIMAL
   }
 
@@ -793,7 +802,7 @@ void HandleRoot(void)
 {
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
 
-  if (WebServer->hasArg("rstrt")) {
+  if (WebServer->hasArg("rst")) {
     WebRestart(0);
     return;
   }
@@ -870,13 +879,15 @@ void HandleRoot(void)
 #endif  // Not FIRMWARE_MINIMAL
 
   if (HTTP_ADMIN == webserver_state) {
-#ifndef FIRMWARE_MINIMAL
-    WSContentSend_P(HTTP_BTN_CONF);
+#ifdef FIRMWARE_MINIMAL
+    WSContentSpaceButton(BUTTON_FIRMWARE_UPGRADE);
 #else
-    WSContentSend_P(PSTR("<br/>"));
+    WSContentSpaceButton(BUTTON_CONFIGURATION);
+    WSContentButton(BUTTON_INFORMATION);
+    WSContentButton(BUTTON_FIRMWARE_UPGRADE);
 #endif  // Not FIRMWARE_MINIMAL
-    WSContentSend_P(HTTP_BTN_MENU1);
-    WSContentSend_P(HTTP_BTN_RSTRT);
+    WSContentButton(BUTTON_CONSOLE);
+    WSContentButton(BUTTON_RESTART);
   }
   WSContentEnd();
 }
@@ -972,15 +983,22 @@ void HandleConfiguration(void)
 
   WSContentStart_P(S_CONFIGURATION);
   WSContentSendStyle();
-  WSContentSend_P(HTTP_BTN_MENU_MODULE);
+
+  WSContentButton(BUTTON_MODULE);
+  WSContentButton(BUTTON_WIFI);
 
   XdrvCall(FUNC_WEB_ADD_BUTTON);
   XsnsCall(FUNC_WEB_ADD_BUTTON);
 
-  WSContentSend_P(HTTP_BTN_MENU4);
-  WSContentSend_P(HTTP_BTN_RESET);
-  WSContentSend_P(HTTP_BTN_MENU5);
-  WSContentSend_P(HTTP_BTN_MAIN);
+  WSContentButton(BUTTON_LOGGING);
+  WSContentButton(BUTTON_OTHER);
+  WSContentButton(BUTTON_TEMPLATE);
+
+  WSContentSpaceButton(BUTTON_RESET_CONFIGURATION);
+  WSContentButton(BUTTON_BACKUP);
+  WSContentButton(BUTTON_RESTORE);
+
+  WSContentSpaceButton(BUTTON_MAIN);
   WSContentEnd();
 }
 
@@ -1067,7 +1085,7 @@ void HandleTemplateConfiguration(void)
 
   WSContentSend_P(HTTP_FORM_TEMPLATE_FLAG);
   WSContentSend_P(HTTP_FORM_END);
-  WSContentSend_P(HTTP_BTN_CONF);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 }
 
@@ -1174,7 +1192,7 @@ void HandleModuleConfiguration(void)
   }
   WSContentSend_P(PSTR("</table>"));
   WSContentSend_P(HTTP_FORM_END);
-  WSContentSend_P(HTTP_BTN_CONF);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 }
 
@@ -1310,13 +1328,12 @@ void HandleWifiConfiguration(void)
   }
 
   if (WifiIsInManagerMode()) {
-    WSContentSend_P(PSTR("<br/>"));
-    WSContentSend_P(HTTP_BTN_RSTRT);
+    WSContentSpaceButton(BUTTON_RESTART);
 #ifndef FIRMWARE_MINIMAL
-    WSContentSend_P(HTTP_BTN_RESET);
+    WSContentSpaceButton(BUTTON_RESET_CONFIGURATION);
 #endif  // FIRMWARE_MINIMAL
   } else {
-    WSContentSend_P(HTTP_BTN_CONF);
+    WSContentSpaceButton(BUTTON_CONFIGURATION);
   }
   WSContentEnd();
 }
@@ -1376,7 +1393,7 @@ void HandleLoggingConfiguration(void)
   }
   WSContentSend_P(HTTP_FORM_LOG2, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
   WSContentSend_P(HTTP_FORM_END);
-  WSContentSend_P(HTTP_BTN_CONF);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 }
 
@@ -1452,7 +1469,7 @@ void HandleOtherConfiguration(void)
 #endif  // USE_EMULATION
 
   WSContentSend_P(HTTP_FORM_END);
-  WSContentSend_P(HTTP_BTN_CONF);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 }
 
@@ -1548,7 +1565,7 @@ void HandleResetConfiguration(void)
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'>" D_CONFIGURATION_RESET "</div>"));
   WSContentSend_P(HTTP_MSG_RSTRT);
-  WSContentSend_P(HTTP_BTN_MAIN);
+  WSContentSpaceButton(BUTTON_MAIN);
   WSContentEnd();
 
   char command[CMDSZ];
@@ -1566,7 +1583,7 @@ void HandleRestoreConfiguration(void)
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_RST);
   WSContentSend_P(HTTP_FORM_RST_UPG, D_RESTORE);
-  WSContentSend_P(HTTP_BTN_CONF);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 
   upload_error = 0;
@@ -1668,7 +1685,7 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("<style>td{padding:0px 5px;}</style>"
                        "<div id='i' name='i'></div>"));
   //   WSContentSend_P(PSTR("</fieldset>"));
-  WSContentSend_P(HTTP_BTN_MAIN);
+  WSContentSpaceButton(BUTTON_MAIN);
   WSContentEnd();
 }
 #endif  // Not FIRMWARE_MINIMAL
@@ -1685,7 +1702,7 @@ void HandleUpgradeFirmware(void)
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_UPG, Settings.ota_url);
   WSContentSend_P(HTTP_FORM_RST_UPG, D_UPGRADE);
-  WSContentSend_P(HTTP_BTN_MAIN);
+  WSContentSpaceButton(BUTTON_MAIN);
   WSContentEnd();
 
   upload_error = 0;
@@ -1713,7 +1730,7 @@ void HandleUpgradeFirmwareStart(void)
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>"));
   WSContentSend_P(HTTP_MSG_RSTRT);
-  WSContentSend_P(HTTP_BTN_MAIN);
+  WSContentSpaceButton(BUTTON_MAIN);
   WSContentEnd();
 
   snprintf_P(command, sizeof(command), PSTR(D_CMND_UPGRADE " 1"));
@@ -1760,7 +1777,7 @@ void HandleUploadDone(void)
   }
   SettingsBufferFree();
   WSContentSend_P(PSTR("</div><br/>"));
-  WSContentSend_P(HTTP_BTN_MAIN);
+  WSContentSpaceButton(BUTTON_MAIN);
   WSContentEnd();
 }
 
@@ -2039,7 +2056,7 @@ void HandleConsole(void)
   WSContentSend_P(HTTP_SCRIPT_CONSOL, Settings.web_refresh);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_CMND);
-  WSContentSend_P(HTTP_BTN_MAIN);
+  WSContentSpaceButton(BUTTON_MAIN);
   WSContentEnd();
 }
 

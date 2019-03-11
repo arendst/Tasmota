@@ -720,7 +720,7 @@ void HandleTimerConfiguration(void)
 #endif  // USE_SUNRISE
   WSContentSend_P(HTTP_FORM_TIMER4);
   WSContentSend_P(HTTP_FORM_END);
-  WSContentSend_P(HTTP_BTN_CONF);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 }
 

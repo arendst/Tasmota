@@ -207,6 +207,7 @@ bool XdrvRulesProcess(void)
   return XdrvCall(FUNC_RULES_PROCESS);
 }
 
+#ifdef USE_DEBUG_DRIVER
 void ShowFreeMem(const char *where)
 {
   char stemp[20];
@@ -214,6 +215,7 @@ void ShowFreeMem(const char *where)
   XdrvMailbox.data = stemp;
   XdrvCall(FUNC_FREE_MEM);
 }
+#endif
 
 /*********************************************************************************************\
  * Function call to all xdrv

@@ -482,7 +482,7 @@ void HandleDomoticzConfiguration(void)
   WSContentSend_P(HTTP_FORM_DOMOTICZ_TIMER, Settings.domoticz_update_timer);
   WSContentSend_P(PSTR("</table>"));
   WSContentSend_P(HTTP_FORM_END);
-  WSContentSend_P(HTTP_BTN_CONF);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 }
 
