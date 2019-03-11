@@ -2046,7 +2046,7 @@ bool Xsns27(uint8_t function)
         case FUNC_EVERY_50_MSECOND:
             APDS9960_loop();
             break;
-        case FUNC_COMMAND:
+        case FUNC_COMMAND_SENSOR:
             if (XSNS_27 == XdrvMailbox.index) {
             result = APDS9960CommandSensor();
             }

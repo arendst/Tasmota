@@ -460,9 +460,9 @@ void HandleDomoticzConfiguration(void)
 
   char stemp[32];
 
-  WSContentStart(FPSTR(S_CONFIGURE_DOMOTICZ));
+  WSContentStart_P(S_CONFIGURE_DOMOTICZ);
   WSContentSendStyle();
-  WSContentSend(FPSTR(HTTP_FORM_DOMOTICZ));
+  WSContentSend_P(HTTP_FORM_DOMOTICZ);
   for (int i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     if (i < devices_present) {
       WSContentSend_P(HTTP_FORM_DOMOTICZ_RELAY,
@@ -480,9 +480,9 @@ void HandleDomoticzConfiguration(void)
       i +1, GetTextIndexed(stemp, sizeof(stemp), i, kDomoticzSensors), i, i, Settings.domoticz_sensor_idx[i]);
   }
   WSContentSend_P(HTTP_FORM_DOMOTICZ_TIMER, Settings.domoticz_update_timer);
-  WSContentSend(F("</table>"));
-  WSContentSend(FPSTR(HTTP_FORM_END));
-  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentSend_P(PSTR("</table>"));
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 }
 
@@ -533,7 +533,7 @@ bool Xdrv07(uint8_t function)
     switch (function) {
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend(FPSTR(HTTP_BTN_MENU_DOMOTICZ));
+        WSContentSend_P(HTTP_BTN_MENU_DOMOTICZ);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/" WEB_HANDLE_DOMOTICZ, HandleDomoticzConfiguration);

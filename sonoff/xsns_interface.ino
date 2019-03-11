@@ -310,7 +310,9 @@ bool XsnsCall(uint8_t Function)
       }
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
 
-      if (result && (FUNC_COMMAND == Function)) {
+      if (result && ((FUNC_COMMAND == Function) ||
+                     (FUNC_COMMAND_SENSOR == Function)
+                    )) {
         break;
       }
 #ifdef USE_DEBUG_DRIVER

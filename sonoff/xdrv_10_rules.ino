@@ -387,7 +387,9 @@ bool RulesProcessEvent(char *json_event)
 {
   bool serviced = false;
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("RulesProcessEvent"));
+#endif
 
   String event_saved = json_event;
   event_saved.toUpperCase();

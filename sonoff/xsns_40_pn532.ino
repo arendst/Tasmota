@@ -593,7 +593,7 @@ bool Xsns40(uint8_t function)
     case FUNC_EVERY_SECOND:
       break;
 #ifdef USE_PN532_DATA_FUNCTION
-    case FUNC_COMMAND:
+    case FUNC_COMMAND_SENSOR:
       if (XSNS_40 == XdrvMailbox.index) {
         result = PN532_Command();
       }

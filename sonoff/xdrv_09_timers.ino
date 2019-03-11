@@ -538,7 +538,7 @@ const char HTTP_TIMER_SCRIPT2[] PROGMEM =
     "if(m==0){"                                                   // Time is set
       "so(0);"                                                    // Hide offset span and allow Hour 00..23
       "q=Math.floor(p/60);if(q<10){q='0'+q;}qs('#ho').value=q;"   // Set hours
-      "q=p%60;if(q<10){q='0'+q;}qs('#mi').value=q;"               // Set minutes
+      "q=p%%60;if(q<10){q='0'+q;}qs('#mi').value=q;"               // Set minutes
     "}"
     "if((m==1)||(m==2)){"                                         // Sunrise or sunset is set
       "so(1);"                                                    // Show offset span and allow Hour 00..11
@@ -546,7 +546,7 @@ const char HTTP_TIMER_SCRIPT2[] PROGMEM =
       "if(q>=12){q-=12;qs('#dr').selectedIndex=1;}"               // Negative offset
         "else{qs('#dr').selectedIndex=0;}"
       "if(q<10){q='0'+q;}qs('#ho').value=q;"                      // Set offset hours
-      "q=p%60;if(q<10){q='0'+q;}qs('#mi').value=q;"               // Set offset minutes
+      "q=p%%60;if(q<10){q='0'+q;}qs('#mi').value=q;"               // Set offset minutes
     "}"
   "}"
   "function so(b){"                                               // Hide or show offset items
@@ -648,7 +648,7 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
   "}"
   "window.onload=it;";
 const char HTTP_TIMER_STYLE[] PROGMEM =
-  ".tl{float:left;border-radius:0;border:1px solid #f2f2f2;padding:1px;width:6.25%;}";  // Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
+  ".tl{float:left;border-radius:0;border:1px solid #f2f2f2;padding:1px;width:6.25%%;}";  // Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
 const char HTTP_FORM_TIMER1[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
@@ -698,29 +698,29 @@ void HandleTimerConfiguration(void)
     return;
   }
 
-  WSContentStart(FPSTR(S_CONFIGURE_TIMER));
-  WSContentSend(FPSTR(HTTP_TIMER_SCRIPT1));
+  WSContentStart_P(S_CONFIGURE_TIMER);
+  WSContentSend_P(HTTP_TIMER_SCRIPT1);
 #ifdef USE_SUNRISE
-  WSContentSend(FPSTR(HTTP_TIMER_SCRIPT2));
+  WSContentSend_P(HTTP_TIMER_SCRIPT2);
 #endif  // USE_SUNRISE
   WSContentSend_P(HTTP_TIMER_SCRIPT3, devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT4, devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT5, devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT6, devices_present);
-  WSContentSendStyle(FPSTR(HTTP_TIMER_STYLE));
+  WSContentSendStyle_P(HTTP_TIMER_STYLE);
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");
   for (uint8_t i = 0; i < MAX_TIMERS; i++) {
     WSContentSend_P(PSTR("%s%u"), (i > 0) ? "," : "", Settings.timer[i].data);
   }
-  WSContentSend(FPSTR(HTTP_FORM_TIMER2));
+  WSContentSend_P(HTTP_FORM_TIMER2);
 #ifdef USE_SUNRISE
   WSContentSend_P(HTTP_FORM_TIMER3, 100 + (strlen(D_SUNSET) *12), GetSun(0).c_str(), GetSun(1).c_str());
 #else
-  WSContentSend(FPSTR(HTTP_FORM_TIMER3));
+  WSContentSend_P(HTTP_FORM_TIMER3);
 #endif  // USE_SUNRISE
-  WSContentSend(FPSTR(HTTP_FORM_TIMER4));
-  WSContentSend(FPSTR(HTTP_FORM_END));
-  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentSend_P(HTTP_FORM_TIMER4);
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 }
 
@@ -764,9 +764,9 @@ bool Xdrv09(uint8_t function)
 #ifdef USE_TIMERS_WEB
     case FUNC_WEB_ADD_BUTTON:
 #ifdef USE_RULES
-      WSContentSend(FPSTR(HTTP_BTN_MENU_TIMER));
+      WSContentSend_P(HTTP_BTN_MENU_TIMER);
 #else
-      if (devices_present) { WSContentSend(FPSTR(HTTP_BTN_MENU_TIMER)); }
+      if (devices_present) { WSContentSend_P(HTTP_BTN_MENU_TIMER); }
 #endif  // USE_RULES
       break;
     case FUNC_WEB_ADD_HANDLER:

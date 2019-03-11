@@ -266,7 +266,7 @@ bool Xsns13(uint8_t function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_COMMAND:
+      case FUNC_COMMAND_SENSOR:
         if ((XSNS_13 == XdrvMailbox.index) && (ina219_type)) {
           result = Ina219CommandSensor();
         }
