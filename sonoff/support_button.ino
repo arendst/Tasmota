@@ -95,8 +95,9 @@ void ButtonHandler(void)
   uint16_t loops_per_second = 1000 / Settings.button_debounce;
   char scmnd[20];
 
-  uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
-  for (uint8_t button_index = 0; button_index < maxdev; button_index++) {
+//  uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
+//  for (uint8_t button_index = 0; button_index < maxdev; button_index++) {
+  for (uint8_t button_index = 0; button_index < MAX_KEYS; button_index++) {
     button = NOT_PRESSED;
     button_present = 0;
 

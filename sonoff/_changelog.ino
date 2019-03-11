@@ -3,6 +3,7 @@
  * Add support for sensor SCD30 (#5434)
  * Add support for commands in sensor drivers
  * Add 0x to IRRemote (SetOption29) and RCSwitch (SetOption28) received hexadecimal data (#5431)
+ * Add button control when no relay configured (#4682)
  *
  * 6.4.1.20 20190304
  * Changed webserver content handling from single String to small Chunks increasing RAM
