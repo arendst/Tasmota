@@ -1068,7 +1068,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.switch_debounce);
     }
     else if (CMND_BAUDRATE == command_code) {
-      if (payload32 > 0) {
+      if (payload32 > 1200) {
         payload32 /= 1200;  // Make it a valid baudrate
         baudrate = (1 == payload) ? APP_BAUDRATE : payload32 * 1200;
         SetSerialBaudrate(baudrate);
