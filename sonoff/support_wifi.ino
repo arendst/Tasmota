@@ -1,7 +1,7 @@
 /*
   support_wifi.ino - wifi support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -32,8 +32,26 @@
 #define WIFI_CHECK_SEC         20   // seconds
 #define WIFI_RETRY_OFFSET_SEC  20   // seconds
 
+/*
+// This worked for 2_5_0_BETA2 but fails since then. Waiting for a solution from core team (#4952)
+#ifdef USE_MQTT_TLS
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
+#else
+#define USING_AXTLS
+#include <ESP8266WiFi.h>
+// force use of AxTLS (BearSSL is now default) which uses less memory (#4952)
+#include <WiFiClientSecureAxTLS.h>
+using namespace axTLS;
+#endif  // ARDUINO_ESP8266_RELEASE prior to 2_5_0
+#else
+#include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
+#endif  // USE_MQTT_TLS
+*/
 #include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
 
+uint32_t wifi_last_event = 0;       // Last wifi connection event
+uint32_t wifi_downtime = 0;         // Wifi down duration
+uint16_t wifi_link_count = 0;       // Number of wifi re-connect
 uint8_t wifi_counter;
 uint8_t wifi_retry_init;
 uint8_t wifi_retry;
@@ -41,6 +59,7 @@ uint8_t wifi_status;
 uint8_t wps_result;
 uint8_t wifi_config_type = 0;
 uint8_t wifi_config_counter = 0;
+uint8_t mdns_begun = 0;             // mDNS active
 
 uint8_t wifi_scan_state;
 uint8_t wifi_bssid[6];
@@ -59,7 +78,7 @@ int WifiGetRssiAsQuality(int rssi)
   return quality;
 }
 
-boolean WifiConfigCounter(void)
+bool WifiConfigCounter(void)
 {
   if (wifi_config_counter) {
     wifi_config_counter = WIFI_CONFIG_SEC;
@@ -88,18 +107,17 @@ void WifiWpsStatusCallback(wps_cb_status status)
   if (WPS_CB_ST_SUCCESS == wps_result) {
     wifi_wps_disable();
   } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_WPS_FAILED_WITH_STATUS " %d"), wps_result);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WPS_FAILED_WITH_STATUS " %d"), wps_result);
     wifi_config_counter = 2;
   }
 }
 
-boolean WifiWpsConfigDone(void)
+bool WifiWpsConfigDone(void)
 {
   return (!wps_result);
 }
 
-boolean WifiWpsConfigBegin(void)
+bool WifiWpsConfigBegin(void)
 {
   wps_result = 99;
   if (!wifi_wps_disable()) { return false; }
@@ -155,9 +173,9 @@ void WifiConfig(uint8_t type)
     }
 #endif  // USE_WPS
 #ifdef USE_WEBSERVER
-    else if (WIFI_MANAGER == wifi_config_type) {
+    else if (WIFI_MANAGER == wifi_config_type || WIFI_MANAGER_RESET_ONLY == wifi_config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES));
-      WifiManagerBegin();
+      WifiManagerBegin(WIFI_MANAGER_RESET_ONLY == wifi_config_type);
     }
 #endif  // USE_WEBSERVER
   }
@@ -206,7 +224,8 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   delay(200);
   WiFi.mode(WIFI_STA);      // Disable AP mode
   WiFiSetSleepMode();
-//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }
+//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
+//  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
   if (!WiFi.getAutoConnect()) { WiFi.setAutoConnect(true); }
 //  WiFi.setAutoReconnect(true);
   switch (flag) {
@@ -227,9 +246,8 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   } else {
     WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active]);
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
     Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
-  AddLog(LOG_LEVEL_INFO);
 }
 
 void WifiBeginAfterScan()
@@ -304,9 +322,8 @@ void WifiBeginAfterScan()
             break;
           }
         }
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI "Network %d, AP%c, SSId %s, Channel %d, BSSId %02X:%02X:%02X:%02X:%02X:%02X, RSSI %d, Encryption %d"),
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network %d, AP%c, SSId %s, Channel %d, BSSId %02X:%02X:%02X:%02X:%02X:%02X, RSSI %d, Encryption %d"),
           i, (known) ? (j) ? '2' : '1' : '-', ssid_scan.c_str(), chan_scan, bssid_scan[0], bssid_scan[1], bssid_scan[2], bssid_scan[3], bssid_scan[4], bssid_scan[5], rssi_scan, (sec_scan == ENC_TYPE_NONE) ? 0 : 1);
-        AddLog(LOG_LEVEL_DEBUG);
         delay(0);
       }
       WiFi.scanDelete();                            // Clean up Ram
@@ -323,13 +340,26 @@ void WifiBeginAfterScan()
   }
 }
 
+uint16_t WifiLinkCount()
+{
+  return wifi_link_count;
+}
+
+String WifiDowntime()
+{
+  return GetDuration(wifi_downtime);
+}
+
 void WifiSetState(uint8_t state)
 {
   if (state == global_state.wifi_down) {
     if (state) {
       rules_flag.wifi_connected = 1;
+      wifi_link_count++;
+      wifi_downtime += UpTime() - wifi_last_event;
     } else {
       rules_flag.wifi_disconnected = 1;
+      wifi_last_event = UpTime();
     }
   }
   global_state.wifi_down = state ^1;
@@ -349,6 +379,14 @@ void WifiCheckIp(void)
       Settings.ip_address[3] = (uint32_t)WiFi.dnsIP();
     }
     wifi_status = WL_CONNECTED;
+#ifdef USE_DISCOVERY
+#ifdef WEBSERVER_ADVERTISE
+    if (2 == mdns_begun) {
+      MDNS.update();
+      AddLog_P(LOG_LEVEL_DEBUG_MORE, D_LOG_MDNS, "MDNS.update");
+    }
+#endif  // USE_DISCOVERY
+#endif  // WEBSERVER_ADVERTISE
   } else {
     WifiSetState(0);
     uint8_t wifi_config_tool = Settings.sta_config;
@@ -449,8 +487,7 @@ void WifiCheck(uint8_t param)
             strlcpy(Settings.sta_pwd[0], WiFi.psk().c_str(), sizeof(Settings.sta_pwd[0]));
           }
           Settings.sta_active = 0;
-          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_WCFG_1_SMARTCONFIG D_CMND_SSID "1 %s"), Settings.sta_ssid[0]);
-          AddLog(LOG_LEVEL_INFO);
+          AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_1_SMARTCONFIG D_CMND_SSID "1 %s"), Settings.sta_ssid[0]);
         }
       }
       if (!wifi_config_counter) {
@@ -477,23 +514,24 @@ void WifiCheck(uint8_t param)
           }
         }
 
-#ifdef BE_MINIMAL
+#ifdef FIRMWARE_MINIMAL
         if (1 == RtcSettings.ota_loader) {
           RtcSettings.ota_loader = 0;
           ota_state_flag = 3;
         }
-#endif  // BE_MINIMAL
+#endif  // FIRMWARE_MINIMAL
 
 #ifdef USE_DISCOVERY
-        if (!mdns_begun) {
-          if (mdns_delayed_start) {
-            AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_ATTEMPTING_CONNECTION));
-            mdns_delayed_start--;
-          } else {
-            mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
-            mdns_begun = MDNS.begin(my_hostname);
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS "%s"), (mdns_begun) ? D_INITIALIZED : D_FAILED);
-            AddLog(LOG_LEVEL_INFO);
+        if (Settings.flag3.mdns_enabled) {
+          if (!mdns_begun) {
+//            if (mdns_delayed_start) {
+//              AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_ATTEMPTING_CONNECTION));
+//              mdns_delayed_start--;
+//            } else {
+//              mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
+              mdns_begun = (uint8_t)MDNS.begin(my_hostname);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (mdns_begun) ? D_INITIALIZED : D_FAILED);
+//            }
           }
         }
 #endif  // USE_DISCOVERY
@@ -503,7 +541,8 @@ void WifiCheck(uint8_t param)
           StartWebserver(Settings.webserver, WiFi.localIP());
 #ifdef USE_DISCOVERY
 #ifdef WEBSERVER_ADVERTISE
-          if (mdns_begun) {
+          if (1 == mdns_begun) {
+            mdns_begun = 2;
             MDNS.addService("http", "tcp", WEB_PORT);
           }
 #endif  // WEBSERVER_ADVERTISE
@@ -528,7 +567,7 @@ void WifiCheck(uint8_t param)
 #if defined(USE_WEBSERVER) && defined(USE_EMULATION)
         UdpDisconnect();
 #endif  // USE_EMULATION
-        mdns_begun = false;
+        mdns_begun = 0;
 #ifdef USE_KNX
         knx_started = false;
 #endif  // USE_KNX

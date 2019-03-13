@@ -1,7 +1,7 @@
 /*
   xnrg_04_mcp39f501.ino - MCP39F501 energy sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 
 #define XNRG_04                 4
 
+#define MCP_BAUDRATE            4800
 #define MCP_TIMEOUT             4
 #define MCP_CALIBRATION_TIMEOUT 2
 
@@ -63,6 +64,11 @@
 #define MCP_FREQUENCY_GAIN_BASE 0x00AE
 #define MCP_FREQUENCY_LEN       4
 
+#define MCP_BUFFER_SIZE         60
+
+#include <TasmotaSerial.h>
+TasmotaSerial *McpSerial = NULL;
+
 typedef struct mcp_cal_registers_type {
   uint16_t gain_current_rms;
   uint16_t gain_voltage_rms;
@@ -86,6 +92,8 @@ typedef struct mcp_cal_registers_type {
   uint16_t accumulation_interval;
 } mcp_cal_registers_type;
 
+char *mcp_buffer = NULL;
+unsigned long mcp_window = 0;
 unsigned long mcp_kWhcounter = 0;
 uint32_t mcp_system_configuration = 0x03000000;
 uint32_t mcp_active_power;
@@ -100,6 +108,7 @@ uint8_t mcp_calibration_active = 0;
 uint8_t mcp_init = 0;
 uint8_t mcp_timeout = 0;
 uint8_t mcp_calibrate = 0;
+uint8_t mcp_byte_counter = 0;
 
 /*********************************************************************************************\
  * Olimex tools
@@ -112,7 +121,7 @@ uint8_t McpChecksum(uint8_t *data)
   uint8_t offset = 0;
   uint8_t len = data[1] -1;
 
-  for (byte i = offset; i < len; i++) { checksum += data[i];	}
+  for (uint8_t i = offset; i < len; i++) { checksum += data[i];	}
   return checksum;
 }
 
@@ -121,7 +130,7 @@ unsigned long McpExtractInt(char *data, uint8_t offset, uint8_t size)
 	unsigned long result = 0;
 	unsigned long pow = 1;
 
-	for (byte i = 0; i < size; i++) {
+	for (uint8_t i = 0; i < size; i++) {
 		result = result + (uint8_t)data[offset + i] * pow;
 		pow = pow * 256;
 	}
@@ -130,7 +139,7 @@ unsigned long McpExtractInt(char *data, uint8_t offset, uint8_t size)
 
 void McpSetInt(unsigned long value, uint8_t *data, uint8_t offset, size_t size)
 {
-	for (byte i = 0; i < size; i++) {
+	for (uint8_t i = 0; i < size; i++) {
 		data[offset + i] = ((value >> (i * 8)) & 0xFF);
 	}
 }
@@ -143,10 +152,10 @@ void McpSend(uint8_t *data)
   data[0] = MCP_START_FRAME;
   data[data[1] -1] = McpChecksum(data);
 
-//  AddLogSerial(LOG_LEVEL_DEBUG_MORE, data, data[1]);
+//  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, data, data[1]);
 
-  for (byte i = 0; i < data[1]; i++) {
-    Serial.write(data[i]);
+  for (uint8_t i = 0; i < data[1]; i++) {
+    McpSerial->write(data[i]);
   }
 }
 
@@ -162,7 +171,7 @@ void McpGetAddress(void)
 void McpAddressReceive(void)
 {
   // 06 05 004D 58
-  mcp_address = serial_in_buffer[3];
+  mcp_address = mcp_buffer[3];
 }
 
 /********************************************************************************************/
@@ -183,26 +192,26 @@ void McpParseCalibration(void)
   mcp_cal_registers_type cal_registers;
 
   // 06 37 C882 B6AD 0781 9273 06000000 00000000 00000000 0000 D3FF 0300 00000003 9204 120C1300 204E0000 9808 E0AB0000 D9940000 0200 24
-  cal_registers.gain_current_rms           = McpExtractInt(serial_in_buffer,  2, 2);
-  cal_registers.gain_voltage_rms           = McpExtractInt(serial_in_buffer,  4, 2);
-  cal_registers.gain_active_power          = McpExtractInt(serial_in_buffer,  6, 2);
-  cal_registers.gain_reactive_power        = McpExtractInt(serial_in_buffer,  8, 2);
-  cal_registers.offset_current_rms         = McpExtractInt(serial_in_buffer, 10, 4);
-  cal_registers.offset_active_power        = McpExtractInt(serial_in_buffer, 14, 4);
-  cal_registers.offset_reactive_power      = McpExtractInt(serial_in_buffer, 18, 4);
-  cal_registers.dc_offset_current          = McpExtractInt(serial_in_buffer, 22, 2);
-  cal_registers.phase_compensation         = McpExtractInt(serial_in_buffer, 24, 2);
-  cal_registers.apparent_power_divisor     = McpExtractInt(serial_in_buffer, 26, 2);
+  cal_registers.gain_current_rms           = McpExtractInt(mcp_buffer,  2, 2);
+  cal_registers.gain_voltage_rms           = McpExtractInt(mcp_buffer,  4, 2);
+  cal_registers.gain_active_power          = McpExtractInt(mcp_buffer,  6, 2);
+  cal_registers.gain_reactive_power        = McpExtractInt(mcp_buffer,  8, 2);
+  cal_registers.offset_current_rms         = McpExtractInt(mcp_buffer, 10, 4);
+  cal_registers.offset_active_power        = McpExtractInt(mcp_buffer, 14, 4);
+  cal_registers.offset_reactive_power      = McpExtractInt(mcp_buffer, 18, 4);
+  cal_registers.dc_offset_current          = McpExtractInt(mcp_buffer, 22, 2);
+  cal_registers.phase_compensation         = McpExtractInt(mcp_buffer, 24, 2);
+  cal_registers.apparent_power_divisor     = McpExtractInt(mcp_buffer, 26, 2);
 
-  cal_registers.system_configuration       = McpExtractInt(serial_in_buffer, 28, 4);
-  cal_registers.dio_configuration          = McpExtractInt(serial_in_buffer, 32, 2);
-  cal_registers.range                      = McpExtractInt(serial_in_buffer, 34, 4);
+  cal_registers.system_configuration       = McpExtractInt(mcp_buffer, 28, 4);
+  cal_registers.dio_configuration          = McpExtractInt(mcp_buffer, 32, 2);
+  cal_registers.range                      = McpExtractInt(mcp_buffer, 34, 4);
 
-  cal_registers.calibration_current        = McpExtractInt(serial_in_buffer, 38, 4);
-  cal_registers.calibration_voltage        = McpExtractInt(serial_in_buffer, 42, 2);
-  cal_registers.calibration_active_power   = McpExtractInt(serial_in_buffer, 44, 4);
-  cal_registers.calibration_reactive_power = McpExtractInt(serial_in_buffer, 48, 4);
-  cal_registers.accumulation_interval      = McpExtractInt(serial_in_buffer, 52, 2);
+  cal_registers.calibration_current        = McpExtractInt(mcp_buffer, 38, 4);
+  cal_registers.calibration_voltage        = McpExtractInt(mcp_buffer, 42, 2);
+  cal_registers.calibration_active_power   = McpExtractInt(mcp_buffer, 44, 4);
+  cal_registers.calibration_reactive_power = McpExtractInt(mcp_buffer, 48, 4);
+  cal_registers.accumulation_interval      = McpExtractInt(mcp_buffer, 52, 2);
 
   if (mcp_calibrate & MCP_CALIBRATE_POWER) {
     cal_registers.calibration_active_power = Settings.energy_power_calibration;
@@ -373,8 +382,8 @@ void McpGetFrequency(void)
 void McpParseFrequency(void)
 {
   // 06 07 C350 8000 A0
-  uint16_t line_frequency_ref  = serial_in_buffer[2] * 256 + serial_in_buffer[3];
-  uint16_t gain_line_frequency = serial_in_buffer[4] * 256 + serial_in_buffer[5];
+  uint16_t line_frequency_ref  = mcp_buffer[2] * 256 + mcp_buffer[3];
+  uint16_t gain_line_frequency = mcp_buffer[4] * 256 + mcp_buffer[5];
 
   if (mcp_calibrate & MCP_CALIBRATE_FREQUENCY) {
     line_frequency_ref = Settings.energy_frequency_calibration;
@@ -438,12 +447,12 @@ void McpParseData(void)
   // 06 19 CE 18 00 00 F2 08 3A 38 00 00 66 00 00 00 93 38 00 00 36 7F 9A C6 B7
   // Ak Ln Current---- Volt- ActivePower ReActivePow ApparentPow Factr Frequ Ck
 
-  mcp_current_rms    = McpExtractInt(serial_in_buffer,  2, 4);
-  mcp_voltage_rms    = McpExtractInt(serial_in_buffer,  6, 2);
-  mcp_active_power   = McpExtractInt(serial_in_buffer,  8, 4);
-//  mcp_reactive_power = McpExtractInt(serial_in_buffer, 12, 4);
-//  mcp_power_factor   = McpExtractInt(serial_in_buffer, 20, 2);
-  mcp_line_frequency = McpExtractInt(serial_in_buffer, 22, 2);
+  mcp_current_rms    = McpExtractInt(mcp_buffer,  2, 4);
+  mcp_voltage_rms    = McpExtractInt(mcp_buffer,  6, 2);
+  mcp_active_power   = McpExtractInt(mcp_buffer,  8, 4);
+//  mcp_reactive_power = McpExtractInt(mcp_buffer, 12, 4);
+//  mcp_power_factor   = McpExtractInt(mcp_buffer, 20, 2);
+  mcp_line_frequency = McpExtractInt(mcp_buffer, 22, 2);
 
   if (energy_power_on) {  // Powered on
     energy_frequency = (float)mcp_line_frequency / 1000;
@@ -464,49 +473,53 @@ void McpParseData(void)
 
 /********************************************************************************************/
 
-bool McpSerialInput(void)
+void McpSerialInput(void)
 {
-  serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-  unsigned long start = millis();
-  while (millis() - start < 20) {
+  while ((McpSerial->available()) && (mcp_byte_counter < MCP_BUFFER_SIZE)) {
     yield();
-    if (Serial.available()) {
-      serial_in_buffer[serial_in_byte_counter++] = Serial.read();
-      start = millis();
-    }
+    mcp_buffer[mcp_byte_counter++] = McpSerial->read();
+    mcp_window = millis();
   }
 
-  AddLogSerial(LOG_LEVEL_DEBUG_MORE);
+  // Ignore until non received after 2 chars (= 12 bits/char) time
+  if ((mcp_byte_counter) && (millis() - mcp_window > (24000 / MCP_BAUDRATE) +1)) {
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)mcp_buffer, mcp_byte_counter);
 
-  if (1 == serial_in_byte_counter) {
-    if (MCP_ERROR_CRC == serial_in_buffer[0]) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: Send " D_CHECKSUM_FAILURE));
-      mcp_timeout = 0;
+    if (MCP_BUFFER_SIZE == mcp_byte_counter) {
+//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: Overflow"));
     }
-    else if (MCP_ERROR_NAK == serial_in_buffer[0]) {
-//      AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: NAck"));
-      mcp_timeout = 0;
-    }
-  }
-  else if (MCP_ACK_FRAME == serial_in_buffer[0]) {
-    if (serial_in_byte_counter == serial_in_buffer[1]) {
-
-      if (McpChecksum((uint8_t *)serial_in_buffer) != serial_in_buffer[serial_in_byte_counter -1]) {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: " D_CHECKSUM_FAILURE));
-      } else {
-        if (5 == serial_in_buffer[1]) { McpAddressReceive(); }
-        if (25 == serial_in_buffer[1]) { McpParseData(); }
-        if (MCP_CALIBRATION_LEN + 3 == serial_in_buffer[1]) { McpParseCalibration(); }
-        if (MCP_FREQUENCY_LEN + 3 == serial_in_buffer[1]) { McpParseFrequency(); }
+    else if (1 == mcp_byte_counter) {
+      if (MCP_ERROR_CRC == mcp_buffer[0]) {
+//        AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: Send " D_CHECKSUM_FAILURE));
+        mcp_timeout = 0;
       }
-
+      else if (MCP_ERROR_NAK == mcp_buffer[0]) {
+//        AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: NAck"));
+        mcp_timeout = 0;
+      }
     }
-    mcp_timeout = 0;
+    else if (MCP_ACK_FRAME == mcp_buffer[0]) {
+      if (mcp_byte_counter == mcp_buffer[1]) {
+
+        if (McpChecksum((uint8_t *)mcp_buffer) != mcp_buffer[mcp_byte_counter -1]) {
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("MCP: " D_CHECKSUM_FAILURE));
+        } else {
+          if (5 == mcp_buffer[1]) { McpAddressReceive(); }
+          if (25 == mcp_buffer[1]) { McpParseData(); }
+          if (MCP_CALIBRATION_LEN + 3 == mcp_buffer[1]) { McpParseCalibration(); }
+          if (MCP_FREQUENCY_LEN + 3 == mcp_buffer[1]) { McpParseFrequency(); }
+        }
+
+      }
+      mcp_timeout = 0;
+    }
+    else if (MCP_SINGLE_WIRE == mcp_buffer[0]) {
+      mcp_timeout = 0;
+    }
+
+    mcp_byte_counter = 0;
+    McpSerial->flush();
   }
-  else if (MCP_SINGLE_WIRE == serial_in_buffer[0]) {
-    mcp_timeout = 0;
-  }
-  return 1;
 }
 
 /********************************************************************************************/
@@ -543,17 +556,31 @@ void McpEverySecond(void)
 
 void McpSnsInit(void)
 {
-  SetSeriallog(LOG_LEVEL_NONE);      // Free serial interface from logging interference
-  digitalWrite(15, 1);               // GPIO15 - MCP enable
+  // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
+  McpSerial = new TasmotaSerial(pin[GPIO_MCP39F5_RX], pin[GPIO_MCP39F5_TX], 1);
+  if (McpSerial->begin(MCP_BAUDRATE)) {
+    if (McpSerial->hardwareSerial()) {
+      ClaimSerial();
+      mcp_buffer = serial_in_buffer;  // Use idle serial buffer to save RAM
+    } else {
+      mcp_buffer = (char*)(malloc(MCP_BUFFER_SIZE));
+    }
+    if (pin[GPIO_MCP39F5_RST] < 99) {
+      digitalWrite(pin[GPIO_MCP39F5_RST], 1);  // MCP enable
+    }
+  } else {
+    energy_flg = ENERGY_NONE;
+  }
 }
 
 void McpDrvInit(void)
 {
   if (!energy_flg) {
-    if (SHELLY2 == Settings.module) {
-      pinMode(15, OUTPUT);
-      digitalWrite(15, 0);           // GPIO15 - MCP disable - Reset Delta Sigma ADC's
-      baudrate = 4800;
+    if ((pin[GPIO_MCP39F5_RX] < 99) && (pin[GPIO_MCP39F5_TX] < 99)) {
+      if (pin[GPIO_MCP39F5_RST] < 99) {
+        pinMode(pin[GPIO_MCP39F5_RST], OUTPUT);
+        digitalWrite(pin[GPIO_MCP39F5_RST], 0);  // MCP disable - Reset Delta Sigma ADC's
+      }
       mcp_calibrate = 0;
       mcp_timeout = 2;               // Initial wait
       mcp_init = 2;                  // Initial setup steps
@@ -562,9 +589,9 @@ void McpDrvInit(void)
   }
 }
 
-boolean McpCommand(void)
+bool McpCommand(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
   unsigned long value = 0;
 
   if (CMND_POWERSET == energy_command_code) {
@@ -616,7 +643,7 @@ boolean McpCommand(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg04(byte function)
+int Xnrg04(uint8_t function)
 {
   int result = 0;
 
@@ -628,14 +655,14 @@ int Xnrg04(byte function)
       case FUNC_INIT:
         McpSnsInit();
         break;
+      case FUNC_LOOP:
+        if (McpSerial) { McpSerialInput(); }
+        break;
       case FUNC_EVERY_SECOND:
-        McpEverySecond();
+        if (McpSerial) { McpEverySecond(); }
         break;
       case FUNC_COMMAND:
         result = McpCommand();
-        break;
-      case FUNC_SERIAL:
-        result = McpSerialInput();
         break;
     }
   }

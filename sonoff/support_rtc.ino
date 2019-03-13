@@ -1,7 +1,7 @@
 /*
   support_rtc.ino - Real Time Clock support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ uint32_t local_time = 0;
 uint32_t daylight_saving_time = 0;
 uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
-uint32_t midnight = 1451602800;
+uint32_t midnight = 0;
 uint32_t restart_time = 0;
 int32_t  time_timezone = 0;
 uint8_t  midnight_now = 0;
@@ -60,7 +60,7 @@ String GetBuildDateAndTime(void)
   int year = 0;
 
   // sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too much code
-  byte i = 0;
+  uint8_t i = 0;
   for (char *str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
     switch (i++) {
     case 0:  // Month
@@ -85,6 +85,23 @@ String GetTimeZone(void)
   snprintf_P(tz, sizeof(tz), PSTR("%+03d:%02d"), time_timezone / 60, abs(time_timezone % 60));
 
   return String(tz);  // -03:45
+}
+
+String GetDuration(uint32_t time)
+{
+  char dt[16];
+
+  TIME_T ut;
+  BreakTime(time, ut);
+
+  // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
+//  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
+
+  // "128 14:35:44" - OpenVMS
+  // "128T14:35:44" - Tasmota
+  snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"), ut.days, ut.hour, ut.minute, ut.second);
+
+  return String(dt);  // 128T14:35:44
 }
 
 String GetDT(uint32_t time)
@@ -112,7 +129,7 @@ String GetDT(uint32_t time)
  *  "2017-03-07T11:08:02-07:00" - if DT_LOCAL and SetOption52 = 1
  *  "2017-03-07T11:08:02"       - otherwise
  */
-String GetDateAndTime(byte time_type)
+String GetDateAndTime(uint8_t time_type)
 {
   // "2017-03-07T11:08:02-07:00" - ISO8601:2004
   uint32_t time = local_time;
@@ -155,42 +172,26 @@ String GetTime(int type)
   return String(stime);  // Thu Nov 01 11:41:02 2018
 }
 
+uint32_t UpTime(void)
+{
+  if (restart_time) {
+    return utc_time - restart_time;
+  } else {
+    return uptime;
+  }
+}
+
+uint32_t MinutesUptime(void)
+{
+  return (UpTime() / 60);
+}
+
 String GetUptime(void)
 {
-  char dt[16];
-
-  TIME_T ut;
-
-  if (restart_time) {
-    BreakTime(utc_time - restart_time, ut);
-  } else {
-    BreakTime(uptime, ut);
-  }
-
-  // "P128DT14H35M44S" - ISO8601:2004 - https://en.wikipedia.org/wiki/ISO_8601 Durations
-//  snprintf_P(dt, sizeof(dt), PSTR("P%dDT%02dH%02dM%02dS"), ut.days, ut.hour, ut.minute, ut.second);
-
-  // "128 14:35:44" - OpenVMS
-  // "128T14:35:44" - Tasmota
-  snprintf_P(dt, sizeof(dt), PSTR("%dT%02d:%02d:%02d"), ut.days, ut.hour, ut.minute, ut.second);
-
-  return String(dt);  // 128T14:35:44
+  return GetDuration(UpTime());
 }
 
-uint32_t GetMinutesUptime(void)
-{
-  TIME_T ut;
-
-  if (restart_time) {
-    BreakTime(utc_time - restart_time, ut);
-  } else {
-    BreakTime(uptime, ut);
-  }
-
-  return (ut.days *1440) + (ut.hour *60) + ut.minute;
-}
-
-uint32_t GetMinutesPastMidnight(void)
+uint32_t MinutesPastMidnight(void)
 {
   uint32_t minutes = 0;
 
@@ -322,6 +323,11 @@ uint32_t RuleToTime(TimeRule r, int yr)
   return t;
 }
 
+uint32_t UtcTime(void)
+{
+  return utc_time;
+}
+
 uint32_t LocalTime(void)
 {
   return local_time;
@@ -332,9 +338,9 @@ uint32_t Midnight(void)
   return midnight;
 }
 
-boolean MidnightNow(void)
+bool MidnightNow(void)
 {
-  boolean mnflg = midnight_now;
+  bool mnflg = midnight_now;
   if (mnflg) midnight_now = 0;
   return mnflg;
 }
@@ -348,7 +354,7 @@ void RtcSecond(void)
   if (!global_state.wifi_down && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute) || ntp_force_sync)) {
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
-      ntp_force_sync = 0;
+      ntp_force_sync = false;
       utc_time = ntp_time;
       ntp_sync_minute = 60;  // Sync so block further requests
       if (restart_time == 0) {
@@ -358,9 +364,7 @@ void RtcSecond(void)
       RtcTime.year = tmpTime.year + 1970;
       daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
       standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-        GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       if (local_time < 1451602800) {  // 2016-01-01
         rules_flag.time_init = 1;
       } else {
@@ -400,10 +404,17 @@ void RtcSecond(void)
     if (!Settings.energy_kWhtotal_time) { Settings.energy_kWhtotal_time = local_time; }
   }
   BreakTime(local_time, RtcTime);
-  if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second && RtcTime.valid) {
-    midnight = local_time;
-    midnight_now = 1;
+
+  if (RtcTime.valid) {
+    if (!midnight) {
+      midnight = local_time - (RtcTime.hour * 3600) - (RtcTime.minute * 60) - RtcTime.second;
+    }
+    if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) {
+      midnight = local_time;
+      midnight_now = 1;
+    }
   }
+
   RtcTime.year += 1970;
 }
 

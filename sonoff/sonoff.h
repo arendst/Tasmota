@@ -1,7 +1,7 @@
 /*
   sonoff.h - Master header file for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -51,6 +51,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 // Changes to the following MAX_ defines will impact settings layout
 #define MAX_SWITCHES           8            // Max number of switches
 #define MAX_RELAYS             8            // Max number of relays
+#define MAX_INTERLOCKS         4            // Max number of interlock groups (MAX_RELAYS / 2)
 #define MAX_LEDS               4            // Max number of leds
 #define MAX_KEYS               4            // Max number of keys or buttons
 #define MAX_PWMS               5            // Max number of PWM channels
@@ -103,6 +104,7 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define PWM_MIN                100          // [PWM_MIN] Minimum frequency - Default: 100
                                             //    For Dimmers use double of your mains AC frequecy (100 for 50Hz and 120 for 60Hz)
                                             //    For Controlling Servos use 50 and also set PWM_FREQ as 50 (DO NOT USE THESE VALUES FOR DIMMERS)
+//#define PWM_LIGHTSCHEME0_IGNORE_SLEEP       // Do not change sleep value for LightAnimate() scheme 0
 
 #define DEFAULT_POWER_DELTA    80           // Power change percentage
 #define MAX_POWER_HOLD         10           // Time in SECONDS to allow max agreed power
@@ -167,6 +169,15 @@ typedef unsigned long power_t;              // Power (Relay) type
 #define NEO_RGBW               5            // Neopixel RGBW leds
 #define NEO_GRBW               6            // Neopixel GRBW leds
 
+#define LT_SM16716             16           // Lights that use SM16716 will have this bit set in light_type
+
+#define RGB_REMAP_RGBW         0
+#define RGB_REMAP_RBGW         6
+#define RGB_REMAP_GRBW         24
+#define RGB_REMAP_GBRW         30
+#define RGB_REMAP_BRGW         48
+#define RGB_REMAP_BGRW         54
+
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino - soon obsolete
 #define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf - obsolete but define is present for debugging purposes
@@ -208,7 +219,7 @@ enum GetDateAndTimeOptions { DT_LOCAL, DT_UTC, DT_RESTART, DT_ENERGY };
 
 enum LoggingLevels {LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE, LOG_LEVEL_ALL};
 
-enum WifiConfigOptions {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, WIFI_SERIAL, MAX_WIFI_OPTION};
+enum WifiConfigOptions {WIFI_RESTART, WIFI_SMARTCONFIG, WIFI_MANAGER, WIFI_WPSCONFIG, WIFI_RETRY, WIFI_WAIT, WIFI_SERIAL, WIFI_MANAGER_RESET_ONLY, MAX_WIFI_OPTION};
 
 enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, MAX_SWITCH_OPTION};
 
@@ -226,7 +237,7 @@ enum ButtonStates { PRESSED, NOT_PRESSED };
 
 enum Shortcuts { SC_CLEAR, SC_DEFAULT, SC_USER };
 
-enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_TUYA_DIMMER_ID, P_MDNS_DELAYED_START, P_MAX_PARAM8};  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
+enum SettingsParmaIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_TUYA_DIMMER_ID, P_MDNS_DELAYED_START, P_BOOT_LOOP_OFFSET, P_RGB_REMAP, P_MAX_PARAM8};  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
 
 enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_AIRQUALITY, DZ_MAX_SENSORS};
 
@@ -241,7 +252,7 @@ enum LightSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MA
 
 enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_MODULE_INIT, FUNC_PRE_INIT, FUNC_INIT,
                     FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND,
-                    FUNC_PREP_BEFORE_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART, FUNC_COMMAND,
+                    FUNC_PREP_BEFORE_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_APPEND, FUNC_SAVE_BEFORE_RESTART, FUNC_COMMAND, FUNC_COMMAND_SENSOR, FUNC_COMMAND_DRIVER,
                     FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA,
                     FUNC_SET_POWER, FUNC_SET_DEVICE_POWER, FUNC_SHOW_SENSOR,
                     FUNC_RULES_PROCESS, FUNC_SERIAL, FUNC_FREE_MEM, FUNC_BUTTON_PRESSED,
@@ -260,5 +271,7 @@ const uint8_t kIFan02Speed[MAX_FAN_SPEED][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,
 \*********************************************************************************************/
 
 extern uint8_t light_device;  // Light device number
+extern uint8_t light_power;  // Light power
+extern uint8_t rotary_changed; // Rotary switch changed
 
 #endif  // _SONOFF_H_

@@ -1,7 +1,7 @@
 /*
   xdrv_15_pca9685.ino - Support for I2C PCA9685 12bit 16 pin hardware PWM driver
 
-  Copyright (C) 2018  Andre Thomas and Theo Arends
+  Copyright (C) 2019  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -45,8 +45,7 @@ void PCA9685_Detect(void)
     if (I2cValidRead8(&buffer, USE_PCA9685_ADDR, PCA9685_REG_MODE1)) {
       if (0x20 == buffer) {
         pca9685_detected = 1;
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "PCA9685", USE_PCA9685_ADDR);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "PCA9685", USE_PCA9685_ADDR);
         PCA9685_Reset(); // Reset the controller
       }
     }
@@ -101,10 +100,10 @@ void PCA9685_SetPWM(uint8_t pin, uint16_t pwm, bool inverted) {
   pca9685_pin_pwm_value[pin] = pwm;
 }
 
-bool PCA9685_Command(void) 
+bool PCA9685_Command(void)
 {
-  boolean serviced = true;
-  boolean validpin = false;
+  bool serviced = true;
+  bool validpin = false;
   uint8_t paramcount = 0;
   if (XdrvMailbox.data_len > 0) {
     paramcount=1;
@@ -178,9 +177,9 @@ void PCA9685_OutputTelemetry(bool telemetry) {
   }
 }
 
-boolean Xdrv15(byte function)
+bool Xdrv15(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

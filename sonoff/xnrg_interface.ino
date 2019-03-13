@@ -1,7 +1,7 @@
 /*
   xnrg_interface.ino - Energy driver interface support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends inspired by ESPEasy
+  Copyright (C) 2019  Theo Arends inspired by ESPEasy
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,10 +17,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_ENERGY_SENSOR
+
 #ifdef XFUNC_PTR_IN_ROM
-int (* const xnrg_func_ptr[])(byte) PROGMEM = {   // Energy driver Function Pointers
+int (* const xnrg_func_ptr[])(uint8_t) PROGMEM = {   // Energy driver Function Pointers
 #else
-int (* const xnrg_func_ptr[])(byte) = {   // Energy driver Function Pointers
+int (* const xnrg_func_ptr[])(uint8_t) = {   // Energy driver Function Pointers
 #endif
 
 #ifdef XNRG_01
@@ -90,13 +92,20 @@ int (* const xnrg_func_ptr[])(byte) = {   // Energy driver Function Pointers
 
 const uint8_t xnrg_present = sizeof(xnrg_func_ptr) / sizeof(xnrg_func_ptr[0]);  // Number of drivers found
 
-int XnrgCall(byte Function)
+int XnrgCall(uint8_t Function)
 {
   int result = 0;
 
-  for (byte x = 0; x < xnrg_present; x++) {
+  for (uint8_t x = 0; x < xnrg_present; x++) {
     result = xnrg_func_ptr[x](Function);
-    if (result) break;
+
+    if (result && ((FUNC_SERIAL == Function) ||
+                   (FUNC_COMMAND == Function)
+                  )) {
+      break;
+    }
   }
   return result;
 }
+
+#endif  // USE_ENERGY_SENSOR

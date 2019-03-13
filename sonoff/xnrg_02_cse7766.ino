@@ -1,7 +1,7 @@
 /*
   xnrg_02_cse7766.ino - CSE7766 energy sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ uint8_t cse_receive_flag = 0;
 long voltage_cycle = 0;
 long current_cycle = 0;
 long power_cycle = 0;
-unsigned long power_cycle_first = 0;
+long power_cycle_first = 0;
 long cf_pulses = 0;
 long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 uint8_t cse_power_invalid = CSE_MAX_INVALID_POWER;
@@ -137,7 +137,7 @@ bool CseSerialInput(void)
       AddLogSerial(LOG_LEVEL_DEBUG_MORE);
 
       uint8_t checksum = 0;
-      for (byte i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
+      for (uint8_t i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
       if (checksum == serial_in_buffer[23]) {
         CseReceived();
         cse_receive_flag = 0;
@@ -191,7 +191,7 @@ void CseEverySecond(void)
 void CseDrvInit(void)
 {
   if (!energy_flg) {
-    if ((SONOFF_S31 == Settings.module) || (SONOFF_POW_R2 == Settings.module)) {     // Sonoff S31 or Sonoff Pow R2
+    if ((3 == pin[GPIO_CSE7766_RX]) && (1 == pin[GPIO_CSE7766_TX])) {  // As it uses 8E1 currently only hardware serial is supported
       baudrate = 4800;
       serial_config = SERIAL_8E1;
       energy_flg = XNRG_02;
@@ -199,23 +199,23 @@ void CseDrvInit(void)
   }
 }
 
-boolean CseCommand(void)
+bool CseCommand(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   if (CMND_POWERSET == energy_command_code) {
     if (XdrvMailbox.data_len && power_cycle) {
-      Settings.energy_power_calibration = ((unsigned long)CharToDouble(XdrvMailbox.data) * power_cycle) / CSE_PREF;
+      Settings.energy_power_calibration = (unsigned long)(CharToDouble(XdrvMailbox.data) * power_cycle) / CSE_PREF;
     }
   }
   else if (CMND_VOLTAGESET == energy_command_code) {
     if (XdrvMailbox.data_len && voltage_cycle) {
-      Settings.energy_voltage_calibration = ((unsigned long)CharToDouble(XdrvMailbox.data) * voltage_cycle) / CSE_UREF;
+      Settings.energy_voltage_calibration = (unsigned long)(CharToDouble(XdrvMailbox.data) * voltage_cycle) / CSE_UREF;
     }
   }
   else if (CMND_CURRENTSET == energy_command_code) {
     if (XdrvMailbox.data_len && current_cycle) {
-      Settings.energy_current_calibration = ((unsigned long)CharToDouble(XdrvMailbox.data) * current_cycle) / 1000;
+      Settings.energy_current_calibration = (unsigned long)(CharToDouble(XdrvMailbox.data) * current_cycle) / 1000;
     }
   }
   else serviced = false;  // Unknown command
@@ -227,7 +227,7 @@ boolean CseCommand(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg02(byte function)
+int Xnrg02(uint8_t function)
 {
   int result = 0;
 

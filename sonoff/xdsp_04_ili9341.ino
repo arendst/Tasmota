@@ -1,7 +1,7 @@
 /*
   xdsp_04_ili9341.ino - Display Tft Ili9341 support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends and Adafruit
+  Copyright (C) 2019  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -148,7 +148,7 @@ void Ili9341PrintLog(void)
 
     char* txt = DisplayLogBuffer('\370');
     if (txt != NULL) {
-      byte size = Settings.display_size;
+      uint8_t size = Settings.display_size;
       uint16_t theight = size * TFT_FONT_HEIGTH;
 
       tft->setTextSize(size);
@@ -167,7 +167,7 @@ void Ili9341PrintLog(void)
 
         tft_scroll = theight;  // Start below header
         tft->setCursor(0, tft_scroll);
-        for (byte i = 0; i < last_row; i++) {
+        for (uint8_t i = 0; i < last_row; i++) {
           strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
 //          tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);  // Erase line
           tft->print(disp_screen_buffer[i]);
@@ -178,8 +178,7 @@ void Ili9341PrintLog(void)
         DisplayFillScreen(last_row);
         tft->print(disp_screen_buffer[last_row]);
       }
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "[%s]"), txt);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), txt);
     }
   }
 }
@@ -222,9 +221,9 @@ void Ili9341Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-boolean Xdsp04(byte function)
+bool Xdsp04(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (spi_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {

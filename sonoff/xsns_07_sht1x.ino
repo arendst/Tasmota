@@ -1,7 +1,7 @@
 /*
   xsns_07_sht1x.ino - SHT1x temperature and sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -44,21 +44,21 @@ uint8_t sht_valid = 0;
 float sht_temperature = 0;
 float sht_humidity = 0;
 
-boolean ShtReset(void)
+bool ShtReset(void)
 {
   pinMode(sht_sda_pin, INPUT_PULLUP);
   pinMode(sht_scl_pin, OUTPUT);
   delay(11);
-  for (byte i = 0; i < 9; i++) {
+  for (uint8_t i = 0; i < 9; i++) {
     digitalWrite(sht_scl_pin, HIGH);
     digitalWrite(sht_scl_pin, LOW);
   }
-  boolean success = ShtSendCommand(SHT1X_CMD_SOFT_RESET);
+  bool success = ShtSendCommand(SHT1X_CMD_SOFT_RESET);
   delay(11);
   return success;
 }
 
-boolean ShtSendCommand(const byte cmd)
+bool ShtSendCommand(const uint8_t cmd)
 {
   pinMode(sht_sda_pin, OUTPUT);
   // Transmission Start sequence
@@ -72,7 +72,7 @@ boolean ShtSendCommand(const byte cmd)
   // Send the command (address must be 000b)
   shiftOut(sht_sda_pin, sht_scl_pin, MSBFIRST, cmd);
   // Wait for ACK
-  boolean ackerror = false;
+  bool ackerror = false;
   digitalWrite(sht_scl_pin, HIGH);
   pinMode(sht_sda_pin, INPUT_PULLUP);
   if (digitalRead(sht_sda_pin) != LOW) {
@@ -90,10 +90,10 @@ boolean ShtSendCommand(const byte cmd)
   return (!ackerror);
 }
 
-boolean ShtAwaitResult(void)
+bool ShtAwaitResult(void)
 {
   // Maximum 320ms for 14 bit measurement
-  for (byte i = 0; i < 16; i++) {
+  for (uint8_t i = 0; i < 16; i++) {
     if (LOW == digitalRead(sht_sda_pin)) {
       return true;
     }
@@ -125,7 +125,7 @@ int ShtReadData(void)
   return val;
 }
 
-boolean ShtRead(void)
+bool ShtRead(void)
 {
   if (sht_valid) { sht_valid--; }
   if (!ShtReset()) { return false; }
@@ -185,7 +185,7 @@ void ShtEverySecond(void)
   }
 }
 
-void ShtShow(boolean json)
+void ShtShow(bool json)
 {
   if (sht_valid) {
     char temperature[33];
@@ -219,9 +219,9 @@ void ShtShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns07(byte function)
+bool Xsns07(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

@@ -1,7 +1,7 @@
 /*
   xdsp_02_ssd1306.ino - Display Oled ssd1306 support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends and Adafruit
+  Copyright (C) 2019  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -147,15 +147,14 @@ void Ssd1306PrintLog(void)
       oled->clearDisplay();
       oled->setTextSize(Settings.display_size);
       oled->setCursor(0,0);
-      for (byte i = 0; i < last_row; i++) {
+      for (uint8_t i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
         oled->println(disp_screen_buffer[i]);
       }
       strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
       DisplayFillScreen(last_row);
 
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
 
       oled->println(disp_screen_buffer[last_row]);
       oled->display();
@@ -200,9 +199,9 @@ void Ssd1306Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-boolean Xdsp02(byte function)
+bool Xdsp02(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {

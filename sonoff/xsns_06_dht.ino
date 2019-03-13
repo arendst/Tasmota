@@ -1,7 +1,7 @@
 /*
   xsns_06_dht.ino - DHTxx, AM23xx and SI7021 temperature and humidity sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -33,11 +33,11 @@
 
 uint32_t dht_max_cycles;
 uint8_t dht_data[5];
-byte dht_sensors = 0;
+uint8_t dht_sensors = 0;
 
 struct DHTSTRUCT {
-  byte     pin;
-  byte     type;
+  uint8_t     pin;
+  uint8_t     type;
   char     stype[12];
   uint32_t lastreadtime;
   uint8_t  lastresult;
@@ -47,12 +47,12 @@ struct DHTSTRUCT {
 
 void DhtReadPrep(void)
 {
-  for (byte i = 0; i < dht_sensors; i++) {
+  for (uint8_t i = 0; i < dht_sensors; i++) {
     digitalWrite(Dht[i].pin, HIGH);
   }
 }
 
-int32_t DhtExpectPulse(byte sensor, bool level)
+int32_t DhtExpectPulse(uint8_t sensor, bool level)
 {
   int32_t count = 0;
 
@@ -64,7 +64,7 @@ int32_t DhtExpectPulse(byte sensor, bool level)
   return count;
 }
 
-boolean DhtRead(byte sensor)
+bool DhtRead(uint8_t sensor)
 {
   int32_t cycles[80];
   uint8_t error = 0;
@@ -125,16 +125,15 @@ boolean DhtRead(byte sensor)
 
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %02X, %02X, %02X, %02X, %02X =? %02X"),
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %02X, %02X, %02X, %02X, %02X =? %02X"),
       dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], checksum);
-    AddLog(LOG_LEVEL_DEBUG);
     return false;
   }
 
   return true;
 }
 
-void DhtReadTempHum(byte sensor)
+void DhtReadTempHum(uint8_t sensor)
 {
   if ((NAN == Dht[sensor].h) || (Dht[sensor].lastresult > DHT_MAX_RETRY)) {  // Reset after 8 misses
     Dht[sensor].t = NAN;
@@ -162,9 +161,9 @@ void DhtReadTempHum(byte sensor)
   }
 }
 
-boolean DhtSetup(byte pin, byte type)
+bool DhtSetup(uint8_t pin, uint8_t type)
 {
-  boolean success = false;
+  bool success = false;
 
   if (dht_sensors < DHT_MAX_SENSORS) {
     Dht[dht_sensors].pin = pin;
@@ -181,7 +180,7 @@ void DhtInit(void)
 {
   dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
-  for (byte i = 0; i < dht_sensors; i++) {
+  for (uint8_t i = 0; i < dht_sensors; i++) {
     pinMode(Dht[i].pin, INPUT_PULLUP);
     Dht[i].lastreadtime = 0;
     Dht[i].lastresult = 0;
@@ -198,16 +197,16 @@ void DhtEverySecond(void)
     // <1mS
     DhtReadPrep();
   } else {
-    for (byte i = 0; i < dht_sensors; i++) {
+    for (uint8_t i = 0; i < dht_sensors; i++) {
       // DHT11 and AM2301 25mS per sensor, SI7021 5mS per sensor
       DhtReadTempHum(i);
     }
   }
 }
 
-void DhtShow(boolean json)
+void DhtShow(bool json)
 {
-  for (byte i = 0; i < dht_sensors; i++) {
+  for (uint8_t i = 0; i < dht_sensors; i++) {
     char temperature[33];
     dtostrfd(Dht[i].t, Settings.flag2.temperature_resolution, temperature);
     char humidity[33];
@@ -239,9 +238,9 @@ void DhtShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns06(byte function)
+bool Xsns06(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (dht_flg) {
     switch (function) {

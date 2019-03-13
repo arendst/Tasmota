@@ -1,10 +1,10 @@
 # decode-config.py
 _decode-config.py_ is able to backup and restore Sonoff-Tasmota configuration.
 
-In contrast to the Tasmota build-in "Backup/Restore Configuration" function,
-* _decode-config.py_ uses human readable and editable [JSON](http://www.json.org/)-format for backup/restore,
-* _decode-config.py_ can restore previous backuped and changed [JSON](http://www.json.org/)-format files,
-* _decode-config.py_ is able to create Tasmota commands based on given configuration
+In comparison with the Tasmota build-in "Backup/Restore Configuration" function _decode-config.py_
+* uses human readable and editable [JSON](http://www.json.org/)-format for backup/restore,
+* can restore previously backup and changed [JSON](http://www.json.org/)-format files,
+* is able to create Tasmota compatible command list with related config parameter
 
 Comparing backup files created by *decode-config.py* and *.dmp files created by Tasmota "Backup/Restore Configuration":  
 
@@ -15,7 +15,7 @@ Comparing backup files created by *decode-config.py* and *.dmp files created by 
 | Simply editable         |               Yes               |                  No                 |
 | Simply batch processing |               Yes               |                  No                 |
 
-_decode-config.py_ is able to handle Tasmota configurations for release version starting from 5.10.0 up to now.
+_decode-config.py_ is compatible with Tasmota version from v5.10.0 up to now.
 
 # Content
 * [Prerequisite](decode-config.md#prerequisite)
@@ -42,10 +42,10 @@ _decode-config.py_ is able to handle Tasmota configurations for release version 
 
 ## Prerequisite
 * [Python](https://en.wikipedia.org/wiki/Python_(programming_language))  
-  This program is written in [Python](https://en.wikipedia.org/wiki/Python_(programming_language)) so you need to install a python environment (for details see [Python Setup and Usage](https://docs.python.org/2.7/using/index.html))
+  This program is written in [Python](https://en.wikipedia.org/wiki/Python_(programming_language)) so you need to install a working python environment (for details see [Python Setup and Usage](https://docs.python.org/2.7/using/index.html))
 
 * [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) [Firmware](https://github.com/arendst/Sonoff-Tasmota/releases) with Web-Server enabled:
-  * To backup or restore configurations from/to a Sonoff-Tasmota device you need a firmare with enabled web-server in admin mode (command [WebServer 2](https://github.com/arendst/Sonoff-Tasmota/wiki/Commands#wifi)).
+  * To backup or restore configurations from or to a Sonoff-Tasmota device you need a firmare with enabled web-server in admin mode (command [WebServer 2](https://github.com/arendst/Sonoff-Tasmota/wiki/Commands#wifi)). This is the Tasmota default.
   * If using your own compiled firmware be aware to enable the web-server (`#define USE_WEBSERVER` and `#define WEB_SERVER 2`).
 
 ## File Types
@@ -55,28 +55,28 @@ Configuration data as used by Tasmota "Backup/Restore Configuration" web interfa
 This format is binary and encrypted.
 ### .json Format
 Configuration data in [JSON](http://www.json.org/)-format.  
-This format is decrypted, human readable and editable and can also be used for the `--restore-file` command.  
-This file will becreated by _decode-config.py_ using `--backup-file` with `--backup-type json` parameter (default).
+This format is decrypted, human readable and editable and can also be used for the `--restore-file` parameter.  
+This file will be created by _decode-config.py_ using the `--backup-file` with `--backup-type json` parameter, this is the default.
 ### .bin Format
 Configuration data in binary format.  
 This format is binary decryptet, editable (e.g. using a hex editor) and can also be used for `--restore-file` command.  
 It will be created by _decode-config.py_ using `--backup-file` with `--backup-type bin`.  
 Note:  
-This file is 4 byte longer than an original .dmp file due to an prefix header at the beginning. The file data starting at address position 4 are containing the same as the **struct SYSCFG** from Tasmota [settings.h](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/settings.h) in decrypted format.
+The .bin file contains the same information as the original .dmp file from Tasmota "Backup/Restore Configuration" but it is decrpted and  4 byte longer than an original (it is a prefix header at the beginning). .bin file data starting at address 4 contains the same as the **struct SYSCFG** from Tasmota [settings.h](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/settings.h) in decrypted format.
 
 #### File extensions
-_decode-config.py_ uses auto extension as default for backup filenames; you don't need to append extensions to your backup file, it will be selected based on `--backup-type` argument.  
-If you want using your own extension use the `--no-extension` argument.
+You don't need to append exensions for your file name as _decode-config.py_ uses auto extension as default. The extension will be choose based on file contents and `--backup-type` parameter.
+If you do not want using auto extensions use the `--no-extension` parameter.
 
 ## Usage
-After download don't forget to set exec flag under linux with `chmod +x decode-config.py` or call the program using `python decode-config.py...`.
+After download don't forget to set the executable flag under linux with `chmod +x decode-config.py` or call the program using `python decode-config.py...`.
 
 ### Basics
 At least pass a source where you want to read the configuration data from using `-f <filename>` or `-d <host>`:
 
 The source can be either 
-* a Tasmota device hostname or IP by passing it using the `-d <host>` arg
-* or a previously stored Tasmota `*.dmp` configuration file by passing the filename using `-f <filename>` arg
+* a Tasmota device hostname or IP using the `-d <host>` parameter
+* a Tasmota `*.dmp` configuration file using `-f <filename>` parameter
 
 Example:  
 
@@ -99,7 +99,7 @@ will output a human readable configuration in [JSON](http://www.json.org/)-forma
 
 
 ### Save backup file
-To save the output as backup file `--backup-file <filename>`, you can use placeholder for Version, Friendlyname and Hostname:  
+To save the output as backup file use `--backup-file <filename>`, you can use placeholder for Version, Friendlyname and Hostname:  
 
     decode-config.py -d sonoff-4281 --backup-file Config_@f_@v
     
@@ -107,10 +107,10 @@ If you have setup a WebPassword within Tasmota, use
 
     decode-config.py -d sonoff-4281 -p <yourpassword> --backup-file Config_@f_@v
 
-will create a file like `Config_Sonoff_x.x.x.json`. Because it is in JSON format, you can read and edit the file with any raw text editor.
+will create a file like `Config_Sonoff_6.4.0.json` (the part `Sonoff` and `6.4.0` will choosen related to your device configuration). Because the default backup file format is JSON, you can read and change it with any raw text editor.
 
 ### Restore backup file
-Reading back a saved (and possible changed) backup file use the `--restore-file <filename>` arg. This will read the (changed) configuration data from this file and send it back to the source device or filename.
+Reading back a saved (and possible changed) backup file use the `--restore-file <filename>` parameter. This will read the (changed) configuration data from this file and send it back to the source device or filename.
 
 To restore the previously save backup file `Config_Sonoff_6.2.1.json` to device `sonoff-4281` use:  
 
@@ -121,12 +121,12 @@ with password set by WebPassword:
     decode-config.py -d sonoff-4281 -p <yourpassword> --restore-file Config_Sonoff_6.2.1.json
 
 ### Output to screen
-Output to screen is default enabled when calling the program with a source arg but without a backup or restore arg.
+To force screen output use the `--output` parameter.
 
-`--output` arg will force screen output even if you use backup or restore arg.
+Output to screen is default enabled when calling the program with a source parameter (-f or -d) but without any backup or restore parameter.
 
 #### JSON output
-The default output format is JSON. You can force JSON output with `--output-format json` arg.
+The default output format is [JSON](decode-config.md#-json-format). You can force JSON output using the `--output-format json` parameter.
 
 Example:
 

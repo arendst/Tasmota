@@ -1,7 +1,7 @@
 /*
   xsns_09_bmp.ino - BMP pressure, temperature, humidity and gas sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Heiko Krupp and Theo Arends
+  Copyright (C) 2019  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -101,7 +101,7 @@ typedef struct {
 
 bmp180_cal_data_t *bmp180_cal_data = NULL;
 
-boolean Bmp180Calibration(uint8_t bmp_idx)
+bool Bmp180Calibration(uint8_t bmp_idx)
 {
   if (!bmp180_cal_data) {
     bmp180_cal_data = (bmp180_cal_data_t*)malloc(BMP_MAX_SENSORS * sizeof(bmp180_cal_data_t));
@@ -246,7 +246,7 @@ typedef struct {
 
 Bme280CalibrationData_t *Bme280CalibrationData = NULL;
 
-boolean Bmx280Calibrate(uint8_t bmp_idx)
+bool Bmx280Calibrate(uint8_t bmp_idx)
 {
   //  if (I2cRead8(bmp_address, BMP_REGISTER_CHIPID) != BME280_CHIPID) return false;
 
@@ -351,7 +351,7 @@ static void BmeDelayMs(uint32_t ms)
   delay(ms);
 }
 
-boolean Bme680Init(uint8_t bmp_idx)
+bool Bme680Init(uint8_t bmp_idx)
 {
   if (!gas_sensor) {
     gas_sensor = (bme680_dev*)malloc(BMP_MAX_SENSORS * sizeof(bme680_dev));
@@ -455,14 +455,14 @@ void BmpDetect(void)
   if (!bmp_sensors) { return; }
   memset(bmp_sensors, 0, bmp_sensor_size);  // Init defaults to 0
 
-  for (byte i = 0; i < BMP_MAX_SENSORS; i++) {
+  for (uint8_t i = 0; i < BMP_MAX_SENSORS; i++) {
     uint8_t bmp_type = I2cRead8(bmp_addresses[i], BMP_REGISTER_CHIPID);
     if (bmp_type) {
       bmp_sensors[bmp_count].bmp_address = bmp_addresses[i];
       bmp_sensors[bmp_count].bmp_type = bmp_type;
       bmp_sensors[bmp_count].bmp_model = 0;
 
-      boolean success = false;
+      bool success = false;
       switch (bmp_type) {
         case BMP180_CHIPID:
           success = Bmp180Calibration(bmp_count);
@@ -482,8 +482,7 @@ void BmpDetect(void)
       }
       if (success) {
         GetTextIndexed(bmp_sensors[bmp_count].bmp_name, sizeof(bmp_sensors[bmp_count].bmp_name), bmp_sensors[bmp_count].bmp_model, kBmpTypes);
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bmp_sensors[bmp_count].bmp_name, bmp_sensors[bmp_count].bmp_address);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, bmp_sensors[bmp_count].bmp_name, bmp_sensors[bmp_count].bmp_address);
         bmp_count++;
       }
     }
@@ -494,7 +493,7 @@ void BmpRead(void)
 {
   if (!bmp_sensors) { return; }
 
-  for (byte bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+  for (uint8_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     switch (bmp_sensors[bmp_idx].bmp_type) {
       case BMP180_CHIPID:
         Bmp180Read(bmp_idx);
@@ -525,11 +524,11 @@ void BmpEverySecond(void)
   }
 }
 
-void BmpShow(boolean json)
+void BmpShow(bool json)
 {
   if (!bmp_sensors) { return; }
 
-  for (byte bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+  for (uint8_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     if (bmp_sensors[bmp_idx].bmp_type) {
       float bmp_sealevel = 0.0;
       if (bmp_sensors[bmp_idx].bmp_pressure != 0.0) {
@@ -540,7 +539,7 @@ void BmpShow(boolean json)
       float bmp_pressure = ConvertPressure(bmp_sensors[bmp_idx].bmp_pressure);
 
       char name[10];
-      snprintf(name, sizeof(name), bmp_sensors[bmp_idx].bmp_name);
+      strlcpy(name, bmp_sensors[bmp_idx].bmp_name, sizeof(name));
       if (bmp_count > 1) {
         snprintf_P(name, sizeof(name), PSTR("%s-%02X"), name, bmp_sensors[bmp_idx].bmp_address);  // BMXXXX-XX
       }
@@ -621,9 +620,9 @@ void BmpShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns09(byte function)
+bool Xsns09(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

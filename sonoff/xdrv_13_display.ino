@@ -1,7 +1,7 @@
 /*
   xdrv_13_display.ino - Display support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -427,13 +427,18 @@ void DisplayText(void)
             cp += var;
             DisplayDrawFilledRectangle(disp_xpos, disp_ypos, temp, temp1, color);
             break;
-          case 't': {
+          case 't':
             if (dp < (linebuf + DISPLAY_BUFFER_COLS) -5) {
-              snprintf_P(dp, 5, PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute);
+              snprintf_P(dp, 6, PSTR("%02d" D_HOUR_MINUTE_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute);
               dp += 5;
             }
             break;
-          }
+          case 'T':
+            if (dp < (linebuf + DISPLAY_BUFFER_COLS) -8) {
+              snprintf_P(dp, 9, PSTR("%02d" D_MONTH_DAY_SEPARATOR "%02d" D_YEAR_MONTH_SEPARATOR "%02d"), RtcTime.day_of_month, RtcTime.month, RtcTime.year%2000);
+              dp += 8;
+            }
+            break;
           case 'd':
             // force draw grafics buffer
             DisplayDrawFrame();
@@ -490,7 +495,7 @@ void DisplayText(void)
 void DisplayClearScreenBuffer(void)
 {
   if (disp_screen_buffer_cols) {
-    for (byte i = 0; i < disp_screen_buffer_rows; i++) {
+    for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
       memset(disp_screen_buffer[i], 0, disp_screen_buffer_cols);
     }
   }
@@ -499,7 +504,7 @@ void DisplayClearScreenBuffer(void)
 void DisplayFreeScreenBuffer(void)
 {
   if (disp_screen_buffer != NULL) {
-    for (byte i = 0; i < disp_screen_buffer_rows; i++) {
+    for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
       if (disp_screen_buffer[i] != NULL) { free(disp_screen_buffer[i]); }
     }
     free(disp_screen_buffer);
@@ -514,7 +519,7 @@ void DisplayAllocScreenBuffer(void)
     disp_screen_buffer_rows = Settings.display_rows;
     disp_screen_buffer = (char**)malloc(sizeof(*disp_screen_buffer) * disp_screen_buffer_rows);
     if (disp_screen_buffer != NULL) {
-      for (byte i = 0; i < disp_screen_buffer_rows; i++) {
+      for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
         disp_screen_buffer[i] = (char*)malloc(sizeof(*disp_screen_buffer[i]) * (Settings.display_cols[0] +1));
         if (disp_screen_buffer[i] == NULL) {
           DisplayFreeScreenBuffer();
@@ -537,7 +542,7 @@ void DisplayReAllocScreenBuffer(void)
 
 void DisplayFillScreen(uint8_t line)
 {
-  byte len = disp_screen_buffer_cols - strlen(disp_screen_buffer[line]);
+  uint8_t len = disp_screen_buffer_cols - strlen(disp_screen_buffer[line]);
   if (len) {
     memset(disp_screen_buffer[line] + strlen(disp_screen_buffer[line]), 0x20, len);
     disp_screen_buffer[line][disp_screen_buffer_cols -1] = 0;
@@ -549,7 +554,7 @@ void DisplayFillScreen(uint8_t line)
 void DisplayClearLogBuffer(void)
 {
   if (disp_log_buffer_cols) {
-    for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
+    for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
       memset(disp_log_buffer[i], 0, disp_log_buffer_cols);
     }
   }
@@ -558,7 +563,7 @@ void DisplayClearLogBuffer(void)
 void DisplayFreeLogBuffer(void)
 {
   if (disp_log_buffer != NULL) {
-    for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
+    for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
       if (disp_log_buffer[i] != NULL) { free(disp_log_buffer[i]); }
     }
     free(disp_log_buffer);
@@ -571,7 +576,7 @@ void DisplayAllocLogBuffer(void)
   if (!disp_log_buffer_cols) {
     disp_log_buffer = (char**)malloc(sizeof(*disp_log_buffer) * DISPLAY_LOG_ROWS);
     if (disp_log_buffer != NULL) {
-      for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
+      for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
         disp_log_buffer[i] = (char*)malloc(sizeof(*disp_log_buffer[i]) * (Settings.display_cols[0] +1));
         if (disp_log_buffer[i] == NULL) {
           DisplayFreeLogBuffer();
@@ -682,7 +687,7 @@ const char kSensorQuantity[] PROGMEM =
   D_JSON_CO2 "|"                                                                // ppm
   D_JSON_FREQUENCY ;                                                            // Hz
 
-void DisplayJsonValue(const char *topic, const char* device, const char* mkey, const char* value)
+void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value)
 {
   char quantity[TOPSZ];
   char buffer[Settings.display_cols[0] +1];
@@ -690,11 +695,13 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
   char source[Settings.display_cols[0] - Settings.display_cols[1]];
   char svalue[Settings.display_cols[1] +1];
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("DisplayJsonValue"));
+#endif
 
   memset(spaces, 0x20, sizeof(spaces));
   spaces[sizeof(spaces) -1] = '\0';
-  snprintf_P(source, sizeof(source), PSTR("%s/%s%s"), topic, mkey, spaces);  // pow1/Voltage
+  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), topic, (strlen(topic))?"/":"", mkey, spaces);  // pow1/Voltage or Voltage if topic is empty (local sensor)
 
   int quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
   if ((-1 == quantity_code) || !strcmp_P(mkey, S_RSLT_POWER)) {  // Ok: Power, Not ok: POWER
@@ -741,8 +748,7 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
   }
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
-//  AddLog(LOG_LEVEL_DEBUG);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
 
   DisplayLogBufferAdd(buffer);
 }
@@ -772,8 +778,7 @@ void DisplayAnalyzeJson(char *topic, char *json)
     tempunit = root[D_JSON_TEMPERATURE_UNIT];
     if (tempunit) {
       snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%s"), tempunit);
-//      snprintf_P(log_data, sizeof(log_data), disp_temp);
-//      AddLog(LOG_LEVEL_DEBUG);
+//      AddLog_P2(LOG_LEVEL_DEBUG, disp_temp);
     }
 
     for (JsonObject::iterator it = root.begin(); it != root.end(); ++it) {
@@ -785,14 +790,23 @@ void DisplayAnalyzeJson(char *topic, char *json)
           if (value2.is<JsonObject>()) {
             JsonObject& Object3 = value2;
             for (JsonObject::iterator it3 = Object3.begin(); it3 != Object3.end(); ++it3) {
-              DisplayJsonValue(topic, it->key, it3->key, it3->value.as<const char*>());  // Sensor 56%
+              const char* value = it3->value;
+              if (value != nullptr) {  // "DHT11":{"Temperature":null,"Humidity":null} - ignore null as it will raise exception 28
+                DisplayJsonValue(topic, it->key, it3->key, value);  // Sensor 56%
+              }
             }
           } else {
-            DisplayJsonValue(topic, it->key, it2->key, it2->value.as<const char*>());  // Sensor  56%
+            const char* value = it2->value;
+            if (value != nullptr) {
+              DisplayJsonValue(topic, it->key, it2->key, value);  // Sensor  56%
+            }
           }
         }
       } else {
-        DisplayJsonValue(topic, it->key, it->key, it->value.as<const char*>());  // Topic  56%
+        const char* value = it->value;
+        if (value != nullptr) {
+          DisplayJsonValue(topic, it->key, it->key, value);  // Topic  56%
+        }
       }
     }
   }
@@ -831,7 +845,7 @@ void DisplayMqttSubscribe(void)
   }
 }
 
-boolean DisplayMqttData(void)
+bool DisplayMqttData(void)
 {
   if (disp_subscribed) {
     char stopic[TOPSZ];
@@ -853,7 +867,9 @@ boolean DisplayMqttData(void)
 void DisplayLocalSensor(void)
 {
   if ((Settings.display_mode &0x02) && (0 == tele_period)) {
-    DisplayAnalyzeJson(mqtt_topic, mqtt_data);
+    char no_topic[1] = { 0 };
+//    DisplayAnalyzeJson(mqtt_topic, mqtt_data);  // Add local topic
+    DisplayAnalyzeJson(no_topic, mqtt_data);    // Discard any topic
   }
 }
 
@@ -867,8 +883,7 @@ void DisplayInitDriver(void)
 {
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
-//  AddLog(LOG_LEVEL_DEBUG);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
     devices_present++;
@@ -894,10 +909,10 @@ void DisplaySetPower(void)
  * Commands
 \*********************************************************************************************/
 
-boolean DisplayCommand(void)
+bool DisplayCommand(void)
 {
   char command [CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t disp_len = strlen(D_CMND_DISPLAY);  // Prep for string length change
 
   if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_DISPLAY), disp_len)) {  // Prefix
@@ -1062,9 +1077,9 @@ boolean DisplayCommand(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv13(byte function)
+bool Xdrv13(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if ((i2c_flg || spi_flg || soft_spi_flg) && XdspPresent()) {
     switch (function) {

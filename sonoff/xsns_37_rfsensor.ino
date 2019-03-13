@@ -1,7 +1,7 @@
 /*
   xsns_37_rfsensor.ino - RF sensor receiver for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -49,10 +49,10 @@
 typedef struct RawSignalStruct                   // Variabelen geplaatst in struct zodat deze later eenvoudig kunnen worden weggeschreven naar SDCard
 {
   int  Number;                           // aantal bits, maal twee omdat iedere bit een mark en een space heeft.
-  byte Repeats;                          // Aantal maal dat de pulsreeks verzonden moet worden bij een zendactie.
-  byte Multiply;                         // Pulses[] * Multiply is de echte tijd van een puls in microseconden
+  uint8_t Repeats;                          // Aantal maal dat de pulsreeks verzonden moet worden bij een zendactie.
+  uint8_t Multiply;                         // Pulses[] * Multiply is de echte tijd van een puls in microseconden
   unsigned long Time;                    // Tijdstempel wanneer signaal is binnengekomen (millis())
-  byte Pulses[RFSNS_RAW_BUFFER_SIZE+2];  // Tabel met de gemeten pulsen in microseconden gedeeld door rfsns_raw_signal->Multiply. Dit scheelt helft aan RAM geheugen.
+  uint8_t Pulses[RFSNS_RAW_BUFFER_SIZE+2];  // Tabel met de gemeten pulsen in microseconden gedeeld door rfsns_raw_signal->Multiply. Dit scheelt helft aan RAM geheugen.
                                          // Om legacy redenen zit de eerste puls in element 1. Element 0 wordt dus niet gebruikt.
 } raw_signal_t;
 
@@ -65,7 +65,7 @@ uint8_t rfsns_any_sensor = 0;
  * Fetch signals from RF pin
 \*********************************************************************************************/
 
-bool RfSnsFetchSignal(byte DataPin, bool StateSignal)
+bool RfSnsFetchSignal(uint8_t DataPin, bool StateSignal)
 {
   uint8_t Fbit = digitalPinToBitMask(DataPin);
   uint8_t Fport = digitalPinToPort(DataPin);
@@ -179,17 +179,17 @@ void RfSnsAnalyzeTheov2(void)
 {
   if (rfsns_raw_signal->Number != RFSNS_THEOV2_PULSECOUNT) { return; }
 
-  byte Checksum;     // 8 bits Checksum over following bytes
-  byte Channel;      // 3 bits channel
-  byte Type;         // 5 bits type
-  byte Voltage;      // 8 bits Vcc like 45 = 4.5V, bit 8 is batt low
+  uint8_t Checksum;  // 8 bits Checksum over following bytes
+  uint8_t Channel;   // 3 bits channel
+  uint8_t Type;      // 5 bits type
+  uint8_t Voltage;   // 8 bits Vcc like 45 = 4.5V, bit 8 is batt low
   int Payload1;      // 16 bits
   int Payload2;      // 16 bits
 
-  byte b, bytes, bits, id;
+  uint8_t b, bytes, bits, id;
 
-  byte idx = 3;
-  byte chksum = 0;
+  uint8_t idx = 3;
+  uint8_t chksum = 0;
   for (bytes = 0; bytes < 7; bytes++) {
     b = 0;
     for (bits = 0; bits <= 7; bits++)
@@ -251,9 +251,8 @@ void RfSnsAnalyzeTheov2(void)
     break;
   }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("RFS: TheoV2, ChkCalc %d, Chksum %d, id %d, Type %d, Ch %d, Volt %d, BattLo %d, Pld1 %d, Pld2 %d"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RFS: TheoV2, ChkCalc %d, Chksum %d, id %d, Type %d, Ch %d, Volt %d, BattLo %d, Pld1 %d, Pld2 %d"),
     chksum, Checksum, id, Type, Channel +1, Payload3, (Voltage & 0x80) >> 7, Payload1, Payload2);
-  AddLog(LOG_LEVEL_DEBUG);
 }
 
 void RfSnsTheoV2Show(bool json)
@@ -438,23 +437,23 @@ void RfSnsAnalyzeAlectov2()
   if (!(((rfsns_raw_signal->Number >= RFSNS_ACH2010_MIN_PULSECOUNT) &&
          (rfsns_raw_signal->Number <= RFSNS_ACH2010_MAX_PULSECOUNT)) || (rfsns_raw_signal->Number == RFSNS_DKW2012_PULSECOUNT))) { return; }
 
-  byte c = 0;
-  byte rfbit;
-  byte data[9] = { 0 };
-  byte msgtype = 0;
-  byte rc = 0;
+  uint8_t c = 0;
+  uint8_t rfbit;
+  uint8_t data[9] = { 0 };
+  uint8_t msgtype = 0;
+  uint8_t rc = 0;
   int temp;
-  byte checksum = 0;
-  byte checksumcalc = 0;
-  byte maxidx = 8;
+  uint8_t checksum = 0;
+  uint8_t checksumcalc = 0;
+  uint8_t maxidx = 8;
   unsigned long atime;
   float factor;
   char buf1[16];
 
   if (rfsns_raw_signal->Number > RFSNS_ACH2010_MAX_PULSECOUNT) { maxidx = 9; }
   // Get message back to front as the header is almost never received complete for ACH2010
-  byte idx = maxidx;
-  for (byte x = rfsns_raw_signal->Number; x > 0; x = x-2) {
+  uint8_t idx = maxidx;
+  for (uint8_t x = rfsns_raw_signal->Number; x > 0; x = x-2) {
     if (rfsns_raw_signal->Pulses[x-1] * rfsns_raw_signal->Multiply < 0x300) {
       rfbit = 0x80;
     } else {
@@ -507,9 +506,8 @@ void RfSnsAnalyzeAlectov2()
     rfsns_alecto_v2->wdir = data[8] & 0xf;
   }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("RFS: " D_ALECTOV2 ", ChkCalc %d, Chksum %d, rc %d, Temp %d, Hum %d, Rain %d, Wind %d, Gust %d, Dir %d, Factor %s"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RFS: " D_ALECTOV2 ", ChkCalc %d, Chksum %d, rc %d, Temp %d, Hum %d, Rain %d, Wind %d, Gust %d, Dir %d, Factor %s"),
     checksumcalc, checksum, rc, ((data[1] & 0x3) * 256 + data[2]) - 400, data[3], (data[6] * 256) + data[7], data[4], data[5], data[8] & 0xf, dtostrfd(factor, 3, buf1));
-  AddLog(LOG_LEVEL_DEBUG);
 }
 
 void RfSnsAlectoResetRain(void)
@@ -627,8 +625,7 @@ void RfSnsInit(void)
 
 void RfSnsAnalyzeRawSignal(void)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR("RFS: Pulses %d"), (int)rfsns_raw_signal->Number);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RFS: Pulses %d"), (int)rfsns_raw_signal->Number);
 
 #ifdef USE_THEO_V2
     RfSnsAnalyzeTheov2();
@@ -659,7 +656,7 @@ void RfSnsShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns37(byte function)
+bool Xsns37(uint8_t function)
 {
   bool result = false;
 

@@ -1,7 +1,7 @@
 /*
   xsns_28_tm1638.ino - TM1638 8 switch, led and 7 segment unit support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ uint8_t tm1638_state = 0;
  *    and from library https://github.com/MartyMacGyver/TM1638-demos-and-examples
 \*********************************************************************************************/
 
-void Tm16XXSend(byte data)
+void Tm16XXSend(uint8_t data)
 {
 	for (uint8_t i = 0; i < 8; i++) {
     digitalWrite(tm1638_data_pin, !!(data & (1 << i)));
@@ -56,14 +56,14 @@ void Tm16XXSend(byte data)
   }
 }
 
-void Tm16XXSendCommand(byte cmd)
+void Tm16XXSendCommand(uint8_t cmd)
 {
   digitalWrite(tm1638_strobe_pin, LOW);
   Tm16XXSend(cmd);
   digitalWrite(tm1638_strobe_pin, HIGH);
 }
 
-void TM16XXSendData(byte address, byte data)
+void TM16XXSendData(uint8_t address, uint8_t data)
 {
   Tm16XXSendCommand(0x44);
   digitalWrite(tm1638_strobe_pin, LOW);
@@ -72,9 +72,9 @@ void TM16XXSendData(byte address, byte data)
   digitalWrite(tm1638_strobe_pin, HIGH);
 }
 
-byte Tm16XXReceive(void)
+uint8_t Tm16XXReceive(void)
 {
-  byte temp = 0;
+  uint8_t temp = 0;
 
   // Pull-up on
   pinMode(tm1638_data_pin, INPUT);
@@ -103,7 +103,7 @@ void Tm16XXClearDisplay(void)
   }
 }
 
-void Tm1638SetLED(byte color, byte pos)
+void Tm1638SetLED(uint8_t color, uint8_t pos)
 {
   TM16XXSendData((pos << 1) + 1, color);
 }
@@ -111,7 +111,7 @@ void Tm1638SetLED(byte color, byte pos)
 void Tm1638SetLEDs(word leds)
 {
   for (int i = 0; i < tm1638_displays; i++) {
-    byte color = 0;
+    uint8_t color = 0;
 
     if ((leds & (1 << i)) != 0) {
       color |= TM1638_COLOR_RED;
@@ -125,9 +125,9 @@ void Tm1638SetLEDs(word leds)
   }
 }
 
-byte Tm1638GetButtons(void)
+uint8_t Tm1638GetButtons(void)
 {
-  byte keys = 0;
+  uint8_t keys = 0;
 
   digitalWrite(tm1638_strobe_pin, LOW);
   Tm16XXSend(0x42);
@@ -174,10 +174,10 @@ void TmInit(void)
 void TmLoop(void)
 {
   if (tm1638_state) {
-    byte buttons = Tm1638GetButtons();
-    for (byte i = 0; i < MAX_SWITCHES; i++) {
-      virtualswitch[i] = (buttons &1) ^1;
-      byte color = (virtualswitch[i]) ? TM1638_COLOR_NONE : TM1638_COLOR_RED;
+    uint8_t buttons = Tm1638GetButtons();
+    for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
+      SwitchSetVirtual(i, (buttons &1) ^1);
+      uint8_t color = (SwitchGetVirtual(i)) ? TM1638_COLOR_NONE : TM1638_COLOR_RED;
       Tm1638SetLED(color, i);
       buttons >>= 1;
     }
@@ -186,7 +186,7 @@ void TmLoop(void)
 }
 
 /*
-void TmShow(boolean json)
+void TmShow(bool json)
 {
   if (tm1638_type) {
 
@@ -198,9 +198,9 @@ void TmShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns28(byte function)
+bool Xsns28(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (tm1638_type) {
     switch (function) {

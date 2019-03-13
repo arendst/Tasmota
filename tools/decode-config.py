@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0015'
+VER = '2.1.0021'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
 
-    Copyright (C) 2018 Norbert Richter <nr@prsolution.eu>
+    Copyright (C) 2019 Norbert Richter <nr@prsolution.eu>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -814,7 +814,73 @@ Setting_6_3_0_16['flag3'][0].update ({
 Setting_6_4_0_2 = copy.deepcopy(Setting_6_3_0_16)
 Setting_6_4_0_2['flag3'][0].pop('hass_short_discovery_msg',None)
 # ======================================================================
+Setting_6_4_1_4 = copy.deepcopy(Setting_6_4_0_2)
+Setting_6_4_1_4['flag3'][0].update ({
+        'mdns_enabled':             ('<L', (0x3A0,1, 5), (None, None,                           ('SetOption',   '"SetOption55 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_4_1_7 = copy.deepcopy(Setting_6_4_1_4)
+Setting_6_4_1_7['flag3'][0].update ({
+        'no_pullup':                ('<L', (0x3A0,1,12), (None, None,                           ('SetOption',   '"SetOption62 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_4_1_8 = copy.deepcopy(Setting_6_4_1_7)
+Setting_6_4_1_8['flag3'][0].update ({
+        'split_interlock':          ('<L', (0x3A0,1,13), (None, None,                           ('SetOption',   '"SetOption63 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_4_1_11 = copy.deepcopy(Setting_6_4_1_8)
+Setting_6_4_1_11['flag3'][0].pop('split_interlock',None)
+Setting_6_4_1_11.update            ({
+    'interlock':                    ('B',   0x4CA,       ([4],  None,                           ('Main',        None)), '"0x{:02x}".format($)' ),
+                                    })
+# ======================================================================
+Setting_6_4_1_13 = copy.deepcopy(Setting_6_4_1_11)
+Setting_6_4_1_13.update            ({
+    'SensorBits1':                 ({
+        'mhz19b_abc_disable':       ('B',  (0x717,1, 7), (None, None,                           ('Sensor',      '"Sensor15 {}".format($)')) ),
+                                    },      0x717,       (None, None,                           ('*',           None)), (None,      False) ),
+                                    })
+# ======================================================================
+Setting_6_4_1_16 = copy.deepcopy(Setting_6_4_1_13)
+Setting_6_4_1_16.update({
+    'user_template_base':          ('B',   0x71F,       (None,  None,                           ('Management',  '"Template {}".format($)')), ('$ + 1','$ - 1') ),
+    'user_template':               ({
+        'name':                     ('15s', 0x720, (None, None,                                 ('Management',  '"Template {{\\\"NAME\\\":\\\"{}\\\"}}".format($)' )) ),
+        'gpio00':                   ('B',   0x72F, (None, None,                                 ('Management',  '"Template {{\\\"GPIO\\\":[{},{},{},{},{},{},{},{},{},{},{},{},{}]}}".format(@["user_template"]["gpio00"],@["user_template"]["gpio01"],@["user_template"]["gpio02"],@["user_template"]["gpio03"],@["user_template"]["gpio04"],@["user_template"]["gpio05"],@["user_template"]["gpio09"],@["user_template"]["gpio10"],@["user_template"]["gpio12"],@["user_template"]["gpio13"],@["user_template"]["gpio14"],@["user_template"]["gpio15"],@["user_template"]["gpio16"])')) ),
+        'gpio01':                   ('B',   0x730, (None, None,                                 ('Management',  None)) ),
+        'gpio02':                   ('B',   0x731, (None, None,                                 ('Management',  None)) ),
+        'gpio03':                   ('B',   0x732, (None, None,                                 ('Management',  None)) ),
+        'gpio04':                   ('B',   0x733, (None, None,                                 ('Management',  None)) ),
+        'gpio05':                   ('B',   0x734, (None, None,                                 ('Management',  None)) ),
+        'gpio09':                   ('B',   0x735, (None, None,                                 ('Management',  None)) ),
+        'gpio10':                   ('B',   0x736, (None, None,                                 ('Management',  None)) ),
+        'gpio12':                   ('B',   0x737, (None, None,                                 ('Management',  None)) ),
+        'gpio13':                   ('B',   0x738, (None, None,                                 ('Management',  None)) ),
+        'gpio14':                   ('B',   0x739, (None, None,                                 ('Management',  None)) ),
+        'gpio15':                   ('B',   0x73A, (None, None,                                 ('Management',  None)) ),
+        'gpio16':                   ('B',   0x73B, (None, None,                                 ('Management',  None)) ),
+        'flag':                         ({
+            'value':                        ('B',   0x73C     ,  (None, None,                   ('Management',  '"Template {{\\\"FLAG\\\":{}}}".format($)')) ),
+            'adc0':                         ('B',  (0x73C,1,0),  (None, None,                   ('Management',  None)) ),
+            'pullup':                       ('B',  (0x73C,1,1),  (None, None,                   ('Management',  None)) ),
+                                         },      0x73C,       (None, None,                      ('Management',  None))
+                                        ),
+                                    },      0x720,       (None, None,                           ('Management',  None)) 
+                                   ),
+})
+# ======================================================================
+Setting_6_4_1_17 = copy.deepcopy(Setting_6_4_1_16)
+Setting_6_4_1_17['flag3'][0].pop('no_pullup',None)
+# ======================================================================
 Settings = [
+            (0x6040111, 0xe00, Setting_6_4_1_17),
+            (0x6040110, 0xe00, Setting_6_4_1_16),
+            (0x604010D, 0xe00, Setting_6_4_1_13),
+            (0x604010B, 0xe00, Setting_6_4_1_11),
+            (0x6040108, 0xe00, Setting_6_4_1_8),
+            (0x6040107, 0xe00, Setting_6_4_1_7),
+            (0x6040104, 0xe00, Setting_6_4_1_4),
             (0x6040002, 0xe00, Setting_6_4_0_2),
             (0x6030010, 0xe00, Setting_6_3_0_16),
             (0x603000F, 0xe00, Setting_6_3_0_15),
@@ -1072,47 +1138,40 @@ def GetFileType(filename):
     try:
         isfile = os.path.isfile(filename)
         try:
-            f = open(filename, "r")
-            try:
-                # try reading as json
-                inputjson = json.load(f)
-                if 'header' in inputjson:
-                    filetype = FileType.JSON
-                else:
-                    filetype = FileType.INCOMPLETE_JSON
-            except ValueError:
-                filetype = FileType.INVALID_JSON
-                # not a valid json, get filesize and compare it with all possible sizes
+            with open(filename, "r") as f:
                 try:
-                    size = os.path.getsize(filename)
-                except:
-                    filetype = FileType.UNKNOWN
-                sizes = GetTemplateSizes()
-
-                # size is one of a dmp file size
-                if size in sizes:
-                    filetype = FileType.DMP
-                elif (size - ((len(hex(BINARYFILE_MAGIC))-2)/2)) in sizes:
-                    # check if the binary file has the magic header
+                    # try reading as json
+                    inputjson = json.load(f)
+                    if 'header' in inputjson:
+                        filetype = FileType.JSON
+                    else:
+                        filetype = FileType.INCOMPLETE_JSON
+                except ValueError:
+                    filetype = FileType.INVALID_JSON
+                    # not a valid json, get filesize and compare it with all possible sizes
                     try:
-                        inputfile = open(filename, "rb")
-                        inputbin = inputfile.read()
-                        inputfile.close()
+                        size = os.path.getsize(filename)
+                    except:
+                        filetype = FileType.UNKNOWN
+                    sizes = GetTemplateSizes()
+
+                    # size is one of a dmp file size
+                    if size in sizes:
+                        filetype = FileType.DMP
+                    elif (size - ((len(hex(BINARYFILE_MAGIC))-2)/2)) in sizes:
+                        # check if the binary file has the magic header
+                        with open(filename, "rb") as inputfile:
+                            inputbin = inputfile.read()
                         if struct.unpack_from('<L', inputbin, 0)[0] == BINARYFILE_MAGIC:
                             filetype = FileType.BIN
                         else:
                             filetype = FileType.INVALID_BIN
-
-                    except:
-                        pass
-                # ~ else:
-                    # ~ filetype = FileType.UNKNOWN
-            finally:
-                f.close()
         except:
             filetype = FileType.FILE_NOT_FOUND
+            pass
     except:
         filetype = FileType.FILE_NOT_FOUND
+        pass
 
     return filetype
 
@@ -1260,9 +1319,8 @@ def LoadTasmotaConfig(filename):
     if not os.path.isfile(filename):    # check file exists
         exit(ExitCode.FILE_NOT_FOUND, "File '{}' not found".format(filename),line=inspect.getlineno(inspect.currentframe()))
     try:
-        tasmotafile = open(filename, "rb")
-        encode_cfg = tasmotafile.read()
-        tasmotafile.close()
+        with open(filename, "rb") as tasmotafile:
+            encode_cfg = tasmotafile.read()
     except Exception, e:
         exit(e[0], "'{}' {}".format(filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
 
@@ -2083,9 +2141,8 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
             value = ReadWriteConverter(restore.encode(STR_ENCODING), fielddef, read=False)
             err = "string length exceeding"
             if value is not None:
-                # be aware 0 byte at end of string (str must be < max, not <= max)
                 _max -= 1
-                valid = _min <= len(value) < _max
+                valid = _min <= len(value) <= _max
             else:
                 skip = True
                 valid = True
@@ -2389,12 +2446,10 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
         if args.verbose:
             message("Writing backup file '{}' ({} format)".format(backup_filename, fileformat), typ=LogType.INFO)
         try:
-            backupfp = open(backup_filename, "wb")
-            backupfp.write(encode_cfg)
+            with open(backup_filename, "wb") as backupfp:
+                backupfp.write(encode_cfg)
         except Exception, e:
             exit(e[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
-        finally:
-            backupfp.close()
 
     # binary format
     elif backupfileformat.lower() == FileType.BIN.lower():
@@ -2403,14 +2458,11 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
         if args.verbose:
             message("Writing backup file '{}' ({} format)".format(backup_filename, fileformat), typ=LogType.INFO)
         try:
-            backupfp = open(backup_filename, "wb")
-            magic = BINARYFILE_MAGIC
-            backupfp.write(struct.pack('<L',magic))
-            backupfp.write(decode_cfg)
+            with open(backup_filename, "wb") as backupfp:
+                backupfp.write(struct.pack('<L',BINARYFILE_MAGIC))
+                backupfp.write(decode_cfg)
         except Exception, e:
             exit(e[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
-        finally:
-            backupfp.close()
 
     # JSON format
     elif backupfileformat.lower() == FileType.JSON.lower():
@@ -2419,12 +2471,10 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
         if args.verbose:
             message("Writing backup file '{}' ({} format)".format(backup_filename, fileformat), typ=LogType.INFO)
         try:
-            backupfp = open(backup_filename, "w")
-            json.dump(configmapping, backupfp, sort_keys=args.jsonsort, indent=None if args.jsonindent < 0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
+            with open(backup_filename, "w") as backupfp:
+                json.dump(configmapping, backupfp, sort_keys=args.jsonsort, indent=None if args.jsonindent < 0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
         except Exception, e:
             exit(e[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
-        finally:
-            backupfp.close()
 
     if args.verbose:
         srctype = 'device'
@@ -2465,9 +2515,8 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
         if args.verbose:
             message("Reading restore file '{}' (Tasmota format)".format(restorefilename), typ=LogType.INFO)
         try:
-            restorefp = open(restorefilename, "rb")
-            new_encode_cfg = restorefp.read()
-            restorefp.close()
+            with open(restorefilename, "rb") as restorefp:
+                new_encode_cfg = restorefp.read()
         except Exception, e:
             exit(e[0], "'{}' {}".format(restorefilename, e[1]),line=inspect.getlineno(inspect.currentframe()))
 
@@ -2475,9 +2524,8 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
         if args.verbose:
             message("Reading restore file '{}' (binary format)".format(restorefilename), typ=LogType.INFO)
         try:
-            restorefp = open(restorefilename, "rb")
-            restorebin = restorefp.read()
-            restorefp.close()
+            with open(restorefilename, "rb") as restorefp:
+                restorebin = restorefp.read()
         except Exception, e:
             exit(e[0], "'{}' {}".format(restorefilename, e[1]),line=inspect.getlineno(inspect.currentframe()))
         header = struct.unpack_from('<L', restorebin, 0)[0]
@@ -2489,12 +2537,10 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
         if args.verbose:
             message("Reading restore file '{}' (JSON format)".format(restorefilename), typ=LogType.INFO)
         try:
-            restorefp = open(restorefilename, "r")
-            jsonconfig = json.load(restorefp)
+            with open(restorefilename, "r") as restorefp:
+                jsonconfig = json.load(restorefp)
         except ValueError as e:
             exit(ExitCode.JSON_READ_ERROR, "File '{}' invalid JSON: {}".format(restorefilename, e), line=inspect.getlineno(inspect.currentframe()))
-        finally:
-            restorefp.close()
         # process json config to binary config
         new_decode_cfg = Mapping2Bin(decode_cfg, jsonconfig, restorefilename)
         new_encode_cfg = DecryptEncrypt(new_decode_cfg)
@@ -2526,14 +2572,12 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
                 if args.verbose:
                     message("Write new data to file '{}' using restore file '{}'".format(args.tasmotafile, restorefilename), typ=LogType.INFO)
                 try:
-                    outputfile = open(args.tasmotafile, "wb")
-                    outputfile.write(new_encode_cfg)
+                    with open(args.tasmotafile, "wb") as outputfile:
+                        outputfile.write(new_encode_cfg)
                 except Exception, e:
                     exit(e[0], "'{}' {}".format(args.tasmotafile, e[1]),line=inspect.getlineno(inspect.currentframe()))
-                finally:
-                    outputfile.close()
-                    if args.verbose:
-                        message("Restore successful to file '{}' using restore file '{}'".format(args.tasmotafile, restorefilename), typ=LogType.INFO)
+                if args.verbose:
+                    message("Restore successful to file '{}' using restore file '{}'".format(args.tasmotafile, restorefilename), typ=LogType.INFO)
 
         else:
             global exitcode

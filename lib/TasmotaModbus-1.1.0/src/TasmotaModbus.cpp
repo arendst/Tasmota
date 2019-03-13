@@ -27,7 +27,6 @@ TasmotaModbus::TasmotaModbus(int receive_pin, int transmit_pin) : TasmotaSerial(
 uint16_t CalculateCRC(uint8_t *frame, uint8_t num)
 {
   uint16_t crc = 0xFFFF;
-  uint16_t flag;
 
   for (uint8_t i = 0; i < num; i++) {
     crc ^= frame[i];

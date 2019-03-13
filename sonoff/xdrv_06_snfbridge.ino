@@ -1,7 +1,7 @@
 /*
   xdrv_06_snfbridge.ino - sonoff RF bridge 433 support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends and Erik Andrén Zachrisson (fw update)
+  Copyright (C) 2019  Theo Arends and Erik Andrén Zachrisson (fw update)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ unsigned long sonoff_bridge_last_learn_time = 0;
 
 ssize_t rf_find_hex_record_start(uint8_t *buf, size_t size)
 {
-  for (int i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     if (buf[i] == ':') {
       return i;
     }
@@ -66,7 +66,7 @@ ssize_t rf_find_hex_record_start(uint8_t *buf, size_t size)
 
 ssize_t rf_find_hex_record_end(uint8_t *buf, size_t size)
 {
-  for (ssize_t i = 0; i < size; i++) {
+  for (size_t i = 0; i < size; i++) {
     if (buf[i] == '\n') {
       return i;
     }
@@ -251,7 +251,7 @@ void SonoffBridgeReceived(void)
     low_time = serial_in_buffer[3] << 8 | serial_in_buffer[4];   // Low time in uSec
     high_time = serial_in_buffer[5] << 8 | serial_in_buffer[6];  // High time in uSec
     if (low_time && high_time) {
-      for (byte i = 0; i < 9; i++) {
+      for (uint8_t i = 0; i < 9; i++) {
         Settings.rf_code[sonoff_bridge_learn_key][i] = serial_in_buffer[i +1];
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, sonoff_bridge_learn_key, D_JSON_LEARNED);
@@ -274,7 +274,7 @@ void SonoffBridgeReceived(void)
         sonoff_bridge_last_received_id = received_id;
         sonoff_bridge_last_time = now;
         strncpy_P(rfkey, PSTR("\"" D_JSON_NONE "\""), sizeof(rfkey));
-        for (byte i = 1; i <= 16; i++) {
+        for (uint8_t i = 1; i <= 16; i++) {
           if (Settings.rf_code[i][0]) {
             uint32_t send_id = Settings.rf_code[i][6] << 16 | Settings.rf_code[i][7] << 8 | Settings.rf_code[i][8];
             if (send_id == received_id) {
@@ -300,7 +300,7 @@ void SonoffBridgeReceived(void)
   }
 }
 
-boolean SonoffBridgeSerialInput(void)
+bool SonoffBridgeSerialInput(void)
 {
   // iTead Rf Universal Transceiver Module Serial Protocol Version 1.0 (20170420)
   static int8_t receive_len = 0;
@@ -352,7 +352,7 @@ boolean SonoffBridgeSerialInput(void)
   return 0;
 }
 
-void SonoffBridgeSendCommand(byte code)
+void SonoffBridgeSendCommand(uint8_t code)
 {
   Serial.write(0xAA);  // Start of Text
   Serial.write(code);  // Command or Acknowledge
@@ -370,7 +370,7 @@ void SonoffBridgeSendCode(uint32_t code)
 {
   Serial.write(0xAA);  // Start of Text
   Serial.write(0xA5);  // Send following code
-  for (byte i = 0; i < 6; i++) {
+  for (uint8_t i = 0; i < 6; i++) {
     Serial.write(Settings.rf_code[0][i]);
   }
   Serial.write((code >> 16) & 0xff);
@@ -387,7 +387,7 @@ void SonoffBridgeSend(uint8_t idx, uint8_t key)
   key--;               // Support 1 to 16
   Serial.write(0xAA);  // Start of Text
   Serial.write(0xA5);  // Send following code
-  for (byte i = 0; i < 8; i++) {
+  for (uint8_t i = 0; i < 8; i++) {
     Serial.write(Settings.rf_code[idx][i]);
   }
   if (0 == idx) {
@@ -418,10 +418,10 @@ void SonoffBridgeLearn(uint8_t key)
  * Commands
 \*********************************************************************************************/
 
-boolean SonoffBridgeCommand(void)
+bool SonoffBridgeCommand(void)
 {
   char command [CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSonoffBridgeCommands);
   if (-1 == command_code) {
@@ -485,7 +485,7 @@ boolean SonoffBridgeCommand(void)
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_SET_TO_DEFAULT);
       }
       else if (4 == XdrvMailbox.payload) {         // Save RF data provided by RFSync, RfLow, RfHigh and last RfCode
-        for (byte i = 0; i < 6; i++) {
+        for (uint8_t i = 0; i < 6; i++) {
           Settings.rf_code[XdrvMailbox.index][i] = Settings.rf_code[0][i];
         }
         Settings.rf_code[XdrvMailbox.index][6] = (sonoff_bridge_last_send_code >> 16) & 0xff;
@@ -566,11 +566,11 @@ void SonoffBridgeInit(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv06(byte function)
+bool Xdrv06(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
-  if (SONOFF_BRIDGE == Settings.module) {
+  if (SONOFF_BRIDGE == my_module_type) {
     switch (function) {
       case FUNC_INIT:
         SonoffBridgeInit();

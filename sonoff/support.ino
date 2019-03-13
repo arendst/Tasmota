@@ -1,7 +1,7 @@
 /*
   support.ino - support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ Ticker tickerOSWatch;
 #define OSWATCH_RESET_TIME 120
 
 static unsigned long oswatch_last_loop_time;
-byte oswatch_blocked_loop = 0;
+uint8_t oswatch_blocked_loop = 0;
 
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
 //void OsWatchTicker() ICACHE_RAM_ATTR;
@@ -47,8 +47,7 @@ void OsWatchTicker(void)
   unsigned long last_run = abs(t - oswatch_last_loop_time);
 
 #ifdef DEBUG_THEO
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(WiFi.RSSI()), last_run);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(WiFi.RSSI()), last_run);
 #endif  // DEBUG_THEO
   if (last_run >= (OSWATCH_RESET_TIME * 1000)) {
 //    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));  // Save iram space
@@ -84,7 +83,7 @@ String GetResetReason(void)
   }
 }
 
-boolean OsWatchBlockedLoop(void)
+bool OsWatchBlockedLoop(void)
 {
   return oswatch_blocked_loop;
 }
@@ -140,7 +139,7 @@ size_t strchrspn(const char *str1, int character)
 char* subStr(char* dest, char* str, const char *delim, int index)
 {
   char *act;
-  char *sub;
+  char *sub = NULL;
   char *ptr;
   int i;
 
@@ -154,34 +153,39 @@ char* subStr(char* dest, char* str, const char *delim, int index)
   return sub;
 }
 
-double CharToDouble(char *str)
+double CharToDouble(const char *str)
 {
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
 
   strlcpy(strbuf, str, sizeof(strbuf));
-  char *pt;
-  double left = atoi(strbuf);
+  char *pt = strbuf;
+  while ((*pt != '\0') && isblank(*pt)) { pt++; }  // Trim leading spaces
+
+  signed char sign = 1;
+  if (*pt == '-') { sign = -1; }
+  if (*pt == '-' || *pt=='+') { pt++; }            // Skip any sign
+
+  double left = 0;
+  if (*pt != '.') {
+    left = atoi(pt);                               // Get left part
+    while (isdigit(*pt)) { pt++; }                 // Skip number
+  }
+
   double right = 0;
-  short len = 0;
-  pt = strtok (strbuf, ".");
-  if (pt) {
-    pt = strtok (NULL, ".");
-    if (pt) {
-      right = atoi(pt);
-      len = strlen(pt);
-      double fac = 1;
-      while (len) {
-        fac /= 10.0;
-        len--;
-      }
-      // pow is also very large
-      //double fac=pow(10,-len);
-      right *= fac;
+  if (*pt == '.') {
+    pt++;
+    right = atoi(pt);                              // Decimal part
+    while (isdigit(*pt)) {
+      pt++;
+      right /= 10.0;
     }
   }
+
   double result = left + right;
-  if (left < 0) { result = left - right; }
+  if (sign < 0) {
+    return -result;                                // Add negative sign
+  }
   return result;
 }
 
@@ -210,9 +214,11 @@ char* Unescape(char* buffer, uint16_t* size)
 {
   uint8_t* read = (uint8_t*)buffer;
   uint8_t* write = (uint8_t*)buffer;
-  uint16_t start_size = *size;
-  uint16_t end_size = *size;
+  int16_t start_size = *size;
+  int16_t end_size = *size;
   uint8_t che = 0;
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
 
   while (start_size > 0) {
     uint8_t ch = *read++;
@@ -235,6 +241,14 @@ char* Unescape(char* buffer, uint16_t* size)
           case 's': che = ' ';  break;   // 20 Space
           case 't': che = '\t'; break;   // 09 Horizontal tab
           case 'v': che = '\v'; break;   // 0B Vertical tab
+          case 'x': {
+            uint8_t* start = read;
+            che = (uint8_t)strtol((const char*)read, (char**)&read, 16);
+            start_size -= (uint16_t)(read - start);
+            end_size -= (uint16_t)(read - start);
+            break;
+          }
+          case '"': che = '\"'; break;   // 22 Quotation mark
 //          case '?': che = '\?'; break;   // 3F Question mark
           default : {
             che = chi;
@@ -247,6 +261,9 @@ char* Unescape(char* buffer, uint16_t* size)
     }
   }
   *size = end_size;
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
+
   return buffer;
 }
 
@@ -262,7 +279,7 @@ char* RemoveSpace(char* p)
       *write++ = ch;
     }
   }
-  *write = '\0';
+//  *write = '\0';  // Removed 20190223 as it buffer overflows on no isspace found - no need either
   return p;
 }
 
@@ -291,27 +308,6 @@ char* UpperCase_P(char* dest, const char* source)
   }
   return dest;
 }
-
-/*
-char* LTrim(char* p)
-{
-  while ((*p != '\0') && (isblank(*p))) {
-    p++;                                     // Trim leading spaces
-  }
-  return p;
-}
-
-char* RTrim(char* p)
-{
-  char* q = p + strlen(p) -1;
-  while ((q >= p) && (isblank(*q))) {
-    q--;                                     // Trim trailing spaces
-  }
-  q++;
-  *q = '\0';
-  return p;
-}
-*/
 
 char* Trim(char* p)
 {
@@ -361,10 +357,10 @@ uint8_t Shortcut(const char* str)
   return result;
 }
 
-boolean ParseIp(uint32_t* addr, const char* str)
+bool ParseIp(uint32_t* addr, const char* str)
 {
   uint8_t *part = (uint8_t*)addr;
-  byte i;
+  uint8_t i;
 
   *addr = 0;
   for (i = 0; i < 4; i++) {
@@ -378,7 +374,7 @@ boolean ParseIp(uint32_t* addr, const char* str)
   return (3 == i);
 }
 
-void MakeValidMqtt(byte option, char* str)
+void MakeValidMqtt(uint8_t option, char* str)
 {
 // option 0 = replace by underscore
 // option 1 = delete character
@@ -643,7 +639,160 @@ int GetStateNumber(char *state_text)
   return state_number;
 }
 
-boolean GetUsedInModule(byte val, uint8_t *arr)
+void SetSerialBaudrate(int baudrate)
+{
+  Settings.baudrate = baudrate / 1200;
+  if (Serial.baudRate() != baudrate) {
+    if (seriallog_level) {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
+    }
+    delay(100);
+    Serial.flush();
+    Serial.begin(baudrate, serial_config);
+    delay(10);
+    Serial.println();
+  }
+}
+
+void ClaimSerial(void)
+{
+  serial_local = true;
+  AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
+  SetSeriallog(LOG_LEVEL_NONE);
+  baudrate = Serial.baudRate();
+  Settings.baudrate = baudrate / 1200;
+}
+
+void SerialSendRaw(char *codes)
+{
+  char *p;
+  char stemp[3];
+  uint8_t code;
+
+  int size = strlen(codes);
+
+  while (size > 0) {
+    strlcpy(stemp, codes, sizeof(stemp));
+    code = strtol(stemp, &p, 16);
+    Serial.write(code);
+    size -= 2;
+    codes += 2;
+  }
+}
+
+uint32_t GetHash(const char *buffer, size_t size)
+{
+  uint32_t hash = 0;
+  for (uint16_t i = 0; i <= size; i++) {
+    hash += (uint8_t)*buffer++ * (i +1);
+  }
+  return hash;
+}
+
+void ShowSource(int source)
+{
+  if ((source > 0) && (source < SRC_MAX)) {
+    char stemp1[20];
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
+  }
+}
+
+/*********************************************************************************************\
+ * GPIO Module and Template management
+\*********************************************************************************************/
+
+uint8_t ModuleNr()
+{
+  // 0    = User module (255)
+  // 1 up = Template module 0 up
+  return (USER_MODULE == Settings.module) ? 0 : Settings.module +1;
+}
+
+String AnyModuleName(uint8_t index)
+{
+  if (USER_MODULE == index) {
+    return String(Settings.user_template.name);
+  } else {
+    return FPSTR(kModules[index].name);
+  }
+}
+
+String ModuleName()
+{
+  return AnyModuleName(Settings.module);
+}
+
+void ModuleGpios(myio *gp)
+{
+  uint8_t *dest = (uint8_t *)gp;
+  memset(dest, GPIO_NONE, sizeof(myio));
+
+  uint8_t src[sizeof(mycfgio)];
+  if (USER_MODULE == Settings.module) {
+    memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
+  } else {
+    memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
+  }
+  // 11 85 00 85 85 00 00 00 15 38 85 00 00 81
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
+
+  uint8_t j = 0;
+  for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+    if (6 == i) { j = 9; }
+    if (8 == i) { j = 12; }
+    dest[j] = src[i];
+    j++;
+  }
+  // 11 85 00 85 85 00 00 00 00 00 00 00 15 38 85 00 00 81
+
+//  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
+}
+
+gpio_flag ModuleFlag()
+{
+  gpio_flag flag;
+
+  if (USER_MODULE == Settings.module) {
+    flag = Settings.user_template.flag;
+  } else {
+    memcpy_P(&flag, &kModules[Settings.module].flag, sizeof(gpio_flag));
+  }
+
+  return flag;
+}
+
+void ModuleDefault(uint8_t module)
+{
+  if (USER_MODULE == module) { module = WEMOS; }  // Generic
+  Settings.user_template_base = module;
+  memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
+}
+
+void SetModuleType()
+{
+  my_module_type = (USER_MODULE == Settings.module) ? Settings.user_template_base : Settings.module;
+}
+
+uint8_t ValidPin(uint8_t pin, uint8_t gpio)
+{
+  uint8_t result = gpio;
+
+  if (((pin > 5) && (pin < 9)) || (11 == pin)) {
+    result = GPIO_NONE;  // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
+  }
+  if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {
+    if ((pin == 9) || (pin == 10)) { result = GPIO_NONE; }  // Disable possible flash GPIO9 and GPIO10
+  }
+  return result;
+}
+
+bool ValidGPIO(uint8_t pin, uint8_t gpio)
+{
+  return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
+}
+
+bool GetUsedInModule(uint8_t val, uint8_t *arr)
 {
   int offset = 0;
 
@@ -654,6 +803,12 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
   }
   if ((val >= GPIO_KEY1_NP) && (val < GPIO_KEY1_NP + MAX_KEYS)) {
     offset = -(GPIO_KEY1_NP - GPIO_KEY1);
+  }
+  if ((val >= GPIO_KEY1_INV) && (val < GPIO_KEY1_INV + MAX_KEYS)) {
+    offset = -(GPIO_KEY1_INV - GPIO_KEY1);
+  }
+  if ((val >= GPIO_KEY1_INV_NP) && (val < GPIO_KEY1_INV_NP + MAX_KEYS)) {
+    offset = -(GPIO_KEY1_INV_NP - GPIO_KEY1);
   }
 
   if ((val >= GPIO_SWT1) && (val < GPIO_SWT1 + MAX_SWITCHES)) {
@@ -691,80 +846,49 @@ boolean GetUsedInModule(byte val, uint8_t *arr)
     offset = -(GPIO_CNTR1_NP - GPIO_CNTR1);
   }
 
-  for (byte i = 0; i < MAX_GPIO_PIN; i++) {
+  for (uint8_t i = 0; i < MAX_GPIO_PIN; i++) {
     if (arr[i] == val) { return true; }
     if (arr[i] == val + offset) { return true; }
   }
   return false;
 }
 
-void SetSerialBaudrate(int baudrate)
+bool JsonTemplate(const char* dataBuf)
 {
-  Settings.baudrate = baudrate / 1200;
-  if (Serial.baudRate() != baudrate) {
-    if (seriallog_level) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
-      AddLog(LOG_LEVEL_INFO);
+  StaticJsonBuffer<350> jb;  // 331 from https://arduinojson.org/v5/assistant/
+  JsonObject& obj = jb.parseObject(dataBuf);
+  if (!obj.success()) { return false; }
+
+  // All parameters are optional allowing for partial changes
+  const char* name = obj[D_JSON_NAME];
+  if (name != nullptr) {
+    strlcpy(Settings.user_template.name, name, sizeof(Settings.user_template.name));
+  }
+  if (obj[D_JSON_GPIO].success()) {
+    for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+      Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
     }
-    delay(100);
-    Serial.flush();
-    Serial.begin(baudrate, serial_config);
-    delay(10);
-    Serial.println();
   }
+  if (obj[D_JSON_FLAG].success()) {
+    uint8_t flag = obj[D_JSON_FLAG] | 0;
+    memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
+  }
+  if (obj[D_JSON_BASE].success()) {
+    uint8_t base = obj[D_JSON_BASE];
+    if ((0 == base) || (base >= MAXMODULE)) { base = 17; } else { base--; }
+    Settings.user_template_base = base;  // Default WEMOS
+  }
+  return true;
 }
 
-void ClaimSerial(void)
+void TemplateJson()
 {
-  serial_local = 1;
-  AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
-  SetSeriallog(LOG_LEVEL_NONE);
-  baudrate = Serial.baudRate();
-  Settings.baudrate = baudrate / 1200;
-}
-
-void SerialSendRaw(char *codes)
-{
-  char *p;
-  char stemp[3];
-  uint8_t code;
-
-  int size = strlen(codes);
-
-  while (size > 0) {
-    snprintf(stemp, sizeof(stemp), codes);
-    code = strtol(stemp, &p, 16);
-    Serial.write(code);
-    size -= 2;
-    codes += 2;
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
+  for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (i>0)?",":"", Settings.user_template.gp.io[i]);
   }
-}
-
-uint32_t GetHash(const char *buffer, size_t size)
-{
-  uint32_t hash = 0;
-  for (uint16_t i = 0; i <= size; i++) {
-    hash += (uint8_t)*buffer++ * (i +1);
-  }
-  return hash;
-}
-
-void ShowSource(int source)
-{
-  if ((source > 0) && (source < SRC_MAX)) {
-    char stemp1[20];
-    snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
-    AddLog(LOG_LEVEL_DEBUG);
-  }
-}
-
-uint8_t ValidGPIO(uint8_t pin, uint8_t gpio)
-{
-  uint8_t result = gpio;
-  if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {
-    if ((pin == 9) || (pin == 10)) { result = GPIO_NONE; }  // Disable possible flash GPIO9 and GPIO10
-  }
-  return result;
+  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"),
+    mqtt_data, Settings.user_template.flag, Settings.user_template_base +1);
 }
 
 /*********************************************************************************************\
@@ -841,7 +965,7 @@ uint32_t i2c_buffer = 0;
 
 bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
 {
-  byte x = I2C_RETRY_COUNTER;
+  uint8_t x = I2C_RETRY_COUNTER;
 
   i2c_buffer = 0;
   do {
@@ -850,7 +974,7 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
     if (0 == Wire.endTransmission(false)) {             // Try to become I2C Master, send data and collect bytes, keep master status for next request...
       Wire.requestFrom((int)addr, (int)size);           // send data n-bytes read
       if (Wire.available() == size) {
-        for (byte i = 0; i < size; i++) {
+        for (uint8_t i = 0; i < size; i++) {
           i2c_buffer = i2c_buffer << 8 | Wire.read();   // receive DATA
         }
       }
@@ -942,7 +1066,7 @@ int32_t I2cRead24(uint8_t addr, uint8_t reg)
 
 bool I2cWrite(uint8_t addr, uint8_t reg, uint32_t val, uint8_t size)
 {
-  byte x = I2C_RETRY_COUNTER;
+  uint8_t x = I2C_RETRY_COUNTER;
 
   do {
     Wire.beginTransmission((uint8_t)addr);              // start transmission to device
@@ -971,7 +1095,7 @@ int8_t I2cReadBuffer(uint8_t addr, uint8_t reg, uint8_t *reg_data, uint16_t len)
   Wire.beginTransmission((uint8_t)addr);
   Wire.write((uint8_t)reg);
   Wire.endTransmission();
-  if (len != Wire.requestFrom((uint8_t)addr, (byte)len)) {
+  if (len != Wire.requestFrom((uint8_t)addr, (uint8_t)len)) {
     return 1;
   }
   while (len--) {
@@ -1002,9 +1126,9 @@ void I2cScan(char *devs, unsigned int devs_len)
   // I2C_SDA_HELD_LOW            3 = I2C bus error. SDA line held low by slave/another_master after n bits
   // I2C_SDA_HELD_LOW_AFTER_INIT 4 = line busy. SDA again held low by another device. 2nd master?
 
-  byte error = 0;
-  byte address = 0;
-  byte any = 0;
+  uint8_t error = 0;
+  uint8_t address = 0;
+  uint8_t any = 0;
 
   snprintf_P(devs, devs_len, PSTR("{\"" D_CMND_I2CSCAN "\":\"" D_JSON_I2CSCAN_DEVICES_FOUND_AT));
   for (address = 1; address <= 127; address++) {
@@ -1028,9 +1152,9 @@ void I2cScan(char *devs, unsigned int devs_len)
   }
 }
 
-boolean I2cDevice(byte addr)
+bool I2cDevice(uint8_t addr)
 {
-  for (byte address = 1; address <= 127; address++) {
+  for (uint8_t address = 1; address <= 127; address++) {
     Wire.beginTransmission(address);
     if (!Wire.endTransmission() && (address == addr)) {
       return true;
@@ -1044,12 +1168,11 @@ boolean I2cDevice(byte addr)
  * Syslog
  *
  * Example:
- *   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Any value %d"), value);
- *   AddLog(LOG_LEVEL_DEBUG);
+ *   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_LOG "Any value %d"), value);
  *
 \*********************************************************************************************/
 
-void SetSeriallog(byte loglevel)
+void SetSeriallog(uint8_t loglevel)
 {
   Settings.seriallog_level = loglevel;
   seriallog_level = loglevel;
@@ -1057,7 +1180,7 @@ void SetSeriallog(byte loglevel)
 }
 
 #ifdef USE_WEBSERVER
-void GetLog(byte idx, char** entry_pp, size_t* len_p)
+void GetLog(uint8_t idx, char** entry_pp, size_t* len_p)
 {
   char* entry_p = NULL;
   size_t len = 0;
@@ -1065,7 +1188,7 @@ void GetLog(byte idx, char** entry_pp, size_t* len_p)
   if (idx) {
     char* it = web_log;
     do {
-      byte cur_idx = *it;
+      uint8_t cur_idx = *it;
       it++;
       size_t tmp = strchrspn(it, '\1');
       tmp++;                             // Skip terminating '\1'
@@ -1101,12 +1224,11 @@ void Syslog(void)
   } else {
     syslog_level = 0;
     syslog_timer = SYSLOG_TIMER;
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
   }
 }
 
-void AddLog(byte loglevel)
+void AddLog(uint8_t loglevel)
 {
   char mxtime[10];  // "13:45:21 "
 
@@ -1136,13 +1258,13 @@ void AddLog(byte loglevel)
   if (!global_state.wifi_down && (loglevel <= syslog_level)) { Syslog(); }
 }
 
-void AddLog_P(byte loglevel, const char *formatP)
+void AddLog_P(uint8_t loglevel, const char *formatP)
 {
   snprintf_P(log_data, sizeof(log_data), formatP);
   AddLog(loglevel);
 }
 
-void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
+void AddLog_P(uint8_t loglevel, const char *formatP, const char *formatP2)
 {
   char message[100];
 
@@ -1152,22 +1274,31 @@ void AddLog_P(byte loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
-void AddLogSerial(byte loglevel, uint8_t *buffer, int count)
+void AddLog_P2(uint8_t loglevel, PGM_P formatP, ...)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SERIAL D_RECEIVED));
+  va_list arg;
+  va_start(arg, formatP);
+  int len = vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  va_end(arg);
+
+  AddLog(loglevel);
+}
+
+void AddLogBuffer(uint8_t loglevel, uint8_t *buffer, int count)
+{
+  snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
   for (int i = 0; i < count; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer++));
   }
   AddLog(loglevel);
 }
 
-void AddLogSerial(byte loglevel)
+void AddLogSerial(uint8_t loglevel)
 {
-  AddLogSerial(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
+  AddLogBuffer(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
 }
 
 void AddLogMissed(char *sensor, uint8_t misses)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
 }

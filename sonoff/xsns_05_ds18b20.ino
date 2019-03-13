@@ -1,7 +1,7 @@
 /*
   xsns_05_ds18b20.ino - DS18B20 temperature sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -42,7 +42,11 @@ uint8_t OneWireReset(void)
   uint8_t retries = 125;
 
   //noInterrupts();
+#ifdef DS18B20_INTERNAL_PULLUP
+  pinMode(ds18x20_pin, INPUT_PULLUP);
+#else
   pinMode(ds18x20_pin, INPUT);
+#endif
   do {
     if (--retries == 0) {
       return 0;
@@ -52,7 +56,11 @@ uint8_t OneWireReset(void)
   pinMode(ds18x20_pin, OUTPUT);
   digitalWrite(ds18x20_pin, LOW);
   delayMicroseconds(480);
+#ifdef DS18B20_INTERNAL_PULLUP
+  pinMode(ds18x20_pin, INPUT_PULLUP);
+#else
   pinMode(ds18x20_pin, INPUT);
+#endif
   delayMicroseconds(70);
   uint8_t r = !digitalRead(ds18x20_pin);
   //interrupts();
@@ -81,7 +89,11 @@ uint8_t OneWireReadBit(void)
   pinMode(ds18x20_pin, OUTPUT);
   digitalWrite(ds18x20_pin, LOW);
   delayMicroseconds(3);
+#ifdef DS18B20_INTERNAL_PULLUP
+  pinMode(ds18x20_pin, INPUT_PULLUP);
+#else
   pinMode(ds18x20_pin, INPUT);
+#endif
   delayMicroseconds(10);
   uint8_t r = digitalRead(ds18x20_pin);
   //interrupts();
@@ -108,7 +120,7 @@ uint8_t OneWireRead(void)
   return r;
 }
 
-boolean OneWireCrc8(uint8_t *addr)
+bool OneWireCrc8(uint8_t *addr)
 {
   uint8_t crc = 0;
   uint8_t len = 8;
@@ -137,7 +149,7 @@ void Ds18b20Convert(void)
 //  delay(750);                          // 750ms should be enough for 12bit conv
 }
 
-boolean Ds18b20Read(void)
+bool Ds18b20Read(void)
 {
   uint8_t data[9];
   int8_t sign = 1;
@@ -187,7 +199,7 @@ void Ds18b20EverySecond(void)
   }
 }
 
-void Ds18b20Show(boolean json)
+void Ds18b20Show(bool json)
 {
   if (ds18b20_valid) {        // Check for valid temperature
     char temperature[33];
@@ -216,9 +228,9 @@ void Ds18b20Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns05(byte function)
+bool Xsns05(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pin[GPIO_DSB] < 99) {
     switch (function) {

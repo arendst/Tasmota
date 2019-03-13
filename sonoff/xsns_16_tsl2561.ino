@@ -1,7 +1,7 @@
 /*
   xsns_16_tsl2561.ino - TSL2561 light sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends and Joachim Banzhaf
+  Copyright (C) 2019  Theo Arends and Joachim Banzhaf
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -48,7 +48,6 @@ bool Tsl2561Read(void)
   uint16_t scaledFull, scaledIr;
   uint32_t full, ir;
 
-  if (Tsl.available()) {
     if (Tsl.on()) {
       if (Tsl.id(id)
         && Tsl2561Util::autoGain(Tsl, gain, exposure, scaledFull, scaledIr)
@@ -58,7 +57,6 @@ bool Tsl2561Read(void)
         tsl2561_milliLux = 0;
       }
     }
-  }
   tsl2561_valid = SENSOR_MAX_MISS;
   return true;
 }
@@ -66,13 +64,14 @@ bool Tsl2561Read(void)
 void Tsl2561Detect(void)
 {
   if (tsl2561_type) { return; }
+  uint8_t id;
 
-  if (!Tsl.available()) {
+  if (I2cDevice(0x29) || I2cDevice(0x39) || I2cDevice(0x49)) {
     Tsl.begin();
-    if (Tsl.available()) {
+    if (!Tsl.id(id)) return;
+    if (Tsl.on()) {
       tsl2561_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, tsl2561_types, Tsl.address());
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, tsl2561_types, Tsl.address(), id);
     }
   }
 }
@@ -88,7 +87,7 @@ void Tsl2561EverySecond(void)
     if (tsl2561_type) {
       if (!Tsl2561Read()) {
         AddLogMissed(tsl2561_types, tsl2561_valid);
-//        if (!tsl2561_valid) { tsl2561_type = 0; }
+               if (!tsl2561_valid) { tsl2561_type = 0; }
       }
     }
   }
@@ -99,7 +98,7 @@ const char HTTP_SNS_TSL2561[] PROGMEM =
   "%s{s}TSL2561 " D_ILLUMINANCE "{m}%u.%03u " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
-void Tsl2561Show(boolean json)
+void Tsl2561Show(bool json)
 {
   if (tsl2561_valid) {
     if (json) {
@@ -120,9 +119,9 @@ void Tsl2561Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns16(byte function)
+bool Xsns16(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

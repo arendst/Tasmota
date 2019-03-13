@@ -1,7 +1,7 @@
 /*
   xsns_25_sdm630.ino - Eastron SDM630-Modbus energy meter support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Gennaro Tortone
+  Copyright (C) 2019  Gennaro Tortone
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -155,8 +155,7 @@ void SDM630250ms(void)              // Every 250 mSec
     if (data_ready) {
       uint8_t error = SDM630_ModbusReceive(&value);
       if (error) {
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "SDM630 response error %d"), error);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM630 response error %d"), error);
       } else {
         switch(sdm630_read_state) {
           case 0:
@@ -267,7 +266,7 @@ const char HTTP_SNS_SDM630_DATA[] PROGMEM = "%s"
   "{s}SDM630 " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
 #endif  // USE_WEBSERVER
 
-void SDM630Show(boolean json)
+void SDM630Show(bool json)
 {
   char voltage_l1[33];
   dtostrfd(sdm630_voltage[0], Settings.flag2.voltage_resolution, voltage_l1);
@@ -326,9 +325,9 @@ void SDM630Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns25(byte function)
+bool Xsns25(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (sdm630_type) {
     switch (function) {

@@ -3,7 +3,7 @@
 """
   decode-status.py - decode status for Sonoff-Tasmota
 
-  Copyright (C) 2018 Theo Arends
+  Copyright (C) 2019 Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -84,19 +84,29 @@ a_setoption = [[
     "Enforce HASS light group",
     "Do not show Wifi and Mqtt state using Led"
     ],[
+    "Key hold time (ms)",
+    "Sonoff POW Max_Power_Retry",
+    "Tuya dimmer device id",
+    "(not used) mDNS delayed start (Sec)",
+    "Boot loop retry offset (0 = disable)",
+    "",
+    "","","","","","",
+    "","","","","","",
+    ],[
     "Timers enabled",
     "Generic ESP8285 GPIO enabled",
     "Add UTC time offset to JSON message",
     "Show hostname and IP address in GUI",
     "Apply SetOption20 to Tuya",
-    "Use short Hass discovery messages",
+    "mDNS enabled",
     "Use wifi network scan at restart",
     "Use wifi network rescan regularly",
     "Add IR raw data to JSON message",
     "Change state topic from tele/STATE to stat/RESULT",
     "Enable normal sleep instead of dynamic sleep",
-    "",
-    "","","","",
+    "Force local operation when button/switch topic is set",
+    "Force no pull-up",
+    "","","",
     "","","","",
     "","","","",
     "","","","",
@@ -113,8 +123,8 @@ a_features = [[
     "USE_TIMERS","USE_SUNRISE","USE_TIMERS_WEB","USE_RULES",
     "USE_KNX","USE_WPS","USE_SMARTCONFIG","MQTT_ARDUINOMQTT"
     ],[
-    "USE_CONFIG_OVERRIDE","BE_MINIMAL","USE_SENSORS","USE_CLASSIC",
-    "USE_KNX_NO_EMULATION","USE_DISPLAY_MODES1TO5","USE_DISPLAY_GRAPH","USE_DISPLAY_LCD",
+    "USE_CONFIG_OVERRIDE","FIRMWARE_MINIMAL","FIRMWARE_SENSORS","FIRMWARE_CLASSIC",
+    "FIRMWARE_KNX_NO_EMULATION","USE_DISPLAY_MODES1TO5","USE_DISPLAY_GRAPH","USE_DISPLAY_LCD",
     "USE_DISPLAY_SSD1306","USE_DISPLAY_MATRIX","USE_DISPLAY_ILI9341","USE_DISPLAY_EPAPER",
     "USE_DISPLAY_SH1106","USE_MP3_PLAYER","USE_PCA9685","USE_TUYA_DIMMER",
     "USE_RC_SWITCH","USE_ARMTRONIX_DIMMERS","","",
@@ -135,8 +145,8 @@ a_features = [[
     "USE_MCP230xx_OUTPUT","USE_MCP230xx_DISPLAYOUTPUT","USE_HLW8012","USE_CSE7766",
     "USE_MCP39F501","USE_PZEM_AC","USE_DS3231","USE_HX711",
     "USE_PZEM_DC","USE_TX20_WIND_SENSOR","USE_MGC3130","USE_RF_SENSOR",
-    "USE_THEO_V2","USE_ALECTO_V2","","",
-    "","","","",
+    "USE_THEO_V2","USE_ALECTO_V2","USE_AZ7798","USE_MAX31855",
+    "USE_PN532_I2C","USE_MAX44009","","",
     "","","","",
     "","","",""]]
 
@@ -167,66 +177,73 @@ if (options.device):
     obj = json.loads(body)
 else:
     jsonfile = options.jsonfile
-    fp = open(jsonfile, "r")
-    obj = json.load(fp)
-    fp.close()
+    with open(jsonfile, "r") as fp:
+        obj = json.load(fp)
 
 def StartDecode():
-    print ("\n*** decode-status.py v20180730 by Theo Arends ***")
+    print ("\n*** decode-status.py v20190204 by Theo Arends and Jacek Ziolkowski ***")
 
 #    print("Decoding\n{}".format(obj))
 
-    if ("StatusSNS" in obj):
-        if ("Time" in obj["StatusSNS"]):
+    if "StatusSNS" in obj:
+        if "Time" in obj["StatusSNS"]:
             time = str(" from status report taken at {}".format(obj["StatusSNS"]["Time"]))
 
-    if ("Status" in obj):
-        if ("FriendlyName" in obj["Status"]):
+    if "Status" in obj:
+        if "FriendlyName" in obj["Status"]:
             print("Decoding information for device {}{}".format(obj["Status"]["FriendlyName"][0], time))
 
-    if ("StatusLOG" in obj):
-        if ("SetOption" in obj["StatusLOG"]):
+    if "StatusLOG" in obj:
+        if "SetOption" in obj["StatusLOG"]:
             options = []
-            o = 0
-            p = 0
 
-            r = 1
-            if (len(obj["StatusLOG"]["SetOption"]) == 3):
-                r = 2
+            i = 0
+            for r,opt_group in enumerate(a_setoption):
+                register = obj["StatusLOG"]["SetOption"][r]
 
-            for f in range(r):
-                if (f == 1):
-                    o = 2
-                    p = 50
+                if r > 0 and len(obj["StatusLOG"]["SetOption"]) == 2: # old firmware: array consisted only of SetOptions 0..31 and resolution
+                    break
 
-                option = obj["StatusLOG"]["SetOption"][o]
-                i_option = int(option,16)
-                for i in range(len(a_setoption[f])):
-                    if (a_setoption[f][i]):
-                        state = (i_option >> i) & 1
-                        options.append(str("{0:2d} ({1}) {2}".format(i + p, a_on_off[state], a_setoption[f][i])))
+                if r == 1:
+                    if len(register) == 8:            # pre 6.1.1.14: array consisted of SetOptions 0..31, resolution, and SetOptions 50..81
+                        i += 18                       # adjust option index and skip 2nd register
+                        continue
+
+                    elif len(register) == 36:         # 6.1.1.14: array consists of SetOptions 0..31, SetOptions 32..49, and SetOptions 50..81
+                        split_register = [int(register[opt*2:opt*2+2],16) for opt in range(18)] # split register into 18 values
+
+                        for opt_idx, option in enumerate(opt_group):
+                            options.append(str("{0:2d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))
+                            i += 1
+
+                if r in (0, 2): #registers 1 and 3 hold binary values
+                    for opt_idx, option in enumerate(opt_group):
+                        i_register = int(register,16)
+                        state = (i_register >> opt_idx) & 1
+                        options.append(str("{0:2d} ({1}) {2}".format(i, a_on_off[state], option)))
+                        i += 1
 
             print("\nOptions")
-            for i in range(len(options)):
-                print("  {}".format(options[i]))
+            for o in options:
+                print("  {}".format(o))
 
-    if ("StatusMEM" in obj):
-        if ("Features" in obj["StatusMEM"]):
+    if "StatusMEM" in obj:
+        if "Features" in obj["StatusMEM"]:
             features = []
             for f in range(5):
                 feature = obj["StatusMEM"]["Features"][f]
                 i_feature = int(feature,16)
-                if (f == 0):
+                if f == 0:
                     features.append(str("Language LCID = {}".format(i_feature & 0xFFFF)))
                 else:
                     for i in range(len(a_features[f -1])):
-                        if ((i_feature >> i) & 1):
+                        if (i_feature >> i) & 1:
                             features.append(a_features[f -1][i])
 
             features.sort()
             print("\nFeatures")
-            for i in range(len(features)):
-                print("  {}".format(features[i]))
+            for f in features:
+                print("  {}".format(f))
 
 if __name__ == "__main__":
     try:

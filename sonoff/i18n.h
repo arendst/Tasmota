@@ -1,7 +1,7 @@
 /*
   i18n.h - internationalization for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@
 #define D_JSON_CHANNEL "Channel"
 #define D_JSON_CO2 "CarbonDioxide"
 #define D_JSON_COMMAND "Command"
+#define D_JSON_CONFIG_HOLDER "CfgHolder"
 #define D_JSON_CONNECT_FAILED "Connect failed"
 #define D_JSON_COREVERSION "Core"
 #define D_JSON_COUNT "Count"
@@ -53,6 +54,7 @@
 #define D_JSON_DISTANCE "Distance"
 #define D_JSON_DNSSERVER "DNSServer"
 #define D_JSON_DONE "Done"
+#define D_JSON_DOWNTIME "Downtime"
 #define D_JSON_ECO2 "eCO2"
 #define D_JSON_EMPTY "Empty"
 #define D_JSON_ENDDST "EndDST"           // End Daylight Savings Time
@@ -72,6 +74,7 @@
 #define D_JSON_FROM "from"
 #define D_JSON_GAS "Gas"
 #define D_JSON_GATEWAY "Gateway"
+#define D_JSON_GROUPS "Groups"
 #define D_JSON_HEAPSIZE "Heap"
 #define D_JSON_HIGH "High"
 #define D_JSON_HOST_NOT_FOUND "Host not found"
@@ -87,11 +90,14 @@
 #define D_JSON_INFRARED "Infrared"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
+#define D_JSON_LINK_COUNT "LinkCount"
 #define D_JSON_LOCAL_TIME "Local"
 #define D_JSON_LOW "Low"
 #define D_JSON_MAC "Mac"
 #define D_JSON_MASK "Mask"
 #define D_JSON_MINIMAL "minimal"
+#define D_JSON_MODEL "Model"
+#define D_JSON_MQTT_COUNT "MqttCount"
 #define D_JSON_NO "No"
 #define D_JSON_NOISE "Noise"
 #define D_JSON_NONE "None"
@@ -106,9 +112,12 @@
 #define D_JSON_PRESSURE "Pressure"
 #define D_JSON_PRESSUREATSEALEVEL "SeaPressure"
 #define D_JSON_PRESSURE_UNIT "PressureUnit"
+#define D_JSON_PROBETEMPERATURE "ProbeTemperature"
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
+#define D_JSON_REFERENCETEMPERATURE "ReferenceTemperature"
 #define D_JSON_RESET "Reset"
+#define D_JSON_RESOLUTION "Resolution"
 #define D_JSON_RESTARTING "Restarting"
 #define D_JSON_RESTARTREASON "RestartReason"
 #define D_JSON_RSSI "RSSI"
@@ -155,6 +164,7 @@
 #define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
 
 #define D_RSLT_ENERGY "ENERGY"
+#define D_RSLT_HASS_STATE "HASS_STATE"
 #define D_RSLT_INFO "INFO"
 #define D_RSLT_MARGINS "MARGINS"
 #define D_RSLT_POWER "POWER"
@@ -163,6 +173,8 @@
 #define D_RSLT_STATE "STATE"
 #define D_RSLT_UPTIME "UPTIME"
 #define D_RSLT_WARNING "WARNING"
+
+#define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 
 // Commands sonoff.ino
 #define D_CMND_BACKLOG "Backlog"
@@ -236,8 +248,10 @@
   #define D_WCFG_4_RETRY "Retry"
   #define D_WCFG_5_WAIT "Wait"
   #define D_WCFG_6_SERIAL "Serial"
+  #define D_WCFG_7_WIFIMANAGER_RESET_ONLY "ManagerRst"
 #define D_CMND_FRIENDLYNAME "FriendlyName"
 #define D_CMND_SWITCHMODE "SwitchMode"
+#define D_CMND_INTERLOCK "Interlock"
 #define D_CMND_TELEPERIOD "TelePeriod"
 #define D_CMND_RESTART "Restart"
   #define D_JSON_ONE_TO_RESTART "1 to restart"
@@ -254,7 +268,11 @@
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
-#define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
+#define D_CMND_TEMPLATE "Template"
+  #define D_JSON_NAME "NAME"
+  #define D_JSON_GPIO "GPIO"
+  #define D_JSON_FLAG "FLAG"
+  #define D_JSON_BASE "BASE"
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTHOST "MqttHost"
@@ -405,6 +423,7 @@
 /********************************************************************************************/
 
 #define D_ASTERIX "********"
+#define D_ASTERISK_PWD "****"
 
 #ifndef MY_LANGUAGE
   #include "language/en-GB.h"
@@ -522,7 +541,8 @@ const char kWifiConfig[MAX_WIFI_OPTION][WCFG_MAX_STRING_LENGTH] PROGMEM = {
   D_WCFG_3_WPSCONFIG,
   D_WCFG_4_RETRY,
   D_WCFG_5_WAIT,
-  D_WCFG_6_SERIAL };
+  D_WCFG_6_SERIAL,
+  D_WCFG_7_WIFIMANAGER_RESET_ONLY };
 const char kPrefixes[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
   D_CMND,
   D_STAT,
@@ -548,12 +568,17 @@ const char HTTP_SNS_SEAPRESSURE[] PROGMEM = "%s{s}%s " D_PRESSUREATSEALEVEL "{m}
 const char HTTP_SNS_ANALOG[] PROGMEM = "%s{s}%s " D_ANALOG_INPUT "%d{m}%d{e}";                               // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_ILLUMINANCE[] PROGMEM = "%s{s}%s " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}";              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
-#if defined(USE_MHZ19) || defined(USE_SENSEAIR) || defined(USE_AZ7798)
+#if defined(USE_MHZ19) || defined(USE_SENSEAIR) || defined(USE_AZ7798) || defined(USE_SCD30)
 const char HTTP_SNS_CO2[] PROGMEM = "%s{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
+#endif  // USE_MHZ19
+
+#if defined(USE_SCD30)
+const char HTTP_SNS_CO2EAVG[] PROGMEM = "%s{s}%s " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";           // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif  // USE_SCD30
 
 const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;
 const char S_CONFIGURATION[] PROGMEM = D_CONFIGURATION;
+const char S_CONFIGURE_TEMPLATE[] PROGMEM = D_CONFIGURE_TEMPLATE;
 const char S_CONFIGURE_MODULE[] PROGMEM = D_CONFIGURE_MODULE;
 const char S_CONFIGURE_WIFI[] PROGMEM = D_CONFIGURE_WIFI;
 const char S_NO_NETWORKS_FOUND[] PROGMEM = D_NO_NETWORKS_FOUND;

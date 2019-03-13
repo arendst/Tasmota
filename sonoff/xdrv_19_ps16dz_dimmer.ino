@@ -1,7 +1,7 @@
 /*
   xdrv_19_ps16dz_dimmer.ino - PS_16_DZ dimmer support for Sonoff-Tasmota
 
-  Copyright (C) 2018 Joel Stein and Theo Arends
+  Copyright (C) 2019 Joel Stein and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 
 TasmotaSerial *PS16DZSerial = nullptr;
 
-boolean ps16dz_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
+bool ps16dz_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
 
 //uint64_t ps16dz_seq = 0;
 
@@ -67,17 +67,16 @@ void PS16DZSendCommand(char type = 0, uint8_t value = 0)
       break;
     }
 
-    snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send serial command: %s"), ps16dz_tx_buffer );
 
     PS16DZSerial->print(ps16dz_tx_buffer);
     PS16DZSerial->write(0x1B);
     PS16DZSerial->flush();
 }
 
-boolean PS16DZSetPower(void)
+bool PS16DZSetPower(void)
 {
-  boolean status = false;
+  bool status = false;
 
   uint8_t rpower = XdrvMailbox.index;
   int16_t source = XdrvMailbox.payload;
@@ -91,7 +90,7 @@ boolean PS16DZSetPower(void)
   return status;
 }
 
-boolean PS16DZSetChannels(void)
+bool PS16DZSetChannels(void)
 {
   PS16DZSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
   return true;
@@ -109,8 +108,7 @@ void PS16DZSerialDuty(uint8_t duty)
   } else {
     ps16dz_ignore_dim = false;  // reset flag
 
-    snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send Dim Level skipped due to 0 or already set. Value=%d"), duty);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send Dim Level skipped due to 0 or already set. Value=%d"), duty);
 
   }
 }
@@ -128,7 +126,7 @@ void PS16DZResetWifi(void)
  * API Functions
 \*********************************************************************************************/
 
-boolean PS16DZModuleSelected(void)
+bool PS16DZModuleSelected(void)
 {
   light_type = LT_SERIAL1;
   return true;
@@ -153,7 +151,7 @@ void PS16DZSerialInput(void)
   char scmnd[20];
   while (PS16DZSerial->available()) {
     yield();
-    byte serial_in_byte = PS16DZSerial->read();
+    uint8_t serial_in_byte = PS16DZSerial->read();
     if (serial_in_byte != 0x1B){
       if (ps16dz_byte_counter >= PS16DZ_BUFFER_SIZE - 1) {
         memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);
@@ -165,8 +163,7 @@ void PS16DZSerialInput(void)
     }
     else {
       ps16dz_rx_buffer[ps16dz_byte_counter++] = 0x00;
-      snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: command received: %s"), ps16dz_rx_buffer);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: command received: %s"), ps16dz_rx_buffer);
       if(!strncmp(ps16dz_rx_buffer+3, "UPDATE", 6) || !strncmp(ps16dz_rx_buffer+3, "RESULT", 6)) {
         char *end_str;
         char *string = ps16dz_rx_buffer+10;
@@ -176,23 +173,20 @@ void PS16DZSerialInput(void)
           char* token2 = strtok_r(token, ":", &end_token);
           char* token3 = strtok_r(NULL, ":", &end_token);
           if(!strncmp(token2, "\"switch\"", 8)){
-            boolean ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
-            snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: power received: %s"), token3);
-            AddLog(LOG_LEVEL_DEBUG);
+            bool ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: power received: %s"), token3);
             if((power || Settings.light_dimmer > 0) && (power !=ps16dz_power)) {
               ExecuteCommandPower(1, ps16dz_power, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
             }
           }
           else if(!strncmp(token2, "\"bright\"", 8)){
             uint8_t ps16dz_bright = atoi(token3);
-            snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: brightness received: %d"), ps16dz_bright);
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: brightness received: %d"), ps16dz_bright);
             if(power && ps16dz_bright > 0 && ps16dz_bright != Settings.light_dimmer) {
 
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), ps16dz_bright );
 
-              snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: Send CMND_DIMMER_STR=%s"), scmnd );
-              AddLog(LOG_LEVEL_DEBUG);
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send CMND_DIMMER_STR=%s"), scmnd );
 
               ps16dz_ignore_dim = true;
               ExecuteCommand(scmnd, SRC_SWITCH);
@@ -200,15 +194,13 @@ void PS16DZSerialInput(void)
           }
           else if(!strncmp(token2, "\"sequence\"", 10)){
             //ps16dz_seq = strtoull(token3+1, NULL, 10);
-            snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: sequence received: %s"), token3);
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: sequence received: %s"), token3);
           }
           token = strtok_r(NULL, ",", &end_str);
         }
       }
       else if(!strncmp(ps16dz_rx_buffer+3, "SETTING", 7)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: Reset"));
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("PSZ: Reset"));
         PS16DZResetWifi();
       }
       memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);
@@ -225,11 +217,11 @@ void PS16DZSerialInput(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv19(byte function)
+bool Xdrv19(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
-  if (PS_16_DZ == Settings.module) {
+  if (PS_16_DZ == my_module_type) {
     switch (function) {
       case FUNC_MODULE_INIT:
         result = PS16DZModuleSelected();

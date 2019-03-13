@@ -1,7 +1,7 @@
 /*
   xsns_18_pms5003.ino - PMS5003-7003 particle concentration sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ struct pms5003data {
 
 /*********************************************************************************************/
 
-boolean PmsReadData(void)
+bool PmsReadData(void)
 {
   if (! PmsSerial->available()) {
     return false;
@@ -62,7 +62,7 @@ boolean PmsReadData(void)
   PmsSerial->readBytes(buffer, 32);
   PmsSerial->flush();  // Make room for another burst
 
-  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, 32);
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 32);
 
   // get checksum ready
   for (uint8_t i = 0; i < 30; i++) {
@@ -128,7 +128,7 @@ const char HTTP_PMS5003_SNS[] PROGMEM = "%s"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
-void PmsShow(boolean json)
+void PmsShow(bool json)
 {
   if (pms_valid) {
     if (json) {
@@ -158,9 +158,9 @@ void PmsShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns18(byte function)
+bool Xsns18(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pms_type) {
     switch (function) {

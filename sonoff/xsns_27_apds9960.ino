@@ -1,7 +1,7 @@
 /*
   xsns_27_apds9960.ino - Support for I2C APDS9960 Proximity Sensor for Sonoff-Tasmota
 
-  Copyright (C) 2018  Shawn Hymel/Sparkfun and Theo Arends
+  Copyright (C) 2019  Shawn Hymel/Sparkfun and Theo Arends
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -1518,8 +1518,7 @@ int16_t readGesture(void)
         if (gesture_loop_counter == APDS9960_MAX_GESTURE_CYCLES){ // We will escape after a few loops
           disableGestureSensor();   // stop the sensor to prevent problems with power consumption/blocking  and return to the main loop
           APDS9960_overload = true; // we report this as "long"-gesture
-          snprintf_P(log_data, sizeof(log_data), PSTR("Sensor overload"));
-          AddLog(LOG_LEVEL_DEBUG);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("Sensor overload"));
         }
         gesture_loop_counter += 1;
         /* Wait some time to collect next batch of FIFO data */
@@ -1794,33 +1793,32 @@ void handleGesture(void) {
     if (isGestureAvailable() ) {
     switch (readGesture()) {
       case DIR_UP:
-        snprintf_P(log_data, sizeof(log_data), PSTR("UP"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("UP"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Up"));
         break;
       case DIR_DOWN:
-        snprintf_P(log_data, sizeof(log_data), PSTR("DOWN"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("DOWN"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Down"));
         break;
       case DIR_LEFT:
-        snprintf_P(log_data, sizeof(log_data), PSTR("LEFT"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("LEFT"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Left"));
         break;
       case DIR_RIGHT:
-        snprintf_P(log_data, sizeof(log_data), PSTR("RIGHT"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("RIGHT"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Right"));
         break;
       default:
       if(APDS9960_overload)
       {
-        snprintf_P(log_data, sizeof(log_data), PSTR("LONG"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("LONG"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Long"));
       }
       else{
-        snprintf_P(log_data, sizeof(log_data), PSTR("NONE"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("NONE"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("None"));
       }
     }
-    AddLog(LOG_LEVEL_DEBUG);
 
     mqtt_data[0] = '\0';
     if (MqttShowSensor()) {
@@ -1903,13 +1901,12 @@ bool APDS9960_detect(void)
     return true;
   }
 
-  boolean success = false;
+  bool success = false;
   APDS9960type = I2cRead8(APDS9960_I2C_ADDR, APDS9960_ID);
 
   if (APDS9960type == APDS9960_CHIPID_1 || APDS9960type == APDS9960_CHIPID_2) {
     strcpy_P(APDS9960stype, PSTR("APDS9960"));
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, APDS9960stype, APDS9960_I2C_ADDR);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, APDS9960stype, APDS9960_I2C_ADDR);
     if (APDS9960_init()) {
       success = true;
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "APDS9960 initialized"));
@@ -1919,12 +1916,10 @@ bool APDS9960_detect(void)
   }
   else {
     if (APDS9960type == APDS9930_CHIPID_1 || APDS9960type == APDS9930_CHIPID_2) {
-      snprintf_P(log_data, sizeof(log_data), PSTR("APDS9930 found at address 0x%x, unsupported chip"), APDS9960_I2C_ADDR);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("APDS9930 found at address 0x%x, unsupported chip"), APDS9960_I2C_ADDR);
     }
     else{
-      snprintf_P(log_data, sizeof(log_data), PSTR("APDS9960 not found at address 0x%x"), APDS9960_I2C_ADDR);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("APDS9960 not found at address 0x%x"), APDS9960_I2C_ADDR);
     }
   }
   currentGesture[0] = '\0';
@@ -1935,7 +1930,7 @@ bool APDS9960_detect(void)
  * Presentation
 \*********************************************************************************************/
 
-void APDS9960_show(boolean json)
+void APDS9960_show(bool json)
 {
   if (!APDS9960type) {
     return;
@@ -1993,7 +1988,7 @@ void APDS9960_show(boolean json)
 
 bool APDS9960CommandSensor(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   switch (XdrvMailbox.payload) {
     case 0: // Off
@@ -2039,9 +2034,9 @@ bool APDS9960CommandSensor(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns27(byte function)
+bool Xsns27(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     if (FUNC_INIT == function) {
@@ -2051,7 +2046,7 @@ boolean Xsns27(byte function)
         case FUNC_EVERY_50_MSECOND:
             APDS9960_loop();
             break;
-        case FUNC_COMMAND:
+        case FUNC_COMMAND_SENSOR:
             if (XSNS_27 == XdrvMailbox.index) {
             result = APDS9960CommandSensor();
             }

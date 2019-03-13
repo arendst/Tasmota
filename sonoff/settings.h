@@ -1,7 +1,7 @@
 /*
   settings.h - setting variables for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,57 +25,57 @@
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption0 .. SetOption31
-    uint32_t save_state : 1;               // bit 0
-    uint32_t button_restrict : 1;          // bit 1
-    uint32_t value_units : 1;              // bit 2
-    uint32_t mqtt_enabled : 1;             // bit 3
-    uint32_t mqtt_response : 1;            // bit 4
-    uint32_t mqtt_power_retain : 1;        // CMND_POWERRETAIN
-    uint32_t mqtt_button_retain : 1;       // CMND_BUTTONRETAIN
-    uint32_t mqtt_switch_retain : 1;       // CMND_SWITCHRETAIN
-    uint32_t temperature_conversion : 1;   // bit 8
-    uint32_t mqtt_sensor_retain : 1;       // CMND_SENSORRETAIN
-    uint32_t mqtt_offline : 1;             // bit 10
-    uint32_t button_swap : 1;              // bit 11 (v5.1.6)
-    uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)
-    uint32_t button_single : 1;            // bit 13 (v5.4.0)
-    uint32_t interlock : 1;                // bit 14 (v5.6.0)
-    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)
-    uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)
-    uint32_t decimal_text : 1;             // bit 17 (v5.8.1)
-    uint32_t light_signal : 1;             // bit 18 (v5.10.0c)
-    uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)
-    uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
-    uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
-    uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
-    uint32_t mqtt_serial_raw : 1;          // bit 23 (v6.1.1c)   // Was rules_enabled until 5.14.0b
-    uint32_t pressure_conversion : 1;      // bit 24 (v6.3.0.2)  // Was rules_once until 5.14.0b
-    uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
-    uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
-    uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
-    uint32_t rf_receive_decimal : 1;       // bit 28 (v6.0.0a)
-    uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)
-    uint32_t hass_light : 1;               // bit 30 (v6.0.0b)
-    uint32_t global_state : 1;             // bit 31 (v6.1.0)
+    uint32_t save_state : 1;               // bit 0              - SetOption0  - Save power state and use after restart
+    uint32_t button_restrict : 1;          // bit 1              - SetOption1  - Control button multipress
+    uint32_t value_units : 1;              // bit 2              - SetOption2  - Add units to JSON status messages
+    uint32_t mqtt_enabled : 1;             // bit 3              - SetOption3  - Control MQTT
+    uint32_t mqtt_response : 1;            // bit 4              - SetOption4  - Switch between MQTT RESULT or COMMAND
+    uint32_t mqtt_power_retain : 1;        // bit 5              - CMND_POWERRETAIN
+    uint32_t mqtt_button_retain : 1;       // bit 6              - CMND_BUTTONRETAIN
+    uint32_t mqtt_switch_retain : 1;       // bit 7              - CMND_SWITCHRETAIN
+    uint32_t temperature_conversion : 1;   // bit 8              - SetOption8  - Switch between Celsius or Fahrenheit
+    uint32_t mqtt_sensor_retain : 1;       // bit 9              - CMND_SENSORRETAIN
+    uint32_t mqtt_offline : 1;             // bit 10             - SetOption10 - Control MQTT LWT message format
+    uint32_t button_swap : 1;              // bit 11 (v5.1.6)    - SetOption11 - Swap button single and double press functionality
+    uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)    - SetOption12 - Switch between dynamic or fixed slot flash save location
+    uint32_t button_single : 1;            // bit 13 (v5.4.0)    - SetOption13 - Support only single press to speed up button press recognition
+    uint32_t interlock : 1;                // bit 14 (v5.6.0)    - CMND_INTERLOCK
+    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)    - SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
+    uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)    - SetOption16 - Switch between clockwise or counter-clockwise
+    uint32_t decimal_text : 1;             // bit 17 (v5.8.1)    - SetOption17 - Switch between decimal or hexadecimal output
+    uint32_t light_signal : 1;             // bit 18 (v5.10.0c)  - SetOption18 - Pair light signal with CO2 sensor
+    uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)  - SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
+    uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)  - SetOption20 - Control power in relation to Dimmer/Color/Ct changes
+    uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)  - SetOption21 - Show voltage even if powered off
+    uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)  - CMND_SERIALSEND and CMND_SERIALLOG
+    uint32_t mqtt_serial_raw : 1;          // bit 23 (v6.1.1c)   - CMND_SERIALSEND3
+    uint32_t pressure_conversion : 1;      // bit 24 (v6.3.0.2)  - SetOption24 - Switch between hPa or mmHg pressure unit
+    uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l)  - CMND_KNX_ENABLED
+    uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)  - SetOption26 - Switch between POWER or POWER1
+    uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a)  - CMND_KNX_ENHANCED
+    uint32_t rf_receive_decimal : 1;       // bit 28 (v6.0.0a)   - SetOption28 - RF receive data format
+    uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)   - SetOption29 - IR receive data format
+    uint32_t hass_light : 1;               // bit 30 (v6.0.0b)   - SetOption30 - Enforce HAss autodiscovery as light
+    uint32_t global_state : 1;             // bit 31 (v6.1.0)    - SetOption31 - Control link led blinking
   };
 } SysBitfield;
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption50 .. SetOption81
-    uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
-    uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)
-    uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)
-    uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)
-    uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)
-    uint32_t spare5 : 1;
-    uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)
-    uint32_t use_wifi_rescan : 1;          // bit 7 (v6.3.0.10)
-    uint32_t receive_raw : 1;              // bit 8 (v6.3.0.11)
-    uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)
+    uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)    - CMND_TIMERS
+    uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)  - SetOption51 - Enable ESP8285 user GPIO's
+    uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)   - SetOption52 - Append timezone to JSON time
+    uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)  - SetOption53 - Show hostanme and IP address in GUI main menu
+    uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)   - SetOption54 - Apply SetOption20 settings to Tuya device
+    uint32_t mdns_enabled : 1;             // bit 5 (v6.4.1.4)   - SetOption55 - Control mDNS service
+    uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)  - SetOption56 - Scan wifi network at restart for configured AP's
+    uint32_t use_wifi_rescan : 1;          // bit 7 (v6.3.0.10)  - SetOption57 - Scan wifi network every 44 minutes for configured AP's
+    uint32_t receive_raw : 1;              // bit 8 (v6.3.0.11)  - SetOption58 - Add IR Raw data to JSON message
+    uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)  - SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
     uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60 - Enable normal sleep instead of dynamic sleep
-    uint32_t button_switch_force_local : 1;// bit 11
-    uint32_t spare12 : 1;
+    uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61 - Force local operation when button/switch topic is set
+    uint32_t no_hold_retain : 1;           // bit 12 (v6.4.1.19) - SetOption62 - Don't use retain flag on HOLD messages
     uint32_t spare13 : 1;
     uint32_t spare14 : 1;
     uint32_t spare15 : 1;
@@ -163,6 +163,20 @@ typedef union {
   };
 } Mcp230xxCfg;
 
+typedef union {
+  uint8_t data;
+  struct {
+    uint8_t spare0 : 1;
+    uint8_t spare1 : 1;
+    uint8_t spare2 : 1;
+    uint8_t spare3 : 1;
+    uint8_t spare4 : 1;
+    uint8_t spare5 : 1;
+    uint8_t spare6 : 1;
+    uint8_t mhz19b_abc_disable : 1;        // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
+  };
+} SensorCfg1;
+
 /*
 struct SYSCFG {
   unsigned long cfg_holder;                // 000 Pre v6 header
@@ -183,21 +197,21 @@ struct SYSCFG {
   char          ota_url[101];              // 017
   char          mqtt_prefix[3][11];        // 07C
   uint8_t       baudrate;                  // 09D
-  byte          seriallog_level;           // 09E
+  uint8_t       seriallog_level;           // 09E
   uint8_t       sta_config;                // 09F
-  byte          sta_active;                // 0A0
+  uint8_t       sta_active;                // 0A0
   char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 4/5
   char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 4/5
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
   uint8_t       rule_stop;                 // 1A7
   uint16_t      syslog_port;               // 1A8
-  byte          syslog_level;              // 1AA
+  uint8_t       syslog_level;              // 1AA
   uint8_t       webserver;                 // 1AB
-  byte          weblog_level;              // 1AC
+  uint8_t       weblog_level;              // 1AC
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
 
-  byte          free_1D5[20];              // 1D5  Free since 5.12.0e
+  uint8_t       free_1D5[20];              // 1D5  Free since 5.12.0e
 
   char          mqtt_host[33];             // 1E9
   uint16_t      mqtt_port;                 // 20A
@@ -271,6 +285,7 @@ struct SYSCFG {
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
   myio          my_gp;                     // 484
+  uint8_t       test_step;                 // 495
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
   uint8_t       light_correction;          // 49D
@@ -281,15 +296,13 @@ struct SYSCFG {
   uint8_t       light_speed;               // 4A2
   uint8_t       light_scheme;              // 4A3
   uint8_t       light_width;               // 4A4
-  byte          knx_GA_registered;         // 4A5  Number of Group Address to read
+  uint8_t       knx_GA_registered;         // 4A5  Number of Group Address to read
   uint16_t      light_wakeup;              // 4A6
-  byte          knx_CB_registered;         // 4A8  Number of Group Address to write
+  uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
   char          web_password[33];          // 4A9
-
-  uint8_t       ex_switchmode[4];          // 4CA  Free since 6.0.0a
-
+  uint8_t       interlock[MAX_INTERLOCKS]; // 4CA
   char          ntp_server[3][33];         // 4CE
-  byte          ina219_mode;               // 531
+  uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
   uint16_t      button_debounce;           // 542
   uint32_t      ip_address[4];             // 544
@@ -308,17 +321,17 @@ struct SYSCFG {
   uint16_t      knx_physsical_addr;        // 6B8  (address_t is a uint16_t)
   uint16_t      knx_GA_addr[MAX_KNX_GA];   // 6BA  (address_t is a uint16_t) x KNX_max_GA
   uint16_t      knx_CB_addr[MAX_KNX_CB];   // 6CE  (address_t is a uint16_t) x KNX_max_CB
-  byte          knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
-  byte          knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
+  uint8_t       knx_GA_param[MAX_KNX_GA];  // 6E2  Type of Input (relay changed, button pressed, sensor read <-teleperiod)
+  uint8_t       knx_CB_param[MAX_KNX_CB];  // 6EC  Type of Output (set relay, toggle relay, reply sensor value)
   Mcp230xxCfg   mcp230xx_config[16];       // 6F6
   uint8_t       mcp230xx_int_prio;         // 716
-
-  byte          free_717[1];               // 717
-
+  SensorCfg1    SensorBits1;               // 717  On/Off settings used by Sensor Commands
   uint16_t      mcp230xx_int_timer;        // 718
   uint8_t       rgbwwTable[5];             // 71A
+  uint8_t       user_template_base;        // 71F
+  mytmplt       user_template;             // 720  29 bytes
 
-  byte          free_71F[117];             // 71F
+  uint8_t       free_73D[87];              // 73D
 
   uint32_t      drivers[3];                // 794
   uint32_t      monitors;                  // 7A0
@@ -327,7 +340,7 @@ struct SYSCFG {
   uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
 
-  byte          free_7BC[2];               // 7BC
+  uint8_t       free_7BC[2];               // 7BC
 
   uint16_t      weight_max;                // 7BE Total max weight in kilogram
   unsigned long weight_reference;          // 7C0 Reference weight in gram
@@ -347,7 +360,7 @@ struct RTCRBT {
 
 struct RTCMEM {
   uint16_t      valid;                     // 290 (RTC memory offset 100)
-  byte          oswatch_blocked_loop;      // 292
+  uint8_t       oswatch_blocked_loop;      // 292
   uint8_t       ota_loader;                // 293
   unsigned long energy_kWhtoday;              // 294
   unsigned long energy_kWhtotal;              // 298
@@ -377,7 +390,7 @@ struct XDRVMAILBOX {
   uint16_t      data_len;
   uint16_t      payload16;
   int16_t       payload;
-  uint8_t       grpflg;
+  bool          grpflg;
   uint8_t       notused;
   char         *topic;
   char         *data;

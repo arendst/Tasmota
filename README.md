@@ -1,6 +1,6 @@
 ## Sonoff-Tasmota
 
-Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web**, **timers**, 'Over The Air' (**OTA**) firmware updates and **sensors support**, allowing control under **Serial**, **HTTP**, **MQTT** and **KNX**, so as to be used on **Smart Home Systems**. Written for Arduino IDE and PlatformIO.
+Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web UI, rules and timers, OTA updates, custome device templates and sensors support**. Allows control over **MQTT**, **HTTP**, **Serial** and **KNX** for integrations with smart home systems. Written for Arduino IDE and PlatformIO.
 
 [![GitHub version](https://img.shields.io/github/release/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Sonoff-Tasmota/total.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
@@ -23,6 +23,9 @@ In addition to the [release webpage](https://github.com/arendst/Sonoff-Tasmota/r
 A Sonoff device is not a toy. It uses Mains AC so there is a danger of electrocution if not installed properly. If you don't know how to install it, please call an electrician. Remember: _**SAFETY FIRST**_. It is not worth to risk yourself, your family and your home if you don't know exactly what you are doing. Never try to flash a Sonoff device while it is connected to MAINS AC.
 
 We don't take any responsibility nor liability for using this software nor for the installation or any tips, advice, videos, etc. given by any member of this site or any related site.
+
+### Note
+Please do not ask to add devices where you can't provide a basic working configuration (other than sonoff). Since there are thousands of them..
 
 ### Quick Install
 Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as documented in the wiki.
@@ -101,6 +104,7 @@ You can contribute to Sonoff-Tasmota by
 - providing Pull Requests (Features, Proof of Concepts, Language files or Fixes)
 - testing new released features and report issues
 - donating to acquire hardware for testing and implementing or out of gratitude
+- contributing missing documentation for features and devices on our [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki)
 
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
@@ -121,9 +125,11 @@ Libraries used with Sonoff-Tasmota are:
 - [C2 Programmer](http://app.cear.ufpb.br/~lucas.hartmann/tag/efm8bb1/)
 - [esp-epaper-29-ws-20171230-gemu](https://github.com/gemu2015/Sonoff-Tasmota/tree/displays/lib)
 - [esp-knx-ip](https://github.com/envy/esp-knx-ip)
+- FrogmoreScd30
 - [I2Cdevlib](https://github.com/jrowberg/i2cdevlib)
 - [IRremoteEsp8266](https://github.com/markszabo/IRremoteESP8266)
 - [JobaTsl2561](https://github.com/joba-1/Joba_Tsl2561)
+- [LinkedList](https://github.com/ivanseidel/LinkedList)
 - [Liquid Cristal](https://github.com/marcoschwartz/LiquidCrystal_I2C)
 - [MultiChannelGasSensor](http://wiki.seeedstudio.com/Grove-Multichannel_Gas_Sensor/)
 - [NeoPixelBus](https://github.com/Makuna/NeoPixelBus)
@@ -157,7 +163,8 @@ People helping to keep the show on the road:
 - Andre Thomas for providing [thehackbox](http://thehackbox.org/tasmota/) OTA support and daily development builds
 - Joel Stein and digiblur for their Tuya research and driver
 - Frogmore42 and Jason2866 for providing many issue answers
-- Many more providing Tips, Pocs or PRs
+- Blakadder for editing the wiki and providing template management
+- Many more providing Tips, Wips, Pocs or PRs
 
 ### License
 

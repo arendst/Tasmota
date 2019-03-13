@@ -1,7 +1,7 @@
 /*
   xsns_interface.ino - Sensor interface support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends inspired by ESPEasy
+  Copyright (C) 2019  Theo Arends inspired by ESPEasy
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@
 */
 
 #ifdef XFUNC_PTR_IN_ROM
-boolean (* const xsns_func_ptr[])(byte) PROGMEM = {  // Sensor Function Pointers for simple implementation of sensors
+bool (* const xsns_func_ptr[])(uint8_t) PROGMEM = {  // Sensor Function Pointers for simple implementation of sensors
 #else
-boolean (* const xsns_func_ptr[])(byte) = {  // Sensor Function Pointers for simple implementation of sensors
+bool (* const xsns_func_ptr[])(uint8_t) = {  // Sensor Function Pointers for simple implementation of sensors
 #endif
 
 #ifdef XSNS_01
@@ -268,7 +268,7 @@ const uint8_t xsns_present = sizeof(xsns_func_ptr) / sizeof(xsns_func_ptr[0]);  
  * Function call to all xsns
 \*********************************************************************************************/
 
-boolean XsnsNextCall(byte Function, uint8_t &xsns_index)
+bool XsnsNextCall(uint8_t Function, uint8_t &xsns_index)
 {
   xsns_index++;
   if (xsns_index == xsns_present) { xsns_index = 0; }
@@ -282,15 +282,15 @@ boolean XsnsNextCall(byte Function, uint8_t &xsns_index)
   return xsns_func_ptr[xsns_index](Function);
 }
 
-boolean XsnsCall(byte Function)
+bool XsnsCall(uint8_t Function)
 {
-  boolean result = false;
+  bool result = false;
 
 #ifdef PROFILE_XSNS_EVERY_SECOND
   uint32_t profile_start_millis = millis();
 #endif  // PROFILE_XSNS_EVERY_SECOND
 
-  for (byte x = 0; x < xsns_present; x++) {
+  for (uint8_t x = 0; x < xsns_present; x++) {
 #ifdef USE_DEBUG_DRIVER
     if (XsnsEnabled(x)) {
 #endif
@@ -305,13 +305,16 @@ boolean XsnsCall(byte Function)
       uint32_t profile_millis = millis() - profile_start_millis;
       if (profile_millis) {
         if (FUNC_EVERY_SECOND == Function) {
-          snprintf_P(log_data, sizeof(log_data), PSTR("PRF: At %08u XsnsCall %d to Sensor %d took %u mS"), uptime, Function, x, profile_millis);
-          AddLog(LOG_LEVEL_DEBUG);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PRF: At %08u XsnsCall %d to Sensor %d took %u mS"), uptime, Function, x, profile_millis);
         }
       }
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
 
-      if (result) break;
+      if (result && ((FUNC_COMMAND == Function) ||
+                     (FUNC_COMMAND_SENSOR == Function)
+                    )) {
+        break;
+      }
 #ifdef USE_DEBUG_DRIVER
     }
 #endif
@@ -321,8 +324,7 @@ boolean XsnsCall(byte Function)
   uint32_t profile_millis = millis() - profile_start_millis;
   if (profile_millis) {
     if (FUNC_EVERY_SECOND == Function) {
-      snprintf_P(log_data, sizeof(log_data), PSTR("PRF: At %08u XsnsCall %d took %u mS"), uptime, Function, profile_millis);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PRF: At %08u XsnsCall %d took %u mS"), uptime, Function, profile_millis);
     }
   }
 #endif  // PROFILE_XSNS_EVERY_SECOND

@@ -1,7 +1,7 @@
 /*
   xsns_26_lm75ad.ino - Support for I2C LM75AD Temperature Sensor
 
-  Copyright (C) 2018  Andre Thomas and Theo Arends
+  Copyright (C) 2019  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -53,13 +53,12 @@ void LM75ADDetect(void)
   if (lm75ad_type) { return; }
 
   uint16_t buffer;
-  for (byte i = 0; i < sizeof(lm75ad_addresses); i++) {
+  for (uint8_t i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
     if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
       if (buffer == 0x4B00) {
         lm75ad_type = 1;
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "LM75AD", lm75ad_address);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "LM75AD", lm75ad_address);
         break;
       }
     }
@@ -78,7 +77,7 @@ float LM75ADGetTemp(void) {
   return ConvertTemp(sign * t * 0.125);
 }
 
-void LM75ADShow(boolean json)
+void LM75ADShow(bool json)
 {
   if (lm75ad_type) {
     float t = LM75ADGetTemp();
@@ -102,9 +101,9 @@ void LM75ADShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns26(byte function)
+bool Xsns26(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

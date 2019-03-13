@@ -5,11 +5,11 @@
 # For more info:
 # https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5---3rd-party-Hardware-specification
 
-name=ESP8266 Boards (2.5.0-beta2)
-version=2.5.0-beta2
+name=ESP8266 Boards (2.5.0)
+version=2.5.0
 
-
-
+runtime.tools.xtensa-lx106-elf-gcc.path={runtime.platform.path}/tools/xtensa-lx106-elf
+runtime.tools.esptool.path={runtime.platform.path}/tools/esptool
 runtime.tools.signing={runtime.platform.path}/tools/signing.py
 
 compiler.warning_flags=-w
@@ -24,10 +24,8 @@ build.lwip_flags=-DLWIP_OPEN_SRC
 
 build.vtable_flags=-DVTABLES_IN_FLASH
 
-#build.exception_flags=-fexceptions
 build.exception_flags=-fno-exceptions
-#build.stdcpp_lib=-lstdc++
-build.stdcpp_lib=-lstdc++-nox
+build.stdcpp_lib=-lstdc++
 
 #build.float=-u _printf_float -u _scanf_float
 build.float=
@@ -39,7 +37,7 @@ compiler.libc.path={runtime.platform.path}/tools/sdk/libc/xtensa-lx106-elf
 compiler.cpreprocessor.flags=-D__ets__ -DICACHE_FLASH -U__STRICT_ANSI__ "-I{compiler.sdk.path}/include" "-I{compiler.sdk.path}/{build.lwip_include}" "-I{compiler.libc.path}/include" "-I{build.path}/core"
 
 compiler.c.cmd=xtensa-lx106-elf-gcc
-compiler.c.flags=-c {compiler.warning_flags} -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals -falign-functions=4 -MMD -std=gnu99 {build.exception_flags} -ffunction-sections -fdata-sections {build.exception_flags}
+compiler.c.flags=-c {compiler.warning_flags} -Os -g -Wpointer-arith -Wno-implicit-function-declaration -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals -falign-functions=4 -MMD -std=gnu99 -ffunction-sections -fdata-sections {build.exception_flags}
 
 compiler.S.cmd=xtensa-lx106-elf-gcc
 compiler.S.flags=-c -g -x assembler-with-cpp -MMD -mlongcalls
@@ -80,31 +78,31 @@ compiler.elf2hex.extra_flags=
 ## generate file with git version number
 ## needs bash, git, and echo
 recipe.hooks.core.prebuild.1.pattern=python "{runtime.tools.signing}" --mode header --publickey "{build.source.path}/public.key" --out "{build.path}/core/Updater_Signing.h"
-
-
+recipe.hooks.core.prebuild.2.pattern=bash -c "mkdir -p {build.path}/core && echo \#define ARDUINO_ESP8266_GIT_VER 0x`git --git-dir {runtime.platform.path}/.git rev-parse --short=8 HEAD 2>/dev/null || echo ffffffff` >{build.path}/core/core_version.h"
+recipe.hooks.core.prebuild.3.pattern=bash -c "mkdir -p {build.path}/core && echo \#define ARDUINO_ESP8266_GIT_DESC `cd "{runtime.platform.path}"; git describe --tags 2>/dev/null || echo unix-{version}` >>{build.path}/core/core_version.h"
 
 ## windows-compatible version without git
 recipe.hooks.core.prebuild.1.pattern.windows=cmd.exe /c rem cannot sign on windows
-
-
+recipe.hooks.core.prebuild.2.pattern.windows=cmd.exe /c mkdir {build.path}\core & (echo #define ARDUINO_ESP8266_GIT_VER 0x00000000 & echo #define ARDUINO_ESP8266_GIT_DESC win-{version} ) > {build.path}\core\core_version.h
+recipe.hooks.core.prebuild.3.pattern.windows=cmd.exe /c if exist {build.source.path}\public.key echo #error Cannot automatically build signed binaries on Windows > {build.path}\core\Updater_Signing.h
 
 ## Build the app.ld linker file
 recipe.hooks.linking.prelink.1.pattern="{compiler.path}{compiler.c.cmd}" -CC -E -P {build.vtable_flags} "{runtime.platform.path}/tools/sdk/ld/eagle.app.v6.common.ld.h" -o "{build.path}/local.eagle.app.v6.common.ld"
 
 ## Compile c files
-recipe.c.o.pattern="{compiler.path}{compiler.c.cmd}" {compiler.cpreprocessor.flags} {compiler.c.flags} -DF_CPU={build.f_cpu} {build.lwip_flags} {build.debug_port} {build.debug_level} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DARDUINO_BOARD="{build.board}" {build.led} {compiler.c.extra_flags} {build.extra_flags} {includes} "{source_file}" -o "{object_file}"
+recipe.c.o.pattern="{compiler.path}{compiler.c.cmd}" {compiler.cpreprocessor.flags} {compiler.c.flags} -DF_CPU={build.f_cpu} {build.lwip_flags} {build.debug_port} {build.debug_level} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DARDUINO_BOARD="{build.board}" {build.led} {build.flash_flags} {compiler.c.extra_flags} {build.extra_flags} {includes} "{source_file}" -o "{object_file}"
 
 ## Compile c++ files
-recipe.cpp.o.pattern="{compiler.path}{compiler.cpp.cmd}" {compiler.cpreprocessor.flags} {compiler.cpp.flags} -DF_CPU={build.f_cpu} {build.lwip_flags} {build.debug_port} {build.debug_level} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DARDUINO_BOARD="{build.board}" {build.led} {compiler.cpp.extra_flags} {build.extra_flags} {includes} "{source_file}" -o "{object_file}"
+recipe.cpp.o.pattern="{compiler.path}{compiler.cpp.cmd}" {compiler.cpreprocessor.flags} {compiler.cpp.flags} -DF_CPU={build.f_cpu} {build.lwip_flags} {build.debug_port} {build.debug_level} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DARDUINO_BOARD="{build.board}" {build.led} {build.flash_flags} {compiler.cpp.extra_flags} {build.extra_flags} {includes} "{source_file}" -o "{object_file}"
 
 ## Compile S files
-recipe.S.o.pattern="{compiler.path}{compiler.c.cmd}" {compiler.cpreprocessor.flags} {compiler.S.flags} -DF_CPU={build.f_cpu} {build.lwip_flags} {build.debug_port} {build.debug_level} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DARDUINO_BOARD="{build.board}" {build.led} {compiler.c.extra_flags} {build.extra_flags} {includes} "{source_file}" -o "{object_file}"
+recipe.S.o.pattern="{compiler.path}{compiler.c.cmd}" {compiler.cpreprocessor.flags} {compiler.S.flags} -DF_CPU={build.f_cpu} {build.lwip_flags} {build.debug_port} {build.debug_level} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DARDUINO_BOARD="{build.board}" {build.led} {build.flash_flags} {compiler.c.extra_flags} {build.extra_flags} {includes} "{source_file}" -o "{object_file}"
 
 ## Create archives
 recipe.ar.pattern="{compiler.path}{compiler.ar.cmd}" {compiler.ar.flags} {compiler.ar.extra_flags} "{archive_file_path}" "{object_file}"
 
 ## Combine gc-sections, archives, and objects
-recipe.c.combine.pattern="{compiler.path}{compiler.c.elf.cmd}" -Wl,-Map "-Wl,{build.path}/{build.project_name}.map" {compiler.c.elf.flags} {compiler.c.elf.extra_flags} -o "{build.path}/{build.project_name}.elf" -Wl,--start-group {object_files} "{archive_file_path}" {compiler.c.elf.libs} -Wl,--end-group  "-L{build.path}"
+recipe.c.combine.pattern="{compiler.path}{compiler.c.elf.cmd}" {build.exception_flags} -Wl,-Map "-Wl,{build.path}/{build.project_name}.map" {compiler.c.elf.flags} {compiler.c.elf.extra_flags} -o "{build.path}/{build.project_name}.elf" -Wl,--start-group {object_files} "{archive_file_path}" {compiler.c.elf.libs} -Wl,--end-group  "-L{build.path}"
 
 ## Create eeprom
 recipe.objcopy.eep.pattern=
@@ -154,3 +152,4 @@ tools.espupload.upload.protocol=espupload
 tools.espupload.upload.params.verbose=
 tools.espupload.upload.params.quiet=
 tools.espupload.upload.pattern="{cmd}" "{path}/espupload.py" -f "{build.path}/{build.project_name}.bin"
+

@@ -1,7 +1,7 @@
 /*
   xsns_02_analog.ino - ESP8266 ADC support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ uint16_t adc_last_value = 0;
 uint16_t AdcRead(void)
 {
   uint16_t analog = 0;
-  for (byte i = 0; i < 32; i++) {
+  for (uint8_t i = 0; i < 32; i++) {
     analog += analogRead(A0);
     delay(1);
   }
@@ -50,7 +50,7 @@ void AdcEvery250ms(void)
 }
 #endif  // USE_RULES
 
-void AdcShow(boolean json)
+void AdcShow(bool json)
 {
   uint16_t analog = AdcRead();
 
@@ -67,11 +67,11 @@ void AdcShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns02(byte function)
+bool Xsns02(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
-  if (pin[GPIO_ADC0] < 99) {
+  if (my_module_flag.adc0) {
     switch (function) {
 #ifdef USE_RULES
       case FUNC_EVERY_250_MSECOND:

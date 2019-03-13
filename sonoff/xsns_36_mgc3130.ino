@@ -1,7 +1,7 @@
 /*
   xsns_36_MGC3130.ino - Support for I2C MGC3130 Electric Field Sensor for Sonoff-Tasmota
 
-  Copyright (C) 2018  Christian Baars & Theo Arends
+  Copyright (C) 2019  Christian Baars & Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -497,17 +497,15 @@ bool MGC3130_detect(void)
   digitalWrite(MGC3130_reset, HIGH);
   delay(50);
 
-  boolean success = false;
+  bool success = false;
   success = MGC3130_receiveMessage(); // This should read the firmware info
   if (success) {
     strcpy_P(MGC3130stype, PSTR("MGC3130"));
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, MGC3130stype, MGC3130_I2C_ADDR);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, MGC3130stype, MGC3130_I2C_ADDR);
     MGC3130_currentGesture[0] = '\0';
     MGC3130_type = true;
   } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR("MGC3130 did not respond at address 0x%x"), MGC3130_I2C_ADDR);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("MGC3130 did not respond at address 0x%x"), MGC3130_I2C_ADDR);
   }
   return success;
 }
@@ -516,7 +514,7 @@ bool MGC3130_detect(void)
  * Presentation
 \*********************************************************************************************/
 
-void MGC3130_show(boolean json)
+void MGC3130_show(bool json)
 {
   if (!MGC3130_type) { return; }
 
@@ -576,7 +574,7 @@ void MGC3130_show(boolean json)
 
 bool MGC3130CommandSensor()
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   switch (XdrvMailbox.payload) {
     case 0: // cycle through the modes
@@ -602,9 +600,9 @@ bool MGC3130CommandSensor()
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns36(byte function)
+bool Xsns36(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     if ((FUNC_INIT == function) && (pin[GPIO_MGC3130_XFER] < 99) && (pin[GPIO_MGC3130_RESET] < 99)) {
@@ -615,7 +613,7 @@ boolean Xsns36(byte function)
         case FUNC_EVERY_50_MSECOND:
           MGC3130_loop();
           break;
-        case FUNC_COMMAND:
+        case FUNC_COMMAND_SENSOR:
           if (XSNS_36 == XdrvMailbox.index) {
             result = MGC3130CommandSensor();
           }

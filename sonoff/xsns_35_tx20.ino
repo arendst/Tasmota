@@ -1,7 +1,7 @@
 /*
   xsns_35_Tx20.ino - La Crosse Tx20 wind sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Thomas Eckerstorfer and Theo Arends
+  Copyright (C) 2019  Thomas Eckerstorfer and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@ float tx20_wind_sum = 0;
 int tx20_count = 0;
 uint8_t tx20_wind_direction = 0;
 
-boolean tx20_available = false;
+bool tx20_available = false;
 
 void Tx20StartRead(void)
 {
@@ -170,7 +170,7 @@ void Tx20Init(void) {
   attachInterrupt(pin[GPIO_TX20_TXD_BLACK], Tx20StartRead, RISING);
 }
 
-void Tx20Show(boolean json)
+void Tx20Show(bool json)
 {
   char wind_speed_string[33];
   dtostrfd(tx20_wind_speed_kmh, 2, wind_speed_string);
@@ -195,9 +195,9 @@ void Tx20Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns35(byte function)
+bool Xsns35(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pin[GPIO_TX20_TXD_BLACK] < 99) {
     switch (function) {

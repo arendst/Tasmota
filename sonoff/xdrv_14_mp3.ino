@@ -1,7 +1,7 @@
 /*
   xdrv_14_mp3.ino - MP3 support for Sonoff-Tasmota
 
-  Copyright (C) 2018  gemu2015, mike2nl and Theo Arends
+  Copyright (C) 2019  gemu2015, mike2nl and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -178,9 +178,9 @@ void MP3_CMD(uint8_t mp3cmd,uint16_t val) {
  * check the MP3 commands
 \*********************************************************************************************/
 
-boolean MP3PlayerCmd(void) {
+bool MP3PlayerCmd(void) {
   char command[CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t disp_len = strlen(D_CMND_MP3);
 
   if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_MP3), disp_len)) {  // prefix
@@ -226,9 +226,9 @@ boolean MP3PlayerCmd(void) {
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv14(byte function)
+bool Xdrv14(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pin[GPIO_MP3_DFR562] < 99) {
     switch (function) {

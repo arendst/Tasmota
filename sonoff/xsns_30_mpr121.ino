@@ -220,8 +220,7 @@ void Mpr121Init(struct mpr121 *pS)
 		if (pS->connected[i]) {
 
 			// Log sensor found
-			snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "MPR121(%c) " D_FOUND_AT " 0x%X"), pS->id[i], pS->i2c_addr[i]);
-			AddLog(LOG_LEVEL_INFO);
+			AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_I2C "MPR121(%c) " D_FOUND_AT " 0x%X"), pS->id[i], pS->i2c_addr[i]);
 
 			// Set thresholds for registers 0x41 - 0x5A (ExTTH and ExRTH)
 			for (uint8_t j = 0; j < 13; j++) {
@@ -283,12 +282,9 @@ void Mpr121Init(struct mpr121 *pS)
 
 			// Check if sensor is running
 			pS->running[i] = (0x00 != I2cRead8(pS->i2c_addr[i], MPR121_ECR_REG));
-			if (pS->running[i]) {
-				snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "MPR121%c: Running"), pS->id[i]);
-			} else {
-				snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "MPR121%c: NOT Running"), pS->id[i]);
-			}
-			AddLog(LOG_LEVEL_INFO);
+
+			AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_I2C "MPR121%c: %sRunning"), pS->id[i], (pS->running[i]) ? "" : "NOT");
+
 		} else {
 
 			// Make sure running is false
@@ -299,8 +295,7 @@ void Mpr121Init(struct mpr121 *pS)
 	// Display no sensor found message
 	if (!(pS->connected[0] || pS->connected[1] || pS->connected[2]
 	      || pS->connected[3])) {
-		snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "MPR121: No sensors found"));
-		AddLog(LOG_LEVEL_DEBUG);
+		AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_I2C "MPR121: No sensors found"));
 	}
 }				// void Mpr121Init(struct mpr121 *s)
 
@@ -318,7 +313,7 @@ void Mpr121Init(struct mpr121 *pS)
  * @post    None.
  *
  */
-void Mpr121Show(struct mpr121 *pS, byte function)
+void Mpr121Show(struct mpr121 *pS, uint8_t function)
 {
 
 	// Loop through sensors
@@ -329,8 +324,7 @@ void Mpr121Show(struct mpr121 *pS, byte function)
 
 			// Read data
 			if (!I2cValidRead16LE(&pS->current[i], pS->i2c_addr[i], MPR121_ELEX_REG)) {
-				snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "MPR121%c: ERROR: Cannot read data!"), pS->id[i]);
-				AddLog(LOG_LEVEL_ERROR);
+				AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_I2C "MPR121%c: ERROR: Cannot read data!"), pS->id[i]);
 				Mpr121Init(pS);
 				return;
 			}
@@ -339,9 +333,7 @@ void Mpr121Show(struct mpr121 *pS, byte function)
 
 				// Clear OVCF bit
 				I2cWrite8(pS->i2c_addr[i], MPR121_ELEX_REG, 0x00);
-				snprintf_P(log_data, sizeof(log_data),
-					   PSTR(D_LOG_I2C "MPR121%c: ERROR: Excess current detected! Fix circuits if it happens repeatedly! Soft-resetting MPR121 ..."), pS->id[i]);
-				AddLog(LOG_LEVEL_ERROR);
+				AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_I2C "MPR121%c: ERROR: Excess current detected! Fix circuits if it happens repeatedly! Soft-resetting MPR121 ..."), pS->id[i]);
 				Mpr121Init(pS);
 				return;
 			}
@@ -384,7 +376,7 @@ void Mpr121Show(struct mpr121 *pS, byte function)
 			}
 		}		// if->running
 	}			// for-loop i
-}				// void Mpr121Show(byte function)
+}				// void Mpr121Show(uint8_t function)
 
 /*********************************************************************************************\
  * Interface
@@ -400,15 +392,15 @@ void Mpr121Show(struct mpr121 *pS, byte function)
  * FUNC_WEB_APPEND for displaying data in the Tasmota web-interface
  *
  * @param   byte    function  Tasmota function ID.
- * @return  boolean           ???
+ * @return  bool           ???
  * @pre     None.
  * @post    None.
  *
  */
-boolean Xsns30(byte function)
+bool Xsns30(uint8_t function)
 {
 	// ???
-	boolean result = false;
+	bool result = false;
 
 	// Sensor state/data struct
 	static struct mpr121 mpr121;
@@ -440,7 +432,7 @@ boolean Xsns30(byte function)
 #endif				// USE_WEBSERVER
 		}
 	}
-	// Return boolean result
+	// Return bool result
 	return result;
 }
 

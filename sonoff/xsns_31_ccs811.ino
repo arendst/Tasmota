@@ -1,7 +1,7 @@
 /*
   xsns_31_ccs811.ino - CCS811 gas and air quality sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Gerhard Mutz and Theo Arends
+  Copyright (C) 2019  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -52,11 +52,9 @@ void CCS811Update(void)  // Perform every n second
       sint8_t res = ccs.begin(CCS811_ADDRESS);
       if (!res) {
         CCS811_type = 1;
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "CCS811", 0x5A);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "CCS811", 0x5A);
       } else {
-        //snprintf_P(log_data, sizeof(log_data), "CCS811 init failed: %d",res);
-        //AddLog(LOG_LEVEL_DEBUG);
+        //AddLog_P2(LOG_LEVEL_DEBUG, "CCS811 init failed: %d",res);
       }
     } else {
       if (ccs.available()) {
@@ -83,7 +81,7 @@ const char HTTP_SNS_CCS811[] PROGMEM = "%s"
   "{s}CCS811 " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}CCS811 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
-void CCS811Show(boolean json)
+void CCS811Show(bool json)
 {
   if (CCS811_ready) {
     if (json) {
@@ -103,9 +101,9 @@ void CCS811Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns31(byte function)
+bool Xsns31(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

@@ -1,7 +1,7 @@
 /*
   xsns_23_sdm120.ino - Eastron SDM120-Modbus energy meter support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Gennaro Tortone
+  Copyright (C) 2019  Gennaro Tortone
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -165,8 +165,7 @@ void SDM120250ms(void)              // Every 250 mSec
     if (data_ready) {
       uint8_t error = SDM120_ModbusReceive(&value);
       if (error) {
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "SDM120 response error %d"), error);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM120 response error %d"), error);
       } else {
         switch(sdm120_read_state) {
           case 0:
@@ -281,7 +280,7 @@ const char HTTP_SNS_SDM120_DATA[] PROGMEM = "%s"
   ;
 #endif  // USE_WEBSERVER
 
-void SDM120Show(boolean json)
+void SDM120Show(bool json)
 {
   char voltage[33];
   dtostrfd(sdm120_voltage,        Settings.flag2.voltage_resolution, voltage);
@@ -343,9 +342,9 @@ void SDM120Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns23(byte function)
+bool Xsns23(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (sdm120_type) {
     switch (function) {

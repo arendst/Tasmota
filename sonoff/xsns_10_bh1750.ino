@@ -1,7 +1,7 @@
 /*
   xsns_10_bh1750.ino - BH1750 ambient light sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -44,8 +44,8 @@ bool Bh1750Read(void)
   if (bh1750_valid) { bh1750_valid--; }
 
   if (2 != Wire.requestFrom(bh1750_address, (uint8_t)2)) { return false; }
-  byte msb = Wire.read();
-  byte lsb = Wire.read();
+  uint8_t msb = Wire.read();
+  uint8_t lsb = Wire.read();
   bh1750_illuminance = ((msb << 8) | lsb) / 1.2;
   bh1750_valid = SENSOR_MAX_MISS;
   return true;
@@ -59,14 +59,13 @@ void Bh1750Detect(void)
     return;
   }
 
-  for (byte i = 0; i < sizeof(bh1750_addresses); i++) {
+  for (uint8_t i = 0; i < sizeof(bh1750_addresses); i++) {
     bh1750_address = bh1750_addresses[i];
     Wire.beginTransmission(bh1750_address);
     Wire.write(BH1750_CONTINUOUS_HIGH_RES_MODE);
     if (!Wire.endTransmission()) {
       bh1750_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bh1750_types, bh1750_address);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, bh1750_types, bh1750_address);
       break;
     }
   }
@@ -89,7 +88,7 @@ void Bh1750EverySecond(void)
   }
 }
 
-void Bh1750Show(boolean json)
+void Bh1750Show(bool json)
 {
   if (bh1750_valid) {
     if (json) {
@@ -111,9 +110,9 @@ void Bh1750Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns10(byte function)
+bool Xsns10(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {

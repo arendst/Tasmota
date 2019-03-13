@@ -1,7 +1,7 @@
 /*
   xsns_29_mcp230xx.ino - Support for I2C MCP23008/MCP23017 GPIO Expander
 
-  Copyright (C) 2018  Andre Thomas and Theo Arends
+  Copyright (C) 2019  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ void MCP230xx_CheckForIntCounter(void) {
     }
   }
 }
-  
+
 void MCP230xx_CheckForIntRetainer(void) {
   uint8_t en = 0;
   for (uint8_t ca=0;ca<16;ca++) {
@@ -210,15 +210,13 @@ void MCP230xx_Detect(void)
   if (I2cValidRead8(&buffer, USE_MCP230xx_ADDR, MCP230xx_IOCON)) {
     if (0x00 == buffer) {
       mcp230xx_type = 1; // We have a MCP23008
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23008", USE_MCP230xx_ADDR);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "MCP23008", USE_MCP230xx_ADDR);
       mcp230xx_pincount = 8;
       MCP230xx_ApplySettings();
     } else {
       if (0x80 == buffer) {
         mcp230xx_type = 2; // We have a MCP23017
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23017", USE_MCP230xx_ADDR);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "MCP23017", USE_MCP230xx_ADDR);
         mcp230xx_pincount = 16;
         // Reset bank mode to 0
         I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_IOCON, 0x00);
@@ -325,7 +323,7 @@ void MCP230xx_CheckForInterrupt(void) {
   }
 }
 
-void MCP230xx_Show(boolean json)
+void MCP230xx_Show(bool json)
 {
   if (mcp230xx_type) {
     if (json) {
@@ -426,8 +424,8 @@ void MCP230xx_Reset(uint8_t pinmode) {
 }
 
 bool MCP230xx_Command(void) {
-  boolean serviced = true;
-  boolean validpin = false;
+  bool serviced = true;
+  bool validpin = false;
   uint8_t paramcount = 0;
   if (XdrvMailbox.data_len > 0) {
     paramcount=1;
@@ -498,8 +496,7 @@ bool MCP230xx_Command(void) {
             if (Settings.mcp230xx_config[pin].int_count_en) {
               Settings.mcp230xx_config[pin].int_count_en=0;
               MCP230xx_CheckForIntCounter();
-              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabled INTCNT for pin D%i"),pin);
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTCNT for pin D%i"),pin);
             }
             snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings.mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
             return serviced;
@@ -537,17 +534,14 @@ bool MCP230xx_Command(void) {
             Settings.mcp230xx_config[pin].int_count_en=intcnt;
             if (Settings.mcp230xx_config[pin].int_report_defer) {
               Settings.mcp230xx_config[pin].int_report_defer=0;
-              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabled INTDEF for pin D%i"),pin);
-              AddLog(LOG_LEVEL_INFO);              
+              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTDEF for pin D%i"),pin);
             }
             if (Settings.mcp230xx_config[pin].int_report_mode < 3) {
               Settings.mcp230xx_config[pin].int_report_mode=3;
-              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabled immediate interrupt/telemetry reporting for pin D%i"),pin);
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled immediate interrupt/telemetry reporting for pin D%i"),pin);
             }
             if ((Settings.mcp230xx_config[pin].int_count_en) && (!Settings.mcp230xx_int_timer)) {
-              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - INTCNT enabled for pin D%i but global INTTIMER is disabled!"),pin);
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - INTCNT enabled for pin D%i but global INTTIMER is disabled!"),pin);
             }
             MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
             snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings.mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
@@ -605,7 +599,7 @@ bool MCP230xx_Command(void) {
   }
 
   uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
-  
+
   if (pin < mcp230xx_pincount) {
     if (0 == pin) {
       if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "0")) validpin=true;
@@ -767,7 +761,7 @@ void MCP230xx_Interrupt_Retain_Report(void) {
   uint16_t retainresult = 0;
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP_INTRETAIN\": {"), GetDateAndTime(DT_LOCAL).c_str());
   for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
-    if (Settings.mcp230xx_config[pinx].int_retain_flag) { 
+    if (Settings.mcp230xx_config[pinx].int_retain_flag) {
       snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"D%i\":%i,"),mqtt_data,pinx,mcp230xx_int_retainer[pinx]);
       retainresult |= (((mcp230xx_int_retainer[pinx])&1) << pinx);
       mcp230xx_int_retainer[pinx]=0;
@@ -781,9 +775,9 @@ void MCP230xx_Interrupt_Retain_Report(void) {
    Interface
 \*********************************************************************************************/
 
-boolean Xsns29(byte function)
+bool Xsns29(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -820,7 +814,7 @@ boolean Xsns29(byte function)
       case FUNC_JSON_APPEND:
         MCP230xx_Show(1);
         break;
-      case FUNC_COMMAND:
+      case FUNC_COMMAND_SENSOR:
         if (XSNS_29 == XdrvMailbox.index) {
           result = MCP230xx_Command();
         }
