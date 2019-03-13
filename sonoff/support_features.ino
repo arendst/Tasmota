@@ -383,8 +383,10 @@ void GetFeatures(void)
 #endif
 #ifdef USE_MAX44009
   feature_sns2 |= 0x00200000;
-#endif  
-//  feature_sns2 |= 0x00400000;
+#endif
+#ifdef USE_SCD30
+  feature_sns2 |= 0x00400000;
+#endif
 //  feature_sns2 |= 0x00800000;
 //  feature_sns2 |= 0x01000000;
 //  feature_sns2 |= 0x02000000;
