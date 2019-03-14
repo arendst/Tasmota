@@ -1278,7 +1278,7 @@ void AddLog_P2(uint8_t loglevel, PGM_P formatP, ...)
 {
   va_list arg;
   va_start(arg, formatP);
-  int len = vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
   va_end(arg);
 
   AddLog(loglevel);

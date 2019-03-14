@@ -200,8 +200,8 @@ struct SYSCFG {
   uint8_t       seriallog_level;           // 09E
   uint8_t       sta_config;                // 09F
   uint8_t       sta_active;                // 0A0
-  char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 4/5
-  char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 4/5
+  char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 5
+  char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 5
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
   uint8_t       rule_stop;                 // 1A7
@@ -213,12 +213,12 @@ struct SYSCFG {
 
   uint8_t       free_1D5[20];              // 1D5  Free since 5.12.0e
 
-  char          mqtt_host[33];             // 1E9
-  uint16_t      mqtt_port;                 // 20A
-  char          mqtt_client[33];           // 20C
-  char          mqtt_user[33];             // 22D
-  char          mqtt_pwd[33];              // 24E
-  char          mqtt_topic[33];            // 26F
+  char          mqtt_host[33];             // 1E9 - Keep together with below as being copied as one chunck with reset 6
+  uint16_t      mqtt_port;                 // 20A - Keep together
+  char          mqtt_client[33];           // 20C - Keep together
+  char          mqtt_user[33];             // 22D - Keep together
+  char          mqtt_pwd[33];              // 24E - Keep together
+  char          mqtt_topic[33];            // 26F - Keep together with above items as being copied as one chunck with reset 6
   char          button_topic[33];          // 290
   char          mqtt_grptopic[33];         // 2B1
   uint8_t       display_model;             // 2D2
