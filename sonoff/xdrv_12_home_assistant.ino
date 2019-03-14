@@ -166,7 +166,7 @@ static void Shorten(char** s, char *prefix)
   }
 }
 
-int try_snprintf_P(char *s, size_t n, const char *format, ... )
+void try_snprintf_P(char *s, int n, const char *format, ... )
 {
   va_list args;
   va_start(args, format);

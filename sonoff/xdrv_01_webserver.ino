@@ -272,7 +272,7 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
 #else
   "<h3>%s " D_MODULE "</h3>"
 #endif
-  "<h2>%s</h2>%s</div>";
+  "<h2>%s</h2>";
 
 const char HTTP_MSG_SLIDER1[] PROGMEM =
   "<div><span class='p'>" D_COLDLIGHT "</span><span class='q'>" D_WARMLIGHT "</span></div>"
@@ -566,27 +566,6 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
   return true;
 }
 
-String WSNetworkInfo(void)
-{
-  String info = "";
-  if (Settings.flag3.gui_hostname_ip) {
-    uint8_t more_ips = 0;
-    info += F("<h3>"); info += my_hostname;
-    if (mdns_begun) { info += F(".local"); }
-    info += F(" (");
-    if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
-      info += WiFi.localIP().toString();
-      more_ips++;
-    }
-    if (static_cast<uint32_t>(WiFi.softAPIP()) != 0) {
-      if (more_ips) { info += F(", "); }
-      info += WiFi.softAPIP().toString();
-    }
-    info += F(")</h3>");
-  }
-  return info;
-}
-
 void WSHeaderSend(void)
 {
   WebServer->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
@@ -701,7 +680,18 @@ void WSContentSendStyle_P(const char* style)
   WSContentSend_P(HTTP_HEAD_STYLE1);
   WSContentSend_P(HTTP_HEAD_STYLE2);
   WSContentSend_P(style);
-  WSContentSend_P(HTTP_HEAD_STYLE3, ModuleName().c_str(), Settings.friendlyname[0], WSNetworkInfo().c_str());
+  WSContentSend_P(HTTP_HEAD_STYLE3, ModuleName().c_str(), Settings.friendlyname[0]);
+  if (Settings.flag3.gui_hostname_ip) {
+    bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
+    bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
+    WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // sonoff.local (192.168.2.12,192.168.4.1)
+      my_hostname,
+      (mdns_begun) ? ".local" : "",
+      (lip) ? WiFi.localIP().toString().c_str() : "",
+      (lip && sip) ? "," : "",
+      (sip) ? WiFi.softAPIP().toString().c_str() : "");
+  }
+  WSContentSend_P(PSTR("</div>"));
 }
 
 void WSContentSendStyle(void)
@@ -812,7 +802,7 @@ void HandleRoot(void)
     if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1")) && HTTP_MANAGER_RESET_ONLY != webserver_state) {
       HandleWifiLogin();
     } else {
-      if (!(Settings.web_password[0] != 0) || ((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == Settings.web_password ) || HTTP_MANAGER_RESET_ONLY == webserver_state)) {
+      if (!(Settings.web_password[0] != 0) || (((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == Settings.web_password )) || HTTP_MANAGER_RESET_ONLY == webserver_state)) {
         HandleWifiConfiguration();
       } else {
         // wrong user and pass

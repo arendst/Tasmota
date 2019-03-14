@@ -2082,31 +2082,26 @@ void Every250mSeconds(void)
     }
     if (restart_flag && (backlog_pointer == backlog_index)) {
       if ((214 == restart_flag) || (215 == restart_flag) || (216 == restart_flag)) {
-        char storage[sizeof(Settings.sta_ssid) + sizeof(Settings.sta_pwd)];
-        char storage_mqtt_host[sizeof(Settings.mqtt_host)];
-        uint16_t storage_mqtt_port;
-        char storage_mqtt_user[sizeof(Settings.mqtt_user)];
-        char storage_mqtt_pwd[sizeof(Settings.mqtt_pwd)];
-        char storage_mqtt_topic[sizeof(Settings.mqtt_topic)];
-        memcpy(storage, Settings.sta_ssid, sizeof(storage));  // Backup current SSIDs and Passwords
+        char storage_wifi[sizeof(Settings.sta_ssid) +
+                          sizeof(Settings.sta_pwd)];
+        char storage_mqtt[sizeof(Settings.mqtt_host) +
+                          sizeof(Settings.mqtt_port) +
+                          sizeof(Settings.mqtt_client) +
+                          sizeof(Settings.mqtt_user) +
+                          sizeof(Settings.mqtt_pwd) +
+                          sizeof(Settings.mqtt_topic)];
+        memcpy(storage_wifi, Settings.sta_ssid, sizeof(storage_wifi));     // Backup current SSIDs and Passwords
         if (216 == restart_flag) {
-          memcpy(storage_mqtt_host, Settings.mqtt_host, sizeof(Settings.mqtt_host));
-          storage_mqtt_port = Settings.mqtt_port;
-          memcpy(storage_mqtt_user, Settings.mqtt_user, sizeof(Settings.mqtt_user));
-          memcpy(storage_mqtt_pwd, Settings.mqtt_pwd, sizeof(Settings.mqtt_pwd));
-          memcpy(storage_mqtt_topic, Settings.mqtt_topic, sizeof(Settings.mqtt_topic));
+          memcpy(storage_mqtt, Settings.mqtt_host, sizeof(storage_mqtt));  // Backup mqtt host, port, client, username and password
         }
         if ((215 == restart_flag) || (216 == restart_flag)) {
           SettingsErase(0);  // Erase all flash from program end to end of physical flash
         }
         SettingsDefault();
-        memcpy(Settings.sta_ssid, storage, sizeof(storage));  // Restore current SSIDs and Passwords
-        if (216 == restart_flag) {                            // Restore the mqtt host, port, username and password
-          memcpy(Settings.mqtt_host, storage_mqtt_host, sizeof(Settings.mqtt_host));
-          Settings.mqtt_port = storage_mqtt_port;
-          memcpy(Settings.mqtt_user, storage_mqtt_user, sizeof(Settings.mqtt_user));
-          memcpy(Settings.mqtt_pwd, storage_mqtt_pwd, sizeof(Settings.mqtt_pwd));
-          memcpy(Settings.mqtt_topic, storage_mqtt_topic, sizeof(Settings.mqtt_topic));
+        memcpy(Settings.sta_ssid, storage_wifi, sizeof(storage_wifi));     // Restore current SSIDs and Passwords
+        if (216 == restart_flag) {
+          memcpy(Settings.mqtt_host, storage_mqtt, sizeof(storage_mqtt));  // Restore the mqtt host, port, client, username and password
+          strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));  // Set client to default
         }
         restart_flag = 2;
       }
