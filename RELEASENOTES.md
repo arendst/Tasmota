@@ -93,7 +93,7 @@ Module            | Description
 69 SYF05          | Sunyesmart SYF05 RGBWW Wifi Led Bulb
 
 ## Provided Binary Downloads
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.4.2** patched with the Alexa fix.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.3.0**.
 
 - **sonoff-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
 - **sonoff-classic.bin** = The Classic version allows **initial installation** using either WifiManager, Wps or SmartConfig.
@@ -102,6 +102,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - **sonoff-sensors.bin** = The Sensors version without Wps and SmartConfig configuration but adds even more useful sensors.
 - **sonoff-display.bin** = The Display version without Wps and SmartConfig configuration but adds display support.
 - **sonoff-knx.bin** = The Knx version without Wps and SmartConfig configuration and some other features but adds KNX support.
+
+Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/
 
 ### Available Features and Sensors
 
@@ -125,6 +127,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_TIMERS_WEB                 | - | x | - | x | x | x |
 | USE_SUNRISE                    | - | x | - | x | x | x |
 | USE_RULES                      | - | x | - | x | x | x |
+| USE_EXPRESSION                 | - | - | - | - | - | - |
 |                                |   |   |   |   |   |
 | USE_ADC_VCC                    | x | x | x | x | x | - |
 | USE_DS18B20                    | - | - | - | - | - | - | Single sensor
@@ -146,7 +149,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_TSL2561                    | - | - | - | - | - | x |
 | USE_MGS                        | - | - | - | - | - | x |
 | USE_SGP30                      | - | - | - | x | x | x |
-| USE_SI1145                     | - | - | - | - | - | x |
+| USE_SI1145                     | - | - | - | - | - | - |
 | USE_LM75AD                     | - | - | - | x | x | x |
 | USE_APDS9960                   | - | - | - | - | - | - |
 | USE_MCP230xx                   | - | - | - | - | - | - |
@@ -157,7 +160,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_DS3231                     | - | - | - | - | - | - |
 | USE_MGC3130                    | - | - | - | - | - | - |
 | USE_MAX44009                   | - | - | - | - | - | - |
-| USE_SCD30                      | - | - | - | - | - | - |
+| USE_SCD30                      | - | - | - | - | - | x |
 |                                |   |   |   |   |   |   |
 | Feature or Sensor              | minimal | basic | classic | sonoff | knx  | sensors |
 | USE_SPI                        | - | - | - | - | - | - |
@@ -177,7 +180,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_ARMTRONIX_DIMMERS          | - | x | - | x | x | x |
 | USE_PS_16_DZ                   | - | x | - | x | x | x |
 | USE_AZ7798                     | - | - | - | - | - | - |
-| USE_PN532_HSU                  | - | - | - | - | - | - |
+| USE_PN532_HSU                  | - | - | - | - | - | x |
 | USE_IR_REMOTE                  | - | - | - | x | x | x |
 | USE_IR_HVAC                    | - | - | - | - | - | x |
 | USE_IR_RECEIVE                 | - | - | - | x | x | x |
