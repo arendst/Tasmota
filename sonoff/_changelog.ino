@@ -1,6 +1,9 @@
 /* 6.5.0 20190319
  * New Release
  *
+ * 6.4.2.22 20190315
+ * Remove support for MQTT_LIBRARY_TYPE, MQTT_ARDUINOMQTT and MQTT_TASMOTAMQTT (#5474)
+ *
  * 6.4.1.21 20190309
  * Fix exception on GUI Configure Logging and Configure Other (#5424)
  * Add support for sensor SCD30 (#5434)

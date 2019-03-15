@@ -434,7 +434,6 @@ const char HTTP_BTN_MENU_DOMOTICZ[] PROGMEM =
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_DOMOTICZ "'>"
-  "<br/>"
   "<table>";
 const char HTTP_FORM_DOMOTICZ_RELAY[] PROGMEM =
   "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " %d</b></td><td style='width:70px'><input id='r%d' name='r%d' placeholder='0' value='%d'></td></tr>"
