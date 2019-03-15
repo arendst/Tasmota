@@ -158,8 +158,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #ifndef USE_SMARTCONFIG
 #define USE_SMARTCONFIG                       // Add support for Wifi SmartConfig as initial wifi configuration tool (+23k code, +0.6k mem)
 #endif
-#undef MQTT_LIBRARY_TYPE
-#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
 //#undef USE_DOMOTICZ                           // Disable Domoticz
 #undef USE_HOME_ASSISTANT                     // Disable Home Assistant

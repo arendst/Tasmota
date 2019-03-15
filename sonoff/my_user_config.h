@@ -230,16 +230,6 @@
 // -- OTA -----------------------------------------
 //#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+13k code)
 
-/*-------------------------------------------------------------------------------------------*\
- * Select ONE of possible MQTT library types below
-\*-------------------------------------------------------------------------------------------*/
-  // Default MQTT driver for both non-TLS and TLS connections. Latest library version (20181016) does not block network if MQTT server is unavailable.
-#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
-  // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 (core 2.3.0), +14k4 (core 2.4.2 lwip2) code, +4k mem) - non-TLS only
-  // Alternative MQTT driver does not block network when MQTT server is unavailable. TLS should work but needs to be tested.
-//#define MQTT_LIBRARY_TYPE      MQTT_ARDUINOMQTT    // Use arduino-mqtt (lwmqtt) library (+3k3 code, +2k mem)
-
 // -- MQTT ----------------------------------------
 #define MQTT_TELE_RETAIN     0                   // Tele messages may send retain flag (0 = off, 1 = on)
 
@@ -249,7 +239,7 @@
   #define DOMOTICZ_OUT_TOPIC   "domoticz/out"    // Domoticz Output Topic
 
 // -- MQTT - Home Assistant Discovery -------------
-#define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+2k code)
+#define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+7k code)
   #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant"  // Home Assistant discovery prefix
 
 // -- MQTT - TLS ----------------------------------
