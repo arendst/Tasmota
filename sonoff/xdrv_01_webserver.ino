@@ -294,9 +294,7 @@ const char HTTP_FORM_LOGIN[] PROGMEM =
 
 const char HTTP_FORM_TEMPLATE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE_PARAMETERS "&nbsp;</b></legend>"
-  "<form method='get' action='tp'>"
-  "<p><b>" D_TEMPLATE_NAME "</b><br/><input id='s1' name='s1' placeholder='" D_TEMPLATE_NAME "'></p>"
-  "<p></p><b>" D_BASE_TYPE "</b><br/><select id='g99' name='g99' onchange='st(this.value)'></select><br/>";
+  "<form method='get' action='tp'>";
 const char HTTP_FORM_TEMPLATE_FLAG[] PROGMEM =
   "<p></p>"  // Keep close so do not use <br/>
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE_FLAGS "&nbsp;</b></legend><p>"
@@ -1063,16 +1061,20 @@ void HandleTemplateConfiguration(void)
   WSContentSend_P(HTTP_SCRIPT_TEMPLATE);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_TEMPLATE);
-
-  WSContentSend_P(PSTR("<br/><table>"));
+  WSContentSend_P(HTTP_TABLE100);
+  WSContentSend_P(PSTR("<tr><td><b>" D_TEMPLATE_NAME "</b></td><td style='width:200px'><input id='s1' name='s1' placeholder='" D_TEMPLATE_NAME "'></td></tr>"
+                       "<tr><td><b>" D_BASE_TYPE "</b></td><td><select id='g99' name='g99' onchange='st(this.value)'></select></td></tr>"
+                       "</table>"
+                       "<hr/>"));
+  WSContentSend_P(HTTP_TABLE100);
   for (uint8_t i = 0; i < 17; i++) {
     if ((i < 6) || ((i > 8) && (i != 11))) {          // Ignore flash pins GPIO06, 7, 8 and 11
-      WSContentSend_P(PSTR("<tr><td%s><b>" D_GPIO "%d</b></td><td>%s</td><td%s><select id='g%d' name='g%d'></select></td></tr>"),
-        (0==i)?" style='width:74px'":"", i, ((9==i)||(10==i))? "<font color='red'>ESP8285</font>" :"", (0==i)?" style='width:176px'":"", i, i);
+      bool esp8285 = ((9==i)||(10==i));
+      WSContentSend_P(PSTR("<tr><td><b>%s" D_GPIO "%d%s</b></td><td%s><select id='g%d' name='g%d'></select></td></tr>"),
+        (esp8285) ? "<font color='red'>" : "", i, (esp8285) ? "</font>" : "", (0==i) ? " style='width:200px'" : "", i, i);
     }
   }
   WSContentSend_P(PSTR("</table>"));
-
   WSContentSend_P(HTTP_FORM_TEMPLATE_FLAG);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
