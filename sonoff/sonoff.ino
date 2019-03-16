@@ -462,7 +462,9 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
   uint16_t index;
   uint32_t address;
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("MqttDataHandler"));
+#endif
 
   strlcpy(topicBuf, topic, sizeof(topicBuf));
   for (i = 0; i < data_len; i++) {
@@ -527,8 +529,18 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
 
     int command_code = GetCommandCode(command, sizeof(command), type, kTasmotaCommands);
     if (-1 == command_code) {
-      if (!XdrvCommand(grpflg, type, index, dataBuf, data_len, payload, payload16)) {
-        type = NULL;  // Unknown command
+//      XdrvMailbox.valid = 1;
+      XdrvMailbox.index = index;
+      XdrvMailbox.data_len = data_len;
+      XdrvMailbox.payload16 = payload16;
+      XdrvMailbox.payload = payload;
+      XdrvMailbox.grpflg = grpflg;
+      XdrvMailbox.topic = type;
+      XdrvMailbox.data = dataBuf;
+      if (!XdrvCall(FUNC_COMMAND)) {
+        if (!XsnsCall(FUNC_COMMAND)) {
+          type = NULL;  // Unknown command
+        }
       }
     }
     else if (CMND_BACKLOG == command_code) {
@@ -711,9 +723,9 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       XdrvMailbox.topic = command;
       XdrvMailbox.data = dataBuf;
       if (CMND_SENSOR == command_code) {
-        XsnsCall(FUNC_COMMAND);
+        XsnsCall(FUNC_COMMAND_SENSOR);
       } else {
-        XdrvCall(FUNC_COMMAND);
+        XdrvCall(FUNC_COMMAND_DRIVER);
       }
     }
     else if ((CMND_SETOPTION == command_code) && (index < 82)) {
@@ -1056,7 +1068,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.switch_debounce);
     }
     else if (CMND_BAUDRATE == command_code) {
-      if (payload32 > 0) {
+      if (payload32 > 1200) {
         payload32 /= 1200;  // Make it a valid baudrate
         baudrate = (1 == payload) ? APP_BAUDRATE : payload32 * 1200;
         SetSerialBaudrate(baudrate);
@@ -1585,7 +1597,9 @@ void ExecuteCommand(char *cmnd, int source)
   char *start;
   char *token;
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("ExecuteCommand"));
+#endif
   ShowSource(source);
 
   token = strtok(cmnd, " ");
@@ -1668,8 +1682,8 @@ void PublishStatus(uint8_t payload)
   }
 
   if (((0 == payload) || (6 == payload)) && Settings.flag.mqtt_enabled) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS6_MQTT "\":{\"" D_CMND_MQTTHOST "\":\"%s\",\"" D_CMND_MQTTPORT "\":%d,\"" D_CMND_MQTTCLIENT D_JSON_MASK "\":\"%s\",\"" D_CMND_MQTTCLIENT "\":\"%s\",\"" D_CMND_MQTTUSER "\":\"%s\",\"MqttType\":%d,\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d}}"),
-      Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, mqtt_client, Settings.mqtt_user, MqttLibraryType(), MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_STATUS D_STATUS6_MQTT "\":{\"" D_CMND_MQTTHOST "\":\"%s\",\"" D_CMND_MQTTPORT "\":%d,\"" D_CMND_MQTTCLIENT D_JSON_MASK "\":\"%s\",\"" D_CMND_MQTTCLIENT "\":\"%s\",\"" D_CMND_MQTTUSER "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d}}"),
+      Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client, mqtt_client, Settings.mqtt_user, MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "6"));
   }
 
@@ -2068,31 +2082,26 @@ void Every250mSeconds(void)
     }
     if (restart_flag && (backlog_pointer == backlog_index)) {
       if ((214 == restart_flag) || (215 == restart_flag) || (216 == restart_flag)) {
-        char storage[sizeof(Settings.sta_ssid) + sizeof(Settings.sta_pwd)];
-        char storage_mqtt_host[sizeof(Settings.mqtt_host)];
-        uint16_t storage_mqtt_port;
-        char storage_mqtt_user[sizeof(Settings.mqtt_user)];
-        char storage_mqtt_pwd[sizeof(Settings.mqtt_pwd)];
-        char storage_mqtt_topic[sizeof(Settings.mqtt_topic)];
-        memcpy(storage, Settings.sta_ssid, sizeof(storage));  // Backup current SSIDs and Passwords
+        char storage_wifi[sizeof(Settings.sta_ssid) +
+                          sizeof(Settings.sta_pwd)];
+        char storage_mqtt[sizeof(Settings.mqtt_host) +
+                          sizeof(Settings.mqtt_port) +
+                          sizeof(Settings.mqtt_client) +
+                          sizeof(Settings.mqtt_user) +
+                          sizeof(Settings.mqtt_pwd) +
+                          sizeof(Settings.mqtt_topic)];
+        memcpy(storage_wifi, Settings.sta_ssid, sizeof(storage_wifi));     // Backup current SSIDs and Passwords
         if (216 == restart_flag) {
-          memcpy(storage_mqtt_host, Settings.mqtt_host, sizeof(Settings.mqtt_host));
-          storage_mqtt_port = Settings.mqtt_port;
-          memcpy(storage_mqtt_user, Settings.mqtt_user, sizeof(Settings.mqtt_user));
-          memcpy(storage_mqtt_pwd, Settings.mqtt_pwd, sizeof(Settings.mqtt_pwd));
-          memcpy(storage_mqtt_topic, Settings.mqtt_topic, sizeof(Settings.mqtt_topic));
+          memcpy(storage_mqtt, Settings.mqtt_host, sizeof(storage_mqtt));  // Backup mqtt host, port, client, username and password
         }
         if ((215 == restart_flag) || (216 == restart_flag)) {
           SettingsErase(0);  // Erase all flash from program end to end of physical flash
         }
         SettingsDefault();
-        memcpy(Settings.sta_ssid, storage, sizeof(storage));  // Restore current SSIDs and Passwords
-        if (216 == restart_flag) {                            // Restore the mqtt host, port, username and password
-          memcpy(Settings.mqtt_host, storage_mqtt_host, sizeof(Settings.mqtt_host));
-          Settings.mqtt_port = storage_mqtt_port;
-          memcpy(Settings.mqtt_user, storage_mqtt_user, sizeof(Settings.mqtt_user));
-          memcpy(Settings.mqtt_pwd, storage_mqtt_pwd, sizeof(Settings.mqtt_pwd));
-          memcpy(Settings.mqtt_topic, storage_mqtt_topic, sizeof(Settings.mqtt_topic));
+        memcpy(Settings.sta_ssid, storage_wifi, sizeof(storage_wifi));     // Restore current SSIDs and Passwords
+        if (216 == restart_flag) {
+          memcpy(Settings.mqtt_host, storage_mqtt, sizeof(storage_mqtt));  // Restore the mqtt host, port, client, username and password
+          strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));  // Set client to default
         }
         restart_flag = 2;
       }

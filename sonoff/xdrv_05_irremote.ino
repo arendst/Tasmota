@@ -114,7 +114,7 @@ void IrReceiveCheck(void)
 
   if (irrecv->decode(&results)) {
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value %08X, Decode %d"),
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value 0x%08X, Decode %d"),
               irsend_active, results.rawlen, results.overflow, results.bits, results.value, results.decode_type);
 
     unsigned long now = millis();
@@ -129,7 +129,7 @@ void IrReceiveCheck(void)
       if (Settings.flag.ir_receive_decimal) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%u"), (uint32_t)results.value);
       } else {
-        snprintf_P(stemp, sizeof(stemp), PSTR("\"%lX\""), (uint32_t)results.value);
+        snprintf_P(stemp, sizeof(stemp), PSTR("\"0x%lX\""), (uint32_t)results.value);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, stemp);

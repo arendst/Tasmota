@@ -129,7 +129,6 @@ Libraries used with Sonoff-Tasmota are:
 - [Adafruit SSD1306](https://github.com/adafruit/Adafruit_SSD1306)
 - [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library)
 - [ArduinoJson](https://arduinojson.org/)
-- [arduino mqtt](https://github.com/256dpi/arduino-mqtt)
 - [Bosch BME680](https://github.com/BoschSensortec/BME680_driver)
 - [C2 Programmer](http://app.cear.ufpb.br/~lucas.hartmann/tag/efm8bb1/)
 - [esp-epaper-29-ws-20171230-gemu](https://github.com/gemu2015/Sonoff-Tasmota/tree/displays/lib)

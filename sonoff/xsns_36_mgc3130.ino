@@ -613,7 +613,7 @@ bool Xsns36(uint8_t function)
         case FUNC_EVERY_50_MSECOND:
           MGC3130_loop();
           break;
-        case FUNC_COMMAND:
+        case FUNC_COMMAND_SENSOR:
           if (XSNS_36 == XdrvMailbox.index) {
             result = MGC3130CommandSensor();
           }

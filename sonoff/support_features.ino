@@ -56,10 +56,10 @@ void GetFeatures(void)
   feature_drv1 |= 0x00000400;  // xdrv_01_mqtt.ino
 #endif
 #if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
-  feature_drv1 |= 0x00000800;  // xdrv_01_mqtt.ino
+//  feature_drv1 |= 0x00000800;  // xdrv_01_mqtt.ino
 #endif
 #if (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)      // Obsolete since 6.2.1.11
-  feature_drv1 |= 0x00001000;  // xdrv_01_mqtt.ino
+//  feature_drv1 |= 0x00001000;  // xdrv_01_mqtt.ino
 #endif
 #ifdef MQTT_HOST_DISCOVERY
   feature_drv1 |= 0x00002000;  // xdrv_01_mqtt.ino
@@ -116,7 +116,7 @@ void GetFeatures(void)
   feature_drv1 |= 0x40000000;  // support.ino
 #endif
 #if (MQTT_LIBRARY_TYPE == MQTT_ARDUINOMQTT)
-  feature_drv1 |= 0x80000000;  // xdrv_01_mqtt.ino
+//  feature_drv1 |= 0x80000000;  // xdrv_01_mqtt.ino
 #endif
 
 /*********************************************************************************************/
@@ -383,8 +383,10 @@ void GetFeatures(void)
 #endif
 #ifdef USE_MAX44009
   feature_sns2 |= 0x00200000;
-#endif  
-//  feature_sns2 |= 0x00400000;
+#endif
+#ifdef USE_SCD30
+  feature_sns2 |= 0x00400000;
+#endif
 //  feature_sns2 |= 0x00800000;
 //  feature_sns2 |= 0x01000000;
 //  feature_sns2 |= 0x02000000;

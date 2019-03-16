@@ -18,41 +18,6 @@
 */
 
 #define XDRV_02                2
-
-/*********************************************************************************************\
- * Select ONE of possible MQTT library types below
-\*********************************************************************************************/
-// Default MQTT driver for both non-TLS and TLS connections. Blocks network if MQTT server is unavailable.
-//#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
-// Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 (core 2.3.0), +14k4 (core 2.4.2 lwip2) code, +4k mem) - non-TLS only
-// Alternative MQTT driver does not block network when MQTT server is unavailable. TLS should work but needs to be tested.
-//#define MQTT_LIBRARY_TYPE      MQTT_ARDUINOMQTT    // Use arduino-mqtt (lwmqtt) library (+3k3 code, +2k mem)
-
-#if (MQTT_LIBRARY_TYPE == MQTT_ESPMQTTARDUINO)     // Obsolete as of v6.2.1.11
-#undef MQTT_LIBRARY_TYPE
-#define MQTT_LIBRARY_TYPE      MQTT_ARDUINOMQTT
-#endif
-
-/*
-#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
-#undef MQTT_LIBRARY_TYPE
-#define MQTT_LIBRARY_TYPE      MQTT_ARDUINOMQTT    // Obsolete in near future
-#endif
-*/
-
-#ifdef USE_MQTT_TLS
-
-#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
-#undef MQTT_LIBRARY_TYPE
-#endif
-
-#ifndef MQTT_LIBRARY_TYPE
-#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library as it only supports TLS
-#endif
-
-#endif  //  USE_MQTT_TLS
-
 /*********************************************************************************************/
 
 #ifdef USE_MQTT_TLS
@@ -88,8 +53,6 @@ bool mqtt_allowed = false;                  // MQTT enabled and parameters valid
  * bool MqttPublishLib(const char* topic, bool retained)
  * void MqttLoop()
 \*********************************************************************************************/
-
-#if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)  /***********************************************/
 
 #include <PubSubClient.h>
 
@@ -134,96 +97,6 @@ void MqttLoop(void)
   MqttClient.loop();
 }
 
-#elif (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)  /**********************************************/
-
-#include <TasmotaMqtt.h>
-TasmotaMqtt MqttClient;
-
-bool MqttIsConnected(void)
-{
-  return MqttClient.Connected();
-}
-
-void MqttDisconnect(void)
-{
-  MqttClient.Disconnect();
-}
-
-void MqttDisconnectedCb(void)
-{
-  MqttDisconnected(MqttClient.State());  // status codes are documented in file mqtt.h as tConnState
-}
-
-void MqttSubscribeLib(const char *topic)
-{
-  MqttClient.Subscribe(topic, 0);
-}
-
-void MqttUnsubscribeLib(const char *topic)
-{
-  MqttClient.Unsubscribe(topic, 0);
-}
-
-bool MqttPublishLib(const char* topic, bool retained)
-{
-  return MqttClient.Publish(topic, mqtt_data, strlen(mqtt_data), 0, retained);
-}
-
-void MqttLoop(void)
-{
-}
-
-#elif (MQTT_LIBRARY_TYPE == MQTT_ARDUINOMQTT)  /**********************************************/
-
-#include <MQTTClient.h>
-MQTTClient MqttClient(MQTT_MAX_PACKET_SIZE);
-
-bool MqttIsConnected(void)
-{
-  return MqttClient.connected();
-}
-
-void MqttDisconnect(void)
-{
-  MqttClient.disconnect();
-}
-
-/*
-void MqttMyDataCb(MQTTClient* client, char* topic, char* data, int data_len)
-//void MqttMyDataCb(MQTTClient *client, char topic[], char data[], int data_len)
-{
-//  MqttDataHandler((char*)topic, (uint8_t*)data, data_len);
-}
-*/
-
-void MqttMyDataCb(String &topic, String &data)
-{
-  MqttDataHandler((char*)topic.c_str(), (uint8_t*)data.c_str(), data.length());
-}
-
-void MqttSubscribeLib(const char *topic)
-{
-  MqttClient.subscribe(topic, 0);
-}
-
-void MqttUnsubscribeLib(const char *topic)
-{
-  MqttClient.unsubscribe(topic, 0);
-}
-
-bool MqttPublishLib(const char* topic, bool retained)
-{
-  return MqttClient.publish(topic, mqtt_data, strlen(mqtt_data), retained, 0);
-}
-
-void MqttLoop(void)
-{
-  MqttClient.loop();
-//  delay(10);
-}
-
-#endif  // MQTT_LIBRARY_TYPE
-
 /*********************************************************************************************/
 
 #ifdef USE_DISCOVERY
@@ -254,11 +127,6 @@ void MqttDiscoverServer(void)
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
 
-int MqttLibraryType(void)
-{
-  return (int)MQTT_LIBRARY_TYPE;
-}
-
 void MqttRetryCounter(uint8_t value)
 {
   mqtt_retry_counter = value;
@@ -281,7 +149,9 @@ void MqttPublishDirect(const char* topic, bool retained)
   char sretained[CMDSZ];
   char slog_type[10];
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("MqttPublishDirect"));
+#endif
 
   sretained[0] = '\0';
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
@@ -584,25 +454,9 @@ void MqttReconnect(void)
     if (!MqttCheckTls()) return;
 #endif  // USE_MQTT_TLS
 
-#if (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
-    MqttClient.InitConnection(Settings.mqtt_host, Settings.mqtt_port);
-    MqttClient.InitClient(mqtt_client, mqtt_user, mqtt_pwd, MQTT_KEEPALIVE);
-    MqttClient.InitLWT(stopic, mqtt_data, 1, true);
-    MqttClient.OnConnected(MqttConnected);
-    MqttClient.OnDisconnected(MqttDisconnectedCb);
-    MqttClient.OnData(MqttDataHandler);
-#elif (MQTT_LIBRARY_TYPE == MQTT_ARDUINOMQTT)
-    MqttClient.begin(Settings.mqtt_host, Settings.mqtt_port, EspClient);
-    MqttClient.setWill(stopic, mqtt_data, true, 1);
-    MqttClient.setOptions(MQTT_KEEPALIVE, true, MQTT_TIMEOUT);
-//    MqttClient.onMessageAdvanced(MqttMyDataCb);
-    MqttClient.onMessage(MqttMyDataCb);
-#endif
-
     mqtt_initial_connection_state = 1;
   }
 
-#if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
   MqttClient.setCallback(MqttDataHandler);
   MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data)) {
@@ -610,15 +464,6 @@ void MqttReconnect(void)
   } else {
     MqttDisconnected(MqttClient.state());  // status codes are documented here http://pubsubclient.knolleary.net/api.html#state
   }
-#elif (MQTT_LIBRARY_TYPE == MQTT_TASMOTAMQTT)
-  MqttClient.Connect();
-#elif (MQTT_LIBRARY_TYPE == MQTT_ARDUINOMQTT)
-  if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd)) {
-    MqttConnected();
-  } else {
-    MqttDisconnected(MqttClient.lastError());  // status codes are documented here https://github.com/256dpi/lwmqtt/blob/master/include/lwmqtt.h#L11
-  }
-#endif  // MQTT_LIBRARY_TYPE
 }
 
 void MqttCheck(void)
@@ -917,7 +762,7 @@ void HandleMqttConfiguration(void)
 
   char str[sizeof(Settings.mqtt_client)];
 
-  WSContentStart(FPSTR(S_CONFIGURE_MQTT));
+  WSContentStart_P(S_CONFIGURE_MQTT);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_MQTT1,
     Settings.mqtt_host,
@@ -930,8 +775,8 @@ void HandleMqttConfiguration(void)
     Settings.mqtt_topic,
     MQTT_FULLTOPIC, MQTT_FULLTOPIC,
     Settings.mqtt_fulltopic);
-  WSContentSend(FPSTR(HTTP_FORM_END));
-  WSContentSend(FPSTR(HTTP_BTN_CONF));
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentEnd();
 }
 
@@ -980,7 +825,7 @@ bool Xdrv02(uint8_t function)
     switch (function) {
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend(FPSTR(HTTP_BTN_MENU_MQTT));
+        WSContentSend_P(HTTP_BTN_MENU_MQTT);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/" WEB_HANDLE_MQTT, HandleMqttConfiguration);

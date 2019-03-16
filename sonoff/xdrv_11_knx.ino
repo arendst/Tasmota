@@ -762,7 +762,7 @@ const char HTTP_FORM_KNX2[] PROGMEM =
   "<fieldset><center>"
   "<b>" D_KNX_GROUP_ADDRESS_TO_WRITE "</b><hr>"
 
-  "<select name='GAop' style='width:25%;'>";
+  "<select name='GAop' style='width:25%%;'>";
 
 const char HTTP_FORM_KNX_OPT[] PROGMEM =
   "<option value='%d'>%s</option>";
@@ -786,7 +786,7 @@ const char HTTP_FORM_KNX3[] PROGMEM =
   "<b>" D_KNX_GROUP_ADDRESS_TO_READ "</b><hr>";
 
 const char HTTP_FORM_KNX4[] PROGMEM =
-  "-> <select name='CBop' style='width:25%;'>";
+  "-> <select name='CBop' style='width:25%%;'>";
 
 const char HTTP_FORM_KNX_ADD_TABLE_ROW2[] PROGMEM =
   "<tr><td><b>%d / %d / %d -> %s</b></td>"
@@ -859,33 +859,33 @@ void HandleKNXConfiguration(void)
 
     }
 
-    WSContentStart(FPSTR(S_CONFIGURE_KNX));
-    WSContentSend(
-      F("function GAwarning()"
-        "{"
-          "var GA_FNUM = eb('GA_FNUM');"
-          "var GA_AREA = eb('GA_AREA');"
-          "var GA_FDEF = eb('GA_FDEF');"
-          "if ( GA_FNUM != null && GA_FNUM.value == '0' && GA_AREA.value == '0' && GA_FDEF.value == '0' ) {"
-            "alert('" D_KNX_WARNING "');"
+    WSContentStart_P(S_CONFIGURE_KNX);
+    WSContentSend_P(
+      PSTR("function GAwarning()"
+          "{"
+            "var GA_FNUM=eb('GA_FNUM');"
+            "var GA_AREA=eb('GA_AREA');"
+            "var GA_FDEF=eb('GA_FDEF');"
+            "if(GA_FNUM!=null&&GA_FNUM.value=='0'&&GA_AREA.value=='0'&&GA_FDEF.value=='0'){"
+              "alert('" D_KNX_WARNING "');"
+            "}"
           "}"
-        "}"
-        "function CBwarning()"
-        "{"
-          "var CB_FNUM = eb('CB_FNUM');"
-          "var CB_AREA = eb('CB_AREA');"
-          "var CB_FDEF = eb('CB_FDEF');"
-          "if ( CB_FNUM != null && CB_FNUM.value == '0' && CB_AREA.value == '0' && CB_FDEF.value == '0' ) {"
-            "alert('" D_KNX_WARNING "');"
-          "}"
-        "}"));
+          "function CBwarning()"
+          "{"
+            "var CB_FNUM=eb('CB_FNUM');"
+            "var CB_AREA=eb('CB_AREA');"
+            "var CB_FDEF=eb('CB_FDEF');"
+            "if(CB_FNUM!=null&&CB_FNUM.value=='0'&&CB_AREA.value=='0'&&CB_FDEF.value=='0'){"
+              "alert('" D_KNX_WARNING "');"
+            "}"
+          "}"));
     WSContentSendStyle();
     WSContentSend_P(HTTP_FORM_KNX, KNX_physs_addr.pa.area, KNX_physs_addr.pa.line, KNX_physs_addr.pa.member);
-    if ( Settings.flag.knx_enabled ) { WSContentSend(F(" checked")); }
-    WSContentSend(FPSTR(HTTP_FORM_KNX1));
-    if ( Settings.flag.knx_enable_enhancement ) { WSContentSend(F(" checked")); }
+    if ( Settings.flag.knx_enabled ) { WSContentSend_P(PSTR(" checked")); }
+    WSContentSend_P(HTTP_FORM_KNX1);
+    if ( Settings.flag.knx_enable_enhancement ) { WSContentSend_P(PSTR(" checked")); }
 
-    WSContentSend(FPSTR(HTTP_FORM_KNX2));
+    WSContentSend_P(HTTP_FORM_KNX2);
     for (uint8_t i = 0; i < KNX_MAX_device_param ; i++)
     {
       if ( device_param[i].show )
@@ -893,7 +893,7 @@ void HandleKNXConfiguration(void)
         WSContentSend_P(HTTP_FORM_KNX_OPT, device_param[i].type, device_param_ga[i]);
       }
     }
-    WSContentSend(F("</select> -> "));
+    WSContentSend_P(PSTR("</select> -> "));
     WSContentSend_P(HTTP_FORM_KNX_GA, "GA_FNUM", "GA_FNUM", "GA_AREA", "GA_AREA", "GA_FDEF", "GA_FDEF");
     WSContentSend_P(HTTP_FORM_KNX_ADD_BTN, "GAwarning", (Settings.knx_GA_registered < MAX_KNX_GA) ? "" : "disabled", 1);
     for (uint8_t i = 0; i < Settings.knx_GA_registered ; ++i)
@@ -905,9 +905,9 @@ void HandleKNXConfiguration(void)
       }
     }
 
-    WSContentSend(FPSTR(HTTP_FORM_KNX3));
+    WSContentSend_P(HTTP_FORM_KNX3);
     WSContentSend_P(HTTP_FORM_KNX_GA, "CB_FNUM", "CB_FNUM", "CB_AREA", "CB_AREA", "CB_FDEF", "CB_FDEF");
-    WSContentSend(FPSTR(HTTP_FORM_KNX4));
+    WSContentSend_P(HTTP_FORM_KNX4);
 
     uint8_t j;
     for (uint8_t i = 0; i < KNX_MAX_device_param ; i++)
@@ -920,7 +920,7 @@ void HandleKNXConfiguration(void)
         WSContentSend_P(HTTP_FORM_KNX_OPT, device_param[i].type, device_param_cb[i]);
       }
     }
-    WSContentSend(F("</select> "));
+    WSContentSend_P(PSTR("</select> "));
     WSContentSend_P(HTTP_FORM_KNX_ADD_BTN, "CBwarning", (Settings.knx_CB_registered < MAX_KNX_CB) ? "" : "disabled", 2);
 
     for (uint8_t i = 0; i < Settings.knx_CB_registered ; ++i)
@@ -931,9 +931,9 @@ void HandleKNXConfiguration(void)
         WSContentSend_P(HTTP_FORM_KNX_ADD_TABLE_ROW2, KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member, device_param_cb[Settings.knx_CB_param[i]-1], i +1);
       }
     }
-    WSContentSend(F("</table></center></fieldset>"));
-    WSContentSend(FPSTR(HTTP_FORM_END));
-    WSContentSend(FPSTR(HTTP_BTN_CONF));
+    WSContentSend_P(PSTR("</table></center></fieldset>"));
+    WSContentSend_P(HTTP_FORM_END);
+    WSContentSpaceButton(BUTTON_CONFIGURATION);
     WSContentEnd();
   }
 
@@ -1229,7 +1229,7 @@ bool Xdrv11(uint8_t function)
 #ifdef USE_WEBSERVER
 #ifdef USE_KNX_WEB_MENU
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend(FPSTR(HTTP_BTN_MENU_KNX));
+        WSContentSend_P(HTTP_BTN_MENU_KNX);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/kn", HandleKNXConfiguration);

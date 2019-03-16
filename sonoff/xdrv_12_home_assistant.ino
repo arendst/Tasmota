@@ -166,11 +166,12 @@ static void Shorten(char** s, char *prefix)
   }
 }
 
-int try_snprintf_P(char *s, size_t n, const char *format, ... )
+void try_snprintf_P(char *s, int n, const char *format, ... )
 {
   va_list args;
   va_start(args, format);
-  int len = vsnprintf_P(NULL, 0, format, args);
+  char dummy[2];
+  int len = vsnprintf_P(dummy, 1, format, args);
   if (len >= n) {
     AddLog_P2(LOG_LEVEL_ERROR, PSTR("ERROR: MQTT discovery failed due to too long topic or friendly name. "
                                     "Please shorten topic and friendly name. Failed to format(%u/%u):"), len, n);
@@ -232,6 +233,7 @@ void HAssAnnounceRelayLight(void)
       Shorten(&command_topic, prefix);
       Shorten(&state_topic, prefix);
       Shorten(&availability_topic, prefix);
+
       try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_RELAY,
                  name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
       try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_DEVICE_INFO_SHORT, mqtt_data,
@@ -542,11 +544,11 @@ void HAssPublishStatus(void)
              PSTR("{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\","
              "\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
              "\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\","
-             "\"WiFi " D_JSON_LINK_COUNT "\":%d,\"WiFi " D_JSON_DOWNTIME "\":\"%s\","
+             "\"WiFi " D_JSON_LINK_COUNT "\":%d,\"WiFi " D_JSON_DOWNTIME "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,"
              "\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_CMND_IPADDRESS "\":\"%s\","
              "\"" D_JSON_RSSI "\":\"%d\",\"LoadAvg\":%lu}"),
              my_version, my_image, GetBuildDateAndTime().c_str(), ESP.getSdkVersion(), ModuleName().c_str(),
-             GetResetReason().c_str(), GetUptime().c_str(), WifiLinkCount(), WifiDowntime().c_str(),
+             GetResetReason().c_str(), GetUptime().c_str(), WifiLinkCount(), WifiDowntime().c_str(), MqttConnectCount(),
              Settings.bootcount, Settings.save_flag, WiFi.localIP().toString().c_str(),
              WifiGetRssiAsQuality(WiFi.RSSI()), loop_load_avg);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_HASS_STATE));
