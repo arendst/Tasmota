@@ -157,7 +157,9 @@ void Ws2812UpdateHand(int position, uint8_t index, uint8_t odd)
       direction = -1;
   }
       
-  WsColor hand_color = { Settings.ws_color[index][WS_RED], Settings.ws_color[index][WS_GREEN], Settings.ws_color[index][WS_BLUE] };
+  WsColor hand_color = { Settings.ws_color[index][WS_RED], 
+                         Settings.ws_color[index][WS_GREEN], 
+                         Settings.ws_color[index][WS_BLUE] };
 
   Ws2812UpdatePixelColor(position, hand_color, 1);
 
@@ -168,7 +170,8 @@ void Ws2812UpdateHand(int position, uint8_t index, uint8_t odd)
     Ws2812UpdatePixelColor(position -h, hand_color, offset);
     Ws2812UpdatePixelColor(position +h, hand_color, offset);
   }
-  if (odd && !(Settings.ws_width[index] & 0x1)){  // one extra pixel for even width and real pos > position+0.5
+  if (odd && !(Settings.ws_width[index] & 0x1)){  
+    // one extra pixel for even width and real pos > position+0.5
     float offset = (float)(1) / (float)range;
     Ws2812UpdatePixelColor(position +direction*range, hand_color, offset);
   }
@@ -184,8 +187,16 @@ void Ws2812Clock(void)
   Ws2812UpdateHand(minutePosDouble/2, WS_MINUTE, minutePosDouble & 0x1);
   int hourPosDouble = (((RtcTime.hour % 12) * 10000) + ((RtcTime.minute * 2000) / 12 )) / clksize;
   Ws2812UpdateHand(hourPosDouble/2, WS_HOUR, hourPosDouble & 0x1);
-  if (Settings.ws_color[WS_MARKER][WS_RED] + Settings.ws_color[WS_MARKER][WS_GREEN] + Settings.ws_color[WS_MARKER][WS_BLUE]) {
-    for (uint8_t i = 0; i < 12; i++) {
+  if (Settings.ws_color[WS_MARKER][WS_RED] 
+   + Settings.ws_color[WS_MARKER][WS_GREEN] 
+   + Settings.ws_color[WS_MARKER][WS_BLUE]) {
+    int step = (Settings.light_pixels<48) ? 3 : 1;
+    // pixels  ;  step  for markers
+    // <=12    ;   3    // only 4 markers
+    //  24     ;   3 
+    //  48     ;   1    // 12 markers
+    //  60     ;   1
+    for (int i = 0; i < 12; i+= step) {
       Ws2812UpdateHand((i * 5000) / clksize, WS_MARKER, 0);
     }
   }
@@ -196,15 +207,18 @@ void Ws2812Clock(void)
     // 6 Pixels: widths 0 2 2
     // 12 Pixels: widths 0 1 2
     // 24 Pixels: widths 0 1 2  or widths 0 3 2
-    uint8_t direction = 1;
+    int direction = 1;
     if (Settings.flag.ws_clock_reverse){
       direction = -1;
     }
-    uint8_t minutes_mod_5 = RtcTime.minute % 5;
-    uint8_t start = minutePosDouble/2 + (minutePosDouble & 0x1) & ~(Settings.ws_width[WS_MINUTE] & 0x1);
-    WsColor hand_color = { Settings.ws_color[WS_SECOND][WS_RED], Settings.ws_color[WS_SECOND][WS_GREEN], Settings.ws_color[WS_SECOND][WS_BLUE] };
-    for (uint8_t i = 1; i <= minutes_mod_5; i++){
-      Ws2812UpdatePixelColor((start+direction*i+Settings.light_pixels+Settings.light_rotation)%Settings.light_pixels, hand_color, 1.0);
+    int minutes_mod_5 = RtcTime.minute % 5;
+    int start = direction*(minutePosDouble/2 + ((Settings.ws_width[WS_MINUTE]-1) / 2) 
+          + (((minutePosDouble & 0x1) && !(Settings.ws_width[WS_MINUTE] & 0x1))?1:0));
+    WsColor hand_color = { Settings.ws_color[WS_SECOND][WS_RED], 
+                           Settings.ws_color[WS_SECOND][WS_GREEN], 
+                           Settings.ws_color[WS_SECOND][WS_BLUE] };
+    for (int i = 1; i <= minutes_mod_5; i++){
+      Ws2812UpdatePixelColor(start+direction*(i+Settings.light_rotation), hand_color, 1.0);
     }
   }
   Ws2812StripShow();
