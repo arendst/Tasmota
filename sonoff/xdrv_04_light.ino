@@ -109,6 +109,9 @@ uint8_t light_current_color[5];
 uint8_t light_new_color[5];
 uint8_t light_last_color[5];
 uint8_t light_signal_color[5];
+uint8_t light_color_remap[5];
+
+bool light_ct_rgb_linked;
 
 uint8_t light_wheel = 0;
 uint8_t light_subtype = 0;
@@ -202,8 +205,7 @@ void AriluxRfHandler(void)
     }
     uint16_t stored_hostcode = Settings.rf_code[1][6] << 8 | Settings.rf_code[1][7];
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_RFR D_HOST D_CODE " 0x%04X, " D_RECEIVED " 0x%06X"), stored_hostcode, arilux_rf_received_value);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_RFR D_HOST D_CODE " 0x%04X, " D_RECEIVED " 0x%06X"), stored_hostcode, arilux_rf_received_value);
 
     if (hostcode == stored_hostcode) {
       char command[33];
@@ -403,8 +405,7 @@ void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
     uint8_t sm16716_should_enable = (duty_r | duty_g | duty_b);
     if (!sm16716_enabled && sm16716_should_enable) {
 #ifdef D_LOG_SM16716
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SM16716 "turning color on"));
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_SM16716 "turning color on"));
 #endif // D_LOG_SM16716
       sm16716_enabled = 1;
       digitalWrite(sm16716_pin_sel, HIGH);
@@ -415,26 +416,22 @@ void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
     }
     else if (sm16716_enabled && !sm16716_should_enable) {
 #ifdef D_LOG_SM16716
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_SM16716 "turning color off"));
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_SM16716 "turning color off"));
 #endif // D_LOG_SM16716
       sm16716_enabled = 0;
       digitalWrite(sm16716_pin_sel, LOW);
     }
   }
 #ifdef D_LOG_SM16716
-  snprintf_P(log_data, sizeof(log_data),
-      PSTR(D_LOG_SM16716 "Update; rgb=%02x%02x%02x"),
-      duty_r, duty_g, duty_b);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_SM16716 "Update; rgb=%02x%02x%02x"), duty_r, duty_g, duty_b);
 #endif // D_LOG_SM16716
 
   // send start bit
   SM16716_SendBit(1);
-  // send 24-bit rgb data
   SM16716_SendByte(duty_r);
   SM16716_SendByte(duty_g);
   SM16716_SendByte(duty_b);
+
   // send a 'do it' pulse
   // (if multiple chips are chained, each one processes the 1st '1rgb' 25-bit block and
   // passes on the rest, right until the one starting with 0)
@@ -451,10 +448,7 @@ bool SM16716_ModuleSelected(void)
   sm16716_pin_dat = pin[GPIO_SM16716_DAT];
   sm16716_pin_sel = pin[GPIO_SM16716_SEL];
 #ifdef D_LOG_SM16716
-  snprintf_P(log_data, sizeof(log_data),
-      PSTR(D_LOG_SM16716 "ModuleSelected; clk_pin=%d, dat_pin=%d)"),
-      sm16716_pin_clk, sm16716_pin_dat);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_SM16716 "ModuleSelected; clk_pin=%d, dat_pin=%d)"), sm16716_pin_clk, sm16716_pin_dat);
 #endif // D_LOG_SM16716
   return (sm16716_pin_clk < 99) && (sm16716_pin_dat < 99);
 }
@@ -563,6 +557,39 @@ void LightInit(void)
   light_power = 0;
   light_update = 1;
   light_wakeup_active = 0;
+
+  LightUpdateColorMapping();
+}
+
+void LightUpdateColorMapping(void)
+{
+  uint8_t param = Settings.param[P_RGB_REMAP] & 127;
+  if(param > 119){
+    param = 0;
+  }
+  uint8_t tmp[] = {0,1,2,3,4};
+  light_color_remap[0] = tmp[param / 24];
+  for (uint8_t i = param / 24; i<4; ++i){
+    tmp[i] = tmp[i+1];
+  }
+  param = param % 24;
+  light_color_remap[1] = tmp[(param / 6)];
+  for (uint8_t i = param / 6; i<3; ++i){
+    tmp[i] = tmp[i+1];
+  }
+  param = param % 6;
+  light_color_remap[2] = tmp[(param / 2)];
+  for (uint8_t i = param / 2; i<2; ++i){
+    tmp[i] = tmp[i+1];
+  }
+  param = param % 2;
+  light_color_remap[3] = tmp[param];
+  light_color_remap[4] = tmp[1-param];
+
+  light_ct_rgb_linked = !(Settings.param[P_RGB_REMAP] & 128);
+
+  light_update = 1;
+  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], light_color_remap[0],light_color_remap[1],light_color_remap[2],light_color_remap[3],light_color_remap[4]);
 }
 
 void LightSetColorTemp(uint16_t ct)
@@ -584,9 +611,11 @@ void LightSetColorTemp(uint16_t ct)
     Settings.light_color[1] = (uint8_t)icold;
   } else
   if (LST_RGBWC == light_subtype) {
-    Settings.light_color[0] = 0;
-    Settings.light_color[1] = 0;
-    Settings.light_color[2] = 0;
+    if(light_ct_rgb_linked){
+      Settings.light_color[0] = 0;
+      Settings.light_color[1] = 0;
+      Settings.light_color[2] = 0;
+    }
     Settings.light_color[3] = (uint8_t)icold;
     Settings.light_color[4] = (uint8_t)iwarm;
   } else {
@@ -668,8 +697,7 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
         signal = 255;
       }
     }
-//    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "Light signal %d"), signal);
-//    AddLog(LOG_LEVEL_DEBUG);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
     light_signal_color[0] = signal;
     light_signal_color[1] = 255 - signal;
     light_signal_color[2] = 0;
@@ -896,11 +924,11 @@ void LightAnimate(void)
     }
   }
   else {
-#ifdef PWM_LIGHTSCHEME0_IGNORE_SLEEP    
+#ifdef PWM_LIGHTSCHEME0_IGNORE_SLEEP
     sleep = (LS_POWER == Settings.light_scheme) ? Settings.sleep : 0;  // If no animation then use sleep as is
 #else
     sleep = 0;
-#endif // PWM_LIGHTSCHEME0_IGNORE_SLEEP    
+#endif // PWM_LIGHTSCHEME0_IGNORE_SLEEP
     switch (Settings.light_scheme) {
       case LS_POWER:
         LightSetDimmer(Settings.light_dimmer);
@@ -951,10 +979,8 @@ void LightAnimate(void)
   }
 
   if ((Settings.light_scheme < LS_MAX) || !light_power) {
-    for (uint8_t i = 0; i < light_subtype; i++) {
-      if (light_last_color[i] != light_new_color[i]) {
+    if (memcmp(light_last_color, light_new_color, light_subtype)) {
         light_update = 1;
-      }
     }
     if (light_update) {
       light_update = 0;
@@ -962,14 +988,23 @@ void LightAnimate(void)
         light_last_color[i] = light_new_color[i];
         cur_col[i] = light_last_color[i]*Settings.rgbwwTable[i]/255;
         cur_col[i] = (Settings.light_correction) ? ledTable[cur_col[i]] : cur_col[i];
+      }
+
+      // color remapping
+      uint8_t orig_col[5];
+      memcpy(orig_col, cur_col, sizeof(orig_col));
+      for (uint8_t i = 0; i < 5; i++) {
+        cur_col[i] = orig_col[light_color_remap[i]];
+      }
+
+      for (uint8_t i = 0; i < light_subtype; i++) {
         if (light_type < LT_PWM6) {
           if (pin[GPIO_PWM1 +i] < 99) {
             if (cur_col[i] > 0xFC) {
               cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
             }
             uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
-//            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
-//            AddLog(LOG_LEVEL_DEBUG);
+//            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
             analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - curcol : curcol);
           }
         }
@@ -997,8 +1032,7 @@ void LightAnimate(void)
               cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
             }
             uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
-//            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
-//            AddLog(LOG_LEVEL_DEBUG);
+//            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
             analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - curcol : curcol);
           }
         }
@@ -1116,8 +1150,10 @@ void LightHsbToRgb(void)
   light_current_color[0] = (uint8_t)(r * 255.0f);
   light_current_color[1] = (uint8_t)(g * 255.0f);
   light_current_color[2] = (uint8_t)(b * 255.0f);
-  light_current_color[3] = 0;
-  light_current_color[4] = 0;
+  if(light_ct_rgb_linked){
+    light_current_color[3] = 0;
+    light_current_color[4] = 0;
+  }
 }
 
 /********************************************************************************************/
@@ -1210,7 +1246,7 @@ bool LightColorEntry(char *buffer, uint8_t buffer_length)
     entry_type = 2;                                 // Decimal
   }
   else if (((2 * light_subtype) == buffer_length) || (buffer_length > 3)) {  // Hexadecimal entry
-    for (uint8_t i = 0; i < buffer_length / 2; i++) {
+    for (uint8_t i = 0; i < tmin((uint)(buffer_length / 2), sizeof(light_entry_color)); i++) {
       strlcpy(scolor, buffer + (i *2), 3);
       light_entry_color[i] = (uint8_t)strtol(scolor, &p, 16);
     }

@@ -107,8 +107,7 @@ void WifiWpsStatusCallback(wps_cb_status status)
   if (WPS_CB_ST_SUCCESS == wps_result) {
     wifi_wps_disable();
   } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_WPS_FAILED_WITH_STATUS " %d"), wps_result);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WPS_FAILED_WITH_STATUS " %d"), wps_result);
     wifi_config_counter = 2;
   }
 }
@@ -247,9 +246,8 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   } else {
     WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active]);
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
     Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
-  AddLog(LOG_LEVEL_INFO);
 }
 
 void WifiBeginAfterScan()
@@ -324,9 +322,8 @@ void WifiBeginAfterScan()
             break;
           }
         }
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI "Network %d, AP%c, SSId %s, Channel %d, BSSId %02X:%02X:%02X:%02X:%02X:%02X, RSSI %d, Encryption %d"),
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Network %d, AP%c, SSId %s, Channel %d, BSSId %02X:%02X:%02X:%02X:%02X:%02X, RSSI %d, Encryption %d"),
           i, (known) ? (j) ? '2' : '1' : '-', ssid_scan.c_str(), chan_scan, bssid_scan[0], bssid_scan[1], bssid_scan[2], bssid_scan[3], bssid_scan[4], bssid_scan[5], rssi_scan, (sec_scan == ENC_TYPE_NONE) ? 0 : 1);
-        AddLog(LOG_LEVEL_DEBUG);
         delay(0);
       }
       WiFi.scanDelete();                            // Clean up Ram
@@ -490,8 +487,7 @@ void WifiCheck(uint8_t param)
             strlcpy(Settings.sta_pwd[0], WiFi.psk().c_str(), sizeof(Settings.sta_pwd[0]));
           }
           Settings.sta_active = 0;
-          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_WIFI D_WCFG_1_SMARTCONFIG D_CMND_SSID "1 %s"), Settings.sta_ssid[0]);
-          AddLog(LOG_LEVEL_INFO);
+          AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_1_SMARTCONFIG D_CMND_SSID "1 %s"), Settings.sta_ssid[0]);
         }
       }
       if (!wifi_config_counter) {
@@ -534,8 +530,7 @@ void WifiCheck(uint8_t param)
 //            } else {
 //              mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
               mdns_begun = (uint8_t)MDNS.begin(my_hostname);
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MDNS "%s"), (mdns_begun) ? D_INITIALIZED : D_FAILED);
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS "%s"), (mdns_begun) ? D_INITIALIZED : D_FAILED);
 //            }
           }
         }

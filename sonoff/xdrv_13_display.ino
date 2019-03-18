@@ -687,7 +687,7 @@ const char kSensorQuantity[] PROGMEM =
   D_JSON_CO2 "|"                                                                // ppm
   D_JSON_FREQUENCY ;                                                            // Hz
 
-void DisplayJsonValue(const char *topic, const char* device, const char* mkey, const char* value)
+void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value)
 {
   char quantity[TOPSZ];
   char buffer[Settings.display_cols[0] +1];
@@ -695,11 +695,13 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
   char source[Settings.display_cols[0] - Settings.display_cols[1]];
   char svalue[Settings.display_cols[1] +1];
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("DisplayJsonValue"));
+#endif
 
   memset(spaces, 0x20, sizeof(spaces));
   spaces[sizeof(spaces) -1] = '\0';
-  snprintf_P(source, sizeof(source), PSTR("%s/%s%s"), topic, mkey, spaces);  // pow1/Voltage
+  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), topic, (strlen(topic))?"/":"", mkey, spaces);  // pow1/Voltage or Voltage if topic is empty (local sensor)
 
   int quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
   if ((-1 == quantity_code) || !strcmp_P(mkey, S_RSLT_POWER)) {  // Ok: Power, Not ok: POWER
@@ -746,8 +748,7 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
   }
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
-//  AddLog(LOG_LEVEL_DEBUG);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
 
   DisplayLogBufferAdd(buffer);
 }
@@ -777,8 +778,7 @@ void DisplayAnalyzeJson(char *topic, char *json)
     tempunit = root[D_JSON_TEMPERATURE_UNIT];
     if (tempunit) {
       snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%s"), tempunit);
-//      snprintf_P(log_data, sizeof(log_data), disp_temp);
-//      AddLog(LOG_LEVEL_DEBUG);
+//      AddLog_P2(LOG_LEVEL_DEBUG, disp_temp);
     }
 
     for (JsonObject::iterator it = root.begin(); it != root.end(); ++it) {
@@ -867,7 +867,9 @@ bool DisplayMqttData(void)
 void DisplayLocalSensor(void)
 {
   if ((Settings.display_mode &0x02) && (0 == tele_period)) {
-    DisplayAnalyzeJson(mqtt_topic, mqtt_data);
+    char no_topic[1] = { 0 };
+//    DisplayAnalyzeJson(mqtt_topic, mqtt_data);  // Add local topic
+    DisplayAnalyzeJson(no_topic, mqtt_data);    // Discard any topic
   }
 }
 
@@ -881,8 +883,7 @@ void DisplayInitDriver(void)
 {
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
-//  AddLog(LOG_LEVEL_DEBUG);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
     devices_present++;

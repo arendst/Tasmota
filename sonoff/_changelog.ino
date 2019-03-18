@@ -1,4 +1,27 @@
-/* 6.4.1.18 20191221
+/* 6.4.2.22 20190315
+ * Remove support for MQTT_LIBRARY_TYPE, MQTT_ARDUINOMQTT and MQTT_TASMOTAMQTT (#5474)
+ *
+ * 6.4.1.21 20190309
+ * Fix exception on GUI Configure Logging and Configure Other (#5424)
+ * Add support for sensor SCD30 (#5434)
+ * Add support for commands in sensor drivers
+ * Add 0x to IRRemote (SetOption29) and RCSwitch (SetOption28) received hexadecimal data (#5431)
+ * Add button control when no relay configured (#4682)
+ *
+ * 6.4.1.20 20190304
+ * Changed webserver content handling from single String to small Chunks increasing RAM
+ * Changed logging message handling
+ * Fix additional characters in fallbacktopic, hostname and mqttclient on core 2.5.0 (#5359, #5417)
+ * Add command Template 255 to copy module configuration over to current active template and store as user template named Merged (#5371)
+ *
+ * 6.4.1.19 20190222
+ * Add command SetOption37 for RGBCW color mapping (#5326)
+ * Add Korean language translations (#5344)
+ * Fix Energy TotalStartTime when commands EnergyReset0 and/or EnergyReset3 used (#5373)
+ * Fix DS18S20 temperature calculation (#5375)
+ * Fix float calculations in range from 0 to -1 (#5386)
+ *
+ * 6.4.1.18 20190221
  * Fix some exceptions and watchdogs due to lack of stack space - part 1 (#5215)
  * Fix some exceptions and watchdogs due to lack of stack space - part 2
  * Add command SetOption62 0/1 to disable retain on Button or Swith hold messages (#5299)

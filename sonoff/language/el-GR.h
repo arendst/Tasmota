@@ -148,6 +148,7 @@
 #define D_STOP "Τερματισμός"
 #define D_SUBNET_MASK "Μάσκα υποδικτύου"
 #define D_SUBSCRIBE_TO "Εγγραφή στο"
+#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "Επιτυχές"
 #define D_SUNRISE "Σούρουπο"
 #define D_SUNSET "Ηλιοβασίλεμα"

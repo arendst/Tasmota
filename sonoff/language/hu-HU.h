@@ -148,6 +148,7 @@
 #define D_STOP "Leállítás"
 #define D_SUBNET_MASK "Alhálózati maszk"
 #define D_SUBSCRIBE_TO "Feliratkozás a(z)"
+#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "Sikeres"
 #define D_SUNRISE "Napkelte"
 #define D_SUNSET "Napnyugta"

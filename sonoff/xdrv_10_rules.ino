@@ -75,6 +75,8 @@
 #define D_CMND_MULT "Mult"
 #define D_CMND_SCALE "Scale"
 #define D_CMND_CALC_RESOLUTION "CalcRes"
+#define D_CMND_SUBSCRIBE "Subscribe"
+#define D_CMND_UNSUBSCRIBE "Unsubscribe"
 
 #define D_JSON_INITIATED "Initiated"
 
@@ -105,8 +107,18 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
   #define MAX_EXPRESSION_OPERATOR_PRIORITY    4
 #endif  // USE_EXPRESSION
 
-enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_MULT, CMND_SCALE, CMND_CALC_RESOLUTION };
-const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION ;
+enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_MULT, CMND_SCALE, CMND_CALC_RESOLUTION, CMND_SUBSCRIBE, CMND_UNSUBSCRIBE };
+const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION "|" D_CMND_SUBSCRIBE "|" D_CMND_UNSUBSCRIBE ;
+
+#ifdef SUPPORT_MQTT_EVENT
+  #include <LinkedList.h>                 // Import LinkedList library
+  typedef struct {
+    String Event;
+    String Topic;
+    String Key;
+  } MQTT_Subscription;
+  LinkedList<MQTT_Subscription> subscriptions;
+#endif    //SUPPORT_MQTT_EVENT
 
 String rules_event_value;
 unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
@@ -206,7 +218,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     }
 #endif  // USE_TIMERS and USE_SUNRISE
     rule_param.toUpperCase();
-    snprintf(rule_svalue, sizeof(rule_svalue), rule_param.c_str());
+    strlcpy(rule_svalue, rule_param.c_str(), sizeof(rule_svalue));
 
     int temp_value = GetStateNumber(rule_svalue);
     if (temp_value > -1) {
@@ -225,9 +237,8 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   double value = 0;
   const char* str_value = root[rule_task][rule_name];
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
 //  rule_task.c_str(), rule_name.c_str(), rule_svalue, rules_trigger_count[rule_set], bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
-//AddLog(LOG_LEVEL_DEBUG);
 
   if (!root[rule_task][rule_name].success()) { return false; }
   // No value but rule_name is ok
@@ -293,8 +304,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
   delay(0);                                               // Prohibit possible loop software watchdog
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
-//AddLog(LOG_LEVEL_DEBUG);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
 
   String rules = Settings.rules[rule_set];
 
@@ -329,8 +339,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     rules_event_value = "";
     String event = event_saved;
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
-//AddLog(LOG_LEVEL_DEBUG);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 
     if (RulesRuleMatch(rule_set, event, event_trigger)) {
       commands.trim();
@@ -356,10 +365,9 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 #endif  // USE_TIMERS and USE_SUNRISE
 
       char command[commands.length() +1];
-      snprintf(command, sizeof(command), commands.c_str());
+      strlcpy(command, commands.c_str(), sizeof(command));
 
-      snprintf_P(log_data, sizeof(log_data), PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
 
 //      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
@@ -379,13 +387,14 @@ bool RulesProcessEvent(char *json_event)
 {
   bool serviced = false;
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("RulesProcessEvent"));
+#endif
 
   String event_saved = json_event;
   event_saved.toUpperCase();
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event %s"), event_saved.c_str());
-//AddLog(LOG_LEVEL_DEBUG);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event %s"), event_saved.c_str());
 
   for (uint8_t i = 0; i < MAX_RULE_SETS; i++) {
     if (strlen(Settings.rules[i]) && bitRead(Settings.rule_enabled, i)) {
@@ -576,6 +585,188 @@ void RulesTeleperiod(void)
   RulesProcess();
   rules_teleperiod = 0;
 }
+
+#ifdef SUPPORT_MQTT_EVENT
+/********************************************************************************************/
+/*
+ * Rules: Process received MQTT message.
+ *        If the message is in our subscription list, trigger an event with the value parsed from MQTT data
+ * Input:
+ *      void      - We are going to access XdrvMailbox data directly.
+ * Return:
+ *      true      - The message is consumed.
+ *      false     - The message is not in our list.
+ */
+bool RulesMqttData(void)
+{
+  bool serviced = false;
+  if (XdrvMailbox.data_len < 1 || XdrvMailbox.data_len > 128) {
+    return false;
+  }
+  String sTopic = XdrvMailbox.topic;
+  String sData = XdrvMailbox.data;
+  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
+  MQTT_Subscription event_item;
+  //Looking for matched topic
+  for (int index = 0; index < subscriptions.size(); index++) {
+    event_item = subscriptions.get(index);
+
+    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
+    if (sTopic.startsWith(event_item.Topic)) {
+      //This topic is subscribed by us, so serve it
+      serviced = true;
+      String value;
+      if (event_item.Key.length() == 0) {   //If did not specify Key
+        value = sData;
+      } else {      //If specified Key, need to parse Key/Value from JSON data
+        StaticJsonBuffer<400> jsonBuf;
+        JsonObject& jsonData = jsonBuf.parseObject(sData);
+        String key1 = event_item.Key;
+        String key2;
+        if (!jsonData.success()) break;       //Failed to parse JSON data, ignore this message.
+        int dot;
+        if ((dot = key1.indexOf('.')) > 0) {
+          key2 = key1.substring(dot+1);
+          key1 = key1.substring(0, dot);
+          if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
+          value = (const char *)jsonData[key1][key2];
+        } else {
+          if (!jsonData[key1].success()) break;
+          value = (const char *)jsonData[key1];
+        }
+      }
+      value.trim();
+      //Create an new event. Cannot directly call RulesProcessEvent().
+      snprintf_P(event_data, sizeof(event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
+    }
+  }
+  return serviced;
+}
+
+/********************************************************************************************/
+/*
+ * Subscribe a MQTT topic (with or without key) and assign an event name to it
+ * Command Subscribe format:
+ *      Subscribe <event_name>, <topic> [, <key>]
+ *        This command will subscribe a <topic> and give it an event name <event_name>.
+ *        The optional parameter <key> is for parse the specified key/value from MQTT message
+ *            payload with JSON format.
+ *      Subscribe
+ *        Subscribe command without any parameter will list all topics currently subscribed.
+ * Input:
+ *      data      - A char buffer with all the parameters
+ *      data_len  - Length of the parameters
+ * Return:
+ *      A string include subscribed event, topic and key.
+ */
+String RulesSubscribe(const char *data, int data_len)
+{
+  MQTT_Subscription subscription_item;
+  String events;
+  if (data_len > 0) {
+    char parameters[data_len+1];
+    memcpy(parameters, data, data_len);
+    parameters[data_len] = '\0';
+    String event_name, topic, key;
+
+    char * pos = strtok(parameters, ",");
+    if (pos) {
+      event_name = Trim(pos);
+      pos = strtok(NULL, ",");
+      if (pos) {
+        topic = Trim(pos);
+        pos = strtok(NULL, ",");
+        if (pos) {
+          key = Trim(pos);
+        }
+      }
+    }
+    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
+    event_name.toUpperCase();
+    if (event_name.length() > 0 && topic.length() > 0) {
+      //Search all subscriptions
+      for (int index=0; index < subscriptions.size(); index++) {
+        if (subscriptions.get(index).Event.equals(event_name)) {
+          //If find exists one, remove it.
+          String stopic = subscriptions.get(index).Topic + "/#";
+          MqttUnsubscribe(stopic.c_str());
+          subscriptions.remove(index);
+          break;
+        }
+      }
+      //Add "/#" to the topic
+      if (!topic.endsWith("#")) {
+        if (topic.endsWith("/")) {
+          topic.concat("#");
+        } else {
+          topic.concat("/#");
+        }
+      }
+      //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: New topic: %s."), topic.c_str());
+      //MQTT Subscribe
+      subscription_item.Event = event_name;
+      subscription_item.Topic = topic.substring(0, topic.length() - 2);   //Remove "/#" so easy to match
+      subscription_item.Key = key;
+      subscriptions.add(subscription_item);
+
+      MqttSubscribe(topic.c_str());
+      events.concat(event_name + "," + topic
+        + (key.length()>0 ? "," : "")
+        + key);
+    } else {
+      events = D_JSON_WRONG_PARAMETERS;
+    }
+  } else {
+    //If did not specify the event name, list all subscribed event
+    for (int index=0; index < subscriptions.size(); index++) {
+      subscription_item = subscriptions.get(index);
+      events.concat(subscription_item.Event + "," + subscription_item.Topic
+        + (subscription_item.Key.length()>0 ? "," : "")
+        + subscription_item.Key + "; ");
+    }
+  }
+  return events;
+}
+
+/********************************************************************************************/
+/*
+ * Unsubscribe specified MQTT event. If no event specified, Unsubscribe all.
+ * Command Unsubscribe format:
+ *      Unsubscribe [<event_name>]
+ * Input:
+ *      data      - Event name
+ *      data_len  - Length of the parameters
+ * Return:
+ *      list all the events unsubscribed.
+ */
+String RulesUnsubscribe(const char * data, int data_len)
+{
+  MQTT_Subscription subscription_item;
+  String events;
+  if (data_len > 0) {
+    for (int index = 0; index < subscriptions.size(); index++) {
+      subscription_item = subscriptions.get(index);
+      if (subscription_item.Event.equalsIgnoreCase(data)) {
+        String stopic = subscription_item.Topic + "/#";
+        MqttUnsubscribe(stopic.c_str());
+        events = subscription_item.Event;
+        subscriptions.remove(index);
+        break;
+      }
+    }
+  } else {
+    //If did not specify the event name, unsubscribe all event
+    String stopic;
+    while (subscriptions.size() > 0) {
+      events.concat(subscriptions.get(0).Event + "; ");
+      stopic = subscriptions.get(0).Topic + "/#";
+      MqttUnsubscribe(stopic.c_str());
+      subscriptions.remove(0);
+    }
+  }
+  return events;
+}
+#endif //     SUPPORT_MQTT_EVENT
 
 #ifdef USE_EXPRESSION
 /********************************************************************************************/
@@ -1026,6 +1217,14 @@ bool RulesCommand(void)
       }
     }
     snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+#ifdef SUPPORT_MQTT_EVENT
+  } else if (CMND_SUBSCRIBE == command_code) {			//MQTT Subscribe command. Subscribe <Event>, <Topic> [, <Key>]
+    String result = RulesSubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, result.c_str());
+  } else if (CMND_UNSUBSCRIBE == command_code) {			//MQTT Un-subscribe command. UnSubscribe <Event>
+    String result = RulesUnsubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, result.c_str());
+#endif        //SUPPORT_MQTT_EVENT
   }
   else serviced = false;  // Unknown command
 
@@ -1067,6 +1266,11 @@ bool Xdrv10(uint8_t function)
     case FUNC_RULES_PROCESS:
       result = RulesProcess();
       break;
+#ifdef SUPPORT_MQTT_EVENT
+    case FUNC_MQTT_DATA:
+      result = RulesMqttData();
+      break;
+#endif    //SUPPORT_MQTT_EVENT
   }
   return result;
 }

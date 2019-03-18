@@ -287,8 +287,7 @@ void Ds18x20Init(void)
       }
     }
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
 }
 
 void Ds18x20Convert(void)
@@ -310,9 +309,6 @@ bool Ds18x20Read(uint8_t sensor)
 {
   uint8_t data[9];
   int8_t sign = 1;
-  uint16_t temp12 = 0;
-  int16_t temp14 = 0;
-  float temp9 = 0.0;
 
   uint8_t index = ds18x20_sensor[sensor].index;
   if (ds18x20_sensor[index].valid) { ds18x20_sensor[index].valid--; }
@@ -325,48 +321,47 @@ bool Ds18x20Read(uint8_t sensor)
     }
     if (OneWireCrc8(data)) {
       switch(ds18x20_sensor[index].address[0]) {
-      case DS18S20_CHIPID:
-        if (data[1] > 0x80) {
-          data[0] = (~data[0]) +1;
-          sign = -1;                     // App-Note fix possible sign error
+        case DS18S20_CHIPID: {
+          if (data[1] > 0x80) {
+            data[0] = (~data[0]) +1;
+            sign = -1;                     // App-Note fix possible sign error
+          }
+          float temp9 = (float)(data[0] >> 1) * sign;
+          ds18x20_sensor[index].temperature = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
+          ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
+          return true;
         }
-        if (data[0] & 1) {
-          temp9 = ((data[0] >> 1) + 0.5) * sign;
-        } else {
-          temp9 = (data[0] >> 1) * sign;
-        }
-        ds18x20_sensor[index].temperature = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
-        ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
-        return true;
-      case DS1822_CHIPID:
-      case DS18B20_CHIPID:
-        if (data[4] != 0x7F) {
-          data[4] = 0x7F;                 // Set resolution to 12-bit
-          OneWireReset();
-          OneWireSelect(ds18x20_sensor[index].address);
-          OneWireWrite(W1_WRITE_SCRATCHPAD);
-          OneWireWrite(data[2]);          // Th Register
-          OneWireWrite(data[3]);          // Tl Register
-          OneWireWrite(data[4]);          // Configuration Register
-          OneWireSelect(ds18x20_sensor[index].address);
-          OneWireWrite(W1_WRITE_EEPROM);  // Save scratchpad to EEPROM
+        case DS1822_CHIPID:
+        case DS18B20_CHIPID: {
+          if (data[4] != 0x7F) {
+            data[4] = 0x7F;                 // Set resolution to 12-bit
+            OneWireReset();
+            OneWireSelect(ds18x20_sensor[index].address);
+            OneWireWrite(W1_WRITE_SCRATCHPAD);
+            OneWireWrite(data[2]);          // Th Register
+            OneWireWrite(data[3]);          // Tl Register
+            OneWireWrite(data[4]);          // Configuration Register
+            OneWireSelect(ds18x20_sensor[index].address);
+            OneWireWrite(W1_WRITE_EEPROM);  // Save scratchpad to EEPROM
 #ifdef W1_PARASITE_POWER
-          w1_power_until = millis() + 10; // 10ms specified duration for EEPROM write
+            w1_power_until = millis() + 10; // 10ms specified duration for EEPROM write
 #endif
+          }
+          uint16_t temp12 = (data[1] << 8) + data[0];
+          if (temp12 > 2047) {
+            temp12 = (~temp12) +1;
+            sign = -1;
+          }
+          ds18x20_sensor[index].temperature = ConvertTemp(sign * temp12 * 0.0625);  // Divide by 16
+          ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
+          return true;
         }
-        temp12 = (data[1] << 8) + data[0];
-        if (temp12 > 2047) {
-          temp12 = (~temp12) +1;
-          sign = -1;
+        case MAX31850_CHIPID: {
+          int16_t temp14 = (data[1] << 8) + (data[0] & 0xFC);
+          ds18x20_sensor[index].temperature = ConvertTemp(temp14 * 0.0625);  // Divide by 16
+          ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
+          return true;
         }
-        ds18x20_sensor[index].temperature = ConvertTemp(sign * temp12 * 0.0625);  // Divide by 16
-        ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
-        return true;
-      case MAX31850_CHIPID:
-        temp14 = (data[1] << 8) + (data[0] & 0xFC);
-        ds18x20_sensor[index].temperature = ConvertTemp(temp14 * 0.0625);  // Divide by 16
-        ds18x20_sensor[index].valid = SENSOR_MAX_MISS;
-        return true;
       }
     }
   }

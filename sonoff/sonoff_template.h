@@ -1764,7 +1764,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     GPIO_LED1,        // GPIO12 Green LED - Link status
+     GPIO_LED1_INV,    // GPIO12 Green LED - Link status
      GPIO_LED2,        // GPIO13 Red LED - Power status
      0, 0, 0, 0
   },

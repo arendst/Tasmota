@@ -137,7 +137,7 @@ bool SerialBridgeCommand(void)
         int size = strlen(XdrvMailbox.data);
 
         while (size > 0) {
-          snprintf(stemp, sizeof(stemp), codes);
+          strlcpy(stemp, codes, sizeof(stemp));
           code = strtol(stemp, &p, 16);
           SerialBridgeSerial->write(code);                                  // "AA004566" as hex values
           size -= 2;
@@ -150,7 +150,7 @@ bool SerialBridgeCommand(void)
   else if (CMND_SBAUDRATE == command_code) {
     char *p;
     int baud = strtol(XdrvMailbox.data, &p, 10);
-    if (baud > 0) {
+    if (baud >= 1200) {
       baud /= 1200;  // Make it a valid baudrate
       Settings.sbaudrate = (1 == XdrvMailbox.payload) ? SOFT_BAUDRATE / 1200 : baud;
       SerialBridgeSerial->begin(Settings.sbaudrate * 1200);  // Reinitialize serial port with new baud rate

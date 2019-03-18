@@ -209,6 +209,7 @@
 //#define MY_LANGUAGE            he-HE           // Hebrew in Israel
 //#define MY_LANGUAGE            hu-HU           // Hungarian in Hungary
 //#define MY_LANGUAGE            it-IT           // Italian in Italy
+//#define MY_LANGUAGE            ko-KO           // Korean in Korea
 //#define MY_LANGUAGE            nl-NL           // Dutch in the Netherlands
 //#define MY_LANGUAGE            pl-PL           // Polish in Poland
 //#define MY_LANGUAGE            pt-BR           // Portuguese in Brazil
@@ -229,16 +230,6 @@
 // -- OTA -----------------------------------------
 //#define USE_ARDUINO_OTA                          // Add optional support for Arduino OTA (+13k code)
 
-/*-------------------------------------------------------------------------------------------*\
- * Select ONE of possible MQTT library types below
-\*-------------------------------------------------------------------------------------------*/
-  // Default MQTT driver for both non-TLS and TLS connections. Latest library version (20181016) does not block network if MQTT server is unavailable.
-#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
-  // Alternative MQTT driver does not block network when MQTT server is unavailable. No TLS support
-//#define MQTT_LIBRARY_TYPE      MQTT_TASMOTAMQTT    // Use TasmotaMqtt library (+4k4 (core 2.3.0), +14k4 (core 2.4.2 lwip2) code, +4k mem) - non-TLS only
-  // Alternative MQTT driver does not block network when MQTT server is unavailable. TLS should work but needs to be tested.
-//#define MQTT_LIBRARY_TYPE      MQTT_ARDUINOMQTT    // Use arduino-mqtt (lwmqtt) library (+3k3 code, +2k mem)
-
 // -- MQTT ----------------------------------------
 #define MQTT_TELE_RETAIN     0                   // Tele messages may send retain flag (0 = off, 1 = on)
 
@@ -248,7 +239,7 @@
   #define DOMOTICZ_OUT_TOPIC   "domoticz/out"    // Domoticz Output Topic
 
 // -- MQTT - Home Assistant Discovery -------------
-#define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+2k code)
+#define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+7k code)
   #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant"  // Home Assistant discovery prefix
 
 // -- MQTT - TLS ----------------------------------
@@ -279,7 +270,8 @@
 
 // -- Rules ---------------------------------------
 #define USE_RULES                                // Add support for rules (+4k4 code)
-  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
+//  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
+//  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 
 // -- Internal Analog input -----------------------
 #define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
@@ -289,7 +281,7 @@
 //#define USE_DS18x20_LEGACY                       // Optional for more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 #define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //  #define W1_PARASITE_POWER                      // If using USE_DS18x20 then optimize for parasite powered sensors
-//  #define DS18B20_INTERNAL_PULLUP	               // Use INPUT_PULLUP internal pullup resistors for single DS18B20
+//  #define DS18B20_INTERNAL_PULLUP                // Use INPUT_PULLUP internal pullup resistors for single DS18B20
 
 // -- I2C sensors ---------------------------------
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
@@ -329,6 +321,7 @@
 //    #define USE_RTC_ADDR  0x68                   // Default I2C address 0x68
 //  #define USE_MGC3130                            // Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
 //  #define USE_MAX44009                           // Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
+//  #define USE_SCD30                              // Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
 
 //  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0

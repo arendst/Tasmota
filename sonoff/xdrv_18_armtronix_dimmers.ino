@@ -58,13 +58,11 @@ void LightSerial2Duty(uint8_t duty1, uint8_t duty2)
     ArmtronixSerial->print("\nDimmer2:");
     ArmtronixSerial->println(duty2);
 
-    snprintf_P(log_data, sizeof(log_data), PSTR( "ARM: Send Serial Packet Dim Values=%d,%d"), armtronix_dimState[0],armtronix_dimState[1]);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ARM: Send Serial Packet Dim Values=%d,%d"), armtronix_dimState[0],armtronix_dimState[1]);
 
   } else {
     armtronix_ignore_dim = false;
-    snprintf_P(log_data, sizeof(log_data), PSTR( "ARM: Send Dim Level skipped due to already set. Value=%d,%d"), armtronix_dimState[0],armtronix_dimState[1]);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ARM: Send Dim Level skipped due to already set. Value=%d,%d"), armtronix_dimState[0],armtronix_dimState[1]);
 
   }
 }
@@ -73,8 +71,7 @@ void ArmtronixRequestState(void)
 {
   if (ArmtronixSerial) {
     // Get current status of MCU
-    snprintf_P(log_data, sizeof(log_data), "TYA: Request MCU state");
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("ARM: Request MCU state"));
     ArmtronixSerial->println("Status");
 
   }
@@ -123,8 +120,7 @@ void ArmtronixSerialInput(void)
           armtronix_ignore_dim = true;
           snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_CHANNEL "%d %d"),i+1, temp);
           ExecuteCommand(scmnd,SRC_SWITCH);
-          snprintf_P(log_data, sizeof(log_data), PSTR("ARM: Send CMND_CHANNEL=%s"), scmnd );
-          AddLog(LOG_LEVEL_DEBUG);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ARM: Send CMND_CHANNEL=%s"), scmnd );
         }
         commaIndex = answer.indexOf(',',commaIndex+1);
       }
@@ -152,8 +148,7 @@ void ArmtronixSetWifiLed(void)
       break;
   }
 
-  snprintf_P(log_data, sizeof(log_data), "ARM: Set WiFi LED to state %d (%d)", wifi_state, WifiState());
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ARM: Set WiFi LED to state %d (%d)"), wifi_state, WifiState());
 
   char state = '0' + ((wifi_state & 1) > 0);
   ArmtronixSerial->print("Setled:");

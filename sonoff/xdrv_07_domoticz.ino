@@ -206,8 +206,7 @@ bool DomoticzMqttData(void)
       nvalue = domoticz["nvalue"];
     }
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ "idx %d, nvalue %d"), idx, nvalue);
-    AddLog(LOG_LEVEL_DEBUG_MORE);
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ "idx %d, nvalue %d"), idx, nvalue);
 
     if ((idx > 0) && (nvalue >= 0) && (nvalue <= 15)) {
       uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
@@ -275,8 +274,7 @@ bool DomoticzMqttData(void)
       return 1;
     }
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ D_RECEIVED_TOPIC " %s, " D_DATA " %s"), XdrvMailbox.topic, XdrvMailbox.data);
-    AddLog(LOG_LEVEL_DEBUG_MORE);
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_DOMOTICZ D_RECEIVED_TOPIC " %s, " D_DATA " %s"), XdrvMailbox.topic, XdrvMailbox.data);
 
     domoticz_update_flag = 0;
   }
@@ -436,17 +434,16 @@ const char HTTP_BTN_MENU_DOMOTICZ[] PROGMEM =
 const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_DOMOTICZ_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_DOMOTICZ "'>"
-  "<br/>"
   "<table>";
 const char HTTP_FORM_DOMOTICZ_RELAY[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " {1</b></td><td style='width:70px'><input id='r{1' name='r{1' placeholder='0' value='{2'></td></tr>"
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_KEY_IDX " {1</b></td><td style='width:70px'><input id='k{1' name='k{1' placeholder='0' value='{3'></td></tr>";
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " %d</b></td><td style='width:70px'><input id='r%d' name='r%d' placeholder='0' value='%d'></td></tr>"
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_KEY_IDX " %d</b></td><td style='width:70px'><input id='k%d' name='k%d' placeholder='0' value='%d'></td></tr>";
   const char HTTP_FORM_DOMOTICZ_SWITCH[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SWITCH_IDX " {1</b></td><td style='width:70px'><input id='s{1' name='s{1' placeholder='0' value='{4'></td></tr>";
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SWITCH_IDX " %d</b></td><td style='width:70px'><input id='s%d' name='s%d' placeholder='0' value='%d'></td></tr>";
 const char HTTP_FORM_DOMOTICZ_SENSOR[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SENSOR_IDX " {1</b> {2</td><td style='width:70px'><input id='l{1' name='l{1' placeholder='0' value='{5'></td></tr>";
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SENSOR_IDX " %d</b> %s</td><td style='width:70px'><input id='l%d' name='l%d' placeholder='0' value='%d'></td></tr>";
 const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td style='width:70px'><input id='ut' name='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='{6'</td></tr>";
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td style='width:70px'><input id='ut' name='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='%d'</td></tr>";
 
 void HandleDomoticzConfiguration(void)
 {
@@ -462,35 +459,30 @@ void HandleDomoticzConfiguration(void)
 
   char stemp[32];
 
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_CONFIGURE_DOMOTICZ));
-  page += FPSTR(HTTP_HEAD_STYLE);
-  page += FPSTR(HTTP_FORM_DOMOTICZ);
+  WSContentStart_P(S_CONFIGURE_DOMOTICZ);
+  WSContentSendStyle();
+  WSContentSend_P(HTTP_FORM_DOMOTICZ);
   for (int i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     if (i < devices_present) {
-      page += FPSTR(HTTP_FORM_DOMOTICZ_RELAY);
-      page.replace("{2", String((int)Settings.domoticz_relay_idx[i]));
-      page.replace("{3", String((int)Settings.domoticz_key_idx[i]));
+      WSContentSend_P(HTTP_FORM_DOMOTICZ_RELAY,
+        i +1, i, i, Settings.domoticz_relay_idx[i],
+        i +1, i, i, Settings.domoticz_key_idx[i]);
     }
     if (pin[GPIO_SWT1 +i] < 99) {
-      page += FPSTR(HTTP_FORM_DOMOTICZ_SWITCH);
-      page.replace("{4", String((int)Settings.domoticz_switch_idx[i]));
+      WSContentSend_P(HTTP_FORM_DOMOTICZ_SWITCH,
+        i +1, i, i, Settings.domoticz_switch_idx[i]);
     }
-    page.replace("{1", String(i +1));
     if ((SONOFF_IFAN02 == my_module_type) && (1 == i)) { break; }
   }
   for (int i = 0; i < DZ_MAX_SENSORS; i++) {
-    page += FPSTR(HTTP_FORM_DOMOTICZ_SENSOR);
-    page.replace("{1", String(i +1));
-    page.replace("{2", GetTextIndexed(stemp, sizeof(stemp), i, kDomoticzSensors));
-    page.replace("{5", String((int)Settings.domoticz_sensor_idx[i]));
+    WSContentSend_P(HTTP_FORM_DOMOTICZ_SENSOR,
+      i +1, GetTextIndexed(stemp, sizeof(stemp), i, kDomoticzSensors), i, i, Settings.domoticz_sensor_idx[i]);
   }
-  page += FPSTR(HTTP_FORM_DOMOTICZ_TIMER);
-  page.replace("{6", String((int)Settings.domoticz_update_timer));
-  page += F("</table>");
-  page += FPSTR(HTTP_FORM_END);
-  page += FPSTR(HTTP_BTN_CONF);
-  ShowPage(page);
+  WSContentSend_P(HTTP_FORM_DOMOTICZ_TIMER, Settings.domoticz_update_timer);
+  WSContentSend_P(PSTR("</table>"));
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
+  WSContentStop();
 }
 
 void DomoticzSaveSettings(void)
@@ -500,19 +492,19 @@ void DomoticzSaveSettings(void)
   char tmp[100];
 
   for (uint8_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
-    snprintf_P(stemp, sizeof(stemp), PSTR("r%d"), i +1);
+    snprintf_P(stemp, sizeof(stemp), PSTR("r%d"), i);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_relay_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
-    snprintf_P(stemp, sizeof(stemp), PSTR("k%d"), i +1);
+    snprintf_P(stemp, sizeof(stemp), PSTR("k%d"), i);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_key_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
-    snprintf_P(stemp, sizeof(stemp), PSTR("s%d"), i +1);
+    snprintf_P(stemp, sizeof(stemp), PSTR("s%d"), i);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_switch_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
   }
   ssensor_indices[0] = '\0';
   for (uint8_t i = 0; i < DZ_MAX_SENSORS; i++) {
-    snprintf_P(stemp, sizeof(stemp), PSTR("l%d"), i +1);
+    snprintf_P(stemp, sizeof(stemp), PSTR("l%d"), i);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_sensor_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
     snprintf_P(ssensor_indices, sizeof(ssensor_indices), PSTR("%s%s%d"), ssensor_indices, (strlen(ssensor_indices)) ? "," : "",  Settings.domoticz_sensor_idx[i]);
@@ -520,12 +512,11 @@ void DomoticzSaveSettings(void)
   WebGetArg("ut", tmp, sizeof(tmp));
   Settings.domoticz_update_timer = (!strlen(tmp)) ? DOMOTICZ_UPDATE_TIMER : atoi(tmp);
 
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DOMOTICZ D_CMND_IDX " %d,%d,%d,%d, " D_CMND_KEYIDX " %d,%d,%d,%d, " D_CMND_SWITCHIDX " %d,%d,%d,%d, " D_CMND_SENSORIDX " %s, " D_CMND_UPDATETIMER " %d"),
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_DOMOTICZ D_CMND_IDX " %d,%d,%d,%d, " D_CMND_KEYIDX " %d,%d,%d,%d, " D_CMND_SWITCHIDX " %d,%d,%d,%d, " D_CMND_SENSORIDX " %s, " D_CMND_UPDATETIMER " %d"),
     Settings.domoticz_relay_idx[0], Settings.domoticz_relay_idx[1], Settings.domoticz_relay_idx[2], Settings.domoticz_relay_idx[3],
     Settings.domoticz_key_idx[0], Settings.domoticz_key_idx[1], Settings.domoticz_key_idx[2], Settings.domoticz_key_idx[3],
     Settings.domoticz_switch_idx[0], Settings.domoticz_switch_idx[1], Settings.domoticz_switch_idx[2], Settings.domoticz_switch_idx[3],
     ssensor_indices, Settings.domoticz_update_timer);
-  AddLog(LOG_LEVEL_INFO);
 }
 #endif  // USE_WEBSERVER
 
@@ -541,7 +532,7 @@ bool Xdrv07(uint8_t function)
     switch (function) {
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
-        strncat_P(mqtt_data, HTTP_BTN_MENU_DOMOTICZ, sizeof(mqtt_data) - strlen(mqtt_data) -1);
+        WSContentSend_P(HTTP_BTN_MENU_DOMOTICZ);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/" WEB_HANDLE_DOMOTICZ, HandleDomoticzConfiguration);

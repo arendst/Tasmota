@@ -1,6 +1,6 @@
 ## Sonoff-Tasmota
 
-Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web**, **timers**, 'Over The Air' (**OTA**) firmware updates and **sensors support**, allowing control under **Serial**, **HTTP**, **MQTT** and **KNX**, so as to be used on **Smart Home Systems**. Written for Arduino IDE and PlatformIO.
+Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web UI, rules and timers, OTA updates, custome device templates and sensors support**. Allows control over **MQTT**, **HTTP**, **Serial** and **KNX** for integrations with smart home systems. Written for Arduino IDE and PlatformIO.
 
 [![GitHub version](https://img.shields.io/github/release/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Sonoff-Tasmota/total.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
@@ -64,7 +64,7 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 
 See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki) for more information.<br />
 See [Community](https://groups.google.com/d/forum/sonoffusers) for forum.<br />
-See [Chat](https://discord.gg/Ks2Kzd4) for more user experience.
+Visit [Discord Chat](https://discord.gg/Ks2Kzd4) for discussions and troubleshooting.
 
 The following devices are supported:
 - [iTead Sonoff Basic (R2)](https://www.itead.cc/smart-home/sonoff-wifi-wireless-switch-1.html)
@@ -113,6 +113,7 @@ You can contribute to Sonoff-Tasmota by
 - providing Pull Requests (Features, Proof of Concepts, Language files or Fixes)
 - testing new released features and report issues
 - donating to acquire hardware for testing and implementing or out of gratitude
+- contributing missing documentation for features and devices on our [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki)
 
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
@@ -128,7 +129,6 @@ Libraries used with Sonoff-Tasmota are:
 - [Adafruit SSD1306](https://github.com/adafruit/Adafruit_SSD1306)
 - [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library)
 - [ArduinoJson](https://arduinojson.org/)
-- [arduino mqtt](https://github.com/256dpi/arduino-mqtt)
 - [Bosch BME680](https://github.com/BoschSensortec/BME680_driver)
 - [C2 Programmer](http://app.cear.ufpb.br/~lucas.hartmann/tag/efm8bb1/)
 - [esp-epaper-29-ws-20171230-gemu](https://github.com/gemu2015/Sonoff-Tasmota/tree/displays/lib)
@@ -169,7 +169,8 @@ People helping to keep the show on the road:
 - Andre Thomas for providing [thehackbox](http://thehackbox.org/tasmota/) OTA support and daily development builds
 - Joel Stein and digiblur for their Tuya research and driver
 - Frogmore42 and Jason2866 for providing many issue answers
-- Many more providing Tips, Pocs or PRs
+- Blakadder for editing the wiki and providing template management
+- Many more providing Tips, Wips, Pocs or PRs
 
 ### License
 

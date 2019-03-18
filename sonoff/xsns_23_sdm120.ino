@@ -165,8 +165,7 @@ void SDM120250ms(void)              // Every 250 mSec
     if (data_ready) {
       uint8_t error = SDM120_ModbusReceive(&value);
       if (error) {
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "SDM120 response error %d"), error);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM120 response error %d"), error);
       } else {
         switch(sdm120_read_state) {
           case 0:

@@ -114,9 +114,8 @@ void IrReceiveCheck(void)
 
   if (irrecv->decode(&results)) {
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value %08X, Decode %d"),
-               irsend_active, results.rawlen, results.overflow, results.bits, results.value, results.decode_type);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value 0x%08X, Decode %d"),
+              irsend_active, results.rawlen, results.overflow, results.bits, results.value, results.decode_type);
 
     unsigned long now = millis();
 //    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
@@ -130,7 +129,7 @@ void IrReceiveCheck(void)
       if (Settings.flag.ir_receive_decimal) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%u"), (uint32_t)results.value);
       } else {
-        snprintf_P(stemp, sizeof(stemp), PSTR("\"%lX\""), (uint32_t)results.value);
+        snprintf_P(stemp, sizeof(stemp), PSTR("\"0x%lX\""), (uint32_t)results.value);
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, stemp);
@@ -314,9 +313,8 @@ bool IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC
   mitsubir->setVane(MITSUBISHI_AC_VANE_AUTO);
   mitsubir->send();
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Mitsubishi Power %d, Mode %d, FanSpeed %d, Temp %d, VaneMode %d"),
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Mitsubishi Power %d, Mode %d, FanSpeed %d, Temp %d, VaneMode %d"),
 //    mitsubir->getPower(), mitsubir->getMode(), mitsubir->getFan(), mitsubir->getTemp(), mitsubir->getVane());
-//  AddLog(LOG_LEVEL_DEBUG);
 
   return false;
 }
@@ -381,8 +379,7 @@ bool IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Power, 
       hvacOn = true;
     }
 
-//    snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: HvacMode %s, ModeVal %d, Code %d"), p, mode, data[3]);
-//    AddLog(LOG_LEVEL_DEBUG);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: HvacMode %s, ModeVal %d, Code %d"), p, mode, data[3]);
 
     // Set code for HVAC temperature - data[4]
     if (HVAC_Temp > 30) {
@@ -414,8 +411,7 @@ bool IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Power, 
       data[5] = (mode * 2) - 2; // Low = 0x00, Mid = 0x02, High = 0x04
     }
 
-//    snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: FanMode %s, ModeVal %d, Code %d"), p, mode, data[5]);
-//    AddLog(LOG_LEVEL_DEBUG);
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: FanMode %s, ModeVal %d, Code %d"), p, mode, data[5]);
 
     // Set CRC code - data[6]
     data[6] = (data[3] + data[4] + data[5]) & 0x0f; // CRC
@@ -428,8 +424,7 @@ bool IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Power, 
   }
   LG_Code = LG_Code + data[6];
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: LG_Code %d"), LG_Code);
-//  AddLog(LOG_LEVEL_DEBUG);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: LG_Code %d"), LG_Code);
 
   // Send LG IR Code
 //  noInterrupts();
@@ -449,8 +444,7 @@ bool IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Po
 {
   const char kFujitsuHvacModeOptions[] = "HDCAF";
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR("FUJITSU: mode:%s, fan:%s, power:%u, temp:%u"), HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
-//  AddLog(LOG_LEVEL_DEBUG);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FUJITSU: mode:%s, fan:%s, power:%u, temp:%u"), HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
 
   IRFujitsuAC ac(pin[GPIO_IRSEND]);
 
@@ -541,9 +535,7 @@ bool IrSendCommand(void)
             raw_array[i++] = strtoul(str, NULL, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
           }
 
-//          snprintf_P(log_data, sizeof(log_data), PSTR("IRS: Count %d, Freq %d, Arr[0] %d, Arr[count -1] %d"),
-//            count, freq, raw_array[0], raw_array[count -1]);
-//          AddLog(LOG_LEVEL_DEBUG);
+//          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: Count %d, Freq %d, Arr[0] %d, Arr[count -1] %d"), count, freq, raw_array[0], raw_array[count -1]);
 
           irsend_active = true;
           irsend->sendRaw(raw_array, count, freq);
@@ -573,9 +565,8 @@ bool IrSendCommand(void)
             char protocol_text[20];
             int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
 
-            snprintf_P(log_data, sizeof(log_data), PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %u (0x%lX), protocol_code %d"),
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %u (0x%lX), protocol_code %d"),
               protocol_text, protocol, bits, data, data, protocol_code);
-            AddLog(LOG_LEVEL_DEBUG);
 
             irsend_active = true;
             switch (protocol_code) {
@@ -637,9 +628,7 @@ bool IrSendCommand(void)
         HVAC_FanMode = root[D_JSON_IRHVAC_FANSPEED];
         HVAC_Temp = root[D_JSON_IRHVAC_TEMP];
 
-//        snprintf_P(log_data, sizeof(log_data), PSTR("IRHVAC: Received Vendor %s, Power %d, Mode %s, FanSpeed %s, Temp %d"),
-//          HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
-//        AddLog(LOG_LEVEL_DEBUG);
+//        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received Vendor %s, Power %d, Mode %s, FanSpeed %s, Temp %d"), HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
 
         char vendor[20];
         int vendor_code = GetCommandCode(vendor, sizeof(vendor), HVAC_Vendor, kIrHvacVendors);

@@ -166,16 +166,15 @@ static void Shorten(char** s, char *prefix)
   }
 }
 
-int try_snprintf_P(char *s, size_t n, const char *format, ... )
+void try_snprintf_P(char *s, int n, const char *format, ... )
 {
   va_list args;
   va_start(args, format);
-  int len = vsnprintf_P(NULL, 0, format, args);
+  char dummy[2];
+  int len = vsnprintf_P(dummy, 1, format, args);
   if (len >= n) {
-    snprintf_P(log_data, sizeof(log_data),
-               PSTR("ERROR: MQTT discovery failed due to too long topic or friendly name. "
-                    "Please shorten topic and friendly name. Failed to format(%u/%u):"), len, n);
-    AddLog(LOG_LEVEL_ERROR);
+    AddLog_P2(LOG_LEVEL_ERROR, PSTR("ERROR: MQTT discovery failed due to too long topic or friendly name. "
+                                    "Please shorten topic and friendly name. Failed to format(%u/%u):"), len, n);
     va_start(args, format);
     vsnprintf_P(log_data, sizeof(log_data), format, args);
     AddLog(LOG_LEVEL_ERROR);
@@ -202,7 +201,7 @@ void HAssAnnounceRelayLight(void)
 
     mqtt_data[0] = '\0';  // Clear retained message
 
-    // Clear "other" topic first in case the device has been reconfigured from ligth to switch or vice versa
+    // Clear "other" topic first in case the device has been reconfigured from light to switch or vice versa
     snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%d"), ESP.getChipId(), (is_topic_light) ? "RL" : "LI", i);
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/%s/%s/config"),
                (is_topic_light) ? "switch" : "light", unique_id);
@@ -234,6 +233,7 @@ void HAssAnnounceRelayLight(void)
       Shorten(&command_topic, prefix);
       Shorten(&state_topic, prefix);
       Shorten(&availability_topic, prefix);
+
       try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_RELAY,
                  name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
       try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_DEVICE_INFO_SHORT, mqtt_data,
@@ -319,7 +319,7 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
                name, state_topic, Settings.state_text[toggle?2:1], availability_topic);
     try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_DEVICE_INFO_SHORT, mqtt_data,
                unique_id, ESP.getChipId());
-    if (strlen(prefix) > 0 ) try_snprintf_P(mqtt_data-1, sizeof(mqtt_data), HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
+    if (strlen(prefix) > 0 ) try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_TOPIC_PREFIX, mqtt_data, prefix);
     if (toggle) try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_BUTTON_SWITCH_TOGGLE, mqtt_data);
     else try_snprintf_P(mqtt_data, sizeof(mqtt_data)-1, HASS_DISCOVER_BUTTON_SWITCH_ONOFF, mqtt_data, Settings.state_text[0]);
 
@@ -479,16 +479,14 @@ void HAssAnnounceSensors(void)
       StaticJsonBuffer<500> jsonBuffer;
       JsonObject& root = jsonBuffer.parseObject(sensordata);
       if (!root.success()) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("HASS: failed to parse '%s'"), sensordata);
-        AddLog(LOG_LEVEL_ERROR);
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: failed to parse '%s'"), sensordata);
         continue;
       }
       for (auto sensor : root) {
         const char* sensorname = sensor.key;
         JsonObject& sensors = sensor.value.as<JsonObject>();
         if (!sensors.success()) {
-          snprintf_P(log_data, sizeof(log_data), PSTR("HASS: failed to parse '%s'"), sensordata);
-          AddLog(LOG_LEVEL_ERROR);
+          AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: failed to parse '%s'"), sensordata);
           continue;
         }
         for (auto subsensor : sensors) {
@@ -543,11 +541,16 @@ void HAssAnnounceStatusSensor(void)
 void HAssPublishStatus(void)
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data),
-             PSTR("{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_RESTARTREASON "\":\"%s\",\""
-             D_JSON_UPTIME "\":\"%s\",\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\""
-             D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_RSSI "\":\"%d\",\"LoadAvg\":%lu}"),
-             my_version, my_image, ModuleName().c_str(), GetResetReason().c_str(), GetUptime().c_str(), Settings.bootcount,
-             Settings.save_flag, WiFi.localIP().toString().c_str(), WifiGetRssiAsQuality(WiFi.RSSI()), loop_load_avg);
+             PSTR("{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\","
+             "\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
+             "\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\","
+             "\"WiFi " D_JSON_LINK_COUNT "\":%d,\"WiFi " D_JSON_DOWNTIME "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,"
+             "\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_CMND_IPADDRESS "\":\"%s\","
+             "\"" D_JSON_RSSI "\":\"%d\",\"LoadAvg\":%lu}"),
+             my_version, my_image, GetBuildDateAndTime().c_str(), ESP.getSdkVersion(), ModuleName().c_str(),
+             GetResetReason().c_str(), GetUptime().c_str(), WifiLinkCount(), WifiDowntime().c_str(), MqttConnectCount(),
+             Settings.bootcount, Settings.save_flag, WiFi.localIP().toString().c_str(),
+             WifiGetRssiAsQuality(WiFi.RSSI()), loop_load_avg);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_HASS_STATE));
 }
 
