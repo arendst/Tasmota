@@ -220,7 +220,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "För att använda Tasmota, aktivera JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - var god uppgradera"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br/>var god uppgradera"
 #define D_WEBSERVER_ACTIVE_ON "Webbserver aktiv på"
 #define D_WITH_IP_ADDRESS "med IP-adress"
 #define D_WEBSERVER_STOPPED "Webbserver stoppad"
