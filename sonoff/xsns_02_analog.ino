@@ -58,7 +58,7 @@ void AdcShow(bool json)
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ANALOG\":{\"A0\":%d}"), mqtt_data, analog);
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "", 0, analog);
+    WSContentSend_PD(HTTP_SNS_ANALOG, "", 0, analog);
 #endif  // USE_WEBSERVER
   }
 }
@@ -82,7 +82,7 @@ bool Xsns02(uint8_t function)
         AdcShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         AdcShow(0);
         break;
 #endif  // USE_WEBSERVER

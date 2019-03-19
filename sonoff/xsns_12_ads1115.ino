@@ -203,7 +203,7 @@ void Ads1115toString(uint8_t address)
   snprintf_P(label, sizeof(label), "ADS1115(%02x)", address);
 
   for (uint8_t i = 0; i < 4; i++) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, label, i, ads1115_values[i]);
+    WSContentSend_PD(HTTP_SNS_ANALOG, label, i, ads1115_values[i]);
   }
 }
 
@@ -255,7 +255,7 @@ bool Xsns12(uint8_t function)
         Ads1115Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Ads1115Show(0);
         break;
 #endif  // USE_WEBSERVER

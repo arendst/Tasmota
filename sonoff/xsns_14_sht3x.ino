@@ -126,8 +126,8 @@ void Sht3xShow(bool json)
 
 #ifdef USE_WEBSERVER
         } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, types, temperature, TempUnit());
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, types, humidity);
+          WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
+          WSContentSend_PD(HTTP_SNS_HUM, types, humidity);
 #endif  // USE_WEBSERVER
         }
       }
@@ -152,7 +152,7 @@ bool Xsns14(uint8_t function)
         Sht3xShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Sht3xShow(0);
         break;
 #endif  // USE_WEBSERVER

@@ -57,7 +57,7 @@ char* measure_gas(int gas_type, char* buffer)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_MGS_GAS[] PROGMEM = "%s{s}MGS %s{m}%s " D_UNIT_PARTS_PER_MILLION "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_MGS_GAS[] PROGMEM = "{s}MGS %s{m}%s " D_UNIT_PARTS_PER_MILLION "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif // USE_WEBSERVER
 
 void MGSShow(bool json)
@@ -74,14 +74,14 @@ void MGSShow(bool json)
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"C2H5OH\":%s}"), mqtt_data, measure_gas(C2H5OH, buffer));
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGS_GAS, mqtt_data, "NH3", measure_gas(NH3, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGS_GAS, mqtt_data, "CO", measure_gas(CO, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGS_GAS, mqtt_data, "NO2", measure_gas(NO2, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGS_GAS, mqtt_data, "C3H8", measure_gas(C3H8, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGS_GAS, mqtt_data, "C4H10", measure_gas(C4H10, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGS_GAS, mqtt_data, "CH4", measure_gas(GAS_CH4, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGS_GAS, mqtt_data, "H2", measure_gas(H2, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGS_GAS, mqtt_data, "C2H5OH", measure_gas(C2H5OH, buffer));
+    WSContentSend_PD(HTTP_MGS_GAS, "NH3", measure_gas(NH3, buffer));
+    WSContentSend_PD(HTTP_MGS_GAS, "CO", measure_gas(CO, buffer));
+    WSContentSend_PD(HTTP_MGS_GAS, "NO2", measure_gas(NO2, buffer));
+    WSContentSend_PD(HTTP_MGS_GAS, "C3H8", measure_gas(C3H8, buffer));
+    WSContentSend_PD(HTTP_MGS_GAS, "C4H10", measure_gas(C4H10, buffer));
+    WSContentSend_PD(HTTP_MGS_GAS, "CH4", measure_gas(GAS_CH4, buffer));
+    WSContentSend_PD(HTTP_MGS_GAS, "H2", measure_gas(H2, buffer));
+    WSContentSend_PD(HTTP_MGS_GAS, "C2H5OH", measure_gas(C2H5OH, buffer));
 #endif // USE_WEBSERVER
   }
 }
@@ -107,7 +107,7 @@ bool Xsns19(uint8_t function)
         if (detected) MGSShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         if (detected) MGSShow(0);
         break;
 #endif  // USE_WEBSERVER

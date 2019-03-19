@@ -100,7 +100,7 @@ void Bh1750Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, bh1750_types, bh1750_illuminance);
+      WSContentSend_PD(HTTP_SNS_ILLUMINANCE, bh1750_types, bh1750_illuminance);
 #endif  // USE_WEBSERVER
     }
   }
@@ -126,7 +126,7 @@ bool Xsns10(uint8_t function)
         Bh1750Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Bh1750Show(0);
         break;
 #endif  // USE_WEBSERVER

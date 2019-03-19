@@ -67,7 +67,7 @@ char MGC3130stype[8];
 
 
 #ifdef USE_WEBSERVER
-const char HTTP_MGC_3130_SNS[] PROGMEM = "%s"
+const char HTTP_MGC_3130_SNS[] PROGMEM =
   "{s}" "%s" "{m}%s{e}"
   "{s}" "HwRev" "{m}%u.%u{e}"
   "{s}" "loaderVer" "{m}%u.%u{e}"
@@ -555,7 +555,7 @@ void MGC3130_show(bool json)
     }
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGC_3130_SNS, mqtt_data, MGC3130stype, status_chr, hwRev[0], hwRev[1], loaderVersion[0], loaderVersion[1], loaderPlatform );
+    WSContentSend_PD(HTTP_MGC_3130_SNS, MGC3130stype, status_chr, hwRev[0], hwRev[1], loaderVersion[0], loaderVersion[1], loaderPlatform );
 #endif  // USE_WEBSERVER
   }
 }
@@ -622,7 +622,7 @@ bool Xsns36(uint8_t function)
           MGC3130_show(1);
           break;
 #ifdef USE_WEBSERVER
-        case FUNC_WEB_APPEND:
+        case FUNC_WEB_SENSOR:
           MGC3130_show(0);
           break;
 #endif  // USE_WEBSERVER

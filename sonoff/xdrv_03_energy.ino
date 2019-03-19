@@ -548,20 +548,20 @@ void EnergySnsInit(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_ENERGY_SNS1[] PROGMEM = "%s"
+const char HTTP_ENERGY_SNS1[] PROGMEM =
   "{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
   "{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
   "{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
 
-const char HTTP_ENERGY_SNS2[] PROGMEM = "%s"
+const char HTTP_ENERGY_SNS2[] PROGMEM =
   "{s}" D_POWERUSAGE_APPARENT "{m}%s " D_UNIT_VA "{e}"
   "{s}" D_POWERUSAGE_REACTIVE "{m}%s " D_UNIT_VAR "{e}"
   "{s}" D_POWER_FACTOR "{m}%s{e}";
 
-const char HTTP_ENERGY_SNS3[] PROGMEM = "%s"
+const char HTTP_ENERGY_SNS3[] PROGMEM =
   "{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}";
 
-const char HTTP_ENERGY_SNS4[] PROGMEM = "%s"
+const char HTTP_ENERGY_SNS4[] PROGMEM =
   "{s}" D_ENERGY_TODAY  "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_YESTERDAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -666,12 +666,12 @@ void EnergyShow(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS1, mqtt_data, voltage_chr, current_chr, active_power_chr);
+    WSContentSend_PD(HTTP_ENERGY_SNS1, voltage_chr, current_chr, active_power_chr);
     if (!energy_type_dc) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS2, mqtt_data, apparent_power_chr, reactive_power_chr, power_factor_chr);
-      if (!isnan(energy_frequency)) { snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS3, mqtt_data, frequency_chr); }
+      WSContentSend_PD(HTTP_ENERGY_SNS2, apparent_power_chr, reactive_power_chr, power_factor_chr);
+      if (!isnan(energy_frequency)) { WSContentSend_PD(HTTP_ENERGY_SNS3, frequency_chr); }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_ENERGY_SNS4, mqtt_data, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
+    WSContentSend_PD(HTTP_ENERGY_SNS4, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
 #endif  // USE_WEBSERVER
   }
 }
@@ -722,7 +722,7 @@ bool Xsns03(uint8_t function)
         EnergyShow(true);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         EnergyShow(false);
         break;
 #endif  // USE_WEBSERVER

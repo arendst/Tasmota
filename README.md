@@ -18,7 +18,7 @@ See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development
 In addition to the [release webpage](https://github.com/arendst/Sonoff-Tasmota/releases/latest) the binaries can also be OTA downloaded from http://thehackbox.org/tasmota/release/
 
 ### Development
-[![Dev Version](https://img.shields.io/badge/development%20version-6.4.1.x-blue.svg)](https://github.com/arendst/Sonoff-Tasmota)
+[![Dev Version](https://img.shields.io/badge/development%20version-6.5.0.x-blue.svg)](https://github.com/arendst/Sonoff-Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Build Status](https://img.shields.io/travis/arendst/Sonoff-Tasmota.svg)](https://travis-ci.org/arendst/Sonoff-Tasmota)
 
@@ -133,9 +133,11 @@ Libraries used with Sonoff-Tasmota are:
 - [C2 Programmer](http://app.cear.ufpb.br/~lucas.hartmann/tag/efm8bb1/)
 - [esp-epaper-29-ws-20171230-gemu](https://github.com/gemu2015/Sonoff-Tasmota/tree/displays/lib)
 - [esp-knx-ip](https://github.com/envy/esp-knx-ip)
+- FrogmoreScd30
 - [I2Cdevlib](https://github.com/jrowberg/i2cdevlib)
 - [IRremoteEsp8266](https://github.com/markszabo/IRremoteESP8266)
 - [JobaTsl2561](https://github.com/joba-1/Joba_Tsl2561)
+- [LinkedList](https://github.com/ivanseidel/LinkedList)
 - [Liquid Cristal](https://github.com/marcoschwartz/LiquidCrystal_I2C)
 - [MultiChannelGasSensor](http://wiki.seeedstudio.com/Grove-Multichannel_Gas_Sensor/)
 - [NeoPixelBus](https://github.com/Makuna/NeoPixelBus)

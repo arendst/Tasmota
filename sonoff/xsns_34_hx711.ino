@@ -321,11 +321,11 @@ void HxEvery100mSecond(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_HX711_WEIGHT[] PROGMEM = "%s"
+const char HTTP_HX711_WEIGHT[] PROGMEM =
   "{s}HX711 " D_WEIGHT "{m}%s " D_UNIT_KILOGRAM "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_HX711_COUNT[] PROGMEM = "%s"
+const char HTTP_HX711_COUNT[] PROGMEM =
   "{s}HX711 " D_COUNT "{m}%d{e}";
-const char HTTP_HX711_CAL[] PROGMEM = "%s"
+const char HTTP_HX711_CAL[] PROGMEM =
   "{s}HX711 %s{m}{e}";
 #endif  // USE_WEBSERVER
 
@@ -351,13 +351,13 @@ void HxShow(bool json)
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"HX711\":{\"" D_JSON_WEIGHT "\":%s%s}"), mqtt_data, weight_chr, scount);
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_HX711_WEIGHT, mqtt_data, weight_chr);
+    WSContentSend_PD(HTTP_HX711_WEIGHT, weight_chr);
     if (count > 1) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_HX711_COUNT, mqtt_data, count);
+      WSContentSend_PD(HTTP_HX711_COUNT, count);
     }
     if (hx_calibrate_step) {
       char cal_text[30];
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_HX711_CAL, mqtt_data, GetTextIndexed(cal_text, sizeof(cal_text), hx_calibrate_msg, kHxCalibrationStates));
+      WSContentSend_PD(HTTP_HX711_CAL, GetTextIndexed(cal_text, sizeof(cal_text), hx_calibrate_msg, kHxCalibrationStates));
     }
 #endif  // USE_WEBSERVER
   }
@@ -374,7 +374,7 @@ void HxShow(bool json)
 const char S_CONFIGURE_HX711[] PROGMEM = D_CONFIGURE_HX711;
 
 const char HTTP_BTN_MENU_MAIN_HX711[] PROGMEM =
-  "<br/><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form>";
+  "<p><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form></p>";
 
 const char HTTP_BTN_MENU_HX711[] PROGMEM =
   "<p><form action='" WEB_HANDLE_HX711 "' method='get'><button>" D_CONFIGURE_HX711 "</button></form></p>";
@@ -485,7 +485,7 @@ bool Xsns34(uint8_t function)
         HxShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         HxShow(0);
         break;
 #ifdef USE_HX711_GUI

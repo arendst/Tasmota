@@ -91,7 +91,7 @@ void LM75ADShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "LM75AD", temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_TEMP, "LM75AD", temperature, TempUnit());
 #endif  // USE_WEBSERVER
     }
   }
@@ -114,7 +114,7 @@ bool Xsns26(uint8_t function)
         LM75ADShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         LM75ADShow(0);
         break;
 #endif  // USE_WEBSERVER

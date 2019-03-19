@@ -77,7 +77,7 @@ void CCS811Update(void)  // Perform every n second
   }
 }
 
-const char HTTP_SNS_CCS811[] PROGMEM = "%s"
+const char HTTP_SNS_CCS811[] PROGMEM =
   "{s}CCS811 " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}CCS811 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
@@ -91,7 +91,7 @@ void CCS811Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CCS811, mqtt_data, eCO2, TVOC);
+      WSContentSend_PD(HTTP_SNS_CCS811, eCO2, TVOC);
 #endif
     }
   }
@@ -114,7 +114,7 @@ bool Xsns31(uint8_t function)
         CCS811Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         CCS811Show(0);
         break;
 #endif  // USE_WEBSERVER
