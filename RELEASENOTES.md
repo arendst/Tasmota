@@ -7,15 +7,13 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 4. Migrate to **Sonoff-Tasmota 6.x**
 
 ## Release notes
+### Core version 2.3.0 vs 2.4.2
+This release is based on ESP8266/Arduino library core 2.3.0 (again) as some people encountered wifi related issues on core 2.4.2. For others core 2.4.2 is working just fine. Both version are available from http://thehackbox.org/tasmota/
+
 ### Change in default initial configuration tool
 Firmware binary **sonoff-classic.bin** supports **WifiManager, Wps and SmartConfig** for initial configuration. The default tool is **Wps**.
 
 To save memory space all other binaries support **WifiManager only**.
-
-See _changelog.ino how to enable them again.
-- Define WIFI_CONFIG_TOOL now contains the default behaviour once a SSID has been configured.
-- If no SSID is configured making a wifi connection impossible the new define WIFI_CONFIG_NO_SSID will be used.
-- While define WIFI_CONFIG_NO_SSID is set to WIFI_WPSCONFIG in my_user_config.h the compiler will check for define USE_WPS and if not enabled WIFI_CONFIG_NO_SSID will default to WIFI_MANAGER using the webserver. If define USE_WEBSERVER is also not enabled WIFI_CONFIG_NO_SSID will default to WIFI_SMARTCONFIG. If define USE_SMARTCONFIG is also not enabled WIFI_CONFIG_NO_SSID will default to a new option WIFI_SERIAL allowing to enter wifi parameters to serial which is always possible.
 
 ## Supported Modules
 The following hardware modules are supported.
