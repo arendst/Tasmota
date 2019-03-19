@@ -8,7 +8,7 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 
 ## Release notes
 ### Core version 2.3.0 vs 2.4.2
-This release is based on ESP8266/Arduino library core 2.3.0 (again) as some people encountered wifi related issues on core 2.4.2. For others core 2.4.2 is working just fine. Both version are available from http://thehackbox.org/tasmota/
+This release is based on ESP8266/Arduino library core 2.3.0 (again) as some people encountered wifi related issues on core 2.4.2. For others core 2.4.2 is working just fine. Both version are available from http://thehackbox.org/tasmota/release/
 
 ### Change in default initial configuration tool
 Firmware binary **sonoff-classic.bin** supports **WifiManager, Wps and SmartConfig** for initial configuration. The default tool is **Wps**.
@@ -102,7 +102,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - **sonoff-display.bin** = The Display version without Wps and SmartConfig configuration and Energy Monitoring but adds display support.
 - **sonoff-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
 
-Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/
+Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/release/020402/
 
 ### Available Features and Sensors
 
