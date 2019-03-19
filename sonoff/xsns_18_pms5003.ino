@@ -113,7 +113,7 @@ void PmsInit(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_PMS5003_SNS[] PROGMEM = "%s"
+const char HTTP_PMS5003_SNS[] PROGMEM =
 //  "{s}PMS5003 " D_STANDARD_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
 //  "{s}PMS5003 " D_STANDARD_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
 //  "{s}PMS5003 " D_STANDARD_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
@@ -145,7 +145,7 @@ void PmsShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_PMS5003_SNS, mqtt_data,
+      WSContentSend_PD(HTTP_PMS5003_SNS,
 //        pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
         pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env,
         pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
@@ -174,7 +174,7 @@ bool Xsns18(uint8_t function)
         PmsShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         PmsShow(0);
         break;
 #endif  // USE_WEBSERVER

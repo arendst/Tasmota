@@ -287,8 +287,8 @@ void RfSnsTheoV2Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
         } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, sensor, temperature, TempUnit());
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, sensor, rfsns_theo_v2_t1[i].lux);
+          WSContentSend_PD(HTTP_SNS_TEMP, sensor, temperature, TempUnit());
+          WSContentSend_PD(HTTP_SNS_ILLUMINANCE, sensor, rfsns_theo_v2_t1[i].lux);
 #endif  // USE_WEBSERVER
         }
       }
@@ -331,8 +331,8 @@ void RfSnsTheoV2Show(bool json)
           }
 #ifdef USE_WEBSERVER
         } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, sensor, temperature, TempUnit());
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, sensor, humidity);
+          WSContentSend_PD(HTTP_SNS_TEMP, sensor, temperature, TempUnit());
+          WSContentSend_PD(HTTP_SNS_HUM, sensor, humidity);
 #endif  // USE_WEBSERVER
         }
       }
@@ -539,11 +539,11 @@ uint8_t RfSnsAlectoCRC8(uint8_t *addr, uint8_t len)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_ALECTOV2[] PROGMEM = "%s"
+const char HTTP_SNS_ALECTOV2[] PROGMEM =
   "{s}" D_ALECTOV2 " " D_RAIN "{m}%s " D_UNIT_MILLIMETER "{e}"
   "{s}" D_ALECTOV2 " " D_TX20_WIND_SPEED "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
   "{s}" D_ALECTOV2 " " D_TX20_WIND_SPEED_MAX "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}";
-const char HTTP_SNS_ALECTOV2_WDIR[] PROGMEM = "%s"
+const char HTTP_SNS_ALECTOV2_WDIR[] PROGMEM =
   "{s}" D_ALECTOV2 " " D_TX20_WIND_DIRECTION "{m}%s{e}";
 #endif
 
@@ -588,11 +588,11 @@ void RfSnsAlectoV2Show(bool json)
         }
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, D_ALECTOV2, temperature, TempUnit());
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, D_ALECTOV2, humidity);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ALECTOV2, mqtt_data, rain, wind, gust);
+        WSContentSend_PD(HTTP_SNS_TEMP, D_ALECTOV2, temperature, TempUnit());
+        WSContentSend_PD(HTTP_SNS_HUM, D_ALECTOV2, humidity);
+        WSContentSend_PD(HTTP_SNS_ALECTOV2, rain, wind, gust);
         if (rfsns_alecto_v2->type) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ALECTOV2_WDIR, mqtt_data, wdir);
+          WSContentSend_PD(HTTP_SNS_ALECTOV2_WDIR, wdir);
         }
 #endif  // USE_WEBSERVER
       }
@@ -680,7 +680,7 @@ bool Xsns37(uint8_t function)
         RfSnsShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         RfSnsShow(0);
         break;
 #endif  // USE_WEBSERVER

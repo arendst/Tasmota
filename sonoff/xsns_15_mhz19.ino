@@ -351,8 +351,8 @@ void MhzShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, types, mhz_last_ppm);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, types, temperature, TempUnit());
+    WSContentSend_PD(HTTP_SNS_CO2, types, mhz_last_ppm);
+    WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
 #endif  // USE_WEBSERVER
   }
 }
@@ -382,7 +382,7 @@ bool Xsns15(uint8_t function)
         MhzShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         MhzShow(0);
         break;
 #endif  // USE_WEBSERVER

@@ -597,19 +597,20 @@ void BmpShow(bool json)
 
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, name, temperature, TempUnit());
+        WSContentSend_PD(HTTP_SNS_TEMP, name, temperature, TempUnit());
         if (bmp_sensors[bmp_idx].bmp_model >= 2) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, name, humidity);
+          WSContentSend_PD(HTTP_SNS_HUM, name, humidity);
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PRESSURE, mqtt_data, name, pressure, PressureUnit().c_str());
+        WSContentSend_PD(HTTP_SNS_PRESSURE, name, pressure, PressureUnit().c_str());
         if (Settings.altitude != 0) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, name, sea_pressure, PressureUnit().c_str());
+          WSContentSend_PD(HTTP_SNS_SEAPRESSURE, name, sea_pressure, PressureUnit().c_str());
         }
 #ifdef USE_BME680
         if (bmp_sensors[bmp_idx].bmp_model >= 3) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), mqtt_data, name, gas_resistance);
+          WSContentSend_PD(PSTR("{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), name, gas_resistance);
         }
 #endif  // USE_BME680
+
 #endif  // USE_WEBSERVER
       }
     }
@@ -636,7 +637,7 @@ bool Xsns09(uint8_t function)
         BmpShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         BmpShow(0);
         break;
 #endif  // USE_WEBSERVER

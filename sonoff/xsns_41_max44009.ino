@@ -139,8 +139,7 @@ void Max4409Show(bool json)
 #ifdef USE_WEBSERVER
     } else {
       // show integer value for lx on web-server
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE,
-                 mqtt_data, max44009_types, (int)max44009_illuminance);
+      WSContentSend_PD(HTTP_SNS_ILLUMINANCE, max44009_types, (int)max44009_illuminance);
 #endif  // USE_WEBSERVER
     }
   }
@@ -166,7 +165,7 @@ bool Xsns41(uint8_t function)
         Max4409Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Max4409Show(0);
         break;
 #endif  // USE_WEBSERVER

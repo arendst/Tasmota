@@ -208,8 +208,8 @@ void ShtShow(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, sht_types, temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, sht_types, humidity);
+      WSContentSend_PD(HTTP_SNS_TEMP, sht_types, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, sht_types, humidity);
 #endif  // USE_WEBSERVER
     }
   }
@@ -236,7 +236,7 @@ bool Xsns07(uint8_t function)
         ShtShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         ShtShow(0);
         break;
 #endif  // USE_WEBSERVER

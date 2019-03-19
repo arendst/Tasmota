@@ -115,7 +115,7 @@ void Ads1115Show(bool json)
         strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
+        WSContentSend_PD(HTTP_SNS_ANALOG, "ADS1115", i, adc_value);
 #endif  // USE_WEBSERVER
       }
     }
@@ -144,7 +144,7 @@ bool Xsns12(uint8_t function)
         Ads1115Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Ads1115Show(0);
         break;
 #endif  // USE_WEBSERVER

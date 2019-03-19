@@ -86,7 +86,7 @@ void CounterInit(void)
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_COUNTER[] PROGMEM =
-  "%s{s}" D_COUNTER "%d{m}%s%s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}" D_COUNTER "%d{m}%s%s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 void CounterShow(bool json)
@@ -121,7 +121,7 @@ void CounterShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_COUNTER, mqtt_data, i +1, counter, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
+        WSContentSend_PD(HTTP_SNS_COUNTER, i +1, counter, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
 #endif  // USE_WEBSERVER
       }
     }
@@ -152,7 +152,7 @@ bool Xsns01(uint8_t function)
       CounterShow(1);
       break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_APPEND:
+    case FUNC_WEB_SENSOR:
       CounterShow(0);
       break;
 #endif  // USE_WEBSERVER

@@ -260,7 +260,7 @@ void SDM120Init(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_SDM120_DATA[] PROGMEM = "%s"
+const char HTTP_SNS_SDM120_DATA[] PROGMEM =
   "{s}SDM120 " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
   "{s}SDM120 " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
   "{s}SDM120 " D_POWERUSAGE_ACTIVE "{m}%s " D_UNIT_WATT "{e}"
@@ -330,9 +330,9 @@ void SDM120Show(bool json)
 #ifdef USE_WEBSERVER
   } else {
 #ifdef USE_SDM220
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM120_DATA, mqtt_data, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total, phase_angle,import_active,export_active,import_reactive,export_reactive,total_reactive);
+    WSContentSend_PD(HTTP_SNS_SDM120_DATA, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total, phase_angle,import_active,export_active,import_reactive,export_reactive,total_reactive);
 #else
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM120_DATA, mqtt_data, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total);
+    WSContentSend_PD(HTTP_SNS_SDM120_DATA, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total);
 #endif  // USE_SDM220
 #endif  // USE_WEBSERVER
   }
@@ -358,7 +358,7 @@ bool Xsns23(uint8_t function)
         SDM120Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         SDM120Show(0);
         break;
 #endif  // USE_WEBSERVER

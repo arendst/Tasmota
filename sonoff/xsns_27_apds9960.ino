@@ -77,7 +77,7 @@ volatile uint8_t recovery_loop_counter = 0;  //count number of stateloops to swi
 bool APDS9960_overload = false;
 
 #ifdef USE_WEBSERVER
-const char HTTP_APDS_9960_SNS[] PROGMEM = "%s"
+const char HTTP_APDS_9960_SNS[] PROGMEM =
   "{s}" "Red" "{m}%s{e}"
   "{s}" "Green" "{m}%s{e}"
   "{s}" "Blue" "{m}%s{e}"
@@ -1963,7 +1963,7 @@ void APDS9960_show(bool json)
         mqtt_data, APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_APDS_9960_SNS, mqtt_data, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr );
+      WSContentSend_PD(HTTP_APDS_9960_SNS, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr );
 #endif  // USE_WEBSERVER
     }
   }
@@ -2055,7 +2055,7 @@ bool Xsns27(uint8_t function)
             APDS9960_show(1);
             break;
 #ifdef USE_WEBSERVER
-        case FUNC_WEB_APPEND:
+        case FUNC_WEB_SENSOR:
           APDS9960_show(0);
           break;
 #endif  // USE_WEBSERVER

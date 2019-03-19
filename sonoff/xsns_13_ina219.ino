@@ -222,7 +222,7 @@ void Ina219EverySecond(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_INA219_DATA[] PROGMEM = "%s"
+const char HTTP_SNS_INA219_DATA[] PROGMEM =
   "{s}INA219 " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
   "{s}INA219 " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
   "{s}INA219 " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
@@ -250,7 +250,7 @@ void Ina219Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_INA219_DATA, mqtt_data, voltage, current, power);
+      WSContentSend_PD(HTTP_SNS_INA219_DATA, voltage, current, power);
 #endif  // USE_WEBSERVER
     }
   }
@@ -281,7 +281,7 @@ bool Xsns13(uint8_t function)
         Ina219Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Ina219Show(0);
         break;
 #endif  // USE_WEBSERVER

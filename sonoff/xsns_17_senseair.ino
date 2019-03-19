@@ -159,10 +159,10 @@ void SenseairShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, senseair_types, senseair_co2);
+    WSContentSend_PD(HTTP_SNS_CO2, senseair_types, senseair_co2);
     if (senseair_type != 2) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, senseair_types, temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, senseair_types, humidity);
+      WSContentSend_PD(HTTP_SNS_TEMP, senseair_types, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, senseair_types, humidity);
     }
 #endif  // USE_WEBSERVER
   }
@@ -188,7 +188,7 @@ bool Xsns17(uint8_t function)
         SenseairShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         SenseairShow(0);
         break;
 #endif  // USE_WEBSERVER

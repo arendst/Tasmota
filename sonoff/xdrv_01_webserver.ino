@@ -629,13 +629,9 @@ void WSContentFlush()
   }
 }
 
-void WSContentSend_P(const char* formatP, ...)     // Content send snprintf_P char data
+void _WSContentSendBuffer(void)
 {
-  // This uses char strings. Be aware of sending %% if % is needed
-  va_list arg;
-  va_start(arg, formatP);
-  int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
-  va_end(arg);
+  int len = strlen(mqtt_data);
 
   if (0 == len) {                                  // No content
     return;
@@ -654,6 +650,36 @@ void WSContentSend_P(const char* formatP, ...)     // Content send snprintf_P ch
   if (strlen(mqtt_data) >= CHUNKED_BUFFER_SIZE) {  // Content is oversize
     _WSContentSend(mqtt_data);                     // Send content
   }
+}
+
+void WSContentSend_P(const char* formatP, ...)     // Content send snprintf_P char data
+{
+  // This uses char strings. Be aware of sending %% if % is needed
+  va_list arg;
+  va_start(arg, formatP);
+  vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
+  va_end(arg);
+
+  _WSContentSendBuffer();
+}
+
+void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P char data checked for decimal separator
+{
+  // This uses char strings. Be aware of sending %% if % is needed
+  va_list arg;
+  va_start(arg, formatP);
+  int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
+  va_end(arg);
+
+  if (D_DECIMAL_SEPARATOR[0] != '.') {
+    for (uint16_t i = 0; i < strlen(mqtt_data); i++) {
+      if ('.' == mqtt_data[i]) {
+        mqtt_data[i] = D_DECIMAL_SEPARATOR[0];
+      }
+    }
+  }
+
+  _WSContentSendBuffer();
 }
 
 void WSContentStart_P(const char* title, bool auth)
@@ -940,20 +966,11 @@ bool HandleRootStatusRefresh(void)
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 
-  mqtt_data[0] = '\0';
-  XsnsCall(FUNC_WEB_APPEND);
-  if (D_DECIMAL_SEPARATOR[0] != '.') {
-    for (uint16_t i = 0; i < strlen(mqtt_data); i++) {
-      if ('.' == mqtt_data[i]) {
-        mqtt_data[i] = D_DECIMAL_SEPARATOR[0];
-      }
-    }
-  }
-  char stemp[strlen(mqtt_data) +1];
-  memcpy(stemp, mqtt_data, sizeof(stemp));
-
   WSContentBegin(200, CT_HTML);
-  WSContentSend_P(PSTR("{t}%s</table>"), stemp);
+  WSContentSend_P(PSTR("{t}"));
+  XsnsCall(FUNC_WEB_SENSOR);
+  WSContentSend_P(PSTR("</table>"));
+
   if (devices_present) {
     WSContentSend_P(PSTR("{t}<tr>"));
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;

@@ -256,11 +256,11 @@ double Veml6070UvPower(double uvrisk)
 #ifdef USE_WEBSERVER
   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #ifdef USE_VEML6070_SHOW_RAW
-  const char HTTP_SNS_UV_LEVEL[] PROGMEM = "%s{s}VEML6070 " D_UV_LEVEL "{m}%s " D_UNIT_INCREMENTS "{e}";
+  const char HTTP_SNS_UV_LEVEL[] PROGMEM = "{s}VEML6070 " D_UV_LEVEL "{m}%s " D_UNIT_INCREMENTS "{e}";
 #endif  // USE_VEML6070_SHOW_RAW
   // different uv index level texts
-  const char HTTP_SNS_UV_INDEX[] PROGMEM = "%s{s}VEML6070 " D_UV_INDEX " {m}%s %s{e}";
-  const char HTTP_SNS_UV_POWER[] PROGMEM = "%s{s}VEML6070 " D_UV_POWER "{m}%s " D_UNIT_WATT_METER_QUADRAT "{e}";
+  const char HTTP_SNS_UV_INDEX[] PROGMEM = "{s}VEML6070 " D_UV_INDEX "{m}%s %s{e}";
+  const char HTTP_SNS_UV_POWER[] PROGMEM = "{s}VEML6070 " D_UV_POWER "{m}%s " D_UNIT_WATT_METER_QUADRAT "{e}";
 #endif  // USE_WEBSERVER
 
 /********************************************************************************************/
@@ -289,10 +289,10 @@ void Veml6070Show(bool json)
 #ifdef USE_WEBSERVER
     } else {
 #ifdef USE_VEML6070_SHOW_RAW
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_UV_LEVEL, mqtt_data, str_uvlevel);
+      WSContentSend_PD(HTTP_SNS_UV_LEVEL, str_uvlevel);
 #endif  // USE_VEML6070_SHOW_RAW
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_UV_INDEX, mqtt_data, str_uvrisk, str_uvrisk_text);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_UV_POWER, mqtt_data, str_uvpower);
+      WSContentSend_PD(HTTP_SNS_UV_INDEX, str_uvrisk, str_uvrisk_text);
+      WSContentSend_PD(HTTP_SNS_UV_POWER, str_uvpower);
 #endif  // USE_WEBSERVER
     }
   }
@@ -310,7 +310,7 @@ bool Xsns11(uint8_t function)
     switch (function) {
       case FUNC_INIT:
         Veml6070Detect();         // 1[ms], detect and init the sensor
-	Veml6070UvTableInit();    // 1[ms], initalize the UV compare table only once
+        Veml6070UvTableInit();    // 1[ms], initalize the UV compare table only once
         break;
       case FUNC_EVERY_SECOND:
         Veml6070EverySecond();    // 10..15[ms], tested with OLED display, do all the actions needed to get all sensor values
@@ -319,7 +319,7 @@ bool Xsns11(uint8_t function)
         Veml6070Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Veml6070Show(0);
         break;
 #endif  // USE_WEBSERVER

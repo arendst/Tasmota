@@ -39,7 +39,7 @@ extern "C" {
 
 #ifdef USE_WEBSERVER
 
-const char HTTP_SNS_TX20[] PROGMEM = "%s"
+const char HTTP_SNS_TX20[] PROGMEM =
    "{s}TX20 " D_TX20_WIND_SPEED "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
    "{s}TX20 " D_TX20_WIND_SPEED_AVG "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
    "{s}TX20 " D_TX20_WIND_SPEED_MAX "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
@@ -186,7 +186,7 @@ void Tx20Show(bool json)
       mqtt_data, wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string);
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TX20, mqtt_data, wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string);
+    WSContentSend_PD(HTTP_SNS_TX20, wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string);
 #endif  // USE_WEBSERVER
   }
 }
@@ -211,7 +211,7 @@ bool Xsns35(uint8_t function)
         Tx20Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Tx20Show(0);
         break;
 #endif  // USE_WEBSERVER

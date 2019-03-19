@@ -452,10 +452,10 @@ void Scd30Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2EAVG, mqtt_data, "SCD30", scd30_CO2EAvg);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, "SCD30", scd30_CO2);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "SCD30", temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "SCD30", humidity);
+      WSContentSend_PD(HTTP_SNS_CO2EAVG, "SCD30", scd30_CO2EAvg);
+      WSContentSend_PD(HTTP_SNS_CO2, "SCD30", scd30_CO2);
+      WSContentSend_PD(HTTP_SNS_TEMP, "SCD30", temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, "SCD30", humidity);
 #endif  // USE_WEBSERVER
     }
   }
@@ -481,7 +481,7 @@ bool Xsns42(byte function)
         Scd30Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Scd30Show(0);
         break;
 #endif  // USE_WEBSERVER

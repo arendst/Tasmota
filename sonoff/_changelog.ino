@@ -1,4 +1,7 @@
-/* 6.5.0 20190319
+/* 6.5.0.1 20190319
+ * Change Web GUI sensor data collection
+ *
+ * 6.5.0 20190319
  * Remove commands SetOption14 and SetOption63 as it has been superseded by command Interlock
  * Remove command SetOption35 0-255 for mDNS start-up delay (#4793)
  * Remove support for MQTT_LIBRARY_TYPE, MQTT_ARDUINOMQTT and MQTT_TASMOTAMQTT (#5474)

@@ -694,7 +694,7 @@ bool MCP230xx_Command(void) {
 
 #ifdef USE_MCP230xx_DISPLAYOUTPUT
 
-const char HTTP_SNS_MCP230xx_OUTPUT[] PROGMEM = "%s{s}MCP230XX D%d{m}%s{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_MCP230xx_OUTPUT[] PROGMEM = "{s}MCP230XX D%d{m}%s{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 void MCP230xx_UpdateWebData(void) {
   uint8_t gpio1 = MCP230xx_readGPIO(0);
@@ -707,7 +707,7 @@ void MCP230xx_UpdateWebData(void) {
     if (Settings.mcp230xx_config[pin].pinmode >= 5) {
       char stt[7];
       sprintf(stt,ConvertNumTxt((gpio>>pin)&1,Settings.mcp230xx_config[pin].pinmode));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MCP230xx_OUTPUT, mqtt_data, pin, stt);
+      WSContentSend_PD(HTTP_SNS_MCP230xx_OUTPUT, pin, stt);
     }
   }
 }
@@ -822,7 +822,7 @@ bool Xsns29(uint8_t function)
 #ifdef USE_WEBSERVER
 #ifdef USE_MCP230xx_OUTPUT
 #ifdef USE_MCP230xx_DISPLAYOUTPUT
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         MCP230xx_UpdateWebData();
         break;
 #endif // USE_MCP230xx_DISPLAYOUTPUT

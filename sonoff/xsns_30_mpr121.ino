@@ -356,8 +356,8 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 				}
 				// Add buttons to web string
 #ifdef USE_WEBSERVER
-				if (FUNC_WEB_APPEND == function) {
-					snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{s}MPR121%c Button%d{m}%d{e}"), mqtt_data, pS->id[i], j, BITC(i, j));
+				if (FUNC_WEB_SENSOR == function) {
+					WSContentSend_PD(PSTR("{s}MPR121%c Button%d{m}%d{e}"), pS->id[i], j, BITC(i, j));
 				}
 #endif				// USE_WEBSERVER
 
@@ -389,7 +389,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
  * FUNC_INIT to initialize a driver,
  * FUNC_EVERY_50_MSECOND for near real-time operation,
  * FUNC_JSON_APPEND for telemetry data and
- * FUNC_WEB_APPEND for displaying data in the Tasmota web-interface
+ * FUNC_WEB_SENSOR for displaying data in the Tasmota web-interface
  *
  * @param   byte    function  Tasmota function ID.
  * @return  bool           ???
@@ -426,8 +426,8 @@ bool Xsns30(uint8_t function)
 
 #ifdef USE_WEBSERVER
 			// Show sensor data on main web page
-		case FUNC_WEB_APPEND:
-			Mpr121Show(&mpr121, FUNC_WEB_APPEND);
+		case FUNC_WEB_SENSOR:
+			Mpr121Show(&mpr121, FUNC_WEB_SENSOR);
 			break;
 #endif				// USE_WEBSERVER
 		}
