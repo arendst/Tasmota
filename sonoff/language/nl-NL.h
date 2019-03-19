@@ -220,7 +220,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Zet JavaScript aan voor Tasmota"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware - opwaarderen"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br/>opwaarderen"
 #define D_WEBSERVER_ACTIVE_ON "Webserver actief op"
 #define D_WITH_IP_ADDRESS "met IP adres"
 #define D_WEBSERVER_STOPPED "Webserver gestopt"

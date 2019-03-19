@@ -62,7 +62,7 @@
 #define D_BRIGHTLIGHT "בהירות"
 #define D_BSSID "BSSId"
 #define D_BUTTON "לחצן"
-#define D_BY "ע"                    // Written by me
+#define D_BY "ע"י"                    // Written by me
 #define D_BYTES "בייט"
 #define D_CELSIUS "צלזיוס"
 #define D_CHANNEL "ערוץ"
