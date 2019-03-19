@@ -774,7 +774,7 @@ void HandleMqttConfiguration(void)
     Settings.mqtt_fulltopic);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void MqttSaveSettings(void)

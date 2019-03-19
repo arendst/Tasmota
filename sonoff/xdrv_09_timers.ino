@@ -721,7 +721,7 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_FORM_TIMER4);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void TimerSaveSettings(void)

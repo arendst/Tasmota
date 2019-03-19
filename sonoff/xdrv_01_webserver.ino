@@ -383,7 +383,7 @@ const char HTTP_END[] PROGMEM =
   "</html>";
 
 const char HTTP_DEVICE_CONTROL[] PROGMEM = "<td style='width:%d%%'><button onclick='la(\"&o=%d\");'>%s%s</button></td>";  // ?o is related to WebGetArg("o", tmp, sizeof(tmp));
-const char HTTP_DEVICE_STATE[] PROGMEM = "%s<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>";  // {c} = %'><div style='text-align:center;font-weight:
+const char HTTP_DEVICE_STATE[] PROGMEM = "<td style='width:%d{c}%s;font-size:%dpx'>%s</div></td>";  // {c} = %'><div style='text-align:center;font-weight:
 
 enum ButtonTitle {
   BUTTON_RESTART, BUTTON_RESET_CONFIGURATION,
@@ -423,6 +423,7 @@ ESP8266WebServer *WebServer;
 String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
 int minimum_signal_quality = -1;
 bool remove_duplicate_access_points = true;
+bool reset_web_log_flag = false;                  // Reset web console log
 uint8_t webserver_state = HTTP_OFF;
 uint8_t upload_error = 0;
 uint8_t upload_file_type;
@@ -588,6 +589,19 @@ void WSSend(int code, int ctype, const String& content)
 * HTTP Content Chunk handler
 **********************************************************************************************/
 
+void WSContentBegin(int code, int ctype)
+{
+  WebServer->client().flush();
+  WSHeaderSend();
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+  WebServer->sendHeader(F("Accept-Ranges"),F("none"));
+  WebServer->sendHeader(F("Transfer-Encoding"),F("chunked"));
+#endif
+  WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);
+  WSSend(code, ctype, "");                        // Signal start of chunked content
+  chunk_buffer = "";
+}
+
 void _WSContentSend(const String& content)        // Low level sendContent for all core versions
 {
   size_t len = content.length();
@@ -648,19 +662,13 @@ void WSContentStart_P(const char* title, bool auth)
     return WebServer->requestAuthentication();
   }
 
-  WebServer->client().flush();
-  WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);
-  WSHeaderSend();
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-  WebServer->sendHeader(F("Accept-Ranges"),F("none"));
-  WebServer->sendHeader(F("Transfer-Encoding"),F("chunked"));
-#endif
-  WSSend(200, CT_HTML, "");                        // Signal start of chunked content
-  chunk_buffer = "";
+  WSContentBegin(200, CT_HTML);
 
-  char ctitle[strlen_P(title) +1];
-  strcpy_P(ctitle, title);                         // Get title from flash to RAM
-  WSContentSend_P(HTTP_HEAD, Settings.friendlyname[0], ctitle);
+  if (title != NULL) {
+    char ctitle[strlen_P(title) +1];
+    strcpy_P(ctitle, title);                       // Get title from flash to RAM
+    WSContentSend_P(HTTP_HEAD, Settings.friendlyname[0], ctitle);
+  }
 }
 
 void WSContentStart_P(const char* title)
@@ -677,16 +685,18 @@ void WSContentSendStyle_P(const char* style)
   }
   WSContentSend_P(HTTP_HEAD_STYLE1);
   WSContentSend_P(HTTP_HEAD_STYLE2);
-  WSContentSend_P(style);
+  if (style != NULL) {
+    WSContentSend_P(style);
+  }
   WSContentSend_P(HTTP_HEAD_STYLE3, ModuleName().c_str(), Settings.friendlyname[0]);
   if (Settings.flag3.gui_hostname_ip) {
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
-    WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // sonoff.local (192.168.2.12,192.168.4.1)
+    WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // sonoff.local (192.168.2.12, 192.168.4.1)
       my_hostname,
       (mdns_begun) ? ".local" : "",
       (lip) ? WiFi.localIP().toString().c_str() : "",
-      (lip && sip) ? "," : "",
+      (lip && sip) ? ", " : "",
       (sip) ? WiFi.softAPIP().toString().c_str() : "");
   }
   WSContentSend_P(PSTR("</div>"));
@@ -694,7 +704,7 @@ void WSContentSendStyle_P(const char* style)
 
 void WSContentSendStyle(void)
 {
-  WSContentSendStyle_P(PSTR(""));
+  WSContentSendStyle_P(NULL);
 }
 
 void WSContentButton(uint8_t title_index)
@@ -724,15 +734,20 @@ void WSContentSpaceButton(uint8_t title_index)
 
 void WSContentEnd(void)
 {
+  WSContentFlush();                                // Flush chunk buffer
+  _WSContentSend("");                              // Signal end of chunked content
+  WebServer->client().stop();
+}
+
+void WSContentStop(void)
+{
   if (WifiIsInManagerMode()) {
     if (WifiConfigCounter()) {
       WSContentSend_P(HTTP_COUNTER);
     }
   }
   WSContentSend_P(HTTP_END, my_version);
-  WSContentFlush();                                // Flush chunk buffer
-  _WSContentSend("");                              // Signal end of chunked content
-  WebServer->client().stop();
+  WSContentEnd();
 }
 
 /*********************************************************************************************/
@@ -762,7 +777,7 @@ void WebRestart(uint8_t type)
   } else {
     WSContentSpaceButton(BUTTON_MAIN);
   }
-  WSContentEnd();
+  WSContentStop();
 
   ShowWebSource(SRC_WEBGUI);
   restart_flag = 2;
@@ -783,7 +798,7 @@ void HandleWifiLogin(void)
 #endif  // FIRMWARE_MINIMAL
   }
 
-  WSContentEnd();
+  WSContentStop();
 }
 
 void HandleRoot(void)
@@ -877,7 +892,7 @@ void HandleRoot(void)
     WSContentButton(BUTTON_CONSOLE);
     WSContentButton(BUTTON_RESTART);
   }
-  WSContentEnd();
+  WSContentStop();
 }
 
 bool HandleRootStatusRefresh(void)
@@ -925,7 +940,7 @@ bool HandleRootStatusRefresh(void)
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{t}"));
+  mqtt_data[0] = '\0';
   XsnsCall(FUNC_WEB_APPEND);
   if (D_DECIMAL_SEPARATOR[0] != '.') {
     for (uint16_t i = 0; i < strlen(mqtt_data); i++) {
@@ -934,28 +949,29 @@ bool HandleRootStatusRefresh(void)
       }
     }
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s</table>"), mqtt_data);
+  char stemp[strlen(mqtt_data) +1];
+  memcpy(stemp, mqtt_data, sizeof(stemp));
+
+  WSContentBegin(200, CT_HTML);
+  WSContentSend_P(PSTR("{t}%s</table>"), stemp);
   if (devices_present) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{t}<tr>"), mqtt_data);
+    WSContentSend_P(PSTR("{t}<tr>"));
     uint8_t fsize = (devices_present < 5) ? 70 - (devices_present * 8) : 32;
     if (SONOFF_IFAN02 == my_module_type) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
-        mqtt_data, 36, (bitRead(power, 0)) ? "bold" : "normal", 54, GetStateText(bitRead(power, 0)));
+      WSContentSend_P(HTTP_DEVICE_STATE, 36, (bitRead(power, 0)) ? "bold" : "normal", 54, GetStateText(bitRead(power, 0)));
       uint8_t fanspeed = GetFanspeed();
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
-        mqtt_data, 64, (fanspeed) ? "bold" : "normal", 54, (fanspeed) ? svalue : GetStateText(0));
+      WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? "bold" : "normal", 54, (fanspeed) ? svalue : GetStateText(0));
     } else {
       for (uint8_t idx = 1; idx <= devices_present; idx++) {
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_DEVICE_STATE,
-          mqtt_data, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
+        WSContentSend_P(HTTP_DEVICE_STATE, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
       }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s</tr></table>"), mqtt_data);
+    WSContentSend_P(PSTR("</tr></table>"));
   }
-  WSHeaderSend();
-  WSSend(200, CT_HTML, mqtt_data);
+  WSContentEnd();
+
   return true;
 }
 
@@ -987,7 +1003,7 @@ void HandleConfiguration(void)
   WSContentButton(BUTTON_RESTORE);
 
   WSContentSpaceButton(BUTTON_MAIN);
-  WSContentEnd();
+  WSContentStop();
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1005,13 +1021,12 @@ void HandleTemplateConfiguration(void)
   char stemp[20];                                           // Template number and Sensor name
 
   if (WebServer->hasArg("m")) {
-    String page = "";
+    WSContentBegin(200, CT_PLAIN);
     for (uint8_t i = 0; i < MAXMODULE; i++) {               // "}2'%d'>%s (%d)}3" - "}2'0'>Sonoff Basic (1)}3"
       uint8_t midx = pgm_read_byte(kModuleNiceList + i);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), midx +1);
-      page += mqtt_data;
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), midx +1);
     }
-    WSSend(200, CT_PLAIN, page);
+    WSContentEnd();
     return;
   }
 
@@ -1025,32 +1040,26 @@ void HandleTemplateConfiguration(void)
     gpio_flag flag = ModuleFlag();
     Settings.module = module_save;
 
-    String page = AnyModuleName(module);                    // NAME: Generic
-    page += F("}1");                                        // Field separator
-
+    WSContentBegin(200, CT_PLAIN);
+    WSContentSend_P(PSTR("%s}1"), AnyModuleName(module).c_str());  // NAME: Generic
     for (uint8_t i = 0; i < sizeof(kGpioNiceList); i++) {   // GPIO: }2'0'>None (0)}3}2'17'>Button1 (17)}3...
 
       if (1 == i) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MODULE_TEMPLATE_REPLACE, 255, D_SENSOR_USER, 255);  // }2'255'>User (255)}3
-        page += mqtt_data;
+        WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, 255, D_SENSOR_USER, 255);  // }2'255'>User (255)}3
       }
 
       uint8_t midx = pgm_read_byte(kGpioNiceList + i);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
-      page += mqtt_data;
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
     }
 
-    page += F("}1");                                        // Field separator
-    mqtt_data[0] = '\0';
+    WSContentSend_P(PSTR("}1"));                                   // Field separator
     for (uint8_t i = 0; i < sizeof(cmodule); i++) {         // 17,148,29,149,7,255,255,255,138,255,139,255,255
       if ((i < 6) || ((i > 8) && (i != 11))) {              // Ignore flash pins GPIO06, 7, 8 and 11
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (i>0)?",":"", cmodule.io[i]);
+        WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", cmodule.io[i]);
       }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}1%d}1%d"), mqtt_data, flag, Settings.user_template_base);  // FLAG: 1  BASE: 17
-    page += mqtt_data;
-
-    WSSend(200, CT_PLAIN, page);
+    WSContentSend_P(PSTR("}1%d}1%d"), flag, Settings.user_template_base);  // FLAG: 1  BASE: 17
+    WSContentEnd();
     return;
   }
 
@@ -1078,7 +1087,7 @@ void HandleTemplateConfiguration(void)
   WSContentSend_P(HTTP_FORM_TEMPLATE_FLAG);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void TemplateSaveSettings(void)
@@ -1132,7 +1141,7 @@ void HandleModuleConfiguration(void)
   ModuleGpios(&cmodule);
 
   if (WebServer->hasArg("m")) {
-    String page = "";
+    WSContentBegin(200, CT_PLAIN);
     uint8_t vidx = 0;
     for (uint8_t i = 0; i <= MAXMODULE; i++) {  // "}2'%d'>%s (%d)}3" - "}2'255'>UserTemplate (0)}3" - "}2'0'>Sonoff Basic (1)}3"
       if (0 == i) {
@@ -1142,23 +1151,21 @@ void HandleModuleConfiguration(void)
         midx = pgm_read_byte(kModuleNiceList + i -1);
         vidx = midx +1;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), vidx);
-      page += mqtt_data;
+      WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), vidx);
     }
-    WSSend(200, CT_PLAIN, page);
+    WSContentEnd();
     return;
   }
 
   if (WebServer->hasArg("g")) {
-    String page = "";
+    WSContentBegin(200, CT_PLAIN);
     for (uint8_t j = 0; j < sizeof(kGpioNiceList); j++) {
       midx = pgm_read_byte(kGpioNiceList + j);
       if (!GetUsedInModule(midx, cmodule.io)) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
-        page += mqtt_data;
+        WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
       }
     }
-    WSSend(200, CT_PLAIN, page);
+    WSContentEnd();
     return;
   }
 
@@ -1185,7 +1192,7 @@ void HandleModuleConfiguration(void)
   WSContentSend_P(PSTR("</table>"));
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void ModuleSaveSettings(void)
@@ -1327,7 +1334,7 @@ void HandleWifiConfiguration(void)
   } else {
     WSContentSpaceButton(BUTTON_CONFIGURATION);
   }
-  WSContentEnd();
+  WSContentStop();
 }
 
 void WifiSaveSettings(void)
@@ -1386,7 +1393,7 @@ void HandleLoggingConfiguration(void)
   WSContentSend_P(HTTP_FORM_LOG2, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void LoggingSaveSettings(void)
@@ -1462,7 +1469,7 @@ void HandleOtherConfiguration(void)
 
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void OtherSaveSettings(void)
@@ -1558,7 +1565,7 @@ void HandleResetConfiguration(void)
   WSContentSend_P(PSTR("<div style='text-align:center;'>" D_CONFIGURATION_RESET "</div>"));
   WSContentSend_P(HTTP_MSG_RSTRT);
   WSContentSpaceButton(BUTTON_MAIN);
-  WSContentEnd();
+  WSContentStop();
 
   char command[CMDSZ];
   snprintf_P(command, sizeof(command), PSTR(D_CMND_RESET " 1"));
@@ -1576,7 +1583,7 @@ void HandleRestoreConfiguration(void)
   WSContentSend_P(HTTP_FORM_RST);
   WSContentSend_P(HTTP_FORM_RST_UPG, D_RESTORE);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentEnd();
+  WSContentStop();
 
   upload_error = 0;
   upload_file_type = UPL_SETTINGS;
@@ -1678,7 +1685,7 @@ void HandleInformation(void)
                        "<div id='i' name='i'></div>"));
   //   WSContentSend_P(PSTR("</fieldset>"));
   WSContentSpaceButton(BUTTON_MAIN);
-  WSContentEnd();
+  WSContentStop();
 }
 #endif  // Not FIRMWARE_MINIMAL
 
@@ -1695,7 +1702,7 @@ void HandleUpgradeFirmware(void)
   WSContentSend_P(HTTP_FORM_UPG, Settings.ota_url);
   WSContentSend_P(HTTP_FORM_RST_UPG, D_UPGRADE);
   WSContentSpaceButton(BUTTON_MAIN);
-  WSContentEnd();
+  WSContentStop();
 
   upload_error = 0;
   upload_file_type = UPL_TASMOTA;
@@ -1723,7 +1730,7 @@ void HandleUpgradeFirmwareStart(void)
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPGRADE_STARTED " ...</b></div>"));
   WSContentSend_P(HTTP_MSG_RSTRT);
   WSContentSpaceButton(BUTTON_MAIN);
-  WSContentEnd();
+  WSContentStop();
 
   snprintf_P(command, sizeof(command), PSTR(D_CMND_UPGRADE " 1"));
   ExecuteWebCommand(command, SRC_WEBGUI);
@@ -1770,7 +1777,7 @@ void HandleUploadDone(void)
   SettingsBufferFree();
   WSContentSend_P(PSTR("</div><br/>"));
   WSContentSpaceButton(BUTTON_MAIN);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void HandleUploadLoop(void)
@@ -1990,7 +1997,7 @@ void HandleHttpCommand(void)
     if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, Settings.web_password))) { valid = 0; }
   }
 
-  String message = F("{\"" D_RSLT_WARNING "\":\"");
+  WSContentBegin(200, CT_JSON);
   if (valid) {
     uint8_t curridx = web_log_index;
     String svalue = WebServer->arg("cmnd");
@@ -1998,7 +2005,8 @@ void HandleHttpCommand(void)
       ExecuteWebCommand((char*)svalue.c_str(), SRC_WEBCOMMAND);
       if (web_log_index != curridx) {
         uint8_t counter = curridx;
-        message = F("{");
+        WSContentSend_P(PSTR("{"));
+        bool cflg = false;
         do {
           char* tmp;
           size_t len;
@@ -2007,28 +2015,28 @@ void HandleHttpCommand(void)
             // [14:49:36 MQTT: stat/wemos5/RESULT = {"POWER":"OFF"}] > [{"POWER":"OFF"}]
             char* JSON = (char*)memchr(tmp, '{', len);
             if (JSON) { // Is it a JSON message (and not only [15:26:08 MQT: stat/wemos5/POWER = O])
-              if (message.length() > 1) { message += F(","); }
               size_t JSONlen = len - (JSON - tmp);
               if (JSONlen > sizeof(mqtt_data)) { JSONlen = sizeof(mqtt_data); }
-              strlcpy(mqtt_data, JSON +1, JSONlen -2);
-              message += mqtt_data;
+              char stemp[JSONlen];
+              strlcpy(stemp, JSON +1, JSONlen -2);
+              WSContentSend_P(PSTR("%s%s"), (cflg) ? "," : "", stemp);
+              cflg = true;
             }
           }
           counter++;
           if (!counter) counter++;  // Skip 0 as it is not allowed
         } while (counter != web_log_index);
-        message += F("}");
+        WSContentSend_P(PSTR("}"));
       } else {
-        message += F(D_ENABLE_WEBLOG_FOR_RESPONSE "\"}");
+        WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENABLE_WEBLOG_FOR_RESPONSE "\"}"));
       }
     } else {
-      message += F(D_ENTER_COMMAND " cmnd=\"}");
+      WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_ENTER_COMMAND " cmnd=\"}"));
     }
   } else {
-    message += F(D_NEED_USER_AND_PASSWORD "\"}");
+    WSContentSend_P(PSTR("{\"" D_RSLT_WARNING "\":\"" D_NEED_USER_AND_PASSWORD "\"}"));
   }
-  WSHeaderSend();
-  WSSend(200, CT_JSON, message);
+  WSContentEnd();
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -2049,7 +2057,7 @@ void HandleConsole(void)
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_CMND);
   WSContentSpaceButton(BUTTON_MAIN);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void HandleConsoleRefresh(void)
@@ -2067,10 +2075,8 @@ void HandleConsoleRefresh(void)
   WebGetArg("c2", stmp, sizeof(stmp));
   if (strlen(stmp)) { counter = atoi(stmp); }
 
-  bool last_reset_web_log_flag = reset_web_log_flag;
-  // mqtt_data used as scratch space
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%d}1%d}1"), web_log_index, last_reset_web_log_flag);
-  String message = mqtt_data;
+  WSContentBegin(200, CT_PLAIN);
+  WSContentSend_P(PSTR("%d}1%d}1"), web_log_index, reset_web_log_flag);
   if (!reset_web_log_flag) {
     counter = 0;
     reset_web_log_flag = true;
@@ -2085,21 +2091,18 @@ void HandleConsoleRefresh(void)
       size_t len;
       GetLog(counter, &tmp, &len);
       if (len) {
-        if (cflg) {
-          message += F("\n");
-        } else {
-          cflg = true;
-        }
         if (len > sizeof(mqtt_data) -2) { len = sizeof(mqtt_data); }
-        strlcpy(mqtt_data, tmp, len);
-        message += mqtt_data; // mqtt_data used as scratch space
+        char stemp[len +1];
+        strlcpy(stemp, tmp, len);
+        WSContentSend_P(PSTR("%s%s"), (cflg) ? "\n" : "", stemp);
+        cflg = true;
       }
       counter++;
-      if (!counter) { counter++; } // Skip log index 0 as it is not allowed
+      if (!counter) { counter++; }  // Skip log index 0 as it is not allowed
     } while (counter != web_log_index);
   }
-  message += F("}1");
-  WSSend(200, CT_PLAIN, message);
+  WSContentSend_P(PSTR("}1"));
+  WSContentEnd();
 }
 
 /********************************************************************************************/

@@ -434,7 +434,7 @@ void HandleHxAction(void)
   WSContentSend_P(HTTP_FORM_HX711, stemp1, stemp2);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void HxSaveSettings(void)
