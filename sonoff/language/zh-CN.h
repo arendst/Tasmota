@@ -220,7 +220,7 @@
 
 // webserver.ino
 #define D_NOSCRIPT "Tasmota要求浏览器支持 JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "当前是精简版固件<br/>请升级"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "当前是精简版固件 - 请升级"
 #define D_WEBSERVER_ACTIVE_ON "Web 服务器地址:"
 #define D_WITH_IP_ADDRESS "IP 地址:"
 #define D_WEBSERVER_STOPPED "Web 服务已停止"

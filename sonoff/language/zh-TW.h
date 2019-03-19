@@ -220,7 +220,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "固件版本過低<br/>請升級"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "固件版本過低 - 請升級"
 #define D_WEBSERVER_ACTIVE_ON "Web服務器:"
 #define D_WITH_IP_ADDRESS "IP地址:"
 #define D_WEBSERVER_STOPPED "Web 服務器已停止"

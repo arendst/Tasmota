@@ -220,7 +220,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Прошивка MINIMAL<br/>пожалуйста обновите"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Прошивка MINIMAL - пожалуйста обновите"
 #define D_WEBSERVER_ACTIVE_ON "Веб-сервер активен"
 #define D_WITH_IP_ADDRESS "с IP-адресом"
 #define D_WEBSERVER_STOPPED "Веб-сервер остановлен"

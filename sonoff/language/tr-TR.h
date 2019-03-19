@@ -220,7 +220,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Donanım yazılımı çok düşük<br/>lütfen yükseltin"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Donanım yazılımı çok düşük, lütfen yükseltin"
 #define D_WEBSERVER_ACTIVE_ON "Web sunucusu aktif"
 #define D_WITH_IP_ADDRESS "IP adres ile"
 #define D_WEBSERVER_STOPPED "Web sunucusu durdu"

@@ -220,7 +220,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Pro používání prostředí Tasmota povolte JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMÁLNÍ<br/>prosím zaktualizujte"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMÁLNÍ - prosím zaktualizujte"
 #define D_WEBSERVER_ACTIVE_ON "Aktivní Web server"
 #define D_WITH_IP_ADDRESS "na IP adrese"
 #define D_WEBSERVER_STOPPED "Web server zastaven"
