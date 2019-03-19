@@ -1,144 +1,81 @@
 /* 6.5.0 20190319
- * New Release
- *
- * 6.4.2.22 20190315
+ * Remove commands SetOption14 and SetOption63 as it has been superseded by command Interlock
+ * Remove command SetOption35 0-255 for mDNS start-up delay (#4793)
  * Remove support for MQTT_LIBRARY_TYPE, MQTT_ARDUINOMQTT and MQTT_TASMOTAMQTT (#5474)
- *
- * 6.4.1.21 20190309
- * Fix exception on GUI Configure Logging and Configure Other (#5424)
- * Add support for sensor SCD30 (#5434)
- * Add support for commands in sensor drivers
- * Add 0x to IRRemote (SetOption29) and RCSwitch (SetOption28) received hexadecimal data (#5431)
- * Add button control when no relay configured (#4682)
- *
- * 6.4.1.20 20190304
- * Changed webserver content handling from single String to small Chunks increasing RAM
- * Changed logging message handling
+ * Change webserver content handling from single String to small Chunks increasing RAM
+ * Change code use of boolean to bool and byte to uint8_t
+ * Change code uint8_t flags to bool flags
+ * Change sonoff_template.h layout regarding optional module flags like ADC0
+ * Change sonoff_template.h module lay-out by removing non-configurable GPIOs
+ * Change button driver making it modular
+ * Change switch driver making it modular and introduce input filter (#4665, #4724)
+ * Change switch input detection by optimizing switch debounce (#4724)
+ * Change web authentication (#4865)
+ * Change image name BE_MINIMAL to FIRMWARE_MINIMAL and USE_xyz to FIRMWARE_xyz (#5106)
+ * Change GUI weblog from XML to plain text solving possible empty screens (#5154)
+ * Fix most compiler warnings
+ * Fix Display exception 28 when JSON value is NULL received
+ * Fix epaper driver (#4785)
+ * Fix HAss Sensor Discovery Software Watchdog restart (#4831, #4988)
+ * Fix allowable MAX_RULE_VARS to 16 (#4933)
+ * Fix mDNS addService (#4938, #4951)
+ * Fix HAss discovery of MHZ19(B) sensors (#4992)
+ * Fix some exceptions and watchdogs due to lack of stack space (#5215)
+ * Fix GUI wifi password acception starting with asteriks (*) (#5231, #5242)
+ * Fix command WebSend intermittent results (#5273, #5304)
  * Fix additional characters in fallbacktopic, hostname and mqttclient on core 2.5.0 (#5359, #5417)
- * Add command Template 255 to copy module configuration over to current active template and store as user template named Merged (#5371)
- *
- * 6.4.1.19 20190222
- * Add command SetOption37 for RGBCW color mapping (#5326)
- * Add Korean language translations (#5344)
  * Fix Energy TotalStartTime when commands EnergyReset0 and/or EnergyReset3 used (#5373)
  * Fix DS18S20 temperature calculation (#5375)
  * Fix float calculations in range from 0 to -1 (#5386)
- *
- * 6.4.1.18 20190221
- * Fix some exceptions and watchdogs due to lack of stack space - part 1 (#5215)
- * Fix some exceptions and watchdogs due to lack of stack space - part 2
- * Add command SetOption62 0/1 to disable retain on Button or Swith hold messages (#5299)
- * Add option WifiConfig 7 to allow reset of device in AP mode without admin password (#5297)
- * Fix command WebSend when using a port number as regression from 6.4.1.17 (#5304)
- *
- * 6.4.1.17 20190214
- * Change template update by removing possibility to add user module config keeping template as defined (#5222)
- * Fix regression from 6.4.1.16 where GPIO9 and GPIO10 connected devices did not work (#5197)
- * Fix GUI wifi password acception starting with asteriks (*) (#5231, #5242)
- * Add rule expression enabled  by define USE_EXPRESSION in my_user_config.h (#5210)
- * Add Configure Template menu option to GUI (#5222)
- * Remove command SetOption62 as it's functionality is replaced by user changing the device template (#5255)
- * Add property LinkCount to state and status 11 message representing number of Wifi Link re-connections
- * Add property MqttCount to status 6 message representing number of Mqtt re-connections
- * Add property Downtime to state and status 11 message representing the duration of wifi connection loss
- * Fix command WebSend intermittent results (#5273)
- *
- * 6.4.1.16 20190211
- * Initial support for online template change using command Template or GUI Configure Other (#5177)
- * Add parameter CFG_HOLDER to status 1 message (#5206)
- * Update GUI
- *
- * 6.4.1.15 20190208
- * Change image name BE_MINIMAL to FIRMWARE_MINIMAL (#5106)
- * Change image names USE_xyz to FIRMWARE_xyz (#5106)
+ * Fix exception on GUI Configure Logging and Configure Other (#5424)
+ * Add commands PowerCal, VoltageCal and CurrentCal for HLW8012, HJL01 and BL0937 based energy sensors
  * Add command SerialDelimiter 128 to filter reception of only characters between ASCII 32 and 127 (#5131)
- * Add status message to former declined group commands (#5145)
- *
- * 6.4.1.14 20190203
- * Add SetOption32 until SetOption49 diagnostic information to Status 3 report as replacement for second property value in SetOption property name
- * Add Resolution property to Status 3 report providing previous SetOption second value property
- * Fix IR local echo
- * Add user configuration of HLW8012 and HJL-01/BL0937 Energy Monitoring as used in Sonoff S31, Pow Ra and many Tuya based devices
- * Add user configuration of MCP39F501 Energy Monitoring as used in Shelly2
- * Add support for multiple ADS1115 I2C devices (#5083)
- * Add rule support for "==", "!=" ">=" and "<=" (#5122)
- * Add Hass status sensor (#5139)
- * Change GUI weblog solving possible empty screens (#5154)
- * Change PN532 support from I2C to Serial for more stability (#5162)
- * Add MHZ19 Temperature as Domoticz Temperature selection (#5128)
- *
- * 6.4.1.13 20190130
+ * Add command SSerialSend5 \<hexdata\> to SerialBridge
+ * Add command Interlock 0 / 1 / 1,2 3,4 .. to control interlock ON/OFF and add up to 8 relays in 1 to 4 interlock groups (#4910, #5014)
+ * Add command Template 255 to copy module configuration over to current active template and store as user template named Merged (#5371)
+ * Add command WifiConfig 7 to allow reset of device in AP mode without admin password (#5297)
  * Add command SetOption36 to control boot loop default restoration (#4645, #5063)
- * Add resiliency to saved Settings (#5065)
- *
- * 6.4.1.12 20190128
- * Change code use of boolean to bool and byte to uint8_t
- * Change code uint8_t flags to bool flags
- *
- * 6.4.1.11 20190124
- * Remove command SetOption14 as it has been superseded by command Interlock
- * Remove command SetOption63 as it has been superseded by command Interlock
- * Add command Interlock 0 / 1 / 1,2 3,4 .. to control interlock ON/OFF and add up to 8 relays in 1 to 4 interlock groups (#5014)
- * Add core version conditional compile options to provided PWM files (#4917)
- * Add support for inverted buttons and inverted buttons without pullup (#4914)
- *
- * 6.4.1.10 20190121
- * Fix Hass discovery of MHZ19(B) sensors (#4992)
- * Fix Hass Software Watchdog exception during discovery (#4988)
- * Add support for MAX44009 Ambient Light sensor (#4907)
- *
- * 6.4.1.9 20190115
- * Add support for Mi LED Desk Lamp with rotary switch (#4887)
- * Fix mDNS addService (#4938, #4951)
- * Fix allowable MAX_RULE_VARS to 16 (#4933)
- * Add (S)SerialSend3 escape sequence \x to allow hexadecimal byte value (#3560, #4947)
- * Add SerialBridge command SSerialSend5 <hexdata>
- *
- * 6.4.1.8 20190107
- * Change sonoff_template.h layout regarding optional module flags like ADC0
- * Add command SetOption62 1 to force no Button/Switch pullup on dedicated modules. Currently only supported on Shelly2 (#4841)
- * Fix Display exception 28 when JSON value is NULL received
- * Fix Home Assistant Sensor Discovery Software Watchdog restart (#4831)
+ * Add command SetOption37 for RGBCW color mapping (#5326)
+ * Add command SetOption55 0/1 and define MDNS_ENABLE to disable/enable mDNS (#4793, #4923)
+ * Add command SetOption62 0/1 to disable retain on Button or Switch hold messages (#5299)
+ * Add support for Smanergy KA10 Smart Wall Socket with Energy monitoring
+ * Add support for commands in sensor drivers
+ * Add support for MAX31855 K-Type thermocouple sensor using softSPI (#4764)
+ * Add support for Near Field Communication (NFC) controller PN532 using Serial (#4791, #5162)
  * Add support for OBI Power Socket 2 (#4829)
  * Add support for YTF IR Bridge (#4855)
- * Change web authentication (#4865)
+ * Add support for Mi LED Desk Lamp with rotary switch (#4887)
  * Add support for Digoo DG-SP202 Smart Socket with Energy monitoring (#4891)
- * Add support for Smanergy KA10 Smart Wall Socket with Energy monitoring
+ * Add support for MAX44009 Ambient Light sensor (#4907)
+ * Add support for inverted buttons and inverted buttons without pullup (#4914)
  * Add support for Luminea ZX2820 Smart Socket with Energy monitoring (#4921)
- * Add define MDNS_ENABLE to control initial mDNS state (#4923)
- * Add split interlock part 1 (#4910)
- *
- * 6.4.1.7 20190106
- * Fix HLW8012, HJL01 and BL0937 based energy sensors low Power (below 10W) measurement regression from 6.4.1.6
- * Add Power status functionality to LED2 when configured leaving LED1 for Link status indication
- * Add no pull-up control to Shelly 2 module (default is pull-up, change GPIO2 to Switch3n for no pull-up) (#4841)
- * Add 4 seconds startup delay to button control (#4829)
- * Change button driver making it modular
- *
- * 6.4.1.6 20190105
- * Add commands PowerCal, VoltageCal and CurrentCal for HLW8012, HJL01 and BL0937 based energy sensors
- *
- * 6.4.1.5 20190103
- * Remove command SetOption35 0-255 for mDNS start-up delay (#4793)
- * Add command SetOption55 0/1 to disable/enable mDNS (#4793)
- *
- * 6.4.1.4 20190101
- * Update Copyright (C) 2019
- * Fix epaper driver (#4785)
- * Add support for Near Field Communication (NFC) controller PN532 using I2C (#4791)
- *
- * 6.4.1.3 20181229
- * Change sonoff_template.h module lay-out by removing non-configurable GPIOs
- * Add support for MAX31855 K-Type thermocouple sensor using softSPI (#4764)
- *
- * 6.4.1.2 20181228
- * Change switch driver making it modular and introduce input filter (#4665, #4724)
- * Add define DS18B20_INTERNAL_PULLUP to select internal input pullup when only one DS18B20 sensor is connected eliminating external resistor (#4738)
+ * Add support for multiple ADS1115 I2C devices (#5083)
+ * Add support for online template change using command Template or GUI Configure Other (#5177)
+ * Add support for Korean language translations (#5344)
+ * Add support for sensor SCD30 (#5434)
+ * Add parameter CFG_HOLDER to status 1 message (#5206)
+ * Add SetOption32 until SetOption49 diagnostic information to Status 3 report as replacement for second property value in SetOption property name
+ * Add Resolution property to Status 3 report providing previous SetOption second value property
+ * Add property MqttCount to status 6 message representing number of Mqtt re-connections
+ * Add property LinkCount to state and status 11 message representing number of Wifi Link re-connections
+ * Add property Downtime to state and status 11 message representing the duration of wifi connection loss
  * Add variable %timestamp% to rules (#4749)
- *
- * 6.4.1.1 20181224
- * Fix most compiler warnings
- * Change switch input detection by optimizing switch debounce (#4724)
+ * Add rule support for "==", "!=" ">=" and "<=" (#5122)
+ * Add rule expression enabled by define USE_EXPRESSION in my_user_config.h (#5210)
+ * Add Power status functionality to LED2 when configured leaving LED1 for Link status indication
+ * Add user configuration of HLW8012 and HJL-01/BL0937 Energy Monitoring as used in Sonoff Pow and many Tuya based devices
+ * Add user configuration of MCP39F501 Energy Monitoring as used in Shelly2
+ * Add online template configuration using both commands and Configure Template menu option in GUI
+ * Add (S)SerialSend3 escape sequence \x to allow hexadecimal byte value (#3560, #4947)
+ * Add define DS18B20_INTERNAL_PULLUP to select internal input pullup when only one DS18B20 sensor is connected eliminating external resistor (#4738)
+ * Add button control when no relay configured (#4682)
+ * Add startup delay of 4 seconds to button control (#4829)
+ * Add core version conditional compile options to provided PWM files (#4917)
+ * Add resiliency to saved Settings (#5065)
+ * Add MHZ19 Temperature as Domoticz Temperature selection (#5128)
+ * Add HAss status sensor (#5139)
+ * Add status message to former declined group commands (#5145)
+ * Add 0x to IRRemote (SetOption29) and RCSwitch (SetOption28) received hexadecimal data (#5431)
  *
  * 6.4.1 20181224
  * Change RAM usage BMP/BME I2C sensors
