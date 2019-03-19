@@ -199,7 +199,7 @@ Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/
 | USE_DISPLAY_SSD1306   | - | - | - | - | - | - | x |
 | USE_DISPLAY_MATRIX    | - | - | - | - | - | - | x |
 | USE_DISPLAY_ILI9341   | - | - | - | - | - | - | x |
-| USE_DISPLAY_EPAPER_29 | - | - | - | - | - | - | x |
+| USE_DISPLAY_EPAPER_29 | - | - | - | - | - | - | x | Disabled for core 2.3.0
 
 ## Changelog
 Version 6.5.0 20190319
