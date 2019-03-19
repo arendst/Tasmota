@@ -18,7 +18,6 @@
 */
 
 #define XDRV_02                2
-/*********************************************************************************************/
 
 #ifdef USE_MQTT_TLS
 #ifdef USE_MQTT_TLS_CA_CERT
@@ -441,13 +440,11 @@ void MqttReconnect(void)
   GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
   snprintf_P(mqtt_data, sizeof(mqtt_data), S_OFFLINE);
 
-//#ifdef ARDUINO_ESP8266_RELEASE_2_4_1
 #ifdef USE_MQTT_TLS
   EspClient = WiFiClientSecure();         // Wifi Secure Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
 #else
   EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
 #endif
-//#endif
 
   if (2 == mqtt_initial_connection_state) {  // Executed once just after power on and wifi is connected
 #ifdef USE_MQTT_TLS
@@ -777,7 +774,7 @@ void HandleMqttConfiguration(void)
     Settings.mqtt_fulltopic);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void MqttSaveSettings(void)

@@ -482,7 +482,7 @@ void HandleDomoticzConfiguration(void)
   WSContentSend_P(PSTR("</table>"));
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void DomoticzSaveSettings(void)

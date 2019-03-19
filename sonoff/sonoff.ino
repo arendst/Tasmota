@@ -167,7 +167,6 @@ bool i2c_flg = false;                       // I2C configured
 bool spi_flg = false;                       // SPI configured
 bool soft_spi_flg = false;                  // Software SPI configured
 bool ntp_force_sync = false;                // Force NTP sync
-bool reset_web_log_flag = false;            // Reset web console log
 myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
 gpio_flag my_module_flag;                   // Active copy of Module GPIO flags
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
