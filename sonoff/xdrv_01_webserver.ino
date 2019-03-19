@@ -376,7 +376,6 @@ const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 
 const char HTTP_END[] PROGMEM =
-  "<br/>"
   "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " %s " D_BY " " D_AUTHOR "</a></div>"
   "</div>"
   "</body>"
@@ -672,7 +671,7 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
   va_end(arg);
 
   if (D_DECIMAL_SEPARATOR[0] != '.') {
-    for (uint16_t i = 0; i < strlen(mqtt_data); i++) {
+    for (int i = 0; i < len; i++) {
       if ('.' == mqtt_data[i]) {
         mqtt_data[i] = D_DECIMAL_SEPARATOR[0];
       }

@@ -374,7 +374,7 @@ void HxShow(bool json)
 const char S_CONFIGURE_HX711[] PROGMEM = D_CONFIGURE_HX711;
 
 const char HTTP_BTN_MENU_MAIN_HX711[] PROGMEM =
-  "<br/><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form>";
+  "<p><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form></p>";
 
 const char HTTP_BTN_MENU_HX711[] PROGMEM =
   "<p><form action='" WEB_HANDLE_HX711 "' method='get'><button>" D_CONFIGURE_HX711 "</button></form></p>";
