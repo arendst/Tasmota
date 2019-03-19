@@ -1472,10 +1472,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0
   },
   { "Shelly 1",        // Shelly1 Open Source (ESP8266 - 2MB) - https://shelly.cloud/shelly1-open-source/
-     GPIO_USER,        // GPIO00 - Only to be used when Shelly is connected to 12V DC
-     GPIO_USER,        // GPIO01 Serial RXD - Only to be used when Shelly is connected to 12V DC
+     0,                // GPIO00 - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
+     0,                // GPIO01 Serial RXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
      0,
-     GPIO_USER,        // GPIO03 Serial TXD - Only to be used when Shelly is connected to 12V DC
+     0,                // GPIO03 Serial TXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
      GPIO_REL1,        // GPIO04 Relay (0 = Off, 1 = On)
      GPIO_SWT1_NP,     // GPIO05 SW pin
                        // GPIO06 (SD_CLK   Flash)
