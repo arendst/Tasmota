@@ -619,7 +619,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       if (Settings.flag.hass_discovery) {
         HAssPublishStatus();
       }
-#endif  // USE_HOME_ASSISTANT	    
+#endif  // USE_HOME_ASSISTANT
     }
     else if (CMND_SLEEP == command_code) {
       if ((payload >= 0) && (payload < 251)) {
@@ -1552,11 +1552,7 @@ void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
 #ifdef USE_KNX
     KnxUpdatePowerState(device, power);
 #endif  // USE_KNX
-    if (publish_power && Settings.flag3.hass_tele_on_power) {
-      mqtt_data[0] = '\0';
-      MqttShowState();
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
-    }
+    if (publish_power && Settings.flag3.hass_tele_on_power) { MqttPublishTeleState(); }
     if (device <= MAX_PULSETIMERS) {  // Restart PulseTime if powered On
       SetPulseTimer(device -1, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[device -1] : 0);
     }
@@ -1783,6 +1779,13 @@ void MqttShowState(void)
     mqtt_data, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WiFi.BSSIDstr().c_str(), WiFi.channel(), WifiGetRssiAsQuality(WiFi.RSSI()), WifiLinkCount(), WifiDowntime().c_str());
 }
 
+void MqttPublishTeleState(void)
+{
+  mqtt_data[0] = '\0';
+  MqttShowState();
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+}
+
 bool MqttShowSensor(void)
 {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{\"" D_JSON_TIME "\":\"%s\""), mqtt_data, GetDateAndTime(DT_LOCAL).c_str());
@@ -1860,9 +1863,7 @@ void PerformEverySecond(void)
     if (tele_period >= Settings.tele_period) {
       tele_period = 0;
 
-      mqtt_data[0] = '\0';
-      MqttShowState();
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+      MqttPublishTeleState();
 
       mqtt_data[0] = '\0';
       if (MqttShowSensor()) {
