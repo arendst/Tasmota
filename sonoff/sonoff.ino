@@ -615,6 +615,11 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       if (Settings.flag3.hass_tele_on_power) {
         MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
       }
+#ifdef USE_HOME_ASSISTANT
+      if (Settings.flag.hass_discovery) {
+        HAssPublishStatus();
+      }
+#endif  // USE_HOME_ASSISTANT	    
     }
     else if (CMND_SLEEP == command_code) {
       if ((payload >= 0) && (payload < 251)) {
