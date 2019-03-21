@@ -1929,7 +1929,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO03 RX Serial TXD and Optional sensor
      GPIO_I2C_SDA,        // GPIO04 D2 Wemos I2C SDA
      GPIO_I2C_SCL,        // GPIO05 D1 Wemos I2C SCL / Wemos Relay Shield (0 = Off, 1 = On) / Wemos WS2812B RGB led Shield
-     0, 0, 0, 0, 0, 0, // Flash connection
+     0, 0,             // Flash connection
      GPIO_USER,        // GPIO12 D6
      GPIO_USER,        // GPIO13 D7
      GPIO_USER,        // GPIO14 D5
