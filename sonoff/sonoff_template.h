@@ -316,10 +316,11 @@ enum SupportedModules {
   SP10,
   WAGA,
   SYF05,
-  MAXMODULE,
   TUYA_TOUCH_T1,
   TUYA_TOUCH_T2,
-  TUYA_TOUCH_T3, };
+  TUYA_TOUCH_T3,
+  MAXMODULE
+ };
 
 #define USER_MODULE        255
 
@@ -1643,7 +1644,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY2,        // GPIO03
      0,                // GPIO04
      0,                // GPIO05
-     0, 0, 0, 0, 0, 0,
+     0, 0,
      GPIO_KEY1,        // GPIO12
      GPIO_REL1,        // GPIO13
      0,
@@ -1656,7 +1657,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY2,        // GPIO03
      GPIO_REL2,        // GPIO04
      0,                // GPIO05
-     0, 0, 0, 0, 0, 0,
+     0, 0,
      GPIO_KEY1,        // GPIO12
      GPIO_REL1,        // GPIO13
      0,
@@ -1669,7 +1670,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY2,        // GPIO03
      GPIO_REL2,        // GPIO04
      GPIO_KEY3,        // GPIO05
-     0, 0, 0, 0, 0, 0,
+     0, 0,
      GPIO_KEY1,        // GPIO12
      GPIO_REL1,        // GPIO13
      0,
