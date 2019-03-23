@@ -131,19 +131,19 @@ void IrReceiveCheck(void)
       } else {
         snprintf_P(stemp, sizeof(stemp), PSTR("\"0x%lX\""), (uint32_t)results.value);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
+      Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, stemp);
 
       if (Settings.flag3.receive_raw) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_IR_RAWDATA "\":["), mqtt_data);
+        ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":["));
         uint16_t i;
         for (i = 1; i < results.rawlen; i++) {
-          if (i > 1) { snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data); }
+          if (i > 1) { ResponseAppend_P(PSTR(",")); }
           uint32_t usecs;
           for (usecs = results.rawbuf[i] * kRawTick; usecs > UINT16_MAX; usecs -= UINT16_MAX) {
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d,0,"), mqtt_data, UINT16_MAX);
+            ResponseAppend_P(PSTR("%d,0,"), UINT16_MAX);
           }
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%d"), mqtt_data, usecs);
+          ResponseAppend_P(PSTR("%d"), usecs);
           if (strlen(mqtt_data) > sizeof(mqtt_data) - 40) { break; }  // Quit if char string becomes too long
         }
         uint16_t extended_length = results.rawlen - 1;
@@ -152,10 +152,10 @@ void IrReceiveCheck(void)
           // Add two extra entries for multiple larger than UINT16_MAX it is.
           extended_length += (usecs / (UINT16_MAX + 1)) * 2;
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_IR_RAWDATA "Info\":[%d,%d,%d]"), mqtt_data, extended_length, i -1, results.overflow);
+        ResponseAppend_P(PSTR("],\"" D_JSON_IR_RAWDATA "Info\":[%d,%d,%d]"), extended_length, i -1, results.overflow);
       }
 
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}}"), mqtt_data);
+      ResponseAppend_P(PSTR("}}"));
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
 
       if (iridx) {
@@ -516,7 +516,7 @@ bool IrSendCommand(void)
   }
   else if (CMND_IRSEND == command_code) {
     if (XdrvMailbox.data_len) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+      Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
 
       if (!strstr(XdrvMailbox.data, "{")) {  // If no JSON it must be rawdata
         // IRSend frequency, rawdata, rawdata ...
@@ -540,11 +540,11 @@ bool IrSendCommand(void)
           irsend_active = true;
           irsend->sendRaw(raw_array, count, freq);
           if (!count) {
-            snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_FAILED);
+            Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_FAILED);
           }
         }
         else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_INVALID_RAWDATA);
+          Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_INVALID_RAWDATA);
         }
       }
       else {
@@ -553,7 +553,7 @@ bool IrSendCommand(void)
         StaticJsonBuffer<128> jsonBuf;
         JsonObject &root = jsonBuf.parseObject(dataBufUc);
         if (!root.success()) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_INVALID_JSON);
+          Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_INVALID_JSON);
         }
         else {
           // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
@@ -588,7 +588,7 @@ bool IrSendCommand(void)
                 irsend->sendPanasonic(bits, data); break;
               default:
                 irsend_active = false;
-                snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_PROTOCOL_NOT_SUPPORTED);
+                Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_PROTOCOL_NOT_SUPPORTED);
             }
           }
           else {
@@ -601,7 +601,7 @@ bool IrSendCommand(void)
       error = true;
     }
     if (error) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_NO " " D_JSON_IR_PROTOCOL ", " D_JSON_IR_BITS " " D_JSON_OR " " D_JSON_IR_DATA "\"}"));
+      Response_P(PSTR("{\"" D_CMND_IRSEND "\":\"" D_JSON_NO " " D_JSON_IR_PROTOCOL ", " D_JSON_IR_BITS " " D_JSON_OR " " D_JSON_IR_DATA "\"}"));
     }
   }
 #ifdef USE_IR_HVAC
@@ -618,10 +618,10 @@ bool IrSendCommand(void)
       StaticJsonBuffer<164> jsonBufer;
       JsonObject &root = jsonBufer.parseObject(dataBufUc);
       if (!root.success()) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_INVALID_JSON);
+        Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_INVALID_JSON);
       }
       else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+        Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
         HVAC_Vendor = root[D_JSON_IRHVAC_VENDOR];
         HVAC_Power = root[D_JSON_IRHVAC_POWER];
         HVAC_Mode = root[D_JSON_IRHVAC_MODE];
@@ -650,7 +650,7 @@ bool IrSendCommand(void)
       error = true;
     }
     if (error) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_IRHVAC "\":\"" D_JSON_WRONG " " D_JSON_IRHVAC_VENDOR ", " D_JSON_IRHVAC_MODE " " D_JSON_OR " " D_JSON_IRHVAC_FANSPEED "\"}"));
+      Response_P(PSTR("{\"" D_CMND_IRHVAC "\":\"" D_JSON_WRONG " " D_JSON_IRHVAC_VENDOR ", " D_JSON_IRHVAC_MODE " " D_JSON_OR " " D_JSON_IRHVAC_FANSPEED "\"}"));
     }
   }
 #endif // USE_IR_HVAC

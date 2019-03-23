@@ -465,7 +465,7 @@ void DisplayText(void)
             break;
           default:
             // unknown escape
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("Unknown Escape"));
+            Response_P(PSTR("Unknown Escape"));
             goto exit;
             break;
         }
@@ -921,7 +921,7 @@ bool DisplayCommand(void)
       serviced = false;  // Unknown command
     }
     else if (CMND_DISPLAY == command_code) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DISPLAY "\":{\"" D_CMND_DISP_MODEL "\":%d,\"" D_CMND_DISP_MODE "\":%d,\"" D_CMND_DISP_DIMMER "\":%d,\""
+      Response_P(PSTR("{\"" D_CMND_DISPLAY "\":{\"" D_CMND_DISP_MODEL "\":%d,\"" D_CMND_DISP_MODE "\":%d,\"" D_CMND_DISP_DIMMER "\":%d,\""
          D_CMND_DISP_SIZE "\":%d,\"" D_CMND_DISP_FONT "\":%d,\"" D_CMND_DISP_ROTATE "\":%d,\"" D_CMND_DISP_REFRESH "\":%d,\"" D_CMND_DISP_COLS "\":[%d,%d],\"" D_CMND_DISP_ROWS "\":%d}}"),
         Settings.display_model, Settings.display_mode, Settings.display_dimmer, Settings.display_size, Settings.display_font, Settings.display_rotate, Settings.display_refresh,
         Settings.display_cols[0], Settings.display_cols[1], Settings.display_rows);
@@ -936,7 +936,7 @@ bool DisplayCommand(void)
           Settings.display_model = last_display_model;
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_model);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_model);
     }
     else if (CMND_DISP_MODE == command_code) {
 #ifdef USE_DISPLAY_MODES1TO5
@@ -964,7 +964,7 @@ bool DisplayCommand(void)
         }
       }
 #endif  // USE_DISPLAY_MODES1TO5
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_mode);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_mode);
     }
     else if (CMND_DISP_DIMMER == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
@@ -976,19 +976,19 @@ bool DisplayCommand(void)
           ExecuteCommandPower(disp_device, POWER_OFF, SRC_DISPLAY);
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_dimmer);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_dimmer);
     }
     else if (CMND_DISP_SIZE == command_code) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
         Settings.display_size = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_size);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_size);
     }
     else if (CMND_DISP_FONT == command_code) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
         Settings.display_font = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_font);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_font);
     }
     else if (CMND_DISP_ROTATE == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 4)) {
@@ -1011,7 +1011,7 @@ bool DisplayCommand(void)
 #endif  // USE_DISPLAY_MODES1TO5
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rotate);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rotate);
     }
     else if (CMND_DISP_TEXT == command_code) {
       mqtt_data[0] = '\0';
@@ -1026,23 +1026,23 @@ bool DisplayCommand(void)
         }
 #endif  // USE_DISPLAY_MODES1TO5
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("No Text"));
+        Response_P(PSTR("No Text"));
       }
       if (mqtt_data[0] == '\0') {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_VALUE, command, XdrvMailbox.data);
+        Response_P(S_JSON_DISPLAY_COMMAND_VALUE, command, XdrvMailbox.data);
       }
     }
     else if ((CMND_DISP_ADDRESS == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 8)) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
         Settings.display_address[XdrvMailbox.index -1] = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_address[XdrvMailbox.index -1]);
+      Response_P(S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_address[XdrvMailbox.index -1]);
     }
     else if (CMND_DISP_REFRESH == command_code) {
       if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 7)) {
         Settings.display_refresh = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_refresh);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_refresh);
     }
     else if ((CMND_DISP_COLS == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_COLS)) {
@@ -1054,7 +1054,7 @@ bool DisplayCommand(void)
         }
 #endif  // USE_DISPLAY_MODES1TO5
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_cols[XdrvMailbox.index -1]);
+      Response_P(S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_cols[XdrvMailbox.index -1]);
     }
     else if (CMND_DISP_ROWS == command_code) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_ROWS)) {
@@ -1064,7 +1064,7 @@ bool DisplayCommand(void)
         DisplayReAllocScreenBuffer();
 #endif  // USE_DISPLAY_MODES1TO5
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rows);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rows);
     }
     else serviced = false;  // Unknown command
   }

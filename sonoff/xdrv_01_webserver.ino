@@ -2136,13 +2136,12 @@ void HandleNotFound(void)
   } else
 #endif // USE_EMULATION
   {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_FILE_NOT_FOUND "\n\nURI: %s\nMethod: %s\nArguments: %d\n"),
-      WebServer->uri().c_str(), (WebServer->method() == HTTP_GET) ? "GET" : "POST", WebServer->args());
+    WSContentBegin(404, CT_PLAIN);
+    WSContentSend_P(PSTR(D_FILE_NOT_FOUND "\n\nURI: %s\nMethod: %s\nArguments: %d\n"), WebServer->uri().c_str(), (WebServer->method() == HTTP_GET) ? "GET" : "POST", WebServer->args());
     for (uint8_t i = 0; i < WebServer->args(); i++) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s %s: %s\n"), mqtt_data, WebServer->argName(i).c_str(), WebServer->arg(i).c_str());
+      WSContentSend_P(PSTR(" %s: %s\n"), WebServer->argName(i).c_str(), WebServer->arg(i).c_str());
     }
-    WSHeaderSend();
-    WSSend(404, CT_PLAIN, mqtt_data);
+    WSContentEnd();
   }
 }
 
@@ -2301,33 +2300,33 @@ bool WebCommand(void)
   if (CMND_WEBSERVER == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) { Settings.webserver = XdrvMailbox.payload; }
     if (Settings.webserver) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
+      Response_P(PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
         (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(0));
+      Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(0));
     }
   }
   else if (CMND_WEBPASSWORD == command_code) {
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.web_password))) {
       strlcpy(Settings.web_password, (SC_CLEAR == Shortcut(XdrvMailbox.data)) ? "" : (SC_DEFAULT == Shortcut(XdrvMailbox.data)) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, Settings.web_password);
+      Response_P(S_JSON_COMMAND_SVALUE, command, Settings.web_password);
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_ASTERIX, command);
+      Response_P(S_JSON_COMMAND_ASTERIX, command);
     }
   }
   else if (CMND_WEBLOG == command_code) {
     if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) { Settings.weblog_level = XdrvMailbox.payload; }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.weblog_level);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.weblog_level);
   }
   else if (CMND_WEBREFRESH == command_code) {
     if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload <= 10000)) { Settings.web_refresh = XdrvMailbox.payload; }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.web_refresh);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.web_refresh);
   }
   else if (CMND_WEBSEND == command_code) {
     if (XdrvMailbox.data_len > 0) {
       uint8_t result = WebSend(XdrvMailbox.data);
       char stemp1[20];
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
+      Response_P(S_JSON_COMMAND_SVALUE, command, GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
     }
   }
 #ifdef USE_EMULATION
@@ -2336,7 +2335,7 @@ bool WebCommand(void)
       Settings.flag2.emulation = XdrvMailbox.payload;
       restart_flag = 2;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.flag2.emulation);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.flag2.emulation);
   }
 #endif  // USE_EMULATION
   else serviced = false;  // Unknown command

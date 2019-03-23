@@ -68,13 +68,13 @@ void SerialBridgeInput(void)
   if (serial_bridge_in_byte_counter && (millis() > (serial_bridge_polling_window + SERIAL_POLLING))) {
     serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                   // Serial data completed
     if (!serial_bridge_raw) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\"%s\"}"), serial_bridge_buffer);
+      Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\"%s\"}"), serial_bridge_buffer);
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\""));
+      Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\""));
       for (int i = 0; i < serial_bridge_in_byte_counter; i++) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%02x"), mqtt_data, serial_bridge_buffer[i]);
+        ResponseAppend_P(PSTR("%02x"), serial_bridge_buffer[i]);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"}"), mqtt_data);
+      ResponseAppend_P(PSTR("\"}"));
     }
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
 //    XdrvRulesProcess();
@@ -144,7 +144,7 @@ bool SerialBridgeCommand(void)
           codes += 2;
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+      Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
     }
   }
   else if (CMND_SBAUDRATE == command_code) {
@@ -155,7 +155,7 @@ bool SerialBridgeCommand(void)
       Settings.sbaudrate = (1 == XdrvMailbox.payload) ? SOFT_BAUDRATE / 1200 : baud;
       SerialBridgeSerial->begin(Settings.sbaudrate * 1200);  // Reinitialize serial port with new baud rate
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.sbaudrate * 1200);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.sbaudrate * 1200);
   }
   else serviced = false;  // Unknown command
 
