@@ -64,14 +64,14 @@ void MGSShow(bool json)
 {
   char buffer[33];
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MGS\":{\"NH3\":%s"), mqtt_data, measure_gas(NH3, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"CO\":%s"), mqtt_data, measure_gas(CO, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"NO2\":%s"), mqtt_data, measure_gas(NO2, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"C3H8\":%s"), mqtt_data, measure_gas(C3H8, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"C4H10\":%s"), mqtt_data, measure_gas(C4H10, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"CH4\":%s"), mqtt_data, measure_gas(GAS_CH4, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"H2\":%s"), mqtt_data, measure_gas(H2, buffer));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"C2H5OH\":%s}"), mqtt_data, measure_gas(C2H5OH, buffer));
+    ResponseAppend_P(PSTR(",\"MGS\":{\"NH3\":%s"), measure_gas(NH3, buffer));
+    ResponseAppend_P(PSTR(",\"CO\":%s"), measure_gas(CO, buffer));
+    ResponseAppend_P(PSTR(",\"NO2\":%s"), measure_gas(NO2, buffer));
+    ResponseAppend_P(PSTR(",\"C3H8\":%s"), measure_gas(C3H8, buffer));
+    ResponseAppend_P(PSTR(",\"C4H10\":%s"), measure_gas(C4H10, buffer));
+    ResponseAppend_P(PSTR(",\"CH4\":%s"), measure_gas(GAS_CH4, buffer));
+    ResponseAppend_P(PSTR(",\"H2\":%s"), measure_gas(H2, buffer));
+    ResponseAppend_P(PSTR(",\"C2H5OH\":%s}"), measure_gas(C2H5OH, buffer));
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_MGS_GAS, "NH3", measure_gas(NH3, buffer));

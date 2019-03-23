@@ -92,7 +92,7 @@ void Bh1750Show(bool json)
 {
   if (bh1750_valid) {
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}"), mqtt_data, bh1750_types, bh1750_illuminance);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}"), bh1750_types, bh1750_illuminance);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_ILLUMINANCE, bh1750_illuminance);

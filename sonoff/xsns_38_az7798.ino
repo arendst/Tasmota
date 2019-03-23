@@ -258,7 +258,7 @@ void AzShow(bool json)
   dtostrfd(az_humidity, Settings.flag2.humidity_resolution, humidity);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), mqtt_data, ktype, az_co2, temperature, humidity);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), ktype, az_co2, temperature, humidity);
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, az_co2);
 #endif  // USE_DOMOTICZ

@@ -102,8 +102,8 @@ void Tsl2561Show(bool json)
 {
   if (tsl2561_valid) {
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),
-        mqtt_data, tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
+      ResponseAppend_P(PSTR(",\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),
+        tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, (tsl2561_milliLux + 500) / 1000); }
 #endif  // USE_DOMOTICZ

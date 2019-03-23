@@ -277,11 +277,11 @@ void Veml6070Show(bool json)
     dtostrfd(uvpower, 3, str_uvpower);
     if (json) {
 #ifdef USE_VEML6070_SHOW_RAW
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_UV_LEVEL "\":%s,\"" D_JSON_UV_INDEX "\":%s,\"" D_JSON_UV_INDEX_TEXT "\":\"%s\",\"" D_JSON_UV_POWER "\":%s}"),
-        mqtt_data, veml6070_name, str_uvlevel, str_uvrisk, str_uvrisk_text, str_uvpower);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_UV_LEVEL "\":%s,\"" D_JSON_UV_INDEX "\":%s,\"" D_JSON_UV_INDEX_TEXT "\":\"%s\",\"" D_JSON_UV_POWER "\":%s}"),
+        veml6070_name, str_uvlevel, str_uvrisk, str_uvrisk_text, str_uvpower);
 #else
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_UV_INDEX "\":%s,\"" D_JSON_UV_INDEX_TEXT "\":\"%s\",\"" D_JSON_UV_POWER "\":%s}"),
-        mqtt_data, veml6070_name, str_uvrisk, str_uvrisk_text, str_uvpower);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_UV_INDEX "\":%s,\"" D_JSON_UV_INDEX_TEXT "\":\"%s\",\"" D_JSON_UV_POWER "\":%s}"),
+        veml6070_name, str_uvrisk, str_uvrisk_text, str_uvpower);
 #endif  // USE_VEML6070_SHOW_RAW
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, uvlevel); }

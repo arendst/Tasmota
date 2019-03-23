@@ -44,7 +44,7 @@ void AdcEvery250ms(void)
   if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
     adc_last_value = new_value;
     uint16_t value = adc_last_value / 10;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
+    Response_P(PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
     XdrvRulesProcess();
   }
 }
@@ -55,7 +55,7 @@ void AdcShow(bool json)
   uint16_t analog = AdcRead();
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ANALOG\":{\"A0\":%d}"), mqtt_data, analog);
+    ResponseAppend_P(PSTR(",\"ANALOG\":{\"A0\":%d}"), analog);
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_SNS_ANALOG, "", 0, analog);

@@ -1207,7 +1207,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         snprintf_P(stemp1, sizeof(stemp1), kWifiConfig[Settings.sta_config]);
         Response_P(PSTR("{\"" D_CMND_WIFICONFIG "\":\"%s " D_JSON_SELECTED "\"}"), stemp1);
         if (WifiState() > WIFI_RESTART) {
-//          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s after restart"), mqtt_data);
+//          ResponseAppend_P(PSTR(" after restart"));
           restart_flag = 2;
         }
       } else {
@@ -1478,7 +1478,7 @@ bool SendKey(uint8_t key, uint8_t device, uint8_t state)
 #endif  // USE_DOMOTICZ
     result = !Settings.flag3.button_switch_force_local;
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
+    Response_P(PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
     result = XdrvRulesProcess();
   }
 #ifdef USE_KNX

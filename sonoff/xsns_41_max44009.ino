@@ -128,9 +128,7 @@ void Max4409Show(bool json)
     dtostrf(max44009_illuminance, sizeof(illum_str) -1, prec, illum_str);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data),
-                 PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"),
-                 mqtt_data, max44009_types, illum_str);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"), max44009_types, illum_str);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_ILLUMINANCE, illum_str);

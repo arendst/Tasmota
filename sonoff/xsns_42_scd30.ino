@@ -401,7 +401,7 @@ bool Scd30CommandSensor()
           Scd30GetCommand(command_code, &value);
         }
 
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SCD30_COMMAND_NVALUE, command, value);
+        Response_P(S_JSON_SCD30_COMMAND_NVALUE, command, value);
       }
         break;
 
@@ -421,7 +421,7 @@ bool Scd30CommandSensor()
         }
         else
         {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SCD30_COMMAND_NFW_VALUE, command, major, minor);
+          Response_P(S_JSON_SCD30_COMMAND_NFW_VALUE, command, major, minor);
         }
       }
         break;
@@ -445,8 +445,9 @@ void Scd30Show(bool json)
     dtostrfd(scd30_Humid, Settings.flag2.humidity_resolution, humidity);
     dtostrfd(ConvertTemp(scd30_Temp), Settings.flag2.temperature_resolution, temperature);
     if (json) {
-      //snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), mqtt_data, scd30_CO2, temperature, humidity);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), mqtt_data, scd30_CO2, scd30_CO2EAvg, temperature, humidity);
+      //ResponseAppend_P(PSTR(",\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), scd30_CO2, temperature, humidity);
+      ResponseAppend_P(PSTR(",\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"),
+        scd30_CO2, scd30_CO2EAvg, temperature, humidity);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, scd30_CO2);
 #endif  // USE_DOMOTICZ

@@ -343,7 +343,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 
 			// Append sensor to JSON message string
 			if (FUNC_JSON_APPEND == function) {
-				snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MPR121%c\":{"), mqtt_data, pS->id[i]);
+				ResponseAppend_P(PSTR(",\"MPR121%c\":{"), pS->id[i]);
 			}
 			// Loop through buttons
 			for (uint8_t j = 0; j < 13; j++) {
@@ -351,7 +351,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 				// Add sensor, button and state to MQTT JSON message string
 				if ((FUNC_EVERY_50_MSECOND == function)
 				    && (BITC(i, j) != BITP(i, j))) {
-					snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"MPR121%c\":{\"Button%i\":%i}}"), pS->id[i], j, BITC(i, j));
+					Response_P(PSTR("{\"MPR121%c\":{\"Button%i\":%i}}"), pS->id[i], j, BITC(i, j));
 					MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
 				}
 				// Add buttons to web string
@@ -363,7 +363,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 
 				// Append JSON message string
 				if (FUNC_JSON_APPEND == function) {
-					snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"Button%i\":%i"), mqtt_data, (j > 0 ? "," : ""), j, BITC(i, j));
+					ResponseAppend_P(PSTR("%s\"Button%i\":%i"), (j > 0 ? "," : ""), j, BITC(i, j));
 				}
 			}	// for-loop j
 
@@ -372,7 +372,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 
 			// Append JSON message string
 			if (FUNC_JSON_APPEND == function) {
-				snprintf_P(mqtt_data, sizeof(mqtt_data), "%s}", mqtt_data);
+				ResponseAppend_P(PSTR("}"));
 			}
 		}		// if->running
 	}			// for-loop i

@@ -99,7 +99,6 @@ void Ads1115Detect(void)
 void Ads1115Show(bool json)
 {
   if (ads1115_type) {
-    char stemp[10];
 
     uint8_t dsxflg = 0;
     for (uint8_t i = 0; i < 4; i++) {
@@ -107,12 +106,10 @@ void Ads1115Show(bool json)
 
       if (json) {
         if (!dsxflg  ) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ADS1115\":{"), mqtt_data);
-          stemp[0] = '\0';
+          ResponseAppend_P(PSTR(",\"ADS1115\":{"));
         }
+        ResponseAppend_P(PSTR("%s\"A%d\":%d"), (dsxflg) ? "," : "", i, adc_value);
         dsxflg++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, stemp, i, adc_value);
-        strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_WEBSERVER
       } else {
         WSContentSend_PD(HTTP_SNS_ANALOG, "ADS1115", i, adc_value);
@@ -121,7 +118,7 @@ void Ads1115Show(bool json)
     }
     if (json) {
       if (dsxflg) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+        ResponseAppend_P(PSTR("}"));
       }
     }
   }

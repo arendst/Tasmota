@@ -128,7 +128,7 @@ void HxCalibrationStateTextJson(uint8_t msg_id)
   char cal_text[30];
 
   hx_calibrate_msg = msg_id;
-  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, GetTextIndexed(cal_text, sizeof(cal_text), hx_calibrate_msg, kHxCalibrationStates));
+  Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, GetTextIndexed(cal_text, sizeof(cal_text), hx_calibrate_msg, kHxCalibrationStates));
 
   if (msg_id < 3) { MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("Sensor34")); }
 }
@@ -162,7 +162,7 @@ bool HxCommand(void)
   switch (XdrvMailbox.payload) {
     case 1:  // Reset scale
       HxReset();
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, "Reset");
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, "Reset");
       break;
     case 2:  // Calibrate
       if (strstr(XdrvMailbox.data, ",")) {
@@ -206,7 +206,7 @@ bool HxCommand(void)
   if (show_parms) {
     char item[33];
     dtostrfd((float)Settings.weight_item / 10, 1, item);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\"" D_JSON_WEIGHT_ITEM "\":%s}}"),
+    Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\"" D_JSON_WEIGHT_ITEM "\":%s}}"),
       Settings.weight_reference, Settings.weight_calibration, Settings.weight_max * 1000, item);
   }
 
@@ -348,7 +348,7 @@ void HxShow(bool json)
   dtostrfd(weight, Settings.flag2.weight_resolution, weight_chr);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"HX711\":{\"" D_JSON_WEIGHT "\":%s%s}"), mqtt_data, weight_chr, scount);
+    ResponseAppend_P(PSTR(",\"HX711\":{\"" D_JSON_WEIGHT "\":%s%s}"), weight_chr, scount);
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_HX711_WEIGHT, weight_chr);

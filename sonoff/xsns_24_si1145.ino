@@ -329,8 +329,8 @@ void Si1145Show(bool json)
     uint16_t infrared = Si1145ReadIR();
     uint16_t uvindex = Si1145ReadUV();
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SI1145\":{\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_INFRARED "\":%d,\"" D_JSON_UV_INDEX "\":%d.%d}"),
-        mqtt_data, visible, infrared, uvindex /100, uvindex %100);
+      ResponseAppend_P(PSTR(",\"SI1145\":{\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_INFRARED "\":%d,\"" D_JSON_UV_INDEX "\":%d.%d}"),
+        visible, infrared, uvindex /100, uvindex %100);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, visible);
 #endif  // USE_DOMOTICZ

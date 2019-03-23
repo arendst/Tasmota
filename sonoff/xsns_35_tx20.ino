@@ -182,8 +182,8 @@ void Tx20Show(bool json)
   GetTextIndexed(wind_direction_string, sizeof(wind_direction_string), tx20_wind_direction, kTx20Directions);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TX20\":{\"Speed\":%s,\"SpeedAvg\":%s,\"SpeedMax\":%s,\"Direction\":\"%s\"}"),
-      mqtt_data, wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string);
+    ResponseAppend_P(PSTR(",\"TX20\":{\"Speed\":%s,\"SpeedAvg\":%s,\"SpeedMax\":%s,\"Direction\":\"%s\"}"),
+      wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string);
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_SNS_TX20, wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string);

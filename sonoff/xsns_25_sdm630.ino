@@ -302,10 +302,10 @@ void SDM630Show(bool json)
   dtostrfd(sdm630_energy_total, Settings.flag2.energy_resolution, energy_total);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\""
+    ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\""
       D_JSON_ACTIVE_POWERUSAGE "\":[%s,%s,%s],\"" D_JSON_REACTIVE_POWERUSAGE "\":[%s,%s,%s],\""
       D_JSON_POWERFACTOR "\":[%s,%s,%s],\"" D_JSON_VOLTAGE "\":[%s,%s,%s],\"" D_JSON_CURRENT "\":[%s,%s,%s]}"),
-      mqtt_data, energy_total, active_power_l1, active_power_l2, active_power_l3,
+      energy_total, active_power_l1, active_power_l2, active_power_l3,
       reactive_power_l1, reactive_power_l2, reactive_power_l3,
       power_factor_l1, power_factor_l2, power_factor_l3,
       voltage_l1, voltage_l2, voltage_l3,

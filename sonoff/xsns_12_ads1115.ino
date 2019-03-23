@@ -188,13 +188,13 @@ void Ads1115GetValues(uint8_t address)
 
 void Ads1115toJSON(char *comma_j)
 {
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s{"), mqtt_data,comma_j);
+  ResponseAppend_P(PSTR("%s{"), comma_j);
   char *comma = (char*)"";
   for (uint8_t i = 0; i < 4; i++) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, comma, i, ads1115_values[i]);
+    ResponseAppend_P(PSTR("%s\"A%d\":%d"), comma, i, ads1115_values[i]);
     comma = (char*)",";
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+  ResponseAppend_P(PSTR("}"));
 }
 
 void Ads1115toString(uint8_t address)
@@ -212,7 +212,7 @@ void Ads1115Show(bool json)
   if (!ads1115_type) { return; }
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ADS1115\":["), mqtt_data);
+    ResponseAppend_P(PSTR(",\"ADS1115\":["));
   }
 
   char *comma = (char*)"";
@@ -234,7 +234,7 @@ void Ads1115Show(bool json)
   }
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]"), mqtt_data);
+    ResponseAppend_P(PSTR("]"));
   }
 }
 
