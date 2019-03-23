@@ -1221,6 +1221,7 @@ void Syslog(void)
     memcpy(log_data, syslog_preamble, strlen(syslog_preamble));
     PortUdp.write(log_data);
     PortUdp.endPacket();
+    delay(1);  // Add time for UDP handling (#5512)
   } else {
     syslog_level = 0;
     syslog_timer = SYSLOG_TIMER;
