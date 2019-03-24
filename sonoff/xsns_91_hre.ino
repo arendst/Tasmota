@@ -1,7 +1,7 @@
 /*
-  xsns_07_sht1x.ino - SHT1x temperature and sensor support for Sonoff-Tasmota
+  xsns_09_hre.ino - Badger HR-E Water Meter Encoder interface
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2019  Jon Little
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
