@@ -701,24 +701,24 @@ void ShowSource(int source)
  * Response data handling
 \*********************************************************************************************/
 
-int Response_P(const char* formatP, ...)     // Content send snprintf_P char data
+int Response_P(const char* format, ...)     // Content send snprintf_P char data
 {
   // This uses char strings. Be aware of sending %% if % is needed
-  va_list arg;
-  va_start(arg, formatP);
-  int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
-  va_end(arg);
+  va_list args;
+  va_start(args, format);
+  int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), format, args);
+  va_end(args);
   return len;
 }
 
-int ResponseAppend_P(const char* formatP, ...)  // Content send snprintf_P char data
+int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char data
 {
   // This uses char strings. Be aware of sending %% if % is needed
-  va_list arg;
-  va_start(arg, formatP);
+  va_list args;
+  va_start(args, format);
   int mlen = strlen(mqtt_data);
-  int len = vsnprintf_P(mqtt_data + mlen, sizeof(mqtt_data) - mlen, formatP, arg);
-  va_end(arg);
+  int len = vsnprintf_P(mqtt_data + mlen, sizeof(mqtt_data) - mlen, format, args);
+  va_end(args);
   return len + mlen;
 }
 
