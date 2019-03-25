@@ -741,7 +741,7 @@ const char HTTP_FORM_MQTT1[] PROGMEM =
 const char HTTP_FORM_MQTT2[] PROGMEM =
   "<p><b>" D_USER "</b> (" MQTT_USER ")<br/><input id='mu' name='mu' placeholder='" MQTT_USER "' value='%s'></p>"
   "<p><b>" D_PASSWORD "</b><br/><input id='mp' name='mp' type='password' placeholder='" D_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
-  "<p><b>" D_TOPIC "</b> = %%topic%% (" MQTT_TOPIC ")<br/><input id='mt' name='mt' placeholder='" MQTT_TOPIC "' value='%s'></p>"
+  "<p><b>" D_TOPIC "</b> = %%topic%% (%s)<br/><input id='mt' name='mt' placeholder='%s' value='%s'></p>"
   "<p><b>" D_FULL_TOPIC "</b> (%s)<br/><input id='mf' name='mf' placeholder='%s' value='%s'></p>";
 
 void HandleMqttConfiguration(void)
@@ -763,14 +763,11 @@ void HandleMqttConfiguration(void)
   WSContentSend_P(HTTP_FORM_MQTT1,
     Settings.mqtt_host,
     Settings.mqtt_port,
-    Format(str, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client)),
-    MQTT_CLIENT_ID,
-    Settings.mqtt_client);
+    Format(str, MQTT_CLIENT_ID, sizeof(str)), MQTT_CLIENT_ID, Settings.mqtt_client);
   WSContentSend_P(HTTP_FORM_MQTT2,
     (Settings.mqtt_user[0] == '\0') ? "0" : Settings.mqtt_user,
-    Settings.mqtt_topic,
-    MQTT_FULLTOPIC, MQTT_FULLTOPIC,
-    Settings.mqtt_fulltopic);
+    Format(str, MQTT_TOPIC, sizeof(str)), MQTT_TOPIC, Settings.mqtt_topic,
+    MQTT_FULLTOPIC, MQTT_FULLTOPIC, Settings.mqtt_fulltopic);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
