@@ -222,26 +222,26 @@ bool UdpConnect(void)
 
 void PollUdp(void)
 {
-  if (udp_connected && !udp_response_mutex) {
+  if (udp_connected && !udp_response_mutex && devices_present) {
     if (PortUdp.parsePacket()) {
       int len = PortUdp.read(packet_buffer, UDP_BUFFER_SIZE -1);
       if (len > 0) {
         packet_buffer[len] = 0;
       }
-      String request = packet_buffer;
 
-//      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet received"));
-//      AddLog_P(LOG_LEVEL_DEBUG_MORE, packet_buffer);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
+//      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 
-      if (request.indexOf("M-SEARCH") >= 0) {
-        request.toLowerCase();
-        request.replace(" ", "");
-
-//        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
-//        AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
-
+      if (strstr_P(packet_buffer, PSTR("M-SEARCH"))) {
         udp_remote_ip = PortUdp.remoteIP();
         udp_remote_port = PortUdp.remotePort();
+
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %s:%d\n%s"),
+          udp_remote_ip.toString().c_str(), udp_remote_port, packet_buffer);
+
+        String request = packet_buffer;
+        request.toLowerCase();
+        request.replace(" ", "");
         if (EMUL_WEMO == Settings.flag2.emulation) {
           if (request.indexOf(F("urn:belkin:device:**")) > 0) {    // type1 echo dot 2g, echo 1g's
             udp_response_mutex = true;
@@ -384,6 +384,9 @@ void HandleUpnpEvent(void)
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
 
   String request = WebServer->arg(0);
+
+//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), request.c_str());
+
   String state_xml = FPSTR(WEMO_RESPONSE_STATE_SOAP);
   //differentiate get and set state
   if (request.indexOf(F("SetBinaryState")) > 0) {
@@ -837,14 +840,16 @@ void HandleHueApi(String *path)
 
 void HueWemoAddHandlers(void)
 {
-  if (EMUL_WEMO == Settings.flag2.emulation) {
-    WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
-    WebServer->on("/eventservice.xml", HandleUpnpService);
-    WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
-    WebServer->on("/setup.xml", HandleUpnpSetupWemo);
-  }
-  if (EMUL_HUE == Settings.flag2.emulation) {
-    WebServer->on("/description.xml", HandleUpnpSetupHue);
+  if (devices_present) {
+    if (EMUL_WEMO == Settings.flag2.emulation) {
+      WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
+      WebServer->on("/eventservice.xml", HandleUpnpService);
+      WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
+      WebServer->on("/setup.xml", HandleUpnpSetupWemo);
+    }
+    if (EMUL_HUE == Settings.flag2.emulation) {
+      WebServer->on("/description.xml", HandleUpnpSetupHue);
+    }
   }
 }
 

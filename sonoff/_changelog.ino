@@ -1,4 +1,7 @@
-/* 6.5.0.1 20190319
+/* 6.5.0.2 20190325
+ * Change UDP initial message handling from string to char using static memory and add debug info (#5505)
+ *
+ * 6.5.0.1 20190319
  * Change Web GUI sensor data collection
  *
  * 6.5.0 20190319
