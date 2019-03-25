@@ -131,7 +131,6 @@ void hreEvery50ms(void)
    static int read_counter = 0; // number of bytes in the current read
    static int parity_errors = 0; // Number of parity errors in current read
    static char buff[46];  // 8 char and a term
-   static char aux[46];  // 8 char and a term
 
    static char ch;
    static size_t i;
@@ -144,8 +143,7 @@ void hreEvery50ms(void)
          sync_run = 0;
          sync_counter = 0;
          hre_state = hre_syncing;
-         snprintf_P(log_data, sizeof(log_data), PSTR("HRE: state:syncing"));
-         AddLog(LOG_LEVEL_DEBUG);
+         AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_syncing"));
          break;
          
       case hre_syncing:
@@ -169,40 +167,34 @@ void hreEvery50ms(void)
          if (sync_counter > 1000)
          {
             hre_state = hre_sleep;
-            snprintf_P(log_data, sizeof(log_data), PSTR("HRE: sync error"));
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE D_ERROR));
          }
          break;
 
          // Start reading the data block
       case hre_read:
-         snprintf_P(log_data, sizeof(log_data), PSTR("HRE: sync_run:%d, sync_counter:%d"), sync_run, sync_counter);
-         AddLog(LOG_LEVEL_DEBUG);
+         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE " sync_run:%d, sync_counter:%d"), sync_run, sync_counter);
          read_counter = 0;
          parity_errors = 0;
          curr_start = uptime;
          memset(buff, 0, sizeof(buff));
          hre_state = hre_reading;
-         snprintf_P(log_data, sizeof(log_data), PSTR("HRE: state:reading"));
-         AddLog(LOG_LEVEL_DEBUG);
+         AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_reading"));
          // So this is intended to fall through to the hre_reading section.
          // it seems that if there is much of a delay between getting the sync
          // bits and starting the read, the HRE won't output the message we
          // are looking for...
          
       case hre_reading:
-         //ch = hreReadChar(parity_errors);
-         //i = read_counter - 24;  // The water usage reading starts 24 bytes into the block
-         //if (i>=0 && i<sizeof(buff))
-         //   buff[i] = ch;
-
+         //KG44?Q45484=0444444V;RB000000022;IB018435683
+         // RB003119173;IB018435683
          buff[read_counter] = hreReadChar(parity_errors);
          
          read_counter++;
          if (read_counter == 46)
          {
-            snprintf_P(log_data, sizeof(log_data), PSTR("HRE: pe:%d, buff:%s"), parity_errors, buff);
-            AddLog(LOG_LEVEL_DEBUG);
+            //buff[33]='\0';
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE " pe:%d, buff:%s"), parity_errors, buff);
             if (parity_errors == 0)
             {
                float curr_usage;
@@ -215,8 +207,7 @@ void hreEvery50ms(void)
                hre_usage = curr_usage;
                hre_usage_time = curr_start;
                hre_good = true;
-               snprintf_P(log_data, sizeof(log_data), PSTR("HRE: usage:%.2f, rate:%.3f"), hre_usage, hre_rate);
-               AddLog(LOG_LEVEL_DEBUG);
+               AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE " usage:%d, rate:%d"), int(100*hre_usage), int(100*hre_rate));
                hre_state = hre_sleep;
             }
             else
@@ -230,8 +221,7 @@ void hreEvery50ms(void)
       case hre_sleep:
          hre_usage_time = curr_start;
          hre_state = hre_sleeping;
-         snprintf_P(log_data, sizeof(log_data), PSTR("HRE: state:sleeping"));
-         AddLog(LOG_LEVEL_DEBUG);
+         AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_sleeping"));
 
       case hre_sleeping:
          if (uptime - hre_usage_time > 27)
@@ -243,8 +233,8 @@ void hreShow(boolean json)
 {
    if (!hre_good)
       return;
-
-   const char hre_types[] = "HRE";
+   
+   const char *id = "HRE";
 
    char usage[33];
    char rate[33];
@@ -253,13 +243,13 @@ void hreShow(boolean json)
    
    if (json)
    {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_GNGPM, mqtt_data, hre_types, usage, rate);
+      ResponseAppend_P(JSON_SNS_GNGPM, id, usage, rate);
 #ifdef USE_WEBSERVER
    }
    else
    {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_GALLONS, mqtt_data, hre_types, usage);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_GPM, mqtt_data, hre_types, rate);
+      WSContentSend_PD(HTTP_SNS_GALLONS, id, usage);
+      WSContentSend_PD(HTTP_SNS_GPM, id, rate);
 #endif  // USE_WEBSERVER
    }
 }
