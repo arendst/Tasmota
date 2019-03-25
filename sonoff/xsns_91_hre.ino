@@ -138,7 +138,7 @@ void hreEvery50ms(void)
    switch (hre_state)
    {
       case hre_sync:
-         if (uptime < 15)
+         if (uptime < 10)
             break;
          sync_run = 0;
          sync_counter = 0;
@@ -148,9 +148,8 @@ void hreEvery50ms(void)
          
       case hre_syncing:
          // Find the header, a string of 62 '1's
-         // Note that on startup, this could take a a whole block (46 bytes)
-         // before we start seeing the header
-         for (int i=0; i<8; i++)
+         // Since each bit taks 2 ms, we just read 20 bits at a time
+         for (int i=0; i<20; i++)
          {
             if (hreReadBit())
                sync_run++;
@@ -173,7 +172,7 @@ void hreEvery50ms(void)
 
          // Start reading the data block
       case hre_read:
-         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE " sync_run:%d, sync_counter:%d"), sync_run, sync_counter);
+         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "sync_run:%d, sync_counter:%d"), sync_run, sync_counter);
          read_counter = 0;
          parity_errors = 0;
          curr_start = uptime;
@@ -186,15 +185,14 @@ void hreEvery50ms(void)
          // are looking for...
          
       case hre_reading:
-         //KG44?Q45484=0444444V;RB000000022;IB018435683
-         // RB003119173;IB018435683
-         buff[read_counter] = hreReadChar(parity_errors);
+         // Read two characters at a time...
+         buff[read_counter++] = hreReadChar(parity_errors);
+         buff[read_counter++] = hreReadChar(parity_errors);
          
-         read_counter++;
          if (read_counter == 46)
          {
-            //buff[33]='\0';
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE " pe:%d, buff:%s"), parity_errors, buff);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "pe:%d, re:%d, buff:%s"),
+                      parity_errors, hre_read_errors, buff);
             if (parity_errors == 0)
             {
                float curr_usage;
@@ -207,7 +205,7 @@ void hreEvery50ms(void)
                hre_usage = curr_usage;
                hre_usage_time = curr_start;
                hre_good = true;
-               AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE " usage:%d, rate:%d"), int(100*hre_usage), int(100*hre_rate));
+               
                hre_state = hre_sleep;
             }
             else
@@ -224,7 +222,9 @@ void hreEvery50ms(void)
          AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_sleeping"));
 
       case hre_sleeping:
-         if (uptime - hre_usage_time > 27)
+         // If there isn't some delay between readings, rate calculations
+         // aren't as accurate. 27 seconds will give about a 30 second refresh rate
+         if (uptime - hre_usage_time >= 27)
             hre_state = hre_sync;
    }
 }
@@ -236,8 +236,8 @@ void hreShow(boolean json)
    
    const char *id = "HRE";
 
-   char usage[33];
-   char rate[33];
+   char usage[16];
+   char rate[16];
    dtostrfd(hre_usage, 2, usage);
    dtostrfd(hre_rate, 3, rate);
    
