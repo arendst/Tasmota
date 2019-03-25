@@ -760,7 +760,7 @@ void LightState(uint8_t append)
     for (uint8_t i = 0; i < light_subtype; i++) {
       ResponseAppend_P(PSTR("%s%d" ), (i > 0 ? "," : ""), light_current_color[i] * 100 / 255);
     }
-    ResponseAppend_P(PSTR("%s]"));
+    ResponseAppend_P(PSTR("]"));
   }
   if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
     ResponseAppend_P(PSTR(",\"" D_CMND_COLORTEMPERATURE "\":%d"), LightGetColorTemp());
