@@ -239,7 +239,7 @@ void PollUdp(void)
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
 //      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 
-      if (strstr_P(packet_buffer, PSTR("M-SEARCH"))) {
+      if (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr) {
         udp_response_mutex = true;
 
         udp_remote_ip = PortUdp.remoteIP();
@@ -253,21 +253,21 @@ void PollUdp(void)
         LowerCase(packet_buffer, packet_buffer);
         RemoveSpace(packet_buffer);
         if (EMUL_WEMO == Settings.flag2.emulation) {
-          if (strstr_P(packet_buffer, URN_BELKIN_DEVICE)) {     // type1 echo dot 2g, echo 1g's
+          if (strstr_P(packet_buffer, URN_BELKIN_DEVICE) != nullptr) {     // type1 echo dot 2g, echo 1g's
             TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 1);
             return;
           }
-          else if (strstr_P(packet_buffer, UPNP_ROOTDEVICE) ||  // type2 Echo 2g (echo & echo plus)
-                   strstr_P(packet_buffer, SSDPSEARCH_ALL) ||
-                   strstr_P(packet_buffer, SSDP_ALL)) {
+          else if ((strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||  // type2 Echo 2g (echo & echo plus)
+                   (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
+                   (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
             TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 2);
             return;
           }
         } else {
-          if (strstr_P(packet_buffer, PSTR("urn:schemas-upnp-org:device:basic:1")) ||
-              strstr_P(packet_buffer, UPNP_ROOTDEVICE) ||
-              strstr_P(packet_buffer, SSDPSEARCH_ALL) ||
-              strstr_P(packet_buffer, SSDP_ALL)) {
+          if ((strstr_P(packet_buffer, PSTR("urn:schemas-upnp-org:device:basic:1")) != nullptr) ||
+              (strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||
+              (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
+              (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
             TickerMSearch.attach_ms(response_delay, HueRespondToMSearch);
             return;
           }
@@ -402,13 +402,13 @@ void HandleUpnpEvent(void)
 
   //differentiate get and set state
   char state = 'G';
-  if (strstr_P(event, PSTR("SetBinaryState"))) {
+  if (strstr_P(event, PSTR("SetBinaryState")) != nullptr) {
     state = 'S';
     uint8_t power = POWER_TOGGLE;
-    if (strstr_P(event, PSTR("State>1</Binary"))) {
+    if (strstr_P(event, PSTR("State>1</Binary")) != nullptr) {
       power = POWER_ON;
     }
-    else if (strstr_P(event, PSTR("State>0</Binary"))) {
+    else if (strstr_P(event, PSTR("State>0</Binary")) != nullptr) {
       power = POWER_OFF;
     }
     if (power != POWER_TOGGLE) {

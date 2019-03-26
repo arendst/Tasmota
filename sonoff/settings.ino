@@ -306,7 +306,7 @@ void EepromEnd(void)
 
 uint16_t settings_crc = 0;
 uint32_t settings_location = SETTINGS_LOCATION;
-uint8_t *settings_buffer = NULL;
+uint8_t *settings_buffer = nullptr;
 
 /********************************************************************************************/
 /*
@@ -333,9 +333,9 @@ void SetFlashModeDout(void)
 
 void SettingsBufferFree(void)
 {
-  if (settings_buffer != NULL) {
+  if (settings_buffer != nullptr) {
     free(settings_buffer);
-    settings_buffer = NULL;
+    settings_buffer = nullptr;
   }
 }
 

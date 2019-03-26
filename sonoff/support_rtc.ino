@@ -61,7 +61,7 @@ String GetBuildDateAndTime(void)
 
   // sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too much code
   uint8_t i = 0;
-  for (char *str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
+  for (char *str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(nullptr, " ", &p)) {
     switch (i++) {
     case 0:  // Month
       smonth = str;

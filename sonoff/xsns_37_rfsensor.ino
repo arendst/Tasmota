@@ -56,7 +56,7 @@ typedef struct RawSignalStruct                   // Variabelen geplaatst in stru
                                          // Om legacy redenen zit de eerste puls in element 1. Element 0 wordt dus niet gebruikt.
 } raw_signal_t;
 
-raw_signal_t *rfsns_raw_signal = NULL;
+raw_signal_t *rfsns_raw_signal = nullptr;
 uint8_t rfsns_rf_bit;
 uint8_t rfsns_rf_port;
 uint8_t rfsns_any_sensor = 0;
@@ -165,8 +165,8 @@ typedef struct {
   uint8_t volt;
 } theo_v2_t2_t;
 
-theo_v2_t1_t *rfsns_theo_v2_t1 = NULL;
-theo_v2_t2_t *rfsns_theo_v2_t2 = NULL;
+theo_v2_t1_t *rfsns_theo_v2_t1 = nullptr;
+theo_v2_t2_t *rfsns_theo_v2_t2 = nullptr;
 
 void RfSnsInitTheoV2(void)
 {
@@ -423,7 +423,7 @@ typedef struct {
   uint8_t wdir;
 } alecto_v2_t;
 
-alecto_v2_t *rfsns_alecto_v2 = NULL;
+alecto_v2_t *rfsns_alecto_v2 = nullptr;
 uint16_t rfsns_alecto_rain_base = 0;
 
 void RfSnsInitAlectoV2(void)
@@ -617,7 +617,7 @@ void RfSnsInit(void)
       pinMode(pin[GPIO_RF_SENSOR], INPUT);
     } else {
       free(rfsns_raw_signal);
-      rfsns_raw_signal = NULL;
+      rfsns_raw_signal = nullptr;
     }
   }
 }

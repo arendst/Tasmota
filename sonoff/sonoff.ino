@@ -188,15 +188,15 @@ char* Format(char* output, const char* input, int size)
   char *token;
   uint8_t digits = 0;
 
-  if (strstr(input, "%")) {
+  if (strstr(input, "%") != nullptr) {
     strlcpy(output, input, size);
     token = strtok(output, "%");
     if (strstr(input, "%") == input) {
       output[0] = '\0';
     } else {
-      token = strtok(NULL, "");
+      token = strtok(nullptr, "");
     }
-    if (token != NULL) {
+    if (token != nullptr) {
       digits = atoi(token);
       if (digits) {
         char tmp[size];
@@ -221,10 +221,10 @@ char* Format(char* output, const char* input, int size)
 
 char* GetOtaUrl(char *otaurl, size_t otaurl_size)
 {
-  if (strstr(Settings.ota_url, "%04d") != NULL) {     // OTA url contains placeholder for chip ID
+  if (strstr(Settings.ota_url, "%04d") != nullptr) {     // OTA url contains placeholder for chip ID
     snprintf(otaurl, otaurl_size, Settings.ota_url, ESP.getChipId() & 0x1fff);
   }
-  else if (strstr(Settings.ota_url, "%d") != NULL) {  // OTA url contains placeholder for chip ID
+  else if (strstr(Settings.ota_url, "%d") != nullptr) {  // OTA url contains placeholder for chip ID
     snprintf_P(otaurl, otaurl_size, Settings.ota_url, ESP.getChipId());
   }
   else {
@@ -278,7 +278,7 @@ char* GetTopic_P(char *stopic, uint8_t prefix, char *topic, const char* subtopic
 
 char* GetFallbackTopic_P(char *stopic, uint8_t prefix, const char* subtopic)
 {
-  return GetTopic_P(stopic, prefix +4, NULL, subtopic);
+  return GetTopic_P(stopic, prefix +4, nullptr, subtopic);
 }
 
 char* GetStateText(uint8_t state)
@@ -452,7 +452,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
   char command [CMDSZ];
   char stemp1[TOPSZ];
   char *p;
-  char *type = NULL;
+  char *type = nullptr;
   uint8_t lines = 1;
   bool jsflg = false;
   bool grpflg = false;
@@ -480,7 +480,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
 
   if (XdrvMqttData(topicBuf, sizeof(topicBuf), dataBuf, sizeof(dataBuf))) { return; }
 
-  grpflg = (strstr(topicBuf, Settings.mqtt_grptopic) != NULL);
+  grpflg = (strstr(topicBuf, Settings.mqtt_grptopic) != nullptr);
 
   GetFallbackTopic_P(stemp1, CMND, "");  // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
   fallback_topic_flag = (!strncmp(topicBuf, stemp1, strlen(stemp1)));
@@ -488,7 +488,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
   type = strrchr(topicBuf, '/');  // Last part of received topic is always the command (type)
 
   index = 1;
-  if (type != NULL) {
+  if (type != nullptr) {
     type++;
     for (i = 0; i < strlen(type); i++) {
       type[i] = toupper(type[i]);
@@ -505,7 +505,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_RESULT D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " %s, " D_DATA " %s"), grpflg, index, type, dataBuf);
 
-  if (type != NULL) {
+  if (type != nullptr) {
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
     if (Settings.ledstate &0x02) { blinks++; }
 
@@ -538,7 +538,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       XdrvMailbox.data = dataBuf;
       if (!XdrvCall(FUNC_COMMAND)) {
         if (!XsnsCall(FUNC_COMMAND)) {
-          type = NULL;  // Unknown command
+          type = nullptr;  // Unknown command
         }
       }
     }
@@ -547,7 +547,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         uint8_t bl_pointer = (!backlog_pointer) ? MAX_BACKLOG -1 : backlog_pointer;
         bl_pointer--;
         char *blcommand = strtok(dataBuf, ";");
-        while ((blcommand != NULL) && (backlog_index != bl_pointer)) {
+        while ((blcommand != nullptr) && (backlog_index != bl_pointer)) {
           while(true) {
             blcommand = Trim(blcommand);
             if (!strncasecmp_P(blcommand, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG))) {
@@ -561,7 +561,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
             backlog_index++;
             if (backlog_index >= MAX_BACKLOG) backlog_index = 0;
           }
-          blcommand = strtok(NULL, ";");
+          blcommand = strtok(nullptr, ";");
         }
 //        Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_APPENDED);
         mqtt_data[0] = '\0';
@@ -974,7 +974,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
       bool error = false;
 
-      if (!strstr(dataBuf, "{")) {      // If no JSON it must be parameter
+      if (strstr(dataBuf, "{") == nullptr) {  // If no JSON it must be parameter
         if ((payload > 0) && (payload <= MAXMODULE)) {
           ModuleDefault(payload -1);    // Copy template module
           if (USER_MODULE == Settings.module) { restart_flag = 2; }
@@ -1193,7 +1193,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     else if (CMND_HOSTNAME == command_code) {
       if (!grpflg && (data_len > 0) && (data_len < sizeof(Settings.hostname))) {
         strlcpy(Settings.hostname, (SC_DEFAULT == Shortcut(dataBuf)) ? WIFI_HOSTNAME : dataBuf, sizeof(Settings.hostname));
-        if (strstr(Settings.hostname,"%")) {
+        if (strstr(Settings.hostname, "%") != nullptr) {
           strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
         }
         restart_flag = 2;
@@ -1238,15 +1238,15 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       if (max_relays > sizeof(Settings.interlock[0]) * 8) { max_relays = sizeof(Settings.interlock[0]) * 8; }
       if (max_relays > 1) {                                         // Only interlock with more than 1 relay
         if (data_len > 0) {
-          if (strstr(dataBuf, ",")) {                               // Interlock entry
+          if (strstr(dataBuf, ",") != nullptr) {                    // Interlock entry
             for (uint8_t i = 0; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }  // Reset current interlocks
             char *group;
             char *q;
             uint8_t group_index = 0;
             power_t relay_mask = 0;
-            for (group = strtok_r(dataBuf, " ", &q); group && group_index < MAX_INTERLOCKS; group = strtok_r(NULL, " ", &q)) {
+            for (group = strtok_r(dataBuf, " ", &q); group && group_index < MAX_INTERLOCKS; group = strtok_r(nullptr, " ", &q)) {
               char *str;
-              for (str = strtok_r(group, ",", &p); str; str = strtok_r(NULL, ",", &p)) {
+              for (str = strtok_r(group, ",", &p); str; str = strtok_r(nullptr, ",", &p)) {
                 int pbit = atoi(str);
                 if ((pbit > 0) && (pbit <= max_relays)) {           // Only valid relays
                   pbit--;
@@ -1329,9 +1329,9 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         if (payload < 15) {
           p = strtok (dataBuf, ":");
           if (p) {
-            p = strtok (NULL, ":");
+            p = strtok (nullptr, ":");
             if (p) {
-              Settings.timezone_minutes = strtol(p, NULL, 10);
+              Settings.timezone_minutes = strtol(p, nullptr, 10);
               if (Settings.timezone_minutes > 59) { Settings.timezone_minutes = 59; }
             }
           }
@@ -1352,7 +1352,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       uint8_t ts = 0;
       if (CMND_TIMEDST == command_code) { ts = 1; }
       if (data_len > 0) {
-        if (strstr(dataBuf, ",")) {              // Process parameter entry
+        if (strstr(dataBuf, ",") != nullptr) {   // Process parameter entry
           uint8_t tpos = 0;                      // Parameter index
           int value = 0;
           p = dataBuf;                           // Parameters like "1, 2,3 , 4 ,5, -120" or ",,,,,+240"
@@ -1426,9 +1426,9 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       I2cScan(mqtt_data, sizeof(mqtt_data));
     }
 #endif  // USE_I2C
-    else type = NULL;  // Unknown command
+    else type = nullptr;  // Unknown command
   }
-  if (type == NULL) {
+  if (type == nullptr) {
     blinks = 201;
     snprintf_P(topicBuf, sizeof(topicBuf), PSTR(D_JSON_COMMAND));
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_UNKNOWN "\"}"));
@@ -1608,18 +1608,18 @@ void ExecuteCommand(char *cmnd, int source)
   ShowSource(source);
 
   token = strtok(cmnd, " ");
-  if (token != NULL) {
+  if (token != nullptr) {
     start = strrchr(token, '/');   // Skip possible cmnd/sonoff/ preamble
     if (start) { token = start +1; }
   }
-  uint16_t size = (token != NULL) ? strlen(token) : 0;
+  uint16_t size = (token != nullptr) ? strlen(token) : 0;
   char stopic[size +2];  // / + \0
-  snprintf_P(stopic, sizeof(stopic), PSTR("/%s"), (token == NULL) ? "" : token);
+  snprintf_P(stopic, sizeof(stopic), PSTR("/%s"), (token == nullptr) ? "" : token);
 
-  token = strtok(NULL, "");
-  size = (token != NULL) ? strlen(token) : 0;
+  token = strtok(nullptr, "");
+  size = (token != nullptr) ? strlen(token) : 0;
   char svalue[size +1];
-  strlcpy(svalue, (token == NULL) ? "" : token, sizeof(svalue));       // Fixed 5.8.0b
+  strlcpy(svalue, (token == nullptr) ? "" : token, sizeof(svalue));       // Fixed 5.8.0b
   MqttDataHandler(stopic, (uint8_t*)svalue, strlen(svalue));
 }
 
@@ -1807,10 +1807,10 @@ bool MqttShowSensor(void)
   }
   XsnsCall(FUNC_JSON_APPEND);
   bool json_data_available = (strlen(mqtt_data) - json_data_start);
-  if (strstr_P(mqtt_data, PSTR(D_JSON_PRESSURE))) {
+  if (strstr_P(mqtt_data, PSTR(D_JSON_PRESSURE)) != nullptr) {
     ResponseAppend_P(PSTR(",\"" D_JSON_PRESSURE_UNIT "\":\"%s\""), PressureUnit().c_str());
   }
-  if (strstr_P(mqtt_data, PSTR(D_JSON_TEMPERATURE))) {
+  if (strstr_P(mqtt_data, PSTR(D_JSON_TEMPERATURE)) != nullptr) {
     ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
   }
   ResponseAppend_P(PSTR("}"));
@@ -2025,8 +2025,8 @@ void Every250mSeconds(void)
 #ifndef FIRMWARE_MINIMAL
           if (RtcSettings.ota_loader) {
             char *bch = strrchr(mqtt_data, '/');                        // Only consider filename after last backslash prevent change of urls having "-" in it
-            char *pch = strrchr((bch != NULL) ? bch : mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
-            char *ech = strrchr((bch != NULL) ? bch : mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
+            char *pch = strrchr((bch != nullptr) ? bch : mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
+            char *ech = strrchr((bch != nullptr) ? bch : mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
             if (!pch) { pch = ech; }
             if (pch) {
               mqtt_data[pch - mqtt_data] = '\0';
@@ -2611,7 +2611,7 @@ void setup(void)
 
   Format(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
   Format(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
-  if (strstr(Settings.hostname, "%")) {
+  if (strstr(Settings.hostname, "%") != nullptr) {
     strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
     snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname, mqtt_topic, ESP.getChipId() & 0x1FFF);
   } else {

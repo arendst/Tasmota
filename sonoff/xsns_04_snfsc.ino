@@ -81,7 +81,7 @@ void SonoffScSerialInput(char *rcvstat)
 
   if (!strncasecmp_P(rcvstat, PSTR("AT+UPDATE="), 10)) {
     int8_t i = -1;
-    for (str = strtok_r(rcvstat, ":", &p); str && i < 5; str = strtok_r(NULL, ":", &p)) {
+    for (str = strtok_r(rcvstat, ":", &p); str && i < 5; str = strtok_r(nullptr, ":", &p)) {
       value[i++] = atoi(str);
     }
     if (value[0] > 0) {

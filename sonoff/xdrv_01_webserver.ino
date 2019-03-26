@@ -41,7 +41,7 @@
 #include <DNSServer.h>
 
 #ifdef USE_RF_FLASH
-uint8_t *efm8bb1_update = NULL;
+uint8_t *efm8bb1_update = nullptr;
 #endif  // USE_RF_FLASH
 
 enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1 };
@@ -524,7 +524,7 @@ void WifiManagerBegin(bool reset_only)
 
   int channel = WIFI_SOFT_AP_CHANNEL;
   if ((channel < 1) || (channel > 13)) { channel = 1; }
-  WiFi.softAP(my_hostname, NULL, channel);
+  WiFi.softAP(my_hostname, nullptr, channel);
 
   delay(500); // Without delay I've seen the IP address blank
   /* Setup the DNS server redirecting all the domains to the apIP */
@@ -689,7 +689,7 @@ void WSContentStart_P(const char* title, bool auth)
 
   WSContentBegin(200, CT_HTML);
 
-  if (title != NULL) {
+  if (title != nullptr) {
     char ctitle[strlen_P(title) +1];
     strcpy_P(ctitle, title);                       // Get title from flash to RAM
     WSContentSend_P(HTTP_HEAD, Settings.friendlyname[0], ctitle);
@@ -710,7 +710,7 @@ void WSContentSendStyle_P(const char* style)
   }
   WSContentSend_P(HTTP_HEAD_STYLE1);
   WSContentSend_P(HTTP_HEAD_STYLE2);
-  if (style != NULL) {
+  if (style != nullptr) {
     WSContentSend_P(style);
   }
   WSContentSend_P(HTTP_HEAD_STYLE3, ModuleName().c_str(), Settings.friendlyname[0]);
@@ -729,7 +729,7 @@ void WSContentSendStyle_P(const char* style)
 
 void WSContentSendStyle(void)
 {
-  WSContentSendStyle_P(NULL);
+  WSContentSendStyle_P(nullptr);
 }
 
 void WSContentButton(uint8_t title_index)
@@ -1359,7 +1359,7 @@ void WifiSaveSettings(void)
 
   WebGetArg("h", tmp, sizeof(tmp));
   strlcpy(Settings.hostname, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp, sizeof(Settings.hostname));
-  if (strstr(Settings.hostname,"%")) {
+  if (strstr(Settings.hostname, "%") != nullptr) {
     strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
   }
   WebGetArg("s1", tmp, sizeof(tmp));
@@ -1885,10 +1885,10 @@ void HandleUploadLoop(void)
     }
 #ifdef USE_RF_FLASH
     else if (UPL_EFM8BB1 == upload_file_type) {
-      if (efm8bb1_update != NULL) {    // We have carry over data since last write, i. e. a start but not an end
+      if (efm8bb1_update != nullptr) {    // We have carry over data since last write, i. e. a start but not an end
         ssize_t result = rf_glue_remnant_with_new_data_and_write(efm8bb1_update, upload.buf, upload.currentSize);
         free(efm8bb1_update);
-        efm8bb1_update = NULL;
+        efm8bb1_update = nullptr;
         if (result != 0) {
           upload_error = abs(result);  // 2 = Not enough space, 8 = File invalid
           return;
@@ -1907,7 +1907,7 @@ void HandleUploadLoop(void)
         // A remnant has been detected, allocate data for it plus a null termination byte
         size_t remnant_sz = upload.currentSize - result;
         efm8bb1_update = (uint8_t *) malloc(remnant_sz + 1);
-        if (efm8bb1_update == NULL) {
+        if (efm8bb1_update == nullptr) {
           upload_error = 2;  // Not enough space - Unable to allocate memory to store new RF firmware
           return;
         }

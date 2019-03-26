@@ -36,7 +36,7 @@
 
 #include <OneWire.h>
 
-OneWire *ds = NULL;
+OneWire *ds = nullptr;
 
 uint8_t ds18x20_address[DS18X20_MAX_SENSORS][8];
 uint8_t ds18x20_index[DS18X20_MAX_SENSORS];

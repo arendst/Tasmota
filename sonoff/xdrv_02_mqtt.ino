@@ -301,7 +301,7 @@ void MqttConnected(void)
 
     GetTopic_P(stopic, CMND, mqtt_topic, PSTR("#"));
     MqttSubscribe(stopic);
-    if (strstr(Settings.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != NULL) {
+    if (strstr(Settings.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != nullptr) {
       GetTopic_P(stopic, CMND, Settings.mqtt_grptopic, PSTR("#"));
       MqttSubscribe(stopic);
       GetFallbackTopic_P(stopic, CMND, PSTR("#"));
@@ -431,8 +431,8 @@ void MqttReconnect(void)
   mqtt_retry_counter = Settings.mqtt_retry;
   global_state.mqtt_down = 1;
 
-  char *mqtt_user = NULL;
-  char *mqtt_pwd = NULL;
+  char *mqtt_user = nullptr;
+  char *mqtt_pwd = nullptr;
   if (strlen(Settings.mqtt_user) > 0) mqtt_user = Settings.mqtt_user;
   if (strlen(Settings.mqtt_pwd) > 0) mqtt_pwd = Settings.mqtt_pwd;
 
@@ -607,7 +607,7 @@ bool MqttCommand(void)
       char *mqtt_part = strtok(dataBuf, " ");
       if (mqtt_part) {
         strlcpy(stemp1, mqtt_part, sizeof(stemp1));
-        mqtt_part = strtok(NULL, " ");
+        mqtt_part = strtok(nullptr, " ");
         if (mqtt_part) {
           strlcpy(mqtt_data, mqtt_part, sizeof(mqtt_data));
         } else {

@@ -20,7 +20,7 @@
  * Change image name BE_MINIMAL to FIRMWARE_MINIMAL and USE_xyz to FIRMWARE_xyz (#5106)
  * Change GUI weblog from XML to plain text solving possible empty screens (#5154)
  * Fix most compiler warnings
- * Fix Display exception 28 when JSON value is NULL received
+ * Fix Display exception 28 when JSON value is nullptr received
  * Fix epaper driver (#4785)
  * Fix HAss Sensor Discovery Software Watchdog restart (#4831, #4988)
  * Fix allowable MAX_RULE_VARS to 16 (#4933)

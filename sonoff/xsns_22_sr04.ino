@@ -34,7 +34,7 @@ uint8_t sr04_echo_pin = 0;
 uint8_t sr04_trig_pin = 0;
 real64_t distance;
 
-NewPing* sonar = NULL;
+NewPing* sonar = nullptr;
 
 void Sr04Init(void)
 {

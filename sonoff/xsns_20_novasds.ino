@@ -109,7 +109,7 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   NovaSdsSerial->readBytes(&recbuf[1], 9);
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, recbuf, sizeof(recbuf));
 
-  if ( NULL != buffer ) {
+  if ( nullptr != buffer ) {
     // return data to buffer
     memcpy(buffer, recbuf, sizeof(recbuf));
   }
@@ -126,9 +126,9 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
 void NovaSdsSetWorkPeriod(void)
 {
   // set sensor working period
-  NovaSdsCommand(NOVA_SDS_WORKING_PERIOD, NOVA_SDS_SET_MODE, WORKING_PERIOD,        NOVA_SDS_DEVICE_ID, NULL);
+  NovaSdsCommand(NOVA_SDS_WORKING_PERIOD, NOVA_SDS_SET_MODE, WORKING_PERIOD,        NOVA_SDS_DEVICE_ID, nullptr);
   // set sensor report only on query
-  NovaSdsCommand(NOVA_SDS_REPORTING_MODE, NOVA_SDS_SET_MODE, NOVA_SDS_REPORT_QUERY, NOVA_SDS_DEVICE_ID, NULL);
+  NovaSdsCommand(NOVA_SDS_REPORTING_MODE, NOVA_SDS_SET_MODE, NOVA_SDS_REPORT_QUERY, NOVA_SDS_DEVICE_ID, nullptr);
 }
 
 bool NovaSdsReadData(void)

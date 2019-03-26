@@ -503,9 +503,9 @@ void DisplayClearScreenBuffer(void)
 
 void DisplayFreeScreenBuffer(void)
 {
-  if (disp_screen_buffer != NULL) {
+  if (disp_screen_buffer != nullptr) {
     for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
-      if (disp_screen_buffer[i] != NULL) { free(disp_screen_buffer[i]); }
+      if (disp_screen_buffer[i] != nullptr) { free(disp_screen_buffer[i]); }
     }
     free(disp_screen_buffer);
     disp_screen_buffer_cols = 0;
@@ -518,16 +518,16 @@ void DisplayAllocScreenBuffer(void)
   if (!disp_screen_buffer_cols) {
     disp_screen_buffer_rows = Settings.display_rows;
     disp_screen_buffer = (char**)malloc(sizeof(*disp_screen_buffer) * disp_screen_buffer_rows);
-    if (disp_screen_buffer != NULL) {
+    if (disp_screen_buffer != nullptr) {
       for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
         disp_screen_buffer[i] = (char*)malloc(sizeof(*disp_screen_buffer[i]) * (Settings.display_cols[0] +1));
-        if (disp_screen_buffer[i] == NULL) {
+        if (disp_screen_buffer[i] == nullptr) {
           DisplayFreeScreenBuffer();
           break;
         }
       }
     }
-    if (disp_screen_buffer != NULL) {
+    if (disp_screen_buffer != nullptr) {
       disp_screen_buffer_cols = Settings.display_cols[0] +1;
       DisplayClearScreenBuffer();
     }
@@ -562,9 +562,9 @@ void DisplayClearLogBuffer(void)
 
 void DisplayFreeLogBuffer(void)
 {
-  if (disp_log_buffer != NULL) {
+  if (disp_log_buffer != nullptr) {
     for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
-      if (disp_log_buffer[i] != NULL) { free(disp_log_buffer[i]); }
+      if (disp_log_buffer[i] != nullptr) { free(disp_log_buffer[i]); }
     }
     free(disp_log_buffer);
     disp_log_buffer_cols = 0;
@@ -575,16 +575,16 @@ void DisplayAllocLogBuffer(void)
 {
   if (!disp_log_buffer_cols) {
     disp_log_buffer = (char**)malloc(sizeof(*disp_log_buffer) * DISPLAY_LOG_ROWS);
-    if (disp_log_buffer != NULL) {
+    if (disp_log_buffer != nullptr) {
       for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
         disp_log_buffer[i] = (char*)malloc(sizeof(*disp_log_buffer[i]) * (Settings.display_cols[0] +1));
-        if (disp_log_buffer[i] == NULL) {
+        if (disp_log_buffer[i] == nullptr) {
           DisplayFreeLogBuffer();
           break;
         }
       }
     }
-    if (disp_log_buffer != NULL) {
+    if (disp_log_buffer != nullptr) {
       disp_log_buffer_cols = Settings.display_cols[0] +1;
       DisplayClearLogBuffer();
     }
@@ -608,7 +608,7 @@ void DisplayLogBufferAdd(char* txt)
 
 char* DisplayLogBuffer(char temp_code)
 {
-  char* result = NULL;
+  char* result = nullptr;
   if (disp_log_buffer_cols) {
     if (disp_log_buffer_idx != disp_log_buffer_ptr) {
       result = disp_log_buffer[disp_log_buffer_ptr];
@@ -616,7 +616,7 @@ char* DisplayLogBuffer(char temp_code)
       if (DISPLAY_LOG_ROWS == disp_log_buffer_ptr) { disp_log_buffer_ptr = 0; }
 
       char *pch = strchr(result, '~');  // = 0x7E (~) Replace degrees character (276 octal)
-      if (pch != NULL) { result[pch - result] = temp_code; }
+      if (pch != nullptr) { result[pch - result] = temp_code; }
     }
   }
   return result;
@@ -829,12 +829,12 @@ void DisplayMqttSubscribe(void)
     ntopic[0] = '\0';
     strlcpy(stopic, Settings.mqtt_fulltopic, sizeof(stopic));
     char *tp = strtok(stopic, "/");
-    while (tp != NULL) {
+    while (tp != nullptr) {
       if (!strcmp_P(tp, PSTR(MQTT_TOKEN_PREFIX))) {
         break;
       }
       strncat_P(ntopic, PSTR("+/"), sizeof(ntopic) - strlen(ntopic) -1);           // Add single-level wildcards
-      tp = strtok(NULL, "/");
+      tp = strtok(nullptr, "/");
     }
     strncat(ntopic, Settings.mqtt_prefix[2], sizeof(ntopic) - strlen(ntopic) -1);  // Subscribe to tele messages
     strncat_P(ntopic, PSTR("/#"), sizeof(ntopic) - strlen(ntopic) -1);             // Add multi-level wildcard

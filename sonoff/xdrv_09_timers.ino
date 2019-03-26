@@ -387,7 +387,7 @@ bool TimerCommand(void)
 
               strlcpy(time_str, root[parm_uc], sizeof(time_str));
               const char *substr = strtok(time_str, ":");
-              if (substr != NULL) {
+              if (substr != nullptr) {
                 if (strchr(substr, '-')) {
                   sign = 1;
                   substr++;
@@ -396,8 +396,8 @@ bool TimerCommand(void)
                 if (sign) { value += 12; }  // Allow entering timer offset from -11:59 to -00:01 converted to 12:01 to 23:59
                 if (value > 23) { value = 23; }
                 itime = value * 60;
-                substr = strtok(NULL, ":");
-                if (substr != NULL) {
+                substr = strtok(nullptr, ":");
+                if (substr != nullptr) {
                   value = atoi(substr);
                   if (value < 0) { value = 0; }
                   if (value > 59) { value = 59; }

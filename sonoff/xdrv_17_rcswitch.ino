@@ -107,7 +107,7 @@ bool RfSendCommand(void)
       if (root.success()) {
         // RFsend {"data":0x501014,"bits":24,"protocol":1,"repeat":10,"pulse":350}
         char parm_uc[10];
-        data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_DATA))], NULL, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+        data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_DATA))], nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
         bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_BITS))];
         protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_PROTOCOL))];
         repeat = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_REPEAT))];
@@ -116,10 +116,10 @@ bool RfSendCommand(void)
         //  RFsend data, bits, protocol, repeat, pulse
         char *p;
         uint8_t i = 0;
-        for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 5; str = strtok_r(NULL, ", ", &p)) {
+        for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 5; str = strtok_r(nullptr, ", ", &p)) {
           switch (i++) {
           case 0:
-            data = strtoul(str, NULL, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+            data = strtoul(str, nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
             break;
           case 1:
             bits = atoi(str);

@@ -61,7 +61,7 @@ uint8_t bmp_addresses[] = { BMP_ADDR1, BMP_ADDR2 };
 uint8_t bmp_count = 0;
 uint8_t bmp_once = 1;
 
-bmp_sensors_t *bmp_sensors = NULL;
+bmp_sensors_t *bmp_sensors = nullptr;
 
 /*********************************************************************************************\
  * BMP085 and BME180
@@ -99,7 +99,7 @@ typedef struct {
   uint16_t cal_ac6;
 } bmp180_cal_data_t;
 
-bmp180_cal_data_t *bmp180_cal_data = NULL;
+bmp180_cal_data_t *bmp180_cal_data = nullptr;
 
 bool Bmp180Calibration(uint8_t bmp_idx)
 {
@@ -244,7 +244,7 @@ typedef struct {
   int8_t   dig_H6;
 } Bme280CalibrationData_t;
 
-Bme280CalibrationData_t *Bme280CalibrationData = NULL;
+Bme280CalibrationData_t *Bme280CalibrationData = nullptr;
 
 bool Bmx280Calibrate(uint8_t bmp_idx)
 {
@@ -344,7 +344,7 @@ void Bme280Read(uint8_t bmp_idx)
 
 #include <bme680.h>
 
-struct bme680_dev *gas_sensor = NULL;
+struct bme680_dev *gas_sensor = nullptr;
 
 static void BmeDelayMs(uint32_t ms)
 {

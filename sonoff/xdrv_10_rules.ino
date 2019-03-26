@@ -672,10 +672,10 @@ String RulesSubscribe(const char *data, int data_len)
     char * pos = strtok(parameters, ",");
     if (pos) {
       event_name = Trim(pos);
-      pos = strtok(NULL, ",");
+      pos = strtok(nullptr, ",");
       if (pos) {
         topic = Trim(pos);
-        pos = strtok(NULL, ",");
+        pos = strtok(nullptr, ",");
         if (pos) {
           key = Trim(pos);
         }
@@ -1203,7 +1203,7 @@ bool RulesCommand(void)
   }
   else if ((CMND_SCALE == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
 
         double valueIN = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 1));

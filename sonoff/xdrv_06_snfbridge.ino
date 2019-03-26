@@ -98,7 +98,7 @@ ssize_t rf_glue_remnant_with_new_data_and_write(const uint8_t *remnant_data, uin
   glue_record_sz = strlen((const char *) remnant_data) + record_end;
 
   glue_buf = (uint8_t *) malloc(glue_record_sz);
-  if (glue_buf == NULL) { return -2; }  // Not enough space
+  if (glue_buf == nullptr) { return -2; }  // Not enough space
 
   // Assemble new glue buffer
   memcpy(glue_buf, remnant_data, strlen((const char *) remnant_data));

@@ -31,10 +31,10 @@
 enum SerialBridgeCommands { CMND_SSERIALSEND, CMND_SBAUDRATE };
 const char kSerialBridgeCommands[] PROGMEM = D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE;
 
-TasmotaSerial *SerialBridgeSerial = NULL;
+TasmotaSerial *SerialBridgeSerial = nullptr;
 
 unsigned long serial_bridge_polling_window = 0;
-char *serial_bridge_buffer = NULL;
+char *serial_bridge_buffer = nullptr;
 int serial_bridge_in_byte_counter = 0;
 bool serial_bridge_active = true;
 bool serial_bridge_raw = false;

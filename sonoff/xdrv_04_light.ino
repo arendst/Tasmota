@@ -1231,9 +1231,9 @@ bool LightColorEntry(char *buffer, uint8_t buffer_length)
   }
 
   memset(&light_entry_color, 0x00, sizeof(light_entry_color));
-  if (strstr(buffer, ",")) {                        // Decimal entry
+  if (strstr(buffer, ",") != nullptr) {             // Decimal entry
     int8_t i = 0;
-    for (str = strtok_r(buffer, ",", &p); str && i < 6; str = strtok_r(NULL, ",", &p)) {
+    for (str = strtok_r(buffer, ",", &p); str && i < 6; str = strtok_r(nullptr, ",", &p)) {
       if (i < 5) {
         light_entry_color[i++] = atoi(str);
       }
@@ -1345,16 +1345,16 @@ bool LightCommand(void)
     bool validHSB = (XdrvMailbox.data_len > 0);
     if (validHSB) {
       uint16_t HSB[3];
-      if (strstr(XdrvMailbox.data, ",")) {  // Command with 3 comma separated parameters, Hue (0<H<360), Saturation (0<S<100) AND Brightness (0<B<100)
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Command with 3 comma separated parameters, Hue (0<H<360), Saturation (0<S<100) AND Brightness (0<B<100)
         for (int i = 0; i < 3; i++) {
           char *substr;
 
           if (0 == i) {
             substr = strtok(XdrvMailbox.data, ",");
           } else {
-            substr = strtok(NULL, ",");
+            substr = strtok(nullptr, ",");
           }
-          if (substr != NULL) {
+          if (substr != nullptr) {
             HSB[i] = atoi(substr);
           } else {
             validHSB = false;
@@ -1392,7 +1392,7 @@ bool LightCommand(void)
       char *p;
       uint16_t idx = XdrvMailbox.index;
       Ws2812ForceSuspend();
-      for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(NULL, " ", &p)) {
+      for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(nullptr, " ", &p)) {
         if (LightColorEntry(color, strlen(color))) {
           Ws2812SetColor(idx, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
           idx++;
@@ -1515,16 +1515,16 @@ bool LightCommand(void)
     bool validtable = (XdrvMailbox.data_len > 0);
     char scolor[25];
     if (validtable) {
-      if (strstr(XdrvMailbox.data, ",")) {  // Command with up to 5 comma separated parameters
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Command with up to 5 comma separated parameters
         for (int i = 0; i < LST_RGBWC; i++) {
           char *substr;
 
           if (0 == i) {
             substr = strtok(XdrvMailbox.data, ",");
           } else {
-            substr = strtok(NULL, ",");
+            substr = strtok(nullptr, ",");
           }
-          if (substr != NULL) {
+          if (substr != nullptr) {
             Settings.rgbwwTable[i] = atoi(substr);
           }
         }
