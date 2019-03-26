@@ -233,37 +233,40 @@ void PollUdp(void)
 //      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 
       if (strstr_P(packet_buffer, PSTR("M-SEARCH"))) {
+        udp_response_mutex = true;
+
         udp_remote_ip = PortUdp.remoteIP();
         udp_remote_port = PortUdp.remotePort();
 
         AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %s:%d\n%s"),
           udp_remote_ip.toString().c_str(), udp_remote_port, packet_buffer);
 
-        String request = packet_buffer;
-        request.toLowerCase();
-        request.replace(" ", "");
+        UpperCase(packet_buffer, packet_buffer);
+        RemoveSpace(packet_buffer);
         if (EMUL_WEMO == Settings.flag2.emulation) {
-          if (request.indexOf(F("urn:belkin:device:**")) > 0) {    // type1 echo dot 2g, echo 1g's
-            udp_response_mutex = true;
+          if (strstr_P(packet_buffer, PSTR("URN:BELKIN:DEVICE:**"))) {  // type1 echo dot 2g, echo 1g's
             TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, WemoRespondToMSearch, 1);
+            return;
           }
-          else if ((request.indexOf(F("upnp:rootdevice")) > 0) ||  // type2 Echo 2g (echo & echo plus)
-                   (request.indexOf(F("ssdpsearch:all")) > 0) ||
-                   (request.indexOf(F("ssdp:all")) > 0)) {
-            udp_response_mutex = true;
+          else if (strstr_P(packet_buffer, PSTR("UPNP:ROOTDEVICE")) ||  // type2 Echo 2g (echo & echo plus)
+                   strstr_P(packet_buffer, PSTR("SSDPSEARCH:ALL")) ||
+                   strstr_P(packet_buffer, PSTR("SSDP:ALL"))) {
             TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, WemoRespondToMSearch, 2);
+            return;
+          }
+        } else {
+          if (strstr_P(packet_buffer, PSTR("URN:SCHEMAS-UPNP-ORG:DEVICE:BASIC:1")) ||
+              strstr_P(packet_buffer, PSTR("UPNP:ROOTDEVICE")) ||
+              strstr_P(packet_buffer, PSTR("SSDPSEARCH:ALL")) ||
+              strstr_P(packet_buffer, PSTR("SSDP:ALL"))) {
+            TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, HueRespondToMSearch);
+            return;
           }
         }
-        else if ((EMUL_HUE == Settings.flag2.emulation) &&
-                ((request.indexOf(F("urn:schemas-upnp-org:device:basic:1")) > 0) ||
-                 (request.indexOf(F("upnp:rootdevice")) > 0) ||
-                 (request.indexOf(F("ssdpsearch:all")) > 0) ||
-                 (request.indexOf(F("ssdp:all")) > 0))) {
-            udp_response_mutex = true;
-            TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, HueRespondToMSearch);
-        }
+        udp_response_mutex = false;
       }
     }
+    delay(1);
   }
 }
 
