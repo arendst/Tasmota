@@ -31,15 +31,21 @@
 #include <Ticker.h>
 Ticker TickerMSearch;
 
-bool udp_connected = false;
-
 char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP packet
-IPAddress ipMulticast(239,255,255,250);  // Simple Service Discovery Protocol (SSDP)
-uint32_t port_multicast = 1900;          // Multicast address and port
-
-bool udp_response_mutex = false;         // M-Search response mutex to control re-entry
 IPAddress udp_remote_ip;                 // M-Search remote IP address
 uint16_t udp_remote_port;                // M-Search remote port
+
+bool udp_connected = false;
+bool udp_response_mutex = false;         // M-Search response mutex to control re-entry
+
+/*********************************************************************************************\
+ * UPNP search targets
+\*********************************************************************************************/
+
+const char URN_BELKIN_DEVICE[] PROGMEM = "urn:belkin:device:**";
+const char UPNP_ROOTDEVICE[] PROGMEM = "upnp:rootdevice";
+const char SSDPSEARCH_ALL[] PROGMEM = "ssdpsearch:all";
+const char SSDP_ALL[] PROGMEM = "ssdp:all";
 
 /*********************************************************************************************\
  * WeMo UPNP support routines
@@ -50,12 +56,12 @@ const char WEMO_MSEARCH[] PROGMEM =
   "CACHE-CONTROL: max-age=86400\r\n"
   "DATE: Fri, 15 Apr 2016 04:56:29 GMT\r\n"
   "EXT:\r\n"
-  "LOCATION: http://{r1:80/setup.xml\r\n"
+  "LOCATION: http://%s:80/setup.xml\r\n"
   "OPT: \"http://schemas.upnp.org/upnp/1/0/\"; ns=01\r\n"
   "01-NLS: b9200ebb-736d-4b93-bf03-835149d13983\r\n"
   "SERVER: Unspecified, UPnP/1.0, Unspecified\r\n"
-  "ST: {r3\r\n"                 // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
-  "USN: uuid:{r2::{r3\r\n"      // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
+  "ST: %s\r\n"                // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
+  "USN: uuid:%s::%s\r\n"      // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
   "X-User-Agent: redsonic\r\n"
   "\r\n";
 
@@ -81,15 +87,15 @@ void WemoRespondToMSearch(int echo_type)
 
   TickerMSearch.detach();
   if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
-    String response = FPSTR(WEMO_MSEARCH);
-    response.replace("{r1", WiFi.localIP().toString());
-    response.replace("{r2", WemoUuid());
+    char type[24];
     if (1 == echo_type) {              // type1 echo 1g & dot 2g
-      response.replace("{r3", F("urn:Belkin:device:**"));
+      strcpy_P(type, URN_BELKIN_DEVICE);
     } else {                           // type2 echo 2g (echo, plus, show)
-      response.replace("{r3", F("upnp:rootdevice"));
+      strcpy_P(type, UPNP_ROOTDEVICE);
     }
-    PortUdp.write(response.c_str());
+    char response[400];
+    snprintf_P(response, sizeof(response), WEMO_MSEARCH, WiFi.localIP().toString().c_str(), type, WemoUuid().c_str(), type);
+    PortUdp.write(response);
     PortUdp.endPacket();
     snprintf_P(message, sizeof(message), PSTR(D_RESPONSE_SENT));
   } else {
@@ -208,7 +214,8 @@ bool UdpDisconnect(void)
 bool UdpConnect(void)
 {
   if (!udp_connected) {
-    if (PortUdp.beginMulticast(WiFi.localIP(), ipMulticast, port_multicast)) {
+    // Simple Service Discovery Protocol (SSDP)
+    if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), 1900)) {
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
       udp_response_mutex = false;
       udp_connected = true;
@@ -238,28 +245,30 @@ void PollUdp(void)
         udp_remote_ip = PortUdp.remoteIP();
         udp_remote_port = PortUdp.remotePort();
 
-        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %s:%d\n%s"),
-          udp_remote_ip.toString().c_str(), udp_remote_port, packet_buffer);
+//        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %s:%d\n%s"),
+//          udp_remote_ip.toString().c_str(), udp_remote_port, packet_buffer);
 
-        UpperCase(packet_buffer, packet_buffer);
+        uint32_t response_delay = UDP_MSEARCH_SEND_DELAY + ((millis() &0x7) * 100);  // 1500 - 2200 msec
+
+        LowerCase(packet_buffer, packet_buffer);
         RemoveSpace(packet_buffer);
         if (EMUL_WEMO == Settings.flag2.emulation) {
-          if (strstr_P(packet_buffer, PSTR("URN:BELKIN:DEVICE:**"))) {  // type1 echo dot 2g, echo 1g's
-            TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, WemoRespondToMSearch, 1);
+          if (strstr_P(packet_buffer, URN_BELKIN_DEVICE)) {     // type1 echo dot 2g, echo 1g's
+            TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 1);
             return;
           }
-          else if (strstr_P(packet_buffer, PSTR("UPNP:ROOTDEVICE")) ||  // type2 Echo 2g (echo & echo plus)
-                   strstr_P(packet_buffer, PSTR("SSDPSEARCH:ALL")) ||
-                   strstr_P(packet_buffer, PSTR("SSDP:ALL"))) {
-            TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, WemoRespondToMSearch, 2);
+          else if (strstr_P(packet_buffer, UPNP_ROOTDEVICE) ||  // type2 Echo 2g (echo & echo plus)
+                   strstr_P(packet_buffer, SSDPSEARCH_ALL) ||
+                   strstr_P(packet_buffer, SSDP_ALL)) {
+            TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 2);
             return;
           }
         } else {
-          if (strstr_P(packet_buffer, PSTR("URN:SCHEMAS-UPNP-ORG:DEVICE:BASIC:1")) ||
-              strstr_P(packet_buffer, PSTR("UPNP:ROOTDEVICE")) ||
-              strstr_P(packet_buffer, PSTR("SSDPSEARCH:ALL")) ||
-              strstr_P(packet_buffer, PSTR("SSDP:ALL"))) {
-            TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, HueRespondToMSearch);
+          if (strstr_P(packet_buffer, PSTR("urn:schemas-upnp-org:device:basic:1")) ||
+              strstr_P(packet_buffer, UPNP_ROOTDEVICE) ||
+              strstr_P(packet_buffer, SSDPSEARCH_ALL) ||
+              strstr_P(packet_buffer, SSDP_ALL)) {
+            TickerMSearch.attach_ms(response_delay, HueRespondToMSearch);
             return;
           }
         }
@@ -343,9 +352,9 @@ const char WEMO_METASERVICE_XML[] PROGMEM =
 const char WEMO_RESPONSE_STATE_SOAP[] PROGMEM =
   "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">"
     "<s:Body>"
-      "<u:SetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">"
-        "<BinaryState>{x1</BinaryState>"
-      "</u:SetBinaryStateResponse>"
+      "<u:%cetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">"
+        "<BinaryState>%d</BinaryState>"
+      "</u:%cetBinaryStateResponse>"
     "</s:Body>"
   "</s:Envelope>\r\n";
 
@@ -386,18 +395,20 @@ void HandleUpnpEvent(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
 
-  String request = WebServer->arg(0);
+  char event[500];
+  strlcpy(event, WebServer->arg(0).c_str(), sizeof(event));
 
-//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), request.c_str());
+//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), event);
 
-  String state_xml = FPSTR(WEMO_RESPONSE_STATE_SOAP);
   //differentiate get and set state
-  if (request.indexOf(F("SetBinaryState")) > 0) {
+  char state = 'G';
+  if (strstr_P(event, PSTR("SetBinaryState"))) {
+    state = 'S';
     uint8_t power = POWER_TOGGLE;
-    if (request.indexOf(F("State>1</Binary")) > 0) {
+    if (strstr_P(event, PSTR("State>1</Binary"))) {
       power = POWER_ON;
     }
-    else if (request.indexOf(F("State>0</Binary")) > 0) {
+    else if (strstr_P(event, PSTR("State>0</Binary"))) {
       power = POWER_OFF;
     }
     if (power != POWER_TOGGLE) {
@@ -405,11 +416,9 @@ void HandleUpnpEvent(void)
       ExecuteCommandPower(device, power, SRC_WEMO);
     }
   }
-  else if(request.indexOf(F("GetBinaryState")) > 0){
-    state_xml.replace(F("Set"), F("Get"));
-  }
-  state_xml.replace("{x1", String(bitRead(power, devices_present -1)));
-  WSSend(200, CT_XML, state_xml);
+
+  snprintf_P(event, sizeof(event), WEMO_RESPONSE_STATE_SOAP, state, bitRead(power, devices_present -1), state);
+  WSSend(200, CT_XML, event);
 }
 
 void HandleUpnpService(void)

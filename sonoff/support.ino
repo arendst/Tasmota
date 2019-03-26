@@ -283,6 +283,19 @@ char* RemoveSpace(char* p)
   return p;
 }
 
+char* LowerCase(char* dest, const char* source)
+{
+  char* write = dest;
+  const char* read = source;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    *write++ = tolower(ch);
+  }
+  return dest;
+}
+
 char* UpperCase(char* dest, const char* source)
 {
   char* write = dest;
