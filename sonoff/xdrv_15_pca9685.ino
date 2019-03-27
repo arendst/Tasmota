@@ -189,9 +189,9 @@ bool Xdrv15(uint8_t function)
           PCA9685_OutputTelemetry(true);
         }
         break;
-      case FUNC_COMMAND:
+      case FUNC_COMMAND_DRIVER:
         if (XDRV_15 == XdrvMailbox.index) {
-          PCA9685_Command();
+          result = PCA9685_Command();
         }
         break;
       default:
