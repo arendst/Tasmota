@@ -31,7 +31,6 @@
 #include <Ticker.h>
 Ticker TickerMSearch;
 
-char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP packet
 IPAddress udp_remote_ip;                 // M-Search remote IP address
 uint16_t udp_remote_port;                // M-Search remote port
 
@@ -120,20 +119,20 @@ const char HUE_RESPONSE[] PROGMEM =
   "HOST: 239.255.255.250:1900\r\n"
   "CACHE-CONTROL: max-age=100\r\n"
   "EXT:\r\n"
-  "LOCATION: http://{r1:80/description.xml\r\n"
+  "LOCATION: http://%s:80/description.xml\r\n"
   "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.17.0\r\n"
-  "hue-bridgeid: {r2\r\n";
+  "hue-bridgeid: %s\r\n";
 const char HUE_ST1[] PROGMEM =
   "ST: upnp:rootdevice\r\n"
-  "USN: uuid:{r3::upnp:rootdevice\r\n"
+  "USN: uuid:%s::upnp:rootdevice\r\n"
   "\r\n";
 const char HUE_ST2[] PROGMEM =
-  "ST: uuid:{r3\r\n"
-  "USN: uuid:{r3\r\n"
+  "ST: uuid:%s\r\n"
+  "USN: uuid:%s\r\n"
   "\r\n";
 const char HUE_ST3[] PROGMEM =
   "ST: urn:schemas-upnp-org:device:basic:1\r\n"
-  "USN: uuid:{r3\r\n"
+  "USN: uuid:%s\r\n"
   "\r\n";
 
 String HueBridgeId(void)
@@ -165,26 +164,20 @@ void HueRespondToMSearch(void)
 
   TickerMSearch.detach();
   if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
-    String response1 = FPSTR(HUE_RESPONSE);
-    response1.replace("{r1", WiFi.localIP().toString());
-    response1.replace("{r2", HueBridgeId());
+    char response[320];
+    snprintf_P(response, sizeof(response), HUE_RESPONSE, WiFi.localIP().toString().c_str(), HueBridgeId().c_str());
+    int len = strlen(response);
 
-    String response = response1;
-    response += FPSTR(HUE_ST1);
-    response.replace("{r3", HueUuid());
-    PortUdp.write(response.c_str());
+    snprintf_P(response + len, sizeof(response) - len, HUE_ST1, HueUuid().c_str());
+    PortUdp.write(response);
     PortUdp.endPacket();
 
-    response = response1;
-    response += FPSTR(HUE_ST2);
-    response.replace("{r3", HueUuid());
-    PortUdp.write(response.c_str());
+    snprintf_P(response + len, sizeof(response) - len, HUE_ST2, HueUuid().c_str(), HueUuid().c_str());
+    PortUdp.write(response);
     PortUdp.endPacket();
 
-    response = response1;
-    response += FPSTR(HUE_ST3);
-    response.replace("{r3", HueUuid());
-    PortUdp.write(response.c_str());
+    snprintf_P(response + len, sizeof(response) - len, HUE_ST3, HueUuid().c_str());
+    PortUdp.write(response);
     PortUdp.endPacket();
 
     snprintf_P(message, sizeof(message), PSTR(D_3_RESPONSE_PACKETS_SENT));
@@ -231,10 +224,10 @@ void PollUdp(void)
 {
   if (udp_connected && !udp_response_mutex && devices_present) {
     if (PortUdp.parsePacket()) {
+      char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP/SSDP packet
+
       int len = PortUdp.read(packet_buffer, UDP_BUFFER_SIZE -1);
-      if (len > 0) {
-        packet_buffer[len] = 0;
-      }
+      packet_buffer[len] = 0;
 
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
 //      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
@@ -264,7 +257,7 @@ void PollUdp(void)
             return;
           }
         } else {
-          if ((strstr_P(packet_buffer, PSTR("urn:schemas-upnp-org:device:basic:1")) != nullptr) ||
+          if ((strstr_P(packet_buffer, PSTR(":device:basic:1")) != nullptr) ||
               (strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||
               (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
               (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
