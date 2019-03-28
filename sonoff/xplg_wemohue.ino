@@ -222,7 +222,7 @@ bool UdpConnect(void)
 
 void PollUdp(void)
 {
-  if (udp_connected && !udp_response_mutex && devices_present) {
+  if (udp_connected) {
     if (PortUdp.parsePacket()) {
       char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP/SSDP packet
 
@@ -232,7 +232,7 @@ void PollUdp(void)
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
 //      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 
-      if (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr) {
+      if ((strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr) && !udp_response_mutex && devices_present) {
         udp_response_mutex = true;
 
         udp_remote_ip = PortUdp.remoteIP();
