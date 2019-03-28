@@ -415,6 +415,8 @@
 
 #define USE_SM16716                              // Add support for SM16716 RGB LED controller (+0k7 code)
 
+//#define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
+
 /*********************************************************************************************\
  * Debug features are only supported in development branch
 \*********************************************************************************************/
