@@ -197,6 +197,7 @@ void HueRespondToMSearch(void)
 bool UdpDisconnect(void)
 {
   if (udp_connected) {
+    PortUdp.flush();
     WiFiUDP::stopAll();
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_MULTICAST_DISABLED));
     udp_connected = false;
@@ -232,7 +233,7 @@ void PollUdp(void)
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
 //      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 
-      if ((strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr) && !udp_response_mutex && devices_present) {
+      if (devices_present && !udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
         udp_response_mutex = true;
 
         udp_remote_ip = PortUdp.remoteIP();
