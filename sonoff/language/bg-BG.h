@@ -494,7 +494,7 @@
 #define D_TX20_SOUTH "Ю"
 #define D_TX20_WEST "З"
 
-//xsns_91_hre.ino
+//xsns_43_hre.ino
 #define D_LOG_HRE "HRE: "
 
 

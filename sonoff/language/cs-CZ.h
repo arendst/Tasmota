@@ -494,7 +494,7 @@
 #define D_TX20_SOUTH "J"
 #define D_TX20_WEST "Z"
 
-//xsns_91_hre.ino
+//xsns_43_hre.ino
 #define D_LOG_HRE "HRE: "
 
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box

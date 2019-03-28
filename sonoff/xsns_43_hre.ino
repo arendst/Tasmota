@@ -1,5 +1,5 @@
 /*
-  xsns_09_hre.ino - Badger HR-E Water Meter Encoder interface
+  xsns_43_hre.ino - Badger HR-E Water Meter Encoder interface
 
   Copyright (C) 2019  Jon Little
 
@@ -47,7 +47,7 @@
 
 #ifdef USE_HRE
 
-#define XSNS_91             91
+#define XSNS_43             43
 
 enum hre_states {
    hre_idle,    // Initial state,
@@ -258,7 +258,7 @@ void hreShow(boolean json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xsns91(byte function)
+bool Xsns43(byte function)
 {
    // If we don't have pins assigned give up quickly.
    if (pin[GPIO_HRE_CLOCK] >= 99 || pin[GPIO_HRE_DATA] >= 99)
