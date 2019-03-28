@@ -815,6 +815,8 @@ void SettingsDefaultSet2(void)
     Settings.rgbwwTable[j] = 255;
   }
 
+  Settings.novasds_period = WORKING_PERIOD;
+
   memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
 }
 
@@ -1054,6 +1056,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06040113) {
       Settings.param[P_RGB_REMAP] = RGB_REMAP_RGBW;
+    }
+    if (Settings.version < 0x06050003) {
+      Settings.novasds_period = WORKING_PERIOD;
     }
 
     Settings.version = VERSION;

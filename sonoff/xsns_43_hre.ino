@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_HRE
 /*********************************************************************************************\
  * HR-E LCD Water meter register interface
  *
@@ -27,25 +28,23 @@
  *    KG44?Q45484=0444444V;RB000000022;IB018435683
  * where the RB...; is the miligalons used
  *
- * Note that this sensor takes a _long_ time to read. 62 bits * 4 ms/bit for the 
+ * Note that this sensor takes a _long_ time to read. 62 bits * 4 ms/bit for the
  * sync sequence plus 46 bytes * 40 ms/byte = 2088 ms minimum. If we aren't alligned
  * to the sync sequence, it could be almost twice that.
  * To keep from bogging the kernel down, we read 8 bits at a time on the 50 ms callback.
  * It will take seconds to discover if the device is there.
  *
  * In lieu of an actual schematic to describe the electrical interface, here is a description:
- * 
+ *
  * hre_clock_pin: drives the power/clock for the water meter through a 1k resister to
  *   the base of a pnp transistor
  * hre_data_pin: is the data and has a 1 k pulldown
- * 
+ *
  * The pnp transitor has the collector connected to the power/clock and is pulled up
  * to +5 via a 1 k resistor.
  * The emitter is connected to ground
- * 
+ *
 \*********************************************************************************************/
-
-#ifdef USE_HRE
 
 #define XSNS_43             43
 
@@ -110,14 +109,14 @@ void hreInit(void)
 {
    hre_read_errors = 0;
    hre_good = false;
-   
+
    pinMode(pin[GPIO_HRE_CLOCK], OUTPUT);
    pinMode(pin[GPIO_HRE_DATA], INPUT);
 
    // Note that the level shifter inverts this line and we want to leave it
    // high when not being read.
    digitalWrite(pin[GPIO_HRE_CLOCK], LOW);
-   
+
    hre_state = hre_sync;
 }
 
@@ -134,7 +133,7 @@ void hreEvery50ms(void)
 
    static char ch;
    static size_t i;
-   
+
    switch (hre_state)
    {
       case hre_sync:
@@ -145,7 +144,7 @@ void hreEvery50ms(void)
          hre_state = hre_syncing;
          AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "hre_state:hre_syncing"));
          break;
-         
+
       case hre_syncing:
          // Find the header, a string of 62 '1's
          // Since each bit taks 2 ms, we just read 20 bits at a time
@@ -183,12 +182,12 @@ void hreEvery50ms(void)
          // it seems that if there is much of a delay between getting the sync
          // bits and starting the read, the HRE won't output the message we
          // are looking for...
-         
+
       case hre_reading:
          // Read two characters at a time...
          buff[read_counter++] = hreReadChar(parity_errors);
          buff[read_counter++] = hreReadChar(parity_errors);
-         
+
          if (read_counter == 46)
          {
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HRE "pe:%d, re:%d, buff:%s"),
@@ -205,7 +204,7 @@ void hreEvery50ms(void)
                hre_usage = curr_usage;
                hre_usage_time = curr_start;
                hre_good = true;
-               
+
                hre_state = hre_sleep;
             }
             else
@@ -215,7 +214,7 @@ void hreEvery50ms(void)
             }
          }
          break;
-         
+
       case hre_sleep:
          hre_usage_time = curr_start;
          hre_state = hre_sleeping;
@@ -233,14 +232,14 @@ void hreShow(boolean json)
 {
    if (!hre_good)
       return;
-   
+
    const char *id = "HRE";
 
    char usage[16];
    char rate[16];
    dtostrfd(hre_usage, 2, usage);
    dtostrfd(hre_rate, 3, rate);
-   
+
    if (json)
    {
       ResponseAppend_P(JSON_SNS_GNGPM, id, usage, rate);
@@ -263,7 +262,7 @@ bool Xsns43(byte function)
    // If we don't have pins assigned give up quickly.
    if (pin[GPIO_HRE_CLOCK] >= 99 || pin[GPIO_HRE_DATA] >= 99)
       return false;
-   
+
    switch (function)
    {
       case FUNC_INIT:
