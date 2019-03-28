@@ -89,7 +89,7 @@ a_setoption = [[
     "Tuya dimmer device id",
     "(not used) mDNS delayed start (Sec)",
     "Boot loop retry offset (0 = disable)",
-    "",
+    "RGBWW remap",
     "","","","","","",
     "","","","","","",
     ],[
@@ -105,7 +105,7 @@ a_setoption = [[
     "Change state topic from tele/STATE to stat/RESULT",
     "Enable normal sleep instead of dynamic sleep",
     "Force local operation when button/switch topic is set",
-    "Force no pull-up",
+    "Do not use retain flag on HOLD messages",
     "","","",
     "","","","",
     "","","","",
@@ -146,7 +146,7 @@ a_features = [[
     "USE_MCP39F501","USE_PZEM_AC","USE_DS3231","USE_HX711",
     "USE_PZEM_DC","USE_TX20_WIND_SENSOR","USE_MGC3130","USE_RF_SENSOR",
     "USE_THEO_V2","USE_ALECTO_V2","USE_AZ7798","USE_MAX31855",
-    "USE_PN532_I2C","USE_MAX44009","","",
+    "USE_PN532_I2C","USE_MAX44009","USE_SCD30","USE_HRE",
     "","","","",
     "","","",""]]
 

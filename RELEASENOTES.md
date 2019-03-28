@@ -194,6 +194,7 @@ Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/re
 | USE_RC_SWITCH         | - | - | - | x | x | x | x |
 | USE_RF_SENSOR         | - | - | - | - | - | x | - | AlectoV2 only
 | USE_SM16716           | - | x | x | x | x | x | x |
+| USE_HRE               | - | - | - | - | - | x | - |
 | USE_DISPLAY           | - | - | - | - | - | - | x |
 | USE_DISPLAY_LCD       | - | - | - | - | - | - | x |
 | USE_DISPLAY_SSD1306   | - | - | - | - | - | - | x |

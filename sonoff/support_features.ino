@@ -382,12 +382,14 @@ void GetFeatures(void)
   feature_sns2 |= 0x00100000;  // xsns_40_pn532.ino
 #endif
 #ifdef USE_MAX44009
-  feature_sns2 |= 0x00200000;
+  feature_sns2 |= 0x00200000;  // xsns_41_max44009.ino
 #endif
 #ifdef USE_SCD30
-  feature_sns2 |= 0x00400000;
+  feature_sns2 |= 0x00400000;  // xsns_42_scd30.ino
 #endif
-//  feature_sns2 |= 0x00800000;
+#ifdef USE_HRE
+  feature_sns2 |= 0x00800000;  // xsns_43_hre.ino
+#endif
 //  feature_sns2 |= 0x01000000;
 //  feature_sns2 |= 0x02000000;
 //  feature_sns2 |= 0x04000000;
