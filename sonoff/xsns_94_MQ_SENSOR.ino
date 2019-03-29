@@ -295,7 +295,7 @@ int MQGetGasPercentage(float rs_ro_ratio, int gas_id)
 
 
 
-void measure(boolean json)
+void measure(bool json)
 {
 counter_measure++;
 if (counter_measure == 20) {
@@ -328,9 +328,9 @@ if (counter_measure == 20) {
 
 #define XSNS_94
 
-boolean Xsns94(byte function)
+bool Xsns94(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
 
     switch (function) {

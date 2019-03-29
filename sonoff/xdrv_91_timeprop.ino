@@ -104,8 +104,8 @@ void Timeprop_Set_Power( int index, float power )
 
 void Timeprop_Init()
 {
-  snprintf_P(log_data, sizeof(log_data), "Timeprop Init");
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P2(LOG_LEVEL_INFO, "Timeprop Init");
+
   int cycleTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_CYCLETIMES};
   int deadTimes[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_DEADTIMES};
   int opInverts[TIMEPROP_NUM_OUTPUTS] = {TIMEPROP_OPINVERTS};
@@ -146,13 +146,13 @@ void Timeprop_Xdrv_Power() {
 /* } XdrvMailbox; */
 
 // To get here post with topic cmnd/timeprop_setpower_n where n is index into timeprops 0:7
-boolean Timeprop_Command()
+bool Timeprop_Command()
 {
   char command [CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t ua_prefix_len = strlen(D_CMND_TIMEPROP); // to detect prefix of command
   /*
-  snprintf_P(log_data, sizeof(log_data), "Command called: "
+  AddLog_P2(LOG_LEVEL_INFO, "Command called: "
     "index: %d data_len: %d payload: %d topic: %s data: %s\n",
     XdrvMailbox.index,
     XdrvMailbox.data_len,
@@ -160,26 +160,26 @@ boolean Timeprop_Command()
     (XdrvMailbox.payload >= 0 ? XdrvMailbox.topic : ""),
     (XdrvMailbox.data_len >= 0 ? XdrvMailbox.data : ""));
 
-    AddLog(LOG_LEVEL_INFO);
+
   */
   if (0 == strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_TIMEPROP), ua_prefix_len)) {
     // command starts with timeprop_
     int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic + ua_prefix_len, kTimepropCommands);
     if (CMND_TIMEPROP_SETPOWER == command_code) {
       /*
-      snprintf_P(log_data, sizeof(log_data), "Timeprop command timeprop_setpower: "
+      AddLog_P2(LOG_LEVEL_INFO, "Timeprop command timeprop_setpower: "
         "index: %d data_len: %d payload: %d topic: %s data: %s",
 	      XdrvMailbox.index,
 	      XdrvMailbox.data_len,
 	      XdrvMailbox.payload,
 	      (XdrvMailbox.payload >= 0 ? XdrvMailbox.topic : ""),
 	      (XdrvMailbox.data_len >= 0 ? XdrvMailbox.data : ""));
-        AddLog(LOG_LEVEL_INFO);
+
       */
       if (XdrvMailbox.index >=0 && XdrvMailbox.index < TIMEPROP_NUM_OUTPUTS) {
         timeprops[XdrvMailbox.index].setPower( atof(XdrvMailbox.data), utc_time );
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMEPROP D_CMND_TIMEPROP_SETPOWER "%d\":\"%s\"}"),
+      ResponseAppend_P( PSTR("{\"" D_CMND_TIMEPROP D_CMND_TIMEPROP_SETPOWER "%d\":\"%s\"}"),
         XdrvMailbox.index, XdrvMailbox.data);
     }
     else {
@@ -197,9 +197,9 @@ boolean Timeprop_Command()
 
 #define XDRV_91
 
-boolean Xdrv91(byte function)
+bool Xdrv91(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   switch (function) {
   case FUNC_INIT:

@@ -36,7 +36,7 @@
 
 #include <OneWire.h>
 
-OneWire *ds = NULL;
+OneWire *ds = nullptr;
 
 uint8_t ds18x20_address[DS18X20_MAX_SENSORS][8];
 uint8_t ds18x20_index[DS18X20_MAX_SENSORS];
@@ -65,11 +65,11 @@ void Ds18x20Search(void)
       num_sensors++;
     }
   }
-  for (byte i = 0; i < num_sensors; i++) {
+  for (uint8_t i = 0; i < num_sensors; i++) {
     ds18x20_index[i] = i;
   }
-  for (byte i = 0; i < num_sensors; i++) {
-    for (byte j = i + 1; j < num_sensors; j++) {
+  for (uint8_t i = 0; i < num_sensors; i++) {
+    for (uint8_t j = i + 1; j < num_sensors; j++) {
       if (uint32_t(ds18x20_address[ds18x20_index[i]]) > uint32_t(ds18x20_address[ds18x20_index[j]])) {
         std::swap(ds18x20_index[i], ds18x20_index[j]);
       }
@@ -87,7 +87,7 @@ String Ds18x20Addresses(uint8_t sensor)
 {
   char address[20];
 
-  for (byte i = 0; i < 8; i++) {
+  for (uint8_t i = 0; i < 8; i++) {
     sprintf(address+2*i, "%02X", ds18x20_address[ds18x20_index[sensor]][i]);
   }
   return String(address);
@@ -101,9 +101,9 @@ void Ds18x20Convert(void)
 //  delay(750);                   // 750ms should be enough for 12bit conv
 }
 
-boolean Ds18x20Read(uint8_t sensor, float &t)
+bool Ds18x20Read(uint8_t sensor, float &t)
 {
-  byte data[12];
+  uint8_t data[12];
   int8_t sign = 1;
   uint16_t temp12 = 0;
   int16_t temp14 = 0;
@@ -116,7 +116,7 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
   ds->select(ds18x20_address[ds18x20_index[sensor]]);
   ds->write(W1_READ_SCRATCHPAD); // Read Scratchpad
 
-  for (byte i = 0; i < 9; i++) {
+  for (uint8_t i = 0; i < 9; i++) {
     data[i] = ds->read();
   }
   if (OneWire::crc8(data, 8) == data[8]) {
@@ -126,11 +126,7 @@ boolean Ds18x20Read(uint8_t sensor, float &t)
         data[0] = (~data[0]) +1;
         sign = -1;  // App-Note fix possible sign error
       }
-      if (data[0] & 1) {
-        temp9 = ((data[0] >> 1) + 0.5) * sign;
-      } else {
-        temp9 = (data[0] >> 1) * sign;
-      }
+      temp9 = (float)(data[0] >> 1) * sign;
       t = ConvertTemp((temp9 - 0.25) + ((16.0 - data[6]) / 16.0));
       break;
     case DS18B20_CHIPID:
@@ -168,13 +164,13 @@ void Ds18x20Type(uint8_t sensor)
   }
 }
 
-void Ds18x20Show(boolean json)
+void Ds18x20Show(bool json)
 {
   char stemp[10];
   float t;
 
-  byte dsxflg = 0;
-  for (byte i = 0; i < Ds18x20Sensors(); i++) {
+  uint8_t dsxflg = 0;
+  for (uint8_t i = 0; i < Ds18x20Sensors(); i++) {
     if (Ds18x20Read(i, t)) {           // Check if read failed
       Ds18x20Type(i);
       char temperature[33];
@@ -182,12 +178,12 @@ void Ds18x20Show(boolean json)
 
       if (json) {
         if (!dsxflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18x20\":{"), mqtt_data);
+          ResponseAppend_P(PSTR(",\"DS18x20\":{"));
           stemp[0] = '\0';
         }
         dsxflg++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_JSON_TYPE "\":\"%s\",\"" D_JSON_ADDRESS "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"),
-          mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
+        ResponseAppend_P(PSTR("%s\"DS%d\":{\"" D_JSON_TYPE "\":\"%s\",\"" D_JSON_ADDRESS "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"),
+          stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
         strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
@@ -202,14 +198,14 @@ void Ds18x20Show(boolean json)
 #ifdef USE_WEBSERVER
       } else {
         snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
+        WSContentSend_PD(HTTP_SNS_TEMP, stemp, temperature, TempUnit());
 #endif  // USE_WEBSERVER
       }
     }
   }
   if (json) {
     if (dsxflg) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      ResponseAppend_P(PSTR("}"));
     }
   }
   Ds18x20Search();      // Check for changes in sensors number
@@ -220,9 +216,9 @@ void Ds18x20Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns05(byte function)
+bool Xsns05(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pin[GPIO_DSB] < 99) {
     switch (function) {
@@ -237,7 +233,7 @@ boolean Xsns05(byte function)
         Ds18x20Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Ds18x20Show(0);
         break;
 #endif  // USE_WEBSERVER

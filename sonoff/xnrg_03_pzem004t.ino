@@ -32,7 +32,7 @@
 
 #include <TasmotaSerial.h>
 
-TasmotaSerial *PzemSerial;
+TasmotaSerial *PzemSerial = nullptr;
 
 #define PZEM_VOLTAGE (uint8_t)0xB0
 #define RESP_VOLTAGE (uint8_t)0xA0
@@ -226,7 +226,7 @@ void PzemDrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg03(byte function)
+int Xnrg03(uint8_t function)
 {
   int result = 0;
 
@@ -239,7 +239,7 @@ int Xnrg03(byte function)
         PzemSnsInit();
         break;
       case FUNC_EVERY_200_MSECOND:
-        PzemEvery200ms();
+        if (PzemSerial) { PzemEvery200ms(); }
         break;
     }
   }

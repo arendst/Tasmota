@@ -77,7 +77,7 @@ volatile uint8_t recovery_loop_counter = 0;  //count number of stateloops to swi
 bool APDS9960_overload = false;
 
 #ifdef USE_WEBSERVER
-const char HTTP_APDS_9960_SNS[] PROGMEM = "%s"
+const char HTTP_APDS_9960_SNS[] PROGMEM =
   "{s}" "Red" "{m}%s{e}"
   "{s}" "Green" "{m}%s{e}"
   "{s}" "Blue" "{m}%s{e}"
@@ -1518,8 +1518,7 @@ int16_t readGesture(void)
         if (gesture_loop_counter == APDS9960_MAX_GESTURE_CYCLES){ // We will escape after a few loops
           disableGestureSensor();   // stop the sensor to prevent problems with power consumption/blocking  and return to the main loop
           APDS9960_overload = true; // we report this as "long"-gesture
-          snprintf_P(log_data, sizeof(log_data), PSTR("Sensor overload"));
-          AddLog(LOG_LEVEL_DEBUG);
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("Sensor overload"));
         }
         gesture_loop_counter += 1;
         /* Wait some time to collect next batch of FIFO data */
@@ -1794,33 +1793,32 @@ void handleGesture(void) {
     if (isGestureAvailable() ) {
     switch (readGesture()) {
       case DIR_UP:
-        snprintf_P(log_data, sizeof(log_data), PSTR("UP"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("UP"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Up"));
         break;
       case DIR_DOWN:
-        snprintf_P(log_data, sizeof(log_data), PSTR("DOWN"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("DOWN"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Down"));
         break;
       case DIR_LEFT:
-        snprintf_P(log_data, sizeof(log_data), PSTR("LEFT"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("LEFT"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Left"));
         break;
       case DIR_RIGHT:
-        snprintf_P(log_data, sizeof(log_data), PSTR("RIGHT"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("RIGHT"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Right"));
         break;
       default:
       if(APDS9960_overload)
       {
-        snprintf_P(log_data, sizeof(log_data), PSTR("LONG"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("LONG"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("Long"));
       }
       else{
-        snprintf_P(log_data, sizeof(log_data), PSTR("NONE"));
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("NONE"));
         snprintf_P(currentGesture, sizeof(currentGesture), PSTR("None"));
       }
     }
-    AddLog(LOG_LEVEL_DEBUG);
 
     mqtt_data[0] = '\0';
     if (MqttShowSensor()) {
@@ -1876,7 +1874,7 @@ void APDS9960_loop(void)
   if (recovery_loop_counter == 1 && APDS9960_overload){  //restart sensor just before the end of recovery from long press
     enableGestureSensor();
     APDS9960_overload = false;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"On\"}"));
+    Response_P(PSTR("{\"Gesture\":\"On\"}"));
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data); // only after the long break we report, that we are online again
     gesture_mode = 1;
   }
@@ -1889,7 +1887,7 @@ void APDS9960_loop(void)
         {
         disableGestureSensor();
         recovery_loop_counter = APDS9960_LONG_RECOVERY;  // long pause after overload/long press - number of stateloops
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Off\"}"));
+        Response_P(PSTR("{\"Gesture\":\"Off\"}"));
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
         gesture_mode = 0;
         }
@@ -1903,13 +1901,12 @@ bool APDS9960_detect(void)
     return true;
   }
 
-  boolean success = false;
+  bool success = false;
   APDS9960type = I2cRead8(APDS9960_I2C_ADDR, APDS9960_ID);
 
   if (APDS9960type == APDS9960_CHIPID_1 || APDS9960type == APDS9960_CHIPID_2) {
     strcpy_P(APDS9960stype, PSTR("APDS9960"));
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, APDS9960stype, APDS9960_I2C_ADDR);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, APDS9960stype, APDS9960_I2C_ADDR);
     if (APDS9960_init()) {
       success = true;
       AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "APDS9960 initialized"));
@@ -1919,12 +1916,10 @@ bool APDS9960_detect(void)
   }
   else {
     if (APDS9960type == APDS9930_CHIPID_1 || APDS9960type == APDS9930_CHIPID_2) {
-      snprintf_P(log_data, sizeof(log_data), PSTR("APDS9930 found at address 0x%x, unsupported chip"), APDS9960_I2C_ADDR);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("APDS9930 found at address 0x%x, unsupported chip"), APDS9960_I2C_ADDR);
     }
     else{
-      snprintf_P(log_data, sizeof(log_data), PSTR("APDS9960 not found at address 0x%x"), APDS9960_I2C_ADDR);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("APDS9960 not found at address 0x%x"), APDS9960_I2C_ADDR);
     }
   }
   currentGesture[0] = '\0';
@@ -1935,7 +1930,7 @@ bool APDS9960_detect(void)
  * Presentation
 \*********************************************************************************************/
 
-void APDS9960_show(boolean json)
+void APDS9960_show(bool json)
 {
   if (!APDS9960type) {
     return;
@@ -1964,17 +1959,17 @@ void APDS9960_show(boolean json)
     sprintf (cct_chr, "%u", color_data.cct);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"Red\":%s,\"Green\":%s,\"Blue\":%s,\"Ambient\":%s,\"CCT\":%s,\"Proximity\":%s}"),
-        mqtt_data, APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
+      ResponseAppend_P(PSTR(",\"%s\":{\"Red\":%s,\"Green\":%s,\"Blue\":%s,\"Ambient\":%s,\"CCT\":%s,\"Proximity\":%s}"),
+        APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_APDS_9960_SNS, mqtt_data, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr );
+      WSContentSend_PD(HTTP_APDS_9960_SNS, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr );
 #endif  // USE_WEBSERVER
     }
   }
   else {
     if (json && (currentGesture[0] != '\0' )) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"%s\":1}"), mqtt_data, APDS9960stype, currentGesture);
+      ResponseAppend_P(PSTR(",\"%s\":{\"%s\":1}"), APDS9960stype, currentGesture);
       currentGesture[0] = '\0';
     }
   }
@@ -1993,7 +1988,7 @@ void APDS9960_show(boolean json)
 
 bool APDS9960CommandSensor(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   switch (XdrvMailbox.payload) {
     case 0: // Off
@@ -2030,7 +2025,7 @@ bool APDS9960CommandSensor(void)
       }
     break;
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_27, GetStateText(gesture_mode));
+  Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_27, GetStateText(gesture_mode));
 
   return serviced;
 }
@@ -2039,9 +2034,9 @@ bool APDS9960CommandSensor(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns27(byte function)
+bool Xsns27(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     if (FUNC_INIT == function) {
@@ -2051,7 +2046,7 @@ boolean Xsns27(byte function)
         case FUNC_EVERY_50_MSECOND:
             APDS9960_loop();
             break;
-        case FUNC_COMMAND:
+        case FUNC_COMMAND_SENSOR:
             if (XSNS_27 == XdrvMailbox.index) {
             result = APDS9960CommandSensor();
             }
@@ -2060,7 +2055,7 @@ boolean Xsns27(byte function)
             APDS9960_show(1);
             break;
 #ifdef USE_WEBSERVER
-        case FUNC_WEB_APPEND:
+        case FUNC_WEB_SENSOR:
           APDS9960_show(0);
           break;
 #endif  // USE_WEBSERVER

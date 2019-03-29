@@ -16,11 +16,11 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+ 
 #ifdef XFUNC_PTR_IN_ROM
-boolean (* const xdrv_func_ptr[])(byte) PROGMEM = {   // Driver Function Pointers
+bool (* const xdrv_func_ptr[])(uint8_t) PROGMEM = {   // Driver Function Pointers
 #else
-boolean (* const xdrv_func_ptr[])(byte) = {   // Driver Function Pointers
+bool (* const xdrv_func_ptr[])(uint8_t) = {   // Driver Function Pointers
 #endif
 
 #ifdef XDRV_01
@@ -192,21 +192,7 @@ boolean (* const xdrv_func_ptr[])(byte) = {   // Driver Function Pointers
 
 const uint8_t xdrv_present = sizeof(xdrv_func_ptr) / sizeof(xdrv_func_ptr[0]);  // Number of drivers found
 
-boolean XdrvCommand(uint8_t grpflg, char *type, uint16_t index, char *dataBuf, uint16_t data_len, int16_t payload, uint16_t payload16)
-{
-//  XdrvMailbox.valid = 1;
-  XdrvMailbox.index = index;
-  XdrvMailbox.data_len = data_len;
-  XdrvMailbox.payload16 = payload16;
-  XdrvMailbox.payload = payload;
-  XdrvMailbox.grpflg = grpflg;
-  XdrvMailbox.topic = type;
-  XdrvMailbox.data = dataBuf;
-
-  return XdrvCall(FUNC_COMMAND);
-}
-
-boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t sdataBuf)
+bool XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t sdataBuf)
 {
   XdrvMailbox.index = stopicBuf;
   XdrvMailbox.data_len = sdataBuf;
@@ -216,32 +202,35 @@ boolean XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t
   return XdrvCall(FUNC_MQTT_DATA);
 }
 
-boolean XdrvRulesProcess(void)
+bool XdrvRulesProcess(void)
 {
   return XdrvCall(FUNC_RULES_PROCESS);
 }
 
+#ifdef USE_DEBUG_DRIVER
 void ShowFreeMem(const char *where)
 {
-  char stemp[20];
+  char stemp[30];
   snprintf_P(stemp, sizeof(stemp), where);
   XdrvMailbox.data = stemp;
   XdrvCall(FUNC_FREE_MEM);
 }
+#endif
 
 /*********************************************************************************************\
  * Function call to all xdrv
 \*********************************************************************************************/
 
-boolean XdrvCall(byte Function)
+bool XdrvCall(uint8_t Function)
 {
-  boolean result = false;
+  bool result = false;
 
-  for (byte x = 0; x < xdrv_present; x++) {
+  for (uint8_t x = 0; x < xdrv_present; x++) {
 //    WifiAddDelayWhenDisconnected();
     result = xdrv_func_ptr[x](Function);
 
     if (result && ((FUNC_COMMAND == Function) ||
+                   (FUNC_COMMAND_DRIVER == Function) ||
                    (FUNC_MQTT_DATA == Function) ||
                    (FUNC_RULES_PROCESS == Function) ||
                    (FUNC_BUTTON_PRESSED == Function) ||

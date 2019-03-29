@@ -38,14 +38,14 @@ const char HTTP_SWITCH_STATE[] PROGMEM = "%s{s}" D_SENSOR_SWITCH "%d{m} %s{e}";
 
 
 
-void SwitchStateShow(boolean json)
+void SwitchStateShow(bool json)
 {
 
       if (json) {
 
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
-         boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
+         bool swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
           char topic[25];
           snprintf_P(topic,sizeof(topic),PSTR("stat/%s/SWITCH%d"),Settings.switch_topic,i+1);
           char *test=GetStateText(swm ^ lastwallswitch[i]);
@@ -59,7 +59,7 @@ void SwitchStateShow(boolean json)
 
   for (byte i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
-      boolean swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
+      bool swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
       snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SWITCH_STATE, mqtt_data,i +1, GetStateText(swm ^ lastwallswitch[i]));
 
      }
@@ -75,9 +75,9 @@ void SwitchStateShow(boolean json)
 
 #define XSNS_95
 
-boolean Xsns95(byte function)
+bool Xsns95(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   switch (function) {
 

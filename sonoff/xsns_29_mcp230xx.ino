@@ -81,7 +81,7 @@ void MCP230xx_CheckForIntCounter(void) {
     }
   }
 }
-  
+
 void MCP230xx_CheckForIntRetainer(void) {
   uint8_t en = 0;
   for (uint8_t ca=0;ca<16;ca++) {
@@ -210,15 +210,13 @@ void MCP230xx_Detect(void)
   if (I2cValidRead8(&buffer, USE_MCP230xx_ADDR, MCP230xx_IOCON)) {
     if (0x00 == buffer) {
       mcp230xx_type = 1; // We have a MCP23008
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23008", USE_MCP230xx_ADDR);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "MCP23008", USE_MCP230xx_ADDR);
       mcp230xx_pincount = 8;
       MCP230xx_ApplySettings();
     } else {
       if (0x80 == buffer) {
         mcp230xx_type = 2; // We have a MCP23017
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "MCP23017", USE_MCP230xx_ADDR);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "MCP23017", USE_MCP230xx_ADDR);
         mcp230xx_pincount = 16;
         // Reset bank mode to 0
         I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_IOCON, 0x00);
@@ -305,9 +303,8 @@ void MCP230xx_CheckForInterrupt(void) {
                       break;
                   }
                   if (int_tele) {
-                    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-                    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX_INT\":{\"D%i\":%i,\"MS\":%lu}"), mqtt_data, intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01),millis_since_last_int);
-                    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+                    Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230XX_INT\":{\"D%i\":%i,\"MS\":%lu}}"),
+                      GetDateAndTime(DT_LOCAL).c_str(), intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01),millis_since_last_int);
                     MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("MCP230XX_INT"));
                   }
                   if (int_event) {
@@ -325,20 +322,20 @@ void MCP230xx_CheckForInterrupt(void) {
   }
 }
 
-void MCP230xx_Show(boolean json)
+void MCP230xx_Show(bool json)
 {
   if (mcp230xx_type) {
     if (json) {
       if (mcp230xx_type > 0) { // we have at least 8 pins
         uint8_t gpio = MCP230xx_readGPIO(0);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MCP230XX\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i"),
-                   mqtt_data,(gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
+        ResponseAppend_P(PSTR(",\"MCP230XX\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i"),
+                   (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
         if (2 == mcp230xx_type) {
           gpio = MCP230xx_readGPIO(1);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i"),
-                     mqtt_data,(gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
+          ResponseAppend_P(PSTR(",\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i"),
+                     (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s"),mqtt_data,"}");
+        ResponseAppend_P(PSTR("}"));
       }
     }
   }
@@ -386,9 +383,9 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   if (interlock && (pinmo == Settings.mcp230xx_config[pin+pinadd].pinmode)) {
     char stt1[4];
     sprintf(stt1,ConvertNumTxt((portpins >> (pin+pinadd-(port*8))&1), pinmo));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"S29cmnd_D%i\":{\"COMMAND\":\"%s\",\"STATE\":\"%s\"},\"S29cmnd_D%i\":{\"STATE\":\"%s\"}}"),pin, cmnd, stt, pin+pinadd, stt1);
+    Response_P(PSTR("{\"S29cmnd_D%i\":{\"COMMAND\":\"%s\",\"STATE\":\"%s\"},\"S29cmnd_D%i\":{\"STATE\":\"%s\"}}"),pin, cmnd, stt, pin+pinadd, stt1);
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_CMND_RESPONSE, pin, cmnd, stt);
+    Response_P(MCP230XX_CMND_RESPONSE, pin, cmnd, stt);
   }
 }
 
@@ -422,12 +419,12 @@ void MCP230xx_Reset(uint8_t pinmode) {
   uint8_t intmode = 3;
   if ((pinmode > 1) && (pinmode < 5)) { intmode = 0; }
   sprintf(intmodetxt,IntModeTxt(intmode));
-  snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,99,pinmode,pulluptxt,intmodetxt,"");
+  Response_P(MCP230XX_SENSOR_RESPONSE,99,pinmode,pulluptxt,intmodetxt,"");
 }
 
 bool MCP230xx_Command(void) {
-  boolean serviced = true;
-  boolean validpin = false;
+  bool serviced = true;
+  bool validpin = false;
   uint8_t paramcount = 0;
   if (XdrvMailbox.data_len > 0) {
     paramcount=1;
@@ -456,11 +453,11 @@ bool MCP230xx_Command(void) {
       uint8_t intpri = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
       if ((intpri >= 0) && (intpri <= 20)) {
         Settings.mcp230xx_int_prio = intpri;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"PRI",99,Settings.mcp230xx_int_prio);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+        Response_P(MCP230XX_INTCFG_RESPONSE,"PRI",99,Settings.mcp230xx_int_prio);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
         return serviced;
       }
     } else { // No parameter was given for INTPRI so we return the current configured value
-      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"PRI",99,Settings.mcp230xx_int_prio);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+      Response_P(MCP230XX_INTCFG_RESPONSE,"PRI",99,Settings.mcp230xx_int_prio);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
       return serviced;
     }
   }
@@ -471,11 +468,11 @@ bool MCP230xx_Command(void) {
       if ((inttim >= 0) && (inttim <= 3600)) {
         Settings.mcp230xx_int_timer = inttim;
         MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
-        snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"TIMER",99,Settings.mcp230xx_int_timer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+        Response_P(MCP230XX_INTCFG_RESPONSE,"TIMER",99,Settings.mcp230xx_int_timer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
         return serviced;
       }
     } else { // No parameter was given for INTTIM so we return the current configured value
-      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"TIMER",99,Settings.mcp230xx_int_timer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+      Response_P(MCP230XX_INTCFG_RESPONSE,"TIMER",99,Settings.mcp230xx_int_timer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
       return serviced;
     }
   }
@@ -498,17 +495,16 @@ bool MCP230xx_Command(void) {
             if (Settings.mcp230xx_config[pin].int_count_en) {
               Settings.mcp230xx_config[pin].int_count_en=0;
               MCP230xx_CheckForIntCounter();
-              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabled INTCNT for pin D%i"),pin);
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTCNT for pin D%i"),pin);
             }
-            snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings.mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+            Response_P(MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings.mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
             return serviced;
           } else {
             serviced=false;
             return serviced;
           }
         } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings.mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+          Response_P(MCP230XX_INTCFG_RESPONSE,"DEF",pin,Settings.mcp230xx_config[pin].int_report_defer);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
           return serviced;
         }
       }
@@ -537,27 +533,24 @@ bool MCP230xx_Command(void) {
             Settings.mcp230xx_config[pin].int_count_en=intcnt;
             if (Settings.mcp230xx_config[pin].int_report_defer) {
               Settings.mcp230xx_config[pin].int_report_defer=0;
-              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabled INTDEF for pin D%i"),pin);
-              AddLog(LOG_LEVEL_INFO);              
+              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled INTDEF for pin D%i"),pin);
             }
             if (Settings.mcp230xx_config[pin].int_report_mode < 3) {
               Settings.mcp230xx_config[pin].int_report_mode=3;
-              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - Disabled immediate interrupt/telemetry reporting for pin D%i"),pin);
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - Disabled immediate interrupt/telemetry reporting for pin D%i"),pin);
             }
             if ((Settings.mcp230xx_config[pin].int_count_en) && (!Settings.mcp230xx_int_timer)) {
-              snprintf_P(log_data, sizeof(log_data), PSTR("*** WARNING *** - INTCNT enabled for pin D%i but global INTTIMER is disabled!"),pin);
-              AddLog(LOG_LEVEL_INFO);
+              AddLog_P2(LOG_LEVEL_INFO, PSTR("*** WARNING *** - INTCNT enabled for pin D%i but global INTTIMER is disabled!"),pin);
             }
             MCP230xx_CheckForIntCounter(); // update register on whether or not we should be counting interrupts
-            snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings.mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+            Response_P(MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings.mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
             return serviced;
           } else {
             serviced=false;
             return serviced;
           }
         } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings.mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
+          Response_P(MCP230XX_INTCFG_RESPONSE,"CNT",pin,Settings.mcp230xx_config[pin].int_count_en);  // "{\"MCP230xx_INT%s\":{\"D_%i\":%i}}";
           return serviced;
         }
       }
@@ -584,7 +577,7 @@ bool MCP230xx_Command(void) {
           uint8_t int_retain = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
           if ((int_retain >= 0) && (int_retain <= 1)) {
             Settings.mcp230xx_config[pin].int_retain_flag=int_retain;
-            snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"INT_RETAIN",pin,Settings.mcp230xx_config[pin].int_retain_flag);
+            Response_P(MCP230XX_INTCFG_RESPONSE,"INT_RETAIN",pin,Settings.mcp230xx_config[pin].int_retain_flag);
             MCP230xx_CheckForIntRetainer();
             return serviced;
           } else {
@@ -592,7 +585,7 @@ bool MCP230xx_Command(void) {
             return serviced;
           }
         } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_INTCFG_RESPONSE,"INT_RETAIN",pin,Settings.mcp230xx_config[pin].int_retain_flag);
+          Response_P(MCP230XX_INTCFG_RESPONSE,"INT_RETAIN",pin,Settings.mcp230xx_config[pin].int_retain_flag);
           return serviced;
         }
       }
@@ -605,7 +598,7 @@ bool MCP230xx_Command(void) {
   }
 
   uint8_t pin = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
-  
+
   if (pin < mcp230xx_pincount) {
     if (0 == pin) {
       if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "0")) validpin=true;
@@ -625,10 +618,10 @@ bool MCP230xx_Command(void) {
 #ifdef USE_MCP230xx_OUTPUT
       uint8_t pinmod = Settings.mcp230xx_config[pin].pinmode;
       sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1,pinmod));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmod,pulluptxtr,intmodetxt,pinstatustxtr);
+      Response_P(MCP230XX_SENSOR_RESPONSE,pin,pinmod,pulluptxtr,intmodetxt,pinstatustxtr);
 #else // not USE_MCP230xx_OUTPUT
       sprintf(pinstatustxtr,ConvertNumTxt(portdata>>(pin-(port*8))&1));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,Settings.mcp230xx_config[pin].pinmode,pulluptxtr,intmodetxt,pinstatustxtr);
+      Response_P(MCP230XX_SENSOR_RESPONSE,pin,Settings.mcp230xx_config[pin].pinmode,pulluptxtr,intmodetxt,pinstatustxtr);
 #endif //USE_MCP230xx_OUTPUT
       return serviced;
     }
@@ -688,7 +681,7 @@ bool MCP230xx_Command(void) {
 #else  // not USE_MCP230xx_OUTPUT
       sprintf(pinstatustxtc,ConvertNumTxt(portdata>>(pin-(port*8))&1));
 #endif // USE_MCP230xx_OUTPUT
-      snprintf_P(mqtt_data, sizeof(mqtt_data), MCP230XX_SENSOR_RESPONSE,pin,pinmode,pulluptxtc,intmodetxt,pinstatustxtc);
+      Response_P(MCP230XX_SENSOR_RESPONSE,pin,pinmode,pulluptxtc,intmodetxt,pinstatustxtc);
       return serviced;
     }
   } else {
@@ -700,7 +693,7 @@ bool MCP230xx_Command(void) {
 
 #ifdef USE_MCP230xx_DISPLAYOUTPUT
 
-const char HTTP_SNS_MCP230xx_OUTPUT[] PROGMEM = "%s{s}MCP230XX D%d{m}%s{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_MCP230xx_OUTPUT[] PROGMEM = "{s}MCP230XX D%d{m}%s{e}"; // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 void MCP230xx_UpdateWebData(void) {
   uint8_t gpio1 = MCP230xx_readGPIO(0);
@@ -713,7 +706,7 @@ void MCP230xx_UpdateWebData(void) {
     if (Settings.mcp230xx_config[pin].pinmode >= 5) {
       char stt[7];
       sprintf(stt,ConvertNumTxt((gpio>>pin)&1,Settings.mcp230xx_config[pin].pinmode));
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_MCP230xx_OUTPUT, mqtt_data, pin, stt);
+      WSContentSend_PD(HTTP_SNS_MCP230xx_OUTPUT, pin, stt);
     }
   }
 }
@@ -736,14 +729,14 @@ void MCP230xx_OutputTelemetry(void) {
   }
   if (outputcount) {
     char stt[7];
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230_OUT\": {"), GetDateAndTime(DT_LOCAL).c_str());
+    Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230_OUT\": {"), GetDateAndTime(DT_LOCAL).c_str());
     for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
       if (Settings.mcp230xx_config[pinx].pinmode >= 5) {
         sprintf(stt,ConvertNumTxt(((gpiototal>>pinx)&1),Settings.mcp230xx_config[pinx].pinmode));
-        snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"OUT_D%i\":\"%s\","),mqtt_data,pinx,stt);
+        ResponseAppend_P(PSTR("\"OUT_D%i\":\"%s\","),pinx,stt);
       }
     }
-    snprintf_P(mqtt_data,sizeof(mqtt_data),PSTR("%s\"END\":1}}"),mqtt_data);
+    ResponseAppend_P(PSTR("\"END\":1}}"));
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   }
 }
@@ -751,29 +744,29 @@ void MCP230xx_OutputTelemetry(void) {
 #endif // USE_MCP230xx_OUTPUT
 
 void MCP230xx_Interrupt_Counter_Report(void) {
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230_INTTIMER\": {"), GetDateAndTime(DT_LOCAL).c_str());
+  Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230_INTTIMER\": {"), GetDateAndTime(DT_LOCAL).c_str());
   for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
     if (Settings.mcp230xx_config[pinx].int_count_en) { // Counting is enabled for this pin so we add to report
-      snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"INTCNT_D%i\":%i,"),mqtt_data,pinx,mcp230xx_int_counter[pinx]);
+      ResponseAppend_P(PSTR("\"INTCNT_D%i\":%i,"),pinx,mcp230xx_int_counter[pinx]);
       mcp230xx_int_counter[pinx]=0;
     }
   }
-  snprintf_P(mqtt_data,sizeof(mqtt_data),PSTR("%s\"END\":1}}"),mqtt_data);
+  ResponseAppend_P(PSTR("\"END\":1}}"));
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   mcp230xx_int_sec_counter = 0;
 }
 
 void MCP230xx_Interrupt_Retain_Report(void) {
   uint16_t retainresult = 0;
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP_INTRETAIN\": {"), GetDateAndTime(DT_LOCAL).c_str());
+  Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP_INTRETAIN\": {"), GetDateAndTime(DT_LOCAL).c_str());
   for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
-    if (Settings.mcp230xx_config[pinx].int_retain_flag) { 
-      snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"D%i\":%i,"),mqtt_data,pinx,mcp230xx_int_retainer[pinx]);
+    if (Settings.mcp230xx_config[pinx].int_retain_flag) {
+      ResponseAppend_P(PSTR("\"D%i\":%i,"),pinx,mcp230xx_int_retainer[pinx]);
       retainresult |= (((mcp230xx_int_retainer[pinx])&1) << pinx);
       mcp230xx_int_retainer[pinx]=0;
     }
   }
-  snprintf_P(mqtt_data,sizeof(mqtt_data),PSTR("%s\"Value\":%u}}"),mqtt_data,retainresult);
+  ResponseAppend_P(PSTR("\"Value\":%u}}"),retainresult);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
 }
 
@@ -781,9 +774,9 @@ void MCP230xx_Interrupt_Retain_Report(void) {
    Interface
 \*********************************************************************************************/
 
-boolean Xsns29(byte function)
+bool Xsns29(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -820,7 +813,7 @@ boolean Xsns29(byte function)
       case FUNC_JSON_APPEND:
         MCP230xx_Show(1);
         break;
-      case FUNC_COMMAND:
+      case FUNC_COMMAND_SENSOR:
         if (XSNS_29 == XdrvMailbox.index) {
           result = MCP230xx_Command();
         }
@@ -828,7 +821,7 @@ boolean Xsns29(byte function)
 #ifdef USE_WEBSERVER
 #ifdef USE_MCP230xx_OUTPUT
 #ifdef USE_MCP230xx_DISPLAYOUTPUT
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         MCP230xx_UpdateWebData();
         break;
 #endif // USE_MCP230xx_DISPLAYOUTPUT

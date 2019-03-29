@@ -178,9 +178,9 @@ void MP3_CMD(uint8_t mp3cmd,uint16_t val) {
  * check the MP3 commands
 \*********************************************************************************************/
 
-boolean MP3PlayerCmd(void) {
+bool MP3PlayerCmd(void) {
   char command[CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t disp_len = strlen(D_CMND_MP3);
 
   if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_MP3), disp_len)) {  // prefix
@@ -200,7 +200,7 @@ boolean MP3PlayerCmd(void) {
           if (command_code == CMND_MP3_DEVICE) { MP3_CMD(MP3_CMD_DEVICE, XdrvMailbox.payload); }
           if (command_code == CMND_MP3_DAC)    { MP3_CMD(MP3_CMD_DAC,    XdrvMailbox.payload); }
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_MP3_COMMAND_NVALUE, command, XdrvMailbox.payload);
+        Response_P(S_JSON_MP3_COMMAND_NVALUE, command, XdrvMailbox.payload);
         break;
       case CMND_MP3_PLAY:
       case CMND_MP3_PAUSE:
@@ -211,7 +211,7 @@ boolean MP3PlayerCmd(void) {
         if (command_code == CMND_MP3_PAUSE)    { MP3_CMD(MP3_CMD_PAUSE,  0); }
         if (command_code == CMND_MP3_STOP)     { MP3_CMD(MP3_CMD_STOP,   0); }
         if (command_code == CMND_MP3_RESET)    { MP3_CMD(MP3_CMD_RESET,  0); }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_MP3_COMMAND, command, XdrvMailbox.payload);
+        Response_P(S_JSON_MP3_COMMAND, command, XdrvMailbox.payload);
         break;
       default:
     	  // else for Unknown command
@@ -226,9 +226,9 @@ boolean MP3PlayerCmd(void) {
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv14(byte function)
+bool Xdrv14(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pin[GPIO_MP3_DFR562] < 99) {
     switch (function) {

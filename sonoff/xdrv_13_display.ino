@@ -465,7 +465,7 @@ void DisplayText(void)
             break;
           default:
             // unknown escape
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("Unknown Escape"));
+            Response_P(PSTR("Unknown Escape"));
             goto exit;
             break;
         }
@@ -495,7 +495,7 @@ void DisplayText(void)
 void DisplayClearScreenBuffer(void)
 {
   if (disp_screen_buffer_cols) {
-    for (byte i = 0; i < disp_screen_buffer_rows; i++) {
+    for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
       memset(disp_screen_buffer[i], 0, disp_screen_buffer_cols);
     }
   }
@@ -503,9 +503,9 @@ void DisplayClearScreenBuffer(void)
 
 void DisplayFreeScreenBuffer(void)
 {
-  if (disp_screen_buffer != NULL) {
-    for (byte i = 0; i < disp_screen_buffer_rows; i++) {
-      if (disp_screen_buffer[i] != NULL) { free(disp_screen_buffer[i]); }
+  if (disp_screen_buffer != nullptr) {
+    for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
+      if (disp_screen_buffer[i] != nullptr) { free(disp_screen_buffer[i]); }
     }
     free(disp_screen_buffer);
     disp_screen_buffer_cols = 0;
@@ -518,16 +518,16 @@ void DisplayAllocScreenBuffer(void)
   if (!disp_screen_buffer_cols) {
     disp_screen_buffer_rows = Settings.display_rows;
     disp_screen_buffer = (char**)malloc(sizeof(*disp_screen_buffer) * disp_screen_buffer_rows);
-    if (disp_screen_buffer != NULL) {
-      for (byte i = 0; i < disp_screen_buffer_rows; i++) {
+    if (disp_screen_buffer != nullptr) {
+      for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
         disp_screen_buffer[i] = (char*)malloc(sizeof(*disp_screen_buffer[i]) * (Settings.display_cols[0] +1));
-        if (disp_screen_buffer[i] == NULL) {
+        if (disp_screen_buffer[i] == nullptr) {
           DisplayFreeScreenBuffer();
           break;
         }
       }
     }
-    if (disp_screen_buffer != NULL) {
+    if (disp_screen_buffer != nullptr) {
       disp_screen_buffer_cols = Settings.display_cols[0] +1;
       DisplayClearScreenBuffer();
     }
@@ -542,7 +542,7 @@ void DisplayReAllocScreenBuffer(void)
 
 void DisplayFillScreen(uint8_t line)
 {
-  byte len = disp_screen_buffer_cols - strlen(disp_screen_buffer[line]);
+  uint8_t len = disp_screen_buffer_cols - strlen(disp_screen_buffer[line]);
   if (len) {
     memset(disp_screen_buffer[line] + strlen(disp_screen_buffer[line]), 0x20, len);
     disp_screen_buffer[line][disp_screen_buffer_cols -1] = 0;
@@ -554,7 +554,7 @@ void DisplayFillScreen(uint8_t line)
 void DisplayClearLogBuffer(void)
 {
   if (disp_log_buffer_cols) {
-    for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
+    for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
       memset(disp_log_buffer[i], 0, disp_log_buffer_cols);
     }
   }
@@ -562,9 +562,9 @@ void DisplayClearLogBuffer(void)
 
 void DisplayFreeLogBuffer(void)
 {
-  if (disp_log_buffer != NULL) {
-    for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
-      if (disp_log_buffer[i] != NULL) { free(disp_log_buffer[i]); }
+  if (disp_log_buffer != nullptr) {
+    for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
+      if (disp_log_buffer[i] != nullptr) { free(disp_log_buffer[i]); }
     }
     free(disp_log_buffer);
     disp_log_buffer_cols = 0;
@@ -575,16 +575,16 @@ void DisplayAllocLogBuffer(void)
 {
   if (!disp_log_buffer_cols) {
     disp_log_buffer = (char**)malloc(sizeof(*disp_log_buffer) * DISPLAY_LOG_ROWS);
-    if (disp_log_buffer != NULL) {
-      for (byte i = 0; i < DISPLAY_LOG_ROWS; i++) {
+    if (disp_log_buffer != nullptr) {
+      for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
         disp_log_buffer[i] = (char*)malloc(sizeof(*disp_log_buffer[i]) * (Settings.display_cols[0] +1));
-        if (disp_log_buffer[i] == NULL) {
+        if (disp_log_buffer[i] == nullptr) {
           DisplayFreeLogBuffer();
           break;
         }
       }
     }
-    if (disp_log_buffer != NULL) {
+    if (disp_log_buffer != nullptr) {
       disp_log_buffer_cols = Settings.display_cols[0] +1;
       DisplayClearLogBuffer();
     }
@@ -608,7 +608,7 @@ void DisplayLogBufferAdd(char* txt)
 
 char* DisplayLogBuffer(char temp_code)
 {
-  char* result = NULL;
+  char* result = nullptr;
   if (disp_log_buffer_cols) {
     if (disp_log_buffer_idx != disp_log_buffer_ptr) {
       result = disp_log_buffer[disp_log_buffer_ptr];
@@ -616,7 +616,7 @@ char* DisplayLogBuffer(char temp_code)
       if (DISPLAY_LOG_ROWS == disp_log_buffer_ptr) { disp_log_buffer_ptr = 0; }
 
       char *pch = strchr(result, '~');  // = 0x7E (~) Replace degrees character (276 octal)
-      if (pch != NULL) { result[pch - result] = temp_code; }
+      if (pch != nullptr) { result[pch - result] = temp_code; }
     }
   }
   return result;
@@ -687,7 +687,7 @@ const char kSensorQuantity[] PROGMEM =
   D_JSON_CO2 "|"                                                                // ppm
   D_JSON_FREQUENCY ;                                                            // Hz
 
-void DisplayJsonValue(const char *topic, const char* device, const char* mkey, const char* value)
+void DisplayJsonValue(const char* topic, const char* device, const char* mkey, const char* value)
 {
   char quantity[TOPSZ];
   char buffer[Settings.display_cols[0] +1];
@@ -695,11 +695,13 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
   char source[Settings.display_cols[0] - Settings.display_cols[1]];
   char svalue[Settings.display_cols[1] +1];
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("DisplayJsonValue"));
+#endif
 
   memset(spaces, 0x20, sizeof(spaces));
   spaces[sizeof(spaces) -1] = '\0';
-  snprintf_P(source, sizeof(source), PSTR("%s/%s%s"), topic, mkey, spaces);  // pow1/Voltage
+  snprintf_P(source, sizeof(source), PSTR("%s%s%s%s"), topic, (strlen(topic))?"/":"", mkey, spaces);  // pow1/Voltage or Voltage if topic is empty (local sensor)
 
   int quantity_code = GetCommandCode(quantity, sizeof(quantity), mkey, kSensorQuantity);
   if ((-1 == quantity_code) || !strcmp_P(mkey, S_RSLT_POWER)) {  // Ok: Power, Not ok: POWER
@@ -746,8 +748,7 @@ void DisplayJsonValue(const char *topic, const char* device, const char* mkey, c
   }
   snprintf_P(buffer, sizeof(buffer), PSTR("%s %s"), source, svalue);
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
-//  AddLog(LOG_LEVEL_DEBUG);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "mkey [%s], source [%s], value [%s], quantity_code %d, log_buffer [%s]"), mkey, source, value, quantity_code, buffer);
 
   DisplayLogBufferAdd(buffer);
 }
@@ -777,8 +778,7 @@ void DisplayAnalyzeJson(char *topic, char *json)
     tempunit = root[D_JSON_TEMPERATURE_UNIT];
     if (tempunit) {
       snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%s"), tempunit);
-//      snprintf_P(log_data, sizeof(log_data), disp_temp);
-//      AddLog(LOG_LEVEL_DEBUG);
+//      AddLog_P2(LOG_LEVEL_DEBUG, disp_temp);
     }
 
     for (JsonObject::iterator it = root.begin(); it != root.end(); ++it) {
@@ -829,12 +829,12 @@ void DisplayMqttSubscribe(void)
     ntopic[0] = '\0';
     strlcpy(stopic, Settings.mqtt_fulltopic, sizeof(stopic));
     char *tp = strtok(stopic, "/");
-    while (tp != NULL) {
+    while (tp != nullptr) {
       if (!strcmp_P(tp, PSTR(MQTT_TOKEN_PREFIX))) {
         break;
       }
       strncat_P(ntopic, PSTR("+/"), sizeof(ntopic) - strlen(ntopic) -1);           // Add single-level wildcards
-      tp = strtok(NULL, "/");
+      tp = strtok(nullptr, "/");
     }
     strncat(ntopic, Settings.mqtt_prefix[2], sizeof(ntopic) - strlen(ntopic) -1);  // Subscribe to tele messages
     strncat_P(ntopic, PSTR("/#"), sizeof(ntopic) - strlen(ntopic) -1);             // Add multi-level wildcard
@@ -845,7 +845,7 @@ void DisplayMqttSubscribe(void)
   }
 }
 
-boolean DisplayMqttData(void)
+bool DisplayMqttData(void)
 {
   if (disp_subscribed) {
     char stopic[TOPSZ];
@@ -867,7 +867,9 @@ boolean DisplayMqttData(void)
 void DisplayLocalSensor(void)
 {
   if ((Settings.display_mode &0x02) && (0 == tele_period)) {
-    DisplayAnalyzeJson(mqtt_topic, mqtt_data);
+    char no_topic[1] = { 0 };
+//    DisplayAnalyzeJson(mqtt_topic, mqtt_data);  // Add local topic
+    DisplayAnalyzeJson(no_topic, mqtt_data);    // Discard any topic
   }
 }
 
@@ -881,8 +883,7 @@ void DisplayInitDriver(void)
 {
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
-//  AddLog(LOG_LEVEL_DEBUG);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
     devices_present++;
@@ -908,10 +909,10 @@ void DisplaySetPower(void)
  * Commands
 \*********************************************************************************************/
 
-boolean DisplayCommand(void)
+bool DisplayCommand(void)
 {
   char command [CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t disp_len = strlen(D_CMND_DISPLAY);  // Prep for string length change
 
   if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_DISPLAY), disp_len)) {  // Prefix
@@ -920,7 +921,7 @@ boolean DisplayCommand(void)
       serviced = false;  // Unknown command
     }
     else if (CMND_DISPLAY == command_code) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DISPLAY "\":{\"" D_CMND_DISP_MODEL "\":%d,\"" D_CMND_DISP_MODE "\":%d,\"" D_CMND_DISP_DIMMER "\":%d,\""
+      Response_P(PSTR("{\"" D_CMND_DISPLAY "\":{\"" D_CMND_DISP_MODEL "\":%d,\"" D_CMND_DISP_MODE "\":%d,\"" D_CMND_DISP_DIMMER "\":%d,\""
          D_CMND_DISP_SIZE "\":%d,\"" D_CMND_DISP_FONT "\":%d,\"" D_CMND_DISP_ROTATE "\":%d,\"" D_CMND_DISP_REFRESH "\":%d,\"" D_CMND_DISP_COLS "\":[%d,%d],\"" D_CMND_DISP_ROWS "\":%d}}"),
         Settings.display_model, Settings.display_mode, Settings.display_dimmer, Settings.display_size, Settings.display_font, Settings.display_rotate, Settings.display_refresh,
         Settings.display_cols[0], Settings.display_cols[1], Settings.display_rows);
@@ -935,7 +936,7 @@ boolean DisplayCommand(void)
           Settings.display_model = last_display_model;
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_model);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_model);
     }
     else if (CMND_DISP_MODE == command_code) {
 #ifdef USE_DISPLAY_MODES1TO5
@@ -963,7 +964,7 @@ boolean DisplayCommand(void)
         }
       }
 #endif  // USE_DISPLAY_MODES1TO5
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_mode);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_mode);
     }
     else if (CMND_DISP_DIMMER == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
@@ -975,19 +976,19 @@ boolean DisplayCommand(void)
           ExecuteCommandPower(disp_device, POWER_OFF, SRC_DISPLAY);
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_dimmer);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_dimmer);
     }
     else if (CMND_DISP_SIZE == command_code) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
         Settings.display_size = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_size);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_size);
     }
     else if (CMND_DISP_FONT == command_code) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
         Settings.display_font = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_font);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_font);
     }
     else if (CMND_DISP_ROTATE == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 4)) {
@@ -1010,7 +1011,7 @@ boolean DisplayCommand(void)
 #endif  // USE_DISPLAY_MODES1TO5
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rotate);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rotate);
     }
     else if (CMND_DISP_TEXT == command_code) {
       mqtt_data[0] = '\0';
@@ -1025,23 +1026,23 @@ boolean DisplayCommand(void)
         }
 #endif  // USE_DISPLAY_MODES1TO5
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("No Text"));
+        Response_P(PSTR("No Text"));
       }
       if (mqtt_data[0] == '\0') {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_VALUE, command, XdrvMailbox.data);
+        Response_P(S_JSON_DISPLAY_COMMAND_VALUE, command, XdrvMailbox.data);
       }
     }
     else if ((CMND_DISP_ADDRESS == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 8)) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
         Settings.display_address[XdrvMailbox.index -1] = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_address[XdrvMailbox.index -1]);
+      Response_P(S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_address[XdrvMailbox.index -1]);
     }
     else if (CMND_DISP_REFRESH == command_code) {
       if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 7)) {
         Settings.display_refresh = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_refresh);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_refresh);
     }
     else if ((CMND_DISP_COLS == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_COLS)) {
@@ -1053,7 +1054,7 @@ boolean DisplayCommand(void)
         }
 #endif  // USE_DISPLAY_MODES1TO5
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_cols[XdrvMailbox.index -1]);
+      Response_P(S_JSON_DISPLAY_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.display_cols[XdrvMailbox.index -1]);
     }
     else if (CMND_DISP_ROWS == command_code) {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= DISPLAY_MAX_ROWS)) {
@@ -1063,7 +1064,7 @@ boolean DisplayCommand(void)
         DisplayReAllocScreenBuffer();
 #endif  // USE_DISPLAY_MODES1TO5
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rows);
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_rows);
     }
     else serviced = false;  // Unknown command
   }
@@ -1076,9 +1077,9 @@ boolean DisplayCommand(void)
  * Interface
 \*********************************************************************************************/
 
-boolean Xdrv13(byte function)
+bool Xdrv13(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if ((i2c_flg || spi_flg || soft_spi_flg) && XdspPresent()) {
     switch (function) {

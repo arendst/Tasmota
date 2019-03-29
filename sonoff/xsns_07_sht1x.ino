@@ -44,21 +44,21 @@ uint8_t sht_valid = 0;
 float sht_temperature = 0;
 float sht_humidity = 0;
 
-boolean ShtReset(void)
+bool ShtReset(void)
 {
   pinMode(sht_sda_pin, INPUT_PULLUP);
   pinMode(sht_scl_pin, OUTPUT);
   delay(11);
-  for (byte i = 0; i < 9; i++) {
+  for (uint8_t i = 0; i < 9; i++) {
     digitalWrite(sht_scl_pin, HIGH);
     digitalWrite(sht_scl_pin, LOW);
   }
-  boolean success = ShtSendCommand(SHT1X_CMD_SOFT_RESET);
+  bool success = ShtSendCommand(SHT1X_CMD_SOFT_RESET);
   delay(11);
   return success;
 }
 
-boolean ShtSendCommand(const byte cmd)
+bool ShtSendCommand(const uint8_t cmd)
 {
   pinMode(sht_sda_pin, OUTPUT);
   // Transmission Start sequence
@@ -72,7 +72,7 @@ boolean ShtSendCommand(const byte cmd)
   // Send the command (address must be 000b)
   shiftOut(sht_sda_pin, sht_scl_pin, MSBFIRST, cmd);
   // Wait for ACK
-  boolean ackerror = false;
+  bool ackerror = false;
   digitalWrite(sht_scl_pin, HIGH);
   pinMode(sht_sda_pin, INPUT_PULLUP);
   if (digitalRead(sht_sda_pin) != LOW) {
@@ -90,10 +90,10 @@ boolean ShtSendCommand(const byte cmd)
   return (!ackerror);
 }
 
-boolean ShtAwaitResult(void)
+bool ShtAwaitResult(void)
 {
   // Maximum 320ms for 14 bit measurement
-  for (byte i = 0; i < 16; i++) {
+  for (uint8_t i = 0; i < 16; i++) {
     if (LOW == digitalRead(sht_sda_pin)) {
       return true;
     }
@@ -125,7 +125,7 @@ int ShtReadData(void)
   return val;
 }
 
-boolean ShtRead(void)
+bool ShtRead(void)
 {
   if (sht_valid) { sht_valid--; }
   if (!ShtReset()) { return false; }
@@ -185,7 +185,7 @@ void ShtEverySecond(void)
   }
 }
 
-void ShtShow(boolean json)
+void ShtShow(bool json)
 {
   if (sht_valid) {
     char temperature[33];
@@ -194,7 +194,7 @@ void ShtShow(boolean json)
     dtostrfd(sht_humidity, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, sht_types, temperature, humidity);
+      ResponseAppend_P(JSON_SNS_TEMPHUM, sht_types, temperature, humidity);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzTempHumSensor(temperature, humidity);
@@ -208,8 +208,8 @@ void ShtShow(boolean json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, sht_types, temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, sht_types, humidity);
+      WSContentSend_PD(HTTP_SNS_TEMP, sht_types, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, sht_types, humidity);
 #endif  // USE_WEBSERVER
     }
   }
@@ -219,9 +219,9 @@ void ShtShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns07(byte function)
+bool Xsns07(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -236,7 +236,7 @@ boolean Xsns07(byte function)
         ShtShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         ShtShow(0);
         break;
 #endif  // USE_WEBSERVER

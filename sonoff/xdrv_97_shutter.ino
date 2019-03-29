@@ -75,9 +75,7 @@ void ShutterInit()
   char shutter_open_chr[10];
   char shutter_close_chr[10];
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("Shutter accuracy digits: %d"), Settings.shutter_accuracy);
-  AddLog(LOG_LEVEL_INFO);
-
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("Shutter accuracy digits: %d"), Settings.shutter_accuracy);
 
   for (byte i=0;i < MAX_SHUTTERS; i++) {
     // upgrade to 0.1sec calculation base.
@@ -91,7 +89,7 @@ void ShutterInit()
       shutters_present++;
 
       // Determine shutter types
-      if (Settings.flag3.paired_interlock) {
+      if (Settings.interlock[0]) {
         if (Settings.pulse_timer[i] > 0) {
           shutterMode = PULSE_OPEN__PULSE_CLOSE;
         } else {
@@ -124,8 +122,7 @@ void ShutterInit()
       dtostrfd((double)Shutter_Open_Time[i] / 10 , 1, shutter_open_chr);
       dtostrfd((double)Shutter_Close_Time[i] / 10, 1, shutter_close_chr);
 
-      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoedffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, shuttermode %d"), i, Settings.shutter_startrelay[i],Shutter_Real_Position[i],Settings.shutter_position[i],  Shutter_Close_Velocity[i] , Shutter_Open_Max[i], shutter_open_chr, shutter_close_chr,Settings.shuttercoeff[0][i],Settings.shuttercoeff[1][i],Settings.shuttercoeff[2][i],Settings.shuttercoeff[3][i],Settings.shuttercoeff[4][i],shutter_mask,Settings.shutter_invert[i],shutterMode );
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoedffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, shuttermode %d"), i, Settings.shutter_startrelay[i],Shutter_Real_Position[i],Settings.shutter_position[i],  Shutter_Close_Velocity[i] , Shutter_Open_Max[i], shutter_open_chr, shutter_close_chr,Settings.shuttercoeff[0][i],Settings.shuttercoeff[1][i],Settings.shuttercoeff[2][i],Settings.shuttercoeff[3][i],Settings.shuttercoeff[4][i],shutter_mask,Settings.shutter_invert[i],shutterMode );
     } else {
       // terminate loop at first INVALID shutter.
       break;
@@ -167,14 +164,13 @@ void Schutter_Update_Position()
         }
 
         dtostrfd((double)shutter_time[i] / 20, 1, stemp2);
-        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Real Pos. %d, Stoppos: %ld, relay: %d, direction %d, pulsetimer: %d, rtcshutter: %s [s], operationtime %d"), i, Shutter_Real_Position[i], Settings.shutter_position[i], cur_relay -1, Shutter_Direction[i], Settings.pulse_timer[cur_relay -1], stemp2, Shutter_Operations[i]);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Shutter %d: Real Pos. %d, Stoppos: %ld, relay: %d, direction %d, pulsetimer: %d, rtcshutter: %s [s], operationtime %d"), i, Shutter_Real_Position[i], Settings.shutter_position[i], cur_relay -1, Shutter_Direction[i], Settings.pulse_timer[cur_relay -1], stemp2, Shutter_Operations[i]);
         Shutter_Start_Position[i] = Shutter_Real_Position[i];
 
         // sending MQTT result to broker
         snprintf_P(scommand, sizeof(scommand),PSTR("%s%d"), D_SHUTTER, i+1);
         GetTopic_P(stopic, STAT, mqtt_topic, scommand);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), "%d", Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
+        Response_P("%d", Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
         MqttPublish(stopic, Settings.flag.mqtt_power_retain);
 
         switch (shutterMode) {
@@ -202,8 +198,8 @@ void Schutter_Update_Position()
         }
         Shutter_Direction[i] = 0;
         byte position =  Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i];
-//        snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, position);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s-%d\":{\"position\":%d, \"direction\":%d}}"), D_SHUTTER, i+1, position, 0/*Shutter_Direction[i]*/);
+//        Response_P( JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, position);
+          Response_P( PSTR("{\"%s-%d\":{\"position\":%d, \"direction\":%d}}"), D_SHUTTER, i+1, position, 0/*Shutter_Direction[i]*/);
           MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
           XdrvRulesProcess();
       }
@@ -220,11 +216,11 @@ void Shutter_StartInit (uint8_t index, uint8_t direction, int32_t target_pos)
   shutter_time[index] = 0;
 }
 
-boolean ShutterCommand()
+bool ShutterCommand()
 {
   char command [CMDSZ];
-  boolean serviced = true;
-  boolean valid_entry = false;
+  bool serviced = true;
+  bool valid_entry = false;
   byte index;
 
   index = XdrvMailbox.index;
@@ -237,26 +233,25 @@ boolean ShutterCommand()
     XdrvMailbox.payload = CMND_OPEN == command_code ? 100 : 0;
     last_source = SRC_WEBGUI;
     command_code = CMND_POSITION;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index,1);
+    Response_P( S_JSON_COMMAND_INDEX_NVALUE, command, index,1);
   }
   else if (CMND_STOP == command_code && (index > 0) && (index <= shutters_present)) {
     if (Shutter_Direction[index-1]!=0) {
       int32_t temp_realpos;
-      snprintf_P(log_data, sizeof(log_data), PSTR("Stop moving shutter %d: direction:%d"), index, Shutter_Direction[index-1]);
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO,  PSTR("Stop moving shutter %d: direction:%d"), index, Shutter_Direction[index-1]);
       temp_realpos = Shutter_Start_Position[index-1] + ( (shutter_time[index-1]+10) * (Shutter_Direction[index-1] > 0 ? 100 : -Shutter_Close_Velocity[index-1]));
       XdrvMailbox.payload = realposition_to_percent(temp_realpos, index-1);
       //XdrvMailbox.payload = Settings.shuttercoeff[2][index-1] * 5 > temp_realpos ? temp_realpos / Settings.shuttercoeff[2][index-1] : (temp_realpos-Settings.shuttercoeff[0,index-1]) / Settings.shuttercoeff[1][index-1];
       last_source = SRC_WEBGUI;
       command_code = CMND_POSITION;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index,1);
+    Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, index,1);
   }
   else if (CMND_SHUTTERINVERT == command_code && (index > 0) && (index <= shutters_present)) {
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
       Settings.shutter_invert[index-1] = XdrvMailbox.payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]);
+    Response_P( S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]);
   }
   else if (((CMND_OPENTIME == command_code) || (CMND_CLOSETIME == command_code) ) && (index > 0) && (index <= shutters_present) ) {
     char time_chr[10];
@@ -269,7 +264,7 @@ boolean ShutterCommand()
       ShutterInit();
     }
     dtostrfd( (double)(CMND_OPENTIME == command_code ? Settings.shutter_opentime[index-1] : Settings.shutter_closetime[index-1]) / 10  , 1, time_chr);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, time_chr );
+    Response_P( S_JSON_COMMAND_INDEX_SVALUE, command, index, time_chr );
   }
   else if ((CMND_SHUTTERRELAY == command_code) && (index > 0) && (index <= MAX_SHUTTERS)) {
     if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 64)) {
@@ -279,8 +274,7 @@ boolean ShutterCommand()
       } else {
         shutter_mask ^= 3 << (Settings.shutter_startrelay[index-1] - 1);
       }
-      snprintf_P(log_data, sizeof(log_data), PSTR("Shutterrelay %d: is:%d"), index,  XdrvMailbox.payload);
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("Shutterrelay %d: is:%d"), index,  XdrvMailbox.payload);
       Settings.shutter_startrelay[index-1] = XdrvMailbox.payload;
       ShutterInit();
       // if payload is 0 to disable the relay there must be a reboot. Otherwhise does not work
@@ -291,20 +285,20 @@ boolean ShutterCommand()
       if ( (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
         Settings.shutter_set50percent[index-1] = Settings.shutter_invert[index-1] ? 100 - XdrvMailbox.payload : XdrvMailbox.payload;
         ShutterInit();
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, XdrvMailbox.payload);
+        Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, index, XdrvMailbox.payload);
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_set50percent[index-1]);
+        Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_set50percent[index-1]);
       }
   }
   else if (CMND_SHUTTERSETCLOSE == command_code && (index > 0) && (index <= shutters_present)) {
       Shutter_Real_Position[index-1] = 0;
       Shutter_StartInit(index-1, 0, 0);
       Settings.shutter_position[index-1] = 0;
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, D_CONFIGURATION_RESET);
+      Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, index, D_CONFIGURATION_RESET);
   }
   else if ((CMND_CALIBRATIONMATIX == command_code) && (index > 0) && (index <= MAX_SHUTTERS)) {
     if (XdrvMailbox.data_len > 0) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, XdrvMailbox.data);
+        Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, XdrvMailbox.data);
     }
   }
   else {
@@ -313,8 +307,7 @@ boolean ShutterCommand()
   if (CMND_POSITION == command_code && (index > 0) && (index <= shutters_present)) {
     int8_t target_pos_percent;
     //limit the payload
-    snprintf_P(log_data, sizeof(log_data), PSTR("shutterposition in: payload %d, index %d, source %d"), XdrvMailbox.payload , index, last_source );
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("shutterposition in: payload %d, index %d, source %d"), XdrvMailbox.payload , index, last_source );
     target_pos_percent = XdrvMailbox.payload < XdrvMailbox.payload ? 0 : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
     serviced = true;
     // webgui still send also on inverted shutter the native position.
@@ -323,8 +316,7 @@ boolean ShutterCommand()
       //target_pos_percent = Settings.shutter_invert[index-1] ? 100 - target_pos_percent : target_pos_percent;
       Shutter_Target_Position[index-1] = percent_to_realposition(target_pos_percent, index-1);
       //Shutter_Target_Position[index-1] = XdrvMailbox.payload < 5 ?  Settings.shuttercoeff[2][index-1] * XdrvMailbox.payload : Settings.shuttercoeff[1][index-1] * XdrvMailbox.payload + Settings.shuttercoeff[0,index-1];
-      snprintf_P(log_data, sizeof(log_data), PSTR("lastsource %d:, realpos %d, target %d, payload %d"), last_source, Shutter_Real_Position[index-1] ,Shutter_Target_Position[index-1],target_pos_percent);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("lastsource %d:, realpos %d, target %d, payload %d"), last_source, Shutter_Real_Position[index-1] ,Shutter_Target_Position[index-1],target_pos_percent);
     }
     if ( (target_pos_percent >= 0) && (target_pos_percent <= 100) && abs(Shutter_Target_Position[index-1] - Shutter_Real_Position[index-1] ) / Shutter_Close_Velocity[index-1] > 2) {
       int8_t new_shutterdirection = Shutter_Real_Position[index-1] < Shutter_Target_Position[index-1] ? 1 : -1;
@@ -341,8 +333,7 @@ boolean ShutterCommand()
         Shutter_Operations[index-1]++;
         if (shutterMode == OFF_ON__OPEN_CLOSE) {
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] , 0, SRC_SHUTTER);
-          snprintf_P(log_data, sizeof(log_data), PSTR("Delay5 5s, xdrv %d"), XdrvMailbox.payload);
-          AddLog(LOG_LEVEL_DEBUG);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay5 5s, xdrv %d"), XdrvMailbox.payload);
           delay(MOTOR_STOP_TIME);
           // Code for shutters with circuit safe configuration, switch the direction Relay
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
@@ -350,26 +341,23 @@ boolean ShutterCommand()
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] , 1, SRC_SHUTTER);
         } else {
           // now start the motor for the right direction, work for momentary and normal shutters.
-          snprintf_P(log_data, sizeof(log_data), PSTR("Start shutter in right direction %d"), Shutter_Direction[index-1]);
-          AddLog(LOG_LEVEL_INFO);
+          AddLog_P2(LOG_LEVEL_INFO, PSTR("Start shutter in right direction %d"), Shutter_Direction[index-1]);
           delay(MOTOR_STOP_TIME);
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);
-          snprintf_P(log_data, sizeof(log_data), PSTR("Delay6 5s, xdrv %d"), XdrvMailbox.payload);
-          AddLog(LOG_LEVEL_DEBUG);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay6 5s, xdrv %d"), XdrvMailbox.payload);
         }
         SwitchedRelay = 0;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index,  Settings.shutter_invert[index-1] ? 100 - target_pos_percent : target_pos_percent);
+      Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, index,  Settings.shutter_invert[index-1] ? 100 - target_pos_percent : target_pos_percent);
     } else {
       target_pos_percent = realposition_to_percent(Shutter_Real_Position[index-1], index-1);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]  ? 100 - target_pos_percent : target_pos_percent);
+      Response_P( S_JSON_COMMAND_INDEX_NVALUE, command, index, Settings.shutter_invert[index-1]  ? 100 - target_pos_percent : target_pos_percent);
       command_code = 0;
     }
   }
 
   if (!serviced) {
-    snprintf_P(log_data, sizeof(log_data), PSTR("Shutter unknown"));
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("Shutter unknown"));
   }
   return serviced;
 }
@@ -382,9 +370,8 @@ void Schutter_Report_Position()
       char stemp2[10];
       dtostrfd((double)shutter_time[i] / 20, 1, stemp2);
       //Settings.shutter_position[i] = Settings.shuttercoeff[2][i] * 5 > Shutter_Real_Position[i] ? Shutter_Real_Position[i] / Settings.shuttercoeff[2][i] : (Shutter_Real_Position[i]-Settings.shuttercoeff[0,i]) / Settings.shuttercoeff[1][i];
-      snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Real Pos: %d, Target %d, source: %s, start-pos: %d %%, direction: %d, rtcshutter: %s  [s]"), i,Shutter_Real_Position[i], Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), Settings.shutter_position[i], Shutter_Direction[i], stemp2 );
-      AddLog(LOG_LEVEL_INFO);
-    }
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("Shutter %d: Real Pos: %d, Target %d, source: %s, start-pos: %d %%, direction: %d, rtcshutter: %s  [s]"), i,Shutter_Real_Position[i], Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), Settings.shutter_position[i], Shutter_Direction[i], stemp2 );
+     }
   }
 }
 
@@ -393,7 +380,7 @@ void Shutter_Relay_changed()
 
   // SwitchedRelay = binary relay that was recently changed and cause an Action
   // powerstate_local = binary powermatrix and relays from shutter: 0..3
-  // relays_changed = boolean if one of the relays that belong to the shutter changed not by shutter or pulsetimer
+  // relays_changed = bool if one of the relays that belong to the shutter changed not by shutter or pulsetimer
   char stemp1[10];
 
 	for (byte i=0; i < shutters_present; i++) {
@@ -404,14 +391,12 @@ void Shutter_Relay_changed()
 			if (shutterMode == OFF_ON__OPEN_CLOSE) {
 				switch (powerstate_local) {
 					case 1:
-            snprintf_P(log_data, sizeof(log_data), PSTR("Delay3 5s"));
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay3 5s"));
             delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
 					  break;
 					case 3:
-            snprintf_P(log_data, sizeof(log_data), PSTR("Delay4 5s"));
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay4 5s"));
             delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, -1, 0);
 					  break;
@@ -422,26 +407,22 @@ void Shutter_Relay_changed()
 			} else {
 				if (Shutter_Direction[i] != 0 && !powerstate_local) {
 					Shutter_Target_Position[i] = Shutter_Real_Position[i];
-					snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Switch OFF motor. Target: %ld, source: %s, powerstate_local %ld, switchedRelay %d, manual change %d"), i, Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate_local,SwitchedRelay,manual_relays_changed);
-					AddLog(LOG_LEVEL_DEBUG);
+					AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Shutter %d: Switch OFF motor. Target: %ld, source: %s, powerstate_local %ld, switchedRelay %d, manual change %d"), i, Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate_local,SwitchedRelay,manual_relays_changed);
 				} else {
 					last_source = SRC_SHUTTER; // avoid switch off in the next loop
 					if (powerstate_local == 2) { // testing on CLOSE relay, if ON
 					  // close with relay two
-            snprintf_P(log_data, sizeof(log_data), PSTR("Delay1 5s"));
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay1 5s"));
             delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, -1, 0);
 					} else {
 					  // opens with relay one
-            snprintf_P(log_data, sizeof(log_data), PSTR("Delay2 5s"));
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay2 5s"));
             delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
 					}
 				}
-        snprintf_P(log_data, sizeof(log_data), PSTR("Shutter %d: Target: %ld, powerstatelocal %d"), i, Shutter_Target_Position[i], powerstate_local);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Shutter %d: Target: %ld, powerstatelocal %d"), i, Shutter_Target_Position[i], powerstate_local);
 			}
 		}
 	}
@@ -473,9 +454,9 @@ void SetShutterPosition(uint8_t device, uint8_t position)
 
 #define XDRV_97
 
-boolean Xdrv97(byte function)
+bool Xdrv97(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (Settings.flag3.shutter_mode) {
     switch (function) {
@@ -494,7 +475,7 @@ boolean Xdrv97(byte function)
       case FUNC_JSON_APPEND:
         for (byte i=0; i < shutters_present; i++) {
           byte position =  Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i];
-         snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, position, Shutter_Direction[i]);
+          Response_P( JSON_SHUTTER_POS, mqtt_data, D_SHUTTER, i+1, position, Shutter_Direction[i]);
 
           #ifdef USE_DOMOTICZ
             if ((0 == tele_period) ) {
@@ -508,8 +489,7 @@ boolean Xdrv97(byte function)
         // extract the number of the relay that was switched and save for later in Update Position.
         SwitchedRelay = power ^ old_power;
         old_power = power;
-        snprintf_P(log_data, sizeof(log_data), PSTR("Switched relay: %d by %s"), SwitchedRelay,GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource));
-        AddLog(LOG_LEVEL_DEBUG_MORE);
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("Switched relay: %d by %s"), SwitchedRelay,GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource));
         Shutter_Relay_changed();
       break;
     }

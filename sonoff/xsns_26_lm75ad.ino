@@ -53,13 +53,12 @@ void LM75ADDetect(void)
   if (lm75ad_type) { return; }
 
   uint16_t buffer;
-  for (byte i = 0; i < sizeof(lm75ad_addresses); i++) {
+  for (uint8_t i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
     if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
       if (buffer == 0x4B00) {
         lm75ad_type = 1;
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "LM75AD", lm75ad_address);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "LM75AD", lm75ad_address);
         break;
       }
     }
@@ -78,7 +77,7 @@ float LM75ADGetTemp(void) {
   return ConvertTemp(sign * t * 0.125);
 }
 
-void LM75ADShow(boolean json)
+void LM75ADShow(bool json)
 {
   if (lm75ad_type) {
     float t = LM75ADGetTemp();
@@ -86,13 +85,13 @@ void LM75ADShow(boolean json)
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, temperature);
+      ResponseAppend_P(PSTR(",\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), temperature);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "LM75AD", temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_TEMP, "LM75AD", temperature, TempUnit());
 #endif  // USE_WEBSERVER
     }
   }
@@ -102,9 +101,9 @@ void LM75ADShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns26(byte function)
+bool Xsns26(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -115,7 +114,7 @@ boolean Xsns26(byte function)
         LM75ADShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         LM75ADShow(0);
         break;
 #endif  // USE_WEBSERVER

@@ -39,7 +39,7 @@ extern "C" {
 
 #ifdef USE_WEBSERVER
 
-const char HTTP_SNS_TX20[] PROGMEM = "%s"
+const char HTTP_SNS_TX20[] PROGMEM =
    "{s}TX20 " D_TX20_WIND_SPEED "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
    "{s}TX20 " D_TX20_WIND_SPEED_AVG "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
    "{s}TX20 " D_TX20_WIND_SPEED_MAX "{m}%s " D_UNIT_KILOMETER_PER_HOUR "{e}"
@@ -78,7 +78,7 @@ float tx20_wind_sum = 0;
 int tx20_count = 0;
 uint8_t tx20_wind_direction = 0;
 
-boolean tx20_available = false;
+bool tx20_available = false;
 
 void Tx20StartRead(void)
 {
@@ -170,7 +170,7 @@ void Tx20Init(void) {
   attachInterrupt(pin[GPIO_TX20_TXD_BLACK], Tx20StartRead, RISING);
 }
 
-void Tx20Show(boolean json)
+void Tx20Show(bool json)
 {
   char wind_speed_string[33];
   dtostrfd(tx20_wind_speed_kmh, 2, wind_speed_string);
@@ -182,11 +182,11 @@ void Tx20Show(boolean json)
   GetTextIndexed(wind_direction_string, sizeof(wind_direction_string), tx20_wind_direction, kTx20Directions);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TX20\":{\"Speed\":%s,\"SpeedAvg\":%s,\"SpeedMax\":%s,\"Direction\":\"%s\"}"),
-      mqtt_data, wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string);
+    ResponseAppend_P(PSTR(",\"TX20\":{\"Speed\":%s,\"SpeedAvg\":%s,\"SpeedMax\":%s,\"Direction\":\"%s\"}"),
+      wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string);
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TX20, mqtt_data, wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string);
+    WSContentSend_PD(HTTP_SNS_TX20, wind_speed_string, wind_speed_avg_string, wind_speed_max_string, wind_direction_string);
 #endif  // USE_WEBSERVER
   }
 }
@@ -195,9 +195,9 @@ void Tx20Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns35(byte function)
+bool Xsns35(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pin[GPIO_TX20_TXD_BLACK] < 99) {
     switch (function) {
@@ -211,7 +211,7 @@ boolean Xsns35(byte function)
         Tx20Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Tx20Show(0);
         break;
 #endif  // USE_WEBSERVER

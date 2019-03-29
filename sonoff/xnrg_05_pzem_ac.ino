@@ -49,8 +49,7 @@ void PzemAcEverySecond(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
 
     if (error) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "PzemAc response error %d"), error);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "PzemAc response error %d"), error);
     } else {
       //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
       // 01 04 14 08 D1 00 6C 00 00 00 F4 00 00 00 26 00 00 01 F4 00 64 00 00 51 34
@@ -104,7 +103,7 @@ void PzemAcDrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg05(byte function)
+int Xnrg05(uint8_t function)
 {
   int result = 0;
 

@@ -62,11 +62,11 @@ unsigned long hlw_power_ratio = 0;
 unsigned long hlw_voltage_ratio = 0;
 unsigned long hlw_current_ratio = 0;
 
-byte hlw_select_ui_flag = 0;
-byte hlw_ui_flag = 1;
-byte hlw_model_type = 0;
-byte hlw_load_off = 1;
-byte hlw_cf1_timer = 0;
+uint8_t hlw_select_ui_flag = 0;
+uint8_t hlw_ui_flag = 1;
+uint8_t hlw_model_type = 0;
+uint8_t hlw_load_off = 1;
+uint8_t hlw_cf1_timer = 0;
 
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
 void HlwCfInterrupt(void) ICACHE_RAM_ATTR;
@@ -152,9 +152,8 @@ void HlwEvery200ms(void)
       }
     }
     unsigned long median = hlw_debug[(hlw_cf1_pulse_counter +1) / 2];
-    snprintf_P(log_data, sizeof(log_data), PSTR("NRG: power %d, ui %d, cnt %d, smpl%s, sum %d, mean %d, median %d"),
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: power %d, ui %d, cnt %d, smpl%s, sum %d, mean %d, median %d"),
       hlw_cf_power_pulse_length, hlw_select_ui_flag, hlw_cf1_pulse_counter, stemp, hlw_cf1_summed_pulse_length, cf1_pulse_length, median);
-    AddLog(LOG_LEVEL_DEBUG);
 #endif
 
     if (hlw_select_ui_flag == hlw_ui_flag) {
@@ -246,9 +245,9 @@ void HlwDrvInit(void)
   }
 }
 
-boolean HlwCommand(void)
+bool HlwCommand(void)
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   if ((CMND_POWERCAL == energy_command_code) || (CMND_VOLTAGECAL == energy_command_code) || (CMND_CURRENTCAL == energy_command_code)) {
     // Service in xdrv_03_energy.ino
@@ -277,7 +276,7 @@ boolean HlwCommand(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg01(byte function)
+int Xnrg01(uint8_t function)
 {
   int result = 0;
 

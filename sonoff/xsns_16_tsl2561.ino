@@ -64,13 +64,14 @@ bool Tsl2561Read(void)
 void Tsl2561Detect(void)
 {
   if (tsl2561_type) { return; }
+  uint8_t id;
 
   if (I2cDevice(0x29) || I2cDevice(0x39) || I2cDevice(0x49)) {
     Tsl.begin();
+    if (!Tsl.id(id)) return;
     if (Tsl.on()) {
       tsl2561_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, tsl2561_types, Tsl.address());
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, tsl2561_types, Tsl.address(), id);
     }
   }
 }
@@ -94,21 +95,21 @@ void Tsl2561EverySecond(void)
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_TSL2561[] PROGMEM =
-  "%s{s}TSL2561 " D_ILLUMINANCE "{m}%u.%03u " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}TSL2561 " D_ILLUMINANCE "{m}%u.%03u " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
-void Tsl2561Show(boolean json)
+void Tsl2561Show(bool json)
 {
   if (tsl2561_valid) {
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),
-        mqtt_data, tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
+      ResponseAppend_P(PSTR(",\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),
+        tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, (tsl2561_milliLux + 500) / 1000); }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TSL2561, mqtt_data, tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
+      WSContentSend_PD(HTTP_SNS_TSL2561, tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
 #endif  // USE_WEBSERVER
     }
   }
@@ -118,9 +119,9 @@ void Tsl2561Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns16(byte function)
+bool Xsns16(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -134,7 +135,7 @@ boolean Xsns16(byte function)
         Tsl2561Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Tsl2561Show(0);
         break;
 #endif  // USE_WEBSERVER

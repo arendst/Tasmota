@@ -158,12 +158,11 @@ static PID pid[MAX_PIID];
 static int update_secs = PID_UPDATE_SECS <= 0  ?  0  :  PID_UPDATE_SECS;   // how often (secs) the pid alogorithm is run
 static int max_interval = PID_MAX_INTERVAL;
 static unsigned long last_pv_update_secs = 0;
-static boolean run_pid_now = false;     // tells PID_Every_Second to run the pid algorithm
+static bool run_pid_now = false;     // tells PID_Every_Second to run the pid algorithm
 
 void PID_Init()
 {
-  snprintf_P(log_data, sizeof(log_data), "PID Init");
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P2(LOG_LEVEL_INFO, "PID Init");
   for (byte i=0; i<MAX_PIID; i++) {
     pid[0].initialise( PID_SETPOINT, PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_INITIAL_INT,
       PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR, PID_AUTO, PID_MANUAL_POWER );
@@ -185,8 +184,7 @@ void PID_Show_Sensor() {
   // as published in tele/SENSOR
   // Update period is specified in TELE_PERIOD
   // e.g. "{"Time":"2018-03-13T16:48:05","DS18B20":{"Temperature":22.0},"TempUnit":"C"}"
-  snprintf_P(log_data, sizeof(log_data), D_CMND_PID_SHOWSENSOR ": mqtt_data: %s", mqtt_data);
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_SHOWSENSOR ": mqtt_data: %s", mqtt_data);
   StaticJsonBuffer<400> jsonBuffer;
   // force mqtt_data to read only to stop parse from overwriting it
   JsonObject& data_json = jsonBuffer.parseObject((const char*)mqtt_data);
@@ -194,8 +192,8 @@ void PID_Show_Sensor() {
     const char* value = data_json["DS18B20-1"]["Temperature"];
     // check that something was found and it contains a number
     if (value != NULL && strlen(value) > 0 && (isdigit(value[0]) || (value[0] == '-' && isdigit(value[1])) ) ) {
-      snprintf_P(log_data, sizeof(log_data), D_CMND_PID_SHOWSENSOR ": Temperature: %s", value);
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_SHOWSENSOR ": Temperature: %s", value);
+
       // pass the value to the pid alogorithm to use as current pv
       last_pv_update_secs = utc_time;
       pid[0].setPv(atof(value), last_pv_update_secs);
@@ -205,13 +203,11 @@ void PID_Show_Sensor() {
         run_pid_now = true;
       }
     } else {
-      snprintf_P(log_data, sizeof(log_data), D_CMND_PID_SHOWSENSOR ": no temperature found");
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO,  D_CMND_PID_SHOWSENSOR ": no temperature found");
     }
   } else  {
     // parse failed
-    snprintf_P(log_data, sizeof(log_data), D_CMND_PID_SHOWSENSOR ": json parse failed");
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO,  D_CMND_PID_SHOWSENSOR ": json parse failed");
   }
 }
 
@@ -225,20 +221,20 @@ void PID_Show_Sensor() {
 /*   char         *data; */
 /* } XdrvMailbox; */
 
-boolean PID_Command()
+bool PID_Command()
 {
   char command [CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
   uint8_t ua_prefix_len = strlen(D_CMND_PID); // to detect prefix of command
 
-  snprintf_P(log_data, sizeof(log_data), "Command called: "
+  AddLog_P2(LOG_LEVEL_INFO, "Command called: "
     "index: %d data_len: %d payload: %d topic: %s data: %s",
     XdrvMailbox.index,
     XdrvMailbox.data_len,
     XdrvMailbox.payload,
     (XdrvMailbox.payload >= 0 ? XdrvMailbox.topic : ""),
     (XdrvMailbox.data_len >= 0 ? XdrvMailbox.data : ""));
-  AddLog(LOG_LEVEL_INFO);
+
 
   if (0 == strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_PID), ua_prefix_len) && XdrvMailbox.index <= MAX_PIID) {
     // command starts with pid_
@@ -246,8 +242,8 @@ boolean PID_Command()
     serviced = true;
     switch (command_code) {
       case CMND_PID_SETPV:
-        snprintf_P(log_data, sizeof(log_data), D_CMND_PID_COMMAND "setpv");
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_COMMAND "setpv");
+
         last_pv_update_secs = utc_time;
         pid[XdrvMailbox.index-1].setPv(atof(XdrvMailbox.data), last_pv_update_secs);
         // also trigger running the pid algorithm if we have been told to run it each pv sample
@@ -258,63 +254,62 @@ boolean PID_Command()
         break;
 
       case CMND_PID_SETSETPOINT:
-        snprintf_P(log_data, sizeof(log_data), D_CMND_PID_COMMAND "setsetpoint");
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_COMMAND "setsetpoint");
         pid[XdrvMailbox.index-1].setSp(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETPROPBAND:
-        snprintf_P(log_data, sizeof(log_data), D_CMND_PID_COMMAND "propband");
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_COMMAND "propband");
+
         pid[XdrvMailbox.index-1].setPb(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETINTEGRAL_TIME:
-        snprintf_P(log_data, sizeof(log_data), D_CMND_PID_COMMAND "Ti");
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_COMMAND "Ti");
+
         pid[XdrvMailbox.index-1].setTi(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETDERIVATIVE_TIME:
-        snprintf_P(log_data, sizeof(log_data), D_CMND_PID_COMMAND "Td");
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_COMMAND "Td");
+
         pid[XdrvMailbox.index-1].setTd(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETINITIAL_INT:
-        snprintf_P(log_data, sizeof(log_data), D_CMND_PID_COMMAND "initial int");
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_COMMAND "initial int");
+
         pid[XdrvMailbox.index-1].setInitialInt(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETDERIV_SMOOTH_FACTOR:
-        snprintf_P(log_data, sizeof(log_data), D_CMND_PID_COMMAND "deriv smooth");
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_COMMAND "deriv smooth");
+
         pid[XdrvMailbox.index-1].setDSmooth(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETAUTO:
-        snprintf_P(log_data, sizeof(log_data), D_CMND_PID_COMMAND "auto");
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_COMMAND "auto");
+
         pid[XdrvMailbox.index-1].setAuto(atoi(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETMANUAL_POWER:
-        snprintf_P(log_data, sizeof(log_data), D_CMND_PID_COMMAND "manual power");
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_COMMAND "manual power");
+
         pid[XdrvMailbox.index-1].setManualPower(atof(XdrvMailbox.data));
         break;
 
       case CMND_PID_SETMAX_INTERVAL:
-      snprintf_P(log_data, sizeof(log_data), D_CMND_PID_COMMAND "max interval");
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_COMMAND "max interval");
+
       max_interval = atoi(XdrvMailbox.data);
       pid[XdrvMailbox.index-1].setMaxInterval(max_interval);
       break;
 
       case CMND_PID_SETUPDATE_SECS:
-        snprintf_P(log_data, sizeof(log_data), D_CMND_PID_COMMAND "update secs");
-        AddLog(LOG_LEVEL_INFO);
+        AddLog_P2(LOG_LEVEL_INFO, D_CMND_PID_COMMAND "update secs");
+
         update_secs = atoi(XdrvMailbox.data) ;
         if (update_secs < 0) update_secs = 0;
         break;
@@ -325,7 +320,7 @@ boolean PID_Command()
 
     if (serviced) {
       // set mqtt RESULT
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"), XdrvMailbox.topic, XdrvMailbox.data);
+      ResponseAppend_P(PSTR("{\"%s\":\"%s\"}"), XdrvMailbox.topic, XdrvMailbox.data);
     }
 
   } else {
@@ -340,12 +335,12 @@ static void run_pid()
   char buf[10];
   dtostrfd(power, 3, buf);
   // implement global char an publish only on change
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"), D_CMND_PID_RESULTNAME, buf);
+  ResponseAppend_P(PSTR("{\"%s\":\"%s\"}"), D_CMND_PID_RESULTNAME, buf);
   MqttPublishPrefixTopic_P(TELE, "PID", false);
 
 #if defined PID_USE_CUSTOMTOPIC
   dtostrfd(power*100, 0, buf);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(PID_USE_CUSTOMTOPIC " %s"), buf);
+  ResponseAppend_P( PSTR(PID_USE_CUSTOMTOPIC " %s"), buf);
   ExecuteCommand(mqtt_data, SRC_IGNORE);
 #endif
 
@@ -361,9 +356,9 @@ static void run_pid()
 
 #define XDRV_92
 
-boolean Xdrv92(byte function)
+bool Xdrv92(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   switch (function) {
   case FUNC_INIT:

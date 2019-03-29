@@ -82,24 +82,23 @@ void Sht3xDetect(void)
 
   float t;
   float h;
-  for (byte i = 0; i < SHT3X_MAX_SENSORS; i++) {
+  for (uint8_t i = 0; i < SHT3X_MAX_SENSORS; i++) {
     if (Sht3xRead(t, h, sht3x_addresses[i])) {
       sht3x_sensors[sht3x_count].address = sht3x_addresses[i];
       GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), i, kShtTypes);
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, sht3x_sensors[sht3x_count].types, sht3x_sensors[sht3x_count].address);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, sht3x_sensors[sht3x_count].types, sht3x_sensors[sht3x_count].address);
       sht3x_count++;
     }
   }
 }
 
-void Sht3xShow(boolean json)
+void Sht3xShow(bool json)
 {
   if (sht3x_count) {
     float t;
     float h;
     char types[11];
-    for (byte i = 0; i < sht3x_count; i++) {
+    for (uint8_t i = 0; i < sht3x_count; i++) {
       if (Sht3xRead(t, h, sht3x_sensors[i].address)) {
 
         if (0 == i) { SetGlobalValues(t, h); }
@@ -111,7 +110,7 @@ void Sht3xShow(boolean json)
         snprintf_P(types, sizeof(types), PSTR("%s-0x%02X"), sht3x_sensors[i].types, sht3x_sensors[i].address);  // "SHT3X-0xXX"
 
         if (json) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, types, temperature, humidity);
+          ResponseAppend_P(JSON_SNS_TEMPHUM, types, temperature, humidity);
 #ifdef USE_DOMOTICZ
           if ((0 == tele_period) && (0 == i)) {  // We want the same first sensor to report to Domoticz in case a read is missed
             DomoticzTempHumSensor(temperature, humidity);
@@ -127,8 +126,8 @@ void Sht3xShow(boolean json)
 
 #ifdef USE_WEBSERVER
         } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, types, temperature, TempUnit());
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, types, humidity);
+          WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
+          WSContentSend_PD(HTTP_SNS_HUM, types, humidity);
 #endif  // USE_WEBSERVER
         }
       }
@@ -140,9 +139,9 @@ void Sht3xShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns14(byte function)
+bool Xsns14(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -153,7 +152,7 @@ boolean Xsns14(byte function)
         Sht3xShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Sht3xShow(0);
         break;
 #endif  // USE_WEBSERVER

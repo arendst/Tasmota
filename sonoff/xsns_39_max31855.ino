@@ -101,7 +101,7 @@ int32_t MAX31855_ShiftIn(uint8_t Length){
 
     digitalWrite(pin[GPIO_MAX31855CS], LOW);            // CS = LOW -> Start SPI communication
     delayMicroseconds(1);                               // CS fall to output enable = max. 100ns
-    
+
     for(uint8_t i = 0; i < Length; i++)
     {
         digitalWrite(pin[GPIO_MAX31855CLK], LOW);
@@ -115,7 +115,7 @@ int32_t MAX31855_ShiftIn(uint8_t Length){
 
     digitalWrite(pin[GPIO_MAX31855CS], HIGH);           // CS = HIGH -> End SPI communication
     digitalWrite(pin[GPIO_MAX31855CLK], LOW);
-    return dataIn;    
+    return dataIn;
 }
 
 void MAX31855_Show(bool Json){
@@ -125,8 +125,8 @@ void MAX31855_Show(bool Json){
     dtostrfd(MAX31855_Result.ReferenceTemperature, Settings.flag2.temperature_resolution, referencetemp);
 
     if(Json){
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_PROBETEMPERATURE "\":%s,\"" D_JSON_REFERENCETEMPERATURE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
-            mqtt_data, "MAX31855", probetemp, referencetemp, MAX31855_Result.ErrorCode);
+        ResponseAppend_P(PSTR(",\"MAX31855\":{\"" D_JSON_PROBETEMPERATURE "\":%s,\"" D_JSON_REFERENCETEMPERATURE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
+          probetemp, referencetemp, MAX31855_Result.ErrorCode);
 #ifdef USE_DOMOTICZ
         if (0 == tele_period) {
           DomoticzSensor(DZ_TEMP, probetemp);
@@ -139,7 +139,7 @@ void MAX31855_Show(bool Json){
 #endif  // USE_KNX
     } else {
 #ifdef USE_WEBSERVER
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "MAX31855", probetemp, TempUnit());
+        WSContentSend_PD(HTTP_SNS_TEMP, "MAX31855", probetemp, TempUnit());
 #endif  // USE_WEBSERVER
     }
 }
@@ -148,9 +148,9 @@ void MAX31855_Show(bool Json){
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns39(byte function)
+bool Xsns39(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
   if((pin[GPIO_MAX31855CS] < 99) && (pin[GPIO_MAX31855CLK] < 99) && (pin[GPIO_MAX31855DO] < 99)){
 
     switch (function) {
@@ -164,7 +164,7 @@ boolean Xsns39(byte function)
         MAX31855_Show(true);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         MAX31855_Show(false);
         break;
 #endif  // USE_WEBSERVER

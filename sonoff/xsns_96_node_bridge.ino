@@ -90,7 +90,7 @@ void HardBridgeInput()
  * Commands
 \*********************************************************************************************/
 
-void NodeShow(boolean json)
+void NodeShow(bool json)
 {
 
 if (json) {
@@ -141,9 +141,9 @@ if (json) {
 
 #define XSNS_96
 
-boolean Xsns96(byte function)
+bool Xsns96(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
 
      switch (function) {

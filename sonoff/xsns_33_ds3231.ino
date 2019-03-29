@@ -62,9 +62,9 @@
 #define HR1224 6                   //Hours register 12 or 24 hour mode (24 hour mode==0)
 #define CENTURY 7                  //Century bit in Month register
 #define DYDT 6                     //Day/Date flag bit in alarm Day/Date registers
-boolean ds3231ReadStatus = false;
-boolean ds3231WriteStatus = false; //flag, we want to wriet/write to DS3231 onlu once
-boolean DS3231chipDetected = false;
+bool ds3231ReadStatus = false;
+bool ds3231WriteStatus = false; //flag, we want to wriet/write to DS3231 onlu once
+bool DS3231chipDetected = false;
 
 /*----------------------------------------------------------------------*
   Detect the DS3231 Chip
@@ -73,12 +73,11 @@ void DS3231Detect(void)
 {
   DS3231chipDetected = false;
   if (I2cValidRead(USE_RTC_ADDR, RTC_STATUS, 1)) {
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "DS3231", USE_RTC_ADDR);
+    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "DS3231", USE_RTC_ADDR);
     DS3231chipDetected = true;
   } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_I2C "%s *NOT* " D_FOUND_AT " 0x%x"), "DS3231", USE_RTC_ADDR);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_I2C "DS3231 NOT " D_FOUND_AT " 0x%x"), USE_RTC_ADDR);
   }
-  AddLog(LOG_LEVEL_INFO);
 }
 
 /*----------------------------------------------------------------------*
@@ -132,9 +131,9 @@ void SetDS3231Time (uint32_t epoch_time) {
    Interface
   \*********************************************************************************************/
 
-boolean Xsns33(byte function)
+bool Xsns33(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -144,7 +143,7 @@ boolean Xsns33(byte function)
       case FUNC_EVERY_SECOND:
         TIME_T tmpTime;
         if (!ds3231ReadStatus && DS3231chipDetected && utc_time < 1451602800 ) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
-          ntp_force_sync = 1; //force to sync with ntp
+          ntp_force_sync = true; //force to sync with ntp
           utc_time = ReadFromDS3231(); //we read UTC TIME from DS3231
           // from this line, we just copy the function from "void RtcSecond()" at the support.ino ,line 2143 and above
           // We need it to set rules etc.
@@ -155,9 +154,8 @@ boolean Xsns33(byte function)
           RtcTime.year = tmpTime.year + 1970;
           daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
           standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
-          snprintf_P(log_data, sizeof(log_data), PSTR("Set time from DS3231 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+          AddLog_P2(LOG_LEVEL_INFO, PSTR("Set time from DS3231 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                      GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
-          AddLog(LOG_LEVEL_INFO);
           if (local_time < 1451602800) {  // 2016-01-01
             rules_flag.time_init = 1;
           } else {
@@ -165,9 +163,8 @@ boolean Xsns33(byte function)
           }
         }
         else if (!ds3231WriteStatus && DS3231chipDetected &&  utc_time > 1451602800 && abs(utc_time - ReadFromDS3231()) > 60) {//if time is valid and is drift from RTC in more that 60 second
-          snprintf_P(log_data, sizeof(log_data), PSTR("Write Time TO DS3231 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+          AddLog_P2(LOG_LEVEL_INFO, PSTR("Write Time TO DS3231 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                      GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
-          AddLog(LOG_LEVEL_INFO);
           SetDS3231Time (utc_time); //update the DS3231 time
           ds3231WriteStatus = true;
         }

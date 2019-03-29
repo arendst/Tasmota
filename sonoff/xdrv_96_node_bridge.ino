@@ -211,10 +211,10 @@ void NodeBridgeInit(void)
  * Commands
 \*********************************************************************************************/
 
-boolean NodeBridgeCommand()
+bool NodeBridgeCommand()
 {
   char command [CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kNodeBridgeCommands);
   if ((CMND_SSERIALSEND == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
@@ -337,7 +337,7 @@ void NodeConvert()
 
 }
 
-void NodeShow(boolean json)
+void NodeShow(bool json)
 {
 
 if (json) {
@@ -442,9 +442,9 @@ if(no4==4) {
 
 #define XDRV_96
 
-boolean Xdrv96(byte function)
+bool Xdrv96(byte function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (node_bridge_active) {
     switch (function) {
@@ -466,9 +466,9 @@ boolean Xdrv96(byte function)
 
 #define XSNS_96
 
-boolean Xsns96(byte function)
+bool Xsns96(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
 
     switch (function) {

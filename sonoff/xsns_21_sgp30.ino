@@ -44,10 +44,8 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
   if (!sgp30_type) {
     if (sgp.begin()) {
       sgp30_type = 1;
-//      snprintf_P(log_data, sizeof(log_data), PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
-//      AddLog(LOG_LEVEL_DEBUG);
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "SGP30", 0x58);
-      AddLog(LOG_LEVEL_DEBUG);
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "SGP30", 0x58);
     }
   } else {
     if (!sgp.IAQmeasure()) return;  // Measurement failed
@@ -59,28 +57,27 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
       uint16_t eCO2_base;
 
       if (!sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) return;  // Failed to get baseline readings
-//      snprintf_P(log_data, sizeof(log_data), PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
-//      AddLog(LOG_LEVEL_DEBUG);
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
     }
     sgp30_ready = 1;
   }
 }
 
-const char HTTP_SNS_SGP30[] PROGMEM = "%s"
+const char HTTP_SNS_SGP30[] PROGMEM =
   "{s}SGP30 " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}SGP30 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
-void Sgp30Show(boolean json)
+void Sgp30Show(bool json)
 {
   if (sgp30_ready) {
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), mqtt_data, sgp.eCO2, sgp.TVOC);
+      ResponseAppend_P(PSTR(",\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), sgp.eCO2, sgp.TVOC);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, sgp.eCO2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SGP30, mqtt_data, sgp.eCO2, sgp.TVOC);
+      WSContentSend_PD(HTTP_SNS_SGP30, sgp.eCO2, sgp.TVOC);
 #endif
     }
   }
@@ -90,9 +87,9 @@ void Sgp30Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns21(byte function)
+bool Xsns21(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -103,7 +100,7 @@ boolean Xsns21(byte function)
         Sgp30Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Sgp30Show(0);
         break;
 #endif  // USE_WEBSERVER

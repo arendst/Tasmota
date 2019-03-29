@@ -67,7 +67,7 @@ char MGC3130stype[8];
 
 
 #ifdef USE_WEBSERVER
-const char HTTP_MGC_3130_SNS[] PROGMEM = "%s"
+const char HTTP_MGC_3130_SNS[] PROGMEM =
   "{s}" "%s" "{m}%s{e}"
   "{s}" "HwRev" "{m}%u.%u{e}"
   "{s}" "loaderVer" "{m}%u.%u{e}"
@@ -497,17 +497,15 @@ bool MGC3130_detect(void)
   digitalWrite(MGC3130_reset, HIGH);
   delay(50);
 
-  boolean success = false;
+  bool success = false;
   success = MGC3130_receiveMessage(); // This should read the firmware info
   if (success) {
     strcpy_P(MGC3130stype, PSTR("MGC3130"));
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, MGC3130stype, MGC3130_I2C_ADDR);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, MGC3130stype, MGC3130_I2C_ADDR);
     MGC3130_currentGesture[0] = '\0';
     MGC3130_type = true;
   } else {
-    snprintf_P(log_data, sizeof(log_data), PSTR("MGC3130 did not respond at address 0x%x"), MGC3130_I2C_ADDR);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("MGC3130 did not respond at address 0x%x"), MGC3130_I2C_ADDR);
   }
   return success;
 }
@@ -516,7 +514,7 @@ bool MGC3130_detect(void)
  * Presentation
 \*********************************************************************************************/
 
-void MGC3130_show(boolean json)
+void MGC3130_show(bool json)
 {
   if (!MGC3130_type) { return; }
 
@@ -531,8 +529,8 @@ void MGC3130_show(boolean json)
   if (json) {
     if (MGC3130_mode == 3 && !MGC3130_triggeredByTouch) {
       if (MGC_data.out.systemInfo.positionValid && !(MGC_data.out.x == MGC3130_lastSentX && MGC_data.out.y == MGC3130_lastSentY && MGC_data.out.z == MGC3130_lastSentZ)) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"X\":%u,\"Y\":%u,\"Z\":%u}"),
-          mqtt_data, MGC3130stype, MGC_data.out.x/64, MGC_data.out.y/64, (MGC_data.out.z-(uint16_t)MGC3130_MIN_ZVALUE)/64);
+        ResponseAppend_P(PSTR(",\"%s\":{\"X\":%u,\"Y\":%u,\"Z\":%u}"),
+          MGC3130stype, MGC_data.out.x/64, MGC_data.out.y/64, (MGC_data.out.z-(uint16_t)MGC3130_MIN_ZVALUE)/64);
         MGC3130_lastSentX = MGC_data.out.x;
         MGC3130_lastSentY = MGC_data.out.y;
         MGC3130_lastSentZ = MGC_data.out.z;
@@ -542,7 +540,7 @@ void MGC3130_show(boolean json)
 
     if (MGC3130_mode == 2) {
       if (MGC_data.out.systemInfo.airWheelValid && (MGC3130_rotValue != MGC3130_lastSentRotValue)) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"AW\":%i}"), mqtt_data, MGC3130stype, MGC3130_rotValue);
+        ResponseAppend_P(PSTR(",\"%s\":{\"AW\":%i}"), MGC3130stype, MGC3130_rotValue);
         MGC3130_lastSentRotValue = MGC3130_rotValue;
       }
     }
@@ -551,13 +549,13 @@ void MGC3130_show(boolean json)
       if (millis() - MGC3130_touchTimeStamp > 220 ) {
         MGC3130_touchCounter = 1;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"%s\":%u}"), mqtt_data, MGC3130stype, MGC3130_currentGesture, MGC3130_touchCounter);
+      ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%u}"), MGC3130stype, MGC3130_currentGesture, MGC3130_touchCounter);
       MGC3130_currentGesture[0] = '\0';
       MGC3130_touchTimeStamp = millis();
     }
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_MGC_3130_SNS, mqtt_data, MGC3130stype, status_chr, hwRev[0], hwRev[1], loaderVersion[0], loaderVersion[1], loaderPlatform );
+    WSContentSend_PD(HTTP_MGC_3130_SNS, MGC3130stype, status_chr, hwRev[0], hwRev[1], loaderVersion[0], loaderVersion[1], loaderPlatform );
 #endif  // USE_WEBSERVER
   }
 }
@@ -576,7 +574,7 @@ void MGC3130_show(boolean json)
 
 bool MGC3130CommandSensor()
 {
-  boolean serviced = true;
+  bool serviced = true;
 
   switch (XdrvMailbox.payload) {
     case 0: // cycle through the modes
@@ -602,9 +600,9 @@ bool MGC3130CommandSensor()
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns36(byte function)
+bool Xsns36(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     if ((FUNC_INIT == function) && (pin[GPIO_MGC3130_XFER] < 99) && (pin[GPIO_MGC3130_RESET] < 99)) {
@@ -615,7 +613,7 @@ boolean Xsns36(byte function)
         case FUNC_EVERY_50_MSECOND:
           MGC3130_loop();
           break;
-        case FUNC_COMMAND:
+        case FUNC_COMMAND_SENSOR:
           if (XSNS_36 == XdrvMailbox.index) {
             result = MGC3130CommandSensor();
           }
@@ -624,7 +622,7 @@ boolean Xsns36(byte function)
           MGC3130_show(1);
           break;
 #ifdef USE_WEBSERVER
-        case FUNC_WEB_APPEND:
+        case FUNC_WEB_SENSOR:
           MGC3130_show(0);
           break;
 #endif  // USE_WEBSERVER

@@ -20,7 +20,7 @@
 #ifndef _SONOFF_VERSION_H_
 #define _SONOFF_VERSION_H_
 
-#define VERSION            0x06040109
+#define VERSION            0x06050003
 //STB mod
 #define STB_VERSION         0x0101
 //end

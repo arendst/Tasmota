@@ -120,7 +120,7 @@ uint8_t OneWireRead(void)
   return r;
 }
 
-boolean OneWireCrc8(uint8_t *addr)
+bool OneWireCrc8(uint8_t *addr)
 {
   uint8_t crc = 0;
   uint8_t len = 8;
@@ -149,7 +149,7 @@ void Ds18b20Convert(void)
 //  delay(750);                          // 750ms should be enough for 12bit conv
 }
 
-boolean Ds18b20Read(void)
+bool Ds18b20Read(void)
 {
   uint8_t data[9];
   int8_t sign = 1;
@@ -199,13 +199,13 @@ void Ds18b20EverySecond(void)
   }
 }
 
-void Ds18b20Show(boolean json)
+void Ds18b20Show(bool json)
 {
   if (ds18b20_valid) {        // Check for valid temperature
     char temperature[33];
     dtostrfd(ds18b20_temperature, Settings.flag2.temperature_resolution, temperature);
     if(json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMP, mqtt_data, ds18b20_types, temperature);
+      ResponseAppend_P(JSON_SNS_TEMP, ds18b20_types, temperature);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_TEMP, temperature);
@@ -218,7 +218,7 @@ void Ds18b20Show(boolean json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, ds18b20_types, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_TEMP, ds18b20_types, temperature, TempUnit());
 #endif  // USE_WEBSERVER
     }
   }
@@ -228,9 +228,9 @@ void Ds18b20Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns05(byte function)
+bool Xsns05(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pin[GPIO_DSB] < 99) {
     switch (function) {
@@ -241,7 +241,7 @@ boolean Xsns05(byte function)
         Ds18b20Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Ds18b20Show(0);
         break;
 #endif  // USE_WEBSERVER

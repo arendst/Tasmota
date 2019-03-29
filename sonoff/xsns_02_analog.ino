@@ -29,7 +29,7 @@ uint16_t adc_last_value = 0;
 uint16_t AdcRead(void)
 {
   uint16_t analog = 0;
-  for (byte i = 0; i < 32; i++) {
+  for (uint8_t i = 0; i < 32; i++) {
     analog += analogRead(A0);
     delay(1);
   }
@@ -44,21 +44,21 @@ void AdcEvery250ms(void)
   if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
     adc_last_value = new_value;
     uint16_t value = adc_last_value / 10;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
+    Response_P(PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
     XdrvRulesProcess();
   }
 }
 #endif  // USE_RULES
 
-void AdcShow(boolean json)
+void AdcShow(bool json)
 {
   uint16_t analog = AdcRead();
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ANALOG\":{\"A0\":%d}"), mqtt_data, analog);
+    ResponseAppend_P(PSTR(",\"ANALOG\":{\"A0\":%d}"), analog);
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "", 0, analog);
+    WSContentSend_PD(HTTP_SNS_ANALOG, "", 0, analog);
 #endif  // USE_WEBSERVER
   }
 }
@@ -67,9 +67,9 @@ void AdcShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-boolean Xsns02(byte function)
+bool Xsns02(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (my_module_flag.adc0) {
     switch (function) {
@@ -82,7 +82,7 @@ boolean Xsns02(byte function)
         AdcShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         AdcShow(0);
         break;
 #endif  // USE_WEBSERVER
