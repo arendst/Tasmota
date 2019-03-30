@@ -61,6 +61,10 @@
 #define LONGITUDE              2.294442          // [Longitude] Your location to be used with sunrise and sunset
 #endif
 
+#ifndef WORKING_PERIOD
+#define WORKING_PERIOD         5                 // Working period of the SDS Sensor, Takes a reading every X Minutes
+#endif
+
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/
