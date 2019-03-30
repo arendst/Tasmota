@@ -419,8 +419,8 @@ void MqttReconnect(void)
   UdpDisconnect();
 #endif  // USE_EMULATION
 
-//  AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_ATTEMPTING_CONNECTION));
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "(%d) " D_ATTEMPTING_CONNECTION), ESP.getFreeHeap()/1024);
+  AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_ATTEMPTING_CONNECTION));
+//  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "(%d) " D_ATTEMPTING_CONNECTION), ESP.getFreeHeap()/1024);
 
   mqtt_connected = false;
   mqtt_retry_counter = Settings.mqtt_retry;
