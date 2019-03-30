@@ -172,11 +172,11 @@ bool Xdrv08(uint8_t function)
 
   if (serial_bridge_active) {
     switch (function) {
-      case FUNC_PRE_INIT:
-        SerialBridgeInit();
-        break;
       case FUNC_LOOP:
         if (SerialBridgeSerial) { SerialBridgeInput(); }
+        break;
+      case FUNC_PRE_INIT:
+        SerialBridgeInit();
         break;
       case FUNC_COMMAND:
         result = SerialBridgeCommand();

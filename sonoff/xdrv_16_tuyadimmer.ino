@@ -393,14 +393,14 @@ bool Xdrv16(uint8_t function)
 
   if (TUYA_DIMMER == my_module_type) {
     switch (function) {
+      case FUNC_LOOP:
+        if (TuyaSerial) { TuyaSerialInput(); }
+        break;
       case FUNC_MODULE_INIT:
         result = TuyaModuleSelected();
         break;
       case FUNC_INIT:
         TuyaInit();
-        break;
-      case FUNC_LOOP:
-        if (TuyaSerial) { TuyaSerialInput(); }
         break;
       case FUNC_SET_DEVICE_POWER:
         result = TuyaSetPower();

@@ -2355,7 +2355,7 @@ bool Xdrv01(uint8_t function)
     case FUNC_LOOP:
       PollDnsWebserver();
 #ifdef USE_EMULATION
-      if (Settings.flag2.emulation) PollUdp();
+      if (Settings.flag2.emulation) { PollUdp(); }
 #endif  // USE_EMULATION
       break;
     case FUNC_COMMAND:

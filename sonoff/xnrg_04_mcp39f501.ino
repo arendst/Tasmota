@@ -652,11 +652,11 @@ int Xnrg04(uint8_t function)
   }
   else if (XNRG_04 == energy_flg) {
     switch (function) {
-      case FUNC_INIT:
-        McpSnsInit();
-        break;
       case FUNC_LOOP:
         if (McpSerial) { McpSerialInput(); }
+        break;
+      case FUNC_INIT:
+        McpSnsInit();
         break;
       case FUNC_EVERY_SECOND:
         if (McpSerial) { McpEverySecond(); }

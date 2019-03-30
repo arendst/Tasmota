@@ -223,14 +223,14 @@ bool Xdrv19(uint8_t function)
 
   if (PS_16_DZ == my_module_type) {
     switch (function) {
+      case FUNC_LOOP:
+        if (PS16DZSerial) { PS16DZSerialInput(); }
+        break;
       case FUNC_MODULE_INIT:
         result = PS16DZModuleSelected();
         break;
       case FUNC_INIT:
         PS16DZInit();
-        break;
-      case FUNC_LOOP:
-        if (PS16DZSerial) { PS16DZSerialInput(); }
         break;
       case FUNC_SET_DEVICE_POWER:
         result = PS16DZSetPower();
