@@ -254,20 +254,21 @@ char* GetTopic_P(char *stopic, uint8_t prefix, char *topic, const char* subtopic
     fulltopic += F("_fb");                    // cmnd/<mqttclient>_fb
   } else {
     fulltopic = Settings.mqtt_fulltopic;
-    if ((0 == prefix) && (-1 == fulltopic.indexOf(F(MQTT_TOKEN_PREFIX)))) {
-      fulltopic += F("/" MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
+    if ((0 == prefix) && (-1 == fulltopic.indexOf(FPSTR(MQTT_TOKEN_PREFIX)))) {
+      fulltopic += F("/");
+      fulltopic += FPSTR(MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
     }
     for (uint8_t i = 0; i < 3; i++) {
       if ('\0' == Settings.mqtt_prefix[i][0]) {
         snprintf_P(Settings.mqtt_prefix[i], sizeof(Settings.mqtt_prefix[i]), kPrefixes[i]);
       }
     }
-    fulltopic.replace(F(MQTT_TOKEN_PREFIX), Settings.mqtt_prefix[prefix]);
-    fulltopic.replace(F(MQTT_TOKEN_TOPIC), topic);
-    fulltopic.replace(F(MQTT_TOKEN_HOSTNAME), my_hostname);
+    fulltopic.replace(FPSTR(MQTT_TOKEN_PREFIX), Settings.mqtt_prefix[prefix]);
+    fulltopic.replace(FPSTR(MQTT_TOKEN_TOPIC), topic);
+    fulltopic.replace(F("%hostname%"), my_hostname);
     String token_id = WiFi.macAddress();
     token_id.replace(":", "");
-    fulltopic.replace(F(MQTT_TOKEN_ID), token_id);
+    fulltopic.replace(F("%id%"), token_id);
   }
   fulltopic.replace(F("#"), "");
   fulltopic.replace(F("//"), "/");

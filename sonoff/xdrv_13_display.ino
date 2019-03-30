@@ -830,7 +830,7 @@ void DisplayMqttSubscribe(void)
     strlcpy(stopic, Settings.mqtt_fulltopic, sizeof(stopic));
     char *tp = strtok(stopic, "/");
     while (tp != nullptr) {
-      if (!strcmp_P(tp, PSTR(MQTT_TOKEN_PREFIX))) {
+      if (!strcmp_P(tp, MQTT_TOKEN_PREFIX)) {
         break;
       }
       strncat_P(ntopic, PSTR("+/"), sizeof(ntopic) - strlen(ntopic) -1);           // Add single-level wildcards

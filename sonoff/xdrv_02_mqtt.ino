@@ -295,7 +295,7 @@ void MqttConnected(void)
 
     GetTopic_P(stopic, CMND, mqtt_topic, PSTR("#"));
     MqttSubscribe(stopic);
-    if (strstr(Settings.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != nullptr) {
+    if (strstr_P(Settings.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != nullptr) {
       GetTopic_P(stopic, CMND, Settings.mqtt_grptopic, PSTR("#"));
       MqttSubscribe(stopic);
       GetFallbackTopic_P(stopic, CMND, PSTR("#"));
