@@ -2148,7 +2148,7 @@ void HandleNotFound(void)
 /* Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
 bool CaptivePortal(void)
 {
-  if ((WifiIsInManagerMode()) && !ValidIpAddress(WebServer->hostHeader().c_str())) {
+  if ((WifiIsInManagerMode()) && !ValidIpAddress(WebServer->hostHeader())) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_REDIRECTED));
 
     WebServer->sendHeader(F("Location"), String("http://") + WebServer->client().localIP().toString(), true);
@@ -2157,6 +2157,16 @@ bool CaptivePortal(void)
     return true;
   }
   return false;
+}
+
+/** Is this an IP? */
+bool ValidIpAddress(String str)
+{
+  for (uint16_t i = 0; i < str.length(); i++) {
+    int c = str.charAt(i);
+    if (c != '.' && (c < '0' || c > '9')) { return false; }
+  }
+  return true;
 }
 
 /*********************************************************************************************/

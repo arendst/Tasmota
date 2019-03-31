@@ -37,9 +37,6 @@ const char kMqttCommands[] PROGMEM =
   D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
 
-IPAddress mqtt_host_addr;                   // MQTT host IP address
-uint32_t mqtt_host_hash = 0;                // MQTT host name hash
-
 uint16_t mqtt_connect_count = 0;            // MQTT re-connect count
 uint16_t mqtt_retry_counter = 1;            // MQTT connection retry counter
 uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
@@ -451,16 +448,7 @@ void MqttReconnect(void)
   }
 
   MqttClient.setCallback(MqttDataHandler);
-//  MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
-
-  // Skip MQTT host DNS lookup if not needed
-  uint32_t current_hash = GetHash(Settings.mqtt_host, strlen(Settings.mqtt_host));
-  if (mqtt_host_hash != current_hash) {
-    mqtt_host_hash = current_hash;
-    WiFi.hostByName(Settings.mqtt_host, mqtt_host_addr);  // Skips DNS lookup if mqtt_host is IP address string as from mDns
-  }
-  MqttClient.setServer(mqtt_host_addr, Settings.mqtt_port);
-
+  MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data)) {
     MqttConnected();
   } else {
