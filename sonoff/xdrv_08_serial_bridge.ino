@@ -24,7 +24,7 @@
 
 #define XDRV_08                    8
 
-#define SERIAL_BRIDGE_BUFFER_SIZE  130
+const uint8_t SERIAL_BRIDGE_BUFFER_SIZE = 130;
 
 #include <TasmotaSerial.h>
 

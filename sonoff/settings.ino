@@ -69,7 +69,7 @@
  * RTC memory
 \*********************************************************************************************/
 
-#define RTC_MEM_VALID 0xA55A
+const uint16_t RTC_MEM_VALID = 0xA55A;
 
 uint32_t rtc_settings_crc = 0;
 
@@ -168,12 +168,12 @@ extern "C" {
 extern "C" uint32_t _SPIFFS_end;
 
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
-#define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
+const uint32_t SPIFFS_END = ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
 
 // Version 4.2 config = eeprom area
-#define SETTINGS_LOCATION   SPIFFS_END  // No need for SPIFFS as it uses EEPROM area
+const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses EEPROM area
 // Version 5.2 allow for more flash space
-#define CFG_ROTATES         8           // Number of flash sectors used (handles uploads)
+const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
 
 /*********************************************************************************************\
  * EEPROM support based on EEPROM library and tuned for Tasmota

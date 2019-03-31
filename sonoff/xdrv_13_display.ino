@@ -22,11 +22,11 @@
 
 #define XDRV_13                13
 
-#define DISPLAY_MAX_DRIVERS    16           // Max number of display drivers/models supported by xdsp_interface.ino
-#define DISPLAY_MAX_COLS       44           // Max number of columns allowed with command DisplayCols
-#define DISPLAY_MAX_ROWS       32           // Max number of lines allowed with command DisplayRows
+const uint8_t DISPLAY_MAX_DRIVERS = 16;        // Max number of display drivers/models supported by xdsp_interface.ino
+const uint8_t DISPLAY_MAX_COLS = 44;           // Max number of columns allowed with command DisplayCols
+const uint8_t DISPLAY_MAX_ROWS = 32;           // Max number of lines allowed with command DisplayRows
 
-#define DISPLAY_LOG_ROWS       32           // Number of lines in display log buffer
+const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log buffer
 
 #define D_CMND_DISPLAY "Display"
 #define D_CMND_DISP_ADDRESS "Address"

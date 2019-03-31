@@ -27,15 +27,15 @@
 
 #define XDRV_01                               1
 
-#define CHUNKED_BUFFER_SIZE                 400   // Chunk buffer size
-
 #ifndef WIFI_SOFT_AP_CHANNEL
-#define WIFI_SOFT_AP_CHANNEL                  1   // Soft Access Point Channel number between 1 and 11 as used by SmartConfig web GUI
+#define WIFI_SOFT_AP_CHANNEL                  1          // Soft Access Point Channel number between 1 and 11 as used by SmartConfig web GUI
 #endif
 
-#define HTTP_REFRESH_TIME                  2345   // milliseconds
-#define HTTP_RESTART_RECONNECT_TIME        9000   // milliseconds
-#define HTTP_OTA_RESTART_RECONNECT_TIME   20000   // milliseconds
+const uint16_t CHUNKED_BUFFER_SIZE = 400;                // Chunk buffer size (should be smaller than half mqtt_date size)
+
+const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
+#define HTTP_RESTART_RECONNECT_TIME           9000       // milliseconds
+#define HTTP_OTA_RESTART_RECONNECT_TIME       20000      // milliseconds
 
 #include <ESP8266WebServer.h>
 #include <DNSServer.h>
@@ -376,7 +376,7 @@ const char HTTP_COUNTER[] PROGMEM =
   "<br/><div id='t' name='t' style='text-align:center;'></div>";
 
 const char HTTP_END[] PROGMEM =
-  "<div style='text-align:right;font-size:11px;'><hr/><a href='" D_WEBLINK "' target='_blank' style='color:#aaa;'>" D_PROGRAMNAME " %s " D_BY " " D_AUTHOR "</a></div>"
+  "<div style='text-align:right;font-size:11px;'><hr/><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>Sonoff-Tasmota %s " D_BY " Theo Arends</a></div>"
   "</div>"
   "</body>"
   "</html>";
@@ -413,7 +413,7 @@ const char kUploadErrors[] PROGMEM =
 #endif
   ;
 
-#define DNS_PORT 53
+const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
 
 DNSServer *DnsServer;

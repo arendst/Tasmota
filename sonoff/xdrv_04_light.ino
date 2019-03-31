@@ -56,7 +56,7 @@
 
 #define XDRV_04              4
 
-#define WS2812_SCHEMES       7    // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
+const uint8_t WS2812_SCHEMES = 7;    // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
 
 enum LightCommands {
   CMND_COLOR, CMND_COLORTEMPERATURE, CMND_DIMMER, CMND_LED, CMND_LEDTABLE, CMND_FADE,
@@ -70,23 +70,23 @@ const char kLightCommands[] PROGMEM =
 struct LRgbColor {
   uint8_t R, G, B;
 };
-#define MAX_FIXED_COLOR  12
+const uint8_t MAX_FIXED_COLOR = 12;
 const LRgbColor kFixedColor[MAX_FIXED_COLOR] PROGMEM =
   { 255,0,0, 0,255,0, 0,0,255, 228,32,0, 0,228,32, 0,32,228, 188,64,0, 0,160,96, 160,32,240, 255,255,0, 255,0,170, 255,255,255 };
 
 struct LWColor {
   uint8_t W;
 };
-#define MAX_FIXED_WHITE  4
+const uint8_t MAX_FIXED_WHITE = 4;
 const LWColor kFixedWhite[MAX_FIXED_WHITE] PROGMEM = { 0, 255, 128, 32 };
 
 struct LCwColor {
   uint8_t C, W;
 };
-#define MAX_FIXED_COLD_WARM  4
+const uint8_t MAX_FIXED_COLD_WARM = 4;
 const LCwColor kFixedColdWarm[MAX_FIXED_COLD_WARM] PROGMEM = { 0,0, 255,0, 0,255, 128,128 };
 
-uint8_t ledTable[] = {
+const uint8_t ledTable[] = {
   0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
   1,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  3,  4,  4,
@@ -132,11 +132,11 @@ unsigned long strip_timer_counter = 0;    // Bars and Gradient
  * Arilux LC11 Rf support stripped from RCSwitch library
 \*********************************************************************************************/
 
-#define ARILUX_RF_TIME_AVOID_DUPLICATE  1000  // Milliseconds
+const uint32_t ARILUX_RF_TIME_AVOID_DUPLICATE = 1000;  // Milliseconds
 
-#define ARILUX_RF_MAX_CHANGES           51    // Pulses (sync + 2 x 24 bits)
-#define ARILUX_RF_SEPARATION_LIMIT      4300  // Microseconds
-#define ARILUX_RF_RECEIVE_TOLERANCE     60    // Percentage
+const uint8_t ARILUX_RF_MAX_CHANGES = 51;              // Pulses (sync + 2 x 24 bits)
+const uint32_t ARILUX_RF_SEPARATION_LIMIT = 4300;      // Microseconds
+const uint32_t ARILUX_RF_RECEIVE_TOLERANCE = 60;       // Percentage
 
 unsigned int arilux_rf_timings[ARILUX_RF_MAX_CHANGES];
 

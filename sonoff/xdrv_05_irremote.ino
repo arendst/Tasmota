@@ -42,17 +42,17 @@ enum IrHvacVendors { VNDR_TOSHIBA, VNDR_MITSUBISHI, VNDR_LG, VNDR_FUJITSU };
 const char kIrHvacVendors[] PROGMEM = "Toshiba|Mitsubishi|LG|Fujitsu" ;
 
 // HVAC TOSHIBA_
-#define HVAC_TOSHIBA_HDR_MARK 4400
-#define HVAC_TOSHIBA_HDR_SPACE 4300
-#define HVAC_TOSHIBA_BIT_MARK 543
-#define HVAC_TOSHIBA_ONE_SPACE 1623
-#define HVAC_MISTUBISHI_ZERO_SPACE 472
-#define HVAC_TOSHIBA_RPT_MARK 440
-#define HVAC_TOSHIBA_RPT_SPACE 7048 // Above original iremote limit
-#define HVAC_TOSHIBA_DATALEN 9
+const uint16_t HVAC_TOSHIBA_HDR_MARK = 4400;
+const uint16_t HVAC_TOSHIBA_HDR_SPACE = 4300;
+const uint16_t HVAC_TOSHIBA_BIT_MARK = 543;
+const uint16_t HVAC_TOSHIBA_ONE_SPACE = 1623;
+const uint16_t HVAC_MISTUBISHI_ZERO_SPACE = 472;
+const uint16_t HVAC_TOSHIBA_RPT_MARK = 440;
+const uint16_t HVAC_TOSHIBA_RPT_SPACE = 7048; // Above original iremote limit
+const uint8_t HVAC_TOSHIBA_DATALEN = 9;
 
 // HVAC LG
-#define HVAC_LG_DATALEN 7
+const uint8_t HVAC_LG_DATALEN = 7;
 
 IRMitsubishiAC *mitsubir = nullptr;
 
@@ -84,9 +84,8 @@ void IrSendInit(void)
  * IR Receive
 \*********************************************************************************************/
 
-#define IR_RCV_SAVE_BUFFER      0            // 0 = do not use buffer, 1 = use buffer for decoding
-
-#define IR_TIME_AVOID_DUPLICATE 500          // Milliseconds
+const bool IR_RCV_SAVE_BUFFER = false;         // false = do not use buffer, true = use buffer for decoding
+const uint32_t IR_TIME_AVOID_DUPLICATE = 500;  // Milliseconds
 
 #include <IRrecv.h>
 
