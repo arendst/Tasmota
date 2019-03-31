@@ -370,6 +370,14 @@ uint8_t Shortcut(const char* str)
   return result;
 }
 
+bool ValidIpAddress(const char* str)
+{
+  const char* p = str;
+
+  while (*p && ( (*p == '.') || (*p >= '0') || (*p <= '9') )) { p++; }
+  return (*p == '\0');
+}
+
 bool ParseIp(uint32_t* addr, const char* str)
 {
   uint8_t *part = (uint8_t*)addr;
@@ -1247,8 +1255,9 @@ void Syslog(void)
   // Destroys log_data
   char syslog_preamble[64];  // Hostname + Id
 
-  if (syslog_host_hash != GetHash(Settings.syslog_host, strlen(Settings.syslog_host))) {
-    syslog_host_hash = GetHash(Settings.syslog_host, strlen(Settings.syslog_host));
+  uint32_t current_hash = GetHash(Settings.syslog_host, strlen(Settings.syslog_host));
+  if (syslog_host_hash != current_hash) {
+    syslog_host_hash = current_hash;
     WiFi.hostByName(Settings.syslog_host, syslog_host_addr);  // If sleep enabled this might result in exception so try to do it once using hash
   }
   if (PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
