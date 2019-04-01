@@ -81,6 +81,27 @@ void IrSendInit(void)
 #endif //USE_IR_HVAC
 }
 
+char* IrUint64toHex(uint64_t value, char *str, uint16_t bits)
+{
+  ulltoa(value, str, 16);  // Get 64bit value
+
+  int fill = 8;
+  if ((bits > 3) && (bits < 65)) {
+    fill = bits / 4;  // Max 16
+    if (bits % 4) { fill++; }
+  }
+  int len = strlen(str);
+  fill -= len;
+  if (fill > 0) {
+    memmove(str + fill, str, len +1);
+    memset(str, '0', fill);
+  }
+  memmove(str + 2, str, strlen(str) +1);
+  str[0] = '0';
+  str[1] = 'x';
+  return str;
+}
+
 #ifdef USE_IR_RECEIVE
 /*********************************************************************************************\
  * IR Receive
@@ -103,24 +124,6 @@ void IrReceiveInit(void)
   irrecv->enableIRIn();                  // Start the receiver
 
   //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
-}
-
-char* IrUint64toHex(uint64_t value, char *str, uint16_t bits)
-{
-  ulltoa(value, str, 16);  // Get 64bit value
-
-  int fill = 8;
-  if ((bits > 3) && (bits < 65)) { fill = bits / 4 ; }  // Max 16
-  int len = strlen(str);
-  fill -= len;
-  if (fill > 0) {
-    memmove(str + fill, str, len +1);
-    memset(str, '0', fill);
-  }
-  memmove(str + 2, str, strlen(str) +1);
-  str[0] = '0';
-  str[1] = 'x';
-  return str;
 }
 
 void IrReceiveCheck(void)
