@@ -1,6 +1,8 @@
 /* 6.5.0.3 20190328
  * Add command Sensor20 1..255 to change Nova Fitness SDS01 working period in minutes (#5452)
  * Change some defines to const
+ * Change IRsend and receive for 64-bit support (#5523)
+ * Change IRSend Panasonic protocol to 64-bit (#5523)
  *
  * 6.5.0.2 20190325
  * Change UDP initial message handling from string to char using static memory and add debug info (#5505)

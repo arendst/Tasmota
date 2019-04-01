@@ -105,18 +105,37 @@ void IrReceiveInit(void)
   //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
 }
 
+char* IrUint64toHex(uint64_t value, char *str, uint16_t bits)
+{
+  ulltoa(value, str, 16);  // Get 64bit value
+
+  int fill = 8;
+  if ((bits > 3) && (bits < 65)) { fill = bits / 4 ; }  // Max 16
+  int len = strlen(str);
+  fill -= len;
+  if (fill > 0) {
+    memmove(str + fill, str, len +1);
+    memset(str, '0', fill);
+  }
+  memmove(str + 2, str, strlen(str) +1);
+  str[0] = '0';
+  str[1] = 'x';
+  return str;
+}
+
 void IrReceiveCheck(void)
 {
   char sirtype[14];  // Max is AIWA_RC_T501
-  char stemp[16];
   int8_t iridx = 0;
 
   decode_results results;
 
   if (irrecv->decode(&results)) {
+    char hvalue[64];
+    IrUint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 0x00123456
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value 0x%08X, Decode %d"),
-              irsend_active, results.rawlen, results.overflow, results.bits, results.value, results.decode_type);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value %s, Decode %d"),
+              irsend_active, results.rawlen, results.overflow, results.bits, hvalue, results.decode_type);
 
     unsigned long now = millis();
 //    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
@@ -124,16 +143,15 @@ void IrReceiveCheck(void)
       ir_lasttime = now;
 
       iridx = results.decode_type;
-      if ((iridx < 0) || (iridx > 14)) {
-        iridx = 0;  // UNKNOWN
-      }
+      if ((iridx < 0) || (iridx > 14)) { iridx = 0; }  // UNKNOWN
+      char svalue[64];
       if (Settings.flag.ir_receive_decimal) {
-        snprintf_P(stemp, sizeof(stemp), PSTR("%u"), (uint32_t)results.value);
+        ulltoa(results.value, svalue, 10);
       } else {
-        snprintf_P(stemp, sizeof(stemp), PSTR("\"0x%lX\""), (uint32_t)results.value);
+        snprintf_P(svalue, sizeof(svalue), PSTR("\"%s\""), hvalue);
       }
       Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
-        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, stemp);
+        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, svalue);
 
       if (Settings.flag3.receive_raw) {
         ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":["));
@@ -565,14 +583,16 @@ bool IrSendCommand(void)
             // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
             char parm_uc[10];
             const char *protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_PROTOCOL))];
-            uint32_t bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS))];
-            uint32_t data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA))], nullptr, 0);
+            uint16_t bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS))];
+            uint64_t data = strtoull(root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA))], nullptr, 0);
             if (protocol && bits) {
               char protocol_text[20];
               int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
 
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %u (0x%lX), protocol_code %d"),
-                protocol_text, protocol, bits, data, data, protocol_code);
+              char dvalue[64];
+              char hvalue[64];
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (%s), protocol_code %d"),
+                protocol_text, protocol, bits, ulltoa(data, dvalue, 10), IrUint64toHex(data, hvalue, bits), protocol_code);
 
               irsend_active = true;
               switch (protocol_code) {
@@ -591,7 +611,8 @@ bool IrSendCommand(void)
                 case SAMSUNG:
                   irsend->sendSAMSUNG(data, (bits > SAMSUNG_BITS) ? SAMSUNG_BITS : bits); break;
                 case PANASONIC:
-                  irsend->sendPanasonic(bits, data); break;
+//                  irsend->sendPanasonic(bits, data); break;
+                  irsend->sendPanasonic64(data, bits); break;
                 default:
                   irsend_active = false;
                   Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_PROTOCOL_NOT_SUPPORTED);
