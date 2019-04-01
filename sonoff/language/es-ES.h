@@ -1,5 +1,5 @@
 /*
-  es-AR.h - localization for Spanish - Argentina for Sonoff-Tasmota
+  es-ES.h - localization for Spanish - Spain for Sonoff-Tasmota
 
   Copyright (C) 2019  Adrian Scillato
 
@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LANGUAGE_ES_AR_H_
-#define _LANGUAGE_ES_AR_H_
+#ifndef _LANGUAGE_ES_ES_H_
+#define _LANGUAGE_ES_ES_H_
 
 /*************************** ATTENTION *******************************\
  *
@@ -33,7 +33,7 @@
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
-#define LANGUAGE_LCID 11274
+#define LANGUAGE_LCID 1034
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "es"
 
@@ -653,4 +653,4 @@
 #define D_UNIT_KWARH      "kVArH"
 #define D_UNIT_ANGLE      "Grados"
 
-#endif  // _LANGUAGE_ES_AR_H_
+#endif  // _LANGUAGE_ES_ES_H_

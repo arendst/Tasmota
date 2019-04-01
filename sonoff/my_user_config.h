@@ -204,7 +204,7 @@
 //#define MY_LANGUAGE            de-DE           // German in Germany
 //#define MY_LANGUAGE            el-GR           // Greek in Greece
 //#define MY_LANGUAGE            en-GB           // English in Great Britain. Enabled by Default
-//#define MY_LANGUAGE            es-AR           // Spanish in Argentina
+//#define MY_LANGUAGE            es-ES           // Spanish in Spain
 //#define MY_LANGUAGE            fr-FR           // French in France
 //#define MY_LANGUAGE            he-HE           // Hebrew in Israel
 //#define MY_LANGUAGE            hu-HU           // Hungarian in Hungary
