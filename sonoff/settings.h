@@ -185,12 +185,12 @@ struct SYSCFG {
   unsigned long bootcount;                 // 00C
 */
 struct SYSCFG {
-  uint16_t cfg_holder;                     // 000 v6 header
-  uint16_t cfg_size;                       // 002
+  uint16_t      cfg_holder;                // 000 v6 header
+  uint16_t      cfg_size;                  // 002
   unsigned long save_flag;                 // 004
   unsigned long version;                   // 008
-  uint16_t bootcount;                      // 00C
-  uint16_t cfg_crc;                        // 00E
+  uint16_t      bootcount;                 // 00C
+  uint16_t      cfg_crc;                   // 00E
   SysBitfield   flag;                      // 010
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016

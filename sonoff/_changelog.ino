@@ -1,4 +1,8 @@
-/* 6.5.0.3 20190328
+/* 6.5.0.4 20190402
+ * Fix Configure Timer Web GUI (#5568)
+ * Add validation check when loading settings from flash
+ *
+ * 6.5.0.3 20190328
  * Add command Sensor20 1..255 to change Nova Fitness SDS01 working period in minutes (#5452)
  * Change some defines to const
  * Change IRsend and receive for 64-bit support (#5523)

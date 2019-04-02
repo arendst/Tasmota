@@ -460,13 +460,17 @@ void SettingsLoad(void)
 
   settings_location = 0;
   uint32_t flash_location = SETTINGS_LOCATION +1;
+  uint16_t cfg_holder = 0;
   for (uint8_t i = 0; i < CFG_ROTATES; i++) {
     flash_location--;
     ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
 
     bool valid = false;
     if (Settings.version > 0x06000000) {
-      valid = (Settings.cfg_crc == GetSettingsCrc());
+      bool almost_valid = (Settings.cfg_crc == GetSettingsCrc());
+      // Sometimes CRC on pages below FB, overwritten by OTA, is fine but Settings are still invalid. So check cfg_holder too
+      if (almost_valid && (0 == cfg_holder)) { cfg_holder = Settings.cfg_holder; }  // At FB always active cfg_holder
+      valid = (cfg_holder == Settings.cfg_holder);
     } else {
       ESP.flashRead((flash_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
       valid = (Settings.cfg_holder == _SettingsH.cfg_holder);
@@ -485,7 +489,7 @@ void SettingsLoad(void)
   }
   if (settings_location > 0) {
     ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"), settings_location, Settings.save_flag);
+    AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
 
 #ifndef FIRMWARE_MINIMAL
