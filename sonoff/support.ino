@@ -207,9 +207,8 @@ char* ulltoa(unsigned long long value, char *str, int radix)
   int i = 0;
   int n = 0;
 
-/*
-  if (radix < 2 || radix > 36) { radix = 10; }
-*/
+//  if (radix < 2 || radix > 36) { radix = 10; }
+
   do {
     n = value % radix;
     digits[i++] = (n < 10) ? (char)n+'0' : (char)n-10+'A';
@@ -396,7 +395,7 @@ bool ValidIpAddress(const char* str)
 {
   const char* p = str;
 
-  while (*p && ( (*p == '.') || (*p >= '0') || (*p <= '9') )) { p++; }
+  while (*p && ((*p == '.') || ((*p >= '0') && (*p <= '9')))) { p++; }
   return (*p == '\0');
 }
 

@@ -2148,6 +2148,7 @@ void HandleNotFound(void)
 /* Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
 bool CaptivePortal(void)
 {
+  // Possible hostHeader: connectivitycheck.gstatic.com or 192.168.4.1
   if ((WifiIsInManagerMode()) && !ValidIpAddress(WebServer->hostHeader().c_str())) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_REDIRECTED));
 
