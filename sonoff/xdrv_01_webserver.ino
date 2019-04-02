@@ -506,6 +506,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/md", HandleModuleConfiguration);
       WebServer->on("/wi", HandleWifiConfiguration);
       WebServer->on("/lg", HandleLoggingConfiguration);
+      WebServer->on("/tp", HandleTemplateConfiguration);
       WebServer->on("/co", HandleOtherConfiguration);
       WebServer->on("/dl", HandleBackupConfiguration);
       WebServer->on("/rs", HandleRestoreConfiguration);
