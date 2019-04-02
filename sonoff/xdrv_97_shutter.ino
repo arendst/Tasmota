@@ -70,10 +70,12 @@ uint8_t realposition_to_percent(int32_t realpos, uint8_t index)
 void ShutterInit()
 {
   shutters_present = 0;
+  shutter_mask = 0;
   //Initialize to get relay that changed
   old_power = power;
   char shutter_open_chr[10];
   char shutter_close_chr[10];
+  bool relay_in_interlock = false;
 
   AddLog_P2(LOG_LEVEL_INFO, PSTR("Shutter accuracy digits: %d"), Settings.shutter_accuracy);
 
@@ -85,11 +87,22 @@ void ShutterInit()
     }
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
     Settings.shutter_startrelay[i] = (Settings.shutter_startrelay[i] == 0 && i ==  0? 1 : Settings.shutter_startrelay[i]);
-    if (Settings.shutter_startrelay[i] && Settings.shutter_startrelay[i] <33) {
+    if (Settings.shutter_startrelay[i] && Settings.shutter_startrelay[i] <9) {
       shutters_present++;
 
       // Determine shutter types
-      if (Settings.interlock[0]) {
+      shutter_mask |= 3 << (Settings.shutter_startrelay[i] -1)  ;
+
+
+
+      for (uint8_t i = 0; i < MAX_INTERLOCKS * Settings.flag.interlock; i++) {
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("Interlock state i=%d %d, flag %d, , shuttermask %d, maskedIL %d"),i, Settings.interlock[i], Settings.flag.interlock,shutter_mask, Settings.interlock[i]&shutter_mask);
+        if (Settings.interlock[i] && Settings.interlock[i] & shutter_mask) {
+          AddLog_P2(LOG_LEVEL_INFO, PSTR("Relay in Interlock group"));
+          relay_in_interlock = true;
+        }
+      }
+      if ( relay_in_interlock) {
         if (Settings.pulse_timer[i] > 0) {
           shutterMode = PULSE_OPEN__PULSE_CLOSE;
         } else {
