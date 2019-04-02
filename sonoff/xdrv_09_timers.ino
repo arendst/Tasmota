@@ -620,7 +620,7 @@ const char HTTP_TIMER_SCRIPT5[] PROGMEM =
   "function it(){"                                                // Initialize elements and select first tab
     "var b,i,o,s;"
     "pt=eb('t0').value.split(',').map(Number);"                   // Get parameters from hidden area to array
-    "s='';for(i=0;i<" STR(MAX_TIMERS) ";i++){b='';if(0==i){b=\" id='dP'\";}s+=\"<button type='button' class='tl' onclick='ot(\"+i+\",this)'\"+b+\">\"+(i+1)+\"</button>\"}"
+    "s='';for(i=0;i<%d;i++){b='';if(0==i){b=\" id='dP'\";}s+=\"<button type='button' class='tl' onclick='ot(\"+i+\",this)'\"+b+\">\"+(i+1)+\"</button>\"}"
     "eb('bt').innerHTML=s;"                                       // Create tabs
     "if(%d>0){"                                                   // Create Output and Action drop down boxes
       "eb('oa').innerHTML=\"<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1' name='d1'></select></span>&emsp;<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:99px;' id='p1' name='p1'></select>\";"
@@ -705,7 +705,7 @@ void HandleTimerConfiguration(void)
 #endif  // USE_SUNRISE
   WSContentSend_P(HTTP_TIMER_SCRIPT3, devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT4, devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT5, devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT6, devices_present);
   WSContentSendStyle_P(HTTP_TIMER_STYLE);
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");
