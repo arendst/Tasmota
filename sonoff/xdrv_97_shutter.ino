@@ -93,12 +93,10 @@ void ShutterInit()
       // Determine shutter types
       shutter_mask |= 3 << (Settings.shutter_startrelay[i] -1)  ;
 
-
-
       for (uint8_t i = 0; i < MAX_INTERLOCKS * Settings.flag.interlock; i++) {
-        AddLog_P2(LOG_LEVEL_INFO, PSTR("Interlock state i=%d %d, flag %d, , shuttermask %d, maskedIL %d"),i, Settings.interlock[i], Settings.flag.interlock,shutter_mask, Settings.interlock[i]&shutter_mask);
+        //AddLog_P2(LOG_LEVEL_INFO, PSTR("Interlock state i=%d %d, flag %d, , shuttermask %d, maskedIL %d"),i, Settings.interlock[i], Settings.flag.interlock,shutter_mask, Settings.interlock[i]&shutter_mask);
         if (Settings.interlock[i] && Settings.interlock[i] & shutter_mask) {
-          AddLog_P2(LOG_LEVEL_INFO, PSTR("Relay in Interlock group"));
+          //AddLog_P2(LOG_LEVEL_INFO, PSTR("Relay in Interlock group"));
           relay_in_interlock = true;
         }
       }
