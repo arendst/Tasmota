@@ -176,8 +176,10 @@ const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses
 const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
 
 /*********************************************************************************************\
- * EEPROM support based on EEPROM library and tuned for Tasmota
+ * Optional EEPROM support based on EEPROM library and tuned for Tasmota
 \*********************************************************************************************/
+//#define USE_EEPROM
+#ifdef USE_EEPROM
 
 uint32_t eeprom_sector = SPIFFS_END;
 uint8_t* eeprom_data = 0;
@@ -305,7 +307,7 @@ void EepromEnd(void)
   eeprom_size = 0;
   eeprom_dirty = false;
 }
-
+#endif  // USE_EEPROM
 /********************************************************************************************/
 
 uint16_t settings_crc = 0;
@@ -372,7 +374,9 @@ void SettingsSaveAll(void)
     Settings.power = 0;
   }
   XsnsCall(FUNC_SAVE_BEFORE_RESTART);
+#ifdef USE_EEPROM
   EepromCommit();
+#endif
   SettingsSave(0);
 }
 
@@ -415,6 +419,7 @@ void SettingsSave(uint8_t rotate)
     Settings.cfg_size = sizeof(SYSCFG);
     Settings.cfg_crc = GetSettingsCrc();
 
+#ifdef USE_EEPROM
     if (SPIFFS_END == settings_location) {
       uint8_t* flash_buffer;
       flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
@@ -432,6 +437,10 @@ void SettingsSave(uint8_t rotate)
       ESP.flashEraseSector(settings_location);
       ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     }
+#else
+    ESP.flashEraseSector(settings_location);
+    ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+#endif  // USE_EEPROM
 
     if (!stop_flash_rotate && rotate) {
       for (uint8_t i = 1; i < CFG_ROTATES; i++) {
