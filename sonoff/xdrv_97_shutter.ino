@@ -399,15 +399,13 @@ void Shutter_Relay_changed()
 		uint8   manual_relays_changed = ((SwitchedRelay >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
 
 		if (manual_relays_changed) {
-			if (shutterMode == OFF_ON__OPEN_CLOSE) {
+      if (shutterMode == OFF_ON__OPEN_CLOSE) {
 				switch (powerstate_local) {
 					case 1:
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay3 5s"));
             delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
 					  break;
 					case 3:
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay4 5s"));
             delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, -1, 0);
 					  break;
@@ -416,19 +414,17 @@ void Shutter_Relay_changed()
 					  Shutter_Target_Position[i] = Shutter_Real_Position[i];
 				  }
 			} else {
-				if (Shutter_Direction[i] != 0 && !powerstate_local) {
+        if (Shutter_Direction[i] != 0 && (!powerstate_local || (powerstate_local && shutterMode == PULSE_OPEN__PULSE_CLOSE))) {
 					Shutter_Target_Position[i] = Shutter_Real_Position[i];
 					AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Shutter %d: Switch OFF motor. Target: %ld, source: %s, powerstate_local %ld, switchedRelay %d, manual change %d"), i, Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate_local,SwitchedRelay,manual_relays_changed);
 				} else {
 					last_source = SRC_SHUTTER; // avoid switch off in the next loop
 					if (powerstate_local == 2) { // testing on CLOSE relay, if ON
 					  // close with relay two
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay1 5s"));
             delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, -1, 0);
 					} else {
 					  // opens with relay one
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay2 5s"));
             delay(MOTOR_STOP_TIME);
 					  Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
 					}
