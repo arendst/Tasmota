@@ -880,6 +880,7 @@ void HandleKNXConfiguration(void)
             "}"
           "}"));
     WSContentSendStyle();
+    KNX_physs_addr.value = Settings.knx_physsical_addr;
     WSContentSend_P(HTTP_FORM_KNX, KNX_physs_addr.pa.area, KNX_physs_addr.pa.line, KNX_physs_addr.pa.member);
     if ( Settings.flag.knx_enabled ) { WSContentSend_P(PSTR(" checked")); }
     WSContentSend_P(HTTP_FORM_KNX1);
