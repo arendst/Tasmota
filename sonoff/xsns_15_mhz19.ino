@@ -71,8 +71,8 @@ TasmotaSerial *MhzSerial;
 
 const char kMhzModels[] PROGMEM = "|B";
 
-const char ABC_ENABLED[] PROGMEM = "ABC is Enabled";
-const char ABC_DISABLED[] PROGMEM = "ABC is Enabled";
+const char ABC_ENABLED[] = "ABC is Enabled";
+const char ABC_DISABLED[] = "ABC is Disabled";
 
 enum MhzCommands { MHZ_CMND_READPPM, MHZ_CMND_ABCENABLE, MHZ_CMND_ABCDISABLE, MHZ_CMND_ZEROPOINT, MHZ_CMND_RESET, MHZ_CMND_RANGE_1000, MHZ_CMND_RANGE_2000, MHZ_CMND_RANGE_3000, MHZ_CMND_RANGE_5000 };
 const uint8_t kMhzCommands[][4] PROGMEM = {
