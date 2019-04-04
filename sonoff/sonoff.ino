@@ -1619,7 +1619,7 @@ void ExecuteCommand(const char *cmnd, int source)
     }
     pos++;
   }
-  if (nullptr == *start || pos <= start) {   //Did not find any command to execute
+  if (NULL == *start || pos <= start) {   //Did not find any command to execute
     return;
   }
 
