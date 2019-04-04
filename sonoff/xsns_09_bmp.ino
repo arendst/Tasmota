@@ -61,7 +61,7 @@ uint8_t bmp_addresses[] = { BMP_ADDR1, BMP_ADDR2 };
 uint8_t bmp_count = 0;
 uint8_t bmp_once = 1;
 
-bmp_sensors_t *bmp_sensors = NULL;
+bmp_sensors_t *bmp_sensors = nullptr;
 
 /*********************************************************************************************\
  * BMP085 and BME180
@@ -99,7 +99,7 @@ typedef struct {
   uint16_t cal_ac6;
 } bmp180_cal_data_t;
 
-bmp180_cal_data_t *bmp180_cal_data = NULL;
+bmp180_cal_data_t *bmp180_cal_data = nullptr;
 
 bool Bmp180Calibration(uint8_t bmp_idx)
 {
@@ -244,7 +244,7 @@ typedef struct {
   int8_t   dig_H6;
 } Bme280CalibrationData_t;
 
-Bme280CalibrationData_t *Bme280CalibrationData = NULL;
+Bme280CalibrationData_t *Bme280CalibrationData = nullptr;
 
 bool Bmx280Calibrate(uint8_t bmp_idx)
 {
@@ -344,7 +344,7 @@ void Bme280Read(uint8_t bmp_idx)
 
 #include <bme680.h>
 
-struct bme680_dev *gas_sensor = NULL;
+struct bme680_dev *gas_sensor = nullptr;
 
 static void BmeDelayMs(uint32_t ms)
 {
@@ -566,8 +566,7 @@ void BmpShow(bool json)
         char json_gas[40];
         snprintf_P(json_gas, sizeof(json_gas), PSTR(",\"" D_JSON_GAS "\":%s"), gas_resistance);
 
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
-          mqtt_data,
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s%s}"),
           name,
           temperature,
           (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "",
@@ -575,8 +574,8 @@ void BmpShow(bool json)
           (Settings.altitude != 0) ? json_sealevel : "",
           (bmp_sensors[bmp_idx].bmp_model >= 3) ? json_gas : "");
 #else
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s}"),
-          mqtt_data, name, temperature, (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
+        ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s,\"" D_JSON_PRESSURE "\":%s%s}"),
+          name, temperature, (bmp_sensors[bmp_idx].bmp_model >= 2) ? json_humidity : "", pressure, (Settings.altitude != 0) ? json_sealevel : "");
 #endif  // USE_BME680
 
 #ifdef USE_DOMOTICZ
@@ -597,19 +596,20 @@ void BmpShow(bool json)
 
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, name, temperature, TempUnit());
+        WSContentSend_PD(HTTP_SNS_TEMP, name, temperature, TempUnit());
         if (bmp_sensors[bmp_idx].bmp_model >= 2) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, name, humidity);
+          WSContentSend_PD(HTTP_SNS_HUM, name, humidity);
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_PRESSURE, mqtt_data, name, pressure, PressureUnit().c_str());
+        WSContentSend_PD(HTTP_SNS_PRESSURE, name, pressure, PressureUnit().c_str());
         if (Settings.altitude != 0) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SEAPRESSURE, mqtt_data, name, sea_pressure, PressureUnit().c_str());
+          WSContentSend_PD(HTTP_SNS_SEAPRESSURE, name, sea_pressure, PressureUnit().c_str());
         }
 #ifdef USE_BME680
         if (bmp_sensors[bmp_idx].bmp_model >= 3) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), mqtt_data, name, gas_resistance);
+          WSContentSend_PD(PSTR("{s}%s " D_GAS "{m}%s " D_UNIT_KILOOHM "{e}"), name, gas_resistance);
         }
 #endif  // USE_BME680
+
 #endif  // USE_WEBSERVER
       }
     }
@@ -636,7 +636,7 @@ bool Xsns09(uint8_t function)
         BmpShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         BmpShow(0);
         break;
 #endif  // USE_WEBSERVER

@@ -44,7 +44,7 @@
 #else   // USE_WS2812_DMA
   typedef NeoEsp8266BitBang800KbpsMethod selectedNeoSpeedType;
 #endif  // USE_WS2812_DMA
-  NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType> *strip = NULL;
+  NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType> *strip = nullptr;
 
 struct WsColor {
   uint8_t red, green, blue;

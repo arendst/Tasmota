@@ -95,21 +95,21 @@ void Tsl2561EverySecond(void)
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_TSL2561[] PROGMEM =
-  "%s{s}TSL2561 " D_ILLUMINANCE "{m}%u.%03u " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}TSL2561 " D_ILLUMINANCE "{m}%u.%03u " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 void Tsl2561Show(bool json)
 {
   if (tsl2561_valid) {
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),
-        mqtt_data, tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
+      ResponseAppend_P(PSTR(",\"TSL2561\":{\"" D_JSON_ILLUMINANCE "\":%u.%03u}"),
+        tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, (tsl2561_milliLux + 500) / 1000); }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TSL2561, mqtt_data, tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
+      WSContentSend_PD(HTTP_SNS_TSL2561, tsl2561_milliLux / 1000, tsl2561_milliLux % 1000);
 #endif  // USE_WEBSERVER
     }
   }
@@ -135,7 +135,7 @@ bool Xsns16(uint8_t function)
         Tsl2561Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Tsl2561Show(0);
         break;
 #endif  // USE_WEBSERVER

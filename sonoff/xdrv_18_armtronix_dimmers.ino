@@ -170,14 +170,14 @@ bool Xdrv18(uint8_t function)
 
   if (ARMTRONIX_DIMMERS == my_module_type) {
     switch (function) {
+      case FUNC_LOOP:
+        if (ArmtronixSerial) { ArmtronixSerialInput(); }
+        break;
       case FUNC_MODULE_INIT:
         result = ArmtronixModuleSelected();
         break;
       case FUNC_INIT:
         ArmtronixInit();
-        break;
-      case FUNC_LOOP:
-        if (ArmtronixSerial) { ArmtronixSerialInput(); }
         break;
       case FUNC_EVERY_SECOND:
         if (ArmtronixSerial) {

@@ -260,7 +260,7 @@ void SDM120Init(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_SDM120_DATA[] PROGMEM = "%s"
+const char HTTP_SNS_SDM120_DATA[] PROGMEM =
   "{s}SDM120 " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
   "{s}SDM120 " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
   "{s}SDM120 " D_POWERUSAGE_ACTIVE "{m}%s " D_UNIT_WATT "{e}"
@@ -314,11 +314,11 @@ void SDM120Show(bool json)
 #endif // USE_SDM220
   if (json) {
 #ifdef USE_SDM220
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT  "\":%s,\"" D_JSON_PHASE_ANGLE "\":%s,\"" D_JSON_IMPORT_ACTIVE "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s,\"" D_JSON_IMPORT_REACTIVE "\":%s,\"" D_JSON_EXPORT_REACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s}"),
-      mqtt_data, energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current, phase_angle, import_active, export_active, import_reactive, export_reactive, total_reactive);
+    ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT  "\":%s,\"" D_JSON_PHASE_ANGLE "\":%s,\"" D_JSON_IMPORT_ACTIVE "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s,\"" D_JSON_IMPORT_REACTIVE "\":%s,\"" D_JSON_EXPORT_REACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s}"),
+      energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current, phase_angle, import_active, export_active, import_reactive, export_reactive, total_reactive);
 #else
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
-      mqtt_data, energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current);
+    ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
+      energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current);
 #endif // USE_SDM220
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) {
@@ -330,9 +330,9 @@ void SDM120Show(bool json)
 #ifdef USE_WEBSERVER
   } else {
 #ifdef USE_SDM220
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM120_DATA, mqtt_data, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total, phase_angle,import_active,export_active,import_reactive,export_reactive,total_reactive);
+    WSContentSend_PD(HTTP_SNS_SDM120_DATA, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total, phase_angle,import_active,export_active,import_reactive,export_reactive,total_reactive);
 #else
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM120_DATA, mqtt_data, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total);
+    WSContentSend_PD(HTTP_SNS_SDM120_DATA, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total);
 #endif  // USE_SDM220
 #endif  // USE_WEBSERVER
   }
@@ -358,7 +358,7 @@ bool Xsns23(uint8_t function)
         SDM120Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         SDM120Show(0);
         break;
 #endif  // USE_WEBSERVER

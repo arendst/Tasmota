@@ -81,7 +81,7 @@ void SonoffScSerialInput(char *rcvstat)
 
   if (!strncasecmp_P(rcvstat, PSTR("AT+UPDATE="), 10)) {
     int8_t i = -1;
-    for (str = strtok_r(rcvstat, ":", &p); str && i < 5; str = strtok_r(NULL, ":", &p)) {
+    for (str = strtok_r(rcvstat, ":", &p); str && i < 5; str = strtok_r(nullptr, ":", &p)) {
       value[i++] = atoi(str);
     }
     if (value[0] > 0) {
@@ -105,7 +105,7 @@ void SonoffScSerialInput(char *rcvstat)
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_SCPLUS[] PROGMEM =
-  "%s{s}" D_LIGHT "{m}%d%%{e}{s}" D_NOISE "{m}%d%%{e}{s}" D_AIR_QUALITY "{m}%d%%{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}" D_LIGHT "{m}%d%%{e}{s}" D_NOISE "{m}%d%%{e}{s}" D_AIR_QUALITY "{m}%d%%{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 void SonoffScShow(bool json)
@@ -120,8 +120,8 @@ void SonoffScShow(bool json)
     dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SonoffSC\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_LIGHT "\":%d,\"" D_JSON_NOISE "\":%d,\"" D_JSON_AIRQUALITY "\":%d}"),
-        mqtt_data, temperature, humidity, sc_value[2], sc_value[3], sc_value[4]);
+      ResponseAppend_P(PSTR(",\"SonoffSC\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_LIGHT "\":%d,\"" D_JSON_NOISE "\":%d,\"" D_JSON_AIRQUALITY "\":%d}"),
+        temperature, humidity, sc_value[2], sc_value[3], sc_value[4]);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzTempHumSensor(temperature, humidity);
@@ -140,9 +140,9 @@ void SonoffScShow(bool json)
 
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "", temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "", humidity);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SCPLUS, mqtt_data, sc_value[2], sc_value[3], sc_value[4]);
+      WSContentSend_PD(HTTP_SNS_TEMP, "", temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, "", humidity);
+      WSContentSend_PD(HTTP_SNS_SCPLUS, sc_value[2], sc_value[3], sc_value[4]);
 #endif  // USE_WEBSERVER
     }
   }
@@ -165,7 +165,7 @@ bool Xsns04(uint8_t function)
         SonoffScShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         SonoffScShow(0);
         break;
 #endif  // USE_WEBSERVER

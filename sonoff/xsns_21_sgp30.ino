@@ -63,7 +63,7 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
   }
 }
 
-const char HTTP_SNS_SGP30[] PROGMEM = "%s"
+const char HTTP_SNS_SGP30[] PROGMEM =
   "{s}SGP30 " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}SGP30 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
 
@@ -71,13 +71,13 @@ void Sgp30Show(bool json)
 {
   if (sgp30_ready) {
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), mqtt_data, sgp.eCO2, sgp.TVOC);
+      ResponseAppend_P(PSTR(",\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d}"), sgp.eCO2, sgp.TVOC);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, sgp.eCO2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SGP30, mqtt_data, sgp.eCO2, sgp.TVOC);
+      WSContentSend_PD(HTTP_SNS_SGP30, sgp.eCO2, sgp.TVOC);
 #endif
     }
   }
@@ -100,7 +100,7 @@ bool Xsns21(uint8_t function)
         Sgp30Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Sgp30Show(0);
         break;
 #endif  // USE_WEBSERVER

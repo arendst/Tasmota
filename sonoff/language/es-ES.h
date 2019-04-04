@@ -1,5 +1,5 @@
 /*
-  es-AR.h - localization for Spanish - Argentina for Sonoff-Tasmota
+  es-ES.h - localization for Spanish - Spain for Sonoff-Tasmota
 
   Copyright (C) 2019  Adrian Scillato
 
@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LANGUAGE_ES_AR_H_
-#define _LANGUAGE_ES_AR_H_
+#ifndef _LANGUAGE_ES_ES_H_
+#define _LANGUAGE_ES_ES_H_
 
 /*************************** ATTENTION *******************************\
  *
@@ -33,7 +33,7 @@
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
-#define LANGUAGE_LCID 11274
+#define LANGUAGE_LCID 1034
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "es"
 
@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "FallbackTopic"
 #define D_FALSE "Falso"
 #define D_FILE "Archivo"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Memoria Libre"
 #define D_FREQUENCY "Frecuencia"
 #define D_GAS "Gas"
@@ -156,6 +157,7 @@
 #define D_TO "a"
 #define D_TOGGLE "Conmutar"
 #define D_TOPIC "Topic"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "Transmitir"
 #define D_TRUE "Verdadero"
 #define D_TVOC "TVOC"
@@ -220,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Habilitar JavaScript para usar Tasmota"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MÍNIMO - actualice por favor"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MÍNIMO<br/>actualice por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor web activo en"
 #define D_WITH_IP_ADDRESS "con dirección IP"
 #define D_WEBSERVER_STOPPED "Servidor web detenido"
@@ -492,6 +494,9 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "O"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Ninguno"
 #define D_SENSOR_USER          "User"
@@ -576,12 +581,16 @@
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
@@ -644,4 +653,4 @@
 #define D_UNIT_KWARH      "kVArH"
 #define D_UNIT_ANGLE      "Grados"
 
-#endif  // _LANGUAGE_ES_AR_H_
+#endif  // _LANGUAGE_ES_ES_H_

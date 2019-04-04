@@ -147,7 +147,7 @@ void Ili9341PrintLog(void)
     }
 
     char* txt = DisplayLogBuffer('\370');
-    if (txt != NULL) {
+    if (txt != nullptr) {
       uint8_t size = Settings.display_size;
       uint16_t theight = size * TFT_FONT_HEIGTH;
 

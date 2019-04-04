@@ -110,7 +110,7 @@ void Sht3xShow(bool json)
         snprintf_P(types, sizeof(types), PSTR("%s-0x%02X"), sht3x_sensors[i].types, sht3x_sensors[i].address);  // "SHT3X-0xXX"
 
         if (json) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, types, temperature, humidity);
+          ResponseAppend_P(JSON_SNS_TEMPHUM, types, temperature, humidity);
 #ifdef USE_DOMOTICZ
           if ((0 == tele_period) && (0 == i)) {  // We want the same first sensor to report to Domoticz in case a read is missed
             DomoticzTempHumSensor(temperature, humidity);
@@ -126,8 +126,8 @@ void Sht3xShow(bool json)
 
 #ifdef USE_WEBSERVER
         } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, types, temperature, TempUnit());
-          snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, types, humidity);
+          WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
+          WSContentSend_PD(HTTP_SNS_HUM, types, humidity);
 #endif  // USE_WEBSERVER
         }
       }
@@ -152,7 +152,7 @@ bool Xsns14(uint8_t function)
         Sht3xShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Sht3xShow(0);
         break;
 #endif  // USE_WEBSERVER

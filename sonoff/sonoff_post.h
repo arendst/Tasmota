@@ -92,7 +92,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 //#define USE_MPU6050                           // Enable MPU6050 sensor (I2C address 0x68 AD0 low or 0x69 AD0 high) (+2k6 code)
 //#define USE_DS3231                            // Enable DS3231 external RTC in case no Wifi is avaliable. See docs in the source file (+1k2 code)
 //#define USE_MGC3130                           // Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
-//#define USE_MAX44009                           // Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
+//#define USE_MAX44009                          // Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
+#define USE_SCD30                             // Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW
@@ -139,6 +140,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_RF_SENSOR                         // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 //  #define USE_THEO_V2                         // Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver (+1k4 code)
   #define USE_ALECTO_V2                       // Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver (+1k7 code)
+#define USE_HRE                               // Add support for Badger HR-E Water Meter (+1k4 code)
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
@@ -157,8 +159,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #ifndef USE_SMARTCONFIG
 #define USE_SMARTCONFIG                       // Add support for Wifi SmartConfig as initial wifi configuration tool (+23k code, +0.6k mem)
 #endif
-#undef MQTT_LIBRARY_TYPE
-#define MQTT_LIBRARY_TYPE      MQTT_PUBSUBCLIENT   // Use PubSubClient library
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
 //#undef USE_DOMOTICZ                           // Disable Domoticz
 #undef USE_HOME_ASSISTANT                     // Disable Home Assistant
@@ -198,6 +198,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
+#undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_CLASSIC
@@ -246,7 +247,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #define USE_SPI                               // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
     #define USE_DISPLAY_ILI9341               // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0         // There is not enough spare RAM with core 2.3.0 to support the following
     #define USE_DISPLAY_EPAPER_29             // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
+#endif
 
 #undef USE_ARILUX_RF                          // Remove support for Arilux RF remote controller (-0k8 code, 252 iram (non 2.3.0))
 #undef USE_RF_FLASH                           // Remove support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (-3k code)
@@ -325,6 +328,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
+#undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_BASIC
@@ -390,6 +394,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
+#undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_MINIMAL

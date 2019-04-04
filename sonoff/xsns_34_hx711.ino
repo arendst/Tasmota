@@ -128,7 +128,7 @@ void HxCalibrationStateTextJson(uint8_t msg_id)
   char cal_text[30];
 
   hx_calibrate_msg = msg_id;
-  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, GetTextIndexed(cal_text, sizeof(cal_text), hx_calibrate_msg, kHxCalibrationStates));
+  Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, GetTextIndexed(cal_text, sizeof(cal_text), hx_calibrate_msg, kHxCalibrationStates));
 
   if (msg_id < 3) { MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("Sensor34")); }
 }
@@ -162,11 +162,11 @@ bool HxCommand(void)
   switch (XdrvMailbox.payload) {
     case 1:  // Reset scale
       HxReset();
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, "Reset");
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, "Reset");
       break;
     case 2:  // Calibrate
-      if (strstr(XdrvMailbox.data, ",")) {
-        Settings.weight_reference = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), NULL, 10);
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+        Settings.weight_reference = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       hx_scale = 1;
       HxReset();
@@ -175,26 +175,26 @@ bool HxCommand(void)
       HxCalibrationStateTextJson(3);
       break;
     case 3:  // WeightRef to user reference
-      if (strstr(XdrvMailbox.data, ",")) {
-        Settings.weight_reference = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), NULL, 10);
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+        Settings.weight_reference = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
       }
       show_parms = true;
       break;
     case 4:  // WeightCal to user calculated value
-      if (strstr(XdrvMailbox.data, ",")) {
-        Settings.weight_calibration = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), NULL, 10);
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+        Settings.weight_calibration = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
         hx_scale = Settings.weight_calibration;
       }
       show_parms = true;
       break;
     case 5:  // WeightMax
-      if (strstr(XdrvMailbox.data, ",")) {
-        Settings.weight_max = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), NULL, 10) / 1000;
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+        Settings.weight_max = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10) / 1000;
       }
       show_parms = true;
       break;
     case 6:  // WeightItem
-      if (strstr(XdrvMailbox.data, ",")) {
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {
         Settings.weight_item = (unsigned long)(CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 10);
       }
       show_parms = true;
@@ -206,7 +206,7 @@ bool HxCommand(void)
   if (show_parms) {
     char item[33];
     dtostrfd((float)Settings.weight_item / 10, 1, item);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\"" D_JSON_WEIGHT_ITEM "\":%s}}"),
+    Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\"" D_JSON_WEIGHT_ITEM "\":%s}}"),
       Settings.weight_reference, Settings.weight_calibration, Settings.weight_max * 1000, item);
   }
 
@@ -321,11 +321,11 @@ void HxEvery100mSecond(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_HX711_WEIGHT[] PROGMEM = "%s"
+const char HTTP_HX711_WEIGHT[] PROGMEM =
   "{s}HX711 " D_WEIGHT "{m}%s " D_UNIT_KILOGRAM "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-const char HTTP_HX711_COUNT[] PROGMEM = "%s"
+const char HTTP_HX711_COUNT[] PROGMEM =
   "{s}HX711 " D_COUNT "{m}%d{e}";
-const char HTTP_HX711_CAL[] PROGMEM = "%s"
+const char HTTP_HX711_CAL[] PROGMEM =
   "{s}HX711 %s{m}{e}";
 #endif  // USE_WEBSERVER
 
@@ -348,16 +348,16 @@ void HxShow(bool json)
   dtostrfd(weight, Settings.flag2.weight_resolution, weight_chr);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"HX711\":{\"" D_JSON_WEIGHT "\":%s%s}"), mqtt_data, weight_chr, scount);
+    ResponseAppend_P(PSTR(",\"HX711\":{\"" D_JSON_WEIGHT "\":%s%s}"), weight_chr, scount);
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_HX711_WEIGHT, mqtt_data, weight_chr);
+    WSContentSend_PD(HTTP_HX711_WEIGHT, weight_chr);
     if (count > 1) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_HX711_COUNT, mqtt_data, count);
+      WSContentSend_PD(HTTP_HX711_COUNT, count);
     }
     if (hx_calibrate_step) {
       char cal_text[30];
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_HX711_CAL, mqtt_data, GetTextIndexed(cal_text, sizeof(cal_text), hx_calibrate_msg, kHxCalibrationStates));
+      WSContentSend_PD(HTTP_HX711_CAL, GetTextIndexed(cal_text, sizeof(cal_text), hx_calibrate_msg, kHxCalibrationStates));
     }
 #endif  // USE_WEBSERVER
   }
@@ -374,7 +374,7 @@ void HxShow(bool json)
 const char S_CONFIGURE_HX711[] PROGMEM = D_CONFIGURE_HX711;
 
 const char HTTP_BTN_MENU_MAIN_HX711[] PROGMEM =
-  "<br/><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form>";
+  "<p><form action='" WEB_HANDLE_HX711 "' method='get'><button name='reset'>" D_RESET_HX711 "</button></form></p>";
 
 const char HTTP_BTN_MENU_HX711[] PROGMEM =
   "<p><form action='" WEB_HANDLE_HX711 "' method='get'><button>" D_CONFIGURE_HX711 "</button></form></p>";
@@ -426,15 +426,15 @@ void HandleHxAction(void)
     return;
   }
 
-  WSContentStart(FPSTR(D_CONFIGURE_HX711));
+  WSContentStart_P(S_CONFIGURE_HX711);
   WSContentSendStyle();
   dtostrfd((float)Settings.weight_reference / 1000, 3, stemp1);
   char stemp2[20];
   dtostrfd((float)Settings.weight_item / 10000, 4, stemp2);
   WSContentSend_P(HTTP_FORM_HX711, stemp1, stemp2);
-  WSContentSend(FPSTR(HTTP_FORM_END));
-  WSContentSend(FPSTR(HTTP_BTN_CONF));
-  WSContentEnd();
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
+  WSContentStop();
 }
 
 void HxSaveSettings(void)
@@ -476,7 +476,7 @@ bool Xsns34(uint8_t function)
       case FUNC_EVERY_100_MSECOND:
         HxEvery100mSecond();
         break;
-      case FUNC_COMMAND:
+      case FUNC_COMMAND_SENSOR:
         if (XSNS_34 == XdrvMailbox.index) {
           result = HxCommand();
         }
@@ -485,15 +485,15 @@ bool Xsns34(uint8_t function)
         HxShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         HxShow(0);
         break;
 #ifdef USE_HX711_GUI
       case FUNC_WEB_ADD_MAIN_BUTTON:
-        WSContentSend(FPSTR(HTTP_BTN_MENU_MAIN_HX711));
+        WSContentSend_P(HTTP_BTN_MENU_MAIN_HX711);
         break;
       case FUNC_WEB_ADD_BUTTON:
-        WSContentSend(FPSTR(HTTP_BTN_MENU_HX711));
+        WSContentSend_P(HTTP_BTN_MENU_HX711);
         break;
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/" WEB_HANDLE_HX711, HandleHxAction);
