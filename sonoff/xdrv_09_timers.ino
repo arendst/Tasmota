@@ -287,7 +287,7 @@ void TimerEverySecond(void)
               Settings.timer[i].arm = xtimer.repeat;
 #ifdef USE_RULES
               if (3 == xtimer.power) {  // Blink becomes Rule disregarding device and allowing use of Backlog commands
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
+                Response_P(PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
                 XdrvRulesProcess();
               } else
 #endif  // USE_RULES
@@ -325,11 +325,11 @@ void PrepShowTimer(uint8_t index)
       sign[0] = '-';
     }
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%s%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
-    mqtt_data, index, xtimer.arm, xtimer.mode, sign, hour, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
+  ResponseAppend_P(PSTR("\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%s%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
+    index, xtimer.arm, xtimer.mode, sign, hour, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
 #else
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
-    mqtt_data, index, xtimer.arm, xtimer.time / 60, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
+  ResponseAppend_P(PSTR("\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
+    index, xtimer.arm, xtimer.time / 60, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
 #endif  // USE_SUNRISE
 }
 
@@ -365,7 +365,7 @@ bool TimerCommand(void)
           StaticJsonBuffer<256> jsonBuffer;
           JsonObject& root = jsonBuffer.parseObject(dataBufUc);
           if (!root.success()) {
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
+            Response_P(PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
             error = 1;
           }
           else {
@@ -387,7 +387,7 @@ bool TimerCommand(void)
 
               strlcpy(time_str, root[parm_uc], sizeof(time_str));
               const char *substr = strtok(time_str, ":");
-              if (substr != NULL) {
+              if (substr != nullptr) {
                 if (strchr(substr, '-')) {
                   sign = 1;
                   substr++;
@@ -396,8 +396,8 @@ bool TimerCommand(void)
                 if (sign) { value += 12; }  // Allow entering timer offset from -11:59 to -00:01 converted to 12:01 to 23:59
                 if (value > 23) { value = 23; }
                 itime = value * 60;
-                substr = strtok(NULL, ":");
-                if (substr != NULL) {
+                substr = strtok(nullptr, ":");
+                if (substr != nullptr) {
                   value = atoi(substr);
                   if (value < 0) { value = 0; }
                   if (value > 59) { value = 59; }
@@ -439,16 +439,16 @@ bool TimerCommand(void)
           }
 #ifndef USE_RULES
         } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_TIMER_NO_DEVICE "\"}"), index);  // No outputs defined so nothing to control
+          Response_P(PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_TIMER_NO_DEVICE "\"}"), index);  // No outputs defined so nothing to control
           error = 1;
         }
 #endif
       }
     }
     if (!error) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
+      Response_P(PSTR("{"));
       PrepShowTimer(index);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      ResponseAppend_P(PSTR("}"));
     }
   }
   else if (CMND_TIMERS == command_code) {
@@ -461,21 +461,21 @@ bool TimerCommand(void)
       }
     }
 
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag3.timers_enable));
+    Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag3.timers_enable));
     MqttPublishPrefixTopic_P(RESULT_OR_STAT, command);
 
     uint8_t jsflg = 0;
     uint8_t lines = 1;
     for (uint8_t i = 0; i < MAX_TIMERS; i++) {
       if (!jsflg) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMERS "%d\":{"), lines++);
+        Response_P(PSTR("{\"" D_CMND_TIMERS "%d\":{"), lines++);
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
+        ResponseAppend_P(PSTR(","));
       }
       jsflg++;
       PrepShowTimer(i +1);
       if (jsflg > 3) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}}"), mqtt_data);
+        ResponseAppend_P(PSTR("}}"));
         MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_TIMERS));
         jsflg = 0;
       }
@@ -489,7 +489,7 @@ bool TimerCommand(void)
     }
     char lbuff[33];
     dtostrfd(((double)Settings.longitude) /1000000, 6, lbuff);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, lbuff);
+    Response_P(S_JSON_COMMAND_SVALUE, command, lbuff);
   }
   else if (CMND_LATITUDE == command_code) {
     if (XdrvMailbox.data_len) {
@@ -497,7 +497,7 @@ bool TimerCommand(void)
     }
     char lbuff[33];
     dtostrfd(((double)Settings.latitude) /1000000, 6, lbuff);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, lbuff);
+    Response_P(S_JSON_COMMAND_SVALUE, command, lbuff);
   }
 #endif
   else serviced = false;  // Unknown command
@@ -620,7 +620,12 @@ const char HTTP_TIMER_SCRIPT5[] PROGMEM =
   "function it(){"                                                // Initialize elements and select first tab
     "var b,i,o,s;"
     "pt=eb('t0').value.split(',').map(Number);"                   // Get parameters from hidden area to array
-    "s='';for(i=0;i<" STR(MAX_TIMERS) ";i++){b='';if(0==i){b=\" id='dP'\";}s+=\"<button type='button' class='tl' onclick='ot(\"+i+\",this)'\"+b+\">\"+(i+1)+\"</button>\"}"
+    "s='';"
+    "for(i=0;i<%d;i++){"
+      "b='';"
+      "if(0==i){b=\" id='dP'\";}"
+      "s+=\"<button type='button' class='tl' onclick='ot(\"+i+\",this)'\"+b+\">\"+(i+1)+\"</button>\""
+    "}"
     "eb('bt').innerHTML=s;"                                       // Create tabs
     "if(%d>0){"                                                   // Create Output and Action drop down boxes
       "eb('oa').innerHTML=\"<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1' name='d1'></select></span>&emsp;<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:99px;' id='p1' name='p1'></select>\";"
@@ -705,7 +710,7 @@ void HandleTimerConfiguration(void)
 #endif  // USE_SUNRISE
   WSContentSend_P(HTTP_TIMER_SCRIPT3, devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT4, devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT5, devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT6, devices_present);
   WSContentSendStyle_P(HTTP_TIMER_STYLE);
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");
@@ -721,7 +726,7 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_FORM_TIMER4);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
-  WSContentEnd();
+  WSContentStop();
 }
 
 void TimerSaveSettings(void)

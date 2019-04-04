@@ -36,7 +36,7 @@
 
 #include <OneWire.h>
 
-OneWire *ds = NULL;
+OneWire *ds = nullptr;
 
 uint8_t ds18x20_address[DS18X20_MAX_SENSORS][8];
 uint8_t ds18x20_index[DS18X20_MAX_SENSORS];
@@ -178,12 +178,12 @@ void Ds18x20Show(bool json)
 
       if (json) {
         if (!dsxflg) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"DS18x20\":{"), mqtt_data);
+          ResponseAppend_P(PSTR(",\"DS18x20\":{"));
           stemp[0] = '\0';
         }
         dsxflg++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"DS%d\":{\"" D_JSON_TYPE "\":\"%s\",\"" D_JSON_ADDRESS "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"),
-          mqtt_data, stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
+        ResponseAppend_P(PSTR("%s\"DS%d\":{\"" D_JSON_TYPE "\":\"%s\",\"" D_JSON_ADDRESS "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"),
+          stemp, i +1, ds18x20_types, Ds18x20Addresses(i).c_str(), temperature);
         strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
@@ -198,14 +198,14 @@ void Ds18x20Show(bool json)
 #ifdef USE_WEBSERVER
       } else {
         snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, stemp, temperature, TempUnit());
+        WSContentSend_PD(HTTP_SNS_TEMP, stemp, temperature, TempUnit());
 #endif  // USE_WEBSERVER
       }
     }
   }
   if (json) {
     if (dsxflg) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      ResponseAppend_P(PSTR("}"));
     }
   }
   Ds18x20Search();      // Check for changes in sensors number
@@ -233,7 +233,7 @@ bool Xsns05(uint8_t function)
         Ds18x20Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Ds18x20Show(0);
         break;
 #endif  // USE_WEBSERVER

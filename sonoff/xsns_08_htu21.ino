@@ -254,7 +254,7 @@ void HtuShow(bool json)
     dtostrfd(htu_humidity, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, htu_types, temperature, humidity);
+      ResponseAppend_P(JSON_SNS_TEMPHUM, htu_types, temperature, humidity);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzTempHumSensor(temperature, humidity);
@@ -268,8 +268,8 @@ void HtuShow(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, htu_types, temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, htu_types, humidity);
+      WSContentSend_PD(HTTP_SNS_TEMP, htu_types, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, htu_types, humidity);
 #endif  // USE_WEBSERVER
     }
   }
@@ -295,7 +295,7 @@ bool Xsns08(uint8_t function)
         HtuShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         HtuShow(0);
         break;
 #endif  // USE_WEBSERVER

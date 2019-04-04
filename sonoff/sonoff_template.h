@@ -178,6 +178,8 @@ enum UserSelectablePins {
   GPIO_ROT1B,          // Rotary switch1 B Pin
   GPIO_ROT2A,          // Rotary switch2 A Pin
   GPIO_ROT2B,          // Rotary switch2 B Pin
+  GPIO_HRE_CLOCK,      // Clock/Power line for HR-E Water Meter
+  GPIO_HRE_DATA,       // Data line for HR-E Water Meter
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -241,6 +243,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_CSE7766_TX "|" D_SENSOR_CSE7766_RX "|"
   D_SENSOR_ARIRFRCV "|" D_SENSOR_TXD "|" D_SENSOR_RXD "|"
   D_SENSOR_ROTARY "1a|" D_SENSOR_ROTARY "1b|" D_SENSOR_ROTARY "2a|" D_SENSOR_ROTARY "2b|"
+  D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
   ;
 
 /********************************************************************************************/
@@ -584,7 +587,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_ROT1B,          // Rotary switch1 B Pin
   GPIO_ROT2A,          // Rotary switch2 A Pin
   GPIO_ROT2B,          // Rotary switch2 B Pin
-  GPIO_ARIRFRCV        // AliLux RF Receive input
+  GPIO_ARIRFRCV,       // AliLux RF Receive input
+#ifdef USE_HRE
+  GPIO_HRE_CLOCK,
+  GPIO_HRE_DATA
+#endif  
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
@@ -1472,10 +1479,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0
   },
   { "Shelly 1",        // Shelly1 Open Source (ESP8266 - 2MB) - https://shelly.cloud/shelly1-open-source/
-     GPIO_USER,        // GPIO00 - Only to be used when Shelly is connected to 12V DC
-     GPIO_USER,        // GPIO01 Serial RXD - Only to be used when Shelly is connected to 12V DC
+     0,                // GPIO00 - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
+     0,                // GPIO01 Serial RXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
      0,
-     GPIO_USER,        // GPIO03 Serial TXD - Only to be used when Shelly is connected to 12V DC
+     0,                // GPIO03 Serial TXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
      GPIO_REL1,        // GPIO04 Relay (0 = Off, 1 = On)
      GPIO_SWT1_NP,     // GPIO05 SW pin
                        // GPIO06 (SD_CLK   Flash)

@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "Tópico para retornar"
 #define D_FALSE "Falso"
 #define D_FILE "Arquivo"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Memória livre"
 #define D_FREQUENCY "Frequência"
 #define D_GAS "Gás"
@@ -156,6 +157,7 @@
 #define D_TO "Para"
 #define D_TOGGLE "Inverter"
 #define D_TOPIC "Tópico"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "Transmitir"
 #define D_TRUE "Verdadeiro"
 #define D_TVOC "TVOC"
@@ -220,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware mínimo - Atualizar por favor"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware mínimo<br/>Atualizar por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor WEB ativo em"
 #define D_WITH_IP_ADDRESS "com o endereço IP"
 #define D_WEBSERVER_STOPPED "Servidor WEB parou"
@@ -492,6 +494,9 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Nenhum"
 #define D_SENSOR_USER          "User"
@@ -576,12 +581,16 @@
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "H"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"

@@ -32,7 +32,7 @@
 
 #include <TasmotaSerial.h>
 
-TasmotaSerial *PzemSerial = NULL;
+TasmotaSerial *PzemSerial = nullptr;
 
 #define PZEM_VOLTAGE (uint8_t)0xB0
 #define RESP_VOLTAGE (uint8_t)0xA0

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0021'
+VER = '2.1.0023'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -873,7 +873,19 @@ Setting_6_4_1_16.update({
 Setting_6_4_1_17 = copy.deepcopy(Setting_6_4_1_16)
 Setting_6_4_1_17['flag3'][0].pop('no_pullup',None)
 # ======================================================================
+Setting_6_4_1_18 = copy.deepcopy(Setting_6_4_1_17)
+Setting_6_4_1_18['flag3'][0].update ({
+        'no_hold_retain':                ('<L', (0x3A0,1,12), (None, None,                      ('SetOption',   '"SetOption62 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_5_0_3 = copy.deepcopy(Setting_6_4_1_18)
+Setting_6_5_0_3.update({
+    'novasds_period':               ('B',   0x73D,       (None, '0 <= $ <= 255',                ('Sensor',      '"Sensor20 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x6050003, 0xe00, Setting_6_5_0_3),
+            (0x6040112, 0xe00, Setting_6_4_1_18),
             (0x6040111, 0xe00, Setting_6_4_1_17),
             (0x6040110, 0xe00, Setting_6_4_1_16),
             (0x604010D, 0xe00, Setting_6_4_1_13),

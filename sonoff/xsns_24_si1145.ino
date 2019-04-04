@@ -316,7 +316,7 @@ void Si1145Update(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_SI1145[] PROGMEM = "%s"
+const char HTTP_SNS_SI1145[] PROGMEM =
   "{s}SI1145 " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}"     // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}SI1145 " D_INFRARED "{m}%d " D_UNIT_LUX "{e}"
   "{s}SI1145 " D_UV_INDEX "{m}%d.%d{e}";
@@ -329,14 +329,14 @@ void Si1145Show(bool json)
     uint16_t infrared = Si1145ReadIR();
     uint16_t uvindex = Si1145ReadUV();
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SI1145\":{\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_INFRARED "\":%d,\"" D_JSON_UV_INDEX "\":%d.%d}"),
-        mqtt_data, visible, infrared, uvindex /100, uvindex %100);
+      ResponseAppend_P(PSTR(",\"SI1145\":{\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_INFRARED "\":%d,\"" D_JSON_UV_INDEX "\":%d.%d}"),
+        visible, infrared, uvindex /100, uvindex %100);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, visible);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SI1145, mqtt_data, visible, infrared, uvindex /100, uvindex %100);
+      WSContentSend_PD(HTTP_SNS_SI1145, visible, infrared, uvindex /100, uvindex %100);
 #endif
     }
   } else {
@@ -361,7 +361,7 @@ bool Xsns24(uint8_t function)
         Si1145Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Si1145Show(0);
         break;
 #endif  // USE_WEBSERVER

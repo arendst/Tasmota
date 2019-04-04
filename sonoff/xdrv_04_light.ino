@@ -56,7 +56,7 @@
 
 #define XDRV_04              4
 
-#define WS2812_SCHEMES       7    // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
+const uint8_t WS2812_SCHEMES = 7;    // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
 
 enum LightCommands {
   CMND_COLOR, CMND_COLORTEMPERATURE, CMND_DIMMER, CMND_LED, CMND_LEDTABLE, CMND_FADE,
@@ -70,23 +70,23 @@ const char kLightCommands[] PROGMEM =
 struct LRgbColor {
   uint8_t R, G, B;
 };
-#define MAX_FIXED_COLOR  12
+const uint8_t MAX_FIXED_COLOR = 12;
 const LRgbColor kFixedColor[MAX_FIXED_COLOR] PROGMEM =
   { 255,0,0, 0,255,0, 0,0,255, 228,32,0, 0,228,32, 0,32,228, 188,64,0, 0,160,96, 160,32,240, 255,255,0, 255,0,170, 255,255,255 };
 
 struct LWColor {
   uint8_t W;
 };
-#define MAX_FIXED_WHITE  4
+const uint8_t MAX_FIXED_WHITE = 4;
 const LWColor kFixedWhite[MAX_FIXED_WHITE] PROGMEM = { 0, 255, 128, 32 };
 
 struct LCwColor {
   uint8_t C, W;
 };
-#define MAX_FIXED_COLD_WARM  4
+const uint8_t MAX_FIXED_COLD_WARM = 4;
 const LCwColor kFixedColdWarm[MAX_FIXED_COLD_WARM] PROGMEM = { 0,0, 255,0, 0,255, 128,128 };
 
-uint8_t ledTable[] = {
+const uint8_t ledTable[] = {
   0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
   1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
   1,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  3,  4,  4,
@@ -132,11 +132,11 @@ unsigned long strip_timer_counter = 0;    // Bars and Gradient
  * Arilux LC11 Rf support stripped from RCSwitch library
 \*********************************************************************************************/
 
-#define ARILUX_RF_TIME_AVOID_DUPLICATE  1000  // Milliseconds
+const uint32_t ARILUX_RF_TIME_AVOID_DUPLICATE = 1000;  // Milliseconds
 
-#define ARILUX_RF_MAX_CHANGES           51    // Pulses (sync + 2 x 24 bits)
-#define ARILUX_RF_SEPARATION_LIMIT      4300  // Microseconds
-#define ARILUX_RF_RECEIVE_TOLERANCE     60    // Percentage
+const uint8_t ARILUX_RF_MAX_CHANGES = 51;              // Pulses (sync + 2 x 24 bits)
+const uint32_t ARILUX_RF_SEPARATION_LIMIT = 4300;      // Microseconds
+const uint32_t ARILUX_RF_RECEIVE_TOLERANCE = 60;       // Percentage
 
 unsigned int arilux_rf_timings[ARILUX_RF_MAX_CHANGES];
 
@@ -740,43 +740,42 @@ void LightState(uint8_t append)
   int16_t h,s,b;
 
   if (append) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
+    ResponseAppend_P(PSTR(","));
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
+    Response_P(PSTR("{"));
   }
   GetPowerDevice(scommand, light_device, sizeof(scommand), Settings.flag.device_index_enable);
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"),
-    mqtt_data, scommand, GetStateText(light_power), Settings.light_dimmer);
+  ResponseAppend_P(PSTR("\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"), scommand, GetStateText(light_power), Settings.light_dimmer);
   if (light_subtype > LST_SINGLE) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLOR "\":\"%s\""), mqtt_data, LightGetColor(0, scolor));
+    ResponseAppend_P(PSTR(",\"" D_CMND_COLOR "\":\"%s\""), LightGetColor(0, scolor));
     //  Add status for HSB
     LightGetHsb(&hsb[0],&hsb[1],&hsb[2], false);
     //  Scale these percentages up to the numbers expected by the client
     h = round(hsb[0] * 360);
     s = round(hsb[1] * 100);
     b = round(hsb[2] * 100);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), mqtt_data, h,s,b);
+    ResponseAppend_P(PSTR(",\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), h,s,b);
     // Add status for each channel
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_CHANNEL "\":[" ), mqtt_data);
+    ResponseAppend_P(PSTR(",\"" D_CMND_CHANNEL "\":[" ));
     for (uint8_t i = 0; i < light_subtype; i++) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d" ), mqtt_data, (i > 0 ? "," : ""), light_current_color[i] * 100 / 255);
+      ResponseAppend_P(PSTR("%s%d" ), (i > 0 ? "," : ""), light_current_color[i] * 100 / 255);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]" ), mqtt_data);
+    ResponseAppend_P(PSTR("]"));
   }
   if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_COLORTEMPERATURE "\":%d"), mqtt_data, LightGetColorTemp());
+    ResponseAppend_P(PSTR(",\"" D_CMND_COLORTEMPERATURE "\":%d"), LightGetColorTemp());
   }
   if (append) {
     if (light_subtype >= LST_RGB) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_SCHEME "\":%d"), mqtt_data, Settings.light_scheme);
+      ResponseAppend_P(PSTR(",\"" D_CMND_SCHEME "\":%d"), Settings.light_scheme);
     }
     if (LT_WS2812 == light_type) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_WIDTH "\":%d"), mqtt_data, Settings.light_width);
+      ResponseAppend_P(PSTR(",\"" D_CMND_WIDTH "\":%d"), Settings.light_width);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_CMND_FADE "\":\"%s\",\"" D_CMND_SPEED "\":%d,\"" D_CMND_LEDTABLE "\":\"%s\""),
-      mqtt_data, GetStateText(Settings.light_fade), Settings.light_speed, GetStateText(Settings.light_correction));
+    ResponseAppend_P(PSTR(",\"" D_CMND_FADE "\":\"%s\",\"" D_CMND_SPEED "\":%d,\"" D_CMND_LEDTABLE "\":\"%s\""),
+      GetStateText(Settings.light_fade), Settings.light_speed, GetStateText(Settings.light_correction));
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+    ResponseAppend_P(PSTR("}"));
   }
 }
 
@@ -793,11 +792,7 @@ void LightPreparePower(void)
 #ifdef USE_DOMOTICZ
   DomoticzUpdatePowerState(light_device);
 #endif  // USE_DOMOTICZ
-  if (Settings.flag3.hass_tele_on_power) {
-    mqtt_data[0] = '\0';
-    MqttShowState();
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
-  }
+  if (Settings.flag3.hass_tele_on_power) { MqttPublishTeleState(); }
 
   LightState(0);
 }
@@ -953,7 +948,7 @@ void LightAnimate(void)
               light_new_color[i] = light_current_color[i];
             }
           } else {
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_WAKEUP "\":\"" D_JSON_DONE "\"}"));
+            Response_P(PSTR("{\"" D_CMND_WAKEUP "\":\"" D_JSON_DONE "\"}"));
             MqttPublishPrefixTopic_P(TELE, PSTR(D_CMND_WAKEUP));
             light_wakeup_active = 0;
             Settings.light_scheme = LS_POWER;
@@ -1236,9 +1231,9 @@ bool LightColorEntry(char *buffer, uint8_t buffer_length)
   }
 
   memset(&light_entry_color, 0x00, sizeof(light_entry_color));
-  if (strstr(buffer, ",")) {                        // Decimal entry
+  if (strstr(buffer, ",") != nullptr) {             // Decimal entry
     int8_t i = 0;
-    for (str = strtok_r(buffer, ",", &p); str && i < 6; str = strtok_r(NULL, ",", &p)) {
+    for (str = strtok_r(buffer, ",", &p); str && i < 6; str = strtok_r(nullptr, ",", &p)) {
       if (i < 5) {
         light_entry_color[i++] = atoi(str);
       }
@@ -1323,7 +1318,7 @@ bool LightCommand(void)
       }
     }
     if (!valid_entry && (XdrvMailbox.index <= 2)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, LightGetColor(0, scolor));
+      Response_P(S_JSON_COMMAND_SVALUE, command, LightGetColor(0, scolor));
     }
     if (XdrvMailbox.index >= 3) {
       scolor[0] = '\0';
@@ -1334,7 +1329,7 @@ bool LightCommand(void)
           snprintf_P(scolor, 25, PSTR("%s%02X"), scolor, Settings.ws_color[XdrvMailbox.index -3][i]);
         }
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, scolor);
+      Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, scolor);
     }
   }
   else if ((CMND_CHANNEL == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= light_subtype ) ) {
@@ -1344,22 +1339,22 @@ bool LightCommand(void)
       LightSetColor();
       coldim = true;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, light_current_color[XdrvMailbox.index -1] * 100 / 255);
+    Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, light_current_color[XdrvMailbox.index -1] * 100 / 255);
   }
   else if ((CMND_HSBCOLOR == command_code) && ( light_subtype >= LST_RGB)) {
     bool validHSB = (XdrvMailbox.data_len > 0);
     if (validHSB) {
       uint16_t HSB[3];
-      if (strstr(XdrvMailbox.data, ",")) {  // Command with 3 comma separated parameters, Hue (0<H<360), Saturation (0<S<100) AND Brightness (0<B<100)
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Command with 3 comma separated parameters, Hue (0<H<360), Saturation (0<S<100) AND Brightness (0<B<100)
         for (int i = 0; i < 3; i++) {
           char *substr;
 
           if (0 == i) {
             substr = strtok(XdrvMailbox.data, ",");
           } else {
-            substr = strtok(NULL, ",");
+            substr = strtok(nullptr, ",");
           }
-          if (substr != NULL) {
+          if (substr != nullptr) {
             HSB[i] = atoi(substr);
           } else {
             validHSB = false;
@@ -1397,7 +1392,7 @@ bool LightCommand(void)
       char *p;
       uint16_t idx = XdrvMailbox.index;
       Ws2812ForceSuspend();
-      for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(NULL, " ", &p)) {
+      for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(nullptr, " ", &p)) {
         if (LightColorEntry(color, strlen(color))) {
           Ws2812SetColor(idx, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
           idx++;
@@ -1409,7 +1404,7 @@ bool LightCommand(void)
 
       Ws2812ForceUpdate();
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, Ws2812GetColor(XdrvMailbox.index, scolor));
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, Ws2812GetColor(XdrvMailbox.index, scolor));
   }
   else if ((CMND_PIXELS == command_code) && (LT_WS2812 == light_type)) {
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= WS2812_MAX_LEDS)) {
@@ -1418,25 +1413,25 @@ bool LightCommand(void)
       Ws2812Clear();
       light_update = 1;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_pixels);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_pixels);
   }
   else if ((CMND_ROTATION == command_code) && (LT_WS2812 == light_type)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < Settings.light_pixels)) {
       Settings.light_rotation = XdrvMailbox.payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_rotation);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_rotation);
   }
   else if ((CMND_WIDTH == command_code) && (LT_WS2812 == light_type) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
     if (1 == XdrvMailbox.index) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 4)) {
         Settings.light_width = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_width);
+      Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_width);
     } else {
       if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 32)) {
         Settings.ws_width[XdrvMailbox.index -2] = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.ws_width[XdrvMailbox.index -2]);
+      Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.ws_width[XdrvMailbox.index -2]);
     }
   }
 #endif  // USE_WS2812 ************************************************************************
@@ -1456,13 +1451,9 @@ bool LightCommand(void)
       LightPowerOn();
       strip_timer_counter = 0;
       // Publish state message for Hass
-      if (Settings.flag3.hass_tele_on_power) {
-        mqtt_data[0] = '\0';
-        MqttShowState();
-        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
-      }
+      if (Settings.flag3.hass_tele_on_power) { MqttPublishTeleState(); }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_scheme);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_scheme);
   }
   else if (CMND_WAKEUP == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
@@ -1471,7 +1462,7 @@ bool LightCommand(void)
     light_wakeup_active = 3;
     Settings.light_scheme = LS_WAKEUP;
     LightPowerOn();
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_STARTED);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_STARTED);
   }
   else if ((CMND_COLORTEMPERATURE == command_code) && ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype))) { // ColorTemp
     if (option != '\0') {
@@ -1487,7 +1478,7 @@ bool LightCommand(void)
       LightSetColorTemp(XdrvMailbox.payload);
       coldim = true;
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, LightGetColorTemp());
+      Response_P(S_JSON_COMMAND_NVALUE, command, LightGetColorTemp());
     }
   }
   else if (CMND_DIMMER == command_code) {
@@ -1502,7 +1493,7 @@ bool LightCommand(void)
       light_update = 1;
       coldim = true;
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_dimmer);
+      Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_dimmer);
     }
   }
   else if (CMND_LEDTABLE == command_code) {
@@ -1518,22 +1509,22 @@ bool LightCommand(void)
       }
       light_update = 1;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.light_correction));
+    Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.light_correction));
   }
   else if (CMND_RGBWWTABLE == command_code) {
     bool validtable = (XdrvMailbox.data_len > 0);
     char scolor[25];
     if (validtable) {
-      if (strstr(XdrvMailbox.data, ",")) {  // Command with up to 5 comma separated parameters
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Command with up to 5 comma separated parameters
         for (int i = 0; i < LST_RGBWC; i++) {
           char *substr;
 
           if (0 == i) {
             substr = strtok(XdrvMailbox.data, ",");
           } else {
-            substr = strtok(NULL, ",");
+            substr = strtok(nullptr, ",");
           }
-          if (substr != NULL) {
+          if (substr != nullptr) {
             Settings.rgbwwTable[i] = atoi(substr);
           }
         }
@@ -1544,7 +1535,7 @@ bool LightCommand(void)
     for (uint8_t i = 0; i < LST_RGBWC; i++) {
       snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.rgbwwTable[i]);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, scolor);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, scolor);
   }
   else if (CMND_FADE == command_code) {
     switch (XdrvMailbox.payload) {
@@ -1556,7 +1547,7 @@ bool LightCommand(void)
       Settings.light_fade ^= 1;
       break;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.light_fade));
+    Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.light_fade));
   }
   else if (CMND_SPEED == command_code) {  // 1 - fast, 20 - very slow
     if (('+' == option) && (Settings.light_speed > 1)) {
@@ -1568,20 +1559,19 @@ bool LightCommand(void)
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= STATES)) {
       Settings.light_speed = XdrvMailbox.payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_speed);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_speed);
   }
   else if (CMND_WAKEUPDURATION == command_code) {
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 3001)) {
       Settings.light_wakeup = XdrvMailbox.payload;
       light_wakeup_active = 0;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.light_wakeup);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_wakeup);
   }
   else if (CMND_UNDOCA == command_code) {  // Theos legacy status
     LightGetColor(1, scolor);
     scolor[6] = '\0';  // RGB only
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,%d,%d,%d,%d,%d"),
-      scolor, Settings.light_fade, Settings.light_correction, Settings.light_scheme, Settings.light_speed, Settings.light_width);
+    Response_P(PSTR("%s,%d,%d,%d,%d,%d"), scolor, Settings.light_fade, Settings.light_correction, Settings.light_scheme, Settings.light_speed, Settings.light_width);
     MqttPublishPrefixTopic_P(STAT, XdrvMailbox.topic);
     mqtt_data[0] = '\0';
   }

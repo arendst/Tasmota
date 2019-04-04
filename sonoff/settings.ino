@@ -61,11 +61,15 @@
 #define LONGITUDE              2.294442          // [Longitude] Your location to be used with sunrise and sunset
 #endif
 
+#ifndef WORKING_PERIOD
+#define WORKING_PERIOD         5                 // Working period of the SDS Sensor, Takes a reading every X Minutes
+#endif
+
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/
 
-#define RTC_MEM_VALID 0xA55A
+const uint16_t RTC_MEM_VALID = 0xA55A;
 
 uint32_t rtc_settings_crc = 0;
 
@@ -164,16 +168,18 @@ extern "C" {
 extern "C" uint32_t _SPIFFS_end;
 
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
-#define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
+const uint32_t SPIFFS_END = ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
 
 // Version 4.2 config = eeprom area
-#define SETTINGS_LOCATION   SPIFFS_END  // No need for SPIFFS as it uses EEPROM area
+const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses EEPROM area
 // Version 5.2 allow for more flash space
-#define CFG_ROTATES         8           // Number of flash sectors used (handles uploads)
+const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
 
 /*********************************************************************************************\
- * EEPROM support based on EEPROM library and tuned for Tasmota
+ * Optional EEPROM support based on EEPROM library and tuned for Tasmota
 \*********************************************************************************************/
+//#define USE_EEPROM
+#ifdef USE_EEPROM
 
 uint32_t eeprom_sector = SPIFFS_END;
 uint8_t* eeprom_data = 0;
@@ -301,12 +307,12 @@ void EepromEnd(void)
   eeprom_size = 0;
   eeprom_dirty = false;
 }
-
+#endif  // USE_EEPROM
 /********************************************************************************************/
 
 uint16_t settings_crc = 0;
 uint32_t settings_location = SETTINGS_LOCATION;
-uint8_t *settings_buffer = NULL;
+uint8_t *settings_buffer = nullptr;
 
 /********************************************************************************************/
 /*
@@ -333,9 +339,9 @@ void SetFlashModeDout(void)
 
 void SettingsBufferFree(void)
 {
-  if (settings_buffer != NULL) {
+  if (settings_buffer != nullptr) {
     free(settings_buffer);
-    settings_buffer = NULL;
+    settings_buffer = nullptr;
   }
 }
 
@@ -368,7 +374,9 @@ void SettingsSaveAll(void)
     Settings.power = 0;
   }
   XsnsCall(FUNC_SAVE_BEFORE_RESTART);
+#ifdef USE_EEPROM
   EepromCommit();
+#endif
   SettingsSave(0);
 }
 
@@ -411,6 +419,7 @@ void SettingsSave(uint8_t rotate)
     Settings.cfg_size = sizeof(SYSCFG);
     Settings.cfg_crc = GetSettingsCrc();
 
+#ifdef USE_EEPROM
     if (SPIFFS_END == settings_location) {
       uint8_t* flash_buffer;
       flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
@@ -428,6 +437,10 @@ void SettingsSave(uint8_t rotate)
       ESP.flashEraseSector(settings_location);
       ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     }
+#else
+    ESP.flashEraseSector(settings_location);
+    ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+#endif  // USE_EEPROM
 
     if (!stop_flash_rotate && rotate) {
       for (uint8_t i = 1; i < CFG_ROTATES; i++) {
@@ -456,13 +469,17 @@ void SettingsLoad(void)
 
   settings_location = 0;
   uint32_t flash_location = SETTINGS_LOCATION +1;
+  uint16_t cfg_holder = 0;
   for (uint8_t i = 0; i < CFG_ROTATES; i++) {
     flash_location--;
     ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
 
     bool valid = false;
     if (Settings.version > 0x06000000) {
-      valid = (Settings.cfg_crc == GetSettingsCrc());
+      bool almost_valid = (Settings.cfg_crc == GetSettingsCrc());
+      // Sometimes CRC on pages below FB, overwritten by OTA, is fine but Settings are still invalid. So check cfg_holder too
+      if (almost_valid && (0 == cfg_holder)) { cfg_holder = Settings.cfg_holder; }  // At FB always active cfg_holder
+      valid = (cfg_holder == Settings.cfg_holder);
     } else {
       ESP.flashRead((flash_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
       valid = (Settings.cfg_holder == _SettingsH.cfg_holder);
@@ -481,7 +498,7 @@ void SettingsLoad(void)
   }
   if (settings_location > 0) {
     ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"), settings_location, Settings.save_flag);
+    AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
 
 #ifndef FIRMWARE_MINIMAL
@@ -815,6 +832,8 @@ void SettingsDefaultSet2(void)
     Settings.rgbwwTable[j] = 255;
   }
 
+  Settings.novasds_period = WORKING_PERIOD;
+
   memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
 }
 
@@ -1054,6 +1073,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06040113) {
       Settings.param[P_RGB_REMAP] = RGB_REMAP_RGBW;
+    }
+    if (Settings.version < 0x06050003) {
+      Settings.novasds_period = WORKING_PERIOD;
     }
 
     Settings.version = VERSION;

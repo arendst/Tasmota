@@ -127,7 +127,7 @@ bool LcdPrintLog(void)
     if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
 
     char* txt = DisplayLogBuffer('\337');
-    if (txt != NULL) {
+    if (txt != nullptr) {
       uint8_t last_row = Settings.display_rows -1;
 
       for (uint8_t i = 0; i < last_row; i++) {

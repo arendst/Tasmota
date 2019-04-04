@@ -880,6 +880,7 @@ void HandleKNXConfiguration(void)
             "}"
           "}"));
     WSContentSendStyle();
+    KNX_physs_addr.value = Settings.knx_physsical_addr;
     WSContentSend_P(HTTP_FORM_KNX, KNX_physs_addr.pa.area, KNX_physs_addr.pa.line, KNX_physs_addr.pa.member);
     if ( Settings.flag.knx_enabled ) { WSContentSend_P(PSTR(" checked")); }
     WSContentSend_P(HTTP_FORM_KNX1);
@@ -934,7 +935,7 @@ void HandleKNXConfiguration(void)
     WSContentSend_P(PSTR("</table></center></fieldset>"));
     WSContentSend_P(HTTP_FORM_END);
     WSContentSpaceButton(BUTTON_CONFIGURATION);
-    WSContentEnd();
+    WSContentStop();
   }
 
 }
@@ -1086,7 +1087,7 @@ bool KnxCommand(void)
 
   else if (CMND_KNX_PA == command_code) {
     if (XdrvMailbox.data_len) {
-      if (strstr(XdrvMailbox.data, ".")) {     // Process parameter entry
+      if (strstr(XdrvMailbox.data, ".") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len];
 
         int pa_area = atoi(subStr(sub_string, XdrvMailbox.data, ".", 1));
@@ -1113,7 +1114,7 @@ bool KnxCommand(void)
 
   else if ((CMND_KNX_GA == command_code) && (index > 0) && (index <= MAX_KNX_GA)) {
     if (XdrvMailbox.data_len) {
-      if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len];
 
         int ga_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
@@ -1162,7 +1163,7 @@ bool KnxCommand(void)
 
   else if ((CMND_KNX_CB == command_code) && (index > 0) && (index <= MAX_KNX_CB)) {
     if (XdrvMailbox.data_len) {
-      if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len];
 
         int cb_option = atoi(subStr(sub_string, XdrvMailbox.data, ",", 1));
@@ -1223,6 +1224,9 @@ bool Xdrv11(uint8_t function)
 {
   bool result = false;
     switch (function) {
+      case FUNC_LOOP:
+        if (!global_state.wifi_down) { knx.loop(); }  // Process knx events
+        break;
       case FUNC_PRE_INIT:
         KNX_INIT();
         break;
@@ -1236,9 +1240,6 @@ bool Xdrv11(uint8_t function)
         break;
 #endif // USE_KNX_WEB_MENU
 #endif  // USE_WEBSERVER
-      case FUNC_LOOP:
-        if (!global_state.wifi_down) { knx.loop(); }  // Process knx events
-        break;
       case FUNC_EVERY_50_MSECOND:
         if (toggle_inhibit) {
           toggle_inhibit--;

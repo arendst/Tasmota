@@ -141,7 +141,7 @@ void Ssd1306PrintLog(void)
     if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
 
     char* txt = DisplayLogBuffer('\370');
-    if (txt != NULL) {
+    if (txt != nullptr) {
       uint8_t last_row = Settings.display_rows -1;
 
       oled->clearDisplay();
