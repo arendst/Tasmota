@@ -301,14 +301,7 @@ const char HTTP_MSG_SLIDER3[] PROGMEM =
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
 
-  //STB mod
-  #ifdef USE_I2C
-  #ifdef USE_PCF8574
-  const char HTTP_BTN_PCF[] PROGMEM =
-    "<br/><form action='i2c' method='get'><button>" D_CONFIGURE_PCF8574 "</button></form>";
-  #endif // USE_PCF8574
-  #endif
-  //end
+
 
 const char HTTP_FORM_LOGIN[] PROGMEM =
   "<fieldset>"
@@ -415,10 +408,12 @@ enum ButtonTitle {
   BUTTON_RESTART, BUTTON_RESET_CONFIGURATION,
   BUTTON_MAIN, BUTTON_CONFIGURATION, BUTTON_INFORMATION, BUTTON_FIRMWARE_UPGRADE, BUTTON_CONSOLE,
   BUTTON_MODULE, BUTTON_WIFI, BUTTON_LOGGING, BUTTON_OTHER, BUTTON_TEMPLATE, BUTTON_BACKUP, BUTTON_RESTORE };
+
 const char kButtonTitle[] PROGMEM =
   D_RESTART "|" D_RESET_CONFIGURATION "|"
   D_MAIN_MENU "|" D_CONFIGURATION "|" D_INFORMATION "|" D_FIRMWARE_UPGRADE "|" D_CONSOLE "|"
-  D_CONFIGURE_MODULE "|" D_CONFIGURE_WIFI"|" D_CONFIGURE_LOGGING "|" D_CONFIGURE_OTHER "|" D_CONFIGURE_TEMPLATE "|" D_BACKUP_CONFIGURATION "|" D_RESTORE_CONFIGURATION;
+  D_CONFIGURE_MODULE "|" D_CONFIGURE_WIFI"|" D_CONFIGURE_LOGGING "|" D_CONFIGURE_OTHER "|" D_CONFIGURE_TEMPLATE "|" D_BACKUP_CONFIGURATION "|" D_RESTORE_CONFIGURATION ;
+
 const char kButtonAction[] PROGMEM =
   ".|rt|"
   ".|cn|in|up|cs|"
@@ -512,15 +507,7 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/rs", HandleRestoreConfiguration);
       WebServer->on("/rt", HandleResetConfiguration);
       WebServer->on("/in", HandleInformation);
-//STB mod
-#ifdef USE_I2C
-#ifdef USE_PCF8574
-      if (max_pcf8574_devices > 0) {
-        WebServer->on("/i2c", handleI2C);
-      }
-#endif
-#endif
-//end
+
 #ifdef USE_EMULATION
       HueWemoAddHandlers();
 #endif  // USE_EMULATION
@@ -1102,15 +1089,7 @@ void HandleTemplateConfiguration(void)
     WebRestart(1);
     return;
   }
-//STB mod
-#ifdef USE_I2C
-#ifdef USE_PCF8574
-  if (max_pcf8574_devices) {
-    page += FPSTR(HTTP_BTN_PCF);
-  }
-#endif
-#endif
-//end
+
   char stemp[20];                                           // Template number and Sensor name
 
   if (WebServer->hasArg("m")) {

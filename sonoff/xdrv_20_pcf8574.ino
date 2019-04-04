@@ -36,14 +36,20 @@ int _error;
 
 
 #ifdef USE_WEBSERVER
+
+#define WEB_HANDLE_PCF8574 "pcf"
+
+const char HTTP_BTN_MENU_PCF8574[] PROGMEM =
+  "<p><form action='" WEB_HANDLE_PCF8574 "' method='get'><button>" D_CONFIGURE_PCF8574 "</button></form></p>";
+
 const char HTTP_FORM_I2C_PCF8574_1[] PROGMEM =
-  "<fieldset><legend><b>&nbsp;PCF8674 parameters &nbsp;</b></legend><form method='post' action='sv'>"
-  "<input id='w' name='w' value='8' hidden><input id='r' name='r' value='1' hidden>"
-  "<br/><input style='width:10%;float:left' id='b1' name='b1' type='checkbox'{r1><b>Reverse Relays</b><br/>";
+  "<fieldset><legend><b>&nbsp;PCF8674 parameters &nbsp;</b></legend>"
+  "<form method='get' action='" WEB_HANDLE_PCF8574 "'>"
+  "<br/><input id='b1' name='b1' type='checkbox'%s><b>Reverse Relays</b><br/><br/><hr/>";
 const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
-  "<br/><b>{b0 IN/OUT</b> <br/><select id='{b2' name='{b2'>"
-  "<option{a0value='0'>0 Input</option>"
-  "<option{a1value='1'>1 Output</option>"
+  "<br/><b>Board %d  Channel %d IN/OUT</b> <br/><select id='i2cs%d' name='i2cs%d'>"
+  "<option%s value='0'>Input</option>"
+  "<option%s value='1'>Output</option>"
   "</select></br>";
 
 
@@ -51,36 +57,46 @@ const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
 
 void handleI2C()
 {
-  if (HttpUser()) return;
+  if (!HttpCheckPriviledgedAccess()) { return; }
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP  D_CONFIGURE_PCF8574));
 
-  String page = FPSTR(HTTP_HEAD);
+  if (WebServer->hasArg("save")) {
+    pcf8574_saveSettings();
+    WebRestart(1);
+    return;
+  }
 
-  page.replace("{v", D_CONFIGURE_PCF8574);
-  page += FPSTR(HTTP_HEAD_STYLE);
-  page += FPSTR(HTTP_FORM_I2C_PCF8574_1);
-  page.replace("{r1", (Settings.all_relays_inverted) ? " checked" : "");
-  AddLog(LOG_LEVEL_INFO);
-  for (byte idx = 0; idx < max_pcf8574_devices; idx++) {
-    page.replace("{b1", String(idx));
-    for (byte idx2 = 0; idx2 < 8; idx2++) {
-      page += FPSTR(HTTP_FORM_I2C_PCF8574_2);
-      page.replace("{b0", "Board: "+  String(idx) + "  I2C P" + String(idx2));
-      page.replace("{b2", "i2cs" + String(idx2+8*idx));
-      for (byte i = 0; i < 2; i++) {
-        byte helper = 1 << idx2;
-        page.replace("{a" + String(i), ((helper & Settings.pcf8574_config[idx]) >> idx2 == i) ? " selected " : " ");
-      }
+  WSContentStart_P(D_CONFIGURE_PCF8574);
+  WSContentSendStyle();
+
+  //page += FPSTR(HTTP_HEAD_STYLE);
+  WSContentSend_P(HTTP_FORM_I2C_PCF8574_1, (Settings.all_relays_inverted) ? " checked" : "");
+  //page += FPSTR(HTTP_FORM_I2C_PCF8574_1);
+  //page.replace("{r1", (Settings.all_relays_inverted) ? " checked" : "");
+  //AddLog(LOG_LEVEL_INFO);
+  for (uint8_t idx = 0; idx < max_pcf8574_devices; idx++) {
+    //page.replace("{b1", String(idx));
+    for (uint8_t idx2 = 0; idx2 < 8; idx2++) {
+      uint8_t helper = 1 << idx2;
+      WSContentSend_P(HTTP_FORM_I2C_PCF8574_2,
+        idx , idx2,
+        idx2+8*idx,
+        idx2+8*idx,
+        ((helper & Settings.pcf8574_config[idx]) >> idx2 == 0) ? " selected " : " ",
+        ((helper & Settings.pcf8574_config[idx]) >> idx2 == 1) ? " selected " : " "
+      );
     }
   }
-  page += FPSTR(HTTP_FORM_END);
-  page += FPSTR(HTTP_BTN_CONF);
-  ShowPage(page);
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
+  WSContentStop();
 }
 
 void pcf8574_saveSettings()
 {
   char stemp[7];
+  char tmp[100];
+  //AddLog_P(LOG_LEVEL_DEBUG, PSTR("Start working on Save arguements: inverted:%d")), WebServer->hasArg("ab1");
   Settings.all_relays_inverted = WebServer->hasArg("b1");
   for (byte idx = 0; idx < max_pcf8574_devices; idx++) {
     byte count=0;
@@ -93,8 +109,9 @@ void pcf8574_saveSettings()
       devices_present = devices_present - count;
     }
     for (byte i = 0; i < 8; i++) {
-      Response_P(PSTR("i2cs%d"), i+8*idx);
-      byte _value = (!strlen(WebServer->arg(stemp).c_str() )) ?  0 : atoi(WebServer->arg(stemp).c_str() );
+      snprintf_P(stemp, sizeof(stemp), PSTR("i2cs%d"), i+8*idx);
+      WebGetArg(stemp, tmp, sizeof(tmp));
+      byte _value = (!strlen(tmp)) ?  0 : atoi(tmp);
       if (_value) {
         Settings.pcf8574_config[idx] = Settings.pcf8574_config[idx] | 1 << i;
         devices_present++;
@@ -104,7 +121,7 @@ void pcf8574_saveSettings()
       }
     }
     //Settings.pcf8574_config[0] = (!strlen(webServer->arg("i2cs0").c_str())) ?  0 : atoi(webServer->arg("i2cs0").c_str());
-    //AddLog_P2(LOG_LEVEL_INFO, PSTR("HTTP: I2C Board: %d, Config: %2x"),  idx, Settings.pcf8574_config[idx]);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("HTTP: I2C Board: %d, Config: %2x")),  idx, Settings.pcf8574_config[idx];
 
   }
 }
@@ -115,7 +132,7 @@ void pcf8574_switchrelay()
 {
   uint8_t relay_state;
 
-  for (byte i = 0; i < devices_present; i++) {
+  for (uint8_t i = 0; i < devices_present; i++) {
     relay_state = bitRead(XdrvMailbox.index, i);
     //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RSLT: max_pcf8574_devices %d requested pin %d"), max_pcf8574_devices,pcf8574_pin[i]);
     if (max_pcf8574_devices > 0 && pcf8574_pin[i] < 99) {
@@ -201,6 +218,12 @@ bool Xdrv20(uint8_t function)
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
+      case FUNC_WEB_ADD_BUTTON:
+        WSContentSend_P(HTTP_BTN_MENU_PCF8574);
+        break;
+      case FUNC_WEB_ADD_HANDLER:
+        WebServer->on("/" WEB_HANDLE_PCF8574, handleI2C);
+        break;
       case FUNC_PRE_INIT:
          pcf8574_Init();
         break;

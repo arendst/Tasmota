@@ -98,10 +98,6 @@ bool chirp_detect()
  * Presentation
 \*********************************************************************************************/
 #ifdef USE_WEBSERVER
- #ifndef USE_BH1750  // avoid duplicate definition
-  const char HTTP_SNS_ILLUMINANCE[] PROGMEM =  "%s{s}%s " D_ILLUMINANCE "{m}%d%%{e}";
- #endif //USE_BH1750
-
   const char HTTP_SNS_MOISTURE[] PROGMEM = "%s{s}%s " D_MOISTURE "{m}%s%%{e}";
 #endif // USE_WEBSERVER
 
@@ -193,7 +189,7 @@ bool Xsns92(uint8_t function)
 
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         chirp_Show(0);
         break;
 #endif // USE_WEBSERVER

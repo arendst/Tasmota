@@ -351,7 +351,7 @@ bool Xsns94(uint8_t function)
         measure(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
 
         measure(0);
         break;
