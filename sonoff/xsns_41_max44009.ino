@@ -94,8 +94,7 @@ void Max4409Detect(void)
         Wire.write(MAX44009_CONTINUOUS_AUTO_MODE);
         if (0 == Wire.endTransmission()) {
           max44009_found = 1;
-          snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, max44009_types, max44009_address);
-          AddLog(LOG_LEVEL_DEBUG);
+          AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, max44009_types, max44009_address);
           break;
         }
       }
@@ -129,9 +128,7 @@ void Max4409Show(bool json)
     dtostrf(max44009_illuminance, sizeof(illum_str) -1, prec, illum_str);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data),
-                 PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"),
-                 mqtt_data, max44009_types, illum_str);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"), max44009_types, illum_str);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_ILLUMINANCE, illum_str);
@@ -140,8 +137,7 @@ void Max4409Show(bool json)
 #ifdef USE_WEBSERVER
     } else {
       // show integer value for lx on web-server
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE,
-                 mqtt_data, max44009_types, (int)max44009_illuminance);
+      WSContentSend_PD(HTTP_SNS_ILLUMINANCE, max44009_types, (int)max44009_illuminance);
 #endif  // USE_WEBSERVER
     }
   }
@@ -167,7 +163,7 @@ bool Xsns41(uint8_t function)
         Max4409Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Max4409Show(0);
         break;
 #endif  // USE_WEBSERVER

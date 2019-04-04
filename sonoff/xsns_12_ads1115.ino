@@ -164,13 +164,12 @@ void Ads1115Detect(void)
   for (uint8_t i = 0; i < sizeof(ads1115_addresses); i++) {
     if (!ads1115_found[i]) {
       ads1115_address = ads1115_addresses[i];
-      if (I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONVERT) && 
+      if (I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONVERT) &&
           I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONFIG)) {
         Ads1115StartComparator(i, ADS1115_REG_CONFIG_MODE_CONTIN);
         ads1115_type = 1;
         ads1115_found[i] = 1;
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
       }
     }
   }
@@ -182,21 +181,20 @@ void Ads1115GetValues(uint8_t address)
   ads1115_address = address;
   for (uint8_t i = 0; i < 4; i++) {
     ads1115_values[i] = Ads1115GetConversion(i);
-    //snprintf_P(log_data, sizeof(log_data), "Logging ADS1115 %02x (%i) = %i", address, i, ads1115_values[i] );
-    //AddLog(LOG_LEVEL_INFO);
+    //AddLog_P2(LOG_LEVEL_INFO, "Logging ADS1115 %02x (%i) = %i", address, i, ads1115_values[i] );
   }
   ads1115_address = old_address;
 }
 
 void Ads1115toJSON(char *comma_j)
 {
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s{"), mqtt_data,comma_j);
+  ResponseAppend_P(PSTR("%s{"), comma_j);
   char *comma = (char*)"";
   for (uint8_t i = 0; i < 4; i++) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, comma, i, ads1115_values[i]);
+    ResponseAppend_P(PSTR("%s\"A%d\":%d"), comma, i, ads1115_values[i]);
     comma = (char*)",";
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+  ResponseAppend_P(PSTR("}"));
 }
 
 void Ads1115toString(uint8_t address)
@@ -205,7 +203,7 @@ void Ads1115toString(uint8_t address)
   snprintf_P(label, sizeof(label), "ADS1115(%02x)", address);
 
   for (uint8_t i = 0; i < 4; i++) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, label, i, ads1115_values[i]);
+    WSContentSend_PD(HTTP_SNS_ANALOG, label, i, ads1115_values[i]);
   }
 }
 
@@ -214,14 +212,13 @@ void Ads1115Show(bool json)
   if (!ads1115_type) { return; }
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ADS1115\":["), mqtt_data);
+    ResponseAppend_P(PSTR(",\"ADS1115\":["));
   }
 
   char *comma = (char*)"";
 
   for (uint8_t t = 0; t < sizeof(ads1115_addresses); t++) {
-    //snprintf_P(log_data, sizeof(log_data), "Logging ADS1115 %02x", ads1115_addresses[t]);
-    //AddLog(LOG_LEVEL_INFO);
+    //AddLog_P2(LOG_LEVEL_INFO, "Logging ADS1115 %02x", ads1115_addresses[t]);
     if (ads1115_found[t]) {
       Ads1115GetValues(ads1115_addresses[t]);
       if (json) {
@@ -237,7 +234,7 @@ void Ads1115Show(bool json)
   }
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s]"), mqtt_data);
+    ResponseAppend_P(PSTR("]"));
   }
 }
 
@@ -258,7 +255,7 @@ bool Xsns12(uint8_t function)
         Ads1115Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Ads1115Show(0);
         break;
 #endif  // USE_WEBSERVER

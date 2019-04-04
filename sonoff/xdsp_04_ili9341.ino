@@ -147,7 +147,7 @@ void Ili9341PrintLog(void)
     }
 
     char* txt = DisplayLogBuffer('\370');
-    if (txt != NULL) {
+    if (txt != nullptr) {
       uint8_t size = Settings.display_size;
       uint16_t theight = size * TFT_FONT_HEIGTH;
 
@@ -178,8 +178,7 @@ void Ili9341PrintLog(void)
         DisplayFillScreen(last_row);
         tft->print(disp_screen_buffer[last_row]);
       }
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "[%s]"), txt);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), txt);
     }
   }
 }

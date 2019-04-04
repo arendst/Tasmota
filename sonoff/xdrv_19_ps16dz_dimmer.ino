@@ -35,8 +35,8 @@ bool ps16dz_ignore_dim = false;            // Flag to skip serial send to preven
 
 //uint64_t ps16dz_seq = 0;
 
-char *ps16dz_tx_buffer = NULL;                // Serial transmit buffer
-char *ps16dz_rx_buffer = NULL;                // Serial receive buffer
+char *ps16dz_tx_buffer = nullptr;          // Serial transmit buffer
+char *ps16dz_rx_buffer = nullptr;          // Serial receive buffer
 int ps16dz_byte_counter = 0;
 
 /*********************************************************************************************\
@@ -67,8 +67,7 @@ void PS16DZSendCommand(char type = 0, uint8_t value = 0)
       break;
     }
 
-    snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send serial command: %s"), ps16dz_tx_buffer );
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send serial command: %s"), ps16dz_tx_buffer );
 
     PS16DZSerial->print(ps16dz_tx_buffer);
     PS16DZSerial->write(0x1B);
@@ -109,8 +108,7 @@ void PS16DZSerialDuty(uint8_t duty)
   } else {
     ps16dz_ignore_dim = false;  // reset flag
 
-    snprintf_P(log_data, sizeof(log_data), PSTR( "PSZ: Send Dim Level skipped due to 0 or already set. Value=%d"), duty);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send Dim Level skipped due to 0 or already set. Value=%d"), duty);
 
   }
 }
@@ -137,9 +135,9 @@ bool PS16DZModuleSelected(void)
 void PS16DZInit(void)
 {
   ps16dz_tx_buffer = (char*)(malloc(PS16DZ_BUFFER_SIZE));
-  if (ps16dz_tx_buffer != NULL) {
+  if (ps16dz_tx_buffer != nullptr) {
     ps16dz_rx_buffer = (char*)(malloc(PS16DZ_BUFFER_SIZE));
-    if (ps16dz_rx_buffer != NULL) {
+    if (ps16dz_rx_buffer != nullptr) {
       PS16DZSerial = new TasmotaSerial(pin[GPIO_RXD], pin[GPIO_TXD], 2);
       if (PS16DZSerial->begin(19200)) {
         if (PS16DZSerial->hardwareSerial()) { ClaimSerial(); }
@@ -165,50 +163,44 @@ void PS16DZSerialInput(void)
     }
     else {
       ps16dz_rx_buffer[ps16dz_byte_counter++] = 0x00;
-      snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: command received: %s"), ps16dz_rx_buffer);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: command received: %s"), ps16dz_rx_buffer);
       if(!strncmp(ps16dz_rx_buffer+3, "UPDATE", 6) || !strncmp(ps16dz_rx_buffer+3, "RESULT", 6)) {
         char *end_str;
         char *string = ps16dz_rx_buffer+10;
         char* token = strtok_r(string, ",", &end_str);
-        while (token != NULL) {
+        while (token != nullptr) {
           char* end_token;
           char* token2 = strtok_r(token, ":", &end_token);
-          char* token3 = strtok_r(NULL, ":", &end_token);
+          char* token3 = strtok_r(nullptr, ":", &end_token);
           if(!strncmp(token2, "\"switch\"", 8)){
             bool ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
-            snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: power received: %s"), token3);
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: power received: %s"), token3);
             if((power || Settings.light_dimmer > 0) && (power !=ps16dz_power)) {
               ExecuteCommandPower(1, ps16dz_power, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
             }
           }
           else if(!strncmp(token2, "\"bright\"", 8)){
             uint8_t ps16dz_bright = atoi(token3);
-            snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: brightness received: %d"), ps16dz_bright);
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: brightness received: %d"), ps16dz_bright);
             if(power && ps16dz_bright > 0 && ps16dz_bright != Settings.light_dimmer) {
 
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), ps16dz_bright );
 
-              snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: Send CMND_DIMMER_STR=%s"), scmnd );
-              AddLog(LOG_LEVEL_DEBUG);
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send CMND_DIMMER_STR=%s"), scmnd );
 
               ps16dz_ignore_dim = true;
               ExecuteCommand(scmnd, SRC_SWITCH);
             }
           }
           else if(!strncmp(token2, "\"sequence\"", 10)){
-            //ps16dz_seq = strtoull(token3+1, NULL, 10);
-            snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: sequence received: %s"), token3);
-            AddLog(LOG_LEVEL_DEBUG);
+            //ps16dz_seq = strtoull(token3+1, nullptr, 10);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: sequence received: %s"), token3);
           }
-          token = strtok_r(NULL, ",", &end_str);
+          token = strtok_r(nullptr, ",", &end_str);
         }
       }
       else if(!strncmp(ps16dz_rx_buffer+3, "SETTING", 7)) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("PSZ: Reset"));
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("PSZ: Reset"));
         PS16DZResetWifi();
       }
       memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);
@@ -231,14 +223,14 @@ bool Xdrv19(uint8_t function)
 
   if (PS_16_DZ == my_module_type) {
     switch (function) {
+      case FUNC_LOOP:
+        if (PS16DZSerial) { PS16DZSerialInput(); }
+        break;
       case FUNC_MODULE_INIT:
         result = PS16DZModuleSelected();
         break;
       case FUNC_INIT:
         PS16DZInit();
-        break;
-      case FUNC_LOOP:
-        if (PS16DZSerial) { PS16DZSerialInput(); }
         break;
       case FUNC_SET_DEVICE_POWER:
         result = PS16DZSetPower();

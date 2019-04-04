@@ -218,7 +218,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     }
 #endif  // USE_TIMERS and USE_SUNRISE
     rule_param.toUpperCase();
-    snprintf(rule_svalue, sizeof(rule_svalue), rule_param.c_str());
+    strlcpy(rule_svalue, rule_param.c_str(), sizeof(rule_svalue));
 
     int temp_value = GetStateNumber(rule_svalue);
     if (temp_value > -1) {
@@ -237,9 +237,8 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   double value = 0;
   const char* str_value = root[rule_task][rule_name];
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
 //  rule_task.c_str(), rule_name.c_str(), rule_svalue, rules_trigger_count[rule_set], bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
-//AddLog(LOG_LEVEL_DEBUG);
 
   if (!root[rule_task][rule_name].success()) { return false; }
   // No value but rule_name is ok
@@ -305,8 +304,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
   delay(0);                                               // Prohibit possible loop software watchdog
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
-//AddLog(LOG_LEVEL_DEBUG);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event = %s, Rule = %s"), event_saved.c_str(), Settings.rules[rule_set]);
 
   String rules = Settings.rules[rule_set];
 
@@ -341,8 +339,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     rules_event_value = "";
     String event = event_saved;
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
-//AddLog(LOG_LEVEL_DEBUG);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 
     if (RulesRuleMatch(rule_set, event, event_trigger)) {
       commands.trim();
@@ -368,12 +365,11 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 #endif  // USE_TIMERS and USE_SUNRISE
 
       char command[commands.length() +1];
-      snprintf(command, sizeof(command), commands.c_str());
+      strlcpy(command, commands.c_str(), sizeof(command));
 
-      snprintf_P(log_data, sizeof(log_data), PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
 
-//      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
+//      Response_P(S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
 
       ExecuteCommand(command, SRC_RULE);
@@ -391,13 +387,14 @@ bool RulesProcessEvent(char *json_event)
 {
   bool serviced = false;
 
+#ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("RulesProcessEvent"));
+#endif
 
   String event_saved = json_event;
   event_saved.toUpperCase();
 
-//snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Event %s"), event_saved.c_str());
-//AddLog(LOG_LEVEL_DEBUG);
+//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event %s"), event_saved.c_str());
 
   for (uint8_t i = 0; i < MAX_RULE_SETS; i++) {
     if (strlen(Settings.rules[i]) && bitRead(Settings.rule_enabled, i)) {
@@ -547,7 +544,7 @@ void RulesEvery100ms(void)
     tele_period = tele_period_save;
     if (strlen(mqtt_data)) {
       mqtt_data[0] = '{';                              // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      ResponseAppend_P(PSTR("}"));
       RulesProcess();
     }
   }
@@ -608,15 +605,13 @@ bool RulesMqttData(void)
   }
   String sTopic = XdrvMailbox.topic;
   String sData = XdrvMailbox.data;
-  //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
-  //AddLog(LOG_LEVEL_DEBUG);
+  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
   MQTT_Subscription event_item;
   //Looking for matched topic
   for (int index = 0; index < subscriptions.size(); index++) {
     event_item = subscriptions.get(index);
 
-    //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
-    //AddLog(LOG_LEVEL_DEBUG);
+    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
     if (sTopic.startsWith(event_item.Topic)) {
       //This topic is subscribed by us, so serve it
       serviced = true;
@@ -677,17 +672,16 @@ String RulesSubscribe(const char *data, int data_len)
     char * pos = strtok(parameters, ",");
     if (pos) {
       event_name = Trim(pos);
-      pos = strtok(NULL, ",");
+      pos = strtok(nullptr, ",");
       if (pos) {
         topic = Trim(pos);
-        pos = strtok(NULL, ",");
+        pos = strtok(nullptr, ",");
         if (pos) {
           key = Trim(pos);
         }
       }
     }
-    //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
-    //AddLog(LOG_LEVEL_DEBUG);
+    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
     event_name.toUpperCase();
     if (event_name.length() > 0 && topic.length() > 0) {
       //Search all subscriptions
@@ -708,8 +702,7 @@ String RulesSubscribe(const char *data, int data_len)
           topic.concat("/#");
         }
       }
-      //snprintf_P(log_data, sizeof(log_data), PSTR("RUL: New topic: %s."), topic.c_str());
-      //AddLog(LOG_LEVEL_DEBUG);
+      //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: New topic: %s."), topic.c_str());
       //MQTT Subscribe
       subscription_item.Event = event_name;
       subscription_item.Topic = topic.substring(0, topic.length() - 2);   //Remove "/#" so easy to match
@@ -1146,15 +1139,15 @@ bool RulesCommand(void)
     }
     mqtt_data[0] = '\0';
     for (uint8_t i = 0; i < MAX_RULE_TIMERS; i++) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%c\"T%d\":%d"), mqtt_data, (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
+      ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+    ResponseAppend_P(PSTR("}"));
   }
   else if (CMND_EVENT == command_code) {
     if (XdrvMailbox.data_len > 0) {
       strlcpy(event_data, XdrvMailbox.data, sizeof(event_data));
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
   else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1169,7 +1162,7 @@ bool RulesCommand(void)
 #endif      //USE_EXPRESSION
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1184,13 +1177,13 @@ bool RulesCommand(void)
 #endif      //USE_EXPRESSION
       bitSet(mems_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
   else if (CMND_CALC_RESOLUTION == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
       Settings.flag2.calc_resolution = XdrvMailbox.payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.flag2.calc_resolution);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.flag2.calc_resolution);
   }
   else if ((CMND_ADD == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1198,7 +1191,7 @@ bool RulesCommand(void)
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SUB == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1206,7 +1199,7 @@ bool RulesCommand(void)
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MULT == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1214,11 +1207,11 @@ bool RulesCommand(void)
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SCALE == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
 
         double valueIN = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 1));
@@ -1231,14 +1224,14 @@ bool RulesCommand(void)
         bitSet(vars_event, index -1);
       }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
 #ifdef SUPPORT_MQTT_EVENT
   } else if (CMND_SUBSCRIBE == command_code) {			//MQTT Subscribe command. Subscribe <Event>, <Topic> [, <Key>]
     String result = RulesSubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, result.c_str());
+    Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
   } else if (CMND_UNSUBSCRIBE == command_code) {			//MQTT Un-subscribe command. UnSubscribe <Event>
     String result = RulesUnsubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, result.c_str());
+    Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
 #endif        //SUPPORT_MQTT_EVENT
   }
   else serviced = false;  // Unknown command

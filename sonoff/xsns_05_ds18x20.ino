@@ -287,8 +287,7 @@ void Ds18x20Init(void)
       }
     }
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DSB D_SENSORS_FOUND " %d"), ds18x20_sensors);
 }
 
 void Ds18x20Convert(void)
@@ -433,13 +432,13 @@ void Ds18x20Show(bool json)
 
       if (json) {
         if (1 == ds18x20_sensors) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, temperature);
+          ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), ds18x20_types, temperature);
         } else {
           char address[17];
           for (uint8_t j = 0; j < 6; j++) {
             sprintf(address+2*j, "%02X", ds18x20_sensor[index].address[6-j]);  // Skip sensor type and crc
           }
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, ds18x20_types, address, temperature);
+          ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ID "\":\"%s\",\"" D_JSON_TEMPERATURE "\":%s}"), ds18x20_types, address, temperature);
         }
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (0 == i)) {
@@ -453,7 +452,7 @@ void Ds18x20Show(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, ds18x20_types, temperature, TempUnit());
+        WSContentSend_PD(HTTP_SNS_TEMP, ds18x20_types, temperature, TempUnit());
 #endif  // USE_WEBSERVER
       }
     }
@@ -480,7 +479,7 @@ bool Xsns05(uint8_t function)
         Ds18x20Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Ds18x20Show(0);
         break;
 #endif  // USE_WEBSERVER

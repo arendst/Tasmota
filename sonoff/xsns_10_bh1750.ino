@@ -65,8 +65,7 @@ void Bh1750Detect(void)
     Wire.write(BH1750_CONTINUOUS_HIGH_RES_MODE);
     if (!Wire.endTransmission()) {
       bh1750_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bh1750_types, bh1750_address);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, bh1750_types, bh1750_address);
       break;
     }
   }
@@ -93,7 +92,7 @@ void Bh1750Show(bool json)
 {
   if (bh1750_valid) {
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}"), mqtt_data, bh1750_types, bh1750_illuminance);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}"), bh1750_types, bh1750_illuminance);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_ILLUMINANCE, bh1750_illuminance);
@@ -101,7 +100,7 @@ void Bh1750Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, bh1750_types, bh1750_illuminance);
+      WSContentSend_PD(HTTP_SNS_ILLUMINANCE, bh1750_types, bh1750_illuminance);
 #endif  // USE_WEBSERVER
     }
   }
@@ -127,7 +126,7 @@ bool Xsns10(uint8_t function)
         Bh1750Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Bh1750Show(0);
         break;
 #endif  // USE_WEBSERVER

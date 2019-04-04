@@ -123,16 +123,14 @@ void EpdInitDriver(void)
       epd.sclk_pin = pin[GPIO_SPI_CLK];   // 14
       epd.mosi_pin = pin[GPIO_SPI_MOSI];  // 13
       EpdInitMode();
-      snprintf_P(log_data, sizeof(log_data), PSTR("EPD: HardSPI CS %d, CLK %d, MOSI %d"), epd.cs_pin, epd.sclk_pin, epd.mosi_pin);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EPD: HardSPI CS %d, CLK %d, MOSI %d"), epd.cs_pin, epd.sclk_pin, epd.mosi_pin);
     }
     else if ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && (pin[GPIO_SSPI_MOSI] < 99)) {
       epd.cs_pin = pin[GPIO_SSPI_CS];
       epd.sclk_pin = pin[GPIO_SSPI_SCLK];
       epd.mosi_pin = pin[GPIO_SSPI_MOSI];
       EpdInitMode();
-      snprintf_P(log_data, sizeof(log_data), PSTR("EPD: SoftSPI CS %d, CLK %d, MOSI %d"), epd.cs_pin, epd.sclk_pin, epd.mosi_pin);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EPD: SoftSPI CS %d, CLK %d, MOSI %d"), epd.cs_pin, epd.sclk_pin, epd.mosi_pin);
     }
   }
 }
@@ -202,7 +200,7 @@ void EpdPrintLog(void)
     }
 
     char* txt = DisplayLogBuffer('\040');
-    if (txt != NULL) {
+    if (txt != nullptr) {
       uint8_t size = Settings.display_size;
       uint16_t theight = size * EPD_FONT_HEIGTH;
 
@@ -221,8 +219,7 @@ void EpdPrintLog(void)
       EpdDrawStringAt(0, epd_scroll, disp_screen_buffer[last_row], COLORED, 0);
 //      EpdDisplayFrame();
 
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "[%s]"), txt);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), txt);
     }
   }
 }

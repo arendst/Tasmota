@@ -22,10 +22,11 @@
  *          Timezone by Jack Christensen (https://github.com/JChristensen/Timezone)
 \*********************************************************************************************/
 
-#define SECS_PER_MIN  ((uint32_t)(60UL))
-#define SECS_PER_HOUR ((uint32_t)(3600UL))
-#define SECS_PER_DAY  ((uint32_t)(SECS_PER_HOUR * 24UL))
-#define MINS_PER_HOUR ((uint32_t)(60UL))
+const uint32_t SECS_PER_MIN = 60UL;
+const uint32_t SECS_PER_HOUR = 3600UL;
+const uint32_t SECS_PER_DAY = SECS_PER_HOUR * 24UL;
+const uint32_t MINS_PER_HOUR = 60UL;
+
 #define LEAP_YEAR(Y)  (((1970+Y)>0) && !((1970+Y)%4) && (((1970+Y)%100) || !((1970+Y)%400)))
 
 extern "C" {
@@ -61,7 +62,7 @@ String GetBuildDateAndTime(void)
 
   // sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too much code
   uint8_t i = 0;
-  for (char *str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
+  for (char *str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(nullptr, " ", &p)) {
     switch (i++) {
     case 0:  // Month
       smonth = str;
@@ -364,9 +365,7 @@ void RtcSecond(void)
       RtcTime.year = tmpTime.year + 1970;
       daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
       standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-        GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
       if (local_time < 1451602800) {  // 2016-01-01
         rules_flag.time_init = 1;
       } else {
