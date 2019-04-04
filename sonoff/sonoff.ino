@@ -559,13 +559,9 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         uint8_t bl_pointer = (!backlog_pointer) ? MAX_BACKLOG -1 : backlog_pointer;
         bl_pointer--;
         char *blcommand = strtok(dataBuf, ";");
-<<<<<<< HEAD
-        while ((blcommand != NULL) && (backlog_index != bl_pointer))
+        while ((blcommand != nullptr) && (backlog_index != bl_pointer))
 #endif
         {
-=======
-        while ((blcommand != nullptr) && (backlog_index != bl_pointer)) {
->>>>>>> development
           while(true) {
             blcommand = Trim(blcommand);
             if (!strncasecmp_P(blcommand, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG))) {
@@ -595,12 +591,9 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         backlog.clear();
 #else
         backlog_pointer = backlog_index;
-<<<<<<< HEAD
 #endif
         snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, blflag ? D_JSON_EMPTY : D_JSON_ABORTED);
-=======
         Response_P(S_JSON_COMMAND_SVALUE, command, blflag ? D_JSON_EMPTY : D_JSON_ABORTED);
->>>>>>> development
       }
     }
     else if (CMND_DELAY == command_code) {
