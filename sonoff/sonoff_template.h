@@ -588,15 +588,15 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_ROT1B,          // Rotary switch1 B Pin
   GPIO_ROT2A,          // Rotary switch2 A Pin
   GPIO_ROT2B,          // Rotary switch2 B Pin
-#endif 
+#endif
   GPIO_ARIRFRCV,       // AliLux RF Receive input
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,
   GPIO_HRE_DATA
-#endif  
+#endif
 };
 
-const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
+const uint8_t kModuleNiceList[] PROGMEM = {
   SONOFF_BASIC,        // Sonoff Relay Devices
   SONOFF_RF,
   SONOFF_TH,
@@ -660,7 +660,7 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   HUAFAN_SS,
 #ifdef ROTARY_V1
   MI_DESK_LAMP,
-#endif  
+#endif
   KMC_70011,
   AILIGHT,             // Light Bulbs
   PHILIPS,

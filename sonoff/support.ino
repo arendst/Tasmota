@@ -846,6 +846,16 @@ uint8_t ModuleNr()
   return (USER_MODULE == Settings.module) ? 0 : Settings.module +1;
 }
 
+bool ValidModule(uint8_t index)
+{
+  for (uint8_t i = 0; i < sizeof(kModuleNiceList); i++) {
+    if (index == pgm_read_byte(kModuleNiceList + i)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 String AnyModuleName(uint8_t index)
 {
   if (USER_MODULE == index) {

@@ -874,35 +874,40 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     }
     else if (CMND_MODULE == command_code) {
       if ((payload >= 0) && (payload <= MAXMODULE)) {
-        if (0 == payload) { payload = 256; }
-        payload--;
-        Settings.last_module = Settings.module;
-        Settings.module = payload;
-        SetModuleType();
-        if (Settings.last_module != payload) {
-          for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) {
-            Settings.my_gp.io[i] = GPIO_NONE;
-          }
+        bool present = false;
+        if (0 == payload) {
+          payload = 255;
+          present = true;
+        } else {
+          payload--;
+          present = ValidModule(payload);
         }
-        restart_flag = 2;
+        if (present) {
+          Settings.last_module = Settings.module;
+          Settings.module = payload;
+          SetModuleType();
+          if (Settings.last_module != payload) {
+            for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) {
+              Settings.my_gp.io[i] = GPIO_NONE;
+            }
+          }
+          restart_flag = 2;
+        }
       }
       Response_P(S_JSON_COMMAND_NVALUE_SVALUE, command, ModuleNr(), ModuleName().c_str());
     }
     else if (CMND_MODULES == command_code) {
-      for (uint8_t i = 0; i <= MAXMODULE; i++) {
+      uint8_t midx = USER_MODULE;
+      for (uint8_t i = 0; i <= sizeof(kModuleNiceList); i++) {
+        if (i > 0) { midx = pgm_read_byte(kModuleNiceList + i -1); }
         if (!jsflg) {
           Response_P(PSTR("{\"" D_CMND_MODULES "%d\":["), lines);
         } else {
           ResponseAppend_P(PSTR(","));
         }
         jsflg = true;
-        uint8_t j = i;
-        if (0 == i) { j = USER_MODULE; } else { j--; }
-
-//        ResponseAppend_P(PSTR("\"%d (%s)\""), i, AnyModuleName(j).c_str());
-//        if ((strlen(mqtt_data) > (LOGSZ - TOPSZ)) || (i == MAXMODULE)) {
-
-        if ((ResponseAppend_P(PSTR("\"%d (%s)\""), i, AnyModuleName(j).c_str()) > (LOGSZ - TOPSZ)) || (i == MAXMODULE)) {
+        uint8_t j = i ? midx +1 : 0;
+        if ((ResponseAppend_P(PSTR("\"%d (%s)\""), j, AnyModuleName(midx).c_str()) > (LOGSZ - TOPSZ)) || (i == sizeof(kModuleNiceList))) {
           ResponseAppend_P(PSTR("]}"));
           MqttPublishPrefixTopic_P(RESULT_OR_STAT, type);
           jsflg = false;
@@ -957,10 +962,6 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
             ResponseAppend_P(PSTR(","));
           }
           jsflg = true;
-
-//          ResponseAppend_P(PSTR("\"%d (%s)\""), midx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames));
-//          if ((strlen(mqtt_data) > (LOGSZ - TOPSZ)) || (i == sizeof(kGpioNiceList) -1)) {
-
           if ((ResponseAppend_P(PSTR("\"%d (%s)\""), midx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (LOGSZ - TOPSZ)) || (i == sizeof(kGpioNiceList) -1)) {
             ResponseAppend_P(PSTR("]}"));
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, type);
@@ -2324,9 +2325,11 @@ void GpioInit(void)
 {
   uint8_t mpin;
 
-  if ((Settings.module >= MAXMODULE) && (Settings.module < USER_MODULE)) {
-    Settings.module = MODULE;
-    Settings.last_module = MODULE;
+  if (!ValidModule(Settings.module)) {
+    uint8_t module = MODULE;
+    if (!ValidModule(MODULE)) { module = SONOFF_BASIC; }
+    Settings.module = module;
+    Settings.last_module = module;
   }
   SetModuleType();
 
@@ -2509,7 +2512,7 @@ void GpioInit(void)
   SwitchInit();
 #ifdef ROTARY_V1
   RotaryInit();
-#endif  
+#endif
 
 #ifdef USE_WS2812
   if (!light_type && (pin[GPIO_WS2812] < 99)) {  // RGB led
@@ -2702,9 +2705,9 @@ void loop(void)
 
   ButtonLoop();
   SwitchLoop();
-#ifdef ROTARY_V1  
+#ifdef ROTARY_V1
   RotaryLoop();
-#endif  
+#endif
 
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);

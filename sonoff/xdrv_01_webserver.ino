@@ -1038,7 +1038,7 @@ void HandleTemplateConfiguration(void)
 
   if (WebServer->hasArg("m")) {
     WSContentBegin(200, CT_PLAIN);
-    for (uint8_t i = 0; i < MAXMODULE; i++) {               // "}2'%d'>%s (%d)}3" - "}2'0'>Sonoff Basic (1)}3"
+    for (uint8_t i = 0; i < sizeof(kModuleNiceList); i++) {  // "}2'%d'>%s (%d)}3" - "}2'0'>Sonoff Basic (1)}3"
       uint8_t midx = pgm_read_byte(kModuleNiceList + i);
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), midx +1);
     }
@@ -1159,7 +1159,7 @@ void HandleModuleConfiguration(void)
   if (WebServer->hasArg("m")) {
     WSContentBegin(200, CT_PLAIN);
     uint8_t vidx = 0;
-    for (uint8_t i = 0; i <= MAXMODULE; i++) {  // "}2'%d'>%s (%d)}3" - "}2'255'>UserTemplate (0)}3" - "}2'0'>Sonoff Basic (1)}3"
+    for (uint8_t i = 0; i <= sizeof(kModuleNiceList); i++) {  // "}2'%d'>%s (%d)}3" - "}2'255'>UserTemplate (0)}3" - "}2'0'>Sonoff Basic (1)}3"
       if (0 == i) {
         midx = USER_MODULE;
         vidx = 0;
