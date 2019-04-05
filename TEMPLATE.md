@@ -3,7 +3,7 @@ Sonoff-Tasmota uses Device or Module information to control peripherals connecte
 
 Starting with version 6.4.1.16 Sonoff-Tasmota Modules can be extended by users online using a template. To provide easy processing by Sonoff-Tasmota a user template is written as JSON text and could look like this:
 
-{"NAME":"UserModule1","GPIO":[17,243,29,244,7,201,255,255,138,255,139,255,255],"FLAG":0,"BASE":18}
+{"NAME":"UserModule1","GPIO":[17,148,29,149,7,255,255,255,138,255,139,255,255],"FLAG":0,"BASE":18}
 
 The four properties with UPPERCASE property names have the following functionality:
 
@@ -74,7 +74,7 @@ Template | 0        | Copy active module template to user template
 Template | 1 .. 69  | Copy hard-coded module template to user template
 
 The following command will store a complete template based on the Generic module
-``Template {"NAME":"UserModule1","GPIO":[17,243,29,244,7,201,255,255,138,255,139,255,255],"FLAG":0,"BASE":18}``
+``Template {"NAME":"UserModule1","GPIO":[17,148,29,149,7,255,255,255,138,255,139,255,255],"FLAG":0,"BASE":18}``
 
 The following command will update the name of a stored template
 ``Template {"NAME":"UserModule2"}``

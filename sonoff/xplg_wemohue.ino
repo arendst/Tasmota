@@ -31,15 +31,20 @@
 #include <Ticker.h>
 Ticker TickerMSearch;
 
-bool udp_connected = false;
-
-char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP packet
-IPAddress ipMulticast(239,255,255,250);  // Simple Service Discovery Protocol (SSDP)
-uint32_t port_multicast = 1900;          // Multicast address and port
-
-bool udp_response_mutex = false;         // M-Search response mutex to control re-entry
 IPAddress udp_remote_ip;                 // M-Search remote IP address
 uint16_t udp_remote_port;                // M-Search remote port
+
+bool udp_connected = false;
+bool udp_response_mutex = false;         // M-Search response mutex to control re-entry
+
+/*********************************************************************************************\
+ * UPNP search targets
+\*********************************************************************************************/
+
+const char URN_BELKIN_DEVICE[] PROGMEM = "urn:belkin:device:**";
+const char UPNP_ROOTDEVICE[] PROGMEM = "upnp:rootdevice";
+const char SSDPSEARCH_ALL[] PROGMEM = "ssdpsearch:all";
+const char SSDP_ALL[] PROGMEM = "ssdp:all";
 
 /*********************************************************************************************\
  * WeMo UPNP support routines
@@ -50,12 +55,12 @@ const char WEMO_MSEARCH[] PROGMEM =
   "CACHE-CONTROL: max-age=86400\r\n"
   "DATE: Fri, 15 Apr 2016 04:56:29 GMT\r\n"
   "EXT:\r\n"
-  "LOCATION: http://{r1:80/setup.xml\r\n"
+  "LOCATION: http://%s:80/setup.xml\r\n"
   "OPT: \"http://schemas.upnp.org/upnp/1/0/\"; ns=01\r\n"
   "01-NLS: b9200ebb-736d-4b93-bf03-835149d13983\r\n"
   "SERVER: Unspecified, UPnP/1.0, Unspecified\r\n"
-  "ST: {r3\r\n"                 // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
-  "USN: uuid:{r2::{r3\r\n"      // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
+  "ST: %s\r\n"                // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
+  "USN: uuid:%s::%s\r\n"      // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
   "X-User-Agent: redsonic\r\n"
   "\r\n";
 
@@ -81,23 +86,22 @@ void WemoRespondToMSearch(int echo_type)
 
   TickerMSearch.detach();
   if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
-    String response = FPSTR(WEMO_MSEARCH);
-    response.replace("{r1", WiFi.localIP().toString());
-    response.replace("{r2", WemoUuid());
+    char type[24];
     if (1 == echo_type) {              // type1 echo 1g & dot 2g
-      response.replace("{r3", F("urn:Belkin:device:**"));
+      strcpy_P(type, URN_BELKIN_DEVICE);
     } else {                           // type2 echo 2g (echo, plus, show)
-      response.replace("{r3", F("upnp:rootdevice"));
+      strcpy_P(type, UPNP_ROOTDEVICE);
     }
-    PortUdp.write(response.c_str());
+    char response[400];
+    snprintf_P(response, sizeof(response), WEMO_MSEARCH, WiFi.localIP().toString().c_str(), type, WemoUuid().c_str(), type);
+    PortUdp.write(response);
     PortUdp.endPacket();
     snprintf_P(message, sizeof(message), PSTR(D_RESPONSE_SENT));
   } else {
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPNP D_WEMO " " D_JSON_TYPE " %d, %s " D_TO " %s:%d"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_WEMO " " D_JSON_TYPE " %d, %s " D_TO " %s:%d"),
     echo_type, message, udp_remote_ip.toString().c_str(), udp_remote_port);
-  AddLog(LOG_LEVEL_DEBUG);
 
   udp_response_mutex = false;
 }
@@ -115,20 +119,20 @@ const char HUE_RESPONSE[] PROGMEM =
   "HOST: 239.255.255.250:1900\r\n"
   "CACHE-CONTROL: max-age=100\r\n"
   "EXT:\r\n"
-  "LOCATION: http://{r1:80/description.xml\r\n"
+  "LOCATION: http://%s:80/description.xml\r\n"
   "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.17.0\r\n"
-  "hue-bridgeid: {r2\r\n";
+  "hue-bridgeid: %s\r\n";
 const char HUE_ST1[] PROGMEM =
   "ST: upnp:rootdevice\r\n"
-  "USN: uuid:{r3::upnp:rootdevice\r\n"
+  "USN: uuid:%s::upnp:rootdevice\r\n"
   "\r\n";
 const char HUE_ST2[] PROGMEM =
-  "ST: uuid:{r3\r\n"
-  "USN: uuid:{r3\r\n"
+  "ST: uuid:%s\r\n"
+  "USN: uuid:%s\r\n"
   "\r\n";
 const char HUE_ST3[] PROGMEM =
   "ST: urn:schemas-upnp-org:device:basic:1\r\n"
-  "USN: uuid:{r3\r\n"
+  "USN: uuid:%s\r\n"
   "\r\n";
 
 String HueBridgeId(void)
@@ -160,35 +164,28 @@ void HueRespondToMSearch(void)
 
   TickerMSearch.detach();
   if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
-    String response1 = FPSTR(HUE_RESPONSE);
-    response1.replace("{r1", WiFi.localIP().toString());
-    response1.replace("{r2", HueBridgeId());
+    char response[320];
+    snprintf_P(response, sizeof(response), HUE_RESPONSE, WiFi.localIP().toString().c_str(), HueBridgeId().c_str());
+    int len = strlen(response);
 
-    String response = response1;
-    response += FPSTR(HUE_ST1);
-    response.replace("{r3", HueUuid());
-    PortUdp.write(response.c_str());
+    snprintf_P(response + len, sizeof(response) - len, HUE_ST1, HueUuid().c_str());
+    PortUdp.write(response);
     PortUdp.endPacket();
 
-    response = response1;
-    response += FPSTR(HUE_ST2);
-    response.replace("{r3", HueUuid());
-    PortUdp.write(response.c_str());
+    snprintf_P(response + len, sizeof(response) - len, HUE_ST2, HueUuid().c_str(), HueUuid().c_str());
+    PortUdp.write(response);
     PortUdp.endPacket();
 
-    response = response1;
-    response += FPSTR(HUE_ST3);
-    response.replace("{r3", HueUuid());
-    PortUdp.write(response.c_str());
+    snprintf_P(response + len, sizeof(response) - len, HUE_ST3, HueUuid().c_str());
+    PortUdp.write(response);
     PortUdp.endPacket();
 
     snprintf_P(message, sizeof(message), PSTR(D_3_RESPONSE_PACKETS_SENT));
   } else {
     snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
   }
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_HUE " %s " D_TO " %s:%d"),
     message, udp_remote_ip.toString().c_str(), udp_remote_port);
-  AddLog(LOG_LEVEL_DEBUG);
 
   udp_response_mutex = false;
 }
@@ -200,6 +197,7 @@ void HueRespondToMSearch(void)
 bool UdpDisconnect(void)
 {
   if (udp_connected) {
+    PortUdp.flush();
     WiFiUDP::stopAll();
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_MULTICAST_DISABLED));
     udp_connected = false;
@@ -210,7 +208,8 @@ bool UdpDisconnect(void)
 bool UdpConnect(void)
 {
   if (!udp_connected) {
-    if (PortUdp.beginMulticast(WiFi.localIP(), ipMulticast, port_multicast)) {
+    // Simple Service Discovery Protocol (SSDP)
+    if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), 1900)) {
       AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
       udp_response_mutex = false;
       udp_connected = true;
@@ -224,48 +223,53 @@ bool UdpConnect(void)
 
 void PollUdp(void)
 {
-  if (udp_connected && !udp_response_mutex) {
+  if (udp_connected) {
     if (PortUdp.parsePacket()) {
+      char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP/SSDP packet
+
       int len = PortUdp.read(packet_buffer, UDP_BUFFER_SIZE -1);
-      if (len > 0) {
-        packet_buffer[len] = 0;
-      }
-      String request = packet_buffer;
+      packet_buffer[len] = 0;
 
-//      AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet received"));
-//      AddLog_P(LOG_LEVEL_DEBUG_MORE, packet_buffer);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
+//      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 
-      if (request.indexOf("M-SEARCH") >= 0) {
-        request.toLowerCase();
-        request.replace(" ", "");
-
-//        AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet received"));
-//        AddLog_P(LOG_LEVEL_DEBUG_MORE, request.c_str());
+      if (devices_present && !udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
+        udp_response_mutex = true;
 
         udp_remote_ip = PortUdp.remoteIP();
         udp_remote_port = PortUdp.remotePort();
+
+//        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %s:%d\n%s"),
+//          udp_remote_ip.toString().c_str(), udp_remote_port, packet_buffer);
+
+        uint32_t response_delay = UDP_MSEARCH_SEND_DELAY + ((millis() &0x7) * 100);  // 1500 - 2200 msec
+
+        LowerCase(packet_buffer, packet_buffer);
+        RemoveSpace(packet_buffer);
         if (EMUL_WEMO == Settings.flag2.emulation) {
-          if (request.indexOf(F("urn:belkin:device:**")) > 0) {    // type1 echo dot 2g, echo 1g's
-            udp_response_mutex = true;
-            TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, WemoRespondToMSearch, 1);
+          if (strstr_P(packet_buffer, URN_BELKIN_DEVICE) != nullptr) {     // type1 echo dot 2g, echo 1g's
+            TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 1);
+            return;
           }
-          else if ((request.indexOf(F("upnp:rootdevice")) > 0) ||  // type2 Echo 2g (echo & echo plus)
-                   (request.indexOf(F("ssdpsearch:all")) > 0) ||
-                   (request.indexOf(F("ssdp:all")) > 0)) {
-            udp_response_mutex = true;
-            TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, WemoRespondToMSearch, 2);
+          else if ((strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||  // type2 Echo 2g (echo & echo plus)
+                   (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
+                   (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
+            TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 2);
+            return;
+          }
+        } else {
+          if ((strstr_P(packet_buffer, PSTR(":device:basic:1")) != nullptr) ||
+              (strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||
+              (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
+              (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
+            TickerMSearch.attach_ms(response_delay, HueRespondToMSearch);
+            return;
           }
         }
-        else if ((EMUL_HUE == Settings.flag2.emulation) &&
-                ((request.indexOf(F("urn:schemas-upnp-org:device:basic:1")) > 0) ||
-                 (request.indexOf(F("upnp:rootdevice")) > 0) ||
-                 (request.indexOf(F("ssdpsearch:all")) > 0) ||
-                 (request.indexOf(F("ssdp:all")) > 0))) {
-            udp_response_mutex = true;
-            TickerMSearch.attach_ms(UDP_MSEARCH_SEND_DELAY, HueRespondToMSearch);
-        }
+        udp_response_mutex = false;
       }
     }
+    delay(1);
   }
 }
 
@@ -342,9 +346,9 @@ const char WEMO_METASERVICE_XML[] PROGMEM =
 const char WEMO_RESPONSE_STATE_SOAP[] PROGMEM =
   "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">"
     "<s:Body>"
-      "<u:SetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">"
-        "<BinaryState>{x1</BinaryState>"
-      "</u:SetBinaryStateResponse>"
+      "<u:%cetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">"
+        "<BinaryState>%d</BinaryState>"
+      "</u:%cetBinaryStateResponse>"
     "</s:Body>"
   "</s:Envelope>\r\n";
 
@@ -385,15 +389,20 @@ void HandleUpnpEvent(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
 
-  String request = WebServer->arg(0);
-  String state_xml = FPSTR(WEMO_RESPONSE_STATE_SOAP);
+  char event[500];
+  strlcpy(event, WebServer->arg(0).c_str(), sizeof(event));
+
+//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), event);
+
   //differentiate get and set state
-  if (request.indexOf(F("SetBinaryState")) > 0) {
+  char state = 'G';
+  if (strstr_P(event, PSTR("SetBinaryState")) != nullptr) {
+    state = 'S';
     uint8_t power = POWER_TOGGLE;
-    if (request.indexOf(F("State>1</Binary")) > 0) {
+    if (strstr_P(event, PSTR("State>1</Binary")) != nullptr) {
       power = POWER_ON;
     }
-    else if (request.indexOf(F("State>0</Binary")) > 0) {
+    else if (strstr_P(event, PSTR("State>0</Binary")) != nullptr) {
       power = POWER_OFF;
     }
     if (power != POWER_TOGGLE) {
@@ -401,25 +410,23 @@ void HandleUpnpEvent(void)
       ExecuteCommandPower(device, power, SRC_WEMO);
     }
   }
-  else if(request.indexOf(F("GetBinaryState")) > 0){
-    state_xml.replace(F("Set"), F("Get"));
-  }
-  state_xml.replace("{x1", String(bitRead(power, devices_present -1)));
-  WebServer->send(200, FPSTR(HDR_CTYPE_XML), state_xml);
+
+  snprintf_P(event, sizeof(event), WEMO_RESPONSE_STATE_SOAP, state, bitRead(power, devices_present -1), state);
+  WSSend(200, CT_XML, event);
 }
 
 void HandleUpnpService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_EVENT_SERVICE));
 
-  WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), FPSTR(WEMO_EVENTSERVICE_XML));
+  WSSend(200, CT_PLAIN, FPSTR(WEMO_EVENTSERVICE_XML));
 }
 
 void HandleUpnpMetaService(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_META_SERVICE));
 
-  WebServer->send(200, FPSTR(HDR_CTYPE_PLAIN), FPSTR(WEMO_METASERVICE_XML));
+  WSSend(200, CT_PLAIN, FPSTR(WEMO_METASERVICE_XML));
 }
 
 void HandleUpnpSetupWemo(void)
@@ -430,7 +437,7 @@ void HandleUpnpSetupWemo(void)
   setup_xml.replace("{x1", Settings.friendlyname[0]);
   setup_xml.replace("{x2", WemoUuid());
   setup_xml.replace("{x3", WemoSerialnumber());
-  WebServer->send(200, FPSTR(HDR_CTYPE_XML), setup_xml);
+  WSSend(200, CT_XML, setup_xml);
 }
 
 /*********************************************************************************************\
@@ -532,15 +539,14 @@ void HandleUpnpSetupHue(void)
   description_xml.replace("{x1", WiFi.localIP().toString());
   description_xml.replace("{x2", HueUuid());
   description_xml.replace("{x3", HueSerialnumber());
-  WebServer->send(200, FPSTR(HDR_CTYPE_XML), description_xml);
+  WSSend(200, CT_XML, description_xml);
 }
 
 void HueNotImplemented(String *path)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_HUE_API_NOT_IMPLEMENTED " (%s)"), path->c_str());
-  AddLog(LOG_LEVEL_DEBUG_MORE);
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API_NOT_IMPLEMENTED " (%s)"), path->c_str());
 
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), "{}");
+  WSSend(200, CT_JSON, "{}");
 }
 
 void HueConfigResponse(String *response)
@@ -559,7 +565,7 @@ void HueConfig(String *path)
 {
   String response = "";
   HueConfigResponse(&response);
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+  WSSend(200, CT_JSON, response);
 }
 
 bool g_gotct = false;
@@ -610,7 +616,7 @@ void HueGlobalConfig(String *path)
   response += F("},\"groups\":{},\"schedules\":{},\"config\":");
   HueConfigResponse(&response);
   response += "}";
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+  WSSend(200, CT_JSON, response);
 }
 
 void HueAuthentication(String *path)
@@ -618,7 +624,7 @@ void HueAuthentication(String *path)
   char response[38];
 
   snprintf_P(response, sizeof(response), PSTR("[{\"success\":{\"username\":\"%s\"}}]"), GetHueUserId().c_str());
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+  WSSend(200, CT_JSON, response);
 }
 
 void HueLights(String *path)
@@ -627,15 +633,16 @@ void HueLights(String *path)
  * http://sonoff/api/username/lights/1/state?1={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
  */
   String response;
-  uint8_t device = 1;
-  uint16_t tmp = 0;
+  int code = 200;
   float bri = 0;
   float hue = 0;
   float sat = 0;
+  uint16_t tmp = 0;
   uint16_t ct = 0;
   bool resp = false;
   bool on = false;
   bool change = false;
+  uint8_t device = 1;
   uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
 
   path->remove(0,path->indexOf("/lights"));          // Remove until /lights
@@ -651,7 +658,6 @@ void HueLights(String *path)
       }
     }
     response += "}";
-    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
   else if (path->endsWith("/state")) {               // Got ID/state
     path->remove(0,8);                               // Remove /lights/
@@ -761,8 +767,6 @@ void HueLights(String *path)
     else {
       response = FPSTR(HUE_ERROR_JSON);
     }
-
-    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
   else if(path->indexOf("/lights/") >= 0) {          // Got /lights/ID
     path->remove(0,8);                               // Remove /lights/
@@ -773,11 +777,12 @@ void HueLights(String *path)
     response += F("{\"state\":");
     HueLightStatus1(device, &response);
     HueLightStatus2(device, &response);
-    WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
   }
   else {
-    WebServer->send(406, FPSTR(HDR_CTYPE_JSON), "{}");
+    response = "{}";
+    code = 406;
   }
+  WSSend(code, CT_JSON, response);
 }
 
 void HueGroups(String *path)
@@ -799,7 +804,7 @@ void HueGroups(String *path)
     response += F("}");
   }
 
-  WebServer->send(200, FPSTR(HDR_CTYPE_JSON), response);
+  WSSend(200, CT_JSON, response);
 }
 
 void HandleHueApi(String *path)
@@ -820,12 +825,10 @@ void HandleHueApi(String *path)
 
   path->remove(0, 4);                                // remove /api
   uint16_t apilen = path->length();
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_HUE_API " (%s)"), path->c_str());
-  AddLog(LOG_LEVEL_DEBUG_MORE);                      // HTP: Hue API (//lights/1/state)
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_API " (%s)"), path->c_str());         // HTP: Hue API (//lights/1/state
   for (args = 0; args < WebServer->args(); args++) {
     String json = WebServer->arg(args);
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());
-    AddLog(LOG_LEVEL_DEBUG_MORE);                    // HTP: Hue POST args ({"on":false})
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE_POST_ARGS " (%s)"), json.c_str());  // HTP: Hue POST args ({"on":false})
   }
 
   if (path->endsWith("/invalid/")) {}                // Just ignore
@@ -843,14 +846,16 @@ void HandleHueApi(String *path)
 
 void HueWemoAddHandlers(void)
 {
-  if (EMUL_WEMO == Settings.flag2.emulation) {
-    WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
-    WebServer->on("/eventservice.xml", HandleUpnpService);
-    WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
-    WebServer->on("/setup.xml", HandleUpnpSetupWemo);
-  }
-  if (EMUL_HUE == Settings.flag2.emulation) {
-    WebServer->on("/description.xml", HandleUpnpSetupHue);
+  if (devices_present) {
+    if (EMUL_WEMO == Settings.flag2.emulation) {
+      WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
+      WebServer->on("/eventservice.xml", HandleUpnpService);
+      WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
+      WebServer->on("/setup.xml", HandleUpnpSetupWemo);
+    }
+    if (EMUL_HUE == Settings.flag2.emulation) {
+      WebServer->on("/description.xml", HandleUpnpSetupHue);
+    }
   }
 }
 

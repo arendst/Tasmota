@@ -37,7 +37,7 @@ int16_t mtx_x = 0;
 int16_t mtx_y = 0;
 
 //char mtx_buffer[MTX_MAX_SCREEN_BUFFER];
-char *mtx_buffer = NULL;
+char *mtx_buffer = nullptr;
 
 uint8_t mtx_mode = 0;
 uint8_t mtx_loop = 0;
@@ -94,8 +94,7 @@ void MatrixScrollLeft(char* txt, int loop)
     // Horiz. position of text -- starts off right edge
     mtx_x = 8 * mtx_matrices;
 
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "[%s]"), txt);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), txt);
 
     disp_refresh = Settings.display_refresh;
   case 2:
@@ -141,9 +140,9 @@ void MatrixScrollUp(char* txt, int loop)
       disp_refresh = Settings.display_refresh;
       strlcpy(tmpbuf, txt, sizeof(tmpbuf));
       char *p = strtok(tmpbuf, separators);
-      while (p != NULL && wordcounter < 40) {
+      while (p != nullptr && wordcounter < 40) {
         words[wordcounter++] = p;
-        p = strtok(NULL, separators);
+        p = strtok(nullptr, separators);
       }
       for (uint8_t i = 0; i < mtx_matrices; i++) {
         matrix[i]->clear();
@@ -197,7 +196,7 @@ void MatrixInit(uint8_t mode)
 void MatrixInitDriver(void)
 {
   mtx_buffer = (char*)(malloc(MTX_MAX_SCREEN_BUFFER));
-  if (mtx_buffer != NULL) {
+  if (mtx_buffer != nullptr) {
     if (!Settings.display_model) {
       if (I2cDevice(Settings.display_address[1])) {
         Settings.display_model = XDSP_03;
@@ -227,7 +226,7 @@ void MatrixOnOff(void)
 
 void MatrixDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8_t flag)
 {
-  snprintf(mtx_buffer, MTX_MAX_SCREEN_BUFFER, str);
+  strlcpy(mtx_buffer, str, MTX_MAX_SCREEN_BUFFER);
   mtx_mode = x &1;  // Use x for selecting scroll up (0) or scroll left (1)
   mtx_loop = y &1;  // Use y for selecting no loop (0) or loop (1)
   if (!mtx_state) { mtx_state = 1; }
@@ -240,7 +239,7 @@ void MatrixDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8
 void MatrixPrintLog(uint8_t direction)
 {
   char* txt = (!mtx_done) ? DisplayLogBuffer('\370') : mtx_buffer;
-  if (txt != NULL) {
+  if (txt != nullptr) {
     if (!mtx_state) { mtx_state = 1; }
 
     if (!mtx_done) {
@@ -261,8 +260,7 @@ void MatrixPrintLog(uint8_t direction)
         i++;
       }
 
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "[%s]"), mtx_buffer);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), mtx_buffer);
 
       mtx_done = 1;
     }

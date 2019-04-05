@@ -232,7 +232,7 @@ String GetSun(uint8_t dawn)
   return String(stime);
 }
 
-uint16_t GetSunMinutes(uint8_t dawn)
+uint16_t SunMinutes(uint8_t dawn)
 {
   uint8_t hour[2];
   uint8_t minute[2];
@@ -287,7 +287,7 @@ void TimerEverySecond(void)
               Settings.timer[i].arm = xtimer.repeat;
 #ifdef USE_RULES
               if (3 == xtimer.power) {  // Blink becomes Rule disregarding device and allowing use of Backlog commands
-                snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
+                Response_P(PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
                 XdrvRulesProcess();
               } else
 #endif  // USE_RULES
@@ -325,11 +325,11 @@ void PrepShowTimer(uint8_t index)
       sign[0] = '-';
     }
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%s%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
-    mqtt_data, index, xtimer.arm, xtimer.mode, sign, hour, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
+  ResponseAppend_P(PSTR("\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_MODE "\":%d,\"" D_JSON_TIMER_TIME "\":\"%s%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
+    index, xtimer.arm, xtimer.mode, sign, hour, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
 #else
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
-    mqtt_data, index, xtimer.arm, xtimer.time / 60, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
+  ResponseAppend_P(PSTR("\"" D_CMND_TIMER "%d\":{\"" D_JSON_TIMER_ARM "\":%d,\"" D_JSON_TIMER_TIME "\":\"%02d:%02d\",\"" D_JSON_TIMER_WINDOW "\":%d,\"" D_JSON_TIMER_DAYS "\":\"%s\",\"" D_JSON_TIMER_REPEAT "\":%d%s,\"" D_JSON_TIMER_ACTION "\":%d}"),
+    index, xtimer.arm, xtimer.time / 60, xtimer.time % 60, xtimer.window, days, xtimer.repeat, soutput, xtimer.power);
 #endif  // USE_SUNRISE
 }
 
@@ -365,7 +365,7 @@ bool TimerCommand(void)
           StaticJsonBuffer<256> jsonBuffer;
           JsonObject& root = jsonBuffer.parseObject(dataBufUc);
           if (!root.success()) {
-            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
+            Response_P(PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_INVALID_JSON "\"}"), index); // JSON decode failed
             error = 1;
           }
           else {
@@ -385,9 +385,9 @@ bool TimerCommand(void)
               uint8_t sign = 0;
               char time_str[10];
 
-              snprintf(time_str, sizeof(time_str), root[parm_uc]);
+              strlcpy(time_str, root[parm_uc], sizeof(time_str));
               const char *substr = strtok(time_str, ":");
-              if (substr != NULL) {
+              if (substr != nullptr) {
                 if (strchr(substr, '-')) {
                   sign = 1;
                   substr++;
@@ -396,8 +396,8 @@ bool TimerCommand(void)
                 if (sign) { value += 12; }  // Allow entering timer offset from -11:59 to -00:01 converted to 12:01 to 23:59
                 if (value > 23) { value = 23; }
                 itime = value * 60;
-                substr = strtok(NULL, ":");
-                if (substr != NULL) {
+                substr = strtok(nullptr, ":");
+                if (substr != nullptr) {
                   value = atoi(substr);
                   if (value < 0) { value = 0; }
                   if (value > 59) { value = 59; }
@@ -439,16 +439,16 @@ bool TimerCommand(void)
           }
 #ifndef USE_RULES
         } else {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_TIMER_NO_DEVICE "\"}"), index);  // No outputs defined so nothing to control
+          Response_P(PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_TIMER_NO_DEVICE "\"}"), index);  // No outputs defined so nothing to control
           error = 1;
         }
 #endif
       }
     }
     if (!error) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{"));
+      Response_P(PSTR("{"));
       PrepShowTimer(index);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      ResponseAppend_P(PSTR("}"));
     }
   }
   else if (CMND_TIMERS == command_code) {
@@ -461,21 +461,21 @@ bool TimerCommand(void)
       }
     }
 
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag3.timers_enable));
+    Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag3.timers_enable));
     MqttPublishPrefixTopic_P(RESULT_OR_STAT, command);
 
     uint8_t jsflg = 0;
     uint8_t lines = 1;
     for (uint8_t i = 0; i < MAX_TIMERS; i++) {
       if (!jsflg) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_TIMERS "%d\":{"), lines++);
+        Response_P(PSTR("{\"" D_CMND_TIMERS "%d\":{"), lines++);
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,"), mqtt_data);
+        ResponseAppend_P(PSTR(","));
       }
       jsflg++;
       PrepShowTimer(i +1);
       if (jsflg > 3) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}}"), mqtt_data);
+        ResponseAppend_P(PSTR("}}"));
         MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_TIMERS));
         jsflg = 0;
       }
@@ -489,7 +489,7 @@ bool TimerCommand(void)
     }
     char lbuff[33];
     dtostrfd(((double)Settings.longitude) /1000000, 6, lbuff);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, lbuff);
+    Response_P(S_JSON_COMMAND_SVALUE, command, lbuff);
   }
   else if (CMND_LATITUDE == command_code) {
     if (XdrvMailbox.data_len) {
@@ -497,7 +497,7 @@ bool TimerCommand(void)
     }
     char lbuff[33];
     dtostrfd(((double)Settings.latitude) /1000000, 6, lbuff);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, lbuff);
+    Response_P(S_JSON_COMMAND_SVALUE, command, lbuff);
   }
 #endif
   else serviced = false;  // Unknown command
@@ -517,9 +517,9 @@ bool TimerCommand(void)
 const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
 
 const char HTTP_BTN_MENU_TIMER[] PROGMEM =
-  "<br/><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form>";
+  "<p><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form></p>";
 
-const char HTTP_TIMER_SCRIPT[] PROGMEM =
+const char HTTP_TIMER_SCRIPT1[] PROGMEM =
   "var pt=[],ct=99;"
   "function qs(s){"                                               // Alias to save code space
     "return document.querySelector(s);"
@@ -528,8 +528,9 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "var o=document.createElement('option');"
     "o.textContent=i;"
     "q.appendChild(o);"
-  "}"
+  "}";
 #ifdef USE_SUNRISE
+const char HTTP_TIMER_SCRIPT2[] PROGMEM =
   "function gt(){"                                                // Set hours and minutes according to mode
     "var m,p,q;"
     "m=qs('input[name=\"rd\"]:checked').value;"                   // Get mode
@@ -537,7 +538,7 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "if(m==0){"                                                   // Time is set
       "so(0);"                                                    // Hide offset span and allow Hour 00..23
       "q=Math.floor(p/60);if(q<10){q='0'+q;}qs('#ho').value=q;"   // Set hours
-      "q=p%60;if(q<10){q='0'+q;}qs('#mi').value=q;"               // Set minutes
+      "q=p%%60;if(q<10){q='0'+q;}qs('#mi').value=q;"               // Set minutes
     "}"
     "if((m==1)||(m==2)){"                                         // Sunrise or sunset is set
       "so(1);"                                                    // Show offset span and allow Hour 00..11
@@ -545,7 +546,7 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
       "if(q>=12){q-=12;qs('#dr').selectedIndex=1;}"               // Negative offset
         "else{qs('#dr').selectedIndex=0;}"
       "if(q<10){q='0'+q;}qs('#ho').value=q;"                      // Set offset hours
-      "q=p%60;if(q<10){q='0'+q;}qs('#mi').value=q;"               // Set offset minutes
+      "q=p%%60;if(q<10){q='0'+q;}qs('#mi').value=q;"               // Set offset minutes
     "}"
   "}"
   "function so(b){"                                               // Hide or show offset items
@@ -558,8 +559,9 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
       "qs('#dr').disabled='disabled';"
       "if(e<23){for(i=12;i<=23;i++){ce(i,o);}}"                   // Create hours select options
     "}"
-  "}"
+  "}";
 #endif
+const char HTTP_TIMER_SCRIPT3[] PROGMEM =
   "function st(){"                                                // Save parameters to hidden area
     "var i,l,m,n,p,s;"
     "m=0;s=0;"
@@ -570,7 +572,7 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "m=qs('input[name=\"rd\"]:checked').value;"                   // Check mode
     "s|=(qs('input[name=\"rd\"]:checked').value<<29);"            // Get mode
 #endif
-    "if(}1>0){"
+    "if(%d>0){"
       "i=qs('#d1').selectedIndex;if(i>=0){s|=(i<<23);}"           // Get output
       "s|=(qs('#p1').selectedIndex<<27);"                         // Get action
     "}else{"
@@ -587,14 +589,15 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
     "s|=((qs('#mw').selectedIndex)&0x0F)<<11;"                    // Get window minutes
     "pt[ct]=s;"
     "eb('t0').value=pt.join();"                                   // Save parameters from array to hidden area
-  "}"
+  "}";
+const char HTTP_TIMER_SCRIPT4[] PROGMEM =
   "function ot(t,e){"                                             // Select tab and update elements
     "var i,n,o,p,q,s;"
     "if(ct<99){st();}"                                            // Save changes
     "ct=t;"
     "o=document.getElementsByClassName('tl');"                    // Restore style to all tabs/buttons
-    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background-color:#ccc;color:#fff;font-weight:normal;\"}"
-    "e.style.cssText=\"background-color:#fff;color:#000;font-weight:bold;\";"  // Change style to tab/button used to open content
+    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background-color:#999;color:#fff;font-weight:normal;\"}"
+    "e.style.cssText=\"background-color:transparent;color:#000;font-weight:bold;\";"  // Change style to tab/button used to open content
     "s=pt[ct];"                                                   // Get parameters from array
 #ifdef USE_SUNRISE
     "p=(s>>29)&3;eb('b'+p).checked=1;"                            // Set mode
@@ -602,23 +605,29 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
 #else
     "p=s&0x7FF;"                                                  // Get time
     "q=Math.floor(p/60);if(q<10){q='0'+q;}qs('#ho').value=q;"     // Set hours
-    "q=p%60;if(q<10){q='0'+q;}qs('#mi').value=q;"                 // Set minutes
+    "q=p%%60;if(q<10){q='0'+q;}qs('#mi').value=q;"                // Set minutes
 #endif
     "q=(s>>11)&0xF;if(q<10){q='0'+q;}qs('#mw').value=q;"          // Set window minutes
     "for(i=0;i<7;i++){p=(s>>(16+i))&1;eb('w'+i).checked=p;}"      // Set weekdays
-    "if(}1>0){"
+    "if(%d>0){"
       "p=(s>>23)&0xF;qs('#d1').value=p+1;"                        // Set output
       "p=(s>>27)&3;qs('#p1').selectedIndex=p;"                    // Set action
     "}"
     "p=(s>>15)&1;eb('r0').checked=p;"                             // Set repeat
     "p=(s>>31)&1;eb('a0').checked=p;"                             // Set arm
-  "}"
+  "}";
+const char HTTP_TIMER_SCRIPT5[] PROGMEM =
   "function it(){"                                                // Initialize elements and select first tab
     "var b,i,o,s;"
     "pt=eb('t0').value.split(',').map(Number);"                   // Get parameters from hidden area to array
-    "s='';for(i=0;i<" STR(MAX_TIMERS) ";i++){b='';if(0==i){b=\" id='dP'\";}s+=\"<button type='button' class='tl' onclick='ot(\"+i+\",this)'\"+b+\">\"+(i+1)+\"</button>\"}"
+    "s='';"
+    "for(i=0;i<%d;i++){"
+      "b='';"
+      "if(0==i){b=\" id='dP'\";}"
+      "s+=\"<button type='button' class='tl' onclick='ot(\"+i+\",this)'\"+b+\">\"+(i+1)+\"</button>\""
+    "}"
     "eb('bt').innerHTML=s;"                                       // Create tabs
-    "if(}1>0){"                                                   // Create Output and Action drop down boxes
+    "if(%d>0){"                                                   // Create Output and Action drop down boxes
       "eb('oa').innerHTML=\"<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1' name='d1'></select></span>&emsp;<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:99px;' id='p1' name='p1'></select>\";"
       "o=qs('#p1');ce('" D_OFF "',o);ce('" D_ON "',o);ce('" D_TOGGLE "',o);"  // Create offset direction select options
 #ifdef USE_RULES
@@ -628,50 +637,52 @@ const char HTTP_TIMER_SCRIPT[] PROGMEM =
 #endif
     "}else{"
       "eb('oa').innerHTML=\"<b>" D_TIMER_ACTION "</b> " D_RULE "\";"  // No outputs but rule is allowed
-    "}"
+    "}";
+const char HTTP_TIMER_SCRIPT6[] PROGMEM =
 #ifdef USE_SUNRISE
     "o=qs('#dr');ce('+',o);ce('-',o);"                            // Create offset direction select options
 #endif
     "o=qs('#ho');for(i=0;i<=23;i++){ce((i<10)?('0'+i):i,o);}"     // Create hours select options
     "o=qs('#mi');for(i=0;i<=59;i++){ce((i<10)?('0'+i):i,o);}"     // Create minutes select options
     "o=qs('#mw');for(i=0;i<=15;i++){ce((i<10)?('0'+i):i,o);}"     // Create window minutes select options
-    "o=qs('#d1');for(i=0;i<}1;i++){ce(i+1,o);}"                   // Create outputs
+    "o=qs('#d1');for(i=0;i<%d;i++){ce(i+1,o);}"                   // Create outputs
     "var a='" D_DAY3LIST "';"
-    "s='';for(i=0;i<7;i++){s+=\"<input style='width:5%;' id='w\"+i+\"' name='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b>\"}"
+    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' name='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b> \"}"
     "eb('ds').innerHTML=s;"                                       // Create weekdays
     "eb('dP').click();"                                           // Get the element with id='dP' and click on it
-  "}";
+  "}"
+  "window.onload=it;";
 const char HTTP_TIMER_STYLE[] PROGMEM =
-  ".tl{float:left;border-radius:0;border:1px solid #fff;padding:1px;width:6.25%;}"
-#ifdef USE_SUNRISE
-  "input[type='radio']{width:13px;height:24px;margin-top:-1px;margin-right:8px;vertical-align:middle;}"
-#endif
-  "</style>";
-const char HTTP_FORM_TIMER[] PROGMEM =
+  ".tl{float:left;border-radius:0;border:1px solid #f2f2f2;padding:1px;width:6.25%%;}";  // Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
+const char HTTP_FORM_TIMER1[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
-  "<br/><input style='width:5%;' id='e0' name='e0' type='checkbox'{e0><b>" D_TIMER_ENABLE "</b><br/><br/><hr/>"
+  "<br/><input id='e0' name='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b><br/><br/><hr/>"
   "<input id='t0' name='t0' value='";
-const char HTTP_FORM_TIMER1[] PROGMEM =
+const char HTTP_FORM_TIMER2[] PROGMEM =
   "' hidden><div id='bt' name='bt'></div><br/><br/><br/>"
   "<div id='oa' name='oa'></div><br/>"
   "<div>"
-  "<input style='width:5%;' id='a0' name='a0' type='checkbox'><b>" D_TIMER_ARM "</b>&emsp;"
-  "<input style='width:5%;' id='r0' name='r0' type='checkbox'><b>" D_TIMER_REPEAT "</b>"
+  "<input id='a0' name='a0' type='checkbox'><b>" D_TIMER_ARM "</b>&emsp;"
+  "<input id='r0' name='r0' type='checkbox'><b>" D_TIMER_REPEAT "</b>"
   "</div><br/>"
-  "<div>"
+  "<div>";
 #ifdef USE_SUNRISE
-  "<fieldset style='width:299px;margin:auto;text-align:left;border:0;'>"
+const char HTTP_FORM_TIMER3[] PROGMEM =
+  "<fieldset style='width:%dpx;margin:auto;text-align:left;border:0;'>"
   "<input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b><br/>"
-  "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b> (}8)<br/>"
-  "<input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b> (}9)<br/>"
+  "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b> (%s)<br/>"
+  "<input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b> (%s)<br/>"
   "</fieldset>"
+  "<p></p>"
   "<span><select style='width:46px;' id='dr' name='dr'></select></span>"
-  "&nbsp;"
+  "&nbsp;";
 #else
-  "<b>" D_TIMER_TIME "</b>&nbsp;"
+const char HTTP_FORM_TIMER3[] PROGMEM =
+  "<b>" D_TIMER_TIME "</b>&nbsp;";
 #endif  // USE_SUNRISE
+const char HTTP_FORM_TIMER4[] PROGMEM =
   "<span><select style='width:60px;' id='ho' name='ho'></select></span>"
   "&nbsp;" D_HOUR_MINUTE_SEPARATOR "&nbsp;"
   "<span><select style='width:60px;' id='mi' name='mi'></select></span>"
@@ -692,28 +703,30 @@ void HandleTimerConfiguration(void)
     return;
   }
 
-  String page = FPSTR(HTTP_HEAD);
-  page.replace(F("{v}"), FPSTR(S_CONFIGURE_TIMER));
-  page += FPSTR(HTTP_TIMER_SCRIPT);
-  page += FPSTR(HTTP_HEAD_STYLE);
-  page.replace(F("</style>"), FPSTR(HTTP_TIMER_STYLE));
-  page += FPSTR(HTTP_FORM_TIMER);
-  page.replace(F("{e0"), (Settings.flag3.timers_enable) ? F(" checked") : F(""));
-  for (uint8_t i = 0; i < MAX_TIMERS; i++) {
-    if (i > 0) { page += F(","); }
-    page += String(Settings.timer[i].data);
-  }
-  page += FPSTR(HTTP_FORM_TIMER1);
-  page.replace(F("}1"), String(devices_present));
+  WSContentStart_P(S_CONFIGURE_TIMER);
+  WSContentSend_P(HTTP_TIMER_SCRIPT1);
 #ifdef USE_SUNRISE
-  page.replace(F("}8"), GetSun(0));  // Add Sunrise
-  page.replace(F("}9"), GetSun(1));  // Add Sunset
-  page.replace(F("299"), String(100 + (strlen(D_SUNSET) *12)));  // Fix string length to keep radios centered
+  WSContentSend_P(HTTP_TIMER_SCRIPT2);
 #endif  // USE_SUNRISE
-  page += FPSTR(HTTP_FORM_END);
-  page += F("<script>it();</script>");  // Init elements and select first tab/button
-  page += FPSTR(HTTP_BTN_CONF);
-  ShowPage(page);
+  WSContentSend_P(HTTP_TIMER_SCRIPT3, devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT4, devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT6, devices_present);
+  WSContentSendStyle_P(HTTP_TIMER_STYLE);
+  WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");
+  for (uint8_t i = 0; i < MAX_TIMERS; i++) {
+    WSContentSend_P(PSTR("%s%u"), (i > 0) ? "," : "", Settings.timer[i].data);
+  }
+  WSContentSend_P(HTTP_FORM_TIMER2);
+#ifdef USE_SUNRISE
+  WSContentSend_P(HTTP_FORM_TIMER3, 100 + (strlen(D_SUNSET) *12), GetSun(0).c_str(), GetSun(1).c_str());
+#else
+  WSContentSend_P(HTTP_FORM_TIMER3);
+#endif  // USE_SUNRISE
+  WSContentSend_P(HTTP_FORM_TIMER4);
+  WSContentSend_P(HTTP_FORM_END);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
+  WSContentStop();
 }
 
 void TimerSaveSettings(void)
@@ -756,9 +769,9 @@ bool Xdrv09(uint8_t function)
 #ifdef USE_TIMERS_WEB
     case FUNC_WEB_ADD_BUTTON:
 #ifdef USE_RULES
-      strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data) - strlen(mqtt_data) -1);
+      WSContentSend_P(HTTP_BTN_MENU_TIMER);
 #else
-      if (devices_present) { strncat_P(mqtt_data, HTTP_BTN_MENU_TIMER, sizeof(mqtt_data) - strlen(mqtt_data) -1); }
+      if (devices_present) { WSContentSend_P(HTTP_BTN_MENU_TIMER); }
 #endif  // USE_RULES
       break;
     case FUNC_WEB_ADD_HANDLER:

@@ -152,9 +152,8 @@ void HlwEvery200ms(void)
       }
     }
     unsigned long median = hlw_debug[(hlw_cf1_pulse_counter +1) / 2];
-    snprintf_P(log_data, sizeof(log_data), PSTR("NRG: power %d, ui %d, cnt %d, smpl%s, sum %d, mean %d, median %d"),
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: power %d, ui %d, cnt %d, smpl%s, sum %d, mean %d, median %d"),
       hlw_cf_power_pulse_length, hlw_select_ui_flag, hlw_cf1_pulse_counter, stemp, hlw_cf1_summed_pulse_length, cf1_pulse_length, median);
-    AddLog(LOG_LEVEL_DEBUG);
 #endif
 
     if (hlw_select_ui_flag == hlw_ui_flag) {

@@ -125,9 +125,8 @@ bool DhtRead(uint8_t sensor)
 
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %02X, %02X, %02X, %02X, %02X =? %02X"),
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %02X, %02X, %02X, %02X, %02X =? %02X"),
       dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], checksum);
-    AddLog(LOG_LEVEL_DEBUG);
     return false;
   }
 
@@ -214,7 +213,7 @@ void DhtShow(bool json)
     dtostrfd(Dht[i].h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, temperature, humidity);
+      ResponseAppend_P(JSON_SNS_TEMPHUM, Dht[i].stype, temperature, humidity);
 #ifdef USE_DOMOTICZ
       if ((0 == tele_period) && (0 == i)) {
         DomoticzTempHumSensor(temperature, humidity);
@@ -228,8 +227,8 @@ void DhtShow(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, Dht[i].stype, temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, Dht[i].stype, humidity);
+      WSContentSend_PD(HTTP_SNS_TEMP, Dht[i].stype, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, Dht[i].stype, humidity);
 #endif  // USE_WEBSERVER
     }
   }
@@ -255,7 +254,7 @@ bool Xsns06(uint8_t function)
         DhtShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         DhtShow(0);
         break;
 #endif  // USE_WEBSERVER

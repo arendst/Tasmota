@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.3.0.17
+ * Updated until v6.4.1.18
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "Fallback-Topic"
 #define D_FALSE "falsch"
 #define D_FILE "Datei"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Freier Arbeitsspeicher"
 #define D_FREQUENCY "Frequenz"
 #define D_GAS "Gas"
@@ -148,6 +149,7 @@
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Subnetzmaske"
 #define D_SUBSCRIBE_TO "abonniere"
+#define D_UNSUBSCRIBE_FROM "löse abo. von"
 #define D_SUCCESSFUL "erfolgreich"
 #define D_SUNRISE "Sonnenaufgang"
 #define D_SUNSET "Sonnenuntergang"
@@ -155,6 +157,7 @@
 #define D_TO "zu"
 #define D_TOGGLE "An/Aus"
 #define D_TOPIC "topic"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "Übertragen"
 #define D_TRUE "wahr"
 #define D_TVOC "TVOC"
@@ -219,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "JavaScript aktivieren um Tasmota benutzen zu können"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMUM-Firmware - bitte upgraden"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMUM-Firmware<br/>bitte upgraden"
 #define D_WEBSERVER_ACTIVE_ON "Web-Server aktiv bei"
 #define D_WITH_IP_ADDRESS "mit IP-Adresse"
 #define D_WEBSERVER_STOPPED "Web-Server angehalten"
@@ -288,7 +291,8 @@
 #define D_TELEMETRY_PERIOD "Telemetrieperiode"
 
 #define D_OTHER_PARAMETERS "Sonstige Einstellungen"
-#define D_TEMPLATE "Template"
+#define D_TEMPLATE "Vorlage"
+#define D_ACTIVATE "Aktivieren"
 #define D_WEB_ADMIN_PASSWORD "Passwort für Web Oberfläche"
 #define D_MQTT_ENABLE "MQTT aktivieren"
 #define D_FRIENDLY_NAME "Name [friendly name]"
@@ -296,6 +300,14 @@
 #define D_HUE_BRIDGE "Hue Bridge"
 #define D_SINGLE_DEVICE "Einzelnes Gerät"
 #define D_MULTI_DEVICE "Mehrfachgerät"
+
+#define D_CONFIGURE_TEMPLATE "Vorlage konfigurieren"
+#define D_TEMPLATE_PARAMETERS "Vorlage Parameter"
+#define D_TEMPLATE_NAME "Name"
+#define D_BASE_TYPE "basiert auf"
+#define D_TEMPLATE_FLAGS "Options"
+#define D_ALLOW_ADC0 "ADC0 input"
+#define D_ALLOW_PULLUP "Nutzer pull-up Auswahl"
 
 #define D_SAVE_CONFIGURATION "Konfiguration speichern"
 #define D_CONFIGURATION_SAVED "Konfiguration gespeichert"
@@ -482,8 +494,12 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "None"
+#define D_SENSOR_USER          "User"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
@@ -565,12 +581,16 @@
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"

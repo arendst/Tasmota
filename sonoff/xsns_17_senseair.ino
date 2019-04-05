@@ -70,19 +70,16 @@ void Senseair250ms(void)              // Every 250 mSec
     if (data_ready) {
       uint8_t error = SenseairModbus->Receive16BitRegister(&value);
       if (error) {
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "SenseAir response error %d"), error);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir response error %d"), error);
       } else {
         switch(senseair_read_state) {
           case 0:                // 0x1A (26) READ_TYPE_LOW - S8: fe 04 02 01 77 ec 92
             senseair_type = 2;
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "SenseAir type id low %04X"), value);
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir type id low %04X"), value);
             break;
           case 1:                // 0x00 (0) READ_ERRORLOG - fe 04 02 00 00 ad 24
             if (value) {
-              snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "SenseAir error %04X"), value);
-              AddLog(LOG_LEVEL_DEBUG);
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir error %04X"), value);
             }
             break;
           case 2:                // 0x03 (3) READ_CO2 - fe 04 02 06 2c af 59
@@ -98,13 +95,11 @@ void Senseair250ms(void)              // Every 250 mSec
           case 5:                // 0x1C (28) READ_RELAY_STATE - S8: fe 04 02 01 54 ad 4b - firmware version
           {
             bool relay_state = value >> 8 & 1;
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "SenseAir relay state %d"), relay_state);
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir relay state %d"), relay_state);
             break;
           }
           case 6:                // 0x0A (10) READ_TEMP_ADJUSTMENT - S8: fe 84 02 f2 f1 - Illegal Data Address
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "SenseAir temp adjustment %d"), value);
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SenseAir temp adjustment %d"), value);
             break;
         }
       }
@@ -154,20 +149,20 @@ void SenseairShow(bool json)
   GetTextIndexed(senseair_types, sizeof(senseair_types), senseair_type -1, kSenseairTypes);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d"), mqtt_data, senseair_types, senseair_co2);
+    ResponseAppend_P(PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d"), senseair_types, senseair_co2);
     if (senseair_type != 2) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s"), mqtt_data, temperature, humidity);
+      ResponseAppend_P(PSTR("%s,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s"), temperature, humidity);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+    ResponseAppend_P(PSTR("}"));
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, senseair_types, senseair_co2);
+    WSContentSend_PD(HTTP_SNS_CO2, senseair_types, senseair_co2);
     if (senseair_type != 2) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, senseair_types, temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, senseair_types, humidity);
+      WSContentSend_PD(HTTP_SNS_TEMP, senseair_types, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, senseair_types, humidity);
     }
 #endif  // USE_WEBSERVER
   }
@@ -193,7 +188,7 @@ bool Xsns17(uint8_t function)
         SenseairShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         SenseairShow(0);
         break;
 #endif  // USE_WEBSERVER

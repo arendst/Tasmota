@@ -28,7 +28,7 @@ uint32_t syslog_host_hash = 0;   // Syslog host name hash
 
 Ticker tickerOSWatch;
 
-#define OSWATCH_RESET_TIME 120
+const uint32_t OSWATCH_RESET_TIME = 120;
 
 static unsigned long oswatch_last_loop_time;
 uint8_t oswatch_blocked_loop = 0;
@@ -47,8 +47,7 @@ void OsWatchTicker(void)
   unsigned long last_run = abs(t - oswatch_last_loop_time);
 
 #ifdef DEBUG_THEO
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(WiFi.RSSI()), last_run);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(WiFi.RSSI()), last_run);
 #endif  // DEBUG_THEO
   if (last_run >= (OSWATCH_RESET_TIME * 1000)) {
 //    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));  // Save iram space
@@ -109,7 +108,7 @@ void* memchr(const void* ptr, int value, size_t num)
   return 0;
 }
 
-// http://clc-wiki.net/wiki/C_standard_library:string.h:strspn
+// http://clc-wiki.net/wiki/C_standard_library:string.h:strcspn
 // Get span until any character in string
 size_t strcspn(const char *str1, const char *str2)
 {
@@ -123,6 +122,77 @@ size_t strcspn(const char *str1, const char *str2)
     }
   }
   return ret;
+}
+
+// https://opensource.apple.com/source/Libc/Libc-583/stdlib/FreeBSD/strtoull.c
+// Convert a string to an unsigned long long integer
+#ifndef __LONG_LONG_MAX__
+#define __LONG_LONG_MAX__ 9223372036854775807LL
+#endif
+#ifndef ULLONG_MAX
+#define ULLONG_MAX (__LONG_LONG_MAX__ * 2ULL + 1)
+#endif
+
+unsigned long long strtoull(const char *__restrict nptr, char **__restrict endptr, int base)
+{
+  const char *s = nptr;
+  char c;
+  do { c = *s++; } while (isspace((unsigned char)c));                         // Trim leading spaces
+
+  int neg = 0;
+  if (c == '-') {                                                             // Set minus flag and/or skip sign
+    neg = 1;
+    c = *s++;
+  } else {
+    if (c == '+') {
+      c = *s++;
+    }
+  }
+
+  if ((base == 0 || base == 16) && (c == '0') && (*s == 'x' || *s == 'X')) {  // Set Hexadecimal
+    c = s[1];
+    s += 2;
+    base = 16;
+  }
+  if (base == 0) { base = (c == '0') ? 8 : 10; }                              // Set Octal or Decimal
+
+  unsigned long long acc = 0;
+  int any = 0;
+  if (base > 1 && base < 37) {
+    unsigned long long cutoff = ULLONG_MAX / base;
+    int cutlim = ULLONG_MAX % base;
+    for ( ; ; c = *s++) {
+      if (c >= '0' && c <= '9')
+        c -= '0';
+      else if (c >= 'A' && c <= 'Z')
+        c -= 'A' - 10;
+      else if (c >= 'a' && c <= 'z')
+        c -= 'a' - 10;
+      else
+        break;
+
+      if (c >= base)
+        break;
+
+      if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
+        any = -1;
+      else {
+        any = 1;
+        acc *= base;
+        acc += c;
+      }
+    }
+    if (any < 0) {
+      acc = ULLONG_MAX;                                                       // Range error
+    }
+    else if (any && neg) {
+      acc = -acc;
+    }
+  }
+
+  if (endptr != nullptr) { *endptr = (char *)(any ? s - 1 : nptr); }
+
+  return acc;
 }
 #endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
@@ -140,48 +210,53 @@ size_t strchrspn(const char *str1, int character)
 char* subStr(char* dest, char* str, const char *delim, int index)
 {
   char *act;
-  char *sub = NULL;
+  char *sub = nullptr;
   char *ptr;
   int i;
 
   // Since strtok consumes the first arg, make a copy
   strncpy(dest, str, strlen(str)+1);
-  for (i = 1, act = dest; i <= index; i++, act = NULL) {
+  for (i = 1, act = dest; i <= index; i++, act = nullptr) {
     sub = strtok_r(act, delim, &ptr);
-    if (sub == NULL) break;
+    if (sub == nullptr) break;
   }
   sub = Trim(sub);
   return sub;
 }
 
-double CharToDouble(char *str)
+double CharToDouble(const char *str)
 {
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
 
   strlcpy(strbuf, str, sizeof(strbuf));
-  char *pt;
-  double left = atoi(strbuf);
+  char *pt = strbuf;
+  while ((*pt != '\0') && isblank(*pt)) { pt++; }  // Trim leading spaces
+
+  signed char sign = 1;
+  if (*pt == '-') { sign = -1; }
+  if (*pt == '-' || *pt=='+') { pt++; }            // Skip any sign
+
+  double left = 0;
+  if (*pt != '.') {
+    left = atoi(pt);                               // Get left part
+    while (isdigit(*pt)) { pt++; }                 // Skip number
+  }
+
   double right = 0;
-  short len = 0;
-  pt = strtok (strbuf, ".");
-  if (pt) {
-    pt = strtok (NULL, ".");
-    if (pt) {
-      right = atoi(pt);
-      len = strlen(pt);
-      double fac = 1;
-      while (len) {
-        fac /= 10.0;
-        len--;
-      }
-      // pow is also very large
-      //double fac=pow(10,-len);
-      right *= fac;
+  if (*pt == '.') {
+    pt++;
+    right = atoi(pt);                              // Decimal part
+    while (isdigit(*pt)) {
+      pt++;
+      right /= 10.0;
     }
   }
+
   double result = left + right;
-  if (left < 0) { result = left - right; }
+  if (sign < 0) {
+    return -result;                                // Add negative sign
+  }
   return result;
 }
 
@@ -194,6 +269,27 @@ int TextToInt(char *str)
     str++;
   }
   return strtol(str, &p, radix);
+}
+
+char* ulltoa(unsigned long long value, char *str, int radix)
+{
+  char digits[64];
+  char *dst = str;
+  int i = 0;
+  int n = 0;
+
+//  if (radix < 2 || radix > 36) { radix = 10; }
+
+  do {
+    n = value % radix;
+    digits[i++] = (n < 10) ? (char)n+'0' : (char)n-10+'A';
+    value /= radix;
+  } while (value != 0);
+
+  while (i > 0) { *dst++ = digits[--i]; }
+
+  *dst = 0;
+  return str;
 }
 
 char* dtostrfd(double number, unsigned char prec, char *s)
@@ -275,8 +371,21 @@ char* RemoveSpace(char* p)
       *write++ = ch;
     }
   }
-  *write = '\0';
+//  *write = '\0';  // Removed 20190223 as it buffer overflows on no isspace found - no need either
   return p;
+}
+
+char* LowerCase(char* dest, const char* source)
+{
+  char* write = dest;
+  const char* read = source;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    *write++ = tolower(ch);
+  }
+  return dest;
 }
 
 char* UpperCase(char* dest, const char* source)
@@ -353,6 +462,14 @@ uint8_t Shortcut(const char* str)
   return result;
 }
 
+bool ValidIpAddress(const char* str)
+{
+  const char* p = str;
+
+  while (*p && ((*p == '.') || ((*p >= '0') && (*p <= '9')))) { p++; }
+  return (*p == '\0');
+}
+
 bool ParseIp(uint32_t* addr, const char* str)
 {
   uint8_t *part = (uint8_t*)addr;
@@ -360,9 +477,9 @@ bool ParseIp(uint32_t* addr, const char* str)
 
   *addr = 0;
   for (i = 0; i < 4; i++) {
-    part[i] = strtoul(str, NULL, 10);        // Convert byte
+    part[i] = strtoul(str, nullptr, 10);        // Convert byte
     str = strchr(str, '.');
-    if (str == NULL || *str == '\0') {
+    if (str == nullptr || *str == '\0') {
       break;  // No more separators, exit
     }
     str++;                                   // Point to next character after separator
@@ -405,7 +522,7 @@ bool NewerVersion(char* version_str)
     return false;  // Bail if we can't duplicate. Assume bad.
   }
   // Loop through the version string, splitting on '.' seperators.
-  for (char *str = strtok_r(version_dup, ".", &str_ptr); str && i < sizeof(VERSION); str = strtok_r(NULL, ".", &str_ptr), i++) {
+  for (char *str = strtok_r(version_dup, ".", &str_ptr); str && i < sizeof(VERSION); str = strtok_r(nullptr, ".", &str_ptr), i++) {
     int field = atoi(str);
     // The fields in a version string can only range from 0-255.
     if ((field < 0) || (field > 255)) {
@@ -640,8 +757,7 @@ void SetSerialBaudrate(int baudrate)
   Settings.baudrate = baudrate / 1200;
   if (Serial.baudRate() != baudrate) {
     if (seriallog_level) {
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
     }
     delay(100);
     Serial.flush();
@@ -669,7 +785,7 @@ void SerialSendRaw(char *codes)
   int size = strlen(codes);
 
   while (size > 0) {
-    snprintf(stemp, sizeof(stemp), codes);
+    strlcpy(stemp, codes, sizeof(stemp));
     code = strtol(stemp, &p, 16);
     Serial.write(code);
     size -= 2;
@@ -690,14 +806,45 @@ void ShowSource(int source)
 {
   if ((source > 0) && (source < SRC_MAX)) {
     char stemp1[20];
-    snprintf_P(log_data, sizeof(log_data), PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SRC: %s"), GetTextIndexed(stemp1, sizeof(stemp1), source, kCommandSource));
   }
+}
+
+/*********************************************************************************************\
+ * Response data handling
+\*********************************************************************************************/
+
+int Response_P(const char* format, ...)     // Content send snprintf_P char data
+{
+  // This uses char strings. Be aware of sending %% if % is needed
+  va_list args;
+  va_start(args, format);
+  int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), format, args);
+  va_end(args);
+  return len;
+}
+
+int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char data
+{
+  // This uses char strings. Be aware of sending %% if % is needed
+  va_list args;
+  va_start(args, format);
+  int mlen = strlen(mqtt_data);
+  int len = vsnprintf_P(mqtt_data + mlen, sizeof(mqtt_data) - mlen, format, args);
+  va_end(args);
+  return len + mlen;
 }
 
 /*********************************************************************************************\
  * GPIO Module and Template management
 \*********************************************************************************************/
+
+uint8_t ModuleNr()
+{
+  // 0    = User module (255)
+  // 1 up = Template module 0 up
+  return (USER_MODULE == Settings.module) ? 0 : Settings.module +1;
+}
 
 String AnyModuleName(uint8_t index)
 {
@@ -720,7 +867,6 @@ void ModuleGpios(myio *gp)
 
   uint8_t src[sizeof(mycfgio)];
   if (USER_MODULE == Settings.module) {
-//    src = Settings.user_template.gp;
     memcpy(&src, &Settings.user_template.gp, sizeof(mycfgio));
   } else {
     memcpy_P(&src, &kModules[Settings.module].gp, sizeof(mycfgio));
@@ -769,34 +915,24 @@ void SetModuleType()
 uint8_t ValidPin(uint8_t pin, uint8_t gpio)
 {
   uint8_t result = gpio;
-  if ((pin > 5) && (pin < 12)) {
-    result = GPIO_NONE;  // Disable all flash pins
+
+  if (((pin > 5) && (pin < 9)) || (11 == pin)) {
+    result = GPIO_NONE;  // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
-  if (Settings.flag3.user_esp8285_enable) {
-    if ((pin == 9) || (pin == 10)) {
-      result = gpio;     // Allow optional flash pins
-    }
+  if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {
+    if ((pin == 9) || (pin == 10)) { result = GPIO_NONE; }  // Disable possible flash GPIO9 and GPIO10
   }
   return result;
 }
 
 bool ValidGPIO(uint8_t pin, uint8_t gpio)
 {
-  bool result = false;
-
-  if (USER_MODULE == Settings.module) {
-    result = (ValidPin(pin, gpio) > GPIO_NONE);  // Allow any pin
-  } else {
-    result = (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
-  }
-  return result;
+  return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
 }
 
 bool GetUsedInModule(uint8_t val, uint8_t *arr)
 {
   int offset = 0;
-
-  if (USER_MODULE == Settings.module) { return false; }
 
   if (!val) { return false; }  // None
 
@@ -855,16 +991,41 @@ bool GetUsedInModule(uint8_t val, uint8_t *arr)
   return false;
 }
 
+bool JsonTemplate(const char* dataBuf)
+{
+  StaticJsonBuffer<350> jb;  // 331 from https://arduinojson.org/v5/assistant/
+  JsonObject& obj = jb.parseObject(dataBuf);
+  if (!obj.success()) { return false; }
+
+  // All parameters are optional allowing for partial changes
+  const char* name = obj[D_JSON_NAME];
+  if (name != nullptr) {
+    strlcpy(Settings.user_template.name, name, sizeof(Settings.user_template.name));
+  }
+  if (obj[D_JSON_GPIO].success()) {
+    for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+      Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
+    }
+  }
+  if (obj[D_JSON_FLAG].success()) {
+    uint8_t flag = obj[D_JSON_FLAG] | 0;
+    memcpy(&Settings.user_template.flag, &flag, sizeof(gpio_flag));
+  }
+  if (obj[D_JSON_BASE].success()) {
+    uint8_t base = obj[D_JSON_BASE];
+    if ((0 == base) || (base >= MAXMODULE)) { base = 17; } else { base--; }
+    Settings.user_template_base = base;  // Default WEMOS
+  }
+  return true;
+}
+
 void TemplateJson()
 {
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
+  Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
   for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s%d"), mqtt_data, (i>0)?",":"", Settings.user_template.gp.io[i]);
+    ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
   }
-//  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":\"%d (%s)\"}"),
-//    mqtt_data, Settings.user_template.flag, Settings.user_template_base +1, AnyModuleName(Settings.user_template_base).c_str());
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"),
-    mqtt_data, Settings.user_template.flag, Settings.user_template_base +1);
+  ResponseAppend_P(PSTR("],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), Settings.user_template.flag, Settings.user_template_base +1);
 }
 
 /*********************************************************************************************\
@@ -935,7 +1096,7 @@ void SetNextTimeInterval(unsigned long& timer, const unsigned long step)
 \*********************************************************************************************/
 
 #ifdef USE_I2C
-#define I2C_RETRY_COUNTER 3
+const uint8_t I2C_RETRY_COUNTER = 3;
 
 uint32_t i2c_buffer = 0;
 
@@ -1144,8 +1305,7 @@ bool I2cDevice(uint8_t addr)
  * Syslog
  *
  * Example:
- *   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_LOG "Any value %d"), value);
- *   AddLog(LOG_LEVEL_DEBUG);
+ *   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_LOG "Any value %d"), value);
  *
 \*********************************************************************************************/
 
@@ -1159,7 +1319,7 @@ void SetSeriallog(uint8_t loglevel)
 #ifdef USE_WEBSERVER
 void GetLog(uint8_t idx, char** entry_pp, size_t* len_p)
 {
-  char* entry_p = NULL;
+  char* entry_p = nullptr;
   size_t len = 0;
 
   if (idx) {
@@ -1187,8 +1347,9 @@ void Syslog(void)
   // Destroys log_data
   char syslog_preamble[64];  // Hostname + Id
 
-  if (syslog_host_hash != GetHash(Settings.syslog_host, strlen(Settings.syslog_host))) {
-    syslog_host_hash = GetHash(Settings.syslog_host, strlen(Settings.syslog_host));
+  uint32_t current_hash = GetHash(Settings.syslog_host, strlen(Settings.syslog_host));
+  if (syslog_host_hash != current_hash) {
+    syslog_host_hash = current_hash;
     WiFi.hostByName(Settings.syslog_host, syslog_host_addr);  // If sleep enabled this might result in exception so try to do it once using hash
   }
   if (PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
@@ -1198,11 +1359,11 @@ void Syslog(void)
     memcpy(log_data, syslog_preamble, strlen(syslog_preamble));
     PortUdp.write(log_data);
     PortUdp.endPacket();
+    delay(1);  // Add time for UDP handling (#5512)
   } else {
     syslog_level = 0;
     syslog_timer = SYSLOG_TIMER;
-    snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
-    AddLog(LOG_LEVEL_INFO);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SYSLOG_HOST_NOT_FOUND ". " D_RETRY_IN " %d " D_UNIT_SECOND), SYSLOG_TIMER);
   }
 }
 
@@ -1252,6 +1413,16 @@ void AddLog_P(uint8_t loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
+void AddLog_P2(uint8_t loglevel, PGM_P formatP, ...)
+{
+  va_list arg;
+  va_start(arg, formatP);
+  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  va_end(arg);
+
+  AddLog(loglevel);
+}
+
 void AddLogBuffer(uint8_t loglevel, uint8_t *buffer, int count)
 {
   snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
@@ -1268,6 +1439,5 @@ void AddLogSerial(uint8_t loglevel)
 
 void AddLogMissed(char *sensor, uint8_t misses)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
-  AddLog(LOG_LEVEL_DEBUG);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
 }

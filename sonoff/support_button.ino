@@ -50,12 +50,6 @@ void ButtonInvertFlag(uint8 button_bit)
 
 void ButtonInit(void)
 {
-  if (my_module_flag.pullup) {
-    if (Settings.flag3.no_pullup) {
-      key_no_pullup = 0xff;
-    }
-  }
-
   buttons_found = 0;
   for (uint8_t i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
@@ -101,16 +95,16 @@ void ButtonHandler(void)
   uint16_t loops_per_second = 1000 / Settings.button_debounce;
   char scmnd[20];
 
-  uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
-  for (uint8_t button_index = 0; button_index < maxdev; button_index++) {
+//  uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
+//  for (uint8_t button_index = 0; button_index < maxdev; button_index++) {
+  for (uint8_t button_index = 0; button_index < MAX_KEYS; button_index++) {
     button = NOT_PRESSED;
     button_present = 0;
 
     if (!button_index && ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type))) {
       button_present = 1;
       if (dual_button_code) {
-        snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), dual_button_code);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), dual_button_code);
         button = PRESSED;
         if (0xF500 == dual_button_code) {                      // Button hold
           holdbutton[button_index] = (loops_per_second * Settings.param[P_HOLD_TIME] / 10) -1;
@@ -136,14 +130,12 @@ void ButtonHandler(void)
 
         bool button_pressed = false;
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
-          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), button_index +1);
-          AddLog(LOG_LEVEL_DEBUG);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_10), button_index +1);
           holdbutton[button_index] = loops_per_second;
           button_pressed = true;
         }
         if ((NOT_PRESSED == button) && (PRESSED == lastbutton[button_index])) {
-          snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_01), button_index +1);
-          AddLog(LOG_LEVEL_DEBUG);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_LEVEL_01), button_index +1);
           if (!holdbutton[button_index]) { button_pressed = true; }  // Do not allow within 1 second
         }
         if (button_pressed) {
@@ -155,15 +147,13 @@ void ButtonHandler(void)
       else {
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
           if (Settings.flag.button_single) {                   // Allow only single button press for immediate action
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
             if (!SendKey(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
               ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
             }
           } else {
             multipress[button_index] = (multiwindow[button_index]) ? multipress[button_index] +1 : 1;
-            snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_MULTI_PRESS " %d"), button_index +1, multipress[button_index]);
-            AddLog(LOG_LEVEL_DEBUG);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_MULTI_PRESS " %d"), button_index +1, multipress[button_index]);
             multiwindow[button_index] = loops_per_second / 2;  // 0.5 second multi press window
           }
           blinks = 201;

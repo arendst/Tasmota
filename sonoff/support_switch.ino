@@ -25,7 +25,7 @@
  * Inspired by (https://github.com/OLIMEX/olimex-iot-firmware-esp8266/blob/master/olimex/user/user_switch2.c)
 \*********************************************************************************************/
 
-#define SWITCH_PROBE_INTERVAL    10         // Time in milliseconds between switch input probe
+const uint8_t SWITCH_PROBE_INTERVAL = 10;   // Time in milliseconds between switch input probe
 
 #include <Ticker.h>
 
@@ -110,12 +110,6 @@ void SwitchProbe(void)
 
 void SwitchInit(void)
 {
-  if (my_module_flag.pullup) {
-    if (Settings.flag3.no_pullup) {
-      switch_no_pullup = 0xffff;
-    }
-  }
-
   switches_found = 0;
   for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
     lastwallswitch[i] = 1;  // Init global to virtual switch state;

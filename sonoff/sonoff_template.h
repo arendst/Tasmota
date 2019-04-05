@@ -178,6 +178,8 @@ enum UserSelectablePins {
   GPIO_ROT1B,          // Rotary switch1 B Pin
   GPIO_ROT2A,          // Rotary switch2 A Pin
   GPIO_ROT2B,          // Rotary switch2 B Pin
+  GPIO_HRE_CLOCK,      // Clock/Power line for HR-E Water Meter
+  GPIO_HRE_DATA,       // Data line for HR-E Water Meter
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -241,6 +243,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_CSE7766_TX "|" D_SENSOR_CSE7766_RX "|"
   D_SENSOR_ARIRFRCV "|" D_SENSOR_TXD "|" D_SENSOR_RXD "|"
   D_SENSOR_ROTARY "1a|" D_SENSOR_ROTARY "1b|" D_SENSOR_ROTARY "2a|" D_SENSOR_ROTARY "2b|"
+  D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
   ;
 
 /********************************************************************************************/
@@ -335,8 +338,10 @@ typedef struct MYCFGIO {
   uint8_t      io[MAX_GPIO_PIN - MIN_FLASH_PINS];
 } mycfgio;
 
+#define GPIO_FLAG_USED       1  // Currently only one flag used
+
 #define GPIO_FLAG_ADC0       1  // Allow ADC0 when define USE_ADC_VCC is disabled
-#define GPIO_FLAG_PULLUP     2  // Allow input pull-up control using SetOption62
+#define GPIO_FLAG_SPARE01    2  // Allow input pull-up control using SetOption62 - Superseded by user template editing
 #define GPIO_FLAG_SPARE02    4
 #define GPIO_FLAG_SPARE03    8
 #define GPIO_FLAG_SPARE04   16
@@ -348,7 +353,7 @@ typedef union {
   uint8_t data;
   struct {
     uint8_t adc0 : 1;            // Allow ADC0 when define USE_ADC_VCC is disabled
-    uint8_t pullup : 1;          // Allow input pull-up control using SetOption62
+    uint8_t spare01 : 1;
     uint8_t spare02 : 1;
     uint8_t spare03 : 1;
     uint8_t spare04 : 1;
@@ -582,7 +587,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_ROT1B,          // Rotary switch1 B Pin
   GPIO_ROT2A,          // Rotary switch2 A Pin
   GPIO_ROT2B,          // Rotary switch2 B Pin
-  GPIO_ARIRFRCV        // AliLux RF Receive input
+  GPIO_ARIRFRCV,       // AliLux RF Receive input
+#ifdef USE_HRE
+  GPIO_HRE_CLOCK,
+  GPIO_HRE_DATA
+#endif  
 };
 
 const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
@@ -974,7 +983,6 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO15 D8
      GPIO_USER,        // GPIO16 D0 Wemos Wake
      GPIO_FLAG_ADC0    // ADC0 A0 Analog input
-//   + GPIO_FLAG_PULLUP  // Allow input pull-up control
   },
   { "Sonoff Dev",      // Sonoff Dev (ESP8266)
      GPIO_KEY1,        // GPIO00 E-FW Button
@@ -1471,10 +1479,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0
   },
   { "Shelly 1",        // Shelly1 Open Source (ESP8266 - 2MB) - https://shelly.cloud/shelly1-open-source/
-     GPIO_USER,        // GPIO00 - Only to be used when Shelly is connected to 12V DC
-     GPIO_USER,        // GPIO01 Serial RXD - Only to be used when Shelly is connected to 12V DC
+     0,                // GPIO00 - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
+     0,                // GPIO01 Serial RXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
      0,
-     GPIO_USER,        // GPIO03 Serial TXD - Only to be used when Shelly is connected to 12V DC
+     0,                // GPIO03 Serial TXD - Can be changed to GPIO_USER, only if Shelly is powered with 12V DC
      GPIO_REL1,        // GPIO04 Relay (0 = Off, 1 = On)
      GPIO_SWT1_NP,     // GPIO05 SW pin
                        // GPIO06 (SD_CLK   Flash)
@@ -1503,7 +1511,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_SWT2,        // GPIO14
      GPIO_MCP39F5_RST, // GPIO15 MCP39F501 Reset
      0,
-     GPIO_FLAG_PULLUP  // Allow input pull-up control
+     0
   },
   { "Xiaomi Philips",  // Xiaomi Philips bulb (ESP8266)
      0, 0, 0, 0, 0, 0,
@@ -1763,7 +1771,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     GPIO_LED1,        // GPIO12 Green LED - Link status
+     GPIO_LED1_INV,    // GPIO12 Green LED - Link status
      GPIO_LED2,        // GPIO13 Red LED - Power status
      0, 0, 0, 0
   },

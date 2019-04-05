@@ -45,8 +45,7 @@ void PCA9685_Detect(void)
     if (I2cValidRead8(&buffer, USE_PCA9685_ADDR, PCA9685_REG_MODE1)) {
       if (0x20 == buffer) {
         pca9685_detected = 1;
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "PCA9685", USE_PCA9685_ADDR);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "PCA9685", USE_PCA9685_ADDR);
         PCA9685_Reset(); // Reset the controller
       }
     }
@@ -61,7 +60,7 @@ void PCA9685_Reset(void)
     PCA9685_SetPWM(pin,0,false);
     pca9685_pin_pwm_value[pin] = 0;
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"PCA9685\":{\"RESET\":\"OK\"}}"));
+  Response_P(PSTR("{\"PCA9685\":{\"RESET\":\"OK\"}}"));
 }
 
 void PCA9685_SetPWMfreq(double freq) {
@@ -101,7 +100,7 @@ void PCA9685_SetPWM(uint8_t pin, uint16_t pwm, bool inverted) {
   pca9685_pin_pwm_value[pin] = pwm;
 }
 
-bool PCA9685_Command(void) 
+bool PCA9685_Command(void)
 {
   bool serviced = true;
   bool validpin = false;
@@ -128,11 +127,11 @@ bool PCA9685_Command(void)
       uint16_t new_freq = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
       if ((new_freq >= 24) && (new_freq <= 1526)) {
         PCA9685_SetPWMfreq(new_freq);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"PCA9685\":{\"PWMF\":%i, \"Result\":\"OK\"}}"),new_freq);
+        Response_P(PSTR("{\"PCA9685\":{\"PWMF\":%i, \"Result\":\"OK\"}}"),new_freq);
         return serviced;
       }
     } else { // No parameter was given for setfreq, so we return current setting
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"PCA9685\":{\"PWMF\":%i}}"),pca9685_freq);
+      Response_P(PSTR("{\"PCA9685\":{\"PWMF\":%i}}"),pca9685_freq);
       return serviced;
     }
   }
@@ -142,20 +141,20 @@ bool PCA9685_Command(void)
       if (paramcount > 2) {
         if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 3), "ON")) {
           PCA9685_SetPWM(pin, 4096, false);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,4096);
+          Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,4096);
           serviced = true;
           return serviced;
         }
         if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 3), "OFF")) {
           PCA9685_SetPWM(pin, 0, false);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,0);
+          Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,0);
           serviced = true;
           return serviced;
         }
         uint16_t pwm = atoi(subStr(sub_string, XdrvMailbox.data, ",", 3));
         if ((pin >= 0 && pin <= 15) && (pwm >= 0 && pwm <= 4096)) {
           PCA9685_SetPWM(pin, pwm, false);
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,pwm);
+          Response_P(PSTR("{\"PCA9685\":{\"PIN\":%i,\"PWM\":%i}}"),pin,pwm);
           serviced = true;
           return serviced;
         }
@@ -167,12 +166,12 @@ bool PCA9685_Command(void)
 
 void PCA9685_OutputTelemetry(bool telemetry) {
   if (0 == pca9685_detected) { return; }  // We do not do this if the PCA9685 has not been detected
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\",\"PCA9685\": {"), GetDateAndTime(DT_LOCAL).c_str());
-  snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"PWM_FREQ\":%i,"),mqtt_data,pca9685_freq);
+  Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"PCA9685\": {"), GetDateAndTime(DT_LOCAL).c_str());
+  ResponseAppend_P(PSTR("\"PWM_FREQ\":%i,"),pca9685_freq);
   for (uint8_t pin=0;pin<16;pin++) {
-    snprintf_P(mqtt_data,sizeof(mqtt_data), PSTR("%s\"PWM%i\":%i,"),mqtt_data,pin,pca9685_pin_pwm_value[pin]);
+    ResponseAppend_P(PSTR("\"PWM%i\":%i,"),pin,pca9685_pin_pwm_value[pin]);
   }
-  snprintf_P(mqtt_data,sizeof(mqtt_data),PSTR("%s\"END\":1}}"),mqtt_data);
+  ResponseAppend_P(PSTR("\"END\":1}}"));
   if (telemetry) {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   }
@@ -190,9 +189,9 @@ bool Xdrv15(uint8_t function)
           PCA9685_OutputTelemetry(true);
         }
         break;
-      case FUNC_COMMAND:
+      case FUNC_COMMAND_DRIVER:
         if (XDRV_15 == XdrvMailbox.index) {
-          PCA9685_Command();
+          result = PCA9685_Command();
         }
         break;
       default:

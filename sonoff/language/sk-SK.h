@@ -75,6 +75,7 @@
 #define D_COUNTER "Počítadlo"
 #define D_CURRENT "Prúd"          // As in Voltage and Current
 #define D_DATA "Dáta"
+#define D_FLOW_RATE "Flow rate"
 #define D_DARKLIGHT "Tmavý"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Zablokované"
@@ -148,6 +149,7 @@
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Maska podsiete"
 #define D_SUBSCRIBE_TO "Prihlásiť do"
+#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
 #define D_SUCCESSFUL "úspešné."
 #define D_SUNRISE "Svitanie"
 #define D_SUNSET "Súmrak"
@@ -155,6 +157,7 @@
 #define D_TO "do"
 #define D_TOGGLE "Prepni"
 #define D_TOPIC "Topic"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "Odošli"
 #define D_TRUE "Pravda"
 #define D_TVOC "TVOC"
@@ -219,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Pre používanie prostredia Tasmota povoľte JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMÁLNY - prosím aktualizujte"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMÁLNY<br/>prosím aktualizujte"
 #define D_WEBSERVER_ACTIVE_ON "Aktívny Web server"
 #define D_WITH_IP_ADDRESS "na IP adrese"
 #define D_WEBSERVER_STOPPED "Web server zastavený"
@@ -289,6 +292,7 @@
 
 #define D_OTHER_PARAMETERS "Ostatné nastavenia"
 #define D_TEMPLATE "Template"
+#define D_ACTIVATE "Activate"
 #define D_WEB_ADMIN_PASSWORD "Heslo Web administrátora"
 #define D_MQTT_ENABLE "MQTT aktívne"
 #define D_FRIENDLY_NAME "Friendly Name"
@@ -296,6 +300,14 @@
 #define D_HUE_BRIDGE "Hue Bridge"
 #define D_SINGLE_DEVICE "single device"
 #define D_MULTI_DEVICE "multi device"
+
+#define D_CONFIGURE_TEMPLATE "Configure Template"
+#define D_TEMPLATE_PARAMETERS "Template parameters"
+#define D_TEMPLATE_NAME "Name"
+#define D_BASE_TYPE "Based on"
+#define D_TEMPLATE_FLAGS "Options"
+#define D_ALLOW_ADC0 "ADC0 input"
+#define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "Ulož nastavenia"
 #define D_CONFIGURATION_SAVED "Nastavenia uložené"
@@ -482,8 +494,12 @@
 #define D_TX20_SOUTH "J"
 #define D_TX20_WEST "Z"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Žiaden"
+#define D_SENSOR_USER          "User"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
@@ -565,12 +581,16 @@
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "hod"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"

@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "Fallback Topic"
 #define D_FALSE "False"
 #define D_FILE "文件:"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "可用記憶體"
 #define D_FREQUENCY "Frequency"
 #define D_GAS "氣體"
@@ -148,6 +149,7 @@
 #define D_STOP "停止"
 #define D_SUBNET_MASK "子網遮罩"
 #define D_SUBSCRIBE_TO "訂閱"
+#define D_UNSUBSCRIBE_FROM "退訂"
 #define D_SUCCESSFUL "成功"
 #define D_SUNRISE "Sunrise"
 #define D_SUNSET "Sunset"
@@ -155,6 +157,7 @@
 #define D_TO "to"
 #define D_TOGGLE "切換"
 #define D_TOPIC "主題"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "發送"
 #define D_TRUE "True"
 #define D_TVOC "TVOC"
@@ -219,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "固件版本過低 - 請升級"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "固件版本過低<br/>請升級"
 #define D_WEBSERVER_ACTIVE_ON "Web服務器:"
 #define D_WITH_IP_ADDRESS "IP地址:"
 #define D_WEBSERVER_STOPPED "Web 服務器已停止"
@@ -289,6 +292,7 @@
 
 #define D_OTHER_PARAMETERS "其他設置"
 #define D_TEMPLATE "Template"
+#define D_ACTIVATE "Activate"
 #define D_WEB_ADMIN_PASSWORD "WEB管理密碼"
 #define D_MQTT_ENABLE "啟用MQTT"
 #define D_FRIENDLY_NAME "昵稱"
@@ -296,6 +300,14 @@
 #define D_HUE_BRIDGE "飛利浦 Hue 網橋"
 #define D_SINGLE_DEVICE "單設備"
 #define D_MULTI_DEVICE "多設備"
+
+#define D_CONFIGURE_TEMPLATE "Configure Template"
+#define D_TEMPLATE_PARAMETERS "Template parameters"
+#define D_TEMPLATE_NAME "Name"
+#define D_BASE_TYPE "Based on"
+#define D_TEMPLATE_FLAGS "Options"
+#define D_ALLOW_ADC0 "ADC0 input"
+#define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "保存設置"
 #define D_CONFIGURATION_SAVED "設置已保存"
@@ -482,8 +494,12 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "None"
+#define D_SENSOR_USER          "User"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
@@ -565,12 +581,16 @@
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
 
 // Units
 #define D_UNIT_AMPERE "安"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "時"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"

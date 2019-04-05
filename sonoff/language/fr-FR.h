@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.3.0.17
+ * Updated until v6.4.1.18
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -93,13 +93,14 @@
 #define D_FALLBACK_TOPIC "Topic de secours"
 #define D_FALSE "Faux"
 #define D_FILE "Fichier"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Mémoire libre"
 #define D_FREQUENCY "Fréquence"
 #define D_GAS "Gaz"
 #define D_GATEWAY "Passerelle"
 #define D_GROUP "Groupe"
-#define D_HOST "Host"
-#define D_HOSTNAME "Hostname"
+#define D_HOST "Hôte"
+#define D_HOSTNAME "Nom d'Hôte"
 #define D_HUMIDITY "Humidité"
 #define D_ILLUMINANCE "Éclairement"
 #define D_IMMEDIATE "immédiat"      // Button immediate
@@ -138,7 +139,7 @@
 #define D_RESTARTING "Redémarre"
 #define D_RESTART_REASON "Raison du redémarrage"
 #define D_RESTORE "restaurer"
-#define D_RETAINED "retenu"
+#define D_RETAINED "persistant"		// MQTT
 #define D_RULE "Règle"
 #define D_SAVE "Enregistrer"
 #define D_SENSOR "Capteur"
@@ -147,7 +148,8 @@
 #define D_STD_TIME "STD"
 #define D_STOP "Stop"
 #define D_SUBNET_MASK "Masque sous-réseau"
-#define D_SUBSCRIBE_TO "Souscrire à"
+#define D_SUBSCRIBE_TO "S'abonner à"
+#define D_UNSUBSCRIBE_FROM "Se désabonner de"
 #define D_SUCCESSFUL "Réussi"
 #define D_SUNRISE "Lever du jour"
 #define D_SUNSET "Tombée de la nuit"
@@ -155,6 +157,7 @@
 #define D_TO "à"
 #define D_TOGGLE "Inverser"
 #define D_TOPIC "Topic"      // Keep MQTT keyword
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "Transmettre"
 #define D_TRUE "Vrai"
 #define D_TVOC "TVOC"
@@ -184,7 +187,7 @@
 #define D_LEVEL_10 "level 1-0"
 #define D_LEVEL_01 "level 0-1"
 #define D_SERIAL_LOGGING_DISABLED "Journalisation série désactivée"
-#define D_SYSLOG_LOGGING_REENABLED "Jounalisation syslog réactivée"
+#define D_SYSLOG_LOGGING_REENABLED "Jounalisation SysLog réactivée"
 
 #define D_SET_BAUDRATE_TO "Définir le débit à"
 #define D_RECEIVED_TOPIC "Topic reçu"  // Terme MQTT
@@ -209,7 +212,7 @@
 #define D_QUERY_DONE "Requête terminée. Services MQTT trouvés"
 #define D_MQTT_SERVICE_FOUND "Service MQTT trouvé sur"
 #define D_FOUND_AT "trouvé à"
-#define D_SYSLOG_HOST_NOT_FOUND "Host syslog introuvable"
+#define D_SYSLOG_HOST_NOT_FOUND "Hôte SysLog introuvable"
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "Enregistré en flash à"
@@ -219,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Pour utiliser Tasmota, veuillez activer JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMAL - merci de mettre à jour"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMAL<br/>merci de mettre à jour"
 #define D_WEBSERVER_ACTIVE_ON "Serveur web actif sur"
 #define D_WITH_IP_ADDRESS "avec l'adresse IP"
 #define D_WEBSERVER_STOPPED "Serveur web éteint"
@@ -253,7 +256,7 @@
 
 #define D_MODULE_PARAMETERS "Paramètres module"
 #define D_MODULE_TYPE "Type de module"
-#define D_PULLUP_ENABLE "No Button/Switch pull-up"
+#define D_PULLUP_ENABLE "Inter. sans pull-up"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Entrée série"
 #define D_SERIAL_OUT "Sortie série"
@@ -281,14 +284,15 @@
 #define D_LOGGING_PARAMETERS "Paramètres du journal"
 #define D_SERIAL_LOG_LEVEL "Niveau de journalisation série"
 #define D_WEB_LOG_LEVEL "Niveau de journalisation web"
-#define D_SYS_LOG_LEVEL "Niveau Syslog"
+#define D_SYS_LOG_LEVEL "Niveau SysLog"
 #define D_MORE_DEBUG "Plus de debug"
-#define D_SYSLOG_HOST "Hôte Syslog"
-#define D_SYSLOG_PORT "Port Syslog"
+#define D_SYSLOG_HOST "Hôte SysLog"
+#define D_SYSLOG_PORT "Port SysLog"
 #define D_TELEMETRY_PERIOD "Période télémétrie"
 
 #define D_OTHER_PARAMETERS "Autres paramètres"
-#define D_TEMPLATE "Template"
+#define D_TEMPLATE "Modèle"
+#define D_ACTIVATE "Activer"
 #define D_WEB_ADMIN_PASSWORD "Mot de passe Web Admin"
 #define D_MQTT_ENABLE "MQTT activé"
 #define D_FRIENDLY_NAME "Surnom"
@@ -296,6 +300,14 @@
 #define D_HUE_BRIDGE "Hue Bridge"
 #define D_SINGLE_DEVICE "module unique"
 #define D_MULTI_DEVICE "multi module"
+
+#define D_CONFIGURE_TEMPLATE "Configuration du modèle"
+#define D_TEMPLATE_PARAMETERS "Paramètres du modèle"
+#define D_TEMPLATE_NAME "Nom"
+#define D_BASE_TYPE "Basé sur"
+#define D_TEMPLATE_FLAGS "Options"
+#define D_ALLOW_ADC0 "Entrée ADC0"
+#define D_ALLOW_PULLUP "Pull-up utilisateur"
 
 #define D_SAVE_CONFIGURATION "Enregistrer la configuration"
 #define D_CONFIGURATION_SAVED "Configuration enregistrée"
@@ -332,7 +344,7 @@
 #define D_UPLOAD_ERR_3 "L'octet magique n'est pas 0xE9"
 #define D_UPLOAD_ERR_4 "La taille du programme à flasher est plus grande que la taille réelle de la mémoire flash"
 #define D_UPLOAD_ERR_5 "Erreur de comparaison du buffer de téléchargement"
-#define D_UPLOAD_ERR_6 "Téléchargement échoué. Activer Weblog 3"
+#define D_UPLOAD_ERR_6 "Téléchargement échoué. Activer WebLog 3"
 #define D_UPLOAD_ERR_7 "Téléchargement annulé"
 #define D_UPLOAD_ERR_8 "Fichier invalide"
 #define D_UPLOAD_ERR_9 "Fichier trop grand"
@@ -343,7 +355,7 @@
 #define D_UPLOAD_ERROR_CODE "Code d'erreur téléchargement"
 
 #define D_ENTER_COMMAND "Saisir une commande"
-#define D_ENABLE_WEBLOG_FOR_RESPONSE "Activer Weblog 2 si une réponse est attendue"
+#define D_ENABLE_WEBLOG_FOR_RESPONSE "Activer WebLog 2 si une réponse est attendue"
 #define D_NEED_USER_AND_PASSWORD "Nécessite utilisateur=<username>&password=<password>"
 
 // xdrv_01_mqtt.ino
@@ -482,8 +494,12 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "O"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Aucun"
+#define D_SENSOR_USER          "Utilisateur"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
@@ -565,12 +581,16 @@
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"

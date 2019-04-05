@@ -20,62 +20,62 @@
 #ifndef _SETTINGS_H_
 #define _SETTINGS_H_
 
-#define PARAM8_SIZE  18                    // Number of param bytes (SetOption)
+const uint8_t PARAM8_SIZE = 18;            // Number of param bytes (SetOption)
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption0 .. SetOption31
-    uint32_t save_state : 1;               // bit 0
-    uint32_t button_restrict : 1;          // bit 1
-    uint32_t value_units : 1;              // bit 2
-    uint32_t mqtt_enabled : 1;             // bit 3
-    uint32_t mqtt_response : 1;            // bit 4
-    uint32_t mqtt_power_retain : 1;        // CMND_POWERRETAIN
-    uint32_t mqtt_button_retain : 1;       // CMND_BUTTONRETAIN
-    uint32_t mqtt_switch_retain : 1;       // CMND_SWITCHRETAIN
-    uint32_t temperature_conversion : 1;   // bit 8
-    uint32_t mqtt_sensor_retain : 1;       // CMND_SENSORRETAIN
-    uint32_t mqtt_offline : 1;             // bit 10
-    uint32_t button_swap : 1;              // bit 11 (v5.1.6)
-    uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)
-    uint32_t button_single : 1;            // bit 13 (v5.4.0)
-    uint32_t interlock : 1;                // bit 14 (v5.6.0)
-    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)
-    uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)
-    uint32_t decimal_text : 1;             // bit 17 (v5.8.1)
-    uint32_t light_signal : 1;             // bit 18 (v5.10.0c)
-    uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)
-    uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)
-    uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)
-    uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)
-    uint32_t mqtt_serial_raw : 1;          // bit 23 (v6.1.1c)   // Was rules_enabled until 5.14.0b
-    uint32_t pressure_conversion : 1;      // bit 24 (v6.3.0.2)  // Was rules_once until 5.14.0b
-    uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l) KNX
-    uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)
-    uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a) KNX
-    uint32_t rf_receive_decimal : 1;       // bit 28 (v6.0.0a)
-    uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)
-    uint32_t hass_light : 1;               // bit 30 (v6.0.0b)
-    uint32_t global_state : 1;             // bit 31 (v6.1.0)
+    uint32_t save_state : 1;               // bit 0              - SetOption0  - Save power state and use after restart
+    uint32_t button_restrict : 1;          // bit 1              - SetOption1  - Control button multipress
+    uint32_t value_units : 1;              // bit 2              - SetOption2  - Add units to JSON status messages
+    uint32_t mqtt_enabled : 1;             // bit 3              - SetOption3  - Control MQTT
+    uint32_t mqtt_response : 1;            // bit 4              - SetOption4  - Switch between MQTT RESULT or COMMAND
+    uint32_t mqtt_power_retain : 1;        // bit 5              - CMND_POWERRETAIN
+    uint32_t mqtt_button_retain : 1;       // bit 6              - CMND_BUTTONRETAIN
+    uint32_t mqtt_switch_retain : 1;       // bit 7              - CMND_SWITCHRETAIN
+    uint32_t temperature_conversion : 1;   // bit 8              - SetOption8  - Switch between Celsius or Fahrenheit
+    uint32_t mqtt_sensor_retain : 1;       // bit 9              - CMND_SENSORRETAIN
+    uint32_t mqtt_offline : 1;             // bit 10             - SetOption10 - Control MQTT LWT message format
+    uint32_t button_swap : 1;              // bit 11 (v5.1.6)    - SetOption11 - Swap button single and double press functionality
+    uint32_t stop_flash_rotate : 1;        // bit 12 (v5.2.0)    - SetOption12 - Switch between dynamic or fixed slot flash save location
+    uint32_t button_single : 1;            // bit 13 (v5.4.0)    - SetOption13 - Support only single press to speed up button press recognition
+    uint32_t interlock : 1;                // bit 14 (v5.6.0)    - CMND_INTERLOCK
+    uint32_t pwm_control : 1;              // bit 15 (v5.8.1)    - SetOption15 - Switch between commands PWM or COLOR/DIMMER/CT/CHANNEL
+    uint32_t ws_clock_reverse : 1;         // bit 16 (v5.8.1)    - SetOption16 - Switch between clockwise or counter-clockwise
+    uint32_t decimal_text : 1;             // bit 17 (v5.8.1)    - SetOption17 - Switch between decimal or hexadecimal output
+    uint32_t light_signal : 1;             // bit 18 (v5.10.0c)  - SetOption18 - Pair light signal with CO2 sensor
+    uint32_t hass_discovery : 1;           // bit 19 (v5.11.1a)  - SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
+    uint32_t not_power_linked : 1;         // bit 20 (v5.11.1f)  - SetOption20 - Control power in relation to Dimmer/Color/Ct changes
+    uint32_t no_power_on_check : 1;        // bit 21 (v5.11.1i)  - SetOption21 - Show voltage even if powered off
+    uint32_t mqtt_serial : 1;              // bit 22 (v5.12.0f)  - CMND_SERIALSEND and CMND_SERIALLOG
+    uint32_t mqtt_serial_raw : 1;          // bit 23 (v6.1.1c)   - CMND_SERIALSEND3
+    uint32_t pressure_conversion : 1;      // bit 24 (v6.3.0.2)  - SetOption24 - Switch between hPa or mmHg pressure unit
+    uint32_t knx_enabled : 1;              // bit 25 (v5.12.0l)  - CMND_KNX_ENABLED
+    uint32_t device_index_enable : 1;      // bit 26 (v5.13.1a)  - SetOption26 - Switch between POWER or POWER1
+    uint32_t knx_enable_enhancement : 1;   // bit 27 (v5.14.0a)  - CMND_KNX_ENHANCED
+    uint32_t rf_receive_decimal : 1;       // bit 28 (v6.0.0a)   - SetOption28 - RF receive data format
+    uint32_t ir_receive_decimal : 1;       // bit 29 (v6.0.0a)   - SetOption29 - IR receive data format
+    uint32_t hass_light : 1;               // bit 30 (v6.0.0b)   - SetOption30 - Enforce HAss autodiscovery as light
+    uint32_t global_state : 1;             // bit 31 (v6.1.0)    - SetOption31 - Control link led blinking
   };
 } SysBitfield;
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption50 .. SetOption81
-    uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)
-    uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)
-    uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)
-    uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)
-    uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)
-    uint32_t mdns_enabled : 1;             // bit 5 (v6.4.1.4)   - SetOption55
-    uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)
-    uint32_t use_wifi_rescan : 1;          // bit 7 (v6.3.0.10)
-    uint32_t receive_raw : 1;              // bit 8 (v6.3.0.11)
-    uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)
+    uint32_t timers_enable : 1;            // bit 0 (v6.1.1b)    - CMND_TIMERS
+    uint32_t user_esp8285_enable : 1;      // bit 1 (v6.1.1.14)  - SetOption51 - Enable ESP8285 user GPIO's
+    uint32_t time_append_timezone : 1;     // bit 2 (v6.2.1.2)   - SetOption52 - Append timezone to JSON time
+    uint32_t gui_hostname_ip : 1;          // bit 3 (v6.2.1.20)  - SetOption53 - Show hostanme and IP address in GUI main menu
+    uint32_t tuya_apply_o20 : 1;           // bit 4 (v6.3.0.4)   - SetOption54 - Apply SetOption20 settings to Tuya device
+    uint32_t mdns_enabled : 1;             // bit 5 (v6.4.1.4)   - SetOption55 - Control mDNS service
+    uint32_t use_wifi_scan : 1;            // bit 6 (v6.3.0.10)  - SetOption56 - Scan wifi network at restart for configured AP's
+    uint32_t use_wifi_rescan : 1;          // bit 7 (v6.3.0.10)  - SetOption57 - Scan wifi network every 44 minutes for configured AP's
+    uint32_t receive_raw : 1;              // bit 8 (v6.3.0.11)  - SetOption58 - Add IR Raw data to JSON message
+    uint32_t hass_tele_on_power : 1;       // bit 9 (v6.3.0.13)  - SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
     uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60 - Enable normal sleep instead of dynamic sleep
     uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61 - Force local operation when button/switch topic is set
-    uint32_t no_pullup : 1;                // bit 12 (v6.4.1.7)  - SetOption62 - Force no pull-up (0 = (no)pull-up, 1 = no pull-up)
+    uint32_t no_hold_retain : 1;           // bit 12 (v6.4.1.19) - SetOption62 - Don't use retain flag on HOLD messages
     uint32_t spare13 : 1;
     uint32_t spare14 : 1;
     uint32_t spare15 : 1;
@@ -185,12 +185,12 @@ struct SYSCFG {
   unsigned long bootcount;                 // 00C
 */
 struct SYSCFG {
-  uint16_t cfg_holder;                     // 000 v6 header
-  uint16_t cfg_size;                       // 002
+  uint16_t      cfg_holder;                // 000 v6 header
+  uint16_t      cfg_size;                  // 002
   unsigned long save_flag;                 // 004
   unsigned long version;                   // 008
-  uint16_t bootcount;                      // 00C
-  uint16_t cfg_crc;                        // 00E
+  uint16_t      bootcount;                 // 00C
+  uint16_t      cfg_crc;                   // 00E
   SysBitfield   flag;                      // 010
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
@@ -200,8 +200,8 @@ struct SYSCFG {
   uint8_t       seriallog_level;           // 09E
   uint8_t       sta_config;                // 09F
   uint8_t       sta_active;                // 0A0
-  char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 4/5
-  char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 4/5
+  char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 5
+  char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 5
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
   uint8_t       rule_stop;                 // 1A7
@@ -213,12 +213,12 @@ struct SYSCFG {
 
   uint8_t       free_1D5[20];              // 1D5  Free since 5.12.0e
 
-  char          mqtt_host[33];             // 1E9
-  uint16_t      mqtt_port;                 // 20A
-  char          mqtt_client[33];           // 20C
-  char          mqtt_user[33];             // 22D
-  char          mqtt_pwd[33];              // 24E
-  char          mqtt_topic[33];            // 26F
+  char          mqtt_host[33];             // 1E9 - Keep together with below as being copied as one chunck with reset 6
+  uint16_t      mqtt_port;                 // 20A - Keep together
+  char          mqtt_client[33];           // 20C - Keep together
+  char          mqtt_user[33];             // 22D - Keep together
+  char          mqtt_pwd[33];              // 24E - Keep together
+  char          mqtt_topic[33];            // 26F - Keep together with above items as being copied as one chunck with reset 6
   char          button_topic[33];          // 290
   char          mqtt_grptopic[33];         // 2B1
   uint8_t       display_model;             // 2D2
@@ -330,8 +330,9 @@ struct SYSCFG {
   uint8_t       rgbwwTable[5];             // 71A
   uint8_t       user_template_base;        // 71F
   mytmplt       user_template;             // 720  29 bytes
+  uint8_t       novasds_period;            // 73D
 
-  uint8_t       free_73D[87];              // 73D
+  uint8_t       free_73D[86];              // 73E
 
   uint32_t      drivers[3];                // 794
   uint32_t      monitors;                  // 7A0
@@ -396,7 +397,7 @@ struct XDRVMAILBOX {
   char         *data;
 } XdrvMailbox;
 
-#define MAX_RULES_FLAG  7                  // Number of bits used in RulesBitfield (tricky I know...)
+const uint8_t MAX_RULES_FLAG = 7;          // Number of bits used in RulesBitfield (tricky I know...)
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {

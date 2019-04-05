@@ -215,7 +215,7 @@ bool Xsns28(uint8_t function)
         TmShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         TmShow(0);
         break;
 #endif  // USE_WEBSERVER

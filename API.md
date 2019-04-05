@@ -23,6 +23,8 @@ FUNC_JSON_APPEND            |      |          |      |  x   |      | Extend tele
 FUNC_WEB_APPEND             |      |          |      |  x   |      | Extend webgui ajax info
 FUNC_SAVE_BEFORE_RESTART    |      |          |      |  x   |      | Just before a planned restart
 FUNC_COMMAND                |  x   |          |  x   |  x   |      | When a command is not recognized
+FUNC_COMMAND_DRIVER         |  x   | 6.4.1.21 |  x   |      |      | When command Driver\<id\> is executed
+FUNC_COMMAND_SENSOR         |  x   | 6.4.1.21 |      |  x   |      | When command Sensor\<id\> is executed
 FUNC_MQTT_SUBSCRIBE         |      | 5.12.0k  |  x   |      |      | At end of MQTT subscriptions
 FUNC_MQTT_INIT              |      | 5.12.0k  |  x   |      |      | Once at end of MQTT connection
 FUNC_MQTT_DATA              |  x   | 5.12.0k  |  x   |      |      | Before decoding command
