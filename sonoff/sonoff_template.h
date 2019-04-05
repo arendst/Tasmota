@@ -466,7 +466,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_DHT11,          // DHT11
   GPIO_DHT22,          // DHT21, DHT22, AM2301, AM2302, AM2321
   GPIO_SI7021,         // iTead SI7021
+#if defined(USE_DS18B20) || defined(USE_DS18x20) || defined(USE_DS18x20_LEGACY)
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
+#endif
 #ifdef USE_WS2812
   GPIO_WS2812,         // WS2812 Led string
 #endif
@@ -589,7 +591,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_ROT2A,          // Rotary switch2 A Pin
   GPIO_ROT2B,          // Rotary switch2 B Pin
 #endif
+#ifdef USE_ARILUX_RF
   GPIO_ARIRFRCV,       // AliLux RF Receive input
+#endif
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,
   GPIO_HRE_DATA
@@ -648,9 +652,15 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   OBI2,
   MANZOKU_EU_4,
   ESP_SWITCH,          // Switch Devices
+#ifdef USE_TUYA_DIMMER
   TUYA_DIMMER,         // Dimmer Devices
+#endif
+#ifdef USE_ARMTRONIX_DIMMERS
   ARMTRONIX_DIMMERS,
+#endif
+#ifdef USE_PS_16_DZ
   PS_16_DZ,
+#endif
   H801,                // Light Devices
   MAGICHOME,
   ARILUX_LC01,
