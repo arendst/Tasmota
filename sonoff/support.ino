@@ -1023,8 +1023,8 @@ bool JsonTemplate(const char* dataBuf)
   }
   if (obj[D_JSON_BASE].success()) {
     uint8_t base = obj[D_JSON_BASE];
-    if ((0 == base) || (base >= MAXMODULE)) { base = 17; } else { base--; }
-    Settings.user_template_base = base;  // Default WEMOS
+    if ((0 == base) || !ValidModule(base -1)) { base = 18; }
+    Settings.user_template_base = base -1;  // Default WEMOS
   }
   return true;
 }

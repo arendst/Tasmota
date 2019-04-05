@@ -978,8 +978,11 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
 
       if (strstr(dataBuf, "{") == nullptr) {  // If no JSON it must be parameter
         if ((payload > 0) && (payload <= MAXMODULE)) {
-          ModuleDefault(payload -1);    // Copy template module
-          if (USER_MODULE == Settings.module) { restart_flag = 2; }
+          payload--;
+          if (ValidModule(payload)) {
+            ModuleDefault(payload);     // Copy template module
+            if (USER_MODULE == Settings.module) { restart_flag = 2; }
+          }
         }
         else if (0 == payload) {        // Copy current template to user template
           if (Settings.module != USER_MODULE) {
