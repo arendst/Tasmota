@@ -17,8 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define ROTARY_V1
-#ifdef ROTARY_V1
+
 /*********************************************************************************************\
  * Rotary support
 \*********************************************************************************************/
@@ -30,6 +29,9 @@ uint8_t rotary_position = 128;
 uint8_t rotary_last_position = 128;
 uint8_t interrupts_in_use = 0;
 uint8_t rotary_changed = 0;
+
+//#define ROTARY_V1
+#ifdef ROTARY_V1
 
 /********************************************************************************************/
 

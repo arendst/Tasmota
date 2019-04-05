@@ -583,10 +583,12 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SM16716_DAT,    // SM16716 DATA
   GPIO_SM16716_SEL,    // SM16716 SELECT
 #endif // USE_SM16716
+#ifdef ROTARY_V1
   GPIO_ROT1A,          // Rotary switch1 A Pin
   GPIO_ROT1B,          // Rotary switch1 B Pin
   GPIO_ROT2A,          // Rotary switch2 A Pin
   GPIO_ROT2B,          // Rotary switch2 B Pin
+#endif 
   GPIO_ARIRFRCV,       // AliLux RF Receive input
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,
@@ -656,7 +658,9 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   ARILUX_LC11,
   ZENGGE_ZF_WF017,
   HUAFAN_SS,
+#ifdef ROTARY_V1
   MI_DESK_LAMP,
+#endif  
   KMC_70011,
   AILIGHT,             // Light Bulbs
   PHILIPS,
