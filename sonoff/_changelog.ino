@@ -1,4 +1,7 @@
-/* 6.5.0.4 20190402
+/* 6.5.0.5 20190406
+ * Add compile time GUI color options (#5586)
+ *
+ * 6.5.0.4 20190402
  * Fix Configure Timer Web GUI (#5568)
  * Add validation check when loading settings from flash
  * Fixed Display Bug in KNX webmenu for Physical Address

@@ -257,6 +257,32 @@
   #define WEB_USERNAME         "admin"           // Web server Admin mode user name
   #define USE_EMULATION                          // Enable Belkin WeMo and Hue Bridge emulation for Alexa (+16k code, +2k mem)
 
+// Black text on white/greyish background (default)
+  #define COLOR_TEXT "#000"                      // Global text color - Black
+  #define COLOR_BACKGROUND "#fff"                // Global background color - White
+  #define COLOR_FORM "#f2f2f2"                   // Form background color - Greyish
+
+// White text on black/greyish background (alternative)
+//  #define COLOR_TEXT "#fff"                      // Global text color - White
+//  #define COLOR_BACKGROUND "#000"                // Global background color - Black
+//  #define COLOR_FORM "#4f4f4f"                   // Form background color - Greyish
+
+  #define COLOR_TEXT_WARNING "red"               // Warning text color - Red
+  #define COLOR_TEXT_SUCCESS "green"             // Success text color - Green
+
+  #define COLOR_BUTTON_TEXT "#fff"               // Button text color - White
+  #define COLOR_BUTTON "#1fa3ec"                 // Button color - Blueish
+  #define COLOR_BUTTON_HOVER "#0e70a4"           // Button color when hovered over - Darker blueish
+  #define COLOR_BUTTON_RESET "#d43535"           // Restart/Reset/Delete button color - Redish
+  #define COLOR_BUTTON_RESET_HOVER "#931f1f"     // Restart/Reset/Delete button color when hovered over - Darker redish
+  #define COLOR_BUTTON_SAVE "#47c266"            // Save button color - Greenish
+  #define COLOR_BUTTON_SAVE_HOVER "#5aaf6f"      // Save button color when hovered over - Darker greenish
+
+  #define COLOR_TIMER_TAB_TEXT "#fff"            // Config timer tab text color - White
+  #define COLOR_TIMER_TAB_BACKGROUND "#999"      // Config timer tab background color - Light grey
+  #define COLOR_TIMER_ACTIVE_TAB_TEXT "#000"     // Config timer active tab text color - Black
+  #define COLOR_TIMER_ACTIVE_TAB_BG "transparent"  // Config timer active tab text color - Transparent (= COLOR_FORM)
+
 // -- mDNS ----------------------------------------
 #define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem)
   #define WEBSERVER_ADVERTISE                    // Provide access to webserver by name <Hostname>.local/

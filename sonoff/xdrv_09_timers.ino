@@ -512,6 +512,19 @@ bool TimerCommand(void)
 #ifdef USE_WEBSERVER
 #ifdef USE_TIMERS_WEB
 
+#ifndef COLOR_TIMER_TAB_TEXT
+#define COLOR_TIMER_TAB_TEXT        "#fff"         // Config timer tab text color - White
+#endif
+#ifndef COLOR_TIMER_TAB_BACKGROUND
+#define COLOR_TIMER_TAB_BACKGROUND  "#999"         // Config timer tab background color - Light grey
+#endif
+#ifndef COLOR_TIMER_ACTIVE_TAB_TEXT
+#define COLOR_TIMER_ACTIVE_TAB_TEXT "#000"         // Config timer active tab text color - Black
+#endif
+#ifndef COLOR_TIMER_ACTIVE_TAB_BG
+#define COLOR_TIMER_ACTIVE_TAB_BG   "transparent"  // Config timer active tab text color - Transparent (= COLOR_FORM)
+#endif
+
 #define WEB_HANDLE_TIMER "tm"
 
 const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
@@ -596,8 +609,8 @@ const char HTTP_TIMER_SCRIPT4[] PROGMEM =
     "if(ct<99){st();}"                                            // Save changes
     "ct=t;"
     "o=document.getElementsByClassName('tl');"                    // Restore style to all tabs/buttons
-    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background-color:#999;color:#fff;font-weight:normal;\"}"
-    "e.style.cssText=\"background-color:transparent;color:#000;font-weight:bold;\";"  // Change style to tab/button used to open content
+    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background-color:" COLOR_TIMER_TAB_BACKGROUND ";color:" COLOR_TIMER_TAB_TEXT ";font-weight:normal;\"}"
+    "e.style.cssText=\"background-color:" COLOR_TIMER_ACTIVE_TAB_BG ";color:" COLOR_TIMER_ACTIVE_TAB_TEXT ";font-weight:bold;\";"  // Change style to tab/button used to open content
     "s=pt[ct];"                                                   // Get parameters from array
 #ifdef USE_SUNRISE
     "p=(s>>29)&3;eb('b'+p).checked=1;"                            // Set mode
@@ -653,7 +666,7 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
   "}"
   "window.onload=it;";
 const char HTTP_TIMER_STYLE[] PROGMEM =
-  ".tl{float:left;border-radius:0;border:1px solid #f2f2f2;padding:1px;width:6.25%%;}";  // Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
+  ".tl{float:left;border-radius:0;border:1px solid " COLOR_FORM ";padding:1px;width:6.25%%;}";  // Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
 const char HTTP_FORM_TIMER1[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
