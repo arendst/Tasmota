@@ -261,11 +261,19 @@
   #define COLOR_TEXT "#000"                      // Global text color - Black
   #define COLOR_BACKGROUND "#fff"                // Global background color - White
   #define COLOR_FORM "#f2f2f2"                   // Form background color - Greyish
+  #define COLOR_INPUT_TEXT "#000"                // Input text color - Black
+  #define COLOR_INPUT "#fff"                     // Input background color - White
+  #define COLOR_CONSOLE_TEXT "#000"              // Console text color - Black
+  #define COLOR_CONSOLE "#fff"                   // Console background color - White
 
 // White text on black/greyish background (alternative)
 //  #define COLOR_TEXT "#fff"                      // Global text color - White
 //  #define COLOR_BACKGROUND "#000"                // Global background color - Black
 //  #define COLOR_FORM "#4f4f4f"                   // Form background color - Greyish
+//  #define COLOR_INPUT_TEXT "#000"                // Input text color - Black
+//  #define COLOR_INPUT "#ddd"                     // Input background color - Greyish
+//  #define COLOR_CONSOLE_TEXT "green"             // Console text color - Green
+//  #define COLOR_CONSOLE "#111"                   // Console background color - Blackish
 
   #define COLOR_TEXT_WARNING "red"               // Warning text color - Red
   #define COLOR_TEXT_SUCCESS "green"             // Success text color - Green

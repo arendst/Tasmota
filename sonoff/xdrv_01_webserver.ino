@@ -46,6 +46,18 @@
 #ifndef COLOR_FORM
 #define COLOR_FORM                            "#f2f2f2"  // Form background color - Greyish
 #endif
+#ifndef COLOR_INPUT_TEXT
+#define COLOR_INPUT_TEXT                      "#000"     // Input text color - Black
+#endif
+#ifndef COLOR_INPUT
+#define COLOR_INPUT                           "#fff"     // Input background color - White
+#endif
+#ifndef COLOR_CONSOLE_TEXT
+#define COLOR_CONSOLE_TEXT                    "#000"     // Console text color - Black
+#endif
+#ifndef COLOR_CONSOLE
+#define COLOR_CONSOLE                         "#fff"     // Console background color - White
+#endif
 #ifndef COLOR_BUTTON_TEXT
 #define COLOR_BUTTON_TEXT                     "#fff"     // Button text color - White
 #endif
@@ -278,10 +290,10 @@ const char HTTP_HEAD_STYLE1[] PROGMEM =
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
   "fieldset{background-color:" COLOR_FORM ";}"  // Also update HTTP_TIMER_STYLE
   "p{margin:0.5em 0;}"
-  "input{width:100%%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;}"
+  "input{width:100%%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;background-color:" COLOR_INPUT ";color:" COLOR_INPUT_TEXT ";}"
   "input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}"
-  "select{width:100%%;}"
-  "textarea{resize:none;width:98%%;height:318px;padding:5px;overflow:auto;}"
+  "select{width:100%%;background-color:" COLOR_INPUT ";color:" COLOR_INPUT_TEXT ";}"
+  "textarea{resize:none;width:98%%;height:318px;padding:5px;overflow:auto;background-color:" COLOR_CONSOLE ";color:" COLOR_CONSOLE_TEXT ";}"
   "body{text-align:center;font-family:verdana;background-color:" COLOR_BACKGROUND ";}"
   "td{padding:0px;}";
 const char HTTP_HEAD_STYLE2[] PROGMEM =
