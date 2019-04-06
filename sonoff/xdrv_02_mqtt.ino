@@ -822,7 +822,7 @@ bool Xdrv02(uint8_t function)
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
-      case FUNC_LOOP:
+      case FUNC_EVERY_100_MSECOND:  // https://github.com/knolleary/pubsubclient/issues/556
         if (MqttIsConnected()) { MqttClient.loop(); }
         break;
 #ifdef USE_WEBSERVER
