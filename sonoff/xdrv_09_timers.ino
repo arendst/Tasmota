@@ -521,9 +521,6 @@ bool TimerCommand(void)
 #ifndef COLOR_TIMER_ACTIVE_TAB_TEXT
 #define COLOR_TIMER_ACTIVE_TAB_TEXT "#000"         // Config timer active tab text color - Black
 #endif
-#ifndef COLOR_TIMER_ACTIVE_TAB_BG
-#define COLOR_TIMER_ACTIVE_TAB_BG   "transparent"  // Config timer active tab text color - Transparent (= COLOR_FORM)
-#endif
 
 #define WEB_HANDLE_TIMER "tm"
 
@@ -609,8 +606,8 @@ const char HTTP_TIMER_SCRIPT4[] PROGMEM =
     "if(ct<99){st();}"                                            // Save changes
     "ct=t;"
     "o=document.getElementsByClassName('tl');"                    // Restore style to all tabs/buttons
-    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background-color:" COLOR_TIMER_TAB_BACKGROUND ";color:" COLOR_TIMER_TAB_TEXT ";font-weight:normal;\"}"
-    "e.style.cssText=\"background-color:" COLOR_TIMER_ACTIVE_TAB_BG ";color:" COLOR_TIMER_ACTIVE_TAB_TEXT ";font-weight:bold;\";"  // Change style to tab/button used to open content
+    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background:" COLOR_TIMER_TAB_BACKGROUND ";color:" COLOR_TIMER_TAB_TEXT ";font-weight:normal;\"}"
+    "e.style.cssText=\"background:" COLOR_FORM ";color:" COLOR_TIMER_ACTIVE_TAB_TEXT ";font-weight:bold;\";"  // Change style to tab/button used to open content
     "s=pt[ct];"                                                   // Get parameters from array
 #ifdef USE_SUNRISE
     "p=(s>>29)&3;eb('b'+p).checked=1;"                            // Set mode

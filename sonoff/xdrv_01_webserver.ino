@@ -32,10 +32,10 @@
 #endif
 
 #ifndef COLOR_TEXT_WARNING
-#define COLOR_TEXT_WARNING                    "red"      // Warning text color - Red
+#define COLOR_TEXT_WARNING                    "#f00"     // Warning text color - Red
 #endif
 #ifndef COLOR_TEXT_SUCCESS
-#define COLOR_TEXT_SUCCESS                    "green"    // Success text color - Green
+#define COLOR_TEXT_SUCCESS                    "#008000"  // Success text color - Green
 #endif
 #ifndef COLOR_TEXT
 #define COLOR_TEXT                            "#000"     // Global text color - Black
@@ -288,21 +288,21 @@ const char HTTP_HEAD_STYLE1[] PROGMEM =
 
   "<style>"
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
-  "fieldset{background-color:" COLOR_FORM ";}"  // Also update HTTP_TIMER_STYLE
+  "fieldset{background:" COLOR_FORM ";}"  // Also update HTTP_TIMER_STYLE
   "p{margin:0.5em 0;}"
-  "input{width:100%%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;background-color:" COLOR_INPUT ";color:" COLOR_INPUT_TEXT ";}"
+  "input{width:100%%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;background:" COLOR_INPUT ";color:" COLOR_INPUT_TEXT ";}"
   "input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}"
-  "select{width:100%%;background-color:" COLOR_INPUT ";color:" COLOR_INPUT_TEXT ";}"
-  "textarea{resize:none;width:98%%;height:318px;padding:5px;overflow:auto;background-color:" COLOR_CONSOLE ";color:" COLOR_CONSOLE_TEXT ";}"
-  "body{text-align:center;font-family:verdana;background-color:" COLOR_BACKGROUND ";}"
+  "select{width:100%%;background:" COLOR_INPUT ";color:" COLOR_INPUT_TEXT ";}"
+  "textarea{resize:none;width:98%%;height:318px;padding:5px;overflow:auto;background:" COLOR_CONSOLE ";color:" COLOR_CONSOLE_TEXT ";}"
+  "body{text-align:center;font-family:verdana;background:" COLOR_BACKGROUND ";}"
   "td{padding:0px;}";
 const char HTTP_HEAD_STYLE2[] PROGMEM =
-  "button{border:0;border-radius:0.3rem;background-color:" COLOR_BUTTON ";color:" COLOR_BUTTON_TEXT ";line-height:2.4rem;font-size:1.2rem;width:100%%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"
-  "button:hover{background-color:" COLOR_BUTTON_HOVER ";}"
-  ".bred{background-color:" COLOR_BUTTON_RESET ";}"
-  ".bred:hover{background-color:" COLOR_BUTTON_RESET_HOVER ";}"
-  ".bgrn{background-color:" COLOR_BUTTON_SAVE ";}"
-  ".bgrn:hover{background-color:" COLOR_BUTTON_SAVE_HOVER ";}"
+  "button{border:0;border-radius:0.3rem;background:" COLOR_BUTTON ";color:" COLOR_BUTTON_TEXT ";line-height:2.4rem;font-size:1.2rem;width:100%%;-webkit-transition-duration:0.4s;transition-duration:0.4s;cursor:pointer;}"
+  "button:hover{background:" COLOR_BUTTON_HOVER ";}"
+  ".bred{background:" COLOR_BUTTON_RESET ";}"
+  ".bred:hover{background:" COLOR_BUTTON_RESET_HOVER ";}"
+  ".bgrn{background:" COLOR_BUTTON_SAVE ";}"
+  ".bgrn:hover{background:" COLOR_BUTTON_SAVE_HOVER ";}"
   "a{text-decoration:none;}"
   ".p{float:left;text-align:left;}"
   ".q{float:right;text-align:right;}";

@@ -272,11 +272,11 @@
 //  #define COLOR_FORM "#4f4f4f"                   // Form background color - Greyish
 //  #define COLOR_INPUT_TEXT "#000"                // Input text color - Black
 //  #define COLOR_INPUT "#ddd"                     // Input background color - Greyish
-//  #define COLOR_CONSOLE_TEXT "green"             // Console text color - Green
+//  #define COLOR_CONSOLE_TEXT "#008000"           // Console text color - Green
 //  #define COLOR_CONSOLE "#111"                   // Console background color - Blackish
 
-  #define COLOR_TEXT_WARNING "red"               // Warning text color - Red
-  #define COLOR_TEXT_SUCCESS "green"             // Success text color - Green
+  #define COLOR_TEXT_WARNING "#f00"              // Warning text color - Red
+  #define COLOR_TEXT_SUCCESS "#008000"           // Success text color - Green
 
   #define COLOR_BUTTON_TEXT "#fff"               // Button text color - White
   #define COLOR_BUTTON "#1fa3ec"                 // Button color - Blueish
@@ -289,7 +289,6 @@
   #define COLOR_TIMER_TAB_TEXT "#fff"            // Config timer tab text color - White
   #define COLOR_TIMER_TAB_BACKGROUND "#999"      // Config timer tab background color - Light grey
   #define COLOR_TIMER_ACTIVE_TAB_TEXT "#000"     // Config timer active tab text color - Black
-  #define COLOR_TIMER_ACTIVE_TAB_BG "transparent"  // Config timer active tab text color - Transparent (= COLOR_FORM)
 
 // -- mDNS ----------------------------------------
 #define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem)
