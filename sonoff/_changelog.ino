@@ -1,5 +1,5 @@
 /* 6.5.0.5 20190406
- * Add compile time GUI color options (#5586)
+ * Add compile time GUI hexadecimal only color options in my_user_config.h (#5586)
  *
  * 6.5.0.4 20190402
  * Fix Configure Timer Web GUI (#5568)
