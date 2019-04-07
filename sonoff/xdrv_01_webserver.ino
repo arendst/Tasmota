@@ -382,7 +382,7 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "<p><input id='t2' name='t2' type='checkbox'%s><b>" D_ACTIVATE "</b></p>"
   "</fieldset>"
   "<br/>"
-  "<b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
+  "<b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='wp' name='wp' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
   "<br>"
   "<input id='b1' name='b1' type='checkbox'%s><b>" D_MQTT_ENABLE "</b><br/>"
   "<br/>";
@@ -1543,7 +1543,7 @@ void OtherSaveSettings(void)
   char webindex[5];
   char friendlyname[sizeof(Settings.friendlyname[0])];
 
-  WebGetArg("p1", tmp, sizeof(tmp));
+  WebGetArg("wp", tmp, sizeof(tmp));
   strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
   Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
 #ifdef USE_EMULATION
