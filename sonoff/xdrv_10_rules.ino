@@ -488,7 +488,7 @@ void RulesEvery50ms(void)
     }
     else if (vars_event || mems_event){
       if (vars_event) {
-        for (uint8_t i = 0; i < MAX_RULE_VARS-1; i++) {
+        for (uint8_t i = 0; i < MAX_RULE_VARS; i++) {
           if (bitRead(vars_event, i)) {
             bitClear(vars_event, i);
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
@@ -498,7 +498,7 @@ void RulesEvery50ms(void)
         }
       }
       if (mems_event) {
-        for (uint8_t i = 0; i < MAX_RULE_MEMS-1; i++) {
+        for (uint8_t i = 0; i < MAX_RULE_MEMS; i++) {
           if (bitRead(mems_event, i)) {
             bitClear(mems_event, i);
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
