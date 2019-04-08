@@ -1,5 +1,6 @@
 /* 6.5.0.5 20190406
  * Add compile time GUI hexadecimal only color options in my_user_config.h (#5586)
+ * Fix template activation and/or module selection regression from 6.5.0.4 (#5598)
  *
  * 6.5.0.4 20190402
  * Fix Configure Timer Web GUI (#5568)

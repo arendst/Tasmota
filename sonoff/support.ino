@@ -846,7 +846,7 @@ uint8_t ModuleNr()
   return (USER_MODULE == Settings.module) ? 0 : Settings.module +1;
 }
 
-bool ValidModule(uint8_t index)
+bool ValidTemplateModule(uint8_t index)
 {
   for (uint8_t i = 0; i < sizeof(kModuleNiceList); i++) {
     if (index == pgm_read_byte(kModuleNiceList + i)) {
@@ -854,6 +854,12 @@ bool ValidModule(uint8_t index)
     }
   }
   return false;
+}
+
+bool ValidModule(uint8_t index)
+{
+  if (index == USER_MODULE) { return true; }
+  return ValidTemplateModule(index);
 }
 
 String AnyModuleName(uint8_t index)
@@ -1023,7 +1029,7 @@ bool JsonTemplate(const char* dataBuf)
   }
   if (obj[D_JSON_BASE].success()) {
     uint8_t base = obj[D_JSON_BASE];
-    if ((0 == base) || !ValidModule(base -1)) { base = 18; }
+    if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
     Settings.user_template_base = base -1;  // Default WEMOS
   }
   return true;
