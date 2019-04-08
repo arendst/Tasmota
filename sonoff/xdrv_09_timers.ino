@@ -512,16 +512,6 @@ bool TimerCommand(void)
 #ifdef USE_WEBSERVER
 #ifdef USE_TIMERS_WEB
 
-#ifndef COLOR_TIMER_TAB_TEXT
-#define COLOR_TIMER_TAB_TEXT        "#fff"         // Config timer tab text color - White
-#endif
-#ifndef COLOR_TIMER_TAB_BACKGROUND
-#define COLOR_TIMER_TAB_BACKGROUND  "#999"         // Config timer tab background color - Light grey
-#endif
-#ifndef COLOR_TIMER_ACTIVE_TAB_TEXT
-#define COLOR_TIMER_ACTIVE_TAB_TEXT "#000"         // Config timer active tab text color - Black
-#endif
-
 #define WEB_HANDLE_TIMER "tm"
 
 const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
@@ -606,8 +596,8 @@ const char HTTP_TIMER_SCRIPT4[] PROGMEM =
     "if(ct<99){st();}"                                            // Save changes
     "ct=t;"
     "o=document.getElementsByClassName('tl');"                    // Restore style to all tabs/buttons
-    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background:" COLOR_TIMER_TAB_BACKGROUND ";color:" COLOR_TIMER_TAB_TEXT ";font-weight:normal;\"}"
-    "e.style.cssText=\"background:" COLOR_FORM ";color:" COLOR_TIMER_ACTIVE_TAB_TEXT ";font-weight:bold;\";"  // Change style to tab/button used to open content
+    "for(i=0;i<o.length;i++){o[i].style.cssText=\"background:#%06x;color:#%06x;font-weight:normal;\"}"  // COLOR_TIMER_TAB_BACKGROUND, COLOR_TIMER_TAB_TEXT
+    "e.style.cssText=\"background:#%06x;color:#%06x;font-weight:bold;\";"  // COLOR_FORM, COLOR_TIMER_ACTIVE_TAB_TEXT, Change style to tab/button used to open content
     "s=pt[ct];"                                                   // Get parameters from array
 #ifdef USE_SUNRISE
     "p=(s>>29)&3;eb('b'+p).checked=1;"                            // Set mode
@@ -663,7 +653,7 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
   "}"
   "window.onload=it;";
 const char HTTP_TIMER_STYLE[] PROGMEM =
-  ".tl{float:left;border-radius:0;border:1px solid " COLOR_FORM ";padding:1px;width:6.25%%;}";  // Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
+  ".tl{float:left;border-radius:0;border:1px solid #%06x;padding:1px;width:6.25%%;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
 const char HTTP_FORM_TIMER1[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
@@ -719,10 +709,10 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_TIMER_SCRIPT2);
 #endif  // USE_SUNRISE
   WSContentSend_P(HTTP_TIMER_SCRIPT3, devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT4, devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT4, gui_color[COL_TIMER_TAB_BACKGROUND], gui_color[COL_TIMER_TAB_TEXT], gui_color[COL_FORM], gui_color[COL_TIMER_ACTIVE_TAB_TEXT], devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT6, devices_present);
-  WSContentSendStyle_P(HTTP_TIMER_STYLE);
+  WSContentSendStyle_P(HTTP_TIMER_STYLE, gui_color[COL_FORM]);
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");
   for (uint8_t i = 0; i < MAX_TIMERS; i++) {
     WSContentSend_P(PSTR("%s%u"), (i > 0) ? "," : "", Settings.timer[i].data);

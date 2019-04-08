@@ -397,7 +397,7 @@ struct XDRVMAILBOX {
   char         *data;
 } XdrvMailbox;
 
-const uint8_t MAX_RULES_FLAG = 7;          // Number of bits used in RulesBitfield (tricky I know...)
+const uint8_t MAX_RULES_FLAG = 8;          // Number of bits used in RulesBitfield (tricky I know...)
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
@@ -408,7 +408,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t mqtt_disconnected : 1;
     uint16_t wifi_connected : 1;
     uint16_t wifi_disconnected : 1;
-    uint16_t spare07 : 1;
+    uint16_t http_init : 1;
     uint16_t spare08 : 1;
     uint16_t spare09 : 1;
     uint16_t spare10 : 1;

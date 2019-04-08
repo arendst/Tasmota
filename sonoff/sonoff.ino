@@ -1005,7 +1005,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
           }
         }
       }
-      else if (data_len > 9) {          // Workaround exception if empty JSON like {} - Needs checks
+      else {
         if (JsonTemplate(dataBuf)) {    // Free 336 bytes StaticJsonBuffer stack space by moving code to function
           if (USER_MODULE == Settings.module) { restart_flag = 2; }
         } else {

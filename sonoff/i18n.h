@@ -311,6 +311,7 @@
 #define D_CMND_WEBLOG "WebLog"
 #define D_CMND_WEBREFRESH "WebRefresh"
 #define D_CMND_WEBSEND "WebSend"
+#define D_CMND_WEBCOLOR "WebColor"
 #define D_CMND_EMULATION "Emulation"
 
 // Commands xdrv_03_energy.ino

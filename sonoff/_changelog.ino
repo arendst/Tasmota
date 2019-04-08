@@ -1,6 +1,13 @@
 /* 6.5.0.5 20190406
  * Add compile time GUI hexadecimal only color options in my_user_config.h (#5586)
  * Fix template activation and/or module selection regression from 6.5.0.4 (#5598)
+ * Add rule Http#Initialized
+ * Add command WebColor to change non-persistent GUI colors on the fly
+   Use a rule like:
+   rule3 on http#initialized do webcolor {"webcolor":["#eeeeee","#181818","#4f4f4f","#000000","#dddddd","#008000","#222222","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999","#000000"]} endon
+   or
+   rule3 on http#initialized do webcolor {"webcolor":["#eee","#181818","#4f4f4f","#000","#ddd","#008000","#222"]} endon
+   to make color changes persistent)
  *
  * 6.5.0.4 20190402
  * Fix Configure Timer Web GUI (#5568)

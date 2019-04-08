@@ -1009,6 +1009,10 @@ bool GetUsedInModule(uint8_t val, uint8_t *arr)
 
 bool JsonTemplate(const char* dataBuf)
 {
+  // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
+
+  if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
+
   StaticJsonBuffer<350> jb;  // 331 from https://arduinojson.org/v5/assistant/
   JsonObject& obj = jb.parseObject(dataBuf);
   if (!obj.success()) { return false; }
