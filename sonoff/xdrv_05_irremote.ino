@@ -549,49 +549,45 @@ bool IrSendCommand(void)
           error = IE_INVALID_RAWDATA;
         } else {
           uint16_t freq = atoi(str);
-          if (!freq && (*str != '0')) {   // first parameter is a string
+          if (!freq && (*str != '0')) {                // First parameter is a string
             uint16_t count = 0;
             char *q = p;
             for (; *q; count += (*q++ == ','));
-            if (count != 6) {                    // parameters must be exactly 6
+            if (count != 6) {                          // Parameters must be exactly 6
               error = IE_INVALID_RAWDATA;
             } else {
-               str = strtok_r(NULL, ", ", &p);
-               freq = atoi(str);
-               if (!freq) { freq = 38000; }      // Default to 38kHz
-               str = strtok_r(NULL, ", ", &p);
-               uint16_t hdr_mrk = atoi(str);     // header mark
-               str = strtok_r(NULL, ", ", &p);
-               uint16_t hdr_spc = atoi(str);     // header space
-               str = strtok_r(NULL, ", ", &p);
-               uint16_t bit_mrk = atoi(str);     // bit mark
-               str = strtok_r(NULL, ", ", &p);
-               uint16_t zer_spc = atoi(str);     // zero space
-               str = strtok_r(NULL, ", ", &p);
-               uint16_t one_spc = atoi(str);     // one space
-
-               if (!hdr_mrk || !hdr_spc || !bit_mrk || !zer_spc || !one_spc) {
-                 error = IE_INVALID_RAWDATA;
-               } else {
-                 uint16_t raw_array[strlen(p)*2+3]; // header + bits + end
-                 uint16_t i = 0;
-                 raw_array[i++] = hdr_mrk;
-                 raw_array[i++] = hdr_spc;
-
-                 for (; *p; *p++) {
-                    if (*p == '0') {
-                       raw_array[i++] = bit_mrk; 
-                       raw_array[i++] = zer_spc;
-                    } else if (*p == '1') {
-                       raw_array[i++] = bit_mrk; 
-                       raw_array[i++] = one_spc;
-                    }
-                 }
-                 raw_array[i++] = bit_mrk;      // trailing mark
-
-                 irsend_active = true;
-                 irsend->sendRaw(raw_array, i, freq);
-               }
+              uint16_t parm[6];
+              for (uint8_t i = 0; i < 6; i++) {
+                str = strtok_r(nullptr, ", ", &p);
+                parm[i] = atoi(str);
+                if (!parm[i]) {
+                  if (!i) {
+                    parm[0] = 38000;                   // Frequency default to 38kHz
+                  } else {
+                    error = IE_INVALID_RAWDATA;
+                    break;
+                  }
+                }
+              }
+              if (IE_NO_ERROR == error) {
+                uint16_t raw_array[strlen(p)*2+3];     // Header + bits + end
+                uint16_t i = 0;
+                raw_array[i++] = parm[1];              // Header mark
+                raw_array[i++] = parm[2];              // Header space
+                for (; *p; *p++) {
+                  if (*p == '0') {
+                    raw_array[i++] = parm[3];          // Bit mark
+                    raw_array[i++] = parm[4];          // Zero space
+                  }
+                  else if (*p == '1') {
+                    raw_array[i++] = parm[3];          // Bit mark
+                    raw_array[i++] = parm[5];          // One space
+                  }
+                }
+                raw_array[i++] = parm[3];              // Trailing mark
+                irsend_active = true;
+                irsend->sendRaw(raw_array, i, parm[0]);
+              }
             }
           } else {
             if (!freq) { freq = 38000; }  // Default to 38kHz
