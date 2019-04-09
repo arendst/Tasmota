@@ -31,61 +31,6 @@
 #define WIFI_SOFT_AP_CHANNEL                  1          // Soft Access Point Channel number between 1 and 11 as used by SmartConfig web GUI
 #endif
 
-#ifndef COLOR_TEXT_WARNING
-#define COLOR_TEXT_WARNING                    "#f00"     // Warning text color - Red
-#endif
-#ifndef COLOR_TEXT_SUCCESS
-#define COLOR_TEXT_SUCCESS                    "#008000"  // Success text color - Green
-#endif
-#ifndef COLOR_TEXT
-#define COLOR_TEXT                            "#000"     // Global text color - Black
-#endif
-#ifndef COLOR_BACKGROUND
-#define COLOR_BACKGROUND                      "#fff"     // Global background color - White
-#endif
-#ifndef COLOR_FORM
-#define COLOR_FORM                            "#f2f2f2"  // Form background color - Greyish
-#endif
-#ifndef COLOR_INPUT_TEXT
-#define COLOR_INPUT_TEXT                      "#000"     // Input text color - Black
-#endif
-#ifndef COLOR_INPUT
-#define COLOR_INPUT                           "#fff"     // Input background color - White
-#endif
-#ifndef COLOR_CONSOLE_TEXT
-#define COLOR_CONSOLE_TEXT                    "#000"     // Console text color - Black
-#endif
-#ifndef COLOR_CONSOLE
-#define COLOR_CONSOLE                         "#fff"     // Console background color - White
-#endif
-#ifndef COLOR_BUTTON_TEXT
-#define COLOR_BUTTON_TEXT                     "#fff"     // Button text color - White
-#endif
-#ifndef COLOR_BUTTON
-#define COLOR_BUTTON                          "#1fa3ec"  // Button color - Blueish
-#endif
-#ifndef COLOR_BUTTON_HOVER
-#define COLOR_BUTTON_HOVER                    "#0e70a4"  // Button color when hovered over - Darker blueish
-#endif
-#ifndef COLOR_BUTTON_RESET
-#define COLOR_BUTTON_RESET                    "#d43535"  // Restart/Reset/Delete button color - Redish
-#endif
-#ifndef COLOR_BUTTON_RESET_HOVER
-#define COLOR_BUTTON_RESET_HOVER              "#931f1f"  // Restart/Reset/Delete button color when hovered over - Darker redish
-#endif
-#ifndef COLOR_BUTTON_SAVE
-#define COLOR_BUTTON_SAVE                     "#47c266"  // Save button color - Greenish
-#endif
-#ifndef COLOR_BUTTON_SAVE_HOVER
-#define COLOR_BUTTON_SAVE_HOVER               "#5aaf6f"  // Save button color when hovered over - Darker greenish
-#endif
-#ifndef COLOR_TIMER_TAB_TEXT
-#define COLOR_TIMER_TAB_TEXT                  "#fff"     // Config timer tab text color - White
-#endif
-#ifndef COLOR_TIMER_TAB_BACKGROUND
-#define COLOR_TIMER_TAB_BACKGROUND            "#999"     // Config timer tab background color - Light grey
-#endif
-
 const uint16_t CHUNKED_BUFFER_SIZE = 400;                // Chunk buffer size (should be smaller than half mqtt_date size)
 
 const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
@@ -468,21 +413,6 @@ const char kUploadErrors[] PROGMEM =
 #endif
   ;
 
-enum WebColors {
-  COL_TEXT, COL_BACKGROUND, COL_FORM,
-  COL_INPUT_TEXT, COL_INPUT, COL_CONSOLE_TEXT, COL_CONSOLE,
-  COL_TEXT_WARNING, COL_TEXT_SUCCESS,
-  COL_BUTTON_TEXT, COL_BUTTON, COL_BUTTON_HOVER, COL_BUTTON_RESET, COL_BUTTON_RESET_HOVER, COL_BUTTON_SAVE, COL_BUTTON_SAVE_HOVER,
-  COL_TIMER_TAB_TEXT, COL_TIMER_TAB_BACKGROUND,
-  COL_LAST };
-
-const char kWebColors[] PROGMEM =
-  COLOR_TEXT "|" COLOR_BACKGROUND "|" COLOR_FORM "|"
-  COLOR_INPUT_TEXT "|" COLOR_INPUT "|" COLOR_CONSOLE_TEXT "|" COLOR_CONSOLE "|"
-  COLOR_TEXT_WARNING "|" COLOR_TEXT_SUCCESS "|"
-  COLOR_BUTTON_TEXT "|" COLOR_BUTTON "|" COLOR_BUTTON_HOVER "|" COLOR_BUTTON_RESET "|" COLOR_BUTTON_RESET_HOVER "|" COLOR_BUTTON_SAVE "|" COLOR_BUTTON_SAVE_HOVER "|"
-  COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND;
-
 const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
 
@@ -490,11 +420,9 @@ DNSServer *DnsServer;
 ESP8266WebServer *WebServer;
 
 String chunk_buffer = "";                         // Could be max 2 * CHUNKED_BUFFER_SIZE
-uint32_t gui_color[COL_LAST];
 int minimum_signal_quality = -1;
 bool remove_duplicate_access_points = true;
 bool reset_web_log_flag = false;                  // Reset web console log
-bool gui_colors_init = false;
 uint8_t webserver_state = HTTP_OFF;
 uint8_t upload_error = 0;
 uint8_t upload_file_type;
@@ -502,45 +430,6 @@ uint8_t upload_progress_dot_count;
 uint8_t config_block_count = 0;
 uint8_t config_xor_on = 0;
 uint8_t config_xor_on_set = CONFIG_FILE_XOR;
-
-uint32_t WebHexCode(const char* code)
-{
-  char scolor[10];
-
-  strlcpy(scolor, code, sizeof(scolor));
-  char* p = scolor;
-  if ('#' == p[0]) { p++; }  // Skip
-
-  if (3 == strlen(p)) {  // Convert 3 character to 6 character color code
-    p[6] = p[3];  // \0
-    p[5] = p[2];  // 3
-    p[4] = p[2];  // 3
-    p[3] = p[1];  // 2
-    p[2] = p[1];  // 2
-    p[1] = p[0];  // 1
-  }
-
-  uint32_t color = strtol(p, nullptr, 16);
-/*
-  if (3 == strlen(p)) {  // Convert 3 character to 6 character color code
-    uint32_t w = ((color & 0xF00) << 8) | ((color & 0x0F0) << 4) | (color & 0x00F);  // 00010203
-    color = w | (w << 4);                                                            // 00112233
-  }
-*/
-  return color;
-}
-
-void WebColorInit(bool force)
-{
-  if (!gui_colors_init || force) {
-    char scolor[10];
-    for (uint8_t i = 0; i < COL_LAST; i++) {
-      GetTextIndexed(scolor, sizeof(scolor), i, kWebColors);
-      gui_color[i] = WebHexCode(scolor);
-    }
-    gui_colors_init = true;
-  }
-}
 
 // Helper function to avoid code duplication (saves 4k Flash)
 static void WebGetArg(const char* arg, char* out, size_t max)
@@ -573,7 +462,6 @@ void StartWebserver(int type, IPAddress ipweb)
   if (!Settings.web_refresh) { Settings.web_refresh = HTTP_REFRESH_TIME; }
   if (!webserver_state) {
     if (!WebServer) {
-      WebColorInit(false);
       WebServer = new ESP8266WebServer((HTTP_MANAGER == type || HTTP_MANAGER_RESET_ONLY == type) ? 80 : WEB_PORT);
       WebServer->on("/", HandleRoot);
       WebServer->onNotFound(HandleNotFound);
@@ -821,8 +709,8 @@ void WSContentSendStyle_P(const char* formatP, ...)
       WSContentSend_P(HTTP_SCRIPT_COUNTER);
     }
   }
-  WSContentSend_P(HTTP_HEAD_STYLE1, gui_color[COL_FORM], gui_color[COL_INPUT], gui_color[COL_INPUT_TEXT], gui_color[COL_INPUT], gui_color[COL_INPUT_TEXT], gui_color[COL_CONSOLE], gui_color[COL_CONSOLE_TEXT], gui_color[COL_BACKGROUND]);
-  WSContentSend_P(HTTP_HEAD_STYLE2, gui_color[COL_BUTTON], gui_color[COL_BUTTON_TEXT], gui_color[COL_BUTTON_HOVER], gui_color[COL_BUTTON_RESET], gui_color[COL_BUTTON_RESET_HOVER], gui_color[COL_BUTTON_SAVE], gui_color[COL_BUTTON_SAVE_HOVER]);
+  WSContentSend_P(HTTP_HEAD_STYLE1, WebColor(COL_FORM), WebColor(COL_INPUT), WebColor(COL_INPUT_TEXT), WebColor(COL_INPUT), WebColor(COL_INPUT_TEXT), WebColor(COL_CONSOLE), WebColor(COL_CONSOLE_TEXT), WebColor(COL_BACKGROUND));
+  WSContentSend_P(HTTP_HEAD_STYLE2, WebColor(COL_BUTTON), WebColor(COL_BUTTON_TEXT), WebColor(COL_BUTTON_HOVER), WebColor(COL_BUTTON_RESET), WebColor(COL_BUTTON_RESET_HOVER), WebColor(COL_BUTTON_SAVE), WebColor(COL_BUTTON_SAVE_HOVER));
   if (formatP != nullptr) {
     // This uses char strings. Be aware of sending %% if % is needed
     va_list arg;
@@ -831,9 +719,9 @@ void WSContentSendStyle_P(const char* formatP, ...)
     va_end(arg);
     _WSContentSendBuffer();
   }
-  WSContentSend_P(HTTP_HEAD_STYLE3, gui_color[COL_TEXT],
+  WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_TEXT),
 #ifdef FIRMWARE_MINIMAL
-    gui_color[COL_TEXT_WARNING],
+    WebColor(COL_TEXT_WARNING),
 #endif
     ModuleName().c_str(), Settings.friendlyname[0]);
   if (Settings.flag3.gui_hostname_ip) {
@@ -1217,7 +1105,7 @@ void HandleTemplateConfiguration(void)
   for (uint8_t i = 0; i < 17; i++) {
     if ((i < 6) || ((i > 8) && (i != 11))) {                // Ignore flash pins GPIO06, 7, 8 and 11
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' name='g%d'></select></td></tr>"),
-        ((9==i)||(10==i)) ? gui_color[COL_TEXT_WARNING] : gui_color[COL_TEXT], i, (0==i) ? " style='width:200px'" : "", i, i);
+        ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:200px'" : "", i, i);
     }
   }
   WSContentSend_P(PSTR("</table>"));
@@ -1323,7 +1211,7 @@ void HandleModuleConfiguration(void)
     if (ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       char sesp8285[40];
-      snprintf_P(sesp8285, sizeof(sesp8285), PSTR("<font color='#%06x'>ESP8285</font>"), gui_color[COL_TEXT_WARNING]);
+      snprintf_P(sesp8285, sizeof(sesp8285), PSTR("<font color='#%06x'>ESP8285</font>"), WebColor(COL_TEXT_WARNING));
       WSContentSend_P(PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:176px'><select id='g%d' name='g%d'></select></td></tr>"),
         (WEMOS==my_module_type)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :((9==i)||(10==i))? sesp8285 :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
     }
@@ -1895,7 +1783,7 @@ void HandleUploadDone(void)
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
   if (upload_error) {
 //    WSContentSend_P(PSTR(COLOR_TEXT_WARNING "'>" D_FAILED "</font></b><br/><br/>"));
-    WSContentSend_P(PSTR("%06x'>" D_FAILED "</font></b><br/><br/>"), gui_color[COL_TEXT_WARNING]);
+    WSContentSend_P(PSTR("%06x'>" D_FAILED "</font></b><br/><br/>"), WebColor(COL_TEXT_WARNING));
 #ifdef USE_RF_FLASH
     if (upload_error < 14) {
 #else
@@ -1909,7 +1797,7 @@ void HandleUploadDone(void)
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_UPLOAD ": %s"), error);
     stop_flash_rotate = Settings.flag.stop_flash_rotate;
   } else {
-    WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), gui_color[COL_TEXT_SUCCESS]);
+    WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
     WSContentSend_P(HTTP_MSG_RSTRT);
     ShowWebSource(SRC_WEBGUI);
     restart_flag = 2;  // Always restart to re-enable disabled features during update
@@ -2420,7 +2308,7 @@ bool JsonWebColor(const char* dataBuf)
     for (uint8_t i = 0; i < COL_LAST; i++) {
       const char* color = obj[parm_lc][i];
       if (color != nullptr) {
-        gui_color[i] = WebHexCode(color);
+        WebHexCode(i, color);
       }
     }
   }
@@ -2476,10 +2364,10 @@ bool WebCommand(void)
     if (XdrvMailbox.data_len > 0) {
       if (strstr(XdrvMailbox.data, "{") == nullptr) {  // If no JSON it must be parameter
         if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= COL_LAST)) {
-          gui_color[XdrvMailbox.index -1] = WebHexCode(XdrvMailbox.data);
+          WebHexCode(XdrvMailbox.index -1, XdrvMailbox.data);
         }
         else if (0 == XdrvMailbox.payload) {
-          WebColorInit(true);
+          SettingsDefaultWebColor();
         }
       }
       else {
@@ -2489,7 +2377,7 @@ bool WebCommand(void)
     Response_P(PSTR("{\"" D_CMND_WEBCOLOR "\":["));
     for (uint8_t i = 0; i < COL_LAST; i++) {
       if (i) { ResponseAppend_P(PSTR(",")); }
-      ResponseAppend_P(PSTR("\"#%06x\""), gui_color[i]);
+      ResponseAppend_P(PSTR("\"#%06x\""), WebColor(i));
     }
     ResponseAppend_P(PSTR("]}"));
   }

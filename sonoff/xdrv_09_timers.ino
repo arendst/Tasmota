@@ -709,10 +709,10 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_TIMER_SCRIPT2);
 #endif  // USE_SUNRISE
   WSContentSend_P(HTTP_TIMER_SCRIPT3, devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT4, gui_color[COL_TIMER_TAB_BACKGROUND], gui_color[COL_TIMER_TAB_TEXT], gui_color[COL_FORM], gui_color[COL_TEXT], devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT4, WebColor(COL_TIMER_TAB_BACKGROUND), WebColor(COL_TIMER_TAB_TEXT), WebColor(COL_FORM), WebColor(COL_TEXT), devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT6, devices_present);
-  WSContentSendStyle_P(HTTP_TIMER_STYLE, gui_color[COL_FORM]);
+  WSContentSendStyle_P(HTTP_TIMER_STYLE, WebColor(COL_FORM));
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");
   for (uint8_t i = 0; i < MAX_TIMERS; i++) {
     WSContentSend_P(PSTR("%s%u"), (i > 0) ? "," : "", Settings.timer[i].data);

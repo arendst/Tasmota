@@ -810,6 +810,42 @@ void ShowSource(int source)
   }
 }
 
+void WebHexCode(uint8_t i, const char* code)
+{
+  char scolor[10];
+
+  strlcpy(scolor, code, sizeof(scolor));
+  char* p = scolor;
+  if ('#' == p[0]) { p++; }  // Skip
+
+  if (3 == strlen(p)) {  // Convert 3 character to 6 character color code
+    p[6] = p[3];  // \0
+    p[5] = p[2];  // 3
+    p[4] = p[2];  // 3
+    p[3] = p[1];  // 2
+    p[2] = p[1];  // 2
+    p[1] = p[0];  // 1
+  }
+
+  uint32_t color = strtol(p, nullptr, 16);
+/*
+  if (3 == strlen(p)) {  // Convert 3 character to 6 character color code
+    uint32_t w = ((color & 0xF00) << 8) | ((color & 0x0F0) << 4) | (color & 0x00F);  // 00010203
+    color = w | (w << 4);                                                            // 00112233
+  }
+*/
+
+  Settings.web_color[i][0] = (color >> 16) & 0xFF;  // Red
+  Settings.web_color[i][1] = (color >> 8) & 0xFF;   // Green
+  Settings.web_color[i][2] = color & 0xFF;          // Blue
+}
+
+uint32_t WebColor(uint8_t i)
+{
+  uint32_t tcolor = (Settings.web_color[i][0] << 16) | (Settings.web_color[i][1] << 8) | Settings.web_color[i][2];
+  return tcolor;
+}
+
 /*********************************************************************************************\
  * Response data handling
 \*********************************************************************************************/

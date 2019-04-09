@@ -1,4 +1,8 @@
-/* 6.5.0.5 20190406
+/* 6.5.0.6 20190409
+ * Add WebColor parameters to Settings making them persistent and remove the need for using a rule
+ * Add alternative IRSend command syntax IRSend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream> (#5610)
+ *
+ * 6.5.0.5 20190406
  * Add compile time GUI hexadecimal only color options in my_user_config.h (#5586)
  * Fix template activation and/or module selection regression from 6.5.0.4 (#5598)
  * Add rule Http#Initialized

@@ -18,36 +18,36 @@
 */
 
 #ifndef DOMOTICZ_UPDATE_TIMER
-#define DOMOTICZ_UPDATE_TIMER  0            // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
+#define DOMOTICZ_UPDATE_TIMER       0          // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 #endif
 
 #ifndef EMULATION
-#define EMULATION              EMUL_NONE    // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
+#define EMULATION                   EMUL_NONE  // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
 #endif
 
-#ifndef MTX_ADDRESS1                        // Add Display Support for up to eigth Matrices
-#define MTX_ADDRESS1           0
+#ifndef MTX_ADDRESS1                           // Add Display Support for up to eigth Matrices
+#define MTX_ADDRESS1                0
 #endif
 #ifndef MTX_ADDRESS2
-#define MTX_ADDRESS2           0
+#define MTX_ADDRESS2                0
 #endif
 #ifndef MTX_ADDRESS3
-#define MTX_ADDRESS3           0
+#define MTX_ADDRESS3                0
 #endif
 #ifndef MTX_ADDRESS4
-#define MTX_ADDRESS4           0
+#define MTX_ADDRESS4                0
 #endif
 #ifndef MTX_ADDRESS5
-#define MTX_ADDRESS5           0
+#define MTX_ADDRESS5                0
 #endif
 #ifndef MTX_ADDRESS6
-#define MTX_ADDRESS6           0
+#define MTX_ADDRESS6                0
 #endif
 #ifndef MTX_ADDRESS7
-#define MTX_ADDRESS7           0
+#define MTX_ADDRESS7                0
 #endif
 #ifndef MTX_ADDRESS8
-#define MTX_ADDRESS8           0
+#define MTX_ADDRESS8                0
 #endif
 
 #ifndef HOME_ASSISTANT_DISCOVERY_ENABLE
@@ -55,15 +55,85 @@
 #endif
 
 #ifndef LATITUDE
-#define LATITUDE               48.858360         // [Latitude] Your location to be used with sunrise and sunset
+#define LATITUDE                    48.858360  // [Latitude] Your location to be used with sunrise and sunset
 #endif
 #ifndef LONGITUDE
-#define LONGITUDE              2.294442          // [Longitude] Your location to be used with sunrise and sunset
+#define LONGITUDE                   2.294442   // [Longitude] Your location to be used with sunrise and sunset
 #endif
 
 #ifndef WORKING_PERIOD
-#define WORKING_PERIOD         5                 // Working period of the SDS Sensor, Takes a reading every X Minutes
+#define WORKING_PERIOD              5          // Working period of the SDS Sensor, Takes a reading every X Minutes
 #endif
+
+#ifndef COLOR_TEXT
+#define COLOR_TEXT                  "#000"     // Global text color - Black
+#endif
+#ifndef COLOR_BACKGROUND
+#define COLOR_BACKGROUND            "#fff"     // Global background color - White
+#endif
+#ifndef COLOR_FORM
+#define COLOR_FORM                  "#f2f2f2"  // Form background color - Greyish
+#endif
+#ifndef COLOR_INPUT_TEXT
+#define COLOR_INPUT_TEXT            "#000"     // Input text color - Black
+#endif
+#ifndef COLOR_INPUT
+#define COLOR_INPUT                 "#fff"     // Input background color - White
+#endif
+#ifndef COLOR_CONSOLE_TEXT
+#define COLOR_CONSOLE_TEXT          "#000"     // Console text color - Black
+#endif
+#ifndef COLOR_CONSOLE
+#define COLOR_CONSOLE               "#fff"     // Console background color - White
+#endif
+#ifndef COLOR_TEXT_WARNING
+#define COLOR_TEXT_WARNING          "#f00"     // Warning text color - Red
+#endif
+#ifndef COLOR_TEXT_SUCCESS
+#define COLOR_TEXT_SUCCESS          "#008000"  // Success text color - Green
+#endif
+#ifndef COLOR_BUTTON_TEXT
+#define COLOR_BUTTON_TEXT           "#fff"     // Button text color - White
+#endif
+#ifndef COLOR_BUTTON
+#define COLOR_BUTTON                "#1fa3ec"  // Button color - Blueish
+#endif
+#ifndef COLOR_BUTTON_HOVER
+#define COLOR_BUTTON_HOVER          "#0e70a4"  // Button color when hovered over - Darker blueish
+#endif
+#ifndef COLOR_BUTTON_RESET
+#define COLOR_BUTTON_RESET          "#d43535"  // Restart/Reset/Delete button color - Redish
+#endif
+#ifndef COLOR_BUTTON_RESET_HOVER
+#define COLOR_BUTTON_RESET_HOVER    "#931f1f"  // Restart/Reset/Delete button color when hovered over - Darker redish
+#endif
+#ifndef COLOR_BUTTON_SAVE
+#define COLOR_BUTTON_SAVE           "#47c266"  // Save button color - Greenish
+#endif
+#ifndef COLOR_BUTTON_SAVE_HOVER
+#define COLOR_BUTTON_SAVE_HOVER     "#5aaf6f"  // Save button color when hovered over - Darker greenish
+#endif
+#ifndef COLOR_TIMER_TAB_TEXT
+#define COLOR_TIMER_TAB_TEXT        "#fff"     // Config timer tab text color - White
+#endif
+#ifndef COLOR_TIMER_TAB_BACKGROUND
+#define COLOR_TIMER_TAB_BACKGROUND  "#999"     // Config timer tab background color - Light grey
+#endif
+
+enum WebColors {
+  COL_TEXT, COL_BACKGROUND, COL_FORM,
+  COL_INPUT_TEXT, COL_INPUT, COL_CONSOLE_TEXT, COL_CONSOLE,
+  COL_TEXT_WARNING, COL_TEXT_SUCCESS,
+  COL_BUTTON_TEXT, COL_BUTTON, COL_BUTTON_HOVER, COL_BUTTON_RESET, COL_BUTTON_RESET_HOVER, COL_BUTTON_SAVE, COL_BUTTON_SAVE_HOVER,
+  COL_TIMER_TAB_TEXT, COL_TIMER_TAB_BACKGROUND,
+  COL_LAST };
+
+const char kWebColors[] PROGMEM =
+  COLOR_TEXT "|" COLOR_BACKGROUND "|" COLOR_FORM "|"
+  COLOR_INPUT_TEXT "|" COLOR_INPUT "|" COLOR_CONSOLE_TEXT "|" COLOR_CONSOLE "|"
+  COLOR_TEXT_WARNING "|" COLOR_TEXT_SUCCESS "|"
+  COLOR_BUTTON_TEXT "|" COLOR_BUTTON "|" COLOR_BUTTON_HOVER "|" COLOR_BUTTON_RESET "|" COLOR_BUTTON_RESET_HOVER "|" COLOR_BUTTON_SAVE "|" COLOR_BUTTON_SAVE_HOVER "|"
+  COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND;
 
 /*********************************************************************************************\
  * RTC memory
@@ -834,6 +904,8 @@ void SettingsDefaultSet2(void)
 
   Settings.novasds_period = WORKING_PERIOD;
 
+  SettingsDefaultWebColor();
+
   memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
 }
 
@@ -902,6 +974,14 @@ void SettingsDefaultSet_5_13_1c(void)
 {
   SettingsResetStd();
   SettingsResetDst();
+}
+
+void SettingsDefaultWebColor(void)
+{
+  char scolor[10];
+  for (uint8_t i = 0; i < COL_LAST; i++) {
+    WebHexCode(i, GetTextIndexed(scolor, sizeof(scolor), i, kWebColors));
+  }
 }
 
 /********************************************************************************************/
@@ -1076,6 +1156,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06050003) {
       Settings.novasds_period = WORKING_PERIOD;
+    }
+    if (Settings.version < 0x06050006) {
+      SettingsDefaultWebColor();
     }
 
     Settings.version = VERSION;
