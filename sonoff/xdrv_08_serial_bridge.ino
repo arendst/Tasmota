@@ -77,7 +77,7 @@ void SerialBridgeInput(void)
       ResponseAppend_P(PSTR("\"}"));
     }
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
-//    XdrvRulesProcess();
+    XdrvRulesProcess();
     serial_bridge_in_byte_counter = 0;
   }
 }
