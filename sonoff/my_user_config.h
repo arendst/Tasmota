@@ -154,7 +154,6 @@
 #define COLOR_BUTTON_SAVE_HOVER     "#5aaf6f"    // [WebColor16] Save button color when hovered over - Darker greenish
 #define COLOR_TIMER_TAB_TEXT        "#fff"       // [WebColor17] Config timer tab text color - White
 #define COLOR_TIMER_TAB_BACKGROUND  "#999"       // [WebColor18] Config timer tab background color - Light grey
-#define COLOR_TIMER_ACTIVE_TAB_TEXT "#000"       // [WebColor19] Config timer active tab text color - Black
 
 // -- mDNS ----------------------------------------
 #define MDNS_ENABLED           0                 // [SetOption55] Use mDNS (0 = Disable, 1 = Enable)

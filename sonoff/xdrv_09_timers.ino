@@ -597,7 +597,7 @@ const char HTTP_TIMER_SCRIPT4[] PROGMEM =
     "ct=t;"
     "o=document.getElementsByClassName('tl');"                    // Restore style to all tabs/buttons
     "for(i=0;i<o.length;i++){o[i].style.cssText=\"background:#%06x;color:#%06x;font-weight:normal;\"}"  // COLOR_TIMER_TAB_BACKGROUND, COLOR_TIMER_TAB_TEXT
-    "e.style.cssText=\"background:#%06x;color:#%06x;font-weight:bold;\";"  // COLOR_FORM, COLOR_TIMER_ACTIVE_TAB_TEXT, Change style to tab/button used to open content
+    "e.style.cssText=\"background:#%06x;color:#%06x;font-weight:bold;\";"  // COLOR_FORM, COLOR_TEXT, Change style to tab/button used to open content
     "s=pt[ct];"                                                   // Get parameters from array
 #ifdef USE_SUNRISE
     "p=(s>>29)&3;eb('b'+p).checked=1;"                            // Set mode
@@ -709,7 +709,7 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_TIMER_SCRIPT2);
 #endif  // USE_SUNRISE
   WSContentSend_P(HTTP_TIMER_SCRIPT3, devices_present);
-  WSContentSend_P(HTTP_TIMER_SCRIPT4, gui_color[COL_TIMER_TAB_BACKGROUND], gui_color[COL_TIMER_TAB_TEXT], gui_color[COL_FORM], gui_color[COL_TIMER_ACTIVE_TAB_TEXT], devices_present);
+  WSContentSend_P(HTTP_TIMER_SCRIPT4, gui_color[COL_TIMER_TAB_BACKGROUND], gui_color[COL_TIMER_TAB_TEXT], gui_color[COL_FORM], gui_color[COL_TEXT], devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT6, devices_present);
   WSContentSendStyle_P(HTTP_TIMER_STYLE, gui_color[COL_FORM]);
