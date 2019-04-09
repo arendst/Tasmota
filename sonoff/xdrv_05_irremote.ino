@@ -582,7 +582,7 @@ bool IrSendCommand(void)
                     if (*p == '0') {
                        raw_array[i++] = bit_mrk; 
                        raw_array[i++] = zer_spc;
-                    } else {
+                    } else if (*p == '1') {
                        raw_array[i++] = bit_mrk; 
                        raw_array[i++] = one_spc;
                     }
