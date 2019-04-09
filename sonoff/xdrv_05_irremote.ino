@@ -542,32 +542,79 @@ bool IrSendCommand(void)
 
       if (strstr(XdrvMailbox.data, "{") == nullptr) {  // If no JSON it must be rawdata
         // IRSend frequency, rawdata, rawdata ...
+        // or IRSend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream>
         char *p;
         char *str = strtok_r(XdrvMailbox.data, ", ", &p);
         if (p == nullptr) {
           error = IE_INVALID_RAWDATA;
         } else {
           uint16_t freq = atoi(str);
-          if (!freq) { freq = 38000; }  // Default to 38kHz
-          uint16_t count = 0;
-          char *q = p;
-          for (; *q; count += (*q++ == ','));
-          if (0 == count) {
-            error = IE_INVALID_RAWDATA;
-          } else {  // At least two raw data values
-            count++;
-            uint16_t raw_array[count];  // It's safe to use stack for up to 240 packets (limited by mqtt_data length)
-            uint8_t i = 0;
-            for (str = strtok_r(nullptr, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p)) {
-              raw_array[i++] = strtoul(str, nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+          if (!freq && (*str != '0')) {   // first parameter is a string
+            uint16_t count = 0;
+            char *q = p;
+            for (; *q; count += (*q++ == ','));
+            if (count != 6) {                    // parameters must be exactly 6
+              error = IE_INVALID_RAWDATA;
+            } else {
+               str = strtok_r(NULL, ", ", &p);
+               freq = atoi(str);
+               if (!freq) { freq = 38000; }      // Default to 38kHz
+               str = strtok_r(NULL, ", ", &p);
+               uint16_t hdr_mrk = atoi(str);     // header mark
+               str = strtok_r(NULL, ", ", &p);
+               uint16_t hdr_spc = atoi(str);     // header space
+               str = strtok_r(NULL, ", ", &p);
+               uint16_t bit_mrk = atoi(str);     // bit mark
+               str = strtok_r(NULL, ", ", &p);
+               uint16_t zer_spc = atoi(str);     // zero space
+               str = strtok_r(NULL, ", ", &p);
+               uint16_t one_spc = atoi(str);     // one space
+
+               if (!hdr_mrk || !hdr_spc || !bit_mrk || !zer_spc || !one_spc) {
+                 error = IE_INVALID_RAWDATA;
+               } else {
+                 uint16_t raw_array[strlen(p)*2+3]; // header + bits + end
+                 uint16_t i = 0;
+                 raw_array[i++] = hdr_mrk;
+                 raw_array[i++] = hdr_spc;
+
+                 for (; *p; *p++) {
+                    if (*p == '0') {
+                       raw_array[i++] = bit_mrk; 
+                       raw_array[i++] = zer_spc;
+                    } else {
+                       raw_array[i++] = bit_mrk; 
+                       raw_array[i++] = one_spc;
+                    }
+                 }
+                 raw_array[i++] = bit_mrk;      // trailing mark
+
+                 irsend_active = true;
+                 irsend->sendRaw(raw_array, i, freq);
+               }
             }
+          } else {
+            if (!freq) { freq = 38000; }  // Default to 38kHz
+            uint16_t count = 0;
+            char *q = p;
+            for (; *q; count += (*q++ == ','));
+            if (0 == count) {
+              error = IE_INVALID_RAWDATA;
+            } else {  // At least two raw data values
+              count++;
+              uint16_t raw_array[count];  // It's safe to use stack for up to 240 packets (limited by mqtt_data length)
+              uint8_t i = 0;
+              for (str = strtok_r(nullptr, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p)) {
+                raw_array[i++] = strtoul(str, nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+              }
 
 //            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: Count %d, Freq %d, Arr[0] %d, Arr[count -1] %d"), count, freq, raw_array[0], raw_array[count -1]);
 
-            irsend_active = true;
-            irsend->sendRaw(raw_array, count, freq);
-            if (!count) {
-              Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_FAILED);
+              irsend_active = true;
+              irsend->sendRaw(raw_array, count, freq);
+              if (!count) {
+                Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_FAILED);
+              }
             }
           }
         }
