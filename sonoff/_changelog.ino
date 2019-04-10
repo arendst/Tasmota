@@ -1,4 +1,7 @@
-/* 6.5.0.6 20190409
+/* 6.5.0.7 20190410
+ * Add power, brightness and color support for Sonoff L1
+ *
+ * 6.5.0.6 20190409
  * Add WebColor parameters to Settings making them persistent and remove the need for using a rule
  * Add alternative IRSend command syntax IRSend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream> (#5610)
  *

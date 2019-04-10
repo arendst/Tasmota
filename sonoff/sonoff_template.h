@@ -308,6 +308,7 @@ enum SupportedModules {
   ARMTRONIX_DIMMERS,
   SK03_TUYA,
   PS_16_DZ,
+  SONOFF_L1,
   TECKIN_US,
   MANZOKU_EU_4,
   OBI2,
@@ -319,9 +320,7 @@ enum SupportedModules {
   SP10,
   WAGA,
   SYF05,
-  MAXMODULE,
-  SONOFF_L1,
-  SPIDER_Z };
+  MAXMODULE};
 
 #define USER_MODULE        255
 
@@ -663,7 +662,6 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 #ifdef USE_PS_16_DZ
   PS_16_DZ,
   SONOFF_L1,
-  SPIDER_Z,
 #endif
   H801,                // Light Devices
   MAGICHOME,
@@ -1715,6 +1713,26 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "PS-16-DZ",        // PS-16-DZ Dimmer (ESP8266 w/ separate Nuvoton MCU dimmer)
                        // https://www.aliexpress.com/item/SM-Smart-WIFI-Wall-Dimmer-Light-Switch-US-Ewelink-APP-Remote-Control-Wi-Fi-Wirele-Work/32871151902.html
+     GPIO_USER,
+     GPIO_TXD,         // GPIO01 MCU serial control
+     GPIO_USER,
+     GPIO_RXD,         // GPIO03 MCU serial control
+     GPIO_USER,
+     GPIO_USER,
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_USER,
+     GPIO_LED1,        // GPIO13 WiFi LED - Link and Power status
+     GPIO_USER,
+     GPIO_USER,
+     GPIO_USER,
+     0
+  },
+  { "SONOFF L1",       // Sonoff L1 RGB LED controller (ESP8266 w/ separate Nuvoton MCU)
      GPIO_USER,
      GPIO_TXD,         // GPIO01 MCU serial control
      GPIO_USER,

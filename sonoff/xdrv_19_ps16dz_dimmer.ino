@@ -113,7 +113,7 @@ bool PS16DZSetChannels(void)
     case LST_RGB:
       if(XdrvMailbox.data_len = 3)
       {
-        PS16DZSerialRGB(((uint8_t*)XdrvMailbox.data)[0], ((uint8_t*)XdrvMailbox.data)[1], ((uint8_t*)XdrvMailbox.data)[2])
+        PS16DZSerialRGB(((uint8_t*)XdrvMailbox.data)[0], ((uint8_t*)XdrvMailbox.data)[1], ((uint8_t*)XdrvMailbox.data)[2]);
       } else {
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Unexpected data length for set RGB. Expected 3, got %d"), XdrvMailbox.data_len);
       }
@@ -186,7 +186,6 @@ bool PS16DZModuleSelected(void)
       break;
 
     case SONOFF_L1:
-    case SPIDER_Z:
       // Not actually WS2812 but this gives the correct subtype (LST_RGB)
       light_type = LT_WS2812;
       break;
@@ -235,7 +234,7 @@ void PS16DZSerialInput(void)
         char color_channel_name;
         bool color_channel_updated[3] = { false, false, false };
         uint8_t color_channel_values[3];
-        memcpy(color_channel_values, Settings.light_color);
+        memcpy(color_channel_values, Settings.light_color, 3);
 
         while (token != nullptr) {
           char* end_token;
@@ -249,7 +248,7 @@ void PS16DZSerialInput(void)
               ExecuteCommandPower(1, ps16dz_power, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
             }
           }
-          else if(sscanf(input, "\"color%c\"", &color_channel_name)==1)){
+          else if(sscanf(token2, "\"color%c\"", &color_channel_name)==1){
 
             int color_channel_index;
 
@@ -341,8 +340,7 @@ bool Xdrv19(uint8_t function)
   bool result = false;
 
   if (PS_16_DZ == my_module_type ||
-      SONOFF_L1 == my_module_type ||
-      SPIDER_Z == my_module_type) {
+      SONOFF_L1 == my_module_type) {
     switch (function) {
       case FUNC_LOOP:
         if (PS16DZSerial) { PS16DZSerialInput(); }
