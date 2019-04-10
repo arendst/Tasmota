@@ -341,9 +341,7 @@ struct SYSCFG {
   uint32_t      displays;                  // 7B0
   uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
-
-  uint8_t       free_7BC[2];               // 7BC
-
+  uint16_t      ledmask;                   // 7BC
   uint16_t      weight_max;                // 7BE Total max weight in kilogram
   unsigned long weight_reference;          // 7C0 Reference weight in gram
   unsigned long weight_calibration;        // 7C4

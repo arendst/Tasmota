@@ -695,6 +695,7 @@ void SettingsDefaultSet2(void)
   Settings.blinktime = APP_BLINKTIME;
   Settings.blinkcount = APP_BLINKCOUNT;
   Settings.ledstate = APP_LEDSTATE;
+  Settings.ledmask = APP_LEDMASK;
   Settings.pulse_timer[0] = APP_PULSETIME;
 //  for (uint8_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
 
@@ -1159,6 +1160,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06050006) {
       SettingsDefaultWebColor();
+    }
+    if (Settings.version < 0x06050007) {
+      Settings.ledmask = APP_LEDMASK;
     }
 
     Settings.version = VERSION;
