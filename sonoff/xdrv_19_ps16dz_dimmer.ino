@@ -45,6 +45,7 @@
 TasmotaSerial *PS16DZSerial = nullptr;
 
 bool ps16dz_ignore_dim = false;            // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
+bool ps16dz_ignore_color = false;
 
 //uint64_t ps16dz_seq = 0;
 
@@ -140,6 +141,7 @@ void PS16DZSerialDuty(uint8_t duty)
 
 void PS16DZSerialRGB(uint8_t red, uint8_t green, uint8_t blue)
 {
+  if(!ps16dz_ignore_color && PS16DZSerial) {
     // Write out static color update eg.
     // AT+UPDATE="sequence":"1554682835320","mode":1,"colorR":255,"colorB":101,"colorG":46,"light_types":1
 
@@ -157,6 +159,9 @@ void PS16DZSerialRGB(uint8_t red, uint8_t green, uint8_t blue)
     PS16DZSerial->print(ps16dz_tx_buffer);
     PS16DZSerial->write(0x1B);
     PS16DZSerial->flush();
+  } else {
+    ps16dz_ignore_color = false;
+  }
 }
 
 void PS16DZResetWifi(void)
@@ -226,15 +231,71 @@ void PS16DZSerialInput(void)
         char *end_str;
         char *string = ps16dz_rx_buffer+10;
         char* token = strtok_r(string, ",", &end_str);
+
+        char color_channel_name;
+        bool color_channel_updated[3] = { false, false, false };
+        uint8_t color_channel_values[3];
+        memcpy(color_channel_values, Settings.light_color);
+
         while (token != nullptr) {
           char* end_token;
           char* token2 = strtok_r(token, ":", &end_token);
           char* token3 = strtok_r(nullptr, ":", &end_token);
+
           if(!strncmp(token2, "\"switch\"", 8)){
             bool ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: power received: %s"), token3);
             if((power || Settings.light_dimmer > 0) && (power !=ps16dz_power)) {
               ExecuteCommandPower(1, ps16dz_power, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+            }
+          }
+          else if(sscanf(input, "\"color%c\"", &color_channel_name)==1)){
+
+            int color_channel_index;
+
+            switch(color_channel_name)
+            {
+              case 'R':
+                color_channel_index = 0;
+                break;
+              case 'G':
+                color_channel_index = 1;
+                break;
+              case 'B':
+                color_channel_index = 2;
+                break;
+            }
+
+            int color_channel_value = atoi(token3);
+            color_channel_values[color_channel_index] = color_channel_value;
+            color_channel_updated[color_channel_index] = true;
+
+            bool all_color_channels_updated =
+              color_channel_updated[0] &&
+              color_channel_updated[1] &&
+              color_channel_updated[2];
+
+            if(all_color_channels_updated)
+            {
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: color received: R:%d, G:%d, B:%d"),
+                color_channel_values[0],
+                color_channel_values[1],
+                color_channel_values[2]);
+            }
+
+            bool is_color_change = memcmp(color_channel_values, Settings.light_color, 3) != 0;
+
+            if(power && all_color_channels_updated && is_color_change)
+            {
+              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_COLOR " %02x%02x%02x"),
+                color_channel_values[0],
+                color_channel_values[1],
+                color_channel_values[2]);
+
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send CMND_COLOR_STR=%s"), scmnd );
+
+              ps16dz_ignore_color = true;
+              ExecuteCommand(scmnd, SRC_SWITCH);
             }
           }
           else if(!strncmp(token2, "\"bright\"", 8)){
