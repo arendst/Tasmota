@@ -119,7 +119,6 @@ bool PS16DZSetChannels(void)
       break;
   }
 
-  PS16DZSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
   return true;
 }
 
