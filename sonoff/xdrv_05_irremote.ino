@@ -542,51 +542,78 @@ bool IrSendCommand(void)
 
       if (strstr(XdrvMailbox.data, "{") == nullptr) {  // If no JSON it must be rawdata
         // IRSend frequency, rawdata, rawdata ...
-        // or IRSend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream>
+        // or
+        // IRsend raw,<freq>,<any space>,<bit stream>
+        // IRsend raw,<freq>,<zero space>,<one space>,<bit stream>
+        // IRSend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream>
         char *p;
         char *str = strtok_r(XdrvMailbox.data, ", ", &p);
         if (p == nullptr) {
           error = IE_INVALID_RAWDATA;
         } else {
           uint16_t freq = atoi(str);
-          if (!freq && (*str != '0')) {                // First parameter is a string
+          if (!freq && (*str != '0')) {                // First parameter is any string
             uint16_t count = 0;
             char *q = p;
             for (; *q; count += (*q++ == ','));
-            if (count != 6) {                          // Parameters must be exactly 6
+            if (count < 2) {                           // Parameters must be at least 3
               error = IE_INVALID_RAWDATA;
             } else {
-              uint16_t parm[6];
-              for (uint8_t i = 0; i < 6; i++) {
+              uint16_t parm[count];
+              for (uint8_t i = 0; i < count; i++) {
                 str = strtok_r(nullptr, ", ", &p);
                 parm[i] = atoi(str);
                 if (!parm[i]) {
                   if (!i) {
                     parm[0] = 38000;                   // Frequency default to 38kHz
                   } else {
-                    error = IE_INVALID_RAWDATA;
+                    error = IE_INVALID_RAWDATA;        // Other parameters may not be 0
                     break;
                   }
                 }
               }
               if (IE_NO_ERROR == error) {
-                uint16_t raw_array[strlen(p)*2+3];     // Header + bits + end
+                uint16_t raw_array[strlen(p)*2+3];     // Header + bits + end (Largest needed)
                 uint16_t i = 0;
-                raw_array[i++] = parm[1];              // Header mark
-                raw_array[i++] = parm[2];              // Header space
-                for (; *p; *p++) {
-                  if (*p == '0') {
-                    raw_array[i++] = parm[3];          // Bit mark
-                    raw_array[i++] = parm[4];          // Zero space
+                if (count < 4) {                       // Protocol where 0 = t, 1 = 2t (RC5)
+                  // IRSend raw,0,889,0000100000000000000100000
+                  uint16_t mark = parm[1] *2;
+                  if (3 == count) {                    // Protocol where 0 = t1, 1 = t2 (Could be RC5)
+                    // IRSend raw,0,889,1778,0000100000000000000100000
+                    mark = parm[2];
                   }
-                  else if (*p == '1') {
-                    raw_array[i++] = parm[3];          // Bit mark
-                    raw_array[i++] = parm[5];          // One space
+                  for (; *p; *p++) {
+                    if (*p == '0') {
+                      raw_array[i++] = parm[1];        // Space
+                    }
+                    else if (*p == '1') {
+                      raw_array[i++] = mark;           // Mark
+                    }
                   }
                 }
-                raw_array[i++] = parm[3];              // Trailing mark
-                irsend_active = true;
-                irsend->sendRaw(raw_array, i, parm[0]);
+                else if (6 == count) {                 // NEC Protocol
+                  // IRSend raw,0,8620,4260,544,411,1496,010101101000111011001110000000001100110000000001100000000000000010001100
+                  raw_array[i++] = parm[1];            // Header mark
+                  raw_array[i++] = parm[2];            // Header space
+                  for (; *p; *p++) {
+                    if (*p == '0') {
+                      raw_array[i++] = parm[3];        // Bit mark
+                      raw_array[i++] = parm[4];        // Zero space
+                    }
+                    else if (*p == '1') {
+                      raw_array[i++] = parm[3];        // Bit mark
+                      raw_array[i++] = parm[5];        // One space
+                    }
+                  }
+                  raw_array[i++] = parm[3];            // Trailing mark
+                }
+                else {
+                  error = IE_INVALID_RAWDATA;          // Invalid number of parameters
+                }
+                if (IE_NO_ERROR == error) {
+                  irsend_active = true;
+                  irsend->sendRaw(raw_array, i, parm[0]);
+                }
               }
             }
           } else {

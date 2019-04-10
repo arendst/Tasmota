@@ -1,5 +1,6 @@
 /* 6.5.0.7 20190410
- * Add power, brightness and color support for Sonoff L1
+ * Add power, brightness and color support for Sonoff L1 (#4935)
+ * Add command LedMask to assign which relay has access to power LED (#5602, #5612)
  *
  * 6.5.0.6 20190409
  * Add WebColor parameters to Settings making them persistent and remove the need for using a rule
