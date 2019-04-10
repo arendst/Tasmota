@@ -625,6 +625,7 @@ void SettingsDefaultSet2(void)
   Settings.blinktime = APP_BLINKTIME;
   Settings.blinkcount = APP_BLINKCOUNT;
   Settings.ledstate = APP_LEDSTATE;
+  Settings.ledrelaymask = 0xff;
   Settings.pulse_timer[0] = APP_PULSETIME;
 //  for (uint8_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
 

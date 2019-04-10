@@ -77,7 +77,7 @@ enum TasmotaCommands {
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
   CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE, CMND_INTERLOCK, CMND_TEMPLATE,
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIMEZONE, CMND_TIMESTD, CMND_TIMEDST, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE,
-  CMND_I2CSCAN, CMND_SERIALSEND, CMND_BAUDRATE, CMND_SERIALDELIMITER, CMND_DRIVER };
+  CMND_I2CSCAN, CMND_SERIALSEND, CMND_BAUDRATE, CMND_SERIALDELIMITER, CMND_DRIVER, CMND_LEDRELAYMASK };
 const char kTasmotaCommands[] PROGMEM =
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_FANSPEED "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
@@ -87,7 +87,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TEMPLATE "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|"
-  D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER "|" D_CMND_DRIVER;
+  D_CMND_I2CSCAN "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER "|" D_CMND_DRIVER "|" D_CMND_LEDRELAYMASK;
 
 const char kSleepMode[] PROGMEM = "Dynamic|Normal";
 
@@ -1426,6 +1426,11 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       }
       Response_P(S_JSON_COMMAND_NVALUE, command, Settings.ledstate);
     }
+    else if (CMND_LEDRELAYMASK == command_code) {
+      if (-99 != payload)
+        Settings.ledrelaymask = payload;
+      Response_P(S_JSON_COMMAND_NVALUE, command, Settings.ledrelaymask);
+    }
 #ifdef USE_I2C
     else if ((CMND_I2CSCAN == command_code) && i2c_flg) {
       I2cScan(mqtt_data, sizeof(mqtt_data));
@@ -1991,7 +1996,7 @@ void Every250mSeconds(void)
     }
   }
   else if (Settings.ledstate &1) {
-    bool tstate = power;
+    bool tstate = Settings.power & Settings.ledrelaymask;
     if ((SONOFF_TOUCH == my_module_type) || (SONOFF_T11 == my_module_type) || (SONOFF_T12 == my_module_type) || (SONOFF_T13 == my_module_type)) {
       tstate = (!power) ? 1 : 0;                          // As requested invert signal for Touch devices to find them in the dark
     }
