@@ -21,11 +21,24 @@
 
 #define XDRV_19                19
 
-#define PS16DZ_BUFFER_SIZE     80
+#define PS16DZ_BUFFER_SIZE     115
 
 #define PS16DZ_TYPE_ACK        0
 #define PS16DZ_TYPE_PWR        1
 #define PS16DZ_TYPE_DIM        2
+
+#define PS16DZ_SONOFF_L1_MODE_COLORFUL 1          // Colorful (static color)
+#define PS16DZ_SONOFF_L1_MODE_COLORFUL_GRADIENT 2 // Colorful Gradient
+#define PS16DZ_SONOFF_L1_MODE_COLORFUL_BREATH 3   // Colorful Breath
+#define PS16DZ_SONOFF_L1_MODE_DIY_GRADIENT 4      // DIY Gradient (fade in and out) [Speed 1- 100, color]
+#define PS16DZ_SONOFF_L1_MODE_DIY_PULSE 5         // DIY Pulse  (faster fade in and out) [Speed 1- 100, color]
+#define PS16DZ_SONOFF_L1_MODE_DIY_BREATH 6        // DIY Breath (toggle on/off) [Speed 1- 100, color]
+#define PS16DZ_SONOFF_L1_MODE_DIY_STROBE 7        // DIY Strobe (faster toggle on/off) [Speed 1- 100, color]
+#define PS16DZ_SONOFF_L1_MODE_RGB_GRADIENT 8      // RGB Gradient
+#define PS16DZ_SONOFF_L1_MODE_RGB_PULSE 9         // RGB Pulse
+#define PS16DZ_SONOFF_L1_MODE_RGB_BREATH 10       // RGB Breath
+#define PS16DZ_SONOFF_L1_MODE_RGB_STROBE 11       // RGB strobe
+#define PS16DZ_SONOFF_L1_MODE_SYNC_TO_MUSIC 12    // Sync to music [Speed 1- 100, sensitivity 1 - 10]
 
 #include <TasmotaSerial.h>
 
@@ -92,6 +105,20 @@ bool PS16DZSetPower(void)
 
 bool PS16DZSetChannels(void)
 {
+  switch (light_subtype) {
+    case LST_SINGLE:
+      PS16DZSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
+      break;
+    case LST_RGB:
+      if(XdrvMailbox.data_len = 3)
+      {
+        PS16DZSerialRGB(((uint8_t*)XdrvMailbox.data)[0], ((uint8_t*)XdrvMailbox.data)[1], ((uint8_t*)XdrvMailbox.data)[2])
+      } else {
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Unexpected data length for set RGB. Expected 3, got %d"), XdrvMailbox.data_len);
+      }
+      break;
+  }
+
   PS16DZSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
   return true;
 }
@@ -109,8 +136,28 @@ void PS16DZSerialDuty(uint8_t duty)
     ps16dz_ignore_dim = false;  // reset flag
 
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send Dim Level skipped due to 0 or already set. Value=%d"), duty);
-
   }
+}
+
+void PS16DZSerialRGB(uint8_t red, uint8_t green, uint8_t blue)
+{
+    // Write out static color update eg.
+    // AT+UPDATE="sequence":"1554682835320","mode":1,"colorR":255,"colorB":101,"colorG":46,"light_types":1
+
+    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "AT+UPDATE=\"sequence\":\""));
+    printTimestamp();
+    int light_types_value = 1;
+    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s\",\"mode\":%d"), ps16dz_tx_buffer, PS16DZ_SONOFF_L1_MODE_COLORFUL);
+    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s,\"colorR\":%d"), ps16dz_tx_buffer, red);
+    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s,\"colorB\":%d"), ps16dz_tx_buffer, blue);
+    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s,\"colorG\":%d"), ps16dz_tx_buffer, green);
+    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s,\"light_types\":%d"), ps16dz_tx_buffer, light_types_value);
+
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send serial command: %s"), ps16dz_tx_buffer );
+
+    PS16DZSerial->print(ps16dz_tx_buffer);
+    PS16DZSerial->write(0x1B);
+    PS16DZSerial->flush();
 }
 
 void PS16DZResetWifi(void)
@@ -128,7 +175,19 @@ void PS16DZResetWifi(void)
 
 bool PS16DZModuleSelected(void)
 {
-  light_type = LT_SERIAL1;
+  switch (my_module_type)
+  {
+    case PS_16_DZ:
+      light_type = LT_SERIAL1;
+      break;
+
+    case SONOFF_L1:
+    case SPIDER_Z:
+      // Not actually WS2812 but this gives the correct subtype (LST_RGB)
+      light_type = LT_WS2812;
+      break;
+  }
+
   return true;
 }
 
@@ -221,7 +280,9 @@ bool Xdrv19(uint8_t function)
 {
   bool result = false;
 
-  if (PS_16_DZ == my_module_type) {
+  if (PS_16_DZ == my_module_type ||
+      SONOFF_L1 == my_module_type ||
+      SPIDER_Z == my_module_type) {
     switch (function) {
       case FUNC_LOOP:
         if (PS16DZSerial) { PS16DZSerialInput(); }

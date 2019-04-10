@@ -319,7 +319,9 @@ enum SupportedModules {
   SP10,
   WAGA,
   SYF05,
-  MAXMODULE };
+  MAXMODULE,
+  SONOFF_L1,
+  SPIDER_Z };
 
 #define USER_MODULE        255
 
@@ -660,6 +662,8 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 #endif
 #ifdef USE_PS_16_DZ
   PS_16_DZ,
+  SONOFF_L1,
+  SPIDER_Z,
 #endif
   H801,                // Light Devices
   MAGICHOME,
