@@ -307,6 +307,7 @@
 #define D_BASE_TYPE "Based on"
 #define D_TEMPLATE_FLAGS "옵션"
 #define D_ALLOW_ADC0 "ADC0 입력"
+#define D_ALLOW_ADC0_TEMP "ADC0 temperature"
 #define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "설정 저장"

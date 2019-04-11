@@ -307,6 +307,7 @@
 #define D_BASE_TYPE "基于"
 #define D_TEMPLATE_FLAGS "选项"
 #define D_ALLOW_ADC0 "ADC0 输入"
+#define D_ALLOW_ADC0_TEMP "ADC0 temperature"
 #define D_ALLOW_PULLUP "用户上拉选择"
 
 #define D_SAVE_CONFIGURATION "保存设置"

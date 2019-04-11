@@ -307,6 +307,7 @@
 #define D_BASE_TYPE "basiert auf"
 #define D_TEMPLATE_FLAGS "Options"
 #define D_ALLOW_ADC0 "ADC0 input"
+#define D_ALLOW_ADC0_TEMP "ADC0 Temperatur"
 #define D_ALLOW_PULLUP "Nutzer pull-up Auswahl"
 
 #define D_SAVE_CONFIGURATION "Konfiguration speichern"

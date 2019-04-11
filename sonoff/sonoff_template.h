@@ -338,22 +338,22 @@ typedef struct MYCFGIO {
   uint8_t      io[MAX_GPIO_PIN - MIN_FLASH_PINS];
 } mycfgio;
 
-#define GPIO_FLAG_USED       1  // Currently only one flag used
+#define GPIO_FLAG_USED         2  // Currently two flags used
 
-#define GPIO_FLAG_ADC0       1  // Allow ADC0 when define USE_ADC_VCC is disabled
-#define GPIO_FLAG_SPARE01    2  // Allow input pull-up control using SetOption62 - Superseded by user template editing
-#define GPIO_FLAG_SPARE02    4
-#define GPIO_FLAG_SPARE03    8
-#define GPIO_FLAG_SPARE04   16
-#define GPIO_FLAG_SPARE05   32
-#define GPIO_FLAG_SPARE06   64
-#define GPIO_FLAG_SPARE07  128
+#define GPIO_FLAG_ADC0         1  // Allow ADC0 when define USE_ADC_VCC is disabled
+#define GPIO_FLAG_ADC0_TEMP    2  // Allow ADC0 as Temperature sensor when define USE_ADC_VCC is disabled
+#define GPIO_FLAG_SPARE02      4
+#define GPIO_FLAG_SPARE03      8
+#define GPIO_FLAG_SPARE04     16
+#define GPIO_FLAG_SPARE05     32
+#define GPIO_FLAG_SPARE06     64
+#define GPIO_FLAG_SPARE07    128
 
 typedef union {
   uint8_t data;
   struct {
-    uint8_t adc0 : 1;            // Allow ADC0 when define USE_ADC_VCC is disabled
-    uint8_t spare01 : 1;
+    uint8_t adc0 : 1;             // Allow ADC0 when define USE_ADC_VCC is disabled
+    uint8_t adc0_temp : 1;        // Allow ADC0 as Temperature sensor when define USE_ADC_VCC is disabled
     uint8_t spare02 : 1;
     uint8_t spare03 : 1;
     uint8_t spare04 : 1;

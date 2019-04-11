@@ -299,6 +299,7 @@ const char HTTP_FORM_TEMPLATE_FLAG[] PROGMEM =
   "<p></p>"  // Keep close so do not use <br/>
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE_FLAGS "&nbsp;</b></legend><p>"
   "<input id='c0' name='c0' type='checkbox'><b>" D_ALLOW_ADC0 "</b><br/>"
+  "<input id='c1' name='c1' type='checkbox'><b>" D_ALLOW_ADC0_TEMP "</b><br/>"
   "</p></fieldset>";
 
 const char HTTP_FORM_MODULE[] PROGMEM =

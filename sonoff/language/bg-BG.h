@@ -307,6 +307,7 @@
 #define D_BASE_TYPE "Базиран на"
 #define D_TEMPLATE_FLAGS "Флагове"
 #define D_ALLOW_ADC0 "ADC0 вход"
+#define D_ALLOW_ADC0_TEMP "ADC0 температура"
 #define D_ALLOW_PULLUP "Потребителски избор на pull-up"
 
 #define D_SAVE_CONFIGURATION "Запазване на конфигурацията"
