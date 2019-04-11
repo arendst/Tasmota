@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.3.0.17
+ * Updated until v6.5.0.7
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -93,7 +93,7 @@
 #define D_FALLBACK_TOPIC "FallbackTopic"
 #define D_FALSE "Falso"
 #define D_FILE "Archivo"
-#define D_FLOW_RATE "Flow rate"
+#define D_FLOW_RATE "Caudal"
 #define D_FREE_MEMORY "Memoria Libre"
 #define D_FREQUENCY "Frecuencia"
 #define D_GAS "Gas"
@@ -157,7 +157,7 @@
 #define D_TO "a"
 #define D_TOGGLE "Conmutar"
 #define D_TOPIC "Topic"
-#define D_TOTAL_USAGE "Total Usage"
+#define D_TOTAL_USAGE "Total Usado"
 #define D_TRANSMIT "Transmitir"
 #define D_TRUE "Verdadero"
 #define D_TVOC "TVOC"
@@ -291,8 +291,8 @@
 #define D_TELEMETRY_PERIOD "Período de Telemetría"
 
 #define D_OTHER_PARAMETERS "Otros parámetros"
-#define D_TEMPLATE "Template"
-#define D_ACTIVATE "Activate"
+#define D_TEMPLATE "Plantilla"
+#define D_ACTIVATE "Activar"
 #define D_WEB_ADMIN_PASSWORD "Clave Administrador Web"
 #define D_MQTT_ENABLE "Habilitar MQTT"
 #define D_FRIENDLY_NAME "Nombre Amigable"
@@ -301,14 +301,14 @@
 #define D_SINGLE_DEVICE "dispositivo simple"
 #define D_MULTI_DEVICE "dispositivo múltiple"
 
-#define D_CONFIGURE_TEMPLATE "Configure Template"
-#define D_TEMPLATE_PARAMETERS "Template parameters"
-#define D_TEMPLATE_NAME "Name"
-#define D_BASE_TYPE "Based on"
-#define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "ADC0 input"
-#define D_ALLOW_ADC0_TEMP "ADC0 temperature"
-#define D_ALLOW_PULLUP "User pull-up selection"
+#define D_CONFIGURE_TEMPLATE "Configurar Plantilla"
+#define D_TEMPLATE_PARAMETERS "Parámetros de Plantilla"
+#define D_TEMPLATE_NAME "Nombre"
+#define D_BASE_TYPE "Basada en"
+#define D_TEMPLATE_FLAGS "Opciones"
+#define D_ALLOW_ADC0 "Entrada ADC0"
+#define D_ALLOW_ADC0_TEMP "Temperatura por ADC0"
+#define D_ALLOW_PULLUP "Habilitar pull-up"
 
 #define D_SAVE_CONFIGURATION "Grabar configuración"
 #define D_CONFIGURATION_SAVED "Configuración grabada"
