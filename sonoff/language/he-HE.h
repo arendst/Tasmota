@@ -222,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "JavaScript - כדי להשתמש בקושחת אסמוטה אנא הפעל"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "קושחה מינימלית - בבקשה אנא שדרג"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "קושחה מינימלית<br/>בבקשה אנא שדרג"
 #define D_WEBSERVER_ACTIVE_ON "שרת ווב פעיל"
 #define D_WITH_IP_ADDRESS "IP עם כתובת"
 #define D_WEBSERVER_STOPPED "שרת ווב הופסק"
