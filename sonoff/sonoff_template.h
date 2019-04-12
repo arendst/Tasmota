@@ -178,8 +178,7 @@ enum UserSelectablePins {
   GPIO_ROT1B,          // Rotary switch1 B Pin
   GPIO_ROT2A,          // Rotary switch2 A Pin
   GPIO_ROT2B,          // Rotary switch2 B Pin
-  GPIO_HRE_CLOCK,      // Clock/Power line for HR-E Water Meter
-  GPIO_HRE_DATA,       // Data line for HR-E Water Meter
+  GPIO_RF433_TX,
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -242,8 +241,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_MY92X1_DI "|" D_SENSOR_MY92X1_DCKI "|"
   D_SENSOR_CSE7766_TX "|" D_SENSOR_CSE7766_RX "|"
   D_SENSOR_ARIRFRCV "|" D_SENSOR_TXD "|" D_SENSOR_RXD "|"
-  D_SENSOR_ROTARY "1a|" D_SENSOR_ROTARY "1b|" D_SENSOR_ROTARY "2a|" D_SENSOR_ROTARY "2b|"
-  D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
+  D_SENSOR_ROTARY "1a|" D_SENSOR_ROTARY "1b|" D_SENSOR_ROTARY "2a|" D_SENSOR_ROTARY "2b|" 
+  D_SENSOR_RF433_TX "|"
   ;
 
 /********************************************************************************************/
@@ -338,22 +337,22 @@ typedef struct MYCFGIO {
   uint8_t      io[MAX_GPIO_PIN - MIN_FLASH_PINS];
 } mycfgio;
 
-#define GPIO_FLAG_USED         2  // Currently two flags used
+#define GPIO_FLAG_USED       1  // Currently only one flag used
 
-#define GPIO_FLAG_ADC0         1  // Allow ADC0 when define USE_ADC_VCC is disabled
-#define GPIO_FLAG_ADC0_TEMP    2  // Allow ADC0 as Temperature sensor when define USE_ADC_VCC is disabled
-#define GPIO_FLAG_SPARE02      4
-#define GPIO_FLAG_SPARE03      8
-#define GPIO_FLAG_SPARE04     16
-#define GPIO_FLAG_SPARE05     32
-#define GPIO_FLAG_SPARE06     64
-#define GPIO_FLAG_SPARE07    128
+#define GPIO_FLAG_ADC0       1  // Allow ADC0 when define USE_ADC_VCC is disabled
+#define GPIO_FLAG_SPARE01    2  // Allow input pull-up control using SetOption62 - Superseded by user template editing
+#define GPIO_FLAG_SPARE02    4
+#define GPIO_FLAG_SPARE03    8
+#define GPIO_FLAG_SPARE04   16
+#define GPIO_FLAG_SPARE05   32
+#define GPIO_FLAG_SPARE06   64
+#define GPIO_FLAG_SPARE07  128
 
 typedef union {
   uint8_t data;
   struct {
-    uint8_t adc0 : 1;             // Allow ADC0 when define USE_ADC_VCC is disabled
-    uint8_t adc0_temp : 1;        // Allow ADC0 as Temperature sensor when define USE_ADC_VCC is disabled
+    uint8_t adc0 : 1;            // Allow ADC0 when define USE_ADC_VCC is disabled
+    uint8_t spare01 : 1;
     uint8_t spare02 : 1;
     uint8_t spare03 : 1;
     uint8_t spare04 : 1;
@@ -466,9 +465,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_DHT11,          // DHT11
   GPIO_DHT22,          // DHT21, DHT22, AM2301, AM2302, AM2321
   GPIO_SI7021,         // iTead SI7021
-#if defined(USE_DS18B20) || defined(USE_DS18x20) || defined(USE_DS18x20_LEGACY)
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
-#endif
 #ifdef USE_WS2812
   GPIO_WS2812,         // WS2812 Led string
 #endif
@@ -585,22 +582,15 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SM16716_DAT,    // SM16716 DATA
   GPIO_SM16716_SEL,    // SM16716 SELECT
 #endif // USE_SM16716
-#ifdef ROTARY_V1
   GPIO_ROT1A,          // Rotary switch1 A Pin
   GPIO_ROT1B,          // Rotary switch1 B Pin
   GPIO_ROT2A,          // Rotary switch2 A Pin
   GPIO_ROT2B,          // Rotary switch2 B Pin
-#endif
-#ifdef USE_ARILUX_RF
-  GPIO_ARIRFRCV,       // AliLux RF Receive input
-#endif
-#ifdef USE_HRE
-  GPIO_HRE_CLOCK,
-  GPIO_HRE_DATA
-#endif
+  GPIO_ARIRFRCV,        // AliLux RF Receive input
+  GPIO_RF433_TX,         // JWS
 };
 
-const uint8_t kModuleNiceList[] PROGMEM = {
+const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   SONOFF_BASIC,        // Sonoff Relay Devices
   SONOFF_RF,
   SONOFF_TH,
@@ -652,15 +642,9 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   OBI2,
   MANZOKU_EU_4,
   ESP_SWITCH,          // Switch Devices
-#ifdef USE_TUYA_DIMMER
   TUYA_DIMMER,         // Dimmer Devices
-#endif
-#ifdef USE_ARMTRONIX_DIMMERS
   ARMTRONIX_DIMMERS,
-#endif
-#ifdef USE_PS_16_DZ
   PS_16_DZ,
-#endif
   H801,                // Light Devices
   MAGICHOME,
   ARILUX_LC01,
@@ -668,9 +652,7 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   ARILUX_LC11,
   ZENGGE_ZF_WF017,
   HUAFAN_SS,
-#ifdef ROTARY_V1
   MI_DESK_LAMP,
-#endif
   KMC_70011,
   AILIGHT,             // Light Bulbs
   PHILIPS,
