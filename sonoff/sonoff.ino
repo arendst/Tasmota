@@ -757,7 +757,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
               case 7:            // mqtt_switch_retain (CMND_SWITCHRETAIN)
               case 9:            // mqtt_sensor_retain (CMND_SENSORRETAIN)
               case 14:           // interlock (CMND_INTERLOCK)
-              case 22:           // mqtt_serial (SerialSend and SerialLog)
+              // case 22:           // mqtt_serial (SerialSend and SerialLog) - allow to be set for devices that just relay serial and for which no SerialSend command is done
               case 23:           // mqtt_serial_raw (SerialSend)
               case 25:           // knx_enabled (Web config)
               case 27:           // knx_enable_enhancement (Web config)
@@ -2274,7 +2274,7 @@ void SerialInput(void)
       if (serial_in_byte || Settings.flag.mqtt_serial_raw) {                     // Any char between 1 and 127 or any char (0 - 255)
         if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&                   // Add char to string if it still fits and ...
             ((isprint(serial_in_byte) && (128 == Settings.serial_delimiter)) ||  // Any char between 32 and 127
-             (serial_in_byte != Settings.serial_delimiter) ||                    // Any char between 1 and 127 and not being delimiter
+             (serial_in_byte != Settings.serial_delimiter  && (128 != Settings.serial_delimiter)) ||                    // Any char between 1 and 127 and not being delimiter
               Settings.flag.mqtt_serial_raw)) {                                  // Any char between 0 and 255
           serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
           serial_polling_window = millis();
