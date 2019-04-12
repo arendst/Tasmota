@@ -180,6 +180,7 @@ enum UserSelectablePins {
   GPIO_ROT2B,          // Rotary switch2 B Pin
   GPIO_HRE_CLOCK,      // Clock/Power line for HR-E Water Meter
   GPIO_HRE_DATA,       // Data line for HR-E Water Meter
+  GPIO_ADE7953_IRQ,    // ADE7953 IRQ
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -244,6 +245,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ARIRFRCV "|" D_SENSOR_TXD "|" D_SENSOR_RXD "|"
   D_SENSOR_ROTARY "1a|" D_SENSOR_ROTARY "1b|" D_SENSOR_ROTARY "2a|" D_SENSOR_ROTARY "2b|"
   D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
+  D_SENSOR_ADE7953_IRQ "|"
   ;
 
 /********************************************************************************************/
@@ -504,6 +506,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
   GPIO_HLW_CF,         // HLW8012 CF power
   GPIO_HJL_CF,         // HJL-01/BL0937 CF power
+#endif
+#if defined(USE_ENERGY_SENSOR) && defined(USE_I2C) && defined(USE_ADE7953)
+  GPIO_ADE7953_IRQ,    // ADE7953 IRQ
 #endif
   GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
