@@ -27,22 +27,30 @@
 #define TO_CELSIUS(x) ((x) - 273.15)
 #define TO_KELVIN(x) ((x) + 273.15)
 
-#define ANALOG_V33   3.3
-#define ANALOG_R21   32000.0
-#define ANALOG_R0    10000.0
-#define ANALOG_T0    TO_KELVIN(25.0)
-#define ANALOG_B     3350.0
+// Parameters for Steinhart-Hart equation
+#define ANALOG_V33   3.3               // ESP8266 Analog voltage
+#define ANALOG_T0    TO_KELVIN(25.0)   // 25 degrees Celcius in Kelvin (= 298.15)
+// Shelly 2.5 thermistor
+#define ANALOG_R21   32000.0           // Voltage bridge resistor
+#define ANALOG_R0    10000.0           // Thermistor resistance
+#define ANALOG_B     3350.0            // Thermistor Beta Coefficient
 
 uint16_t adc_last_value = 0;
 
-uint16_t AdcRead(void)
+uint16_t AdcRead(uint8_t factor)
 {
+  // factor 1 = 2 samples
+  // factor 2 = 4 samples
+  // factor 3 = 8 samples
+  // factor 4 = 16 samples
+  // factor 5 = 32 samples
+  uint8_t samples = 1 << factor;
   uint16_t analog = 0;
-  for (uint8_t i = 0; i < 32; i++) {
+  for (uint8_t i = 0; i < samples; i++) {
     analog += analogRead(A0);
     delay(1);
   }
-  analog >>= 5;
+  analog >>= factor;
   return analog;
 }
 
@@ -50,7 +58,7 @@ uint16_t AdcRead(void)
 void AdcEvery250ms(void)
 {
   if (my_module_flag.adc0) {
-    uint16_t new_value = AdcRead();
+    uint16_t new_value = AdcRead(5);
     if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
       adc_last_value = new_value;
       uint16_t value = adc_last_value / 10;
@@ -64,7 +72,7 @@ void AdcEvery250ms(void)
 void AdcShow(bool json)
 {
   if (my_module_flag.adc0) {
-    uint16_t analog = AdcRead();
+    uint16_t analog = AdcRead(5);
 
     if (json) {
       ResponseAppend_P(PSTR(",\"ANALOG\":{\"A0\":%d}"), analog);
@@ -75,8 +83,8 @@ void AdcShow(bool json)
     }
   }
   if (my_module_flag.adc0_temp) {
-    int adc = analogRead(A0);
-    // Formule used by Shelly 2.5 analog temperature sensor
+    int adc = AdcRead(2);
+    // Steinhart-Hart equation for thermistor as temperature sensor
     double Rt = (adc * ANALOG_R21) / (1024.0 * ANALOG_V33 - (double)adc);
     double T = ANALOG_B / (ANALOG_B/ANALOG_T0 + log(Rt/ANALOG_R0));
     double temp = ConvertTemp(TO_CELSIUS(T));
