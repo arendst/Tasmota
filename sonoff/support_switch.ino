@@ -25,7 +25,7 @@
  * Inspired by (https://github.com/OLIMEX/olimex-iot-firmware-esp8266/blob/master/olimex/user/user_switch2.c)
 \*********************************************************************************************/
 
-#define SWITCH_PROBE_INTERVAL    10         // Time in milliseconds between switch input probe
+const uint8_t SWITCH_PROBE_INTERVAL = 10;   // Time in milliseconds between switch input probe
 
 #include <Ticker.h>
 

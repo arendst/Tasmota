@@ -20,7 +20,7 @@
 #ifndef _SETTINGS_H_
 #define _SETTINGS_H_
 
-#define PARAM8_SIZE  18                    // Number of param bytes (SetOption)
+const uint8_t PARAM8_SIZE = 18;            // Number of param bytes (SetOption)
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
@@ -185,12 +185,12 @@ struct SYSCFG {
   unsigned long bootcount;                 // 00C
 */
 struct SYSCFG {
-  uint16_t cfg_holder;                     // 000 v6 header
-  uint16_t cfg_size;                       // 002
+  uint16_t      cfg_holder;                // 000 v6 header
+  uint16_t      cfg_size;                  // 002
   unsigned long save_flag;                 // 004
   unsigned long version;                   // 008
-  uint16_t bootcount;                      // 00C
-  uint16_t cfg_crc;                        // 00E
+  uint16_t      bootcount;                 // 00C
+  uint16_t      cfg_crc;                   // 00E
   SysBitfield   flag;                      // 010
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
@@ -330,8 +330,10 @@ struct SYSCFG {
   uint8_t       rgbwwTable[5];             // 71A
   uint8_t       user_template_base;        // 71F
   mytmplt       user_template;             // 720  29 bytes
+  uint8_t       novasds_period;            // 73D
+  uint8_t       web_color[18][3];          // 73E
 
-  uint8_t       free_73D[87];              // 73D
+  uint8_t       free_774[32];              // 774
 
   uint32_t      drivers[3];                // 794
   uint32_t      monitors;                  // 7A0
@@ -339,9 +341,7 @@ struct SYSCFG {
   uint32_t      displays;                  // 7B0
   uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
-
-  uint8_t       free_7BC[2];               // 7BC
-
+  uint16_t      ledmask;                   // 7BC
   uint16_t      weight_max;                // 7BE Total max weight in kilogram
   unsigned long weight_reference;          // 7C0 Reference weight in gram
   unsigned long weight_calibration;        // 7C4
@@ -396,7 +396,7 @@ struct XDRVMAILBOX {
   char         *data;
 } XdrvMailbox;
 
-#define MAX_RULES_FLAG  7                  // Number of bits used in RulesBitfield (tricky I know...)
+const uint8_t MAX_RULES_FLAG = 8;          // Number of bits used in RulesBitfield (tricky I know...)
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
@@ -407,7 +407,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t mqtt_disconnected : 1;
     uint16_t wifi_connected : 1;
     uint16_t wifi_disconnected : 1;
-    uint16_t spare07 : 1;
+    uint16_t http_init : 1;
     uint16_t spare08 : 1;
     uint16_t spare09 : 1;
     uint16_t spare10 : 1;

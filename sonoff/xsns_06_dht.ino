@@ -213,7 +213,7 @@ void DhtShow(bool json)
     dtostrfd(Dht[i].h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, Dht[i].stype, temperature, humidity);
+      ResponseAppend_P(JSON_SNS_TEMPHUM, Dht[i].stype, temperature, humidity);
 #ifdef USE_DOMOTICZ
       if ((0 == tele_period) && (0 == i)) {
         DomoticzTempHumSensor(temperature, humidity);

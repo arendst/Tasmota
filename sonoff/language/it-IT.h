@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "Topic Riserva"
 #define D_FALSE "Falso"
 #define D_FILE "File"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Memoria Libera"
 #define D_FREQUENCY "Frequenza"
 #define D_GAS "Gas"
@@ -156,6 +157,7 @@
 #define D_TO "a"
 #define D_TOGGLE "Toggle"
 #define D_TOPIC "Topic"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "Trasmesso"
 #define D_TRUE "Vero"
 #define D_TVOC "TVOC"
@@ -305,6 +307,7 @@
 #define D_BASE_TYPE "Based on"
 #define D_TEMPLATE_FLAGS "Options"
 #define D_ALLOW_ADC0 "ADC0 input"
+#define D_ALLOW_ADC0_TEMP "ADC0 temperature"
 #define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "Salva configurazione"
@@ -492,6 +495,9 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Nessuno"
 #define D_SENSOR_USER          "User"
@@ -576,12 +582,16 @@
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"

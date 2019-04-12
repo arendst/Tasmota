@@ -205,7 +205,7 @@ void Ds18b20Show(bool json)
     char temperature[33];
     dtostrfd(ds18b20_temperature, Settings.flag2.temperature_resolution, temperature);
     if(json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMP, mqtt_data, ds18b20_types, temperature);
+      ResponseAppend_P(JSON_SNS_TEMP, ds18b20_types, temperature);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_TEMP, temperature);

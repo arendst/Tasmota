@@ -369,7 +369,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
       AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
 
-//      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
+//      Response_P(S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
 
       ExecuteCommand(command, SRC_RULE);
@@ -486,23 +486,25 @@ void RulesEvery50ms(void)
         event_data[0] ='\0';
       }
     }
-    else if (vars_event) {
-      for (uint8_t i = 0; i < MAX_RULE_VARS-1; i++) {
-        if (bitRead(vars_event, i)) {
-          bitClear(vars_event, i);
-          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
-          RulesProcessEvent(json_event);
-          break;
+    else if (vars_event || mems_event){
+      if (vars_event) {
+        for (uint8_t i = 0; i < MAX_RULE_VARS; i++) {
+          if (bitRead(vars_event, i)) {
+            bitClear(vars_event, i);
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
+            RulesProcessEvent(json_event);
+            break;
+          }
         }
       }
-    }
-    else if (mems_event) {
-      for (uint8_t i = 0; i < MAX_RULE_MEMS-1; i++) {
-        if (bitRead(mems_event, i)) {
-          bitClear(mems_event, i);
-          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
-          RulesProcessEvent(json_event);
-          break;
+      if (mems_event) {
+        for (uint8_t i = 0; i < MAX_RULE_MEMS; i++) {
+          if (bitRead(mems_event, i)) {
+            bitClear(mems_event, i);
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
+            RulesProcessEvent(json_event);
+            break;
+          }
         }
       }
     }
@@ -520,6 +522,7 @@ void RulesEvery50ms(void)
             case 4: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
             case 5: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event)); break;
             case 6: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
+            case 7: strncpy_P(json_event, PSTR("{\"HTTP\":{\"Initialized\":1}}"), sizeof(json_event)); break;
           }
           if (json_event[0]) {
             RulesProcessEvent(json_event);
@@ -544,7 +547,7 @@ void RulesEvery100ms(void)
     tele_period = tele_period_save;
     if (strlen(mqtt_data)) {
       mqtt_data[0] = '{';                              // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      ResponseAppend_P(PSTR("}"));
       RulesProcess();
     }
   }
@@ -672,10 +675,10 @@ String RulesSubscribe(const char *data, int data_len)
     char * pos = strtok(parameters, ",");
     if (pos) {
       event_name = Trim(pos);
-      pos = strtok(NULL, ",");
+      pos = strtok(nullptr, ",");
       if (pos) {
         topic = Trim(pos);
-        pos = strtok(NULL, ",");
+        pos = strtok(nullptr, ",");
         if (pos) {
           key = Trim(pos);
         }
@@ -1139,15 +1142,15 @@ bool RulesCommand(void)
     }
     mqtt_data[0] = '\0';
     for (uint8_t i = 0; i < MAX_RULE_TIMERS; i++) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%c\"T%d\":%d"), mqtt_data, (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
+      ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+    ResponseAppend_P(PSTR("}"));
   }
   else if (CMND_EVENT == command_code) {
     if (XdrvMailbox.data_len > 0) {
       strlcpy(event_data, XdrvMailbox.data, sizeof(event_data));
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
   else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1158,7 +1161,7 @@ bool RulesCommand(void)
 #endif      //USE_EXPRESSION
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1169,13 +1172,13 @@ bool RulesCommand(void)
 #endif      //USE_EXPRESSION
       bitSet(mems_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
   else if (CMND_CALC_RESOLUTION == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
       Settings.flag2.calc_resolution = XdrvMailbox.payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.flag2.calc_resolution);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.flag2.calc_resolution);
   }
   else if ((CMND_ADD == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1183,7 +1186,7 @@ bool RulesCommand(void)
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SUB == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1191,7 +1194,7 @@ bool RulesCommand(void)
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MULT == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1199,11 +1202,11 @@ bool RulesCommand(void)
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SCALE == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
 
         double valueIN = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 1));
@@ -1216,14 +1219,14 @@ bool RulesCommand(void)
         bitSet(vars_event, index -1);
       }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
 #ifdef SUPPORT_MQTT_EVENT
   } else if (CMND_SUBSCRIBE == command_code) {			//MQTT Subscribe command. Subscribe <Event>, <Topic> [, <Key>]
     String result = RulesSubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, result.c_str());
+    Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
   } else if (CMND_UNSUBSCRIBE == command_code) {			//MQTT Un-subscribe command. UnSubscribe <Event>
     String result = RulesUnsubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, result.c_str());
+    Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
 #endif        //SUPPORT_MQTT_EVENT
   }
   else serviced = false;  // Unknown command

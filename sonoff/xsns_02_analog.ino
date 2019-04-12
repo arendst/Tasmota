@@ -22,7 +22,16 @@
  * ADC support
 \*********************************************************************************************/
 
-#define XSNS_02             2
+#define XSNS_02      2
+
+#define TO_CELSIUS(x) ((x) - 273.15)
+#define TO_KELVIN(x) ((x) + 273.15)
+
+#define ANALOG_V33   3.3
+#define ANALOG_R21   32000.0
+#define ANALOG_R0    10000.0
+#define ANALOG_T0    TO_KELVIN(25.0)
+#define ANALOG_B     3350.0
 
 uint16_t adc_last_value = 0;
 
@@ -40,26 +49,58 @@ uint16_t AdcRead(void)
 #ifdef USE_RULES
 void AdcEvery250ms(void)
 {
-  uint16_t new_value = AdcRead();
-  if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
-    adc_last_value = new_value;
-    uint16_t value = adc_last_value / 10;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
-    XdrvRulesProcess();
+  if (my_module_flag.adc0) {
+    uint16_t new_value = AdcRead();
+    if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
+      adc_last_value = new_value;
+      uint16_t value = adc_last_value / 10;
+      Response_P(PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
+      XdrvRulesProcess();
+    }
   }
 }
 #endif  // USE_RULES
 
 void AdcShow(bool json)
 {
-  uint16_t analog = AdcRead();
+  if (my_module_flag.adc0) {
+    uint16_t analog = AdcRead();
 
-  if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ANALOG\":{\"A0\":%d}"), mqtt_data, analog);
+    if (json) {
+      ResponseAppend_P(PSTR(",\"ANALOG\":{\"A0\":%d}"), analog);
 #ifdef USE_WEBSERVER
-  } else {
-    WSContentSend_PD(HTTP_SNS_ANALOG, "", 0, analog);
+    } else {
+      WSContentSend_PD(HTTP_SNS_ANALOG, "", 0, analog);
 #endif  // USE_WEBSERVER
+    }
+  }
+  if (my_module_flag.adc0_temp) {
+    int adc = analogRead(A0);
+    // Formule used by Shelly 2.5 analog temperature sensor
+    double Rt = (adc * ANALOG_R21) / (1024.0 * ANALOG_V33 - (double)adc);
+    double T = ANALOG_B / (ANALOG_B/ANALOG_T0 + log(Rt/ANALOG_R0));
+    double temp = ConvertTemp(TO_CELSIUS(T));
+
+    char temperature[33];
+    dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
+
+    if (json) {
+      ResponseAppend_P(JSON_SNS_TEMP, "ANALOG", temperature);
+#ifdef USE_DOMOTICZ
+      if (0 == tele_period) {
+        DomoticzSensor(DZ_TEMP, temperature);
+      }
+#endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+      if (0 == tele_period) {
+        KnxSensor(KNX_TEMPERATURE, temp);
+      }
+#endif  // USE_KNX
+#ifdef USE_WEBSERVER
+    } else {
+      WSContentSend_PD(HTTP_SNS_TEMP, "", temperature, TempUnit());
+#endif  // USE_WEBSERVER
+    }
   }
 }
 
@@ -71,7 +112,7 @@ bool Xsns02(uint8_t function)
 {
   bool result = false;
 
-  if (my_module_flag.adc0) {
+  if (my_module_flag.adc0 || my_module_flag.adc0_temp) {
     switch (function) {
 #ifdef USE_RULES
       case FUNC_EVERY_250_MSECOND:

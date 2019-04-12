@@ -183,7 +183,7 @@ bool Ina219CommandSensor(void)
     Settings.ina219_mode = XdrvMailbox.payload;
     restart_flag = 2;
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_NVALUE, XSNS_13, Settings.ina219_mode);
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_13, Settings.ina219_mode);
 
   return serviced;
 }
@@ -240,8 +240,8 @@ void Ina219Show(bool json)
     dtostrfd(ina219_current, Settings.flag2.current_resolution, current);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
-        mqtt_data, ina219_types, voltage, current, power);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
+        ina219_types, voltage, current, power);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_VOLTAGE, voltage);

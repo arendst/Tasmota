@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "נושא לחזרה"
 #define D_FALSE "שגוי"
 #define D_FILE "קובץ"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "זכרון פנוי"
 #define D_FREQUENCY "תדר"
 #define D_GAS "גז"
@@ -156,6 +157,7 @@
 #define D_TO "ל"
 #define D_TOGGLE "מתג"
 #define D_TOPIC "נושא"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "עבר"
 #define D_TRUE "נכון"
 #define D_TVOC "TVOC"
@@ -305,6 +307,7 @@
 #define D_BASE_TYPE "מבוסס על"
 #define D_TEMPLATE_FLAGS "אפשריות"
 #define D_ALLOW_ADC0 "ADC0 כניסת"
+#define D_ALLOW_ADC0_TEMP "ADC0 temperature"
 #define D_ALLOW_PULLUP "pull-up בחירת משתמש עבור"
 
 #define D_SAVE_CONFIGURATION "שמירת הגדרות"
@@ -492,6 +495,9 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "None"
 #define D_SENSOR_USER          "משתמש"
@@ -576,12 +582,16 @@
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"

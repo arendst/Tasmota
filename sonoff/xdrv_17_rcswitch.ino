@@ -61,7 +61,7 @@ void RfReceiveCheck(void)
       } else {
         snprintf_P(stemp, sizeof(stemp), PSTR("\"0x%lX\""), (uint32_t)data);
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_RF_DATA "\":%s,\"" D_JSON_RF_BITS "\":%d,\"" D_JSON_RF_PROTOCOL "\":%d,\"" D_JSON_RF_PULSE "\":%d}}"),
+      Response_P(PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_RF_DATA "\":%s,\"" D_JSON_RF_BITS "\":%d,\"" D_JSON_RF_PROTOCOL "\":%d,\"" D_JSON_RF_PULSE "\":%d}}"),
         stemp, bits, protocol, delay);
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_RFRECEIVED));
       XdrvRulesProcess();
@@ -107,7 +107,7 @@ bool RfSendCommand(void)
       if (root.success()) {
         // RFsend {"data":0x501014,"bits":24,"protocol":1,"repeat":10,"pulse":350}
         char parm_uc[10];
-        data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_DATA))], NULL, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+        data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_DATA))], nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
         bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_BITS))];
         protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_PROTOCOL))];
         repeat = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_REPEAT))];
@@ -116,10 +116,10 @@ bool RfSendCommand(void)
         //  RFsend data, bits, protocol, repeat, pulse
         char *p;
         uint8_t i = 0;
-        for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 5; str = strtok_r(NULL, ", ", &p)) {
+        for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 5; str = strtok_r(nullptr, ", ", &p)) {
           switch (i++) {
           case 0:
-            data = strtoul(str, NULL, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+            data = strtoul(str, nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
             break;
           case 1:
             bits = atoi(str);
@@ -145,7 +145,7 @@ bool RfSendCommand(void)
       if (!bits) { bits = 24; }         // Default 24 bits
       if (data) {
         mySwitch.send(data, bits);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFSEND "\":\"" D_JSON_DONE "\"}"));
+        Response_P(PSTR("{\"" D_CMND_RFSEND "\":\"" D_JSON_DONE "\"}"));
       } else {
         error = true;
       }
@@ -153,7 +153,7 @@ bool RfSendCommand(void)
       error = true;
     }
     if (error) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_RFSEND "\":\"" D_JSON_NO " " D_JSON_RF_DATA ", " D_JSON_RF_BITS ", " D_JSON_RF_PROTOCOL ", " D_JSON_RF_REPEAT " " D_JSON_OR " " D_JSON_RF_PULSE "\"}"));
+      Response_P(PSTR("{\"" D_CMND_RFSEND "\":\"" D_JSON_NO " " D_JSON_RF_DATA ", " D_JSON_RF_BITS ", " D_JSON_RF_PROTOCOL ", " D_JSON_RF_REPEAT " " D_JSON_OR " " D_JSON_RF_PULSE "\"}"));
     }
   }
   else serviced = false; // Unknown command

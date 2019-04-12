@@ -194,7 +194,7 @@ void ShtShow(bool json)
     dtostrfd(sht_humidity, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, sht_types, temperature, humidity);
+      ResponseAppend_P(JSON_SNS_TEMPHUM, sht_types, temperature, humidity);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzTempHumSensor(temperature, humidity);

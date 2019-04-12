@@ -140,6 +140,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_RF_SENSOR                         // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 //  #define USE_THEO_V2                         // Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver (+1k4 code)
   #define USE_ALECTO_V2                       // Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver (+1k7 code)
+#define USE_HRE                               // Add support for Badger HR-E Water Meter (+1k4 code)
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
@@ -197,6 +198,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
+#undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_CLASSIC
@@ -326,6 +328,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
+#undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_BASIC
@@ -391,6 +394,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
+#undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_MINIMAL

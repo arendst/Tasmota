@@ -125,8 +125,8 @@ void MAX31855_Show(bool Json){
     dtostrfd(MAX31855_Result.ReferenceTemperature, Settings.flag2.temperature_resolution, referencetemp);
 
     if(Json){
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_PROBETEMPERATURE "\":%s,\"" D_JSON_REFERENCETEMPERATURE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
-            mqtt_data, "MAX31855", probetemp, referencetemp, MAX31855_Result.ErrorCode);
+        ResponseAppend_P(PSTR(",\"MAX31855\":{\"" D_JSON_PROBETEMPERATURE "\":%s,\"" D_JSON_REFERENCETEMPERATURE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
+          probetemp, referencetemp, MAX31855_Result.ErrorCode);
 #ifdef USE_DOMOTICZ
         if (0 == tele_period) {
           DomoticzSensor(DZ_TEMP, probetemp);

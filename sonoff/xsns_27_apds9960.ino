@@ -1874,7 +1874,7 @@ void APDS9960_loop(void)
   if (recovery_loop_counter == 1 && APDS9960_overload){  //restart sensor just before the end of recovery from long press
     enableGestureSensor();
     APDS9960_overload = false;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"On\"}"));
+    Response_P(PSTR("{\"Gesture\":\"On\"}"));
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data); // only after the long break we report, that we are online again
     gesture_mode = 1;
   }
@@ -1887,7 +1887,7 @@ void APDS9960_loop(void)
         {
         disableGestureSensor();
         recovery_loop_counter = APDS9960_LONG_RECOVERY;  // long pause after overload/long press - number of stateloops
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Off\"}"));
+        Response_P(PSTR("{\"Gesture\":\"Off\"}"));
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
         gesture_mode = 0;
         }
@@ -1959,8 +1959,8 @@ void APDS9960_show(bool json)
     sprintf (cct_chr, "%u", color_data.cct);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"Red\":%s,\"Green\":%s,\"Blue\":%s,\"Ambient\":%s,\"CCT\":%s,\"Proximity\":%s}"),
-        mqtt_data, APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
+      ResponseAppend_P(PSTR(",\"%s\":{\"Red\":%s,\"Green\":%s,\"Blue\":%s,\"Ambient\":%s,\"CCT\":%s,\"Proximity\":%s}"),
+        APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
 #ifdef USE_WEBSERVER
     } else {
       WSContentSend_PD(HTTP_APDS_9960_SNS, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr );
@@ -1969,7 +1969,7 @@ void APDS9960_show(bool json)
   }
   else {
     if (json && (currentGesture[0] != '\0' )) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"%s\":1}"), mqtt_data, APDS9960stype, currentGesture);
+      ResponseAppend_P(PSTR(",\"%s\":{\"%s\":1}"), APDS9960stype, currentGesture);
       currentGesture[0] = '\0';
     }
   }
@@ -2025,7 +2025,7 @@ bool APDS9960CommandSensor(void)
       }
     break;
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_27, GetStateText(gesture_mode));
+  Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_27, GetStateText(gesture_mode));
 
   return serviced;
 }

@@ -210,7 +210,7 @@ bool XdrvRulesProcess(void)
 #ifdef USE_DEBUG_DRIVER
 void ShowFreeMem(const char *where)
 {
-  char stemp[20];
+  char stemp[30];
   snprintf_P(stemp, sizeof(stemp), where);
   XdrvMailbox.data = stemp;
   XdrvCall(FUNC_FREE_MEM);

@@ -1,5 +1,5 @@
 /*
-  es-AR.h - localization for Spanish - Argentina for Sonoff-Tasmota
+  es-ES.h - localization for Spanish - Spain for Sonoff-Tasmota
 
   Copyright (C) 2019  Adrian Scillato
 
@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LANGUAGE_ES_AR_H_
-#define _LANGUAGE_ES_AR_H_
+#ifndef _LANGUAGE_ES_ES_H_
+#define _LANGUAGE_ES_ES_H_
 
 /*************************** ATTENTION *******************************\
  *
@@ -28,12 +28,12 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.3.0.17
+ * Updated until v6.5.0.7
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
 
-#define LANGUAGE_LCID 11274
+#define LANGUAGE_LCID 1034
 // HTML (ISO 639-1) Language Code
 #define D_HTML_LANGUAGE "es"
 
@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "FallbackTopic"
 #define D_FALSE "Falso"
 #define D_FILE "Archivo"
+#define D_FLOW_RATE "Caudal"
 #define D_FREE_MEMORY "Memoria Libre"
 #define D_FREQUENCY "Frecuencia"
 #define D_GAS "Gas"
@@ -156,6 +157,7 @@
 #define D_TO "a"
 #define D_TOGGLE "Conmutar"
 #define D_TOPIC "Topic"
+#define D_TOTAL_USAGE "Total Usado"
 #define D_TRANSMIT "Transmitir"
 #define D_TRUE "Verdadero"
 #define D_TVOC "TVOC"
@@ -289,8 +291,8 @@
 #define D_TELEMETRY_PERIOD "Período de Telemetría"
 
 #define D_OTHER_PARAMETERS "Otros parámetros"
-#define D_TEMPLATE "Template"
-#define D_ACTIVATE "Activate"
+#define D_TEMPLATE "Plantilla"
+#define D_ACTIVATE "Activar"
 #define D_WEB_ADMIN_PASSWORD "Clave Administrador Web"
 #define D_MQTT_ENABLE "Habilitar MQTT"
 #define D_FRIENDLY_NAME "Nombre Amigable"
@@ -299,13 +301,14 @@
 #define D_SINGLE_DEVICE "dispositivo simple"
 #define D_MULTI_DEVICE "dispositivo múltiple"
 
-#define D_CONFIGURE_TEMPLATE "Configure Template"
-#define D_TEMPLATE_PARAMETERS "Template parameters"
-#define D_TEMPLATE_NAME "Name"
-#define D_BASE_TYPE "Based on"
-#define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "ADC0 input"
-#define D_ALLOW_PULLUP "User pull-up selection"
+#define D_CONFIGURE_TEMPLATE "Configurar Plantilla"
+#define D_TEMPLATE_PARAMETERS "Parámetros de Plantilla"
+#define D_TEMPLATE_NAME "Nombre"
+#define D_BASE_TYPE "Basada en"
+#define D_TEMPLATE_FLAGS "Opciones"
+#define D_ALLOW_ADC0 "Entrada ADC0"
+#define D_ALLOW_ADC0_TEMP "Temperatura por ADC0"
+#define D_ALLOW_PULLUP "Habilitar pull-up"
 
 #define D_SAVE_CONFIGURATION "Grabar configuración"
 #define D_CONFIGURATION_SAVED "Configuración grabada"
@@ -492,6 +495,9 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "O"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Ninguno"
 #define D_SENSOR_USER          "User"
@@ -576,12 +582,16 @@
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
@@ -644,4 +654,4 @@
 #define D_UNIT_KWARH      "kVArH"
 #define D_UNIT_ANGLE      "Grados"
 
-#endif  // _LANGUAGE_ES_AR_H_
+#endif  // _LANGUAGE_ES_ES_H_

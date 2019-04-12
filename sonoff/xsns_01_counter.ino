@@ -107,11 +107,11 @@ void CounterShow(bool json)
 
       if (json) {
         if (!header) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"COUNTER\":{"), mqtt_data);
+          ResponseAppend_P(PSTR(",\"COUNTER\":{"));
           stemp[0] = '\0';
         }
         header++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"C%d\":%s"), mqtt_data, stemp, i +1, counter);
+        ResponseAppend_P(PSTR("%s\"C%d\":%s"), stemp, i +1, counter);
         strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
@@ -131,7 +131,7 @@ void CounterShow(bool json)
   }
   if (json) {
     if (header) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      ResponseAppend_P(PSTR("}"));
     }
   }
 }

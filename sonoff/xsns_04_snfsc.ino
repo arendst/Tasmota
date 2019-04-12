@@ -81,7 +81,7 @@ void SonoffScSerialInput(char *rcvstat)
 
   if (!strncasecmp_P(rcvstat, PSTR("AT+UPDATE="), 10)) {
     int8_t i = -1;
-    for (str = strtok_r(rcvstat, ":", &p); str && i < 5; str = strtok_r(NULL, ":", &p)) {
+    for (str = strtok_r(rcvstat, ":", &p); str && i < 5; str = strtok_r(nullptr, ":", &p)) {
       value[i++] = atoi(str);
     }
     if (value[0] > 0) {
@@ -120,8 +120,8 @@ void SonoffScShow(bool json)
     dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SonoffSC\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_LIGHT "\":%d,\"" D_JSON_NOISE "\":%d,\"" D_JSON_AIRQUALITY "\":%d}"),
-        mqtt_data, temperature, humidity, sc_value[2], sc_value[3], sc_value[4]);
+      ResponseAppend_P(PSTR(",\"SonoffSC\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_LIGHT "\":%d,\"" D_JSON_NOISE "\":%d,\"" D_JSON_AIRQUALITY "\":%d}"),
+        temperature, humidity, sc_value[2], sc_value[3], sc_value[4]);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzTempHumSensor(temperature, humidity);

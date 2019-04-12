@@ -529,8 +529,8 @@ void MGC3130_show(bool json)
   if (json) {
     if (MGC3130_mode == 3 && !MGC3130_triggeredByTouch) {
       if (MGC_data.out.systemInfo.positionValid && !(MGC_data.out.x == MGC3130_lastSentX && MGC_data.out.y == MGC3130_lastSentY && MGC_data.out.z == MGC3130_lastSentZ)) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"X\":%u,\"Y\":%u,\"Z\":%u}"),
-          mqtt_data, MGC3130stype, MGC_data.out.x/64, MGC_data.out.y/64, (MGC_data.out.z-(uint16_t)MGC3130_MIN_ZVALUE)/64);
+        ResponseAppend_P(PSTR(",\"%s\":{\"X\":%u,\"Y\":%u,\"Z\":%u}"),
+          MGC3130stype, MGC_data.out.x/64, MGC_data.out.y/64, (MGC_data.out.z-(uint16_t)MGC3130_MIN_ZVALUE)/64);
         MGC3130_lastSentX = MGC_data.out.x;
         MGC3130_lastSentY = MGC_data.out.y;
         MGC3130_lastSentZ = MGC_data.out.z;
@@ -540,7 +540,7 @@ void MGC3130_show(bool json)
 
     if (MGC3130_mode == 2) {
       if (MGC_data.out.systemInfo.airWheelValid && (MGC3130_rotValue != MGC3130_lastSentRotValue)) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"AW\":%i}"), mqtt_data, MGC3130stype, MGC3130_rotValue);
+        ResponseAppend_P(PSTR(",\"%s\":{\"AW\":%i}"), MGC3130stype, MGC3130_rotValue);
         MGC3130_lastSentRotValue = MGC3130_rotValue;
       }
     }
@@ -549,7 +549,7 @@ void MGC3130_show(bool json)
       if (millis() - MGC3130_touchTimeStamp > 220 ) {
         MGC3130_touchCounter = 1;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"%s\":%u}"), mqtt_data, MGC3130stype, MGC3130_currentGesture, MGC3130_touchCounter);
+      ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%u}"), MGC3130stype, MGC3130_currentGesture, MGC3130_touchCounter);
       MGC3130_currentGesture[0] = '\0';
       MGC3130_touchTimeStamp = millis();
     }

@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "Топік зворотнього зв'язку"
 #define D_FALSE "Помилково"
 #define D_FILE "Файл"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Вільна память"
 #define D_FREQUENCY "Частота"
 #define D_GAS "Газ"
@@ -156,6 +157,7 @@
 #define D_TO "до"
 #define D_TOGGLE "Перекл."
 #define D_TOPIC "Топік"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "Передати"
 #define D_TRUE "Істина"
 #define D_TVOC "TVOC"
@@ -305,6 +307,7 @@
 #define D_BASE_TYPE "Based on"
 #define D_TEMPLATE_FLAGS "Options"
 #define D_ALLOW_ADC0 "ADC0 input"
+#define D_ALLOW_ADC0_TEMP "ADC0 temperature"
 #define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "Зберегти конфігурацію"
@@ -492,6 +495,9 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "-відсутньо-"
 #define D_SENSOR_USER          "User"
@@ -576,12 +582,16 @@
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
 
 // Units
 #define D_UNIT_AMPERE "А"
 #define D_UNIT_CENTIMETER "cм"
 #define D_UNIT_HERTZ "Гц"
 #define D_UNIT_HOUR "Г"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"

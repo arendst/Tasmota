@@ -71,14 +71,14 @@ Module            | Description
 49 Neo Coolcam    | Neo Coolcam Wifi Smart Socket
 50 ESP Switch     | ESP Switch 4-gang Wifi Switch with Leds
 51 OBI Socket     | OBI Wifi Smart Socket
-52 Teckin         | Teckin SP20 Wifi Smart Switch with Energy Monitoring
+52 Teckin         | Teckin SP22 Wifi Smart Switch with Energy Monitoring
 53 AplicWDP303075 | Aplic WDP 303075 CSL Wifi Smart Switch with Energy Monitoring
 54 Tuya Dimmer    | MIUO (and other Tuya based) Wifi Dimmer for Incandescent Lights and Led
 55 Gosund SP1 v23 | Gosund SP1 v2.3 Wifi Smart Switch with Energy Monitoring
 56 ARMTR Dimmer   | ARMtronix Wifi dimmer for Incandescent Lights and Led
 57 SK03 Outdoor   | SK03 Outdoor Wifi Smart Switch with Energy Monitoring
 58 PS-16-DZ       | PS-16-DZ  Wifi dimmer for Incandescent Lights and Led
-59 Teckin US      | Teckin US and ZooZee SA102 Wifi Smart Switch with Energy Monitoring
+59 Teckin US      | Teckin SP20 and ZooZee SA102 Wifi Smart Switch with Energy Monitoring
 60 Manzoku strip  | Manzoku Wifi Smart Power Strip with four Relays
 61 OBI Socket 2   | OBI 2 Wifi Smart Socket
 62 YTF IR Bridge  | YTF Infra Red Wifi Bridge
@@ -194,6 +194,7 @@ Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/re
 | USE_RC_SWITCH         | - | - | - | x | x | x | x |
 | USE_RF_SENSOR         | - | - | - | - | - | x | - | AlectoV2 only
 | USE_SM16716           | - | x | x | x | x | x | x |
+| USE_HRE               | - | - | - | - | - | x | - |
 | USE_DISPLAY           | - | - | - | - | - | - | x |
 | USE_DISPLAY_LCD       | - | - | - | - | - | - | x |
 | USE_DISPLAY_SSD1306   | - | - | - | - | - | - | x |

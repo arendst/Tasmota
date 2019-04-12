@@ -47,12 +47,10 @@
 #define NOVA_SDS_DEVICE_ID            0xFFFF  // NodaSDS all sensor response
 #endif
 
-
 TasmotaSerial *NovaSdsSerial;
 
 uint8_t novasds_type = 1;
 uint8_t novasds_valid = 0;
-
 
 struct sds011data {
   uint16_t pm100;
@@ -109,7 +107,7 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   NovaSdsSerial->readBytes(&recbuf[1], 9);
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, recbuf, sizeof(recbuf));
 
-  if ( NULL != buffer ) {
+  if ( nullptr != buffer ) {
     // return data to buffer
     memcpy(buffer, recbuf, sizeof(recbuf));
   }
@@ -126,9 +124,9 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
 void NovaSdsSetWorkPeriod(void)
 {
   // set sensor working period
-  NovaSdsCommand(NOVA_SDS_WORKING_PERIOD, NOVA_SDS_SET_MODE, WORKING_PERIOD,        NOVA_SDS_DEVICE_ID, NULL);
+  NovaSdsCommand(NOVA_SDS_WORKING_PERIOD, NOVA_SDS_SET_MODE, Settings.novasds_period, NOVA_SDS_DEVICE_ID, nullptr);
   // set sensor report only on query
-  NovaSdsCommand(NOVA_SDS_REPORTING_MODE, NOVA_SDS_SET_MODE, NOVA_SDS_REPORT_QUERY, NOVA_SDS_DEVICE_ID, NULL);
+  NovaSdsCommand(NOVA_SDS_REPORTING_MODE, NOVA_SDS_SET_MODE, NOVA_SDS_REPORT_QUERY,   NOVA_SDS_DEVICE_ID, nullptr);
 }
 
 bool NovaSdsReadData(void)
@@ -162,7 +160,22 @@ void NovaSdsSecond(void)                 // Every second
   }
 }
 
-/*********************************************************************************************/
+/*********************************************************************************************\
+ * Command Sensor20
+ *
+ * 1 .. 255 - Set working period in minutes
+\*********************************************************************************************/
+
+bool NovaSdsCommandSensor(void)
+{
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 256)) {
+    Settings.novasds_period = XdrvMailbox.payload;
+    NovaSdsSetWorkPeriod();
+  }
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_20, Settings.novasds_period);
+
+  return true;
+}
 
 void NovaSdsInit(void)
 {
@@ -195,7 +208,7 @@ void NovaSdsShow(bool json)
     char pm2_5[33];
     dtostrfd(pm2_5f, 1, pm2_5);
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SDS0X1\":{\"PM2.5\":%s,\"PM10\":%s}"), mqtt_data, pm2_5, pm10);
+      ResponseAppend_P(PSTR(",\"SDS0X1\":{\"PM2.5\":%s,\"PM10\":%s}"), pm2_5, pm10);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_VOLTAGE, pm2_5);  // PM2.5
@@ -225,6 +238,11 @@ bool Xsns20(uint8_t function)
         break;
       case FUNC_EVERY_SECOND:
         NovaSdsSecond();
+        break;
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_20 == XdrvMailbox.index) {
+          result = NovaSdsCommandSensor();
+        }
         break;
       case FUNC_JSON_APPEND:
         NovaSdsShow(1);

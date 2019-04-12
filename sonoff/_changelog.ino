@@ -1,4 +1,37 @@
-/* 6.5.0.1 20190319
+/* 6.5.0.7 20190410
+ * Add command LedMask to assign which relay has access to power LED (#5602, #5612)
+ *
+ * 6.5.0.6 20190409
+ * Add WebColor parameters to Settings making them persistent and remove the need for using a rule
+ * Add alternative IRSend command syntax IRSend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream> (#5610)
+ *
+ * 6.5.0.5 20190406
+ * Add compile time GUI hexadecimal only color options in my_user_config.h (#5586)
+ * Fix template activation and/or module selection regression from 6.5.0.4 (#5598)
+ * Add rule Http#Initialized
+ * Add command WebColor to change non-persistent GUI colors on the fly
+   Use a rule like:
+   rule3 on http#initialized do webcolor {"webcolor":["#eeeeee","#181818","#4f4f4f","#000000","#dddddd","#008000","#222222","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999"]} endon
+   or
+   rule3 on http#initialized do webcolor {"webcolor":["#eee","#181818","#4f4f4f","#000","#ddd","#009800","#222"]} endon
+   to make color changes persistent)
+ *
+ * 6.5.0.4 20190402
+ * Fix Configure Timer Web GUI (#5568)
+ * Add validation check when loading settings from flash
+ * Fixed Display Bug in KNX webmenu for Physical Address
+ *
+ * 6.5.0.3 20190328
+ * Add command Sensor20 1..255 to change Nova Fitness SDS01 working period in minutes (#5452)
+ * Change some defines to const
+ * Change IRsend and receive for 64-bit support (#5523)
+ * Change IRSend Panasonic protocol to 64-bit (#5523)
+ *
+ * 6.5.0.2 20190325
+ * Change UDP initial message handling from string to char using static memory and add debug info (#5505)
+ * Add optional support for Badger HR-E Water Meter (#5539)
+ *
+ * 6.5.0.1 20190319
  * Change Web GUI sensor data collection
  *
  * 6.5.0 20190319
@@ -17,7 +50,7 @@
  * Change image name BE_MINIMAL to FIRMWARE_MINIMAL and USE_xyz to FIRMWARE_xyz (#5106)
  * Change GUI weblog from XML to plain text solving possible empty screens (#5154)
  * Fix most compiler warnings
- * Fix Display exception 28 when JSON value is NULL received
+ * Fix Display exception 28 when JSON value is nullptr received
  * Fix epaper driver (#4785)
  * Fix HAss Sensor Discovery Software Watchdog restart (#4831, #4988)
  * Fix allowable MAX_RULE_VARS to 16 (#4933)

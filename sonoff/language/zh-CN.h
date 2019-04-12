@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "回退主题"
 #define D_FALSE "False"
 #define D_FILE "文件:"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "空闲内存"
 #define D_FREQUENCY "频率"
 #define D_GAS "气体"
@@ -156,6 +157,7 @@
 #define D_TO "to"
 #define D_TOGGLE "切换"
 #define D_TOPIC "主题"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "发送"
 #define D_TRUE "True"
 #define D_TVOC "TVOC"
@@ -305,6 +307,7 @@
 #define D_BASE_TYPE "基于"
 #define D_TEMPLATE_FLAGS "选项"
 #define D_ALLOW_ADC0 "ADC0 输入"
+#define D_ALLOW_ADC0_TEMP "ADC0 temperature"
 #define D_ALLOW_PULLUP "用户上拉选择"
 
 #define D_SAVE_CONFIGURATION "保存设置"
@@ -492,6 +495,9 @@
 #define D_TX20_SOUTH "南"
 #define D_TX20_WEST "西"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "无"
 #define D_SENSOR_USER          "User"
@@ -576,11 +582,15 @@
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
 
 // Units
 #define D_UNIT_AMPERE "安"
 #define D_UNIT_CENTIMETER "厘米"
 #define D_UNIT_HOUR "时"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "千克"
 #define D_UNIT_KILOMETER_PER_HOUR "公里/时"  // or "km/h"

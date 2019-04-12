@@ -200,7 +200,7 @@ void EpdPrintLog(void)
     }
 
     char* txt = DisplayLogBuffer('\040');
-    if (txt != NULL) {
+    if (txt != nullptr) {
       uint8_t size = Settings.display_size;
       uint16_t theight = size * EPD_FONT_HEIGTH;
 

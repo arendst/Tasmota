@@ -56,7 +56,7 @@ typedef struct RawSignalStruct                   // Variabelen geplaatst in stru
                                          // Om legacy redenen zit de eerste puls in element 1. Element 0 wordt dus niet gebruikt.
 } raw_signal_t;
 
-raw_signal_t *rfsns_raw_signal = NULL;
+raw_signal_t *rfsns_raw_signal = nullptr;
 uint8_t rfsns_rf_bit;
 uint8_t rfsns_rf_port;
 uint8_t rfsns_any_sensor = 0;
@@ -165,8 +165,8 @@ typedef struct {
   uint8_t volt;
 } theo_v2_t2_t;
 
-theo_v2_t1_t *rfsns_theo_v2_t1 = NULL;
-theo_v2_t2_t *rfsns_theo_v2_t2 = NULL;
+theo_v2_t1_t *rfsns_theo_v2_t1 = nullptr;
+theo_v2_t2_t *rfsns_theo_v2_t2 = nullptr;
 
 void RfSnsInitTheoV2(void)
 {
@@ -268,16 +268,16 @@ void RfSnsTheoV2Show(bool json)
 
       if (rfsns_theo_v2_t1[i].time < LocalTime() - RFSNS_VALID_WINDOW) {
         if (json) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_RFRECEIVED "\":\"%s\",\"" D_JSON_VOLTAGE "\":%s}"),
-            mqtt_data, sensor, GetDT(rfsns_theo_v2_t1[i].time).c_str(), voltage);
+          ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_RFRECEIVED "\":\"%s\",\"" D_JSON_VOLTAGE "\":%s}"),
+            sensor, GetDT(rfsns_theo_v2_t1[i].time).c_str(), voltage);
         }
       } else {
         char temperature[33];
         dtostrfd(ConvertTemp((float)rfsns_theo_v2_t1[i].temp / 100), Settings.flag2.temperature_resolution, temperature);
 
         if (json) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_VOLTAGE "\":%s}"),
-            mqtt_data, sensor, temperature, rfsns_theo_v2_t1[i].lux, voltage);
+          ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_VOLTAGE "\":%s}"),
+            sensor, temperature, rfsns_theo_v2_t1[i].lux, voltage);
 #ifdef USE_DOMOTICZ
           if ((0 == tele_period) && !sensor_once) {
             DomoticzSensor(DZ_TEMP, temperature);
@@ -305,8 +305,8 @@ void RfSnsTheoV2Show(bool json)
 
       if (rfsns_theo_v2_t2[i].time < LocalTime() - RFSNS_VALID_WINDOW) {
         if (json) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_RFRECEIVED" \":\"%s\",\"" D_JSON_VOLTAGE "\":%s}"),
-            mqtt_data, sensor, GetDT(rfsns_theo_v2_t2[i].time).c_str(), voltage);
+          ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_RFRECEIVED" \":\"%s\",\"" D_JSON_VOLTAGE "\":%s}"),
+            sensor, GetDT(rfsns_theo_v2_t2[i].time).c_str(), voltage);
         }
       } else {
         float temp = ConvertTemp((float)rfsns_theo_v2_t2[i].temp / 100);
@@ -317,8 +317,8 @@ void RfSnsTheoV2Show(bool json)
         dtostrfd(humi, Settings.flag2.humidity_resolution, humidity);
 
         if (json) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_VOLTAGE "\":%s}"),
-            mqtt_data, sensor, temperature, humidity, voltage);
+          ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"" D_JSON_VOLTAGE "\":%s}"),
+            sensor, temperature, humidity, voltage);
           if ((0 == tele_period) && !sensor_once) {
 #ifdef USE_DOMOTICZ
             DomoticzTempHumSensor(temperature, humidity);  //
@@ -423,7 +423,7 @@ typedef struct {
   uint8_t wdir;
 } alecto_v2_t;
 
-alecto_v2_t *rfsns_alecto_v2 = NULL;
+alecto_v2_t *rfsns_alecto_v2 = nullptr;
 uint16_t rfsns_alecto_rain_base = 0;
 
 void RfSnsInitAlectoV2(void)
@@ -552,8 +552,7 @@ void RfSnsAlectoV2Show(bool json)
   if (rfsns_alecto_v2->time) {
     if (rfsns_alecto_v2->time < LocalTime() - RFSNS_VALID_WINDOW) {
       if (json) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_ALECTOV2 "\":{\"" D_JSON_RFRECEIVED "\":\"%s\"}"),
-          mqtt_data, GetDT(rfsns_alecto_v2->time).c_str());
+        ResponseAppend_P(PSTR(",\"" D_ALECTOV2 "\":{\"" D_JSON_RFRECEIVED "\":\"%s\"}"), GetDT(rfsns_alecto_v2->time).c_str());
       }
     } else {
       float temp = ConvertTemp(rfsns_alecto_v2->temp);
@@ -576,8 +575,8 @@ void RfSnsAlectoV2Show(bool json)
       }
 
       if (json) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_ALECTOV2 "\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"Rain\":%s,\"Wind\":%s,\"Gust\":%s%s}"),
-          mqtt_data, temperature, humidity, rain, wind, gust, (rfsns_alecto_v2->type) ? direction : "");
+        ResponseAppend_P(PSTR(",\"" D_ALECTOV2 "\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s,\"Rain\":%s,\"Wind\":%s,\"Gust\":%s%s}"),
+          temperature, humidity, rain, wind, gust, (rfsns_alecto_v2->type) ? direction : "");
         if (0 == tele_period) {
 #ifdef USE_DOMOTICZ
         // Use a rules to send data to Domoticz where also a local BMP280 is connected:
@@ -618,7 +617,7 @@ void RfSnsInit(void)
       pinMode(pin[GPIO_RF_SENSOR], INPUT);
     } else {
       free(rfsns_raw_signal);
-      rfsns_raw_signal = NULL;
+      rfsns_raw_signal = nullptr;
     }
   }
 }

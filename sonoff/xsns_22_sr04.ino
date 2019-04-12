@@ -34,7 +34,7 @@ uint8_t sr04_echo_pin = 0;
 uint8_t sr04_trig_pin = 0;
 real64_t distance;
 
-NewPing* sonar = NULL;
+NewPing* sonar = nullptr;
 
 void Sr04Init(void)
 {
@@ -57,7 +57,7 @@ void Sr04Show(bool json)
     dtostrfd(distance, 3, distance_chr);
 
     if(json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SR04\":{\"" D_JSON_DISTANCE "\":%s}"), mqtt_data, distance_chr);
+      ResponseAppend_P(PSTR(",\"SR04\":{\"" D_JSON_DISTANCE "\":%s}"), distance_chr);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_COUNT, distance_chr);  // Send distance as Domoticz Counter value
