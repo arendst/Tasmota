@@ -47,6 +47,7 @@
 TasmotaSerial *TuyaSerial = nullptr;
 
 uint8_t tuya_new_dim = 0;                   // Tuya dimmer value temp
+uint8_t tuya_current_dim = 255;             // Tuya dimmer current value
 bool tuya_ignore_dim = false;               // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
 uint8_t tuya_cmd_status = 0;                // Current status of serial-read
 uint8_t tuya_cmd_checksum = 0;              // Checksum of tuya command
@@ -126,6 +127,14 @@ bool TuyaSetPower(void)
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: SetDevicePower.rpower=%d"), rpower);
 
     TuyaSendBool(TUYA_POWER_ID, rpower);
+
+    if (rpower) {
+      if (Settings.param[P_HOLD_TIME] > 0)
+        tuya_current_dim = Settings.param[P_HOLD_TIME];
+
+      LightSerialDuty(tuya_current_dim);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: SetDevicePower.tuya_current_dim=%d"), tuya_current_dim);
+    }
 
     status = true;
   }
@@ -207,6 +216,8 @@ void TuyaPacketProcess(void)
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Autoconfiguring Dimmer ID %d"), tuya_buffer[6]);
           Settings.param[P_TUYA_DIMMER_ID] = tuya_buffer[6];
         }
+
+        tuya_current_dim = tuya_buffer[13];
 
         tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
         if((power || Settings.flag3.tuya_apply_o20)  && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 1)) {
