@@ -1,4 +1,7 @@
-/* 6.5.0.7 20190410
+/* 6.5.0.8 20190412
+ * Fix use of SerialDelimiter value 128
+ * 
+ * 6.5.0.7 20190410
  * Add command LedMask to assign which relay has access to power LED (#5602, #5612)
  *
  * 6.5.0.6 20190409
