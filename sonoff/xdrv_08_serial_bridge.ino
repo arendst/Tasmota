@@ -54,7 +54,7 @@ void SerialBridgeInput(void)
 
       if ((serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFFER_SIZE -1) &&    // Add char to string if it still fits and ...
           ((isprint(serial_in_byte) && (128 == Settings.serial_delimiter)) ||  // Any char between 32 and 127
-           (serial_in_byte != Settings.serial_delimiter) ||                    // Any char between 1 and 127 and not being delimiter
+          ((serial_in_byte != Settings.serial_delimiter) && (128 != Settings.serial_delimiter)) ||  // Any char between 1 and 127 and not being delimiter
             serial_bridge_raw)) {                                              // Any char between 0 and 255
         serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
         serial_bridge_polling_window = millis();                               // Wait for more data

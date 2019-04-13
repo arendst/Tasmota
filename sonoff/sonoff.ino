@@ -2274,7 +2274,7 @@ void SerialInput(void)
       if (serial_in_byte || Settings.flag.mqtt_serial_raw) {                     // Any char between 1 and 127 or any char (0 - 255)
         if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&                   // Add char to string if it still fits and ...
             ((isprint(serial_in_byte) && (128 == Settings.serial_delimiter)) ||  // Any char between 32 and 127
-             (serial_in_byte != Settings.serial_delimiter) ||                    // Any char between 1 and 127 and not being delimiter
+            ((serial_in_byte != Settings.serial_delimiter) && (128 != Settings.serial_delimiter)) ||  // Any char between 1 and 127 and not being delimiter
               Settings.flag.mqtt_serial_raw)) {                                  // Any char between 0 and 255
           serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
           serial_polling_window = millis();
@@ -2558,6 +2558,8 @@ extern struct rst_info resetInfo;
 
 void setup(void)
 {
+  global_state.data = 3;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
+
   RtcRebootLoad();
   if (!RtcRebootValid()) { RtcReboot.fast_reboot_count = 0; }
   RtcReboot.fast_reboot_count++;
