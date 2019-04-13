@@ -129,8 +129,8 @@ bool TuyaSetPower(void)
     TuyaSendBool(TUYA_POWER_ID, rpower);
 
     if (rpower) {
-      if (Settings.param[P_HOLD_TIME] > 0)
-        tuya_current_dim = Settings.param[P_HOLD_TIME];
+      if (Settings.param[P_TUYA_ON_POWER] > 0)
+        tuya_current_dim = Settings.param[P_TUYA_ON_POWER];
 
       LightSerialDuty(tuya_current_dim);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: SetDevicePower.tuya_current_dim=%d"), tuya_current_dim);

@@ -1,4 +1,7 @@
-/* 6.5.0.8 20190413
+/* 6.5.0.9 20190413
+ * Fix Tuya Dimmers from turning on at different dimming value instead of the last one.
+ * Added SetOption38 to control at what intensity Tuya Dimmer turns on at. 1-255 means at that specific level. 0 means at the last level.
+ * 6.5.0.8 20190413
  * Fix use of SerialDelimiter value 128 (#5634)
  * Fix lost syslog connection regression from 6.5.0.4
  *
