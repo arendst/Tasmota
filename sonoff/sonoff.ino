@@ -2558,6 +2558,8 @@ extern struct rst_info resetInfo;
 
 void setup(void)
 {
+  global_state.data = 3;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
+
   RtcRebootLoad();
   if (!RtcRebootValid()) { RtcReboot.fast_reboot_count = 0; }
   RtcReboot.fast_reboot_count++;
