@@ -1,6 +1,7 @@
 /* 6.5.0.8 20190413
  * Fix use of SerialDelimiter value 128 (#5634)
  * Fix lost syslog connection regression from 6.5.0.4
+ * Add Shelly 2.5 Energy Monitoring (#5592)
  *
  * 6.5.0.7 20190410
  * Add command LedMask to assign which relay has access to power LED (#5602, #5612)
