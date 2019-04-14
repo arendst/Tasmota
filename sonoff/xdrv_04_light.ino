@@ -652,6 +652,9 @@ void LightSetDimmer(uint8_t myDimmer)
     light_current_color[1] = (uint8_t)temp;
     return;
   }
+  else if (TUYA_DIMMER == my_module_type) {
+    light_current_color[0] = (uint8_t)myDimmer;
+  }
   if (LT_PWM1 == light_type) {
     Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
   }
@@ -799,7 +802,7 @@ void LightPreparePower(void)
 
 void LightFade(void)
 {
-  if (0 == Settings.light_fade) {
+  if (0 == Settings.light_fade || TUYA_DIMMER == my_module_type) {
     for (uint8_t i = 0; i < light_subtype; i++) {
       light_new_color[i] = light_current_color[i];
     }
@@ -902,7 +905,7 @@ void LightAnimate(void)
     for (uint8_t i = 0; i < light_subtype; i++) {
       light_still_on += light_new_color[i];
     }
-    if (light_still_on && Settings.light_fade && (Settings.light_scheme < LS_MAX)) {
+    if (light_still_on && Settings.light_fade && (Settings.light_scheme < LS_MAX) && TUYA_DIMMER != my_module_type) {
       uint8_t speed = Settings.light_speed;
       if (speed > 6) {
         speed = 6;

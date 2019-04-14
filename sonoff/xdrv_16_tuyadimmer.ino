@@ -47,7 +47,6 @@
 TasmotaSerial *TuyaSerial = nullptr;
 
 uint8_t tuya_new_dim = 0;                   // Tuya dimmer value temp
-uint8_t tuya_current_dim = 255;             // Tuya dimmer current value
 bool tuya_ignore_dim = false;               // Flag to skip serial send to prevent looping when processing inbound states from the faceplate interaction
 uint8_t tuya_cmd_status = 0;                // Current status of serial-read
 uint8_t tuya_cmd_checksum = 0;              // Checksum of tuya command
@@ -121,19 +120,24 @@ bool TuyaSetPower(void)
 
   uint8_t rpower = XdrvMailbox.index;
   int16_t source = XdrvMailbox.payload;
+  uint8_t tuya_current_dim;
 
   if (source != SRC_SWITCH && TuyaSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: SetDevicePower.rpower=%d"), rpower);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaSetPower.rpower=%d"), rpower);
 
     TuyaSendBool(TUYA_POWER_ID, rpower);
 
     if (rpower) {
-      if (Settings.param[P_TUYA_ON_POWER] > 0)
+      if (Settings.param[P_TUYA_ON_POWER] > 0) {
         tuya_current_dim = Settings.param[P_TUYA_ON_POWER];
+        Settings.light_dimmer = round(tuya_current_dim * 100. / 255.);
+      }
+      else
+        tuya_current_dim = round(Settings.light_dimmer * 255. / 100.);
 
       LightSerialDuty(tuya_current_dim);
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: SetDevicePower.tuya_current_dim=%d"), tuya_current_dim);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaSetPower.tuya_current_dim=%d"), tuya_current_dim);
     }
 
     status = true;
@@ -150,8 +154,8 @@ bool TuyaSetChannels(void)
 void LightSerialDuty(uint8_t duty)
 {
   if (duty > 0 && !tuya_ignore_dim && TuyaSerial) {
-    if (duty < 25) {
-      duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
+    if (duty < Settings.param[P_TUYA_MIN_POWER]) {
+      duty = Settings.param[P_TUYA_MIN_POWER];  // dimming acts odd below some level but all light are created equal
     }
 
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR( "TYA: Send Serial Packet Dim Value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
@@ -216,8 +220,6 @@ void TuyaPacketProcess(void)
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Autoconfiguring Dimmer ID %d"), tuya_buffer[6]);
           Settings.param[P_TUYA_DIMMER_ID] = tuya_buffer[6];
         }
-
-        tuya_current_dim = tuya_buffer[13];
 
         tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
         if((power || Settings.flag3.tuya_apply_o20)  && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 1)) {

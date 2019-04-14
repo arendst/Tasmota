@@ -870,6 +870,8 @@ void SettingsDefaultSet2(void)
   Settings.light_pixels = WS2812_LEDS;
 //  Settings.light_rotation = 0;
   SettingsDefaultSet_5_8_1();    // Clock color
+  Settings.param[P_TUYA_ON_POWER] = 0;
+  Settings.param[P_TUYA_MIN_POWER] = 25;
 
   // Display
   SettingsDefaultSet_5_10_1();   // Display settings
