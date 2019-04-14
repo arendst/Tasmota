@@ -1108,7 +1108,6 @@ void LightRgbToHsb(bool from_settings = false)
   }
 
   float saturation = (0.0f == max) ? 0 : 1.0f - min / max;
-  // float saturation = (0.0f == light_brightness) ? 0 : (d / light_brightness);
 
   if (d != 0.0f)
   {
