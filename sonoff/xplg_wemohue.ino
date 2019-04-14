@@ -466,13 +466,9 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
   "</device>"
   "</root>\r\n"
   "\r\n";
-const char HUE_LIGHTS_STATUS_JSON[] PROGMEM =
+const char HUE_LIGHTS_STATUS_JSON1[] PROGMEM =
   "{\"on\":{state},"
-  "\"bri\":{b},"
-  "\"hue\":{h},"
-  "\"sat\":{s},"
-  "\"xy\":[0.5, 0.5],"
-  "\"ct\":{t},"
+  "{light_status}"
   "\"alert\":\"none\","
   "\"effect\":\"none\","
   "\"colormode\":\"{m}\","
@@ -575,18 +571,32 @@ void HueLightStatus1(uint8_t device, String *response)
   float hue = 0;
   float sat = 0;
   float bri = 254;
-  uint16_t ct = 500;
+  uint16_t ct = 0;
+  String light_status = "";
+
+  // force ct mode for LST_COLDWARM
+  if (LST_COLDWARM == light_subtype) {
+    g_gotct = true;
+  }
 
   if (light_type) {
     LightGetHsb(&hue, &sat, &bri, g_gotct);
     ct = LightGetColorTemp();
   }
-  *response += FPSTR(HUE_LIGHTS_STATUS_JSON);
+  *response += FPSTR(HUE_LIGHTS_STATUS_JSON1);
   response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
-  response->replace("{h}", String((uint16_t)(65535.0f * hue)));
-  response->replace("{s}", String((uint8_t)(254.0f * sat)));
-  response->replace("{b}", String((uint8_t)(254.0f * bri)));
-  response->replace("{t}", String(ct));
+
+  if (LST_SINGLE <= light_subtype) {
+    light_status += "\"bri\":" + String((uint8_t)(254.0f * bri + 0.5f)) + ",";
+  }
+  if (LST_RGB <= light_subtype) {  // colors
+    light_status += "\"hue\":" + String((uint16_t)(65535.0f * hue + 0.5f)) + ",";
+    light_status += "\"sat\":" + String((uint8_t)(254.0f * sat + 0.5f)) + ",";
+  }
+  if (LST_COLDWARM == light_subtype || LST_RGBWC == light_subtype) {  // white temp
+    light_status += "\"ct\":"  + String(ct) + ",";
+  }
+  response->replace("{light_status}", light_status);
   response->replace("{m}", g_gotct?"ct":"hs");
 }
 
@@ -760,6 +770,7 @@ void HueLights(String *path)
         change = false;
       }
       response += "]";
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
       if (2 == response.length()) {
         response = FPSTR(HUE_ERROR_JSON);
       }
@@ -777,6 +788,7 @@ void HueLights(String *path)
     response += F("{\"state\":");
     HueLightStatus1(device, &response);
     HueLightStatus2(device, &response);
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " LightResult (%s)"), response.c_str());
   }
   else {
     response = "{}";
