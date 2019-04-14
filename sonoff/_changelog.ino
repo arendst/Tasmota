@@ -1,4 +1,5 @@
 /* 6.5.0.8 20190413
+ * Fix color and ct handling in Philips Hue emulation (#5600 #4809)
  * Fix use of SerialDelimiter value 128 (#5634)
  * Fix lost syslog connection regression from 6.5.0.4
  *

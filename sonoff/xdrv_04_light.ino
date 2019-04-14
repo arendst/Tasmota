@@ -629,7 +629,7 @@ void LightSetColorTemp(uint16_t ct)
   }
 }
 
-uint16_t light_ct;    // memorise the last ct
+uint16_t _light_ct;    // memorise the last ct
 
 uint16_t LightGetColorTemp(void)
 {
@@ -657,10 +657,9 @@ uint16_t LightGetColorTemp(void)
 
   // for Alexa, send back the original CT value if close enough
   // avoids rounding errors
-  if (abs(ct - light_ct) < 5)
-    return light_ct;
-  else
-    return ct;
+  if ((ct > _light_ct ? ct - _light_ct : _light_ct - ct) < 5)
+    _light_ct = ct;
+  return _light_ct;
 }
 
 void LightSetDimmer(uint8_t myDimmer)
@@ -869,7 +868,7 @@ void LightWheel(uint8_t wheel_pos)
   light_entry_color[4] = 0;
   float dimmer = 100 / (float)Settings.light_dimmer;
   for (uint8_t i = 0; i < LST_RGB; i++) {
-    float temp = (float)light_entry_color[i] / dimmer;
+    float temp = (float)light_entry_color[i] / dimmer + 0.5f;
     light_entry_color[i] = (uint8_t)temp;
   }
 }
@@ -896,6 +895,7 @@ void LightRandomColor(void)
     light_wheel = random(255);
     LightWheel(light_wheel);
     memcpy(light_current_color, light_entry_color, sizeof(light_current_color));
+    LightSetColor();
   }
   LightFade();
 }
@@ -1123,11 +1123,11 @@ void LightRgbToHsb(bool from_settings = false)
   }
 
   // change the value only if it's significantly different from last value
-  if (abs(light_hue - hue) > 0.01f)
+  if ((light_hue - hue > 0.01f) || (hue - light_hue > 0.01f))
     light_hue = hue;
-  if (abs(light_saturation - saturation) > 0.01f)
+  if ((light_saturation - saturation > 0.01f) || (saturation - light_saturation > 0.01f))
     light_saturation = saturation;
-  if (abs(light_brightness - brightness) > 0.01f)
+  if ((light_brightness - brightness > 0.01f) || (brightness - light_brightness > 0.01f))
     light_brightness = brightness;
 }
 
@@ -1209,7 +1209,7 @@ void LightGetHsb(float *hue, float *sat, float *bri, bool gotct)
     *hue = light_hue = 0.0f;
     *sat = light_saturation = 0.0f;
     float brightness = (float)Settings.light_dimmer / 100.0f;
-    if (abs(light_brightness - brightness) > 0.01f)
+    if ((light_brightness - brightness > 0.01f) || (brightness - light_brightness > 0.01f))
       light_brightness = brightness;
     *bri = light_brightness;
   }
@@ -1224,11 +1224,11 @@ void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
       if (ct > 0) {
         light_hue = 0.0f;
         light_saturation = 0.0f;
-        light_ct = ct;
+        _light_ct = ct;
         LightSetColorTemp(ct);
       }
     } else {
-      light_ct = 0;
+      _light_ct = 0;
       light_hue = hue;
       light_saturation = sat;
       light_brightness = bri;
@@ -1246,7 +1246,7 @@ void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
       if (ct > 0) {
         light_hue = 0.0f;
         light_saturation = 0.0f;
-        light_ct = ct;
+        _light_ct = ct;
         LightSetColorTemp(ct);
       }
       LightPreparePower();
