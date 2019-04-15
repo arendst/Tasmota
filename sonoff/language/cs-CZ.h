@@ -1,4 +1,4 @@
-/*
+﻿/*
   cs-CZ.h - localization for Czech with diacritics - Czech for Sonoff-Tasmota
 
   Copyright (C) 2019  Vladimír Synek
@@ -585,6 +585,7 @@
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
+#define D_SENSOR_RF433_TX      "RF433 Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
