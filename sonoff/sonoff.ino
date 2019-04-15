@@ -127,6 +127,7 @@ uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
 float global_temperature = 0;               // Provide a global temperature to be used by some sensors
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
+float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
 char *ota_url;                              // OTA url string pointer
 uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
 uint16_t blink_counter = 0;                 // Number of blink cycles
@@ -1606,6 +1607,18 @@ void StopAllPowerBlink(void)
       MqttPublishPowerBlinkState(i);
       ExecuteCommandPower(i, (blink_powersave >> (i -1))&1, SRC_IGNORE);  // Restore state
     }
+  }
+}
+
+void SetAllPower(uint8_t state, int source)
+{
+  if ((POWER_ALL_OFF == state) || (POWER_ALL_ON == state)) {
+    power = 0;
+    if (POWER_ALL_ON == state) {
+      power = (1 << devices_present) -1;
+    }
+    SetDevicePower(power, source);
+    MqttPublishAllPowerState();
   }
 }
 

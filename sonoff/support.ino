@@ -575,6 +575,9 @@ float ConvertTemp(float c)
 {
   float result = c;
 
+  global_update = uptime;
+  global_temperature = c;
+
   if (!isnan(c) && Settings.flag.temperature_conversion) {
     result = c * 1.8 + 32;  // Fahrenheit
   }
@@ -586,9 +589,20 @@ char TempUnit(void)
   return (Settings.flag.temperature_conversion) ? 'F' : 'C';
 }
 
+float ConvertHumidity(float h)
+{
+  global_update = uptime;
+  global_humidity = h;
+
+  return h;
+}
+
 float ConvertPressure(float p)
 {
   float result = p;
+
+  global_update = uptime;
+  global_pressure = p;
 
   if (!isnan(p) && Settings.flag.pressure_conversion) {
     result = p * 0.75006375541921;  // mmHg
@@ -601,19 +615,13 @@ String PressureUnit(void)
   return (Settings.flag.pressure_conversion) ? String(D_UNIT_MILLIMETER_MERCURY) : String(D_UNIT_PRESSURE);
 }
 
-void SetGlobalValues(float temperature, float humidity)
-{
-  global_update = uptime;
-  global_temperature = temperature;
-  global_humidity = humidity;
-}
-
 void ResetGlobalValues(void)
 {
   if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
     global_update = 0;
     global_temperature = 0;
     global_humidity = 0;
+    global_pressure = 0;
   }
 }
 

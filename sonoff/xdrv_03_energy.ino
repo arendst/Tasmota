@@ -116,7 +116,7 @@ void Energy200ms(void)
   if (5 == energy_fifth_second) {
     energy_fifth_second = 0;
 
-    XnrgCall(FUNC_EVERY_SECOND);
+    XnrgCall(FUNC_ENERGY_EVERY_SECOND);
 
     if (RtcTime.valid) {
       if (LocalTime() == Midnight()) {
@@ -717,6 +717,7 @@ bool Xsns03(uint8_t function)
         break;
       case FUNC_EVERY_SECOND:
         EnergyMarginCheck();
+        XnrgCall(FUNC_EVERY_SECOND);
         break;
       case FUNC_JSON_APPEND:
         EnergyShow(true);

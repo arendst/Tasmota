@@ -288,7 +288,7 @@ int Xnrg01(uint8_t function)
       case FUNC_INIT:
         HlwSnsInit();
         break;
-      case FUNC_EVERY_SECOND:
+      case FUNC_ENERGY_EVERY_SECOND:
         HlwEverySecond();
         break;
       case FUNC_EVERY_200_MSECOND:

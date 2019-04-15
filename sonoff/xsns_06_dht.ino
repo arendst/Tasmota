@@ -155,6 +155,7 @@ void DhtReadTempHum(uint8_t sensor)
       break;
     }
     Dht[sensor].t = ConvertTemp(Dht[sensor].t);
+    Dht[sensor].h = ConvertHumidity(Dht[sensor].h);
     Dht[sensor].lastresult = 0;
   } else {
     Dht[sensor].lastresult++;

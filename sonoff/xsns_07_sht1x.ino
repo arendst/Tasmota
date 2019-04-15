@@ -148,8 +148,7 @@ bool ShtRead(void)
   float rhLinear = c1 + c2 * humRaw + c3 * humRaw * humRaw;
   sht_humidity = (sht_temperature - 25) * (t1 + t2 * humRaw) + rhLinear;
   sht_temperature = ConvertTemp(sht_temperature);
-
-  SetGlobalValues(sht_temperature, sht_humidity);
+  ConvertHumidity(sht_humidity);  // Set global humidity
 
   sht_valid = SENSOR_MAX_MISS;
   return true;

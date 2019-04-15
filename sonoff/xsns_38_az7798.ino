@@ -232,7 +232,7 @@ void AzEverySecond(void)
       return;
     }
     response_substr[j] = 0;                 // add null terminator
-    az_humidity = CharToDouble((char*)response_substr);
+    az_humidity = ConvertHumidity(CharToDouble((char*)response_substr));
   }
 }
 

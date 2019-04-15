@@ -509,7 +509,8 @@ void BmpRead(void)
 #endif  // USE_BME680
     }
   }
-  SetGlobalValues(ConvertTemp(bmp_sensors[0].bmp_temperature), bmp_sensors[0].bmp_humidity);
+  ConvertTemp(bmp_sensors[0].bmp_temperature);   // Set global temperature
+  ConvertHumidity(bmp_sensors[0].bmp_humidity);  // Set global humidity
 }
 
 void BmpEverySecond(void)

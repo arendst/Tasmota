@@ -34,6 +34,8 @@
 #define ADE7953_UREF            26000
 #define ADE7953_IREF            10000
 
+#define ADE7953_OVERTEMP        73.0     // Industry standard lowest overtemp in Celsius
+
 #define ADE7953_ADDR            0x38
 
 uint32_t ade7953_active_power = 0;
@@ -141,7 +143,7 @@ void Ade7953GetData(void)
   }
 }
 
-void Ade7953EverySecond()
+void Ade7953EnergyEverySecond()
 {
   if (ade7953_active_power) {
     energy_kWhtoday_delta += ((ade7953_active_power * (100000 / (Settings.energy_power_calibration / 10))) / 3600);
@@ -156,6 +158,13 @@ void Ade7953EverySecond()
 	else {
 		Ade7953GetData();
 	}
+}
+
+void Ade7953EverySecond()
+{
+  if (power && (global_temperature > ADE7953_OVERTEMP)) {  // Device overtemp, turn off relays
+    SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
+  }
 }
 
 void Ade7953DrvInit(void)
@@ -228,6 +237,9 @@ int Xnrg07(uint8_t function)
   }
   else if (XNRG_07 == energy_flg) {
     switch (function) {
+      case FUNC_ENERGY_EVERY_SECOND:
+        Ade7953EnergyEverySecond();
+        break;
       case FUNC_EVERY_SECOND:
         Ade7953EverySecond();
         break;
