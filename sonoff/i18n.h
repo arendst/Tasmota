@@ -424,6 +424,14 @@
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
 
+// Commands xdrv_91_timers.ino
+#define D_JSON_RF433_GROUP "Group"
+#define D_JSON_RF433_BLIND "Blind"
+#define D_JSON_RF433_ACTION "Action"
+#define D_JSON_RF433_ACTION_UP "Up"
+#define D_JSON_RF433_ACTION_DOWN "Down"
+#define D_JSON_RF433_ACTION_STOP "Stop"
+#define D_JSON_RF433_ACTION_PROG "Prog"
 /********************************************************************************************/
 
 #define D_ASTERIX "********"

@@ -1,4 +1,4 @@
-/*
+﻿/*
   sonoff_template.h - template settings for Sonoff-Tasmota
 
   Copyright (C) 2019  Theo Arends
@@ -181,6 +181,7 @@ enum UserSelectablePins {
   GPIO_HRE_CLOCK,      // Clock/Power line for HR-E Water Meter
   GPIO_HRE_DATA,       // Data line for HR-E Water Meter
   GPIO_ADE7953_IRQ,    // ADE7953 IRQ
+  GPIO_RF433_TX,       // RF433 transmitter module  
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -246,6 +247,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ROTARY "1a|" D_SENSOR_ROTARY "1b|" D_SENSOR_ROTARY "2a|" D_SENSOR_ROTARY "2b|"
   D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
   D_SENSOR_ADE7953_IRQ "|"
+  D_SENSOR_RF433_TX "|"
   ;
 
 /********************************************************************************************/
@@ -601,8 +603,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,
-  GPIO_HRE_DATA
+  GPIO_HRE_DATA,
 #endif
+  GPIO_RF433_TX	
 };
 
 const uint8_t kModuleNiceList[] PROGMEM = {
