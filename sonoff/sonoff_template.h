@@ -181,6 +181,7 @@ enum UserSelectablePins {
   GPIO_HRE_CLOCK,      // Clock/Power line for HR-E Water Meter
   GPIO_HRE_DATA,       // Data line for HR-E Water Meter
   GPIO_ADE7953_IRQ,    // ADE7953 IRQ
+  GPIO_DOOYARF_TX,
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -246,6 +247,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ROTARY "1a|" D_SENSOR_ROTARY "1b|" D_SENSOR_ROTARY "2a|" D_SENSOR_ROTARY "2b|"
   D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
   D_SENSOR_ADE7953_IRQ "|"
+  D_SENSOR_DOOYARF_TX "|"
   ;
 
 /********************************************************************************************/
@@ -603,6 +605,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_HRE_CLOCK,
   GPIO_HRE_DATA
 #endif
+#ifdef USE_DOOYA
+  GPIO_DOOYARF_TX,     //Dooya BLind and Shutter
+#endif //USE_DOOYA
 };
 
 const uint8_t kModuleNiceList[] PROGMEM = {
