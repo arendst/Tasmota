@@ -439,6 +439,7 @@
 
 //#define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 
+#define USE_DOOYA                               // Add Dooya BLind and Shutter Support (+1k0 code)
 /*********************************************************************************************\
  * Debug features are only supported in development branch
 \*********************************************************************************************/
