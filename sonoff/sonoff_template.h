@@ -603,10 +603,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,
-  GPIO_HRE_DATA
+  GPIO_HRE_DATA,
 #endif
 #ifdef USE_DOOYA
-  GPIO_DOOYARF_TX,     //Dooya BLind and Shutter
+  GPIO_DOOYARF_TX     //Dooya BLind and Shutter
 #endif //USE_DOOYA
 };
 
