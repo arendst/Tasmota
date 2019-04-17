@@ -5,6 +5,7 @@
  * Add all temperature, humidity and pressure for global access
  * Add Shelly 2.5 overtemp functionality
  * Fix Shelly 2.5 I2C address priority issue when VEML6070 code is present by disabling VEML6070 for Shelly 2.5 (#5592)
+ * Support for color and colortone for Philips Hue emulation via Alexa (#5600 #4809)
  *
  * 6.5.0.7 20190410
  * Add command LedMask to assign which relay has access to power LED (#5602, #5612)
