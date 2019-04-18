@@ -162,9 +162,11 @@ void Ade7953EnergyEverySecond()
 
 void Ade7953EverySecond()
 {
+#ifndef USE_ADC_VCC
   if (power && (ConvertTempToCelsius(AdcTemperature()) > ADE7953_OVERTEMP)) {  // Device overtemp, turn off relays
     SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
   }
+#endif  // USE_ADC_VCC
 }
 
 void Ade7953DrvInit(void)
@@ -190,7 +192,7 @@ bool Ade7953Command(void)
 {
   bool serviced = true;
 
-  double value = CharToDouble(XdrvMailbox.data);
+  uint32_t value = (uint32_t)(CharToDouble(XdrvMailbox.data) * 100);  // 1.23 = 123
 
   if (CMND_POWERCAL == energy_command_code) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = ADE7953_PREF; }
@@ -206,17 +208,23 @@ bool Ade7953Command(void)
   }
   else if (CMND_POWERSET == energy_command_code) {
     if (XdrvMailbox.data_len && ade7953_active_power) {
-      Settings.energy_power_calibration = (uint32_t)((double)ade7953_active_power / (value / 10));  // W
+      if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
+        Settings.energy_power_calibration = (ade7953_active_power * 1000) / value;  // 0.00 W
+      }
     }
   }
   else if (CMND_VOLTAGESET == energy_command_code) {
     if (XdrvMailbox.data_len && ade7953_voltage_rms) {
-      Settings.energy_voltage_calibration = (uint32_t)((double)ade7953_voltage_rms / value);  // V
+      if ((value > 10000) && (value < 26000)) {  // Between 100V and 260V
+        Settings.energy_voltage_calibration = (ade7953_voltage_rms * 100) / value;  // 0.00 V
+      }
     }
   }
   else if (CMND_CURRENTSET == energy_command_code) {
     if (XdrvMailbox.data_len && ade7953_current_rms) {
-      Settings.energy_current_calibration = (uint32_t)((double)ade7953_current_rms / (value * 10));  // A
+      if ((value > 2000) && (value < 1000000)) {  // Between 20mA and 10A
+        Settings.energy_current_calibration = ((ade7953_current_rms * 100) / value) * 100;  // 0.00 mA
+      }
     }
   }
   else serviced = false;  // Unknown command
