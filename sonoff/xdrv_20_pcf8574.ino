@@ -47,7 +47,7 @@ const char HTTP_FORM_I2C_PCF8574_1[] PROGMEM =
   "<form method='get' action='" WEB_HANDLE_PCF8574 "'>"
   "<br/><input id='b1' name='b1' type='checkbox'%s><b>Reverse Relays</b><br/><br/><hr/>";
 const char HTTP_FORM_I2C_PCF8574_2[] PROGMEM =
-  "<br/><b>Board %d  Channel %d IN/OUT</b> <br/><select id='i2cs%d' name='i2cs%d'>"
+  "<br/><b>Board %d " D_CHANNEL " %d</b> <br/><select id='i2cs%d' name='i2cs%d'>"
   "<option%s value='0'>Input</option>"
   "<option%s value='1'>Output</option>"
   "</select></br>";
@@ -121,7 +121,7 @@ void pcf8574_saveSettings()
       }
     }
     //Settings.pcf8574_config[0] = (!strlen(webServer->arg("i2cs0").c_str())) ?  0 : atoi(webServer->arg("i2cs0").c_str());
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("HTTP: I2C Board: %d, Config: %2x")),  idx, Settings.pcf8574_config[idx];
+    //AddLog_P2(LOG_LEVEL_INFO, PSTR("HTTP: I2C Board: %d, Config: %2x")),  idx, Settings.pcf8574_config[idx];
 
   }
 }

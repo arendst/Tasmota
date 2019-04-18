@@ -22,7 +22,7 @@
 
 //STB mod
 #define D_JSON_MOISTURE "Moisture"
-#define D_JSON_DISTANCE "Distance"
+#define D_JSON_DISTANCE "Distanz"
 #define D_CONFIGURE_PCF8574 "Configure PCF8574"
 #define D_CMND_COUNTERDEVIDER "CounterDevider"
 #define D_CMND_MQTTENABLE "MqttEnable"

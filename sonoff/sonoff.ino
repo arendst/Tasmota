@@ -1111,7 +1111,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       if ((data_len > 0) && (payload32 >= 0) ) {
         Settings.deepsleep = payload32;
       }
-      Response_P( PSTR("{\"DeepSleep\":\"%d%s (%d%s)\"}"), Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "", Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "");
+      Response_P( PSTR("{\"" D_CMND_DEEPSLEEP "\":\"%d%s (%d%s)\"}"), Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "", Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "");
     }
 //end
     else if (CMND_BUTTONDEBOUNCE == command_code) {
@@ -1832,7 +1832,7 @@ void MqttShowState(void)
     MqttShowPWMState();
   }
   //STB mod
-  ResponseAppend_P(PSTR(",\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d,\"" D_JSON_LINK_COUNT "\":%d,\"" D_JSON_DOWNTIME "\":\"%s\",\""  D_CMND_DEEPSLEEP  "\":%d,\"" D_JSON_HEAPSIZE "\":%d\"}}"),
+  ResponseAppend_P(PSTR(",\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d,\"" D_JSON_LINK_COUNT "\":%d,\"" D_JSON_DOWNTIME "\":\"%s\",\""  D_CMND_DEEPSLEEP  "\":%d,\"" D_JSON_HEAPSIZE "\":%d}}"),
     Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WiFi.BSSIDstr().c_str(), WiFi.channel(), WifiGetRssiAsQuality(WiFi.RSSI()), WifiLinkCount(), WifiDowntime().c_str(), Settings.deepsleep, ESP.getFreeHeap());
 }
   //end
