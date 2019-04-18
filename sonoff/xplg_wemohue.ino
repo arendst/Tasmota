@@ -468,6 +468,7 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
   "\r\n";
 const char HUE_LIGHTS_STATUS_JSON1[] PROGMEM =
   "{\"on\":{state},"
+  "\"xy\":[{x}, {y}],"
   "{light_status}"
   "\"alert\":\"none\","
   "\"effect\":\"none\","
@@ -566,12 +567,42 @@ void HueConfig(String *path)
 
 bool g_gotct = false;
 
+#define FORCE_RANGE(x, min, max) x < min ? min : (x > max ? max : x)
+
+void RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x, float *r_y)
+{
+  float x = 0.31271f;
+  float y = 0.32902f;
+
+  if (i_r + i_b + i_g > 0) {
+    float r = (float)i_r / 255.0f;
+    float g = (float)i_g / 255.0f;
+    float b = (float)i_b / 255.0f;
+    // https://gist.github.com/popcorn245/30afa0f98eea1c2fd34d
+    r = (r > 0.04045f) ? pow((r + 0.055f) / (1.0f + 0.055f), 2.4f) : (r / 12.92f);
+    g = (g > 0.04045f) ? pow((g + 0.055f) / (1.0f + 0.055f), 2.4f) : (g / 12.92f);
+    b = (b > 0.04045f) ? pow((b + 0.055f) / (1.0f + 0.055f), 2.4f) : (b / 12.92f);
+
+    float X = r * 0.649926f + g * 0.103455f + b * 0.197109f;
+    float Y = r * 0.234327f + g * 0.743075f + b * 0.022598f;
+    float Z = r * 0.000000f + g * 0.053077f + b * 1.035763f;
+
+    x = X / (X + Y + Z);
+    y = Y / (X + Y + Z);
+  }
+  if (r_x)  *r_x = x;
+  if (r_y)  *r_y = y;
+  //*bri = Y;
+}
+
 void HueLightStatus1(uint8_t device, String *response)
 {
   float hue = 0;
   float sat = 0;
   float bri = 254;
   uint16_t ct = 0;
+  // default xy color to white D65, https://en.wikipedia.org/wiki/Illuminant_D65
+  float x, y;
   String light_status = "";
 
   // force ct mode for LST_COLDWARM
@@ -595,6 +626,9 @@ void HueLightStatus1(uint8_t device, String *response)
     // ct = 0 is non valid, so we put 284 as default value (medium white)
     light_status += "\"ct\":"  + String( (ct < 100) ? 284 : ct) + ",";
   }
+  RgbToXy(Settings.light_color[0], Settings.light_color[1], Settings.light_color[2], &x, &y);
+  response->replace("{x}", String(x));
+  response->replace("{y}", String(y));
   response->replace("{light_status}", light_status);
   response->replace("{m}", g_gotct?"ct":"hs");
 }
