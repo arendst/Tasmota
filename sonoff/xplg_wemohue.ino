@@ -585,10 +585,8 @@ void HueLightStatus1(uint8_t device, String *response)
   }
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON1);
   response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
+  light_status += "\"bri\":" + String((uint8_t)(254.0f * bri + 0.5f)) + ",";
 
-  if (LST_SINGLE <= light_subtype) {
-    light_status += "\"bri\":" + String((uint8_t)(254.0f * bri + 0.5f)) + ",";
-  }
   if (LST_RGB <= light_subtype) {  // colors
     light_status += "\"hue\":" + String((uint16_t)(65535.0f * hue + 0.5f)) + ",";
     light_status += "\"sat\":" + String((uint8_t)(254.0f * sat + 0.5f)) + ",";
