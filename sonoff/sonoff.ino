@@ -2693,8 +2693,10 @@ void setup(void)
 
   // Issue #526 and #909
   for (uint8_t i = 0; i < devices_present; i++) {
-    if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
-      bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
+    if (!Settings.flag3.no_power_feedback) {  // #5594 and #5663
+      if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
+        bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
+      }
     }
     if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
       SetPulseTimer(i, Settings.pulse_timer[i]);
