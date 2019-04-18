@@ -1,4 +1,10 @@
-/* 6.5.0.8 20190413
+/* 6.5.0.9 20190418
+ * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)
+ * Fix TasmotaSerial at 9600 bps solving DFPlayer comms (#5528)
+ * Fix Shelly 2.5 overtemp
+ *
+ * 6.5.0.8 20190413
+ * Add Tuya Dimmer 10 second heartbeat serial packet required by some Tuya dimmer secondary MCUs
  * Fix use of SerialDelimiter value 128 (#5634)
  * Fix lost syslog connection regression from 6.5.0.4
  * Add Shelly 2.5 Energy Monitoring (#5592)

@@ -22,7 +22,7 @@ This file is part of the Joba_Tsl2561 Library.
 
 #include <Tsl2561.h>
 
-// to mimic Serial.printf() of esp8266 core for other platforms
+// to mimic Serial.printf() of esp cores for other platforms
 char *format( const char *fmt, ... ) {
   static char buf[128];
   va_list arg;
@@ -158,7 +158,7 @@ void test( Tsl2561 &tsl ) {
 
 void setup() {
   Serial.begin(115200);
-  Wire.begin();
+  Wire.begin(TSL2561_SDA, TSL2561_SCL);
   Serial.println("\nStarting Tsl2561 testing loop");
 }
 

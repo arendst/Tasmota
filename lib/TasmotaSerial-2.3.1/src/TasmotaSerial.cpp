@@ -100,7 +100,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
       m_buffer = (uint8_t*)malloc(TM_SERIAL_BUFFER_SIZE);
       if (m_buffer == NULL) return;
       // Use getCycleCount() loop to get as exact timing as possible
-      m_bit_time = F_CPU / TM_SERIAL_BAUDRATE;
+      m_bit_time = ESP.getCpuFreqMHz() * 1000000 / TM_SERIAL_BAUDRATE;
       pinMode(m_rx_pin, INPUT);
       tms_obj_list[m_rx_pin] = this;
       attachInterrupt(m_rx_pin, ISRList[m_rx_pin], FALLING);
@@ -145,8 +145,8 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
     }
   } else {
     // Use getCycleCount() loop to get as exact timing as possible
-    m_bit_time = F_CPU / speed;
-    m_high_speed = (speed > 9600);
+    m_bit_time = ESP.getCpuFreqMHz() * 1000000 / speed;
+    m_high_speed = (speed >= 9600);
   }
   return m_valid;
 }

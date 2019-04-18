@@ -23,6 +23,14 @@ This file is part of the Joba_Tsl2561 Library.
 #include <Arduino.h>
 #include <Wire.h>
 
+// To be able to override pin definitions in build flags (used in examples)
+#ifndef TSL2561_SDA
+  #define TSL2561_SDA SDA
+#endif
+#ifndef TSL2561_SCL
+  #define TSL2561_SCL SCL
+#endif
+
 class Tsl2561 {
 
 public:
