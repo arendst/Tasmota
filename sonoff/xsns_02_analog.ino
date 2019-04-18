@@ -36,6 +36,7 @@
 #define ANALOG_B     3350.0            // Thermistor Beta Coefficient
 
 uint16_t adc_last_value = 0;
+float adc_temp = 0;
 
 uint16_t AdcRead(uint8_t factor)
 {
@@ -69,6 +70,22 @@ void AdcEvery250ms(void)
 }
 #endif  // USE_RULES
 
+void AdcEverySecond(void)
+{
+  if (my_module_flag.adc0_temp) {
+    int adc = AdcRead(2);
+    // Steinhart-Hart equation for thermistor as temperature sensor
+    double Rt = (adc * ANALOG_R21) / (1024.0 * ANALOG_V33 - (double)adc);
+    double T = ANALOG_B / (ANALOG_B/ANALOG_T0 + log(Rt/ANALOG_R0));
+    adc_temp = ConvertTemp(TO_CELSIUS(T));
+  }
+}
+
+float AdcTemperature(void)
+{
+  return adc_temp;
+}
+
 void AdcShow(bool json)
 {
   if (my_module_flag.adc0) {
@@ -83,14 +100,8 @@ void AdcShow(bool json)
     }
   }
   if (my_module_flag.adc0_temp) {
-    int adc = AdcRead(2);
-    // Steinhart-Hart equation for thermistor as temperature sensor
-    double Rt = (adc * ANALOG_R21) / (1024.0 * ANALOG_V33 - (double)adc);
-    double T = ANALOG_B / (ANALOG_B/ANALOG_T0 + log(Rt/ANALOG_R0));
-    double temp = ConvertTemp(TO_CELSIUS(T));
-
     char temperature[33];
-    dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
+    dtostrfd(adc_temp, Settings.flag2.temperature_resolution, temperature);
 
     if (json) {
       ResponseAppend_P(JSON_SNS_TEMP, "ANALOG", temperature);
@@ -127,6 +138,9 @@ bool Xsns02(uint8_t function)
         AdcEvery250ms();
         break;
 #endif  // USE_RULES
+      case FUNC_EVERY_SECOND:
+        AdcEverySecond();
+        break;
       case FUNC_JSON_APPEND:
         AdcShow(1);
         break;

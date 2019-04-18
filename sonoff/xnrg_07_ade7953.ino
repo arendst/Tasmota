@@ -162,7 +162,7 @@ void Ade7953EnergyEverySecond()
 
 void Ade7953EverySecond()
 {
-  if (power && (global_temperature > ADE7953_OVERTEMP)) {  // Device overtemp, turn off relays
+  if (power && (ConvertTempToCelsius(AdcTemperature()) > ADE7953_OVERTEMP)) {  // Device overtemp, turn off relays
     SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
   }
 }

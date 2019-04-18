@@ -584,6 +584,16 @@ float ConvertTemp(float c)
   return result;
 }
 
+float ConvertTempToCelsius(float c)
+{
+  float result = c;
+
+  if (!isnan(c) && Settings.flag.temperature_conversion) {
+    result = (c - 32) / 1.8;  // Celsius
+  }
+  return result;
+}
+
 char TempUnit(void)
 {
   return (Settings.flag.temperature_conversion) ? 'F' : 'C';
