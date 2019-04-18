@@ -21,7 +21,7 @@ This file is part of the Joba_Tsl2561 Library.
 
 #include <Tsl2561.h>
 
-// to mimic Serial.printf() of esp8266 core for other platforms
+// to mimic Serial.printf() of esp cores for other platforms
 char *format( const char *fmt, ... ) {
   static char buf[128];
   va_list arg;
@@ -36,7 +36,7 @@ Tsl2561 Tsl(Wire);
 
 void setup() {
   Serial.begin(115200);
-  Wire.begin();
+  Wire.begin(TSL2561_SDA, TSL2561_SCL);
   Serial.println("\nStarting Tsl2561 simple loop");
 }
 
@@ -60,7 +60,7 @@ void loop() {
     Tsl.off();
   }
   else {
-    Serial.println("No Tsl2561 found. Check wiring.");
+    Serial.print(format("No Tsl2561 found. Check wiring: SCL=%u, SDA=%u\n", TSL2561_SCL, TSL2561_SDA));
   }
 
   delay(5000);
