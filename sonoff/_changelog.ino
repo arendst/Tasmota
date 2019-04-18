@@ -1,4 +1,5 @@
 /* 6.5.0.8 20190413
+ * Add Tuya Dimmer 10 second heartbeat serial packet required by some Tuya dimmer secondary MCUs
  * Fix use of SerialDelimiter value 128 (#5634)
  * Fix lost syslog connection regression from 6.5.0.4
  * Add Shelly 2.5 Energy Monitoring (#5592)
