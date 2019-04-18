@@ -657,7 +657,7 @@ uint16_t LightGetColorTemp(void)
 
   // for Alexa, send back the original CT value if close enough
   // avoids rounding errors
-  if ((ct > _light_ct ? ct - _light_ct : _light_ct - ct) < 5)
+  if ((ct > _light_ct ? ct - _light_ct : _light_ct - ct) > 5)
     _light_ct = ct;
   return _light_ct;
 }

@@ -592,7 +592,8 @@ void HueLightStatus1(uint8_t device, String *response)
     light_status += "\"sat\":" + String((uint8_t)(254.0f * sat + 0.5f)) + ",";
   }
   if (LST_COLDWARM == light_subtype || LST_RGBWC == light_subtype) {  // white temp
-    light_status += "\"ct\":"  + String(ct) + ",";
+    // ct = 0 is non valid, so we put 284 as default value (medium white)
+    light_status += "\"ct\":"  + String( (ct < 100) ? 284 : ct) + ",";
   }
   response->replace("{light_status}", light_status);
   response->replace("{m}", g_gotct?"ct":"hs");
