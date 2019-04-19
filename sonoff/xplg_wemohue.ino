@@ -468,7 +468,6 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
   "\r\n";
 const char HUE_LIGHTS_STATUS_JSON1[] PROGMEM =
   "{\"on\":{state},"
-  "\"xy\":[{x}, {y}],"
   "{light_status}"
   "\"alert\":\"none\","
   "\"effect\":\"none\","
@@ -602,7 +601,6 @@ void HueLightStatus1(uint8_t device, String *response)
   float bri = 254;
   uint16_t ct = 0;
   // default xy color to white D65, https://en.wikipedia.org/wiki/Illuminant_D65
-  float x, y;
   String light_status = "";
 
   // force ct mode for LST_COLDWARM
@@ -619,6 +617,9 @@ void HueLightStatus1(uint8_t device, String *response)
   light_status += "\"bri\":" + String((uint8_t)(254.0f * bri + 0.5f)) + ",";
 
   if (LST_RGB <= light_subtype) {  // colors
+    float x, y;
+    RgbToXy(Settings.light_color[0], Settings.light_color[1], Settings.light_color[2], &x, &y);
+    light_status += "\"xy\":[" + String(x) + ", " + String(y) + "],";
     light_status += "\"hue\":" + String((uint16_t)(65535.0f * hue + 0.5f)) + ",";
     light_status += "\"sat\":" + String((uint8_t)(254.0f * sat + 0.5f)) + ",";
   }
@@ -626,9 +627,6 @@ void HueLightStatus1(uint8_t device, String *response)
     // ct = 0 is non valid, so we put 284 as default value (medium white)
     light_status += "\"ct\":"  + String( (ct < 100) ? 284 : ct) + ",";
   }
-  RgbToXy(Settings.light_color[0], Settings.light_color[1], Settings.light_color[2], &x, &y);
-  response->replace("{x}", String(x));
-  response->replace("{y}", String(y));
   response->replace("{light_status}", light_status);
   response->replace("{m}", g_gotct?"ct":"hs");
 }
