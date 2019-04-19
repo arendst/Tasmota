@@ -629,8 +629,6 @@ void LightSetColorTemp(uint16_t ct)
   }
 }
 
-uint16_t _light_ct;    // memorise the last ct
-
 uint16_t LightGetColorTemp(void)
 {
   // don't calculate CT for unsupported devices
@@ -655,11 +653,7 @@ uint16_t LightGetColorTemp(void)
     }
   }
 
-  // for Alexa, send back the original CT value if close enough
-  // avoids rounding errors
-  if ((ct > _light_ct ? ct - _light_ct : _light_ct - ct) > 5)
-    _light_ct = ct;
-  return _light_ct;
+  return ct;
 }
 
 void LightSetDimmer(uint8_t myDimmer)
@@ -1120,14 +1114,9 @@ void LightRgbToHsb(bool from_settings = false)
     }
     hue /= 6.0f;
   }
-
-  // change the value only if it's significantly different from last value
-  if ((light_hue - hue > 0.01f) || (hue - light_hue > 0.01f))
-    light_hue = hue;
-  if ((light_saturation - saturation > 0.01f) || (saturation - light_saturation > 0.01f))
-    light_saturation = saturation;
-  if ((light_brightness - brightness > 0.01f) || (brightness - light_brightness > 0.01f))
-    light_brightness = brightness;
+  light_hue = hue;
+  light_saturation = saturation;
+  light_brightness = brightness;
 }
 
 void LightHsToRgb(void)
@@ -1223,11 +1212,9 @@ void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
       if (ct > 0) {
         light_hue = 0.0f;
         light_saturation = 0.0f;
-        _light_ct = ct;
         LightSetColorTemp(ct);
       }
     } else {
-      _light_ct = 0;
       light_hue = hue;
       light_saturation = sat;
       light_brightness = bri;
@@ -1245,7 +1232,6 @@ void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
       if (ct > 0) {
         light_hue = 0.0f;
         light_saturation = 0.0f;
-        _light_ct = ct;
         LightSetColorTemp(ct);
       }
       LightPreparePower();

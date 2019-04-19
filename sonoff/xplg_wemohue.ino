@@ -471,7 +471,6 @@ const char HUE_LIGHTS_STATUS_JSON1[] PROGMEM =
   "{light_status}"
   "\"alert\":\"none\","
   "\"effect\":\"none\","
-  "\"colormode\":\"{m}\","
   "\"reachable\":true}";
 const char HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
   ",\"type\":\"Extended color light\","
@@ -594,14 +593,20 @@ void RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x, float *r_y)
   //*bri = Y;
 }
 
+// store previously set values from the Alexa app
+uint16_t prev_hue = 0;
+uint8_t  prev_sat = 0;
+uint8_t  prev_bri = 254;
+uint16_t prev_ct  = 254;
+
 void HueLightStatus1(uint8_t device, String *response)
 {
-  float hue = 0;
-  float sat = 0;
-  float bri = 254;
   uint16_t ct = 0;
   // default xy color to white D65, https://en.wikipedia.org/wiki/Illuminant_D65
   String light_status = "";
+  uint16_t hue = 0;
+  uint8_t  sat = 0;
+  uint8_t  bri = 254;
 
   // force ct mode for LST_COLDWARM
   if (LST_COLDWARM == light_subtype) {
@@ -609,26 +614,56 @@ void HueLightStatus1(uint8_t device, String *response)
   }
 
   if (light_type) {
-    LightGetHsb(&hue, &sat, &bri, g_gotct);
+    float hhue, hsat, hbri;
+    LightGetHsb(&hhue, &hsat, &hbri, g_gotct);
+
+    bri = 254.0f * hbri + 0.5f;
+    if (bri > 254)  bri = 254;    // Philips Hue bri is between 1 and 254
+    if (bri < 1)    bri = 1;
+    if ((bri > prev_bri ? bri - prev_bri : prev_bri - bri) < 2)
+      bri = prev_bri;
+
+    sat = 254.0f * hsat + 0.5f;    // 0..254
+    if (sat > 254)  sat = 254;  // Philips Hue only accepts 254 as max hue
+    if ((sat > prev_sat ? sat - prev_sat : prev_sat - sat) < 2)
+      sat = prev_sat;
+
+    hue = 65535.0f * hhue + 0.5f;  // 0..65535
+    if ((hue > prev_hue ? hue - prev_hue : prev_hue - hue) < 700)
+      hue = prev_hue;
+
     ct = LightGetColorTemp();
+    if (ct < 100)  ct = 284;
+    if ((ct > prev_ct ? ct - prev_ct : prev_ct - ct) < 5)
+      ct = prev_ct;
+
+    //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("HueLightStatus1 HSB (%d, %d, %d) Prev_HSB (%d, %d, %d)"),
+    //  hue, sat, bri, prev_hue, prev_sat, prev_bri);
   }
+
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON1);
   response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
-  light_status += "\"bri\":" + String((uint8_t)(254.0f * bri + 0.5f)) + ",";
+  if (LST_SINGLE <= light_subtype) {
+    light_status += "\"bri\":" + String(bri) + ",";
+  }
+  if (LST_COLDWARM <= light_subtype) {
+    light_status += "\"colormode\":\"" + String(g_gotct ? "ct" : "hs") + "\",";
+  }
+
 
   if (LST_RGB <= light_subtype) {  // colors
     float x, y;
+
     RgbToXy(Settings.light_color[0], Settings.light_color[1], Settings.light_color[2], &x, &y);
     light_status += "\"xy\":[" + String(x) + ", " + String(y) + "],";
-    light_status += "\"hue\":" + String((uint16_t)(65535.0f * hue + 0.5f)) + ",";
-    light_status += "\"sat\":" + String((uint8_t)(254.0f * sat + 0.5f)) + ",";
+    light_status += "\"hue\":" + String(hue) + ",";
+    light_status += "\"sat\":" + String(sat) + ",";
   }
   if (LST_COLDWARM == light_subtype || LST_RGBWC == light_subtype) {  // white temp
     // ct = 0 is non valid, so we put 284 as default value (medium white)
-    light_status += "\"ct\":"  + String( (ct < 100) ? 284 : ct) + ",";
+    light_status += "\"ct\":"  + String(ct) + ",";
   }
   response->replace("{light_status}", light_status);
-  response->replace("{m}", g_gotct?"ct":"hs");
 }
 
 void HueLightStatus2(uint8_t device, String *response)
@@ -739,6 +774,7 @@ void HueLights(String *path)
 
       if (hue_json.containsKey("bri")) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
         tmp = hue_json["bri"];
+        prev_bri = tmp;   // store command value
         tmp = tmax(tmp, 1);
         tmp = tmin(tmp, 254);
         bri = (float)tmp / 254.0f;
@@ -754,6 +790,7 @@ void HueLights(String *path)
       }
       if (hue_json.containsKey("hue")) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
         tmp = hue_json["hue"];
+        prev_hue = tmp;  // store command value
         hue = (float)tmp / 65535.0f;
         if (resp) {
           response += ",";
@@ -768,6 +805,7 @@ void HueLights(String *path)
       }
       if (hue_json.containsKey("sat")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
         tmp = hue_json["sat"];
+        prev_sat = tmp;   // store command value
         tmp = tmax(tmp, 0);
         tmp = tmin(tmp, 254);
         sat = (float)tmp / 254.0f;
@@ -784,6 +822,7 @@ void HueLights(String *path)
       }
       if (hue_json.containsKey("ct")) {              // Color temperature 153 (Cold) to 500 (Warm)
         ct = hue_json["ct"];
+        prev_ct = ct;   // store commande value
         if (resp) {
           response += ",";
         }
