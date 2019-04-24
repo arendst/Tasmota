@@ -282,7 +282,7 @@
 #define SEND_GLOBALCACHE       false
 
 #define DECODE_GREE            false
-#define SEND_GREE              false
+#define SEND_GREE              true
 
 #define DECODE_PRONTO          false  // Not written.
 #define SEND_PRONTO            false
