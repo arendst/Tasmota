@@ -461,59 +461,6 @@ uint8_t IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Powe
 /*******************
       Fujitsu
 ********************/
-uint8_t IrHvacGree(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Power, int HVAC_Temp)
-{
-  const char kGreeHvacModeOptions[] = "CDF";
-  const char kGreeFanSpeedOptions[] = "A123";
-
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("GREE: mode:%s, fan:%s, power:%u, temp:%u"), HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
-
-  IRGreeAC ac(pin[GPIO_IRSEND]);
-
-  irsend_active = true;
-  if (HVAC_Power == 0) {
-    ac.setPower(false);
-    ac.send();
-    return IE_NO_ERROR;
-  }
-
-  if (HVAC_Power == 1) {
-    ac.setPower(true);
-  uint8_t modes[3] = {kGreeCool, kGreeDry, kGreeFan};
-  uint8_t fanModes[4] = {0, 1, 2, 3};
-
-  char *p;
-  if (nullptr == HVAC_Mode) {
-    p = (char *)kGreeHvacModeOptions;
-  }
-  else {
-    p = strchr(kGreeHvacModeOptions, toupper(HVAC_Mode[0]));
-  }
-  if (!p) {
-    return IE_SYNTAX_IRHVAC;
-  }
-  
-  ac.setMode(modes[p - kGreeHvacModeOptions]);
-
-  if (HVAC_FanMode == nullptr) {
-    p = (char *)kGreeFanSpeedOptions; // default FAN_SPEED_AUTO
-  }
-  else {
-    p = strchr(kGreeFanSpeedOptions, toupper(HVAC_FanMode[0]));
-  }
-  if (!p) {
-    return IE_SYNTAX_IRHVAC;
-  }
-  ac.setFan(fanModes[p - kGreeFanSpeedOptions]);
-  ac.setTemp(HVAC_Temp);
-  ac.send();
-
-  return IE_NO_ERROR;
-}
-}
-/*******************
-      Fujitsu
-********************/
 
 uint8_t IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Power, int HVAC_Temp)
 {
@@ -563,6 +510,60 @@ uint8_t IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC
   ac.send();
 
   return IE_NO_ERROR;
+}
+
+/*******************
+      Gree
+********************/
+uint8_t IrHvacGree(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Power, int HVAC_Temp)
+{
+  const char kGreeHvacModeOptions[] = "CDF";
+  const char kGreeFanSpeedOptions[] = "A123";
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("GREE: mode:%s, fan:%s, power:%u, temp:%u"), HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+
+  IRGreeAC ac(pin[GPIO_IRSEND]);
+
+  irsend_active = true;
+  if (HVAC_Power == 0) {
+    ac.setPower(false);
+    ac.send();
+    return IE_NO_ERROR;
+  }
+
+  if (HVAC_Power == 1) {
+    ac.setPower(true);
+    uint8_t modes[3] = {kGreeCool, kGreeDry, kGreeFan};
+    uint8_t fanModes[4] = {0, 1, 2, 3};
+
+  char *p;
+  if (nullptr == HVAC_Mode) {
+    p = (char *)kGreeHvacModeOptions;
+  }
+  else {
+    p = strchr(kGreeHvacModeOptions, toupper(HVAC_Mode[0]));
+  }
+  if (!p) {
+    return IE_SYNTAX_IRHVAC;
+  }
+  
+  ac.setMode(modes[p - kGreeHvacModeOptions]);
+
+  if (HVAC_FanMode == nullptr) {
+    p = (char *)kGreeFanSpeedOptions; // default FAN_SPEED_AUTO
+  }
+  else {
+    p = strchr(kGreeFanSpeedOptions, toupper(HVAC_FanMode[0]));
+  }
+  if (!p) {
+    return IE_SYNTAX_IRHVAC;
+  }
+  ac.setFan(fanModes[p - kGreeFanSpeedOptions]);
+  ac.setTemp(HVAC_Temp);
+  ac.send();
+
+  return IE_NO_ERROR;
+}
 }
 
 #endif // USE_IR_HVAC
