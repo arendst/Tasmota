@@ -33,15 +33,16 @@ const char kIrRemoteCommands[] PROGMEM = D_CMND_IRSEND "|" D_CMND_IRHVAC ;
 
 // Based on IRremoteESP8266.h enum decode_type_t
 const char kIrRemoteProtocols[] PROGMEM =
-  "UNKNOWN|RC5|RC6|NEC|SONY|PANASONIC|JVC|SAMSUNG|WHYNTER|AIWA_RC_T501|LG|SANYO|MITSUBISHI|DISH|SHARP";
+  "UNKNOWN|RC5|RC6|NEC|SONY|PANASONIC|JVC|SAMSUNG|WHYNTER|AIWA_RC_T501|LG|SANYO|MITSUBISHI|DISH|SHARP|GREE";
 
 #ifdef USE_IR_HVAC
 
 #include <ir_Mitsubishi.h>
 #include <ir_Fujitsu.h>
+#include <ir_Gree.h>
 
-enum IrHvacVendors { VNDR_TOSHIBA, VNDR_MITSUBISHI, VNDR_LG, VNDR_FUJITSU };
-const char kIrHvacVendors[] PROGMEM = "Toshiba|Mitsubishi|LG|Fujitsu" ;
+enum IrHvacVendors { VNDR_TOSHIBA, VNDR_MITSUBISHI, VNDR_LG, VNDR_FUJITSU, VNDR_GREE };
+const char kIrHvacVendors[] PROGMEM = "Toshiba|Mitsubishi|LG|Fujitsu|Gree" ;
 
 // HVAC TOSHIBA_
 const uint16_t HVAC_TOSHIBA_HDR_MARK = 4400;
@@ -457,7 +458,59 @@ uint8_t IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Powe
   return IE_NO_ERROR;
 }
 
+/*******************
+      Fujitsu
+********************/
+uint8_t IrHvacGree(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Power, int HVAC_Temp)
+{
+  const char kGreeHvacModeOptions[] = "CDF";
+  const char kGreeFanSpeedOptions[] = "A123";
 
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("GREE: mode:%s, fan:%s, power:%u, temp:%u"), HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp);
+
+  IRGreeAC ac(pin[GPIO_IRSEND]);
+
+  irsend_active = true;
+  if (HVAC_Power == 0) {
+    ac.setPower(false);
+    ac.send();
+    return IE_NO_ERROR;
+  }
+
+  if (HVAC_Power == 1) {
+    ac.setPower(true);
+  uint8_t modes[3] = {kGreeCool, kGreeDry, kGreeFan};
+  uint8_t fanModes[4] = {0, 1, 2, 3};
+
+  char *p;
+  if (nullptr == HVAC_Mode) {
+    p = (char *)kGreeHvacModeOptions;
+  }
+  else {
+    p = strchr(kGreeHvacModeOptions, toupper(HVAC_Mode[0]));
+  }
+  if (!p) {
+    return IE_SYNTAX_IRHVAC;
+  }
+  
+  ac.setMode(modes[p - kGreeHvacModeOptions]);
+
+  if (HVAC_FanMode == nullptr) {
+    p = (char *)kGreeFanSpeedOptions; // default FAN_SPEED_AUTO
+  }
+  else {
+    p = strchr(kGreeFanSpeedOptions, toupper(HVAC_FanMode[0]));
+  }
+  if (!p) {
+    return IE_SYNTAX_IRHVAC;
+  }
+  ac.setFan(fanModes[p - kGreeFanSpeedOptions]);
+  ac.setTemp(HVAC_Temp);
+  ac.send();
+
+  return IE_NO_ERROR;
+}
+}
 /*******************
       Fujitsu
 ********************/
@@ -741,6 +794,8 @@ bool IrSendCommand(void)
               error = IrHvacLG(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
             case VNDR_FUJITSU:
               error = IrHvacFujitsu(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+            case VNDR_GREE:
+              error = IrHvacGree(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
             default:
               error = IE_SYNTAX_IRHVAC;
           }
