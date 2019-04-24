@@ -1,4 +1,7 @@
-/* 6.5.0.9 20190418
+/* 6.5.0.9 20190424
+ * Added GREE protocol to IRHVAC command
+ *
+ * 6.5.0.9 20190418
  * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)
  * Fix TasmotaSerial at 9600 bps solving DFPlayer comms (#5528)
  * Fix Shelly 2.5 overtemp
