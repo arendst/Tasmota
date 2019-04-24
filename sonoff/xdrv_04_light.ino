@@ -599,6 +599,11 @@ void LightSetColorTemp(uint16_t ct)
  * ct = 153 = 2000K = Warm = CCWW = 00FF
  * ct = 500 = 6500K = Cold = CCWW = FF00
  */
+  // don't set CT if not supported
+  if ((LST_COLDWARM != light_subtype) && (LST_RGBWC != light_subtype)) {
+    return;
+  }
+
   uint16_t my_ct = ct - 153;
   if (my_ct > 347) {
     my_ct = 347;
@@ -626,17 +631,29 @@ void LightSetColorTemp(uint16_t ct)
 
 uint16_t LightGetColorTemp(void)
 {
+  // don't calculate CT for unsupported devices
+  if ((LST_COLDWARM != light_subtype) && (LST_RGBWC != light_subtype)) {
+    return 0;
+  }
+
+  uint16_t ct = 0;
   uint8_t ct_idx = 0;
   if (LST_RGBWC == light_subtype) {
     ct_idx = 3;
   }
   uint16_t my_ct = Settings.light_color[ct_idx +1];
   if (my_ct > 0) {
-    return ((my_ct * 136) / 100) + 154;
+    ct = ((my_ct * 136) / 100) + 154;
   } else {
     my_ct = Settings.light_color[ct_idx];
-    return 499 - ((my_ct * 136) / 100);
+    if (my_ct > 0) {
+      ct = 499 - ((my_ct * 136) / 100);
+    } else {
+      ct = 0;
+    }
   }
+
+  return ct;
 }
 
 void LightSetDimmer(uint8_t myDimmer)
@@ -655,12 +672,12 @@ void LightSetDimmer(uint8_t myDimmer)
   if (LT_PWM1 == light_type) {
     Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
   }
-  float dimmer = 100 / (float)myDimmer;
+  float dimmer = 100.0f / (float)myDimmer;
   for (uint8_t i = 0; i < light_subtype; i++) {
     if (Settings.flag.light_signal) {
-      temp = (float)light_signal_color[i] / dimmer;
+      temp = (float)light_signal_color[i] / dimmer + 0.5f;
     } else {
-      temp = (float)Settings.light_color[i] / dimmer;
+      temp = (float)Settings.light_color[i] / dimmer + 0.5f;
     }
     light_current_color[i] = (uint8_t)temp;
   }
@@ -675,11 +692,11 @@ void LightSetColor(void)
       highest = light_current_color[i];
     }
   }
-  float mDim = (float)highest / 2.55;
-  Settings.light_dimmer = (uint8_t)mDim;
+  float mDim = (float)highest / 2.55f;
+  Settings.light_dimmer = (uint8_t)(mDim + 0.5f);
   float dimmer = 100 / mDim;
   for (uint8_t i = 0; i < light_subtype; i++) {
-    float temp = (float)light_current_color[i] * dimmer;
+    float temp = (float)light_current_color[i] * dimmer + 0.5f;
     Settings.light_color[i] = (uint8_t)temp;
   }
 }
@@ -845,7 +862,7 @@ void LightWheel(uint8_t wheel_pos)
   light_entry_color[4] = 0;
   float dimmer = 100 / (float)Settings.light_dimmer;
   for (uint8_t i = 0; i < LST_RGB; i++) {
-    float temp = (float)light_entry_color[i] / dimmer;
+    float temp = (float)light_entry_color[i] / dimmer + 0.5f;
     light_entry_color[i] = (uint8_t)temp;
   }
 }
@@ -872,6 +889,7 @@ void LightRandomColor(void)
     light_wheel = random(255);
     LightWheel(light_wheel);
     memcpy(light_current_color, light_entry_color, sizeof(light_current_color));
+    LightSetColor();
   }
   LightFade();
 }
@@ -1048,103 +1066,118 @@ void LightAnimate(void)
  * Hue support
 \*********************************************************************************************/
 
-float light_hue = 0.0;
-float light_saturation = 0.0;
-float light_brightness = 0.0;
+float light_hue = 0.0f;
+float light_saturation = 0.0f;
+float light_brightness = 0.0f;
 
-void LightRgbToHsb(void)
+void LightRgbToHsb(bool from_settings = false)
 {
-  LightSetDimmer(Settings.light_dimmer);
+  // We get a previse Hue and Sat from the Settings parameter with full brightness
+  // and apply the Dimmer value for Brightness
+  // 'from_settings' default to actual RGB color for retro-compatibility
 
   // convert colors to float between (0.0 - 1.0)
-  float r = light_current_color[0] / 255.0f;
-  float g = light_current_color[1] / 255.0f;
-  float b = light_current_color[2] / 255.0f;
+  float r, g, b;
+  if (from_settings) {
+    r = Settings.light_color[0] / 255.0f;
+    g = Settings.light_color[1] / 255.0f;
+    b = Settings.light_color[2] / 255.0f;
+  } else {
+    r = light_current_color[0] / 255.0f;
+    g = light_current_color[1] / 255.0f;
+    b = light_current_color[2] / 255.0f;
+  }
 
   float max = (r > g && r > b) ? r : (g > b) ? g : b;
   float min = (r < g && r < b) ? r : (g < b) ? g : b;
 
   float d = max - min;
 
-  light_hue = 0.0;
-  light_brightness = max;
-  light_saturation = (0.0f == light_brightness) ? 0 : (d / light_brightness);
+  float hue = 0.0f;
+  float brightness;
+  if (from_settings) {
+    brightness = max * Settings.light_dimmer / 100.0f;
+  } else {
+    brightness = max;
+  }
+
+  float saturation = (0.0f == max) ? 0 : 1.0f - min / max;
 
   if (d != 0.0f)
   {
     if (r == max) {
-      light_hue = (g - b) / d + (g < b ? 6.0f : 0.0f);
+      hue = (g - b) / d + (g < b ? 6.0f : 0.0f);
     } else if (g == max) {
-      light_hue = (b - r) / d + 2.0f;
+      hue = (b - r) / d + 2.0f;
     } else {
-      light_hue = (r - g) / d + 4.0f;
+      hue = (r - g) / d + 4.0f;
     }
-    light_hue /= 6.0f;
+    hue /= 6.0f;
   }
+  light_hue = hue;
+  light_saturation = saturation;
+  light_brightness = brightness;
 }
 
-void LightHsbToRgb(void)
+void LightHsToRgb(void)
 {
-  float r;
-  float g;
-  float b;
+  float r = 1.0f; // default to white
+  float g = 1.0f;
+  float b = 1.0f;
 
   float h = light_hue;
   float s = light_saturation;
-  float v = light_brightness;
+  // brightness is set to 100%, and controlled via Dimmer
 
-  if (0.0f == light_saturation) {
-    r = g = b = v;                      // Achromatic or black
-  } else {
+  if (0.0f < light_saturation) {
     if (h < 0.0f) {
       h += 1.0f;
-    }
-    else if (h >= 1.0f) {
+    } else if (h >= 1.0f) {
       h -= 1.0f;
     }
     h *= 6.0f;
     int i = (int)h;
     float f = h - i;
-    float q = v * (1.0f - s * f);
-    float p = v * (1.0f - s);
-    float t = v * (1.0f - s * (1.0f - f));
+    float q = 1.0f - s * f;
+    float p = 1.0f - s;
+    float t = 1.0f - s * (1.0f - f);
     switch (i) {
       case 0:
-        r = v;
+        //r = 1.0f;
         g = t;
         b = p;
         break;
       case 1:
         r = q;
-        g = v;
+        //g = 1.0f;
         b = p;
         break;
       case 2:
         r = p;
-        g = v;
+        //g = 1.0f;
         b = t;
         break;
       case 3:
         r = p;
         g = q;
-        b = v;
+        //b = 1.0f;
         break;
       case 4:
         r = t;
         g = p;
-        b = v;
+        //b = 1.0f;
         break;
       default:
-        r = v;
+        //r = 1.0f;
         g = p;
         b = q;
         break;
       }
   }
 
-  light_current_color[0] = (uint8_t)(r * 255.0f);
-  light_current_color[1] = (uint8_t)(g * 255.0f);
-  light_current_color[2] = (uint8_t)(b * 255.0f);
+  light_current_color[0] = (uint8_t)(r * 255.0f + 0.5f);
+  light_current_color[1] = (uint8_t)(g * 255.0f + 0.5f);
+  light_current_color[2] = (uint8_t)(b * 255.0f + 0.5f);
   if(light_ct_rgb_linked){
     light_current_color[3] = 0;
     light_current_color[4] = 0;
@@ -1156,14 +1189,17 @@ void LightHsbToRgb(void)
 void LightGetHsb(float *hue, float *sat, float *bri, bool gotct)
 {
   if (light_subtype > LST_COLDWARM && !gotct) {
-    LightRgbToHsb();
+    LightRgbToHsb(true);
     *hue = light_hue;
     *sat = light_saturation;
     *bri = light_brightness;
   } else {
-    *hue = 0;
-    *sat = 0;
-    *bri = (0.01f * (float)Settings.light_dimmer);
+    *hue = light_hue = 0.0f;
+    *sat = light_saturation = 0.0f;
+    float brightness = (float)Settings.light_dimmer / 100.0f;
+    if ((light_brightness - brightness > 0.01f) || (brightness - light_brightness > 0.01f))
+      light_brightness = brightness;
+    *bri = light_brightness;
   }
 }
 
@@ -1171,25 +1207,31 @@ void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
 {
   if (light_subtype > LST_COLDWARM) {
     if ((LST_RGBWC == light_subtype) && (gotct)) {
-      uint8_t tmp = (uint8_t)(bri * 100);
-      Settings.light_dimmer = tmp;
+      light_brightness = bri;
+      Settings.light_dimmer = (uint8_t)(bri * 100.0f +0.5f);
       if (ct > 0) {
+        light_hue = 0.0f;
+        light_saturation = 0.0f;
         LightSetColorTemp(ct);
       }
     } else {
       light_hue = hue;
       light_saturation = sat;
       light_brightness = bri;
-      LightHsbToRgb();
+      LightHsToRgb();
       LightSetColor();
+      Settings.light_dimmer = (uint8_t)(bri * 100.0f + 0.5f);
+      LightSetDimmer(Settings.light_dimmer);
     }
     LightPreparePower();
     MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
   } else {
-    uint8_t tmp = (uint8_t)(bri * 100);
-    Settings.light_dimmer = tmp;
+    light_brightness = bri;
+    Settings.light_dimmer = (uint8_t)(bri * 100.0f +0.5f);
     if (LST_COLDWARM == light_subtype) {
       if (ct > 0) {
+        light_hue = 0.0f;
+        light_saturation = 0.0f;
         LightSetColorTemp(ct);
       }
       LightPreparePower();
