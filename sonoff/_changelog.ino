@@ -2,6 +2,7 @@
  * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)
  * Fix TasmotaSerial at 9600 bps solving DFPlayer comms (#5528)
  * Fix Shelly 2.5 overtemp
+ * Set gamma correction as default behavior, ie "Ledtable 1"
  *
  * 6.5.0.8 20190413
  * Add Tuya Dimmer 10 second heartbeat serial packet required by some Tuya dimmer secondary MCUs
