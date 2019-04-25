@@ -631,11 +631,13 @@ void HueLightStatus1(uint8_t device, String *response)
     light_status += "\"colormode\":\"" + String(g_gotct ? "ct" : "hs") + "\",";
   }
   if (LST_RGB <= light_subtype) {  // colors
-    float x, y;
-    light_state.getXY(&x, &y);
-    light_status += "\"xy\":[" + String(x) + ", " + String(y) + "],";
     light_status += "\"hue\":" + String(hue) + ",";
     light_status += "\"sat\":" + String(sat) + ",";
+    if (!g_gotct) {
+      float x, y;
+      light_state.getXY(&x, &y);
+      light_status += "\"xy\":[" + String(x, 5) + "," + String(y, 5) + "],";
+    }
   }
   if (LST_COLDWARM == light_subtype || LST_RGBW <= light_subtype) {  // white temp
     light_status += "\"ct\":"  + String(ct > 0 ? ct : 284) + ",";  // if no ct, default to medium white
