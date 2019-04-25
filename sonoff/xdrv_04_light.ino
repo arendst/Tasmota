@@ -1672,7 +1672,9 @@ bool LightCommand(void)
            ((CMND_WHITE == command_code) && (light_subtype == LST_RGBW) && (XdrvMailbox.index == 1))) {
     if (CMND_WHITE == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-        snprintf_P(scolor, sizeof(scolor), PSTR("0,0,0,%d"), XdrvMailbox.payload * 255 / 100);
+        uint8_t whiteBri = changeUIntScale(XdrvMailbox.payload,0,100,0,255);
+        snprintf_P(scolor, sizeof(scolor), PSTR("0,0,0,%d"), whiteBri);
+        light_state.setBri(whiteBri); // save target Bri, will be confirmed below
         XdrvMailbox.data = scolor;
         XdrvMailbox.data_len = strlen(scolor);
       } else {
