@@ -571,6 +571,10 @@ uint16_t prev_hue = 0;
 uint8_t  prev_sat = 0;
 uint8_t  prev_bri = 254;
 uint16_t prev_ct  = 254;
+float    prev_x   = 0.31271f;  // default to D65 white
+float    prev_y   = 0.32902f;  // https://en.wikipedia.org/wiki/Illuminant_D65
+char     prev_x_str[25] = "\0"; // store previously set xy by Alexa app
+char     prev_y_str[25] = "\0";
 
 void HueLightStatus1(uint8_t device, String *response)
 {
@@ -631,9 +635,17 @@ void HueLightStatus1(uint8_t device, String *response)
     light_status += "\"colormode\":\"" + String(g_gotct ? "ct" : "hs") + "\",";
   }
   if (LST_RGB <= light_subtype) {  // colors
-    float x, y;
-    light_state.getXY(&x, &y);
-    light_status += "\"xy\":[" + String(x, 5) + "," + String(y, 5) + "],";
+    if (prev_x_str[0] && prev_y_str[0]) {
+      light_status += "\"xy\":[";
+      light_status += prev_x_str;
+      light_status += ",";
+      light_status += prev_y_str;
+      light_status += "],";
+    } else {
+      float x, y;
+      light_state.getXY(&x, &y);
+      light_status += "\"xy\":[" + String(x, 5) + "," + String(y, 5) + "],";
+    }
     light_status += "\"hue\":" + String(hue) + ",";
     light_status += "\"sat\":" + String(sat) + ",";
   }
@@ -752,6 +764,7 @@ void HueLights(String *path)
           g_gotct = true;
         }
       }
+      prev_x_str[0] = prev_y_str[0] = 0;  // reset xy string
 
       if (hue_json.containsKey("bri")) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
         tmp = hue_json["bri"];
@@ -799,6 +812,27 @@ void HueLights(String *path)
           change = true;
         }
         resp = true;
+      }
+      if (hue_json.containsKey("xy")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
+        prev_x = hue_json["xy"][0];
+        prev_y = hue_json["xy"][1];
+        const String &x_str = hue_json["xy"][0];
+        const String &y_str = hue_json["xy"][1];
+        x_str.toCharArray(prev_x_str, sizeof(prev_x_str));
+        y_str.toCharArray(prev_y_str, sizeof(prev_y_str));
+        //AddLog_P2(LOG_LEVEL_DEBUG_MORE, "XY (%s %s)", String(prev_x,5).c_str(), String(prev_y,5).c_str());
+        uint8_t rr,gg,bb;
+        LightStateClass::XyToRgb(prev_x, prev_y, &rr, &gg, &bb);
+        LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
+        //AddLog_P2(LOG_LEVEL_DEBUG_MORE, "XY RGB (%d %d %d) HS (%d %d)", rr,gg,bb,hue,sat);
+        if (resp) { response += ","; }
+        response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
+        response.replace("{id", String(device));
+        response.replace("{cm", "xy");
+        response.replace("{re", "[" + x_str + "," + y_str + "]");
+        g_gotct = false;
+        resp = true;
+        change = true;
       }
       if (hue_json.containsKey("ct")) {  // Color temperature 153 (Cold) to 500 (Warm)
         ct = hue_json["ct"];

@@ -438,9 +438,7 @@ class LightStateClass {
     static void RgbToHsb(uint8_t r, uint8_t g, uint8_t b, uint16_t *r_hue, uint8_t *r_sat, uint8_t *r_bri);
     static void HsToRgb(uint16_t hue, uint8_t sat, uint8_t *r_r, uint8_t *r_g, uint8_t *r_b);
     static void RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x, float *r_y);
-#if 0
-    static void XyToRgb(float x, float y, float bri, float *r, float *g, float *b);
-#endif
+    static void XyToRgb(float x, float y, uint8_t *rr, uint8_t *rg, uint8_t *rb);
 
 };
 
@@ -561,24 +559,39 @@ void LightStateClass::RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x,
   if (r_y)  *r_y = y;
 }
 
-#if 0
-// We don't need XY to RGB right now, but code is ready - jst in case
-void LightStateClass::XyToRgb(float x, float y, float bri, float *rr, float *rg, float *rb)
+void LightStateClass::XyToRgb(float x, float y, uint8_t *rr, uint8_t *rg, uint8_t *rb)
 {
   x = (x > 0.99f ? 0.99f : (x < 0.01f ? 0.01f : x));
   y = (y > 0.99f ? 0.99f : (y < 0.01f ? 0.01f : y));
   float z = 1.0f - x - y;
-  float Y = bri;
-  float X = (Y / y) * x;
-  float Z = (Y / y) * z;
-  float r = X * 1.4628067 - Y * 0.1840623 - Z * 0.2743606;
-  float g = -X * 0.5217933 + Y * 1.4472381 + Z * 0.0677227;
-  float b = X * 0.0349342 - Y * 0.0968930 + Z * 1.2884099;
-  if (rr) { *rr = r <= 0.0031308f ? 12.92f * r : (1.0f + 0.055f) * powf(r, (1.0f / 2.4f)) - 0.055f; }
-  if (rg) { *rg = g <= 0.0031308f ? 12.92f * g : (1.0f + 0.055f) * powf(g, (1.0f / 2.4f)) - 0.055f; }
-  if (rb) { *rb = b <= 0.0031308f ? 12.92f * b : (1.0f + 0.055f) * powf(b, (1.0f / 2.4f)) - 0.055f; }
+  //float Y = 1.0f;
+  float X = x / y;
+  float Z = z / y;
+  // float r =  X * 1.4628067f - 0.1840623f - Z * 0.2743606f;
+  // float g = -X * 0.5217933f + 1.4472381f + Z * 0.0677227f;
+  // float b =  X * 0.0349342f - 0.0968930f + Z * 1.2884099f;
+  float r =  X * 3.2406f - 1.5372f - Z * 0.4986f;
+  float g = -X * 0.9689f + 1.8758f + Z * 0.0415f;
+  float b =  X * 0.0557f - 0.2040f + Z * 1.0570f;
+  float max = (r > g && r > b) ? r : (g > b) ? g : b;
+  r = r / max;    // normalize to max == 1.0
+  g = g / max;
+  b = b / max;
+  r = (r <= 0.0031308f) ? 12.92f * r : 1.055f * powf(r, (1.0f / 2.4f)) - 0.055f;
+  g = (g <= 0.0031308f) ? 12.92f * g : 1.055f * powf(g, (1.0f / 2.4f)) - 0.055f;
+  b = (b <= 0.0031308f) ? 12.92f * b : 1.055f * powf(b, (1.0f / 2.4f)) - 0.055f;
+  //
+  // AddLog_P2(LOG_LEVEL_DEBUG_MORE, "XyToRgb XZ (%s %s) rgb (%s %s %s)",
+  //   String(X,5).c_str(), String(Z,5).c_str(),
+  //   String(r,5).c_str(), String(g,5).c_str(),String(b,5).c_str());
+
+  int32_t ir = r * 255.0f + 0.5f;
+  int32_t ig = g * 255.0f + 0.5f;
+  int32_t ib = b * 255.0f + 0.5f;
+  if (rr) { *rr = (ir > 255 ? 255: (ir < 0 ? 0 : ir)); }
+  if (rg) { *rg = (ig > 255 ? 255: (ig < 0 ? 0 : ig)); }
+  if (rb) { *rb = (ib > 255 ? 255: (ib < 0 ? 0 : ib)); }
 }
-#endif
 
 class LightControllerClass {
   LightStateClass *_state;
