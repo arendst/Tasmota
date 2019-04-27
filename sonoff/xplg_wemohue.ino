@@ -628,9 +628,9 @@ void HueLightStatus1(uint8_t device, String *response)
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON1);
   response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
   // Brightness for all devices with PWM
-  if (LST_SINGLE <= light_subtype) {
-    light_status += "\"bri\":" + String(bri) + ",";
-  }
+  //if (LST_SINGLE <= light_subtype) {
+  light_status += "\"bri\":" + String(bri) + ",";
+  //}
   if (LST_COLDWARM <= light_subtype) {
     light_status += "\"colormode\":\"" + String(g_gotct ? "ct" : "hs") + "\",";
   }

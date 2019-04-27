@@ -684,8 +684,6 @@ public:
       // channel 0=intensity, channel2=temperature
       light_current_color[0] = bri;  // set brightness from r (white)
       light_current_color[1] = c;
-    } else if (LT_PWM1 == light_type) {
-      light_current_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
     } else {
       switch (light_subtype) {
         case LST_NONE:
