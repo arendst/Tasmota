@@ -1874,17 +1874,14 @@ bool LightCommand(void)
     uint16_t ct = light_state.getCT();
     if (option != '\0') {
       if ('+' == option) {
-        ct = (ct > (500-34)) ? 500 : ct + 34;
+        XdrvMailbox.payload = (ct > (500-34)) ? 500 : ct + 34;
       }
       else if ('-' == option) {
-        ct = (ct < (153+34)) ? 153 : ct - 34;
+        XdrvMailbox.payload = (ct < (153+34)) ? 153 : ct - 34;
       }
-    } else {
-      ct = XdrvMailbox.payload;
     }
-    if ((ct >= 153) && (ct <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
-      //LightSetColorTemp(XdrvMailbox.payload);
-      light_controller.changeCT(ct);
+    if ((XdrvMailbox.payload >= 153) && (XdrvMailbox.payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
+      light_controller.changeCT(XdrvMailbox.payload);
       coldim = true;
     } else {
       Response_P(S_JSON_COMMAND_NVALUE, command, ct);
