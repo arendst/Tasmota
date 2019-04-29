@@ -860,7 +860,7 @@ void SettingsDefaultSet2(void)
     Settings.light_color[i] = 255;
 //    Settings.pwm_value[i] = 0;
   }
-//  Settings.light_correction = 0;
+  Settings.light_correction = 1;
   Settings.light_dimmer = 10;
 //  Settings.light_fade = 0;
   Settings.light_speed = 1;
@@ -1002,7 +1002,7 @@ void SettingsDelta(void)
       Settings.light_color[1] = 0;
       Settings.light_color[2] = 0;
       Settings.light_dimmer = 10;
-      Settings.light_correction = 0;
+      Settings.light_correction = 1;
       Settings.light_fade = 0;
       Settings.light_speed = 1;
       Settings.light_scheme = 0;
