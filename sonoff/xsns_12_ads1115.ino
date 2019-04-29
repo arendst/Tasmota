@@ -212,7 +212,7 @@ void Ads1115Show(bool json)
   if (!ads1115_type) { return; }
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"ADS1115\":["));
+    ResponseAppend_P(PSTR(",\"ADS1115\":"));
   }
 
   char *comma = (char*)"";
@@ -233,9 +233,6 @@ void Ads1115Show(bool json)
     }
   }
 
-  if (json) {
-    ResponseAppend_P(PSTR("]"));
-  }
 }
 
 /*********************************************************************************************\
