@@ -1699,11 +1699,8 @@ bool LightCommand(void)
           uint8_t old_bri = light_state.getBri();
           // change all channels to specified values
           light_controller.changeChannels(light_entry_color);
-          if ((CMND_COLOR == command_code) && (1 == XdrvMailbox.index)) {
-            // If Color(1) then reset brightness to maximum;
-            light_controller.changeBri(255);
-          } else {
-            // else set back initial brightness
+          if (2 == XdrvMailbox.index) {
+            // If Color2, set back old brightness
             light_controller.changeBri(old_bri);
           }
 
