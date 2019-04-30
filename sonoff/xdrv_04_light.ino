@@ -54,7 +54,23 @@
  *
 \*********************************************************************************************/
 
+
+/*********************************************************************************************\
+ *
+ * Light management has been refactored to provide a cleaner class-based interface.
+ * Also, now all values are stored as integer, no more floats that could generate
+ * rounding errors.
+ *
+ * Two singletons are now used to control the state of the light.
+ *  - light_state (LightStateClass) stores the color / white temperature and
+ *    brightness. Use this object to READ only.
+ *  - light_controller (LightControllerClass) is used to change light state
+ *    and adjust all Settings and levels accordingly.
+ *    Always use this object to change light status.
+\*********************************************************************************************/
+
 #define XDRV_04              4
+//#define DEBUG_LIGHT
 
 const uint8_t WS2812_SCHEMES = 7;    // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
 
@@ -108,13 +124,10 @@ uint8_t light_entry_color[5];
 uint8_t light_current_color[5];
 uint8_t light_new_color[5];
 uint8_t light_last_color[5];
-uint8_t light_signal_color[5];
 uint8_t light_color_remap[5];
 
-bool light_ct_rgb_linked;
-
 uint8_t light_wheel = 0;
-uint8_t light_subtype = 0;
+uint8_t light_subtype = 0;    // LST_ subtype
 uint8_t light_device = 0;
 uint8_t light_power = 0;
 uint8_t light_old_power = 1;
@@ -126,6 +139,614 @@ uint16_t light_wakeup_counter = 0;
 uint8_t light_fixed_color_index = 1;
 
 unsigned long strip_timer_counter = 0;    // Bars and Gradient
+
+//
+// changeUIntScale
+// Change a value for range a..b to c..d, using only unsigned int math
+//
+// PRE-CONDITIONS (if not satisfied, you may 'halt and catch fire')
+//    from_min < from_max  (not checked)
+//    to_min   < to_max    (not checked)
+//    from_min <= num <= from-max  (chacked)
+// POST-CONDITIONS
+//    to_min <= result <= to_max
+//
+uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
+                                       uint16_t ito_min, uint16_t ito_max) {
+  // convert to uint31, it's more verbose but code is more compact
+  uint32_t num = inum;
+  uint32_t from_min = ifrom_min;
+  uint32_t from_max = ifrom_max;
+  uint32_t to_min = ito_min;
+  uint32_t to_max = ito_max;
+
+  // check source range
+  num = (num > from_max ? from_max : (num < from_min ? from_min : num));
+  uint32_t numerator = (num - from_min) * (to_max - to_min);
+  uint32_t result;
+  if (numerator >= 0x80000000L) {
+    // don't do rounding as it would create an overflow
+    result = numerator / (from_max - from_min) + to_min;
+  } else {
+    result = (((numerator * 2) / (from_max - from_min)) + 1) / 2 + to_min;
+  }
+  return (uint32_t) (result > to_max ? to_max : (result < to_min ? to_min : result));
+}
+
+//
+// LightStateClass
+// This class is an abstraction of the current light state.
+// It allows for b/w, full colors, or white colortone
+//
+// This class has 3 independant slots
+// 1/ Brightness 0.255, dimmer controls both RGB and WC (warm-cold)
+//    If Brightness is 0, it is equivalent to Off (for compatibility)
+//    Dimmer is Brightness converted to range 0..100
+// 2/ RGB and Hue/Sat - always kept in sync and stored at full brightness,
+//    i.e. R G or B are 255
+// 3/ White with colortone - or WC (Warm / Cold)
+//    ct is either 0: no white colortone control, revert to RGB
+//    ct is 153..500 temperature
+//    Optional whiteBri to contraol separately the brightness of white channel
+//
+// RGB and Hue/Sat are always kept in sync
+// Brightness is stored in full range 0..255
+// Dimmer (0.100) is autoamtically derived from brightness
+//
+// Light has two states: either color (HS) when ct==0, or white with
+//   colortone if ct > 0.
+//
+//
+// Note: RGB is internally stored always at full brightness (ie. one of R,G,B is 255)
+//    If you want the actual RGB, you need to multiply with Bri,
+//    or use getActualRGBCW()
+// Note: all values are stored as unsigned integer, no floats.
+// Note: you can query vaules from this singleton. But to change values,
+//   use the LightController - changing this object will have no effect on actual light.
+//
+class LightStateClass {
+  private:
+    uint16_t _ct = 0;  // 0 or 153..500
+    uint16_t _hue = 0;  // 0..359
+    uint8_t  _sat = 255;  // 0..255
+    uint8_t  _bri = 255;  // 0..255
+    // dimmer is same as _bri but with a range of 0%-100%
+    uint8_t  _r = 255;  // 0..255
+    uint8_t  _g = 255;  // 0..255
+    uint8_t  _b = 255;  // 0..255
+    // are RGB and CT linked, i.e. if we set CT then RGB channels are off
+    bool     _ct_rgb_linked = true;
+    uint8_t  _whiteBri = 255;
+
+  public:
+    LightStateClass() {
+      //AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::Constructor RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
+    }
+
+    bool setCTRGBLinked(bool ct_rgb_linked) {
+      bool prev = _ct_rgb_linked;
+      _ct_rgb_linked = ct_rgb_linked;
+      return prev;
+    }
+
+    bool isCTRGBLinked() {
+      return _ct_rgb_linked;
+    }
+
+    void setWhite() {
+      _r = _g = _b = 255;
+      _hue = 0;
+      _sat = 0;
+      //AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setWhite RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
+    }
+
+    // Get RGB color, always at full brightness (ie. one of the components is 255)
+    void getRGB(uint8_t *r, uint8_t *g, uint8_t *b) {
+      if (r)  *r = _r;
+      if (g)  *g = _g;
+      if (b)  *b = _b;
+    }
+
+    // get full brightness values for wamr and cold channels.
+    // either w=c=0 (off) or w+c=255
+    void getCW(uint8_t *rc, uint8_t *rw) {
+      uint16_t ct = _ct;
+      uint16_t w = changeUIntScale(ct, 153, 500, 0, 255);
+      if (rw) { *rw = (ct ? w       : 0); }
+      if (rc) { *rc = (ct ? 255 - w : 0); }
+    }
+
+    // Get the actual RGB corrected with Brightness, ready to drive leds
+    // return Bri
+    uint8_t getActualRGBCW(uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *c, uint8_t *w) {
+      uint16_t bri = _bri;
+      uint16_t wBri = _whiteBri;
+      bool rgb_channels_off = _ct && _ct_rgb_linked;
+
+      if (r) { *r = rgb_channels_off ? 0 : changeUIntScale(_r, 0, 255, 0, bri); }
+      if (g) { *g = rgb_channels_off ? 0 : changeUIntScale(_g, 0, 255, 0, bri); }
+      if (b) { *b = rgb_channels_off ? 0 : changeUIntScale(_b, 0, 255, 0, bri); }
+
+      if (_ct) {
+        // change range from 153..500 to 0..255
+        uint8_t iwarm, icold;
+        getCW(&icold, &iwarm);
+        if (c) { *w = changeUIntScale(icold, 0, 255, 0, wBri); }
+        if (w) { *c = changeUIntScale(iwarm, 0, 255, 0, wBri); }
+      } else {
+        if (w) { *w = 0; }
+        if (c) { *c = 0; }
+      }
+      return _bri;
+    }
+
+    uint8_t getChannels(uint8_t *channels) {
+      return getActualRGBCW(&channels[0], &channels[1], &channels[2], &channels[3], &channels[4]);
+    }
+
+    void getHSB(uint16_t *hue, uint8_t *sat, uint8_t *bri) {
+      if (hue)  *hue = _hue;
+      if (sat)  *sat = _sat;
+      if (bri)  *bri = _bri;
+    }
+
+    // getBri() is guaranteed to give the same result as setBri() - no rounding errors.
+    uint8_t getBri() {
+      return _bri;  // 0..255
+    }
+
+    // get the Optional white Brightness
+    uint8_t getWhiteBri() {
+      return _whiteBri;
+    }
+
+    uint8_t getDimmer() {
+      uint8_t dimmer = changeUIntScale(_bri, 0, 255, 0, 100);  // 0.100
+      // if brightness is non zero, force dimmer to be non-zero too
+      if ((dimmer == 0) && (_bri > 0)) { dimmer = 1; }
+      return dimmer;
+    }
+
+    uint16_t getCT() {
+      return _ct; // 0 or 153..500
+    }
+
+    // get current color in XY format
+    void getXY(float *x, float *y) {
+      RgbToXy(_r, _g, _b, x, y);
+    }
+
+    // setters -- do not use directly, use the light_controller instead
+    // sets both master Bri and whiteBri
+    void setBri(uint8_t bri, bool syncWhiteBri = true) {
+      _bri = bri;  // 0..255
+      if (syncWhiteBri) { _whiteBri = bri; }
+#ifdef DEBUG_LIGHT
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setBri RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
+#endif
+    }
+
+    // whanges the white brightness, leaving master Bri untouched
+    void setWhiteBri(uint8_t wBri) {
+      _whiteBri = wBri;
+    }
+
+    void setDimmer(uint8_t dimmer) {
+      _bri = changeUIntScale(dimmer, 0, 100, 0, 255);  // 0..255
+    }
+
+    void setCT(uint16_t ct) {
+      if (0 == ct) {
+        // disable ct mode
+        _ct = 0;
+      } else {
+        _ct = (ct < 153 ? 153 : (ct > 500 ? 500 : ct));
+      }
+#ifdef DEBUG_LIGHT
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setCT RGB raw (%d %d %d) HS (%d %d) bri (%d) CT (%d)", _r, _g, _b, _hue, _sat, _bri, _ct);
+#endif
+    }
+
+    // recalibrate W and C, in case a channel was changed independently
+    // w+c must be 255, recalculate ct temperature accordingly
+    // returns brightness
+    uint8_t setCW(uint8_t w, uint8_t c) {
+      uint16_t wc = w + c;
+      if (wc > 0) {
+        uint16_t ct = changeUIntScale(w, 0, wc, 153, 500);
+        setCT(ct);
+      } else {
+        setCT(0);
+      }
+#ifdef DEBUG_LIGHT
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setCW CW (%d %d) CT (%d)", c, w, _ct);
+#endif
+      return (wc > 255 ? 255 : wc);
+    }
+
+    // sets RGB and returns the Brightness. Bri is unchanged here.
+    uint8_t setRGB(uint8_t r, uint8_t g, uint8_t b) {
+      uint16_t hue;
+      uint8_t  sat;
+
+      uint32_t max = (r > g && r > b) ? r : (g > b) ? g : b;   // 0..255
+
+      if (0 == max) {
+        r = g = b = 255;
+      } else if (255 > max) {
+        // we need to normalize rgb
+        r = changeUIntScale(r, 0, max, 0, 255);
+        g = changeUIntScale(g, 0, max, 0, 255);
+        b = changeUIntScale(b, 0, max, 0, 255);
+      }
+
+      RgbToHsb(r, g, b, &hue, &sat, nullptr);
+      _r = r;
+      _g = g;
+      _b = b;
+      _hue = hue;
+      _sat = sat;
+      _ct = 0;    // no ct mode
+#ifdef DEBUG_LIGHT
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setRGB RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
+#endif
+      return max;
+    }
+
+    void setHS(uint16_t hue, uint8_t sat) {
+      uint8_t r, g, b;
+      HsToRgb(hue, sat, &r, &g, &b);
+      _r = r;
+      _g = g;
+      _b = b;
+      _hue = hue;
+      _sat = sat;
+      _ct = 0;    // no ct mode
+#ifdef DEBUG_LIGHT
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS HS (%d %d) rgb (%d %d %d)", hue, sat, r, g, b);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
+#endif
+  }
+
+  // set all 5 channels at once.
+  // Channels are: R G B CW WW
+  // Brightness is automatically recalculated to adjust channels to the desired values
+  void setChannels(uint8_t *channels) {
+    uint8_t briRGB = setRGB(channels[0], channels[1], channels[2]);
+    uint8_t briCW = setCW(channels[3], channels[4]);
+#ifdef DEBUG_LIGHT
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels (%d %d %d %d %d)",
+      channels[0], channels[1], channels[2], channels[3], channels[4]);
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels CT (%d) briRGB (%d) briCW (%d) linked (%d)",
+      _ct, briRGB, briCW, _ct_rgb_linked);
+#endif
+    if (_ct_rgb_linked){
+      // if RGB and CT are linked, we set Brightness to either CT or RGB
+      if (_ct) {
+        setBri(briCW);
+      } else {
+        setBri(briRGB);
+      }
+    } else {
+      // we need to store the two brightnesses separately
+      setBri(briRGB);
+      setWhiteBri(briCW);
+    }
+  }
+
+    // new version of RGB to HSB with only integer calculation
+    static void RgbToHsb(uint8_t r, uint8_t g, uint8_t b, uint16_t *r_hue, uint8_t *r_sat, uint8_t *r_bri);
+    static void HsToRgb(uint16_t hue, uint8_t sat, uint8_t *r_r, uint8_t *r_g, uint8_t *r_b);
+    static void RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x, float *r_y);
+    static void XyToRgb(float x, float y, uint8_t *rr, uint8_t *rg, uint8_t *rb);
+
+};
+
+
+/*********************************************************************************************\
+ * LightStateClass implementation
+\*********************************************************************************************/
+
+// new version with only integer computing
+// brightness is not needed, it is controlled via Dimmer
+void LightStateClass::RgbToHsb(uint8_t ir, uint8_t ig, uint8_t ib, uint16_t *r_hue, uint8_t *r_sat, uint8_t *r_bri) {
+  uint32_t r = ir;
+  uint32_t g = ig;
+  uint32_t b = ib;
+  uint32_t max = (r > g && r > b) ? r : (g > b) ? g : b;   // 0..255
+  uint32_t min = (r < g && r < b) ? r : (g < b) ? g : b;   // 0..255
+  uint32_t d = max - min;   // 0..255
+
+  uint16_t hue = 0;   // hue value in degrees ranges from 0 to 359
+  uint8_t sat = 0;    // 0..255
+  uint8_t bri = max;  // 0..255
+
+  if (d != 0) {
+    sat = changeUIntScale(d, 0, max, 0, 255);
+    if (r == max) {
+      hue = (g > b) ?       changeUIntScale(g-b,0,d,0,60) : 360 - changeUIntScale(b-g,0,d,0,60);
+    } else if (g == max) {
+      hue = (b > r) ? 120 + changeUIntScale(b-r,0,d,0,60) : 120 - changeUIntScale(r-b,0,d,0,60);
+    } else {
+      hue = (r > g) ? 240 + changeUIntScale(r-g,0,d,0,60) : 240 - changeUIntScale(g-r,0,d,0,60);
+    }
+    hue = hue % 360;    // 0..359
+  }
+
+  if (r_hue) *r_hue = hue;
+  if (r_sat) *r_sat = sat;
+  if (r_bri) *r_bri = bri;
+  //AddLog_P2(LOG_LEVEL_DEBUG_MORE, "RgbToHsb rgb (%d %d %d) hsb (%d %d %d)", r, g, b, hue, sat, bri);
+}
+
+void LightStateClass::HsToRgb(uint16_t hue, uint8_t sat, uint8_t *r_r, uint8_t *r_g, uint8_t *r_b) {
+  uint32_t r = 255;  // default to white
+  uint32_t g = 255;
+  uint32_t b = 255;
+  // we take brightness at 100%, brightness should be set separately
+  hue = hue % 360;  // normalize to 0..359
+
+  if (sat > 0) {
+    uint32_t i = hue / 60;   // quadrant 0..5
+    uint32_t f = hue % 60;   // 0..59
+    uint32_t q = 255 - changeUIntScale(f, 0, 60, 0, sat);  // 0..59
+    uint32_t p = 255 - sat;
+    uint32_t t = 255 - changeUIntScale(60 - f, 0, 60, 0, sat);
+
+    switch (i) {
+      case 0:
+        //r = 255;
+        g = t;
+        b = p;
+        break;
+      case 1:
+        r = q;
+        //g = 255;
+        b = p;
+        break;
+      case 2:
+        r = p;
+        //g = 255;
+        b = t;
+        break;
+      case 3:
+        r = p;
+        g = q;
+        //b = 255;
+        break;
+      case 4:
+        r = t;
+        g = p;
+        //b = 255;
+        break;
+      default:
+        //r = 255;
+        g = p;
+        b = q;
+        break;
+      }
+    }
+  if (r_r)  *r_r = r;
+  if (r_g)  *r_g = g;
+  if (r_b)  *r_b = b;
+}
+
+void LightStateClass::RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x, float *r_y) {
+  float x = 0.31271f;   // default medium white
+  float y = 0.32902f;
+
+  if (i_r + i_b + i_g > 0) {
+    float r = (float)i_r / 255.0f;
+    float g = (float)i_g / 255.0f;
+    float b = (float)i_b / 255.0f;
+    // https://gist.github.com/popcorn245/30afa0f98eea1c2fd34d
+    // Gamma correction
+    r = (r > 0.04045f) ? powf((r + 0.055f) / (1.0f + 0.055f), 2.4f) : (r / 12.92f);
+    g = (g > 0.04045f) ? powf((g + 0.055f) / (1.0f + 0.055f), 2.4f) : (g / 12.92f);
+    b = (b > 0.04045f) ? powf((b + 0.055f) / (1.0f + 0.055f), 2.4f) : (b / 12.92f);
+
+    // conversion to X, Y, Z
+    // Y is also the Luminance
+    float X = r * 0.649926f + g * 0.103455f + b * 0.197109f;
+    float Y = r * 0.234327f + g * 0.743075f + b * 0.022598f;
+    float Z = r * 0.000000f + g * 0.053077f + b * 1.035763f;
+
+    x = X / (X + Y + Z);
+    y = Y / (X + Y + Z);
+    // we keep the raw gamut, one nice thing could be to convert to a narrower gamut
+  }
+  if (r_x)  *r_x = x;
+  if (r_y)  *r_y = y;
+}
+
+void LightStateClass::XyToRgb(float x, float y, uint8_t *rr, uint8_t *rg, uint8_t *rb)
+{
+  x = (x > 0.99f ? 0.99f : (x < 0.01f ? 0.01f : x));
+  y = (y > 0.99f ? 0.99f : (y < 0.01f ? 0.01f : y));
+  float z = 1.0f - x - y;
+  //float Y = 1.0f;
+  float X = x / y;
+  float Z = z / y;
+  // float r =  X * 1.4628067f - 0.1840623f - Z * 0.2743606f;
+  // float g = -X * 0.5217933f + 1.4472381f + Z * 0.0677227f;
+  // float b =  X * 0.0349342f - 0.0968930f + Z * 1.2884099f;
+  float r =  X * 3.2406f - 1.5372f - Z * 0.4986f;
+  float g = -X * 0.9689f + 1.8758f + Z * 0.0415f;
+  float b =  X * 0.0557f - 0.2040f + Z * 1.0570f;
+  float max = (r > g && r > b) ? r : (g > b) ? g : b;
+  r = r / max;    // normalize to max == 1.0
+  g = g / max;
+  b = b / max;
+  r = (r <= 0.0031308f) ? 12.92f * r : 1.055f * powf(r, (1.0f / 2.4f)) - 0.055f;
+  g = (g <= 0.0031308f) ? 12.92f * g : 1.055f * powf(g, (1.0f / 2.4f)) - 0.055f;
+  b = (b <= 0.0031308f) ? 12.92f * b : 1.055f * powf(b, (1.0f / 2.4f)) - 0.055f;
+  //
+  // AddLog_P2(LOG_LEVEL_DEBUG_MORE, "XyToRgb XZ (%s %s) rgb (%s %s %s)",
+  //   String(X,5).c_str(), String(Z,5).c_str(),
+  //   String(r,5).c_str(), String(g,5).c_str(),String(b,5).c_str());
+
+  int32_t ir = r * 255.0f + 0.5f;
+  int32_t ig = g * 255.0f + 0.5f;
+  int32_t ib = b * 255.0f + 0.5f;
+  if (rr) { *rr = (ir > 255 ? 255: (ir < 0 ? 0 : ir)); }
+  if (rg) { *rg = (ig > 255 ? 255: (ig < 0 ? 0 : ig)); }
+  if (rb) { *rb = (ib > 255 ? 255: (ib < 0 ? 0 : ib)); }
+}
+
+class LightControllerClass {
+  LightStateClass *_state;
+
+public:
+  LightControllerClass(LightStateClass& state) {
+    _state = &state;
+  }
+
+#ifdef DEBUG_LIGHT
+  void debugLogs() {
+    uint8_t r,g,b,c,w;
+    _state->getActualRGBCW(&r,&g,&b,&c,&w);
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::debugLogs rgb (%d %d %d) cw (%d %d)",
+      r, g, b, c, w);
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::debugLogs lightCurrent (%d %d %d %d %d)",
+      light_current_color[0], light_current_color[1], light_current_color[2],
+      light_current_color[3], light_current_color[4]);
+  }
+#endif
+
+  void loadSettings() {
+#ifdef DEBUG_LIGHT
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings Settings.light_color (%d %d %d %d %d - %d)",
+      Settings.light_color[0], Settings.light_color[1], Settings.light_color[2],
+      Settings.light_color[3], Settings.light_color[4], Settings.light_dimmer);
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings light_type/sub (%d %d)",
+      light_type, light_subtype);
+#endif
+
+    // set the RGB from settings
+    _state->setRGB(Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
+
+    // get CT only for lights that support it
+    if ((LST_COLDWARM == light_subtype) || (LST_RGBW <= light_subtype)) {
+      // calculate whether we have CT set
+      uint32_t c = Settings.light_color[3];
+      uint32_t w = Settings.light_color[4];
+      uint32_t ct = ((c > 0) || (w > 0)) ? changeUIntScale(w, 0, 255, 153, 500) : 0;
+      _state->setCT(ct);
+    }
+
+    // set Dimmer
+    _state->setDimmer(Settings.light_dimmer);
+  }
+
+  void changeCT(uint16_t new_ct) {
+    /* Color Temperature (https://developers.meethue.com/documentation/core-concepts)
+     *
+     * ct = 153 = 2000K = Warm = CCWW = 00FF
+     * ct = 500 = 6500K = Cold = CCWW = FF00
+     */
+    // don't set CT if not supported
+    if ((LST_COLDWARM != light_subtype) && (LST_RGBW > light_subtype)) {
+      return;
+    }
+    _state->setCT(new_ct);
+    saveSettings();
+    calcLevels();
+    //debugLogs();
+  }
+
+  void changeDimmer(uint8_t dimmer) {
+    uint8_t bri = changeUIntScale(dimmer, 0, 100, 0, 255);
+    changeBri(bri);
+  }
+
+  void changeBri(uint8_t bri) {
+    _state->setBri(bri);
+    saveSettings();
+    calcLevels();
+  }
+
+  void changeRGB(uint8_t r, uint8_t g, uint8_t b) {
+    _state->setRGB(r, g, b);
+    saveSettings();
+    calcLevels();
+  }
+
+  // calculate the levels for each channel
+  void calcLevels() {
+    uint8_t r,g,b,w,c,bri;
+    bri = _state->getActualRGBCW(&r,&g,&b,&w,&c);
+    uint8_t wBri = _state->getWhiteBri();
+
+    light_current_color[0] = light_current_color[1] = light_current_color[2] = 0;
+    light_current_color[3] = light_current_color[4] = 0;
+    if (PHILIPS == my_module_type) {
+      // Xiaomi Philips bulbs follow a different scheme:
+      // channel 0=intensity, channel2=temperature
+      light_current_color[0] = bri;  // set brightness from r (white)
+      light_current_color[1] = c;
+    } else {
+      switch (light_subtype) {
+        case LST_NONE:
+          light_current_color[0] = 255;
+          break;
+        case LST_SINGLE:
+          light_current_color[0] = bri;
+          break;
+        case LST_COLDWARM:
+          light_current_color[0] = w;
+          light_current_color[1] = c;
+          break;
+        case LST_RGB:
+        case LST_RGBW:
+        case LST_RGBWC:
+          light_current_color[0] = r;
+          light_current_color[1] = g;
+          light_current_color[2] = b;
+          if (c || w) {   // if we have CT set
+            if (LST_RGBWC == light_subtype) {
+              light_current_color[3] = w;
+              light_current_color[4] = c;
+            } else if (LST_RGBW == light_subtype) {
+              light_current_color[3] = wBri;
+            }
+          }
+          break;
+      }
+    }
+  }
+
+  void changeHS(uint16_t hue, uint8_t sat) {
+    _state->setHS(hue, sat);
+    saveSettings();
+  }
+
+  // save the current light state to Settings.
+  void saveSettings() {
+    _state->getRGB(&Settings.light_color[0], &Settings.light_color[1], &Settings.light_color[2]);
+    _state->getCW(&Settings.light_color[3], &Settings.light_color[4]);
+    Settings.light_dimmer = _state->getDimmer();
+#ifdef DEBUG_LIGHT
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::saveSettings Settings.light_color (%d %d %d %d %d - %d)",
+      Settings.light_color[0], Settings.light_color[1], Settings.light_color[2],
+      Settings.light_color[3], Settings.light_color[4], Settings.light_dimmer);
+#endif
+  }
+
+  // set all 5 channels at once.
+  // Channels are: R G B CW WW
+  // Brightness is automatically recalculated to adjust channels to the desired values
+  void changeChannels(uint8_t *channels) {
+    _state->setChannels(channels);
+    saveSettings();
+    calcLevels();
+  }
+};
+
+
+// the singletons for light state and Light Controller
+LightStateClass light_state = LightStateClass();
+LightControllerClass light_controller = LightControllerClass(light_state);
+
 
 #ifdef USE_ARILUX_RF
 /*********************************************************************************************\
@@ -471,6 +1092,8 @@ void LightInit(void)
   light_device = devices_present;
   light_subtype = light_type &7;        // Always 0 - 7
 
+  light_controller.loadSettings();
+
   if (LST_SINGLE == light_subtype) {
     Settings.light_color[0] = 255;      // One channel only supports Dimmer but needs max color
   }
@@ -564,9 +1187,8 @@ void LightInit(void)
 void LightUpdateColorMapping(void)
 {
   uint8_t param = Settings.param[P_RGB_REMAP] & 127;
-  if(param > 119){
-    param = 0;
-  }
+  if (param > 119){ param = 0; }
+
   uint8_t tmp[] = {0,1,2,3,4};
   light_color_remap[0] = tmp[param / 24];
   for (uint8_t i = param / 24; i<4; ++i){
@@ -586,7 +1208,9 @@ void LightUpdateColorMapping(void)
   light_color_remap[3] = tmp[param];
   light_color_remap[4] = tmp[1-param];
 
-  light_ct_rgb_linked = !(Settings.param[P_RGB_REMAP] & 128);
+  // do not allow independant RGV and WC colors
+  bool ct_rgb_linked = !(Settings.param[P_RGB_REMAP] & 128);
+  light_state.setCTRGBLinked(ct_rgb_linked);
 
   light_update = 1;
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], light_color_remap[0],light_color_remap[1],light_color_remap[2],light_color_remap[3],light_color_remap[4]);
@@ -603,30 +1227,7 @@ void LightSetColorTemp(uint16_t ct)
   if ((LST_COLDWARM != light_subtype) && (LST_RGBWC != light_subtype)) {
     return;
   }
-
-  uint16_t my_ct = ct - 153;
-  if (my_ct > 347) {
-    my_ct = 347;
-  }
-  uint16_t icold = (100 * (347 - my_ct)) / 136;
-  uint16_t iwarm = (100 * my_ct) / 136;
-  if (PHILIPS == my_module_type) {
-    // Xiaomi Philips bulbs follow a different scheme:
-    // channel 0=intensity, channel2=temperature
-    Settings.light_color[1] = (uint8_t)icold;
-  } else
-  if (LST_RGBWC == light_subtype) {
-    if(light_ct_rgb_linked){
-      Settings.light_color[0] = 0;
-      Settings.light_color[1] = 0;
-      Settings.light_color[2] = 0;
-    }
-    Settings.light_color[3] = (uint8_t)icold;
-    Settings.light_color[4] = (uint8_t)iwarm;
-  } else {
-    Settings.light_color[0] = (uint8_t)icold;
-    Settings.light_color[1] = (uint8_t)iwarm;
-  }
+  light_controller.changeCT(ct);
 }
 
 uint16_t LightGetColorTemp(void)
@@ -635,70 +1236,7 @@ uint16_t LightGetColorTemp(void)
   if ((LST_COLDWARM != light_subtype) && (LST_RGBWC != light_subtype)) {
     return 0;
   }
-
-  uint16_t ct = 0;
-  uint8_t ct_idx = 0;
-  if (LST_RGBWC == light_subtype) {
-    ct_idx = 3;
-  }
-  uint16_t my_ct = Settings.light_color[ct_idx +1];
-  if (my_ct > 0) {
-    ct = ((my_ct * 136) / 100) + 154;
-  } else {
-    my_ct = Settings.light_color[ct_idx];
-    if (my_ct > 0) {
-      ct = 499 - ((my_ct * 136) / 100);
-    } else {
-      ct = 0;
-    }
-  }
-
-  return ct;
-}
-
-void LightSetDimmer(uint8_t myDimmer)
-{
-  float temp;
-
-  if (PHILIPS == my_module_type) {
-    // Xiaomi Philips bulbs use two PWM channels with a different scheme:
-    float dimmer = 100 / (float)myDimmer;
-    temp = (float)Settings.light_color[0] / dimmer; // channel 1 is intensity
-    light_current_color[0] = (uint8_t)temp;
-    temp = (float)Settings.light_color[1];          // channel 2 is temperature
-    light_current_color[1] = (uint8_t)temp;
-    return;
-  }
-  if (LT_PWM1 == light_type) {
-    Settings.light_color[0] = 255;    // One PWM channel only supports Dimmer but needs max color
-  }
-  float dimmer = 100.0f / (float)myDimmer;
-  for (uint8_t i = 0; i < light_subtype; i++) {
-    if (Settings.flag.light_signal) {
-      temp = (float)light_signal_color[i] / dimmer + 0.5f;
-    } else {
-      temp = (float)Settings.light_color[i] / dimmer + 0.5f;
-    }
-    light_current_color[i] = (uint8_t)temp;
-  }
-}
-
-void LightSetColor(void)
-{
-  uint8_t highest = 0;
-
-  for (uint8_t i = 0; i < light_subtype; i++) {
-    if (highest < light_current_color[i]) {
-      highest = light_current_color[i];
-    }
-  }
-  float mDim = (float)highest / 2.55f;
-  Settings.light_dimmer = (uint8_t)(mDim + 0.5f);
-  float dimmer = 100 / mDim;
-  for (uint8_t i = 0; i < light_subtype; i++) {
-    float temp = (float)light_current_color[i] * dimmer + 0.5f;
-    Settings.light_color[i] = (uint8_t)temp;
-  }
+  return light_state.getCT();
 }
 
 void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
@@ -707,33 +1245,23 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
    hi - above hi is red
 */
   if (Settings.flag.light_signal) {
-    uint16_t signal = 0;
-    if (value > lo) {
-      signal = (value - lo) * 10 / ((hi - lo) * 10 / 256);
-      if (signal > 255) {
-        signal = 255;
-      }
-    }
+    uint16_t signal = changeUIntScale(value, lo, hi, 0, 255);  // 0..255
 //    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
-    light_signal_color[0] = signal;
-    light_signal_color[1] = 255 - signal;
-    light_signal_color[2] = 0;
-    light_signal_color[3] = 0;
-    light_signal_color[4] = 0;
-
+    light_controller.changeRGB(signal, 255 - signal, 0);
     Settings.light_scheme = 0;
-    if (!Settings.light_dimmer) {
-      Settings.light_dimmer = 20;
+    if (0 == light_state.getBri()) {
+      light_controller.changeBri(50);
     }
   }
 }
 
-char* LightGetColor(uint8_t type, char* scolor)
+// convert channels to string, use Option 17 to foce decimal, unless force_hex
+char* LightGetColor(char* scolor, boolean force_hex = false)
 {
-  LightSetDimmer(Settings.light_dimmer);
+  light_controller.calcLevels();
   scolor[0] = '\0';
   for (uint8_t i = 0; i < light_subtype; i++) {
-    if (!type && Settings.flag.decimal_text) {
+    if (!force_hex && Settings.flag.decimal_text) {
       snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", light_current_color[i]);
     } else {
       snprintf_P(scolor, 25, PSTR("%s%02X"), scolor, light_current_color[i]);
@@ -744,7 +1272,7 @@ char* LightGetColor(uint8_t type, char* scolor)
 
 void LightPowerOn(void)
 {
-  if (Settings.light_dimmer && !(light_power)) {
+  if (light_state.getBri() && !(light_power)) {
     ExecuteCommandPower(light_device, POWER_ON, SRC_LIGHT);
   }
 }
@@ -753,8 +1281,6 @@ void LightState(uint8_t append)
 {
   char scolor[25];
   char scommand[33];
-  float hsb[3];
-  int16_t h,s,b;
 
   if (append) {
     ResponseAppend_P(PSTR(","));
@@ -762,25 +1288,29 @@ void LightState(uint8_t append)
     Response_P(PSTR("{"));
   }
   GetPowerDevice(scommand, light_device, sizeof(scommand), Settings.flag.device_index_enable);
-  ResponseAppend_P(PSTR("\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"), scommand, GetStateText(light_power), Settings.light_dimmer);
+  ResponseAppend_P(PSTR("\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"), scommand, GetStateText(light_power), light_state.getDimmer());
   if (light_subtype > LST_SINGLE) {
-    ResponseAppend_P(PSTR(",\"" D_CMND_COLOR "\":\"%s\""), LightGetColor(0, scolor));
-    //  Add status for HSB
-    LightGetHsb(&hsb[0],&hsb[1],&hsb[2], false);
-    //  Scale these percentages up to the numbers expected by the client
-    h = round(hsb[0] * 360);
-    s = round(hsb[1] * 100);
-    b = round(hsb[2] * 100);
-    ResponseAppend_P(PSTR(",\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), h,s,b);
+    ResponseAppend_P(PSTR(",\"" D_CMND_COLOR "\":\"%s\""), LightGetColor(scolor));
+    uint16_t hue;
+    uint8_t  sat, bri;
+    light_state.getHSB(&hue, &sat, &bri);
+    sat = changeUIntScale(sat, 0, 255, 0, 100);
+    bri = changeUIntScale(bri, 0, 255, 0, 100);
+
+    ResponseAppend_P(PSTR(",\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), hue,sat,bri);
     // Add status for each channel
     ResponseAppend_P(PSTR(",\"" D_CMND_CHANNEL "\":[" ));
     for (uint8_t i = 0; i < light_subtype; i++) {
-      ResponseAppend_P(PSTR("%s%d" ), (i > 0 ? "," : ""), light_current_color[i] * 100 / 255);
+      uint8_t channel_raw = light_current_color[i];
+      uint8_t channel = changeUIntScale(channel_raw,0,255,0,100);
+      // if non null, force to be at least 1
+      if ((0 == channel) && (channel_raw > 0)) { channel = 1; }
+      ResponseAppend_P(PSTR("%s%d" ), (i > 0 ? "," : ""), channel);
     }
     ResponseAppend_P(PSTR("]"));
   }
   if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
-    ResponseAppend_P(PSTR(",\"" D_CMND_COLORTEMPERATURE "\":%d"), LightGetColorTemp());
+    ResponseAppend_P(PSTR(",\"" D_CMND_COLORTEMPERATURE "\":%d"), light_state.getCT());
   }
   if (append) {
     if (light_subtype >= LST_RGB) {
@@ -798,12 +1328,12 @@ void LightState(uint8_t append)
 
 void LightPreparePower(void)
 {
-  if (Settings.light_dimmer && !(light_power)) {
+  if (light_state.getBri() && !(light_power)) {
     if (!Settings.flag.not_power_linked) {
       ExecuteCommandPower(light_device, POWER_ON_NO_STATE, SRC_LIGHT);
     }
   }
-  else if (!Settings.light_dimmer && light_power) {
+  else if (!light_state.getBri() && light_power) {
     ExecuteCommandPower(light_device, POWER_OFF_NO_STATE, SRC_LIGHT);
   }
 #ifdef USE_DOMOTICZ
@@ -889,7 +1419,7 @@ void LightRandomColor(void)
     light_wheel = random(255);
     LightWheel(light_wheel);
     memcpy(light_current_color, light_entry_color, sizeof(light_current_color));
-    LightSetColor();
+    light_controller.changeChannels(light_current_color);
   }
   LightFade();
 }
@@ -944,7 +1474,7 @@ void LightAnimate(void)
 #endif // PWM_LIGHTSCHEME0_IGNORE_SLEEP
     switch (Settings.light_scheme) {
       case LS_POWER:
-        LightSetDimmer(Settings.light_dimmer);
+        light_controller.calcLevels();
         LightFade();
         break;
       case LS_WAKEUP:
@@ -961,7 +1491,8 @@ void LightAnimate(void)
           light_wakeup_counter = 0;
           light_wakeup_dimmer++;
           if (light_wakeup_dimmer <= Settings.light_dimmer) {
-            LightSetDimmer(light_wakeup_dimmer);
+            light_state.setDimmer(light_wakeup_dimmer);
+            light_controller.calcLevels();
             for (uint8_t i = 0; i < light_subtype; i++) {
               light_new_color[i] = light_current_color[i];
             }
@@ -1063,187 +1594,6 @@ void LightAnimate(void)
 }
 
 /*********************************************************************************************\
- * Hue support
-\*********************************************************************************************/
-
-float light_hue = 0.0f;
-float light_saturation = 0.0f;
-float light_brightness = 0.0f;
-
-void LightRgbToHsb(bool from_settings = false)
-{
-  // We get a previse Hue and Sat from the Settings parameter with full brightness
-  // and apply the Dimmer value for Brightness
-  // 'from_settings' default to actual RGB color for retro-compatibility
-
-  // convert colors to float between (0.0 - 1.0)
-  float r, g, b;
-  if (from_settings) {
-    r = Settings.light_color[0] / 255.0f;
-    g = Settings.light_color[1] / 255.0f;
-    b = Settings.light_color[2] / 255.0f;
-  } else {
-    r = light_current_color[0] / 255.0f;
-    g = light_current_color[1] / 255.0f;
-    b = light_current_color[2] / 255.0f;
-  }
-
-  float max = (r > g && r > b) ? r : (g > b) ? g : b;
-  float min = (r < g && r < b) ? r : (g < b) ? g : b;
-
-  float d = max - min;
-
-  float hue = 0.0f;
-  float brightness;
-  if (from_settings) {
-    brightness = max * Settings.light_dimmer / 100.0f;
-  } else {
-    brightness = max;
-  }
-
-  float saturation = (0.0f == max) ? 0 : 1.0f - min / max;
-
-  if (d != 0.0f)
-  {
-    if (r == max) {
-      hue = (g - b) / d + (g < b ? 6.0f : 0.0f);
-    } else if (g == max) {
-      hue = (b - r) / d + 2.0f;
-    } else {
-      hue = (r - g) / d + 4.0f;
-    }
-    hue /= 6.0f;
-  }
-  light_hue = hue;
-  light_saturation = saturation;
-  light_brightness = brightness;
-}
-
-void LightHsToRgb(void)
-{
-  float r = 1.0f; // default to white
-  float g = 1.0f;
-  float b = 1.0f;
-
-  float h = light_hue;
-  float s = light_saturation;
-  // brightness is set to 100%, and controlled via Dimmer
-
-  if (0.0f < light_saturation) {
-    if (h < 0.0f) {
-      h += 1.0f;
-    } else if (h >= 1.0f) {
-      h -= 1.0f;
-    }
-    h *= 6.0f;
-    int i = (int)h;
-    float f = h - i;
-    float q = 1.0f - s * f;
-    float p = 1.0f - s;
-    float t = 1.0f - s * (1.0f - f);
-    switch (i) {
-      case 0:
-        //r = 1.0f;
-        g = t;
-        b = p;
-        break;
-      case 1:
-        r = q;
-        //g = 1.0f;
-        b = p;
-        break;
-      case 2:
-        r = p;
-        //g = 1.0f;
-        b = t;
-        break;
-      case 3:
-        r = p;
-        g = q;
-        //b = 1.0f;
-        break;
-      case 4:
-        r = t;
-        g = p;
-        //b = 1.0f;
-        break;
-      default:
-        //r = 1.0f;
-        g = p;
-        b = q;
-        break;
-      }
-  }
-
-  light_current_color[0] = (uint8_t)(r * 255.0f + 0.5f);
-  light_current_color[1] = (uint8_t)(g * 255.0f + 0.5f);
-  light_current_color[2] = (uint8_t)(b * 255.0f + 0.5f);
-  if(light_ct_rgb_linked){
-    light_current_color[3] = 0;
-    light_current_color[4] = 0;
-  }
-}
-
-/********************************************************************************************/
-
-void LightGetHsb(float *hue, float *sat, float *bri, bool gotct)
-{
-  if (light_subtype > LST_COLDWARM && !gotct) {
-    LightRgbToHsb(true);
-    *hue = light_hue;
-    *sat = light_saturation;
-    *bri = light_brightness;
-  } else {
-    *hue = light_hue = 0.0f;
-    *sat = light_saturation = 0.0f;
-    float brightness = (float)Settings.light_dimmer / 100.0f;
-    if ((light_brightness - brightness > 0.01f) || (brightness - light_brightness > 0.01f))
-      light_brightness = brightness;
-    *bri = light_brightness;
-  }
-}
-
-void LightSetHsb(float hue, float sat, float bri, uint16_t ct, bool gotct)
-{
-  if (light_subtype > LST_COLDWARM) {
-    if ((LST_RGBWC == light_subtype) && (gotct)) {
-      light_brightness = bri;
-      Settings.light_dimmer = (uint8_t)(bri * 100.0f +0.5f);
-      if (ct > 0) {
-        light_hue = 0.0f;
-        light_saturation = 0.0f;
-        LightSetColorTemp(ct);
-      }
-    } else {
-      light_hue = hue;
-      light_saturation = sat;
-      light_brightness = bri;
-      LightHsToRgb();
-      LightSetColor();
-      Settings.light_dimmer = (uint8_t)(bri * 100.0f + 0.5f);
-      LightSetDimmer(Settings.light_dimmer);
-    }
-    LightPreparePower();
-    MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
-  } else {
-    light_brightness = bri;
-    Settings.light_dimmer = (uint8_t)(bri * 100.0f +0.5f);
-    if (LST_COLDWARM == light_subtype) {
-      if (ct > 0) {
-        light_hue = 0.0f;
-        light_saturation = 0.0f;
-        LightSetColorTemp(ct);
-      }
-      LightPreparePower();
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
-    } else {
-      LightPreparePower();
-      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_DIMMER));
-    }
-  }
-}
-
-/*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
@@ -1333,7 +1683,9 @@ bool LightCommand(void)
            ((CMND_WHITE == command_code) && (light_subtype == LST_RGBW) && (XdrvMailbox.index == 1))) {
     if (CMND_WHITE == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-        snprintf_P(scolor, sizeof(scolor), PSTR("0,0,0,%d"), XdrvMailbox.payload * 255 / 100);
+        uint8_t whiteBri = changeUIntScale(XdrvMailbox.payload,0,100,0,255);
+        snprintf_P(scolor, sizeof(scolor), PSTR("0,0,0,%d"), whiteBri);
+        light_state.setBri(whiteBri); // save target Bri, will be confirmed below
         XdrvMailbox.data = scolor;
         XdrvMailbox.data_len = strlen(scolor);
       } else {
@@ -1344,12 +1696,14 @@ bool LightCommand(void)
       valid_entry = LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len);
       if (valid_entry) {
         if (XdrvMailbox.index <= 2) {    // Color(1), 2
-          memcpy(light_current_color, light_entry_color, sizeof(light_current_color));
-          uint8_t dimmer = Settings.light_dimmer;
-          LightSetColor();
+          uint8_t old_bri = light_state.getBri();
+          // change all channels to specified values
+          light_controller.changeChannels(light_entry_color);
           if (2 == XdrvMailbox.index) {
-            Settings.light_dimmer = dimmer;
+            // If Color2, set back old brightness
+            light_controller.changeBri(old_bri);
           }
+
           Settings.light_scheme = 0;
           coldim = true;
         } else {             // Color3, 4, 5 and 6
@@ -1360,7 +1714,7 @@ bool LightCommand(void)
       }
     }
     if (!valid_entry && (XdrvMailbox.index <= 2)) {
-      Response_P(S_JSON_COMMAND_SVALUE, command, LightGetColor(0, scolor));
+      Response_P(S_JSON_COMMAND_SVALUE, command, LightGetColor(scolor));
     }
     if (XdrvMailbox.index >= 3) {
       scolor[0] = '\0';
@@ -1377,13 +1731,17 @@ bool LightCommand(void)
   else if ((CMND_CHANNEL == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= light_subtype ) ) {
     //  Set "Channel" directly - this allows Color and Direct PWM control to coexist
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      light_current_color[XdrvMailbox.index-1] = XdrvMailbox.payload * 255 / 100;
-      LightSetColor();
+      light_current_color[XdrvMailbox.index-1] = changeUIntScale(XdrvMailbox.payload,0,100,0,255);
+      // if we change channels 1,2,3 then turn off CT mode (unless non-linked)
+      if ((XdrvMailbox.index <= 3) && (light_state.isCTRGBLinked())) {
+        light_current_color[3] = light_current_color[4] = 0;
+      }
+      light_controller.changeChannels(light_current_color);
       coldim = true;
     }
     Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, light_current_color[XdrvMailbox.index -1] * 100 / 255);
   }
-  else if ((CMND_HSBCOLOR == command_code) && ( light_subtype >= LST_RGB)) {
+  else if ((CMND_HSBCOLOR == command_code) && (light_subtype >= LST_RGB)) {
     bool validHSB = (XdrvMailbox.data_len > 0);
     if (validHSB) {
       uint16_t HSB[3];
@@ -1398,31 +1756,34 @@ bool LightCommand(void)
           }
           if (substr != nullptr) {
             HSB[i] = atoi(substr);
+            if (0 < i) {
+              HSB[i] = changeUIntScale(HSB[i], 0, 100, 0, 255); // change sat and bri to 0..255
+            }
           } else {
             validHSB = false;
           }
         }
       } else {  // Command with only 1 parameter, Hue (0<H<360), Saturation (0<S<100) OR Brightness (0<B<100)
-        float hsb[3];
+        uint16_t c_hue;
+        uint8_t  c_sat, c_bri;
+        light_state.getHSB(&c_hue, &c_sat, &c_bri);
+        HSB[0] = c_hue;
+        HSB[1] = c_sat;
+        HSB[2] = c_bri;
 
-        LightGetHsb(&hsb[0],&hsb[1],&hsb[2], false);
-        HSB[0] = round(hsb[0] * 360);
-        HSB[1] = round(hsb[1] * 100);
-        HSB[2] = round(hsb[2] * 100);
-        if ((XdrvMailbox.index > 0) && (XdrvMailbox.index < 4)) {
-          HSB[XdrvMailbox.index -1] = XdrvMailbox.payload;
+        if (1 == XdrvMailbox.index) {
+          HSB[0] = XdrvMailbox.payload;
+        } else if ((XdrvMailbox.index > 1) && (XdrvMailbox.index < 4)) {
+          HSB[XdrvMailbox.index-1] = changeUIntScale(XdrvMailbox.payload,0,100,0,255);
         } else {
           validHSB = false;
         }
       }
       if (validHSB) {
-        //  Translate to fractional elements as required by LightHsbToRgb
-        //  Keep the results <=1 in the event someone passes something out of range.
-        LightSetHsb(( (HSB[0]>360) ? (HSB[0] % 360) : HSB[0] ) /360.0,
-                    ( (HSB[1]>100) ? (HSB[1] % 100) : HSB[1] ) /100.0,
-                    ( (HSB[2]>100) ? (HSB[2] % 100) : HSB[2] ) /100.0,
-                    0,
-                    false);
+        light_controller.changeHS(HSB[0], HSB[1]);
+        light_controller.changeBri(HSB[2]);
+        LightPreparePower();
+        MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
       }
     } else {
       LightState(0);
@@ -1507,31 +1868,32 @@ bool LightCommand(void)
     Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_STARTED);
   }
   else if ((CMND_COLORTEMPERATURE == command_code) && ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype))) { // ColorTemp
+    uint16_t ct = light_state.getCT();
     if (option != '\0') {
-      uint16_t value = LightGetColorTemp();
       if ('+' == option) {
-        XdrvMailbox.payload = (value  > 466) ? 500 : value + 34;
+        XdrvMailbox.payload = (ct > (500-34)) ? 500 : ct + 34;
       }
       else if ('-' == option) {
-        XdrvMailbox.payload = (value  < 187) ? 153 : value - 34;
+        XdrvMailbox.payload = (ct < (153+34)) ? 153 : ct - 34;
       }
     }
     if ((XdrvMailbox.payload >= 153) && (XdrvMailbox.payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
-      LightSetColorTemp(XdrvMailbox.payload);
+      light_controller.changeCT(XdrvMailbox.payload);
       coldim = true;
     } else {
-      Response_P(S_JSON_COMMAND_NVALUE, command, LightGetColorTemp());
+      Response_P(S_JSON_COMMAND_NVALUE, command, ct);
     }
   }
   else if (CMND_DIMMER == command_code) {
+    uint32_t dimmer = light_state.getDimmer();
     if ('+' == option) {
-      XdrvMailbox.payload = (Settings.light_dimmer > 89) ? 100 : Settings.light_dimmer + 10;
+      XdrvMailbox.payload = (dimmer > 89) ? 100 : dimmer + 10;
     }
     else if ('-' == option) {
-      XdrvMailbox.payload = (Settings.light_dimmer < 11) ? 1 : Settings.light_dimmer - 10;
+      XdrvMailbox.payload = (dimmer < 11) ? 1 : dimmer - 10;
     }
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      Settings.light_dimmer = XdrvMailbox.payload;
+      light_controller.changeDimmer(XdrvMailbox.payload);
       light_update = 1;
       coldim = true;
     } else {
@@ -1611,7 +1973,7 @@ bool LightCommand(void)
     Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_wakeup);
   }
   else if (CMND_UNDOCA == command_code) {  // Theos legacy status
-    LightGetColor(1, scolor);
+    LightGetColor(scolor, true);  // force hex whatever Option 17
     scolor[6] = '\0';  // RGB only
     Response_P(PSTR("%s,%d,%d,%d,%d,%d"), scolor, Settings.light_fade, Settings.light_correction, Settings.light_scheme, Settings.light_speed, Settings.light_width);
     MqttPublishPrefixTopic_P(STAT, XdrvMailbox.topic);
