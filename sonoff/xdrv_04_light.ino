@@ -22,6 +22,7 @@
  *
  * light_type  Module     Color  ColorTemp  Modules
  * ----------  ---------  -----  ---------  ----------------------------
+ *  0          -                 no         (Sonoff Basic)
  *  1          PWM1       W      no         (Sonoff BN-SZ)
  *  2          PWM2       CW     yes        (Sonoff Led)
  *  3          PWM3       RGB    no         (H801, MagicHome and Arilux LC01)
@@ -167,11 +168,11 @@ const uint8_t _ledTable[] = {
 //867,879,887,899,907,919,931,939,951,963,971,983,995,1003,1015,1023
 
 
-uint8_t light_entry_color[5];
-uint8_t light_current_color[5];
-uint8_t light_new_color[5];
-uint8_t light_last_color[5];
-uint8_t light_color_remap[5];
+uint8_t light_entry_color[LST_MAX];
+uint8_t light_current_color[LST_MAX];
+uint8_t light_new_color[LST_MAX];
+uint8_t light_last_color[LST_MAX];
+uint8_t light_color_remap[LST_MAX];
 
 uint8_t light_wheel = 0;
 uint8_t light_subtype = 0;    // LST_ subtype
@@ -200,6 +201,10 @@ unsigned long strip_timer_counter = 0;    // Bars and Gradient
 //
 uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
                                        uint16_t ito_min, uint16_t ito_max) {
+  // guard-rails
+  if ((ito_min >= ito_max) || (ifrom_min >= ifrom_max)) {
+    return ito_min;  // invalid input, return arbitrary value
+  }
   // convert to uint31, it's more verbose but code is more compact
   uint32_t num = inum;
   uint32_t from_min = ifrom_min;
@@ -1169,7 +1174,7 @@ void LightInit(void)
   uint8_t max_scheme = LS_MAX -1;
 
   light_device = devices_present;
-  light_subtype = light_type &7;        // Always 0 - 7
+  light_subtype = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7); // Always 0 - LST_MAX (5)
 
   light_controller.loadSettings();
 
@@ -1519,7 +1524,7 @@ void LightSetPower(void)
 
 void LightAnimate(void)
 {
-  uint8_t cur_col[5];
+  uint8_t cur_col[LST_MAX];
   uint16_t light_still_on = 0;
 
   strip_timer_counter++;
@@ -1607,27 +1612,42 @@ void LightAnimate(void)
     }
     if (light_update) {
       light_update = 0;
-      for (uint8_t i = 0; i < light_subtype; i++) {
+
+      // first adjust all colors to RgbwwTable if needed
+      for (uint8_t i = 0; i < LST_MAX; i++) {
         light_last_color[i] = light_new_color[i];
-        cur_col[i] = light_last_color[i]*Settings.rgbwwTable[i]/255;
-        cur_col[i] = (Settings.light_correction) ? ledGamma(cur_col[i]) : cur_col[i];
+        //cur_col[i] = light_last_color[i]*Settings.rgbwwTable[i]/255;
+        // adjust from 0.255 to 0..Settings.rgbwwTable[i] -- RgbwwTable command
+        cur_col[i] = changeUIntScale(light_last_color[i], 0, 255, 0, Settings.rgbwwTable[i]);
       }
 
-      // color remapping
-      uint8_t orig_col[5];
+      // apply port remapping
+      uint8_t orig_col[LST_MAX];
       memcpy(orig_col, cur_col, sizeof(orig_col));
-      for (uint8_t i = 0; i < 5; i++) {
+      for (uint8_t i = 0; i < LST_MAX; i++) {
         cur_col[i] = orig_col[light_color_remap[i]];
       }
 
-      for (uint8_t i = 0; i < light_subtype; i++) {
-        if (light_type < LT_PWM6) {
+      // apply gamma correction both in 8 bits and 10 bits resolution, if LedTable is true
+      uint16_t cur_col_10bits[LST_MAX];
+      for (uint8_t i = 0; i < LST_MAX; i++) {
+        // get 10 bits gamma correction, or extend from 8 to 10 bits if no correction
+        cur_col_10bits[i] = (Settings.light_correction) ? ledGamma(cur_col[i], 10) : changeUIntScale(cur_col[i], 0, 255, 0, 1023);
+        // but still keep an 8 bits gamma corrected version
+        cur_col[i] = (Settings.light_correction) ? ledGamma(cur_col[i]) : cur_col[i];
+      }
+
+      if (light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
+        for (uint8_t i = 0; i < light_subtype; i++) {
           if (pin[GPIO_PWM1 +i] < 99) {
-            if (cur_col[i] > 0xFC) {
-              cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
+            if ((cur_col_10bits[i] > 1008) && (cur_col_10bits[i] < 1023) {
+              cur_col_10bits[i] = 1008;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
+            // if (cur_col_10bits[i] > 0xFC*4) {
+            //   cur_col_10bits[i] = 0xFC*4;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
             }
-            uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
-//            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
+            // scale from 0..1023 to 0..pwm_range, but keep any non-zero value to at least 1
+            uint16_t curcol = (cur_col_10bits[i] > 0) ? changeUIntScale(cur_col_10bits[i], 1, 1023, 1, Settings.pwm_range) : 0;
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
             analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - curcol : curcol);
           }
         }
@@ -1705,7 +1725,7 @@ bool LightColorEntry(char *buffer, uint8_t buffer_length)
   if (strstr(buffer, ",") != nullptr) {             // Decimal entry
     int8_t i = 0;
     for (str = strtok_r(buffer, ",", &p); str && i < 6; str = strtok_r(nullptr, ",", &p)) {
-      if (i < 5) {
+      if (i < LST_MAX) {
         light_entry_color[i++] = atoi(str);
       }
     }
