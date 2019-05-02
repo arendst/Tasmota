@@ -1640,7 +1640,7 @@ void LightAnimate(void)
       if (light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
         for (uint8_t i = 0; i < light_subtype; i++) {
           if (pin[GPIO_PWM1 +i] < 99) {
-            if ((cur_col_10bits[i] > 1008) && (cur_col_10bits[i] < 1023) {
+            if ((cur_col_10bits[i] > 1008) && (cur_col_10bits[i] < 1023)) {
               cur_col_10bits[i] = 1008;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
             // if (cur_col_10bits[i] > 0xFC*4) {
             //   cur_col_10bits[i] = 0xFC*4;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
