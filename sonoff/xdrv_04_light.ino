@@ -1608,47 +1608,77 @@ void LightAnimate(void)
 
   if ((Settings.light_scheme < LS_MAX) || !light_power) {
     if (memcmp(light_last_color, light_new_color, light_subtype)) {
-        light_update = 1;
+      light_update = 1;
     }
     if (light_update) {
+      uint16_t cur_col_10bits[LST_MAX];   // 10 bits version of cur_col for PWM
       light_update = 0;
 
       // first adjust all colors to RgbwwTable if needed
       for (uint8_t i = 0; i < LST_MAX; i++) {
         light_last_color[i] = light_new_color[i];
-        //cur_col[i] = light_last_color[i]*Settings.rgbwwTable[i]/255;
         // adjust from 0.255 to 0..Settings.rgbwwTable[i] -- RgbwwTable command
         cur_col[i] = changeUIntScale(light_last_color[i], 0, 255, 0, Settings.rgbwwTable[i]);
+        // Extend from 8 to 10 bits if no correction (in case no gamma correction is required)
+        cur_col_10bits[i] = changeUIntScale(cur_col[i], 0, 255, 0, 1023);
       }
 
-      // apply port remapping
-      uint8_t orig_col[LST_MAX];
+      // Apply gamma correction for 8 and 10 bits resolutions, if needed
+      if (Settings.light_correction) {
+        // first apply gamma correction to all channels independently, from 8 bits value
+        for (uint8_t i = 0; i < LST_MAX; i++) {
+          cur_col_10bits[i] = ledGamma(cur_col[i], 10);
+        }
+        // then apply a different correction for CW white channels
+        if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
+          uint8_t w_idx[2] = {0, 1};        // if LST_COLDWARM, channels 0 and 1
+          if (LST_RGBWC == light_subtype) { // if LST_RGBWC, channels 3 and 4
+            w_idx[0] = 3;
+            w_idx[1] = 4;
+          }
+          uint16_t white_bri = cur_col[w_idx[0]] + cur_col[w_idx[1]];
+          // if sum of both channels is > 255, then channels are probablu uncorrelated
+          if (white_bri <= 255) {
+            // we calculate the gamma corrected sum of CW + WW
+            uint16_t white_bri_10bits = ledGamma(white_bri, 10);
+            // then we split the total energy among the cold and warm leds
+            cur_col_10bits[w_idx[0]] = changeUIntScale(cur_col[w_idx[0]], 0, white_bri, 0, white_bri_10bits);
+            cur_col_10bits[w_idx[1]] = changeUIntScale(cur_col[w_idx[1]], 0, white_bri, 0, white_bri_10bits);
+          }
+        }
+        // still keep an 8 bits gamma corrected version
+        for (uint8_t i = 0; i < LST_MAX; i++) {
+          cur_col[i] = ledGamma(cur_col[i]);
+        }
+      }
+
+      // final adjusments for PMW, post-gamma correction
+      for (uint8_t i = 0; i < LST_MAX; i++) {
+        // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
+        // but keep value 1023 if full range (PWM will be deactivated in this case)
+        if ((cur_col_10bits[i] > 1008) && (cur_col_10bits[i] < 1023)) {
+          cur_col_10bits[i] = 1008;
+        }
+        // scale from 0..1023 to 0..pwm_range, but keep any non-zero value to at least 1
+        cur_col_10bits[i] = (cur_col_10bits[i] > 0) ? changeUIntScale(cur_col_10bits[i], 1, 1023, 1, Settings.pwm_range) : 0;
+      }
+
+      // apply port remapping on both 8 bits and 10 bits versions
+      uint8_t  orig_col[LST_MAX];
+      uint16_t orig_col_10bits[LST_MAX];
       memcpy(orig_col, cur_col, sizeof(orig_col));
+      memcpy(orig_col_10bits, cur_col_10bits, sizeof(orig_col_10bits));
       for (uint8_t i = 0; i < LST_MAX; i++) {
         cur_col[i] = orig_col[light_color_remap[i]];
+        cur_col_10bits[i] = orig_col_10bits[light_color_remap[i]];
       }
 
-      // apply gamma correction both in 8 bits and 10 bits resolution, if LedTable is true
-      uint16_t cur_col_10bits[LST_MAX];
-      for (uint8_t i = 0; i < LST_MAX; i++) {
-        // get 10 bits gamma correction, or extend from 8 to 10 bits if no correction
-        cur_col_10bits[i] = (Settings.light_correction) ? ledGamma(cur_col[i], 10) : changeUIntScale(cur_col[i], 0, 255, 0, 1023);
-        // but still keep an 8 bits gamma corrected version
-        cur_col[i] = (Settings.light_correction) ? ledGamma(cur_col[i]) : cur_col[i];
-      }
-
+      // now apply the actual PWM values, adjusted and remapped 10-bits range
       if (light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
         for (uint8_t i = 0; i < light_subtype; i++) {
           if (pin[GPIO_PWM1 +i] < 99) {
-            if ((cur_col_10bits[i] > 1008) && (cur_col_10bits[i] < 1023)) {
-              cur_col_10bits[i] = 1008;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
-            // if (cur_col_10bits[i] > 0xFC*4) {
-            //   cur_col_10bits[i] = 0xFC*4;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
-            }
-            // scale from 0..1023 to 0..pwm_range, but keep any non-zero value to at least 1
-            uint16_t curcol = (cur_col_10bits[i] > 0) ? changeUIntScale(cur_col_10bits[i], 1, 1023, 1, Settings.pwm_range) : 0;
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
-            analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - curcol : curcol);
+            //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
+            analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
           }
         }
       }
@@ -1671,12 +1701,8 @@ void LightAnimate(void)
         // handle any PWM pins, skipping the first 3 values for sm16716
         for (uint8_t i = 3; i < light_subtype; i++) {
           if (pin[GPIO_PWM1 +i-3] < 99) {
-            if (cur_col[i] > 0xFC) {
-              cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
-            }
-            uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
-//            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
-            analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - curcol : curcol);
+            //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
+            analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
           }
         }
         // handle sm16716 update
