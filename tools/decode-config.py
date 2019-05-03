@@ -896,7 +896,13 @@ Setting_6_5_0_7.update({
     'ledmask':                      ('<H',   0x7BC,       (None, None,                          ('Main',          '"LedMask {}".format($)')), '"0x{:04x}".format($)' ),
                                     })
 # ======================================================================
+Setting_6_5_0_10 = copy.deepcopy(Setting_6_5_0_7)
+Setting_6_5_0_10.update({
+    'user_password':                ('32s', 0x744,       (None, None,                           ('Wifi',        '"UserPassword {}".format($)')), (passwordread,passwordwrite) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x605000A, 0xe00, Setting_6_5_0_10),
             (0x6050007, 0xe00, Setting_6_5_0_7),
             (0x6050006, 0xe00, Setting_6_5_0_6),
             (0x6050003, 0xe00, Setting_6_5_0_3),

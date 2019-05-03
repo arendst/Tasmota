@@ -385,6 +385,7 @@ void DebugCfgShow(uint8_t more)
     AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: AP Passwords (%d)     [%s], [%s]"), (uint8_t *)&Settings.sta_pwd - SetAddr, sizeof(Settings.sta_pwd[0])-1, Settings.sta_pwd[0], Settings.sta_pwd[1]);
     AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: MQTT Password (%d)    [%s]"), (uint8_t *)&Settings.mqtt_pwd - SetAddr, sizeof(Settings.mqtt_pwd)-1, Settings.mqtt_pwd);
     AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: Web Password (%d)     [%s]"), (uint8_t *)&Settings.web_password - SetAddr, sizeof(Settings.web_password)-1, Settings.web_password);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: User Password (%d)    [%s]"), (uint8_t *)&Settings.user_password - SetAddr, sizeof(Settings.user_password)-1, Settings.user_password);
   }
 }
 #endif  // USE_DEBUG_SETTING_NAMES

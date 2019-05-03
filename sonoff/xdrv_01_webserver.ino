@@ -18,7 +18,7 @@
 */
 
 // @@@ HB: REMOVE THIS BEFORE COMMIT!
-#include "sonoff.ino"
+//#include "sonoff.ino"
 
 #ifdef USE_WEBSERVER
 /*********************************************************************************************\
@@ -338,6 +338,7 @@ const char HTTP_FORM_OTHER[] PROGMEM =
   "</fieldset>"
   "<br/>"
   "<b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='wp' name='wp' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
+  "<b>" D_WEB_USER_PASSWORD "</b><br/><input id='up' name='up' type='password' placeholder='" D_WEB_USER_PASSWORD "' value='" D_ASTERIX "'><br/>"
   "<br>"
   "<input id='b1' name='b1' type='checkbox'%s><b>" D_MQTT_ENABLE "</b><br/>"
   "<br/>";
@@ -1524,6 +1525,8 @@ void OtherSaveSettings(void)
 
   WebGetArg("wp", tmp, sizeof(tmp));
   strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
+  WebGetArg("up", tmp, sizeof(tmp));
+  strlcpy(Settings.user_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.user_password : tmp, sizeof(Settings.user_password));
   Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
 #ifdef USE_EMULATION
   WebGetArg("b2", tmp, sizeof(tmp));
@@ -2332,8 +2335,8 @@ bool JsonWebColor(const char* dataBuf)
   return true;
 }
 
-enum WebCommands { CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_WEBLOG, CMND_WEBREFRESH, CMND_WEBSEND, CMND_WEBCOLOR, CMND_EMULATION };
-const char kWebCommands[] PROGMEM = D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|" D_CMND_EMULATION ;
+enum WebCommands { CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_USERPASSWORD, CMND_WEBLOG, CMND_WEBREFRESH, CMND_WEBSEND, CMND_WEBCOLOR, CMND_EMULATION };
+const char kWebCommands[] PROGMEM = D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_USERPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|" D_CMND_EMULATION ;
 const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND ;
 
 bool WebCommand(void)
@@ -2362,6 +2365,14 @@ bool WebCommand(void)
       Response_P(S_JSON_COMMAND_ASTERIX, command);
     }
   }
+  else if (CMND_USERPASSWORD == command_code) {
+    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.user_password))) {
+      strlcpy(Settings.user_password, (SC_CLEAR == Shortcut(XdrvMailbox.data)) ? "" : (SC_DEFAULT == Shortcut(XdrvMailbox.data)) ? USER_PASSWORD : XdrvMailbox.data, sizeof(Settings.user_password));
+      Response_P(S_JSON_COMMAND_SVALUE, command, Settings.user_password);
+    } else {
+      Response_P(S_JSON_COMMAND_ASTERIX, command);
+    }
+  }  
   else if (CMND_WEBLOG == command_code) {
     if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) { Settings.weblog_level = XdrvMailbox.payload; }
     Response_P(S_JSON_COMMAND_NVALUE, command, Settings.weblog_level);

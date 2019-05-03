@@ -332,9 +332,7 @@ struct SYSCFG {
   mytmplt       user_template;             // 720  29 bytes
   uint8_t       novasds_period;            // 73D
   uint8_t       web_color[18][3];          // 73E
-
-  uint8_t       free_774[32];              // 774
-
+  char          user_password[32];         // 774
   uint32_t      drivers[3];                // 794
   uint32_t      monitors;                  // 7A0
   uint32_t      sensors[3];                // 7A4
