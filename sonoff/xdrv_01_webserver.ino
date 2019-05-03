@@ -17,6 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// @@@ HB: REMOVE THIS BEFORE COMMIT!
+#include "sonoff.ino"
+
 #ifdef USE_WEBSERVER
 /*********************************************************************************************\
  * Web server and WiFi Manager
@@ -555,10 +558,13 @@ bool WebAuthenticate(void)
 
 bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
 {
+  // if in user mode: only allow Root
   if (HTTP_USER == webserver_state) {
     HandleRoot();
     return false;
   }
+  // if (!autorequestauth) : let the caller handle the rest. Ex.: HandleHttpCommand uses request parameters for verification, and a JSON error reply
+  // else: if I am not authenticated, reply with HTTP 401
   if (autorequestauth && !WebAuthenticate()) {
     WebServer->requestAuthentication();
     return false;
@@ -749,11 +755,13 @@ void WSContentButton(uint8_t title_index)
   char title[32];
 
   if (title_index <= BUTTON_RESET_CONFIGURATION) {
+    // Red buttons with pop-up confirmation
+    // This is for all buttons having an index lower than or equal to BUTTON_RESET_CONFIGURATION
     char confirm[64];
     WSContentSend_P(PSTR("<p><form action='%s' method='get' onsubmit='return confirm(\"%s\");'><button name='%s' class='button bred'>%s</button></form></p>"),
       GetTextIndexed(action, sizeof(action), title_index, kButtonAction),
       GetTextIndexed(confirm, sizeof(confirm), title_index, kButtonConfirm),
-      (!title_index) ? "rst" : "non",
+      (!title_index) ? "rst" : "non", // "rst" is used on the main page to force a reset. "non" is not used. Maybe we could save 2 bytes here
       GetTextIndexed(title, sizeof(title), title_index, kButtonTitle));
   } else {
     WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),
@@ -975,6 +983,14 @@ bool HandleRootStatusRefresh(void)
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
+
+  // @@@ HB: START testing only
+  WebGetArg(D_CMND_WEBSERVER, tmp, sizeof(tmp)); 
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_WEBSERVER " %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  // @@@ HB: END testing only
 
   WSContentBegin(200, CT_HTML);
   WSContentSend_P(PSTR("{t}"));
