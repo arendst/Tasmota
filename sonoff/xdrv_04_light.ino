@@ -802,13 +802,8 @@ LightControllerClass light_controller = LightControllerClass(light_state);
 /*********************************************************************************************\
  * Gamma correction
 \*********************************************************************************************/
-// uint16_t ledGamma(uint8_t v, uint16_t max_range = 255) {
-//   uint16_t slot = 3 - (v / 64);  // 0..3
-//   uint16_t uncorrected_value = _ledTable[v];
-//   uint16_t range = (0x100 << slot) - 1;
-//   return changeUIntScale(uncorrected_value, 0, range, 0, max_range);
-// }
-// bits can be 8,9,10,11
+// Calculate the gamma corrected value for LEDS
+// You can request 11, 10, 9 or 8 bits resolution via 'bits_out' parameter
 uint16_t ledGamma(uint8_t v, uint16_t bits_out = 8) {
   uint16_t result;
   // bits_resolution: the resolution of _ledTable[v], between 8 and 11
