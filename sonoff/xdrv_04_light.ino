@@ -83,6 +83,10 @@ const char kLightCommands[] PROGMEM =
   D_CMND_PIXELS "|" D_CMND_RGBWWTABLE "|" D_CMND_ROTATION "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
   D_CMND_WHITE "|" D_CMND_WIDTH "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR "|UNDOCA" ;
 
+// Light color mode, either RGB alone, or white-CT alone, or both only available if ct_rgb_linked is false
+enum LightColorModes {
+  LCM_RGB = 1, LCM_CT = 2, LCM_BOTH = 3 };
+
 struct LRgbColor {
   uint8_t R, G, B;
 };
@@ -206,109 +210,145 @@ uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
 //
 class LightStateClass {
   private:
-    uint16_t _ct = 0;  // 0 or 153..500
     uint16_t _hue = 0;  // 0..359
     uint8_t  _sat = 255;  // 0..255
-    uint8_t  _bri = 255;  // 0..255
+    uint8_t  _briRGB = 255;  // 0..255
     // dimmer is same as _bri but with a range of 0%-100%
     uint8_t  _r = 255;  // 0..255
     uint8_t  _g = 255;  // 0..255
     uint8_t  _b = 255;  // 0..255
-    // are RGB and CT linked, i.e. if we set CT then RGB channels are off
-    bool     _ct_rgb_linked = true;
-    uint8_t  _whiteBri = 255;
+
+    uint8_t  _subtype = 0;  // local copy of light_subtype, if we need multiple lights
+    uint16_t _ct = 153;  // 153..500, default to 153 (cold white)
+    uint8_t  _wc = 255;  // white cold channel
+    uint8_t  _ww = 0;    // white warm channel
+    uint8_t  _briCT = 255;
+
+    uint8_t  _color_mode = LCM_RGB; // RGB by default
 
   public:
     LightStateClass() {
       //AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::Constructor RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
     }
 
-    bool setCTRGBLinked(bool ct_rgb_linked) {
-      bool prev = _ct_rgb_linked;
-      _ct_rgb_linked = ct_rgb_linked;
-      return prev;
+    void setSubType(uint8_t sub_type) {
+      _subtype = sub_type;    // set sub_type at initialization, shoudln't be changed afterwards
     }
 
-    bool isCTRGBLinked() {
-      return _ct_rgb_linked;
+    // This function is a bit hairy, it will try to match the rerquired
+    // colormode with the features of the device:
+    //   LST_NONE:      LCM_RGB
+    //   LST_SINGLE:    LCM_RGB
+    //   LST_COLDWARM:  LCM_CT
+    //   LST_RGB:       LCM_RGB
+    //   LST_RGBW:      LCM_RGB, LCM_CT or LCM_BOTH
+    //   LST_RGBWC:     LCM_RGB, LCM_CT or LCM_BOTH
+    uint8_t setColorMode(uint8_t cm) {
+      uint8_t prev_cm = _color_mode;
+      if (cm < LCM_RGB) { cm = LCM_RGB; }
+      if (cm > LCM_BOTH) { cm = LCM_BOTH; }
+      uint8_t maxbri = (_briRGB >= _briCT) ? _briRGB : _briCT;
+
+      switch (_subtype) {
+        case LST_COLDWARM:
+          _color_mode = LCM_CT;
+          break;
+
+        case LST_NONE:
+        case LST_SINGLE:
+        case LST_RGB:
+        default:
+          _color_mode = LCM_RGB;
+          break;
+
+        case LST_RGBW:
+        case LST_RGBWC:
+          _color_mode = cm;
+          break;
+      }
+      if (LCM_RGB == _color_mode) {
+        _briCT = 0;
+        if (0 == _briRGB) { _briRGB = maxbri; }
+      }
+      if (LCM_CT == _color_mode) {
+        _briRGB = 0;
+        if (0 == _briCT) { _briCT = maxbri; }
+      }
+#ifdef DEBUG_LIGHT
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setColorMode prev_cm (%d) req_cm (%d) new_cm (%d)", prev_cm, cm, _color_mode);
+#endif
+      return prev_cm;
     }
 
-    void setWhite() {
-      _r = _g = _b = 255;
-      _hue = 0;
-      _sat = 0;
-      //AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setWhite RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
+    inline uint8_t getColorMode() {
+      return _color_mode;
+    }
+
+    void addRGBMode() {
+      setColorMode(_color_mode | LCM_RGB);
+    }
+    void addCTMode() {
+      setColorMode(_color_mode | LCM_CT);
     }
 
     // Get RGB color, always at full brightness (ie. one of the components is 255)
     void getRGB(uint8_t *r, uint8_t *g, uint8_t *b) {
-      if (r)  *r = _r;
-      if (g)  *g = _g;
-      if (b)  *b = _b;
+      if (r) { *r = _r; }
+      if (g) { *g = _g; }
+      if (b) { *b = _b; }
     }
 
     // get full brightness values for wamr and cold channels.
     // either w=c=0 (off) or w+c=255
     void getCW(uint8_t *rc, uint8_t *rw) {
-      uint16_t ct = _ct;
-      uint16_t w = changeUIntScale(ct, 153, 500, 0, 255);
-      if (rw) { *rw = (ct ? w       : 0); }
-      if (rc) { *rc = (ct ? 255 - w : 0); }
+      if (rc) { *rc = _wc; }
+      if (rw) { *rw = _ww; }
     }
 
-    // Get the actual RGB corrected with Brightness, ready to drive leds
-    // return Bri
-    uint8_t getActualRGBCW(uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *c, uint8_t *w) {
-      uint16_t bri = _bri;
-      uint16_t wBri = _whiteBri;
-      bool rgb_channels_off = _ct && _ct_rgb_linked;
+    // Get the actual values for each channel, ie multiply with brightness
+    void getActualRGBWC(uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *w, uint8_t *c) {
+      bool rgb_channels_on = _color_mode & LCM_RGB;
+      bool ct_channels_on = _color_mode & LCM_CT;
 
-      if (r) { *r = rgb_channels_off ? 0 : changeUIntScale(_r, 0, 255, 0, bri); }
-      if (g) { *g = rgb_channels_off ? 0 : changeUIntScale(_g, 0, 255, 0, bri); }
-      if (b) { *b = rgb_channels_off ? 0 : changeUIntScale(_b, 0, 255, 0, bri); }
+      if (r) { *r = rgb_channels_on ? changeUIntScale(_r, 0, 255, 0, _briRGB) : 0; }
+      if (g) { *g = rgb_channels_on ? changeUIntScale(_g, 0, 255, 0, _briRGB) : 0; }
+      if (b) { *b = rgb_channels_on ? changeUIntScale(_b, 0, 255, 0, _briRGB) : 0; }
 
-      if (_ct) {
-        // change range from 153..500 to 0..255
-        uint8_t iwarm, icold;
-        getCW(&icold, &iwarm);
-        if (c) { *w = changeUIntScale(icold, 0, 255, 0, wBri); }
-        if (w) { *c = changeUIntScale(iwarm, 0, 255, 0, wBri); }
-      } else {
-        if (w) { *w = 0; }
-        if (c) { *c = 0; }
-      }
-      return _bri;
+      if (c) { *c = ct_channels_on  ? changeUIntScale(_wc, 0, 255, 0, _briCT) : 0; }
+      if (w) { *w = ct_channels_on  ? changeUIntScale(_ww, 0, 255, 0, _briCT) : 0; }
     }
 
     uint8_t getChannels(uint8_t *channels) {
-      return getActualRGBCW(&channels[0], &channels[1], &channels[2], &channels[3], &channels[4]);
+      getActualRGBWC(&channels[0], &channels[1], &channels[2], &channels[3], &channels[4]);
     }
 
     void getHSB(uint16_t *hue, uint8_t *sat, uint8_t *bri) {
-      if (hue)  *hue = _hue;
-      if (sat)  *sat = _sat;
-      if (bri)  *bri = _bri;
+      if (hue) { *hue = _hue; }
+      if (sat) { *sat = _sat; }
+      if (bri) { *bri = _briRGB; }
     }
 
     // getBri() is guaranteed to give the same result as setBri() - no rounding errors.
-    uint8_t getBri() {
-      return _bri;  // 0..255
+    uint8_t getBri(void) {
+      // return the max of _briCT and _briRGB
+      return (_briRGB >= _briCT) ? _briRGB : _briCT;
     }
 
-    // get the Optional white Brightness
-    uint8_t getWhiteBri() {
-      return _whiteBri;
+    // get the white Brightness
+    inline uint8_t getBriCT() {
+      return _briCT;
     }
 
     uint8_t getDimmer() {
-      uint8_t dimmer = changeUIntScale(_bri, 0, 255, 0, 100);  // 0.100
+      uint8_t bri = getBri();
+      uint8_t dimmer = changeUIntScale(bri, 0, 255, 0, 100);  // 0.100
       // if brightness is non zero, force dimmer to be non-zero too
-      if ((dimmer == 0) && (_bri > 0)) { dimmer = 1; }
+      if ((dimmer == 0) && (bri > 0)) { dimmer = 1; }
       return dimmer;
     }
 
-    uint16_t getCT() {
-      return _ct; // 0 or 153..500
+    inline uint16_t getCT() {
+      return _ct; // 153..500
     }
 
     // get current color in XY format
@@ -318,66 +358,117 @@ class LightStateClass {
 
     // setters -- do not use directly, use the light_controller instead
     // sets both master Bri and whiteBri
-    void setBri(uint8_t bri, bool syncWhiteBri = true) {
-      _bri = bri;  // 0..255
-      if (syncWhiteBri) { _whiteBri = bri; }
+    void setBri(uint8_t bri) {
+      setBriRGB(_color_mode & LCM_RGB ? bri : 0);
+      setBriCT(_color_mode & LCM_CT ? bri : 0);
 #ifdef DEBUG_LIGHT
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setBri RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setBri RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
     }
 
-    // whanges the white brightness, leaving master Bri untouched
-    void setWhiteBri(uint8_t wBri) {
-      _whiteBri = wBri;
+    // changes the RGB brightness alone
+    uint8_t setBriRGB(uint8_t bri_rgb) {
+      uint8_t prev_bri = _briRGB;
+      _briRGB = bri_rgb;
+      if (bri_rgb > 0) { addRGBMode(); }
+      return prev_bri;
+    }
+
+    // changes the white brightness alone
+    uint8_t setBriCT(uint8_t bri_ct) {
+      uint8_t prev_bri = _briCT;
+      _briCT = bri_ct;
+      if (bri_ct > 0) { addCTMode(); }
+      return prev_bri;
+    }
+
+    inline uint8_t getBriRGB() {
+      return _briRGB;
     }
 
     void setDimmer(uint8_t dimmer) {
-      _bri = changeUIntScale(dimmer, 0, 100, 0, 255);  // 0..255
+      setBri(changeUIntScale(dimmer, 0, 100, 0, 255));  // 0..255
     }
 
     void setCT(uint16_t ct) {
       if (0 == ct) {
         // disable ct mode
-        _ct = 0;
+        setColorMode(LCM_RGB);  // try deactivating CT mode, setColorMode() will check which is legal
       } else {
-        _ct = (ct < 153 ? 153 : (ct > 500 ? 500 : ct));
+        ct = (ct < 153 ? 153 : (ct > 500 ? 500 : ct));
+        _ww = changeUIntScale(ct, 153, 500, 0, 255);
+        _wc = 255 - _ww;
+        _ct = ct;
+        addCTMode();
       }
 #ifdef DEBUG_LIGHT
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setCT RGB raw (%d %d %d) HS (%d %d) bri (%d) CT (%d)", _r, _g, _b, _hue, _sat, _bri, _ct);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setCT RGB raw (%d %d %d) HS (%d %d) briRGB (%d) briCT (%d) CT (%d)", _r, _g, _b, _hue, _sat, _briRGB, _briCT, _ct);
 #endif
     }
 
-    // recalibrate W and C, in case a channel was changed independently
-    // w+c must be 255, recalculate ct temperature accordingly
-    // returns brightness
-    uint8_t setCW(uint8_t w, uint8_t c) {
-      uint16_t wc = w + c;
-      if (wc > 0) {
-        uint16_t ct = changeUIntScale(w, 0, wc, 153, 500);
-        setCT(ct);
+    // Manually set Warm/Cold channels.
+    // There are two modes:
+    // 1. (free_range == false, default)
+    //    In this mode there is only one virtual white channel with color temperature
+    //    As a side effect, WC+WW = 255. It means also that the sum of light power
+    //    from white LEDs is always equal to briCT. It is not possible here
+    //    to set both white LEDs at full power, hence protecting power supplies
+    //    from overlaoding.
+    // 2. (free_range == true)
+    //    In this mode, values of WC and WW are free -- both channels can be set
+    //    at full power.
+    //    In this mode, we always scale both channels so that one at least is 255.
+    //
+    // We automatically adjust briCT to have the right values of channels
+    void setWC(uint8_t w, uint8_t c, bool free_range = false) {
+      uint16_t max = (w > c) ? w : c;   // 0..255
+      uint16_t sum = c + w;
+
+      if (0 == max) {
+        _briCT = 0;       // brightness set to null
+        setColorMode(LCM_RGB);  // try deactivating CT mode, setColorMode() will check which is legal
       } else {
-        setCT(0);
+        if (!free_range) {
+          // we need to normalize to sum = 255
+          _ww = changeUIntScale(w, 0, sum, 0, 255);
+          _wc = 255 - _ww;
+        } else {  // we normalize to max = 255
+          _ww = changeUIntScale(w, 0, max, 0, 255);
+          _wc = changeUIntScale(c, 0, max, 0, 255);
+        }
+        _ct = changeUIntScale(w, 0, sum, 153, 500);
+        addCTMode();   // activate CT mode if needed
+        if (_color_mode & LCM_CT) { _briCT = free_range ? max : (sum > 255 ? 255 : sum); }
       }
 #ifdef DEBUG_LIGHT
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setCW CW (%d %d) CT (%d)", c, w, _ct);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setWC WC (%d %d) CT (%d) briCT (%d)", w, c, _ct, _briCT);
 #endif
-      return (wc > 255 ? 255 : wc);
     }
 
-    // sets RGB and returns the Brightness. Bri is unchanged here.
-    uint8_t setRGB(uint8_t r, uint8_t g, uint8_t b) {
+    // sets RGB and returns the Brightness. Bri is updated unless keep_bri is true
+    uint8_t setRGB(uint8_t r, uint8_t g, uint8_t b, bool keep_bri = false) {
       uint16_t hue;
       uint8_t  sat;
+#ifdef DEBUG_LIGHT
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setRGB RGB input (%d %d %d)", r, g, b);
+#endif
 
       uint32_t max = (r > g && r > b) ? r : (g > b) ? g : b;   // 0..255
 
       if (0 == max) {
         r = g = b = 255;
-      } else if (255 > max) {
-        // we need to normalize rgb
-        r = changeUIntScale(r, 0, max, 0, 255);
-        g = changeUIntScale(g, 0, max, 0, 255);
-        b = changeUIntScale(b, 0, max, 0, 255);
+        setColorMode(LCM_CT);   // try deactivating RGB, setColorMode() will check if this is legal
+      } else {
+        if (255 > max) {
+          // we need to normalize rgb
+          r = changeUIntScale(r, 0, max, 0, 255);
+          g = changeUIntScale(g, 0, max, 0, 255);
+          b = changeUIntScale(b, 0, max, 0, 255);
+        }
+        addRGBMode();
+      }
+      if (!keep_bri) {
+        _briRGB = (_color_mode & LCM_RGB) ? max : 0;
       }
 
       RgbToHsb(r, g, b, &hue, &sat, nullptr);
@@ -386,9 +477,8 @@ class LightStateClass {
       _b = b;
       _hue = hue;
       _sat = sat;
-      _ct = 0;    // no ct mode
 #ifdef DEBUG_LIGHT
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setRGB RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setRGB RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
       return max;
     }
@@ -401,10 +491,10 @@ class LightStateClass {
       _b = b;
       _hue = hue;
       _sat = sat;
-      _ct = 0;    // no ct mode
+      addRGBMode();
 #ifdef DEBUG_LIGHT
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS HS (%d %d) rgb (%d %d %d)", hue, sat, r, g, b);
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _bri);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
   }
 
@@ -412,26 +502,13 @@ class LightStateClass {
   // Channels are: R G B CW WW
   // Brightness is automatically recalculated to adjust channels to the desired values
   void setChannels(uint8_t *channels) {
-    uint8_t briRGB = setRGB(channels[0], channels[1], channels[2]);
-    uint8_t briCW = setCW(channels[3], channels[4]);
+    setRGB(channels[0], channels[1], channels[2]);
+    setWC(channels[3], channels[4], true);  // free range for WC and WW
 #ifdef DEBUG_LIGHT
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels (%d %d %d %d %d)",
       channels[0], channels[1], channels[2], channels[3], channels[4]);
-    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels CT (%d) briRGB (%d) briCW (%d) linked (%d)",
-      _ct, briRGB, briCW, _ct_rgb_linked);
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels CT (%d) briRGB (%d) briCT (%d)", _ct, _briRGB, _briCT);
 #endif
-    if (_ct_rgb_linked){
-      // if RGB and CT are linked, we set Brightness to either CT or RGB
-      if (_ct) {
-        setBri(briCW);
-      } else {
-        setBri(briRGB);
-      }
-    } else {
-      // we need to store the two brightnesses separately
-      setBri(briRGB);
-      setWhiteBri(briCW);
-    }
   }
 
     // new version of RGB to HSB with only integer calculation
@@ -594,17 +671,35 @@ void LightStateClass::XyToRgb(float x, float y, uint8_t *rr, uint8_t *rg, uint8_
 }
 
 class LightControllerClass {
+private:
   LightStateClass *_state;
+
+  // are RGB and CT linked, i.e. if we set CT then RGB channels are off
+  bool     _ct_rgb_linked = true;
 
 public:
   LightControllerClass(LightStateClass& state) {
     _state = &state;
   }
 
+  void setSubType(uint8_t sub_type) {
+    _state->setSubType(sub_type);
+  }
+
+  inline bool setCTRGBLinked(bool ct_rgb_linked) {
+    bool prev = _ct_rgb_linked;
+    _ct_rgb_linked = ct_rgb_linked;
+    return prev;
+  }
+
+  inline bool isCTRGBLinked() {
+    return _ct_rgb_linked;
+  }
+
 #ifdef DEBUG_LIGHT
   void debugLogs() {
     uint8_t r,g,b,c,w;
-    _state->getActualRGBCW(&r,&g,&b,&c,&w);
+    _state->getActualRGBWC(&r,&g,&b,&w,&c);
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::debugLogs rgb (%d %d %d) cw (%d %d)",
       r, g, b, c, w);
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::debugLogs lightCurrent (%d %d %d %d %d)",
@@ -621,24 +716,21 @@ public:
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings light_type/sub (%d %d)",
       light_type, light_subtype);
 #endif
-
+    // TODO
     // set the RGB from settings
     _state->setRGB(Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
 
     // get CT only for lights that support it
     if ((LST_COLDWARM == light_subtype) || (LST_RGBW <= light_subtype)) {
-      // calculate whether we have CT set
-      uint32_t c = Settings.light_color[3];
-      uint32_t w = Settings.light_color[4];
-      uint32_t ct = ((c > 0) || (w > 0)) ? changeUIntScale(w, 0, 255, 153, 500) : 0;
-      _state->setCT(ct);
+      // TODO check
+      _state->setWC(Settings.light_color[3], Settings.light_color[4], true);
     }
 
     // set Dimmer
     _state->setDimmer(Settings.light_dimmer);
   }
 
-  void changeCT(uint16_t new_ct) {
+  void changeCTB(uint16_t new_ct, uint8_t briCT) {
     /* Color Temperature (https://developers.meethue.com/documentation/core-concepts)
      *
      * ct = 153 = 2000K = Warm = CCWW = 00FF
@@ -649,6 +741,8 @@ public:
       return;
     }
     _state->setCT(new_ct);
+    _state->setBriCT(briCT);
+    if (_ct_rgb_linked) { _state->setColorMode(LCM_CT); }   // try to force CT
     saveSettings();
     calcLevels();
     //debugLogs();
@@ -665,24 +759,26 @@ public:
     calcLevels();
   }
 
-  void changeRGB(uint8_t r, uint8_t g, uint8_t b) {
-    _state->setRGB(r, g, b);
+  void changeRGB(uint8_t r, uint8_t g, uint8_t b, bool keep_bri = false) {
+    _state->setRGB(r, g, b, keep_bri);
+    if (_ct_rgb_linked) { _state->setColorMode(LCM_RGB); }   // try to force RGB
     saveSettings();
     calcLevels();
   }
 
   // calculate the levels for each channel
   void calcLevels() {
-    uint8_t r,g,b,w,c,bri;
-    bri = _state->getActualRGBCW(&r,&g,&b,&w,&c);
-    uint8_t wBri = _state->getWhiteBri();
+    uint8_t r,g,b,w,c,briRGB,briCT;
+    _state->getActualRGBWC(&r,&g,&b,&w,&c);
+    briRGB = _state->getBriRGB();
+    briCT = _state->getBriCT();
 
     light_current_color[0] = light_current_color[1] = light_current_color[2] = 0;
     light_current_color[3] = light_current_color[4] = 0;
     if (PHILIPS == my_module_type) {
       // Xiaomi Philips bulbs follow a different scheme:
       // channel 0=intensity, channel2=temperature
-      light_current_color[0] = bri;  // set brightness from r (white)
+      light_current_color[0] = briRGB;  // set brightness
       light_current_color[1] = c;
     } else {
       switch (light_subtype) {
@@ -690,40 +786,47 @@ public:
           light_current_color[0] = 255;
           break;
         case LST_SINGLE:
-          light_current_color[0] = bri;
+          light_current_color[0] = briRGB;
           break;
         case LST_COLDWARM:
           light_current_color[0] = w;
           light_current_color[1] = c;
           break;
-        case LST_RGB:
         case LST_RGBW:
         case LST_RGBWC:
+          if (LST_RGBWC == light_subtype) {
+            light_current_color[3] = w;
+            light_current_color[4] = c;
+          } else {
+            light_current_color[3] = briCT;
+          }
+          // continue
+        case LST_RGB:
           light_current_color[0] = r;
           light_current_color[1] = g;
           light_current_color[2] = b;
-          if (c || w) {   // if we have CT set
-            if (LST_RGBWC == light_subtype) {
-              light_current_color[3] = w;
-              light_current_color[4] = c;
-            } else if (LST_RGBW == light_subtype) {
-              light_current_color[3] = wBri;
-            }
-          }
           break;
       }
     }
   }
 
-  void changeHS(uint16_t hue, uint8_t sat) {
+  void changeHSB(uint16_t hue, uint8_t sat, uint8_t briRGB) {
     _state->setHS(hue, sat);
+    _state->setBriRGB(briRGB);
+    if (_ct_rgb_linked) { _state->setColorMode(LCM_RGB); }   // try to force RGB
     saveSettings();
+    calcLevels();
   }
 
   // save the current light state to Settings.
   void saveSettings() {
-    _state->getRGB(&Settings.light_color[0], &Settings.light_color[1], &Settings.light_color[2]);
-    _state->getCW(&Settings.light_color[3], &Settings.light_color[4]);
+    memset(&Settings.light_color[0], 0, sizeof(Settings.light_color));
+    if (_state->getBriRGB() > 0) {
+      _state->getRGB(&Settings.light_color[0], &Settings.light_color[1], &Settings.light_color[2]);
+    }
+    if (_state->getBriCT() > 0) {
+      _state->getCW(&Settings.light_color[3], &Settings.light_color[4]);
+    }
     Settings.light_dimmer = _state->getDimmer();
 #ifdef DEBUG_LIGHT
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::saveSettings Settings.light_color (%d %d %d %d %d - %d)",
@@ -1092,6 +1195,7 @@ void LightInit(void)
   light_device = devices_present;
   light_subtype = light_type &7;        // Always 0 - 7
 
+  light_controller.setSubType(light_subtype);
   light_controller.loadSettings();
 
   if (LST_SINGLE == light_subtype) {
@@ -1210,7 +1314,7 @@ void LightUpdateColorMapping(void)
 
   // do not allow independant RGV and WC colors
   bool ct_rgb_linked = !(Settings.param[P_RGB_REMAP] & 128);
-  light_state.setCTRGBLinked(ct_rgb_linked);
+  light_controller.setCTRGBLinked(ct_rgb_linked);
 
   light_update = 1;
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], light_color_remap[0],light_color_remap[1],light_color_remap[2],light_color_remap[3],light_color_remap[4]);
@@ -1227,7 +1331,7 @@ void LightSetColorTemp(uint16_t ct)
   if ((LST_COLDWARM != light_subtype) && (LST_RGBWC != light_subtype)) {
     return;
   }
-  light_controller.changeCT(ct);
+  light_controller.changeCTB(ct, light_state.getBriCT());
 }
 
 uint16_t LightGetColorTemp(void)
@@ -1236,7 +1340,7 @@ uint16_t LightGetColorTemp(void)
   if ((LST_COLDWARM != light_subtype) && (LST_RGBWC != light_subtype)) {
     return 0;
   }
-  return light_state.getCT();
+  return (light_state.getColorMode() & LCM_CT) ? light_state.getCT() : 0;
 }
 
 void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
@@ -1247,7 +1351,7 @@ void LightSetSignal(uint16_t lo, uint16_t hi, uint16_t value)
   if (Settings.flag.light_signal) {
     uint16_t signal = changeUIntScale(value, lo, hi, 0, 255);  // 0..255
 //    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Light signal %d"), signal);
-    light_controller.changeRGB(signal, 255 - signal, 0);
+    light_controller.changeRGB(signal, 255 - signal, 0, true);  // keep bri
     Settings.light_scheme = 0;
     if (0 == light_state.getBri()) {
       light_controller.changeBri(50);
@@ -1733,7 +1837,7 @@ bool LightCommand(void)
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
       light_current_color[XdrvMailbox.index-1] = changeUIntScale(XdrvMailbox.payload,0,100,0,255);
       // if we change channels 1,2,3 then turn off CT mode (unless non-linked)
-      if ((XdrvMailbox.index <= 3) && (light_state.isCTRGBLinked())) {
+      if ((XdrvMailbox.index <= 3) && (light_controller.isCTRGBLinked())) {
         light_current_color[3] = light_current_color[4] = 0;
       }
       light_controller.changeChannels(light_current_color);
@@ -1765,11 +1869,11 @@ bool LightCommand(void)
         }
       } else {  // Command with only 1 parameter, Hue (0<H<360), Saturation (0<S<100) OR Brightness (0<B<100)
         uint16_t c_hue;
-        uint8_t  c_sat, c_bri;
-        light_state.getHSB(&c_hue, &c_sat, &c_bri);
+        uint8_t  c_sat;
+        light_state.getHSB(&c_hue, &c_sat, nullptr);
         HSB[0] = c_hue;
         HSB[1] = c_sat;
-        HSB[2] = c_bri;
+        HSB[2] = light_state.getBri();
 
         if (1 == XdrvMailbox.index) {
           HSB[0] = XdrvMailbox.payload;
@@ -1780,8 +1884,7 @@ bool LightCommand(void)
         }
       }
       if (validHSB) {
-        light_controller.changeHS(HSB[0], HSB[1]);
-        light_controller.changeBri(HSB[2]);
+        light_controller.changeHSB(HSB[0], HSB[1], HSB[2]);
         LightPreparePower();
         MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
       }
@@ -1878,7 +1981,7 @@ bool LightCommand(void)
       }
     }
     if ((XdrvMailbox.payload >= 153) && (XdrvMailbox.payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
-      light_controller.changeCT(XdrvMailbox.payload);
+      light_controller.changeCTB(XdrvMailbox.payload, light_state.getBri());
       coldim = true;
     } else {
       Response_P(S_JSON_COMMAND_NVALUE, command, ct);
