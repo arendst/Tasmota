@@ -236,7 +236,7 @@ int Xnrg02(uint8_t function)
   }
   else if (XNRG_02 == energy_flg) {
     switch (function) {
-      case FUNC_EVERY_SECOND:
+      case FUNC_ENERGY_EVERY_SECOND:
         CseEverySecond();
         break;
       case FUNC_COMMAND:

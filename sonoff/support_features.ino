@@ -390,7 +390,9 @@ void GetFeatures(void)
 #ifdef USE_HRE
   feature_sns2 |= 0x00800000;  // xsns_43_hre.ino
 #endif
-//  feature_sns2 |= 0x01000000;
+#ifdef USE_ADE7953
+  feature_sns2 |= 0x01000000;  // xnrg_07_ade7953.ino
+#endif
 //  feature_sns2 |= 0x02000000;
 //  feature_sns2 |= 0x04000000;
 //  feature_sns2 |= 0x08000000;

@@ -658,7 +658,7 @@ int Xnrg04(uint8_t function)
       case FUNC_INIT:
         McpSnsInit();
         break;
-      case FUNC_EVERY_SECOND:
+      case FUNC_ENERGY_EVERY_SECOND:
         if (McpSerial) { McpEverySecond(); }
         break;
       case FUNC_COMMAND:

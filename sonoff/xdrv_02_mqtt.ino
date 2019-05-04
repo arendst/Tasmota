@@ -249,6 +249,14 @@ void MqttPublishPowerState(uint8_t device)
   }
 }
 
+void MqttPublishAllPowerState()
+{
+  for (uint8_t i = 1; i <= devices_present; i++) {
+    MqttPublishPowerState(i);
+    if (SONOFF_IFAN02 == my_module_type) { break; }  // Report status of light relay only
+  }
+}
+
 void MqttPublishPowerBlinkState(uint8_t device)
 {
   char scommand[33];
@@ -321,10 +329,7 @@ void MqttConnected(void)
 #endif  // USE_WEBSERVER
     Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"), (GetResetReason() == "Exception") ? ESP.getResetInfo().c_str() : GetResetReason().c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
-    for (uint8_t i = 1; i <= devices_present; i++) {
-      MqttPublishPowerState(i);
-      if (SONOFF_IFAN02 == my_module_type) { break; }  // Report status of light relay only
-    }
+    MqttPublishAllPowerState();
     if (Settings.tele_period) { tele_period = Settings.tele_period -9; }  // Enable TelePeriod in 9 seconds
     rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);

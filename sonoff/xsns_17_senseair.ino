@@ -90,7 +90,7 @@ void Senseair250ms(void)              // Every 250 mSec
             senseair_temperature = ConvertTemp((float)value / 100);
             break;
           case 4:                // 0x05 (5) READ_HUMIDITY - S8: fe 84 02 f2 f1 - Illegal Data Address
-            senseair_humidity = (float)value / 100;
+            senseair_humidity = ConvertHumidity((float)value / 100);
             break;
           case 5:                // 0x1C (28) READ_RELAY_STATE - S8: fe 04 02 01 54 ad 4b - firmware version
           {

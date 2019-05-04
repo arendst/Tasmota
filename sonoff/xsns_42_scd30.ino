@@ -442,7 +442,7 @@ void Scd30Show(bool json)
 
   if (scd30Found && scd30IsDataValid)
   {
-    dtostrfd(scd30_Humid, Settings.flag2.humidity_resolution, humidity);
+    dtostrfd(ConvertHumidity(scd30_Humid), Settings.flag2.humidity_resolution, humidity);
     dtostrfd(ConvertTemp(scd30_Temp), Settings.flag2.temperature_resolution, temperature);
     if (json) {
       //ResponseAppend_P(PSTR(",\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), scd30_CO2, temperature, humidity);

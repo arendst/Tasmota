@@ -22,44 +22,104 @@
  * ADC support
 \*********************************************************************************************/
 
-#define XSNS_02             2
+#define XSNS_02      2
+
+#define TO_CELSIUS(x) ((x) - 273.15)
+#define TO_KELVIN(x) ((x) + 273.15)
+
+// Parameters for Steinhart-Hart equation
+#define ANALOG_V33   3.3               // ESP8266 Analog voltage
+#define ANALOG_T0    TO_KELVIN(25.0)   // 25 degrees Celcius in Kelvin (= 298.15)
+// Shelly 2.5 thermistor
+#define ANALOG_R21   32000.0           // Voltage bridge resistor
+#define ANALOG_R0    10000.0           // Thermistor resistance
+#define ANALOG_B     3350.0            // Thermistor Beta Coefficient
 
 uint16_t adc_last_value = 0;
+float adc_temp = 0;
 
-uint16_t AdcRead(void)
+uint16_t AdcRead(uint8_t factor)
 {
+  // factor 1 = 2 samples
+  // factor 2 = 4 samples
+  // factor 3 = 8 samples
+  // factor 4 = 16 samples
+  // factor 5 = 32 samples
+  uint8_t samples = 1 << factor;
   uint16_t analog = 0;
-  for (uint8_t i = 0; i < 32; i++) {
+  for (uint8_t i = 0; i < samples; i++) {
     analog += analogRead(A0);
     delay(1);
   }
-  analog >>= 5;
+  analog >>= factor;
   return analog;
 }
 
 #ifdef USE_RULES
 void AdcEvery250ms(void)
 {
-  uint16_t new_value = AdcRead();
-  if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
-    adc_last_value = new_value;
-    uint16_t value = adc_last_value / 10;
-    Response_P(PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
-    XdrvRulesProcess();
+  if (my_module_flag.adc0) {
+    uint16_t new_value = AdcRead(5);
+    if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
+      adc_last_value = new_value;
+      uint16_t value = adc_last_value / 10;
+      Response_P(PSTR("{\"ANALOG\":{\"A0div10\":%d}}"), (value > 99) ? 100 : value);
+      XdrvRulesProcess();
+    }
   }
 }
 #endif  // USE_RULES
 
+void AdcEverySecond(void)
+{
+  if (my_module_flag.adc0_temp) {
+    int adc = AdcRead(2);
+    // Steinhart-Hart equation for thermistor as temperature sensor
+    double Rt = (adc * ANALOG_R21) / (1024.0 * ANALOG_V33 - (double)adc);
+    double T = ANALOG_B / (ANALOG_B/ANALOG_T0 + log(Rt/ANALOG_R0));
+    adc_temp = ConvertTemp(TO_CELSIUS(T));
+  }
+}
+
+float AdcTemperature(void)
+{
+  return adc_temp;
+}
+
 void AdcShow(bool json)
 {
-  uint16_t analog = AdcRead();
+  if (my_module_flag.adc0) {
+    uint16_t analog = AdcRead(5);
 
-  if (json) {
-    ResponseAppend_P(PSTR(",\"ANALOG\":{\"A0\":%d}"), analog);
+    if (json) {
+      ResponseAppend_P(PSTR(",\"ANALOG\":{\"A0\":%d}"), analog);
 #ifdef USE_WEBSERVER
-  } else {
-    WSContentSend_PD(HTTP_SNS_ANALOG, "", 0, analog);
+    } else {
+      WSContentSend_PD(HTTP_SNS_ANALOG, "", 0, analog);
 #endif  // USE_WEBSERVER
+    }
+  }
+  if (my_module_flag.adc0_temp) {
+    char temperature[33];
+    dtostrfd(adc_temp, Settings.flag2.temperature_resolution, temperature);
+
+    if (json) {
+      ResponseAppend_P(JSON_SNS_TEMP, "ANALOG", temperature);
+#ifdef USE_DOMOTICZ
+      if (0 == tele_period) {
+        DomoticzSensor(DZ_TEMP, temperature);
+      }
+#endif  // USE_DOMOTICZ
+#ifdef USE_KNX
+      if (0 == tele_period) {
+        KnxSensor(KNX_TEMPERATURE, temp);
+      }
+#endif  // USE_KNX
+#ifdef USE_WEBSERVER
+    } else {
+      WSContentSend_PD(HTTP_SNS_TEMP, "", temperature, TempUnit());
+#endif  // USE_WEBSERVER
+    }
   }
 }
 
@@ -71,13 +131,16 @@ bool Xsns02(uint8_t function)
 {
   bool result = false;
 
-  if (my_module_flag.adc0) {
+  if (my_module_flag.adc0 || my_module_flag.adc0_temp) {
     switch (function) {
 #ifdef USE_RULES
       case FUNC_EVERY_250_MSECOND:
         AdcEvery250ms();
         break;
 #endif  // USE_RULES
+      case FUNC_EVERY_SECOND:
+        AdcEverySecond();
+        break;
       case FUNC_JSON_APPEND:
         AdcShow(1);
         break;

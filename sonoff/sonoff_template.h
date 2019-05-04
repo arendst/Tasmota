@@ -180,6 +180,7 @@ enum UserSelectablePins {
   GPIO_ROT2B,          // Rotary switch2 B Pin
   GPIO_HRE_CLOCK,      // Clock/Power line for HR-E Water Meter
   GPIO_HRE_DATA,       // Data line for HR-E Water Meter
+  GPIO_ADE7953_IRQ,    // ADE7953 IRQ
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -244,6 +245,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ARIRFRCV "|" D_SENSOR_TXD "|" D_SENSOR_RXD "|"
   D_SENSOR_ROTARY "1a|" D_SENSOR_ROTARY "1b|" D_SENSOR_ROTARY "2a|" D_SENSOR_ROTARY "2b|"
   D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
+  D_SENSOR_ADE7953_IRQ "|"
   ;
 
 /********************************************************************************************/
@@ -339,22 +341,22 @@ typedef struct MYCFGIO {
   uint8_t      io[MAX_GPIO_PIN - MIN_FLASH_PINS];
 } mycfgio;
 
-#define GPIO_FLAG_USED       1  // Currently only one flag used
+#define GPIO_FLAG_USED         2  // Currently two flags used
 
-#define GPIO_FLAG_ADC0       1  // Allow ADC0 when define USE_ADC_VCC is disabled
-#define GPIO_FLAG_SPARE01    2  // Allow input pull-up control using SetOption62 - Superseded by user template editing
-#define GPIO_FLAG_SPARE02    4
-#define GPIO_FLAG_SPARE03    8
-#define GPIO_FLAG_SPARE04   16
-#define GPIO_FLAG_SPARE05   32
-#define GPIO_FLAG_SPARE06   64
-#define GPIO_FLAG_SPARE07  128
+#define GPIO_FLAG_ADC0         1  // Allow ADC0 when define USE_ADC_VCC is disabled
+#define GPIO_FLAG_ADC0_TEMP    2  // Allow ADC0 as Temperature sensor when define USE_ADC_VCC is disabled
+#define GPIO_FLAG_SPARE02      4
+#define GPIO_FLAG_SPARE03      8
+#define GPIO_FLAG_SPARE04     16
+#define GPIO_FLAG_SPARE05     32
+#define GPIO_FLAG_SPARE06     64
+#define GPIO_FLAG_SPARE07    128
 
 typedef union {
   uint8_t data;
   struct {
-    uint8_t adc0 : 1;            // Allow ADC0 when define USE_ADC_VCC is disabled
-    uint8_t spare01 : 1;
+    uint8_t adc0 : 1;             // Allow ADC0 when define USE_ADC_VCC is disabled
+    uint8_t adc0_temp : 1;        // Allow ADC0 as Temperature sensor when define USE_ADC_VCC is disabled
     uint8_t spare02 : 1;
     uint8_t spare03 : 1;
     uint8_t spare04 : 1;
@@ -505,6 +507,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
   GPIO_HLW_CF,         // HLW8012 CF power
   GPIO_HJL_CF,         // HJL-01/BL0937 CF power
+#endif
+#if defined(USE_ENERGY_SENSOR) && defined(USE_I2C) && defined(USE_ADE7953)
+  GPIO_ADE7953_IRQ,    // ADE7953 IRQ
 #endif
   GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)

@@ -9,6 +9,7 @@
 .gcc-flags.json
 sonoff/user_config_override.h
 build
+firmware.map
 
 ## Visual Studio Code specific ######
 .vscode

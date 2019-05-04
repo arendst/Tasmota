@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.4.1.18
+ * Updated until v6.5.0.7
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -93,7 +93,7 @@
 #define D_FALLBACK_TOPIC "Topic de secours"
 #define D_FALSE "Faux"
 #define D_FILE "Fichier"
-#define D_FLOW_RATE "Flow rate"
+#define D_FLOW_RATE "Débit"
 #define D_FREE_MEMORY "Mémoire libre"
 #define D_FREQUENCY "Fréquence"
 #define D_GAS "Gaz"
@@ -157,7 +157,7 @@
 #define D_TO "à"
 #define D_TOGGLE "Inverser"
 #define D_TOPIC "Topic"      // Keep MQTT keyword
-#define D_TOTAL_USAGE "Total Usage"
+#define D_TOTAL_USAGE "Eau totale"
 #define D_TRANSMIT "Transmettre"
 #define D_TRUE "Vrai"
 #define D_TVOC "TVOC"
@@ -307,6 +307,7 @@
 #define D_BASE_TYPE "Basé sur"
 #define D_TEMPLATE_FLAGS "Options"
 #define D_ALLOW_ADC0 "Entrée ADC0"
+#define D_ALLOW_ADC0_TEMP "Température ADC0"
 #define D_ALLOW_PULLUP "Pull-up utilisateur"
 
 #define D_SAVE_CONFIGURATION "Enregistrer la configuration"
@@ -432,7 +433,7 @@
 #define D_KNX_COMMAND_READ "Lire"
 #define D_KNX_COMMAND_OTHER "Autre"
 #define D_SENT_TO "envoyé à"
-#define D_KNX_WARNING "L'Adresse de Groupe ( 0 / 0 / 0 ) est réservée et ne peut être utilisée."
+#define D_KNX_WARNING "L'Adresse de Groupe (0/0/0) est réservée et ne peut être utilisée."
 #define D_KNX_ENHANCEMENT "Amélioration de la communication"
 #define D_KNX_TX_SLOT "KNX TX"
 #define D_KNX_RX_SLOT "KNX RX"
@@ -583,6 +584,7 @@
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
+#define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -590,7 +592,7 @@
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
 #define D_UNIT_GALLONS "gal"
-#define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_GALLONS_PER_MIN "gal/mn"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"
@@ -604,12 +606,12 @@
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
-#define D_UNIT_MINUTE "Min"
+#define D_UNIT_MINUTE "mn"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"
-#define D_UNIT_SECOND "sec"
+#define D_UNIT_SECOND "s"
 #define D_UNIT_SECTORS "secteurs"
 #define D_UNIT_VA "VA"
 #define D_UNIT_VAR "VAr"

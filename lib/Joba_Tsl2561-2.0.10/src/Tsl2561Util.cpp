@@ -22,9 +22,10 @@ This file is part of the Joba_Tsl2561 Library.
 namespace Tsl2561Util {
 
 // Tsl2561Util::normalizedLuminosity returncode false can mean:
-// - saturation: full and/or ir have value ~0 (aka -1)
+// - saturation: full and/or ir have value ~0 (aka -1) and not shortest exposure
 // - manual exposure time: full and ir are corrected only for gain
-// If true, full and ir have values as if exposure was 402 and gain 16.
+// If true, full and ir have values as if exposure was 402 and gain 16
+//   or ~0 if saturated even at shortest exposure
 bool normalizedLuminosity( bool gain, Tsl2561::exposure_t exposure, uint32_t &full, uint32_t &ir ) {
 
   uint16_t scaledFull = (uint16_t)full;
@@ -39,8 +40,8 @@ bool normalizedLuminosity( bool gain, Tsl2561::exposure_t exposure, uint32_t &fu
 
     switch( exposure ) {
       case Tsl2561::EXP_14:
-        full = (scaledFull >=  5047/4*3) ? 0xffffffff : ((full + 5) * 322) / 11;
-        ir   = (scaledIr   >=  5047/4*3) ? 0xffffffff : ((ir   + 5) * 322) / 11;
+        full = (scaledFull == 5047) ? 0xffffffff : ((full + 5) * 322) / 11;
+        ir   = (scaledIr   == 5047) ? 0xffffffff : ((ir   + 5) * 322) / 11;
         break;
       case Tsl2561::EXP_101:
         full = (scaledFull >= 37177/4*3) ? 0xffffffff : ((full + 40) * 322) / 81;
@@ -54,7 +55,7 @@ bool normalizedLuminosity( bool gain, Tsl2561::exposure_t exposure, uint32_t &fu
         return false;
     }
 
-    return full != 0xffffffff && ir != 0xffffffff;
+    return exposure == Tsl2561::EXP_14 || (full != 0xffffffff && ir != 0xffffffff);
   }
 
   return false;
@@ -93,6 +94,8 @@ bool autoGain( Tsl2561 &tsl, bool &gain, Tsl2561::exposure_t &exposure, uint16_t
     { true,  Tsl2561::EXP_402 }  // max
   };
 
+  // Serial.printf("autoGain start: gain=%u, expo=%u\n", gain, exposure);
+
   // get current sensitivity
   if( !tsl.getSensitivity(gain, exposure) ) {
     return false; // I2C error
@@ -110,9 +113,10 @@ bool autoGain( Tsl2561 &tsl, bool &gain, Tsl2561::exposure_t &exposure, uint16_t
     return false; // should not happen...
   }
 
-  // in a loop wait for next sample, get values and adjust sensitivity if needed
+  // sometimes sensor reports high brightness although it is darker.
   uint8_t retryOnSaturated = 10;
 
+  // in a loop wait for next sample, get values and adjust sensitivity if needed
   while( true ) {
     waitNext(exposure);
 
@@ -122,11 +126,14 @@ bool autoGain( Tsl2561 &tsl, bool &gain, Tsl2561::exposure_t &exposure, uint16_t
 
     uint16_t limit = getLimit(exposure);
     if( full >= 1000 && full <= limit ) {
-      return true; // new value within limits
+      // Serial.printf("autoGain normal full=%u, limits=1000-%u, curr=%u\n", full, limit, curr);
+      return true; // new value within limits of good accuracy
     }
 
+    // adjust sensitivity, if possible
     if( (full < 1000 && ++curr < sizeof(sensitivity)/sizeof(sensitivity[0]))
      || (full > limit && curr-- > 0) ) {
+      // Serial.printf("autoGain adjust full=%u, limits=1000-%u, curr=%u\n", full, limit, curr);
       if( !tsl.setSensitivity(sensitivity[curr].gain, sensitivity[curr].exposure) ) {
         return false; // I2C error
       }
@@ -134,7 +141,10 @@ bool autoGain( Tsl2561 &tsl, bool &gain, Tsl2561::exposure_t &exposure, uint16_t
       exposure = sensitivity[curr].exposure;
     }
     else {
-      if( ++curr > 0 && retryOnSaturated-- == 0 ) {
+      // sensitivity already is at minimum or maximum
+      if( ++curr > 0 || retryOnSaturated-- == 0 ) {
+        // Serial.printf("autoGain limit full=%u, ir=%u, limits=1000-%u, curr=%u, retry=%u\n", full, ir, limit, curr, retryOnSaturated);
+        // dark, or repeatedly confirmed high brightness
         return true; // saturated, but best we can do
       }
     }
@@ -173,6 +183,11 @@ uint32_t significance( uint32_t num, uint8_t digits ) {
 bool milliLux( uint32_t full, uint32_t ir, uint32_t &mLux, bool csType, uint8_t digits ) {
   if( !full ) {
     mLux = 0;
+    return true;
+  }
+
+  if( full == 0xffffffff || ir == 0xffffffff ) {
+    mLux = 99999999; // indicates saturation at shortest exposure
     return true;
   }
 

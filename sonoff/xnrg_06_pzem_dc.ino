@@ -114,7 +114,7 @@ int Xnrg06(uint8_t function)
       case FUNC_INIT:
         PzemDcSnsInit();
         break;
-      case FUNC_EVERY_SECOND:
+      case FUNC_ENERGY_EVERY_SECOND:
         PzemDcEverySecond();
         break;
     }

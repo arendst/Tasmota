@@ -521,6 +521,7 @@ uint8_t IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC
 /*
  * ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(3) + 40 = 96
  IRsend:
+ { "protocol": "RC5", "bits": 12, "data":"0xC86" }
  { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
  IRhvac:
  { "Vendor": "<Toshiba|Mitsubishi>", "Power": <0|1>, "Mode": "<Hot|Cold|Dry|Auto>", "FanSpeed": "<1|2|3|4|5|Auto|Silence>", "Temp": <17..30> }
@@ -541,11 +542,12 @@ bool IrSendCommand(void)
       Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
 
       if (strstr(XdrvMailbox.data, "{") == nullptr) {  // If no JSON it must be rawdata
-        // IRSend frequency, rawdata, rawdata ...
+        // IRsend <freq>,<rawdata>,<rawdata> ...
         // or
-        // IRsend raw,<freq>,<any space>,<bit stream>
+        // IRsend raw,<freq>,<zero space>,<bit stream> (one space = zero space *2)
+        // IRsend raw,<freq>,<zero space>,<zero space multiplier becoming one space>,<bit stream>
         // IRsend raw,<freq>,<zero space>,<one space>,<bit stream>
-        // IRSend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream>
+        // IRsend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream>
         char *p;
         char *str = strtok_r(XdrvMailbox.data, ", ", &p);
         if (p == nullptr) {
@@ -561,8 +563,7 @@ bool IrSendCommand(void)
             } else {
               uint16_t parm[count];
               for (uint8_t i = 0; i < count; i++) {
-                str = strtok_r(nullptr, ", ", &p);
-                parm[i] = atoi(str);
+                parm[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);
                 if (!parm[i]) {
                   if (!i) {
                     parm[0] = 38000;                   // Frequency default to 38kHz
@@ -573,15 +574,20 @@ bool IrSendCommand(void)
                 }
               }
               if (IE_NO_ERROR == error) {
-                uint16_t raw_array[strlen(p)*2+3];     // Header + bits + end (Largest needed)
                 uint16_t i = 0;
-                if (count < 4) {                       // Protocol where 0 = t, 1 = 2t (RC5)
-                  // IRSend raw,0,889,0000100000000000000100000
-                  uint16_t mark = parm[1] *2;
-                  if (3 == count) {                    // Protocol where 0 = t1, 1 = t2 (Could be RC5)
-                    // IRSend raw,0,889,1778,0000100000000000000100000
-                    mark = parm[2];
+                if (count < 4) {
+                  // IRsend raw,0,889,000000100110000001001
+                  uint16_t mark = parm[1] *2;          // Protocol where 0 = t, 1 = 2t (RC5)
+                  if (3 == count) {
+                    if (parm[2] < parm[1]) {
+                      // IRsend raw,0,889,2,000000100110000001001
+                      mark = parm[1] * parm[2];        // Protocol where 0 = t1, 1 = t1*t2 (Could be RC5)
+                    } else {
+                      // IRsend raw,0,889,1778,000000100110000001001
+                      mark = parm[2];                  // Protocol where 0 = t1, 1 = t2 (Could be RC5)
+                    }
                   }
+                  uint16_t raw_array[strlen(p)];       // Bits
                   for (; *p; *p++) {
                     if (*p == '0') {
                       raw_array[i++] = parm[1];        // Space
@@ -590,9 +596,12 @@ bool IrSendCommand(void)
                       raw_array[i++] = mark;           // Mark
                     }
                   }
+                  irsend_active = true;
+                  irsend->sendRaw(raw_array, i, parm[0]);
                 }
                 else if (6 == count) {                 // NEC Protocol
-                  // IRSend raw,0,8620,4260,544,411,1496,010101101000111011001110000000001100110000000001100000000000000010001100
+                  // IRsend raw,0,8620,4260,544,411,1496,010101101000111011001110000000001100110000000001100000000000000010001100
+                  uint16_t raw_array[strlen(p)*2+3];   // Header + bits + end
                   raw_array[i++] = parm[1];            // Header mark
                   raw_array[i++] = parm[2];            // Header space
                   for (; *p; *p++) {
@@ -606,13 +615,11 @@ bool IrSendCommand(void)
                     }
                   }
                   raw_array[i++] = parm[3];            // Trailing mark
+                  irsend_active = true;
+                  irsend->sendRaw(raw_array, i, parm[0]);
                 }
                 else {
                   error = IE_INVALID_RAWDATA;          // Invalid number of parameters
-                }
-                if (IE_NO_ERROR == error) {
-                  irsend_active = true;
-                  irsend->sendRaw(raw_array, i, parm[0]);
                 }
               }
             }
@@ -624,20 +631,14 @@ bool IrSendCommand(void)
             if (0 == count) {
               error = IE_INVALID_RAWDATA;
             } else {  // At least two raw data values
+              // IRsend 0,896,876,900,888,894,876,1790,874,872,1810,1736,948,872,880,872,936,872,1792,900,888,1734
               count++;
               uint16_t raw_array[count];  // It's safe to use stack for up to 240 packets (limited by mqtt_data length)
-              uint8_t i = 0;
-              for (str = strtok_r(nullptr, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p)) {
-                raw_array[i++] = strtoul(str, nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+              for (uint16_t i = 0; i < count; i++) {
+                raw_array[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
               }
-
-//            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: Count %d, Freq %d, Arr[0] %d, Arr[count -1] %d"), count, freq, raw_array[0], raw_array[count -1]);
-
               irsend_active = true;
               irsend->sendRaw(raw_array, count, freq);
-              if (!count) {
-                Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_FAILED);
-              }
             }
           }
         }

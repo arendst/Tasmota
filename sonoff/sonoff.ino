@@ -127,6 +127,7 @@ uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
 float global_temperature = 0;               // Provide a global temperature to be used by some sensors
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
+float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
 char *ota_url;                              // OTA url string pointer
 uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
 uint16_t blink_counter = 0;                 // Number of blink cycles
@@ -1609,6 +1610,18 @@ void StopAllPowerBlink(void)
   }
 }
 
+void SetAllPower(uint8_t state, int source)
+{
+  if ((POWER_ALL_OFF == state) || (POWER_ALL_ON == state)) {
+    power = 0;
+    if (POWER_ALL_ON == state) {
+      power = (1 << devices_present) -1;
+    }
+    SetDevicePower(power, source);
+    MqttPublishAllPowerState();
+  }
+}
+
 void ExecuteCommand(char *cmnd, int source)
 {
   char *start;
@@ -2274,7 +2287,7 @@ void SerialInput(void)
       if (serial_in_byte || Settings.flag.mqtt_serial_raw) {                     // Any char between 1 and 127 or any char (0 - 255)
         if ((serial_in_byte_counter < INPUT_BUFFER_SIZE -1) &&                   // Add char to string if it still fits and ...
             ((isprint(serial_in_byte) && (128 == Settings.serial_delimiter)) ||  // Any char between 32 and 127
-             (serial_in_byte != Settings.serial_delimiter) ||                    // Any char between 1 and 127 and not being delimiter
+            ((serial_in_byte != Settings.serial_delimiter) && (128 != Settings.serial_delimiter)) ||  // Any char between 1 and 127 and not being delimiter
               Settings.flag.mqtt_serial_raw)) {                                  // Any char between 0 and 255
           serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
           serial_polling_window = millis();
@@ -2558,6 +2571,8 @@ extern struct rst_info resetInfo;
 
 void setup(void)
 {
+  global_state.data = 3;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
+
   RtcRebootLoad();
   if (!RtcRebootValid()) { RtcReboot.fast_reboot_count = 0; }
   RtcReboot.fast_reboot_count++;
@@ -2678,8 +2693,10 @@ void setup(void)
 
   // Issue #526 and #909
   for (uint8_t i = 0; i < devices_present; i++) {
-    if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
-      bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
+    if (!Settings.flag3.no_power_feedback) {  // #5594 and #5663
+      if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
+        bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
+      }
     }
     if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
       SetPulseTimer(i, Settings.pulse_timer[i]);

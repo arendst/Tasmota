@@ -21,7 +21,7 @@ This file is part of the Joba_Tsl2561 Library.
 
 #include <Tsl2561Util.h>
 
-// to mimic Serial.printf() of esp8266 core for other platforms
+// to mimic Serial.printf() of esp cores for other platforms
 char *format( const char *fmt, ... ) {
   static char buf[128];
   va_list arg;
@@ -37,7 +37,7 @@ uint8_t id;
 
 void setup() {
   Serial.begin(115200);
-  Wire.begin();
+  Wire.begin(TSL2561_SDA, TSL2561_SCL);
   while( !Tsl.begin() )
     ; // wait until chip detected or wdt reset
   Serial.println("\nStarting Tsl2561Util autogain loop");

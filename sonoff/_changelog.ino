@@ -1,5 +1,22 @@
-/* 6.5.0.7 20190410
- * Add power, brightness and color support for Sonoff L1 (#4935)
+/* 6.5.0.9 20190418
+ * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)
+ * Fix TasmotaSerial at 9600 bps solving DFPlayer comms (#5528)
+ * Fix Shelly 2.5 overtemp
+ * Set gamma correction as default behavior, ie "Ledtable 1"
+ * Refactored management of lights, using classes and integers instead of floats.
+ * Add support for Sonoff L1 (#4935)
+ *
+ * 6.5.0.8 20190413
+ * Add Tuya Dimmer 10 second heartbeat serial packet required by some Tuya dimmer secondary MCUs
+ * Fix use of SerialDelimiter value 128 (#5634)
+ * Fix lost syslog connection regression from 6.5.0.4
+ * Add Shelly 2.5 Energy Monitoring (#5592)
+ * Add all temperature, humidity and pressure for global access
+ * Add Shelly 2.5 overtemp functionality
+ * Fix Shelly 2.5 I2C address priority issue when VEML6070 code is present by disabling VEML6070 for Shelly 2.5 (#5592)
+ * Support for color and colortone for Philips Hue emulation via Alexa (#5600 #4809)
+ *
+ * 6.5.0.7 20190410
  * Add command LedMask to assign which relay has access to power LED (#5602, #5612)
  *
  * 6.5.0.6 20190409
