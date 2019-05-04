@@ -68,6 +68,56 @@
  *  - light_controller (LightControllerClass) is used to change light state
  *    and adjust all Settings and levels accordingly.
  *    Always use this object to change light status.
+ *
+ * As there have been lots of changes in light control, here is a summary out
+ * the whole flow from setting colors to drving the PMW pins.
+ *
+ * 1.  To change colors, always use 'light_controller' object.
+ *     'light_state' is only to be used to read current state.
+ *  .a For color bulbs, set color via changeRGB() or changeHS() for Hue/Sat.
+ *     Set the overall brightness changeBri(0..255) or changeDimmer(0..100%)
+ *     RGB and Hue/Sat are always kept in sync. Internally, RGB are stored at
+ *     full range (max brightness) so that when you reduce brightness and
+ *     raise it back again, colors don't change due to rounding errors.
+ *  .b For white bulbs with Cold/Warm colortone, use changeCW() or changeCT()
+ *     to change color-tone. Set overall brightness separately.
+ *     Color-tone temperature can range from 153 (Cold) to 500 (Warm).
+ *     CW channels are stored at full brightness to avoid rounding errors.
+ *  .c Alternatively, you can set all 5 channels at once with changeChannels(),
+ *     in this case it will also set the corresponding brightness.
+ *
+ * 2.a After any change, the Settings object is updated so that changes
+ *     survive a reboot and can be stored in flash - in saveSettings()
+ *  .b Actual channel values are computed from RGB or CT combined with brightness.
+ *     Range is still 0..255 (8 bits) - in getActualRGBCW()
+ *  .c The 5 internal channels RGBWC are mapped to the actual channels supproted
+ *     by the light_type: in calcLevels()
+ *     1 channel  - 0:Brightness
+ *     2 channels - 0:Warmwhite 1:Coldwhite
+ *     3 channels - 0:Red 1:Green 2:Blue
+ *     4 chennels - 0:Red 1:Green 2:Blue 3:White
+ *     5 chennels - 0:Red 1:Green 2:Blue 3:Warmwhite 4:Coldwhite
+ *
+ * 3.  In LightAnimate(), final PWM values are computed at next tick.
+ *  .a If color did not change since last tick - ignore.
+ *  .b Apply color balance correction from rgbwwTable[]
+ *  .c Extend resolution from 8 bits to 10 bits, which makes a significant
+ *     difference when applying gamma correction at low brightness.
+ *  .d Apply Gamma Correction if LedTable==1 (by default).
+ *     Gamma Correction uses an adaptative resolution table from 11 to 8 bits.
+ *  .e For Warm/Cold-white channels, Gamma correction is calculated in combined mode.
+ *     Ie. total white brightness (C+W) is used for Gamma correction and gives
+ *     the overall light power required. Then this light power is split among
+ *     Wamr/Cold channels.
+ *  .f Gamma correction is still applied to 8 bits channels for compatibility
+ *     with other non-PMW modules.
+ *  .g Avoid PMW values between 1008 and 1022, issue #1146
+ *  .h Scale ranges from 10 bits to 0..PWMRange (by default 1023) so no change
+ *     by default.
+ *  .i Apply port remapping from Option37
+ *  .j Invert PWM value if port is of type PMWxi instead of PMWx
+ *  .k Apply PWM value with analogWrite() - if pin is configured
+ *
 \*********************************************************************************************/
 
 #define XDRV_04              4
@@ -1613,7 +1663,8 @@ void LightAnimate(void)
       for (uint8_t i = 0; i < LST_MAX; i++) {
         light_last_color[i] = light_new_color[i];
         // adjust from 0.255 to 0..Settings.rgbwwTable[i] -- RgbwwTable command
-        cur_col[i] = changeUIntScale(light_last_color[i], 0, 255, 0, Settings.rgbwwTable[i]);
+        // protect against overflow of rgbwwTable which is of size 5
+        cur_col[i] = changeUIntScale(light_last_color[i], 0, 255, 0, (i<5)? Settings.rgbwwTable[i] : 255);
         // Extend from 8 to 10 bits if no correction (in case no gamma correction is required)
         cur_col_10bits[i] = changeUIntScale(cur_col[i], 0, 255, 0, 1023);
       }
