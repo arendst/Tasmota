@@ -191,6 +191,11 @@ extern void __analogWrite(uint8_t pin, int value)
         prep_pwm_steps();
         return;
     }
+    if(value == pwm_range) {
+        digitalWrite(pin, HIGH);
+        prep_pwm_steps();
+        return;
+    }
     if((pwm_mask & (1 << pin)) == 0) {
         if(pwm_mask == 0) {
             memset(&_pwm_isr_data, 0, sizeof(_pwm_isr_data));
