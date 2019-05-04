@@ -1732,7 +1732,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,
      0
   },
-  { "SONOFF L1",       // Sonoff L1 RGB LED controller (ESP8266 w/ separate Nuvoton MCU)
+  { "Sonoff L1",       // Sonoff L1 RGB LED controller (ESP8266 w/ separate Nuvoton MCU)
      GPIO_USER,
      GPIO_TXD,         // GPIO01 MCU serial control
      GPIO_USER,

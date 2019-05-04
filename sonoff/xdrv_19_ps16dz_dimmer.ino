@@ -21,7 +21,7 @@
 
 #define XDRV_19                19
 
-#define PS16DZ_BUFFER_SIZE     115
+#define PS16DZ_BUFFER_SIZE     126
 
 #define PS16DZ_TYPE_ACK        0
 #define PS16DZ_TYPE_PWR        1
@@ -81,7 +81,7 @@ void PS16DZSendCommand(char type = 0, uint8_t value = 0)
       break;
     }
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send serial command: %s"), ps16dz_tx_buffer );
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Serial TX: %s"), ps16dz_tx_buffer );
 
     PS16DZSerial->print(ps16dz_tx_buffer);
     PS16DZSerial->write(0x1B);
@@ -106,18 +106,15 @@ bool PS16DZSetPower(void)
 
 bool PS16DZSetChannels(void)
 {
-  switch (light_subtype) {
-    case LST_SINGLE:
-      PS16DZSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
-      break;
-    case LST_RGB:
-      if(XdrvMailbox.data_len = 3)
-      {
+  if(PS16DZSerial) {
+    switch (light_subtype) {
+      case LST_SINGLE:
+        PS16DZSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
+        break;
+      case LST_RGB:
         PS16DZSerialRGB(((uint8_t*)XdrvMailbox.data)[0], ((uint8_t*)XdrvMailbox.data)[1], ((uint8_t*)XdrvMailbox.data)[2]);
-      } else {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Unexpected data length for set RGB. Expected 3, got %d"), XdrvMailbox.data_len);
-      }
-      break;
+        break;
+    }
   }
 
   return true;
@@ -125,7 +122,7 @@ bool PS16DZSetChannels(void)
 
 void PS16DZSerialDuty(uint8_t duty)
 {
-  if (duty > 0 && !ps16dz_ignore_dim && PS16DZSerial) {
+  if (duty > 0 && !ps16dz_ignore_dim) {
     if (duty < 25) {
       duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     }
@@ -141,7 +138,15 @@ void PS16DZSerialDuty(uint8_t duty)
 
 void PS16DZSerialRGB(uint8_t red, uint8_t green, uint8_t blue)
 {
-  if(!ps16dz_ignore_color && PS16DZSerial) {
+  // Because this routine is called before PS16DZSetPower when an
+  // MQTT command is recieved, we should not send a color request
+  // to the MC as it responds with the the power state, which
+  // then overrides the requested power state...
+  if(power != Settings.power) {
+    ps16dz_ignore_color = true;
+  }
+
+  if(!ps16dz_ignore_color) {
     // Write out static color update eg.
     // AT+UPDATE="sequence":"1554682835320","mode":1,"colorR":255,"colorB":101,"colorG":46,"light_types":1
 
@@ -150,11 +155,12 @@ void PS16DZSerialRGB(uint8_t red, uint8_t green, uint8_t blue)
     int light_types_value = 1;
     snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s\",\"mode\":%d"), ps16dz_tx_buffer, PS16DZ_SONOFF_L1_MODE_COLORFUL);
     snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s,\"colorR\":%d"), ps16dz_tx_buffer, red);
-    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s,\"colorB\":%d"), ps16dz_tx_buffer, blue);
     snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s,\"colorG\":%d"), ps16dz_tx_buffer, green);
+    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s,\"colorB\":%d"), ps16dz_tx_buffer, blue);
+    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s,\"bright\":%d"), ps16dz_tx_buffer, Settings.light_dimmer);
     snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR( "%s,\"light_types\":%d"), ps16dz_tx_buffer, light_types_value);
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send serial command: %s"), ps16dz_tx_buffer );
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Serial TX: %s"), ps16dz_tx_buffer );
 
     PS16DZSerial->print(ps16dz_tx_buffer);
     PS16DZSerial->write(0x1B);
@@ -210,7 +216,6 @@ void PS16DZInit(void)
 
 void PS16DZSerialInput(void)
 {
-  char scmnd[20];
   while (PS16DZSerial->available()) {
     yield();
     uint8_t serial_in_byte = PS16DZSerial->read();
@@ -225,14 +230,18 @@ void PS16DZSerialInput(void)
     }
     else {
       ps16dz_rx_buffer[ps16dz_byte_counter++] = 0x00;
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: command received: %s"), ps16dz_rx_buffer);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Serial RX: %s"), ps16dz_rx_buffer);
       if(!strncmp(ps16dz_rx_buffer+3, "UPDATE", 6) || !strncmp(ps16dz_rx_buffer+3, "RESULT", 6)) {
         char *end_str;
         char *string = ps16dz_rx_buffer+10;
         char* token = strtok_r(string, ",", &end_str);
 
+        bool is_brightness_change = false;
+        uint8_t brightness_value = Settings.light_dimmer;
+        bool is_color_change = false;
         char color_channel_name;
-        bool color_channel_updated[3] = { false, false, false };
+        char* color_channel_map = (char *)"RGB";
+        bool color_channel_updated[3] = { false };
         uint8_t color_channel_values[3];
         memcpy(color_channel_values, Settings.light_color, 3);
 
@@ -250,71 +259,68 @@ void PS16DZSerialInput(void)
           }
           else if(sscanf(token2, "\"color%c\"", &color_channel_name)==1){
 
-            int color_channel_index;
+            int color_channel_index = strchr(color_channel_map, color_channel_name) - color_channel_map;
+            bool is_valid_color_channel_index = color_channel_index >= 0 && color_channel_index < strlen(color_channel_map);
 
-            switch(color_channel_name)
-            {
-              case 'R':
-                color_channel_index = 0;
-                break;
-              case 'G':
-                color_channel_index = 1;
-                break;
-              case 'B':
-                color_channel_index = 2;
-                break;
+            if(is_valid_color_channel_index) {
+              int color_channel_value = atoi(token3);
+              color_channel_values[color_channel_index] = color_channel_value;
+              color_channel_updated[color_channel_index] = true;
             }
-
-            int color_channel_value = atoi(token3);
-            color_channel_values[color_channel_index] = color_channel_value;
-            color_channel_updated[color_channel_index] = true;
 
             bool all_color_channels_updated =
               color_channel_updated[0] &&
               color_channel_updated[1] &&
               color_channel_updated[2];
 
-            if(all_color_channels_updated)
-            {
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: color received: R:%d, G:%d, B:%d"),
-                color_channel_values[0],
-                color_channel_values[1],
-                color_channel_values[2]);
-            }
+            is_color_change = memcmp(color_channel_values, Settings.light_color, 3) != 0;
 
-            bool is_color_change = memcmp(color_channel_values, Settings.light_color, 3) != 0;
-
-            if(power && all_color_channels_updated && is_color_change)
-            {
-              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_COLOR " %02x%02x%02x"),
-                color_channel_values[0],
-                color_channel_values[1],
-                color_channel_values[2]);
-
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send CMND_COLOR_STR=%s"), scmnd );
-
-              ps16dz_ignore_color = true;
-              ExecuteCommand(scmnd, SRC_SWITCH);
+            if(power && all_color_channels_updated && is_color_change) {
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Module updated color from %02x%02x%02x to %02x%02x%02x"),
+                Settings.light_color[0], Settings.light_color[1], Settings.light_color[2],
+                color_channel_values[0], color_channel_values[1], color_channel_values[2]);
             }
           }
           else if(!strncmp(token2, "\"bright\"", 8)){
-            uint8_t ps16dz_bright = atoi(token3);
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: brightness received: %d"), ps16dz_bright);
-            if(power && ps16dz_bright > 0 && ps16dz_bright != Settings.light_dimmer) {
+            brightness_value = atoi(token3);
 
-              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), ps16dz_bright );
+            if(power && brightness_value > 0 && brightness_value != Settings.light_dimmer)
+            {
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Module updated brightness from %d to %d"),
+                Settings.light_dimmer,
+                brightness_value );
 
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send CMND_DIMMER_STR=%s"), scmnd );
-
-              ps16dz_ignore_dim = true;
-              ExecuteCommand(scmnd, SRC_SWITCH);
+              is_brightness_change = true;
             }
           }
           else if(!strncmp(token2, "\"sequence\"", 10)){
-            //ps16dz_seq = strtoull(token3+1, nullptr, 10);
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: sequence received: %s"), token3);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Module updated sequence to %s"), token3);
           }
           token = strtok_r(nullptr, ",", &end_str);
+        }
+
+        char scmnd[20];
+
+        if(is_color_change) {
+          if(!is_brightness_change) {
+            ps16dz_ignore_color = true;
+          }
+
+          snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_COLOR " %02x%02x%02x"),
+            color_channel_values[0],
+            color_channel_values[1],
+            color_channel_values[2]);
+
+        } else if(is_brightness_change) {
+          ps16dz_ignore_dim = true;
+
+          snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"),
+            brightness_value);
+        }
+
+        if(is_color_change || is_brightness_change) {
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: ExecuteCommand %s"), scmnd );
+          ExecuteCommand(scmnd, SRC_SWITCH);
         }
       }
       else if(!strncmp(ps16dz_rx_buffer+3, "SETTING", 7)) {
