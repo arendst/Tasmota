@@ -4,6 +4,8 @@
  * Fix Shelly 2.5 overtemp
  * Set gamma correction as default behavior, ie "Ledtable 1"
  * Refactored management of lights, using classes and integers instead of floats.
+ * Extend PWM resolution from 8 to 10 bits for low brightness lights
+ * Allow all 5 PWM channels individually adressable with LEDs. (#5741)
  *
  * 6.5.0.8 20190413
  * Add Tuya Dimmer 10 second heartbeat serial packet required by some Tuya dimmer secondary MCUs
