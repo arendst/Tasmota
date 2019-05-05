@@ -294,6 +294,7 @@
 #define D_TEMPLATE "Template"
 #define D_ACTIVATE "Activate"
 #define D_WEB_ADMIN_PASSWORD "Hasło administratora Web"
+#define D_WEB_USER_PASSWORD "Hasło użytkownika Web"
 #define D_MQTT_ENABLE "MQTT aktywne"
 #define D_FRIENDLY_NAME "Twoja nazwa"
 #define D_BELKIN_WEMO "Belkin WeMo"

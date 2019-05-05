@@ -294,6 +294,7 @@
 #define D_TEMPLATE "Plantilla"
 #define D_ACTIVATE "Activar"
 #define D_WEB_ADMIN_PASSWORD "Clave Administrador Web"
+#define D_WEB_USER_PASSWORD "Clave Usario Web"
 #define D_MQTT_ENABLE "Habilitar MQTT"
 #define D_FRIENDLY_NAME "Nombre Amigable"
 #define D_BELKIN_WEMO "Belkin WeMo"

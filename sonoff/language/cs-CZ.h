@@ -294,6 +294,7 @@
 #define D_TEMPLATE "Šablona"
 #define D_ACTIVATE "Aktivovat"
 #define D_WEB_ADMIN_PASSWORD "Heslo Web administrátora"
+#define D_WEB_USER_PASSWORD "Uživatelské heslo"
 #define D_MQTT_ENABLE "MQTT aktivní"
 #define D_FRIENDLY_NAME "Friendly Name"
 #define D_BELKIN_WEMO "Belkin WeMo"

@@ -1003,14 +1003,14 @@ void HandleRootStatusRefresh(void)
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 
-  // TODO: remove this. 
+/*   // TODO: remove this. 
   // START testing only
   WebGetArg(D_CMND_WEBSERVER, tmp, sizeof(tmp)); 
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_WEBSERVER " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  // END testing only
+  // END testing only */
 
   WSContentBegin(200, CT_HTML);
   WSContentSend_P(PSTR("{t}"));

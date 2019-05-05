@@ -294,6 +294,7 @@
 #define D_TEMPLATE "템플릿"
 #define D_ACTIVATE "활성"
 #define D_WEB_ADMIN_PASSWORD "Web Admin 비밀번호"
+#define D_WEB_USER_PASSWORD "Web User 비밀번호"
 #define D_MQTT_ENABLE "MQTT 사용"
 #define D_FRIENDLY_NAME "별칭"
 #define D_BELKIN_WEMO "Belkin WeMo"

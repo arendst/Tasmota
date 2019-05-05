@@ -294,6 +294,7 @@
 #define D_TEMPLATE "模板"
 #define D_ACTIVATE "启用"
 #define D_WEB_ADMIN_PASSWORD "WEB 管理密码"
+#define D_WEB_USER_PASSWORD "WEB 用户密码"
 #define D_MQTT_ENABLE "启用MQTT"
 #define D_FRIENDLY_NAME "昵称"
 #define D_BELKIN_WEMO "贝尔金 WeMo"

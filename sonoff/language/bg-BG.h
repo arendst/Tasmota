@@ -294,6 +294,7 @@
 #define D_TEMPLATE "Модел"
 #define D_ACTIVATE "Активирай"
 #define D_WEB_ADMIN_PASSWORD "Парола на уеб администратора"
+#define D_WEB_USER_PASSWORD "Парола на уеб потребителска"
 #define D_MQTT_ENABLE "Активиране на MQTT"
 #define D_FRIENDLY_NAME "Приятелско име"
 #define D_BELKIN_WEMO "Belkin WeMo"

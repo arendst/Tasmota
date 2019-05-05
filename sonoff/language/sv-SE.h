@@ -294,6 +294,7 @@
 #define D_TEMPLATE "Template"
 #define D_ACTIVATE "Activate"
 #define D_WEB_ADMIN_PASSWORD "Webbadmin-lösenord"
+#define D_WEB_USER_PASSWORD "Webbläsarens lösenord"
 #define D_MQTT_ENABLE "MQTT aktivera"
 #define D_FRIENDLY_NAME "Läsbart namn"
 #define D_BELKIN_WEMO "Belkin WeMo"

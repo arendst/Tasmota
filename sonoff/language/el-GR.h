@@ -294,6 +294,7 @@
 #define D_TEMPLATE "Πρότυπο"
 #define D_ACTIVATE "Ενεργοποίηση"
 #define D_WEB_ADMIN_PASSWORD "Κωδικός διαχειριστή"
+#define D_WEB_USER_PASSWORD "Κωδικός χρήστη"
 #define D_MQTT_ENABLE "Ενεργοποίηση MQTT"
 #define D_FRIENDLY_NAME "Φιλική ονομασία"
 #define D_BELKIN_WEMO "Belkin WeMo"

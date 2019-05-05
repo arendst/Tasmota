@@ -294,6 +294,7 @@
 #define D_TEMPLATE "תבנית"
 #define D_ACTIVATE "הפעל"
 #define D_WEB_ADMIN_PASSWORD "סיסמת מנהל"
+#define D_WEB_USER_PASSWORD "סיסמת משתמש"
 #define D_MQTT_ENABLE "MQTT אפשר"
 #define D_FRIENDLY_NAME "שם ידידותי"
 #define D_BELKIN_WEMO "Belkin WeMo"
