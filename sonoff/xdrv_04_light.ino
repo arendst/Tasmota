@@ -22,6 +22,7 @@
  *
  * light_type  Module     Color  ColorTemp  Modules
  * ----------  ---------  -----  ---------  ----------------------------
+ *  0          -                 no         (Sonoff Basic)
  *  1          PWM1       W      no         (Sonoff BN-SZ)
  *  2          PWM2       CW     yes        (Sonoff Led)
  *  3          PWM3       RGB    no         (H801, MagicHome and Arilux LC01)
@@ -67,6 +68,56 @@
  *  - light_controller (LightControllerClass) is used to change light state
  *    and adjust all Settings and levels accordingly.
  *    Always use this object to change light status.
+ *
+ * As there have been lots of changes in light control, here is a summary out
+ * the whole flow from setting colors to drving the PMW pins.
+ *
+ * 1.  To change colors, always use 'light_controller' object.
+ *     'light_state' is only to be used to read current state.
+ *  .a For color bulbs, set color via changeRGB() or changeHS() for Hue/Sat.
+ *     Set the overall brightness changeBri(0..255) or changeDimmer(0..100%)
+ *     RGB and Hue/Sat are always kept in sync. Internally, RGB are stored at
+ *     full range (max brightness) so that when you reduce brightness and
+ *     raise it back again, colors don't change due to rounding errors.
+ *  .b For white bulbs with Cold/Warm colortone, use changeCW() or changeCT()
+ *     to change color-tone. Set overall brightness separately.
+ *     Color-tone temperature can range from 153 (Cold) to 500 (Warm).
+ *     CW channels are stored at full brightness to avoid rounding errors.
+ *  .c Alternatively, you can set all 5 channels at once with changeChannels(),
+ *     in this case it will also set the corresponding brightness.
+ *
+ * 2.a After any change, the Settings object is updated so that changes
+ *     survive a reboot and can be stored in flash - in saveSettings()
+ *  .b Actual channel values are computed from RGB or CT combined with brightness.
+ *     Range is still 0..255 (8 bits) - in getActualRGBCW()
+ *  .c The 5 internal channels RGBWC are mapped to the actual channels supproted
+ *     by the light_type: in calcLevels()
+ *     1 channel  - 0:Brightness
+ *     2 channels - 0:Warmwhite 1:Coldwhite
+ *     3 channels - 0:Red 1:Green 2:Blue
+ *     4 chennels - 0:Red 1:Green 2:Blue 3:White
+ *     5 chennels - 0:Red 1:Green 2:Blue 3:Warmwhite 4:Coldwhite
+ *
+ * 3.  In LightAnimate(), final PWM values are computed at next tick.
+ *  .a If color did not change since last tick - ignore.
+ *  .b Apply color balance correction from rgbwwTable[]
+ *  .c Extend resolution from 8 bits to 10 bits, which makes a significant
+ *     difference when applying gamma correction at low brightness.
+ *  .d Apply Gamma Correction if LedTable==1 (by default).
+ *     Gamma Correction uses an adaptative resolution table from 11 to 8 bits.
+ *  .e For Warm/Cold-white channels, Gamma correction is calculated in combined mode.
+ *     Ie. total white brightness (C+W) is used for Gamma correction and gives
+ *     the overall light power required. Then this light power is split among
+ *     Wamr/Cold channels.
+ *  .f Gamma correction is still applied to 8 bits channels for compatibility
+ *     with other non-PMW modules.
+ *  .g Avoid PMW values between 1008 and 1022, issue #1146
+ *  .h Scale ranges from 10 bits to 0..PWMRange (by default 1023) so no change
+ *     by default.
+ *  .i Apply port remapping from Option37
+ *  .j Invert PWM value if port is of type PMWxi instead of PMWx
+ *  .k Apply PWM value with analogWrite() - if pin is configured
+ *
 \*********************************************************************************************/
 
 #define XDRV_04              4
@@ -102,29 +153,76 @@ struct LCwColor {
 const uint8_t MAX_FIXED_COLD_WARM = 4;
 const LCwColor kFixedColdWarm[MAX_FIXED_COLD_WARM] PROGMEM = { 0,0, 255,0, 0,255, 128,128 };
 
-const uint8_t ledTable[] = {
-  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
-  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
-  1,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  3,  4,  4,
-  4,  4,  4,  5,  5,  5,  5,  6,  6,  6,  6,  7,  7,  7,  7,  8,
-  8,  8,  9,  9,  9, 10, 10, 10, 11, 11, 12, 12, 12, 13, 13, 14,
- 14, 15, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 22,
- 22, 23, 23, 24, 25, 25, 26, 26, 27, 28, 28, 29, 30, 30, 31, 32,
- 33, 33, 34, 35, 36, 36, 37, 38, 39, 40, 40, 41, 42, 43, 44, 45,
- 46, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
- 61, 62, 63, 64, 65, 67, 68, 69, 70, 71, 72, 73, 75, 76, 77, 78,
- 80, 81, 82, 83, 85, 86, 87, 89, 90, 91, 93, 94, 95, 97, 98, 99,
-101,102,104,105,107,108,110,111,113,114,116,117,119,121,122,124,
-125,127,129,130,132,134,135,137,139,141,142,144,146,148,150,151,
-153,155,157,159,161,163,165,166,168,170,172,174,176,178,180,182,
-184,186,189,191,193,195,197,199,201,204,206,208,210,212,215,217,
-219,221,224,226,228,231,233,235,238,240,243,245,248,250,253,255 };
+// New version of Gamma correction table, with adaptative resolution
+// from 11 bits (lower values) to 8 bits (upper values).
+// We're using the fact that lower values are small and can fit within 8 bits
+// To save flash space, the array is only 8 bits uint
+const uint8_t _ledTable[] = {
+  // 11 bits resolution
+    0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  // 11 bits, 0..2047
+    2,  2,  2,  2,  3,  3,  3,  3,  4,  4,  4,  5,  5,  6,  6,  7,  // 11 bits, 0..2047
+    7,  8,  8,  9, 10, 10, 11, 12, 12, 13, 14, 15, 16, 17, 18, 19,  // 11 bits, 0..2047
+   20, 21, 22, 24, 25, 26, 28, 29, 30, 32, 33, 35, 37, 38, 40, 42,  // 11 bits, 0..2047
+  // 10 bits resolution
+   22, 23, 24, 25, 26, 27, 28, 30, 31, 32, 33, 34, 36, 37, 38, 39,  // 10 bits, 0..1023
+   41, 42, 44, 45, 47, 48, 50, 51, 53, 55, 56, 58, 60, 62, 64, 65,  // 10 bits, 0..1023
+   67, 69, 71, 73, 75, 78, 80, 82, 84, 86, 89, 91, 93, 96, 98,101,  // 10 bits, 0..1023
+  103,106,108,111,114,116,119,122,125,128,131,134,137,140,143,146,  // 10 bits, 0..1023
+  // 9 bits resolution
+   75, 77, 78, 80, 82, 84, 85, 87, 89, 91, 93, 94, 96, 98,100,102,  //  9 bits, 0..511
+  104,106,108,110,112,115,117,119,121,123,125,128,130,132,135,137,  //  9 bits, 0..511
+  140,142,144,147,149,152,155,157,160,163,165,168,171,173,176,179,  //  9 bits, 0..511
+  182,185,188,191,194,197,200,203,206,209,212,215,219,222,225,229,  //  9 bits, 0..511
+  // 8 bits resolution
+  116,118,120,121,123,125,127,128,130,132,134,136,138,139,141,143,  //  8 bits, 0..255
+  145,147,149,151,153,155,157,159,161,163,165,168,170,172,174,176,  //  8 bits, 0..255
+  178,181,183,185,187,190,192,194,197,199,201,204,206,209,211,214,  //  8 bits, 0..255
+  216,219,221,224,226,229,232,234,237,240,242,245,248,250,253,255   //  8 bits, 0..255
+};
 
-uint8_t light_entry_color[5];
-uint8_t light_current_color[5];
-uint8_t light_new_color[5];
-uint8_t light_last_color[5];
-uint8_t light_color_remap[5];
+// For reference, below are the computed gamma tables, via ledGamma()
+// for 8 bits output:
+//  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+//  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+//  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,
+//  3,  3,  3,  3,  4,  4,  4,  4,  4,  4,  5,  5,  5,  5,  5,  6,
+//  6,  6,  6,  7,  7,  7,  7,  8,  8,  8,  9,  9,  9, 10, 10, 10,
+// 11, 11, 11, 12, 12, 12, 13, 13, 14, 14, 14, 15, 15, 16, 16, 17,
+// 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 23, 23, 24, 24, 25, 26,
+// 26, 27, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36, 37,
+// 38, 39, 39, 40, 41, 42, 43, 44, 45, 46, 47, 47, 48, 49, 50, 51,
+// 52, 53, 54, 55, 56, 58, 59, 60, 61, 62, 63, 64, 65, 66, 68, 69,
+// 70, 71, 72, 74, 75, 76, 78, 79, 80, 82, 83, 84, 86, 87, 88, 90,
+// 91, 93, 94, 96, 97, 99,100,102,103,105,106,108,110,111,113,115,
+//116,118,120,121,123,125,127,128,130,132,134,136,138,139,141,143,
+//145,147,149,151,153,155,157,159,161,163,165,168,170,172,174,176,
+//178,181,183,185,187,190,192,194,197,199,201,204,206,209,211,214,
+//216,219,221,224,226,229,232,234,237,240,242,245,248,250,253,255
+//
+// and for 10 bits output:
+//  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+//  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  4,
+//  4,  4,  4,  5,  5,  5,  6,  6,  6,  7,  7,  8,  8,  9,  9, 10,
+// 10, 11, 11, 12, 13, 13, 14, 15, 15, 16, 17, 18, 19, 19, 20, 21,
+// 22, 23, 24, 25, 26, 27, 28, 30, 31, 32, 33, 34, 36, 37, 38, 39,
+// 41, 42, 44, 45, 47, 48, 50, 51, 53, 55, 56, 58, 60, 62, 64, 65,
+// 67, 69, 71, 73, 75, 78, 80, 82, 84, 86, 89, 91, 93, 96, 98,101,
+//103,106,108,111,114,116,119,122,125,128,131,134,137,140,143,146,
+//151,155,157,161,165,169,171,175,179,183,187,189,193,197,201,205,
+//209,213,217,221,225,231,235,239,243,247,251,257,261,265,271,275,
+//281,285,289,295,299,305,311,315,321,327,331,337,343,347,353,359,
+//365,371,377,383,389,395,401,407,413,419,425,431,439,445,451,459,
+//467,475,483,487,495,503,511,515,523,531,539,547,555,559,567,575,
+//583,591,599,607,615,623,631,639,647,655,663,675,683,691,699,707,
+//715,727,735,743,751,763,771,779,791,799,807,819,827,839,847,859,
+//867,879,887,899,907,919,931,939,951,963,971,983,995,1003,1015,1023
+
+
+uint8_t light_entry_color[LST_MAX];
+uint8_t light_current_color[LST_MAX];
+uint8_t light_new_color[LST_MAX];
+uint8_t light_last_color[LST_MAX];
+uint8_t light_color_remap[LST_MAX];
 
 uint8_t light_wheel = 0;
 uint8_t light_subtype = 0;    // LST_ subtype
@@ -153,6 +251,10 @@ unsigned long strip_timer_counter = 0;    // Bars and Gradient
 //
 uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
                                        uint16_t ito_min, uint16_t ito_max) {
+  // guard-rails
+  if ((ito_min >= ito_max) || (ifrom_min >= ifrom_max)) {
+    return ito_min;  // invalid input, return arbitrary value
+  }
   // convert to uint31, it's more verbose but code is more compact
   uint32_t num = inum;
   uint32_t from_min = ifrom_min;
@@ -747,6 +849,33 @@ public:
 LightStateClass light_state = LightStateClass();
 LightControllerClass light_controller = LightControllerClass(light_state);
 
+/*********************************************************************************************\
+ * Gamma correction
+\*********************************************************************************************/
+// Calculate the gamma corrected value for LEDS
+// You can request 11, 10, 9 or 8 bits resolution via 'bits_out' parameter
+uint16_t ledGamma(uint8_t v, uint16_t bits_out = 8) {
+  uint16_t result;
+  // bits_resolution: the resolution of _ledTable[v], between 8 and 11
+  uint32_t bits_resolution = 11 - (v / 64);                     // 8..11
+  int32_t  bits_correction = bits_out - bits_resolution;      // -3..3
+  uint32_t uncorrected_value = _ledTable[v];        // 0..255
+  if (0 == bits_correction) {
+    // we already match the required resolution, no change
+    result = uncorrected_value;
+  } else if (bits_correction > 0) {
+    // the output resolution is higher than our value, we need to extrapolate
+    // we shift by bits_correction, and force last bits to 1
+    uint32_t bits_mask = (1 << bits_correction) - 1;  // 1, 3, 7
+    result = (uncorrected_value << bits_correction) | bits_mask;
+  } else {  // bits_correction < 0
+    // our resolution is too high, we need to remove bits
+    // we add 1, 3 or 7 to force rouding to the nearest high value
+    uint32_t bits_mask = (1 << -bits_correction) - 1;  // 1, 3, 7
+    result = ((uncorrected_value + bits_mask) >> -bits_correction);
+  }
+  return result;
+}
 
 #ifdef USE_ARILUX_RF
 /*********************************************************************************************\
@@ -1090,7 +1219,7 @@ void LightInit(void)
   uint8_t max_scheme = LS_MAX -1;
 
   light_device = devices_present;
-  light_subtype = light_type &7;        // Always 0 - 7
+  light_subtype = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7); // Always 0 - LST_MAX (5)
 
   light_controller.loadSettings();
 
@@ -1440,7 +1569,7 @@ void LightSetPower(void)
 
 void LightAnimate(void)
 {
-  uint8_t cur_col[5];
+  uint8_t cur_col[LST_MAX];
   uint16_t light_still_on = 0;
 
   strip_timer_counter++;
@@ -1524,32 +1653,78 @@ void LightAnimate(void)
 
   if ((Settings.light_scheme < LS_MAX) || !light_power) {
     if (memcmp(light_last_color, light_new_color, light_subtype)) {
-        light_update = 1;
+      light_update = 1;
     }
     if (light_update) {
+      uint16_t cur_col_10bits[LST_MAX];   // 10 bits version of cur_col for PWM
       light_update = 0;
-      for (uint8_t i = 0; i < light_subtype; i++) {
+
+      // first adjust all colors to RgbwwTable if needed
+      for (uint8_t i = 0; i < LST_MAX; i++) {
         light_last_color[i] = light_new_color[i];
-        cur_col[i] = light_last_color[i]*Settings.rgbwwTable[i]/255;
-        cur_col[i] = (Settings.light_correction) ? ledTable[cur_col[i]] : cur_col[i];
+        // adjust from 0.255 to 0..Settings.rgbwwTable[i] -- RgbwwTable command
+        // protect against overflow of rgbwwTable which is of size 5
+        cur_col[i] = changeUIntScale(light_last_color[i], 0, 255, 0, (i<5)? Settings.rgbwwTable[i] : 255);
+        // Extend from 8 to 10 bits if no correction (in case no gamma correction is required)
+        cur_col_10bits[i] = changeUIntScale(cur_col[i], 0, 255, 0, 1023);
       }
 
-      // color remapping
-      uint8_t orig_col[5];
+      // Apply gamma correction for 8 and 10 bits resolutions, if needed
+      if (Settings.light_correction) {
+        // first apply gamma correction to all channels independently, from 8 bits value
+        for (uint8_t i = 0; i < LST_MAX; i++) {
+          cur_col_10bits[i] = ledGamma(cur_col[i], 10);
+        }
+        // then apply a different correction for CW white channels
+        if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
+          uint8_t w_idx[2] = {0, 1};        // if LST_COLDWARM, channels 0 and 1
+          if (LST_RGBWC == light_subtype) { // if LST_RGBWC, channels 3 and 4
+            w_idx[0] = 3;
+            w_idx[1] = 4;
+          }
+          uint16_t white_bri = cur_col[w_idx[0]] + cur_col[w_idx[1]];
+          // if sum of both channels is > 255, then channels are probablu uncorrelated
+          if (white_bri <= 255) {
+            // we calculate the gamma corrected sum of CW + WW
+            uint16_t white_bri_10bits = ledGamma(white_bri, 10);
+            // then we split the total energy among the cold and warm leds
+            cur_col_10bits[w_idx[0]] = changeUIntScale(cur_col[w_idx[0]], 0, white_bri, 0, white_bri_10bits);
+            cur_col_10bits[w_idx[1]] = changeUIntScale(cur_col[w_idx[1]], 0, white_bri, 0, white_bri_10bits);
+          }
+        }
+        // still keep an 8 bits gamma corrected version
+        for (uint8_t i = 0; i < LST_MAX; i++) {
+          cur_col[i] = ledGamma(cur_col[i]);
+        }
+      }
+
+      // final adjusments for PMW, post-gamma correction
+      for (uint8_t i = 0; i < LST_MAX; i++) {
+        // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
+        // but keep value 1023 if full range (PWM will be deactivated in this case)
+        if ((cur_col_10bits[i] > 1008) && (cur_col_10bits[i] < 1023)) {
+          cur_col_10bits[i] = 1008;
+        }
+        // scale from 0..1023 to 0..pwm_range, but keep any non-zero value to at least 1
+        cur_col_10bits[i] = (cur_col_10bits[i] > 0) ? changeUIntScale(cur_col_10bits[i], 1, 1023, 1, Settings.pwm_range) : 0;
+      }
+
+      // apply port remapping on both 8 bits and 10 bits versions
+      uint8_t  orig_col[LST_MAX];
+      uint16_t orig_col_10bits[LST_MAX];
       memcpy(orig_col, cur_col, sizeof(orig_col));
-      for (uint8_t i = 0; i < 5; i++) {
+      memcpy(orig_col_10bits, cur_col_10bits, sizeof(orig_col_10bits));
+      for (uint8_t i = 0; i < LST_MAX; i++) {
         cur_col[i] = orig_col[light_color_remap[i]];
+        cur_col_10bits[i] = orig_col_10bits[light_color_remap[i]];
       }
 
-      for (uint8_t i = 0; i < light_subtype; i++) {
-        if (light_type < LT_PWM6) {
+      // now apply the actual PWM values, adjusted and remapped 10-bits range
+      if (light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
+        for (uint8_t i = 0; i < light_subtype; i++) {
           if (pin[GPIO_PWM1 +i] < 99) {
-            if (cur_col[i] > 0xFC) {
-              cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
-            }
-            uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
-//            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
-            analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - curcol : curcol);
+            //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
+            analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
           }
         }
       }
@@ -1572,12 +1747,8 @@ void LightAnimate(void)
         // handle any PWM pins, skipping the first 3 values for sm16716
         for (uint8_t i = 3; i < light_subtype; i++) {
           if (pin[GPIO_PWM1 +i-3] < 99) {
-            if (cur_col[i] > 0xFC) {
-              cur_col[i] = 0xFC;   // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
-            }
-            uint16_t curcol = cur_col[i] * (Settings.pwm_range / 255);
-//            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d %d, CurCol %d"), i, cur_col[i], curcol);
-            analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - curcol : curcol);
+            //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
+            analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
           }
         }
         // handle sm16716 update
@@ -1626,7 +1797,7 @@ bool LightColorEntry(char *buffer, uint8_t buffer_length)
   if (strstr(buffer, ",") != nullptr) {             // Decimal entry
     int8_t i = 0;
     for (str = strtok_r(buffer, ",", &p); str && i < 6; str = strtok_r(nullptr, ",", &p)) {
-      if (i < 5) {
+      if (i < LST_MAX) {
         light_entry_color[i++] = atoi(str);
       }
     }
