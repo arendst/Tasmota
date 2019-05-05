@@ -17,9 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// @@@ HB: REMOVE THIS BEFORE COMMIT!
-//#include "sonoff.ino"
-
 #ifdef USE_WEBSERVER
 /*********************************************************************************************\
  * Web server and WiFi Manager
@@ -419,6 +416,13 @@ const char kUploadErrors[] PROGMEM =
   ;
 
 const uint16_t DNS_PORT = 53;
+// HttpOptions is used for webserver_state, which is a superset and run time equivalent 
+// of Settings.webserver. The latter only accepts values 0..2.
+//  HTTP_OFF: web server off.
+//  HTTP_USER: locked down user interface. Only user level functions are allowed.
+//  HTTP_ADMIN: regular user interface with admin functions.
+//  HTTP_MANAGER: Used during WiFi setup.
+//  HTTP_MANAGER_RESET_ONLY: Used during WiFi setup, limited functionality.
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
 
 DNSServer *DnsServer;
@@ -444,6 +448,7 @@ static void WebGetArg(const char* arg, char* out, size_t max)
 //  out[max-1] = '\0';  // Ensure terminating NUL
 }
 
+// Check if the server is in one of the WiFi management modes
 static bool WifiIsInManagerMode(){
   return (HTTP_MANAGER == webserver_state || HTTP_MANAGER_RESET_ONLY == webserver_state);
 }
@@ -462,6 +467,9 @@ void ExecuteWebCommand(char* svalue, int source)
   ExecuteCommand(svalue, SRC_IGNORE);
 }
 
+// Start the web server. 
+//  type: see HttpOptions.
+//  ipweb: the IP address of the web server. 
 void StartWebserver(int type, IPAddress ipweb)
 {
   if (!Settings.web_refresh) { Settings.web_refresh = HTTP_REFRESH_TIME; }
@@ -548,29 +556,43 @@ void PollDnsWebserver(void)
 
 /*********************************************************************************************/
 
-bool WebAuthenticate(void)
+bool HttpCheckAccessLevel(bool only_for_admin)
 {
-  if (Settings.web_password[0] != 0 && HTTP_MANAGER_RESET_ONLY != webserver_state) {
-    return WebServer->authenticate(WEB_USERNAME, Settings.web_password);
-  } else {
-    return true;
-  }
+  return ((Settings.web_password[0] == 0) ||  // no admin password: everything goes
+      (WebServer->authenticate(WEB_ADMINNAME, Settings.web_password)) || // Is admin connected?
+      ((!only_for_admin) &&
+       ((Settings.user_password[0] == 0) ||  // no user password: everything goes
+        (WebServer->authenticate(WEB_USERNAME, Settings.user_password))))); // is user connected?
 }
 
-bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
+// Check if admin or user level access is possible, by (potentially) checking both web server state and user authentication.
+//  only_for_admin: set to true (default) if the function is allowed only for admins.
+//  autorequestauth: set to true (default) to check for basic authentication. If false, let the caller handle authentication.
+//  Returns false if access is denied, The user will have been informed at that stage, so the caller must abort handling. 
+bool HttpCheckPriviledgedAccess(bool only_for_admin, bool autorequestauth)
 {
-  // if in user mode: only allow Root
-  if (HTTP_USER == webserver_state) {
+  // if only for admins and in webserver "user mode": only allow the Root page
+  if (only_for_admin && (HTTP_USER == webserver_state)) {
     HandleRoot();
     return false;
   }
   // if (!autorequestauth) : let the caller handle the rest. Ex.: HandleHttpCommand uses request parameters for verification, and a JSON error reply
   // else: if I am not authenticated, reply with HTTP 401
-  if (autorequestauth && !WebAuthenticate()) {
+  if (autorequestauth) {
+    if ((HTTP_MANAGER_RESET_ONLY == webserver_state) || // in special setup mode: say it's OK. TODO: why??
+        HttpCheckAccessLevel(only_for_admin)) return true;
+    // nothing got through: not authenticated at the right level
     WebServer->requestAuthentication();
     return false;
   }
   return true;
+}
+
+// Check if admin level access is possible, by checking both web server state and (basic) authentication.
+//  Returns false if access is denied, The user will have been informed at that stage, so the caller must abort handling. 
+bool HttpCheckPriviledgedAccess()
+{
+  return HttpCheckPriviledgedAccess(true,true);
 }
 
 void WSHeaderSend(void)
@@ -690,12 +712,9 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
   _WSContentSendBuffer();
 }
 
-void WSContentStart_P(const char* title, bool auth)
+// Start content sending
+void WSContentStart_P(const char* title)
 {
-  if (auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
-    return WebServer->requestAuthentication();
-  }
-
   WSContentBegin(200, CT_HTML);
 
   if (title != nullptr) {
@@ -703,11 +722,6 @@ void WSContentStart_P(const char* title, bool auth)
     strcpy_P(ctitle, title);                       // Get title from flash to RAM
     WSContentSend_P(HTTP_HEAD, Settings.friendlyname[0], ctitle);
   }
-}
-
-void WSContentStart_P(const char* title)
-{
-  WSContentStart_P(title, true);
 }
 
 void WSContentSendStyle_P(const char* formatP, ...)
@@ -804,9 +818,7 @@ void WebRestart(uint8_t type)
   // type 2 = restart after config change with possible ip address change too
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESTART);
 
-  bool reset_only = (HTTP_MANAGER_RESET_ONLY == webserver_state);
-
-  WSContentStart_P((type) ? S_SAVE_CONFIGURATION : S_RESTART, !reset_only);
+  WSContentStart_P((type) ? S_SAVE_CONFIGURATION : S_RESTART);
   WSContentSend_P(HTTP_SCRIPT_RELOAD);
   WSContentSendStyle();
   if (type) {
@@ -817,7 +829,7 @@ void WebRestart(uint8_t type)
     WSContentSend_P(PSTR("</div>"));
   }
   WSContentSend_P(HTTP_MSG_RSTRT);
-  if (HTTP_MANAGER == webserver_state || reset_only) {
+  if (WifiIsInManagerMode()) {
     webserver_state = HTTP_ADMIN;
   } else {
     WSContentSpaceButton(BUTTON_MAIN);
@@ -832,7 +844,8 @@ void WebRestart(uint8_t type)
 
 void HandleWifiLogin(void)
 {
-  WSContentStart_P(S_CONFIGURE_WIFI, false);  // false means show page no matter if the client has or has not credentials
+  // Show page no matter if the client has or has not credentials
+  WSContentStart_P(S_CONFIGURE_WIFI);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_LOGIN);
 
@@ -851,6 +864,7 @@ void HandleRoot(void)
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
 
   if (WebServer->hasArg("rst")) {
+    // TODO: TO BE INVESTIGATED: Do we need authentication for reset? If so, move this section downwards. Right now, a reset can be done by anyone now, without authentication.
     WebRestart(0);
     return;
   }
@@ -860,7 +874,7 @@ void HandleRoot(void)
     if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1")) && HTTP_MANAGER_RESET_ONLY != webserver_state) {
       HandleWifiLogin();
     } else {
-      if (!(Settings.web_password[0] != 0) || (((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == Settings.web_password )) || HTTP_MANAGER_RESET_ONLY == webserver_state)) {
+      if (!(Settings.web_password[0] != 0) || (((WebServer->arg("USER1") == WEB_ADMINNAME ) && (WebServer->arg("PASS1") == Settings.web_password )) || HTTP_MANAGER_RESET_ONLY == webserver_state)) {
         HandleWifiConfiguration();
       } else {
         // wrong user and pass
@@ -871,7 +885,12 @@ void HandleRoot(void)
     return;
   }
 
-  if (HandleRootStatusRefresh()) {
+  // Check authentication. But also non-admin users can get here.
+  if (!HttpCheckPriviledgedAccess(false,true)) { return; }
+
+  // handle refresh if requested
+  if (WebServer->hasArg("m")) {
+    HandleRootStatusRefresh();
     return;
   }
 
@@ -929,28 +948,27 @@ void HandleRoot(void)
   if (HTTP_ADMIN == webserver_state) {
 #ifdef FIRMWARE_MINIMAL
     WSContentSpaceButton(BUTTON_FIRMWARE_UPGRADE);
-#else
-    WSContentSpaceButton(BUTTON_CONFIGURATION);
-    WSContentButton(BUTTON_INFORMATION);
-    WSContentButton(BUTTON_FIRMWARE_UPGRADE);
-#endif  // Not FIRMWARE_MINIMAL
     WSContentButton(BUTTON_CONSOLE);
     WSContentButton(BUTTON_RESTART);
+#else
+    // Show the other buttons, depending on the access level.
+    // Always show the config button, even when the user is not admin. 
+    // It invites admins to log in. Otherwise you would need anonymous mode, or a URL you'd remember. Not intuitive enough. 
+    // Note that the screen refresh ("/?m") will mess with this. But the user can then simply click reload and we're back on. 
+    WSContentSpaceButton(BUTTON_CONFIGURATION); 
+    if (HttpCheckAccessLevel(true)) {
+      WSContentButton(BUTTON_INFORMATION);
+      WSContentButton(BUTTON_FIRMWARE_UPGRADE);
+      WSContentButton(BUTTON_CONSOLE);
+      WSContentButton(BUTTON_RESTART);
+    }
+#endif  // Not FIRMWARE_MINIMAL
   }
   WSContentStop();
 }
 
-bool HandleRootStatusRefresh(void)
+void HandleRootStatusRefresh(void)
 {
-  if (!WebAuthenticate()) {
-    WebServer->requestAuthentication();
-    return true;
-  }
-
-  if (!WebServer->hasArg("m")) {     // Status refresh requested
-    return false;
-  }
-
   char tmp[8];                       // WebGetArg numbers only
   char svalue[32];                   // Command and number parameter
 
@@ -985,13 +1003,14 @@ bool HandleRootStatusRefresh(void)
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 
-  // @@@ HB: START testing only
+  // TODO: remove this. 
+  // START testing only
   WebGetArg(D_CMND_WEBSERVER, tmp, sizeof(tmp)); 
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_WEBSERVER " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  // @@@ HB: END testing only
+  // END testing only
 
   WSContentBegin(200, CT_HTML);
   WSContentSend_P(PSTR("{t}"));
@@ -1015,8 +1034,6 @@ bool HandleRootStatusRefresh(void)
     WSContentSend_P(PSTR("</tr></table>"));
   }
   WSContentEnd();
-
-  return true;
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1283,7 +1300,7 @@ String htmlEscape(String s)
 
 void HandleWifiConfiguration(void)
 {
-  if (!HttpCheckPriviledgedAccess(!WifiIsInManagerMode())) { return; }
+  if (!HttpCheckPriviledgedAccess(true, !WifiIsInManagerMode())) { return; }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_WIFI);
 
@@ -1293,7 +1310,7 @@ void HandleWifiConfiguration(void)
     return;
   }
 
-  WSContentStart_P(S_CONFIGURE_WIFI, !WifiIsInManagerMode());
+  WSContentStart_P(S_CONFIGURE_WIFI);
   WSContentSend_P(HTTP_SCRIPT_WIFI);
   WSContentSendStyle();
 
@@ -1603,11 +1620,11 @@ void HandleBackupConfiguration(void)
 
 void HandleResetConfiguration(void)
 {
-  if (!HttpCheckPriviledgedAccess(!WifiIsInManagerMode())) { return; }
+  if (!HttpCheckPriviledgedAccess(true, !WifiIsInManagerMode())) { return; }
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_RESET_CONFIGURATION);
 
-  WSContentStart_P(S_RESET_CONFIGURATION, !WifiIsInManagerMode());
+  WSContentStart_P(S_RESET_CONFIGURATION);
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'>" D_CONFIGURATION_RESET "</div>"));
   WSContentSend_P(HTTP_MSG_RSTRT);
@@ -2032,17 +2049,19 @@ void HandlePreflightRequest(void)
 
 void HandleHttpCommand(void)
 {
-  if (!HttpCheckPriviledgedAccess(false)) { return; }
+  // check if the web server is in the right mode, but do not request authentication yet, as we'll do that differently here
+  if (!HttpCheckPriviledgedAccess(true, false)) { return; }
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
 
   uint8_t valid = 1;
+  // and check admin level authentication via the GET URL parameters (not via basic authentication, like with all the others)
   if (Settings.web_password[0] != 0) {
     char tmp1[sizeof(Settings.web_password)];
     WebGetArg("user", tmp1, sizeof(tmp1));
     char tmp2[sizeof(Settings.web_password)];
     WebGetArg("password", tmp2, sizeof(tmp2));
-    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, Settings.web_password))) { valid = 0; }
+    if (!(!strcmp(tmp1, WEB_ADMINNAME) && !strcmp(tmp2, Settings.web_password))) { valid = 0; }
   }
 
   WSContentBegin(200, CT_JSON);
@@ -2349,6 +2368,7 @@ bool WebCommand(void)
     serviced = false;  // Unknown command
   }
   if (CMND_WEBSERVER == command_code) {
+    // see HttpOptions
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) { Settings.webserver = XdrvMailbox.payload; }
     if (Settings.webserver) {
       Response_P(PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
