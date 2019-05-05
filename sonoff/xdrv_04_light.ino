@@ -182,28 +182,34 @@ uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
 // This class is an abstraction of the current light state.
 // It allows for b/w, full colors, or white colortone
 //
-// This class has 3 independant slots
+// This class has 2 independant slots
 // 1/ Brightness 0.255, dimmer controls both RGB and WC (warm-cold)
+// 1/ RGB and Hue/Sat - always kept in sync and stored at full brightness,
+//    i.e. R G or B are 255
+//    briRGB specifies the brightness for the RGB slot.
 //    If Brightness is 0, it is equivalent to Off (for compatibility)
 //    Dimmer is Brightness converted to range 0..100
-// 2/ RGB and Hue/Sat - always kept in sync and stored at full brightness,
-//    i.e. R G or B are 255
-// 3/ White with colortone - or WC (Warm / Cold)
-//    ct is either 0: no white colortone control, revert to RGB
-//    ct is 153..500 temperature
-//    Optional whiteBri to contraol separately the brightness of white channel
+// 2/ White with colortone - or WC (Warm / Cold)
+//    ct is 153..500 temperature (153=cold, 500=warm)
+//    briCT specifies the brightness for white channel
 //
-// RGB and Hue/Sat are always kept in sync
-// Brightness is stored in full range 0..255
-// Dimmer (0.100) is autoamtically derived from brightness
+// Dimmer (0.100) is automatically derived from brightness
 //
-// Light has two states: either color (HS) when ct==0, or white with
-//   colortone if ct > 0.
+// INVARIANTS:
+// 1.  RGB components are always stored at full brightness and modulated with briRGB
+//     ((R == 255) || (G == 255) || (B == 255))
+// 2.  RGB and Hue/Sat are always kept in sync whether you use setRGB() or setHS()
+// 3.  Warm/Cold white channels are always stored at full brightness
+//     ((WW == 255) || (WC == 255))
+// 4.  WC/WW and CT are always kept in sync.
+//     Note: if you use setCT() then WC+WW == 255 (both channels are linked)
+//     but if you use setWC() both channels can be set independantly
+// 5.  If RGB or CT channels are deactivated, then corresponding brightness is zero
+//     if (colot_tone == LCM_RGB) then briCT = 0
+//     if (color_tone == LCM_CT)  then briRGB = 0
+//     if (colot_tone == LCM_BOTH) then briRGB and briCT can have any values
 //
-//
-// Note: RGB is internally stored always at full brightness (ie. one of R,G,B is 255)
-//    If you want the actual RGB, you need to multiply with Bri,
-//    or use getActualRGBCW()
+// Note:  If you want the actual RGB, you need to multiply with Bri, or use getActualRGBCW()
 // Note: all values are stored as unsigned integer, no floats.
 // Note: you can query vaules from this singleton. But to change values,
 //   use the LightController - changing this object will have no effect on actual light.
