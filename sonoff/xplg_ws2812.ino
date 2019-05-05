@@ -99,11 +99,11 @@ void Ws2812StripShow(void)
   if (Settings.light_correction) {
     for (uint16_t i = 0; i < Settings.light_pixels; i++) {
       c = strip->GetPixelColor(i);
-      c.R = ledTable[c.R];
-      c.G = ledTable[c.G];
-      c.B = ledTable[c.B];
+      c.R = ledGamma(c.R);
+      c.G = ledGamma(c.G);
+      c.B = ledGamma(c.B);
 #if (USE_WS2812_CTYPE > NEO_3LED)
-      c.W = ledTable[c.W];
+      c.W = ledGamma(c.W);
 #endif
       strip->SetPixelColor(i, c);
     }
