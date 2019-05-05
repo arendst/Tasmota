@@ -883,38 +883,31 @@ public:
 
     light_current_color[0] = light_current_color[1] = light_current_color[2] = 0;
     light_current_color[3] = light_current_color[4] = 0;
-    if (PHILIPS == my_module_type) {
-      // Xiaomi Philips bulbs follow a different scheme:
-      // channel 0=intensity, channel2=temperature
-      light_current_color[0] = briRGB;  // set brightness
-      light_current_color[1] = c;
-    } else {
-      switch (light_subtype) {
-        case LST_NONE:
-          light_current_color[0] = 255;
-          break;
-        case LST_SINGLE:
-          light_current_color[0] = briRGB;
-          break;
-        case LST_COLDWARM:
-          light_current_color[0] = w;
-          light_current_color[1] = c;
-          break;
-        case LST_RGBW:
-        case LST_RGBWC:
-          if (LST_RGBWC == light_subtype) {
-            light_current_color[3] = w;
-            light_current_color[4] = c;
-          } else {
-            light_current_color[3] = briCT;
-          }
-          // continue
-        case LST_RGB:
-          light_current_color[0] = r;
-          light_current_color[1] = g;
-          light_current_color[2] = b;
-          break;
-      }
+    switch (light_subtype) {
+      case LST_NONE:
+        light_current_color[0] = 255;
+        break;
+      case LST_SINGLE:
+        light_current_color[0] = briRGB;
+        break;
+      case LST_COLDWARM:
+        light_current_color[0] = w;
+        light_current_color[1] = c;
+        break;
+      case LST_RGBW:
+      case LST_RGBWC:
+        if (LST_RGBWC == light_subtype) {
+          light_current_color[3] = w;
+          light_current_color[4] = c;
+        } else {
+          light_current_color[3] = briCT;
+        }
+        // continue
+      case LST_RGB:
+        light_current_color[0] = r;
+        light_current_color[1] = g;
+        light_current_color[2] = b;
+        break;
     }
   }
 
@@ -1779,42 +1772,60 @@ void LightAnimate(void)
         cur_col_10bits[i] = changeUIntScale(cur_col[i], 0, 255, 0, 1023);
       }
 
-      // Apply gamma correction for 8 and 10 bits resolutions, if needed
-      if (Settings.light_correction) {
-        // first apply gamma correction to all channels independently, from 8 bits value
-        for (uint8_t i = 0; i < LST_MAX; i++) {
-          cur_col_10bits[i] = ledGamma(cur_col[i], 10);
+
+      if (PHILIPS == my_module_type) {
+        // TODO
+        // Xiaomi Philips bulbs follow a different scheme:
+        // channel 0=intensity, channel2=temperature
+        uint16_t pxBri = cur_col[0] + cur_col[1];
+        if (pxBri > 255) { pxBri = 255; }
+        //cur_col[1] = cur_col[0]; // get 8 bits CT from WC -- not really used
+        cur_col_10bits[1] = changeUIntScale(cur_col[0], 0, pxBri, 0, 1023);  // get 10 bits CT from WC / (WC+WW)
+        if (Settings.light_correction) { // gamma correction
+          cur_col_10bits[0] = ledGamma(pxBri, 10);    // 10 bits gamma correction
+        } else {
+          cur_col_10bits[0] = changeUIntScale(pxBri, 0, 255, 0, 1023);  // no gamma, extend to 10 bits
         }
-        // then apply a different correction for CW white channels
-        if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
-          uint8_t w_idx[2] = {0, 1};        // if LST_COLDWARM, channels 0 and 1
-          if (LST_RGBWC == light_subtype) { // if LST_RGBWC, channels 3 and 4
-            w_idx[0] = 3;
-            w_idx[1] = 4;
+      } else {
+        // Apply gamma correction for 8 and 10 bits resolutions, if needed
+        if (Settings.light_correction) {
+          // first apply gamma correction to all channels independently, from 8 bits value
+          for (uint8_t i = 0; i < LST_MAX; i++) {
+            cur_col_10bits[i] = ledGamma(cur_col[i], 10);
           }
-          uint16_t white_bri = cur_col[w_idx[0]] + cur_col[w_idx[1]];
-          // if sum of both channels is > 255, then channels are probablu uncorrelated
-          if (white_bri <= 255) {
-            // we calculate the gamma corrected sum of CW + WW
-            uint16_t white_bri_10bits = ledGamma(white_bri, 10);
-            // then we split the total energy among the cold and warm leds
-            cur_col_10bits[w_idx[0]] = changeUIntScale(cur_col[w_idx[0]], 0, white_bri, 0, white_bri_10bits);
-            cur_col_10bits[w_idx[1]] = changeUIntScale(cur_col[w_idx[1]], 0, white_bri, 0, white_bri_10bits);
+          // then apply a different correction for CW white channels
+          if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
+            uint8_t w_idx[2] = {0, 1};        // if LST_COLDWARM, channels 0 and 1
+            if (LST_RGBWC == light_subtype) { // if LST_RGBWC, channels 3 and 4
+              w_idx[0] = 3;
+              w_idx[1] = 4;
+            }
+            uint16_t white_bri = cur_col[w_idx[0]] + cur_col[w_idx[1]];
+            // if sum of both channels is > 255, then channels are probablu uncorrelated
+            if (white_bri <= 255) {
+              // we calculate the gamma corrected sum of CW + WW
+              uint16_t white_bri_10bits = ledGamma(white_bri, 10);
+              // then we split the total energy among the cold and warm leds
+              cur_col_10bits[w_idx[0]] = changeUIntScale(cur_col[w_idx[0]], 0, white_bri, 0, white_bri_10bits);
+              cur_col_10bits[w_idx[1]] = changeUIntScale(cur_col[w_idx[1]], 0, white_bri, 0, white_bri_10bits);
+            }
           }
-        }
-        // still keep an 8 bits gamma corrected version
-        for (uint8_t i = 0; i < LST_MAX; i++) {
-          cur_col[i] = ledGamma(cur_col[i]);
+          // still keep an 8 bits gamma corrected version
+          for (uint8_t i = 0; i < LST_MAX; i++) {
+            cur_col[i] = ledGamma(cur_col[i]);
+          }
         }
       }
 
       // final adjusments for PMW, post-gamma correction
       for (uint8_t i = 0; i < LST_MAX; i++) {
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
         // Fix unwanted blinking and PWM watchdog errors for values close to pwm_range (H801, Arilux and BN-SZ01)
         // but keep value 1023 if full range (PWM will be deactivated in this case)
         if ((cur_col_10bits[i] > 1008) && (cur_col_10bits[i] < 1023)) {
           cur_col_10bits[i] = 1008;
         }
+#endif
         // scale from 0..1023 to 0..pwm_range, but keep any non-zero value to at least 1
         cur_col_10bits[i] = (cur_col_10bits[i] > 0) ? changeUIntScale(cur_col_10bits[i], 1, 1023, 1, Settings.pwm_range) : 0;
       }
