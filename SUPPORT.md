@@ -5,7 +5,8 @@ If you're looking for support on **Sonoff-Tasmota** there are some options avail
 ### Documentation:
 
 * [Wiki Pages](https://github.com/arendst/Sonoff-Tasmota/wiki): For information on how to Flash Tasmota, configure and use it.
-* [Troubleshooting Information](https://github.com/arendst/Sonoff-Tasmota/wiki/Troubleshooting): For information on common problems and solutions.
+* [FAQ](https://github.com/arendst/Sonoff-Tasmota/wiki/FAQ): For information on common problems and solutions.
+* [Troubleshooting Information](https://github.com/arendst/Sonoff-Tasmota/wiki/Troubleshooting): For ways to debug and troubleshoot.
 * [Commands Information](https://github.com/arendst/Sonoff-Tasmota/wiki/Commands): For information on all the commands supported by Tasmota.
 
 ### Support's Community:
