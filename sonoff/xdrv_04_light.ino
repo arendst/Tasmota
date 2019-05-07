@@ -93,10 +93,10 @@
  *  .c The 5 internal channels RGBWC are mapped to the actual channels supproted
  *     by the light_type: in calcLevels()
  *     1 channel  - 0:Brightness
- *     2 channels - 0:Warmwhite 1:Coldwhite
+ *     2 channels - 0:Coldhite 1:Warmwhite
  *     3 channels - 0:Red 1:Green 2:Blue
  *     4 chennels - 0:Red 1:Green 2:Blue 3:White
- *     5 chennels - 0:Red 1:Green 2:Blue 3:Warmwhite 4:Coldwhite
+ *     5 chennels - 0:Red 1:Green 2:Blue 3:Coldwhite 4:Warmwhite
  *
  * 3.  In LightAnimate(), final PWM values are computed at next tick.
  *  .a If color did not change since last tick - ignore.
