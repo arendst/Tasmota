@@ -6,6 +6,7 @@
  * Refactored management of lights, using classes and integers instead of floats.
  * Extend PWM resolution from 8 to 10 bits for low brightness lights
  * Allow all 5 PWM channels individually adressable with LEDs. (#5741)
+ * Fixed inversion of WC/WW channels, back to RGBCW
  *
  * 6.5.0.8 20190413
  * Add Tuya Dimmer 10 second heartbeat serial packet required by some Tuya dimmer secondary MCUs

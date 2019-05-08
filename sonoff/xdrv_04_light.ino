@@ -93,10 +93,10 @@
  *  .c The 5 internal channels RGBWC are mapped to the actual channels supproted
  *     by the light_type: in calcLevels()
  *     1 channel  - 0:Brightness
- *     2 channels - 0:Warmwhite 1:Coldwhite
+ *     2 channels - 0:Coldwhite 1:Warmwhite
  *     3 channels - 0:Red 1:Green 2:Blue
  *     4 chennels - 0:Red 1:Green 2:Blue 3:White
- *     5 chennels - 0:Red 1:Green 2:Blue 3:Warmwhite 4:Coldwhite
+ *     5 chennels - 0:Red 1:Green 2:Blue 3:ColdWhite 4:Warmwhite
  *
  * 3.  In LightAnimate(), final PWM values are computed at next tick.
  *  .a If color did not change since last tick - ignore.
@@ -291,7 +291,7 @@ uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
 //    briRGB specifies the brightness for the RGB slot.
 //    If Brightness is 0, it is equivalent to Off (for compatibility)
 //    Dimmer is Brightness converted to range 0..100
-// 2/ White with colortone - or WC (Warm / Cold)
+// 2/ White with colortone - or CW (Cold / Warm)
 //    ct is 153..500 temperature (153=cold, 500=warm)
 //    briCT specifies the brightness for white channel
 //
@@ -305,7 +305,7 @@ uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
 //     ((WW == 255) || (WC == 255))
 // 4.  WC/WW and CT are always kept in sync.
 //     Note: if you use setCT() then WC+WW == 255 (both channels are linked)
-//     but if you use setWC() both channels can be set independantly
+//     but if you use setCW() both channels can be set independantly
 // 5.  If RGB or CT channels are deactivated, then corresponding brightness is zero
 //     if (colot_tone == LCM_RGB) then briCT = 0
 //     if (color_tone == LCM_CT)  then briRGB = 0
@@ -414,7 +414,7 @@ class LightStateClass {
     }
 
     // Get the actual values for each channel, ie multiply with brightness
-    void getActualRGBWC(uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *w, uint8_t *c) {
+    void getActualRGBCW(uint8_t *r, uint8_t *g, uint8_t *b, uint8_t *c, uint8_t *w) {
       bool rgb_channels_on = _color_mode & LCM_RGB;
       bool ct_channels_on = _color_mode & LCM_CT;
 
@@ -427,7 +427,7 @@ class LightStateClass {
     }
 
     uint8_t getChannels(uint8_t *channels) {
-      getActualRGBWC(&channels[0], &channels[1], &channels[2], &channels[3], &channels[4]);
+      getActualRGBCW(&channels[0], &channels[1], &channels[2], &channels[3], &channels[4]);
     }
 
     void getHSB(uint16_t *hue, uint8_t *sat, uint8_t *bri) {
@@ -514,7 +514,7 @@ class LightStateClass {
 #endif
     }
 
-    // Manually set Warm/Cold channels.
+    // Manually set Cold/Warm channels.
     // There are two modes:
     // 1. (free_range == false, default)
     //    In this mode there is only one virtual white channel with color temperature
@@ -528,7 +528,7 @@ class LightStateClass {
     //    In this mode, we always scale both channels so that one at least is 255.
     //
     // We automatically adjust briCT to have the right values of channels
-    void setWC(uint8_t w, uint8_t c, bool free_range = false) {
+    void setCW(uint8_t c, uint8_t w, bool free_range = false) {
       uint16_t max = (w > c) ? w : c;   // 0..255
       uint16_t sum = c + w;
 
@@ -549,7 +549,7 @@ class LightStateClass {
         if (_color_mode & LCM_CT) { _briCT = free_range ? max : (sum > 255 ? 255 : sum); }
       }
 #ifdef DEBUG_LIGHT
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setWC WC (%d %d) CT (%d) briCT (%d)", w, c, _ct, _briCT);
+      AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setCW CW (%d %d) CT (%d) briCT (%d)", c, w, _ct, _briCT);
 #endif
     }
 
@@ -611,7 +611,7 @@ class LightStateClass {
   // Brightness is automatically recalculated to adjust channels to the desired values
   void setChannels(uint8_t *channels) {
     setRGB(channels[0], channels[1], channels[2]);
-    setWC(channels[3], channels[4], true);  // free range for WC and WW
+    setCW(channels[3], channels[4], true);  // free range for WC and WW
 #ifdef DEBUG_LIGHT
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setChannels (%d %d %d %d %d)",
       channels[0], channels[1], channels[2], channels[3], channels[4]);
@@ -807,7 +807,7 @@ public:
 #ifdef DEBUG_LIGHT
   void debugLogs() {
     uint8_t r,g,b,c,w;
-    _state->getActualRGBWC(&r,&g,&b,&w,&c);
+    _state->getActualRGBCW(&r,&g,&b,&c,&w);
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::debugLogs rgb (%d %d %d) cw (%d %d)",
       r, g, b, c, w);
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::debugLogs lightCurrent (%d %d %d %d %d)",
@@ -831,7 +831,7 @@ public:
     // get CT only for lights that support it
     if ((LST_COLDWARM == light_subtype) || (LST_RGBW <= light_subtype)) {
       // TODO check
-      _state->setWC(Settings.light_color[3], Settings.light_color[4], true);
+      _state->setCW(Settings.light_color[3], Settings.light_color[4], true);
     }
 
     // set Dimmer
@@ -876,8 +876,8 @@ public:
 
   // calculate the levels for each channel
   void calcLevels() {
-    uint8_t r,g,b,w,c,briRGB,briCT;
-    _state->getActualRGBWC(&r,&g,&b,&w,&c);
+    uint8_t r,g,b,c,w,briRGB,briCT;
+    _state->getActualRGBCW(&r,&g,&b,&c,&w);
     briRGB = _state->getBriRGB();
     briCT = _state->getBriCT();
 
@@ -891,14 +891,14 @@ public:
         light_current_color[0] = briRGB;
         break;
       case LST_COLDWARM:
-        light_current_color[0] = w;
-        light_current_color[1] = c;
+        light_current_color[0] = c;
+        light_current_color[1] = w;
         break;
       case LST_RGBW:
       case LST_RGBWC:
         if (LST_RGBWC == light_subtype) {
-          light_current_color[3] = w;
-          light_current_color[4] = c;
+          light_current_color[3] = c;
+          light_current_color[4] = w;
         } else {
           light_current_color[3] = briCT;
         }
