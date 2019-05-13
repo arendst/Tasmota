@@ -112,7 +112,7 @@ void AdcShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
       if (0 == tele_period) {
-        KnxSensor(KNX_TEMPERATURE, temp);
+        KnxSensor(KNX_TEMPERATURE, adc_temp);
       }
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
