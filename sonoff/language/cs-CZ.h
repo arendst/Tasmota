@@ -257,6 +257,7 @@
 #define D_MODULE_PARAMETERS "Nastavení modulu"
 #define D_MODULE_TYPE "Typ modulu"
 #define D_PULLUP_ENABLE "Tlačítko/Spínač bez pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
@@ -306,9 +307,6 @@
 #define D_TEMPLATE_NAME "Název"
 #define D_BASE_TYPE "Vzor z"
 #define D_TEMPLATE_FLAGS "Volby"
-#define D_ALLOW_ADC0 "ADC0 vstup"
-#define D_ALLOW_ADC0_TEMP "ADC0 teplota"
-#define D_ALLOW_PULLUP "Pull-up volba uživatele"
 
 #define D_SAVE_CONFIGURATION "Ulož nastavení"
 #define D_CONFIGURATION_SAVED "Nastavení uloženo"

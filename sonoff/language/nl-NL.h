@@ -257,6 +257,7 @@
 #define D_MODULE_PARAMETERS "Module parameters"
 #define D_MODULE_TYPE "Module soort"
 #define D_PULLUP_ENABLE "Geen schakelaar pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serieel In"
 #define D_SERIAL_OUT "Serieel Uit"
@@ -306,9 +307,6 @@
 #define D_TEMPLATE_NAME "Naam"
 #define D_BASE_TYPE "Op basis van"
 #define D_TEMPLATE_FLAGS "Opties"
-#define D_ALLOW_ADC0 "ADC0 ingang"
-#define D_ALLOW_ADC0_TEMP "ADC0 temperatuur"
-#define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "Bewaar configuratie"
 #define D_CONFIGURATION_SAVED "Configuratie opgeslagen"

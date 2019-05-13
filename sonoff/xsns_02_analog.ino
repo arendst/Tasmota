@@ -58,7 +58,7 @@ uint16_t AdcRead(uint8_t factor)
 #ifdef USE_RULES
 void AdcEvery250ms(void)
 {
-  if (my_module_flag.adc0) {
+  if (ADC0_INPUT == my_adc0) {
     uint16_t new_value = AdcRead(5);
     if ((new_value < adc_last_value -10) || (new_value > adc_last_value +10)) {
       adc_last_value = new_value;
@@ -72,7 +72,7 @@ void AdcEvery250ms(void)
 
 void AdcEverySecond(void)
 {
-  if (my_module_flag.adc0_temp) {
+  if (ADC0_TEMP == my_adc0) {
     int adc = AdcRead(2);
     // Steinhart-Hart equation for thermistor as temperature sensor
     double Rt = (adc * ANALOG_R21) / (1024.0 * ANALOG_V33 - (double)adc);
@@ -88,7 +88,7 @@ float AdcTemperature(void)
 
 void AdcShow(bool json)
 {
-  if (my_module_flag.adc0) {
+  if (ADC0_INPUT == my_adc0) {
     uint16_t analog = AdcRead(5);
 
     if (json) {
@@ -99,7 +99,7 @@ void AdcShow(bool json)
 #endif  // USE_WEBSERVER
     }
   }
-  if (my_module_flag.adc0_temp) {
+  if (ADC0_TEMP == my_adc0) {
     char temperature[33];
     dtostrfd(adc_temp, Settings.flag2.temperature_resolution, temperature);
 
@@ -131,7 +131,7 @@ bool Xsns02(uint8_t function)
 {
   bool result = false;
 
-  if (my_module_flag.adc0 || my_module_flag.adc0_temp) {
+  if ((ADC0_INPUT == my_adc0) || (ADC0_TEMP == my_adc0)) {
     switch (function) {
 #ifdef USE_RULES
       case FUNC_EVERY_250_MSECOND:

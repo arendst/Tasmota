@@ -1164,6 +1164,9 @@ void SettingsDelta(void)
     if (Settings.version < 0x06050007) {
       Settings.ledmask = APP_LEDMASK;
     }
+    if (Settings.version < 0x0605000A) {
+      Settings.my_adc0 = ADC0_NONE;
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

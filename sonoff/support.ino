@@ -1000,6 +1000,13 @@ bool ValidGPIO(uint8_t pin, uint8_t gpio)
   return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
 }
 
+bool ValidAdc()
+{
+  gpio_flag flag = ModuleFlag();
+  uint8_t template_adc0 = flag.data &15;
+  return (ADC0_USER == template_adc0);
+}
+
 bool GetUsedInModule(uint8_t val, uint8_t *arr)
 {
   int offset = 0;

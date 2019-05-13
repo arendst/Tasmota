@@ -257,6 +257,7 @@
 #define D_MODULE_PARAMETERS "Παράμετροι μονάδας"
 #define D_MODULE_TYPE "Τύπος μονάδας"
 #define D_PULLUP_ENABLE "No Button/Switch pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
@@ -306,9 +307,6 @@
 #define D_TEMPLATE_NAME "Όνομα"
 #define D_BASE_TYPE "Βασίζεται στο"
 #define D_TEMPLATE_FLAGS "Επιλογές"
-#define D_ALLOW_ADC0 "Είσοδος ADC0"
-#define D_ALLOW_ADC0_TEMP "Θερμοκρασία ADC0"
-#define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "Αποθήκευση ρυθμίσεων"
 #define D_CONFIGURATION_SAVED "Οι ρυθμίσεις αποθηκεύτηκαν"

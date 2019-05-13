@@ -257,6 +257,7 @@
 #define D_MODULE_PARAMETERS "Paramètres module"
 #define D_MODULE_TYPE "Type de module"
 #define D_PULLUP_ENABLE "Inter. sans pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Entrée série"
 #define D_SERIAL_OUT "Sortie série"
@@ -306,9 +307,6 @@
 #define D_TEMPLATE_NAME "Nom"
 #define D_BASE_TYPE "Basé sur"
 #define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "Entrée ADC0"
-#define D_ALLOW_ADC0_TEMP "Température ADC0"
-#define D_ALLOW_PULLUP "Pull-up utilisateur"
 
 #define D_SAVE_CONFIGURATION "Enregistrer la configuration"
 #define D_CONFIGURATION_SAVED "Configuration enregistrée"

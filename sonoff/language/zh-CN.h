@@ -257,6 +257,7 @@
 #define D_MODULE_PARAMETERS "模块设置"
 #define D_MODULE_TYPE "模块类型"
 #define D_PULLUP_ENABLE "没有按钮/开关上拉"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "串口输入(RX)"
 #define D_SERIAL_OUT "串口输出(TX)"
@@ -306,9 +307,6 @@
 #define D_TEMPLATE_NAME "名称"
 #define D_BASE_TYPE "基于"
 #define D_TEMPLATE_FLAGS "选项"
-#define D_ALLOW_ADC0 "ADC0 输入"
-#define D_ALLOW_ADC0_TEMP "ADC0 temperature"
-#define D_ALLOW_PULLUP "用户上拉选择"
 
 #define D_SAVE_CONFIGURATION "保存设置"
 #define D_CONFIGURATION_SAVED "设置已保存"

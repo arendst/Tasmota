@@ -285,7 +285,7 @@ struct SYSCFG {
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
   myio          my_gp;                     // 484
-  uint8_t       test_step;                 // 495
+  uint8_t       my_adc0;                   // 495
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
   uint8_t       light_correction;          // 49D

@@ -1,4 +1,8 @@
-/* 6.5.0.9 20190418
+/* 6.5.0.10 20190513
+ * Enable ADC0 by default in my_user_config.h (#5671)
+ * Add user configurable ADC0 to Module and Template configuration compatible with current FLAG options (#5671)
+ *
+ * 6.5.0.9 20190418
  * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)
  * Fix TasmotaSerial at 9600 bps solving DFPlayer comms (#5528)
  * Fix Shelly 2.5 overtemp
