@@ -1448,6 +1448,10 @@ void LightUpdateColorMapping(void)
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], light_color_remap[0],light_color_remap[1],light_color_remap[2],light_color_remap[3],light_color_remap[4]);
 }
 
+void LightSetDimmer(uint8_t dimmer) {
+  light_controller.changeDimmer(dimmer);
+}
+
 void LightSetColorTemp(uint16_t ct)
 {
 /* Color Temperature (https://developers.meethue.com/documentation/core-concepts)
