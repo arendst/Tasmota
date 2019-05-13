@@ -353,7 +353,7 @@ char* Unescape(char* buffer, uint16_t* size)
     }
   }
   *size = end_size;
-
+  *write++ = 0;   // add the end string pointer reference
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
 
   return buffer;
