@@ -479,6 +479,7 @@ void ExecuteWebCommand(char* svalue, int source)
   //STB mode
   last_source = source;
   //end
+
   ExecuteCommand(svalue, SRC_IGNORE);
 }
 
@@ -979,7 +980,9 @@ bool HandleRootStatusRefresh(void)
         ExecuteCommand(svalue, SRC_WEBGUI);
       }
     } else {
-      ExecuteCommandPower(device, POWER_TOGGLE, SRC_IGNORE);
+      //STB mode
+      ExecuteCommandPower(device, POWER_TOGGLE, SRC_WEBGUI);
+      //end
     }
   }
   WebGetArg("d", tmp, sizeof(tmp));  // 0 - 100 Dimmer value

@@ -157,11 +157,13 @@ void Schutter_Update_Position()
       // Add additional runtime, if shutter did not reach the endstop for some time.
       if (Shutter_Target_Position[i] == Shutter_Real_Position[i] && Shutter_Target_Position[i] == 0) {
         // for every operation add 5x50ms = 250ms to stop position
+        //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Adding additional runtime"));
         Shutter_Real_Position[i] += 500 * Shutter_Operations[i] ;
         Shutter_Operations[i]  = 0;
       }
       if (Shutter_Real_Position[i] * Shutter_Direction[i] >= Shutter_Target_Position[i] * Shutter_Direction[i] ) {
         // calculate relay number responsible for current movement.
+        //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Stop Condition detected: real: %d, Target: %d, direction: %d"),Shutter_Real_Position[i], Shutter_Target_Position[i],Shutter_Direction[i]);
         uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter_Direction[i] == 1 ? 0 : 1) ;
         char stemp2[10];
 
@@ -225,6 +227,7 @@ void Shutter_StartInit (uint8_t index, uint8_t direction, int32_t target_pos)
   Shutter_Target_Position[index] = target_pos;
   Shutter_Start_Position[index] = Shutter_Real_Position[index];
   shutter_time[index] = 0;
+  //AddLog_P2(LOG_LEVEL_INFO,  PSTR("Start shutter: %d from %d to %d in directin %d"), index, Shutter_Start_Position[index], Shutter_Target_Position[index], Shutter_Direction[index]);
 }
 
 bool ShutterCommand()
@@ -249,7 +252,7 @@ bool ShutterCommand()
   else if (CMND_STOP == command_code && (index > 0) && (index <= shutters_present)) {
     if (Shutter_Direction[index-1]!=0) {
       int32_t temp_realpos;
-      AddLog_P2(LOG_LEVEL_INFO,  PSTR("Stop moving shutter %d: direction:%d"), index, Shutter_Direction[index-1]);
+      //AddLog_P2(LOG_LEVEL_INFO,  PSTR("Stop moving shutter %d: direction:%d"), index, Shutter_Direction[index-1]);
       temp_realpos = Shutter_Start_Position[index-1] + ( (shutter_time[index-1]+10) * (Shutter_Direction[index-1] > 0 ? 100 : -Shutter_Close_Velocity[index-1]));
       XdrvMailbox.payload = realposition_to_percent(temp_realpos, index-1);
       //XdrvMailbox.payload = Settings.shuttercoeff[2][index-1] * 5 > temp_realpos ? temp_realpos / Settings.shuttercoeff[2][index-1] : (temp_realpos-Settings.shuttercoeff[0,index-1]) / Settings.shuttercoeff[1][index-1];
@@ -344,7 +347,7 @@ bool ShutterCommand()
         Shutter_Operations[index-1]++;
         if (shutterMode == OFF_ON__OPEN_CLOSE) {
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] , 0, SRC_SHUTTER);
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay5 5s, xdrv %d"), XdrvMailbox.payload);
+          //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay5 5s, xdrv %d"), XdrvMailbox.payload);
           delay(MOTOR_STOP_TIME);
           // Code for shutters with circuit safe configuration, switch the direction Relay
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
@@ -352,10 +355,10 @@ bool ShutterCommand()
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] , 1, SRC_SHUTTER);
         } else {
           // now start the motor for the right direction, work for momentary and normal shutters.
-          AddLog_P2(LOG_LEVEL_INFO, PSTR("Start shutter in right direction %d"), Shutter_Direction[index-1]);
+          AddLog_P2(LOG_LEVEL_INFO, PSTR("Start shutter in direction %d"), Shutter_Direction[index-1]);
           delay(MOTOR_STOP_TIME);
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay6 5s, xdrv %d"), XdrvMailbox.payload);
+          //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay6 5s, xdrv %d"), XdrvMailbox.payload);
         }
         SwitchedRelay = 0;
       }
@@ -396,7 +399,7 @@ void Shutter_Relay_changed()
 
 	for (byte i=0; i < shutters_present; i++) {
 		power_t powerstate_local = (power >> (Settings.shutter_startrelay[i] -1)) & 3;
-		uint8   manual_relays_changed = ((SwitchedRelay >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
+		uint8   manual_relays_changed = ((SwitchedRelay >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != last_source && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
 
 		if (manual_relays_changed) {
       if (shutterMode == OFF_ON__OPEN_CLOSE) {

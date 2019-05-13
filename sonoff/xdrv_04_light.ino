@@ -1146,7 +1146,9 @@ void LightHsbToRgb(void)
   light_current_color[1] = (uint8_t)(g * 255.0f);
   light_current_color[2] = (uint8_t)(b * 255.0f);
   if(light_ct_rgb_linked){
-    light_current_color[3] = 0;
+    //stb mod
+    light_current_color[3] = (uint8_t)( ( (r < g && r < b) ? r : (g < b) ? g : b )    * 255.0f);
+    //end
     light_current_color[4] = 0;
   }
 }
