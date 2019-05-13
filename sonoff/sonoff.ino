@@ -2674,6 +2674,8 @@ void setup(void)
   }
   if (RtcSettings.ultradeepsleep > 0 && RtcSettings.ultradeepsleep < 4294967295) {
      RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
+     RtcReboot.fast_reboot_count = 0;
+     RtcRebootSave();
      snprintf_P(log_data, sizeof(log_data), PSTR("APP: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
      AddLog(LOG_LEVEL_INFO);
      snprintf_P(log_data, sizeof(log_data), PSTR("APP: online %d"), millis());
