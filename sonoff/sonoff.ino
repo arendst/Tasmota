@@ -1930,7 +1930,7 @@ void PerformEverySecond(void)
       prep_called = 1;
       // end stb mod
     }
-    if (tele_period >= Settings.tele_period) {
+    if (tele_period >= Settings.tele_period && prep_called == 1) {
       tele_period = 0;
 
       MqttPublishTeleState();
