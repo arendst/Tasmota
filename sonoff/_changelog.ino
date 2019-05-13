@@ -1,6 +1,7 @@
 /* 6.5.0.10 20190513
  * Enable ADC0 by default in my_user_config.h (#5671)
  * Add user configurable ADC0 to Module and Template configuration compatible with current FLAG options (#5671)
+ * Add support for Shelly 1PM Template {"NAME":"Shelly 1PM","GPIO":[56,0,0,0,82,134,0,0,0,0,0,21,0],"FLAG":2,"BASE":18} (#5716)
  *
  * 6.5.0.9 20190418
  * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)

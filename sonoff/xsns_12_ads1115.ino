@@ -194,7 +194,7 @@ void Ads1115toJSON(char *comma_j)
     ResponseAppend_P(PSTR("%s\"A%d\":%d"), comma, i, ads1115_values[i]);
     comma = (char*)",";
   }
-  ResponseAppend_P(PSTR("}"));
+  ResponseJsonEnd();
 }
 
 void Ads1115toString(uint8_t address)

@@ -448,7 +448,7 @@ bool TimerCommand(void)
     if (!error) {
       Response_P(PSTR("{"));
       PrepShowTimer(index);
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
     }
   }
   else if (CMND_TIMERS == command_code) {

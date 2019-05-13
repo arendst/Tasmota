@@ -966,7 +966,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         }
       }
       if (jsflg) {
-        ResponseAppend_P(PSTR("}"));
+        ResponseJsonEnd();
       } else {
         Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_NOT_SUPPORTED);
       }
@@ -1044,7 +1044,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       }
       Response_P(PSTR("{"));
       MqttShowPWMState();  // Render the PWM status to MQTT
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
     }
     else if (CMND_PWMFREQUENCY == command_code) {
       if ((1 == payload) || ((payload >= PWM_MIN) && (payload <= PWM_MAX))) {
@@ -1765,7 +1765,7 @@ void PublishStatus(uint8_t payload)
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
     MqttShowSensor();
-    ResponseAppend_P(PSTR("}"));
+    ResponseJsonEnd();
     if (8 == payload) {
       MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "8"));
     } else {
@@ -1776,7 +1776,7 @@ void PublishStatus(uint8_t payload)
   if ((0 == payload) || (11 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS11_STATUS "\":"));
     MqttShowState();
-    ResponseAppend_P(PSTR("}"));
+    ResponseJsonEnd();
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "11"));
   }
 
@@ -1792,7 +1792,7 @@ void MqttShowPWMState(void)
       first = false;
     }
   }
-  ResponseAppend_P(PSTR("}"));
+  ResponseJsonEnd();
 }
 
 void MqttShowState(void)
@@ -1859,7 +1859,7 @@ bool MqttShowSensor(void)
   if (strstr_P(mqtt_data, PSTR(D_JSON_TEMPERATURE)) != nullptr) {
     ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
   }
-  ResponseAppend_P(PSTR("}"));
+  ResponseJsonEnd();
 
   if (json_data_available) { XdrvCall(FUNC_SHOW_SENSOR); }
   return json_data_available;

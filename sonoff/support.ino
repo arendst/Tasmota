@@ -889,6 +889,11 @@ int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char d
   return len + mlen;
 }
 
+int ResponseJsonEnd(void)
+{
+  return ResponseAppend_P(PSTR("}"));
+}
+
 /*********************************************************************************************\
  * GPIO Module and Template management
 \*********************************************************************************************/

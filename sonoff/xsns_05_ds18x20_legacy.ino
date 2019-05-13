@@ -205,7 +205,7 @@ void Ds18x20Show(bool json)
   }
   if (json) {
     if (dsxflg) {
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
     }
   }
   Ds18x20Search();      // Check for changes in sensors number

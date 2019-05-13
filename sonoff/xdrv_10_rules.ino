@@ -547,7 +547,7 @@ void RulesEvery100ms(void)
     tele_period = tele_period_save;
     if (strlen(mqtt_data)) {
       mqtt_data[0] = '{';                              // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
       RulesProcess();
     }
   }
@@ -1144,7 +1144,7 @@ bool RulesCommand(void)
     for (uint8_t i = 0; i < MAX_RULE_TIMERS; i++) {
       ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
     }
-    ResponseAppend_P(PSTR("}"));
+    ResponseJsonEnd();
   }
   else if (CMND_EVENT == command_code) {
     if (XdrvMailbox.data_len > 0) {

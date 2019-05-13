@@ -1558,7 +1558,7 @@ void LightState(uint8_t append)
     ResponseAppend_P(PSTR(",\"" D_CMND_FADE "\":\"%s\",\"" D_CMND_SPEED "\":%d,\"" D_CMND_LEDTABLE "\":\"%s\""),
       GetStateText(Settings.light_fade), Settings.light_speed, GetStateText(Settings.light_correction));
   } else {
-    ResponseAppend_P(PSTR("}"));
+    ResponseJsonEnd();
   }
 }
 
