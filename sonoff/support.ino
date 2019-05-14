@@ -1188,10 +1188,11 @@ uint32_t i2c_buffer = 0;
 
 bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
 {
-  uint8_t x = I2C_RETRY_COUNTER;
+  uint8_t retry = I2C_RETRY_COUNTER;
+  bool status = false;
 
   i2c_buffer = 0;
-  do {
+  while (!status && retry) {
     Wire.beginTransmission(addr);                       // start transmission to device
     Wire.write(reg);                                    // sends register address to read from
     if (0 == Wire.endTransmission(false)) {             // Try to become I2C Master, send data and collect bytes, keep master status for next request...
@@ -1200,11 +1201,12 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
         for (uint8_t i = 0; i < size; i++) {
           i2c_buffer = i2c_buffer << 8 | Wire.read();   // receive DATA
         }
+        status = true;
       }
     }
-    x--;
-  } while (Wire.endTransmission(true) != 0 && x != 0);  // end transmission
-  return (x);
+    retry--;
+  }
+  return status;
 }
 
 bool I2cValidRead8(uint8_t *data, uint8_t addr, uint8_t reg)
