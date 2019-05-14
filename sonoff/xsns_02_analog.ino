@@ -81,11 +81,6 @@ void AdcEverySecond(void)
   }
 }
 
-float AdcTemperature(void)
-{
-  return adc_temp;
-}
-
 void AdcShow(bool json)
 {
   if (ADC0_INPUT == my_adc0) {
@@ -99,7 +94,7 @@ void AdcShow(bool json)
 #endif  // USE_WEBSERVER
     }
   }
-  if (ADC0_TEMP == my_adc0) {
+  else if (ADC0_TEMP == my_adc0) {
     char temperature[33];
     dtostrfd(adc_temp, Settings.flag2.temperature_resolution, temperature);
 

@@ -27,6 +27,8 @@
 
 #define ENERGY_NONE          0
 
+#define ENERGY_OVERTEMP      73.0     // Industry standard lowest overtemp in Celsius
+
 #define FEATURE_POWER_LIMIT  true
 
 #include <Ticker.h>
@@ -316,6 +318,15 @@ void EnergyMqttShow(void)
   ResponseJsonEnd();
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   energy_power_delta = 0;
+}
+
+void EnergyOverTempCheck()
+{
+  if (global_update) {
+    if (power && (global_temperature > ENERGY_OVERTEMP)) {  // Device overtemp, turn off relays
+      SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
+    }
+  }
 }
 
 /*********************************************************************************************\
@@ -742,7 +753,7 @@ bool Xsns03(uint8_t function)
         break;
       case FUNC_EVERY_SECOND:
         EnergyMarginCheck();
-        XnrgCall(FUNC_EVERY_SECOND);
+        EnergyOverTempCheck();
         break;
       case FUNC_JSON_APPEND:
         EnergyShow(true);
