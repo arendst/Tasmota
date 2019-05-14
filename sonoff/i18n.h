@@ -215,6 +215,8 @@
 #define D_CMND_WEIGHT_RESOLUTION "WeightRes"
 #define D_CMND_MODULE "Module"
 #define D_CMND_MODULES "Modules"
+#define D_CMND_ADC "ADC"
+#define D_CMND_ADCS "ADCs"
 #define D_CMND_GPIO "GPIO"
   #define D_JSON_NOT_SUPPORTED "Not supported"
 #define D_CMND_GPIOS "GPIOs"

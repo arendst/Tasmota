@@ -34,8 +34,6 @@
 #define ADE7953_UREF            26000
 #define ADE7953_IREF            10000
 
-#define ADE7953_OVERTEMP        73.0     // Industry standard lowest overtemp in Celsius
-
 #define ADE7953_ADDR            0x38
 
 uint32_t ade7953_active_power = 0;
@@ -160,15 +158,6 @@ void Ade7953EnergyEverySecond()
 	}
 }
 
-void Ade7953EverySecond()
-{
-#ifndef USE_ADC_VCC
-  if (power && (ConvertTempToCelsius(AdcTemperature()) > ADE7953_OVERTEMP)) {  // Device overtemp, turn off relays
-    SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
-  }
-#endif  // USE_ADC_VCC
-}
-
 void Ade7953DrvInit(void)
 {
   if (!energy_flg) {
@@ -247,9 +236,6 @@ int Xnrg07(uint8_t function)
     switch (function) {
       case FUNC_ENERGY_EVERY_SECOND:
         Ade7953EnergyEverySecond();
-        break;
-      case FUNC_EVERY_SECOND:
-        Ade7953EverySecond();
         break;
       case FUNC_COMMAND:
         result = Ade7953Command();

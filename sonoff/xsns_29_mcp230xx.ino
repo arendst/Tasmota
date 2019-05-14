@@ -335,7 +335,7 @@ void MCP230xx_Show(bool json)
           ResponseAppend_P(PSTR(",\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i"),
                      (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
         }
-        ResponseAppend_P(PSTR("}"));
+        ResponseJsonEnd();
       }
     }
   }

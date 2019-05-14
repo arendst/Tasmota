@@ -577,6 +577,7 @@ char     prev_y_str[24] = "\0";
 void HueLightStatus1(uint8_t device, String *response)
 {
   uint16_t ct = 0;
+  uint8_t  color_mode;
   String light_status = "";
   uint16_t hue = 0;
   uint8_t  sat = 0;
@@ -584,7 +585,8 @@ void HueLightStatus1(uint8_t device, String *response)
 
 
   if (light_type) {
-    light_state.getHSB(&hue, &sat, &bri);
+    light_state.getHSB(&hue, &sat, nullptr);
+    bri = light_state.getBri();
 
     if (bri > 254)  bri = 254;    // Philips Hue bri is between 1 and 254
     if (bri < 1)    bri = 1;
@@ -605,21 +607,11 @@ void HueLightStatus1(uint8_t device, String *response)
       prev_x_str[0] = prev_y_str[0] = 0;
     }
 
+    color_mode = light_state.getColorMode();
     ct = light_state.getCT();
-    // compute whether we're in CT mode
-    if (LST_RGBW <= light_subtype) {
-      if (light_state.isCTRGBLinked()) {
-        // normal case, CT mode if we have a CT channel
-        g_gotct = (ct > 0 ? true : false);
-      }
-      // else leave g_gotct unchanged, otherwise it's getting messy
-    } else if (LST_COLDWARM == light_subtype) {
-      // force ct mode for LST_COLDWARM
-      g_gotct = true;
-    } else {
-      // for all others, no ct
-      g_gotct = false;
-    }
+    if (LCM_RGB == color_mode) { g_gotct = false; }
+    if (LCM_CT  == color_mode) { g_gotct = true; }
+    // If LCM_BOTH == color_mode, leave g_gotct unchanged
 
     // re-adjust ct if close to command value
     if ((ct > prev_ct ? ct - prev_ct : prev_ct - ct) < 1)
@@ -638,7 +630,6 @@ void HueLightStatus1(uint8_t device, String *response)
   light_status += ",";
   //}
   if (LST_COLDWARM <= light_subtype) {
-    //light_status += "\"colormode\":\"" + String(g_gotct ? "ct" : "hs") + "\",";
     light_status += F("\"colormode\":\"");
     light_status += (g_gotct ? "ct" : "hs");
     light_status += "\",";
@@ -652,7 +643,7 @@ void HueLightStatus1(uint8_t device, String *response)
       light_status += "],";
     } else {
       float x, y;
-      light_state.getXY(&x, &y);
+        light_state.getXY(&x, &y);
       light_status += "\"xy\":[";
       light_status += String(x, 5);
       light_status += ",";
@@ -778,11 +769,13 @@ void HueLights(String *path)
       }
 
       if (light_type) {
-        light_state.getHSB(&hue, &sat, &bri);
+        light_state.getHSB(&hue, &sat, nullptr);
+        bri = light_state.getBri();   // get the combined bri for CT and RGB, not only the RGB one
         ct = light_state.getCT();
-        if ((LST_COLDWARM == light_subtype) || (ct > 0)) {
-          g_gotct = true;
-        }
+        uint8_t color_mode = light_state.getColorMode();
+        if (LCM_RGB == color_mode) { g_gotct = false; }
+        if (LCM_CT  == color_mode) { g_gotct = true; }
+        // If LCM_BOTH == color_mode, leave g_gotct unchanged
       }
       prev_x_str[0] = prev_y_str[0] = 0;  // reset xy string
 
@@ -876,11 +869,9 @@ void HueLights(String *path)
       if (change) {
         if (light_type) {
           if (g_gotct) {
-            light_controller.changeCT(ct);
-            light_controller.changeBri(bri);
+            light_controller.changeCTB(ct, bri);
           } else {
-            light_controller.changeHS(hue, sat);
-            light_controller.changeBri(bri);
+            light_controller.changeHSB(hue, sat, bri);
           }
           LightPreparePower();
           if (LST_COLDWARM <= light_subtype) {

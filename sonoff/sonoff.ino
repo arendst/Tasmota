@@ -72,7 +72,7 @@ enum TasmotaCommands {
   CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_FANSPEED, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,
   CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SENSOR, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
   CMND_PRESSURE_RESOLUTION, CMND_POWER_RESOLUTION, CMND_VOLTAGE_RESOLUTION, CMND_FREQUENCY_RESOLUTION, CMND_CURRENT_RESOLUTION, CMND_ENERGY_RESOLUTION, CMND_WEIGHT_RESOLUTION,
-  CMND_MODULE, CMND_MODULES, CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
+  CMND_MODULE, CMND_MODULES, CMND_ADC, CMND_ADCS, CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
   CMND_COUNTERDEBOUNCE, CMND_BUTTONDEBOUNCE, CMND_SWITCHDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
   CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE, CMND_INTERLOCK, CMND_TEMPLATE,
@@ -82,7 +82,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_FANSPEED "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_FREQUENCY_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_WEIGHT_RESOLUTION "|"
-  D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|"
+  D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|"
   D_CMND_COUNTERDEBOUNCE "|" D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TEMPLATE "|"
@@ -154,6 +154,7 @@ uint8_t devices_present = 0;                // Max number of devices supported
 uint8_t seriallog_level;                    // Current copy of Settings.seriallog_level
 uint8_t syslog_level;                       // Current copy of Settings.syslog_level
 uint8_t my_module_type;                     // Current copy of Settings.module or user template type
+uint8_t my_adc0;                            // Active copy of Module ADC0
 //uint8_t mdns_delayed_start = 0;             // mDNS delayed start
 bool serial_local = false;                  // Handle serial locally;
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
@@ -169,7 +170,7 @@ bool spi_flg = false;                       // SPI configured
 bool soft_spi_flg = false;                  // Software SPI configured
 bool ntp_force_sync = false;                // Force NTP sync
 myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
-gpio_flag my_module_flag;                   // Active copy of Module GPIO flags
+gpio_flag my_module_flag;                   // Active copy of Template GPIO flags
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
 char my_version[33];                        // Composed version string
 char my_image[33];                          // Code image and/or commit
@@ -917,6 +918,26 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       }
       mqtt_data[0] = '\0';
     }
+#ifndef USE_ADC_VCC
+    else if (CMND_ADC == command_code) {
+      if (ValidAdc() && (payload >= 0) && (payload < ADC0_END)) {
+        Settings.my_adc0 = payload;
+        restart_flag = 2;
+      }
+      Response_P(PSTR("{\"" D_CMND_ADC "0\":\"%d (%s)\"}"), Settings.my_adc0, GetTextIndexed(stemp1, sizeof(stemp1), Settings.my_adc0, kAdc0Names));
+    }
+    else if (CMND_ADCS == command_code) {
+      Response_P(PSTR("{\"" D_CMND_ADCS "\":["));
+      for (uint8_t i = 0; i < ADC0_END; i++) {
+        if (jsflg) {
+          ResponseAppend_P(PSTR(","));
+        }
+        jsflg = true;
+        ResponseAppend_P(PSTR("\"%d (%s)\""), i, GetTextIndexed(stemp1, sizeof(stemp1), i, kAdc0Names));
+      }
+      ResponseAppend_P(PSTR("]}"));
+    }
+#endif  // USE_ADC_VCC
     else if ((CMND_GPIO == command_code) && (index < sizeof(Settings.my_gp))) {
       myio cmodule;
       ModuleGpios(&cmodule);
@@ -945,7 +966,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         }
       }
       if (jsflg) {
-        ResponseAppend_P(PSTR("}"));
+        ResponseJsonEnd();
       } else {
         Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_NOT_SUPPORTED);
       }
@@ -1023,7 +1044,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       }
       Response_P(PSTR("{"));
       MqttShowPWMState();  // Render the PWM status to MQTT
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
     }
     else if (CMND_PWMFREQUENCY == command_code) {
       if ((1 == payload) || ((payload >= PWM_MIN) && (payload <= PWM_MAX))) {
@@ -1744,7 +1765,7 @@ void PublishStatus(uint8_t payload)
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
     MqttShowSensor();
-    ResponseAppend_P(PSTR("}"));
+    ResponseJsonEnd();
     if (8 == payload) {
       MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "8"));
     } else {
@@ -1755,7 +1776,7 @@ void PublishStatus(uint8_t payload)
   if ((0 == payload) || (11 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS11_STATUS "\":"));
     MqttShowState();
-    ResponseAppend_P(PSTR("}"));
+    ResponseJsonEnd();
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "11"));
   }
 
@@ -1771,7 +1792,7 @@ void MqttShowPWMState(void)
       first = false;
     }
   }
-  ResponseAppend_P(PSTR("}"));
+  ResponseJsonEnd();
 }
 
 void MqttShowState(void)
@@ -1838,7 +1859,7 @@ bool MqttShowSensor(void)
   if (strstr_P(mqtt_data, PSTR(D_JSON_TEMPERATURE)) != nullptr) {
     ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE_UNIT "\":\"%c\""), TempUnit());
   }
-  ResponseAppend_P(PSTR("}"));
+  ResponseJsonEnd();
 
   if (json_data_available) { XdrvCall(FUNC_SHOW_SENSOR); }
   return json_data_available;
@@ -2373,13 +2394,23 @@ void GpioInit(void)
       Settings.my_gp.io[i] = GPIO_NONE;             // Fix not supported sensor ids in module
     }
     else if (Settings.my_gp.io[i] > GPIO_NONE) {
-      my_module.io[i] = Settings.my_gp.io[i];
+      my_module.io[i] = Settings.my_gp.io[i];       // Set User selected Module sensors
     }
     if ((def_gp.io[i] > GPIO_NONE) && (def_gp.io[i] < GPIO_USER)) {
-      my_module.io[i] = def_gp.io[i];
+      my_module.io[i] = def_gp.io[i];               // Force Template override
     }
   }
+  if ((Settings.my_adc0 >= ADC0_END) && (Settings.my_adc0 < ADC0_USER)) {
+    Settings.my_adc0 = ADC0_NONE;                   // Fix not supported sensor ids in module
+  }
+  else if (Settings.my_adc0 > ADC0_NONE) {
+    my_adc0 = Settings.my_adc0;                     // Set User selected Module sensors
+  }
   my_module_flag = ModuleFlag();
+  uint8_t template_adc0 = my_module_flag.data &15;
+  if ((template_adc0 > ADC0_NONE) && (template_adc0 < ADC0_USER)) {
+    my_adc0 = template_adc0;                        // Force Template override
+  }
 
   for (uint16_t i = 0; i < GPIO_MAX; i++) {
     pin[i] = 99;

@@ -118,7 +118,7 @@ void Ads1115Show(bool json)
     }
     if (json) {
       if (dsxflg) {
-        ResponseAppend_P(PSTR("}"));
+        ResponseJsonEnd();
       }
     }
   }

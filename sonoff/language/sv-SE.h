@@ -257,6 +257,7 @@
 #define D_MODULE_PARAMETERS "Modulparameterar"
 #define D_MODULE_TYPE "Modultyp"
 #define D_PULLUP_ENABLE "Ingen knapp/brytare pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Seriell in"
 #define D_SERIAL_OUT "Seriell ut"
@@ -307,9 +308,6 @@
 #define D_TEMPLATE_NAME "Name"
 #define D_BASE_TYPE "Based on"
 #define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "ADC0 input"
-#define D_ALLOW_ADC0_TEMP "ADC0 temperature"
-#define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "Spara konfiguration"
 #define D_CONFIGURATION_SAVED "Konfiguration sparad"

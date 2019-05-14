@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.1.0024'
+VER = '2.2.0025'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -43,7 +43,7 @@ Usage: decode-config.py [-f <filename>] [-d <host>] [-P <port>]
                         [--cmnd-indent <indent>] [--cmnd-groups]
                         [--cmnd-nogroups] [--cmnd-sort] [--cmnd-unsort]
                         [-c <filename>] [-S] [-T json|cmnd|command]
-                        [-g {Display,Domoticz,Internal,KNX,Led,Logging,MCP230xx,MQTT,Main,Management,Pow,Sensor,Serial,SetOption,SonoffRF,System,Timers,Wifi} [{Display,Domoticz,Internal,KNX,Led,Logging,MCP230xx,MQTT,Main,Management,Pow,Sensor,Serial,SetOption,SonoffRF,System,Timers,Wifi} ...]]
+                        [-g {Control,Devices,Display,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,Timer,Wifi} ...]]
                         [--ignore-warnings] [-h] [-H] [-v] [-V]
 
     Backup/Restore Sonoff-Tasmota configuration data. Args that start with '--'
@@ -123,7 +123,7 @@ Usage: decode-config.py [-f <filename>] [-d <host>] [-P <port>]
                             (default do not output on backup or restore usage)
       -T, --output-format json|cmnd|command
                             display output format (default: 'json')
-      -g, --group {Display,Domoticz,Internal,KNX,Led,Logging,MCP230xx,MQTT,Main,Management,Pow,Sensor,Serial,SetOption,SonoffRF,System,Timers,Wifi}
+      -g, --group {Control,Devices,Display,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,Timer,Wifi}
                             limit data processing to command groups (default no
                             filter)
       --ignore-warnings     do not exit on warnings. Not recommended, used by your
@@ -308,7 +308,7 @@ Settings dictionary describes the config file fields definition:
                     Tasmota command definition
                     <group>:        <string>
                         command group string
-                    <tasmotacmnd>:   <function>
+                    <tasmotacmnd>:   <function> | (<function>,...)
                         convert data into Tasmota command function
 
             <converter>:    <readconverter> | (<readconverter>, <writeconverter>)
@@ -407,7 +407,6 @@ def MqttFingerprint(value, idx=None):
 # ----------------------------------------------------------------------
 # Tasmota configuration data definition
 # ----------------------------------------------------------------------
-Groups = ('Main','Sensor','Timers','Management','Wifi','MQTT','Serial','SetOption','Logging','Pow','Led','KNX','Domoticz','Display','MCP230xx')
 Setting_5_10_0 = {
                               # <format>, <addrdef>, <datadef> [,<converter>]
     'cfg_holder':                   ('<L',  0x000,       (None, None,                           (INTERNAL,      None)), '"0x{:08x}".format($)' ),
@@ -415,40 +414,40 @@ Setting_5_10_0 = {
     'version':                      ('<L',  0x008,       (None, None,                           (INTERNAL,      None)), ('hex($)',  False) ),
     'bootcount':                    ('<L',  0x00C,       (None, None,                           ('System',      None)), (None,      False) ),
     'flag':                         ({
-        'save_state':               ('<L', (0x010,1, 0), (None, None,                           ('Management',  '"SetOption0 {}".format($)')) ),
-        'button_restrict':          ('<L', (0x010,1, 1), (None, None,                           ('Management',  '"SetOption1 {}".format($)')) ),
-        'value_units':              ('<L', (0x010,1, 2), (None, None,                           ('MQTT',        '"SetOption2 {}".format($)')) ),
-        'mqtt_enabled':             ('<L', (0x010,1, 3), (None, None,                           ('MQTT',        '"SetOption3 {}".format($)')) ),
-        'mqtt_response':            ('<L', (0x010,1, 4), (None, None,                           ('MQTT',        '"SetOption4 {}".format($)')) ),
-        'mqtt_power_retain':        ('<L', (0x010,1, 5), (None, None,                           ('Main',        '"PowerRetain {}".format($)')) ),
+        'save_state':               ('<L', (0x010,1, 0), (None, None,                           ('SetOption',   '"SetOption0 {}".format($)')) ),
+        'button_restrict':          ('<L', (0x010,1, 1), (None, None,                           ('SetOption',   '"SetOption1 {}".format($)')) ),
+        'value_units':              ('<L', (0x010,1, 2), (None, None,                           ('SetOption',   '"SetOption2 {}".format($)')) ),
+        'mqtt_enabled':             ('<L', (0x010,1, 3), (None, None,                           ('SetOption',   '"SetOption3 {}".format($)')) ),
+        'mqtt_response':            ('<L', (0x010,1, 4), (None, None,                           ('SetOption',   '"SetOption4 {}".format($)')) ),
+        'mqtt_power_retain':        ('<L', (0x010,1, 5), (None, None,                           ('MQTT',        '"PowerRetain {}".format($)')) ),
         'mqtt_button_retain':       ('<L', (0x010,1, 6), (None, None,                           ('MQTT',        '"ButtonRetain {}".format($)')) ),
         'mqtt_switch_retain':       ('<L', (0x010,1, 7), (None, None,                           ('MQTT',        '"SwitchRetain {}".format($)')) ),
-        'temperature_conversion':   ('<L', (0x010,1, 8), (None, None,                           ('Sensor',      '"SetOption8 {}".format($)')) ),
+        'temperature_conversion':   ('<L', (0x010,1, 8), (None, None,                           ('SetOption',   '"SetOption8 {}".format($)')) ),
         'mqtt_sensor_retain':       ('<L', (0x010,1, 9), (None, None,                           ('MQTT',        '"SensorRetain {}".format($)')) ),
-        'mqtt_offline':             ('<L', (0x010,1,10), (None, None,                           ('MQTT',        '"SetOption10 {}".format($)')) ),
-        'button_swap':              ('<L', (0x010,1,11), (None, None,                           ('Main',        '"SetOption11 {}".format($)')) ),
+        'mqtt_offline':             ('<L', (0x010,1,10), (None, None,                           ('SetOption',   '"SetOption10 {}".format($)')) ),
+        'button_swap':              ('<L', (0x010,1,11), (None, None,                           ('SetOption',   '"SetOption11 {}".format($)')) ),
         'stop_flash_rotate':        ('<L', (0x010,1,12), (None, None,                           ('Management',  '"SetOption12 {}".format($)')) ),
-        'button_single':            ('<L', (0x010,1,13), (None, None,                           ('Main',        '"SetOption13 {}".format($)')) ),
-        'interlock':                ('<L', (0x010,1,14), (None, None,                           ('Main',        '"SetOption14 {}".format($)')) ),
-        'pwm_control':              ('<L', (0x010,1,15), (None, None,                           ('Main',        '"SetOption15 {}".format($)')) ),
+        'button_single':            ('<L', (0x010,1,13), (None, None,                           ('SetOption',   '"SetOption13 {}".format($)')) ),
+        'interlock':                ('<L', (0x010,1,14), (None, None,                           ('SetOption',   '"SetOption14 {}".format($)')) ),
+        'pwm_control':              ('<L', (0x010,1,15), (None, None,                           ('SetOption',   '"SetOption15 {}".format($)')) ),
         'ws_clock_reverse':         ('<L', (0x010,1,16), (None, None,                           ('SetOption',   '"SetOption16 {}".format($)')) ),
         'decimal_text':             ('<L', (0x010,1,17), (None, None,                           ('SetOption',   '"SetOption17 {}".format($)')) ),
                                     },      0x010,       (None, None,                           ('*',           None)), (None,      None) ),
     'save_data':                    ('<h',  0x014,       (None, '0 <= $ <= 3600',               ('Management',  '"SaveData {}".format($)')) ),
     'timezone':                     ('b',   0x016,       (None, '-13 <= $ <= 13 or $==99',      ('Management',  '"Timezone {}".format($)')) ),
-    'ota_url':                      ('101s',0x017,       (None, None,                           ('Main',        '"OtaUrl {}".format($)')) ),
+    'ota_url':                      ('101s',0x017,       (None, None,                           ('Management',  '"OtaUrl {}".format($)')) ),
     'mqtt_prefix':                  ('11s', 0x07C,       ([3],  None,                           ('MQTT',        '"Prefix{} {}".format(#,$)')) ),
-    'seriallog_level':              ('B',   0x09E,       (None, '0 <= $ <= 5',                  ('Logging',     '"SerialLog {}".format($)')) ),
+    'seriallog_level':              ('B',   0x09E,       (None, '0 <= $ <= 5',                  ('Management',  '"SerialLog {}".format($)')) ),
     'sta_config':                   ('B',   0x09F,       (None, '0 <= $ <= 5',                  ('Wifi',        '"WifiConfig {}".format($)')) ),
     'sta_active':                   ('B',   0x0A0,       (None, '0 <= $ <= 1',                  ('Wifi',        '"AP {}".format($)')) ),
     'sta_ssid':                     ('33s', 0x0A1,       ([2],  None,                           ('Wifi',        '"SSId{} {}".format(#,$)')) ),
     'sta_pwd':                      ('65s', 0x0E3,       ([2],  None,                           ('Wifi',        '"Password{} {}".format(#,$)')), (passwordread,passwordwrite) ),
     'hostname':                     ('33s', 0x165,       (None, None,                           ('Wifi',        '"Hostname {}".format($)')) ),
-    'syslog_host':                  ('33s', 0x186,       (None, None,                           ('Logging',     '"LogHost {}".format($)')) ),
-    'syslog_port':                  ('<H',  0x1A8,       (None, '1 <= $ <= 32766',              ('Logging',     '"LogPort {}".format($)')) ),
-    'syslog_level':                 ('B',   0x1AA,       (None, '0 <= $ <= 4',                  ('Logging',     '"SysLog {}".format($)')) ),
+    'syslog_host':                  ('33s', 0x186,       (None, None,                           ('Management',  '"LogHost {}".format($)')) ),
+    'syslog_port':                  ('<H',  0x1A8,       (None, '1 <= $ <= 32766',              ('Management',  '"LogPort {}".format($)')) ),
+    'syslog_level':                 ('B',   0x1AA,       (None, '0 <= $ <= 4',                  ('Management',  '"SysLog {}".format($)')) ),
     'webserver':                    ('B',   0x1AB,       (None, '0 <= $ <= 2',                  ('Wifi',        '"WebServer {}".format($)')) ),
-    'weblog_level':                 ('B',   0x1AC,       (None, '0 <= $ <= 4',                  ('Logging',     '"WebLog {}".format($)')) ),
+    'weblog_level':                 ('B',   0x1AC,       (None, '0 <= $ <= 4',                  ('Management',  '"WebLog {}".format($)')) ),
     'mqtt_fingerprint':             ('60s', 0x1AD,       (None, None,                           ('MQTT',        None)) ),
     'mqtt_host':                    ('33s', 0x1E9,       (None, None,                           ('MQTT',        '"MqttHost {}".format($)')) ),
     'mqtt_port':                    ('<H',  0x20A,       (None, None,                           ('MQTT',        '"MqttPort {}".format($)')) ),
@@ -461,84 +460,84 @@ Setting_5_10_0 = {
     'mqtt_fingerprinth':            ('B',   0x2D2,       ([20], None,                           ('MQTT',        None)) ),
     'pwm_frequency':                ('<H',  0x2E6,       (None, '$==1 or 100 <= $ <= 4000',     ('Management',  '"PwmFrequency {}".format($)')) ),
     'power':                        ({
-        'power1':                   ('<L', (0x2E8,1,0),  (None, None,                           ('Main',        '"Power1 {}".format($)')) ),
-        'power2':                   ('<L', (0x2E8,1,1),  (None, None,                           ('Main',        '"Power2 {}".format($)')) ),
-        'power3':                   ('<L', (0x2E8,1,2),  (None, None,                           ('Main',        '"Power3 {}".format($)')) ),
-        'power4':                   ('<L', (0x2E8,1,3),  (None, None,                           ('Main',        '"Power4 {}".format($)')) ),
-        'power5':                   ('<L', (0x2E8,1,4),  (None, None,                           ('Main',        '"Power5 {}".format($)')) ),
-        'power6':                   ('<L', (0x2E8,1,5),  (None, None,                           ('Main',        '"Power6 {}".format($)')) ),
-        'power7':                   ('<L', (0x2E8,1,6),  (None, None,                           ('Main',        '"Power7 {}".format($)')) ),
-        'power8':                   ('<L', (0x2E8,1,7),  (None, None,                           ('Main',        '"Power8 {}".format($)')) ),
-                                    },      0x2E8,       (None, None,                           ('Main',        None)), (None,      None) ),
+        'power1':                   ('<L', (0x2E8,1,0),  (None, None,                           ('Control',     '"Power1 {}".format($)')) ),
+        'power2':                   ('<L', (0x2E8,1,1),  (None, None,                           ('Control',     '"Power2 {}".format($)')) ),
+        'power3':                   ('<L', (0x2E8,1,2),  (None, None,                           ('Control',     '"Power3 {}".format($)')) ),
+        'power4':                   ('<L', (0x2E8,1,3),  (None, None,                           ('Control',     '"Power4 {}".format($)')) ),
+        'power5':                   ('<L', (0x2E8,1,4),  (None, None,                           ('Control',     '"Power5 {}".format($)')) ),
+        'power6':                   ('<L', (0x2E8,1,5),  (None, None,                           ('Control',     '"Power6 {}".format($)')) ),
+        'power7':                   ('<L', (0x2E8,1,6),  (None, None,                           ('Control',     '"Power7 {}".format($)')) ),
+        'power8':                   ('<L', (0x2E8,1,7),  (None, None,                           ('Control',     '"Power8 {}".format($)')) ),
+                                    },      0x2E8,       (None, None,                           ('Control',     None)), (None,      None) ),
     'pwm_value':                    ('<H',  0x2EC,       ([5],  '0 <= $ <= 1023',               ('Management',  '"Pwm{} {}".format(#,$)')) ),
     'altitude':                     ('<h',  0x2F6,       (None, '-30000 <= $ <= 30000',         ('Sensor',      '"Altitude {}".format($)')) ),
     'tele_period':                  ('<H',  0x2F8,       (None, '0 <= $ <= 1 or 10 <= $ <= 3600',('MQTT',       '"TelePeriod {}".format($)')) ),
-    'ledstate':                     ('B',   0x2FB,       (None, '0 <= ($ & 0x7) <= 7',          ('Main',        '"LedState {}".format($)')) ),
+    'ledstate':                     ('B',   0x2FB,       (None, '0 <= ($ & 0x7) <= 7',          ('Control',     '"LedState {}".format(($ & 0x7))')) ),
     'param':                        ('B',   0x2FC,       ([23], None,                           ('SetOption',   '"SetOption{} {}".format(#+31,$)')) ),
     'state_text':                   ('11s', 0x313,       ([4],  None,                           ('MQTT',        '"StateText{} {}".format(#,$)')) ),
     'domoticz_update_timer':        ('<H',  0x340,       (None, '0 <= $ <= 3600',               ('Domoticz',    '"DomoticzUpdateTimer {}".format($)')) ),
     'pwm_range':                    ('<H',  0x342,       (None, '$==1 or 255 <= $ <= 1023',     ('Management',  '"PwmRange {}".format($)')) ),
     'domoticz_relay_idx':           ('<L',  0x344,       ([4],  None,                           ('Domoticz',    '"DomoticzIdx{} {}".format(#,$)')) ),
     'domoticz_key_idx':             ('<L',  0x354,       ([4],  None,                           ('Domoticz',    '"DomoticzKeyIdx{} {}".format(#,$)')) ),
-    'energy_power_calibration':     ('<L',  0x364,       (None, None,                           ('Pow',         '"PowerSet {}".format($)')) ),
-    'energy_voltage_calibration':   ('<L',  0x368,       (None, None,                           ('Pow',         '"VoltageSet {}".format($)')) ),
-    'energy_current_calibration':   ('<L',  0x36C,       (None, None,                           ('Pow',         '"CurrentSet {}".format($)')) ),
-    'energy_kWhtoday':              ('<L',  0x370,       (None, '0 <= $ <= 4250000',            ('Pow',         '"EnergyReset1 {}".format(int(round(float($)/100)))')) ),
-    'energy_kWhyesterday':          ('<L',  0x374,       (None, '0 <= $ <= 4250000',            ('Pow',         '"EnergyReset2 {}".format(int(round(float($)/100)))')) ),
-    'energy_kWhdoy':                ('<H',  0x378,       (None, None,                           ('Pow',         None)) ),
-    'energy_min_power':             ('<H',  0x37A,       (None, None,                           ('Pow',         '"PowerLow {}".format($)')) ),
-    'energy_max_power':             ('<H',  0x37C,       (None, None,                           ('Pow',         '"PowerHigh {}".format($)')) ),
-    'energy_min_voltage':           ('<H',  0x37E,       (None, None,                           ('Pow',         '"VoltageLow {}".format($)')) ),
-    'energy_max_voltage':           ('<H',  0x380,       (None, None,                           ('Pow',         '"VoltageHigh {}".format($)')) ),
-    'energy_min_current':           ('<H',  0x382,       (None, None,                           ('Pow',         '"CurrentLow {}".format($)')) ),
-    'energy_max_current':           ('<H',  0x384,       (None, None,                           ('Pow',         '"CurrentHigh {}".format($)')) ),
-    'energy_max_power_limit':       ('<H',  0x386,       (None, None,                           ('Pow',         '"MaxPower {}".format($)')) ),
-    'energy_max_power_limit_hold':  ('<H',  0x388,       (None, None,                           ('Pow',         '"MaxPowerHold {}".format($)')) ),
-    'energy_max_power_limit_window':('<H',  0x38A,       (None, None,                           ('Pow',         '"MaxPowerWindow {}".format($)')) ),
-    'energy_max_power_safe_limit':  ('<H',  0x38C,       (None, None,                           ('Pow',         '"SavePower {}".format($)')) ),
+    'energy_power_calibration':     ('<L',  0x364,       (None, None,                           ('Power',       '"PowerSet {}".format($)')) ),
+    'energy_voltage_calibration':   ('<L',  0x368,       (None, None,                           ('Power',       '"VoltageSet {}".format($)')) ),
+    'energy_current_calibration':   ('<L',  0x36C,       (None, None,                           ('Power',       '"CurrentSet {}".format($)')) ),
+    'energy_kWhtoday':              ('<L',  0x370,       (None, '0 <= $ <= 4250000',            ('Power',       '"EnergyReset1 {}".format(int(round(float($)/100)))')) ),
+    'energy_kWhyesterday':          ('<L',  0x374,       (None, '0 <= $ <= 4250000',            ('Power',       '"EnergyReset2 {}".format(int(round(float($)/100)))')) ),
+    'energy_kWhdoy':                ('<H',  0x378,       (None, None,                           ('Power',       None)) ),
+    'energy_min_power':             ('<H',  0x37A,       (None, None,                           ('Power',       '"PowerLow {}".format($)')) ),
+    'energy_max_power':             ('<H',  0x37C,       (None, None,                           ('Power',       '"PowerHigh {}".format($)')) ),
+    'energy_min_voltage':           ('<H',  0x37E,       (None, None,                           ('Power',       '"VoltageLow {}".format($)')) ),
+    'energy_max_voltage':           ('<H',  0x380,       (None, None,                           ('Power',       '"VoltageHigh {}".format($)')) ),
+    'energy_min_current':           ('<H',  0x382,       (None, None,                           ('Power',       '"CurrentLow {}".format($)')) ),
+    'energy_max_current':           ('<H',  0x384,       (None, None,                           ('Power',       '"CurrentHigh {}".format($)')) ),
+    'energy_max_power_limit':       ('<H',  0x386,       (None, None,                           ('Power',       '"MaxPower {}".format($)')) ),
+    'energy_max_power_limit_hold':  ('<H',  0x388,       (None, None,                           ('Power',       '"MaxPowerHold {}".format($)')) ),
+    'energy_max_power_limit_window':('<H',  0x38A,       (None, None,                           ('Power',       '"MaxPowerWindow {}".format($)')) ),
+    'energy_max_power_safe_limit':  ('<H',  0x38C,       (None, None,                           ('Power',       '"SavePower {}".format($)')) ),
     'energy_max_power_safe_limit_hold':
-                                    ('<H',  0x38E,       (None, None,                           ('Pow',         '"SavePowerHold {}".format($)')) ),
+                                    ('<H',  0x38E,       (None, None,                           ('Power',       '"SavePowerHold {}".format($)')) ),
     'energy_max_power_safe_limit_window':
-                                    ('<H',  0x390,       (None, None,                           ('Pow',         '"SavePowerWindow {}".format($)')) ),
-    'energy_max_energy':            ('<H',  0x392,       (None, None,                           ('Pow',         '"MaxEnergy {}".format($)')) ),
-    'energy_max_energy_start':      ('<H',  0x394,       (None, None,                           ('Pow',         '"MaxEnergyStart {}".format($)')) ),
+                                    ('<H',  0x390,       (None, None,                           ('Power',       '"SavePowerWindow {}".format($)')) ),
+    'energy_max_energy':            ('<H',  0x392,       (None, None,                           ('Power',       '"MaxEnergy {}".format($)')) ),
+    'energy_max_energy_start':      ('<H',  0x394,       (None, None,                           ('Power',       '"MaxEnergyStart {}".format($)')) ),
     'mqtt_retry':                   ('<H',  0x396,       (None, '10 <= $ <= 32000',             ('MQTT',        '"MqttRetry {}".format($)')) ),
-    'poweronstate':                 ('B',   0x398,       (None, '0 <= $ <= 5',                  ('Main',        '"PowerOnState {}".format($)')) ),
+    'poweronstate':                 ('B',   0x398,       (None, '0 <= $ <= 5',                  ('Control',     '"PowerOnState {}".format($)')) ),
     'last_module':                  ('B',   0x399,       (None, None,                           ('System',      None)) ),
-    'blinktime':                    ('<H',  0x39A,       (None, '2 <= $ <= 3600',               ('Main',        '"BlinkTime {}".format($)')) ),
-    'blinkcount':                   ('<H',  0x39C,       (None, '0 <= $ <= 32000',              ('Main',        '"BlinkCount {}".format($)')) ),
+    'blinktime':                    ('<H',  0x39A,       (None, '2 <= $ <= 3600',               ('Control',     '"BlinkTime {}".format($)')) ),
+    'blinkcount':                   ('<H',  0x39C,       (None, '0 <= $ <= 32000',              ('Control',     '"BlinkCount {}".format($)')) ),
     'friendlyname':                 ('33s', 0x3AC,       ([4],  None,                           ('Management',  '"FriendlyName{} {}".format(#,$)')) ),
     'switch_topic':                 ('33s', 0x430,       (None, None,                           ('MQTT',        '"SwitchTopic {}".format($)')) ),
     'sleep':                        ('B',   0x453,       (None, '0 <= $ <= 250',                ('Management',  '"Sleep {}".format($)')) ),
     'domoticz_switch_idx':          ('<H',  0x454,       ([4],  None,                           ('Domoticz',    '"DomoticzSwitchIdx{} {}".format(#,$)')) ),
     'domoticz_sensor_idx':          ('<H',  0x45C,       ([12], None,                           ('Domoticz',    '"DomoticzSensorIdx{} {}".format(#,$)')) ),
     'module':                       ('B',   0x474,       (None, None,                           ('Management',  '"Module {}".format($)')) ),
-    'ws_color':                     ('B',   0x475,       ([4,3],None,                           ('Led',         None)) ),
-    'ws_width':                     ('B',   0x481,       ([3],  None,                           ('Led',         None)) ),
+    'ws_color':                     ('B',   0x475,       ([4,3],None,                           ('Light',       None)) ),
+    'ws_width':                     ('B',   0x481,       ([3],  None,                           ('Light',       None)) ),
     'my_gp':                        ('B',   0x484,       ([18], None,                           ('Management',  '"Gpio{} {}".format(#,$)')) ),
-    'light_pixels':                 ('<H',  0x496,       (None, '1 <= $ <= 512',                ('Led',         '"Pxels {}".format($)')) ),
-    'light_color':                  ('B',   0x498,       ([5],  None,                           ('Led',         None)) ),
-    'light_correction':             ('B',   0x49D     ,  (None, '0 <= $ <= 1',                  ('Led',         '"LedTable {}".format($)')) ),
-    'light_dimmer':                 ('B',   0x49E,       (None, '0 <= $ <= 100',                ('Led',         '"Wakeup {}".format($)')) ),
-    'light_fade':                   ('B',   0x4A1,       (None, '0 <= $ <= 1',                  ('Led',         '"Fade {}".format($)')) ),
-    'light_speed':                  ('B',   0x4A2,       (None, '1 <= $ <= 20',                 ('Led',         '"Speed {}".format($)')) ),
-    'light_scheme':                 ('B',   0x4A3,       (None, None,                           ('Led',         '"Scheme {}".format($)')) ),
-    'light_width':                  ('B',   0x4A4,       (None, '0 <= $ <= 4',                  ('Led',         '"Width {}".format($)')) ),
-    'light_wakeup':                 ('<H',  0x4A6,       (None, '0 <= $ <= 3100',               ('Led',         '"WakeUpDuration {}".format($)')) ),
+    'light_pixels':                 ('<H',  0x496,       (None, '1 <= $ <= 512',                ('Light',       '"Pxels {}".format($)')) ),
+    'light_color':                  ('B',   0x498,       ([5],  None,                           ('Light',       None)) ),
+    'light_correction':             ('B',   0x49D     ,  (None, '0 <= $ <= 1',                  ('Light',       '"LedTable {}".format($)')) ),
+    'light_dimmer':                 ('B',   0x49E,       (None, '0 <= $ <= 100',                ('Light',       '"Wakeup {}".format($)')) ),
+    'light_fade':                   ('B',   0x4A1,       (None, '0 <= $ <= 1',                  ('Light',       '"Fade {}".format($)')) ),
+    'light_speed':                  ('B',   0x4A2,       (None, '1 <= $ <= 20',                 ('Light',       '"Speed {}".format($)')) ),
+    'light_scheme':                 ('B',   0x4A3,       (None, None,                           ('Light',       '"Scheme {}".format($)')) ),
+    'light_width':                  ('B',   0x4A4,       (None, '0 <= $ <= 4',                  ('Light',       '"Width {}".format($)')) ),
+    'light_wakeup':                 ('<H',  0x4A6,       (None, '0 <= $ <= 3100',               ('Light',       '"WakeUpDuration {}".format($)')) ),
     'web_password':                 ('33s', 0x4A9,       (None, None,                           ('Wifi',        '"WebPassword {}".format($)')), (passwordread,passwordwrite) ),
-    'switchmode':                   ('B',   0x4CA,       ([4],  '0 <= $ <= 7',                  ('Main',        '"SwitchMode{} {}".format(#,$)')) ),
+    'switchmode':                   ('B',   0x4CA,       ([4],  '0 <= $ <= 7',                  ('Control',     '"SwitchMode{} {}".format(#,$)')) ),
     'ntp_server':                   ('33s', 0x4CE,       ([3],  None,                           ('Wifi',        '"NtpServer{} {}".format(#,$)')) ),
     'ina219_mode':                  ('B',   0x531,       (None, '0 <= $ <= 7',                  ('Sensor',      '"Sensor13 {}".format($)')) ),
-    'pulse_timer':                  ('<H',  0x532,       ([8],  '0 <= $ <= 64900',              ('Main',        '"PulseTime{} {}".format(#,$)')) ),
+    'pulse_timer':                  ('<H',  0x532,       ([8],  '0 <= $ <= 64900',              ('Control',     '"PulseTime{} {}".format(#,$)')) ),
     'ip_address':                   ('<L',  0x544,       ([4],  None,                           ('Wifi',        '"IPAddress{} {}".format(#,$)')), ("socket.inet_ntoa(struct.pack('<L', $))", "struct.unpack('<L', socket.inet_aton($))[0]")),
-    'energy_kWhtotal':              ('<L',  0x554,       (None, '0 <= $ <= 4250000000',         ('Pow',         '"EnergyReset3 {}".format(int(round(float($)/100)))')) ),
+    'energy_kWhtotal':              ('<L',  0x554,       (None, '0 <= $ <= 4250000000',         ('Power',       '"EnergyReset3 {}".format(int(round(float($)/100)))')) ),
     'mqtt_fulltopic':               ('100s',0x558,       (None, None,                           ('MQTT',        '"FullTopic {}".format($)')) ),
     'flag2':                        ({
-        'current_resolution':       ('<L', (0x5BC,2,15), (None, '0 <= $ <= 3',                  ('Pow',         '"AmpRes {}".format($)')) ),
-        'voltage_resolution':       ('<L', (0x5BC,2,17), (None, '0 <= $ <= 3',                  ('Pow',         '"VoltRes {}".format($)')) ),
-        'wattage_resolution':       ('<L', (0x5BC,2,19), (None, '0 <= $ <= 3',                  ('Pow',         '"WattRes {}".format($)')) ),
+        'current_resolution':       ('<L', (0x5BC,2,15), (None, '0 <= $ <= 3',                  ('Power',       '"AmpRes {}".format($)')) ),
+        'voltage_resolution':       ('<L', (0x5BC,2,17), (None, '0 <= $ <= 3',                  ('Power',       '"VoltRes {}".format($)')) ),
+        'wattage_resolution':       ('<L', (0x5BC,2,19), (None, '0 <= $ <= 3',                  ('Power',       '"WattRes {}".format($)')) ),
         'emulation':                ('<L', (0x5BC,2,21), (None, '0 <= $ <= 2',                  ('Management',  '"Emulation {}".format($)')) ),
-        'energy_resolution':        ('<L', (0x5BC,3,23), (None, '0 <= $ <= 5',                  ('Pow',         '"EnergyRes {}".format($)')) ),
+        'energy_resolution':        ('<L', (0x5BC,3,23), (None, '0 <= $ <= 5',                  ('Power',       '"EnergyRes {}".format($)')) ),
         'pressure_resolution':      ('<L', (0x5BC,2,26), (None, '0 <= $ <= 3',                  ('Sensor',      '"PressRes {}".format($)')) ),
         'humidity_resolution':      ('<L', (0x5BC,2,28), (None, '0 <= $ <= 3',                  ('Sensor',      '"HumRes {}".format($)')) ),
         'temperature_resolution':   ('<L', (0x5BC,2,30), (None, '0 <= $ <= 3',                  ('Sensor',      '"TempRes {}".format($)')) ),
@@ -567,15 +566,15 @@ Setting_5_11_0.update               ({
     'display_size':                 ('B',   0x2E1,       (None, '1 <= $ <= 4',                  ('Display',     '"Size {}".format($)')) ),
                                     })
 Setting_5_11_0['flag'][0].update    ({
-        'light_signal':             ('<L', (0x010,1,18), (None, None,                           ('Sensor',      '"SetOption18 {}".format($)')) ),
+        'light_signal':             ('<L', (0x010,1,18), (None, None,                           ('SetOption',   '"SetOption18 {}".format($)')) ),
                                     })
 Setting_5_11_0.pop('mqtt_fingerprinth',None)
 # ======================================================================
 Setting_5_12_0 = copy.deepcopy(Setting_5_11_0)
 Setting_5_12_0['flag'][0].update    ({
         'hass_discovery':           ('<L', (0x010,1,19), (None, None,                           ('SetOption',   '"SetOption19 {}".format($)')) ),
-        'not_power_linked':         ('<L', (0x010,1,20), (None, None,                           ('Led',         '"SetOption20 {}".format($)')) ),
-        'no_power_on_check':        ('<L', (0x010,1,21), (None, None,                           ('Pow',         '"SetOption21 {}".format($)')) ),
+        'not_power_linked':         ('<L', (0x010,1,20), (None, None,                           ('SetOption',   '"SetOption20 {}".format($)')) ),
+        'no_power_on_check':        ('<L', (0x010,1,21), (None, None,                           ('SetOption',   '"SetOption21 {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_5_13_1 = copy.deepcopy(Setting_5_12_0)
@@ -588,36 +587,36 @@ Setting_5_13_1['flag'][0].update    ({
 Setting_5_13_1.update               ({
     'baudrate':                     ('B',   0x09D,       (None, None,                           ('Serial',      '"Baudrate {}".format($)')), ('$ * 1200','$ / 1200') ),
     'mqtt_fingerprint':             ('20s', 0x1AD,       ([2],  None,                           ('MQTT',        MqttFingerprint)) ),
-    'energy_power_delta':           ('B',   0x33F,       (None, None,                           ('Pow',         '"PowerDelta {}".format($)')) ),
-    'light_rotation':               ('<H',  0x39E,       (None, None,                           ('Led',         '"Rotation {}".format($)')) ),
+    'energy_power_delta':           ('B',   0x33F,       (None, None,                           ('Power',       '"PowerDelta {}".format($)')) ),
+    'light_rotation':               ('<H',  0x39E,       (None, None,                           ('Light',       '"Rotation {}".format($)')) ),
     'serial_delimiter':             ('B',   0x451,       (None, None,                           ('Serial',      '"SerialDelimiter {}".format($)')) ),
     'sbaudrate':                    ('B',   0x452,       (None, None,                           ('Serial',      '"SBaudrate {}".format($)')), ('$ * 1200','$ / 1200') ),
     'knx_GA_registered':            ('B',   0x4A5,       (None, None,                           ('KNX',         None)) ),
     'knx_CB_registered':            ('B',   0x4A8,       (None, None,                           ('KNX',         None)) ),
     'timer':                        ({
-        '_':                        ('<L',  0x670,       (None, None,                           ('Timers',      '"Timer{} {{\\\"Arm\\\":{arm},\\\"Mode\\\":{mode},\\\"Time\\\":\\\"{tsign}{time}\\\",\\\"Window\\\":{window},\\\"Days\\\":\\\"{days}\\\",\\\"Repeat\\\":{repeat},\\\"Output\\\":{device},\\\"Action\\\":{power}}}".format(#, arm=bitsRead($,31),mode=bitsRead($,29,2),tsign="-" if bitsRead($,29,2)>0 and bitsRead($,0,11)>(12*60) else "",time=time.strftime("%H:%M",time.gmtime((bitsRead($,0,11) if bitsRead($,29,2)==0 else bitsRead($,0,11) if bitsRead($,0,11)<=(12*60) else bitsRead($,0,11)-(12*60))*60)),window=bitsRead($,11,4),repeat=bitsRead($,15),days="{:07b}".format(bitsRead($,16,7))[::-1],device=bitsRead($,23,4)+1,power=bitsRead($,27,2) )')), ('"0x{:08x}".format($)', False) ),
-        'time':                     ('<L', (0x670,11, 0),(None, '0 <= $ < 1440',                ('Timers',      None)) ),
-        'window':                   ('<L', (0x670, 4,11),(None, None,                           ('Timers',      None)) ),
-        'repeat':                   ('<L', (0x670, 1,15),(None, None,                           ('Timers',      None)) ),
-        'days':                     ('<L', (0x670, 7,16),(None, None,                           ('Timers',      None)), '"0b{:07b}".format($)' ),
-        'device':                   ('<L', (0x670, 4,23),(None, None,                           ('Timers',      None)) ),
-        'power':                    ('<L', (0x670, 2,27),(None, None,                           ('Timers',      None)) ),
-        'mode':                     ('<L', (0x670, 2,29),(None, '0 <= $ <= 3',                  ('Timers',      None)) ),
-        'arm':                      ('<L', (0x670, 1,31),(None, None,                           ('Timers',      None)) ),
-                                    },      0x670,       ([16], None,                           ('Timers',      None)) ),
-    'latitude':                     ('i',   0x6B0,       (None, None,                           ('Timers',      '"Latitude {}".format($)')),  ('float($) / 1000000', 'int($ * 1000000)')),
-    'longitude':                    ('i',   0x6B4,       (None, None,                           ('Timers',      '"Longitude {}".format($)')), ('float($) / 1000000', 'int($ * 1000000)')),
+        '_':                        ('<L',  0x670,       (None, None,                           ('Timer',       '"Timer{} {{\\\"Arm\\\":{arm},\\\"Mode\\\":{mode},\\\"Time\\\":\\\"{tsign}{time}\\\",\\\"Window\\\":{window},\\\"Days\\\":\\\"{days}\\\",\\\"Repeat\\\":{repeat},\\\"Output\\\":{device},\\\"Action\\\":{power}}}".format(#, arm=bitsRead($,31),mode=bitsRead($,29,2),tsign="-" if bitsRead($,29,2)>0 and bitsRead($,0,11)>(12*60) else "",time=time.strftime("%H:%M",time.gmtime((bitsRead($,0,11) if bitsRead($,29,2)==0 else bitsRead($,0,11) if bitsRead($,0,11)<=(12*60) else bitsRead($,0,11)-(12*60))*60)),window=bitsRead($,11,4),repeat=bitsRead($,15),days="{:07b}".format(bitsRead($,16,7))[::-1],device=bitsRead($,23,4)+1,power=bitsRead($,27,2) )')), ('"0x{:08x}".format($)', False) ),
+        'time':                     ('<L', (0x670,11, 0),(None, '0 <= $ < 1440',                ('Timer',       None)) ),
+        'window':                   ('<L', (0x670, 4,11),(None, None,                           ('Timer',       None)) ),
+        'repeat':                   ('<L', (0x670, 1,15),(None, None,                           ('Timer',       None)) ),
+        'days':                     ('<L', (0x670, 7,16),(None, None,                           ('Timer',       None)), '"0b{:07b}".format($)' ),
+        'device':                   ('<L', (0x670, 4,23),(None, None,                           ('Timer',       None)) ),
+        'power':                    ('<L', (0x670, 2,27),(None, None,                           ('Timer',       None)) ),
+        'mode':                     ('<L', (0x670, 2,29),(None, '0 <= $ <= 3',                  ('Timer',       None)) ),
+        'arm':                      ('<L', (0x670, 1,31),(None, None,                           ('Timer',       None)) ),
+                                    },      0x670,       ([16], None,                           ('Timer',       None)) ),
+    'latitude':                     ('i',   0x6B0,       (None, None,                           ('Timer',       '"Latitude {}".format($)')),  ('float($) / 1000000', 'int($ * 1000000)')),
+    'longitude':                    ('i',   0x6B4,       (None, None,                           ('Timer',       '"Longitude {}".format($)')), ('float($) / 1000000', 'int($ * 1000000)')),
     'knx_physsical_addr':           ('<H',  0x6B8,       (None, None,                           ('KNX',         None)) ),
     'knx_GA_addr':                  ('<H',  0x6BA,       ([10], None,                           ('KNX',         None)) ),
     'knx_CB_addr':                  ('<H',  0x6CE,       ([10], None,                           ('KNX',         None)) ),
     'knx_GA_param':                 ('B',   0x6E2,       ([10], None,                           ('KNX',         None)) ),
     'knx_CB_param':                 ('B',   0x6EC,       ([10], None,                           ('KNX',         None)) ),
-    'rules':                        ('512s',0x800,       (None, None,                           ('Management',  '"Rule {}".format("\\"" if len($)==0 else $)')) ),
+    'rules':                        ('512s',0x800,       (None, None,                           ('Rules',       '"Rule {}".format("\\"" if len($)==0 else $)')) ),
                                     })
 # ======================================================================
 Setting_5_14_0 = copy.deepcopy(Setting_5_13_1)
 Setting_5_14_0['flag'][0].update    ({
-        'device_index_enable':      ('<L', (0x010,1,26), (None, None,                           ('Main',        '"SetOption26 {}".format($)')) ),
+        'device_index_enable':      ('<L', (0x010,1,26), (None, None,                           ('SetOption',   '"SetOption26 {}".format($)')) ),
                                     })
 Setting_5_14_0['flag'][0].pop('rules_once',None)
 Setting_5_14_0.update               ({
@@ -639,17 +638,17 @@ Setting_6_0_0.update({
     'bootcount':                    ('<H',  0x00C,       (None, None,                           ('System',      None)), (None, False)),
     'cfg_crc':                      ('<H',  0x00E,       (None, None,                           (INTERNAL,      None)), '"0x{:04x}".format($)'),
     'rule_enabled':                 ({
-        'rule1':                    ('B',  (0x49F,1,0),  (None, None,                           ('Management',  '"Rule1 {}".format($)')) ),
-        'rule2':                    ('B',  (0x49F,1,1),  (None, None,                           ('Management',  '"Rule2 {}".format($)')) ),
-        'rule3':                    ('B',  (0x49F,1,2),  (None, None,                           ('Management',  '"Rule3 {}".format($)')) ),
-                                    },      0x49F,       (None, None,                           ('Management',  None)), (None,      None) ),
+        'rule1':                    ('B',  (0x49F,1,0),  (None, None,                           ('Rules',       '"Rule1 {}".format($)')) ),
+        'rule2':                    ('B',  (0x49F,1,1),  (None, None,                           ('Rules',       '"Rule2 {}".format($)')) ),
+        'rule3':                    ('B',  (0x49F,1,2),  (None, None,                           ('Rules',       '"Rule3 {}".format($)')) ),
+                                    },      0x49F,       (None, None,                           ('Rules',       None)), (None,      None) ),
     'rule_once':                    ({
-        'rule1':                    ('B',  (0x4A0,1,0),  (None, None,                           ('Management',  '"Rule1 {}".format($+4)')) ),
-        'rule2':                    ('B',  (0x4A0,1,1),  (None, None,                           ('Management',  '"Rule2 {}".format($+4)')) ),
-        'rule3':                    ('B',  (0x4A0,1,2),  (None, None,                           ('Management',  '"Rule3 {}".format($+4)')) ),
-                                    },      0x4A0,       (None, None,                           ('Management',  None)), (None,      None) ),
-    'mems':                         ('10s', 0x7CE,       ([5],  None,                           ('Management',  '"Mem{} {}".format(#,"\\"" if len($)==0 else $)')) ),
-    'rules':                        ('512s',0x800,       ([3],  None,                           ('Management',  '"Rule{} {}".format(#,"\\"" if len($)==0 else $)')) ),
+        'rule1':                    ('B',  (0x4A0,1,0),  (None, None,                           ('Rules',       '"Rule1 {}".format($+4)')) ),
+        'rule2':                    ('B',  (0x4A0,1,1),  (None, None,                           ('Rules',       '"Rule2 {}".format($+4)')) ),
+        'rule3':                    ('B',  (0x4A0,1,2),  (None, None,                           ('Rules',       '"Rule3 {}".format($+4)')) ),
+                                    },      0x4A0,       (None, None,                           ('Rules',       None)), (None,      None) ),
+    'mems':                         ('10s', 0x7CE,       ([5],  None,                           ('Rules',       '"Mem{} {}".format(#,"\\"" if len($)==0 else $)')) ),
+    'rules':                        ('512s',0x800,       ([3],  None,                           ('Rules',       '"Rule{} {}".format(#,"\\"" if len($)==0 else $)')) ),
 })
 Setting_6_0_0['flag'][0].update     ({
         'knx_enable_enhancement':   ('<L', (0x010,1,27), (None, None,                           ('KNX',         '"KNX_ENHANCED {}".format($)')) ),
@@ -658,16 +657,16 @@ Setting_6_0_0['flag'][0].update     ({
 Setting_6_1_1 = copy.deepcopy(Setting_6_0_0)
 Setting_6_1_1.update                ({
     'flag3':                        ('<L',  0x3A0,       (None, None,                           ('System',      None)), '"0x{:08x}".format($)' ),
-    'switchmode':                   ('B',   0x3A4,       ([8],  '0 <= $ <= 7',                  ('Main',        '"SwitchMode{} {}".format(#,$)')) ),
+    'switchmode':                   ('B',   0x3A4,       ([8],  '0 <= $ <= 7',                  ('Control',     '"SwitchMode{} {}".format(#,$)')) ),
     'mcp230xx_config':              ({
-        '_':                        ('<L',  0x6F6,       (None, None,                           ('MCP230xx',    '"Sensor29 {pin},{pinmode},{pullup},{intmode}".format(pin=#-1, pinmode=@["mcp230xx_config"][#-1]["pinmode"], pullup=@["mcp230xx_config"][#-1]["pullup"], intmode=@["mcp230xx_config"][#-1]["int_report_mode"])')), ('"0x{:08x}".format($)', False) ),
-        'pinmode':                  ('<L', (0x6F6,3, 0), (None, '0 <= $ <= 5',                  ('MCP230xx',    None)) ),
-        'pullup':                   ('<L', (0x6F6,1, 3), (None, None,                           ('MCP230xx',    None)) ),
-        'saved_state':              ('<L', (0x6F6,1, 4), (None, None,                           ('MCP230xx',    None)) ),
-        'int_report_mode':          ('<L', (0x6F6,2, 5), (None, None,                           ('MCP230xx',    None)) ),
-        'int_report_defer':         ('<L', (0x6F6,4, 7), (None, None,                           ('MCP230xx',    None)) ),
-        'int_count_en':             ('<L', (0x6F6,1,11), (None, None,                           ('MCP230xx',    None)) ),
-                                     },     0x6F6,       ([16], None,                           ('MCP230xx',    None)), (None,      None) ),
+        '_':                        ('<L',  0x6F6,       (None, None,                           ('Devices',     '"Sensor29 {pin},{pinmode},{pullup},{intmode}".format(pin=#-1, pinmode=@["mcp230xx_config"][#-1]["pinmode"], pullup=@["mcp230xx_config"][#-1]["pullup"], intmode=@["mcp230xx_config"][#-1]["int_report_mode"])')), ('"0x{:08x}".format($)', False) ),
+        'pinmode':                  ('<L', (0x6F6,3, 0), (None, None,                           ('Devices',     None)) ),
+        'pullup':                   ('<L', (0x6F6,1, 3), (None, None,                           ('Devices',     None)) ),
+        'saved_state':              ('<L', (0x6F6,1, 4), (None, None,                           ('Devices',     None)) ),
+        'int_report_mode':          ('<L', (0x6F6,2, 5), (None, None,                           ('Devices',     None)) ),
+        'int_report_defer':         ('<L', (0x6F6,4, 7), (None, None,                           ('Devices',     None)) ),
+        'int_count_en':             ('<L', (0x6F6,1,11), (None, None,                           ('Devices',     None)) ),
+                                     },     0x6F6,       ([16], None,                           ('Devices',     None)), (None,      None) ),
                                     })
 Setting_6_1_1['flag'][0].update     ({
         'rf_receive_decimal':       ('<L', (0x010,1,28), (None, None,                           ('SetOption' ,  '"SetOption28 {}".format($)')) ),
@@ -678,20 +677,20 @@ Setting_6_1_1['flag'][0].update     ({
 Setting_6_2_1 = copy.deepcopy(Setting_6_1_1)
 Setting_6_2_1.update                ({
     'rule_stop':                    ({
-        'rule1':                    ('B',  (0x1A7,1,0),  (None, None,                           ('Management',  '"Rule1 {}".format($+8)')) ),
-        'rule2':                    ('B',  (0x1A7,1,1),  (None, None,                           ('Management',  '"Rule2 {}".format($+8)')) ),
-        'rule3':                    ('B',  (0x1A7,1,2),  (None, None,                           ('Management',  '"Rule3 {}".format($+8)')) ),
+        'rule1':                    ('B',  (0x1A7,1,0),  (None, None,                           ('Rules',       '"Rule1 {}".format($+8)')) ),
+        'rule2':                    ('B',  (0x1A7,1,1),  (None, None,                           ('Rules',       '"Rule2 {}".format($+8)')) ),
+        'rule3':                    ('B',  (0x1A7,1,2),  (None, None,                           ('Rules',       '"Rule3 {}".format($+8)')) ),
                                      },     0x1A7,        None),
     'display_rotate':               ('B',   0x2FA,       (None, '0 <= $ <= 3',                  ('Display',     '"Rotate {}".format($)')) ),
     'display_font':                 ('B',   0x312,       (None, '1 <= $ <= 4',                  ('Display',     '"Font {}".format($)')) ),
     'flag3':                        ({
-         'timers_enable':           ('<L', (0x3A0,1, 0), (None, None,                           ('Timers',      '"Timers {}".format($)')) ),
+         'timers_enable':           ('<L', (0x3A0,1, 0), (None, None,                           ('Timer',       '"Timers {}".format($)')) ),
          'user_esp8285_enable':     ('<L', (0x3A0,1,31), (None, None,                           ('System',      None)) ),
                                     },      0x3A0,       (None, None,                           ('*',           None)), (None,      None) ),
-    'button_debounce':              ('<H',  0x542,       (None, '40 <= $ <= 1000',              ('Main',        '"ButtonDebounce {}".format($)')) ),
-    'switch_debounce':              ('<H',  0x66E,       (None, '40 <= $ <= 1000',              ('Main',        '"SwitchDebounce {}".format($)')) ),
-    'mcp230xx_int_prio':            ('B',   0x716,       (None, None,                           ('MCP230xx',    None)) ),
-    'mcp230xx_int_timer':           ('<H',  0x718,       (None, None,                           ('MCP230xx',    None)) ),
+    'button_debounce':              ('<H',  0x542,       (None, '40 <= $ <= 1000',              ('Control',     '"ButtonDebounce {}".format($)')) ),
+    'switch_debounce':              ('<H',  0x66E,       (None, '40 <= $ <= 1000',              ('Control',     '"SwitchDebounce {}".format($)')) ),
+    'mcp230xx_int_prio':            ('B',   0x716,       (None, None,                           ('Devices',     None)) ),
+    'mcp230xx_int_timer':           ('<H',  0x718,       (None, None,                           ('Devices',     None)) ),
                                     })
 Setting_6_2_1['flag'][0].pop('rules_enabled',None)
 Setting_6_2_1['flag'][0].update     ({
@@ -710,7 +709,7 @@ Setting_6_2_1_2['flag3'][0].update  ({
 # ======================================================================
 Setting_6_2_1_3 = copy.deepcopy(Setting_6_2_1_2)
 Setting_6_2_1_3['flag2'][0].update  ({
-        'frequency_resolution':     ('<L', (0x5BC,2,11), (None, '0 <= $ <= 3',                  ('Pow',         '"FreqRes {}".format($)')) ),
+        'frequency_resolution':     ('<L', (0x5BC,2,11), (None, '0 <= $ <= 3',                  ('Power',       '"FreqRes {}".format($)')) ),
                                     })
 Setting_6_2_1_3['flag3'][0].update  ({
         'time_append_timezone':     ('<L', (0x3A0,1, 2), (None, None,                           ('SetOption',   '"SetOption52 {}".format($)')) ),
@@ -718,7 +717,10 @@ Setting_6_2_1_3['flag3'][0].update  ({
 # ======================================================================
 Setting_6_2_1_6 = copy.deepcopy(Setting_6_2_1_3)
 Setting_6_2_1_6.update({
-    'energy_frequency_calibration': ('<L',  0x7C8,       (None, '45000 < $ < 65000',            ('Pow',         '"FrequencySet {}".format($)')) ),
+    'energy_power_calibration':     ('<L',  0x364,       (None, None,                           ('Power',       None)) ),
+    'energy_voltage_calibration':   ('<L',  0x368,       (None, None,                           ('Power',       None)) ),
+    'energy_current_calibration':   ('<L',  0x36C,       (None, None,                           ('Power',       None)) ),
+    'energy_frequency_calibration': ('<L',  0x7C8,       (None, '45000 < $ < 65000',            ('Power',       '"FrequencySet {}".format($)')) ),
 })
 # ======================================================================
 Setting_6_2_1_10 = copy.deepcopy(Setting_6_2_1_6)
@@ -732,7 +734,7 @@ Setting_6_2_1_14.update({
     'weight_max':                   ('<H',  0x7BE,       (None, None,                           ('Management',  '"Sensor34 5 {}".format($)')), ('float($) / 1000', 'int($ * 1000)') ),        # undocumented
     'weight_reference':             ('<L',  0x7C0,       (None, None,                           ('Management',  '"Sensor34 3 {}".format($)')) ),     # undocumented
     'weight_calibration':           ('<L',  0x7C4,       (None, None,                           ('Management',  '"Sensor34 4 {}".format($)')) ),     # undocumented
-    'web_refresh':                  ('<H',  0x7CC,       (None, '1000 <= $ <= 10000',           ('Management',  '"WebRefresh {}".format($)')) ),     # undocumented
+    'web_refresh':                  ('<H',  0x7CC,       (None, '1000 <= $ <= 10000',           ('Wifi',        '"WebRefresh {}".format($)')) ),     # undocumented
 })
 Setting_6_2_1_14['flag2'][0].update ({
         'weight_resolution':        ('<L', (0x5BC,2, 9), (None, '0 <= $ <= 3',                  ('Management',  '"WeightRes {}".format($)')) ),      # undocumented
@@ -749,12 +751,12 @@ Setting_6_2_1_20['flag3'][0].update ({
 # ======================================================================
 Setting_6_3_0 = copy.deepcopy(Setting_6_2_1_20)
 Setting_6_3_0.update({
-    'energy_kWhtotal_time':         ('<L',  0x7B4,       (None, None,                           ('System',           None)) ),
+    'energy_kWhtotal_time':         ('<L',  0x7B4,       (None, None,                           ('System',       None)) ),
 })
 # ======================================================================
 Setting_6_3_0_2 = copy.deepcopy(Setting_6_3_0)
 Setting_6_3_0_2.update({
-    'timezone_minutes':             ('B',   0x66D,       (None, None,                           ('System',           None)) ),
+    'timezone_minutes':             ('B',   0x66D,       (None, None,                           ('System',       None)) ),
 })
 Setting_6_3_0_2['flag'][0].pop('rules_once',None)
 Setting_6_3_0_2['flag'][0].update   ({
@@ -763,10 +765,10 @@ Setting_6_3_0_2['flag'][0].update   ({
 # ======================================================================
 Setting_6_3_0_4 = copy.deepcopy(Setting_6_3_0_2)
 Setting_6_3_0_4.update({
-    'drivers':                      ('<L',  0x794,       ([3],  None,                           ('System',           None)), '"0x{:08x}".format($)' ),
-    'monitors':                     ('<L',  0x7A0,       (None, None,                           ('System',           None)), '"0x{:08x}".format($)' ),
-    'sensors':                      ('<L',  0x7A4,       ([3],  None,                           ('System',           None)), '"0x{:08x}".format($)' ),
-    'displays':                     ('<L',  0x7B0,       (None, None,                           ('System',           None)), '"0x{:08x}".format($)' ),
+    'drivers':                      ('<L',  0x794,       ([3],  None,                           ('System',       None)), '"0x{:08x}".format($)' ),
+    'monitors':                     ('<L',  0x7A0,       (None, None,                           ('System',       None)), '"0x{:08x}".format($)' ),
+    'sensors':                      ('<L',  0x7A4,       ([3],  None,                           ('System',       None)), '"0x{:08x}".format($)' ),
+    'displays':                     ('<L',  0x7B0,       (None, None,                           ('System',       None)), '"0x{:08x}".format($)' ),
 })
 Setting_6_3_0_4['flag3'][0].update ({
         'tuya_apply_o20':           ('<L', (0x3A0,1, 4), (None, None,                           ('SetOption',   '"SetOption54 {}".format($)')) ),
@@ -795,7 +797,7 @@ Setting_6_3_0_13['flag3'][0].update ({
 # ======================================================================
 Setting_6_3_0_14 = copy.deepcopy(Setting_6_3_0_13)
 Setting_6_3_0_14['flag2'][0].update ({
-        'calc_resolution':          ('<L', (0x5BC,3, 6), (None, '0 <= $ <= 7',                  ('Management',  '"CalcRes {}".format($)')) ),
+        'calc_resolution':          ('<L', (0x5BC,3, 6), (None, '0 <= $ <= 7',                  ('Rules',       '"CalcRes {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_6_3_0_15 = copy.deepcopy(Setting_6_3_0_14)
@@ -805,7 +807,7 @@ Setting_6_3_0_15['flag3'][0].update ({
 # ======================================================================
 Setting_6_3_0_16 = copy.deepcopy(Setting_6_3_0_15)
 Setting_6_3_0_16['mcp230xx_config'][0].update ({
-        'int_retain_flag':          ('<L', (0x6F6,1,12), (None, None,                           ('MCP230xx',    None)) ),
+        'int_retain_flag':          ('<L', (0x6F6,1,12), (None, None,                           ('Devices',     None)) ),
                                     })
 Setting_6_3_0_16['flag3'][0].update ({
         'button_switch_force_local':('<L', (0x3A0,1,11), (None, None,                           ('SetOption',   '"SetOption61 {}".format($)')) ),
@@ -832,10 +834,10 @@ Setting_6_4_1_8['flag3'][0].update ({
 Setting_6_4_1_11 = copy.deepcopy(Setting_6_4_1_8)
 Setting_6_4_1_11['flag3'][0].pop('split_interlock',None)
 Setting_6_4_1_11.update            ({
-    'interlock':                    ('B',   0x4CA,       ([4],  None,                           ('Main',        None)), '"0x{:02x}".format($)' ),
+    'interlock':                    ('B',   0x4CA,       ([4],  None,                           ('Control',     None)), '"0x{:02x}".format($)' ),
                                     })
 Setting_6_4_1_11['flag'][0].update ({
-        'interlock':                ('<L', (0x010,1,14), (None, None,                           ('Main',        '"Interlock {}".format($)')) ),
+        'interlock':                ('<L', (0x010,1,14), (None, None,                           ('Control',     '"Interlock {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_6_4_1_13 = copy.deepcopy(Setting_6_4_1_11)
@@ -888,12 +890,17 @@ Setting_6_5_0_3.update({
 # ======================================================================
 Setting_6_5_0_6 = copy.deepcopy(Setting_6_5_0_3)
 Setting_6_5_0_6.update({
-    'web_color':                    ('3B',   0x73E,       ([18], None,                          ('Wifi',          '"WebColor{} {}{:06x}".format(#,chr(35),int($,0))')), '"0x{:06x}".format($)' ),
+    'web_color':                    ('3B',   0x73E,       ([18], None,                          ('Wifi',        '"WebColor{} {}{:06x}".format(#,chr(35),int($,0))')), '"0x{:06x}".format($)' ),
                                     })
 # ======================================================================
 Setting_6_5_0_7 = copy.deepcopy(Setting_6_5_0_6)
 Setting_6_5_0_7.update({
-    'ledmask':                      ('<H',   0x7BC,       (None, None,                          ('Main',          '"LedMask {}".format($)')), '"0x{:04x}".format($)' ),
+    'ledmask':                      ('<H',   0x7BC,       (None, None,                          ('Control',     '"LedMask {}".format($)')), '"0x{:04x}".format($)' ),
+                                    })
+# ======================================================================
+Setting_6_5_0_9 = copy.deepcopy(Setting_6_5_0_7)
+Setting_6_5_0_9['flag3'][0].update ({
+        'no_power_feedback':             ('<L', (0x3A0,1,13), (None, None,                      ('SetOption',   '"SetOption63 {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_6_5_0_10 = copy.deepcopy(Setting_6_5_0_7)
@@ -903,6 +910,7 @@ Setting_6_5_0_10.update({
 # ======================================================================
 Settings = [
             (0x605000A, 0xe00, Setting_6_5_0_10),
+            (0x6050009, 0xe00, Setting_6_5_0_9),
             (0x6050007, 0xe00, Setting_6_5_0_7),
             (0x6050006, 0xe00, Setting_6_5_0_6),
             (0x6050003, 0xe00, Setting_6_5_0_3),
@@ -1265,10 +1273,10 @@ def MakeFilename(filename, filetype, configmapping):
     if 'version' in configmapping:
         config_version = GetVersionStr( int(str(configmapping['version']), 0) )
     if 'friendlyname' in configmapping:
-        config_friendlyname = configmapping['friendlyname'][0]
+        config_friendlyname = re.sub('[^0-9a-zA-Z]','_', configmapping['friendlyname'][0])
     if 'hostname' in configmapping:
         if configmapping['hostname'].find('%') < 0:
-            config_hostname = configmapping['hostname']
+            config_hostname = re.sub('[^0-9a-zA-Z]','_', configmapping['hostname'])
     if filename.find('@H') >= 0 and args.device is not None:
         device_hostname = GetTasmotaHostname(args.device, args.port, username=args.username, password=args.password)
         if device_hostname is None:
@@ -1499,7 +1507,6 @@ def PushTasmotaConfig(encode_cfg, host, port, username=DEFAULTS['source']['usern
     # post data
     c = pycurl.Curl()
     header = HTTPHeader()
-    from StringIO import StringIO
     buffer_ = io.BytesIO()
     c.setopt(c.HEADERFUNCTION, header.store)
     c.setopt(c.WRITEFUNCTION, lambda x: None)
@@ -1671,9 +1678,16 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
                 if group is not None and not isinstance(group, (str, unicode)):
                     print >> sys.stderr, 'wrong <group> {} in <fielddef> {}'.format(group, fielddef)
                     raise SyntaxError('<fielddef> error')
-                if tasmotacmnd is not None and not callable(tasmotacmnd) and not isinstance(tasmotacmnd, (str, unicode)):
-                    print >> sys.stderr, 'wrong <tasmotacmnd> {} in <fielddef> {}'.format(tasmotacmnd, fielddef)
-                    raise SyntaxError('<fielddef> error')
+                if tasmotacmnd is isinstance(tasmotacmnd, tuple):
+                    tasmotacmnds = tasmotacmnd
+                    for tasmotacmnd in tasmotacmnds:
+                        if tasmotacmnd is not None and not callable(tasmotacmnd) and not isinstance(tasmotacmnd, (str, unicode)):
+                            print >> sys.stderr, 'wrong <tasmotacmnd> {} in <fielddef> {}'.format(tasmotacmnd, fielddef)
+                            raise SyntaxError('<fielddef> error')
+                else:
+                    if tasmotacmnd is not None and not callable(tasmotacmnd) and not isinstance(tasmotacmnd, (str, unicode)):
+                        print >> sys.stderr, 'wrong <tasmotacmnd> {} in <fielddef> {}'.format(tasmotacmnd, fielddef)
+                        raise SyntaxError('<fielddef> error')
             else:
                 print >> sys.stderr, 'wrong <cmd> {} length ({}) in <fielddef> {}'.format(cmd, len(cmd), fielddef)
                 raise SyntaxError('<fielddef> error')
@@ -1997,10 +2011,13 @@ def IsFilterGroup(group):
     @return:
         True if group is in filter, otherwise False
     """
+
     if args.filter is not None:
         if group is None:
             return False
-        if group != INTERNAL and group != '*' and group not in args.filter:
+        if group == '*':
+            return False
+        if group.title() != INTERNAL.title() and group.title() not in (groupname.title() for groupname in args.filter):
             return False
     return True
 
@@ -2379,12 +2396,20 @@ def SetCmnd(cmnds, fieldname, fielddef, valuemapping, mappedvalue, addroffset=0,
 
     # a simple value
     elif isinstance(format_, (str, bool, int, float, long)):
-        cmnd = CmndConverter(valuemapping, mappedvalue, idx, fielddef)
-
-        if group is not None and cmnd is not None:
-            if group not in cmnds:
-                cmnds[group] = []
-            cmnds[group].append(cmnd)
+        if isinstance(tasmotacmnd, tuple):
+            tasmotacmnds = tasmotacmnd
+            for tasmotacmnd in tasmotacmnds:
+                cmnd = CmndConverter(valuemapping, mappedvalue, idx, fielddef)
+                if group is not None and cmnd is not None:
+                    if group not in cmnds:
+                        cmnds[group] = []
+                    cmnds[group].append(cmnd)
+        else:
+            cmnd = CmndConverter(valuemapping, mappedvalue, idx, fielddef)
+            if group is not None and cmnd is not None:
+                if group not in cmnds:
+                    cmnds[group] = []
+                cmnds[group].append(cmnd)
 
     return cmnds
 
@@ -2407,7 +2432,7 @@ def Bin2Mapping(decode_cfg):
 
     # if we did not found a mathching setting
     if setting is None:
-        exit(ExitCode.UNSUPPORTED_VERSION, "Tasmota configuration version 0x{:x} not supported".format(version),line=inspect.getlineno(inspect.currentframe()))
+        exit(ExitCode.UNSUPPORTED_VERSION, "Tasmota configuration version {} not supported".format(version),line=inspect.getlineno(inspect.currentframe()))
 
     if 'version' in setting:
         cfg_version = GetField(decode_cfg, 'version', setting['version'], raw=True)
@@ -2661,7 +2686,7 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
 
     elif filetype == FileType.BIN:
         if args.verbose:
-            message("Reading restore file '{}' (binary format)".format(restorefilename), typ=LogType.INFO)
+            message("Reading restore file '{}' (Binary format)".format(restorefilename), typ=LogType.INFO)
         try:
             with open(restorefilename, "rb") as restorefp:
                 restorebin = restorefp.read()
@@ -2694,6 +2719,13 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
         exit(ExitCode.FILE_READ_ERROR, "File '{}' unknown error".format(restorefilename),line=inspect.getlineno(inspect.currentframe()))
 
     if new_encode_cfg is not None:
+        if args.verbose:
+            new_decode_cfg = DecryptEncrypt(new_encode_cfg)
+            # get binary header and template to use
+            version, size, setting = GetTemplateSetting(new_decode_cfg)
+            # get config file version
+            cfg_version = GetField(new_decode_cfg, 'version', setting['version'], raw=True)
+            message("Config file contains data of Sonoff-Tasmota {}".format(GetVersionStr(cfg_version)), typ=LogType.INFO)
         if args.forcerestore or new_encode_cfg != encode_cfg:
             # write config direct to device via http
             if args.device is not None:
@@ -2740,9 +2772,11 @@ def OutputTasmotaCmnds(tasmotacmnds):
             for cmnd in cmnds:
                 print "{}{}".format(" "*args.cmndindent, cmnd)
 
+    groups = GetGroupList(Settings[0][2])
+
     if args.cmndgroup:
-        for group in Groups:
-            if group in tasmotacmnds:
+        for group in groups:
+            if group.title() in (groupname.title() for groupname in tasmotacmnds):
                 cmnds = tasmotacmnds[group]
                 print
                 print "# {}:".format(group)
@@ -2750,8 +2784,8 @@ def OutputTasmotaCmnds(tasmotacmnds):
                     
     else:
         cmnds = []
-        for group in Groups:
-            if group in tasmotacmnds:
+        for group in groups:
+            if group.title() in (groupname.title() for groupname in tasmotacmnds):
                 cmnds.extend(tasmotacmnds[group])
         OutputTasmotaSubCmnds(cmnds)
 
@@ -2919,6 +2953,7 @@ def ParseArgs():
                             dest='filter',
                             choices=groups,
                             nargs='+',
+                            type=lambda s : s.title(),
                             default=DEFAULTS['common']['filter'],
                             help="limit data processing to command groups (default {})".format("no filter" if DEFAULTS['common']['filter'] == None else DEFAULTS['common']['filter']) )
     common.add_argument('--ignore-warnings',
@@ -2999,7 +3034,7 @@ if __name__ == "__main__":
     # decode into mappings dictionary
     configmapping = Bin2Mapping(decode_cfg)
     if args.verbose and 'version' in configmapping:
-        message("{} '{}' is using version {}".format('File' if args.tasmotafile is not None else 'Device',
+        message("{} '{}' is using Sonoff-Tasmota {}".format('File' if args.tasmotafile is not None else 'Device',
                                                      args.tasmotafile if args.tasmotafile is not None else args.device,
                                                      GetVersionStr(configmapping['version'])),
                                                      typ=LogType.INFO)

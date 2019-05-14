@@ -153,7 +153,7 @@ void SenseairShow(bool json)
     if (senseair_type != 2) {
       ResponseAppend_P(PSTR("%s,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s"), temperature, humidity);
     }
-    ResponseAppend_P(PSTR("}"));
+    ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
 #endif  // USE_DOMOTICZ

@@ -1,12 +1,21 @@
-/* 6.5.0.10 20190504
+/* 6.5.0.10 20190513
+ * Enable ADC0 by default in my_user_config.h (#5671)
+ * Add user configurable ADC0 to Module and Template configuration compatible with current FLAG options (#5671)
+ * Add support for Shelly 1PM Template {"NAME":"Shelly 1PM","GPIO":[56,0,0,0,82,134,0,0,0,0,0,21,0],"FLAG":2,"BASE":18} (#5716)
+ * Fix Sonoff Pow R2 / S31 invalid energy increments (#5789)
+ * Add device OverTemp (>73 Celsius) detection to any Energy Monitoring device with temperature sensor powering off all outputs
  * Added another web user: "user", with restricted functionality. Both User and Admin have passwords now. (#5719)
- * 
+ *
  * 6.5.0.9 20190418
  * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)
  * Fix TasmotaSerial at 9600 bps solving DFPlayer comms (#5528)
  * Fix Shelly 2.5 overtemp
  * Set gamma correction as default behavior, ie "Ledtable 1"
  * Refactored management of lights, using classes and integers instead of floats.
+ * Extend PWM resolution from 8 to 10 bits for low brightness lights
+ * Allow all 5 PWM channels individually adressable with LEDs. (#5741)
+ * Fixed inversion of WC/WW channels, back to RGBCW
+ * Fixed the Unescape() function and the SendSerial3 behaviour
  *
  * 6.5.0.8 20190413
  * Add Tuya Dimmer 10 second heartbeat serial packet required by some Tuya dimmer secondary MCUs

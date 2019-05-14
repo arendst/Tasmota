@@ -1167,6 +1167,7 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x0605000A) {
       strlcpy(Settings.user_password, USER_PASSWORD, sizeof(Settings.user_password));
+      Settings.my_adc0 = ADC0_NONE;
     }
 
     Settings.version = VERSION;
