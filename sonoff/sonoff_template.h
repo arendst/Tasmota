@@ -305,6 +305,7 @@ enum SupportedModules {
   SONOFF_BRIDGE,
   SONOFF_B1,
   AILIGHT,
+  LYASI,
   SONOFF_T11,
   SONOFF_T12,
   SONOFF_T13,
@@ -697,6 +698,7 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 #endif
   KMC_70011,
   AILIGHT,             // Light Bulbs
+  LYASI,
   PHILIPS,
   SYF05,
   YTF_IR_BRIDGE,
@@ -1178,6 +1180,25 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_DCKI,        // GPIO15 my9291 DCKI
      0, 0
   },
+  { "Lyasi",         	// RGBW led (ESP8266 - my9291)
+      GPIO_KEY1,        // GPIO00 Pad
+      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor pad
+      GPIO_USER,        // GPIO02 Optional sensor SDA pad
+      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor pad
+      GPIO_DI, GPIO_DCKI, // DI AND DCKI ON 4 and 5
+                          // GPIO06 (SD_CLK   Flash)
+                          // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                          // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+      0,                  // GPIO09
+      0,                  // GPIO10
+                          // GPIO11 (SD_CMD   Flash)
+      0,                  // GPIO12
+      0,                  // GPIO13
+      0,                  // GPIO14
+      0,                  // GPIO15
+      0,                  // GPIO16
+      0
+    },
   { "Sonoff T1 1CH",   // Sonoff T1 1CH (ESP8285)
      GPIO_KEY1,        // GPIO00 Button 1
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor

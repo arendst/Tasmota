@@ -2535,7 +2535,7 @@ void GpioInit(void)
   else if (SONOFF_LED == my_module_type) {  // PWM Dual color led (White warm and cold)
     light_type = LT_PWM2;
   }
-  else if (AILIGHT == my_module_type) {     // RGBW led
+  else if (AILIGHT == my_module_type || LYASI == Settings.module) {     // RGBW led
     light_type = LT_RGBW;
   }
   else if (SONOFF_B1 == my_module_type) {   // RGBWC led
