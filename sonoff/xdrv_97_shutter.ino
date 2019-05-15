@@ -204,7 +204,7 @@ void Schutter_Update_Position()
           case OFF_OPEN__OFF_CLOSE:
             // avoid switching OFF a relay already OFF
             if ((1 << (cur_relay-1)) & power) {
-              // Relay is on and need to be switched off.
+              // Relay is on and need to be switched off. 
               ExecuteCommandPower(cur_relay, 0, SRC_SHUTTER);
             }
           break;
@@ -347,7 +347,7 @@ bool ShutterCommand()
         Shutter_Operations[index-1]++;
         if (shutterMode == OFF_ON__OPEN_CLOSE) {
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] , 0, SRC_SHUTTER);
-          //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay5 5s, xdrv %d"), XdrvMailbox.payload);
+          //µAddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay5 5s, xdrv %d"), XdrvMailbox.payload);
           delay(MOTOR_STOP_TIME);
           // Code for shutters with circuit safe configuration, switch the direction Relay
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
