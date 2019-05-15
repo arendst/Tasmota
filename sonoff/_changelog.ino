@@ -5,6 +5,7 @@
  * Fix Sonoff Pow R2 / S31 invalid energy increments (#5789)
  * Add device OverTemp (>73 Celsius) detection to any Energy Monitoring device with temperature sensor powering off all outputs
  * Added another web user: "user", with restricted functionality. Both User and Admin have passwords now. (#5719)
+ * Add rule support for single JSON value pair like {"SSerialReceived":"on"} by expanding it to {"SSerialReceived":{"Data":"on"}} allowing for trigger SSerialReceived#Data=on (#5638)
  *
  * 6.5.0.9 20190418
  * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)

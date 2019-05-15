@@ -159,6 +159,7 @@ void WifiConfig(uint8_t type)
 #ifdef USE_SMARTCONFIG
     else if (WIFI_SMARTCONFIG == wifi_config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG " " D_ACTIVE_FOR_3_MINUTES));
+      WiFi.mode(WIFI_STA);    // Disable AP mode
       WiFi.beginSmartConfig();
     }
 #endif  // USE_SMARTCONFIG

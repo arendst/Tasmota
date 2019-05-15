@@ -2358,7 +2358,7 @@ void SerialInput(void)
       ResponseAppend_P(PSTR("\"}"));
     }
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
-//      XdrvRulesProcess();
+    XdrvRulesProcess();
     serial_in_byte_counter = 0;
   }
 }
