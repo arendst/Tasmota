@@ -4,6 +4,7 @@
  * Add support for Shelly 1PM Template {"NAME":"Shelly 1PM","GPIO":[56,0,0,0,82,134,0,0,0,0,0,21,0],"FLAG":2,"BASE":18} (#5716)
  * Fix Sonoff Pow R2 / S31 invalid energy increments (#5789)
  * Add device OverTemp (>73 Celsius) detection to any Energy Monitoring device with temperature sensor powering off all outputs
+ * Add rule support for single JSON value pair like {"SSerialReceived":"on"} by expanding it to {"SSerialReceived":{"Data":"on"}} allowing for trigger SSerialReceived#Data=on (#5638)
  *
  * 6.5.0.9 20190418
  * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)
