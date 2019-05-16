@@ -172,6 +172,7 @@ People helping to keep the show on the road:
 - Joel Stein and digiblur for their Tuya research and driver
 - Frogmore42 and Jason2866 for providing many issue answers
 - Blakadder for editing the wiki and providing template management
+- Stephan Hadinger for refactoring light driver and enhancing HueEmulation
 - Many more providing Tips, Wips, Pocs or PRs
 
 ### License
