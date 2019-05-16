@@ -22,18 +22,30 @@
  * ADC support
 \*********************************************************************************************/
 
-#define XSNS_02      2
+#define XSNS_02                       2
 
 #define TO_CELSIUS(x) ((x) - 273.15)
 #define TO_KELVIN(x) ((x) + 273.15)
 
-// Parameters for Steinhart-Hart equation
-#define ANALOG_V33   3.3               // ESP8266 Analog voltage
-#define ANALOG_T0    TO_KELVIN(25.0)   // 25 degrees Celcius in Kelvin (= 298.15)
-// Shelly 2.5 thermistor
-#define ANALOG_R21   32000.0           // Voltage bridge resistor
-#define ANALOG_R0    10000.0           // Thermistor resistance
-#define ANALOG_B     3350.0            // Thermistor Beta Coefficient
+// Parameters for equation
+#define ANALOG_V33                    3.3              // ESP8266 Analog voltage
+#define ANALOG_T0                     TO_KELVIN(25.0)  // 25 degrees Celcius in Kelvin (= 298.15)
+
+// Shelly 2.5 NTC Thermistor
+// 3V3 --- ANALOG_NTC_BRIDGE_RESISTANCE ---v--- NTC --- Gnd
+//                                         |
+//                                        ADC0
+#define ANALOG_NTC_BRIDGE_RESISTANCE  32000.0          // NTC Voltage bridge resistor
+#define ANALOG_NTC_RESISTANCE         10000.0          // NTC Resistance
+#define ANALOG_NTC_B_COEFFICIENT      3350.0           // NTC Beta Coefficient
+
+// LDR parameters
+// 3V3 --- LDR ---v--- ANALOG_LDR_BRIDGE_RESISTANCE --- Gnd
+//                |
+//               ADC0
+#define ANALOG_LDR_BRIDGE_RESISTANCE  10000.0          // LDR Voltage bridge resistor
+#define ANALOG_LDR_LUX_CALC_SCALAR    12518931         // Experimental
+#define ANALOG_LDR_LUX_CALC_EXPONENT  -1.405           // Experimental
 
 uint16_t adc_last_value = 0;
 float adc_temp = 0;
@@ -70,13 +82,25 @@ void AdcEvery250ms(void)
 }
 #endif  // USE_RULES
 
+uint16_t AdcGetLux()
+{
+  int adc = AdcRead(2);
+  // Source: https://www.allaboutcircuits.com/projects/design-a-luxmeter-using-a-light-dependent-resistor/
+  double resistorVoltage = ((double)adc / 1023) * ANALOG_V33;
+  double ldrVoltage = ANALOG_V33 - resistorVoltage;
+  double ldrResistance = ldrVoltage / resistorVoltage * ANALOG_LDR_BRIDGE_RESISTANCE;
+  double ldrLux = ANALOG_LDR_LUX_CALC_SCALAR * FastPrecisePow(ldrResistance, ANALOG_LDR_LUX_CALC_EXPONENT);
+
+  return (uint16_t)ldrLux;
+}
+
 void AdcEverySecond(void)
 {
   if (ADC0_TEMP == my_adc0) {
     int adc = AdcRead(2);
     // Steinhart-Hart equation for thermistor as temperature sensor
-    double Rt = (adc * ANALOG_R21) / (1024.0 * ANALOG_V33 - (double)adc);
-    double T = ANALOG_B / (ANALOG_B/ANALOG_T0 + log(Rt/ANALOG_R0));
+    double Rt = (adc * ANALOG_NTC_BRIDGE_RESISTANCE) / (1024.0 * ANALOG_V33 - (double)adc);
+    double T = ANALOG_NTC_B_COEFFICIENT / (ANALOG_NTC_B_COEFFICIENT / ANALOG_T0 + log(Rt / ANALOG_NTC_RESISTANCE));
     adc_temp = ConvertTemp(TO_CELSIUS(T));
   }
 }
@@ -116,6 +140,22 @@ void AdcShow(bool json)
 #endif  // USE_WEBSERVER
     }
   }
+  else if (ADC0_LIGHT == my_adc0) {
+    uint16_t adc_light = AdcGetLux();
+
+    if (json) {
+      ResponseAppend_P(JSON_SNS_ILLUMINANCE, "ANALOG", adc_light);
+#ifdef USE_DOMOTICZ
+      if (0 == tele_period) {
+        DomoticzSensor(DZ_ILLUMINANCE, adc_light);
+      }
+#endif  // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+    } else {
+      WSContentSend_PD(HTTP_SNS_ILLUMINANCE, "", adc_light);
+#endif  // USE_WEBSERVER
+    }
+  }
 }
 
 /*********************************************************************************************\
@@ -126,7 +166,7 @@ bool Xsns02(uint8_t function)
 {
   bool result = false;
 
-  if ((ADC0_INPUT == my_adc0) || (ADC0_TEMP == my_adc0)) {
+  if ((ADC0_INPUT == my_adc0) || (ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0)) {
     switch (function) {
 #ifdef USE_RULES
       case FUNC_EVERY_250_MSECOND:

@@ -639,7 +639,7 @@ double FastPrecisePow(double a, double b)
 {
   // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
   // calculate approximation with fraction of the exponent
-  int e = (int)b;
+  int e = abs((int)b);
   union {
     double d;
     int x[2];

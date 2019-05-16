@@ -2662,6 +2662,7 @@ void setup(void)
         for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) {
           Settings.my_gp.io[i] = GPIO_NONE;         // Reset user defined GPIO disabling sensors
         }
+        Settings.my_adc0 = ADC0_NONE;               // Reset user defined ADC0 disabling sensors
       }
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +4) {  // Restarted 6 times
         Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
