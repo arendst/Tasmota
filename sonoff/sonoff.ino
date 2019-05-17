@@ -2806,6 +2806,8 @@ void loop(void)
     } else {
       if (global_state.wifi_down) {
         delay(my_activity /2); // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
+      } else {
+        delay(0);
       }
     }
   }
