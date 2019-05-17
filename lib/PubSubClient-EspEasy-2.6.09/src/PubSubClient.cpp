@@ -346,6 +346,7 @@ boolean PubSubClient::loop() {
                 // readPacket has closed the connection
                 return false;
             }
+            optimistic_yield(1000);
         }
         return true;
     }
