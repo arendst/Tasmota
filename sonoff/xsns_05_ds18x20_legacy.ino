@@ -197,7 +197,7 @@ void Ds18x20Show(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
+        snprintf_P(stemp, sizeof(stemp), PSTR("%s" INDEX_SEPARATOR "%d"), ds18x20_types, i +1);
         WSContentSend_PD(HTTP_SNS_TEMP, stemp, temperature, TempUnit());
 #endif  // USE_WEBSERVER
       }

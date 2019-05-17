@@ -104,7 +104,7 @@ void Sht3xShow(bool json)
         dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
         char humidity[33];
         dtostrfd(h, Settings.flag2.humidity_resolution, humidity);
-        snprintf_P(types, sizeof(types), PSTR("%s-0x%02X"), sht3x_sensors[i].types, sht3x_sensors[i].address);  // "SHT3X-0xXX"
+        snprintf_P(types, sizeof(types), PSTR("%s" INDEX_SEPARATOR "0x%02X"), sht3x_sensors[i].types, sht3x_sensors[i].address);  // "SHT3X-0xXX"
 
         if (json) {
           ResponseAppend_P(JSON_SNS_TEMPHUM, types, temperature, humidity);

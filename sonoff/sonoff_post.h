@@ -50,6 +50,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define MODULE                 SONOFF_BASIC   // [Module] Select default model
 #endif
 
+#ifndef INDEX_SEPARATOR
+#define INDEX_SEPARATOR        "-"            // Name separator as in sensor name SHT3X-0xXX
+#endif
+
 /*********************************************************************************************\
  * [sonoff-sensors.bin]
  * Provide an image with useful supported sensors enabled

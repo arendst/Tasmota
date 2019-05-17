@@ -242,6 +242,8 @@
 //#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
 //#define MY_LANGUAGE            zh-TW           // Chinese (Traditional) in Taiwan
 
+#define INDEX_SEPARATOR        "_"               // Sensor name separator as in SHT3X_0xXX
+
 // -- Wifi Config tools ---------------------------
 #define WIFI_SOFT_AP_CHANNEL   1                 // Soft Access Point Channel number between 1 and 13 as used by Wifi Manager web GUI
 //#define USE_WPS                                  // Add support for WPS as initial wifi configuration tool (+33k code, 1k mem (5k mem with core v2.4.2+))

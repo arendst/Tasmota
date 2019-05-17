@@ -380,7 +380,7 @@ void Ds18x20Name(uint8_t sensor)
   }
   GetTextIndexed(ds18x20_types, sizeof(ds18x20_types), index, kDs18x20Types);
   if (ds18x20_sensors > 1) {
-    snprintf_P(ds18x20_types, sizeof(ds18x20_types), PSTR("%s-%d"), ds18x20_types, sensor +1);
+    snprintf_P(ds18x20_types, sizeof(ds18x20_types), PSTR("%s" INDEX_SEPARATOR "%d"), ds18x20_types, sensor +1);
   }
 }
 

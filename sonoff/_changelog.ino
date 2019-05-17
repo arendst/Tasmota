@@ -1,4 +1,8 @@
-/* 6.5.0.10 20190513
+/* 6.5.0.11 20190517
+ * Add user define INDEX_SEPARATOR to control Sensor Name index character which was fixed to "-" (minus) but is now changed to "_" (underscore) for future support.
+ *  This change impacts DS18X20, DHT, BMP and SHT3X sensor names.
+ *
+ * 6.5.0.10 20190513
  * Enable ADC0 by default in my_user_config.h (#5671)
  * Add user configurable ADC0 to Module and Template configuration compatible with current FLAG options (#5671)
  * Add support for Shelly 1PM Template {"NAME":"Shelly 1PM","GPIO":[56,0,0,0,82,134,0,0,0,0,0,21,0],"FLAG":2,"BASE":18} (#5716)
