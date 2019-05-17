@@ -303,7 +303,7 @@ boolean PubSubClient::loop() {
                 pingOutstanding = true;
             }
         }
-        if (_client->available()) {
+        while (_client->available()) {
             uint8_t llen;
             uint16_t len = readPacket(&llen);
             uint16_t msgId = 0;
