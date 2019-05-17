@@ -161,7 +161,7 @@ const LCwColor kFixedColdWarm[MAX_FIXED_COLD_WARM] PROGMEM = { 0,0, 255,0, 0,255
 // from 11 bits (lower values) to 8 bits (upper values).
 // We're using the fact that lower values are small and can fit within 8 bits
 // To save flash space, the array is only 8 bits uint
-const uint8_t _ledTable[] = {
+const uint8_t _ledTable[] PROGMEM = {
   // 11 bits resolution
     0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  // 11 bits, 0..2047
     2,  2,  2,  2,  3,  3,  3,  3,  4,  4,  4,  5,  5,  6,  6,  7,  // 11 bits, 0..2047
@@ -961,7 +961,7 @@ uint16_t ledGamma(uint8_t v, uint16_t bits_out = 8) {
   // bits_resolution: the resolution of _ledTable[v], between 8 and 11
   uint32_t bits_resolution = 11 - (v / 64);                     // 8..11
   int32_t  bits_correction = bits_out - bits_resolution;      // -3..3
-  uint32_t uncorrected_value = _ledTable[v];        // 0..255
+  uint32_t uncorrected_value = pgm_read_byte(&_ledTable[v]);        // 0..255
   if (0 == bits_correction) {
     // we already match the required resolution, no change
     result = uncorrected_value;
