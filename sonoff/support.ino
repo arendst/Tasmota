@@ -437,6 +437,21 @@ char* NoAlNumToUnderscore(char* dest, const char* source)
   return dest;
 }
 
+char IndexSeparator()
+{
+/*
+  // 20 bytes more costly !?!
+  const char separators[] = { "-_" };
+
+  return separators[Settings.flag3.use_underscore];
+*/
+  if (Settings.flag3.use_underscore) {
+    return '_';
+  } else {
+    return '-';
+  }
+}
+
 void SetShortcut(char* str, uint8_t action)
 {
   if ('\0' != str[0]) {     // There must be at least one character in the buffer

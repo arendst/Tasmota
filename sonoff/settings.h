@@ -77,7 +77,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61 - Force local operation when button/switch topic is set
     uint32_t no_hold_retain : 1;           // bit 12 (v6.4.1.19) - SetOption62 - Don't use retain flag on HOLD messages
     uint32_t no_power_feedback : 1;        // bit 13 (v6.5.0.9)  - SetOption63 - Don't scan relay power state at restart
-    uint32_t spare14 : 1;
+    uint32_t use_underscore : 1;           // bit 14 (v6.5.0.12) - SetOption64 - Enable "_" instead of "-" as sensor index separator
     uint32_t spare15 : 1;
     uint32_t spare16 : 1;
     uint32_t spare17 : 1;
