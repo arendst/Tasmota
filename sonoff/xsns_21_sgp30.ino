@@ -149,7 +149,7 @@ void Sgp30Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns21(byte function)
+bool Xsns21(uint8_t function)
 {
   bool result = false;
 
