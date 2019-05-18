@@ -1,4 +1,9 @@
-/* 6.5.0.11 20190517
+/* 6.5.0.12 20190517
+ * Add command SetOption65 (tuya_show_dimmer) to enable or disable dimmer Slider ( for 4 Gang Tuya switch)
+ * Added Seeting.pram9 to define no of Tuya MCU devices
+ * Updated xdrv_01_webserver.ino to check for the tuya_show_dimmer option to display slider2 
+ * Updated xdrv_16_tuyadimmer.ino create bool serial packet based on the Device Id and set the power status based on the Device id from MCU packet
+ * 6.5.0.11 20190517
  * Add command SetOption64 0/1 to switch between "-" or "_" as sensor index separator impacting DS18X20, DHT, BMP and SHT3X sensor names (#5689)
  *
  * 6.5.0.10 20190513
