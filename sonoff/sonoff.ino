@@ -1535,6 +1535,8 @@ void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
 
 //  ShowSource(source);
 
+  XdrvMailbox.notused = device;
+
   if (SONOFF_IFAN02 == my_module_type) {
     blink_mask &= 1;                 // No blinking on the fan relays
     Settings.flag.interlock = 0;     // No interlock mode as it is already done by the microcontroller
