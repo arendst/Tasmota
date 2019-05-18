@@ -48,6 +48,9 @@ void sgp30_Init(void) {
   }
 }
 
+//#define POW_FUNC pow
+#define POW_FUNC FastPrecisePow
+
 float sgp30_AbsoluteHumidity(float temperature, float humidity,char tempUnit) {
   //taken from https://carnotcycle.wordpress.com/2012/08/04/how-to-convert-relative-humidity-to-absolute-humidity/
   //precision is about 0.1°C in range -30 to 35°C
@@ -66,7 +69,9 @@ float sgp30_AbsoluteHumidity(float temperature, float humidity,char tempUnit) {
         temperature = (temperature - 32.0) * (5.0 / 9.0); /*conversion to [°C]*/
   }
 
-  temp = pow(2.718281828, (17.67 * temperature) / (temperature + 243.5));
+  temp = POW_FUNC(2.718281828, (17.67 * temperature) / (temperature + 243.5));
+
+
 
   //return (6.112 * temp * humidity * 2.1674) / (273.15 + temperature); 	//simplified version
   return (6.112 * temp * humidity * mw) / ((273.15 + temperature) * r); 	//long version
