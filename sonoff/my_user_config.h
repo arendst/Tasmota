@@ -290,6 +290,9 @@
 
 // -- Rules ---------------------------------------
 #define USE_RULES                                // Add support for rules (+4k4 code)
+#undef USE_RULES
+#define USE_SCRIPT
+
 //  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 

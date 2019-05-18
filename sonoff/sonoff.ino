@@ -1468,7 +1468,12 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_UNKNOWN "\"}"));
     type = (char*)topicBuf;
   }
-  if (mqtt_data[0] != '\0') { MqttPublishPrefixTopic_P(RESULT_OR_STAT, type); }
+  if (mqtt_data[0] != '\0') {
+     MqttPublishPrefixTopic_P(RESULT_OR_STAT, type);
+#ifdef USE_SCRIPT
+     XdrvRulesProcess();
+#endif
+  }
   fallback_topic_flag = false;
 }
 
@@ -1835,6 +1840,9 @@ void MqttPublishTeleState(void)
   mqtt_data[0] = '\0';
   MqttShowState();
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+#ifdef USE_SCRIPT
+  RulesTeleperiod();  // Allow rule based HA messages
+#endif  // USE_SCRIPT
 }
 
 bool MqttShowSensor(void)
@@ -1919,7 +1927,7 @@ void PerformEverySecond(void)
       mqtt_data[0] = '\0';
       if (MqttShowSensor()) {
         MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-#ifdef USE_RULES
+#if defined(USE_RULES) || defined(USE_SCRIPT)
         RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_RULES
       }
