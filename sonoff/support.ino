@@ -674,6 +674,12 @@ double FastPrecisePow(double a, double b)
   return r * u.d;
 }
 
+float FastPrecisePowf(const float x, const float y)
+{
+//  return (float)(pow((double)x, (double)y));
+  return (float)FastPrecisePow(x, y);
+}
+
 uint32_t SqrtInt(uint32_t num)
 {
   if (num <= 1) {

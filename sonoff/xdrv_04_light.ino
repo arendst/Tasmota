@@ -718,10 +718,6 @@ void LightStateClass::HsToRgb(uint16_t hue, uint8_t sat, uint8_t *r_r, uint8_t *
 
 #define POW FastPrecisePowf
 
-float FastPrecisePowf(float a, float b) {
-  return (float) FastPrecisePow(a,b);
-}
-
 void LightStateClass::RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x, float *r_y) {
   float x = 0.31271f;   // default medium white
   float y = 0.32902f;
