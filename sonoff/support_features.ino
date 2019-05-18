@@ -103,7 +103,7 @@ void GetFeatures(void)
 #ifdef USE_TIMERS_WEB
   feature_drv1 |= 0x04000000;  // xdrv_09_timers.ino
 #endif
-#ifdef USE_RULES
+#if defined(USE_RULES) || defined(USE_SCRIPT)
   feature_drv1 |= 0x08000000;  // xdrv_10_rules.ino
 #endif
 #ifdef USE_KNX
