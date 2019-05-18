@@ -684,12 +684,13 @@ double TaylorLog(double x)
 {
   // https://stackoverflow.com/questions/46879166/finding-the-natural-logarithm-of-a-number-using-taylor-series-in-c
 
+  if (x <= 0.0) { return NAN; }
   double z = (x + 1) / (x - 1);                              // We start from power -1, to make sure we get the right power in each iteration;
   double step = ((x - 1) * (x - 1)) / ((x + 1) * (x + 1));   // Store step to not have to calculate it each time
   double totalValue = 0;
   double powe = 1;
   double y;
-  for (int count = 0; count < 10; count++) {
+  for (int count = 0; count < 10; count++) {                 // Experimental number of 10 iterations
     z *= step;
     y = (1 / powe) * z;
     totalValue = totalValue + y;
