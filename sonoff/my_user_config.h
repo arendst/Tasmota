@@ -290,8 +290,11 @@
   #define USE_SUNRISE                            // Add support for Sunrise and sunset tools (+16k)
     #define SUNRISE_DAWN_ANGLE DAWN_NORMAL       // Select desired Dawn Angle from (DAWN_NORMAL, DAWN_CIVIL, DAWN_NAUTIC, DAWN_ASTRONOMIC)
 
-// -- Rules ---------------------------------------
-#define USE_RULES                                // Add support for rules (+4k4 code)
+// -- Rules or Script  ----------------------------
+// Select none or only one of the below defines
+#define USE_RULES                                // Add support for rules (+8k code)
+//#define USE_SCRIPT                               // Add support for script (+15k code)
+
 //  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 

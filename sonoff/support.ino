@@ -437,6 +437,21 @@ char* NoAlNumToUnderscore(char* dest, const char* source)
   return dest;
 }
 
+char IndexSeparator()
+{
+/*
+  // 20 bytes more costly !?!
+  const char separators[] = { "-_" };
+
+  return separators[Settings.flag3.use_underscore];
+*/
+  if (Settings.flag3.use_underscore) {
+    return '_';
+  } else {
+    return '-';
+  }
+}
+
 void SetShortcut(char* str, uint8_t action)
 {
   if ('\0' != str[0]) {     // There must be at least one character in the buffer
@@ -639,7 +654,7 @@ double FastPrecisePow(double a, double b)
 {
   // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
   // calculate approximation with fraction of the exponent
-  int e = (int)b;
+  int e = abs((int)b);
   union {
     double d;
     int x[2];
@@ -657,6 +672,31 @@ double FastPrecisePow(double a, double b)
     e >>= 1;
   }
   return r * u.d;
+}
+
+float FastPrecisePowf(const float x, const float y)
+{
+//  return (float)(pow((double)x, (double)y));
+  return (float)FastPrecisePow(x, y);
+}
+
+double TaylorLog(double x)
+{
+  // https://stackoverflow.com/questions/46879166/finding-the-natural-logarithm-of-a-number-using-taylor-series-in-c
+
+  if (x <= 0.0) { return NAN; }
+  double z = (x + 1) / (x - 1);                              // We start from power -1, to make sure we get the right power in each iteration;
+  double step = ((x - 1) * (x - 1)) / ((x + 1) * (x + 1));   // Store step to not have to calculate it each time
+  double totalValue = 0;
+  double powe = 1;
+  double y;
+  for (int count = 0; count < 10; count++) {                 // Experimental number of 10 iterations
+    z *= step;
+    y = (1 / powe) * z;
+    totalValue = totalValue + y;
+    powe = powe + 2;
+  }
+  return 2 * totalValue;
 }
 
 uint32_t SqrtInt(uint32_t num)
