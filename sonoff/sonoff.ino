@@ -109,6 +109,7 @@ unsigned long pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
 unsigned long blink_timer = 0;              // Power cycle timer
 unsigned long backlog_delay = 0;            // Command backlog delay
 power_t power = 0;                          // Current copy of Settings.power
+power_t deviceid = 1;                       // hold current deviceid
 power_t blink_power;                        // Blink power state
 power_t blink_mask = 0;                     // Blink relay active mask
 power_t blink_powersave;                    // Blink start power save state
@@ -1535,7 +1536,7 @@ void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
 
 //  ShowSource(source);
 
-  XdrvMailbox.notused = device;
+  deviceid = device;
 
   if (SONOFF_IFAN02 == my_module_type) {
     blink_mask &= 1;                 // No blinking on the fan relays

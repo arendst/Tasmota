@@ -123,26 +123,23 @@ bool TuyaSetPower(void)
   int16_t source = XdrvMailbox.payload;
 
   if (source != SRC_SWITCH && TuyaSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
-    boolean Bin[] = {0,0,0,0};
-    convertDecToBin(rpower, Bin);
-    TuyaSendBool(XdrvMailbox.notused, Bin[XdrvMailbox.notused-1]);
-
+    TuyaSendBool(deviceid, TuyaGetPower(rpower, deviceid));
     status = true;
   }
   return status;
 }
 
-void convertDecToBin(int Dec, boolean Bin[]) {
-  for(int i = 3 ; i >= 0 ; i--) {
-    if(pow(2, i)<=Dec) {
-      Dec = Dec - pow(2, i);
-      Bin[(i)] = 1;
-    } else {
+uint8_t TuyaGetPower(uint8_t p, uint8_t d) {
+  uint8_t g = 0;
+  for(int i = 7 ; i >= 0 ; i--) {
+    g = p >> i;
+    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: --SetDevicePower3-- for Device = %d,  Power=%d"),i, k&1);
+    if (i== d-1)
+    {
+       return g&1;
     }
   }
 }
-
-
 bool TuyaSetChannels(void)
 {
   LightSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
@@ -156,8 +153,8 @@ void LightSerialDuty(uint8_t duty)
       duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     }
 
-    
-   if(Settings.flag3.tuya_show_dimmer == 1) // no Dimmer for 4 relay
+
+   if(Settings.flag3.tuya_show_dimmer == 0)
     {
     	AddLog_P2(LOG_LEVEL_DEBUG, PSTR( "TYA: Send Serial Packet Dim Value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
         TuyaSendValue(Settings.param[P_TUYA_DIMMER_ID], duty);
@@ -165,7 +162,7 @@ void LightSerialDuty(uint8_t duty)
 
   } else {
     tuya_ignore_dim = false;  // reset flag
-    if(Settings.flag3.tuya_show_dimmer == 1) // no Dimmer for 4 relay
+    if(Settings.flag3.tuya_show_dimmer == 0)
     {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR( "TYA: Send Dim Level skipped due to 0 or already set. Value=%d"), duty);
     }
@@ -432,7 +429,7 @@ bool Xdrv16(uint8_t function)
         if (tuya_heartbeat_timer > 10) {
            tuya_heartbeat_timer = 0;
            TuyaSendCmd(TUYA_CMD_HEARTBEAT);
-        } 
+        }
         break;
       case FUNC_SET_CHANNELS:
         result = TuyaSetChannels();
