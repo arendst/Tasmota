@@ -100,7 +100,7 @@ void AdcEverySecond(void)
     int adc = AdcRead(2);
     // Steinhart-Hart equation for thermistor as temperature sensor
     double Rt = (adc * ANALOG_NTC_BRIDGE_RESISTANCE) / (1024.0 * ANALOG_V33 - (double)adc);
-    double T = ANALOG_NTC_B_COEFFICIENT / (ANALOG_NTC_B_COEFFICIENT / ANALOG_T0 + log(Rt / ANALOG_NTC_RESISTANCE));
+    double T = ANALOG_NTC_B_COEFFICIENT / (ANALOG_NTC_B_COEFFICIENT / ANALOG_T0 + TaylorLog(Rt / ANALOG_NTC_RESISTANCE));
     adc_temp = ConvertTemp(TO_CELSIUS(T));
   }
 }
