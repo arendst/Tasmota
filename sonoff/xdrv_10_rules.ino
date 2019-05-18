@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_RULES
+#ifndef USE_SCRIPT
 /*********************************************************************************************\
  * Rules based heavily on ESP Easy implementation
  *
@@ -1287,4 +1288,5 @@ bool Xdrv10(uint8_t function)
   return result;
 }
 
+#endif  // Do not USE_SCRIPT
 #endif  // USE_RULES

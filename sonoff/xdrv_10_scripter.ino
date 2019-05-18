@@ -17,25 +17,28 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// for doku see up to date doku in file scripter.md
+#ifdef USE_SCRIPT
+#ifndef USE_RULES
+/*********************************************************************************************\
 
-// uses about 14,2 k of flash
-// more stack could be needed for sendmail  => -D CONT_STACKSIZE=4800 = +0.8k stack -0.8k heap
-//
+for documentation see up to date docs in file SCRIPTER.md
 
-/* to doo
+uses about 14,2 k of flash
+more stack could be needed for sendmail  => -D CONT_STACKSIZE=4800 = +0.8k stack -0.8k heap
+
+
+to do
 optimize code for space
 
-// remarks
+remarks
 goal is fast execution time, minimal use of ram and intuitive syntax
 therefore =>
 case sensitive cmds and vars (lowercase uses time and code)
 no math hierarchy  (costs ram and execution time, better group with brackets, anyhow better readable for beginners)
 (will probably make math hierarchy an ifdefed option)
 keywords if then else endif, or, and are better readable for beginners (others may use {})
-*/
-#ifdef USE_SCRIPT
-#ifndef USE_RULES
+
+\*********************************************************************************************/
 
 #define XDRV_10             10
 
@@ -896,8 +899,8 @@ chknext:
           float fvar2;
           lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
           lp++;
-          fvar=pow(fvar1,fvar2);
-          //fvar=FastPrecisePow(fvar1,fvar2);
+          //fvar=pow(fvar1,fvar2);
+          fvar=FastPrecisePow(fvar1,fvar2);
           len=0;
           goto exit;
         }
@@ -2231,5 +2234,5 @@ bool Xdrv10(byte function)
   return result;
 }
 
-#endif // not use RULES
+#endif  // Do not USE_RULES
 #endif  // USE_SCRIPT
