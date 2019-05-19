@@ -123,23 +123,12 @@ bool TuyaSetPower(void)
   int16_t source = XdrvMailbox.payload;
 
   if (source != SRC_SWITCH && TuyaSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
-    TuyaSendBool(deviceid, TuyaGetPower(rpower, deviceid));
+    TuyaSendBool(deviceid, bitRead(rpower, deviceid-1));
     status = true;
   }
   return status;
 }
 
-uint8_t TuyaGetPower(uint8_t p, uint8_t d) {
-  uint8_t g = 0;
-  for(int i = 7 ; i >= 0 ; i--) {
-    g = p >> i;
-    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: --SetDevicePower3-- for Device = %d,  Power=%d"),i, k&1);
-    if (i== d-1)
-    {
-       return g&1;
-    }
-  }
-}
 bool TuyaSetChannels(void)
 {
   LightSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
