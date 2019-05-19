@@ -444,6 +444,7 @@ void SettingsSaveAll(void)
     Settings.power = 0;
   }
   XsnsCall(FUNC_SAVE_BEFORE_RESTART);
+  XdrvCall(FUNC_SAVE_BEFORE_RESTART);
 #ifdef USE_EEPROM
   EepromCommit();
 #endif
