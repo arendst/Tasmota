@@ -2,6 +2,7 @@
  * Add command SetOption64 0/1 to switch between "-" or "_" as sensor index separator impacting DS18X20, DHT, BMP and SHT3X sensor names (#5689)
  * Add initial support for Scripts as replacement for Rules. Default disabled but can be enabled in my_user_config.h (#5689)
  * Add rule System#Save executed just before a planned restart
+ * Add HX711 weight restore after controlled restart or after power restore just before executing command Sensor34 7 (#5367, #5786)
  *
  * 6.5.0.10 20190513
  * Enable ADC0 by default in my_user_config.h (#5671)
