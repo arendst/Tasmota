@@ -1,8 +1,6 @@
 /*
- * 6.5.0.13 20190518
- * Updated xdrv_01_webserver.ino to show dimmer slider2 by default for Tuya Dimmer Module optionally disabled for non dimmers
- * Updated xdrv_16_tuyadimmer.ino remove the use of XdrvMailbox and removed the pow functions
- * updated sonoff.ino to hold current device id
+ * 6.5.0.14 20190520
+ * Updated xdrv_16_tuyadimmer.ino repalced TuyGetPower with bitRead()
  *
  * 6.5.0.12 20190517
  * Add command SetOption65 (tuya_show_dimmer) to enable or disable dimmer Slider ( for 4 Gang Tuya switch)
