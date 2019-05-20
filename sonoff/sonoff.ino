@@ -2181,7 +2181,9 @@ void Every250mSeconds(void)
         SettingsDefault();
         restart_flag = 2;
       }
-      SettingsSaveAll();
+      if (2 == restart_flag) {
+        SettingsSaveAll();
+      }
       restart_flag--;
       if (restart_flag <= 0) {
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
