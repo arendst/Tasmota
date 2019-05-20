@@ -696,7 +696,18 @@ double TaylorLog(double x)
     totalValue = totalValue + y;
     powe = powe + 2;
   }
-  return 2 * totalValue;
+  totalValue *= 2;
+/*
+  char logxs[33];
+  dtostrfd(x, 8, logxs);
+  double log1 = log(x);
+  char log1s[33];
+  dtostrfd(log1, 8, log1s);
+  char log2s[33];
+  dtostrfd(totalValue, 8, log2s);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("input %s, log %s, taylor %s"), logxs, log1s, log2s);
+*/
+  return totalValue;
 }
 
 uint32_t SqrtInt(uint32_t num)

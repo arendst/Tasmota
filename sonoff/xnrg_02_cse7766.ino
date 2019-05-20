@@ -189,6 +189,7 @@ void CseEverySecond(void)
       }
       else {
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Load overflow"));
+        cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
       }
       EnergyUpdateToday();
     }

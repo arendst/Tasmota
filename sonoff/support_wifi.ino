@@ -131,7 +131,7 @@ void WifiConfig(uint8_t type)
 {
   if (!wifi_config_type) {
     if ((WIFI_RETRY == type) || (WIFI_WAIT == type)) { return; }
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
+#ifdef USE_EMULATION
     UdpDisconnect();
 #endif  // USE_EMULATION
     WiFi.disconnect();                       // Solve possible Wifi hangs
@@ -159,7 +159,7 @@ void WifiConfig(uint8_t type)
 #ifdef USE_SMARTCONFIG
     else if (WIFI_SMARTCONFIG == wifi_config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG " " D_ACTIVE_FOR_3_MINUTES));
-      WiFi.mode(WIFI_STA);    // Disable AP mode
+      WiFi.mode(WIFI_STA);      // Disable AP mode
       WiFi.beginSmartConfig();
     }
 #endif  // USE_SMARTCONFIG
@@ -211,7 +211,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
 {
   const char kWifiPhyMode[] = " BGN";
 
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
+#ifdef USE_EMULATION
   UdpDisconnect();
 #endif  // USE_EMULATION
 
@@ -565,7 +565,7 @@ void WifiCheck(uint8_t param)
 
       } else {
         WifiSetState(0);
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
+#ifdef USE_EMULATION
         UdpDisconnect();
 #endif  // USE_EMULATION
         mdns_begun = 0;

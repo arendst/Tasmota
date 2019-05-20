@@ -62,6 +62,7 @@ enum HxCalibrationSteps { HX_CAL_END, HX_CAL_LIMBO, HX_CAL_FINISH, HX_CAL_FAIL, 
 const char kHxCalibrationStates[] PROGMEM = D_HX_CAL_FAIL "|" D_HX_CAL_DONE "|" D_HX_CAL_REFERENCE "|" D_HX_CAL_REMOVE;
 
 long hx_weight = 0;
+long hx_last_weight = 0;
 long hx_sum_weight = 0;
 long hx_offset = 0;
 long hx_scale = 1;
@@ -116,11 +117,18 @@ long HxRead()
 
 /*********************************************************************************************/
 
-void HxReset(void)
+void HxResetPart(void)
 {
   hx_tare_flg = true;
   hx_sum_weight = 0;
   hx_sample_count = 0;
+  hx_last_weight = 0;
+}
+
+void HxReset(void)
+{
+  HxResetPart();
+  Settings.energy_frequency_calibration = 0;
 }
 
 void HxCalibrationStateTextJson(uint8_t msg_id)
@@ -147,6 +155,7 @@ void HxCalibrationStateTextJson(uint8_t msg_id)
  * Sensor34 5 <weight in gram>     - Set max weight
  * Sensor34 6                      - Show item weigth in decigram
  * Sensor34 6 <weight in decigram> - Set item weight
+ * Sensor34 7                      - Save current weight to be used as start weight on restart
 \*********************************************************************************************/
 
 bool HxCommand(void)
@@ -199,6 +208,10 @@ bool HxCommand(void)
       }
       show_parms = true;
       break;
+    case 7:  // WeightSave
+      Settings.energy_frequency_calibration = hx_weight;
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, D_JSON_DONE);
+      break;
     default:
       serviced = false;
   }
@@ -238,8 +251,7 @@ void HxInit(void)
       if (!Settings.weight_reference) { Settings.weight_reference = HX_REFERENCE; }
       hx_scale = Settings.weight_calibration;
       HxRead();
-      HxReset();
-
+      HxResetPart();
       hx_type = 1;
     }
   }
@@ -254,7 +266,16 @@ void HxEvery100mSecond(void)
     long average = hx_sum_weight / hx_sample_count;  // grams
     long value = average - hx_offset;                // grams
     hx_weight = value / hx_scale;                    // grams
-    if (hx_weight < 0) { hx_weight = 0; }
+    if (hx_weight < 0) {
+      if (Settings.energy_frequency_calibration) {
+        long difference = Settings.energy_frequency_calibration + hx_weight;
+        hx_last_weight = difference;
+        if (difference < 0) { HxReset(); }           // Cancel last weight as there seems to be no more weight on the scale
+      }
+      hx_weight = 0;
+    } else {
+      hx_last_weight = Settings.energy_frequency_calibration;
+    }
 
     if (hx_tare_flg) {
       hx_tare_flg = false;
@@ -313,11 +334,19 @@ void HxEvery100mSecond(void)
       if (!hx_calibrate_timer) {
         hx_calibrate_step = HX_CAL_END;              // End of calibration
       }
+    } else {
+      hx_weight += hx_last_weight;                   // grams
     }
 
     hx_sum_weight = 0;
     hx_sample_count = 0;
   }
+}
+
+void HxSaveBeforeRestart()
+{
+  Settings.energy_frequency_calibration = hx_weight;
+  hx_sample_count = HX_SAMPLES +1;                   // Stop updating hx_weight
 }
 
 #ifdef USE_WEBSERVER
@@ -483,6 +512,9 @@ bool Xsns34(uint8_t function)
         break;
       case FUNC_JSON_APPEND:
         HxShow(1);
+        break;
+      case FUNC_SAVE_BEFORE_RESTART:
+        HxSaveBeforeRestart();
         break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
