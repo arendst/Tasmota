@@ -37,6 +37,9 @@ const char kMqttCommands[] PROGMEM =
   D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|" D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
 
+IPAddress mqtt_host_addr;                   // MQTT host IP address
+uint32_t mqtt_host_hash = 0;                // MQTT host name hash
+
 uint16_t mqtt_connect_count = 0;            // MQTT re-connect count
 uint16_t mqtt_retry_counter = 1;            // MQTT connection retry counter
 uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
@@ -50,7 +53,6 @@ bool mqtt_allowed = false;                  // MQTT enabled and parameters valid
  * void MqttDisconnect()
  * void MqttSubscribeLib(char *topic)
  * bool MqttPublishLib(const char* topic, bool retained)
- * void MqttLoop()
 \*********************************************************************************************/
 
 #include <PubSubClient.h>
@@ -89,11 +91,6 @@ bool MqttPublishLib(const char* topic, bool retained)
   bool result = MqttClient.publish(topic, mqtt_data, retained);
   yield();  // #3313
   return result;
-}
-
-void MqttLoop(void)
-{
-  MqttClient.loop();
 }
 
 /*********************************************************************************************/
@@ -252,6 +249,14 @@ void MqttPublishPowerState(uint8_t device)
   }
 }
 
+void MqttPublishAllPowerState()
+{
+  for (uint8_t i = 1; i <= devices_present; i++) {
+    MqttPublishPowerState(i);
+    if (SONOFF_IFAN02 == my_module_type) { break; }  // Report status of light relay only
+  }
+}
+
 void MqttPublishPowerBlinkState(uint8_t device)
 {
   char scommand[33];
@@ -301,7 +306,7 @@ void MqttConnected(void)
 
     GetTopic_P(stopic, CMND, mqtt_topic, PSTR("#"));
     MqttSubscribe(stopic);
-    if (strstr(Settings.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != nullptr) {
+    if (strstr_P(Settings.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != nullptr) {
       GetTopic_P(stopic, CMND, Settings.mqtt_grptopic, PSTR("#"));
       MqttSubscribe(stopic);
       GetFallbackTopic_P(stopic, CMND, PSTR("#"));
@@ -324,10 +329,7 @@ void MqttConnected(void)
 #endif  // USE_WEBSERVER
     Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"), (GetResetReason() == "Exception") ? ESP.getResetInfo().c_str() : GetResetReason().c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
-    for (uint8_t i = 1; i <= devices_present; i++) {
-      MqttPublishPowerState(i);
-      if (SONOFF_IFAN02 == my_module_type) { break; }  // Report status of light relay only
-    }
+    MqttPublishAllPowerState();
     if (Settings.tele_period) { tele_period = Settings.tele_period -9; }  // Enable TelePeriod in 9 seconds
     rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);
@@ -455,6 +457,15 @@ void MqttReconnect(void)
 
   MqttClient.setCallback(MqttDataHandler);
   MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
+/*
+  // Skip MQTT host DNS lookup if not needed
+  uint32_t current_hash = GetHash(Settings.mqtt_host, strlen(Settings.mqtt_host));
+  if (mqtt_host_hash != current_hash) {
+    mqtt_host_hash = current_hash;
+    WiFi.hostByName(Settings.mqtt_host, mqtt_host_addr);  // Skips DNS lookup if mqtt_host is IP address string as from mDns
+  }
+  MqttClient.setServer(mqtt_host_addr, Settings.mqtt_port);
+*/
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data)) {
     MqttConnected();
   } else {
@@ -816,6 +827,9 @@ bool Xdrv02(uint8_t function)
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
+      case FUNC_EVERY_50_MSECOND:  // https://github.com/knolleary/pubsubclient/issues/556
+        MqttClient.loop();
+        break;
 #ifdef USE_WEBSERVER
       case FUNC_WEB_ADD_BUTTON:
         WSContentSend_P(HTTP_BTN_MENU_MQTT);
@@ -824,9 +838,6 @@ bool Xdrv02(uint8_t function)
         WebServer->on("/" WEB_HANDLE_MQTT, HandleMqttConfiguration);
         break;
 #endif  // USE_WEBSERVER
-      case FUNC_LOOP:
-        if (!global_state.mqtt_down) { MqttLoop(); }
-        break;
       case FUNC_COMMAND:
         result = MqttCommand();
         break;

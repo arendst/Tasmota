@@ -142,7 +142,7 @@ void CounterShow(bool json)
   }
   if (json) {
     if (header) {
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
     }
   }
 }

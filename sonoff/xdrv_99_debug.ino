@@ -497,11 +497,11 @@ bool Xdrv99(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_PRE_INIT:
-      CPU_last_millis = millis();
-      break;
     case FUNC_LOOP:
       CpuLoadLoop();
+      break;
+    case FUNC_PRE_INIT:
+      CPU_last_millis = millis();
       break;
     case FUNC_COMMAND:
       result = DebugCommand();

@@ -372,7 +372,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 
 			// Append JSON message string
 			if (FUNC_JSON_APPEND == function) {
-				ResponseAppend_P(PSTR("}"));
+        ResponseJsonEnd();
 			}
 		}		// if->running
 	}			// for-loop i

@@ -53,7 +53,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.2.1.14
+ * Updated until v6.5.0.9
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -281,7 +281,8 @@
 
 #define D_MODULE_PARAMETERS "Nastavení modulu"
 #define D_MODULE_TYPE "Typ modulu"
-#define D_PULLUP_ENABLE "No Button/Switch pull-up"
+#define D_PULLUP_ENABLE "Tlačítko/Spínač bez pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
@@ -316,8 +317,8 @@
 #define D_TELEMETRY_PERIOD "Interval telemetrie"
 
 #define D_OTHER_PARAMETERS "Další nastavení"
-#define D_TEMPLATE "Template"
-#define D_ACTIVATE "Activate"
+#define D_TEMPLATE "Šablona"
+#define D_ACTIVATE "Aktivovat"
 #define D_WEB_ADMIN_PASSWORD "Heslo Web administrátora"
 #define D_MQTT_ENABLE "MQTT aktivní"
 #define D_FRIENDLY_NAME "Friendly Name"
@@ -326,13 +327,11 @@
 #define D_SINGLE_DEVICE "single device"
 #define D_MULTI_DEVICE "multi device"
 
-#define D_CONFIGURE_TEMPLATE "Configure Template"
-#define D_TEMPLATE_PARAMETERS "Template parameters"
-#define D_TEMPLATE_NAME "Name"
-#define D_BASE_TYPE "Based on"
-#define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "ADC0 input"
-#define D_ALLOW_PULLUP "User pull-up selection"
+#define D_CONFIGURE_TEMPLATE "Nastavení šablony"
+#define D_TEMPLATE_PARAMETERS "Parametry šablony"
+#define D_TEMPLATE_NAME "Název"
+#define D_BASE_TYPE "Vzor z"
+#define D_TEMPLATE_FLAGS "Volby"
 
 #define D_SAVE_CONFIGURATION "Ulož nastavení"
 #define D_CONFIGURATION_SAVED "Nastavení uloženo"
@@ -608,6 +607,7 @@
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
+#define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -622,9 +622,9 @@
 #define D_UNIT_KILOOHM "kOhm"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
-#define D_UNIT_MICROMETER "um"
-#define D_UNIT_MICROSECOND "us"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
+#define D_UNIT_MICROMETER "µm"
+#define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"

@@ -194,7 +194,7 @@ void Ads1115toJSON(char *comma_j)
     ResponseAppend_P(PSTR("%s\"A%d\":%d"), comma, i, ads1115_values[i]);
     comma = (char*)",";
   }
-  ResponseAppend_P(PSTR("}"));
+  ResponseJsonEnd();
 }
 
 void Ads1115toString(uint8_t address)
@@ -212,7 +212,7 @@ void Ads1115Show(bool json)
   if (!ads1115_type) { return; }
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"ADS1115\":["));
+    ResponseAppend_P(PSTR(",\"ADS1115\":"));
   }
 
   char *comma = (char*)"";
@@ -233,9 +233,6 @@ void Ads1115Show(bool json)
     }
   }
 
-  if (json) {
-    ResponseAppend_P(PSTR("]"));
-  }
 }
 
 /*********************************************************************************************\

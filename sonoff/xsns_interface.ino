@@ -19,7 +19,6 @@
 
 #ifdef XFUNC_PTR_IN_ROM
 bool (* const xsns_func_ptr[])(uint8_t) PROGMEM = {  // Sensor Function Pointers for simple implementation of sensors
-
 #else
 bool (* const xsns_func_ptr[])(uint8_t) = {  // Sensor Function Pointers for simple implementation of sensors
 #endif

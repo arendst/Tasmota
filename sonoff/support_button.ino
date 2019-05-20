@@ -35,6 +35,7 @@ uint8_t dual_hex_code = 0;                  // Sonoff dual input flag
 uint8_t key_no_pullup = 0;                  // key no pullup flag (1 = no pullup)
 uint8_t key_inverted = 0;                   // Key inverted flag (1 = inverted)
 uint8_t buttons_found = 0;                  // Number of buttons found flag
+uint8_t button_adc = 99;                    // ADC0 button number
 
 /********************************************************************************************/
 
@@ -56,6 +57,12 @@ void ButtonInit(void)
       buttons_found++;
       pinMode(pin[GPIO_KEY1 +i], bitRead(key_no_pullup, i) ? INPUT : ((16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
     }
+#ifndef USE_ADC_VCC
+    else if ((99 == button_adc) && ((ADC0_BUTTON == my_adc0) || (ADC0_BUTTON_INV == my_adc0))) {
+      buttons_found++;
+      button_adc = i;
+    }
+#endif  // USE_ADC_VCC
   }
 }
 
@@ -112,12 +119,22 @@ void ButtonHandler(void)
         }
         dual_button_code = 0;
       }
-    } else {
-      if (pin[GPIO_KEY1 +button_index] < 99) {
-        button_present = 1;
-        button = (digitalRead(pin[GPIO_KEY1 +button_index]) != bitRead(key_inverted, button_index));
+    }
+    else if (pin[GPIO_KEY1 +button_index] < 99) {
+      button_present = 1;
+      button = (digitalRead(pin[GPIO_KEY1 +button_index]) != bitRead(key_inverted, button_index));
+    }
+#ifndef USE_ADC_VCC
+    if (button_adc == button_index) {
+      button_present = 1;
+      if (ADC0_BUTTON_INV == my_adc0) {
+        button = (AdcRead(1) < 128);
+      }
+      else if (ADC0_BUTTON == my_adc0) {
+        button = (AdcRead(1) > 128);
       }
     }
+#endif  // USE_ADC_VCC
 
     if (button_present) {
       XdrvMailbox.index = button_index;

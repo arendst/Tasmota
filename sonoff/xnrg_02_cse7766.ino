@@ -181,8 +181,16 @@ void CseEverySecond(void)
       cf_frequency = cf_pulses - cf_pulses_last_time;
     }
     if (cf_frequency && energy_active_power)  {
-      cf_pulses_last_time = cf_pulses;
-      energy_kWhtoday_delta += (cf_frequency * Settings.energy_power_calibration) / 36;
+      unsigned long delta = (cf_frequency * Settings.energy_power_calibration) / 36;
+      // prevent invalid load delta steps even checksum is valid (issue #5789):
+      if (delta <= (3680*100/36) * 10 ) {  // max load for S31/Pow R2: 3.68kW
+        cf_pulses_last_time = cf_pulses;
+        energy_kWhtoday_delta += delta;
+      }
+      else {
+        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Load overflow"));
+        cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
+      }
       EnergyUpdateToday();
     }
   }
@@ -236,7 +244,7 @@ int Xnrg02(uint8_t function)
   }
   else if (XNRG_02 == energy_flg) {
     switch (function) {
-      case FUNC_EVERY_SECOND:
+      case FUNC_ENERGY_EVERY_SECOND:
         CseEverySecond();
         break;
       case FUNC_COMMAND:

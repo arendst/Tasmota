@@ -509,7 +509,8 @@ void BmpRead(void)
 #endif  // USE_BME680
     }
   }
-  SetGlobalValues(ConvertTemp(bmp_sensors[0].bmp_temperature), bmp_sensors[0].bmp_humidity);
+  ConvertTemp(bmp_sensors[0].bmp_temperature);   // Set global temperature
+  ConvertHumidity(bmp_sensors[0].bmp_humidity);  // Set global humidity
 }
 
 void BmpEverySecond(void)
@@ -541,7 +542,7 @@ void BmpShow(bool json)
       char name[10];
       strlcpy(name, bmp_sensors[bmp_idx].bmp_name, sizeof(name));
       if (bmp_count > 1) {
-        snprintf_P(name, sizeof(name), PSTR("%s-%02X"), name, bmp_sensors[bmp_idx].bmp_address);  // BMXXXX-XX
+        snprintf_P(name, sizeof(name), PSTR("%s%c%02X"), name, IndexSeparator(), bmp_sensors[bmp_idx].bmp_address);  // BMXXXX-XX
       }
 
       char temperature[33];

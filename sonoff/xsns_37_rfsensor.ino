@@ -310,7 +310,7 @@ void RfSnsTheoV2Show(bool json)
         }
       } else {
         float temp = ConvertTemp((float)rfsns_theo_v2_t2[i].temp / 100);
-        float humi = (float)rfsns_theo_v2_t2[i].hum / 100;
+        float humi = ConvertHumidity((float)rfsns_theo_v2_t2[i].hum / 100);
         char temperature[33];
         dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
         char humidity[33];
@@ -558,7 +558,7 @@ void RfSnsAlectoV2Show(bool json)
       float temp = ConvertTemp(rfsns_alecto_v2->temp);
       char temperature[33];
       dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
-      float humi = (float)rfsns_alecto_v2->humi;
+      float humi = ConvertHumidity((float)rfsns_alecto_v2->humi);
       char humidity[33];
       dtostrfd(humi, Settings.flag2.humidity_resolution, humidity);
       char rain[33];

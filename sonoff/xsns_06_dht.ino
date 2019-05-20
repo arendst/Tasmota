@@ -155,6 +155,7 @@ void DhtReadTempHum(uint8_t sensor)
       break;
     }
     Dht[sensor].t = ConvertTemp(Dht[sensor].t);
+    Dht[sensor].h = ConvertHumidity(Dht[sensor].h);
     Dht[sensor].lastresult = 0;
   } else {
     Dht[sensor].lastresult++;
@@ -186,7 +187,7 @@ void DhtInit(void)
     Dht[i].lastresult = 0;
     GetTextIndexed(Dht[i].stype, sizeof(Dht[i].stype), Dht[i].type, kSensorNames);
     if (dht_sensors > 1) {
-      snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s-%02d"), Dht[i].stype, Dht[i].pin);
+      snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
     }
   }
 }

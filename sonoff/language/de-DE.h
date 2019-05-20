@@ -52,7 +52,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.4.1.18
+ * Updated until v6.5.0.7
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -78,7 +78,7 @@
 #define D_ADMIN "Admin"
 #define D_AIR_QUALITY "Luftqualität"
 #define D_AP "AP"                    // Access Point
-#define D_AS "wie"
+#define D_AS "als"
 #define D_AUTO "AUTO"
 #define D_BLINK "Blinken"
 #define D_BLINKOFF "BlinkenAus"
@@ -117,7 +117,7 @@
 #define D_FALLBACK_TOPIC "Fallback-Topic"
 #define D_FALSE "falsch"
 #define D_FILE "Datei"
-#define D_FLOW_RATE "Flow rate"
+#define D_FLOW_RATE "Durchflussmenge"
 #define D_FREE_MEMORY "Freier Arbeitsspeicher"
 #define D_FREQUENCY "Frequenz"
 #define D_GAS "Gas"
@@ -281,6 +281,7 @@
 #define D_MODULE_PARAMETERS "Geräte-Einstellungen"
 #define D_MODULE_TYPE "Gerätetyp"
 #define D_PULLUP_ENABLE "Kein Taster/Schalter Pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "serieller Eingang [serial in]"
 #define D_SERIAL_OUT "serieller Ausgang [serial out]"
@@ -330,8 +331,6 @@
 #define D_TEMPLATE_NAME "Name"
 #define D_BASE_TYPE "basiert auf"
 #define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "ADC0 input"
-#define D_ALLOW_PULLUP "Nutzer pull-up Auswahl"
 
 #define D_SAVE_CONFIGURATION "Konfiguration speichern"
 #define D_CONFIGURATION_SAVED "Konfiguration gespeichert"
@@ -456,7 +455,7 @@
 #define D_KNX_COMMAND_READ "Lesen"
 #define D_KNX_COMMAND_OTHER "Andere"
 #define D_SENT_TO "gesendet an"
-#define D_KNX_WARNING "Die Gruppenadresse ( 0 / 0 / 0 ) ist reserviert und kann nicht verwendet werden."
+#define D_KNX_WARNING "Die Gruppenadresse (0/0/0) ist reserviert und kann nicht verwendet werden."
 #define D_KNX_ENHANCEMENT "Erweiterte Kommunikation"
 #define D_KNX_TX_SLOT "KNX TX"
 #define D_KNX_RX_SLOT "KNX RX"
@@ -607,6 +606,7 @@
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
+#define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 
 // Units
 #define D_UNIT_AMPERE "A"

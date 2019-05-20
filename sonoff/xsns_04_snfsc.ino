@@ -112,7 +112,7 @@ void SonoffScShow(bool json)
 {
   if (sc_value[0] > 0) {
     float t = ConvertTemp(sc_value[1]);
-    float h = sc_value[0];
+    float h = ConvertHumidity(sc_value[0]);
 
     char temperature[33];
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);

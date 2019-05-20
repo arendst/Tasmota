@@ -880,6 +880,7 @@ void HandleKNXConfiguration(void)
             "}"
           "}"));
     WSContentSendStyle();
+    KNX_physs_addr.value = Settings.knx_physsical_addr;
     WSContentSend_P(HTTP_FORM_KNX, KNX_physs_addr.pa.area, KNX_physs_addr.pa.line, KNX_physs_addr.pa.member);
     if ( Settings.flag.knx_enabled ) { WSContentSend_P(PSTR(" checked")); }
     WSContentSend_P(HTTP_FORM_KNX1);
@@ -1223,6 +1224,9 @@ bool Xdrv11(uint8_t function)
 {
   bool result = false;
     switch (function) {
+      case FUNC_LOOP:
+        if (!global_state.wifi_down) { knx.loop(); }  // Process knx events
+        break;
       case FUNC_PRE_INIT:
         KNX_INIT();
         break;
@@ -1236,9 +1240,6 @@ bool Xdrv11(uint8_t function)
         break;
 #endif // USE_KNX_WEB_MENU
 #endif  // USE_WEBSERVER
-      case FUNC_LOOP:
-        if (!global_state.wifi_down) { knx.loop(); }  // Process knx events
-        break;
       case FUNC_EVERY_50_MSECOND:
         if (toggle_inhibit) {
           toggle_inhibit--;

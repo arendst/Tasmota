@@ -28,7 +28,7 @@ uint32_t syslog_host_hash = 0;   // Syslog host name hash
 
 Ticker tickerOSWatch;
 
-#define OSWATCH_RESET_TIME 120
+const uint32_t OSWATCH_RESET_TIME = 120;
 
 static unsigned long oswatch_last_loop_time;
 uint8_t oswatch_blocked_loop = 0;
@@ -108,7 +108,7 @@ void* memchr(const void* ptr, int value, size_t num)
   return 0;
 }
 
-// http://clc-wiki.net/wiki/C_standard_library:string.h:strspn
+// http://clc-wiki.net/wiki/C_standard_library:string.h:strcspn
 // Get span until any character in string
 size_t strcspn(const char *str1, const char *str2)
 {
@@ -122,6 +122,77 @@ size_t strcspn(const char *str1, const char *str2)
     }
   }
   return ret;
+}
+
+// https://opensource.apple.com/source/Libc/Libc-583/stdlib/FreeBSD/strtoull.c
+// Convert a string to an unsigned long long integer
+#ifndef __LONG_LONG_MAX__
+#define __LONG_LONG_MAX__ 9223372036854775807LL
+#endif
+#ifndef ULLONG_MAX
+#define ULLONG_MAX (__LONG_LONG_MAX__ * 2ULL + 1)
+#endif
+
+unsigned long long strtoull(const char *__restrict nptr, char **__restrict endptr, int base)
+{
+  const char *s = nptr;
+  char c;
+  do { c = *s++; } while (isspace((unsigned char)c));                         // Trim leading spaces
+
+  int neg = 0;
+  if (c == '-') {                                                             // Set minus flag and/or skip sign
+    neg = 1;
+    c = *s++;
+  } else {
+    if (c == '+') {
+      c = *s++;
+    }
+  }
+
+  if ((base == 0 || base == 16) && (c == '0') && (*s == 'x' || *s == 'X')) {  // Set Hexadecimal
+    c = s[1];
+    s += 2;
+    base = 16;
+  }
+  if (base == 0) { base = (c == '0') ? 8 : 10; }                              // Set Octal or Decimal
+
+  unsigned long long acc = 0;
+  int any = 0;
+  if (base > 1 && base < 37) {
+    unsigned long long cutoff = ULLONG_MAX / base;
+    int cutlim = ULLONG_MAX % base;
+    for ( ; ; c = *s++) {
+      if (c >= '0' && c <= '9')
+        c -= '0';
+      else if (c >= 'A' && c <= 'Z')
+        c -= 'A' - 10;
+      else if (c >= 'a' && c <= 'z')
+        c -= 'a' - 10;
+      else
+        break;
+
+      if (c >= base)
+        break;
+
+      if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
+        any = -1;
+      else {
+        any = 1;
+        acc *= base;
+        acc += c;
+      }
+    }
+    if (any < 0) {
+      acc = ULLONG_MAX;                                                       // Range error
+    }
+    else if (any && neg) {
+      acc = -acc;
+    }
+  }
+
+  if (endptr != nullptr) { *endptr = (char *)(any ? s - 1 : nptr); }
+
+  return acc;
 }
 #endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
@@ -200,6 +271,27 @@ int TextToInt(char *str)
   return strtol(str, &p, radix);
 }
 
+char* ulltoa(unsigned long long value, char *str, int radix)
+{
+  char digits[64];
+  char *dst = str;
+  int i = 0;
+  int n = 0;
+
+//  if (radix < 2 || radix > 36) { radix = 10; }
+
+  do {
+    n = value % radix;
+    digits[i++] = (n < 10) ? (char)n+'0' : (char)n-10+'A';
+    value /= radix;
+  } while (value != 0);
+
+  while (i > 0) { *dst++ = digits[--i]; }
+
+  *dst = 0;
+  return str;
+}
+
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
   if ((isnan(number)) || (isinf(number))) {  // Fix for JSON output (https://stackoverflow.com/questions/1423081/json-left-out-infinity-and-nan-json-status-in-ecmascript)
@@ -261,7 +353,7 @@ char* Unescape(char* buffer, uint16_t* size)
     }
   }
   *size = end_size;
-
+  *write++ = 0;   // add the end string pointer reference
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
 
   return buffer;
@@ -345,6 +437,21 @@ char* NoAlNumToUnderscore(char* dest, const char* source)
   return dest;
 }
 
+char IndexSeparator()
+{
+/*
+  // 20 bytes more costly !?!
+  const char separators[] = { "-_" };
+
+  return separators[Settings.flag3.use_underscore];
+*/
+  if (Settings.flag3.use_underscore) {
+    return '_';
+  } else {
+    return '-';
+  }
+}
+
 void SetShortcut(char* str, uint8_t action)
 {
   if ('\0' != str[0]) {     // There must be at least one character in the buffer
@@ -368,6 +475,14 @@ uint8_t Shortcut(const char* str)
     }
   }
   return result;
+}
+
+bool ValidIpAddress(const char* str)
+{
+  const char* p = str;
+
+  while (*p && ((*p == '.') || ((*p >= '0') && (*p <= '9')))) { p++; }
+  return (*p == '\0');
 }
 
 bool ParseIp(uint32_t* addr, const char* str)
@@ -475,8 +590,21 @@ float ConvertTemp(float c)
 {
   float result = c;
 
+  global_update = uptime;
+  global_temperature = c;
+
   if (!isnan(c) && Settings.flag.temperature_conversion) {
     result = c * 1.8 + 32;  // Fahrenheit
+  }
+  return result;
+}
+
+float ConvertTempToCelsius(float c)
+{
+  float result = c;
+
+  if (!isnan(c) && Settings.flag.temperature_conversion) {
+    result = (c - 32) / 1.8;  // Celsius
   }
   return result;
 }
@@ -486,9 +614,20 @@ char TempUnit(void)
   return (Settings.flag.temperature_conversion) ? 'F' : 'C';
 }
 
+float ConvertHumidity(float h)
+{
+  global_update = uptime;
+  global_humidity = h;
+
+  return h;
+}
+
 float ConvertPressure(float p)
 {
   float result = p;
+
+  global_update = uptime;
+  global_pressure = p;
 
   if (!isnan(p) && Settings.flag.pressure_conversion) {
     result = p * 0.75006375541921;  // mmHg
@@ -501,19 +640,13 @@ String PressureUnit(void)
   return (Settings.flag.pressure_conversion) ? String(D_UNIT_MILLIMETER_MERCURY) : String(D_UNIT_PRESSURE);
 }
 
-void SetGlobalValues(float temperature, float humidity)
-{
-  global_update = uptime;
-  global_temperature = temperature;
-  global_humidity = humidity;
-}
-
 void ResetGlobalValues(void)
 {
   if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
     global_update = 0;
     global_temperature = 0;
     global_humidity = 0;
+    global_pressure = 0;
   }
 }
 
@@ -521,7 +654,7 @@ double FastPrecisePow(double a, double b)
 {
   // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
   // calculate approximation with fraction of the exponent
-  int e = (int)b;
+  int e = abs((int)b);
   union {
     double d;
     int x[2];
@@ -539,6 +672,42 @@ double FastPrecisePow(double a, double b)
     e >>= 1;
   }
   return r * u.d;
+}
+
+float FastPrecisePowf(const float x, const float y)
+{
+//  return (float)(pow((double)x, (double)y));
+  return (float)FastPrecisePow(x, y);
+}
+
+double TaylorLog(double x)
+{
+  // https://stackoverflow.com/questions/46879166/finding-the-natural-logarithm-of-a-number-using-taylor-series-in-c
+
+  if (x <= 0.0) { return NAN; }
+  double z = (x + 1) / (x - 1);                              // We start from power -1, to make sure we get the right power in each iteration;
+  double step = ((x - 1) * (x - 1)) / ((x + 1) * (x + 1));   // Store step to not have to calculate it each time
+  double totalValue = 0;
+  double powe = 1;
+  double y;
+  for (int count = 0; count < 10; count++) {                 // Experimental number of 10 iterations
+    z *= step;
+    y = (1 / powe) * z;
+    totalValue = totalValue + y;
+    powe = powe + 2;
+  }
+  totalValue *= 2;
+/*
+  char logxs[33];
+  dtostrfd(x, 8, logxs);
+  double log1 = log(x);
+  char log1s[33];
+  dtostrfd(log1, 8, log1s);
+  char log2s[33];
+  dtostrfd(totalValue, 8, log2s);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("input %s, log %s, taylor %s"), logxs, log1s, log2s);
+*/
+  return totalValue;
 }
 
 uint32_t SqrtInt(uint32_t num)
@@ -710,6 +879,42 @@ void ShowSource(int source)
   }
 }
 
+void WebHexCode(uint8_t i, const char* code)
+{
+  char scolor[10];
+
+  strlcpy(scolor, code, sizeof(scolor));
+  char* p = scolor;
+  if ('#' == p[0]) { p++; }  // Skip
+
+  if (3 == strlen(p)) {  // Convert 3 character to 6 character color code
+    p[6] = p[3];  // \0
+    p[5] = p[2];  // 3
+    p[4] = p[2];  // 3
+    p[3] = p[1];  // 2
+    p[2] = p[1];  // 2
+    p[1] = p[0];  // 1
+  }
+
+  uint32_t color = strtol(p, nullptr, 16);
+/*
+  if (3 == strlen(p)) {  // Convert 3 character to 6 character color code
+    uint32_t w = ((color & 0xF00) << 8) | ((color & 0x0F0) << 4) | (color & 0x00F);  // 00010203
+    color = w | (w << 4);                                                            // 00112233
+  }
+*/
+
+  Settings.web_color[i][0] = (color >> 16) & 0xFF;  // Red
+  Settings.web_color[i][1] = (color >> 8) & 0xFF;   // Green
+  Settings.web_color[i][2] = color & 0xFF;          // Blue
+}
+
+uint32_t WebColor(uint8_t i)
+{
+  uint32_t tcolor = (Settings.web_color[i][0] << 16) | (Settings.web_color[i][1] << 8) | Settings.web_color[i][2];
+  return tcolor;
+}
+
 /*********************************************************************************************\
  * Response data handling
 \*********************************************************************************************/
@@ -735,6 +940,11 @@ int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char d
   return len + mlen;
 }
 
+int ResponseJsonEnd(void)
+{
+  return ResponseAppend_P(PSTR("}"));
+}
+
 /*********************************************************************************************\
  * GPIO Module and Template management
 \*********************************************************************************************/
@@ -744,6 +954,22 @@ uint8_t ModuleNr()
   // 0    = User module (255)
   // 1 up = Template module 0 up
   return (USER_MODULE == Settings.module) ? 0 : Settings.module +1;
+}
+
+bool ValidTemplateModule(uint8_t index)
+{
+  for (uint8_t i = 0; i < sizeof(kModuleNiceList); i++) {
+    if (index == pgm_read_byte(kModuleNiceList + i)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool ValidModule(uint8_t index)
+{
+  if (index == USER_MODULE) { return true; }
+  return ValidTemplateModule(index);
 }
 
 String AnyModuleName(uint8_t index)
@@ -830,6 +1056,13 @@ bool ValidGPIO(uint8_t pin, uint8_t gpio)
   return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
 }
 
+bool ValidAdc()
+{
+  gpio_flag flag = ModuleFlag();
+  uint8_t template_adc0 = flag.data &15;
+  return (ADC0_USER == template_adc0);
+}
+
 bool GetUsedInModule(uint8_t val, uint8_t *arr)
 {
   int offset = 0;
@@ -893,6 +1126,10 @@ bool GetUsedInModule(uint8_t val, uint8_t *arr)
 
 bool JsonTemplate(const char* dataBuf)
 {
+  // {"NAME":"Generic","GPIO":[17,254,29,254,7,254,254,254,138,254,139,254,254],"FLAG":1,"BASE":255}
+
+  if (strlen(dataBuf) < 9) { return false; }  // Workaround exception if empty JSON like {} - Needs checks
+
   StaticJsonBuffer<350> jb;  // 331 from https://arduinojson.org/v5/assistant/
   JsonObject& obj = jb.parseObject(dataBuf);
   if (!obj.success()) { return false; }
@@ -913,8 +1150,8 @@ bool JsonTemplate(const char* dataBuf)
   }
   if (obj[D_JSON_BASE].success()) {
     uint8_t base = obj[D_JSON_BASE];
-    if ((0 == base) || (base >= MAXMODULE)) { base = 17; } else { base--; }
-    Settings.user_template_base = base;  // Default WEMOS
+    if ((0 == base) || !ValidTemplateModule(base -1)) { base = 18; }
+    Settings.user_template_base = base -1;  // Default WEMOS
   }
   return true;
 }
@@ -996,16 +1233,17 @@ void SetNextTimeInterval(unsigned long& timer, const unsigned long step)
 \*********************************************************************************************/
 
 #ifdef USE_I2C
-#define I2C_RETRY_COUNTER 3
+const uint8_t I2C_RETRY_COUNTER = 3;
 
 uint32_t i2c_buffer = 0;
 
 bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
 {
-  uint8_t x = I2C_RETRY_COUNTER;
+  uint8_t retry = I2C_RETRY_COUNTER;
+  bool status = false;
 
   i2c_buffer = 0;
-  do {
+  while (!status && retry) {
     Wire.beginTransmission(addr);                       // start transmission to device
     Wire.write(reg);                                    // sends register address to read from
     if (0 == Wire.endTransmission(false)) {             // Try to become I2C Master, send data and collect bytes, keep master status for next request...
@@ -1014,11 +1252,12 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
         for (uint8_t i = 0; i < size; i++) {
           i2c_buffer = i2c_buffer << 8 | Wire.read();   // receive DATA
         }
+        status = true;
       }
     }
-    x--;
-  } while (Wire.endTransmission(true) != 0 && x != 0);  // end transmission
-  return (x);
+    retry--;
+  }
+  return status;
 }
 
 bool I2cValidRead8(uint8_t *data, uint8_t addr, uint8_t reg)
@@ -1247,8 +1486,9 @@ void Syslog(void)
   // Destroys log_data
   char syslog_preamble[64];  // Hostname + Id
 
-  if (syslog_host_hash != GetHash(Settings.syslog_host, strlen(Settings.syslog_host))) {
-    syslog_host_hash = GetHash(Settings.syslog_host, strlen(Settings.syslog_host));
+  uint32_t current_hash = GetHash(Settings.syslog_host, strlen(Settings.syslog_host));
+  if (syslog_host_hash != current_hash) {
+    syslog_host_hash = current_hash;
     WiFi.hostByName(Settings.syslog_host, syslog_host_addr);  // If sleep enabled this might result in exception so try to do it once using hash
   }
   if (PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {

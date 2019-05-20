@@ -27,6 +27,8 @@
 
 #define ENERGY_NONE          0
 
+#define ENERGY_OVERTEMP      73.0     // Industry standard lowest overtemp in Celsius
+
 #define FEATURE_POWER_LIMIT  true
 
 #include <Ticker.h>
@@ -69,6 +71,9 @@ unsigned long energy_period = 0;    // 12312312 Wh * 10^-2 (deca milli Watt hour
 
 float energy_power_last[3] = { 0 };
 uint8_t energy_power_delta = 0;
+
+bool energy_voltage_available = true;  // Enable if voltage is measured
+bool energy_current_available = true;  // Enable if current is measured
 
 bool energy_type_dc = false;
 bool energy_power_on = true;
@@ -116,7 +121,7 @@ void Energy200ms(void)
   if (5 == energy_fifth_second) {
     energy_fifth_second = 0;
 
-    XnrgCall(FUNC_EVERY_SECOND);
+    XnrgCall(FUNC_ENERGY_EVERY_SECOND);
 
     if (RtcTime.valid) {
       if (LocalTime() == Midnight()) {
@@ -228,7 +233,7 @@ void EnergyMarginCheck(void)
       jsonflg = true;
     }
     if (jsonflg) {
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_MARGINS), MQTT_TELE_RETAIN);
       EnergyMqttShow();
     }
@@ -310,9 +315,18 @@ void EnergyMqttShow(void)
   tele_period = 2;
   EnergyShow(true);
   tele_period = tele_period_save;
-  ResponseAppend_P(PSTR("}"));
+  ResponseJsonEnd();
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
   energy_power_delta = 0;
+}
+
+void EnergyOverTempCheck()
+{
+  if (global_update) {
+    if (power && (global_temperature > ENERGY_OVERTEMP)) {  // Device overtemp, turn off relays
+      SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
+    }
+  }
 }
 
 /*********************************************************************************************\
@@ -549,19 +563,11 @@ void EnergySnsInit(void)
 
 #ifdef USE_WEBSERVER
 const char HTTP_ENERGY_SNS1[] PROGMEM =
-  "{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-  "{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-  "{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
-
-const char HTTP_ENERGY_SNS2[] PROGMEM =
   "{s}" D_POWERUSAGE_APPARENT "{m}%s " D_UNIT_VA "{e}"
   "{s}" D_POWERUSAGE_REACTIVE "{m}%s " D_UNIT_VAR "{e}"
   "{s}" D_POWER_FACTOR "{m}%s{e}";
 
-const char HTTP_ENERGY_SNS3[] PROGMEM =
-  "{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}";
-
-const char HTTP_ENERGY_SNS4[] PROGMEM =
+const char HTTP_ENERGY_SNS2[] PROGMEM =
   "{s}" D_ENERGY_TODAY  "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_YESTERDAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -570,7 +576,7 @@ const char HTTP_ENERGY_SNS4[] PROGMEM =
 void EnergyShow(bool json)
 {
   char speriod[20];
-  char sfrequency[20];
+//  char sfrequency[20];
 
   bool show_energy_period = (0 == tele_period);
 
@@ -581,36 +587,37 @@ void EnergyShow(bool json)
   char power_factor_chr[33];
   char frequency_chr[33];
   if (!energy_type_dc) {
-    float apparent_power = energy_apparent_power;
-    if (isnan(apparent_power)) {
-      apparent_power = energy_voltage * energy_current;
-    }
-    if (apparent_power < energy_active_power) {  // Should be impossible
-      energy_active_power = apparent_power;
-    }
-
-    if (isnan(power_factor)) {
-      power_factor = (energy_active_power && apparent_power) ? energy_active_power / apparent_power : 0;
-      if (power_factor > 1) power_factor = 1;
-    }
-
-    float reactive_power = energy_reactive_power;
-    if (isnan(reactive_power)) {
-      reactive_power = 0;
-      uint32_t difference = ((uint32_t)(apparent_power * 100) - (uint32_t)(energy_active_power * 100)) / 10;
-      if ((energy_current > 0.005) && ((difference > 15) || (difference > (uint32_t)(apparent_power * 100 / 1000)))) {
-        // calculating reactive power only if current is greater than 0.005A and
-        // difference between active and apparent power is greater than 1.5W or 1%
-        reactive_power = (float)(RoundSqrtInt((uint32_t)(apparent_power * apparent_power * 100) - (uint32_t)(energy_active_power * energy_active_power * 100))) / 10;
+    if (energy_current_available && energy_voltage_available) {
+      float apparent_power = energy_apparent_power;
+      if (isnan(apparent_power)) {
+        apparent_power = energy_voltage * energy_current;
       }
-    }
+      if (apparent_power < energy_active_power) {  // Should be impossible
+        energy_active_power = apparent_power;
+      }
 
-    dtostrfd(apparent_power, Settings.flag2.wattage_resolution, apparent_power_chr);
-    dtostrfd(reactive_power, Settings.flag2.wattage_resolution, reactive_power_chr);
-    dtostrfd(power_factor, 2, power_factor_chr);
+      if (isnan(power_factor)) {
+        power_factor = (energy_active_power && apparent_power) ? energy_active_power / apparent_power : 0;
+        if (power_factor > 1) power_factor = 1;
+      }
+
+      float reactive_power = energy_reactive_power;
+      if (isnan(reactive_power)) {
+        reactive_power = 0;
+        uint32_t difference = ((uint32_t)(apparent_power * 100) - (uint32_t)(energy_active_power * 100)) / 10;
+        if ((energy_current > 0.005) && ((difference > 15) || (difference > (uint32_t)(apparent_power * 100 / 1000)))) {
+          // calculating reactive power only if current is greater than 0.005A and
+          // difference between active and apparent power is greater than 1.5W or 1%
+          reactive_power = (float)(RoundSqrtInt((uint32_t)(apparent_power * apparent_power * 100) - (uint32_t)(energy_active_power * energy_active_power * 100))) / 10;
+        }
+      }
+
+      dtostrfd(apparent_power, Settings.flag2.wattage_resolution, apparent_power_chr);
+      dtostrfd(reactive_power, Settings.flag2.wattage_resolution, reactive_power_chr);
+      dtostrfd(power_factor, 2, power_factor_chr);
+    }
     if (!isnan(energy_frequency)) {
       dtostrfd(energy_frequency, Settings.flag2.frequency_resolution, frequency_chr);
-      snprintf_P(sfrequency, sizeof(sfrequency), PSTR(",\"" D_JSON_FREQUENCY "\":%s"), frequency_chr);
     }
   }
 
@@ -640,23 +647,42 @@ void EnergyShow(bool json)
     ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL_START_TIME "\":\"%s\",\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s%s,\"" D_JSON_POWERUSAGE "\":%s"),
       GetDateAndTime(DT_ENERGY).c_str(), energy_total_chr, energy_yesterday_chr, energy_daily_chr, (show_energy_period) ? speriod : "", active_power_chr);
     if (!energy_type_dc) {
-      ResponseAppend_P(PSTR(",\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_POWERFACTOR "\":%s%s"),
-        apparent_power_chr, reactive_power_chr, power_factor_chr, (!isnan(energy_frequency)) ? sfrequency : "");
+      if (energy_current_available && energy_voltage_available) {
+        ResponseAppend_P(PSTR(",\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_POWERFACTOR "\":%s"),
+          apparent_power_chr, reactive_power_chr, power_factor_chr);
+      }
+      if (!isnan(energy_frequency)) {
+        ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%s"), frequency_chr);
+      }
     }
-    ResponseAppend_P(PSTR(",\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"), voltage_chr, current_chr);
+    if (energy_voltage_available) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_VOLTAGE "\":%s"), voltage_chr);
+    }
+    if (energy_current_available) {
+      ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT "\":%s"), current_chr);
+    }
+    ResponseJsonEnd();
 
 #ifdef USE_DOMOTICZ
     if (show_energy_period) {  // Only send if telemetry
       dtostrfd(energy_total * 1000, 1, energy_total_chr);
       DomoticzSensorPowerEnergy((int)energy_active_power, energy_total_chr);  // PowerUsage, EnergyToday
-      DomoticzSensor(DZ_VOLTAGE, voltage_chr);  // Voltage
-      DomoticzSensor(DZ_CURRENT, current_chr);  // Current
+      if (energy_voltage_available) {
+        DomoticzSensor(DZ_VOLTAGE, voltage_chr);  // Voltage
+      }
+      if (energy_current_available) {
+        DomoticzSensor(DZ_CURRENT, current_chr);  // Current
+      }
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
     if (show_energy_period) {
-      KnxSensor(KNX_ENERGY_VOLTAGE, energy_voltage);
-      KnxSensor(KNX_ENERGY_CURRENT, energy_current);
+      if (energy_voltage_available) {
+        KnxSensor(KNX_ENERGY_VOLTAGE, energy_voltage);
+      }
+      if (energy_current_available) {
+        KnxSensor(KNX_ENERGY_CURRENT, energy_current);
+      }
       KnxSensor(KNX_ENERGY_POWER, energy_active_power);
       if (!energy_type_dc) { KnxSensor(KNX_ENERGY_POWERFACTOR, power_factor); }
       KnxSensor(KNX_ENERGY_DAILY, energy_daily);
@@ -666,12 +692,22 @@ void EnergyShow(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ENERGY_SNS1, voltage_chr, current_chr, active_power_chr);
-    if (!energy_type_dc) {
-      WSContentSend_PD(HTTP_ENERGY_SNS2, apparent_power_chr, reactive_power_chr, power_factor_chr);
-      if (!isnan(energy_frequency)) { WSContentSend_PD(HTTP_ENERGY_SNS3, frequency_chr); }
+    if (energy_voltage_available) {
+      WSContentSend_PD(PSTR("{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"), voltage_chr);
     }
-    WSContentSend_PD(HTTP_ENERGY_SNS4, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
+    if (energy_current_available) {
+      WSContentSend_PD(PSTR("{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"), current_chr);
+    }
+    WSContentSend_PD(PSTR("{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"), active_power_chr);
+    if (!energy_type_dc) {
+      if (energy_current_available && energy_voltage_available) {
+        WSContentSend_PD(HTTP_ENERGY_SNS1, apparent_power_chr, reactive_power_chr, power_factor_chr);
+      }
+      if (!isnan(energy_frequency)) {
+        WSContentSend_PD(PSTR("{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"), frequency_chr);
+      }
+    }
+    WSContentSend_PD(HTTP_ENERGY_SNS2, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
 #endif  // USE_WEBSERVER
   }
 }
@@ -689,14 +725,14 @@ bool Xdrv03(uint8_t function)
   }
   else if (energy_flg) {
     switch (function) {
+      case FUNC_LOOP:
+        XnrgCall(FUNC_LOOP);
+        break;
       case FUNC_COMMAND:
         result = EnergyCommand();
         break;
       case FUNC_SET_POWER:
         EnergySetPowerSteadyCounter();
-        break;
-      case FUNC_LOOP:
-        XnrgCall(FUNC_LOOP);
         break;
       case FUNC_SERIAL:
         result = XnrgCall(FUNC_SERIAL);
@@ -717,6 +753,7 @@ bool Xsns03(uint8_t function)
         break;
       case FUNC_EVERY_SECOND:
         EnergyMarginCheck();
+        EnergyOverTempCheck();
         break;
       case FUNC_JSON_APPEND:
         EnergyShow(true);

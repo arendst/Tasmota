@@ -180,8 +180,10 @@ void GetFeatures(void)
 #ifdef USE_SM16716
   feature_drv2 |= 0x00040000;  // xdrv_04_light.ino
 #endif
+#ifdef USE_SCRIPT
+  feature_drv2 |= 0x00080000;  // xdrv_10_scripter.ino
+#endif
 
-//  feature_drv2 |= 0x00080000;
 //  feature_drv2 |= 0x00100000;
 //  feature_drv2 |= 0x00200000;
 //  feature_drv2 |= 0x00400000;
@@ -390,7 +392,9 @@ void GetFeatures(void)
 #ifdef USE_HRE
   feature_sns2 |= 0x00800000;  // xsns_43_hre.ino
 #endif
-//  feature_sns2 |= 0x01000000;
+#ifdef USE_ADE7953
+  feature_sns2 |= 0x01000000;  // xnrg_07_ade7953.ino
+#endif
 //  feature_sns2 |= 0x02000000;
 //  feature_sns2 |= 0x04000000;
 //  feature_sns2 |= 0x08000000;

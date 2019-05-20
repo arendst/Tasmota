@@ -281,6 +281,7 @@
 #define D_MODULE_PARAMETERS "Параметри модулю"
 #define D_MODULE_TYPE "Тип модулю"
 #define D_PULLUP_ENABLE "No Button/Switch pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial вхід"
 #define D_SERIAL_OUT "Serial вихід"
@@ -330,8 +331,6 @@
 #define D_TEMPLATE_NAME "Name"
 #define D_BASE_TYPE "Based on"
 #define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "ADC0 input"
-#define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "Зберегти конфігурацію"
 #define D_CONFIGURATION_SAVED "Конфігурація збережена "
@@ -607,6 +606,7 @@
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
+#define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 
 // Units
 #define D_UNIT_AMPERE "А"

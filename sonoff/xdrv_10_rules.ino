@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_RULES
+#ifndef USE_SCRIPT
 /*********************************************************************************************\
  * Rules based heavily on ESP Easy implementation
  *
@@ -392,6 +393,15 @@ bool RulesProcessEvent(char *json_event)
 #endif
 
   String event_saved = json_event;
+  // json_event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
+  // json_event = {"System":{"Boot":1}}
+  // json_event = {"SerialReceived":"on"} - invalid but will be expanded to {"SerialReceived":{"Data":"on"}}
+  char *p = strchr(json_event, ':');
+  if ((p != NULL) && !(strchr(++p, ':'))) {  // Find second colon
+    event_saved.replace(F(":"), F(":{\"Data\":"));
+    event_saved += F("}");
+    // event_saved = {"SerialReceived":{"Data":"on"}}
+  }
   event_saved.toUpperCase();
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event %s"), event_saved.c_str());
@@ -486,23 +496,25 @@ void RulesEvery50ms(void)
         event_data[0] ='\0';
       }
     }
-    else if (vars_event) {
-      for (uint8_t i = 0; i < MAX_RULE_VARS-1; i++) {
-        if (bitRead(vars_event, i)) {
-          bitClear(vars_event, i);
-          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
-          RulesProcessEvent(json_event);
-          break;
+    else if (vars_event || mems_event){
+      if (vars_event) {
+        for (uint8_t i = 0; i < MAX_RULE_VARS; i++) {
+          if (bitRead(vars_event, i)) {
+            bitClear(vars_event, i);
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
+            RulesProcessEvent(json_event);
+            break;
+          }
         }
       }
-    }
-    else if (mems_event) {
-      for (uint8_t i = 0; i < MAX_RULE_MEMS-1; i++) {
-        if (bitRead(mems_event, i)) {
-          bitClear(mems_event, i);
-          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
-          RulesProcessEvent(json_event);
-          break;
+      if (mems_event) {
+        for (uint8_t i = 0; i < MAX_RULE_MEMS; i++) {
+          if (bitRead(mems_event, i)) {
+            bitClear(mems_event, i);
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
+            RulesProcessEvent(json_event);
+            break;
+          }
         }
       }
     }
@@ -520,6 +532,7 @@ void RulesEvery50ms(void)
             case 4: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
             case 5: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event)); break;
             case 6: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
+            case 7: strncpy_P(json_event, PSTR("{\"HTTP\":{\"Initialized\":1}}"), sizeof(json_event)); break;
           }
           if (json_event[0]) {
             RulesProcessEvent(json_event);
@@ -544,7 +557,7 @@ void RulesEvery100ms(void)
     tele_period = tele_period_save;
     if (strlen(mqtt_data)) {
       mqtt_data[0] = '{';                              // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
       RulesProcess();
     }
   }
@@ -571,6 +584,16 @@ void RulesEverySecond(void)
         }
       }
     }
+  }
+}
+
+void RulesSaveBeforeRestart(void)
+{
+  if (Settings.rule_enabled) {  // Any rule enabled
+    char json_event[32];
+
+    strncpy_P(json_event, PSTR("{\"System\":{\"Save\":1}}"), sizeof(json_event));
+    RulesProcessEvent(json_event);
   }
 }
 
@@ -1141,7 +1164,7 @@ bool RulesCommand(void)
     for (uint8_t i = 0; i < MAX_RULE_TIMERS; i++) {
       ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
     }
-    ResponseAppend_P(PSTR("}"));
+    ResponseJsonEnd();
   }
   else if (CMND_EVENT == command_code) {
     if (XdrvMailbox.data_len > 0) {
@@ -1266,6 +1289,9 @@ bool Xdrv10(uint8_t function)
     case FUNC_RULES_PROCESS:
       result = RulesProcess();
       break;
+    case FUNC_SAVE_BEFORE_RESTART:
+      RulesSaveBeforeRestart();
+      break;
 #ifdef SUPPORT_MQTT_EVENT
     case FUNC_MQTT_DATA:
       result = RulesMqttData();
@@ -1275,4 +1301,5 @@ bool Xdrv10(uint8_t function)
   return result;
 }
 
+#endif  // Do not USE_SCRIPT
 #endif  // USE_RULES

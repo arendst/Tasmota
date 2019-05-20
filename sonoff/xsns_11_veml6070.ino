@@ -306,7 +306,7 @@ bool Xsns11(uint8_t function)
 {
   bool result = false;
 
-  if (i2c_flg) {
+  if (i2c_flg && !(pin[GPIO_ADE7953_IRQ] < 99)) {  // The ADE7953 uses I2C address 0x38 too but needs priority
     switch (function) {
       case FUNC_INIT:
         Veml6070Detect();         // 1[ms], detect and init the sensor

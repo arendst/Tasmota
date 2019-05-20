@@ -24,7 +24,7 @@
 
 #define XDRV_08                    8
 
-#define SERIAL_BRIDGE_BUFFER_SIZE  130
+const uint8_t SERIAL_BRIDGE_BUFFER_SIZE = 130;
 
 #include <TasmotaSerial.h>
 
@@ -54,7 +54,7 @@ void SerialBridgeInput(void)
 
       if ((serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFFER_SIZE -1) &&    // Add char to string if it still fits and ...
           ((isprint(serial_in_byte) && (128 == Settings.serial_delimiter)) ||  // Any char between 32 and 127
-           (serial_in_byte != Settings.serial_delimiter) ||                    // Any char between 1 and 127 and not being delimiter
+          ((serial_in_byte != Settings.serial_delimiter) && (128 != Settings.serial_delimiter)) ||  // Any char between 1 and 127 and not being delimiter
             serial_bridge_raw)) {                                              // Any char between 0 and 255
         serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
         serial_bridge_polling_window = millis();                               // Wait for more data
@@ -77,7 +77,7 @@ void SerialBridgeInput(void)
       ResponseAppend_P(PSTR("\"}"));
     }
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
-//    XdrvRulesProcess();
+    XdrvRulesProcess();
     serial_bridge_in_byte_counter = 0;
   }
 }
@@ -172,11 +172,11 @@ bool Xdrv08(uint8_t function)
 
   if (serial_bridge_active) {
     switch (function) {
-      case FUNC_PRE_INIT:
-        SerialBridgeInit();
-        break;
       case FUNC_LOOP:
         if (SerialBridgeSerial) { SerialBridgeInput(); }
+        break;
+      case FUNC_PRE_INIT:
+        SerialBridgeInit();
         break;
       case FUNC_COMMAND:
         result = SerialBridgeCommand();

@@ -22,15 +22,15 @@
 \*********************************************************************************************/
 
 #ifndef WIFI_RSSI_THRESHOLD
-#define WIFI_RSSI_THRESHOLD    10   // Difference in dB between current network and scanned network
+#define WIFI_RSSI_THRESHOLD     10         // Difference in dB between current network and scanned network
 #endif
 #ifndef WIFI_RESCAN_MINUTES
-#define WIFI_RESCAN_MINUTES    44   // Number of minutes between wifi network rescan
+#define WIFI_RESCAN_MINUTES     44         // Number of minutes between wifi network rescan
 #endif
 
-#define WIFI_CONFIG_SEC        180  // seconds before restart
-#define WIFI_CHECK_SEC         20   // seconds
-#define WIFI_RETRY_OFFSET_SEC  20   // seconds
+const uint8_t WIFI_CONFIG_SEC = 180;       // seconds before restart
+const uint8_t WIFI_CHECK_SEC = 20;         // seconds
+const uint8_t WIFI_RETRY_OFFSET_SEC = 20;  // seconds
 
 /*
 // This worked for 2_5_0_BETA2 but fails since then. Waiting for a solution from core team (#4952)
@@ -159,6 +159,7 @@ void WifiConfig(uint8_t type)
 #ifdef USE_SMARTCONFIG
     else if (WIFI_SMARTCONFIG == wifi_config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG " " D_ACTIVE_FOR_3_MINUTES));
+      WiFi.mode(WIFI_STA);    // Disable AP mode
       WiFi.beginSmartConfig();
     }
 #endif  // USE_SMARTCONFIG

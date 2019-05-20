@@ -180,6 +180,7 @@ enum UserSelectablePins {
   GPIO_ROT2B,          // Rotary switch2 B Pin
   GPIO_HRE_CLOCK,      // Clock/Power line for HR-E Water Meter
   GPIO_HRE_DATA,       // Data line for HR-E Water Meter
+  GPIO_ADE7953_IRQ,    // ADE7953 IRQ
 //STB mod
   GPIO_SEN_SLEEP,
 //end
@@ -247,9 +248,35 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ARIRFRCV "|" D_SENSOR_TXD "|" D_SENSOR_RXD "|"
   D_SENSOR_ROTARY "1a|" D_SENSOR_ROTARY "1b|" D_SENSOR_ROTARY "2a|" D_SENSOR_ROTARY "2b|"
   D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
+  D_SENSOR_ADE7953_IRQ "|"
   //STB mod
   D_SENSOR_DEEPSLEEP "|" ;
   //end
+// User selectable ADC0 functionality
+enum UserSelectableAdc0 {
+  ADC0_NONE,           // Not used
+  ADC0_INPUT,          // Analog input
+  ADC0_TEMP,           // Thermistor
+  ADC0_LIGHT,          // Light sensor
+  ADC0_BUTTON,         // Button
+  ADC0_BUTTON_INV,
+//  ADC0_SWITCH,         // Switch
+//  ADC0_SWITCH_INV,
+  ADC0_END };
+
+// Programmer selectable ADC0 functionality
+enum ProgramSelectableAdc0 {
+  ADC0_FIX_START = 14,
+  ADC0_USER,           // User configurable needs to be 15
+  ADC0_MAX };
+
+// Text in webpage Module Parameters and commands ADC
+const char kAdc0Names[] PROGMEM =
+  D_SENSOR_NONE "|" D_ANALOG_INPUT "|"
+  D_TEMPERATURE "|" D_LIGHT "|"
+  D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|"
+//  D_SENSOR_SWITCH "|" D_SENSOR_SWITCH "i|"
+  ;
 
 /********************************************************************************************/
 
@@ -343,24 +370,17 @@ typedef struct MYCFGIO {
   uint8_t      io[MAX_GPIO_PIN - MIN_FLASH_PINS];
 } mycfgio;
 
-#define GPIO_FLAG_USED       1  // Currently only one flag used
+#define GPIO_FLAG_USED           0  // Currently two flags used
 
-#define GPIO_FLAG_ADC0       1  // Allow ADC0 when define USE_ADC_VCC is disabled
-#define GPIO_FLAG_SPARE01    2  // Allow input pull-up control using SetOption62 - Superseded by user template editing
-#define GPIO_FLAG_SPARE02    4
-#define GPIO_FLAG_SPARE03    8
-#define GPIO_FLAG_SPARE04   16
-#define GPIO_FLAG_SPARE05   32
-#define GPIO_FLAG_SPARE06   64
-#define GPIO_FLAG_SPARE07  128
+#define GPIO_FLAG_SPARE04       16
+#define GPIO_FLAG_SPARE05       32
+#define GPIO_FLAG_SPARE06       64
+#define GPIO_FLAG_SPARE07      128
 
 typedef union {
   uint8_t data;
   struct {
-    uint8_t adc0 : 1;            // Allow ADC0 when define USE_ADC_VCC is disabled
-    uint8_t spare01 : 1;
-    uint8_t spare02 : 1;
-    uint8_t spare03 : 1;
+    uint8_t adc0 : 4;               // Allow ADC0 when define USE_ADC_VCC is disabled
     uint8_t spare04 : 1;
     uint8_t spare05 : 1;
     uint8_t spare06 : 1;
@@ -474,7 +494,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_DHT11,          // DHT11
   GPIO_DHT22,          // DHT21, DHT22, AM2301, AM2302, AM2321
   GPIO_SI7021,         // iTead SI7021
+#if defined(USE_DS18B20) || defined(USE_DS18x20) || defined(USE_DS18x20_LEGACY)
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
+#endif
 #ifdef USE_WS2812
   GPIO_WS2812,         // WS2812 Led string
 #endif
@@ -510,6 +532,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
   GPIO_HLW_CF,         // HLW8012 CF power
   GPIO_HJL_CF,         // HJL-01/BL0937 CF power
+#endif
+#if defined(USE_ENERGY_SENSOR) && defined(USE_I2C) && defined(USE_ADE7953)
+  GPIO_ADE7953_IRQ,    // ADE7953 IRQ
 #endif
   GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
@@ -591,18 +616,22 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SM16716_DAT,    // SM16716 DATA
   GPIO_SM16716_SEL,    // SM16716 SELECT
 #endif // USE_SM16716
+#ifdef ROTARY_V1
   GPIO_ROT1A,          // Rotary switch1 A Pin
   GPIO_ROT1B,          // Rotary switch1 B Pin
   GPIO_ROT2A,          // Rotary switch2 A Pin
   GPIO_ROT2B,          // Rotary switch2 B Pin
+#endif
+#ifdef USE_ARILUX_RF
   GPIO_ARIRFRCV,       // AliLux RF Receive input
+#endif
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,
   GPIO_HRE_DATA
-#endif  
+#endif
 };
 
-const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
+const uint8_t kModuleNiceList[] PROGMEM = {
   SONOFF_BASIC,        // Sonoff Relay Devices
   SONOFF_RF,
   SONOFF_TH,
@@ -654,9 +683,15 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   OBI2,
   MANZOKU_EU_4,
   ESP_SWITCH,          // Switch Devices
+#ifdef USE_TUYA_DIMMER
   TUYA_DIMMER,         // Dimmer Devices
+#endif
+#ifdef USE_ARMTRONIX_DIMMERS
   ARMTRONIX_DIMMERS,
+#endif
+#ifdef USE_PS_16_DZ
   PS_16_DZ,
+#endif
   H801,                // Light Devices
   MAGICHOME,
   ARILUX_LC01,
@@ -664,7 +699,9 @@ const uint8_t kModuleNiceList[MAXMODULE] PROGMEM = {
   ARILUX_LC11,
   ZENGGE_ZF_WF017,
   HUAFAN_SS,
+#ifdef ROTARY_V1
   MI_DESK_LAMP,
+#endif
   KMC_70011,
   AILIGHT,             // Light Bulbs
   PHILIPS,
@@ -731,7 +768,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off) - Link and Power status
      GPIO_USER,        // GPIO14 Optional sensor
      0, 0,
-     GPIO_FLAG_ADC0    // ADC0 Analog input
+     ADC0_USER         // ADC0 Analog input
   },
   { "Sonoff TH",       // Sonoff TH10/16 (ESP8266)
      GPIO_KEY1,        // GPIO00 Button
@@ -929,7 +966,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor
      GPIO_USER,        // GPIO15 Optional sensor
      GPIO_LED1,        // GPIO16 Green/Blue Led (1 = On, 0 = Off) - Link and Power status
-     GPIO_FLAG_ADC0    // ADC0   A0 Analog input
+     ADC0_USER         // ADC0   A0 Analog input
   },
   { "EXS Relay(s)",    // ES-Store Latching relay(s) (ESP8266)
                        // https://ex-store.de/ESP8266-WiFi-Relay-V31
@@ -990,7 +1027,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 D5
      GPIO_USER,        // GPIO15 D8
      GPIO_USER,        // GPIO16 D0 Wemos Wake
-     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
+     ADC0_USER         // ADC0 A0 Analog input
   },
   { "Sonoff Dev",      // Sonoff Dev (ESP8266)
      GPIO_KEY1,        // GPIO00 E-FW Button
@@ -1010,7 +1047,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor
      0,                // GPIO15
      0,                // GPIO16
-     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
+     ADC0_USER         // ADC0 A0 Analog input
   },
   { "H801",            // Lixada H801 Wifi (ESP8266)
      GPIO_USER,        // GPIO00 E-FW Button
@@ -1217,7 +1254,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor
      0,
      GPIO_LED1,        // GPIO16 Led (1 = On, 0 = Off) - Link and Power status
-     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
+     ADC0_USER         // ADC0 A0 Analog input
   },
   { "Witty Cloud",     // Witty Cloud Dev Board (ESP8266)
                        // https://www.aliexpress.com/item/ESP8266-serial-WIFI-Witty-cloud-Development-Board-ESP-12F-module-MINI-nodemcu/32643464555.html
@@ -1238,7 +1275,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 D5 optional sensor
      GPIO_PWM1,        // GPIO15 D8 RGB LED Red
      GPIO_USER,        // GPIO16 D0 optional sensor
-     GPIO_FLAG_ADC0    // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
+     ADC0_USER         // ADC0 A0 Light sensor / Requires USE_ADC_VCC in user_config.h to be disabled
   },
   { "Yunshan Relay",   // Yunshan Wifi Relay (ESP8266)
                        // https://www.ebay.com/p/Esp8266-220v-10a-Network-Relay-WiFi-Module/1369583381
@@ -1296,7 +1333,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14 Optional sensor / I2C SCL pad
      GPIO_LED1,        // GPIO15 Led (1 = On, 0 = Off) - Link and Power status
      0,
-     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
+     ADC0_USER         // ADC0 A0 Analog input
   },
   { "KMC 70011",       // KMC 70011
                        // https://www.amazon.com/KMC-Timing-Monitoring-Network-125V-240V/dp/B06XRX2GTQ
@@ -1588,7 +1625,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_KEY1,        // GPIO14 Button
      0,
      GPIO_USER,        // GPIO16
-     GPIO_FLAG_ADC0    // ADC0   A0 Analog input
+     ADC0_USER         // ADC0   A0 Analog input
   },
   { "Teckin",          // https://www.amazon.de/gp/product/B07D5V139R
      0,
@@ -1933,7 +1970,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_SM16716_DAT, // GPIO14 SM16716 Data
      0,                // GPIO15 wired to GND
      GPIO_USER,        // GPIO16 N.C.
-     GPIO_FLAG_ADC0    // ADC0 A0 Analog input
+     ADC0_USER         // ADC0 A0 Analog input
   }
 };
 

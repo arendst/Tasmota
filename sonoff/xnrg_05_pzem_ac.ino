@@ -115,7 +115,7 @@ int Xnrg05(uint8_t function)
       case FUNC_INIT:
         PzemAcSnsInit();
         break;
-      case FUNC_EVERY_SECOND:
+      case FUNC_ENERGY_EVERY_SECOND:
         PzemAcEverySecond();
         break;
     }

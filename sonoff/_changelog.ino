@@ -1,4 +1,62 @@
-/* 6.5.0.3 20190328
+/* 6.5.0.11 20190517
+ * Add command SetOption64 0/1 to switch between "-" or "_" as sensor index separator impacting DS18X20, DHT, BMP and SHT3X sensor names (#5689)
+ * Add initial support for Scripts as replacement for Rules. Default disabled but can be enabled in my_user_config.h (#5689)
+ * Add rule System#Save executed just before a planned restart
+ * Add HX711 weight restore after controlled restart or after power restore just before executing command Sensor34 7 (#5367, #5786)
+ *
+ * 6.5.0.10 20190513
+ * Enable ADC0 by default in my_user_config.h (#5671)
+ * Add user configurable ADC0 to Module and Template configuration compatible with current FLAG options (#5671)
+ * Add support for Shelly 1PM Template {"NAME":"Shelly 1PM","GPIO":[56,0,0,0,82,134,0,0,0,0,0,21,0],"FLAG":2,"BASE":18} (#5716)
+ * Fix Sonoff Pow R2 / S31 invalid energy increments (#5789)
+ * Add device OverTemp (>73 Celsius) detection to any Energy Monitoring device with temperature sensor powering off all outputs
+ * Add rule support for single JSON value pair like {"SSerialReceived":"on"} by expanding it to {"SSerialReceived":{"Data":"on"}} allowing for trigger SSerialReceived#Data=on (#5638)
+ *
+ * 6.5.0.9 20190418
+ * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)
+ * Fix TasmotaSerial at 9600 bps solving DFPlayer comms (#5528)
+ * Fix Shelly 2.5 overtemp
+ * Set gamma correction as default behavior, ie "Ledtable 1"
+ * Refactored management of lights, using classes and integers instead of floats.
+ * Extend PWM resolution from 8 to 10 bits for low brightness lights
+ * Allow all 5 PWM channels individually adressable with LEDs. (#5741)
+ * Fixed inversion of WC/WW channels, back to RGBCW
+ * Fixed the Unescape() function and the SendSerial3 behaviour
+ *
+ * 6.5.0.8 20190413
+ * Add Tuya Dimmer 10 second heartbeat serial packet required by some Tuya dimmer secondary MCUs
+ * Fix use of SerialDelimiter value 128 (#5634)
+ * Fix lost syslog connection regression from 6.5.0.4
+ * Add Shelly 2.5 Energy Monitoring (#5592)
+ * Add all temperature, humidity and pressure for global access
+ * Add Shelly 2.5 overtemp functionality
+ * Fix Shelly 2.5 I2C address priority issue when VEML6070 code is present by disabling VEML6070 for Shelly 2.5 (#5592)
+ * Support for color and colortone for Philips Hue emulation via Alexa (#5600 #4809)
+ *
+ * 6.5.0.7 20190410
+ * Add command LedMask to assign which relay has access to power LED (#5602, #5612)
+ *
+ * 6.5.0.6 20190409
+ * Add WebColor parameters to Settings making them persistent and remove the need for using a rule
+ * Add alternative IRSend command syntax IRSend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream> (#5610)
+ *
+ * 6.5.0.5 20190406
+ * Add compile time GUI hexadecimal only color options in my_user_config.h (#5586)
+ * Fix template activation and/or module selection regression from 6.5.0.4 (#5598)
+ * Add rule Http#Initialized
+ * Add command WebColor to change non-persistent GUI colors on the fly
+   Use a rule like:
+   rule3 on http#initialized do webcolor {"webcolor":["#eeeeee","#181818","#4f4f4f","#000000","#dddddd","#008000","#222222","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999"]} endon
+   or
+   rule3 on http#initialized do webcolor {"webcolor":["#eee","#181818","#4f4f4f","#000","#ddd","#009800","#222"]} endon
+   to make color changes persistent)
+ *
+ * 6.5.0.4 20190402
+ * Fix Configure Timer Web GUI (#5568)
+ * Add validation check when loading settings from flash
+ * Fixed Display Bug in KNX webmenu for Physical Address
+ *
+ * 6.5.0.3 20190328
  * Add command Sensor20 1..255 to change Nova Fitness SDS01 working period in minutes (#5452)
  *
  * 6.5.0.2 20190325

@@ -18,36 +18,36 @@
 */
 
 #ifndef DOMOTICZ_UPDATE_TIMER
-#define DOMOTICZ_UPDATE_TIMER  0            // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
+#define DOMOTICZ_UPDATE_TIMER       0          // [DomoticzUpdateTimer] Send relay status (0 = disable, 1 - 3600 seconds) (Optional)
 #endif
 
 #ifndef EMULATION
-#define EMULATION              EMUL_NONE    // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
+#define EMULATION                   EMUL_NONE  // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
 #endif
 
-#ifndef MTX_ADDRESS1                        // Add Display Support for up to eigth Matrices
-#define MTX_ADDRESS1           0
+#ifndef MTX_ADDRESS1                           // Add Display Support for up to eigth Matrices
+#define MTX_ADDRESS1                0
 #endif
 #ifndef MTX_ADDRESS2
-#define MTX_ADDRESS2           0
+#define MTX_ADDRESS2                0
 #endif
 #ifndef MTX_ADDRESS3
-#define MTX_ADDRESS3           0
+#define MTX_ADDRESS3                0
 #endif
 #ifndef MTX_ADDRESS4
-#define MTX_ADDRESS4           0
+#define MTX_ADDRESS4                0
 #endif
 #ifndef MTX_ADDRESS5
-#define MTX_ADDRESS5           0
+#define MTX_ADDRESS5                0
 #endif
 #ifndef MTX_ADDRESS6
-#define MTX_ADDRESS6           0
+#define MTX_ADDRESS6                0
 #endif
 #ifndef MTX_ADDRESS7
-#define MTX_ADDRESS7           0
+#define MTX_ADDRESS7                0
 #endif
 #ifndef MTX_ADDRESS8
-#define MTX_ADDRESS8           0
+#define MTX_ADDRESS8                0
 #endif
 
 #ifndef HOME_ASSISTANT_DISCOVERY_ENABLE
@@ -55,17 +55,91 @@
 #endif
 
 #ifndef LATITUDE
-#define LATITUDE               48.858360         // [Latitude] Your location to be used with sunrise and sunset
+#define LATITUDE                    48.858360  // [Latitude] Your location to be used with sunrise and sunset
 #endif
 #ifndef LONGITUDE
-#define LONGITUDE              2.294442          // [Longitude] Your location to be used with sunrise and sunset
+#define LONGITUDE                   2.294442   // [Longitude] Your location to be used with sunrise and sunset
 #endif
+
+#ifndef WORKING_PERIOD
+#define WORKING_PERIOD              5          // Working period of the SDS Sensor, Takes a reading every X Minutes
+#endif
+
+#ifndef COLOR_TEXT
+#define COLOR_TEXT                  "#000"     // Global text color - Black
+#endif
+#ifndef COLOR_BACKGROUND
+#define COLOR_BACKGROUND            "#fff"     // Global background color - White
+#endif
+#ifndef COLOR_FORM
+#define COLOR_FORM                  "#f2f2f2"  // Form background color - Greyish
+#endif
+#ifndef COLOR_INPUT_TEXT
+#define COLOR_INPUT_TEXT            "#000"     // Input text color - Black
+#endif
+#ifndef COLOR_INPUT
+#define COLOR_INPUT                 "#fff"     // Input background color - White
+#endif
+#ifndef COLOR_CONSOLE_TEXT
+#define COLOR_CONSOLE_TEXT          "#000"     // Console text color - Black
+#endif
+#ifndef COLOR_CONSOLE
+#define COLOR_CONSOLE               "#fff"     // Console background color - White
+#endif
+#ifndef COLOR_TEXT_WARNING
+#define COLOR_TEXT_WARNING          "#f00"     // Warning text color - Red
+#endif
+#ifndef COLOR_TEXT_SUCCESS
+#define COLOR_TEXT_SUCCESS          "#008000"  // Success text color - Green
+#endif
+#ifndef COLOR_BUTTON_TEXT
+#define COLOR_BUTTON_TEXT           "#fff"     // Button text color - White
+#endif
+#ifndef COLOR_BUTTON
+#define COLOR_BUTTON                "#1fa3ec"  // Button color - Blueish
+#endif
+#ifndef COLOR_BUTTON_HOVER
+#define COLOR_BUTTON_HOVER          "#0e70a4"  // Button color when hovered over - Darker blueish
+#endif
+#ifndef COLOR_BUTTON_RESET
+#define COLOR_BUTTON_RESET          "#d43535"  // Restart/Reset/Delete button color - Redish
+#endif
+#ifndef COLOR_BUTTON_RESET_HOVER
+#define COLOR_BUTTON_RESET_HOVER    "#931f1f"  // Restart/Reset/Delete button color when hovered over - Darker redish
+#endif
+#ifndef COLOR_BUTTON_SAVE
+#define COLOR_BUTTON_SAVE           "#47c266"  // Save button color - Greenish
+#endif
+#ifndef COLOR_BUTTON_SAVE_HOVER
+#define COLOR_BUTTON_SAVE_HOVER     "#5aaf6f"  // Save button color when hovered over - Darker greenish
+#endif
+#ifndef COLOR_TIMER_TAB_TEXT
+#define COLOR_TIMER_TAB_TEXT        "#fff"     // Config timer tab text color - White
+#endif
+#ifndef COLOR_TIMER_TAB_BACKGROUND
+#define COLOR_TIMER_TAB_BACKGROUND  "#999"     // Config timer tab background color - Light grey
+#endif
+
+enum WebColors {
+  COL_TEXT, COL_BACKGROUND, COL_FORM,
+  COL_INPUT_TEXT, COL_INPUT, COL_CONSOLE_TEXT, COL_CONSOLE,
+  COL_TEXT_WARNING, COL_TEXT_SUCCESS,
+  COL_BUTTON_TEXT, COL_BUTTON, COL_BUTTON_HOVER, COL_BUTTON_RESET, COL_BUTTON_RESET_HOVER, COL_BUTTON_SAVE, COL_BUTTON_SAVE_HOVER,
+  COL_TIMER_TAB_TEXT, COL_TIMER_TAB_BACKGROUND,
+  COL_LAST };
+
+const char kWebColors[] PROGMEM =
+  COLOR_TEXT "|" COLOR_BACKGROUND "|" COLOR_FORM "|"
+  COLOR_INPUT_TEXT "|" COLOR_INPUT "|" COLOR_CONSOLE_TEXT "|" COLOR_CONSOLE "|"
+  COLOR_TEXT_WARNING "|" COLOR_TEXT_SUCCESS "|"
+  COLOR_BUTTON_TEXT "|" COLOR_BUTTON "|" COLOR_BUTTON_HOVER "|" COLOR_BUTTON_RESET "|" COLOR_BUTTON_RESET_HOVER "|" COLOR_BUTTON_SAVE "|" COLOR_BUTTON_SAVE_HOVER "|"
+  COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND;
 
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/
 
-#define RTC_MEM_VALID 0xA55A
+const uint16_t RTC_MEM_VALID = 0xA55A;
 
 uint32_t rtc_settings_crc = 0;
 
@@ -168,16 +242,18 @@ extern "C" {
 extern "C" uint32_t _SPIFFS_end;
 
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
-#define SPIFFS_END          ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE
+const uint32_t SPIFFS_END = ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
 
 // Version 4.2 config = eeprom area
-#define SETTINGS_LOCATION   SPIFFS_END  // No need for SPIFFS as it uses EEPROM area
+const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses EEPROM area
 // Version 5.2 allow for more flash space
-#define CFG_ROTATES         8           // Number of flash sectors used (handles uploads)
+const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
 
 /*********************************************************************************************\
- * EEPROM support based on EEPROM library and tuned for Tasmota
+ * Optional EEPROM support based on EEPROM library and tuned for Tasmota
 \*********************************************************************************************/
+//#define USE_EEPROM
+#ifdef USE_EEPROM
 
 uint32_t eeprom_sector = SPIFFS_END;
 uint8_t* eeprom_data = 0;
@@ -305,7 +381,7 @@ void EepromEnd(void)
   eeprom_size = 0;
   eeprom_dirty = false;
 }
-
+#endif  // USE_EEPROM
 /********************************************************************************************/
 
 uint16_t settings_crc = 0;
@@ -372,7 +448,10 @@ void SettingsSaveAll(void)
     Settings.power = 0;
   }
   XsnsCall(FUNC_SAVE_BEFORE_RESTART);
+  XdrvCall(FUNC_SAVE_BEFORE_RESTART);
+#ifdef USE_EEPROM
   EepromCommit();
+#endif
   SettingsSave(0);
 }
 
@@ -415,6 +494,7 @@ void SettingsSave(uint8_t rotate)
     Settings.cfg_size = sizeof(SYSCFG);
     Settings.cfg_crc = GetSettingsCrc();
 
+#ifdef USE_EEPROM
     if (SPIFFS_END == settings_location) {
       uint8_t* flash_buffer;
       flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
@@ -432,6 +512,10 @@ void SettingsSave(uint8_t rotate)
       ESP.flashEraseSector(settings_location);
       ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
     }
+#else
+    ESP.flashEraseSector(settings_location);
+    ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+#endif  // USE_EEPROM
 
     if (!stop_flash_rotate && rotate) {
       for (uint8_t i = 1; i < CFG_ROTATES; i++) {
@@ -460,13 +544,17 @@ void SettingsLoad(void)
 
   settings_location = 0;
   uint32_t flash_location = SETTINGS_LOCATION +1;
+  uint16_t cfg_holder = 0;
   for (uint8_t i = 0; i < CFG_ROTATES; i++) {
     flash_location--;
     ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
 
     bool valid = false;
     if (Settings.version > 0x06000000) {
-      valid = (Settings.cfg_crc == GetSettingsCrc());
+      bool almost_valid = (Settings.cfg_crc == GetSettingsCrc());
+      // Sometimes CRC on pages below FB, overwritten by OTA, is fine but Settings are still invalid. So check cfg_holder too
+      if (almost_valid && (0 == cfg_holder)) { cfg_holder = Settings.cfg_holder; }  // At FB always active cfg_holder
+      valid = (cfg_holder == Settings.cfg_holder);
     } else {
       ESP.flashRead((flash_location -1) * SPI_FLASH_SEC_SIZE, (uint32*)&_SettingsH, sizeof(SYSCFGH));
       valid = (Settings.cfg_holder == _SettingsH.cfg_holder);
@@ -485,7 +573,7 @@ void SettingsLoad(void)
   }
   if (settings_location > 0) {
     ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %d"), settings_location, Settings.save_flag);
+    AddLog_P2(LOG_LEVEL_NONE, PSTR(D_LOG_CONFIG D_LOADED_FROM_FLASH_AT " %X, " D_COUNT " %lu"), settings_location, Settings.save_flag);
   }
 
 #ifndef FIRMWARE_MINIMAL
@@ -612,6 +700,7 @@ void SettingsDefaultSet2(void)
   Settings.blinktime = APP_BLINKTIME;
   Settings.blinkcount = APP_BLINKCOUNT;
   Settings.ledstate = APP_LEDSTATE;
+  Settings.ledmask = APP_LEDMASK;
   Settings.pulse_timer[0] = APP_PULSETIME;
 //  for (uint8_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
 
@@ -781,7 +870,7 @@ void SettingsDefaultSet2(void)
     Settings.light_color[i] = 255;
 //    Settings.pwm_value[i] = 0;
   }
-//  Settings.light_correction = 0;
+  Settings.light_correction = 1;
   Settings.light_dimmer = 10;
 //  Settings.light_fade = 0;
   Settings.light_speed = 1;
@@ -825,6 +914,8 @@ void SettingsDefaultSet2(void)
   }
 
   Settings.novasds_period = WORKING_PERIOD;
+
+  SettingsDefaultWebColor();
 
   memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
 }
@@ -896,6 +987,14 @@ void SettingsDefaultSet_5_13_1c(void)
   SettingsResetDst();
 }
 
+void SettingsDefaultWebColor(void)
+{
+  char scolor[10];
+  for (uint8_t i = 0; i < COL_LAST; i++) {
+    WebHexCode(i, GetTextIndexed(scolor, sizeof(scolor), i, kWebColors));
+  }
+}
+
 /********************************************************************************************/
 
 void SettingsDelta(void)
@@ -913,7 +1012,7 @@ void SettingsDelta(void)
       Settings.light_color[1] = 0;
       Settings.light_color[2] = 0;
       Settings.light_dimmer = 10;
-      Settings.light_correction = 0;
+      Settings.light_correction = 1;
       Settings.light_fade = 0;
       Settings.light_speed = 1;
       Settings.light_scheme = 0;
@@ -1068,6 +1167,15 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06050003) {
       Settings.novasds_period = WORKING_PERIOD;
+    }
+    if (Settings.version < 0x06050006) {
+      SettingsDefaultWebColor();
+    }
+    if (Settings.version < 0x06050007) {
+      Settings.ledmask = APP_LEDMASK;
+    }
+    if (Settings.version < 0x0605000A) {
+      Settings.my_adc0 = ADC0_NONE;
     }
 
     Settings.version = VERSION;

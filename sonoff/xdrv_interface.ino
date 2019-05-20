@@ -16,7 +16,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
- 
+
 #ifdef XFUNC_PTR_IN_ROM
 bool (* const xdrv_func_ptr[])(uint8_t) PROGMEM = {   // Driver Function Pointers
 #else

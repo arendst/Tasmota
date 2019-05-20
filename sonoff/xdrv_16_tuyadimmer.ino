@@ -52,6 +52,7 @@ uint8_t tuya_cmd_status = 0;                // Current status of serial-read
 uint8_t tuya_cmd_checksum = 0;              // Checksum of tuya command
 uint8_t tuya_data_len = 0;                  // Data lenght of command
 int8_t tuya_wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()
+uint8_t tuya_heartbeat_timer = 0;           // 10 second heartbeat timer for tuya module
 
 char *tuya_buffer = nullptr;                // Serial receive buffer
 int tuya_byte_counter = 0;                  // Index in serial receive buffer
@@ -294,6 +295,7 @@ void TuyaInit(void)
       TuyaSendCmd(TUYA_CMD_MCU_CONF);
     }
   }
+  tuya_heartbeat_timer = 0; // init heartbeat timer when dimmer init is done
 }
 
 void TuyaSerialInput(void)
@@ -393,14 +395,14 @@ bool Xdrv16(uint8_t function)
 
   if (TUYA_DIMMER == my_module_type) {
     switch (function) {
+      case FUNC_LOOP:
+        if (TuyaSerial) { TuyaSerialInput(); }
+        break;
       case FUNC_MODULE_INIT:
         result = TuyaModuleSelected();
         break;
       case FUNC_INIT:
         TuyaInit();
-        break;
-      case FUNC_LOOP:
-        if (TuyaSerial) { TuyaSerialInput(); }
         break;
       case FUNC_SET_DEVICE_POWER:
         result = TuyaSetPower();
@@ -410,6 +412,11 @@ bool Xdrv16(uint8_t function)
         break;
       case FUNC_EVERY_SECOND:
         if(TuyaSerial && tuya_wifi_state!=WifiState()) { TuyaSetWifiLed(); }
+        tuya_heartbeat_timer++;
+        if (tuya_heartbeat_timer > 10) {
+           tuya_heartbeat_timer = 0;
+           TuyaSendCmd(TUYA_CMD_HEARTBEAT);
+        } 
         break;
       case FUNC_SET_CHANNELS:
         result = TuyaSetChannels();

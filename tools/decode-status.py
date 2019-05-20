@@ -147,7 +147,7 @@ a_features = [[
     "USE_PZEM_DC","USE_TX20_WIND_SENSOR","USE_MGC3130","USE_RF_SENSOR",
     "USE_THEO_V2","USE_ALECTO_V2","USE_AZ7798","USE_MAX31855",
     "USE_PN532_I2C","USE_MAX44009","USE_SCD30","USE_HRE",
-    "","","","",
+    "USE_ADE7953","","","",
     "","","",""]]
 
 usage = "usage: decode-status {-d | -f} arg"
