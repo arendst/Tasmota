@@ -195,11 +195,14 @@ void TuyaPacketProcess(void)
     case TUYA_CMD_STATE:
       if (tuya_buffer[5] == 5) {  // on/off packet
 
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Device -%d --> %s State"),tuya_buffer[6],tuya_buffer[10]?"On":"Off");
-        ExecuteCommandPower(tuya_buffer[6], tuya_buffer[10], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
         /*if((power || Settings.light_dimmer > 0) && (power != tuya_buffer[10])) {
           ExecuteCommandPower(1, tuya_buffer[10], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
         }*/
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Device-%d --> MCU State: %s Current State:%s"),tuya_buffer[6],tuya_buffer[10]?"On":"Off",bitRead(power, tuya_buffer[6]-1)?"On":"Off");
+          if((power || Settings.light_dimmer > 0) && (tuya_buffer[10] != bitRead(power, tuya_buffer[6]-1)))
+          {
+            ExecuteCommandPower(tuya_buffer[6], tuya_buffer[10], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+          }
       }
       else if (tuya_buffer[5] == 8) {  // dim packet
 
