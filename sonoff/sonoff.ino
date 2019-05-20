@@ -2652,6 +2652,13 @@ void setup(void)
   sleep = Settings.sleep;
 #ifndef USE_EMULATION
   Settings.flag2.emulation = 0;
+#else
+#ifndef USE_EMULATION_WEMO
+  if (EMUL_WEMO == Settings.flag2.emulation) { Settings.flag2.emulation = 0; }
+#endif
+#ifndef USE_EMULATION_HUE
+  if (EMUL_HUE == Settings.flag2.emulation) { Settings.flag2.emulation = 0; }
+#endif
 #endif  // USE_EMULATION
 
   if (Settings.param[P_BOOT_LOOP_OFFSET]) {

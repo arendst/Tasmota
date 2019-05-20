@@ -1,5 +1,5 @@
 /*
-  xplg_wemohue.ino - wemo and hue support for Sonoff-Tasmota
+  xdrv_20_hue.ino - Philips Hue support for Sonoff-Tasmota
 
   Copyright (C) 2019  Heiko Krupp and Theo Arends
 
@@ -17,99 +17,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE)
 /*********************************************************************************************\
- * Belkin WeMo and Philips Hue bridge emulation
-\*********************************************************************************************/
-
-#define UDP_BUFFER_SIZE         200      // Max UDP buffer size needed for M-SEARCH message
-#define UDP_MSEARCH_SEND_DELAY  1500     // Delay in ms before M-Search response is send
-
-#include <Ticker.h>
-Ticker TickerMSearch;
-
-IPAddress udp_remote_ip;                 // M-Search remote IP address
-uint16_t udp_remote_port;                // M-Search remote port
-
-bool udp_connected = false;
-bool udp_response_mutex = false;         // M-Search response mutex to control re-entry
-
-/*********************************************************************************************\
- * UPNP search targets
-\*********************************************************************************************/
-
-const char URN_BELKIN_DEVICE[] PROGMEM = "urn:belkin:device:**";
-const char UPNP_ROOTDEVICE[] PROGMEM = "upnp:rootdevice";
-const char SSDPSEARCH_ALL[] PROGMEM = "ssdpsearch:all";
-const char SSDP_ALL[] PROGMEM = "ssdp:all";
-
-/*********************************************************************************************\
- * WeMo UPNP support routines
-\*********************************************************************************************/
-
-const char WEMO_MSEARCH[] PROGMEM =
-  "HTTP/1.1 200 OK\r\n"
-  "CACHE-CONTROL: max-age=86400\r\n"
-  "DATE: Fri, 15 Apr 2016 04:56:29 GMT\r\n"
-  "EXT:\r\n"
-  "LOCATION: http://%s:80/setup.xml\r\n"
-  "OPT: \"http://schemas.upnp.org/upnp/1/0/\"; ns=01\r\n"
-  "01-NLS: b9200ebb-736d-4b93-bf03-835149d13983\r\n"
-  "SERVER: Unspecified, UPnP/1.0, Unspecified\r\n"
-  "ST: %s\r\n"                // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
-  "USN: uuid:%s::%s\r\n"      // type1 = urn:Belkin:device:**, type2 = upnp:rootdevice
-  "X-User-Agent: redsonic\r\n"
-  "\r\n";
-
-String WemoSerialnumber(void)
-{
-  char serial[16];
-
-  snprintf_P(serial, sizeof(serial), PSTR("201612K%08X"), ESP.getChipId());
-  return String(serial);
-}
-
-String WemoUuid(void)
-{
-  char uuid[27];
-
-  snprintf_P(uuid, sizeof(uuid), PSTR("Socket-1_0-%s"), WemoSerialnumber().c_str());
-  return String(uuid);
-}
-
-void WemoRespondToMSearch(int echo_type)
-{
-  char message[TOPSZ];
-
-  TickerMSearch.detach();
-  if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
-    char type[24];
-    if (1 == echo_type) {              // type1 echo 1g & dot 2g
-      strcpy_P(type, URN_BELKIN_DEVICE);
-    } else {                           // type2 echo 2g (echo, plus, show)
-      strcpy_P(type, UPNP_ROOTDEVICE);
-    }
-    char response[400];
-    snprintf_P(response, sizeof(response), WEMO_MSEARCH, WiFi.localIP().toString().c_str(), type, WemoUuid().c_str(), type);
-    PortUdp.write(response);
-    PortUdp.endPacket();
-    snprintf_P(message, sizeof(message), PSTR(D_RESPONSE_SENT));
-  } else {
-    snprintf_P(message, sizeof(message), PSTR(D_FAILED_TO_SEND_RESPONSE));
-  }
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_WEMO " " D_JSON_TYPE " %d, %s " D_TO " %s:%d"),
-    echo_type, message, udp_remote_ip.toString().c_str(), udp_remote_port);
-
-  udp_response_mutex = false;
-}
-
-/*********************************************************************************************\
+ * Philips Hue bridge emulation
+ *
  * Hue Bridge UPNP support routines
  * Need to send 3 response packets with varying ST and USN
  *
  * Using Espressif Inc Mac Address of 5C:CF:7F:00:00:00
  * Philips Lighting is 00:17:88:00:00:00
 \*********************************************************************************************/
+
+#define XDRV_20           20
 
 const char HUE_RESPONSE[] PROGMEM =
   "HTTP/1.1 200 OK\r\n"
@@ -185,256 +104,6 @@ void HueRespondToMSearch(void)
     message, udp_remote_ip.toString().c_str(), udp_remote_port);
 
   udp_response_mutex = false;
-}
-
-/*********************************************************************************************\
- * Belkin WeMo and Philips Hue bridge UDP multicast support
-\*********************************************************************************************/
-
-bool UdpDisconnect(void)
-{
-  if (udp_connected) {
-    PortUdp.flush();
-    WiFiUDP::stopAll();
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPNP D_MULTICAST_DISABLED));
-    udp_connected = false;
-  }
-  return udp_connected;
-}
-
-bool UdpConnect(void)
-{
-  if (!udp_connected) {
-    // Simple Service Discovery Protocol (SSDP)
-    if (PortUdp.beginMulticast(WiFi.localIP(), IPAddress(239,255,255,250), 1900)) {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_REJOINED));
-      udp_response_mutex = false;
-      udp_connected = true;
-    } else {
-      AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_UPNP D_MULTICAST_JOIN_FAILED));
-      udp_connected = false;
-    }
-  }
-  return udp_connected;
-}
-
-void PollUdp(void)
-{
-  if (udp_connected) {
-    if (PortUdp.parsePacket()) {
-      char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP/SSDP packet
-
-      int len = PortUdp.read(packet_buffer, UDP_BUFFER_SIZE -1);
-      packet_buffer[len] = 0;
-
-      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: Packet (%d)"), len);
-//      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
-
-      if (devices_present && !udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
-        udp_response_mutex = true;
-
-        udp_remote_ip = PortUdp.remoteIP();
-        udp_remote_port = PortUdp.remotePort();
-
-//        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("UDP: M-SEARCH Packet from %s:%d\n%s"),
-//          udp_remote_ip.toString().c_str(), udp_remote_port, packet_buffer);
-
-        uint32_t response_delay = UDP_MSEARCH_SEND_DELAY + ((millis() &0x7) * 100);  // 1500 - 2200 msec
-
-        LowerCase(packet_buffer, packet_buffer);
-        RemoveSpace(packet_buffer);
-        if (EMUL_WEMO == Settings.flag2.emulation) {
-          if (strstr_P(packet_buffer, URN_BELKIN_DEVICE) != nullptr) {     // type1 echo dot 2g, echo 1g's
-            TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 1);
-            return;
-          }
-          else if ((strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||  // type2 Echo 2g (echo & echo plus)
-                   (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
-                   (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
-            TickerMSearch.attach_ms(response_delay, WemoRespondToMSearch, 2);
-            return;
-          }
-        } else {
-          if ((strstr_P(packet_buffer, PSTR(":device:basic:1")) != nullptr) ||
-              (strstr_P(packet_buffer, UPNP_ROOTDEVICE) != nullptr) ||
-              (strstr_P(packet_buffer, SSDPSEARCH_ALL) != nullptr) ||
-              (strstr_P(packet_buffer, SSDP_ALL) != nullptr)) {
-            TickerMSearch.attach_ms(response_delay, HueRespondToMSearch);
-            return;
-          }
-        }
-        udp_response_mutex = false;
-      }
-    }
-    delay(1);
-  }
-}
-
-/*********************************************************************************************\
- * Wemo web server additions
-\*********************************************************************************************/
-
-const char WEMO_EVENTSERVICE_XML[] PROGMEM =
-  "<scpd xmlns=\"urn:Belkin:service-1-0\">"
-    "<actionList>"
-      "<action>"
-        "<name>SetBinaryState</name>"
-        "<argumentList>"
-          "<argument>"
-            "<retval/>"
-            "<name>BinaryState</name>"
-            "<relatedStateVariable>BinaryState</relatedStateVariable>"
-            "<direction>in</direction>"
-          "</argument>"
-        "</argumentList>"
-      "</action>"
-      "<action>"
-        "<name>GetBinaryState</name>"
-        "<argumentList>"
-          "<argument>"
-            "<retval/>"
-            "<name>BinaryState</name>"
-            "<relatedStateVariable>BinaryState</relatedStateVariable>"
-            "<direction>out</direction>"
-          "</argument>"
-        "</argumentList>"
-      "</action>"
-    "</actionList>"
-    "<serviceStateTable>"
-      "<stateVariable sendEvents=\"yes\">"
-        "<name>BinaryState</name>"
-        "<dataType>bool</dataType>"
-        "<defaultValue>0</defaultValue>"
-      "</stateVariable>"
-      "<stateVariable sendEvents=\"yes\">"
-        "<name>level</name>"
-        "<dataType>string</dataType>"
-        "<defaultValue>0</defaultValue>"
-      "</stateVariable>"
-    "</serviceStateTable>"
-  "</scpd>\r\n\r\n";
-
-const char WEMO_METASERVICE_XML[] PROGMEM =
-  "<scpd xmlns=\"urn:Belkin:service-1-0\">"
-    "<specVersion>"
-      "<major>1</major>"
-      "<minor>0</minor>"
-    "</specVersion>"
-    "<actionList>"
-      "<action>"
-        "<name>GetMetaInfo</name>"
-        "<argumentList>"
-          "<retval />"
-          "<name>GetMetaInfo</name>"
-          "<relatedStateVariable>MetaInfo</relatedStateVariable>"
-          "<direction>in</direction>"
-        "</argumentList>"
-      "</action>"
-    "</actionList>"
-    "<serviceStateTable>"
-      "<stateVariable sendEvents=\"yes\">"
-        "<name>MetaInfo</name>"
-        "<dataType>string</dataType>"
-        "<defaultValue>0</defaultValue>"
-      "</stateVariable>"
-    "</serviceStateTable>"
-  "</scpd>\r\n\r\n";
-
-const char WEMO_RESPONSE_STATE_SOAP[] PROGMEM =
-  "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">"
-    "<s:Body>"
-      "<u:%cetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">"
-        "<BinaryState>%d</BinaryState>"
-      "</u:%cetBinaryStateResponse>"
-    "</s:Body>"
-  "</s:Envelope>\r\n";
-
-const char WEMO_SETUP_XML[] PROGMEM =
-  "<?xml version=\"1.0\"?>"
-  "<root xmlns=\"urn:Belkin:device-1-0\">"
-    "<device>"
-      "<deviceType>urn:Belkin:device:controllee:1</deviceType>"
-      "<friendlyName>{x1</friendlyName>"
-      "<manufacturer>Belkin International Inc.</manufacturer>"
-      "<modelName>Socket</modelName>"
-      "<modelNumber>3.1415</modelNumber>"
-      "<UDN>uuid:{x2</UDN>"
-      "<serialNumber>{x3</serialNumber>"
-      "<binaryState>0</binaryState>"
-      "<serviceList>"
-        "<service>"
-          "<serviceType>urn:Belkin:service:basicevent:1</serviceType>"
-          "<serviceId>urn:Belkin:serviceId:basicevent1</serviceId>"
-          "<controlURL>/upnp/control/basicevent1</controlURL>"
-          "<eventSubURL>/upnp/event/basicevent1</eventSubURL>"
-          "<SCPDURL>/eventservice.xml</SCPDURL>"
-        "</service>"
-        "<service>"
-          "<serviceType>urn:Belkin:service:metainfo:1</serviceType>"
-          "<serviceId>urn:Belkin:serviceId:metainfo1</serviceId>"
-          "<controlURL>/upnp/control/metainfo1</controlURL>"
-          "<eventSubURL>/upnp/event/metainfo1</eventSubURL>"
-          "<SCPDURL>/metainfoservice.xml</SCPDURL>"
-        "</service>"
-      "</serviceList>"
-    "</device>"
-  "</root>\r\n";
-
-/********************************************************************************************/
-
-void HandleUpnpEvent(void)
-{
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_BASIC_EVENT));
-
-  char event[500];
-  strlcpy(event, WebServer->arg(0).c_str(), sizeof(event));
-
-//  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), event);
-
-  //differentiate get and set state
-  char state = 'G';
-  if (strstr_P(event, PSTR("SetBinaryState")) != nullptr) {
-    state = 'S';
-    uint8_t power = POWER_TOGGLE;
-    if (strstr_P(event, PSTR("State>1</Binary")) != nullptr) {
-      power = POWER_ON;
-    }
-    else if (strstr_P(event, PSTR("State>0</Binary")) != nullptr) {
-      power = POWER_OFF;
-    }
-    if (power != POWER_TOGGLE) {
-      uint8_t device = (light_type) ? devices_present : 1;  // Select either a configured light or relay1
-      ExecuteCommandPower(device, power, SRC_WEMO);
-    }
-  }
-
-  snprintf_P(event, sizeof(event), WEMO_RESPONSE_STATE_SOAP, state, bitRead(power, devices_present -1), state);
-  WSSend(200, CT_XML, event);
-}
-
-void HandleUpnpService(void)
-{
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_EVENT_SERVICE));
-
-  WSSend(200, CT_PLAIN, FPSTR(WEMO_EVENTSERVICE_XML));
-}
-
-void HandleUpnpMetaService(void)
-{
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_META_SERVICE));
-
-  WSSend(200, CT_PLAIN, FPSTR(WEMO_METASERVICE_XML));
-}
-
-void HandleUpnpSetupWemo(void)
-{
-  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, PSTR(D_WEMO_SETUP));
-
-  String setup_xml = FPSTR(WEMO_SETUP_XML);
-  setup_xml.replace("{x1", Settings.friendlyname[0]);
-  setup_xml.replace("{x2", WemoUuid());
-  setup_xml.replace("{x3", WemoSerialnumber());
-  WSSend(200, CT_XML, setup_xml);
 }
 
 /*********************************************************************************************\
@@ -970,19 +639,22 @@ void HandleHueApi(String *path)
   else HueGlobalConfig(path);
 }
 
-void HueWemoAddHandlers(void)
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+bool Xdrv20(uint8_t function)
 {
-  if (devices_present) {
-    if (EMUL_WEMO == Settings.flag2.emulation) {
-      WebServer->on("/upnp/control/basicevent1", HTTP_POST, HandleUpnpEvent);
-      WebServer->on("/eventservice.xml", HandleUpnpService);
-      WebServer->on("/metainfoservice.xml", HandleUpnpMetaService);
-      WebServer->on("/setup.xml", HandleUpnpSetupWemo);
-    }
-    if (EMUL_HUE == Settings.flag2.emulation) {
-      WebServer->on("/description.xml", HandleUpnpSetupHue);
+  bool result = false;
+
+  if (devices_present && (EMUL_HUE == Settings.flag2.emulation)) {
+    switch (function) {
+      case FUNC_WEB_ADD_HANDLER:
+        WebServer->on("/description.xml", HandleUpnpSetupHue);
+        break;
     }
   }
+  return result;
 }
 
-#endif  // USE_WEBSERVER && USE_EMULATION
+#endif  // USE_WEBSERVER && USE_EMULATION && USE_EMULATION_HUE
