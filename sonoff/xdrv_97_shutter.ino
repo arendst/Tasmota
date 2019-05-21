@@ -204,7 +204,7 @@ void Schutter_Update_Position()
           case OFF_OPEN__OFF_CLOSE:
             // avoid switching OFF a relay already OFF
             if ((1 << (cur_relay-1)) & power) {
-              // Relay is on and need to be switched off. 
+              // Relay is on and need to be switched off.
               ExecuteCommandPower(cur_relay, 0, SRC_SHUTTER);
             }
           break;
@@ -340,6 +340,9 @@ bool ShutterCommand()
           // code for momentary shutters only small switch on to stop Shutter
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);
           delay(100);
+        } else {
+          ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (new_shutterdirection == 1 ? 1 : 0), 0, SRC_SHUTTER);
+          DelayForMotorStop();
         }
       }
       if (Shutter_Direction[index-1] !=  new_shutterdirection ) {
@@ -348,7 +351,7 @@ bool ShutterCommand()
         if (shutterMode == OFF_ON__OPEN_CLOSE) {
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] , 0, SRC_SHUTTER);
           //µAddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay5 5s, xdrv %d"), XdrvMailbox.payload);
-          delay(MOTOR_STOP_TIME);
+          DelayForMotorStop();
           // Code for shutters with circuit safe configuration, switch the direction Relay
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] +1, new_shutterdirection == 1 ? 0 : 1, SRC_SHUTTER);
           // power on
@@ -356,7 +359,6 @@ bool ShutterCommand()
         } else {
           // now start the motor for the right direction, work for momentary and normal shutters.
           AddLog_P2(LOG_LEVEL_INFO, PSTR("Start shutter in direction %d"), Shutter_Direction[index-1]);
-          delay(MOTOR_STOP_TIME);
           ExecuteCommandPower(Settings.shutter_startrelay[index-1] + (new_shutterdirection == 1 ? 0 : 1), 1, SRC_SHUTTER);
           //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Delay6 5s, xdrv %d"), XdrvMailbox.payload);
         }
@@ -374,6 +376,12 @@ bool ShutterCommand()
     AddLog_P2(LOG_LEVEL_INFO, PSTR("Shutter unknown"));
   }
   return serviced;
+}
+
+void DelayForMotorStop()
+{
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("Wait for Motorstop %d"), MOTOR_STOP_TIME);
+  delay(MOTOR_STOP_TIME);
 }
 
 void Schutter_Report_Position()
@@ -405,11 +413,11 @@ void Shutter_Relay_changed()
       if (shutterMode == OFF_ON__OPEN_CLOSE) {
 				switch (powerstate_local) {
 					case 1:
-            delay(MOTOR_STOP_TIME);
+            DelayForMotorStop();
 					  Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
 					  break;
 					case 3:
-            delay(MOTOR_STOP_TIME);
+            DelayForMotorStop();
 					  Shutter_StartInit(i, -1, 0);
 					  break;
 					default:
@@ -424,11 +432,11 @@ void Shutter_Relay_changed()
 					last_source = SRC_SHUTTER; // avoid switch off in the next loop
 					if (powerstate_local == 2) { // testing on CLOSE relay, if ON
 					  // close with relay two
-            delay(MOTOR_STOP_TIME);
+            DelayForMotorStop();
 					  Shutter_StartInit(i, -1, 0);
 					} else {
 					  // opens with relay one
-            delay(MOTOR_STOP_TIME);
+            DelayForMotorStop();
 					  Shutter_StartInit(i, 1, Shutter_Open_Max[i]);
 					}
 				}
