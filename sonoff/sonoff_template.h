@@ -171,7 +171,7 @@ enum UserSelectablePins {
   GPIO_DCKI,           // my92x1 CLK input
   GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
-  GPIO_ARIRFRCV,       // AliLux RF Receive input
+  GPIO_ARIRFRCV,       // AriLux RF Receive input
   GPIO_TXD,            // Serial interface
   GPIO_RXD,            // Serial interface
   GPIO_ROT1A,          // Rotary switch1 A Pin
@@ -181,6 +181,9 @@ enum UserSelectablePins {
   GPIO_HRE_CLOCK,      // Clock/Power line for HR-E Water Meter
   GPIO_HRE_DATA,       // Data line for HR-E Water Meter
   GPIO_ADE7953_IRQ,    // ADE7953 IRQ
+  GPIO_LEDLNK,         // Link led
+  GPIO_LEDLNK_INV,     // Inverted link led
+  GPIO_ARIRFSEL,       // Arilux RF Receive input selected
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -246,6 +249,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ROTARY "1a|" D_SENSOR_ROTARY "1b|" D_SENSOR_ROTARY "2a|" D_SENSOR_ROTARY "2b|"
   D_SENSOR_HRE_CLOCK "|" D_SENSOR_HRE_DATA "|"
   D_SENSOR_ADE7953_IRQ "|"
+  D_SENSOR_LED_LINK "|" D_SENSOR_LED_LINK "i|"
+  D_SENSOR_ARIRFSEL "|"
   ;
 
 // User selectable ADC0 functionality
@@ -448,6 +453,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_LED3_INV,
   GPIO_LED4,
   GPIO_LED4_INV,
+  GPIO_LEDLNK,         // Link led
+  GPIO_LEDLNK_INV,     // Inverted link led
   GPIO_PWM1,           // RGB   Red   or C  Cold White
   GPIO_PWM1_INV,
   GPIO_PWM2,           // RGB   Green or CW Warm White
@@ -616,7 +623,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_ROT2B,          // Rotary switch2 B Pin
 #endif
 #ifdef USE_ARILUX_RF
-  GPIO_ARIRFRCV,       // AliLux RF Receive input
+  GPIO_ARIRFRCV,       // AriLux RF Receive input
+  GPIO_ARIRFSEL,       // Arilux RF Receive input selected
 #endif
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,
@@ -1109,9 +1117,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0, 0
   },
   { "Huafan SS",       // Hua Fan Smart Socket (ESP8266) - like Sonoff Pow
-     GPIO_LED1_INV,    // GPIO00 Blue Led (0 = On, 1 = Off) - Link status
+     GPIO_LEDLNK_INV,  // GPIO00 Blue Led (0 = On, 1 = Off) - Link status
      0, 0,
-     GPIO_LED2_INV,    // GPIO03 Red Led (0 = On, 1 = Off) - Power status
+     GPIO_LED1_INV,    // GPIO03 Red Led (0 = On, 1 = Off) - Power status
      GPIO_KEY1,        // GPIO04 Button
      GPIO_REL1_INV,    // GPIO05 Relay (0 = On, 1 = Off)
                        // GPIO06 (SD_CLK   Flash)
@@ -1304,7 +1312,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM3,        // GPIO12 RGB LED Blue
      GPIO_USER,        // GPIO13 RGBW LED White (optional - set to PWM4 for Cold White or Warm White as used on Arilux LC10)
      GPIO_PWM1,        // GPIO14 RGB LED Red
-     GPIO_LED4_INV,    // GPIO15 RF receiver control (Arilux LC10)
+     GPIO_ARIRFSEL,    // GPIO15 RF receiver control (Arilux LC10)
      0, 0
   },
   { "Luani HVIO",      // ESP8266_HVIO
@@ -1350,7 +1358,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        //  (PwmFrequency 1111Hz)
      GPIO_KEY1,        // GPIO00 Optional Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     GPIO_LED4_INV,    // GPIO02 RF receiver control
+     GPIO_ARIRFSEL,    // GPIO02 RF receiver control
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_ARIRFRCV,    // GPIO04 IR or RF receiver (optional)
      GPIO_PWM1,        // GPIO05 RGB LED Red
@@ -1370,7 +1378,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        //  (PwmFrequency 540Hz)
      GPIO_KEY1,        // GPIO00 Optional Button
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     GPIO_LED4_INV,    // GPIO02 RF receiver control
+     GPIO_ARIRFSEL,    // GPIO02 RF receiver control
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      GPIO_PWM2,        // GPIO04 RGB LED Green
      GPIO_PWM1,        // GPIO05 RGB LED Red
@@ -1498,9 +1506,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
                        // https://www.amazon.de/Steckdose-Homecube-intelligente-Verbrauchsanzeige-funktioniert/dp/B076Q2LKHG/ref=sr_1_fkmr0_1
                        // https://www.amazon.de/Intelligente-Stromverbrauch-Fernsteurung-Schaltbare-Energieklasse/dp/B076WZQS4S/ref=sr_1_1
                        // https://www.aliexpress.com/store/product/BlitzWolf-BW-SHP6-EU-Plug-Metering-Version-WIFI-Smart-Socket-220V-240V-10A-Work-with-Amazon/1965360_32945504669.html
-     GPIO_LED2_INV,    // GPIO00 Red Led (1 = On, 0 = Off) - Power status
+     GPIO_LED1_INV,    // GPIO00 Red Led (1 = On, 0 = Off) - Power status
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor
-     GPIO_LED1_INV,    // GPIO02 Blue Led (1 = On, 0 = Off) - Link status
+     GPIO_LEDLNK_INV,  // GPIO02 Blue Led (1 = On, 0 = Off) - Link status
      GPIO_USER,        // GPIO03 Serial TXD and Optional sensor
      0,
      GPIO_HJL_CF,      // GPIO05 BL0937 or HJL-01 CF power
@@ -1624,7 +1632,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,
      GPIO_KEY1,        // GPIO01 Serial TXD and Button
      0,
-     GPIO_LED2_INV,    // GPIO03 Serial RXD and Red Led (0 = On, 1 = Off) - Power status
+     GPIO_LED1_INV,    // GPIO03 Serial RXD and Red Led (0 = On, 1 = Off) - Power status
      GPIO_HJL_CF,      // GPIO04 BL0937 or HJL-01 CF power
      GPIO_NRG_CF1,     // GPIO05 BL0937 or HJL-01 CF1 current / voltage
                        // GPIO06 (SD_CLK   Flash)
@@ -1634,7 +1642,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
      GPIO_NRG_SEL_INV, // GPIO12 BL0937 or HJL-01 Sel output (0 = Voltage)
-     GPIO_LED1_INV,    // GPIO13 Blue Led (0 = On, 1 = Off) - Link status
+     GPIO_LEDLNK_INV,  // GPIO13 Blue Led (0 = On, 1 = Off) - Link status
      GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
      0, 0, 0
   },
@@ -1678,7 +1686,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "Gosund SP1 v23",  // https://www.amazon.de/gp/product/B0777BWS1P
      0,
-     GPIO_LED1_INV,    // GPIO01 Serial RXD and LED1 (blue) inv - Link status
+     GPIO_LEDLNK_INV,  // GPIO01 Serial RXD and LED1 (blue) inv - Link status
      0,
      GPIO_KEY1,        // GPIO03 Serial TXD and Button
      GPIO_HJL_CF,      // GPIO04 BL0937 or HJL-01 CF power
@@ -1690,7 +1698,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
      GPIO_NRG_SEL_INV, // GPIO12 BL0937 or HJL-01 Sel output (0 = Voltage)
-     GPIO_LED2_INV,    // GPIO13 LED2 (red) inv - Power status
+     GPIO_LED1_INV,    // GPIO13 LED2 (red) inv - Power status
      GPIO_REL1,        // GPIO14 Relay (0 = Off, 1 = On)
      0, 0, 0
   },
@@ -1728,8 +1736,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
      GPIO_NRG_SEL_INV, // GPIO12 HLW8012 CF Sel output (0 = Voltage)
-     GPIO_LED2_INV,    // GPIO13 Red Led (0 = On, 1 = Off) - Power status
-     GPIO_LED1_INV,    // GPIO14 Blue Led (0 = On, 1 = Off) - Link status
+     GPIO_LED1_INV,    // GPIO13 Red Led (0 = On, 1 = Off) - Power status
+     GPIO_LEDLNK_INV,  // GPIO14 Blue Led (0 = On, 1 = Off) - Link status
      GPIO_REL1,        // GPIO15 Relay (0 = Off, 1 = On)
      0, 0
   },
@@ -1757,9 +1765,9 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   { "Teckin US",       // Teckin SP20 US with Energy Monitoring
                        // https://www.amazon.com/Outlet-Compatible-Monitoring-Function-Required/dp/B079Q5W22B
                        // https://www.amazon.com/Outlet-ZOOZEE-Monitoring-Function-Compatible/dp/B07J2LR5KN
-     GPIO_LED2_INV,    // GPIO00 Red Led (1 = On, 0 = Off) - Power status
+     GPIO_LED1_INV,    // GPIO00 Red Led (1 = On, 0 = Off) - Power status
      0,
-     GPIO_LED1_INV,    // GPIO02 Blue Led (1 = On, 0 = Off) - Link status
+     GPIO_LEDLNK_INV,  // GPIO02 Blue Led (1 = On, 0 = Off) - Link status
      0,
      GPIO_REL1,        // GPIO04 Relay (0 = Off, 1 = On)
      GPIO_HJL_CF,      // GPIO05 BL0937 or HJL-01 CF power
@@ -1809,8 +1817,8 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     GPIO_LED1_INV,    // GPIO12 Green LED - Link status
-     GPIO_LED2,        // GPIO13 Red LED - Power status
+     GPIO_LEDLNK_INV,  // GPIO12 Green LED - Link status
+     GPIO_LED1,        // GPIO13 Red LED - Power status
      0, 0, 0, 0
   },
   { "YTF IR Bridge",   // https://www.aliexpress.com/item/Tuya-universal-Smart-IR-Hub-remote-control-Voice-Control-AC-TV-Work-With-Alexa-Google-Home/32951202513.html
@@ -1854,7 +1862,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "KA10",            // SMANERGY KA10 (ESP8285 - BL0937 Energy Monitoring) - https://www.amazon.es/dp/B07MBTCH2Y
      0,                // GPIO00
-     GPIO_LED1_INV,    // GPIO01 Blue LED - Link status
+     GPIO_LEDLNK_INV,  // GPIO01 Blue LED - Link status
      0,                // GPIO02
      GPIO_KEY1,        // GPIO03 Button
      GPIO_HJL_CF,      // GPIO04 BL0937 CF power
@@ -1866,7 +1874,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
      GPIO_NRG_SEL_INV, // GPIO12 BL0937 Sel output (1 = Voltage)
-     GPIO_LED2,        // GPIO13 Red LED - Power status
+     GPIO_LED1,        // GPIO13 Red LED - Power status
      GPIO_REL1,        // GPIO14 Relay 1
      0, 0, 0
   },
@@ -1923,7 +1931,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   },
   { "WAGA CHCZ02MB",   // WAGA life CHCZ02MB (HJL-01 Energy Monitoring)
                        // https://www.ebay.com/itm/332595697006
-     GPIO_LED2_INV,    // GPIO00 Red LED
+     GPIO_LED1_INV,    // GPIO00 Red LED
      0,                // GPIO01 Serial RXD
      0,                // GPIO02
      GPIO_NRG_SEL_INV, // GPIO03 HJL-01 Sel output (1 = Voltage)
@@ -1938,7 +1946,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO12 Relay
      GPIO_KEY1,        // GPIO13 Button
      GPIO_NRG_CF1,     // GPIO14 HJL-01 CF1 voltage / current
-     GPIO_LED1_INV,    // GPIO15 Blue LED - Link status
+     GPIO_LEDLNK_INV,  // GPIO15 Blue LED - Link status
      0, 0
   },
   { "SYF05",           // Sunyesmart SYF05 (a.k.a. Fcmila) = TYWE3S + SM16726
@@ -2070,7 +2078,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_PWM3,        // GPIO12 RGB LED Blue
      GPIO_PWM4,        // GPIO13 RGBW LED White
      GPIO_PWM1,        // GPIO14 RGB LED Red
-     GPIO_LED4_INV,    // GPIO15 RF receiver control
+     GPIO_ARIRFSEL,    // GPIO15 RF receiver control
      0, 0
   }
 

@@ -1,4 +1,10 @@
-/* 6.5.0.11 20190517
+/* 6.5.0.12 20190521
+ * Add AriLux RF control GPIO option "ALux IrSel" (159) replacing "Led4i" (59) for full LED control (#5709)
+ * Add LED GPIO option "LedLink" (157) and "LedLinki" (158) to select dedicated link status LED (#5709)
+ * Add support for up to four LEDs related to four power outputs. Enabled when "LedLink(i)" is configured too (#5709)
+ * Add extended LED power control using command LedPowerX where X is 1 to 4. Enabled when "LedLink(i)" is configured too (#5709)
+ *
+ * 6.5.0.11 20190517
  * Add command SetOption64 0/1 to switch between "-" or "_" as sensor index separator impacting DS18X20, DHT, BMP and SHT3X sensor names (#5689)
  * Add initial support for Scripts as replacement for Rules. Default disabled but can be enabled in my_user_config.h (#5689)
  * Add rule System#Save executed just before a planned restart
