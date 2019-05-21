@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.2.0025'
+VER = '2.2.0026'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -903,7 +903,13 @@ Setting_6_5_0_9['flag3'][0].update ({
         'no_power_feedback':             ('<L', (0x3A0,1,13), (None, None,                      ('SetOption',   '"SetOption63 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_5_0_11 = copy.deepcopy(Setting_6_5_0_9)
+Setting_6_5_0_11['flag3'][0].update ({
+        'use_underscore':                ('<L', (0x3A0,1,14), (None, None,                      ('SetOption',   '"SetOption64 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x605000B, 0xe00, Setting_6_5_0_11),
             (0x6050009, 0xe00, Setting_6_5_0_9),
             (0x6050007, 0xe00, Setting_6_5_0_7),
             (0x6050006, 0xe00, Setting_6_5_0_6),
@@ -1135,12 +1141,12 @@ def GetGroupList(setting):
         dev = setting[name]
         format_, group = GetFieldDef(dev, fields="format_, group")
         if group is not None and len(group) > 0:
-            groups.add(group)
+            groups.add(group.title())
         if isinstance(format_, dict):
             subgroups = GetGroupList(format_)
             if subgroups is not None and len(subgroups) > 0:
                 for group in subgroups:
-                    groups.add(group)
+                    groups.add(group.title())
 
     groups=list(groups)
     groups.sort()
