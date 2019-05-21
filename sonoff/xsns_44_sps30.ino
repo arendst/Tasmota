@@ -146,9 +146,9 @@ const char HTTP_SNS_SPS30_c[] PROGMEM ="{s}SPS30 " "TYPSIZ" "{m}%s " "um" "{e}";
 
 #define PMDP 2
 
-//#define SPS30_HOURS Settings.sps30_inuse_hours
-#define SPS30_HOURS sps30_inuse_hours
-uint8_t sps30_inuse_hours;
+#define SPS30_HOURS Settings.sps30_inuse_hours
+//#define SPS30_HOURS sps30_inuse_hours
+//uint8_t sps30_inuse_hours;
 
 void SPS30_Every_Second() {
 

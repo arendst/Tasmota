@@ -211,8 +211,9 @@ struct SYSCFG {
   uint8_t       weblog_level;              // 1AC
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
 
-  uint8_t       free_1D5[20];              // 1D5  Free since 5.12.0e
+  uint8_t       free_1D5[19];              // 1D5  Free since 5.12.0e
 
+  uint8_t       sps30_inuse_hours;         // 1E8
   char          mqtt_host[33];             // 1E9 - Keep together with below as being copied as one chunck with reset 6
   uint16_t      mqtt_port;                 // 20A - Keep together
   char          mqtt_client[33];           // 20C - Keep together

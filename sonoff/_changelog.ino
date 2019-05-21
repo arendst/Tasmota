@@ -5,6 +5,7 @@
  * Add HX711 weight restore after controlled restart or after power restore just before executing command Sensor34 7 (#5367, #5786)
  * Remove define USE_EMULATION from my_user_config.h (#5826)
  * Add defines USE_EMULATION_WEMO and USE_EMULATION_HUE to my_user_config.h to control emulation features at compile time (#5826)
+ * Add support for SPS30 Particle sensor thanks to Gerhard Mutz (#5830)
  *
  * 6.5.0.10 20190513
  * Enable ADC0 by default in my_user_config.h (#5671)
