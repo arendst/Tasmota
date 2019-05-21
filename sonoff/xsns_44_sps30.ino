@@ -1,5 +1,5 @@
 /*
-  xsns_96_sps30.ino - Sensirion SPS30
+  xsns_44_sps30.ino - Sensirion SPS30
 
   Copyright (C) 2019  Gerhard Mutz and Theo Arends
 
@@ -252,7 +252,7 @@ bool XSNS_44_cmd(void) {
         // clean cmd
         sps30_cmd(SPS_CMD_CLEAN);
         cp++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SPS30, XSNS_96,"clean_fan");
+        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SPS30, XSNS_44,"clean_fan");
       } else {
         serviced=false;
       }
