@@ -139,17 +139,9 @@ void SPS30_Detect() {
 #define D_UNIT_NCPM "#/m3"
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_SPS30_a[] PROGMEM ="{s}SPS30 " "PM 1.0" "{m}%s " D_UNIT_PM "{e}";
-const char HTTP_SNS_SPS30_b[] PROGMEM ="{s}SPS30 " "PM 2.5" "{m}%s " D_UNIT_PM "{e}";
-const char HTTP_SNS_SPS30_c[] PROGMEM ="{s}SPS30 " "PM 4.0" "{m}%s " D_UNIT_PM "{e}";
-const char HTTP_SNS_SPS30_d[] PROGMEM ="{s}SPS30 " "PM 10" "{m}%s " D_UNIT_PM "{e}";
-const char HTTP_SNS_SPS30_e[] PROGMEM ="{s}SPS30 " "NCPM 0.5" "{m}%s " D_UNIT_NCPM "{e}";
-const char HTTP_SNS_SPS30_f[] PROGMEM ="{s}SPS30 " "NCPM 1.0" "{m}%s " D_UNIT_NCPM "{e}";
-const char HTTP_SNS_SPS30_g[] PROGMEM ="{s}SPS30 " "NCPM 2.5" "{m}%s " D_UNIT_NCPM "{e}";
-const char HTTP_SNS_SPS30_h[] PROGMEM ="{s}SPS30 " "NCPM 4.0" "{m}%s " D_UNIT_NCPM "{e}";
-const char HTTP_SNS_SPS30_i[] PROGMEM ="{s}SPS30 " "NCPM 10" "{m}%s " D_UNIT_NCPM "{e}";
-const char HTTP_SNS_SPS30_j[] PROGMEM ="{s}SPS30 " "TYPSIZ" "{m}%s " "um" "{e}";
-
+const char HTTP_SNS_SPS30_a[] PROGMEM ="{s}SPS30 " "%s" "{m}%s " D_UNIT_PM "{e}";
+const char HTTP_SNS_SPS30_b[] PROGMEM ="{s}SPS30 " "%s" "{m}%s " D_UNIT_NCPM "{e}";
+const char HTTP_SNS_SPS30_c[] PROGMEM ="{s}SPS30 " "TYPSIZ" "{m}%s " "um" "{e}";
 #endif  // USE_WEBSERVER
 
 #define PMDP 2
@@ -225,25 +217,25 @@ void SPS30_Show(bool json) {
 #ifdef USE_WEBSERVER
   } else {
     dtostrfd(sps30_result.PM1_0,PMDP,str);
-    WSContentSend_PD(HTTP_SNS_SPS30_a,str);
+    WSContentSend_PD(HTTP_SNS_SPS30_a,"PM 1.0",str);
     dtostrfd(sps30_result.PM2_5,PMDP,str);
-    WSContentSend_PD(HTTP_SNS_SPS30_b,str);
+    WSContentSend_PD(HTTP_SNS_SPS30_a,"PM 2.5",str);
     dtostrfd(sps30_result.PM4_0,PMDP,str);
-    WSContentSend_PD(HTTP_SNS_SPS30_c,str);
+    WSContentSend_PD(HTTP_SNS_SPS30_a,"PM 4.0",str);
     dtostrfd(sps30_result.PM10,PMDP,str);
-    WSContentSend_PD(HTTP_SNS_SPS30_d,str);
+    WSContentSend_PD(HTTP_SNS_SPS30_a,"PM 10",str);
     dtostrfd(sps30_result.NCPM0_5,PMDP,str);
-    WSContentSend_PD(HTTP_SNS_SPS30_e,str);
+    WSContentSend_PD(HTTP_SNS_SPS30_b,"NCPM 0.5",str);
     dtostrfd(sps30_result.NCPM1_0,PMDP,str);
-    WSContentSend_PD(HTTP_SNS_SPS30_f,str);
+    WSContentSend_PD(HTTP_SNS_SPS30_b,"NCPM 1.0",str);
     dtostrfd(sps30_result.NCPM2_5,PMDP,str);
-    WSContentSend_PD(HTTP_SNS_SPS30_g,str);
+    WSContentSend_PD(HTTP_SNS_SPS30_b,"NCPM 2.5",str);
     dtostrfd(sps30_result.NCPM4_0,PMDP,str);
-    WSContentSend_PD(HTTP_SNS_SPS30_h,str);
+    WSContentSend_PD(HTTP_SNS_SPS30_b,"NCPM 4.0",str);
     dtostrfd(sps30_result.NCPM10,PMDP,str);
-    WSContentSend_PD(HTTP_SNS_SPS30_i,str);
+    WSContentSend_PD(HTTP_SNS_SPS30_b,"NCPM 10",str);
     dtostrfd(sps30_result.TYPSIZ,PMDP,str);
-    WSContentSend_PD(HTTP_SNS_SPS30_j,str);
+    WSContentSend_PD(HTTP_SNS_SPS30_c,str);
 #endif
   }
 
