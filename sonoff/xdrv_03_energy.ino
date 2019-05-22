@@ -323,7 +323,7 @@ void EnergyMqttShow(void)
 void EnergyOverTempCheck()
 {
   if (global_update) {
-    if (power && (global_temperature > ENERGY_OVERTEMP)) {  // Device overtemp, turn off relays
+    if (power && (global_temperature != 9999) && (global_temperature > ENERGY_OVERTEMP)) {  // Device overtemp, turn off relays
       SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
     }
   }
