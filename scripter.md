@@ -39,7 +39,9 @@ numeric var=4 bytes, string var=lenght of string+1)
 **i:**vname specifies auto increment counters if >=0 (in seconds)  
 **m:**vname specifies a median filter variable with 5 entries (for elimination of outliers)  
 **M:**vname specifies a moving average filter variable with 8 entries (for smoothing data)  
-(max 5 filters in total m+M)
+(max 5 filters in total m+M) optional another filter lenght (1..127) can be given after the definition.  
+filter vars can be accessed also in indexed mode vname[x] (index = 1...N, index 0 returns current array index pointer)  
+by this filter vars can be used as arrays  
 
 >all variable names length taken together may not exceed 256 characters, so keep variable names as short as possible.  
 memory is dynamically allocated as a result of the D section.  
@@ -84,7 +86,8 @@ special variables (read only):
 **pow(x y)** = calculates the power of x^y  
 **med(n x)** = calculates a 5 value median filter of x (2 filters possible n=0,1)  
 **int(x)** = gets the integer part of x (like floor)  
-**hn(x)** = converts x (0..255) zu a hex nibble string  
+**hn(x)** = converts x (0..255) to a hex nibble string  
+**st(svar c n)** = stringtoken gets the n th substring of svar separated by c  
 **mqtts** = state of mqtt disconnected=0, connected>0  
 **wifis** = state of wifi disconnected=0, connected>0  
 
@@ -225,7 +228,9 @@ tcnt=0
 hour=0
 state=1  
 m:med5=0  
-M:movav=0  
+M:movav=0
+; define array with 10 entries
+m:array=0 10  
 
 **\>B**  
 
@@ -258,15 +263,14 @@ delay(100)
 =>power 0  
 
 **\>T**  
-
 hum=BME280#Humidity  
 temp=BME280#Temperature  
 rssi=Wifi#RSSI  
 string=SleepMode  
 
-; add to median filter
+; add to median filter  
 median=temp  
-; add to moving average filter
+; add to moving average filter  
 movav=hum  
 
 ; show filtered results  
@@ -274,7 +278,7 @@ movav=hum
 
 if chg[rssi]>0  
 then =>print rssi changed to %rssi%  
-endif
+endif  
 
 if temp\>30  
 and hum\>70  
@@ -285,6 +289,11 @@ endif
 
 ; every second but not completely reliable time here  
 ; use upsecs and uptime or best t: for reliable timers  
+
+; arrays
+array[1]=4
+array[2]=5
+tmp=array[1]+array[2]
 
 ; call subrountines with parameters   
 =#sub1("hallo")  
@@ -427,6 +436,8 @@ ends
 **\>E**  
 =\>print event executed!  
 
+; get HSBColor 1. component  
+tmp=st(HSBColor , 1)  
 
 ; check if switch changed state  
 sw=sw[1]  

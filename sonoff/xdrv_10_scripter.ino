@@ -20,23 +20,23 @@
 #ifdef USE_SCRIPT
 #ifndef USE_RULES
 /*********************************************************************************************\
-
 for documentation see up to date docs in file SCRIPTER.md
-
 uses about 14,2 k of flash
 more stack could be needed for sendmail  => -D CONT_STACKSIZE=4800 = +0.8k stack -0.8k heap
-
 
 to do
 optimize code for space
 
 remarks
+
 goal is fast execution time, minimal use of ram and intuitive syntax
 therefore =>
 case sensitive cmds and vars (lowercase uses time and code)
 no math hierarchy  (costs ram and execution time, better group with brackets, anyhow better readable for beginners)
 (will probably make math hierarchy an ifdefed option)
 keywords if then else endif, or, and are better readable for beginners (others may use {})
+
+
 
 \*********************************************************************************************/
 
@@ -104,11 +104,14 @@ struct SCRIPT_MEM {
     uint8_t script_loglevel;
 } glob_script_mem;
 
+
+int16_t last_findex;
 uint8_t tasm_cmd_activ=0;
 
 uint32_t script_lastmillis;
 
 char *GetNumericResult(char *lp,uint8_t lastop,float *fp,JsonObject *jo);
+char *GetStringResult(char *lp,uint8_t lastop,char *cp,JsonObject *jo);
 
 void ScriptEverySecond(void) {
 
@@ -243,6 +246,19 @@ int16_t Init_Scripter(char *script) {
                     if (nvars>MAXNVARS) {
                       return -1;
                     }
+                    if (vtypes[vars].bits.is_filter) {
+                      while (isdigit(*op) || *op=='.' || *op=='-') {
+                        op++;
+                      }
+                      while (*op==' ') op++;
+                      if (isdigit(*op)) {
+                        // lenght define follows
+                        uint8_t flen=atoi(op);
+                        mfilt[numflt-1].numvals&=0x7f;
+                        mfilt[numflt-1].numvals|=flen&0x7f;
+                      }
+                    }
+
                 } else {
                     // string vars
                     op++;
@@ -445,9 +461,65 @@ int16_t Init_Scripter(char *script) {
 #define NTYPE 0
 #define STYPE 0x80
 
+#define FLT_MAX 99999999
 
-//Settings.seriallog_level
-//Settings.weblog_level
+float median_array(float *array,uint8_t len) {
+    uint8_t ind[len];
+    uint8_t mind=0,index=0,flg;
+    float min=FLT_MAX;
+
+    for (uint8_t hcnt=0; hcnt<len/2+1; hcnt++) {
+        for (uint8_t mcnt=0; mcnt<len; mcnt++) {
+            flg=0;
+            for (uint8_t icnt=0; icnt<index; icnt++) {
+                if (ind[icnt]==mcnt) {
+                    flg=1;
+                }
+            }
+            if (!flg) {
+                if (array[mcnt]<min) {
+                    min=array[mcnt];
+                    mind=mcnt;
+                }
+            }
+        }
+        ind[index]=mind;
+        index++;
+        min=FLT_MAX;
+    }
+    return array[ind[len/2]];
+}
+
+float Get_MFVal(uint8_t index,uint8_t bind) {
+  uint8_t *mp=(uint8_t*)glob_script_mem.mfilt;
+  for (uint8_t count=0; count<MAXFILT; count++) {
+    struct M_FILT *mflp=(struct M_FILT*)mp;
+    if (count==index) {
+        uint8_t maxind=mflp->numvals&0x7f;
+        if (!bind) {
+          return mflp->index;
+        }
+        if (bind<1 || bind>maxind) bind=maxind;
+        return mflp->rbuff[bind-1];
+    }
+    mp+=sizeof(struct M_FILT)+((mflp->numvals&0x7f)-1)*sizeof(float);
+  }
+  return 0;
+}
+
+void Set_MFVal(uint8_t index,uint8_t bind,float val) {
+  uint8_t *mp=(uint8_t*)glob_script_mem.mfilt;
+  for (uint8_t count=0; count<MAXFILT; count++) {
+    struct M_FILT *mflp=(struct M_FILT*)mp;
+    if (count==index) {
+        uint8_t maxind=mflp->numvals&0x7f;
+        if (bind<1 || bind>maxind) bind=maxind;
+        mflp->rbuff[bind-1]=val;
+    }
+    mp+=sizeof(struct M_FILT)+((mflp->numvals&0x7f)-1)*sizeof(float);
+  }
+}
+
 
 float Get_MFilter(uint8_t index) {
   uint8_t *mp=(uint8_t*)glob_script_mem.mfilt;
@@ -458,23 +530,8 @@ float Get_MFilter(uint8_t index) {
         // moving average
         return mflp->maccu/(mflp->numvals&0x7f);
       } else {
-        // median, sort array
-        float tbuff[mflp->numvals],tmp;
-        uint8_t flag;
-        memmove(tbuff,mflp->rbuff,sizeof(tbuff));
-        for (uint8_t ocnt=0; ocnt<mflp->numvals; ocnt++) {
-          flag=0;
-          for (uint8_t count=0; count<mflp->numvals-1; count++) {
-            if (tbuff[count]>tbuff[count+1]) {
-              tmp=tbuff[count];
-              tbuff[count]=tbuff[count+1];
-              tbuff[count+1]=tmp;
-              flag=1;
-            }
-          }
-          if (!flag) break;
-        }
-        return mflp->rbuff[mflp->numvals/2];
+        // median, sort array indices
+        return median_array(mflp->rbuff,mflp->numvals);
       }
     }
     mp+=sizeof(struct M_FILT)+((mflp->numvals&0x7f)-1)*sizeof(float);
@@ -519,27 +576,10 @@ float DoMedian5(uint8_t index, float in) {
   if (index>=MEDIAN_FILTER_NUM) index=0;
 
   struct MEDIAN_FILTER* mf=&script_mf[index];
-
-  float tbuff[MEDIAN_SIZE],tmp;
-  uint8_t flag;
   mf->buffer[mf->index]=in;
   mf->index++;
   if (mf->index>=MEDIAN_SIZE) mf->index=0;
-  // sort list and take median
-  memmove(tbuff,mf->buffer,sizeof(tbuff));
-  for (uint8_t ocnt=0; ocnt<MEDIAN_SIZE; ocnt++) {
-    flag=0;
-    for (uint8_t count=0; count<MEDIAN_SIZE-1; count++) {
-      if (tbuff[count]>tbuff[count+1]) {
-        tmp=tbuff[count];
-        tbuff[count]=tbuff[count+1];
-        tbuff[count+1]=tmp;
-        flag=1;
-      }
-    }
-    if (!flag) break;
-  }
-  return tbuff[MEDIAN_SIZE/2];
+  return median_array(mf->buffer,MEDIAN_SIZE);
 }
 
 
@@ -606,19 +646,35 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
     }
 
     struct T_INDEX *vtp=glob_script_mem.type;
+    char dvnam[32];
+    strcpy (dvnam,vname);
+    uint8_t olen=len;
+    last_findex=-1;
+    char *ja=strchr(dvnam,'[');
+    if (ja) {
+      *ja=0;
+      ja++;
+      olen=strlen(dvnam);
+    }
     for (count=0; count<glob_script_mem.numvars; count++) {
         char *cp=glob_script_mem.glob_vnp+glob_script_mem.vnp_offset[count];
         uint8_t slen=strlen(cp);
-
-        if (slen==len && *cp==vname[0]) {
-            if (!strncmp(cp,vname,len)) {
+        if (slen==olen && *cp==dvnam[0]) {
+            if (!strncmp(cp,dvnam,olen)) {
                 uint8_t index=vtp[count].index;
                 *tind=vtp[count];
                 tind->index=count; // overwrite with global var index
                 if (vtp[count].bits.is_string==0) {
                     *vtype=NTYPE|index;
                     if (vtp[count].bits.is_filter) {
-                      fvar=Get_MFilter(index);
+                      if (ja) {
+                        GetNumericResult(ja,OPER_EQU,&fvar,0);
+                        last_findex=fvar;
+                        fvar=Get_MFVal(index,fvar);
+                        len++;
+                      } else {
+                        fvar=Get_MFilter(index);
+                      }
                     } else {
                       fvar=glob_script_mem.fvars[index];
                     }
@@ -942,6 +998,40 @@ chknext:
         if (!strncmp(vname,"slen",4)) {
           fvar=strlen(Settings.rules[0]);
           goto exit;
+        }
+        if (!strncmp(vname,"st(",3)) {
+          lp+=3;
+          char str[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          while (*lp==' ') lp++;
+          char token[2];
+          token[0]=*lp++;
+          token[1]=0;
+          while (*lp==' ') lp++;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          // skip ) bracket
+          lp++;
+          len=0;
+          if (sp) {
+            // get stringtoken
+            char *st=strtok(str,token);
+            if (!st) {
+              *sp=0;
+            } else {
+              for (uint8_t cnt=1; cnt<=fvar; cnt++) {
+                if (cnt==fvar) {
+                  strcpy(sp,st);
+                  break;
+                }
+                st=strtok(NULL,token);
+                if (!st) {
+                  *sp=0;
+                  break;
+                }
+              }
+            }
+          }
+          goto strexit;
         }
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
         if (!strncmp(vname,"sunrise",7)) {
@@ -1416,10 +1506,13 @@ void toSLog(const char *str) {
 #endif
 }
 
+
+
+
 #define IF_NEST 8
 // execute section of scripter
 int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
-    uint8_t vtype=0,sindex,xflg,floop=0,globvindex;
+    uint8_t vtype=0,sindex,xflg,floop=0,globvindex,globaindex;
     struct T_INDEX ind;
     uint8_t operand,lastop,numeric=1,if_state[IF_NEST],if_result[IF_NEST],and_or,ifstck=0,s_ifstck=0;
     if_state[ifstck]=0;
@@ -1726,6 +1819,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
               if (vtype!=VAR_NV) {
                   // found variable as result
                   globvindex=ind.index; // save destination var index here
+                  globaindex=last_findex;
                   uint8_t index=glob_script_mem.type[ind.index].index;
                   if ((vtype&STYPE)==0) {
                       // numeric result
@@ -1860,7 +1954,11 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                 // var was changed
                 glob_script_mem.type[globvindex].bits.changed=1;
                 if (glob_script_mem.type[globvindex].bits.is_filter) {
-                  Set_MFilter(glob_script_mem.type[globvindex].index,*dfvar);
+                  if (globaindex>=0) {
+                    Set_MFVal(glob_script_mem.type[globvindex].index,globaindex,*dfvar);
+                  } else {
+                    Set_MFilter(glob_script_mem.type[globvindex].index,*dfvar);
+                  }
                 }
 
                 if (sysv_type) {
