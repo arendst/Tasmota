@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.2.0025'
+VER = '2.2.0026'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -29,7 +29,7 @@ Requirements:
 Instructions:
     Execute command with option -d to retrieve config data from a host
     or use -f to read a configuration file saved using Tasmota Web-UI
-    
+
     For further information read 'decode-config.md'
 
     For help execute command with argument -h (or -H for advanced help)
@@ -263,7 +263,7 @@ exitcode = 0
 Settings dictionary describes the config file fields definition:
 
     <setting> = { <name> : <def> }
-    
+
     <name>: "string"
         a python valid dictionary key (string)
 
@@ -333,12 +333,12 @@ Settings dictionary describes the config file fields definition:
                         to convert value from JSON back to binary object
 
         Common definitions
-        
+
         <function>: <functionname> | <string> | None
             function to be called or string to evaluate:
             <functionname>:
                 A function name will be called with one or two parameter:
-                    The value to be processed 
+                    The value to be processed
                     (optional) the current array index (1,n)
             <string>
                 A string will be evaluate as is. The following
@@ -358,7 +358,7 @@ Settings dictionary describes the config file fields definition:
              numbers in the range -2147483648 through 2147483647
         <uint>:     unsigned integer
              numbers in the range 0 through 4294967295
-            
+
 """
 # ----------------------------------------------------------------------
 # Settings helper
@@ -370,16 +370,16 @@ def passwordwrite(value):
 def bitsRead(x, n=0, c=1):
     """
     Reads bit(s) of a number
-    
+
     @param x:
         the number from which to read
-    
+
     @param n:
         which bit position to read
-    
+
     @param c:
         how many bits to read (1 if omitted)
-    
+
     @return:
         the bit value(s)
     """
@@ -396,14 +396,14 @@ def bitsRead(x, n=0, c=1):
         x &= (1<<c)-1
     return x
 
-    
+
 def MqttFingerprint(value, idx=None):
     fingerprint = ""
     for i in value:
         fingerprint += "{:02x} ".format(ord(i))
     return "MqttFingerprint{} {}".format('' if idx is None else idx, fingerprint.strip())
 
-    
+
 # ----------------------------------------------------------------------
 # Tasmota configuration data definition
 # ----------------------------------------------------------------------
@@ -871,7 +871,7 @@ Setting_6_4_1_16.update({
             'pullup':                       ('B',  (0x73C,1,1),  (None, None,                   ('Management',  None)) ),
                                          },      0x73C,       (None, None,                      ('Management',  None))
                                         ),
-                                    },      0x720,       (None, None,                           ('Management',  None)) 
+                                    },      0x720,       (None, None,                           ('Management',  None))
                                    ),
 })
 # ======================================================================
@@ -903,14 +903,20 @@ Setting_6_5_0_9['flag3'][0].update ({
         'no_power_feedback':             ('<L', (0x3A0,1,13), (None, None,                      ('SetOption',   '"SetOption63 {}".format($)')) ),
                                     })
 # ======================================================================
-# ======================================================================
 Setting_6_5_0_10 = copy.deepcopy(Setting_6_5_0_9)
 Setting_6_5_0_10['flag3'][0].update ({
+        'use_underscore':                ('<L', (0x3A0,1,14), (None, None,                      ('SetOption',   '"SetOption64 {}".format($)')) ),
+                                    })
+# ======================================================================
+# ======================================================================
+Setting_6_5_0_11 = copy.deepcopy(Setting_6_5_0_10)
+Setting_6_5_0_11['flag3'][0].update ({
         'tuya_show_dimmer':             ('<L', (0x3A0,1,15), (None, None,                      ('SetOption',   '"SetOption65 {}".format($)')) ),
                                     })
 # ======================================================================
 Settings = [
-			(0x6050010, 0xe00, Setting_6_5_0_10),
+            (0x605000B, 0xe00, Setting_6_5_0_11),
+            (0x605000B, 0xe00, Setting_6_5_0_10),
             (0x6050009, 0xe00, Setting_6_5_0_9),
             (0x6050007, 0xe00, Setting_6_5_0_7),
             (0x6050006, 0xe00, Setting_6_5_0_6),
@@ -1132,7 +1138,7 @@ def GetTemplateSetting(decode_cfg):
 def GetGroupList(setting):
     """
     Get all avilable group definition from setting
-    
+
     @return:
         configargparse.parse_args() result
     """
@@ -1142,17 +1148,17 @@ def GetGroupList(setting):
         dev = setting[name]
         format_, group = GetFieldDef(dev, fields="format_, group")
         if group is not None and len(group) > 0:
-            groups.add(group)
+            groups.add(group.title())
         if isinstance(format_, dict):
             subgroups = GetGroupList(format_)
             if subgroups is not None and len(subgroups) > 0:
                 for group in subgroups:
-                    groups.add(group)
+                    groups.add(group.title())
 
     groups=list(groups)
     groups.sort()
     return groups
-    
+
 
 class FileType:
     FILE_NOT_FOUND = None
@@ -1347,7 +1353,7 @@ def MakeUrl(host, port=80, location=''):
 def LoadTasmotaConfig(filename):
     """
     Load config from Tasmota file
-    
+
     @param filename:
         filename to load
 
@@ -1420,7 +1426,7 @@ def TasmotaGet(cmnd, host, port, username=DEFAULTS['source']['username'], passwo
         body = buffer.getvalue()
     except:
         pass
-    
+
     return responsecode, body
 
 
@@ -1605,7 +1611,7 @@ def GetSettingsCrc(dobj):
 
 
 def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, datadef, arraydef, validate, cmd, group, tasmotacmnd, converter, readconverter, writeconverter"):
-    
+
     """
     Get field definition items
 
@@ -1723,7 +1729,7 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
         else:
             print >> sys.stderr, 'wrong <converter> {} length ({}) in <fielddef> {}'.format(converter, len(converter), fielddef)
             raise SyntaxError('<fielddef> error')
-    
+
 
     return eval(fields)
 
@@ -1798,13 +1804,13 @@ def CmndConverter(valuemapping, value, idx, fielddef):
             else:
                 evalstr = tasmotacmnd.replace('$','value').replace('@','valuemapping')
             result = eval(evalstr)
-                
+
         elif callable(tasmotacmnd):      # use as format function
             if idx is not None:
                 result = tasmotacmnd(value, idx)
             else:
                 result = tasmotacmnd(value)
-    
+
     return result
 
 
@@ -1821,7 +1827,7 @@ def ValidateValue(value, fielddef):
         True if value is valid, False if invalid
     """
     validate = GetFieldDef(fielddef, fields='validate')
-    
+
     if value == 0:
         # can not complete all validate condition
         # some Tasmota values are not allowed to be 0 on input
@@ -1918,7 +1924,7 @@ def GetFieldMinMax(fielddef):
         max_ = GetFormatCount(format_)
 
     return min_,max_
-    
+
 
 def GetFieldLength(fielddef):
     """
@@ -2039,7 +2045,7 @@ def GetFieldValue(fielddef, dobj, addr):
     """
 
     format_, bits, bitshift = GetFieldDef(fielddef, fields='format_, bits, bitshift')
-    
+
     value_  = 0
     unpackedvalue = struct.unpack_from(format_, dobj, addr)
     singletype, bitsize = GetFormatType(format_)
@@ -2076,7 +2082,7 @@ def SetFieldValue(fielddef, dobj, addr, value):
 
     format_, bits, bitshift = GetFieldDef(fielddef, fields='format_, bits, bitshift')
     formatcnt = GetFormatCount(format_)
-    singletype, bitsize = GetFormatType(format_)    
+    singletype, bitsize = GetFormatType(format_)
     if args.debug >= 2:
         print >> sys.stderr, "SetFieldValue(): fielddef {}, addr 0x{:04x}  value {}  formatcnt {}  singletype {}  bitsize {}  ".format(fielddef,addr,value,formatcnt,singletype,bitsize)
     if not format_[-1:].lower() in ['s','p']:
@@ -2138,7 +2144,7 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
                 value = GetField(dobj, fieldname, subfielddef, raw=raw, addroffset=addroffset+offset)
                 valuemapping.append(value)
             offset += length
-        
+
     # <format> contains a dict
     elif isinstance(format_, dict):
         mapping_value = {}
@@ -2333,7 +2339,7 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
                     curvalue = GetFieldValue(fielddef, dobj, baseaddr+addroffset)
                     if prevvalue != curvalue and args.verbose:
                         message("Value for '{}' changed from {} to {}".format(fieldname, prevvalue, curvalue), typ=LogType.INFO)
-                else: 
+                else:
                     if args.debug >= 2:
                         print >> sys.stderr, "SetField(): Special field '{}' using '{}'/{}{} @{} skipped".format(fieldname, format_, arraydef, bits, hex(baseaddr+addroffset))
         else:
@@ -2502,14 +2508,14 @@ def Mapping2Bin(decode_cfg, jsonconfig, filename=""):
         restore data mapping
     @param filename:
         name of the restore file (for error output only)
-        
+
     @return:
         changed binary config data (decrypted) or None on error
     """
     if isinstance(decode_cfg, str):
         decode_cfg = bytearray(decode_cfg)
 
-    
+
     # get binary header data to use the correct version template from device
     version, size, setting = GetTemplateSetting(decode_cfg)
 
@@ -2549,13 +2555,13 @@ def Mapping2Cmnd(decode_cfg, valuemapping, filename=""):
         data mapping
     @param filename:
         name of the restore file (for error output only)
-        
+
     @return:
         Tasmota command mapping {group: [cmnd <,cmnd <,...>>]}
     """
     if isinstance(decode_cfg, str):
         decode_cfg = bytearray(decode_cfg)
-    
+
     # get binary header data to use the correct version template from device
     version, size, setting = GetTemplateSetting(decode_cfg)
 
@@ -2782,7 +2788,7 @@ def OutputTasmotaCmnds(tasmotacmnds):
                 print
                 print "# {}:".format(group)
                 OutputTasmotaSubCmnds(cmnds)
-                    
+
     else:
         cmnds = []
         for group in groups:
@@ -2793,7 +2799,7 @@ def OutputTasmotaCmnds(tasmotacmnds):
 def ParseArgs():
     """
     Program argument parser
-    
+
     @return:
         configargparse.parse_args() result
     """
@@ -3056,5 +3062,5 @@ if __name__ == "__main__":
         if args.outputformat == 'cmnd' or args.outputformat == 'command':
             tasmotacmnds = Mapping2Cmnd(decode_cfg, configmapping)
             OutputTasmotaCmnds(tasmotacmnds)
-            
+
     sys.exit(exitcode)

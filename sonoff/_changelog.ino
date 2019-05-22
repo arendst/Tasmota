@@ -1,15 +1,25 @@
 /*
- * 6.5.0.14 20190520
- * Updated xdrv_16_tuyadimmer.ino repalced TuyGetPower with bitRead()
- *
- * 6.5.0.12 20190517
+ * 6.5.0.13 20190517
  * Add command SetOption65 (tuya_show_dimmer) to enable or disable dimmer Slider ( for 4 Gang Tuya switch)
  * Added Seeting.pram9 to define no of Tuya MCU devices
  * Updated xdrv_01_webserver.ino to check for the tuya_show_dimmer option to display slider2
  * Updated xdrv_16_tuyadimmer.ino create bool serial packet based on the Device Id and set the power status based on the Device id from MCU packet
+ * Updated xdrv_16_tuyadimmer.ino skip dimmer packets for device configured as non - dimmer
+ *
+ * 6.5.0.12 20190521
+ * Add AriLux RF control GPIO option "ALux IrSel" (159) replacing "Led4i" (59) for full LED control (#5709)
+ * Add LED GPIO option "LedLink" (157) and "LedLinki" (158) to select dedicated link status LED (#5709)
+ * Add support for up to four LEDs related to four power outputs. Enabled when "LedLink(i)" is configured too (#5709)
+ * Add extended LED power control using command LedPowerX where X is 1 to 4. Enabled when "LedLink(i)" is configured too (#5709)
  *
  * 6.5.0.11 20190517
  * Add command SetOption64 0/1 to switch between "-" or "_" as sensor index separator impacting DS18X20, DHT, BMP and SHT3X sensor names (#5689)
+ * Add initial support for Scripts as replacement for Rules. Default disabled but can be enabled in my_user_config.h (#5689)
+ * Add rule System#Save executed just before a planned restart
+ * Add HX711 weight restore after controlled restart or after power restore just before executing command Sensor34 7 (#5367, #5786)
+ * Remove define USE_EMULATION from my_user_config.h (#5826)
+ * Add defines USE_EMULATION_WEMO and USE_EMULATION_HUE to my_user_config.h to control emulation features at compile time (#5826)
+ * Add support for SPS30 Particle sensor thanks to Gerhard Mutz (#5830)
  *
  * 6.5.0.10 20190513
  * Enable ADC0 by default in my_user_config.h (#5671)

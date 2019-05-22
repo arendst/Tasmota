@@ -207,21 +207,23 @@ void TuyaPacketProcess(void)
       else if (tuya_buffer[5] == 8) {  // dim packet
 
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Dim State=%d"), tuya_buffer[13]);
+        if(Settings.flag3.tuya_show_dimmer == 0) // 
+        {
+          if (!Settings.param[P_TUYA_DIMMER_ID]) {
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Autoconfiguring Dimmer ID %d"), tuya_buffer[6]);
+            Settings.param[P_TUYA_DIMMER_ID] = tuya_buffer[6];
+          }
 
-        if (!Settings.param[P_TUYA_DIMMER_ID]) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Autoconfiguring Dimmer ID %d"), tuya_buffer[6]);
-          Settings.param[P_TUYA_DIMMER_ID] = tuya_buffer[6];
-        }
+          tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
+          if((power || Settings.flag3.tuya_apply_o20)  && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 1)) {
 
-        tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
-        if((power || Settings.flag3.tuya_apply_o20)  && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 1)) {
+            snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), tuya_new_dim );
 
-          snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), tuya_new_dim );
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Send CMND_DIMMER_STR=%s"), scmnd );
 
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Send CMND_DIMMER_STR=%s"), scmnd );
-
-          tuya_ignore_dim = true;
-          ExecuteCommand(scmnd, SRC_SWITCH);
+            tuya_ignore_dim = true;
+            ExecuteCommand(scmnd, SRC_SWITCH);
+          }
         }
       }
       break;
