@@ -61,6 +61,10 @@ void update_position(void)
   rotary_state = (s >> 2);
 }
 
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0      // Fix core 2.5.x ISR not in IRAM Exception
+void update_rotary(void) ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+
 void update_rotary(void)
 {
   if (MI_DESK_LAMP == my_module_type){

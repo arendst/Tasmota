@@ -40,6 +40,13 @@ void CounterUpdate(uint8_t index)
   }
 }
 
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0       // Fix core 2.5.x ISR not in IRAM Exception
+void CounterUpdate1(void) ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
+void CounterUpdate2(void) ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
+void CounterUpdate3(void) ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
+void CounterUpdate4(void) ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+
 void CounterUpdate1(void)
 {
   CounterUpdate(1);

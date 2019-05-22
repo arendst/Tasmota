@@ -68,6 +68,7 @@ uint8_t hlw_model_type = 0;
 uint8_t hlw_load_off = 1;
 uint8_t hlw_cf1_timer = 0;
 
+// Fix core 2.5.x ISR not in IRAM Exception
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
 void HlwCfInterrupt(void) ICACHE_RAM_ATTR;
 void HlwCf1Interrupt(void) ICACHE_RAM_ATTR;

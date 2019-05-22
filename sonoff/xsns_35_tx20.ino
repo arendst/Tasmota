@@ -80,6 +80,10 @@ uint8_t tx20_wind_direction = 0;
 
 bool tx20_available = false;
 
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0      // Fix core 2.5.x ISR not in IRAM Exception
+void Tx20StartRead(void) ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+
 void Tx20StartRead(void)
 {
   /* La Crosse TX20 Anemometer datagram every 2 seconds

@@ -1005,8 +1005,8 @@ unsigned int arilux_rf_repeat_count = 0;
 uint8_t arilux_rf_toggle = 0;
 
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
-#ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves RF misses
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0          // Fix core 2.5.x ISR not in IRAM Exception
+#ifndef USE_WS2812_DMA                         // Collides with Neopixelbus but solves RF misses
 void AriluxRfInterrupt(void) ICACHE_RAM_ATTR;  // As iram is tight and it works this way too
 #endif  // USE_WS2812_DMA
 #endif  // ARDUINO_ESP8266_RELEASE_2_3_0
