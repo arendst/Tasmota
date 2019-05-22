@@ -1,3 +1,5 @@
+![Logo](/tools/logo/TASMOTA_FullLogo_Vector.svg)
+
 ## Sonoff-Tasmota
 
 Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web UI, rules and timers, OTA updates, custom device templates and sensor support**. Allows control over **MQTT**, **HTTP**, **Serial** and **KNX** for integrations with smart home systems. Written for Arduino IDE and PlatformIO.
