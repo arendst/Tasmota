@@ -49,8 +49,8 @@ void GetFeatures(void)
 #ifdef WEBSERVER_ADVERTISE
   feature_drv1 |= 0x00000100;  // xdrv_02_webserver.ino
 #endif
-#ifdef USE_EMULATION
-  feature_drv1 |= 0x00000200;  // xplg_wemohue.ino
+#ifdef USE_EMULATION_HUE
+  feature_drv1 |= 0x00000200;  // xdrv_20_hue.ino
 #endif
 #if (MQTT_LIBRARY_TYPE == MQTT_PUBSUBCLIENT)
   feature_drv1 |= 0x00000400;  // xdrv_01_mqtt.ino
@@ -180,9 +180,13 @@ void GetFeatures(void)
 #ifdef USE_SM16716
   feature_drv2 |= 0x00040000;  // xdrv_04_light.ino
 #endif
+#ifdef USE_SCRIPT
+  feature_drv2 |= 0x00080000;  // xdrv_10_scripter.ino
+#endif
+#ifdef USE_EMULATION_WEMO
+  feature_drv2 |= 0x00100000;  // xdrv_21_wemo.ino
+#endif
 
-//  feature_drv2 |= 0x00080000;
-//  feature_drv2 |= 0x00100000;
 //  feature_drv2 |= 0x00200000;
 //  feature_drv2 |= 0x00400000;
 

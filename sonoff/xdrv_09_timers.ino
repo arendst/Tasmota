@@ -285,7 +285,7 @@ void TimerEverySecond(void)
           if (time == set_time) {
             if (xtimer.days & days) {
               Settings.timer[i].arm = xtimer.repeat;
-#ifdef USE_RULES
+#if defined(USE_RULES) || defined(USE_SCRIPT)
               if (3 == xtimer.power) {  // Blink becomes Rule disregarding device and allowing use of Backlog commands
                 Response_P(PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
                 XdrvRulesProcess();
@@ -359,7 +359,8 @@ bool TimerCommand(void)
           Settings.timer[index -1].data = Settings.timer[XdrvMailbox.payload -1].data;  // Copy timer
         }
       } else {
-#ifndef USE_RULES
+//#ifndef USE_RULES
+#if defined(USE_RULES)==0 && defined(USE_SCRIPT)==0
         if (devices_present) {
 #endif
           StaticJsonBuffer<256> jsonBuffer;
@@ -437,7 +438,8 @@ bool TimerCommand(void)
 
             index++;
           }
-#ifndef USE_RULES
+//#ifndef USE_RULES
+#if defined(USE_RULES)==0 && defined(USE_SCRIPT)==0
         } else {
           Response_P(PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_TIMER_NO_DEVICE "\"}"), index);  // No outputs defined so nothing to control
           error = 1;
@@ -630,7 +632,7 @@ const char HTTP_TIMER_SCRIPT5[] PROGMEM =
     "if(%d>0){"                                                   // Create Output and Action drop down boxes
       "eb('oa').innerHTML=\"<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1' name='d1'></select></span>&emsp;<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:99px;' id='p1' name='p1'></select>\";"
       "o=qs('#p1');ce('" D_OFF "',o);ce('" D_ON "',o);ce('" D_TOGGLE "',o);"  // Create offset direction select options
-#ifdef USE_RULES
+#if defined(USE_RULES) || defined(USE_SCRIPT)
       "ce('" D_RULE "',o);"
 #else
       "ce('" D_BLINK "',o);"
@@ -768,7 +770,7 @@ bool Xdrv09(uint8_t function)
 #ifdef USE_WEBSERVER
 #ifdef USE_TIMERS_WEB
     case FUNC_WEB_ADD_BUTTON:
-#ifdef USE_RULES
+#if defined(USE_RULES) || defined(USE_SCRIPT)
       WSContentSend_P(HTTP_BTN_MENU_TIMER);
 #else
       if (devices_present) { WSContentSend_P(HTTP_BTN_MENU_TIMER); }

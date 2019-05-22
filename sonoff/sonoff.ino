@@ -143,7 +143,10 @@ uint8_t backlog_pointer = 0;                // Command backlog pointer
 uint8_t sleep;                              // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
+uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
+uint8_t led_power = 0;                      // LED power state
+uint8_t ledlnk_inverted = 0;                // Link LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
 uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
 uint8_t energy_flg = 0;                     // Energy monitor configured
@@ -370,19 +373,56 @@ void SetDevicePower(power_t rpower, int source)
   }
 }
 
+void SetLedPowerIdx(uint8_t led, uint8_t state)
+{
+  if ((99 == pin[GPIO_LEDLNK]) && (0 == led)) {          // Legacy - LED1 is link led only if LED2 is present
+    if (pin[GPIO_LED2] < 99) { led = 1; }
+  }
+  if (pin[GPIO_LED1 + led] < 99) {
+    uint8_t mask = 1 << led;
+    if (state) {
+      state = 1;
+      led_power |= mask;
+    } else {
+      led_power &= (0xFF ^ mask);
+    }
+    digitalWrite(pin[GPIO_LED1 + led], bitRead(led_inverted, led) ? !state : state);
+  }
+}
+
 void SetLedPower(uint8_t state)
 {
-  if (state) { state = 1; }
+  if (99 == pin[GPIO_LEDLNK]) {                          // Legacy - Only use LED1 and/or LED2
+    SetLedPowerIdx(0, state);
+  } else {
+    power_t mask = 1;
+    for (uint8_t i = 0; i < leds_present; i++) {         // Map leds to power
+      bool tstate = (power & mask);
+      SetLedPowerIdx(i, tstate);
+      mask <<= 1;
+    }
+  }
+}
 
-  uint8_t led_pin = 0;
-  if (pin[GPIO_LED2] < 99) { led_pin = 1; }
-  digitalWrite(pin[GPIO_LED1 + led_pin], (bitRead(led_inverted, led_pin)) ? !state : state);
+void SetLedPowerAll(uint8_t state)
+{
+  for (uint8_t i = 0; i < leds_present; i++) {
+    SetLedPowerIdx(i, state);
+  }
 }
 
 void SetLedLink(uint8_t state)
 {
-  if (state) { state = 1; }
-  digitalWrite(pin[GPIO_LED1], (bitRead(led_inverted, 0)) ? !state : state);
+  uint8_t led_pin = pin[GPIO_LEDLNK];
+  uint8_t led_inv = ledlnk_inverted;
+  if (99 == led_pin) {                                   // Legacy - LED1 is status
+    led_pin = pin[GPIO_LED1];
+    led_inv = bitRead(led_inverted, 0);
+  }
+  if (led_pin < 99) {
+    if (state) { state = 1; }
+    digitalWrite(led_pin, (led_inv) ? !state : state);
+  }
 }
 
 uint8_t GetFanspeed(void)
@@ -1422,7 +1462,8 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       }
       Response_P(S_JSON_COMMAND_NVALUE, command, Settings.altitude);
     }
-    else if (CMND_LEDPOWER == command_code) {
+    else if ((CMND_LEDPOWER == command_code) && (index > 0) && (index <= MAX_LEDS)) {
+/*
       if ((payload >= 0) && (payload <= 2)) {
         Settings.ledstate &= 8;
         switch (payload) {
@@ -1435,15 +1476,83 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
           break;
         }
         blinks = 0;
-        SetLedPower(Settings.ledstate &8);
+        SetLedPowerIdx(index -1, Settings.ledstate &8);
       }
-      Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(bitRead(Settings.ledstate, 3)));
+      Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, GetStateText(bitRead(Settings.ledstate, 3)));
+*/
+/*
+      if (99 == pin[GPIO_LEDLNK]) {
+        if ((payload >= 0) && (payload <= 2)) {
+          Settings.ledstate &= 8;
+          switch (payload) {
+          case 0: // Off
+          case 1: // On
+            Settings.ledstate = payload << 3;
+            break;
+          case 2: // Toggle
+            Settings.ledstate ^= 8;
+            break;
+          }
+          blinks = 0;
+          SetLedPower(Settings.ledstate &8);
+        }
+        Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(bitRead(Settings.ledstate, 3)));
+      } else {
+        if ((payload >= 0) && (payload <= 2)) {
+          Settings.ledstate &= 8;                // Disable power control
+          uint8_t mask = 1 << (index -1);        // Led to control
+          switch (payload) {
+          case 0: // Off
+            led_power &= (0xFF ^ mask);
+          case 1: // On
+            led_power |= mask;
+            break;
+          case 2: // Toggle
+            led_power ^= mask;
+            break;
+          }
+          blinks = 0;
+          SetLedPowerIdx(index -1, (led_power & mask));
+        }
+        Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, GetStateText(bitRead(led_power, index -1)));
+      }
+*/
+      if (99 == pin[GPIO_LEDLNK]) { index = 1; }
+      if ((payload >= 0) && (payload <= 2)) {
+        Settings.ledstate &= 8;                // Disable power control
+        uint8_t mask = 1 << (index -1);        // Led to control
+        switch (payload) {
+        case 0: // Off
+          led_power &= (0xFF ^ mask);
+          Settings.ledstate = 0;
+          break;
+        case 1: // On
+          led_power |= mask;
+          Settings.ledstate = 8;
+          break;
+        case 2: // Toggle
+          led_power ^= mask;
+          Settings.ledstate ^= 8;
+          break;
+        }
+        blinks = 0;
+        if (99 == pin[GPIO_LEDLNK]) {
+          SetLedPower(Settings.ledstate &8);
+        } else {
+          SetLedPowerIdx(index -1, (led_power & mask));
+        }
+      }
+      uint8_t state = bitRead(led_power, index -1);
+      if (99 == pin[GPIO_LEDLNK]) {
+        state = bitRead(Settings.ledstate, 3);
+      }
+      Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, GetStateText(state));
     }
     else if (CMND_LEDSTATE == command_code) {
       if ((payload >= 0) && (payload < MAX_LED_OPTION)) {
         Settings.ledstate = payload;
         if (!Settings.ledstate) {
-          SetLedPower(0);
+          SetLedPowerAll(0);
           SetLedLink(0);
         }
       }
@@ -1469,7 +1578,12 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_UNKNOWN "\"}"));
     type = (char*)topicBuf;
   }
-  if (mqtt_data[0] != '\0') { MqttPublishPrefixTopic_P(RESULT_OR_STAT, type); }
+  if (mqtt_data[0] != '\0') {
+     MqttPublishPrefixTopic_P(RESULT_OR_STAT, type);
+#ifdef USE_SCRIPT
+     XdrvRulesProcess();
+#endif
+  }
   fallback_topic_flag = false;
 }
 
@@ -1838,6 +1952,9 @@ void MqttPublishTeleState(void)
   mqtt_data[0] = '\0';
   MqttShowState();
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
+#ifdef USE_SCRIPT
+  RulesTeleperiod();  // Allow rule based HA messages
+#endif  // USE_SCRIPT
 }
 
 bool MqttShowSensor(void)
@@ -1922,7 +2039,7 @@ void PerformEverySecond(void)
       mqtt_data[0] = '\0';
       if (MqttShowSensor()) {
         MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-#ifdef USE_RULES
+#if defined(USE_RULES) || defined(USE_SCRIPT)
         RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_RULES
       }
@@ -2025,8 +2142,6 @@ void Every250mSeconds(void)
       }
     }
     if ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) {
-//    if ( (!Settings.flag.global_state && global_state.data) || ((!(Settings.ledstate &0x08)) && ((Settings.ledstate &0x06) || (blinks > 200) || (blinkstate))) ) {
-//      SetLedPower(blinkstate);                            // Set led on or off
       SetLedLink(blinkstate);                            // Set led on or off
     }
     if (!blinkstate) {
@@ -2176,7 +2291,9 @@ void Every250mSeconds(void)
         SettingsDefault();
         restart_flag = 2;
       }
-      SettingsSaveAll();
+      if (2 == restart_flag) {
+        SettingsSaveAll();
+      }
       restart_flag--;
       if (restart_flag <= 0) {
         AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
@@ -2449,6 +2566,10 @@ void GpioInit(void)
         bitSet(led_inverted, mpin - GPIO_LED1_INV);
         mpin -= (GPIO_LED1_INV - GPIO_LED1);
       }
+      else if (mpin == GPIO_LEDLNK_INV) {
+        ledlnk_inverted = 1;
+        mpin -= (GPIO_LEDLNK_INV - GPIO_LEDLNK);
+      }
       else if ((mpin >= GPIO_PWM1_INV) && (mpin < (GPIO_PWM1_INV + MAX_PWMS))) {
         bitSet(pwm_inverted, mpin - GPIO_PWM1_INV);
         mpin -= (GPIO_PWM1_INV - GPIO_PWM1);
@@ -2560,9 +2681,23 @@ void GpioInit(void)
 
   for (uint8_t i = 0; i < MAX_LEDS; i++) {
     if (pin[GPIO_LED1 +i] < 99) {
-      pinMode(pin[GPIO_LED1 +i], OUTPUT);
-      digitalWrite(pin[GPIO_LED1 +i], bitRead(led_inverted, i));
+#ifdef USE_ARILUX_RF
+      if ((3 == i) && (leds_present < 2) && (99 == pin[GPIO_ARIRFSEL])) {
+        pin[GPIO_ARIRFSEL] = pin[GPIO_LED4];  // Legacy support where LED4 was Arilux RF enable
+        pin[GPIO_LED4] = 99;
+      } else {
+#endif
+        pinMode(pin[GPIO_LED1 +i], OUTPUT);
+        leds_present++;
+        digitalWrite(pin[GPIO_LED1 +i], bitRead(led_inverted, i));
+#ifdef USE_ARILUX_RF
+      }
+#endif
     }
+  }
+  if (pin[GPIO_LEDLNK] < 99) {
+    pinMode(pin[GPIO_LEDLNK], OUTPUT);
+    digitalWrite(pin[GPIO_LEDLNK], ledlnk_inverted);
   }
 
   ButtonInit();
@@ -2645,6 +2780,13 @@ void setup(void)
   sleep = Settings.sleep;
 #ifndef USE_EMULATION
   Settings.flag2.emulation = 0;
+#else
+#ifndef USE_EMULATION_WEMO
+  if (EMUL_WEMO == Settings.flag2.emulation) { Settings.flag2.emulation = 0; }
+#endif
+#ifndef USE_EMULATION_HUE
+  if (EMUL_HUE == Settings.flag2.emulation) { Settings.flag2.emulation = 0; }
+#endif
 #endif  // USE_EMULATION
 
   if (Settings.param[P_BOOT_LOOP_OFFSET]) {

@@ -716,6 +716,8 @@ void LightStateClass::HsToRgb(uint16_t hue, uint8_t sat, uint8_t *r_r, uint8_t *
   if (r_b)  *r_b = b;
 }
 
+#define POW FastPrecisePowf
+
 void LightStateClass::RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x, float *r_y) {
   float x = 0.31271f;   // default medium white
   float y = 0.32902f;
@@ -726,9 +728,9 @@ void LightStateClass::RgbToXy(uint8_t i_r, uint8_t i_g, uint8_t i_b, float *r_x,
     float b = (float)i_b / 255.0f;
     // https://gist.github.com/popcorn245/30afa0f98eea1c2fd34d
     // Gamma correction
-    r = (r > 0.04045f) ? powf((r + 0.055f) / (1.0f + 0.055f), 2.4f) : (r / 12.92f);
-    g = (g > 0.04045f) ? powf((g + 0.055f) / (1.0f + 0.055f), 2.4f) : (g / 12.92f);
-    b = (b > 0.04045f) ? powf((b + 0.055f) / (1.0f + 0.055f), 2.4f) : (b / 12.92f);
+    r = (r > 0.04045f) ? POW((r + 0.055f) / (1.0f + 0.055f), 2.4f) : (r / 12.92f);
+    g = (g > 0.04045f) ? POW((g + 0.055f) / (1.0f + 0.055f), 2.4f) : (g / 12.92f);
+    b = (b > 0.04045f) ? POW((b + 0.055f) / (1.0f + 0.055f), 2.4f) : (b / 12.92f);
 
     // conversion to X, Y, Z
     // Y is also the Luminance
@@ -762,9 +764,9 @@ void LightStateClass::XyToRgb(float x, float y, uint8_t *rr, uint8_t *rg, uint8_
   r = r / max;    // normalize to max == 1.0
   g = g / max;
   b = b / max;
-  r = (r <= 0.0031308f) ? 12.92f * r : 1.055f * powf(r, (1.0f / 2.4f)) - 0.055f;
-  g = (g <= 0.0031308f) ? 12.92f * g : 1.055f * powf(g, (1.0f / 2.4f)) - 0.055f;
-  b = (b <= 0.0031308f) ? 12.92f * b : 1.055f * powf(b, (1.0f / 2.4f)) - 0.055f;
+  r = (r <= 0.0031308f) ? 12.92f * r : 1.055f * POW(r, (1.0f / 2.4f)) - 0.055f;
+  g = (g <= 0.0031308f) ? 12.92f * g : 1.055f * POW(g, (1.0f / 2.4f)) - 0.055f;
+  b = (b <= 0.0031308f) ? 12.92f * b : 1.055f * POW(b, (1.0f / 2.4f)) - 0.055f;
   //
   // AddLog_P2(LOG_LEVEL_DEBUG_MORE, "XyToRgb XZ (%s %s) rgb (%s %s %s)",
   //   String(X,5).c_str(), String(Z,5).c_str(),
@@ -1105,23 +1107,24 @@ void AriluxRfHandler(void)
 
 void AriluxRfInit(void)
 {
-  if ((pin[GPIO_ARIRFRCV] < 99) && (pin[GPIO_LED4] < 99)) {
+  if ((pin[GPIO_ARIRFRCV] < 99) && (pin[GPIO_ARIRFSEL] < 99)) {
     if (Settings.last_module != Settings.module) {
       Settings.rf_code[1][6] = 0;
       Settings.rf_code[1][7] = 0;
       Settings.last_module = Settings.module;
     }
     arilux_rf_received_value = 0;
-    digitalWrite(pin[GPIO_LED4], !bitRead(led_inverted, 3));  // Turn on RF
+
+    digitalWrite(pin[GPIO_ARIRFSEL], 0);  // Turn on RF
     attachInterrupt(pin[GPIO_ARIRFRCV], AriluxRfInterrupt, CHANGE);
   }
 }
 
 void AriluxRfDisable(void)
 {
-  if ((pin[GPIO_ARIRFRCV] < 99) && (pin[GPIO_LED4] < 99)) {
+  if ((pin[GPIO_ARIRFRCV] < 99) && (pin[GPIO_ARIRFSEL] < 99)) {
     detachInterrupt(pin[GPIO_ARIRFRCV]);
-    digitalWrite(pin[GPIO_LED4], bitRead(led_inverted, 3));  // Turn off RF
+    digitalWrite(pin[GPIO_ARIRFSEL], 1);  // Turn off RF
   }
 }
 #endif  // USE_ARILUX_RF
@@ -1351,8 +1354,9 @@ void LightInit(void)
       }
     }
     if (pin[GPIO_ARIRFRCV] < 99) {
-      if (pin[GPIO_LED4] < 99) {
-        digitalWrite(pin[GPIO_LED4], bitRead(led_inverted, 3));  // Turn off RF
+      if (pin[GPIO_ARIRFSEL] < 99) {
+        pinMode(pin[GPIO_ARIRFSEL], OUTPUT);
+        digitalWrite(pin[GPIO_ARIRFSEL], 1);  // Turn off RF
       }
     }
   }

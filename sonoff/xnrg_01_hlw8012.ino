@@ -233,26 +233,27 @@ void HlwSnsInit(void)
 void HlwDrvInit(void)
 {
   if (!energy_flg) {
-    hlw_model_type = 0;    // HLW8012
+    hlw_model_type = 0;                      // HLW8012
     if (pin[GPIO_HJL_CF] < 99) {
       pin[GPIO_HLW_CF] = pin[GPIO_HJL_CF];
       pin[GPIO_HJL_CF] = 99;
-      hlw_model_type = 1;  // HJL-01/BL0937
+      hlw_model_type = 1;                    // HJL-01/BL0937
     }
 
-    if (pin[GPIO_HLW_CF] < 99) {  // HLW8012 or HJL-01 based device
+    if (pin[GPIO_HLW_CF] < 99) {             // HLW8012 or HJL-01 based device Power monitor
 
-      hlw_ui_flag = 1;       // Voltage on high
+      hlw_ui_flag = 1;                       // Voltage on high
       if (pin[GPIO_NRG_SEL_INV] < 99) {
         pin[GPIO_NRG_SEL] = pin[GPIO_NRG_SEL_INV];
         pin[GPIO_NRG_SEL_INV] = 99;
-        hlw_ui_flag = 0;     // Voltage on low
+        hlw_ui_flag = 0;                     // Voltage on low
       }
 
-      if (99 == pin[GPIO_NRG_SEL]) {
-        energy_current_available = false;
-      }
-      if (99 == pin[GPIO_NRG_CF1]) {
+      if (pin[GPIO_NRG_CF1] < 99) {          // Voltage and/or Current monitor
+        if (99 == pin[GPIO_NRG_SEL]) {       // Voltage and/or Current selector
+          energy_current_available = false;  // Assume Voltage
+        }
+      } else {
         energy_current_available = false;
         energy_voltage_available = false;
       }

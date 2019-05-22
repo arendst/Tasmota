@@ -20,6 +20,6 @@
 #ifndef _SONOFF_VERSION_H_
 #define _SONOFF_VERSION_H_
 
-const uint32_t VERSION = 0x0605000B;
+const uint32_t VERSION = 0x0605000C;
 
 #endif  // _SONOFF_VERSION_H_

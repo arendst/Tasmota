@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_RULES
+#ifndef USE_SCRIPT
 /*********************************************************************************************\
  * Rules based heavily on ESP Easy implementation
  *
@@ -583,6 +584,16 @@ void RulesEverySecond(void)
         }
       }
     }
+  }
+}
+
+void RulesSaveBeforeRestart(void)
+{
+  if (Settings.rule_enabled) {  // Any rule enabled
+    char json_event[32];
+
+    strncpy_P(json_event, PSTR("{\"System\":{\"Save\":1}}"), sizeof(json_event));
+    RulesProcessEvent(json_event);
   }
 }
 
@@ -1278,6 +1289,9 @@ bool Xdrv10(uint8_t function)
     case FUNC_RULES_PROCESS:
       result = RulesProcess();
       break;
+    case FUNC_SAVE_BEFORE_RESTART:
+      RulesSaveBeforeRestart();
+      break;
 #ifdef SUPPORT_MQTT_EVENT
     case FUNC_MQTT_DATA:
       result = RulesMqttData();
@@ -1287,4 +1301,5 @@ bool Xdrv10(uint8_t function)
   return result;
 }
 
+#endif  // Do not USE_SCRIPT
 #endif  // USE_RULES

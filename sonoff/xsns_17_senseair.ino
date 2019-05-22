@@ -149,9 +149,9 @@ void SenseairShow(bool json)
   GetTextIndexed(senseair_types, sizeof(senseair_types), senseair_type -1, kSenseairTypes);
 
   if (json) {
-    ResponseAppend_P(PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d"), senseair_types, senseair_co2);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_CO2 "\":%d"), senseair_types, senseair_co2);
     if (senseair_type != 2) {
-      ResponseAppend_P(PSTR("%s,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s"), temperature, humidity);
+      ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s"), temperature, humidity);
     }
     ResponseJsonEnd();
 #ifdef USE_DOMOTICZ

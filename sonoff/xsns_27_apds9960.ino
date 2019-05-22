@@ -374,19 +374,9 @@ void calculateColorTemperature(void)
   n = (xc - 0.3320F) / (0.1858F - yc);
 
   /* Calculate the final CCT */
-  color_data.cct = (449.0F * powf(n, 3)) + (3525.0F * powf(n, 2)) + (6823.3F * n) + 5520.33F;
+  color_data.cct = (449.0F * FastPrecisePowf(n, 3)) + (3525.0F * FastPrecisePowf(n, 2)) + (6823.3F * n) + 5520.33F;
 
   return;
-}
-
-/**
-*   Taken from the Adafruit-Library
-*    @brief  Implements missing powf function
-*/
-
-float powf(const float x, const float y)
-{
-  return (float)(pow((double)x, (double)y));
 }
 
  /*******************************************************************************

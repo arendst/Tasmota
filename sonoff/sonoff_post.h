@@ -46,6 +46,13 @@ void KNX_CB_Action(message_t const &msg, void *arg);
  * Default global defines
 \*********************************************************************************************/
 
+#ifdef USE_EMULATION_HUE
+#define USE_EMULATION
+#endif
+#ifdef USE_EMULATION_WEMO
+#define USE_EMULATION
+#endif
+
 #ifndef MODULE
 #define MODULE                 SONOFF_BASIC   // [Module] Select default model
 #endif

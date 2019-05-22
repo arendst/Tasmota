@@ -493,9 +493,6 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/rs", HandleRestoreConfiguration);
       WebServer->on("/rt", HandleResetConfiguration);
       WebServer->on("/in", HandleInformation);
-#ifdef USE_EMULATION
-      HueWemoAddHandlers();
-#endif  // USE_EMULATION
       XdrvCall(FUNC_WEB_ADD_HANDLER);
       XsnsCall(FUNC_WEB_ADD_HANDLER);
 #endif  // Not FIRMWARE_MINIMAL
@@ -1532,11 +1529,19 @@ void HandleOtherConfiguration(void)
 #ifdef USE_EMULATION
   WSContentSend_P(PSTR("<p></p><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend><p>"));  // Keep close to Friendlynames so do not use <br/>
   for (uint8_t i = 0; i < EMUL_MAX; i++) {
-    WSContentSend_P(PSTR("<input id='r%d' name='b2' type='radio' value='%d'%s><b>%s</b> %s<br/>"),  // Different id only used for labels
-      i, i,
-      (i == Settings.flag2.emulation) ? " checked" : "",
-      GetTextIndexed(stemp, sizeof(stemp), i, kEmulationOptions),
-      (i == EMUL_NONE) ? "" : (i == EMUL_WEMO) ? D_SINGLE_DEVICE : D_MULTI_DEVICE);
+#ifndef USE_EMULATION_WEMO
+    if (i == EMUL_WEMO) { i++; }
+#endif
+#ifndef USE_EMULATION_HUE
+    if (i == EMUL_HUE) { i++; }
+#endif
+    if (i < EMUL_MAX) {
+      WSContentSend_P(PSTR("<input id='r%d' name='b2' type='radio' value='%d'%s><b>%s</b> %s<br/>"),  // Different id only used for labels
+        i, i,
+        (i == Settings.flag2.emulation) ? " checked" : "",
+        GetTextIndexed(stemp, sizeof(stemp), i, kEmulationOptions),
+        (i == EMUL_NONE) ? "" : (i == EMUL_WEMO) ? D_SINGLE_DEVICE : D_MULTI_DEVICE);
+    }
   }
   WSContentSend_P(PSTR("</p></fieldset>"));
 #endif  // USE_EMULATION
@@ -2189,11 +2194,13 @@ void HandleNotFound(void)
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the error page.
 
 #ifdef USE_EMULATION
+#ifdef USE_EMULATION_HUE
   String path = WebServer->uri();
   if ((EMUL_HUE == Settings.flag2.emulation) && (path.startsWith("/api"))) {
     HandleHueApi(&path);
   } else
-#endif // USE_EMULATION
+#endif  // USE_EMULATION_HUE
+#endif  // USE_EMULATION
   {
     WSContentBegin(404, CT_PLAIN);
     WSContentSend_P(PSTR(D_FILE_NOT_FOUND "\n\nURI: %s\nMethod: %s\nArguments: %d\n"), WebServer->uri().c_str(), (WebServer->method() == HTTP_GET) ? "GET" : "POST", WebServer->args());
@@ -2430,7 +2437,16 @@ bool WebCommand(void)
   }
 #ifdef USE_EMULATION
   else if (CMND_EMULATION == command_code) {
+#if defined(USE_EMULATION_WEMO) && defined(USE_EMULATION_HUE)
     if ((XdrvMailbox.payload >= EMUL_NONE) && (XdrvMailbox.payload < EMUL_MAX)) {
+#else
+#ifndef USE_EMULATION_WEMO
+    if ((EMUL_NONE == XdrvMailbox.payload) || (EMUL_HUE == XdrvMailbox.payload)) {
+#endif
+#ifndef USE_EMULATION_HUE
+    if ((EMUL_NONE == XdrvMailbox.payload) || (EMUL_WEMO == XdrvMailbox.payload)) {
+#endif
+#endif
       Settings.flag2.emulation = XdrvMailbox.payload;
       restart_flag = 2;
     }
