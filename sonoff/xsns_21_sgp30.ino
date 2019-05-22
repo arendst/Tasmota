@@ -89,7 +89,7 @@ void Sgp30Update(void)  // Perform every second to ensure proper operation of th
     }
     return;  // Measurement failed
   }
-  if (global_update) {
+  if (global_update && global_humidity>0 && global_temperature!=9999) {
     // abs hum in mg/m3
     sgp30_abshum=sgp30_AbsoluteHumidity(global_temperature,global_humidity,TempUnit());
     sgp.setHumidity(sgp30_abshum*1000);
@@ -124,7 +124,7 @@ void Sgp30Show(bool json)
   if (sgp30_ready) {
     char abs_hum[33];
 
-    if (global_update) {
+    if (global_update && global_humidity>0 && global_temperature!=9999) {
       // has humidity + temperature
       dtostrfd(sgp30_abshum,4,abs_hum);
     }

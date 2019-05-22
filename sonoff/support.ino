@@ -644,7 +644,7 @@ void ResetGlobalValues(void)
 {
   if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
     global_update = 0;
-    global_temperature = 0;
+    global_temperature = 9999;
     global_humidity = 0;
     global_pressure = 0;
   }
