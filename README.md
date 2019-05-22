@@ -34,10 +34,10 @@ A Sonoff device is not a toy. It uses Mains AC so there is a danger of electrocu
 We don't take any responsibility nor liability for using this software nor for the installation or any tips, advice, videos, etc. given by any member of this site or any related site.
 
 ### Note
-Please do not ask to add new devices unless it requires additional code for new features. If the device is not listed as a module, try using Templates first. See if it is listed in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates) or create your own [template](https://github.com/arendst/Sonoff-Tasmota/wiki/Templates#creating-your-template-).
+Please do not ask to add new devices unless it requires additional code for new features. If the device is not listed as a module, try using [Templates](https://github.com/arendst/Sonoff-Tasmota/wiki/Templates) first. If it is not listed in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates) create your own [Template](https://github.com/arendst/Sonoff-Tasmota/wiki/Templates#creating-your-template-).
 
 ### Quick Install
-Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as documented in the wiki.
+Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as [documented in the wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Flashing).
 
 ### Important User Compilation Information
 If you want to compile Sonoff-Tasmota yourself keep in mind the following:
@@ -48,7 +48,7 @@ If you want to compile Sonoff-Tasmota yourself keep in mind the following:
 
 ### Version Information
 - Sonoff-Tasmota provides all (Sonoff) modules in one file and starts with module Sonoff Basic.
-- Once uploaded, select module using the configuration webpage, the commands ```Modules``` and ```Module``` or configure the [Template](https://github.com/arendst/Sonoff-Tasmota/wiki/Templates) for your device
+- Once uploaded, select [Module](https://github.com/arendst/Sonoff-Tasmota/wiki/Modules) using the configuration webpage, the commands ```Modules``` and ```Module``` or configure the [Template](https://github.com/arendst/Sonoff-Tasmota/wiki/Templates) for your device
 - After reboot select config menu again or use commands ```GPIOs``` and ```GPIO``` to change GPIO with desired sensor.
 
 ### Migration Information
@@ -61,7 +61,7 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 
 ### Support Information
 <img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" />
-For a database of supported devices see [Tasmota Device Templates Repository](http://blakadder.github.io/templates).
+For a database of supported devices see [Tasmota Device Templates Repository](http://blakadder.github.io/templates)
 
 See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki) for use instructions and how-to's.<br />
 See [Community](https://groups.google.com/d/forum/sonoffusers) for forum.<br />
