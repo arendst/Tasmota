@@ -348,6 +348,7 @@
 //  #define USE_SCD30                              // Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
   #define USE_SPS30                              // Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
   #define USE_ADE7953                            // Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
+  #define USE_VL53L0X                            // Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
 
 //  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
@@ -442,7 +443,6 @@
 
 #define USE_SM16716                              // Add support for SM16716 RGB LED controller (+0k7 code)
 
-#define USE_VL53L0X                               // add support for VL53L0x time of flight sensor
 //#define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 
 /*********************************************************************************************\

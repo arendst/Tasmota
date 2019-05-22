@@ -4,6 +4,7 @@
  * Add support for up to four LEDs related to four power outputs. Enabled when "LedLink(i)" is configured too (#5709)
  * Add extended LED power control using command LedPowerX where X is 1 to 4. Enabled when "LedLink(i)" is configured too (#5709)
  * Fix core 2.5.x ISR not in IRAM exception (#5837)
+ * Add support for VL53L0x time of flight sensor. Might interfere with TSL2561 using same I2C address (#5845)
  *
  * 6.5.0.11 20190517
  * Add command SetOption64 0/1 to switch between "-" or "_" as sensor index separator impacting DS18X20, DHT, BMP and SHT3X sensor names (#5689)
