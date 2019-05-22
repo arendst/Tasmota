@@ -36,9 +36,7 @@ no math hierarchy  (costs ram and execution time, better group with brackets, an
 (will probably make math hierarchy an ifdefed option)
 keywords if then else endif, or, and are better readable for beginners (others may use {})
 
-changelog after merging to Tasmota
-1.01 optimized median filter, support for opt filter lenght, support for arrays
-1.02 string token support
+
 
 \*********************************************************************************************/
 
