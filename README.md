@@ -1,8 +1,6 @@
-<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
-
 # Sonoff-Tasmota
 
-Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web UI, rules and timers, OTA updates, custom device templates and sensor support**. Allows control over **MQTT**, **HTTP**, **Serial** and **KNX** for integrations with smart home systems. Written for Arduino IDE and PlatformIO.
+<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="90"/>Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web UI, rules and timers, OTA updates, custom device templates and sensor support**. Allows control over **MQTT**, **HTTP**, **Serial** and **KNX** for integrations with smart home systems. Written for Arduino IDE and PlatformIO.
 
 [![GitHub version](https://img.shields.io/github/release/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Sonoff-Tasmota/total.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)
@@ -17,7 +15,7 @@ If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
 
 See [RELEASENOTES.md](https://github.com/arendst/Sonoff-Tasmota/blob/development/RELEASENOTES.md) for release information.
 
-In addition to the [release webpage](https://github.com/arendst/Sonoff-Tasmota/releases/latest), the binaries can also be OTA downloaded from http://thehackbox.org/tasmota/release/
+In addition to the [release webpage](https://github.com/arendst/Sonoff-Tasmota/releases/latest), the binaries can be downloaded from http://thehackbox.org/tasmota/release/
 
 ### Development
 [![Dev Version](https://img.shields.io/badge/development%20version-6.5.0.x-blue.svg)](https://github.com/arendst/Sonoff-Tasmota)
@@ -36,10 +34,10 @@ A Sonoff device is not a toy. It uses Mains AC so there is a danger of electrocu
 We don't take any responsibility nor liability for using this software nor for the installation or any tips, advice, videos, etc. given by any member of this site or any related site.
 
 ### Note
-Please do not ask to add devices where you can't provide a basic working configuration (other than sonoff). Since there are thousands of them.
+Please do not ask to add new devices unless it requires additional code for new features. If the device is not listed as a module, try using [Templates](https://github.com/arendst/Sonoff-Tasmota/wiki/Templates) first. If it is not listed in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates) create your own [Template](https://github.com/arendst/Sonoff-Tasmota/wiki/Templates#creating-your-template-).
 
 ### Quick Install
-Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as documented in the wiki.
+Download one of the released binaries from https://github.com/arendst/Sonoff-Tasmota/releases and flash it to your hardware as [documented in the wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Flashing).
 
 ### Important User Compilation Information
 If you want to compile Sonoff-Tasmota yourself keep in mind the following:
@@ -50,7 +48,7 @@ If you want to compile Sonoff-Tasmota yourself keep in mind the following:
 
 ### Version Information
 - Sonoff-Tasmota provides all (Sonoff) modules in one file and starts with module Sonoff Basic.
-- Once uploaded select module using the configuration webpage or the commands ```Modules``` and ```Module```.
+- Once uploaded, select [Module](https://github.com/arendst/Sonoff-Tasmota/wiki/Modules) using the configuration webpage, the commands ```Modules``` and ```Module``` or configure the [Template](https://github.com/arendst/Sonoff-Tasmota/wiki/Templates) for your device
 - After reboot select config menu again or use commands ```GPIOs``` and ```GPIO``` to change GPIO with desired sensor.
 
 ### Migration Information
@@ -64,51 +62,11 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 ### Support Information
 <img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" />
 
-See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki) for more information.<br />
+For a database of supported devices see [Tasmota Device Templates Repository](https://blakadder.github.io/templates)
+
+See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki) for use instructions and how-to's.<br />
 See [Community](https://groups.google.com/d/forum/sonoffusers) for forum.<br />
 Visit [Discord Chat](https://discord.gg/Ks2Kzd4) for discussions and troubleshooting.
-
-The following devices are supported:
-- [iTead Sonoff Basic (R2)](https://www.itead.cc/smart-home/sonoff-wifi-wireless-switch-1.html)
-- [iTead Sonoff RF](https://www.itead.cc/smart-home/sonoff-rf.html)
-- [iTead Sonoff SV](https://www.itead.cc/smart-home/sonoff-sv.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff_th.jpg" width="250" align="right" />
-- [iTead Sonoff TH10/TH16 with temperature sensor](https://www.itead.cc/smart-home/sonoff-th.html)
-- [iTead Sonoff Dual (R2)](https://www.itead.cc/smart-home/sonoff-dual.html)
-- [iTead Sonoff Pow with Energy Monitoring](https://www.itead.cc/smart-home/sonoff-pow.html)
-- [iTead Sonoff Pow R2 with Energy Monitoring](https://www.itead.cc/sonoff-pow-r2.html)
-- [iTead Sonoff 4CH (R2)](https://www.itead.cc/smart-home/sonoff-4ch.html)
-- [iTead Sonoff 4CH Pro (R2)](https://www.itead.cc/smart-home/sonoff-4ch-pro.html)
-- [iTead Sonoff S20 Smart Socket](https://www.itead.cc/smart-socket.html)
-- [Sonoff S22 Smart Socket](https://github.com/arendst/Sonoff-Tasmota/issues/627)
-- [iTead Sonoff S26 Smart Socket](https://www.itead.cc/sonoff-s26-wifi-smart-plug.html)
-- [iTead Sonoff S31 Smart Socket with Energy Monitoring](https://www.itead.cc/sonoff-s31.html)
-- [iTead Slampher](https://www.itead.cc/slampher.html)
-- [iTead Sonoff Touch](https://www.itead.cc/sonoff-touch.html)
-- [iTead Sonoff T1](https://www.itead.cc/sonoff-t1.html)
-- [iTead Sonoff SC](https://www.itead.cc/sonoff-sc.html)
-- [iTead Sonoff Led](https://www.itead.cc/sonoff-led.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff4chpror2.jpg" height="250" align="right" />
-- [iTead Sonoff BN-SZ01 Ceiling Led](https://www.itead.cc/bn-sz01.html)
-- [iTead Sonoff B1](https://www.itead.cc/sonoff-b1.html)
-- [iTead Sonoff iFan02](https://www.itead.cc/sonoff-ifan02-wifi-smart-ceiling-fan-with-light.html)
-- [iTead Sonoff RF Bridge 433](https://www.itead.cc/sonoff-rf-bridge-433.html)
-- [iTead Sonoff Dev](https://www.itead.cc/sonoff-dev.html)
-- [iTead 1 Channel Switch 5V / 12V](https://www.itead.cc/smart-home/inching-self-locking-wifi-wireless-switch.html)
-- [iTead Motor Clockwise/Anticlockwise](https://www.itead.cc/smart-home/motor-reversing-wifi-wireless-switch.html)
-- [Electrodragon IoT Relay Board](http://www.electrodragon.com/product/wifi-iot-relay-board-based-esp8266/)
-- AI Light or any my9291 compatible RGBW LED bulb
-- H801 PWM LED controller
-- [MagicHome PWM LED controller](https://github.com/arendst/Sonoff-Tasmota/wiki/MagicHome-LED-strip-controller)
-- AriLux AL-LC01, AL-LC06 and AL-LC11 PWM LED controller
-- [Supla device - Espablo-inCan mod. for electrical Installation box](https://forum.supla.org/viewtopic.php?f=33&t=2188)
-- [BlitzWolf BW-SHP2 Smart Socket with Energy Monitoring](https://www.banggood.com/BlitzWolf-BW-SHP2-Smart-WIFI-Socket-EU-Plug-220V-16A-Work-with-Amazon-Alexa-Google-Assistant-p-1292899.html)<img src="https://github.com/arendst/arendst.github.io/blob/master/media/shelly2_small_250a.png" width="250" align="right" />
-- [Luani HVIO board](https://luani.de/projekte/esp8266-hvio/)
-- [Wemos D1 mini](https://wiki.wemos.cc/products:d1:d1_mini)
-- [HuaFan Smart Socket](https://github.com/arendst/Sonoff-Tasmota/wiki/HuaFan-Smart-Socket)
-- [Hyleton-313 Smart Plug](https://github.com/arendst/Sonoff-Tasmota/wiki/Hyleton-313-Smart-Plug)
-- [Allterco Shelly 1](https://shelly.cloud/shelly1-open-source/)
-- [Allterco Shelly 2 with Energy Monitoring](https://shelly.cloud/shelly2/)
-- NodeMcu and Ledunia
-- [KS-602 based switches like GresaTek, Jesiya, NewRice, Lyasi etc](https://ucexperiment.wordpress.com/2017/11/14/reprogramming-a-lyasi-wifi-wall-switch-with-esp8285/)
 
 ### Contribute
 You can contribute to Sonoff-Tasmota by
@@ -175,6 +133,7 @@ People helping to keep the show on the road:
 - Frogmore42 and Jason2866 for providing many issue answers
 - Blakadder for editing the wiki and providing template management
 - Stephan Hadinger for refactoring light driver and enhancing HueEmulation
+- tmo for designing the official logo
 - Many more providing Tips, Wips, Pocs or PRs
 
 ### License
