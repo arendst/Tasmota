@@ -442,6 +442,7 @@
 
 #define USE_SM16716                              // Add support for SM16716 RGB LED controller (+0k7 code)
 
+#define USE_VL53L0X                               // add support for VL53L0x time of flight sensor
 //#define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
 
 /*********************************************************************************************\
