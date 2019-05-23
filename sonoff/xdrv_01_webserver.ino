@@ -480,7 +480,8 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/u1", HandleUpgradeFirmwareStart);  // OTA
       WebServer->on("/u2", HTTP_POST, HandleUploadDone, HandleUploadLoop);
       WebServer->on("/u2", HTTP_OPTIONS, HandlePreflightRequest);
-      WebServer->on("/cs", HandleConsole);
+      WebServer->on("/cs", HTTP_GET, HandleConsole);
+      WebServer->on("/cs", HTTP_OPTIONS, HandlePreflightRequest);
       WebServer->on("/cm", HandleHttpCommand);
 #ifndef FIRMWARE_MINIMAL
       WebServer->on("/cn", HandleConfiguration);
