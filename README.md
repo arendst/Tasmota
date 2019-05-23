@@ -122,7 +122,7 @@ People helping to keep the show on the road:
 - Emontnemery for his HomeAssistant Discovery concept and many code tuning tips
 - Aidan Mountford for his HSB support
 - Daniel Ztolnai for his Serial Bridge implementation
-- Gerhard Mutz for his SGP30, Sunrise/Sunset and display support drivers
+- Gerhard Mutz for multiple sensor & display drivers, Sunrise/Sunset, and scripting
 - Nuno Ferreira for his HC-SR04 driver
 - Adrian Scillato for his (security)fixes and implementing and maintaining KNX
 - Gennaro Tortone for implementing and maintaining Eastron drivers
