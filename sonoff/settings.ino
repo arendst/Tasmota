@@ -908,7 +908,7 @@ void SettingsDefaultSet2(void)
 
   SettingsDefaultWebColor();
 
-  memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
+  memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
 }
 
 /********************************************************************************************/
@@ -1129,7 +1129,7 @@ void SettingsDelta(void)
       Settings.timezone_minutes = 0;
     }
     if (Settings.version < 0x06030004) {
-      memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
+      memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
     }
     if (Settings.version < 0x0603000E) {
       Settings.flag2.calc_resolution = CALC_RESOLUTION;

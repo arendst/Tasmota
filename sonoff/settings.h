@@ -210,8 +210,9 @@ struct SYSCFG {
   uint8_t       webserver;                 // 1AB
   uint8_t       weblog_level;              // 1AC
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
+  uint8_t       adc_param_type;            // 1D5
 
-  uint8_t       free_1D5[19];              // 1D5  Free since 5.12.0e
+  uint8_t       free_1D6[18];              // 1D6  Free since 5.12.0e
 
   uint8_t       sps30_inuse_hours;         // 1E8
   char          mqtt_host[33];             // 1E9 - Keep together with below as being copied as one chunck with reset 6
@@ -336,7 +337,10 @@ struct SYSCFG {
 
   uint8_t       free_774[32];              // 774
 
-  uint32_t      drivers[3];                // 794
+//  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries
+  uint32_t      adc_param1;                // 794
+  uint32_t      adc_param2;                // 798
+  int           adc_param3;                // 79C
   uint32_t      monitors;                  // 7A0
   uint32_t      sensors[3];                // 7A4
   uint32_t      displays;                  // 7B0
