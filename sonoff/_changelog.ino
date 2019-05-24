@@ -6,6 +6,7 @@
  * Fix core 2.5.x ISR not in IRAM exception (#5837)
  * Add support for VL53L0x time of flight sensor. Might interfere with TSL2561 using same I2C address (#5845)
  * Add command AdcParam to control ADC0 Temperature and Light formula parameters
+ * Change default PowerDelta from 80% to 0% on new installations (#5858, #5028, #4813, #4130, #4145, #3795, #3778, #3660, #3648)
  *
  * 6.5.0.11 20190517
  * Add command SetOption64 0/1 to switch between "-" or "_" as sensor index separator impacting DS18X20, DHT, BMP and SHT3X sensor names (#5689)

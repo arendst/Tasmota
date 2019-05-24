@@ -99,7 +99,6 @@ const uint16_t PWM_MIN = 100;               // [PWM_MIN] Minimum frequency - Def
                                             //    For Controlling Servos use 50 and also set PWM_FREQ as 50 (DO NOT USE THESE VALUES FOR DIMMERS)
 //#define PWM_LIGHTSCHEME0_IGNORE_SLEEP       // Do not change sleep value for LightAnimate() scheme 0
 
-const uint8_t DEFAULT_POWER_DELTA = 80;     // Power change percentage
 const uint16_t MAX_POWER_HOLD = 10;         // Time in SECONDS to allow max agreed power
 const uint16_t MAX_POWER_WINDOW = 30;       // Time in SECONDS to disable allow max agreed power
 const uint16_t SAFE_POWER_HOLD = 10;        // Time in SECONDS to allow max unit safe power

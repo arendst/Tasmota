@@ -349,7 +349,7 @@ bool EnergyCommand(void)
   }
   else if (CMND_POWERDELTA == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 101)) {
-      Settings.energy_power_delta = (1 == XdrvMailbox.payload) ? DEFAULT_POWER_DELTA : XdrvMailbox.payload;
+      Settings.energy_power_delta = XdrvMailbox.payload;
     }
     nvalue = Settings.energy_power_delta;
     unit = UNIT_PERCENTAGE;
