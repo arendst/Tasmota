@@ -813,6 +813,9 @@ void SettingsDefaultSet2(void)
 //  Settings.energy_kWhtotal = 0;
   RtcSettings.energy_kWhtotal = 0;
 
+  // IRRemote
+  Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
+
   // RF Bridge
 //  for (uint8_t i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
   memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
@@ -1167,6 +1170,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x0605000A) {
       Settings.my_adc0 = ADC0_NONE;
+    }
+    if (Settings.version < 0x0605000D) {
+      Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
     }
 
     Settings.version = VERSION;

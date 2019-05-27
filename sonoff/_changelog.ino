@@ -1,4 +1,7 @@
-/* 6.5.0.12 20190521
+/* 6.5.0.13 20190527
+ * Add command SetOption38 6..255 to set IRReceive protocol detection sensitivity mimizing UNKNOWN protocols (#5853)
+ *
+ * 6.5.0.12 20190521
  * Add AriLux RF control GPIO option "ALux IrSel" (159) replacing "Led4i" (59) for full LED control (#5709)
  * Add LED GPIO option "LedLink" (157) and "LedLinki" (158) to select dedicated link status LED (#5709)
  * Add support for up to four LEDs related to four power outputs. Enabled when "LedLink(i)" is configured too (#5709)

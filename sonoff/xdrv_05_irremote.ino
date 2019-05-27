@@ -116,11 +116,17 @@ IRrecv *irrecv = nullptr;
 
 unsigned long ir_lasttime = 0;
 
+void IrReceiveUpdateThreshold()
+{
+  if (Settings.param[P_IR_UNKNOW_THRESHOLD] < 6) { Settings.param[P_IR_UNKNOW_THRESHOLD] = 6; }
+  irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
+}
+
 void IrReceiveInit(void)
 {
   // an IR led is at GPIO_IRRECV
   irrecv = new IRrecv(pin[GPIO_IRRECV], IR_RCV_BUFFER_SIZE, IR_RCV_TIMEOUT, IR_RCV_SAVE_BUFFER);
-  irrecv->setUnknownThreshold(IR_RCV_MIN_UNKNOWN_SIZE);
+  irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
   irrecv->enableIRIn();                  // Start the receiver
 
   //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
