@@ -1313,6 +1313,9 @@ String HtmlEscape(const String unescaped) {
   return result;
 }
 
+// Indexed by enum wl_enc_type in file wl_definitions.h starting from -1
+const char kEncryptionType[] PROGMEM = "|||" D_WPA_PSK "||" D_WPA2_PSK "|" D_WEP "||" D_NONE "|" D_AUTO;
+
 void HandleWifiConfiguration(void)
 {
   if (!HttpCheckPriviledgedAccess(!WifiIsInManagerMode())) { return; }
@@ -1379,11 +1382,12 @@ void HandleWifiConfiguration(void)
           int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
 
           if (minimum_signal_quality == -1 || minimum_signal_quality < quality) {
-            uint8_t auth = WiFi.encryptionType(indices[i]);
+            int auth = WiFi.encryptionType(indices[i]);
+            char encryption[20];
             WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%s %d%%</span></div>"),
               HtmlEscape(WiFi.SSID(indices[i])).c_str(),
               WiFi.channel(indices[i]),
-              (ENC_TYPE_WEP == auth) ? D_WEP : (ENC_TYPE_TKIP == auth) ? D_WPA_PSK : (ENC_TYPE_CCMP == auth) ? D_WPA2_PSK : (ENC_TYPE_AUTO == auth) ? D_AUTO : "",
+              GetTextIndexed(encryption, sizeof(encryption), auth +1, kEncryptionType),
               quality
             );
             delay(0);
