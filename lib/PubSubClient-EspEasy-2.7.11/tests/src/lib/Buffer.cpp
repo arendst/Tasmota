@@ -2,9 +2,13 @@
 #include "Arduino.h"
 
 Buffer::Buffer() {
+    this->pos = 0;
+    this->length = 0;
 }
 
 Buffer::Buffer(uint8_t* buf, size_t size) {
+    this->pos = 0;
+    this->length = 0;
     this->add(buf,size);
 }
 bool Buffer::available() {

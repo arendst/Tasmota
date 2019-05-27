@@ -6,7 +6,7 @@
         "type": "git",
         "url": "https://github.com/knolleary/pubsubclient.git"
     },
-    "version": "2.6",
+    "version": "2.7",
     "exclude": "tests",
     "examples": "examples/*/*.ino",
     "frameworks": "arduino",

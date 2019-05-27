@@ -1,8 +1,16 @@
+2.7
+   * Fix remaining-length handling to prevent buffer overrun
+   * Add large-payload API - beginPublish/write/publish/endPublish
+   * Add yield call to improve reliability on ESP
+   * Add Clean Session flag to connect options
+   * Add ESP32 support for functional callback signature
+   * Various other fixes
+
 2.4
    * Add MQTT_SOCKET_TIMEOUT to prevent it blocking indefinitely
      whilst waiting for inbound data
    * Fixed return code when publishing >256 bytes
-   
+
 2.3
    * Add publish(topic,payload,retained) function
 

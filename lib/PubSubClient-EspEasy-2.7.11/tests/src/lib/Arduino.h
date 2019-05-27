@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "Print.h"
 
 
 extern "C"{
@@ -19,5 +20,7 @@ extern "C"{
 
 #define PROGMEM
 #define pgm_read_byte_near(x) *(x)
+
+#define yield(x) {}
 
 #endif // Arduino_h

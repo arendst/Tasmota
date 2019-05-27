@@ -16,6 +16,9 @@ connect 	KEYWORD2
 disconnect 	KEYWORD2
 publish 	KEYWORD2
 publish_P 	KEYWORD2
+beginPublish 	KEYWORD2
+endPublish 	KEYWORD2
+write	 	KEYWORD2
 subscribe 	KEYWORD2
 unsubscribe 	KEYWORD2
 loop 	KEYWORD2
