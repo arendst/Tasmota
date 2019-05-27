@@ -851,7 +851,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
               case P_RGB_REMAP:
                 LightUpdateColorMapping();
                 break;
-#ifdef USE_IR_RECEIVE
+#if defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)
               case P_IR_UNKNOW_THRESHOLD:
                 IrReceiveUpdateThreshold();
                 break;
