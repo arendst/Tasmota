@@ -1,5 +1,6 @@
 /* 6.5.0.13 20190527
  * Add command SetOption38 6..255 to set IRReceive protocol detection sensitivity mimizing UNKNOWN protocols (#5853)
+ * Fix missing white channel for SW2812 (#5869)
  *
  * 6.5.0.12 20190521
  * Add AriLux RF control GPIO option "ALux IrSel" (159) replacing "Led4i" (59) for full LED control (#5709)
