@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.2.0026'
+VER = '2.2.0027'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -908,7 +908,19 @@ Setting_6_5_0_11['flag3'][0].update ({
         'use_underscore':                ('<L', (0x3A0,1,14), (None, None,                      ('SetOption',   '"SetOption64 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_5_0_12 = copy.deepcopy(Setting_6_5_0_11)
+Setting_6_5_0_12.pop('drivers',None)
+Setting_6_5_0_12.update({
+    'adc_param_type':               ('B',   0x1D5,       (None, '2 <= $ <= 3',                  ('Sensor',       '"AdcParam {type},{param1},{param2},{param3}".format(type=$,param1=@["adc_param1"],param2=@["adc_param2"],param3=@["adc_param3"]/10000.0)')) ),
+    'adc_param1':                   ('<L',  0x794,       (None, None,                           ('Sensor',       None)) ),
+    'adc_param2':                   ('<L',  0x798,       (None, None,                           ('Sensor',       None)) ),
+    'adc_param3':                   ('<l',  0x79C,       (None, None,                           ('Sensor',       None)) ),
+    'sps30_inuse_hours':            ('B',   0x1E8,       (None, None,                           ('System',       None)) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x605000C, 0xe00, Setting_6_5_0_12),
+            (0x605000B, 0xe00, Setting_6_5_0_11),
             (0x605000B, 0xe00, Setting_6_5_0_11),
             (0x6050009, 0xe00, Setting_6_5_0_9),
             (0x6050007, 0xe00, Setting_6_5_0_7),
@@ -959,27 +971,27 @@ class LogType:
     ERROR = 'ERROR'
 
 
-def message(msg, typ=None, status=None, line=None):
+def message(msg, type_=None, status=None, line=None):
     """
     Writes a message to stdout
 
     @param msg:
         message to output
-    @param typ:
+    @param type_:
         INFO, WARNING or ERROR
     @param status:
         status number
     """
     print >> sys.stderr, '{styp}{sdelimiter}{sstatus}{slineno}{scolon}{smgs}'.format(\
-                            styp=typ if typ is not None else '',
-                            sdelimiter=' ' if status is not None and status > 0 and typ is not None else '',
+                            styp=type_ if type_ is not None else '',
+                            sdelimiter=' ' if status is not None and status > 0 and type_ is not None else '',
                             sstatus=status if status is not None and status > 0 else '',
-                            scolon=': ' if typ is not None or line is not None else '',
+                            scolon=': ' if type_ is not None or line is not None else '',
                             smgs=msg,
                             slineno=' (@{:04d})'.format(line) if line is not None else '')
 
 
-def exit(status=0, msg="end", typ=LogType.ERROR, src=None, doexit=True, line=None):
+def exit(status=0, msg="end", type_=LogType.ERROR, src=None, doexit=True, line=None):
     """
     Called when the program should be exit
 
@@ -987,7 +999,7 @@ def exit(status=0, msg="end", typ=LogType.ERROR, src=None, doexit=True, line=Non
         the exit status program returns to callert
     @param msg:
         the msg logged before exit
-    @param typ:
+    @param type_:
         msg type: 'INFO', 'WARNING' or 'ERROR'
     @param doexit:
         True to exit program, otherwise return
@@ -995,7 +1007,7 @@ def exit(status=0, msg="end", typ=LogType.ERROR, src=None, doexit=True, line=Non
 
     if src is not None:
         msg = '{} ({})'.format(src, msg)
-    message(msg, typ=typ if status!=ExitCode.OK else LogType.INFO, status=status, line=line)
+    message(msg, type_=type_ if status!=ExitCode.OK else LogType.INFO, status=status, line=line)
     exitcode = status
     if doexit:
         sys.exit(exitcode)
@@ -1451,7 +1463,7 @@ def GetTasmotaHostname(host, port, username=DEFAULTS['source']['username'], pass
         if "StatusNET" in jsonbody and "Hostname" in jsonbody["StatusNET"]:
             hostname = jsonbody["StatusNET"]["Hostname"]
             if args.verbose:
-                message("Hostname for '{}' retrieved: '{}'".format(host, hostname), typ=LogType.INFO)
+                message("Hostname for '{}' retrieved: '{}'".format(host, hostname), type_=LogType.INFO)
 
     return hostname
 
@@ -1759,7 +1771,7 @@ def ReadWriteConverter(value, fielddef, read=True, raw=False):
             elif callable(conv):     # use as format function
                 return conv(value)
         except Exception, e:
-            exit(e[0], e[1], typ=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
+            exit(e[0], e[1], type_=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
 
     return value
 
@@ -2082,15 +2094,33 @@ def SetFieldValue(fielddef, dobj, addr, value):
         addr += (bitsize / 8) * formatcnt
         for _ in range(0, formatcnt):
             addr -= (bitsize / 8)
-            val = value & ((2**bitsize) - 1)
+            maxunsigned = ((2**bitsize) - 1)
+            maxsigned = ((2**bitsize)>>1)-1
+            val = value & maxunsigned
+            if isinstance(value,int) and value < 0 and val > maxsigned:
+                val = ((maxunsigned+1)-val) * (-1)
             if args.debug >= 3:
                 print >> sys.stderr, "SetFieldValue(): Single type - fielddef {}, addr 0x{:04x}  value {}  singletype {}  bitsize {}".format(fielddef,addr,val,singletype,bitsize)
-            struct.pack_into(singletype, dobj, addr, val)
+            try:
+                struct.pack_into(singletype, dobj, addr, val)
+            except struct.error as e:
+                exit(ExitCode.RESTORE_DATA_ERROR, 
+                     "Single type {} [fielddef={}, addr=0x{:04x}, value={}] - skipped!".format(e,fielddef,addr,val), 
+                     type_=LogType.WARNING, 
+                     doexit=not args.ignorewarning, 
+                     line=inspect.getlineno(inspect.currentframe()))
             value >>= bitsize
     else:
         if args.debug >= 3:
             print >> sys.stderr, "SetFieldValue(): String type - fielddef {}, addr 0x{:04x}  value {}  format_ {}".format(fielddef,addr,value,format_)
-        struct.pack_into(format_, dobj, addr, value)
+        try:
+            struct.pack_into(format_, dobj, addr, value)
+        except struct.error as e:
+            exit(ExitCode.RESTORE_DATA_ERROR, 
+                 "String type {} [fielddef={}, addr=0x{:04x}, value={}} - skipped!".format(e,fielddef,addr,value), 
+                 type_=LogType.WARNING, 
+                 doexit=not args.ignorewarning, 
+                 line=inspect.getlineno(inspect.currentframe()))
 
     return dobj
 
@@ -2156,7 +2186,7 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
             valuemapping = ReadWriteConverter(GetFieldValue(fielddef, dobj, baseaddr+addroffset), fielddef, read=True, raw=raw)
 
     else:
-        exit(ExitCode.INTERNAL_ERROR, "Wrong mapping format definition: '{}'".format(format_), typ=LogType.WARNING, doexit=not args.ignorewarning, line=inspect.getlineno(inspect.currentframe()))
+        exit(ExitCode.INTERNAL_ERROR, "Wrong mapping format definition: '{}'".format(format_), type_=LogType.WARNING, doexit=not args.ignorewarning, line=inspect.getlineno(inspect.currentframe()))
 
     return valuemapping
 
@@ -2199,7 +2229,7 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
     if isinstance(arraydef, list) and len(arraydef) > 0:
         offset = 0
         if len(restore) > arraydef[0]:
-            exit(ExitCode.RESTORE_DATA_ERROR, "file '{sfile}', array '{sname}[{selem}]' exceeds max number of elements [{smax}]".format(sfile=filename, sname=fieldname, selem=len(restore), smax=arraydef[0]), typ=LogType.WARNING, doexit=not args.ignorewarning, line=inspect.getlineno(inspect.currentframe()))
+            exit(ExitCode.RESTORE_DATA_ERROR, "file '{sfile}', array '{sname}[{selem}]' exceeds max number of elements [{smax}]".format(sfile=filename, sname=fieldname, selem=len(restore), smax=arraydef[0]), type_=LogType.WARNING, doexit=not args.ignorewarning, line=inspect.getlineno(inspect.currentframe()))
         for i in range(0, arraydef[0]):
             subfielddef = GetSubfieldDef(fielddef)
             length = GetFieldLength(subfielddef)
@@ -2231,7 +2261,7 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
             try:
                 value = ReadWriteConverter(restore.encode(STR_ENCODING)[0], fielddef, read=False)
             except Exception, e:
-                exit(e[0], e[1], typ=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
+                exit(e[0], e[1], type_=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
                 valid = False
 
         # bool
@@ -2239,7 +2269,7 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
             try:
                 value = ReadWriteConverter(bool(restore), fielddef, read=False)
             except Exception, e:
-                exit(e[0], e[1], typ=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
+                exit(e[0], e[1], type_=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
                 valid = False
 
         # integer
@@ -2331,13 +2361,13 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
                     dobj = SetFieldValue(fielddef, dobj, baseaddr+addroffset, value)
                     curvalue = GetFieldValue(fielddef, dobj, baseaddr+addroffset)
                     if prevvalue != curvalue and args.verbose:
-                        message("Value for '{}' changed from {} to {}".format(fieldname, prevvalue, curvalue), typ=LogType.INFO)
+                        message("Value for '{}' changed from {} to {}".format(fieldname, prevvalue, curvalue), type_=LogType.INFO)
                 else: 
                     if args.debug >= 2:
                         print >> sys.stderr, "SetField(): Special field '{}' using '{}'/{}{} @{} skipped".format(fieldname, format_, arraydef, bits, hex(baseaddr+addroffset))
         else:
             sformat = "file '{sfile}' - {{'{sname}': {svalue}}} ({serror})"+errformat
-            exit(ExitCode.RESTORE_DATA_ERROR, sformat.format(sfile=filename, sname=fieldname, serror=err, svalue=_value, smin=min_, smax=max_), typ=LogType.WARNING, doexit=not args.ignorewarning)
+            exit(ExitCode.RESTORE_DATA_ERROR, sformat.format(sfile=filename, sname=fieldname, serror=err, svalue=_value, smin=min_, smax=max_), type_=LogType.WARNING, doexit=not args.ignorewarning)
 
     return dobj
 
@@ -2377,7 +2407,7 @@ def SetCmnd(cmnds, fieldname, fielddef, valuemapping, mappedvalue, addroffset=0,
     if isinstance(arraydef, list) and len(arraydef) > 0:
         offset = 0
         if len(mappedvalue) > arraydef[0]:
-            exit(ExitCode.RESTORE_DATA_ERROR, "array '{sname}[{selem}]' exceeds max number of elements [{smax}]".format(sname=fieldname, selem=len(mappedvalue), smax=arraydef[0]), typ=LogType.WARNING, doexit=not args.ignorewarning, line=inspect.getlineno(inspect.currentframe()))
+            exit(ExitCode.RESTORE_DATA_ERROR, "array '{sname}[{selem}]' exceeds max number of elements [{smax}]".format(sname=fieldname, selem=len(mappedvalue), smax=arraydef[0]), type_=LogType.WARNING, doexit=not args.ignorewarning, line=inspect.getlineno(inspect.currentframe()))
         for i in range(0, arraydef[0]):
             subfielddef = GetSubfieldDef(fielddef)
             length = GetFieldLength(subfielddef)
@@ -2443,10 +2473,10 @@ def Bin2Mapping(decode_cfg):
         # read size should be same as definied in setting
         if cfg_size > size:
             # may be processed
-            exit(ExitCode.DATA_SIZE_MISMATCH, "Number of bytes read does ot match - read {}, expected {} byte".format(cfg_size, size), typ=LogType.ERROR,line=inspect.getlineno(inspect.currentframe()))
+            exit(ExitCode.DATA_SIZE_MISMATCH, "Number of bytes read does ot match - read {}, expected {} byte".format(cfg_size, size), type_=LogType.ERROR,line=inspect.getlineno(inspect.currentframe()))
         elif cfg_size < size:
             # less number of bytes can not be processed
-            exit(ExitCode.DATA_SIZE_MISMATCH, "Number of bytes read to small to process - read {}, expected {} byte".format(cfg_size, size), typ=LogType.ERROR,line=inspect.getlineno(inspect.currentframe()))
+            exit(ExitCode.DATA_SIZE_MISMATCH, "Number of bytes read to small to process - read {}, expected {} byte".format(cfg_size, size), type_=LogType.ERROR,line=inspect.getlineno(inspect.currentframe()))
 
     # check crc if exists
     if 'cfg_crc' in setting:
@@ -2454,7 +2484,7 @@ def Bin2Mapping(decode_cfg):
     else:
         cfg_crc = GetSettingsCrc(decode_cfg)
     if cfg_crc != GetSettingsCrc(decode_cfg):
-        exit(ExitCode.DATA_CRC_ERROR, 'Data CRC error, read 0x{:x} should be 0x{:x}'.format(cfg_crc, GetSettingsCrc(decode_cfg)), typ=LogType.WARNING, doexit=not args.ignorewarning,line=inspect.getlineno(inspect.currentframe()))
+        exit(ExitCode.DATA_CRC_ERROR, 'Data CRC error, read 0x{:x} should be 0x{:x}'.format(cfg_crc, GetSettingsCrc(decode_cfg)), type_=LogType.WARNING, doexit=not args.ignorewarning,line=inspect.getlineno(inspect.currentframe()))
 
     # get valuemapping
     valuemapping = GetField(decode_cfg, None, (setting,0,(None, None, (INTERNAL, None))))
@@ -2525,7 +2555,7 @@ def Mapping2Bin(decode_cfg, jsonconfig, filename=""):
                 SetField(_buffer, name, setting[name], jsonconfig[name], addroffset=0, filename=filename)
             else:
                 if name != 'header':
-                    exit(ExitCode.RESTORE_DATA_ERROR, "Restore file '{}' contains obsolete name '{}', skipped".format(filename, name), typ=LogType.WARNING, doexit=not args.ignorewarning)
+                    exit(ExitCode.RESTORE_DATA_ERROR, "Restore file '{}' contains obsolete name '{}', skipped".format(filename, name), type_=LogType.WARNING, doexit=not args.ignorewarning)
 
         if 'cfg_crc' in setting:
             crc = GetSettingsCrc(_buffer)
@@ -2533,7 +2563,7 @@ def Mapping2Bin(decode_cfg, jsonconfig, filename=""):
         return _buffer
 
     else:
-        exit(ExitCode.UNSUPPORTED_VERSION,"File '{}', Tasmota configuration version 0x{:x} not supported".format(filename, version), typ=LogType.WARNING, doexit=not args.ignorewarning)
+        exit(ExitCode.UNSUPPORTED_VERSION,"File '{}', Tasmota configuration version 0x{:x} not supported".format(filename, version), type_=LogType.WARNING, doexit=not args.ignorewarning)
 
     return None
 
@@ -2568,12 +2598,12 @@ def Mapping2Cmnd(decode_cfg, valuemapping, filename=""):
                 cmnds = SetCmnd(cmnds, name, setting[name], valuemapping, valuemapping[name], addroffset=0)
             else:
                 if name != 'header':
-                    exit(ExitCode.RESTORE_DATA_ERROR, "Restore file '{}' contains obsolete name '{}', skipped".format(filename, name), typ=LogType.WARNING, doexit=not args.ignorewarning)
+                    exit(ExitCode.RESTORE_DATA_ERROR, "Restore file '{}' contains obsolete name '{}', skipped".format(filename, name), type_=LogType.WARNING, doexit=not args.ignorewarning)
 
         return cmnds
 
     else:
-        exit(ExitCode.UNSUPPORTED_VERSION,"File '{}', Tasmota configuration version 0x{:x} not supported".format(filename, version), typ=LogType.WARNING, doexit=not args.ignorewarning)
+        exit(ExitCode.UNSUPPORTED_VERSION,"File '{}', Tasmota configuration version 0x{:x} not supported".format(filename, version), type_=LogType.WARNING, doexit=not args.ignorewarning)
 
     return None
 
@@ -2608,7 +2638,7 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
         fileformat = "Tasmota"
         backup_filename = MakeFilename(backupfile, FileType.DMP, configmapping)
         if args.verbose:
-            message("Writing backup file '{}' ({} format)".format(backup_filename, fileformat), typ=LogType.INFO)
+            message("Writing backup file '{}' ({} format)".format(backup_filename, fileformat), type_=LogType.INFO)
         try:
             with open(backup_filename, "wb") as backupfp:
                 backupfp.write(encode_cfg)
@@ -2620,7 +2650,7 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
         fileformat = "binary"
         backup_filename = MakeFilename(backupfile, FileType.BIN, configmapping)
         if args.verbose:
-            message("Writing backup file '{}' ({} format)".format(backup_filename, fileformat), typ=LogType.INFO)
+            message("Writing backup file '{}' ({} format)".format(backup_filename, fileformat), type_=LogType.INFO)
         try:
             with open(backup_filename, "wb") as backupfp:
                 backupfp.write(struct.pack('<L',BINARYFILE_MAGIC))
@@ -2633,7 +2663,7 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
         fileformat = "JSON"
         backup_filename = MakeFilename(backupfile, FileType.JSON, configmapping)
         if args.verbose:
-            message("Writing backup file '{}' ({} format)".format(backup_filename, fileformat), typ=LogType.INFO)
+            message("Writing backup file '{}' ({} format)".format(backup_filename, fileformat), type_=LogType.INFO)
         try:
             with open(backup_filename, "w") as backupfp:
                 json.dump(configmapping, backupfp, sort_keys=args.jsonsort, indent=None if args.jsonindent < 0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
@@ -2646,7 +2676,7 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
         if args.tasmotafile is not None:
             srctype = 'file'
             src = args.tasmotafile
-        message("Backup successful from {} '{}' to file '{}' ({} format)".format(srctype, src, backup_filename, fileformat), typ=LogType.INFO)
+        message("Backup successful from {} '{}' to file '{}' ({} format)".format(srctype, src, backup_filename, fileformat), type_=LogType.INFO)
 
 
 def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping):
@@ -2677,7 +2707,7 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
 
     if filetype == FileType.DMP:
         if args.verbose:
-            message("Reading restore file '{}' (Tasmota format)".format(restorefilename), typ=LogType.INFO)
+            message("Reading restore file '{}' (Tasmota format)".format(restorefilename), type_=LogType.INFO)
         try:
             with open(restorefilename, "rb") as restorefp:
                 new_encode_cfg = restorefp.read()
@@ -2686,7 +2716,7 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
 
     elif filetype == FileType.BIN:
         if args.verbose:
-            message("Reading restore file '{}' (Binary format)".format(restorefilename), typ=LogType.INFO)
+            message("Reading restore file '{}' (Binary format)".format(restorefilename), type_=LogType.INFO)
         try:
             with open(restorefilename, "rb") as restorefp:
                 restorebin = restorefp.read()
@@ -2699,7 +2729,7 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
 
     elif filetype == FileType.JSON or filetype == FileType.INVALID_JSON:
         if args.verbose:
-            message("Reading restore file '{}' (JSON format)".format(restorefilename), typ=LogType.INFO)
+            message("Reading restore file '{}' (JSON format)".format(restorefilename), type_=LogType.INFO)
         try:
             with open(restorefilename, "r") as restorefp:
                 jsonconfig = json.load(restorefp)
@@ -2725,36 +2755,36 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
             version, size, setting = GetTemplateSetting(new_decode_cfg)
             # get config file version
             cfg_version = GetField(new_decode_cfg, 'version', setting['version'], raw=True)
-            message("Config file contains data of Sonoff-Tasmota {}".format(GetVersionStr(cfg_version)), typ=LogType.INFO)
+            message("Config file contains data of Sonoff-Tasmota {}".format(GetVersionStr(cfg_version)), type_=LogType.INFO)
         if args.forcerestore or new_encode_cfg != encode_cfg:
             # write config direct to device via http
             if args.device is not None:
                 if args.verbose:
-                    message("Push new data to '{}' using restore file '{}'".format(args.device, restorefilename), typ=LogType.INFO)
+                    message("Push new data to '{}' using restore file '{}'".format(args.device, restorefilename), type_=LogType.INFO)
                 error_code, error_str = PushTasmotaConfig(new_encode_cfg, args.device, args.port, args.username, args.password)
                 if error_code:
                     exit(ExitCode.UPLOAD_CONFIG_ERROR, "Config data upload failed - {}".format(error_str),line=inspect.getlineno(inspect.currentframe()))
                 else:
                     if args.verbose:
-                        message("Restore successful to device '{}' using restore file '{}'".format(args.device, restorefilename), typ=LogType.INFO)
+                        message("Restore successful to device '{}' using restore file '{}'".format(args.device, restorefilename), type_=LogType.INFO)
 
             # write config from a file
             elif args.tasmotafile is not None:
                 if args.verbose:
-                    message("Write new data to file '{}' using restore file '{}'".format(args.tasmotafile, restorefilename), typ=LogType.INFO)
+                    message("Write new data to file '{}' using restore file '{}'".format(args.tasmotafile, restorefilename), type_=LogType.INFO)
                 try:
                     with open(args.tasmotafile, "wb") as outputfile:
                         outputfile.write(new_encode_cfg)
                 except Exception, e:
                     exit(e[0], "'{}' {}".format(args.tasmotafile, e[1]),line=inspect.getlineno(inspect.currentframe()))
                 if args.verbose:
-                    message("Restore successful to file '{}' using restore file '{}'".format(args.tasmotafile, restorefilename), typ=LogType.INFO)
+                    message("Restore successful to file '{}' using restore file '{}'".format(args.tasmotafile, restorefilename), type_=LogType.INFO)
 
         else:
             global exitcode
             exitcode = ExitCode.RESTORE_SKIPPED
             if args.verbose:
-                message("Configuration data leaving unchanged", typ=LogType.INFO)
+                message("Configuration data leaving unchanged", type_=LogType.INFO)
 
 
 def OutputTasmotaCmnds(tasmotacmnds):
@@ -3008,13 +3038,13 @@ if __name__ == "__main__":
     # pull config from Tasmota device
     if args.tasmotafile is not None:
         if args.verbose:
-            message("Load data from file '{}'".format(args.tasmotafile), typ=LogType.INFO)
+            message("Load data from file '{}'".format(args.tasmotafile), type_=LogType.INFO)
         encode_cfg = LoadTasmotaConfig(args.tasmotafile)
 
     # load config from Tasmota file
     if args.device is not None:
         if args.verbose:
-            message("Load data from device '{}'".format(args.device), typ=LogType.INFO)
+            message("Load data from device '{}'".format(args.device), type_=LogType.INFO)
         encode_cfg = PullTasmotaConfig(args.device, args.port, username=args.username, password=args.password)
 
     if encode_cfg is None:
@@ -3037,7 +3067,7 @@ if __name__ == "__main__":
         message("{} '{}' is using Sonoff-Tasmota {}".format('File' if args.tasmotafile is not None else 'Device',
                                                      args.tasmotafile if args.tasmotafile is not None else args.device,
                                                      GetVersionStr(configmapping['version'])),
-                                                     typ=LogType.INFO)
+                                                     type_=LogType.INFO)
 
     # backup to file
     if args.backupfile is not None:
