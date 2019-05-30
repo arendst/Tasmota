@@ -342,6 +342,13 @@ void HueLightStatus2(uint8_t device, String *response)
   response->replace("{j2", GetHueDeviceId(device));
 }
 
+// generate a unique lightId mixing local IP address and deice number
+// it is limited to 16 devices.
+uint32_t lightId(uint32_t idx) {
+    uint32_t ip_local = WiFi.localIP();
+    return ((ip_local & 0xFF000000) >> 20) + idx % 16; // >> 24 * 16 is equivalent to >> 20
+}
+
 void HueGlobalConfig(String *path)
 {
   String response;
@@ -350,7 +357,7 @@ void HueGlobalConfig(String *path)
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
   for (uint8_t i = 1; i <= maxhue; i++) {
-    response += i;
+    response += lightId(i);
     response += F("\":{\"state\":");
     HueLightStatus1(i, &response);
     HueLightStatus2(i, &response);
@@ -394,7 +401,7 @@ void HueLights(String *path)
   if (path->endsWith("/lights")) {                   // Got /lights
     response = "{\"";
     for (uint8_t i = 1; i <= maxhue; i++) {
-      response += i;
+      response += lightId(i);
       response += F("\":{\"state\":");
       HueLightStatus1(i, &response);
       HueLightStatus2(i, &response);
@@ -562,7 +569,7 @@ void HueLights(String *path)
   }
   else if(path->indexOf("/lights/") >= 0) {          // Got /lights/ID
     path->remove(0,8);                               // Remove /lights/
-    device = atoi(path->c_str());
+    device = atoi(path->c_str()) % 16;
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -591,7 +598,7 @@ void HueGroups(String *path)
     String lights = F("\"1\"");
     for (uint8_t i = 2; i <= maxhue; i++) {
       lights += ",\"";
-      lights += String(i);
+      lights += lightId(i);
       lights += "\"";
     }
     response.replace("{l1", lights);
