@@ -28,6 +28,7 @@
 #define ENERGY_NONE          0
 
 #define ENERGY_OVERTEMP      73.0     // Industry standard lowest overtemp in Celsius
+#define ENERGY_WATCHDOG      4        // Allow up to 4 seconds before deciding no valid data present
 
 #define FEATURE_POWER_LIMIT  true
 
@@ -71,6 +72,7 @@ unsigned long energy_period = 0;    // 12312312 Wh * 10^-2 (deca milli Watt hour
 
 float energy_power_last[3] = { 0 };
 uint8_t energy_power_delta = 0;
+uint8_t energy_data_valid = 0;
 
 bool energy_voltage_available = true;  // Enable if voltage is measured
 bool energy_current_available = true;  // Enable if current is measured
@@ -325,6 +327,18 @@ void EnergyOverTempCheck()
   if (global_update) {
     if (power && (global_temperature != 9999) && (global_temperature > ENERGY_OVERTEMP)) {  // Device overtemp, turn off relays
       SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
+    }
+  }
+  if (energy_data_valid <= ENERGY_WATCHDOG) {
+    energy_data_valid++;
+    if (energy_data_valid > ENERGY_WATCHDOG) {
+      // Reset energy registers
+      energy_voltage = 0;
+      energy_current = 0;
+      energy_active_power = 0;
+      if (!isnan(energy_frequency)) { energy_frequency = 0; }
+      if (!isnan(energy_power_factor)) { energy_power_factor = 0; }
+      energy_start = 0;
     }
   }
 }
