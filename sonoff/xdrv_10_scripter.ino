@@ -962,7 +962,7 @@ chknext:
           char *cp=str;
           if (glob_script_mem.file_flags[find]&1) {
             while (glob_script_mem.files[find].available()) {
-              char buf[1];
+              uint8_t buf[1];
               glob_script_mem.files[find].read(buf,1);
               if (buf[0]=='\t' || buf[0]==',' || buf[0]=='\n' || buf[0]=='\r') {
                 break;
@@ -2675,7 +2675,7 @@ bool Xdrv10(uint8_t function)
         glob_script_mem.script_size=FAT_SCRIPT_SIZE;
         if (SD.exists(FAT_SCRIPT_NAME)) {
           File file=SD.open(FAT_SCRIPT_NAME,FILE_READ);
-          file.read(script,FAT_SCRIPT_SIZE);
+          file.read((uint8_t*)script,FAT_SCRIPT_SIZE);
           file.close();
         }
         script[FAT_SCRIPT_SIZE-1]=0;
