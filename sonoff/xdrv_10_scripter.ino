@@ -21,8 +21,7 @@
 #ifndef USE_RULES
 /*********************************************************************************************\
 for documentation see up to date docs in file SCRIPTER.md
-uses about 14,2 k of flash
-more stack could be needed for sendmail  => -D CONT_STACKSIZE=4800 = +0.8k stack -0.8k heap
+uses about 17 k of flash
 
 to do
 optimize code for space
@@ -36,7 +35,13 @@ no math hierarchy  (costs ram and execution time, better group with brackets, an
 (will probably make math hierarchy an ifdefed option)
 keywords if then else endif, or, and are better readable for beginners (others may use {})
 
-
+changelog after merging to Tasmota
+1 show remaining chars in webui,
+2 now can expand script space to 2048 chars by setting MAX_RULE_SETS to 4
+3 at24256 eeprom support #ifdef  defaults to 4095 bytes script size (reduces heap by this amount)
+4 some housekeeping
+5 sd card support #ifdef allows eg for sensor logging
+6 download link for sdcard files
 
 \*********************************************************************************************/
 
@@ -53,10 +58,17 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
 #define SCRIPT_MAXPERM (MAX_RULE_MEMS*10)-4/sizeof(float)
-
+#define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
 enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU};
 enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
+
+#ifdef USE_SCRIPT_FATFS
+#include <SPI.h>
+#include <SD.h>
+#define FAT_SCRIPT_SIZE 4096
+#define FAT_SCRIPT_NAME "script.txt"
+#endif
 
 typedef union {
   uint8_t data;
@@ -84,6 +96,7 @@ struct M_FILT {
   float rbuff[1];
 };
 
+#define SFS_MAX 4
 // global memory
 struct SCRIPT_MEM {
     float *fvars; // number var pointer
@@ -94,6 +107,10 @@ struct SCRIPT_MEM {
     uint8_t *vnp_offset;
     char *glob_snp; // string vars pointer
     char *scriptptr;
+    char *script_ram;
+    uint16_t script_size;
+    uint8_t *script_pram;
+    uint16_t script_pram_size;
     uint8_t numvars;
     void *script_mem;
     uint16_t script_mem_size;
@@ -102,6 +119,13 @@ struct SCRIPT_MEM {
     uint8_t glob_error;
     uint8_t max_ssize;
     uint8_t script_loglevel;
+    uint8_t flags;
+#ifdef USE_SCRIPT_FATFS
+    File files[SFS_MAX];
+    uint8_t file_flags[SFS_MAX];
+    uint8_t script_sd_found;
+    char flink[2][14];
+#endif
 } glob_script_mem;
 
 
@@ -110,8 +134,11 @@ uint8_t tasm_cmd_activ=0;
 
 uint32_t script_lastmillis;
 
+
 char *GetNumericResult(char *lp,uint8_t lastop,float *fp,JsonObject *jo);
 char *GetStringResult(char *lp,uint8_t lastop,char *cp,JsonObject *jo);
+char *ForceStringVar(char *lp,char *dstr);
+void send_download(void);
 
 void ScriptEverySecond(void) {
 
@@ -145,11 +172,31 @@ void RulesTeleperiod(void) {
   if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">T",2, mqtt_data);
 }
 
+//#define USE_24C256
+
+// EEPROM MACROS
+#ifdef USE_24C256
+// i2c eeprom
+#include <Eeprom24C128_256.h>
+#define EEPROM_ADDRESS 0x50
+// strange bug, crashes with powers of 2 ??? 4096 crashes
+#define EEP_SCRIPT_SIZE 4095
+static Eeprom24C128_256 eeprom(EEPROM_ADDRESS);
+// eeprom.writeBytes(address, length, buffer);
+#define EEP_WRITE(A,B,C) eeprom.writeBytes(A,B,(uint8_t*)C);
+// eeprom.readBytes(address, length, buffer);
+#define EEP_READ(A,B,C) eeprom.readBytes(A,B,(uint8_t*)C);
+#endif
+
 #define SCRIPT_SKIP_SPACES while (*lp==' ' || *lp=='\t') lp++;
 #define SCRIPT_SKIP_EOL while (*lp==SCRIPT_EOL) lp++;
 
-// allocates all variable and presets them
-int16_t Init_Scripter(char *script) {
+// allocates all variables and presets them
+int16_t Init_Scripter(void) {
+char *script;
+
+    script=glob_script_mem.script_ram;
+
     // scan lines for >DEF
     uint16_t lines=0,nvars=0,svars=0,vars=0;
     char *lp=script;
@@ -415,10 +462,7 @@ int16_t Init_Scripter(char *script) {
 #endif
 
     // now preset permanent vars
-    uint32_t lptr=(uint32_t)Settings.mems[0];
-    lptr&=0xfffffffc;
-    float *fp=(float*)lptr;
-    fp++;
+    float *fp=(float*)glob_script_mem.script_pram;
     struct T_INDEX *vtp=glob_script_mem.type;
     for (uint8_t count=0; count<glob_script_mem.numvars; count++) {
       if (vtp[count].bits.is_permanent && !vtp[count].bits.is_string) {
@@ -442,6 +486,19 @@ int16_t Init_Scripter(char *script) {
       }
     }
 
+
+#ifdef USE_SCRIPT_FATFS
+    if (!glob_script_mem.script_sd_found) {
+      if (SD.begin(USE_SCRIPT_FATFS)) {
+        glob_script_mem.script_sd_found=1;
+      } else {
+        glob_script_mem.script_sd_found=0;
+      }
+    }
+    for (uint8_t cnt=0;cnt<SFS_MAX;cnt++) {
+      glob_script_mem.file_flags[cnt]=0;
+    }
+#endif
 
 #if SCRIPT_DEBUG>0
     ClaimSerial();
@@ -513,8 +570,13 @@ void Set_MFVal(uint8_t index,uint8_t bind,float val) {
     struct M_FILT *mflp=(struct M_FILT*)mp;
     if (count==index) {
         uint8_t maxind=mflp->numvals&0x7f;
-        if (bind<1 || bind>maxind) bind=maxind;
-        mflp->rbuff[bind-1]=val;
+        if (!bind) {
+          mflp->index=val;
+        } else {
+          if (bind<1 || bind>maxind) bind=maxind;
+          mflp->rbuff[bind-1]=val;
+        }
+        return;
     }
     mp+=sizeof(struct M_FILT)+((mflp->numvals&0x7f)-1)*sizeof(float);
   }
@@ -610,7 +672,24 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
       lp++;
       while (*lp!='"') {
         if (*lp==0 || *lp==SCRIPT_EOL) break;
-        if (sp) *sp++=*lp;
+        uint8_t iob=*lp;
+        if (iob=='\\') {
+          lp++;
+          if (*lp=='t') {
+            iob='\t';
+          } else if (*lp=='n') {
+            iob='\n';
+          } else if (*lp=='r') {
+            iob='\r';
+          } else if (*lp=='\\') {
+            iob='\\';
+          } else {
+            lp--;
+          }
+          if (sp) *sp++=iob;
+        } else {
+          if (sp) *sp++=iob;
+        }
         lp++;
       }
       if (sp) *sp=0;
@@ -797,6 +876,141 @@ chknext:
           goto exit;
         }
         break;
+#ifdef USE_SCRIPT_FATFS
+      case 'f':
+        if (!strncmp(vname,"fo(",3)) {
+          lp+=3;
+          char str[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          while (*lp==' ') lp++;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          uint8_t mode=fvar;
+          fvar=-1;
+          for (uint8_t cnt=0;cnt<SFS_MAX;cnt++) {
+            if (!(glob_script_mem.file_flags[0]&1)) {
+              if (mode==0) glob_script_mem.files[0]=SD.open(str,FILE_READ);
+              else glob_script_mem.files[0]=SD.open(str,FILE_WRITE);
+              if (glob_script_mem.files[0]) {
+                fvar=cnt;
+                glob_script_mem.file_flags[0]=1;
+              } else {
+                toLog("file open failed");
+              }
+              break;
+            }
+          }
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"fc(",3)) {
+          lp+=3;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          uint8_t ind=fvar;
+          if (ind>=SFS_MAX) ind=SFS_MAX-1;
+          glob_script_mem.files[ind].close();
+          glob_script_mem.file_flags[ind]=0;
+          fvar=0;
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"fw(",3)) {
+          lp+=3;
+          char str[SCRIPT_MAXSSIZE];
+          lp=ForceStringVar(lp,str);
+          while (*lp==' ') lp++;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          uint8_t ind=fvar;
+          if (ind>=SFS_MAX) ind=SFS_MAX-1;
+          if (glob_script_mem.file_flags[ind]&1) {
+            fvar=glob_script_mem.files[ind].print(str);
+          } else {
+            fvar=0;
+          }
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"fr(",3)) {
+          lp+=3;
+          struct T_INDEX ind;
+          uint8_t vtype;
+          uint8_t sindex=0;
+          lp=isvar(lp,&vtype,&ind,0,0,0);
+          if (vtype!=VAR_NV) {
+            // found variable as result
+            if ((vtype&STYPE)==0) {
+                  // error
+                  fvar=0;
+                  goto exit;
+            } else {
+              // string result
+              sindex=glob_script_mem.type[ind.index].index;
+            }
+          } else {
+              // error
+              fvar=0;
+              goto exit;
+          }
+          while (*lp==' ') lp++;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          uint8_t find=fvar;
+          if (find>=SFS_MAX) find=SFS_MAX-1;
+          uint8_t index=0;
+          char str[glob_script_mem.max_ssize+1];
+          char *cp=str;
+          if (glob_script_mem.file_flags[find]&1) {
+            while (glob_script_mem.files[find].available()) {
+              char buf[1];
+              glob_script_mem.files[find].read(buf,1);
+              if (buf[0]=='\t' || buf[0]==',' || buf[0]=='\n' || buf[0]=='\r') {
+                break;
+              } else {
+                *cp++=buf[0];
+                index++;
+                if (index>=glob_script_mem.max_ssize-1) break;
+              }
+            }
+            *cp=0;
+          } else {
+            strcpy(str,"file error");
+          }
+          lp++;
+          strlcpy(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+          fvar=index;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"fd(",3)) {
+          lp+=3;
+          char str[glob_script_mem.max_ssize+1];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          SD.remove(str);
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"fl1(",4) || !strncmp(vname,"fl2(",4) )  {
+          uint8_t lknum=*(lp+2)&3;
+          lp+=4;
+          char str[glob_script_mem.max_ssize+1];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          if (lknum<1 || lknum>2) lknum=1;
+          strlcpy(glob_script_mem.flink[lknum-1],str,14);
+          lp++;
+          fvar=0;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"fsm",3)) {
+          fvar=glob_script_mem.script_sd_found;
+          //card_init();
+          goto exit;
+        }
+        break;
+
+#endif //USE_SCRIPT_FATFS
       case 'g':
         if (!strncmp(vname,"gtmp",4)) {
           fvar=global_temperature;
@@ -974,7 +1188,7 @@ chknext:
         break;
       case 'r':
         if (!strncmp(vname,"ram",3)) {
-          fvar=glob_script_mem.script_mem_size+(MAX_RULE_SETS*MAX_RULE_SIZE)+(MAX_RULE_MEMS*10);
+          fvar=glob_script_mem.script_mem_size+(glob_script_mem.script_size)+(MAX_RULE_MEMS*10);
           goto exit;
         }
         break;
@@ -996,7 +1210,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname,"slen",4)) {
-          fvar=strlen(Settings.rules[0]);
+          fvar=strlen(glob_script_mem.script_ram);
           goto exit;
         }
         if (!strncmp(vname,"st(",3)) {
@@ -1031,6 +1245,16 @@ chknext:
               }
             }
           }
+          goto strexit;
+        }
+        if (!strncmp(vname,"s(",2)) {
+          lp+=2;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          char str[glob_script_mem.max_ssize+1];
+          dtostrfd(fvar,glob_script_mem.script_dprec,str);
+          if (sp) strlcpy(sp,str,glob_script_mem.max_ssize);
+          lp++;
+          len=0;
           goto strexit;
         }
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
@@ -1416,6 +1640,20 @@ struct T_INDEX ind;
 }
 
 
+char *ForceStringVar(char *lp,char *dstr) {
+  float fvar;
+  char *slp=lp;
+  glob_script_mem.var_not_found=0;
+  lp=GetStringResult(lp,OPER_EQU,dstr,0);
+  if (glob_script_mem.var_not_found) {
+    // mismatch
+    lp=GetNumericResult(slp,OPER_EQU,&fvar,0);
+    dtostrfd(fvar,6,dstr);
+    glob_script_mem.var_not_found=0;
+  }
+  return lp;
+}
+
 // replace vars in cmd %var%
 void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
     char *cp;
@@ -1774,7 +2012,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                     toLog(&tmp[5]);
                   } else {
                     snprintf_P(log_data, sizeof(log_data), PSTR("Script: performs \"%s\""), tmp);
-                    AddLog(glob_script_mem.script_loglevel);
+                    AddLog(glob_script_mem.script_loglevel&0x7f);
                     tasm_cmd_activ=1;
                     ExecuteCommand((char*)tmp, SRC_RULE);
                     tasm_cmd_activ=0;
@@ -2078,8 +2316,8 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
 uint8_t script_xsns_index = 0;
 
 
-void ScripterEvery100ms(void)
-{
+void ScripterEvery100ms(void) {
+
   if (Settings.rule_enabled && (uptime > 4)) {
     mqtt_data[0] = '\0';
     uint16_t script_tele_period_save = tele_period;
@@ -2098,11 +2336,8 @@ void ScripterEvery100ms(void)
 // can hold 11 floats or floats + strings
 // should report overflow later
 void Scripter_save_pvars(void) {
-  uint32_t lptr=(uint32_t)Settings.mems[0];
   int16_t mlen=0;
-  lptr&=0xfffffffc;
-  float *fp=(float*)lptr;
-  fp++;
+  float *fp=(float*)glob_script_mem.script_pram;
   mlen+=sizeof(float);
   struct T_INDEX *vtp=glob_script_mem.type;
   for (uint8_t count=0; count<glob_script_mem.numvars; count++) {
@@ -2138,7 +2373,7 @@ void Scripter_save_pvars(void) {
 
 #define WEB_HANDLE_SCRIPT "s10"
 #define D_CONFIGURE_SCRIPT "Edit script"
-#define D_RULEVARS "edit script"
+#define D_SCRIPT "edit script"
 
 const char S_CONFIGURE_SCRIPT[] PROGMEM = D_CONFIGURE_SCRIPT;
 
@@ -2147,15 +2382,86 @@ const char HTTP_BTN_MENU_RULES[] PROGMEM =
 
 
 const char HTTP_FORM_SCRIPT[] PROGMEM =
-    "<fieldset><legend><b>&nbsp;" D_RULEVARS "&nbsp;</b></legend>"
+    "<fieldset><legend><b>&nbsp;" D_SCRIPT "&nbsp;</b></legend>"
     "<form method='post' action='" WEB_HANDLE_SCRIPT "'>";
 
 const char HTTP_FORM_SCRIPT1[] PROGMEM =
-    "<br/><input style='width:10%%;' id='c%d' name='c%d' type='checkbox'%s><b>script enable</b><br/>"
-    "<br><textarea  id='t%1d' name='t%d' rows='8' cols='80' maxlength='%d' style='font-size: 12pt' >";
+    "<div style='text-align:right' id='charNum'> </div>"
+    "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>script enable</b><br/>"
+    "<br><textarea  id='t1' name='t1' rows='8' cols='80' maxlength='%d' style='font-size: 12pt' >";
+
 
 const char HTTP_FORM_SCRIPT1b[] PROGMEM =
-    "</textarea>";
+    "</textarea>"
+    "<script type='text/javascript'>"
+    "document.getElementById('charNum').innerHTML='-';"
+    "var textarea=document.querySelector('textarea');"
+    "textarea.addEventListener('input',function(){"
+    "var ml=this.getAttribute('maxlength');"
+    "var cl=this.value.length;"
+    "if(cl>=ml){"
+    "document.getElementById('charNum').innerHTML='no more chars';"
+    "}else{"
+    "document.getElementById('charNum').innerHTML=ml-cl+' chars left';"
+    "}"
+
+    "});"
+    "</script>";
+
+#ifdef USE_SCRIPT_FATFS
+const char HTTP_FORM_SCRIPT1c[] PROGMEM =
+"<button name='d%d' type='submit' class='button bgrn'>Download '%s'</button>";
+#endif
+
+#ifdef USE_SCRIPT_FATFS
+
+void script_download(uint8_t num) {
+  File download_file;
+  WiFiClient download_Client;
+
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  if (!SD.exists(glob_script_mem.flink[num-1])) {
+    toLog("file not found");
+    return;
+  }
+
+  download_file=SD.open(glob_script_mem.flink[num-1],FILE_READ);
+  if (!download_file) {
+    toLog("could not open file");
+  }
+  uint32_t flen=download_file.size();
+
+  download_Client = WebServer->client();
+  WebServer->setContentLength(flen);
+
+  char attachment[100];
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"),glob_script_mem.flink[num-1]);
+  WebServer->sendHeader(F("Content-Disposition"), attachment);
+  WSSend(200, CT_STREAM, "");
+
+  uint8_t buff[512];
+  uint16_t bread;
+
+  // transfer is about 150kb/s
+  uint8_t cnt=0;
+  while (download_file.available()) {
+    bread=download_file.read(buff,sizeof(buff));
+    uint16_t bw=download_Client.write((const char*)buff,bread);
+    if (!bw) break;
+    cnt++;
+    if (cnt>7) {
+      cnt=0;
+      if (glob_script_mem.script_loglevel&0x80) {
+        // this indeed multitasks, but is slower 50 kB/s
+        loop();
+      }
+    }
+  }
+  download_file.close();
+  download_Client.stop();
+}
+#endif
 
 void HandleScriptConfiguration(void)
 {
@@ -2169,16 +2475,31 @@ void HandleScriptConfiguration(void)
       return;
     }
 
+#ifdef USE_SCRIPT_FATFS
+    if (WebServer->hasArg("d1")) {
+      script_download(1);
+    }
+    if (WebServer->hasArg("d2")) {
+      script_download(2);
+    }
+#endif
+
     WSContentStart_P(S_CONFIGURE_SCRIPT);
     WSContentSendStyle();
     WSContentSend_P(HTTP_FORM_SCRIPT);
-    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? " checked" : "",1,1,MAX_RULE_SIZE*3);
+    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? " checked" : "",glob_script_mem.script_size);
 
     // script is to larg for WSContentSend_P
-    if (Settings.rules[0][0]) {
-      _WSContentSend(Settings.rules[0]);
+    if (glob_script_mem.script_ram[0]) {
+      _WSContentSend(glob_script_mem.script_ram);
     }
     WSContentSend_P(HTTP_FORM_SCRIPT1b);
+
+#ifdef USE_SCRIPT_FATFS
+    if (glob_script_mem.flink[0][0]) WSContentSend_P(HTTP_FORM_SCRIPT1c,1,glob_script_mem.flink[0]);
+    if (glob_script_mem.flink[1][0]) WSContentSend_P(HTTP_FORM_SCRIPT1c,2,glob_script_mem.flink[1]);
+#endif
+
     WSContentSend_P(HTTP_FORM_END);
     WSContentSpaceButton(BUTTON_CONFIGURATION);
     WSContentStop();
@@ -2195,7 +2516,7 @@ void strrepl_inplace(char *str, const char *a, const char *b) {
   }
 }
 
-#define MAX_SCRIPT_SIZE MAX_RULE_SIZE*3
+
 
 void ScriptSaveSettings(void) {
 
@@ -2215,7 +2536,23 @@ void ScriptSaveSettings(void) {
     str.replace("\r\n","\n");
     str.replace("\r","\n");
 #endif
-    strlcpy(Settings.rules[0],str.c_str(), MAX_RULE_SIZE*3);
+    strlcpy(glob_script_mem.script_ram,str.c_str(), glob_script_mem.script_size);
+
+#ifdef USE_24C256
+    if (glob_script_mem.flags&1) {
+      EEP_WRITE(0,EEP_SCRIPT_SIZE,glob_script_mem.script_ram);
+    }
+#endif
+
+#ifdef USE_SCRIPT_FATFS
+    if (glob_script_mem.flags&1) {
+      SD.remove(FAT_SCRIPT_NAME);
+      File file=SD.open(FAT_SCRIPT_NAME,FILE_WRITE);
+      file.write(glob_script_mem.script_ram,FAT_SCRIPT_SIZE);
+      file.close();
+    }
+#endif
+
   }
 
   if (glob_script_mem.script_mem) {
@@ -2226,7 +2563,7 @@ void ScriptSaveSettings(void) {
   }
 
   if (bitRead(Settings.rule_enabled, 0)) {
-    int16_t res=Init_Scripter(Settings.rules[0]);
+    int16_t res=Init_Scripter();
     if (res) {
       snprintf_P(log_data, sizeof(log_data), PSTR("script init error: %d"),res);
       AddLog(LOG_LEVEL_INFO);
@@ -2280,7 +2617,7 @@ bool ScriptCommand(void) {
         }*/
       }
     }
-    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"Free\":%d}"),command, GetStateText(bitRead(Settings.rule_enabled,0)),MAX_RULE_SIZE*3-strlen(Settings.rules[0]));
+    snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"Free\":%d}"),command, GetStateText(bitRead(Settings.rule_enabled,0)),glob_script_mem.script_size-strlen(glob_script_mem.script_ram));
   } else serviced = false;
 
   return serviced;
@@ -2290,13 +2627,76 @@ bool ScriptCommand(void) {
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv10(byte function)
+bool Xdrv10(uint8_t function)
 {
   bool result = false;
 
   switch (function) {
     case FUNC_PRE_INIT:
-      if (bitRead(Settings.rule_enabled, 0)) Init_Scripter(Settings.rules[0]);
+      // set defaults to rules memory
+      glob_script_mem.script_ram=Settings.rules[0];
+      glob_script_mem.script_size=MAX_SCRIPT_SIZE;
+      glob_script_mem.flags=0;
+      glob_script_mem.script_pram=(uint8_t*)Settings.mems[0];
+      glob_script_mem.script_pram_size=MAX_RULE_MEMS*10;
+
+#ifdef USE_24C256
+      if (i2c_flg) {
+        if (I2cDevice(EEPROM_ADDRESS)) {
+          // found 32kb eeprom
+          char *script;
+          script=(char*)calloc(EEP_SCRIPT_SIZE+4,1);
+          if (!script) break;
+          glob_script_mem.script_ram=script;
+          glob_script_mem.script_size=EEP_SCRIPT_SIZE;
+          EEP_READ(0,EEP_SCRIPT_SIZE,script);
+          if (*script==0xff) {
+            memset(script,EEP_SCRIPT_SIZE,0);
+          }
+          script[EEP_SCRIPT_SIZE-1]=0;
+          // use rules storage for permanent vars
+          glob_script_mem.script_pram=(uint8_t*)Settings.rules[0];
+          glob_script_mem.script_pram_size=MAX_SCRIPT_SIZE;
+
+          glob_script_mem.flags=1;
+        }
+      }
+#endif
+
+
+
+#ifdef USE_SCRIPT_FATFS
+      if (SD.begin(USE_SCRIPT_FATFS)) {
+        glob_script_mem.script_sd_found=1;
+        char *script;
+        script=(char*)calloc(FAT_SCRIPT_SIZE+4,1);
+        if (!script) break;
+        glob_script_mem.script_ram=script;
+        glob_script_mem.script_size=FAT_SCRIPT_SIZE;
+        if (SD.exists(FAT_SCRIPT_NAME)) {
+          File file=SD.open(FAT_SCRIPT_NAME,FILE_READ);
+          file.read(script,FAT_SCRIPT_SIZE);
+          file.close();
+        }
+        script[FAT_SCRIPT_SIZE-1]=0;
+        // use rules storage for permanent vars
+        glob_script_mem.script_pram=(uint8_t*)Settings.rules[0];
+        glob_script_mem.script_pram_size=MAX_SCRIPT_SIZE;
+
+        glob_script_mem.flags=1;
+      } else {
+        glob_script_mem.script_sd_found=0;
+      }
+#endif
+
+      // assure permanent memory is 4 byte aligned
+      { uint32_t ptr=(uint32_t)glob_script_mem.script_pram;
+      ptr&=0xfffffffc;
+      glob_script_mem.script_pram=(uint8_t*)ptr;
+      glob_script_mem.script_pram_size-=4;
+      }
+
+      if (bitRead(Settings.rule_enabled, 0)) Init_Scripter();
       break;
     case FUNC_INIT:
       if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">B",2,0);

@@ -1,6 +1,6 @@
 **Script Language for Tasmota**  
 
-As an alternative to rules. (about 14,2k flash size, variable ram size)  
+As an alternative to rules. (about 17k flash size, variable ram size)  
 
 In submenu Configuration =\> edit script  
 1535 bytes max script size (uses rules buffer)
@@ -88,6 +88,7 @@ special variables (read only):
 **int(x)** = gets the integer part of x (like floor)  
 **hn(x)** = converts x (0..255) to a hex nibble string  
 **st(svar c n)** = stringtoken gets the n th substring of svar separated by c  
+**s(x)** = explicit conversion from number x to string  
 **mqtts** = state of mqtt disconnected=0, connected>0  
 **wifis** = state of wifi disconnected=0, connected>0  
 
@@ -187,6 +188,24 @@ specifies a for next loop, (loop count must not be less then 1)
 **ends**  
 specifies a switch case selector  
 
+**sd card support**  
+enable by CARD_CS = gpio pin of card chip select  
+\#define USE_SCRIPT_FATFS CARD_CS   
+sd card uses standard hardware spi gpios: mosi,miso,sclk  
+max 4 files open at a time  
+allows for e.g. logging sensors to a tab delimited file and then download (see example below)  
+script itself is also stored on sdcard with a default size of 4096 chars  
+requires additional 10k flash  
+
+>**fr=fo("fname" m)** open file fname, mode 0=read, 1=write (returns file reference (0-3) or -1 for error)  
+**res=fw("text" fr)** writes text to (the end of) file fr, returns number of bytes written  
+**res=fr(svar fr)** reads a string into svar, returns bytes read (string is read until delimiter \t \n \r or eof)  
+**fc(fr)** close file  
+**fd("fname")** delete file fname   
+**flx(fname)** create download link for file (x=1 or 2) fname = file name of file to download   
+**fsm** return 1 if filesystem is mounted, (valid sd card found)  
+
+
 **konsole script cmds**  
 >**script 1 or 0** switch script on or off  
 **script >cmdline** executes the script cmdline  
@@ -228,8 +247,8 @@ tcnt=0
 hour=0
 state=1  
 m:med5=0  
-M:movav=0
-; define array with 10 entries
+M:movav=0  
+; define array with 10 entries  
 m:array=0 10  
 
 **\>B**  
@@ -290,10 +309,10 @@ endif
 ; every second but not completely reliable time here  
 ; use upsecs and uptime or best t: for reliable timers  
 
-; arrays
-array[1]=4
-array[2]=5
-tmp=array[1]+array[2]
+; arrays  
+array[1]=4  
+array[2]=5  
+tmp=array[1]+array[2]  
 
 ; call subrountines with parameters   
 =#sub1("hallo")  
@@ -473,11 +492,54 @@ col=hn(255)+hn(0)+hn(0)
 **\>R**  
 =\>print restarting now  
 
+**a log sensor example**  
+; define all vars here  
+; reserve large strings  
+**\>D** 48  
+hum=0  
+temp=0  
+fr=0  
+res=0  
+; moving average for 60 seconds  
+M:mhum=0 60  
+M:mtemp=0 60  
+str=""  
+
+**\>B**  
+; open file for write  
+fr=fo("slog.txt" 1)  
+; set sensor file download link   
+fl1("slog.txt")  
+
+**\>T**  
+; get sensor values  
+temp=BME280#Temperature  
+hum=BME280#Humidity  
+
+**\>S**
+; average sensor values every second  
+mhum=hum  
+mtemp=temp  
+
+; write average to sensor log every minute  
+if upsecs%60==0  
+then  
+; compose string for tab delimited file entry
+str=s(upsecs)+"\t"+s(mhum)+"\t"+s(mtemp)+"\n"  
+; write string to log file  
+res=fw(str fr)  
+endif  
+
+**\>R**  
+; close file  
+fc(fr)  
+
+
 **a real example**  
 epaper 29 with sgp30 and bme280  
 some vars are set from iobroker  
 DisplayText substituted to save script space  
-\>D  
+**\>D**  
 hum=0  
 temp=0  
 press=0  
@@ -496,13 +558,13 @@ DT="DisplayText"
 punit="hPa"  
 tunit="C"  
 
-\>B  
+**\>B**  
 ;reset auto draw  
 =>%DT% [zD0]  
 ;clr display and draw a frame  
 =>%DT% [x0y20h296x0y40h296]  
 
-\>T  
+**\>T**  
 ; get tele vars  
 temp=BME280#Temperature  
 hum=BME280#Humidity  
@@ -513,7 +575,7 @@ ahum=SGP30#aHumidity
 tunit=TempUnit  
 punit=PressureUnit  
 
-\>S  
+**\>S**  
 // update display every teleperiod time  
 if upsecs%tper==0  
 then  
@@ -536,9 +598,9 @@ dprec0
 endif  
 
 
-\>E  
+**\>E**  
 
-\>R  
+**\>R**  
 
 **another real example**  
 ILI 9488 color LCD Display shows various energy graphs  
