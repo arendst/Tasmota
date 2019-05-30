@@ -235,10 +235,19 @@ extern "C" {
 }
 #include "eboot_command.h"
 
-extern "C" uint32_t _SPIFFS_end;
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
 
+extern "C" uint32_t _SPIFFS_end;
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
 const uint32_t SPIFFS_END = ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
+
+#else  // Core > 2.5.2 and STAGE
+
+extern "C" uint32_t _FS_end;
+// From libraries/EEPROM/EEPROM.cpp EEPROMClass
+const uint32_t SPIFFS_END = ((uint32_t)&_FS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
+
+#endif
 
 // Version 4.2 config = eeprom area
 const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses EEPROM area
