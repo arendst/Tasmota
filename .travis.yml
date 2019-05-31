@@ -17,5 +17,9 @@ deploy:
   provider: releases
   api_key:
     secure: $GITHUB_TOKEN
-  file: ".pioenvs/*/*.bin"
-  draft: true
+ 
+file_glob: true
+  file: ".pioenvs/*.bin"
+  skip_cleanup: true
+  on:
+    tags: true
