@@ -235,10 +235,19 @@ extern "C" {
 }
 #include "eboot_command.h"
 
-extern "C" uint32_t _SPIFFS_end;
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
 
+extern "C" uint32_t _SPIFFS_end;
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
 const uint32_t SPIFFS_END = ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
+
+#else  // Core > 2.5.2 and STAGE
+
+extern "C" uint32_t _FS_end;
+// From libraries/EEPROM/EEPROM.cpp EEPROMClass
+const uint32_t SPIFFS_END = ((uint32_t)&_FS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
+
+#endif
 
 // Version 4.2 config = eeprom area
 const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses EEPROM area
@@ -789,7 +798,7 @@ void SettingsDefaultSet2(void)
 //  Settings.flag2.wattage_resolution = 0;
   Settings.flag2.energy_resolution = ENERGY_RESOLUTION;
   Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
-  Settings.energy_power_delta = DEFAULT_POWER_DELTA;
+//  Settings.energy_power_delta = 0;
   Settings.energy_power_calibration = HLW_PREF_PULSE;
   Settings.energy_voltage_calibration = HLW_UREF_PULSE;
   Settings.energy_current_calibration = HLW_IREF_PULSE;
@@ -812,6 +821,9 @@ void SettingsDefaultSet2(void)
 //  Settings.energy_max_energy_start = 0;                           // MaxEnergyStart
 //  Settings.energy_kWhtotal = 0;
   RtcSettings.energy_kWhtotal = 0;
+
+  // IRRemote
+  Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
 
   // RF Bridge
 //  for (uint8_t i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
@@ -908,7 +920,7 @@ void SettingsDefaultSet2(void)
 
   SettingsDefaultWebColor();
 
-  memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
+  memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
 }
 
 /********************************************************************************************/
@@ -1047,7 +1059,7 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x050C0005) {
       Settings.light_rotation = 0;
-      Settings.energy_power_delta = DEFAULT_POWER_DELTA;
+      Settings.energy_power_delta = 0;
       char fingerprint[60];
       memcpy(fingerprint, Settings.mqtt_fingerprint, sizeof(fingerprint));
       char *p = fingerprint;
@@ -1129,7 +1141,7 @@ void SettingsDelta(void)
       Settings.timezone_minutes = 0;
     }
     if (Settings.version < 0x06030004) {
-      memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
+      memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
     }
     if (Settings.version < 0x0603000E) {
       Settings.flag2.calc_resolution = CALC_RESOLUTION;
@@ -1167,6 +1179,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x0605000A) {
       Settings.my_adc0 = ADC0_NONE;
+    }
+    if (Settings.version < 0x0605000D) {
+      Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
     }
 
     Settings.version = VERSION;

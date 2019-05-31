@@ -51,6 +51,8 @@ void PzemAcEverySecond(void)
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "PzemAc response error %d"), error);
     } else {
+      energy_data_valid = 0;
+
       //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
       // 01 04 14 08 D1 00 6C 00 00 00 F4 00 00 00 26 00 00 01 F4 00 64 00 00 51 34
       // Id Cc Sz Volt- Current---- Power------ Energy----- Frequ PFact Alarm Crc--

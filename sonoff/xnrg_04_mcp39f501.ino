@@ -469,6 +469,7 @@ void McpParseData(void)
     energy_active_power = 0;
     energy_current = 0;
   }
+  energy_data_valid = 0;
 }
 
 /********************************************************************************************/
@@ -526,6 +527,13 @@ void McpSerialInput(void)
 
 void McpEverySecond(void)
 {
+  if (energy_data_valid > ENERGY_WATCHDOG) {
+    mcp_voltage_rms = 0;
+    mcp_current_rms = 0;
+    mcp_active_power = 0;
+    mcp_line_frequency = 0;
+  }
+
   if (mcp_active_power) {
     energy_kWhtoday_delta += ((mcp_active_power * 10) / 36);
     EnergyUpdateToday();

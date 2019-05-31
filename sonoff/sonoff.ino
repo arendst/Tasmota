@@ -125,7 +125,7 @@ int blinks = 201;                           // Number of LED blinks
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
 uint32_t global_update = 0;                 // Timestamp of last global temperature and humidity update
-float global_temperature = 0;               // Provide a global temperature to be used by some sensors
+float global_temperature = 9999;               // Provide a global temperature to be used by some sensors
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
 float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
 char *ota_url;                              // OTA url string pointer
@@ -851,6 +851,11 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
               case P_RGB_REMAP:
                 LightUpdateColorMapping();
                 break;
+#if defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)
+              case P_IR_UNKNOW_THRESHOLD:
+                IrReceiveUpdateThreshold();
+                break;
+#endif
             }
           }
         }

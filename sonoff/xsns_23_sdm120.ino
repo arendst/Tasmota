@@ -27,7 +27,19 @@
 
 #define XSNS_23             23
 
+// can be user defined in my_user_config.h
+#ifndef SDM120_SPEED
+  #define SDM120_SPEED      2400    // default SDM120 Modbus address
+#endif
+// can be user defined in my_user_config.h
+#ifndef SDM120_ADDR
+  #define SDM120_ADDR       1       // default SDM120 Modbus address
+#endif
+
+
 #include <TasmotaSerial.h>
+
+enum SDM120_Error {SDM120_ERR_NO_ERROR=0, SDM120_ERR_CRC_ERROR, SDM120_ERR_WRONG_BYTES, SDM120_ERR_NOT_ENOUGHT_BYTES};
 
 TasmotaSerial *SDM120Serial;
 
@@ -58,7 +70,7 @@ void SDM120_ModbusSend(uint8_t function_code, uint16_t start_address, uint16_t r
 {
   uint8_t frame[8];
 
-  frame[0] = 0x01;          // default SDM120 Modbus address
+  frame[0] = SDM120_ADDR;
   frame[1] = function_code;
   frame[2] = (uint8_t)(start_address >> 8);
   frame[3] = (uint8_t)(start_address);
@@ -87,13 +99,12 @@ uint8_t SDM120_ModbusReceive(float *value)
     buffer[len++] = (uint8_t)SDM120Serial->read();
   }
 
-  if (len < 9)
-    return 3;   // SDM_ERR_NOT_ENOUGHT_BYTES
+  if (len < 9) {
+    return SDM120_ERR_NOT_ENOUGHT_BYTES;
+  }
 
-  if (len == 9) {
-
-    if (buffer[0] == 0x01 && buffer[1] == 0x04 && buffer[2] == 4) {   // check node number, op code and reply bytes count
-
+  if (9 == len) {
+    if (0x01 == buffer[0] && 0x04 == buffer[1] && 4 == buffer[2]) {   // check node number, op code and reply bytes count
       if((SDM120_calculateCRC(buffer, 7)) == ((buffer[8] << 8) | buffer[7])) {  //calculate crc from first 7 bytes and compare with received crc (bytes 7 & 8)
 
         ((uint8_t*)value)[3] = buffer[3];
@@ -101,12 +112,16 @@ uint8_t SDM120_ModbusReceive(float *value)
         ((uint8_t*)value)[1] = buffer[5];
         ((uint8_t*)value)[0] = buffer[6];
 
-      } else return 1; // SDM_ERR_CRC_ERROR
+      } else {
+        return SDM120_ERR_CRC_ERROR;
+      }
 
-    } else return 2;  // SDM_ERR_WRONG_BYTES
+    } else {
+      return SDM120_ERR_WRONG_BYTES;
+    }
   }
 
-  return 0;   // SDM_ERR_NO_ERROR
+  return SDM120_ERR_NO_ERROR;
 }
 
 uint16_t SDM120_calculateCRC(uint8_t *frame, uint8_t num)
@@ -152,6 +167,7 @@ const uint16_t sdm120_start_addresses[] {
 
 uint8_t sdm120_read_state = 0;
 uint8_t sdm120_send_retry = 0;
+uint8_t sdm120_nodata_count = 0;
 
 void SDM120250ms(void)              // Every 250 mSec
 {
@@ -163,6 +179,7 @@ void SDM120250ms(void)              // Every 250 mSec
     bool data_ready = SDM120_ModbusReceiveReady();
 
     if (data_ready) {
+      sdm120_nodata_count = 0;
       uint8_t error = SDM120_ModbusReceive(&value);
       if (error) {
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM120 response error %d"), error);
@@ -233,6 +250,18 @@ void SDM120250ms(void)              // Every 250 mSec
         }
       }
     } // end data ready
+    else {
+      if (sdm120_nodata_count <= (1000/250) * 4) {  // max. 4 sec without data
+        sdm120_nodata_count++;
+      } else if (sdm120_nodata_count != 255) {
+        // no data from modbus, reset values to 0
+        sdm120_nodata_count = 255;
+        sdm120_voltage = sdm120_current = sdm120_active_power = sdm120_apparent_power = sdm120_reactive_power = sdm120_power_factor = sdm120_frequency = sdm120_energy_total = 0;
+#ifdef USE_SDM220
+        sdm120_phase_angle = sdm120_import_active = sdm120_export_active = sdm120_import_reactive = sdm120_export_reactive = sdm120_total_reactive = 0;
+#endif
+      }
+    }
 
     if (0 == sdm120_send_retry || data_ready) {
       sdm120_send_retry = 5;
@@ -248,11 +277,7 @@ void SDM120Init(void)
   sdm120_type = 0;
   if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
     SDM120Serial = new TasmotaSerial(pin[GPIO_SDM120_RX], pin[GPIO_SDM120_TX], 1);
-#ifdef SDM120_SPEED
     if (SDM120Serial->begin(SDM120_SPEED)) {
-#else
-    if (SDM120Serial->begin(2400)) {
-#endif
       if (SDM120Serial->hardwareSerial()) { ClaimSerial(); }
       sdm120_type = 1;
     }

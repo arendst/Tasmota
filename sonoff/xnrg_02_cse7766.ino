@@ -139,6 +139,7 @@ bool CseSerialInput(void)
       uint8_t checksum = 0;
       for (uint8_t i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
       if (checksum == serial_in_buffer[23]) {
+        energy_data_valid = 0;
         CseReceived();
         cse_receive_flag = 0;
         return 1;
@@ -170,28 +171,34 @@ bool CseSerialInput(void)
 
 void CseEverySecond(void)
 {
-  long cf_frequency = 0;
-
-  if (CSE_PULSES_NOT_INITIALIZED == cf_pulses_last_time) {
-    cf_pulses_last_time = cf_pulses;  // Init after restart
+  if (energy_data_valid > ENERGY_WATCHDOG) {
+    voltage_cycle = 0;
+    current_cycle = 0;
+    power_cycle = 0;
   } else {
-    if (cf_pulses < cf_pulses_last_time) {  // Rolled over after 65535 pulses
-      cf_frequency = (65536 - cf_pulses_last_time) + cf_pulses;
+    long cf_frequency = 0;
+
+    if (CSE_PULSES_NOT_INITIALIZED == cf_pulses_last_time) {
+      cf_pulses_last_time = cf_pulses;  // Init after restart
     } else {
-      cf_frequency = cf_pulses - cf_pulses_last_time;
-    }
-    if (cf_frequency && energy_active_power)  {
-      unsigned long delta = (cf_frequency * Settings.energy_power_calibration) / 36;
-      // prevent invalid load delta steps even checksum is valid (issue #5789):
-      if (delta <= (3680*100/36) * 10 ) {  // max load for S31/Pow R2: 3.68kW
-        cf_pulses_last_time = cf_pulses;
-        energy_kWhtoday_delta += delta;
+      if (cf_pulses < cf_pulses_last_time) {  // Rolled over after 65535 pulses
+        cf_frequency = (65536 - cf_pulses_last_time) + cf_pulses;
+      } else {
+        cf_frequency = cf_pulses - cf_pulses_last_time;
       }
-      else {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Load overflow"));
-        cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
+      if (cf_frequency && energy_active_power)  {
+        unsigned long delta = (cf_frequency * Settings.energy_power_calibration) / 36;
+        // prevent invalid load delta steps even checksum is valid (issue #5789):
+        if (delta <= (3680*100/36) * 10 ) {  // max load for S31/Pow R2: 3.68kW
+          cf_pulses_last_time = cf_pulses;
+          energy_kWhtoday_delta += delta;
+        }
+        else {
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Load overflow"));
+          cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
+        }
+        EnergyUpdateToday();
       }
-      EnergyUpdateToday();
     }
   }
 }

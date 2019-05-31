@@ -1326,6 +1326,12 @@ void LightInit(void)
   light_device = devices_present;
   light_subtype = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7); // Always 0 - LST_MAX (5)
 
+#if defined(USE_WS2812) && (USE_WS2812_CTYPE > NEO_3LED)
+  if (LT_WS2812 == light_type) {
+    light_subtype++;  // from RGB to RGBW
+  }
+#endif
+
   light_controller.setSubType(light_subtype);
   light_controller.loadSettings();
 
@@ -1362,9 +1368,6 @@ void LightInit(void)
   }
 #ifdef USE_WS2812  // ************************************************************************
   else if (LT_WS2812 == light_type) {
-#if (USE_WS2812_CTYPE > NEO_3LED)
-    light_subtype++;  // from RGB to RGBW
-#endif
     Ws2812Init();
     max_scheme = LS_MAX + WS2812_SCHEMES;
   }
