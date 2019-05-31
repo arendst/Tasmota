@@ -17,5 +17,5 @@ deploy:
   provider: releases
   api_key:
     secure: $GITHUB_TOKEN
-  file: ".pioenvs/sonoff/firmware.bin"
+  file: ".pioenvs/*/*.bin"
   draft: true
