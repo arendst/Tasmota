@@ -349,7 +349,7 @@ uint32_t EncodeLightId(uint8_t idx)
 {
   uint8_t mac[6];
   WiFi.macAddress(mac);
-  uint32_t id = (mac[4] << 12) | (mac[5] << 4) | (idx & 0xF);
+  uint32_t id = (mac[3] << 20) | (mac[4] << 12) | (mac[5] << 4) | (idx & 0xF);
   return id;
 }
 
