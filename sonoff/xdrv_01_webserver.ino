@@ -61,7 +61,7 @@ const char HTTP_HEAD[] PROGMEM =
   "function idn(){"
     "var t=0,i=document.querySelectorAll('input,button,textarea,select'); while(i.length>=t){ if(i[t]) {i[t]['name']=(i[t].hasAttribute('id')&&(!i[t].hasAttribute('name')))?i[t]['id']:i[t]['name'];}t++;}"
   "}"
-  "window.onload=idn;";
+  "window.onload=idn;idn();";
 
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "var cn=180;"                           // seconds
