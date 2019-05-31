@@ -58,6 +58,9 @@ const char HTTP_HEAD[] PROGMEM =
   "function eb(s){"
     "return document.getElementById(s);"  // Save code space
   "}"
+ "function qs(s){"                                               // Alias to save code space
+    "return document.querySelector(s);"
+  "}"
   "function idn(){"
     "var t=0,i=document.querySelectorAll('input,button,textarea,select'); while(i.length>=t){ if(i[t]) {i[t]['name']=(i[t].hasAttribute('id')&&(!i[t].hasAttribute('name')))?i[t]['id']:i[t]['name'];}t++;}"
   "}"
@@ -319,7 +322,7 @@ const char HTTP_FORM_TEMPLATE_FLAG[] PROGMEM =
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='md'>"
-  "<p></p><b>" D_MODULE_TYPE "</b> (%s)<br><select id='g99'></select><br>"
+  "<p></p><b>" D_MODULE_TYPE "</b> (%s)<br><select id='g99' name='g99'></select><br>"
   "<br><table>";
 
 const char HTTP_FORM_WIFI[] PROGMEM =
