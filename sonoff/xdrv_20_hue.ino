@@ -344,9 +344,21 @@ void HueLightStatus2(uint8_t device, String *response)
 
 // generate a unique lightId mixing local IP address and deice number
 // it is limited to 16 devices.
-uint32_t lightId(uint32_t idx) {
-    uint32_t ip_local = WiFi.localIP();
-    return ((ip_local & 0xFF000000) >> 20) + idx % 16; // >> 24 * 16 is equivalent to >> 20
+// last 8 bits of Mac address - last 10 bits of IP address - 4 bits of local light
+// 76543210 - 76543210 - 76543210
+//   mmmmmm   mm  iiii   iiiillll
+uint32_t encode_lightId(uint32_t idx) {
+  byte mac[6];
+  uint32_t id = 0;
+  WiFi.macAddress(mac);
+  uint32_t ip_local = WiFi.localIP();
+  id = (mac[5] << 14);
+  id |= ((ip_local & 0xFF000000) >> 20); // >> 24 * 16
+  id |= (idx & 0xF);  // local light
+  return id;
+}
+uint32_t decode_lightId(uint32_t id) {
+  return id & 0xF;
 }
 
 void HueGlobalConfig(String *path)
@@ -357,7 +369,7 @@ void HueGlobalConfig(String *path)
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
   for (uint8_t i = 1; i <= maxhue; i++) {
-    response += lightId(i);
+    response += encode_lightId(i);
     response += F("\":{\"state\":");
     HueLightStatus1(i, &response);
     HueLightStatus2(i, &response);
@@ -401,7 +413,7 @@ void HueLights(String *path)
   if (path->endsWith("/lights")) {                   // Got /lights
     response = "{\"";
     for (uint8_t i = 1; i <= maxhue; i++) {
-      response += lightId(i);
+      response += encode_lightId(i);
       response += F("\":{\"state\":");
       HueLightStatus1(i, &response);
       HueLightStatus2(i, &response);
@@ -569,7 +581,7 @@ void HueLights(String *path)
   }
   else if(path->indexOf("/lights/") >= 0) {          // Got /lights/ID
     path->remove(0,8);                               // Remove /lights/
-    device = atoi(path->c_str()) % 16;
+    device = decode_lightId(atoi(path->c_str()));
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -598,7 +610,7 @@ void HueGroups(String *path)
     String lights = F("\"1\"");
     for (uint8_t i = 2; i <= maxhue; i++) {
       lights += ",\"";
-      lights += lightId(i);
+      lights += encode_lightId(i);
       lights += "\"";
     }
     response.replace("{l1", lights);
