@@ -2387,22 +2387,22 @@ const char HTTP_FORM_SCRIPT[] PROGMEM =
 
 const char HTTP_FORM_SCRIPT1[] PROGMEM =
     "<div style='text-align:right' id='charNum'> </div>"
-    "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>script enable</b><br/>"
-    "<br><textarea  id='t1' name='t1' rows='8' cols='80' maxlength='%d' style='font-size: 12pt' >";
+    "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>script enable</b><br>"
+    "<br><textarea  id='t1' rows='8' cols='80' maxlength='%d' style='font-size: 12pt' >";
 
 
 const char HTTP_FORM_SCRIPT1b[] PROGMEM =
     "</textarea>"
     "<script type='text/javascript'>"
-    "document.getElementById('charNum').innerHTML='-';"
-    "var textarea=document.querySelector('textarea');"
+    "eb('charNum').innerHTML='-';"
+    "var textarea=qs('textarea');"
     "textarea.addEventListener('input',function(){"
     "var ml=this.getAttribute('maxlength');"
     "var cl=this.value.length;"
     "if(cl>=ml){"
-    "document.getElementById('charNum').innerHTML='no more chars';"
+    "eb('charNum').innerHTML='no more chars';"
     "}else{"
-    "document.getElementById('charNum').innerHTML=ml-cl+' chars left';"
+    "eb('charNum').innerHTML=ml-cl+' chars left';"
     "}"
 
     "});"

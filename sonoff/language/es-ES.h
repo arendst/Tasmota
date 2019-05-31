@@ -222,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Habilitar JavaScript para usar Tasmota"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MÍNIMO<br/>actualice por favor"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MÍNIMO<br>actualice por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor web activo en"
 #define D_WITH_IP_ADDRESS "con dirección IP"
 #define D_WEBSERVER_STOPPED "Servidor web detenido"
