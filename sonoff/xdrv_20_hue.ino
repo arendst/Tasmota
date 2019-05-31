@@ -342,11 +342,19 @@ void HueLightStatus2(uint8_t device, String *response)
   response->replace("{j2", GetHueDeviceId(device));
 }
 
-// generate a unique lightId mixing local IP address and deice number
+// generate a unique lightId mixing local IP address and device number
 // it is limited to 16 devices.
-uint32_t lightId(uint32_t idx) {
-    uint32_t ip_local = WiFi.localIP();
-    return ((ip_local & 0xFF000000) >> 20) + idx % 16; // >> 24 * 16 is equivalent to >> 20
+// last 16 bits of Mac address + 4 bits of local light
+uint32_t EncodeLightId(uint8_t idx)
+{
+  uint8_t mac[6];
+  WiFi.macAddress(mac);
+  uint32_t id = (mac[4] << 12) | (mac[5] << 4) | (idx & 0xF);
+  return id;
+}
+
+uint32_t DecodeLightId(uint32_t id) {
+  return id & 0xF;
 }
 
 void HueGlobalConfig(String *path)
@@ -357,7 +365,7 @@ void HueGlobalConfig(String *path)
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
   for (uint8_t i = 1; i <= maxhue; i++) {
-    response += lightId(i);
+    response += EncodeLightId(i);
     response += F("\":{\"state\":");
     HueLightStatus1(i, &response);
     HueLightStatus2(i, &response);
@@ -401,7 +409,7 @@ void HueLights(String *path)
   if (path->endsWith("/lights")) {                   // Got /lights
     response = "{\"";
     for (uint8_t i = 1; i <= maxhue; i++) {
-      response += lightId(i);
+      response += EncodeLightId(i);
       response += F("\":{\"state\":");
       HueLightStatus1(i, &response);
       HueLightStatus2(i, &response);
@@ -569,7 +577,7 @@ void HueLights(String *path)
   }
   else if(path->indexOf("/lights/") >= 0) {          // Got /lights/ID
     path->remove(0,8);                               // Remove /lights/
-    device = atoi(path->c_str()) % 16;
+    device = DecodeLightId(atoi(path->c_str()));
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -598,7 +606,7 @@ void HueGroups(String *path)
     String lights = F("\"1\"");
     for (uint8_t i = 2; i <= maxhue; i++) {
       lights += ",\"";
-      lights += lightId(i);
+      lights += EncodeLightId(i);
       lights += "\"";
     }
     response.replace("{l1", lights);
