@@ -2001,7 +2001,7 @@ void PerformEverySecond(void)
       if (pin[GPIO_SEN_SLEEP] < 99) {
         disbale_deepsleep_switch = !digitalRead(pin[GPIO_SEN_SLEEP]);
       }
-      if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295 && !disbale_deepsleep_switch) {
+      if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295 && !disbale_deepsleep_switch && tele_period = 0 && prep_called == 1 ) {
         //TODO STEFAN
         yield();
         if (Settings.deepsleep > MAX_DEEPSLEEP_CYCLE) {
