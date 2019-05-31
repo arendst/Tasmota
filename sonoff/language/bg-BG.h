@@ -222,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Разрешете JavaScript, за да използвате Tasmota"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Минимален фърмуер<br/>моля надградете го"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Минимален фърмуер<br>моля надградете го"
 #define D_WEBSERVER_ACTIVE_ON "Уеб сървърът е активен на"
 #define D_WITH_IP_ADDRESS "с IP адрес"
 #define D_WEBSERVER_STOPPED "Уеб сървърът е спрян"

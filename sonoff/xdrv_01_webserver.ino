@@ -57,7 +57,11 @@ const char HTTP_HEAD[] PROGMEM =
   "var x=null,lt,to,tp,pc='';"            // x=null allow for abortion
   "function eb(s){"
     "return document.getElementById(s);"  // Save code space
-  "}";
+  "}"
+  "function idn(){"
+    "var t=0,i=document.querySelectorAll('input,button,textarea,select'); while(i.length>=t){ if(i[t]) {i[t]['name']=(i[t].hasAttribute('id')&&(!i[t].hasAttribute('name')))?i[t]['id']:i[t]['name'];}t++;}"
+  "}"
+  "window.onload=idn;";
 
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "var cn=180;"                           // seconds
@@ -277,7 +281,7 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
 #ifdef FIRMWARE_MINIMAL
   "<div style='text-align:center;color:#%06x;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"  // COLOR_TEXT_WARNING
 #endif
-  "<div style='text-align:center;'><noscript>" D_NOSCRIPT "<br/></noscript>"
+  "<div style='text-align:center;'><noscript>" D_NOSCRIPT "<br></noscript>"
 #ifdef LANGUAGE_MODULE_NAME
   "<h3>" D_MODULE " %s</h3>"
 #else
@@ -292,14 +296,14 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><span class='p'>" D_DARKLIGHT "</span><span class='q'>" D_BRIGHTLIGHT "</span></div>"
   "<div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
-  "<br/><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br/>";
+  "<br><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br>";
 
 const char HTTP_FORM_LOGIN[] PROGMEM =
   "<fieldset>"
   "<form method='post' action='/'>"
-  "<p><b>" D_USER "</b><br/><input name='USER1' placeholder='" D_USER "'></p>"
-  "<p><b>" D_PASSWORD "</b><br/><input name='PASS1' type='password' placeholder='" D_PASSWORD "'></p>"
-  "<br/>"
+  "<p><b>" D_USER "</b><br><input name='USER1' placeholder='" D_USER "'></p>"
+  "<p><b>" D_PASSWORD "</b><br><input name='PASS1' type='password' placeholder='" D_PASSWORD "'></p>"
+  "<br>"
   "<button>" D_OK "</button>"
   "</form></fieldset>";
 
@@ -307,84 +311,84 @@ const char HTTP_FORM_TEMPLATE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='tp'>";
 const char HTTP_FORM_TEMPLATE_FLAG[] PROGMEM =
-  "<p></p>"  // Keep close so do not use <br/>
+  "<p></p>"  // Keep close so do not use <br>
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE_FLAGS "&nbsp;</b></legend><p>"
-//  "<input id='c0' name='c0' type='checkbox'><b>" D_OPTION_TEXT "</b><br/>"
+//  "<input id='c0' name='c0' type='checkbox'><b>" D_OPTION_TEXT "</b><br>"
   "</p></fieldset>";
 
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='md'>"
-  "<p></p><b>" D_MODULE_TYPE "</b> (%s)<br/><select id='g99' name='g99'></select><br/>"
-  "<br/><table>";
+  "<p></p><b>" D_MODULE_TYPE "</b> (%s)<br><select id='g99'></select><br>"
+  "<br><table>";
 
 const char HTTP_FORM_WIFI[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_WIFI_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='wi'>"
-  "<p><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br/><input id='s1' name='s1' placeholder='" STA_SSID1 "' value='%s'></p>"
-  "<p><b>" D_AP1_PASSWORD "</b><br/><input id='p1' name='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
-  "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br/><input id='s2' name='s2' placeholder='" STA_SSID2 "' value='%s'></p>"
-  "<p><b>" D_AP2_PASSWORD "</b><br/><input id='p2' name='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
-  "<p><b>" D_HOSTNAME "</b> (%s)<br/><input id='h' name='h' placeholder='%s' value='%s'></p>";
+  "<p><b>" D_AP1_SSID "</b> (" STA_SSID1 ")<br><input id='s1' placeholder='" STA_SSID1 "' value='%s'></p>"
+  "<p><b>" D_AP1_PASSWORD "</b><br><input id='p1' type='password' placeholder='" D_AP1_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
+  "<p><b>" D_AP2_SSID "</b> (" STA_SSID2 ")<br><input id='s2' placeholder='" STA_SSID2 "' value='%s'></p>"
+  "<p><b>" D_AP2_PASSWORD "</b><br><input id='p2' type='password' placeholder='" D_AP2_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
+  "<p><b>" D_HOSTNAME "</b> (%s)<br><input id='h' placeholder='%s' value='%s'></p>";
 
 const char HTTP_FORM_LOG1[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_LOGGING_PARAMETERS "&nbsp;</b>"
   "</legend><form method='get' action='lg'>";
 const char HTTP_FORM_LOG2[] PROGMEM =
-  "<p><b>" D_SYSLOG_HOST "</b> (" SYS_LOG_HOST ")<br/><input id='lh' name='lh' placeholder='" SYS_LOG_HOST "' value='%s'></p>"
-  "<p><b>" D_SYSLOG_PORT "</b> (" STR(SYS_LOG_PORT) ")<br/><input id='lp' name='lp' placeholder='" STR(SYS_LOG_PORT) "' value='%d'></p>"
-  "<p><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br/><input id='lt' name='lt' placeholder='" STR(TELE_PERIOD) "' value='%d'></p>";
+  "<p><b>" D_SYSLOG_HOST "</b> (" SYS_LOG_HOST ")<br><input id='lh' placeholder='" SYS_LOG_HOST "' value='%s'></p>"
+  "<p><b>" D_SYSLOG_PORT "</b> (" STR(SYS_LOG_PORT) ")<br><input id='lp' placeholder='" STR(SYS_LOG_PORT) "' value='%d'></p>"
+  "<p><b>" D_TELEMETRY_PERIOD "</b> (" STR(TELE_PERIOD) ")<br><input id='lt' placeholder='" STR(TELE_PERIOD) "' value='%d'></p>";
 
 const char HTTP_FORM_OTHER[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_OTHER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='co'>"
   "<p></p>"
   "<fieldset><legend><b>&nbsp;" D_TEMPLATE "&nbsp;</b></legend>"
-  "<p><input id='t1' name='t1' placeholder='" D_TEMPLATE "' value='%s'></p>"
-  "<p><input id='t2' name='t2' type='checkbox'%s><b>" D_ACTIVATE "</b></p>"
+  "<p><input id='t1' placeholder='" D_TEMPLATE "' value='%s'></p>"
+  "<p><input id='t2' type='checkbox'%s><b>" D_ACTIVATE "</b></p>"
   "</fieldset>"
-  "<br/>"
-  "<b>" D_WEB_ADMIN_PASSWORD "</b><br/><input id='wp' name='wp' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br/>"
   "<br>"
-  "<input id='b1' name='b1' type='checkbox'%s><b>" D_MQTT_ENABLE "</b><br/>"
-  "<br/>";
+  "<b>" D_WEB_ADMIN_PASSWORD "</b><br><input id='wp' type='password' placeholder='" D_WEB_ADMIN_PASSWORD "' value='" D_ASTERIX "'><br>"
+  "<br>"
+  "<input id='b1' type='checkbox'%s><b>" D_MQTT_ENABLE "</b><br>"
+  "<br>";
 
 const char HTTP_FORM_END[] PROGMEM =
-  "<br/>"
+  "<br>"
   "<button name='save' type='submit' class='button bgrn'>" D_SAVE "</button>"
   "</form></fieldset>";
 
 const char HTTP_FORM_RST[] PROGMEM =
-  "<div id='f1' name='f1' style='display:block;'>"
+  "<div id='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;" D_RESTORE_CONFIGURATION "&nbsp;</b></legend>";
 const char HTTP_FORM_UPG[] PROGMEM =
-  "<div id='f1' name='f1' style='display:block;'>"
+  "<div id='f1' style='display:block;'>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_WEBSERVER "&nbsp;</b></legend>"
   "<form method='get' action='u1'>"
-  "<br/><b>" D_OTA_URL "</b><br/><input id='o' name='o' placeholder='OTA_URL' value='%s'><br/>"
-  "<br/><button type='submit'>" D_START_UPGRADE "</button></form>"
-  "</fieldset><br/><br/>"
+  "<br><b>" D_OTA_URL "</b><br><input id='o' placeholder='OTA_URL' value='%s'><br>"
+  "<br><button type='submit'>" D_START_UPGRADE "</button></form>"
+  "</fieldset><br><br>"
   "<fieldset><legend><b>&nbsp;" D_UPGRADE_BY_FILE_UPLOAD "&nbsp;</b></legend>";
 const char HTTP_FORM_RST_UPG[] PROGMEM =
   "<form method='post' action='u2' enctype='multipart/form-data'>"
-  "<br/><input type='file' name='u2'><br/>"
-  "<br/><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>"
+  "<br><input type='file' name='u2'><br>"
+  "<br><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>"
   "</fieldset>"
   "</div>"
-  "<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
+  "<div id='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
 
 const char HTTP_FORM_CMND[] PROGMEM =
-  "<br/><textarea readonly id='t1' name='t1' cols='340' wrap='off'></textarea><br/><br/>"
+  "<br><textarea readonly id='t1' cols='340' wrap='off'></textarea><br><br>"
   "<form method='get' onsubmit='return l(1);'>"
-  "<input id='c1' name='c1' placeholder='" D_ENTER_COMMAND "' autofocus><br/>"
-  //  "<br/><button type='submit'>Send command</button>"
+  "<input id='c1' placeholder='" D_ENTER_COMMAND "' autofocus><br>"
+  //  "<br><button type='submit'>Send command</button>"
   "</form>";
 
 const char HTTP_TABLE100[] PROGMEM =
   "<table style='width:100%%'>";
 
 const char HTTP_COUNTER[] PROGMEM =
-  "<br/><div id='t' name='t' style='text-align:center;'></div>";
+  "<br><div id='t' style='text-align:center;'></div>";
 
 const char HTTP_END[] PROGMEM =
   "<div style='text-align:right;font-size:11px;'><hr/><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>Sonoff-Tasmota %s " D_BY " Theo Arends</a></div>"
@@ -809,9 +813,9 @@ void WebRestart(uint8_t type)
   WSContentSend_P(HTTP_SCRIPT_RELOAD);
   WSContentSendStyle();
   if (type) {
-    WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_CONFIGURATION_SAVED "</b><br/>"));
+    WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_CONFIGURATION_SAVED "</b><br>"));
     if (2 == type) {
-      WSContentSend_P(PSTR("<br/>" D_TRYING_TO_CONNECT "<br/>"));
+      WSContentSend_P(PSTR("<br>" D_TRYING_TO_CONNECT "<br>"));
     }
     WSContentSend_P(PSTR("</div>"));
   }
@@ -1112,8 +1116,8 @@ void HandleTemplateConfiguration(void)
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_TEMPLATE);
   WSContentSend_P(HTTP_TABLE100);
-  WSContentSend_P(PSTR("<tr><td><b>" D_TEMPLATE_NAME "</b></td><td style='width:200px'><input id='s1' name='s1' placeholder='" D_TEMPLATE_NAME "'></td></tr>"
-                       "<tr><td><b>" D_BASE_TYPE "</b></td><td><select id='g99' name='g99' onchange='st(this.value)'></select></td></tr>"
+  WSContentSend_P(PSTR("<tr><td><b>" D_TEMPLATE_NAME "</b></td><td style='width:200px'><input id='s1' placeholder='" D_TEMPLATE_NAME "'></td></tr>"
+                       "<tr><td><b>" D_BASE_TYPE "</b></td><td><select id='g99' onchange='st(this.value)'></select></td></tr>"
                        "</table>"
                        "<hr/>"));
   WSContentSend_P(HTTP_TABLE100);
@@ -1123,7 +1127,7 @@ void HandleTemplateConfiguration(void)
         ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:200px'" : "", i, i);
     }
   }
-  WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_ADC "0</font></b></td><td><select id='g17' name='g17'></select></td></tr>"), WebColor(COL_TEXT));
+  WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_ADC "0</font></b></td><td><select id='g17'></select></td></tr>"), WebColor(COL_TEXT));
   WSContentSend_P(PSTR("</table>"));
   gpio_flag flag = ModuleFlag();
   if (flag.data > ADC0_USER) {
@@ -1249,7 +1253,7 @@ void HandleModuleConfiguration(void)
   }
 #ifndef USE_ADC_VCC
   if (ValidAdc()) {
-    WSContentSend_P(PSTR("<tr><td>%s <b>" D_ADC "0</b></td><td style='width:176px'><select id='g17' name='g17'></select></td></tr>"), (WEMOS==my_module_type)?"A0":"");
+    WSContentSend_P(PSTR("<tr><td>%s <b>" D_ADC "0</b></td><td style='width:176px'><select id='g17'></select></td></tr>"), (WEMOS==my_module_type)?"A0":"");
   }
 #endif  // USE_ADC_VCC
   WSContentSend_P(PSTR("</table>"));
@@ -1396,10 +1400,10 @@ void HandleWifiConfiguration(void)
           }
 
         }
-        WSContentSend_P(PSTR("<br/>"));
+        WSContentSend_P(PSTR("<br>"));
       }
     } else {
-      WSContentSend_P(PSTR("<div><a href='/wi?scan='>" D_SCAN_FOR_WIFI_NETWORKS "</a></div><br/>"));
+      WSContentSend_P(PSTR("<div><a href='/wi?scan='>" D_SCAN_FOR_WIFI_NETWORKS "</a></div><br>"));
     }
 
     // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
@@ -1460,7 +1464,7 @@ void HandleLoggingConfiguration(void)
   uint8_t dlevel[3] = { LOG_LEVEL_INFO, LOG_LEVEL_INFO, LOG_LEVEL_NONE };
   for (uint8_t idx = 0; idx < 3; idx++) {
     uint8_t llevel = (0==idx)?Settings.seriallog_level:(1==idx)?Settings.weblog_level:Settings.syslog_level;
-    WSContentSend_P(PSTR("<p><b>%s</b> (%s)<br/><select id='l%d' name='l%d'>"),
+    WSContentSend_P(PSTR("<p><b>%s</b> (%s)<br><select id='l%d'>"),
       GetTextIndexed(stemp1, sizeof(stemp1), idx, kLoggingOptions),
       GetTextIndexed(stemp2, sizeof(stemp2), dlevel[idx], kLoggingLevels),
       idx, idx);
@@ -1528,7 +1532,7 @@ void HandleOtherConfiguration(void)
   if (SONOFF_IFAN02 == my_module_type) { maxfn = 1; }
   for (uint8_t i = 0; i < maxfn; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i +1);
-    WSContentSend_P(PSTR("<b>" D_FRIENDLY_NAME " %d</b> (" FRIENDLY_NAME "%s)<br/><input id='a%d' name='a%d' placeholder='" FRIENDLY_NAME "%s' value='%s'><p></p>"),
+    WSContentSend_P(PSTR("<b>" D_FRIENDLY_NAME " %d</b> (" FRIENDLY_NAME "%s)<br><input id='a%d' name='a%d' placeholder='" FRIENDLY_NAME "%s' value='%s'><p></p>"),
       i +1,
       (i) ? stemp : "",
       i, i,
@@ -1537,7 +1541,7 @@ void HandleOtherConfiguration(void)
   }
 
 #ifdef USE_EMULATION
-  WSContentSend_P(PSTR("<p></p><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend><p>"));  // Keep close to Friendlynames so do not use <br/>
+  WSContentSend_P(PSTR("<p></p><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend><p>"));  // Keep close to Friendlynames so do not use <br>
   for (uint8_t i = 0; i < EMUL_MAX; i++) {
 #ifndef USE_EMULATION_WEMO
     if (i == EMUL_WEMO) { i++; }
@@ -1546,7 +1550,7 @@ void HandleOtherConfiguration(void)
     if (i == EMUL_HUE) { i++; }
 #endif
     if (i < EMUL_MAX) {
-      WSContentSend_P(PSTR("<input id='r%d' name='b2' type='radio' value='%d'%s><b>%s</b> %s<br/>"),  // Different id only used for labels
+      WSContentSend_P(PSTR("<input id='r%d' name='b2' type='radio' value='%d'%s><b>%s</b> %s<br>"),  // Different id only used for labels
         i, i,
         (i == Settings.flag2.emulation) ? " checked" : "",
         GetTextIndexed(stemp, sizeof(stemp), i, kEmulationOptions),
@@ -1844,8 +1848,8 @@ void HandleUploadDone(void)
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
   if (upload_error) {
-//    WSContentSend_P(PSTR(COLOR_TEXT_WARNING "'>" D_FAILED "</font></b><br/><br/>"));
-    WSContentSend_P(PSTR("%06x'>" D_FAILED "</font></b><br/><br/>"), WebColor(COL_TEXT_WARNING));
+//    WSContentSend_P(PSTR(COLOR_TEXT_WARNING "'>" D_FAILED "</font></b><br><br>"));
+    WSContentSend_P(PSTR("%06x'>" D_FAILED "</font></b><br><br>"), WebColor(COL_TEXT_WARNING));
 #ifdef USE_RF_FLASH
     if (upload_error < 14) {
 #else
@@ -1859,13 +1863,13 @@ void HandleUploadDone(void)
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_UPLOAD ": %s"), error);
     stop_flash_rotate = Settings.flag.stop_flash_rotate;
   } else {
-    WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
+    WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     WSContentSend_P(HTTP_MSG_RSTRT);
     ShowWebSource(SRC_WEBGUI);
     restart_flag = 2;  // Always restart to re-enable disabled features during update
   }
   SettingsBufferFree();
-  WSContentSend_P(PSTR("</div><br/>"));
+  WSContentSend_P(PSTR("</div><br>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
 }
