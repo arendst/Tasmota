@@ -768,9 +768,9 @@ const char HTTP_FORM_KNX_OPT[] PROGMEM =
   "<option value='%d'>%s</option>";
 
 const char HTTP_FORM_KNX_GA[] PROGMEM =
-  "<input style='width:12%%;' type='number' id='%s' name='%s' min='0' max='31' value='0'> / "
-  "<input style='width:12%%;' type='number' id='%s' name='%s' min='0' max='7' value='0'> / "
-  "<input style='width:12%%;' type='number' id='%s' name='%s' min='0' max='255' value='0'> ";
+  "<input style='width:12%%;' type='number' id='%s' min='0' max='31' value='0'> / "
+  "<input style='width:12%%;' type='number' id='%s' min='0' max='7' value='0'> / "
+  "<input style='width:12%%;' type='number' id='%s' min='0' max='255' value='0'> ";
 
 const char HTTP_FORM_KNX_ADD_BTN[] PROGMEM =
   "<button type='submit' onclick='%s()' %s name='btn_add' value='%d' style='width:18%%;'>" D_ADD "</button><br><br>"
@@ -895,7 +895,7 @@ void HandleKNXConfiguration(void)
       }
     }
     WSContentSend_P(PSTR("</select> -> "));
-    WSContentSend_P(HTTP_FORM_KNX_GA, "GA_FNUM", "GA_FNUM", "GA_AREA", "GA_AREA", "GA_FDEF", "GA_FDEF");
+    WSContentSend_P(HTTP_FORM_KNX_GA, "GA_FNUM", "GA_AREA", "GA_FDEF");
     WSContentSend_P(HTTP_FORM_KNX_ADD_BTN, "GAwarning", (Settings.knx_GA_registered < MAX_KNX_GA) ? "" : "disabled", 1);
     for (uint8_t i = 0; i < Settings.knx_GA_registered ; ++i)
     {
@@ -907,7 +907,7 @@ void HandleKNXConfiguration(void)
     }
 
     WSContentSend_P(HTTP_FORM_KNX3);
-    WSContentSend_P(HTTP_FORM_KNX_GA, "CB_FNUM", "CB_FNUM", "CB_AREA", "CB_AREA", "CB_FDEF", "CB_FDEF");
+    WSContentSend_P(HTTP_FORM_KNX_GA, "CB_FNUM", "CB_AREA", "CB_FDEF");
     WSContentSend_P(HTTP_FORM_KNX4);
 
     uint8_t j;
