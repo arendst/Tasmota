@@ -455,7 +455,13 @@ void HandleDomoticzConfiguration(void)
     return;
   }
 
-  char stemp[32];
+  #if MY_LANGUAGE == bg-BG
+    #define _STEMP_SIZE 40
+  #else
+    #define _STEMP_SIZE 32
+  #endif
+
+  char stemp[_STEMP_SIZE];
 
   WSContentStart_P(S_CONFIGURE_DOMOTICZ);
   WSContentSendStyle();

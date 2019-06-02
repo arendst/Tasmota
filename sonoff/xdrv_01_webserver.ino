@@ -787,8 +787,14 @@ void WSContentSendStyle(void)
 
 void WSContentButton(uint8_t title_index)
 {
+  #if MY_LANGUAGE == bg-BG
+    #define _TITLE_SIZE 64
+  #else
+    #define _TITLE_SIZE 32
+  #endif
+
   char action[4];
-  char title[32];
+  char title[_TITLE_SIZE];
 
   if (title_index <= BUTTON_RESET_CONFIGURATION) {
     char confirm[64];
@@ -1489,7 +1495,14 @@ void HandleLoggingConfiguration(void)
   WSContentStart_P(S_CONFIGURE_LOGGING);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_LOG1);
-  char stemp1[32];
+
+  #if MY_LANGUAGE == bg-BG
+    #define _STEMP1_SIZE 45
+  #else
+    #define _STEMP1_SIZE 32
+  #endif
+
+  char stemp1[_STEMP1_SIZE];
   char stemp2[32];
   uint8_t dlevel[3] = { LOG_LEVEL_INFO, LOG_LEVEL_INFO, LOG_LEVEL_NONE };
   for (uint8_t idx = 0; idx < 3; idx++) {
