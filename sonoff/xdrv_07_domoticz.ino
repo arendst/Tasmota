@@ -463,18 +463,18 @@ void HandleDomoticzConfiguration(void)
   for (int i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     if (i < devices_present) {
       WSContentSend_P(HTTP_FORM_DOMOTICZ_RELAY,
-        i +1, i, i, Settings.domoticz_relay_idx[i],
-        i +1, i, i, Settings.domoticz_key_idx[i]);
+        i +1, i, Settings.domoticz_relay_idx[i],
+        i +1, i, Settings.domoticz_key_idx[i]);
     }
     if (pin[GPIO_SWT1 +i] < 99) {
       WSContentSend_P(HTTP_FORM_DOMOTICZ_SWITCH,
-        i +1, i, i, Settings.domoticz_switch_idx[i]);
+        i +1, i, Settings.domoticz_switch_idx[i]);
     }
     if ((SONOFF_IFAN02 == my_module_type) && (1 == i)) { break; }
   }
   for (int i = 0; i < DZ_MAX_SENSORS; i++) {
     WSContentSend_P(HTTP_FORM_DOMOTICZ_SENSOR,
-      i +1, GetTextIndexed(stemp, sizeof(stemp), i, kDomoticzSensors), i, i, Settings.domoticz_sensor_idx[i]);
+      i +1, GetTextIndexed(stemp, sizeof(stemp), i, kDomoticzSensors), i, Settings.domoticz_sensor_idx[i]);
   }
   WSContentSend_P(HTTP_FORM_DOMOTICZ_TIMER, Settings.domoticz_update_timer);
   WSContentSend_P(PSTR("</table>"));
