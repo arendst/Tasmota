@@ -788,7 +788,7 @@ void WSContentSendStyle(void)
 void WSContentButton(uint8_t title_index)
 {
   char action[4];
-  char title[32];
+  char title[64];
 
   if (title_index <= BUTTON_RESET_CONFIGURATION) {
     char confirm[64];
@@ -1489,7 +1489,7 @@ void HandleLoggingConfiguration(void)
   WSContentStart_P(S_CONFIGURE_LOGGING);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_LOG1);
-  char stemp1[32];
+  char stemp1[45];
   char stemp2[32];
   uint8_t dlevel[3] = { LOG_LEVEL_INFO, LOG_LEVEL_INFO, LOG_LEVEL_NONE };
   for (uint8_t idx = 0; idx < 3; idx++) {

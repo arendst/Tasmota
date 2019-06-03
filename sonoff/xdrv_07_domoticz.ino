@@ -455,7 +455,7 @@ void HandleDomoticzConfiguration(void)
     return;
   }
 
-  char stemp[32];
+  char stemp[40];
 
   WSContentStart_P(S_CONFIGURE_DOMOTICZ);
   WSContentSendStyle();
