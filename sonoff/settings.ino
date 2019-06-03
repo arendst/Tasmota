@@ -119,6 +119,9 @@
 #ifndef COLOR_TIMER_TAB_BACKGROUND
 #define COLOR_TIMER_TAB_BACKGROUND  "#999"     // Config timer tab background color - Light grey
 #endif
+#ifndef IR_RCV_MIN_UNKNOWN_SIZE
+#define IR_RCV_MIN_UNKNOWN_SIZE     6          // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
+#endif
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
