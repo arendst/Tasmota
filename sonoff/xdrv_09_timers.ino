@@ -627,7 +627,7 @@ const char HTTP_TIMER_SCRIPT5[] PROGMEM =
     "}"
     "eb('bt').innerHTML=s;"                                       // Create tabs
     "if(%d>0){"                                                   // Create Output and Action drop down boxes
-      "eb('oa').innerHTML=\"<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1' name='d1'></select></span>&emsp;<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:99px;' id='p1' name='p1'></select>\";"
+      "eb('oa').innerHTML=\"<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1'></select></span>&emsp;<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:99px;' id='p1'></select>\";"
       "o=qs('#p1');ce('" D_OFF "',o);ce('" D_ON "',o);ce('" D_TOGGLE "',o);"  // Create offset direction select options
 #if defined(USE_RULES) || defined(USE_SCRIPT)
       "ce('" D_RULE "',o);"
@@ -646,11 +646,11 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
     "o=qs('#mw');for(i=0;i<=15;i++){ce((i<10)?('0'+i):i,o);}"     // Create window minutes select options
     "o=qs('#d1');for(i=0;i<%d;i++){ce(i+1,o);}"                   // Create outputs
     "var a='" D_DAY3LIST "';"
-    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' name='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b> \"}"
+    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b> \"}"
     "eb('ds').innerHTML=s;"                                       // Create weekdays
     "eb('dP').click();"                                           // Get the element with id='dP' and click on it
   "}"
-  "window.onload=it;";
+  "wl(it);";
 const char HTTP_TIMER_STYLE[] PROGMEM =
   ".tl{float:left;border-radius:0;border:1px solid #%06x;padding:1px;width:6.25%%;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
 const char HTTP_FORM_TIMER1[] PROGMEM =

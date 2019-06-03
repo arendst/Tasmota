@@ -117,7 +117,7 @@ int Xnrg06(uint8_t function)
         PzemDcSnsInit();
         break;
       case FUNC_ENERGY_EVERY_SECOND:
-        PzemDcEverySecond();
+        if (uptime > 4) { PzemDcEverySecond(); }  // Fix start up issue #5875
         break;
     }
   }

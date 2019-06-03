@@ -58,13 +58,24 @@ const char HTTP_HEAD[] PROGMEM =
   "function eb(s){"
     "return document.getElementById(s);"  // Save code space
   "}"
- "function qs(s){"                                               // Alias to save code space
+  "function qs(s){"                       // Alias to save code space
     "return document.querySelector(s);"
   "}"
-  "function idn(){"
-    "var t=0,i=document.querySelectorAll('input,button,textarea,select'); while(i.length>=t){ if(i[t]) {i[t]['name']=(i[t].hasAttribute('id')&&(!i[t].hasAttribute('name')))?i[t]['id']:i[t]['name'];}t++;}"
-  "}"
-  "window.onload=idn;idn();";
+
+  // https://www.htmlgoodies.com/beyond/javascript/article.php/3724571/Using-Multiple-JavaScript-Onload-Functions.htm
+  "function wl(f){"                       // Execute multiple window.onload
+    "var o=window.onload;"
+    "if(typeof window.onload!='function'){"
+      "window.onload=f;"
+    "}else{"
+      "window.onload=function(){"
+        "if(o){"
+          "o();"
+        "}"
+        "f();"
+      "}"
+    "}"
+  "}";
 
 const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "var cn=180;"                           // seconds
@@ -75,7 +86,7 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
       "setTimeout(u,1000);"
     "}"
   "}"
-  "window.onload=u;";
+  "wl(u);";
 
 const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "function la(p){"
@@ -102,7 +113,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "function lc(p){"
     "la('&t='+p);"                        // &t related to WebGetArg("t", tmp, sizeof(tmp));
   "}"
-  "window.onload=la();";
+  "wl(la);";
 
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "function c(l){"
@@ -152,7 +163,7 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
     "lt=setTimeout(l,%d);"
     "return false;"
   "}"
-  "window.onload=l;";
+  "wl(l);";
 
 const char HTTP_MODULE_TEMPLATE_REPLACE[] PROGMEM =
   "}2%d'>%s (%d}3";                       // }2 and }3 are used in below os.replace
@@ -218,7 +229,10 @@ const char HTTP_SCRIPT_TEMPLATE[] PROGMEM =
     "sk(17,99);"                          // 17 = WEMOS
     "st(" STR(USER_MODULE) ");"
   "}"
-  "window.onload=ld('tp?m=1',x2);";       // ?m related to WebServer->hasArg("m")
+  "function sl(){"
+    "ld('tp?m=1',x2);"                    // ?m related to WebServer->hasArg("m")
+  "}"
+  "wl(sl);";
 
 const char HTTP_SCRIPT_MODULE1[] PROGMEM =
   "function x1(a){"                       // Module Type
@@ -240,7 +254,7 @@ const char HTTP_SCRIPT_MODULE2[] PROGMEM =
       "ld('md?a=1',x3);"                  // ?a related to WebServer->hasArg("a")
     "}"
   "}"
-  "window.onload=sl;";
+  "wl(sl);";
 
 const char HTTP_SCRIPT_INFO_BEGIN[] PROGMEM =
   "function i(){"
@@ -250,11 +264,22 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
     "s=o.replace(/}1/g,\"</td></tr><tr><th>\").replace(/}2/g,\"</th><td>\");"
     "eb('i').innerHTML=s;"
   "}"
-  "window.onload=i;";
+  "wl(i);";
+
+const char HTTP_HEAD_LAST_SCRIPT[] PROGMEM =
+  "function id(){"                        // Add label name='' based on provided id=''
+    "var t=0,i=document.querySelectorAll('input,button,textarea,select');"
+    "while(i.length>=t){"
+      "if(i[t]){"
+        "i[t]['name']=(i[t].hasAttribute('id')&&(!i[t].hasAttribute('name')))?i[t]['id']:i[t]['name'];"
+      "}"
+      "t++;"
+    "}"
+  "}"
+  "wl(id);"                               // Add name='' to any id='' in input,button,textarea,select
+  "</script>";
 
 const char HTTP_HEAD_STYLE1[] PROGMEM =
-  "</script>"
-
   "<style>"
   "div,fieldset,input,select{padding:5px;font-size:1em;}"
   "fieldset{background:#%06x;}"  // COLOR_FORM, Also update HTTP_TIMER_STYLE
@@ -322,7 +347,7 @@ const char HTTP_FORM_TEMPLATE_FLAG[] PROGMEM =
 const char HTTP_FORM_MODULE[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_MODULE_PARAMETERS "&nbsp;</b></legend>"
   "<form method='get' action='md'>"
-  "<p></p><b>" D_MODULE_TYPE "</b> (%s)<br><select id='g99' name='g99'></select><br>"
+  "<p></p><b>" D_MODULE_TYPE "</b> (%s)<br><select id='g99'></select><br>"
   "<br><table>";
 
 const char HTTP_FORM_WIFI[] PROGMEM =
@@ -725,6 +750,8 @@ void WSContentSendStyle_P(const char* formatP, ...)
       WSContentSend_P(HTTP_SCRIPT_COUNTER);
     }
   }
+  WSContentSend_P(HTTP_HEAD_LAST_SCRIPT);
+
   WSContentSend_P(HTTP_HEAD_STYLE1, WebColor(COL_FORM), WebColor(COL_INPUT), WebColor(COL_INPUT_TEXT), WebColor(COL_INPUT), WebColor(COL_INPUT_TEXT), WebColor(COL_CONSOLE), WebColor(COL_CONSOLE_TEXT), WebColor(COL_BACKGROUND));
   WSContentSend_P(HTTP_HEAD_STYLE2, WebColor(COL_BUTTON), WebColor(COL_BUTTON_TEXT), WebColor(COL_BUTTON_HOVER), WebColor(COL_BUTTON_RESET), WebColor(COL_BUTTON_RESET_HOVER), WebColor(COL_BUTTON_SAVE), WebColor(COL_BUTTON_SAVE_HOVER));
   if (formatP != nullptr) {
@@ -761,7 +788,7 @@ void WSContentSendStyle(void)
 void WSContentButton(uint8_t title_index)
 {
   char action[4];
-  char title[32];
+  char title[64];
 
   if (title_index <= BUTTON_RESET_CONFIGURATION) {
     char confirm[64];
@@ -1126,8 +1153,8 @@ void HandleTemplateConfiguration(void)
   WSContentSend_P(HTTP_TABLE100);
   for (uint8_t i = 0; i < 17; i++) {
     if ((i < 6) || ((i > 8) && (i != 11))) {                // Ignore flash pins GPIO06, 7, 8 and 11
-      WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d' name='g%d'></select></td></tr>"),
-        ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:200px'" : "", i, i);
+      WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d'></select></td></tr>"),
+        ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:200px'" : "", i);
     }
   }
   WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_ADC "0</font></b></td><td><select id='g17'></select></td></tr>"), WebColor(COL_TEXT));
@@ -1250,8 +1277,8 @@ void HandleModuleConfiguration(void)
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       char sesp8285[40];
       snprintf_P(sesp8285, sizeof(sesp8285), PSTR("<font color='#%06x'>ESP8285</font>"), WebColor(COL_TEXT_WARNING));
-      WSContentSend_P(PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:176px'><select id='g%d' name='g%d'></select></td></tr>"),
-        (WEMOS==my_module_type)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :((9==i)||(10==i))? sesp8285 :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i, i);
+      WSContentSend_P(PSTR("<tr><td style='width:190px'>%s <b>" D_GPIO "%d</b> %s</td><td style='width:176px'><select id='g%d'></select></td></tr>"),
+        (WEMOS==my_module_type)?stemp:"", i, (0==i)? D_SENSOR_BUTTON "1":(1==i)? D_SERIAL_OUT :(3==i)? D_SERIAL_IN :((9==i)||(10==i))? sesp8285 :(12==i)? D_SENSOR_RELAY "1":(13==i)? D_SENSOR_LED "1i":(14==i)? D_SENSOR :"", i);
     }
   }
 #ifndef USE_ADC_VCC
@@ -1462,7 +1489,7 @@ void HandleLoggingConfiguration(void)
   WSContentStart_P(S_CONFIGURE_LOGGING);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_LOG1);
-  char stemp1[32];
+  char stemp1[45];
   char stemp2[32];
   uint8_t dlevel[3] = { LOG_LEVEL_INFO, LOG_LEVEL_INFO, LOG_LEVEL_NONE };
   for (uint8_t idx = 0; idx < 3; idx++) {
@@ -1470,7 +1497,7 @@ void HandleLoggingConfiguration(void)
     WSContentSend_P(PSTR("<p><b>%s</b> (%s)<br><select id='l%d'>"),
       GetTextIndexed(stemp1, sizeof(stemp1), idx, kLoggingOptions),
       GetTextIndexed(stemp2, sizeof(stemp2), dlevel[idx], kLoggingLevels),
-      idx, idx);
+      idx);
     for (uint8_t i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
       WSContentSend_P(PSTR("<option%s value='%d'>%d %s</option>"),
         (i == llevel) ? " selected" : "", i, i,
@@ -1535,10 +1562,10 @@ void HandleOtherConfiguration(void)
   if (SONOFF_IFAN02 == my_module_type) { maxfn = 1; }
   for (uint8_t i = 0; i < maxfn; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i +1);
-    WSContentSend_P(PSTR("<b>" D_FRIENDLY_NAME " %d</b> (" FRIENDLY_NAME "%s)<br><input id='a%d' name='a%d' placeholder='" FRIENDLY_NAME "%s' value='%s'><p></p>"),
+    WSContentSend_P(PSTR("<b>" D_FRIENDLY_NAME " %d</b> (" FRIENDLY_NAME "%s)<br><input id='a%d' placeholder='" FRIENDLY_NAME "%s' value='%s'><p></p>"),
       i +1,
       (i) ? stemp : "",
-      i, i,
+      i,
       (i) ? stemp : "",
       Settings.friendlyname[i]);
   }

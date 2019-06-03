@@ -344,7 +344,7 @@ void HueLightStatus2(uint8_t device, String *response)
 
 // generate a unique lightId mixing local IP address and device number
 // it is limited to 16 devices.
-// last 16 bits of Mac address + 4 bits of local light
+// last 24 bits of Mac address + 4 bits of local light
 uint32_t EncodeLightId(uint8_t idx)
 {
   uint8_t mac[6];
@@ -422,7 +422,7 @@ void HueLights(String *path)
   else if (path->endsWith("/state")) {               // Got ID/state
     path->remove(0,8);                               // Remove /lights/
     path->remove(path->indexOf("/state"));           // Remove /state
-    device = atoi(path->c_str());
+    device = DecodeLightId(atoi(path->c_str()));
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -434,7 +434,7 @@ void HueLights(String *path)
       if (hue_json.containsKey("on")) {
 
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
-        response.replace("{id", String(device));
+        response.replace("{id", String(EncodeLightId(device)));
         response.replace("{cm", "on");
 
         on = hue_json["on"];
