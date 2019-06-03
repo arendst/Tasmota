@@ -1516,13 +1516,11 @@ void LoggingSaveSettings(void)
   char tmp[sizeof(Settings.syslog_host)];  // Max length is currently 33
 
   WebGetArg("l0", tmp, sizeof(tmp));
-  Settings.seriallog_level = (!strlen(tmp)) ? SERIAL_LOG_LEVEL : atoi(tmp);
+  SetSeriallog((!strlen(tmp)) ? SERIAL_LOG_LEVEL : atoi(tmp));
   WebGetArg("l1", tmp, sizeof(tmp));
   Settings.weblog_level = (!strlen(tmp)) ? WEB_LOG_LEVEL : atoi(tmp);
   WebGetArg("l2", tmp, sizeof(tmp));
-  Settings.syslog_level = (!strlen(tmp)) ? SYS_LOG_LEVEL : atoi(tmp);
-  syslog_level = Settings.syslog_level;
-  syslog_timer = 0;
+  SetSyslog((!strlen(tmp)) ? SYS_LOG_LEVEL : atoi(tmp));
   WebGetArg("lh", tmp, sizeof(tmp));
   strlcpy(Settings.syslog_host, (!strlen(tmp)) ? SYS_LOG_HOST : tmp, sizeof(Settings.syslog_host));
   WebGetArg("lp", tmp, sizeof(tmp));

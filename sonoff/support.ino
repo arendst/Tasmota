@@ -1455,6 +1455,13 @@ void SetSeriallog(uint8_t loglevel)
   seriallog_timer = 0;
 }
 
+void SetSyslog(uint8_t loglevel)
+{
+  Settings.syslog_level = loglevel;
+  syslog_level = loglevel;
+  syslog_timer = 0;
+}
+
 #ifdef USE_WEBSERVER
 void GetLog(uint8_t idx, char** entry_pp, size_t* len_p)
 {

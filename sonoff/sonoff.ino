@@ -1193,9 +1193,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     }
     else if (CMND_SYSLOG == command_code) {
       if ((payload >= LOG_LEVEL_NONE) && (payload <= LOG_LEVEL_ALL)) {
-        Settings.syslog_level = payload;
-        syslog_level = payload;
-        syslog_timer = 0;
+        SetSyslog(payload);
       }
       Response_P(S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, command, Settings.syslog_level, syslog_level);
     }
