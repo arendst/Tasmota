@@ -657,22 +657,22 @@ const char HTTP_FORM_TIMER1[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
-  "<br/><input id='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b><br/><br/><hr/>"
+  "<br><input id='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b><br><br><hr>"
   "<input id='t0' value='";
 const char HTTP_FORM_TIMER2[] PROGMEM =
-  "' hidden><div id='bt'></div><br/><br/><br/>"
-  "<div id='oa' name='oa'></div><br/>"
+  "' hidden><div id='bt'></div><br><br><br>"
+  "<div id='oa' name='oa'></div><br>"
   "<div>"
   "<input id='a0' type='checkbox'><b>" D_TIMER_ARM "</b>&emsp;"
   "<input id='r0' type='checkbox'><b>" D_TIMER_REPEAT "</b>"
-  "</div><br/>"
+  "</div><br>"
   "<div>";
 #ifdef USE_SUNRISE
 const char HTTP_FORM_TIMER3[] PROGMEM =
   "<fieldset style='width:%dpx;margin:auto;text-align:left;border:0;'>"
-  "<input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b><br/>"
-  "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b> (%s)<br/>"
-  "<input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b> (%s)<br/>"
+  "<input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b><br>"
+  "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b> (%s)<br>"
+  "<input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b> (%s)<br>"
   "</fieldset>"
   "<p></p>"
   "<span><select style='width:46px;' id='dr'></select></span>"
@@ -687,7 +687,7 @@ const char HTTP_FORM_TIMER4[] PROGMEM =
   "<span><select style='width:60px;' id='mi'></select></span>"
   "&emsp;<b>+/-</b>&nbsp;"
   "<span><select style='width:60px;' id='mw'></select></span>"
-  "</div><br/>"
+  "</div><br>"
   "<div id='ds' name='ds'></div>";
 
 void HandleTimerConfiguration(void)
