@@ -1,5 +1,5 @@
 /*
-  xnrg_02_cse7766.ino - CSE7766 energy sensor support for Sonoff-Tasmota
+  xnrg_02_cse7766.ino - CSE7766 and HLW8032 energy sensor support for Sonoff-Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -21,6 +21,7 @@
 #ifdef USE_CSE7766
 /*********************************************************************************************\
  * CSE7766 - Energy (Sonoff S31 and Sonoff Pow R2)
+ * HLW8032 - Energy (Blitzwolf SHP5)
  *
  * Based on datasheet from http://www.chipsea.com/UploadFiles/2017/08/11144342F01B5662.pdf
 \*********************************************************************************************/
@@ -44,7 +45,7 @@ long power_cycle = 0;
 long power_cycle_first = 0;
 long cf_pulses = 0;
 long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
-uint8_t cse_power_invalid = CSE_MAX_INVALID_POWER;
+uint8_t cse_power_invalid = 0;
 
 void CseReceived(void)
 {
@@ -106,7 +107,7 @@ void CseReceived(void)
         }
       }
     } else {
-      if (cse_power_invalid < CSE_MAX_INVALID_POWER) {  // Allow measurements down to about 1W
+      if (cse_power_invalid < Settings.param[P_CSE7766_INVALID_POWER]) {  // Allow measurements down to about 1W
         cse_power_invalid++;
       } else {
         power_cycle_first = 0;
@@ -209,6 +210,10 @@ void CseDrvInit(void)
     if ((3 == pin[GPIO_CSE7766_RX]) && (1 == pin[GPIO_CSE7766_TX])) {  // As it uses 8E1 currently only hardware serial is supported
       baudrate = 4800;
       serial_config = SERIAL_8E1;
+      if (0 == Settings.param[P_CSE7766_INVALID_POWER]) {
+        Settings.param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
+      }
+      cse_power_invalid = Settings.param[P_CSE7766_INVALID_POWER];
       energy_flg = XNRG_02;
     }
   }
