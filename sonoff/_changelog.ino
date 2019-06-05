@@ -5,6 +5,7 @@
  * Fix PZem startup issue (#5875)
  * Add command SetOption39 1..255 to control CSE7766 (Pow R2) or HLW8032 (Blitzwolf SHP5) handling of power loads below 6W. Default setting is 128 (#5756)
  * Add Toggle functionality to button double press when more devices are detected
+ * Add support for AWS IoT with TLS 1.2. Full doc here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
  *
  * 6.5.0.13 20190527
  * Add command SetOption38 6..255 to set IRReceive protocol detection sensitivity mimizing UNKNOWN protocols (#5853)
