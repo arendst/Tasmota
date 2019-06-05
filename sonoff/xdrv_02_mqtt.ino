@@ -237,7 +237,7 @@ void MqttPublish(const char* topic, bool retained)
 {
   char *me;
 #ifdef USE_MQTT_AWS_IOT
-  AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained is not supported by AWS IoT, using retained = false."));
+  AddLog_P(LOG_LEVEL_DEBUG, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
   retained = false;   // AWS IoT does not support retained, it will disconnect if received
 #endif
 

@@ -435,8 +435,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define MQTT_MAX_PACKET_SIZE   1000           // Bytes
 #endif
 #ifndef MQTT_KEEPALIVE
-//#define MQTT_KEEPALIVE         15             // Seconds
-#define MQTT_KEEPALIVE         30             // Changed to 30s which is min for AWS IoT, hoping it does not break anthing
+#define MQTT_KEEPALIVE         15             // Seconds
 #endif
 #ifndef MQTT_TIMEOUT
 #define MQTT_TIMEOUT           10000          // milli seconds
