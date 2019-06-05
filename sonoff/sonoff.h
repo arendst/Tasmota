@@ -120,11 +120,7 @@ const uint16_t MIN_MESSZ = 893;             // Min number of characters in MQTT 
 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
 
-#ifdef USE_MQTT_TLS
-  const uint16_t WEB_LOG_SIZE = 2000;       // Max number of characters in weblog
-#else
-  const uint16_t WEB_LOG_SIZE = 4000;       // Max number of characters in weblog
-#endif
+#define WEB_LOG_SIZE (4000)                 // Max number of characters in weblog
 
 const uint8_t MAX_BACKLOG = 30;             // Max number of commands in backlog
 const uint32_t MIN_BACKLOG_DELAY = 2;       // Minimal backlog delay in 0.1 seconds

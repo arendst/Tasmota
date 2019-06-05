@@ -419,7 +419,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 
 #ifndef MQTT_FINGERPRINT1
-#define MQTT_FINGERPRINT1      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
+// Set an all-zeros default fingerprint to activate auto-learning on first connection (AWS IoT)
+#define MQTT_FINGERPRINT1      "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
 #endif
 
 #ifndef MQTT_FINGERPRINT2
@@ -434,7 +435,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define MQTT_MAX_PACKET_SIZE   1000           // Bytes
 #endif
 #ifndef MQTT_KEEPALIVE
-#define MQTT_KEEPALIVE         15             // Seconds
+//#define MQTT_KEEPALIVE         15             // Seconds
+#define MQTT_KEEPALIVE         30             // Changed to 30s which is min for AWS IoT, hoping it does not break anthing
 #endif
 #ifndef MQTT_TIMEOUT
 #define MQTT_TIMEOUT           10000          // milli seconds
