@@ -24,6 +24,9 @@
   #include "sonoff_letsencrypt.h"           // LetsEncrypt certificate
 #endif
   WiFiClientSecure EspClient;               // Wifi Secure Client
+#elif defined(USE_MQTT_AWS_IOT)
+  #include "WiFiClientSecureLightBearSSL.h"
+  BearSSL::WiFiClientSecure_light *awsClient;
 #else
   WiFiClient EspClient;                     // Wifi Client
 #endif
@@ -46,6 +49,32 @@ uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
 bool mqtt_connected = false;                // MQTT virtual connection status
 bool mqtt_allowed = false;                  // MQTT enabled and parameters valid
 
+#ifdef USE_MQTT_AWS_IOT
+
+namespace aws_iot_privkey {
+  // this is where the Private Key and Certificate are stored
+  extern const br_ec_private_key *AWS_IoT_Private_Key;
+  extern const br_x509_certificate *AWS_IoT_Client_Certificate;
+}
+
+// A typical AWS IoT endpoint is 50 characters long, it does not fit
+// in MqttHost field (32 chars). We need to concatenate both MqttUser and MqttHost
+char AWS_endpoint[65];    // aWS IOT endpoint, concatenation of user and host
+
+// check whether the fingerprint is filled with a single value
+// Filled with 0x00 = accept any fingerprint and learn it for next time
+// Filled with 0xFF = accept any fingerpring forever
+bool is_fingerprint_mono_value(uint8_t finger[20], uint8_t value) {
+	for (uint32_t i = 0; i<20; i++) {
+		if (finger[i] != value) {
+			return false;
+		}
+	}
+	return true;
+}
+
+#endif  // USE_MQTT_AWS_IOT
+
 /*********************************************************************************************\
  * MQTT driver specific code need to provide the following functions:
  *
@@ -62,7 +91,35 @@ bool mqtt_allowed = false;                  // MQTT enabled and parameters valid
   #error "MQTT_MAX_PACKET_SIZE is too small in libraries/PubSubClient/src/PubSubClient.h, increase it to at least 1000"
 #endif
 
+#ifdef USE_MQTT_AWS_IOT
+PubSubClient MqttClient;
+#else
 PubSubClient MqttClient(EspClient);
+#endif
+
+
+void MqttInit(void) {
+#ifdef USE_MQTT_AWS_IOT
+  AWS_endpoint[0] = 0;
+  uint8_t len_user = strlen(Settings.mqtt_user);
+  uint8_t len_host = strlen(Settings.mqtt_host);
+  if (len_user > 0) {
+    strcpy(AWS_endpoint, Settings.mqtt_user);
+    if (('.' != AWS_endpoint[len_user-1]) && ('.' != Settings.mqtt_host[0])) {
+      AWS_endpoint[len_user++] = '.';
+    }
+    strcpy(&AWS_endpoint[len_user], Settings.mqtt_host);
+  }
+
+  awsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
+  awsClient->setClientECCert(aws_iot_privkey::AWS_IoT_Client_Certificate,
+                             aws_iot_privkey::AWS_IoT_Private_Key,
+                             0xFFFF /* all usages, don't care */, 0);
+
+  MqttClient.setClient(*awsClient);
+#endif
+}
+
 
 bool MqttIsConnected(void)
 {
@@ -179,6 +236,12 @@ void MqttPublishDirect(const char* topic, bool retained)
 void MqttPublish(const char* topic, bool retained)
 {
   char *me;
+#ifdef USE_MQTT_AWS_IOT
+  if (retained) {
+    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
+  }
+  retained = false;   // AWS IoT does not support retained, it will disconnect if received
+#endif
 
   if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1])) {
     me = strstr(topic,Settings.mqtt_prefix[0]);
@@ -282,7 +345,11 @@ void MqttDisconnected(int state)
   mqtt_connected = false;
   mqtt_retry_counter = Settings.mqtt_retry;
 
+#ifdef USE_MQTT_AWS_IOT
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), AWS_endpoint, Settings.mqtt_port, state, mqtt_retry_counter);
+#else
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), Settings.mqtt_host, Settings.mqtt_port, state, mqtt_retry_counter);
+#endif
   rules_flag.mqtt_disconnected = 1;
 }
 
@@ -443,6 +510,8 @@ void MqttReconnect(void)
 
 #ifdef USE_MQTT_TLS
   EspClient = WiFiClientSecure();         // Wifi Secure Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+#elif defined(USE_MQTT_AWS_IOT)
+  awsClient->stop();
 #else
   EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
 #endif
@@ -456,7 +525,11 @@ void MqttReconnect(void)
   }
 
   MqttClient.setCallback(MqttDataHandler);
+#ifdef USE_MQTT_AWS_IOT
+  MqttClient.setServer(AWS_endpoint, Settings.mqtt_port);
+#else
   MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
+#endif
 /*
   // Skip MQTT host DNS lookup if not needed
   uint32_t current_hash = GetHash(Settings.mqtt_host, strlen(Settings.mqtt_host));
@@ -466,9 +539,50 @@ void MqttReconnect(void)
   }
   MqttClient.setServer(mqtt_host_addr, Settings.mqtt_port);
 */
+  uint32_t time = millis();
+#ifdef USE_MQTT_AWS_IOT
+  bool allow_all_fingerprints = false;
+  bool learn_fingerprint1 = is_fingerprint_mono_value(Settings.mqtt_fingerprint[0], 0x00);
+  bool learn_fingerprint2 = is_fingerprint_mono_value(Settings.mqtt_fingerprint[1], 0x00);
+  allow_all_fingerprints |= is_fingerprint_mono_value(Settings.mqtt_fingerprint[0], 0xff);
+  allow_all_fingerprints |= is_fingerprint_mono_value(Settings.mqtt_fingerprint[1], 0xff);
+  allow_all_fingerprints |= learn_fingerprint1;
+  allow_all_fingerprints |= learn_fingerprint2;
+  awsClient->setPubKeyFingerprint(Settings.mqtt_fingerprint[0], Settings.mqtt_fingerprint[1], allow_all_fingerprints);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "AWS IoT endpoint: %s"), AWS_endpoint);
+  if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, nullptr, 0, false, nullptr)) {
+#else
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data)) {
+#endif
+#ifdef USE_MQTT_AWS_IOT
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "AWS IoT connected in %d ms"), millis() - time);
+    if (learn_fingerprint1 || learn_fingerprint2) {
+      // we potentially need to learn the fingerprint just seen
+      bool fingerprint_matched = false;
+      const uint8_t *recv_fingerprint = awsClient->getRecvPubKeyFingerprint();
+      if (0 == memcmp(recv_fingerprint, Settings.mqtt_fingerprint[0], 20)) {
+        fingerprint_matched = true;
+      }
+      if (0 == memcmp(recv_fingerprint, Settings.mqtt_fingerprint[1], 20)) {
+        fingerprint_matched = true;
+      }
+      if (!fingerprint_matched) {
+        // we had no match, so we need to change all fingerprints ready to learn
+        if (learn_fingerprint1) {
+          memcpy(Settings.mqtt_fingerprint[0], recv_fingerprint, 20);
+        }
+        if (learn_fingerprint2) {
+          memcpy(Settings.mqtt_fingerprint[1], recv_fingerprint, 20);
+        }
+        restart_flag = 2;  // save and restart
+      }
+    }
+#endif
     MqttConnected();
   } else {
+#ifdef USE_MQTT_AWS_IOT
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "AWS IoT connection error: %d"), awsClient->getLastError());
+#endif
     MqttDisconnected(MqttClient.state());  // status codes are documented here http://pubsubclient.knolleary.net/api.html#state
   }
 }
@@ -549,7 +663,7 @@ bool MqttCommand(void)
     }
     Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, GetStateText(index -1));
   }
-#ifdef USE_MQTT_TLS
+#if defined(USE_MQTT_TLS) || defined(USE_MQTT_AWS_IOT)
   else if ((CMND_MQTTFINGERPRINT == command_code) && (index > 0) && (index <= 2)) {
     char fingerprint[60];
     if ((data_len > 0) && (data_len < sizeof(fingerprint))) {
@@ -827,6 +941,11 @@ bool Xdrv02(uint8_t function)
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
+#ifdef USE_MQTT_AWS_IOT
+      case FUNC_PRE_INIT:
+        MqttInit();
+        break;
+#endif
       case FUNC_EVERY_50_MSECOND:  // https://github.com/knolleary/pubsubclient/issues/556
         MqttClient.loop();
         break;

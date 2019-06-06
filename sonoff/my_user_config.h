@@ -88,7 +88,7 @@
 #define MQTT_USE               1                 // [SetOption3] Select default MQTT use (0 = Off, 1 = On)
 
 #define MQTT_HOST              ""                // [MqttHost]
-#define MQTT_FINGERPRINT1      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint1]
+#define MQTT_FINGERPRINT1      "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"  // [MqttFingerprint1]
 #define MQTT_FINGERPRINT2      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint2]
 #define MQTT_PORT              1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
 #define MQTT_USER              "DVES_USER"       // [MqttUser] MQTT user
@@ -266,6 +266,12 @@
   // !!! TLS uses a LOT OF MEMORY so be careful to enable other options at the same time !!!
 //#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+53k code, +15k mem)
 //  #define USE_MQTT_TLS_CA_CERT                   // Use LetsEncrypt Certificate from sonoff_letsencrypt.h - Not supported with core 2.3.0
+
+// -- MQTT - Special version for AWS IoT
+//#define USE_MQTT_AWS_IOT                         // Enable MQTT for AWS IoT - requires a private key (+56.7k code, +6.0k mem and +6.6k additional during connection handshake)
+  // you need to generate a private key + certificate per device
+  // and update 'sonoff/sonoff_aws_iot.cpp'
+  // Full documentation here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
 
 // -- KNX IP Protocol -----------------------------
 //#define USE_KNX                                  // Enable KNX IP Protocol Support (+9.4k code, +3k7 mem)
@@ -471,6 +477,20 @@
 
 #if defined(USE_MQTT_TLS) && defined(USE_WEBSERVER)
   #error "Select either USE_MQTT_TLS or USE_WEBSERVER as there is just not enough memory to play with"
+#endif
+
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+  #error "Select either USE_MQTT_TLS or USE_MQTT_AWS_IOT, they are not compatible"
+#endif
+
+#if defined(USE_DISCOVERY) && defined(USE_MQTT_AWS_IOT)
+  #error "Select either USE_DISCOVERY or USE_MQTT_AWS_IOT, mDNS takes too much code space and is not needed for AWS IoT"
+#endif
+
+
+#if defined(USE_MQTT_TLS) || defined(USE_MQTT_AWS_IOT)
+  #undef WEB_LOG_SIZE
+  #define WEB_LOG_SIZE (2000)   // reduce log buffer size when using TLS
 #endif
 
 #endif  // _MY_USER_CONFIG_H_
