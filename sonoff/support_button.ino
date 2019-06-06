@@ -34,7 +34,7 @@ uint8_t multipress[MAX_KEYS] = { 0 };       // Number of button presses within m
 uint8_t dual_hex_code = 0;                  // Sonoff dual input flag
 uint8_t key_no_pullup = 0;                  // key no pullup flag (1 = no pullup)
 uint8_t key_inverted = 0;                   // Key inverted flag (1 = inverted)
-uint8_t buttons_found = 0;                  // Number of buttons found flag
+uint8_t buttons_present = 0;                // Number of buttons found flag
 uint8_t button_adc = 99;                    // ADC0 button number
 
 /********************************************************************************************/
@@ -51,15 +51,15 @@ void ButtonInvertFlag(uint8 button_bit)
 
 void ButtonInit(void)
 {
-  buttons_found = 0;
+  buttons_present = 0;
   for (uint8_t i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
-      buttons_found++;
+      buttons_present++;
       pinMode(pin[GPIO_KEY1 +i], bitRead(key_no_pullup, i) ? INPUT : ((16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
     }
 #ifndef USE_ADC_VCC
     else if ((99 == button_adc) && ((ADC0_BUTTON == my_adc0) || (ADC0_BUTTON_INV == my_adc0))) {
-      buttons_found++;
+      buttons_present++;
       button_adc = i;
     }
 #endif  // USE_ADC_VCC
@@ -217,10 +217,12 @@ void ButtonHandler(void)
               if (multipress[button_index] < 3) {              // Single or Double press
                 if ((SONOFF_DUAL_R2 == my_module_type) || (SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)) {
                   single_press = true;
-                } else  {
-                  single_press = (Settings.flag.button_swap +1 == multipress[button_index]);  // SetOption11 (0)
-                  if (Settings.flag.button_swap) {             // SetOption11 (0)
-                    multipress[button_index] = (single_press) ? 1 : 2;
+                } else {
+                  if ((0 == button_index) && (1 == buttons_present)) {  // Single Button1 only
+                    single_press = (Settings.flag.button_swap +1 == multipress[button_index]);  // SetOption11 (0)
+                    if (Settings.flag.button_swap) {             // SetOption11 (0)
+                      multipress[button_index] = (single_press) ? 1 : 2;
+                    }
                   }
                 }
               }
@@ -256,7 +258,7 @@ void ButtonHandler(void)
 
 void ButtonLoop(void)
 {
-  if (buttons_found) {
+  if (buttons_present) {
     if (TimeReached(button_debounce)) {
       SetNextTimeInterval(button_debounce, Settings.button_debounce);  // ButtonDebounce (50)
       ButtonHandler();
