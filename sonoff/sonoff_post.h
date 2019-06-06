@@ -46,7 +46,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
  * Default global defines
 \*********************************************************************************************/
 
-#ifdef USE_MQTT_TLS
+#if defined(USE_MQTT_TLS) || defined(USE_MQTT_AWS_IOT)
   const uint16_t WEB_LOG_SIZE = 2000;       // Max number of characters in weblog
 #else
   const uint16_t WEB_LOG_SIZE = 4000;       // Max number of characters in weblog

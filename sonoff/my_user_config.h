@@ -267,7 +267,7 @@
 //#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+53k code, +15k mem)
 //  #define USE_MQTT_TLS_CA_CERT                   // Use LetsEncrypt Certificate from sonoff_letsencrypt.h - Not supported with core 2.3.0
 
-// -- MQTT - Special version for AWS IoT
+// -- MQTT - Special version for AWS IoT on core 2.5.2 only
 //#define USE_MQTT_AWS_IOT                         // Enable MQTT for AWS IoT - requires a private key (+56.7k code, +6.0k mem and +6.6k additional during connection handshake)
   // you need to generate a private key + certificate per device
   // and update 'sonoff/sonoff_aws_iot.cpp'
@@ -485,12 +485,6 @@
 
 #if defined(USE_DISCOVERY) && defined(USE_MQTT_AWS_IOT)
   #error "Select either USE_DISCOVERY or USE_MQTT_AWS_IOT, mDNS takes too much code space and is not needed for AWS IoT"
-#endif
-
-
-#if defined(USE_MQTT_TLS) || defined(USE_MQTT_AWS_IOT)
-  #undef WEB_LOG_SIZE
-  #define WEB_LOG_SIZE (2000)   // reduce log buffer size when using TLS
 #endif
 
 #endif  // _MY_USER_CONFIG_H_

@@ -20,6 +20,9 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <core_version.h>
+#ifdef ARDUINO_ESP8266_RELEASE_2_5_2
+
 #define LWIP_INTERNAL
 
 #include <list>
@@ -880,3 +883,5 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 }
 
 };
+
+#endif  // ARDUINO_ESP8266_RELEASE_2_5_2

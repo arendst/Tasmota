@@ -20,6 +20,8 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+#include <core_version.h>
+#ifdef ARDUINO_ESP8266_RELEASE_2_5_2
 
 #ifndef wificlientlightbearssl_h
 #define wificlientlightbearssl_h
@@ -146,3 +148,5 @@ class WiFiClientSecure_light : public WiFiClient {
 };
 
 #endif
+
+#endif  // ARDUINO_ESP8266_RELEASE_2_5_2
