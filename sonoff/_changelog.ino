@@ -1,4 +1,7 @@
 /*
+ * 6.5.0.15 20190606
+ * Change pubsubclient MQTT_KEEPALIVE from 10 to 30 seconds in preparation of AWS IoT support
+ *
  * 6.5.0.14 20190602
  * Change webserver HTML input, button, textarea, and select name based on id
  * Fix webserver multiple Javascript window.onload functionality
