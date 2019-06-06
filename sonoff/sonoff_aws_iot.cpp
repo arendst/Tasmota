@@ -17,6 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <my_user_config.h>
+#ifdef USE_MQTT_AWS_IOT
+
 #include <bearssl/bearssl.h>
 #include <pgmspace.h>
 
@@ -145,3 +148,5 @@ const br_ec_private_key *AWS_IoT_Private_Key = &EC;
 const br_x509_certificate *AWS_IoT_Client_Certificate = &CHAIN[0];
 
 }
+
+#endif  // USE_MQTT_AWS_IOT

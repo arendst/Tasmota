@@ -46,6 +46,13 @@ void KNX_CB_Action(message_t const &msg, void *arg);
  * Default global defines
 \*********************************************************************************************/
 
+#ifdef USE_MQTT_AWS_IOT
+#include <core_version.h>
+#ifndef ARDUINO_ESP8266_RELEASE_2_5_2
+  #error "USE_MQTT_AWS_IOT is only supported on core version 2.5.2"
+#endif
+#endif
+
 #if defined(USE_MQTT_TLS) || defined(USE_MQTT_AWS_IOT)
   const uint16_t WEB_LOG_SIZE = 2000;       // Max number of characters in weblog
 #else
