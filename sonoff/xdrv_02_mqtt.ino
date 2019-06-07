@@ -345,6 +345,8 @@ void MqttDisconnected(int state)
   mqtt_connected = false;
   mqtt_retry_counter = Settings.mqtt_retry;
 
+  MqttClient.disconnect();
+
 #ifdef USE_MQTT_AWS_IOT
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), AWS_endpoint, Settings.mqtt_port, state, mqtt_retry_counter);
 #else
@@ -508,12 +510,15 @@ void MqttReconnect(void)
   GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
   Response_P(S_OFFLINE);
 
+  if (MqttClient.connected()) { MqttClient.disconnect(); }
 #ifdef USE_MQTT_TLS
   EspClient = WiFiClientSecure();         // Wifi Secure Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+  MqttClient.setClient(EspClient);
 #elif defined(USE_MQTT_AWS_IOT)
   awsClient->stop();
 #else
   EspClient = WiFiClient();               // Wifi Client reconnect issue 4497 (https://github.com/esp8266/Arduino/issues/4497)
+  MqttClient.setClient(EspClient);
 #endif
 
   if (2 == mqtt_initial_connection_state) {  // Executed once just after power on and wifi is connected
@@ -552,7 +557,7 @@ void MqttReconnect(void)
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "AWS IoT endpoint: %s"), AWS_endpoint);
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, nullptr, 0, false, nullptr)) {
 #else
-  if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data)) {
+  if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data, MQTT_CLEAN_SESSION)) {
 #endif
 #ifdef USE_MQTT_AWS_IOT
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "AWS IoT connected in %d ms"), millis() - time);

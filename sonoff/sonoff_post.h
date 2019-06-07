@@ -453,6 +453,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #ifndef MQTT_TIMEOUT
 #define MQTT_TIMEOUT           10000          // milli seconds
 #endif
+#ifndef MQTT_CLEAN_SESSION
+#define MQTT_CLEAN_SESSION     1              // 0 = No clean session, 1 = Clean session (default)
+#endif
 
 #ifndef MESSZ
 //#define MESSZ                  405          // Max number of characters in JSON message string (6 x DS18x20 sensors)

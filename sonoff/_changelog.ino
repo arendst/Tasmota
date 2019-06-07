@@ -2,6 +2,7 @@
  * 6.5.0.15 20190606
  * Change pubsubclient MQTT_KEEPALIVE from 10 to 30 seconds in preparation of AWS IoT support
  * Add support for AWS IoT with TLS 1.2 on core 2.5.2. Full doc here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
+ * Add some MQTT housekeeping which might solve issue (#5755)
  *
  * 6.5.0.14 20190602
  * Change webserver HTML input, button, textarea, and select name based on id
