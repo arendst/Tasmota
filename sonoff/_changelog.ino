@@ -1,12 +1,4 @@
-/*
- * 6.5.0.13 20190517
- * Add command SetOption65 (tuya_show_dimmer) to enable or disable dimmer Slider ( for 4 Gang Tuya switch)
- * Added Seeting.pram9 to define no of Tuya MCU devices
- * Updated xdrv_01_webserver.ino to check for the tuya_show_dimmer option to display slider2
- * Updated xdrv_16_tuyadimmer.ino create bool serial packet based on the Device Id and set the power status based on the Device id from MCU packet
- * Updated xdrv_16_tuyadimmer.ino skip dimmer packets for device configured as non - dimmer
- *
- * 6.5.0.12 20190521
+/* 6.5.0.12 20190521
  * Add AriLux RF control GPIO option "ALux IrSel" (159) replacing "Led4i" (59) for full LED control (#5709)
  * Add LED GPIO option "LedLink" (157) and "LedLinki" (158) to select dedicated link status LED (#5709)
  * Add support for up to four LEDs related to four power outputs. Enabled when "LedLink(i)" is configured too (#5709)
