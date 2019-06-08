@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <my_user_config.h>
+#include "my_user_config.h"
 #ifdef USE_MQTT_AWS_IOT
 
 #include <bearssl/bearssl.h>
