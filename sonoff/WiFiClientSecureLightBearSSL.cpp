@@ -20,9 +20,6 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <core_version.h>
-#ifdef ARDUINO_ESP8266_RELEASE_2_5_2
-
 #define LWIP_INTERNAL
 
 #include <list>
@@ -45,9 +42,9 @@ extern "C" {
 #include "lwip/netif.h"
 #include <include/ClientContext.h>
 #include "c_types.h"
-#include "coredecls.h"
 
-#define SKEY_ON_STACK			// copy private key+cert on stack rather than on heap, this works for now because it takes ~800 bytes
+#include "my_user_config.h"
+
 //#define DEBUG_TLS
 
 #ifdef DEBUG_TLS
@@ -247,14 +244,24 @@ void WiFiClientSecure_light::setBufferSizes(int recv, int xmit) {
 }
 
 bool WiFiClientSecure_light::stop(unsigned int maxWaitMs) {
+#ifdef ARDUINO_ESP8266_RELEASE_2_4_2
+  WiFiClient::stop(); // calls our virtual flush()
+  _freeSSL();
+	return true;
+#else
   bool ret = WiFiClient::stop(maxWaitMs); // calls our virtual flush()
   _freeSSL();
   return ret;
+#endif
 }
 
 bool WiFiClientSecure_light::flush(unsigned int maxWaitMs) {
   (void) _run_until(BR_SSL_SENDAPP);
+#ifdef ARDUINO_ESP8266_RELEASE_2_4_2
+  WiFiClient::flush();
+#else
   return WiFiClient::flush(maxWaitMs);
+#endif
 }
 
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
@@ -281,10 +288,6 @@ int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
   }
 	LOG_HEAP_SIZE("Before calling _connectSSL");
   return _connectSSL(name);
-}
-
-int WiFiClientSecure_light::connect(const String& host, uint16_t port) {
-  return connect(host.c_str(), port);
 }
 
 void WiFiClientSecure_light::_freeSSL() {
@@ -776,11 +779,13 @@ extern "C" {
 // Called by connect() to do the actual SSL setup and handshake.
 // Returns if the SSL handshake succeeded.
 bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
+#ifdef USE_MQTT_AWS_IOT
 	br_ec_private_key sk_ec;
 	br_x509_certificate chain;
-#ifdef SKEY_ON_STACK
+#ifdef USE_MQTT_AWS_IOT_SKEY_ON_STACK
 	unsigned char chain_data[_chain_P->data_len];
 	unsigned char sk_data[_sk_ec_P->xlen];
+#endif
 #endif
   br_x509_pubkeyfingerprint_context *x509_insecure;
 
@@ -808,11 +813,10 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
   br_ssl_engine_set_buffers_bidi(_eng, _iobuf_in.get(), _iobuf_in_size, _iobuf_out.get(), _iobuf_out_size);
 
 	LOG_HEAP_SIZE("_connectSSL after PrivKey allocation");
+#ifdef USE_MQTT_AWS_IOT
   // allocate Private key and client certificate
-  //chain = new X509List(_chain_PEM);
-  //sk = new PrivateKey(_sk_PEM);
 	chain.data_len = _chain_P->data_len;
-#ifdef SKEY_ON_STACK		// allocate on stack
+#ifdef USE_MQTT_AWS_IOT_SKEY_ON_STACK		// allocate on stack
 	chain.data = &chain_data[0];
 #else										// allocate with malloc
 	chain.data = (unsigned char *) malloc(chain.data_len);
@@ -821,38 +825,47 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 
 	sk_ec.curve = _sk_ec_P->curve;
 	sk_ec.xlen = _sk_ec_P->xlen;
-#ifdef SKEY_ON_STACK
+#ifdef USE_MQTT_AWS_IOT_SKEY_ON_STACK
 	sk_ec.x = &sk_data[0];
-#else
+#else // USE_MQTT_AWS_IOT_SKEY_ON_STACK
 	sk_ec.x = (unsigned char *) malloc(sk_ec.xlen);
-#endif
+#endif // USE_MQTT_AWS_IOT_SKEY_ON_STACK
 	if (sk_ec.x) memcpy_P(sk_ec.x, _sk_ec_P->x, sk_ec.xlen);
 	LOG_HEAP_SIZE("_connectSSL after PrivKey allocation");
+#endif // USE_MQTT_AWS_IOT
 
 	// check if memory was correctly allocated
+#ifdef USE_MQTT_AWS_IOT
 	if ((!stack_thunk_light_get_stack_bot()) || (!x509_insecure) ||
       (!chain.data) || (!sk_ec.x)) {
-		// memory allocation problem
-		setLastError(ERR_OOM);
-#ifndef SKEY_ON_STACK
+#ifndef USE_MQTT_AWS_IOT_SKEY_ON_STACK
     free(chain.data);
     free(sk_ec.x);
-#endif
+#endif // USE_MQTT_AWS_IOT_SKEY_ON_STACK
+#else
+	if ((!stack_thunk_light_get_stack_bot()) || (!x509_insecure)) {
+#endif // USE_MQTT_AWS_IOT
+		// memory allocation problem
+		setLastError(ERR_OOM);
     free(x509_insecure);
 		stack_thunk_light_del_ref();
     DEBUG_BSSL("_connectSSL: Out of memory\n");
     return false;
 	}
 
+#ifdef USE_MQTT_AWS_IOT
 	// limited to P256 curve
 	br_ssl_client_set_single_ec(_sc.get(), &chain, 1,
                               &sk_ec, _allowed_usages,
                               _cert_issuer_key_type, &br_ec_p256_m15, br_ecdsa_sign_asn1_get_default());
+#endif
 
   if (!br_ssl_client_reset(_sc.get(), hostName, 0)) {
-#ifndef SKEY_ON_STACK
+#ifdef USE_MQTT_AWS_IOT
+#ifndef USE_MQTT_AWS_IOT_SKEY_ON_STACK
     free(chain.data);
     free(sk_ec.x);
+#endif
 #endif
     free(x509_insecure);
 		stack_thunk_light_del_ref();
@@ -873,9 +886,11 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 	stack_thunk_light_del_ref();
   //stack_thunk_light_repaint();
 	LOG_HEAP_SIZE("_connectSSL.end, freeing StackThunk");
-#ifndef SKEY_ON_STACK
+#ifdef USE_MQTT_AWS_IOT
+#ifndef USE_MQTT_AWS_IOT_SKEY_ON_STACK
 	free(chain.data);
 	free(sk_ec.x);
+#endif
 #endif
   free(x509_insecure);
 	LOG_HEAP_SIZE("_connectSSL after release of Priv Key");
@@ -883,5 +898,3 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 }
 
 };
-
-#endif  // ARDUINO_ESP8266_RELEASE_2_5_2

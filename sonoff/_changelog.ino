@@ -4,7 +4,8 @@
  * Add support for AWS IoT with TLS 1.2 on core 2.5.2. Full doc here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
  * Add some MQTT housekeeping which might solve issue (#5755)
  * Add command SetOption65 0/1 and more Tuya Serial based device support (#5815)
- * Fix include of my_user_config.h in sonoff_aws_iot.cpp (#5930)
+  * Fix include of my_user_config.h in sonoff_aws_iot.cpp (#5930)
+ * Refactored TLS based on BearSSL, warning breakint change for fongerprints validation (see doc)
  *
  * 6.5.0.14 20190602
  * Change webserver HTML input, button, textarea, and select name based on id
