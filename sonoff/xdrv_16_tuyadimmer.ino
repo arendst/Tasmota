@@ -123,11 +123,7 @@ bool TuyaSetPower(void)
   int16_t source = XdrvMailbox.payload;
 
   if (source != SRC_SWITCH && TuyaSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
-
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: SetDevicePower.rpower=%d"), rpower);
-
-    TuyaSendBool(TUYA_POWER_ID, rpower);
-
+    TuyaSendBool(deviceid, bitRead(rpower, deviceid-1));
     status = true;
   }
   return status;
@@ -146,14 +142,19 @@ void LightSerialDuty(uint8_t duty)
       duty = 25;  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     }
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR( "TYA: Send Serial Packet Dim Value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
 
-    TuyaSendValue(Settings.param[P_TUYA_DIMMER_ID], duty);
+   if(Settings.flag3.tuya_show_dimmer == 0)
+    {
+    	AddLog_P2(LOG_LEVEL_DEBUG, PSTR( "TYA: Send Serial Packet Dim Value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
+        TuyaSendValue(Settings.param[P_TUYA_DIMMER_ID], duty);
+    }
 
   } else {
     tuya_ignore_dim = false;  // reset flag
-
+    if(Settings.flag3.tuya_show_dimmer == 0)
+    {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR( "TYA: Send Dim Level skipped due to 0 or already set. Value=%d"), duty);
+    }
 
   }
 }
@@ -194,30 +195,35 @@ void TuyaPacketProcess(void)
     case TUYA_CMD_STATE:
       if (tuya_buffer[5] == 5) {  // on/off packet
 
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX - %s State"),tuya_buffer[10]?"On":"Off");
-
-        if((power || Settings.light_dimmer > 0) && (power != tuya_buffer[10])) {
+        /*if((power || Settings.light_dimmer > 0) && (power != tuya_buffer[10])) {
           ExecuteCommandPower(1, tuya_buffer[10], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
-        }
+        }*/
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Device-%d --> MCU State: %s Current State:%s"),tuya_buffer[6],tuya_buffer[10]?"On":"Off",bitRead(power, tuya_buffer[6]-1)?"On":"Off");
+          if((power || Settings.light_dimmer > 0) && (tuya_buffer[10] != bitRead(power, tuya_buffer[6]-1)))
+          {
+            ExecuteCommandPower(tuya_buffer[6], tuya_buffer[10], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+          }
       }
       else if (tuya_buffer[5] == 8) {  // dim packet
 
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Dim State=%d"), tuya_buffer[13]);
+        if(Settings.flag3.tuya_show_dimmer == 0) // 
+        {
+          if (!Settings.param[P_TUYA_DIMMER_ID]) {
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Autoconfiguring Dimmer ID %d"), tuya_buffer[6]);
+            Settings.param[P_TUYA_DIMMER_ID] = tuya_buffer[6];
+          }
 
-        if (!Settings.param[P_TUYA_DIMMER_ID]) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Autoconfiguring Dimmer ID %d"), tuya_buffer[6]);
-          Settings.param[P_TUYA_DIMMER_ID] = tuya_buffer[6];
-        }
+          tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
+          if((power || Settings.flag3.tuya_apply_o20)  && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 1)) {
 
-        tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
-        if((power || Settings.flag3.tuya_apply_o20)  && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 1)) {
+            snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), tuya_new_dim );
 
-          snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), tuya_new_dim );
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Send CMND_DIMMER_STR=%s"), scmnd );
 
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Send CMND_DIMMER_STR=%s"), scmnd );
-
-          tuya_ignore_dim = true;
-          ExecuteCommand(scmnd, SRC_SWITCH);
+            tuya_ignore_dim = true;
+            ExecuteCommand(scmnd, SRC_SWITCH);
+          }
         }
       }
       break;
@@ -281,6 +287,7 @@ bool TuyaModuleSelected(void)
 
 void TuyaInit(void)
 {
+  devices_present = Settings.param[6] == 0 ? 1 : Settings.param[6];
   if (!Settings.param[P_TUYA_DIMMER_ID]) {
     Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
   }
@@ -416,7 +423,7 @@ bool Xdrv16(uint8_t function)
         if (tuya_heartbeat_timer > 10) {
            tuya_heartbeat_timer = 0;
            TuyaSendCmd(TUYA_CMD_HEARTBEAT);
-        } 
+        }
         break;
       case FUNC_SET_CHANNELS:
         result = TuyaSetChannels();
