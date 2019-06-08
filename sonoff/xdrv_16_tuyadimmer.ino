@@ -123,7 +123,7 @@ bool TuyaSetPower(void)
   int16_t source = XdrvMailbox.payload;
 
   if (source != SRC_SWITCH && TuyaSerial) {  // ignore to prevent loop from pushing state from faceplate interaction
-    TuyaSendBool(deviceid, bitRead(rpower, deviceid-1));
+    TuyaSendBool(active_device, bitRead(rpower, active_device-1));
     status = true;
   }
   return status;
@@ -207,7 +207,7 @@ void TuyaPacketProcess(void)
       else if (tuya_buffer[5] == 8) {  // dim packet
 
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Dim State=%d"), tuya_buffer[13]);
-        if(Settings.flag3.tuya_show_dimmer == 0) // 
+        if(Settings.flag3.tuya_show_dimmer == 0) //
         {
           if (!Settings.param[P_TUYA_DIMMER_ID]) {
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Autoconfiguring Dimmer ID %d"), tuya_buffer[6]);

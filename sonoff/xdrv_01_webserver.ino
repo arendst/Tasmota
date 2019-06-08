@@ -922,8 +922,7 @@ void HandleRoot(void)
       if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
         WSContentSend_P(HTTP_MSG_SLIDER1, LightGetColorTemp());
       }
-      if(Settings.flag3.tuya_show_dimmer == 0)
-      {
+      if (!Settings.flag3.tuya_show_dimmer) {
         WSContentSend_P(HTTP_MSG_SLIDER2, Settings.light_dimmer);
       }
     }
