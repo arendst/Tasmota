@@ -173,6 +173,7 @@ bool i2c_flg = false;                       // I2C configured
 bool spi_flg = false;                       // SPI configured
 bool soft_spi_flg = false;                  // Software SPI configured
 bool ntp_force_sync = false;                // Force NTP sync
+bool ntp_synced_message = false;            // NTP synced message flag
 myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
 gpio_flag my_module_flag;                   // Active copy of Template GPIO flags
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
@@ -1994,6 +1995,12 @@ bool MqttShowSensor(void)
 void PerformEverySecond(void)
 {
   uptime++;
+
+  if (ntp_synced_message) {
+    // Moved here to fix syslog UDP exception 9 during RtcSecond
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
+    ntp_synced_message = false;
+  }
 
   if (BOOT_LOOP_TIME == uptime) {
     RtcReboot.fast_reboot_count = 0;

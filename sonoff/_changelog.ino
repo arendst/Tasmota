@@ -5,6 +5,7 @@
  * Add some MQTT housekeeping which might solve issue (#5755)
  * Add command SetOption65 0/1 and more Tuya Serial based device support (#5815)
  * Fix include of my_user_config.h in sonoff_aws_iot.cpp (#5930)
+ * Fix exception 9 when syslog is enabled and NTP is just synced (#5917)
  *
  * 6.5.0.14 20190602
  * Change webserver HTML input, button, textarea, and select name based on id

@@ -365,7 +365,11 @@ void RtcSecond(void)
       RtcTime.year = tmpTime.year + 1970;
       daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
       standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
+
+      // Do not use AddLog here if syslog is enabled. UDP will force exception 9
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
+      ntp_synced_message = true;
+
       if (local_time < 1451602800) {  // 2016-01-01
         rules_flag.time_init = 1;
       } else {
