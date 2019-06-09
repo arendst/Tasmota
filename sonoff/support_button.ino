@@ -218,11 +218,13 @@ void ButtonHandler(void)
                 if ((SONOFF_DUAL_R2 == my_module_type) || (SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)) {
                   single_press = true;
                 } else {
-                  if ((0 == button_index) && (1 == buttons_present)) {  // Single Button1 only
-                    single_press = (Settings.flag.button_swap +1 == multipress[button_index]);  // SetOption11 (0)
-                    if (Settings.flag.button_swap) {             // SetOption11 (0)
+                  single_press = (Settings.flag.button_swap +1 == multipress[button_index]);  // SetOption11 (0)
+                  if ((1 == buttons_present) && (2 == devices_present)) {  // Single Button with two devices only
+                    if (Settings.flag.button_swap) {           // SetOption11 (0)
                       multipress[button_index] = (single_press) ? 1 : 2;
                     }
+                  } else {
+                    multipress[button_index] = 1;
                   }
                 }
               }
