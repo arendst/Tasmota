@@ -6,6 +6,7 @@
  * Add command SetOption65 0/1 and more Tuya Serial based device support (#5815)
  * Fix include of my_user_config.h in sonoff_aws_iot.cpp (#5930)
  * Fix exception 9 when syslog is enabled and NTP is just synced (#5917)
+ * Fix Toggle functionality to button double press when one button and two devices are detected (#5935)
  * Refactored TLS based on BearSSL, warning breakint change for fongerprints validation (see doc)
  *
  * 6.5.0.14 20190602
