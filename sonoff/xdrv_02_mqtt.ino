@@ -526,9 +526,9 @@ void MqttReconnect(void)
         if (learn_fingerprint2) {
           memcpy(Settings.mqtt_fingerprint[1], recv_fingerprint, 20);
         }
-        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Restarting: fingerprint learned: %s"), buf_fingerprint);
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Fingerprint learned: %s"), buf_fingerprint);
 
-        restart_flag = 2;  // save and restart
+        SettingsSaveAll();  // save settings
       }
     }
 #endif // USE_MQTT_TLS
