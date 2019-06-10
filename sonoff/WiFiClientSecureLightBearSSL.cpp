@@ -20,9 +20,6 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#include <core_version.h>
-#ifdef ARDUINO_ESP8266_RELEASE_2_5_2
-
 #define LWIP_INTERNAL
 
 #include <list>
@@ -45,12 +42,13 @@ extern "C" {
 #include "lwip/netif.h"
 #include <include/ClientContext.h>
 #include "c_types.h"
-#include "coredecls.h"
 
-#define SKEY_ON_STACK			// copy private key+cert on stack rather than on heap, this works for now because it takes ~800 bytes
-//#define DEBUG_TLS
+#include "my_user_config.h"
+
+#define DEBUG_TLS
 
 #ifdef DEBUG_TLS
+#include "coredecls.h"
 #define LOG_HEAP_SIZE(a) _Log_heap_size(a)
 void _Log_heap_size(const char *msg) {
 	register uint32_t *sp asm("a1");
@@ -184,6 +182,9 @@ void WiFiClientSecure_light::_clear() {
 	_fingerprint_any = true;		// by default accept all fingerprints
 	_fingerprint1 = nullptr;
 	_fingerprint2 = nullptr;
+	_chain_P = nullptr;
+	_sk_ec_P = nullptr;
+	_ta_P = nullptr;
 }
 
 // Constructor
@@ -220,14 +221,13 @@ void WiFiClientSecure_light::allocateBuffers(void) {
 void WiFiClientSecure_light::setClientECCert(const br_x509_certificate *cert, const br_ec_private_key *sk,
 																					unsigned allowed_usages, unsigned cert_issuer_key_type) {
 	_chain_P = cert;
-	_chain.data_len = _chain_P->data_len;
-	_chain.data = nullptr;
 	_sk_ec_P = sk;
-	_sk_ec.curve = _sk_ec_P->curve;
-	_sk_ec.xlen  = _sk_ec_P->xlen;
-	_sk_ec.x = nullptr;
   _allowed_usages = allowed_usages;
   _cert_issuer_key_type = cert_issuer_key_type;
+}
+
+void WiFiClientSecure_light::setTrustAnchor(const br_x509_trust_anchor *ta) {
+	_ta_P = ta;
 }
 
 void WiFiClientSecure_light::setBufferSizes(int recv, int xmit) {
@@ -247,14 +247,24 @@ void WiFiClientSecure_light::setBufferSizes(int recv, int xmit) {
 }
 
 bool WiFiClientSecure_light::stop(unsigned int maxWaitMs) {
+#ifdef ARDUINO_ESP8266_RELEASE_2_4_2
+  WiFiClient::stop(); // calls our virtual flush()
+  _freeSSL();
+	return true;
+#else
   bool ret = WiFiClient::stop(maxWaitMs); // calls our virtual flush()
   _freeSSL();
   return ret;
+#endif
 }
 
 bool WiFiClientSecure_light::flush(unsigned int maxWaitMs) {
   (void) _run_until(BR_SSL_SENDAPP);
+#ifdef ARDUINO_ESP8266_RELEASE_2_4_2
+  WiFiClient::flush();
+#else
   return WiFiClient::flush(maxWaitMs);
+#endif
 }
 
 int WiFiClientSecure_light::connect(IPAddress ip, uint16_t port) {
@@ -281,10 +291,6 @@ int WiFiClientSecure_light::connect(const char* name, uint16_t port) {
   }
 	LOG_HEAP_SIZE("Before calling _connectSSL");
   return _connectSSL(name);
-}
-
-int WiFiClientSecure_light::connect(const String& host, uint16_t port) {
-  return connect(host.c_str(), port);
 }
 
 void WiFiClientSecure_light::_freeSSL() {
@@ -776,112 +782,161 @@ extern "C" {
 // Called by connect() to do the actual SSL setup and handshake.
 // Returns if the SSL handshake succeeded.
 bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
-	br_ec_private_key sk_ec;
-	br_x509_certificate chain;
-#ifdef SKEY_ON_STACK
-	unsigned char chain_data[_chain_P->data_len];
-	unsigned char sk_data[_sk_ec_P->xlen];
+#ifdef USE_MQTT_AWS_IOT
+	br_ec_private_key sk_ec = {0, nullptr, 0};
+	br_x509_certificate chain = {nullptr, 0};
+	if ((!_chain_P) || (!_sk_ec_P)) {
+		setLastError(ERR_MISSING_EC_KEY);
+		return false;
+	}
 #endif
+
+	// Validation context, either full CA validation or checking only fingerprints
+#ifdef USE_MQTT_TLS_CA_CERT
+	br_x509_minimal_context *x509_minimal;
+	br_x509_trust_anchor ta; // = {{nullptr,0},0,{0,{.rsa={nullptr,0,nullptr,0}}}};
+	memset(&ta, 0, sizeof(ta));
+	if (!_ta_P) {
+		setLastError(ERR_MISSING_CA);
+		return false;
+	}
+#else
   br_x509_pubkeyfingerprint_context *x509_insecure;
+#endif
 
 	LOG_HEAP_SIZE("_connectSSL.start");
 
-  stack_thunk_light_add_ref();
-	LOG_HEAP_SIZE("Thunk allocated");
-	DEBUG_BSSL("_connectSSL: start connection\n");
-  _freeSSL();
-	clearLastError();
+	do {		// used to exit on Out of Memory error and keep all cleanup code at the same place
+		// ============================================================
+		// allocate Thunk stack, move to alternate stack and initialize
+	  stack_thunk_light_add_ref();
+		LOG_HEAP_SIZE("Thunk allocated");
+		DEBUG_BSSL("_connectSSL: start connection\n");
+	  _freeSSL();
+		clearLastError();
+		if (!stack_thunk_light_get_stack_bot()) break;
 
-  _ctx_present = true;
-  _eng = &_sc->eng; // Allocation/deallocation taken care of by the _sc shared_ptr
 
-  br_ssl_client_base_init(_sc.get());
+		// ============================================================
+		// Copy server CA from PROGMEM to RAM
+	#ifdef USE_MQTT_TLS_CA_CERT
+		memcpy_P(&ta, _ta_P, sizeof(ta));	// copy the whole structure first
+		unsigned char rsa_e[_ta_P->pkey.key.rsa.elen];		// it's only 3 bytes long, spare the malloc
+		ta.pkey.key.rsa.e = rsa_e;
+		ta.dn.data = (unsigned char *) malloc(ta.dn.len);
+		if (!ta.dn.data) break;
+		ta.pkey.key.rsa.n = (unsigned char *) malloc(ta.pkey.key.rsa.nlen);
+		if (!ta.pkey.key.rsa.n) break;
+		memcpy_P(ta.dn.data, _ta_P->dn.data, ta.dn.len);
+		memcpy_P(ta.pkey.key.rsa.n, _ta_P->pkey.key.rsa.n, ta.pkey.key.rsa.nlen);
+		memcpy_P(rsa_e, _ta_P->pkey.key.rsa.e, ta.pkey.key.rsa.elen);
 
-	LOG_HEAP_SIZE("_connectSSL before DecoderContext allocation");
-  // Only failure possible in the installation is OOM
-  x509_insecure = (br_x509_pubkeyfingerprint_context*) malloc(sizeof(br_x509_pubkeyfingerprint_context));
+	#endif
 
-  br_x509_pubkeyfingerprint_init(x509_insecure, _fingerprint1, _fingerprint2,
-																 _recv_fingerprint, _fingerprint_any);
-  br_ssl_engine_set_x509(_eng, &x509_insecure->vtable);
+	  _ctx_present = true;
+	  _eng = &_sc->eng; // Allocation/deallocation taken care of by the _sc shared_ptr
 
-  br_ssl_engine_set_buffers_bidi(_eng, _iobuf_in.get(), _iobuf_in_size, _iobuf_out.get(), _iobuf_out_size);
+	  br_ssl_client_base_init(_sc.get());
 
-	LOG_HEAP_SIZE("_connectSSL after PrivKey allocation");
-  // allocate Private key and client certificate
-  //chain = new X509List(_chain_PEM);
-  //sk = new PrivateKey(_sk_PEM);
-	chain.data_len = _chain_P->data_len;
-#ifdef SKEY_ON_STACK		// allocate on stack
-	chain.data = &chain_data[0];
-#else										// allocate with malloc
-	chain.data = (unsigned char *) malloc(chain.data_len);
-#endif
-	if (chain.data) memcpy_P(chain.data, _chain_P->data, chain.data_len);
+		// ============================================================
+		// Allocatte and initialize Decoder Context
+		LOG_HEAP_SIZE("_connectSSL before DecoderContext allocation");
+	  // Only failure possible in the installation is OOM
+	#ifdef USE_MQTT_TLS_CA_CERT
+		x509_minimal = (br_x509_minimal_context*) malloc(sizeof(br_x509_minimal_context));
+		if (!x509_minimal) break;
+		br_x509_minimal_init(x509_minimal, &br_sha256_vtable, &ta, 1);
+		br_x509_minimal_set_rsa(x509_minimal, br_ssl_engine_get_rsavrfy(_eng));
+		br_x509_minimal_set_hash(x509_minimal, br_sha256_ID, &br_sha256_vtable);
+		br_ssl_engine_set_x509(_eng, &x509_minimal->vtable);
 
-	sk_ec.curve = _sk_ec_P->curve;
-	sk_ec.xlen = _sk_ec_P->xlen;
-#ifdef SKEY_ON_STACK
-	sk_ec.x = &sk_data[0];
-#else
-	sk_ec.x = (unsigned char *) malloc(sk_ec.xlen);
-#endif
-	if (sk_ec.x) memcpy_P(sk_ec.x, _sk_ec_P->x, sk_ec.xlen);
-	LOG_HEAP_SIZE("_connectSSL after PrivKey allocation");
+	#else
+	  x509_insecure = (br_x509_pubkeyfingerprint_context*) malloc(sizeof(br_x509_pubkeyfingerprint_context));
+		//x509_insecure = std::unique_ptr<br_x509_pubkeyfingerprint_context>(new br_x509_pubkeyfingerprint_context);
+		if (!x509_insecure) break;
+	  br_x509_pubkeyfingerprint_init(x509_insecure, _fingerprint1, _fingerprint2, _recv_fingerprint, _fingerprint_any);
+		br_ssl_engine_set_x509(_eng, &x509_insecure->vtable);
+	#endif
+		LOG_HEAP_SIZE("_connectSSL after DecoderContext allocation");
 
-	// check if memory was correctly allocated
-	if ((!stack_thunk_light_get_stack_bot()) || (!x509_insecure) ||
-      (!chain.data) || (!sk_ec.x)) {
-		// memory allocation problem
-		setLastError(ERR_OOM);
-#ifndef SKEY_ON_STACK
-    free(chain.data);
-    free(sk_ec.x);
-#endif
-    free(x509_insecure);
+		// ============================================================
+		// Set send/receive buffers
+	  br_ssl_engine_set_buffers_bidi(_eng, _iobuf_in.get(), _iobuf_in_size, _iobuf_out.get(), _iobuf_out_size);
+
+		// ============================================================
+		// allocate Private key if needed, only if USE_MQTT_AWS_IOT
+		LOG_HEAP_SIZE("_connectSSL before PrivKey allocation");
+	#ifdef USE_MQTT_AWS_IOT
+	  // allocate Private key and client certificate
+		chain.data_len = _chain_P->data_len;
+		chain.data = (unsigned char *) malloc(chain.data_len);
+		if (!chain.data) break;
+		memcpy_P(chain.data, _chain_P->data, chain.data_len);
+		sk_ec.curve = _sk_ec_P->curve;
+		sk_ec.xlen = _sk_ec_P->xlen;
+		sk_ec.x = (unsigned char *) malloc(sk_ec.xlen);
+		if (!sk_ec.x) break;
+		memcpy_P(sk_ec.x, _sk_ec_P->x, sk_ec.xlen);
+		LOG_HEAP_SIZE("_connectSSL after PrivKey allocation");
+
+		// ============================================================
+		// Set the EC Private Key, only USE_MQTT_AWS_IOT
+		// limited to P256 curve
+		br_ssl_client_set_single_ec(_sc.get(), &chain, 1,
+	                              &sk_ec, _allowed_usages,
+	                              _cert_issuer_key_type, &br_ec_p256_m15, br_ecdsa_sign_asn1_get_default());
+	#endif // USE_MQTT_AWS_IOT
+
+		// ============================================================
+		// Start TLS connection, ALL
+	  if (!br_ssl_client_reset(_sc.get(), hostName, 0)) break;
+
+	  auto ret = _wait_for_handshake();
+	#ifdef DEBUG_ESP_SSL
+	  if (!ret) {
+	    DEBUG_BSSL("Couldn't connect. Error = %d\n", getLastError());
+	  } else {
+	    DEBUG_BSSL("Connected! MFLNStatus = %d\n", getMFLNStatus());
+	  }
+	#endif
+		LOG_HEAP_SIZE("_connectSSL.end");
 		stack_thunk_light_del_ref();
-    DEBUG_BSSL("_connectSSL: Out of memory\n");
-    return false;
-	}
+	  //stack_thunk_light_repaint();
+		LOG_HEAP_SIZE("_connectSSL.end, freeing StackThunk");
+	#if defined(USE_MQTT_AWS_IOT)
+		free(chain.data);
+		free(sk_ec.x);
+	#endif
 
-	// limited to P256 curve
-	br_ssl_client_set_single_ec(_sc.get(), &chain, 1,
-                              &sk_ec, _allowed_usages,
-                              _cert_issuer_key_type, &br_ec_p256_m15, br_ecdsa_sign_asn1_get_default());
+	#ifdef USE_MQTT_TLS_CA_CERT
+		free(x509_minimal);
+		free(ta.dn.data);
+		free(ta.pkey.key.rsa.n);
+	#else
+		free(x509_insecure);
+	#endif
+		LOG_HEAP_SIZE("_connectSSL after release of Priv Key");
+	  return ret;
+	} while (0);
 
-  if (!br_ssl_client_reset(_sc.get(), hostName, 0)) {
-#ifndef SKEY_ON_STACK
-    free(chain.data);
-    free(sk_ec.x);
-#endif
-    free(x509_insecure);
-		stack_thunk_light_del_ref();
-    _freeSSL();
-    DEBUG_BSSL("_connectSSL: Can't reset client\n");
-    return false;
-  }
-
-  auto ret = _wait_for_handshake();
-#ifdef DEBUG_ESP_SSL
-  if (!ret) {
-    DEBUG_BSSL("Couldn't connect. Error = %d\n", getLastError());
-  } else {
-    DEBUG_BSSL("Connected! MFLNStatus = %d\n", getMFLNStatus());
-  }
-#endif
-	LOG_HEAP_SIZE("_connectSSL.end");
+	// ============================================================
+	// if we arrived here, this means we had an OOM error, cleaning up
+	setLastError(ERR_OOM);
+	DEBUG_BSSL("_connectSSL: Out of memory\n");
 	stack_thunk_light_del_ref();
-  //stack_thunk_light_repaint();
-	LOG_HEAP_SIZE("_connectSSL.end, freeing StackThunk");
-#ifndef SKEY_ON_STACK
+#ifdef USE_MQTT_AWS_IOT
 	free(chain.data);
 	free(sk_ec.x);
 #endif
-  free(x509_insecure);
-	LOG_HEAP_SIZE("_connectSSL after release of Priv Key");
-  return ret;
+#ifdef USE_MQTT_TLS_CA_CERT
+	free(x509_minimal);
+	free(ta.dn.data);
+	free(ta.pkey.key.rsa.n);
+#else
+	free(x509_insecure);
+#endif
+	LOG_HEAP_SIZE("_connectSSL clean_on_error");
+	return false;
 }
 
 };
-
-#endif  // ARDUINO_ESP8266_RELEASE_2_5_2

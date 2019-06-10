@@ -1759,9 +1759,14 @@ void HandleInformation(void)
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   if (Settings.flag.mqtt_enabled) {
+#ifdef USE_MQTT_AWS_IOT
+    WSContentSend_P(PSTR("}1" D_MQTT_HOST "}2%s%s"), Settings.mqtt_user, Settings.mqtt_host);
+    WSContentSend_P(PSTR("}1" D_MQTT_PORT "}2%d"), Settings.mqtt_port);
+#else
     WSContentSend_P(PSTR("}1" D_MQTT_HOST "}2%s"), Settings.mqtt_host);
     WSContentSend_P(PSTR("}1" D_MQTT_PORT "}2%d"), Settings.mqtt_port);
     WSContentSend_P(PSTR("}1" D_MQTT_USER "}2%s"), Settings.mqtt_user);
+#endif
     WSContentSend_P(PSTR("}1" D_MQTT_CLIENT "}2%s"), mqtt_client);
     WSContentSend_P(PSTR("}1" D_MQTT_TOPIC "}2%s"), Settings.mqtt_topic);
     WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), Settings.mqtt_grptopic);
