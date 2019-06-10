@@ -21,15 +21,12 @@
 */
 
 #include <core_version.h>
-#ifdef ARDUINO_ESP8266_RELEASE_2_5_2
 
 #ifndef wificlientlightbearssl_h
 #define wificlientlightbearssl_h
 #include <vector>
 #include "WiFiClient.h"
 #include <bearssl/bearssl.h>
-#include "BearSSLHelpers.h"
-#include "CertStoreBearSSL.h"
 
 namespace BearSSL {
 
@@ -41,7 +38,6 @@ class WiFiClientSecure_light : public WiFiClient {
     void allocateBuffers(void);
 
     int connect(IPAddress ip, uint16_t port) override;
-    int connect(const String& host, uint16_t port) override;
     int connect(const char* name, uint16_t port) override;
 
     uint8_t connected() override;
@@ -148,5 +144,3 @@ class WiFiClientSecure_light : public WiFiClient {
 };
 
 #endif
-
-#endif  // ARDUINO_ESP8266_RELEASE_2_5_2

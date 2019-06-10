@@ -46,11 +46,21 @@ void KNX_CB_Action(message_t const &msg, void *arg);
  * Default global defines
 \*********************************************************************************************/
 
-#ifdef USE_MQTT_AWS_IOT
-#include <core_version.h>
-#ifndef ARDUINO_ESP8266_RELEASE_2_5_2
-  #error "USE_MQTT_AWS_IOT is only supported on core version 2.5.2"
+// #ifdef USE_MQTT_AWS_IOT
+// #include <core_version.h>
+// #ifndef ARDUINO_ESP8266_RELEASE_2_5_2
+//   #error "USE_MQTT_AWS_IOT is only supported on core version 2.5.2"
+// #endif
+// #endif
+
+#ifdef USE_EMULATION_HUE
+#define USE_EMULATION
 #endif
+#ifdef USE_EMULATION_WEMO
+#define USE_EMULATION
+#endif
+#ifdef USE_MQTT_AWS_IOT
+#define USE_MQTT_TLS
 #endif
 
 #if defined(USE_MQTT_TLS) || defined(USE_MQTT_AWS_IOT)
@@ -59,11 +69,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
   const uint16_t WEB_LOG_SIZE = 4000;       // Max number of characters in weblog
 #endif
 
-#ifdef USE_EMULATION_HUE
-#define USE_EMULATION
-#endif
-#ifdef USE_EMULATION_WEMO
-#define USE_EMULATION
+#if defined(USE_MQTT_TLS) && defined(ARDUINO_ESP8266_RELEASE_2_3_0)
+  #error "TLS is no more supported on Core 2.3.0, use 2.4.2 or higher."
 #endif
 
 #ifndef MODULE
