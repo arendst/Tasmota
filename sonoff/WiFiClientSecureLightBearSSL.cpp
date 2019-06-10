@@ -48,6 +48,7 @@ extern "C" {
 //#define DEBUG_TLS
 
 #ifdef DEBUG_TLS
+#include "coredecls.h"
 #define LOG_HEAP_SIZE(a) _Log_heap_size(a)
 void _Log_heap_size(const char *msg) {
 	register uint32_t *sp asm("a1");
