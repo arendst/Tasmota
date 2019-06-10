@@ -16,6 +16,9 @@ There are only two changes in `src/inner.h`:
 
 Then compile with
 
-```make CONF=esp8266```
+```
+make CONF=esp8266
+xtensa-lx106-elf-ar d esp8266/libbearssl.a `xtensa-lx106-elf-ar t esp8266/libbearssl.a | egrep 'i31|i32|x86|sse|pwr8|i62|m31|m32|m62|m64|ct64|ctmul64'`
+```
 
 Finally copy `libbearssl.a` to this directory.
