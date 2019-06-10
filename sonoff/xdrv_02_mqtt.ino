@@ -127,8 +127,17 @@ void MqttInit(void) {
                              0xFFFF /* all usages, don't care */, 0);
 #endif
 
+#ifdef USE_MQTT_TLS_CA_CERT
+  tlsClient->setTrustAnchor(&LetsEncryptX3CrossSigned_TA);
+#ifdef USE_MQTT_AWS_IOT
+  tlsClient->setTrustAnchor(&AmazonRootCA1_TA);
+#else
+  // LETSENCRYPT CA TODO
+#endif // USE_MQTT_AWS_IOT
+#endif // USE_MQTT_TLS_CA_CERT
+
   MqttClient.setClient(*tlsClient);
-#endif
+#endif // USE_MQTT_AWS_IOT
 }
 
 
@@ -480,8 +489,8 @@ void MqttReconnect(void)
   MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
 #endif
 
-#ifdef USE_MQTT_TLS
   uint32_t mqtt_connect_time = millis();
+#if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   bool allow_all_fingerprints = false;
   bool learn_fingerprint1 = is_fingerprint_mono_value(Settings.mqtt_fingerprint[0], 0x00);
   bool learn_fingerprint2 = is_fingerprint_mono_value(Settings.mqtt_fingerprint[1], 0x00);
@@ -499,15 +508,16 @@ void MqttReconnect(void)
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data, MQTT_CLEAN_SESSION)) {
 #endif
 #ifdef USE_MQTT_TLS
-    // create a printable version of the fingerprint received
-    char buf_fingerprint[64];
-    to_hex((unsigned char *)tlsClient->getRecvPubKeyFingerprint(), 20, buf_fingerprint, 64);
-
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connected in %d ms"), millis() - mqtt_connect_time);
     if (!tlsClient->getMFLNStatus()) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("MFLN not supported by TLS server"));
     }
+#ifndef USE_MQTT_TLS_CA_CERT  // don't bother with fingerprints if using CA validation
+    // create a printable version of the fingerprint received
+    char buf_fingerprint[64];
+    to_hex((unsigned char *)tlsClient->getRecvPubKeyFingerprint(), 20, buf_fingerprint, 64);
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Server fingerprint: %s"), buf_fingerprint);
+
     if (learn_fingerprint1 || learn_fingerprint2) {
       // we potentially need to learn the fingerprint just seen
       bool fingerprint_matched = false;
@@ -531,6 +541,7 @@ void MqttReconnect(void)
         SettingsSaveAll();  // save settings
       }
     }
+#endif // !USE_MQTT_TLS_CA_CERT
 #endif // USE_MQTT_TLS
     MqttConnected();
   } else {
@@ -639,7 +650,7 @@ bool MqttCommand(void)
     }
     Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, GetStateText(index -1));
   }
-#ifdef USE_MQTT_TLS
+#if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   else if ((CMND_MQTTFINGERPRINT == command_code) && (index > 0) && (index <= 2)) {
     char fingerprint[60];
     if ((data_len > 0) && (data_len < sizeof(fingerprint))) {
@@ -934,11 +945,9 @@ bool Xdrv02(uint8_t function)
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
-#ifdef USE_MQTT_TLS
       case FUNC_PRE_INIT:
         MqttInit();
         break;
-#endif
       case FUNC_EVERY_50_MSECOND:  // https://github.com/knolleary/pubsubclient/issues/556
         MqttClient.loop();
         break;

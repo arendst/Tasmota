@@ -264,12 +264,12 @@
 
 // -- MQTT - TLS - AWS IoT ----------------------------------
 //#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+56.7k code, +6.0k mem and +6.6k additional during connection handshake)
+  //#define USE_MQTT_TLS_CA_CERT                   // Force full CA validation instead of fingerprints, uses more memory and slower, but simpler to use
   //#define USE_MQTT_AWS_IOT                       // Enable MQTT for AWS IoT - requires a private key (+56.7k code, +6.0k mem and +6.6k additional during connection handshake)
   // note: enabling USE_MQTT_AWS_IOT autoamtically enables USE_MQTT_TLS
   // you need to generate a private key + certificate per device
   // and update 'sonoff/sonoff_aws_iot.cpp'
   // Full documentation here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
-  #define USE_MQTT_AWS_IOT_SKEY_ON_STACK			// copy private key+cert on stack rather than on heap, don't disable unless you see crashes during connections
 
 
 // -- KNX IP Protocol -----------------------------

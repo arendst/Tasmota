@@ -74,6 +74,8 @@ class WiFiClientSecure_light : public WiFiClient {
     void setClientECCert(const br_x509_certificate *cert, const br_ec_private_key *sk,
                          unsigned allowed_usages, unsigned cert_issuer_key_type);
 
+    void setTrustAnchor(const br_x509_trust_anchor *ta);
+
     // Sets the requested buffer size for transmit and receive
     void setBufferSizes(int recv, int xmit);
 
@@ -128,10 +130,9 @@ class WiFiClientSecure_light : public WiFiClient {
     bool _wait_for_handshake(); // Sets and return the _handshake_done after connecting
 
     // Optional client certificate
-    br_x509_certificate _chain;     // local RAM copy
     const br_x509_certificate *_chain_P;  // PROGMEM certificate
-    br_ec_private_key   _sk_ec;
     const br_ec_private_key   *_sk_ec_P;  // PROGMEM private key
+    const br_x509_trust_anchor *_ta_P;     // PROGMEM server CA
     unsigned _allowed_usages;
     unsigned _cert_issuer_key_type;
 
@@ -140,6 +141,72 @@ class WiFiClientSecure_light : public WiFiClient {
 #define ERR_OOM             -1000
 #define ERR_CANT_RESOLVE_IP -1001
 #define ERR_TCP_CONNECT     -1002
+#define ERR_MISSING_EC_KEY  -1003
+#define ERR_MISSING_CA      -1004
+
+// For reference, BearSSL error codes:
+// #define BR_ERR_OK                      0
+// #define BR_ERR_BAD_PARAM               1
+// #define BR_ERR_BAD_STATE               2
+// #define BR_ERR_UNSUPPORTED_VERSION     3
+// #define BR_ERR_BAD_VERSION             4
+// #define BR_ERR_BAD_LENGTH              5
+// #define BR_ERR_TOO_LARGE               6
+// #define BR_ERR_BAD_MAC                 7
+// #define BR_ERR_NO_RANDOM               8
+// #define BR_ERR_UNKNOWN_TYPE            9
+// #define BR_ERR_UNEXPECTED             10
+// #define BR_ERR_BAD_CCS                12
+// #define BR_ERR_BAD_ALERT              13
+// #define BR_ERR_BAD_HANDSHAKE          14
+// #define BR_ERR_OVERSIZED_ID           15
+// #define BR_ERR_BAD_CIPHER_SUITE       16
+// #define BR_ERR_BAD_COMPRESSION        17
+// #define BR_ERR_BAD_FRAGLEN            18
+// #define BR_ERR_BAD_SECRENEG           19
+// #define BR_ERR_EXTRA_EXTENSION        20
+// #define BR_ERR_BAD_SNI                21
+// #define BR_ERR_BAD_HELLO_DONE         22
+// #define BR_ERR_LIMIT_EXCEEDED         23
+// #define BR_ERR_BAD_FINISHED           24
+// #define BR_ERR_RESUME_MISMATCH        25
+// #define BR_ERR_INVALID_ALGORITHM      26
+// #define BR_ERR_BAD_SIGNATURE          27
+// #define BR_ERR_WRONG_KEY_USAGE        28
+// #define BR_ERR_NO_CLIENT_AUTH         29
+// #define BR_ERR_IO                     31
+// #define BR_ERR_RECV_FATAL_ALERT      256
+// #define BR_ERR_SEND_FATAL_ALERT      512
+// #define BR_ERR_X509_OK                    32
+// #define BR_ERR_X509_INVALID_VALUE         33
+// #define BR_ERR_X509_TRUNCATED             34
+// #define BR_ERR_X509_EMPTY_CHAIN           35
+// #define BR_ERR_X509_INNER_TRUNC           36
+// #define BR_ERR_X509_BAD_TAG_CLASS         37
+// #define BR_ERR_X509_BAD_TAG_VALUE         38
+// #define BR_ERR_X509_INDEFINITE_LENGTH     39
+// #define BR_ERR_X509_EXTRA_ELEMENT         40
+// #define BR_ERR_X509_UNEXPECTED            41
+// #define BR_ERR_X509_NOT_CONSTRUCTED       42
+// #define BR_ERR_X509_NOT_PRIMITIVE         43
+// #define BR_ERR_X509_PARTIAL_BYTE          44
+// #define BR_ERR_X509_BAD_BOOLEAN           45
+// #define BR_ERR_X509_OVERFLOW              46
+// #define BR_ERR_X509_BAD_DN                47
+// #define BR_ERR_X509_BAD_TIME              48
+// #define BR_ERR_X509_UNSUPPORTED           49
+// #define BR_ERR_X509_LIMIT_EXCEEDED        50
+// #define BR_ERR_X509_WRONG_KEY_TYPE        51
+// #define BR_ERR_X509_BAD_SIGNATURE         52
+// #define BR_ERR_X509_TIME_UNKNOWN          53
+// #define BR_ERR_X509_EXPIRED               54
+// #define BR_ERR_X509_DN_MISMATCH           55
+// #define BR_ERR_X509_BAD_SERVER_NAME       56
+// #define BR_ERR_X509_CRITICAL_EXTENSION    57
+// #define BR_ERR_X509_NOT_CA                58
+// #define BR_ERR_X509_FORBIDDEN_KEY_USAGE   59
+// #define BR_ERR_X509_WEAK_PUBLIC_KEY       60
+// #define BR_ERR_X509_NOT_TRUSTED           62
 
 };
 
