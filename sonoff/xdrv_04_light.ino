@@ -121,7 +121,7 @@
 \*********************************************************************************************/
 
 #define XDRV_04              4
-#define DEBUG_LIGHT
+//#define DEBUG_LIGHT
 
 const uint8_t WS2812_SCHEMES = 7;    // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
 
@@ -1461,7 +1461,7 @@ void LightUpdateColorMapping(void)
   light_controller.setCTRGBLinked(ct_rgb_linked);
 
   light_update = 1;
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], light_color_remap[0],light_color_remap[1],light_color_remap[2],light_color_remap[3],light_color_remap[4]);
+  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], light_color_remap[0],light_color_remap[1],light_color_remap[2],light_color_remap[3],light_color_remap[4]);
 }
 
 void LightSetDimmer(uint8_t dimmer) {
