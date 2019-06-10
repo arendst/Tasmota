@@ -121,7 +121,7 @@
 \*********************************************************************************************/
 
 #define XDRV_04              4
-//#define DEBUG_LIGHT
+#define DEBUG_LIGHT
 
 const uint8_t WS2812_SCHEMES = 7;    // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
 
@@ -359,7 +359,11 @@ class LightStateClass {
 
       switch (_subtype) {
         case LST_COLDWARM:
-          _color_mode = LCM_CT;
+          if(LT_SERIAL2 == light_type){
+            _color_mode = LCM_RGB;
+          }else{
+            _color_mode = LCM_CT;
+          }
           break;
 
         case LST_NONE:
@@ -893,8 +897,13 @@ public:
         light_current_color[0] = briRGB;
         break;
       case LST_COLDWARM:
-        light_current_color[0] = c;
-        light_current_color[1] = w;
+        if (light_type == LT_SERIAL2){
+          light_current_color[0] = r;
+          light_current_color[1] = g;
+        }else{
+          light_current_color[0] = c;
+          light_current_color[1] = w;
+        }
         break;
       case LST_RGBW:
       case LST_RGBWC:
@@ -1335,7 +1344,7 @@ void LightInit(void)
   light_controller.setSubType(light_subtype);
   light_controller.loadSettings();
 
-  if (LST_SINGLE == light_subtype) {
+  if ((LST_SINGLE == light_subtype) || ((light_type == LT_SERIAL2) && (light_subtype == LST_COLDWARM))) {
     Settings.light_color[0] = 255;      // One channel only supports Dimmer but needs max color
   }
   if (light_type < LT_PWM6) {           // PWM
@@ -1452,7 +1461,7 @@ void LightUpdateColorMapping(void)
   light_controller.setCTRGBLinked(ct_rgb_linked);
 
   light_update = 1;
-  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], light_color_remap[0],light_color_remap[1],light_color_remap[2],light_color_remap[3],light_color_remap[4]);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], light_color_remap[0],light_color_remap[1],light_color_remap[2],light_color_remap[3],light_color_remap[4]);
 }
 
 void LightSetDimmer(uint8_t dimmer) {
