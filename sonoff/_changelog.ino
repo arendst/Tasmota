@@ -1,4 +1,6 @@
 /*
+ * Fixed the light controller when used with LT_serial2 dimmer devices.
+ *
  * 6.5.0.15 20190606
  * Change pubsubclient MQTT_KEEPALIVE from 10 to 30 seconds in preparation of AWS IoT support
  * Add support for AWS IoT with TLS 1.2 on core 2.5.2. Full doc here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
