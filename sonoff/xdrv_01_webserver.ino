@@ -62,12 +62,7 @@ const char HTTP_HEAD[] PROGMEM =
     "return document.querySelector(s);"
   "}"
   "function sp(i){"                       // Toggle password visibility
-    "var x=eb(i);"
-    "if(x.type==='text'){"
-      "x.type='password';"
-    "}else{"
-      "x.type='text';"
-    "}"
+    "eb(i).type=(eb(i).type==='text'?'password':'text');"
   "}"
   // https://www.htmlgoodies.com/beyond/javascript/article.php/3724571/Using-Multiple-JavaScript-Onload-Functions.htm
   "function wl(f){"                       // Execute multiple window.onload
