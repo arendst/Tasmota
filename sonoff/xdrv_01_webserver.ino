@@ -63,10 +63,10 @@ const char HTTP_HEAD[] PROGMEM =
   "}"
   "function sp(i){"                       // Toggle password visibility
     "var x=eb(i);"
-    "if(x.type==='password'){"
-      "x.type='text';"
-    "}else{"
+    "if(x.type==='text'){"
       "x.type='password';"
+    "}else{"
+      "x.type='text';"
     "}"
   "}"
   // https://www.htmlgoodies.com/beyond/javascript/article.php/3724571/Using-Multiple-JavaScript-Onload-Functions.htm
