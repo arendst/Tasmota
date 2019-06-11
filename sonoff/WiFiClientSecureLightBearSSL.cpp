@@ -20,10 +20,12 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#define LWIP_INTERNAL
-
 #include "my_user_config.h"
 #ifdef USE_MQTT_TLS
+
+#define DEBUG_TLS
+
+#define LWIP_INTERNAL
 
 #include <list>
 #include <errno.h>
@@ -46,8 +48,7 @@ extern "C" {
 #include <include/ClientContext.h>
 #include "c_types.h"
 
-#define DEBUG_TLS
-
+#include <core_version.h>
 #ifndef ARDUINO_ESP8266_RELEASE_2_5_2
 #undef DEBUG_TLS
 #endif
