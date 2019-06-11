@@ -1259,7 +1259,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
         restart_flag = 2;
         Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.sta_pwd[index -1]);
       } else {
-        Response_P(S_JSON_COMMAND_INDEX_ASTERIX, command, index);
+        Response_P(S_JSON_COMMAND_INDEX_ASTERISK, command, index);
       }
     }
     else if (CMND_HOSTNAME == command_code) {
