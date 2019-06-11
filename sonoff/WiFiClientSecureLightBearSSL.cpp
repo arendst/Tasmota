@@ -22,6 +22,9 @@
 
 #define LWIP_INTERNAL
 
+#include "my_user_config.h"
+#ifdef USE_MQTT_TLS
+
 #include <list>
 #include <errno.h>
 #include <algorithm>
@@ -42,8 +45,6 @@ extern "C" {
 #include "lwip/netif.h"
 #include <include/ClientContext.h>
 #include "c_types.h"
-
-#include "my_user_config.h"
 
 #define DEBUG_TLS
 
@@ -944,3 +945,5 @@ bool WiFiClientSecure_light::_connectSSL(const char* hostName) {
 }
 
 };
+
+#endif  // USE_MQTT_TLS
