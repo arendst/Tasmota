@@ -47,6 +47,10 @@ extern "C" {
 
 #define DEBUG_TLS
 
+#ifndef ARDUINO_ESP8266_RELEASE_2_5_2
+#undef DEBUG_TLS
+#endif
+
 #ifdef DEBUG_TLS
 #include "coredecls.h"
 #define LOG_HEAP_SIZE(a) _Log_heap_size(a)
