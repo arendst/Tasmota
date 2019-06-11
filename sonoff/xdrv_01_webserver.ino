@@ -55,15 +55,22 @@ const char HTTP_HEAD[] PROGMEM =
 
   "<script>"
   "var x=null,lt,to,tp,pc='';"            // x=null allow for abortion
+
   "function eb(s){"
-    "return document.getElementById(s);"  // Save code space
+    "return document.getElementById(s);"  // Alias to save code space
   "}"
+//  "eb=s=>document.getElementById(s);"     // Alias to save code space - ES6 fails on old browsers like IE
+
   "function qs(s){"                       // Alias to save code space
     "return document.querySelector(s);"
   "}"
+//  "qs=s=>document.querySelector(s);"      // Alias to save code space - ES6 fails on old browsers like IE
+
   "function sp(i){"                       // Toggle password visibility
     "eb(i).type=(eb(i).type==='text'?'password':'text');"
   "}"
+//  "sp=i=>eb(i).type=(eb(i).type==='text'?'password':'text');"  // Toggle password visibility - ES6 fails on old browsers like IE
+
   // https://www.htmlgoodies.com/beyond/javascript/article.php/3724571/Using-Multiple-JavaScript-Onload-Functions.htm
   "function wl(f){"                       // Execute multiple window.onload
     "var o=window.onload;"
