@@ -56,6 +56,12 @@ const char HTTP_HEAD[] PROGMEM =
   "<script>"
   "var x=null,lt,to,tp,pc='';"            // x=null allow for abortion
 
+#ifdef USE_JAVASCRIPT_ES6
+// Following bytes saving ES6 syntax fails on old browsers like IE 11 - https://kangax.github.io/compat-table/es6/
+  "eb=s=>document.getElementById(s);"     // Alias to save code space
+  "qs=s=>document.querySelector(s);"      // Alias to save code space
+  "sp=i=>eb(i).type=(eb(i).type==='text'?'password':'text');"  // Toggle password visibility
+#else
   "function eb(s){"
     "return document.getElementById(s);"  // Alias to save code space
   "}"
@@ -65,10 +71,7 @@ const char HTTP_HEAD[] PROGMEM =
   "function sp(i){"                       // Toggle password visibility
     "eb(i).type=(eb(i).type==='text'?'password':'text');"
   "}"
-// Following bytes saving ES6 syntax fails on old browsers like IE 11 - https://kangax.github.io/compat-table/es6/
-//  "eb=s=>document.getElementById(s);"     // Alias to save code space
-//  "qs=s=>document.querySelector(s);"      // Alias to save code space
-//  "sp=i=>eb(i).type=(eb(i).type==='text'?'password':'text');"  // Toggle password visibility
+#endif
 
   // https://www.htmlgoodies.com/beyond/javascript/article.php/3724571/Using-Multiple-JavaScript-Onload-Functions.htm
   "function wl(f){"                       // Execute multiple window.onload
