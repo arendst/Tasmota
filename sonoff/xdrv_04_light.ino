@@ -942,7 +942,13 @@ public:
   // Channels are: R G B CW WW
   // Brightness is automatically recalculated to adjust channels to the desired values
   void changeChannels(uint8_t *channels) {
-    _state->setChannels(channels);
+    if (LST_COLDWARM == light_subtype) {
+      // remap channels 0-1 to 3-4 if cold/warm
+      uint8_t remapped_channels[5] = {0,0,0,channels[0],channels[1]};
+      _state->setChannels(remapped_channels);
+    } else {
+      _state->setChannels(channels);
+    }
     saveSettings();
     calcLevels();
   }
