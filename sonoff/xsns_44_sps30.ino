@@ -28,6 +28,8 @@
 #include <twi.h>
 
 uint8_t sps30_ready = 0;
+uint8_t sps30_running;
+
 struct SPS30 {
   float PM1_0;
   float PM2_5;
@@ -69,6 +71,7 @@ uint8_t sps30_calc_CRC(uint8_t *data) {
     return crc;
 }
 
+void CmdClean(void);
 
 unsigned char twi_readFrom(unsigned char address, unsigned char* buf, unsigned int len, unsigned char sendStop);
 
@@ -132,6 +135,7 @@ void SPS30_Detect() {
   sps30_get_data(SPS_CMD_GET_SERIAL,dcode,sizeof(dcode));
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("sps30 found with serial: %s"),dcode);
   sps30_cmd(SPS_CMD_START_MEASUREMENT);
+  sps30_running = 1;
   sps30_ready = 1;
 }
 
@@ -153,6 +157,8 @@ const char HTTP_SNS_SPS30_c[] PROGMEM ="{s}SPS30 " "TYPSIZ" "{m}%s " "um" "{e}";
 void SPS30_Every_Second() {
 
   if (!sps30_ready) return;
+  if (!sps30_running) return;
+
 
   if (uptime%10==0) {
     uint8_t vars[sizeof(float)*10];
@@ -179,7 +185,7 @@ void SPS30_Every_Second() {
     // so count hours, should be in Settings
     SPS30_HOURS++;
     if (SPS30_HOURS>(7*24)) {
-      sps30_cmd(SPS_CMD_CLEAN);
+      CmdClean();
       SPS30_HOURS=0;
     }
   }
@@ -189,6 +195,10 @@ void SPS30_Every_Second() {
 void SPS30_Show(bool json) {
   char str[64];
   if (!sps30_ready) {
+    return;
+  }
+
+  if (!sps30_running) {
     return;
   }
 
@@ -241,22 +251,29 @@ void SPS30_Show(bool json) {
 
 }
 
+void CmdClean(void) {
+  sps30_cmd(SPS_CMD_CLEAN);
+  Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
+  ResponseAppend_P(PSTR(",\"SPS30\":{\"CFAN\":\"true\"}}"));
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+}
 
-bool XSNS_44_cmd(void) {
-  boolean serviced = true;
-  const char S_JSON_SPS30[] = "{\"" D_CMND_SENSOR "%d\":%s}";
-
+bool SPS30_cmd(void) {
+  bool serviced = true;
   if (XdrvMailbox.data_len > 0) {
       char *cp=XdrvMailbox.data;
       if (*cp=='c') {
         // clean cmd
-        sps30_cmd(SPS_CMD_CLEAN);
-        cp++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SPS30, XSNS_44,"clean_fan");
+        CmdClean();
+      } else if (*cp=='0' || *cp=='1') {
+        sps30_running=*cp&1;
+        sps30_cmd(sps30_running?SPS_CMD_START_MEASUREMENT:SPS_CMD_STOP_MEASUREMENT);
       } else {
         serviced=false;
       }
   }
+  Response_P(PSTR("{\"SPS30\":\"%s\"}"), sps30_running?"running":"stopped");
+
   return serviced;
 }
 
@@ -282,7 +299,7 @@ bool Xsns44(byte function)
         break;
       case FUNC_COMMAND_SENSOR:
         if (XSNS_44 == XdrvMailbox.index) {
-          result = XSNS_44_cmd();
+          result = SPS30_cmd();
         }
         break;
 #ifdef USE_WEBSERVER
