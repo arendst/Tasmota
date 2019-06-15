@@ -36,12 +36,9 @@ no math hierarchy  (costs ram and execution time, better group with brackets, an
 keywords if then else endif, or, and are better readable for beginners (others may use {})
 
 changelog after merging to Tasmota
-1 show remaining chars in webui,
-2 now can expand script space to 2048 chars by setting MAX_RULE_SETS to 4
-3 at24256 eeprom support #ifdef  defaults to 4095 bytes script size (reduces heap by this amount)
-4 some housekeeping
-5 sd card support #ifdef allows eg for sensor logging
-6 download link for sdcard files
+1. draw color picture from sd card
+2. upload files to sc card
+
 
 \*********************************************************************************************/
 
@@ -96,6 +93,21 @@ struct M_FILT {
   float rbuff[1];
 };
 
+
+typedef union {
+  uint8_t data;
+  struct {
+      uint8_t nutu8 : 1;
+      uint8_t nutu7 : 1;
+      uint8_t nutu6 : 1;
+      uint8_t nutu5 : 1;
+      uint8_t nutu4 : 1;
+      uint8_t nutu3 : 1;
+      uint8_t is_dir : 1;
+      uint8_t is_open : 1;
+  };
+} FILE_FLAGS;
+
 #define SFS_MAX 4
 // global memory
 struct SCRIPT_MEM {
@@ -122,7 +134,7 @@ struct SCRIPT_MEM {
     uint8_t flags;
 #ifdef USE_SCRIPT_FATFS
     File files[SFS_MAX];
-    uint8_t file_flags[SFS_MAX];
+    FILE_FLAGS file_flags[SFS_MAX];
     uint8_t script_sd_found;
     char flink[2][14];
 #endif
@@ -139,6 +151,7 @@ char *GetNumericResult(char *lp,uint8_t lastop,float *fp,JsonObject *jo);
 char *GetStringResult(char *lp,uint8_t lastop,char *cp,JsonObject *jo);
 char *ForceStringVar(char *lp,char *dstr);
 void send_download(void);
+uint8_t reject(char *name);
 
 void ScriptEverySecond(void) {
 
@@ -496,7 +509,7 @@ char *script;
       }
     }
     for (uint8_t cnt=0;cnt<SFS_MAX;cnt++) {
-      glob_script_mem.file_flags[cnt]=0;
+      glob_script_mem.file_flags[cnt].is_open=0;
     }
 #endif
 
@@ -887,12 +900,20 @@ chknext:
           uint8_t mode=fvar;
           fvar=-1;
           for (uint8_t cnt=0;cnt<SFS_MAX;cnt++) {
-            if (!(glob_script_mem.file_flags[0]&1)) {
-              if (mode==0) glob_script_mem.files[0]=SD.open(str,FILE_READ);
-              else glob_script_mem.files[0]=SD.open(str,FILE_WRITE);
-              if (glob_script_mem.files[0]) {
+            if (!glob_script_mem.file_flags[cnt].is_open) {
+              if (mode==0) {
+                glob_script_mem.files[cnt]=SD.open(str,FILE_READ);
+                if (glob_script_mem.files[cnt].isDirectory()) {
+                  glob_script_mem.files[cnt].rewindDirectory();
+                  glob_script_mem.file_flags[cnt].is_dir=1;
+                } else {
+                  glob_script_mem.file_flags[cnt].is_dir=0;
+                }
+              }
+              else glob_script_mem.files[cnt]=SD.open(str,FILE_WRITE);
+              if (glob_script_mem.files[cnt]) {
                 fvar=cnt;
-                glob_script_mem.file_flags[0]=1;
+                glob_script_mem.file_flags[cnt].is_open=1;
               } else {
                 toLog("file open failed");
               }
@@ -909,7 +930,18 @@ chknext:
           uint8_t ind=fvar;
           if (ind>=SFS_MAX) ind=SFS_MAX-1;
           glob_script_mem.files[ind].close();
-          glob_script_mem.file_flags[ind]=0;
+          glob_script_mem.file_flags[ind].is_open=0;
+          fvar=0;
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"ff(",3)) {
+          lp+=3;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          uint8_t ind=fvar;
+          if (ind>=SFS_MAX) ind=SFS_MAX-1;
+          glob_script_mem.files[ind].flush();
           fvar=0;
           lp++;
           len=0;
@@ -923,7 +955,7 @@ chknext:
           lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
           uint8_t ind=fvar;
           if (ind>=SFS_MAX) ind=SFS_MAX-1;
-          if (glob_script_mem.file_flags[ind]&1) {
+          if (glob_script_mem.file_flags[ind].is_open) {
             fvar=glob_script_mem.files[ind].print(str);
           } else {
             fvar=0;
@@ -960,19 +992,37 @@ chknext:
           uint8_t index=0;
           char str[glob_script_mem.max_ssize+1];
           char *cp=str;
-          if (glob_script_mem.file_flags[find]&1) {
-            while (glob_script_mem.files[find].available()) {
-              uint8_t buf[1];
-              glob_script_mem.files[find].read(buf,1);
-              if (buf[0]=='\t' || buf[0]==',' || buf[0]=='\n' || buf[0]=='\r') {
-                break;
-              } else {
-                *cp++=buf[0];
-                index++;
-                if (index>=glob_script_mem.max_ssize-1) break;
+          if (glob_script_mem.file_flags[find].is_open) {
+            if (glob_script_mem.file_flags[find].is_dir) {
+              while (true) {
+                File entry=glob_script_mem.files[find].openNextFile();
+                if (entry) {
+                  if (!reject((char*)entry.name())) {
+                    strcpy(str,entry.name());
+                    entry.close();
+                    break;
+                  }
+                } else {
+                  *cp=0;
+                  break;
+                }
+                entry.close();
               }
+              index=strlen(str);
+            } else {
+              while (glob_script_mem.files[find].available()) {
+                uint8_t buf[1];
+                glob_script_mem.files[find].read(buf,1);
+                if (buf[0]=='\t' || buf[0]==',' || buf[0]=='\n' || buf[0]=='\r') {
+                  break;
+                } else {
+                  *cp++=buf[0];
+                  index++;
+                  if (index>=glob_script_mem.max_ssize-1) break;
+                }
+              }
+              *cp=0;
             }
-            *cp=0;
           } else {
             strcpy(str,"file error");
           }
@@ -991,6 +1041,59 @@ chknext:
           len=0;
           goto exit;
         }
+#ifdef USE_SCRIPT_FATFS_EXT
+        if (!strncmp(vname,"fe(",3)) {
+          lp+=3;
+          char str[glob_script_mem.max_ssize+1];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          // execute script
+          File ef=SD.open(str);
+          if (ef) {
+            uint16_t fsiz=ef.size();
+            if (fsiz<2048) {
+              char *script=(char*)calloc(fsiz+16,1);
+              if (script) {
+                ef.read((uint8_t*)script,fsiz);
+                execute_script(script);
+                free(script);
+                fvar=1;
+              }
+            }
+            ef.close();
+          }
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"fmd(",4)) {
+          lp+=4;
+          char str[glob_script_mem.max_ssize+1];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          fvar=SD.mkdir(str);
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"frd(",4)) {
+          lp+=4;
+          char str[glob_script_mem.max_ssize+1];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          fvar=SD.rmdir(str);
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"fx(",3)) {
+          lp+=3;
+          char str[glob_script_mem.max_ssize+1];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          if (SD.exists(str)) fvar=1;
+          else fvar=0;
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif
         if (!strncmp(vname,"fl1(",4) || !strncmp(vname,"fl2(",4) )  {
           uint8_t lknum=*(lp+2)&3;
           lp+=4;
@@ -1746,6 +1849,7 @@ void toSLog(const char *str) {
 
 
 
+//#define IFTHEN_DEBUG
 
 #define IF_NEST 8
 // execute section of scripter
@@ -1800,7 +1904,8 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
             }
             glob_script_mem.var_not_found=0;
 
-#if SCRIPT_DEBUG>0
+//#if SCRIPT_DEBUG>0
+#ifdef IFTHEN_DEBUG
             char tbuff[128];
             sprintf(tbuff,"stack=%d,state=%d,cmpres=%d line: ",ifstck,if_state[ifstck],if_result[ifstck]);
             toLogEOL(tbuff,lp);
@@ -1825,6 +1930,8 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                 if (ifstck>0) {
                   ifstck--;
                 }
+                if (if_state[ifstck]==3 && if_result[ifstck]) goto next_line;
+                if (if_state[ifstck]==2 && !if_result[ifstck]) goto next_line;
                 s_ifstck=ifstck; // >>>>>
                 goto next_line;
             } else if (!strncmp(lp,"or",2) && if_state[ifstck]==1) {
@@ -1866,6 +1973,8 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                 if (ifstck>0) {
                   ifstck--;
                 }
+                if (if_state[ifstck]==3 && if_result[ifstck]) goto next_line;
+                if (if_state[ifstck]==2 && !if_result[ifstck]) goto next_line;
                 s_ifstck=ifstck; // >>>>>
               }
             }
@@ -1926,16 +2035,20 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
 
             if (swflg==2) goto next_line;
 
-
             SCRIPT_SKIP_SPACES
             //SCRIPT_SKIP_EOL
             if (*lp==SCRIPT_EOL) {
              goto next_line;
             }
+
             //toLogN(lp,16);
             if (if_state[s_ifstck]==3 && if_result[s_ifstck]) goto next_line;
             if (if_state[s_ifstck]==2 && !if_result[s_ifstck]) goto next_line;
 
+#ifdef IFTHEN_DEBUG
+            sprintf(tbuff,"stack=%d,state=%d,cmpres=%d execute line: ",ifstck,if_state[ifstck],if_result[ifstck]);
+            toLogEOL(tbuff,lp);
+#endif
             s_ifstck=ifstck;
 
             if (!strncmp(lp,"break",5)) {
@@ -1946,8 +2059,8 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                 section=0;
               }
               break;
-            } else if (!strncmp(lp,"dprec",5)) {
-              lp+=5;
+            } else if (!strncmp(lp,"dp",2) && isdigit(*(lp+2))) {
+              lp+=2;
               // number precision
               glob_script_mem.script_dprec=atoi(lp);
               goto next_line;
@@ -1987,6 +2100,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
             else if (!strncmp(lp,"=>",2)) {
                 // execute cmd
                 lp+=2;
+                char *slp=lp;
                 SCRIPT_SKIP_SPACES
                 #define SCRIPT_CMDMEM 512
                 char *cmdmem=(char*)malloc(SCRIPT_CMDMEM);
@@ -2019,6 +2133,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                   }
                   if (cmdmem) free(cmdmem);
                 }
+                lp=slp;
                 goto next_line;
             } else if (!strncmp(lp,"=#",2)) {
                 // subroutine
@@ -2374,6 +2489,9 @@ void Scripter_save_pvars(void) {
 #define WEB_HANDLE_SCRIPT "s10"
 #define D_CONFIGURE_SCRIPT "Edit script"
 #define D_SCRIPT "edit script"
+#define D_SDCARD_UPLOAD "file upload"
+#define D_SDCARD_DIR "sd card directory"
+#define D_UPL_DONE "Done"
 
 const char S_CONFIGURE_SCRIPT[] PROGMEM = D_CONFIGURE_SCRIPT;
 
@@ -2387,8 +2505,8 @@ const char HTTP_FORM_SCRIPT[] PROGMEM =
 
 const char HTTP_FORM_SCRIPT1[] PROGMEM =
     "<div style='text-align:right' id='charNum'> </div>"
-    "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>script enable</b><br>"
-    "<br><textarea  id='t1' rows='8' cols='80' maxlength='%d' style='font-size: 12pt' >";
+    "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>script enable</b><br/>"
+    "<br><textarea  id='t1' name='t1' rows='8' cols='80' maxlength='%d' style='font-size: 12pt' >";
 
 
 const char HTTP_FORM_SCRIPT1b[] PROGMEM =
@@ -2408,59 +2526,251 @@ const char HTTP_FORM_SCRIPT1b[] PROGMEM =
     "});"
     "</script>";
 
+
 #ifdef USE_SCRIPT_FATFS
 const char HTTP_FORM_SCRIPT1c[] PROGMEM =
 "<button name='d%d' type='submit' class='button bgrn'>Download '%s'</button>";
+#ifdef SDCARD_DIR
+const char HTTP_FORM_SCRIPT1d[] PROGMEM =
+"<button method='post' name='upl' type='submit' class='button bgrn'>SD card directory</button>";
+#else
+const char HTTP_FORM_SCRIPT1d[] PROGMEM =
+"<button method='post' name='upl' type='submit' class='button bgrn'>Upload files</button>";
 #endif
+
+#ifdef SDCARD_DIR
+const char S_SCRIPT_FILE_UPLOAD[] PROGMEM = D_SDCARD_DIR;
+#else
+const char S_SCRIPT_FILE_UPLOAD[] PROGMEM = D_SDCARD_UPLOAD;
+#endif
+
+const char HTTP_FORM_FILE_UPLOAD[] PROGMEM =
+"<div id='f1' name='f1' style='display:block;'>"
+"<fieldset><legend><b>&nbsp;%s"  "&nbsp;</b></legend>";
+const char HTTP_FORM_FILE_UPG[] PROGMEM =
+"<form method='post' action='u3' enctype='multipart/form-data'>"
+"<br/><input type='file' name='u3'><br/>"
+"<br/><button type='submit' onclick='eb(\"f1\").style.display=\"none\";eb(\"f2\").style.display=\"block\";this.form.submit();'>" D_START " %s</button></form>";
+
+const char HTTP_FORM_FILE_UPGb[] PROGMEM =
+"</fieldset>"
+"</div>"
+"<div id='f2' name='f2' style='display:none;text-align:center;'><b>" D_UPLOAD_STARTED " ...</b></div>";
+
+const char HTTP_FORM_SDC_DIRa[] PROGMEM =
+"<div style='text-align:left'>";
+const char HTTP_FORM_SDC_DIRb[] PROGMEM =
+ "<pre><a href='%s' file='%s'>%s</a>    %d</pre>";
+const char HTTP_FORM_SDC_DIRd[] PROGMEM =
+"<pre><a href='%s' file='%s'>%s</a></pre>";
+const char HTTP_FORM_SDC_DIRc[] PROGMEM =
+"</div>";
+const char HTTP_FORM_SDC_HREF[] PROGMEM =
+"http://%s/upl?download=%s/%s";
+#endif
+
+
 
 #ifdef USE_SCRIPT_FATFS
 
-void script_download(uint8_t num) {
-  File download_file;
-  WiFiClient download_Client;
+uint8_t reject(char *name) {
+  if (*name=='_') return 1;
+  if (!strncmp(name,"SPOTLI~1",8)) return 1;
+  if (!strncmp(name,"TRASHE~1",8)) return 1;
+  if (!strncmp(name,"FSEVEN~1",8)) return 1;
+  if (!strncmp(name,"SYSTEM~1",8)) return 1;
+  return 0;
+}
+
+void ListDir(char *path, uint8_t depth) {
+  char name[32];
+  char npath[128];
+  char format[12];
+  sprintf(format,"%%-%ds",24-depth);
+
+  File dir=SD.open(path);
+  if (dir) {
+    dir.rewindDirectory();
+    if (strlen(path)>1) {
+      snprintf_P(npath,sizeof(npath),PSTR("http://%s/upl?download=%s"),WiFi.localIP().toString().c_str(),path);
+      for (uint8_t cnt=strlen(npath)-1;cnt>0;cnt--) {
+        if (npath[cnt]=='/') {
+          if (npath[cnt-1]=='=') npath[cnt+1]=0;
+          else npath[cnt]=0;
+          break;
+        }
+      }
+      WSContentSend_P(HTTP_FORM_SDC_DIRd,npath,path,"..");
+    }
+    while (true) {
+      File entry=dir.openNextFile();
+      if (!entry) {
+        break;
+      }
+      char *pp=path;
+      if (!*(pp+1)) pp++;
+      char *cp=name;
+      // osx formatted disks contain a lot of stuff we dont want
+      if (reject((char*)entry.name())) goto fclose;
+
+      for (uint8_t cnt=0;cnt<depth;cnt++) {
+        *cp++='-';
+      }
+      // unfortunately no time date info in class File
+      sprintf(cp,format,entry.name());
+      if (entry.isDirectory()) {
+        snprintf_P(npath,sizeof(npath),HTTP_FORM_SDC_HREF,WiFi.localIP().toString().c_str(),pp,entry.name());
+        WSContentSend_P(HTTP_FORM_SDC_DIRd,npath,entry.name(),name);
+        uint8_t plen=strlen(path);
+        if (plen>1) {
+          strcat(path,"/");
+        }
+        strcat(path,entry.name());
+        ListDir(path,depth+4);
+        path[plen]=0;
+      } else {
+          snprintf_P(npath,sizeof(npath),HTTP_FORM_SDC_HREF,WiFi.localIP().toString().c_str(),pp,entry.name());
+          WSContentSend_P(HTTP_FORM_SDC_DIRb,npath,entry.name(),name,entry.size());
+      }
+      fclose:
+      entry.close();
+    }
+    dir.close();
+  }
+}
+
+char path[48];
+
+void Script_FileUploadConfiguration(void)
+{
+  uint8_t depth=0;
+  strcpy(path,"/");
 
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  if (!SD.exists(glob_script_mem.flink[num-1])) {
-    toLog("file not found");
-    return;
-  }
-
-  download_file=SD.open(glob_script_mem.flink[num-1],FILE_READ);
-  if (!download_file) {
-    toLog("could not open file");
-  }
-  uint32_t flen=download_file.size();
-
-  download_Client = WebServer->client();
-  WebServer->setContentLength(flen);
-
-  char attachment[100];
-  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"),glob_script_mem.flink[num-1]);
-  WebServer->sendHeader(F("Content-Disposition"), attachment);
-  WSSend(200, CT_STREAM, "");
-
-  uint8_t buff[512];
-  uint16_t bread;
-
-  // transfer is about 150kb/s
-  uint8_t cnt=0;
-  while (download_file.available()) {
-    bread=download_file.read(buff,sizeof(buff));
-    uint16_t bw=download_Client.write((const char*)buff,bread);
-    if (!bw) break;
-    cnt++;
-    if (cnt>7) {
-      cnt=0;
-      if (glob_script_mem.script_loglevel&0x80) {
-        // this indeed multitasks, but is slower 50 kB/s
-        loop();
-      }
+  if (WebServer->hasArg("download")) {
+    String stmp = WebServer->arg("download");
+    char *cp=(char*)stmp.c_str();
+    if (DownloadFile(cp)) {
+      // is directory
+      strcpy(path,cp);
     }
   }
-  download_file.close();
-  download_Client.stop();
+
+  WSContentStart_P(S_SCRIPT_FILE_UPLOAD);
+  WSContentSendStyle();
+  WSContentSend_P(HTTP_FORM_FILE_UPLOAD,D_SDCARD_DIR);
+  WSContentSend_P(HTTP_FORM_FILE_UPG, "upload");
+#ifdef SDCARD_DIR
+  WSContentSend_P(HTTP_FORM_SDC_DIRa);
+  if (glob_script_mem.script_sd_found) {
+    ListDir(path,depth);
+  }
+  WSContentSend_P(HTTP_FORM_SDC_DIRc);
+#endif
+  WSContentSend_P(HTTP_FORM_FILE_UPGb);
+  WSContentSpaceButton(BUTTON_CONFIGURATION);
+  WSContentStop();
+  upload_error = 0;
 }
+
+File upload_file;
+
+void ScriptFileUploadSuccess(void) {
+  WSContentStart_P(S_INFORMATION);
+  WSContentSendStyle();
+  WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
+  WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br/>"), WebColor(COL_TEXT_SUCCESS));
+  WSContentSend_P(PSTR("</div><br/>"));
+  WSContentSend_P(PSTR("<p><form action='%s' method='get'><button>%s</button></form></p>"),"/upl",D_UPL_DONE);
+  //WSContentSpaceButton(BUTTON_MAIN);
+  WSContentStop();
+}
+
+void script_upload(void) {
+
+  //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: file upload"));
+
+  HTTPUpload& upload = WebServer->upload();
+  if (upload.status == UPLOAD_FILE_START) {
+    char npath[48];
+    sprintf(npath,"%s/%s",path,upload.filename.c_str());
+    SD.remove(npath);
+    upload_file=SD.open(npath,FILE_WRITE);
+    if (!upload_file) upload_error=1;
+  } else if(upload.status == UPLOAD_FILE_WRITE) {
+    if (upload_file) upload_file.write(upload.buf,upload.currentSize);
+  } else if(upload.status == UPLOAD_FILE_END) {
+    if (upload_file) upload_file.close();
+    if (upload_error) {
+      AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
+    }
+  } else {
+    upload_error=1;
+    WebServer->send(500, "text/plain", "500: couldn't create file");
+  }
+}
+
+uint8_t DownloadFile(char *file) {
+  File download_file;
+  WiFiClient download_Client;
+
+    if (!SD.exists(file)) {
+      toLog("file not found");
+      return 0;
+    }
+
+    download_file=SD.open(file,FILE_READ);
+    if (!download_file) {
+      toLog("could not open file");
+      return 0;
+    }
+
+    if (download_file.isDirectory()) {
+      download_file.close();
+      return 1;
+    }
+
+    uint32_t flen=download_file.size();
+
+    download_Client = WebServer->client();
+    WebServer->setContentLength(flen);
+
+    char attachment[100];
+    char *cp;
+    for (uint8_t cnt=strlen(file); cnt>=0; cnt--) {
+      if (file[cnt]=='/') {
+        cp=&file[cnt+1];
+        break;
+      }
+    }
+    snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=%s"),cp);
+    WebServer->sendHeader(F("Content-Disposition"), attachment);
+    WSSend(200, CT_STREAM, "");
+
+    uint8_t buff[512];
+    uint16_t bread;
+
+    // transfer is about 150kb/s
+    uint8_t cnt=0;
+    while (download_file.available()) {
+      bread=download_file.read(buff,sizeof(buff));
+      uint16_t bw=download_Client.write((const char*)buff,bread);
+      if (!bw) break;
+      cnt++;
+      if (cnt>7) {
+        cnt=0;
+        if (glob_script_mem.script_loglevel&0x80) {
+          // this indeed multitasks, but is slower 50 kB/s
+          loop();
+        }
+      }
+    }
+    download_file.close();
+    download_Client.stop();
+    return 0;
+}
+
 #endif
 
 void HandleScriptConfiguration(void)
@@ -2477,10 +2787,13 @@ void HandleScriptConfiguration(void)
 
 #ifdef USE_SCRIPT_FATFS
     if (WebServer->hasArg("d1")) {
-      script_download(1);
+      DownloadFile(glob_script_mem.flink[0]);
     }
     if (WebServer->hasArg("d2")) {
-      script_download(2);
+      DownloadFile(glob_script_mem.flink[1]);
+    }
+    if (WebServer->hasArg("upl")) {
+      Script_FileUploadConfiguration();
     }
 #endif
 
@@ -2496,8 +2809,11 @@ void HandleScriptConfiguration(void)
     WSContentSend_P(HTTP_FORM_SCRIPT1b);
 
 #ifdef USE_SCRIPT_FATFS
-    if (glob_script_mem.flink[0][0]) WSContentSend_P(HTTP_FORM_SCRIPT1c,1,glob_script_mem.flink[0]);
-    if (glob_script_mem.flink[1][0]) WSContentSend_P(HTTP_FORM_SCRIPT1c,2,glob_script_mem.flink[1]);
+    if (glob_script_mem.script_sd_found) {
+      WSContentSend_P(HTTP_FORM_SCRIPT1d);
+      if (glob_script_mem.flink[0][0]) WSContentSend_P(HTTP_FORM_SCRIPT1c,1,glob_script_mem.flink[0]);
+      if (glob_script_mem.flink[1][0]) WSContentSend_P(HTTP_FORM_SCRIPT1c,2,glob_script_mem.flink[1]);
+    }
 #endif
 
     WSContentSend_P(HTTP_FORM_END);
@@ -2515,8 +2831,6 @@ void strrepl_inplace(char *str, const char *a, const char *b) {
     cursor += strlen(b);
   }
 }
-
-
 
 void ScriptSaveSettings(void) {
 
@@ -2610,7 +2924,7 @@ bool ScriptCommand(void) {
         for (uint8_t count=0; count<XdrvMailbox.data_len; count++) {
           if (XdrvMailbox.data[count]==';') XdrvMailbox.data[count]='\n';
         }
-        execute_script(XdrvMailbox.data);
+        if (bitRead(Settings.rule_enabled, 0)) execute_script(XdrvMailbox.data);
         /*
         for (uint8_t count=0; count<XdrvMailbox.data_len; count++) {
           if (XdrvMailbox.data[count]=='\n') XdrvMailbox.data[count]=';';
@@ -2622,6 +2936,16 @@ bool ScriptCommand(void) {
 
   return serviced;
 }
+
+
+#ifdef USE_SCRIPT_FATFS
+void dateTime(uint16_t* date, uint16_t* time) {
+  // return date using FAT_DATE macro to format fields
+  *date = FAT_DATE(RtcTime.year,RtcTime.month, RtcTime.day_of_month);
+  // return time using FAT_TIME macro to format fields
+  *time = FAT_TIME(RtcTime.hour,RtcTime.minute,RtcTime.second);
+}
+#endif
 
 /*********************************************************************************************\
  * Interface
@@ -2663,8 +2987,6 @@ bool Xdrv10(uint8_t function)
       }
 #endif
 
-
-
 #ifdef USE_SCRIPT_FATFS
       if (SD.begin(USE_SCRIPT_FATFS)) {
         glob_script_mem.script_sd_found=1;
@@ -2684,6 +3006,8 @@ bool Xdrv10(uint8_t function)
         glob_script_mem.script_pram_size=MAX_SCRIPT_SIZE;
 
         glob_script_mem.flags=1;
+        SdFile::dateTimeCallback(dateTime);
+
       } else {
         glob_script_mem.script_sd_found=0;
       }
@@ -2720,6 +3044,11 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_WEB_ADD_HANDLER:
       WebServer->on("/" WEB_HANDLE_SCRIPT, HandleScriptConfiguration);
+#ifdef USE_SCRIPT_FATFS
+      WebServer->on("/u3", HTTP_POST,[]() { WebServer->sendHeader("Location","/u3");WebServer->send(303);},script_upload);
+      WebServer->on("/u3", HTTP_GET,ScriptFileUploadSuccess);
+      WebServer->on("/upl", HTTP_GET,Script_FileUploadConfiguration);
+#endif
       break;
 #endif // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:
