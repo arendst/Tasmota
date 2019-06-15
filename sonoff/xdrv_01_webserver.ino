@@ -140,12 +140,10 @@ const char HTTP_SCRIPT_RELOAD_OTA[] PROGMEM =
   "setTimeout(function(){location.href='.';}," STR(HTTP_OTA_RESTART_RECONNECT_TIME) ");";
 
 const char HTTP_SCRIPT_CONSOL[] PROGMEM =
-  "var sn=0;"                             // Scroll position
-  "var id=0;"                             // Get most of weblog initially
+  "var sn=0,id=0;"                        // Scroll position, Get most of weblog initially
   "function l(p){"                        // Console log and command service
-    "var c,o,t;"
+    "var c,o='',t;"
     "clearTimeout(lt);"
-    "o='';"
     "t=eb('t1');"
     "if(p==1){"
       "c=eb('c1');"
@@ -278,7 +276,7 @@ const char HTTP_SCRIPT_INFO_END[] PROGMEM =
   "wl(i);";
 
 const char HTTP_HEAD_LAST_SCRIPT[] PROGMEM =
-  "function id(){"                        // Add label name='' based on provided id=''
+  "function jd(){"                        // Add label name='' based on provided id=''
     "var t=0,i=document.querySelectorAll('input,button,textarea,select');"
     "while(i.length>=t){"
       "if(i[t]){"
@@ -287,7 +285,7 @@ const char HTTP_HEAD_LAST_SCRIPT[] PROGMEM =
       "t++;"
     "}"
   "}"
-  "wl(id);"                               // Add name='' to any id='' in input,button,textarea,select
+  "wl(jd);"                               // Add name='' to any id='' in input,button,textarea,select
   "</script>";
 
 const char HTTP_HEAD_STYLE1[] PROGMEM =
