@@ -147,6 +147,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_PZEM_AC                           // Add support for PZEM014,016 Energy monitor (+1k1 code)
 #define USE_PZEM_DC                           // Add support for PZEM003,017 Energy monitor (+1k1 code)
 #define USE_MCP39F501                         // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
+#define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #define USE_MAX31855                          // Add support for MAX31855 K-Type thermocouple sensor using softSPI
 #define USE_IR_REMOTE                         // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
   #define USE_IR_HVAC                         // Support for HVAC system using IR (+2k code)
@@ -217,6 +218,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                          // Disable support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
+#define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR remote commands using library IRremoteESP8266 and ArduinoJson
 #undef USE_IR_RECEIVE                         // Disable support for IR receiver
@@ -326,7 +328,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 //#undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 //#undef USE_RULES                              // Disable support for rules
 #undef USE_COUNTER                            // Disable counters
-#undef USE_DHT                                // Disable internal DHT sensor
 #undef USE_DS18x20                            // Disable DS18x20 sensor
 #undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
 #undef USE_DS18B20                            // Disable internal DS18B20 sensor
@@ -350,6 +351,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 //#undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
+#undef USE_DHT                                // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
@@ -397,7 +399,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_SCRIPT                             // Disable support for script
 #undef USE_LIGHT                              // Disable support for lights
 #undef USE_COUNTER                            // Disable counters
-#undef USE_DHT                                // Disable internal DHT sensor
 #undef USE_DS18x20                            // Disable DS18x20 sensor
 #undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
 #undef USE_DS18B20                            // Disable internal DS18B20 sensor
@@ -421,7 +422,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
-#undef USE_MAX31855                           // DIsable MAX31855 K-Type thermocouple sensor using softSPI
+#undef USE_DHT                                // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
+#undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
