@@ -930,6 +930,7 @@ void HandleRoot(void)
 
   WSContentSend_P(PSTR("<div id='l1' name='l1'></div>"));
   if (devices_present) {
+#ifdef USE_LIGHT
     if (light_type) {
       if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
         WSContentSend_P(HTTP_MSG_SLIDER1, LightGetColorTemp());
@@ -938,6 +939,7 @@ void HandleRoot(void)
         WSContentSend_P(HTTP_MSG_SLIDER2, Settings.light_dimmer);
       }
     }
+#endif
     WSContentSend_P(HTTP_TABLE100);
     WSContentSend_P(PSTR("<tr>"));
     if (SONOFF_IFAN02 == my_module_type) {

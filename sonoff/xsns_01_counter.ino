@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_COUNTER
 /*********************************************************************************************\
  * Counter sensors (water meters, electricity meters etc.)
 \*********************************************************************************************/
@@ -165,8 +166,11 @@ bool Xsns01(uint8_t function)
       break;
 #endif  // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:
+    case FUNC_SAVE_AT_MIDNIGHT:
       CounterSaveState();
       break;
   }
   return result;
 }
+
+#endif  // USE_COUNTER

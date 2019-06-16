@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_LIGHT
 #ifdef USE_PS_16_DZ
 
 #define XDRV_19                19
@@ -244,3 +245,4 @@ bool Xdrv19(uint8_t function)
 }
 
 #endif  // USE_PS_16_DZ
+#endif  // USE_LIGHT

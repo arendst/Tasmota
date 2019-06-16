@@ -465,6 +465,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_PWM4_INV,
   GPIO_PWM5,           // RGBCW Warm White
   GPIO_PWM5_INV,
+#ifdef USE_COUNTER
   GPIO_CNTR1,          // Counters
   GPIO_CNTR1_NP,
   GPIO_CNTR2,
@@ -473,6 +474,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_CNTR3_NP,
   GPIO_CNTR4,
   GPIO_CNTR4_NP,
+#endif
   GPIO_TXD,            // Serial interface
   GPIO_RXD,            // Serial interface
 #ifdef USE_I2C
@@ -497,7 +499,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_DS18B20) || defined(USE_DS18x20) || defined(USE_DS18x20_LEGACY)
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
 #endif
-#ifdef USE_WS2812
+#if defined(USE_LIGHT) && defined(USE_WS2812)
   GPIO_WS2812,         // WS2812 Led string
 #endif
 #ifdef USE_IR_REMOTE
@@ -588,7 +590,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MP3_PLAYER
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
 #endif
-#ifdef USE_TUYA_DIMMER
+#if defined(USE_LIGHT) && defined(USE_TUYA_DIMMER)
   GPIO_TUYA_TX,        // Tuya Serial interface
   GPIO_TUYA_RX,        // Tuya Serial interface
 #endif
@@ -609,13 +611,15 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
 #endif
+#ifdef USE_LIGHT
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
 #ifdef USE_SM16716
   GPIO_SM16716_CLK,    // SM16716 CLOCK
   GPIO_SM16716_DAT,    // SM16716 DATA
   GPIO_SM16716_SEL,    // SM16716 SELECT
-#endif // USE_SM16716
+#endif  // USE_SM16716
+#endif  // USE_LIGHT
 #ifdef ROTARY_V1
   GPIO_ROT1A,          // Rotary switch1 A Pin
   GPIO_ROT1B,          // Rotary switch1 B Pin

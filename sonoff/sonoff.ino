@@ -850,9 +850,11 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
           if ((payload >= param_low) && (payload <= param_high)) {
             Settings.param[pindex] = payload;
             switch (pindex) {
-              case P_RGB_REMAP:
+#ifdef USE_LIGHT
+             case P_RGB_REMAP:
                 LightUpdateColorMapping();
                 break;
+#endif
 #if defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)
               case P_IR_UNKNOW_THRESHOLD:
                 IrReceiveUpdateThreshold();
@@ -1937,15 +1939,19 @@ void MqttShowState(void)
     GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode), sleep, loop_load_avg);
 
   for (uint8_t i = 0; i < devices_present; i++) {
+#ifdef USE_LIGHT
     if (i == light_device -1) {
       LightState(1);
     } else {
+#endif
       ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i +1, sizeof(stemp1), Settings.flag.device_index_enable), GetStateText(bitRead(power, i)));
       if (SONOFF_IFAN02 == my_module_type) {
         ResponseAppend_P(PSTR(",\"" D_CMND_FANSPEED "\":%d"), GetFanspeed());
         break;
       }
+#ifdef USE_LIGHT
     }
+#endif
   }
 
   if (pwm_present) {
@@ -2249,7 +2255,9 @@ void Every250mSeconds(void)
     }
     break;
   case 1:                                                 // Every x.25 second
-    if (MidnightNow()) { CounterSaveState(); }
+    if (MidnightNow()) {
+      XsnsCall(FUNC_SAVE_AT_MIDNIGHT);
+    }
     if (save_data_counter && (backlog_pointer == backlog_index)) {
       save_data_counter--;
       if (save_data_counter <= 0) {
@@ -2637,11 +2645,13 @@ void GpioInit(void)
   devices_present = 1;
 
   light_type = LT_BASIC;                     // Use basic PWM control if SetOption15 = 0
+#ifdef USE_LIGHT
   if (Settings.flag.pwm_control) {
     for (uint8_t i = 0; i < MAX_PWMS; i++) {
       if (pin[GPIO_PWM1 +i] < 99) { light_type++; }  // Use Dimmer/Color control for all PWM as SetOption15 = 1
     }
   }
+#endif  // USE_LIGHT
 
   if (SONOFF_BRIDGE == my_module_type) {
     Settings.flag.mqtt_serial = 0;
@@ -2669,6 +2679,7 @@ void GpioInit(void)
     devices_present = 0;
     baudrate = 19200;
   }
+#ifdef USE_LIGHT
   else if (SONOFF_BN == my_module_type) {   // PWM Single color led (White)
     light_type = LT_PWM1;
   }
@@ -2681,6 +2692,7 @@ void GpioInit(void)
   else if (SONOFF_B1 == my_module_type) {   // RGBWC led
     light_type = LT_RGBWC;
   }
+#endif  // USE_LIGHT
   else {
     if (!light_type) { devices_present = 0; }
     for (uint8_t i = 0; i < MAX_RELAYS; i++) {
@@ -2722,6 +2734,7 @@ void GpioInit(void)
   RotaryInit();
 #endif
 
+#ifdef USE_LIGHT
 #ifdef USE_WS2812
   if (!light_type && (pin[GPIO_WS2812] < 99)) {  // RGB led
     devices_present++;
@@ -2733,7 +2746,8 @@ void GpioInit(void)
     light_type += 3;
     light_type |= LT_SM16716;
   }
-#endif  // ifdef USE_SM16716
+#endif  // USE_SM16716
+#endif  // USE_LIGHT
   if (!light_type) {
     for (uint8_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
       if (pin[GPIO_PWM1 +i] < 99) {

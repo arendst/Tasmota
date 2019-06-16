@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_LIGHT
 #ifdef USE_TUYA_DIMMER
 
 #define XDRV_16                16
@@ -434,3 +435,4 @@ bool Xdrv16(uint8_t function)
 }
 
 #endif  // USE_TUYA_DIMMER
+#endif  // USE_LIGHT

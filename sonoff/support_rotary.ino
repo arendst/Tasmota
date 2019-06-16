@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#ifdef USE_LIGHT
 /*********************************************************************************************\
  * Rotary support
 \*********************************************************************************************/
@@ -155,3 +155,4 @@ void RotaryLoop(void)
 }
 
 #endif  // ROTARY_V1
+#endif  // USE_LIGHT

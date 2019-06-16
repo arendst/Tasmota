@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_LIGHT
 /*********************************************************************************************\
  * PWM, WS2812, Sonoff B1, AiLight, Sonoff Led and BN-SZ01, H801, MagicHome and Arilux
  *
@@ -2332,3 +2333,5 @@ bool Xdrv04(uint8_t function)
   }
   return result;
 }
+
+#endif  // USE_LIGHT

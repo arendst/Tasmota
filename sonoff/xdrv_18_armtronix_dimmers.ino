@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_LIGHT
 #ifdef USE_ARMTRONIX_DIMMERS
 /*********************************************************************************************\
  * This code can be used for Armtronix dimmers.
@@ -196,3 +197,4 @@ bool Xdrv18(uint8_t function)
 }
 
 #endif  // USE_ARMTRONIX_DIMMERS
+#endif  // USE_LIGHT

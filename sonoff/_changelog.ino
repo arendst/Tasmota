@@ -3,6 +3,7 @@
  * Add checkbox to GUI password field enabling visibility during password entry only (#5934)
  * Add using heap when more than 199 IRSend values need to be send. May need increase of define MQTT_MAX_PACKET_SIZE too (#5950)
  * Fix channel command for dual dimmers (#5940)
+ * Add define USE_COUNTER to my_user_config.h to save space in sonoff-basic.bin and sonoff-minimal.bin
  *
  * 6.5.0.15 20190606
  * Change pubsubclient MQTT_KEEPALIVE from 10 to 30 seconds in preparation of AWS IoT support

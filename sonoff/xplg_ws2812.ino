@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_LIGHT
 #ifdef USE_WS2812
 /*********************************************************************************************\
  * WS2812 RGB / RGBW Leds using NeopixelBus library
@@ -394,3 +395,4 @@ void Ws2812ShowScheme(uint8_t scheme)
 }
 
 #endif  // USE_WS2812
+#endif  // USE_LIGHT
