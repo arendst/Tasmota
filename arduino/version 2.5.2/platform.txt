@@ -1,11 +1,12 @@
+
 # ESP8266 platform
 # ------------------------------
 
 # For more info:
 # https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5-3rd-party-Hardware-specification
 
-name=ESP8266 Boards (2.5.1)
-version=2.5.1
+name=ESP8266 Boards (2.5.2)
+version=2.5.2
 
 # These will be removed by the packager script when doing a JSON release
 
@@ -146,3 +147,11 @@ tools.esptool.upload.network_pattern="{network_cmd}" "{runtime.platform.path}/to
 tools.mkspiffs.cmd=mkspiffs
 tools.mkspiffs.cmd.windows=mkspiffs.exe
 tools.mkspiffs.path={runtime.tools.mkspiffs.path}
+
+tools.espupload.cmd=python
+tools.espupload.cmd.windows=python.exe
+tools.espupload.path={runtime.platform.path}/tools
+tools.espupload.upload.protocol=espupload
+tools.espupload.upload.params.verbose=
+tools.espupload.upload.params.quiet=
+tools.espupload.upload.pattern="{cmd}" "{path}/espupload.py" -f "{build.path}/{build.project_name}.bin"

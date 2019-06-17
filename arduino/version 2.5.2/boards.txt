@@ -6,7 +6,9 @@
 
 menu.BoardModel=Model
 menu.baud=Upload Speed
+
 menu.UploadTool=Upload Using
+
 menu.xtal=CPU Frequency
 menu.CrystalFreq=Crystal Frequency
 menu.eesz=Flash Size
