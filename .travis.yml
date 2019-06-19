@@ -12,14 +12,11 @@ script:
   - platformio run
 before_deploy:
   - for file in .pioenvs/*/firmware.bin; do cp $file ${file%/*}.bin; done
-
+  
 deploy:
   provider: releases
   api_key:
     secure: $GITHUB_TOKEN
- 
-file_glob: true
+  file_glob: true
   file: ".pioenvs/*.bin"
-  skip_cleanup: true
-  on:
-    tags: true
+  draft: true
