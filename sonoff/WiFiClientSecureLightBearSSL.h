@@ -26,7 +26,7 @@
 #define wificlientlightbearssl_h
 #include <vector>
 #include "WiFiClient.h"
-#include <bearssl/bearssl.h>
+#include <t_bearssl.h>
 
 namespace BearSSL {
 
@@ -97,6 +97,9 @@ class WiFiClientSecure_light : public WiFiClient {
     inline void clearLastError(void) {
       _last_error = 0;
     }
+    inline size_t getMaxThunkStackUse(void) {
+      return _max_thunkstack_use;
+    }
 
   private:
     void _clear();
@@ -135,6 +138,9 @@ class WiFiClientSecure_light : public WiFiClient {
     const br_x509_trust_anchor *_ta_P;     // PROGMEM server CA
     unsigned _allowed_usages;
     unsigned _cert_issuer_key_type;
+
+    // record the maximum use of ThunkStack for monitoring
+    size_t _max_thunkstack_use;
 
 };
 

@@ -25,6 +25,8 @@
   Modified 8 May 2015 by Hristo Gochkov (proper post and file upload handling)
 */
 
+#include "my_user_config.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 #include "StackThunk_light.h"
@@ -38,7 +40,11 @@ uint32_t *stack_thunk_light_save = NULL;  /* Saved A1 while in BearSSL */
 uint32_t stack_thunk_light_refcnt = 0;
 
 //#define _stackSize (5600/4)
-#define _stackSize (4800/4)   // using a light version of bearssl we can save 1KB
+#ifdef USE_MQTT_AWS_IOT
+  #define _stackSize (5300/4)   // using a light version of bearssl we can save 300 bytes
+#else
+  #define _stackSize (3600/4)   // using a light version of bearssl we can save 2k
+#endif
 #define _stackPaint 0xdeadbeef
 
 /* Add a reference, and allocate the stack if necessary */

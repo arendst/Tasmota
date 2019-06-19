@@ -507,7 +507,8 @@ void MqttReconnect(void)
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data, MQTT_CLEAN_SESSION)) {
 #endif
 #ifdef USE_MQTT_TLS
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connected in %d ms"), millis() - mqtt_connect_time);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connected in %d ms, max ThunkStack used %d"),
+      millis() - mqtt_connect_time, tlsClient->getMaxThunkStackUse());
     if (!tlsClient->getMFLNStatus()) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("MFLN not supported by TLS server"));
     }

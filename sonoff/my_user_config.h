@@ -263,10 +263,10 @@
   #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant"  // Home Assistant discovery prefix
 
 // -- MQTT - TLS - AWS IoT ------------------------
-// Using TLS starting with version v6.5.0.16 compilation will only work using platformio. Arduino IDE will fail.
-//#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+56.7k code, +6.0k mem and +6.6k additional during connection handshake)
-  //#define USE_MQTT_TLS_CA_CERT                   // Force full CA validation instead of fingerprints, uses more memory and slower, but simpler to use
-  //#define USE_MQTT_AWS_IOT                       // Enable MQTT for AWS IoT - requires a private key (+56.7k code, +6.0k mem and +6.6k additional during connection handshake)
+// Using TLS starting with version v6.5.0.16 compilation will only work using Core 2.4.2 and 2.5.2. No longer supported: 2.3.0
+//#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
+  //#define USE_MQTT_TLS_CA_CERT                   // Force full CA validation instead of fingerprints, slower, but simpler to use (+2.2k code, +1.9k mem during connection handshake)
+  //#define USE_MQTT_AWS_IOT                       // Enable MQTT for AWS IoT - requires a private key (+11.4k code, +0.4k mem)
                                                  //   Note: you need to generate a private key + certificate per device and update 'sonoff/sonoff_aws_iot.cpp'
                                                  //   Full documentation here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
 
@@ -479,7 +479,7 @@
  * No user configurable items below
 \*********************************************************************************************/
 
-#if defined(USE_DISCOVERY) && defined(USE_MQTT_TLS)
+#if defined(USE_DISCOVERY) && defined(USE_MQTT_AWS_IOT)
   #error "Select either USE_DISCOVERY or USE_MQTT_AWS_IOT, mDNS takes too much code space and is not needed for AWS IoT"
 #endif
 

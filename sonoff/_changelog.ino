@@ -5,6 +5,7 @@
  * Fix channel command for dual dimmers (#5940)
  * Add define USE_COUNTER to my_user_config.h to save space in sonoff-basic.bin and sonoff-minimal.bin
  * Add define USE_DHT to my_user_config.h to save space in sonoff-basic.bin
+ * TLS+AWS IoT optimization for speed, code and memory footprint
  *
  * 6.5.0.15 20190606
  * Change pubsubclient MQTT_KEEPALIVE from 10 to 30 seconds in preparation of AWS IoT support
