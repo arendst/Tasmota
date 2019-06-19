@@ -216,7 +216,7 @@ bool Xdrv20(uint8_t function)
 {
   bool result = false;
 
-  if (Settings.flag.mqtt_enabled) {
+  if (i2c_flg) {
     switch (function) {
       case FUNC_WEB_ADD_BUTTON:
         WSContentSend_P(HTTP_BTN_MENU_PCF8574);
