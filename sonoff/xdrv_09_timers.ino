@@ -60,11 +60,11 @@ int8_t timer_window[MAX_TIMERS] = { 0 };
  *         Rewrite for Arduino by 'jurs' for German Arduino forum
 \*********************************************************************************************/
 
-const double pi2 = TWO_PI;
-const double pi = PI;
-const double RAD = DEG_TO_RAD;
+const float pi2 = TWO_PI;
+const float pi = PI;
+const float RAD = DEG_TO_RAD;
 
-double JulianischesDatum(void)
+float JulianischesDatum(void)
 {
   // Gregorianischer Kalender
   int Gregor;
@@ -77,10 +77,10 @@ double JulianischesDatum(void)
     Jahr -= 1;
   }
   Gregor = (Jahr / 400) - (Jahr / 100) + (Jahr / 4);  // Gregorianischer Kalender
-  return 2400000.5 + 365.0*Jahr - 679004.0 + Gregor + (int)(30.6001 * (Monat +1)) + Tag + 0.5;
+  return 2400000.5f + 365.0f*Jahr - 679004.0f + Gregor + (int)(30.6001f * (Monat +1)) + Tag + 0.5f;
 }
 
-double InPi(double x)
+float InPi(float x)
 {
   int n = (int)(x / pi2);
   x = x - n*pi2;
@@ -88,38 +88,38 @@ double InPi(double x)
   return x;
 }
 
-double eps(double T)
+float eps(float T)
 {
   // Neigung der Erdachse
-  return RAD * (23.43929111 + (-46.8150*T - 0.00059*T*T + 0.001813*T*T*T)/3600.0);
+  return RAD * (23.43929111f + (-46.8150f*T - 0.00059f*T*T + 0.001813f*T*T*T)/3600.0f);
 }
 
-double BerechneZeitgleichung(double *DK,double T)
+float BerechneZeitgleichung(float *DK,float T)
 {
-  double RA_Mittel = 18.71506921 + 2400.0513369*T +(2.5862e-5 - 1.72e-9*T)*T*T;
-  double M = InPi(pi2 * (0.993133 + 99.997361*T));
-  double L = InPi(pi2 * (0.7859453 + M/pi2 + (6893.0*sin(M)+72.0*sin(2.0*M)+6191.2*T) / 1296.0e3));
-  double e = eps(T);
-  double RA = atan(tan(L)*cos(e));
+  float RA_Mittel = 18.71506921f + 2400.0513369f*T +(2.5862e-5f - 1.72e-9f*T)*T*T;
+  float M = InPi(pi2 * (0.993133f + 99.997361f*T));
+  float L = InPi(pi2 * (0.7859453f + M/pi2 + (6893.0f*sinf(M)+72.0f*sinf(2.0f*M)+6191.2f*T) / 1296.0e3f));
+  float e = eps(T);
+  float RA = atanf(tanf(L)*cosf(e));
   if (RA < 0.0) RA += pi;
   if (L > pi) RA += pi;
   RA = 24.0*RA/pi2;
-  *DK = asin(sin(e)*sin(L));
+  *DK = asinf(sinf(e)*sinf(L));
   // Damit 0<=RA_Mittel<24
-  RA_Mittel = 24.0 * InPi(pi2*RA_Mittel/24.0)/pi2;
-  double dRA = RA_Mittel - RA;
-  if (dRA < -12.0) dRA += 24.0;
-  if (dRA > 12.0) dRA -= 24.0;
-  dRA = dRA * 1.0027379;
+  RA_Mittel = 24.0f * InPi(pi2*RA_Mittel/24.0f)/pi2;
+  float dRA = RA_Mittel - RA;
+  if (dRA < -12.0f) dRA += 24.0f;
+  if (dRA > 12.0f) dRA -= 24.0f;
+  dRA = dRA * 1.0027379f;
   return dRA;
 }
 
 void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8_t *minute_down)
 {
-  double JD2000 = 2451545.0;
-  double JD = JulianischesDatum();
-  double T = (JD - JD2000) / 36525.0;
-  double DK;
+  float JD2000 = 2451545.0f;
+  float JD = JulianischesDatum();
+  float T = (JD - JD2000) / 36525.0f;
+  float DK;
   /*
   h (D) = -0.8333 normaler SA & SU-Gang
   h (D) = -6.0 civile Dämmerung
@@ -127,53 +127,53 @@ void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8
   h (D) = -18.0 astronomische Dämmerung
   */
 //  double h = -50/60.0*RAD;
-  double h = SUNRISE_DAWN_ANGLE *RAD;
-  double B = (((double)Settings.latitude)/1000000) * RAD; // geographische Breite
-  double GeographischeLaenge = ((double)Settings.longitude)/1000000;
+  float h = SUNRISE_DAWN_ANGLE *RAD;
+  float B = (((float)Settings.latitude)/1000000) * RAD; // geographische Breite
+  float GeographischeLaenge = ((float)Settings.longitude)/1000000;
 //  double Zeitzone = 0; //Weltzeit
 //  double Zeitzone = 1; //Winterzeit
 //  double Zeitzone = 2.0;   //Sommerzeit
-  double Zeitzone = ((double)time_timezone) / 60;
-  double Zeitgleichung = BerechneZeitgleichung(&DK, T);
-  double Zeitdifferenz = 12.0*acos((sin(h) - sin(B)*sin(DK)) / (cos(B)*cos(DK)))/pi;
-  double AufgangOrtszeit = 12.0 - Zeitdifferenz - Zeitgleichung;
-  double UntergangOrtszeit = 12.0 + Zeitdifferenz - Zeitgleichung;
-  double AufgangWeltzeit = AufgangOrtszeit - GeographischeLaenge / 15.0;
-  double UntergangWeltzeit = UntergangOrtszeit - GeographischeLaenge / 15.0;
-  double Aufgang = AufgangWeltzeit + Zeitzone;         // In Stunden
-  if (Aufgang < 0.0) {
-    Aufgang += 24.0;
+  float Zeitzone = ((float)time_timezone) / 60;
+  float Zeitgleichung = BerechneZeitgleichung(&DK, T);
+  float Zeitdifferenz = 12.0f*acosf((sinf(h) - sinf(B)*sinf(DK)) / (cosf(B)*cosf(DK)))/pi;
+  float AufgangOrtszeit = 12.0f - Zeitdifferenz - Zeitgleichung;
+  float UntergangOrtszeit = 12.0f + Zeitdifferenz - Zeitgleichung;
+  float AufgangWeltzeit = AufgangOrtszeit - GeographischeLaenge / 15.0f;
+  float UntergangWeltzeit = UntergangOrtszeit - GeographischeLaenge / 15.0f;
+  float Aufgang = AufgangWeltzeit + Zeitzone;         // In Stunden
+  if (Aufgang < 0.0f) {
+    Aufgang += 24.0f;
   } else {
-    if (Aufgang >= 24.0) Aufgang -= 24.0;
+    if (Aufgang >= 24.0f) Aufgang -= 24.0f;
   }
-  double Untergang = UntergangWeltzeit + Zeitzone;
-  if (Untergang < 0.0) {
-    Untergang += 24.0;
+  float Untergang = UntergangWeltzeit + Zeitzone;
+  if (Untergang < 0.0f) {
+    Untergang += 24.0f;
   } else {
-    if (Untergang >= 24.0) Untergang -= 24.0;
+    if (Untergang >= 24.0f) Untergang -= 24.0f;
   }
-  int AufgangMinuten = (int)(60.0*(Aufgang - (int)Aufgang)+0.5);
+  int AufgangMinuten = (int)(60.0f*(Aufgang - (int)Aufgang)+0.5f);
   int AufgangStunden = (int)Aufgang;
-  if (AufgangMinuten >= 60.0) {
-    AufgangMinuten -= 60.0;
+  if (AufgangMinuten >= 60.0f) {
+    AufgangMinuten -= 60.0f;
     AufgangStunden++;
   } else {
-    if (AufgangMinuten < 0.0) {
-      AufgangMinuten += 60.0;
+    if (AufgangMinuten < 0.0f) {
+      AufgangMinuten += 60.0f;
       AufgangStunden--;
-      if (AufgangStunden < 0.0) AufgangStunden += 24.0;
+      if (AufgangStunden < 0.0f) AufgangStunden += 24.0f;
     }
   }
-  int UntergangMinuten = (int)(60.0*(Untergang - (int)Untergang)+0.5);
+  int UntergangMinuten = (int)(60.0f*(Untergang - (int)Untergang)+0.5f);
   int UntergangStunden = (int)Untergang;
-  if (UntergangMinuten >= 60.0) {
-    UntergangMinuten -= 60.0;
+  if (UntergangMinuten >= 60.0f) {
+    UntergangMinuten -= 60.0f;
     UntergangStunden++;
   } else {
     if (UntergangMinuten<0) {
-      UntergangMinuten += 60.0;
+      UntergangMinuten += 60.0f;
       UntergangStunden--;
-      if (UntergangStunden < 0.0) UntergangStunden += 24.0;
+      if (UntergangStunden < 0.0f) UntergangStunden += 24.0f;
     }
   }
   *hour_up = AufgangStunden;
@@ -490,7 +490,7 @@ bool TimerCommand(void)
       Settings.longitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
     }
     char lbuff[33];
-    dtostrfd(((double)Settings.longitude) /1000000, 6, lbuff);
+    dtostrfd(((float)Settings.longitude) /1000000, 6, lbuff);
     Response_P(S_JSON_COMMAND_SVALUE, command, lbuff);
   }
   else if (CMND_LATITUDE == command_code) {
@@ -498,7 +498,7 @@ bool TimerCommand(void)
       Settings.latitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
     }
     char lbuff[33];
-    dtostrfd(((double)Settings.latitude) /1000000, 6, lbuff);
+    dtostrfd(((float)Settings.latitude) /1000000, 6, lbuff);
     Response_P(S_JSON_COMMAND_SVALUE, command, lbuff);
   }
 #endif
