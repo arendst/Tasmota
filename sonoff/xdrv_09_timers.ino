@@ -128,8 +128,8 @@ void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8
   */
 //  double h = -50/60.0*RAD;
   float h = SUNRISE_DAWN_ANGLE *RAD;
-  float B = (((double)Settings.latitude)/1000000) * RAD; // geographische Breite
-  float GeographischeLaenge = ((double)Settings.longitude)/1000000;
+  float B = (((float)Settings.latitude)/1000000) * RAD; // geographische Breite
+  float GeographischeLaenge = ((float)Settings.longitude)/1000000;
 //  double Zeitzone = 0; //Weltzeit
 //  double Zeitzone = 1; //Winterzeit
 //  double Zeitzone = 2.0;   //Sommerzeit
@@ -490,7 +490,7 @@ bool TimerCommand(void)
       Settings.longitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
     }
     char lbuff[33];
-    dtostrfd(((double)Settings.longitude) /1000000, 6, lbuff);
+    dtostrfd(((float)Settings.longitude) /1000000, 6, lbuff);
     Response_P(S_JSON_COMMAND_SVALUE, command, lbuff);
   }
   else if (CMND_LATITUDE == command_code) {
@@ -498,7 +498,7 @@ bool TimerCommand(void)
       Settings.latitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
     }
     char lbuff[33];
-    dtostrfd(((double)Settings.latitude) /1000000, 6, lbuff);
+    dtostrfd(((float)Settings.latitude) /1000000, 6, lbuff);
     Response_P(S_JSON_COMMAND_SVALUE, command, lbuff);
   }
 #endif
