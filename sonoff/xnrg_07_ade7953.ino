@@ -126,6 +126,9 @@ void Ade7953GetData(void)
   ade7953_current_rms = ade7953_current_rms1 + ade7953_current_rms2;
   ade7953_active_power = ade7953_active_power1 + ade7953_active_power2;
 
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ADE: U %d, I %d + %d = %d, P %d + %d = %d"),
+    ade7953_voltage_rms, ade7953_current_rms1, ade7953_current_rms2, ade7953_current_rms, ade7953_active_power1, ade7953_active_power2, ade7953_active_power);
+
   if (energy_power_on) {  // Powered on
     energy_voltage = (float)ade7953_voltage_rms / Settings.energy_voltage_calibration;
     energy_active_power = (float)ade7953_active_power / (Settings.energy_power_calibration / 10);
@@ -139,21 +142,21 @@ void Ade7953GetData(void)
     energy_active_power = 0;
     energy_current = 0;
   }
-}
 
-void Ade7953EnergyEverySecond()
-{
   if (ade7953_active_power) {
     energy_kWhtoday_delta += ((ade7953_active_power * (100000 / (Settings.energy_power_calibration / 10))) / 3600);
     EnergyUpdateToday();
   }
+}
+
+void Ade7953EnergyEverySecond()
+{
 	if (ade7953_init) {
     if (1 == ade7953_init) {
       Ade7953Init();
 	  }
     ade7953_init--;
-	}
-	else {
+	}	else {
 		Ade7953GetData();
 	}
 }
