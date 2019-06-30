@@ -1,4 +1,8 @@
-/* 6.5.0.16 20190611
+/*
+ * 6.5.0.16
+ * Add support for Sonoff L1
+ *
+ * 6.5.0.16 20190611
  * Refactored TLS based on BearSSL, warning breaking change for fingerprints validation (see doc)
  * Add checkbox to GUI password field enabling visibility during password entry only (#5934)
  * Add using heap when more than 199 IRSend values need to be send. May need increase of define MQTT_MAX_PACKET_SIZE too (#5950)
