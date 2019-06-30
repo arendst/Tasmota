@@ -138,7 +138,7 @@ bool CseSerialInput(void)
       AddLogSerial(LOG_LEVEL_DEBUG_MORE);
 
       uint8_t checksum = 0;
-      for (uint8_t i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
+      for (uint32_t i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
       if (checksum == serial_in_buffer[23]) {
         energy_data_valid = 0;
         CseReceived();

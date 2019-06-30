@@ -296,7 +296,7 @@ void WifiBeginAfterScan()
 
     if (wifi_scan_result > 0) {
       // Networks found
-      for (int8_t i = 0; i < wifi_scan_result; ++i) {
+      for (uint32_t i = 0; i < wifi_scan_result; ++i) {
 
         String ssid_scan;
         int32_t rssi_scan;
@@ -308,7 +308,7 @@ void WifiBeginAfterScan()
         WiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, bssid_scan, chan_scan, hidden_scan);
 
         bool known = false;
-        uint8_t j;
+        uint32_t j;
         for (j = 0; j < 2; j++) {
           if (ssid_scan == Settings.sta_ssid[j]) {  // SSID match
             known = true;
@@ -332,7 +332,7 @@ void WifiBeginAfterScan()
     }
     wifi_scan_state = 0;
     // If bssid changed then (re)connect wifi
-    for (uint8_t i = 0; i < sizeof(wifi_bssid); i++) {
+    for (uint32_t i = 0; i < sizeof(wifi_bssid); i++) {
       if (last_bssid[i] != wifi_bssid[i]) {
         WifiBegin(ap, channel);                     // 0 (AP1), 1 (AP2) or 3 (default AP)
         break;

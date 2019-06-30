@@ -495,7 +495,7 @@ void DisplayText(void)
 void DisplayClearScreenBuffer(void)
 {
   if (disp_screen_buffer_cols) {
-    for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
+    for (uint32_t i = 0; i < disp_screen_buffer_rows; i++) {
       memset(disp_screen_buffer[i], 0, disp_screen_buffer_cols);
     }
   }
@@ -504,7 +504,7 @@ void DisplayClearScreenBuffer(void)
 void DisplayFreeScreenBuffer(void)
 {
   if (disp_screen_buffer != nullptr) {
-    for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
+    for (uint32_t i = 0; i < disp_screen_buffer_rows; i++) {
       if (disp_screen_buffer[i] != nullptr) { free(disp_screen_buffer[i]); }
     }
     free(disp_screen_buffer);
@@ -519,7 +519,7 @@ void DisplayAllocScreenBuffer(void)
     disp_screen_buffer_rows = Settings.display_rows;
     disp_screen_buffer = (char**)malloc(sizeof(*disp_screen_buffer) * disp_screen_buffer_rows);
     if (disp_screen_buffer != nullptr) {
-      for (uint8_t i = 0; i < disp_screen_buffer_rows; i++) {
+      for (uint32_t i = 0; i < disp_screen_buffer_rows; i++) {
         disp_screen_buffer[i] = (char*)malloc(sizeof(*disp_screen_buffer[i]) * (Settings.display_cols[0] +1));
         if (disp_screen_buffer[i] == nullptr) {
           DisplayFreeScreenBuffer();
@@ -554,7 +554,7 @@ void DisplayFillScreen(uint8_t line)
 void DisplayClearLogBuffer(void)
 {
   if (disp_log_buffer_cols) {
-    for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
+    for (uint32_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
       memset(disp_log_buffer[i], 0, disp_log_buffer_cols);
     }
   }
@@ -563,7 +563,7 @@ void DisplayClearLogBuffer(void)
 void DisplayFreeLogBuffer(void)
 {
   if (disp_log_buffer != nullptr) {
-    for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
+    for (uint32_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
       if (disp_log_buffer[i] != nullptr) { free(disp_log_buffer[i]); }
     }
     free(disp_log_buffer);
@@ -576,7 +576,7 @@ void DisplayAllocLogBuffer(void)
   if (!disp_log_buffer_cols) {
     disp_log_buffer = (char**)malloc(sizeof(*disp_log_buffer) * DISPLAY_LOG_ROWS);
     if (disp_log_buffer != nullptr) {
-      for (uint8_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
+      for (uint32_t i = 0; i < DISPLAY_LOG_ROWS; i++) {
         disp_log_buffer[i] = (char*)malloc(sizeof(*disp_log_buffer[i]) * (Settings.display_cols[0] +1));
         if (disp_log_buffer[i] == nullptr) {
           DisplayFreeLogBuffer();

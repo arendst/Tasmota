@@ -128,9 +128,9 @@ uint16_t SDM120_calculateCRC(uint8_t *frame, uint8_t num)
 {
   uint16_t crc, flag;
   crc = 0xFFFF;
-  for (uint8_t i = 0; i < num; i++) {
+  for (uint32_t i = 0; i < num; i++) {
     crc ^= frame[i];
-    for (uint8_t j = 8; j; j--) {
+    for (uint32_t j = 8; j; j--) {
       if ((crc & 0x0001) != 0) {        // If the LSB is set
         crc >>= 1;                      // Shift right and XOR 0xA001
         crc ^= 0xA001;

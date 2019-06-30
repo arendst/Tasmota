@@ -290,7 +290,7 @@ bool XsnsCall(uint8_t Function)
   uint32_t profile_start_millis = millis();
 #endif  // PROFILE_XSNS_EVERY_SECOND
 
-  for (uint8_t x = 0; x < xsns_present; x++) {
+  for (uint32_t x = 0; x < xsns_present; x++) {
 #ifdef USE_DEBUG_DRIVER
     if (XsnsEnabled(x)) {
 #endif

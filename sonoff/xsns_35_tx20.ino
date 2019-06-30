@@ -109,7 +109,7 @@ void Tx20StartRead(void)
 
   delayMicroseconds(TX20_BIT_TIME / 2);
 
-  for (int bitcount = 41; bitcount > 0; bitcount--) {
+  for (int32_t bitcount = 41; bitcount > 0; bitcount--) {
     uint8_t dpin = (digitalRead(pin[GPIO_TX20_TXD_BLACK]));
     if (bitcount > 41 - 5) {
       // start, inverted

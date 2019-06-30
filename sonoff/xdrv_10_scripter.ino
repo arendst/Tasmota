@@ -2825,7 +2825,7 @@ void HandleScriptConfiguration(void)
 void strrepl_inplace(char *str, const char *a, const char *b) {
   for (char *cursor=str; (cursor=strstr(cursor,a)) != NULL;) {
     memmove(cursor+strlen(b),cursor+strlen(a),strlen(cursor)-strlen(a)+1);
-    for (int i=0; b[i]!='\0'; i++) {
+    for (uint32_t i=0; b[i]!='\0'; i++) {
       cursor[i] = b[i];
     }
     cursor += strlen(b);

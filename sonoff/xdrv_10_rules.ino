@@ -170,7 +170,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 
   char compare_operator[3];
   int8_t compare = COMPARE_OPERATOR_NONE;
-  for (int8_t i = MAXIMUM_COMPARE_OPERATOR; i >= 0; i--) {
+  for (int32_t i = MAXIMUM_COMPARE_OPERATOR; i >= 0; i--) {
     snprintf_P(compare_operator, sizeof(compare_operator), kCompareOperators + (i *2));
     if ((pos = rule_name.indexOf(compare_operator)) > 0) {
       compare = i;
@@ -182,14 +182,14 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   double rule_value = 0;
   if (compare != COMPARE_OPERATOR_NONE) {
     String rule_param = rule_name.substring(pos + strlen(compare_operator));
-    for (uint8_t i = 0; i < MAX_RULE_VARS; i++) {
+    for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%%VAR%d%%"), i +1);
       if (rule_param.startsWith(stemp)) {
         rule_param = vars[i];
         break;
       }
     }
-    for (uint8_t i = 0; i < MAX_RULE_MEMS; i++) {
+    for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%%MEM%d%%"), i +1);
       if (rule_param.startsWith(stemp)) {
         rule_param = Settings.mems[i];
@@ -349,11 +349,11 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
       if (ucommand.indexOf("EVENT ") != -1) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
       commands.replace(F("%value%"), rules_event_value);
-      for (uint8_t i = 0; i < MAX_RULE_VARS; i++) {
+      for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%var%d%%"), i +1);
         commands.replace(stemp, vars[i]);
       }
-      for (uint8_t i = 0; i < MAX_RULE_MEMS; i++) {
+      for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%mem%d%%"), i +1);
         commands.replace(stemp, Settings.mems[i]);
       }
@@ -406,7 +406,7 @@ bool RulesProcessEvent(char *json_event)
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event %s"), event_saved.c_str());
 
-  for (uint8_t i = 0; i < MAX_RULE_SETS; i++) {
+  for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (strlen(Settings.rules[i]) && bitRead(Settings.rule_enabled, i)) {
       if (RuleSetProcess(i, event_saved)) { serviced = true; }
     }
@@ -422,7 +422,7 @@ bool RulesProcess(void)
 void RulesInit(void)
 {
   rules_flag.data = 0;
-  for (uint8_t i = 0; i < MAX_RULE_SETS; i++) {
+  for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (Settings.rules[i][0] == '\0') {
       bitWrite(Settings.rule_enabled, i, 0);
       bitWrite(Settings.rule_once, i, 0);
@@ -439,7 +439,7 @@ void RulesEvery50ms(void)
     if (-1 == rules_new_power) { rules_new_power = power; }
     if (rules_new_power != rules_old_power) {
       if (rules_old_power != -1) {
-        for (uint8_t i = 0; i < devices_present; i++) {
+        for (uint32_t i = 0; i < devices_present; i++) {
           uint8_t new_state = (rules_new_power >> i) &1;
           if (new_state != ((rules_old_power >> i) &1)) {
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"State\":%d}}"), i +1, new_state);
@@ -448,13 +448,13 @@ void RulesEvery50ms(void)
         }
       } else {
         // Boot time POWER OUTPUTS (Relays) Status
-        for (uint8_t i = 0; i < devices_present; i++) {
+        for (uint32_t i = 0; i < devices_present; i++) {
           uint8_t new_state = (rules_new_power >> i) &1;
           snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"Boot\":%d}}"), i +1, new_state);
           RulesProcessEvent(json_event);
         }
         // Boot time SWITCHES Status
-        for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
+        for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
           if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
 #else
@@ -498,7 +498,7 @@ void RulesEvery50ms(void)
     }
     else if (vars_event || mems_event){
       if (vars_event) {
-        for (uint8_t i = 0; i < MAX_RULE_VARS; i++) {
+        for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
           if (bitRead(vars_event, i)) {
             bitClear(vars_event, i);
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
@@ -508,7 +508,7 @@ void RulesEvery50ms(void)
         }
       }
       if (mems_event) {
-        for (uint8_t i = 0; i < MAX_RULE_MEMS; i++) {
+        for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
           if (bitRead(mems_event, i)) {
             bitClear(mems_event, i);
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
@@ -520,7 +520,7 @@ void RulesEvery50ms(void)
     }
     else if (rules_flag.data) {
       uint16_t mask = 1;
-      for (uint8_t i = 0; i < MAX_RULES_FLAG; i++) {
+      for (uint32_t i = 0; i < MAX_RULES_FLAG; i++) {
         if (rules_flag.data & mask) {
           rules_flag.data ^= mask;
           json_event[0] = '\0';
@@ -575,7 +575,7 @@ void RulesEverySecond(void)
         RulesProcessEvent(json_event);
       }
     }
-    for (uint8_t i = 0; i < MAX_RULE_TIMERS; i++) {
+    for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
       if (rules_timer[i] != 0L) {           // Timer active?
         if (TimeReached(rules_timer[i])) {  // Timer finished?
           rules_timer[i] = 0L;              // Turn off this timer
@@ -631,7 +631,7 @@ bool RulesMqttData(void)
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
   MQTT_Subscription event_item;
   //Looking for matched topic
-  for (int index = 0; index < subscriptions.size(); index++) {
+  for (uint32_t index = 0; index < subscriptions.size(); index++) {
     event_item = subscriptions.get(index);
 
     //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
@@ -708,7 +708,7 @@ String RulesSubscribe(const char *data, int data_len)
     event_name.toUpperCase();
     if (event_name.length() > 0 && topic.length() > 0) {
       //Search all subscriptions
-      for (int index=0; index < subscriptions.size(); index++) {
+      for (uint32_t index=0; index < subscriptions.size(); index++) {
         if (subscriptions.get(index).Event.equals(event_name)) {
           //If find exists one, remove it.
           String stopic = subscriptions.get(index).Topic + "/#";
@@ -741,7 +741,7 @@ String RulesSubscribe(const char *data, int data_len)
     }
   } else {
     //If did not specify the event name, list all subscribed event
-    for (int index=0; index < subscriptions.size(); index++) {
+    for (uint32_t index=0; index < subscriptions.size(); index++) {
       subscription_item = subscriptions.get(index);
       events.concat(subscription_item.Event + "," + subscription_item.Topic
         + (subscription_item.Key.length()>0 ? "," : "")
@@ -767,7 +767,7 @@ String RulesUnsubscribe(const char * data, int data_len)
   MQTT_Subscription subscription_item;
   String events;
   if (data_len > 0) {
-    for (int index = 0; index < subscriptions.size(); index++) {
+    for (uint32_t index = 0; index < subscriptions.size(); index++) {
       subscription_item = subscriptions.get(index);
       if (subscription_item.Event.equalsIgnoreCase(data)) {
         String stopic = subscription_item.Topic + "/#";
@@ -1078,7 +1078,7 @@ double evaluateExpression(const char * expression, unsigned int len)
 
   //Going to evaluate the whole expression
   //Calculate by order of operator priorities. Looking for all operators with specified priority (from High to Low)
-  for (int8_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
+  for (int32_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
     int index = 0;
     while (index < operators.size()) {
       if (priority == kExpressionOperatorsPriorities[(operators.get(index))]) {     //need to calculate the operator first
@@ -1161,7 +1161,7 @@ bool RulesCommand(void)
 #endif      //USE_EXPRESSION
     }
     mqtt_data[0] = '\0';
-    for (uint8_t i = 0; i < MAX_RULE_TIMERS; i++) {
+    for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
       ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
     }
     ResponseJsonEnd();

@@ -52,7 +52,7 @@ void to_hex(unsigned char * in, size_t insz, char * out, size_t outsz) {
 	unsigned char * pin = in;
 	static const char * hex = "0123456789ABCDEF";
 	char * pout = out;
-	for(; pin < in+insz; pout +=3, pin++){
+	for (; pin < in+insz; pout +=3, pin++) {
 		pout[0] = hex[(*pin>>4) & 0xF];
 		pout[1] = hex[ *pin     & 0xF];
 		pout[2] = ' ';
@@ -182,7 +182,7 @@ void MqttDiscoverServer(void)
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_QUERY_DONE " %d"), n);
 
   if (n > 0) {
-    uint8_t i = 0;             // If the hostname isn't set, use the first record found.
+    uint32_t i = 0;            // If the hostname isn't set, use the first record found.
 #ifdef MDNS_HOSTNAME
     for (i = n; i > 0; i--) {  // Search from last to first and use first if not found
       if (!strcmp(MDNS.hostname(i).c_str(), MDNS_HOSTNAME)) {
@@ -289,7 +289,7 @@ void MqttPublishPrefixTopic_P(uint8_t prefix, const char* subtopic, bool retaine
   char stopic[TOPSZ];
 
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings.flag.mqtt_response) ? S_RSLT_RESULT : subtopic);
-  for (uint8_t i = 0; i < strlen(romram); i++) {
+  for (uint32_t i = 0; i < strlen(romram); i++) {
     romram[i] = toupper(romram[i]);
   }
   prefix &= 3;
@@ -333,7 +333,7 @@ void MqttPublishPowerState(uint8_t device)
 
 void MqttPublishAllPowerState()
 {
-  for (uint8_t i = 1; i <= devices_present; i++) {
+  for (uint32_t i = 1; i <= devices_present; i++) {
     MqttPublishPowerState(i);
     if (SONOFF_IFAN02 == my_module_type) { break; }  // Report status of light relay only
   }
@@ -598,7 +598,6 @@ bool MqttCommand(void)
   bool serviced = true;
   char stemp1[TOPSZ];
   char scommand[CMDSZ];
-  uint16_t i;
 
   uint16_t index = XdrvMailbox.index;
   uint16_t data_len = XdrvMailbox.data_len;
@@ -643,7 +642,7 @@ bool MqttCommand(void)
   }
   else if ((CMND_STATETEXT == command_code) && (index > 0) && (index <= 4)) {
     if ((data_len > 0) && (data_len < sizeof(Settings.state_text[0]))) {
-      for(i = 0; i <= data_len; i++) {
+      for (uint32_t i = 0; i <= data_len; i++) {
         if (dataBuf[i] == ' ') dataBuf[i] = '_';
       }
       strlcpy(Settings.state_text[index -1], dataBuf, sizeof(Settings.state_text[0]));
@@ -656,13 +655,13 @@ bool MqttCommand(void)
     if ((data_len > 0) && (data_len < sizeof(fingerprint))) {
       strlcpy(fingerprint, (SC_CLEAR == Shortcut(dataBuf)) ? "" : (SC_DEFAULT == Shortcut(dataBuf)) ? (1 == index) ? MQTT_FINGERPRINT1 : MQTT_FINGERPRINT2 : dataBuf, sizeof(fingerprint));
       char *p = fingerprint;
-      for (uint8_t i = 0; i < 20; i++) {
+      for (uint32_t i = 0; i < 20; i++) {
         Settings.mqtt_fingerprint[index -1][i] = strtol(p, &p, 16);
       }
       restart_flag = 2;
     }
     fingerprint[0] = '\0';
-    for (uint8_t i = 0; i < sizeof(Settings.mqtt_fingerprint[index -1]); i++) {
+    for (uint32_t i = 0; i < sizeof(Settings.mqtt_fingerprint[index -1]); i++) {
       snprintf_P(fingerprint, sizeof(fingerprint), PSTR("%s%s%02X"), fingerprint, (i) ? " " : "", Settings.mqtt_fingerprint[index -1][i]);
     }
     Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, fingerprint);
@@ -785,7 +784,7 @@ bool MqttCommand(void)
   else if (CMND_BUTTONRETAIN == command_code) {
     if ((payload >= 0) && (payload <= 1)) {
       if (!payload) {
-        for(i = 1; i <= MAX_KEYS; i++) {
+        for (uint32_t i = 1; i <= MAX_KEYS; i++) {
           SendKey(0, i, 9);  // Clear MQTT retain in broker
         }
       }
@@ -796,7 +795,7 @@ bool MqttCommand(void)
   else if (CMND_SWITCHRETAIN == command_code) {
     if ((payload >= 0) && (payload <= 1)) {
       if (!payload) {
-        for(i = 1; i <= MAX_SWITCHES; i++) {
+        for (uint32_t i = 1; i <= MAX_SWITCHES; i++) {
           SendKey(1, i, 9);  // Clear MQTT retain in broker
         }
       }
@@ -807,7 +806,7 @@ bool MqttCommand(void)
   else if (CMND_POWERRETAIN == command_code) {
     if ((payload >= 0) && (payload <= 1)) {
       if (!payload) {
-        for(i = 1; i <= devices_present; i++) {  // Clear MQTT retain in broker
+        for (uint32_t i = 1; i <= devices_present; i++) {  // Clear MQTT retain in broker
           GetTopic_P(stemp1, STAT, mqtt_topic, GetPowerDevice(scommand, i, sizeof(scommand), Settings.flag.device_index_enable));
           mqtt_data[0] = '\0';
           MqttPublish(stemp1, Settings.flag.mqtt_power_retain);

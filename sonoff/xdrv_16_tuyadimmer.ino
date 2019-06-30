@@ -71,7 +71,7 @@ void TuyaSendCmd(uint8_t cmd, uint8_t payload[] = nullptr, uint16_t payload_len 
   TuyaSerial->write(payload_len >> 8);      // following data length (Hi)
   TuyaSerial->write(payload_len & 0xFF);    // following data length (Lo)
   snprintf_P(log_data, sizeof(log_data), PSTR("TYA: TX Packet: \"55aa00%02x%02x%02x"), cmd, payload_len >> 8, payload_len & 0xFF);
-  for(int i = 0; i < payload_len; ++i) {
+  for (uint32_t i = 0; i < payload_len; ++i) {
     TuyaSerial->write(payload[i]);
     checksum += payload[i];
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, payload[i]);
@@ -248,7 +248,7 @@ void TuyaPacketProcess(void)
         uint8_t key1_gpio = tuya_buffer[7];
         bool key1_set = false;
         bool led1_set = false;
-        for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) {
+        for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) {
           if (Settings.my_gp.io[i] == GPIO_LED1) led1_set = true;
           else if (Settings.my_gp.io[i] == GPIO_KEY1) key1_set = true;
         }
@@ -337,7 +337,7 @@ void TuyaSerialInput(void)
       tuya_buffer[tuya_byte_counter++] = serial_in_byte;
 
       snprintf_P(log_data, sizeof(log_data), PSTR("TYA: RX Packet: \""));
-      for (int i = 0; i < tuya_byte_counter; i++) {
+      for (uint32_t i = 0; i < tuya_byte_counter; i++) {
         snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, tuya_buffer[i]);
       }
       snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);

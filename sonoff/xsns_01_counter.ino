@@ -73,7 +73,7 @@ void CounterUpdate4(void)
 
 void CounterSaveState(void)
 {
-  for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
+  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
     }
@@ -85,7 +85,7 @@ void CounterInit(void)
   typedef void (*function) () ;
   function counter_callbacks[] = { CounterUpdate1, CounterUpdate2, CounterUpdate3, CounterUpdate4 };
 
-  for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
+  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       pinMode(pin[GPIO_CNTR1 +i], bitRead(counter_no_pullup, i) ? INPUT : INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
@@ -104,7 +104,7 @@ void CounterShow(bool json)
 
   uint8_t dsxflg = 0;
   uint8_t header = 0;
-  for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
+  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       char counter[33];
       if (bitRead(Settings.pulse_counter_type, i)) {

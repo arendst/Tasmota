@@ -66,7 +66,7 @@ bool Sht3xRead(float &t, float &h, uint8_t sht3x_address)
   }
   delay(30);                           // Timing verified with logic analyzer (10 is to short)
   Wire.requestFrom(sht3x_address, (uint8_t)6);   // Request 6 bytes of data
-  for (int i = 0; i < 6; i++) {
+  for (uint32_t i = 0; i < 6; i++) {
     data[i] = Wire.read();             // cTemp msb, cTemp lsb, cTemp crc, humidity msb, humidity lsb, humidity crc
   };
   t = ConvertTemp((float)((((data[0] << 8) | data[1]) * 175) / 65535.0) - 45);
@@ -82,7 +82,7 @@ void Sht3xDetect(void)
 
   float t;
   float h;
-  for (uint8_t i = 0; i < SHT3X_MAX_SENSORS; i++) {
+  for (uint32_t i = 0; i < SHT3X_MAX_SENSORS; i++) {
     if (Sht3xRead(t, h, sht3x_addresses[i])) {
       sht3x_sensors[sht3x_count].address = sht3x_addresses[i];
       GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), i, kShtTypes);
@@ -98,7 +98,7 @@ void Sht3xShow(bool json)
     float t;
     float h;
     char types[11];
-    for (uint8_t i = 0; i < sht3x_count; i++) {
+    for (uint32_t i = 0; i < sht3x_count; i++) {
       if (Sht3xRead(t, h, sht3x_sensors[i].address)) {
         char temperature[33];
         dtostrfd(t, Settings.flag2.temperature_resolution, temperature);

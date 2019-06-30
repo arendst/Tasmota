@@ -113,7 +113,7 @@ void ArmtronixSerialInput(void)
     answer = ArmtronixSerial->readStringUntil('\n');
     if (answer.substring(0,7) == "Status:") {
       commaIndex = 6;
-      for (int i =0; i<2; i++) {
+      for (uint32_t i =0; i<2; i++) {
         newDimState[i] = answer.substring(commaIndex+1,answer.indexOf(',',commaIndex+1)).toInt();
         if (newDimState[i] != armtronix_dimState[i]) {
           temp = ((float)newDimState[i])*1.01010101010101; //max 255

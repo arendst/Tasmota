@@ -171,7 +171,7 @@ uint8_t rf_erase_flash(void)
 {
   uint8_t err;
 
-  for (int i = 0; i < 4; i++) {  // HACK: Try multiple times as the command sometimes fails (unclear why)
+  for (uint32_t i = 0; i < 4; i++) {  // HACK: Try multiple times as the command sometimes fails (unclear why)
     err = c2_programming_init();
     if (err != C2_SUCCESS) {
       return 10;                 // Failed to init RF chip
@@ -209,7 +209,7 @@ void SonoffBridgeReceivedRaw(void)
   if (0xB1 == serial_in_buffer[1]) { buckets = serial_in_buffer[2] << 1; }  // Bucket sniffing
 
   Response_P(PSTR("{\"" D_CMND_RFRAW "\":{\"" D_JSON_DATA "\":\""));
-  for (int i = 0; i < serial_in_byte_counter; i++) {
+  for (uint32_t i = 0; i < serial_in_byte_counter; i++) {
     ResponseAppend_P(PSTR("%02X"), serial_in_buffer[i]);
     if (0xB1 == serial_in_buffer[1]) {
       if ((i > 3) && buckets) { buckets--; }
@@ -251,7 +251,7 @@ void SonoffBridgeReceived(void)
     low_time = serial_in_buffer[3] << 8 | serial_in_buffer[4];   // Low time in uSec
     high_time = serial_in_buffer[5] << 8 | serial_in_buffer[6];  // High time in uSec
     if (low_time && high_time) {
-      for (uint8_t i = 0; i < 9; i++) {
+      for (uint32_t i = 0; i < 9; i++) {
         Settings.rf_code[sonoff_bridge_learn_key][i] = serial_in_buffer[i +1];
       }
       Response_P(S_JSON_COMMAND_INDEX_SVALUE, D_CMND_RFKEY, sonoff_bridge_learn_key, D_JSON_LEARNED);
@@ -274,7 +274,7 @@ void SonoffBridgeReceived(void)
         sonoff_bridge_last_received_id = received_id;
         sonoff_bridge_last_time = now;
         strncpy_P(rfkey, PSTR("\"" D_JSON_NONE "\""), sizeof(rfkey));
-        for (uint8_t i = 1; i <= 16; i++) {
+        for (uint32_t i = 1; i <= 16; i++) {
           if (Settings.rf_code[i][0]) {
             uint32_t send_id = Settings.rf_code[i][6] << 16 | Settings.rf_code[i][7] << 8 | Settings.rf_code[i][8];
             if (send_id == received_id) {
@@ -370,7 +370,7 @@ void SonoffBridgeSendCode(uint32_t code)
 {
   Serial.write(0xAA);  // Start of Text
   Serial.write(0xA5);  // Send following code
-  for (uint8_t i = 0; i < 6; i++) {
+  for (uint32_t i = 0; i < 6; i++) {
     Serial.write(Settings.rf_code[0][i]);
   }
   Serial.write((code >> 16) & 0xff);
@@ -387,7 +387,7 @@ void SonoffBridgeSend(uint8_t idx, uint8_t key)
   key--;               // Support 1 to 16
   Serial.write(0xAA);  // Start of Text
   Serial.write(0xA5);  // Send following code
-  for (uint8_t i = 0; i < 8; i++) {
+  for (uint32_t i = 0; i < 8; i++) {
     Serial.write(Settings.rf_code[idx][i]);
   }
   if (0 == idx) {
@@ -485,7 +485,7 @@ bool SonoffBridgeCommand(void)
         Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_SET_TO_DEFAULT);
       }
       else if (4 == XdrvMailbox.payload) {         // Save RF data provided by RFSync, RfLow, RfHigh and last RfCode
-        for (uint8_t i = 0; i < 6; i++) {
+        for (uint32_t i = 0; i < 6; i++) {
           Settings.rf_code[XdrvMailbox.index][i] = Settings.rf_code[0][i];
         }
         Settings.rf_code[XdrvMailbox.index][6] = (sonoff_bridge_last_send_code >> 16) & 0xff;

@@ -71,7 +71,7 @@ void SerialBridgeInput(void)
       Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\"%s\"}"), serial_bridge_buffer);
     } else {
       Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\""));
-      for (int i = 0; i < serial_bridge_in_byte_counter; i++) {
+      for (uint32_t i = 0; i < serial_bridge_in_byte_counter; i++) {
         ResponseAppend_P(PSTR("%02x"), serial_bridge_buffer[i]);
       }
       ResponseAppend_P(PSTR("\"}"));

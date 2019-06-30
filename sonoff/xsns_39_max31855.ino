@@ -102,7 +102,7 @@ int32_t MAX31855_ShiftIn(uint8_t Length){
     digitalWrite(pin[GPIO_MAX31855CS], LOW);            // CS = LOW -> Start SPI communication
     delayMicroseconds(1);                               // CS fall to output enable = max. 100ns
 
-    for(uint8_t i = 0; i < Length; i++)
+    for (uint32_t i = 0; i < Length; i++)
     {
         digitalWrite(pin[GPIO_MAX31855CLK], LOW);
         delayMicroseconds(1);                           // CLK pulse width low = min. 100ns / CLK fall to output valid = max. 40ns
