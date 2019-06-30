@@ -24,6 +24,7 @@
 
 #ifndef wificlientlightbearssl_h
 #define wificlientlightbearssl_h
+#ifdef USE_MQTT_TLS
 #include <vector>
 #include "WiFiClient.h"
 #include <t_bearssl.h>
@@ -216,4 +217,5 @@ class WiFiClientSecure_light : public WiFiClient {
 
 };
 
-#endif
+#endif  // USE_MQTT_TLS
+#endif  // wificlientlightbearssl_h

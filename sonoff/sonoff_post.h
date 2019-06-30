@@ -52,9 +52,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #ifdef USE_EMULATION_WEMO
 #define USE_EMULATION
 #endif
-#ifdef USE_MQTT_AWS_IOT
-#define USE_MQTT_TLS
-#endif
 
 #ifdef USE_MQTT_TLS
   const uint16_t WEB_LOG_SIZE = 2000;       // Max number of characters in weblog
