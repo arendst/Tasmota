@@ -40,9 +40,9 @@ TasmotaModbus *PzemAcModbus;
 uint16_t PzemCalculateCRC(uint8_t *buffer, uint8_t num)
 {
   uint16_t crc = 0xFFFF;
-  for (uint32_t i = 0; i < num; i++) {
+  for (uint8_t i = 0; i < num; i++) {
     crc ^= buffer[i];
-    for (uint32_t j = 8; j; j--) {
+    for (uint8_t j = 8; j; j--) {
       if ((crc & 0x0001) != 0) {        // If the LSB is set
         crc >>= 1;                      // Shift right and XOR 0xA001
         crc ^= 0xA001;

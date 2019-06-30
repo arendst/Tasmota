@@ -53,7 +53,7 @@ void LM75ADDetect(void)
   if (lm75ad_type) { return; }
 
   uint16_t buffer;
-  for (uint32_t i = 0; i < sizeof(lm75ad_addresses); i++) {
+  for (uint8_t i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
     if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
       if (buffer == 0x4B00) {

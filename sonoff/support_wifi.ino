@@ -332,7 +332,7 @@ void WifiBeginAfterScan()
     }
     wifi_scan_state = 0;
     // If bssid changed then (re)connect wifi
-    for (uint32_t i = 0; i < sizeof(wifi_bssid); i++) {
+    for (uint8_t i = 0; i < sizeof(wifi_bssid); i++) {
       if (last_bssid[i] != wifi_bssid[i]) {
         WifiBegin(ap, channel);                     // 0 (AP1), 1 (AP2) or 3 (default AP)
         break;

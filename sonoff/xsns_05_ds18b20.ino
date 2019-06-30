@@ -127,7 +127,7 @@ bool OneWireCrc8(uint8_t *addr)
 
   while (len--) {
     uint8_t inbyte = *addr++;          // from 0 to 7
-    for (uint32_t i = 8; i; i--) {
+    for (uint8_t i = 8; i; i--) {
       uint8_t mix = (crc ^ inbyte) & 0x01;
       crc >>= 1;
       if (mix) {
@@ -161,11 +161,11 @@ bool Ds18b20Read(void)
     return;
   }
 */
-  for (uint32_t retry = 0; retry < 3; retry++) {
+  for (uint8_t retry = 0; retry < 3; retry++) {
     OneWireReset();
     OneWireWrite(W1_SKIP_ROM);
     OneWireWrite(W1_READ_SCRATCHPAD);
-    for (uint32_t i = 0; i < 9; i++) {
+    for (uint8_t i = 0; i < 9; i++) {
       data[i] = OneWireRead();
     }
     if (OneWireCrc8(data)) {

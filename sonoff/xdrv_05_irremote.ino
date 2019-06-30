@@ -175,7 +175,7 @@ void IrReceiveCheck(void)
           if (strlen(mqtt_data) > sizeof(mqtt_data) - 40) { break; }  // Quit if char string becomes too long
         }
         uint16_t extended_length = results.rawlen - 1;
-        for (uint32_t j = 0; j < results.rawlen - 1; j++) {
+        for (uint16_t j = 0; j < results.rawlen - 1; j++) {
           uint32_t usecs = results.rawbuf[j] * kRawTick;
           // Add two extra entries for multiple larger than UINT16_MAX it is.
           extended_length += (usecs / (UINT16_MAX + 1)) * 2;
@@ -568,7 +568,7 @@ bool IrSendCommand(void)
               error = IE_INVALID_RAWDATA;
             } else {
               uint16_t parm[count];
-              for (uint32_t i = 0; i < count; i++) {
+              for (uint8_t i = 0; i < count; i++) {
                 parm[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);
                 if (!parm[i]) {
                   if (!i) {
@@ -641,7 +641,7 @@ bool IrSendCommand(void)
               count++;
               if (count < 200) {
                 uint16_t raw_array[count];  // It's safe to use stack for up to 200 packets (limited by mqtt_data length)
-                for (uint32_t i = 0; i < count; i++) {
+                for (uint16_t i = 0; i < count; i++) {
                   raw_array[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
                 }
 
@@ -654,7 +654,7 @@ bool IrSendCommand(void)
                 if (raw_array == nullptr) {
                   error = IE_INVALID_RAWDATA;
                 } else {
-                  for (uint32_t i = 0; i < count; i++) {
+                  for (uint16_t i = 0; i < count; i++) {
                     raw_array[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
                   }
 

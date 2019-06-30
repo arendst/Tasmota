@@ -52,7 +52,7 @@ void ButtonInvertFlag(uint8 button_bit)
 void ButtonInit(void)
 {
   buttons_present = 0;
-  for (uint32_t i = 0; i < MAX_KEYS; i++) {
+  for (uint8_t i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
       buttons_present++;
       pinMode(pin[GPIO_KEY1 +i], bitRead(key_no_pullup, i) ? INPUT : ((16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
@@ -110,8 +110,8 @@ void ButtonHandler(void)
   char scmnd[20];
 
 //  uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
-//  for (uint32_t button_index = 0; button_index < maxdev; button_index++) {
-  for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
+//  for (uint8_t button_index = 0; button_index < maxdev; button_index++) {
+  for (uint8_t button_index = 0; button_index < MAX_KEYS; button_index++) {
     button = NOT_PRESSED;
     button_present = 0;
 

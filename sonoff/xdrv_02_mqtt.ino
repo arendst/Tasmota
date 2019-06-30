@@ -289,7 +289,7 @@ void MqttPublishPrefixTopic_P(uint8_t prefix, const char* subtopic, bool retaine
   char stopic[TOPSZ];
 
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings.flag.mqtt_response) ? S_RSLT_RESULT : subtopic);
-  for (uint32_t i = 0; i < strlen(romram); i++) {
+  for (uint8_t i = 0; i < strlen(romram); i++) {
     romram[i] = toupper(romram[i]);
   }
   prefix &= 3;
@@ -333,7 +333,7 @@ void MqttPublishPowerState(uint8_t device)
 
 void MqttPublishAllPowerState()
 {
-  for (uint32_t i = 1; i <= devices_present; i++) {
+  for (uint8_t i = 1; i <= devices_present; i++) {
     MqttPublishPowerState(i);
     if (SONOFF_IFAN02 == my_module_type) { break; }  // Report status of light relay only
   }
@@ -656,13 +656,13 @@ bool MqttCommand(void)
     if ((data_len > 0) && (data_len < sizeof(fingerprint))) {
       strlcpy(fingerprint, (SC_CLEAR == Shortcut(dataBuf)) ? "" : (SC_DEFAULT == Shortcut(dataBuf)) ? (1 == index) ? MQTT_FINGERPRINT1 : MQTT_FINGERPRINT2 : dataBuf, sizeof(fingerprint));
       char *p = fingerprint;
-      for (uint32_t i = 0; i < 20; i++) {
+      for (uint8_t i = 0; i < 20; i++) {
         Settings.mqtt_fingerprint[index -1][i] = strtol(p, &p, 16);
       }
       restart_flag = 2;
     }
     fingerprint[0] = '\0';
-    for (uint32_t i = 0; i < sizeof(Settings.mqtt_fingerprint[index -1]); i++) {
+    for (uint8_t i = 0; i < sizeof(Settings.mqtt_fingerprint[index -1]); i++) {
       snprintf_P(fingerprint, sizeof(fingerprint), PSTR("%s%s%02X"), fingerprint, (i) ? " " : "", Settings.mqtt_fingerprint[index -1][i]);
     }
     Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, fingerprint);

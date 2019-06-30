@@ -194,7 +194,7 @@ void Ina219Detect(void)
 {
   if (ina219_type) { return; }
 
-  for (uint32_t i = 0; i < sizeof(ina219_addresses); i++) {
+  for (uint8_t i = 0; i < sizeof(ina219_addresses); i++) {
     ina219_address = ina219_addresses[i];
     if (Ina219SetCalibration(Settings.ina219_mode)) {
       ina219_type = 1;

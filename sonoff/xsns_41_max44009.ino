@@ -74,7 +74,7 @@ void Max4409Detect(void)
 
   uint8_t buffer1;
   uint8_t buffer2;
-  for (uint32_t i = 0; 0 != max44009_addresses[i]; i++) {
+  for (uint8_t i = 0; 0 != max44009_addresses[i]; i++) {
 
     max44009_address = max44009_addresses[i];
 

@@ -68,7 +68,7 @@ IPAddress pzem_ip(192, 168, 1, 1);
 uint8_t PzemCrc(uint8_t *data)
 {
   uint16_t crc = 0;
-  for (uint32_t i = 0; i < sizeof(PZEMCommand) -1; i++) crc += *data++;
+  for (uint8_t i = 0; i < sizeof(PZEMCommand) -1; i++) crc += *data++;
   return (uint8_t)(crc & 0xFF);
 }
 
@@ -77,7 +77,7 @@ void PzemSend(uint8_t cmd)
   PZEMCommand pzem;
 
   pzem.command = cmd;
-  for (uint32_t i = 0; i < sizeof(pzem.addr); i++) pzem.addr[i] = pzem_ip[i];
+  for (uint8_t i = 0; i < sizeof(pzem.addr); i++) pzem.addr[i] = pzem_ip[i];
   pzem.data = 0;
 
   uint8_t *bytes = (uint8_t*)&pzem;

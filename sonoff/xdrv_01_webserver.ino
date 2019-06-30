@@ -944,12 +944,12 @@ void HandleRoot(void)
     WSContentSend_P(PSTR("<tr>"));
     if (SONOFF_IFAN02 == my_module_type) {
       WSContentSend_P(HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
-      for (uint32_t i = 0; i < MAX_FAN_SPEED; i++) {
+      for (uint8_t i = 0; i < MAX_FAN_SPEED; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
         WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i +2, stemp, "");
       }
     } else {
-      for (uint32_t idx = 1; idx <= devices_present; idx++) {
+      for (uint8_t idx = 1; idx <= devices_present; idx++) {
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
         WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
       }
@@ -960,9 +960,9 @@ void HandleRoot(void)
     WSContentSend_P(HTTP_TABLE100);
     WSContentSend_P(PSTR("<tr>"));
     uint8_t idx = 0;
-    for (uint32_t i = 0; i < 4; i++) {
+    for (uint8_t i = 0; i < 4; i++) {
       if (idx > 0) { WSContentSend_P(PSTR("</tr><tr>")); }
-      for (uint32_t j = 0; j < 4; j++) {
+      for (uint8_t j = 0; j < 4; j++) {
         idx++;
         WSContentSend_P(PSTR("<td style='width:25%%'><button onclick='la(\"&k=%d\");'>%d</button></td>"), idx, idx);  // &k is related to WebGetArg("k", tmp, sizeof(tmp));
       }
@@ -1048,7 +1048,7 @@ bool HandleRootStatusRefresh(void)
       snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fanspeed);
       WSContentSend_P(HTTP_DEVICE_STATE, 64, (fanspeed) ? "bold" : "normal", 54, (fanspeed) ? svalue : GetStateText(0));
     } else {
-      for (uint32_t idx = 1; idx <= devices_present; idx++) {
+      for (uint8_t idx = 1; idx <= devices_present; idx++) {
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), bitRead(power, idx -1));
         WSContentSend_P(HTTP_DEVICE_STATE, 100 / devices_present, (bitRead(power, idx -1)) ? "bold" : "normal", fsize, (devices_present < 5) ? GetStateText(bitRead(power, idx -1)) : svalue);
       }
@@ -1107,7 +1107,7 @@ void HandleTemplateConfiguration(void)
 
   if (WebServer->hasArg("m")) {
     WSContentBegin(200, CT_PLAIN);
-    for (uint32_t i = 0; i < sizeof(kModuleNiceList); i++) {  // "}2'%d'>%s (%d)}3" - "}2'0'>Sonoff Basic (1)}3"
+    for (uint8_t i = 0; i < sizeof(kModuleNiceList); i++) {  // "}2'%d'>%s (%d)}3" - "}2'0'>Sonoff Basic (1)}3"
       uint8_t midx = pgm_read_byte(kModuleNiceList + i);
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, AnyModuleName(midx).c_str(), midx +1);
     }
@@ -1127,7 +1127,7 @@ void HandleTemplateConfiguration(void)
 
     WSContentBegin(200, CT_PLAIN);
     WSContentSend_P(PSTR("%s}1"), AnyModuleName(module).c_str());  // NAME: Generic
-    for (uint32_t i = 0; i < sizeof(kGpioNiceList); i++) {   // GPIO: }2'0'>None (0)}3}2'17'>Button1 (17)}3...
+    for (uint8_t i = 0; i < sizeof(kGpioNiceList); i++) {   // GPIO: }2'0'>None (0)}3}2'17'>Button1 (17)}3...
       if (1 == i) {
         WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, 255, D_SENSOR_USER, 255);  // }2'255'>User (255)}3
       }
@@ -1136,7 +1136,7 @@ void HandleTemplateConfiguration(void)
     }
     WSContentSend_P(PSTR("}1"));                                   // Field separator
 
-    for (uint32_t i = 0; i < ADC0_END; i++) {                // FLAG: }2'0'>None (0)}3}2'17'>Analog (17)}3...
+    for (uint8_t i = 0; i < ADC0_END; i++) {                // FLAG: }2'0'>None (0)}3}2'17'>Analog (17)}3...
       if (1 == i) {
         WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, ADC0_USER, D_SENSOR_USER, ADC0_USER);  // }2'15'>User (15)}3
       }
@@ -1144,7 +1144,7 @@ void HandleTemplateConfiguration(void)
     }
     WSContentSend_P(PSTR("}1"));                                   // Field separator
 
-    for (uint32_t i = 0; i < sizeof(cmodule); i++) {         // 17,148,29,149,7,255,255,255,138,255,139,255,255
+    for (uint8_t i = 0; i < sizeof(cmodule); i++) {         // 17,148,29,149,7,255,255,255,138,255,139,255,255
       if ((i < 6) || ((i > 8) && (i != 11))) {              // Ignore flash pins GPIO06, 7, 8 and 11
         WSContentSend_P(PSTR("%s%d"), (i>0)?",":"", cmodule.io[i]);
       }
@@ -1167,7 +1167,7 @@ void HandleTemplateConfiguration(void)
                        "</table>"
                        "<hr/>"));
   WSContentSend_P(HTTP_TABLE100);
-  for (uint32_t i = 0; i < 17; i++) {
+  for (uint8_t i = 0; i < 17; i++) {
     if ((i < 6) || ((i > 8) && (i != 11))) {                // Ignore flash pins GPIO06, 7, 8 and 11
       WSContentSend_P(PSTR("<tr><td><b><font color='#%06x'>" D_GPIO "%d</font></b></td><td%s><select id='g%d'></select></td></tr>"),
         ((9==i)||(10==i)) ? WebColor(COL_TEXT_WARNING) : WebColor(COL_TEXT), i, (0==i) ? " style='width:200px'" : "", i);
@@ -1194,7 +1194,7 @@ void TemplateSaveSettings(void)
   snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_TEMPLATE " {\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), tmp);
 
   uint8_t j = 0;
-  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+  for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     snprintf_P(webindex, sizeof(webindex), PSTR("g%d"), j);
@@ -1206,7 +1206,7 @@ void TemplateSaveSettings(void)
 
   WebGetArg("g17", tmp, sizeof(tmp));                        // FLAG - ADC0
   uint8_t flag = atoi(tmp);
-  for (uint32_t i = 0; i < GPIO_FLAG_USED; i++) {
+  for (uint8_t i = 0; i < GPIO_FLAG_USED; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("c%d"), i);
     uint8_t state = WebServer->hasArg(webindex) << i +4;    // FLAG
     flag += state;
@@ -1238,7 +1238,7 @@ void HandleModuleConfiguration(void)
   if (WebServer->hasArg("m")) {
     WSContentBegin(200, CT_PLAIN);
     uint8_t vidx = 0;
-    for (uint32_t i = 0; i <= sizeof(kModuleNiceList); i++) {  // "}2'%d'>%s (%d)}3" - "}2'255'>UserTemplate (0)}3" - "}2'0'>Sonoff Basic (1)}3"
+    for (uint8_t i = 0; i <= sizeof(kModuleNiceList); i++) {  // "}2'%d'>%s (%d)}3" - "}2'255'>UserTemplate (0)}3" - "}2'0'>Sonoff Basic (1)}3"
       if (0 == i) {
         midx = USER_MODULE;
         vidx = 0;
@@ -1254,7 +1254,7 @@ void HandleModuleConfiguration(void)
 
   if (WebServer->hasArg("g")) {
     WSContentBegin(200, CT_PLAIN);
-    for (uint32_t j = 0; j < sizeof(kGpioNiceList); j++) {
+    for (uint8_t j = 0; j < sizeof(kGpioNiceList); j++) {
       midx = pgm_read_byte(kGpioNiceList + j);
       if (!GetUsedInModule(midx, cmodule.io)) {
         WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, midx, GetTextIndexed(stemp, sizeof(stemp), midx, kSensorNames), midx);
@@ -1267,7 +1267,7 @@ void HandleModuleConfiguration(void)
 #ifndef USE_ADC_VCC
   if (WebServer->hasArg("a")) {
     WSContentBegin(200, CT_PLAIN);
-    for (uint32_t j = 0; j < ADC0_END; j++) {
+    for (uint8_t j = 0; j < ADC0_END; j++) {
       WSContentSend_P(HTTP_MODULE_TEMPLATE_REPLACE, j, GetTextIndexed(stemp, sizeof(stemp), j, kAdc0Names), j);
     }
     WSContentEnd();
@@ -1280,7 +1280,7 @@ void HandleModuleConfiguration(void)
   WSContentStart_P(S_CONFIGURE_MODULE);
   WSContentSend_P(HTTP_SCRIPT_MODULE_TEMPLATE);
   WSContentSend_P(HTTP_SCRIPT_MODULE1, Settings.module);
-  for (uint32_t i = 0; i < sizeof(cmodule); i++) {
+  for (uint8_t i = 0; i < sizeof(cmodule); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
       WSContentSend_P(PSTR("sk(%d,%d);"), my_module.io[i], i);  // g0 - g16
     }
@@ -1288,7 +1288,7 @@ void HandleModuleConfiguration(void)
   WSContentSend_P(HTTP_SCRIPT_MODULE2, Settings.my_adc0);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_MODULE, AnyModuleName(MODULE).c_str());
-  for (uint32_t i = 0; i < sizeof(cmodule); i++) {
+  for (uint8_t i = 0; i < sizeof(cmodule); i++) {
     if (ValidGPIO(i, cmodule.io[i])) {
       snprintf_P(stemp, 3, PINS_WEMOS +i*2);
       char sesp8285[40];
@@ -1321,7 +1321,7 @@ void ModuleSaveSettings(void)
   myio cmodule;
   ModuleGpios(&cmodule);
   String gpios = "";
-  for (uint32_t i = 0; i < sizeof(cmodule); i++) {
+  for (uint8_t i = 0; i < sizeof(cmodule); i++) {
     if (Settings.last_module != new_module) {
       Settings.my_gp.io[i] = GPIO_NONE;
     } else {
@@ -1508,13 +1508,13 @@ void HandleLoggingConfiguration(void)
   char stemp1[45];
   char stemp2[32];
   uint8_t dlevel[3] = { LOG_LEVEL_INFO, LOG_LEVEL_INFO, LOG_LEVEL_NONE };
-  for (uint32_t idx = 0; idx < 3; idx++) {
+  for (uint8_t idx = 0; idx < 3; idx++) {
     uint8_t llevel = (0==idx)?Settings.seriallog_level:(1==idx)?Settings.weblog_level:Settings.syslog_level;
     WSContentSend_P(PSTR("<p><b>%s</b> (%s)<br><select id='l%d'>"),
       GetTextIndexed(stemp1, sizeof(stemp1), idx, kLoggingOptions),
       GetTextIndexed(stemp2, sizeof(stemp2), dlevel[idx], kLoggingLevels),
       idx);
-    for (uint32_t i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
+    for (uint8_t i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
       WSContentSend_P(PSTR("<option%s value='%d'>%d %s</option>"),
         (i == llevel) ? " selected" : "", i, i,
         GetTextIndexed(stemp1, sizeof(stemp1), i, kLoggingLevels));
@@ -1574,7 +1574,7 @@ void HandleOtherConfiguration(void)
 
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
   if (SONOFF_IFAN02 == my_module_type) { maxfn = 1; }
-  for (uint32_t i = 0; i < maxfn; i++) {
+  for (uint8_t i = 0; i < maxfn; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i +1);
     WSContentSend_P(PSTR("<b>" D_FRIENDLY_NAME " %d</b> (" FRIENDLY_NAME "%s)<br><input id='a%d' placeholder='" FRIENDLY_NAME "%s' value='%s'><p></p>"),
       i +1,
@@ -1586,7 +1586,7 @@ void HandleOtherConfiguration(void)
 
 #ifdef USE_EMULATION
   WSContentSend_P(PSTR("<p></p><fieldset><legend><b>&nbsp;" D_EMULATION "&nbsp;</b></legend><p>"));  // Keep close to Friendlynames so do not use <br>
-  for (uint32_t i = 0; i < EMUL_MAX; i++) {
+  for (uint8_t i = 0; i < EMUL_MAX; i++) {
 #ifndef USE_EMULATION_WEMO
     if (i == EMUL_WEMO) { i++; }
 #endif
@@ -1623,7 +1623,7 @@ void OtherSaveSettings(void)
   Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
 #endif  // USE_EMULATION
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
-  for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
+  for (uint8_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("a%d"), i);
     WebGetArg(webindex, tmp, sizeof(tmp));
     snprintf_P(friendlyname, sizeof(friendlyname), PSTR(FRIENDLY_NAME"%d"), i +1);
@@ -1670,7 +1670,7 @@ void HandleBackupConfiguration(void)
 
   memcpy(settings_buffer, &Settings, sizeof(Settings));
   if (config_xor_on_set) {
-    for (uint32_t i = 2; i < sizeof(Settings); i++) {
+    for (uint16_t i = 2; i < sizeof(Settings); i++) {
       settings_buffer[i] ^= (config_xor_on_set +i);
     }
   }
@@ -1753,7 +1753,7 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1" D_RESTART_REASON "}2%s"), GetResetReason().c_str());
   uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
   if (SONOFF_IFAN02 == my_module_type) { maxfn = 1; }
-  for (uint32_t i = 0; i < maxfn; i++) {
+  for (uint8_t i = 0; i < maxfn; i++) {
     WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, Settings.friendlyname[i]);
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
@@ -2061,7 +2061,7 @@ void HandleUploadLoop(void)
     }
     if (UPL_SETTINGS == upload_file_type) {
       if (config_xor_on_set) {
-        for (uint32_t i = 2; i < sizeof(Settings); i++) {
+        for (uint16_t i = 2; i < sizeof(Settings); i++) {
           settings_buffer[i] ^= (config_xor_on_set +i);
         }
       }
@@ -2071,7 +2071,7 @@ void HandleUploadLoop(void)
         uint16_t buffer_size = settings_buffer[3] << 8 | settings_buffer[2];
         uint16_t buffer_crc = settings_buffer[15] << 8 | settings_buffer[14];
         uint16_t crc = 0;
-        for (uint32_t i = 0; i < buffer_size; i++) {
+        for (uint16_t i = 0; i < buffer_size; i++) {
           if ((i < 14) || (i > 15)) { crc += settings_buffer[i]*(i+1); }  // Skip crc
         }
         valid_settings = (buffer_crc == crc);
@@ -2267,7 +2267,7 @@ void HandleNotFound(void)
   {
     WSContentBegin(404, CT_PLAIN);
     WSContentSend_P(PSTR(D_FILE_NOT_FOUND "\n\nURI: %s\nMethod: %s\nArguments: %d\n"), WebServer->uri().c_str(), (WebServer->method() == HTTP_GET) ? "GET" : "POST", WebServer->args());
-    for (uint32_t i = 0; i < WebServer->args(); i++) {
+    for (uint8_t i = 0; i < WebServer->args(); i++) {
       WSContentSend_P(PSTR(" %s: %s\n"), WebServer->argName(i).c_str(), WebServer->arg(i).c_str());
     }
     WSContentEnd();
@@ -2379,7 +2379,7 @@ int WebSend(char *buffer)
           // Return received data to the user - Adds 900+ bytes to the code
           String result = http.getString();   // File found at server - may need lot of ram or trigger out of memory!
           uint16_t j = 0;
-          for (uint32_t i = 0; i < result.length(); i++) {
+          for (uint16_t i = 0; i < result.length(); i++) {
             char text = result.charAt(i);
             if (text > 31) {                  // Remove control characters like linefeed
               mqtt_data[j++] = text;
@@ -2422,7 +2422,7 @@ bool JsonWebColor(const char* dataBuf)
 
   char parm_lc[10];
   if (obj[LowerCase(parm_lc, D_CMND_WEBCOLOR)].success()) {
-    for (uint32_t i = 0; i < COL_LAST; i++) {
+    for (uint8_t i = 0; i < COL_LAST; i++) {
       const char* color = obj[parm_lc][i];
       if (color != nullptr) {
         WebHexCode(i, color);
@@ -2492,7 +2492,7 @@ bool WebCommand(void)
       }
     }
     Response_P(PSTR("{\"" D_CMND_WEBCOLOR "\":["));
-    for (uint32_t i = 0; i < COL_LAST; i++) {
+    for (uint8_t i = 0; i < COL_LAST; i++) {
       if (i) { ResponseAppend_P(PSTR(",")); }
       ResponseAppend_P(PSTR("\"#%06x\""), WebColor(i));
     }

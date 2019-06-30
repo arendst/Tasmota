@@ -56,7 +56,7 @@ void PCA9685_Reset(void)
 {
   I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, 0x80);
   PCA9685_SetPWMfreq(USE_PCA9685_FREQ);
-  for (uint32_t pin=0;pin<16;pin++) {
+  for (uint8_t pin=0;pin<16;pin++) {
     PCA9685_SetPWM(pin,0,false);
     pca9685_pin_pwm_value[pin] = 0;
   }
@@ -112,7 +112,7 @@ bool PCA9685_Command(void)
     return serviced;
   }
   char sub_string[XdrvMailbox.data_len];
-  for (uint32_t ca=0;ca<XdrvMailbox.data_len;ca++) {
+  for (uint8_t ca=0;ca<XdrvMailbox.data_len;ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
     if (',' == XdrvMailbox.data[ca]) { paramcount++; }
   }
@@ -168,7 +168,7 @@ void PCA9685_OutputTelemetry(bool telemetry) {
   if (0 == pca9685_detected) { return; }  // We do not do this if the PCA9685 has not been detected
   Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"PCA9685\": {"), GetDateAndTime(DT_LOCAL).c_str());
   ResponseAppend_P(PSTR("\"PWM_FREQ\":%i,"),pca9685_freq);
-  for (uint32_t pin=0;pin<16;pin++) {
+  for (uint8_t pin=0;pin<16;pin++) {
     ResponseAppend_P(PSTR("\"PWM%i\":%i,"),pin,pca9685_pin_pwm_value[pin]);
   }
   ResponseAppend_P(PSTR("\"END\":1}}"));

@@ -85,7 +85,7 @@ void SonoffScSerialInput(char *rcvstat)
       value[i++] = atoi(str);
     }
     if (value[0] > 0) {
-      for (uint32_t i = 0; i < 5; i++) {
+      for (uint8_t i = 0; i < 5; i++) {
         sc_value[i] = value[i];
       }
       sc_value[2] = (11 - sc_value[2]) * 10;  // Invert light level

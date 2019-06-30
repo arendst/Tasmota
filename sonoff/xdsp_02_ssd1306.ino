@@ -147,7 +147,7 @@ void Ssd1306PrintLog(void)
       oled->clearDisplay();
       oled->setTextSize(Settings.display_size);
       oled->setCursor(0,0);
-      for (uint32_t i = 0; i < last_row; i++) {
+      for (uint8_t i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
         oled->println(disp_screen_buffer[i]);
       }

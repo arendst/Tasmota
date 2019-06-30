@@ -167,7 +167,7 @@ void Ili9341PrintLog(void)
 
         tft_scroll = theight;  // Start below header
         tft->setCursor(0, tft_scroll);
-        for (uint32_t i = 0; i < last_row; i++) {
+        for (uint8_t i = 0; i < last_row; i++) {
           strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
 //          tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);  // Erase line
           tft->print(disp_screen_buffer[i]);

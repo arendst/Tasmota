@@ -77,7 +77,7 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   uint8_t novasds_cmnd[19] = {0xAA, 0xB4, byte1, byte2, byte3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (uint8_t)(sensorid & 0xFF), (uint8_t)((sensorid>>8) & 0xFF), 0x00, 0xAB};
 
   // calc crc
-  for (uint32_t i = 2; i < 17; i++) {
+  for (uint8_t i = 2; i < 17; i++) {
     novasds_cmnd[17] += novasds_cmnd[i];
   }
   //~ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDS: Send %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X"),

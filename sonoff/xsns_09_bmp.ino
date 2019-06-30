@@ -455,7 +455,7 @@ void BmpDetect(void)
   if (!bmp_sensors) { return; }
   memset(bmp_sensors, 0, bmp_sensor_size);  // Init defaults to 0
 
-  for (uint32_t i = 0; i < BMP_MAX_SENSORS; i++) {
+  for (uint8_t i = 0; i < BMP_MAX_SENSORS; i++) {
     uint8_t bmp_type = I2cRead8(bmp_addresses[i], BMP_REGISTER_CHIPID);
     if (bmp_type) {
       bmp_sensors[bmp_count].bmp_address = bmp_addresses[i];
@@ -493,7 +493,7 @@ void BmpRead(void)
 {
   if (!bmp_sensors) { return; }
 
-  for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+  for (uint8_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     switch (bmp_sensors[bmp_idx].bmp_type) {
       case BMP180_CHIPID:
         Bmp180Read(bmp_idx);
@@ -529,7 +529,7 @@ void BmpShow(bool json)
 {
   if (!bmp_sensors) { return; }
 
-  for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
+  for (uint8_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     if (bmp_sensors[bmp_idx].bmp_type) {
       float bmp_sealevel = 0.0;
       if (bmp_sensors[bmp_idx].bmp_pressure != 0.0) {

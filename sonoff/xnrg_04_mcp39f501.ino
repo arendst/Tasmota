@@ -121,7 +121,7 @@ uint8_t McpChecksum(uint8_t *data)
   uint8_t offset = 0;
   uint8_t len = data[1] -1;
 
-  for (uint32_t i = offset; i < len; i++) { checksum += data[i];	}
+  for (uint8_t i = offset; i < len; i++) { checksum += data[i];	}
   return checksum;
 }
 
@@ -130,7 +130,7 @@ unsigned long McpExtractInt(char *data, uint8_t offset, uint8_t size)
 	unsigned long result = 0;
 	unsigned long pow = 1;
 
-	for (uint32_t i = 0; i < size; i++) {
+	for (uint8_t i = 0; i < size; i++) {
 		result = result + (uint8_t)data[offset + i] * pow;
 		pow = pow * 256;
 	}
@@ -139,7 +139,7 @@ unsigned long McpExtractInt(char *data, uint8_t offset, uint8_t size)
 
 void McpSetInt(unsigned long value, uint8_t *data, uint8_t offset, size_t size)
 {
-	for (uint32_t i = 0; i < size; i++) {
+	for (uint8_t i = 0; i < size; i++) {
 		data[offset + i] = ((value >> (i * 8)) & 0xFF);
 	}
 }
@@ -154,7 +154,7 @@ void McpSend(uint8_t *data)
 
 //  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, data, data[1]);
 
-  for (uint32_t i = 0; i < data[1]; i++) {
+  for (uint8_t i = 0; i < data[1]; i++) {
     McpSerial->write(data[i]);
   }
 }

@@ -256,7 +256,7 @@ void TimerSetRandomWindow(uint8_t index)
 
 void TimerSetRandomWindows(void)
 {
-  for (uint32_t i = 0; i < MAX_TIMERS; i++) { TimerSetRandomWindow(i); }
+  for (uint8_t i = 0; i < MAX_TIMERS; i++) { TimerSetRandomWindow(i); }
 }
 
 void TimerEverySecond(void)
@@ -268,7 +268,7 @@ void TimerEverySecond(void)
       int16_t time = (RtcTime.hour *60) + RtcTime.minute;
       uint8_t days = 1 << (RtcTime.day_of_week -1);
 
-      for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+      for (uint8_t i = 0; i < MAX_TIMERS; i++) {
 //        if (Settings.timer[i].device >= devices_present) Settings.timer[i].data = 0;  // Reset timer due to change in devices present
         Timer xtimer = Settings.timer[i];
         uint16_t set_time = xtimer.time;
@@ -308,7 +308,7 @@ void PrepShowTimer(uint8_t index)
 
   Timer xtimer = Settings.timer[index -1];
 
-  for (uint32_t i = 0; i < 7; i++) {
+  for (uint8_t i = 0; i < 7; i++) {
     uint8_t mask = 1 << i;
     snprintf(days, sizeof(days), "%s%d", days, ((xtimer.days & mask) > 0));
   }
@@ -468,7 +468,7 @@ bool TimerCommand(void)
 
     uint8_t jsflg = 0;
     uint8_t lines = 1;
-    for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+    for (uint8_t i = 0; i < MAX_TIMERS; i++) {
       if (!jsflg) {
         Response_P(PSTR("{\"" D_CMND_TIMERS "%d\":{"), lines++);
       } else {
@@ -713,7 +713,7 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_TIMER_SCRIPT6, devices_present);
   WSContentSendStyle_P(HTTP_TIMER_STYLE, WebColor(COL_FORM));
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");
-  for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+  for (uint8_t i = 0; i < MAX_TIMERS; i++) {
     WSContentSend_P(PSTR("%s%u"), (i > 0) ? "," : "", Settings.timer[i].data);
   }
   WSContentSend_P(HTTP_FORM_TIMER2);
@@ -737,7 +737,7 @@ void TimerSaveSettings(void)
   WebGetArg("t0", tmp, sizeof(tmp));
   char *p = tmp;
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);
-  for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+  for (uint8_t i = 0; i < MAX_TIMERS; i++) {
     timer.data = strtol(p, &p, 10);
     p++;  // Skip comma
     if (timer.time < 1440) {

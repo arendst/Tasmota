@@ -202,7 +202,7 @@ const char kKnxCommands[] PROGMEM = D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_C
 
 uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
 {
-  for (uint32_t i = start; i < Settings.knx_GA_registered; ++i)
+  for (uint8_t i = start; i < Settings.knx_GA_registered; ++i)
   {
     if ( Settings.knx_GA_param[i] == param )
     {
@@ -218,7 +218,7 @@ uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
 
 uint8_t KNX_CB_Search( uint8_t param, uint8_t start = 0 )
 {
-  for (uint32_t i = start; i < Settings.knx_CB_registered; ++i)
+  for (uint8_t i = start; i < Settings.knx_CB_registered; ++i)
   {
     if ( Settings.knx_CB_param[i] == param )
     {
@@ -391,7 +391,7 @@ void KNX_DEL_CB( uint8_t CBnum )
 bool KNX_CONFIG_NOT_MATCH(void)
 {
   // Check for configured parameters that the device does not have (module changed)
-  for (uint32_t i = 0; i < KNX_MAX_device_param; ++i)
+  for (uint8_t i = 0; i < KNX_MAX_device_param; ++i)
   {
     if ( !device_param[i].show ) { // device has this parameter ?
       // if not, search for all registered group address to this parameter for deletion
@@ -413,7 +413,7 @@ bool KNX_CONFIG_NOT_MATCH(void)
   }
 
   // Check for invalid or erroneous configuration (tasmota flashed without clearing the memory)
-  for (uint32_t i = 0; i < Settings.knx_GA_registered; ++i)
+  for (uint8_t i = 0; i < Settings.knx_GA_registered; ++i)
   {
     if ( Settings.knx_GA_param[i] != 0 ) // the GA[i] have a parameter defined?
     {
@@ -423,7 +423,7 @@ bool KNX_CONFIG_NOT_MATCH(void)
       }
     }
   }
-  for (uint32_t i = 0; i < Settings.knx_CB_registered; ++i)
+  for (uint8_t i = 0; i < Settings.knx_CB_registered; ++i)
   {
     if ( Settings.knx_CB_param[i] != 0 ) // the CB[i] have a parameter defined?
     {
@@ -524,7 +524,7 @@ void KNX_INIT(void)
   //     Search on the settings if there is a group address set for receive KNX messages for the type: device_param[j].type
   //     If there is, register the group address on the KNX_IP Library to Receive data for Executing Callbacks
   uint8_t j;
-  for (uint32_t i = 0; i < Settings.knx_CB_registered; ++i)
+  for (uint8_t i = 0; i < Settings.knx_CB_registered; ++i)
   {
     j = Settings.knx_CB_param[i];
     if ( j > 0 )
@@ -887,7 +887,7 @@ void HandleKNXConfiguration(void)
     if ( Settings.flag.knx_enable_enhancement ) { WSContentSend_P(PSTR(" checked")); }
 
     WSContentSend_P(HTTP_FORM_KNX2);
-    for (uint32_t i = 0; i < KNX_MAX_device_param ; i++)
+    for (uint8_t i = 0; i < KNX_MAX_device_param ; i++)
     {
       if ( device_param[i].show )
       {
@@ -897,7 +897,7 @@ void HandleKNXConfiguration(void)
     WSContentSend_P(PSTR("</select> -> "));
     WSContentSend_P(HTTP_FORM_KNX_GA, "GA_FNUM", "GA_AREA", "GA_FDEF");
     WSContentSend_P(HTTP_FORM_KNX_ADD_BTN, "GAwarning", (Settings.knx_GA_registered < MAX_KNX_GA) ? "" : "disabled", 1);
-    for (uint32_t i = 0; i < Settings.knx_GA_registered ; ++i)
+    for (uint8_t i = 0; i < Settings.knx_GA_registered ; ++i)
     {
       if ( Settings.knx_GA_param[i] )
       {
@@ -911,7 +911,7 @@ void HandleKNXConfiguration(void)
     WSContentSend_P(HTTP_FORM_KNX4);
 
     uint8_t j;
-    for (uint32_t i = 0; i < KNX_MAX_device_param ; i++)
+    for (uint8_t i = 0; i < KNX_MAX_device_param ; i++)
     {
       // Check How many Relays are available and add: RelayX and TogleRelayX
       if ( (i > 8) && (i < 16) ) { j=i-8; } else { j=i; }
@@ -924,7 +924,7 @@ void HandleKNXConfiguration(void)
     WSContentSend_P(PSTR("</select> "));
     WSContentSend_P(HTTP_FORM_KNX_ADD_BTN, "CBwarning", (Settings.knx_CB_registered < MAX_KNX_CB) ? "" : "disabled", 2);
 
-    for (uint32_t i = 0; i < Settings.knx_CB_registered ; ++i)
+    for (uint8_t i = 0; i < Settings.knx_CB_registered ; ++i)
     {
       if ( Settings.knx_CB_param[i] )
       {
@@ -964,7 +964,7 @@ void KNX_Save_Settings(void)
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "GA: %d"),
    Settings.knx_GA_registered );
-  for (uint32_t i = 0; i < Settings.knx_GA_registered ; ++i)
+  for (uint8_t i = 0; i < Settings.knx_GA_registered ; ++i)
   {
     KNX_addr.value = Settings.knx_GA_addr[i];
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "GA #%d: %s " D_TO " %d/%d/%d"),
@@ -975,7 +975,7 @@ void KNX_Save_Settings(void)
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "CB: %d"),
    Settings.knx_CB_registered );
-  for (uint32_t i = 0; i < Settings.knx_CB_registered ; ++i)
+  for (uint8_t i = 0; i < Settings.knx_CB_registered ; ++i)
   {
     KNX_addr.value = Settings.knx_CB_addr[i];
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX "CB #%d: %d/%d/%d " D_TO " %s"),

@@ -120,7 +120,7 @@ void MPU_6050Detect(void)
     return;
   }
 
-  for (uint32_t i = 0; i < sizeof(MPU_6050_addresses); i++)
+  for (uint8_t i = 0; i < sizeof(MPU_6050_addresses); i++)
   {
     if(!I2cDevice(MPU_6050_addresses[i]))
       {

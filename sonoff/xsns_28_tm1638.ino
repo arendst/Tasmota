@@ -48,7 +48,7 @@ uint8_t tm1638_state = 0;
 
 void Tm16XXSend(uint8_t data)
 {
-	for (uint32_t i = 0; i < 8; i++) {
+	for (uint8_t i = 0; i < 8; i++) {
     digitalWrite(tm1638_data_pin, !!(data & (1 << i)));
     digitalWrite(tm1638_clock_pin, LOW);
     delayMicroseconds(TM1638_CLOCK_DELAY);
@@ -80,7 +80,7 @@ uint8_t Tm16XXReceive(void)
   pinMode(tm1638_data_pin, INPUT);
   digitalWrite(tm1638_data_pin, HIGH);
 
-  for (uint32_t i = 0; i < 8; ++i) {
+  for (uint8_t i = 0; i < 8; ++i) {
     digitalWrite(tm1638_clock_pin, LOW);
     delayMicroseconds(TM1638_CLOCK_DELAY);
     temp |= digitalRead(tm1638_data_pin) << i;
@@ -175,7 +175,7 @@ void TmLoop(void)
 {
   if (tm1638_state) {
     uint8_t buttons = Tm1638GetButtons();
-    for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
+    for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
       SwitchSetVirtual(i, (buttons &1) ^1);
       uint8_t color = (SwitchGetVirtual(i)) ? TM1638_COLOR_NONE : TM1638_COLOR_RED;
       Tm1638SetLED(color, i);

@@ -59,7 +59,7 @@ void Bh1750Detect(void)
     return;
   }
 
-  for (uint32_t i = 0; i < sizeof(bh1750_addresses); i++) {
+  for (uint8_t i = 0; i < sizeof(bh1750_addresses); i++) {
     bh1750_address = bh1750_addresses[i];
     Wire.beginTransmission(bh1750_address);
     Wire.write(BH1750_CONTINUOUS_HIGH_RES_MODE);

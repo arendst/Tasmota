@@ -68,7 +68,7 @@ const char MCP230XX_CMND_RESPONSE[] PROGMEM = "{\"S29cmnd_D%i\":{\"COMMAND\":\"%
 
 void MCP230xx_CheckForIntCounter(void) {
   uint8_t en = 0;
-  for (uint32_t ca=0;ca<16;ca++) {
+  for (uint8_t ca=0;ca<16;ca++) {
     if (Settings.mcp230xx_config[ca].int_count_en) {
       en=1;
     }
@@ -76,7 +76,7 @@ void MCP230xx_CheckForIntCounter(void) {
   if (!Settings.mcp230xx_int_timer) en=0;
   mcp230xx_int_counter_en=en;
   if (!mcp230xx_int_counter_en) { // Interrupt counters are disabled, so we clear all the counters
-    for (uint32_t ca=0;ca<16;ca++) {
+    for (uint8_t ca=0;ca<16;ca++) {
       mcp230xx_int_counter[ca] = 0;
     }
   }
@@ -84,14 +84,14 @@ void MCP230xx_CheckForIntCounter(void) {
 
 void MCP230xx_CheckForIntRetainer(void) {
   uint8_t en = 0;
-  for (uint32_t ca=0;ca<16;ca++) {
+  for (uint8_t ca=0;ca<16;ca++) {
     if (Settings.mcp230xx_config[ca].int_retain_flag) {
       en=1;
     }
   }
   mcp230xx_int_retainer_en=en;
   if (!mcp230xx_int_retainer_en) { // Interrupt counters are disabled, so we clear all the counters
-    for (uint32_t ca=0;ca<16;ca++) {
+    for (uint8_t ca=0;ca<16;ca++) {
       mcp230xx_int_retainer[ca] = 0;
     }
   }
@@ -141,14 +141,14 @@ uint8_t MCP230xx_readGPIO(uint8_t port) {
 
 void MCP230xx_ApplySettings(void) {
   uint8_t int_en = 0;
-  for (uint32_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
+  for (uint8_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
     uint8_t reg_gppu = 0;
     uint8_t reg_gpinten = 0;
     uint8_t reg_iodir = 0xFF;
 #ifdef USE_MCP230xx_OUTPUT
     uint8_t reg_portpins = 0x00;
 #endif // USE_MCP230xx_OUTPUT
-    for (uint32_t idx = 0; idx < 8; idx++) {
+    for (uint8_t idx = 0; idx < 8; idx++) {
       switch (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pinmode) {
         case 0 ... 1:
           reg_iodir |= (1 << idx);
@@ -190,7 +190,7 @@ void MCP230xx_ApplySettings(void) {
     I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO+mcp230xx_port, reg_portpins);
 #endif // USE_MCP230xx_OUTPUT
   }
-  for (uint32_t idx=0;idx<mcp230xx_pincount;idx++) {
+  for (uint8_t idx=0;idx<mcp230xx_pincount;idx++) {
     int_millis[idx]=millis();
   }
   mcp230xx_int_en = int_en;
@@ -236,11 +236,11 @@ void MCP230xx_CheckForInterrupt(void) {
   uint8_t intf;
   uint8_t mcp230xx_intcap = 0;
   uint8_t report_int;
-  for (uint32_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
+  for (uint8_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
     if (I2cValidRead8(&intf,USE_MCP230xx_ADDR,MCP230xx_INTF+mcp230xx_port)) {
       if (intf > 0) {
         if (I2cValidRead8(&mcp230xx_intcap, USE_MCP230xx_ADDR, MCP230xx_INTCAP+mcp230xx_port)) {
-          for (uint32_t intp = 0; intp < 8; intp++) {
+          for (uint8_t intp = 0; intp < 8; intp++) {
             if ((intf >> intp) & 0x01) { // we know which pin caused interrupt
               report_int = 0;
               if (Settings.mcp230xx_config[intp+(mcp230xx_port*8)].pinmode > 1) {
@@ -394,7 +394,7 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
 void MCP230xx_Reset(uint8_t pinmode) {
   uint8_t pullup = 0;
   if ((pinmode > 1) && (pinmode < 5)) { pullup=1; }
-  for (uint32_t pinx=0;pinx<16;pinx++) {
+  for (uint8_t pinx=0;pinx<16;pinx++) {
     Settings.mcp230xx_config[pinx].pinmode=pinmode;
     Settings.mcp230xx_config[pinx].pullup=pullup;
     Settings.mcp230xx_config[pinx].saved_state=0;
@@ -433,7 +433,7 @@ bool MCP230xx_Command(void) {
     return serviced;
   }
   char sub_string[XdrvMailbox.data_len];
-  for (uint32_t ca=0;ca<XdrvMailbox.data_len;ca++) {
+  for (uint8_t ca=0;ca<XdrvMailbox.data_len;ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
     if (',' == XdrvMailbox.data[ca]) { paramcount++; }
   }
@@ -702,7 +702,7 @@ void MCP230xx_UpdateWebData(void) {
     gpio2 = MCP230xx_readGPIO(1);
   }
   uint16_t gpio = (gpio2 << 8) + gpio1;
-  for (uint32_t pin = 0; pin < mcp230xx_pincount; pin++) {
+  for (uint8_t pin = 0; pin < mcp230xx_pincount; pin++) {
     if (Settings.mcp230xx_config[pin].pinmode >= 5) {
       char stt[7];
       sprintf(stt,ConvertNumTxt((gpio>>pin)&1,Settings.mcp230xx_config[pin].pinmode));
@@ -724,13 +724,13 @@ void MCP230xx_OutputTelemetry(void) {
   gpioa=MCP230xx_readGPIO(0);
   if (2 == mcp230xx_type) { gpiob=MCP230xx_readGPIO(1); }
   gpiototal=((uint16_t)gpiob << 8) | gpioa;
-  for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
+  for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
     if (Settings.mcp230xx_config[pinx].pinmode >= 5) outputcount++;
   }
   if (outputcount) {
     char stt[7];
     Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230_OUT\": {"), GetDateAndTime(DT_LOCAL).c_str());
-    for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
+    for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
       if (Settings.mcp230xx_config[pinx].pinmode >= 5) {
         sprintf(stt,ConvertNumTxt(((gpiototal>>pinx)&1),Settings.mcp230xx_config[pinx].pinmode));
         ResponseAppend_P(PSTR("\"OUT_D%i\":\"%s\","),pinx,stt);
@@ -745,7 +745,7 @@ void MCP230xx_OutputTelemetry(void) {
 
 void MCP230xx_Interrupt_Counter_Report(void) {
   Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230_INTTIMER\": {"), GetDateAndTime(DT_LOCAL).c_str());
-  for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
+  for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
     if (Settings.mcp230xx_config[pinx].int_count_en) { // Counting is enabled for this pin so we add to report
       ResponseAppend_P(PSTR("\"INTCNT_D%i\":%i,"),pinx,mcp230xx_int_counter[pinx]);
       mcp230xx_int_counter[pinx]=0;
@@ -759,7 +759,7 @@ void MCP230xx_Interrupt_Counter_Report(void) {
 void MCP230xx_Interrupt_Retain_Report(void) {
   uint16_t retainresult = 0;
   Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP_INTRETAIN\": {"), GetDateAndTime(DT_LOCAL).c_str());
-  for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
+  for (uint8_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
     if (Settings.mcp230xx_config[pinx].int_retain_flag) {
       ResponseAppend_P(PSTR("\"D%i\":%i,"),pinx,mcp230xx_int_retainer[pinx]);
       retainresult |= (((mcp230xx_int_retainer[pinx])&1) << pinx);

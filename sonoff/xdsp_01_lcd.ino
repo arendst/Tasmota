@@ -110,7 +110,7 @@ void LcdCenter(uint8_t row, char* txt)
   }
   memset(line, 0x20, Settings.display_cols[0]);
   line[Settings.display_cols[0]] = 0;
-  for (uint32_t i = 0; i < len; i++) {
+  for (uint8_t i = 0; i < len; i++) {
     line[offset +i] = txt[i];
   }
   lcd->setCursor(0, row);
@@ -130,7 +130,7 @@ bool LcdPrintLog(void)
     if (txt != nullptr) {
       uint8_t last_row = Settings.display_rows -1;
 
-      for (uint32_t i = 0; i < last_row; i++) {
+      for (uint8_t i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
         lcd->setCursor(0, i);            // Col 0, Row i
         lcd->print(disp_screen_buffer[i +1]);

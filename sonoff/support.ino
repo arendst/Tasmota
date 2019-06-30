@@ -865,7 +865,7 @@ void SerialSendRaw(char *codes)
 uint32_t GetHash(const char *buffer, size_t size)
 {
   uint32_t hash = 0;
-  for (uint32_t i = 0; i <= size; i++) {
+  for (uint16_t i = 0; i <= size; i++) {
     hash += (uint8_t)*buffer++ * (i +1);
   }
   return hash;
@@ -958,7 +958,7 @@ uint8_t ModuleNr()
 
 bool ValidTemplateModule(uint8_t index)
 {
-  for (uint32_t i = 0; i < sizeof(kModuleNiceList); i++) {
+  for (uint8_t i = 0; i < sizeof(kModuleNiceList); i++) {
     if (index == pgm_read_byte(kModuleNiceList + i)) {
       return true;
     }
@@ -1002,7 +1002,7 @@ void ModuleGpios(myio *gp)
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
 
   uint8_t j = 0;
-  for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
+  for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     dest[j] = src[i];
@@ -1117,7 +1117,7 @@ bool GetUsedInModule(uint8_t val, uint8_t *arr)
     offset = -(GPIO_CNTR1_NP - GPIO_CNTR1);
   }
 
-  for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
+  for (uint8_t i = 0; i < MAX_GPIO_PIN; i++) {
     if (arr[i] == val) { return true; }
     if (arr[i] == val + offset) { return true; }
   }
@@ -1140,7 +1140,7 @@ bool JsonTemplate(const char* dataBuf)
     strlcpy(Settings.user_template.name, name, sizeof(Settings.user_template.name));
   }
   if (obj[D_JSON_GPIO].success()) {
-    for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
+    for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
       Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
     }
   }
@@ -1159,7 +1159,7 @@ bool JsonTemplate(const char* dataBuf)
 void TemplateJson()
 {
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
-  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+  for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
   }
   ResponseAppend_P(PSTR("],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), Settings.user_template.flag, Settings.user_template_base +1);
@@ -1249,7 +1249,7 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
     if (0 == Wire.endTransmission(false)) {             // Try to become I2C Master, send data and collect bytes, keep master status for next request...
       Wire.requestFrom((int)addr, (int)size);           // send data n-bytes read
       if (Wire.available() == size) {
-        for (uint32_t i = 0; i < size; i++) {
+        for (uint8_t i = 0; i < size; i++) {
           i2c_buffer = i2c_buffer << 8 | Wire.read();   // receive DATA
         }
         status = true;
