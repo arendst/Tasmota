@@ -1572,7 +1572,7 @@ def PushTasmotaConfig(encode_cfg, host, port, username=DEFAULTS['source']['usern
     body = body[findUpload:]
     findSuccessful = body.find("Successful")
     if findSuccessful < 0:
-        errmatch = re.search("<font\s*color='[#0-9a-fA-F]+'>(\S*)</font></b><br/><br/>(.*)<br/>", body)
+        errmatch = re.search("<font\s*color='[#0-9a-fA-F]+'>(\S*)</font></b><br><br>(.*)<br>", body)
         reason = "Unknown error"
         if errmatch and len(errmatch.groups()) > 1:
             reason = errmatch.group(2)
