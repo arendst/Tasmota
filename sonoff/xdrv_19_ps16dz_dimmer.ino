@@ -45,6 +45,7 @@
 
 TasmotaSerial *PS16DZSerial = nullptr;
 
+bool ps16dz_switch = false;
 uint8_t ps16dz_dimmer = 0;
 uint8_t ps16dz_color[3];           // Most recent serial sent/received values
 char *ps16dz_tx_buffer = nullptr;          // Serial transmit buffer
@@ -249,6 +250,7 @@ void PS16DZSerialInput(void)
         char color_channel_name;
         bool color_channel_updated[3] = { false, false, false };
         memcpy(ps16dz_color, Settings.light_color, 3);
+        bool is_switch_change = false;
         bool is_color_change = false;
         bool is_brightness_change = false;
 
@@ -260,11 +262,16 @@ void PS16DZSerialInput(void)
           char* token3 = strtok_r(nullptr, ":", &end_token);
 
           if(!strncmp(token2, "\"switch\"", 8)){
-            bool ps16dz_power = !strncmp(token3, "\"on\"", 4)?true:false;
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: power received: %s"), token3);
-            // if((power || Settings.light_dimmer > 0) && (power !=ps16dz_power)) {
-            //   ExecuteCommandPower(1, ps16dz_power, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
-            // }
+
+            ps16dz_switch =  !strncmp(token3, "\"on\"", 4)?true:false;
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: switch received: %d"), ps16dz_switch);
+
+            is_switch_change = ps16dz_switch != power;
+
+            if(is_switch_change) {
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send CMND_POWER=%d"), ps16dz_switch );
+              ExecuteCommandPower(1, ps16dz_switch, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+            }
           }
           else if(light_supports_color && sscanf(token2, "\"color%c\"", &color_channel_name)==1){
 
@@ -321,7 +328,6 @@ void PS16DZSerialInput(void)
             is_brightness_change = ps16dz_dimmer != Settings.light_dimmer;
 
             if(power && ps16dz_dimmer > 0 && is_brightness_change) {
-
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), ps16dz_dimmer );
               AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send CMND_DIMMER_STR=%s"), scmnd );
               ExecuteCommand(scmnd, SRC_SWITCH);
