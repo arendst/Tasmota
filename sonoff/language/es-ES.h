@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.5.0.7
+ * Updated until v6.5.0.16
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -149,7 +149,7 @@
 #define D_STOP "Detener"
 #define D_SUBNET_MASK "Máscara Subred"
 #define D_SUBSCRIBE_TO "Suscribir a"
-#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
+#define D_UNSUBSCRIBE_FROM "Desuscribirse de"
 #define D_SUCCESSFUL "Exitosa"
 #define D_SUNRISE "Salida del Sol"
 #define D_SUNSET "Puesta del Sol"
