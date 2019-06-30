@@ -364,7 +364,7 @@ void HueGlobalConfig(String *path)
 
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
-  for (uint8_t i = 1; i <= maxhue; i++) {
+  for (uint32_t i = 1; i <= maxhue; i++) {
     response += EncodeLightId(i);
     response += F("\":{\"state\":");
     HueLightStatus1(i, &response);
@@ -408,7 +408,7 @@ void HueLights(String *path)
   path->remove(0,path->indexOf("/lights"));          // Remove until /lights
   if (path->endsWith("/lights")) {                   // Got /lights
     response = "{\"";
-    for (uint8_t i = 1; i <= maxhue; i++) {
+    for (uint32_t i = 1; i <= maxhue; i++) {
       response += EncodeLightId(i);
       response += F("\":{\"state\":");
       HueLightStatus1(i, &response);
@@ -604,7 +604,7 @@ void HueGroups(String *path)
   if (path->endsWith("/0")) {
     response = FPSTR(HUE_GROUP0_STATUS_JSON);
     String lights = F("\"1\"");
-    for (uint8_t i = 2; i <= maxhue; i++) {
+    for (uint32_t i = 2; i <= maxhue; i++) {
       lights += ",\"";
       lights += EncodeLightId(i);
       lights += "\"";

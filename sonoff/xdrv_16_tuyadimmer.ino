@@ -248,7 +248,7 @@ void TuyaPacketProcess(void)
         uint8_t key1_gpio = tuya_buffer[7];
         bool key1_set = false;
         bool led1_set = false;
-        for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) {
+        for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) {
           if (Settings.my_gp.io[i] == GPIO_LED1) led1_set = true;
           else if (Settings.my_gp.io[i] == GPIO_KEY1) key1_set = true;
         }

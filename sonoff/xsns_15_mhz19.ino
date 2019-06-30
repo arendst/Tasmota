@@ -102,7 +102,7 @@ uint8_t mhz_state = 0;
 uint8_t MhzCalculateChecksum(uint8_t *array)
 {
   uint8_t checksum = 0;
-  for (uint8_t i = 1; i < 8; i++) {
+  for (uint32_t i = 1; i < 8; i++) {
     checksum += array[i];
   }
   checksum = 255 - checksum;

@@ -153,11 +153,11 @@ void HlwEvery200ms(void)
       // Debugging for calculating mean and median
       char stemp[100];
       stemp[0] = '\0';
-      for (uint8_t i = 0; i < hlw_cf1_pulse_counter; i++) {
+      for (uint32_t i = 0; i < hlw_cf1_pulse_counter; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%s %d"), stemp, hlw_debug[i]);
       }
-      for (uint8_t i = 0; i < hlw_cf1_pulse_counter; i++) {
-        for (uint8_t j = i + 1; j < hlw_cf1_pulse_counter; j++) {
+      for (uint32_t i = 0; i < hlw_cf1_pulse_counter; i++) {
+        for (uint32_t j = i + 1; j < hlw_cf1_pulse_counter; j++) {
           if (hlw_debug[i] > hlw_debug[j]) {  // Sort ascending
             std::swap(hlw_debug[i], hlw_debug[j]);
           }

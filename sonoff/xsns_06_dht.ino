@@ -47,7 +47,7 @@ struct DHTSTRUCT {
 
 void DhtReadPrep(void)
 {
-  for (uint8_t i = 0; i < dht_sensors; i++) {
+  for (uint32_t i = 0; i < dht_sensors; i++) {
     digitalWrite(Dht[i].pin, HIGH);
   }
 }
@@ -181,7 +181,7 @@ void DhtInit(void)
 {
   dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
-  for (uint8_t i = 0; i < dht_sensors; i++) {
+  for (uint32_t i = 0; i < dht_sensors; i++) {
     pinMode(Dht[i].pin, INPUT_PULLUP);
     Dht[i].lastreadtime = 0;
     Dht[i].lastresult = 0;
@@ -198,7 +198,7 @@ void DhtEverySecond(void)
     // <1mS
     DhtReadPrep();
   } else {
-    for (uint8_t i = 0; i < dht_sensors; i++) {
+    for (uint32_t i = 0; i < dht_sensors; i++) {
       // DHT11 and AM2301 25mS per sensor, SI7021 5mS per sensor
       DhtReadTempHum(i);
     }
@@ -207,7 +207,7 @@ void DhtEverySecond(void)
 
 void DhtShow(bool json)
 {
-  for (uint8_t i = 0; i < dht_sensors; i++) {
+  for (uint32_t i = 0; i < dht_sensors; i++) {
     char temperature[33];
     dtostrfd(Dht[i].t, Settings.flag2.temperature_resolution, temperature);
     char humidity[33];

@@ -126,7 +126,7 @@ void DomoticzMqttUpdate(void)
     domoticz_update_timer--;
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = Settings.domoticz_update_timer;
-      for (uint8_t i = 1; i <= devices_present; i++) {
+      for (uint32_t i = 1; i <= devices_present; i++) {
         if ((SONOFF_IFAN02 == my_module_type) && (i > 1)) {
           MqttPublishDomoticzFanState();
           break;
@@ -141,7 +141,7 @@ void DomoticzMqttUpdate(void)
 void DomoticzMqttSubscribe(void)
 {
   uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
-  for (uint8_t i = 0; i < maxdev; i++) {
+  for (uint32_t i = 0; i < maxdev; i++) {
     if (Settings.domoticz_relay_idx[i]) {
       domoticz_subscribe = true;
     }
@@ -208,7 +208,7 @@ bool DomoticzMqttData(void)
 
     if ((idx > 0) && (nvalue >= 0) && (nvalue <= 15)) {
       uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
-      for (uint8_t i = 0; i < maxdev; i++) {
+      for (uint32_t i = 0; i < maxdev; i++) {
         if (idx == Settings.domoticz_relay_idx[i]) {
           bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
@@ -489,7 +489,7 @@ void DomoticzSaveSettings(void)
   char ssensor_indices[6 * MAX_DOMOTICZ_SNS_IDX];
   char tmp[100];
 
-  for (uint8_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
+  for (uint32_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("r%d"), i);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_relay_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
@@ -501,7 +501,7 @@ void DomoticzSaveSettings(void)
     Settings.domoticz_switch_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
   }
   ssensor_indices[0] = '\0';
-  for (uint8_t i = 0; i < DZ_MAX_SENSORS; i++) {
+  for (uint32_t i = 0; i < DZ_MAX_SENSORS; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("l%d"), i);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_sensor_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);

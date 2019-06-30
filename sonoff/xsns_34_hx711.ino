@@ -164,7 +164,7 @@ bool HxCommand(void)
   bool show_parms = false;
   char sub_string[XdrvMailbox.data_len +1];
 
-  for (uint8_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
+  for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
   }
 

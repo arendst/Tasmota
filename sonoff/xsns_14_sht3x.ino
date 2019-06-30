@@ -82,7 +82,7 @@ void Sht3xDetect(void)
 
   float t;
   float h;
-  for (uint8_t i = 0; i < SHT3X_MAX_SENSORS; i++) {
+  for (uint32_t i = 0; i < SHT3X_MAX_SENSORS; i++) {
     if (Sht3xRead(t, h, sht3x_addresses[i])) {
       sht3x_sensors[sht3x_count].address = sht3x_addresses[i];
       GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), i, kShtTypes);
@@ -98,7 +98,7 @@ void Sht3xShow(bool json)
     float t;
     float h;
     char types[11];
-    for (uint8_t i = 0; i < sht3x_count; i++) {
+    for (uint32_t i = 0; i < sht3x_count; i++) {
       if (Sht3xRead(t, h, sht3x_sensors[i].address)) {
         char temperature[33];
         dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
