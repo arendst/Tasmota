@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.2.0027'
+VER = '2.2.0028'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -918,7 +918,13 @@ Setting_6_5_0_12.update({
     'sps30_inuse_hours':            ('B',   0x1E8,       (None, None,                           ('System',       None)) ),
                                     })
 # ======================================================================
+Setting_6_5_0_15 = copy.deepcopy(Setting_6_5_0_12)
+Setting_6_5_0_15['flag3'][0].update ({
+        'tuya_show_dimmer':              ('<L', (0x3A0,1,15), (None, None,                      ('SetOption',   '"SetOption65 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x605000F, 0xe00, Setting_6_5_0_15),
             (0x605000C, 0xe00, Setting_6_5_0_12),
             (0x605000B, 0xe00, Setting_6_5_0_11),
             (0x605000B, 0xe00, Setting_6_5_0_11),
@@ -1566,7 +1572,7 @@ def PushTasmotaConfig(encode_cfg, host, port, username=DEFAULTS['source']['usern
     body = body[findUpload:]
     findSuccessful = body.find("Successful")
     if findSuccessful < 0:
-        errmatch = re.search("<font\s*color='[#0-9a-fA-F]+'>(\S*)</font></b><br><br>(.*)<br>", body)
+        errmatch = re.search("<font\s*color='[#0-9a-fA-F]+'>(\S*)</font></b><br/><br/>(.*)<br/>", body)
         reason = "Unknown error"
         if errmatch and len(errmatch.groups()) > 1:
             reason = errmatch.group(2)
