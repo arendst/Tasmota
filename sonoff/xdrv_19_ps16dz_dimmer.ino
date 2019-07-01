@@ -216,7 +216,6 @@ void PS16DZSerialInput(void)
         char *string = ps16dz_rx_buffer+10;
         char* token = strtok_r(string, ",", &end_str);
 
-        char color_channel_name;
         bool color_updated[3] = { false, false, false };
         memcpy(ps16dz_color, Settings.light_color, 3);
         bool is_switch_change = false;
@@ -240,8 +239,9 @@ void PS16DZSerialInput(void)
               ExecuteCommandPower(1, ps16dz_switch, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
             }
           }
-          else if(ps16dz_supports_color && sscanf(token2, "\"color%c\"", &color_channel_name)==1){
+          else if(!strncmp(token2, "\"color", 6)) {
 
+            char color_channel_name = token2[6];
             int color_index;
 
             switch(color_channel_name)
