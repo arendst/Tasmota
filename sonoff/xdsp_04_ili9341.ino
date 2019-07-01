@@ -173,6 +173,7 @@ void Ili9341PrintLog(void)
           tft->print(disp_screen_buffer[i]);
           tft_scroll += theight;
           tft->setCursor(0, tft_scroll);
+          delay(1);  // Fix background runs heap usage due to long runtime of this loop (up to 1 second)
         }
         strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
         DisplayFillScreen(last_row);
