@@ -182,7 +182,7 @@ void AzEverySecond(void)
       return;
     }
     response_substr[j] = 0;                 // add null terminator
-    az_temperature = CharToDouble((char*)response_substr); // units (C or F) depends on meter setting
+    az_temperature = CharToFloat((char*)response_substr); // units (C or F) depends on meter setting
     if(az_response[i] == 'C') {             // meter transmits in degC
       az_temperature = ConvertTemp((float)az_temperature); // convert to degF, depending on settings
     } else {                                // meter transmits in degF
@@ -232,7 +232,7 @@ void AzEverySecond(void)
       return;
     }
     response_substr[j] = 0;                 // add null terminator
-    az_humidity = ConvertHumidity(CharToDouble((char*)response_substr));
+    az_humidity = ConvertHumidity(CharToFloat((char*)response_substr));
   }
 }
 
