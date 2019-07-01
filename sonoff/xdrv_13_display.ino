@@ -61,18 +61,8 @@ const char S_JSON_DISPLAY_COMMAND_VALUE[] PROGMEM =        "{\"" D_CMND_DISPLAY 
 const char S_JSON_DISPLAY_COMMAND_NVALUE[] PROGMEM =       "{\"" D_CMND_DISPLAY "%s\":%d}";
 const char S_JSON_DISPLAY_COMMAND_INDEX_NVALUE[] PROGMEM = "{\"" D_CMND_DISPLAY "%s%d\":%d}";
 
-uint8_t disp_power = 0;
-uint8_t disp_device = 0;
-uint8_t disp_refresh = 1;
+char *dsp_str;
 
-int16_t disp_xpos = 0;
-int16_t disp_ypos = 0;
-uint8_t disp_autodraw = 1;
-
-uint8_t dsp_init;
-uint8_t dsp_font;
-uint8_t dsp_flag;
-uint8_t dsp_on;
 uint16_t dsp_x;
 uint16_t dsp_y;
 uint16_t dsp_x2;
@@ -80,21 +70,30 @@ uint16_t dsp_y2;
 uint16_t dsp_rad;
 uint16_t dsp_color;
 int16_t dsp_len;
-char *dsp_str;
+int16_t disp_xpos = 0;
+int16_t disp_ypos = 0;
+
+uint8_t disp_power = 0;
+uint8_t disp_device = 0;
+uint8_t disp_refresh = 1;
+uint8_t disp_autodraw = 1;
+uint8_t dsp_init;
+uint8_t dsp_font;
+uint8_t dsp_flag;
+uint8_t dsp_on;
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-char disp_temp[2];    // C or F
-uint8_t disp_subscribed = 0;
-
 char **disp_log_buffer;
+char **disp_screen_buffer;
+char disp_temp[2];    // C or F
+
 uint8_t disp_log_buffer_cols = 0;
 uint8_t disp_log_buffer_idx = 0;
 uint8_t disp_log_buffer_ptr = 0;
-
-char **disp_screen_buffer;
 uint8_t disp_screen_buffer_cols = 0;
 uint8_t disp_screen_buffer_rows = 0;
+bool disp_subscribed = false;
 
 #endif  // USE_DISPLAY_MODES1TO5
 
@@ -820,8 +819,7 @@ void DisplayMqttSubscribe(void)
  * - home/%prefix%/%topic%
  * - home/level2/%prefix%/%topic% etc.
  */
-//  if (Settings.display_mode &0x04) {
-  if (Settings.display_model) {
+  if (Settings.display_model && (Settings.display_mode &0x04)) {
 
     char stopic[TOPSZ];
     char ntopic[TOPSZ];
@@ -839,9 +837,9 @@ void DisplayMqttSubscribe(void)
     strncat(ntopic, Settings.mqtt_prefix[2], sizeof(ntopic) - strlen(ntopic) -1);  // Subscribe to tele messages
     strncat_P(ntopic, PSTR("/#"), sizeof(ntopic) - strlen(ntopic) -1);             // Add multi-level wildcard
     MqttSubscribe(ntopic);
-    disp_subscribed = 1;
+    disp_subscribed = true;
   } else {
-    disp_subscribed = 0;
+    disp_subscribed = false;
   }
 }
 
@@ -948,16 +946,16 @@ bool DisplayCommand(void)
  * 5 = Mqtt up and time     Mqtt (incl local) sensors and time   Mqtt (incl local) sensors and time
 */
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 5)) {
-        uint8_t last_display_mode = Settings.display_mode;
+        uint32_t last_display_mode = Settings.display_mode;
         Settings.display_mode = XdrvMailbox.payload;
-        if (!disp_subscribed) {
+
+        if (disp_subscribed != (Settings.display_mode &0x04)) {
           restart_flag = 2;  // Restart to Add/Remove MQTT subscribe
         } else {
           if (last_display_mode && !Settings.display_mode) {  // Switch to mode 0
             DisplayInit(DISPLAY_INIT_MODE);
             DisplayClear();
           } else {
-//          if (!last_display_mode && Settings.display_mode) {  // Switch to non mode 0
             DisplayLogBufferInit();
             DisplayInit(DISPLAY_INIT_MODE);
           }
