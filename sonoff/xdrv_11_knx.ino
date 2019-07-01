@@ -1030,7 +1030,7 @@ bool KnxCommand(void)
     while ( i != KNX_Empty ) {
       KNX_addr.value = Settings.knx_GA_addr[i];
 
-      float tempvar = CharToDouble(XdrvMailbox.data);
+      float tempvar = CharToFloat(XdrvMailbox.data);
       dtostrfd(tempvar,2,XdrvMailbox.data);
 
       knx.write_2byte_float(KNX_addr, tempvar);

@@ -179,7 +179,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   }
 
   char rule_svalue[CMDSZ] = { 0 };
-  double rule_value = 0;
+  float rule_value = 0;
   if (compare != COMPARE_OPERATOR_NONE) {
     String rule_param = rule_name.substring(pos + strlen(compare_operator));
     for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
@@ -225,7 +225,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     if (temp_value > -1) {
       rule_value = temp_value;
     } else {
-      rule_value = CharToDouble((char*)rule_svalue);   // 0.1      - This saves 9k code over toFLoat()!
+      rule_value = CharToFloat((char*)rule_svalue);   // 0.1      - This saves 9k code over toFLoat()!
     }
     rule_name = rule_name.substring(0, pos);           // "CURRENT"
   }
@@ -235,7 +235,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   JsonObject &root = jsonBuf.parseObject(event);
   if (!root.success()) { return false; }               // No valid JSON data
 
-  double value = 0;
+  float value = 0;
   const char* str_value = root[rule_task][rule_name];
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
@@ -248,7 +248,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 
   // Step 3: Compare rule (value)
   if (str_value) {
-    value = CharToDouble((char*)str_value);
+    value = CharToFloat((char*)str_value);
     int int_value = int(value);
     int int_rule_value = int(rule_value);
     switch (compare) {
@@ -797,15 +797,15 @@ String RulesUnsubscribe(const char * data, int data_len)
  * Parse a number value
  * Input:
  *      pNumber     - A char pointer point to a digit started string (guaranteed)
- *      value       - Reference a double variable used to accept the result
+ *      value       - Reference a float variable used to accept the result
  * Output:
  *      pNumber     - Pointer forward to next character after the number
- *      value       - double type, the result value
+ *      value       - float type, the result value
  * Return:
  *      true    - succeed
  *      false   - failed
  */
-bool findNextNumber(char * &pNumber, double &value)
+bool findNextNumber(char * &pNumber, float &value)
 {
   bool bSucceed = false;
   String sNumber = "";
@@ -818,7 +818,7 @@ bool findNextNumber(char * &pNumber, double &value)
     }
   }
   if (sNumber.length() > 0) {
-    value = CharToDouble(sNumber.c_str());
+    value = CharToFloat(sNumber.c_str());
     bSucceed = true;
   }
   return bSucceed;
@@ -826,18 +826,18 @@ bool findNextNumber(char * &pNumber, double &value)
 
 /********************************************************************************************/
 /*
- * Parse a variable (like VAR1, MEM3) and get its value (double type)
+ * Parse a variable (like VAR1, MEM3) and get its value (float type)
  * Input:
  *      pVarname    - A char pointer point to a variable name string
- *      value       - Reference a double variable used to accept the result
+ *      value       - Reference a float variable used to accept the result
  * Output:
  *      pVarname    - Pointer forward to next character after the variable
- *      value       - double type, the result value
+ *      value       - float type, the result value
  * Return:
  *      true    - succeed
  *      false   - failed
  */
-bool findNextVariableValue(char * &pVarname, double &value)
+bool findNextVariableValue(char * &pVarname, float &value)
 {
   bool succeed = true;
   value = 0;
@@ -854,12 +854,12 @@ bool findNextVariableValue(char * &pVarname, double &value)
   if (sVarName.startsWith(F("VAR"))) {
     int index = sVarName.substring(3).toInt();
     if (index > 0 && index <= MAX_RULE_VARS) {
-      value = CharToDouble(vars[index -1]);
+      value = CharToFloat(vars[index -1]);
     }
   } else if (sVarName.startsWith(F("MEM"))) {
     int index = sVarName.substring(3).toInt();
     if (index > 0 && index <= MAX_RULE_MEMS) {
-      value = CharToDouble(Settings.mems[index -1]);
+      value = CharToFloat(Settings.mems[index -1]);
     }
   } else if (sVarName.equals(F("TIME"))) {
     value = MinutesPastMidnight();
@@ -891,15 +891,15 @@ bool findNextVariableValue(char * &pVarname, double &value)
  *     - An expression enclosed with a pair of round brackets, (.....)
  * Input:
  *      pointer     - A char pointer point to a place of the expression string
- *      value       - Reference a double variable used to accept the result
+ *      value       - Reference a float variable used to accept the result
  * Output:
  *      pointer     - Pointer forward to next character after next object
- *      value       - double type, the result value
+ *      value       - float type, the result value
  * Return:
  *      true    - succeed
  *      false   - failed
  */
-bool findNextObjectValue(char * &pointer, double &value)
+bool findNextObjectValue(char * &pointer, float &value)
 {
   bool bSucceed = false;
   while (*pointer)
@@ -984,15 +984,15 @@ bool findNextOperator(char * &pointer, int8_t &op)
  * Calculate a simple expression composed by 2 value and 1 operator, like 2 * 3
  * Input:
  *      pointer     - A char pointer point to a place of the expression string
- *      value       - Reference a double variable used to accept the result
+ *      value       - Reference a float variable used to accept the result
  * Output:
  *      pointer     - Pointer forward to next character after next object
- *      value       - double type, the result value
+ *      value       - float type, the result value
  * Return:
  *      true    - succeed
  *      false   - failed
  */
-double calculateTwoValues(double v1, double v2, uint8_t op)
+float calculateTwoValues(float v1, float v2, uint8_t op)
 {
   switch (op)
   {
@@ -1025,7 +1025,7 @@ double calculateTwoValues(double v1, double v2, uint8_t op)
  *      expression  - The expression to be evaluated
  *      len         - Length of the expression
  * Return:
- *      double      - result.
+ *      float      - result.
  *      0           - if the expression is invalid
  * An example:
  * MEM1 = 3, MEM2 = 6, VAR2 = 15, VAR10 = 80
@@ -1045,17 +1045,17 @@ double calculateTwoValues(double v1, double v2, uint8_t op)
  *  2             +                                   1
  *  3             /                                   2
  */
-double evaluateExpression(const char * expression, unsigned int len)
+float evaluateExpression(const char * expression, unsigned int len)
 {
   char expbuf[len + 1];
   memcpy(expbuf, expression, len);
   expbuf[len] = '\0';
   char * scan_pointer = expbuf;
 
-  LinkedList<double> object_values;
+  LinkedList<float> object_values;
   LinkedList<int8_t> operators;
   int8_t op;
-  double va;
+  float va;
   //Find and add the value of first object
   if (findNextObjectValue(scan_pointer, va)) {
     object_values.add(va);
@@ -1154,7 +1154,7 @@ bool RulesCommand(void)
   else if ((CMND_RULETIMER == command_code) && (index > 0) && (index <= MAX_RULE_TIMERS)) {
     if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-      double timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
+      float timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
       rules_timer[index -1] = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
 #else
       rules_timer[index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
@@ -1202,7 +1202,7 @@ bool RulesCommand(void)
   }
   else if ((CMND_ADD == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      double tempvar = CharToDouble(vars[index -1]) + CharToDouble(XdrvMailbox.data);
+      float tempvar = CharToFloat(vars[index -1]) + CharToFloat(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
@@ -1210,7 +1210,7 @@ bool RulesCommand(void)
   }
   else if ((CMND_SUB == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      double tempvar = CharToDouble(vars[index -1]) - CharToDouble(XdrvMailbox.data);
+      float tempvar = CharToFloat(vars[index -1]) - CharToFloat(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
@@ -1218,7 +1218,7 @@ bool RulesCommand(void)
   }
   else if ((CMND_MULT == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      double tempvar = CharToDouble(vars[index -1]) * CharToDouble(XdrvMailbox.data);
+      float tempvar = CharToFloat(vars[index -1]) * CharToFloat(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
@@ -1229,12 +1229,12 @@ bool RulesCommand(void)
       if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
 
-        double valueIN = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 1));
-        double fromLow = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2));
-        double fromHigh = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 3));
-        double toLow = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 4));
-        double toHigh = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 5));
-        double value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
+        float valueIN = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 1));
+        float fromLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2));
+        float fromHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 3));
+        float toLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4));
+        float toHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 5));
+        float value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
         dtostrfd(value, Settings.flag2.calc_resolution, vars[index -1]);
         bitSet(vars_event, index -1);
       }
@@ -1254,7 +1254,7 @@ bool RulesCommand(void)
   return serviced;
 }
 
-double map_double(double x, double in_min, double in_max, double out_min, double out_max)
+float map_double(float x, float in_min, float in_max, float out_min, float out_max)
 {
  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }

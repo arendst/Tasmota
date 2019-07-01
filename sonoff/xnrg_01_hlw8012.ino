@@ -287,17 +287,17 @@ bool HlwCommand(void)
   }
   else if (CMND_POWERSET == energy_command_code) {
     if (XdrvMailbox.data_len && hlw_cf_power_pulse_length) {
-      Settings.energy_power_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data) * 10) * hlw_cf_power_pulse_length) / hlw_power_ratio;
+      Settings.energy_power_calibration = ((unsigned long)(CharToFloat(XdrvMailbox.data) * 10) * hlw_cf_power_pulse_length) / hlw_power_ratio;
     }
   }
   else if (CMND_VOLTAGESET == energy_command_code) {
     if (XdrvMailbox.data_len && hlw_cf1_voltage_pulse_length) {
-      Settings.energy_voltage_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data) * 10) * hlw_cf1_voltage_pulse_length) / hlw_voltage_ratio;
+      Settings.energy_voltage_calibration = ((unsigned long)(CharToFloat(XdrvMailbox.data) * 10) * hlw_cf1_voltage_pulse_length) / hlw_voltage_ratio;
     }
   }
   else if (CMND_CURRENTSET == energy_command_code) {
     if (XdrvMailbox.data_len && hlw_cf1_current_pulse_length) {
-      Settings.energy_current_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data)) * hlw_cf1_current_pulse_length) / hlw_current_ratio;
+      Settings.energy_current_calibration = ((unsigned long)(CharToFloat(XdrvMailbox.data)) * hlw_cf1_current_pulse_length) / hlw_current_ratio;
     }
   }
   else serviced = false;  // Unknown command

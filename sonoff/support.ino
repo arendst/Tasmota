@@ -224,7 +224,7 @@ char* subStr(char* dest, char* str, const char *delim, int index)
   return sub;
 }
 
-double CharToDouble(const char *str)
+float CharToFloat(const char *str)
 {
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
@@ -237,23 +237,23 @@ double CharToDouble(const char *str)
   if (*pt == '-') { sign = -1; }
   if (*pt == '-' || *pt=='+') { pt++; }            // Skip any sign
 
-  double left = 0;
+  float left = 0;
   if (*pt != '.') {
     left = atoi(pt);                               // Get left part
     while (isdigit(*pt)) { pt++; }                 // Skip number
   }
 
-  double right = 0;
+  float right = 0;
   if (*pt == '.') {
     pt++;
     right = atoi(pt);                              // Decimal part
     while (isdigit(*pt)) {
       pt++;
-      right /= 10.0;
+      right /= 10.0f;
     }
   }
 
-  double result = left + right;
+  float result = left + right;
   if (sign < 0) {
     return -result;                                // Add negative sign
   }
@@ -648,66 +648,6 @@ void ResetGlobalValues(void)
     global_humidity = 0;
     global_pressure = 0;
   }
-}
-
-double FastPrecisePow(double a, double b)
-{
-  // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
-  // calculate approximation with fraction of the exponent
-  int e = abs((int)b);
-  union {
-    double d;
-    int x[2];
-  } u = { a };
-  u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
-  u.x[0] = 0;
-  // exponentiation by squaring with the exponent's integer part
-  // double r = u.d makes everything much slower, not sure why
-  double r = 1.0;
-  while (e) {
-    if (e & 1) {
-      r *= a;
-    }
-    a *= a;
-    e >>= 1;
-  }
-  return r * u.d;
-}
-
-float FastPrecisePowf(const float x, const float y)
-{
-//  return (float)(pow((double)x, (double)y));
-  return (float)FastPrecisePow(x, y);
-}
-
-double TaylorLog(double x)
-{
-  // https://stackoverflow.com/questions/46879166/finding-the-natural-logarithm-of-a-number-using-taylor-series-in-c
-
-  if (x <= 0.0) { return NAN; }
-  double z = (x + 1) / (x - 1);                              // We start from power -1, to make sure we get the right power in each iteration;
-  double step = ((x - 1) * (x - 1)) / ((x + 1) * (x + 1));   // Store step to not have to calculate it each time
-  double totalValue = 0;
-  double powe = 1;
-  double y;
-  for (uint32_t count = 0; count < 10; count++) {                 // Experimental number of 10 iterations
-    z *= step;
-    y = (1 / powe) * z;
-    totalValue = totalValue + y;
-    powe = powe + 2;
-  }
-  totalValue *= 2;
-/*
-  char logxs[33];
-  dtostrfd(x, 8, logxs);
-  double log1 = log(x);
-  char log1s[33];
-  dtostrfd(log1, 8, log1s);
-  char log2s[33];
-  dtostrfd(totalValue, 8, log2s);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("input %s, log %s, taylor %s"), logxs, log1s, log2s);
-*/
-  return totalValue;
 }
 
 uint32_t SqrtInt(uint32_t num)

@@ -204,7 +204,7 @@ bool HxCommand(void)
       break;
     case 6:  // WeightItem
       if (strstr(XdrvMailbox.data, ",") != nullptr) {
-        Settings.weight_item = (unsigned long)(CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 10);
+        Settings.weight_item = (unsigned long)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 10);
       }
       show_parms = true;
       break;
@@ -444,7 +444,7 @@ void HandleHxAction(void)
 
   if (WebServer->hasArg("calibrate")) {
     WebGetArg("p1", stemp1, sizeof(stemp1));
-    Settings.weight_reference = (!strlen(stemp1)) ? 0 : (unsigned long)(CharToDouble(stemp1) * 1000);
+    Settings.weight_reference = (!strlen(stemp1)) ? 0 : (unsigned long)(CharToFloat(stemp1) * 1000);
 
     HxLogUpdates();
 
@@ -471,7 +471,7 @@ void HxSaveSettings(void)
   char tmp[100];
 
   WebGetArg("p2", tmp, sizeof(tmp));
-  Settings.weight_item = (!strlen(tmp)) ? 0 : (unsigned long)(CharToDouble(tmp) * 10000);
+  Settings.weight_item = (!strlen(tmp)) ? 0 : (unsigned long)(CharToFloat(tmp) * 10000);
 
   HxLogUpdates();
 }
