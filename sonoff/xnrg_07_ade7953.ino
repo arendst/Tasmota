@@ -184,7 +184,7 @@ bool Ade7953Command(void)
 {
   bool serviced = true;
 
-  uint32_t value = (uint32_t)(CharToDouble(XdrvMailbox.data) * 100);  // 1.23 = 123
+  uint32_t value = (uint32_t)(CharToFloat(XdrvMailbox.data) * 100);  // 1.23 = 123
 
   if (CMND_POWERCAL == energy_command_code) {
     if (1 == XdrvMailbox.payload) { XdrvMailbox.payload = ADE7953_PREF; }

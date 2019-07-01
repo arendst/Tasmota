@@ -487,7 +487,7 @@ bool TimerCommand(void)
 #ifdef USE_SUNRISE
   else if (CMND_LONGITUDE == command_code) {
     if (XdrvMailbox.data_len) {
-      Settings.longitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
+      Settings.longitude = (int)(CharToFloat(XdrvMailbox.data) *1000000);
     }
     char lbuff[33];
     dtostrfd(((float)Settings.longitude) /1000000, 6, lbuff);
@@ -495,7 +495,7 @@ bool TimerCommand(void)
   }
   else if (CMND_LATITUDE == command_code) {
     if (XdrvMailbox.data_len) {
-      Settings.latitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
+      Settings.latitude = (int)(CharToFloat(XdrvMailbox.data) *1000000);
     }
     char lbuff[33];
     dtostrfd(((float)Settings.latitude) /1000000, 6, lbuff);

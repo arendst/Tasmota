@@ -224,7 +224,7 @@ char* subStr(char* dest, char* str, const char *delim, int index)
   return sub;
 }
 
-double CharToDouble(const char *str)
+float CharToFloat(const char *str)
 {
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
@@ -237,23 +237,23 @@ double CharToDouble(const char *str)
   if (*pt == '-') { sign = -1; }
   if (*pt == '-' || *pt=='+') { pt++; }            // Skip any sign
 
-  double left = 0;
+  float left = 0;
   if (*pt != '.') {
     left = atoi(pt);                               // Get left part
     while (isdigit(*pt)) { pt++; }                 // Skip number
   }
 
-  double right = 0;
+  float right = 0;
   if (*pt == '.') {
     pt++;
     right = atoi(pt);                              // Decimal part
     while (isdigit(*pt)) {
       pt++;
-      right /= 10.0;
+      right /= 10.0f;
     }
   }
 
-  double result = left + right;
+  float result = left + right;
   if (sign < 0) {
     return -result;                                // Add negative sign
   }

@@ -298,7 +298,7 @@ char *script;
                 op++;
                 if (*op!='"') {
                     float fv;
-                    fv=CharToDouble(op);
+                    fv=CharToFloat(op);
                     fvalues[nvars]=fv;
                     vtypes[vars].bits.is_string=0;
                     if (!vtypes[vars].bits.is_filter) vtypes[vars].index=nvars;
@@ -670,7 +670,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
 
     if (isdigit(*lp) || (*lp=='-' && isdigit(*(lp+1))) || *lp=='.') {
       // isnumber
-        if (fp) *fp=CharToDouble(lp);
+        if (fp) *fp=CharToFloat(lp);
         if (*lp=='-') lp++;
         while (isdigit(*lp) || *lp=='.') {
           if (*lp==0 || *lp==SCRIPT_EOL) break;
@@ -839,7 +839,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
                 return lp+len;
               }
             } else {
-              if (fp) *fp=CharToDouble((char*)str_value);
+              if (fp) *fp=CharToFloat((char*)str_value);
               *vtype=NUM_RES;
               tind->bits.constant=1;
               tind->bits.is_string=0;
@@ -2266,7 +2266,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                   // mismatch was string, not number
                   // get the string and convert to number
                   lp=isvar(slp,&vtype,&ind,0,cmpstr,jo);
-                  fvar=CharToDouble(cmpstr);
+                  fvar=CharToFloat(cmpstr);
                 }
                 switch (lastop) {
                     case OPER_EQU:
@@ -2398,7 +2398,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                               *dfvar=fparam;
                             } else {
                               // mismatch
-                              *dfvar=CharToDouble(cmpstr);
+                              *dfvar=CharToFloat(cmpstr);
                             }
                         } else {
                             // string result
