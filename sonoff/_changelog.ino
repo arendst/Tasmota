@@ -9,6 +9,7 @@
  * Add command SetOption40 0..250 to disable button functionality if activated for over 0.1 second. Needs SetOption1 1 and SetOption13 0 (#5449)
  * Change converted double to float in rules, and replaced trigonometric functions from stdlib with smaller versions saving 7k code space (#6005)
  * Add support for Sonoff L1 thanks to reef-actor (#6002)
+ * Fix Not restoring white value on power off/power on (#5993)
  *
  * 6.5.0.15 20190606
  * Change pubsubclient MQTT_KEEPALIVE from 10 to 30 seconds in preparation of AWS IoT support
