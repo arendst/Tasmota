@@ -657,6 +657,9 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   SONOFF_T13,
   SONOFF_LED,          // Sonoff Light Devices
   SONOFF_BN,
+#ifdef USE_PS_16_DZ
+  SONOFF_L1,
+#endif
   SONOFF_B1,           // Sonoff Light Bulbs
   SLAMPHER,
   SONOFF_SC,           // Sonoff Environmemtal Sensor
@@ -699,7 +702,6 @@ const uint8_t kModuleNiceList[] PROGMEM = {
 #endif
 #ifdef USE_PS_16_DZ
   PS_16_DZ,
-  SONOFF_L1,
 #endif
   H801,                // Light Devices
   MAGICHOME,
@@ -1981,7 +1983,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO16 N.C.
      ADC0_USER         // ADC0 A0 Analog input
   },
-  { "SONOFF L1",       // Sonoff L1 RGB LED controller (ESP8266 w/ separate Nuvoton MCU)
+  { "Sonoff L1",       // Sonoff L1 RGB LED controller (ESP8266 w/ separate Nuvoton MCU)
      GPIO_USER,
      GPIO_TXD,         // GPIO01 MCU serial control
      GPIO_USER,

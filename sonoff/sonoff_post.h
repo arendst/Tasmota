@@ -137,7 +137,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #ifndef TUYA_DIMMER_ID
   #define TUYA_DIMMER_ID       0              // Default dimmer Id
 #endif
-#define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer
+#define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k7 code)
 //#define USE_AZ7798                            // Add support for AZ-Instrument 7798 CO2 datalogger
 #define USE_PN532_HSU                         // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
@@ -208,7 +208,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k7 code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
@@ -341,7 +341,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 //#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k7 code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
@@ -412,7 +412,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k7 code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
