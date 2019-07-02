@@ -408,7 +408,7 @@ class LightStateClass {
     }
 
     // get full brightness values for wamr and cold channels.
-    // either w=c=0 (off) or w+c=255
+    // either w=c=0 (off) or w+c >= 255
     void getCW(uint8_t *rc, uint8_t *rw) {
       if (rc) { *rc = _wc; }
       if (rw) { *rw = _ww; }
@@ -448,12 +448,18 @@ class LightStateClass {
       return _briCT;
     }
 
-    uint8_t getDimmer() {
-      uint8_t bri = getBri();
-      uint8_t dimmer = changeUIntScale(bri, 0, 255, 0, 100);  // 0.100
+    static inline uint8_t DimmerToBri(uint8_t dimmer) {
+      return changeUIntScale(dimmer, 0, 100, 0, 255);  // 0..255
+    }
+    static uint8_t BriToDimmer(uint8_t bri) {
+      uint8_t dimmer = changeUIntScale(bri, 0, 255, 0, 100);
       // if brightness is non zero, force dimmer to be non-zero too
       if ((dimmer == 0) && (bri > 0)) { dimmer = 1; }
       return dimmer;
+    }
+
+    uint8_t getDimmer() {
+      return BriToDimmer(getBri());
     }
 
     inline uint16_t getCT() {
@@ -496,7 +502,7 @@ class LightStateClass {
     }
 
     void setDimmer(uint8_t dimmer) {
-      setBri(changeUIntScale(dimmer, 0, 100, 0, 255));  // 0..255
+      setBri(DimmerToBri(dimmer));
     }
 
     void setCT(uint16_t ct) {
@@ -827,18 +833,16 @@ public:
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings light_type/sub (%d %d)",
       light_type, light_subtype);
 #endif
-    // TODO
-    // set the RGB from settings
+    // first try setting CW, if zero, it select RGB mode
+    _state->setCW(Settings.light_color[3], Settings.light_color[4], true);
     _state->setRGB(Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
-
-    // get CT only for lights that support it
-    if ((LST_COLDWARM == light_subtype) || (LST_RGBW <= light_subtype)) {
-      // TODO check
-      _state->setCW(Settings.light_color[3], Settings.light_color[4], true);
+    // We apply dimmer in priority to RGB
+    uint8_t bri = _state->DimmerToBri(Settings.light_dimmer);
+    if (Settings.light_color[0] + Settings.light_color[1] + Settings.light_color[2] > 0) {
+      _state->setBriRGB(bri);
+    } else {
+      _state->setBriCT(bri);
     }
-
-    // set Dimmer
-    _state->setDimmer(Settings.light_dimmer);
   }
 
   void changeCTB(uint16_t new_ct, uint8_t briCT) {
@@ -924,14 +928,21 @@ public:
 
   // save the current light state to Settings.
   void saveSettings() {
+    uint8_t cm = _state->getColorMode();
+
     memset(&Settings.light_color[0], 0, sizeof(Settings.light_color));
-    if (_state->getBriRGB() > 0) {
+    if (LCM_RGB & cm) {   // can be either LCM_RGB or LCM_BOTH
       _state->getRGB(&Settings.light_color[0], &Settings.light_color[1], &Settings.light_color[2]);
-    }
-    if (_state->getBriCT() > 0) {
+      Settings.light_dimmer = _state->BriToDimmer(_state->getBriRGB());
+      // anyways we always store RGB with BrightnessRGB
+      if (LCM_BOTH == cm) {
+        // then store at actual brightness CW/WW if dual mode
+        _state->getActualRGBCW(nullptr, nullptr, nullptr, &Settings.light_color[3], &Settings.light_color[4]);
+      }
+    } else if (LCM_CT == cm) {    // cm can only be LCM_CT
       _state->getCW(&Settings.light_color[3], &Settings.light_color[4]);
+      Settings.light_dimmer = _state->BriToDimmer(_state->getBriCT());
     }
-    Settings.light_dimmer = _state->getDimmer();
 #ifdef DEBUG_LIGHT
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::saveSettings Settings.light_color (%d %d %d %d %d - %d)",
       Settings.light_color[0], Settings.light_color[1], Settings.light_color[2],
