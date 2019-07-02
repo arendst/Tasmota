@@ -17,6 +17,94 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
+// Functions not available in 2.3.0
+
+static const float Zero[] = { 0.0, -0.0 };
+
+// https://code.woboq.org/userspace/glibc/sysdeps/ieee754/flt-32/e_fmodf.c.html
+float fmodf(float x, float y)
+{
+  int32_t hx = (int32_t)x;
+  int32_t hy = (int32_t)y;
+
+  int32_t sx = hx &0x80000000;                       // sign of x
+  hx ^= sx;                                          // |x|
+  hy &= 0x7fffffff;                                  // |y|
+
+  // purge off exception values
+  if ((0 == hy) || (hx >= 0x7f800000) || (hy > 0x7f800000)) { // y=0, or x not finite, or y is NaN
+    return (x * y) / (x * y);
+  }
+  if (hx < hy) { return x; }                         // |x|<|y| return x
+  if (hx == hy) { return Zero[(uint32_t)sx >> 31]; } // |x|=|y| return x*0
+
+  int32_t n, hz, ix, iy, i;
+  // determine ix = ilogb(x)
+  if (hx < 0x00800000) {                             // subnormal x
+    for (ix = -126, i = (hx << 8); i > 0; i <<= 1) { ix -=1; }
+  } else {
+    ix = (hx >> 23) -127;
+  }
+
+  // determine iy = ilogb(y)
+  if (hy < 0x00800000) {                             // subnormal y
+    for (iy = -126, i = (hy << 8); i >= 0; i <<= 1) { iy -=1; }
+  } else {
+    iy = (hy >> 23) -127;
+  }
+
+  // set up {hx,lx}, {hy,ly} and align y to x
+  if (ix >= -126) {
+    hx = 0x00800000 | (0x007fffff & hx);
+  } else {                                           // subnormal x, shift x to normal
+    n = -126 - ix;
+    hx = hx << n;
+  }
+  if (iy >= -126) {
+    hy = 0x00800000 | (0x007fffff & hy);
+  } else {                                           // subnormal y, shift y to normal
+    n = -126 - iy;
+    hy = hy << n;
+  }
+
+  // fix point fmod
+  n = ix - iy;
+  while (n--) {
+    hz = hx - hy;
+    if (hz < 0) {
+      hx = hx + hx;
+    } else {
+      if (hz == 0) {                                 // return sign(x)*0
+        return Zero[(uint32_t)sx >> 31];
+      }
+      hx = hz + hz;
+    }
+  }
+  hz = hx - hy;
+  if (hz >= 0) { hx = hz; }
+
+  // convert back to floating value and restore the sign
+  if (0 == hx) {                                     // return sign(x)*0
+    return Zero[(uint32_t)sx >> 31];
+  }
+  while (hx < 0x00800000) {                          // normalize x
+    hx = hx + hx;
+    iy -= 1;
+  }
+  if (iy >= -126) {                                  // normalize output
+    hx = ((hx - 0x00800000) | ((iy +127) << 23));
+    x = (float)(hx | sx);
+  } else {                                           // subnormal output
+    n = -126 - iy;
+    hx >>= n;
+    x = (float)(hx | sx);
+    x *= 1.0;                                        // create necessary signal
+  }
+  return x;                                          // exact output
+}
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+
 double FastPrecisePow(double a, double b)
 {
   // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
