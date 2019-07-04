@@ -316,7 +316,7 @@ void SDM630Show(bool json)
       dtostrfd(sdm630_energy_total * 1000, 1, energy_total_chr);
       DomoticzSensor(DZ_VOLTAGE, voltage_l1);
       DomoticzSensor(DZ_CURRENT, current_l1);
-      DomoticzSensorPowerEnergy((int)sdm630_active_power, energy_total_chr);
+      DomoticzSensorPowerEnergy((int)sdm630_active_power[0], energy_total_chr);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
