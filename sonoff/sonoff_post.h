@@ -438,6 +438,16 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif  // FIRMWARE_MINIMAL
 
 /*********************************************************************************************\
+ * [sonoff-custom.bin]
+ * Provide a custom image based on a defines in user_config_override.h
+\*********************************************************************************************/
+
+#ifdef FIRMWARE_CUSTOM
+#undef CODE_IMAGE
+#define CODE_IMAGE 7
+#endif  // FIRMWARE_CUSTOM
+
+/*********************************************************************************************\
  * Mandatory defines satisfying possible disabled defines
 \*********************************************************************************************/
 
