@@ -556,7 +556,7 @@ const char kPrefixes[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
   D_STAT,
   D_TELE };
 
-const char kCodeImage[] PROGMEM = "sonoff|minimal|classic|sensors|knx|basic|display";
+const char kCodeImage[] PROGMEM = "sonoff|minimal|classic|sensors|knx|basic|display|custom";
 
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;
