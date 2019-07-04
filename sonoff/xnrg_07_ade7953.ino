@@ -107,20 +107,24 @@ void Ade7953Init(void)
 
 void Ade7953GetData(void)
 {
+  int32_t active_power;
+
   ade7953_voltage_rms = Ade7953Read(0x31C);      // Both relays
   ade7953_current_rms1 = Ade7953Read(0x31B);     // Relay 1
   if (ade7953_current_rms1 < 2000) {             // No load threshold (20mA)
     ade7953_current_rms1 = 0;
     ade7953_active_power1 = 0;
   } else {
-    ade7953_active_power1 = (int32_t)Ade7953Read(0x313) * -1;  // Relay 1
+    active_power = (int32_t)Ade7953Read(0x313) * -1;  // Relay 1
+    ade7953_active_power1 = (active_power > 0) ? active_power : 0;
   }
   ade7953_current_rms2 = Ade7953Read(0x31A);     // Relay 2
   if (ade7953_current_rms2 < 2000) {             // No load threshold (20mA)
     ade7953_current_rms2 = 0;
     ade7953_active_power2 = 0;
   } else {
-    ade7953_active_power2 = (int32_t)Ade7953Read(0x312);  // Relay 2
+    active_power = (int32_t)Ade7953Read(0x312);  // Relay 2
+    ade7953_active_power2 = (active_power > 0) ? active_power : 0;
   }
   // First phase only supports accumulated Current and Power
   ade7953_current_rms = ade7953_current_rms1 + ade7953_current_rms2;
