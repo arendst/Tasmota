@@ -301,16 +301,6 @@ void SDM630Show(bool json)
   char energy_total[33];
   dtostrfd(sdm630_energy_total, Settings.flag2.energy_resolution, energy_total);
 
-#ifdef USE_DOMOTICZ
-    if (0 == tele_period) {
-      char energy_total_chr[33];
-      dtostrfd(sdm630_energy_total * 1000, 1, energy_total_chr);
-      DomoticzSensor(DZ_VOLTAGE, voltage);
-      DomoticzSensor(DZ_CURRENT, current);
-      DomoticzSensorPowerEnergy((int)sdm630_active_power, energy_total_chr);
-    }
-#endif  // USE_DOMOTICZ
-  
   if (json) {
     ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\""
       D_JSON_ACTIVE_POWERUSAGE "\":[%s,%s,%s],\"" D_JSON_REACTIVE_POWERUSAGE "\":[%s,%s,%s],\""
@@ -320,6 +310,15 @@ void SDM630Show(bool json)
       power_factor_l1, power_factor_l2, power_factor_l3,
       voltage_l1, voltage_l2, voltage_l3,
       current_l1, current_l2, current_l3);
+#ifdef USE_DOMOTICZ
+    if (0 == tele_period) {
+      char energy_total_chr[33];
+      dtostrfd(sdm630_energy_total * 1000, 1, energy_total_chr);
+      DomoticzSensor(DZ_VOLTAGE, voltage_l1);
+      DomoticzSensor(DZ_CURRENT, current_l1);
+      DomoticzSensorPowerEnergy((int)sdm630_active_power, energy_total_chr);
+    }
+#endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_SNS_SDM630_DATA,
