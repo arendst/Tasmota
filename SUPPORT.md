@@ -1,6 +1,5 @@
-<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
-
 # Support
+<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
 
 If you're looking for support on **Sonoff-Tasmota** there are some options available:
 
