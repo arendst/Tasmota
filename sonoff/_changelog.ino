@@ -31,7 +31,6 @@
  * Fix missing white channel for WS2812 (#5869)
  * Fix PZem startup issue (#5875)
  * Fix exception 9 when syslog is enabled and NTP is just synced (#5917)
- * Fix include of my_user_config.h in sonoff_aws_iot.cpp (#5930)
  * Fix Toggle functionality to button double press when one button and two devices are detected (#5935)
  * Fix channel command for dual dimmers (#5940)
  * Fix not restoring white value on power off/power on (#5993)
