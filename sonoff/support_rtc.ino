@@ -46,9 +46,15 @@ uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 0;
 uint32_t restart_time = 0;
+int32_t  drift_time = 0;
 int32_t  time_timezone = 0;
 uint8_t  midnight_now = 0;
 uint8_t  ntp_sync_minute = 0;
+
+int32_t DriftTime(void)
+{
+  return drift_time;
+}
 
 String GetBuildDateAndTime(void)
 {
@@ -356,6 +362,7 @@ void RtcSecond(void)
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
       ntp_force_sync = false;
+      if (utc_time > 1451602800) { drift_time = ntp_time - utc_time; }
       utc_time = ntp_time;
       ntp_sync_minute = 60;  // Sync so block further requests
       if (restart_time == 0) {

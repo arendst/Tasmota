@@ -2013,7 +2013,8 @@ void PerformEverySecond(void)
 
   if (ntp_synced_message) {
     // Moved here to fix syslog UDP exception 9 during RtcSecond
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: Drift %d, (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
+      DriftTime(), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
     ntp_synced_message = false;
   }
 
