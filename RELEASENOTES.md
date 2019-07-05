@@ -10,8 +10,13 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 3. Migrate to **Sonoff-Tasmota 5.14**
 4. Migrate to **Sonoff-Tasmota 6.x**
 
-## Core version 2.3.0 vs 2.4.2
-This release is based on ESP8266/Arduino library core 2.3.0 (again) as some people encountered wifi related issues on core 2.4.2. For others core 2.4.2 is working just fine. Both version are available from http://thehackbox.org/tasmota/release/
+## Support of TLS
+TLS support for core 2.3.0 is removed.
+
+TLS is supported on core 2.4.2 and up. To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. See full documentation on https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
+
+## Core version 2.3.0 vs 2.4.2 vs 2.5.2
+This release is based on ESP8266/Arduino library core 2.3.0 as some people encountered wifi related issues on core 2.4.2 and 2.5.2. For others core 2.4.2 or 2.5.2 is working just fine. All version are available from http://thehackbox.org/tasmota/release/
 
 ## Change in default initial configuration tool
 Firmware binary **sonoff-classic.bin** supports **WifiManager, Wps and SmartConfig** for initial configuration. The default tool is **Wps**.
@@ -92,6 +97,7 @@ Module            | Description
 67 SP10           | Tuya SP10 Wifi Smart Switch with Energy Monitoring
 68 WAGA CHCZ02MB  | WAGA life CHCZ02MB Wifi Smart Switch with Energy Monitoring
 69 SYF05          | Sunyesmart SYF05 RGBWW Wifi Led Bulb
+70 Sonoff L1      | Sonoff L1 light strip
 
 ## Provided Binary Downloads
 The following binary downloads have been compiled with ESP8266/Arduino library core version **2.3.0**.
@@ -107,6 +113,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/release/020402/
 
+Core version **2.5.2** binaries can be found at http://thehackbox.org/tasmota/release/020502/
+
 ## Available Features and Sensors
 
 | Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
@@ -118,9 +126,12 @@ Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/re
 | USE_DOMOTICZ          | - | - | x | x | x | x | - |
 | USE_HOME_ASSISTANT    | - | - | - | x | x | x | - |
 | USE_MQTT_TLS          | - | - | - | - | - | - | - |
+| USE_MQTT_TLS_CA_CERT  | - | - | - | - | - | - | - |
+| USE_MQTT_AWS_IOT      | - | - | - | - | - | - | - |
 | USE_KNX               | - | - | - | - | x | - | - |
 | USE_WEBSERVER         | x | x | x | x | x | x | x | WifiManager
-| USE_EMULATION         | - | x | x | x | - | x | - |
+| USE_EMULATION_HUE     | - | x | x | x | - | x | - |
+| USE_EMULATION_WEMO    | - | x | x | x | - | x | - |
 | USE_DISCOVERY         | - | - | x | x | x | x | x |
 | WEBSERVER_ADVERTISE   | - | - | x | x | x | x | x |
 | MQTT_HOST_DISCOVERY   | - | - | x | x | x | x | x |
@@ -128,12 +139,15 @@ Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/re
 | USE_TIMERS_WEB        | - | x | - | x | x | x | x |
 | USE_SUNRISE           | - | x | - | x | x | x | x |
 | USE_RULES             | - | x | - | x | x | x | x |
+| USE_SCRIPT            | - | - | - | - | - | - | - |
 | USE_EXPRESSION        | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
-| USE_ADC_VCC           | x | x | x | x | x | - | x |
+| USE_ADC_VCC           | x | x | x | - | - | - | - |
+| USE_COUNTER           | - | - | - | x | x | x | x |
 | USE_DS18B20           | - | - | - | - | - | - | - | Single sensor
 | USE_DS18x20           | - | - | x | x | x | x | x | Multiple sensors
 | USE_DS18x20_LEGACY    | - | - | - | - | - | - | - | Multiple sensors
+| USE_DHT               | - | - | x | x | x | x | x |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
 | USE_I2C               | - | - | - | x | x | x | x |
@@ -162,6 +176,10 @@ Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/re
 | USE_MGC3130           | - | - | - | - | - | - | - |
 | USE_MAX44009          | - | - | - | - | - | - | - |
 | USE_SCD30             | - | - | - | - | - | x | - |
+| USE_SPS30             | - | - | - | - | - | - | - |
+| USE_ADE7953           | - | - | - | x | x | x | x |
+| USE_VL53L0X           | - | - | - | - | - | - | - |
+| USE_MLX90614          | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
@@ -206,81 +224,80 @@ Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/re
 | USE_DISPLAY_EPAPER_29 | - | - | - | - | - | - | x | Disabled for core 2.3.0
 
 ## Changelog
-Version 6.5.0 20190319
- * Remove commands SetOption14 and SetOption63 as it has been superseded by command Interlock
- * Remove command SetOption35 0-255 for mDNS start-up delay (#4793)
- * Remove support for MQTT_LIBRARY_TYPE, MQTT_ARDUINOMQTT and MQTT_TASMOTAMQTT (#5474)
- * Change webserver content handling from single String to small Chunks increasing RAM
- * Change code use of boolean to bool and byte to uint8_t
- * Change code uint8_t flags to bool flags
- * Change sonoff_template.h layout regarding optional module flags like ADC0
- * Change sonoff_template.h module lay-out by removing non-configurable GPIOs
- * Change button driver making it modular
- * Change switch driver making it modular and introduce input filter (#4665, #4724)
- * Change switch input detection by optimizing switch debounce (#4724)
- * Change web authentication (#4865)
- * Change image name BE_MINIMAL to FIRMWARE_MINIMAL and USE_xyz to FIRMWARE_xyz (#5106)
- * Change GUI weblog from XML to plain text solving possible empty screens (#5154)
- * Fix most compiler warnings
- * Fix Display exception 28 when JSON value is NULL received
- * Fix epaper driver (#4785)
- * Fix HAss Sensor Discovery Software Watchdog restart (#4831, #4988)
- * Fix allowable MAX_RULE_VARS to 16 (#4933)
- * Fix mDNS addService (#4938, #4951)
- * Fix HAss discovery of MHZ19(B) sensors (#4992)
- * Fix some exceptions and watchdogs due to lack of stack space (#5215)
- * Fix GUI wifi password acception starting with asteriks (*) (#5231, #5242)
- * Fix command WebSend intermittent results (#5273, #5304)
- * Fix additional characters in fallbacktopic, hostname and mqttclient on core 2.5.0 (#5359, #5417)
- * Fix Energy TotalStartTime when commands EnergyReset0 and/or EnergyReset3 used (#5373)
- * Fix DS18S20 temperature calculation (#5375)
- * Fix float calculations in range from 0 to -1 (#5386)
- * Fix exception on GUI Configure Logging and Configure Other (#5424)
- * Add commands PowerCal, VoltageCal and CurrentCal for HLW8012, HJL01 and BL0937 based energy sensors
- * Add command SerialDelimiter 128 to filter reception of only characters between ASCII 32 and 127 (#5131)
- * Add command SSerialSend5 \<hexdata\> to SerialBridge
- * Add command Interlock 0 / 1 / 1,2 3,4 .. to control interlock ON/OFF and add up to 8 relays in 1 to 4 interlock groups (#4910, #5014)
- * Add command Template 255 to copy module configuration over to current active template and store as user template named Merged (#5371)
- * Add command WifiConfig 7 to allow reset of device in AP mode without admin password (#5297)
- * Add command SetOption36 to control boot loop default restoration (#4645, #5063)
- * Add command SetOption37 for RGBCW color mapping (#5326)
- * Add command SetOption55 0/1 and define MDNS_ENABLE to disable/enable mDNS (#4793, #4923)
- * Add command SetOption62 0/1 to disable retain on Button or Switch hold messages (#5299)
- * Add support for Smanergy KA10 Smart Wall Socket with Energy monitoring
- * Add support for commands in sensor drivers
- * Add support for MAX31855 K-Type thermocouple sensor using softSPI (#4764)
- * Add support for Near Field Communication (NFC) controller PN532 using Serial (#4791, #5162)
- * Add support for OBI Power Socket 2 (#4829)
- * Add support for YTF IR Bridge (#4855)
- * Add support for Mi LED Desk Lamp with rotary switch (#4887)
- * Add support for Digoo DG-SP202 Smart Socket with Energy monitoring (#4891)
- * Add support for MAX44009 Ambient Light sensor (#4907)
- * Add support for inverted buttons and inverted buttons without pullup (#4914)
- * Add support for Luminea ZX2820 Smart Socket with Energy monitoring (#4921)
- * Add support for multiple ADS1115 I2C devices (#5083)
- * Add support for online template change using command Template or GUI Configure Other (#5177)
- * Add support for Korean language translations (#5344)
- * Add support for sensor SCD30 (#5434)
- * Add parameter CFG_HOLDER to status 1 message (#5206)
- * Add SetOption32 until SetOption49 diagnostic information to Status 3 report as replacement for second property value in SetOption property name
- * Add Resolution property to Status 3 report providing previous SetOption second value property
- * Add property MqttCount to status 6 message representing number of Mqtt re-connections
- * Add property LinkCount to state and status 11 message representing number of Wifi Link re-connections
- * Add property Downtime to state and status 11 message representing the duration of wifi connection loss
- * Add variable %timestamp% to rules (#4749)
- * Add rule support for "==", "!=" ">=" and "<=" (#5122)
- * Add rule expression enabled by define USE_EXPRESSION in my_user_config.h (#5210)
- * Add Power status functionality to LED2 when configured leaving LED1 for Link status indication
- * Add user configuration of HLW8012 and HJL-01/BL0937 Energy Monitoring as used in Sonoff Pow and many Tuya based devices
- * Add user configuration of MCP39F501 Energy Monitoring as used in Shelly2
- * Add online template configuration using both commands and Configure Template menu option in GUI
- * Add (S)SerialSend3 escape sequence \x to allow hexadecimal byte value (#3560, #4947)
- * Add define DS18B20_INTERNAL_PULLUP to select internal input pullup when only one DS18B20 sensor is connected eliminating external resistor (#4738)
- * Add button control when no relay configured (#4682)
- * Add startup delay of 4 seconds to button control (#4829)
- * Add core version conditional compile options to provided PWM files (#4917)
- * Add resiliency to saved Settings (#5065)
- * Add MHZ19 Temperature as Domoticz Temperature selection (#5128)
- * Add HAss status sensor (#5139)
- * Add status message to former declined group commands (#5145)
- * Add 0x to IRRemote (SetOption29) and RCSwitch (SetOption28) received hexadecimal data (#5431)
+Version 6.6.0 20190707
+ * Remove support of TLS on core 2.3.0 and extent support on core 2.4.2 and up
+ * Refactor some defines to const
+ * Refactor webserver HTML input, button, textarea, and select name based on id
+ * Refactor webserver sensor data collection
+ * Refactor TLS based on BearSSL, warning breaking change for fingerprints validation
+ * Refactor management of lights, using classes and integers instead of floats
+ * Refactor UDP initial message handling from string to char using static memory and add debug info (#5505)
+ * Refactor IRsend and receive for 64-bit support (#5523)
+ * Refactor MQTT which might solve issue (#5755)
+ * Refactor IRSend by using heap when more than 199 values need to be send. May need increase of define MQTT_MAX_PACKET_SIZE too (#5950)
+ * Refactor double to float in rules, and replaced trigonometric functions from stdlib with smaller versions (#6005)
+ * Change pubsubclient MQTT_KEEPALIVE from 10 to 30 seconds for AWS IoT support
+ * Change gamma correction as default behavior, ie "Ledtable 1"
+ * Change PWM resolution from 8 to 10 bits for low brightness lights
+ * Change IRSend Panasonic protocol to 64-bit (#5523)
+ * Change ADC0 to enabled by default in my_user_config.h (#5671)
+ * Change define USE_EMULATION by USE_EMULATION_HUE and USE_EMULATION_WEMO (#5826)
+ * Change default PowerDelta from 80% to 0% on new installations (#5858, #5028, #4813, #4130, #4145, #3795, #3778, #3660, #3648)
+ * Fix display Bug in KNX webmenu for Physical Address
+ * Fix the Unescape() function and the SendSerial3 behaviour
+ * Fix webserver multiple Javascript window.onload functionality
+ * Fix TasmotaSerial at 9600 bps solving DFPlayer comms (#5528)
+ * Fix Configure Timer Web GUI (#5568)
+ * Fix Shelly 2.5 I2C address priority issue when VEML6070 code is present by disabling VEML6070 for Shelly 2.5 (#5592)
+ * Fix use of SerialDelimiter value 128 (#5634)
+ * Fix Sonoff Pow R2 / S31 invalid energy increments (#5789)
+ * Fix core 2.5.x ISR not in IRAM exception (#5837)
+ * Fix Philips Hue emulation Alexa issue by using part of MAC address for LightId (#5849)
+ * Fix missing white channel for WS2812 (#5869)
+ * Fix PZem startup issue (#5875)
+ * Fix exception 9 when syslog is enabled and NTP is just synced (#5917)
+ * Fix include of my_user_config.h in sonoff_aws_iot.cpp (#5930)
+ * Fix Toggle functionality to button double press when one button and two devices are detected (#5935)
+ * Fix channel command for dual dimmers (#5940)
+ * Fix not restoring white value on power off/power on (#5993)
+ * Add command AdcParam to control ADC0 Temperature and Light formula parameters
+ * Add command LedMask to assign which relay has access to power LED (#5602, #5612)
+ * Add extended LED power control using command LedPowerX where X is 1 to 4. Enabled when "LedLink(i)" is configured too (#5709)
+ * Add command Sensor20 1..255 to change Nova Fitness SDS01 working period in minutes (#5452)
+ * Add command SetOption38 6..255 to set IRReceive protocol detection sensitivity mimizing UNKNOWN protocols (#5853)
+ * Add command SetOption39 1..255 to control CSE7766 (Pow R2) or HLW8032 (Blitzwolf SHP5) handling of power loads below 6W. Default setting is 128 (#5756)
+ * Add command SetOption40 0..250 to disable button functionality if activated for over 0.1 second. Needs SetOption1 1 and SetOption13 0 (#5449)
+ * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)
+ * Add command SetOption64 0/1 to switch between "-" or "_" as sensor index separator impacting DS18X20, DHT, BMP and SHT3X sensor names (#5689)
+ * Add command SetOption65 0/1 and more Tuya Serial based device support (#5815)
+ * Add command WebColor to change GUI colors on the fly
+ * Add support for AWS IoT with TLS 1.2 on core 2.4.2 and up. Full doc here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
+ * Add support for Badger HR-E Water Meter (#5539)
+ * Add support for Shelly 2.5 Energy and overtemp Monitoring (#5592)
+ * Add support for color and colortone for Philips Hue emulation via Alexa (#5600 #4809)
+ * Add support for Scripts as replacement for Rules. Default disabled but can be enabled in my_user_config.h (#5689)
+ * Add support for up to four LEDs related to four power outputs. Enabled when "LedLink(i)" is configured too (#5709)
+ * Add support for Shelly 1PM Template {"NAME":"Shelly 1PM","GPIO":[56,0,0,0,82,134,0,0,0,0,0,21,0],"FLAG":2,"BASE":18} (#5716)
+ * Add support for SPS30 Particle sensor thanks to Gerhard Mutz (#5830)
+ * Add support for VL53L0x time of flight sensor. Might interfere with TSL2561 using same I2C address (#5845)
+ * Add support for Sonoff L1 thanks to reef-actor (#6002)
+ * Add rule Http#Initialized
+ * Add rule System#Save executed just before a planned restart
+ * Add rule support for single JSON value pair like {"SSerialReceived":"on"} by expanding it to {"SSerialReceived":{"Data":"on"}} allowing for trigger SSerialReceived#Data=on (#5638)
+ * Add define USE_COUNTER to my_user_config.h to save space in sonoff-basic.bin and sonoff-minimal.bin
+ * Add define USE_DHT to my_user_config.h to save space in sonoff-basic.bin
+ * Add defines USE_EMULATION_WEMO and USE_EMULATION_HUE to my_user_config.h to control emulation features at compile time (#5826)
+ * Add Toggle functionality to button double press when more devices are detected
+ * Add device OverTemp (>73 Celsius) detection to Energy Monitoring devices with temperature sensor powering off all outputs
+ * Add Tuya Dimmer 10 second heartbeat serial packet required by some Tuya dimmer secondary MCUs
+ * Add all temperature, humidity and pressure for global access
+ * Add validation check when loading settings from flash
+ * Add HX711 weight restore after controlled restart or after power restore just before executing command Sensor34 7 (#5367, #5786)
+ * Add GUI hexadecimal color options in my_user_config.h (#5586)
+ * Add alternative IRSend command syntax IRSend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream> (#5610)
+ * Add user configurable ADC0 to Module and Template configuration compatible with current FLAG options (#5671)
+ * Add AriLux RF control GPIO option "ALux IrSel" (159) replacing "Led4i" (59) for full LED control (#5709)
+ * Add LED GPIO option "LedLink" (157) and "LedLinki" (158) to select dedicated link status LED (#5709)
+ * Add all 5 PWM channels individually adressable with LEDs. (#5741)
+ * Add reset of Energy values when connection to sensor is lost for over 4 seconds (#5874, #5881)
+ * Add checkbox to GUI password field enabling visibility during password entry only (#5934)
