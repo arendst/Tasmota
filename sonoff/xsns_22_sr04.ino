@@ -34,7 +34,7 @@ uint8_t sr04_echo_pin = 0;
 uint8_t sr04_trig_pin = 0;
 real64_t distance;
 
-NewPing* sonar = NULL;
+NewPing* sonar = nullptr;
 
 void Sr04Init(void)
 {
@@ -45,7 +45,7 @@ void Sr04Init(void)
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_DISTANCE[] PROGMEM =
-  "%s{s}SR04 " D_DISTANCE "{m}%s" D_UNIT_CENTIMETER "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}SR04 " D_DISTANCE "{m}%s" D_UNIT_CENTIMETER "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
 void Sr04Show(bool json)
@@ -57,7 +57,7 @@ void Sr04Show(bool json)
     dtostrfd(distance, 3, distance_chr);
 
     if(json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SR04\":{\"" D_JSON_DISTANCE "\":%s}"), mqtt_data, distance_chr);
+      ResponseAppend_P(PSTR(",\"SR04\":{\"" D_JSON_DISTANCE "\":%s}"), distance_chr);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_COUNT, distance_chr);  // Send distance as Domoticz Counter value
@@ -65,7 +65,7 @@ void Sr04Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_DISTANCE, mqtt_data, distance_chr);
+      WSContentSend_PD(HTTP_SNS_DISTANCE, distance_chr);
 #endif  // USE_WEBSERVER
     }
   }
@@ -88,7 +88,7 @@ bool Xsns22(uint8_t function)
         Sr04Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Sr04Show(0);
         break;
 #endif  // USE_WEBSERVER

@@ -401,7 +401,7 @@ bool Scd30CommandSensor()
           Scd30GetCommand(command_code, &value);
         }
 
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SCD30_COMMAND_NVALUE, command, value);
+        Response_P(S_JSON_SCD30_COMMAND_NVALUE, command, value);
       }
         break;
 
@@ -421,7 +421,7 @@ bool Scd30CommandSensor()
         }
         else
         {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SCD30_COMMAND_NFW_VALUE, command, major, minor);
+          Response_P(S_JSON_SCD30_COMMAND_NFW_VALUE, command, major, minor);
         }
       }
         break;
@@ -442,20 +442,21 @@ void Scd30Show(bool json)
 
   if (scd30Found && scd30IsDataValid)
   {
-    dtostrfd(scd30_Humid, Settings.flag2.humidity_resolution, humidity);
+    dtostrfd(ConvertHumidity(scd30_Humid), Settings.flag2.humidity_resolution, humidity);
     dtostrfd(ConvertTemp(scd30_Temp), Settings.flag2.temperature_resolution, temperature);
     if (json) {
-      //snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), mqtt_data, scd30_CO2, temperature, humidity);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), mqtt_data, scd30_CO2, scd30_CO2EAvg, temperature, humidity);
+      //ResponseAppend_P(PSTR(",\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), scd30_CO2, temperature, humidity);
+      ResponseAppend_P(PSTR(",\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"),
+        scd30_CO2, scd30_CO2EAvg, temperature, humidity);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, scd30_CO2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2EAVG, mqtt_data, "SCD30", scd30_CO2EAvg);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, "SCD30", scd30_CO2);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "SCD30", temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, "SCD30", humidity);
+      WSContentSend_PD(HTTP_SNS_CO2EAVG, "SCD30", scd30_CO2EAvg);
+      WSContentSend_PD(HTTP_SNS_CO2, "SCD30", scd30_CO2);
+      WSContentSend_PD(HTTP_SNS_TEMP, "SCD30", temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, "SCD30", humidity);
 #endif  // USE_WEBSERVER
     }
   }
@@ -481,7 +482,7 @@ bool Xsns42(byte function)
         Scd30Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Scd30Show(0);
         break;
 #endif  // USE_WEBSERVER

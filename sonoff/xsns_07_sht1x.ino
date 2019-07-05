@@ -49,7 +49,7 @@ bool ShtReset(void)
   pinMode(sht_sda_pin, INPUT_PULLUP);
   pinMode(sht_scl_pin, OUTPUT);
   delay(11);
-  for (uint8_t i = 0; i < 9; i++) {
+  for (uint32_t i = 0; i < 9; i++) {
     digitalWrite(sht_scl_pin, HIGH);
     digitalWrite(sht_scl_pin, LOW);
   }
@@ -93,7 +93,7 @@ bool ShtSendCommand(const uint8_t cmd)
 bool ShtAwaitResult(void)
 {
   // Maximum 320ms for 14 bit measurement
-  for (uint8_t i = 0; i < 16; i++) {
+  for (uint32_t i = 0; i < 16; i++) {
     if (LOW == digitalRead(sht_sda_pin)) {
       return true;
     }
@@ -148,8 +148,7 @@ bool ShtRead(void)
   float rhLinear = c1 + c2 * humRaw + c3 * humRaw * humRaw;
   sht_humidity = (sht_temperature - 25) * (t1 + t2 * humRaw) + rhLinear;
   sht_temperature = ConvertTemp(sht_temperature);
-
-  SetGlobalValues(sht_temperature, sht_humidity);
+  ConvertHumidity(sht_humidity);  // Set global humidity
 
   sht_valid = SENSOR_MAX_MISS;
   return true;
@@ -194,7 +193,7 @@ void ShtShow(bool json)
     dtostrfd(sht_humidity, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, sht_types, temperature, humidity);
+      ResponseAppend_P(JSON_SNS_TEMPHUM, sht_types, temperature, humidity);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzTempHumSensor(temperature, humidity);
@@ -208,8 +207,8 @@ void ShtShow(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, sht_types, temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, sht_types, humidity);
+      WSContentSend_PD(HTTP_SNS_TEMP, sht_types, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, sht_types, humidity);
 #endif  // USE_WEBSERVER
     }
   }
@@ -236,7 +235,7 @@ bool Xsns07(uint8_t function)
         ShtShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         ShtShow(0);
         break;
 #endif  // USE_WEBSERVER

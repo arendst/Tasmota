@@ -20,7 +20,7 @@
 #ifndef _SETTINGS_H_
 #define _SETTINGS_H_
 
-#define PARAM8_SIZE  18                    // Number of param bytes (SetOption)
+const uint8_t PARAM8_SIZE = 18;            // Number of param bytes (SetOption)
 
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
@@ -76,9 +76,9 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t sleep_normal : 1;             // bit 10 (v6.3.0.15) - SetOption60 - Enable normal sleep instead of dynamic sleep
     uint32_t button_switch_force_local : 1;// bit 11 (v6.3.0.16) - SetOption61 - Force local operation when button/switch topic is set
     uint32_t no_hold_retain : 1;           // bit 12 (v6.4.1.19) - SetOption62 - Don't use retain flag on HOLD messages
-    uint32_t spare13 : 1;
-    uint32_t spare14 : 1;
-    uint32_t spare15 : 1;
+    uint32_t no_power_feedback : 1;        // bit 13 (v6.5.0.9)  - SetOption63 - Don't scan relay power state at restart
+    uint32_t use_underscore : 1;           // bit 14 (v6.5.0.12) - SetOption64 - Enable "_" instead of "-" as sensor index separator
+    uint32_t tuya_show_dimmer : 1;		     // bit 15 (v6.5.0.15) - SetOption65 - Enable or Disable Dimmer slider control
     uint32_t spare16 : 1;
     uint32_t spare17 : 1;
     uint32_t spare18 : 1;
@@ -185,12 +185,12 @@ struct SYSCFG {
   unsigned long bootcount;                 // 00C
 */
 struct SYSCFG {
-  uint16_t cfg_holder;                     // 000 v6 header
-  uint16_t cfg_size;                       // 002
+  uint16_t      cfg_holder;                // 000 v6 header
+  uint16_t      cfg_size;                  // 002
   unsigned long save_flag;                 // 004
   unsigned long version;                   // 008
-  uint16_t bootcount;                      // 00C
-  uint16_t cfg_crc;                        // 00E
+  uint16_t      bootcount;                 // 00C
+  uint16_t      cfg_crc;                   // 00E
   SysBitfield   flag;                      // 010
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
@@ -210,9 +210,11 @@ struct SYSCFG {
   uint8_t       webserver;                 // 1AB
   uint8_t       weblog_level;              // 1AC
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
+  uint8_t       adc_param_type;            // 1D5
 
-  uint8_t       free_1D5[20];              // 1D5  Free since 5.12.0e
+  uint8_t       free_1D6[18];              // 1D6  Free since 5.12.0e
 
+  uint8_t       sps30_inuse_hours;         // 1E8
   char          mqtt_host[33];             // 1E9 - Keep together with below as being copied as one chunck with reset 6
   uint16_t      mqtt_port;                 // 20A - Keep together
   char          mqtt_client[33];           // 20C - Keep together
@@ -285,7 +287,7 @@ struct SYSCFG {
   uint8_t       ws_color[4][3];            // 475
   uint8_t       ws_width[3];               // 481
   myio          my_gp;                     // 484
-  uint8_t       test_step;                 // 495
+  uint8_t       my_adc0;                   // 495
   uint16_t      light_pixels;              // 496
   uint8_t       light_color[5];            // 498
   uint8_t       light_correction;          // 49D
@@ -330,22 +332,25 @@ struct SYSCFG {
   uint8_t       rgbwwTable[5];             // 71A
   uint8_t       user_template_base;        // 71F
   mytmplt       user_template;             // 720  29 bytes
+  uint8_t       novasds_period;            // 73D
+  uint8_t       web_color[18][3];          // 73E
 
-  uint8_t       free_73D[87];              // 73D
+  uint8_t       free_774[32];              // 774
 
-  uint32_t      drivers[3];                // 794
+//  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries
+  uint32_t      adc_param1;                // 794
+  uint32_t      adc_param2;                // 798
+  int           adc_param3;                // 79C
   uint32_t      monitors;                  // 7A0
   uint32_t      sensors[3];                // 7A4
   uint32_t      displays;                  // 7B0
   uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
-
-  uint8_t       free_7BC[2];               // 7BC
-
+  uint16_t      ledmask;                   // 7BC
   uint16_t      weight_max;                // 7BE Total max weight in kilogram
   unsigned long weight_reference;          // 7C0 Reference weight in gram
   unsigned long weight_calibration;        // 7C4
-  unsigned long energy_frequency_calibration;  // 7C8
+  unsigned long energy_frequency_calibration;  // 7C8 also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
@@ -396,7 +401,7 @@ struct XDRVMAILBOX {
   char         *data;
 } XdrvMailbox;
 
-#define MAX_RULES_FLAG  7                  // Number of bits used in RulesBitfield (tricky I know...)
+const uint8_t MAX_RULES_FLAG = 8;          // Number of bits used in RulesBitfield (tricky I know...)
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
@@ -407,7 +412,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t mqtt_disconnected : 1;
     uint16_t wifi_connected : 1;
     uint16_t wifi_disconnected : 1;
-    uint16_t spare07 : 1;
+    uint16_t http_init : 1;
     uint16_t spare08 : 1;
     uint16_t spare09 : 1;
     uint16_t spare10 : 1;

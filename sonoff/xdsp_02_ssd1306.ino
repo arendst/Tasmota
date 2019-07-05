@@ -141,13 +141,13 @@ void Ssd1306PrintLog(void)
     if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
 
     char* txt = DisplayLogBuffer('\370');
-    if (txt != NULL) {
+    if (txt != nullptr) {
       uint8_t last_row = Settings.display_rows -1;
 
       oled->clearDisplay();
       oled->setTextSize(Settings.display_size);
       oled->setCursor(0,0);
-      for (uint8_t i = 0; i < last_row; i++) {
+      for (uint32_t i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
         oled->println(disp_screen_buffer[i]);
       }

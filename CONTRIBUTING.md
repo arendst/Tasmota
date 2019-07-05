@@ -1,4 +1,6 @@
-# Contributing to Sonoff-Tasmota
+<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+
+# Contributing
 
 **Any contribution helps our team and makes Tasmota better for the entire community!**
 
@@ -26,7 +28,7 @@ This document describes rules that are in effect for this repository, meant for 
 1.	Any contributor to the project can participate in the triaging process, if he/she chooses to do so.
 2.	An issue that needs to be closed, either due to not complying with this policy, or for other reasons, should be closed by a contributor.
 3.	Issues that are accepted should be marked with appropriate labels.
-4.	Issues that could impact functionality for many users should be considered severe. 
+4.	Issues that could impact functionality for many users should be considered severe.
 5.	Issues caused by the SDK or chip should not be marked severe, as there usually isn’t much to be done. Common sense should be applied when deciding. Such issues should be documented in the Wiki, for reference by users.
 6.	Issues with feature requests should be discussed for viability/desirability.
 7.	Feature requests or changes that are meant to address a very specific/limited use case, especially if at the expense of increased code complexity, may be denied, or may be required to be redesigned, generalized, or simplified.
@@ -56,7 +58,57 @@ The process is straight-forward.
 7. All pull requests should consider updates to the documentation.
 8. Pull requests that address an outstanding issue, particularly an issue deemed to be severe, should be given priority.
 9. If a PR is accepted, then it should undergo review and updated based on the feedback provided, then merged.
-10. Pull requests that don't meet the above will be denied and closed.
+10. By submitting a PR, it is needed to use the provided PR template and check all boxes, performing the required tasks and accepting the CLA.
+11. Pull requests that don't meet the above will be denied and closed.
+
+--------------------------------------
+
+## Contributor License Agreement (CLA)
+
+```
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I
+    have the right to submit it under the GPL-3.0 license; or
+
+(b) The contribution is based upon previous work that, to the best
+    of my knowledge, is covered under an appropriate open source
+    license and I have the right under that license to submit that
+    work with modifications, whether created in whole or in part
+    by me, under the GPL-3.0 license; or
+
+(c) The contribution was provided directly to me by some other
+    person who certified (a), (b) or (c) and I have not modified
+    it.
+
+(d) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it) is maintained indefinitely
+    and may be redistributed consistent with this project or the open
+    source license(s) involved.
+```
+
+This Contributor License Agreement (CLA) was adopted on April 1st, 2019.
+
+The text of this license is available under the [Creative Commons Attribution-ShareAlike 3.0 Unported License](http://creativecommons.org/licenses/by-sa/3.0/).  It is based on the Linux [Developer Certificate Of Origin](http://elinux.org/Developer_Certificate_Of_Origin), but is modified to explicitly use the GPL-3.0 license and not mention sign-off (due to GitHub.com keeps an historial, with your user name, of PRs' commits and all editions on PR's comments).
+
+To accept the CLA it is required to put a x between [ ] on `[ ] I accept the CLA` in the PR template when submitting it. The [ ] is an opt-in box, so you have to manually accept it.
+
+**Why a CLA ?**
+
+_"A Contributor Licence Agreement (CLA) is strongly recommended when accepting third party contributions to an open development project, such as an open source software project. In order to redistribute contributions, it is necessary to ensure that the project has the necessary rights to do so. A Contributor Licence Agreement is a lightweight agreement, signed by the copyright holder, that grants the necessary rights for the contribution to be redistributed as part of the project."_ [OSS Watch](http://oss-watch.ac.uk/resources/cla)
+
+A CLA is a legal document in which you state _you are entitled to contribute the code/documentation/translation to the project_ you’re contributing to and that _you are willing to have it used in distributions and derivative works_. This means that should there be any kind of legal issue in the future as to the origins and ownership of any particular piece of code, then that project has the necessary forms on file from the contributor(s) saying they were permitted to make this contribution.
+
+CLA is a safety because it also ensures that once you have provided a contribution, you cannot try to withdraw permission for its use at a later date. People can therefore use that software, confident that they will not be asked to stop using pieces of the code at a later date.
+
+A __license__ grants "outbound" rights to the user of project.
+
+A __CLA__ enables a contributor to grant "inbound" rights to a project.
+
+
+
+
 
 <Other>
 <A table should be maintained for relating maintainers and components. When triaging, this is essential to figure out if someone in particular should be consulted about specific changes.>

@@ -212,7 +212,7 @@ void Mpr121Init(struct mpr121 *pS)
 {
 
 	// Loop through I2C addresses
-	for (uint8_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
+	for (uint32_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
 
 		// Soft reset sensor and check if connected at I2C address
 		pS->connected[i] = (I2cWrite8(pS->i2c_addr[i], MPR121_SRST_REG, MPR121_SRST_VAL)
@@ -223,7 +223,7 @@ void Mpr121Init(struct mpr121 *pS)
 			AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_I2C "MPR121(%c) " D_FOUND_AT " 0x%X"), pS->id[i], pS->i2c_addr[i]);
 
 			// Set thresholds for registers 0x41 - 0x5A (ExTTH and ExRTH)
-			for (uint8_t j = 0; j < 13; j++) {
+			for (uint32_t j = 0; j < 13; j++) {
 
 				// Touch
 				I2cWrite8(pS->i2c_addr[i], MPR121_E0TTH_REG + 2 * j, MPR121_E0TTH_VAL);
@@ -317,7 +317,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 {
 
 	// Loop through sensors
-	for (uint8_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
+	for (uint32_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
 
 		// Check if sensor is connected
 		if (pS->connected[i]) {
@@ -343,27 +343,27 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 
 			// Append sensor to JSON message string
 			if (FUNC_JSON_APPEND == function) {
-				snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"MPR121%c\":{"), mqtt_data, pS->id[i]);
+				ResponseAppend_P(PSTR(",\"MPR121%c\":{"), pS->id[i]);
 			}
 			// Loop through buttons
-			for (uint8_t j = 0; j < 13; j++) {
+			for (uint32_t j = 0; j < 13; j++) {
 
 				// Add sensor, button and state to MQTT JSON message string
 				if ((FUNC_EVERY_50_MSECOND == function)
 				    && (BITC(i, j) != BITP(i, j))) {
-					snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"MPR121%c\":{\"Button%i\":%i}}"), pS->id[i], j, BITC(i, j));
+					Response_P(PSTR("{\"MPR121%c\":{\"Button%i\":%i}}"), pS->id[i], j, BITC(i, j));
 					MqttPublishPrefixTopic_P(RESULT_OR_STAT, mqtt_data);
 				}
 				// Add buttons to web string
 #ifdef USE_WEBSERVER
-				if (FUNC_WEB_APPEND == function) {
-					snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s{s}MPR121%c Button%d{m}%d{e}"), mqtt_data, pS->id[i], j, BITC(i, j));
+				if (FUNC_WEB_SENSOR == function) {
+					WSContentSend_PD(PSTR("{s}MPR121%c Button%d{m}%d{e}"), pS->id[i], j, BITC(i, j));
 				}
 #endif				// USE_WEBSERVER
 
 				// Append JSON message string
 				if (FUNC_JSON_APPEND == function) {
-					snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"Button%i\":%i"), mqtt_data, (j > 0 ? "," : ""), j, BITC(i, j));
+					ResponseAppend_P(PSTR("%s\"Button%i\":%i"), (j > 0 ? "," : ""), j, BITC(i, j));
 				}
 			}	// for-loop j
 
@@ -372,7 +372,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 
 			// Append JSON message string
 			if (FUNC_JSON_APPEND == function) {
-				snprintf_P(mqtt_data, sizeof(mqtt_data), "%s}", mqtt_data);
+        ResponseJsonEnd();
 			}
 		}		// if->running
 	}			// for-loop i
@@ -389,7 +389,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
  * FUNC_INIT to initialize a driver,
  * FUNC_EVERY_50_MSECOND for near real-time operation,
  * FUNC_JSON_APPEND for telemetry data and
- * FUNC_WEB_APPEND for displaying data in the Tasmota web-interface
+ * FUNC_WEB_SENSOR for displaying data in the Tasmota web-interface
  *
  * @param   byte    function  Tasmota function ID.
  * @return  bool           ???
@@ -426,8 +426,8 @@ bool Xsns30(uint8_t function)
 
 #ifdef USE_WEBSERVER
 			// Show sensor data on main web page
-		case FUNC_WEB_APPEND:
-			Mpr121Show(&mpr121, FUNC_WEB_APPEND);
+		case FUNC_WEB_SENSOR:
+			Mpr121Show(&mpr121, FUNC_WEB_SENSOR);
 			break;
 #endif				// USE_WEBSERVER
 		}

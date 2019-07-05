@@ -90,7 +90,7 @@ void Senseair250ms(void)              // Every 250 mSec
             senseair_temperature = ConvertTemp((float)value / 100);
             break;
           case 4:                // 0x05 (5) READ_HUMIDITY - S8: fe 84 02 f2 f1 - Illegal Data Address
-            senseair_humidity = (float)value / 100;
+            senseair_humidity = ConvertHumidity((float)value / 100);
             break;
           case 5:                // 0x1C (28) READ_RELAY_STATE - S8: fe 04 02 01 54 ad 4b - firmware version
           {
@@ -149,20 +149,20 @@ void SenseairShow(bool json)
   GetTextIndexed(senseair_types, sizeof(senseair_types), senseair_type -1, kSenseairTypes);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d"), mqtt_data, senseair_types, senseair_co2);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_CO2 "\":%d"), senseair_types, senseair_co2);
     if (senseair_type != 2) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s"), mqtt_data, temperature, humidity);
+      ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s"), temperature, humidity);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+    ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, senseair_co2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, senseair_types, senseair_co2);
+    WSContentSend_PD(HTTP_SNS_CO2, senseair_types, senseair_co2);
     if (senseair_type != 2) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, senseair_types, temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, senseair_types, humidity);
+      WSContentSend_PD(HTTP_SNS_TEMP, senseair_types, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, senseair_types, humidity);
     }
 #endif  // USE_WEBSERVER
   }
@@ -188,7 +188,7 @@ bool Xsns17(uint8_t function)
         SenseairShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         SenseairShow(0);
         break;
 #endif  // USE_WEBSERVER

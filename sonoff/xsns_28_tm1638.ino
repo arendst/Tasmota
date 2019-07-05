@@ -48,7 +48,7 @@ uint8_t tm1638_state = 0;
 
 void Tm16XXSend(uint8_t data)
 {
-	for (uint8_t i = 0; i < 8; i++) {
+	for (uint32_t i = 0; i < 8; i++) {
     digitalWrite(tm1638_data_pin, !!(data & (1 << i)));
     digitalWrite(tm1638_clock_pin, LOW);
     delayMicroseconds(TM1638_CLOCK_DELAY);
@@ -80,7 +80,7 @@ uint8_t Tm16XXReceive(void)
   pinMode(tm1638_data_pin, INPUT);
   digitalWrite(tm1638_data_pin, HIGH);
 
-  for (uint8_t i = 0; i < 8; ++i) {
+  for (uint32_t i = 0; i < 8; ++i) {
     digitalWrite(tm1638_clock_pin, LOW);
     delayMicroseconds(TM1638_CLOCK_DELAY);
     temp |= digitalRead(tm1638_data_pin) << i;
@@ -98,7 +98,7 @@ uint8_t Tm16XXReceive(void)
 
 void Tm16XXClearDisplay(void)
 {
-  for (int i = 0; i < tm1638_displays; i++) {
+  for (uint32_t i = 0; i < tm1638_displays; i++) {
     TM16XXSendData(i << 1, 0);
   }
 }
@@ -110,7 +110,7 @@ void Tm1638SetLED(uint8_t color, uint8_t pos)
 
 void Tm1638SetLEDs(word leds)
 {
-  for (int i = 0; i < tm1638_displays; i++) {
+  for (uint32_t i = 0; i < tm1638_displays; i++) {
     uint8_t color = 0;
 
     if ((leds & (1 << i)) != 0) {
@@ -131,7 +131,7 @@ uint8_t Tm1638GetButtons(void)
 
   digitalWrite(tm1638_strobe_pin, LOW);
   Tm16XXSend(0x42);
-  for (int i = 0; i < 4; i++) {
+  for (uint32_t i = 0; i < 4; i++) {
     keys |= Tm16XXReceive() << i;
   }
   digitalWrite(tm1638_strobe_pin, HIGH);
@@ -161,7 +161,7 @@ void TmInit(void)
 
     digitalWrite(tm1638_strobe_pin, LOW);
     Tm16XXSend(0xC0);
-    for (int i = 0; i < 16; i++) {
+    for (uint32_t i = 0; i < 16; i++) {
       Tm16XXSend(0x00);
     }
     digitalWrite(tm1638_strobe_pin, HIGH);
@@ -175,7 +175,7 @@ void TmLoop(void)
 {
   if (tm1638_state) {
     uint8_t buttons = Tm1638GetButtons();
-    for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
+    for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
       SwitchSetVirtual(i, (buttons &1) ^1);
       uint8_t color = (SwitchGetVirtual(i)) ? TM1638_COLOR_NONE : TM1638_COLOR_RED;
       Tm1638SetLED(color, i);
@@ -215,7 +215,7 @@ bool Xsns28(uint8_t function)
         TmShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         TmShow(0);
         break;
 #endif  // USE_WEBSERVER

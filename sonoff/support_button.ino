@@ -34,7 +34,8 @@ uint8_t multipress[MAX_KEYS] = { 0 };       // Number of button presses within m
 uint8_t dual_hex_code = 0;                  // Sonoff dual input flag
 uint8_t key_no_pullup = 0;                  // key no pullup flag (1 = no pullup)
 uint8_t key_inverted = 0;                   // Key inverted flag (1 = inverted)
-uint8_t buttons_found = 0;                  // Number of buttons found flag
+uint8_t buttons_present = 0;                // Number of buttons found flag
+uint8_t button_adc = 99;                    // ADC0 button number
 
 /********************************************************************************************/
 
@@ -50,12 +51,18 @@ void ButtonInvertFlag(uint8 button_bit)
 
 void ButtonInit(void)
 {
-  buttons_found = 0;
-  for (uint8_t i = 0; i < MAX_KEYS; i++) {
+  buttons_present = 0;
+  for (uint32_t i = 0; i < MAX_KEYS; i++) {
     if (pin[GPIO_KEY1 +i] < 99) {
-      buttons_found++;
+      buttons_present++;
       pinMode(pin[GPIO_KEY1 +i], bitRead(key_no_pullup, i) ? INPUT : ((16 == pin[GPIO_KEY1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
     }
+#ifndef USE_ADC_VCC
+    else if ((99 == button_adc) && ((ADC0_BUTTON == my_adc0) || (ADC0_BUTTON_INV == my_adc0))) {
+      buttons_present++;
+      button_adc = i;
+    }
+#endif  // USE_ADC_VCC
   }
 }
 
@@ -83,21 +90,28 @@ uint8_t ButtonSerial(uint8_t serial_in_byte)
 
 /*********************************************************************************************\
  * Button handler with single press only or multi-press and hold on all buttons
+ *
+ * ButtonDebounce (50) - Debounce time in mSec
+ * SetOption1 (0)      - If set do not execute config commands
+ * SetOption11 (0)     - If set perform single press action on double press and reverse
+ * SetOption13 (0)     - If set act on single press only
+ * SetOption32 (40)    - Max button hold time in Seconds
+ * SetOption40 (0)     - Number of 0.1 seconds until hold is discarded if SetOption1 1 and SetOption13 0
 \*********************************************************************************************/
 
 void ButtonHandler(void)
 {
-  if (uptime < 4) { return; }                                  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
+  if (uptime < 4) { return; }                                   // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
   uint8_t button = NOT_PRESSED;
   uint8_t button_present = 0;
-  uint8_t hold_time_extent = IMMINENT_RESET_FACTOR;            // Extent hold time factor in case of iminnent Reset command
-  uint16_t loops_per_second = 1000 / Settings.button_debounce;
+  uint8_t hold_time_extent = IMMINENT_RESET_FACTOR;             // Extent hold time factor in case of iminnent Reset command
+  uint16_t loops_per_second = 1000 / Settings.button_debounce;  // ButtonDebounce (50)
   char scmnd[20];
 
 //  uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
-//  for (uint8_t button_index = 0; button_index < maxdev; button_index++) {
-  for (uint8_t button_index = 0; button_index < MAX_KEYS; button_index++) {
+//  for (uint32_t button_index = 0; button_index < maxdev; button_index++) {
+  for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
     button = NOT_PRESSED;
     button_present = 0;
 
@@ -107,17 +121,27 @@ void ButtonHandler(void)
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON " " D_CODE " %04X"), dual_button_code);
         button = PRESSED;
         if (0xF500 == dual_button_code) {                      // Button hold
-          holdbutton[button_index] = (loops_per_second * Settings.param[P_HOLD_TIME] / 10) -1;
+          holdbutton[button_index] = (loops_per_second * Settings.param[P_HOLD_TIME] / 10) -1;  // SetOption32 (40)
           hold_time_extent = 1;
         }
         dual_button_code = 0;
       }
-    } else {
-      if (pin[GPIO_KEY1 +button_index] < 99) {
-        button_present = 1;
-        button = (digitalRead(pin[GPIO_KEY1 +button_index]) != bitRead(key_inverted, button_index));
+    }
+    else if (pin[GPIO_KEY1 +button_index] < 99) {
+      button_present = 1;
+      button = (digitalRead(pin[GPIO_KEY1 +button_index]) != bitRead(key_inverted, button_index));
+    }
+#ifndef USE_ADC_VCC
+    if (button_adc == button_index) {
+      button_present = 1;
+      if (ADC0_BUTTON_INV == my_adc0) {
+        button = (AdcRead(1) < 128);
+      }
+      else if (ADC0_BUTTON == my_adc0) {
+        button = (AdcRead(1) > 128);
       }
     }
+#endif  // USE_ADC_VCC
 
     if (button_present) {
       XdrvMailbox.index = button_index;
@@ -146,7 +170,7 @@ void ButtonHandler(void)
       }
       else {
         if ((PRESSED == button) && (NOT_PRESSED == lastbutton[button_index])) {
-          if (Settings.flag.button_single) {                   // Allow only single button press for immediate action
+          if (Settings.flag.button_single) {                   // SetOption13 (0) - Allow only single button press for immediate action
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
             if (!SendKey(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
               ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
@@ -163,20 +187,27 @@ void ButtonHandler(void)
           holdbutton[button_index] = 0;
         } else {
           holdbutton[button_index]++;
-          if (Settings.flag.button_single) {                   // Allow only single button press for immediate action
-            if (holdbutton[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10) {  // Button held for factor times longer
+          if (Settings.flag.button_single) {                   // SetOption13 (0) - Allow only single button press for immediate action
+            if (holdbutton[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10) {  // SetOption32 (40) - Button held for factor times longer
 //              Settings.flag.button_single = 0;
               snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_SETOPTION "13 0"));  // Disable single press only
               ExecuteCommand(scmnd, SRC_BUTTON);
             }
           } else {
-            if (Settings.flag.button_restrict) {               // Button restriction
-              if (holdbutton[button_index] == loops_per_second * Settings.param[P_HOLD_TIME] / 10) {  // Button hold
+            if (Settings.flag.button_restrict) {               // SetOption1 (0) - Button restriction
+              if (Settings.param[P_HOLD_IGNORE] > 0) {         // SetOption40 (0) - Do not ignore button hold
+                if (holdbutton[button_index] > loops_per_second * Settings.param[P_HOLD_IGNORE] / 10) {
+                  holdbutton[button_index] = 0;                // Reset button hold counter to stay below hold trigger
+                  multipress[button_index] = 0;                // Discard button press to disable functionality
+//                  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d cancel by " D_CMND_SETOPTION "40 %d"), button_index +1, Settings.param[P_HOLD_IGNORE]);
+                }
+              }
+              if (holdbutton[button_index] == loops_per_second * Settings.param[P_HOLD_TIME] / 10) {  // SetOption32 (40) - Button hold
                 multipress[button_index] = 0;
                 SendKey(0, button_index +1, 3);                // Execute Hold command via MQTT if ButtonTopic is set
               }
             } else {
-              if (holdbutton[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10) {  // Button held for factor times longer
+              if (holdbutton[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10) {  // SetOption32 (40) - Button held for factor times longer
                 multipress[button_index] = 0;
                 snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_RESET " 1"));
                 ExecuteCommand(scmnd, SRC_BUTTON);
@@ -185,7 +216,7 @@ void ButtonHandler(void)
           }
         }
 
-        if (!Settings.flag.button_single) {                    // Allow multi-press
+        if (!Settings.flag.button_single) {                    // SetOption13 (0) - Allow multi-press
           if (multiwindow[button_index]) {
             multiwindow[button_index]--;
           } else {
@@ -194,14 +225,22 @@ void ButtonHandler(void)
               if (multipress[button_index] < 3) {              // Single or Double press
                 if ((SONOFF_DUAL_R2 == my_module_type) || (SONOFF_DUAL == my_module_type) || (CH4 == my_module_type)) {
                   single_press = true;
-                } else  {
-                  single_press = (Settings.flag.button_swap +1 == multipress[button_index]);
-                  multipress[button_index] = 1;
+                } else {
+                  single_press = (Settings.flag.button_swap +1 == multipress[button_index]);  // SetOption11 (0)
+                  if ((1 == buttons_present) && (2 == devices_present)) {  // Single Button with two devices only
+                    if (Settings.flag.button_swap) {           // SetOption11 (0)
+                      multipress[button_index] = (single_press) ? 1 : 2;
+                    }
+                  } else {
+                    multipress[button_index] = 1;
+                  }
                 }
               }
+#ifdef USE_LIGHT
               if ((MI_DESK_LAMP == my_module_type) && (button_index == 0) && (rotary_changed) && (light_power)) {
                 rotary_changed = 0;                            // Color temp changed, no need to turn of the light
               } else {
+#endif
                 if (single_press && SendKey(0, button_index + multipress[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                   // Success
                 } else {
@@ -212,13 +251,15 @@ void ButtonHandler(void)
                       ExecuteCommandPower(button_index + multipress[button_index], POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
                     }
                   } else {                                     // 3 - 7 press
-                    if (!Settings.flag.button_restrict) {
+                    if (!Settings.flag.button_restrict) {      // SetOption1 (0)
                       snprintf_P(scmnd, sizeof(scmnd), kCommands[multipress[button_index] -3]);
                       ExecuteCommand(scmnd, SRC_BUTTON);
                     }
                   }
                 }
+#ifdef USE_LIGHT
               }
+#endif
               multipress[button_index] = 0;
             }
           }
@@ -231,9 +272,9 @@ void ButtonHandler(void)
 
 void ButtonLoop(void)
 {
-  if (buttons_found) {
+  if (buttons_present) {
     if (TimeReached(button_debounce)) {
-      SetNextTimeInterval(button_debounce, Settings.button_debounce);
+      SetNextTimeInterval(button_debounce, Settings.button_debounce);  // ButtonDebounce (50)
       ButtonHandler();
     }
   }

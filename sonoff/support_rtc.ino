@@ -22,10 +22,11 @@
  *          Timezone by Jack Christensen (https://github.com/JChristensen/Timezone)
 \*********************************************************************************************/
 
-#define SECS_PER_MIN  ((uint32_t)(60UL))
-#define SECS_PER_HOUR ((uint32_t)(3600UL))
-#define SECS_PER_DAY  ((uint32_t)(SECS_PER_HOUR * 24UL))
-#define MINS_PER_HOUR ((uint32_t)(60UL))
+const uint32_t SECS_PER_MIN = 60UL;
+const uint32_t SECS_PER_HOUR = 3600UL;
+const uint32_t SECS_PER_DAY = SECS_PER_HOUR * 24UL;
+const uint32_t MINS_PER_HOUR = 60UL;
+
 #define LEAP_YEAR(Y)  (((1970+Y)>0) && !((1970+Y)%4) && (((1970+Y)%100) || !((1970+Y)%400)))
 
 extern "C" {
@@ -45,9 +46,15 @@ uint32_t standard_time = 0;
 uint32_t ntp_time = 0;
 uint32_t midnight = 0;
 uint32_t restart_time = 0;
+int32_t  drift_time = 0;
 int32_t  time_timezone = 0;
 uint8_t  midnight_now = 0;
 uint8_t  ntp_sync_minute = 0;
+
+int32_t DriftTime(void)
+{
+  return drift_time;
+}
 
 String GetBuildDateAndTime(void)
 {
@@ -61,7 +68,7 @@ String GetBuildDateAndTime(void)
 
   // sscanf(mdate, "%s %d %d", bdt, &day, &year);  // Not implemented in 2.3.0 and probably too much code
   uint8_t i = 0;
-  for (char *str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(NULL, " ", &p)) {
+  for (char *str = strtok_r(mdate, " ", &p); str && i < 3; str = strtok_r(nullptr, " ", &p)) {
     switch (i++) {
     case 0:  // Month
       smonth = str;
@@ -355,6 +362,7 @@ void RtcSecond(void)
     ntp_time = sntp_get_current_timestamp();
     if (ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
       ntp_force_sync = false;
+      if (utc_time > 1451602800) { drift_time = ntp_time - utc_time; }
       utc_time = ntp_time;
       ntp_sync_minute = 60;  // Sync so block further requests
       if (restart_time == 0) {
@@ -364,7 +372,11 @@ void RtcSecond(void)
       RtcTime.year = tmpTime.year + 1970;
       daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
       standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
+
+      // Do not use AddLog here if syslog is enabled. UDP will force exception 9
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
+      ntp_synced_message = true;
+
       if (local_time < 1451602800) {  // 2016-01-01
         rules_flag.time_init = 1;
       } else {

@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_LIGHT
 #ifdef USE_WS2812
 /*********************************************************************************************\
  * WS2812 RGB / RGBW Leds using NeopixelBus library
@@ -44,7 +45,7 @@
 #else   // USE_WS2812_DMA
   typedef NeoEsp8266BitBang800KbpsMethod selectedNeoSpeedType;
 #endif  // USE_WS2812_DMA
-  NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType> *strip = NULL;
+  NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType> *strip = nullptr;
 
 struct WsColor {
   uint8_t red, green, blue;
@@ -97,13 +98,13 @@ void Ws2812StripShow(void)
 #endif
 
   if (Settings.light_correction) {
-    for (uint16_t i = 0; i < Settings.light_pixels; i++) {
+    for (uint32_t i = 0; i < Settings.light_pixels; i++) {
       c = strip->GetPixelColor(i);
-      c.R = ledTable[c.R];
-      c.G = ledTable[c.G];
-      c.B = ledTable[c.B];
+      c.R = ledGamma(c.R);
+      c.G = ledGamma(c.G);
+      c.B = ledGamma(c.B);
 #if (USE_WS2812_CTYPE > NEO_3LED)
-      c.W = ledTable[c.W];
+      c.W = ledGamma(c.W);
 #endif
       strip->SetPixelColor(i, c);
     }
@@ -148,7 +149,7 @@ void Ws2812UpdateHand(int position, uint8_t index)
 
   uint8_t range = 1;
   if (index < WS_MARKER) range = ((Settings.ws_width[index] -1) / 2) +1;
-  for (uint8_t h = 1; h < range; h++) {
+  for (uint32_t h = 1; h < range; h++) {
     float offset = (float)(range - h) / (float)range;
     Ws2812UpdatePixelColor(position -h, hand_color, offset);
     Ws2812UpdatePixelColor(position +h, hand_color, offset);
@@ -164,7 +165,7 @@ void Ws2812Clock(void)
   Ws2812UpdateHand((RtcTime.minute * 1000) / clksize, WS_MINUTE);
   Ws2812UpdateHand((((RtcTime.hour % 12) * 5000) + ((RtcTime.minute * 1000) / 12 )) / clksize, WS_HOUR);
   if (Settings.ws_color[WS_MARKER][WS_RED] + Settings.ws_color[WS_MARKER][WS_GREEN] + Settings.ws_color[WS_MARKER][WS_BLUE]) {
-    for (uint8_t i = 0; i < 12; i++) {
+    for (uint32_t i = 0; i < 12; i++) {
       Ws2812UpdateHand((i * 5000) / clksize, WS_MARKER);
     }
   }
@@ -223,7 +224,7 @@ void Ws2812Gradient(uint8_t schemenr)
   WsColor oldColor, currentColor;
   Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
   currentColor = oldColor;
-  for (uint16_t i = 0; i < Settings.light_pixels; i++) {
+  for (uint32_t i = 0; i < Settings.light_pixels; i++) {
     if (kWsRepeat[Settings.light_width] > 1) {
       Ws2812GradientColor(schemenr, &currentColor, range, gradRange, i +offset);
     }
@@ -328,7 +329,7 @@ void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint
     strip->SetPixelColor(led -1, lcolor);  // Led 1 is strip Led 0 -> substract offset 1
   } else {
 //    strip->ClearTo(lcolor);  // Set WS2812_MAX_LEDS pixels
-    for (uint16_t i = 0; i < Settings.light_pixels; i++) {
+    for (uint32_t i = 0; i < Settings.light_pixels; i++) {
       strip->SetPixelColor(i, lcolor);
     }
   }
@@ -363,7 +364,7 @@ char* Ws2812GetColor(uint16_t led, char* scolor)
   sl_ledcolor[1] = lcolor.G;
   sl_ledcolor[2] = lcolor.B;
   scolor[0] = '\0';
-  for (uint8_t i = 0; i < light_subtype; i++) {
+  for (uint32_t i = 0; i < light_subtype; i++) {
     if (Settings.flag.decimal_text) {
       snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", sl_ledcolor[i]);
     } else {
@@ -394,3 +395,4 @@ void Ws2812ShowScheme(uint8_t scheme)
 }
 
 #endif  // USE_WS2812
+#endif  // USE_LIGHT

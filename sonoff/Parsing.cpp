@@ -415,7 +415,7 @@ bool ESP8266WebServer::_parseForm(WiFiClient& client, String boundary, uint32_t 
             DEBUG_OUTPUT.println(argFilename);
 #endif
             //use GET to set the filename if uploading using blob
-            if (argFilename == F("blob") && hasArg(FPSTR(filename))) 
+            if (argFilename == F("blob") && hasArg(FPSTR(filename)))
               argFilename = arg(FPSTR(filename));
           }
 #ifdef DEBUG_ESP_HTTP_SERVER
@@ -510,7 +510,7 @@ readfile:
               uint8_t endBuf[boundary.length()];
               client.readBytes(endBuf, boundary.length());
 
-              if (strstr((const char*)endBuf, boundary.c_str()) != NULL){
+              if (strstr((const char*)endBuf, boundary.c_str()) != nullptr){
                 if(_currentHandler && _currentHandler->canUpload(_currentUri))
                   _currentHandler->upload(*this, _currentUri, *_currentUpload);
                 _currentUpload->totalSize += _currentUpload->currentSize;
@@ -571,7 +571,7 @@ readfile:
       arg.value = postArgs[iarg].value;
     }
     _currentArgCount = iarg;
-    if (postArgs) 
+    if (postArgs)
       delete[] postArgs;
     return true;
   }

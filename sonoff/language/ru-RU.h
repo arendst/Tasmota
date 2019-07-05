@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "Топик обратной связи"
 #define D_FALSE "Ложно"
 #define D_FILE "Файл"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Свободная память"
 #define D_FREQUENCY "Frequency"
 #define D_GAS "Газ"
@@ -156,6 +157,7 @@
 #define D_TO "до"
 #define D_TOGGLE "Переключить"
 #define D_TOPIC "Топик"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "Передать"
 #define D_TRUE "Истина"
 #define D_TVOC "TVOC"
@@ -220,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Прошивка MINIMAL<br/>пожалуйста обновите"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Прошивка MINIMAL<br>пожалуйста обновите"
 #define D_WEBSERVER_ACTIVE_ON "Веб-сервер активен"
 #define D_WITH_IP_ADDRESS "с IP-адресом"
 #define D_WEBSERVER_STOPPED "Веб-сервер остановлен"
@@ -255,6 +257,7 @@
 #define D_MODULE_PARAMETERS "Параметры модуля"
 #define D_MODULE_TYPE "Тип модуля"
 #define D_PULLUP_ENABLE "No Button/Switch pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial вход"
 #define D_SERIAL_OUT "Serial выход"
@@ -304,8 +307,6 @@
 #define D_TEMPLATE_NAME "Name"
 #define D_BASE_TYPE "Based on"
 #define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "ADC0 input"
-#define D_ALLOW_PULLUP "User pull-up selection"
 
 #define D_SAVE_CONFIGURATION "Сохранить конфигурацию"
 #define D_CONFIGURATION_SAVED "Конфигурация сохранена "
@@ -492,6 +493,9 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "-нет-"
 #define D_SENSOR_USER          "User"
@@ -508,6 +512,7 @@
 #define D_SENSOR_BUTTON        "Кнопка"     // Suffix "1"
 #define D_SENSOR_RELAY         "Реле"       // Suffix "1i"
 #define D_SENSOR_LED           "Led"        // Suffix "1i"
+#define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Счетчик"    // Suffix "1"
 #define D_SENSOR_IRRECV        "IRrecv"
@@ -573,15 +578,21 @@
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
+#define D_SENSOR_ARIRFSEL      "ALux IrSel"
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
+#define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 
 // Units
 #define D_UNIT_AMPERE "А"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Ч"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"

@@ -22,15 +22,15 @@
 \*********************************************************************************************/
 
 #ifndef WIFI_RSSI_THRESHOLD
-#define WIFI_RSSI_THRESHOLD    10   // Difference in dB between current network and scanned network
+#define WIFI_RSSI_THRESHOLD     10         // Difference in dB between current network and scanned network
 #endif
 #ifndef WIFI_RESCAN_MINUTES
-#define WIFI_RESCAN_MINUTES    44   // Number of minutes between wifi network rescan
+#define WIFI_RESCAN_MINUTES     44         // Number of minutes between wifi network rescan
 #endif
 
-#define WIFI_CONFIG_SEC        180  // seconds before restart
-#define WIFI_CHECK_SEC         20   // seconds
-#define WIFI_RETRY_OFFSET_SEC  20   // seconds
+const uint8_t WIFI_CONFIG_SEC = 180;       // seconds before restart
+const uint8_t WIFI_CHECK_SEC = 20;         // seconds
+const uint8_t WIFI_RETRY_OFFSET_SEC = 20;  // seconds
 
 /*
 // This worked for 2_5_0_BETA2 but fails since then. Waiting for a solution from core team (#4952)
@@ -131,7 +131,7 @@ void WifiConfig(uint8_t type)
 {
   if (!wifi_config_type) {
     if ((WIFI_RETRY == type) || (WIFI_WAIT == type)) { return; }
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
+#ifdef USE_EMULATION
     UdpDisconnect();
 #endif  // USE_EMULATION
     WiFi.disconnect();                       // Solve possible Wifi hangs
@@ -159,6 +159,7 @@ void WifiConfig(uint8_t type)
 #ifdef USE_SMARTCONFIG
     else if (WIFI_SMARTCONFIG == wifi_config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG " " D_ACTIVE_FOR_3_MINUTES));
+      WiFi.mode(WIFI_STA);      // Disable AP mode
       WiFi.beginSmartConfig();
     }
 #endif  // USE_SMARTCONFIG
@@ -210,7 +211,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
 {
   const char kWifiPhyMode[] = " BGN";
 
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
+#ifdef USE_EMULATION
   UdpDisconnect();
 #endif  // USE_EMULATION
 
@@ -295,7 +296,7 @@ void WifiBeginAfterScan()
 
     if (wifi_scan_result > 0) {
       // Networks found
-      for (int8_t i = 0; i < wifi_scan_result; ++i) {
+      for (uint32_t i = 0; i < wifi_scan_result; ++i) {
 
         String ssid_scan;
         int32_t rssi_scan;
@@ -307,7 +308,7 @@ void WifiBeginAfterScan()
         WiFi.getNetworkInfo(i, ssid_scan, sec_scan, rssi_scan, bssid_scan, chan_scan, hidden_scan);
 
         bool known = false;
-        uint8_t j;
+        uint32_t j;
         for (j = 0; j < 2; j++) {
           if (ssid_scan == Settings.sta_ssid[j]) {  // SSID match
             known = true;
@@ -331,7 +332,7 @@ void WifiBeginAfterScan()
     }
     wifi_scan_state = 0;
     // If bssid changed then (re)connect wifi
-    for (uint8_t i = 0; i < sizeof(wifi_bssid); i++) {
+    for (uint32_t i = 0; i < sizeof(wifi_bssid); i++) {
       if (last_bssid[i] != wifi_bssid[i]) {
         WifiBegin(ap, channel);                     // 0 (AP1), 1 (AP2) or 3 (default AP)
         break;
@@ -564,7 +565,7 @@ void WifiCheck(uint8_t param)
 
       } else {
         WifiSetState(0);
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION)
+#ifdef USE_EMULATION
         UdpDisconnect();
 #endif  // USE_EMULATION
         mdns_begun = 0;

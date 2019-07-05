@@ -123,7 +123,7 @@ enum MP3_Commands {                                 // commands useable in conso
 uint16_t MP3_Checksum(uint8_t *array)
 {
   uint16_t checksum = 0;
-  for (uint8_t i = 0; i < 6; i++) {
+  for (uint32_t i = 0; i < 6; i++) {
     checksum += array[i];
   }
   checksum = checksum^0xffff;
@@ -200,7 +200,7 @@ bool MP3PlayerCmd(void) {
           if (command_code == CMND_MP3_DEVICE) { MP3_CMD(MP3_CMD_DEVICE, XdrvMailbox.payload); }
           if (command_code == CMND_MP3_DAC)    { MP3_CMD(MP3_CMD_DAC,    XdrvMailbox.payload); }
         }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_MP3_COMMAND_NVALUE, command, XdrvMailbox.payload);
+        Response_P(S_JSON_MP3_COMMAND_NVALUE, command, XdrvMailbox.payload);
         break;
       case CMND_MP3_PLAY:
       case CMND_MP3_PAUSE:
@@ -211,7 +211,7 @@ bool MP3PlayerCmd(void) {
         if (command_code == CMND_MP3_PAUSE)    { MP3_CMD(MP3_CMD_PAUSE,  0); }
         if (command_code == CMND_MP3_STOP)     { MP3_CMD(MP3_CMD_STOP,   0); }
         if (command_code == CMND_MP3_RESET)    { MP3_CMD(MP3_CMD_RESET,  0); }
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_MP3_COMMAND, command, XdrvMailbox.payload);
+        Response_P(S_JSON_MP3_COMMAND, command, XdrvMailbox.payload);
         break;
       default:
     	  // else for Unknown command

@@ -149,7 +149,7 @@ void Veml6070Detect(void)
 void Veml6070UvTableInit(void)
 {
   // fill the uv-risk compare table once, based on the coefficient calculation
-  for (uint8_t i = 0; i < VEML6070_UV_MAX_INDEX; i++) {
+  for (uint32_t i = 0; i < VEML6070_UV_MAX_INDEX; i++) {
 #ifdef USE_VEML6070_RSET
     if ( (USE_VEML6070_RSET >= 220000) && (USE_VEML6070_RSET <= 1000000) ) {
       uv_risk_map[i] = ( (USE_VEML6070_RSET / VEML6070_TABLE_COEFFCIENT) / VEML6070_UV_MAX_DEFAULT ) * (i+1);
@@ -256,11 +256,11 @@ double Veml6070UvPower(double uvrisk)
 #ifdef USE_WEBSERVER
   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #ifdef USE_VEML6070_SHOW_RAW
-  const char HTTP_SNS_UV_LEVEL[] PROGMEM = "%s{s}VEML6070 " D_UV_LEVEL "{m}%s " D_UNIT_INCREMENTS "{e}";
+  const char HTTP_SNS_UV_LEVEL[] PROGMEM = "{s}VEML6070 " D_UV_LEVEL "{m}%s " D_UNIT_INCREMENTS "{e}";
 #endif  // USE_VEML6070_SHOW_RAW
   // different uv index level texts
-  const char HTTP_SNS_UV_INDEX[] PROGMEM = "%s{s}VEML6070 " D_UV_INDEX " {m}%s %s{e}";
-  const char HTTP_SNS_UV_POWER[] PROGMEM = "%s{s}VEML6070 " D_UV_POWER "{m}%s " D_UNIT_WATT_METER_QUADRAT "{e}";
+  const char HTTP_SNS_UV_INDEX[] PROGMEM = "{s}VEML6070 " D_UV_INDEX "{m}%s %s{e}";
+  const char HTTP_SNS_UV_POWER[] PROGMEM = "{s}VEML6070 " D_UV_POWER "{m}%s " D_UNIT_WATT_METER_QUADRAT "{e}";
 #endif  // USE_WEBSERVER
 
 /********************************************************************************************/
@@ -277,11 +277,11 @@ void Veml6070Show(bool json)
     dtostrfd(uvpower, 3, str_uvpower);
     if (json) {
 #ifdef USE_VEML6070_SHOW_RAW
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_UV_LEVEL "\":%s,\"" D_JSON_UV_INDEX "\":%s,\"" D_JSON_UV_INDEX_TEXT "\":\"%s\",\"" D_JSON_UV_POWER "\":%s}"),
-        mqtt_data, veml6070_name, str_uvlevel, str_uvrisk, str_uvrisk_text, str_uvpower);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_UV_LEVEL "\":%s,\"" D_JSON_UV_INDEX "\":%s,\"" D_JSON_UV_INDEX_TEXT "\":\"%s\",\"" D_JSON_UV_POWER "\":%s}"),
+        veml6070_name, str_uvlevel, str_uvrisk, str_uvrisk_text, str_uvpower);
 #else
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_UV_INDEX "\":%s,\"" D_JSON_UV_INDEX_TEXT "\":\"%s\",\"" D_JSON_UV_POWER "\":%s}"),
-        mqtt_data, veml6070_name, str_uvrisk, str_uvrisk_text, str_uvpower);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_UV_INDEX "\":%s,\"" D_JSON_UV_INDEX_TEXT "\":\"%s\",\"" D_JSON_UV_POWER "\":%s}"),
+        veml6070_name, str_uvrisk, str_uvrisk_text, str_uvpower);
 #endif  // USE_VEML6070_SHOW_RAW
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) { DomoticzSensor(DZ_ILLUMINANCE, uvlevel); }
@@ -289,10 +289,10 @@ void Veml6070Show(bool json)
 #ifdef USE_WEBSERVER
     } else {
 #ifdef USE_VEML6070_SHOW_RAW
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_UV_LEVEL, mqtt_data, str_uvlevel);
+      WSContentSend_PD(HTTP_SNS_UV_LEVEL, str_uvlevel);
 #endif  // USE_VEML6070_SHOW_RAW
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_UV_INDEX, mqtt_data, str_uvrisk, str_uvrisk_text);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_UV_POWER, mqtt_data, str_uvpower);
+      WSContentSend_PD(HTTP_SNS_UV_INDEX, str_uvrisk, str_uvrisk_text);
+      WSContentSend_PD(HTTP_SNS_UV_POWER, str_uvpower);
 #endif  // USE_WEBSERVER
     }
   }
@@ -306,11 +306,11 @@ bool Xsns11(uint8_t function)
 {
   bool result = false;
 
-  if (i2c_flg) {
+  if (i2c_flg && !(pin[GPIO_ADE7953_IRQ] < 99)) {  // The ADE7953 uses I2C address 0x38 too but needs priority
     switch (function) {
       case FUNC_INIT:
         Veml6070Detect();         // 1[ms], detect and init the sensor
-	Veml6070UvTableInit();    // 1[ms], initalize the UV compare table only once
+        Veml6070UvTableInit();    // 1[ms], initalize the UV compare table only once
         break;
       case FUNC_EVERY_SECOND:
         Veml6070EverySecond();    // 10..15[ms], tested with OLED display, do all the actions needed to get all sensor values
@@ -319,7 +319,7 @@ bool Xsns11(uint8_t function)
         Veml6070Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Veml6070Show(0);
         break;
 #endif  // USE_WEBSERVER

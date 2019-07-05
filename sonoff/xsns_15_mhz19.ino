@@ -71,8 +71,8 @@ TasmotaSerial *MhzSerial;
 
 const char kMhzModels[] PROGMEM = "|B";
 
-const char ABC_ENABLED[] PROGMEM = "ABC is Enabled";
-const char ABC_DISABLED[] PROGMEM = "ABC is Enabled";
+const char ABC_ENABLED[] = "ABC is Enabled";
+const char ABC_DISABLED[] = "ABC is Disabled";
 
 enum MhzCommands { MHZ_CMND_READPPM, MHZ_CMND_ABCENABLE, MHZ_CMND_ABCDISABLE, MHZ_CMND_ZEROPOINT, MHZ_CMND_RESET, MHZ_CMND_RANGE_1000, MHZ_CMND_RANGE_2000, MHZ_CMND_RANGE_3000, MHZ_CMND_RANGE_5000 };
 const uint8_t kMhzCommands[][4] PROGMEM = {
@@ -102,7 +102,7 @@ uint8_t mhz_state = 0;
 uint8_t MhzCalculateChecksum(uint8_t *array)
 {
   uint8_t checksum = 0;
-  for (uint8_t i = 1; i < 8; i++) {
+  for (uint32_t i = 1; i < 8; i++) {
     checksum += array[i];
   }
   checksum = 255 - checksum;
@@ -276,42 +276,42 @@ bool MhzCommandSensor(void)
     case 0:
       Settings.SensorBits1.mhz19b_abc_disable = true;
       MhzSendCmd(MHZ_CMND_ABCDISABLE);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_DISABLED);
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_DISABLED);
       break;
     case 1:
       Settings.SensorBits1.mhz19b_abc_disable = false;
       MhzSendCmd(MHZ_CMND_ABCENABLE);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_ENABLED);
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_ENABLED);
       break;
     case 2:
       MhzSendCmd(MHZ_CMND_ZEROPOINT);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_ZERO_POINT_CALIBRATION);
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_ZERO_POINT_CALIBRATION);
       break;
     case 9:
       MhzSendCmd(MHZ_CMND_RESET);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET);
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RESET);
       break;
     case 1000:
       MhzSendCmd(MHZ_CMND_RANGE_1000);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_1000);
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_1000);
       break;
     case 2000:
       MhzSendCmd(MHZ_CMND_RANGE_2000);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_2000);
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_2000);
       break;
     case 3000:
       MhzSendCmd(MHZ_CMND_RANGE_3000);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_3000);
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_3000);
       break;
     case 5000:
       MhzSendCmd(MHZ_CMND_RANGE_5000);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_5000);
+      Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, D_JSON_RANGE_5000);
       break;
     default:
       if (!Settings.SensorBits1.mhz19b_abc_disable) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_ENABLED);
+        Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_ENABLED);
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_DISABLED);
+        Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_15, ABC_DISABLED);
       }
   }
 
@@ -342,7 +342,7 @@ void MhzShow(bool json)
   GetTextIndexed(model, sizeof(model), mhz_type -1, kMhzModels);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, types, model, mhz_last_ppm, temperature);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_MODEL "\":\"%s\",\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s}"), types, model, mhz_last_ppm, temperature);
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) {
       DomoticzSensor(DZ_AIRQUALITY, mhz_last_ppm);
@@ -351,8 +351,8 @@ void MhzShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, types, mhz_last_ppm);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, types, temperature, TempUnit());
+    WSContentSend_PD(HTTP_SNS_CO2, types, mhz_last_ppm);
+    WSContentSend_PD(HTTP_SNS_TEMP, types, temperature, TempUnit());
 #endif  // USE_WEBSERVER
   }
 }
@@ -382,7 +382,7 @@ bool Xsns15(uint8_t function)
         MhzShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         MhzShow(0);
         break;
 #endif  // USE_WEBSERVER

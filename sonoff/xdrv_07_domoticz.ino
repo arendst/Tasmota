@@ -79,8 +79,7 @@ void MqttPublishDomoticzFanState()
 
     int fan_speed = GetFanspeed();
     snprintf_P(svalue, sizeof(svalue), PSTR("%d"), fan_speed * 10);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-      (int)Settings.domoticz_relay_idx[1], (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
+    Response_P(DOMOTICZ_MESSAGE, (int)Settings.domoticz_relay_idx[1], (0 == fan_speed) ? 0 : 2, svalue, DomoticzBatteryQuality(), DomoticzRssiQuality());
     MqttPublish(domoticz_in_topic);
 
     fan_debounce = millis();
@@ -106,8 +105,7 @@ void MqttPublishDomoticzPowerState(uint8_t device)
         char svalue[8];  // Dimmer value
 
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), Settings.light_dimmer);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), DOMOTICZ_MESSAGE,
-          (int)Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
+        Response_P(DOMOTICZ_MESSAGE, (int)Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
         MqttPublish(domoticz_in_topic);
       }
     }
@@ -128,7 +126,7 @@ void DomoticzMqttUpdate(void)
     domoticz_update_timer--;
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = Settings.domoticz_update_timer;
-      for (uint8_t i = 1; i <= devices_present; i++) {
+      for (uint32_t i = 1; i <= devices_present; i++) {
         if ((SONOFF_IFAN02 == my_module_type) && (i > 1)) {
           MqttPublishDomoticzFanState();
           break;
@@ -143,7 +141,7 @@ void DomoticzMqttUpdate(void)
 void DomoticzMqttSubscribe(void)
 {
   uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
-  for (uint8_t i = 0; i < maxdev; i++) {
+  for (uint32_t i = 0; i < maxdev; i++) {
     if (Settings.domoticz_relay_idx[i]) {
       domoticz_subscribe = true;
     }
@@ -210,7 +208,7 @@ bool DomoticzMqttData(void)
 
     if ((idx > 0) && (nvalue >= 0) && (nvalue <= 15)) {
       uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
-      for (uint8_t i = 0; i < maxdev; i++) {
+      for (uint32_t i = 0; i < maxdev; i++) {
         if (idx == Settings.domoticz_relay_idx[i]) {
           bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
@@ -301,31 +299,31 @@ bool DomoticzCommand(void)
         Settings.domoticz_relay_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
         restart_flag = 2;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DOMOTICZ_COMMAND_INDEX_LVALUE, command, XdrvMailbox.index, Settings.domoticz_relay_idx[XdrvMailbox.index -1]);
+      Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_LVALUE, command, XdrvMailbox.index, Settings.domoticz_relay_idx[XdrvMailbox.index -1]);
     }
     else if ((CMND_KEYIDX == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DOMOTICZ_IDX)) {
       if (XdrvMailbox.payload >= 0) {
         Settings.domoticz_key_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DOMOTICZ_COMMAND_INDEX_LVALUE, command, XdrvMailbox.index, Settings.domoticz_key_idx[XdrvMailbox.index -1]);
+      Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_LVALUE, command, XdrvMailbox.index, Settings.domoticz_key_idx[XdrvMailbox.index -1]);
     }
     else if ((CMND_SWITCHIDX == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DOMOTICZ_IDX)) {
       if (XdrvMailbox.payload >= 0) {
         Settings.domoticz_switch_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.domoticz_switch_idx[XdrvMailbox.index -1]);
+      Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.domoticz_switch_idx[XdrvMailbox.index -1]);
     }
     else if ((CMND_SENSORIDX == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= DZ_MAX_SENSORS)) {
       if (XdrvMailbox.payload >= 0) {
         Settings.domoticz_sensor_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.domoticz_sensor_idx[XdrvMailbox.index -1]);
+      Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.domoticz_sensor_idx[XdrvMailbox.index -1]);
     }
     else if (CMND_UPDATETIMER == command_code) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
         Settings.domoticz_update_timer = XdrvMailbox.payload;
       }
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_DOMOTICZ "%s\":%d}"), command, Settings.domoticz_update_timer);
+      Response_P(PSTR("{\"" D_CMND_DOMOTICZ "%s\":%d}"), command, Settings.domoticz_update_timer);
     }
     else serviced = false;  // Unknown command
   }
@@ -340,7 +338,7 @@ bool DomoticzSendKey(uint8_t key, uint8_t device, uint8_t state, uint8_t svalflg
 
   if (device <= MAX_DOMOTICZ_IDX) {
     if ((Settings.domoticz_key_idx[device -1] || Settings.domoticz_switch_idx[device -1]) && (svalflg)) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),
+      Response_P(PSTR("{\"command\":\"switchlight\",\"idx\":%d,\"switchcmd\":\"%s\"}"),
         (key) ? Settings.domoticz_switch_idx[device -1] : Settings.domoticz_key_idx[device -1], (state) ? (2 == state) ? "Toggle" : "On" : "Off");
       MqttPublish(domoticz_in_topic);
       result = 1;
@@ -375,14 +373,14 @@ uint8_t DomoticzHumidityState(char *hum)
 void DomoticzSensor(uint8_t idx, char *data)
 {
   if (Settings.domoticz_sensor_idx[idx]) {
-    char dmess[90];
+    char dmess[100];
 
     memcpy(dmess, mqtt_data, sizeof(dmess));
     if (DZ_AIRQUALITY == idx) {
-      snprintf_P(mqtt_data, sizeof(dmess), PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"),
+      Response_P(PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"),
         Settings.domoticz_sensor_idx[idx], data, DomoticzBatteryQuality(), DomoticzRssiQuality());
     } else {
-      snprintf_P(mqtt_data, sizeof(dmess), DOMOTICZ_MESSAGE,
+      Response_P(DOMOTICZ_MESSAGE,
         Settings.domoticz_sensor_idx[idx], 0, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
     }
     MqttPublish(domoticz_in_topic);
@@ -436,14 +434,14 @@ const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<form method='post' action='" WEB_HANDLE_DOMOTICZ "'>"
   "<table>";
 const char HTTP_FORM_DOMOTICZ_RELAY[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " %d</b></td><td style='width:70px'><input id='r%d' name='r%d' placeholder='0' value='%d'></td></tr>"
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_KEY_IDX " %d</b></td><td style='width:70px'><input id='k%d' name='k%d' placeholder='0' value='%d'></td></tr>";
-  const char HTTP_FORM_DOMOTICZ_SWITCH[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SWITCH_IDX " %d</b></td><td style='width:70px'><input id='s%d' name='s%d' placeholder='0' value='%d'></td></tr>";
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " %d</b></td><td style='width:70px'><input id='r%d' placeholder='0' value='%d'></td></tr>"
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_KEY_IDX " %d</b></td><td style='width:70px'><input id='k%d' placeholder='0' value='%d'></td></tr>";
+const char HTTP_FORM_DOMOTICZ_SWITCH[] PROGMEM =
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SWITCH_IDX " %d</b></td><td style='width:70px'><input id='s%d' placeholder='0' value='%d'></td></tr>";
 const char HTTP_FORM_DOMOTICZ_SENSOR[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SENSOR_IDX " %d</b> %s</td><td style='width:70px'><input id='l%d' name='l%d' placeholder='0' value='%d'></td></tr>";
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SENSOR_IDX " %d</b> %s</td><td style='width:70px'><input id='l%d' placeholder='0' value='%d'></td></tr>";
 const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td style='width:70px'><input id='ut' name='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='%d'</td></tr>";
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td style='width:70px'><input id='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='%d'></td></tr>";
 
 void HandleDomoticzConfiguration(void)
 {
@@ -457,26 +455,26 @@ void HandleDomoticzConfiguration(void)
     return;
   }
 
-  char stemp[32];
+  char stemp[40];
 
   WSContentStart_P(S_CONFIGURE_DOMOTICZ);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_DOMOTICZ);
-  for (int i = 0; i < MAX_DOMOTICZ_IDX; i++) {
+  for (uint32_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     if (i < devices_present) {
       WSContentSend_P(HTTP_FORM_DOMOTICZ_RELAY,
-        i +1, i, i, Settings.domoticz_relay_idx[i],
-        i +1, i, i, Settings.domoticz_key_idx[i]);
+        i +1, i, Settings.domoticz_relay_idx[i],
+        i +1, i, Settings.domoticz_key_idx[i]);
     }
     if (pin[GPIO_SWT1 +i] < 99) {
       WSContentSend_P(HTTP_FORM_DOMOTICZ_SWITCH,
-        i +1, i, i, Settings.domoticz_switch_idx[i]);
+        i +1, i, Settings.domoticz_switch_idx[i]);
     }
     if ((SONOFF_IFAN02 == my_module_type) && (1 == i)) { break; }
   }
-  for (int i = 0; i < DZ_MAX_SENSORS; i++) {
+  for (uint32_t i = 0; i < DZ_MAX_SENSORS; i++) {
     WSContentSend_P(HTTP_FORM_DOMOTICZ_SENSOR,
-      i +1, GetTextIndexed(stemp, sizeof(stemp), i, kDomoticzSensors), i, i, Settings.domoticz_sensor_idx[i]);
+      i +1, GetTextIndexed(stemp, sizeof(stemp), i, kDomoticzSensors), i, Settings.domoticz_sensor_idx[i]);
   }
   WSContentSend_P(HTTP_FORM_DOMOTICZ_TIMER, Settings.domoticz_update_timer);
   WSContentSend_P(PSTR("</table>"));
@@ -491,7 +489,7 @@ void DomoticzSaveSettings(void)
   char ssensor_indices[6 * MAX_DOMOTICZ_SNS_IDX];
   char tmp[100];
 
-  for (uint8_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
+  for (uint32_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("r%d"), i);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_relay_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
@@ -503,7 +501,7 @@ void DomoticzSaveSettings(void)
     Settings.domoticz_switch_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
   }
   ssensor_indices[0] = '\0';
-  for (uint8_t i = 0; i < DZ_MAX_SENSORS; i++) {
+  for (uint32_t i = 0; i < DZ_MAX_SENSORS; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("l%d"), i);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_sensor_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);

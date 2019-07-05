@@ -182,7 +182,7 @@ void AzEverySecond(void)
       return;
     }
     response_substr[j] = 0;                 // add null terminator
-    az_temperature = CharToDouble((char*)response_substr); // units (C or F) depends on meter setting
+    az_temperature = CharToFloat((char*)response_substr); // units (C or F) depends on meter setting
     if(az_response[i] == 'C') {             // meter transmits in degC
       az_temperature = ConvertTemp((float)az_temperature); // convert to degF, depending on settings
     } else {                                // meter transmits in degF
@@ -232,7 +232,7 @@ void AzEverySecond(void)
       return;
     }
     response_substr[j] = 0;                 // add null terminator
-    az_humidity = CharToDouble((char*)response_substr);
+    az_humidity = ConvertHumidity(CharToFloat((char*)response_substr));
   }
 }
 
@@ -258,15 +258,15 @@ void AzShow(bool json)
   dtostrfd(az_humidity, Settings.flag2.humidity_resolution, humidity);
 
   if (json) {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), mqtt_data, ktype, az_co2, temperature, humidity);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"), ktype, az_co2, temperature, humidity);
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, az_co2);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_CO2, mqtt_data, ktype, az_co2);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, ktype, temperature, TempUnit());
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, ktype, humidity);
+    WSContentSend_PD(HTTP_SNS_CO2, ktype, az_co2);
+    WSContentSend_PD(HTTP_SNS_TEMP, ktype, temperature, TempUnit());
+    WSContentSend_PD(HTTP_SNS_HUM, ktype, humidity);
 #endif  // USE_WEBSERVER
   }
 }
@@ -291,7 +291,7 @@ bool Xsns38(uint8_t function)
         AzShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         AzShow(0);
         break;
 #endif  // USE_WEBSERVER

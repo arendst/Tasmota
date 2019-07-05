@@ -127,7 +127,7 @@ bool OneWireCrc8(uint8_t *addr)
 
   while (len--) {
     uint8_t inbyte = *addr++;          // from 0 to 7
-    for (uint8_t i = 8; i; i--) {
+    for (uint32_t i = 8; i; i--) {
       uint8_t mix = (crc ^ inbyte) & 0x01;
       crc >>= 1;
       if (mix) {
@@ -161,11 +161,11 @@ bool Ds18b20Read(void)
     return;
   }
 */
-  for (uint8_t retry = 0; retry < 3; retry++) {
+  for (uint32_t retry = 0; retry < 3; retry++) {
     OneWireReset();
     OneWireWrite(W1_SKIP_ROM);
     OneWireWrite(W1_READ_SCRATCHPAD);
-    for (uint8_t i = 0; i < 9; i++) {
+    for (uint32_t i = 0; i < 9; i++) {
       data[i] = OneWireRead();
     }
     if (OneWireCrc8(data)) {
@@ -205,7 +205,7 @@ void Ds18b20Show(bool json)
     char temperature[33];
     dtostrfd(ds18b20_temperature, Settings.flag2.temperature_resolution, temperature);
     if(json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMP, mqtt_data, ds18b20_types, temperature);
+      ResponseAppend_P(JSON_SNS_TEMP, ds18b20_types, temperature);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_TEMP, temperature);
@@ -218,7 +218,7 @@ void Ds18b20Show(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, ds18b20_types, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_TEMP, ds18b20_types, temperature, TempUnit());
 #endif  // USE_WEBSERVER
     }
   }
@@ -241,7 +241,7 @@ bool Xsns05(uint8_t function)
         Ds18b20Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Ds18b20Show(0);
         break;
 #endif  // USE_WEBSERVER

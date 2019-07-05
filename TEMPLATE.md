@@ -1,4 +1,7 @@
-## Sonoff-Tasmota template information
+<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+
+# Template information
+
 Sonoff-Tasmota uses Device or Module information to control peripherals connected to GPIOs. This information is stored in the ``sonoff_template.h`` file as a device specific template. The template contains information about what GPIO should be connected to what peripheral and what GPIO may be configured online using the ``GPIO`` command or GUI Configure Module menu. In addition a device may need specific coding to process the data from these peripherals. The module number as provided by the ``Modules`` command is used to select this coding.
 
 Starting with version 6.4.1.16 Sonoff-Tasmota Modules can be extended by users online using a template. To provide easy processing by Sonoff-Tasmota a user template is written as JSON text and could look like this:

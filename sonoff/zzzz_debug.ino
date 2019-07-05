@@ -271,13 +271,13 @@ bool XsnsEnabled(uint8_t sns_index)
 #endif
     return bitRead(Settings.sensors[index / 32], index % 32);
   }
-  return true;
+  return 1;
 }
 
 bool XsnsPresent(uint8_t sns_index)
 {
   uint8_t index = 0;
-  for (uint8_t i = 0; i < sizeof(kXsnsList); i++) {
+  for (uint32_t i = 0; i < sizeof(kXsnsList); i++) {
 #ifdef XFUNC_PTR_IN_ROM
     index = pgm_read_byte(kXsnsList + i);
 #else
@@ -293,7 +293,7 @@ String XsnsGetSensors(void)
   char state[2] = { 0 };
 
   String data = F("[");
-  for (uint8_t i = 0; i < MAX_XSNS_DRIVERS; i++) {
+  for (uint32_t i = 0; i < MAX_XSNS_DRIVERS; i++) {
     if (i && (!(i % 16))) { data += F(","); }
     if (!(i % 16)) { data += F("\""); }
     state[0] = '-';

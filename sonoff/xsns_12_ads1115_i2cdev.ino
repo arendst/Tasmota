@@ -81,7 +81,7 @@ void Ads1115Detect(void)
     return;
   }
 
-  for (uint8_t i = 0; i < sizeof(ads1115_addresses); i++) {
+  for (uint32_t i = 0; i < sizeof(ads1115_addresses); i++) {
     ads1115_address = ads1115_addresses[i];
     ADS1115 adc0(ads1115_address);
     if (adc0.testConnection()) {
@@ -99,29 +99,26 @@ void Ads1115Detect(void)
 void Ads1115Show(bool json)
 {
   if (ads1115_type) {
-    char stemp[10];
 
     uint8_t dsxflg = 0;
-    for (uint8_t i = 0; i < 4; i++) {
+    for (uint32_t i = 0; i < 4; i++) {
       int16_t adc_value = Ads1115GetConversion(i);
 
       if (json) {
         if (!dsxflg  ) {
-          snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"ADS1115\":{"), mqtt_data);
-          stemp[0] = '\0';
+          ResponseAppend_P(PSTR(",\"ADS1115\":{"));
         }
+        ResponseAppend_P(PSTR("%s\"A%d\":%d"), (dsxflg) ? "," : "", i, adc_value);
         dsxflg++;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%s\"A%d\":%d"), mqtt_data, stemp, i, adc_value);
-        strlcpy(stemp, ",", sizeof(stemp));
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ANALOG, mqtt_data, "ADS1115", i, adc_value);
+        WSContentSend_PD(HTTP_SNS_ANALOG, "ADS1115", i, adc_value);
 #endif  // USE_WEBSERVER
       }
     }
     if (json) {
       if (dsxflg) {
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+        ResponseJsonEnd();
       }
     }
   }
@@ -144,7 +141,7 @@ bool Xsns12(uint8_t function)
         Ads1115Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Ads1115Show(0);
         break;
 #endif  // USE_WEBSERVER

@@ -51,6 +51,8 @@ void PzemDcEverySecond(void)
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "PzemDc response error %d"), error);
     } else {
+      energy_data_valid = 0;
+
       //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
       // 01 04 10 05 40 00 0A 00 0D 00 00 00 02 00 00 00 00 00 00 D6 29
       // Id Cc Sz Volt- Curre Power------ Energy----- HiAlm LoAlm Crc--
@@ -114,8 +116,8 @@ int Xnrg06(uint8_t function)
       case FUNC_INIT:
         PzemDcSnsInit();
         break;
-      case FUNC_EVERY_SECOND:
-        PzemDcEverySecond();
+      case FUNC_ENERGY_EVERY_SECOND:
+        if (uptime > 4) { PzemDcEverySecond(); }  // Fix start up issue #5875
         break;
     }
   }

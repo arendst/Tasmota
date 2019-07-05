@@ -183,7 +183,7 @@ bool Ina219CommandSensor(void)
     Settings.ina219_mode = XdrvMailbox.payload;
     restart_flag = 2;
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_NVALUE, XSNS_13, Settings.ina219_mode);
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_13, Settings.ina219_mode);
 
   return serviced;
 }
@@ -194,7 +194,7 @@ void Ina219Detect(void)
 {
   if (ina219_type) { return; }
 
-  for (uint8_t i = 0; i < sizeof(ina219_addresses); i++) {
+  for (uint32_t i = 0; i < sizeof(ina219_addresses); i++) {
     ina219_address = ina219_addresses[i];
     if (Ina219SetCalibration(Settings.ina219_mode)) {
       ina219_type = 1;
@@ -222,7 +222,7 @@ void Ina219EverySecond(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_INA219_DATA[] PROGMEM = "%s"
+const char HTTP_SNS_INA219_DATA[] PROGMEM =
   "{s}INA219 " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
   "{s}INA219 " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
   "{s}INA219 " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
@@ -240,8 +240,8 @@ void Ina219Show(bool json)
     dtostrfd(ina219_current, Settings.flag2.current_resolution, current);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
-        mqtt_data, ina219_types, voltage, current, power);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
+        ina219_types, voltage, current, power);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_VOLTAGE, voltage);
@@ -250,7 +250,7 @@ void Ina219Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_INA219_DATA, mqtt_data, voltage, current, power);
+      WSContentSend_PD(HTTP_SNS_INA219_DATA, voltage, current, power);
 #endif  // USE_WEBSERVER
     }
   }
@@ -281,7 +281,7 @@ bool Xsns13(uint8_t function)
         Ina219Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Ina219Show(0);
         break;
 #endif  // USE_WEBSERVER

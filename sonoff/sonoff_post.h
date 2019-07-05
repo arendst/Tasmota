@@ -46,6 +46,23 @@ void KNX_CB_Action(message_t const &msg, void *arg);
  * Default global defines
 \*********************************************************************************************/
 
+#ifdef USE_EMULATION_HUE
+#define USE_EMULATION
+#endif
+#ifdef USE_EMULATION_WEMO
+#define USE_EMULATION
+#endif
+
+#ifdef USE_MQTT_TLS
+  const uint16_t WEB_LOG_SIZE = 2000;       // Max number of characters in weblog
+#else
+  const uint16_t WEB_LOG_SIZE = 4000;       // Max number of characters in weblog
+#endif
+
+#if defined(USE_MQTT_TLS) && defined(ARDUINO_ESP8266_RELEASE_2_3_0)
+  #error "TLS is no more supported on Core 2.3.0, use 2.4.2 or higher."
+#endif
+
 #ifndef MODULE
 #define MODULE                 SONOFF_BASIC   // [Module] Select default model
 #endif
@@ -60,25 +77,27 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef CODE_IMAGE
 #define CODE_IMAGE 3
 
+#define USE_COUNTER                           // Enable counters
 #undef USE_ADC_VCC                            // Add Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 //#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
+
 #define USE_I2C                               // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 #define USE_SHT                               // Add I2C emulating code for SHT1X sensor (+1k4 code)
-#define USE_SHT3X                             // Add I2C code for SHT3x sensor (+0k6 code)
 #define USE_HTU                               // Add I2C code for HTU21/SI7013/SI7020/SI7021 sensor (+1k5 code)
-#define USE_LM75AD                            // Add I2C code for LM75AD sensor (+0k5 code)
 #define USE_BMP                               // Add I2C code for BMP085/BMP180/BMP280/BME280 sensor (+4k code)
   #define USE_BME680                          // Add additional support for BME680 sensor using Bosch BME680 library (+4k code)
-#define USE_SGP30                             // Add I2C code for SGP30 sensor (+1k1 code)
 #define USE_BH1750                            // Add I2C code for BH1750 sensor (+0k5 code)
 #define USE_VEML6070                          // Add I2C code for VEML6070 sensor (+0k5 code)
-#define USE_TSL2561                           // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
-//#define USE_SI1145                            // Add I2C code for SI1145/46/47 sensor (+1k code)
 #define USE_ADS1115                           // Add I2C code for ADS1115 16 bit A/D converter based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
 //#define USE_ADS1115_I2CDEV                    // Add I2C code for ADS1115 16 bit A/D converter using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
 #define USE_INA219                            // Add I2C code for INA219 Low voltage and current sensor (+1k code)
+#define USE_SHT3X                             // Add I2C code for SHT3x sensor (+0k6 code)
+#define USE_TSL2561                           // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
 #define USE_MGS                               // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
+#define USE_SGP30                             // Add I2C code for SGP30 sensor (+1k1 code)
+//#define USE_SI1145                            // Add I2C code for SI1145/46/47 sensor (+1k code)
+#define USE_LM75AD                            // Add I2C code for LM75AD sensor (+0k5 code)
 //#define USE_APDS9960                          // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
 //#define USE_MCP230xx                          // Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
 //  #define USE_MCP230xx_ADDR 0x20              // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x27 - set according to your wired setup)
@@ -94,6 +113,11 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 //#define USE_MGC3130                           // Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
 //#define USE_MAX44009                          // Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
 #define USE_SCD30                             // Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
+//#define USE_SPS30                             // Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
+#define USE_ADE7953                           // Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
+//#define USE_VL53L0X                           // Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
+//#define USE_MLX90614                          // Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)
+
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
 #ifndef CO2_LOW
@@ -113,13 +137,14 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #ifndef TUYA_DIMMER_ID
   #define TUYA_DIMMER_ID       0              // Default dimmer Id
 #endif
-#define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer
-//#define USE_AZ7798                             // Add support for AZ-Instrument 7798 CO2 datalogger
+#define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
+//#define USE_AZ7798                            // Add support for AZ-Instrument 7798 CO2 datalogger
 #define USE_PN532_HSU                         // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_PZEM_AC                           // Add support for PZEM014,016 Energy monitor (+1k1 code)
 #define USE_PZEM_DC                           // Add support for PZEM003,017 Energy monitor (+1k1 code)
 #define USE_MCP39F501                         // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
+#define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #define USE_MAX31855                          // Add support for MAX31855 K-Type thermocouple sensor using softSPI
 #define USE_IR_REMOTE                         // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k code, 0k3 mem, 48 iram)
   #define USE_IR_HVAC                         // Support for HVAC system using IR (+2k code)
@@ -140,6 +165,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_RF_SENSOR                         // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 //  #define USE_THEO_V2                         // Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver (+1k4 code)
   #define USE_ALECTO_V2                       // Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver (+1k7 code)
+#define USE_SM16716                           // Add support for SM16716 RGB LED controller (+0k7 code)
+#define USE_HRE                               // Add support for Badger HR-E Water Meter (+1k4 code)
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
@@ -152,6 +179,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef CODE_IMAGE
 #define CODE_IMAGE 2
 
+#define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
 #ifndef USE_WPS
 #define USE_WPS                               // Add support for WPS as initial wifi configuration tool (+33k code, 1k mem (5k mem with core v2.4.2+))
 #endif
@@ -167,6 +195,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TIMERS_WEB                         // Disable support for timer webpage
 #undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 #undef USE_RULES                              // Disable support for rules
+#undef USE_COUNTER                            // Disable counters
 #undef USE_I2C                                // Disable all I2C sensors
 #undef USE_SPI                                // Disable all SPI devices
 #undef USE_MHZ19                              // Disable support for MH-Z19 CO2 sensor
@@ -179,13 +208,14 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                          // Disable support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
+#define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR remote commands using library IRremoteESP8266 and ArduinoJson
 #undef USE_IR_RECEIVE                         // Disable support for IR receiver
@@ -197,6 +227,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
+#undef USE_SM16716                            // Disable support for SM16716 RGB LED controller (+0k7 code)
+#undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_CLASSIC
@@ -275,6 +307,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef APP_SLEEP
 #define APP_SLEEP 1                          // Default to sleep = 1 for FIRMWARE_BASIC
 
+#define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
 //#undef USE_ENERGY_SENSOR                      // Disable energy sensors
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
 #undef USE_WPS                                // Disable support for WPS as initial wifi configuration tool
@@ -291,7 +324,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 //#undef USE_TIMERS_WEB                         // Disable support for timer webpage
 //#undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 //#undef USE_RULES                              // Disable support for rules
-#undef USE_DHT                                // Disable internal DHT sensor
+#undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
 #undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
 #undef USE_DS18B20                            // Disable internal DS18B20 sensor
@@ -308,13 +341,14 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 //#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 //#undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
+#undef USE_DHT                                // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
@@ -326,6 +360,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
+#undef USE_SM16716                            // Disable support for SM16716 RGB LED controller (+0k7 code)
+#undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_BASIC
@@ -340,6 +376,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef CODE_IMAGE
 #define CODE_IMAGE 1
 
+#define USE_ADC_VCC                           // Display Vcc in Power status. Disable for use as Analog input on selected devices
 #undef USE_ENERGY_SENSOR                      // Disable energy sensors
 #undef USE_ARDUINO_OTA                        // Disable support for Arduino OTA
 #undef USE_WPS                                // Disable support for WPS as initial wifi configuration tool
@@ -356,7 +393,9 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TIMERS_WEB                         // Disable support for timer webpage
 #undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 #undef USE_RULES                              // Disable support for rules
-#undef USE_DHT                                // Disable internal DHT sensor
+#undef USE_SCRIPT                             // Disable support for script
+#undef USE_LIGHT                              // Disable support for lights
+#undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
 #undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
 #undef USE_DS18B20                            // Disable internal DS18B20 sensor
@@ -373,14 +412,15 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
 #undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
-#undef USE_MAX31855                           // DIsable MAX31855 K-Type thermocouple sensor using softSPI
+#undef USE_DHT                                // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
+#undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
@@ -391,6 +431,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
+#undef USE_SM16716                            // Disable support for SM16716 RGB LED controller (+0k7 code)
+#undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_MINIMAL
@@ -408,7 +450,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #endif
 
 #ifndef MQTT_FINGERPRINT1
-#define MQTT_FINGERPRINT1      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"
+// Set an all-zeros default fingerprint to activate auto-learning on first connection (AWS IoT)
+#define MQTT_FINGERPRINT1      "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
 #endif
 
 #ifndef MQTT_FINGERPRINT2
@@ -423,10 +466,13 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define MQTT_MAX_PACKET_SIZE   1000           // Bytes
 #endif
 #ifndef MQTT_KEEPALIVE
-#define MQTT_KEEPALIVE         15             // Seconds
+#define MQTT_KEEPALIVE         30             // Seconds
 #endif
 #ifndef MQTT_TIMEOUT
 #define MQTT_TIMEOUT           10000          // milli seconds
+#endif
+#ifndef MQTT_CLEAN_SESSION
+#define MQTT_CLEAN_SESSION     1              // 0 = No clean session, 1 = Clean session (default)
 #endif
 
 #ifndef MESSZ

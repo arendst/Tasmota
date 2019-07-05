@@ -27,7 +27,19 @@
 
 #define XSNS_23             23
 
+// can be user defined in my_user_config.h
+#ifndef SDM120_SPEED
+  #define SDM120_SPEED      2400    // default SDM120 Modbus address
+#endif
+// can be user defined in my_user_config.h
+#ifndef SDM120_ADDR
+  #define SDM120_ADDR       1       // default SDM120 Modbus address
+#endif
+
+
 #include <TasmotaSerial.h>
+
+enum SDM120_Error {SDM120_ERR_NO_ERROR=0, SDM120_ERR_CRC_ERROR, SDM120_ERR_WRONG_BYTES, SDM120_ERR_NOT_ENOUGHT_BYTES};
 
 TasmotaSerial *SDM120Serial;
 
@@ -58,7 +70,7 @@ void SDM120_ModbusSend(uint8_t function_code, uint16_t start_address, uint16_t r
 {
   uint8_t frame[8];
 
-  frame[0] = 0x01;          // default SDM120 Modbus address
+  frame[0] = SDM120_ADDR;
   frame[1] = function_code;
   frame[2] = (uint8_t)(start_address >> 8);
   frame[3] = (uint8_t)(start_address);
@@ -87,13 +99,12 @@ uint8_t SDM120_ModbusReceive(float *value)
     buffer[len++] = (uint8_t)SDM120Serial->read();
   }
 
-  if (len < 9)
-    return 3;   // SDM_ERR_NOT_ENOUGHT_BYTES
+  if (len < 9) {
+    return SDM120_ERR_NOT_ENOUGHT_BYTES;
+  }
 
-  if (len == 9) {
-
-    if (buffer[0] == 0x01 && buffer[1] == 0x04 && buffer[2] == 4) {   // check node number, op code and reply bytes count
-
+  if (9 == len) {
+    if (0x01 == buffer[0] && 0x04 == buffer[1] && 4 == buffer[2]) {   // check node number, op code and reply bytes count
       if((SDM120_calculateCRC(buffer, 7)) == ((buffer[8] << 8) | buffer[7])) {  //calculate crc from first 7 bytes and compare with received crc (bytes 7 & 8)
 
         ((uint8_t*)value)[3] = buffer[3];
@@ -101,21 +112,25 @@ uint8_t SDM120_ModbusReceive(float *value)
         ((uint8_t*)value)[1] = buffer[5];
         ((uint8_t*)value)[0] = buffer[6];
 
-      } else return 1; // SDM_ERR_CRC_ERROR
+      } else {
+        return SDM120_ERR_CRC_ERROR;
+      }
 
-    } else return 2;  // SDM_ERR_WRONG_BYTES
+    } else {
+      return SDM120_ERR_WRONG_BYTES;
+    }
   }
 
-  return 0;   // SDM_ERR_NO_ERROR
+  return SDM120_ERR_NO_ERROR;
 }
 
 uint16_t SDM120_calculateCRC(uint8_t *frame, uint8_t num)
 {
   uint16_t crc, flag;
   crc = 0xFFFF;
-  for (uint8_t i = 0; i < num; i++) {
+  for (uint32_t i = 0; i < num; i++) {
     crc ^= frame[i];
-    for (uint8_t j = 8; j; j--) {
+    for (uint32_t j = 8; j; j--) {
       if ((crc & 0x0001) != 0) {        // If the LSB is set
         crc >>= 1;                      // Shift right and XOR 0xA001
         crc ^= 0xA001;
@@ -152,6 +167,7 @@ const uint16_t sdm120_start_addresses[] {
 
 uint8_t sdm120_read_state = 0;
 uint8_t sdm120_send_retry = 0;
+uint8_t sdm120_nodata_count = 0;
 
 void SDM120250ms(void)              // Every 250 mSec
 {
@@ -163,6 +179,7 @@ void SDM120250ms(void)              // Every 250 mSec
     bool data_ready = SDM120_ModbusReceiveReady();
 
     if (data_ready) {
+      sdm120_nodata_count = 0;
       uint8_t error = SDM120_ModbusReceive(&value);
       if (error) {
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM120 response error %d"), error);
@@ -233,6 +250,18 @@ void SDM120250ms(void)              // Every 250 mSec
         }
       }
     } // end data ready
+    else {
+      if (sdm120_nodata_count <= (1000/250) * 4) {  // max. 4 sec without data
+        sdm120_nodata_count++;
+      } else if (sdm120_nodata_count != 255) {
+        // no data from modbus, reset values to 0
+        sdm120_nodata_count = 255;
+        sdm120_voltage = sdm120_current = sdm120_active_power = sdm120_apparent_power = sdm120_reactive_power = sdm120_power_factor = sdm120_frequency = sdm120_energy_total = 0;
+#ifdef USE_SDM220
+        sdm120_phase_angle = sdm120_import_active = sdm120_export_active = sdm120_import_reactive = sdm120_export_reactive = sdm120_total_reactive = 0;
+#endif
+      }
+    }
 
     if (0 == sdm120_send_retry || data_ready) {
       sdm120_send_retry = 5;
@@ -248,11 +277,7 @@ void SDM120Init(void)
   sdm120_type = 0;
   if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
     SDM120Serial = new TasmotaSerial(pin[GPIO_SDM120_RX], pin[GPIO_SDM120_TX], 1);
-#ifdef SDM120_SPEED
     if (SDM120Serial->begin(SDM120_SPEED)) {
-#else
-    if (SDM120Serial->begin(2400)) {
-#endif
       if (SDM120Serial->hardwareSerial()) { ClaimSerial(); }
       sdm120_type = 1;
     }
@@ -260,7 +285,7 @@ void SDM120Init(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_SDM120_DATA[] PROGMEM = "%s"
+const char HTTP_SNS_SDM120_DATA[] PROGMEM =
   "{s}SDM120 " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
   "{s}SDM120 " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
   "{s}SDM120 " D_POWERUSAGE_ACTIVE "{m}%s " D_UNIT_WATT "{e}"
@@ -314,25 +339,27 @@ void SDM120Show(bool json)
 #endif // USE_SDM220
   if (json) {
 #ifdef USE_SDM220
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT  "\":%s,\"" D_JSON_PHASE_ANGLE "\":%s,\"" D_JSON_IMPORT_ACTIVE "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s,\"" D_JSON_IMPORT_REACTIVE "\":%s,\"" D_JSON_EXPORT_REACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s}"),
-      mqtt_data, energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current, phase_angle, import_active, export_active, import_reactive, export_reactive, total_reactive);
+    ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT  "\":%s,\"" D_JSON_PHASE_ANGLE "\":%s,\"" D_JSON_IMPORT_ACTIVE "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s,\"" D_JSON_IMPORT_REACTIVE "\":%s,\"" D_JSON_EXPORT_REACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s}"),
+      energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current, phase_angle, import_active, export_active, import_reactive, export_reactive, total_reactive);
 #else
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
-      mqtt_data, energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current);
+    ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_APPARENT_POWERUSAGE "\":%s,\"" D_JSON_REACTIVE_POWERUSAGE "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_POWERFACTOR "\":%s,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s}"),
+      energy_total, active_power, apparent_power, reactive_power, frequency, power_factor, voltage, current);
 #endif // USE_SDM220
 #ifdef USE_DOMOTICZ
     if (0 == tele_period) {
+      char energy_total_chr[33];
+      dtostrfd(sdm120_energy_total * 1000, 1, energy_total_chr);
       DomoticzSensor(DZ_VOLTAGE, voltage);
       DomoticzSensor(DZ_CURRENT, current);
-      DomoticzSensorPowerEnergy((int)sdm120_active_power, energy_total);
+      DomoticzSensorPowerEnergy((int)sdm120_active_power, energy_total_chr);
     }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   } else {
 #ifdef USE_SDM220
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM120_DATA, mqtt_data, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total, phase_angle,import_active,export_active,import_reactive,export_reactive,total_reactive);
+    WSContentSend_PD(HTTP_SNS_SDM120_DATA, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total, phase_angle,import_active,export_active,import_reactive,export_reactive,total_reactive);
 #else
-    snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_SDM120_DATA, mqtt_data, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total);
+    WSContentSend_PD(HTTP_SNS_SDM120_DATA, voltage, current, active_power, apparent_power, reactive_power, power_factor, frequency, energy_total);
 #endif  // USE_SDM220
 #endif  // USE_WEBSERVER
   }
@@ -358,7 +385,7 @@ bool Xsns23(uint8_t function)
         SDM120Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         SDM120Show(0);
         break;
 #endif  // USE_WEBSERVER

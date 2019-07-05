@@ -147,7 +147,7 @@ void Ili9341PrintLog(void)
     }
 
     char* txt = DisplayLogBuffer('\370');
-    if (txt != NULL) {
+    if (txt != nullptr) {
       uint8_t size = Settings.display_size;
       uint16_t theight = size * TFT_FONT_HEIGTH;
 
@@ -167,12 +167,13 @@ void Ili9341PrintLog(void)
 
         tft_scroll = theight;  // Start below header
         tft->setCursor(0, tft_scroll);
-        for (uint8_t i = 0; i < last_row; i++) {
+        for (uint32_t i = 0; i < last_row; i++) {
           strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
 //          tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);  // Erase line
           tft->print(disp_screen_buffer[i]);
           tft_scroll += theight;
           tft->setCursor(0, tft_scroll);
+          delay(1);  // Fix background runs heap usage due to long runtime of this loop (up to 1 second)
         }
         strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
         DisplayFillScreen(last_row);

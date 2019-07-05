@@ -47,12 +47,10 @@
 #define NOVA_SDS_DEVICE_ID            0xFFFF  // NodaSDS all sensor response
 #endif
 
-
 TasmotaSerial *NovaSdsSerial;
 
 uint8_t novasds_type = 1;
 uint8_t novasds_valid = 0;
-
 
 struct sds011data {
   uint16_t pm100;
@@ -79,7 +77,7 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   uint8_t novasds_cmnd[19] = {0xAA, 0xB4, byte1, byte2, byte3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (uint8_t)(sensorid & 0xFF), (uint8_t)((sensorid>>8) & 0xFF), 0x00, 0xAB};
 
   // calc crc
-  for (uint8_t i = 2; i < 17; i++) {
+  for (uint32_t i = 2; i < 17; i++) {
     novasds_cmnd[17] += novasds_cmnd[i];
   }
   //~ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDS: Send %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X"),
@@ -109,7 +107,7 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   NovaSdsSerial->readBytes(&recbuf[1], 9);
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, recbuf, sizeof(recbuf));
 
-  if ( NULL != buffer ) {
+  if ( nullptr != buffer ) {
     // return data to buffer
     memcpy(buffer, recbuf, sizeof(recbuf));
   }
@@ -126,9 +124,9 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
 void NovaSdsSetWorkPeriod(void)
 {
   // set sensor working period
-  NovaSdsCommand(NOVA_SDS_WORKING_PERIOD, NOVA_SDS_SET_MODE, WORKING_PERIOD,        NOVA_SDS_DEVICE_ID, NULL);
+  NovaSdsCommand(NOVA_SDS_WORKING_PERIOD, NOVA_SDS_SET_MODE, Settings.novasds_period, NOVA_SDS_DEVICE_ID, nullptr);
   // set sensor report only on query
-  NovaSdsCommand(NOVA_SDS_REPORTING_MODE, NOVA_SDS_SET_MODE, NOVA_SDS_REPORT_QUERY, NOVA_SDS_DEVICE_ID, NULL);
+  NovaSdsCommand(NOVA_SDS_REPORTING_MODE, NOVA_SDS_SET_MODE, NOVA_SDS_REPORT_QUERY,   NOVA_SDS_DEVICE_ID, nullptr);
 }
 
 bool NovaSdsReadData(void)
@@ -162,7 +160,22 @@ void NovaSdsSecond(void)                 // Every second
   }
 }
 
-/*********************************************************************************************/
+/*********************************************************************************************\
+ * Command Sensor20
+ *
+ * 1 .. 255 - Set working period in minutes
+\*********************************************************************************************/
+
+bool NovaSdsCommandSensor(void)
+{
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 256)) {
+    Settings.novasds_period = XdrvMailbox.payload;
+    NovaSdsSetWorkPeriod();
+  }
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_20, Settings.novasds_period);
+
+  return true;
+}
 
 void NovaSdsInit(void)
 {
@@ -180,7 +193,7 @@ void NovaSdsInit(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SDS0X1_SNS[] PROGMEM = "%s"
+const char HTTP_SDS0X1_SNS[] PROGMEM =
   "{s}SDS0X1 " D_ENVIRONMENTAL_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%s " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
   "{s}SDS0X1 " D_ENVIRONMENTAL_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%s " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
@@ -195,7 +208,7 @@ void NovaSdsShow(bool json)
     char pm2_5[33];
     dtostrfd(pm2_5f, 1, pm2_5);
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"SDS0X1\":{\"PM2.5\":%s,\"PM10\":%s}"), mqtt_data, pm2_5, pm10);
+      ResponseAppend_P(PSTR(",\"SDS0X1\":{\"PM2.5\":%s,\"PM10\":%s}"), pm2_5, pm10);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_VOLTAGE, pm2_5);  // PM2.5
@@ -204,7 +217,7 @@ void NovaSdsShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SDS0X1_SNS, mqtt_data, pm2_5, pm10);
+      WSContentSend_PD(HTTP_SDS0X1_SNS, pm2_5, pm10);
 #endif  // USE_WEBSERVER
     }
   }
@@ -226,11 +239,16 @@ bool Xsns20(uint8_t function)
       case FUNC_EVERY_SECOND:
         NovaSdsSecond();
         break;
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_20 == XdrvMailbox.index) {
+          result = NovaSdsCommandSensor();
+        }
+        break;
       case FUNC_JSON_APPEND:
         NovaSdsShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         NovaSdsShow(0);
         break;
 #endif  // USE_WEBSERVER

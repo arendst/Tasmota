@@ -210,7 +210,7 @@ bool XdrvRulesProcess(void)
 #ifdef USE_DEBUG_DRIVER
 void ShowFreeMem(const char *where)
 {
-  char stemp[20];
+  char stemp[30];
   snprintf_P(stemp, sizeof(stemp), where);
   XdrvMailbox.data = stemp;
   XdrvCall(FUNC_FREE_MEM);
@@ -225,7 +225,7 @@ bool XdrvCall(uint8_t Function)
 {
   bool result = false;
 
-  for (uint8_t x = 0; x < xdrv_present; x++) {
+  for (uint32_t x = 0; x < xdrv_present; x++) {
 //    WifiAddDelayWhenDisconnected();
     result = xdrv_func_ptr[x](Function);
 

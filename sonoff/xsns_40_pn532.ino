@@ -142,12 +142,12 @@ int8_t PN532_writeCommand(const uint8_t *header, uint8_t hlen, const uint8_t *bo
   uint8_t sum = PN532_HOSTTOPN532;    // sum of TFI + DATA
 
   PN532_Serial->write(header, hlen);
-  for (uint8_t i = 0; i < hlen; i++) {
+  for (uint32_t i = 0; i < hlen; i++) {
     sum += header[i];
   }
 
   PN532_Serial->write(body, blen);
-  for (uint8_t i = 0; i < blen; i++) {
+  for (uint32_t i = 0; i < blen; i++) {
     sum += body[i];
   }
 
@@ -198,7 +198,7 @@ int16_t PN532_readResponse(uint8_t buf[], uint8_t len, uint16_t timeout = 50)
   }
 
   uint8_t sum = PN532_PN532TOHOST + cmd;
-  for (uint8_t i=0; i<length[0]; i++) {
+  for (uint32_t i=0; i<length[0]; i++) {
     sum += buf[i];
   }
 
@@ -282,7 +282,7 @@ bool PN532_readPassiveTargetID(uint8_t cardbaudrate, uint8_t *uid, uint8_t *uidL
   /* Card appears to be Mifare Classic */
   *uidLength = pn532_packetbuffer[5];
 
-  for (uint8_t i = 0; i < pn532_packetbuffer[5]; i++) {
+  for (uint32_t i = 0; i < pn532_packetbuffer[5]; i++) {
     uid[i] = pn532_packetbuffer[6 + i];
   }
 
@@ -418,7 +418,7 @@ void PN532_ScanForTag(void)
 #endif // USE_PN532_DATA_FUNCTION
 
       sprintf(uids,"");
-      for (uint8_t i = 0;i < uid_len;i++) {
+      for (uint32_t i = 0;i < uid_len;i++) {
         sprintf(uids,"%s%02X",uids,uid[i]);
       }
 
@@ -430,7 +430,7 @@ void PN532_ScanForTag(void)
 #ifdef USE_PN532_DATA_RAW
             memcpy(&card_datas,&card_data,sizeof(card_data));
 #else
-            for (uint8_t i = 0;i < sizeof(card_data);i++) {
+            for (uint32_t i = 0;i < sizeof(card_data);i++) {
               if ((isalpha(card_data[i])) || ((isdigit(card_data[i])))) {
                 card_datas[i] = char(card_data[i]);
               } else {
@@ -440,7 +440,7 @@ void PN532_ScanForTag(void)
 #endif // USE_PN532_DATA_RAW
           }
           if (pn532_function == 1) { // erase block 1 of card
-            for (uint8_t i = 0;i<16;i++) {
+            for (uint32_t i = 0;i<16;i++) {
               card_data[i] = 0x00;
             }
             if (mifareclassic_WriteDataBlock(1, card_data)) {
@@ -459,7 +459,7 @@ void PN532_ScanForTag(void)
             }
 #else
             bool IsAlphaNumeric = true;
-            for (uint8_t i = 0;i < pn532_newdata_len;i++) {
+            for (uint32_t i = 0;i < pn532_newdata_len;i++) {
               if ((!isalpha(pn532_newdata[i])) && (!isdigit(pn532_newdata[i]))) {
                 IsAlphaNumeric = false;
               }
@@ -497,12 +497,12 @@ void PN532_ScanForTag(void)
       pn532_function = 0;
 #endif // USE_PN532_DATA_FUNCTION
 
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
+      Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
 
 #ifdef USE_PN532_DATA_FUNCTION
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PN532\":{\"UID\":\"%s\", \"DATA\":\"%s\"}}"), mqtt_data, uids, card_datas);
+      ResponseAppend_P(PSTR(",\"PN532\":{\"UID\":\"%s\", \"DATA\":\"%s\"}}"), uids, card_datas);
 #else
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PN532\":{\"UID\":\"%s\"}}"), mqtt_data, uids);
+      ResponseAppend_P(PSTR(",\"PN532\":{\"UID\":\"%s\"}}"), uids);
 #endif // USE_PN532_DATA_FUNCTION
 
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
@@ -536,7 +536,7 @@ bool PN532_Command(void)
   }
   char sub_string[XdrvMailbox.data_len];
   char sub_string_tmp[XdrvMailbox.data_len];
-  for (uint8_t ca=0;ca<XdrvMailbox.data_len;ca++) {
+  for (uint32_t ca=0;ca<XdrvMailbox.data_len;ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
     if (',' == XdrvMailbox.data[ca]) { paramcount++; }
   }
@@ -544,8 +544,7 @@ bool PN532_Command(void)
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"E")) {
     pn532_function = 1; // Block 1 of next card/tag will be reset to 0x00...
     AddLog_P(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be erased"));
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PN532\":{\"COMMAND\":\"E\"\"}}"), mqtt_data);
+    Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"PN532\":{\"COMMAND\":\"E\"}}"), GetDateAndTime(DT_LOCAL).c_str());
     return serviced;
   }
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"S")) {
@@ -561,8 +560,7 @@ bool PN532_Command(void)
       pn532_newdata[pn532_newdata_len] = 0x00; // Null terminate the string
       pn532_function = 2;
       AddLog_P2(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), pn532_newdata);
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PN532\":{\"COMMAND\":\"S\"\"}}"), mqtt_data);
+      Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"PN532\":{\"COMMAND\":\"S\"}}"), GetDateAndTime(DT_LOCAL).c_str());
       return serviced;
     }
   }

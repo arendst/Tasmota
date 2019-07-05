@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.4.1.18
+ * Updated until v6.5.0.7
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "Topic de secours"
 #define D_FALSE "Faux"
 #define D_FILE "Fichier"
+#define D_FLOW_RATE "Débit"
 #define D_FREE_MEMORY "Mémoire libre"
 #define D_FREQUENCY "Fréquence"
 #define D_GAS "Gaz"
@@ -156,6 +157,7 @@
 #define D_TO "à"
 #define D_TOGGLE "Inverser"
 #define D_TOPIC "Topic"      // Keep MQTT keyword
+#define D_TOTAL_USAGE "Eau totale"
 #define D_TRANSMIT "Transmettre"
 #define D_TRUE "Vrai"
 #define D_TVOC "TVOC"
@@ -220,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Pour utiliser Tasmota, veuillez activer JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMAL<br/>merci de mettre à jour"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMAL<br>merci de mettre à jour"
 #define D_WEBSERVER_ACTIVE_ON "Serveur web actif sur"
 #define D_WITH_IP_ADDRESS "avec l'adresse IP"
 #define D_WEBSERVER_STOPPED "Serveur web éteint"
@@ -255,6 +257,7 @@
 #define D_MODULE_PARAMETERS "Paramètres module"
 #define D_MODULE_TYPE "Type de module"
 #define D_PULLUP_ENABLE "Inter. sans pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Entrée série"
 #define D_SERIAL_OUT "Sortie série"
@@ -304,8 +307,6 @@
 #define D_TEMPLATE_NAME "Nom"
 #define D_BASE_TYPE "Basé sur"
 #define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "Entrée ADC0"
-#define D_ALLOW_PULLUP "Pull-up utilisateur"
 
 #define D_SAVE_CONFIGURATION "Enregistrer la configuration"
 #define D_CONFIGURATION_SAVED "Configuration enregistrée"
@@ -430,7 +431,7 @@
 #define D_KNX_COMMAND_READ "Lire"
 #define D_KNX_COMMAND_OTHER "Autre"
 #define D_SENT_TO "envoyé à"
-#define D_KNX_WARNING "L'Adresse de Groupe ( 0 / 0 / 0 ) est réservée et ne peut être utilisée."
+#define D_KNX_WARNING "L'Adresse de Groupe (0/0/0) est réservée et ne peut être utilisée."
 #define D_KNX_ENHANCEMENT "Amélioration de la communication"
 #define D_KNX_TX_SLOT "KNX TX"
 #define D_KNX_RX_SLOT "KNX RX"
@@ -492,6 +493,9 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "O"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Aucun"
 #define D_SENSOR_USER          "Utilisateur"
@@ -508,6 +512,7 @@
 #define D_SENSOR_BUTTON        "Bouton"     // Suffix "1"
 #define D_SENSOR_RELAY         "Relais"     // Suffix "1i"
 #define D_SENSOR_LED           "LED"        // Suffix "1i"
+#define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Compteur"   // Suffix "1"
 #define D_SENSOR_IRRECV        "RécptIR"
@@ -573,15 +578,21 @@
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
+#define D_SENSOR_ARIRFSEL      "ALux IrSel"
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
+#define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "gal/mn"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"
@@ -595,12 +606,12 @@
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
 #define D_UNIT_MILLISECOND "ms"
-#define D_UNIT_MINUTE "Min"
+#define D_UNIT_MINUTE "mn"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
 #define D_UNIT_PARTS_PER_MILLION "ppm"
 #define D_UNIT_PRESSURE "hPa"
-#define D_UNIT_SECOND "sec"
+#define D_UNIT_SECOND "s"
 #define D_UNIT_SECTORS "secteurs"
 #define D_UNIT_VA "VA"
 #define D_UNIT_VAR "VAr"

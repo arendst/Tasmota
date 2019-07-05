@@ -1,7 +1,7 @@
 /*
   el-GR.h - localization for Greek - Greece for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends (translated by Nick Galfas)
+  Copyright (C) 2019  Theo Arends, translated by Nick Galfas
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.3.0
+ * Updated until v6.5.0
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -73,7 +73,7 @@
 #define D_CONNECTED "Συνδεδεμένο"
 #define D_COUNT "Μέτρηση"
 #define D_COUNTER "Μετρητής"
-#define D_CURRENT "Τάση"          // As in Voltage and Current
+#define D_CURRENT "Ένταση"          // As in Voltage and Current
 #define D_DATA "Δεδομένα"
 #define D_DARKLIGHT "Σκοτεινό"
 #define D_DEBUG "Debug"
@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "Fallback Topic"
 #define D_FALSE "Ψευδές"
 #define D_FILE "Αρχείο"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Ελεύθερη μνήμη"
 #define D_FREQUENCY "Συχνότητα"
 #define D_GAS "Αέριο"
@@ -156,6 +157,7 @@
 #define D_TO "έως"
 #define D_TOGGLE "Εναλλαγή"
 #define D_TOPIC "Topic"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "Μετάδοση"
 #define D_TRUE "Αληθές"
 #define D_TVOC "TVOC"
@@ -220,7 +222,7 @@
 
 // webserver.ino
 #define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br/>παρακαλώ αναβαθμίστε"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br>παρακαλώ αναβαθμίστε"
 #define D_WEBSERVER_ACTIVE_ON "Ενεργός διακομιστής Web στο"
 #define D_WITH_IP_ADDRESS "με διεύθυνση IP"
 #define D_WEBSERVER_STOPPED "Ο διακομιστής Web σταμάτησε"
@@ -236,25 +238,26 @@
 #define D_BUTTON_TOGGLE "Εναλλαγή"
 #define D_CONFIGURATION "Ρυθμίσεις"
 #define D_INFORMATION "Πληροφορίες"
-#define D_FIRMWARE_UPGRADE "Αναβάθμιση Firmware"
+#define D_FIRMWARE_UPGRADE "Αναβάθμιση"
 #define D_CONSOLE "Κονσόλα"
 #define D_CONFIRM_RESTART "Επιβεβαίωση επανεκκίνησης"
 
-#define D_CONFIGURE_MODULE "Ρυθμίσεις μονάδας"
-#define D_CONFIGURE_WIFI "Ρυθμίσεις WiFi"
-#define D_CONFIGURE_MQTT "Ρυθμίσεις MQTT"
-#define D_CONFIGURE_DOMOTICZ "Ρυθμίσεις Domoticz"
-#define D_CONFIGURE_LOGGING "Ρυθμίσεις καταγραφής"
+#define D_CONFIGURE_MODULE "Μονάδα"
+#define D_CONFIGURE_WIFI "WiFi"
+#define D_CONFIGURE_MQTT "MQTT"
+#define D_CONFIGURE_DOMOTICZ "Domoticz"
+#define D_CONFIGURE_LOGGING "Καταγραφή"
 #define D_CONFIGURE_OTHER "Άλλες ρυθμίσεις"
 #define D_CONFIRM_RESET_CONFIGURATION "Επιβεβαίωση αρχικοποίησης στις προεπιλεγμένες ρυθμίσεις"
-#define D_RESET_CONFIGURATION "Αρχικοποίηση-reset ρυθμίσεων"
-#define D_BACKUP_CONFIGURATION "Αποθήκευση ρυθμίσεων"
-#define D_RESTORE_CONFIGURATION "Επαναφορά ρυθμίσεων"
+#define D_RESET_CONFIGURATION "Reset"
+#define D_BACKUP_CONFIGURATION "Εξαγωγή"
+#define D_RESTORE_CONFIGURATION "Επαναφορά"
 #define D_MAIN_MENU "Κεντρικό μενού"
 
 #define D_MODULE_PARAMETERS "Παράμετροι μονάδας"
 #define D_MODULE_TYPE "Τύπος μονάδας"
 #define D_PULLUP_ENABLE "No Button/Switch pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
@@ -280,17 +283,17 @@
 #define D_FULL_TOPIC "Full Topic"
 
 #define D_LOGGING_PARAMETERS "Παράμετροι καταγραφής"
-#define D_SERIAL_LOG_LEVEL "Επίπεδο καταγραφής Σειριακής"
-#define D_WEB_LOG_LEVEL "Επίπεδο καταγραφής Web"
-#define D_SYS_LOG_LEVEL "Επίπεδο καταγραφής Syslog"
+#define D_SERIAL_LOG_LEVEL "Επίπεδο Σειριακής"
+#define D_WEB_LOG_LEVEL "Επίπεδο Web"
+#define D_SYS_LOG_LEVEL "Επίπεδο Syslog"
 #define D_MORE_DEBUG "More debug"
 #define D_SYSLOG_HOST "Εξυπηρετητής Syslog"
 #define D_SYSLOG_PORT "Θύρα Syslog"
 #define D_TELEMETRY_PERIOD "Περίοδος τηλεμετρίας"
 
 #define D_OTHER_PARAMETERS "Άλλες παράμετροι"
-#define D_TEMPLATE "Template"
-#define D_ACTIVATE "Activate"
+#define D_TEMPLATE "Πρότυπο"
+#define D_ACTIVATE "Ενεργοποίηση"
 #define D_WEB_ADMIN_PASSWORD "Κωδικός διαχειριστή"
 #define D_MQTT_ENABLE "Ενεργοποίηση MQTT"
 #define D_FRIENDLY_NAME "Φιλική ονομασία"
@@ -299,13 +302,11 @@
 #define D_SINGLE_DEVICE "μονή συσκευή"
 #define D_MULTI_DEVICE "πολλαπλές συσκευές"
 
-#define D_CONFIGURE_TEMPLATE "Configure Template"
-#define D_TEMPLATE_PARAMETERS "Template parameters"
-#define D_TEMPLATE_NAME "Name"
-#define D_BASE_TYPE "Based on"
-#define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "ADC0 input"
-#define D_ALLOW_PULLUP "User pull-up selection"
+#define D_CONFIGURE_TEMPLATE "Πρότυπα"
+#define D_TEMPLATE_PARAMETERS "Παράμετροι Πρότυπου"
+#define D_TEMPLATE_NAME "Όνομα"
+#define D_BASE_TYPE "Βασίζεται στο"
+#define D_TEMPLATE_FLAGS "Επιλογές"
 
 #define D_SAVE_CONFIGURATION "Αποθήκευση ρυθμίσεων"
 #define D_CONFIGURATION_SAVED "Οι ρυθμίσεις αποθηκεύτηκαν"
@@ -333,7 +334,7 @@
 #define D_UPGRADE_BY_WEBSERVER "Αναβάθμιση μέσω web server"
 #define D_OTA_URL "OTA URL"
 #define D_START_UPGRADE "Εκκίνηση αναβάθμισης"
-#define D_UPGRADE_BY_FILE_UPLOAD "Αναβάθμιση μέσω μεταφόρτωσης αρχείου"
+#define D_UPGRADE_BY_FILE_UPLOAD "Αναβάθμιση με μεταφόρτωση αρχείου"
 #define D_UPLOAD_STARTED "Η μεταφόρτωση ξεκίνησε"
 #define D_UPGRADE_STARTED "Η αναβάθμιση ξεκίνησε"
 #define D_UPLOAD_DONE "Η μεταφόρτωση ολοκληρώθηκε"
@@ -385,24 +386,24 @@
 #define D_3_RESPONSE_PACKETS_SENT "Στάλθηκαν 3 πακέτα απόκρισης"
 
 // xdrv_07_domoticz.ino
-#define D_DOMOTICZ_PARAMETERS "Ρυθμίσεις Domoticz"
+#define D_DOMOTICZ_PARAMETERS "Παράμετροι Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "Switch idx"
 #define D_DOMOTICZ_SENSOR_IDX "Sensor idx"
-  #define D_DOMOTICZ_TEMP "Temp"
-  #define D_DOMOTICZ_TEMP_HUM "Temp,Hum"
-  #define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
-  #define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
-  #define D_DOMOTICZ_ILLUMINANCE "Illuminance"
-  #define D_DOMOTICZ_COUNT "Count/PM1"
-  #define D_DOMOTICZ_VOLTAGE "Voltage/PM2.5"
-  #define D_DOMOTICZ_CURRENT "Current/PM10"
-  #define D_DOMOTICZ_AIRQUALITY "AirQuality"
+#define D_DOMOTICZ_TEMP "Temp"
+#define D_DOMOTICZ_TEMP_HUM "Temp,Hum"
+#define D_DOMOTICZ_TEMP_HUM_BARO "Temp,Hum,Baro"
+#define D_DOMOTICZ_POWER_ENERGY "Power,Energy"
+#define D_DOMOTICZ_ILLUMINANCE "Illuminance"
+#define D_DOMOTICZ_COUNT "Count/PM1"
+#define D_DOMOTICZ_VOLTAGE "Voltage/PM2.5"
+#define D_DOMOTICZ_CURRENT "Current/PM10"
+#define D_DOMOTICZ_AIRQUALITY "AirQuality"
 #define D_DOMOTICZ_UPDATE_TIMER "Update timer"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Ρυθμίσεις Χρονικών"
+#define D_CONFIGURE_TIMER "Χρονικά"
 #define D_TIMER_PARAMETERS "Παράμετροι χρονικών"
 #define D_TIMER_ENABLE "Ενεργοποίηση χρονικών"
 #define D_TIMER_ARM "Οπλισμένο"
@@ -492,6 +493,9 @@
 #define D_TX20_SOUTH "Ν"
 #define D_TX20_WEST "Δ"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Κανένα"
 #define D_SENSOR_USER          "User"
@@ -504,12 +508,13 @@
 #define D_SENSOR_WS2812        "WS2812"
 #define D_SENSOR_DFR562        "MP3 Player"
 #define D_SENSOR_IRSEND        "IRsend"
-#define D_SENSOR_SWITCH        "Διακόπτης"  // Suffix "1"
-#define D_SENSOR_BUTTON        "Κουμπί"     // Suffix "1"
-#define D_SENSOR_RELAY         "Ρελέ"       // Suffix "1i"
+#define D_SENSOR_SWITCH        "Switch"     // Suffix "1"
+#define D_SENSOR_BUTTON        "Button"     // Suffix "1"
+#define D_SENSOR_RELAY         "Relay"      // Suffix "1i"
 #define D_SENSOR_LED           "Led"        // Suffix "1i"
+#define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
-#define D_SENSOR_COUNTER       "Μετρητής"   // Suffix "1"
+#define D_SENSOR_COUNTER       "Counter"    // Suffix "1"
 #define D_SENSOR_IRRECV        "IRrecv"
 #define D_SENSOR_MHZ_RX        "MHZ Rx"
 #define D_SENSOR_MHZ_TX        "MHZ Tx"
@@ -573,15 +578,21 @@
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
+#define D_SENSOR_ARIRFSEL      "ALux IrSel"
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
+#define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "Hr"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"

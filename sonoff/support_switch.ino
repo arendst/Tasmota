@@ -25,7 +25,7 @@
  * Inspired by (https://github.com/OLIMEX/olimex-iot-firmware-esp8266/blob/master/olimex/user/user_switch2.c)
 \*********************************************************************************************/
 
-#define SWITCH_PROBE_INTERVAL    10         // Time in milliseconds between switch input probe
+const uint8_t SWITCH_PROBE_INTERVAL = 10;   // Time in milliseconds between switch input probe
 
 #include <Ticker.h>
 
@@ -71,7 +71,7 @@ void SwitchProbe(void)
   uint8_t force_high = (Settings.switch_debounce % 50) &1;                   // 51, 101, 151 etc
   uint8_t force_low = (Settings.switch_debounce % 50) &2;                    // 52, 102, 152 etc
 
-  for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
+  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     if (pin[GPIO_SWT1 +i] < 99) {
       // Olimex user_switch2.c code to fix 50Hz induced pulses
       if (1 == digitalRead(pin[GPIO_SWT1 +i])) {
@@ -111,7 +111,7 @@ void SwitchProbe(void)
 void SwitchInit(void)
 {
   switches_found = 0;
-  for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
+  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     lastwallswitch[i] = 1;  // Init global to virtual switch state;
     if (pin[GPIO_SWT1 +i] < 99) {
       switches_found++;
@@ -135,7 +135,7 @@ void SwitchHandler(uint8_t mode)
   uint8_t switchflag;
   uint16_t loops_per_second = 1000 / Settings.switch_debounce;
 
-  for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
+  for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     if ((pin[GPIO_SWT1 +i] < 99) || (mode)) {
 
       if (holdwallswitch[i]) {

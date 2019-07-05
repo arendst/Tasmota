@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "回退主题"
 #define D_FALSE "False"
 #define D_FILE "文件:"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "空闲内存"
 #define D_FREQUENCY "频率"
 #define D_GAS "气体"
@@ -156,6 +157,7 @@
 #define D_TO "to"
 #define D_TOGGLE "切换"
 #define D_TOPIC "主题"
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "发送"
 #define D_TRUE "True"
 #define D_TVOC "TVOC"
@@ -220,7 +222,7 @@
 
 // webserver.ino
 #define D_NOSCRIPT "Tasmota要求浏览器支持 JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "当前是精简版固件<br/>请升级"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "当前是精简版固件<br>请升级"
 #define D_WEBSERVER_ACTIVE_ON "Web 服务器地址:"
 #define D_WITH_IP_ADDRESS "IP 地址:"
 #define D_WEBSERVER_STOPPED "Web 服务已停止"
@@ -255,6 +257,7 @@
 #define D_MODULE_PARAMETERS "模块设置"
 #define D_MODULE_TYPE "模块类型"
 #define D_PULLUP_ENABLE "没有按钮/开关上拉"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "串口输入(RX)"
 #define D_SERIAL_OUT "串口输出(TX)"
@@ -304,8 +307,6 @@
 #define D_TEMPLATE_NAME "名称"
 #define D_BASE_TYPE "基于"
 #define D_TEMPLATE_FLAGS "选项"
-#define D_ALLOW_ADC0 "ADC0 输入"
-#define D_ALLOW_PULLUP "用户上拉选择"
 
 #define D_SAVE_CONFIGURATION "保存设置"
 #define D_CONFIGURATION_SAVED "设置已保存"
@@ -492,6 +493,9 @@
 #define D_TX20_SOUTH "南"
 #define D_TX20_WEST "西"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "无"
 #define D_SENSOR_USER          "User"
@@ -508,6 +512,7 @@
 #define D_SENSOR_BUTTON        "Button"     // Suffix "1"
 #define D_SENSOR_RELAY         "Relay"      // Suffix "1i"
 #define D_SENSOR_LED           "Led"        // Suffix "1i"
+#define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Counter"    // Suffix "1"
 #define D_SENSOR_IRRECV        "IRrecv"
@@ -573,14 +578,20 @@
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
+#define D_SENSOR_ARIRFSEL      "ALux IrSel"
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
+#define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 
 // Units
 #define D_UNIT_AMPERE "安"
 #define D_UNIT_CENTIMETER "厘米"
 #define D_UNIT_HOUR "时"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "千克"
 #define D_UNIT_KILOMETER_PER_HOUR "公里/时"  // or "km/h"

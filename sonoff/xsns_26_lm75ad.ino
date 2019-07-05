@@ -53,7 +53,7 @@ void LM75ADDetect(void)
   if (lm75ad_type) { return; }
 
   uint16_t buffer;
-  for (uint8_t i = 0; i < sizeof(lm75ad_addresses); i++) {
+  for (uint32_t i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
     if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
       if (buffer == 0x4B00) {
@@ -85,13 +85,13 @@ void LM75ADShow(bool json)
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, temperature);
+      ResponseAppend_P(PSTR(",\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), temperature);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "LM75AD", temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_TEMP, "LM75AD", temperature, TempUnit());
 #endif  // USE_WEBSERVER
     }
   }
@@ -114,7 +114,7 @@ bool Xsns26(uint8_t function)
         LM75ADShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         LM75ADShow(0);
         break;
 #endif  // USE_WEBSERVER

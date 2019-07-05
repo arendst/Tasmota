@@ -93,6 +93,7 @@
 #define D_FALLBACK_TOPIC "Fallback Topic"
 #define D_FALSE "Onwaar"
 #define D_FILE "Bestand"
+#define D_FLOW_RATE "Flow rate"
 #define D_FREE_MEMORY "Vrij geheugen"
 #define D_FREQUENCY "Frequentie"
 #define D_GAS "Gas"
@@ -156,6 +157,7 @@
 #define D_TO "naar"
 #define D_TOGGLE "Toggle"  // Wissel, Tuimel
 #define D_TOPIC "Topic"  // Onderwerp
+#define D_TOTAL_USAGE "Total Usage"
 #define D_TRANSMIT "Verzend"
 #define D_TRUE "Waar"
 #define D_TVOC "TVOC"
@@ -220,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Zet JavaScript aan voor Tasmota"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br/>opwaarderen"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "MINIMAL firmware<br>opwaarderen"
 #define D_WEBSERVER_ACTIVE_ON "Webserver actief op"
 #define D_WITH_IP_ADDRESS "met IP adres"
 #define D_WEBSERVER_STOPPED "Webserver gestopt"
@@ -255,6 +257,7 @@
 #define D_MODULE_PARAMETERS "Module parameters"
 #define D_MODULE_TYPE "Module soort"
 #define D_PULLUP_ENABLE "Geen schakelaar pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Serieel In"
 #define D_SERIAL_OUT "Serieel Uit"
@@ -289,8 +292,8 @@
 #define D_TELEMETRY_PERIOD "Telemetry periode"
 
 #define D_OTHER_PARAMETERS "Overige parameters"
-#define D_TEMPLATE "Template"
-#define D_ACTIVATE "Activate"
+#define D_TEMPLATE "Sjabloon"
+#define D_ACTIVATE "Activeer"
 #define D_WEB_ADMIN_PASSWORD "Web Admin Wachtwoord"
 #define D_MQTT_ENABLE "MQTT ingeschakeld"
 #define D_FRIENDLY_NAME "Beschrijvende naam"
@@ -299,13 +302,11 @@
 #define D_SINGLE_DEVICE "een apparaat"
 #define D_MULTI_DEVICE "meer apparaten"
 
-#define D_CONFIGURE_TEMPLATE "Configure Template"
-#define D_TEMPLATE_PARAMETERS "Template parameters"
-#define D_TEMPLATE_NAME "Name"
-#define D_BASE_TYPE "Based on"
-#define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "ADC0 input"
-#define D_ALLOW_PULLUP "User pull-up selection"
+#define D_CONFIGURE_TEMPLATE "Configureer Sjabloon"
+#define D_TEMPLATE_PARAMETERS "Sjabloon parameters"
+#define D_TEMPLATE_NAME "Naam"
+#define D_BASE_TYPE "Op basis van"
+#define D_TEMPLATE_FLAGS "Opties"
 
 #define D_SAVE_CONFIGURATION "Bewaar configuratie"
 #define D_CONFIGURATION_SAVED "Configuratie opgeslagen"
@@ -492,6 +493,9 @@
 #define D_TX20_SOUTH "S"
 #define D_TX20_WEST "W"
 
+//xsns_43_hre.ino
+#define D_LOG_HRE "HRE: "
+
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Geen"
 #define D_SENSOR_USER          "Gebruiker"
@@ -508,6 +512,7 @@
 #define D_SENSOR_BUTTON        "Button"     // Suffix "1"
 #define D_SENSOR_RELAY         "Relais"     // Suffix "1i"
 #define D_SENSOR_LED           "Led"        // Suffix "1i"
+#define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Teller"     // Suffix "1"
 #define D_SENSOR_IRRECV        "IRrecv"
@@ -573,15 +578,21 @@
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
+#define D_SENSOR_ARIRFSEL      "ALux IrSel"
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
+#define D_SENSOR_HRE_CLOCK     "HRE Clock"
+#define D_SENSOR_HRE_DATA      "HRE Data"
+#define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 
 // Units
 #define D_UNIT_AMPERE "A"
 #define D_UNIT_CENTIMETER "cm"
 #define D_UNIT_HERTZ "Hz"
 #define D_UNIT_HOUR "h"
+#define D_UNIT_GALLONS "gal"
+#define D_UNIT_GALLONS_PER_MIN "g/m"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"

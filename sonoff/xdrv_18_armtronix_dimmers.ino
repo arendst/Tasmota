@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_LIGHT
 #ifdef USE_ARMTRONIX_DIMMERS
 /*********************************************************************************************\
  * This code can be used for Armtronix dimmers.
@@ -112,7 +113,7 @@ void ArmtronixSerialInput(void)
     answer = ArmtronixSerial->readStringUntil('\n');
     if (answer.substring(0,7) == "Status:") {
       commaIndex = 6;
-      for (int i =0; i<2; i++) {
+      for (uint32_t i =0; i<2; i++) {
         newDimState[i] = answer.substring(commaIndex+1,answer.indexOf(',',commaIndex+1)).toInt();
         if (newDimState[i] != armtronix_dimState[i]) {
           temp = ((float)newDimState[i])*1.01010101010101; //max 255
@@ -170,14 +171,14 @@ bool Xdrv18(uint8_t function)
 
   if (ARMTRONIX_DIMMERS == my_module_type) {
     switch (function) {
+      case FUNC_LOOP:
+        if (ArmtronixSerial) { ArmtronixSerialInput(); }
+        break;
       case FUNC_MODULE_INIT:
         result = ArmtronixModuleSelected();
         break;
       case FUNC_INIT:
         ArmtronixInit();
-        break;
-      case FUNC_LOOP:
-        if (ArmtronixSerial) { ArmtronixSerialInput(); }
         break;
       case FUNC_EVERY_SECOND:
         if (ArmtronixSerial) {
@@ -196,3 +197,4 @@ bool Xdrv18(uint8_t function)
 }
 
 #endif  // USE_ARMTRONIX_DIMMERS
+#endif  // USE_LIGHT

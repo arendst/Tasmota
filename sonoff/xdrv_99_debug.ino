@@ -327,11 +327,11 @@ void DebugCfgPeek(char* parms)
   uint32_t data32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + data16;
 
   snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), address);
-  for (uint8_t i = 0; i < 4; i++) {
+  for (uint32_t i = 0; i < 4; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[address +i]);
   }
   snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
-  for (uint8_t i = 0; i < 4; i++) {
+  for (uint32_t i = 0; i < 4; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[address +i] > 0x20) && (buffer[address +i] < 0x7F)) ? (char)buffer[address +i] : ' ');
   }
   snprintf_P(log_data, sizeof(log_data), PSTR("%s| 0x%02X (%d), 0x%04X (%d), 0x%0LX (%lu)"), log_data, data8, data8, data16, data16, data32, data32);
@@ -352,7 +352,7 @@ void DebugCfgPoke(char* parms)
   uint32_t data32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + (buffer[address +1] << 8) + buffer[address];
 
   uint8_t *nbuffer = (uint8_t *) &data;
-  for (uint8_t i = 0; i < 4; i++) { buffer[address +i] = nbuffer[+i]; }
+  for (uint32_t i = 0; i < 4; i++) { buffer[address +i] = nbuffer[+i]; }
 
   uint32_t ndata32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + (buffer[address +1] << 8) + buffer[address];
 
@@ -419,28 +419,28 @@ bool DebugCommand(void)
   }
   else if (CMND_HELP == command_code) {
     AddLog_P(LOG_LEVEL_INFO, kDebugCommands);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
   else if (CMND_RTCDUMP == command_code) {
     DebugRtcDump(XdrvMailbox.data);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
   else if (CMND_CFGDUMP == command_code) {
     DebugCfgDump(XdrvMailbox.data);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
   else if (CMND_CFGPEEK == command_code) {
     DebugCfgPeek(XdrvMailbox.data);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
   else if (CMND_CFGPOKE == command_code) {
     DebugCfgPoke(XdrvMailbox.data);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
 #ifdef USE_DEBUG_SETTING_NAMES
   else if (CMND_CFGSHOW == command_code) {
     DebugCfgShow(XdrvMailbox.payload);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
 #endif  // USE_DEBUG_SETTING_NAMES
 #ifdef USE_WEBSERVER
@@ -448,13 +448,13 @@ bool DebugCommand(void)
     if (XdrvMailbox.data_len > 0) {
       config_xor_on_set = XdrvMailbox.payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, config_xor_on_set);
+    Response_P(S_JSON_COMMAND_NVALUE, command, config_xor_on_set);
   }
 #endif  // USE_WEBSERVER
 #ifdef DEBUG_THEO
   else if (CMND_EXCEPTION == command_code) {
     if (XdrvMailbox.data_len > 0) ExceptionTest(XdrvMailbox.payload);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
 #endif  // DEBUG_THEO
   else if (CMND_CPUCHECK == command_code) {
@@ -462,26 +462,26 @@ bool DebugCommand(void)
       CPU_load_check = XdrvMailbox.payload;
       CPU_last_millis = CPU_last_loop_time;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, CPU_load_check);
+    Response_P(S_JSON_COMMAND_NVALUE, command, CPU_load_check);
   }
   else if (CMND_FREEMEM == command_code) {
     if (XdrvMailbox.data_len > 0) {
       CPU_show_freemem = XdrvMailbox.payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, CPU_show_freemem);
+    Response_P(S_JSON_COMMAND_NVALUE, command, CPU_show_freemem);
   }
   else if ((CMND_SETSENSOR == command_code) && (XdrvMailbox.index < MAX_XSNS_DRIVERS)) {
     if ((XdrvMailbox.payload >= 0) && XsnsPresent(XdrvMailbox.index)) {
       bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
       if (1 == XdrvMailbox.payload) { restart_flag = 2; }  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_XVALUE, command, XsnsGetSensors().c_str());
+    Response_P(S_JSON_COMMAND_XVALUE, command, XsnsGetSensors().c_str());
   }
   else if (CMND_FLASHMODE == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
       SetFlashMode(XdrvMailbox.payload);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, ESP.getFlashChipMode());
+    Response_P(S_JSON_COMMAND_NVALUE, command, ESP.getFlashChipMode());
   }
   else serviced = false;  // Unknown command
 
@@ -497,11 +497,11 @@ bool Xdrv99(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_PRE_INIT:
-      CPU_last_millis = millis();
-      break;
     case FUNC_LOOP:
       CpuLoadLoop();
+      break;
+    case FUNC_PRE_INIT:
+      CPU_last_millis = millis();
       break;
     case FUNC_COMMAND:
       result = DebugCommand();

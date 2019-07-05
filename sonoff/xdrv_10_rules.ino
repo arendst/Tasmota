@@ -18,6 +18,7 @@
 */
 
 #ifdef USE_RULES
+#ifndef USE_SCRIPT
 /*********************************************************************************************\
  * Rules based heavily on ESP Easy implementation
  *
@@ -169,7 +170,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 
   char compare_operator[3];
   int8_t compare = COMPARE_OPERATOR_NONE;
-  for (int8_t i = MAXIMUM_COMPARE_OPERATOR; i >= 0; i--) {
+  for (int32_t i = MAXIMUM_COMPARE_OPERATOR; i >= 0; i--) {
     snprintf_P(compare_operator, sizeof(compare_operator), kCompareOperators + (i *2));
     if ((pos = rule_name.indexOf(compare_operator)) > 0) {
       compare = i;
@@ -178,17 +179,17 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   }
 
   char rule_svalue[CMDSZ] = { 0 };
-  double rule_value = 0;
+  float rule_value = 0;
   if (compare != COMPARE_OPERATOR_NONE) {
     String rule_param = rule_name.substring(pos + strlen(compare_operator));
-    for (uint8_t i = 0; i < MAX_RULE_VARS; i++) {
+    for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%%VAR%d%%"), i +1);
       if (rule_param.startsWith(stemp)) {
         rule_param = vars[i];
         break;
       }
     }
-    for (uint8_t i = 0; i < MAX_RULE_MEMS; i++) {
+    for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%%MEM%d%%"), i +1);
       if (rule_param.startsWith(stemp)) {
         rule_param = Settings.mems[i];
@@ -224,7 +225,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     if (temp_value > -1) {
       rule_value = temp_value;
     } else {
-      rule_value = CharToDouble((char*)rule_svalue);   // 0.1      - This saves 9k code over toFLoat()!
+      rule_value = CharToFloat((char*)rule_svalue);   // 0.1      - This saves 9k code over toFLoat()!
     }
     rule_name = rule_name.substring(0, pos);           // "CURRENT"
   }
@@ -234,7 +235,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   JsonObject &root = jsonBuf.parseObject(event);
   if (!root.success()) { return false; }               // No valid JSON data
 
-  double value = 0;
+  float value = 0;
   const char* str_value = root[rule_task][rule_name];
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
@@ -247,7 +248,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 
   // Step 3: Compare rule (value)
   if (str_value) {
-    value = CharToDouble((char*)str_value);
+    value = CharToFloat((char*)str_value);
     int int_value = int(value);
     int int_rule_value = int(rule_value);
     switch (compare) {
@@ -348,11 +349,11 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
       if (ucommand.indexOf("EVENT ") != -1) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
       commands.replace(F("%value%"), rules_event_value);
-      for (uint8_t i = 0; i < MAX_RULE_VARS; i++) {
+      for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%var%d%%"), i +1);
         commands.replace(stemp, vars[i]);
       }
-      for (uint8_t i = 0; i < MAX_RULE_MEMS; i++) {
+      for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%mem%d%%"), i +1);
         commands.replace(stemp, Settings.mems[i]);
       }
@@ -369,7 +370,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
       AddLog_P2(LOG_LEVEL_INFO, PSTR("RUL: %s performs \"%s\""), event_trigger.c_str(), command);
 
-//      snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
+//      Response_P(S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
 
       ExecuteCommand(command, SRC_RULE);
@@ -392,11 +393,20 @@ bool RulesProcessEvent(char *json_event)
 #endif
 
   String event_saved = json_event;
+  // json_event = {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}}
+  // json_event = {"System":{"Boot":1}}
+  // json_event = {"SerialReceived":"on"} - invalid but will be expanded to {"SerialReceived":{"Data":"on"}}
+  char *p = strchr(json_event, ':');
+  if ((p != NULL) && !(strchr(++p, ':'))) {  // Find second colon
+    event_saved.replace(F(":"), F(":{\"Data\":"));
+    event_saved += F("}");
+    // event_saved = {"SerialReceived":{"Data":"on"}}
+  }
   event_saved.toUpperCase();
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event %s"), event_saved.c_str());
 
-  for (uint8_t i = 0; i < MAX_RULE_SETS; i++) {
+  for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (strlen(Settings.rules[i]) && bitRead(Settings.rule_enabled, i)) {
       if (RuleSetProcess(i, event_saved)) { serviced = true; }
     }
@@ -412,7 +422,7 @@ bool RulesProcess(void)
 void RulesInit(void)
 {
   rules_flag.data = 0;
-  for (uint8_t i = 0; i < MAX_RULE_SETS; i++) {
+  for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
     if (Settings.rules[i][0] == '\0') {
       bitWrite(Settings.rule_enabled, i, 0);
       bitWrite(Settings.rule_once, i, 0);
@@ -429,7 +439,7 @@ void RulesEvery50ms(void)
     if (-1 == rules_new_power) { rules_new_power = power; }
     if (rules_new_power != rules_old_power) {
       if (rules_old_power != -1) {
-        for (uint8_t i = 0; i < devices_present; i++) {
+        for (uint32_t i = 0; i < devices_present; i++) {
           uint8_t new_state = (rules_new_power >> i) &1;
           if (new_state != ((rules_old_power >> i) &1)) {
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"State\":%d}}"), i +1, new_state);
@@ -438,13 +448,13 @@ void RulesEvery50ms(void)
         }
       } else {
         // Boot time POWER OUTPUTS (Relays) Status
-        for (uint8_t i = 0; i < devices_present; i++) {
+        for (uint32_t i = 0; i < devices_present; i++) {
           uint8_t new_state = (rules_new_power >> i) &1;
           snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"Boot\":%d}}"), i +1, new_state);
           RulesProcessEvent(json_event);
         }
         // Boot time SWITCHES Status
-        for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
+        for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
           if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
 #else
@@ -486,29 +496,31 @@ void RulesEvery50ms(void)
         event_data[0] ='\0';
       }
     }
-    else if (vars_event) {
-      for (uint8_t i = 0; i < MAX_RULE_VARS-1; i++) {
-        if (bitRead(vars_event, i)) {
-          bitClear(vars_event, i);
-          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
-          RulesProcessEvent(json_event);
-          break;
+    else if (vars_event || mems_event){
+      if (vars_event) {
+        for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
+          if (bitRead(vars_event, i)) {
+            bitClear(vars_event, i);
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
+            RulesProcessEvent(json_event);
+            break;
+          }
         }
       }
-    }
-    else if (mems_event) {
-      for (uint8_t i = 0; i < MAX_RULE_MEMS-1; i++) {
-        if (bitRead(mems_event, i)) {
-          bitClear(mems_event, i);
-          snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
-          RulesProcessEvent(json_event);
-          break;
+      if (mems_event) {
+        for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
+          if (bitRead(mems_event, i)) {
+            bitClear(mems_event, i);
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
+            RulesProcessEvent(json_event);
+            break;
+          }
         }
       }
     }
     else if (rules_flag.data) {
       uint16_t mask = 1;
-      for (uint8_t i = 0; i < MAX_RULES_FLAG; i++) {
+      for (uint32_t i = 0; i < MAX_RULES_FLAG; i++) {
         if (rules_flag.data & mask) {
           rules_flag.data ^= mask;
           json_event[0] = '\0';
@@ -520,6 +532,7 @@ void RulesEvery50ms(void)
             case 4: strncpy_P(json_event, PSTR("{\"MQTT\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
             case 5: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event)); break;
             case 6: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
+            case 7: strncpy_P(json_event, PSTR("{\"HTTP\":{\"Initialized\":1}}"), sizeof(json_event)); break;
           }
           if (json_event[0]) {
             RulesProcessEvent(json_event);
@@ -544,7 +557,7 @@ void RulesEvery100ms(void)
     tele_period = tele_period_save;
     if (strlen(mqtt_data)) {
       mqtt_data[0] = '{';                              // {"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+      ResponseJsonEnd();
       RulesProcess();
     }
   }
@@ -562,7 +575,7 @@ void RulesEverySecond(void)
         RulesProcessEvent(json_event);
       }
     }
-    for (uint8_t i = 0; i < MAX_RULE_TIMERS; i++) {
+    for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
       if (rules_timer[i] != 0L) {           // Timer active?
         if (TimeReached(rules_timer[i])) {  // Timer finished?
           rules_timer[i] = 0L;              // Turn off this timer
@@ -571,6 +584,16 @@ void RulesEverySecond(void)
         }
       }
     }
+  }
+}
+
+void RulesSaveBeforeRestart(void)
+{
+  if (Settings.rule_enabled) {  // Any rule enabled
+    char json_event[32];
+
+    strncpy_P(json_event, PSTR("{\"System\":{\"Save\":1}}"), sizeof(json_event));
+    RulesProcessEvent(json_event);
   }
 }
 
@@ -608,7 +631,7 @@ bool RulesMqttData(void)
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
   MQTT_Subscription event_item;
   //Looking for matched topic
-  for (int index = 0; index < subscriptions.size(); index++) {
+  for (uint32_t index = 0; index < subscriptions.size(); index++) {
     event_item = subscriptions.get(index);
 
     //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
@@ -672,10 +695,10 @@ String RulesSubscribe(const char *data, int data_len)
     char * pos = strtok(parameters, ",");
     if (pos) {
       event_name = Trim(pos);
-      pos = strtok(NULL, ",");
+      pos = strtok(nullptr, ",");
       if (pos) {
         topic = Trim(pos);
-        pos = strtok(NULL, ",");
+        pos = strtok(nullptr, ",");
         if (pos) {
           key = Trim(pos);
         }
@@ -685,7 +708,7 @@ String RulesSubscribe(const char *data, int data_len)
     event_name.toUpperCase();
     if (event_name.length() > 0 && topic.length() > 0) {
       //Search all subscriptions
-      for (int index=0; index < subscriptions.size(); index++) {
+      for (uint32_t index=0; index < subscriptions.size(); index++) {
         if (subscriptions.get(index).Event.equals(event_name)) {
           //If find exists one, remove it.
           String stopic = subscriptions.get(index).Topic + "/#";
@@ -718,7 +741,7 @@ String RulesSubscribe(const char *data, int data_len)
     }
   } else {
     //If did not specify the event name, list all subscribed event
-    for (int index=0; index < subscriptions.size(); index++) {
+    for (uint32_t index=0; index < subscriptions.size(); index++) {
       subscription_item = subscriptions.get(index);
       events.concat(subscription_item.Event + "," + subscription_item.Topic
         + (subscription_item.Key.length()>0 ? "," : "")
@@ -744,7 +767,7 @@ String RulesUnsubscribe(const char * data, int data_len)
   MQTT_Subscription subscription_item;
   String events;
   if (data_len > 0) {
-    for (int index = 0; index < subscriptions.size(); index++) {
+    for (uint32_t index = 0; index < subscriptions.size(); index++) {
       subscription_item = subscriptions.get(index);
       if (subscription_item.Event.equalsIgnoreCase(data)) {
         String stopic = subscription_item.Topic + "/#";
@@ -774,15 +797,15 @@ String RulesUnsubscribe(const char * data, int data_len)
  * Parse a number value
  * Input:
  *      pNumber     - A char pointer point to a digit started string (guaranteed)
- *      value       - Reference a double variable used to accept the result
+ *      value       - Reference a float variable used to accept the result
  * Output:
  *      pNumber     - Pointer forward to next character after the number
- *      value       - double type, the result value
+ *      value       - float type, the result value
  * Return:
  *      true    - succeed
  *      false   - failed
  */
-bool findNextNumber(char * &pNumber, double &value)
+bool findNextNumber(char * &pNumber, float &value)
 {
   bool bSucceed = false;
   String sNumber = "";
@@ -795,7 +818,7 @@ bool findNextNumber(char * &pNumber, double &value)
     }
   }
   if (sNumber.length() > 0) {
-    value = CharToDouble(sNumber.c_str());
+    value = CharToFloat(sNumber.c_str());
     bSucceed = true;
   }
   return bSucceed;
@@ -803,18 +826,18 @@ bool findNextNumber(char * &pNumber, double &value)
 
 /********************************************************************************************/
 /*
- * Parse a variable (like VAR1, MEM3) and get its value (double type)
+ * Parse a variable (like VAR1, MEM3) and get its value (float type)
  * Input:
  *      pVarname    - A char pointer point to a variable name string
- *      value       - Reference a double variable used to accept the result
+ *      value       - Reference a float variable used to accept the result
  * Output:
  *      pVarname    - Pointer forward to next character after the variable
- *      value       - double type, the result value
+ *      value       - float type, the result value
  * Return:
  *      true    - succeed
  *      false   - failed
  */
-bool findNextVariableValue(char * &pVarname, double &value)
+bool findNextVariableValue(char * &pVarname, float &value)
 {
   bool succeed = true;
   value = 0;
@@ -831,12 +854,12 @@ bool findNextVariableValue(char * &pVarname, double &value)
   if (sVarName.startsWith(F("VAR"))) {
     int index = sVarName.substring(3).toInt();
     if (index > 0 && index <= MAX_RULE_VARS) {
-      value = CharToDouble(vars[index -1]);
+      value = CharToFloat(vars[index -1]);
     }
   } else if (sVarName.startsWith(F("MEM"))) {
     int index = sVarName.substring(3).toInt();
     if (index > 0 && index <= MAX_RULE_MEMS) {
-      value = CharToDouble(Settings.mems[index -1]);
+      value = CharToFloat(Settings.mems[index -1]);
     }
   } else if (sVarName.equals(F("TIME"))) {
     value = MinutesPastMidnight();
@@ -868,15 +891,15 @@ bool findNextVariableValue(char * &pVarname, double &value)
  *     - An expression enclosed with a pair of round brackets, (.....)
  * Input:
  *      pointer     - A char pointer point to a place of the expression string
- *      value       - Reference a double variable used to accept the result
+ *      value       - Reference a float variable used to accept the result
  * Output:
  *      pointer     - Pointer forward to next character after next object
- *      value       - double type, the result value
+ *      value       - float type, the result value
  * Return:
  *      true    - succeed
  *      false   - failed
  */
-bool findNextObjectValue(char * &pointer, double &value)
+bool findNextObjectValue(char * &pointer, float &value)
 {
   bool bSucceed = false;
   while (*pointer)
@@ -961,15 +984,15 @@ bool findNextOperator(char * &pointer, int8_t &op)
  * Calculate a simple expression composed by 2 value and 1 operator, like 2 * 3
  * Input:
  *      pointer     - A char pointer point to a place of the expression string
- *      value       - Reference a double variable used to accept the result
+ *      value       - Reference a float variable used to accept the result
  * Output:
  *      pointer     - Pointer forward to next character after next object
- *      value       - double type, the result value
+ *      value       - float type, the result value
  * Return:
  *      true    - succeed
  *      false   - failed
  */
-double calculateTwoValues(double v1, double v2, uint8_t op)
+float calculateTwoValues(float v1, float v2, uint8_t op)
 {
   switch (op)
   {
@@ -1002,7 +1025,7 @@ double calculateTwoValues(double v1, double v2, uint8_t op)
  *      expression  - The expression to be evaluated
  *      len         - Length of the expression
  * Return:
- *      double      - result.
+ *      float      - result.
  *      0           - if the expression is invalid
  * An example:
  * MEM1 = 3, MEM2 = 6, VAR2 = 15, VAR10 = 80
@@ -1022,17 +1045,17 @@ double calculateTwoValues(double v1, double v2, uint8_t op)
  *  2             +                                   1
  *  3             /                                   2
  */
-double evaluateExpression(const char * expression, unsigned int len)
+float evaluateExpression(const char * expression, unsigned int len)
 {
   char expbuf[len + 1];
   memcpy(expbuf, expression, len);
   expbuf[len] = '\0';
   char * scan_pointer = expbuf;
 
-  LinkedList<double> object_values;
+  LinkedList<float> object_values;
   LinkedList<int8_t> operators;
   int8_t op;
-  double va;
+  float va;
   //Find and add the value of first object
   if (findNextObjectValue(scan_pointer, va)) {
     object_values.add(va);
@@ -1055,7 +1078,7 @@ double evaluateExpression(const char * expression, unsigned int len)
 
   //Going to evaluate the whole expression
   //Calculate by order of operator priorities. Looking for all operators with specified priority (from High to Low)
-  for (int8_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
+  for (int32_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
     int index = 0;
     while (index < operators.size()) {
       if (priority == kExpressionOperatorsPriorities[(operators.get(index))]) {     //need to calculate the operator first
@@ -1131,23 +1154,23 @@ bool RulesCommand(void)
   else if ((CMND_RULETIMER == command_code) && (index > 0) && (index <= MAX_RULE_TIMERS)) {
     if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-      double timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
+      float timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
       rules_timer[index -1] = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
 #else
       rules_timer[index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
 #endif      //USE_EXPRESSION
     }
     mqtt_data[0] = '\0';
-    for (uint8_t i = 0; i < MAX_RULE_TIMERS; i++) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s%c\"T%d\":%d"), mqtt_data, (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
+    for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
+      ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s}"), mqtt_data);
+    ResponseJsonEnd();
   }
   else if (CMND_EVENT == command_code) {
     if (XdrvMailbox.data_len > 0) {
       strlcpy(event_data, XdrvMailbox.data, sizeof(event_data));
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
   else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1158,7 +1181,7 @@ bool RulesCommand(void)
 #endif      //USE_EXPRESSION
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
     if (XdrvMailbox.data_len > 0) {
@@ -1169,61 +1192,61 @@ bool RulesCommand(void)
 #endif      //USE_EXPRESSION
       bitSet(mems_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
   else if (CMND_CALC_RESOLUTION == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
       Settings.flag2.calc_resolution = XdrvMailbox.payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, Settings.flag2.calc_resolution);
+    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.flag2.calc_resolution);
   }
   else if ((CMND_ADD == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      double tempvar = CharToDouble(vars[index -1]) + CharToDouble(XdrvMailbox.data);
+      float tempvar = CharToFloat(vars[index -1]) + CharToFloat(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SUB == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      double tempvar = CharToDouble(vars[index -1]) - CharToDouble(XdrvMailbox.data);
+      float tempvar = CharToFloat(vars[index -1]) - CharToFloat(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MULT == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      double tempvar = CharToDouble(vars[index -1]) * CharToDouble(XdrvMailbox.data);
+      float tempvar = CharToFloat(vars[index -1]) * CharToFloat(XdrvMailbox.data);
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
       bitSet(vars_event, index -1);
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_SCALE == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      if (strstr(XdrvMailbox.data, ",")) {     // Process parameter entry
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
 
-        double valueIN = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 1));
-        double fromLow = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2));
-        double fromHigh = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 3));
-        double toLow = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 4));
-        double toHigh = CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 5));
-        double value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
+        float valueIN = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 1));
+        float fromLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2));
+        float fromHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 3));
+        float toLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4));
+        float toHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 5));
+        float value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
         dtostrfd(value, Settings.flag2.calc_resolution, vars[index -1]);
         bitSet(vars_event, index -1);
       }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
 #ifdef SUPPORT_MQTT_EVENT
   } else if (CMND_SUBSCRIBE == command_code) {			//MQTT Subscribe command. Subscribe <Event>, <Topic> [, <Key>]
     String result = RulesSubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, result.c_str());
+    Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
   } else if (CMND_UNSUBSCRIBE == command_code) {			//MQTT Un-subscribe command. UnSubscribe <Event>
     String result = RulesUnsubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, result.c_str());
+    Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
 #endif        //SUPPORT_MQTT_EVENT
   }
   else serviced = false;  // Unknown command
@@ -1231,7 +1254,7 @@ bool RulesCommand(void)
   return serviced;
 }
 
-double map_double(double x, double in_min, double in_max, double out_min, double out_max)
+float map_double(float x, float in_min, float in_max, float out_min, float out_max)
 {
  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -1266,6 +1289,9 @@ bool Xdrv10(uint8_t function)
     case FUNC_RULES_PROCESS:
       result = RulesProcess();
       break;
+    case FUNC_SAVE_BEFORE_RESTART:
+      RulesSaveBeforeRestart();
+      break;
 #ifdef SUPPORT_MQTT_EVENT
     case FUNC_MQTT_DATA:
       result = RulesMqttData();
@@ -1275,4 +1301,5 @@ bool Xdrv10(uint8_t function)
   return result;
 }
 
+#endif  // Do not USE_SCRIPT
 #endif  // USE_RULES

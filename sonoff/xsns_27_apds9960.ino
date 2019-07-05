@@ -77,7 +77,7 @@ volatile uint8_t recovery_loop_counter = 0;  //count number of stateloops to swi
 bool APDS9960_overload = false;
 
 #ifdef USE_WEBSERVER
-const char HTTP_APDS_9960_SNS[] PROGMEM = "%s"
+const char HTTP_APDS_9960_SNS[] PROGMEM =
   "{s}" "Red" "{m}%s{e}"
   "{s}" "Green" "{m}%s{e}"
   "{s}" "Blue" "{m}%s{e}"
@@ -374,19 +374,9 @@ void calculateColorTemperature(void)
   n = (xc - 0.3320F) / (0.1858F - yc);
 
   /* Calculate the final CCT */
-  color_data.cct = (449.0F * powf(n, 3)) + (3525.0F * powf(n, 2)) + (6823.3F * n) + 5520.33F;
+  color_data.cct = (449.0F * FastPrecisePowf(n, 3)) + (3525.0F * FastPrecisePowf(n, 2)) + (6823.3F * n) + 5520.33F;
 
   return;
-}
-
-/**
-*   Taken from the Adafruit-Library
-*    @brief  Implements missing powf function
-*/
-
-float powf(const float x, const float y)
-{
-  return (float)(pow((double)x, (double)y));
 }
 
  /*******************************************************************************
@@ -1874,7 +1864,7 @@ void APDS9960_loop(void)
   if (recovery_loop_counter == 1 && APDS9960_overload){  //restart sensor just before the end of recovery from long press
     enableGestureSensor();
     APDS9960_overload = false;
-    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"On\"}"));
+    Response_P(PSTR("{\"Gesture\":\"On\"}"));
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data); // only after the long break we report, that we are online again
     gesture_mode = 1;
   }
@@ -1887,7 +1877,7 @@ void APDS9960_loop(void)
         {
         disableGestureSensor();
         recovery_loop_counter = APDS9960_LONG_RECOVERY;  // long pause after overload/long press - number of stateloops
-        snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"Gesture\":\"Off\"}"));
+        Response_P(PSTR("{\"Gesture\":\"Off\"}"));
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
         gesture_mode = 0;
         }
@@ -1959,17 +1949,17 @@ void APDS9960_show(bool json)
     sprintf (cct_chr, "%u", color_data.cct);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"Red\":%s,\"Green\":%s,\"Blue\":%s,\"Ambient\":%s,\"CCT\":%s,\"Proximity\":%s}"),
-        mqtt_data, APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
+      ResponseAppend_P(PSTR(",\"%s\":{\"Red\":%s,\"Green\":%s,\"Blue\":%s,\"Ambient\":%s,\"CCT\":%s,\"Proximity\":%s}"),
+        APDS9960stype, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr);
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_APDS_9960_SNS, mqtt_data, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr );
+      WSContentSend_PD(HTTP_APDS_9960_SNS, red_chr, green_chr, blue_chr, ambient_chr, cct_chr, prox_chr );
 #endif  // USE_WEBSERVER
     }
   }
   else {
     if (json && (currentGesture[0] != '\0' )) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"%s\":1}"), mqtt_data, APDS9960stype, currentGesture);
+      ResponseAppend_P(PSTR(",\"%s\":{\"%s\":1}"), APDS9960stype, currentGesture);
       currentGesture[0] = '\0';
     }
   }
@@ -2025,7 +2015,7 @@ bool APDS9960CommandSensor(void)
       }
     break;
   }
-  snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_SENSOR_INDEX_SVALUE, XSNS_27, GetStateText(gesture_mode));
+  Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_27, GetStateText(gesture_mode));
 
   return serviced;
 }
@@ -2055,7 +2045,7 @@ bool Xsns27(uint8_t function)
             APDS9960_show(1);
             break;
 #ifdef USE_WEBSERVER
-        case FUNC_WEB_APPEND:
+        case FUNC_WEB_SENSOR:
           APDS9960_show(0);
           break;
 #endif  // USE_WEBSERVER

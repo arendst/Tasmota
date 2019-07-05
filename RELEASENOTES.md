@@ -1,3 +1,7 @@
+<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+
+# RELEASE NOTES
+
 ## Migration Information
 See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
@@ -6,11 +10,10 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 3. Migrate to **Sonoff-Tasmota 5.14**
 4. Migrate to **Sonoff-Tasmota 6.x**
 
-## Release notes
-### Core version 2.3.0 vs 2.4.2
+## Core version 2.3.0 vs 2.4.2
 This release is based on ESP8266/Arduino library core 2.3.0 (again) as some people encountered wifi related issues on core 2.4.2. For others core 2.4.2 is working just fine. Both version are available from http://thehackbox.org/tasmota/release/
 
-### Change in default initial configuration tool
+## Change in default initial configuration tool
 Firmware binary **sonoff-classic.bin** supports **WifiManager, Wps and SmartConfig** for initial configuration. The default tool is **Wps**.
 
 To save memory space all other binaries support **WifiManager only**.
@@ -71,14 +74,14 @@ Module            | Description
 49 Neo Coolcam    | Neo Coolcam Wifi Smart Socket
 50 ESP Switch     | ESP Switch 4-gang Wifi Switch with Leds
 51 OBI Socket     | OBI Wifi Smart Socket
-52 Teckin         | Teckin SP20 Wifi Smart Switch with Energy Monitoring
+52 Teckin         | Teckin SP22 Wifi Smart Switch with Energy Monitoring
 53 AplicWDP303075 | Aplic WDP 303075 CSL Wifi Smart Switch with Energy Monitoring
 54 Tuya Dimmer    | MIUO (and other Tuya based) Wifi Dimmer for Incandescent Lights and Led
 55 Gosund SP1 v23 | Gosund SP1 v2.3 Wifi Smart Switch with Energy Monitoring
 56 ARMTR Dimmer   | ARMtronix Wifi dimmer for Incandescent Lights and Led
 57 SK03 Outdoor   | SK03 Outdoor Wifi Smart Switch with Energy Monitoring
 58 PS-16-DZ       | PS-16-DZ  Wifi dimmer for Incandescent Lights and Led
-59 Teckin US      | Teckin US and ZooZee SA102 Wifi Smart Switch with Energy Monitoring
+59 Teckin US      | Teckin SP20 and ZooZee SA102 Wifi Smart Switch with Energy Monitoring
 60 Manzoku strip  | Manzoku Wifi Smart Power Strip with four Relays
 61 OBI Socket 2   | OBI 2 Wifi Smart Socket
 62 YTF IR Bridge  | YTF Infra Red Wifi Bridge
@@ -104,7 +107,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/release/020402/
 
-### Available Features and Sensors
+## Available Features and Sensors
 
 | Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
 |-----------------------|---------|-------|---------|--------|------|---------|---------|--------
@@ -194,6 +197,7 @@ Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/re
 | USE_RC_SWITCH         | - | - | - | x | x | x | x |
 | USE_RF_SENSOR         | - | - | - | - | - | x | - | AlectoV2 only
 | USE_SM16716           | - | x | x | x | x | x | x |
+| USE_HRE               | - | - | - | - | - | x | - |
 | USE_DISPLAY           | - | - | - | - | - | - | x |
 | USE_DISPLAY_LCD       | - | - | - | - | - | - | x |
 | USE_DISPLAY_SSD1306   | - | - | - | - | - | - | x |

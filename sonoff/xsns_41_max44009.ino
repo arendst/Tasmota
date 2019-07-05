@@ -74,7 +74,7 @@ void Max4409Detect(void)
 
   uint8_t buffer1;
   uint8_t buffer2;
-  for (uint8_t i = 0; 0 != max44009_addresses[i]; i++) {
+  for (uint32_t i = 0; 0 != max44009_addresses[i]; i++) {
 
     max44009_address = max44009_addresses[i];
 
@@ -128,9 +128,7 @@ void Max4409Show(bool json)
     dtostrf(max44009_illuminance, sizeof(illum_str) -1, prec, illum_str);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data),
-                 PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"),
-                 mqtt_data, max44009_types, illum_str);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%s}"), max44009_types, illum_str);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_ILLUMINANCE, illum_str);
@@ -139,8 +137,7 @@ void Max4409Show(bool json)
 #ifdef USE_WEBSERVER
     } else {
       // show integer value for lx on web-server
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE,
-                 mqtt_data, max44009_types, (int)max44009_illuminance);
+      WSContentSend_PD(HTTP_SNS_ILLUMINANCE, max44009_types, (int)max44009_illuminance);
 #endif  // USE_WEBSERVER
     }
   }
@@ -166,7 +163,7 @@ bool Xsns41(uint8_t function)
         Max4409Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Max4409Show(0);
         break;
 #endif  // USE_WEBSERVER

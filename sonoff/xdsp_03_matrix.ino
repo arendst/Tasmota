@@ -37,7 +37,7 @@ int16_t mtx_x = 0;
 int16_t mtx_y = 0;
 
 //char mtx_buffer[MTX_MAX_SCREEN_BUFFER];
-char *mtx_buffer = NULL;
+char *mtx_buffer = nullptr;
 
 uint8_t mtx_mode = 0;
 uint8_t mtx_loop = 0;
@@ -47,14 +47,14 @@ uint8_t mtx_done = 0;
 
 void MatrixWrite(void)
 {
-  for (uint8_t i = 0; i < mtx_matrices; i++) {
+  for (uint32_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->writeDisplay();
   }
 }
 
 void MatrixClear(void)
 {
-  for (uint8_t i = 0; i < mtx_matrices; i++) {
+  for (uint32_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
   }
   MatrixWrite();
@@ -62,7 +62,7 @@ void MatrixClear(void)
 
 void MatrixFixed(char* txt)
 {
-  for (uint8_t i = 0; i < mtx_matrices; i++) {
+  for (uint32_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
     matrix[i]->setCursor(-i *8, 0);
     matrix[i]->print(txt);
@@ -77,7 +77,7 @@ void MatrixCenter(char* txt)
 
   int len = strlen(txt);
   offset = (len < 8) ? offset = ((mtx_matrices *8) - (len *6)) / 2 : 0;
-  for (uint8_t i = 0; i < mtx_matrices; i++) {
+  for (uint32_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
     matrix[i]->setCursor(-(i *8)+offset, 0);
     matrix[i]->print(txt);
@@ -101,7 +101,7 @@ void MatrixScrollLeft(char* txt, int loop)
   disp_refresh--;
     if (!disp_refresh) {
       disp_refresh = Settings.display_refresh;
-      for (uint8_t i = 0; i < mtx_matrices; i++) {
+      for (uint32_t i = 0; i < mtx_matrices; i++) {
         matrix[i]->clear();
         matrix[i]->setCursor(mtx_x - i *8, 0);
         matrix[i]->print(txt);
@@ -140,13 +140,13 @@ void MatrixScrollUp(char* txt, int loop)
       disp_refresh = Settings.display_refresh;
       strlcpy(tmpbuf, txt, sizeof(tmpbuf));
       char *p = strtok(tmpbuf, separators);
-      while (p != NULL && wordcounter < 40) {
+      while (p != nullptr && wordcounter < 40) {
         words[wordcounter++] = p;
-        p = strtok(NULL, separators);
+        p = strtok(nullptr, separators);
       }
-      for (uint8_t i = 0; i < mtx_matrices; i++) {
+      for (uint32_t i = 0; i < mtx_matrices; i++) {
         matrix[i]->clear();
-        for (uint8_t j = 0; j < wordcounter; j++) {
+        for (uint32_t j = 0; j < wordcounter; j++) {
           matrix[i]->setCursor(-i *8, mtx_y + (j *8));
           matrix[i]->println(words[j]);
         }
@@ -169,7 +169,7 @@ void MatrixScrollUp(char* txt, int loop)
 
 void MatrixInitMode(void)
 {
-  for (uint8_t i = 0; i < mtx_matrices; i++) {
+  for (uint32_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->setRotation(Settings.display_rotate);  // 1
     matrix[i]->setBrightness(Settings.display_dimmer);
     matrix[i]->blinkRate(0);               // 0 - 3
@@ -196,7 +196,7 @@ void MatrixInit(uint8_t mode)
 void MatrixInitDriver(void)
 {
   mtx_buffer = (char*)(malloc(MTX_MAX_SCREEN_BUFFER));
-  if (mtx_buffer != NULL) {
+  if (mtx_buffer != nullptr) {
     if (!Settings.display_model) {
       if (I2cDevice(Settings.display_address[1])) {
         Settings.display_model = XDSP_03;
@@ -239,7 +239,7 @@ void MatrixDrawStringAt(uint16_t x, uint16_t y, char *str, uint16_t color, uint8
 void MatrixPrintLog(uint8_t direction)
 {
   char* txt = (!mtx_done) ? DisplayLogBuffer('\370') : mtx_buffer;
-  if (txt != NULL) {
+  if (txt != nullptr) {
     if (!mtx_state) { mtx_state = 1; }
 
     if (!mtx_done) {

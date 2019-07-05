@@ -200,7 +200,7 @@ void EpdPrintLog(void)
     }
 
     char* txt = DisplayLogBuffer('\040');
-    if (txt != NULL) {
+    if (txt != nullptr) {
       uint8_t size = Settings.display_size;
       uint16_t theight = size * EPD_FONT_HEIGTH;
 
@@ -209,7 +209,7 @@ void EpdPrintLog(void)
 
 //      epd_scroll = theight;  // Start below header
       epd_scroll = 0;  // Start at top with no header
-      for (uint8_t i = 0; i < last_row; i++) {
+      for (uint32_t i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
         EpdDrawStringAt(0, epd_scroll, disp_screen_buffer[i], COLORED, 0);
         epd_scroll += theight;
