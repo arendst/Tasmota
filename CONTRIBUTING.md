@@ -1,5 +1,6 @@
-# Contributing
 <img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+
+# Contributing
 
 **Any contribution helps our team and makes Tasmota better for the entire community!**
 
