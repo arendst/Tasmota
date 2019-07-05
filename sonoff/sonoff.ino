@@ -2075,13 +2075,14 @@ void PerformEverySecond(void)
 
   XdrvCall(FUNC_EVERY_SECOND);
   XsnsCall(FUNC_EVERY_SECOND);
-
+/*
   if ((2 == RtcTime.minute) && latest_uptime_flag) {
     latest_uptime_flag = false;
     Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\"}"), GetDateAndTime(DT_LOCAL).c_str(), GetUptime().c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_UPTIME));
   }
   if ((3 == RtcTime.minute) && !latest_uptime_flag) latest_uptime_flag = true;
+*/
 }
 
 /*********************************************************************************************\
