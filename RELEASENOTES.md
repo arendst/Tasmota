@@ -226,6 +226,7 @@ Core version **2.5.2** binaries can be found at http://thehackbox.org/tasmota/re
 ## Changelog
 Version 6.6.0 20190707
  * Remove support of TLS on core 2.3.0 and extent support on core 2.4.2 and up
+ * Remove MQTT uptime message every hour
  * Refactor some defines to const
  * Refactor webserver HTML input, button, textarea, and select name based on id
  * Refactor webserver sensor data collection
