@@ -1,122 +1,81 @@
-/* 6.5.0.16 20190611
- * Refactored TLS based on BearSSL, warning breaking change for fingerprints validation (see doc)
- * Add checkbox to GUI password field enabling visibility during password entry only (#5934)
- * Add using heap when more than 199 IRSend values need to be send. May need increase of define MQTT_MAX_PACKET_SIZE too (#5950)
- * Fix channel command for dual dimmers (#5940)
- * Add define USE_COUNTER to my_user_config.h to save space in sonoff-basic.bin and sonoff-minimal.bin
- * Add define USE_DHT to my_user_config.h to save space in sonoff-basic.bin
- * Change TLS+AWS IoT optimization for speed, code and memory footprint
- * Add command SetOption40 0..250 to disable button functionality if activated for over 0.1 second. Needs SetOption1 1 and SetOption13 0 (#5449)
- * Change converted double to float in rules, and replaced trigonometric functions from stdlib with smaller versions saving 7k code space (#6005)
- * Add support for Sonoff L1 thanks to reef-actor (#6002)
- * Fix Not restoring white value on power off/power on (#5993)
- *
- * 6.5.0.15 20190606
- * Change pubsubclient MQTT_KEEPALIVE from 10 to 30 seconds in preparation of AWS IoT support
- * Add support for AWS IoT with TLS 1.2 on core 2.5.2. Full doc here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
- * Add some MQTT housekeeping which might solve issue (#5755)
- * Add command SetOption65 0/1 and more Tuya Serial based device support (#5815)
- * Fix include of my_user_config.h in sonoff_aws_iot.cpp (#5930)
+/*********************************************************************************************\
+ * 6.6.0 20190707
+ * Remove support of TLS on core 2.3.0 and extent support on core 2.4.2 and up
+ * Remove MQTT uptime message every hour
+ * Refactor some defines to const
+ * Refactor webserver HTML input, button, textarea, and select name based on id
+ * Refactor webserver sensor data collection
+ * Refactor TLS based on BearSSL, warning breaking change for fingerprints validation
+ * Refactor management of lights, using classes and integers instead of floats
+ * Refactor UDP initial message handling from string to char using static memory and add debug info (#5505)
+ * Refactor IRsend and receive for 64-bit support (#5523)
+ * Refactor MQTT which might solve issue (#5755)
+ * Refactor IRSend by using heap when more than 199 values need to be send. May need increase of define MQTT_MAX_PACKET_SIZE too (#5950)
+ * Refactor double to float in rules, and replaced trigonometric functions from stdlib with smaller versions (#6005)
+ * Change pubsubclient MQTT_KEEPALIVE from 10 to 30 seconds for AWS IoT support
+ * Change gamma correction as default behavior, ie "Ledtable 1"
+ * Change PWM resolution from 8 to 10 bits for low brightness lights
+ * Change IRSend Panasonic protocol to 64-bit (#5523)
+ * Change ADC0 to enabled by default in my_user_config.h (#5671)
+ * Change define USE_EMULATION by USE_EMULATION_HUE and USE_EMULATION_WEMO (#5826)
+ * Change default PowerDelta from 80% to 0% on new installations (#5858, #5028, #4813, #4130, #4145, #3795, #3778, #3660, #3648)
+ * Fix display Bug in KNX webmenu for Physical Address
+ * Fix the Unescape() function and the SendSerial3 behaviour
+ * Fix webserver multiple Javascript window.onload functionality
+ * Fix TasmotaSerial at 9600 bps solving DFPlayer comms (#5528)
+ * Fix Configure Timer Web GUI (#5568)
+ * Fix Shelly 2.5 I2C address priority issue when VEML6070 code is present by disabling VEML6070 for Shelly 2.5 (#5592)
+ * Fix use of SerialDelimiter value 128 (#5634)
+ * Fix Sonoff Pow R2 / S31 invalid energy increments (#5789)
+ * Fix core 2.5.x ISR not in IRAM exception (#5837)
+ * Fix Philips Hue emulation Alexa issue by using part of MAC address for LightId (#5849)
+ * Fix missing white channel for WS2812 (#5869)
+ * Fix PZem startup issue (#5875)
  * Fix exception 9 when syslog is enabled and NTP is just synced (#5917)
  * Fix Toggle functionality to button double press when one button and two devices are detected (#5935)
- *
- * 6.5.0.14 20190602
- * Change webserver HTML input, button, textarea, and select name based on id
- * Fix webserver multiple Javascript window.onload functionality
- * Fix PZem startup issue (#5875)
- * Add command SetOption39 1..255 to control CSE7766 (Pow R2) or HLW8032 (Blitzwolf SHP5) handling of power loads below 6W. Default setting is 128 (#5756)
- * Add Toggle functionality to button double press when more devices are detected
- *
- * 6.5.0.13 20190527
+ * Fix channel command for dual dimmers (#5940)
+ * Fix not restoring white value on power off/power on (#5993)
+ * Add command AdcParam to control ADC0 Temperature and Light formula parameters
+ * Add command LedMask to assign which relay has access to power LED (#5602, #5612)
+ * Add extended LED power control using command LedPowerX where X is 1 to 4. Enabled when "LedLink(i)" is configured too (#5709)
+ * Add command Sensor20 1..255 to change Nova Fitness SDS01 working period in minutes (#5452)
  * Add command SetOption38 6..255 to set IRReceive protocol detection sensitivity mimizing UNKNOWN protocols (#5853)
- * Fix missing white channel for WS2812 (#5869)
- * Add reset of Energy values when connection to sensor is lost for over 4 seconds (#5874, #5881)
- * Work-around for Philips Hue emulation issue by using part of MAC address for LightId (#5849)
- * Add support to Stage Arduino Core (next 2.6.0)
- *
- * 6.5.0.12 20190521
+ * Add command SetOption39 1..255 to control CSE7766 (Pow R2) or HLW8032 (Blitzwolf SHP5) handling of power loads below 6W. Default setting is 128 (#5756)
+ * Add command SetOption40 0..250 to disable button functionality if activated for over 0.1 second. Needs SetOption1 1 and SetOption13 0 (#5449)
+ * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)
+ * Add command SetOption64 0/1 to switch between "-" or "_" as sensor index separator impacting DS18X20, DHT, BMP and SHT3X sensor names (#5689)
+ * Add command SetOption65 0/1 and more Tuya Serial based device support (#5815)
+ * Add command WebColor to change GUI colors on the fly
+ * Add support for AWS IoT with TLS 1.2 on core 2.4.2 and up. Full doc here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
+ * Add support for Badger HR-E Water Meter (#5539)
+ * Add support for Shelly 2.5 Energy and overtemp Monitoring (#5592)
+ * Add support for color and colortone for Philips Hue emulation via Alexa (#5600 #4809)
+ * Add support for Scripts as replacement for Rules. Default disabled but can be enabled in my_user_config.h (#5689)
+ * Add support for up to four LEDs related to four power outputs. Enabled when "LedLink(i)" is configured too (#5709)
+ * Add support for Shelly 1PM Template {"NAME":"Shelly 1PM","GPIO":[56,0,0,0,82,134,0,0,0,0,0,21,0],"FLAG":2,"BASE":18} (#5716)
+ * Add support for SPS30 Particle sensor thanks to Gerhard Mutz (#5830)
+ * Add support for VL53L0x time of flight sensor. Might interfere with TSL2561 using same I2C address (#5845)
+ * Add support for Sonoff L1 thanks to reef-actor (#6002)
+ * Add rule Http#Initialized
+ * Add rule System#Save executed just before a planned restart
+ * Add rule support for single JSON value pair like {"SSerialReceived":"on"} by expanding it to {"SSerialReceived":{"Data":"on"}} allowing for trigger SSerialReceived#Data=on (#5638)
+ * Add define USE_COUNTER to my_user_config.h to save space in sonoff-basic.bin and sonoff-minimal.bin
+ * Add define USE_DHT to my_user_config.h to save space in sonoff-basic.bin
+ * Add defines USE_EMULATION_WEMO and USE_EMULATION_HUE to my_user_config.h to control emulation features at compile time (#5826)
+ * Add Toggle functionality to button double press when more devices are detected
+ * Add device OverTemp (>73 Celsius) detection to Energy Monitoring devices with temperature sensor powering off all outputs
+ * Add Tuya Dimmer 10 second heartbeat serial packet required by some Tuya dimmer secondary MCUs
+ * Add all temperature, humidity and pressure for global access
+ * Add validation check when loading settings from flash
+ * Add HX711 weight restore after controlled restart or after power restore just before executing command Sensor34 7 (#5367, #5786)
+ * Add GUI hexadecimal color options in my_user_config.h (#5586)
+ * Add alternative IRSend command syntax IRSend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream> (#5610)
+ * Add user configurable ADC0 to Module and Template configuration compatible with current FLAG options (#5671)
  * Add AriLux RF control GPIO option "ALux IrSel" (159) replacing "Led4i" (59) for full LED control (#5709)
  * Add LED GPIO option "LedLink" (157) and "LedLinki" (158) to select dedicated link status LED (#5709)
- * Add support for up to four LEDs related to four power outputs. Enabled when "LedLink(i)" is configured too (#5709)
- * Add extended LED power control using command LedPowerX where X is 1 to 4. Enabled when "LedLink(i)" is configured too (#5709)
- * Fix core 2.5.x ISR not in IRAM exception (#5837)
- * Add support for VL53L0x time of flight sensor. Might interfere with TSL2561 using same I2C address (#5845)
- * Add command AdcParam to control ADC0 Temperature and Light formula parameters
- * Change default PowerDelta from 80% to 0% on new installations (#5858, #5028, #4813, #4130, #4145, #3795, #3778, #3660, #3648)
- *
- * 6.5.0.11 20190517
- * Add command SetOption64 0/1 to switch between "-" or "_" as sensor index separator impacting DS18X20, DHT, BMP and SHT3X sensor names (#5689)
- * Add initial support for Scripts as replacement for Rules. Default disabled but can be enabled in my_user_config.h (#5689)
- * Add rule System#Save executed just before a planned restart
- * Add HX711 weight restore after controlled restart or after power restore just before executing command Sensor34 7 (#5367, #5786)
- * Remove define USE_EMULATION from my_user_config.h (#5826)
- * Add defines USE_EMULATION_WEMO and USE_EMULATION_HUE to my_user_config.h to control emulation features at compile time (#5826)
- * Add support for SPS30 Particle sensor thanks to Gerhard Mutz (#5830)
- *
- * 6.5.0.10 20190513
- * Enable ADC0 by default in my_user_config.h (#5671)
- * Add user configurable ADC0 to Module and Template configuration compatible with current FLAG options (#5671)
- * Add support for Shelly 1PM Template {"NAME":"Shelly 1PM","GPIO":[56,0,0,0,82,134,0,0,0,0,0,21,0],"FLAG":2,"BASE":18} (#5716)
- * Fix Sonoff Pow R2 / S31 invalid energy increments (#5789)
- * Add device OverTemp (>73 Celsius) detection to any Energy Monitoring device with temperature sensor powering off all outputs
- * Add rule support for single JSON value pair like {"SSerialReceived":"on"} by expanding it to {"SSerialReceived":{"Data":"on"}} allowing for trigger SSerialReceived#Data=on (#5638)
- *
- * 6.5.0.9 20190418
- * Add command SetOption63 0/1 to disable relay state feedback scan at restart (#5594, #5663)
- * Fix TasmotaSerial at 9600 bps solving DFPlayer comms (#5528)
- * Fix Shelly 2.5 overtemp
- * Set gamma correction as default behavior, ie "Ledtable 1"
- * Refactored management of lights, using classes and integers instead of floats.
- * Extend PWM resolution from 8 to 10 bits for low brightness lights
- * Allow all 5 PWM channels individually adressable with LEDs. (#5741)
- * Fixed inversion of WC/WW channels, back to RGBCW
- * Fixed the Unescape() function and the SendSerial3 behaviour
- *
- * 6.5.0.8 20190413
- * Add Tuya Dimmer 10 second heartbeat serial packet required by some Tuya dimmer secondary MCUs
- * Fix use of SerialDelimiter value 128 (#5634)
- * Fix lost syslog connection regression from 6.5.0.4
- * Add Shelly 2.5 Energy Monitoring (#5592)
- * Add all temperature, humidity and pressure for global access
- * Add Shelly 2.5 overtemp functionality
- * Fix Shelly 2.5 I2C address priority issue when VEML6070 code is present by disabling VEML6070 for Shelly 2.5 (#5592)
- * Support for color and colortone for Philips Hue emulation via Alexa (#5600 #4809)
- *
- * 6.5.0.7 20190410
- * Add command LedMask to assign which relay has access to power LED (#5602, #5612)
- *
- * 6.5.0.6 20190409
- * Add WebColor parameters to Settings making them persistent and remove the need for using a rule
- * Add alternative IRSend command syntax IRSend raw,<freq>,<header mark>,<header space>,<bit mark>,<zero space>,<one space>,<bit stream> (#5610)
- *
- * 6.5.0.5 20190406
- * Add compile time GUI hexadecimal only color options in my_user_config.h (#5586)
- * Fix template activation and/or module selection regression from 6.5.0.4 (#5598)
- * Add rule Http#Initialized
- * Add command WebColor to change non-persistent GUI colors on the fly
-   Use a rule like:
-   rule3 on http#initialized do webcolor {"webcolor":["#eeeeee","#181818","#4f4f4f","#000000","#dddddd","#008000","#222222","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999"]} endon
-   or
-   rule3 on http#initialized do webcolor {"webcolor":["#eee","#181818","#4f4f4f","#000","#ddd","#009800","#222"]} endon
-   to make color changes persistent)
- *
- * 6.5.0.4 20190402
- * Fix Configure Timer Web GUI (#5568)
- * Add validation check when loading settings from flash
- * Fixed Display Bug in KNX webmenu for Physical Address
- *
- * 6.5.0.3 20190328
- * Add command Sensor20 1..255 to change Nova Fitness SDS01 working period in minutes (#5452)
- * Change some defines to const
- * Change IRsend and receive for 64-bit support (#5523)
- * Change IRSend Panasonic protocol to 64-bit (#5523)
- *
- * 6.5.0.2 20190325
- * Change UDP initial message handling from string to char using static memory and add debug info (#5505)
- * Add optional support for Badger HR-E Water Meter (#5539)
- *
- * 6.5.0.1 20190319
- * Change Web GUI sensor data collection
+ * Add all 5 PWM channels individually adressable with LEDs. (#5741)
+ * Add reset of Energy values when connection to sensor is lost for over 4 seconds (#5874, #5881)
+ * Add checkbox to GUI password field enabling visibility during password entry only (#5934)
  *
  * 6.5.0 20190319
  * Remove commands SetOption14 and SetOption63 as it has been superseded by command Interlock
@@ -1790,4 +1749,4 @@
  * 1.0.5  20160310
  * Initial public release
  * Show debug info by selecting option from IDE Tools Debug port: Serial
- */
+\*********************************************************************************************/
