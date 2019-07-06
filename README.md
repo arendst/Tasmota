@@ -61,7 +61,7 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 4. Migrate to **Sonoff-Tasmota 6.x**
 
 ## Support Information
-<img src="https://github.com/arendst/arendst.github.io/blob/development/media/sonoffbasic.jpg" width="250" align="right" />
+<img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" />
 
 For a database of supported devices see [Tasmota Device Templates Repository](https://blakadder.github.io/templates)
 
