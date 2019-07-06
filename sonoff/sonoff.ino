@@ -170,7 +170,7 @@ bool backlog_mutex = false;                 // Command backlog pending
 bool interlock_mutex = false;               // Interlock power command pending
 bool stop_flash_rotate = false;             // Allow flash configuration rotation
 bool blinkstate = false;                    // LED state
-bool latest_uptime_flag = true;             // Signal latest uptime
+//bool latest_uptime_flag = true;             // Signal latest uptime
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
 bool dht_flg = false;                       // DHT configured
 bool i2c_flg = false;                       // I2C configured
@@ -1801,7 +1801,7 @@ void PublishStatus(uint8_t payload)
 {
   uint8_t option = STAT;
   char stemp[MAX_FRIENDLYNAMES * (sizeof(Settings.friendlyname[0]) +MAX_FRIENDLYNAMES)];
-  char stemp2[64];
+  char stemp2[100];
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
   if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1]) && (!payload)) { option++; }  // TELE

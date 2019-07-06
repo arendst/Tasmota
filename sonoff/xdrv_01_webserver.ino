@@ -800,10 +800,10 @@ void WSContentSendStyle(void)
 void WSContentButton(uint8_t title_index)
 {
   char action[4];
-  char title[64];
+  char title[100];  // Large to accomodate UTF-16 as used by Russian
 
   if (title_index <= BUTTON_RESET_CONFIGURATION) {
-    char confirm[64];
+    char confirm[100];
     WSContentSend_P(PSTR("<p><form action='%s' method='get' onsubmit='return confirm(\"%s\");'><button name='%s' class='button bred'>%s</button></form></p>"),
       GetTextIndexed(action, sizeof(action), title_index, kButtonAction),
       GetTextIndexed(confirm, sizeof(confirm), title_index, kButtonConfirm),
