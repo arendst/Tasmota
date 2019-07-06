@@ -302,8 +302,8 @@
 #define D_SINGLE_DEVICE "одиночное"
 #define D_MULTI_DEVICE "мульти"
 
-#define D_CONFIGURE_TEMPLATE "Configure Template"
-#define D_TEMPLATE_PARAMETERS "Template parameters"
+#define D_CONFIGURE_TEMPLATE "Конфигурация Template"
+#define D_TEMPLATE_PARAMETERS "Параметры Template"
 #define D_TEMPLATE_NAME "Name"
 #define D_BASE_TYPE "Based on"
 #define D_TEMPLATE_FLAGS "Options"
@@ -386,7 +386,7 @@
 #define D_3_RESPONSE_PACKETS_SENT "3 ответных пакета получено"
 
 // xdrv_07_domoticz.ino
-#define D_DOMOTICZ_PARAMETERS "Domoticz parameters"
+#define D_DOMOTICZ_PARAMETERS "Параметры Domoticz"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "Switch idx"
@@ -403,8 +403,8 @@
 #define D_DOMOTICZ_UPDATE_TIMER "Update timer"
 
 // xdrv_09_timers.ino
-#define D_CONFIGURE_TIMER "Configure Timer"
-#define D_TIMER_PARAMETERS "Timer parameters"
+#define D_CONFIGURE_TIMER "Конфигурация Timer"
+#define D_TIMER_PARAMETERS "Параметры Timer"
 #define D_TIMER_ENABLE "Enable Timers"
 #define D_TIMER_ARM "Arm"
 #define D_TIMER_TIME "Time"
@@ -414,8 +414,8 @@
 #define D_TIMER_ACTION "Action"
 
 // xdrv_10_knx.ino
-#define D_CONFIGURE_KNX "Configure KNX"
-#define D_KNX_PARAMETERS "KNX Parameters"
+#define D_CONFIGURE_KNX "Конфигурация KNX"
+#define D_KNX_PARAMETERS "Параметры KNX"
 #define D_KNX_GENERAL_CONFIG "General"
 #define D_KNX_PHYSICAL_ADDRESS "Physical Address"
 #define D_KNX_PHYSICAL_ADDRESS_NOTE "( Must be unique on the KNX network )"
