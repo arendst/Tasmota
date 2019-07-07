@@ -1,4 +1,7 @@
 /*********************************************************************************************\
+ * 6.6.0.1 20190707
+ * Add blend RGB leds with White leds for better whites #5895 #5704
+ *
  * 6.6.0 20190707
  * Remove support of TLS on core 2.3.0 and extent support on core 2.4.2 and up
  * Remove MQTT uptime message every hour
