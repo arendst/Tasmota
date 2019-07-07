@@ -1,4 +1,5 @@
 /*********************************************************************************************\
+ * Add automatic setting of clock display from network time for AZ7798
  * 6.6.0.1 20190707
  * Add blend RGB leds with White leds for better whites #5895 #5704
  *
