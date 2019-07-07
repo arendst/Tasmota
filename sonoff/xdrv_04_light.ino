@@ -101,23 +101,27 @@
  *
  * 3.  In LightAnimate(), final PWM values are computed at next tick.
  *  .a If color did not change since last tick - ignore.
- *  .b Apply color balance correction from rgbwwTable[]
- *  .c Extend resolution from 8 bits to 10 bits, which makes a significant
+ *  .b Extend resolution from 8 bits to 10 bits, which makes a significant
  *     difference when applying gamma correction at low brightness.
- *  .d Apply Gamma Correction if LedTable==1 (by default).
+ *  .c Apply Gamma Correction if LedTable==1 (by default).
  *     Gamma Correction uses an adaptative resolution table from 11 to 8 bits.
- *  .e For Warm/Cold-white channels, Gamma correction is calculated in combined mode.
+ *  .d For Warm/Cold-white channels, Gamma correction is calculated in combined mode.
  *     Ie. total white brightness (C+W) is used for Gamma correction and gives
  *     the overall light power required. Then this light power is split among
  *     Wamr/Cold channels.
- *  .f Gamma correction is still applied to 8 bits channels for compatibility
+ *  .e Gamma correction is still applied to 8 bits channels for compatibility
  *     with other non-PMW modules.
- *  .g Avoid PMW values between 1008 and 1022, issue #1146
- *  .h Scale ranges from 10 bits to 0..PWMRange (by default 1023) so no change
+ *  .f Apply color balance correction from rgbwwTable[].
+ *     Note: correction is done after Gamma correction, it is meant
+ *     to adjust leds with different power
+ *  .g If rgbwwTable[4] is zero, blend RGB with White and adjust the level of
+ *     White channel according to rgbwwTable[3]
+ *  .h Avoid PMW values between 1008 and 1022, issue #1146
+ *  .i Scale ranges from 10 bits to 0..PWMRange (by default 1023) so no change
  *     by default.
- *  .i Apply port remapping from Option37
- *  .j Invert PWM value if port is of type PMWxi instead of PMWx
- *  .k Apply PWM value with analogWrite() - if pin is configured
+ *  .j Apply port remapping from Option37
+ *  .k Invert PWM value if port is of type PMWxi instead of PMWx
+ *  .l Apply PWM value with analogWrite() - if pin is configured
  *
 \*********************************************************************************************/
 
@@ -242,6 +246,10 @@ uint16_t light_wakeup_counter = 0;
 uint8_t light_fixed_color_index = 1;
 
 unsigned long strip_timer_counter = 0;    // Bars and Gradient
+
+static uint32_t min3(uint32_t a, uint32_t b, uint32_t c) {
+  return (a < b && a < c) ? a : (b < c) ? b : c;
+}
 
 //
 // changeUIntScale
@@ -1791,19 +1799,14 @@ void LightAnimate(void)
       uint16_t cur_col_10bits[LST_MAX];   // 10 bits version of cur_col for PWM
       light_update = 0;
 
-      // first adjust all colors to RgbwwTable if needed
+      // first set 8 and 10 bits channels
       for (uint32_t i = 0; i < LST_MAX; i++) {
-        light_last_color[i] = light_new_color[i];
-        // adjust from 0.255 to 0..Settings.rgbwwTable[i] -- RgbwwTable command
-        // protect against overflow of rgbwwTable which is of size 5
-        cur_col[i] = changeUIntScale(light_last_color[i], 0, 255, 0, (i<5)? Settings.rgbwwTable[i] : 255);
+        cur_col[i] = light_last_color[i] = light_new_color[i];
         // Extend from 8 to 10 bits if no correction (in case no gamma correction is required)
         cur_col_10bits[i] = changeUIntScale(cur_col[i], 0, 255, 0, 1023);
       }
 
-
       if (PHILIPS == my_module_type) {
-        // TODO
         // Xiaomi Philips bulbs follow a different scheme:
         // channel 0=intensity, channel2=temperature
         uint16_t pxBri = cur_col[0] + cur_col[1];
@@ -1815,14 +1818,10 @@ void LightAnimate(void)
         } else {
           cur_col_10bits[0] = changeUIntScale(pxBri, 0, 255, 0, 1023);  // no gamma, extend to 10 bits
         }
-      } else {
+      } else {  // PHILIPS != my_module_type
         // Apply gamma correction for 8 and 10 bits resolutions, if needed
         if (Settings.light_correction) {
-          // first apply gamma correction to all channels independently, from 8 bits value
-          for (uint32_t i = 0; i < LST_MAX; i++) {
-            cur_col_10bits[i] = ledGamma(cur_col[i], 10);
-          }
-          // then apply a different correction for CW white channels
+          // First apply combined correction to the overall white power
           if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
             uint8_t w_idx[2] = {0, 1};        // if LST_COLDWARM, channels 0 and 1
             if (LST_RGBWC == light_subtype) { // if LST_RGBWC, channels 3 and 4
@@ -1834,14 +1833,57 @@ void LightAnimate(void)
             if (white_bri <= 255) {
               // we calculate the gamma corrected sum of CW + WW
               uint16_t white_bri_10bits = ledGamma(white_bri, 10);
+              uint8_t white_bri_8bits = ledGamma(white_bri);
               // then we split the total energy among the cold and warm leds
               cur_col_10bits[w_idx[0]] = changeUIntScale(cur_col[w_idx[0]], 0, white_bri, 0, white_bri_10bits);
               cur_col_10bits[w_idx[1]] = changeUIntScale(cur_col[w_idx[1]], 0, white_bri, 0, white_bri_10bits);
+              cur_col[w_idx[0]] = changeUIntScale(cur_col[w_idx[0]], 0, white_bri, 0, white_bri_8bits);
+              cur_col[w_idx[1]] = changeUIntScale(cur_col[w_idx[1]], 0, white_bri, 0, white_bri_8bits);
+            } else {
+              cur_col_10bits[w_idx[0]] = ledGamma(cur_col[w_idx[0]], 10);
+              cur_col_10bits[w_idx[1]] = ledGamma(cur_col[w_idx[1]], 10);
+              cur_col[w_idx[0]] = ledGamma(cur_col[w_idx[0]]);
+              cur_col[w_idx[1]] = ledGamma(cur_col[w_idx[1]]);
             }
           }
-          // still keep an 8 bits gamma corrected version
-          for (uint32_t i = 0; i < LST_MAX; i++) {
-            cur_col[i] = ledGamma(cur_col[i]);
+          // then apply gamma correction to RGB channels
+          if (LST_RGB <= light_subtype) {
+            for (uint32_t i = 0; i < 3; i++) {
+              cur_col_10bits[i] = ledGamma(cur_col[i], 10);
+              cur_col[i] = ledGamma(cur_col[i]);
+            }
+          }
+          // If RGBW or Single channel, also adjust White channel
+          if (LST_COLDWARM != light_subtype) {
+            cur_col_10bits[3] = ledGamma(cur_col[3], 10);
+            cur_col[3] = ledGamma(cur_col[3]);
+          }
+        }
+
+        // Now see if we need to mix RGB and True White
+        // Valid only for LST_RGBW, LST_RGBWC, rgbwwTable[4] is zero, and white is zero (see doc)
+        if ((LST_RGBW <= light_subtype) && (0 == Settings.rgbwwTable[4]) && (0 == cur_col[3]+cur_col[4])) {
+          uint32_t min_rgb_10 = min3(cur_col_10bits[0], cur_col_10bits[1], cur_col_10bits[2]);
+          uint8_t min_rgb = min3(cur_col[0], cur_col[1], cur_col[2]);
+          for (uint32_t i=0; i<3; i++) {
+            // substract white and adjust according to rgbwwTable
+            cur_col_10bits[i] = changeUIntScale(cur_col_10bits[i] - min_rgb_10, 0, 255, 0, Settings.rgbwwTable[i]);
+            cur_col[i] = changeUIntScale(cur_col[i] - min_rgb, 0, 255, 0, Settings.rgbwwTable[i]);
+          }
+          // compute the adjusted white levels for 10 and 8 bits
+          uint32_t white_10 = changeUIntScale(min_rgb_10, 0, 255, 0, Settings.rgbwwTable[3]);  // set white power down corrected with rgbwwTable[3]
+          uint32_t white = changeUIntScale(min_rgb, 0, 255, 0, Settings.rgbwwTable[3]);  // set white power down corrected with rgbwwTable[3]
+          if (LST_RGBW == light_subtype) {
+            // we simply set the white channel
+            cur_col_10bits[3] = white_10;
+            cur_col[3] = white;
+          } else {  // LST_RGBWC
+            // we distribute white between cold and warm according to CT value
+            uint32_t ct = light_state.getCT();
+            cur_col_10bits[4] = changeUIntScale(ct, 153, 500, 0, white_10);
+            cur_col_10bits[3] = white_10 - cur_col_10bits[4];
+            cur_col[4] = changeUIntScale(ct, 153, 500, 0, white);
+            cur_col[3] = white - cur_col[4];
           }
         }
       }
@@ -1873,7 +1915,7 @@ void LightAnimate(void)
       if (light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
         for (uint32_t i = 0; i < light_subtype; i++) {
           if (pin[GPIO_PWM1 +i] < 99) {
-            //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
+            //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col_10bits[i], i+1, cur_col[i]);
             analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
           }
         }
@@ -1906,6 +1948,7 @@ void LightAnimate(void)
       }
 #endif  // ifdef USE_SM16716
       else if (light_type > LT_WS2812) {
+        //AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Cur_Col %d,%d,%d,%d,%d"), cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
         LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
       }
       XdrvMailbox.data = tmp_data;
