@@ -122,6 +122,9 @@
 #ifndef IR_RCV_MIN_UNKNOWN_SIZE
 #define IR_RCV_MIN_UNKNOWN_SIZE     6          // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
 #endif
+#ifndef ENERGY_OVERTEMP
+#define ENERGY_OVERTEMP             90         // Overtemp in Celsius
+#endif
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -824,6 +827,7 @@ void SettingsDefaultSet2(void)
 //  Settings.energy_max_energy_start = 0;                           // MaxEnergyStart
 //  Settings.energy_kWhtotal = 0;
   RtcSettings.energy_kWhtotal = 0;
+  Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
 
   // IRRemote
   Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
