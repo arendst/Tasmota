@@ -1186,6 +1186,9 @@ void SettingsDelta(void)
     if (Settings.version < 0x0605000D) {
       Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
     }
+    if (Settings.version < 0x06060001) {
+      Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

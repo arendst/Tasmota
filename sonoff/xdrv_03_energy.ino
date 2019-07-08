@@ -27,7 +27,6 @@
 
 #define ENERGY_NONE          0
 
-#define ENERGY_OVERTEMP      73.0     // Industry standard lowest overtemp in Celsius
 #define ENERGY_WATCHDOG      4        // Allow up to 4 seconds before deciding no valid data present
 
 #define FEATURE_POWER_LIMIT  true
@@ -325,7 +324,7 @@ void EnergyMqttShow(void)
 void EnergyOverTempCheck()
 {
   if (global_update) {
-    if (power && (global_temperature != 9999) && (global_temperature > ENERGY_OVERTEMP)) {  // Device overtemp, turn off relays
+    if (power && (global_temperature != 9999) && (global_temperature > Settings.param[P_OVER_TEMP])) {  // Device overtemp, turn off relays
       SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
     }
   }

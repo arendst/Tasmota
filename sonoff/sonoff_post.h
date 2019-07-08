@@ -46,6 +46,10 @@ void KNX_CB_Action(message_t const &msg, void *arg);
  * Default global defines
 \*********************************************************************************************/
 
+#ifndef ENERGY_OVERTEMP
+#define ENERGY_OVERTEMP      90             // Overtemp in Celsius
+#endif
+
 #ifdef USE_EMULATION_HUE
 #define USE_EMULATION
 #endif
