@@ -282,7 +282,7 @@ bool TuyaModuleSelected(void)
 
 void TuyaInit(void)
 {
-  devices_present = Settings.param[6] == 0 ? 1 : Settings.param[6];
+  devices_present += Settings.param[P_TUYA_RELAYS];  // SetOption41 - Add virtual relays if present
   if (!Settings.param[P_TUYA_DIMMER_ID]) {
     Settings.param[P_TUYA_DIMMER_ID] = TUYA_DIMMER_ID;
   }

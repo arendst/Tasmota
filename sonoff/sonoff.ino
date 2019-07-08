@@ -850,18 +850,26 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
               param_low = 1;
               param_high = 250;
               break;
+            case P_TUYA_RELAYS:
+              param_high = 8;
+              break;
           }
           if ((payload >= param_low) && (payload <= param_high)) {
             Settings.param[pindex] = payload;
             switch (pindex) {
 #ifdef USE_LIGHT
-             case P_RGB_REMAP:
+              case P_RGB_REMAP:
                 LightUpdateColorMapping();
                 break;
 #endif
 #if defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)
               case P_IR_UNKNOW_THRESHOLD:
                 IrReceiveUpdateThreshold();
+                break;
+#endif
+#ifdef USE_TUYA_DIMMER
+              case P_TUYA_RELAYS:
+                restart_flag = 2;  // Need a restart to update GUI
                 break;
 #endif
             }
