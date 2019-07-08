@@ -1688,7 +1688,6 @@ void LightRandomColor(void)
     light_wheel = random(255);
     LightWheel(light_wheel);
     memcpy(light_current_color, light_entry_color, sizeof(light_current_color));
-    light_controller.changeChannels(light_current_color);
   }
   LightFade();
 }
