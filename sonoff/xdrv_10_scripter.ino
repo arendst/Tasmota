@@ -1613,7 +1613,7 @@ extern "C" {
 }
 uint16_t GetStack(void) {
   register uint32_t *sp asm("a1");
-  return (4 * (sp - g_pcont.stack));
+  return (4 * (sp - g_cont.stack));
 }
 
 #else
@@ -1640,7 +1640,7 @@ char *GetStringResult(char *lp,uint8_t lastop,char *cp,JsonObject *jo) {
           strlcpy(str,str1,sizeof(str));
           break;
         case OPER_PLS:
-          strlcat(str,str1,sizeof(str));
+          strncat(str,str1,sizeof(str));
           break;
     }
     slp=lp;
@@ -1704,7 +1704,7 @@ struct T_INDEX ind;
                 fvar/=fvar1;
                 break;
             case OPER_PERC:
-                fvar=fmod(fvar,fvar1);
+                fvar=fmodf(fvar,fvar1);
                 break;
             case OPER_XOR:
                 fvar=(uint32_t)fvar^(uint32_t)fvar1;
@@ -2289,7 +2289,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                         *dfvar/=fvar;
                         break;
                     case OPER_PERCEQU:
-                        *dfvar=fmod(*dfvar,fvar);
+                        *dfvar=fmodf(*dfvar,fvar);
                         break;
                     case OPER_ANDEQU:
                         *dfvar=(uint32_t)*dfvar&(uint32_t)fvar;
@@ -2346,7 +2346,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                   if (lastop==OPER_EQU) {
                     strlcpy(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
                   } else if (lastop==OPER_PLSEQU) {
-                    strlcat(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+                    strncat(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
                   }
                 }
               }
