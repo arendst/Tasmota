@@ -52,8 +52,9 @@ int DomoticzBatteryQuality(void)
   // Battery 100%: ESP 3.6V (maximum operating voltage is 3.6)
   // Battery 101% to 200%: ESP over 3.6V (means over maximum operating voltage)
 
-  int quality = 0;	// Voltage range from 2,6V > 0%  to 3,6V > 100%
+  int quality = 100;	// Voltage range from 2,6V > 0%  to 3,6V > 100%
 
+#ifdef USE_ADC_VCC
   uint16_t voltage = ESP.getVcc();
   if (voltage <= 2600) {
     quality = 0;
@@ -62,6 +63,7 @@ int DomoticzBatteryQuality(void)
   } else {
     quality = (voltage - 2600) / 10;
   }
+#endif
   return quality;
 }
 
