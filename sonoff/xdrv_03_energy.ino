@@ -679,7 +679,7 @@ void EnergyShow(bool json)
 #ifdef USE_DOMOTICZ
     if (show_energy_period) {  // Only send if telemetry
       dtostrfd(energy_total * 1000, 1, energy_total_chr);
-      DomoticzSensorPowerEnergy((int)energy_active_power, energy_total_chr);  // PowerUsage, EnergyToday
+      DomoticzSensorPowerEnergy((int)energy_total_chr);  // PowerUsage, EnergyToday
       if (energy_voltage_available) {
         DomoticzSensor(DZ_VOLTAGE, voltage_chr);  // Voltage
       }
