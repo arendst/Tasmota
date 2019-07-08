@@ -118,8 +118,10 @@ unsigned long ir_lasttime = 0;
 
 void IrReceiveUpdateThreshold()
 {
-  if (Settings.param[P_IR_UNKNOW_THRESHOLD] < 6) { Settings.param[P_IR_UNKNOW_THRESHOLD] = 6; }
-  irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
+  if (irrecv != nullptr) {
+    if (Settings.param[P_IR_UNKNOW_THRESHOLD] < 6) { Settings.param[P_IR_UNKNOW_THRESHOLD] = 6; }
+    irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
+  }
 }
 
 void IrReceiveInit(void)
