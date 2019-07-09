@@ -35,9 +35,6 @@ no math hierarchy  (costs ram and execution time, better group with brackets, an
 (will probably make math hierarchy an ifdefed option)
 keywords if then else endif, or, and are better readable for beginners (others may use {})
 
-changelog after merging to Tasmota
-1. draw color picture from sd card
-2. upload files to sc card
 
 
 \*********************************************************************************************/
@@ -65,6 +62,17 @@ enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
 #include <SD.h>
 #define FAT_SCRIPT_SIZE 4096
 #define FAT_SCRIPT_NAME "script.txt"
+#if USE_LONG_FILE_NAMES==1
+#warning ("FATFS long filenames not supported");
+#endif
+#if USE_STANDARD_SPI_LIBRARY==0
+#warning ("FATFS standard spi should be used");
+#endif
+#endif
+
+#ifdef USE_TOUCH_BUTTONS
+#include <renderer.h>
+extern Adafruit_GFX_Button *buttons[MAXBUTTONS];
 #endif
 
 typedef union {
@@ -146,7 +154,6 @@ uint8_t tasm_cmd_activ=0;
 
 uint32_t script_lastmillis;
 
-
 char *GetNumericResult(char *lp,uint8_t lastop,float *fp,JsonObject *jo);
 char *GetStringResult(char *lp,uint8_t lastop,char *cp,JsonObject *jo);
 char *ForceStringVar(char *lp,char *dstr);
@@ -182,7 +189,7 @@ void ScriptEverySecond(void) {
 }
 
 void RulesTeleperiod(void) {
-  if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">T",2, mqtt_data);
+  if (bitRead(Settings.rule_enabled, 0) && mqtt_data[0]) Run_Scripter(">T",2, mqtt_data);
 }
 
 //#define USE_24C256
@@ -1403,6 +1410,22 @@ chknext:
           if (sp) strlcpy(sp,Settings.mqtt_topic,glob_script_mem.max_ssize);
           goto strexit;
         }
+#ifdef USE_TOUCH_BUTTONS
+        if (!strncmp(vname,"tbut[",5)) {
+          GetNumericResult(vname+5,OPER_EQU,&fvar,0);
+          uint8_t index=fvar;
+          if (index<1 || index>MAXBUTTONS) index=1;
+          index--;
+          if (buttons[index]) {
+            fvar=buttons[index]->vpower&0x80;
+          } else {
+            fvar=-1;
+          }
+          len+=1;
+          goto exit;
+        }
+
+#endif
         break;
       case 'u':
         if (!strncmp(vname,"uptime",6)) {
@@ -1433,6 +1456,7 @@ chknext:
           goto notfound;
         }
         break;
+
       case 'w':
         if (!strncmp(vname,"wday",4)) {
           fvar=RtcTime.day_of_week;
@@ -1717,6 +1741,7 @@ struct T_INDEX ind;
                 break;
             default:
                 break;
+
         }
         slp=lp;
         lp=getop(lp,&operand);
@@ -2106,7 +2131,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                 char *cmdmem=(char*)malloc(SCRIPT_CMDMEM);
                 if (cmdmem) {
                   char *cmd=cmdmem;
-                  short count;
+                  uint16_t count;
                   for (count=0; count<SCRIPT_CMDMEM/2-1; count++) {
                     //if (*lp=='\r' || *lp=='\n' || *lp=='}') {
                     if (!*lp || *lp=='\r' || *lp=='\n') {
@@ -2526,6 +2551,10 @@ const char HTTP_FORM_SCRIPT1b[] PROGMEM =
     "});"
     "</script>";
 
+const char HTTP_SCRIPT_FORM_END[] PROGMEM =
+      "<br/>"
+      "<button name='save' type='submit' formmethod='post' formenctype='multipart/form-data' formaction='/ta' class='button bgrn'>" D_SAVE "</button>"
+      "</form></fieldset>";
 
 #ifdef USE_SCRIPT_FATFS
 const char HTTP_FORM_SCRIPT1c[] PROGMEM =
@@ -2573,12 +2602,28 @@ const char HTTP_FORM_SDC_HREF[] PROGMEM =
 
 #ifdef USE_SCRIPT_FATFS
 
+#if USE_LONG_FILE_NAMES>0
+#define REJCMPL 6
+#else
+#define REJCMPL 8
+#endif
+
 uint8_t reject(char *name) {
+
   if (*name=='_') return 1;
-  if (!strncmp(name,"SPOTLI~1",8)) return 1;
-  if (!strncmp(name,"TRASHE~1",8)) return 1;
-  if (!strncmp(name,"FSEVEN~1",8)) return 1;
-  if (!strncmp(name,"SYSTEM~1",8)) return 1;
+  if (*name=='.') return 1;
+
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
+  if (!strncasecmp(name,"SPOTLI~1",REJCMPL)) return 1;
+  if (!strncasecmp(name,"TRASHE~1",REJCMPL)) return 1;
+  if (!strncasecmp(name,"FSEVEN~1",REJCMPL)) return 1;
+  if (!strncasecmp(name,"SYSTEM~1",REJCMPL)) return 1;
+#else
+  if (!strcasecmp(name,"SPOTLI~1")) return 1;
+  if (!strcasecmp(name,"TRASHE~1")) return 1;
+  if (!strcasecmp(name,"FSEVEN~1")) return 1;
+  if (!strcasecmp(name,"SYSTEM~1")) return 1;
+#endif
   return 0;
 }
 
@@ -2687,6 +2732,8 @@ void ScriptFileUploadSuccess(void) {
   WSContentStop();
 }
 
+
+
 void script_upload(void) {
 
   //AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: file upload"));
@@ -2773,17 +2820,21 @@ uint8_t DownloadFile(char *file) {
 
 #endif
 
-void HandleScriptConfiguration(void)
-{
+
+void HandleScriptTextareaConfiguration(void) {
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  if (WebServer->hasArg("save")) {
+    ScriptSaveSettings();
+    HandleConfiguration();
+    return;
+  }
+}
+
+void HandleScriptConfiguration(void) {
     if (!HttpCheckPriviledgedAccess()) { return; }
 
     AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_SCRIPT);
-
-    if (WebServer->hasArg("save")) {
-      ScriptSaveSettings();
-      HandleConfiguration();
-      return;
-    }
 
 #ifdef USE_SCRIPT_FATFS
     if (WebServer->hasArg("d1")) {
@@ -2816,21 +2867,11 @@ void HandleScriptConfiguration(void)
     }
 #endif
 
-    WSContentSend_P(HTTP_FORM_END);
+    WSContentSend_P(HTTP_SCRIPT_FORM_END);
     WSContentSpaceButton(BUTTON_CONFIGURATION);
     WSContentStop();
   }
 
-
-void strrepl_inplace(char *str, const char *a, const char *b) {
-  for (char *cursor=str; (cursor=strstr(cursor,a)) != NULL;) {
-    memmove(cursor+strlen(b),cursor+strlen(a),strlen(cursor)-strlen(a)+1);
-    for (uint32_t i=0; b[i]!='\0'; i++) {
-      cursor[i] = b[i];
-    }
-    cursor += strlen(b);
-  }
-}
 
 void ScriptSaveSettings(void) {
 
@@ -2840,16 +2881,14 @@ void ScriptSaveSettings(void) {
     bitWrite(Settings.rule_enabled,0,0);
   }
 
+
   String str = WebServer->arg("t1");
 
   if (*str.c_str()) {
-#if 1
-    strrepl_inplace((char*)str.c_str(),"\r\n","\n");
-    strrepl_inplace((char*)str.c_str(),"\r","\n");
-#else
+
     str.replace("\r\n","\n");
     str.replace("\r","\n");
-#endif
+
     strlcpy(glob_script_mem.script_ram,str.c_str(), glob_script_mem.script_size);
 
 #ifdef USE_24C256
@@ -2921,15 +2960,15 @@ bool ScriptCommand(void) {
     } else {
       if ('>' == XdrvMailbox.data[0]) {
         // execute script
-        for (uint8_t count=0; count<XdrvMailbox.data_len; count++) {
-          if (XdrvMailbox.data[count]==';') XdrvMailbox.data[count]='\n';
+        snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\"}"),command,XdrvMailbox.data);
+        if (bitRead(Settings.rule_enabled, 0)) {
+          for (uint8_t count=0; count<XdrvMailbox.data_len; count++) {
+            if (XdrvMailbox.data[count]==';') XdrvMailbox.data[count]='\n';
+          }
+          execute_script(XdrvMailbox.data);
         }
-        if (bitRead(Settings.rule_enabled, 0)) execute_script(XdrvMailbox.data);
-        /*
-        for (uint8_t count=0; count<XdrvMailbox.data_len; count++) {
-          if (XdrvMailbox.data[count]=='\n') XdrvMailbox.data[count]=';';
-        }*/
       }
+      return serviced;
     }
     snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"Free\":%d}"),command, GetStateText(bitRead(Settings.rule_enabled,0)),glob_script_mem.script_size-strlen(glob_script_mem.script_ram));
   } else serviced = false;
@@ -2939,12 +2978,14 @@ bool ScriptCommand(void) {
 
 
 #ifdef USE_SCRIPT_FATFS
+#ifdef FAT_DATE
 void dateTime(uint16_t* date, uint16_t* time) {
   // return date using FAT_DATE macro to format fields
   *date = FAT_DATE(RtcTime.year,RtcTime.month, RtcTime.day_of_month);
   // return time using FAT_TIME macro to format fields
   *time = FAT_TIME(RtcTime.hour,RtcTime.minute,RtcTime.second);
 }
+#endif
 #endif
 
 /*********************************************************************************************\
@@ -3006,7 +3047,11 @@ bool Xdrv10(uint8_t function)
         glob_script_mem.script_pram_size=MAX_SCRIPT_SIZE;
 
         glob_script_mem.flags=1;
+
+#ifdef FAT_DATE
+        // for unkonwn reasons is not defined in 2.52
         SdFile::dateTimeCallback(dateTime);
+#endif
 
       } else {
         glob_script_mem.script_sd_found=0;
@@ -3036,7 +3081,7 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_SET_POWER:
     case FUNC_RULES_PROCESS:
-      if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E",2,mqtt_data);
+      if (bitRead(Settings.rule_enabled, 0) && mqtt_data[0]) Run_Scripter(">E",2,mqtt_data);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_BUTTON:
@@ -3044,6 +3089,7 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_WEB_ADD_HANDLER:
       WebServer->on("/" WEB_HANDLE_SCRIPT, HandleScriptConfiguration);
+      WebServer->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
 #ifdef USE_SCRIPT_FATFS
       WebServer->on("/u3", HTTP_POST,[]() { WebServer->sendHeader("Location","/u3");WebServer->send(303);},script_upload);
       WebServer->on("/u3", HTTP_GET,ScriptFileUploadSuccess);

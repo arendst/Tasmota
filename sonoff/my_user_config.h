@@ -297,7 +297,7 @@
 // Select none or only one of the below defines
 #define USE_RULES                                // Add support for rules (+8k code)
 //#define USE_SCRIPT                               // Add support for script (+17k code)
-//  #define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support (only for cores 2.3.0, 2.4.2 and 2.5.0)
+  #define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support (only for cores 2.3.0, 2.4.2 and 2.5.0)
 
 //  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
