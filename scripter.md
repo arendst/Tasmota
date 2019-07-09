@@ -190,7 +190,6 @@ specifies a for next loop, (loop count must not be less then 1)
 specifies a switch case selector  
 
 **sd card support**  
-(currently only works with 2.42 ???)
 enable by CARD_CS = gpio pin of card chip select (+ 10k flash)  
 \#define USE_SCRIPT_FATFS CARD_CS   
 sd card uses standard hardware spi gpios: mosi,miso,sclk  
