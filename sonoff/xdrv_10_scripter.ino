@@ -2603,8 +2603,10 @@ const char HTTP_FORM_SDC_HREF[] PROGMEM =
 #ifdef USE_SCRIPT_FATFS
 
 #if USE_LONG_FILE_NAMES>0
+#undef REJCMPL
 #define REJCMPL 6
 #else
+#undef REJCMPL
 #define REJCMPL 8
 #endif
 
