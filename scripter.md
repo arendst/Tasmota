@@ -76,6 +76,7 @@ special variables (read only):
 **gtopic** = mqtt group topic  
 **prefixn** = prefix n = 1-3    
 **pwr[x]** = tasmota power state  (x = 1-N)  
+**tbut[x]** = touch screen button state  (x = 1-N)  
 **sw[x]** = tasmota switch state  (x = 1-N)  
 >**pin[x]** = gpio pin level (x = 0-16)  
 **pn[x]** = pin number for sensor code x, 99 if none  
@@ -189,6 +190,7 @@ specifies a for next loop, (loop count must not be less then 1)
 specifies a switch case selector  
 
 **sd card support**  
+(currently only works with 2.42 ???)
 enable by CARD_CS = gpio pin of card chip select (+ 10k flash)  
 \#define USE_SCRIPT_FATFS CARD_CS   
 sd card uses standard hardware spi gpios: mosi,miso,sclk  
@@ -366,7 +368,7 @@ endif
 =\>WebSend %url% dimmer %dimmer%  
 
 ; show on display  
-dprec0  
+dp0  
 =\>displaytext [c1l1f1s2p20] dimmer=%dimmer%  
 
 =\>print %upsecs% %uptime% %time% %sunrise% %sunset% %tstamp%  
@@ -613,7 +615,7 @@ punit=PressureUnit
 // update display every teleperiod time  
 if upsecs%tper==0  
 then  
-dprec2  
+dp2  
 =>%DT% [f1p7x0y5]%temp% %tunit%  
 =>%DT% [p5x70y5]%hum% %%[x250y5t]   
 =>%DT% [p11x140y5]%press% %punit%  
@@ -621,7 +623,7 @@ dprec2
 =>%DT% [p10x160y25]eCO2: %eco2% ppm  
 =>%DT% [p10c26l5]ahum: %ahum% g^m3  
 
-dprec0  
+dp0  
 =>%DT% [p25c1l5]WR 1 (Dach)  : %wr1% W  
 =>%DT% [p25c1l6]WR 2 (Garage): %-wr3% W  
 =>%DT% [p25c1l7]WR 3 (Garten): %-wr2% W  
@@ -697,14 +699,14 @@ endif
 ; update graph every teleperiod  
 if upsecs%tper==0  
 then  
-dprec2  
+dp2  
 =>%DT% [f1Ci3x40y260w30Ci1]  
 =>%DT% [Ci7x120y220t]  
 =>%DT% [Ci7x180y220T]  
 =>%DT% [Ci7p8x120y240]%temp% %tunit%   
 =>%DT% [Ci7x120y260]%press% %punit%  
 =>%DT% [Ci7x120y280]%dist% mm  
-dprec0  
+dp0  
 =>%DT% [g0:%zwz%g1:%wr1%g2:%-wr2%g3:%-wr3%]  
 if zwz>0  
 then
