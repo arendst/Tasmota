@@ -16,12 +16,14 @@ Keep 7-bit fonts around as an option in that case, more compact.
 
 See notes at end for glyph nomenclature & other tidbits.
 */
+#ifndef ARDUINO
 
 #include <stdio.h>
 #include <ctype.h>
 #include <stdint.h>
 #include <ft2build.h>
 #include FT_GLYPH_H
+#include FT_TRUETYPE_DRIVER_H
 #include "../gfxfont.h" // Adafruit_GFX font structures
 
 #define DPI 141 // Approximate res. of Adafruit 2.8" TFT
@@ -116,6 +118,16 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "FreeType init error: %d", err);
 		return err;
 	}
+	
+	// Use TrueType engine version 35, without subpixel rendering.
+	// This improves clarity of fonts since this library does not
+	// support rendering multiple levels of gray in a glyph.
+	// See https://github.com/adafruit/Adafruit-GFX-Library/issues/103
+	FT_UInt interpreter_version = TT_INTERPRETER_VERSION_35;
+	FT_Property_Set( library, "truetype",
+                                  "interpreter-version",
+                                  &interpreter_version );	
+	
 	if((err = FT_New_Face(library, argv[1], 0, &face))) {
 		fprintf(stderr, "Font load error: %d", err);
 		FT_Done_FreeType(library);
@@ -282,3 +294,5 @@ the cursor on the X axis after drawing the corresponding symbol.
 There's also some changes with regard to 'background' color and new GFX
 fonts (classic fonts unchanged).  See Adafruit_GFX.cpp for explanation.
 */
+
+#endif /* !ARDUINO */

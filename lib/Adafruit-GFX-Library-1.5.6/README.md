@@ -1,4 +1,4 @@
-# Adafruit GFX Library # [![Build Status](https://travis-ci.org/adafruit/Adafruit_GFX.svg?branch=master)](https://travis-ci.org/adafruit/Adafruit_GFX)
+# Adafruit GFX Library  [![Build Status](https://travis-ci.com/adafruit/Adafruit-GFX-Library.svg?branch=master)](https://travis-ci.com/adafruit/Adafruit-GFX-Library)
 
 This is the core graphics library for all our displays, providing a common set of graphics primitives (points, lines, circles, etc.). It needs to be paired with a hardware-specific library for each display device we carry (to handle the lower-level functions).
 
