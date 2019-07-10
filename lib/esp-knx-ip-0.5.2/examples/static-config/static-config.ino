@@ -31,14 +31,14 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   Serial.begin(115200);
 
-  callback_id_t temp_cb = knx.callback_register("Read Temperature", temp_cb);
-  callback_id_t hum_cb =knx.callback_register("Read Humidity", hum_cb);
-  callback_id_t pres_cb =knx.callback_register("Read Pressure", pres_cb);
+  callback_id_t temp_cb_id = knx.callback_register("Read Temperature", temp_cb);
+  callback_id_t hum_cb_id =knx.callback_register("Read Humidity", hum_cb);
+  callback_id_t pres_cb_id =knx.callback_register("Read Pressure", pres_cb);
 
   // Assign callbacks to group addresses (2/1/1, 2/1/2, 2/1/3)
-  knx.callback_assign(temp_cb, knx.GA_to_address(2, 1, 1));
-  knx.callback_assign(hum_cb, knx.GA_to_address(2, 1, 2));
-  knx.callback_assign(pres_cb, knx.GA_to_address(2, 1, 3));
+  knx.callback_assign(temp_cb_id, knx.GA_to_address(2, 1, 1));
+  knx.callback_assign(hum_cb_id, knx.GA_to_address(2, 1, 2));
+  knx.callback_assign(pres_cb_id, knx.GA_to_address(2, 1, 3));
 
   // Set physical address (1.1.1)
   knx.physical_address_set(knx.PA_to_address(1, 1, 1));
