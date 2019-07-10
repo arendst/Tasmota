@@ -54,8 +54,9 @@ int DomoticzBatteryQuality(void)
   // Battery 100%: ESP 3.6V (maximum operating voltage is 3.6)
   // Battery 101% to 200%: ESP over 3.6V (means over maximum operating voltage)
 
-  int quality = 0;	// Voltage range from 2,6V > 0%  to 3,6V > 100%
+  int quality = 100;	// Voltage range from 2,6V > 0%  to 3,6V > 100%
 
+#ifdef USE_ADC_VCC
   uint16_t voltage = ESP.getVcc();
   if (voltage <= 2600) {
     quality = 0;
@@ -64,6 +65,7 @@ int DomoticzBatteryQuality(void)
   } else {
     quality = (voltage - 2600) / 10;
   }
+#endif
   return quality;
 }
 
@@ -128,7 +130,7 @@ void DomoticzMqttUpdate(void)
     domoticz_update_timer--;
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = Settings.domoticz_update_timer;
-      for (uint8_t i = 1; i <= devices_present; i++) {
+      for (uint32_t i = 1; i <= devices_present; i++) {
         if ((SONOFF_IFAN02 == my_module_type) && (i > 1)) {
           MqttPublishDomoticzFanState();
           break;
@@ -143,7 +145,7 @@ void DomoticzMqttUpdate(void)
 void DomoticzMqttSubscribe(void)
 {
   uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
-  for (uint8_t i = 0; i < maxdev; i++) {
+  for (uint32_t i = 0; i < maxdev; i++) {
     if (Settings.domoticz_relay_idx[i]) {
       domoticz_subscribe = true;
     }
@@ -210,7 +212,7 @@ bool DomoticzMqttData(void)
 
     if ((idx > 0) && (nvalue >= 0) && (nvalue <= 15)) {
       uint8_t maxdev = (devices_present > MAX_DOMOTICZ_IDX) ? MAX_DOMOTICZ_IDX : devices_present;
-      for (uint8_t i = 0; i < maxdev; i++) {
+      for (uint32_t i = 0; i < maxdev; i++) {
         if (idx == Settings.domoticz_relay_idx[i]) {
           bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
@@ -443,14 +445,14 @@ const char HTTP_FORM_DOMOTICZ[] PROGMEM =
   "<form method='post' action='" WEB_HANDLE_DOMOTICZ "'>"
   "<table>";
 const char HTTP_FORM_DOMOTICZ_RELAY[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " %d</b></td><td style='width:70px'><input id='r%d' name='r%d' placeholder='0' value='%d'></td></tr>"
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_KEY_IDX " %d</b></td><td style='width:70px'><input id='k%d' name='k%d' placeholder='0' value='%d'></td></tr>";
-  const char HTTP_FORM_DOMOTICZ_SWITCH[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SWITCH_IDX " %d</b></td><td style='width:70px'><input id='s%d' name='s%d' placeholder='0' value='%d'></td></tr>";
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_IDX " %d</b></td><td style='width:70px'><input id='r%d' placeholder='0' value='%d'></td></tr>"
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_KEY_IDX " %d</b></td><td style='width:70px'><input id='k%d' placeholder='0' value='%d'></td></tr>";
+const char HTTP_FORM_DOMOTICZ_SWITCH[] PROGMEM =
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SWITCH_IDX " %d</b></td><td style='width:70px'><input id='s%d' placeholder='0' value='%d'></td></tr>";
 const char HTTP_FORM_DOMOTICZ_SENSOR[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SENSOR_IDX " %d</b> %s</td><td style='width:70px'><input id='l%d' name='l%d' placeholder='0' value='%d'></td></tr>";
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_SENSOR_IDX " %d</b> %s</td><td style='width:70px'><input id='l%d' placeholder='0' value='%d'></td></tr>";
 const char HTTP_FORM_DOMOTICZ_TIMER[] PROGMEM =
-  "<tr><td style='width:260px'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td style='width:70px'><input id='ut' name='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='%d'</td></tr>";
+  "<tr><td style='width:260px'><b>" D_DOMOTICZ_UPDATE_TIMER "</b> (" STR(DOMOTICZ_UPDATE_TIMER) ")</td><td style='width:70px'><input id='ut' placeholder='" STR(DOMOTICZ_UPDATE_TIMER) "' value='%d'></td></tr>";
 
 void HandleDomoticzConfiguration(void)
 {
@@ -464,26 +466,26 @@ void HandleDomoticzConfiguration(void)
     return;
   }
 
-  char stemp[32];
+  char stemp[40];
 
   WSContentStart_P(S_CONFIGURE_DOMOTICZ);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_DOMOTICZ);
-  for (int i = 0; i < MAX_DOMOTICZ_IDX; i++) {
+  for (uint32_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     if (i < devices_present) {
       WSContentSend_P(HTTP_FORM_DOMOTICZ_RELAY,
-        i +1, i, i, Settings.domoticz_relay_idx[i],
-        i +1, i, i, Settings.domoticz_key_idx[i]);
+        i +1, i, Settings.domoticz_relay_idx[i],
+        i +1, i, Settings.domoticz_key_idx[i]);
     }
     if (pin[GPIO_SWT1 +i] < 99) {
       WSContentSend_P(HTTP_FORM_DOMOTICZ_SWITCH,
-        i +1, i, i, Settings.domoticz_switch_idx[i]);
+        i +1, i, Settings.domoticz_switch_idx[i]);
     }
     if ((SONOFF_IFAN02 == my_module_type) && (1 == i)) { break; }
   }
-  for (int i = 0; i < DZ_MAX_SENSORS; i++) {
+  for (uint32_t i = 0; i < DZ_MAX_SENSORS; i++) {
     WSContentSend_P(HTTP_FORM_DOMOTICZ_SENSOR,
-      i +1, GetTextIndexed(stemp, sizeof(stemp), i, kDomoticzSensors), i, i, Settings.domoticz_sensor_idx[i]);
+      i +1, GetTextIndexed(stemp, sizeof(stemp), i, kDomoticzSensors), i, Settings.domoticz_sensor_idx[i]);
   }
   WSContentSend_P(HTTP_FORM_DOMOTICZ_TIMER, Settings.domoticz_update_timer);
   WSContentSend_P(PSTR("</table>"));
@@ -498,7 +500,7 @@ void DomoticzSaveSettings(void)
   char ssensor_indices[6 * MAX_DOMOTICZ_SNS_IDX];
   char tmp[100];
 
-  for (uint8_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
+  for (uint32_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("r%d"), i);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_relay_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
@@ -510,7 +512,7 @@ void DomoticzSaveSettings(void)
     Settings.domoticz_switch_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);
   }
   ssensor_indices[0] = '\0';
-  for (uint8_t i = 0; i < DZ_MAX_SENSORS; i++) {
+  for (uint32_t i = 0; i < DZ_MAX_SENSORS; i++) {
     snprintf_P(stemp, sizeof(stemp), PSTR("l%d"), i);
     WebGetArg(stemp, tmp, sizeof(tmp));
     Settings.domoticz_sensor_idx[i] = (!strlen(tmp)) ? 0 : atoi(tmp);

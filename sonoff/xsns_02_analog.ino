@@ -35,20 +35,39 @@
 // 3V3 --- ANALOG_NTC_BRIDGE_RESISTANCE ---v--- NTC --- Gnd
 //                                         |
 //                                        ADC0
-#define ANALOG_NTC_BRIDGE_RESISTANCE  32000.0          // NTC Voltage bridge resistor
-#define ANALOG_NTC_RESISTANCE         10000.0          // NTC Resistance
-#define ANALOG_NTC_B_COEFFICIENT      3350.0           // NTC Beta Coefficient
+#define ANALOG_NTC_BRIDGE_RESISTANCE  32000            // NTC Voltage bridge resistor
+#define ANALOG_NTC_RESISTANCE         10000            // NTC Resistance
+#define ANALOG_NTC_B_COEFFICIENT      3350             // NTC Beta Coefficient
 
 // LDR parameters
 // 3V3 --- LDR ---v--- ANALOG_LDR_BRIDGE_RESISTANCE --- Gnd
 //                |
 //               ADC0
-#define ANALOG_LDR_BRIDGE_RESISTANCE  10000.0          // LDR Voltage bridge resistor
+#define ANALOG_LDR_BRIDGE_RESISTANCE  10000            // LDR Voltage bridge resistor
 #define ANALOG_LDR_LUX_CALC_SCALAR    12518931         // Experimental
-#define ANALOG_LDR_LUX_CALC_EXPONENT  -1.405           // Experimental
+#define ANALOG_LDR_LUX_CALC_EXPONENT  -1.4050          // Experimental
 
 uint16_t adc_last_value = 0;
 float adc_temp = 0;
+
+void AdcInit(void)
+{
+  if ((Settings.adc_param_type != my_adc0) || (Settings.adc_param1 > 1000000) || (Settings.adc_param1 < 100)) {
+    if (ADC0_TEMP == my_adc0) {
+      // Default Shelly 2.5 and 1PM parameters
+      Settings.adc_param_type = ADC0_TEMP;
+      Settings.adc_param1 = ANALOG_NTC_BRIDGE_RESISTANCE;
+      Settings.adc_param2 = ANALOG_NTC_RESISTANCE;
+      Settings.adc_param3 = ANALOG_NTC_B_COEFFICIENT * 10000;
+    }
+    else if (ADC0_LIGHT == my_adc0) {
+      Settings.adc_param_type = ADC0_LIGHT;
+      Settings.adc_param1 = ANALOG_LDR_BRIDGE_RESISTANCE;
+      Settings.adc_param2 = ANALOG_LDR_LUX_CALC_SCALAR;
+      Settings.adc_param3 = ANALOG_LDR_LUX_CALC_EXPONENT * 10000;
+    }
+  }
+}
 
 uint16_t AdcRead(uint8_t factor)
 {
@@ -59,7 +78,7 @@ uint16_t AdcRead(uint8_t factor)
   // factor 5 = 32 samples
   uint8_t samples = 1 << factor;
   uint16_t analog = 0;
-  for (uint8_t i = 0; i < samples; i++) {
+  for (uint32_t i = 0; i < samples; i++) {
     analog += analogRead(A0);
     delay(1);
   }
@@ -88,8 +107,8 @@ uint16_t AdcGetLux()
   // Source: https://www.allaboutcircuits.com/projects/design-a-luxmeter-using-a-light-dependent-resistor/
   double resistorVoltage = ((double)adc / 1023) * ANALOG_V33;
   double ldrVoltage = ANALOG_V33 - resistorVoltage;
-  double ldrResistance = ldrVoltage / resistorVoltage * ANALOG_LDR_BRIDGE_RESISTANCE;
-  double ldrLux = ANALOG_LDR_LUX_CALC_SCALAR * FastPrecisePow(ldrResistance, ANALOG_LDR_LUX_CALC_EXPONENT);
+  double ldrResistance = ldrVoltage / resistorVoltage * (double)Settings.adc_param1;
+  double ldrLux = (double)Settings.adc_param2 * FastPrecisePow(ldrResistance, (double)Settings.adc_param3 / 10000);
 
   return (uint16_t)ldrLux;
 }
@@ -99,10 +118,64 @@ void AdcEverySecond(void)
   if (ADC0_TEMP == my_adc0) {
     int adc = AdcRead(2);
     // Steinhart-Hart equation for thermistor as temperature sensor
-    double Rt = (adc * ANALOG_NTC_BRIDGE_RESISTANCE) / (1024.0 * ANALOG_V33 - (double)adc);
-    double T = ANALOG_NTC_B_COEFFICIENT / (ANALOG_NTC_B_COEFFICIENT / ANALOG_T0 + TaylorLog(Rt / ANALOG_NTC_RESISTANCE));
+    double Rt = (adc * Settings.adc_param1) / (1024.0 * ANALOG_V33 - (double)adc);
+    double BC = (double)Settings.adc_param3 / 10000;
+    double T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (double)Settings.adc_param2));
     adc_temp = ConvertTemp(TO_CELSIUS(T));
   }
+}
+
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+#define D_CMND_ADCPARAM "AdcParam"
+enum AdcCommands { CMND_ADCPARAM };
+const char kAdcCommands[] PROGMEM = D_CMND_ADCPARAM;
+
+bool AdcCommand(void)
+{
+  char command[CMDSZ];
+  bool serviced = true;
+
+  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kAdcCommands);
+  if (CMND_ADCPARAM == command_code) {
+    if (XdrvMailbox.data_len) {
+      if ((ADC0_TEMP == XdrvMailbox.payload) || (ADC0_LIGHT == XdrvMailbox.payload)) {
+//      if ((XdrvMailbox.payload == my_adc0) && ((ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0))) {
+        if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
+          char sub_string[XdrvMailbox.data_len +1];
+          // AdcParam 2, 32000, 10000, 3350
+          // AdcParam 3, 10000, 12518931, -1.405
+          Settings.adc_param_type = XdrvMailbox.payload;
+//          Settings.adc_param_type = my_adc0;
+          Settings.adc_param1 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+          Settings.adc_param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
+          Settings.adc_param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)) * 10000);
+        } else {                                         // Set default values based on current adc type
+          // AdcParam 2
+          // AdcParam 3
+          Settings.adc_param_type = 0;
+          AdcInit();
+        }
+      }
+    }
+
+    // AdcParam
+    int value = Settings.adc_param3;
+    uint8_t precision;
+    for (precision = 4; precision > 0; precision--) {
+      if (value % 10) { break; }
+      value /= 10;
+    }
+    char param3[33];
+    dtostrfd(((double)Settings.adc_param3)/10000, precision, param3);
+    Response_P(PSTR("{\"" D_CMND_ADCPARAM "\":[%d,%d,%d,%s]}"),
+      Settings.adc_param_type, Settings.adc_param1, Settings.adc_param2, param3);
+  }
+  else serviced = false;  // Unknown command
+
+  return serviced;
 }
 
 void AdcShow(bool json)
@@ -175,6 +248,12 @@ bool Xsns02(uint8_t function)
 #endif  // USE_RULES
       case FUNC_EVERY_SECOND:
         AdcEverySecond();
+        break;
+      case FUNC_INIT:
+        AdcInit();
+        break;
+      case FUNC_COMMAND:
+        result = AdcCommand();
         break;
       case FUNC_JSON_APPEND:
         AdcShow(1);

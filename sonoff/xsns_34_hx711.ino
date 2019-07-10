@@ -164,7 +164,7 @@ bool HxCommand(void)
   bool show_parms = false;
   char sub_string[XdrvMailbox.data_len +1];
 
-  for (uint8_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
+  for (uint32_t ca = 0; ca < XdrvMailbox.data_len; ca++) {
     if ((' ' == XdrvMailbox.data[ca]) || ('=' == XdrvMailbox.data[ca])) { XdrvMailbox.data[ca] = ','; }
   }
 
@@ -204,7 +204,7 @@ bool HxCommand(void)
       break;
     case 6:  // WeightItem
       if (strstr(XdrvMailbox.data, ",") != nullptr) {
-        Settings.weight_item = (unsigned long)(CharToDouble(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 10);
+        Settings.weight_item = (unsigned long)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 2)) * 10);
       }
       show_parms = true;
       break;
@@ -411,14 +411,14 @@ const char HTTP_BTN_MENU_HX711[] PROGMEM =
 const char HTTP_FORM_HX711[] PROGMEM =
   "<fieldset><legend><b>&nbsp;" D_CALIBRATION "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_HX711 "'>"
-  "<p><b>" D_REFERENCE_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br/><input type='number' step='0.001' id='p1' name='p1' placeholder='0' value='%s'></p>"
-  "<br/><button name='calibrate' type='submit'>" D_CALIBRATE "</button>"
+  "<p><b>" D_REFERENCE_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br><input type='number' step='0.001' id='p1' placeholder='0' value='%s'></p>"
+  "<br><button name='calibrate' type='submit'>" D_CALIBRATE "</button>"
   "</form>"
-  "</fieldset><br/><br/>"
+  "</fieldset><br><br>"
 
   "<fieldset><legend><b>&nbsp;" D_HX711_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_HX711 "'>"
-  "<p><b>" D_ITEM_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br/><input type='number' max='6.5535' step='0.0001' id='p2' name='p2' placeholder='0.0' value='%s'></p>";
+  "<p><b>" D_ITEM_WEIGHT "</b> (" D_UNIT_KILOGRAM ")<br><input type='number' max='6.5535' step='0.0001' id='p2' placeholder='0.0' value='%s'></p>";
 
 void HandleHxAction(void)
 {
@@ -444,7 +444,7 @@ void HandleHxAction(void)
 
   if (WebServer->hasArg("calibrate")) {
     WebGetArg("p1", stemp1, sizeof(stemp1));
-    Settings.weight_reference = (!strlen(stemp1)) ? 0 : (unsigned long)(CharToDouble(stemp1) * 1000);
+    Settings.weight_reference = (!strlen(stemp1)) ? 0 : (unsigned long)(CharToFloat(stemp1) * 1000);
 
     HxLogUpdates();
 
@@ -471,7 +471,7 @@ void HxSaveSettings(void)
   char tmp[100];
 
   WebGetArg("p2", tmp, sizeof(tmp));
-  Settings.weight_item = (!strlen(tmp)) ? 0 : (unsigned long)(CharToDouble(tmp) * 10000);
+  Settings.weight_item = (!strlen(tmp)) ? 0 : (unsigned long)(CharToFloat(tmp) * 10000);
 
   HxLogUpdates();
 }

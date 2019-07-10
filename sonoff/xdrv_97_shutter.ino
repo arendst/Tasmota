@@ -36,7 +36,7 @@ uint16_t Shutter_Close_Velocity[MAX_SHUTTERS];          // in relation to open v
 uint16_t Shutter_Operations[MAX_SHUTTERS];
 int8_t  Shutter_Direction[MAX_SHUTTERS];                // 1 == UP , 0 == stop; -1 == down
 int32_t Shutter_Real_Position[MAX_SHUTTERS];            // value between 0 and Shutter_Open_Max
-power_t shutter_mask = 0;                               // bit mask with 11 at the position of relays that belong to at least ONE shutter
+//power_t shutter_mask = 0;                               // bit mask with 11 at the position of relays that belong to at least ONE shutter
 power_t old_power = power;                              // preserve old bitmask for power to extract the relay that changes.
 power_t SwitchedRelay = 0;                              // bitmatrix that contain the relays that was lastly changed.
 uint32_t shutter_time[MAX_SHUTTERS] ;
@@ -271,9 +271,9 @@ bool ShutterCommand()
     char time_chr[10];
     if (XdrvMailbox.data_len > 0) {
       if (CMND_OPENTIME == command_code) {
-        Settings.shutter_opentime[index-1] = (uint16_t)(10 * CharToDouble(XdrvMailbox.data));
+        Settings.shutter_opentime[index-1] = (uint16_t)(10 * CharToFloat(XdrvMailbox.data));
       } else {
-        Settings.shutter_closetime[index-1] = (uint16_t)(10 * CharToDouble(XdrvMailbox.data));
+        Settings.shutter_closetime[index-1] = (uint16_t)(10 * CharToFloat(XdrvMailbox.data));
       }
       ShutterInit();
     }

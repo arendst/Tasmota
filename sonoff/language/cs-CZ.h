@@ -247,7 +247,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Pro používání prostředí Tasmota povolte JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMÁLNÍ<br/>prosím zaktualizujte"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMÁLNÍ<br>prosím zaktualizujte"
 #define D_WEBSERVER_ACTIVE_ON "Aktivní Web server"
 #define D_WITH_IP_ADDRESS "na IP adrese"
 #define D_WEBSERVER_STOPPED "Web server zastaven"
@@ -537,6 +537,7 @@
 #define D_SENSOR_BUTTON        "Tlačítko"   // Suffix "1"
 #define D_SENSOR_RELAY         "Relé"       // Suffix "1i"
 #define D_SENSOR_LED           "Led"        // Suffix "1i"
+#define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1",
 #define D_SENSOR_COUNTER       "Počítadlo"  // Suffix "1"
 #define D_SENSOR_IRRECV        "IRrecv"
@@ -602,6 +603,7 @@
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
+#define D_SENSOR_ARIRFSEL      "ALux IrSel"
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"

@@ -1,4 +1,7 @@
-## Tasmota Reference
+<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+
+# Reference
+
 Tasmota backgound information.
 
 ## Supported Smart Switch with Energy Monitoring GPIO usage

@@ -149,7 +149,7 @@ void Veml6070Detect(void)
 void Veml6070UvTableInit(void)
 {
   // fill the uv-risk compare table once, based on the coefficient calculation
-  for (uint8_t i = 0; i < VEML6070_UV_MAX_INDEX; i++) {
+  for (uint32_t i = 0; i < VEML6070_UV_MAX_INDEX; i++) {
 #ifdef USE_VEML6070_RSET
     if ( (USE_VEML6070_RSET >= 220000) && (USE_VEML6070_RSET <= 1000000) ) {
       uv_risk_map[i] = ( (USE_VEML6070_RSET / VEML6070_TABLE_COEFFCIENT) / VEML6070_UV_MAX_DEFAULT ) * (i+1);

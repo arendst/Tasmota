@@ -96,7 +96,7 @@ int XnrgCall(uint8_t Function)
 {
   int result = 0;
 
-  for (uint8_t x = 0; x < xnrg_present; x++) {
+  for (uint32_t x = 0; x < xnrg_present; x++) {
     result = xnrg_func_ptr[x](Function);
 
     if (result && ((FUNC_SERIAL == Function) ||

@@ -197,7 +197,7 @@ void HAssAnnounceRelayLight(void)
   bool is_light = false;
   bool is_topic_light = false;
 
-  for (int i = 1; i <= MAX_RELAYS; i++) {
+  for (uint32_t i = 1; i <= MAX_RELAYS; i++) {
     is_light = ((i == devices_present) && (light_type));
     is_topic_light = Settings.flag.hass_light || is_light;
 
@@ -334,7 +334,7 @@ void HAssAnnounceSwitches(void)
   char *tmp = Settings.switch_topic;
   Format(sw_topic, tmp, sizeof(sw_topic));
   if ((strlen(sw_topic) != 0) && strcmp(sw_topic, "0")) {
-    for (uint8_t switch_index = 0; switch_index < MAX_SWITCHES; switch_index++) {
+    for (uint32_t switch_index = 0; switch_index < MAX_SWITCHES; switch_index++) {
       uint8_t switch_present = 0;
       uint8_t toggle = 1;
 
@@ -363,7 +363,7 @@ void HAssAnnounceButtons(void)
   char *tmp = Settings.button_topic;
   Format(key_topic, tmp, sizeof(key_topic));
   if ((strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
-    for (uint8_t button_index = 0; button_index < MAX_KEYS; button_index++) {
+    for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
       uint8_t button_present = 0;
       uint8_t toggle = 1;
 

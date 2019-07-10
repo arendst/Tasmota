@@ -212,7 +212,7 @@ void Mpr121Init(struct mpr121 *pS)
 {
 
 	// Loop through I2C addresses
-	for (uint8_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
+	for (uint32_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
 
 		// Soft reset sensor and check if connected at I2C address
 		pS->connected[i] = (I2cWrite8(pS->i2c_addr[i], MPR121_SRST_REG, MPR121_SRST_VAL)
@@ -223,7 +223,7 @@ void Mpr121Init(struct mpr121 *pS)
 			AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_I2C "MPR121(%c) " D_FOUND_AT " 0x%X"), pS->id[i], pS->i2c_addr[i]);
 
 			// Set thresholds for registers 0x41 - 0x5A (ExTTH and ExRTH)
-			for (uint8_t j = 0; j < 13; j++) {
+			for (uint32_t j = 0; j < 13; j++) {
 
 				// Touch
 				I2cWrite8(pS->i2c_addr[i], MPR121_E0TTH_REG + 2 * j, MPR121_E0TTH_VAL);
@@ -317,7 +317,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 {
 
 	// Loop through sensors
-	for (uint8_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
+	for (uint32_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
 
 		// Check if sensor is connected
 		if (pS->connected[i]) {
@@ -346,7 +346,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 				ResponseAppend_P(PSTR(",\"MPR121%c\":{"), pS->id[i]);
 			}
 			// Loop through buttons
-			for (uint8_t j = 0; j < 13; j++) {
+			for (uint32_t j = 0; j < 13; j++) {
 
 				// Add sensor, button and state to MQTT JSON message string
 				if ((FUNC_EVERY_50_MSECOND == function)

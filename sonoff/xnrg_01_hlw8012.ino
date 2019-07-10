@@ -67,7 +67,9 @@ uint8_t hlw_ui_flag = 1;
 uint8_t hlw_model_type = 0;
 uint8_t hlw_load_off = 1;
 uint8_t hlw_cf1_timer = 0;
+uint8_t hlw_power_retry = 0;
 
+// Fix core 2.5.x ISR not in IRAM Exception
 #ifndef USE_WS2812_DMA  // Collides with Neopixelbus but solves exception
 void HlwCfInterrupt(void) ICACHE_RAM_ATTR;
 void HlwCf1Interrupt(void) ICACHE_RAM_ATTR;
@@ -85,6 +87,7 @@ void HlwCfInterrupt(void)  // Service Power
     hlw_cf_pulse_last_time = us;
     hlw_energy_period_counter++;
   }
+  energy_data_valid = 0;
 }
 
 void HlwCf1Interrupt(void)  // Service Voltage and Current
@@ -103,6 +106,7 @@ void HlwCf1Interrupt(void)  // Service Voltage and Current
       hlw_cf1_timer = 8;  // We need up to HLW_SAMPLE_COUNT samples within 1 second (low current could take up to 0.3 second)
     }
   }
+  energy_data_valid = 0;
 }
 
 /********************************************************************************************/
@@ -123,8 +127,13 @@ void HlwEvery200ms(void)
   if (hlw_cf_power_pulse_length && energy_power_on && !hlw_load_off) {
     hlw_w = (hlw_power_ratio * Settings.energy_power_calibration) / hlw_cf_power_pulse_length;  // W *10
     energy_active_power = (float)hlw_w / 10;
+    hlw_power_retry = 1;        // Workaround issue #5161
   } else {
-    energy_active_power = 0;
+    if (hlw_power_retry) {
+      hlw_power_retry--;
+    } else {
+      energy_active_power = 0;
+    }
   }
 
   if (pin[GPIO_NRG_CF1] < 99) {
@@ -144,11 +153,11 @@ void HlwEvery200ms(void)
       // Debugging for calculating mean and median
       char stemp[100];
       stemp[0] = '\0';
-      for (uint8_t i = 0; i < hlw_cf1_pulse_counter; i++) {
+      for (uint32_t i = 0; i < hlw_cf1_pulse_counter; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%s %d"), stemp, hlw_debug[i]);
       }
-      for (uint8_t i = 0; i < hlw_cf1_pulse_counter; i++) {
-        for (uint8_t j = i + 1; j < hlw_cf1_pulse_counter; j++) {
+      for (uint32_t i = 0; i < hlw_cf1_pulse_counter; i++) {
+        for (uint32_t j = i + 1; j < hlw_cf1_pulse_counter; j++) {
           if (hlw_debug[i] > hlw_debug[j]) {  // Sort ascending
             std::swap(hlw_debug[i], hlw_debug[j]);
           }
@@ -188,14 +197,20 @@ void HlwEvery200ms(void)
 
 void HlwEverySecond(void)
 {
-  unsigned long hlw_len;
+  if (energy_data_valid > ENERGY_WATCHDOG) {
+    hlw_cf1_voltage_pulse_length = 0;
+    hlw_cf1_current_pulse_length = 0;
+    hlw_cf_power_pulse_length = 0;
+  } else {
+    unsigned long hlw_len;
 
-  if (hlw_energy_period_counter) {
-    hlw_len = 10000 / hlw_energy_period_counter;
-    hlw_energy_period_counter = 0;
-    if (hlw_len) {
-      energy_kWhtoday_delta += ((hlw_power_ratio * Settings.energy_power_calibration) / hlw_len) / 36;
-      EnergyUpdateToday();
+    if (hlw_energy_period_counter) {
+      hlw_len = 10000 / hlw_energy_period_counter;
+      hlw_energy_period_counter = 0;
+      if (hlw_len) {
+        energy_kWhtoday_delta += ((hlw_power_ratio * Settings.energy_power_calibration) / hlw_len) / 36;
+        EnergyUpdateToday();
+      }
     }
   }
 }
@@ -272,17 +287,17 @@ bool HlwCommand(void)
   }
   else if (CMND_POWERSET == energy_command_code) {
     if (XdrvMailbox.data_len && hlw_cf_power_pulse_length) {
-      Settings.energy_power_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data) * 10) * hlw_cf_power_pulse_length) / hlw_power_ratio;
+      Settings.energy_power_calibration = ((unsigned long)(CharToFloat(XdrvMailbox.data) * 10) * hlw_cf_power_pulse_length) / hlw_power_ratio;
     }
   }
   else if (CMND_VOLTAGESET == energy_command_code) {
     if (XdrvMailbox.data_len && hlw_cf1_voltage_pulse_length) {
-      Settings.energy_voltage_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data) * 10) * hlw_cf1_voltage_pulse_length) / hlw_voltage_ratio;
+      Settings.energy_voltage_calibration = ((unsigned long)(CharToFloat(XdrvMailbox.data) * 10) * hlw_cf1_voltage_pulse_length) / hlw_voltage_ratio;
     }
   }
   else if (CMND_CURRENTSET == energy_command_code) {
     if (XdrvMailbox.data_len && hlw_cf1_current_pulse_length) {
-      Settings.energy_current_calibration = ((unsigned long)(CharToDouble(XdrvMailbox.data)) * hlw_cf1_current_pulse_length) / hlw_current_ratio;
+      Settings.energy_current_calibration = ((unsigned long)(CharToFloat(XdrvMailbox.data)) * hlw_cf1_current_pulse_length) / hlw_current_ratio;
     }
   }
   else serviced = false;  // Unknown command

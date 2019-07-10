@@ -123,7 +123,7 @@ enum MP3_Commands {                                 // commands useable in conso
 uint16_t MP3_Checksum(uint8_t *array)
 {
   uint16_t checksum = 0;
-  for (uint8_t i = 0; i < 6; i++) {
+  for (uint32_t i = 0; i < 6; i++) {
     checksum += array[i];
   }
   checksum = checksum^0xffff;

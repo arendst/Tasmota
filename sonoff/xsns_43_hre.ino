@@ -88,7 +88,7 @@ char hreReadChar(int &parity_errors)
 
    unsigned ch=0;
    int sum=0;
-   for (int i=0; i<7; i++)
+   for (uint32_t i=0; i<7; i++)
    {
       int b = hreReadBit();
       ch |= b << i;
@@ -148,7 +148,7 @@ void hreEvery50ms(void)
       case hre_syncing:
          // Find the header, a string of 62 '1's
          // Since each bit taks 2 ms, we just read 20 bits at a time
-         for (int i=0; i<20; i++)
+         for (uint32_t i=0; i<20; i++)
          {
             if (hreReadBit())
                sync_run++;

@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
+#ifdef USE_LIGHT
 /*********************************************************************************************\
  * Rotary support
 \*********************************************************************************************/
@@ -60,6 +60,10 @@ void update_position(void)
   }
   rotary_state = (s >> 2);
 }
+
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0      // Fix core 2.5.x ISR not in IRAM Exception
+void update_rotary(void) ICACHE_RAM_ATTR;
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
 void update_rotary(void)
 {
@@ -151,3 +155,4 @@ void RotaryLoop(void)
 }
 
 #endif  // ROTARY_V1
+#endif  // USE_LIGHT

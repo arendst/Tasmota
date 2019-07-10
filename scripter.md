@@ -1,6 +1,6 @@
 **Script Language for Tasmota**  
 
-As an alternative to rules. (about 14,2k flash size, variable ram size)  
+As an alternative to rules. (about 17k flash size, variable ram size)  
 
 In submenu Configuration =\> edit script  
 1535 bytes max script size (uses rules buffer)
@@ -39,7 +39,9 @@ numeric var=4 bytes, string var=lenght of string+1)
 **i:**vname specifies auto increment counters if >=0 (in seconds)  
 **m:**vname specifies a median filter variable with 5 entries (for elimination of outliers)  
 **M:**vname specifies a moving average filter variable with 8 entries (for smoothing data)  
-(max 5 filters in total m+M)
+(max 5 filters in total m+M) optional another filter lenght (1..127) can be given after the definition.  
+filter vars can be accessed also in indexed mode vname[x] (index = 1...N, index 0 returns current array index pointer)  
+by this filter vars can be used as arrays  
 
 >all variable names length taken together may not exceed 256 characters, so keep variable names as short as possible.  
 memory is dynamically allocated as a result of the D section.  
@@ -74,6 +76,7 @@ special variables (read only):
 **gtopic** = mqtt group topic  
 **prefixn** = prefix n = 1-3    
 **pwr[x]** = tasmota power state  (x = 1-N)  
+**tbut[x]** = touch screen button state  (x = 1-N)  
 **sw[x]** = tasmota switch state  (x = 1-N)  
 >**pin[x]** = gpio pin level (x = 0-16)  
 **pn[x]** = pin number for sensor code x, 99 if none  
@@ -84,7 +87,9 @@ special variables (read only):
 **pow(x y)** = calculates the power of x^y  
 **med(n x)** = calculates a 5 value median filter of x (2 filters possible n=0,1)  
 **int(x)** = gets the integer part of x (like floor)  
-**hn(x)** = converts x (0..255) zu a hex nibble string  
+**hn(x)** = converts x (0..255) to a hex nibble string  
+**st(svar c n)** = stringtoken gets the n th substring of svar separated by c  
+**s(x)** = explicit conversion from number x to string  
 **mqtts** = state of mqtt disconnected=0, connected>0  
 **wifis** = state of wifi disconnected=0, connected>0  
 
@@ -163,7 +168,7 @@ the last closing bracket must be on a single line
 the condition may not be enclosed in brackets  
 
 >**break** exits a section or terminates a for next loop  
-**dprecx** sets decimal precision to x (0-9)  
+**dpx** sets decimal precision to x (0-9)  
 **svars** save permanent vars  
 **delay(x)** pauses x milliseconds (should be as short as possible)  
 **spin(x m)** set gpio pin x (0-16) to value m (0,1) only the last bit is used, so even values set the pin to zero and uneven values set the pin to 1  
@@ -183,6 +188,40 @@ specifies a for next loop, (loop count must not be less then 1)
 **case b**  
 **ends**  
 specifies a switch case selector  
+
+**sd card support**  
+enable by CARD_CS = gpio pin of card chip select (+ 10k flash)  
+\#define USE_SCRIPT_FATFS CARD_CS   
+sd card uses standard hardware spi gpios: mosi,miso,sclk  
+max 4 files open at a time  
+allows for e.g. logging sensors to a tab delimited file and then download (see example below)  
+the download of files may be executed in a kind of "multitasking" when bit 7 of loglvl is set (128+loglevel)  
+without multitasking 150kb/s (all processes are stopped during download), with multitasking 50kb/s (other tasmota processes are running)  
+script itself is also stored on sdcard with a default size of 4096 chars  
+
+
+enable sd card directory support (+ 1,2k flash)  
+\#define SDCARD_DIR  
+shows a web sdcard directory (submeu of scripter) where you can
+upload and download files to/from sd card  
+
+
+>**fr=fo("fname" m)** open file fname, mode 0=read, 1=write (returns file reference (0-3) or -1 for error)  
+**res=fw("text" fr)** writes text to (the end of) file fr, returns number of bytes written  
+**res=fr(svar fr)** reads a string into svar, returns bytes read (string is read until delimiter \t \n \r or eof)  
+**fc(fr)** close file  
+**ff(fr)** flush file, writes cached data and updates directory     
+**fd("fname")** delete file fname   
+**flx(fname)** create download link for file (x=1 or 2) fname = file name of file to download   
+**fsm** return 1 if filesystem is mounted, (valid sd card found)  
+
+extended commands   (+0,9k flash)
+\#define USE_SCRIPT_FATFS_EXT  
+>**fmd("fname")** make directory fname  
+>**frd("fname")** remove directory fname  
+>**fx("fname")** check if file fname exists  
+>**fe("fname")** execute script fname  (max 2048 bytes, script file must start with '>' char on the 1. line)  
+
 
 **konsole script cmds**  
 >**script 1 or 0** switch script on or off  
@@ -226,6 +265,8 @@ hour=0
 state=1  
 m:med5=0  
 M:movav=0  
+; define array with 10 entries  
+m:array=0 10  
 
 **\>B**  
 
@@ -258,15 +299,14 @@ delay(100)
 =>power 0  
 
 **\>T**  
-
 hum=BME280#Humidity  
 temp=BME280#Temperature  
 rssi=Wifi#RSSI  
 string=SleepMode  
 
-; add to median filter
+; add to median filter  
 median=temp  
-; add to moving average filter
+; add to moving average filter  
 movav=hum  
 
 ; show filtered results  
@@ -274,7 +314,7 @@ movav=hum
 
 if chg[rssi]>0  
 then =>print rssi changed to %rssi%  
-endif
+endif  
 
 if temp\>30  
 and hum\>70  
@@ -285,6 +325,11 @@ endif
 
 ; every second but not completely reliable time here  
 ; use upsecs and uptime or best t: for reliable timers  
+
+; arrays  
+array[1]=4  
+array[2]=5  
+tmp=array[1]+array[2]  
 
 ; call subrountines with parameters   
 =#sub1("hallo")  
@@ -322,7 +367,7 @@ endif
 =\>WebSend %url% dimmer %dimmer%  
 
 ; show on display  
-dprec0  
+dp0  
 =\>displaytext [c1l1f1s2p20] dimmer=%dimmer%  
 
 =\>print %upsecs% %uptime% %time% %sunrise% %sunset% %tstamp%  
@@ -427,6 +472,8 @@ ends
 **\>E**  
 =\>print event executed!  
 
+; get HSBColor 1. component  
+tmp=st(HSBColor , 1)  
 
 ; check if switch changed state  
 sw=sw[1]  
@@ -462,11 +509,72 @@ col=hn(255)+hn(0)+hn(0)
 **\>R**  
 =\>print restarting now  
 
+**a log sensor example**  
+; define all vars here  
+; reserve large strings  
+**\>D** 48  
+hum=0  
+temp=0  
+fr=0  
+res=0  
+; moving average for 60 seconds  
+M:mhum=0 60  
+M:mtemp=0 60  
+str=""  
+
+**\>B**  
+; set sensor file download link   
+fl1("slog.txt")  
+; delete file in case we want to start fresh
+;fd("slog.txt")  
+
+
+; list all files in root directory  
+fr=fo("/" 0)  
+for cnt 1 20 1  
+res=fr(str fr)  
+if res>0  
+then  
+=>print %cnt% : %str%  
+else  
+break  
+endif  
+next  
+fc(fr)  
+
+
+**\>T**  
+; get sensor values  
+temp=BME280#Temperature  
+hum=BME280#Humidity  
+
+**\>S**
+; average sensor values every second  
+mhum=hum  
+mtemp=temp  
+
+; write average to sensor log every minute  
+if upsecs%60==0  
+then  
+; open file for write  
+fr=fo("slog.txt" 1)  
+; compose string for tab delimited file entry  
+str=s(upsecs)+"\t"+s(mhum)+"\t"+s(mtemp)+"\n"  
+; write string to log file  
+res=fw(str fr)  
+; close file  
+fc(fr)  
+endif  
+
+**\>R**  
+
+
+
 **a real example**  
 epaper 29 with sgp30 and bme280  
 some vars are set from iobroker  
 DisplayText substituted to save script space  
-\>D  
+**\>D**  
 hum=0  
 temp=0  
 press=0  
@@ -485,13 +593,13 @@ DT="DisplayText"
 punit="hPa"  
 tunit="C"  
 
-\>B  
+**\>B**  
 ;reset auto draw  
 =>%DT% [zD0]  
 ;clr display and draw a frame  
 =>%DT% [x0y20h296x0y40h296]  
 
-\>T  
+**\>T**  
 ; get tele vars  
 temp=BME280#Temperature  
 hum=BME280#Humidity  
@@ -502,11 +610,11 @@ ahum=SGP30#aHumidity
 tunit=TempUnit  
 punit=PressureUnit  
 
-\>S  
+**\>S**  
 // update display every teleperiod time  
 if upsecs%tper==0  
 then  
-dprec2  
+dp2  
 =>%DT% [f1p7x0y5]%temp% %tunit%  
 =>%DT% [p5x70y5]%hum% %%[x250y5t]   
 =>%DT% [p11x140y5]%press% %punit%  
@@ -514,7 +622,7 @@ dprec2
 =>%DT% [p10x160y25]eCO2: %eco2% ppm  
 =>%DT% [p10c26l5]ahum: %ahum% g^m3  
 
-dprec0  
+dp0  
 =>%DT% [p25c1l5]WR 1 (Dach)  : %wr1% W  
 =>%DT% [p25c1l6]WR 2 (Garage): %-wr3% W  
 =>%DT% [p25c1l7]WR 3 (Garten): %-wr2% W  
@@ -525,9 +633,9 @@ dprec0
 endif  
 
 
-\>E  
+**\>E**  
 
-\>R  
+**\>R**  
 
 **another real example**  
 ILI 9488 color LCD Display shows various energy graphs  
@@ -590,14 +698,14 @@ endif
 ; update graph every teleperiod  
 if upsecs%tper==0  
 then  
-dprec2  
+dp2  
 =>%DT% [f1Ci3x40y260w30Ci1]  
 =>%DT% [Ci7x120y220t]  
 =>%DT% [Ci7x180y220T]  
 =>%DT% [Ci7p8x120y240]%temp% %tunit%   
 =>%DT% [Ci7x120y260]%press% %punit%  
 =>%DT% [Ci7x120y280]%dist% mm  
-dprec0  
+dp0  
 =>%DT% [g0:%zwz%g1:%wr1%g2:%-wr2%g3:%-wr3%]  
 if zwz>0  
 then

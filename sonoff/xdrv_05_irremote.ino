@@ -116,11 +116,19 @@ IRrecv *irrecv = nullptr;
 
 unsigned long ir_lasttime = 0;
 
+void IrReceiveUpdateThreshold()
+{
+  if (irrecv != nullptr) {
+    if (Settings.param[P_IR_UNKNOW_THRESHOLD] < 6) { Settings.param[P_IR_UNKNOW_THRESHOLD] = 6; }
+    irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
+  }
+}
+
 void IrReceiveInit(void)
 {
   // an IR led is at GPIO_IRRECV
   irrecv = new IRrecv(pin[GPIO_IRRECV], IR_RCV_BUFFER_SIZE, IR_RCV_TIMEOUT, IR_RCV_SAVE_BUFFER);
-  irrecv->setUnknownThreshold(IR_RCV_MIN_UNKNOWN_SIZE);
+  irrecv->setUnknownThreshold(Settings.param[P_IR_UNKNOW_THRESHOLD]);
   irrecv->enableIRIn();                  // Start the receiver
 
   //  AddLog_P(LOG_LEVEL_DEBUG, PSTR("IrReceive initialized"));
@@ -169,7 +177,7 @@ void IrReceiveCheck(void)
           if (strlen(mqtt_data) > sizeof(mqtt_data) - 40) { break; }  // Quit if char string becomes too long
         }
         uint16_t extended_length = results.rawlen - 1;
-        for (uint16_t j = 0; j < results.rawlen - 1; j++) {
+        for (uint32_t j = 0; j < results.rawlen - 1; j++) {
           uint32_t usecs = results.rawbuf[j] * kRawTick;
           // Add two extra entries for multiple larger than UINT16_MAX it is.
           extended_length += (usecs / (UINT16_MAX + 1)) * 2;
@@ -255,7 +263,7 @@ uint8_t IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC
   data[5] = (uint8_t)(Temp - 17) << 4;
 
   data[HVAC_TOSHIBA_DATALEN - 1] = 0;
-  for (int x = 0; x < HVAC_TOSHIBA_DATALEN - 1; x++) {
+  for (uint32_t x = 0; x < HVAC_TOSHIBA_DATALEN - 1; x++) {
     data[HVAC_TOSHIBA_DATALEN - 1] = (uint8_t)data[x] ^ data[HVAC_TOSHIBA_DATALEN - 1]; // CRC is a simple bits addition
   }
 
@@ -267,7 +275,7 @@ uint8_t IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC
   rawdata[i++] = HVAC_TOSHIBA_HDR_SPACE;
 
   //data
-  for (int b = 0; b < HVAC_TOSHIBA_DATALEN; b++) {
+  for (uint32_t b = 0; b < HVAC_TOSHIBA_DATALEN; b++) {
     for (mask = B10000000; mask > 0; mask >>= 1) { //iterate through bit mask
       if (data[b] & mask) { // Bit ONE
         rawdata[i++] = HVAC_TOSHIBA_BIT_MARK;
@@ -441,7 +449,7 @@ uint8_t IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Powe
   }
   // Build LG IR code
   LG_Code = data[0] << 4;
-  for (int i = 1; i < 6; i++) {
+  for (uint32_t i = 1; i < 6; i++) {
     LG_Code = (LG_Code + data[i]) << 4;
   }
   LG_Code = LG_Code + data[6];
@@ -562,7 +570,7 @@ bool IrSendCommand(void)
               error = IE_INVALID_RAWDATA;
             } else {
               uint16_t parm[count];
-              for (uint8_t i = 0; i < count; i++) {
+              for (uint32_t i = 0; i < count; i++) {
                 parm[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);
                 if (!parm[i]) {
                   if (!i) {
@@ -633,12 +641,32 @@ bool IrSendCommand(void)
             } else {  // At least two raw data values
               // IRsend 0,896,876,900,888,894,876,1790,874,872,1810,1736,948,872,880,872,936,872,1792,900,888,1734
               count++;
-              uint16_t raw_array[count];  // It's safe to use stack for up to 240 packets (limited by mqtt_data length)
-              for (uint16_t i = 0; i < count; i++) {
-                raw_array[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
+              if (count < 200) {
+                uint16_t raw_array[count];  // It's safe to use stack for up to 200 packets (limited by mqtt_data length)
+                for (uint32_t i = 0; i < count; i++) {
+                  raw_array[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
+                }
+
+//              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: stack count %d"), count);
+
+                irsend_active = true;
+                irsend->sendRaw(raw_array, count, freq);
+              } else {
+                uint16_t *raw_array = reinterpret_cast<uint16_t*>(malloc(count * sizeof(uint16_t)));
+                if (raw_array == nullptr) {
+                  error = IE_INVALID_RAWDATA;
+                } else {
+                  for (uint32_t i = 0; i < count; i++) {
+                    raw_array[i] = strtol(strtok_r(nullptr, ", ", &p), nullptr, 0);  // Allow decimal (20496) and hexadecimal (0x5010) input
+                  }
+
+//              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: heap count %d"), count);
+
+                  irsend_active = true;
+                  irsend->sendRaw(raw_array, count, freq);
+                  free(raw_array);
+                }
               }
-              irsend_active = true;
-              irsend->sendRaw(raw_array, count, freq);
             }
           }
         }

@@ -224,7 +224,7 @@ char* subStr(char* dest, char* str, const char *delim, int index)
   return sub;
 }
 
-double CharToDouble(const char *str)
+float CharToFloat(const char *str)
 {
   // simple ascii to double, because atof or strtod are too large
   char strbuf[24];
@@ -237,23 +237,23 @@ double CharToDouble(const char *str)
   if (*pt == '-') { sign = -1; }
   if (*pt == '-' || *pt=='+') { pt++; }            // Skip any sign
 
-  double left = 0;
+  float left = 0;
   if (*pt != '.') {
     left = atoi(pt);                               // Get left part
     while (isdigit(*pt)) { pt++; }                 // Skip number
   }
 
-  double right = 0;
+  float right = 0;
   if (*pt == '.') {
     pt++;
     right = atoi(pt);                              // Decimal part
     while (isdigit(*pt)) {
       pt++;
-      right /= 10.0;
+      right /= 10.0f;
     }
   }
 
-  double result = left + right;
+  float result = left + right;
   if (sign < 0) {
     return -result;                                // Add negative sign
   }
@@ -644,70 +644,10 @@ void ResetGlobalValues(void)
 {
   if ((uptime - global_update) > GLOBAL_VALUES_VALID) {  // Reset after 5 minutes
     global_update = 0;
-    global_temperature = 0;
+    global_temperature = 9999;
     global_humidity = 0;
     global_pressure = 0;
   }
-}
-
-double FastPrecisePow(double a, double b)
-{
-  // https://martin.ankerl.com/2012/01/25/optimized-approximative-pow-in-c-and-cpp/
-  // calculate approximation with fraction of the exponent
-  int e = abs((int)b);
-  union {
-    double d;
-    int x[2];
-  } u = { a };
-  u.x[1] = (int)((b - e) * (u.x[1] - 1072632447) + 1072632447);
-  u.x[0] = 0;
-  // exponentiation by squaring with the exponent's integer part
-  // double r = u.d makes everything much slower, not sure why
-  double r = 1.0;
-  while (e) {
-    if (e & 1) {
-      r *= a;
-    }
-    a *= a;
-    e >>= 1;
-  }
-  return r * u.d;
-}
-
-float FastPrecisePowf(const float x, const float y)
-{
-//  return (float)(pow((double)x, (double)y));
-  return (float)FastPrecisePow(x, y);
-}
-
-double TaylorLog(double x)
-{
-  // https://stackoverflow.com/questions/46879166/finding-the-natural-logarithm-of-a-number-using-taylor-series-in-c
-
-  if (x <= 0.0) { return NAN; }
-  double z = (x + 1) / (x - 1);                              // We start from power -1, to make sure we get the right power in each iteration;
-  double step = ((x - 1) * (x - 1)) / ((x + 1) * (x + 1));   // Store step to not have to calculate it each time
-  double totalValue = 0;
-  double powe = 1;
-  double y;
-  for (int count = 0; count < 10; count++) {                 // Experimental number of 10 iterations
-    z *= step;
-    y = (1 / powe) * z;
-    totalValue = totalValue + y;
-    powe = powe + 2;
-  }
-  totalValue *= 2;
-/*
-  char logxs[33];
-  dtostrfd(x, 8, logxs);
-  double log1 = log(x);
-  char log1s[33];
-  dtostrfd(log1, 8, log1s);
-  char log2s[33];
-  dtostrfd(totalValue, 8, log2s);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("input %s, log %s, taylor %s"), logxs, log1s, log2s);
-*/
-  return totalValue;
 }
 
 uint32_t SqrtInt(uint32_t num)
@@ -865,7 +805,7 @@ void SerialSendRaw(char *codes)
 uint32_t GetHash(const char *buffer, size_t size)
 {
   uint32_t hash = 0;
-  for (uint16_t i = 0; i <= size; i++) {
+  for (uint32_t i = 0; i <= size; i++) {
     hash += (uint8_t)*buffer++ * (i +1);
   }
   return hash;
@@ -958,7 +898,7 @@ uint8_t ModuleNr()
 
 bool ValidTemplateModule(uint8_t index)
 {
-  for (uint8_t i = 0; i < sizeof(kModuleNiceList); i++) {
+  for (uint32_t i = 0; i < sizeof(kModuleNiceList); i++) {
     if (index == pgm_read_byte(kModuleNiceList + i)) {
       return true;
     }
@@ -1002,7 +942,7 @@ void ModuleGpios(myio *gp)
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
 
   uint8_t j = 0;
-  for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+  for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
     dest[j] = src[i];
@@ -1117,7 +1057,7 @@ bool GetUsedInModule(uint8_t val, uint8_t *arr)
     offset = -(GPIO_CNTR1_NP - GPIO_CNTR1);
   }
 
-  for (uint8_t i = 0; i < MAX_GPIO_PIN; i++) {
+  for (uint32_t i = 0; i < MAX_GPIO_PIN; i++) {
     if (arr[i] == val) { return true; }
     if (arr[i] == val + offset) { return true; }
   }
@@ -1140,7 +1080,7 @@ bool JsonTemplate(const char* dataBuf)
     strlcpy(Settings.user_template.name, name, sizeof(Settings.user_template.name));
   }
   if (obj[D_JSON_GPIO].success()) {
-    for (uint8_t i = 0; i < sizeof(mycfgio); i++) {
+    for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
       Settings.user_template.gp.io[i] = obj[D_JSON_GPIO][i] | 0;
     }
   }
@@ -1159,7 +1099,7 @@ bool JsonTemplate(const char* dataBuf)
 void TemplateJson()
 {
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
-  for (uint8_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
+  for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
     ResponseAppend_P(PSTR("%s%d"), (i>0)?",":"", Settings.user_template.gp.io[i]);
   }
   ResponseAppend_P(PSTR("],\"" D_JSON_FLAG "\":%d,\"" D_JSON_BASE "\":%d}"), Settings.user_template.flag, Settings.user_template_base +1);
@@ -1249,7 +1189,7 @@ bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
     if (0 == Wire.endTransmission(false)) {             // Try to become I2C Master, send data and collect bytes, keep master status for next request...
       Wire.requestFrom((int)addr, (int)size);           // send data n-bytes read
       if (Wire.available() == size) {
-        for (uint8_t i = 0; i < size; i++) {
+        for (uint32_t i = 0; i < size; i++) {
           i2c_buffer = i2c_buffer << 8 | Wire.read();   // receive DATA
         }
         status = true;
@@ -1455,6 +1395,13 @@ void SetSeriallog(uint8_t loglevel)
   seriallog_timer = 0;
 }
 
+void SetSyslog(uint8_t loglevel)
+{
+  Settings.syslog_level = loglevel;
+  syslog_level = loglevel;
+  syslog_timer = 0;
+}
+
 #ifdef USE_WEBSERVER
 void GetLog(uint8_t idx, char** entry_pp, size_t* len_p)
 {
@@ -1496,7 +1443,7 @@ void Syslog(void)
     memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));
     log_data[sizeof(log_data) -1] = '\0';
     memcpy(log_data, syslog_preamble, strlen(syslog_preamble));
-    PortUdp.write(log_data);
+    PortUdp.write(log_data, strlen(log_data));
     PortUdp.endPacket();
     delay(1);  // Add time for UDP handling (#5512)
   } else {
@@ -1565,7 +1512,7 @@ void AddLog_P2(uint8_t loglevel, PGM_P formatP, ...)
 void AddLogBuffer(uint8_t loglevel, uint8_t *buffer, int count)
 {
   snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
-  for (int i = 0; i < count; i++) {
+  for (uint32_t i = 0; i < count; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer++));
   }
   AddLog(loglevel);

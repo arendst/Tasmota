@@ -246,7 +246,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "To use Tasmota, please enable JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware mínimo<br/>Atualizar por favor"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware mínimo<br>Atualizar por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor WEB ativo em"
 #define D_WITH_IP_ADDRESS "com o endereço IP"
 #define D_WEBSERVER_STOPPED "Servidor WEB parou"
@@ -536,6 +536,7 @@
 #define D_SENSOR_BUTTON        "Botão"      // Suffix "1"
 #define D_SENSOR_RELAY         "Relé"       // Suffix "1i"
 #define D_SENSOR_LED           "Led"        // Suffix "1i"
+#define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Contador"   // Suffix "1"
 #define D_SENSOR_IRRECV        "IRrecv"
@@ -601,6 +602,7 @@
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
+#define D_SENSOR_ARIRFSEL      "ALux IrSel"
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"

@@ -52,7 +52,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.5.0.7
+ * Updated until v6.5.0.16
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -173,7 +173,7 @@
 #define D_STOP "Detener"
 #define D_SUBNET_MASK "Máscara Subred"
 #define D_SUBSCRIBE_TO "Suscribir a"
-#define D_UNSUBSCRIBE_FROM "Unsubscribe from"
+#define D_UNSUBSCRIBE_FROM "Desuscribirse de"
 #define D_SUCCESSFUL "Exitosa"
 #define D_SUNRISE "Salida del Sol"
 #define D_SUNSET "Puesta del Sol"
@@ -246,7 +246,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Habilitar JavaScript para usar Tasmota"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MÍNIMO<br/>actualice por favor"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MÍNIMO<br>actualice por favor"
 #define D_WEBSERVER_ACTIVE_ON "Servidor web activo en"
 #define D_WITH_IP_ADDRESS "con dirección IP"
 #define D_WEBSERVER_STOPPED "Servidor web detenido"
@@ -536,6 +536,7 @@
 #define D_SENSOR_BUTTON        "Botón"      // Suffix "1"
 #define D_SENSOR_RELAY         "Relé"       // Suffix "1i"
 #define D_SENSOR_LED           "Led"        // Suffix "1i"
+#define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Contador"   // Suffix "1"
 #define D_SENSOR_IRRECV        "IR Rx"
@@ -601,6 +602,7 @@
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
+#define D_SENSOR_ARIRFSEL      "ALux IrSel"
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"

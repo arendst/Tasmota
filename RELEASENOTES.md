@@ -1,3 +1,7 @@
+<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+
+# RELEASE NOTES
+
 ## Migration Information
 See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
@@ -6,11 +10,10 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 3. Migrate to **Sonoff-Tasmota 5.14**
 4. Migrate to **Sonoff-Tasmota 6.x**
 
-## Release notes
-### Core version 2.3.0 vs 2.4.2
+## Core version 2.3.0 vs 2.4.2
 This release is based on ESP8266/Arduino library core 2.3.0 (again) as some people encountered wifi related issues on core 2.4.2. For others core 2.4.2 is working just fine. Both version are available from http://thehackbox.org/tasmota/release/
 
-### Change in default initial configuration tool
+## Change in default initial configuration tool
 Firmware binary **sonoff-classic.bin** supports **WifiManager, Wps and SmartConfig** for initial configuration. The default tool is **Wps**.
 
 To save memory space all other binaries support **WifiManager only**.
@@ -104,7 +107,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/release/020402/
 
-### Available Features and Sensors
+## Available Features and Sensors
 
 | Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
 |-----------------------|---------|-------|---------|--------|------|---------|---------|--------

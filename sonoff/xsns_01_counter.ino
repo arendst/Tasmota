@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_COUNTER
 /*********************************************************************************************\
  * Counter sensors (water meters, electricity meters etc.)
 \*********************************************************************************************/
@@ -24,6 +25,14 @@
 #define XSNS_01             1
 
 unsigned long last_counter_timer[MAX_COUNTERS]; // Last counter time in micro seconds
+
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0       // Fix core 2.5.x ISR not in IRAM Exception
+void CounterUpdate(uint8_t index) ICACHE_RAM_ATTR;
+void CounterUpdate1(void) ICACHE_RAM_ATTR;
+void CounterUpdate2(void) ICACHE_RAM_ATTR;
+void CounterUpdate3(void) ICACHE_RAM_ATTR;
+void CounterUpdate4(void) ICACHE_RAM_ATTR;
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
 void CounterUpdate(uint8_t index)
 {
@@ -64,7 +73,7 @@ void CounterUpdate4(void)
 
 void CounterSaveState(void)
 {
-  for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
+  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
     }
@@ -76,7 +85,7 @@ void CounterInit(void)
   typedef void (*function) () ;
   function counter_callbacks[] = { CounterUpdate1, CounterUpdate2, CounterUpdate3, CounterUpdate4 };
 
-  for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
+  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       pinMode(pin[GPIO_CNTR1 +i], bitRead(counter_no_pullup, i) ? INPUT : INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
@@ -101,7 +110,7 @@ void CounterShow(bool json)
 
   uint8_t dsxflg = 0;
   uint8_t header = 0;
-  for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
+  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       char counter[33];
       if (bitRead(Settings.pulse_counter_type, i)) {
@@ -109,7 +118,7 @@ void CounterShow(bool json)
       } else {
         dsxflg++;
 	//STB mod
-        dtostrfd(RtcSettings.pulse_counter[i]/Settings.pulse_devider[i], 0, counter);
+	dtostrfd(RtcSettings.pulse_counter[i]/Settings.pulse_devider[i], 0, counter);
 	//end
       }
 
@@ -168,8 +177,11 @@ bool Xsns01(uint8_t function)
       break;
 #endif  // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:
+    case FUNC_SAVE_AT_MIDNIGHT:
       CounterSaveState();
       break;
   }
   return result;
 }
+
+#endif  // USE_COUNTER
