@@ -451,6 +451,7 @@ class ESPKNXIP {
     void send_4byte_int(address_t const &receiver, knx_command_type_t ct, int32_t val);
     void send_4byte_uint(address_t const &receiver, knx_command_type_t ct, uint32_t val);
     void send_4byte_float(address_t const &receiver, knx_command_type_t ct, float val);
+    void send_14byte_string(address_t const &receiver, knx_command_type_t ct, const char *val);
 
     void write_1bit(address_t const &receiver, uint8_t bit) { send_1bit(receiver, KNX_CT_WRITE, bit); }
     void write_2bit(address_t const &receiver, uint8_t twobit) { send_2bit(receiver, KNX_CT_WRITE, twobit); }
@@ -469,6 +470,7 @@ class ESPKNXIP {
     void write_4byte_int(address_t const &receiver, int32_t val) { send_4byte_int(receiver, KNX_CT_WRITE, val); }
     void write_4byte_uint(address_t const &receiver, uint32_t val) { send_4byte_uint(receiver, KNX_CT_WRITE, val); }
     void write_4byte_float(address_t const &receiver, float val) { send_4byte_float(receiver, KNX_CT_WRITE, val);}
+    void write_14byte_string(address_t const &receiver, const char *val) { send_14byte_string(receiver, KNX_CT_WRITE, val); }
 
     void answer_1bit(address_t const &receiver, uint8_t bit) { send_1bit(receiver, KNX_CT_ANSWER, bit); }
     void answer_2bit(address_t const &receiver, uint8_t twobit) { send_2bit(receiver, KNX_CT_ANSWER, twobit); }
@@ -487,6 +489,7 @@ class ESPKNXIP {
     void answer_4byte_int(address_t const &receiver, int32_t val) { send_4byte_int(receiver, KNX_CT_ANSWER, val); }
     void answer_4byte_uint(address_t const &receiver, uint32_t val) { send_4byte_uint(receiver, KNX_CT_ANSWER, val); }
     void answer_4byte_float(address_t const &receiver, float val) { send_4byte_float(receiver, KNX_CT_ANSWER, val);}
+    void answer_14byte_string(address_t const &receiver, const char *val) { send_14byte_string(receiver, KNX_CT_ANSWER, val); }
 
     bool          data_to_bool(uint8_t *data);
     int8_t        data_to_1byte_int(uint8_t *data);
