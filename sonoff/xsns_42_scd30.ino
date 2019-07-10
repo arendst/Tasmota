@@ -449,7 +449,11 @@ void Scd30Show(bool json)
       ResponseAppend_P(PSTR(",\"SCD30\":{\"" D_JSON_CO2 "\":%d,\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}"),
         scd30_CO2, scd30_CO2EAvg, temperature, humidity);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, scd30_CO2);
+      if (0 == tele_period)
+      {
+        DomoticzSensor(DZ_AIRQUALITY, scd30_CO2);
+        DomoticzTempHumSensor(temperature, humidity);
+      }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
