@@ -4,8 +4,9 @@
  * Change defines USE_TX20_WIND_SENSOR and USE_RC_SWITCH in my_user_config.h to disable to lower iram usage enabling latest core compilation (#6060, #6062)
  * Add blend RGB leds with White leds for better whites (#5895, #5704)
  * Add command SetOption41 0..8 to control number of Tuya switches (#6039)
- * Add AZ7798 automatic setting of clock display (#6034)
  * Add command SetOption42 0..255 to set overtemperature (Celsius only) threshold resulting in power off all on energy monitoring devices. Default setting is 90 (#6036)
+ * Add command Time to disable NTP and set UTC time as Epoch value if above 1451602800 (=20160101). Time 0 re-enables NTP (#5279)
+ * Add AZ7798 automatic setting of clock display (#6034)
  * Add Epoch and UptimeSec to JSON messages (#6068)
  *
  * 6.6.0 20190707
