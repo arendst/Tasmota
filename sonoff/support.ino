@@ -880,6 +880,17 @@ int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char d
   return len + mlen;
 }
 
+int ResponseAppendTime(void)
+{
+  return ResponseAppend_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%u"), GetDateAndTime(DT_LOCAL).c_str(), UtcTime());
+}
+
+int ResponseBeginTime(void)
+{
+  mqtt_data[0] = '\0';
+  return ResponseAppendTime();
+}
+
 int ResponseJsonEnd(void)
 {
   return ResponseAppend_P(PSTR("}"));

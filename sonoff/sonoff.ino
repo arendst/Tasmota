@@ -1940,7 +1940,8 @@ void MqttShowState(void)
 {
   char stemp1[33];
 
-  ResponseAppend_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str(), GetUptime().c_str());
+  ResponseAppendTime();
+  ResponseAppend_P(PSTR(",\"" D_JSON_UPTIME "\":\"%s\",\"UptimeSec\":%u"), GetUptime().c_str(), UpTime());
 
 #ifdef USE_ADC_VCC
   dtostrfd((double)ESP.getVcc()/1000, 3, stemp1);
@@ -1987,7 +1988,8 @@ void MqttPublishTeleState(void)
 
 bool MqttShowSensor(void)
 {
-  ResponseAppend_P(PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
+  ResponseAppendTime();
+
   int json_data_start = strlen(mqtt_data);
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
 #ifdef USE_TM1638
@@ -2083,14 +2085,6 @@ void PerformEverySecond(void)
 
   XdrvCall(FUNC_EVERY_SECOND);
   XsnsCall(FUNC_EVERY_SECOND);
-/*
-  if ((2 == RtcTime.minute) && latest_uptime_flag) {
-    latest_uptime_flag = false;
-    Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\"}"), GetDateAndTime(DT_LOCAL).c_str(), GetUptime().c_str());
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_UPTIME));
-  }
-  if ((3 == RtcTime.minute) && !latest_uptime_flag) latest_uptime_flag = true;
-*/
 }
 
 /*********************************************************************************************\
