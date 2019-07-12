@@ -923,7 +923,13 @@ Setting_6_5_0_15['flag3'][0].update ({
         'tuya_show_dimmer':              ('<L', (0x3A0,1,15), (None, None,                      ('SetOption',   '"SetOption65 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_6_0_2 = copy.deepcopy(Setting_6_5_0_15)
+Setting_6_6_0_2['flag3'][0].update ({
+        'tuya_dimmer_range_255':         ('<L', (0x3A0,1,16), (None, None,                      ('SetOption',   '"SetOption66 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x6050010, 0xe00, Setting_6_6_0_2),
             (0x605000F, 0xe00, Setting_6_5_0_15),
             (0x605000C, 0xe00, Setting_6_5_0_12),
             (0x605000B, 0xe00, Setting_6_5_0_11),

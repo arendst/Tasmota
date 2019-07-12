@@ -146,14 +146,20 @@ void LightSerialDuty(uint8_t duty)
     if (duty < 25) { duty = 25; }  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
 
     if (Settings.flag3.tuya_show_dimmer == 0) {
-
-    	AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Send dim value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
-
+      if(Settings.flag3.tuya_dimmer_range_255 == 0)
+      {
+        duty = round(duty * (100. / 255.));
+      }
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Send dim value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
       TuyaSendValue(Settings.param[P_TUYA_DIMMER_ID], duty);
     }
   } else {
     tuya_ignore_dim = false;  // reset flag
     if (Settings.flag3.tuya_show_dimmer == 0) {
+      if(Settings.flag3.tuya_dimmer_range_255 == 0)
+      {
+        duty = round(duty * (100. / 255.));
+      }
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Send dim skipped value=%d"), duty);  // due to 0 or already set
     }
   }
@@ -211,8 +217,14 @@ void TuyaPacketProcess(void)
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Autoconfiguring Dimmer ID %d"), tuya_buffer[6]);
             Settings.param[P_TUYA_DIMMER_ID] = tuya_buffer[6];
           }
-
-          tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
+          if(Settings.flag3.tuya_dimmer_range_255 == 0)
+          {
+            tuya_new_dim = round(tuya_buffer[13]);
+          }
+          else
+          {
+            tuya_new_dim = round(tuya_buffer[13] * (100. / 255.));
+          }
           if ((power || Settings.flag3.tuya_apply_o20) && (tuya_new_dim > 0) && (abs(tuya_new_dim - Settings.light_dimmer) > 1)) {
             tuya_ignore_dim = true;
 

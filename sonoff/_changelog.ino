@@ -1,4 +1,7 @@
 /*********************************************************************************************\
+ *  6.6.0.2 20190711
+ * SetOption66 - Enable or Disable Dimmer range 255 slider control
+ *
  * 6.6.0.1 20190708
  * Fix Domoticz battery level set to 100 if define USE_ADC_VCC is not used (#6033)
  * Change defines USE_TX20_WIND_SENSOR and USE_RC_SWITCH in my_user_config.h to disable to lower iram usage enabling latest core compilation (#6060, #6062)
