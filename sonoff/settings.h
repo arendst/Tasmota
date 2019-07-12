@@ -78,8 +78,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t no_hold_retain : 1;           // bit 12 (v6.4.1.19) - SetOption62 - Don't use retain flag on HOLD messages
     uint32_t no_power_feedback : 1;        // bit 13 (v6.5.0.9)  - SetOption63 - Don't scan relay power state at restart
     uint32_t use_underscore : 1;           // bit 14 (v6.5.0.12) - SetOption64 - Enable "_" instead of "-" as sensor index separator
-    uint32_t tuya_show_dimmer : 1;		     // bit 15 (v6.5.0.15) - SetOption65 - Enable or Disable Dimmer slider control
-    uint32_t spare16 : 1;
+    uint32_t tuya_show_dimmer : 1;		   // bit 15 (v6.5.0.15) - SetOption65 - Enable or Disable Dimmer slider control
+    uint32_t tuya_dimmer_range_255 : 1;    // bit 16 (v6.6.0.2)  - SetOption66 - Enable or Disable Dimmer range 255 slider control
     uint32_t spare17 : 1;
     uint32_t spare18 : 1;
     uint32_t spare19 : 1;
