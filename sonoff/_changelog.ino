@@ -8,6 +8,7 @@
  * Add command Time to disable NTP and set UTC time as Epoch value if above 1451602800 (=20160101). Time 0 re-enables NTP (#5279)
  * Add AZ7798 automatic setting of clock display (#6034)
  * Add Epoch and UptimeSec to JSON messages (#6068)
+ * Fix Force Elliptic Curve for Letsencrypt TLS #6042
  *
  * 6.6.0 20190707
  * Remove support of TLS on core 2.3.0 and extent support on core 2.4.2 and up
