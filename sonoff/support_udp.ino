@@ -35,7 +35,8 @@ bool udp_response_mutex = false;         // M-Search response mutex to control r
  * UPNP/SSDP search targets
 \*********************************************************************************************/
 
-const char URN_BELKIN_DEVICE[] PROGMEM = "urn:Belkin:device:**";
+const char URN_BELKIN_DEVICE[] PROGMEM = "urn:belkin:device:**";
+const char URN_BELKIN_DEVICE_CAP[] PROGMEM = "urn:Belkin:device:**";
 const char UPNP_ROOTDEVICE[] PROGMEM = "upnp:rootdevice";
 const char SSDPSEARCH_ALL[] PROGMEM = "ssdpsearch:all";
 const char SSDP_ALL[] PROGMEM = "ssdp:all";
