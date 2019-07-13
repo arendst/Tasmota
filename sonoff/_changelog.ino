@@ -11,6 +11,7 @@
  * Add AZ7798 automatic setting of clock display (#6034)
  * Add Epoch and UptimeSec to JSON messages (#6068)
  * Add support for up to 4 INA219 sensors (#6046)
+ * Fix WeMo emulation for 1G echo and 2G echo dot (#6086)
  *
  * 6.6.0 20190707
  * Remove support of TLS on core 2.3.0 and extent support on core 2.4.2 and up
