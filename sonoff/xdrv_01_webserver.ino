@@ -2329,7 +2329,7 @@ String UrlEncode(const String& text)
 			encoded += hex[decodedChar & 0xF];
     }
 */
-    if (' ' == decodedChar) {
+    if ((' ' == decodedChar) || ('+' == decodedChar)) {
       encoded += '%';
 			encoded += hex[decodedChar >> 4];
 			encoded += hex[decodedChar & 0xF];
