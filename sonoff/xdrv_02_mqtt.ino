@@ -309,8 +309,8 @@ void MqttPublishPowerState(uint8_t device)
 
   if ((device < 1) || (device > devices_present)) { device = 1; }
 
-  if ((SONOFF_IFAN02 == my_module_type) && (device > 1)) {
-    if (GetFanspeed() < MAX_FAN_SPEED) {  // 4 occurs when fanspeed is 3 and RC button 2 is pressed
+  if (IsModuleIfan() && (device > 1)) {
+    if (GetFanspeed() < MaxFanspeed()) {  // 4 occurs when fanspeed is 3 and RC button 2 is pressed
 #ifdef USE_DOMOTICZ
       DomoticzUpdateFanState();  // RC Button feedback
 #endif  // USE_DOMOTICZ
@@ -335,7 +335,7 @@ void MqttPublishAllPowerState()
 {
   for (uint32_t i = 1; i <= devices_present; i++) {
     MqttPublishPowerState(i);
-    if (SONOFF_IFAN02 == my_module_type) { break; }  // Report status of light relay only
+    if (IsModuleIfan()) { break; }  // Report status of light relay only
   }
 }
 

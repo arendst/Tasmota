@@ -1,7 +1,14 @@
 /*********************************************************************************************\
+ * 6.6.0.2 20190714
+ * Add support for Sonoff iFan03 as module 71 (#5988)
+ * Add support for a buzzer
+ * Add command SetOption67 0/1 to disable or enable a buzzer as used in iFan03
+ *
  * 6.6.0.1 20190708
  * Fix Domoticz battery level set to 100 if define USE_ADC_VCC is not used (#6033)
  * Fix Force Elliptic Curve for Letsencrypt TLS #6042
+ * Fix WeMo emulation for 1G echo and 2G echo dot (#6086)
+ * Fix Xiaomi Philips brightness (#6091)
  * Change defines USE_TX20_WIND_SENSOR and USE_RC_SWITCH in my_user_config.h to disable to lower iram usage enabling latest core compilation (#6060, #6062)
  * Add blend RGB leds with White leds for better whites (#5895, #5704)
  * Add command SetOption41 0..8 to control number of Tuya switches (#6039)
@@ -11,8 +18,6 @@
  * Add AZ7798 automatic setting of clock display (#6034)
  * Add Epoch and UptimeSec to JSON messages (#6068)
  * Add support for up to 4 INA219 sensors (#6046)
- * Fix WeMo emulation for 1G echo and 2G echo dot (#6086)
- * Fix Xiaomi Philips brightness (#6091)
  *
  * 6.6.0 20190707
  * Remove support of TLS on core 2.3.0 and extent support on core 2.4.2 and up

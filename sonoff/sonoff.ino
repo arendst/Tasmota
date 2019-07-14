@@ -73,7 +73,7 @@
 #include "settings.h"
 
 enum TasmotaCommands {
-  CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_FANSPEED, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,
+  CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,
   CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SENSOR, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
   CMND_PRESSURE_RESOLUTION, CMND_POWER_RESOLUTION, CMND_VOLTAGE_RESOLUTION, CMND_FREQUENCY_RESOLUTION, CMND_CURRENT_RESOLUTION, CMND_ENERGY_RESOLUTION, CMND_WEIGHT_RESOLUTION,
   CMND_MODULE, CMND_MODULES, CMND_ADC, CMND_ADCS, CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
@@ -83,7 +83,7 @@ enum TasmotaCommands {
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIME, CMND_TIMEZONE, CMND_TIMESTD, CMND_TIMEDST, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE, CMND_LEDMASK,
   CMND_I2CSCAN, CMND_SERIALSEND, CMND_BAUDRATE, CMND_SERIALDELIMITER, CMND_DRIVER };
 const char kTasmotaCommands[] PROGMEM =
-  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_FANSPEED "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
+  D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_FREQUENCY_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_WEIGHT_RESOLUTION "|"
   D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|"
@@ -151,6 +151,7 @@ uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_power = 0;                      // LED power state
 uint8_t ledlnk_inverted = 0;                // Link LED inverted flag (1 = (0 = On, 1 = Off))
+uint8_t buzzer_inverted = 0;                // Buzzer inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
 uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
 uint8_t energy_flg = 0;                     // Energy monitor configured
@@ -163,6 +164,7 @@ uint8_t seriallog_level;                    // Current copy of Settings.seriallo
 uint8_t syslog_level;                       // Current copy of Settings.syslog_level
 uint8_t my_module_type;                     // Current copy of Settings.module or user template type
 uint8_t my_adc0;                            // Active copy of Module ADC0
+uint8_t buzzer_count = 0;                   // Number of buzzes
 //uint8_t mdns_delayed_start = 0;             // mDNS delayed start
 bool serial_local = false;                  // Handle serial locally;
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
@@ -430,35 +432,6 @@ void SetLedLink(uint8_t state)
   }
 }
 
-uint8_t GetFanspeed(void)
-{
-  uint8_t fanspeed = 0;
-
-//  if (SONOFF_IFAN02 == my_module_type) {
-    /* Fanspeed is controlled by relay 2, 3 and 4 as in Sonoff 4CH.
-       000x = 0
-       001x = 1
-       011x = 2
-       101x = 3
-    */
-    fanspeed = (uint8_t)(power &0xF) >> 1;
-    if (fanspeed) { fanspeed = (fanspeed >> 1) +1; }
-//  }
-  return fanspeed;
-}
-
-void SetFanspeed(uint8_t fanspeed)
-{
-  for (uint32_t i = 0; i < MAX_FAN_SPEED -1; i++) {
-    uint8_t state = kIFan02Speed[fanspeed][i];
-//    uint8_t state = pgm_read_byte(kIFan02Speed +(speed *3) +i);
-    ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
-  }
-#ifdef USE_DOMOTICZ
-  DomoticzUpdateFanState();  // Command FanSpeed feedback
-#endif  // USE_DOMOTICZ
-}
-
 void SetPulseTimer(uint8_t index, uint16_t time)
 {
   pulse_timer[index] = (time > 111) ? millis() + (1000 * (time - 100)) : (time > 0) ? millis() + (100 * time) : 0L;
@@ -635,22 +608,6 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       ExecuteCommandPower(index, payload, SRC_IGNORE);
       fallback_topic_flag = false;
       return;
-    }
-    else if ((CMND_FANSPEED == command_code) && (SONOFF_IFAN02 == my_module_type)) {
-      if (data_len > 0) {
-        if ('-' == dataBuf[0]) {
-          payload = (int16_t)GetFanspeed() -1;
-          if (payload < 0) { payload = MAX_FAN_SPEED -1; }
-        }
-        else if ('+' == dataBuf[0]) {
-          payload = GetFanspeed() +1;
-          if (payload > MAX_FAN_SPEED -1) { payload = 0; }
-        }
-      }
-      if ((payload >= 0) && (payload < MAX_FAN_SPEED) && (payload != GetFanspeed())) {
-        SetFanspeed(payload);
-      }
-      Response_P(S_JSON_COMMAND_NVALUE, command, GetFanspeed());
     }
     else if (CMND_STATUS == command_code) {
       if ((payload < 0) || (payload > MAX_STATUS)) payload = 99;
@@ -1675,7 +1632,7 @@ void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
 
 //  ShowSource(source);
 
-  if (SONOFF_IFAN02 == my_module_type) {
+  if (IsModuleIfan()) {
     blink_mask &= 1;                 // No blinking on the fan relays
     Settings.flag.interlock = 0;     // No interlock mode as it is already done by the microcontroller
     Settings.pulse_timer[1] = 0;     // No pulsetimers on the fan relays
@@ -1826,7 +1783,7 @@ void PublishStatus(uint8_t payload)
 
   if ((0 == payload) || (99 == payload)) {
     uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
-    if (SONOFF_IFAN02 == my_module_type) { maxfn = 1; }
+    if (IsModuleIfan()) { maxfn = 1; }
     stemp[0] = '\0';
     for (uint32_t i = 0; i < maxfn; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), Settings.friendlyname[i]);
@@ -1965,7 +1922,7 @@ void MqttShowState(void)
     } else {
 #endif
       ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i +1, sizeof(stemp1), Settings.flag.device_index_enable), GetStateText(bitRead(power, i)));
-      if (SONOFF_IFAN02 == my_module_type) {
+      if (IsModuleIfan()) {
         ResponseAppend_P(PSTR(",\"" D_CMND_FANSPEED "\":%d"), GetFanspeed());
         break;
       }
@@ -2143,6 +2100,16 @@ void Every100mSeconds(void)
       backlog_pointer++;
       if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
     }
+  }
+
+  if ((pin[GPIO_BUZZER] < 99) && (Settings.flag3.buzzer_enable)) {
+    if (buzzer_count) {
+      buzzer_count--;
+      uint8_t state = buzzer_count & 1;
+      digitalWrite(pin[GPIO_BUZZER], (buzzer_inverted) ? !state : state);
+    }
+  } else {
+    buzzer_count = 0;
   }
 }
 
@@ -2609,6 +2576,10 @@ void GpioInit(void)
         ledlnk_inverted = 1;
         mpin -= (GPIO_LEDLNK_INV - GPIO_LEDLNK);
       }
+      else if (mpin == GPIO_BUZZER_INV) {
+        buzzer_inverted = 1;
+        mpin -= (GPIO_BUZZER_INV - GPIO_BUZZER);
+      }
       else if ((mpin >= GPIO_PWM1_INV) && (mpin < (GPIO_PWM1_INV + MAX_PWMS))) {
         bitSet(pwm_inverted, mpin - GPIO_PWM1_INV);
         mpin -= (GPIO_PWM1_INV - GPIO_PWM1);
@@ -2741,6 +2712,10 @@ void GpioInit(void)
   if (pin[GPIO_LEDLNK] < 99) {
     pinMode(pin[GPIO_LEDLNK], OUTPUT);
     digitalWrite(pin[GPIO_LEDLNK], ledlnk_inverted);
+  }
+  if (pin[GPIO_BUZZER] < 99) {
+    pinMode(pin[GPIO_BUZZER], OUTPUT);
+    digitalWrite(pin[GPIO_BUZZER], buzzer_inverted);  // Buzzer Off
   }
 
   ButtonInit();

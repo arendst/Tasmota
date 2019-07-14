@@ -184,6 +184,8 @@ enum UserSelectablePins {
   GPIO_LEDLNK,         // Link led
   GPIO_LEDLNK_INV,     // Inverted link led
   GPIO_ARIRFSEL,       // Arilux RF Receive input selected
+  GPIO_BUZZER,         // Buzzer
+  GPIO_BUZZER_INV,     // Inverted buzzer
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -251,6 +253,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADE7953_IRQ "|"
   D_SENSOR_LED_LINK "|" D_SENSOR_LED_LINK "i|"
   D_SENSOR_ARIRFSEL "|"
+  D_SENSOR_BUZZER "|" D_SENSOR_BUZZER "i|"
   ;
 
 // User selectable ADC0 functionality
@@ -353,6 +356,7 @@ enum SupportedModules {
   WAGA,
   SYF05,
   SONOFF_L1,
+  SONOFF_IFAN03,
   MAXMODULE};
 
 #define USER_MODULE        255
@@ -476,6 +480,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_CNTR4,
   GPIO_CNTR4_NP,
 #endif
+  GPIO_BUZZER,         // Buzzer
+  GPIO_BUZZER_INV,     // Inverted buzzer
   GPIO_TXD,            // Serial interface
   GPIO_RXD,            // Serial interface
 #ifdef USE_I2C
@@ -664,6 +670,7 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   SLAMPHER,
   SONOFF_SC,           // Sonoff Environmemtal Sensor
   SONOFF_IFAN02,       // Sonoff Fan
+  SONOFF_IFAN03,
   SONOFF_BRIDGE,       // Sonoff Bridge
   SONOFF_SV,           // Sonoff Development Devices
   SONOFF_DEV,
@@ -2002,6 +2009,25 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,
      GPIO_USER,
      0
+  },
+  { "Sonoff iFan03",   // Sonoff iFan03 (ESP8285)
+     GPIO_KEY1,        // GPIO00 WIFI_KEY0 Virtual button 1 as feedback from RC
+     GPIO_TXD,         // GPIO01 ESP_TXD Serial RXD and Optional sensor
+     0,                // GPIO02 ESP_LOG
+     GPIO_RXD,         // GPIO03 ESP_RXD Serial TXD and Optional sensor
+     0,                // GPIO04 DEBUG_RX
+     0,                // GPIO05 DEBUG_TX
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     GPIO_REL1_INV,    // GPIO09 WIFI_O0 Relay 1 (0 = Off, 1 = On) controlling the light
+     GPIO_BUZZER_INV,  // GPIO10 WIFI_O4 Buzzer (0 = Off, 1 = On)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_REL3,        // GPIO12 WIFI_O2 Relay 3 (0 = Off, 1 = On) controlling the fan
+     GPIO_LED1_INV,    // GPIO13 WIFI_CHK Blue Led on PCA (0 = On, 1 = Off) - Link and Power status
+     GPIO_REL2,        // GPIO14 WIFI_O1 Relay 2 (0 = Off, 1 = On) controlling the fan
+     GPIO_REL4,        // GPIO15 WIFI_O3 Relay 4 (0 = Off, 1 = On) controlling the fan
+     0, 0
   }
 };
 

@@ -101,7 +101,7 @@ void MqttPublishDomoticzPowerState(uint8_t device)
   if (Settings.flag.mqtt_enabled) {
     if ((device < 1) || (device > devices_present)) { device = 1; }
     if (Settings.domoticz_relay_idx[device -1]) {
-      if ((SONOFF_IFAN02 == my_module_type) && (device > 1)) {
+      if (IsModuleIfan() && (device > 1)) {
         // Fan handled by MqttPublishDomoticzFanState
       } else {
         char svalue[8];  // Dimmer value
@@ -129,7 +129,7 @@ void DomoticzMqttUpdate(void)
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = Settings.domoticz_update_timer;
       for (uint32_t i = 1; i <= devices_present; i++) {
-        if ((SONOFF_IFAN02 == my_module_type) && (i > 1)) {
+        if (IsModuleIfan() && (i > 1)) {
           MqttPublishDomoticzFanState();
           break;
         } else {
@@ -214,7 +214,7 @@ bool DomoticzMqttData(void)
         if (idx == Settings.domoticz_relay_idx[i]) {
           bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
-          if ((SONOFF_IFAN02 == my_module_type) && (1 == i)) {  // Idx 2 is fanspeed
+          if (IsModuleIfan() && (1 == i)) {  // Idx 2 is fanspeed
             uint8_t svalue = 0;
             if (domoticz.containsKey("svalue1")) {
               svalue = domoticz["svalue1"];
@@ -472,7 +472,7 @@ void HandleDomoticzConfiguration(void)
       WSContentSend_P(HTTP_FORM_DOMOTICZ_SWITCH,
         i +1, i, Settings.domoticz_switch_idx[i]);
     }
-    if ((SONOFF_IFAN02 == my_module_type) && (1 == i)) { break; }
+    if (IsModuleIfan() && (1 == i)) { break; }
   }
   for (uint32_t i = 0; i < DZ_MAX_SENSORS; i++) {
     WSContentSend_P(HTTP_FORM_DOMOTICZ_SENSOR,
