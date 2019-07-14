@@ -669,8 +669,10 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   SONOFF_B1,           // Sonoff Light Bulbs
   SLAMPHER,
   SONOFF_SC,           // Sonoff Environmemtal Sensor
+#ifdef USE_SONOFF_IFAN
   SONOFF_IFAN02,       // Sonoff Fan
   SONOFF_IFAN03,
+#endif
   SONOFF_BRIDGE,       // Sonoff Bridge
   SONOFF_SV,           // Sonoff Development Devices
   SONOFF_DEV,

@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_SONOFF_IFAN
 /*********************************************************************************************\
   Sonoff iFan02 and iFan03
 \*********************************************************************************************/
@@ -32,6 +33,7 @@ const uint8_t kIFan03Sequence[MAX_FAN_SPEED][MAX_FAN_SPEED] = {{0, 2, 2, 2}, {0,
 uint8_t ifan_fanspeed_timer = 0;
 uint8_t ifan_fanspeed_goal = 0;
 bool ifan_receive_flag = false;
+bool ifan_restart_flag = true;
 
 /*********************************************************************************************/
 
@@ -236,6 +238,12 @@ void SonoffIfanUpdate(void)
       }
     }
   }
+
+  if (ifan_restart_flag && (4 == uptime) && (SONOFF_IFAN02 == my_module_type)) {  // Microcontroller needs 3 seconds before accepting commands
+    ifan_restart_flag = false;
+    SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
+    SetDevicePower(power, SRC_RETRY);  // Set required power on state
+  }
 }
 
 /*********************************************************************************************\
@@ -264,3 +272,5 @@ bool Xdrv22(uint8_t function)
   }
   return result;
 }
+
+#endif  // USE_SONOFF_IFAN

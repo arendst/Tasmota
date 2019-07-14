@@ -309,6 +309,7 @@ void MqttPublishPowerState(uint8_t device)
 
   if ((device < 1) || (device > devices_present)) { device = 1; }
 
+#ifdef USE_SONOFF_IFAN
   if (IsModuleIfan() && (device > 1)) {
     if (GetFanspeed() < MaxFanspeed()) {  // 4 occurs when fanspeed is 3 and RC button 2 is pressed
 #ifdef USE_DOMOTICZ
@@ -320,6 +321,7 @@ void MqttPublishPowerState(uint8_t device)
       MqttPublish(stopic);
     }
   } else {
+#endif  // USE_SONOFF_IFAN
     GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable);
     GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
     Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(power, device -1)));
@@ -328,14 +330,18 @@ void MqttPublishPowerState(uint8_t device)
     GetTopic_P(stopic, STAT, mqtt_topic, scommand);
     Response_P(GetStateText(bitRead(power, device -1)));
     MqttPublish(stopic, Settings.flag.mqtt_power_retain);
+#ifdef USE_SONOFF_IFAN
   }
+#endif  // USE_SONOFF_IFAN
 }
 
 void MqttPublishAllPowerState()
 {
   for (uint32_t i = 1; i <= devices_present; i++) {
     MqttPublishPowerState(i);
+#ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) { break; }  // Report status of light relay only
+#endif  // USE_SONOFF_IFAN
   }
 }
 

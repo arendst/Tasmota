@@ -81,6 +81,16 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef CODE_IMAGE
 #define CODE_IMAGE 3
 
+// -- Optional modules -------------------------
+#define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
+#define USE_TUYA_DIMMER                       // Add support for Tuya Serial Dimmer
+#ifndef TUYA_DIMMER_ID
+  #define TUYA_DIMMER_ID       0              // Default dimmer Id
+#endif
+//#define USE_ARMTRONIX_DIMMERS                 // Add support for Armtronix Dimmers (+1k4 code)
+#define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
+//#define ROTARY_V1                             // Add support for MI Desk Lamp
+
 #define USE_COUNTER                           // Enable counters
 #undef USE_ADC_VCC                            // Add Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
@@ -137,11 +147,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_SDM630                            // Add support for Eastron SDM630-Modbus energy meter (+2k code)
 #define USE_MP3_PLAYER                        // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10             // Set the startup volume on init, the range can be 0..30(max)
-#define USE_TUYA_DIMMER                       // Add support for Tuya Serial Dimmer
-#ifndef TUYA_DIMMER_ID
-  #define TUYA_DIMMER_ID       0              // Default dimmer Id
-#endif
-#define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 //#define USE_AZ7798                            // Add support for AZ-Instrument 7798 CO2 datalogger
 #define USE_PN532_HSU                         // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
@@ -199,6 +204,16 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_TIMERS_WEB                         // Disable support for timer webpage
 #undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 #undef USE_RULES                              // Disable support for rules
+
+// -- Optional modules -------------------------
+//#ifndef USE_SONOFF_IFAN
+#define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
+//#endif
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
+#undef ROTARY_V1                              // Disable support for MI Desk Lamp
+
 #undef USE_COUNTER                            // Disable counters
 #undef USE_I2C                                // Disable all I2C sensors
 #undef USE_SPI                                // Disable all SPI devices
@@ -210,9 +225,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
-#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
-#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
@@ -328,6 +340,14 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 //#undef USE_TIMERS_WEB                         // Disable support for timer webpage
 //#undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 //#undef USE_RULES                              // Disable support for rules
+
+// -- Optional modules -------------------------
+#define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
+//#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
+#undef ROTARY_V1                              // Disable support for MI Desk Lamp
+
 #undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
 #undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
@@ -343,9 +363,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
-//#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
-#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
@@ -399,6 +416,14 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_RULES                              // Disable support for rules
 #undef USE_SCRIPT                             // Disable support for script
 #undef USE_LIGHT                              // Disable support for lights
+
+// -- Optional modules -------------------------
+#undef USE_SONOFF_IFAN                        // Disable support for Sonoff iFan02 and iFan03 (+2k code)
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
+#undef ROTARY_V1                              // Disable support for MI Desk Lamp
+
 #undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
 #undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
@@ -414,9 +439,6 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
-#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
-#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor

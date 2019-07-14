@@ -1632,6 +1632,7 @@ void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
 
 //  ShowSource(source);
 
+#ifdef USE_SONOFF_IFAN
   if (IsModuleIfan()) {
     blink_mask &= 1;                 // No blinking on the fan relays
     Settings.flag.interlock = 0;     // No interlock mode as it is already done by the microcontroller
@@ -1639,6 +1640,7 @@ void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
     Settings.pulse_timer[2] = 0;
     Settings.pulse_timer[3] = 0;
   }
+#endif  // USE_SONOFF_IFAN
 
   uint8_t publish_power = 1;
   if ((POWER_OFF_NO_STATE == state) || (POWER_ON_NO_STATE == state)) {
@@ -1783,7 +1785,9 @@ void PublishStatus(uint8_t payload)
 
   if ((0 == payload) || (99 == payload)) {
     uint8_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
+#ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) { maxfn = 1; }
+#endif  // USE_SONOFF_IFAN
     stemp[0] = '\0';
     for (uint32_t i = 0; i < maxfn; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), Settings.friendlyname[i]);
@@ -1922,10 +1926,12 @@ void MqttShowState(void)
     } else {
 #endif
       ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i +1, sizeof(stemp1), Settings.flag.device_index_enable), GetStateText(bitRead(power, i)));
+#ifdef USE_SONOFF_IFAN
       if (IsModuleIfan()) {
         ResponseAppend_P(PSTR(",\"" D_CMND_FANSPEED "\":%d"), GetFanspeed());
         break;
       }
+#endif  // USE_SONOFF_IFAN
 #ifdef USE_LIGHT
     }
 #endif
@@ -1998,11 +2004,6 @@ void PerformEverySecond(void)
 
     Settings.bootcount++;              // Moved to here to stop flash writes during start-up
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
-  }
-
-  if ((4 == uptime) && (SONOFF_IFAN02 == my_module_type)) {  // Microcontroller needs 3 seconds before accepting commands
-    SetDevicePower(1, SRC_RETRY);      // Sync with default power on state microcontroller being Light ON and Fan OFF
-    SetDevicePower(power, SRC_RETRY);  // Set required power on state
   }
 
   if (seriallog_timer) {

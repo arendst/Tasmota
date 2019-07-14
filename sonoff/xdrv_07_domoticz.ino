@@ -74,6 +74,7 @@ int DomoticzRssiQuality(void)
   return WifiGetRssiAsQuality(WiFi.RSSI()) / 10;
 }
 
+#ifdef USE_SONOFF_IFAN
 void MqttPublishDomoticzFanState()
 {
   if (Settings.flag.mqtt_enabled && Settings.domoticz_relay_idx[1]) {
@@ -95,21 +96,26 @@ void DomoticzUpdateFanState()
   }
   domoticz_update_flag = 1;
 }
+#endif  // USE_SONOFF_IFAN
 
 void MqttPublishDomoticzPowerState(uint8_t device)
 {
   if (Settings.flag.mqtt_enabled) {
     if ((device < 1) || (device > devices_present)) { device = 1; }
     if (Settings.domoticz_relay_idx[device -1]) {
+#ifdef USE_SONOFF_IFAN
       if (IsModuleIfan() && (device > 1)) {
         // Fan handled by MqttPublishDomoticzFanState
       } else {
+#endif  // USE_SONOFF_IFAN
         char svalue[8];  // Dimmer value
 
         snprintf_P(svalue, sizeof(svalue), PSTR("%d"), Settings.light_dimmer);
         Response_P(DOMOTICZ_MESSAGE, (int)Settings.domoticz_relay_idx[device -1], (power & (1 << (device -1))) ? 1 : 0, (light_type) ? svalue : "", DomoticzBatteryQuality(), DomoticzRssiQuality());
         MqttPublish(domoticz_in_topic);
+#ifdef USE_SONOFF_IFAN
       }
+#endif // USE_SONOFF_IFAN
     }
   }
 }
@@ -129,12 +135,16 @@ void DomoticzMqttUpdate(void)
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = Settings.domoticz_update_timer;
       for (uint32_t i = 1; i <= devices_present; i++) {
+#ifdef USE_SONOFF_IFAN
         if (IsModuleIfan() && (i > 1)) {
           MqttPublishDomoticzFanState();
           break;
         } else {
+#endif  // USE_SONOFF_IFAN
           MqttPublishDomoticzPowerState(i);
+#ifdef USE_SONOFF_IFAN
         }
+#endif  // USE_SONOFF_IFAN
       }
     }
   }
@@ -214,6 +224,7 @@ bool DomoticzMqttData(void)
         if (idx == Settings.domoticz_relay_idx[i]) {
           bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
+#ifdef USE_SONOFF_IFAN
           if (IsModuleIfan() && (1 == i)) {  // Idx 2 is fanspeed
             uint8_t svalue = 0;
             if (domoticz.containsKey("svalue1")) {
@@ -231,8 +242,9 @@ bool DomoticzMqttData(void)
             snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_FANSPEED));
             snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), svalue);
             found = 1;
-          }
-          else if (iscolordimmer && 10 == nvalue) { // Color_SetColor
+          } else
+#endif  // USE_SONOFF_IFAN
+          if (iscolordimmer && 10 == nvalue) { // Color_SetColor
             JsonObject& color = domoticz["Color"];
             uint16_t level = nvalue = domoticz["svalue1"];
             uint16_t r = color["r"]; r = r * level / 100;
@@ -472,7 +484,9 @@ void HandleDomoticzConfiguration(void)
       WSContentSend_P(HTTP_FORM_DOMOTICZ_SWITCH,
         i +1, i, Settings.domoticz_switch_idx[i]);
     }
+#ifdef USE_SONOFF_IFAN
     if (IsModuleIfan() && (1 == i)) { break; }
+#endif  // USE_SONOFF_IFAN
   }
   for (uint32_t i = 0; i < DZ_MAX_SENSORS; i++) {
     WSContentSend_P(HTTP_FORM_DOMOTICZ_SENSOR,
