@@ -48,20 +48,16 @@ uint8_t MaxFanspeed(void)
 uint8_t GetFanspeed(void)
 {
   if (ifan_fanspeed_timer) {
-    return ifan_fanspeed_goal;
+    return ifan_fanspeed_goal;                     // Do not show sequence fanspeed
   } else {
-    uint8_t fanspeed = 0;
-
-//    if (SONOFF_IFAN02 == my_module_type) {
-      /* Fanspeed is controlled by relay 2, 3 and 4 as in Sonoff 4CH.
-        000x = 0
-        001x = 1
-        011x = 2
-        101x = 3 (ifan02) or 100x = 3 (ifan03)
-      */
-      fanspeed = (uint8_t)(power &0xF) >> 1;
-      if (fanspeed) { fanspeed = (fanspeed >> 1) +1; }  // 0, 1, 2, 3
-//    }
+    /* Fanspeed is controlled by relay 2, 3 and 4 as in Sonoff 4CH.
+      000x = 0
+      001x = 1
+      011x = 2
+      101x = 3 (ifan02) or 100x = 3 (ifan03)
+    */
+    uint8_t fanspeed = (uint8_t)(power &0xF) >> 1;
+    if (fanspeed) { fanspeed = (fanspeed >> 1) +1; }  // 0, 1, 2, 3
     return fanspeed;
   }
 }
@@ -93,7 +89,7 @@ void SonoffIFanSetFanspeed(uint8_t fanspeed, bool sequence)
   }
   for (uint32_t i = 2; i < 5; i++) {
     uint8_t state = (fans &1) + 6;                 // Add no publishPowerState
-    ExecuteCommandPower(i, state, SRC_IGNORE);  // Use relay 2, 3 and 4
+    ExecuteCommandPower(i, state, SRC_IGNORE);     // Use relay 2, 3 and 4
     fans >>= 1;
   }
 
@@ -103,20 +99,6 @@ void SonoffIFanSetFanspeed(uint8_t fanspeed, bool sequence)
 }
 
 /*********************************************************************************************/
-
-void SonoffIfanSendAck()
-{
-  // AA 55 01 04 00 00 05
-  serial_in_buffer[5] = 0;
-  uint8_t crc = 0;
-  for (uint32_t i = 2; i < 5; i++) {
-    crc += serial_in_buffer[i];
-  }
-  serial_in_buffer[6] = crc;
-  for (uint32_t i = 0; i < 7; i++) {
-    Serial.write(serial_in_buffer[i]);
-  }
-}
 
 void SonoffIfanReceived(void)
 {
@@ -149,7 +131,15 @@ void SonoffIfanReceived(void)
     // AA 55 01 07 00 01 01 0A - Rf long press - forget RF codes
     buzzer_count = 6;                           // Beep three times
   }
-  SonoffIfanSendAck();
+
+  // Send Acknowledge - Copy first 5 bytes, reset byte 6 and store crc in byte 7
+  // AA 55 01 04 00 00 05
+  serial_in_buffer[5] = 0;                      // Ack
+  serial_in_buffer[6] = 0;                      // Crc
+  for (uint32_t i = 0; i < 7; i++) {
+    if ((i > 1) && (i < 6)) { serial_in_buffer[6] += serial_in_buffer[i]; }
+    Serial.write(serial_in_buffer[i]);
+  }
 }
 
 bool SonoffIfanSerialInput(void)
@@ -160,20 +150,18 @@ bool SonoffIfanSerialInput(void)
       ifan_receive_flag = true;
     }
     if (ifan_receive_flag) {
-      // AA 55 01 01 00 01 01 04 - Wifi long press - start wifi setup
-      // AA 55 01 01 00 01 02 05 - Rf and Wifi short press
-      // AA 55 01 04 00 01 00 06 - Fan 0
-      // AA 55 01 04 00 01 01 07 - Fan 1
-      // AA 55 01 04 00 01 02 08 - Fan 2
-      // AA 55 01 04 00 01 03 09 - Fan 3
-      // AA 55 01 04 00 01 04 0A - Light
-      // AA 55 01 06 00 01 01 09 - Buzzer
-      // AA 55 01 07 00 01 01 0A - Rf long press - forget RF codes
       serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
       if (serial_in_byte_counter == 8) {
-
+        // AA 55 01 01 00 01 01 04 - Wifi long press - start wifi setup
+        // AA 55 01 01 00 01 02 05 - Rf and Wifi short press
+        // AA 55 01 04 00 01 00 06 - Fan 0
+        // AA 55 01 04 00 01 01 07 - Fan 1
+        // AA 55 01 04 00 01 02 08 - Fan 2
+        // AA 55 01 04 00 01 03 09 - Fan 3
+        // AA 55 01 04 00 01 04 0A - Light
+        // AA 55 01 06 00 01 01 09 - Buzzer
+        // AA 55 01 07 00 01 01 0A - Rf long press - forget RF codes
         AddLogSerial(LOG_LEVEL_DEBUG);
-
         uint8_t crc = 0;
         for (uint32_t i = 2; i < 7; i++) {
           crc += serial_in_buffer[i];
@@ -260,17 +248,17 @@ bool Xdrv22(uint8_t function)
 
   if (IsModuleIfan()) {
     switch (function) {
-      case FUNC_MODULE_INIT:
-        result = SonoffIfanInit();
-        break;
       case FUNC_EVERY_250_MSECOND:
         SonoffIfanUpdate();
+        break;
+      case FUNC_SERIAL:
+        result = SonoffIfanSerialInput();
         break;
       case FUNC_COMMAND:
         result = SonoffIfanCommand();
         break;
-      case FUNC_SERIAL:
-        result = SonoffIfanSerialInput();
+      case FUNC_MODULE_INIT:
+        result = SonoffIfanInit();
         break;
     }
   }
