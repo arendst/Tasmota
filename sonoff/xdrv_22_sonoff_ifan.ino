@@ -25,9 +25,9 @@
 
 const uint8_t MAX_FAN_SPEED = 4;            // Max number of iFan02 fan speeds (0 .. 3)
 
-const uint8_t kIFan02Speed[MAX_FAN_SPEED][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {7,6,7}};  // Do not use PROGMEM as it fails
-
-const uint8_t kIFan03Speed[MAX_FAN_SPEED +2][3] = {{6,6,6}, {7,6,6}, {7,7,6}, {6,6,7}, {7,6,7}, {6,7,7}};  // Do not use PROGMEM as it fails
+const uint8_t kIFan02Speed[MAX_FAN_SPEED] = { 0x00, 0x01, 0x03, 0x05 };
+const uint8_t kIFan03Speed[MAX_FAN_SPEED +2] = { 0x00, 0x01, 0x03, 0x04, 0x05, 0x06 };
+const uint8_t kIFan03Sequence[MAX_FAN_SPEED][MAX_FAN_SPEED] = {{0, 2, 2, 2}, {0, 1, 2, 4}, {1, 1, 2, 5}, {4, 4, 5, 3}};
 
 uint8_t ifan_fanspeed_timer = 0;
 uint8_t ifan_fanspeed_goal = 0;
@@ -66,90 +66,39 @@ uint8_t GetFanspeed(void)
   }
 }
 
-void SetFanspeed(uint8_t fanspeed)
-{
-  if (SONOFF_IFAN02 == my_module_type) {
-    for (uint32_t i = 0; i < 3; i++) {
-      uint8_t state = kIFan02Speed[fanspeed][i];
-      ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
-    }
-
-#ifdef USE_DOMOTICZ
-    DomoticzUpdateFanState();  // Command FanSpeed feedback
-#endif  // USE_DOMOTICZ
-  }
-  else if (SONOFF_IFAN03 == my_module_type) {
-    SonoffIFanSetFanspeed(fanspeed, true);
-  }
-}
-
 /*********************************************************************************************/
 
 void SonoffIFanSetFanspeed(uint8_t fanspeed, bool sequence)
 {
-  ifan_fanspeed_timer = 0;  // Stop any sequence
+  ifan_fanspeed_timer = 0;                         // Stop any sequence
   ifan_fanspeed_goal = fanspeed;
 
   uint8_t fanspeed_now = GetFanspeed();
 
   if (fanspeed == fanspeed_now) { return; }
 
-  // Change to lookup table
-  if (sequence) {
-    if (0 == fanspeed_now) {
-      switch (fanspeed) {
-        case 1:
-        case 3:
-          fanspeed = 2;
-          ifan_fanspeed_timer = 20;
-          break;
+  uint8_t fans = kIFan02Speed[fanspeed];
+  if (SONOFF_IFAN03 == my_module_type) {
+    if (sequence) {
+      fanspeed = kIFan03Sequence[fanspeed_now][ifan_fanspeed_goal];
+      if (fanspeed != ifan_fanspeed_goal) {
+        if (0 == fanspeed_now) {
+          ifan_fanspeed_timer = 20;                // Need extra time to power up fan
+        } else {
+          ifan_fanspeed_timer = 2;
+        }
       }
     }
-    if (1 == fanspeed_now) {
-      switch (fanspeed) {
-        case 3:
-          fanspeed = 4;
-          ifan_fanspeed_timer = 2;
-          break;
-      }
-    }
-    if (2 == fanspeed_now) {
-      switch (fanspeed) {
-        case 0:
-          fanspeed = 1;
-          ifan_fanspeed_timer = 2;
-          break;
-        case 3:
-          fanspeed = 5;
-          ifan_fanspeed_timer = 2;
-          break;
-      }
-    }
-    if (3 == fanspeed_now) {
-      switch (fanspeed) {
-        case 0:
-        case 1:
-          fanspeed = 4;
-          ifan_fanspeed_timer = 2;
-          break;
-        case 2:
-          fanspeed = 5;
-          ifan_fanspeed_timer = 2;
-          break;
-      }
-    }
-//    if (fanspeed == ifan_fanspeed_goal) {
-//      sequence = false;
-//    }
+    fans = kIFan03Speed[fanspeed];
   }
-
-  for (uint32_t i = 0; i < 3; i++) {
-    uint8_t state = kIFan03Speed[fanspeed][i];
-    ExecuteCommandPower(i +2, state, SRC_IGNORE);  // Use relay 2, 3 and 4
+  for (uint32_t i = 2; i < 5; i++) {
+    uint8_t state = (fans &1) + 6;                 // Add no publishPowerState
+    ExecuteCommandPower(i, state, SRC_IGNORE);  // Use relay 2, 3 and 4
+    fans >>= 1;
   }
 
 #ifdef USE_DOMOTICZ
-  if (sequence) { DomoticzUpdateFanState(); }  // Command FanSpeed feedback
+  if (sequence) { DomoticzUpdateFanState(); }      // Command FanSpeed feedback
 #endif  // USE_DOMOTICZ
 }
 
@@ -185,7 +134,7 @@ void SonoffIfanReceived(void)
       if (action != GetFanspeed()) {
         snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_FANSPEED " %d"), action);
         ExecuteCommand(svalue, SRC_REMOTE);
-        buzzer_count = 2;                       // Beep once
+        buzzer_count = 2;                        // Beep once
       }
     } else {
       // AA 55 01 04 00 01 04 0A - Light
@@ -269,7 +218,7 @@ bool SonoffIfanCommand(void)
       }
     }
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_FAN_SPEED)) {
-      SetFanspeed(XdrvMailbox.payload);
+      SonoffIFanSetFanspeed(XdrvMailbox.payload, true);
     }
     Response_P(S_JSON_COMMAND_NVALUE, command, GetFanspeed());
   } else serviced = false;  // Unknown command
