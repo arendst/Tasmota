@@ -683,38 +683,39 @@ bool IrSendCommand(void)
             error = IE_INVALID_JSON;
           } else {
             // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
+            // IRsend { "protocol": "NEC", "bits": 32, "data":"0x02FDFE80", "repeat": 2 }
             char parm_uc[10];
             const char *protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_PROTOCOL))];
             uint16_t bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS))];
             uint64_t data = strtoull(root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA))], nullptr, 0);
+            uint16_t repeat = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_REPEAT))];
             if (protocol && bits) {
               char protocol_text[20];
               int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
 
               char dvalue[64];
               char hvalue[64];
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (%s), protocol_code %d"),
-                protocol_text, protocol, bits, ulltoa(data, dvalue, 10), IrUint64toHex(data, hvalue, bits), protocol_code);
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (%s), repeat %d, protocol_code %d"),
+                protocol_text, protocol, bits, ulltoa(data, dvalue, 10), IrUint64toHex(data, hvalue, bits), repeat, protocol_code);
 
               irsend_active = true;
               switch (protocol_code) {
                 case NEC:
-                  irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits); break;
+                  irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits, repeat); break;
                 case SONY:
-                  irsend->sendSony(data, (bits > SONY_20_BITS) ? SONY_20_BITS : bits, 2); break;
+                  irsend->sendSony(data, (bits > SONY_20_BITS) ? SONY_20_BITS : bits, repeat > kSonyMinRepeat ? repeat : kSonyMinRepeat); break;
                 case RC5:
-                  irsend->sendRC5(data, bits); break;
+                  irsend->sendRC5(data, bits, repeat); break;
                 case RC6:
-                  irsend->sendRC6(data, bits); break;
+                  irsend->sendRC6(data, bits, repeat); break;
                 case DISH:
-                  irsend->sendDISH(data, (bits > DISH_BITS) ? DISH_BITS : bits); break;
+                  irsend->sendDISH(data, (bits > DISH_BITS) ? DISH_BITS : bits, repeat > kDishMinRepeat ? repeat : kDishMinRepeat); break;
                 case JVC:
-                  irsend->sendJVC(data, (bits > JVC_BITS) ? JVC_BITS : bits, 1); break;
+                  irsend->sendJVC(data, (bits > JVC_BITS) ? JVC_BITS : bits, repeat > 1 ? repeat : 1); break;
                 case SAMSUNG:
-                  irsend->sendSAMSUNG(data, (bits > SAMSUNG_BITS) ? SAMSUNG_BITS : bits); break;
+                  irsend->sendSAMSUNG(data, (bits > SAMSUNG_BITS) ? SAMSUNG_BITS : bits, repeat); break;
                 case PANASONIC:
-//                  irsend->sendPanasonic(bits, data); break;
-                  irsend->sendPanasonic64(data, bits); break;
+                  irsend->sendPanasonic64(data, bits, repeat); break;
                 default:
                   irsend_active = false;
                   Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_PROTOCOL_NOT_SUPPORTED);
