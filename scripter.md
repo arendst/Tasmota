@@ -53,6 +53,9 @@ executed on BOOT time
 >**\>T**  
 executed on teleperiod time (**SENSOR** and **STATE**), get tele vars only in this section  
 
+>**\>F**  
+executed every 100 ms  
+
 >**\>S**  
 executed every second  
 
@@ -76,6 +79,7 @@ special variables (read only):
 **gtopic** = mqtt group topic  
 **prefixn** = prefix n = 1-3    
 **pwr[x]** = tasmota power state  (x = 1-N)  
+**pc[x]** = tasmota pulse counter value  (x = 1-4)  
 **tbut[x]** = touch screen button state  (x = 1-N)  
 **sw[x]** = tasmota switch state  (x = 1-N)  
 >**pin[x]** = gpio pin level (x = 0-16)  
@@ -129,6 +133,7 @@ variable that special variable is discarded
 **Tasmota** cmds start with **=\>**  
 within cmds you can replace text with variables with **%varname%**  
 a single percent sign must be given as **%%**  
+**->** is equivalent but doesnt send mqtt or any weblog (silent execute, usefull to reduce traffic)
 
 **special** cmds:
 
@@ -187,9 +192,10 @@ specifies a for next loop, (loop count must not be less then 1)
 **case a**  
 **case b**  
 **ends**  
-specifies a switch case selector  
+specifies a switch case selector  (numeric or string)
 
 **sd card support**  
+(currently only works with 2.42 ???)
 enable by CARD_CS = gpio pin of card chip select (+ 10k flash)  
 \#define USE_SCRIPT_FATFS CARD_CS   
 sd card uses standard hardware spi gpios: mosi,miso,sclk  
