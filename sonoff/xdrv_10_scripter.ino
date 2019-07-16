@@ -35,8 +35,6 @@ no math hierarchy  (costs ram and execution time, better group with brackets, an
 (will probably make math hierarchy an ifdefed option)
 keywords if then else endif, or, and are better readable for beginners (others may use {})
 
-
-
 \*********************************************************************************************/
 
 #define XDRV_10             10
@@ -151,7 +149,7 @@ struct SCRIPT_MEM {
 
 int16_t last_findex;
 uint8_t tasm_cmd_activ=0;
-
+uint8_t fast_script=0;
 uint32_t script_lastmillis;
 
 char *GetNumericResult(char *lp,uint8_t lastop,float *fp,JsonObject *jo);
@@ -321,7 +319,7 @@ char *script;
                       if (isdigit(*op)) {
                         // lenght define follows
                         uint8_t flen=atoi(op);
-                        mfilt[numflt-1].numvals&=0x7f;
+                        mfilt[numflt-1].numvals&=0x80;
                         mfilt[numflt-1].numvals|=flen&0x7f;
                       }
                     }
@@ -1295,7 +1293,16 @@ chknext:
           len+=1;
           goto exit;
         }
+        if (!strncmp(vname,"pc[",3)) {
+          GetNumericResult(vname+3,OPER_EQU,&fvar,0);
+          uint8_t index=fvar;
+          if (index<1 || index>MAX_COUNTERS) index=1;
+          fvar=RtcSettings.pulse_counter[index-1];
+          len+=1;
+          goto exit;
+        }
         break;
+
       case 'r':
         if (!strncmp(vname,"ram",3)) {
           fvar=glob_script_mem.script_mem_size+(glob_script_mem.script_size)+(MAX_RULE_MEMS*10);
@@ -1878,13 +1885,20 @@ void toSLog(const char *str) {
 
 #define IF_NEST 8
 // execute section of scripter
-int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
-    uint8_t vtype=0,sindex,xflg,floop=0,globvindex,globaindex;
+int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
+    uint8_t vtype=0,sindex,xflg,floop=0,globvindex;
+    int8_t globaindex;
     struct T_INDEX ind;
-    uint8_t operand,lastop,numeric=1,if_state[IF_NEST],if_result[IF_NEST],and_or,ifstck=0,s_ifstck=0;
+    uint8_t operand,lastop,numeric=1,if_state[IF_NEST],if_exe[IF_NEST],if_result[IF_NEST],and_or,ifstck=0;
     if_state[ifstck]=0;
     if_result[ifstck]=0;
+    if_exe[ifstck]=1;
     char cmpstr[SCRIPT_MAXSSIZE];
+    uint8_t check=0;
+    if (tlen<0) {
+      tlen=abs(tlen);
+      check=1;
+    }
 
     if (tasm_cmd_activ) return 0;
 
@@ -1932,32 +1946,35 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
 //#if SCRIPT_DEBUG>0
 #ifdef IFTHEN_DEBUG
             char tbuff[128];
-            sprintf(tbuff,"stack=%d,state=%d,cmpres=%d line: ",ifstck,if_state[ifstck],if_result[ifstck]);
+            sprintf(tbuff,"stack=%d,exe=%d,state=%d,cmpres=%d line: ",ifstck,if_exe[ifstck],if_state[ifstck],if_result[ifstck]);
             toLogEOL(tbuff,lp);
 #endif
 
+//if (if_state[s_ifstck]==3 && if_result[s_ifstck]) goto next_line;
+//if (if_state[s_ifstck]==2 && !if_result[s_ifstck]) goto next_line;
+
             if (!strncmp(lp,"if",2)) {
                 lp+=2;
-                if (if_state[ifstck]>0) {
-                  if (ifstck<IF_NEST-1) ifstck++;
-                }
+                if (ifstck<IF_NEST-1) ifstck++;
                 if_state[ifstck]=1;
+                if_result[ifstck]=0;
+                if (ifstck==1) if_exe[ifstck]=1;
+                else if_exe[ifstck]=if_exe[ifstck-1];
                 and_or=0;
             } else if (!strncmp(lp,"then",4) && if_state[ifstck]==1) {
                 lp+=4;
                 if_state[ifstck]=2;
+                if (if_exe[ifstck-1]) if_exe[ifstck]=if_result[ifstck];
             } else if (!strncmp(lp,"else",4) && if_state[ifstck]==2) {
                 lp+=4;
                 if_state[ifstck]=3;
+                if (if_exe[ifstck-1]) if_exe[ifstck]=!if_result[ifstck];
             } else if (!strncmp(lp,"endif",5) && if_state[ifstck]>=2) {
                 lp+=5;
-                if_state[ifstck]=0;
                 if (ifstck>0) {
+                  if_state[ifstck]=0;
                   ifstck--;
                 }
-                if (if_state[ifstck]==3 && if_result[ifstck]) goto next_line;
-                if (if_state[ifstck]==2 && !if_result[ifstck]) goto next_line;
-                s_ifstck=ifstck; // >>>>>
                 goto next_line;
             } else if (!strncmp(lp,"or",2) && if_state[ifstck]==1) {
                 lp+=2;
@@ -1970,6 +1987,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
             if (*lp=='{' && if_state[ifstck]==1) {
               lp+=1; // then
               if_state[ifstck]=2;
+              if (if_exe[ifstck-1]) if_exe[ifstck]=if_result[ifstck];
             } else if (*lp=='{' && if_state[ifstck]==3) {
               lp+=1; // after else
               //if_state[ifstck]=3;
@@ -1985,8 +2003,11 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                 if (!strncmp(lp,"else",4)) {
                   // is before else, no endif
                   if_state[ifstck]=3;
+                  if (if_exe[ifstck-1]) if_exe[ifstck]=!if_result[ifstck];
                   lp+=4;
                   iselse=1;
+                  SCRIPT_SKIP_SPACES
+                  if (*lp=='{') lp++;
                   break;
                 }
                 lp++;
@@ -1994,13 +2015,11 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
               if (!iselse) {
                 lp=slp;
                 // endif
-                if_state[ifstck]=0;
                 if (ifstck>0) {
+                  if_state[ifstck]=0;
                   ifstck--;
                 }
-                if (if_state[ifstck]==3 && if_result[ifstck]) goto next_line;
-                if (if_state[ifstck]==2 && !if_result[ifstck]) goto next_line;
-                s_ifstck=ifstck; // >>>>>
+                goto next_line;
               }
             }
 
@@ -2041,24 +2060,42 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
             if (!strncmp(lp,"switch",6)) {
               lp+=6;
               SCRIPT_SKIP_SPACES
+              char *slp=lp;
               lp=GetNumericResult(lp,OPER_EQU,&swvar,0);
-              swflg=1;
+              if (glob_script_mem.glob_error==1) {
+                // was string, not number
+                lp=slp;
+                // get the string
+                lp=isvar(lp,&vtype,&ind,0,cmpstr,0);
+                swflg=0x81;
+              } else {
+                swflg=1;
+              }
             } else if (!strncmp(lp,"case",4) && swflg>0) {
               lp+=4;
               SCRIPT_SKIP_SPACES
               float cvar;
-              lp=GetNumericResult(lp,OPER_EQU,&cvar,0);
-              if (swvar!=cvar) {
-                swflg=2;
+              if (!(swflg&0x80)) {
+                lp=GetNumericResult(lp,OPER_EQU,&cvar,0);
+                if (swvar!=cvar) {
+                  swflg=2;
+                } else {
+                  swflg=1;
+                }
               } else {
-                swflg=1;
+                char str[SCRIPT_MAXSSIZE];
+                lp=GetStringResult(lp,OPER_EQU,str,0);
+                if (!strcmp(cmpstr,str)) {
+                    swflg=0x81;
+                } else {
+                  swflg=0x82;
+                }
               }
             } else if (!strncmp(lp,"ends",4) && swflg>0) {
               lp+=4;
               swflg=0;
             }
-
-            if (swflg==2) goto next_line;
+            if ((swflg&3)==2) goto next_line;
 
             SCRIPT_SKIP_SPACES
             //SCRIPT_SKIP_EOL
@@ -2067,14 +2104,12 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
             }
 
             //toLogN(lp,16);
-            if (if_state[s_ifstck]==3 && if_result[s_ifstck]) goto next_line;
-            if (if_state[s_ifstck]==2 && !if_result[s_ifstck]) goto next_line;
+            if (!if_exe[ifstck] && if_state[ifstck]!=1) goto next_line;
 
 #ifdef IFTHEN_DEBUG
-            sprintf(tbuff,"stack=%d,state=%d,cmpres=%d execute line: ",ifstck,if_state[ifstck],if_result[ifstck]);
+            sprintf(tbuff,"stack=%d,exe=%d,state=%d,cmpres=%d execute line: ",ifstck,if_exe[ifstck],if_state[ifstck],if_result[ifstck]);
             toLogEOL(tbuff,lp);
 #endif
-            s_ifstck=ifstck;
 
             if (!strncmp(lp,"break",5)) {
               if (floop) {
@@ -2122,8 +2157,10 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
               goto next_line;
             }
 
-            else if (!strncmp(lp,"=>",2)) {
+            else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2)) {
                 // execute cmd
+                uint8_t sflag=0,svmqtt,swll;
+                if (*lp=='-') sflag=1;
                 lp+=2;
                 char *slp=lp;
                 SCRIPT_SKIP_SPACES
@@ -2150,11 +2187,22 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                   if (!strncmp(tmp,"print",5)) {
                     toLog(&tmp[5]);
                   } else {
-                    snprintf_P(log_data, sizeof(log_data), PSTR("Script: performs \"%s\""), tmp);
-                    AddLog(glob_script_mem.script_loglevel&0x7f);
+                    if (!sflag) {
+                      snprintf_P(log_data, sizeof(log_data), PSTR("Script: performs \"%s\""), tmp);
+                      AddLog(glob_script_mem.script_loglevel&0x7f);
+                    } else {
+                      svmqtt=Settings.flag.mqtt_enabled;
+                      swll=Settings.weblog_level;
+                      Settings.flag.mqtt_enabled=0;
+                      Settings.weblog_level=0;
+                    }
                     tasm_cmd_activ=1;
                     ExecuteCommand((char*)tmp, SRC_RULE);
                     tasm_cmd_activ=0;
+                    if (sflag) {
+                      Settings.flag.mqtt_enabled=svmqtt;
+                      Settings.weblog_level=swll;
+                    }
                   }
                   if (cmdmem) free(cmdmem);
                 }
@@ -2178,7 +2226,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
             }
 
             // check for variable result
-            if (if_state[s_ifstck]==1) {
+            if (if_state[ifstck]==1) {
               // compare
               dfvar=&fvar;
               glob_script_mem.glob_error=0;
@@ -2218,7 +2266,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
             }
             // evaluate operand
             lp=getop(lp,&lastop);
-            if (if_state[s_ifstck]==1) {
+            if (if_state[ifstck]==1) {
               if (numeric) {
                 uint8_t res=0;
                 lp=GetNumericResult(lp,OPER_EQU,&fvar1,jo);
@@ -2247,15 +2295,15 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                 }
 
                 if (!and_or) {
-                    if_result[s_ifstck]=res;
+                    if_result[ifstck]=res;
                 } else if (and_or==1) {
-                    if_result[s_ifstck]|=res;
+                    if_result[ifstck]|=res;
                 } else {
-                    if_result[s_ifstck]&=res;
+                    if_result[ifstck]&=res;
                 }
 #if SCRIPT_DEBUG>0
                 char tbuff[128];
-                sprintf(tbuff,"p1=%d,p2=%d,cmpres=%d line: ",(int32_t)*dfvar,(int32_t)fvar1,if_result[s_ifstck]);
+                sprintf(tbuff,"p1=%d,p2=%d,cmpres=%d line: ",(int32_t)*dfvar,(int32_t)fvar1,if_result[ifstck]);
                 toLogEOL(tbuff,lp);
 #endif
 
@@ -2268,11 +2316,11 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
                   res=strcmp(cmpstr,str);
                   if (lastop==OPER_EQUEQU) res=!res;
                   if (!and_or) {
-                      if_result[s_ifstck]=res;
+                      if_result[ifstck]=res;
                   } else if (and_or==1) {
-                      if_result[s_ifstck]|=res;
+                      if_result[ifstck]|=res;
                   } else {
-                      if_result[s_ifstck]&=res;
+                      if_result[ifstck]&=res;
                   }
                 }
               }
@@ -2280,6 +2328,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
               if (*lp=='{' && if_state[ifstck]==1) {
                 lp+=1; // then
                 if_state[ifstck]=2;
+                if (if_exe[ifstck-1]) if_exe[ifstck]=if_result[ifstck];
               }
               goto next_line;
             } else {
@@ -2393,6 +2442,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
             if (!strncmp(lp,type,tlen)) {
                 // found section
                 section=1;
+                if (check) return 99;
                 // check for subroutine
                 if (*type=='#') {
                   // check for parameter
@@ -2451,6 +2501,7 @@ int16_t Run_Scripter(const char *type, uint8_t tlen, char *js) {
           lp++;
         }
     }
+    return 0;
 }
 
 uint8_t script_xsns_index = 0;
@@ -2470,6 +2521,7 @@ void ScripterEvery100ms(void) {
       Run_Scripter(">T",2, mqtt_data);
     }
   }
+  if (fast_script==99) Run_Scripter(">F",2,0);
 }
 
 //mems[MAX_RULE_MEMS] is 50 bytes in 6.5
@@ -2925,6 +2977,7 @@ void ScriptSaveSettings(void) {
       return;
     }
     Run_Scripter(">B",2,0);
+    fast_script=Run_Scripter(">F",-2,0);
   }
 }
 
@@ -2980,14 +3033,21 @@ bool ScriptCommand(void) {
 
 
 #ifdef USE_SCRIPT_FATFS
-#ifdef FAT_DATE
+
+uint16_t xFAT_DATE(uint16_t year, uint8_t month, uint8_t day) {
+  return (year - 1980) << 9 | month << 5 | day;
+}
+uint16_t xFAT_TIME(uint8_t hour, uint8_t minute, uint8_t second) {
+  return hour << 11 | minute << 5 | second >> 1;
+}
+
 void dateTime(uint16_t* date, uint16_t* time) {
   // return date using FAT_DATE macro to format fields
-  *date = FAT_DATE(RtcTime.year,RtcTime.month, RtcTime.day_of_month);
+  *date = xFAT_DATE(RtcTime.year,RtcTime.month, RtcTime.day_of_month);
   // return time using FAT_TIME macro to format fields
-  *time = FAT_TIME(RtcTime.hour,RtcTime.minute,RtcTime.second);
+  *time = xFAT_TIME(RtcTime.hour,RtcTime.minute,RtcTime.second);
 }
-#endif
+
 #endif
 
 /*********************************************************************************************\
@@ -3050,7 +3110,7 @@ bool Xdrv10(uint8_t function)
 
         glob_script_mem.flags=1;
 
-#ifdef FAT_DATE
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
         // for unkonwn reasons is not defined in 2.52
         SdFile::dateTimeCallback(dateTime);
 #endif
@@ -3070,7 +3130,10 @@ bool Xdrv10(uint8_t function)
       if (bitRead(Settings.rule_enabled, 0)) Init_Scripter();
       break;
     case FUNC_INIT:
-      if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">B",2,0);
+      if (bitRead(Settings.rule_enabled, 0)) {
+        Run_Scripter(">B",2,0);
+        fast_script=Run_Scripter(">F",-2,0);
+      }
       break;
     case FUNC_EVERY_100_MSECOND:
       ScripterEvery100ms();
