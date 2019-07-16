@@ -2013,10 +2013,10 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      0
   },
   { "Sonoff iFan03",   // Sonoff iFan03 (ESP8285)
-     GPIO_KEY1,        // GPIO00 WIFI_KEY0 Virtual button 1 as feedback from RC
-     GPIO_TXD,         // GPIO01 ESP_TXD Serial RXD and Optional sensor
+     GPIO_KEY1,        // GPIO00 WIFI_KEY0 Button 1
+     GPIO_TXD,         // GPIO01 ESP_TXD Serial RXD connection to P0.5 of RF microcontroller
      0,                // GPIO02 ESP_LOG
-     GPIO_RXD,         // GPIO03 ESP_RXD Serial TXD and Optional sensor
+     GPIO_RXD,         // GPIO03 ESP_RXD Serial TXD connection to P0.4 of RF microcontroller
      0,                // GPIO04 DEBUG_RX
      0,                // GPIO05 DEBUG_TX
                        // GPIO06 (SD_CLK   Flash)
