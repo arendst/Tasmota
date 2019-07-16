@@ -186,6 +186,7 @@ enum UserSelectablePins {
   GPIO_ARIRFSEL,       // Arilux RF Receive input selected
   GPIO_BUZZER,         // Buzzer
   GPIO_BUZZER_INV,     // Inverted buzzer
+  GPIO_OLED_RESET,     // OLED Display Reset
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -254,6 +255,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LED_LINK "|" D_SENSOR_LED_LINK "i|"
   D_SENSOR_ARIRFSEL "|"
   D_SENSOR_BUZZER "|" D_SENSOR_BUZZER "i|"
+  D_SENSOR_OLED_RESET "|"
   ;
 
 // User selectable ADC0 functionality
@@ -499,6 +501,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_DISPLAY
   GPIO_BACKLIGHT,      // Display backlight control
+  GPIO_OLED_RESET,     // OLED Display Reset
 #endif
 #ifdef USE_DHT
   GPIO_DHT11,          // DHT11
