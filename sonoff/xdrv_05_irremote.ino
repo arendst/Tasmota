@@ -207,6 +207,7 @@ void IrReceiveCheck(void)
  * IR Heating, Ventilation and Air Conditioning using IRMitsubishiAC library
 \*********************************************************************************************/
 
+#ifdef USE_IR_HVAC_TOSHIBA
 /*******************
       TOSHIBA
 ********************/
@@ -300,8 +301,9 @@ uint8_t IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC
 
   return IE_NO_ERROR;
 }
+#endif  // USE_IR_HVAC_TOSHIBA
 
-
+#ifdef USE_IR_HVAC_MITSUBISHI
 /*******************
      MITSUBISHI
 ********************/
@@ -348,8 +350,9 @@ uint8_t IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, bool H
 
   return IE_NO_ERROR;
 }
+#endif  // USE_IR_HVAC_MITSUBISHI
 
-
+#ifdef USE_IR_HVAC_LG
 /*******************
         LG
 ********************/
@@ -464,8 +467,9 @@ uint8_t IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Powe
 
   return IE_NO_ERROR;
 }
+#endif  // USE_IR_HVAC_LG
 
-
+#ifdef USE_IR_HVAC_FUJITSU
 /*******************
       Fujitsu
 ********************/
@@ -519,8 +523,9 @@ uint8_t IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC
 
   return IE_NO_ERROR;
 }
+#endif  // USE_IR_HVAC_FUJITSU
 
-#endif // USE_IR_HVAC
+#endif  // USE_IR_HVAC
 
 /*********************************************************************************************\
  * Commands
@@ -699,23 +704,63 @@ bool IrSendCommand(void)
                 protocol_text, protocol, bits, ulltoa(data, dvalue, 10), IrUint64toHex(data, hvalue, bits), repeat, protocol_code);
 
               irsend_active = true;
-              switch (protocol_code) {
-                case NEC:
-                  irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits, repeat); break;
-                case SONY:
-                  irsend->sendSony(data, (bits > SONY_20_BITS) ? SONY_20_BITS : bits, repeat > kSonyMinRepeat ? repeat : kSonyMinRepeat); break;
+              switch (protocol_code) {  // Equals IRremoteESP8266.h enum decode_type_t
+#ifdef USE_IR_SEND_RC5
                 case RC5:
                   irsend->sendRC5(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_RC6
                 case RC6:
                   irsend->sendRC6(data, bits, repeat); break;
-                case DISH:
-                  irsend->sendDISH(data, (bits > DISH_BITS) ? DISH_BITS : bits, repeat > kDishMinRepeat ? repeat : kDishMinRepeat); break;
-                case JVC:
-                  irsend->sendJVC(data, (bits > JVC_BITS) ? JVC_BITS : bits, repeat > 1 ? repeat : 1); break;
-                case SAMSUNG:
-                  irsend->sendSAMSUNG(data, (bits > SAMSUNG_BITS) ? SAMSUNG_BITS : bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_NEC
+                case NEC:
+                  irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_SONY
+                case SONY:
+                  irsend->sendSony(data, (bits > SONY_20_BITS) ? SONY_20_BITS : bits, repeat > kSonyMinRepeat ? repeat : kSonyMinRepeat); break;
+#endif
+#ifdef USE_IR_SEND_PANASONIC
                 case PANASONIC:
                   irsend->sendPanasonic64(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_JVC
+                case JVC:
+                  irsend->sendJVC(data, (bits > JVC_BITS) ? JVC_BITS : bits, repeat > 1 ? repeat : 1); break;
+#endif
+#ifdef USE_IR_SEND_SAMSUNG
+                case SAMSUNG:
+                  irsend->sendSAMSUNG(data, (bits > SAMSUNG_BITS) ? SAMSUNG_BITS : bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_WHYNTER
+                case WHYNTER:
+                  irsend->sendWhynter(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_AIWA
+                case AIWA_RC_T501:
+                  irsend->sendAiwaRCT501(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_LG
+                case LG:
+                  irsend->sendLG(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_SANYO
+                case SANYO:
+                  irsend->sendSanyoLC7461(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_MITSUBISHI
+                case MITSUBISHI:
+                  irsend->sendMitsubishi(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_DISH
+                case DISH:
+                  irsend->sendDISH(data, (bits > DISH_BITS) ? DISH_BITS : bits, repeat > kDishMinRepeat ? repeat : kDishMinRepeat); break;
+#endif
+#ifdef USE_IR_SEND_SHARP
+                case SHARP:
+                  irsend->sendSharpRaw(data, bits, repeat); break;
+#endif
                 default:
                   irsend_active = false;
                   Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_PROTOCOL_NOT_SUPPORTED);
@@ -762,14 +807,22 @@ bool IrSendCommand(void)
           char vendor[20];
           int vendor_code = GetCommandCode(vendor, sizeof(vendor), HVAC_Vendor, kIrHvacVendors);
           switch (vendor_code) {
+#ifdef USE_IR_HVAC_TOSHIBA
             case VNDR_TOSHIBA:
               error = IrHvacToshiba(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+#endif
+#ifdef USE_IR_HVAC_MITSUBISHI
             case VNDR_MITSUBISHI:
               error = IrHvacMitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+#endif
+#ifdef USE_IR_HVAC_LG
             case VNDR_LG:
               error = IrHvacLG(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+#endif
+#ifdef USE_IR_HVAC_FUJITSU
             case VNDR_FUJITSU:
               error = IrHvacFujitsu(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+#endif
             default:
               error = IE_SYNTAX_IRHVAC;
           }
