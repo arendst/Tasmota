@@ -449,6 +449,7 @@
     #define USE_IR_HVAC_MITSUBISHI               // Support IRhvac Mitsubischi protocol
     #define USE_IR_HVAC_LG                       // Support IRhvac LG protocol
     #define USE_IR_HVAC_FUJITSU                  // Support IRhvac Fujitsu protocol
+//    #define USE_IR_HVAC_MIDEA                    // Support IRhvac Midea/Komeco protocol
 
   #define USE_IR_RECEIVE                         // Support for IR receiver (+7k2 code, 264 iram)
     #define IR_RCV_BUFFER_SIZE      100          // Max number of packets allowed in capture buffer (default 100 (*2 bytes ram))
