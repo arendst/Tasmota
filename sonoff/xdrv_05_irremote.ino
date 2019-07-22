@@ -32,8 +32,19 @@ enum IrRemoteCommands { CMND_IRSEND, CMND_IRHVAC };
 const char kIrRemoteCommands[] PROGMEM = D_CMND_IRSEND "|" D_CMND_IRHVAC ;
 
 // Based on IRremoteESP8266.h enum decode_type_t
+static const uint8_t MAX_STANDARD_IR = SHARP;   // this is the last code mapped to decode_type_t
+enum IrVendors { IR_BASE = MAX_STANDARD_IR,
+#ifdef USE_IR_SEND_PIONEER
+                 IR_PIONEER,
+#endif  // USE_IR_SEND_PIONEER
+};
 const char kIrRemoteProtocols[] PROGMEM =
-  "UNKNOWN|RC5|RC6|NEC|SONY|PANASONIC|JVC|SAMSUNG|WHYNTER|AIWA_RC_T501|LG|SANYO|MITSUBISHI|DISH|SHARP";
+  "UNKNOWN|RC5|RC6|NEC|SONY|PANASONIC|JVC|SAMSUNG|WHYNTER|AIWA_RC_T501|LG|SANYO|MITSUBISHI|DISH|SHARP"
+  // now allow for other codes beyond the first series;
+#ifdef USE_IR_SEND_PIONEER
+  "|PIONEER"
+#endif  // USE_IR_SEND_PIONEER
+  ;
 
 #ifdef USE_IR_HVAC
 
@@ -890,6 +901,21 @@ bool IrSendCommand(void)
                 case SHARP:
                   irsend->sendSharpRaw(data, bits, repeat); break;
 #endif
+#ifdef USE_IR_SEND_PIONEER
+                case IR_PIONEER:
+                  for (int32_t r=repeat; r>=0; r--) {
+                    if (bits > 32) {
+                      irsend->sendGeneric(8500,4250,540,1600,540,540,540,25000,85000,
+                                          (data>>32),bits-32,40,true,0,33);
+                    }
+                    irsend->sendGeneric(8500,4250,540,1600,540,540,540,25000,85000,
+                                        data, bits > 32 ? 32 : bits,
+                                        40,true,0,33);
+                  }
+                  break;
+                  // waiting for timing patch to be integrated in
+                  //irsend->sendPioneer(data, bits, repeat); break;
+#endif  // USE_IR_SEND_PIONEER
                 default:
                   irsend_active = false;
                   Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_PROTOCOL_NOT_SUPPORTED);
