@@ -166,6 +166,10 @@ void PS16DZSerialInput(void)
     } else {
       ps16dz_rx_buffer[ps16dz_byte_counter++] = 0x00;
 
+      // AT+RESULT="sequence":"1554682835320"
+      // AT+UPDATE="switch":"on","light_type":1,"colorR":255,"colorG":255,"colorB":255,"bright":100,"mode":19,"speed":100,"sensitive":100
+      // AT+SETTING=enterESPTOUCH - When ON button is held for over 5 seconds
+      // AT+SETTING=exitESPTOUCH - When ON button is pressed
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Received %s"), ps16dz_rx_buffer);
 
       if (!strncmp(ps16dz_rx_buffer+3, "UPDATE", 6)) {
