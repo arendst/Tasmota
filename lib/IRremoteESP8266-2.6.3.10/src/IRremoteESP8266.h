@@ -255,7 +255,7 @@
 #define SEND_NEC               true
 
 #define DECODE_SHERWOOD        false  // Doesn't exist. Actually is DECODE_NEC
-#define SEND_SHERWOOD          false
+#define SEND_SHERWOOD          true
 
 #define DECODE_RC5             true
 #define SEND_RC5               true
@@ -264,7 +264,7 @@
 #define SEND_RC6               true
 
 #define DECODE_RCMM            false
-#define SEND_RCMM              false
+#define SEND_RCMM              true
 
 #define DECODE_SONY            true
 #define SEND_SONY              true
@@ -279,10 +279,10 @@
 #define SEND_SAMSUNG           true
 
 #define DECODE_SAMSUNG36       false
-#define SEND_SAMSUNG36         false
+#define SEND_SAMSUNG36         true
 
 #define DECODE_SAMSUNG_AC      false
-#define SEND_SAMSUNG_AC        false
+#define SEND_SAMSUNG_AC        true
 
 #define DECODE_WHYNTER         false
 #define SEND_WHYNTER           true
@@ -300,7 +300,7 @@
 #define SEND_MITSUBISHI        true
 
 #define DECODE_MITSUBISHI2     false
-#define SEND_MITSUBISHI2       false
+#define SEND_MITSUBISHI2       true
 
 #define DECODE_DISH            false
 #define SEND_DISH              true
@@ -309,13 +309,13 @@
 #define SEND_SHARP             true
 
 #define DECODE_SHARP_AC        false
-#define SEND_SHARP_AC          false
+#define SEND_SHARP_AC          true
 
 #define DECODE_DENON           false
-#define SEND_DENON             false
+#define SEND_DENON             true
 
 #define DECODE_KELVINATOR      false
-#define SEND_KELVINATOR        false
+#define SEND_KELVINATOR        true
 
 #define DECODE_MITSUBISHI_AC   false  // Beta.
 #define SEND_MITSUBISHI_AC     true
@@ -324,115 +324,115 @@
 #define SEND_FUJITSU_AC        true
 
 #define DECODE_INAX            false
-#define SEND_INAX              false
+#define SEND_INAX              true
 
 #define DECODE_DAIKIN          false
-#define SEND_DAIKIN            false
+#define SEND_DAIKIN            true
 
 #define DECODE_COOLIX          false
-#define SEND_COOLIX            false
+#define SEND_COOLIX            true
 
 #define DECODE_GLOBALCACHE     false  // Not written.
-#define SEND_GLOBALCACHE       false
+#define SEND_GLOBALCACHE       true
 
 #define DECODE_GOODWEATHER     false
-#define SEND_GOODWEATHER       false
+#define SEND_GOODWEATHER       true
 
 #define DECODE_GREE            false
-#define SEND_GREE              false
+#define SEND_GREE              true
 
 #define DECODE_PRONTO          false  // Not written.
-#define SEND_PRONTO            false
+#define SEND_PRONTO            true
 
 #define DECODE_ARGO            false  // Experimental
-#define SEND_ARGO              false
+#define SEND_ARGO              true
 
 #define DECODE_TROTEC          false
-#define SEND_TROTEC            false
+#define SEND_TROTEC            true
 
 #define DECODE_NIKAI           false
-#define SEND_NIKAI             false
+#define SEND_NIKAI             true
 
 #define DECODE_TOSHIBA_AC      false
-#define SEND_TOSHIBA_AC        false
+#define SEND_TOSHIBA_AC        true
 
 #define DECODE_MAGIQUEST       false
-#define SEND_MAGIQUEST         false
+#define SEND_MAGIQUEST         true
 
 #define DECODE_MIDEA           false
-#define SEND_MIDEA             false
+#define SEND_MIDEA             true
 
 #define DECODE_LASERTAG        false
-#define SEND_LASERTAG          false
+#define SEND_LASERTAG          true
 
 #define DECODE_CARRIER_AC      false
-#define SEND_CARRIER_AC        false
+#define SEND_CARRIER_AC        true
 
 #define DECODE_HAIER_AC        false
-#define SEND_HAIER_AC          false
+#define SEND_HAIER_AC          true
 
 #define DECODE_HITACHI_AC      false
-#define SEND_HITACHI_AC        false
+#define SEND_HITACHI_AC        true
 
 #define DECODE_HITACHI_AC1     false
-#define SEND_HITACHI_AC1       false
+#define SEND_HITACHI_AC1       true
 
 #define DECODE_HITACHI_AC2     false
-#define SEND_HITACHI_AC2       false
+#define SEND_HITACHI_AC2       true
 
 #define DECODE_GICABLE         false
-#define SEND_GICABLE           false
+#define SEND_GICABLE           true
 
 #define DECODE_HAIER_AC_YRW02  false
-#define SEND_HAIER_AC_YRW02    false
+#define SEND_HAIER_AC_YRW02    true
 
 #define DECODE_WHIRLPOOL_AC    false
-#define SEND_WHIRLPOOL_AC      false
+#define SEND_WHIRLPOOL_AC      true
 
 #define DECODE_LUTRON          false
-#define SEND_LUTRON            false
+#define SEND_LUTRON            true
 
 #define DECODE_ELECTRA_AC      false
-#define SEND_ELECTRA_AC        false
+#define SEND_ELECTRA_AC        true
 
 #define DECODE_PANASONIC_AC    false
-#define SEND_PANASONIC_AC      false
+#define SEND_PANASONIC_AC      true
 
 #define DECODE_MWM             false
-#define SEND_MWM               false
+#define SEND_MWM               true
 
 #define DECODE_PIONEER         false
-#define SEND_PIONEER           false
+#define SEND_PIONEER           true
 
 #define DECODE_DAIKIN2         false
-#define SEND_DAIKIN2           false
+#define SEND_DAIKIN2           true
 
 #define DECODE_VESTEL_AC       false
-#define SEND_VESTEL_AC         false
+#define SEND_VESTEL_AC         true
 
 #define DECODE_TECO            false
-#define SEND_TECO              false
+#define SEND_TECO              true
 
 #define DECODE_TCL112AC        false
-#define SEND_TCL112AC          false
+#define SEND_TCL112AC          true
 
 #define DECODE_LEGOPF          false
-#define SEND_LEGOPF            false
+#define SEND_LEGOPF            true
 
 #define DECODE_MITSUBISHIHEAVY false
-#define SEND_MITSUBISHIHEAVY   false
+#define SEND_MITSUBISHIHEAVY   true
 
 #define DECODE_DAIKIN216       false
-#define SEND_DAIKIN216         false
+#define SEND_DAIKIN216         true
 
 #define DECODE_DAIKIN160       false
-#define SEND_DAIKIN160         false
+#define SEND_DAIKIN160         true
 
 #define DECODE_NEOCLIMA        false
-#define SEND_NEOCLIMA          false
+#define SEND_NEOCLIMA          true
 
 #define DECODE_DAIKIN176       false
-#define SEND_DAIKIN176         false
+#define SEND_DAIKIN176         true
 
 #if (DECODE_ARGO || DECODE_DAIKIN || DECODE_FUJITSU_AC || DECODE_GREE || \
      DECODE_KELVINATOR || DECODE_MITSUBISHI_AC || DECODE_TOSHIBA_AC || \
