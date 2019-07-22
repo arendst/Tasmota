@@ -40,21 +40,10 @@ const char kIrRemoteProtocols[] PROGMEM =
 #include <ir_Mitsubishi.h>
 #include <ir_Fujitsu.h>
 
-enum IrHvacVendors { VNDR_TOSHIBA, VNDR_MITSUBISHI, VNDR_LG, VNDR_FUJITSU };
-const char kIrHvacVendors[] PROGMEM = "Toshiba|Mitsubishi|LG|Fujitsu" ;
-
-// HVAC TOSHIBA_
-const uint16_t HVAC_TOSHIBA_HDR_MARK = 4400;
-const uint16_t HVAC_TOSHIBA_HDR_SPACE = 4300;
-const uint16_t HVAC_TOSHIBA_BIT_MARK = 543;
-const uint16_t HVAC_TOSHIBA_ONE_SPACE = 1623;
-const uint16_t HVAC_MISTUBISHI_ZERO_SPACE = 472;
-const uint16_t HVAC_TOSHIBA_RPT_MARK = 440;
-const uint16_t HVAC_TOSHIBA_RPT_SPACE = 7048; // Above original iremote limit
-const uint8_t HVAC_TOSHIBA_DATALEN = 9;
-
-// HVAC LG
-const uint8_t HVAC_LG_DATALEN = 7;
+enum IrHvacVendors {
+  VNDR_TOSHIBA, VNDR_MITSUBISHI, VNDR_LG, VNDR_FUJITSU, VNDR_MIDEA };
+const char kIrHvacVendors[] PROGMEM =
+  "Toshiba|Mitsubishi|LG|Fujitsu|Midea" ;
 
 IRMitsubishiAC *mitsubir = nullptr;
 
@@ -207,9 +196,19 @@ void IrReceiveCheck(void)
  * IR Heating, Ventilation and Air Conditioning using IRMitsubishiAC library
 \*********************************************************************************************/
 
+#ifdef USE_IR_HVAC_TOSHIBA
 /*******************
       TOSHIBA
 ********************/
+
+const uint16_t HVAC_TOSHIBA_HDR_MARK = 4400;
+const uint16_t HVAC_TOSHIBA_HDR_SPACE = 4300;
+const uint16_t HVAC_TOSHIBA_BIT_MARK = 543;
+const uint16_t HVAC_TOSHIBA_ONE_SPACE = 1623;
+const uint16_t HVAC_MISTUBISHI_ZERO_SPACE = 472;
+const uint16_t HVAC_TOSHIBA_RPT_MARK = 440;
+const uint16_t HVAC_TOSHIBA_RPT_SPACE = 7048; // Above original iremote limit
+const uint8_t HVAC_TOSHIBA_DATALEN = 9;
 
 uint8_t IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Power, int HVAC_Temp)
 {
@@ -300,8 +299,138 @@ uint8_t IrHvacToshiba(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC
 
   return IE_NO_ERROR;
 }
+#endif  // USE_IR_HVAC_TOSHIBA
 
+#ifdef USE_IR_HVAC_MIDEA
+/*******************
+     MIDEA / KOMECO
+********************/
 
+// http://veillard.com/embedded/midea.html
+// https://github.com/sheinz/esp-midea-ir/blob/master/midea-ir.c
+
+const uint16_t HVAC_MIDEA_HDR_MARK = 4420;    // 8T high
+const uint16_t HVAC_MIDEA_HDR_SPACE = 4420;   // 8T low
+const uint16_t HVAC_MIDEA_BIT_MARK = 553;     // 1T
+const uint16_t HVAC_MIDEA_ONE_SPACE = 1660;   // 3T low
+const uint16_t HVAC_MIDEA_ZERO_SPACE = 553;   // 1T high
+const uint16_t HVAC_MIDEA_RPT_MARK = 553;     // 1T
+const uint16_t HVAC_MIDEA_RPT_SPACE = 5530;   // 10T
+const uint8_t HVAC_MIDEA_DATALEN = 3;
+
+uint8_t IrHvacMidea(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Power, int HVAC_Temp)
+{
+  uint16_t rawdata[2 + 2 * 2 * 8 * HVAC_MIDEA_DATALEN + 2]; // START + 2* (2 * 3 BYTES) + STOP
+  uint8_t data[HVAC_MIDEA_DATALEN] = {0xB2, 0x00, 0x00};
+
+  char *p;
+  uint8_t mode;
+
+  if (!HVAC_Power) { // Turn OFF HVAC
+    data[1] = 0x7B;
+    data[2] = 0xE0;
+  } else {
+    // FAN
+    if (HVAC_FanMode == nullptr) {
+      p = (char*)kFanSpeedOptions; // default auto
+    }
+    else {
+      p = (char*)HVAC_FanMode;
+    }
+
+    switch(p[0]) {
+      case '1': data[1] = 0xBF; break; // off
+      case '2': data[1] = 0x9F; break; // low
+      case '3': data[1] = 0x5F; break; // med
+      case '4': data[1] = 0x3F; break; // high
+      case '5': data[1] = 0x1F; break; // auto
+      case 'A': data[1] = 0x1F; break; // auto
+      default: return IE_SYNTAX_IRHVAC;
+    }
+
+    // TEMPERATURE
+    uint8_t Temp;
+    if (HVAC_Temp > 30) {
+      Temp = 30;
+    }
+    else if (HVAC_Temp < 17) {
+      Temp = 17;
+    }
+    else {
+      Temp = HVAC_Temp-17;
+    }
+    if (10 == Temp) { // Temp is encoded as gray code; except 27 and 28. Go figure...
+      data[2] = 0x90;
+    } else if (11 == Temp) {
+      data[2] = 0x80;
+    } else {
+      Temp = (Temp >> 1) ^Temp;
+      data[2] = (Temp << 4);
+    }
+
+    // MODE
+    if (HVAC_Mode == nullptr) {
+      p = (char*)kHvacModeOptions + 3; // default to auto
+    }
+    else {
+      p = (char*)HVAC_Mode;
+    }
+    switch(toupper(p[0])) {
+      case 'D': data[2] = 0xE4; break; // for fan Temp must be 0XE
+      case 'C': data[2] = 0x0 | data[2]; break;
+      case 'A': data[2] = 0x8 | data[2]; data[1] = 0x1F; break; // for auto Fan must be 0x1
+      case 'H': data[2] = 0xC | data[2]; break;
+      default: return IE_SYNTAX_IRHVAC;
+    }
+  }
+
+  int i = 0;
+  uint8_t mask = 1;
+
+  //header
+  rawdata[i++] = HVAC_MIDEA_HDR_MARK;
+  rawdata[i++] = HVAC_MIDEA_HDR_SPACE;
+
+  //data
+  for (int b = 0; b < HVAC_MIDEA_DATALEN; b++) { // Send value
+    for (mask = B10000000; mask > 0; mask >>= 1) {
+      if (data[b] & mask) { // Bit ONE
+        rawdata[i++] = HVAC_MIDEA_BIT_MARK;
+        rawdata[i++] = HVAC_MIDEA_ONE_SPACE;
+      }
+      else { // Bit ZERO
+        rawdata[i++] = HVAC_MIDEA_BIT_MARK;
+        rawdata[i++] = HVAC_MIDEA_ZERO_SPACE;
+      }
+    }
+    for (mask = B10000000; mask > 0; mask >>= 1) { // Send complement
+      if (data[b] & mask) { // Bit ONE
+        rawdata[i++] = HVAC_MIDEA_BIT_MARK;
+        rawdata[i++] = HVAC_MIDEA_ZERO_SPACE;
+      }
+      else { // Bit ZERO
+        rawdata[i++] = HVAC_MIDEA_BIT_MARK;
+        rawdata[i++] = HVAC_MIDEA_ONE_SPACE;
+      }
+    }
+
+  }
+
+  //trailer
+  rawdata[i++] = HVAC_MIDEA_RPT_MARK;
+  rawdata[i++] = HVAC_MIDEA_RPT_SPACE;
+
+//  noInterrupts();
+  // this takes ~180 ms :
+  irsend->sendRaw(rawdata, i, 38);
+  irsend->sendRaw(rawdata, i, 38);
+//  interrupts();
+
+  return IE_NO_ERROR;
+}
+#endif  // USE_IR_HVAC_MIDEA
+
+#ifdef USE_IR_HVAC_MITSUBISHI
 /*******************
      MITSUBISHI
 ********************/
@@ -348,11 +477,14 @@ uint8_t IrHvacMitsubishi(const char *HVAC_Mode, const char *HVAC_FanMode, bool H
 
   return IE_NO_ERROR;
 }
+#endif  // USE_IR_HVAC_MITSUBISHI
 
-
+#ifdef USE_IR_HVAC_LG
 /*******************
         LG
 ********************/
+
+const uint8_t HVAC_LG_DATALEN = 7;
 
 uint8_t IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Power, int HVAC_Temp)
 {
@@ -464,8 +596,9 @@ uint8_t IrHvacLG(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC_Powe
 
   return IE_NO_ERROR;
 }
+#endif  // USE_IR_HVAC_LG
 
-
+#ifdef USE_IR_HVAC_FUJITSU
 /*******************
       Fujitsu
 ********************/
@@ -519,8 +652,9 @@ uint8_t IrHvacFujitsu(const char *HVAC_Mode, const char *HVAC_FanMode, bool HVAC
 
   return IE_NO_ERROR;
 }
+#endif  // USE_IR_HVAC_FUJITSU
 
-#endif // USE_IR_HVAC
+#endif  // USE_IR_HVAC
 
 /*********************************************************************************************\
  * Commands
@@ -699,23 +833,63 @@ bool IrSendCommand(void)
                 protocol_text, protocol, bits, ulltoa(data, dvalue, 10), IrUint64toHex(data, hvalue, bits), repeat, protocol_code);
 
               irsend_active = true;
-              switch (protocol_code) {
-                case NEC:
-                  irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits, repeat); break;
-                case SONY:
-                  irsend->sendSony(data, (bits > SONY_20_BITS) ? SONY_20_BITS : bits, repeat > kSonyMinRepeat ? repeat : kSonyMinRepeat); break;
+              switch (protocol_code) {  // Equals IRremoteESP8266.h enum decode_type_t
+#ifdef USE_IR_SEND_RC5
                 case RC5:
                   irsend->sendRC5(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_RC6
                 case RC6:
                   irsend->sendRC6(data, bits, repeat); break;
-                case DISH:
-                  irsend->sendDISH(data, (bits > DISH_BITS) ? DISH_BITS : bits, repeat > kDishMinRepeat ? repeat : kDishMinRepeat); break;
-                case JVC:
-                  irsend->sendJVC(data, (bits > JVC_BITS) ? JVC_BITS : bits, repeat > 1 ? repeat : 1); break;
-                case SAMSUNG:
-                  irsend->sendSAMSUNG(data, (bits > SAMSUNG_BITS) ? SAMSUNG_BITS : bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_NEC
+                case NEC:
+                  irsend->sendNEC(data, (bits > NEC_BITS) ? NEC_BITS : bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_SONY
+                case SONY:
+                  irsend->sendSony(data, (bits > SONY_20_BITS) ? SONY_20_BITS : bits, repeat > kSonyMinRepeat ? repeat : kSonyMinRepeat); break;
+#endif
+#ifdef USE_IR_SEND_PANASONIC
                 case PANASONIC:
                   irsend->sendPanasonic64(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_JVC
+                case JVC:
+                  irsend->sendJVC(data, (bits > JVC_BITS) ? JVC_BITS : bits, repeat > 1 ? repeat : 1); break;
+#endif
+#ifdef USE_IR_SEND_SAMSUNG
+                case SAMSUNG:
+                  irsend->sendSAMSUNG(data, (bits > SAMSUNG_BITS) ? SAMSUNG_BITS : bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_WHYNTER
+                case WHYNTER:
+                  irsend->sendWhynter(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_AIWA
+                case AIWA_RC_T501:
+                  irsend->sendAiwaRCT501(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_LG
+                case LG:
+                  irsend->sendLG(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_SANYO
+                case SANYO:
+                  irsend->sendSanyoLC7461(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_MITSUBISHI
+                case MITSUBISHI:
+                  irsend->sendMitsubishi(data, bits, repeat); break;
+#endif
+#ifdef USE_IR_SEND_DISH
+                case DISH:
+                  irsend->sendDISH(data, (bits > DISH_BITS) ? DISH_BITS : bits, repeat > kDishMinRepeat ? repeat : kDishMinRepeat); break;
+#endif
+#ifdef USE_IR_SEND_SHARP
+                case SHARP:
+                  irsend->sendSharpRaw(data, bits, repeat); break;
+#endif
                 default:
                   irsend_active = false;
                   Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_PROTOCOL_NOT_SUPPORTED);
@@ -762,14 +936,26 @@ bool IrSendCommand(void)
           char vendor[20];
           int vendor_code = GetCommandCode(vendor, sizeof(vendor), HVAC_Vendor, kIrHvacVendors);
           switch (vendor_code) {
+#ifdef USE_IR_HVAC_TOSHIBA
             case VNDR_TOSHIBA:
               error = IrHvacToshiba(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+#endif
+#ifdef USE_IR_HVAC_MITSUBISHI
             case VNDR_MITSUBISHI:
               error = IrHvacMitsubishi(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+#endif
+#ifdef USE_IR_HVAC_LG
             case VNDR_LG:
               error = IrHvacLG(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+#endif
+#ifdef USE_IR_HVAC_FUJITSU
             case VNDR_FUJITSU:
               error = IrHvacFujitsu(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+#endif
+#ifdef USE_IR_HVAC_MIDEA
+            case VNDR_MIDEA:
+              error = IrHvacMidea(HVAC_Mode, HVAC_FanMode, HVAC_Power, HVAC_Temp); break;
+#endif
             default:
               error = IE_SYNTAX_IRHVAC;
           }
