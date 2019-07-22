@@ -443,6 +443,7 @@
 //  #define USE_IR_SEND_SHARP                      // Support IRsend Sharp protocol
   #define USE_IR_SEND_SONY                       // Support IRsend Sony protocol
 //  #define USE_IR_SEND_WHYNTER                    // Support IRsend Whynter protocol
+  #define USE_IR_SEND_PIONEER                    // Support IRsend Pioneer protocol
 
 //  #define USE_IR_HVAC                            // Support for HVAC systems using IR (+3k5 code)
     #define USE_IR_HVAC_TOSHIBA                  // Support IRhvac Toshiba protocol
