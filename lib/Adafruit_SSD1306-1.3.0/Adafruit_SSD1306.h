@@ -25,8 +25,8 @@
 #define _Adafruit_SSD1306_H_
 
 // ONE of the following three lines must be #defined:
-#define SSD1306_128_64 ///< DEPRECTAED: old way to specify 128x64 screen
-//#define SSD1306_128_32   ///< DEPRECATED: old way to specify 128x32 screen
+//#define SSD1306_128_64 ///< DEPRECTAED: old way to specify 128x64 screen
+#define SSD1306_128_32   ///< DEPRECATED: old way to specify 128x32 screen
 //#define SSD1306_96_16  ///< DEPRECATED: old way to specify 96x16 screen
 // This establishes the screen dimensions in old Adafruit_SSD1306 sketches
 // (NEW CODE SHOULD IGNORE THIS, USE THE CONSTRUCTORS THAT ACCEPT WIDTH
@@ -108,7 +108,7 @@
  #define SSD1306_LCDHEIGHT  16 ///< DEPRECATED: height w/SSD1306_96_16 defined
 #endif
 
-/*!
+/*! 
     @brief  Class that stores state and functions for interacting with
             SSD1306 OLED displays.
 */

@@ -40,6 +40,8 @@ const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log
 #define D_CMND_DISP_FONT "Font"
 #define D_CMND_DISP_ROTATE "Rotate"
 #define D_CMND_DISP_TEXT "Text"
+#define D_CMND_DISP_WIDTH "Width"
+#define D_CMND_DISP_HEIGHT "Height"
 
 enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_EVERY_50_MSECOND, FUNC_DISPLAY_EVERY_SECOND,
                      FUNC_DISPLAY_MODEL, FUNC_DISPLAY_MODE, FUNC_DISPLAY_POWER,
@@ -51,11 +53,11 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
-enum DisplayCommands { CMND_DISPLAY, CMND_DISP_MODEL, CMND_DISP_MODE, CMND_DISP_REFRESH, CMND_DISP_DIMMER, CMND_DISP_COLS, CMND_DISP_ROWS,
-  CMND_DISP_SIZE, CMND_DISP_FONT, CMND_DISP_ROTATE, CMND_DISP_TEXT, CMND_DISP_ADDRESS };
+enum DisplayCommands { CMND_DISPLAY, CMND_DISP_MODEL, CMND_DISP_WIDTH, CMND_DISP_HEIGHT, CMND_DISP_MODE, CMND_DISP_REFRESH, CMND_DISP_DIMMER,
+  CMND_DISP_COLS, CMND_DISP_ROWS, CMND_DISP_SIZE, CMND_DISP_FONT, CMND_DISP_ROTATE, CMND_DISP_TEXT, CMND_DISP_ADDRESS };
 const char kDisplayCommands[] PROGMEM =
-  "|" D_CMND_DISP_MODEL "|" D_CMND_DISP_MODE "|" D_CMND_DISP_REFRESH "|" D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|"
-  D_CMND_DISP_SIZE "|" D_CMND_DISP_FONT "|" D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS ;
+  "|" D_CMND_DISP_MODEL "|" D_CMND_DISP_MODE "|" D_CMND_DISP_WIDTH "|" D_CMND_DISP_HEIGHT "|" D_CMND_DISP_REFRESH "|" D_CMND_DISP_DIMMER "|"
+  D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|" D_CMND_DISP_SIZE "|" D_CMND_DISP_FONT "|" D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS ;
 
 const char S_JSON_DISPLAY_COMMAND_VALUE[] PROGMEM =        "{\"" D_CMND_DISPLAY "%s\":\"%s\"}";
 const char S_JSON_DISPLAY_COMMAND_NVALUE[] PROGMEM =       "{\"" D_CMND_DISPLAY "%s\":%d}";
@@ -919,9 +921,11 @@ bool DisplayCommand(void)
       serviced = false;  // Unknown command
     }
     else if (CMND_DISPLAY == command_code) {
-      Response_P(PSTR("{\"" D_CMND_DISPLAY "\":{\"" D_CMND_DISP_MODEL "\":%d,\"" D_CMND_DISP_MODE "\":%d,\"" D_CMND_DISP_DIMMER "\":%d,\""
-         D_CMND_DISP_SIZE "\":%d,\"" D_CMND_DISP_FONT "\":%d,\"" D_CMND_DISP_ROTATE "\":%d,\"" D_CMND_DISP_REFRESH "\":%d,\"" D_CMND_DISP_COLS "\":[%d,%d],\"" D_CMND_DISP_ROWS "\":%d}}"),
-        Settings.display_model, Settings.display_mode, Settings.display_dimmer, Settings.display_size, Settings.display_font, Settings.display_rotate, Settings.display_refresh,
+      Response_P(PSTR("{\"" D_CMND_DISPLAY "\":{\"" D_CMND_DISP_MODEL "\":%d,\"" D_CMND_DISP_WIDTH "\":%d,\"" D_CMND_DISP_HEIGHT "\":%d,\"" D_CMND_DISP_MODE "\":%d,\""
+        D_CMND_DISP_DIMMER "\":%d,\"" D_CMND_DISP_SIZE "\":%d,\"" D_CMND_DISP_FONT "\":%d,\"" D_CMND_DISP_ROTATE "\":%d,\"" D_CMND_DISP_REFRESH "\":%d,\""
+        D_CMND_DISP_COLS "\":[%d,%d],\"" D_CMND_DISP_ROWS "\":%d}}"),
+        Settings.display_model, Settings.display_width, Settings.display_height, Settings.display_mode,
+        Settings.display_dimmer, Settings.display_size, Settings.display_font, Settings.display_rotate, Settings.display_refresh,
         Settings.display_cols[0], Settings.display_cols[1], Settings.display_rows);
     }
     else if (CMND_DISP_MODEL == command_code) {
@@ -935,6 +939,24 @@ bool DisplayCommand(void)
         }
       }
       Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_model);
+    }
+    else if (CMND_DISP_WIDTH == command_code) {
+      if (XdrvMailbox.payload > 0) {
+        if (XdrvMailbox.payload != Settings.display_width) {
+          Settings.display_width = XdrvMailbox.payload;
+          restart_flag = 2;  // Restart to re-init width
+        }
+      }
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_width);
+    }
+    else if (CMND_DISP_HEIGHT == command_code) {
+      if (XdrvMailbox.payload > 0) {
+        if (XdrvMailbox.payload != Settings.display_height) {
+          Settings.display_height = XdrvMailbox.payload;
+          restart_flag = 2;  // Restart to re-init height
+        }
+      }
+      Response_P(S_JSON_DISPLAY_COMMAND_NVALUE, command, Settings.display_height);
     }
     else if (CMND_DISP_MODE == command_code) {
 #ifdef USE_DISPLAY_MODES1TO5

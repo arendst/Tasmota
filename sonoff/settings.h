@@ -334,8 +334,10 @@ struct SYSCFG {
   mytmplt       user_template;             // 720  29 bytes
   uint8_t       novasds_period;            // 73D
   uint8_t       web_color[18][3];          // 73E
+  uint16_t      display_width;             // 774
+  uint16_t      display_height;            // 776
 
-  uint8_t       free_774[32];              // 774
+  uint8_t       free_778[28];              // 778
 
 //  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries
   uint32_t      adc_param1;                // 794

@@ -1,12 +1,15 @@
 /*********************************************************************************************\
  * 6.6.0.2 20190714
+ * Add command SetOption67 0/1 to disable or enable a buzzer as used in iFan03
+ * Add command DisplayWidth to set pixel width on supported devices
+ * Add command DisplayHeight to set pixel height on supported devices
  * Add support for Sonoff iFan03 as module 71 (#5988)
  * Add support for a buzzer
- * Add command SetOption67 0/1 to disable or enable a buzzer as used in iFan03
  * Add support for IRSend long press ('repeat' feature from IRRemoteESP8266) (#6074)
  * Add support for IRHVAC Midea/Komeco protocol (#3227)
  * Add support for more IRSend protocols enabled in my_user_config.h
  * Add support for IRSend Pioneer protocol (#6100)
+ * Add Oled reset GPIO option "OLED reset"
  *
  * 6.6.0.1 20190708
  * Fix Domoticz battery level set to 100 if define USE_ADC_VCC is not used (#6033)
