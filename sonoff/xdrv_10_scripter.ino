@@ -35,6 +35,13 @@ no math hierarchy  (costs ram and execution time, better group with brackets, an
 (will probably make math hierarchy an ifdefed option)
 keywords if then else endif, or, and are better readable for beginners (others may use {})
 
+a. fixed filters
+b. switch case for strings
+c. recoded if then else
+d. -> silent execute (no mqtt and weblog)
+e. fast section F
+f. pc[x] tasmota pulse counter
+
 \*********************************************************************************************/
 
 #define XDRV_10             10
@@ -67,6 +74,16 @@ enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
 #warning ("FATFS standard spi should be used");
 #endif
 #endif
+
+#ifdef SUPPORT_MQTT_EVENT
+  #include <LinkedList.h>                 // Import LinkedList library
+  typedef struct {
+    String Event;
+    String Topic;
+    String Key;
+  } MQTT_Subscription;
+  LinkedList<MQTT_Subscription> subscriptions;
+#endif    //SUPPORT_MQTT_EVENT
 
 #ifdef USE_TOUCH_BUTTONS
 #include <renderer.h>
@@ -194,6 +211,7 @@ void RulesTeleperiod(void) {
 
 // EEPROM MACROS
 #ifdef USE_24C256
+#ifndef USE_SCRIPT_FATFS
 // i2c eeprom
 #include <Eeprom24C128_256.h>
 #define EEPROM_ADDRESS 0x50
@@ -204,6 +222,7 @@ static Eeprom24C128_256 eeprom(EEPROM_ADDRESS);
 #define EEP_WRITE(A,B,C) eeprom.writeBytes(A,B,(uint8_t*)C);
 // eeprom.readBytes(address, length, buffer);
 #define EEP_READ(A,B,C) eeprom.readBytes(A,B,(uint8_t*)C);
+#endif
 #endif
 
 #define SCRIPT_SKIP_SPACES while (*lp==' ' || *lp=='\t') lp++;
@@ -2138,11 +2157,11 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
               SCRIPT_SKIP_SPACES
               lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
               int8_t mode=fvar;
-              pinMode(pinnr,mode&1);
+              pinMode(pinnr,mode&3);
               goto next_line;
             } else if (!strncmp(lp,"spin(",5)) {
               lp+=5;
-              // set pin mode
+              // set pin
               lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
               int8_t pinnr=fvar;
               SCRIPT_SKIP_SPACES
@@ -2946,9 +2965,11 @@ void ScriptSaveSettings(void) {
     strlcpy(glob_script_mem.script_ram,str.c_str(), glob_script_mem.script_size);
 
 #ifdef USE_24C256
+#ifndef USE_SCRIPT_FATFS
     if (glob_script_mem.flags&1) {
       EEP_WRITE(0,EEP_SCRIPT_SIZE,glob_script_mem.script_ram);
     }
+#endif
 #endif
 
 #ifdef USE_SCRIPT_FATFS
@@ -2991,9 +3012,12 @@ char *svd_sp=glob_script_mem.scriptptr;
   glob_script_mem.scriptptr=svd_sp;
   Scripter_save_pvars();
 }
+#define D_CMND_SCRIPT "Script"
+#define D_CMND_SUBSCRIBE "Subscribe"
+#define D_CMND_UNSUBSCRIBE "Unsubscribe"
 
-enum ScriptCommands { CMND_SCRIPT };
-const char kScriptCommands[] PROGMEM = "Script";
+enum ScriptCommands { CMND_SCRIPT,CMND_SUBSCRIBE, CMND_UNSUBSCRIBE };
+const char kScriptCommands[] PROGMEM = D_CMND_SCRIPT "|" D_CMND_SUBSCRIBE "|" D_CMND_UNSUBSCRIBE;
 
 bool ScriptCommand(void) {
   char command[CMDSZ];
@@ -3026,8 +3050,15 @@ bool ScriptCommand(void) {
       return serviced;
     }
     snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"%s\",\"Free\":%d}"),command, GetStateText(bitRead(Settings.rule_enabled,0)),glob_script_mem.script_size-strlen(glob_script_mem.script_ram));
-  } else serviced = false;
-
+  #ifdef SUPPORT_MQTT_EVENT
+  } else if (CMND_SUBSCRIBE == command_code) {			//MQTT Subscribe command. Subscribe <Event>, <Topic> [, <Key>]
+      String result = ScriptSubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
+      Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
+    } else if (CMND_UNSUBSCRIBE == command_code) {			//MQTT Un-subscribe command. UnSubscribe <Event>
+      String result = ScriptUnsubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
+      Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
+  #endif        //SUPPORT_MQTT_EVENT
+   }
   return serviced;
 }
 
@@ -3050,6 +3081,196 @@ void dateTime(uint16_t* date, uint16_t* time) {
 
 #endif
 
+
+
+#ifdef SUPPORT_MQTT_EVENT
+/********************************************************************************************/
+/*
+ * Script: Process received MQTT message.
+ *        If the message is in our subscription list, trigger an event with the value parsed from MQTT data
+ * Input:
+ *      void      - We are going to access XdrvMailbox data directly.
+ * Return:
+ *      true      - The message is consumed.
+ *      false     - The message is not in our list.
+ */
+bool ScriptMqttData(void)
+{
+  bool serviced = false;
+  //toLog(">>> 1");
+  toLog(XdrvMailbox.data);
+  if (XdrvMailbox.data_len < 1 || XdrvMailbox.data_len > 256) {
+    return false;
+  }
+  String sTopic = XdrvMailbox.topic;
+  String sData = XdrvMailbox.data;
+  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Script: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
+  MQTT_Subscription event_item;
+  //Looking for matched topic
+  for (uint32_t index = 0; index < subscriptions.size(); index++) {
+    event_item = subscriptions.get(index);
+
+    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Script: Match MQTT message Topic %s with subscription topic %s"), sTopic.c_str(), event_item.Topic.c_str());
+    if (sTopic.startsWith(event_item.Topic)) {
+      //This topic is subscribed by us, so serve it
+      serviced = true;
+      String value;
+      if (event_item.Key.length() == 0) {   //If did not specify Key
+        value = sData;
+      } else {      //If specified Key, need to parse Key/Value from JSON data
+        StaticJsonBuffer<400> jsonBuf;
+        JsonObject& jsonData = jsonBuf.parseObject(sData);
+        String key1 = event_item.Key;
+        String key2;
+        if (!jsonData.success()) break;       //Failed to parse JSON data, ignore this message.
+        int dot;
+        if ((dot = key1.indexOf('.')) > 0) {
+          key2 = key1.substring(dot+1);
+          key1 = key1.substring(0, dot);
+          if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
+          value = (const char *)jsonData[key1][key2];
+        } else {
+          if (!jsonData[key1].success()) break;
+          value = (const char *)jsonData[key1];
+        }
+      }
+      value.trim();
+      //Create an new event. Cannot directly call RulesProcessEvent().
+      //snprintf_P(event_data, sizeof(event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
+      char sbuffer[128];
+      snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=%s\n"), event_item.Event.c_str(), value.c_str());
+      //toLog(sbuffer);
+      execute_script(sbuffer);
+    }
+  }
+  return serviced;
+}
+
+/********************************************************************************************/
+/*
+ * Subscribe a MQTT topic (with or without key) and assign an event name to it
+ * Command Subscribe format:
+ *      Subscribe <event_name>, <topic> [, <key>]
+ *        This command will subscribe a <topic> and give it an event name <event_name>.
+ *        The optional parameter <key> is for parse the specified key/value from MQTT message
+ *            payload with JSON format.
+ *      Subscribe
+ *        Subscribe command without any parameter will list all topics currently subscribed.
+ * Input:
+ *      data      - A char buffer with all the parameters
+ *      data_len  - Length of the parameters
+ * Return:
+ *      A string include subscribed event, topic and key.
+ */
+String ScriptSubscribe(const char *data, int data_len)
+{
+  MQTT_Subscription subscription_item;
+  String events;
+  if (data_len > 0) {
+    char parameters[data_len+1];
+    memcpy(parameters, data, data_len);
+    parameters[data_len] = '\0';
+    String event_name, topic, key;
+
+    char * pos = strtok(parameters, ",");
+    if (pos) {
+      event_name = Trim(pos);
+      pos = strtok(nullptr, ",");
+      if (pos) {
+        topic = Trim(pos);
+        pos = strtok(nullptr, ",");
+        if (pos) {
+          key = Trim(pos);
+        }
+      }
+    }
+    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Script: Subscribe command with parameters: %s, %s, %s."), event_name.c_str(), topic.c_str(), key.c_str());
+    //event_name.toUpperCase();
+    if (event_name.length() > 0 && topic.length() > 0) {
+      //Search all subscriptions
+      for (uint32_t index=0; index < subscriptions.size(); index++) {
+        if (subscriptions.get(index).Event.equals(event_name)) {
+          //If find exists one, remove it.
+          String stopic = subscriptions.get(index).Topic + "/#";
+          MqttUnsubscribe(stopic.c_str());
+          subscriptions.remove(index);
+          break;
+        }
+      }
+      //Add "/#" to the topic
+      if (!topic.endsWith("#")) {
+        if (topic.endsWith("/")) {
+          topic.concat("#");
+        } else {
+          topic.concat("/#");
+        }
+      }
+      //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Script: New topic: %s."), topic.c_str());
+      //MQTT Subscribe
+      subscription_item.Event = event_name;
+      subscription_item.Topic = topic.substring(0, topic.length() - 2);   //Remove "/#" so easy to match
+      subscription_item.Key = key;
+      subscriptions.add(subscription_item);
+
+      MqttSubscribe(topic.c_str());
+      events.concat(event_name + "," + topic
+        + (key.length()>0 ? "," : "")
+        + key);
+    } else {
+      events = D_JSON_WRONG_PARAMETERS;
+    }
+  } else {
+    //If did not specify the event name, list all subscribed event
+    for (uint32_t index=0; index < subscriptions.size(); index++) {
+      subscription_item = subscriptions.get(index);
+      events.concat(subscription_item.Event + "," + subscription_item.Topic
+        + (subscription_item.Key.length()>0 ? "," : "")
+        + subscription_item.Key + "; ");
+    }
+  }
+  return events;
+}
+
+/********************************************************************************************/
+/*
+ * Unsubscribe specified MQTT event. If no event specified, Unsubscribe all.
+ * Command Unsubscribe format:
+ *      Unsubscribe [<event_name>]
+ * Input:
+ *      data      - Event name
+ *      data_len  - Length of the parameters
+ * Return:
+ *      list all the events unsubscribed.
+ */
+String ScriptUnsubscribe(const char * data, int data_len)
+{
+  MQTT_Subscription subscription_item;
+  String events;
+  if (data_len > 0) {
+    for (uint32_t index = 0; index < subscriptions.size(); index++) {
+      subscription_item = subscriptions.get(index);
+      if (subscription_item.Event.equalsIgnoreCase(data)) {
+        String stopic = subscription_item.Topic + "/#";
+        MqttUnsubscribe(stopic.c_str());
+        events = subscription_item.Event;
+        subscriptions.remove(index);
+        break;
+      }
+    }
+  } else {
+    //If did not specify the event name, unsubscribe all event
+    String stopic;
+    while (subscriptions.size() > 0) {
+      events.concat(subscriptions.get(0).Event + "; ");
+      stopic = subscriptions.get(0).Topic + "/#";
+      MqttUnsubscribe(stopic.c_str());
+      subscriptions.remove(0);
+    }
+  }
+  return events;
+}
+#endif //     SUPPORT_MQTT_EVENT
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -3068,6 +3289,7 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_pram_size=MAX_RULE_MEMS*10;
 
 #ifdef USE_24C256
+#ifndef USE_SCRIPT_FATFS
       if (i2c_flg) {
         if (I2cDevice(EEPROM_ADDRESS)) {
           // found 32kb eeprom
@@ -3088,6 +3310,7 @@ bool Xdrv10(uint8_t function)
           glob_script_mem.flags=1;
         }
       }
+#endif
 #endif
 
 #ifdef USE_SCRIPT_FATFS
@@ -3146,7 +3369,7 @@ bool Xdrv10(uint8_t function)
       break;
     case FUNC_SET_POWER:
     case FUNC_RULES_PROCESS:
-      if (bitRead(Settings.rule_enabled, 0) && mqtt_data[0]) Run_Scripter(">E",2,mqtt_data);
+      if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E",2,mqtt_data);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_ADD_BUTTON:
@@ -3168,6 +3391,11 @@ bool Xdrv10(uint8_t function)
         Scripter_save_pvars();
       }
       break;
+#ifdef SUPPORT_MQTT_EVENT
+    case FUNC_MQTT_DATA:
+      result = ScriptMqttData();
+      break;
+#endif    //SUPPORT_MQTT_EVENT
   }
   return result;
 }

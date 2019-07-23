@@ -52,6 +52,7 @@ executed on BOOT time
 
 >**\>T**  
 executed on teleperiod time (**SENSOR** and **STATE**), get tele vars only in this section  
+remark: json variable names (like all others) may not contain math operators like - , you should set setoption64 1 to replace - with underscore
 
 >**\>F**  
 executed every 100 ms  
@@ -177,7 +178,7 @@ the condition may not be enclosed in brackets
 **svars** save permanent vars  
 **delay(x)** pauses x milliseconds (should be as short as possible)  
 **spin(x m)** set gpio pin x (0-16) to value m (0,1) only the last bit is used, so even values set the pin to zero and uneven values set the pin to 1  
-**spinm(x m)** set pin mode gpio pin x (0-16) to mode m (input=0,output=1)  
+**spinm(x m)** set pin mode gpio pin x (0-16) to mode m (input=0,output=1,input with pullup=2)  
 
 >**#name** names a subroutine, subroutines are called with **=#name**  
 **#name(param)** names a subroutines with a parameter is called with **=#name(param)**  
@@ -195,7 +196,6 @@ specifies a for next loop, (loop count must not be less then 1)
 specifies a switch case selector  (numeric or string)
 
 **sd card support**  
-(currently only works with 2.42 ???)
 enable by CARD_CS = gpio pin of card chip select (+ 10k flash)  
 \#define USE_SCRIPT_FATFS CARD_CS   
 sd card uses standard hardware spi gpios: mosi,miso,sclk  
@@ -235,6 +235,18 @@ extended commands   (+0,9k flash)
 can be used e.g. to set variables  e.g. **script >mintmp=15**  
 more then one line may be executed seperated by a semicolon e.g. **script >mintmp=15;maxtemp=40**   
 script itself cant be set because the size would not fit the mqtt buffers
+
+**subscribe,unsubscribe**
+>if \#defined SUPPORT_MQTT_EVENT command subscribe and unsubscribe are supported. in contrast to rules no event is generated but the event name specifies a variable defined in D section and this variable is automatically set on transmission of the subscribed item  
+
+**summary of optional defines**  
+>\#define USE_SCRIPT_FATFS CS_PIN : enables SD card support (on spi bus) also enables 4k script buffer  
+\#define USE_SCRIPT_FATFS_EXT : enables additional FS commands  
+\#define SDCARD_DIR : enables support for WEBUI for SD card directory up and download  
+\#define USE_24C256 : enables use of 24C256 i2c eeprom to expand script buffer (defaults to 4k)  
+\#define SUPPORT_MQTT_EVENT : enables support for subscribe unsubscribe  
+\#define USE_TOUCH_BUTTONS : enable virtual touch button support with touch displays  
+
 
 ***example script***  
 meant to show some of the possibilities    
@@ -531,7 +543,7 @@ str=""
 **\>B**  
 ; set sensor file download link   
 fl1("slog.txt")  
-; delete file in case we want to start fresh
+; delete file in case we want to start fresh  
 ;fd("slog.txt")  
 
 
