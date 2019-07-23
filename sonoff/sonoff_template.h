@@ -1996,24 +1996,20 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      ADC0_USER         // ADC0 A0 Analog input
   },
   { "Sonoff L1",       // Sonoff L1 RGB LED controller (ESP8266 w/ separate Nuvoton MCU)
-     GPIO_USER,
+     0,
      GPIO_TXD,         // GPIO01 MCU serial control
-     GPIO_USER,
+     0,
      GPIO_RXD,         // GPIO03 MCU serial control
-     GPIO_USER,
-     GPIO_USER,
+     0, 0,
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
                        // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
      0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     GPIO_USER,
-     GPIO_LED1,        // GPIO13 WiFi LED - Link and Power status
-     GPIO_USER,
-     GPIO_USER,
-     GPIO_USER,
-     0
+     0,
+     GPIO_LED1_INV,    // GPIO13 WiFi Blue Led - Link and Power status
+     0, 0, 0, 0
   },
   { "Sonoff iFan03",   // Sonoff iFan03 (ESP8285)
      GPIO_KEY1,        // GPIO00 WIFI_KEY0 Button 1
