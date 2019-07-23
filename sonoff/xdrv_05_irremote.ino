@@ -822,7 +822,7 @@ bool IrSendCommand(void)
         if (strlen(dataBufUc) < 8) {
           error = IE_INVALID_JSON;
         } else {
-          StaticJsonBuffer<128> jsonBuf;
+          StaticJsonBuffer<140> jsonBuf;
           JsonObject &root = jsonBuf.parseObject(dataBufUc);
           if (!root.success()) {
             error = IE_INVALID_JSON;
