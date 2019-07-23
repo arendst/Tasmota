@@ -35,12 +35,6 @@ no math hierarchy  (costs ram and execution time, better group with brackets, an
 (will probably make math hierarchy an ifdefed option)
 keywords if then else endif, or, and are better readable for beginners (others may use {})
 
-a. fixed filters
-b. switch case for strings
-c. recoded if then else
-d. -> silent execute (no mqtt and weblog)
-e. fast section F
-f. pc[x] tasmota pulse counter
 
 \*********************************************************************************************/
 
