@@ -17,7 +17,7 @@ class Adafruit_GFX : public Print {
   Adafruit_GFX(int16_t w, int16_t h); // Constructor
 
   // This MUST be defined by the subclass:
-  virtual void drawPixel(int16_t x, int16_t y, uint16_t color) = 0;    ///< Virtual drawPixel() function to draw to the screen/framebuffer/etc, must be overridden in subclass. @param x X coordinate.  @param y Y coordinate. @param color 16-bit pixel color. 
+  virtual void drawPixel(int16_t x, int16_t y, uint16_t color) = 0;    ///< Virtual drawPixel() function to draw to the screen/framebuffer/etc, must be overridden in subclass. @param x X coordinate.  @param y Y coordinate. @param color 16-bit pixel color.
 
   // TRANSACTION API / CORE DRAW API
   // These MAY be overridden by the subclass to provide device-specific
@@ -47,24 +47,27 @@ class Adafruit_GFX : public Print {
     fillScreen(uint16_t color),
     // Optional and probably not necessary to change
     drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color),
-    drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+    drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color),
+    setTextSize(uint8_t s),
+    setCursor(int16_t x, int16_t y),
+    drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
+    fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
+    drawRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
+      int16_t radius, uint16_t color),
+    fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
+      int16_t radius, uint16_t color);
 
   // These exist only with Adafruit_GFX (no subclass overrides)
   void
-    drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
+
     drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
       uint16_t color),
-    fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
     fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
       int16_t delta, uint16_t color),
     drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
       int16_t x2, int16_t y2, uint16_t color),
     fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
       int16_t x2, int16_t y2, uint16_t color),
-    drawRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
-      int16_t radius, uint16_t color),
-    fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
-      int16_t radius, uint16_t color),
     drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
       int16_t w, int16_t h, uint16_t color),
     drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
@@ -95,10 +98,9 @@ class Adafruit_GFX : public Print {
       uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h),
     drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color,
       uint16_t bg, uint8_t size),
-    setCursor(int16_t x, int16_t y),
-    setTextColor(uint16_t c),
     setTextColor(uint16_t c, uint16_t bg),
-    setTextSize(uint8_t s),
+    setTextColor(uint16_t c),
+
     setTextWrap(boolean w),
     cp437(boolean x=true),
     setFont(const GFXfont *f = NULL),
@@ -110,11 +112,9 @@ class Adafruit_GFX : public Print {
       int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h);
 
 
-#if ARDUINO >= 100
-  virtual size_t write(uint8_t);
-#else
-  virtual void   write(uint8_t);
-#endif
+  virtual size_t write(uint8_t c);
+
+  size_t iwrite(uint8_t c);
 
   int16_t height(void) const;
   int16_t width(void) const;
@@ -124,6 +124,10 @@ class Adafruit_GFX : public Print {
   // get current cursor position (get rotation safe maximum values, using: width() for x, height() for y)
   int16_t getCursorX(void) const;
   int16_t getCursorY(void) const;
+
+  virtual void setDrawMode(uint8_t mode);
+
+  uint8_t drawmode;       /// transparent or opaque text mode
 
  protected:
   void
@@ -143,6 +147,7 @@ class Adafruit_GFX : public Print {
   uint8_t
     textsize,       ///< Desired magnification of text to print()
     rotation;       ///< Display rotation (0 thru 3)
+
   boolean
     wrap,           ///< If set, 'wrap' text at right edge of display
     _cp437;         ///< If set, use correct CP437 charset (default is off)
@@ -172,6 +177,7 @@ class Adafruit_GFX_Button {
   boolean justPressed();
   boolean justReleased();
 
+  uint8_t vpower;
  private:
   Adafruit_GFX *_gfx;
   int16_t       _x1, _y1; // Coordinates of top-left corner

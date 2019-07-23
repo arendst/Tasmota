@@ -89,6 +89,7 @@ WIDTH(w), HEIGHT(h)
     wrap      = true;
     _cp437    = false;
     gfxFont   = NULL;
+    drawmode  = 0;
 }
 
 /**************************************************************************/
@@ -756,7 +757,7 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y,
 
 /**************************************************************************/
 /*!
-   @brief      Draw PROGMEM-resident XBitMap Files (*.xbm), exported from GIMP. 
+   @brief      Draw PROGMEM-resident XBitMap Files (*.xbm), exported from GIMP.
    Usage: Export from GIMP to *.xbm, rename *.xbm to *.c and open in editor.
    C Array can be directly used with this function.
    There is no RAM-resident version of this function; if generating bitmaps
@@ -791,7 +792,7 @@ void Adafruit_GFX::drawXBitmap(int16_t x, int16_t y,
 
 /**************************************************************************/
 /*!
-   @brief   Draw a PROGMEM-resident 8-bit image (grayscale) at the specified (x,y) pos.  
+   @brief   Draw a PROGMEM-resident 8-bit image (grayscale) at the specified (x,y) pos.
    Specifically for 8-bit display devices such as IS31FL3731; no color reduction/expansion is performed.
     @param    x   Top left corner x coordinate
     @param    y   Top left corner y coordinate
@@ -813,7 +814,7 @@ void Adafruit_GFX::drawGrayscaleBitmap(int16_t x, int16_t y,
 
 /**************************************************************************/
 /*!
-   @brief   Draw a RAM-resident 8-bit image (grayscale) at the specified (x,y) pos.  
+   @brief   Draw a RAM-resident 8-bit image (grayscale) at the specified (x,y) pos.
    Specifically for 8-bit display devices such as IS31FL3731; no color reduction/expansion is performed.
     @param    x   Top left corner x coordinate
     @param    y   Top left corner y coordinate
@@ -900,7 +901,7 @@ void Adafruit_GFX::drawGrayscaleBitmap(int16_t x, int16_t y,
 
 /**************************************************************************/
 /*!
-   @brief   Draw a PROGMEM-resident 16-bit image (RGB 5/6/5) at the specified (x,y) position.  
+   @brief   Draw a PROGMEM-resident 16-bit image (RGB 5/6/5) at the specified (x,y) position.
    For 16-bit display devices; no color reduction performed.
     @param    x   Top left corner x coordinate
     @param    y   Top left corner y coordinate
@@ -922,7 +923,7 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y,
 
 /**************************************************************************/
 /*!
-   @brief   Draw a RAM-resident 16-bit image (RGB 5/6/5) at the specified (x,y) position.  
+   @brief   Draw a RAM-resident 16-bit image (RGB 5/6/5) at the specified (x,y) position.
    For 16-bit display devices; no color reduction performed.
     @param    x   Top left corner x coordinate
     @param    y   Top left corner y coordinate
@@ -1000,6 +1001,10 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y,
     endWrite();
 }
 
+void Adafruit_GFX::setDrawMode(uint8_t mode) {
+  drawmode=mode;
+}
+
 // TEXT- AND CHARACTER-HANDLING FUNCTIONS ----------------------------------
 
 // Draw a character
@@ -1036,11 +1041,13 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
                         writePixel(x+i, y+j, color);
                     else
                         writeFillRect(x+i*size, y+j*size, size, size, color);
-                } else if(bg != color) {
+                } else if (bg != color) {
+                  if (!drawmode) {
                     if(size == 1)
                         writePixel(x+i, y+j, bg);
                     else
                         writeFillRect(x+i*size, y+j*size, size, size, bg);
+                  }
                 }
             }
         }
@@ -1119,6 +1126,57 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
 */
 /**************************************************************************/
 size_t Adafruit_GFX::write(uint8_t c) {
+    if(!gfxFont) { // 'Classic' built-in font
+
+        if(c == '\n') {                        // Newline?
+            cursor_x  = 0;                     // Reset x to zero,
+            cursor_y += textsize * 8;          // advance y one line
+        } else if(c != '\r') {                 // Ignore carriage returns
+            if(wrap && ((cursor_x + textsize * 6) > _width)) { // Off right?
+                cursor_x  = 0;                 // Reset x to zero,
+                cursor_y += textsize * 8;      // advance y one line
+            }
+            drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
+            cursor_x += textsize * 6;          // Advance x one char
+        }
+
+    } else { // Custom font
+
+        if(c == '\n') {
+            cursor_x  = 0;
+            cursor_y += (int16_t)textsize *
+                        (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
+        } else if(c != '\r') {
+            uint8_t first = pgm_read_byte(&gfxFont->first);
+            if((c >= first) && (c <= (uint8_t)pgm_read_byte(&gfxFont->last))) {
+                GFXglyph *glyph = &(((GFXglyph *)pgm_read_pointer(
+                  &gfxFont->glyph))[c - first]);
+                uint8_t   w     = pgm_read_byte(&glyph->width),
+                          h     = pgm_read_byte(&glyph->height);
+                if((w > 0) && (h > 0)) { // Is there an associated bitmap?
+                    int16_t xo = (int8_t)pgm_read_byte(&glyph->xOffset); // sic
+                    if(wrap && ((cursor_x + textsize * (xo + w)) > _width)) {
+                        cursor_x  = 0;
+                        cursor_y += (int16_t)textsize *
+                          (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
+                    }
+                    drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
+                }
+                cursor_x += (uint8_t)pgm_read_byte(&glyph->xAdvance) * (int16_t)textsize;
+            }
+        }
+
+    }
+    return 1;
+}
+
+/**************************************************************************/
+/*!
+    @brief  Print one byte/character of data, used to support print()
+    @param  c  The 8-bit ascii character to write
+*/
+/**************************************************************************/
+size_t Adafruit_GFX::iwrite(uint8_t c) {
     if(!gfxFont) { // 'Classic' built-in font
 
         if(c == '\n') {                        // Newline?
@@ -1596,7 +1654,13 @@ void Adafruit_GFX_Button::drawButton(boolean inverted) {
     _y1 + (_h/2) - (4 * _textsize));
   _gfx->setTextColor(text);
   _gfx->setTextSize(_textsize);
-  _gfx->print(_label);
+  uint8_t sdmode=_gfx->drawmode;
+  _gfx->setDrawMode(1);
+  //_gfx->print(_label);
+  for (uint8_t cnt=0;cnt<strlen(_label);cnt++) {
+    _gfx->iwrite(_label[cnt]);
+  }
+  _gfx->setDrawMode(sdmode);
 }
 
 /**************************************************************************/
@@ -1959,4 +2023,3 @@ void GFXcanvas16::fillScreen(uint16_t color) {
         }
     }
 }
-
