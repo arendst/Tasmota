@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.2.0028'
+VER = '2.2.0029'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -848,31 +848,31 @@ Setting_6_4_1_13.update            ({
                                     })
 # ======================================================================
 Setting_6_4_1_16 = copy.deepcopy(Setting_6_4_1_13)
-Setting_6_4_1_16.update({
-    'user_template_base':          ('B',   0x71F,       (None,  None,                           ('Management',  '"Template {}".format($)')), ('$ + 1','$ - 1') ),
-    'user_template':               ({
-        'name':                     ('15s', 0x720, (None, None,                                 ('Management',  '"Template {{\\\"NAME\\\":\\\"{}\\\"}}".format($)' )) ),
-        'gpio00':                   ('B',   0x72F, (None, None,                                 ('Management',  '"Template {{\\\"GPIO\\\":[{},{},{},{},{},{},{},{},{},{},{},{},{}]}}".format(@["user_template"]["gpio00"],@["user_template"]["gpio01"],@["user_template"]["gpio02"],@["user_template"]["gpio03"],@["user_template"]["gpio04"],@["user_template"]["gpio05"],@["user_template"]["gpio09"],@["user_template"]["gpio10"],@["user_template"]["gpio12"],@["user_template"]["gpio13"],@["user_template"]["gpio14"],@["user_template"]["gpio15"],@["user_template"]["gpio16"])')) ),
-        'gpio01':                   ('B',   0x730, (None, None,                                 ('Management',  None)) ),
-        'gpio02':                   ('B',   0x731, (None, None,                                 ('Management',  None)) ),
-        'gpio03':                   ('B',   0x732, (None, None,                                 ('Management',  None)) ),
-        'gpio04':                   ('B',   0x733, (None, None,                                 ('Management',  None)) ),
-        'gpio05':                   ('B',   0x734, (None, None,                                 ('Management',  None)) ),
-        'gpio09':                   ('B',   0x735, (None, None,                                 ('Management',  None)) ),
-        'gpio10':                   ('B',   0x736, (None, None,                                 ('Management',  None)) ),
-        'gpio12':                   ('B',   0x737, (None, None,                                 ('Management',  None)) ),
-        'gpio13':                   ('B',   0x738, (None, None,                                 ('Management',  None)) ),
-        'gpio14':                   ('B',   0x739, (None, None,                                 ('Management',  None)) ),
-        'gpio15':                   ('B',   0x73A, (None, None,                                 ('Management',  None)) ),
-        'gpio16':                   ('B',   0x73B, (None, None,                                 ('Management',  None)) ),
-        'flag':                         ({
-            '_':                            ('B',   0x73C     ,  (None, None,                   ('Management',  '"Template {{\\\"FLAG\\\":{}}}".format($)')),(None,  False) ),
-            'adc0':                         ('B',  (0x73C,1,0),  (None, None,                   ('Management',  None)) ),
-            'pullup':                       ('B',  (0x73C,1,1),  (None, None,                   ('Management',  None)) ),
-                                         },      0x73C,       (None, None,                      ('Management',  None))
-                                        ),
+Setting_6_4_1_16.update             ({
+    'user_template_base':           ('B',   0x71F,       (None,  None,                          ('Management',  '"Template {}".format($)')), ('$ + 1','$ - 1') ),
+    'user_template':                ({
+        'name':                     ('15s', 0x720,       (None, None,                           ('Management',  '"Template {{\\\"NAME\\\":\\\"{}\\\"}}".format($)' )) ),
+        'gpio00':                   ('B',   0x72F,       (None, None,                           ('Management',  '"Template {{\\\"GPIO\\\":[{},{},{},{},{},{},{},{},{},{},{},{},{}]}}".format(@["user_template"]["gpio00"],@["user_template"]["gpio01"],@["user_template"]["gpio02"],@["user_template"]["gpio03"],@["user_template"]["gpio04"],@["user_template"]["gpio05"],@["user_template"]["gpio09"],@["user_template"]["gpio10"],@["user_template"]["gpio12"],@["user_template"]["gpio13"],@["user_template"]["gpio14"],@["user_template"]["gpio15"],@["user_template"]["gpio16"])')) ),
+        'gpio01':                   ('B',   0x730,       (None, None,                           ('Management',  None)) ),
+        'gpio02':                   ('B',   0x731,       (None, None,                           ('Management',  None)) ),
+        'gpio03':                   ('B',   0x732,       (None, None,                           ('Management',  None)) ),
+        'gpio04':                   ('B',   0x733,       (None, None,                           ('Management',  None)) ),
+        'gpio05':                   ('B',   0x734,       (None, None,                           ('Management',  None)) ),
+        'gpio09':                   ('B',   0x735,       (None, None,                           ('Management',  None)) ),
+        'gpio10':                   ('B',   0x736,       (None, None,                           ('Management',  None)) ),
+        'gpio12':                   ('B',   0x737,       (None, None,                           ('Management',  None)) ),
+        'gpio13':                   ('B',   0x738,       (None, None,                           ('Management',  None)) ),
+        'gpio14':                   ('B',   0x739,       (None, None,                           ('Management',  None)) ),
+        'gpio15':                   ('B',   0x73A,       (None, None,                           ('Management',  None)) ),
+        'gpio16':                   ('B',   0x73B,       (None, None,                           ('Management',  None)) ),
+        'flag':                     ({
+            '_':                    ('B',   0x73C     ,  (None, None,                           ('Management',  '"Template {{\\\"FLAG\\\":{}}}".format($)')),(None,  False) ),
+            'adc0':                 ('B',  (0x73C,1,0),  (None, None,                           ('Management',  None)) ),
+            'pullup':               ('B',  (0x73C,1,1),  (None, None,                           ('Management',  None)) ),
+                                    },      0x73C,       (None, None,                           ('Management',  None))
+                                    ),
                                     },      0x720,       (None, None,                           ('Management',  None)) 
-                                   ),
+                                    ),
 })
 # ======================================================================
 Setting_6_4_1_17 = copy.deepcopy(Setting_6_4_1_16)
@@ -880,37 +880,37 @@ Setting_6_4_1_17['flag3'][0].pop('no_pullup',None)
 # ======================================================================
 Setting_6_4_1_18 = copy.deepcopy(Setting_6_4_1_17)
 Setting_6_4_1_18['flag3'][0].update ({
-        'no_hold_retain':                ('<L', (0x3A0,1,12), (None, None,                      ('SetOption',   '"SetOption62 {}".format($)')) ),
+        'no_hold_retain':           ('<L', (0x3A0,1,12), (None, None,                           ('SetOption',   '"SetOption62 {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_6_5_0_3 = copy.deepcopy(Setting_6_4_1_18)
-Setting_6_5_0_3.update({
+Setting_6_5_0_3.update              ({
     'novasds_period':               ('B',   0x73D,       (None, '1 <= $ <= 255',                ('Sensor',      '"Sensor20 {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_6_5_0_6 = copy.deepcopy(Setting_6_5_0_3)
-Setting_6_5_0_6.update({
-    'web_color':                    ('3B',   0x73E,       ([18], None,                          ('Wifi',        '"WebColor{} {}{:06x}".format(#,chr(35),int($,0))')), '"0x{:06x}".format($)' ),
+Setting_6_5_0_6.update              ({
+    'web_color':                    ('3B',  0x73E,       ([18], None,                           ('Wifi',        '"WebColor{} {}{:06x}".format(#,chr(35),int($,0))')), '"0x{:06x}".format($)' ),
                                     })
 # ======================================================================
 Setting_6_5_0_7 = copy.deepcopy(Setting_6_5_0_6)
-Setting_6_5_0_7.update({
-    'ledmask':                      ('<H',   0x7BC,       (None, None,                          ('Control',     '"LedMask {}".format($)')), '"0x{:04x}".format($)' ),
+Setting_6_5_0_7.update              ({
+    'ledmask':                      ('<H',  0x7BC,       (None, None,                           ('Control',     '"LedMask {}".format($)')), '"0x{:04x}".format($)' ),
                                     })
 # ======================================================================
 Setting_6_5_0_9 = copy.deepcopy(Setting_6_5_0_7)
 Setting_6_5_0_9['flag3'][0].update ({
-        'no_power_feedback':             ('<L', (0x3A0,1,13), (None, None,                      ('SetOption',   '"SetOption63 {}".format($)')) ),
+        'no_power_feedback':        ('<L', (0x3A0,1,13), (None, None,                           ('SetOption',   '"SetOption63 {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_6_5_0_11 = copy.deepcopy(Setting_6_5_0_9)
 Setting_6_5_0_11['flag3'][0].update ({
-        'use_underscore':                ('<L', (0x3A0,1,14), (None, None,                      ('SetOption',   '"SetOption64 {}".format($)')) ),
+        'use_underscore':           ('<L', (0x3A0,1,14), (None, None,                           ('SetOption',   '"SetOption64 {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_6_5_0_12 = copy.deepcopy(Setting_6_5_0_11)
 Setting_6_5_0_12.pop('drivers',None)
-Setting_6_5_0_12.update({
+Setting_6_5_0_12.update             ({
     'adc_param_type':               ('B',   0x1D5,       (None, '2 <= $ <= 3',                  ('Sensor',       '"AdcParam {type},{param1},{param2},{param3}".format(type=$,param1=@["adc_param1"],param2=@["adc_param2"],param3=@["adc_param3"]/10000.0)')) ),
     'adc_param1':                   ('<L',  0x794,       (None, None,                           ('Sensor',       None)) ),
     'adc_param2':                   ('<L',  0x798,       (None, None,                           ('Sensor',       None)) ),
@@ -920,16 +920,26 @@ Setting_6_5_0_12.update({
 # ======================================================================
 Setting_6_5_0_15 = copy.deepcopy(Setting_6_5_0_12)
 Setting_6_5_0_15['flag3'][0].update ({
-        'tuya_show_dimmer':              ('<L', (0x3A0,1,15), (None, None,                      ('SetOption',   '"SetOption65 {}".format($)')) ),
+        'tuya_show_dimmer':         ('<L', (0x3A0,1,15), (None, None,                           ('SetOption',   '"SetOption65 {}".format($)')) ),
                                     })
 # ======================================================================
 Setting_6_6_0_1 = copy.deepcopy(Setting_6_5_0_15)
 Setting_6_6_0_1['flag3'][0].update ({
-        'tuya_dimmer_range_255':         ('<L', (0x3A0,1,16), (None, None,                      ('SetOption',   '"SetOption66 {}".format($)')) ),
+        'tuya_dimmer_range_255':    ('<L', (0x3A0,1,16), (None, None,                           ('SetOption',   '"SetOption66 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_2 = copy.deepcopy(Setting_6_6_0_1)
+Setting_6_6_0_2['flag3'][0].update ({
+        'buzzer_enable':            ('<L', (0x3A0,1,17), (None, None,                           ('SetOption',   '"SetOption67 {}".format($)')) ),
+                                    })
+Setting_6_6_0_2.update              ({
+    'display_width':                ('<H',  0x774,       (None, None,                           ('Display',     '"DisplayWidth {}".format($)')) ),
+    'display_height':               ('<H',  0x776,       (None, None,                           ('Display',     '"DisplayHeight {}".format($)')) ),
                                     })
 # ======================================================================
 Settings = [
-            (0x6050010, 0xe00, Setting_6_6_0_1),
+            (0x6060002, 0xe00, Setting_6_6_0_2),
+            (0x6060001, 0xe00, Setting_6_6_0_1),
             (0x605000F, 0xe00, Setting_6_5_0_15),
             (0x605000C, 0xe00, Setting_6_5_0_12),
             (0x605000B, 0xe00, Setting_6_5_0_11),
