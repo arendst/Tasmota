@@ -1,7 +1,7 @@
 /*
   xnrg_03_pzem004t.ino - PZEM004T energy sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,14 +25,14 @@
  * Source: Victor Ferrer https://github.com/vicfergar/Sonoff-MQTT-OTA-Arduino
  * Based on: PZEM004T library https://github.com/olehs/PZEM004T
  *
- * Hardware Serial will be selected if GPIO1 = [PZEM Rx] and [GPIO3 = PZEM Tx]
+ * Hardware Serial will be selected if GPIO1 = [63 PZEM004 Rx] and GPIO3 = [62 PZEM0XX Tx]
 \*********************************************************************************************/
 
 #define XNRG_03                  3
 
 #include <TasmotaSerial.h>
 
-TasmotaSerial *PzemSerial;
+TasmotaSerial *PzemSerial = nullptr;
 
 #define PZEM_VOLTAGE (uint8_t)0xB0
 #define RESP_VOLTAGE (uint8_t)0xA0
@@ -68,7 +68,7 @@ IPAddress pzem_ip(192, 168, 1, 1);
 uint8_t PzemCrc(uint8_t *data)
 {
   uint16_t crc = 0;
-  for (uint8_t i = 0; i < sizeof(PZEMCommand) -1; i++) crc += *data++;
+  for (uint32_t i = 0; i < sizeof(PZEMCommand) -1; i++) crc += *data++;
   return (uint8_t)(crc & 0xFF);
 }
 
@@ -77,7 +77,7 @@ void PzemSend(uint8_t cmd)
   PZEMCommand pzem;
 
   pzem.command = cmd;
-  for (uint8_t i = 0; i < sizeof(pzem.addr); i++) pzem.addr[i] = pzem_ip[i];
+  for (uint32_t i = 0; i < sizeof(pzem.addr); i++) pzem.addr[i] = pzem_ip[i];
   pzem.data = 0;
 
   uint8_t *bytes = (uint8_t*)&pzem;
@@ -87,7 +87,7 @@ void PzemSend(uint8_t cmd)
   PzemSerial->write(bytes, sizeof(pzem));
 }
 
-bool PzemReceiveReady()
+bool PzemReceiveReady(void)
 {
   return PzemSerial->available() >= (int)sizeof(PZEMCommand);
 }
@@ -122,7 +122,7 @@ bool PzemRecieve(uint8_t resp, float *data)
     }
   }
 
-  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, len);
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, len);
 
   if (len != sizeof(PZEMCommand)) {
 //    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Pzem comms timeout"));
@@ -162,13 +162,14 @@ const uint8_t pzem_responses[] { RESP_SET_ADDRESS, RESP_VOLTAGE, RESP_CURRENT, R
 uint8_t pzem_read_state = 0;
 uint8_t pzem_sendRetry = 0;
 
-void PzemEvery200ms()
+void PzemEvery200ms(void)
 {
   bool data_ready = PzemReceiveReady();
 
   if (data_ready) {
     float value = 0;
     if (PzemRecieve(pzem_responses[pzem_read_state], &value)) {
+      energy_data_valid = 0;
       switch (pzem_read_state) {
         case 1:  // Voltage as 230.2V
           energy_voltage = value;
@@ -177,12 +178,14 @@ void PzemEvery200ms()
           energy_current = value;
           break;
         case 3:  // Power as 20W
-          energy_power = value;
+          energy_active_power = value;
           break;
         case 4:  // Total energy as 99999Wh
           if (!energy_start || (value < energy_start)) energy_start = value;  // Init after restart and hanlde roll-over if any
-          energy_kWhtoday += (value - energy_start) * 100;
-          energy_start = value;
+          if (value != energy_start) {
+            energy_kWhtoday += (unsigned long)((value - energy_start) * 100);
+            energy_start = value;
+          }
           EnergyUpdateToday();
           break;
       }
@@ -200,10 +203,10 @@ void PzemEvery200ms()
   }
 }
 
-void PzemSnsInit()
+void PzemSnsInit(void)
 {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
-  PzemSerial = new TasmotaSerial(pin[GPIO_PZEM_RX], pin[GPIO_PZEM_TX], 1);
+  PzemSerial = new TasmotaSerial(pin[GPIO_PZEM004_RX], pin[GPIO_PZEM0XX_TX], 1);
   if (PzemSerial->begin(9600)) {
     if (PzemSerial->hardwareSerial()) { ClaimSerial(); }
   } else {
@@ -211,11 +214,10 @@ void PzemSnsInit()
   }
 }
 
-void PzemDrvInit()
+void PzemDrvInit(void)
 {
   if (!energy_flg) {
-    if ((pin[GPIO_PZEM_RX] < 99) && (pin[GPIO_PZEM_TX] < 99)) {  // Any device with a Pzem004T
-      energy_calc_power_factor = 1;                              // Calculate power factor from data
+    if ((pin[GPIO_PZEM004_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {  // Any device with a Pzem004T
       energy_flg = XNRG_03;
     }
   }
@@ -225,7 +227,7 @@ void PzemDrvInit()
  * Interface
 \*********************************************************************************************/
 
-int Xnrg03(byte function)
+int Xnrg03(uint8_t function)
 {
   int result = 0;
 
@@ -238,7 +240,7 @@ int Xnrg03(byte function)
         PzemSnsInit();
         break;
       case FUNC_EVERY_200_MSECOND:
-        PzemEvery200ms();
+        if (PzemSerial) { PzemEvery200ms(); }
         break;
     }
   }

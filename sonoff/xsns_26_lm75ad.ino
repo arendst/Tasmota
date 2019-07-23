@@ -1,7 +1,7 @@
 /*
   xsns_26_lm75ad.ino - Support for I2C LM75AD Temperature Sensor
 
-  Copyright (C) 2018  Andre Thomas and Theo Arends
+  Copyright (C) 2019  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,6 +28,8 @@
  * I2C Address: 0x48 - 0x4F
 \*********************************************************************************************/
 
+#define XSNS_26                 26
+
 #define LM75AD_ADDRESS1					0x48
 #define LM75AD_ADDRESS2					0x49
 #define LM75AD_ADDRESS3					0x4A
@@ -46,25 +48,24 @@ uint8_t lm75ad_type = 0;
 uint8_t lm75ad_address;
 uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3, LM75AD_ADDRESS4, LM75AD_ADDRESS5, LM75AD_ADDRESS6, LM75AD_ADDRESS7, LM75AD_ADDRESS8 };
 
-void LM75ADDetect()
+void LM75ADDetect(void)
 {
   if (lm75ad_type) { return; }
 
   uint16_t buffer;
-  for (byte i = 0; i < sizeof(lm75ad_addresses); i++) {
+  for (uint32_t i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
     if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
       if (buffer == 0x4B00) {
         lm75ad_type = 1;
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "LM75AD", lm75ad_address);
-        AddLog(LOG_LEVEL_DEBUG);
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "LM75AD", lm75ad_address);
         break;
       }
     }
   }
 }
 
-float LM75ADGetTemp() {
+float LM75ADGetTemp(void) {
   int16_t sign = 1;
 
   uint16_t t = I2cRead16(lm75ad_address, LM75_TEMP_REGISTER);
@@ -76,22 +77,21 @@ float LM75ADGetTemp() {
   return ConvertTemp(sign * t * 0.125);
 }
 
-void LM75ADShow(boolean json)
+void LM75ADShow(bool json)
 {
   if (lm75ad_type) {
-    char temperature[10];
-
     float t = LM75ADGetTemp();
+    char temperature[33];
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), mqtt_data, temperature);
+      ResponseAppend_P(PSTR(",\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), temperature);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, "LM75AD", temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_TEMP, "LM75AD", temperature, TempUnit());
 #endif  // USE_WEBSERVER
     }
   }
@@ -101,11 +101,9 @@ void LM75ADShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_26
-
-boolean Xsns26(byte function)
+bool Xsns26(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -116,7 +114,7 @@ boolean Xsns26(byte function)
         LM75ADShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         LM75ADShow(0);
         break;
 #endif  // USE_WEBSERVER

@@ -27,14 +27,11 @@
 #ifndef EPD2IN9_H
 #define EPD2IN9_H
 
-#include "epdpaint.h"
-
+#include "epdif.h"
 
 // Display resolution
 #define EPD_WIDTH       128
 #define EPD_HEIGHT      296
-//#define EPD_WIDTH       296
-//#define EPD_HEIGHT      128
 
 // EPD2IN9 commands
 #define DRIVER_OUTPUT_CONTROL                       0x01
@@ -62,16 +59,14 @@
 extern const unsigned char lut_full_update[];
 extern const unsigned char lut_partial_update[];
 
-class Epd : public Paint  {
+class Epd : EpdIf {
 public:
-    Epd(int16_t width, int16_t height);
-    int16_t width;
-    int16_t height;
+    unsigned long width;
+    unsigned long height;
 
     Epd();
     ~Epd();
     int  Init(const unsigned char* lut);
-    void Init(int8_t p);
     void SendCommand(unsigned char command);
     void SendData(unsigned char data);
     void WaitUntilIdle(void);
@@ -87,26 +82,23 @@ public:
     void ClearFrameMemory(unsigned char color);
     void DisplayFrame(void);
     void Sleep(void);
-    void fastSPIwrite(uint8_t d,uint8_t dc);
 
-    void DisplayOnff(int8_t on);
-    void DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
-    int16_t Begin(int16_t p1,int16_t p2,int16_t p3);
-    void Updateframe();
-
+    unsigned int cs_pin;
+    unsigned int mosi_pin;
+    unsigned int sclk_pin;
+    
 private:
     unsigned int reset_pin;
     unsigned int dc_pin;
     unsigned int busy_pin;
     const unsigned char* lut;
-    unsigned int cs_pin;
-    unsigned int mosi_pin;
-    unsigned int sclk_pin;
+
+
 
     void SetLut(const unsigned char* lut);
     void SetMemoryArea(int x_start, int y_start, int x_end, int y_end);
     void SetMemoryPointer(int x, int y);
-    //void fastSPIwrite(uint8_t d,uint8_t dc);
+    void fastSPIwrite(uint8_t d,uint8_t dc);
 };
 
 #endif /* EPD2IN9_H */

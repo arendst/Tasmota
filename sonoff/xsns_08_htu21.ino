@@ -1,7 +1,7 @@
 /*
   xsns_08_htu21.ino - HTU21 temperature and humidity sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Heiko Krupp and Theo Arends
+  Copyright (C) 2019  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -26,6 +26,8 @@
  *
  * I2C Address: 0x40
 \*********************************************************************************************/
+
+#define XSNS_08             8
 
 #define HTU21_ADDR          0x40
 
@@ -67,7 +69,7 @@ char htu_types[7];
 
 uint8_t HtuCheckCrc8(uint16_t data)
 {
-  for (uint8_t bit = 0; bit < 16; bit++) {
+  for (uint32_t bit = 0; bit < 16; bit++) {
     if (data & 0x8000) {
       data =  (data << 1) ^ HTU21_CRC8_POLYNOM;
     } else {
@@ -131,14 +133,14 @@ void HtuHeater(uint8_t heater)
   I2cWrite8(HTU21_ADDR, HTU21_WRITEREG, current);
 }
 
-void HtuInit()
+void HtuInit(void)
 {
   HtuReset();
   HtuHeater(HTU21_HEATER_OFF);
   HtuSetResolution(HTU21_RES_RH12_T14);
 }
 
-boolean HtuRead()
+bool HtuRead(void)
 {
   uint8_t  checksum = 0;
   uint16_t sensorval = 0;
@@ -184,8 +186,7 @@ boolean HtuRead()
   if ((htu_temperature > 0.00) && (htu_temperature < 80.00)) {
     htu_humidity = (-0.15) * (25 - htu_temperature) + htu_humidity;
   }
-
-  SetGlobalValues(htu_temperature, htu_humidity);
+  ConvertHumidity(htu_humidity);  // Set global humidity
 
   htu_valid = SENSOR_MAX_MISS;
   return true;
@@ -193,7 +194,7 @@ boolean HtuRead()
 
 /********************************************************************************************/
 
-void HtuDetect()
+void HtuDetect(void)
 {
   if (htu_type) { return; }
 
@@ -222,12 +223,11 @@ void HtuDetect()
         htu_delay_humidity = 23;
     }
     GetTextIndexed(htu_types, sizeof(htu_types), index, kHtuTypes);
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, htu_types, htu_address);
-    AddLog(LOG_LEVEL_DEBUG);
+    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, htu_types, htu_address);
   }
 }
 
-void HtuEverySecond()
+void HtuEverySecond(void)
 {
   if (92 == (uptime %100)) {
     // 1mS
@@ -244,17 +244,16 @@ void HtuEverySecond()
   }
 }
 
-void HtuShow(boolean json)
+void HtuShow(bool json)
 {
   if (htu_valid) {
-    char temperature[10];
-    char humidity[10];
-
+    char temperature[33];
     dtostrfd(htu_temperature, Settings.flag2.temperature_resolution, temperature);
+    char humidity[33];
     dtostrfd(htu_humidity, Settings.flag2.humidity_resolution, humidity);
 
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), JSON_SNS_TEMPHUM, mqtt_data, htu_types, temperature, humidity);
+      ResponseAppend_P(JSON_SNS_TEMPHUM, htu_types, temperature, humidity);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzTempHumSensor(temperature, humidity);
@@ -268,8 +267,8 @@ void HtuShow(boolean json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_TEMP, mqtt_data, htu_types, temperature, TempUnit());
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_HUM, mqtt_data, htu_types, humidity);
+      WSContentSend_PD(HTTP_SNS_TEMP, htu_types, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, htu_types, humidity);
 #endif  // USE_WEBSERVER
     }
   }
@@ -279,11 +278,9 @@ void HtuShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_08
-
-boolean Xsns08(byte function)
+bool Xsns08(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -297,7 +294,7 @@ boolean Xsns08(byte function)
         HtuShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         HtuShow(0);
         break;
 #endif  // USE_WEBSERVER

@@ -1,7 +1,7 @@
 /*
   xsns_18_pms5003.ino - PMS5003-7003 particle concentration sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@
  * Hardware Serial will be selected if GPIO3 = [PMS5003]
 \*********************************************************************************************/
 
+#define XSNS_18             18
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *PmsSerial;
@@ -43,7 +45,7 @@ struct pms5003data {
 
 /*********************************************************************************************/
 
-boolean PmsReadData()
+bool PmsReadData(void)
 {
   if (! PmsSerial->available()) {
     return false;
@@ -60,15 +62,15 @@ boolean PmsReadData()
   PmsSerial->readBytes(buffer, 32);
   PmsSerial->flush();  // Make room for another burst
 
-  AddLogSerial(LOG_LEVEL_DEBUG_MORE, buffer, 32);
+  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 32);
 
   // get checksum ready
-  for (uint8_t i = 0; i < 30; i++) {
+  for (uint32_t i = 0; i < 30; i++) {
     sum += buffer[i];
   }
   // The data comes in endian'd, this solves it so it works on all platforms
   uint16_t buffer_u16[15];
-  for (uint8_t i = 0; i < 15; i++) {
+  for (uint32_t i = 0; i < 15; i++) {
     buffer_u16[i] = buffer[2 + i*2 + 1];
     buffer_u16[i] += (buffer[2 + i*2] << 8);
   }
@@ -85,7 +87,7 @@ boolean PmsReadData()
 
 /*********************************************************************************************/
 
-void PmsSecond()                 // Every second
+void PmsSecond(void)                 // Every second
 {
   if (PmsReadData()) {
     pms_valid = 10;
@@ -98,7 +100,7 @@ void PmsSecond()                 // Every second
 
 /*********************************************************************************************/
 
-void PmsInit()
+void PmsInit(void)
 {
   pms_type = 0;
   if (pin[GPIO_PMS5003] < 99) {
@@ -111,7 +113,7 @@ void PmsInit()
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_PMS5003_SNS[] PROGMEM = "%s"
+const char HTTP_PMS5003_SNS[] PROGMEM =
 //  "{s}PMS5003 " D_STANDARD_CONCENTRATION " 1 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
 //  "{s}PMS5003 " D_STANDARD_CONCENTRATION " 2.5 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
 //  "{s}PMS5003 " D_STANDARD_CONCENTRATION " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_MICROGRAM_PER_CUBIC_METER "{e}"
@@ -126,11 +128,11 @@ const char HTTP_PMS5003_SNS[] PROGMEM = "%s"
   "{s}PMS5003 " D_PARTICALS_BEYOND " 10 " D_UNIT_MICROMETER "{m}%d " D_UNIT_PARTS_PER_DECILITER "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
 
-void PmsShow(boolean json)
+void PmsShow(bool json)
 {
   if (pms_valid) {
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"PMS5003\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}"), mqtt_data,
+      ResponseAppend_P(PSTR(",\"PMS5003\":{\"CF1\":%d,\"CF2.5\":%d,\"CF10\":%d,\"PM1\":%d,\"PM2.5\":%d,\"PM10\":%d,\"PB0.3\":%d,\"PB0.5\":%d,\"PB1\":%d,\"PB2.5\":%d,\"PB5\":%d,\"PB10\":%d}"),
         pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
         pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env,
         pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
@@ -143,7 +145,7 @@ void PmsShow(boolean json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_PMS5003_SNS, mqtt_data,
+      WSContentSend_PD(HTTP_PMS5003_SNS,
 //        pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,
         pms_data.pm10_env, pms_data.pm25_env, pms_data.pm100_env,
         pms_data.particles_03um, pms_data.particles_05um, pms_data.particles_10um, pms_data.particles_25um, pms_data.particles_50um, pms_data.particles_100um);
@@ -156,11 +158,9 @@ void PmsShow(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_18
-
-boolean Xsns18(byte function)
+bool Xsns18(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (pms_type) {
     switch (function) {
@@ -174,7 +174,7 @@ boolean Xsns18(byte function)
         PmsShow(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         PmsShow(0);
         break;
 #endif  // USE_WEBSERVER

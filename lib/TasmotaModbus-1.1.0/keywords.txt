@@ -1,0 +1,26 @@
+#######################################
+# Syntax Coloring Map for TasmotaModbus
+# (esp8266)
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+TasmotaModbus	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+Begin	KEYWORD2
+Send	KEYWORD2
+ReceiveReady	KEYWORD2
+ReceiveBuffer	KEYWORD2
+Receive16BitRegister	KEYWORD2
+Receive32BitRegister	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+

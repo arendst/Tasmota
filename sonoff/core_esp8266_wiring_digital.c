@@ -18,9 +18,11 @@
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-//#include <core_version.h>
-//#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-//#warning **** Tasmota is using v2.4.0 wiring_digital.c as planned ****
+
+// Use PWM from core 2.4.0 as all versions below 2.5.0-beta3 produce LED flickering when settings are saved to flash
+#include <core_version.h>
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
+#warning **** Tasmota is using v2.4.0 wiring_digital.c as planned ****
 
 #define ARDUINO_MAIN
 #include "wiring_private.h"
@@ -188,7 +190,7 @@ extern void ICACHE_RAM_ATTR __detachInterrupt(uint8_t pin) {
   }
 }
 
-void initPins() {
+void initPins(void) {
   //Disable UART interrupts
   system_set_os_print(0);
   U0IE = 0;
@@ -212,4 +214,4 @@ extern int digitalRead(uint8_t pin) __attribute__ ((weak, alias("__digitalRead")
 extern void attachInterrupt(uint8_t pin, voidFuncPtr handler, int mode) __attribute__ ((weak, alias("__attachInterrupt")));
 extern void detachInterrupt(uint8_t pin) __attribute__ ((weak, alias("__detachInterrupt")));
 
-//#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+#endif  // ARDUINO_ESP8266_RELEASE

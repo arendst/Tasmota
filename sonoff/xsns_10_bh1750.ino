@@ -1,7 +1,7 @@
 /*
   xsns_10_bh1750.ino - BH1750 ambient light sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@
  * I2C Address: 0x23 or 0x5C
 \*********************************************************************************************/
 
+#define XSNS_10              10
+
 #define BH1750_ADDR1         0x23
 #define BH1750_ADDR2         0x5C
 
@@ -37,13 +39,13 @@ uint8_t bh1750_valid = 0;
 uint16_t bh1750_illuminance = 0;
 char bh1750_types[] = "BH1750";
 
-bool Bh1750Read()
+bool Bh1750Read(void)
 {
   if (bh1750_valid) { bh1750_valid--; }
 
   if (2 != Wire.requestFrom(bh1750_address, (uint8_t)2)) { return false; }
-  byte msb = Wire.read();
-  byte lsb = Wire.read();
+  uint8_t msb = Wire.read();
+  uint8_t lsb = Wire.read();
   bh1750_illuminance = ((msb << 8) | lsb) / 1.2;
   bh1750_valid = SENSOR_MAX_MISS;
   return true;
@@ -51,26 +53,25 @@ bool Bh1750Read()
 
 /********************************************************************************************/
 
-void Bh1750Detect()
+void Bh1750Detect(void)
 {
   if (bh1750_type) {
     return;
   }
 
-  for (byte i = 0; i < sizeof(bh1750_addresses); i++) {
+  for (uint32_t i = 0; i < sizeof(bh1750_addresses); i++) {
     bh1750_address = bh1750_addresses[i];
     Wire.beginTransmission(bh1750_address);
     Wire.write(BH1750_CONTINUOUS_HIGH_RES_MODE);
     if (!Wire.endTransmission()) {
       bh1750_type = 1;
-      snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, bh1750_types, bh1750_address);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, bh1750_types, bh1750_address);
       break;
     }
   }
 }
 
-void Bh1750EverySecond()
+void Bh1750EverySecond(void)
 {
   if (90 == (uptime %100)) {
     // 1mS
@@ -87,16 +88,11 @@ void Bh1750EverySecond()
   }
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_SNS_ILLUMINANCE[] PROGMEM =
-  "%s{s}%s " D_ILLUMINANCE "{m}%d " D_UNIT_LUX "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
-
-void Bh1750Show(boolean json)
+void Bh1750Show(bool json)
 {
   if (bh1750_valid) {
     if (json) {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}"), mqtt_data, bh1750_types, bh1750_illuminance);
+      ResponseAppend_P(JSON_SNS_ILLUMINANCE, bh1750_types, bh1750_illuminance);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_ILLUMINANCE, bh1750_illuminance);
@@ -104,7 +100,7 @@ void Bh1750Show(boolean json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      snprintf_P(mqtt_data, sizeof(mqtt_data), HTTP_SNS_ILLUMINANCE, mqtt_data, bh1750_types, bh1750_illuminance);
+      WSContentSend_PD(HTTP_SNS_ILLUMINANCE, bh1750_types, bh1750_illuminance);
 #endif  // USE_WEBSERVER
     }
   }
@@ -114,11 +110,9 @@ void Bh1750Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_10
-
-boolean Xsns10(byte function)
+bool Xsns10(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     switch (function) {
@@ -132,7 +126,7 @@ boolean Xsns10(byte function)
         Bh1750Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         Bh1750Show(0);
         break;
 #endif  // USE_WEBSERVER

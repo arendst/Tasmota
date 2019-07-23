@@ -1,7 +1,7 @@
 /*
   xdrv_99_debug.ino - debug support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,35 +25,55 @@
 #endif  // USE_DEBUG_DRIVER
 #endif  // DEBUG_THEO
 
+//#define USE_DEBUG_SETTING_NAMES
+
 #ifdef USE_DEBUG_DRIVER
+/*********************************************************************************************\
+ * Virtual debugging support - Part1
+ *
+ * Needs file zzzz_debug.ino due to DEFINE processing
+\*********************************************************************************************/
+
+#define XDRV_99             99
 
 #ifndef CPU_LOAD_CHECK
-#define CPU_LOAD_CHECK       1                 // Seconds between each CPU_LOAD log
+#define CPU_LOAD_CHECK      1                 // Seconds between each CPU_LOAD log
 #endif
 
 /*********************************************************************************************\
  * Debug commands
 \*********************************************************************************************/
 
-#define D_CMND_CFGDUMP "CfgDump"
-#define D_CMND_CFGPOKE "CfgPoke"
-#define D_CMND_CFGPEEK "CfgPeek"
-#define D_CMND_CFGXOR  "CfgXor"
+#define D_CMND_CFGDUMP   "CfgDump"
+#define D_CMND_CFGPOKE   "CfgPoke"
+#define D_CMND_CFGPEEK   "CfgPeek"
+#define D_CMND_CFGSHOW   "CfgShow"
+#define D_CMND_CFGXOR    "CfgXor"
+#define D_CMND_CPUCHECK  "CpuChk"
 #define D_CMND_EXCEPTION "Exception"
-#define D_CMND_CPUCHECK "CpuChk"
+#define D_CMND_FREEMEM   "FreeMem"
+#define D_CMND_RTCDUMP   "RtcDump"
+#define D_CMND_HELP      "Help"
+#define D_CMND_SETSENSOR "SetSensor"
+#define D_CMND_FLASHMODE "FlashMode"
 
-enum DebugCommands { CMND_CFGDUMP, CMND_CFGPEEK, CMND_CFGPOKE, CMND_CFGXOR, CMND_EXCEPTION, CMND_CPUCHECK };
-const char kDebugCommands[] PROGMEM = D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|" D_CMND_CFGXOR "|" D_CMND_EXCEPTION "|" D_CMND_CPUCHECK;
+enum DebugCommands {
+  CMND_CFGDUMP, CMND_CFGPEEK, CMND_CFGPOKE, CMND_CFGSHOW, CMND_CFGXOR,
+  CMND_CPUCHECK, CMND_EXCEPTION, CMND_FREEMEM, CMND_RTCDUMP, CMND_SETSENSOR, CMND_FLASHMODE, CMND_HELP };
+const char kDebugCommands[] PROGMEM =
+  D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|" D_CMND_CFGSHOW "|" D_CMND_CFGXOR "|"
+  D_CMND_CPUCHECK "|" D_CMND_EXCEPTION "|" D_CMND_FREEMEM "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR "|" D_CMND_FLASHMODE "|" D_CMND_HELP;
 
 uint32_t CPU_loops = 0;
 uint32_t CPU_last_millis = 0;
 uint32_t CPU_last_loop_time = 0;
-uint8_t CPU_load_check = CPU_LOAD_CHECK;
+uint8_t CPU_load_check = 0;
+uint8_t CPU_show_freemem = 0;
 
 /*******************************************************************************************/
 
 #ifdef DEBUG_THEO
-void ExceptionTest(byte type)
+void ExceptionTest(uint8_t type)
 {
 /*
 Exception (28):
@@ -117,9 +137,72 @@ Decoding 14 results
   }
 }
 
+#endif  // DEBUG_THEO
+
 /*******************************************************************************************/
 
-void RtcSettingsDump()
+void CpuLoadLoop(void)
+{
+  CPU_last_loop_time = millis();
+  if (CPU_load_check && CPU_last_millis) {
+    CPU_loops ++;
+    if ((CPU_last_millis + (CPU_load_check *1000)) <= CPU_last_loop_time) {
+#if defined(F_CPU) && (F_CPU == 160000000L)
+      int CPU_load = 100 - ( (CPU_loops*(1 + 30*sleep)) / (CPU_load_check *800) );
+      CPU_loops = CPU_loops / CPU_load_check;
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(160MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
+#else
+      int CPU_load = 100 - ( (CPU_loops*(1 + 30*sleep)) / (CPU_load_check *400) );
+      CPU_loops = CPU_loops / CPU_load_check;
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(80MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
+#endif
+      CPU_last_millis = CPU_last_loop_time;
+      CPU_loops = 0;
+    }
+  }
+}
+
+/*******************************************************************************************/
+
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1)
+// All version before core 2.4.2
+// https://github.com/esp8266/Arduino/issues/2557
+
+extern "C" {
+#include <cont.h>
+  extern cont_t g_cont;
+}
+
+void DebugFreeMem(void)
+{
+  register uint32_t *sp asm("a1");
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d, UnmodifiedStack %d (%s)"), ESP.getFreeHeap(), 4 * (sp - g_cont.stack), cont_get_free_stack(&g_cont), XdrvMailbox.data);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), 4 * (sp - g_cont.stack), XdrvMailbox.data);
+}
+
+#else
+// All version from core 2.4.2
+// https://github.com/esp8266/Arduino/pull/5018
+// https://github.com/esp8266/Arduino/pull/4553
+
+extern "C" {
+#include <cont.h>
+  extern cont_t* g_pcont;
+}
+
+void DebugFreeMem(void)
+{
+  register uint32_t *sp asm("a1");
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"), ESP.getFreeHeap(), 4 * (sp - g_pcont->stack), XdrvMailbox.data);
+}
+
+#endif  // ARDUINO_ESP8266_RELEASE_2_x_x
+
+/*******************************************************************************************/
+
+void DebugRtcDump(char* parms)
 {
   #define CFG_COLS 16
 
@@ -127,11 +210,37 @@ void RtcSettingsDump()
   uint16_t maxrow;
   uint16_t row;
   uint16_t col;
+  char *p;
 
-  uint8_t *buffer = (uint8_t *) &RtcSettings;
-  maxrow = ((sizeof(RTCMEM)+CFG_COLS)/CFG_COLS);
+  // |<--SDK data (256 bytes)-->|<--User data (512 bytes)-->|
+  // 000 - 0FF: SDK
+  //  000 - 01B: SDK rst_info
+  // 100 - 2FF: User
+  //  280 - 283: Tasmota RtcReboot   (Offset 100 (x 4bytes) - sizeof(RTCRBT) (x 4bytes))
+  //  290 - 2EB: Tasmota RtcSettings (Offset 100 (x 4bytes))
 
-  for (row = 0; row < maxrow; row++) {
+  uint8_t buffer[768];
+//  ESP.rtcUserMemoryRead(0, (uint32_t*)&buffer, sizeof(buffer));
+  system_rtc_mem_read(0, (uint32_t*)&buffer, sizeof(buffer));
+
+  maxrow = ((sizeof(buffer)+CFG_COLS)/CFG_COLS);
+
+  uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
+  uint16_t mrow = strtol(p, &p, 10);
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
+
+  if (0 == mrow) {  // Default only 8 lines
+    mrow = 8;
+  }
+  if (srow > maxrow) {
+    srow = maxrow - mrow;
+  }
+  if (mrow < (maxrow - srow)) {
+    maxrow = srow + mrow;
+  }
+
+  for (row = srow; row < maxrow; row++) {
     idx = row * CFG_COLS;
     snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), idx);
     for (col = 0; col < CFG_COLS; col++) {
@@ -152,77 +261,6 @@ void RtcSettingsDump()
   }
 }
 
-#endif  // DEBUG_THEO
-
-/*******************************************************************************************/
-
-void CpuLoadLoop()
-{
-  CPU_last_loop_time = millis();
-  if (CPU_load_check && CPU_last_millis) {
-    CPU_loops ++;
-    if ((CPU_last_millis + (CPU_load_check *1000)) <= CPU_last_loop_time) {
-#if defined(F_CPU) && (F_CPU == 160000000L)
-      int CPU_load = 100 - ( (CPU_loops*(1 + 30*sleep)) / (CPU_load_check *800) );
-      CPU_loops = CPU_loops / CPU_load_check;
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(160MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
-#else
-      int CPU_load = 100 - ( (CPU_loops*(1 + 30*sleep)) / (CPU_load_check *400) );
-      CPU_loops = CPU_loops / CPU_load_check;
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, CPU %d%%(80MHz), Loops/sec %d"), ESP.getFreeHeap(), CPU_load, CPU_loops);
-#endif
-      AddLog(LOG_LEVEL_DEBUG);
-      CPU_last_millis = CPU_last_loop_time;
-      CPU_loops = 0;
-    }
-  }
-}
-
-/*******************************************************************************************/
-
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1)
-// All version before core 2.4.2
-
-extern "C" {
-#include <cont.h>
-  extern cont_t g_cont;
-}
-
-void DebugFreeMem()
-{
-//  https://github.com/esp8266/Arduino/issues/2557
-  register uint32_t *sp asm("a1");
-
-//  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d, UnmodifiedStack %d (%s)"),
-//    ESP.getFreeHeap(), 4 * (sp - g_cont.stack), cont_get_free_stack(&g_cont), XdrvMailbox.data);
-
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"),
-    ESP.getFreeHeap(), 4 * (sp - g_cont.stack), XdrvMailbox.data);
-  AddLog(LOG_LEVEL_DEBUG);
-}
-
-#else
-// All version from core 2.4.2
-// https://github.com/esp8266/Arduino/pull/5018
-// https://github.com/esp8266/Arduino/pull/4553
-
-extern "C" {
-#include <cont.h>
-  extern cont_t* g_pcont;
-}
-
-void DebugFreeMem()
-{
-// https://github.com/esp8266/Arduino/issues/2557
-  register uint32_t *sp asm("a1");
-
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "FreeRam %d, FreeStack %d (%s)"),
-    ESP.getFreeHeap(), 4 * (sp - g_pcont->stack), XdrvMailbox.data);
-  AddLog(LOG_LEVEL_DEBUG);
-}
-
-#endif  // ARDUINO_ESP8266_RELEASE_2_x_x
-
 /*******************************************************************************************/
 
 void DebugCfgDump(char* parms)
@@ -241,8 +279,7 @@ void DebugCfgDump(char* parms)
   uint16_t srow = strtol(parms, &p, 16) / CFG_COLS;
   uint16_t mrow = strtol(p, &p, 10);
 
-//  snprintf_P(log_data, sizeof(log_data), PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
-//  AddLog(LOG_LEVEL_DEBUG);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Cnfg: Parms %s, Start row %d, rows %d"), parms, srow, mrow);
 
   if (0 == mrow) {  // Default only 8 lines
     mrow = 8;
@@ -290,11 +327,11 @@ void DebugCfgPeek(char* parms)
   uint32_t data32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + data16;
 
   snprintf_P(log_data, sizeof(log_data), PSTR("%03X:"), address);
-  for (byte i = 0; i < 4; i++) {
+  for (uint32_t i = 0; i < 4; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, buffer[address +i]);
   }
   snprintf_P(log_data, sizeof(log_data), PSTR("%s |"), log_data);
-  for (byte i = 0; i < 4; i++) {
+  for (uint32_t i = 0; i < 4; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s%c"), log_data, ((buffer[address +i] > 0x20) && (buffer[address +i] < 0x7F)) ? (char)buffer[address +i] : ' ');
   }
   snprintf_P(log_data, sizeof(log_data), PSTR("%s| 0x%02X (%d), 0x%04X (%d), 0x%0LX (%lu)"), log_data, data8, data8, data16, data16, data32, data32);
@@ -315,49 +352,109 @@ void DebugCfgPoke(char* parms)
   uint32_t data32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + (buffer[address +1] << 8) + buffer[address];
 
   uint8_t *nbuffer = (uint8_t *) &data;
-  for (byte i = 0; i < 4; i++) { buffer[address +i] = nbuffer[+i]; }
+  for (uint32_t i = 0; i < 4; i++) { buffer[address +i] = nbuffer[+i]; }
 
   uint32_t ndata32 = (buffer[address +3] << 24) + (buffer[address +2] << 16) + (buffer[address +1] << 8) + buffer[address];
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("%03X: 0x%0LX (%lu) poked to 0x%0LX (%lu)"), address, data32, data32, ndata32, ndata32);
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: 0x%0LX (%lu) poked to 0x%0LX (%lu)"), address, data32, data32, ndata32, ndata32);
+}
+
+#ifdef USE_DEBUG_SETTING_NAMES
+void DebugCfgShow(uint8_t more)
+{
+  uint8_t *SetAddr;
+  SetAddr = (uint8_t *)&Settings;
+
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: Hostname (%d)         [%s]"), (uint8_t *)&Settings.hostname - SetAddr, sizeof(Settings.hostname)-1, Settings.hostname);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: SSids (%d)            [%s], [%s]"), (uint8_t *)&Settings.sta_ssid - SetAddr, sizeof(Settings.sta_ssid[0])-1, Settings.sta_ssid[0], Settings.sta_ssid[1]);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: Friendlynames (%d)    [%s], [%s], [%s], [%s]"), (uint8_t *)&Settings.friendlyname - SetAddr, sizeof(Settings.friendlyname[0])-1, Settings.friendlyname[0], Settings.friendlyname[1], Settings.friendlyname[2], Settings.friendlyname[3]);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: OTA Url (%d)          [%s]"), (uint8_t *)&Settings.ota_url - SetAddr, sizeof(Settings.ota_url)-1, Settings.ota_url);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: StateText (%d)        [%s], [%s], [%s], [%s]"), (uint8_t *)&Settings.state_text - SetAddr, sizeof(Settings.state_text[0])-1, Settings.state_text[0], Settings.state_text[1], Settings.state_text[2], Settings.state_text[3]);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: Syslog Host (%d)      [%s]"), (uint8_t *)&Settings.syslog_host - SetAddr, sizeof(Settings.syslog_host)-1, Settings.syslog_host);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: NTP Servers (%d)      [%s], [%s], [%s]"), (uint8_t *)&Settings.ntp_server - SetAddr, sizeof(Settings.ntp_server[0])-1, Settings.ntp_server[0], Settings.ntp_server[1], Settings.ntp_server[2]);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: MQTT Host (%d)        [%s]"), (uint8_t *)&Settings.mqtt_host - SetAddr, sizeof(Settings.mqtt_host)-1, Settings.mqtt_host);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: MQTT Client (%d)      [%s]"), (uint8_t *)&Settings.mqtt_client - SetAddr, sizeof(Settings.mqtt_client)-1, Settings.mqtt_client);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: MQTT User (%d)        [%s]"), (uint8_t *)&Settings.mqtt_user - SetAddr, sizeof(Settings.mqtt_user)-1, Settings.mqtt_user);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: MQTT FullTopic (%d)   [%s]"), (uint8_t *)&Settings.mqtt_fulltopic - SetAddr, sizeof(Settings.mqtt_fulltopic)-1, Settings.mqtt_fulltopic);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: MQTT Topic (%d)       [%s]"), (uint8_t *)&Settings.mqtt_topic - SetAddr, sizeof(Settings.mqtt_topic)-1, Settings.mqtt_topic);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: MQTT GroupTopic (%d)  [%s]"), (uint8_t *)&Settings.mqtt_grptopic - SetAddr, sizeof(Settings.mqtt_grptopic)-1, Settings.mqtt_grptopic);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: MQTT ButtonTopic (%d) [%s]"), (uint8_t *)&Settings.button_topic - SetAddr, sizeof(Settings.button_topic)-1, Settings.button_topic);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: MQTT SwitchTopic (%d) [%s]"), (uint8_t *)&Settings.switch_topic - SetAddr, sizeof(Settings.switch_topic)-1, Settings.switch_topic);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: MQTT Prefixes (%d)    [%s], [%s], [%s]"), (uint8_t *)&Settings.mqtt_prefix - SetAddr, sizeof(Settings.mqtt_prefix[0])-1, Settings.mqtt_prefix[0], Settings.mqtt_prefix[1], Settings.mqtt_prefix[2]);
+  if (17 == more) {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: AP Passwords (%d)     [%s], [%s]"), (uint8_t *)&Settings.sta_pwd - SetAddr, sizeof(Settings.sta_pwd[0])-1, Settings.sta_pwd[0], Settings.sta_pwd[1]);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: MQTT Password (%d)    [%s]"), (uint8_t *)&Settings.mqtt_pwd - SetAddr, sizeof(Settings.mqtt_pwd)-1, Settings.mqtt_pwd);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("%03X: Web Password (%d)     [%s]"), (uint8_t *)&Settings.web_password - SetAddr, sizeof(Settings.web_password)-1, Settings.web_password);
+  }
+}
+#endif  // USE_DEBUG_SETTING_NAMES
+
+void SetFlashMode(uint8_t mode)
+{
+  uint8_t *_buffer;
+  uint32_t address;
+
+  address = 0;
+  _buffer = new uint8_t[FLASH_SECTOR_SIZE];
+
+  if (ESP.flashRead(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
+    if (_buffer[2] != mode) {  // DOUT
+      _buffer[2] = mode;
+      if (ESP.flashEraseSector(address / FLASH_SECTOR_SIZE)) ESP.flashWrite(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
+    }
+  }
+  delete[] _buffer;
 }
 
 /*******************************************************************************************/
 
-boolean DebugCommand()
+bool DebugCommand(void)
 {
   char command[CMDSZ];
-  boolean serviced = true;
+  bool serviced = true;
 
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kDebugCommands);
   if (-1 == command_code) {
     serviced = false;  // Unknown command
   }
+  else if (CMND_HELP == command_code) {
+    AddLog_P(LOG_LEVEL_INFO, kDebugCommands);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+  }
+  else if (CMND_RTCDUMP == command_code) {
+    DebugRtcDump(XdrvMailbox.data);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+  }
   else if (CMND_CFGDUMP == command_code) {
     DebugCfgDump(XdrvMailbox.data);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
   else if (CMND_CFGPEEK == command_code) {
     DebugCfgPeek(XdrvMailbox.data);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
   else if (CMND_CFGPOKE == command_code) {
     DebugCfgPoke(XdrvMailbox.data);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
+#ifdef USE_DEBUG_SETTING_NAMES
+  else if (CMND_CFGSHOW == command_code) {
+    DebugCfgShow(XdrvMailbox.payload);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+  }
+#endif  // USE_DEBUG_SETTING_NAMES
 #ifdef USE_WEBSERVER
   else if (CMND_CFGXOR == command_code) {
     if (XdrvMailbox.data_len > 0) {
       config_xor_on_set = XdrvMailbox.payload;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, config_xor_on_set);
+    Response_P(S_JSON_COMMAND_NVALUE, command, config_xor_on_set);
   }
 #endif  // USE_WEBSERVER
 #ifdef DEBUG_THEO
   else if (CMND_EXCEPTION == command_code) {
     if (XdrvMailbox.data_len > 0) ExceptionTest(XdrvMailbox.payload);
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
 #endif  // DEBUG_THEO
   else if (CMND_CPUCHECK == command_code) {
@@ -365,7 +462,26 @@ boolean DebugCommand()
       CPU_load_check = XdrvMailbox.payload;
       CPU_last_millis = CPU_last_loop_time;
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_COMMAND_NVALUE, command, CPU_load_check);
+    Response_P(S_JSON_COMMAND_NVALUE, command, CPU_load_check);
+  }
+  else if (CMND_FREEMEM == command_code) {
+    if (XdrvMailbox.data_len > 0) {
+      CPU_show_freemem = XdrvMailbox.payload;
+    }
+    Response_P(S_JSON_COMMAND_NVALUE, command, CPU_show_freemem);
+  }
+  else if ((CMND_SETSENSOR == command_code) && (XdrvMailbox.index < MAX_XSNS_DRIVERS)) {
+    if ((XdrvMailbox.payload >= 0) && XsnsPresent(XdrvMailbox.index)) {
+      bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      if (1 == XdrvMailbox.payload) { restart_flag = 2; }  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
+    }
+    Response_P(S_JSON_COMMAND_XVALUE, command, XsnsGetSensors().c_str());
+  }
+  else if (CMND_FLASHMODE == command_code) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
+      SetFlashMode(XdrvMailbox.payload);
+    }
+    Response_P(S_JSON_COMMAND_NVALUE, command, ESP.getFlashChipMode());
   }
   else serviced = false;  // Unknown command
 
@@ -376,24 +492,22 @@ boolean DebugCommand()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_99
-
-boolean Xdrv99(byte function)
+bool Xdrv99(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   switch (function) {
-    case FUNC_PRE_INIT:
-      CPU_last_millis = millis();
-      break;
     case FUNC_LOOP:
       CpuLoadLoop();
+      break;
+    case FUNC_PRE_INIT:
+      CPU_last_millis = millis();
       break;
     case FUNC_COMMAND:
       result = DebugCommand();
       break;
     case FUNC_FREE_MEM:
-      DebugFreeMem();
+      if (CPU_show_freemem) { DebugFreeMem(); }
       break;
   }
   return result;

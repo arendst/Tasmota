@@ -1,7 +1,7 @@
 /*
   xdsp_04_ili9341.ino - Display Tft Ili9341 support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends and Adafruit
+  Copyright (C) 2019  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ uint16_t tft_scroll;
 
 /*********************************************************************************************/
 
-void Ili9341InitMode()
+void Ili9341InitMode(void)
 {
   tft->setRotation(Settings.display_rotate);  // 0
   tft->invertDisplay(0);
@@ -77,7 +77,7 @@ void Ili9341Init(uint8_t mode)
   }
 }
 
-void Ili9341InitDriver()
+void Ili9341InitDriver(void)
 {
   if (!Settings.display_model) {
     Settings.display_model = XDSP_04;
@@ -97,7 +97,7 @@ void Ili9341InitDriver()
   }
 }
 
-void Ili9341Clear()
+void Ili9341Clear(void)
 {
   tft->fillScreen(ILI9341_BLACK);
   tft->setCursor(0, 0);
@@ -128,7 +128,7 @@ void Ili9341DisplayOnOff(uint8_t on)
   }
 }
 
-void Ili9341OnOff()
+void Ili9341OnOff(void)
 {
   Ili9341DisplayOnOff(disp_power);
 }
@@ -137,7 +137,7 @@ void Ili9341OnOff()
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-void Ili9341PrintLog()
+void Ili9341PrintLog(void)
 {
   disp_refresh--;
   if (!disp_refresh) {
@@ -147,8 +147,8 @@ void Ili9341PrintLog()
     }
 
     char* txt = DisplayLogBuffer('\370');
-    if (txt != NULL) {
-      byte size = Settings.display_size;
+    if (txt != nullptr) {
+      uint8_t size = Settings.display_size;
       uint16_t theight = size * TFT_FONT_HEIGTH;
 
       tft->setTextSize(size);
@@ -167,24 +167,24 @@ void Ili9341PrintLog()
 
         tft_scroll = theight;  // Start below header
         tft->setCursor(0, tft_scroll);
-        for (byte i = 0; i < last_row; i++) {
+        for (uint32_t i = 0; i < last_row; i++) {
           strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
 //          tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);  // Erase line
           tft->print(disp_screen_buffer[i]);
           tft_scroll += theight;
           tft->setCursor(0, tft_scroll);
+          delay(1);  // Fix background runs heap usage due to long runtime of this loop (up to 1 second)
         }
         strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
         DisplayFillScreen(last_row);
         tft->print(disp_screen_buffer[last_row]);
       }
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_APPLICATION "[%s]"), txt);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), txt);
     }
   }
 }
 
-void Ili9341Refresh()  // Every second
+void Ili9341Refresh(void)  // Every second
 {
   if (Settings.display_mode) {  // Mode 0 is User text
     char tftdt[Settings.display_cols[0] +1];
@@ -222,9 +222,9 @@ void Ili9341Refresh()  // Every second
  * Interface
 \*********************************************************************************************/
 
-boolean Xdsp04(byte function)
+bool Xdsp04(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (spi_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {

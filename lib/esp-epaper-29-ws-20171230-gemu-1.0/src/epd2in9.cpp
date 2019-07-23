@@ -27,78 +27,20 @@
 #include <stdlib.h>
 #include "epd2in9.h"
 
-extern uint8_t *buffer;
-
-Epd::Epd(int16_t width, int16_t height) :
-Paint(width,height) {
-}
-
-void Epd::DisplayOnff(int8_t on) {
-}
-
-void Epd::Updateframe() {
-  SetFrameMemory(buffer, 0, 0, EPD_WIDTH,EPD_HEIGHT);
-  DisplayFrame();
-  //Serial.printf("update\n");
-}
-
-#define DISPLAY_INIT_MODE 0
-#define DISPLAY_INIT_PARTIAL 1
-#define DISPLAY_INIT_FULL 2
+Epd::~Epd() {
+};
 
 
-void Epd::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
-// ignore update mode
-  if (p==DISPLAY_INIT_PARTIAL) {
-    Init(lut_partial_update);
-    //ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
-    DisplayFrame();
-    delay(500);
-    return;
-    //Serial.printf("partial\n");
-  } else if (p==DISPLAY_INIT_FULL) {
-    Init(lut_full_update);
-    //ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
-    DisplayFrame();
-    delay(3500);
-    //Serial.printf("full\n");
-    return;
-  } else {
-    Updateframe();
-  }
-  setRotation(rot);
-  invertDisplay(false);
-  setTextWrap(false);         // Allow text to run off edges
-  cp437(true);
-  setTextFont(font&3);
-  setTextSize(size&7);
-  setTextColor(WHITE,BLACK);
-  setCursor(0,0);
-  fillScreen(BLACK);
-}
-
-int16_t Epd::Begin(int16_t cs,int16_t mosi,int16_t sclk) {
-  cs_pin=cs;
-  mosi_pin=mosi;
-  sclk_pin=sclk;
-}
-
-
-void Epd::Init(int8_t p) {
-  if (p==DISPLAY_INIT_PARTIAL) {
-    Init(lut_partial_update);
-  } else {
-    Init(lut_full_update);
-  }
-  ClearFrameMemory(0xFF);
-  DisplayFrame();
-  if (p==DISPLAY_INIT_PARTIAL) {
-    delay(350);
-  } else {
-    delay(3500);
-  }
-}
-
+Epd::Epd() {
+    //reset_pin = RST_PIN;
+    //dc_pin = DC_PIN;
+    cs_pin = CS_PIN;
+    mosi_pin = MOSI_PIN;
+    sclk_pin = SCLK_PIN;
+    //busy_pin = BUSY_PIN;
+    width = EPD_WIDTH;
+    height = EPD_HEIGHT;
+};
 
 int Epd::Init(const unsigned char* lut) {
     /* this calls the peripheral hardware interface, see epdif */
@@ -113,13 +55,6 @@ int Epd::Init(const unsigned char* lut) {
     pinMode(cs_pin, OUTPUT);
     pinMode(mosi_pin, OUTPUT);
     pinMode(sclk_pin, OUTPUT);
-
-    digitalWrite(cs_pin,HIGH);
-    digitalWrite(mosi_pin,LOW);
-    digitalWrite(sclk_pin,LOW);
-
-    width = EPD_WIDTH;
-    height = EPD_HEIGHT;
 
     /* EPD hardware init start */
     this->lut = lut;
@@ -168,9 +103,9 @@ void Epd::SendData(unsigned char data) {
  */
 void Epd::WaitUntilIdle(void) {
   return;
-    //while(DigitalRead(busy_pin) == HIGH) {      //LOW: idle, HIGH: busy
-    //    DelayMs(100);
-    //}
+    while(DigitalRead(busy_pin) == HIGH) {      //LOW: idle, HIGH: busy
+        DelayMs(100);
+    }
 }
 
 /**
@@ -180,9 +115,9 @@ void Epd::WaitUntilIdle(void) {
  */
 void Epd::Reset(void) {
     //DigitalWrite(reset_pin, LOW);                //module reset
-    //delay(200);
+    DelayMs(200);
     //DigitalWrite(reset_pin, HIGH);
-    //delay(200);
+    DelayMs(200);
 }
 
 /**
@@ -244,7 +179,7 @@ void Epd::SetFrameMemory(
     /* send the image data */
     for (uint16_t j = 0; j < y_end - y + 1; j++) {
         for (uint16_t i = 0; i < (x_end - x + 1) / 8; i++) {
-            SendData(image_buffer[i + j * (image_width / 8)]^0xff);
+            SendData(image_buffer[i + j * (image_width / 8)]);
         }
     }
 }
@@ -272,7 +207,7 @@ void Epd::SetFrameMemory(const unsigned char* image_buffer) {
     SendCommand(WRITE_RAM);
     /* send the image data */
     for (int i = 0; i < this->width / 8 * this->height; i++) {
-        SendData(pgm_read_byte(&image_buffer[i])^0xff);
+        SendData(pgm_read_byte(&image_buffer[i]));
     }
 }
 
@@ -360,68 +295,23 @@ const unsigned char lut_partial_update[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-
-#define PIN_OUT_SET 0x60000304
-#define PIN_OUT_CLEAR 0x60000308
-
-#define PWRITE xdigitalWrite
-
-
-#ifndef SSPI_USEANYPIN
-// uses about 2.75 usecs, 365 kb /sec
-// however does not work with GPIO 16 !!!!
-void ICACHE_RAM_ATTR Epd::fastSPIwrite(uint8_t d,uint8_t dc) {
-
-  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<cs_pin);
-  WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<sclk_pin);
-  if(dc) WRITE_PERI_REG( PIN_OUT_SET, 1<<mosi_pin);
-  else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<mosi_pin);
-  WRITE_PERI_REG( PIN_OUT_SET, 1<<sclk_pin);
-
-  for(uint8_t bit = 0x80; bit; bit >>= 1) {
-    WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<sclk_pin);
-    if(d&bit) WRITE_PERI_REG( PIN_OUT_SET, 1<<mosi_pin);
-    else   WRITE_PERI_REG( PIN_OUT_CLEAR, 1<<mosi_pin);
-    WRITE_PERI_REG( PIN_OUT_SET, 1<<sclk_pin);
-  }
-  WRITE_PERI_REG( PIN_OUT_SET, 1<<cs_pin);
-}
-#else
-
-extern void ICACHE_RAM_ATTR xdigitalWrite(uint8_t pin, uint8_t val) {
-  //stopWaveform(pin);
-  if(pin < 16){
-    if(val) GPOS = (1 << pin);
-    else GPOC = (1 << pin);
-  } else if(pin == 16){
-    if(val) GP16O |= 1;
-    else GP16O &= ~1;
-  }
-}
-
-// about 13 us => 76 kb / sec
-// can use any pin
 void Epd::fastSPIwrite(uint8_t d,uint8_t dc) {
 
-  PWRITE(cs_pin, LOW);
+  digitalWrite(cs_pin, LOW);
 
   // transfer dc
-  PWRITE(sclk_pin, LOW);
-  if(dc) PWRITE(mosi_pin, HIGH);
-  else        PWRITE(mosi_pin, LOW);
-  PWRITE(sclk_pin, HIGH);
+  digitalWrite(sclk_pin, LOW);
+  if(dc) digitalWrite(mosi_pin, HIGH);
+  else        digitalWrite(mosi_pin, LOW);
+  digitalWrite(sclk_pin, HIGH);
 
   for(uint8_t bit = 0x80; bit; bit >>= 1) {
-    PWRITE(sclk_pin, LOW);
-    if(d & bit) PWRITE(mosi_pin, HIGH);
-    else        PWRITE(mosi_pin, LOW);
-    PWRITE(sclk_pin, HIGH);
+    digitalWrite(sclk_pin, LOW);
+    if(d & bit) digitalWrite(mosi_pin, HIGH);
+    else        digitalWrite(mosi_pin, LOW);
+    digitalWrite(sclk_pin, HIGH);
   }
 
-  PWRITE(cs_pin, HIGH);
+  digitalWrite(cs_pin, HIGH);
 }
-
-
-#endif
-
 /* END OF FILE */

@@ -1,7 +1,7 @@
 /*
   xdsp_01_lcd.ino - Display LCD support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends and Adafruit
+  Copyright (C) 2019  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ LiquidCrystal_I2C *lcd;
 
 /*********************************************************************************************/
 
-void LcdInitMode()
+void LcdInitMode(void)
 {
   lcd->init();
   lcd->clear();
@@ -54,7 +54,7 @@ void LcdInit(uint8_t mode)
   }
 }
 
-void LcdInitDriver()
+void LcdInitDriver(void)
 {
   if (!Settings.display_model) {
     if (I2cDevice(LCD_ADDRESS1)) {
@@ -78,7 +78,7 @@ void LcdInitDriver()
   }
 }
 
-void LcdDrawStringAt()
+void LcdDrawStringAt(void)
 {
   lcd->setCursor(dsp_x, dsp_y);
   lcd->print(dsp_str);
@@ -97,24 +97,29 @@ void LcdDisplayOnOff(uint8_t on)
 
 #ifdef USE_DISPLAY_MODES1TO5
 
-void LcdCenter(byte row, char* txt)
+void LcdCenter(uint8_t row, char* txt)
 {
-  int offset;
-  int len;
   char line[Settings.display_cols[0] +2];
 
+  int len = strlen(txt);
+  int offset = 0;
+  if (len >= Settings.display_cols[0]) {
+    len = Settings.display_cols[0];
+  } else {
+    offset = (Settings.display_cols[0] - len) / 2;
+  }
   memset(line, 0x20, Settings.display_cols[0]);
   line[Settings.display_cols[0]] = 0;
-  len = strlen(txt);
-  offset = (len < Settings.display_cols[0]) ? offset = (Settings.display_cols[0] - len) / 2 : 0;
-  strlcpy(line +offset, txt, len);
+  for (uint32_t i = 0; i < len; i++) {
+    line[offset +i] = txt[i];
+  }
   lcd->setCursor(0, row);
   lcd->print(line);
 }
 
-boolean LcdPrintLog()
+bool LcdPrintLog(void)
 {
-  boolean result = false;
+  bool result = false;
 
   disp_refresh--;
   if (!disp_refresh) {
@@ -122,10 +127,10 @@ boolean LcdPrintLog()
     if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
 
     char* txt = DisplayLogBuffer('\337');
-    if (txt != NULL) {
+    if (txt != nullptr) {
       uint8_t last_row = Settings.display_rows -1;
 
-      for (byte i = 0; i < last_row; i++) {
+      for (uint32_t i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
         lcd->setCursor(0, i);            // Col 0, Row i
         lcd->print(disp_screen_buffer[i +1]);
@@ -133,8 +138,7 @@ boolean LcdPrintLog()
       strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
       DisplayFillScreen(last_row);
 
-      snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
-      AddLog(LOG_LEVEL_DEBUG);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "[%s]"), disp_screen_buffer[last_row]);
 
       lcd->setCursor(0, last_row);
       lcd->print(disp_screen_buffer[last_row]);
@@ -145,7 +149,7 @@ boolean LcdPrintLog()
   return result;
 }
 
-void LcdTime()
+void LcdTime(void)
 {
   char line[Settings.display_cols[0] +1];
 
@@ -155,7 +159,7 @@ void LcdTime()
   LcdCenter(1, line);
 }
 
-void LcdRefresh()  // Every second
+void LcdRefresh(void)  // Every second
 {
   if (Settings.display_mode) {  // Mode 0 is User text
     switch (Settings.display_mode) {
@@ -181,9 +185,9 @@ void LcdRefresh()  // Every second
  * Interface
 \*********************************************************************************************/
 
-boolean Xdsp01(byte function)
+bool Xdsp01(uint8_t function)
 {
-  boolean result = false;
+  bool result = false;
 
   if (i2c_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {

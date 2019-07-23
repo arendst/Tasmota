@@ -1,0 +1,69 @@
+language: c
+python:
+  - "2.7"
+
+# Cache PlatformIO packages using Travis CI container-based infrastructure 
+cache:
+  pip: true
+  directories:
+      - "~/.platformio"
+
+env:
+  - > 
+    PLATFORMIO_CI_SRC=$PWD/examples/Webserver 
+    ARDUINOIDE_CI_SRC=$PLATFORMIO_CI_SRC/Webserver.ino
+    BOARDS="--board=diecimilaatmega328 --board=uno --board=esp01"
+  - > 
+    PLATFORMIO_CI_SRC=$PWD/examples/ReceiveDemo_Simple 
+    ARDUINOIDE_CI_SRC=$PLATFORMIO_CI_SRC/ReceiveDemo_Simple.ino
+    BOARDS="--board=diecimilaatmega328 --board=uno --board=esp01"
+  - > 
+    PLATFORMIO_CI_SRC=$PWD/examples/TypeC_Intertechno 
+    ARDUINOIDE_CI_SRC=$PLATFORMIO_CI_SRC/TypeC_Intertechno.ino
+    BOARDS="--board=diecimilaatmega328 --board=uno --board=esp01 --board=attiny25 --board=attiny24"
+  - > 
+    PLATFORMIO_CI_SRC=$PWD/examples/TypeD_REV 
+    ARDUINOIDE_CI_SRC=$PLATFORMIO_CI_SRC/TypeD_REV.ino
+    BOARDS="--board=diecimilaatmega328 --board=uno --board=esp01 --board=attiny25 --board=attiny24"
+  - >
+    PLATFORMIO_CI_SRC=$PWD/examples/TypeA_WithDIPSwitches 
+    ARDUINOIDE_CI_SRC=$PLATFORMIO_CI_SRC/TypeA_WithDIPSwitches.ino
+    BOARDS="--board=diecimilaatmega328 --board=uno --board=esp01 --board=attiny25 --board=attiny24"
+  - > 
+    PLATFORMIO_CI_SRC=$PWD/examples/TypeA_WithDIPSwitches_Lightweight 
+    ARDUINOIDE_CI_SRC=$PLATFORMIO_CI_SRC/TypeA_WithDIPSwitches_Lightweight.ino
+    BOARDS="--board=diecimilaatmega328 --board=uno --board=esp01 --board=attiny25 --board=attiny24"
+  - >
+    PLATFORMIO_CI_SRC=$PWD/examples/TypeB_WithRotaryOrSlidingSwitches 
+    ARDUINOIDE_CI_SRC=$PLATFORMIO_CI_SRC/TypeB_WithRotaryOrSlidingSwitches.ino
+    BOARDS="--board=diecimilaatmega328 --board=uno --board=esp01 --board=attiny25 --board=attiny24"
+  - >
+    PLATFORMIO_CI_SRC=$PWD/examples/SendDemo 
+    ARDUINOIDE_CI_SRC=$PLATFORMIO_CI_SRC/SendDemo.ino
+    BOARDS="--board=diecimilaatmega328 --board=uno --board=esp01"
+  - >
+    PLATFORMIO_CI_SRC=$PWD/examples/ReceiveDemo_Advanced 
+    ARDUINOIDE_CI_SRC=$PLATFORMIO_CI_SRC/ReceiveDemo_Advanced.ino
+    BOARDS="--board=diecimilaatmega328 --board=uno --board=esp01"
+ 
+before_install:
+  # Arduino IDE
+  - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16"
+  - sleep 3
+  - export DISPLAY=:1.0
+  - wget http://downloads.arduino.cc/arduino-1.6.9-linux64.tar.xz
+  - tar xf arduino-1.6.9-linux64.tar.xz
+  - sudo mv arduino-1.6.9 /usr/local/share/arduino
+  - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
+  
+install:
+  # Arduino IDE
+  - ln -s $PWD /usr/local/share/arduino/libraries/rc-switch
+  # PlatformIO
+  - sudo pip install -U platformio
+
+script:
+  # Arduino IDE
+  - arduino --verify --board arduino:avr:uno ${ARDUINOIDE_CI_SRC}
+  # PlatformIO
+  - platformio ci --lib="." ${BOARDS}
