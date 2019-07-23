@@ -1115,7 +1115,7 @@ void HandleTemplateConfiguration(void)
     return;
   }
 
-  char stemp[20];                                           // Template number and Sensor name
+  char stemp[30];                                           // Template number and Sensor name
 
   if (WebServer->hasArg("m")) {
     WSContentBegin(200, CT_PLAIN);
