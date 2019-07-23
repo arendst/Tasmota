@@ -1242,7 +1242,7 @@ void HandleModuleConfiguration(void)
     return;
   }
 
-  char stemp[20];  // Sensor name
+  char stemp[30];  // Sensor name
   uint8_t midx;
   myio cmodule;
   ModuleGpios(&cmodule);
