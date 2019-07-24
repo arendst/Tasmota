@@ -1173,26 +1173,42 @@ bool RulesCommand(void)
     Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
   }
   else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
-    if (XdrvMailbox.data_len > 0) {
+    if (!XdrvMailbox.usridx) {
+      mqtt_data[0] = '\0';
+      for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
+        ResponseAppend_P(PSTR("%c\"Var%d\":\"%s\""), (i) ? ',' : '{', i +1, vars[i]);
+      }
+      ResponseJsonEnd();
+    } else {
+      if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-      dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, vars[index -1]);
+        dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, vars[index -1]);
 #else
-      strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
+        strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
 #endif      //USE_EXPRESSION
-      bitSet(vars_event, index -1);
+        bitSet(vars_event, index -1);
+      }
+      Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
   else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
-    if (XdrvMailbox.data_len > 0) {
+    if (!XdrvMailbox.usridx) {
+      mqtt_data[0] = '\0';
+      for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
+        ResponseAppend_P(PSTR("%c\"Mem%d\":\"%s\""), (i) ? ',' : '{', i +1, Settings.mems[i]);
+      }
+      ResponseJsonEnd();
+    } else {
+      if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-      dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, Settings.mems[index -1]);
+        dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, Settings.mems[index -1]);
 #else
-      strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
+        strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
 #endif      //USE_EXPRESSION
-      bitSet(mems_event, index -1);
+        bitSet(mems_event, index -1);
+      }
+      Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
   else if (CMND_CALC_RESOLUTION == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {

@@ -478,7 +478,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
   uint8_t lines = 1;
   bool jsflg = false;
   bool grpflg = false;
-//  bool user_append_index = false;
+  bool user_index = false;
   uint32_t i = 0;
   uint32_t index;
   uint32_t address;
@@ -520,7 +520,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     }
     if (i < strlen(type)) {
       index = atoi(type +i);
-//      user_append_index = true;
+      user_index = true;
     }
     type[i] = '\0';
   }
@@ -556,6 +556,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
       XdrvMailbox.payload16 = payload16;
       XdrvMailbox.payload = payload;
       XdrvMailbox.grpflg = grpflg;
+      XdrvMailbox.usridx = user_index;
       XdrvMailbox.topic = type;
       XdrvMailbox.data = dataBuf;
       if (!XdrvCall(FUNC_COMMAND)) {
@@ -604,7 +605,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     }
     else if ((CMND_POWER == command_code) && (index > 0) && (index <= devices_present)) {
       if ((payload < 0) || (payload > 4)) { payload = 9; }
-//      Settings.flag.device_index_enable = user_append_index;
+//      Settings.flag.device_index_enable = user_index;
       ExecuteCommandPower(index, payload, SRC_IGNORE);
       fallback_topic_flag = false;
       return;

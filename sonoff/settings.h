@@ -398,7 +398,7 @@ struct XDRVMAILBOX {
   uint16_t      payload16;
   int16_t       payload;
   bool          grpflg;
-  uint8_t       notused;
+  bool          usridx;
   char         *topic;
   char         *data;
 } XdrvMailbox;
