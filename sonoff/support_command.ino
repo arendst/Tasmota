@@ -68,6 +68,11 @@ void ExecuteCommand(char *cmnd, int source)
 
 /********************************************************************************************/
 
+// topic:                    /power1  data: toggle  = Console command
+// topic:         cmnd/sonoff/power1  data: toggle  = Mqtt command using topic
+// topic:        cmnd/sonoffs/power1  data: toggle  = Mqtt command using a group topic
+// topic: cmnd/DVES_83BB10_fb/power1  data: toggle  = Mqtt command using fallback topic
+
 void CommandHandler(char* topic, uint8_t* data, unsigned int data_len)
 {
   if (data_len > MQTT_MAX_PACKET_SIZE) { return; }  // Do not allow more data than would be feasable within stack space
