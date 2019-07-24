@@ -487,7 +487,7 @@ void MqttReconnect(void)
     mqtt_initial_connection_state = 1;
   }
 
-  MqttClient.setCallback(MqttDataHandler);
+  MqttClient.setCallback(CommandHandler);
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   MqttClient.setServer(AWS_endpoint, Settings.mqtt_port);
 #else
