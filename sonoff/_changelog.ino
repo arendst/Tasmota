@@ -1,9 +1,12 @@
 /*********************************************************************************************\
+ * 6.6.0.3 20190725
+ * Change filename of configuration backup from using FriendlyName1 to Hostname solving diacritic issues (#2422)
+ *
  * 6.6.0.2 20190714
+ * Change commands Var and Mem to show all parameters when no index is given (#6107)
  * Add command SetOption67 0/1 to disable or enable a buzzer as used in iFan03
  * Add command DisplayWidth to set pixel width on supported devices
  * Add command DisplayHeight to set pixel height on supported devices
- * Change commands Var and Mem to show all parameters when no index is given (#6107)
  * Add support for Sonoff iFan03 as module 71 (#5988)
  * Add support for a buzzer
  * Add support for IRSend long press ('repeat' feature from IRRemoteESP8266) (#6074)

@@ -1673,8 +1673,13 @@ void HandleBackupConfiguration(void)
   WebServer->setContentLength(sizeof(Settings));
 
   char attachment[100];
-  char friendlyname[sizeof(Settings.friendlyname[0])];
-  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, Settings.friendlyname[0]), my_version);
+
+//  char friendlyname[sizeof(Settings.friendlyname[0])];
+//  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, Settings.friendlyname[0]), my_version);
+
+  char hostname[sizeof(my_hostname)];
+  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(hostname, my_hostname), my_version);
+
   WebServer->sendHeader(F("Content-Disposition"), attachment);
 
   WSSend(200, CT_STREAM, "");
