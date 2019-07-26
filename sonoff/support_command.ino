@@ -21,8 +21,8 @@ enum TasmotaCommands {
   CMND_BACKLOG, CMND_DELAY, CMND_POWER, CMND_STATUS, CMND_STATE, CMND_POWERONSTATE, CMND_PULSETIME,
   CMND_BLINKTIME, CMND_BLINKCOUNT, CMND_SENSOR, CMND_SAVEDATA, CMND_SETOPTION, CMND_TEMPERATURE_RESOLUTION, CMND_HUMIDITY_RESOLUTION,
   CMND_PRESSURE_RESOLUTION, CMND_POWER_RESOLUTION, CMND_VOLTAGE_RESOLUTION, CMND_FREQUENCY_RESOLUTION, CMND_CURRENT_RESOLUTION, CMND_ENERGY_RESOLUTION, CMND_WEIGHT_RESOLUTION,
-  CMND_MODULE, CMND_MODULES, CMND_ADC, CMND_ADCS, CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE, CMND_COUNTER, CMND_COUNTERTYPE,
-  CMND_COUNTERDEBOUNCE, CMND_BUTTONDEBOUNCE, CMND_SWITCHDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
+  CMND_MODULE, CMND_MODULES, CMND_ADC, CMND_ADCS, CMND_GPIO, CMND_GPIOS, CMND_PWM, CMND_PWMFREQUENCY, CMND_PWMRANGE,
+  CMND_BUTTONDEBOUNCE, CMND_SWITCHDEBOUNCE, CMND_SLEEP, CMND_UPGRADE, CMND_UPLOAD, CMND_OTAURL, CMND_SERIALLOG, CMND_SYSLOG,
   CMND_LOGHOST, CMND_LOGPORT, CMND_IPADDRESS, CMND_NTPSERVER, CMND_AP, CMND_SSID, CMND_PASSWORD, CMND_HOSTNAME,
   CMND_WIFICONFIG, CMND_FRIENDLYNAME, CMND_SWITCHMODE, CMND_INTERLOCK, CMND_TEMPLATE,
   CMND_TELEPERIOD, CMND_RESTART, CMND_RESET, CMND_TIME, CMND_TIMEZONE, CMND_TIMESTD, CMND_TIMEDST, CMND_ALTITUDE, CMND_LEDPOWER, CMND_LEDSTATE, CMND_LEDMASK,
@@ -31,8 +31,8 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_BACKLOG "|" D_CMND_DELAY "|" D_CMND_POWER "|" D_CMND_STATUS "|" D_CMND_STATE "|"  D_CMND_POWERONSTATE "|" D_CMND_PULSETIME "|"
   D_CMND_BLINKTIME "|" D_CMND_BLINKCOUNT "|" D_CMND_SENSOR "|" D_CMND_SAVEDATA "|" D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|"
   D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|" D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_FREQUENCY_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_WEIGHT_RESOLUTION "|"
-  D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|" D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|"
-  D_CMND_COUNTERDEBOUNCE "|" D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
+  D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|"
+  D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SLEEP "|" D_CMND_UPGRADE "|" D_CMND_UPLOAD "|" D_CMND_OTAURL "|" D_CMND_SERIALLOG "|" D_CMND_SYSLOG "|"
   D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|"
   D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TEMPLATE "|"
   D_CMND_TELEPERIOD "|" D_CMND_RESTART "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|"
@@ -145,6 +145,7 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
 //      XdrvMailbox.valid = 1;
       XdrvMailbox.index = index;
       XdrvMailbox.data_len = data_len;
+      XdrvMailbox.payload32 = payload32;
       XdrvMailbox.payload16 = payload16;
       XdrvMailbox.payload = payload;
       XdrvMailbox.grpflg = grpflg;
@@ -320,6 +321,7 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
     else if ((CMND_SENSOR == command_code) || (CMND_DRIVER == command_code)) {
       XdrvMailbox.index = index;
       XdrvMailbox.data_len = data_len;
+      XdrvMailbox.payload32 = payload32;
       XdrvMailbox.payload16 = payload16;
       XdrvMailbox.payload = payload;
       XdrvMailbox.grpflg = grpflg;
@@ -681,32 +683,6 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
         analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
       }
       Response_P(S_JSON_COMMAND_NVALUE, command, Settings.pwm_range);
-    }
-    else if ((CMND_COUNTER == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
-      if ((data_len > 0) && (pin[GPIO_CNTR1 + index -1] < 99)) {
-        if ((dataBuf[0] == '-') || (dataBuf[0] == '+')) {
-          RtcSettings.pulse_counter[index -1] += payload32;
-          Settings.pulse_counter[index -1] += payload32;
-        } else {
-          RtcSettings.pulse_counter[index -1] = payload32;
-          Settings.pulse_counter[index -1] = payload32;
-        }
-      }
-      Response_P(S_JSON_COMMAND_INDEX_LVALUE, command, index, RtcSettings.pulse_counter[index -1]);
-    }
-    else if ((CMND_COUNTERTYPE == command_code) && (index > 0) && (index <= MAX_COUNTERS)) {
-      if ((payload >= 0) && (payload <= 1) && (pin[GPIO_CNTR1 + index -1] < 99)) {
-        bitWrite(Settings.pulse_counter_type, index -1, payload &1);
-        RtcSettings.pulse_counter[index -1] = 0;
-        Settings.pulse_counter[index -1] = 0;
-      }
-      Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, index, bitRead(Settings.pulse_counter_type, index -1));
-    }
-    else if (CMND_COUNTERDEBOUNCE == command_code) {
-      if ((data_len > 0) && (payload16 < 32001)) {
-        Settings.pulse_counter_debounce = payload16;
-      }
-      Response_P(S_JSON_COMMAND_NVALUE, command, Settings.pulse_counter_debounce);
     }
     else if (CMND_BUTTONDEBOUNCE == command_code) {
       if ((payload > 39) && (payload < 1001)) {
