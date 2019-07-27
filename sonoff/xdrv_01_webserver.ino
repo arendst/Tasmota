@@ -2090,8 +2090,8 @@ void HandleUploadLoop(void)
       unsigned long buffer_version = settings_buffer[11] << 24 | settings_buffer[10] << 16 | settings_buffer[9] << 8 | settings_buffer[8];
       if (buffer_version > 0x06000000) {
         uint32_t buffer_size = settings_buffer[3] << 8 | settings_buffer[2];
-        uint32_t buffer_crc = settings_buffer[15] << 8 | settings_buffer[14];
-        uint32_t crc = 0;
+        uint16_t buffer_crc = settings_buffer[15] << 8 | settings_buffer[14];
+        uint16_t crc = 0;
         for (uint32_t i = 0; i < buffer_size; i++) {
           if ((i < 14) || (i > 15)) { crc += settings_buffer[i]*(i+1); }  // Skip crc
         }
