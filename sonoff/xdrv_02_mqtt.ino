@@ -640,10 +640,9 @@ bool MqttCommand(void)
   char stemp1[TOPSZ];
   char scommand[CMDSZ];
 
-  uint16_t index = XdrvMailbox.index;
-  uint16_t data_len = XdrvMailbox.data_len;
-  uint16_t payload16 = XdrvMailbox.payload16;
-  int16_t payload = XdrvMailbox.payload;
+  uint32_t index = XdrvMailbox.index;
+  uint32_t data_len = XdrvMailbox.data_len;
+  int32_t payload = XdrvMailbox.payload;
   bool grpflg =  XdrvMailbox.grpflg;
   char *type = XdrvMailbox.topic;
   char *dataBuf = XdrvMailbox.data;
@@ -668,8 +667,8 @@ bool MqttCommand(void)
 #endif
   }
   else if (CMND_MQTTPORT == command_code) {
-    if (payload16 > 0) {
-      Settings.mqtt_port = (1 == payload16) ? MQTT_PORT : payload16;
+    if ((payload > 0) && (payload < 65536)) {
+      Settings.mqtt_port = (1 == payload) ? MQTT_PORT : payload;
       restart_flag = 2;
     }
     Response_P(S_JSON_COMMAND_NVALUE, command, Settings.mqtt_port);

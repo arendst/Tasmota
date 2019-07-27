@@ -302,12 +302,12 @@ char* dtostrfd(double number, unsigned char prec, char *s)
   }
 }
 
-char* Unescape(char* buffer, uint16_t* size)
+char* Unescape(char* buffer, uint32_t* size)
 {
   uint8_t* read = (uint8_t*)buffer;
   uint8_t* write = (uint8_t*)buffer;
-  int16_t start_size = *size;
-  int16_t end_size = *size;
+  int32_t start_size = *size;
+  int32_t end_size = *size;
   uint8_t che = 0;
 
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t*)buffer, *size);
@@ -811,7 +811,7 @@ uint32_t GetHash(const char *buffer, size_t size)
   return hash;
 }
 
-void ShowSource(int source)
+void ShowSource(uint32_t source)
 {
   if ((source > 0) && (source < SRC_MAX)) {
     char stemp1[20];

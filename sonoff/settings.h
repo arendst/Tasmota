@@ -392,14 +392,11 @@ struct TIME_T {
 } RtcTime;
 
 struct XDRVMAILBOX {
-  uint16_t      valid;
-  uint16_t      index;
-  uint16_t      data_len;
-  uint16_t      payload16;
-  int16_t       payload;
   bool          grpflg;
   bool          usridx;
-  int32_t       payload32;
+  uint32_t      index;
+  uint32_t      data_len;
+  int32_t       payload;
   char         *topic;
   char         *data;
   char         *command;

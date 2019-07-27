@@ -162,11 +162,11 @@ bool CounterCommand(void)
     if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
       if ((XdrvMailbox.data_len > 0) && (pin[GPIO_CNTR1 + XdrvMailbox.index -1] < 99)) {
         if ((XdrvMailbox.data[0] == '-') || (XdrvMailbox.data[0] == '+')) {
-          RtcSettings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload32;
-          Settings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload32;
+          RtcSettings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload;
+          Settings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload;
         } else {
-          RtcSettings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload32;
-          Settings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload32;
+          RtcSettings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload;
+          Settings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload;
         }
       }
       Response_P(S_JSON_COMMAND_INDEX_LVALUE, command, XdrvMailbox.index, RtcSettings.pulse_counter[XdrvMailbox.index -1]);
@@ -183,8 +183,8 @@ bool CounterCommand(void)
     }
   }
   else if (CMND_COUNTERDEBOUNCE == command_code) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.payload16 < 32001)) {
-      Settings.pulse_counter_debounce = XdrvMailbox.payload16;
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
+      Settings.pulse_counter_debounce = XdrvMailbox.payload;
     }
     Response_P(S_JSON_COMMAND_NVALUE, command, Settings.pulse_counter_debounce);
   }
