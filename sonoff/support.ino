@@ -502,16 +502,16 @@ bool ParseIp(uint32_t* addr, const char* str)
   return (3 == i);
 }
 
-void MakeValidMqtt(uint8_t option, char* str)
+void MakeValidMqtt(uint32_t option, char* str)
 {
 // option 0 = replace by underscore
 // option 1 = delete character
-  uint16_t i = 0;
+  uint32_t i = 0;
   while (str[i] > 0) {
 //        if ((str[i] == '/') || (str[i] == '+') || (str[i] == '#') || (str[i] == ' ')) {
     if ((str[i] == '+') || (str[i] == '#') || (str[i] == ' ')) {
       if (option) {
-        uint16_t j = i;
+        uint32_t j = i;
         while (str[j] > 0) {
           str[j] = str[j +1];
           j++;
@@ -529,7 +529,7 @@ void MakeValidMqtt(uint8_t option, char* str)
 bool NewerVersion(char* version_str)
 {
   uint32_t version = 0;
-  uint8_t i = 0;
+  uint32_t i = 0;
   char *str_ptr;
   char* version_dup = strdup(version_str);  // Duplicate the version_str as strtok_r will modify it.
 
@@ -676,7 +676,7 @@ uint32_t RoundSqrtInt(uint32_t num)
   return s / 2;
 }
 
-char* GetTextIndexed(char* destination, size_t destination_size, uint16_t index, const char* haystack)
+char* GetTextIndexed(char* destination, size_t destination_size, uint32_t index, const char* haystack)
 {
   // Returns empty string if not found
   // Returns text of found
@@ -1414,7 +1414,7 @@ void SetSyslog(uint8_t loglevel)
 }
 
 #ifdef USE_WEBSERVER
-void GetLog(uint8_t idx, char** entry_pp, size_t* len_p)
+void GetLog(uint32_t idx, char** entry_pp, size_t* len_p)
 {
   char* entry_p = nullptr;
   size_t len = 0;
@@ -1422,7 +1422,7 @@ void GetLog(uint8_t idx, char** entry_pp, size_t* len_p)
   if (idx) {
     char* it = web_log;
     do {
-      uint8_t cur_idx = *it;
+      uint32_t cur_idx = *it;
       it++;
       size_t tmp = strchrspn(it, '\1');
       tmp++;                             // Skip terminating '\1'
@@ -1477,6 +1477,7 @@ void AddLog(uint8_t loglevel)
   if (Settings.webserver && (loglevel <= Settings.weblog_level)) {
     // Delimited, zero-terminated buffer of log lines.
     // Each entry has this format: [index][log data]['\1']
+    web_log_index &= 0xFF;
     if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
     while (web_log_index == web_log[0] ||  // If log already holds the next index, remove it
            strlen(web_log) + strlen(log_data) + 13 > WEB_LOG_SIZE)  // 13 = web_log_index + mxtime + '\1' + '\0'
@@ -1488,6 +1489,7 @@ void AddLog(uint8_t loglevel)
       memmove(web_log, it, WEB_LOG_SIZE -(it-web_log));  // Move buffer forward to remove oldest log line
     }
     snprintf_P(web_log, sizeof(web_log), PSTR("%s%c%s%s\1"), web_log, web_log_index++, mxtime, log_data);
+    web_log_index &= 0xFF;
     if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
   }
 #endif  // USE_WEBSERVER
