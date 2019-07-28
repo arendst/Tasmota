@@ -43,8 +43,8 @@ bool knx_started = false;
 
 void OsWatchTicker(void)
 {
-  unsigned long t = millis();
-  unsigned long last_run = abs(t - oswatch_last_loop_time);
+  uint32_t t = millis();
+  uint32_t last_run = abs(t - oswatch_last_loop_time);
 
 #ifdef DEBUG_THEO
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(WiFi.RSSI()), last_run);
@@ -569,7 +569,7 @@ bool NewerVersion(char* version_str)
   return (version > VERSION);
 }
 
-char* GetPowerDevice(char* dest, uint8_t idx, size_t size, uint8_t option)
+char* GetPowerDevice(char* dest, uint32_t idx, size_t size, uint32_t option)
 {
   char sidx[8];
 
@@ -581,7 +581,7 @@ char* GetPowerDevice(char* dest, uint8_t idx, size_t size, uint8_t option)
   return dest;
 }
 
-char* GetPowerDevice(char* dest, uint8_t idx, size_t size)
+char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
 {
   return GetPowerDevice(dest, idx, size, 0);
 }
@@ -819,7 +819,7 @@ void ShowSource(uint32_t source)
   }
 }
 
-void WebHexCode(uint8_t i, const char* code)
+void WebHexCode(uint32_t i, const char* code)
 {
   char scolor[10];
 
@@ -849,7 +849,7 @@ void WebHexCode(uint8_t i, const char* code)
   Settings.web_color[i][2] = color & 0xFF;          // Blue
 }
 
-uint32_t WebColor(uint8_t i)
+uint32_t WebColor(uint32_t i)
 {
   uint32_t tcolor = (Settings.web_color[i][0] << 16) | (Settings.web_color[i][1] << 8) | Settings.web_color[i][2];
   return tcolor;
@@ -907,7 +907,7 @@ uint8_t ModuleNr()
   return (USER_MODULE == Settings.module) ? 0 : Settings.module +1;
 }
 
-bool ValidTemplateModule(uint8_t index)
+bool ValidTemplateModule(uint32_t index)
 {
   for (uint32_t i = 0; i < sizeof(kModuleNiceList); i++) {
     if (index == pgm_read_byte(kModuleNiceList + i)) {
@@ -917,13 +917,13 @@ bool ValidTemplateModule(uint8_t index)
   return false;
 }
 
-bool ValidModule(uint8_t index)
+bool ValidModule(uint32_t index)
 {
   if (index == USER_MODULE) { return true; }
   return ValidTemplateModule(index);
 }
 
-String AnyModuleName(uint8_t index)
+String AnyModuleName(uint32_t index)
 {
   if (USER_MODULE == index) {
     return String(Settings.user_template.name);
@@ -952,7 +952,7 @@ void ModuleGpios(myio *gp)
 
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)&src, sizeof(mycfgio));
 
-  uint8_t j = 0;
+  uint32_t j = 0;
   for (uint32_t i = 0; i < sizeof(mycfgio); i++) {
     if (6 == i) { j = 9; }
     if (8 == i) { j = 12; }
@@ -977,7 +977,7 @@ gpio_flag ModuleFlag()
   return flag;
 }
 
-void ModuleDefault(uint8_t module)
+void ModuleDefault(uint32_t module)
 {
   if (USER_MODULE == module) { module = WEMOS; }  // Generic
   Settings.user_template_base = module;
@@ -989,7 +989,7 @@ void SetModuleType()
   my_module_type = (USER_MODULE == Settings.module) ? Settings.user_template_base : Settings.module;
 }
 
-uint8_t ValidPin(uint8_t pin, uint8_t gpio)
+uint8_t ValidPin(uint32_t pin, uint32_t gpio)
 {
   uint8_t result = gpio;
 
@@ -1002,7 +1002,7 @@ uint8_t ValidPin(uint8_t pin, uint8_t gpio)
   return result;
 }
 
-bool ValidGPIO(uint8_t pin, uint8_t gpio)
+bool ValidGPIO(uint32_t pin, uint32_t gpio)
 {
   return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
 }
@@ -1010,11 +1010,11 @@ bool ValidGPIO(uint8_t pin, uint8_t gpio)
 bool ValidAdc()
 {
   gpio_flag flag = ModuleFlag();
-  uint8_t template_adc0 = flag.data &15;
+  uint32_t template_adc0 = flag.data &15;
   return (ADC0_USER == template_adc0);
 }
 
-bool GetUsedInModule(uint8_t val, uint8_t *arr)
+bool GetUsedInModule(uint32_t val, uint8_t *arr)
 {
   int offset = 0;
 
@@ -1399,14 +1399,14 @@ bool I2cDevice(uint8_t addr)
  *
 \*********************************************************************************************/
 
-void SetSeriallog(uint8_t loglevel)
+void SetSeriallog(uint32_t loglevel)
 {
   Settings.seriallog_level = loglevel;
   seriallog_level = loglevel;
   seriallog_timer = 0;
 }
 
-void SetSyslog(uint8_t loglevel)
+void SetSyslog(uint32_t loglevel)
 {
   Settings.syslog_level = loglevel;
   syslog_level = loglevel;
@@ -1464,7 +1464,7 @@ void Syslog(void)
   }
 }
 
-void AddLog(uint8_t loglevel)
+void AddLog(uint32_t loglevel)
 {
   char mxtime[10];  // "13:45:21 "
 
@@ -1496,13 +1496,13 @@ void AddLog(uint8_t loglevel)
   if (!global_state.wifi_down && (loglevel <= syslog_level)) { Syslog(); }
 }
 
-void AddLog_P(uint8_t loglevel, const char *formatP)
+void AddLog_P(uint32_t loglevel, const char *formatP)
 {
   snprintf_P(log_data, sizeof(log_data), formatP);
   AddLog(loglevel);
 }
 
-void AddLog_P(uint8_t loglevel, const char *formatP, const char *formatP2)
+void AddLog_P(uint32_t loglevel, const char *formatP, const char *formatP2)
 {
   char message[100];
 
@@ -1512,7 +1512,7 @@ void AddLog_P(uint8_t loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
-void AddLog_P2(uint8_t loglevel, PGM_P formatP, ...)
+void AddLog_P2(uint32_t loglevel, PGM_P formatP, ...)
 {
   va_list arg;
   va_start(arg, formatP);
@@ -1522,7 +1522,7 @@ void AddLog_P2(uint8_t loglevel, PGM_P formatP, ...)
   AddLog(loglevel);
 }
 
-void AddLogBuffer(uint8_t loglevel, uint8_t *buffer, int count)
+void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
 {
   snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
   for (uint32_t i = 0; i < count; i++) {
@@ -1531,12 +1531,12 @@ void AddLogBuffer(uint8_t loglevel, uint8_t *buffer, int count)
   AddLog(loglevel);
 }
 
-void AddLogSerial(uint8_t loglevel)
+void AddLogSerial(uint32_t loglevel)
 {
   AddLogBuffer(loglevel, (uint8_t*)serial_in_buffer, serial_in_byte_counter);
 }
 
-void AddLogMissed(char *sensor, uint8_t misses)
+void AddLogMissed(char *sensor, uint32_t misses)
 {
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
 }
