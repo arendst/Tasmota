@@ -452,23 +452,23 @@ char IndexSeparator()
   }
 }
 
-void SetShortcut(char* str, uint8_t action)
+void SetShortcutDefault(void)
 {
-  if ('\0' != str[0]) {     // There must be at least one character in the buffer
-    str[0] = '0' + action;  // SC_CLEAR, SC_DEFAULT, SC_USER
-    str[1] = '\0';
+  if ('\0' != XdrvMailbox.data[0]) {     // There must be at least one character in the buffer
+    XdrvMailbox.data[0] = '0' + SC_DEFAULT;  // SC_CLEAR, SC_DEFAULT, SC_USER
+    XdrvMailbox.data[1] = '\0';
   }
 }
 
-uint8_t Shortcut(const char* str)
+uint8_t Shortcut()
 {
   uint8_t result = 10;
 
-  if ('\0' == str[1]) {    // Only allow single character input for shortcut
-    if (('"' == str[0]) || ('0' == str[0])) {
+  if ('\0' == XdrvMailbox.data[1]) {    // Only allow single character input for shortcut
+    if (('"' == XdrvMailbox.data[0]) || ('0' == XdrvMailbox.data[0])) {
       result = SC_CLEAR;
     } else {
-      result = atoi(str);  // 1 = SC_DEFAULT, 2 = SC_USER
+      result = atoi(XdrvMailbox.data);  // 1 = SC_DEFAULT, 2 = SC_USER
       if (0 == result) {
         result = 10;
       }
@@ -500,29 +500,6 @@ bool ParseIp(uint32_t* addr, const char* str)
     str++;                                   // Point to next character after separator
   }
   return (3 == i);
-}
-
-void MakeValidMqtt(uint32_t option, char* str)
-{
-// option 0 = replace by underscore
-// option 1 = delete character
-  uint32_t i = 0;
-  while (str[i] > 0) {
-//        if ((str[i] == '/') || (str[i] == '+') || (str[i] == '#') || (str[i] == ' ')) {
-    if ((str[i] == '+') || (str[i] == '#') || (str[i] == ' ')) {
-      if (option) {
-        uint32_t j = i;
-        while (str[j] > 0) {
-          str[j] = str[j +1];
-          j++;
-        }
-        i--;
-      } else {
-        str[i] = '_';
-      }
-    }
-    i++;
-  }
 }
 
 // Function to parse & check if version_str is newer than our currently installed version.

@@ -142,7 +142,8 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
 
     backlog_delay = millis() + (100 * MIN_BACKLOG_DELAY);
 
-    char command [CMDSZ];
+    char command[CMDSZ];
+    XdrvMailbox.command = command;
     XdrvMailbox.index = index;
     XdrvMailbox.data_len = data_len;
     XdrvMailbox.payload = payload;
@@ -150,9 +151,8 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
     XdrvMailbox.usridx = user_index;
     XdrvMailbox.topic = type;
     XdrvMailbox.data = dataBuf;
-    XdrvMailbox.command = command;
 
-    int command_code = GetCommandCode(command, sizeof(command), type, kTasmotaCommands);
+    int command_code = GetCommandCode(XdrvMailbox.command, CMDSZ, type, kTasmotaCommands);
     if (command_code >= 0) {
       TasmotaCommand[command_code]();
     } else {
@@ -398,7 +398,7 @@ void CmndUpgrade(void)
 void CmndOtaUrl(void)
 {
   if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.ota_url))) {
-    strlcpy(Settings.ota_url, (SC_DEFAULT == Shortcut(XdrvMailbox.data)) ? OTA_URL : XdrvMailbox.data, sizeof(Settings.ota_url));
+    strlcpy(Settings.ota_url, (SC_DEFAULT == Shortcut()) ? OTA_URL : XdrvMailbox.data, sizeof(Settings.ota_url));
   }
   Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.ota_url);
 }
@@ -946,7 +946,7 @@ void CmndSyslog(void)
 void CmndLoghost(void)
 {
   if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.syslog_host))) {
-    strlcpy(Settings.syslog_host, (SC_DEFAULT == Shortcut(XdrvMailbox.data)) ? SYS_LOG_HOST : XdrvMailbox.data, sizeof(Settings.syslog_host));
+    strlcpy(Settings.syslog_host, (SC_DEFAULT == Shortcut()) ? SYS_LOG_HOST : XdrvMailbox.data, sizeof(Settings.syslog_host));
   }
   Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.syslog_host);
 }
@@ -978,7 +978,7 @@ void CmndNtpServer(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.ntp_server[0]))) {
       strlcpy(Settings.ntp_server[XdrvMailbox.index -1],
-              (SC_CLEAR == Shortcut(XdrvMailbox.data)) ? "" : (SC_DEFAULT == Shortcut(XdrvMailbox.data)) ? (1==XdrvMailbox.index)?NTP_SERVER1:(2==XdrvMailbox.index)?NTP_SERVER2:NTP_SERVER3 : XdrvMailbox.data,
+              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index)?NTP_SERVER1:(2==XdrvMailbox.index)?NTP_SERVER2:NTP_SERVER3 : XdrvMailbox.data,
               sizeof(Settings.ntp_server[0]));
       for (uint32_t i = 0; i < strlen(Settings.ntp_server[XdrvMailbox.index -1]); i++) {
         if (Settings.ntp_server[XdrvMailbox.index -1][i] == ',') Settings.ntp_server[XdrvMailbox.index -1][i] = '.';
@@ -1011,7 +1011,7 @@ void CmndSsid(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.sta_ssid[0]))) {
       strlcpy(Settings.sta_ssid[XdrvMailbox.index -1],
-              (SC_CLEAR == Shortcut(XdrvMailbox.data)) ? "" : (SC_DEFAULT == Shortcut(XdrvMailbox.data)) ? (1 == XdrvMailbox.index) ? STA_SSID1 : STA_SSID2 : XdrvMailbox.data,
+              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_SSID1 : STA_SSID2 : XdrvMailbox.data,
               sizeof(Settings.sta_ssid[0]));
       Settings.sta_active = XdrvMailbox.index -1;
       restart_flag = 2;
@@ -1023,9 +1023,9 @@ void CmndSsid(void)
 void CmndPassword(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
-    if ((XdrvMailbox.data_len > 4 || SC_CLEAR == Shortcut(XdrvMailbox.data) || SC_DEFAULT == Shortcut(XdrvMailbox.data)) && (XdrvMailbox.data_len < sizeof(Settings.sta_pwd[0]))) {
+    if ((XdrvMailbox.data_len > 4 || SC_CLEAR == Shortcut() || SC_DEFAULT == Shortcut()) && (XdrvMailbox.data_len < sizeof(Settings.sta_pwd[0]))) {
       strlcpy(Settings.sta_pwd[XdrvMailbox.index -1],
-              (SC_CLEAR == Shortcut(XdrvMailbox.data)) ? "" : (SC_DEFAULT == Shortcut(XdrvMailbox.data)) ? (1 == XdrvMailbox.index) ? STA_PASS1 : STA_PASS2 : XdrvMailbox.data,
+              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_PASS1 : STA_PASS2 : XdrvMailbox.data,
               sizeof(Settings.sta_pwd[0]));
       Settings.sta_active = XdrvMailbox.index -1;
       restart_flag = 2;
@@ -1039,7 +1039,7 @@ void CmndPassword(void)
 void CmndHostname(void)
 {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.hostname))) {
-    strlcpy(Settings.hostname, (SC_DEFAULT == Shortcut(XdrvMailbox.data)) ? WIFI_HOSTNAME : XdrvMailbox.data, sizeof(Settings.hostname));
+    strlcpy(Settings.hostname, (SC_DEFAULT == Shortcut()) ? WIFI_HOSTNAME : XdrvMailbox.data, sizeof(Settings.hostname));
     if (strstr(Settings.hostname, "%") != nullptr) {
       strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
     }
@@ -1076,7 +1076,7 @@ void CmndFriendlyname(void)
       } else {
         snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME "%d"), XdrvMailbox.index);
       }
-      strlcpy(Settings.friendlyname[XdrvMailbox.index -1], (SC_DEFAULT == Shortcut(XdrvMailbox.data)) ? stemp1 : XdrvMailbox.data, sizeof(Settings.friendlyname[XdrvMailbox.index -1]));
+      strlcpy(Settings.friendlyname[XdrvMailbox.index -1], (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data, sizeof(Settings.friendlyname[XdrvMailbox.index -1]));
     }
     Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.friendlyname[XdrvMailbox.index -1]);
   }
