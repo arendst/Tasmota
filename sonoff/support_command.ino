@@ -152,7 +152,7 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
     XdrvMailbox.topic = type;
     XdrvMailbox.data = dataBuf;
 
-    int command_code = GetCommandCode(XdrvMailbox.command, CMDSZ, type, kTasmotaCommands);
+    int command_code = GetCommand(kTasmotaCommands);
     if (command_code >= 0) {
       TasmotaCommand[command_code]();
     } else {

@@ -2425,8 +2425,6 @@ int WebSend(char *buffer)
   return status;
 }
 
-/*********************************************************************************************/
-
 bool JsonWebColor(const char* dataBuf)
 {
   // Default (light)
@@ -2455,93 +2453,113 @@ bool JsonWebColor(const char* dataBuf)
   return true;
 }
 
-enum WebCommands { CMND_WEBSERVER, CMND_WEBPASSWORD, CMND_WEBLOG, CMND_WEBREFRESH, CMND_WEBSEND, CMND_WEBCOLOR, CMND_EMULATION };
-const char kWebCommands[] PROGMEM = D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|" D_CMND_EMULATION ;
 const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND ;
 
-bool WebCommand(void)
-{
-  char command[CMDSZ];
-  bool serviced = true;
-
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kWebCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
-  }
-  if (CMND_WEBSERVER == command_code) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) { Settings.webserver = XdrvMailbox.payload; }
-    if (Settings.webserver) {
-      Response_P(PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
-        (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
-    } else {
-      Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(0));
-    }
-  }
-  else if (CMND_WEBPASSWORD == command_code) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.web_password))) {
-      strlcpy(Settings.web_password, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
-      Response_P(S_JSON_COMMAND_SVALUE, command, Settings.web_password);
-    } else {
-      Response_P(S_JSON_COMMAND_ASTERISK, command);
-    }
-  }
-  else if (CMND_WEBLOG == command_code) {
-    if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) { Settings.weblog_level = XdrvMailbox.payload; }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.weblog_level);
-  }
-  else if (CMND_WEBREFRESH == command_code) {
-    if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload <= 10000)) { Settings.web_refresh = XdrvMailbox.payload; }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.web_refresh);
-  }
-  else if (CMND_WEBSEND == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      uint32_t result = WebSend(XdrvMailbox.data);
-      char stemp1[20];
-      Response_P(S_JSON_COMMAND_SVALUE, command, GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
-    }
-  }
-  else if (CMND_WEBCOLOR == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      if (strstr(XdrvMailbox.data, "{") == nullptr) {  // If no JSON it must be parameter
-        if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= COL_LAST)) {
-          WebHexCode(XdrvMailbox.index -1, XdrvMailbox.data);
-        }
-        else if (0 == XdrvMailbox.payload) {
-          SettingsDefaultWebColor();
-        }
-      }
-      else {
-        JsonWebColor(XdrvMailbox.data);
-      }
-    }
-    Response_P(PSTR("{\"" D_CMND_WEBCOLOR "\":["));
-    for (uint32_t i = 0; i < COL_LAST; i++) {
-      if (i) { ResponseAppend_P(PSTR(",")); }
-      ResponseAppend_P(PSTR("\"#%06x\""), WebColor(i));
-    }
-    ResponseAppend_P(PSTR("]}"));
-  }
+const char kWebCommands[] PROGMEM =
 #ifdef USE_EMULATION
-  else if (CMND_EMULATION == command_code) {
+  D_CMND_EMULATION "|"
+#endif
+  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR  ;
+
+void (* const WebCommand[])(void) PROGMEM = {
+#ifdef USE_EMULATION
+  &CmndEmulation,
+#endif
+  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor };
+
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+#ifdef USE_EMULATION
+void CmndEmulation(void)
+{
 #if defined(USE_EMULATION_WEMO) && defined(USE_EMULATION_HUE)
-    if ((XdrvMailbox.payload >= EMUL_NONE) && (XdrvMailbox.payload < EMUL_MAX)) {
+  if ((XdrvMailbox.payload >= EMUL_NONE) && (XdrvMailbox.payload < EMUL_MAX)) {
 #else
 #ifndef USE_EMULATION_WEMO
-    if ((EMUL_NONE == XdrvMailbox.payload) || (EMUL_HUE == XdrvMailbox.payload)) {
+  if ((EMUL_NONE == XdrvMailbox.payload) || (EMUL_HUE == XdrvMailbox.payload)) {
 #endif
 #ifndef USE_EMULATION_HUE
-    if ((EMUL_NONE == XdrvMailbox.payload) || (EMUL_WEMO == XdrvMailbox.payload)) {
+  if ((EMUL_NONE == XdrvMailbox.payload) || (EMUL_WEMO == XdrvMailbox.payload)) {
 #endif
 #endif
-      Settings.flag2.emulation = XdrvMailbox.payload;
-      restart_flag = 2;
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.flag2.emulation);
+    Settings.flag2.emulation = XdrvMailbox.payload;
+    restart_flag = 2;
   }
+  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.emulation);
+}
 #endif  // USE_EMULATION
-  else serviced = false;  // Unknown command
 
-  return serviced;
+void CmndWebServer(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
+    Settings.webserver = XdrvMailbox.payload;
+  }
+  if (Settings.webserver) {
+    Response_P(PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
+      (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
+  } else {
+    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(0));
+  }
+}
+
+void CmndWebPassword(void)
+{
+  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.web_password))) {
+    strlcpy(Settings.web_password, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
+    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.web_password);
+  } else {
+    Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
+  }
+}
+
+void CmndWeblog(void)
+{
+  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) {
+    Settings.weblog_level = XdrvMailbox.payload;
+  }
+  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.weblog_level);
+}
+
+void CmndWebRefresh(void)
+{
+  if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload <= 10000)) {
+    Settings.web_refresh = XdrvMailbox.payload;
+  }
+  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.web_refresh);
+}
+
+void CmndWebSend(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    uint32_t result = WebSend(XdrvMailbox.data);
+    char stemp1[20];
+    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
+  }
+}
+
+void CmndWebColor(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    if (strstr(XdrvMailbox.data, "{") == nullptr) {  // If no JSON it must be parameter
+      if ((XdrvMailbox.data_len > 3) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= COL_LAST)) {
+        WebHexCode(XdrvMailbox.index -1, XdrvMailbox.data);
+      }
+      else if (0 == XdrvMailbox.payload) {
+        SettingsDefaultWebColor();
+      }
+    }
+    else {
+      JsonWebColor(XdrvMailbox.data);
+    }
+  }
+  Response_P(PSTR("{\"" D_CMND_WEBCOLOR "\":["));
+  for (uint32_t i = 0; i < COL_LAST; i++) {
+    if (i) { ResponseAppend_P(PSTR(",")); }
+    ResponseAppend_P(PSTR("\"#%06x\""), WebColor(i));
+  }
+  ResponseAppend_P(PSTR("]}"));
 }
 
 /*********************************************************************************************\
@@ -2560,7 +2578,11 @@ bool Xdrv01(uint8_t function)
 #endif  // USE_EMULATION
       break;
     case FUNC_COMMAND:
-      result = WebCommand();
+      int command_code = GetCommand(kWebCommands);
+      if (command_code >= 0) {
+        WebCommand[command_code]();
+        result = true;
+      }
       break;
   }
   return result;

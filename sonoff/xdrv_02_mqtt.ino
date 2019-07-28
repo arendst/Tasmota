@@ -1058,7 +1058,7 @@ bool Xdrv02(uint8_t function)
         break;
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:
-        int command_code = GetCommandCode(XdrvMailbox.command, CMDSZ, XdrvMailbox.topic, kMqttCommands);
+        int command_code = GetCommand(kMqttCommands);
         if (command_code >= 0) {
           MqttCommand[command_code]();
           result = true;

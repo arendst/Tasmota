@@ -715,6 +715,11 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
+int GetCommand(const char* haystack)
+{
+  return GetCommandCode(XdrvMailbox.command, CMDSZ, XdrvMailbox.topic, haystack);
+}
+
 int GetStateNumber(char *state_text)
 {
   char command[CMDSZ];
