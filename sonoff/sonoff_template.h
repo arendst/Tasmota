@@ -187,10 +187,6 @@ enum UserSelectablePins {
   GPIO_BUZZER,         // Buzzer
   GPIO_BUZZER_INV,     // Inverted buzzer
   GPIO_OLED_RESET,     // OLED Display Reset
-  GPIO_MAX318x5CS,     // MAX318x5 SPI CS
-  GPIO_MAX318x5CLK,    // MAX318x5 SPI CLK
-  GPIO_MAX318x5MISO,   // MAX318x5 SPI MISO
-  GPIO_MAX318x5MOSI,   // MAX318x5 SPI MOSI
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -626,12 +622,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855CS,     // MAX31855 Serial interface
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
-#endif
-#ifdef USE_MAX318x5
-  GPIO_MAX318x5CS,     // MAX318x5 SPI CS
-  GPIO_MAX318x5CLK,    // MAX318x5 SPI CLK
-  GPIO_MAX318x5MISO,   // MAX318x5 SPI MISO
-  GPIO_MAX318x5MOSI,   // MAX318x5 SPI MOSI
 #endif
 #ifdef USE_LIGHT
   GPIO_DI,             // my92x1 PWM input

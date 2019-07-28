@@ -44,7 +44,7 @@
 \*********************************************************************************************/
 
 // -- Master parameter control --------------------
-#define CFG_HOLDER             4618              // [Reset 1] Change this value (max 32000) to load SECTION1 configuration parameters to flash
+#define CFG_HOLDER             4617              // [Reset 1] Change this value (max 32000) to load SECTION1 configuration parameters to flash
 
 // -- Project -------------------------------------
 #define PROJECT                "sonoff"          // PROJECT is used as the default topic delimiter
@@ -425,12 +425,9 @@
 // -- Low level interface devices -----------------
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)
 
-#define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
-#define USE_MAX318x5                             // Add support for MAX31855/31865 K-Type thermocouple / RTD sensors using softSPI
+//#define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
 
-#ifdef USE_MAX318x5
-#define USE_MAX31855                             // Until we move code to its own sourcefile we use 31855 original
-#endif
+#define USE_MAX31865                             // Add support for MAX31865 RTD sensors using softSPI
 
 // -- IR Remote features --------------------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k3 code, 0k3 mem, 48 iram)
