@@ -35,7 +35,6 @@ no math hierarchy  (costs ram and execution time, better group with brackets, an
 (will probably make math hierarchy an ifdefed option)
 keywords if then else endif, or, and are better readable for beginners (others may use {})
 
-
 \*********************************************************************************************/
 
 #define XDRV_10             10
@@ -81,7 +80,7 @@ enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
 
 #ifdef USE_TOUCH_BUTTONS
 #include <renderer.h>
-extern Adafruit_GFX_Button *buttons[MAXBUTTONS];
+extern VButton *buttons[MAXBUTTONS];
 #endif
 
 typedef union {
@@ -316,7 +315,12 @@ char *script;
                 op++;
                 if (*op!='"') {
                     float fv;
-                    fv=CharToFloat(op);
+                    if (*op=='0' && *(op+1)=='x') {
+                      op+=2;
+                      fv=strtol(op,&op,16);
+                    } else {
+                      fv=CharToFloat(op);
+                    }
                     fvalues[nvars]=fv;
                     vtypes[vars].bits.is_string=0;
                     if (!vtypes[vars].bits.is_filter) vtypes[vars].index=nvars;
@@ -542,6 +546,21 @@ char *script;
 
 }
 
+#ifdef USE_LIGHT
+#ifdef USE_WS2812
+void ws2812_set_array(float *array ,uint8_t len) {
+
+  Ws2812ForceSuspend();
+  for (uint8_t cnt=0;cnt<len;cnt++) {
+    if (cnt>Settings.light_pixels) break;
+    uint32_t col=array[cnt];
+    Ws2812SetColor(cnt+1,col>>16,col>>8,col,0);
+  }
+  Ws2812ForceUpdate();
+}
+#endif
+#endif
+
 #define NUM_RES 0xfe
 #define STR_RES 0xfd
 #define VAR_NV 0xff
@@ -577,6 +596,22 @@ float median_array(float *array,uint8_t len) {
     }
     return array[ind[len/2]];
 }
+
+
+float *Get_MFAddr(uint8_t index,uint8_t *len) {
+  *len=0;
+  uint8_t *mp=(uint8_t*)glob_script_mem.mfilt;
+  for (uint8_t count=0; count<MAXFILT; count++) {
+    struct M_FILT *mflp=(struct M_FILT*)mp;
+    if (count==index) {
+        *len=mflp->numvals&0x7f;
+        return mflp->rbuff;
+    }
+    mp+=sizeof(struct M_FILT)+((mflp->numvals&0x7f)-1)*sizeof(float);
+  }
+  return 0;
+}
+
 
 float Get_MFVal(uint8_t index,uint8_t bind) {
   uint8_t *mp=(uint8_t*)glob_script_mem.mfilt;
@@ -688,7 +723,14 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
 
     if (isdigit(*lp) || (*lp=='-' && isdigit(*(lp+1))) || *lp=='.') {
       // isnumber
-        if (fp) *fp=CharToFloat(lp);
+        if (fp) {
+          if (*lp=='0' && *(lp+1)=='x') {
+            lp+=2;
+            *fp=strtol(lp,0,16);
+          } else {
+            *fp=CharToFloat(lp);
+          }
+        }
         if (*lp=='-') lp++;
         while (isdigit(*lp) || *lp=='.') {
           if (*lp==0 || *lp==SCRIPT_EOL) break;
@@ -778,10 +820,11 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
                     *vtype=NTYPE|index;
                     if (vtp[count].bits.is_filter) {
                       if (ja) {
-                        GetNumericResult(ja,OPER_EQU,&fvar,0);
+                        lp+=olen+1;
+                        lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
                         last_findex=fvar;
                         fvar=Get_MFVal(index,fvar);
-                        len++;
+                        len=1;
                       } else {
                         fvar=Get_MFilter(index);
                       }
@@ -2052,7 +2095,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   lp=GetNumericResult(lp,OPER_EQU,&cv_max,0);
                   SCRIPT_SKIP_SPACES
                   lp=GetNumericResult(lp,OPER_EQU,&cv_inc,0);
-                  SCRIPT_SKIP_EOL
+                  //SCRIPT_SKIP_EOL
                   cv_ptr=lp;
                   floop=1;
               } else {
@@ -2169,6 +2212,28 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
               Scripter_save_pvars();
               goto next_line;
             }
+#ifdef USE_LIGHT
+#ifdef USE_WS2812
+            else if (!strncmp(lp,"ws2812(",7)) {
+              lp+=7;
+              lp=isvar(lp,&vtype,&ind,0,0,0);
+              if (vtype!=VAR_NV) {
+                // found variable as result
+                uint8_t index=glob_script_mem.type[ind.index].index;
+                if ((vtype&STYPE)==0) {
+                    // numeric result
+                  if (glob_script_mem.type[index].bits.is_filter) {
+                    uint8_t len=0;
+                    float *fa=Get_MFAddr(index,&len);
+                    //Serial.printf(">> 2 %d\n",(uint32_t)*fa);
+                    if (fa && len) ws2812_set_array(fa,len);
+                  }
+                }
+              }
+              goto next_line;
+            }
+#endif
+#endif
 
             else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2)) {
                 // execute cmd

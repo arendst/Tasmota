@@ -21,6 +21,7 @@ e.g. temp=hum\*(100/37.5)+temp-(timer\*hum%10)
 no spaces allowed between math operations
 Comparison operators **==,!=,\>,\>=,<,<=**  
 **and** , **or** support  
+hexadecimal numbers are supported with prefix 0x
 
 strings support **+** and **+=** operators  
 string comparison **==,!=**  
@@ -179,6 +180,7 @@ the condition may not be enclosed in brackets
 **delay(x)** pauses x milliseconds (should be as short as possible)  
 **spin(x m)** set gpio pin x (0-16) to value m (0,1) only the last bit is used, so even values set the pin to zero and uneven values set the pin to 1  
 **spinm(x m)** set pin mode gpio pin x (0-16) to mode m (input=0,output=1,input with pullup=2)  
+**ws2812(array)** copies an array (defined with m:name) to the WS2812 LED chain  the array should be defined as long as the number of pixels. the color is coded as 24 bit RGB    
 
 >**#name** names a subroutine, subroutines are called with **=#name**  
 **#name(param)** names a subroutines with a parameter is called with **=#name(param)**  
