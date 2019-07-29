@@ -903,18 +903,7 @@ bool IrSendCommand(void)
 #endif
 #ifdef USE_IR_SEND_PIONEER
                 case IR_PIONEER:
-                  for (int32_t r=repeat; r>=0; r--) {
-                    if (bits > 32) {
-                      irsend->sendGeneric(8500,4250,540,1600,540,540,540,25000,85000,
-                                          (data>>32),bits-32,40,true,0,33);
-                    }
-                    irsend->sendGeneric(8500,4250,540,1600,540,540,540,25000,85000,
-                                        data, bits > 32 ? 32 : bits,
-                                        40,true,0,33);
-                  }
-                  break;
-                  // waiting for timing patch to be integrated in
-                  //irsend->sendPioneer(data, bits, repeat); break;
+                  irsend->sendPioneer(data, bits, repeat); break;
 #endif  // USE_IR_SEND_PIONEER
                 default:
                   irsend_active = false;
