@@ -1,8 +1,7 @@
 /*
   xsns_39_MAX31865.ino - MAX31865 thermocouple sensor support for Sonoff-Tasmota
 
-  Copyright (C) 2019 Alberto Lopez
-  Based on original code for MAx31855 written by Markus Past
+  Copyright (C) 2019 Alberto Lopez Siemens
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -18,15 +17,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#if defined(USE_MAX31855) || defined(USE_MAX31865)
-
 #ifdef USE_MAX31865
 #include "Adafruit_MAX31865.h"
 
 #define XSNS_47              47
 
-#define RTD0                 104.0   // Temperature at 0 degrees Celcius
-#define RREF                 430.0
+#if MAX31865_PTD_WIRES == 4
+  #define PTD_WIRES MAX31865_4WIRE
+#elif MAX31865_PTD_WIRES == 3
+  #define PTD_WIRES MAX31865_3WIRE
+#else
+  #define PTD_WIRES MAX31865_2WIRE
+#endif
 
 int8_t init_status = 0;
 
@@ -49,7 +51,7 @@ void MAX31865_Init(void){
     pin[GPIO_SSPI_SCLK]
   );
 
-  if(max31865.begin(MAX31865_2WIRE))
+  if(max31865.begin(PTD_WIRES))
     init_status = 1;
   else
     init_status = -1;
@@ -61,7 +63,7 @@ void MAX31865_Init(void){
 */
 void MAX31865_GetResult(void){
     MAX31865_Result.PtdResistance = max31865.readRTD();
-    MAX31865_Result.PtdTemp = max31865.rtd_to_temperature(MAX31865_Result.PtdResistance, RTD0, RREF);
+    MAX31865_Result.PtdTemp = max31865.rtd_to_temperature(MAX31865_Result.PtdResistance, MAX31865_PTD_RES, MAX31865_REF_RES);
 }
 
 void MAX31865_Show(bool Json){

@@ -429,6 +429,12 @@
 
 #define USE_MAX31865                             // Add support for MAX31865 RTD sensors using softSPI
 
+#ifdef USE_MAX31865
+  #define MAX31865_PTD_WIRES  2                 // PTDs come in several flavors. Pick yours
+  #define MAX31865_PTD_RES    100               // Nominal PTD resistance at 0°C (100Ω for a PT100, 1000Ω for a PT1000, YMMV!)
+  #define MAX31865_REF_RES    430               // Reference resistor (Usually 430Ω for a PT100, 4300Ω for a PT1000)
+#endif
+
 // -- IR Remote features --------------------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k3 code, 0k3 mem, 48 iram)
 //  #define USE_IR_SEND_AIWA                       // Support IRsend Aiwa protocol
