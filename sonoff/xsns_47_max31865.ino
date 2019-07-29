@@ -36,7 +36,8 @@ Adafruit_MAX31865 max31865;
 
 struct MAX31865_Result_Struct {
     uint8_t   ErrorCode;
-    uint16_t  PtdResistance;
+    uint16_t  Rtd;
+    float     PtdResistance;
     float     PtdTemp;
 } MAX31865_Result;
 
@@ -62,20 +63,26 @@ void MAX31865_Init(void){
 *   Acquires the raw data via SPI, checks for MAX31865 errors and fills result structure
 */
 void MAX31865_GetResult(void){
-    MAX31865_Result.PtdResistance = max31865.readRTD();
-    MAX31865_Result.PtdTemp = max31865.rtd_to_temperature(MAX31865_Result.PtdResistance, MAX31865_PTD_RES, MAX31865_REF_RES);
+    uint16_t rtd;
+
+    rtd = max31865.readRTD();
+    MAX31865_Result.Rtd = rtd;
+    MAX31865_Result.PtdResistance = max31865.rtd_to_resistance(rtd, MAX31865_REF_RES);
+    MAX31865_Result.PtdTemp = max31865.rtd_to_temperature(rtd, MAX31865_PTD_RES, MAX31865_REF_RES) + MAX31865_PTD_BIAS;
 }
 
 void MAX31865_Show(bool Json){
     char temperature[33];
     char resistance[33];
+    char srtd[33];
 
-    sprintf(resistance, "%ld", MAX31865_Result.PtdResistance);
+    sprintf(srtd, "%d", MAX31865_Result.Rtd);
+    dtostrfd(MAX31865_Result.PtdResistance, Settings.flag2.temperature_resolution, resistance);
     dtostrfd(MAX31865_Result.PtdTemp, Settings.flag2.temperature_resolution, temperature);
 
     if(Json){
-        ResponseAppend_P(PSTR(",\"MAX31865\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RESISTANCE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
-          temperature, resistance, MAX31865_Result.ErrorCode);
+        ResponseAppend_P(PSTR(",\"MAX31865\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RESISTANCE "\":%s,\"RTD\":%s,\"" D_JSON_ERROR "\":%d}"), \
+          temperature, resistance, srtd, MAX31865_Result.ErrorCode);
 #ifdef USE_DOMOTICZ
         if (0 == tele_period) {
           DomoticzSensor(DZ_TEMP, temperature);

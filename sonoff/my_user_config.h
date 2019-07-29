@@ -433,6 +433,7 @@
   #define MAX31865_PTD_WIRES  2                 // PTDs come in several flavors. Pick yours
   #define MAX31865_PTD_RES    100               // Nominal PTD resistance at 0°C (100Ω for a PT100, 1000Ω for a PT1000, YMMV!)
   #define MAX31865_REF_RES    430               // Reference resistor (Usually 430Ω for a PT100, 4300Ω for a PT1000)
+  #define MAX31865_PTD_BIAS   -6.6              // To calibrate your not-so-good PTD
 #endif
 
 // -- IR Remote features --------------------------
