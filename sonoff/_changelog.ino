@@ -1,6 +1,7 @@
 /*********************************************************************************************\
  * 6.6.0.3 20190725
  * Change filename of configuration backup from using FriendlyName1 to Hostname solving diacritic issues (#2422)
+ * Upgrade library IRRemoteEsp8266 to 2.6.4, now using sendPioneer()
  *
  * 6.6.0.2 20190714
  * Change commands Var and Mem to show all parameters when no index is given (#6107)
