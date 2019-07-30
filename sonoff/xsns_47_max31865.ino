@@ -18,6 +18,11 @@
 */
 
 #ifdef USE_MAX31865
+
+#ifndef USE_SPI
+#error "MAX31865 requires USE_SPI enabled"
+#endif
+
 #include "Adafruit_MAX31865.h"
 
 #define XSNS_47              47
@@ -74,15 +79,13 @@ void MAX31865_GetResult(void){
 void MAX31865_Show(bool Json){
     char temperature[33];
     char resistance[33];
-    char srtd[33];
 
-    sprintf(srtd, "%d", MAX31865_Result.Rtd);
     dtostrfd(MAX31865_Result.PtdResistance, Settings.flag2.temperature_resolution, resistance);
     dtostrfd(MAX31865_Result.PtdTemp, Settings.flag2.temperature_resolution, temperature);
 
     if(Json){
-        ResponseAppend_P(PSTR(",\"MAX31865\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RESISTANCE "\":%s,\"RTD\":%s,\"" D_JSON_ERROR "\":%d}"), \
-          temperature, resistance, srtd, MAX31865_Result.ErrorCode);
+        ResponseAppend_P(PSTR(",\"MAX31865\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RESISTANCE "\":%s,\"" D_JSON_ERROR "\":%d}"), \
+          temperature, resistance, MAX31865_Result.ErrorCode);
 #ifdef USE_DOMOTICZ
         if (0 == tele_period) {
           DomoticzSensor(DZ_TEMP, temperature);
