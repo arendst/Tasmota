@@ -90,7 +90,7 @@ void MAX31865_Show(bool Json){
 #endif  // USE_DOMOTICZ
 #ifdef USE_KNX
         if (0 == tele_period) {
-          KnxSensor(KNX_TEMPERATURE, MAX31865_Result.Max31865.PtdTemp);
+          KnxSensor(KNX_TEMPERATURE, MAX31865_Result.PtdTemp);
         }
 #endif  // USE_KNX
     } else {

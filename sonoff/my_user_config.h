@@ -384,7 +384,7 @@
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------
-#define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
+//#define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
 
 #ifdef USE_SPI
   #ifndef USE_DISPLAY
@@ -427,13 +427,12 @@
 
 //#define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
 
-#define USE_MAX31865                             // Add support for MAX31865 RTD sensors using softSPI
+//#define USE_MAX31865                             // Add support for MAX31865 RTD sensors using softSPI
 
 #ifdef USE_MAX31865
   #define MAX31865_PTD_WIRES  2                 // PTDs come in several flavors. Pick yours
   #define MAX31865_PTD_RES    100               // Nominal PTD resistance at 0°C (100Ω for a PT100, 1000Ω for a PT1000, YMMV!)
   #define MAX31865_REF_RES    430               // Reference resistor (Usually 430Ω for a PT100, 4300Ω for a PT1000)
-  #define MAX31865_PTD_BIAS   -6.6              // To calibrate your not-so-good PTD
 #endif
 
 // -- IR Remote features --------------------------
