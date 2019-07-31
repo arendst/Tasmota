@@ -4,6 +4,7 @@
  * Upgrade library IRRemoteEsp8266 to 2.6.4, now using sendPioneer()
  * Add support for MAX31865 Thermocouple sensor by Alberto Lopez Siemens
  * Add option 0 to Width1 (Marker), Width2 (Second), Width3 (Minute) and Width4 (Hour) disabling display (#6152)
+ * Add MqttCount metric to STATE (#6155)
  *
  * 6.6.0.2 20190714
  * Change commands Var and Mem to show all parameters when no index is given (#6107)
