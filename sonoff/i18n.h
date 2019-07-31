@@ -118,6 +118,7 @@
 #define D_JSON_PROGRAMSIZE "ProgramSize"
 #define D_JSON_REFERENCETEMPERATURE "ReferenceTemperature"
 #define D_JSON_RESET "Reset"
+#define D_JSON_RESISTANCE "Resistance"
 #define D_JSON_RESOLUTION "Resolution"
 #define D_JSON_RESTARTING "Restarting"
 #define D_JSON_RESTARTREASON "RestartReason"
