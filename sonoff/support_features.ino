@@ -25,8 +25,9 @@ void GetFeatures(void)
 {
   feature_drv1 = 0x00000000;   // xdrv_02_mqtt.ino, xdrv_04_light.ino, xdrv_06_snfbridge.ino
 
-//  feature_drv1 |= 0x00000001;
-
+#ifdef USE_ENERGY_MARGIN_DETECTION
+  feature_drv1 |= 0x00000001;  // xdrv_03_energy.ino
+#endif
 #ifdef USE_LIGHT
   feature_drv1 |= 0x00000002;  // sonoff.ino, xdrv_04_light.ino
 #endif
@@ -117,8 +118,8 @@ void GetFeatures(void)
 #ifdef USE_SMARTCONFIG
   feature_drv1 |= 0x40000000;  // support.ino
 #endif
-#if (MQTT_LIBRARY_TYPE == MQTT_ARDUINOMQTT)
-//  feature_drv1 |= 0x80000000;  // xdrv_02_mqtt.ino
+#ifdef USE_ENERGY_POWER_LIMIT
+  feature_drv1 |= 0x80000000;  // xdrv_03_energy.ino
 #endif
 
 /*********************************************************************************************/
@@ -188,8 +189,10 @@ void GetFeatures(void)
 #ifdef USE_EMULATION_WEMO
   feature_drv2 |= 0x00100000;  // xdrv_21_wemo.ino
 #endif
+#ifdef USE_SONOFF_IFAN
+  feature_drv2 |= 0x00200000;
+#endif
 
-//  feature_drv2 |= 0x00200000;
 //  feature_drv2 |= 0x00400000;
 
 #ifdef NO_EXTRA_4K_HEAP
@@ -400,10 +403,18 @@ void GetFeatures(void)
 #ifdef USE_ADE7953
   feature_sns2 |= 0x01000000;  // xnrg_07_ade7953.ino
 #endif
-//  feature_sns2 |= 0x02000000;
-//  feature_sns2 |= 0x04000000;
-//  feature_sns2 |= 0x08000000;
-//  feature_sns2 |= 0x10000000;
+#ifdef USE_SPS30
+  feature_sns2 |= 0x02000000;
+#endif
+#ifdef USE_VL53L0X
+  feature_sns2 |= 0x04000000;
+#endif
+#ifdef USE_MLX90614
+  feature_sns2 |= 0x08000000;
+#endif
+#ifdef USE_MAX31865
+  feature_sns2 |= 0x10000000;
+#endif
 //  feature_sns2 |= 0x20000000;
 //  feature_sns2 |= 0x40000000;
 //  feature_sns2 |= 0x80000000;
