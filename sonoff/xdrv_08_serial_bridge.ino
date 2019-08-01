@@ -28,8 +28,9 @@ const uint8_t SERIAL_BRIDGE_BUFFER_SIZE = 130;
 
 #include <TasmotaSerial.h>
 
-enum SerialBridgeCommands { CMND_SSERIALSEND, CMND_SBAUDRATE };
 const char kSerialBridgeCommands[] PROGMEM = D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE;
+
+void (* const SerialBridgeCommand[])(void) PROGMEM = { &CmndSSerialSend, &CmndSBaudrate };
 
 TasmotaSerial *SerialBridgeSerial = nullptr;
 
@@ -106,16 +107,9 @@ void SerialBridgeInit(void)
  * Commands
 \*********************************************************************************************/
 
-bool SerialBridgeCommand(void)
+void CmndSSerialSend(void)
 {
-  char command [CMDSZ];
-  bool serviced = true;
-
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSerialBridgeCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
-  }
-  else if ((CMND_SSERIALSEND == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
     serial_bridge_raw = (XdrvMailbox.index > 3);
     if (XdrvMailbox.data_len > 0) {
       if (1 == XdrvMailbox.index) {
@@ -144,19 +138,18 @@ bool SerialBridgeCommand(void)
           codes += 2;
         }
       }
-      Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+      Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_DONE);
     }
   }
-  else if (CMND_SBAUDRATE == command_code) {
-    if (XdrvMailbox.payload > 1200) {
-      Settings.sbaudrate /= 1200;  // Make it a valid baudrate
-      SerialBridgeSerial->begin(Settings.sbaudrate * 1200);  // Reinitialize serial port with new baud rate
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.sbaudrate * 1200);
-  }
-  else serviced = false;  // Unknown command
+}
 
-  return serviced;
+void CmndSBaudrate(void)
+{
+  if (XdrvMailbox.payload > 1200) {
+    Settings.sbaudrate /= 1200;  // Make it a valid baudrate
+    SerialBridgeSerial->begin(Settings.sbaudrate * 1200);  // Reinitialize serial port with new baud rate
+  }
+  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.sbaudrate * 1200);
 }
 
 /*********************************************************************************************\
@@ -176,7 +169,7 @@ bool Xdrv08(uint8_t function)
         SerialBridgeInit();
         break;
       case FUNC_COMMAND:
-        result = SerialBridgeCommand();
+        result = DecodeCommand(kSerialBridgeCommands, SerialBridgeCommand);
         break;
     }
   }
