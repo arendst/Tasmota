@@ -25,10 +25,13 @@
 
 const uint32_t SFB_TIME_AVOID_DUPLICATE = 2000;  // Milliseconds
 
-enum SonoffBridgeCommands {
-    CMND_RFSYNC,      CMND_RFLOW,      CMND_RFHIGH,      CMND_RFHOST,      CMND_RFCODE,      CMND_RFKEY,      CMND_RFRAW };
+enum SonoffBridgeCommands { CMND_RFSYNC, CMND_RFLOW, CMND_RFHIGH, CMND_RFHOST, CMND_RFCODE };
+
 const char kSonoffBridgeCommands[] PROGMEM =
   D_CMND_RFSYNC "|" D_CMND_RFLOW "|" D_CMND_RFHIGH "|" D_CMND_RFHOST "|" D_CMND_RFCODE "|" D_CMND_RFKEY "|" D_CMND_RFRAW;
+
+void (* const SonoffBridgeCommand[])(void) PROGMEM = {
+  &CmndRfSync, &CmndRfLow, &CmndRfHigh, &CmndRfHost, &CmndRfCode, &CmndRfKey, &CmndRfRaw };
 
 uint8_t sonoff_bridge_receive_flag = 0;
 uint8_t sonoff_bridge_receive_raw_flag = 0;
@@ -418,71 +421,91 @@ void SonoffBridgeLearn(uint8_t key)
  * Commands
 \*********************************************************************************************/
 
-bool SonoffBridgeCommand(void)
+void SonoffBridgeCmnd(uint32_t command_code)  // RfSync, RfLow, RfHigh, RfHost and RfCode
 {
-  char command [CMDSZ];
-  bool serviced = true;
+  char *p;
+  char stemp [10];
+  uint32_t code = 0;
+  uint8_t radix = 10;
 
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSonoffBridgeCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
+  uint32_t set_index = command_code *2;
+
+  if (XdrvMailbox.data[0] == '#') {
+    XdrvMailbox.data++;
+    XdrvMailbox.data_len--;
+    radix = 16;
   }
-  else if ((command_code >= CMND_RFSYNC) && (command_code <= CMND_RFCODE)) {  // RfSync, RfLow, RfHigh, RfHost and RfCode
-    char *p;
-    char stemp [10];
-    uint32_t code = 0;
-    uint8_t radix = 10;
 
-    uint8_t set_index = command_code *2;
-
-    if (XdrvMailbox.data[0] == '#') {
-      XdrvMailbox.data++;
-      XdrvMailbox.data_len--;
-      radix = 16;
-    }
-
-    if (XdrvMailbox.data_len) {
-      code = strtol(XdrvMailbox.data, &p, radix);
-      if (code) {
-        if (CMND_RFCODE == command_code) {
-          sonoff_bridge_last_send_code = code;
-          SonoffBridgeSendCode(code);
-        } else {
-          if (1 == XdrvMailbox.payload) {
-            code = pgm_read_byte(kDefaultRfCode + set_index) << 8 | pgm_read_byte(kDefaultRfCode + set_index +1);
-          }
-          uint8_t msb = code >> 8;
-          uint8_t lsb = code & 0xFF;
-          if ((code > 0) && (code < 0x7FFF) && (msb != 0x55) && (lsb != 0x55)) {  // Check for End of Text codes
-            Settings.rf_code[0][set_index] = msb;
-            Settings.rf_code[0][set_index +1] = lsb;
-          }
+  if (XdrvMailbox.data_len) {
+    code = strtol(XdrvMailbox.data, &p, radix);
+    if (code) {
+      if (CMND_RFCODE == command_code) {
+        sonoff_bridge_last_send_code = code;
+        SonoffBridgeSendCode(code);
+      } else {
+        if (1 == XdrvMailbox.payload) {
+          code = pgm_read_byte(kDefaultRfCode + set_index) << 8 | pgm_read_byte(kDefaultRfCode + set_index +1);
+        }
+        uint8_t msb = code >> 8;
+        uint8_t lsb = code & 0xFF;
+        if ((code > 0) && (code < 0x7FFF) && (msb != 0x55) && (lsb != 0x55)) {  // Check for End of Text codes
+          Settings.rf_code[0][set_index] = msb;
+          Settings.rf_code[0][set_index +1] = lsb;
         }
       }
     }
-    if (CMND_RFCODE == command_code) {
-      code = sonoff_bridge_last_send_code;
-    } else {
-      code = Settings.rf_code[0][set_index] << 8 | Settings.rf_code[0][set_index +1];
-    }
-    if (10 == radix) {
-      snprintf_P(stemp, sizeof(stemp), PSTR("%d"), code);
-    } else {
-      snprintf_P(stemp, sizeof(stemp), PSTR("\"#%X\""), code);
-    }
-    Response_P(S_JSON_COMMAND_XVALUE, command, stemp);
   }
-  else if ((CMND_RFKEY == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 16)) {
+  if (CMND_RFCODE == command_code) {
+    code = sonoff_bridge_last_send_code;
+  } else {
+    code = Settings.rf_code[0][set_index] << 8 | Settings.rf_code[0][set_index +1];
+  }
+  if (10 == radix) {
+    snprintf_P(stemp, sizeof(stemp), PSTR("%d"), code);
+  } else {
+    snprintf_P(stemp, sizeof(stemp), PSTR("\"#%X\""), code);
+  }
+  Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, stemp);
+}
+
+void CmndRfSync(void)
+{
+  SonoffBridgeCmnd(CMND_RFSYNC);
+}
+
+void CmndRfLow(void)
+{
+  SonoffBridgeCmnd(CMND_RFLOW);
+}
+
+void CmndRfHigh(void)
+{
+  SonoffBridgeCmnd(CMND_RFHIGH);
+}
+
+void CmndRfHost(void)
+{
+  SonoffBridgeCmnd(CMND_RFHOST);
+}
+
+void CmndRfCode(void)
+{
+  SonoffBridgeCmnd(CMND_RFCODE);
+}
+
+void CmndRfKey(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 16)) {
     unsigned long now = millis();
     if ((!sonoff_bridge_learn_active) || (now - sonoff_bridge_last_learn_time > 60100)) {
       sonoff_bridge_learn_active = 0;
       if (2 == XdrvMailbox.payload) {              // Learn RF data
         SonoffBridgeLearn(XdrvMailbox.index);
-        Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_START_LEARNING);
+        Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, D_JSON_START_LEARNING);
       }
       else if (3 == XdrvMailbox.payload) {         // Unlearn RF data
         Settings.rf_code[XdrvMailbox.index][0] = 0;  // Reset sync_time MSB
-        Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_SET_TO_DEFAULT);
+        Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, D_JSON_SET_TO_DEFAULT);
       }
       else if (4 == XdrvMailbox.payload) {         // Save RF data provided by RFSync, RfLow, RfHigh and last RfCode
         for (uint32_t i = 0; i < 6; i++) {
@@ -491,7 +514,7 @@ bool SonoffBridgeCommand(void)
         Settings.rf_code[XdrvMailbox.index][6] = (sonoff_bridge_last_send_code >> 16) & 0xff;
         Settings.rf_code[XdrvMailbox.index][7] = (sonoff_bridge_last_send_code >> 8) & 0xff;
         Settings.rf_code[XdrvMailbox.index][8] = sonoff_bridge_last_send_code & 0xff;
-        Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_SAVED);
+        Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, D_JSON_SAVED);
       } else if (5 == XdrvMailbox.payload) {      // Show default or learned RF data
         uint8_t key = XdrvMailbox.index;
         uint8_t index = (0 == Settings.rf_code[key][0]) ? 0 : key;  // Use default if sync_time MSB = 0
@@ -506,52 +529,52 @@ bool SonoffBridgeCommand(void)
           code |= Settings.rf_code[index][8];
         }
         Response_P(PSTR("{\"%s%d\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":\"%06X\"}}"),
-                   command, XdrvMailbox.index, sync_time, low_time, high_time, code);
+                   XdrvMailbox.command, XdrvMailbox.index, sync_time, low_time, high_time, code);
       } else {
         if ((1 == XdrvMailbox.payload) || (0 == Settings.rf_code[XdrvMailbox.index][0])) {  // Test sync_time MSB
           SonoffBridgeSend(0, XdrvMailbox.index);  // Send default RF data
-          Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_DEFAULT_SENT);
+          Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, D_JSON_DEFAULT_SENT);
         } else {
           SonoffBridgeSend(XdrvMailbox.index, 0);  // Send learned RF data
-          Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, D_JSON_LEARNED_SENT);
+          Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, D_JSON_LEARNED_SENT);
         }
       }
     } else {
-      Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, sonoff_bridge_learn_key, D_JSON_LEARNING_ACTIVE);
+      Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, sonoff_bridge_learn_key, D_JSON_LEARNING_ACTIVE);
     }
   }
-  else if (CMND_RFRAW == command_code) {
-    if (XdrvMailbox.data_len) {
-      if (XdrvMailbox.data_len < 6) {  // On, Off
-        switch (XdrvMailbox.payload) {
-        case 0:    // Receive Raw Off
-          SonoffBridgeSendCommand(0xA7);  // Stop reading RF signals enabling iTead default RF handling
-        case 1:    // Receive Raw On
-          sonoff_bridge_receive_raw_flag = XdrvMailbox.payload;
-          break;
-        case 166:  // 0xA6 - Start reading RF signals disabling iTead default RF handling
-        case 167:  // 0xA7 - Stop reading RF signals enabling iTead default RF handling
-        case 169:  // 0xA9 - Start learning predefined protocols
-        case 176:  // 0xB0 - Stop sniffing
-        case 177:  // 0xB1 - Start sniffing
-        case 255:  // 0xFF - Show firmware version
-          SonoffBridgeSendCommand(XdrvMailbox.payload);
-          sonoff_bridge_receive_raw_flag = 1;
-          break;
-        case 192:  // 0xC0 - Beep
-          char beep[] = "AAC000C055\0";
-          SerialSendRaw(beep);
-          break;
-        }
-      } else {
-        SerialSendRaw(RemoveSpace(XdrvMailbox.data));
-        sonoff_bridge_receive_raw_flag = 1;
-      }
-    }
-    Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(sonoff_bridge_receive_raw_flag));
-  } else serviced = false;  // Unknown command
+}
 
-  return serviced;
+void CmndRfRaw(void)
+{
+  if (XdrvMailbox.data_len) {
+    if (XdrvMailbox.data_len < 6) {  // On, Off
+      switch (XdrvMailbox.payload) {
+      case 0:    // Receive Raw Off
+        SonoffBridgeSendCommand(0xA7);  // Stop reading RF signals enabling iTead default RF handling
+      case 1:    // Receive Raw On
+        sonoff_bridge_receive_raw_flag = XdrvMailbox.payload;
+        break;
+      case 166:  // 0xA6 - Start reading RF signals disabling iTead default RF handling
+      case 167:  // 0xA7 - Stop reading RF signals enabling iTead default RF handling
+      case 169:  // 0xA9 - Start learning predefined protocols
+      case 176:  // 0xB0 - Stop sniffing
+      case 177:  // 0xB1 - Start sniffing
+      case 255:  // 0xFF - Show firmware version
+        SonoffBridgeSendCommand(XdrvMailbox.payload);
+        sonoff_bridge_receive_raw_flag = 1;
+        break;
+      case 192:  // 0xC0 - Beep
+        char beep[] = "AAC000C055\0";
+        SerialSendRaw(beep);
+        break;
+      }
+    } else {
+      SerialSendRaw(RemoveSpace(XdrvMailbox.data));
+      sonoff_bridge_receive_raw_flag = 1;
+    }
+  }
+  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(sonoff_bridge_receive_raw_flag));
 }
 
 /*********************************************************************************************/
@@ -572,14 +595,14 @@ bool Xdrv06(uint8_t function)
 
   if (SONOFF_BRIDGE == my_module_type) {
     switch (function) {
+      case FUNC_SERIAL:
+        result = SonoffBridgeSerialInput();
+        break;
       case FUNC_INIT:
         SonoffBridgeInit();
         break;
       case FUNC_COMMAND:
-        result = SonoffBridgeCommand();
-        break;
-      case FUNC_SERIAL:
-        result = SonoffBridgeSerialInput();
+        result = DecodeCommand(kSonoffBridgeCommands, SonoffBridgeCommand);
         break;
     }
   }
