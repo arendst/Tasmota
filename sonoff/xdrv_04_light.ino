@@ -128,16 +128,24 @@
 #define XDRV_04              4
 //#define DEBUG_LIGHT
 
-const uint8_t WS2812_SCHEMES = 7;    // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
+const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
+const uint8_t WS2812_SCHEMES = 7;      // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
 
-enum LightCommands {
-  CMND_COLOR, CMND_COLORTEMPERATURE, CMND_DIMMER, CMND_LED, CMND_LEDTABLE, CMND_FADE,
-  CMND_PIXELS, CMND_RGBWWTABLE, CMND_ROTATION, CMND_SCHEME, CMND_SPEED, CMND_WAKEUP, CMND_WAKEUPDURATION,
-  CMND_WHITE, CMND_WIDTH, CMND_CHANNEL, CMND_HSBCOLOR, CMND_UNDOCA };
 const char kLightCommands[] PROGMEM =
-  D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_LED "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
-  D_CMND_PIXELS "|" D_CMND_RGBWWTABLE "|" D_CMND_ROTATION "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
-  D_CMND_WHITE "|" D_CMND_WIDTH "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR "|UNDOCA" ;
+#ifdef USE_WS2812
+  D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|"
+#endif  // USE_WS2812
+  D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
+  D_CMND_RGBWWTABLE "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
+  D_CMND_WHITE "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR "|UNDOCA" ;
+
+void (* const LightCommand[])(void) PROGMEM = {
+#ifdef USE_WS2812
+  &CmndLed, &CmndPixels, &CmndRotation, &CmndWidth,
+#endif  // USE_WS2812
+  &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndLedTable, &CmndFade,
+  &CmndRgbwwTable, &CmndScheme, &CmndSpeed, &CmndWakeup, &CmndWakeupDuration,
+  &CmndWhite, &CmndChannel, &CmndHsbColor, &CmndUndocA };
 
 // Light color mode, either RGB alone, or white-CT alone, or both only available if ct_rgb_linked is false
 enum LightColorModes {
@@ -1531,9 +1539,9 @@ char* LightGetColor(char* scolor, boolean force_hex = false)
   scolor[0] = '\0';
   for (uint32_t i = 0; i < light_subtype; i++) {
     if (!force_hex && Settings.flag.decimal_text) {
-      snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", light_current_color[i]);
+      snprintf_P(scolor, LIGHT_COLOR_SIZE, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", light_current_color[i]);
     } else {
-      snprintf_P(scolor, 25, PSTR("%s%02X"), scolor, light_current_color[i]);
+      snprintf_P(scolor, LIGHT_COLOR_SIZE, PSTR("%s%02X"), scolor, light_current_color[i]);
     }
   }
   return scolor;
@@ -1548,7 +1556,7 @@ void LightPowerOn(void)
 
 void LightState(uint8_t append)
 {
-  char scolor[25];
+  char scolor[LIGHT_COLOR_SIZE];
   char scommand[33];
 
   if (append) {
@@ -1964,12 +1972,12 @@ void LightAnimate(void)
  * Commands
 \*********************************************************************************************/
 
-bool LightColorEntry(char *buffer, uint8_t buffer_length)
+bool LightColorEntry(char *buffer, uint32_t buffer_length)
 {
   char scolor[10];
   char *p;
   char *str;
-  uint8_t entry_type = 0;                           // Invalid
+  uint32_t entry_type = 0;                           // Invalid
   uint8_t value = light_fixed_color_index;
 
   if (buffer[0] == '#') {                           // Optional hexadecimal entry
@@ -2033,69 +2041,80 @@ bool LightColorEntry(char *buffer, uint8_t buffer_length)
 
 /********************************************************************************************/
 
-bool LightCommand(void)
+void CmndSupportColor(void)
 {
-  char command [CMDSZ];
-  bool serviced = true;
-  bool coldim = false;
   bool valid_entry = false;
-  char scolor[25];
-  char option = (1 == XdrvMailbox.data_len) ? XdrvMailbox.data[0] : '\0';
+  bool coldim = false;
 
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kLightCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
+  if (XdrvMailbox.data_len > 0) {
+    valid_entry = LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len);
+    if (valid_entry) {
+      if (XdrvMailbox.index <= 2) {    // Color(1), 2
+        uint32_t old_bri = light_state.getBri();
+        // change all channels to specified values
+        light_controller.changeChannels(light_entry_color);
+        if (2 == XdrvMailbox.index) {
+          // If Color2, set back old brightness
+          light_controller.changeBri(old_bri);
+        }
+
+        Settings.light_scheme = 0;
+        coldim = true;
+      } else {             // Color3, 4, 5 and 6
+        for (uint32_t i = 0; i < LST_RGB; i++) {
+          Settings.ws_color[XdrvMailbox.index -3][i] = light_entry_color[i];
+        }
+      }
+    }
   }
-  else if (((CMND_COLOR == command_code) && (light_subtype > LST_SINGLE) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) ||
-           ((CMND_WHITE == command_code) && (light_subtype == LST_RGBW) && (XdrvMailbox.index == 1))) {
-    if (CMND_WHITE == command_code) {
-      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-        uint8_t whiteBri = changeUIntScale(XdrvMailbox.payload,0,100,0,255);
-        snprintf_P(scolor, sizeof(scolor), PSTR("0,0,0,%d"), whiteBri);
-        light_state.setBri(whiteBri); // save target Bri, will be confirmed below
-        XdrvMailbox.data = scolor;
-        XdrvMailbox.data_len = strlen(scolor);
+  char scolor[LIGHT_COLOR_SIZE];
+  if (!valid_entry && (XdrvMailbox.index <= 2)) {
+    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, LightGetColor(scolor));
+  }
+  if (XdrvMailbox.index >= 3) {
+    scolor[0] = '\0';
+    for (uint32_t i = 0; i < LST_RGB; i++) {
+      if (Settings.flag.decimal_text) {
+        snprintf_P(scolor, sizeof(scolor), PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.ws_color[XdrvMailbox.index -3][i]);
       } else {
-        XdrvMailbox.data_len = 0;
+        snprintf_P(scolor, sizeof(scolor), PSTR("%s%02X"), scolor, Settings.ws_color[XdrvMailbox.index -3][i]);
       }
     }
-    if (XdrvMailbox.data_len > 0) {
-      valid_entry = LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len);
-      if (valid_entry) {
-        if (XdrvMailbox.index <= 2) {    // Color(1), 2
-          uint8_t old_bri = light_state.getBri();
-          // change all channels to specified values
-          light_controller.changeChannels(light_entry_color);
-          if (2 == XdrvMailbox.index) {
-            // If Color2, set back old brightness
-            light_controller.changeBri(old_bri);
-          }
-
-          Settings.light_scheme = 0;
-          coldim = true;
-        } else {             // Color3, 4, 5 and 6
-          for (uint32_t i = 0; i < LST_RGB; i++) {
-            Settings.ws_color[XdrvMailbox.index -3][i] = light_entry_color[i];
-          }
-        }
-      }
-    }
-    if (!valid_entry && (XdrvMailbox.index <= 2)) {
-      Response_P(S_JSON_COMMAND_SVALUE, command, LightGetColor(scolor));
-    }
-    if (XdrvMailbox.index >= 3) {
-      scolor[0] = '\0';
-      for (uint32_t i = 0; i < LST_RGB; i++) {
-        if (Settings.flag.decimal_text) {
-          snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.ws_color[XdrvMailbox.index -3][i]);
-        } else {
-          snprintf_P(scolor, 25, PSTR("%s%02X"), scolor, Settings.ws_color[XdrvMailbox.index -3][i]);
-        }
-      }
-      Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, scolor);
-    }
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, scolor);
   }
-  else if ((CMND_CHANNEL == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= light_subtype ) ) {
+  if (coldim) {
+    LightPreparePower();
+  }
+}
+
+void CmndColor(void)
+{
+  if ((light_subtype > LST_SINGLE) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
+    CmndSupportColor();
+  }
+}
+
+void CmndWhite(void)
+{
+  if ((light_subtype == LST_RGBW) && (XdrvMailbox.index == 1)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
+      uint32_t whiteBri = changeUIntScale(XdrvMailbox.payload,0,100,0,255);
+      char scolor[LIGHT_COLOR_SIZE];
+      snprintf_P(scolor, sizeof(scolor), PSTR("0,0,0,%d"), whiteBri);
+      light_state.setBri(whiteBri); // save target Bri, will be confirmed below
+      XdrvMailbox.data = scolor;
+      XdrvMailbox.data_len = strlen(scolor);
+    } else {
+      XdrvMailbox.data_len = 0;
+    }
+    CmndSupportColor();
+  }
+}
+
+void CmndChannel(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= light_subtype )) {
+    bool coldim = false;
     //  Set "Channel" directly - this allows Color and Direct PWM control to coexist
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
       light_current_color[XdrvMailbox.index-1] = changeUIntScale(XdrvMailbox.payload,0,100,0,255);
@@ -2106,9 +2125,16 @@ bool LightCommand(void)
       light_controller.changeChannels(light_current_color);
       coldim = true;
     }
-    Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, light_current_color[XdrvMailbox.index -1] * 100 / 255);
+    Response_P(S_JSON_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, light_current_color[XdrvMailbox.index -1] * 100 / 255);
+    if (coldim) {
+      LightPreparePower();
+    }
   }
-  else if ((CMND_HSBCOLOR == command_code) && (light_subtype >= LST_RGB)) {
+}
+
+void CmndHsbColor(void)
+{
+  if (light_subtype >= LST_RGB) {
     bool validHSB = (XdrvMailbox.data_len > 0);
     if (validHSB) {
       uint16_t HSB[3];
@@ -2155,8 +2181,12 @@ bool LightCommand(void)
       LightState(0);
     }
   }
+}
+
 #ifdef USE_WS2812  //  ***********************************************************************
-  else if ((CMND_LED == command_code) && (LT_WS2812 == light_type) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= Settings.light_pixels)) {
+void CmndLed(void)
+{
+  if ((LT_WS2812 == light_type) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= Settings.light_pixels)) {
     if (XdrvMailbox.data_len > 0) {
       char *p;
       uint16_t idx = XdrvMailbox.index;
@@ -2165,7 +2195,7 @@ bool LightCommand(void)
         if (LightColorEntry(color, strlen(color))) {
           Ws2812SetColor(idx, light_entry_color[0], light_entry_color[1], light_entry_color[2], light_entry_color[3]);
           idx++;
-          if (idx > Settings.light_pixels) break;
+          if (idx > Settings.light_pixels) { break; }
         } else {
           break;
         }
@@ -2173,44 +2203,63 @@ bool LightCommand(void)
 
       Ws2812ForceUpdate();
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, Ws2812GetColor(XdrvMailbox.index, scolor));
+    char scolor[LIGHT_COLOR_SIZE];
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, Ws2812GetColor(XdrvMailbox.index, scolor));
   }
-  else if ((CMND_PIXELS == command_code) && (LT_WS2812 == light_type)) {
+}
+
+void CmndPixels(void)
+{
+  if (LT_WS2812 == light_type) {
     if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= WS2812_MAX_LEDS)) {
       Settings.light_pixels = XdrvMailbox.payload;
       Settings.light_rotation = 0;
       Ws2812Clear();
       light_update = 1;
     }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_pixels);
+    Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_pixels);
   }
-  else if ((CMND_ROTATION == command_code) && (LT_WS2812 == light_type)) {
+}
+
+void CmndRotation(void)
+{
+  if (LT_WS2812 == light_type) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < Settings.light_pixels)) {
       Settings.light_rotation = XdrvMailbox.payload;
     }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_rotation);
+    Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_rotation);
   }
-  else if ((CMND_WIDTH == command_code) && (LT_WS2812 == light_type) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
+}
+
+void CmndWidth(void)
+{
+  if ((LT_WS2812 == light_type) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
     if (1 == XdrvMailbox.index) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 4)) {
         Settings.light_width = XdrvMailbox.payload;
       }
-      Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_width);
+      Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_width);
     } else {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32)) {
         Settings.ws_width[XdrvMailbox.index -2] = XdrvMailbox.payload;
       }
-      Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.ws_width[XdrvMailbox.index -2]);
+      Response_P(S_JSON_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.ws_width[XdrvMailbox.index -2]);
     }
   }
+}
 #endif  // USE_WS2812 ************************************************************************
-  else if ((CMND_SCHEME == command_code) && (light_subtype >= LST_RGB)) {
-    uint8_t max_scheme = (LT_WS2812 == light_type) ? LS_MAX + WS2812_SCHEMES : LS_MAX -1;
-    if (('+' == option) && (Settings.light_scheme < max_scheme)) {
-      XdrvMailbox.payload = Settings.light_scheme + ((0 == Settings.light_scheme) ? 2 : 1);  // Skip wakeup
-    }
-    else if (('-' == option) && (Settings.light_scheme > 0)) {
-      XdrvMailbox.payload = Settings.light_scheme - ((2 == Settings.light_scheme) ? 2 : 1);  // Skip wakeup
+
+void CmndScheme(void)
+{
+  if (light_subtype >= LST_RGB) {
+    uint32_t max_scheme = (LT_WS2812 == light_type) ? LS_MAX + WS2812_SCHEMES : LS_MAX -1;
+    if (1 == XdrvMailbox.data_len) {
+      if (('+' == XdrvMailbox.data[0]) && (Settings.light_scheme < max_scheme)) {
+        XdrvMailbox.payload = Settings.light_scheme + ((0 == Settings.light_scheme) ? 2 : 1);  // Skip wakeup
+      }
+      else if (('-' == XdrvMailbox.data[0]) && (Settings.light_scheme > 0)) {
+        XdrvMailbox.payload = Settings.light_scheme - ((2 == Settings.light_scheme) ? 2 : 1);  // Skip wakeup
+      }
     }
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= max_scheme)) {
       Settings.light_scheme = XdrvMailbox.payload;
@@ -2222,138 +2271,153 @@ bool LightCommand(void)
       // Publish state message for Hass
       if (Settings.flag3.hass_tele_on_power) { MqttPublishTeleState(); }
     }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_scheme);
+    Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_scheme);
   }
-  else if (CMND_WAKEUP == command_code) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      Settings.light_dimmer = XdrvMailbox.payload;
-    }
-    light_wakeup_active = 3;
-    Settings.light_scheme = LS_WAKEUP;
-    LightPowerOn();
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_STARTED);
+}
+
+void CmndWakeup(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
+    Settings.light_dimmer = XdrvMailbox.payload;
   }
-  else if ((CMND_COLORTEMPERATURE == command_code) && ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype))) { // ColorTemp
-    uint16_t ct = light_state.getCT();
-    if (option != '\0') {
-      if ('+' == option) {
+  light_wakeup_active = 3;
+  Settings.light_scheme = LS_WAKEUP;
+  LightPowerOn();
+  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_STARTED);
+}
+
+void CmndColorTemperature(void)
+{
+  if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) { // ColorTemp
+    uint32_t ct = light_state.getCT();
+    if (1 == XdrvMailbox.data_len) {
+      if ('+' == XdrvMailbox.data[0]) {
         XdrvMailbox.payload = (ct > (500-34)) ? 500 : ct + 34;
       }
-      else if ('-' == option) {
+      else if ('-' == XdrvMailbox.data[0]) {
         XdrvMailbox.payload = (ct < (153+34)) ? 153 : ct - 34;
       }
     }
     if ((XdrvMailbox.payload >= 153) && (XdrvMailbox.payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
       light_controller.changeCTB(XdrvMailbox.payload, light_state.getBri());
-      coldim = true;
+      LightPreparePower();
     } else {
-      Response_P(S_JSON_COMMAND_NVALUE, command, ct);
+      Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, ct);
     }
   }
-  else if (CMND_DIMMER == command_code) {
-    uint32_t dimmer = light_state.getDimmer();
-    if ('+' == option) {
+}
+
+void CmndDimmer(void)
+{
+  uint32_t dimmer = light_state.getDimmer();
+  if (1 == XdrvMailbox.data_len) {
+    if ('+' == XdrvMailbox.data[0]) {
       XdrvMailbox.payload = (dimmer > 89) ? 100 : dimmer + 10;
     }
-    else if ('-' == option) {
+    else if ('-' == XdrvMailbox.data[0]) {
       XdrvMailbox.payload = (dimmer < 11) ? 1 : dimmer - 10;
     }
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      light_controller.changeDimmer(XdrvMailbox.payload);
-      light_update = 1;
-      coldim = true;
-    } else {
-      Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_dimmer);
-    }
   }
-  else if (CMND_LEDTABLE == command_code) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
-      switch (XdrvMailbox.payload) {
-      case 0: // Off
-      case 1: // On
-        Settings.light_correction = XdrvMailbox.payload;
-        break;
-      case 2: // Toggle
-        Settings.light_correction ^= 1;
-        break;
-      }
-      light_update = 1;
-    }
-    Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.light_correction));
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
+    light_controller.changeDimmer(XdrvMailbox.payload);
+    light_update = 1;
+    LightPreparePower();
+  } else {
+    Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_dimmer);
   }
-  else if (CMND_RGBWWTABLE == command_code) {
-    bool validtable = (XdrvMailbox.data_len > 0);
-    char scolor[25];
-    if (validtable) {
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Command with up to 5 comma separated parameters
-        for (uint32_t i = 0; i < LST_RGBWC; i++) {
-          char *substr;
+}
 
-          if (0 == i) {
-            substr = strtok(XdrvMailbox.data, ",");
-          } else {
-            substr = strtok(nullptr, ",");
-          }
-          if (substr != nullptr) {
-            Settings.rgbwwTable[i] = atoi(substr);
-          }
-        }
-      }
-      light_update = 1;
-    }
-    scolor[0] = '\0';
-    for (uint32_t i = 0; i < LST_RGBWC; i++) {
-      snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.rgbwwTable[i]);
-    }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, XdrvMailbox.index, scolor);
-  }
-  else if (CMND_FADE == command_code) {
+void CmndLedTable(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
     switch (XdrvMailbox.payload) {
     case 0: // Off
     case 1: // On
-      Settings.light_fade = XdrvMailbox.payload;
+      Settings.light_correction = XdrvMailbox.payload;
       break;
     case 2: // Toggle
-      Settings.light_fade ^= 1;
+      Settings.light_correction ^= 1;
       break;
     }
-    Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.light_fade));
+    light_update = 1;
   }
-  else if (CMND_SPEED == command_code) {  // 1 - fast, 20 - very slow
-    if (('+' == option) && (Settings.light_speed > 1)) {
+  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.light_correction));
+}
+
+void CmndRgbwwTable(void)
+{
+  if ((XdrvMailbox.data_len > 0)) {
+    if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Command with up to 5 comma separated parameters
+      for (uint32_t i = 0; i < LST_RGBWC; i++) {
+        char *substr;
+
+        if (0 == i) {
+          substr = strtok(XdrvMailbox.data, ",");
+        } else {
+          substr = strtok(nullptr, ",");
+        }
+        if (substr != nullptr) {
+          Settings.rgbwwTable[i] = atoi(substr);
+        }
+      }
+    }
+    light_update = 1;
+  }
+  char scolor[LIGHT_COLOR_SIZE];
+  scolor[0] = '\0';
+  for (uint32_t i = 0; i < LST_RGBWC; i++) {
+    snprintf_P(scolor, sizeof(scolor), PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.rgbwwTable[i]);
+  }
+  Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, scolor);
+}
+
+void CmndFade(void)
+{
+  switch (XdrvMailbox.payload) {
+  case 0: // Off
+  case 1: // On
+    Settings.light_fade = XdrvMailbox.payload;
+    break;
+  case 2: // Toggle
+    Settings.light_fade ^= 1;
+    break;
+  }
+  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.light_fade));
+}
+
+void CmndSpeed(void)
+{  // 1 - fast, 20 - very slow
+  if (1 == XdrvMailbox.data_len) {
+    if (('+' == XdrvMailbox.data[0]) && (Settings.light_speed > 1)) {
       XdrvMailbox.payload = Settings.light_speed -1;
     }
-    else if (('-' == option) && (Settings.light_speed < STATES)) {
+    else if (('-' == XdrvMailbox.data[0]) && (Settings.light_speed < STATES)) {
       XdrvMailbox.payload = Settings.light_speed +1;
     }
-    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= STATES)) {
-      Settings.light_speed = XdrvMailbox.payload;
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_speed);
   }
-  else if (CMND_WAKEUPDURATION == command_code) {
-    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 3001)) {
-      Settings.light_wakeup = XdrvMailbox.payload;
-      light_wakeup_active = 0;
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_wakeup);
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= STATES)) {
+    Settings.light_speed = XdrvMailbox.payload;
   }
-  else if (CMND_UNDOCA == command_code) {  // Theos legacy status
-    LightGetColor(scolor, true);  // force hex whatever Option 17
-    scolor[6] = '\0';  // RGB only
-    Response_P(PSTR("%s,%d,%d,%d,%d,%d"), scolor, Settings.light_fade, Settings.light_correction, Settings.light_scheme, Settings.light_speed, Settings.light_width);
-    MqttPublishPrefixTopic_P(STAT, XdrvMailbox.topic);
-    mqtt_data[0] = '\0';
-  }
-  else {
-    serviced = false;  // Unknown command
-  }
+  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_speed);
+}
 
-  if (coldim) {
-    LightPreparePower();
+void CmndWakeupDuration(void)
+{
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 3001)) {
+    Settings.light_wakeup = XdrvMailbox.payload;
+    light_wakeup_active = 0;
   }
+  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_wakeup);
+}
 
-  return serviced;
+void CmndUndocA(void)
+{  // Theos legacy status
+  char scolor[LIGHT_COLOR_SIZE];
+  LightGetColor(scolor, true);  // force hex whatever Option 17
+  scolor[6] = '\0';  // RGB only
+  Response_P(PSTR("%s,%d,%d,%d,%d,%d"), scolor, Settings.light_fade, Settings.light_correction, Settings.light_scheme, Settings.light_speed, Settings.light_width);
+  MqttPublishPrefixTopic_P(STAT, XdrvMailbox.topic);
+  mqtt_data[0] = '\0';
 }
 
 /*********************************************************************************************\
@@ -2372,19 +2436,19 @@ bool Xdrv04(uint8_t function)
       case FUNC_EVERY_50_MSECOND:
         LightAnimate();
 #ifdef USE_ARILUX_RF
-        if (pin[GPIO_ARIRFRCV] < 99) AriluxRfHandler();
+        if (pin[GPIO_ARIRFRCV] < 99) { AriluxRfHandler(); }
 #endif  // USE_ARILUX_RF
         break;
 #ifdef USE_ARILUX_RF
       case FUNC_EVERY_SECOND:
-        if (10 == uptime) AriluxRfInit();  // Needs rest before enabling RF interrupts
+        if (10 == uptime) { AriluxRfInit(); }  // Needs rest before enabling RF interrupts
         break;
 #endif  // USE_ARILUX_RF
-      case FUNC_COMMAND:
-        result = LightCommand();
-        break;
       case FUNC_SET_POWER:
         LightSetPower();
+        break;
+      case FUNC_COMMAND:
+        result = DecodeCommand(kLightCommands, LightCommand);
         break;
     }
   }
