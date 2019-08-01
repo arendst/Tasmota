@@ -243,7 +243,7 @@
 //#define MY_LANGUAGE            sk-SK           // Slovak in Slovakia
 //#define MY_LANGUAGE            sv-SE           // Swedish in Sweden
 //#define MY_LANGUAGE            tr-TR           // Turkish in Turkey
-//#define MY_LANGUAGE            uk-UK           // Ukrainian in Ukrain
+//#define MY_LANGUAGE            uk-UK           // Ukrainian in Ukraine
 //#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
 //#define MY_LANGUAGE            zh-TW           // Chinese (Traditional) in Taiwan
 
@@ -271,6 +271,7 @@
 // Using TLS starting with version v6.5.0.16 compilation will only work using Core 2.4.2 and 2.5.2. No longer supported: 2.3.0
 //#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
 //  #define USE_MQTT_TLS_CA_CERT                   // Force full CA validation instead of fingerprints, slower, but simpler to use (+2.2k code, +1.9k mem during connection handshake)
+//  #define USE_MQTT_TLS_FORCE_EC_CIPHER           // Force Elliptic Curve cipher (higher security) required by some servers (automatically enabled with USE_MQTT_AWS_IOT) (+11.4k code, +0.4k mem)
 //  #define USE_MQTT_AWS_IOT                       // Enable MQTT for AWS IoT - requires a private key (+11.4k code, +0.4k mem)
                                                  //   Note: you need to generate a private key + certificate per device and update 'sonoff/sonoff_aws_iot.cpp'
                                                  //   Full documentation here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
@@ -307,7 +308,15 @@
 //  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 
-// -- Counter input -----------------------
+// -- Optional modules ----------------------------
+#define USE_SONOFF_IFAN                          // Add support for Sonoff iFan02 and iFan03 (+2k code)
+#define USE_TUYA_DIMMER                          // Add support for Tuya Serial Dimmer
+  #define TUYA_DIMMER_ID       0                 // Default dimmer Id
+#define USE_ARMTRONIX_DIMMERS                    // Add support for Armtronix Dimmers (+1k4 code)
+#define USE_PS_16_DZ                             // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
+//#define ROTARY_V1                                // Add support for MI Desk Lamp
+
+// -- Counter input -------------------------------
 #define USE_COUNTER                              // Enable inputs as counter (+0k8 code)
 
 // -- Internal Analog input -----------------------
@@ -400,17 +409,12 @@
   #define WORKING_PERIOD       5                 // Working period of the SDS Sensor, Takes a reading every X Minutes
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
 //#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
-  #define SDM120_SPEED         9600              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
+  #define SDM120_SPEED         2400              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
   #define USE_SDM220                             // Add extra parameters for SDM220 (+0k1 code)
 //#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy meter (+2k code)
   #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
 //#define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10                // Set the startup volume on init, the range can be 0..30(max)
-#define USE_TUYA_DIMMER                          // Add support for Tuya Serial Dimmer
-  #define TUYA_DIMMER_ID       0                 // Default dimmer Id
-#define USE_ARMTRONIX_DIMMERS                    // Add support for Armtronix Dimmers (+1k4 code)
-#define USE_PS_16_DZ                             // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-//#define ROTARY_V1                                // Add support for MI Desk Lamp
 //#define USE_AZ7798                               // Add support for AZ-Instrument 7798 CO2 datalogger (+1k6 code)
 //#define USE_PN532_HSU                            // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 //  #define USE_PN532_CAUSE_EVENTS                 // Cause event execution for PN532_UID= and PN532_DATA=[if defined] (+ 30 bytes code)
@@ -427,13 +431,42 @@
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)
 
 //#define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
+//#define USE_MAX31865                             // Add support for MAX31865 RTD sensors using softSPI
+  #define MAX31865_PTD_WIRES  2                 // PTDs come in several flavors. Pick yours
+  #define MAX31865_PTD_RES    100               // Nominal PTD resistance at 0°C (100Ω for a PT100, 1000Ω for a PT1000, YMMV!)
+  #define MAX31865_REF_RES    430               // Reference resistor (Usually 430Ω for a PT100, 4300Ω for a PT1000)
+  #define MAX31865_PTD_BIAS   0                 // To calibrate your not-so-good PTD
 
+// -- IR Remote features --------------------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k3 code, 0k3 mem, 48 iram)
-//  #define USE_IR_HVAC                            // Support for HVAC (Toshiba, Mitsubishi and LG) system using IR (+3k5 code)
+//  #define USE_IR_SEND_AIWA                       // Support IRsend Aiwa protocol
+  #define USE_IR_SEND_DISH                       // Support IRsend Dish protocol
+  #define USE_IR_SEND_JVC                        // Support IRsend JVC protocol
+//  #define USE_IR_SEND_LG                         // Support IRsend LG protocol
+//  #define USE_IR_SEND_MITSUBISHI                 // Support IRsend Mitsubishi protocol
+  #define USE_IR_SEND_NEC                        // Support IRsend NEC protocol
+  #define USE_IR_SEND_PANASONIC                  // Support IRsend Panasonic protocol
+  #define USE_IR_SEND_PIONEER                    // Support IRsend Pioneer protocol
+  #define USE_IR_SEND_RC5                        // Support IRsend Philips RC5 protocol
+  #define USE_IR_SEND_RC6                        // Support IRsend Philips RC6 protocol
+  #define USE_IR_SEND_SAMSUNG                    // Support IRsend Samsung protocol
+//  #define USE_IR_SEND_SANYO                      // Support IRsend Sanyo protocol
+//  #define USE_IR_SEND_SHARP                      // Support IRsend Sharp protocol
+  #define USE_IR_SEND_SONY                       // Support IRsend Sony protocol
+//  #define USE_IR_SEND_WHYNTER                    // Support IRsend Whynter protocol
+
+//  #define USE_IR_HVAC                            // Support for HVAC systems using IR (+3k5 code)
+    #define USE_IR_HVAC_TOSHIBA                  // Support IRhvac Toshiba protocol
+    #define USE_IR_HVAC_MITSUBISHI               // Support IRhvac Mitsubischi protocol
+    #define USE_IR_HVAC_LG                       // Support IRhvac LG protocol
+    #define USE_IR_HVAC_FUJITSU                  // Support IRhvac Fujitsu protocol
+//    #define USE_IR_HVAC_MIDEA                    // Support IRhvac Midea/Komeco protocol
+
   #define USE_IR_RECEIVE                         // Support for IR receiver (+7k2 code, 264 iram)
     #define IR_RCV_BUFFER_SIZE      100          // Max number of packets allowed in capture buffer (default 100 (*2 bytes ram))
     #define IR_RCV_TIMEOUT          15           // Number of milli-Seconds of no-more-data before we consider a message ended (default 15)
     #define IR_RCV_MIN_UNKNOWN_SIZE 6            // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
+// ------------------------------------------------
 
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
   #define USE_WS2812_CTYPE     NEO_GRB           // WS2812 Color type (NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_RGBW, NEO_GRBW)
@@ -449,9 +482,9 @@
 
 #define USE_RF_FLASH                             // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (+3k code)
 
-#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k code)
+//#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k code)
 
-#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
+//#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 
 //#define USE_RF_SENSOR                            // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 //  #define USE_THEO_V2                            // Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver (+1k4 code)

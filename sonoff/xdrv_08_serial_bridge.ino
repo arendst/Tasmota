@@ -148,11 +148,8 @@ bool SerialBridgeCommand(void)
     }
   }
   else if (CMND_SBAUDRATE == command_code) {
-    char *p;
-    int baud = strtol(XdrvMailbox.data, &p, 10);
-    if (baud >= 1200) {
-      baud /= 1200;  // Make it a valid baudrate
-      Settings.sbaudrate = (1 == XdrvMailbox.payload) ? SOFT_BAUDRATE / 1200 : baud;
+    if (XdrvMailbox.payload > 1200) {
+      Settings.sbaudrate /= 1200;  // Make it a valid baudrate
       SerialBridgeSerial->begin(Settings.sbaudrate * 1200);  // Reinitialize serial port with new baud rate
     }
     Response_P(S_JSON_COMMAND_NVALUE, command, Settings.sbaudrate * 1200);

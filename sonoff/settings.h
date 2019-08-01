@@ -79,8 +79,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t no_power_feedback : 1;        // bit 13 (v6.5.0.9)  - SetOption63 - Don't scan relay power state at restart
     uint32_t use_underscore : 1;           // bit 14 (v6.5.0.12) - SetOption64 - Enable "_" instead of "-" as sensor index separator
     uint32_t tuya_show_dimmer : 1;		     // bit 15 (v6.5.0.15) - SetOption65 - Enable or Disable Dimmer slider control
-    uint32_t spare16 : 1;
-    uint32_t spare17 : 1;
+    uint32_t tuya_dimmer_range_255 : 1;    // bit 16 (v6.6.0.1)  - SetOption66 - Enable or Disable Dimmer range 255 slider control
+    uint32_t buzzer_enable : 1;            // bit 17 (v6.6.0.1)  - SetOption67 - Enable buzzer when available
     uint32_t spare18 : 1;
     uint32_t spare19 : 1;
     uint32_t spare20 : 1;
@@ -337,8 +337,10 @@ struct SYSCFG {
   mytmplt       user_template;             // 720  29 bytes
   uint8_t       novasds_period;            // 73D
   uint8_t       web_color[18][3];          // 73E
+  uint16_t      display_width;             // 774
+  uint16_t      display_height;            // 776
 
-  uint8_t       free_774[32];              // 774
+  uint8_t       free_778[28];              // 778
 
 //  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries
   uint32_t      adc_param1;                // 794
@@ -420,15 +422,14 @@ struct TIME_T {
 } RtcTime;
 
 struct XDRVMAILBOX {
-  uint16_t      valid;
-  power_t      index;
-  uint16_t      data_len;
-  uint16_t      payload16;
-  int16_t       payload;
   bool          grpflg;
-  uint8_t       notused;
+  bool          usridx;
+  uint32_t      index;
+  uint32_t      data_len;
+  int32_t       payload;
   char         *topic;
   char         *data;
+  char         *command;
 } XdrvMailbox;
 
 const uint8_t MAX_RULES_FLAG = 8;          // Number of bits used in RulesBitfield (tricky I know...)

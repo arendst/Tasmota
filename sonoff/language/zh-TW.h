@@ -550,7 +550,7 @@
 #define D_SENSOR_SAIR_TX       "SAir Tx"
 #define D_SENSOR_SPI_CS        "SPI CS"
 #define D_SENSOR_SPI_DC        "SPI DC"
-#define D_SENSOR_BACKLIGHT     "BkLight"
+#define D_SENSOR_BACKLIGHT     "Backlight"
 #define D_SENSOR_PMS5003       "PMS5003"
 #define D_SENSOR_SDS0X1_RX     "SDS0X1 Rx"
 #define D_SENSOR_SDS0X1_TX     "SDS0X1 Tx"
@@ -609,6 +609,8 @@
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
+#define D_SENSOR_BUZZER        "Buzzer"
+#define D_SENSOR_OLED_RESET    "OLED Reset"
 
 // Units
 #define D_UNIT_AMPERE "安"

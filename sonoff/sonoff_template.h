@@ -184,6 +184,9 @@ enum UserSelectablePins {
   GPIO_LEDLNK,         // Link led
   GPIO_LEDLNK_INV,     // Inverted link led
   GPIO_ARIRFSEL,       // Arilux RF Receive input selected
+  GPIO_BUZZER,         // Buzzer
+  GPIO_BUZZER_INV,     // Inverted buzzer
+  GPIO_OLED_RESET,     // OLED Display Reset
 //STB mod
   GPIO_SEN_SLEEP,
 //end
@@ -254,9 +257,13 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ADE7953_IRQ "|"
   D_SENSOR_LED_LINK "|" D_SENSOR_LED_LINK "i|"
   D_SENSOR_ARIRFSEL "|"
+  D_SENSOR_BUZZER "|" D_SENSOR_BUZZER "i|"
+  D_SENSOR_OLED_RESET "|"
   //STB mod
-  D_SENSOR_DEEPSLEEP "|" ;
+  D_SENSOR_DEEPSLEEP "|"
   //end
+  ;
+
 // User selectable ADC0 functionality
 enum UserSelectableAdc0 {
   ADC0_NONE,           // Not used
@@ -357,6 +364,7 @@ enum SupportedModules {
   WAGA,
   SYF05,
   SONOFF_L1,
+  SONOFF_IFAN03,
   MAXMODULE};
 
 #define USER_MODULE        255
@@ -480,9 +488,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_CNTR4,
   GPIO_CNTR4_NP,
 #endif
+  GPIO_BUZZER,         // Buzzer
+  GPIO_BUZZER_INV,     // Inverted buzzer
   GPIO_TXD,            // Serial interface
   GPIO_RXD,            // Serial interface
-  // stb model
+  // stb mod
   GPIO_SEN_SLEEP,
   //end
 #ifdef USE_I2C
@@ -500,6 +510,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_DISPLAY
   GPIO_BACKLIGHT,      // Display backlight control
+  GPIO_OLED_RESET,     // OLED Display Reset
 #endif
 #ifdef USE_DHT
   GPIO_DHT11,          // DHT11
@@ -670,7 +681,10 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   SONOFF_B1,           // Sonoff Light Bulbs
   SLAMPHER,
   SONOFF_SC,           // Sonoff Environmemtal Sensor
+#ifdef USE_SONOFF_IFAN
   SONOFF_IFAN02,       // Sonoff Fan
+  SONOFF_IFAN03,
+#endif
   SONOFF_BRIDGE,       // Sonoff Bridge
   SONOFF_SV,           // Sonoff Development Devices
   SONOFF_DEV,
@@ -1991,24 +2005,39 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      ADC0_USER         // ADC0 A0 Analog input
   },
   { "Sonoff L1",       // Sonoff L1 RGB LED controller (ESP8266 w/ separate Nuvoton MCU)
-     GPIO_USER,
+     0,
      GPIO_TXD,         // GPIO01 MCU serial control
-     GPIO_USER,
+     0,
      GPIO_RXD,         // GPIO03 MCU serial control
-     GPIO_USER,
-     GPIO_USER,
+     0, 0,
                        // GPIO06 (SD_CLK   Flash)
                        // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
                        // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
      0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
      0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
                        // GPIO11 (SD_CMD   Flash)
-     GPIO_USER,
-     GPIO_LED1,        // GPIO13 WiFi LED - Link and Power status
-     GPIO_USER,
-     GPIO_USER,
-     GPIO_USER,
-     0
+     0,
+     GPIO_LED1_INV,    // GPIO13 WiFi Blue Led - Link and Power status
+     0, 0, 0, 0
+  },
+  { "Sonoff iFan03",   // Sonoff iFan03 (ESP8285)
+     GPIO_KEY1,        // GPIO00 WIFI_KEY0 Button 1
+     GPIO_TXD,         // GPIO01 ESP_TXD Serial RXD connection to P0.5 of RF microcontroller
+     0,                // GPIO02 ESP_LOG
+     GPIO_RXD,         // GPIO03 ESP_RXD Serial TXD connection to P0.4 of RF microcontroller
+     0,                // GPIO04 DEBUG_RX
+     0,                // GPIO05 DEBUG_TX
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     GPIO_REL1_INV,    // GPIO09 WIFI_O0 Relay 1 (0 = Off, 1 = On) controlling the light
+     GPIO_BUZZER_INV,  // GPIO10 WIFI_O4 Buzzer (0 = Off, 1 = On)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_REL3,        // GPIO12 WIFI_O2 Relay 3 (0 = Off, 1 = On) controlling the fan
+     GPIO_LED1_INV,    // GPIO13 WIFI_CHK Blue Led on PCA (0 = On, 1 = Off) - Link and Power status
+     GPIO_REL2,        // GPIO14 WIFI_O1 Relay 2 (0 = Off, 1 = On) controlling the fan
+     GPIO_REL4,        // GPIO15 WIFI_O3 Relay 4 (0 = Off, 1 = On) controlling the fan
+     0, 0
   }
 };
 

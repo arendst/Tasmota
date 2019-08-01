@@ -20,9 +20,9 @@
 #ifndef _SONOFF_VERSION_H_
 #define _SONOFF_VERSION_H_
 
-const uint32_t VERSION = 0x06060001;
+const uint32_t VERSION = 0x06060003;
 //STB mod
-#define STB_VERSION         0x0105
+#define STB_VERSION         0x0106
 //end
 
 #endif  // _SONOFF_VERSION_H_

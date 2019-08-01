@@ -457,10 +457,8 @@ void SetShutterPosition(uint8_t device, uint8_t position)
   char topic [] = D_CMND_POSITION;
   XdrvMailbox.index = device;
   XdrvMailbox.data_len = 0;
-  XdrvMailbox.payload16 = 0;
   XdrvMailbox.payload = position;
   XdrvMailbox.grpflg = 0;
-  XdrvMailbox.notused = 0;
   XdrvMailbox.topic = topic;
   XdrvMailbox.data = NULL;
   ShutterCommand();

@@ -16,7 +16,6 @@ Additional features:
 **Note that deep sleep on ESP-01 is not possible without hardware modifications because it's required to connect GPIO16 to RST, see https://github.com/stefanbode/Sonoff-Tasmota/issues/40. The same applies most likely to other modules like ESP-02, ESP-04 etc**
 
 # Sonoff-Tasmota
-
 Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web UI, rules and timers, OTA updates, custom device templates and sensor support**. Allows control over **MQTT**, **HTTP**, **Serial** and **KNX** for integrations with smart home systems. Written for Arduino IDE and PlatformIO.
 
 [![GitHub version](https://img.shields.io/github/release/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/releases/latest)

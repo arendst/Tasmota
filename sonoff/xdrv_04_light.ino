@@ -1807,14 +1807,18 @@ void LightAnimate(void)
 
       if (PHILIPS == my_module_type) {
         // Xiaomi Philips bulbs follow a different scheme:
-        // channel 0=intensity, channel2=temperature
-        uint16_t pxBri = cur_col[0] + cur_col[1];
-        if (pxBri > 255) { pxBri = 255; }
-        //cur_col[1] = cur_col[0]; // get 8 bits CT from WC -- not really used
-        cur_col_10bits[1] = changeUIntScale(cur_col[0], 0, pxBri, 0, 1023);  // get 10 bits CT from WC / (WC+WW)
+        uint8_t cold;   // channel 1 is the color tone, mapped to cold channel (0..255)
+        light_state.getCW(&cold, nullptr);
+        cur_col[1] = cold;
+        cur_col_10bits[1] = changeUIntScale(cur_col[1], 0, 255, 0, 1023);
+        // now set channel 0 to overall brightness
+        uint8_t pxBri = light_state.getBriCT();
+        // channel 0=intensity, channel1=temperature
         if (Settings.light_correction) { // gamma correction
+          cur_col[0] = ledGamma(pxBri);
           cur_col_10bits[0] = ledGamma(pxBri, 10);    // 10 bits gamma correction
         } else {
+          cur_col[0] = pxBri;
           cur_col_10bits[0] = changeUIntScale(pxBri, 0, 255, 0, 1023);  // no gamma, extend to 10 bits
         }
       } else {  // PHILIPS != my_module_type
@@ -2193,7 +2197,7 @@ bool LightCommand(void)
       }
       Response_P(S_JSON_COMMAND_NVALUE, command, Settings.light_width);
     } else {
-      if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 32)) {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32)) {
         Settings.ws_width[XdrvMailbox.index -2] = XdrvMailbox.payload;
       }
       Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.ws_width[XdrvMailbox.index -2]);

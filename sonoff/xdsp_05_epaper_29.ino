@@ -118,6 +118,13 @@ void EpdInitDriver(void)
   }
 
   if (XDSP_05 == Settings.display_model) {
+    if (Settings.display_width != EPD_WIDTH) {
+      Settings.display_width = EPD_WIDTH;
+    }
+    if (Settings.display_height != EPD_HEIGHT) {
+      Settings.display_height = EPD_HEIGHT;
+    }
+
     if ((pin[GPIO_SPI_CS] < 99) && (pin[GPIO_SPI_CLK] < 99) && (pin[GPIO_SPI_MOSI] < 99)) {
       epd.cs_pin = pin[GPIO_SPI_CS];
       epd.sclk_pin = pin[GPIO_SPI_CLK];   // 14
