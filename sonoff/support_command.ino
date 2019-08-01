@@ -31,6 +31,7 @@ const char kTasmotaCommands[] PROGMEM =
   D_CMND_I2CSCAN "|"
 #endif
   D_CMND_SENSOR "|" D_CMND_DRIVER;
+
 void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBacklog, &CmndDelay, &CmndPower, &CmndStatus, &CmndState, &CmndSleep, &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl,
   &CmndSeriallog, &CmndRestart, &CmndPowerOnState, &CmndPulsetime, &CmndBlinktime, &CmndBlinkcount, &CmndSavedata,
@@ -40,7 +41,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport, &CmndSerialSend, &CmndBaudrate,
   &CmndSerialDelimiter, &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig,
   &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
-  &CmndTimeStd, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask,
+  &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask,
 #ifdef USE_I2C
   &CmndI2cScan,
 #endif
@@ -152,10 +153,7 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
     XdrvMailbox.topic = type;
     XdrvMailbox.data = dataBuf;
 
-    int command_code = GetCommand(kTasmotaCommands);
-    if (command_code >= 0) {
-      TasmotaCommand[command_code]();
-    } else {
+    if (!DecodeCommand(kTasmotaCommands, TasmotaCommand)) {
       if (!XdrvCall(FUNC_COMMAND)) {
         if (!XsnsCall(FUNC_COMMAND)) {
           type = nullptr;  // Unknown command
@@ -328,6 +326,7 @@ void CmndStatus(void)
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "7"));
   }
 
+#if defined(USE_ENERGY_SENSOR) && defined(USE_ENERGY_MARGIN_DETECTION)
   if (energy_flg) {
     if ((0 == payload) || (9 == payload)) {
       Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS9_MARGIN "\":{\"" D_CMND_POWERDELTA "\":%d,\"" D_CMND_POWERLOW "\":%d,\"" D_CMND_POWERHIGH "\":%d,\"" D_CMND_VOLTAGELOW "\":%d,\"" D_CMND_VOLTAGEHIGH "\":%d,\"" D_CMND_CURRENTLOW "\":%d,\"" D_CMND_CURRENTHIGH "\":%d}}"),
@@ -335,6 +334,7 @@ void CmndStatus(void)
       MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "9"));
     }
   }
+#endif  // USE_ENERGY_MARGIN_DETECTION
 
   if ((0 == payload) || (8 == payload) || (10 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS10_SENSOR "\":"));
@@ -1227,12 +1227,9 @@ void CmndTimezone(void)
   }
 }
 
-void CmndTimeStd(void)
+void CmndTimeStdDst(uint32_t ts)
 {
   // TimeStd 0/1, 0/1/2/3/4, 1..12, 1..7, 0..23, +/-780
-  uint32_t ts = 0;
-  if (!strcmp_P(XdrvMailbox.command, PSTR(D_CMND_TIMEDST))) { ts = 1; }
-
   if (XdrvMailbox.data_len > 0) {
     if (strstr(XdrvMailbox.data, ",") != nullptr) {   // Process parameter entry
       uint32_t tpos = 0;                      // Parameter index
@@ -1269,6 +1266,16 @@ void CmndTimeStd(void)
   }
   Response_P(PSTR("{\"%s\":{\"Hemisphere\":%d,\"Week\":%d,\"Month\":%d,\"Day\":%d,\"Hour\":%d,\"Offset\":%d}}"),
     XdrvMailbox.command, Settings.tflag[ts].hemis, Settings.tflag[ts].week, Settings.tflag[ts].month, Settings.tflag[ts].dow, Settings.tflag[ts].hour, Settings.toffset[ts]);
+}
+
+void CmndTimeStd(void)
+{
+  CmndTimeStdDst(0);
+}
+
+void CmndTimeDst(void)
+{
+  CmndTimeStdDst(1);
 }
 
 void CmndAltitude(void)

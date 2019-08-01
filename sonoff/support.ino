@@ -715,9 +715,16 @@ int GetCommandCode(char* destination, size_t destination_size, const char* needl
   return result;
 }
 
-int GetCommand(const char* haystack)
+bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void))
 {
-  return GetCommandCode(XdrvMailbox.command, CMDSZ, XdrvMailbox.topic, haystack);
+  bool result = false;
+
+  int command_code = GetCommandCode(XdrvMailbox.command, CMDSZ, XdrvMailbox.topic, haystack);
+  if (command_code >= 0) {
+    MyCommand[command_code]();
+    result = true;
+  }
+  return result;
 }
 
 int GetStateNumber(char *state_text)

@@ -2578,11 +2578,7 @@ bool Xdrv01(uint8_t function)
 #endif  // USE_EMULATION
       break;
     case FUNC_COMMAND:
-      int command_code = GetCommand(kWebCommands);
-      if (command_code >= 0) {
-        WebCommand[command_code]();
-        result = true;
-      }
+      result = DecodeCommand(kWebCommands, WebCommand);
       break;
   }
   return result;

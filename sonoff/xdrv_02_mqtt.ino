@@ -36,6 +36,7 @@ const char kMqttCommands[] PROGMEM =
   D_CMND_MQTTHOST "|" D_CMND_MQTTPORT "|" D_CMND_MQTTRETRY "|" D_CMND_STATETEXT "|" D_CMND_MQTTCLIENT "|"
   D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
+
 void (* const MqttCommand[])(void) PROGMEM = {
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   &CmndMqttFingerprint,
@@ -1058,11 +1059,7 @@ bool Xdrv02(uint8_t function)
         break;
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:
-        int command_code = GetCommand(kMqttCommands);
-        if (command_code >= 0) {
-          MqttCommand[command_code]();
-          result = true;
-        }
+        result = DecodeCommand(kMqttCommands, MqttCommand);
         break;
     }
   }
