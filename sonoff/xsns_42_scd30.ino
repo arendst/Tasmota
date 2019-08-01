@@ -393,7 +393,7 @@ bool Scd30CommandSensor()
         uint16_t value = 0;
         if (XdrvMailbox.data_len > 0)
         {
-          value = XdrvMailbox.payload16;
+          value = XdrvMailbox.payload;
           Scd30SetCommand(command_code, value);
         }
         else

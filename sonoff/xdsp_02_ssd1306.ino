@@ -62,24 +62,41 @@ void SSD1306InitDriver()
 
   if (XDSP_02 == Settings.display_model) {
 
+    if ((Settings.display_width != 96) && (Settings.display_width != 128)) {
+      Settings.display_width = 128;
+    }
+    if ((Settings.display_height != 16) && (Settings.display_height != 32) && (Settings.display_height != 64)) {
+      Settings.display_height = 64;
+    }
+
+    uint8_t reset_pin = -1;
+    if (pin[GPIO_OLED_RESET] < 99) {
+      reset_pin = pin[GPIO_OLED_RESET];
+    }
+
     // allocate screen buffer
     if (buffer) free(buffer);
-    buffer=(unsigned char*)calloc((SSD1306_LCDWIDTH * SSD1306_LCDHEIGHT) / 8,1);
+    buffer=(unsigned char*)calloc((Settings.display_width * Settings.display_height) / 8,1);
     if (!buffer) return;
 
     // init renderer
-    oled1306 = new Adafruit_SSD1306(SSD1306_LCDWIDTH,SSD1306_LCDHEIGHT);
+    //oled1306 = new Adafruit_SSD1306(SSD1306_LCDWIDTH,SSD1306_LCDHEIGHT);
+    oled1306 = new Adafruit_SSD1306(Settings.display_width, Settings.display_height, &Wire, reset_pin);
+    oled1306->begin(SSD1306_SWITCHCAPVCC, Settings.display_address[0],0);
     renderer=oled1306;
-    renderer->Begin(SSD1306_SWITCHCAPVCC, Settings.display_address[0],0);
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
 
+    renderer->setTextColor(1,0);
+
 #ifdef SHOW_SPLASH
+    renderer->setTextFont(0);
     renderer->setTextSize(2);
     renderer->setCursor(20,20);
     renderer->println(F("Adafruit"));
     renderer->Updateframe();
     renderer->DisplayOnff(1);
 #endif
+
   }
 }
 

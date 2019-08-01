@@ -48,12 +48,12 @@ o = switch display off
 O = switch display on  
 ax = x 0..3 set rotation angle
 t = display Tasmota time in HH:MM  
+ts = display Tasmota time in HH:MM:SS  
 T = display Tasmota date in DD.MM.YY  
 p*p =* pad text with spaces, positiv values align left, negativ values
 align right  
 s*p* = set text size (scaling factor 1\...4) (only for classic GFX + RA8876 internal font)  
-f*p* = set font (1=12, 2=24,(opt 3=8)) if font==0 the classic GFX or RA8876 internal font
-is used  
+f*p* = set font (1=12, 2=24,(opt 3=8)) if font==0 the classic GFX is used if font==7 the RA8876 internal font is used  
 C*p* = set foreground color (0,1) for black or white or 16 bit color
 code  
 B*p* = set background color (0,1) for black or white or 16 bit color
@@ -94,7 +94,7 @@ bt = button text (must end with a colon :) (max 9 chars)
 n = number up to 4 charts (0-3) + optional ticks  
 xp = x position  
 yp = y position  
-xs = x size  (if xs<0) graph is not reinitialized on second call (e.g. restart of scripter) 
+xs = x size  (if xs<0) graph is not reinitialized on second call (e.g. restart of scripter)
 ys = y size  
 t = time in minutes for total chart  
 ymin = float chart minimum y  
@@ -144,28 +144,26 @@ SPI. You can NOT use GPIO16 for software spi!
 
 **ILI9488 driver**  
 
-This color LCD display (480x320) also uses a 3 wire SPI interface. If you select the true SPI lines the driver uses hardware SPI else software SPI. (MOSI=GPIO13, SCLK=GPIO14,CS=GPIO15) the backlight on/off pin must be selected too.
+This color LCD display (480x320) uses a 3 wire hardware SPI interface. (MOSI=GPIO13, SCLK=GPIO14,CS=GPIO15) the backlight on/off pin must be selected too.
 Defines =\> USE\_SPI , USE\_DISPLAY\_ILI9488  
 
-You can NOT use GPIO16 for software spi!  
 The capacitive touch panel is connected via I2C.  
 if you want to use virtual buttons define USE_TOUCH_BUTTONS  
 
 **RA8876 driver**  
 
-This color LCD display (1024x600) uses normal SPI (with MISO) (backlight pin not needed)  
-Defines =\> USE\_SPI , USE\_DISPLAY\_RA8876  (only hardware spi supported)  
-font 0 is the build in font and is extremely fast. (size from 1..4 supported)
+This color LCD display (1024x600) uses normal hardware SPI (with MISO) (backlight pin not needed)  
+Defines =\> USE\_SPI , USE\_DISPLAY\_RA8876  
+font 7 is the build in font and is extremely fast. (size from 1..4 supported)
 over all this display is extremely fast because of hardware acceleration.
 rotation not yet supported.  
+The capacitive touch panel is connected via I2C.  
+if you want to use virtual buttons define USE_TOUCH_BUTTONS  
 (dimmer supported)  
 
 **SSD1351 driver**  
 
-This OLED color display (128x128) also uses a 3 wire SPI interface. If you
-select the true SPI lines the driver uses hardware SPI else software
-SPI. (MOSI=GPIO13, SCLK=GPIO14,CS=GPIO15)
-You can NOT use GPIO16 for software spi!  
+This OLED color display (128x128) also uses a 3 wire SPI interface. This driver uses hardware SPI (MOSI=GPIO13, SCLK=GPIO14,CS=GPIO15)
 (dimmer supported)  
 
 Defines =\> USE\_SPI , USE\_DISPLAY\_SSD1351  
@@ -212,7 +210,7 @@ DisplayText \[z\]
 // draw rectangle from x,y with width and height  
 DisplayText \[x50y50r200:100\]  
 
-you can display local sensors via rules =\>  
+you can display local sensors via rules or scripts =\>  
 
 // show sensor values and time and separation line, whiten display every
 60 minutes
@@ -242,10 +240,10 @@ rule1 on tele-BME280\#Temperature do DisplayText \[s1p21x0y0\]Temp:
 \[s1p21x0y30\]TVOC: %value% ppb endon on tele-SGP30\#eCO2 do DisplayText
 \[s1p21x0y40\]eCO2: %value% ppm \[s1p0x0y50\]Time: \[x35y50t\] endon
 
-// show graphs etc on 400 x 300 epaper % sign must be %% in arduino 2.42
+// show graphs etc on 400 x 300 epaper % sign must be %% in core 2.42
 !!!
 
-// must use arduino 2.42 due to ram size restrictions !!!
+// must use core 2.42 due to ram size restrictions !!!
 
 rule1 on tele-SHT3X-0x44\#Temperature do DisplayText \[f1p7x0y5\]%value%
 C endon on tele-SHT3X-0x44\#Humidity do DisplayText
@@ -283,7 +281,7 @@ displays.
 
 the drivers are subclasses of GFX library  
 the class hirarchie is LOWLEVEL :: Paint :: Renderer :: GFX  
-modified GFX library   
+modified (some more functions declared virtual for acceleration) GFX library    
 Renderer: the interface for Tasmota  
 Paint: the modified pixel driver for epaper  
 there are several virtual functions that can be subclassed down to
@@ -297,6 +295,9 @@ This must be set to zero on character or TFT color displays.
 
 The GFX proportional fonts can alternativly be used instead of the EPD
 fonts by selecting the fonts with \#define in the renderer driver file.
+
+only 1 SPI Display driver \#define is allowed at a time  
+
 
 **Remark for the 400x300 epaper:**
 

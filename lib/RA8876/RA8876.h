@@ -477,8 +477,8 @@ class RA8876 : public Renderer {
   void selectInternalFont(enum FontSize size, enum FontEncoding enc = RA8876_FONT_ENCODING_8859_1);
   void selectExternalFont(enum ExternalFontFamily family, enum FontSize size, enum FontEncoding enc, FontFlags flags = 0);
   int getTextSizeY(void);
-  void setTextColor(uint16_t color);
-  void setTextColor(uint16_t c, uint16_t bg);
+  //void setTextColor(uint16_t color);
+  //void setTextColor(uint16_t c, uint16_t bg);
   void setTextScale(int scale);
   void setTextSize(uint8_t s);
   void setTextScale(int xScale, int yScale);
@@ -488,14 +488,16 @@ class RA8876 : public Renderer {
   void putChars16(const uint16_t *buffer, unsigned int count);
 
   // Internal for Print class
-  size_t write(uint8_t c);
-  size_t write(const uint8_t *buffer, size_t size);
+  size_t xwrite(uint8_t c);
+  size_t xwrite(const uint8_t *buffer, size_t size);
 
   uint16_t GetColorFromIndex(uint8_t index);
   void DisplayOnff(int8_t on);
   void setRotation(uint8_t m);
   void setDrawMode(uint8_t mode);
+  void setDrawMode_reg(uint8_t mode);
   void dim(uint8_t contrast);
+  void FastString(uint16_t x,uint16_t y,uint16_t tcolor, const char* str);
 
  private:
   uint8_t  tabcolor;
@@ -555,7 +557,7 @@ class RA8876 : public Renderer {
   uint16_t addrw_x1;
   uint16_t addrw_x2;
 
-  uint16_t m_textColor;
+  //uint16_t m_textColor;
   int      m_textScaleX;
   int      m_textScaleY;
 

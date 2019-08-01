@@ -46,6 +46,13 @@ void SSD1351_InitDriver() {
 
   if (XDSP_09 == Settings.display_model) {
 
+    if (Settings.display_width != SSD1351_WIDTH) {
+      Settings.display_width = SSD1351_WIDTH;
+    }
+    if (Settings.display_height != SSD1351_HEIGHT) {
+      Settings.display_height = SSD1351_HEIGHT;
+    }
+
     buffer=0;
 
     // default colors

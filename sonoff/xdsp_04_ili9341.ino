@@ -84,6 +84,12 @@ void Ili9341InitDriver(void)
   }
 
   if (XDSP_04 == Settings.display_model) {
+    if (Settings.display_width != ILI9341_TFTWIDTH) {
+      Settings.display_width = ILI9341_TFTWIDTH;
+    }
+    if (Settings.display_height != ILI9341_TFTHEIGHT) {
+      Settings.display_height = ILI9341_TFTHEIGHT;
+    }
     tft = new Adafruit_ILI9341(pin[GPIO_SPI_CS], pin[GPIO_SPI_DC]);
     tft->begin();
 

@@ -40,7 +40,7 @@ TouchLocation pLoc;
 uint8_t ctouch_counter = 0;
 
 #ifdef USE_TOUCH_BUTTONS
-extern Adafruit_GFX_Button *buttons[];
+extern VButton *buttons[];
 #endif
 
 extern uint8_t *buffer;
@@ -58,6 +58,12 @@ void RA8876_InitDriver()
 
   if (XDSP_10 == Settings.display_model) {
 
+    if (Settings.display_width != RA8876_TFTWIDTH) {
+      Settings.display_width = RA8876_TFTWIDTH;
+    }
+    if (Settings.display_height != RA8876_TFTHEIGHT) {
+      Settings.display_height = RA8876_TFTHEIGHT;
+    }
     buffer=0;
 
     // default colors
@@ -123,8 +129,8 @@ if (2 == ctouch_counter) {
     if (renderer) {
 
       // rotation not supported
-      pLoc.x=renderer->width()-pLoc.x;
-      pLoc.y=renderer->height()-pLoc.y;
+      pLoc.x=RA8876_TFTWIDTH-pLoc.x;
+      pLoc.y=RA8876_TFTHEIGHT-pLoc.y;
 
       /*
       uint8_t rot=renderer->getRotation();
@@ -162,7 +168,7 @@ if (2 == ctouch_counter) {
                     if (!SendKey(0, count+1, POWER_TOGGLE)) {
                       ExecuteCommandPower(count+1, POWER_TOGGLE, SRC_BUTTON);
                     }
-                    buttons[count]->drawButton(bitRead(power,count));
+                    buttons[count]->xdrawButton(bitRead(power,count));
                   } else {
                     // virtual button
                     const char *cp;
@@ -175,7 +181,7 @@ if (2 == ctouch_counter) {
                       buttons[count]->vpower|=0x80;
                       cp="PBT";
                     }
-                    buttons[count]->drawButton(buttons[count]->vpower&0x80);
+                    buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
                     RA8876_MQTT(count,cp);
                   }
                 }
@@ -195,7 +201,7 @@ if (2 == ctouch_counter) {
             buttons[count]->vpower&=0x7f;
             RA8876_MQTT(count,"PBT");
           }
-          buttons[count]->drawButton(buttons[count]->vpower&0x80);
+          buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
         }
       }
     }

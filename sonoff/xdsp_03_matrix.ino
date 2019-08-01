@@ -214,6 +214,9 @@ void MatrixInitDriver(void)
         }
       }
 
+      Settings.display_width = mtx_matrices * 8;
+      Settings.display_height = 8;
+
       MatrixInitMode();
     }
   }

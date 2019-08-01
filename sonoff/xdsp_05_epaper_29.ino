@@ -23,6 +23,9 @@
 
 #define XDSP_05                5
 
+#define EPD_TOP                12
+#define EPD_FONT_HEIGTH        12
+
 #define COLORED                1
 #define UNCOLORED              0
 
@@ -48,6 +51,12 @@ void EpdInitDriver29()
   }
 
   if (XDSP_05 == Settings.display_model) {
+    if (Settings.display_width != EPD_WIDTH) {
+      Settings.display_width = EPD_WIDTH;
+    }
+    if (Settings.display_height != EPD_HEIGHT) {
+      Settings.display_height = EPD_HEIGHT;
+    }
 
     // allocate screen buffer
     if (buffer) free(buffer);
@@ -58,26 +67,24 @@ void EpdInitDriver29()
     epd  = new Epd(EPD_WIDTH,EPD_HEIGHT);
 
     // whiten display with full update, takes 3 seconds
-#ifdef USE_SPI
-    if  ((pin[GPIO_SSPI_CS]<99) && (pin[GPIO_SSPI_MOSI]<99) && (pin[GPIO_SSPI_SCLK]<99)){
-      epd->Begin(pin[GPIO_SSPI_CS],pin[GPIO_SSPI_MOSI],pin[GPIO_SSPI_SCLK]);
-    } else {
-      free(buffer);
-      return;
-    }
-#else
-    if ((pin[GPIO_SPI_CS]<99) && (pin[GPIO_SPI_MOSI]<99) && (pin[GPIO_SPI_CLK]<99)) {
+    if ((pin[GPIO_SPI_CS] < 99) && (pin[GPIO_SPI_CLK] < 99) && (pin[GPIO_SPI_MOSI] < 99)) {
       epd->Begin(pin[GPIO_SPI_CS],pin[GPIO_SPI_MOSI],pin[GPIO_SPI_CLK]);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EPD: HardSPI CS %d, CLK %d, MOSI %d"),pin[GPIO_SPI_CS], pin[GPIO_SPI_CLK], pin[GPIO_SPI_MOSI]);
+    }
+    else if ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && (pin[GPIO_SSPI_MOSI] < 99)) {
+      epd->Begin(pin[GPIO_SSPI_CS],pin[GPIO_SSPI_MOSI],pin[GPIO_SSPI_SCLK]);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EPD: SoftSPI CS %d, CLK %d, MOSI %d"),pin[GPIO_SSPI_CS], pin[GPIO_SSPI_SCLK], pin[GPIO_SSPI_MOSI]);
     } else {
       free(buffer);
       return;
     }
-#endif
 
     renderer = epd;
     epd->Init(DISPLAY_INIT_FULL);
     epd->Init(DISPLAY_INIT_PARTIAL);
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+
+    renderer->setTextColor(1,0);
 
 #ifdef SHOW_SPLASH
     // Welcome text
@@ -176,18 +183,14 @@ void EpdRefresh29(void)  // Every second
 bool Xdsp05(byte function)
 {
   bool result = false;
-
-  //if (spi_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {
       EpdInitDriver29();
     }
     else if (XDSP_05 == Settings.display_model) {
-
       switch (function) {
         case FUNC_DISPLAY_MODEL:
           result = true;
           break;
-
 #ifdef USE_DISPLAY_MODES1TO5
         case FUNC_DISPLAY_EVERY_SECOND:
           EpdRefresh29();
@@ -195,7 +198,6 @@ bool Xdsp05(byte function)
 #endif  // USE_DISPLAY_MODES1TO5
       }
     }
-  //}
   return result;
 }
 

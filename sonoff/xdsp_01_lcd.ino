@@ -68,6 +68,8 @@ void LcdInitDriver(void)
   }
 
   if (XDSP_01 == Settings.display_model) {
+    Settings.display_width = Settings.display_cols[0];
+    Settings.display_height = Settings.display_rows;
     lcd = new LiquidCrystal_I2C(Settings.display_address[0], Settings.display_cols[0], Settings.display_rows);
 
 #ifdef USE_DISPLAY_MODES1TO5

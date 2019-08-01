@@ -62,6 +62,13 @@ void SH1106InitDriver()
 
   if (XDSP_07 == Settings.display_model) {
 
+    if (Settings.display_width != SH1106_LCDWIDTH) {
+      Settings.display_width = SH1106_LCDWIDTH;
+    }
+    if (Settings.display_height != SH1106_LCDHEIGHT) {
+      Settings.display_height = SH1106_LCDHEIGHT;
+    }
+
     // allocate screen buffer
     if (buffer) free(buffer);
     buffer=(unsigned char*)calloc((SH1106_LCDWIDTH * SH1106_LCDHEIGHT) / 8,1);
@@ -72,8 +79,10 @@ void SH1106InitDriver()
     renderer=oled1106;
     renderer->Begin(SH1106_SWITCHCAPVCC, Settings.display_address[0],0);
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    renderer->setTextColor(1,0);
 
 #ifdef SHOW_SPLASH
+    renderer->setTextFont(0);
     renderer->setTextSize(2);
     renderer->setCursor(20,20);
     renderer->println(F("Adafruit"));

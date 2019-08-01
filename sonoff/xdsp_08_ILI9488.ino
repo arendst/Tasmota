@@ -48,7 +48,7 @@ extern uint8_t color_type;
 ILI9488 *ili9488;
 
 #ifdef USE_TOUCH_BUTTONS
-extern Adafruit_GFX_Button *buttons[];
+extern VButton *buttons[];
 #endif
 
 extern const uint16_t picture[];
@@ -63,6 +63,13 @@ void ILI9488_InitDriver()
   }
 
   if (XDSP_08 == Settings.display_model) {
+
+    if (Settings.display_width != ILI9488_TFTWIDTH) {
+      Settings.display_width = ILI9488_TFTWIDTH;
+    }
+    if (Settings.display_height != ILI9488_TFTHEIGHT) {
+      Settings.display_height = ILI9488_TFTHEIGHT;
+    }
 
     // disable screen buffer
     buffer=NULL;
@@ -161,7 +168,7 @@ if (2 == ctouch_counter) {
                     if (!SendKey(0, count+1, POWER_TOGGLE)) {
                       ExecuteCommandPower(count+1, POWER_TOGGLE, SRC_BUTTON);
                     }
-                    buttons[count]->drawButton(bitRead(power,count));
+                    buttons[count]->xdrawButton(bitRead(power,count));
                   } else {
                     // virtual button
                     const char *cp;
@@ -174,7 +181,7 @@ if (2 == ctouch_counter) {
                       buttons[count]->vpower|=0x80;
                       cp="PBT";
                     }
-                    buttons[count]->drawButton(buttons[count]->vpower&0x80);
+                    buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
                     ILI9488_MQTT(count,cp);
                   }
                 }
@@ -194,7 +201,7 @@ if (2 == ctouch_counter) {
             buttons[count]->vpower&=0x7f;
             ILI9488_MQTT(count,"PBT");
           }
-          buttons[count]->drawButton(buttons[count]->vpower&0x80);
+          buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
         }
       }
     }

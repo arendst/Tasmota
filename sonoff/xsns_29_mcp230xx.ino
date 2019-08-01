@@ -784,8 +784,6 @@ bool Xsns29(uint8_t function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_MQTT_DATA:
-        break;
       case FUNC_EVERY_SECOND:
         MCP230xx_Detect();
         if (mcp230xx_int_counter_en) {

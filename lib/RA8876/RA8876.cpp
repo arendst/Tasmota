@@ -654,7 +654,7 @@ bool RA8876::begin(void) {
   m_height = m_displayInfo->height;
   m_depth  = 16;
   m_oscClock = 10000;  // 10000kHz or 10MHz
-  m_textColor = 0xFFFF; // White
+  textcolor = 0xFFFF; // White
   textbgcolor = 0; // black
   m_fontRomInfo.present = false;  // No external font ROM chip
 
@@ -764,7 +764,8 @@ void RA8876::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color) {
 
 void RA8876::setTextSize(uint8_t s) {
    setTextScale(s, s);
-   textsize=s;
+   textsize_x=s;
+   textsize_y=s;
    //Serial.printf("scale %d\n",s);
 }
 
@@ -1168,10 +1169,10 @@ uint8_t RA8876::internalFontEncoding(enum FontEncoding enc) {
 
 void RA8876::setTextMode(void) {
   // Restore text colour
-  m_textColor=textcolor;
-  writeReg(RA8876_REG_FGCR, m_textColor >> 11 << 3);
-  writeReg(RA8876_REG_FGCG, ((m_textColor >> 5) & 0x3F) << 2);
-  writeReg(RA8876_REG_FGCB, (m_textColor & 0x1F) << 3);
+  textcolor=textcolor;
+  writeReg(RA8876_REG_FGCR, textcolor >> 11 << 3);
+  writeReg(RA8876_REG_FGCG, ((textcolor >> 5) & 0x3F) << 2);
+  writeReg(RA8876_REG_FGCB, (textcolor & 0x1F) << 3);
 
   writeReg(RA8876_REG_BGCR, textbgcolor >> 11 << 3);
   writeReg(RA8876_REG_BGCG, ((textbgcolor >> 5) & 0x3F) << 2);
@@ -1182,6 +1183,13 @@ void RA8876::setTextMode(void) {
   // Enable text mode
   uint8_t icr = readReg(RA8876_REG_ICR);
   writeReg(RA8876_REG_ICR, icr | 0x04);
+
+  if (textcolor==textbgcolor) {
+    setDrawMode_reg(1);
+  } else {
+    setDrawMode_reg(0);
+  }
+
 }
 
 void RA8876::setGraphicsMode(void) {
@@ -1211,6 +1219,10 @@ void RA8876::selectInternalFont(enum FontSize size, enum FontEncoding enc) {
 
 void RA8876::setDrawMode(uint8_t mode) {
   drawmode=mode;
+  setDrawMode_reg(mode);
+}
+
+void RA8876::setDrawMode_reg(uint8_t mode)  {
   SPI.beginTransaction(m_spiSettings);
   uint8_t ccr1 = readReg(RA8876_REG_CCR1);
   if (mode) {
@@ -1243,14 +1255,17 @@ void RA8876::selectExternalFont(enum ExternalFontFamily family, enum FontSize si
   SPI.endTransaction();
 }
 
+/*
 void RA8876::setTextColor(uint16_t color) {
-   m_textColor = color;
+   textcolor = color;
+   textbgcolor = color;
  };
 
  void RA8876::setTextColor(uint16_t c, uint16_t bg) {
-   m_textColor = c;
+   textcolor = c;
    textbgcolor=bg;
  }
+ */
 
 void RA8876::setTextScale(int scale) {
    setTextScale(scale, scale);
@@ -1317,13 +1332,16 @@ void RA8876::putChars16(const uint16_t *buffer, unsigned int count) {
   SPI.endTransaction();
 }
 
-size_t RA8876::write(uint8_t c) {
-  return write(&c, 1);
+
+extern uint8_t wr_redir;
+
+size_t RA8876::xwrite(uint8_t c) {
+  return xwrite(&c, 1);
 };
 
 //#define RA8876_DEBUG
 
-size_t RA8876::write(const uint8_t *buffer, size_t size) {
+size_t RA8876::xwrite(const uint8_t *buffer, size_t size) {
 
 #ifdef RA8876_DEBUG
   char buff[128];
@@ -1376,4 +1394,10 @@ size_t RA8876::write(const uint8_t *buffer, size_t size) {
   #endif
 
   return size;
+}
+
+void RA8876::FastString(uint16_t x,uint16_t y,uint16_t tcolor, const char* str) {
+  setCursor(x,y);
+  setTextColor(tcolor,textbgcolor);
+  xwrite((uint8_t*)str,strlen(str));
 }

@@ -87,6 +87,7 @@ uint8_t kWsRepeat[5] = {
 
 uint8_t ws_show_next = 1;
 bool ws_suspend_update = false;
+
 /********************************************************************************************/
 
 void Ws2812StripShow(void)
@@ -119,7 +120,6 @@ int mod(int a, int b)
    return ret;
 }
 
-
 void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, float offset)
 {
 #if (USE_WS2812_CTYPE > NEO_3LED)
@@ -128,7 +128,7 @@ void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, float offse
   RgbColor color;
 #endif
 
-  uint16_t mod_position = mod(position, (int)Settings.light_pixels);
+  uint32_t mod_position = mod(position, (int)Settings.light_pixels);
 
   color = strip->GetPixelColor(mod_position);
   float dimmer = 100 / (float)Settings.light_dimmer;
@@ -138,8 +138,12 @@ void Ws2812UpdatePixelColor(int position, struct WsColor hand_color, float offse
   strip->SetPixelColor(mod_position, color);
 }
 
-void Ws2812UpdateHand(int position, uint8_t index)
+void Ws2812UpdateHand(int position, uint32_t index)
 {
+  uint32_t width = Settings.light_width;
+  if (index < WS_MARKER) { width = Settings.ws_width[index]; }
+  if (!width) { return; }  // Skip
+
   position = (position + Settings.light_rotation) % Settings.light_pixels;
 
   if (Settings.flag.ws_clock_reverse) position = Settings.light_pixels -position;
@@ -147,8 +151,7 @@ void Ws2812UpdateHand(int position, uint8_t index)
 
   Ws2812UpdatePixelColor(position, hand_color, 1);
 
-  uint8_t range = 1;
-  if (index < WS_MARKER) range = ((Settings.ws_width[index] -1) / 2) +1;
+  uint32_t range = ((width -1) / 2) +1;
   for (uint32_t h = 1; h < range; h++) {
     float offset = (float)(range - h) / (float)range;
     Ws2812UpdatePixelColor(position -h, hand_color, offset);
@@ -173,18 +176,18 @@ void Ws2812Clock(void)
   Ws2812StripShow();
 }
 
-void Ws2812GradientColor(uint8_t schemenr, struct WsColor* mColor, uint16_t range, uint16_t gradRange, uint16_t i)
+void Ws2812GradientColor(uint32_t schemenr, struct WsColor* mColor, uint32_t range, uint32_t gradRange, uint32_t i)
 {
 /*
  * Compute the color of a pixel at position i using a gradient of the color scheme.
  * This function is used internally by the gradient function.
  */
   ColorScheme scheme = kSchemes[schemenr];
-  uint16_t curRange = i / range;
-  uint16_t rangeIndex = i % range;
-  uint16_t colorIndex = rangeIndex / gradRange;
-  uint16_t start = colorIndex;
-  uint16_t end = colorIndex +1;
+  uint32_t curRange = i / range;
+  uint32_t rangeIndex = i % range;
+  uint32_t colorIndex = rangeIndex / gradRange;
+  uint32_t start = colorIndex;
+  uint32_t end = colorIndex +1;
   if (curRange % 2 != 0) {
     start = (scheme.count -1) - start;
     end = (scheme.count -1) - end;
@@ -198,7 +201,7 @@ void Ws2812GradientColor(uint8_t schemenr, struct WsColor* mColor, uint16_t rang
   mColor->blue = (uint8_t)fmyBlu;
 }
 
-void Ws2812Gradient(uint8_t schemenr)
+void Ws2812Gradient(uint32_t schemenr)
 {
 /*
  * This routine courtesy Tony DiCola (Adafruit)
@@ -213,13 +216,13 @@ void Ws2812Gradient(uint8_t schemenr)
 #endif
 
   ColorScheme scheme = kSchemes[schemenr];
-  if (scheme.count < 2) return;
+  if (scheme.count < 2) { return; }
 
-  uint8_t repeat = kWsRepeat[Settings.light_width];  // number of scheme.count per ledcount
-  uint16_t range = (uint16_t)ceil((float)Settings.light_pixels / (float)repeat);
-  uint16_t gradRange = (uint16_t)ceil((float)range / (float)(scheme.count - 1));
-  uint16_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
-  uint16_t offset = speed > 0 ? strip_timer_counter / speed : 0;
+  uint32_t repeat = kWsRepeat[Settings.light_width];  // number of scheme.count per ledcount
+  uint32_t range = (uint32_t)ceil((float)Settings.light_pixels / (float)repeat);
+  uint32_t gradRange = (uint32_t)ceil((float)range / (float)(scheme.count - 1));
+  uint32_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
+  uint32_t offset = speed > 0 ? strip_timer_counter / speed : 0;
 
   WsColor oldColor, currentColor;
   Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
@@ -246,7 +249,7 @@ void Ws2812Gradient(uint8_t schemenr)
   Ws2812StripShow();
 }
 
-void Ws2812Bars(uint8_t schemenr)
+void Ws2812Bars(uint32_t schemenr)
 {
 /*
  * This routine courtesy Tony DiCola (Adafruit)
@@ -259,20 +262,19 @@ void Ws2812Bars(uint8_t schemenr)
 #else
   RgbColor c;
 #endif
-  uint16_t i;
 
   ColorScheme scheme = kSchemes[schemenr];
 
-  uint16_t maxSize = Settings.light_pixels / scheme.count;
-  if (kWidth[Settings.light_width] > maxSize) maxSize = 0;
+  uint32_t maxSize = Settings.light_pixels / scheme.count;
+  if (kWidth[Settings.light_width] > maxSize) { maxSize = 0; }
 
-  uint16_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
-  uint8_t offset = speed > 0 ? strip_timer_counter / speed : 0;
+  uint32_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
+  uint32_t offset = (speed > 0) ? strip_timer_counter / speed : 0;
 
   WsColor mcolor[scheme.count];
   memcpy(mcolor, scheme.colors, sizeof(mcolor));
   float dimmer = 100 / (float)Settings.light_dimmer;
-  for (i = 0; i < scheme.count; i++) {
+  for (uint32_t i = 0; i < scheme.count; i++) {
     float fmyRed = (float)mcolor[i].red / dimmer;
     float fmyGrn = (float)mcolor[i].green / dimmer;
     float fmyBlu = (float)mcolor[i].blue / dimmer;
@@ -280,9 +282,9 @@ void Ws2812Bars(uint8_t schemenr)
     mcolor[i].green = (uint8_t)fmyGrn;
     mcolor[i].blue = (uint8_t)fmyBlu;
   }
-  uint8_t colorIndex = offset % scheme.count;
-  for (i = 0; i < Settings.light_pixels; i++) {
-    if (maxSize) colorIndex = ((i + offset) % (scheme.count * kWidth[Settings.light_width])) / kWidth[Settings.light_width];
+  uint32_t colorIndex = offset % scheme.count;
+  for (uint32_t i = 0; i < Settings.light_pixels; i++) {
+    if (maxSize) { colorIndex = ((i + offset) % (scheme.count * kWidth[Settings.light_width])) / kWidth[Settings.light_width]; }
     c.R = mcolor[colorIndex].red;
     c.G = mcolor[colorIndex].green;
     c.B = mcolor[colorIndex].blue;
@@ -313,7 +315,7 @@ void Ws2812Clear(void)
   ws_show_next = 1;
 }
 
-void Ws2812SetColor(uint16_t led, uint8_t red, uint8_t green, uint8_t blue, uint8_t white)
+void Ws2812SetColor(uint32_t led, uint8_t red, uint8_t green, uint8_t blue, uint8_t white)
 {
 #if (USE_WS2812_CTYPE > NEO_3LED)
   RgbwColor lcolor;
@@ -350,7 +352,7 @@ void Ws2812ForceUpdate (void) {
   ws_show_next = 1;
 }
 
-char* Ws2812GetColor(uint16_t led, char* scolor)
+char* Ws2812GetColor(uint32_t led, char* scolor)
 {
   uint8_t sl_ledcolor[4];
 
@@ -374,7 +376,7 @@ char* Ws2812GetColor(uint16_t led, char* scolor)
   return scolor;
 }
 
-void Ws2812ShowScheme(uint8_t scheme)
+void Ws2812ShowScheme(uint32_t scheme)
 {
   switch (scheme) {
     case 0:  // Clock

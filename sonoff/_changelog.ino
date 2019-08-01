@@ -1,11 +1,23 @@
 /*********************************************************************************************\
+ * 6.6.0.3 20190725
+ * Change filename of configuration backup from using FriendlyName1 to Hostname solving diacritic issues (#2422)
+ * Upgrade library IRRemoteEsp8266 to 2.6.4, now using sendPioneer()
+ * Add support for MAX31865 Thermocouple sensor by Alberto Lopez Siemens
+ * Add option 0 to Width1 (Marker), Width2 (Second), Width3 (Minute) and Width4 (Hour) disabling display (#6152)
+ * Add MqttCount metric to STATE (#6155)
+ *
  * 6.6.0.2 20190714
+ * Change commands Var and Mem to show all parameters when no index is given (#6107)
+ * Add command SetOption67 0/1 to disable or enable a buzzer as used in iFan03
+ * Add command DisplayWidth to set pixel width on supported devices
+ * Add command DisplayHeight to set pixel height on supported devices
  * Add support for Sonoff iFan03 as module 71 (#5988)
  * Add support for a buzzer
- * Add command SetOption67 0/1 to disable or enable a buzzer as used in iFan03
- * Add support IRSend long press ('repeat' feature from IRRemoteESP8266) (#6074)
- * Add support for optional IRHVAC Midea/Komeco protocol (#3227)
- * Fix IRSend for Pioneer devices (#6100)
+ * Add support for IRSend long press ('repeat' feature from IRRemoteESP8266) (#6074)
+ * Add support for IRHVAC Midea/Komeco protocol (#3227)
+ * Add support for more IRSend protocols enabled in my_user_config.h
+ * Add support for IRSend Pioneer protocol (#6100)
+ * Add Oled reset GPIO option "OLED reset"
  *
  * 6.6.0.1 20190708
  * Fix Domoticz battery level set to 100 if define USE_ADC_VCC is not used (#6033)
@@ -31,7 +43,7 @@
  * Refactor TLS based on BearSSL, warning breaking change for fingerprints validation
  * Refactor management of lights, using classes and integers instead of floats
  * Refactor UDP initial message handling from string to char using static memory and add debug info (#5505)
- * Refactor IRsend and receive for 64-bit support (#5523)
+ * Refactor IRSend and receive for 64-bit support (#5523)
  * Refactor MQTT which might solve issue (#5755)
  * Refactor IRSend by using heap when more than 199 values need to be send. May need increase of define MQTT_MAX_PACKET_SIZE too (#5950)
  * Refactor double to float in rules, and replaced trigonometric functions from stdlib with smaller versions (#6005)

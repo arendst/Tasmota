@@ -238,7 +238,7 @@
 //#define MY_LANGUAGE            sk-SK           // Slovak in Slovakia
 //#define MY_LANGUAGE            sv-SE           // Swedish in Sweden
 //#define MY_LANGUAGE            tr-TR           // Turkish in Turkey
-//#define MY_LANGUAGE            uk-UK           // Ukrainian in Ukrain
+//#define MY_LANGUAGE            uk-UK           // Ukrainian in Ukraine
 //#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
 //#define MY_LANGUAGE            zh-TW           // Chinese (Traditional) in Taiwan
 
@@ -426,6 +426,11 @@
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)
 
 //#define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
+//#define USE_MAX31865                             // Add support for MAX31865 RTD sensors using softSPI
+  #define MAX31865_PTD_WIRES  2                 // PTDs come in several flavors. Pick yours
+  #define MAX31865_PTD_RES    100               // Nominal PTD resistance at 0°C (100Ω for a PT100, 1000Ω for a PT1000, YMMV!)
+  #define MAX31865_REF_RES    430               // Reference resistor (Usually 430Ω for a PT100, 4300Ω for a PT1000)
+  #define MAX31865_PTD_BIAS   0                 // To calibrate your not-so-good PTD
 
 // -- IR Remote features --------------------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k3 code, 0k3 mem, 48 iram)
@@ -436,6 +441,7 @@
 //  #define USE_IR_SEND_MITSUBISHI                 // Support IRsend Mitsubishi protocol
   #define USE_IR_SEND_NEC                        // Support IRsend NEC protocol
   #define USE_IR_SEND_PANASONIC                  // Support IRsend Panasonic protocol
+  #define USE_IR_SEND_PIONEER                    // Support IRsend Pioneer protocol
   #define USE_IR_SEND_RC5                        // Support IRsend Philips RC5 protocol
   #define USE_IR_SEND_RC6                        // Support IRsend Philips RC6 protocol
   #define USE_IR_SEND_SAMSUNG                    // Support IRsend Samsung protocol
@@ -443,7 +449,6 @@
 //  #define USE_IR_SEND_SHARP                      // Support IRsend Sharp protocol
   #define USE_IR_SEND_SONY                       // Support IRsend Sony protocol
 //  #define USE_IR_SEND_WHYNTER                    // Support IRsend Whynter protocol
-  #define USE_IR_SEND_PIONEER                    // Support IRsend Pioneer protocol
 
 //  #define USE_IR_HVAC                            // Support for HVAC systems using IR (+3k5 code)
     #define USE_IR_HVAC_TOSHIBA                  // Support IRhvac Toshiba protocol

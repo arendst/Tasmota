@@ -48,6 +48,13 @@ void EpdInitDriver42()
 
   if (XDSP_06 == Settings.display_model) {
 
+    if (Settings.display_width != EPD_WIDTH42) {
+      Settings.display_width = EPD_WIDTH42;
+    }
+    if (Settings.display_height != EPD_HEIGHT42) {
+      Settings.display_height = EPD_HEIGHT42;
+    }
+
     // allocate screen buffer
     if (buffer) free(buffer);
     buffer=(unsigned char*)calloc((EPD_WIDTH42 * EPD_HEIGHT42) / 8,1);
@@ -86,6 +93,7 @@ void EpdInitDriver42()
     epd42->ClearFrame();
     renderer->Updateframe();
     delay(3000);
+    renderer->setTextColor(1,0);
 
 #ifdef SHOW_SPLASH
     // Welcome text
