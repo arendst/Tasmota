@@ -108,8 +108,21 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
   #define MAX_EXPRESSION_OPERATOR_PRIORITY    4
 #endif  // USE_EXPRESSION
 
-enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_MULT, CMND_SCALE, CMND_CALC_RESOLUTION, CMND_SUBSCRIBE, CMND_UNSUBSCRIBE };
-const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION "|" D_CMND_SUBSCRIBE "|" D_CMND_UNSUBSCRIBE ;
+const char kRulesCommands[] PROGMEM =
+  D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|"
+  D_CMND_ADD "|"  D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION
+#ifdef SUPPORT_MQTT_EVENT
+  "|" D_CMND_SUBSCRIBE "|" D_CMND_UNSUBSCRIBE
+#endif
+  ;
+
+void (* const RulesCommand[])(void) PROGMEM = {
+  &CmndRule, &CmndRuleTimer, &CmndEvent, &CmndVariable, &CmndMemory,
+  &CmndAddition, &CmndSubtract, &CmndMultiply, &CmndScale, &CmndCalcResolution
+#ifdef SUPPORT_MQTT_EVENT
+  , &CmndSubscribe, &CmndUnsubscribe
+#endif
+  };
 
 #ifdef SUPPORT_MQTT_EVENT
   #include <LinkedList.h>                 // Import LinkedList library
@@ -119,7 +132,7 @@ const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMN
     String Key;
   } MQTT_Subscription;
   LinkedList<MQTT_Subscription> subscriptions;
-#endif    //SUPPORT_MQTT_EVENT
+#endif  // SUPPORT_MQTT_EVENT
 
 String rules_event_value;
 unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
@@ -459,7 +472,7 @@ void RulesEvery50ms(void)
           if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
 #else
           if (pin[GPIO_SWT1 +i] < 99) {
-#endif // USE_TM1638
+#endif  // USE_TM1638
             bool swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (swm ^ SwitchLastState(i)));
             RulesProcessEvent(json_event);
@@ -677,19 +690,19 @@ bool RulesMqttData(void)
  *      Subscribe
  *        Subscribe command without any parameter will list all topics currently subscribed.
  * Input:
- *      data      - A char buffer with all the parameters
- *      data_len  - Length of the parameters
+ *      XdrvMailbox.data      - A char buffer with all the parameters
+ *      XdrvMailbox.data_len  - Length of the parameters
  * Return:
  *      A string include subscribed event, topic and key.
  */
-String RulesSubscribe(const char *data, int data_len)
+void CmndSubscribe(void)
 {
   MQTT_Subscription subscription_item;
   String events;
-  if (data_len > 0) {
-    char parameters[data_len+1];
-    memcpy(parameters, data, data_len);
-    parameters[data_len] = '\0';
+  if (XdrvMailbox.data_len > 0) {
+    char parameters[XdrvMailbox.data_len+1];
+    memcpy(parameters, XdrvMailbox.data, XdrvMailbox.data_len);
+    parameters[XdrvMailbox.data_len] = '\0';
     String event_name, topic, key;
 
     char * pos = strtok(parameters, ",");
@@ -748,28 +761,28 @@ String RulesSubscribe(const char *data, int data_len)
         + subscription_item.Key + "; ");
     }
   }
-  return events;
+  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, events.c_str());
 }
 
 /********************************************************************************************/
 /*
  * Unsubscribe specified MQTT event. If no event specified, Unsubscribe all.
  * Command Unsubscribe format:
- *      Unsubscribe [<event_name>]
+ *      UnSubscribe [<event_name>]
  * Input:
- *      data      - Event name
- *      data_len  - Length of the parameters
+ *      XdrvMailbox.data      - Event name
+ *      XdrvMailbox.data_len  - Length of the parameters
  * Return:
  *      list all the events unsubscribed.
  */
-String RulesUnsubscribe(const char * data, int data_len)
+void CmndUnsubscribe(void)
 {
   MQTT_Subscription subscription_item;
   String events;
-  if (data_len > 0) {
+  if (XdrvMailbox.data_len > 0) {
     for (uint32_t index = 0; index < subscriptions.size(); index++) {
       subscription_item = subscriptions.get(index);
-      if (subscription_item.Event.equalsIgnoreCase(data)) {
+      if (subscription_item.Event.equalsIgnoreCase(XdrvMailbox.data)) {
         String stopic = subscription_item.Topic + "/#";
         MqttUnsubscribe(stopic.c_str());
         events = subscription_item.Event;
@@ -778,7 +791,7 @@ String RulesUnsubscribe(const char * data, int data_len)
       }
     }
   } else {
-    //If did not specify the event name, unsubscribe all event
+    // If did not specify the event name, unsubscribe all event
     String stopic;
     while (subscriptions.size() > 0) {
       events.concat(subscriptions.get(0).Event + "; ");
@@ -787,9 +800,10 @@ String RulesUnsubscribe(const char * data, int data_len)
       subscriptions.remove(0);
     }
   }
-  return events;
+  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, events.c_str());
 }
-#endif //     SUPPORT_MQTT_EVENT
+
+#endif  // SUPPORT_MQTT_EVENT
 
 #ifdef USE_EXPRESSION
 /********************************************************************************************/
@@ -1093,19 +1107,16 @@ float evaluateExpression(const char * expression, unsigned int len)
   }
   return object_values.get(0);
 }
-#endif          //USE_EXPRESSION
+#endif  // USE_EXPRESSION
 
-bool RulesCommand(void)
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+void CmndRule(void)
 {
-  char command[CMDSZ];
-  bool serviced = true;
   uint8_t index = XdrvMailbox.index;
-
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kRulesCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
-  }
-  else if ((CMND_RULE == command_code) && (index > 0) && (index <= MAX_RULE_SETS)) {
+  if ((index > 0) && (index <= MAX_RULE_SETS)) {
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules[index -1]))) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10)) {
         switch (XdrvMailbox.payload) {
@@ -1148,17 +1159,21 @@ bool RulesCommand(void)
       rules_triggers[index -1] = 0;  // Reset once flag
     }
     snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}"),
-      command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
+      XdrvMailbox.command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
       GetStateText(bitRead(Settings.rule_stop, index -1)), sizeof(Settings.rules[index -1]) - strlen(Settings.rules[index -1]) -1, Settings.rules[index -1]);
   }
-  else if ((CMND_RULETIMER == command_code) && (index > 0) && (index <= MAX_RULE_TIMERS)) {
+}
+
+void CmndRuleTimer(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_TIMERS)) {
     if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
       float timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
-      rules_timer[index -1] = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
+      rules_timer[XdrvMailbox.index -1] = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
 #else
-      rules_timer[index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
-#endif      //USE_EXPRESSION
+      rules_timer[XdrvMailbox.index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
+#endif  // USE_EXPRESSION
     }
     mqtt_data[0] = '\0';
     for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
@@ -1166,13 +1181,19 @@ bool RulesCommand(void)
     }
     ResponseJsonEnd();
   }
-  else if (CMND_EVENT == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      strlcpy(event_data, XdrvMailbox.data, sizeof(event_data));
-    }
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+}
+
+void CmndEvent(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    strlcpy(event_data, XdrvMailbox.data, sizeof(event_data));
   }
-  else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
+  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_DONE);
+}
+
+void CmndVariable(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (!XdrvMailbox.usridx) {
       mqtt_data[0] = '\0';
       for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
@@ -1182,16 +1203,20 @@ bool RulesCommand(void)
     } else {
       if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-        dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, vars[index -1]);
+        dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
 #else
-        strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
-#endif      //USE_EXPRESSION
-        bitSet(vars_event, index -1);
+        strlcpy(vars[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[XdrvMailbox.index -1]));
+#endif  // USE_EXPRESSION
+        bitSet(vars_event, XdrvMailbox.index -1);
       }
-      Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+      Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, vars[XdrvMailbox.index -1]);
     }
   }
-  else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
+}
+
+void CmndMemory(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_MEMS)) {
     if (!XdrvMailbox.usridx) {
       mqtt_data[0] = '\0';
       for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
@@ -1201,46 +1226,64 @@ bool RulesCommand(void)
     } else {
       if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-        dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, Settings.mems[index -1]);
+        dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, Settings.mems[XdrvMailbox.index -1]);
 #else
-        strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
-#endif      //USE_EXPRESSION
-        bitSet(mems_event, index -1);
+        strlcpy(Settings.mems[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[XdrvMailbox.index -1]));
+#endif  // USE_EXPRESSION
+        bitSet(mems_event, XdrvMailbox.index -1);
       }
-      Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
+      Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.mems[XdrvMailbox.index -1]);
     }
   }
-  else if (CMND_CALC_RESOLUTION == command_code) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
-      Settings.flag2.calc_resolution = XdrvMailbox.payload;
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.flag2.calc_resolution);
+}
+
+void CmndCalcResolution(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
+    Settings.flag2.calc_resolution = XdrvMailbox.payload;
   }
-  else if ((CMND_ADD == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
+  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.calc_resolution);
+}
+
+void CmndAddition(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      float tempvar = CharToFloat(vars[index -1]) + CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
-      bitSet(vars_event, index -1);
+      float tempvar = CharToFloat(vars[XdrvMailbox.index -1]) + CharToFloat(XdrvMailbox.data);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
+      bitSet(vars_event, XdrvMailbox.index -1);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, vars[XdrvMailbox.index -1]);
   }
-  else if ((CMND_SUB == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
+}
+
+void CmndSubtract(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      float tempvar = CharToFloat(vars[index -1]) - CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
-      bitSet(vars_event, index -1);
+      float tempvar = CharToFloat(vars[XdrvMailbox.index -1]) - CharToFloat(XdrvMailbox.data);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
+      bitSet(vars_event, XdrvMailbox.index -1);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, vars[XdrvMailbox.index -1]);
   }
-  else if ((CMND_MULT == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
+}
+
+void CmndMultiply(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      float tempvar = CharToFloat(vars[index -1]) * CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
-      bitSet(vars_event, index -1);
+      float tempvar = CharToFloat(vars[XdrvMailbox.index -1]) * CharToFloat(XdrvMailbox.data);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
+      bitSet(vars_event, XdrvMailbox.index -1);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, vars[XdrvMailbox.index -1]);
   }
-  else if ((CMND_SCALE == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
+}
+
+void CmndScale(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
@@ -1251,28 +1294,17 @@ bool RulesCommand(void)
         float toLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4));
         float toHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 5));
         float value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
-        dtostrfd(value, Settings.flag2.calc_resolution, vars[index -1]);
-        bitSet(vars_event, index -1);
+        dtostrfd(value, Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
+        bitSet(vars_event, XdrvMailbox.index -1);
       }
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
-#ifdef SUPPORT_MQTT_EVENT
-  } else if (CMND_SUBSCRIBE == command_code) {			//MQTT Subscribe command. Subscribe <Event>, <Topic> [, <Key>]
-    String result = RulesSubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
-    Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
-  } else if (CMND_UNSUBSCRIBE == command_code) {			//MQTT Un-subscribe command. UnSubscribe <Event>
-    String result = RulesUnsubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
-    Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
-#endif        //SUPPORT_MQTT_EVENT
+    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, vars[XdrvMailbox.index -1]);
   }
-  else serviced = false;  // Unknown command
-
-  return serviced;
 }
 
 float map_double(float x, float in_min, float in_max, float out_min, float out_max)
 {
- return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 /*********************************************************************************************\
@@ -1300,7 +1332,7 @@ bool Xdrv10(uint8_t function)
       RulesSetPower();
       break;
     case FUNC_COMMAND:
-      result = RulesCommand();
+      result = DecodeCommand(kRulesCommands, RulesCommand);
       break;
     case FUNC_RULES_PROCESS:
       result = RulesProcess();
@@ -1312,7 +1344,7 @@ bool Xdrv10(uint8_t function)
     case FUNC_MQTT_DATA:
       result = RulesMqttData();
       break;
-#endif    //SUPPORT_MQTT_EVENT
+#endif  // SUPPORT_MQTT_EVENT
   }
   return result;
 }
