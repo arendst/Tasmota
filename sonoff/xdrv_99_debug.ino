@@ -57,12 +57,33 @@
 #define D_CMND_SETSENSOR "SetSensor"
 #define D_CMND_FLASHMODE "FlashMode"
 
-enum DebugCommands {
-  CMND_CFGDUMP, CMND_CFGPEEK, CMND_CFGPOKE, CMND_CFGSHOW, CMND_CFGXOR,
-  CMND_CPUCHECK, CMND_EXCEPTION, CMND_FREEMEM, CMND_RTCDUMP, CMND_SETSENSOR, CMND_FLASHMODE, CMND_HELP };
 const char kDebugCommands[] PROGMEM =
-  D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|" D_CMND_CFGSHOW "|" D_CMND_CFGXOR "|"
-  D_CMND_CPUCHECK "|" D_CMND_EXCEPTION "|" D_CMND_FREEMEM "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR "|" D_CMND_FLASHMODE "|" D_CMND_HELP;
+  D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|"
+#ifdef USE_DEBUG_SETTING_NAMES
+  D_CMND_CFGSHOW "|"
+#endif
+#ifdef USE_WEBSERVER
+  D_CMND_CFGXOR "|"
+#endif
+  D_CMND_CPUCHECK "|"
+#ifdef DEBUG_THEO
+  D_CMND_EXCEPTION "|"
+#endif
+  D_CMND_FREEMEM "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR "|" D_CMND_FLASHMODE "|" D_CMND_HELP;
+
+void (* const DebugCommand[])(void) PROGMEM = {
+  &CmndCfgDump, &CmndCfgPeek, &CmndCfgPoke,
+#ifdef USE_DEBUG_SETTING_NAMES
+  &CmndCfgShow,
+#endif
+#ifdef USE_WEBSERVER
+  &CmndCfgXor,
+#endif
+  &CmndCpuCheck,
+#ifdef DEBUG_THEO
+  &CmndException,
+#endif
+  &CmndFreemem, &CmndRtcDump, &CmndSetSensor, &CmndFlashMode, &CmndHelp };
 
 uint32_t CPU_loops = 0;
 uint32_t CPU_last_millis = 0;
@@ -398,91 +419,110 @@ void SetFlashMode(uint8_t mode)
   if (ESP.flashRead(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
     if (_buffer[2] != mode) {  // DOUT
       _buffer[2] = mode;
-      if (ESP.flashEraseSector(address / FLASH_SECTOR_SIZE)) ESP.flashWrite(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
+      if (ESP.flashEraseSector(address / FLASH_SECTOR_SIZE)) {
+        ESP.flashWrite(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
+      }
     }
   }
   delete[] _buffer;
 }
 
-/*******************************************************************************************/
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
 
-bool DebugCommand(void)
+void CmndHelp(void)
 {
-  bool serviced = true;
+  AddLog_P(LOG_LEVEL_INFO, kDebugCommands);
+  ResponseCmndDone();
+}
 
-  int command_code = GetCommandCode(XdrvMailbox.command, CMDSZ, XdrvMailbox.topic, kDebugCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
-  }
-  else if (CMND_HELP == command_code) {
-    AddLog_P(LOG_LEVEL_INFO, kDebugCommands);
-    ResponseCmndDone();
-  }
-  else if (CMND_RTCDUMP == command_code) {
-    DebugRtcDump(XdrvMailbox.data);
-    ResponseCmndDone();
-  }
-  else if (CMND_CFGDUMP == command_code) {
-    DebugCfgDump(XdrvMailbox.data);
-    ResponseCmndDone();
-  }
-  else if (CMND_CFGPEEK == command_code) {
-    DebugCfgPeek(XdrvMailbox.data);
-    ResponseCmndDone();
-  }
-  else if (CMND_CFGPOKE == command_code) {
-    DebugCfgPoke(XdrvMailbox.data);
-    ResponseCmndDone();
-  }
+void CmndRtcDump(void)
+{
+  DebugRtcDump(XdrvMailbox.data);
+  ResponseCmndDone();
+}
+
+void CmndCfgDump(void)
+{
+  DebugCfgDump(XdrvMailbox.data);
+  ResponseCmndDone();
+}
+
+void CmndCfgPeek(void)
+{
+  DebugCfgPeek(XdrvMailbox.data);
+  ResponseCmndDone();
+}
+
+void CmndCfgPoke(void)
+{
+  DebugCfgPoke(XdrvMailbox.data);
+  ResponseCmndDone();
+}
+
 #ifdef USE_DEBUG_SETTING_NAMES
-  else if (CMND_CFGSHOW == command_code) {
-    DebugCfgShow(XdrvMailbox.payload);
-    ResponseCmndDone();
-  }
+void CmndCfgShow(void)
+{
+  DebugCfgShow(XdrvMailbox.payload);
+  ResponseCmndDone();
+}
 #endif  // USE_DEBUG_SETTING_NAMES
+
 #ifdef USE_WEBSERVER
-  else if (CMND_CFGXOR == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      config_xor_on_set = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(config_xor_on_set);
+void CmndCfgXor(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    config_xor_on_set = XdrvMailbox.payload;
   }
+  ResponseCmndNumber(config_xor_on_set);
+}
 #endif  // USE_WEBSERVER
+
 #ifdef DEBUG_THEO
-  else if (CMND_EXCEPTION == command_code) {
-    if (XdrvMailbox.data_len > 0) ExceptionTest(XdrvMailbox.payload);
-    ResponseCmndDone();
-  }
+void CmndException(void)
+{
+  if (XdrvMailbox.data_len > 0) { ExceptionTest(XdrvMailbox.payload); }
+  ResponseCmndDone();
+}
 #endif  // DEBUG_THEO
-  else if (CMND_CPUCHECK == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      CPU_load_check = XdrvMailbox.payload;
-      CPU_last_millis = CPU_last_loop_time;
-    }
-    ResponseCmndNumber(CPU_load_check);
+
+void CmndCpuCheck(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    CPU_load_check = XdrvMailbox.payload;
+    CPU_last_millis = CPU_last_loop_time;
   }
-  else if (CMND_FREEMEM == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      CPU_show_freemem = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(CPU_show_freemem);
+  ResponseCmndNumber(CPU_load_check);
+}
+
+void CmndFreemem(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    CPU_show_freemem = XdrvMailbox.payload;
   }
-  else if ((CMND_SETSENSOR == command_code) && (XdrvMailbox.index < MAX_XSNS_DRIVERS)) {
+  ResponseCmndNumber(CPU_show_freemem);
+}
+
+void CmndSetSensor(void)
+{
+  if (XdrvMailbox.index < MAX_XSNS_DRIVERS) {
     if ((XdrvMailbox.payload >= 0) && XsnsPresent(XdrvMailbox.index)) {
       bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
-      if (1 == XdrvMailbox.payload) { restart_flag = 2; }  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
+      if (1 == XdrvMailbox.payload) {
+        restart_flag = 2;  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
+      }
     }
     Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, XsnsGetSensors().c_str());
   }
-  else if (CMND_FLASHMODE == command_code) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
-      SetFlashMode(XdrvMailbox.payload);
-    }
-    ResponseCmndNumber(ESP.getFlashChipMode());
-  }
-  else serviced = false;  // Unknown command
+}
 
-  return serviced;
+void CmndFlashMode(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
+    SetFlashMode(XdrvMailbox.payload);
+  }
+  ResponseCmndNumber(ESP.getFlashChipMode());
 }
 
 /*********************************************************************************************\
@@ -497,14 +537,14 @@ bool Xdrv99(uint8_t function)
     case FUNC_LOOP:
       CpuLoadLoop();
       break;
+    case FUNC_FREE_MEM:
+      if (CPU_show_freemem) { DebugFreeMem(); }
+      break;
     case FUNC_PRE_INIT:
       CPU_last_millis = millis();
       break;
     case FUNC_COMMAND:
-      result = DebugCommand();
-      break;
-    case FUNC_FREE_MEM:
-      if (CPU_show_freemem) { DebugFreeMem(); }
+      result = DecodeCommand(kDebugCommands, DebugCommand);
       break;
   }
   return result;
