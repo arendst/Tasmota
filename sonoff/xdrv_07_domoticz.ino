@@ -38,8 +38,6 @@ void (* const DomoticzCommand[])(void) PROGMEM = {
 const char kDomoticzSensors[] PROGMEM =
   D_DOMOTICZ_TEMP "|" D_DOMOTICZ_TEMP_HUM "|" D_DOMOTICZ_TEMP_HUM_BARO "|" D_DOMOTICZ_POWER_ENERGY "|" D_DOMOTICZ_ILLUMINANCE "|" D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT "|" D_DOMOTICZ_AIRQUALITY ;
 
-const char S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE[] PROGMEM = "{\"" D_CMND_DOMOTICZ "%s%d\":%d}";
-
 char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
 char domoticz_out_topic[] = DOMOTICZ_OUT_TOPIC;
 
@@ -383,6 +381,13 @@ void DomoticzSensorPowerEnergy(int power, char *energy)
  * Commands
 \*********************************************************************************************/
 
+void ResponseDomoticzCmndIdxNumber(uint32_t value)
+{
+  Response_P(PSTR("{\"" D_CMND_DOMOTICZ "%s%d\":%d}"), XdrvMailbox.command, XdrvMailbox.index, value);
+}
+
+/*********************************************************************************************/
+
 void CmndDomoticzIdx(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DOMOTICZ_IDX)) {
@@ -390,7 +395,7 @@ void CmndDomoticzIdx(void)
       Settings.domoticz_relay_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
       restart_flag = 2;
     }
-    Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.domoticz_relay_idx[XdrvMailbox.index -1]);
+    ResponseDomoticzCmndIdxNumber(Settings.domoticz_relay_idx[XdrvMailbox.index -1]);
   }
 }
 
@@ -400,7 +405,7 @@ void CmndDomoticzKeyIdx(void)
     if (XdrvMailbox.payload >= 0) {
       Settings.domoticz_key_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
-    Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.domoticz_key_idx[XdrvMailbox.index -1]);
+    ResponseDomoticzCmndIdxNumber(Settings.domoticz_key_idx[XdrvMailbox.index -1]);
   }
 }
 
@@ -410,7 +415,7 @@ void CmndDomoticzSwitchIdx(void)
     if (XdrvMailbox.payload >= 0) {
       Settings.domoticz_switch_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
-    Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.domoticz_switch_idx[XdrvMailbox.index -1]);
+    ResponseDomoticzCmndIdxNumber(Settings.domoticz_switch_idx[XdrvMailbox.index -1]);
   }
 }
 
@@ -420,7 +425,7 @@ void CmndDomoticzSensorIdx(void)
     if (XdrvMailbox.payload >= 0) {
       Settings.domoticz_sensor_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
-    Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.domoticz_sensor_idx[XdrvMailbox.index -1]);
+    ResponseDomoticzCmndIdxNumber(Settings.domoticz_sensor_idx[XdrvMailbox.index -1]);
   }
 }
 
