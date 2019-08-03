@@ -761,7 +761,7 @@ void CmndSubscribe(void)
         + subscription_item.Key + "; ");
     }
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, events.c_str());
+  ResponseCmndChar(events.c_str());
 }
 
 /********************************************************************************************/
@@ -800,7 +800,7 @@ void CmndUnsubscribe(void)
       subscriptions.remove(0);
     }
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, events.c_str());
+  ResponseCmndChar(events.c_str());
 }
 
 #endif  // SUPPORT_MQTT_EVENT
@@ -1188,7 +1188,7 @@ void CmndEvent(void)
   if (XdrvMailbox.data_len > 0) {
     strlcpy(event_data, XdrvMailbox.data, sizeof(event_data));
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_DONE);
+  ResponseCmndDone();
 }
 
 void CmndVariable(void)
@@ -1209,7 +1209,7 @@ void CmndVariable(void)
 #endif  // USE_EXPRESSION
         bitSet(vars_event, XdrvMailbox.index -1);
       }
-      Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, vars[XdrvMailbox.index -1]);
+      ResponseCmndIdxChar(vars[XdrvMailbox.index -1]);
     }
   }
 }
@@ -1232,7 +1232,7 @@ void CmndMemory(void)
 #endif  // USE_EXPRESSION
         bitSet(mems_event, XdrvMailbox.index -1);
       }
-      Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.mems[XdrvMailbox.index -1]);
+      ResponseCmndIdxChar(Settings.mems[XdrvMailbox.index -1]);
     }
   }
 }
@@ -1242,7 +1242,7 @@ void CmndCalcResolution(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
     Settings.flag2.calc_resolution = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.calc_resolution);
+  ResponseCmndNumber(Settings.flag2.calc_resolution);
 }
 
 void CmndAddition(void)
@@ -1253,7 +1253,7 @@ void CmndAddition(void)
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
       bitSet(vars_event, XdrvMailbox.index -1);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, vars[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(vars[XdrvMailbox.index -1]);
   }
 }
 
@@ -1265,7 +1265,7 @@ void CmndSubtract(void)
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
       bitSet(vars_event, XdrvMailbox.index -1);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, vars[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(vars[XdrvMailbox.index -1]);
   }
 }
 
@@ -1277,7 +1277,7 @@ void CmndMultiply(void)
       dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
       bitSet(vars_event, XdrvMailbox.index -1);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, vars[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(vars[XdrvMailbox.index -1]);
   }
 }
 
@@ -1298,7 +1298,7 @@ void CmndScale(void)
         bitSet(vars_event, XdrvMailbox.index -1);
       }
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, vars[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(vars[XdrvMailbox.index -1]);
   }
 }
 

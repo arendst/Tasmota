@@ -408,37 +408,36 @@ void SetFlashMode(uint8_t mode)
 
 bool DebugCommand(void)
 {
-  char command[CMDSZ];
   bool serviced = true;
 
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kDebugCommands);
+  int command_code = GetCommandCode(XdrvMailbox.command, CMDSZ, XdrvMailbox.topic, kDebugCommands);
   if (-1 == command_code) {
     serviced = false;  // Unknown command
   }
   else if (CMND_HELP == command_code) {
     AddLog_P(LOG_LEVEL_INFO, kDebugCommands);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    ResponseCmndDone();
   }
   else if (CMND_RTCDUMP == command_code) {
     DebugRtcDump(XdrvMailbox.data);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    ResponseCmndDone();
   }
   else if (CMND_CFGDUMP == command_code) {
     DebugCfgDump(XdrvMailbox.data);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    ResponseCmndDone();
   }
   else if (CMND_CFGPEEK == command_code) {
     DebugCfgPeek(XdrvMailbox.data);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    ResponseCmndDone();
   }
   else if (CMND_CFGPOKE == command_code) {
     DebugCfgPoke(XdrvMailbox.data);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    ResponseCmndDone();
   }
 #ifdef USE_DEBUG_SETTING_NAMES
   else if (CMND_CFGSHOW == command_code) {
     DebugCfgShow(XdrvMailbox.payload);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    ResponseCmndDone();
   }
 #endif  // USE_DEBUG_SETTING_NAMES
 #ifdef USE_WEBSERVER
@@ -446,13 +445,13 @@ bool DebugCommand(void)
     if (XdrvMailbox.data_len > 0) {
       config_xor_on_set = XdrvMailbox.payload;
     }
-    Response_P(S_JSON_COMMAND_NVALUE, command, config_xor_on_set);
+    ResponseCmndNumber(config_xor_on_set);
   }
 #endif  // USE_WEBSERVER
 #ifdef DEBUG_THEO
   else if (CMND_EXCEPTION == command_code) {
     if (XdrvMailbox.data_len > 0) ExceptionTest(XdrvMailbox.payload);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+    ResponseCmndDone();
   }
 #endif  // DEBUG_THEO
   else if (CMND_CPUCHECK == command_code) {
@@ -460,26 +459,26 @@ bool DebugCommand(void)
       CPU_load_check = XdrvMailbox.payload;
       CPU_last_millis = CPU_last_loop_time;
     }
-    Response_P(S_JSON_COMMAND_NVALUE, command, CPU_load_check);
+    ResponseCmndNumber(CPU_load_check);
   }
   else if (CMND_FREEMEM == command_code) {
     if (XdrvMailbox.data_len > 0) {
       CPU_show_freemem = XdrvMailbox.payload;
     }
-    Response_P(S_JSON_COMMAND_NVALUE, command, CPU_show_freemem);
+    ResponseCmndNumber(CPU_show_freemem);
   }
   else if ((CMND_SETSENSOR == command_code) && (XdrvMailbox.index < MAX_XSNS_DRIVERS)) {
     if ((XdrvMailbox.payload >= 0) && XsnsPresent(XdrvMailbox.index)) {
       bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
       if (1 == XdrvMailbox.payload) { restart_flag = 2; }  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
     }
-    Response_P(S_JSON_COMMAND_XVALUE, command, XsnsGetSensors().c_str());
+    Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, XsnsGetSensors().c_str());
   }
   else if (CMND_FLASHMODE == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
       SetFlashMode(XdrvMailbox.payload);
     }
-    Response_P(S_JSON_COMMAND_NVALUE, command, ESP.getFlashChipMode());
+    ResponseCmndNumber(ESP.getFlashChipMode());
   }
   else serviced = false;  // Unknown command
 

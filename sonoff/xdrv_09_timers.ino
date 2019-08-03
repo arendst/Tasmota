@@ -249,7 +249,7 @@ uint16_t SunMinutes(uint32_t dawn)
 
 /*******************************************************************************************/
 
-void TimerSetRandomWindow(uint8_t index)
+void TimerSetRandomWindow(uint32_t index)
 {
   timer_window[index] = 0;
   if (Settings.timer[index].window) {
@@ -461,7 +461,7 @@ void CmndTimers(void)
     }
   }
 
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag3.timers_enable));
+  ResponseCmndStateText(Settings.flag3.timers_enable);
   MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
 
   uint32_t jsflg = 0;
@@ -491,7 +491,7 @@ void CmndLongitude(void)
   }
   char lbuff[33];
   dtostrfd(((float)Settings.longitude) /1000000, 6, lbuff);
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, lbuff);
+  ResponseCmndChar(lbuff);
 }
 
 void CmndLatitude(void)
@@ -501,7 +501,7 @@ void CmndLatitude(void)
   }
   char lbuff[33];
   dtostrfd(((float)Settings.latitude) /1000000, 6, lbuff);
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, lbuff);
+  ResponseCmndChar(lbuff);
 }
 #endif  // USE_SUNRISE
 

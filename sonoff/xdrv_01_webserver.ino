@@ -2487,7 +2487,7 @@ void CmndEmulation(void)
     Settings.flag2.emulation = XdrvMailbox.payload;
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.emulation);
+  ResponseCmndNumber(Settings.flag2.emulation);
 }
 #endif  // USE_EMULATION
 
@@ -2500,7 +2500,7 @@ void CmndWebServer(void)
     Response_P(PSTR("{\"" D_CMND_WEBSERVER "\":\"" D_JSON_ACTIVE_FOR " %s " D_JSON_ON_DEVICE " %s " D_JSON_WITH_IP_ADDRESS " %s\"}"),
       (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
   } else {
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(0));
+    ResponseCmndStateText(0);
   }
 }
 
@@ -2508,7 +2508,7 @@ void CmndWebPassword(void)
 {
   if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.web_password))) {
     strlcpy(Settings.web_password, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.web_password);
+    ResponseCmndChar(Settings.web_password);
   } else {
     Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
   }
@@ -2519,7 +2519,7 @@ void CmndWeblog(void)
   if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) {
     Settings.weblog_level = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.weblog_level);
+  ResponseCmndNumber(Settings.weblog_level);
 }
 
 void CmndWebRefresh(void)
@@ -2527,7 +2527,7 @@ void CmndWebRefresh(void)
   if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload <= 10000)) {
     Settings.web_refresh = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.web_refresh);
+  ResponseCmndNumber(Settings.web_refresh);
 }
 
 void CmndWebSend(void)
@@ -2535,7 +2535,7 @@ void CmndWebSend(void)
   if (XdrvMailbox.data_len > 0) {
     uint32_t result = WebSend(XdrvMailbox.data);
     char stemp1[20];
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
+    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
   }
 }
 

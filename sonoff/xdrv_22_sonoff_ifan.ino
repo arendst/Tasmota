@@ -189,10 +189,9 @@ const char kSonoffIfanCommands[] PROGMEM = D_CMND_FANSPEED;
 
 bool SonoffIfanCommand(void)
 {
-  char command [CMDSZ];
   bool serviced = true;
 
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSonoffIfanCommands);
+  int command_code = GetCommandCode(XdrvMailbox.command, CMDSZ, XdrvMailbox.topic, kSonoffIfanCommands);
   if (-1 == command_code) {
     serviced = false;  // Unknown command
   }
@@ -210,7 +209,7 @@ bool SonoffIfanCommand(void)
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_FAN_SPEED)) {
       SonoffIFanSetFanspeed(XdrvMailbox.payload, true);
     }
-    Response_P(S_JSON_COMMAND_NVALUE, command, GetFanspeed());
+    ResponseCmndNumber(GetFanspeed());
   } else serviced = false;  // Unknown command
 
   return serviced;

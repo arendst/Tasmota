@@ -684,7 +684,7 @@ void CmndMqttFingerprint(void)
     for (uint32_t i = 0; i < sizeof(Settings.mqtt_fingerprint[XdrvMailbox.index -1]); i++) {
       snprintf_P(fingerprint, sizeof(fingerprint), PSTR("%s%s%02X"), fingerprint, (i) ? " " : "", Settings.mqtt_fingerprint[XdrvMailbox.index -1][i]);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, fingerprint);
+    ResponseCmndIdxChar(fingerprint);
   }
 }
 #endif
@@ -696,14 +696,14 @@ void CmndMqttUser(void)
     strlcpy(Settings.mqtt_user, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_USER : XdrvMailbox.data, sizeof(Settings.mqtt_user));
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_user);
+  ResponseCmndChar(Settings.mqtt_user);
 }
 
 void CmndMqttPassword(void)
 {
   if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_pwd))) {
     strlcpy(Settings.mqtt_pwd, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_PASS : XdrvMailbox.data, sizeof(Settings.mqtt_pwd));
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_pwd);
+    ResponseCmndChar(Settings.mqtt_pwd);
     restart_flag = 2;
   } else {
     Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
@@ -718,13 +718,13 @@ void CmndMqttHost(void)
     setLongMqttHost((SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_HOST : XdrvMailbox.data);
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, AWS_endpoint);
+  ResponseCmndChar(AWS_endpoint);
 #else
   if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_host))) {
     strlcpy(Settings.mqtt_host, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_HOST : XdrvMailbox.data, sizeof(Settings.mqtt_host));
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_host);
+  ResponseCmndChar(Settings.mqtt_host);
 #endif
 }
 
@@ -734,7 +734,7 @@ void CmndMqttPort(void)
     Settings.mqtt_port = (1 == XdrvMailbox.payload) ? MQTT_PORT : XdrvMailbox.payload;
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.mqtt_port);
+  ResponseCmndNumber(Settings.mqtt_port);
 }
 
 void CmndMqttRetry(void)
@@ -743,7 +743,7 @@ void CmndMqttRetry(void)
     Settings.mqtt_retry = XdrvMailbox.payload;
     mqtt_retry_counter = Settings.mqtt_retry;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.mqtt_retry);
+  ResponseCmndNumber(Settings.mqtt_retry);
 }
 
 void CmndStateText(void)
@@ -755,7 +755,7 @@ void CmndStateText(void)
       }
       strlcpy(Settings.state_text[XdrvMailbox.index -1], XdrvMailbox.data, sizeof(Settings.state_text[0]));
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, GetStateText(XdrvMailbox.index -1));
+    ResponseCmndIdxChar(GetStateText(XdrvMailbox.index -1));
   }
 }
 
@@ -765,7 +765,7 @@ void CmndMqttClient(void)
     strlcpy(Settings.mqtt_client, (SC_DEFAULT == Shortcut()) ? MQTT_CLIENT_ID : XdrvMailbox.data, sizeof(Settings.mqtt_client));
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_client);
+  ResponseCmndChar(Settings.mqtt_client);
 }
 
 void CmndFullTopic(void)
@@ -782,7 +782,7 @@ void CmndFullTopic(void)
       restart_flag = 2;
     }
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_fulltopic);
+  ResponseCmndChar(Settings.mqtt_fulltopic);
 }
 
 void CmndPrefix(void)
@@ -794,7 +794,7 @@ void CmndPrefix(void)
 //      if (Settings.mqtt_prefix[XdrvMailbox.index -1][strlen(Settings.mqtt_prefix[XdrvMailbox.index -1])] == '/') Settings.mqtt_prefix[XdrvMailbox.index -1][strlen(Settings.mqtt_prefix[XdrvMailbox.index -1])] = 0;
       restart_flag = 2;
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.mqtt_prefix[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(Settings.mqtt_prefix[XdrvMailbox.index -1]);
   }
 }
 
@@ -812,7 +812,7 @@ void CmndPublish(void)
         mqtt_data[0] = '\0';
       }
       MqttPublishDirect(stemp1, (XdrvMailbox.index == 2));
-//        Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+//      ResponseCmndDone();
       mqtt_data[0] = '\0';
     }
   }
@@ -826,7 +826,7 @@ void CmndGroupTopic(void)
     strlcpy(Settings.mqtt_grptopic, (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data, sizeof(Settings.mqtt_grptopic));
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_grptopic);
+  ResponseCmndChar(Settings.mqtt_grptopic);
 }
 
 void CmndTopic(void)
@@ -843,7 +843,7 @@ void CmndTopic(void)
       restart_flag = 2;
     }
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_topic);
+  ResponseCmndChar(Settings.mqtt_topic);
 }
 
 void CmndButtonTopic(void)
@@ -858,7 +858,7 @@ void CmndButtonTopic(void)
       default: strlcpy(Settings.button_topic, XdrvMailbox.data, sizeof(Settings.button_topic));
     }
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.button_topic);
+  ResponseCmndChar(Settings.button_topic);
 }
 
 void CmndSwitchTopic(void)
@@ -873,7 +873,7 @@ void CmndSwitchTopic(void)
       default: strlcpy(Settings.switch_topic, XdrvMailbox.data, sizeof(Settings.switch_topic));
     }
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.switch_topic);
+  ResponseCmndChar(Settings.switch_topic);
 }
 
 void CmndButtonRetain(void)
@@ -886,7 +886,7 @@ void CmndButtonRetain(void)
     }
     Settings.flag.mqtt_button_retain = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag.mqtt_button_retain));
+  ResponseCmndStateText(Settings.flag.mqtt_button_retain);
 }
 
 void CmndSwitchRetain(void)
@@ -899,7 +899,7 @@ void CmndSwitchRetain(void)
     }
     Settings.flag.mqtt_switch_retain = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag.mqtt_switch_retain));
+  ResponseCmndStateText(Settings.flag.mqtt_switch_retain);
 }
 
 void CmndPowerRetain(void)
@@ -916,7 +916,7 @@ void CmndPowerRetain(void)
     }
     Settings.flag.mqtt_power_retain = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag.mqtt_power_retain));
+  ResponseCmndStateText(Settings.flag.mqtt_power_retain);
 }
 
 void CmndSensorRetain(void)
@@ -929,7 +929,7 @@ void CmndSensorRetain(void)
     }
     Settings.flag.mqtt_sensor_retain = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag.mqtt_sensor_retain));
+  ResponseCmndStateText(Settings.flag.mqtt_sensor_retain);
 }
 
 /*********************************************************************************************\

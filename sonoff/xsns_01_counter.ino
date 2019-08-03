@@ -154,10 +154,9 @@ const char kCounterCommands[] PROGMEM = D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|
 
 bool CounterCommand(void)
 {
-  char command[CMDSZ];
   bool serviced = true;
 
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kCounterCommands);
+  int command_code = GetCommandCode(XdrvMailbox.command, CMDSZ, XdrvMailbox.topic, kCounterCommands);
   if (CMND_COUNTER == command_code) {
     if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
       if ((XdrvMailbox.data_len > 0) && (pin[GPIO_CNTR1 + XdrvMailbox.index -1] < 99)) {
@@ -169,7 +168,7 @@ bool CounterCommand(void)
           Settings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload;
         }
       }
-      Response_P(S_JSON_COMMAND_INDEX_LVALUE, command, XdrvMailbox.index, RtcSettings.pulse_counter[XdrvMailbox.index -1]);
+      Response_P(S_JSON_COMMAND_INDEX_LVALUE, XdrvMailbox.command, XdrvMailbox.index, RtcSettings.pulse_counter[XdrvMailbox.index -1]);
     }
   }
   else if (CMND_COUNTERTYPE == command_code) {
@@ -179,14 +178,14 @@ bool CounterCommand(void)
         RtcSettings.pulse_counter[XdrvMailbox.index -1] = 0;
         Settings.pulse_counter[XdrvMailbox.index -1] = 0;
       }
-      Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, bitRead(Settings.pulse_counter_type, XdrvMailbox.index -1));
+      ResponseCmndIdxNumber(bitRead(Settings.pulse_counter_type, XdrvMailbox.index -1));
     }
   }
   else if (CMND_COUNTERDEBOUNCE == command_code) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
       Settings.pulse_counter_debounce = XdrvMailbox.payload;
     }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.pulse_counter_debounce);
+    ResponseCmndNumber(Settings.pulse_counter_debounce);
   }
   else serviced = false;  // Unknown command
 

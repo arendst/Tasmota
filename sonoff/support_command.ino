@@ -49,6 +49,38 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 
 /********************************************************************************************/
 
+void ResponseCmndNumber(int value)
+{
+  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, value);
+}
+
+void ResponseCmndIdxNumber(int value)
+{
+  Response_P(S_JSON_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, value);
+}
+
+void ResponseCmndChar(const char* value)
+{
+  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, value);
+}
+
+void ResponseCmndStateText(uint32_t value)
+{
+  ResponseCmndChar(GetStateText(value));
+}
+
+void ResponseCmndDone(void)
+{
+  ResponseCmndChar(D_JSON_DONE);
+}
+
+void ResponseCmndIdxChar(const char* value)
+{
+  Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, value);
+}
+
+/********************************************************************************************/
+
 void ExecuteCommand(char *cmnd, uint32_t source)
 {
   char *start;
@@ -202,12 +234,12 @@ void CmndBacklog(void)
       }
       blcommand = strtok(nullptr, ";");
     }
-//        Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_APPENDED);
+//    ResponseCmndChar(D_JSON_APPENDED);
     mqtt_data[0] = '\0';
   } else {
     bool blflag = (backlog_pointer == backlog_index);
     backlog_pointer = backlog_index;
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, blflag ? D_JSON_EMPTY : D_JSON_ABORTED);
+    ResponseCmndChar(blflag ? D_JSON_EMPTY : D_JSON_ABORTED);
   }
 }
 
@@ -219,7 +251,7 @@ void CmndDelay(void)
   uint32_t bl_delay = 0;
   long bl_delta = TimePassedSince(backlog_delay);
   if (bl_delta < 0) { bl_delay = (bl_delta *-1) / 100; }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, bl_delay);
+  ResponseCmndNumber(bl_delay);
 }
 
 void CmndPower(void)
@@ -400,7 +432,7 @@ void CmndOtaUrl(void)
   if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.ota_url))) {
     strlcpy(Settings.ota_url, (SC_DEFAULT == Shortcut()) ? OTA_URL : XdrvMailbox.data, sizeof(Settings.ota_url));
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.ota_url);
+  ResponseCmndChar(Settings.ota_url);
 }
 
 void CmndSeriallog(void)
@@ -417,14 +449,14 @@ void CmndRestart(void)
   switch (XdrvMailbox.payload) {
   case 1:
     restart_flag = 2;
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_RESTARTING);
+    ResponseCmndChar(D_JSON_RESTARTING);
     break;
   case 99:
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
     EspRestart();
     break;
   default:
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_ONE_TO_RESTART);
+    ResponseCmndChar(D_JSON_ONE_TO_RESTART);
   }
 }
 
@@ -446,7 +478,7 @@ void CmndPowerOnState(void)
         }
       }
     }
-    Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.poweronstate);
+    ResponseCmndNumber(Settings.poweronstate);
   }
 }
 
@@ -467,7 +499,7 @@ void CmndBlinktime(void)
     Settings.blinktime = XdrvMailbox.payload;
     if (blink_timer > 0) { blink_timer = millis() + (100 * XdrvMailbox.payload); }
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.blinktime);
+  ResponseCmndNumber(Settings.blinktime);
 }
 
 void CmndBlinkcount(void)
@@ -476,7 +508,7 @@ void CmndBlinkcount(void)
     Settings.blinkcount = XdrvMailbox.payload;  // 0 - 65535
     if (blink_counter) { blink_counter = Settings.blinkcount *2; }
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.blinkcount);
+  ResponseCmndNumber(Settings.blinkcount);
 }
 
 void CmndSavedata(void)
@@ -490,7 +522,7 @@ void CmndSavedata(void)
   if (Settings.save_data > 1) {
     snprintf_P(stemp1, sizeof(stemp1), PSTR(D_JSON_EVERY " %d " D_UNIT_SECOND), Settings.save_data);
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, (Settings.save_data > 1) ? stemp1 : GetStateText(Settings.save_data));
+  ResponseCmndChar((Settings.save_data > 1) ? stemp1 : GetStateText(Settings.save_data));
 }
 
 void CmndSetoption(void)
@@ -593,7 +625,7 @@ void CmndSetoption(void)
     if (ptype < 99) {
       char stemp1[TOPSZ];
       if (2 == ptype) { snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), Settings.param[pindex]); }
-      Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, (2 == ptype) ? stemp1 : (1 == ptype) ? GetStateText(bitRead(Settings.flag3.data, pindex)) : GetStateText(bitRead(Settings.flag.data, pindex)));
+      ResponseCmndIdxChar((2 == ptype) ? stemp1 : (1 == ptype) ? GetStateText(bitRead(Settings.flag3.data, pindex)) : GetStateText(bitRead(Settings.flag.data, pindex)));
     }
   }
 }
@@ -603,7 +635,7 @@ void CmndTemperatureResolution(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
     Settings.flag2.temperature_resolution = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.temperature_resolution);
+  ResponseCmndNumber(Settings.flag2.temperature_resolution);
 }
 
 void CmndHumidityResolution(void)
@@ -611,7 +643,7 @@ void CmndHumidityResolution(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
     Settings.flag2.humidity_resolution = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.humidity_resolution);
+  ResponseCmndNumber(Settings.flag2.humidity_resolution);
 }
 
 void CmndPressureResolution(void)
@@ -619,7 +651,7 @@ void CmndPressureResolution(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
     Settings.flag2.pressure_resolution = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.pressure_resolution);
+  ResponseCmndNumber(Settings.flag2.pressure_resolution);
 }
 
 void CmndPowerResolution(void)
@@ -627,7 +659,7 @@ void CmndPowerResolution(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
     Settings.flag2.wattage_resolution = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.wattage_resolution);
+  ResponseCmndNumber(Settings.flag2.wattage_resolution);
 }
 
 void CmndVoltageResolution(void)
@@ -635,7 +667,7 @@ void CmndVoltageResolution(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
     Settings.flag2.voltage_resolution = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.voltage_resolution);
+  ResponseCmndNumber(Settings.flag2.voltage_resolution);
 }
 
 void CmndFrequencyResolution(void)
@@ -643,7 +675,7 @@ void CmndFrequencyResolution(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
     Settings.flag2.frequency_resolution = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.frequency_resolution);
+  ResponseCmndNumber(Settings.flag2.frequency_resolution);
 }
 
 void CmndCurrentResolution(void)
@@ -651,7 +683,7 @@ void CmndCurrentResolution(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
     Settings.flag2.current_resolution = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.current_resolution);
+  ResponseCmndNumber(Settings.flag2.current_resolution);
 }
 
 void CmndEnergyResolution(void)
@@ -659,7 +691,7 @@ void CmndEnergyResolution(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 5)) {
     Settings.flag2.energy_resolution = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.energy_resolution);
+  ResponseCmndNumber(Settings.flag2.energy_resolution);
 }
 
 void CmndWeightResolution(void)
@@ -667,7 +699,7 @@ void CmndWeightResolution(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
     Settings.flag2.weight_resolution = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.flag2.weight_resolution);
+  ResponseCmndNumber(Settings.flag2.weight_resolution);
 }
 
 void CmndModule(void)
@@ -754,7 +786,7 @@ void CmndGpio(void)
     if (jsflg) {
       ResponseJsonEnd();
     } else {
-      Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_NOT_SUPPORTED);
+      ResponseCmndChar(D_JSON_NOT_SUPPORTED);
     }
   }
 }
@@ -825,7 +857,7 @@ void CmndTemplate(void)
     if (JsonTemplate(XdrvMailbox.data)) {    // Free 336 bytes StaticJsonBuffer stack space by moving code to function
       if (USER_MODULE == Settings.module) { restart_flag = 2; }
     } else {
-      Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_INVALID_JSON);
+      ResponseCmndChar(D_JSON_INVALID_JSON);
       error = true;
     }
   }
@@ -851,7 +883,7 @@ void CmndPwmfrequency(void)
     Settings.pwm_frequency = (1 == XdrvMailbox.payload) ? PWM_FREQ : XdrvMailbox.payload;
     analogWriteFreq(Settings.pwm_frequency);   // Default is 1000 (core_esp8266_wiring_pwm.c)
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.pwm_frequency);
+  ResponseCmndNumber(Settings.pwm_frequency);
 }
 
 void CmndPwmrange(void)
@@ -865,7 +897,7 @@ void CmndPwmrange(void)
     }
     analogWriteRange(Settings.pwm_range);      // Default is 1023 (Arduino.h)
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.pwm_range);
+  ResponseCmndNumber(Settings.pwm_range);
 }
 
 void CmndButtonDebounce(void)
@@ -873,7 +905,7 @@ void CmndButtonDebounce(void)
   if ((XdrvMailbox.payload > 39) && (XdrvMailbox.payload < 1001)) {
     Settings.button_debounce = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.button_debounce);
+  ResponseCmndNumber(Settings.button_debounce);
 }
 
 void CmndSwitchDebounce(void)
@@ -881,7 +913,7 @@ void CmndSwitchDebounce(void)
   if ((XdrvMailbox.payload > 39) && (XdrvMailbox.payload < 1001)) {
     Settings.switch_debounce = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.switch_debounce);
+  ResponseCmndNumber(Settings.switch_debounce);
 }
 
 void CmndBaudrate(void)
@@ -891,7 +923,7 @@ void CmndBaudrate(void)
     baudrate = XdrvMailbox.payload * 1200;
     SetSerialBaudrate(baudrate);
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.baudrate * 1200);
+  ResponseCmndNumber(Settings.baudrate * 1200);
 }
 
 void CmndSerialSend(void)
@@ -916,7 +948,7 @@ void CmndSerialSend(void)
       else if (5 == XdrvMailbox.index) {
         SerialSendRaw(RemoveSpace(XdrvMailbox.data));               // "AA004566" as hex values
       }
-      Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_DONE);
+      ResponseCmndDone();
     }
   }
 }
@@ -932,7 +964,7 @@ void CmndSerialDelimiter(void)
       Settings.serial_delimiter = XdrvMailbox.data[0];
     }
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.serial_delimiter);
+  ResponseCmndNumber(Settings.serial_delimiter);
 }
 
 void CmndSyslog(void)
@@ -948,7 +980,7 @@ void CmndLoghost(void)
   if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.syslog_host))) {
     strlcpy(Settings.syslog_host, (SC_DEFAULT == Shortcut()) ? SYS_LOG_HOST : XdrvMailbox.data, sizeof(Settings.syslog_host));
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.syslog_host);
+  ResponseCmndChar(Settings.syslog_host);
 }
 
 void CmndLogport(void)
@@ -956,7 +988,7 @@ void CmndLogport(void)
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 65536)) {
     Settings.syslog_port = (1 == XdrvMailbox.payload) ? SYS_LOG_PORT : XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.syslog_port);
+  ResponseCmndNumber(Settings.syslog_port);
 }
 
 void CmndIpAddress(void)
@@ -986,7 +1018,7 @@ void CmndNtpServer(void)
 //        restart_flag = 2;  // Issue #3890
       ntp_force_sync = true;
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.ntp_server[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(Settings.ntp_server[XdrvMailbox.index -1]);
   }
 }
 
@@ -1016,7 +1048,7 @@ void CmndSsid(void)
       Settings.sta_active = XdrvMailbox.index -1;
       restart_flag = 2;
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.sta_ssid[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(Settings.sta_ssid[XdrvMailbox.index -1]);
   }
 }
 
@@ -1029,7 +1061,7 @@ void CmndPassword(void)
               sizeof(Settings.sta_pwd[0]));
       Settings.sta_active = XdrvMailbox.index -1;
       restart_flag = 2;
-      Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.sta_pwd[XdrvMailbox.index -1]);
+      ResponseCmndIdxChar(Settings.sta_pwd[XdrvMailbox.index -1]);
     } else {
       Response_P(S_JSON_COMMAND_INDEX_ASTERISK, XdrvMailbox.command, XdrvMailbox.index);
     }
@@ -1045,7 +1077,7 @@ void CmndHostname(void)
     }
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.hostname);
+  ResponseCmndChar(Settings.hostname);
 }
 
 void CmndWifiConfig(void)
@@ -1078,7 +1110,7 @@ void CmndFriendlyname(void)
       }
       strlcpy(Settings.friendlyname[XdrvMailbox.index -1], (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data, sizeof(Settings.friendlyname[XdrvMailbox.index -1]));
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.friendlyname[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(Settings.friendlyname[XdrvMailbox.index -1]);
   }
 }
 
@@ -1088,7 +1120,7 @@ void CmndSwitchMode(void)
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_SWITCH_OPTION)) {
       Settings.switchmode[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
-    Response_P(S_JSON_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.switchmode[XdrvMailbox.index-1]);
+    ResponseCmndIdxNumber(Settings.switchmode[XdrvMailbox.index-1]);
   }
 }
 
@@ -1160,7 +1192,7 @@ void CmndInterlock(void)
     ResponseAppend_P(PSTR("\"}"));
   } else {
     Settings.flag.interlock = 0;
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag.interlock));
+    ResponseCmndStateText(Settings.flag.interlock);
   }
 }
 
@@ -1179,14 +1211,14 @@ void CmndReset(void)
   switch (XdrvMailbox.payload) {
   case 1:
     restart_flag = 211;
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command , D_JSON_RESET_AND_RESTARTING);
+    ResponseCmndChar(D_JSON_RESET_AND_RESTARTING);
     break;
   case 2 ... 6:
     restart_flag = 210 + XdrvMailbox.payload;
     Response_P(PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
     break;
   default:
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_ONE_TO_RESET);
+    ResponseCmndChar(D_JSON_ONE_TO_RESET);
   }
 }
 
@@ -1219,11 +1251,11 @@ void CmndTimezone(void)
     ntp_force_sync = true;
   }
   if (99 == Settings.timezone) {
-    Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.timezone);
+    ResponseCmndNumber(Settings.timezone);
   } else {
     char stemp1[TOPSZ];
     snprintf_P(stemp1, sizeof(stemp1), PSTR("%+03d:%02d"), Settings.timezone, Settings.timezone_minutes);
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, stemp1);
+    ResponseCmndChar(stemp1);
   }
 }
 
@@ -1283,7 +1315,7 @@ void CmndAltitude(void)
   if ((XdrvMailbox.data_len > 0) && ((XdrvMailbox.payload >= -30000) && (XdrvMailbox.payload <= 30000))) {
     Settings.altitude = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.altitude);
+  ResponseCmndNumber(Settings.altitude);
 }
 
 void CmndLedPower(void)
@@ -1318,7 +1350,7 @@ void CmndLedPower(void)
     if (99 == pin[GPIO_LEDLNK]) {
       state = bitRead(Settings.ledstate, 3);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, GetStateText(state));
+    ResponseCmndIdxChar(GetStateText(state));
   }
 }
 
@@ -1331,7 +1363,7 @@ void CmndLedState(void)
       SetLedLink(0);
     }
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.ledstate);
+  ResponseCmndNumber(Settings.ledstate);
 }
 
 void CmndLedMask(void)
@@ -1341,7 +1373,7 @@ void CmndLedMask(void)
   }
   char stemp1[TOPSZ];
   snprintf_P(stemp1, sizeof(stemp1), PSTR("%d (0x%04X)"), Settings.ledmask, Settings.ledmask);
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, stemp1);
+  ResponseCmndChar(stemp1);
 }
 
 #ifdef USE_I2C

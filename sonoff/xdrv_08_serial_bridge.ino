@@ -138,7 +138,7 @@ void CmndSSerialSend(void)
           codes += 2;
         }
       }
-      Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_DONE);
+      ResponseCmndDone();
     }
   }
 }
@@ -149,7 +149,7 @@ void CmndSBaudrate(void)
     Settings.sbaudrate /= 1200;  // Make it a valid baudrate
     SerialBridgeSerial->begin(Settings.sbaudrate * 1200);  // Reinitialize serial port with new baud rate
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.sbaudrate * 1200);
+  ResponseCmndNumber(Settings.sbaudrate * 1200);
 }
 
 /*********************************************************************************************\

@@ -2069,7 +2069,7 @@ void CmndSupportColor(void)
   }
   char scolor[LIGHT_COLOR_SIZE];
   if (!valid_entry && (XdrvMailbox.index <= 2)) {
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, LightGetColor(scolor));
+    ResponseCmndChar(LightGetColor(scolor));
   }
   if (XdrvMailbox.index >= 3) {
     scolor[0] = '\0';
@@ -2080,7 +2080,7 @@ void CmndSupportColor(void)
         snprintf_P(scolor, sizeof(scolor), PSTR("%s%02X"), scolor, Settings.ws_color[XdrvMailbox.index -3][i]);
       }
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, scolor);
+    ResponseCmndIdxChar(scolor);
   }
   if (coldim) {
     LightPreparePower();
@@ -2125,7 +2125,7 @@ void CmndChannel(void)
       light_controller.changeChannels(light_current_color);
       coldim = true;
     }
-    Response_P(S_JSON_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, light_current_color[XdrvMailbox.index -1] * 100 / 255);
+    ResponseCmndIdxNumber(light_current_color[XdrvMailbox.index -1] * 100 / 255);
     if (coldim) {
       LightPreparePower();
     }
@@ -2204,7 +2204,7 @@ void CmndLed(void)
       Ws2812ForceUpdate();
     }
     char scolor[LIGHT_COLOR_SIZE];
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, Ws2812GetColor(XdrvMailbox.index, scolor));
+    ResponseCmndIdxChar(Ws2812GetColor(XdrvMailbox.index, scolor));
   }
 }
 
@@ -2217,7 +2217,7 @@ void CmndPixels(void)
       Ws2812Clear();
       light_update = 1;
     }
-    Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_pixels);
+    ResponseCmndNumber(Settings.light_pixels);
   }
 }
 
@@ -2227,7 +2227,7 @@ void CmndRotation(void)
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < Settings.light_pixels)) {
       Settings.light_rotation = XdrvMailbox.payload;
     }
-    Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_rotation);
+    ResponseCmndNumber(Settings.light_rotation);
   }
 }
 
@@ -2238,12 +2238,12 @@ void CmndWidth(void)
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 4)) {
         Settings.light_width = XdrvMailbox.payload;
       }
-      Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_width);
+      ResponseCmndNumber(Settings.light_width);
     } else {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32)) {
         Settings.ws_width[XdrvMailbox.index -2] = XdrvMailbox.payload;
       }
-      Response_P(S_JSON_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.ws_width[XdrvMailbox.index -2]);
+      ResponseCmndIdxNumber(Settings.ws_width[XdrvMailbox.index -2]);
     }
   }
 }
@@ -2271,7 +2271,7 @@ void CmndScheme(void)
       // Publish state message for Hass
       if (Settings.flag3.hass_tele_on_power) { MqttPublishTeleState(); }
     }
-    Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_scheme);
+    ResponseCmndNumber(Settings.light_scheme);
   }
 }
 
@@ -2283,7 +2283,7 @@ void CmndWakeup(void)
   light_wakeup_active = 3;
   Settings.light_scheme = LS_WAKEUP;
   LightPowerOn();
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, D_JSON_STARTED);
+  ResponseCmndChar(D_JSON_STARTED);
 }
 
 void CmndColorTemperature(void)
@@ -2302,7 +2302,7 @@ void CmndColorTemperature(void)
       light_controller.changeCTB(XdrvMailbox.payload, light_state.getBri());
       LightPreparePower();
     } else {
-      Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, ct);
+      ResponseCmndNumber(ct);
     }
   }
 }
@@ -2323,7 +2323,7 @@ void CmndDimmer(void)
     light_update = 1;
     LightPreparePower();
   } else {
-    Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_dimmer);
+    ResponseCmndNumber(Settings.light_dimmer);
   }
 }
 
@@ -2341,7 +2341,7 @@ void CmndLedTable(void)
     }
     light_update = 1;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.light_correction));
+  ResponseCmndStateText(Settings.light_correction);
 }
 
 void CmndRgbwwTable(void)
@@ -2368,7 +2368,7 @@ void CmndRgbwwTable(void)
   for (uint32_t i = 0; i < LST_RGBWC; i++) {
     snprintf_P(scolor, sizeof(scolor), PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", Settings.rgbwwTable[i]);
   }
-  Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, scolor);
+  ResponseCmndIdxChar(scolor);
 }
 
 void CmndFade(void)
@@ -2382,7 +2382,7 @@ void CmndFade(void)
     Settings.light_fade ^= 1;
     break;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.light_fade));
+  ResponseCmndStateText(Settings.light_fade);
 }
 
 void CmndSpeed(void)
@@ -2398,7 +2398,7 @@ void CmndSpeed(void)
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= STATES)) {
     Settings.light_speed = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_speed);
+  ResponseCmndNumber(Settings.light_speed);
 }
 
 void CmndWakeupDuration(void)
@@ -2407,7 +2407,7 @@ void CmndWakeupDuration(void)
     Settings.light_wakeup = XdrvMailbox.payload;
     light_wakeup_active = 0;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.light_wakeup);
+  ResponseCmndNumber(Settings.light_wakeup);
 }
 
 void CmndUndocA(void)

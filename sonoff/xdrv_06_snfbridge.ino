@@ -501,11 +501,11 @@ void CmndRfKey(void)
       sonoff_bridge_learn_active = 0;
       if (2 == XdrvMailbox.payload) {              // Learn RF data
         SonoffBridgeLearn(XdrvMailbox.index);
-        Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, D_JSON_START_LEARNING);
+        ResponseCmndIdxChar(D_JSON_START_LEARNING);
       }
       else if (3 == XdrvMailbox.payload) {         // Unlearn RF data
         Settings.rf_code[XdrvMailbox.index][0] = 0;  // Reset sync_time MSB
-        Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, D_JSON_SET_TO_DEFAULT);
+        ResponseCmndIdxChar(D_JSON_SET_TO_DEFAULT);
       }
       else if (4 == XdrvMailbox.payload) {         // Save RF data provided by RFSync, RfLow, RfHigh and last RfCode
         for (uint32_t i = 0; i < 6; i++) {
@@ -514,7 +514,7 @@ void CmndRfKey(void)
         Settings.rf_code[XdrvMailbox.index][6] = (sonoff_bridge_last_send_code >> 16) & 0xff;
         Settings.rf_code[XdrvMailbox.index][7] = (sonoff_bridge_last_send_code >> 8) & 0xff;
         Settings.rf_code[XdrvMailbox.index][8] = sonoff_bridge_last_send_code & 0xff;
-        Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, D_JSON_SAVED);
+        ResponseCmndIdxChar(D_JSON_SAVED);
       } else if (5 == XdrvMailbox.payload) {      // Show default or learned RF data
         uint8_t key = XdrvMailbox.index;
         uint8_t index = (0 == Settings.rf_code[key][0]) ? 0 : key;  // Use default if sync_time MSB = 0
@@ -533,10 +533,10 @@ void CmndRfKey(void)
       } else {
         if ((1 == XdrvMailbox.payload) || (0 == Settings.rf_code[XdrvMailbox.index][0])) {  // Test sync_time MSB
           SonoffBridgeSend(0, XdrvMailbox.index);  // Send default RF data
-          Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, D_JSON_DEFAULT_SENT);
+          ResponseCmndIdxChar(D_JSON_DEFAULT_SENT);
         } else {
           SonoffBridgeSend(XdrvMailbox.index, 0);  // Send learned RF data
-          Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, D_JSON_LEARNED_SENT);
+          ResponseCmndIdxChar(D_JSON_LEARNED_SENT);
         }
       }
     } else {
@@ -574,7 +574,7 @@ void CmndRfRaw(void)
       sonoff_bridge_receive_raw_flag = 1;
     }
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(sonoff_bridge_receive_raw_flag));
+  ResponseCmndStateText(sonoff_bridge_receive_raw_flag);
 }
 
 /*********************************************************************************************/

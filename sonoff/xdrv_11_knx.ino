@@ -1017,7 +1017,7 @@ void CmndKnxTxCmnd(void)
 
       i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
     }
-    Response_P (S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, XdrvMailbox.data );
+    ResponseCmndIdxChar (XdrvMailbox.data );
   }
 }
 
@@ -1046,7 +1046,7 @@ void CmndKnxTxVal(void)
 
       i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
     }
-    Response_P (S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, XdrvMailbox.data );
+    ResponseCmndIdxChar (XdrvMailbox.data );
   }
 }
 
@@ -1055,7 +1055,7 @@ void CmndKnxEnabled(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings.flag.knx_enabled = XdrvMailbox.payload;
   }
-  Response_P (S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag.knx_enabled) );
+  ResponseCmndChar (GetStateText(Settings.flag.knx_enabled) );
 }
 
 void CmndKnxEnhanced(void)
@@ -1063,7 +1063,7 @@ void CmndKnxEnhanced(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     Settings.flag.knx_enable_enhancement = XdrvMailbox.payload;
   }
-  Response_P (S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag.knx_enable_enhancement) );
+  ResponseCmndChar (GetStateText(Settings.flag.knx_enable_enhancement) );
 }
 
 void CmndKnxPa(void)
@@ -1139,7 +1139,7 @@ void CmndKnxGa(void)
           KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member );
       }
     } else {
-      Response_P (S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.knx_GA_registered );
+      ResponseCmndNumber (Settings.knx_GA_registered );
     }
   }
 }
@@ -1190,7 +1190,7 @@ void CmndKnxCb(void)
           KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member );
       }
     } else {
-      Response_P (S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.knx_CB_registered );
+      ResponseCmndNumber (Settings.knx_CB_registered );
     }
   }
 }
