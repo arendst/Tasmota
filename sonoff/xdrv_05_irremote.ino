@@ -803,6 +803,9 @@ uint32_t IrRemoteCmndIrSendRaw(void)
       irsend_active = true;
       for (uint32_t r = 0; r <= repeat; r++) {
         irsend->sendRaw(raw_array, i, parm[0]);
+        if (r < repeat) {         // if it's not the last message
+          irsend->space(40000);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
+        }
       }
     }
     else if (6 == count) {                          // NEC Protocol
@@ -810,6 +813,8 @@ uint32_t IrRemoteCmndIrSendRaw(void)
       uint16_t raw_array[strlen(p)*2+3];            // Header + bits + end
       raw_array[i++] = parm[1];                     // Header mark
       raw_array[i++] = parm[2];                     // Header space
+      uint32_t inter_message_32 = (parm[1] + parm[2]) * 3;  // compute an inter-message gap (32 bits)
+      uint16_t inter_message = (inter_message_32 > 65000) ? 65000 : inter_message_32;  // avoid 16 bits overflow
       for (; *p; *p++) {
         if (*p == '0') {
           raw_array[i++] = parm[3];                 // Bit mark
@@ -824,6 +829,9 @@ uint32_t IrRemoteCmndIrSendRaw(void)
       irsend_active = true;
       for (uint32_t r = 0; r <= repeat; r++) {
         irsend->sendRaw(raw_array, i, parm[0]);
+        if (r < repeat) {         // if it's not the last message
+          irsend->space(inter_message);   // since we don't know the inter-message gap, place an arbitrary 40ms gap
+        }
       }
     }
     else {
