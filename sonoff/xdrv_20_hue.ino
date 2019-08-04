@@ -563,6 +563,7 @@ void HueLights(String *path)
           } else {
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_DIMMER));
           }
+          XdrvRulesProcess();
         }
         change = false;
       }
