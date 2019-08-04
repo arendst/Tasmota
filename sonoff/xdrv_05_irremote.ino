@@ -754,6 +754,9 @@ uint32_t IrRemoteCmndIrSendRaw(void)
     return IE_INVALID_RAWDATA;
   }
 
+  // repeat
+  uint16_t repeat = XdrvMailbox.index > 0 ? XdrvMailbox.index - 1 : 0;
+
   uint16_t freq = atoi(str);
   if (!freq && (*str != '0')) {                     // First parameter is any string
     uint16_t count = 0;
@@ -798,7 +801,9 @@ uint32_t IrRemoteCmndIrSendRaw(void)
         }
       }
       irsend_active = true;
-      irsend->sendRaw(raw_array, i, parm[0]);
+      for (uint32_t r = 0; r <= repeat; r++) {
+        irsend->sendRaw(raw_array, i, parm[0]);
+      }
     }
     else if (6 == count) {                          // NEC Protocol
       // IRsend raw,0,8620,4260,544,411,1496,010101101000111011001110000000001100110000000001100000000000000010001100
@@ -817,7 +822,9 @@ uint32_t IrRemoteCmndIrSendRaw(void)
       }
       raw_array[i++] = parm[3];                     // Trailing mark
       irsend_active = true;
-      irsend->sendRaw(raw_array, i, parm[0]);
+      for (uint32_t r = 0; r <= repeat; r++) {
+        irsend->sendRaw(raw_array, i, parm[0]);
+      }
     }
     else {
       return IE_INVALID_RAWDATA;                    // Invalid number of parameters
@@ -842,7 +849,9 @@ uint32_t IrRemoteCmndIrSendRaw(void)
 //      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: stack count %d"), count);
 
       irsend_active = true;
-      irsend->sendRaw(raw_array, count, freq);
+      for (uint32_t r = 0; r <= repeat; r++) {
+        irsend->sendRaw(raw_array, count, freq);
+      }
     } else {
       uint16_t *raw_array = reinterpret_cast<uint16_t*>(malloc(count * sizeof(uint16_t)));
       if (raw_array == nullptr) {
@@ -856,7 +865,9 @@ uint32_t IrRemoteCmndIrSendRaw(void)
 //     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: heap count %d"), count);
 
       irsend_active = true;
-      irsend->sendRaw(raw_array, count, freq);
+      for (uint32_t r = 0; r <= repeat; r++) {
+        irsend->sendRaw(raw_array, count, freq);
+      }
       free(raw_array);
     }
   }
@@ -890,6 +901,10 @@ uint32_t IrRemoteCmndIrSendJson(void)
   uint16_t bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_BITS))];
   uint64_t data = strtoull(root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_DATA))], nullptr, 0);
   uint16_t repeat = root[UpperCase_P(parm_uc, PSTR(D_JSON_IR_REPEAT))];
+  // check if the IRSend<x> is great than repeat
+  if (XdrvMailbox.index > repeat + 1) {
+    repeat = XdrvMailbox.index - 1;
+  }
   if (!(protocol && bits)) {
     return IE_SYNTAX_IRSEND;
   }
