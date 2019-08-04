@@ -755,7 +755,7 @@ uint32_t IrRemoteCmndIrSendRaw(void)
   }
 
   // repeat
-  uint16_t repeat = XdrvMailbox.index - 1;
+  uint16_t repeat = XdrvMailbox.index > 0 ? XdrvMailbox.index - 1 : 0;
 
   uint16_t freq = atoi(str);
   if (!freq && (*str != '0')) {                     // First parameter is any string
