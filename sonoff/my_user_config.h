@@ -36,7 +36,7 @@
  * Users are advised to use the user_config_override.h file for most changes.
 \*********************************************************************************************/
 
-//#define USE_CONFIG_OVERRIDE                      // Uncomment to use user_config_override.h file. See README.md
+#define USE_CONFIG_OVERRIDE                      // Uncomment to use user_config_override.h file. See README.md
 
 /*********************************************************************************************\
  * SECTION 1
@@ -88,7 +88,7 @@
 #define MQTT_USE               1                 // [SetOption3] Select default MQTT use (0 = Off, 1 = On)
 
 #define MQTT_HOST              ""                // [MqttHost]
-#define MQTT_FINGERPRINT1      "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"  // [MqttFingerprint1]
+#define MQTT_FINGERPRINT1      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint1]
 #define MQTT_FINGERPRINT2      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint2]
 #define MQTT_PORT              1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
 #define MQTT_USER              "DVES_USER"       // [MqttUser] MQTT user
@@ -238,7 +238,7 @@
 //#define MY_LANGUAGE            sk-SK           // Slovak in Slovakia
 //#define MY_LANGUAGE            sv-SE           // Swedish in Sweden
 //#define MY_LANGUAGE            tr-TR           // Turkish in Turkey
-//#define MY_LANGUAGE            uk-UK           // Ukrainian in Ukraine
+//#define MY_LANGUAGE            uk-UK           // Ukrainian in Ukrain
 //#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
 //#define MY_LANGUAGE            zh-TW           // Chinese (Traditional) in Taiwan
 
@@ -262,14 +262,10 @@
 #define USE_HOME_ASSISTANT                       // Enable Home Assistant Discovery Support (+7k code)
   #define HOME_ASSISTANT_DISCOVERY_PREFIX "homeassistant"  // Home Assistant discovery prefix
 
-// -- MQTT - TLS - AWS IoT ------------------------
-// Using TLS starting with version v6.5.0.16 compilation will only work using Core 2.4.2 and 2.5.2. No longer supported: 2.3.0
-//#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+34.5k code, +7.0k mem and +4.8k additional during connection handshake)
-//  #define USE_MQTT_TLS_CA_CERT                   // Force full CA validation instead of fingerprints, slower, but simpler to use (+2.2k code, +1.9k mem during connection handshake)
-//  #define USE_MQTT_TLS_FORCE_EC_CIPHER           // Force Elliptic Curve cipher (higher security) required by some servers (automatically enabled with USE_MQTT_AWS_IOT) (+11.4k code, +0.4k mem)
-//  #define USE_MQTT_AWS_IOT                       // Enable MQTT for AWS IoT - requires a private key (+11.4k code, +0.4k mem)
-                                                 //   Note: you need to generate a private key + certificate per device and update 'sonoff/sonoff_aws_iot.cpp'
-                                                 //   Full documentation here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
+// -- MQTT - TLS ----------------------------------
+  // !!! TLS uses a LOT OF MEMORY so be careful to enable other options at the same time !!!
+//#define USE_MQTT_TLS                             // Use TLS for MQTT connection (+53k code, +15k mem)
+//  #define USE_MQTT_TLS_CA_CERT                   // Use LetsEncrypt Certificate from sonoff_letsencrypt.h - Not supported with core 2.3.0
 
 // -- KNX IP Protocol -----------------------------
 //#define USE_KNX                                  // Enable KNX IP Protocol Support (+9.4k code, +3k7 mem)
@@ -279,12 +275,10 @@
 #define USE_WEBSERVER                            // Enable web server and Wifi Manager (+66k code, +8k mem)
   #define WEB_PORT             80                // Web server Port for User and Admin mode
   #define WEB_USERNAME         "admin"           // Web server Admin mode user name
-//  #define USE_JAVASCRIPT_ES6                     // Enable ECMAScript6 syntax using less JavaScript code bytes (fails on IE11)
-  #define USE_EMULATION_HUE                      // Enable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
-  #define USE_EMULATION_WEMO                     // Enable Belkin WeMo emulation for Alexa (+6k code, +2k mem common)
+  #define USE_EMULATION                          // Enable Belkin WeMo and Hue Bridge emulation for Alexa (+16k code, +2k mem)
 
 // -- mDNS ----------------------------------------
-#define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
+#define USE_DISCOVERY                            // Enable mDNS for the following services (+8k code, +0.3k mem)
   #define WEBSERVER_ADVERTISE                    // Provide access to webserver by name <Hostname>.local/
   #define MQTT_HOST_DISCOVERY                    // Find MQTT host server (overrides MQTT_HOST if found)
 
@@ -294,28 +288,13 @@
   #define USE_SUNRISE                            // Add support for Sunrise and sunset tools (+16k)
     #define SUNRISE_DAWN_ANGLE DAWN_NORMAL       // Select desired Dawn Angle from (DAWN_NORMAL, DAWN_CIVIL, DAWN_NAUTIC, DAWN_ASTRONOMIC)
 
-// -- Rules or Script  ----------------------------
-// Select none or only one of the below defines
-#define USE_RULES                                // Add support for rules (+8k code)
-//#define USE_SCRIPT                               // Add support for script (+17k code)
-  #define USE_SCRIPT_FATFS 4                     // Script: Add FAT FileSystem Support
-
+// -- Rules ---------------------------------------
+#define USE_RULES                                // Add support for rules (+4k4 code)
 //  #define USE_EXPRESSION                         // Add support for expression evaluation in rules (+3k2 code, +64 bytes mem)
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 
-// -- Optional modules ----------------------------
-#define USE_SONOFF_IFAN                          // Add support for Sonoff iFan02 and iFan03 (+2k code)
-#define USE_TUYA_DIMMER                          // Add support for Tuya Serial Dimmer
-  #define TUYA_DIMMER_ID       0                 // Default dimmer Id
-#define USE_ARMTRONIX_DIMMERS                    // Add support for Armtronix Dimmers (+1k4 code)
-#define USE_PS_16_DZ                             // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-//#define ROTARY_V1                                // Add support for MI Desk Lamp
-
-// -- Counter input -------------------------------
-#define USE_COUNTER                              // Enable inputs as counter (+0k8 code)
-
 // -- Internal Analog input -----------------------
-//#define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
+#define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
 
 // -- One wire sensors ----------------------------
                                                  // WARNING: Select none for default one DS18B20 sensor or enable one of the following two options for multiple sensors
@@ -343,7 +322,7 @@
 //  #define USE_TSL2561                            // Enable TSL2561 sensor (I2C address 0x29, 0x39 or 0x49) using library Joba_Tsl2561 (+2k3 code)
 //  #define USE_MGS                                // Enable Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
     #define MGS_SENSOR_ADDR    0x04              // Default Mutichannel Gas sensor i2c address
-//  #define USE_SGP30                              // Enable SGP30 sensor (I2C address 0x58) (+1k1 code)
+  #define USE_SGP30                              // Enable SGP30 sensor (I2C address 0x58) (+1k1 code)
 //  #define USE_SI1145                             // Enable SI1145/46/47 sensor (I2C address 0x60) (+1k code)
   #define USE_LM75AD                             // Enable LM75AD sensor (I2C addresses 0x48 - 0x4F) (+0k5 code)
 //  #define USE_APDS9960                           // Enable APDS9960 Proximity Sensor (I2C address 0x39). Disables SHT and VEML6070 (+4k7 code)
@@ -363,10 +342,7 @@
 //  #define USE_MGC3130                            // Enable MGC3130 Electric Field Effect Sensor (I2C address 0x42) (+2k7 code, 0k3 mem)
 //  #define USE_MAX44009                           // Enable MAX44009 Ambient Light sensor (I2C addresses 0x4A and 0x4B) (+0k8 code)
 //  #define USE_SCD30                              // Enable Sensiron SCd30 CO2 sensor (I2C address 0x61) (+3k3 code)
-//  #define USE_SPS30                              // Enable Sensiron SPS30 particle sensor (I2C address 0x69) (+1.7 code)
   #define USE_ADE7953                            // Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
-//  #define USE_VL53L0X                            // Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
-//  #define USE_MLX90614                           // Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)
 
 //  #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
     #define USE_DISPLAY_MODES1TO5                // Enable display mode 1 to 5 in addition to mode 0
@@ -404,12 +380,17 @@
   #define WORKING_PERIOD       5                 // Working period of the SDS Sensor, Takes a reading every X Minutes
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
 //#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
-  #define SDM120_SPEED         2400              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
+  #define SDM120_SPEED         9600              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
   #define USE_SDM220                             // Add extra parameters for SDM220 (+0k1 code)
 //#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy meter (+2k code)
   #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
 //#define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10                // Set the startup volume on init, the range can be 0..30(max)
+#define USE_TUYA_DIMMER                          // Add support for Tuya Serial Dimmer
+  #define TUYA_DIMMER_ID       0                 // Default dimmer Id
+#define USE_ARMTRONIX_DIMMERS                    // Add support for Armtronix Dimmers (+1k4 code)
+#define USE_PS_16_DZ                             // Add support for PS-16-DZ Dimmer
+//#define ROTARY_V1                                // Add support for MI Desk Lamp
 //#define USE_AZ7798                               // Add support for AZ-Instrument 7798 CO2 datalogger (+1k6 code)
 //#define USE_PN532_HSU                            // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 //  #define USE_PN532_CAUSE_EVENTS                 // Cause event execution for PN532_UID= and PN532_DATA=[if defined] (+ 30 bytes code)
@@ -417,53 +398,20 @@
 //  #define USE_PN532_DATA_RAW                     // Allow DATA block to be used by non-alpha-numberic data (+ 80 bytes code, 48 bytes ram)
 
 // Power monitoring sensors -----------------------
-#define USE_ENERGY_MARGIN_DETECTION              // Add support for Energy Margin detection (+1k6 code)
-  #define USE_ENERGY_POWER_LIMIT                 // Add additional support for Energy Power Limit detection (+1k2 code)
 #define USE_PZEM004T                             // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_PZEM_AC                              // Add support for PZEM014,016 Energy monitor (+1k1 code)
 #define USE_PZEM_DC                              // Add support for PZEM003,017 Energy monitor (+1k1 code)
 #define USE_MCP39F501                            // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
 
 // -- Low level interface devices -----------------
-#define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)
-
 //#define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
-//#define USE_MAX31865                             // Add support for MAX31865 RTD sensors using softSPI
-  #define MAX31865_PTD_WIRES  2                 // PTDs come in several flavors. Pick yours
-  #define MAX31865_PTD_RES    100               // Nominal PTD resistance at 0°C (100Ω for a PT100, 1000Ω for a PT1000, YMMV!)
-  #define MAX31865_REF_RES    430               // Reference resistor (Usually 430Ω for a PT100, 4300Ω for a PT1000)
-  #define MAX31865_PTD_BIAS   0                 // To calibrate your not-so-good PTD
 
-// -- IR Remote features --------------------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k3 code, 0k3 mem, 48 iram)
-//  #define USE_IR_SEND_AIWA                       // Support IRsend Aiwa protocol
-  #define USE_IR_SEND_DISH                       // Support IRsend Dish protocol
-  #define USE_IR_SEND_JVC                        // Support IRsend JVC protocol
-//  #define USE_IR_SEND_LG                         // Support IRsend LG protocol
-//  #define USE_IR_SEND_MITSUBISHI                 // Support IRsend Mitsubishi protocol
-  #define USE_IR_SEND_NEC                        // Support IRsend NEC protocol
-  #define USE_IR_SEND_PANASONIC                  // Support IRsend Panasonic protocol
-  #define USE_IR_SEND_PIONEER                    // Support IRsend Pioneer protocol
-  #define USE_IR_SEND_RC5                        // Support IRsend Philips RC5 protocol
-  #define USE_IR_SEND_RC6                        // Support IRsend Philips RC6 protocol
-  #define USE_IR_SEND_SAMSUNG                    // Support IRsend Samsung protocol
-//  #define USE_IR_SEND_SANYO                      // Support IRsend Sanyo protocol
-//  #define USE_IR_SEND_SHARP                      // Support IRsend Sharp protocol
-  #define USE_IR_SEND_SONY                       // Support IRsend Sony protocol
-//  #define USE_IR_SEND_WHYNTER                    // Support IRsend Whynter protocol
-
-//  #define USE_IR_HVAC                            // Support for HVAC systems using IR (+3k5 code)
-    #define USE_IR_HVAC_TOSHIBA                  // Support IRhvac Toshiba protocol
-    #define USE_IR_HVAC_MITSUBISHI               // Support IRhvac Mitsubischi protocol
-    #define USE_IR_HVAC_LG                       // Support IRhvac LG protocol
-    #define USE_IR_HVAC_FUJITSU                  // Support IRhvac Fujitsu protocol
-//    #define USE_IR_HVAC_MIDEA                    // Support IRhvac Midea/Komeco protocol
-
+//  #define USE_IR_HVAC                            // Support for HVAC (Toshiba, Mitsubishi and LG) system using IR (+3k5 code)
   #define USE_IR_RECEIVE                         // Support for IR receiver (+7k2 code, 264 iram)
     #define IR_RCV_BUFFER_SIZE      100          // Max number of packets allowed in capture buffer (default 100 (*2 bytes ram))
     #define IR_RCV_TIMEOUT          15           // Number of milli-Seconds of no-more-data before we consider a message ended (default 15)
-    #define IR_RCV_MIN_UNKNOWN_SIZE 6            // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
-// ------------------------------------------------
+    #define IR_RCV_MIN_UNKNOWN_SIZE 6            // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6)
 
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
   #define USE_WS2812_CTYPE     NEO_GRB           // WS2812 Color type (NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_RGBW, NEO_GRBW)
@@ -479,9 +427,9 @@
 
 #define USE_RF_FLASH                             // Add support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (+3k code)
 
-//#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k code)
+#define USE_TX20_WIND_SENSOR                     // Add support for La Crosse TX20 anemometer (+2k code)
 
-//#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
+#define USE_RC_SWITCH                            // Add support for RF transceiver using library RcSwitch (+2k7 code, 460 iram)
 
 //#define USE_RF_SENSOR                            // Add support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 //  #define USE_THEO_V2                            // Add support for decoding Theo V2 sensors as documented on https://sidweb.nl using 434MHz RF sensor receiver (+1k4 code)
@@ -514,8 +462,8 @@
  * No user configurable items below
 \*********************************************************************************************/
 
-#if defined(USE_DISCOVERY) && defined(USE_MQTT_AWS_IOT)
-  #error "Select either USE_DISCOVERY or USE_MQTT_AWS_IOT, mDNS takes too much code space and is not needed for AWS IoT"
+#if defined(USE_MQTT_TLS) && defined(USE_WEBSERVER)
+  #error "Select either USE_MQTT_TLS or USE_WEBSERVER as there is just not enough memory to play with"
 #endif
 
 #endif  // _MY_USER_CONFIG_H_
