@@ -172,7 +172,9 @@ then
 
 remarks:  
 the last closing bracket must be on a single line  
-the condition may not be enclosed in brackets  
+the condition may be enclosed in brackets  
+and on the same line conditions may be bracketed  e.g. if ((a==b) and ((c==d) or (c==e)) and (s!="x"))  
+
 
 >**break** exits a section or terminates a for next loop  
 **dpx** sets decimal precision to x (0-9)  
