@@ -371,3 +371,40 @@ float sqrt1(const float x)
 
   return u.x;
 }
+
+//
+// changeUIntScale
+// Change a value for range a..b to c..d, using only unsigned int math
+//
+// PRE-CONDITIONS (if not satisfied, you may 'halt and catch fire')
+//    from_min < from_max  (not checked)
+//    to_min   < to_max    (not checked)
+//    from_min <= num <= from-max  (chacked)
+// POST-CONDITIONS
+//    to_min <= result <= to_max
+//
+uint16_t changeUIntScale(uint16_t inum, uint16_t ifrom_min, uint16_t ifrom_max,
+                                       uint16_t ito_min, uint16_t ito_max) {
+  // guard-rails
+  if ((ito_min >= ito_max) || (ifrom_min >= ifrom_max)) {
+    return ito_min;  // invalid input, return arbitrary value
+  }
+  // convert to uint31, it's more verbose but code is more compact
+  uint32_t num = inum;
+  uint32_t from_min = ifrom_min;
+  uint32_t from_max = ifrom_max;
+  uint32_t to_min = ito_min;
+  uint32_t to_max = ito_max;
+
+  // check source range
+  num = (num > from_max ? from_max : (num < from_min ? from_min : num));
+  uint32_t numerator = (num - from_min) * (to_max - to_min);
+  uint32_t result;
+  if (numerator >= 0x80000000L) {
+    // don't do rounding as it would create an overflow
+    result = numerator / (from_max - from_min) + to_min;
+  } else {
+    result = (((numerator * 2) / (from_max - from_min)) + 1) / 2 + to_min;
+  }
+  return (uint32_t) (result > to_max ? to_max : (result < to_min ? to_min : result));
+}
