@@ -45,17 +45,18 @@
 \*********************************************************************************************/
 
 #define D_CMND_CFGDUMP   "CfgDump"
-#define D_CMND_CFGPOKE   "CfgPoke"
 #define D_CMND_CFGPEEK   "CfgPeek"
+#define D_CMND_CFGPOKE   "CfgPoke"
 #define D_CMND_CFGSHOW   "CfgShow"
 #define D_CMND_CFGXOR    "CfgXor"
 #define D_CMND_CPUCHECK  "CpuChk"
 #define D_CMND_EXCEPTION "Exception"
-#define D_CMND_FREEMEM   "FreeMem"
-#define D_CMND_RTCDUMP   "RtcDump"
-#define D_CMND_HELP      "Help"
-#define D_CMND_SETSENSOR "SetSensor"
+#define D_CMND_FLASHDUMP "FlashDump"
 #define D_CMND_FLASHMODE "FlashMode"
+#define D_CMND_FREEMEM   "FreeMem"
+#define D_CMND_HELP      "Help"
+#define D_CMND_RTCDUMP   "RtcDump"
+#define D_CMND_SETSENSOR "SetSensor"
 
 const char kDebugCommands[] PROGMEM =
   D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|"
@@ -69,7 +70,7 @@ const char kDebugCommands[] PROGMEM =
 #ifdef DEBUG_THEO
   D_CMND_EXCEPTION "|"
 #endif
-  D_CMND_FREEMEM "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR "|" D_CMND_FLASHMODE "|" D_CMND_HELP;
+  D_CMND_FLASHDUMP "|" D_CMND_FLASHMODE "|" D_CMND_FREEMEM"|" D_CMND_HELP "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR ;
 
 void (* const DebugCommand[])(void) PROGMEM = {
   &CmndCfgDump, &CmndCfgPeek, &CmndCfgPoke,
@@ -83,7 +84,7 @@ void (* const DebugCommand[])(void) PROGMEM = {
 #ifdef DEBUG_THEO
   &CmndException,
 #endif
-  &CmndFreemem, &CmndRtcDump, &CmndSetSensor, &CmndFlashMode, &CmndHelp };
+  &CmndFlashDump, &CmndFlashMode, &CmndFreemem, &CmndHelp, &CmndRtcDump, &CmndSetSensor };
 
 uint32_t CPU_loops = 0;
 uint32_t CPU_last_millis = 0;
@@ -433,7 +434,7 @@ void SetFlashMode(uint8_t mode)
 
 void CmndHelp(void)
 {
-  AddLog_P(LOG_LEVEL_INFO, kDebugCommands);
+  AddLog_P(LOG_LEVEL_INFO, PSTR("HLP: "), kDebugCommands);
   ResponseCmndDone();
 }
 
@@ -523,6 +524,47 @@ void CmndFlashMode(void)
     SetFlashMode(XdrvMailbox.payload);
   }
   ResponseCmndNumber(ESP.getFlashChipMode());
+}
+
+uint32_t DebugSwap32(uint32_t x) {
+	return	((x << 24) & 0xff000000 ) |
+		((x <<  8) & 0x00ff0000 ) |
+		((x >>  8) & 0x0000ff00 ) |
+		((x >> 24) & 0x000000ff );
+}
+
+void CmndFlashDump(void)
+{
+  // FlashDump
+  // FlashDump 0xFF000
+  // FlashDump 0xFC000 10
+  const uint32_t flash_start = 0x40200000;  // Start address flash
+  const uint8_t bytes_per_cols = 0x20;
+  const uint32_t max = (SPIFFS_END + 5) * SPI_FLASH_SEC_SIZE;  // 0x100000 for 1M flash, 0x400000 for 4M flash
+
+  uint32_t start = flash_start;
+  uint32_t rows = 8;
+
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= (max - bytes_per_cols))) {
+    start += (XdrvMailbox.payload &0x7FFFFFFC);  // Fix exception as flash access is only allowed on 4 byte boundary
+
+    char *p;
+    uint32_t is_payload = strtol(XdrvMailbox.data, &p, 16);
+    rows = strtol(p, &p, 10);
+    if (0 == rows) { rows = 8; }
+  }
+  uint32_t end = start + (rows * bytes_per_cols);
+  if ((end - flash_start) > max) {
+    end = flash_start + max;
+  }
+
+  for (uint32_t pos = start; pos < end; pos += bytes_per_cols) {
+    uint32_t* values = (uint32_t*)(pos);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("%06X:  %08X %08X %08X %08X  %08X %08X %08X %08X"), pos - flash_start,
+      DebugSwap32(values[0]), DebugSwap32(values[1]), DebugSwap32(values[2]), DebugSwap32(values[3]),
+      DebugSwap32(values[4]), DebugSwap32(values[5]), DebugSwap32(values[6]), DebugSwap32(values[7]));
+  }
+  ResponseCmndDone();
 }
 
 /*********************************************************************************************\

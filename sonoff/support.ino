@@ -1493,7 +1493,7 @@ void AddLog_P(uint32_t loglevel, const char *formatP)
 
 void AddLog_P(uint32_t loglevel, const char *formatP, const char *formatP2)
 {
-  char message[100];
+  char message[sizeof(log_data)];
 
   snprintf_P(log_data, sizeof(log_data), formatP);
   snprintf_P(message, sizeof(message), formatP2);
