@@ -221,7 +221,7 @@ void MqttInit(void)
   tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 
 #ifdef USE_MQTT_AWS_IOT
-  snprintf(AWS_endpoint, sizeof(AWS_endpoint), PSTR("%s%s"), Settings.mqtt_user, Settings.mqtt_host);
+  snprintf_P(AWS_endpoint, sizeof(AWS_endpoint), PSTR("%s%s"), Settings.mqtt_user, Settings.mqtt_host);
 
   loadTlsDir();   // load key and certificate data from Flash
   tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
@@ -973,9 +973,8 @@ void CmndSensorRetain(void)
 \*********************************************************************************************/
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
 
-const static uint8_t* tls_spi_start    = (uint8_t*) 0x402FF000;
-const static uint32_t tls_spi_start_write  = 0x00FF000;
-const static uint16_t tls_spi_start_sector = 0x00FF;
+const static uint16_t tls_spi_start_sector = SPIFFS_END + 4;  // 0xXXFF
+const static uint8_t* tls_spi_start    = (uint8_t*) ((tls_spi_start_sector * SPI_FLASH_SEC_SIZE) + 0x40200000);  // 0x40XFF000
 const static size_t   tls_spi_len      = 0x1000;  // 4kb blocs
 const static size_t   tls_block_offset = 0x0400;
 const static size_t   tls_block_len    = 0x0400;   // 1kb
@@ -1144,11 +1143,11 @@ uint32_t bswap32(uint32_t x) {
 		((x >> 24) & 0x000000ff );
 }
 void CmndTlsDump(void) {
-  uint32_t start = 0x402FF400;
-  uint32_t end   = 0x402FF7FF;
+  uint32_t start = (uint32_t)tls_spi_start + tls_block_offset;
+  uint32_t end   = start + tls_block_len -1;
   for (uint32_t pos = start; pos < end; pos += 0x10) {
       uint32_t* values = (uint32_t*)(pos);
-      Serial.printf(PSTR("%08x:  %08x %08x %08x %08x\n"), pos, bswap32(values[0]), bswap32(values[1]), bswap32(values[2]), bswap32(values[3]));
+      Serial.printf_P(PSTR("%08x:  %08x %08x %08x %08x\n"), pos, bswap32(values[0]), bswap32(values[1]), bswap32(values[2]), bswap32(values[3]));
   }
 }
 #endif  // DEBUG_DUMP_TLS
