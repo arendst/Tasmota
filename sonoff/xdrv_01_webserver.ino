@@ -46,6 +46,8 @@ uint8_t *efm8bb1_update = nullptr;
 
 enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1 };
 
+static const char * HEADER_KEYS[] = { "User-Agent", };
+
 const char HTTP_HEAD[] PROGMEM =
   "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
   "<head>"
@@ -543,6 +545,11 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // Not FIRMWARE_MINIMAL
     }
     reset_web_log_flag = false;
+
+    // Collect User-Agent for Alexa Hue Emulation
+    // This is used in xdrv_20_hue.ino in function findEchoGeneration()
+    WebServer->collectHeaders(HEADER_KEYS, sizeof(HEADER_KEYS)/sizeof(char*));
+
     WebServer->begin(); // Web server start
   }
   if (webserver_state != type) {
