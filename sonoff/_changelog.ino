@@ -1,4 +1,6 @@
 /*********************************************************************************************\
+ * 6.6.0.4 20190806
+ *
  * 6.6.0.3 20190725
  * Change filename of configuration backup from using FriendlyName1 to Hostname solving diacritic issues (#2422)
  * Upgrade library IRRemoteEsp8266 to 2.6.4, now using sendPioneer()
