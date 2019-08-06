@@ -9,6 +9,7 @@
  * Add define USE_ENERGY_POWER_LIMIT to disable Energy Power Limit detection while Energy Margin detection is active
  * Add allow repeat/longpress for IRSend raw, introduced IRSend<r> option (#6074)
  * Change Store AWS IoT Private Key and Certificate in SPI Flash avoiding device-specific compilations
+ * Add SetOption68 to enable multi-channel PWM instead of a single light (#6134)
  *
  * 6.6.0.2 20190714
  * Change commands Var and Mem to show all parameters when no index is given (#6107)

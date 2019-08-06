@@ -59,6 +59,7 @@ const uint8_t MAX_COUNTERS = 4;             // Max number of counter sensors
 const uint8_t MAX_TIMERS = 16;              // Max number of Timers
 const uint8_t MAX_PULSETIMERS = 8;          // Max number of supported pulse timers
 const uint8_t MAX_FRIENDLYNAMES = 4;        // Max number of Friendly names
+const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 const uint8_t MAX_DOMOTICZ_IDX = 4;         // Max number of Domoticz device, key and switch indices
 const uint8_t MAX_DOMOTICZ_SNS_IDX = 12;    // Max number of Domoticz sensors indices
 const uint8_t MAX_KNX_GA = 10;              // Max number of KNX Group Addresses to read that can be set
@@ -264,7 +265,7 @@ const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 
 \*********************************************************************************************/
 
 extern uint8_t light_device;  // Light device number
-extern uint8_t light_power;  // Light power
+extern power_t light_power;  // Light power
 extern uint8_t rotary_changed; // Rotary switch changed
 
 #endif  // _SONOFF_H_

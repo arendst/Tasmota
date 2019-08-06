@@ -585,6 +585,9 @@ void CmndSetoption(void)
           if (10 == pindex) {  // SetOption60 enable or disable traditional sleep
             WiFiSetSleepMode();  // Update WiFi sleep mode accordingly
           }
+          if (18 == pindex) { // SetOption68 for multi-channel PWM, requires a reboot
+            restart_flag = 2;
+          }
         }
       }
       else {                   // SetOption32 .. 49

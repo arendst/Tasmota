@@ -1451,6 +1451,13 @@ void GpioInit(void)
     light_type |= LT_SM16716;
   }
 #endif  // USE_SM16716
+
+  // post-process for lights
+  if (Settings.flag3.pmw_multi_channels) {
+    uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
+    if (0 == pwm_channels)  pwm_channels = 1;
+    devices_present += pwm_channels - 1;  // add the pwm channels controls at the end
+  }
 #endif  // USE_LIGHT
   if (!light_type) {
     for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
