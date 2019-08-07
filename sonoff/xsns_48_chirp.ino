@@ -124,7 +124,7 @@ void ChirpReset(uint8_t addr) {
 /********************************************************************************************/
 
 void ChirpResetAll(void) {
-    for (uint8_t i = 0; i < chirp_found_sensors; i++) {
+    for (uint32_t i = 0; i < chirp_found_sensors; i++) {
       if (chirp_sensor[i].version) { 
         ChirpReset(chirp_sensor[i].address);
         }
@@ -146,7 +146,7 @@ void ChirpSleep(uint8_t addr) {
 /********************************************************************************************/
 
 // void ChirpSleepAll(void) {
-//     for (uint8_t i = 0; i < chirp_found_sensors; i++) {
+//     for (uint32_t i = 0; i < chirp_found_sensors; i++) {
 //       if (chirp_sensor[i].version) { 
 //         ChirpSleep(chirp_sensor[i].address);
 //         }
@@ -156,7 +156,7 @@ void ChirpSleep(uint8_t addr) {
 // /********************************************************************************************/
 
 // void ChirpAutoWakeAll(void) {
-//     for (uint8_t i = 0; i < chirp_found_sensors; i++) {
+//     for (uint32_t i = 0; i < chirp_found_sensors; i++) {
 //       if (chirp_sensor[i].version && !chirp_sensor[i].explicitSleep) { 
 //         ChirpReadVersion(chirp_sensor[i].address);
 //         }
@@ -178,7 +178,7 @@ void ChirpSelect(uint8_t sensor) {
 /********************************************************************************************/
 
 bool ChirpMeasureLight(void) {
-  for (uint8_t i = 0; i < chirp_found_sensors; i++) {
+  for (uint32_t i = 0; i < chirp_found_sensors; i++) {
     if (chirp_sensor[i].version && !chirp_sensor[i].explicitSleep) { 
       uint8_t lightReady = I2cRead8(chirp_sensor[i].address, CHIRP_GET_BUSY);
       AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: busy status for light for sensor %u", lightReady);
@@ -195,7 +195,7 @@ bool ChirpMeasureLight(void) {
 /********************************************************************************************/
 
 void ChirpReadCapTemp() { // no timeout needed for both measurements, so we do it at once
-    for (uint8_t i = 0; i < chirp_found_sensors; i++) {
+    for (uint32_t i = 0; i < chirp_found_sensors; i++) {
       if (chirp_sensor[i].version && !chirp_sensor[i].explicitSleep) { 
         AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: now really read CapTemp for sensor at address 0x%x", chirp_sensor[i].address);
         chirp_sensor[i].moisture = I2cRead16(chirp_sensor[i].address, CHIRP_GET_CAPACITANCE);
@@ -208,7 +208,7 @@ void ChirpReadCapTemp() { // no timeout needed for both measurements, so we do i
 
 bool ChirpReadLight() {   // sophisticated calculations could be done here
   bool success = false;
-  for (uint8_t i = 0; i < chirp_found_sensors; i++) {
+  for (uint32_t i = 0; i < chirp_found_sensors; i++) {
     AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: will read light for sensor %u", i);
     if (chirp_sensor[i].version) {
       if (I2cValidRead16(&chirp_sensor[i].light, chirp_sensor[i].address, CHIRP_GET_LIGHT)){
@@ -352,7 +352,7 @@ void ChirpEverySecond(void)
 
 void ChirpShow(bool json)
 {
-  for (uint8_t i = 0; i < chirp_found_sensors; i++) {
+  for (uint32_t i = 0; i < chirp_found_sensors; i++) {
     if (chirp_sensor[i].version) {
       // convert double values to string
       char str_moisture[33];      
