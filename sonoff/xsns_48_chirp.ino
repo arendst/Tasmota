@@ -168,10 +168,10 @@ void ChirpSleep(uint8_t addr) {
 void ChirpSelect(uint8_t sensor) {
   if(sensor < chirp_found_sensors) { //TODO: show some infos
     chirp_current = sensor;
-    AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: Sensor %u now active.", chirp_current);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: Sensor %u now active."), chirp_current);
   }
   if (sensor == 255) {
-    AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: Sensor %u active at address 0x%x.", chirp_current, chirp_sensor[chirp_current].address);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: Sensor %u active at address 0x%x."), chirp_current, chirp_sensor[chirp_current].address);
   }
 }
 
@@ -181,11 +181,11 @@ bool ChirpMeasureLight(void) {
   for (uint32_t i = 0; i < chirp_found_sensors; i++) {
     if (chirp_sensor[i].version && !chirp_sensor[i].explicitSleep) { 
       uint8_t lightReady = I2cRead8(chirp_sensor[i].address, CHIRP_GET_BUSY);
-      AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: busy status for light for sensor %u", lightReady);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: busy status for light for sensor %u"), lightReady);
       if (lightReady == 1) {
         return false; // a measurement is still in progress, we stop everything and come back in the next loop = 1 second
       }
-      AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: init measure light for sensor %u", i);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: init measure light for sensor %u"), i);
       I2cWriteReg(chirp_sensor[i].address, CHIRP_MEASURE_LIGHT); 
       }
   }
@@ -197,7 +197,7 @@ bool ChirpMeasureLight(void) {
 void ChirpReadCapTemp() { // no timeout needed for both measurements, so we do it at once
     for (uint32_t i = 0; i < chirp_found_sensors; i++) {
       if (chirp_sensor[i].version && !chirp_sensor[i].explicitSleep) { 
-        AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: now really read CapTemp for sensor at address 0x%x", chirp_sensor[i].address);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: now really read CapTemp for sensor at address 0x%x"), chirp_sensor[i].address);
         chirp_sensor[i].moisture = I2cRead16(chirp_sensor[i].address, CHIRP_GET_CAPACITANCE);
         chirp_sensor[i].temperature = I2cRead16(chirp_sensor[i].address, CHIRP_GET_TEMPERATURE); 
         }
@@ -209,10 +209,10 @@ void ChirpReadCapTemp() { // no timeout needed for both measurements, so we do i
 bool ChirpReadLight() {   // sophisticated calculations could be done here
   bool success = false;
   for (uint32_t i = 0; i < chirp_found_sensors; i++) {
-    AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: will read light for sensor %u", i);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: will read light for sensor %u"), i);
     if (chirp_sensor[i].version) {
       if (I2cValidRead16(&chirp_sensor[i].light, chirp_sensor[i].address, CHIRP_GET_LIGHT)){
-        AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: light read success");
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: light read success"));
         success = true;
       }
       if(!chirp_sensor[i].explicitSleep){ success = true;} 
@@ -233,7 +233,7 @@ bool ChirpSet(uint8_t addr) {
   if(addr < 128){
     if (I2cWrite8(chirp_sensor[chirp_current].address, CHIRP_SET_ADDRESS, addr)){
       I2cWrite8(chirp_sensor[chirp_current].address, CHIRP_SET_ADDRESS, addr); // two calls are needed for sensor firmware version 2.6
-      AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: Wrote adress %u ", addr);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: Wrote adress %u "), addr);
       ChirpReset(chirp_sensor[chirp_current].address);
       chirp_sensor[chirp_current].address = addr;
       return true;
@@ -256,12 +256,12 @@ bool ChirpScan() {
         AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "CHIRP:", address);    
         if(chirp_found_sensors<CHIRP_MAX_SENSOR_COUNT){
           chirp_sensor[chirp_found_sensors].address = address; // push next sensor, as long as there is space in the array
-          AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: fw %u", chirp_sensor[chirp_found_sensors].version);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: fw %u"), chirp_sensor[chirp_found_sensors].version);
         }
         chirp_found_sensors++;
       }
     }
-    AddLog_P2(LOG_LEVEL_DEBUG, "Found %u CHIRP sensor(s).", chirp_found_sensors);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Found %u CHIRP sensor(s)."), chirp_found_sensors);
     if (chirp_found_sensors == 0) {return false;}
     else {return true;}
 }
@@ -273,7 +273,7 @@ void ChirpDetect(void)
   if (chirp_next_job > 0) {
     return;
   }
-  AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: scan will start ...");
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: scan will start ..."));
   if (ChirpScan()) {
     uint8_t chirp_model = 0;  // TODO: ??
     GetTextIndexed(chirp_name, sizeof(chirp_name), chirp_model, kChirpTypes);
@@ -285,44 +285,44 @@ void ChirpDetect(void)
 
 void ChirpEverySecond(void)
 {
-  // AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: every second");
+  // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: every second"));
   if(chirp_timeout_count == 0) {    //countdown complete, now do something
       switch(chirp_next_job) {
           case 0:                   //this should only be called after driver initialization
-          AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: reset all");
+          AddLog_P2(LOG_LEVEL_DEBUG,PSTR( "CHIRP: reset all"));
           ChirpResetAll();
           chirp_timeout_count = 1;
           chirp_next_job++;
           break;
           case 1:                   // auto-sleep-wake seems to expose a fundamental I2C-problem of the sensor and is deactivated
-          // AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: auto-wake all");
+          // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: auto-wake all"));
           // ChirpAutoWakeAll();       // this is only a wake-up call at the start of next read cycle
           chirp_next_job++;         // go on, next job should start in a second
           break;
           case 2:
-          AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: call CapTemp twice");
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: call CapTemp twice"));
           ChirpReadCapTemp();       // it is reported to be useful, to read twice, because otherwise old values are received
           ChirpReadCapTemp();       // this is the "real" read call, we simply overwrite the existing values
-          AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: call measure light");
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: call measure light"));
           ChirpMeasureLight();      // prepare the next step -> initiate light read
           chirp_timeout_count = 2;  // wait 3 seconds, no need to hurry ...
           chirp_next_job++;
           break;
           case 3:
-          AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: call read light");
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: call read light"));
           if (ChirpReadLight()){                                // now read light and if successful continue, otherwise come back in a second and try again
-            // AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: auto-sleep all");
+            // AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: auto-sleep all"));
             // ChirpSleepAll();                                    // let all sensors auto-sleep 
             chirp_next_job++;
           }          
           break;
           case 4:
-          AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: paused, waiting for TELE");
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: paused, waiting for TELE"));
           break;
           case 5:
           if (Settings.tele_period > 9){
               chirp_timeout_count = Settings.tele_period - 10;  // sync it with the TELEPERIOD, we need about up to 10 seconds to measure, depending on the light level
-              AddLog_P2(LOG_LEVEL_DEBUG, "CHIRP: timeout: %u, tele: %u", chirp_timeout_count, Settings.tele_period);
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: timeout: %u, tele: %u"), chirp_timeout_count, Settings.tele_period);
             }
           chirp_next_job = 1;                                 // back to step 1
           break;
