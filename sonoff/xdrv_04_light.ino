@@ -1359,7 +1359,7 @@ void LightInit(void)
 
   light_device = devices_present;
   light_subtype = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7); // Always 0 - LST_MAX (5)
-  light_pwm_multi_channels = Settings.flag3.pmw_multi_channels;
+  light_pwm_multi_channels = Settings.flag3.pwm_multi_channels;
 
 #if defined(USE_WS2812) && (USE_WS2812_CTYPE > NEO_3LED)
   if (LT_WS2812 == light_type) {

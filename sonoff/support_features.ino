@@ -415,7 +415,9 @@ void GetFeatures(void)
 #ifdef USE_MAX31865
   feature_sns2 |= 0x10000000;
 #endif
-//  feature_sns2 |= 0x20000000;
+#ifdef USE_CHIRP
+  feature_sns2 |= 0x20000000;
+#endif
 //  feature_sns2 |= 0x40000000;
 //  feature_sns2 |= 0x80000000;
 

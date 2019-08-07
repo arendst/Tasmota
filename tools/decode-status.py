@@ -116,7 +116,8 @@ a_setoption = [[
     "Disable Dimmer slider control",
     "Disable Dimmer range 255 slider control",
     "Enable buzzer when available",
-    "","",
+    "Enable multi-channels PWM instead of Color PWM",
+    "",
     "","","","",
     "","","","",
     "","","",""
@@ -157,7 +158,7 @@ a_features = [[
     "USE_THEO_V2","USE_ALECTO_V2","USE_AZ7798","USE_MAX31855",
     "USE_PN532_I2C","USE_MAX44009","USE_SCD30","USE_HRE",
     "USE_ADE7953","USE_SPS30","USE_VL53L0X","USE_MLX90614",
-    "USE_MAX31865","","",""]]
+    "USE_MAX31865","USE_CHIRP","",""]]
 
 usage = "usage: decode-status {-d | -f} arg"
 parser = OptionParser(usage)

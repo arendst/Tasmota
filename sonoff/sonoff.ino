@@ -1453,9 +1453,9 @@ void GpioInit(void)
 #endif  // USE_SM16716
 
   // post-process for lights
-  if (Settings.flag3.pmw_multi_channels) {
+  if (Settings.flag3.pwm_multi_channels) {
     uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
-    if (0 == pwm_channels)  pwm_channels = 1;
+    if (0 == pwm_channels) { pwm_channels = 1; }
     devices_present += pwm_channels - 1;  // add the pwm channels controls at the end
   }
 #endif  // USE_LIGHT
