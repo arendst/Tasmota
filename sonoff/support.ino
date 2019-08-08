@@ -1511,6 +1511,16 @@ void AddLog_P2(uint32_t loglevel, PGM_P formatP, ...)
   AddLog(loglevel);
 }
 
+void AddLog_Debug(PGM_P formatP, ...)
+{
+  va_list arg;
+  va_start(arg, formatP);
+  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  va_end(arg);
+
+  AddLog(LOG_LEVEL_DEBUG);
+}
+
 void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
 {
   snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));

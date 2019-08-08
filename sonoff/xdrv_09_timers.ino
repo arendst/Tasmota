@@ -282,9 +282,14 @@ void TimerEverySecond(void)
         }
 #endif
         if (xtimer.arm) {
-          set_time += timer_window[i];                // Add random time offset
-          if (set_time < 0) { set_time = 0; }         // Stay today;
-          if (set_time > 1439) { set_time = 1439; }
+          set_time += timer_window[i];                            // Add random time offset
+          if (set_time < 0) { set_time = abs(timer_window[i]); }  // After midnight and within negative window so stay today but allow positive randomness;
+          if (set_time > 1439) { set_time = 1439; }               // Stay today
+
+          if (0 == i) {
+            DEBUG_DRIVER_LOG(PSTR("TIM: Timer 1 XTimerTime %d, Window %d, SetTime %d"), xtimer.time, timer_window[i], set_time);
+          }
+
           if (time == set_time) {
             if (xtimer.days & days) {
               Settings.timer[i].arm = xtimer.repeat;

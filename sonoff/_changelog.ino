@@ -1,6 +1,7 @@
 /*********************************************************************************************\
  * 6.6.0.4 20190806
  * Add support for CHIRP soil moisture sensor by Christian Baars
+ * Add debug compile features using defines DEBUG_TASMOTA_DRIVER and DEBUG_TASMOTA_SENSOR. See example in xdrv_09_timers.ino
  *
  * 6.6.0.3 20190725
  * Change filename of configuration backup from using FriendlyName1 to Hostname solving diacritic issues (#2422)

@@ -517,4 +517,16 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #undef USE_MQTT_TLS_CA_CERT
 #endif
 
+#ifdef DEBUG_TASMOTA_DRIVER
+#define DEBUG_DRIVER_LOG(...) AddLog_Debug(__VA_ARGS__)
+#else
+#define DEBUG_DRIVER_LOG(...)
+#endif
+
+#ifdef DEBUG_TASMOTA_SENSOR
+#define DEBUG_SENSOR_LOG(...) AddLog_Debug(__VA_ARGS__)
+#else
+#define DEBUG_SENSOR_LOG(...)
+#endif
+
 #endif  // _SONOFF_POST_H_
