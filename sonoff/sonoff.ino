@@ -1259,7 +1259,7 @@ void GpioInit(void)
   for (uint32_t i = 0; i < sizeof(my_module.io); i++) {
     mpin = ValidPin(i, my_module.io[i]);
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: gpio pin %d, mpin %d"), i, mpin);
+    DEBUG_CORE_LOG(PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
 
     if (mpin) {
       if ((mpin >= GPIO_SWT1_NP) && (mpin < (GPIO_SWT1_NP + MAX_SWITCHES))) {

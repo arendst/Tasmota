@@ -1437,7 +1437,7 @@ void HandleWifiConfiguration(void)
             cssid = WiFi.SSID(indices[i]);
             for (uint32_t j = i + 1; j < n; j++) {
               if (cssid == WiFi.SSID(indices[j])) {
-                AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_DUPLICATE_ACCESSPOINT " %s"), WiFi.SSID(indices[j]).c_str());
+                DEBUG_DRIVER_LOG(PSTR(D_LOG_WIFI D_DUPLICATE_ACCESSPOINT " %s"), WiFi.SSID(indices[j]).c_str());
                 indices[j] = -1;  // set dup aps to index -1
               }
             }
@@ -1447,7 +1447,8 @@ void HandleWifiConfiguration(void)
         //display networks in page
         for (uint32_t i = 0; i < n; i++) {
           if (-1 == indices[i]) { continue; }  // skip dups
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"), WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), WiFi.RSSI(indices[i]));
+          DEBUG_DRIVER_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
+            WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), WiFi.RSSI(indices[i]));
           int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
 
           if (minimum_signal_quality == -1 || minimum_signal_quality < quality) {

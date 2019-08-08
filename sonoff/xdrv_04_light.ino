@@ -1093,7 +1093,7 @@ void AriluxRfHandler(void)
     }
     uint16_t stored_hostcode = Settings.rf_code[1][6] << 8 | Settings.rf_code[1][7];
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_RFR D_HOST D_CODE " 0x%04X, " D_RECEIVED " 0x%06X"), stored_hostcode, arilux_rf_received_value);
+    DEBUG_DRIVER_LOG(PSTR(D_LOG_RFR D_HOST D_CODE " 0x%04X, " D_RECEIVED " 0x%06X"), stored_hostcode, arilux_rf_received_value);
 
     if (hostcode == stored_hostcode) {
       char command[33];
@@ -1257,8 +1257,7 @@ void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t dut
  *
 \*********************************************************************************************/
 
-// Enable this for debug logging
-//#define D_LOG_SM16716       "SM16716: "
+#define D_LOG_SM16716       "SM16716: "
 
 uint8_t sm16716_pin_clk     = 100;
 uint8_t sm16716_pin_dat     = 100;
@@ -1293,9 +1292,7 @@ void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
   if (sm16716_pin_sel < 99) {
     uint8_t sm16716_should_enable = (duty_r | duty_g | duty_b);
     if (!sm16716_enabled && sm16716_should_enable) {
-#ifdef D_LOG_SM16716
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_SM16716 "turning color on"));
-#endif // D_LOG_SM16716
+      DEBUG_DRIVER_LOG(PSTR(D_LOG_SM16716 "turning color on"));
       sm16716_enabled = 1;
       digitalWrite(sm16716_pin_sel, HIGH);
       // in testing I found it takes a minimum of ~380us to wake up the chip
@@ -1304,16 +1301,12 @@ void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
       SM16716_Init();
     }
     else if (sm16716_enabled && !sm16716_should_enable) {
-#ifdef D_LOG_SM16716
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_SM16716 "turning color off"));
-#endif // D_LOG_SM16716
+      DEBUG_DRIVER_LOG(PSTR(D_LOG_SM16716 "turning color off"));
       sm16716_enabled = 0;
       digitalWrite(sm16716_pin_sel, LOW);
     }
   }
-#ifdef D_LOG_SM16716
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_SM16716 "Update; rgb=%02x%02x%02x"), duty_r, duty_g, duty_b);
-#endif // D_LOG_SM16716
+  DEBUG_DRIVER_LOG(PSTR(D_LOG_SM16716 "Update; rgb=%02x%02x%02x"), duty_r, duty_g, duty_b);
 
   // send start bit
   SM16716_SendBit(1);
@@ -1336,9 +1329,7 @@ bool SM16716_ModuleSelected(void)
   sm16716_pin_clk = pin[GPIO_SM16716_CLK];
   sm16716_pin_dat = pin[GPIO_SM16716_DAT];
   sm16716_pin_sel = pin[GPIO_SM16716_SEL];
-#ifdef D_LOG_SM16716
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_SM16716 "ModuleSelected; clk_pin=%d, dat_pin=%d)"), sm16716_pin_clk, sm16716_pin_dat);
-#endif // D_LOG_SM16716
+  DEBUG_DRIVER_LOG(PSTR(D_LOG_SM16716 "ModuleSelected; clk_pin=%d, dat_pin=%d)"), sm16716_pin_clk, sm16716_pin_dat);
   return (sm16716_pin_clk < 99) && (sm16716_pin_dat < 99);
 }
 

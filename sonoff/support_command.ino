@@ -156,7 +156,7 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
     type[i] = '\0';
   }
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_COMMAND D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " \"%s\", " D_DATA " \"%s\""), grpflg, index, type, dataBuf);
+  DEBUG_CORE_LOG(PSTR("CMD: " D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " \"%s\", " D_DATA " \"%s\""), grpflg, index, type, dataBuf);
 
   if (type != nullptr) {
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
@@ -171,7 +171,7 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
     int temp_payload = GetStateNumber(dataBuf);
     if (temp_payload > -1) { payload = temp_payload; }
 
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_RESULT "Payload %d"), payload);
+    DEBUG_CORE_LOG(PSTR("CMD: Payload %d"), payload);
 
     backlog_delay = millis() + (100 * MIN_BACKLOG_DELAY);
 
