@@ -678,7 +678,7 @@ void _WSContentSend(const String& content)        // Low level sendContent for a
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("WSContentSend"));
 #endif
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HTP: Chunk size %d"), len);
+  DEBUG_DRIVER_LOG(PSTR("WEB: Chunk size %d"), len);
 }
 
 void WSContentFlush()
@@ -2392,7 +2392,7 @@ int WebSend(char *buffer)
     }
     url += command;                           // url = |http://192.168.178.86/cm?cmnd=POWER1 ON|
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Uri |%s|"), url.c_str());
+    DEBUG_DRIVER_LOG(PSTR("WEB: Uri |%s|"), url.c_str());
 
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
     HTTPClient http;

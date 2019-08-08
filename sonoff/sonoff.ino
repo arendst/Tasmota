@@ -929,7 +929,7 @@ void Every250mSeconds(void)
           if (!ota_result) {
 #ifndef FIRMWARE_MINIMAL
             int ota_error = ESPhttpUpdate.getLastError();
-//            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Ota error %d"), ota_error);
+            DEBUG_CORE_LOG(PSTR("OTA: Error %d"), ota_error);
             if ((HTTP_UE_TOO_LESS_SPACE == ota_error) || (HTTP_UE_BIN_FOR_WRONG_FLASH == ota_error)) {
               RtcSettings.ota_loader = 1;  // Try minimal image next
             }
