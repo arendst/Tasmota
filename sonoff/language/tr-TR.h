@@ -587,8 +587,8 @@
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 #define D_SENSOR_BUZZER        "Buzzer"
 #define D_SENSOR_OLED_RESET    "OLED Reset"
-#define D_SENSOR_SOLAXX1_TX    "SOLAXX1 Tx"
-#define D_SENSOR_SOLAXX1_RX    "SOLAXX1 Rx"
+#define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
+#define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -659,7 +659,6 @@
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
 
-#ifdef USE_SOLAX_X1
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltage"
 #define D_PV1_CURRENT     "PV1 Current"
@@ -669,24 +668,19 @@
 #define D_PV2_POWER       "PV2 Power"
 #define D_SOLAR_POWER     "Solar Power"
 #define D_INVERTER_POWER  "Inverter Power"
-#define D_WORKTIME        "Uptime"
 #define D_STATUS          "Status"
-#define D_UNIT_TEMPERATURE "°C"
-
-#define D_WAITING          "Waiting"
-#define D_CHECKING         "Checking"
-#define D_WORKING          "Working"
-#define D_FAILURE          "Failure"
-
-#define D_SOLAX_ERROR_0    "No Error Code"
-#define D_SOLAX_ERROR_1    "Grid Lost Fault"
-#define D_SOLAX_ERROR_2    "Grid Voltage Fault"
-#define D_SOLAX_ERROR_3    "Grid Frequency Fault"
-#define D_SOLAX_ERROR_4    "Pv Voltage Fault"
-#define D_SOLAX_ERROR_5    "Isolation Fault"
-#define D_SOLAX_ERROR_6    "Over Temperature Fault"
-#define D_SOLAX_ERROR_7    "Fan Fault"
-#define D_SOLAX_ERROR_8    "Other Device Fault"
-#endif
+#define D_WAITING         "Waiting"
+#define D_CHECKING        "Checking"
+#define D_WORKING         "Working"
+#define D_FAILURE         "Failure"
+#define D_SOLAX_ERROR_0   "No Error Code"
+#define D_SOLAX_ERROR_1   "Grid Lost Fault"
+#define D_SOLAX_ERROR_2   "Grid Voltage Fault"
+#define D_SOLAX_ERROR_3   "Grid Frequency Fault"
+#define D_SOLAX_ERROR_4   "Pv Voltage Fault"
+#define D_SOLAX_ERROR_5   "Isolation Fault"
+#define D_SOLAX_ERROR_6   "Over Temperature Fault"
+#define D_SOLAX_ERROR_7   "Fan Fault"
+#define D_SOLAX_ERROR_8   "Other Device Fault"
 
 #endif  // _LANGUAGE_TR_TR_H_
