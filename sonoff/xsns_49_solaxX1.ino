@@ -251,7 +251,7 @@ void solaxX1_Update(void) // Every Second
 
   bool data_ready = solaxX1_RS485ReceiveReady();
 
-  DEBUG_DRIVER_LOG(PSTR("SX1: queryOffline: %d , queryOfflineSend: %d, hasAddress: %d, inverterAddressSend: %d, solaxX1_send_retry: %d"),
+  DEBUG_SENSOR_LOG(PSTR("SX1: queryOffline: %d , queryOfflineSend: %d, hasAddress: %d, inverterAddressSend: %d, solaxX1_send_retry: %d"),
     queryOffline, queryOfflineSend, hasAddress, inverterAddressSend, solaxX1_send_retry);
 
   if (!hasAddress && (data_ready || solaxX1_send_retry == 0))
@@ -265,7 +265,7 @@ void solaxX1_Update(void) // Every Second
         uint8_t error = solaxX1_RS485Receive(value);
         if (error)
         {
-          DEBUG_DRIVER_LOG(PSTR("SX1: Address confirmation response CRC error"));
+          DEBUG_SENSOR_LOG(PSTR("SX1: Address confirmation response CRC error"));
         }
         else
         {
@@ -284,7 +284,7 @@ void solaxX1_Update(void) // Every Second
         uint8_t error = solaxX1_RS485Receive(value);
         if (error)
         {
-          DEBUG_DRIVER_LOG(PSTR("SX1: Query Offline response CRC error"));
+          DEBUG_SENSOR_LOG(PSTR("SX1: Query Offline response CRC error"));
         }
         else
         {
@@ -349,7 +349,7 @@ void solaxX1_Update(void) // Every Second
       uint8_t error = solaxX1_RS485Receive(value);
       if (error)
       {
-        DEBUG_DRIVER_LOG(PSTR("SX1: Data response CRC error"));
+        DEBUG_SENSOR_LOG(PSTR("SX1: Data response CRC error"));
       }
       else
       {
@@ -460,7 +460,7 @@ void solaxX1_Update(void) // Every Second
 void solaxX1Init(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("Solax X1 Inverter Init"));
-  DEBUG_DRIVER_LOG(PSTR("SX1: RX pin: %d, TX pin: %d"), pin[GPIO_SOLAXX1_RX], pin[GPIO_SOLAXX1_TX]);
+  DEBUG_SENSOR_LOG(PSTR("SX1: RX pin: %d, TX pin: %d"), pin[GPIO_SOLAXX1_RX], pin[GPIO_SOLAXX1_TX]);
   solaxX1_Init = 0;
   if ((pin[GPIO_SOLAXX1_RX] < 99) && (pin[GPIO_SOLAXX1_TX] < 99))
   {
