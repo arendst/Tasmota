@@ -678,7 +678,7 @@ void _WSContentSend(const String& content)        // Low level sendContent for a
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("WSContentSend"));
 #endif
-  DEBUG_DRIVER_LOG(PSTR("WEB: Chunk size %d"), len);
+  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d"), len);
 }
 
 void WSContentFlush()
@@ -1437,7 +1437,7 @@ void HandleWifiConfiguration(void)
             cssid = WiFi.SSID(indices[i]);
             for (uint32_t j = i + 1; j < n; j++) {
               if (cssid == WiFi.SSID(indices[j])) {
-                DEBUG_DRIVER_LOG(PSTR(D_LOG_WIFI D_DUPLICATE_ACCESSPOINT " %s"), WiFi.SSID(indices[j]).c_str());
+                DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_DUPLICATE_ACCESSPOINT " %s"), WiFi.SSID(indices[j]).c_str());
                 indices[j] = -1;  // set dup aps to index -1
               }
             }
@@ -1447,7 +1447,7 @@ void HandleWifiConfiguration(void)
         //display networks in page
         for (uint32_t i = 0; i < n; i++) {
           if (-1 == indices[i]) { continue; }  // skip dups
-          DEBUG_DRIVER_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
+          DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
             WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), WiFi.RSSI(indices[i]));
           int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
 
@@ -2393,7 +2393,7 @@ int WebSend(char *buffer)
     }
     url += command;                           // url = |http://192.168.178.86/cm?cmnd=POWER1 ON|
 
-    DEBUG_DRIVER_LOG(PSTR("WEB: Uri |%s|"), url.c_str());
+    DEBUG_CORE_LOG(PSTR("WEB: Uri |%s|"), url.c_str());
 
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
     HTTPClient http;
