@@ -165,6 +165,17 @@
 #define D_JSON_WRONG_PARAMETERS "Wrong parameters"
 #define D_JSON_YESTERDAY "Yesterday"
 #define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
+#ifdef USE_SOLAX_X1
+#define D_JSON_RUNTIME "Runtime"
+#define D_JSON_PV1_VOLTAGE "Pv1Voltage"
+#define D_JSON_PV1_CURRENT "Pv1Current"
+#define D_JSON_PV1_POWER "Pv1Power"
+#define D_JSON_PV2_VOLTAGE "Pv2Voltage"
+#define D_JSON_PV2_CURRENT "Pv2Current"
+#define D_JSON_PV2_POWER "Pv2Power"
+#define D_JSON_SOLAR_POWER "SolarPower"
+#define D_JSON_STATUS "Status"
+#endif
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
