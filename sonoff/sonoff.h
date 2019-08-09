@@ -126,6 +126,7 @@ const uint32_t MIN_BACKLOG_DELAY = 2;       // Minimal backlog delay in 0.1 seco
 const uint32_t SOFT_BAUDRATE = 9600;        // Default software serial baudrate
 const uint32_t APP_BAUDRATE = 115200;       // Default serial baudrate
 const uint32_t SERIAL_POLLING = 100;        // Serial receive polling in ms
+const uint32_t ZIGBEE_POLLING = 100;        // Serial receive polling in ms
 const uint8_t MAX_STATUS = 11;              // Max number of status lines
 
 const uint32_t DRIVER_BOOT_DELAY = 1;       // Number of milliseconds to retard driver cycles during boot-up time to reduce overall CPU load whilst Wifi is connecting
