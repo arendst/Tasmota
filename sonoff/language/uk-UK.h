@@ -587,6 +587,8 @@
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 #define D_SENSOR_BUZZER        "Зуммер"
 #define D_SENSOR_OLED_RESET    "OLED Reset"
+#define D_SENSOR_SOLAXX1_TX    "SOLAXX1 Tx"
+#define D_SENSOR_SOLAXX1_RX    "SOLAXX1 Rx"
 
 // Units
 #define D_UNIT_AMPERE "А"
