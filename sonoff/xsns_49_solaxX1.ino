@@ -18,12 +18,19 @@
 */
 
 #ifdef USE_SOLAX_X1
+/*********************************************************************************************\
+ * Solax X1 Inverter
+\*********************************************************************************************/
 
-#define XSNS_49 49
+#define XSNS_49            49
 
-#define solaxX1_SPEED 9600 // default solax rs485 speed
+#ifndef SOLAXX1_SPEED
+#define SOLAXX1_SPEED      9600      // default solax rs485 speed
+#endif
 
-#define PV2 // comment this line if you use only one PV input
+#define INVERTER_ADDRESS   0x0A
+
+#define D_SOLAX_X1         "SolaxX1"
 
 #include <TasmotaSerial.h>
 
@@ -75,24 +82,11 @@ union {
   };
 } ErrCode;
 
-const char solax_mode_0[] PROGMEM = D_WAITING;
-const char solax_mode_1[] PROGMEM = D_CHECKING;
-const char solax_mode_2[] PROGMEM = D_WORKING;
-const char solax_mode_3[] PROGMEM = D_FAILURE;
+const char kSolaxMode[] PROGMEM = D_WAITING "|" D_CHECKING "|" D_WORKING "|" D_FAILURE;
 
-const char *const solaxX1_Mode[] PROGMEM = {solax_mode_0, solax_mode_1, solax_mode_2, solax_mode_3};
-
-const char solax_error_0[] PROGMEM = D_SOLAX_ERROR_0;
-const char solax_error_1[] PROGMEM = D_SOLAX_ERROR_1;
-const char solax_error_2[] PROGMEM = D_SOLAX_ERROR_2;
-const char solax_error_3[] PROGMEM = D_SOLAX_ERROR_3;
-const char solax_error_4[] PROGMEM = D_SOLAX_ERROR_4;    
-const char solax_error_5[] PROGMEM = D_SOLAX_ERROR_5;
-const char solax_error_6[] PROGMEM = D_SOLAX_ERROR_6;
-const char solax_error_7[] PROGMEM = D_SOLAX_ERROR_7;
-const char solax_error_8[] PROGMEM = D_SOLAX_ERROR_8;
-
-const char *const solaxX1_ErrCode[] PROGMEM = {solax_error_0, solax_error_1, solax_error_2, solax_error_3, solax_error_4, solax_error_5, solax_error_6, solax_error_7, solax_error_8};
+const char kSolaxError[] PROGMEM =
+  D_SOLAX_ERROR_0 "|" D_SOLAX_ERROR_1 "|" D_SOLAX_ERROR_2 "|" D_SOLAX_ERROR_3 "|" D_SOLAX_ERROR_4 "|" D_SOLAX_ERROR_5 "|"
+  D_SOLAX_ERROR_6 "|" D_SOLAX_ERROR_7 "|" D_SOLAX_ERROR_8;
 
 /*********************************************************************************************/
 
@@ -134,8 +128,6 @@ uint8_t dataLength[1] = {0x00};
 uint8_t data[16] = {0};
 
 uint8_t message[30];
-
-#define INVERTER_ADDRESS 0x0A
 
 /*********************************************************************************************/
 
@@ -236,7 +228,7 @@ void solaxX1_QueryLiveData()
 
 uint8_t solaxX1_ParseErrorCode(uint32_t code){
   ErrCode.ErrMessage = code;
-  
+
   if (code == 0) return 0;
   if (ErrCode.MainsLostFault) return 1;
   if (ErrCode.GridVoltFault) return 2;
@@ -259,7 +251,8 @@ void solaxX1_Update(void) // Every Second
 
   bool data_ready = solaxX1_RS485ReceiveReady();
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "queryOffline: %d , queryOfflineSend: %d, hasAddress: %d, inverterAddressSend: %d, solaxX1_send_retry: %d"), queryOffline, queryOfflineSend, hasAddress, inverterAddressSend, solaxX1_send_retry);
+  DEBUG_DRIVER_LOG(PSTR("SX1: queryOffline: %d , queryOfflineSend: %d, hasAddress: %d, inverterAddressSend: %d, solaxX1_send_retry: %d"),
+    queryOffline, queryOfflineSend, hasAddress, inverterAddressSend, solaxX1_send_retry);
 
   if (!hasAddress && (data_ready || solaxX1_send_retry == 0))
   {
@@ -272,7 +265,7 @@ void solaxX1_Update(void) // Every Second
         uint8_t error = solaxX1_RS485Receive(value);
         if (error)
         {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Address confirmation response CRC error"));
+          DEBUG_DRIVER_LOG(PSTR("SX1: Address confirmation response CRC error"));
         }
         else
         {
@@ -291,7 +284,7 @@ void solaxX1_Update(void) // Every Second
         uint8_t error = solaxX1_RS485Receive(value);
         if (error)
         {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Query Offline response CRC error"));
+          DEBUG_DRIVER_LOG(PSTR("SX1: Query Offline response CRC error"));
         }
         else
         {
@@ -356,7 +349,7 @@ void solaxX1_Update(void) // Every Second
       uint8_t error = solaxX1_RS485Receive(value);
       if (error)
       {
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Data response CRC error"));
+        DEBUG_DRIVER_LOG(PSTR("SX1: Data response CRC error"));
       }
       else
       {
@@ -365,7 +358,7 @@ void solaxX1_Update(void) // Every Second
             sprintf(hexCar, "%02X", value[i]);
             AddLog_P(LOG_LEVEL_DEBUG, hexCar);
         }*/
-        
+
         solaxX1_nodata_count = 0;
         solaxX1_send_retry = 2;
         uint32_t temporal = 0;
@@ -421,7 +414,7 @@ void solaxX1_Update(void) // Every Second
         //temporal = (value[53] << 8) | value[54]; // GFC fault value
 
         temporal = (value[58] << 8) | (value[57] << 8) | (value[56] << 8) | value[55]; // Error Code
-        solaxX1_errorCode = (uint32_t)temporal; 
+        solaxX1_errorCode = (uint32_t)temporal;
 
         solaxX1_dc1_power = solaxX1_dc1_voltage * solaxX1_dc1_current;
         solaxX1_dc2_power = solaxX1_dc2_voltage * solaxX1_dc2_current;
@@ -440,7 +433,7 @@ void solaxX1_Update(void) // Every Second
   { // end hasAddress && (data_ready || solaxX1_send_retry == 0)
 
     if (solaxX1_nodata_count <= 10) // max. 10 sec without data
-    { 
+    {
       solaxX1_nodata_count++;
     }
     else if (solaxX1_nodata_count != 255)
@@ -467,12 +460,12 @@ void solaxX1_Update(void) // Every Second
 void solaxX1Init(void)
 {
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("Solax X1 Inverter Init"));
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "RX pin: %d, TX pin: %d"), pin[GPIO_SOLAXX1_RX], pin[GPIO_SOLAXX1_TX]);
+  DEBUG_DRIVER_LOG(PSTR("SX1: RX pin: %d, TX pin: %d"), pin[GPIO_SOLAXX1_RX], pin[GPIO_SOLAXX1_TX]);
   solaxX1_Init = 0;
   if ((pin[GPIO_SOLAXX1_RX] < 99) && (pin[GPIO_SOLAXX1_TX] < 99))
   {
     solaxX1Serial = new TasmotaSerial(pin[GPIO_SOLAXX1_RX], pin[GPIO_SOLAXX1_TX], 1);
-    if (solaxX1Serial->begin(solaxX1_SPEED))
+    if (solaxX1Serial->begin(SOLAXX1_SPEED))
     {
       if (solaxX1Serial->hardwareSerial())
       {
@@ -484,103 +477,108 @@ void solaxX1Init(void)
 }
 
 #ifdef USE_WEBSERVER
-const char HTTP_SNS_solaxX1_DATA[] PROGMEM =
-    "{s}solaxX1 " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-    "{s}solaxX1 " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-    "{s}solaxX1 " D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"
-    "{s}solaxX1 " D_INVERTER_POWER "{m}%s " D_UNIT_WATT "{e}"
-    "{s}solaxX1 " D_SOLAR_POWER "{m}%s " D_UNIT_WATT "{e}"
-    "{s}solaxX1 " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
-    "{s}solaxX1 " D_ENERGY_TODAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
-    "{s}solaxX1 " D_PV1_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-    "{s}solaxX1 " D_PV1_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-    "{s}solaxX1 " D_PV1_POWER "{m}%s " D_UNIT_WATT "{e}"
-#ifdef PV2
-    "{s}solaxX1 " D_PV2_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-    "{s}solaxX1 " D_PV2_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-    "{s}solaxX1 " D_PV2_POWER "{m}%s " D_UNIT_WATT "{e}"
+const char HTTP_SNS_solaxX1_DATA1[] PROGMEM =
+    "{s}" D_SOLAX_X1 " " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
+    "{s}" D_SOLAX_X1 " " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
+    "{s}" D_SOLAX_X1 " " D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"
+    "{s}" D_SOLAX_X1 " " D_INVERTER_POWER "{m}%s " D_UNIT_WATT "{e}"
+    "{s}" D_SOLAX_X1 " " D_SOLAR_POWER "{m}%s " D_UNIT_WATT "{e}"
+    "{s}" D_SOLAX_X1 " " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+    "{s}" D_SOLAX_X1 " " D_ENERGY_TODAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+    "{s}" D_SOLAX_X1 " " D_PV1_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
+    "{s}" D_SOLAX_X1 " " D_PV1_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
+    "{s}" D_SOLAX_X1 " " D_PV1_POWER "{m}%s " D_UNIT_WATT "{e}";
+#ifdef SOLAXX1_PV2
+const char HTTP_SNS_solaxX1_DATA2[] PROGMEM =
+    "{s}" D_SOLAX_X1 " " D_PV2_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
+    "{s}" D_SOLAX_X1 " " D_PV2_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
+    "{s}" D_SOLAX_X1 " " D_PV2_POWER "{m}%s " D_UNIT_WATT "{e}";
 #endif
-    "{s}solaxX1 " D_TEMPERATURE "{m}%s " D_UNIT_TEMPERATURE "{e}"
-    "{s}solaxX1 " D_WORKTIME "{m}%s " D_UNIT_HOUR "{e}"
-    "{s}solaxX1 " D_STATUS "{m}%s"
-    "{s}solaxX1 " D_ERROR "{m}%s";
+const char HTTP_SNS_solaxX1_DATA3[] PROGMEM =
+    "{s}" D_SOLAX_X1 " " D_UPTIME "{m}%s " D_UNIT_HOUR "{e}"
+    "{s}" D_SOLAX_X1 " " D_STATUS "{m}%s"
+    "{s}" D_SOLAX_X1 " " D_ERROR "{m}%s";
 #endif // USE_WEBSERVER
 
 void solaxX1Show(bool json)
 {
   char voltage[33];
-  dtostrfd(solaxX1_ac_voltage,    2, voltage);
+  dtostrfd(solaxX1_ac_voltage, Settings.flag2.voltage_resolution, voltage);
   char current[33];
-  dtostrfd(solaxX1_ac_current,    3, current);
+  dtostrfd(solaxX1_ac_current, Settings.flag2.current_resolution, current);
   char inverter_power[33];
-  dtostrfd(solaxX1_power,         2, inverter_power);
+  dtostrfd(solaxX1_power, Settings.flag2.wattage_resolution, inverter_power);
   char solar_power[33];
-  dtostrfd(solaxX1_dc1_power +
-           solaxX1_dc2_power,     2, solar_power);
+  dtostrfd(solaxX1_dc1_power + solaxX1_dc2_power, Settings.flag2.wattage_resolution, solar_power);
   char frequency[33];
-  dtostrfd(solaxX1_frequency,     2, frequency);
+  dtostrfd(solaxX1_frequency, Settings.flag2.frequency_resolution, frequency);
   char energy_total[33];
-  dtostrfd(solaxX1_energy_total,  1, energy_total);
+  dtostrfd(solaxX1_energy_total, Settings.flag2.energy_resolution, energy_total);
   char energy_today[33];
-  dtostrfd(solaxX1_energy_today,  1, energy_today);
+  dtostrfd(solaxX1_energy_today, Settings.flag2.energy_resolution, energy_today);
   char pv1_voltage[33];
-  dtostrfd(solaxX1_dc1_voltage,   2, pv1_voltage);
+  dtostrfd(solaxX1_dc1_voltage, Settings.flag2.voltage_resolution, pv1_voltage);
   char pv1_current[33];
-  dtostrfd(solaxX1_dc1_current,   3, pv1_current);
+  dtostrfd(solaxX1_dc1_current, Settings.flag2.current_resolution, pv1_current);
   char pv1_power[33];
-  dtostrfd(solaxX1_dc1_power,     2, pv1_power);
-#ifdef PV2
+  dtostrfd(solaxX1_dc1_power, Settings.flag2.wattage_resolution, pv1_power);
+#ifdef SOLAXX1_PV2
   char pv2_voltage[33];
-  dtostrfd(solaxX1_dc2_voltage,   2, pv2_voltage);
+  dtostrfd(solaxX1_dc2_voltage, Settings.flag2.voltage_resolution, pv2_voltage);
   char pv2_current[33];
-  dtostrfd(solaxX1_dc2_current,   3, pv2_current);
+  dtostrfd(solaxX1_dc2_current, Settings.flag2.current_resolution, pv2_current);
   char pv2_power[33];
-  dtostrfd(solaxX1_dc2_power,     2, pv2_power);
+  dtostrfd(solaxX1_dc2_power, Settings.flag2.wattage_resolution, pv2_power);
 #endif
   char temperature[33];
-  dtostrfd(solaxX1_temperature,   1, temperature);
+  dtostrfd(solaxX1_temperature, Settings.flag2.temperature_resolution, temperature);
   char runtime[33];
   dtostrfd(solaxX1_runtime_total, 0, runtime);
   char status[33];
-  strcpy_P(status, (PGM_P)solaxX1_Mode[solaxX1_status]);
-  char errorCode[33];
-  char errorCodeString[33];
-  dtostrfd(solaxX1_errorCode, 0, errorCode);
-  strcpy_P(errorCodeString, (PGM_P)solaxX1_ErrCode[solaxX1_ParseErrorCode(solaxX1_errorCode)]);
+  GetTextIndexed(status, sizeof(status), solaxX1_status, kSolaxMode);
 
   if (json)
   {
-#ifdef PV2
-    ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_SOLAR_POWER "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_TOTAL "\":%s,\"" D_JSON_TODAY "\":%s,\"" D_JSON_PV1_VOLTAGE "\":%s,\"" D_JSON_PV1_CURRENT "\":%s,\"" D_JSON_PV1_POWER "\":%s,\"" D_JSON_PV2_VOLTAGE "\":%s,\"" D_JSON_PV2_CURRENT "\":%s,\"" D_JSON_PV2_POWER "\":%s,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%s}"),
-                     voltage, current, inverter_power, solar_power, frequency, energy_total, energy_today, pv1_voltage, pv1_current, pv1_power, pv2_voltage, pv2_current, pv2_power, temperature, runtime, status, errorCode);
-#else
-    ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\"" D_JSON_SOLAR_POWER "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_TOTAL "\":%s,\"" D_JSON_TODAY "\":%s,\"" D_JSON_PV1_VOLTAGE "\":%s,\"" D_JSON_PV1_CURRENT "\":%s,\"" D_JSON_PV1_POWER "\":%s,\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\"}"),
-                     voltage, current, inverter_power, solar_power, frequency, energy_total, energy_today, pv1_voltage, pv1_current, pv1_power, temperature, runtime, status, errorCode);
+    ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\""
+                                D_JSON_SOLAR_POWER "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_TOTAL "\":%s,\"" D_JSON_TODAY "\":%s,\""
+                                D_JSON_PV1_VOLTAGE "\":%s,\"" D_JSON_PV1_CURRENT "\":%s,\"" D_JSON_PV1_POWER "\":%s"),
+                                voltage, current, inverter_power,
+                                solar_power, frequency, energy_total, energy_today,
+                                pv1_voltage, pv1_current, pv1_power);
+#ifdef SOLAXX1_PV2
+    ResponseAppend_P(PSTR(",\"" D_JSON_PV2_VOLTAGE "\":%s,\"" D_JSON_PV2_CURRENT "\":%s,\"" D_JSON_PV2_POWER "\":%s"),
+                                pv2_voltage, pv2_current, pv2_power);
 #endif
+    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d}"),
+                                temperature, runtime, status, solaxX1_errorCode);
+
 
 #ifdef USE_DOMOTICZ
     if (0 == tele_period)
     {
       char energy_total_chr[33];
       dtostrfd(solaxX1_energy_total * 1000, 1, energy_total_chr);
-      
+
       DomoticzSensor(DZ_VOLTAGE, voltage);
       DomoticzSensor(DZ_CURRENT, current);
       // Only do the updates if the values are greater than 0, to avoid wrong data representation in domoticz
       if (solaxX1_temperature  > 0) DomoticzSensor(DZ_TEMP, temperature);
       if (solaxX1_energy_total > 0) DomoticzSensorPowerEnergy((int)solaxX1_power, energy_total_chr);
     }
-#endif // USE_DOMOTICZ
+#endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   }
   else
   {
-#ifdef PV2
-    WSContentSend_PD(HTTP_SNS_solaxX1_DATA, voltage, current, frequency, inverter_power, solar_power, energy_total, energy_today, pv1_voltage, pv1_current, pv1_power, pv2_voltage, pv2_current, pv2_power, temperature, runtime, status, errorCodeString);
-#else
-    WSContentSend_PD(HTTP_SNS_solaxX1_DATA, voltage, current, frequency, inverter_power, solar_power, energy_total, energy_today, pv1_voltage, pv1_current, pv1_power, temperature, runtime, status, errorCodeString);
+    WSContentSend_PD(HTTP_SNS_solaxX1_DATA1, voltage, current, frequency, inverter_power, solar_power, energy_total, energy_today, pv1_voltage, pv1_current, pv1_power);
+#ifdef SOLAXX1_PV2
+    WSContentSend_PD(HTTP_SNS_solaxX1_DATA2, pv2_voltage, pv2_current, pv2_power);
 #endif
-#endif // USE_WEBSERVER
+    WSContentSend_PD(HTTP_SNS_TEMP, D_SOLAX_X1, temperature, TempUnit());
+    char errorCodeString[33];
+    WSContentSend_PD(HTTP_SNS_solaxX1_DATA3, runtime, status,
+      GetTextIndexed(errorCodeString, sizeof(errorCodeString), solaxX1_ParseErrorCode(solaxX1_errorCode), kSolaxError));
+#endif  // USE_WEBSERVER
   }
 }
 
@@ -609,10 +607,10 @@ bool Xsns49(uint8_t function)
     case FUNC_WEB_SENSOR:
       solaxX1Show(0);
       break;
-#endif // USE_WEBSERVER
+#endif  // USE_WEBSERVER
     }
   }
   return result;
 }
 
-#endif // USE_solaxX1
+#endif  // USE_SOLAX_X1

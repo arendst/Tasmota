@@ -177,7 +177,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
   #define USE_ALECTO_V2                       // Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver (+1k7 code)
 #define USE_SM16716                           // Add support for SM16716 RGB LED controller (+0k7 code)
 #define USE_HRE                               // Add support for Badger HR-E Water Meter (+1k4 code)
-//#define USE_SOLAX_X1                          // Enable Solax X1 series log info support (+4k1 code)
+//#define USE_SOLAX_X1                          // Add support for Solax X1 series Modbus log info (+4k1 code)
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
