@@ -353,11 +353,7 @@ void solaxX1_Update(void) // Every Second
       }
       else
       {
-        /* char hexCar[2];
-        for(int i=0; i<sizeof(value); i++){
-            sprintf(hexCar, "%02X", value[i]);
-            AddLog_P(LOG_LEVEL_DEBUG, hexCar);
-        }*/
+//        AddLogBuffer(LOG_LEVEL_DEBUG, value, sizeof(value));
 
         solaxX1_nodata_count = 0;
         solaxX1_send_retry = 2;
