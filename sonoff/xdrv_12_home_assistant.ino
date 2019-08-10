@@ -54,7 +54,7 @@ const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
   ",\"bri_cmd_t\":\"%s\","                         // cmnd/led2/Dimmer
   "\"bri_stat_t\":\"%s\","                         // stat/led2/RESULT
   "\"bri_scl\":100,"                               // 100%
-  "\"on_cmd_type\":\"brightness\","                // power on (first), power on (last), no power on (brightness)
+  "\"on_cmd_type\":\"%s\","                        // power on (first), power on (last), no power on (brightness)
   "\"bri_val_tpl\":\"{{value_json." D_CMND_DIMMER "}}\"";
 
 const char HASS_DISCOVER_LIGHT_COLOR[] PROGMEM =
@@ -245,7 +245,8 @@ void HAssAnnounceRelayLight(void)
 
         GetTopic_P(brightness_command_topic, CMND, mqtt_topic, D_CMND_DIMMER);
         Shorten(&brightness_command_topic, prefix);
-        TryResponseAppend_P(HASS_DISCOVER_LIGHT_DIMMER, brightness_command_topic, state_topic);
+        strncpy_P(stemp3, Settings.flag.not_power_linked?PSTR("last"):PSTR("brightness"), sizeof(stemp3));
+        TryResponseAppend_P(HASS_DISCOVER_LIGHT_DIMMER, brightness_command_topic, state_topic, stemp3);
 
         if (light_subtype >= LST_RGB) {
           char *rgb_command_topic = stemp1;
