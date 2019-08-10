@@ -66,26 +66,8 @@ bool mqtt_connected = false;                // MQTT virtual connection status
 bool mqtt_allowed = false;                  // MQTT enabled and parameters valid
 
 #ifdef USE_MQTT_TLS
-// see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
-void to_hex(unsigned char * in, size_t insz, char * out, size_t outsz) {
-	unsigned char * pin = in;
-	static const char * hex = "0123456789ABCDEF";
-	char * pout = out;
-	for (; pin < in+insz; pout +=3, pin++) {
-		pout[0] = hex[(*pin>>4) & 0xF];
-		pout[1] = hex[ *pin     & 0xF];
-		pout[2] = ' ';
-		if (pout + 3 - out > outsz){
-			/* Better to truncate output string than overflow buffer */
-			/* it would be still better to either return a status */
-			/* or ensure the target buffer is large enough and it never happen */
-			break;
-		}
-	}
-	pout[-1] = 0;
-}
 
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+#ifdef USE_MQTT_AWS_IOT
 #include <base64.hpp>
 
 const br_ec_private_key *AWS_IoT_Private_Key = nullptr;
@@ -108,7 +90,7 @@ public:
 
 tls_dir_t tls_dir;          // memory copy of tls_dir from flash
 
-#endif
+#endif  // USE_MQTT_AWS_IOT
 
 // A typical AWS IoT endpoint is 50 characters long, it does not fit
 // in MqttHost field (32 chars). We need to concatenate both MqttUser and MqttHost
@@ -638,7 +620,7 @@ void MqttReconnect(void)
 #ifndef USE_MQTT_TLS_CA_CERT  // don't bother with fingerprints if using CA validation
     // create a printable version of the fingerprint received
     char buf_fingerprint[64];
-    to_hex((unsigned char *)tlsClient->getRecvPubKeyFingerprint(), 20, buf_fingerprint, 64);
+    ToHex((unsigned char *)tlsClient->getRecvPubKeyFingerprint(), 20, buf_fingerprint, sizeof(buf_fingerprint));
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Server fingerprint: %s"), buf_fingerprint);
 
     if (learn_fingerprint1 || learn_fingerprint2) {
@@ -716,10 +698,7 @@ void CmndMqttFingerprint(void)
       }
       restart_flag = 2;
     }
-    fingerprint[0] = '\0';
-    for (uint32_t i = 0; i < sizeof(Settings.mqtt_fingerprint[XdrvMailbox.index -1]); i++) {
-      snprintf_P(fingerprint, sizeof(fingerprint), PSTR("%s%s%02X"), fingerprint, (i) ? " " : "", Settings.mqtt_fingerprint[XdrvMailbox.index -1][i]);
-    }
+    ToHex((unsigned char *)Settings.mqtt_fingerprint[XdrvMailbox.index -1], 20, fingerprint, sizeof(fingerprint));
     ResponseCmndIdxChar(fingerprint);
   }
 }

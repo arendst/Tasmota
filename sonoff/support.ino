@@ -292,6 +292,31 @@ char* ulltoa(unsigned long long value, char *str, int radix)
   return str;
 }
 
+// see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
+void ToHex(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = ' ');
+void ToHex(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween)
+{
+  // ToHex(in, insz, out, outz)       -> "12 34 56 67"
+  // ToHex(in, insz, out, outz, '\0') -> "12345667"
+  // ToHex(in, insz, out, outz, ':')  -> "12:34:56:67"
+	static const char * hex = "0123456789ABCDEF";
+  int between = (inbetween) ? 3 : 2;
+	unsigned char * pin = in;
+	char * pout = out;
+	for (; pin < in+insz; pout += between, pin++) {
+		pout[0] = hex[(*pin>>4) & 0xF];
+		pout[1] = hex[ *pin     & 0xF];
+		if (inbetween) { pout[2] = inbetween; }
+		if (pout + 3 - out > outsz) {
+			// Better to truncate output string than overflow buffer
+			// it would be still better to either return a status
+			// or ensure the target buffer is large enough and it never happen
+			break;
+		}
+	}
+	pout[(inbetween) ? -1 : 0] = 0;  // Discard last inbetween
+}
+
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
   if ((isnan(number)) || (isinf(number))) {  // Fix for JSON output (https://stackoverflow.com/questions/1423081/json-left-out-infinity-and-nan-json-status-in-ecmascript)

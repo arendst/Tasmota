@@ -286,26 +286,6 @@ uint32_t zigbee_frame_len = 256;
 bool zigbee_active = true;
 bool zigbee_raw = false;
 
-// see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
-static void tohex(unsigned char * in, size_t insz, char * out, size_t outsz) {
-	unsigned char * pin = in;
-	static const char * hex = "0123456789ABCDEF";
-	char * pout = out;
-	for(; pin < in+insz; pout +=3, pin++){
-		pout[0] = hex[(*pin>>4) & 0xF];
-		pout[1] = hex[ *pin     & 0xF];
-		pout[2] = ':';
-		if (pout + 3 - out > outsz){
-			/* Better to truncate output string than overflow buffer */
-			/* it would be still better to either return a status */
-			/* or ensure the target buffer is large enough and it never happen */
-			break;
-		}
-	}
-	pout[-1] = 0;
-}
-
-
 void ZigbeeInput(void)
 {
   // Receive only valid ZNP frames:
