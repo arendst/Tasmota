@@ -138,7 +138,7 @@ a_features = [[
     "USE_DISPLAY_SSD1306","USE_DISPLAY_MATRIX","USE_DISPLAY_ILI9341","USE_DISPLAY_EPAPER",
     "USE_DISPLAY_SH1106","USE_MP3_PLAYER","USE_PCA9685","USE_TUYA_DIMMER",
     "USE_RC_SWITCH","USE_ARMTRONIX_DIMMERS","USE_SM16716","USE_SCRIPT",
-    "USE_EMULATION_WEMO","USE_SONOFF_IFAN","","NO_EXTRA_4K_HEAP",
+    "USE_EMULATION_WEMO","USE_SONOFF_IFAN","USE_ZIGBEE","NO_EXTRA_4K_HEAP",
     "VTABLES_IN_IRAM","VTABLES_IN_DRAM","VTABLES_IN_FLASH","PIO_FRAMEWORK_ARDUINO_LWIP_HIGHER_BANDWIDTH",
     "PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY","PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH","DEBUG_THEO","USE_DEBUG_DRIVER"
     ],[
@@ -158,7 +158,17 @@ a_features = [[
     "USE_THEO_V2","USE_ALECTO_V2","USE_AZ7798","USE_MAX31855",
     "USE_PN532_I2C","USE_MAX44009","USE_SCD30","USE_HRE",
     "USE_ADE7953","USE_SPS30","USE_VL53L0X","USE_MLX90614",
-    "USE_MAX31865","USE_CHIRP","",""]]
+    "USE_MAX31865","USE_CHIRP","",""
+    ],[
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","",""
+    ]]
 
 usage = "usage: decode-status {-d | -f} arg"
 parser = OptionParser(usage)
@@ -240,7 +250,7 @@ def StartDecode():
     if "StatusMEM" in obj:
         if "Features" in obj["StatusMEM"]:
             features = []
-            for f in range(5):
+            for f in range(6):
                 feature = obj["StatusMEM"]["Features"][f]
                 i_feature = int(feature,16)
                 if f == 0:

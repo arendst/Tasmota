@@ -192,9 +192,9 @@ void GetFeatures(void)
 #ifdef USE_SONOFF_IFAN
   feature_drv2 |= 0x00200000;  // xdrv_22_sonoff_ifan.ino
 #endif
-
-//  feature_drv2 |= 0x00400000;
-
+#ifdef USE_ZIGBEE
+  feature_drv2 |= 0x00400000;  // xdrv_23_zigbee.ino
+#endif
 #ifdef NO_EXTRA_4K_HEAP
   feature_drv2 |= 0x00800000;  // sonoff_post.h
 #endif
