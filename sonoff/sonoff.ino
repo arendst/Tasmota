@@ -1189,15 +1189,9 @@ void SerialInput(void)
 
   if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {
     serial_in_buffer[serial_in_byte_counter] = 0;                                // Serial data completed
-    if (!Settings.flag.mqtt_serial_raw) {
-      Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
-    } else {
-      Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\""));
-      for (uint32_t i = 0; i < serial_in_byte_counter; i++) {
-        ResponseAppend_P(PSTR("%02x"), serial_in_buffer[i]);
-      }
-      ResponseAppend_P(PSTR("\"}"));
-    }
+    char hex_char[(serial_in_byte_counter * 2) + 2];
+    Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"),
+      (Settings.flag.mqtt_serial_raw) ? ToHex((unsigned char*)serial_in_buffer, serial_in_byte_counter, hex_char, sizeof(hex_char)) : serial_in_buffer);
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
     XdrvRulesProcess();
     serial_in_byte_counter = 0;

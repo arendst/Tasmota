@@ -620,7 +620,7 @@ void MqttReconnect(void)
 #ifndef USE_MQTT_TLS_CA_CERT  // don't bother with fingerprints if using CA validation
     // create a printable version of the fingerprint received
     char buf_fingerprint[64];
-    ToHex((unsigned char *)tlsClient->getRecvPubKeyFingerprint(), 20, buf_fingerprint, sizeof(buf_fingerprint));
+    ToHex((unsigned char *)tlsClient->getRecvPubKeyFingerprint(), 20, buf_fingerprint, sizeof(buf_fingerprint), ' ');
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Server fingerprint: %s"), buf_fingerprint);
 
     if (learn_fingerprint1 || learn_fingerprint2) {
@@ -698,8 +698,7 @@ void CmndMqttFingerprint(void)
       }
       restart_flag = 2;
     }
-    ToHex((unsigned char *)Settings.mqtt_fingerprint[XdrvMailbox.index -1], 20, fingerprint, sizeof(fingerprint));
-    ResponseCmndIdxChar(fingerprint);
+    ResponseCmndIdxChar(ToHex((unsigned char *)Settings.mqtt_fingerprint[XdrvMailbox.index -1], 20, fingerprint, sizeof(fingerprint), ' '));
   }
 }
 #endif

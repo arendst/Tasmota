@@ -324,11 +324,9 @@ void ZigbeeInput(void)
   }
 
   if (zigbee_in_byte_counter && (millis() > (zigbee_polling_window + ZIGBEE_POLLING))) {
-    Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\""));
-    for (uint32_t i = 0; i < zigbee_in_byte_counter; i++) {
-      ResponseAppend_P(PSTR("%02X"), zigbee_buffer[i]);
-    }
-    ResponseAppend_P(PSTR("\"}"));
+    char hex_char[(zigbee_in_byte_counter * 2) + 2];
+    Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"),
+      ToHex((unsigned char*)zigbee_buffer, zigbee_in_byte_counter, hex_char, sizeof(hex_char)));
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZNPRECEIVED));
     XdrvRulesProcess();
     zigbee_in_byte_counter = 0;

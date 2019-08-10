@@ -293,28 +293,24 @@ char* ulltoa(unsigned long long value, char *str, int radix)
 }
 
 // see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
-void ToHex(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = ' ');
-void ToHex(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween)
+// char* ToHex(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0'); in sonoff_post.h
+char* ToHex(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween)
 {
-  // ToHex(in, insz, out, outz)       -> "12 34 56 67"
-  // ToHex(in, insz, out, outz, '\0') -> "12345667"
-  // ToHex(in, insz, out, outz, ':')  -> "12:34:56:67"
-	static const char * hex = "0123456789ABCDEF";
+  // ToHex(in, insz, out, outz)      -> "12345667"
+  // ToHex(in, insz, out, outz, ' ') -> "12 34 56 67"
+  // ToHex(in, insz, out, outz, ':') -> "12:34:56:67"
+  static const char * hex = "0123456789ABCDEF";
   int between = (inbetween) ? 3 : 2;
-	unsigned char * pin = in;
-	char * pout = out;
-	for (; pin < in+insz; pout += between, pin++) {
-		pout[0] = hex[(*pin>>4) & 0xF];
-		pout[1] = hex[ *pin     & 0xF];
-		if (inbetween) { pout[2] = inbetween; }
-		if (pout + 3 - out > outsz) {
-			// Better to truncate output string than overflow buffer
-			// it would be still better to either return a status
-			// or ensure the target buffer is large enough and it never happen
-			break;
-		}
-	}
-	pout[(inbetween) ? -1 : 0] = 0;  // Discard last inbetween
+  unsigned char * pin = in;
+  char * pout = out;
+  for (; pin < in+insz; pout += between, pin++) {
+    pout[0] = hex[(*pin>>4) & 0xF];
+    pout[1] = hex[ *pin     & 0xF];
+    if (inbetween) { pout[2] = inbetween; }
+    if (pout + 3 - out > outsz) { break; }  // Better to truncate output string than overflow buffer
+  }
+  pout[(inbetween) ? -1 : 0] = 0;  // Discard last inbetween
+  return out;
 }
 
 char* dtostrfd(double number, unsigned char prec, char *s)
@@ -1548,11 +1544,20 @@ void AddLog_Debug(PGM_P formatP, ...)
 
 void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
 {
+/*
   snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
   for (uint32_t i = 0; i < count; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer++));
   }
   AddLog(loglevel);
+*/
+/*
+  strcpy_P(log_data, PSTR("DMP: "));
+  ToHex(buffer, count, log_data + strlen(log_data), sizeof(log_data) - strlen(log_data), ' ');
+  AddLog(loglevel);
+*/
+  char hex_char[count * 3];
+  AddLog_P2(loglevel, PSTR("DMP: %s"), ToHex(buffer, count, hex_char, sizeof(hex_char), ' '));
 }
 
 void AddLogSerial(uint32_t loglevel)
