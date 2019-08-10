@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.5.0.7
+ * Updated until v6.6.0.4
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -228,8 +228,8 @@
 #define D_WEBSERVER_STOPPED "Serveur web éteint"
 #define D_FILE_NOT_FOUND "Fichier introuvable"
 #define D_REDIRECTED "Redirection sur le portail captif"
-#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager définit AccessPoint et garde station"
-#define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager définit AccessPoint"
+#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager en mode Point d'Accès et Station"
+#define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager en mode Point d'Accès"
 #define D_TRYING_TO_CONNECT "Tentative de connexion du module au réseau"
 
 #define D_RESTART_IN "Redémarrage dans"
@@ -660,27 +660,27 @@
 #define D_UNIT_ANGLE      "°"
 
 //SOLAXX1
-#define D_PV1_VOLTAGE     "PV1 Voltage"
-#define D_PV1_CURRENT     "PV1 Current"
-#define D_PV1_POWER       "PV1 Power"
-#define D_PV2_VOLTAGE     "PV2 Voltage"
-#define D_PV2_CURRENT     "PV2 Current"
-#define D_PV2_POWER       "PV2 Power"
-#define D_SOLAR_POWER     "Solar Power"
-#define D_INVERTER_POWER  "Inverter Power"
-#define D_STATUS          "Status"
-#define D_WAITING         "Waiting"
-#define D_CHECKING        "Checking"
-#define D_WORKING         "Working"
-#define D_FAILURE         "Failure"
-#define D_SOLAX_ERROR_0   "No Error Code"
-#define D_SOLAX_ERROR_1   "Grid Lost Fault"
-#define D_SOLAX_ERROR_2   "Grid Voltage Fault"
-#define D_SOLAX_ERROR_3   "Grid Frequency Fault"
-#define D_SOLAX_ERROR_4   "Pv Voltage Fault"
-#define D_SOLAX_ERROR_5   "Isolation Fault"
-#define D_SOLAX_ERROR_6   "Over Temperature Fault"
-#define D_SOLAX_ERROR_7   "Fan Fault"
-#define D_SOLAX_ERROR_8   "Other Device Fault"
+#define D_PV1_VOLTAGE     "Tension PV1"
+#define D_PV1_CURRENT     "Courant PV1"
+#define D_PV1_POWER       "Puissance PV1"
+#define D_PV2_VOLTAGE     "Tension PV2"
+#define D_PV2_CURRENT     "Courant PV2"
+#define D_PV2_POWER       "Puissance PV2"
+#define D_SOLAR_POWER     "Puissance solaire"
+#define D_INVERTER_POWER  "Puissance onduleur"
+#define D_STATUS          "Statut"
+#define D_WAITING         "En attente"
+#define D_CHECKING        "En test"
+#define D_WORKING         "En marche"
+#define D_FAILURE         "Défault"
+#define D_SOLAX_ERROR_0   "Aucun Code d'erreur"
+#define D_SOLAX_ERROR_1   "Défaut Perte de réseau"
+#define D_SOLAX_ERROR_2   "Défaut Tension réseau"
+#define D_SOLAX_ERROR_3   "Défaut Fréquence réseau"
+#define D_SOLAX_ERROR_4   "Défaut Tension PV"
+#define D_SOLAX_ERROR_5   "Défaut Isolation"
+#define D_SOLAX_ERROR_6   "Défaut Surchauffe"
+#define D_SOLAX_ERROR_7   "Défaut Ventilateur"
+#define D_SOLAX_ERROR_8   "Défaut Autre équipement"
 
 #endif  // _LANGUAGE_FR_FR_H_
