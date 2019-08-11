@@ -21,13 +21,20 @@
 
 #define XDRV_07             7
 
-const char DOMOTICZ_MESSAGE[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}";
+#define D_PRFX_DOMOTICZ "Domoticz"
+#define D_CMND_IDX "Idx"
+#define D_CMND_KEYIDX "KeyIdx"
+#define D_CMND_SWITCHIDX "SwitchIdx"
+#define D_CMND_SENSORIDX "SensorIdx"
+#define D_CMND_UPDATETIMER "UpdateTimer"
 
-const char kDomoticzCommands[] PROGMEM =
+const char kDomoticzCommands[] PROGMEM = D_PRFX_DOMOTICZ "|"  // Prefix
   D_CMND_IDX "|" D_CMND_KEYIDX "|" D_CMND_SWITCHIDX "|" D_CMND_SENSORIDX "|" D_CMND_UPDATETIMER ;
 
 void (* const DomoticzCommand[])(void) PROGMEM = {
   &CmndDomoticzIdx, &CmndDomoticzKeyIdx, &CmndDomoticzSwitchIdx, &CmndDomoticzSensorIdx, &CmndDomoticzUpdateTimer };
+
+const char DOMOTICZ_MESSAGE[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"%s\",\"Battery\":%d,\"RSSI\":%d}";
 
 //enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_AIRQUALITY, DZ_MAX_SENSORS};
 
@@ -381,13 +388,6 @@ void DomoticzSensorPowerEnergy(int power, char *energy)
  * Commands
 \*********************************************************************************************/
 
-void ResponseDomoticzCmndIdxNumber(uint32_t value)
-{
-  Response_P(PSTR("{\"" D_CMND_DOMOTICZ "%s%d\":%d}"), XdrvMailbox.command, XdrvMailbox.index, value);
-}
-
-/*********************************************************************************************/
-
 void CmndDomoticzIdx(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DOMOTICZ_IDX)) {
@@ -395,7 +395,7 @@ void CmndDomoticzIdx(void)
       Settings.domoticz_relay_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
       restart_flag = 2;
     }
-    ResponseDomoticzCmndIdxNumber(Settings.domoticz_relay_idx[XdrvMailbox.index -1]);
+    ResponseCmndIdxNumber(Settings.domoticz_relay_idx[XdrvMailbox.index -1]);
   }
 }
 
@@ -405,7 +405,7 @@ void CmndDomoticzKeyIdx(void)
     if (XdrvMailbox.payload >= 0) {
       Settings.domoticz_key_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
-    ResponseDomoticzCmndIdxNumber(Settings.domoticz_key_idx[XdrvMailbox.index -1]);
+    ResponseCmndIdxNumber(Settings.domoticz_key_idx[XdrvMailbox.index -1]);
   }
 }
 
@@ -415,7 +415,7 @@ void CmndDomoticzSwitchIdx(void)
     if (XdrvMailbox.payload >= 0) {
       Settings.domoticz_switch_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
-    ResponseDomoticzCmndIdxNumber(Settings.domoticz_switch_idx[XdrvMailbox.index -1]);
+    ResponseCmndIdxNumber(Settings.domoticz_switch_idx[XdrvMailbox.index -1]);
   }
 }
 
@@ -425,7 +425,7 @@ void CmndDomoticzSensorIdx(void)
     if (XdrvMailbox.payload >= 0) {
       Settings.domoticz_sensor_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
-    ResponseDomoticzCmndIdxNumber(Settings.domoticz_sensor_idx[XdrvMailbox.index -1]);
+    ResponseCmndIdxNumber(Settings.domoticz_sensor_idx[XdrvMailbox.index -1]);
   }
 }
 
@@ -434,7 +434,7 @@ void CmndDomoticzUpdateTimer(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
     Settings.domoticz_update_timer = XdrvMailbox.payload;
   }
-  Response_P(PSTR("{\"" D_CMND_DOMOTICZ "%s\":%d}"), XdrvMailbox.command, Settings.domoticz_update_timer);
+  ResponseCmndNumber(Settings.domoticz_update_timer);
 }
 
 /*********************************************************************************************\
@@ -575,10 +575,7 @@ bool Xdrv07(uint8_t function)
 //        DomoticzSendSensor();
         break;
       case FUNC_COMMAND:
-        if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_DOMOTICZ), strlen(D_CMND_DOMOTICZ))) {  // Prefix
-          XdrvMailbox.topic += strlen(D_CMND_DOMOTICZ);
-          result = DecodeCommand(kDomoticzCommands, DomoticzCommand);
-        }
+        result = DecodeCommand(kDomoticzCommands, DomoticzCommand);
         break;
     }
   }

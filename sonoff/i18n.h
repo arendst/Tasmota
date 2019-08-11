@@ -233,9 +233,6 @@
 #define D_CMND_PWM "PWM"
 #define D_CMND_PWMFREQUENCY "PWMFrequency"
 #define D_CMND_PWMRANGE "PWMRange"
-#define D_CMND_COUNTER "Counter"
-#define D_CMND_COUNTERTYPE "CounterType"
-#define D_CMND_COUNTERDEBOUNCE "CounterDebounce"
 #define D_CMND_BUTTONDEBOUNCE "ButtonDebounce"
 #define D_CMND_SWITCHDEBOUNCE "SwitchDebounce"
 #define D_CMND_SLEEP "Sleep"
@@ -411,14 +408,6 @@
   #define D_JSON_RFRECEIVED "RfReceived"
 #define D_CMND_RFRAW "RfRaw"
 
-// Commands xdrv_07_domoticz.ino
-#define D_CMND_DOMOTICZ "Domoticz"
-#define D_CMND_IDX "Idx"
-#define D_CMND_KEYIDX "KeyIdx"
-#define D_CMND_SWITCHIDX "SwitchIdx"
-#define D_CMND_SENSORIDX "SensorIdx"
-#define D_CMND_UPDATETIMER "UpdateTimer"
-
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
 #define D_CMND_SBAUDRATE "SBaudrate"
@@ -439,9 +428,6 @@
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
 
-// Commands xdrv_23_zigbee.ino
-#define D_CMND_ZIGBEEZNPSEND "ZigbeeZNPSend"
-  #define D_JSON_ZIGBEEZNPRECEIVED "ZigbeeZNPReceived"
 /********************************************************************************************/
 
 #define D_ASTERISK_PWD "****"

@@ -271,9 +271,16 @@ enum class ConfigurationOption : uint8_t {
   ZDO_DIRECT_CB = 0x8F
 };
 
-const char kZigbeeCommands[] PROGMEM = D_CMND_ZIGBEEZNPSEND;
+#define D_JSON_ZIGBEEZNPRECEIVED "ZigbeeZNPReceived"
 
-void (* const ZigbeeCommand[])(void) PROGMEM = { &CmndZigbeeZNPSend };
+#define D_PRFX_ZIGBEE        "Zigbee"
+#define D_CMND_ZIGBEEZNPSEND "ZNPSend"
+
+const char kZigbeeCommands[] PROGMEM = D_PRFX_ZIGBEE "|"  // Prefix
+  D_CMND_ZIGBEEZNPSEND;
+
+void (* const ZigbeeCommand[])(void) PROGMEM =
+  { &CmndZigbeeZNPSend };
 
 #include <TasmotaSerial.h>
 

@@ -27,7 +27,7 @@ const uint32_t SFB_TIME_AVOID_DUPLICATE = 2000;  // Milliseconds
 
 enum SonoffBridgeCommands { CMND_RFSYNC, CMND_RFLOW, CMND_RFHIGH, CMND_RFHOST, CMND_RFCODE };
 
-const char kSonoffBridgeCommands[] PROGMEM =
+const char kSonoffBridgeCommands[] PROGMEM = "|"  // No prefix
   D_CMND_RFSYNC "|" D_CMND_RFLOW "|" D_CMND_RFHIGH "|" D_CMND_RFHOST "|" D_CMND_RFCODE "|" D_CMND_RFKEY "|" D_CMND_RFRAW;
 
 void (* const SonoffBridgeCommand[])(void) PROGMEM = {

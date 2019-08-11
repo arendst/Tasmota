@@ -58,7 +58,7 @@
 #define D_CMND_RTCDUMP   "RtcDump"
 #define D_CMND_SETSENSOR "SetSensor"
 
-const char kDebugCommands[] PROGMEM =
+const char kDebugCommands[] PROGMEM = "|"  // No prefix
   D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|"
 #ifdef USE_DEBUG_SETTING_NAMES
   D_CMND_CFGSHOW "|"

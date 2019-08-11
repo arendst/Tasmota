@@ -2463,7 +2463,7 @@ bool JsonWebColor(const char* dataBuf)
 
 const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND ;
 
-const char kWebCommands[] PROGMEM =
+const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_EMULATION
   D_CMND_EMULATION "|"
 #endif

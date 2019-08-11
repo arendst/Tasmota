@@ -188,21 +188,20 @@ const char *device_param_cb[] = {
 };
 
 // Commands
-#define D_CMND_KNXTXCMND "KnxTx_Cmnd"
-#define D_CMND_KNXTXVAL "KnxTx_Val"
-#define D_CMND_KNX_ENABLED "Knx_Enabled"
-#define D_CMND_KNX_ENHANCED "Knx_Enhanced"
-#define D_CMND_KNX_PA "Knx_PA"
-#define D_CMND_KNX_GA "Knx_GA"
-#define D_CMND_KNX_CB "Knx_CB"
+#define D_PRFX_KNX "Knx"
+#define D_CMND_KNXTXCMND "Tx_Cmnd"
+#define D_CMND_KNXTXVAL "Tx_Val"
+#define D_CMND_KNX_ENABLED "_Enabled"
+#define D_CMND_KNX_ENHANCED "_Enhanced"
+#define D_CMND_KNX_PA "_PA"
+#define D_CMND_KNX_GA "_GA"
+#define D_CMND_KNX_CB "_CB"
 
-const char kKnxCommands[] PROGMEM =
-  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|"
-  D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB ;
+const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
+  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB ;
 
 void (* const KnxCommand[])(void) PROGMEM = {
-  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced,
-  &CmndKnxPa, &CmndKnxGa, &CmndKnxCb };
+  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb };
 
 uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
 {

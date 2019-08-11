@@ -131,7 +131,7 @@
 const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 const uint8_t WS2812_SCHEMES = 7;      // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
 
-const char kLightCommands[] PROGMEM =
+const char kLightCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_WS2812
   D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|"
 #endif  // USE_WS2812

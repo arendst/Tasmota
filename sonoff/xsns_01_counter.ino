@@ -24,9 +24,15 @@
 
 #define XSNS_01             1
 
-const char kCounterCommands[] PROGMEM = D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|" D_CMND_COUNTERDEBOUNCE ;
+#define D_PRFX_COUNTER "Counter"
+#define D_CMND_COUNTERTYPE "Type"
+#define D_CMND_COUNTERDEBOUNCE "Debounce"
 
-void (* const CounterCommand[])(void) PROGMEM = { &CmndCounter, &CmndCounterType, &CmndCounterDebounce };
+const char kCounterCommands[] PROGMEM = D_PRFX_COUNTER "|"  // Prefix
+  "|" D_CMND_COUNTERTYPE "|" D_CMND_COUNTERDEBOUNCE ;
+
+void (* const CounterCommand[])(void) PROGMEM =
+  { &CmndCounter, &CmndCounterType, &CmndCounterDebounce };
 
 unsigned long last_counter_timer[MAX_COUNTERS]; // Last counter time in micro seconds
 
@@ -155,7 +161,7 @@ void CmndCounter(void)
         Settings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload;
       }
     }
-    Response_P(S_JSON_COMMAND_INDEX_LVALUE, XdrvMailbox.command, XdrvMailbox.index, RtcSettings.pulse_counter[XdrvMailbox.index -1]);
+    ResponseCmndIdxNumber(RtcSettings.pulse_counter[XdrvMailbox.index -1]);
   }
 }
 

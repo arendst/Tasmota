@@ -108,7 +108,7 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
   #define MAX_EXPRESSION_OPERATOR_PRIORITY    4
 #endif  // USE_EXPRESSION
 
-const char kRulesCommands[] PROGMEM =
+const char kRulesCommands[] PROGMEM = "|"  // No prefix
   D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|"
   D_CMND_ADD "|"  D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION
 #ifdef SUPPORT_MQTT_EVENT

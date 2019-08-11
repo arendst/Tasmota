@@ -38,7 +38,7 @@
 
 #define XDRV_09             9
 
-const char kTimerCommands[] PROGMEM =
+const char kTimerCommands[] PROGMEM = "|"  // No prefix
   D_CMND_TIMER "|" D_CMND_TIMERS
 #ifdef USE_SUNRISE
   "|" D_CMND_LATITUDE "|" D_CMND_LONGITUDE

@@ -28,7 +28,7 @@
 
 enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_SYNTAX_IRHVAC };
 
-const char kIrRemoteCommands[] PROGMEM =
+const char kIrRemoteCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_IR_HVAC
   D_CMND_IRHVAC "|"
 #endif

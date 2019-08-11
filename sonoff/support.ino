@@ -740,9 +740,11 @@ bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void))
 {
   bool result = false;
 
-  int command_code = GetCommandCode(XdrvMailbox.command, CMDSZ, XdrvMailbox.topic, haystack);
-  if (command_code >= 0) {
-    MyCommand[command_code]();
+  GetTextIndexed(XdrvMailbox.command, CMDSZ, 0, haystack);  // Get prefix if available
+  int prefix_length = strlen(XdrvMailbox.command);
+  int command_code = GetCommandCode(XdrvMailbox.command + prefix_length, CMDSZ, XdrvMailbox.topic + prefix_length, haystack);
+  if (command_code > 0) {                                   // Skip prefix
+    MyCommand[command_code -1]();
     result = true;
   }
   return result;

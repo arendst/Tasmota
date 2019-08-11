@@ -32,9 +32,11 @@
 #define D_JSON_RF_PULSE "Pulse"
 #define D_JSON_RF_REPEAT "Repeat"
 
-const char kRfSendCommands[] PROGMEM = D_CMND_RFSEND;
+const char kRfSendCommands[] PROGMEM = "|"  // No prefix
+  D_CMND_RFSEND;
 
-void (* const RfSendCommand[])(void) PROGMEM = { &CmndRfSend };
+void (* const RfSendCommand[])(void) PROGMEM =
+  { &CmndRfSend };
 
 #include <RCSwitch.h>
 

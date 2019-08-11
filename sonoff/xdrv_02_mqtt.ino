@@ -28,7 +28,7 @@
   WiFiClient EspClient;                     // Wifi Client
 #endif
 
-const char kMqttCommands[] PROGMEM =
+const char kMqttCommands[] PROGMEM = "|"  // No prefix
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   D_CMND_MQTTFINGERPRINT "|"
 #endif
