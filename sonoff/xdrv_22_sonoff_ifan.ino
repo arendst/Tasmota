@@ -30,6 +30,10 @@ const uint8_t kIFan02Speed[MAX_FAN_SPEED] = { 0x00, 0x01, 0x03, 0x05 };
 const uint8_t kIFan03Speed[MAX_FAN_SPEED +2] = { 0x00, 0x01, 0x03, 0x04, 0x05, 0x06 };
 const uint8_t kIFan03Sequence[MAX_FAN_SPEED][MAX_FAN_SPEED] = {{0, 2, 2, 2}, {0, 1, 2, 4}, {1, 1, 2, 5}, {4, 4, 5, 3}};
 
+const char kSonoffIfanCommands[] PROGMEM = D_CMND_FANSPEED;
+
+void (* const SonoffIfanCommand[])(void) PROGMEM = { &CmndFanspeed };
+
 uint8_t ifan_fanspeed_timer = 0;
 uint8_t ifan_fanspeed_goal = 0;
 bool ifan_receive_flag = false;
@@ -184,35 +188,22 @@ bool SonoffIfanSerialInput(void)
  * Commands
 \*********************************************************************************************/
 
-enum SonoffIfanCommands { CMND_FANSPEED };
-const char kSonoffIfanCommands[] PROGMEM = D_CMND_FANSPEED;
-
-bool SonoffIfanCommand(void)
+void CmndFanspeed(void)
 {
-  bool serviced = true;
-
-  int command_code = GetCommandCode(XdrvMailbox.command, CMDSZ, XdrvMailbox.topic, kSonoffIfanCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
+  if (XdrvMailbox.data_len > 0) {
+    if ('-' == XdrvMailbox.data[0]) {
+      XdrvMailbox.payload = (int16_t)GetFanspeed() -1;
+      if (XdrvMailbox.payload < 0) { XdrvMailbox.payload = MAX_FAN_SPEED -1; }
+    }
+    else if ('+' == XdrvMailbox.data[0]) {
+      XdrvMailbox.payload = GetFanspeed() +1;
+      if (XdrvMailbox.payload > MAX_FAN_SPEED -1) { XdrvMailbox.payload = 0; }
+    }
   }
-  else if (CMND_FANSPEED == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      if ('-' == XdrvMailbox.data[0]) {
-        XdrvMailbox.payload = (int16_t)GetFanspeed() -1;
-        if (XdrvMailbox.payload < 0) { XdrvMailbox.payload = MAX_FAN_SPEED -1; }
-      }
-      else if ('+' == XdrvMailbox.data[0]) {
-        XdrvMailbox.payload = GetFanspeed() +1;
-        if (XdrvMailbox.payload > MAX_FAN_SPEED -1) { XdrvMailbox.payload = 0; }
-      }
-    }
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_FAN_SPEED)) {
-      SonoffIFanSetFanspeed(XdrvMailbox.payload, true);
-    }
-    ResponseCmndNumber(GetFanspeed());
-  } else serviced = false;  // Unknown command
-
-  return serviced;
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < MAX_FAN_SPEED)) {
+    SonoffIFanSetFanspeed(XdrvMailbox.payload, true);
+  }
+  ResponseCmndNumber(GetFanspeed());
 }
 
 /*********************************************************************************************/
@@ -262,7 +253,7 @@ bool Xdrv22(uint8_t function)
         result = SonoffIfanSerialInput();
         break;
       case FUNC_COMMAND:
-        result = SonoffIfanCommand();
+        result = DecodeCommand(kSonoffIfanCommands, SonoffIfanCommand);
         break;
       case FUNC_MODULE_INIT:
         result = SonoffIfanInit();
