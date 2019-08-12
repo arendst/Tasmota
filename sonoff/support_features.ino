@@ -425,7 +425,9 @@ void GetFeatures(void)
 
   feature5 = 0x00000000;
 
-//  feature5 |= 0x00000001;
+#ifdef USE_BUZZER
+  feature5 |= 0x00000001;  // xdrv_24_buzzer.ino
+#endif
 //  feature5 |= 0x00000002;
 //  feature5 |= 0x00000004;
 //  feature5 |= 0x00000008;
