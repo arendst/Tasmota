@@ -41,9 +41,13 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune)
 {
   buzzer.set[0] = off;
   buzzer.set[1] = on;
-  buzzer.duration = 1;       // Start buzzer on first step
+  buzzer.duration = 1;         // Start buzzer on first step
   buzzer.tune = tune;
-  buzzer.count = count * 2;  // Start buzzer
+  if (buzzer.tune) {
+    buzzer.count = 1;          // Allow tune only once
+  } else {
+    buzzer.count = count * 2;  // Start buzzer
+  }
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BUZ: %d,%d,%d,0x%08X"), count, on, off, tune);
 
@@ -87,16 +91,20 @@ void BuzzerEvery100mSec(void)
 {
   if (buzzer.enable) {
     if (buzzer.count) {
-      uint8_t state = buzzer.count & 1;
       if (buzzer.duration) {
         buzzer.duration--;
         if (!buzzer.duration) {
-          buzzer.count--;
-          state = buzzer.count & 1;
-          buzzer.duration = buzzer.set[state];
+          if (buzzer.tune) {
+            buzzer.state = buzzer.tune & 1;
+            buzzer.tune >>= 1;
+          } else {
+            buzzer.count--;
+            buzzer.state = buzzer.count & 1;
+          }
+          buzzer.duration = buzzer.set[buzzer.state];
         }
       }
-      digitalWrite(pin[GPIO_BUZZER], (buzzer.inverted) ? !state : state);
+      digitalWrite(pin[GPIO_BUZZER], (buzzer.inverted) ? !buzzer.state : buzzer.state);
     } else {
       buzzer.enable = false;
     }
@@ -118,10 +126,12 @@ void CmndBuzzer(void)
   // Buzzer <number of beeps>,<duration of beep in 100mS steps>,<duration of silence in 100mS steps>
   // All parameters are optional
   //
-  // Buzzer        = Buzzer 1,1,1 = Beep once with both duration and pause set to 100mS
-  // Buzzer 2      = Beep twice with duration 200mS and pause 100mS
-  // Buzzer 2,3    = Beep twice with duration 300mS and pause 100mS
-  // Buzzer 2,3,4  = Beep twice with duration 300mS and pause 400mS
+  // Buzzer             = Buzzer 1,1,1 = Beep once with both duration and pause set to 100mS
+  // Buzzer 2           = Beep twice with duration 200mS and pause 100mS
+  // Buzzer 2,3         = Beep twice with duration 300mS and pause 100mS
+  // Buzzer 2,3,4       = Beep twice with duration 300mS and pause 400mS
+  // Buzzer 2,3,4,0x2AF = Beep a sequence once indicated by 0x2AF with duration 300mS and pause 400mS
+  //                        resulting in beep ----_-_-_-
 
   if (XdrvMailbox.data_len > 0) {
     char *p;
