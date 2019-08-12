@@ -132,7 +132,6 @@ uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_power = 0;                      // LED power state
 uint8_t ledlnk_inverted = 0;                // Link LED inverted flag (1 = (0 = On, 1 = Off))
-uint8_t buzzer_inverted = 0;                // Buzzer inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
 uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
 uint8_t energy_flg = 0;                     // Energy monitor configured
@@ -144,7 +143,6 @@ uint8_t seriallog_level;                    // Current copy of Settings.seriallo
 uint8_t syslog_level;                       // Current copy of Settings.syslog_level
 uint8_t my_module_type;                     // Current copy of Settings.module or user template type
 uint8_t my_adc0;                            // Active copy of Module ADC0
-uint8_t buzzer_count = 0;                   // Number of buzzes
 //uint8_t mdns_delayed_start = 0;             // mDNS delayed start
 bool serial_local = false;                  // Handle serial locally;
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
@@ -816,16 +814,6 @@ void Every100mSeconds(void)
       if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
     }
   }
-
-  if ((pin[GPIO_BUZZER] < 99) && (Settings.flag3.buzzer_enable)) {
-    if (buzzer_count) {
-      buzzer_count--;
-      uint8_t state = buzzer_count & 1;
-      digitalWrite(pin[GPIO_BUZZER], (buzzer_inverted) ? !state : state);
-    }
-  } else {
-    buzzer_count = 0;
-  }
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -1256,6 +1244,8 @@ void GpioInit(void)
     DEBUG_CORE_LOG(PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
 
     if (mpin) {
+      XdrvMailbox.index = mpin;
+
       if ((mpin >= GPIO_SWT1_NP) && (mpin < (GPIO_SWT1_NP + MAX_SWITCHES))) {
         SwitchPullupFlag(mpin - GPIO_SWT1_NP);
         mpin -= (GPIO_SWT1_NP - GPIO_SWT1);
@@ -1285,10 +1275,6 @@ void GpioInit(void)
         ledlnk_inverted = 1;
         mpin -= (GPIO_LEDLNK_INV - GPIO_LEDLNK);
       }
-      else if (mpin == GPIO_BUZZER_INV) {
-        buzzer_inverted = 1;
-        mpin -= (GPIO_BUZZER_INV - GPIO_BUZZER);
-      }
       else if ((mpin >= GPIO_PWM1_INV) && (mpin < (GPIO_PWM1_INV + MAX_PWMS))) {
         bitSet(pwm_inverted, mpin - GPIO_PWM1_INV);
         mpin -= (GPIO_PWM1_INV - GPIO_PWM1);
@@ -1307,6 +1293,12 @@ void GpioInit(void)
         }
       }
 #endif  // USE_DHT
+      else if (XdrvCall(FUNC_PIN_STATE)) {
+        mpin = XdrvMailbox.index;
+      }
+      else if (XsnsCall(FUNC_PIN_STATE)) {
+        mpin = XdrvMailbox.index;
+      };
     }
     if (mpin) pin[mpin] = i;
   }
@@ -1421,10 +1413,6 @@ void GpioInit(void)
   if (pin[GPIO_LEDLNK] < 99) {
     pinMode(pin[GPIO_LEDLNK], OUTPUT);
     digitalWrite(pin[GPIO_LEDLNK], ledlnk_inverted);
-  }
-  if (pin[GPIO_BUZZER] < 99) {
-    pinMode(pin[GPIO_BUZZER], OUTPUT);
-    digitalWrite(pin[GPIO_BUZZER], buzzer_inverted);  // Buzzer Off
   }
 
   ButtonInit();

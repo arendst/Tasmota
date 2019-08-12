@@ -488,8 +488,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_CNTR4,
   GPIO_CNTR4_NP,
 #endif
+#ifdef USE_BUZZER
   GPIO_BUZZER,         // Buzzer
   GPIO_BUZZER_INV,     // Inverted buzzer
+#endif
   GPIO_TXD,            // Serial interface
   GPIO_RXD,            // Serial interface
 #ifdef USE_I2C

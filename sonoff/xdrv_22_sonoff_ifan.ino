@@ -124,7 +124,9 @@ void SonoffIfanReceived(void)
       if (action != GetFanspeed()) {
         snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_FANSPEED " %d"), action);
         ExecuteCommand(svalue, SRC_REMOTE);
-        buzzer_count = 2;                        // Beep once
+#ifdef USE_BUZZER
+        BuzzerEnabledBeep(1);                   // Beep once
+#endif
       }
     } else {
       // AA 55 01 04 00 01 04 0A - Light
@@ -137,7 +139,9 @@ void SonoffIfanReceived(void)
   }
   if (7 == mode) {
     // AA 55 01 07 00 01 01 0A - Rf long press - forget RF codes
-    buzzer_count = 6;                           // Beep three times
+#ifdef USE_BUZZER
+    BuzzerEnabledBeep(3);                       // Beep three times
+#endif
   }
 
   // Send Acknowledge - Copy first 5 bytes, reset byte 6 and store crc in byte 7

@@ -237,6 +237,7 @@ bool XdrvCall(uint8_t Function)
                    (FUNC_SERIAL == Function) ||
                    (FUNC_MODULE_INIT == Function) ||
                    (FUNC_SET_CHANNELS == Function) ||
+                   (FUNC_PIN_STATE == Function) ||
                    (FUNC_SET_DEVICE_POWER == Function)
                   )) {
       break;

@@ -304,6 +304,7 @@
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 
 // -- Optional modules ----------------------------
+#define USE_BUZZER                               // Add support for a buzzer (+0k6 code)
 #define USE_SONOFF_IFAN                          // Add support for Sonoff iFan02 and iFan03 (+2k code)
 #define USE_TUYA_DIMMER                          // Add support for Tuya Serial Dimmer
   #define TUYA_DIMMER_ID       0                 // Default dimmer Id

@@ -5,6 +5,7 @@
  *   See DEBUG_CORE_LOG example in sonoff.ino and DEBUG_DRIVER_LOG example in xdrv_09_timers.ino
  * Add support for Solax X1 inverter by Pablo Zerón
  * Add ZigBee support phase 1 - low level MQTT ZNP messages for CC2530 devices
+ * Add command Buzzer with optional parameters <number of beeps>,<duration of beep in 100mS steps>,<duration of silence in 100mS steps> enabled when a buzzer is configured (#5988)
  *
  * 6.6.0.3 20190725
  * Change filename of configuration backup from using FriendlyName1 to Hostname solving diacritic issues (#2422)
