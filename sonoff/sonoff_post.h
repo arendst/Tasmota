@@ -42,7 +42,7 @@ void WifiWpsStatusCallback(wps_cb_status status);
 void KNX_CB_Action(message_t const &msg, void *arg);
 //#endif  // USE_KNX
 
-char* ToHex(unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0');
+char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0');
 
 /*********************************************************************************************\
  * Default global defines
