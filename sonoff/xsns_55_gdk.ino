@@ -1,4 +1,7 @@
 /*
+  xsns_55_gdk.ino - Support for GDK101 gamma radiation sensor
+   
+  Copyright (C) 2019   Petr Novacek
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -16,6 +19,18 @@
 
 #ifdef USE_I2C
 #ifdef USE_GDK101
+
+/*********************************************************************************************\
+ * GDK101 gamma radiation sensor ftlab.co.kr
+ *
+ * Based on library https://github.com/r21m/Arduino-GDK101-gamma-sensor
+ *
+ * I2C Address: 
+ * A0 Short, A1 Short : 0x18
+ * A0 Open,  A1 Short : 0x19
+ * A0 Short, A1 Open  : 0x1A
+ * A0 Open,  A1 Open  : 0x1B
+\*********************************************************************************************/
 
 #define XSNS_55 55
 //I2C register
@@ -52,7 +67,7 @@ const char HTTP_GDK101_SNS[] PROGMEM = "%s"
 void gdk101_Init() {
 
   if (gdk_ready) return;
-
+  
   bool ts;
   ts = gdk101_reset();
   if (ts) {
@@ -74,8 +89,6 @@ void gdk101_update_all() {
   gdk101_get_1min_avg();
   gdk101_get_vib();
   gdk101_get_status();
-//  gdk101_get_measuring_time_min();
-//  gdk101_get_measuring_time_sec();
 }
 
 float gdk101_get_fw_version() {
@@ -133,10 +146,6 @@ void gamma_mod_read(uint8_t reg) {
   delay(10);
 };
 
-/*********************************************************************************************\
-   every sec show...
-  \*********************************************************************************************/
-
 void Every_Second(void) {
   if (!gdk_ready) return;
   
@@ -162,14 +171,11 @@ void gdk101_Every_Second(void) {
     delay(10);
     vibr = 0;
   }
-  
-//  gdk101_get_measuring_time_sec();
 }
 
 void gdk101_Every_10_Second(void) {
   gdk101_get_10min_avg();
   gdk101_get_1min_avg();
-//  gdk101_get_measuring_time_min();
 }
 
 void gdk101_Show(uint8_t json) {
@@ -182,7 +188,6 @@ void gdk101_Show(uint8_t json) {
 #ifdef USE_WEBSERVER
   } else {
     WSContentSend_PD(HTTP_GDK101_SNS, mqtt_data, mea_10min_avg, mea_1min_avg, gdk_status, gdk_vibration);
-
 #endif  // USE_WEBSERVER
   }
 }
@@ -214,7 +219,6 @@ bool Xsns55(byte function)
   }
   return result;
 }
-
 
 #endif  // USE_GDK
 #endif  // USE_I2C
