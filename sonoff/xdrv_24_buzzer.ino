@@ -42,14 +42,25 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune)
   buzzer.set[0] = off;
   buzzer.set[1] = on;
   buzzer.duration = 1;         // Start buzzer on first step
-  buzzer.tune = tune;
-  if (buzzer.tune) {
+  buzzer.tune = 0;
+  if (tune) {
+    uint32_t tune1 = tune;
+    uint32_t tune2 = tune;
+    for (uint32_t i = 0; i < 32; i++) {
+      if (!(tune2 & 0x80000000)) {
+        tune2 <<= 1;           // Skip leading silence
+      } else {
+        buzzer.tune <<= 1;     // Add swapped tune
+        buzzer.tune |= tune1 & 1;
+        tune1 >>= 1;
+      }
+    }
     buzzer.count = 1;          // Allow tune only once
   } else {
     buzzer.count = count * 2;  // Start buzzer
   }
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BUZ: %d,%d,%d,0x%08X"), count, on, off, tune);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BUZ: %d(%d),%d,%d,0x%08X(0x%08X)"), count, buzzer.count, on, off, tune, buzzer.tune);
 
   buzzer.enable = true;
 }
@@ -130,15 +141,14 @@ void CmndBuzzer(void)
   // Buzzer 2           = Beep twice with duration 200mS and pause 100mS
   // Buzzer 2,3         = Beep twice with duration 300mS and pause 100mS
   // Buzzer 2,3,4       = Beep twice with duration 300mS and pause 400mS
-  // Buzzer 2,3,4,0x2AF = Beep a sequence once indicated by 0x2AF with duration 300mS and pause 400mS
-  //                        resulting in beep ----_-_-_-
+  // Buzzer 2,3,4,0xF54 = Beep a sequence once indicated by 0xF54 = 1111 0101 01 with duration 300mS and pause 400mS
 
   if (XdrvMailbox.data_len > 0) {
     char *p;
     uint32_t i = 0;
     uint32_t parm[4] = { 0 };
     for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 4; str = strtok_r(nullptr, ", ", &p)) {
-      parm[i] = strtol(str, nullptr, 0);
+      parm[i] = strtoul(str, nullptr, 0);
       i++;
     }
     for (uint32_t i = 0; i < 4; i++) {
