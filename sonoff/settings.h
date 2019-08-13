@@ -394,6 +394,7 @@ struct TIME_T {
 struct XDRVMAILBOX {
   bool          grpflg;
   bool          usridx;
+  uint16_t      command_code;
   uint32_t      index;
   uint32_t      data_len;
   int32_t       payload;

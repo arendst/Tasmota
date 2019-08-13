@@ -1327,11 +1327,6 @@ void GpioInit(void)
   }
 #endif  // USE_LIGHT
 
-  if (SONOFF_BRIDGE == my_module_type) {
-    Settings.flag.mqtt_serial = 0;
-    baudrate = 19200;
-  }
-
   if (XdrvCall(FUNC_MODULE_INIT)) {
     // Serviced
   }
