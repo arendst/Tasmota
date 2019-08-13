@@ -79,7 +79,7 @@ void BuzzerEnabledBeep(uint32_t count)
 
 /*********************************************************************************************/
 
-bool BuzzerPinState()
+bool BuzzerPinState(void)
 {
   if (XdrvMailbox.index == GPIO_BUZZER_INV) {
     Buzzer.inverted = 1;

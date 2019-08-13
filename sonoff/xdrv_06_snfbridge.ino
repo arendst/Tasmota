@@ -424,7 +424,7 @@ void SonoffBridgeLearn(uint8_t key)
  * Commands
 \*********************************************************************************************/
 
-void CmndRfBridge()  // RfSync, RfLow, RfHigh, RfHost and RfCode
+void CmndRfBridge(void)  // RfSync, RfLow, RfHigh, RfHost and RfCode
 {
   char *p;
   char stemp [10];

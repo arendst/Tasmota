@@ -82,7 +82,7 @@ void CounterUpdate4(void)
 
 /********************************************************************************************/
 
-bool CounterPinState()
+bool CounterPinState(void)
 {
   if ((XdrvMailbox.index >= GPIO_CNTR1_NP) && (XdrvMailbox.index < (GPIO_CNTR1_NP + MAX_COUNTERS))) {
     bitSet(counter_no_pullup, XdrvMailbox.index - GPIO_CNTR1_NP);
