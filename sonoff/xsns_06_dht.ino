@@ -128,7 +128,7 @@ bool DhtRead(uint8_t sensor)
   if (dht_data[4] != checksum) {
     char hex_char[15];
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %s =? %02X"),
-      ToHex(dht_data, 5, hex_char, sizeof(hex_char), ' '), checksum);
+      ToHex_P(dht_data, 5, hex_char, sizeof(hex_char), ' '), checksum);
     return false;
   }
 

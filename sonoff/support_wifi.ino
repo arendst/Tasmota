@@ -329,7 +329,7 @@ void WifiBeginAfterScan()
           (known) ? (j) ? '2' : '1' : '-',
           ssid_scan.c_str(),
           chan_scan,
-          ToHex((unsigned char*)bssid_scan, 6, hex_char, sizeof(hex_char), ':'),
+          ToHex_P((unsigned char*)bssid_scan, 6, hex_char, sizeof(hex_char), ':'),
           rssi_scan,
           (sec_scan == ENC_TYPE_NONE) ? 0 : 1);
         delay(0);

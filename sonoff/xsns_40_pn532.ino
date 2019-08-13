@@ -417,7 +417,7 @@ void PN532_ScanForTag(void)
       char card_datas[34];
 #endif // USE_PN532_DATA_FUNCTION
 
-      ToHex((unsigned char*)uid, uid_len, uids, sizeof(uids));
+      ToHex_P((unsigned char*)uid, uid_len, uids, sizeof(uids));
 
 #ifdef USE_PN532_DATA_FUNCTION
       if (uid_len == 4) { // Lets try to read block 1 of the mifare classic card for more information
