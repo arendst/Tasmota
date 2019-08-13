@@ -35,6 +35,7 @@ void (* const CounterCommand[])(void) PROGMEM =
   { &CmndCounter, &CmndCounterType, &CmndCounterDebounce };
 
 unsigned long last_counter_timer[MAX_COUNTERS]; // Last counter time in micro seconds
+uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
 
 #ifndef ARDUINO_ESP8266_RELEASE_2_3_0       // Fix core 2.5.x ISR not in IRAM Exception
 void CounterUpdate(uint8_t index) ICACHE_RAM_ATTR;
@@ -81,13 +82,14 @@ void CounterUpdate4(void)
 
 /********************************************************************************************/
 
-void CounterSaveState(void)
+bool CounterPinState()
 {
-  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
-    if (pin[GPIO_CNTR1 +i] < 99) {
-      Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
-    }
+  if ((XdrvMailbox.index >= GPIO_CNTR1_NP) && (XdrvMailbox.index < (GPIO_CNTR1_NP + MAX_COUNTERS))) {
+    bitSet(counter_no_pullup, XdrvMailbox.index - GPIO_CNTR1_NP);
+    XdrvMailbox.index -= (GPIO_CNTR1_NP - GPIO_CNTR1);
+    return true;
   }
+  return false;
 }
 
 void CounterInit(void)
@@ -99,6 +101,15 @@ void CounterInit(void)
     if (pin[GPIO_CNTR1 +i] < 99) {
       pinMode(pin[GPIO_CNTR1 +i], bitRead(counter_no_pullup, i) ? INPUT : INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
+    }
+  }
+}
+
+void CounterSaveState(void)
+{
+  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
+    if (pin[GPIO_CNTR1 +i] < 99) {
+      Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
     }
   }
 }
@@ -211,6 +222,9 @@ bool Xsns01(uint8_t function)
       break;
     case FUNC_INIT:
       CounterInit();
+      break;
+    case FUNC_PIN_STATE:
+      result = CounterPinState();
       break;
   }
   return result;

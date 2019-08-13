@@ -133,7 +133,6 @@ uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1
 uint8_t led_power = 0;                      // LED power state
 uint8_t ledlnk_inverted = 0;                // Link LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
-uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
 uint8_t energy_flg = 0;                     // Energy monitor configured
 uint8_t light_type = 0;                     // Light types
 uint8_t serial_in_byte;                     // Received byte
@@ -152,7 +151,6 @@ bool stop_flash_rotate = false;             // Allow flash configuration rotatio
 bool blinkstate = false;                    // LED state
 //bool latest_uptime_flag = true;             // Signal latest uptime
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
-bool dht_flg = false;                       // DHT configured
 bool i2c_flg = false;                       // I2C configured
 bool spi_flg = false;                       // SPI configured
 bool soft_spi_flg = false;                  // Software SPI configured
@@ -1245,6 +1243,7 @@ void GpioInit(void)
 
     if (mpin) {
       XdrvMailbox.index = mpin;
+      XdrvMailbox.payload = i;
 
       if ((mpin >= GPIO_SWT1_NP) && (mpin < (GPIO_SWT1_NP + MAX_SWITCHES))) {
         SwitchPullupFlag(mpin - GPIO_SWT1_NP);
@@ -1279,20 +1278,6 @@ void GpioInit(void)
         bitSet(pwm_inverted, mpin - GPIO_PWM1_INV);
         mpin -= (GPIO_PWM1_INV - GPIO_PWM1);
       }
-      else if ((mpin >= GPIO_CNTR1_NP) && (mpin < (GPIO_CNTR1_NP + MAX_COUNTERS))) {
-        bitSet(counter_no_pullup, mpin - GPIO_CNTR1_NP);
-        mpin -= (GPIO_CNTR1_NP - GPIO_CNTR1);
-      }
-#ifdef USE_DHT
-      else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_SI7021)) {
-        if (DhtSetup(i, mpin)) {
-          dht_flg = true;
-          mpin = GPIO_DHT11;
-        } else {
-          mpin = 0;
-        }
-      }
-#endif  // USE_DHT
       else if (XdrvCall(FUNC_PIN_STATE)) {
         mpin = XdrvMailbox.index;
       }
@@ -1326,7 +1311,9 @@ void GpioInit(void)
 
 #ifdef USE_I2C
   i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
-  if (i2c_flg) { Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]); }
+  if (i2c_flg) {
+    Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]);
+  }
 #endif  // USE_I2C
 
   devices_present = 1;

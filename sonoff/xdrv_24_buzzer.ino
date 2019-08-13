@@ -134,7 +134,7 @@ void (* const BuzzerCommand[])(void) PROGMEM = {
 
 void CmndBuzzer(void)
 {
-  // Buzzer <number of beeps>,<duration of beep in 100mS steps>,<duration of silence in 100mS steps>
+  // Buzzer <number of beeps>,<duration of beep in 100mS steps>,<duration of silence in 100mS steps>,<tune>
   // All parameters are optional
   //
   // Buzzer             = Buzzer 1,1,1 = Beep once with both duration and pause set to 100mS
@@ -151,12 +151,8 @@ void CmndBuzzer(void)
       parm[i] = strtoul(str, nullptr, 0);
       i++;
     }
-    for (uint32_t i = 0; i < 4; i++) {
-      if (i < 3) {
-        if (parm[i] < 1) { parm[i] = 1; }  // Default Count, On time, Off time
-      } else {
-        if (parm[3] < 0) { parm[3] = 0; }  // Default Tune bitmap
-      }
+    for (uint32_t i = 0; i < 3; i++) {
+      if (parm[i] < 1) { parm[i] = 1; }  // Default Count, On time, Off time
     }
     BuzzerBeep(parm[0], parm[1], parm[2], parm[3]);
   } else {
