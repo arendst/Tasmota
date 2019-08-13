@@ -223,11 +223,165 @@ bool (* const xsns_func_ptr[])(uint8_t) = {  // Sensor Function Pointers for sim
   &Xsns50,
 #endif
 
+#ifdef XSNS_51
+  &Xsns51,
+#endif
+
+#ifdef XSNS_52
+  &Xsns52,
+#endif
+
+#ifdef XSNS_53
+  &Xsns53,
+#endif
+
+#ifdef XSNS_54
+  &Xsns54,
+#endif
+
 #ifdef XSNS_55
   &Xsns55,
 #endif
 
-// Optional user defined sensors in range 91 - 99
+#ifdef XSNS_56
+  &Xsns56,
+#endif
+
+#ifdef XSNS_57
+  &Xsns57,
+#endif
+
+#ifdef XSNS_58
+  &Xsns58,
+#endif
+
+#ifdef XSNS_59
+  &Xsns59,
+#endif
+
+#ifdef XSNS_60
+  &Xsns60,
+#endif
+
+#ifdef XSNS_61
+  &Xsns61,
+#endif
+
+#ifdef XSNS_62
+  &Xsns62,
+#endif
+
+#ifdef XSNS_63
+  &Xsns63,
+#endif
+
+#ifdef XSNS_64
+  &Xsns64,
+#endif
+
+#ifdef XSNS_65
+  &Xsns65,
+#endif
+
+#ifdef XSNS_66
+  &Xsns66,
+#endif
+
+#ifdef XSNS_67
+  &Xsns67,
+#endif
+
+#ifdef XSNS_68
+  &Xsns68,
+#endif
+
+#ifdef XSNS_69
+  &Xsns69,
+#endif
+
+#ifdef XSNS_70
+  &Xsns70,
+#endif
+
+#ifdef XSNS_71
+  &Xsns71,
+#endif
+
+#ifdef XSNS_72
+  &Xsns72,
+#endif
+
+#ifdef XSNS_73
+  &Xsns73,
+#endif
+
+#ifdef XSNS_74
+  &Xsns74,
+#endif
+
+#ifdef XSNS_75
+  &Xsns75,
+#endif
+
+#ifdef XSNS_76
+  &Xsns76,
+#endif
+
+#ifdef XSNS_77
+  &Xsns77,
+#endif
+
+#ifdef XSNS_78
+  &Xsns78,
+#endif
+
+#ifdef XSNS_79
+  &Xsns79,
+#endif
+
+#ifdef XSNS_80
+  &Xsns80,
+#endif
+
+#ifdef XSNS_81
+  &Xsns81,
+#endif
+
+#ifdef XSNS_82
+  &Xsns82,
+#endif
+
+#ifdef XSNS_83
+  &Xsns83,
+#endif
+
+#ifdef XSNS_84
+  &Xsns84,
+#endif
+
+#ifdef XSNS_85
+  &Xsns85,
+#endif
+
+#ifdef XSNS_86
+  &Xsns86,
+#endif
+
+#ifdef XSNS_87
+  &Xsns87,
+#endif
+
+#ifdef XSNS_88
+  &Xsns88,
+#endif
+
+#ifdef XSNS_89
+  &Xsns89,
+#endif
+
+#ifdef XSNS_90
+  &Xsns90,
+#endif
 
 #ifdef XSNS_91
   &Xsns91,
@@ -294,7 +448,7 @@ bool XsnsCall(uint8_t Function)
   uint32_t profile_start_millis = millis();
 #endif  // PROFILE_XSNS_EVERY_SECOND
 
-  for (uint8_t x = 0; x < xsns_present; x++) {
+  for (uint32_t x = 0; x < xsns_present; x++) {
 #ifdef USE_DEBUG_DRIVER
     if (XsnsEnabled(x)) {
 #endif
@@ -315,6 +469,7 @@ bool XsnsCall(uint8_t Function)
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
 
       if (result && ((FUNC_COMMAND == Function) ||
+                     (FUNC_PIN_STATE == Function) ||
                      (FUNC_COMMAND_SENSOR == Function)
                     )) {
         break;
