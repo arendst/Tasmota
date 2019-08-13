@@ -176,17 +176,12 @@ void gdk101_Show(uint8_t json) {
   if (!gdk_ready) return;
   
   if (json) {
-    //char mqtt_data[40];
-    snprintf_P(mqtt_data, sizeof(mqtt_data), 
-    PSTR("{\"GDK101\":{\"10MIN_AVG\":%.3f,\"1MIN_AVG\":%.3f,\"STATUS\":%i,\"VIBRATION\":%i}"),
-               mqtt_data, mea_10min_avg, mea_1min_avg, gdk_status, gdk_vibration);
-    //ResponseAppend_P(PSTR("{\"GDK101\":{\"10MIN_AVG\":%.3f,\"1MIN_AVG\":%.3f,\"STATUS\":%i,\"VIBRATION\":%i}"),
-    //           mqtt_data, mea_10min_avg, mea_1min_avg, gdk_status, gdk_vibration);
+    ResponseAppend_P(PSTR(",\"GDK101\":{\"10MIN_AVG\":%.3f,\"1MIN_AVG\":%.3f,\"STATUS\":%i,\"VIBRATION\":%i,\"RAD_UNIT\":\"uSv/h\"}"),
+               mea_10min_avg, mea_1min_avg, gdk_status, gdk_vibration);
 
 #ifdef USE_WEBSERVER
   } else {
-    snprintf_P(mqtt_data, sizeof(mqtt_data),
-               HTTP_GDK101_SNS, mqtt_data, mea_10min_avg, mea_1min_avg, gdk_status, gdk_vibration );
+    WSContentSend_PD(HTTP_GDK101_SNS, mqtt_data, mea_10min_avg, mea_1min_avg, gdk_status, gdk_vibration);
 
 #endif  // USE_WEBSERVER
   }
@@ -211,7 +206,7 @@ bool Xsns55(byte function)
         gdk101_Show(1);
         break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_APPEND:
+      case FUNC_WEB_SENSOR:
         gdk101_Show(0);
         break;
 #endif  // USE_WEBSERVER
