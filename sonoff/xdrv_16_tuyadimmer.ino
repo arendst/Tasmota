@@ -143,7 +143,9 @@ bool TuyaSetChannels(void)
 void LightSerialDuty(uint8_t duty)
 {
   if (duty > 0 && !tuya_ignore_dim && TuyaSerial) {
-    if (duty < 25) { duty = 25; }  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
+    if (Settings.flag3.tuya_dimmer_min_limit) { // Enable dimming limit SetOption69: Enabled by default
+      if (duty < 25) { duty = 25; }  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
+    }
 
     if (Settings.flag3.tuya_show_dimmer == 0) {
       if(Settings.flag3.tuya_dimmer_range_255 == 0) {
