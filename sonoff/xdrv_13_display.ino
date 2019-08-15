@@ -28,7 +28,7 @@ const uint8_t DISPLAY_MAX_ROWS = 32;           // Max number of lines allowed wi
 
 const uint8_t DISPLAY_LOG_ROWS = 32;           // Number of lines in display log buffer
 
-#define D_CMND_DISPLAY "Display"
+#define D_PRFX_DISPLAY "Display"
 #define D_CMND_DISP_ADDRESS "Address"
 #define D_CMND_DISP_COLS "Cols"
 #define D_CMND_DISP_DIMMER "Dimmer"
@@ -53,7 +53,7 @@ enum XdspFunctions { FUNC_DISPLAY_INIT_DRIVER, FUNC_DISPLAY_INIT, FUNC_DISPLAY_E
 
 enum DisplayInitModes { DISPLAY_INIT_MODE, DISPLAY_INIT_PARTIAL, DISPLAY_INIT_FULL };
 
-const char kDisplayCommands[] PROGMEM =
+const char kDisplayCommands[] PROGMEM = D_PRFX_DISPLAY "|"  // Prefix
   "|" D_CMND_DISP_MODEL "|" D_CMND_DISP_WIDTH "|" D_CMND_DISP_HEIGHT "|" D_CMND_DISP_MODE "|" D_CMND_DISP_REFRESH "|"
   D_CMND_DISP_DIMMER "|" D_CMND_DISP_COLS "|" D_CMND_DISP_ROWS "|" D_CMND_DISP_SIZE "|" D_CMND_DISP_FONT "|"
   D_CMND_DISP_ROTATE "|" D_CMND_DISP_TEXT "|" D_CMND_DISP_ADDRESS ;
@@ -909,21 +909,9 @@ void DisplaySetPower(void)
  * Commands
 \*********************************************************************************************/
 
-void ResponseDisplayCmndNumber(int value)
-{
-  Response_P(PSTR("{\"" D_CMND_DISPLAY "%s\":%d}"), XdrvMailbox.command, value);
-}
-
-void ResponseDisplayCmndIdxNumber(int value)
-{
-  Response_P(PSTR("{\"" D_CMND_DISPLAY "%s%d\":%d}"), XdrvMailbox.command, XdrvMailbox.index, value);
-}
-
-/*********************************************************************************************/
-
 void CmndDisplay(void)
 {
-  Response_P(PSTR("{\"" D_CMND_DISPLAY "\":{\"" D_CMND_DISP_MODEL "\":%d,\"" D_CMND_DISP_WIDTH "\":%d,\"" D_CMND_DISP_HEIGHT "\":%d,\""
+  Response_P(PSTR("{\"" D_PRFX_DISPLAY "\":{\"" D_CMND_DISP_MODEL "\":%d,\"" D_CMND_DISP_WIDTH "\":%d,\"" D_CMND_DISP_HEIGHT "\":%d,\""
     D_CMND_DISP_MODE "\":%d,\"" D_CMND_DISP_DIMMER "\":%d,\"" D_CMND_DISP_SIZE "\":%d,\"" D_CMND_DISP_FONT "\":%d,\""
     D_CMND_DISP_ROTATE "\":%d,\"" D_CMND_DISP_REFRESH "\":%d,\"" D_CMND_DISP_COLS "\":[%d,%d],\"" D_CMND_DISP_ROWS "\":%d}}"),
     Settings.display_model, Settings.display_width, Settings.display_height,
@@ -942,7 +930,7 @@ void CmndDisplayModel(void)
       Settings.display_model = last_display_model;
     }
   }
-  ResponseDisplayCmndNumber(Settings.display_model);
+  ResponseCmndNumber(Settings.display_model);
 }
 
 void CmndDisplayWidth(void)
@@ -953,7 +941,7 @@ void CmndDisplayWidth(void)
       restart_flag = 2;  // Restart to re-init width
     }
   }
-  ResponseDisplayCmndNumber(Settings.display_width);
+  ResponseCmndNumber(Settings.display_width);
 }
 
 void CmndDisplayHeight(void)
@@ -964,7 +952,7 @@ void CmndDisplayHeight(void)
       restart_flag = 2;  // Restart to re-init height
     }
   }
-  ResponseDisplayCmndNumber(Settings.display_height);
+  ResponseCmndNumber(Settings.display_height);
 }
 
 void CmndDisplayMode(void)
@@ -994,7 +982,7 @@ void CmndDisplayMode(void)
     }
   }
 #endif  // USE_DISPLAY_MODES1TO5
-  ResponseDisplayCmndNumber(Settings.display_mode);
+  ResponseCmndNumber(Settings.display_mode);
 }
 
 void CmndDisplayDimmer(void)
@@ -1008,7 +996,7 @@ void CmndDisplayDimmer(void)
       ExecuteCommandPower(disp_device, POWER_OFF, SRC_DISPLAY);
     }
   }
-  ResponseDisplayCmndNumber(Settings.display_dimmer);
+  ResponseCmndNumber(Settings.display_dimmer);
 }
 
 void CmndDisplaySize(void)
@@ -1016,7 +1004,7 @@ void CmndDisplaySize(void)
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
     Settings.display_size = XdrvMailbox.payload;
   }
-  ResponseDisplayCmndNumber(Settings.display_size);
+  ResponseCmndNumber(Settings.display_size);
 }
 
 void CmndDisplayFont(void)
@@ -1024,7 +1012,7 @@ void CmndDisplayFont(void)
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
     Settings.display_font = XdrvMailbox.payload;
   }
-  ResponseDisplayCmndNumber(Settings.display_font);
+  ResponseCmndNumber(Settings.display_font);
 }
 
 void CmndDisplayRotate(void)
@@ -1049,7 +1037,7 @@ void CmndDisplayRotate(void)
 #endif  // USE_DISPLAY_MODES1TO5
     }
   }
-  ResponseDisplayCmndNumber(Settings.display_rotate);
+  ResponseCmndNumber(Settings.display_rotate);
 }
 
 void CmndDisplayText(void)
@@ -1064,7 +1052,7 @@ void CmndDisplayText(void)
       DisplayLogBufferAdd(XdrvMailbox.data);
     }
 #endif  // USE_DISPLAY_MODES1TO5
-    Response_P("{\"" D_CMND_DISPLAY "%s\":\"%s\"}", XdrvMailbox.command, XdrvMailbox.data);
+    ResponseCmndChar(XdrvMailbox.data);
   }
 }
 
@@ -1074,7 +1062,7 @@ void CmndDisplayAddress(void)
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
       Settings.display_address[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
-    ResponseDisplayCmndIdxNumber(Settings.display_address[XdrvMailbox.index -1]);
+    ResponseCmndIdxNumber(Settings.display_address[XdrvMailbox.index -1]);
   }
 }
 
@@ -1083,7 +1071,7 @@ void CmndDisplayRefresh(void)
   if ((XdrvMailbox.payload >= 1) && (XdrvMailbox.payload <= 7)) {
     Settings.display_refresh = XdrvMailbox.payload;
   }
-  ResponseDisplayCmndNumber(Settings.display_refresh);
+  ResponseCmndNumber(Settings.display_refresh);
 }
 
 void CmndDisplayColumns(void)
@@ -1098,7 +1086,7 @@ void CmndDisplayColumns(void)
       }
 #endif  // USE_DISPLAY_MODES1TO5
     }
-    ResponseDisplayCmndIdxNumber(Settings.display_cols[XdrvMailbox.index -1]);
+    ResponseCmndIdxNumber(Settings.display_cols[XdrvMailbox.index -1]);
   }
 }
 
@@ -1111,7 +1099,7 @@ void CmndDisplayRows(void)
     DisplayReAllocScreenBuffer();
 #endif  // USE_DISPLAY_MODES1TO5
   }
-  ResponseDisplayCmndNumber(Settings.display_rows);
+  ResponseCmndNumber(Settings.display_rows);
 }
 
 /*********************************************************************************************\
@@ -1148,10 +1136,7 @@ bool Xdrv13(uint8_t function)
         break;
 #endif  // USE_DISPLAY_MODES1TO5
       case FUNC_COMMAND:
-        if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_DISPLAY), strlen(D_CMND_DISPLAY))) {  // Prefix
-          XdrvMailbox.topic += strlen(D_CMND_DISPLAY);
-          result = DecodeCommand(kDisplayCommands, DisplayCommand);
-        }
+        result = DecodeCommand(kDisplayCommands, DisplayCommand);
         break;
     }
   }

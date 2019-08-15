@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.2.0029'
+VER = '2.2.0030'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -937,7 +937,13 @@ Setting_6_6_0_2.update              ({
     'display_height':               ('<H',  0x776,       (None, None,                           ('Display',     '"DisplayHeight {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_6_0_3 = copy.deepcopy(Setting_6_6_0_2)
+Setting_6_6_0_3['flag3'][0].update ({
+        'pwm_multi_channels':       ('<L', (0x3A0,1,18), (None, None,                           ('SetOption',   '"SetOption68 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x6060003, 0xe00, Setting_6_6_0_3),
             (0x6060002, 0xe00, Setting_6_6_0_2),
             (0x6060001, 0xe00, Setting_6_6_0_1),
             (0x605000F, 0xe00, Setting_6_5_0_15),

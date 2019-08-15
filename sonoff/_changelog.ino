@@ -1,12 +1,24 @@
 /*********************************************************************************************\
+ * 6.6.0.4 20190806
+ * Add support for CHIRP soil moisture sensor by Christian Baars
+ * Add debug compile features using defines DEBUG_TASMOTA_CORE, DEBUG_TASMOTA_DRIVER and DEBUG_TASMOTA_SENSOR.
+ *   See DEBUG_CORE_LOG example in sonoff.ino and DEBUG_DRIVER_LOG example in xdrv_09_timers.ino
+ * Add support for Solax X1 inverter by Pablo Zerón
+ * Add ZigBee support phase 1 - low level MQTT ZNP messages for CC2530 devices
+ * Add command Buzzer with optional parameters <number of beeps>,<duration of beep in 100mS steps>,<duration of silence in 100mS steps> enabled when a buzzer is configured (#5988)
+ * Add support for PAJ7620 gesture sensor by Christian Baars
+ *
  * 6.6.0.3 20190725
  * Change filename of configuration backup from using FriendlyName1 to Hostname solving diacritic issues (#2422)
+ * Change Store AWS IoT Private Key and Certificate in SPI Flash avoiding device-specific compilations
  * Upgrade library IRRemoteEsp8266 to 2.6.4, now using sendPioneer()
  * Add support for MAX31865 Thermocouple sensor by Alberto Lopez Siemens
  * Add option 0 to Width1 (Marker), Width2 (Second), Width3 (Minute) and Width4 (Hour) disabling display (#6152)
  * Add MqttCount metric to STATE (#6155)
  * Add define USE_ENERGY_MARGIN_DETECTION to disable Energy Margin and Power Limit detection
  * Add define USE_ENERGY_POWER_LIMIT to disable Energy Power Limit detection while Energy Margin detection is active
+ * Add allow repeat/longpress for IRSend raw, introduced IRSend<r> option (#6074)
+ * Add SetOption68 to enable multi-channel PWM instead of a single light (#6134)
  *
  * 6.6.0.2 20190714
  * Change commands Var and Mem to show all parameters when no index is given (#6107)

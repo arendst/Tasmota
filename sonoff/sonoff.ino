@@ -83,6 +83,7 @@ unsigned long feature_drv1;                 // Compiled driver feature map
 unsigned long feature_drv2;                 // Compiled driver feature map
 unsigned long feature_sns1;                 // Compiled sensor feature map
 unsigned long feature_sns2;                 // Compiled sensor feature map
+unsigned long feature5;                     // Compiled feature map
 unsigned long serial_polling_window = 0;    // Serial polling window
 unsigned long state_second = 0;             // State second timer
 unsigned long state_50msecond = 0;          // State 50msecond timer
@@ -131,9 +132,7 @@ uint8_t leds_present = 0;                   // Max number of LED supported
 uint8_t led_inverted = 0;                   // LED inverted flag (1 = (0 = On, 1 = Off))
 uint8_t led_power = 0;                      // LED power state
 uint8_t ledlnk_inverted = 0;                // Link LED inverted flag (1 = (0 = On, 1 = Off))
-uint8_t buzzer_inverted = 0;                // Buzzer inverted flag (1 = (0 = On, 1 = Off))
 uint8_t pwm_inverted = 0;                   // PWM inverted flag (1 = inverted)
-uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
 uint8_t energy_flg = 0;                     // Energy monitor configured
 uint8_t light_type = 0;                     // Light types
 uint8_t serial_in_byte;                     // Received byte
@@ -143,7 +142,6 @@ uint8_t seriallog_level;                    // Current copy of Settings.seriallo
 uint8_t syslog_level;                       // Current copy of Settings.syslog_level
 uint8_t my_module_type;                     // Current copy of Settings.module or user template type
 uint8_t my_adc0;                            // Active copy of Module ADC0
-uint8_t buzzer_count = 0;                   // Number of buzzes
 //uint8_t mdns_delayed_start = 0;             // mDNS delayed start
 bool serial_local = false;                  // Handle serial locally;
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
@@ -153,7 +151,6 @@ bool stop_flash_rotate = false;             // Allow flash configuration rotatio
 bool blinkstate = false;                    // LED state
 //bool latest_uptime_flag = true;             // Signal latest uptime
 bool pwm_present = false;                   // Any PWM channel configured with SetOption15 0
-bool dht_flg = false;                       // DHT configured
 bool i2c_flg = false;                       // I2C configured
 bool spi_flg = false;                       // SPI configured
 bool soft_spi_flg = false;                  // Software SPI configured
@@ -815,16 +812,6 @@ void Every100mSeconds(void)
       if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
     }
   }
-
-  if ((pin[GPIO_BUZZER] < 99) && (Settings.flag3.buzzer_enable)) {
-    if (buzzer_count) {
-      buzzer_count--;
-      uint8_t state = buzzer_count & 1;
-      digitalWrite(pin[GPIO_BUZZER], (buzzer_inverted) ? !state : state);
-    }
-  } else {
-    buzzer_count = 0;
-  }
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -928,7 +915,7 @@ void Every250mSeconds(void)
           if (!ota_result) {
 #ifndef FIRMWARE_MINIMAL
             int ota_error = ESPhttpUpdate.getLastError();
-//            AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "Ota error %d"), ota_error);
+            DEBUG_CORE_LOG(PSTR("OTA: Error %d"), ota_error);
             if ((HTTP_UE_TOO_LESS_SPACE == ota_error) || (HTTP_UE_BIN_FOR_WRONG_FLASH == ota_error)) {
               RtcSettings.ota_loader = 1;  // Try minimal image next
             }
@@ -1188,15 +1175,9 @@ void SerialInput(void)
 
   if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {
     serial_in_buffer[serial_in_byte_counter] = 0;                                // Serial data completed
-    if (!Settings.flag.mqtt_serial_raw) {
-      Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"), serial_in_buffer);
-    } else {
-      Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\""));
-      for (uint32_t i = 0; i < serial_in_byte_counter; i++) {
-        ResponseAppend_P(PSTR("%02x"), serial_in_buffer[i]);
-      }
-      ResponseAppend_P(PSTR("\"}"));
-    }
+    char hex_char[(serial_in_byte_counter * 2) + 2];
+    Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"),
+      (Settings.flag.mqtt_serial_raw) ? ToHex_P((unsigned char*)serial_in_buffer, serial_in_byte_counter, hex_char, sizeof(hex_char)) : serial_in_buffer);
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
     XdrvRulesProcess();
     serial_in_byte_counter = 0;
@@ -1258,9 +1239,12 @@ void GpioInit(void)
   for (uint32_t i = 0; i < sizeof(my_module.io); i++) {
     mpin = ValidPin(i, my_module.io[i]);
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: gpio pin %d, mpin %d"), i, mpin);
+    DEBUG_CORE_LOG(PSTR("INI: gpio pin %d, mpin %d"), i, mpin);
 
     if (mpin) {
+      XdrvMailbox.index = mpin;
+      XdrvMailbox.payload = i;
+
       if ((mpin >= GPIO_SWT1_NP) && (mpin < (GPIO_SWT1_NP + MAX_SWITCHES))) {
         SwitchPullupFlag(mpin - GPIO_SWT1_NP);
         mpin -= (GPIO_SWT1_NP - GPIO_SWT1);
@@ -1290,28 +1274,16 @@ void GpioInit(void)
         ledlnk_inverted = 1;
         mpin -= (GPIO_LEDLNK_INV - GPIO_LEDLNK);
       }
-      else if (mpin == GPIO_BUZZER_INV) {
-        buzzer_inverted = 1;
-        mpin -= (GPIO_BUZZER_INV - GPIO_BUZZER);
-      }
       else if ((mpin >= GPIO_PWM1_INV) && (mpin < (GPIO_PWM1_INV + MAX_PWMS))) {
         bitSet(pwm_inverted, mpin - GPIO_PWM1_INV);
         mpin -= (GPIO_PWM1_INV - GPIO_PWM1);
       }
-      else if ((mpin >= GPIO_CNTR1_NP) && (mpin < (GPIO_CNTR1_NP + MAX_COUNTERS))) {
-        bitSet(counter_no_pullup, mpin - GPIO_CNTR1_NP);
-        mpin -= (GPIO_CNTR1_NP - GPIO_CNTR1);
+      else if (XdrvCall(FUNC_PIN_STATE)) {
+        mpin = XdrvMailbox.index;
       }
-#ifdef USE_DHT
-      else if ((mpin >= GPIO_DHT11) && (mpin <= GPIO_SI7021)) {
-        if (DhtSetup(i, mpin)) {
-          dht_flg = true;
-          mpin = GPIO_DHT11;
-        } else {
-          mpin = 0;
-        }
-      }
-#endif  // USE_DHT
+      else if (XsnsCall(FUNC_PIN_STATE)) {
+        mpin = XdrvMailbox.index;
+      };
     }
     if (mpin) pin[mpin] = i;
   }
@@ -1339,7 +1311,9 @@ void GpioInit(void)
 
 #ifdef USE_I2C
   i2c_flg = ((pin[GPIO_I2C_SCL] < 99) && (pin[GPIO_I2C_SDA] < 99));
-  if (i2c_flg) { Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]); }
+  if (i2c_flg) {
+    Wire.begin(pin[GPIO_I2C_SDA], pin[GPIO_I2C_SCL]);
+  }
 #endif  // USE_I2C
 
   devices_present = 1;
@@ -1352,11 +1326,6 @@ void GpioInit(void)
     }
   }
 #endif  // USE_LIGHT
-
-  if (SONOFF_BRIDGE == my_module_type) {
-    Settings.flag.mqtt_serial = 0;
-    baudrate = 19200;
-  }
 
   if (XdrvCall(FUNC_MODULE_INIT)) {
     // Serviced
@@ -1427,10 +1396,6 @@ void GpioInit(void)
     pinMode(pin[GPIO_LEDLNK], OUTPUT);
     digitalWrite(pin[GPIO_LEDLNK], ledlnk_inverted);
   }
-  if (pin[GPIO_BUZZER] < 99) {
-    pinMode(pin[GPIO_BUZZER], OUTPUT);
-    digitalWrite(pin[GPIO_BUZZER], buzzer_inverted);  // Buzzer Off
-  }
 
   ButtonInit();
   SwitchInit();
@@ -1451,6 +1416,13 @@ void GpioInit(void)
     light_type |= LT_SM16716;
   }
 #endif  // USE_SM16716
+
+  // post-process for lights
+  if (Settings.flag3.pwm_multi_channels) {
+    uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
+    if (0 == pwm_channels) { pwm_channels = 1; }
+    devices_present += pwm_channels - 1;  // add the pwm channels controls at the end
+  }
 #endif  // USE_LIGHT
   if (!light_type) {
     for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only

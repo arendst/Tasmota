@@ -1935,7 +1935,111 @@ void toSLog(const char *str) {
 #endif
 }
 
+char *Evaluate_expression(char *lp,uint8_t and_or, uint8_t *result,JsonObject  *jo) {
+  float fvar,*dfvar,fvar1;
+  uint8_t numeric;
+  struct T_INDEX ind;
+  uint8_t vtype=0,lastop;
+  uint8_t res=0;
 
+  SCRIPT_SKIP_SPACES
+
+  if (*lp=='(') {
+    lp++;
+    lp=Evaluate_expression(lp,and_or,result,jo);
+    lp++;
+    // check for next and or
+    SCRIPT_SKIP_SPACES
+    if (!strncmp(lp,"or",2)) {
+      lp+=2;
+      and_or=1;
+      SCRIPT_SKIP_SPACES
+      lp=Evaluate_expression(lp,and_or,result,jo);
+    } else if (!strncmp(lp,"and",3)) {
+      lp+=3;
+      and_or=2;
+      SCRIPT_SKIP_SPACES
+      lp=Evaluate_expression(lp,and_or,result,jo);
+    }
+    return lp;
+  }
+
+  // compare
+  dfvar=&fvar;
+  glob_script_mem.glob_error=0;
+  char *slp=lp;
+  numeric=1;
+  lp=GetNumericResult(lp,OPER_EQU,dfvar,0);
+  if (glob_script_mem.glob_error==1) {
+    // was string, not number
+	  char cmpstr[SCRIPT_MAXSSIZE];
+    lp=slp;
+    numeric=0;
+    // get the string
+    lp=isvar(lp,&vtype,&ind,0,cmpstr,0);
+	  lp=getop(lp,&lastop);
+    // compare string
+    char str[SCRIPT_MAXSSIZE];
+    lp=GetStringResult(lp,OPER_EQU,str,jo);
+    if (lastop==OPER_EQUEQU || lastop==OPER_NOTEQU) {
+      uint8_t res=0;
+      res=strcmp(cmpstr,str);
+      if (lastop==OPER_EQUEQU) res=!res;
+      if (!and_or) {
+          *result=res;
+      } else if (and_or==1) {
+          *result|=res;
+      } else {
+          *result&=res;
+      }
+    }
+
+  } else {
+    // numeric
+    // evaluate operand
+    lp=getop(lp,&lastop);
+
+    lp=GetNumericResult(lp,OPER_EQU,&fvar1,jo);
+    switch (lastop) {
+      case OPER_EQUEQU:
+          res=(*dfvar==fvar1);
+          break;
+      case OPER_NOTEQU:
+          res=(*dfvar!=fvar1);
+          break;
+      case OPER_LOW:
+          res=(*dfvar<fvar1);
+          break;
+      case OPER_LOWEQU:
+          res=(*dfvar<=fvar1);
+          break;
+      case OPER_GRT:
+          res=(*dfvar>fvar1);
+          break;
+      case OPER_GRTEQU:
+          res=(*dfvar>=fvar1);
+          break;
+      default:
+          // error
+          break;
+    }
+
+    if (!and_or) {
+      *result=res;
+    } else if (and_or==1) {
+      *result|=res;
+    } else {
+      *result&=res;
+    }
+  }
+exit:
+#if SCRIPT_DEBUG>0
+  char tbuff[128];
+  sprintf(tbuff,"p1=%d,p2=%d,cmpres=%d line: ",(int32_t)*dfvar,(int32_t)fvar1,*result);
+  toLogEOL(tbuff,lp);
+#endif
+  return lp;
+}
 
 //#define IFTHEN_DEBUG
 
@@ -2305,19 +2409,15 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
 
             // check for variable result
             if (if_state[ifstck]==1) {
-              // compare
-              dfvar=&fvar;
-              glob_script_mem.glob_error=0;
-              char *slp=lp;
-              numeric=1;
-              lp=GetNumericResult(lp,OPER_EQU,dfvar,0);
-              if (glob_script_mem.glob_error==1) {
-                // was string, not number
-                lp=slp;
-                numeric=0;
-                // get the string
-                lp=isvar(lp,&vtype,&ind,0,cmpstr,0);
+              // evaluate exxpression
+              lp=Evaluate_expression(lp,and_or,&if_result[ifstck],jo);
+              SCRIPT_SKIP_SPACES
+              if (*lp=='{' && if_state[ifstck]==1) {
+                lp+=1; // then
+                if_state[ifstck]=2;
+                if (if_exe[ifstck-1]) if_exe[ifstck]=if_result[ifstck];
               }
+              goto next_line;
             } else {
               lp=isvar(lp,&vtype,&ind,&sysvar,0,0);
               if (vtype!=VAR_NV) {
@@ -2335,180 +2435,110 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                         sysv_type=0;
                       }
                       numeric=1;
-                  } else {
-                      // string result
-                      numeric=0;
-                      sindex=index;
-                  }
-              }
-            }
-            // evaluate operand
-            lp=getop(lp,&lastop);
-            if (if_state[ifstck]==1) {
-              if (numeric) {
-                uint8_t res=0;
-                lp=GetNumericResult(lp,OPER_EQU,&fvar1,jo);
-                switch (lastop) {
-                    case OPER_EQUEQU:
-                        res=(*dfvar==fvar1);
-                        break;
-                    case OPER_NOTEQU:
-                        res=(*dfvar!=fvar1);
-                        break;
-                    case OPER_LOW:
-                        res=(*dfvar<fvar1);
-                        break;
-                    case OPER_LOWEQU:
-                        res=(*dfvar<=fvar1);
-                        break;
-                    case OPER_GRT:
-                        res=(*dfvar>fvar1);
-                        break;
-                    case OPER_GRTEQU:
-                        res=(*dfvar>=fvar1);
-                        break;
-                    default:
-                        // error
-                        break;
-                }
-
-                if (!and_or) {
-                    if_result[ifstck]=res;
-                } else if (and_or==1) {
-                    if_result[ifstck]|=res;
-                } else {
-                    if_result[ifstck]&=res;
-                }
-#if SCRIPT_DEBUG>0
-                char tbuff[128];
-                sprintf(tbuff,"p1=%d,p2=%d,cmpres=%d line: ",(int32_t)*dfvar,(int32_t)fvar1,if_result[ifstck]);
-                toLogEOL(tbuff,lp);
-#endif
-
-              } else {
-                // compare string
-                char str[SCRIPT_MAXSSIZE];
-                lp=GetStringResult(lp,OPER_EQU,str,0);
-                if (lastop==OPER_EQUEQU || lastop==OPER_NOTEQU) {
-                  uint8_t res=0;
-                  res=strcmp(cmpstr,str);
-                  if (lastop==OPER_EQUEQU) res=!res;
-                  if (!and_or) {
-                      if_result[ifstck]=res;
-                  } else if (and_or==1) {
-                      if_result[ifstck]|=res;
-                  } else {
-                      if_result[ifstck]&=res;
-                  }
-                }
-              }
-              SCRIPT_SKIP_SPACES
-              if (*lp=='{' && if_state[ifstck]==1) {
-                lp+=1; // then
-                if_state[ifstck]=2;
-                if (if_exe[ifstck-1]) if_exe[ifstck]=if_result[ifstck];
-              }
-              goto next_line;
-            } else {
-              if (numeric) {
-                char *slp=lp;
-                glob_script_mem.glob_error=0;
-                lp=GetNumericResult(lp,OPER_EQU,&fvar,jo);
-                if (glob_script_mem.glob_error==1) {
-                  // mismatch was string, not number
-                  // get the string and convert to number
-                  lp=isvar(slp,&vtype,&ind,0,cmpstr,jo);
-                  fvar=CharToFloat(cmpstr);
-                }
-                switch (lastop) {
-                    case OPER_EQU:
-                        if (glob_script_mem.var_not_found) {
-                          if (!js) toLog("var not found\n");
-                          goto next_line;
+                      lp=getop(lp,&lastop);
+                      char *slp=lp;
+                      glob_script_mem.glob_error=0;
+                      lp=GetNumericResult(lp,OPER_EQU,&fvar,jo);
+                      if (glob_script_mem.glob_error==1) {
+                        // mismatch was string, not number
+                        // get the string and convert to number
+                        lp=isvar(slp,&vtype,&ind,0,cmpstr,jo);
+                        fvar=CharToFloat(cmpstr);
+                      }
+                      switch (lastop) {
+                          case OPER_EQU:
+                              if (glob_script_mem.var_not_found) {
+                                if (!js) toLog("var not found\n");
+                                goto next_line;
+                              }
+                              *dfvar=fvar;
+                              break;
+                          case OPER_PLSEQU:
+                              *dfvar+=fvar;
+                              break;
+                          case OPER_MINEQU:
+                              *dfvar-=fvar;
+                              break;
+                          case OPER_MULEQU:
+                              *dfvar*=fvar;
+                              break;
+                          case OPER_DIVEQU:
+                              *dfvar/=fvar;
+                              break;
+                          case OPER_PERCEQU:
+                              *dfvar=fmodf(*dfvar,fvar);
+                              break;
+                          case OPER_ANDEQU:
+                              *dfvar=(uint32_t)*dfvar&(uint32_t)fvar;
+                              break;
+                          case OPER_OREQU:
+                              *dfvar=(uint32_t)*dfvar|(uint32_t)fvar;
+                              break;
+                          case OPER_XOREQU:
+                              *dfvar=(uint32_t)*dfvar^(uint32_t)fvar;
+                              break;
+                          default:
+                              // error
+                              break;
+                      }
+                      // var was changed
+                      glob_script_mem.type[globvindex].bits.changed=1;
+                      if (glob_script_mem.type[globvindex].bits.is_filter) {
+                        if (globaindex>=0) {
+                          Set_MFVal(glob_script_mem.type[globvindex].index,globaindex,*dfvar);
+                        } else {
+                          Set_MFilter(glob_script_mem.type[globvindex].index,*dfvar);
                         }
-                        *dfvar=fvar;
-                        break;
-                    case OPER_PLSEQU:
-                        *dfvar+=fvar;
-                        break;
-                    case OPER_MINEQU:
-                        *dfvar-=fvar;
-                        break;
-                    case OPER_MULEQU:
-                        *dfvar*=fvar;
-                        break;
-                    case OPER_DIVEQU:
-                        *dfvar/=fvar;
-                        break;
-                    case OPER_PERCEQU:
-                        *dfvar=fmodf(*dfvar,fvar);
-                        break;
-                    case OPER_ANDEQU:
-                        *dfvar=(uint32_t)*dfvar&(uint32_t)fvar;
-                        break;
-                    case OPER_OREQU:
-                        *dfvar=(uint32_t)*dfvar|(uint32_t)fvar;
-                        break;
-                    case OPER_XOREQU:
-                        *dfvar=(uint32_t)*dfvar^(uint32_t)fvar;
-                        break;
-                    default:
-                        // error
-                        break;
-                }
-                // var was changed
-                glob_script_mem.type[globvindex].bits.changed=1;
-                if (glob_script_mem.type[globvindex].bits.is_filter) {
-                  if (globaindex>=0) {
-                    Set_MFVal(glob_script_mem.type[globvindex].index,globaindex,*dfvar);
+                      }
+
+                      if (sysv_type) {
+                        switch (sysv_type) {
+                          case SCRIPT_LOGLEVEL:
+                            glob_script_mem.script_loglevel=*dfvar;
+                            break;
+                          case SCRIPT_TELEPERIOD:
+                            if (*dfvar<10) *dfvar=10;
+                            if (*dfvar>300) *dfvar=300;
+                            Settings.tele_period=*dfvar;
+                            break;
+                        }
+                        sysv_type=0;
+                      }
                   } else {
-                    Set_MFilter(glob_script_mem.type[globvindex].index,*dfvar);
-                  }
-                }
+                    // string result
+                    numeric=0;
+                    sindex=index;
+                    // string result
+                    char str[SCRIPT_MAXSSIZE];
+                    char *slp=lp;
+                    lp=getop(lp,&lastop);
+                    lp=GetStringResult(lp,OPER_EQU,str,jo);
+                    if (!js && glob_script_mem.var_not_found) {
+                      // mismatch
+                      lp=GetNumericResult(slp,OPER_EQU,&fvar,0);
+                      dtostrfd(fvar,6,str);
+                      glob_script_mem.var_not_found=0;
+                    }
 
-                if (sysv_type) {
-                  switch (sysv_type) {
-                    case SCRIPT_LOGLEVEL:
-                      glob_script_mem.script_loglevel=*dfvar;
-                      break;
-                    case SCRIPT_TELEPERIOD:
-                      if (*dfvar<10) *dfvar=10;
-                      if (*dfvar>300) *dfvar=300;
-                      Settings.tele_period=*dfvar;
-                      break;
+                    if (!glob_script_mem.var_not_found) {
+                      // var was changed
+                      glob_script_mem.type[globvindex].bits.changed=1;
+                      if (lastop==OPER_EQU) {
+                        strlcpy(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+                      } else if (lastop==OPER_PLSEQU) {
+                        strncat(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+                      }
+                    }
                   }
-                  sysv_type=0;
-                }
 
-              } else {
-                // string result
-                char str[SCRIPT_MAXSSIZE];
-                char *slp=lp;
-                lp=GetStringResult(lp,OPER_EQU,str,jo);
-                if (!js && glob_script_mem.var_not_found) {
-                  // mismatch
-                  lp=GetNumericResult(slp,OPER_EQU,&fvar,0);
-                  dtostrfd(fvar,6,str);
-                  glob_script_mem.var_not_found=0;
-                }
-
-                if (!glob_script_mem.var_not_found) {
-                  // var was changed
-                  glob_script_mem.type[globvindex].bits.changed=1;
-                  if (lastop==OPER_EQU) {
-                    strlcpy(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
-                  } else if (lastop==OPER_PLSEQU) {
-                    strncat(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
-                  }
-                }
-              }
-              SCRIPT_SKIP_SPACES
-              if (*lp=='{' && if_state[ifstck]==3) {
-                lp+=1; // else
-                //if_state[ifstck]=3;
-              }
-              goto next_line;
-           }
+            }
+            SCRIPT_SKIP_SPACES
+            if (*lp=='{' && if_state[ifstck]==3) {
+              lp+=1; // else
+              //if_state[ifstck]=3;
+            }
+            goto next_line;
+          }
         } else {
             // decode line
             if (*lp=='>' && tlen==1) {

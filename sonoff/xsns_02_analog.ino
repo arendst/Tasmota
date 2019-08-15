@@ -183,73 +183,71 @@ void AdcShow(bool json)
 \*********************************************************************************************/
 
 #define D_CMND_ADCPARAM "AdcParam"
-enum AdcCommands { CMND_ADC, CMND_ADCS, CMND_ADCPARAM };
-const char kAdcCommands[] PROGMEM = D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_ADCPARAM;
+const char kAdcCommands[] PROGMEM = "|"  // No prefix
+  D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_ADCPARAM;
 
-bool AdcCommand(void)
+void (* const AdcCommand[])(void) PROGMEM =
+  { &CmndAdc, &CmndAdcs, &CmndAdcParam };
+
+void CmndAdc(void)
 {
-  char command[CMDSZ];
-  bool serviced = true;
+  if (ValidAdc() && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < ADC0_END)) {
+    Settings.my_adc0 = XdrvMailbox.payload;
+    restart_flag = 2;
+  }
+  char stemp1[TOPSZ];
+  Response_P(PSTR("{\"" D_CMND_ADC "0\":\"%d (%s)\"}"), Settings.my_adc0, GetTextIndexed(stemp1, sizeof(stemp1), Settings.my_adc0, kAdc0Names));
+}
 
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kAdcCommands);
-  if (CMND_ADC == command_code) {
-    if (ValidAdc() && (XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < ADC0_END)) {
-      Settings.my_adc0 = XdrvMailbox.payload;
-      restart_flag = 2;
+void CmndAdcs(void)
+{
+  Response_P(PSTR("{\"" D_CMND_ADCS "\":["));
+  bool jsflg = false;
+  char stemp1[TOPSZ];
+  for (uint32_t i = 0; i < ADC0_END; i++) {
+    if (jsflg) {
+      ResponseAppend_P(PSTR(","));
     }
-    char stemp1[TOPSZ];
-    Response_P(PSTR("{\"" D_CMND_ADC "0\":\"%d (%s)\"}"), Settings.my_adc0, GetTextIndexed(stemp1, sizeof(stemp1), Settings.my_adc0, kAdc0Names));
+    jsflg = true;
+    ResponseAppend_P(PSTR("\"%d (%s)\""), i, GetTextIndexed(stemp1, sizeof(stemp1), i, kAdc0Names));
   }
-  else if (CMND_ADCS == command_code) {
-    Response_P(PSTR("{\"" D_CMND_ADCS "\":["));
-    bool jsflg = false;
-    char stemp1[TOPSZ];
-    for (uint32_t i = 0; i < ADC0_END; i++) {
-      if (jsflg) {
-        ResponseAppend_P(PSTR(","));
-      }
-      jsflg = true;
-      ResponseAppend_P(PSTR("\"%d (%s)\""), i, GetTextIndexed(stemp1, sizeof(stemp1), i, kAdc0Names));
-    }
-    ResponseAppend_P(PSTR("]}"));
-  }
-  else if (CMND_ADCPARAM == command_code) {
-    if (XdrvMailbox.data_len) {
-      if ((ADC0_TEMP == XdrvMailbox.payload) || (ADC0_LIGHT == XdrvMailbox.payload)) {
+  ResponseAppend_P(PSTR("]}"));
+}
+
+void CmndAdcParam(void)
+{
+  if (XdrvMailbox.data_len) {
+    if ((ADC0_TEMP == XdrvMailbox.payload) || (ADC0_LIGHT == XdrvMailbox.payload)) {
 //      if ((XdrvMailbox.payload == my_adc0) && ((ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0))) {
-        if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
-          char sub_string[XdrvMailbox.data_len +1];
-          // AdcParam 2, 32000, 10000, 3350
-          // AdcParam 3, 10000, 12518931, -1.405
-          Settings.adc_param_type = XdrvMailbox.payload;
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
+        char sub_string[XdrvMailbox.data_len +1];
+        // AdcParam 2, 32000, 10000, 3350
+        // AdcParam 3, 10000, 12518931, -1.405
+        Settings.adc_param_type = XdrvMailbox.payload;
 //          Settings.adc_param_type = my_adc0;
-          Settings.adc_param1 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
-          Settings.adc_param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
-          Settings.adc_param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)) * 10000);
-        } else {                                         // Set default values based on current adc type
-          // AdcParam 2
-          // AdcParam 3
-          Settings.adc_param_type = 0;
-          AdcInit();
-        }
+        Settings.adc_param1 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+        Settings.adc_param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
+        Settings.adc_param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)) * 10000);
+      } else {                                         // Set default values based on current adc type
+        // AdcParam 2
+        // AdcParam 3
+        Settings.adc_param_type = 0;
+        AdcInit();
       }
     }
-
-    // AdcParam
-    int value = Settings.adc_param3;
-    uint8_t precision;
-    for (precision = 4; precision > 0; precision--) {
-      if (value % 10) { break; }
-      value /= 10;
-    }
-    char param3[33];
-    dtostrfd(((double)Settings.adc_param3)/10000, precision, param3);
-    Response_P(PSTR("{\"" D_CMND_ADCPARAM "\":[%d,%d,%d,%s]}"),
-      Settings.adc_param_type, Settings.adc_param1, Settings.adc_param2, param3);
   }
-  else serviced = false;  // Unknown command
 
-  return serviced;
+  // AdcParam
+  int value = Settings.adc_param3;
+  uint8_t precision;
+  for (precision = 4; precision > 0; precision--) {
+    if (value % 10) { break; }
+    value /= 10;
+  }
+  char param3[33];
+  dtostrfd(((double)Settings.adc_param3)/10000, precision, param3);
+  Response_P(PSTR("{\"" D_CMND_ADCPARAM "\":[%d,%d,%d,%s]}"),
+    Settings.adc_param_type, Settings.adc_param1, Settings.adc_param2, param3);
 }
 
 /*********************************************************************************************\
@@ -262,7 +260,7 @@ bool Xsns02(uint8_t function)
 
   switch (function) {
     case FUNC_COMMAND:
-      result = AdcCommand();
+      result = DecodeCommand(kAdcCommands, AdcCommand);
       break;
     default:
       if ((ADC0_INPUT == my_adc0) || (ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0)) {

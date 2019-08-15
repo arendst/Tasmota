@@ -42,6 +42,8 @@ void WifiWpsStatusCallback(wps_cb_status status);
 void KNX_CB_Action(message_t const &msg, void *arg);
 //#endif  // USE_KNX
 
+char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0');
+
 /*********************************************************************************************\
  * Default global defines
 \*********************************************************************************************/
@@ -131,6 +133,8 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 #define USE_ADE7953                           // Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
 //#define USE_VL53L0X                           // Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
 //#define USE_MLX90614                          // Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)
+//#define USE_CHIRP                             // Enable CHIRP soil moisture sensor (variable I2C address, default 0x20)
+//#define USE_PAJ7620                           // Enable PAJ7620 gesture sensor (I2C address 0x73) (+2.5k code)
 
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
@@ -176,6 +180,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
   #define USE_ALECTO_V2                       // Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver (+1k7 code)
 #define USE_SM16716                           // Add support for SM16716 RGB LED controller (+0k7 code)
 #define USE_HRE                               // Add support for Badger HR-E Water Meter (+1k4 code)
+//#define USE_SOLAX_X1                          // Add support for Solax X1 series Modbus log info (+4k1 code)
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
@@ -514,6 +519,24 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 
 #ifdef ARDUINO_ESP8266_RELEASE_2_3_0          // Disable not supported features in core 2.3.0
 #undef USE_MQTT_TLS_CA_CERT
+#endif
+
+#ifdef DEBUG_TASMOTA_CORE
+#define DEBUG_CORE_LOG(...) AddLog_Debug(__VA_ARGS__)
+#else
+#define DEBUG_CORE_LOG(...)
+#endif
+
+#ifdef DEBUG_TASMOTA_DRIVER
+#define DEBUG_DRIVER_LOG(...) AddLog_Debug(__VA_ARGS__)
+#else
+#define DEBUG_DRIVER_LOG(...)
+#endif
+
+#ifdef DEBUG_TASMOTA_SENSOR
+#define DEBUG_SENSOR_LOG(...) AddLog_Debug(__VA_ARGS__)
+#else
+#define DEBUG_SENSOR_LOG(...)
 #endif
 
 #endif  // _SONOFF_POST_H_

@@ -123,6 +123,7 @@
 #define D_JSON_RESTARTING "Restarting"
 #define D_JSON_RESTARTREASON "RestartReason"
 #define D_JSON_RSSI "RSSI"
+#define D_JSON_RUNTIME "Runtime"
 #define D_JSON_SAVEADDRESS "SaveAddress"
 #define D_JSON_SAVECOUNT "SaveCount"
 #define D_JSON_SAVED "Saved"
@@ -134,6 +135,7 @@
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
 #define D_JSON_STARTUPUTC "StartupUTC"
+#define D_JSON_STATUS "Status"
 #define D_JSON_SUBNETMASK "Subnetmask"
 #define D_JSON_SUCCESSFUL "Successful"
 #define D_JSON_SUNRISE "Sunrise"
@@ -165,6 +167,13 @@
 #define D_JSON_WRONG_PARAMETERS "Wrong parameters"
 #define D_JSON_YESTERDAY "Yesterday"
 #define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
+#define D_JSON_PV1_VOLTAGE "Pv1Voltage"
+#define D_JSON_PV1_CURRENT "Pv1Current"
+#define D_JSON_PV1_POWER "Pv1Power"
+#define D_JSON_PV2_VOLTAGE "Pv2Voltage"
+#define D_JSON_PV2_CURRENT "Pv2Current"
+#define D_JSON_PV2_POWER "Pv2Power"
+#define D_JSON_SOLAR_POWER "SolarPower"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
@@ -224,9 +233,6 @@
 #define D_CMND_PWM "PWM"
 #define D_CMND_PWMFREQUENCY "PWMFrequency"
 #define D_CMND_PWMRANGE "PWMRange"
-#define D_CMND_COUNTER "Counter"
-#define D_CMND_COUNTERTYPE "CounterType"
-#define D_CMND_COUNTERDEBOUNCE "CounterDebounce"
 #define D_CMND_BUTTONDEBOUNCE "ButtonDebounce"
 #define D_CMND_SWITCHDEBOUNCE "SwitchDebounce"
 #define D_CMND_SLEEP "Sleep"
@@ -290,6 +296,7 @@
 #define D_CMND_MQTTCLIENT "MqttClient"
 #define D_CMND_MQTTUSER "MqttUser"
 #define D_CMND_MQTTPASSWORD "MqttPassword"
+#define D_CMND_TLSKEY "TLSKey"
 #define D_CMND_FULLTOPIC "FullTopic"
 #define D_CMND_PREFIX "Prefix"
   #define PRFX_MAX_STRING_LENGTH 5
@@ -400,14 +407,6 @@
 #define D_CMND_RFSYNC "RfSync"
   #define D_JSON_RFRECEIVED "RfReceived"
 #define D_CMND_RFRAW "RfRaw"
-
-// Commands xdrv_07_domoticz.ino
-#define D_CMND_DOMOTICZ "Domoticz"
-#define D_CMND_IDX "Idx"
-#define D_CMND_KEYIDX "KeyIdx"
-#define D_CMND_SWITCHIDX "SwitchIdx"
-#define D_CMND_SENSORIDX "SensorIdx"
-#define D_CMND_UPDATETIMER "UpdateTimer"
 
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"

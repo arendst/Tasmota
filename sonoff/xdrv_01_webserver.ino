@@ -46,6 +46,8 @@ uint8_t *efm8bb1_update = nullptr;
 
 enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1 };
 
+static const char * HEADER_KEYS[] = { "User-Agent", };
+
 const char HTTP_HEAD[] PROGMEM =
   "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
   "<head>"
@@ -543,6 +545,11 @@ void StartWebserver(int type, IPAddress ipweb)
 #endif  // Not FIRMWARE_MINIMAL
     }
     reset_web_log_flag = false;
+
+    // Collect User-Agent for Alexa Hue Emulation
+    // This is used in xdrv_20_hue.ino in function findEchoGeneration()
+    WebServer->collectHeaders(HEADER_KEYS, sizeof(HEADER_KEYS)/sizeof(char*));
+
     WebServer->begin(); // Web server start
   }
   if (webserver_state != type) {
@@ -671,7 +678,7 @@ void _WSContentSend(const String& content)        // Low level sendContent for a
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("WSContentSend"));
 #endif
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("HTP: Chunk size %d"), len);
+  DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d"), len);
 }
 
 void WSContentFlush()
@@ -1430,7 +1437,7 @@ void HandleWifiConfiguration(void)
             cssid = WiFi.SSID(indices[i]);
             for (uint32_t j = i + 1; j < n; j++) {
               if (cssid == WiFi.SSID(indices[j])) {
-                AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_DUPLICATE_ACCESSPOINT " %s"), WiFi.SSID(indices[j]).c_str());
+                DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_DUPLICATE_ACCESSPOINT " %s"), WiFi.SSID(indices[j]).c_str());
                 indices[j] = -1;  // set dup aps to index -1
               }
             }
@@ -1440,7 +1447,8 @@ void HandleWifiConfiguration(void)
         //display networks in page
         for (uint32_t i = 0; i < n; i++) {
           if (-1 == indices[i]) { continue; }  // skip dups
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"), WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), WiFi.RSSI(indices[i]));
+          DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_SSID " %s, " D_BSSID " %s, " D_CHANNEL " %d, " D_RSSI " %d"),
+            WiFi.SSID(indices[i]).c_str(), WiFi.BSSIDstr(indices[i]).c_str(), WiFi.channel(indices[i]), WiFi.RSSI(indices[i]));
           int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
 
           if (minimum_signal_quality == -1 || minimum_signal_quality < quality) {
@@ -1930,7 +1938,7 @@ void HandleUploadDone(void)
       snprintf_P(error, sizeof(error), PSTR(D_UPLOAD_ERROR_CODE " %d"), upload_error);
     }
     WSContentSend_P(error);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_UPLOAD ": %s"), error);
+    DEBUG_CORE_LOG(PSTR("UPL: %s"), error);
     stop_flash_rotate = Settings.flag.stop_flash_rotate;
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
@@ -2275,7 +2283,7 @@ void HandleConsoleRefresh(void)
 
 void HandleNotFound(void)
 {
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Not fount (%s)"), WebServer->uri().c_str());
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP "Not found (%s)"), WebServer->uri().c_str());
 
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the error page.
 
@@ -2385,7 +2393,7 @@ int WebSend(char *buffer)
     }
     url += command;                           // url = |http://192.168.178.86/cm?cmnd=POWER1 ON|
 
-//AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: Uri |%s|"), url.c_str());
+    DEBUG_CORE_LOG(PSTR("WEB: Uri |%s|"), url.c_str());
 
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
     HTTPClient http;
@@ -2455,7 +2463,7 @@ bool JsonWebColor(const char* dataBuf)
 
 const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND ;
 
-const char kWebCommands[] PROGMEM =
+const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_EMULATION
   D_CMND_EMULATION "|"
 #endif

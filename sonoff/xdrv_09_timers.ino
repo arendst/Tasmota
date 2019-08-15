@@ -33,11 +33,12 @@
  * Output  1..16
  * Action  0 = Off, 1 = On, 2 = Toggle, 3 = Blink or Rule if USE_RULES enabled
  *
+ * Window allows Time offset for +/- 15 minutes max as long as Time is not within Window from 00:00
 \*********************************************************************************************/
 
 #define XDRV_09             9
 
-const char kTimerCommands[] PROGMEM =
+const char kTimerCommands[] PROGMEM = "|"  // No prefix
   D_CMND_TIMER "|" D_CMND_TIMERS
 #ifdef USE_SUNRISE
   "|" D_CMND_LATITUDE "|" D_CMND_LONGITUDE
@@ -274,22 +275,28 @@ void TimerEverySecond(void)
       for (uint32_t i = 0; i < MAX_TIMERS; i++) {
 //        if (Settings.timer[i].device >= devices_present) Settings.timer[i].data = 0;  // Reset timer due to change in devices present
         Timer xtimer = Settings.timer[i];
-        int32_t set_time = xtimer.time;
 #ifdef USE_SUNRISE
-        if ((1 == xtimer.mode) || (2 == xtimer.mode)) {  // Sunrise or Sunset
+        if ((1 == xtimer.mode) || (2 == xtimer.mode)) {      // Sunrise or Sunset
           ApplyTimerOffsets(&xtimer);
-          set_time = xtimer.time;
         }
 #endif
         if (xtimer.arm) {
-          set_time += timer_window[i];                // Add random time offset
-          if (set_time < 0) { set_time = 0; }         // Stay today;
-          if (set_time > 1439) { set_time = 1439; }
+          int32_t set_time = xtimer.time + timer_window[i];  // Add random time offset
+          if (set_time < 0) {
+            set_time = abs(timer_window[i]);                 // After midnight and within negative window so stay today but allow positive randomness;
+          }
+          if (set_time > 1439) {
+            set_time = xtimer.time - abs(timer_window[i]);   // Before midnight and within positive window so stay today but allow negative randomness;
+          }
+          if (set_time > 1439) { set_time = 1439; }          // Stay today
+
+          DEBUG_DRIVER_LOG(PSTR("TIM: Timer %d, Time %d, Window %d, SetTime %d"), i +1, xtimer.time, timer_window[i], set_time);
+
           if (time == set_time) {
             if (xtimer.days & days) {
               Settings.timer[i].arm = xtimer.repeat;
 #if defined(USE_RULES) || defined(USE_SCRIPT)
-              if (3 == xtimer.power) {  // Blink becomes Rule disregarding device and allowing use of Backlog commands
+              if (3 == xtimer.power) {                       // Blink becomes Rule disregarding device and allowing use of Backlog commands
                 Response_P(PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
                 XdrvRulesProcess();
               } else

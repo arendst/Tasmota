@@ -26,11 +26,13 @@
 
 const uint8_t SERIAL_BRIDGE_BUFFER_SIZE = 130;
 
+const char kSerialBridgeCommands[] PROGMEM = "|"  // No prefix
+  D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE;
+
+void (* const SerialBridgeCommand[])(void) PROGMEM =
+  { &CmndSSerialSend, &CmndSBaudrate };
+
 #include <TasmotaSerial.h>
-
-const char kSerialBridgeCommands[] PROGMEM = D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE;
-
-void (* const SerialBridgeCommand[])(void) PROGMEM = { &CmndSSerialSend, &CmndSBaudrate };
 
 TasmotaSerial *SerialBridgeSerial = nullptr;
 
@@ -68,15 +70,9 @@ void SerialBridgeInput(void)
 
   if (serial_bridge_in_byte_counter && (millis() > (serial_bridge_polling_window + SERIAL_POLLING))) {
     serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                   // Serial data completed
-    if (!serial_bridge_raw) {
-      Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\"%s\"}"), serial_bridge_buffer);
-    } else {
-      Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\""));
-      for (uint32_t i = 0; i < serial_bridge_in_byte_counter; i++) {
-        ResponseAppend_P(PSTR("%02x"), serial_bridge_buffer[i]);
-      }
-      ResponseAppend_P(PSTR("\"}"));
-    }
+    char hex_char[(serial_bridge_in_byte_counter * 2) + 2];
+    Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\"%s\"}"),
+      (serial_bridge_raw) ? ToHex_P((unsigned char*)serial_bridge_buffer, serial_bridge_in_byte_counter, hex_char, sizeof(hex_char)) : serial_bridge_buffer);
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
     XdrvRulesProcess();
     serial_bridge_in_byte_counter = 0;

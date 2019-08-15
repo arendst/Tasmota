@@ -218,6 +218,8 @@ bool MP3PlayerCmd(void) {
     	  serviced = false;
     	break;
     }
+  } else {
+    return false;
   }
   return serviced;
 }
