@@ -474,9 +474,9 @@ void CmndCfgShow(void)
 void CmndCfgXor(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    config_xor_on_set = XdrvMailbox.payload;
+    Web.config_xor_on_set = XdrvMailbox.payload;
   }
-  ResponseCmndNumber(config_xor_on_set);
+  ResponseCmndNumber(Web.config_xor_on_set);
 }
 #endif  // USE_WEBSERVER
 

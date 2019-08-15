@@ -2878,7 +2878,7 @@ void Script_FileUploadConfiguration(void)
   WSContentSend_P(HTTP_FORM_FILE_UPGb);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
-  upload_error = 0;
+  Web.upload_error = 0;
 }
 
 File upload_file;
@@ -2906,16 +2906,16 @@ void script_upload(void) {
     sprintf(npath,"%s/%s",path,upload.filename.c_str());
     SD.remove(npath);
     upload_file=SD.open(npath,FILE_WRITE);
-    if (!upload_file) upload_error=1;
+    if (!upload_file) Web.upload_error=1;
   } else if(upload.status == UPLOAD_FILE_WRITE) {
     if (upload_file) upload_file.write(upload.buf,upload.currentSize);
   } else if(upload.status == UPLOAD_FILE_END) {
     if (upload_file) upload_file.close();
-    if (upload_error) {
+    if (Web.upload_error) {
       AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
     }
   } else {
-    upload_error=1;
+    Web.upload_error=1;
     WebServer->send(500, "text/plain", "500: couldn't create file");
   }
 }
