@@ -6,6 +6,7 @@
  * Add support for Solax X1 inverter by Pablo Zerón
  * Add ZigBee support phase 1 - low level MQTT ZNP messages for CC2530 devices
  * Add command Buzzer with optional parameters <number of beeps>,<duration of beep in 100mS steps>,<duration of silence in 100mS steps> enabled when a buzzer is configured (#5988)
+ * Add support for PAJ7620 gesture sensor by Christian Baars
  *
  * 6.6.0.3 20190725
  * Change filename of configuration backup from using FriendlyName1 to Hostname solving diacritic issues (#2422)
