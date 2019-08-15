@@ -23,11 +23,10 @@
 
 void GetFeatures(void)
 {
-  feature_drv1 = 0x00000000;
+  feature_drv1 = 0x00000000;   // xdrv_02_mqtt.ino, xdrv_04_light.ino, xdrv_06_snfbridge.ino
 
-#ifdef USE_ENERGY_MARGIN_DETECTION
-  feature_drv1 |= 0x00000001;  // xdrv_03_energy.ino
-#endif
+//  feature_drv1 |= 0x00000001;
+
 #ifdef USE_LIGHT
   feature_drv1 |= 0x00000002;  // sonoff.ino, xdrv_04_light.ino
 #endif
@@ -118,8 +117,8 @@ void GetFeatures(void)
 #ifdef USE_SMARTCONFIG
   feature_drv1 |= 0x40000000;  // support.ino
 #endif
-#ifdef USE_ENERGY_POWER_LIMIT
-  feature_drv1 |= 0x80000000;  // xdrv_03_energy.ino
+#if (MQTT_LIBRARY_TYPE == MQTT_ARDUINOMQTT)
+//  feature_drv1 |= 0x80000000;  // xdrv_02_mqtt.ino
 #endif
 
 /*********************************************************************************************/
@@ -189,12 +188,10 @@ void GetFeatures(void)
 #ifdef USE_EMULATION_WEMO
   feature_drv2 |= 0x00100000;  // xdrv_21_wemo.ino
 #endif
-#ifdef USE_SONOFF_IFAN
-  feature_drv2 |= 0x00200000;  // xdrv_22_sonoff_ifan.ino
-#endif
-#ifdef USE_ZIGBEE
-  feature_drv2 |= 0x00400000;  // xdrv_23_zigbee.ino
-#endif
+
+//  feature_drv2 |= 0x00200000;
+//  feature_drv2 |= 0x00400000;
+
 #ifdef NO_EXTRA_4K_HEAP
   feature_drv2 |= 0x00800000;  // sonoff_post.h
 #endif
@@ -225,7 +222,7 @@ void GetFeatures(void)
 
 /*********************************************************************************************/
 
-  feature_sns1 = 0x00000000;
+  feature_sns1 = 0x00000000;   // xsns_01_counter.ino, xsns_04_snfsc.ino
 
 #ifdef USE_COUNTER
   feature_sns1 |= 0x00000001;  // xsns_01_counter.ino
@@ -403,21 +400,11 @@ void GetFeatures(void)
 #ifdef USE_ADE7953
   feature_sns2 |= 0x01000000;  // xnrg_07_ade7953.ino
 #endif
-#ifdef USE_SPS30
-  feature_sns2 |= 0x02000000;  // xsns_44_sps30.ino
-#endif
-#ifdef USE_VL53L0X
-  feature_sns2 |= 0x04000000;  // xsns_45_vl53l0x.ino
-#endif
-#ifdef USE_MLX90614
-  feature_sns2 |= 0x08000000;  // xsns_46_MLX90614.ino
-#endif
-#ifdef USE_MAX31865
-  feature_sns2 |= 0x10000000;  // xsns_47-max31865.ino
-#endif
-#ifdef USE_CHIRP
-  feature_sns2 |= 0x20000000;  // xsns_48_chirp.ino
-#endif
+//  feature_sns2 |= 0x02000000;
+//  feature_sns2 |= 0x04000000;
+//  feature_sns2 |= 0x08000000;
+//  feature_sns2 |= 0x10000000;
+//  feature_sns2 |= 0x20000000;
 //  feature_sns2 |= 0x40000000;
 //  feature_sns2 |= 0x80000000;
 

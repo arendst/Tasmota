@@ -17,8 +17,6 @@ about: Users Troubleshooting Help
   <If your issue has been addresed before (duplicated issue), please ask in the original issue>
   <If your issue is wifi problem or mqtt problem, please try first the steps provided in troubleshooting of the wiki>
 
-Please take a few minutes to complete the requested information below. Our ability to provide assistance is greatly hampered without it. The details requested potentially affect which options to pursue. The small amount of time you spend completing the template will also help the volunteers providing the assistance to you to reduce the time required to help you.
-
 ### ISSUE DESCRIPTION - TROUBLESHOOTING
 _A clear description of what the issue is and be as extensive as possible_
   

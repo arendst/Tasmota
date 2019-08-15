@@ -188,20 +188,17 @@ const char *device_param_cb[] = {
 };
 
 // Commands
-#define D_PRFX_KNX "Knx"
-#define D_CMND_KNXTXCMND "Tx_Cmnd"
-#define D_CMND_KNXTXVAL "Tx_Val"
-#define D_CMND_KNX_ENABLED "_Enabled"
-#define D_CMND_KNX_ENHANCED "_Enhanced"
-#define D_CMND_KNX_PA "_PA"
-#define D_CMND_KNX_GA "_GA"
-#define D_CMND_KNX_CB "_CB"
-
-const char kKnxCommands[] PROGMEM = D_PRFX_KNX "|"  // Prefix
-  D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|" D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB ;
-
-void (* const KnxCommand[])(void) PROGMEM = {
-  &CmndKnxTxCmnd, &CmndKnxTxVal, &CmndKnxEnabled, &CmndKnxEnhanced, &CmndKnxPa, &CmndKnxGa, &CmndKnxCb };
+#define D_CMND_KNXTXCMND "KnxTx_Cmnd"
+#define D_CMND_KNXTXVAL "KnxTx_Val"
+#define D_CMND_KNX_ENABLED "Knx_Enabled"
+#define D_CMND_KNX_ENHANCED "Knx_Enhanced"
+#define D_CMND_KNX_PA "Knx_PA"
+#define D_CMND_KNX_GA "Knx_GA"
+#define D_CMND_KNX_CB "Knx_CB"
+enum KnxCommands { CMND_KNXTXCMND, CMND_KNXTXVAL, CMND_KNX_ENABLED, CMND_KNX_ENHANCED, CMND_KNX_PA,
+                   CMND_KNX_GA, CMND_KNX_CB } ;
+const char kKnxCommands[] PROGMEM = D_CMND_KNXTXCMND "|" D_CMND_KNXTXVAL "|" D_CMND_KNX_ENABLED "|"
+                   D_CMND_KNX_ENHANCED "|" D_CMND_KNX_PA "|" D_CMND_KNX_GA "|" D_CMND_KNX_CB ;
 
 uint8_t KNX_GA_Search( uint8_t param, uint8_t start = 0 )
 {
@@ -995,13 +992,13 @@ void KNX_Save_Settings(void)
  * Commands
 \*********************************************************************************************/
 
-void CmndKnxTxCmnd(void)
+bool KnxCommand(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KNXTX_CMNDS) && (XdrvMailbox.data_len > 0) && Settings.flag.knx_enabled) {
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
     // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
-    uint8_t i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1);
+    uint8_t i = KNX_GA_Search(index + KNX_SLOT1 -1);
     while ( i != KNX_Empty ) {
       KNX_addr.value = Settings.knx_GA_addr[i];
       knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
@@ -1011,7 +1008,7 @@ void CmndKnxTxCmnd(void)
       }
 
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
-       device_param_ga[XdrvMailbox.index + KNX_SLOT1 -2], !(XdrvMailbox.payload == 0),
+       device_param_ga[index + KNX_SLOT1 -2], !(XdrvMailbox.payload == 0),
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 
       i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
@@ -1026,7 +1023,7 @@ void CmndKnxTxVal(void)
     // XdrvMailbox.index <- KNX SLOT to use
     // XdrvMailbox.payload <- data to send
     // Search all the registered GA that has that output (variable: KNX SLOTx) as parameter
-    uint8_t i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1);
+    uint8_t i = KNX_GA_Search(index + KNX_SLOT1 -1);
     while ( i != KNX_Empty ) {
       KNX_addr.value = Settings.knx_GA_addr[i];
 
@@ -1040,7 +1037,7 @@ void CmndKnxTxVal(void)
       }
 
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d.%d.%d"),
-       device_param_ga[XdrvMailbox.index + KNX_SLOT1 -2], XdrvMailbox.data,
+       device_param_ga[index + KNX_SLOT1 -2], XdrvMailbox.data,
        KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 
       i = KNX_GA_Search(XdrvMailbox.index + KNX_SLOT1 -1, i + 1);
@@ -1065,26 +1062,27 @@ void CmndKnxEnhanced(void)
   ResponseCmndChar (GetStateText(Settings.flag.knx_enable_enhancement) );
 }
 
-void CmndKnxPa(void)
-{
-  if (XdrvMailbox.data_len) {
-    if (strstr(XdrvMailbox.data, ".") != nullptr) {  // Process parameter entry
-      char sub_string[XdrvMailbox.data_len];
+  else if (CMND_KNX_PA == command_code) {
+    if (XdrvMailbox.data_len) {
+      if (strstr(XdrvMailbox.data, ".") != nullptr) {  // Process parameter entry
+        char sub_string[XdrvMailbox.data_len];
 
-      int pa_area = atoi(subStr(sub_string, XdrvMailbox.data, ".", 1));
-      int pa_line = atoi(subStr(sub_string, XdrvMailbox.data, ".", 2));
-      int pa_member = atoi(subStr(sub_string, XdrvMailbox.data, ".", 3));
+        int pa_area = atoi(subStr(sub_string, XdrvMailbox.data, ".", 1));
+        int pa_line = atoi(subStr(sub_string, XdrvMailbox.data, ".", 2));
+        int pa_member = atoi(subStr(sub_string, XdrvMailbox.data, ".", 3));
 
-      if ( ((pa_area == 0) && (pa_line == 0) && (pa_member == 0))
-            || (pa_area > 15) || (pa_line > 15) || (pa_member > 255) ) {
-              Response_P (PSTR("{\"%s\":\"" D_ERROR "\"}"), XdrvMailbox.command );
-              return;
-      }  // Invalid command
+        if ( ((pa_area == 0) && (pa_line == 0) && (pa_member == 0))
+             || (pa_area > 15) || (pa_line > 15) || (pa_member > 255) ) {
+               snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s\":\"" D_ERROR "\"}"),
+                 command );
+               return true;
+        }  // Invalid command
 
-      KNX_addr.pa.area = pa_area;
-      KNX_addr.pa.line = pa_line;
-      KNX_addr.pa.member = pa_member;
-      Settings.knx_physsical_addr = KNX_addr.value;
+        KNX_addr.pa.area = pa_area;
+        KNX_addr.pa.line = pa_line;
+        KNX_addr.pa.member = pa_member;
+        Settings.knx_physsical_addr = KNX_addr.value;
+      }
     }
   }
   KNX_addr.value = Settings.knx_physsical_addr;

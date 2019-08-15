@@ -48,10 +48,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
  * Default global defines
 \*********************************************************************************************/
 
-#ifndef ENERGY_OVERTEMP
-#define ENERGY_OVERTEMP      90             // Overtemp in Celsius
-#endif
-
 #ifdef USE_EMULATION_HUE
 #define USE_EMULATION
 #endif
@@ -82,16 +78,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 3
-
-// -- Optional modules -------------------------
-#define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
-#define USE_TUYA_DIMMER                       // Add support for Tuya Serial Dimmer
-#ifndef TUYA_DIMMER_ID
-  #define TUYA_DIMMER_ID       0              // Default dimmer Id
-#endif
-//#define USE_ARMTRONIX_DIMMERS                 // Add support for Armtronix Dimmers (+1k4 code)
-#define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-//#define ROTARY_V1                             // Add support for MI Desk Lamp
 
 #define USE_COUNTER                           // Enable counters
 #undef USE_ADC_VCC                            // Add Analog input on selected devices
@@ -133,8 +119,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_ADE7953                           // Enable ADE7953 Energy monitor as used on Shelly 2.5 (I2C address 0x38) (+1k5)
 //#define USE_VL53L0X                           // Enable VL53L0x time of flight sensor (I2C address 0x29) (+4k code)
 //#define USE_MLX90614                          // Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)
-//#define USE_CHIRP                             // Enable CHIRP soil moisture sensor (variable I2C address, default 0x20)
-//#define USE_PAJ7620                           // Enable PAJ7620 gesture sensor (I2C address 0x73) (+2.5k code)
 
 #define USE_MHZ19                             // Add support for MH-Z19 CO2 sensor (+2k code)
 #define USE_SENSEAIR                          // Add support for SenseAir K30, K70 and S8 CO2 sensor (+2k3 code)
@@ -151,6 +135,11 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_SDM630                            // Add support for Eastron SDM630-Modbus energy meter (+2k code)
 #define USE_MP3_PLAYER                        // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10             // Set the startup volume on init, the range can be 0..30(max)
+#define USE_TUYA_DIMMER                       // Add support for Tuya Serial Dimmer
+#ifndef TUYA_DIMMER_ID
+  #define TUYA_DIMMER_ID       0              // Default dimmer Id
+#endif
+#define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 //#define USE_AZ7798                            // Add support for AZ-Instrument 7798 CO2 datalogger
 #define USE_PN532_HSU                         // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
@@ -180,7 +169,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
   #define USE_ALECTO_V2                       // Add support for decoding Alecto V2 sensors like ACH2010, WS3000 and DKW2012 using 868MHz RF sensor receiver (+1k7 code)
 #define USE_SM16716                           // Add support for SM16716 RGB LED controller (+0k7 code)
 #define USE_HRE                               // Add support for Badger HR-E Water Meter (+1k4 code)
-//#define USE_SOLAX_X1                          // Add support for Solax X1 series Modbus log info (+4k1 code)
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
@@ -209,16 +197,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_TIMERS_WEB                         // Disable support for timer webpage
 #undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 #undef USE_RULES                              // Disable support for rules
-
-// -- Optional modules -------------------------
-//#ifndef USE_SONOFF_IFAN
-#define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
-//#endif
-#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
-#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-#undef ROTARY_V1                              // Disable support for MI Desk Lamp
-
 #undef USE_COUNTER                            // Disable counters
 #undef USE_I2C                                // Disable all I2C sensors
 #undef USE_SPI                                // Disable all SPI devices
@@ -230,6 +208,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
@@ -345,14 +326,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 //#undef USE_TIMERS_WEB                         // Disable support for timer webpage
 //#undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 //#undef USE_RULES                              // Disable support for rules
-
-// -- Optional modules -------------------------
-#define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
-//#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
-#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-#undef ROTARY_V1                              // Disable support for MI Desk Lamp
-
 #undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
 #undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
@@ -368,6 +341,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
+//#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
@@ -421,14 +397,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_RULES                              // Disable support for rules
 #undef USE_SCRIPT                             // Disable support for script
 #undef USE_LIGHT                              // Disable support for lights
-
-// -- Optional modules -------------------------
-#undef USE_SONOFF_IFAN                        // Disable support for Sonoff iFan02 and iFan03 (+2k code)
-#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
-#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-#undef ROTARY_V1                              // Disable support for MI Desk Lamp
-
 #undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
 #undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
@@ -444,6 +412,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_SDM120                             // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                             // Disable support for Eastron SDM630-Modbus energy meter
 #undef USE_MP3_PLAYER                         // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
+#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
@@ -519,24 +490,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 #ifdef ARDUINO_ESP8266_RELEASE_2_3_0          // Disable not supported features in core 2.3.0
 #undef USE_MQTT_TLS_CA_CERT
-#endif
-
-#ifdef DEBUG_TASMOTA_CORE
-#define DEBUG_CORE_LOG(...) AddLog_Debug(__VA_ARGS__)
-#else
-#define DEBUG_CORE_LOG(...)
-#endif
-
-#ifdef DEBUG_TASMOTA_DRIVER
-#define DEBUG_DRIVER_LOG(...) AddLog_Debug(__VA_ARGS__)
-#else
-#define DEBUG_DRIVER_LOG(...)
-#endif
-
-#ifdef DEBUG_TASMOTA_SENSOR
-#define DEBUG_SENSOR_LOG(...) AddLog_Debug(__VA_ARGS__)
-#else
-#define DEBUG_SENSOR_LOG(...)
 #endif
 
 #endif  // _SONOFF_POST_H_

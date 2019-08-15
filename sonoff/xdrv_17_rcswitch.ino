@@ -93,71 +93,75 @@ void RfInit(void)
  * Commands
 \*********************************************************************************************/
 
-void CmndRfSend(void)
+bool RfSendCommand(void)
 {
+  bool serviced = true;
   bool error = false;
 
-  if (XdrvMailbox.data_len) {
-    unsigned long data = 0;
-    unsigned int bits = 24;
-    int protocol = 1;
-    int repeat = 10;
-    int pulse = 350;
+  if (!strcasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_RFSEND))) {
+    if (XdrvMailbox.data_len) {
+      unsigned long data = 0;
+      unsigned int bits = 24;
+      int protocol = 1;
+      int repeat = 10;
+      int pulse = 350;
 
-    char dataBufUc[XdrvMailbox.data_len];
-    UpperCase(dataBufUc, XdrvMailbox.data);
-    StaticJsonBuffer<150> jsonBuf;  // ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(5) + 40 = 134
-    JsonObject &root = jsonBuf.parseObject(dataBufUc);
-    if (root.success()) {
-      // RFsend {"data":0x501014,"bits":24,"protocol":1,"repeat":10,"pulse":350}
-      char parm_uc[10];
-      data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_DATA))], nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
-      bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_BITS))];
-      protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_PROTOCOL))];
-      repeat = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_REPEAT))];
-      pulse = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_PULSE))];
-    } else {
-      //  RFsend data, bits, protocol, repeat, pulse
-      char *p;
-      uint8_t i = 0;
-      for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 5; str = strtok_r(nullptr, ", ", &p)) {
-        switch (i++) {
-        case 0:
-          data = strtoul(str, nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
-          break;
-        case 1:
-          bits = atoi(str);
-          break;
-        case 2:
-          protocol = atoi(str);
-          break;
-        case 3:
-          repeat = atoi(str);
-          break;
-        case 4:
-          pulse = atoi(str);
+      char dataBufUc[XdrvMailbox.data_len];
+      UpperCase(dataBufUc, XdrvMailbox.data);
+      StaticJsonBuffer<150> jsonBuf;  // ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(5) + 40 = 134
+      JsonObject &root = jsonBuf.parseObject(dataBufUc);
+      if (root.success()) {
+        // RFsend {"data":0x501014,"bits":24,"protocol":1,"repeat":10,"pulse":350}
+        char parm_uc[10];
+        data = strtoul(root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_DATA))], nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+        bits = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_BITS))];
+        protocol = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_PROTOCOL))];
+        repeat = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_REPEAT))];
+        pulse = root[UpperCase_P(parm_uc, PSTR(D_JSON_RF_PULSE))];
+      } else {
+        //  RFsend data, bits, protocol, repeat, pulse
+        char *p;
+        uint8_t i = 0;
+        for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 5; str = strtok_r(nullptr, ", ", &p)) {
+          switch (i++) {
+          case 0:
+            data = strtoul(str, nullptr, 0);  // Allow decimal (5246996) and hexadecimal (0x501014) input
+            break;
+          case 1:
+            bits = atoi(str);
+            break;
+          case 2:
+            protocol = atoi(str);
+            break;
+          case 3:
+            repeat = atoi(str);
+            break;
+          case 4:
+            pulse = atoi(str);
+          }
         }
       }
     }
 
-    if (!protocol) { protocol = 1; }
-    mySwitch.setProtocol(protocol);
-    if (!pulse) { pulse = 350; }      // Default pulse length for protocol 1
-    mySwitch.setPulseLength(pulse);
-    if (!repeat) { repeat = 10; }     // Default at init
-    mySwitch.setRepeatTransmit(repeat);
-    if (!bits) { bits = 24; }         // Default 24 bits
-    if (data) {
-      mySwitch.send(data, bits);
-      ResponseCmndDone();
+      if (!protocol) { protocol = 1; }
+      mySwitch.setProtocol(protocol);
+      if (!pulse) { pulse = 350; }      // Default pulse length for protocol 1
+      mySwitch.setPulseLength(pulse);
+      if (!repeat) { repeat = 10; }     // Default at init
+      mySwitch.setRepeatTransmit(repeat);
+      if (!bits) { bits = 24; }         // Default 24 bits
+      if (data) {
+        mySwitch.send(data, bits);
+        Response_P(PSTR("{\"" D_CMND_RFSEND "\":\"" D_JSON_DONE "\"}"));
+      } else {
+        error = true;
+      }
     } else {
       error = true;
     }
-  } else {
-    error = true;
-  }
-  if (error) {
-    Response_P(PSTR("{\"" D_CMND_RFSEND "\":\"" D_JSON_NO " " D_JSON_RF_DATA ", " D_JSON_RF_BITS ", " D_JSON_RF_PROTOCOL ", " D_JSON_RF_REPEAT " " D_JSON_OR " " D_JSON_RF_PULSE "\"}"));
+    if (error) {
+      Response_P(PSTR("{\"" D_CMND_RFSEND "\":\"" D_JSON_NO " " D_JSON_RF_DATA ", " D_JSON_RF_BITS ", " D_JSON_RF_PROTOCOL ", " D_JSON_RF_REPEAT " " D_JSON_OR " " D_JSON_RF_PULSE "\"}"));
+    }
   }
 }
 

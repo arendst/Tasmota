@@ -197,13 +197,14 @@ bool Ina219CommandSensor(void)
 
 void Ina219Detect(void)
 {
-  for (int i=0; i<sizeof(ina219_type); i++) {
-    if (ina219_type[i])
-      continue;
-    uint16_t addr = ina219_addresses[i];
-    if (Ina219SetCalibration(Settings.ina219_mode, addr)) {
-        ina219_type[i] = 1;
-        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, ina219_types, addr);
+  if (ina219_type) { return; }
+
+  for (uint32_t i = 0; i < sizeof(ina219_addresses); i++) {
+    ina219_address = ina219_addresses[i];
+    if (Ina219SetCalibration(Settings.ina219_mode)) {
+      ina219_type = 1;
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, ina219_types, ina219_address);
+      break;
     }
   }
 }
@@ -222,39 +223,25 @@ void Ina219EverySecond(void)
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_INA219_DATA[] PROGMEM =
-  "{s}%s " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-  "{s}%s " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-  "{s}%s " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
+  "{s}INA219 " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
+  "{s}INA219 " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
+  "{s}INA219 " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
 #endif  // USE_WEBSERVER
 
 void Ina219Show(bool json)
 {
-  int num_found=0;
-  for (int i=0; i<sizeof(ina219_type); i++)
-    if (ina219_type[i] && ina219_valid[i])
-      num_found++;
-  
-  int sensor_num = 0;
-  for (int i=0; i<sizeof(ina219_type); i++) {
-    if (!ina219_type[i] || !ina219_valid[i])
-      continue;
-    sensor_num++;
-    
-    char voltage[16];
-    dtostrfd(ina219_voltage[i], Settings.flag2.voltage_resolution, voltage);
-    char current[16];
-    dtostrfd(ina219_current[i], Settings.flag2.current_resolution, current);
-    char power[16];
-    dtostrfd(ina219_voltage[i] * ina219_current[i], Settings.flag2.wattage_resolution, power);
-    char name[16];
-    if (num_found>1)
-      snprintf_P(name, sizeof(name), PSTR("%s%c%d"), ina219_types, IndexSeparator(), sensor_num);
-    else
-      snprintf_P(name, sizeof(name), PSTR("%s"), ina219_types);
-    
+  if (ina219_valid) {
+    float fpower = ina219_voltage * ina219_current;
+    char voltage[33];
+    dtostrfd(ina219_voltage, Settings.flag2.voltage_resolution, voltage);
+    char power[33];
+    dtostrfd(fpower, Settings.flag2.wattage_resolution, power);
+    char current[33];
+    dtostrfd(ina219_current, Settings.flag2.current_resolution, current);
+
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"Id\":%02x,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
-                       name, ina219_addresses[i], voltage, current, power);
+      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
+        ina219_types, voltage, current, power);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
         DomoticzSensor(DZ_VOLTAGE, voltage);
@@ -263,7 +250,7 @@ void Ina219Show(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_INA219_DATA, name, voltage, name, current, name, power);
+      WSContentSend_PD(HTTP_SNS_INA219_DATA, voltage, current, power);
 #endif  // USE_WEBSERVER
     }
   }

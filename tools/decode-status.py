@@ -90,12 +90,7 @@ a_setoption = [[
     "(not used) mDNS delayed start (Sec)",
     "Boot loop retry offset (0 = disable)",
     "RGBWW remap",
-    "IR Unknown threshold",
-    "CSE7766 invalid power margin",
-    "Ignore hold time (s)",
-    "Number of Tuya relays",
-    "Over temperature threshold (celsius)",
-    "",
+    "","","","","","",
     "","","","","","",
     ],[
     "Timers enabled",
@@ -113,11 +108,8 @@ a_setoption = [[
     "Do not use retain flag on HOLD messages",
     "Do not scan relay power state at restart",
     "Use _ instead of - as sensor index separator",
-    "Disable Dimmer slider control",
-    "Disable Dimmer range 255 slider control",
-    "Enable buzzer when available",
-    "Enable multi-channels PWM instead of Color PWM",
     "",
+    "","","","",
     "","","","",
     "","","","",
     "","","",""
@@ -138,7 +130,7 @@ a_features = [[
     "USE_DISPLAY_SSD1306","USE_DISPLAY_MATRIX","USE_DISPLAY_ILI9341","USE_DISPLAY_EPAPER",
     "USE_DISPLAY_SH1106","USE_MP3_PLAYER","USE_PCA9685","USE_TUYA_DIMMER",
     "USE_RC_SWITCH","USE_ARMTRONIX_DIMMERS","USE_SM16716","USE_SCRIPT",
-    "USE_EMULATION_WEMO","USE_SONOFF_IFAN","USE_ZIGBEE","NO_EXTRA_4K_HEAP",
+    "USE_EMULATION_WEMO","","","NO_EXTRA_4K_HEAP",
     "VTABLES_IN_IRAM","VTABLES_IN_DRAM","VTABLES_IN_FLASH","PIO_FRAMEWORK_ARDUINO_LWIP_HIGHER_BANDWIDTH",
     "PIO_FRAMEWORK_ARDUINO_LWIP2_LOW_MEMORY","PIO_FRAMEWORK_ARDUINO_LWIP2_HIGHER_BANDWIDTH","DEBUG_THEO","USE_DEBUG_DRIVER"
     ],[
@@ -157,18 +149,8 @@ a_features = [[
     "USE_PZEM_DC","USE_TX20_WIND_SENSOR","USE_MGC3130","USE_RF_SENSOR",
     "USE_THEO_V2","USE_ALECTO_V2","USE_AZ7798","USE_MAX31855",
     "USE_PN532_I2C","USE_MAX44009","USE_SCD30","USE_HRE",
-    "USE_ADE7953","USE_SPS30","USE_VL53L0X","USE_MLX90614",
-    "USE_MAX31865","USE_CHIRP","",""
-    ],[
-    "USE_BUZZER","","","",
-    "","","","",
-    "","","","",
-    "","","","",
-    "","","","",
-    "","","","",
-    "","","","",
-    "","","",""
-    ]]
+    "USE_ADE7953","","","",
+    "","","",""]]
 
 usage = "usage: decode-status {-d | -f} arg"
 parser = OptionParser(usage)
