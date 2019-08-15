@@ -27,7 +27,6 @@
                     base      - code base from arendst and              - https://github.com/Seeed-Studio/Gesture_PAJ7620
 
 */
-#define USE_PAJ7620
 
 #ifdef USE_I2C
 #ifdef USE_PAJ7620
@@ -181,7 +180,7 @@ struct{
 /********************************************************************************************/
 void PAJ7620DecodeGesture(void)
 {
-  switch (PAJ7620_gesture.current) { // we will accept only "clean" recognized gestures, the sensor can report multiple gestures at once via bitfield
+  switch (PAJ7620_gesture.current) { // we will accept only "clean" recognized gestures, the sensor can report multiple gestures at once via bitfield, but these are discarded
     case PAJ7620_DOWN:
       DEBUG_SENSOR_LOG(PSTR("DOWN"));
       snprintf_P(PAJ7620_currentGestureName, sizeof(PAJ7620_currentGestureName), PSTR("Down"));
