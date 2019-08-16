@@ -1592,41 +1592,56 @@ void LightState(uint8_t append)
   } else {
     Response_P(PSTR("{"));
   }
-  GetPowerDevice(scommand, light_device, sizeof(scommand), Settings.flag.device_index_enable);
-  ResponseAppend_P(PSTR("\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"), scommand, GetStateText(light_power), light_state.getDimmer());
-  if (light_subtype > LST_SINGLE) {
-    ResponseAppend_P(PSTR(",\"" D_CMND_COLOR "\":\"%s\""), LightGetColor(scolor));
-    uint16_t hue;
-    uint8_t  sat, bri;
-    light_state.getHSB(&hue, &sat, &bri);
-    sat = changeUIntScale(sat, 0, 255, 0, 100);
-    bri = changeUIntScale(bri, 0, 255, 0, 100);
+  if (!light_pwm_multi_channels) {
+    GetPowerDevice(scommand, light_device, sizeof(scommand), Settings.flag.device_index_enable);
+    ResponseAppend_P(PSTR("\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"), scommand, GetStateText(light_power), light_state.getDimmer());
 
-    ResponseAppend_P(PSTR(",\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), hue,sat,bri);
-    // Add status for each channel
-    ResponseAppend_P(PSTR(",\"" D_CMND_CHANNEL "\":[" ));
+    if (light_subtype > LST_SINGLE) {
+      ResponseAppend_P(PSTR(",\"" D_CMND_COLOR "\":\"%s\""), LightGetColor(scolor));
+      uint16_t hue;
+      uint8_t  sat, bri;
+      light_state.getHSB(&hue, &sat, &bri);
+      sat = changeUIntScale(sat, 0, 255, 0, 100);
+      bri = changeUIntScale(bri, 0, 255, 0, 100);
+
+      ResponseAppend_P(PSTR(",\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), hue,sat,bri);
+      // Add status for each channel
+      ResponseAppend_P(PSTR(",\"" D_CMND_CHANNEL "\":[" ));
+      for (uint32_t i = 0; i < light_subtype; i++) {
+        uint8_t channel_raw = light_current_color[i];
+        uint8_t channel = changeUIntScale(channel_raw,0,255,0,100);
+        // if non null, force to be at least 1
+        if ((0 == channel) && (channel_raw > 0)) { channel = 1; }
+        ResponseAppend_P(PSTR("%s%d" ), (i > 0 ? "," : ""), channel);
+      }
+      ResponseAppend_P(PSTR("]"));
+    }
+    if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
+      ResponseAppend_P(PSTR(",\"" D_CMND_COLORTEMPERATURE "\":%d"), light_state.getCT());
+    }
+
+    if (append) {
+      if (light_subtype >= LST_RGB) {
+        ResponseAppend_P(PSTR(",\"" D_CMND_SCHEME "\":%d"), Settings.light_scheme);
+      }
+      if (LT_WS2812 == light_type) {
+        ResponseAppend_P(PSTR(",\"" D_CMND_WIDTH "\":%d"), Settings.light_width);
+      }
+      ResponseAppend_P(PSTR(",\"" D_CMND_FADE "\":\"%s\",\"" D_CMND_SPEED "\":%d,\"" D_CMND_LEDTABLE "\":\"%s\""),
+        GetStateText(Settings.light_fade), Settings.light_speed, GetStateText(Settings.light_correction));
+    }
+  } else {  // light_pwm_multi_channels
     for (uint32_t i = 0; i < light_subtype; i++) {
-      uint8_t channel_raw = light_current_color[i];
-      uint8_t channel = changeUIntScale(channel_raw,0,255,0,100);
-      // if non null, force to be at least 1
-      if ((0 == channel) && (channel_raw > 0)) { channel = 1; }
-      ResponseAppend_P(PSTR("%s%d" ), (i > 0 ? "," : ""), channel);
+      GetPowerDevice(scommand, light_device + i, sizeof(scommand), 1);
+      uint32_t light_power_masked = light_power & (1 << i);    // the light_power value for this device
+      light_power_masked = light_power_masked ? 1 : 0;                    // convert to on/off
+      ResponseAppend_P(PSTR("\"%s\":\"%s\",\"" D_CMND_CHANNEL "%d\":%d"), scommand, GetStateText(light_power_masked), light_device + i,
+        changeUIntScale(light_current_color[i], 0, 255, 0, 100));
     }
-    ResponseAppend_P(PSTR("]"));
-  }
-  if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
-    ResponseAppend_P(PSTR(",\"" D_CMND_COLORTEMPERATURE "\":%d"), light_state.getCT());
-  }
-  if (append) {
-    if (light_subtype >= LST_RGB) {
-      ResponseAppend_P(PSTR(",\"" D_CMND_SCHEME "\":%d"), Settings.light_scheme);
-    }
-    if (LT_WS2812 == light_type) {
-      ResponseAppend_P(PSTR(",\"" D_CMND_WIDTH "\":%d"), Settings.light_width);
-    }
-    ResponseAppend_P(PSTR(",\"" D_CMND_FADE "\":\"%s\",\"" D_CMND_SPEED "\":%d,\"" D_CMND_LEDTABLE "\":\"%s\""),
-      GetStateText(Settings.light_fade), Settings.light_speed, GetStateText(Settings.light_correction));
-  } else {
+    ResponseAppend_P(PSTR(",\"" D_CMND_COLOR "\":\"%s\""), LightGetColor(scolor));
+  }   // light_pwm_multi_channels
+
+  if (!append) {
     ResponseJsonEnd();
   }
 }
@@ -2227,7 +2242,7 @@ void CmndWhite(void)
 
 void CmndChannel(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= light_subtype )) {
+  if ((XdrvMailbox.index >= light_device) && (XdrvMailbox.index < light_device + light_subtype )) {
     bool coldim = false;
     //  Set "Channel" directly - this allows Color and Direct PWM control to coexist
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {

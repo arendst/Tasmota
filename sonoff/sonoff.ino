@@ -629,13 +629,13 @@ void MqttShowState(void)
   ResponseAppend_P(PSTR(",\"" D_JSON_HEAPSIZE "\":%d,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u,\"MqttCount\":%u"),
     ESP.getFreeHeap()/1024, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode), sleep, loop_load_avg, MqttConnectCount());
 
-  for (uint32_t i = 0; i < devices_present; i++) {
+  for (uint32_t i = 1; i <= devices_present; i++) {
 #ifdef USE_LIGHT
-    if (i == light_device -1) {
-      LightState(1);
+    if (i >= light_device) {
+      if (i == light_device)  { LightState(1); }    // call it only once
     } else {
 #endif
-      ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i +1, sizeof(stemp1), Settings.flag.device_index_enable), GetStateText(bitRead(power, i)));
+      ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i, sizeof(stemp1), Settings.flag.device_index_enable), GetStateText(bitRead(power, i-1)));
 #ifdef USE_SONOFF_IFAN
       if (IsModuleIfan()) {
         ResponseAppend_P(PSTR(",\"" D_CMND_FANSPEED "\":%d"), GetFanspeed());
