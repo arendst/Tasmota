@@ -828,6 +828,22 @@ bool XsnsEnabled(uint32_t sns_index)
   return true;
 }
 
+String XsnsSensorsAvailable()
+{
+  String sensors = F("[");
+  for (uint32_t i = 0; i < sizeof(kXsnsList); i++) {
+#ifdef XFUNC_PTR_IN_ROM
+    uint32_t sensorid = pgm_read_byte(kXsnsList + i);
+#else
+    uint32_t sensorid = kXsnsList[i];
+#endif
+    if (i) { sensors += F(","); }
+    sensors += String(sensorid);
+  }
+  sensors += F("]");
+  return sensors;
+}
+
 /*********************************************************************************************\
  * Function call to all xsns
 \*********************************************************************************************/
