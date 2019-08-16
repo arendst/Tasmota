@@ -344,7 +344,7 @@ struct SYSCFG {
   uint32_t      adc_param2;                // 798
   int           adc_param3;                // 79C
   uint32_t      monitors;                  // 7A0
-  uint32_t      sensors[3];                // 7A4
+  uint32_t      sensors[3];                // 7A4 Normal WebSensor, Debug SetSensor
   uint32_t      displays;                  // 7B0
   uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8 Weight of one item in gram * 10

@@ -129,6 +129,7 @@ const char HASS_DISCOVER_SENSOR_HASS_STATUS[] PROGMEM =
 const char HASS_DISCOVER_DEVICE_INFO[] PROGMEM =
   ",\"uniq_id\":\"%s\","
   "\"device\":{\"identifiers\":[\"%06X\"],"
+  "\"connections\":[[\"mac\",\"%s\"]],"
   "\"name\":\"%s\","
   "\"model\":\"%s\","
   "\"sw_version\":\"%s%s\","
@@ -136,7 +137,8 @@ const char HASS_DISCOVER_DEVICE_INFO[] PROGMEM =
 
 const char HASS_DISCOVER_DEVICE_INFO_SHORT[] PROGMEM =
   ",\"uniq_id\":\"%s\","
-  "\"device\":{\"identifiers\":[\"%06X\"]}";
+  "\"device\":{\"identifiers\":[\"%06X\"],"
+  "\"connections\":[[\"mac\",\"%s\"]]}";
 
 const char HASS_DISCOVER_TOPIC_PREFIX[] PROGMEM =
   ",\"~\":\"%s\"";
@@ -237,7 +239,7 @@ void HAssAnnounceRelayLight(void)
       Shorten(&availability_topic, prefix);
 
       Response_P(HASS_DISCOVER_RELAY, name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
-      TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId());
+      TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
       TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
 
       if (is_light) {
@@ -317,7 +319,7 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
     Shorten(&state_topic, prefix);
     Shorten(&availability_topic, prefix);
     Response_P(HASS_DISCOVER_BUTTON_SWITCH, name, state_topic, Settings.state_text[toggle?2:1], availability_topic);
-    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId());
+    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
     if (strlen(prefix) > 0 ) TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
     if (toggle) TryResponseAppend_P(HASS_DISCOVER_BUTTON_SWITCH_TOGGLE);
     else TryResponseAppend_P(HASS_DISCOVER_BUTTON_SWITCH_ONOFF, Settings.state_text[0]);
@@ -416,7 +418,7 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     Shorten(&availability_topic, prefix);
 
     Response_P(HASS_DISCOVER_SENSOR, name, state_topic, availability_topic);
-    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId());
+    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
     TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
     if (!strcmp_P(subsensortype, PSTR(D_JSON_TEMPERATURE))) {
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_TEMP, TempUnit(), sensorname);
@@ -516,7 +518,7 @@ void HAssAnnounceStatusSensor(void)
 
     Response_P(HASS_DISCOVER_SENSOR, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_SENSOR_HASS_STATUS, state_topic);
-    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP.getChipId(),
+    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP.getChipId(), WiFi.macAddress().c_str(),
                Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
     TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
     TryResponseAppend_P(PSTR("}"));

@@ -454,22 +454,22 @@ void McpParseData(void)
 //  mcp_power_factor   = McpExtractInt(mcp_buffer, 20, 2);
   mcp_line_frequency = McpExtractInt(mcp_buffer, 22, 2);
 
-  if (energy_power_on) {  // Powered on
-    energy_frequency = (float)mcp_line_frequency / 1000;
-    energy_voltage = (float)mcp_voltage_rms / 10;
-    energy_active_power = (float)mcp_active_power / 100;
-    if (0 == energy_active_power) {
-      energy_current = 0;
+  if (Energy.power_on) {  // Powered on
+    Energy.frequency = (float)mcp_line_frequency / 1000;
+    Energy.voltage = (float)mcp_voltage_rms / 10;
+    Energy.active_power = (float)mcp_active_power / 100;
+    if (0 == Energy.active_power) {
+      Energy.current = 0;
     } else {
-      energy_current = (float)mcp_current_rms / 10000;
+      Energy.current = (float)mcp_current_rms / 10000;
     }
   } else {  // Powered off
-    energy_frequency = 0;
-    energy_voltage = 0;
-    energy_active_power = 0;
-    energy_current = 0;
+    Energy.frequency = 0;
+    Energy.voltage = 0;
+    Energy.active_power = 0;
+    Energy.current = 0;
   }
-  energy_data_valid = 0;
+  Energy.data_valid = 0;
 }
 
 /********************************************************************************************/
@@ -527,7 +527,7 @@ void McpSerialInput(void)
 
 void McpEverySecond(void)
 {
-  if (energy_data_valid > ENERGY_WATCHDOG) {
+  if (Energy.data_valid > ENERGY_WATCHDOG) {
     mcp_voltage_rms = 0;
     mcp_current_rms = 0;
     mcp_active_power = 0;
@@ -535,7 +535,7 @@ void McpEverySecond(void)
   }
 
   if (mcp_active_power) {
-    energy_kWhtoday_delta += ((mcp_active_power * 10) / 36);
+    Energy.kWhtoday_delta += ((mcp_active_power * 10) / 36);
     EnergyUpdateToday();
   }
 
@@ -602,7 +602,7 @@ bool McpCommand(void)
   bool serviced = true;
   unsigned long value = 0;
 
-  if (CMND_POWERSET == energy_command_code) {
+  if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && mcp_active_power) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 100);
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
@@ -612,7 +612,7 @@ bool McpCommand(void)
       }
     }
   }
-  else if (CMND_VOLTAGESET == energy_command_code) {
+  else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len && mcp_voltage_rms) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
       if ((value > 1000) && (value < 2600)) {  // Between 100V and 260V
@@ -622,7 +622,7 @@ bool McpCommand(void)
       }
     }
   }
-  else if (CMND_CURRENTSET == energy_command_code) {
+  else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && mcp_current_rms) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
       if ((value > 100) && (value < 80000)) {  // Between 10mA and 8A
@@ -632,7 +632,7 @@ bool McpCommand(void)
       }
     }
   }
-  else if (CMND_FREQUENCYSET == energy_command_code) {
+  else if (CMND_FREQUENCYSET == Energy.command_code) {
     if (XdrvMailbox.data_len && mcp_line_frequency) {
       value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 1000);
       if ((value > 45000) && (value < 65000)) {  // Between 45Hz and 65Hz
