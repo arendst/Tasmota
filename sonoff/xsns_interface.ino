@@ -828,19 +828,19 @@ bool XsnsEnabled(uint32_t sns_index)
   return true;
 }
 
-String XsnsSensorsAvailable()
+char* XsnsSensorsAvailable(char* sensors)
 {
-  String sensors = F("[");
+  // Return string like [2,3,4,5,8,9,10,14,15,17,18,34]
+  sensors[0] = '\0';
   for (uint32_t i = 0; i < sizeof(kXsnsList); i++) {
 #ifdef XFUNC_PTR_IN_ROM
     uint32_t sensorid = pgm_read_byte(kXsnsList + i);
 #else
     uint32_t sensorid = kXsnsList[i];
 #endif
-    if (i) { sensors += F(","); }
-    sensors += String(sensorid);
+    snprintf_P(sensors, LOGSZ, PSTR("%s%s%d"), sensors, (!i) ? "[" : ",", sensorid);
   }
-  sensors += F("]");
+  snprintf_P(sensors, LOGSZ, PSTR("%s]"), sensors);  // Max length is about 3 x 96 < LOGSZ
   return sensors;
 }
 
