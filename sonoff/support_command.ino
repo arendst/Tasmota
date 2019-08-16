@@ -30,7 +30,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|"
 #endif
-  D_CMND_SENSOR "|" D_CMND_DRIVER;
+  D_CMND_SENSOR "|" D_CMND_DRIVER "|WebSensor";
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBacklog, &CmndDelay, &CmndPower, &CmndStatus, &CmndState, &CmndSleep, &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl,
@@ -45,7 +45,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #ifdef USE_I2C
   &CmndI2cScan,
 #endif
-  &CmndSensor, &CmndDriver };
+  &CmndSensor, &CmndDriver, &CmndWebSensor };
 
 /********************************************************************************************/
 
@@ -659,6 +659,16 @@ void CmndSetoption(void)
       if (2 == ptype) { snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), Settings.param[pindex]); }
       ResponseCmndIdxChar((2 == ptype) ? stemp1 : (1 == ptype) ? GetStateText(bitRead(Settings.flag3.data, pindex)) : GetStateText(bitRead(Settings.flag.data, pindex)));
     }
+  }
+}
+
+void CmndWebSensor(void)
+{
+  if (XdrvMailbox.index < MAX_XSNS_DRIVERS) {
+    if (XdrvMailbox.payload >= 0) {
+      bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+    }
+    ResponseCmndIdxChar(GetStateText(bitRead(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32)));
   }
 }
 

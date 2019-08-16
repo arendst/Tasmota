@@ -24,7 +24,7 @@
  * Performance ROM (PROGMEM) vs RAM (RODATA)
 \*********************************************************************************************/
 
-//#define XFUNC_PTR_IN_ROM                    // Enable for keeping tables in ROM (PROGMEM) which seem to have access issues on some flash types
+#define XFUNC_PTR_IN_ROM                    // Enable for keeping tables in ROM (PROGMEM) which seem to have access issues on some flash types
 
 /*********************************************************************************************\
  * Default sensor states
