@@ -488,7 +488,6 @@ struct WEB {
   uint8_t config_xor_on_set = CONFIG_FILE_XOR;
 } Web;
 
-
 // Helper function to avoid code duplication (saves 4k Flash)
 static void WebGetArg(const char* arg, char* out, size_t max)
 {
