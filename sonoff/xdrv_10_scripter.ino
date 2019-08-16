@@ -109,7 +109,6 @@ struct M_FILT {
   float rbuff[1];
 };
 
-
 typedef union {
   uint8_t data;
   struct {
@@ -199,8 +198,6 @@ void ScriptEverySecond(void) {
 void RulesTeleperiod(void) {
   if (bitRead(Settings.rule_enabled, 0) && mqtt_data[0]) Run_Scripter(">T",2, mqtt_data);
 }
-
-//#define USE_24C256
 
 // EEPROM MACROS
 #ifdef USE_24C256
@@ -710,6 +707,91 @@ float DoMedian5(uint8_t index, float in) {
   return median_array(mf->buffer,MEDIAN_SIZE);
 }
 
+#ifdef USE_LIGHT
+#ifdef USE_WS2812
+uint32_t HSVToRGB(uint16_t hue, uint8_t saturation, uint8_t value) {
+float r = 0, g = 0, b = 0;
+struct HSV {
+	float H;
+	float S;
+	float V;
+} hsv;
+
+hsv.H=hue;
+hsv.S=(float)saturation/100.0;
+hsv.V=(float)value/100.0;
+
+if (hsv.S == 0) {
+		r = hsv.V;
+		g = hsv.V;
+		b = hsv.V;
+	} else {
+		int i;
+		float f, p, q, t;
+
+		if (hsv.H == 360)
+			hsv.H = 0;
+		else
+			hsv.H = hsv.H / 60;
+
+		i = (int)trunc(hsv.H);
+		f = hsv.H - i;
+
+		p = hsv.V * (1.0 - hsv.S);
+		q = hsv.V * (1.0 - (hsv.S * f));
+		t = hsv.V * (1.0 - (hsv.S * (1.0 - f)));
+
+		switch (i)
+		{
+		case 0:
+			r = hsv.V;
+			g = t;
+			b = p;
+			break;
+
+		case 1:
+			r = q;
+			g = hsv.V;
+			b = p;
+			break;
+
+		case 2:
+			r = p;
+			g = hsv.V;
+			b = t;
+			break;
+
+		case 3:
+			r = p;
+			g = q;
+			b = hsv.V;
+			break;
+
+		case 4:
+			r = t;
+			g = p;
+			b = hsv.V;
+			break;
+
+		default:
+			r = hsv.V;
+			g = p;
+			b = q;
+			break;
+		}
+
+	}
+
+  uint8_t ir,ig,ib;
+  ir=r*255;
+  ig=g*255;
+  ib=b*255;
+
+	uint32_t rgb=(ir<<16)|(ig<<8)|ib;
+	return rgb;
+}
+#endif
+#endif
 
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
@@ -1212,6 +1294,30 @@ chknext:
           }
           goto strexit;
         }
+#ifdef USE_LIGHT
+#ifdef USE_WS2812
+        if (!strncmp(vname,"hsvrgb(",7)) {
+          lp=GetNumericResult(lp+7,OPER_EQU,&fvar,0);
+          if (fvar<0 || fvar>360) fvar=0;
+          SCRIPT_SKIP_SPACES
+          // arg2
+          float fvar2;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+          if (fvar2<0 || fvar2>100) fvar2=0;
+          SCRIPT_SKIP_SPACES
+          // arg3
+          float fvar3;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar3,0);
+          if (fvar3<0 || fvar3>100) fvar3=0;
+
+          fvar=HSVToRGB(fvar,fvar2,fvar3);
+
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif
+#endif
         break;
       case 'i':
         if (!strncmp(vname,"int(",4)) {
@@ -2046,6 +2152,9 @@ exit:
 #define IF_NEST 8
 // execute section of scripter
 int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
+
+    if (tasm_cmd_activ && tlen>0) return 0;
+
     uint8_t vtype=0,sindex,xflg,floop=0,globvindex;
     int8_t globaindex;
     struct T_INDEX ind;
@@ -2059,9 +2168,6 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
       tlen=abs(tlen);
       check=1;
     }
-
-    if (tasm_cmd_activ) return 0;
-
 
     float *dfvar,*cv_count,cv_max,cv_inc;
     char *cv_ptr;
@@ -3224,10 +3330,11 @@ bool ScriptMqttData(void)
         }
       }
       value.trim();
+
       //Create an new event. Cannot directly call RulesProcessEvent().
       //snprintf_P(event_data, sizeof(event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
       char sbuffer[128];
-      snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=%s\n"), event_item.Event.c_str(), value.c_str());
+      snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
       //toLog(sbuffer);
       execute_script(sbuffer);
     }
