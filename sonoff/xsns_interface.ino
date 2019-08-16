@@ -813,6 +813,8 @@ const uint8_t kXsnsList[] = {
 #endif
 };
 
+/*********************************************************************************************/
+
 bool XsnsEnabled(uint32_t sns_index)
 {
   if (sns_index < sizeof(kXsnsList)) {

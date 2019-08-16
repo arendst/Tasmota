@@ -2460,13 +2460,13 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_EMULATION
   D_CMND_EMULATION "|"
 #endif
-  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR  ;
+  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR;
 
 void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
   &CmndEmulation,
 #endif
-  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor };
+  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor, &CmndWebSensor };
 
 /*********************************************************************************************\
  * Commands
@@ -2561,6 +2561,16 @@ void CmndWebColor(void)
     ResponseAppend_P(PSTR("\"#%06x\""), WebColor(i));
   }
   ResponseAppend_P(PSTR("]}"));
+}
+
+void CmndWebSensor(void)
+{
+  if (XdrvMailbox.index < MAX_XSNS_DRIVERS) {
+    if (XdrvMailbox.payload >= 0) {
+      bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+    }
+    ResponseCmndIdxChar(GetStateText(bitRead(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32)));
+  }
 }
 
 /*********************************************************************************************\
