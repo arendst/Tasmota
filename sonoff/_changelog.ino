@@ -2,6 +2,7 @@
  * 6.6.0.5 20190816
  * Add command WebSensor<sensor number> 0/1 to control display of sensor data in web GUI (#6085)
  * Change some table locations from RAM to Flash
+ * Fix wrong telemetry message when SetOption68 1 (#6191)
  *
  * 6.6.0.4 20190806
  * Add support for CHIRP soil moisture sensor by Christian Baars
