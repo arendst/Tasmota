@@ -262,10 +262,4 @@ const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Seri
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 
-/*********************************************************************************************\
- * Extern global variables
-\*********************************************************************************************/
-
-extern uint8_t rotary_changed; // Rotary switch changed
-
 #endif  // _SONOFF_H_
