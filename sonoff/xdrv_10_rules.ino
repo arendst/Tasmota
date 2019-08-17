@@ -134,28 +134,32 @@ void (* const RulesCommand[])(void) PROGMEM = {
   LinkedList<MQTT_Subscription> subscriptions;
 #endif  // SUPPORT_MQTT_EVENT
 
-String rules_event_value;
-unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
-uint8_t rules_quota = 0;
-long rules_new_power = -1;
-long rules_old_power = -1;
-long rules_old_dimm = -1;
+struct RULES {
+  String event_value;
+  unsigned long timer[MAX_RULE_TIMERS] = { 0 };
+  uint32_t triggers[MAX_RULE_SETS] = { 0 };
+  uint8_t trigger_count[MAX_RULE_SETS] = { 0 };
 
-uint32_t rules_triggers[MAX_RULE_SETS] = { 0 };
-uint16_t rules_last_minute = 60;
-uint8_t rules_trigger_count[MAX_RULE_SETS] = { 0 };
-uint8_t rules_teleperiod = 0;
+  long new_power = -1;
+  long old_power = -1;
+  long old_dimm = -1;
 
-char event_data[100];
-char vars[MAX_RULE_VARS][33] = { 0 };
+  uint16_t last_minute = 60;
+  uint16_t vars_event = 0;
+  uint8_t mems_event = 0;
+  bool teleperiod = false;
+
+  char event_data[100];
+} Rules;
+
+char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
+
 #if (MAX_RULE_VARS>16)
 #error MAX_RULE_VARS is bigger than 16
 #endif
 #if (MAX_RULE_MEMS>5)
 #error MAX_RULE_MEMS is bigger than 5
 #endif
-uint16_t vars_event = 0;
-uint8_t mems_event = 0;
 
 /*******************************************************************************************/
 
@@ -173,7 +177,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   if (pos == -1) { return false; }                     // No # sign in rule
 
   String rule_task = rule.substring(0, pos);           // "INA219" or "SYSTEM"
-  if (rules_teleperiod) {
+  if (Rules.teleperiod) {
     int ppos = rule_task.indexOf("TELE-");             // "TELE-INA219" or "INA219"
     if (ppos == -1) { return false; }                  // No pre-amble in rule
     rule_task = rule.substring(5, pos);                // "INA219" or "SYSTEM"
@@ -198,7 +202,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%%VAR%d%%"), i +1);
       if (rule_param.startsWith(stemp)) {
-        rule_param = vars[i];
+        rule_param = rules_vars[i];
         break;
       }
     }
@@ -252,12 +256,12 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   const char* str_value = root[rule_task][rule_name];
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
-//  rule_task.c_str(), rule_name.c_str(), rule_svalue, rules_trigger_count[rule_set], bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
+//  rule_task.c_str(), rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
 
   if (!root[rule_task][rule_name].success()) { return false; }
   // No value but rule_name is ok
 
-  rules_event_value = str_value;                       // Prepare %value%
+  Rules.event_value = str_value;                       // Prepare %value%
 
   // Step 3: Compare rule (value)
   if (str_value) {
@@ -296,13 +300,13 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 
   if (bitRead(Settings.rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
-      if (!bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set])) {
-        bitSet(rules_triggers[rule_set], rules_trigger_count[rule_set]);
+      if (!bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set])) {
+        bitSet(Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
       } else {
         match = false;
       }
     } else {
-      bitClear(rules_triggers[rule_set], rules_trigger_count[rule_set]);
+      bitClear(Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
     }
   }
 
@@ -322,7 +326,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
   String rules = Settings.rules[rule_set];
 
-  rules_trigger_count[rule_set] = 0;
+  Rules.trigger_count[rule_set] = 0;
   int plen = 0;
   int plen2 = 0;
   bool stop_all_rules = false;
@@ -350,7 +354,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
     String commands = rules.substring(pevt +4, plen);     // "Backlog Dimmer 10;Color 100000"
     plen += 6;
-    rules_event_value = "";
+    Rules.event_value = "";
     String event = event_saved;
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
@@ -361,10 +365,10 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       ucommand.toUpperCase();
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
       if (ucommand.indexOf("EVENT ") != -1) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
-      commands.replace(F("%value%"), rules_event_value);
+      commands.replace(F("%value%"), Rules.event_value);
       for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%var%d%%"), i +1);
-        commands.replace(stemp, vars[i]);
+        commands.replace(stemp, rules_vars[i]);
       }
       for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%mem%d%%"), i +1);
@@ -390,7 +394,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       serviced = true;
       if (stop_all_rules) { return serviced; }     // If BREAK was used, Stop execution of this rule set
     }
-    rules_trigger_count[rule_set]++;
+    Rules.trigger_count[rule_set]++;
   }
   return serviced;
 }
@@ -441,7 +445,7 @@ void RulesInit(void)
       bitWrite(Settings.rule_once, i, 0);
     }
   }
-  rules_teleperiod = 0;
+  Rules.teleperiod = false;
 }
 
 void RulesEvery50ms(void)
@@ -449,12 +453,12 @@ void RulesEvery50ms(void)
   if (Settings.rule_enabled) {  // Any rule enabled
     char json_event[120];
 
-    if (-1 == rules_new_power) { rules_new_power = power; }
-    if (rules_new_power != rules_old_power) {
-      if (rules_old_power != -1) {
+    if (-1 == Rules.new_power) { Rules.new_power = power; }
+    if (Rules.new_power != Rules.old_power) {
+      if (Rules.old_power != -1) {
         for (uint32_t i = 0; i < devices_present; i++) {
-          uint8_t new_state = (rules_new_power >> i) &1;
-          if (new_state != ((rules_old_power >> i) &1)) {
+          uint8_t new_state = (Rules.new_power >> i) &1;
+          if (new_state != ((Rules.old_power >> i) &1)) {
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"State\":%d}}"), i +1, new_state);
             RulesProcessEvent(json_event);
           }
@@ -462,7 +466,7 @@ void RulesEvery50ms(void)
       } else {
         // Boot time POWER OUTPUTS (Relays) Status
         for (uint32_t i = 0; i < devices_present; i++) {
-          uint8_t new_state = (rules_new_power >> i) &1;
+          uint8_t new_state = (Rules.new_power >> i) &1;
           snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"Boot\":%d}}"), i +1, new_state);
           RulesProcessEvent(json_event);
         }
@@ -479,22 +483,22 @@ void RulesEvery50ms(void)
           }
         }
       }
-      rules_old_power = rules_new_power;
+      Rules.old_power = Rules.new_power;
     }
-    else if (rules_old_dimm != Settings.light_dimmer) {
-      if (rules_old_dimm != -1) {
+    else if (Rules.old_dimm != Settings.light_dimmer) {
+      if (Rules.old_dimm != -1) {
         snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"State\":%d}}"), Settings.light_dimmer);
       } else {
         // Boot time DIMMER VALUE
         snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"Boot\":%d}}"), Settings.light_dimmer);
       }
       RulesProcessEvent(json_event);
-      rules_old_dimm = Settings.light_dimmer;
+      Rules.old_dimm = Settings.light_dimmer;
     }
-    else if (event_data[0]) {
+    else if (Rules.event_data[0]) {
       char *event;
       char *parameter;
-      event = strtok_r(event_data, "=", &parameter);     // event_data = fanspeed=10
+      event = strtok_r(Rules.event_data, "=", &parameter);     // Rules.event_data = fanspeed=10
       if (event) {
         event = Trim(event);
         if (parameter) {
@@ -503,27 +507,27 @@ void RulesEvery50ms(void)
           parameter = event + strlen(event);  // '\0'
         }
         snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":\"%s\"}}"), event, parameter);
-        event_data[0] ='\0';
+        Rules.event_data[0] ='\0';
         RulesProcessEvent(json_event);
       } else {
-        event_data[0] ='\0';
+        Rules.event_data[0] ='\0';
       }
     }
-    else if (vars_event || mems_event){
-      if (vars_event) {
+    else if (Rules.vars_event || Rules.mems_event){
+      if (Rules.vars_event) {
         for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
-          if (bitRead(vars_event, i)) {
-            bitClear(vars_event, i);
-            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
+          if (bitRead(Rules.vars_event, i)) {
+            bitClear(Rules.vars_event, i);
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, rules_vars[i]);
             RulesProcessEvent(json_event);
             break;
           }
         }
       }
-      if (mems_event) {
+      if (Rules.mems_event) {
         for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
-          if (bitRead(mems_event, i)) {
-            bitClear(mems_event, i);
+          if (bitRead(Rules.mems_event, i)) {
+            bitClear(Rules.mems_event, i);
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
             RulesProcessEvent(json_event);
             break;
@@ -582,16 +586,16 @@ void RulesEverySecond(void)
     char json_event[120];
 
     if (RtcTime.valid) {
-      if ((uptime > 60) && (RtcTime.minute != rules_last_minute)) {  // Execute from one minute after restart every minute only once
-        rules_last_minute = RtcTime.minute;
+      if ((uptime > 60) && (RtcTime.minute != Rules.last_minute)) {  // Execute from one minute after restart every minute only once
+        Rules.last_minute = RtcTime.minute;
         snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Minute\":%d}}"), MinutesPastMidnight());
         RulesProcessEvent(json_event);
       }
     }
     for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
-      if (rules_timer[i] != 0L) {           // Timer active?
-        if (TimeReached(rules_timer[i])) {  // Timer finished?
-          rules_timer[i] = 0L;              // Turn off this timer
+      if (Rules.timer[i] != 0L) {           // Timer active?
+        if (TimeReached(Rules.timer[i])) {  // Timer finished?
+          Rules.timer[i] = 0L;              // Turn off this timer
           snprintf_P(json_event, sizeof(json_event), PSTR("{\"Rules\":{\"Timer\":%d}}"), i +1);
           RulesProcessEvent(json_event);
         }
@@ -612,14 +616,14 @@ void RulesSaveBeforeRestart(void)
 
 void RulesSetPower(void)
 {
-  rules_new_power = XdrvMailbox.index;
+  Rules.new_power = XdrvMailbox.index;
 }
 
 void RulesTeleperiod(void)
 {
-  rules_teleperiod = 1;
+  Rules.teleperiod = true;
   RulesProcess();
-  rules_teleperiod = 0;
+  Rules.teleperiod = false;
 }
 
 #ifdef SUPPORT_MQTT_EVENT
@@ -673,7 +677,7 @@ bool RulesMqttData(void)
       }
       value.trim();
       //Create an new event. Cannot directly call RulesProcessEvent().
-      snprintf_P(event_data, sizeof(event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
+      snprintf_P(Rules.event_data, sizeof(Rules.event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
     }
   }
   return serviced;
@@ -868,7 +872,7 @@ bool findNextVariableValue(char * &pVarname, float &value)
   if (sVarName.startsWith(F("VAR"))) {
     int index = sVarName.substring(3).toInt();
     if (index > 0 && index <= MAX_RULE_VARS) {
-      value = CharToFloat(vars[index -1]);
+      value = CharToFloat(rules_vars[index -1]);
     }
   } else if (sVarName.startsWith(F("MEM"))) {
     int index = sVarName.substring(3).toInt();
@@ -1156,7 +1160,7 @@ void CmndRule(void)
           strlcpy(Settings.rules[index -1] + offset, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.rules[index -1]));
         }
       }
-      rules_triggers[index -1] = 0;  // Reset once flag
+      Rules.triggers[index -1] = 0;  // Reset once flag
     }
     snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}"),
       XdrvMailbox.command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
@@ -1170,14 +1174,14 @@ void CmndRuleTimer(void)
     if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
       float timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
-      rules_timer[XdrvMailbox.index -1] = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
+      Rules.timer[XdrvMailbox.index -1] = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
 #else
-      rules_timer[XdrvMailbox.index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
+      Rules.timer[XdrvMailbox.index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
 #endif  // USE_EXPRESSION
     }
     mqtt_data[0] = '\0';
     for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
-      ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
+      ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (Rules.timer[i]) ? (Rules.timer[i] - millis()) / 1000 : 0);
     }
     ResponseJsonEnd();
   }
@@ -1186,7 +1190,7 @@ void CmndRuleTimer(void)
 void CmndEvent(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    strlcpy(event_data, XdrvMailbox.data, sizeof(event_data));
+    strlcpy(Rules.event_data, XdrvMailbox.data, sizeof(Rules.event_data));
   }
   ResponseCmndDone();
 }
@@ -1197,19 +1201,19 @@ void CmndVariable(void)
     if (!XdrvMailbox.usridx) {
       mqtt_data[0] = '\0';
       for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
-        ResponseAppend_P(PSTR("%c\"Var%d\":\"%s\""), (i) ? ',' : '{', i +1, vars[i]);
+        ResponseAppend_P(PSTR("%c\"Var%d\":\"%s\""), (i) ? ',' : '{', i +1, rules_vars[i]);
       }
       ResponseJsonEnd();
     } else {
       if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-        dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
+        dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
 #else
-        strlcpy(vars[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[XdrvMailbox.index -1]));
+        strlcpy(rules_vars[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(rules_vars[XdrvMailbox.index -1]));
 #endif  // USE_EXPRESSION
-        bitSet(vars_event, XdrvMailbox.index -1);
+        bitSet(Rules.vars_event, XdrvMailbox.index -1);
       }
-      ResponseCmndIdxChar(vars[XdrvMailbox.index -1]);
+      ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
     }
   }
 }
@@ -1230,7 +1234,7 @@ void CmndMemory(void)
 #else
         strlcpy(Settings.mems[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[XdrvMailbox.index -1]));
 #endif  // USE_EXPRESSION
-        bitSet(mems_event, XdrvMailbox.index -1);
+        bitSet(Rules.mems_event, XdrvMailbox.index -1);
       }
       ResponseCmndIdxChar(Settings.mems[XdrvMailbox.index -1]);
     }
@@ -1249,11 +1253,11 @@ void CmndAddition(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      float tempvar = CharToFloat(vars[XdrvMailbox.index -1]) + CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
-      bitSet(vars_event, XdrvMailbox.index -1);
+      float tempvar = CharToFloat(rules_vars[XdrvMailbox.index -1]) + CharToFloat(XdrvMailbox.data);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+      bitSet(Rules.vars_event, XdrvMailbox.index -1);
     }
-    ResponseCmndIdxChar(vars[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
   }
 }
 
@@ -1261,11 +1265,11 @@ void CmndSubtract(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      float tempvar = CharToFloat(vars[XdrvMailbox.index -1]) - CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
-      bitSet(vars_event, XdrvMailbox.index -1);
+      float tempvar = CharToFloat(rules_vars[XdrvMailbox.index -1]) - CharToFloat(XdrvMailbox.data);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+      bitSet(Rules.vars_event, XdrvMailbox.index -1);
     }
-    ResponseCmndIdxChar(vars[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
   }
 }
 
@@ -1273,11 +1277,11 @@ void CmndMultiply(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      float tempvar = CharToFloat(vars[XdrvMailbox.index -1]) * CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
-      bitSet(vars_event, XdrvMailbox.index -1);
+      float tempvar = CharToFloat(rules_vars[XdrvMailbox.index -1]) * CharToFloat(XdrvMailbox.data);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+      bitSet(Rules.vars_event, XdrvMailbox.index -1);
     }
-    ResponseCmndIdxChar(vars[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
   }
 }
 
@@ -1294,11 +1298,11 @@ void CmndScale(void)
         float toLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4));
         float toHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 5));
         float value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
-        dtostrfd(value, Settings.flag2.calc_resolution, vars[XdrvMailbox.index -1]);
-        bitSet(vars_event, XdrvMailbox.index -1);
+        dtostrfd(value, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+        bitSet(Rules.vars_event, XdrvMailbox.index -1);
       }
     }
-    ResponseCmndIdxChar(vars[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
   }
 }
 

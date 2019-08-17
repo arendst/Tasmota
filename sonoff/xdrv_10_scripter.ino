@@ -3332,7 +3332,7 @@ bool ScriptMqttData(void)
       value.trim();
 
       //Create an new event. Cannot directly call RulesProcessEvent().
-      //snprintf_P(event_data, sizeof(event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
+      //snprintf_P(Rules.event_data, sizeof(Rules.event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
       char sbuffer[128];
       snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
       //toLog(sbuffer);
