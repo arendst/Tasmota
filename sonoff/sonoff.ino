@@ -854,7 +854,7 @@ void Every250mSeconds(void)
       if (200 == blinks) blinks = 0;                      // Disable blink
     }
   }
-  else if (Settings.ledstate &1) {
+  if (Settings.ledstate &1 && (pin[GPIO_LEDLNK] < 99 || !(blinkstate || blinks <= 200)) ) {
     bool tstate = power & Settings.ledmask;
     if ((SONOFF_TOUCH == my_module_type) || (SONOFF_T11 == my_module_type) || (SONOFF_T12 == my_module_type) || (SONOFF_T13 == my_module_type)) {
       tstate = (!power) ? 1 : 0;                          // As requested invert signal for Touch devices to find them in the dark
