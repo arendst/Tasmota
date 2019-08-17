@@ -1,5 +1,5 @@
 /*
-  xdrv_19_ps16dz_dimmer.ino - PS_16_DZ dimmer and Sonoff L1 support for Sonoff-Tasmota
+  xdrv_19_Ps16dz.dimmer.ino - PS_16_DZ dimmer and Sonoff L1 support for Sonoff-Tasmota
 
   Copyright (C) 2019  Joel Stein and Theo Arends
 
@@ -44,13 +44,15 @@
 
 TasmotaSerial *PS16DZSerial = nullptr;
 
-char *ps16dz_tx_buffer = nullptr;                 // Serial transmit buffer
-char *ps16dz_rx_buffer = nullptr;                 // Serial receive buffer
-int ps16dz_byte_counter = 0;
-uint8_t ps16dz_color[3];                          // Most recent serial sent/received values
-uint8_t ps16dz_dimmer = 0;
-bool ps16dz_supports_color = false;
-bool ps16dz_switch = false;
+struct PS16DZ {
+  char *tx_buffer = nullptr;                 // Serial transmit buffer
+  char *rx_buffer = nullptr;                 // Serial receive buffer
+  int byte_counter = 0;
+  uint8_t color[3];                          // Most recent serial sent/received values
+  uint8_t dimmer = 0;
+  bool supports_color = false;
+  bool switch_state = false;
+} Ps16dz;
 
 /*********************************************************************************************\
  * Internal Functions
@@ -58,16 +60,16 @@ bool ps16dz_switch = false;
 
 void PS16DZSerialSendTxBuffer(void)
 {
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send %s"), ps16dz_tx_buffer);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Send %s"), Ps16dz.tx_buffer);
 
-  PS16DZSerial->print(ps16dz_tx_buffer);
+  PS16DZSerial->print(Ps16dz.tx_buffer);
   PS16DZSerial->write(0x1B);
   PS16DZSerial->flush();
 }
 
 void PS16DZSerialSendOkCommand(void)
 {
-  snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR("AT+SEND=ok"));
+  snprintf_P(Ps16dz.tx_buffer, PS16DZ_BUFFER_SIZE, PSTR("AT+SEND=ok"));
   PS16DZSerialSendTxBuffer();
 }
 
@@ -82,15 +84,15 @@ void PS16DZSerialSendUpdateCommand(void)
   // Dimming acts odd below 10% - this mirrors the threshold set on the faceplate itself
   light_state_dimmer = (light_state_dimmer < 10) ? 10 : light_state_dimmer;
 
-  snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"bright\":%d"),
+  snprintf_P(Ps16dz.tx_buffer, PS16DZ_BUFFER_SIZE, PSTR("AT+UPDATE=\"sequence\":\"%d%03d\",\"switch\":\"%s\",\"bright\":%d"),
     LocalTime(), millis()%1000, power?"on":"off", light_state_dimmer);
 
-  if (ps16dz_supports_color) {
+  if (Ps16dz.supports_color) {
     uint8_t light_state_rgb[3];
     light_state.getRGB(&light_state_rgb[0], &light_state_rgb[1], &light_state_rgb[2]);
 
-    snprintf_P(ps16dz_tx_buffer, PS16DZ_BUFFER_SIZE, PSTR("%s,\"mode\":%d,\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"light_types\":1"),
-      ps16dz_tx_buffer, PS16DZ_SONOFF_L1_MODE_COLORFUL, light_state_rgb[0], light_state_rgb[1], light_state_rgb[2]);
+    snprintf_P(Ps16dz.tx_buffer, PS16DZ_BUFFER_SIZE, PSTR("%s,\"mode\":%d,\"colorR\":%d,\"colorG\":%d,\"colorB\":%d,\"light_types\":1"),
+      Ps16dz.tx_buffer, PS16DZ_SONOFF_L1_MODE_COLORFUL, light_state_rgb[0], light_state_rgb[1], light_state_rgb[2]);
   }
   PS16DZSerialSendTxBuffer();
 }
@@ -104,11 +106,11 @@ bool PS16DZSerialSendUpdateCommandIfRequired(void)
   if (!PS16DZSerial) { return true; }
 
   bool is_switch_change = (XdrvMailbox.payload != SRC_SWITCH);
-  bool is_brightness_change = (light_state.getDimmer() != ps16dz_dimmer);
+  bool is_brightness_change = (light_state.getDimmer() != Ps16dz.dimmer);
 
   uint8_t light_state_rgb[3];
   light_state.getRGB(&light_state_rgb[0], &light_state_rgb[1], &light_state_rgb[2]);
-  bool is_color_change = (ps16dz_supports_color && (memcmp(light_state_rgb, ps16dz_color, 3) != 0));
+  bool is_color_change = (Ps16dz.supports_color && (memcmp(light_state_rgb, Ps16dz.color, 3) != 0));
 
   if (is_switch_change || is_brightness_change || is_color_change) {
     PS16DZSerialSendUpdateCommand();
@@ -135,12 +137,12 @@ bool PS16DZModuleSelected(void)
 
 void PS16DZInit(void)
 {
-  ps16dz_supports_color = (light_state.getColorMode() == LCM_RGB);
+  Ps16dz.supports_color = (light_state.getColorMode() == LCM_RGB);
 
-  ps16dz_tx_buffer = (char*)(malloc(PS16DZ_BUFFER_SIZE));
-  if (ps16dz_tx_buffer != nullptr) {
-    ps16dz_rx_buffer = (char*)(malloc(PS16DZ_BUFFER_SIZE));
-    if (ps16dz_rx_buffer != nullptr) {
+  Ps16dz.tx_buffer = (char*)(malloc(PS16DZ_BUFFER_SIZE));
+  if (Ps16dz.tx_buffer != nullptr) {
+    Ps16dz.rx_buffer = (char*)(malloc(PS16DZ_BUFFER_SIZE));
+    if (Ps16dz.rx_buffer != nullptr) {
       PS16DZSerial = new TasmotaSerial(pin[GPIO_RXD], pin[GPIO_TXD], 2);
       if (PS16DZSerial->begin(19200)) {
         if (PS16DZSerial->hardwareSerial()) { ClaimSerial(); }
@@ -156,27 +158,27 @@ void PS16DZSerialInput(void)
     yield();
     uint8_t serial_in_byte = PS16DZSerial->read();
     if (serial_in_byte != 0x1B) {
-      if (ps16dz_byte_counter >= PS16DZ_BUFFER_SIZE - 1) {
-        memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);
-        ps16dz_byte_counter = 0;
+      if (Ps16dz.byte_counter >= PS16DZ_BUFFER_SIZE - 1) {
+        memset(Ps16dz.rx_buffer, 0, PS16DZ_BUFFER_SIZE);
+        Ps16dz.byte_counter = 0;
       }
-      if (ps16dz_byte_counter || (!ps16dz_byte_counter && ('A' == serial_in_byte))) {
-        ps16dz_rx_buffer[ps16dz_byte_counter++] = serial_in_byte;
+      if (Ps16dz.byte_counter || (!Ps16dz.byte_counter && ('A' == serial_in_byte))) {
+        Ps16dz.rx_buffer[Ps16dz.byte_counter++] = serial_in_byte;
       }
     } else {
-      ps16dz_rx_buffer[ps16dz_byte_counter++] = 0x00;
+      Ps16dz.rx_buffer[Ps16dz.byte_counter++] = 0x00;
 
       // AT+RESULT="sequence":"1554682835320"
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Received %s"), ps16dz_rx_buffer);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Received %s"), Ps16dz.rx_buffer);
 
-      if (!strncmp(ps16dz_rx_buffer+3, "UPDATE", 6)) {
+      if (!strncmp(Ps16dz.rx_buffer+3, "UPDATE", 6)) {
         // AT+UPDATE="switch":"on","light_type":1,"colorR":255,"colorG":255,"colorB":255,"bright":100,"mode":19,"speed":100,"sensitive":100
         char *end_str;
-        char *string = ps16dz_rx_buffer+10;
+        char *string = Ps16dz.rx_buffer+10;
         char *token = strtok_r(string, ",", &end_str);
 
         bool color_updated[3] = { false, false, false };
-        memcpy(ps16dz_color, Settings.light_color, 3);
+        memcpy(Ps16dz.color, Settings.light_color, 3);
         bool is_switch_change = false;
         bool is_color_change = false;
         bool is_brightness_change = false;
@@ -187,13 +189,13 @@ void PS16DZSerialInput(void)
           char* token3 = strtok_r(nullptr, ":", &end_token);
 
           if (!strncmp(token2, "\"switch\"", 8)) {
-            ps16dz_switch = !strncmp(token3, "\"on\"", 4) ? true : false;
+            Ps16dz.switch_state = !strncmp(token3, "\"on\"", 4) ? true : false;
 
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Switch %d"), ps16dz_switch);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Switch %d"), Ps16dz.switch_state);
 
-            is_switch_change = (ps16dz_switch != power);
+            is_switch_change = (Ps16dz.switch_state != power);
             if (is_switch_change) {
-              ExecuteCommandPower(1, ps16dz_switch, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+              ExecuteCommandPower(1, Ps16dz.switch_state, SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
             }
           }
           else if (!strncmp(token2, "\"color", 6)) {
@@ -210,30 +212,30 @@ void PS16DZSerialInput(void)
                 break;
             }
             int color_value = atoi(token3);
-            ps16dz_color[color_index] = color_value;
+            Ps16dz.color[color_index] = color_value;
             color_updated[color_index] = true;
 
             bool all_color_channels_updated = color_updated[0] && color_updated[1] && color_updated[2];
             if (all_color_channels_updated) {
 
-              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Color R:%d, G:%d, B:%d"), ps16dz_color[0], ps16dz_color[1], ps16dz_color[2]);
+              AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Color R:%d, G:%d, B:%d"), Ps16dz.color[0], Ps16dz.color[1], Ps16dz.color[2]);
 
-              is_color_change = (memcmp(ps16dz_color, Settings.light_color, 3) != 0);
+              is_color_change = (memcmp(Ps16dz.color, Settings.light_color, 3) != 0);
             }
 
             if (power && is_color_change) {
-              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_COLOR "2 %02x%02x%02x"), ps16dz_color[0], ps16dz_color[1], ps16dz_color[2]);
+              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_COLOR "2 %02x%02x%02x"), Ps16dz.color[0], Ps16dz.color[1], Ps16dz.color[2]);
               ExecuteCommand(scmnd, SRC_SWITCH);
             }
           }
           else if (!strncmp(token2, "\"bright\"", 8)) {
-            ps16dz_dimmer = atoi(token3);
+            Ps16dz.dimmer = atoi(token3);
 
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Brightness %d"), ps16dz_dimmer);
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Brightness %d"), Ps16dz.dimmer);
 
-            is_brightness_change = ps16dz_dimmer != Settings.light_dimmer;
-            if (power && (ps16dz_dimmer > 0) && is_brightness_change) {
-              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), ps16dz_dimmer);
+            is_brightness_change = Ps16dz.dimmer != Settings.light_dimmer;
+            if (power && (Ps16dz.dimmer > 0) && is_brightness_change) {
+              snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), Ps16dz.dimmer);
               ExecuteCommand(scmnd, SRC_SWITCH);
             }
           }
@@ -252,20 +254,20 @@ void PS16DZSerialInput(void)
           PS16DZSerialSendOkCommand();
         }
       }
-      else if (!strncmp(ps16dz_rx_buffer+3, "SETTING", 7)) {
+      else if (!strncmp(Ps16dz.rx_buffer+3, "SETTING", 7)) {
         // AT+SETTING=enterESPTOUCH - When ON button is held for over 5 seconds
         // AT+SETTING=exitESPTOUCH  - When ON button is pressed
         if (!Settings.flag.button_restrict) {
           int state = WIFI_MANAGER;
-          if (!strncmp(ps16dz_rx_buffer+10, "=exit", 5)) { state = WIFI_RETRY; }
+          if (!strncmp(Ps16dz.rx_buffer+10, "=exit", 5)) { state = WIFI_RETRY; }
           if (state != Settings.sta_config) {
             snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_WIFICONFIG " %d"), state);
             ExecuteCommand(scmnd, SRC_BUTTON);
           }
         }
       }
-      memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);
-      ps16dz_byte_counter = 0;
+      memset(Ps16dz.rx_buffer, 0, PS16DZ_BUFFER_SIZE);
+      Ps16dz.byte_counter = 0;
     }
   }
 }
