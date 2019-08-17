@@ -631,8 +631,8 @@ void MqttShowState(void)
 
   for (uint32_t i = 1; i <= devices_present; i++) {
 #ifdef USE_LIGHT
-    if ((light_device) && (i >= light_device)) {
-      if (i == light_device)  { LightState(1); }    // call it only once
+    if ((LightDevice()) && (i >= LightDevice())) {
+      if (i == LightDevice())  { LightState(1); }    // call it only once
     } else {
 #endif
       ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i, sizeof(stemp1), Settings.flag.device_index_enable), GetStateText(bitRead(power, i-1)));

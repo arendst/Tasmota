@@ -68,7 +68,7 @@ void update_rotary(void) ICACHE_RAM_ATTR;
 void update_rotary(void)
 {
   if (MI_DESK_LAMP == my_module_type){
-    if (light_power) {
+    if (LightPower()) {
       update_position();
     }
   }

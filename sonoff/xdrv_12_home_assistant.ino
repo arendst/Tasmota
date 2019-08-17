@@ -250,7 +250,7 @@ void HAssAnnounceRelayLight(void)
         strncpy_P(stemp3, Settings.flag.not_power_linked?PSTR("last"):PSTR("brightness"), sizeof(stemp3));
         TryResponseAppend_P(HASS_DISCOVER_LIGHT_DIMMER, brightness_command_topic, state_topic, stemp3);
 
-        if (light_subtype >= LST_RGB) {
+        if (Light.subtype >= LST_RGB) {
           char *rgb_command_topic = stemp1;
 
           GetTopic_P(rgb_command_topic, CMND, mqtt_topic, D_CMND_COLOR);
@@ -263,14 +263,14 @@ void HAssAnnounceRelayLight(void)
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_SCHEME, effect_command_topic, state_topic);
 
         }
-        if (LST_RGBW == light_subtype) {
+        if (LST_RGBW == Light.subtype) {
           char *white_temp_command_topic = stemp1;
 
           GetTopic_P(white_temp_command_topic, CMND, mqtt_topic, D_CMND_WHITE);
           Shorten(&white_temp_command_topic, prefix);
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_WHITE, white_temp_command_topic, state_topic);
         }
-        if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
+        if ((LST_COLDWARM == Light.subtype) || (LST_RGBWC == Light.subtype)) {
           char *color_temp_command_topic = stemp1;
 
           GetTopic_P(color_temp_command_topic, CMND, mqtt_topic, D_CMND_COLORTEMPERATURE);

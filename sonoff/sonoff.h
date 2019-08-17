@@ -266,8 +266,6 @@ const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 
  * Extern global variables
 \*********************************************************************************************/
 
-extern uint8_t light_device;  // Light device number
-extern power_t light_power;  // Light power
 extern uint8_t rotary_changed; // Rotary switch changed
 
 #endif  // _SONOFF_H_

@@ -237,7 +237,7 @@ void ButtonHandler(void)
                 }
               }
 #ifdef USE_LIGHT
-              if ((MI_DESK_LAMP == my_module_type) && (button_index == 0) && (rotary_changed) && (light_power)) {
+              if ((MI_DESK_LAMP == my_module_type) && (button_index == 0) && (rotary_changed) && (LightPower())) {
                 rotary_changed = 0;                            // Color temp changed, no need to turn of the light
               } else {
 #endif

@@ -245,11 +245,11 @@ char     prev_y_str[24] = "\0";
 
 uint8_t getLocalLightSubtype(uint8_t device) {
   if (light_type) {
-    if (device >= light_device) {
+    if (device >= Light.device) {
       if (Settings.flag3.pwm_multi_channels) {
         return LST_SINGLE;     // If SetOption68, each channel acts like a dimmer
       } else {
-        return light_subtype;  // the actual light
+        return Light.subtype;  // the actual light
       }
     } else {
       return LST_NONE;       // relays
@@ -268,7 +268,7 @@ void HueLightStatus1(uint8_t device, String *response)
   uint8_t  sat = 0;
   uint8_t  bri = 254;
   uint32_t echo_gen = findEchoGeneration();   // 1 for 1st gen =+ Echo Dot 2nd gen, 2 for 2nd gen and above
-  // local_light_subtype simulates the light_subtype for 'device'
+  // local_light_subtype simulates the Light.subtype for 'device'
   // For relays LST_NONE, for dimmers LST_SINGLE
   uint8_t local_light_subtype = getLocalLightSubtype(device);
 
@@ -458,7 +458,7 @@ void HueLights(String *path)
   bool on = false;
   bool change = false;  // need to change a parameter to the light
   uint8_t device = 1;
-  uint8_t local_light_subtype = light_subtype;
+  uint8_t local_light_subtype = Light.subtype;
   uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
 
   path->remove(0,path->indexOf("/lights"));          // Remove until /lights
@@ -535,7 +535,7 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "bri");
         response.replace("{re", String(tmp));
-        if (LST_SINGLE <= light_subtype) {
+        if (LST_SINGLE <= Light.subtype) {
           change = true;
         }
         resp = true;
@@ -576,7 +576,7 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "hue");
         response.replace("{re", String(tmp));
-        if (LST_RGB <= light_subtype) {
+        if (LST_RGB <= Light.subtype) {
           g_gotct = false;
           change = true;
         }
@@ -592,7 +592,7 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "sat");
         response.replace("{re", String(tmp));
-        if (LST_RGB <= light_subtype) {
+        if (LST_RGB <= Light.subtype) {
           g_gotct = false;
           change = true;
         }
@@ -606,7 +606,7 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "ct");
         response.replace("{re", String(ct));
-        if ((LST_COLDWARM == light_subtype) || (LST_RGBW <= light_subtype)) {
+        if ((LST_COLDWARM == Light.subtype) || (LST_RGBW <= Light.subtype)) {
           g_gotct = true;
           change = true;
         }
