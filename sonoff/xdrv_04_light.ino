@@ -1643,10 +1643,10 @@ void LightState(uint8_t append)
       GetPowerDevice(scommand, light_device + i, sizeof(scommand), 1);
       uint32_t light_power_masked = light_power & (1 << i);    // the light_power value for this device
       light_power_masked = light_power_masked ? 1 : 0;                    // convert to on/off
-      ResponseAppend_P(PSTR("\"%s\":\"%s\",\"" D_CMND_CHANNEL "%d\":%d"), scommand, GetStateText(light_power_masked), light_device + i,
+      ResponseAppend_P(PSTR("\"%s\":\"%s\",\"" D_CMND_CHANNEL "%d\":%d,"), scommand, GetStateText(light_power_masked), light_device + i,
         changeUIntScale(light_current_color[i], 0, 255, 0, 100));
     }
-    ResponseAppend_P(PSTR(",\"" D_CMND_COLOR "\":\"%s\""), LightGetColor(scolor));
+    ResponseAppend_P(PSTR("\"" D_CMND_COLOR "\":\"%s\""), LightGetColor(scolor));
   }   // light_pwm_multi_channels
 
   if (!append) {
