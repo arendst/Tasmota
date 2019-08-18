@@ -2569,8 +2569,10 @@ void CmndWebSensor(void)
     if (XdrvMailbox.payload >= 0) {
       bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
     }
-    ResponseCmndIdxChar(GetStateText(bitRead(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32)));
   }
+  Response_P(PSTR("{\"" D_CMND_WEBSENSOR "\":"));
+  XsnsSensorState();
+  ResponseJsonEnd();
 }
 
 /*********************************************************************************************\

@@ -809,7 +809,23 @@ const uint8_t kXsnsList[] = {
 #endif
 
 #ifdef XSNS_95
-  XSNS_95
+  XSNS_95,
+#endif
+
+#ifdef XSNS_96
+  XSNS_96,
+#endif
+
+#ifdef XSNS_97
+  XSNS_97,
+#endif
+
+#ifdef XSNS_98
+  XSNS_98,
+#endif
+
+#ifdef XSNS_99
+  XSNS_99
 #endif
 };
 
@@ -828,20 +844,22 @@ bool XsnsEnabled(uint32_t sns_index)
   return true;
 }
 
-char* XsnsSensorsAvailable(char* sensors)
+void XsnsSensorState(void)
 {
-  // Return string like [2,3,4,5,8,9,10,14,15,17,18,34]
-  sensors[0] = '\0';
+  ResponseAppend_P(PSTR("\""));  // Use string for enable/disable signal
   for (uint32_t i = 0; i < sizeof(kXsnsList); i++) {
 #ifdef XFUNC_PTR_IN_ROM
     uint32_t sensorid = pgm_read_byte(kXsnsList + i);
 #else
     uint32_t sensorid = kXsnsList[i];
 #endif
-    snprintf_P(sensors, LOGSZ, PSTR("%s%s%d"), sensors, (!i) ? "[" : ",", sensorid);
+    bool disabled = false;
+    if (sensorid < MAX_XSNS_DRIVERS) {
+      disabled = !bitRead(Settings.sensors[sensorid / 32], sensorid % 32);
+    }
+    ResponseAppend_P(PSTR("%s%s%d"), (i) ? "," : "", (disabled) ? "!" : "", sensorid);
   }
-  snprintf_P(sensors, LOGSZ, PSTR("%s]"), sensors);  // Max length is about 3 x 96 < LOGSZ
-  return sensors;
+  ResponseAppend_P(PSTR("\""));
 }
 
 /*********************************************************************************************\

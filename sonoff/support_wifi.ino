@@ -32,27 +32,12 @@ const uint8_t WIFI_CONFIG_SEC = 180;       // seconds before restart
 const uint8_t WIFI_CHECK_SEC = 20;         // seconds
 const uint8_t WIFI_RETRY_OFFSET_SEC = 20;  // seconds
 
-/*
-// This worked for 2_5_0_BETA2 but fails since then. Waiting for a solution from core team (#4952)
-#ifdef USE_MQTT_TLS
-#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
-#else
-#define USING_AXTLS
-#include <ESP8266WiFi.h>
-// force use of AxTLS (BearSSL is now default) which uses less memory (#4952)
-#include <WiFiClientSecureAxTLS.h>
-using namespace axTLS;
-#endif  // ARDUINO_ESP8266_RELEASE prior to 2_5_0
-#else
-#include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
-#endif  // USE_MQTT_TLS
-*/
-#include <ESP8266WiFi.h>            // Wifi, MQTT, Ota, WifiManager
+#include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 
 struct WIFI {
-  uint32_t last_event = 0;          // Last wifi connection event
-  uint32_t downtime = 0;            // Wifi down duration
-  uint16_t link_count = 0;          // Number of wifi re-connect
+  uint32_t last_event = 0;                 // Last wifi connection event
+  uint32_t downtime = 0;                   // Wifi down duration
+  uint16_t link_count = 0;                 // Number of wifi re-connect
   uint8_t counter;
   uint8_t retry_init;
   uint8_t retry;
@@ -60,7 +45,7 @@ struct WIFI {
   uint8_t wps_result;
   uint8_t config_type = 0;
   uint8_t config_counter = 0;
-  uint8_t mdns_begun = 0;           // mDNS active
+  uint8_t mdns_begun = 0;                  // mDNS active
   uint8_t scan_state;
   uint8_t bssid[6];
 } Wifi;
