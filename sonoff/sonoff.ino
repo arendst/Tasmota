@@ -131,7 +131,7 @@ unsigned long last_save_uptime = 0;         // Loop timer to calculate ontime
 uint8_t last_source = 0;
 byte max_pcf8574_devices = 0;               // Max numbers of PCF8574 modules
 uint8_t shutters_present = 0;
-power_t shutter_mask = 0; 
+power_t shutter_mask = 0;
 //end
 uint8_t sleep;                              // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
@@ -779,11 +779,11 @@ void PerformEverySecond(void)
 #endif  // USE_RULES
       }
       //STB mod
-      uint8 disbale_deepsleep_switch = 0;
+      uint8 disable_deepsleep_switch = 0;
       if (pin[GPIO_SEN_SLEEP] < 99) {
-        disbale_deepsleep_switch = !digitalRead(pin[GPIO_SEN_SLEEP]);
+        disable_deepsleep_switch = !digitalRead(pin[GPIO_SEN_SLEEP]);
       }
-      if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295 && !disbale_deepsleep_switch && tele_period == 0 && prep_called == 1 ) {
+      if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295 && !disable_deepsleep_switch && tele_period == 0 && prep_called == 1 ) {
         //TODO STEFAN
         yield();
         if (Settings.deepsleep > MAX_DEEPSLEEP_CYCLE) {
@@ -1554,10 +1554,10 @@ void setup(void)
   SettingsDelta();
 
   //STB mod
-  uint8 disbale_deepsleep_switch = 0;
+  uint8 disable_deepsleep_switch = 0;
   if (pin[GPIO_SEN_SLEEP] < 99) {
-    disbale_deepsleep_switch = !digitalRead(pin[GPIO_SEN_SLEEP]);
-    if (disbale_deepsleep_switch) {
+    disable_deepsleep_switch = !digitalRead(pin[GPIO_SEN_SLEEP]);
+    if (disable_deepsleep_switch) {
       RtcSettings.ultradeepsleep = 0;
     }
   }
