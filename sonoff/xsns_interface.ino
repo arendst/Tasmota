@@ -870,13 +870,19 @@ bool XsnsNextCall(uint8_t Function, uint8_t &xsns_index)
 {
   xsns_index++;
   if (xsns_index == xsns_present) { xsns_index = 0; }
-#ifdef USE_DEBUG_DRIVER
-  while (!XsnsEnabled(xsns_index) && !xsns_index) {  // Perform at least first sensor (counter)
-    xsns_index++;
-    if (xsns_index == xsns_present) { xsns_index = 0; }
+
+#ifndef USE_DEBUG_DRIVER
+  if (FUNC_WEB_SENSOR == Function) {  // Skip web info for disabled sensors
+#endif
+    uint32_t max_disabled = xsns_present;
+    while (!XsnsEnabled(xsns_index) && max_disabled--) {  // Perform at least one sensor
+      xsns_index++;
+      if (xsns_index == xsns_present) { xsns_index = 0; }
+    }
+#ifndef USE_DEBUG_DRIVER
   }
 #endif
-//  WifiAddDelayWhenDisconnected();
+
   return xsns_func_ptr[xsns_index](Function);
 }
 
@@ -890,7 +896,7 @@ bool XsnsCall(uint8_t Function)
 
   for (uint32_t x = 0; x < xsns_present; x++) {
 #ifdef USE_DEBUG_DRIVER
-    if (XsnsEnabled(x)) {
+    if (XsnsEnabled(x)) {  // Skip disabled sensor in debug mode
 #endif
 
       if ((FUNC_WEB_SENSOR == Function) && !XsnsEnabled(x)) { continue; }  // Skip web info for disabled sensors
@@ -898,7 +904,6 @@ bool XsnsCall(uint8_t Function)
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND
       uint32_t profile_start_millis = millis();
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
-//      WifiAddDelayWhenDisconnected();
       result = xsns_func_ptr[x](Function);
 
 #ifdef PROFILE_XSNS_SENSOR_EVERY_SECOND

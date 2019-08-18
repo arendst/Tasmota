@@ -609,19 +609,3 @@ void EspRestart(void)
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
 }
-
-/*
-void EspRestart(void)
-{
-  ESP.restart();
-}
-*/
-
-void WifiAddDelayWhenDisconnected(void)
-{
-  if (APP_BAUDRATE == baudrate) {  // When baudrate too low it will fail on Sonoff Pow R2 and S31 serial interface initialization
-    if (global_state.wifi_down) {
-      delay(DRIVER_BOOT_DELAY);
-    }
-  }
-}
