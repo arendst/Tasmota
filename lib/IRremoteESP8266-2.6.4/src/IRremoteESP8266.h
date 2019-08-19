@@ -51,11 +51,7 @@
 #endif  // UNIT_TEST
 
 // Library Version
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRremoteESP8266.h
 #define _IRREMOTEESP8266_VERSION_ "2.6.4"
-=======
-#define _IRREMOTEESP8266_VERSION_ "2.6.0"
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRremoteESP8266.h
 // Supported IR protocols
 // Each protocol you include costs memory and, during decode, costs time
 // Disable (set to false) all the protocols you do not need/want!
@@ -239,7 +235,6 @@
 
 #define DECODE_DAIKIN216       true
 #define SEND_DAIKIN216         true
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRremoteESP8266.h
 
 #define DECODE_DAIKIN160       true
 #define SEND_DAIKIN160         true
@@ -252,8 +247,6 @@
 
 #define DECODE_DAIKIN128       true
 #define SEND_DAIKIN128         true
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRremoteESP8266.h
 */
 
 // Tasmota supported protocols (less protocols is less code size)
@@ -289,11 +282,7 @@
 #define SEND_SAMSUNG           true
 
 #define DECODE_SAMSUNG36       false
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRremoteESP8266.h
 #define SEND_SAMSUNG36         true
-=======
-#define SEND_SAMSUNG36         false
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRremoteESP8266.h
 
 #define DECODE_SAMSUNG_AC      false
 #define SEND_SAMSUNG_AC        true
@@ -451,27 +440,6 @@
 #define DECODE_DAIKIN128       false
 #define SEND_DAIKIN128         true
 
-#define DECODE_DAIKIN2         false
-#define SEND_DAIKIN2           false
-
-#define DECODE_VESTEL_AC       false
-#define SEND_VESTEL_AC         false
-
-#define DECODE_TECO            false
-#define SEND_TECO              false
-
-#define DECODE_TCL112AC        false
-#define SEND_TCL112AC          false
-
-#define DECODE_LEGOPF          false
-#define SEND_LEGOPF            false
-
-#define DECODE_MITSUBISHIHEAVY false
-#define SEND_MITSUBISHIHEAVY   false
-
-#define DECODE_DAIKIN216       false
-#define SEND_DAIKIN216         false
-
 #if (DECODE_ARGO || DECODE_DAIKIN || DECODE_FUJITSU_AC || DECODE_GREE || \
      DECODE_KELVINATOR || DECODE_MITSUBISHI_AC || DECODE_TOSHIBA_AC || \
      DECODE_TROTEC || DECODE_HAIER_AC || DECODE_HITACHI_AC || \
@@ -479,12 +447,8 @@
      DECODE_WHIRLPOOL_AC || DECODE_SAMSUNG_AC || DECODE_ELECTRA_AC || \
      DECODE_PANASONIC_AC || DECODE_MWM || DECODE_DAIKIN2 || \
      DECODE_VESTEL_AC || DECODE_TCL112AC || DECODE_MITSUBISHIHEAVY || \
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRremoteESP8266.h
      DECODE_DAIKIN216 || DECODE_SHARP_AC || DECODE_DAIKIN160 || \
      DECODE_NEOCLIMA || DECODE_DAIKIN176 || DECODE_DAIKIN128)
-=======
-     DECODE_DAIKIN216)
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRremoteESP8266.h
 #define DECODE_AC true  // We need some common infrastructure for decoding A/Cs.
 #else
 #define DECODE_AC false   // We don't need that infrastructure.
@@ -565,7 +529,6 @@ enum decode_type_t {
   MITSUBISHI_HEAVY_88,
   MITSUBISHI_HEAVY_152,  // 60
   DAIKIN216,
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRremoteESP8266.h
   SHARP_AC,
   GOODWEATHER,
   INAX,
@@ -575,10 +538,6 @@ enum decode_type_t {
   DAIKIN128,
   // Add new entries before this one, and update it to point to the last entry.
   kLastDecodeType = DAIKIN128,
-=======
-  // Add new entries before this one, and update it to point to the last entry.
-  kLastDecodeType = DAIKIN216,
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRremoteESP8266.h
 };
 
 // Message lengths & required repeat values
@@ -588,16 +547,10 @@ const uint16_t kSingleRepeat = 1;
 const uint16_t kAiwaRcT501Bits = 15;
 const uint16_t kAiwaRcT501MinRepeats = kSingleRepeat;
 const uint16_t kArgoStateLength = 12;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRremoteESP8266.h
 const uint16_t kArgoBits = kArgoStateLength * 8;
 const uint16_t kArgoDefaultRepeat = kNoRepeat;
 const uint16_t kCoolixBits = 24;
 const uint16_t kCoolixDefaultRepeat = kSingleRepeat;
-=======
-const uint16_t kArgoDefaultRepeat = kNoRepeat;
-const uint16_t kCoolixBits = 24;
-const uint16_t kCoolixDefaultRepeat = 1;
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRremoteESP8266.h
 const uint16_t kCarrierAcBits = 32;
 const uint16_t kCarrierAcMinRepeat = kNoRepeat;
 const uint16_t kDaikinStateLength = 35;
@@ -608,7 +561,6 @@ const uint16_t kDaikinDefaultRepeat = kNoRepeat;
 const uint16_t kDaikin2StateLength = 39;
 const uint16_t kDaikin2Bits = kDaikin2StateLength * 8;
 const uint16_t kDaikin2DefaultRepeat = kNoRepeat;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRremoteESP8266.h
 const uint16_t kDaikin160StateLength = 20;
 const uint16_t kDaikin160Bits = kDaikin160StateLength * 8;
 const uint16_t kDaikin160DefaultRepeat = kNoRepeat;
@@ -618,8 +570,6 @@ const uint16_t kDaikin128DefaultRepeat = kNoRepeat;
 const uint16_t kDaikin176StateLength = 22;
 const uint16_t kDaikin176Bits = kDaikin176StateLength * 8;
 const uint16_t kDaikin176DefaultRepeat = kNoRepeat;
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRremoteESP8266.h
 const uint16_t kDaikin216StateLength = 27;
 const uint16_t kDaikin216Bits = kDaikin216StateLength * 8;
 const uint16_t kDaikin216DefaultRepeat = kNoRepeat;
@@ -739,10 +689,7 @@ const uint16_t kToshibaACStateLength = 9;
 const uint16_t kToshibaACBits = kToshibaACStateLength * 8;
 const uint16_t kToshibaACMinRepeat = kSingleRepeat;
 const uint16_t kTrotecStateLength = 9;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRremoteESP8266.h
 const uint16_t kTrotecBits = kTrotecStateLength * 8;
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRremoteESP8266.h
 const uint16_t kTrotecDefaultRepeat = kNoRepeat;
 const uint16_t kWhirlpoolAcStateLength = 21;
 const uint16_t kWhirlpoolAcBits = kWhirlpoolAcStateLength * 8;
@@ -827,16 +774,10 @@ const uint8_t  kVestelAcBits = 56;
 // Create a no-op F() macro so the code base still compiles outside of the
 // Arduino framework. Thus we can safely use the Arduino 'F()' macro through-out
 // the code base. That macro stores constants in Flash (PROGMEM) memory.
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRremoteESP8266.h
 // See: https://github.com/crankyoldgit/IRremoteESP8266/issues/667
 #define F(x) x
 #endif  // F
 typedef std::string String;
-=======
-// See: https://github.com/markszabo/IRremoteESP8266/issues/667
-#define F(x) x
-#endif  // F
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRremoteESP8266.h
 #endif  // UNIT_TEST
 
 #endif  // IRREMOTEESP8266_H_

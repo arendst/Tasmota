@@ -223,7 +223,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
   duskdawn->time = timeBuffer;
 }
 
-String GetSun(uint8_t dawn)
+String GetSun(uint32_t dawn)
 {
   char stime[6];
 
@@ -236,7 +236,7 @@ String GetSun(uint8_t dawn)
   return String(stime);
 }
 
-uint16_t SunMinutes(uint8_t dawn)
+uint16_t SunMinutes(uint32_t dawn)
 {
   uint8_t hour[2];
   uint8_t minute[2];
@@ -250,7 +250,7 @@ uint16_t SunMinutes(uint8_t dawn)
 
 /*******************************************************************************************/
 
-void TimerSetRandomWindow(uint8_t index)
+void TimerSetRandomWindow(uint32_t index)
 {
   timer_window[index] = 0;
   if (Settings.timer[index].window) {
@@ -296,7 +296,7 @@ void TimerEverySecond(void)
             if (xtimer.days & days) {
               Settings.timer[i].arm = xtimer.repeat;
 #if defined(USE_RULES) || defined(USE_SCRIPT)
-              if (3 == xtimer.power) {  // Blink becomes Rule disregarding device and allowing use of Backlog commands
+              if (3 == xtimer.power) {                       // Blink becomes Rule disregarding device and allowing use of Backlog commands
                 Response_P(PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
                 XdrvRulesProcess();
               } else
@@ -314,6 +314,7 @@ void PrepShowTimer(uint32_t index)
 {
   Timer xtimer = Settings.timer[index -1];
 
+  char days[8] = { 0 };
   for (uint32_t i = 0; i < 7; i++) {
     uint8_t mask = 1 << i;
     snprintf(days, sizeof(days), "%s%d", days, ((xtimer.days & mask) > 0));
@@ -345,20 +346,11 @@ void PrepShowTimer(uint32_t index)
  * Commands
 \*********************************************************************************************/
 
-bool TimerCommand(void)
+void CmndTimer(void)
 {
-  char command[CMDSZ];
-  char dataBufUc[XdrvMailbox.data_len];
-  bool serviced = true;
-  uint8_t index = XdrvMailbox.index;
-
-  UpperCase(dataBufUc, XdrvMailbox.data);
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kTimerCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
-  }
-  else if ((CMND_TIMER == command_code) && (index > 0) && (index <= MAX_TIMERS)) {
-    uint8_t error = 0;
+  uint32_t index = XdrvMailbox.index;
+  if ((index > 0) && (index <= MAX_TIMERS)) {
+    uint32_t error = 0;
     if (XdrvMailbox.data_len) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAX_TIMERS)) {
         if (XdrvMailbox.payload == 0) {
@@ -476,14 +468,33 @@ void CmndTimers(void)
     }
   }
 
-  }
-  else if (CMND_LATITUDE == command_code) {
-    if (XdrvMailbox.data_len) {
-      Settings.latitude = (int)(CharToFloat(XdrvMailbox.data) *1000000);
+  ResponseCmndStateText(Settings.flag3.timers_enable);
+  MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+
+  uint32_t jsflg = 0;
+  uint32_t lines = 1;
+  for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+    if (!jsflg) {
+      Response_P(PSTR("{\"" D_CMND_TIMERS "%d\":{"), lines++);
+    } else {
+      ResponseAppend_P(PSTR(","));
     }
-    char lbuff[33];
-    dtostrfd(((float)Settings.latitude) /1000000, 6, lbuff);
-    Response_P(S_JSON_COMMAND_SVALUE, command, lbuff);
+    jsflg++;
+    PrepShowTimer(i +1);
+    if (jsflg > 3) {
+      ResponseAppend_P(PSTR("}}"));
+      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_TIMERS));
+      jsflg = 0;
+    }
+  }
+  mqtt_data[0] = '\0';
+}
+
+#ifdef USE_SUNRISE
+void CmndLongitude(void)
+{
+  if (XdrvMailbox.data_len) {
+    Settings.longitude = (int)(CharToFloat(XdrvMailbox.data) *1000000);
   }
   char lbuff[33];
   dtostrfd(((float)Settings.longitude) /1000000, 6, lbuff);
@@ -513,6 +524,7 @@ void CmndLatitude(void)
 const char S_CONFIGURE_TIMER[] PROGMEM = D_CONFIGURE_TIMER;
 
 const char HTTP_BTN_MENU_TIMER[] PROGMEM =
+  "<p><form action='" WEB_HANDLE_TIMER "' method='get'><button>" D_CONFIGURE_TIMER "</button></form></p>";
 
 const char HTTP_TIMER_SCRIPT1[] PROGMEM =
   "var pt=[],ct=99;"

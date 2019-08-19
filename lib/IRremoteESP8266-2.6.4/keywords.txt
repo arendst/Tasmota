@@ -22,12 +22,9 @@
 
 IRArgoAC	KEYWORD1
 IRCoolixAC	KEYWORD1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 IRDaikin128	KEYWORD1
 IRDaikin160	KEYWORD1
 IRDaikin176	KEYWORD1
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 IRDaikin2	KEYWORD1
 IRDaikin216	KEYWORD1
 IRDaikinESP	KEYWORD1
@@ -43,15 +40,10 @@ IRMideaAC	KEYWORD1
 IRMitsubishiAC	KEYWORD1
 IRMitsubishiHeavy152Ac	KEYWORD1
 IRMitsubishiHeavy88Ac	KEYWORD1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 IRNeoclimaAc	KEYWORD1
 IRPanasonicAc	KEYWORD1
 IRSamsungAc	KEYWORD1
 IRSharpAc	KEYWORD1
-=======
-IRPanasonicAc	KEYWORD1
-IRSamsungAc	KEYWORD1
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 IRTcl112Ac	KEYWORD1
 IRTecoAc	KEYWORD1
 IRToshibaAC	KEYWORD1
@@ -82,7 +74,6 @@ whirlpool_ac_remote_model_t	KEYWORD1
 #######################################
 
 _delayMicroseconds	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 _matchGeneric	KEYWORD2
 _setMode	KEYWORD2
 _setTemp	KEYWORD2
@@ -95,12 +86,6 @@ addModeToString	KEYWORD2
 addTempToString	KEYWORD2
 argo	KEYWORD2
 bcdToUint8	KEYWORD2
-=======
-_setMode	KEYWORD2
-_setTemp	KEYWORD2
-add	KEYWORD2
-argo	KEYWORD2
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 begin	KEYWORD2
 boolToString	KEYWORD2
 buildFromState	KEYWORD2
@@ -116,36 +101,26 @@ calibrate	KEYWORD2
 cancelOffTimer	KEYWORD2
 cancelOnTimer	KEYWORD2
 cancelTimers	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 celsiusToFahrenheit	KEYWORD2
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 checkZjsSig	KEYWORD2
 checkZmsSig	KEYWORD2
 checksum	KEYWORD2
 clearOnTimerFlag	KEYWORD2
 clearSensorTemp	KEYWORD2
 clearSleepTimerFlag	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 cmpStates	KEYWORD2
 compare	KEYWORD2
 convertFan	KEYWORD2
 convertMode	KEYWORD2
 convertSwingH	KEYWORD2
 convertSwingV	KEYWORD2
-=======
-compare	KEYWORD2
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 coolix	KEYWORD2
 copyIrParams	KEYWORD2
 countBits	KEYWORD2
 daikin	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 daikin128	KEYWORD2
 daikin160	KEYWORD2
 daikin176	KEYWORD2
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 daikin2	KEYWORD2
 daikin216	KEYWORD2
 decode	KEYWORD2
@@ -155,12 +130,9 @@ decodeCOOLIX	KEYWORD2
 decodeCarrierAC	KEYWORD2
 decodeDISH	KEYWORD2
 decodeDaikin	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 decodeDaikin128	KEYWORD2
 decodeDaikin160	KEYWORD2
 decodeDaikin176	KEYWORD2
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 decodeDaikin2	KEYWORD2
 decodeDaikin216	KEYWORD2
 decodeDenon	KEYWORD2
@@ -206,13 +178,9 @@ decodeSharpAc	KEYWORD2
 decodeSony	KEYWORD2
 decodeTcl112Ac	KEYWORD2
 decodeTeco	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 decodeToState	KEYWORD2
 decodeToshibaAC	KEYWORD2
 decodeTrotec	KEYWORD2
-=======
-decodeToshibaAC	KEYWORD2
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 decodeVestelAc	KEYWORD2
 decodeWhirlpoolAC	KEYWORD2
 decodeWhynter	KEYWORD2
@@ -243,20 +211,13 @@ encodeSanyoLC7461	KEYWORD2
 encodeSharp	KEYWORD2
 encodeSony	KEYWORD2
 encodeTime	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 fahrenheitToCelsius	KEYWORD2
 fanspeedToString	KEYWORD2
-=======
-fanspeed_t	KEYWORD2
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 fixChecksum	KEYWORD2
 fixup	KEYWORD2
 fujitsu	KEYWORD2
 get3D	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 get8CHeat	KEYWORD2
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 getBeep	KEYWORD2
 getBufSize	KEYWORD2
 getButton	KEYWORD2
@@ -276,7 +237,6 @@ getFan	KEYWORD2
 getFanSpeed	KEYWORD2
 getFilter	KEYWORD2
 getFlap	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 getFollow	KEYWORD2
 getFresh	KEYWORD2
 getFreshAir	KEYWORD2
@@ -284,12 +244,6 @@ getFreshAirHigh	KEYWORD2
 getHealth	KEYWORD2
 getHold	KEYWORD2
 getIFeel	KEYWORD2
-=======
-getFreshAir	KEYWORD2
-getFreshAirHigh	KEYWORD2
-getHealth	KEYWORD2
-getHeatMode	KEYWORD2
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 getIon	KEYWORD2
 getIonFilter	KEYWORD2
 getLed	KEYWORD2
@@ -348,10 +302,7 @@ getWideVane	KEYWORD2
 getXFan	KEYWORD2
 getZoneFollow	KEYWORD2
 getiFeel	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 goodweather	KEYWORD2
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 gree	KEYWORD2
 haier	KEYWORD2
 haierYrwo2	KEYWORD2
@@ -365,10 +316,7 @@ isOnTimerActive	KEYWORD2
 isOnTimerEnabled	KEYWORD2
 isProtocolSupported	KEYWORD2
 isSpecialState	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 isSwingVToggle	KEYWORD2
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 isTimeCommand	KEYWORD2
 isTimerActive	KEYWORD2
 isTimerEnabled	KEYWORD2
@@ -384,7 +332,6 @@ matchGeneric	KEYWORD2
 matchMark	KEYWORD2
 matchSpace	KEYWORD2
 midea	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 minRepeats	KEYWORD2
 minsToString	KEYWORD2
 mitsubishi	KEYWORD2
@@ -397,19 +344,6 @@ on	KEYWORD2
 opmodeToString	KEYWORD2
 panasonic	KEYWORD2
 recoverSavedState	KEYWORD2
-=======
-mitsubishi	KEYWORD2
-mitsubishiHeavy152	KEYWORD2
-mitsubishiHeavy88	KEYWORD2
-mode)	KEYWORD2
-off	KEYWORD2
-on	KEYWORD2
-opmode_t	KEYWORD2
-panasonic	KEYWORD2
-position)	KEYWORD2
-recoverSavedState	KEYWORD2
-renderTime	KEYWORD2
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 reset	KEYWORD2
 resultAcToString	KEYWORD2
 resultToHexidecimal	KEYWORD2
@@ -428,12 +362,9 @@ sendCOOLIX	KEYWORD2
 sendCarrierAC	KEYWORD2
 sendDISH	KEYWORD2
 sendDaikin	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 sendDaikin128	KEYWORD2
 sendDaikin160	KEYWORD2
 sendDaikin176	KEYWORD2
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 sendDaikin2	KEYWORD2
 sendDaikin216	KEYWORD2
 sendData	KEYWORD2
@@ -499,10 +430,7 @@ sendWhirlpoolAC	KEYWORD2
 sendWhynter	KEYWORD2
 serialPrintUint64	KEYWORD2
 set3D	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 set8CHeat	KEYWORD2
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 setAuto	KEYWORD2
 setBeep	KEYWORD2
 setButton	KEYWORD2
@@ -521,7 +449,6 @@ setFan	KEYWORD2
 setFanSpeed	KEYWORD2
 setFilter	KEYWORD2
 setFlap	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 setFollow	KEYWORD2
 setFresh	KEYWORD2
 setFreshAir	KEYWORD2
@@ -529,12 +456,6 @@ setFreshAirHigh	KEYWORD2
 setHealth	KEYWORD2
 setHold	KEYWORD2
 setIFeel	KEYWORD2
-=======
-setFreshAir	KEYWORD2
-setFreshAirHigh	KEYWORD2
-setHealth	KEYWORD2
-setHeatMode	KEYWORD2
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 setIon	KEYWORD2
 setIonFilter	KEYWORD2
 setLed	KEYWORD2
@@ -547,16 +468,11 @@ setMold	KEYWORD2
 setNight	KEYWORD2
 setOffTimer	KEYWORD2
 setOffTimerActive	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 setOffTimerEnabled	KEYWORD2
 setOnTimer	KEYWORD2
 setOnTimerActive	KEYWORD2
 setOnTimerEnabled	KEYWORD2
 setOutsideQuiet	KEYWORD2
-=======
-setOnTimer	KEYWORD2
-setOnTimerActive	KEYWORD2
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 setPower	KEYWORD2
 setPowerToggle	KEYWORD2
 setPowerful	KEYWORD2
@@ -596,25 +512,16 @@ setZoneFollow	KEYWORD2
 setiFeel	KEYWORD2
 sharp	KEYWORD2
 space	KEYWORD2
-speed)	KEYWORD2
 stateReset	KEYWORD2
 stepHoriz	KEYWORD2
 stepVert	KEYWORD2
 strToBool	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 strToDecodeType	KEYWORD2
 strToModel	KEYWORD2
 sumBytes	KEYWORD2
 sumNibbles	KEYWORD2
 swinghToString	KEYWORD2
 swingvToString	KEYWORD2
-=======
-strToModel	KEYWORD2
-sumBytes	KEYWORD2
-swingh_t	KEYWORD2
-swingv)	KEYWORD2
-swingv_t	KEYWORD2
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 tcl112	KEYWORD2
 teco	KEYWORD2
 ticksHigh	KEYWORD2
@@ -622,19 +529,13 @@ ticksLow	KEYWORD2
 toString	KEYWORD2
 toggleRC5	KEYWORD2
 toggleRC6	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 toggleSwingHoriz	KEYWORD2
 toggleSwingVert	KEYWORD2
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 toshiba	KEYWORD2
 trotec	KEYWORD2
 typeToString	KEYWORD2
 uint64ToString	KEYWORD2
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 uint8ToBcd	KEYWORD2
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 updateSavedState	KEYWORD2
 validChecksum	KEYWORD2
 vestel	KEYWORD2
@@ -681,12 +582,9 @@ CARRIER_AC_BITS	LITERAL1
 COOLIX	LITERAL1
 COOLIX_BITS	LITERAL1
 DAIKIN	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 DAIKIN128	LITERAL1
 DAIKIN160	LITERAL1
 DAIKIN176	LITERAL1
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 DAIKIN2	LITERAL1
 DAIKIN216	LITERAL1
 DAIKIN_AUTO	LITERAL1
@@ -707,12 +605,9 @@ DECODE_ARGO	LITERAL1
 DECODE_CARRIER_AC	LITERAL1
 DECODE_COOLIX	LITERAL1
 DECODE_DAIKIN	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 DECODE_DAIKIN128	LITERAL1
 DECODE_DAIKIN160	LITERAL1
 DECODE_DAIKIN176	LITERAL1
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 DECODE_DAIKIN2	LITERAL1
 DECODE_DAIKIN216	LITERAL1
 DECODE_DENON	LITERAL1
@@ -998,12 +893,9 @@ SEND_ARGO	LITERAL1
 SEND_CARRIER_AC	LITERAL1
 SEND_COOLIX	LITERAL1
 SEND_DAIKIN	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 SEND_DAIKIN128	LITERAL1
 SEND_DAIKIN160	LITERAL1
 SEND_DAIKIN176	LITERAL1
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 SEND_DAIKIN2	LITERAL1
 SEND_DAIKIN216	LITERAL1
 SEND_DENON	LITERAL1
@@ -1096,10 +988,7 @@ TROTEC_MAX_TIMER	LITERAL1
 TROTEC_MIN_TEMP	LITERAL1
 UNKNOWN	LITERAL1
 UNUSED	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 USE_IRAM_ATTR	LITERAL1
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 VESTEL_AC	LITERAL1
 WHIRLPOOL_AC	LITERAL1
 WHYNTER	LITERAL1
@@ -1114,18 +1003,10 @@ kAiwaRcT501PreBits	LITERAL1
 kAiwaRcT501PreData	LITERAL1
 kArgoAuto	LITERAL1
 kArgoBitMark	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 kArgoBits	LITERAL1
 kArgoCool	LITERAL1
 kArgoDefaultRepeat	LITERAL1
 kArgoDry	LITERAL1
-=======
-kArgoCoolAuto	LITERAL1
-kArgoCoolHum	LITERAL1
-kArgoCoolOff	LITERAL1
-kArgoCoolOn	LITERAL1
-kArgoDefaultRepeat	LITERAL1
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 kArgoFan1	LITERAL1
 kArgoFan2	LITERAL1
 kArgoFan3	LITERAL1
@@ -1222,7 +1103,6 @@ kCoolixUnknown	LITERAL1
 kCoolixZeroSpace	LITERAL1
 kCoolixZeroSpaceTicks	LITERAL1
 kCoolixZoneFollowMask	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 kDaikin128Auto	LITERAL1
 kDaikin128BitCeiling	LITERAL1
 kDaikin128BitEcono	LITERAL1
@@ -1328,17 +1208,12 @@ kDaikin176StateLength	LITERAL1
 kDaikin176SwingHAuto	LITERAL1
 kDaikin176SwingHOff	LITERAL1
 kDaikin176ZeroSpace	LITERAL1
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 kDaikin216BitMark	LITERAL1
 kDaikin216Bits	LITERAL1
 kDaikin216ByteFan	LITERAL1
 kDaikin216ByteMode	LITERAL1
 kDaikin216BytePower	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 kDaikin216BytePowerful	LITERAL1
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 kDaikin216ByteSwingH	LITERAL1
 kDaikin216ByteSwingV	LITERAL1
 kDaikin216ByteTemp	LITERAL1
@@ -1433,10 +1308,7 @@ kDaikinByteSensor	LITERAL1
 kDaikinByteSilent	LITERAL1
 kDaikinByteSwingH	LITERAL1
 kDaikinByteTemp	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 kDaikinByteWeeklyTimer	LITERAL1
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 kDaikinCool	LITERAL1
 kDaikinCurBit	LITERAL1
 kDaikinCurIndex	LITERAL1
@@ -1470,13 +1342,9 @@ kDaikinStateLengthShort	LITERAL1
 kDaikinTolerance	LITERAL1
 kDaikinUnusedTime	LITERAL1
 kDaikinZeroSpace	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 kDefaultESP32Timer	LITERAL1
 kDefaultMessageGap	LITERAL1
 kDenon48Bits	LITERAL1
-=======
-kDefaultMessageGap	LITERAL1
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 kDenonBitMark	LITERAL1
 kDenonBitMarkTicks	LITERAL1
 kDenonBits	LITERAL1
@@ -1659,10 +1527,7 @@ kGreeFan	LITERAL1
 kGreeFanAuto	LITERAL1
 kGreeFanMask	LITERAL1
 kGreeFanMax	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 kGreeFanMed	LITERAL1
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 kGreeFanMin	LITERAL1
 kGreeHdrMark	LITERAL1
 kGreeHdrSpace	LITERAL1
@@ -1788,10 +1653,7 @@ kHitachiAcFan	LITERAL1
 kHitachiAcFanAuto	LITERAL1
 kHitachiAcFanHigh	LITERAL1
 kHitachiAcFanLow	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 kHitachiAcFanMed	LITERAL1
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 kHitachiAcHdrMark	LITERAL1
 kHitachiAcHdrSpace	LITERAL1
 kHitachiAcHeat	LITERAL1
@@ -2540,10 +2402,7 @@ kTcl112AcPowerMask	LITERAL1
 kTcl112AcStateLength	LITERAL1
 kTcl112AcTempMax	LITERAL1
 kTcl112AcTempMin	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
 kTcl112AcTolerance	LITERAL1
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 kTcl112AcZeroSpace	LITERAL1
 kTecoAuto	LITERAL1
 kTecoBitMark	LITERAL1
@@ -2617,19 +2476,11 @@ kTrotecIntro2	LITERAL1
 kTrotecMaxTemp	LITERAL1
 kTrotecMaxTimer	LITERAL1
 kTrotecMinTemp	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
-=======
-kTrotecOneMark	LITERAL1
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 kTrotecOneSpace	LITERAL1
 kTrotecPowerBit	LITERAL1
 kTrotecSleepBit	LITERAL1
 kTrotecStateLength	LITERAL1
 kTrotecTimerBit	LITERAL1
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/keywords.txt
-=======
-kTrotecZeroMark	LITERAL1
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/keywords.txt
 kTrotecZeroSpace	LITERAL1
 kUnknownThreshold	LITERAL1
 kVestelAcAuto	LITERAL1

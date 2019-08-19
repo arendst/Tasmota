@@ -491,7 +491,6 @@ void IRsend::sendRaw(uint16_t buf[], uint16_t len, uint16_t hz) {
 }
 #endif  // SEND_RAW
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
 // Get the minimum number of repeats for a given protocol.
 // Args:
 //   protocol:  Protocol number/type of the message you want to send.
@@ -637,15 +636,12 @@ uint16_t IRsend::defaultBits(const decode_type_t protocol) {
   }
 }
 
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
 // Send a simple (up to 64 bits) IR message of a given type.
 // An unknown/unsupported type will do nothing.
 // Args:
 //   type:  Protocol number/type of the message you want to send.
 //   data:  The data you want to send (up to 64 bits).
 //   nbits: How many bits long the message is to be.
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
 //   repeat: How many repeats to do?
 // Returns:
 //   bool: True if it is a type we can attempt to send, false if not.
@@ -656,42 +652,21 @@ bool IRsend::send(const decode_type_t type, const uint64_t data,
 #if SEND_AIWA_RC_T501
     case AIWA_RC_T501:
       sendAiwaRCT501(data, nbits, min_repeat);
-=======
-// Returns:
-//   bool: True if it is a type we can attempt to send, false if not.
-bool IRsend::send(decode_type_t type, uint64_t data, uint16_t nbits) {
-  switch (type) {
-#if SEND_AIWA_RC_T501
-    case AIWA_RC_T501:
-      sendAiwaRCT501(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_CARRIER_AC
     case CARRIER_AC:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendCarrierAC(data, nbits, min_repeat);
-=======
-      sendCarrierAC(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_COOLIX
     case COOLIX:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendCOOLIX(data, nbits, min_repeat);
-=======
-      sendCOOLIX(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_DENON
     case DENON:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendDenon(data, nbits, min_repeat);
-=======
-      sendDenon(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_DISH
@@ -714,24 +689,11 @@ bool IRsend::send(decode_type_t type, uint64_t data, uint16_t nbits) {
       sendGree(data, nbits, min_repeat);
       break;
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
 #if SEND_INAX
     case INAX:
       sendInax(data, nbits, min_repeat);
       break;
 #endif  // SEND_INAX
-=======
-#if SEND_GICABLE
-    case GICABLE:
-      sendGICable(data, nbits);
-      break;
-#endif
-#if SEND_GREE
-    case GREE:
-      sendGree(data, nbits);
-      break;
-#endif
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
 #if SEND_JVC
     case JVC:
       sendJVC(data, nbits, min_repeat);
@@ -739,133 +701,77 @@ bool IRsend::send(decode_type_t type, uint64_t data, uint16_t nbits) {
 #endif
 #if SEND_LASERTAG
     case LASERTAG:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendLasertag(data, nbits, min_repeat);
-=======
-      sendLasertag(data, nbits);
-      break;
-#endif
-#if SEND_LEGOPF
-    case LEGOPF:
-      sendLegoPf(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_LEGOPF
     case LEGOPF:
       sendLegoPf(data, nbits, min_repeat);
       break;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
 #endif
 #if SEND_LG
     case LG:
       sendLG(data, nbits, min_repeat);
       break;
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
     case LG2:
       sendLG2(data, nbits, min_repeat);
       break;
 #endif
 #if SEND_LUTRON
     case LUTRON:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendLutron(data, nbits, min_repeat);
-=======
-      sendLutron(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_MAGIQUEST
     case MAGIQUEST:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendMagiQuest(data, nbits, min_repeat);
-=======
-      sendMagiQuest(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_MIDEA
     case MIDEA:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendMidea(data, nbits, min_repeat);
-=======
-      sendMidea(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_MITSUBISHI
     case MITSUBISHI:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendMitsubishi(data, nbits, min_repeat);
-=======
-      sendMitsubishi(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_MITSUBISHI2
     case MITSUBISHI2:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendMitsubishi2(data, nbits, min_repeat);
-=======
-      sendMitsubishi2(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_NIKAI
     case NIKAI:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendNikai(data, nbits, min_repeat);
-=======
-      sendNikai(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_NEC
     case NEC:
     case NEC_LIKE:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendNEC(data, nbits, min_repeat);
-=======
-      sendNEC(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_PANASONIC
     case PANASONIC:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendPanasonic64(data, nbits, min_repeat);
-=======
-      sendPanasonic64(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_PIONEER
     case PIONEER:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendPioneer(data, nbits, min_repeat);
-=======
-      sendPioneer(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_RC5
     case RC5:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
     case RC5X:
       sendRC5(data, nbits, min_repeat);
-=======
-      sendRC5(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_RC6
     case RC6:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendRC6(data, nbits, min_repeat);
-=======
-      sendRC6(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_RCMM
@@ -875,29 +781,17 @@ bool IRsend::send(decode_type_t type, uint64_t data, uint16_t nbits) {
 #endif
 #if SEND_SAMSUNG
     case SAMSUNG:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendSAMSUNG(data, nbits, min_repeat);
-=======
-      sendSAMSUNG(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_SAMSUNG36
     case SAMSUNG36:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendSamsung36(data, nbits, min_repeat);
-=======
-      sendSamsung36(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_SANYO
     case SANYO_LC7461:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendSanyoLC7461(data, nbits, min_repeat);
-=======
-      sendSanyoLC7461(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_SHARP
@@ -907,54 +801,33 @@ bool IRsend::send(decode_type_t type, uint64_t data, uint16_t nbits) {
 #endif
 #if SEND_SHERWOOD
     case SHERWOOD:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendSherwood(data, nbits, min_repeat);
-=======
-      sendSherwood(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_SONY
     case SONY:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendSony(data, nbits, min_repeat);
-=======
-      sendSony(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_TECO
     case TECO:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendTeco(data, nbits, min_repeat);
-=======
-      sendTeco(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_VESTEL_AC
     case VESTEL_AC:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendVestelAc(data, nbits, min_repeat);
-=======
-      sendVestelAc(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
 #if SEND_WHYNTER
     case WHYNTER:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
       sendWhynter(data, nbits, min_repeat);
-=======
-      sendWhynter(data, nbits);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
       break;
 #endif
     default:
       return false;
   }
   return true;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRsend.cpp
 }
 
 // Send a complex (>= 64 bits) IR message of a given type.
@@ -1110,6 +983,4 @@ bool IRsend::send(const decode_type_t type, const unsigned char *state,
       return false;
   }
   return true;
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRsend.cpp
 }

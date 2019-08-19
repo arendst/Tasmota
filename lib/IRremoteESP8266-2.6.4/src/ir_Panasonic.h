@@ -32,15 +32,6 @@
 #ifdef UNIT_TEST
 #include "IRsend_test.h"
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.h
-=======
-
-//       PPPP    AAA   N   N   AAA    SSSS   OOO   N   N  IIIII   CCCC
-//       P   P  A   A  NN  N  A   A  S      O   O  NN  N    I    C
-//       PPPP   AAAAA  N N N  AAAAA   SSS   O   O  N N N    I    C
-//       P      A   A  N  NN  A   A      S  O   O  N  NN    I    C
-//       P      A   A  N   N  A   A  SSSS    OOO   N   N  IIIII   CCCC
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.h
 
 // Panasonic A/C support heavily influenced by:
 //   https://github.com/ToniA/ESPEasy/blob/HeatpumpIR/lib/HeatpumpIR/PanasonicHeatpumpIR.cpp
@@ -108,10 +99,7 @@ class IRPanasonicAc {
   void stateReset(void);
 #if SEND_PANASONIC
   void send(const uint16_t repeat = kPanasonicAcDefaultRepeat);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.h
   uint8_t calibrate(void) { return _irsend.calibrate(); }
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.h
 #endif  // SEND_PANASONIC
   void begin(void);
   void on(void);
@@ -150,33 +138,18 @@ class IRPanasonicAc {
   uint16_t getOffTimer(void);
   void setOffTimer(const uint16_t mins_since_midnight,
                    const bool enable = true);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.h
   void cancelOffTimer(void);
   bool isOffTimerEnabled(void);
-=======
-  void cancelOffTimer();
-  bool isOffTimerEnabled();
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.h
   uint8_t convertMode(const stdAc::opmode_t mode);
   uint8_t convertFan(const stdAc::fanspeed_t speed);
   uint8_t convertSwingV(const stdAc::swingv_t position);
   uint8_t convertSwingH(const stdAc::swingh_t position);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.h
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
   static stdAc::swingv_t toCommonSwingV(const uint8_t pos);
   static stdAc::swingh_t toCommonSwingH(const uint8_t pos);
   stdAc::state_t toCommon(void);
   String toString(void);
-=======
-#ifdef ARDUINO
-  String toString();
-  static String timeToString(const uint16_t mins_since_midnight);
-#else
-  std::string toString();
-  static std::string timeToString(const uint16_t mins_since_midnight);
-#endif
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.h
 #ifndef UNIT_TEST
 
  private:

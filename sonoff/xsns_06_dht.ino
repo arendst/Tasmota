@@ -34,6 +34,7 @@
 uint32_t dht_max_cycles;
 uint8_t dht_data[5];
 uint8_t dht_sensors = 0;
+bool dht_active = true;                       // DHT configured
 
 struct DHTSTRUCT {
   uint8_t     pin;
@@ -125,8 +126,9 @@ bool DhtRead(uint8_t sensor)
 
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %02X, %02X, %02X, %02X, %02X =? %02X"),
-      dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], checksum);
+    char hex_char[15];
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %s =? %02X"),
+      ToHex_P(dht_data, 5, hex_char, sizeof(hex_char), ' '), checksum);
     return false;
   }
 
@@ -162,9 +164,7 @@ void DhtReadTempHum(uint8_t sensor)
   }
 }
 
-bool DhtSetup(uint8_t pin, uint8_t type)
-{
-  bool success = false;
+/********************************************************************************************/
 
 bool DhtPinState()
 {
@@ -184,15 +184,17 @@ bool DhtPinState()
 
 void DhtInit(void)
 {
-  dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
+  if (dht_sensors) {
+    dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
-  for (uint32_t i = 0; i < dht_sensors; i++) {
-    pinMode(Dht[i].pin, INPUT_PULLUP);
-    Dht[i].lastreadtime = 0;
-    Dht[i].lastresult = 0;
-    GetTextIndexed(Dht[i].stype, sizeof(Dht[i].stype), Dht[i].type, kSensorNames);
-    if (dht_sensors > 1) {
-      snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
+    for (uint32_t i = 0; i < dht_sensors; i++) {
+      pinMode(Dht[i].pin, INPUT_PULLUP);
+      Dht[i].lastreadtime = 0;
+      Dht[i].lastresult = 0;
+      GetTextIndexed(Dht[i].stype, sizeof(Dht[i].stype), Dht[i].type, kSensorNames);
+      if (dht_sensors > 1) {
+        snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
+      }
     }
   } else {
     dht_active = false;

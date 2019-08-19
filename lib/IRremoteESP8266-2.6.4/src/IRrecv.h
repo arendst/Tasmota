@@ -293,11 +293,6 @@ class IRrecv {
                        const uint16_t nbits = kSamsung36Bits,
                        const bool strict = true);
 #endif
-#if DECODE_SAMSUNG
-  bool decodeSamsung36(decode_results *results,
-                       const uint16_t nbits = kSamsung36Bits,
-                       const bool strict = true);
-#endif
 #if DECODE_SAMSUNG_AC
   bool decodeSamsungAC(decode_results *results,
                        const uint16_t nbits = kSamsungAcBits,
@@ -348,7 +343,6 @@ class IRrecv {
   bool decodeDaikin(decode_results *results, const uint16_t nbits = kDaikinBits,
                     const bool strict = true);
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRrecv.h
 #if DECODE_DAIKIN128
   bool decodeDaikin128(decode_results *results,
                        const uint16_t nbits = kDaikin128Bits,
@@ -364,8 +358,6 @@ class IRrecv {
                        const uint16_t nbits = kDaikin176Bits,
                        const bool strict = true);
 #endif  // DECODE_DAIKIN176
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRrecv.h
 #if DECODE_DAIKIN2
   bool decodeDaikin2(decode_results *results, uint16_t nbits = kDaikin2Bits,
                      bool strict = true);
@@ -460,7 +452,6 @@ class IRrecv {
                  bool strict = true);
 #endif
 #if DECODE_VESTEL_AC
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRrecv.h
   bool decodeVestelAc(decode_results *results,
                       const uint16_t nbits = kVestelAcBits,
                       const bool strict = true);
@@ -473,31 +464,16 @@ class IRrecv {
 #if DECODE_TECO
   bool decodeTeco(decode_results *results, const uint16_t nbits = kTecoBits,
                   const bool strict = false);
-=======
-  bool decodeVestelAc(decode_results *results, uint16_t nbits = kVestelAcBits,
-                      bool strict = true);
-#endif
-#if DECODE_TCL112AC
-  bool decodeTcl112Ac(decode_results *results, uint16_t nbits = kTcl112AcBits,
-                      bool strict = true);
-#endif
-#if DECODE_TECO
-  bool decodeTeco(decode_results *results, uint16_t nbits = kTecoBits,
-                  bool strict = false);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRrecv.h
 #endif
 #if DECODE_LEGOPF
   bool decodeLegoPf(decode_results *results, const uint16_t nbits = kLegoPfBits,
                     const bool strict = true);
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRrecv.h
 #if DECODE_NEOCLIMA
 bool decodeNeoclima(decode_results *results,
                     const uint16_t nbits = kNeoclimaBits,
                     const bool strict = true);
 #endif  // DECODE_NEOCLIMA
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRrecv.h
 };
 
 #endif  // IRRECV_H_

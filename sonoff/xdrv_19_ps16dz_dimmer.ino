@@ -166,9 +166,11 @@ void PS16DZSerialInput(void)
     } else {
       ps16dz_rx_buffer[ps16dz_byte_counter++] = 0x00;
 
+      // AT+RESULT="sequence":"1554682835320"
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PSZ: Received %s"), ps16dz_rx_buffer);
 
       if (!strncmp(ps16dz_rx_buffer+3, "UPDATE", 6)) {
+        // AT+UPDATE="switch":"on","light_type":1,"colorR":255,"colorG":255,"colorB":255,"bright":100,"mode":19,"speed":100,"sensitive":100
         char *end_str;
         char *string = ps16dz_rx_buffer+10;
         char *token = strtok_r(string, ",", &end_str);
@@ -251,9 +253,15 @@ void PS16DZSerialInput(void)
         }
       }
       else if (!strncmp(ps16dz_rx_buffer+3, "SETTING", 7)) {
+        // AT+SETTING=enterESPTOUCH - When ON button is held for over 5 seconds
+        // AT+SETTING=exitESPTOUCH  - When ON button is pressed
         if (!Settings.flag.button_restrict) {
-          snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_WIFICONFIG " 2"));
-          ExecuteCommand(scmnd, SRC_BUTTON);
+          int state = WIFI_MANAGER;
+          if (!strncmp(ps16dz_rx_buffer+10, "=exit", 5)) { state = WIFI_RETRY; }
+          if (state != Settings.sta_config) {
+            snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_WIFICONFIG " %d"), state);
+            ExecuteCommand(scmnd, SRC_BUTTON);
+          }
         }
       }
       memset(ps16dz_rx_buffer, 0, PS16DZ_BUFFER_SIZE);

@@ -57,11 +57,6 @@ int32_t DriftTime(void)
   return drift_time;
 }
 
-int32_t DriftTime(void)
-{
-  return drift_time;
-}
-
 String GetBuildDateAndTime(void)
 {
   // "2017-03-07T11:08:02" - ISO8601:2004
@@ -362,29 +357,33 @@ void RtcSecond(void)
 {
   TIME_T tmpTime;
 
-  if ((ntp_sync_minute > 59) && (RtcTime.minute > 2)) ntp_sync_minute = 1;                 // If sync prepare for a new cycle
-  uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
-  if (!global_state.wifi_down && (offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute) || ntp_force_sync)) {
-    ntp_time = sntp_get_current_timestamp();
-    if (ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
-      ntp_force_sync = false;
-      if (utc_time > 1451602800) { drift_time = ntp_time - utc_time; }
-      utc_time = ntp_time;
-      ntp_sync_minute = 60;  // Sync so block further requests
-      if (restart_time == 0) {
-        restart_time = utc_time - uptime;  // save first ntp time as restart time
-      }
-      BreakTime(utc_time, tmpTime);
-      RtcTime.year = tmpTime.year + 1970;
-      daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
-      standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
+  if (!user_time_entry) {
+    if ((ntp_sync_minute > 59) && (RtcTime.minute > 2)) ntp_sync_minute = 1;                 // If sync prepare for a new cycle
+    uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
+    if (!global_state.wifi_down && (((offset == RtcTime.second) && ((RtcTime.year < 2016) || (ntp_sync_minute == RtcTime.minute))) || ntp_force_sync)) {
+      ntp_time = sntp_get_current_timestamp();
+      if (ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
+        ntp_force_sync = false;
+        if (utc_time > 1451602800) { drift_time = ntp_time - utc_time; }
+        utc_time = ntp_time;
+        ntp_sync_minute = 60;  // Sync so block further requests
+        if (restart_time == 0) {
+          restart_time = utc_time - uptime;  // save first ntp time as restart time
+        }
+        BreakTime(utc_time, tmpTime);
+        RtcTime.year = tmpTime.year + 1970;
+        daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
+        standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
 
-      // Do not use AddLog here if syslog is enabled. UDP will force exception 9
-//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
-      ntp_synced_message = true;
+        // Do not use AddLog here if syslog is enabled. UDP will force exception 9
+  //      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
+        ntp_synced_message = true;
 
-      if (local_time < 1451602800) {  // 2016-01-01
-        rules_flag.time_init = 1;
+        if (local_time < 1451602800) {  // 2016-01-01
+          rules_flag.time_init = 1;
+        } else {
+          rules_flag.time_set = 1;
+        }
       } else {
         ntp_sync_minute++;  // Try again in next minute
       }

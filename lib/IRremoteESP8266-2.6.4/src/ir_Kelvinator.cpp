@@ -146,11 +146,7 @@ void IRKelvinatorAC::fixup(void) {
 
 #if SEND_KELVINATOR
 void IRKelvinatorAC::send(const uint16_t repeat) {
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Kelvinator.cpp
   this->fixup();  // Ensure correct settings before sending.
-=======
-  fixup();  // Ensure correct settings before sending.
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Kelvinator.cpp
   _irsend.sendKelvinator(remote_state, kKelvinatorStateLength, repeat);
 }
 #endif  // SEND_KELVINATOR
@@ -375,7 +371,6 @@ uint8_t IRKelvinatorAC::convertMode(const stdAc::opmode_t mode) {
       return kKelvinatorDry;
     case stdAc::opmode_t::kFan:
       return kKelvinatorFan;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Kelvinator.cpp
     default:
       return kKelvinatorAuto;
   }
@@ -442,94 +437,6 @@ String IRKelvinatorAC::toString(void) {
   result += addBoolToString(getLight(), F("Light"));
   result += addBoolToString(getSwingHorizontal(), F("Swing (Horizontal)"));
   result += addBoolToString(getSwingVertical(), F("Swing (Vertical)"));
-=======
-    default:
-      return kKelvinatorAuto;
-  }
-}
-
-// Convert the internal state into a human readable string.
-#ifdef ARDUINO
-String IRKelvinatorAC::toString() {
-  String result = "";
-#else
-std::string IRKelvinatorAC::toString() {
-  std::string result = "";
-#endif  // ARDUINO
-  result += F("Power: ");
-  if (getPower())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Mode: ");
-  result += uint64ToString(getMode());
-  switch (getMode()) {
-    case kKelvinatorAuto:
-      result += F(" (AUTO)");
-      break;
-    case kKelvinatorCool:
-      result += F(" (COOL)");
-      break;
-    case kKelvinatorHeat:
-      result += F(" (HEAT)");
-      break;
-    case kKelvinatorDry:
-      result += F(" (DRY)");
-      break;
-    case kKelvinatorFan:
-      result += F(" (FAN)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-  }
-  result += F(", Temp: ");
-  result += uint64ToString(getTemp());
-  result += F("C, Fan: ");
-  result += uint64ToString(getFan());
-  switch (getFan()) {
-    case kKelvinatorFanAuto:
-      result += F(" (AUTO)");
-      break;
-    case kKelvinatorFanMax:
-      result += F(" (MAX)");
-      break;
-  }
-  result += F(", Turbo: ");
-  if (getTurbo())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Quiet: ");
-  if (getQuiet())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", XFan: ");
-  if (getXFan())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", IonFilter: ");
-  if (getIonFilter())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Light: ");
-  if (getLight())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Swing (Horizontal): ");
-  if (getSwingHorizontal())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Swing (Vertical): ");
-  if (getSwingVertical())
-    result += F("On");
-  else
-    result += F("Off");
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Kelvinator.cpp
   return result;
 }
 

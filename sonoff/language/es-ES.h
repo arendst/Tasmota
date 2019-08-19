@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.5.0.16
+ * Updated until v6.6.0.4
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -526,7 +526,7 @@
 #define D_SENSOR_SAIR_TX       "SAir Tx"
 #define D_SENSOR_SPI_CS        "SPI CS"
 #define D_SENSOR_SPI_DC        "SPI DC"
-#define D_SENSOR_BACKLIGHT     "BkLight"
+#define D_SENSOR_BACKLIGHT     "Backlight"
 #define D_SENSOR_PMS5003       "PMS5003"
 #define D_SENSOR_SDS0X1_RX     "SDS0X1 Rx"
 #define D_SENSOR_SDS0X1_TX     "SDS0X1 Tx"
@@ -585,6 +585,12 @@
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
+#define D_SENSOR_BUZZER        "Buzzer"
+#define D_SENSOR_OLED_RESET    "OLED Reset"
+#define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
+#define D_SENSOR_ZIGBEE_RXD    "Zigbee Rx"
+#define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
+#define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -654,5 +660,29 @@
 #define D_TOTAL_REACTIVE  "P. Reactiva Total"
 #define D_UNIT_KWARH      "kVArH"
 #define D_UNIT_ANGLE      "Grados"
+
+//SOLAXX1
+#define D_PV1_VOLTAGE     "PV1 Voltaje"
+#define D_PV1_CURRENT     "PV1 Corriente"
+#define D_PV1_POWER       "PV1 Potencia"
+#define D_PV2_VOLTAGE     "PV2 Voltaee"
+#define D_PV2_CURRENT     "PV2 Corriente"
+#define D_PV2_POWER       "PV2 Potencia"
+#define D_SOLAR_POWER     "Potencia Solar"
+#define D_INVERTER_POWER  "Potencia del Inversor"
+#define D_STATUS          "Estado"
+#define D_WAITING         "En Espera"
+#define D_CHECKING        "Revisando"
+#define D_WORKING         "Funcionando"
+#define D_FAILURE         "Falla"
+#define D_SOLAX_ERROR_0   "Sin código de Error"
+#define D_SOLAX_ERROR_1   "Falla por Pérdida de Red"
+#define D_SOLAX_ERROR_2   "Falla por Voltaje de Red"
+#define D_SOLAX_ERROR_3   "Falla por Frecuencia de Red"
+#define D_SOLAX_ERROR_4   "Falla por Voltaje en PV"
+#define D_SOLAX_ERROR_5   "Falla de Aislación"
+#define D_SOLAX_ERROR_6   "Falla por sobretemperatura"
+#define D_SOLAX_ERROR_7   "Falla de Ventilador"
+#define D_SOLAX_ERROR_8   "Falla del Dispositivo"
 
 #endif  // _LANGUAGE_ES_ES_H_

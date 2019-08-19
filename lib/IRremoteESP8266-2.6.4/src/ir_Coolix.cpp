@@ -205,7 +205,6 @@ void IRCoolixAC::setPower(const bool power) {
     updateSavedState();
     remote_state = kCoolixOff;
   }
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Coolix.cpp
 }
 
 void IRCoolixAC::on(void) {
@@ -214,8 +213,6 @@ void IRCoolixAC::on(void) {
 
 void IRCoolixAC::off(void) {
   this->setPower(false);
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Coolix.cpp
 }
 
 bool IRCoolixAC::getSwing() { return remote_state == kCoolixSwing; }
@@ -281,7 +278,6 @@ void IRCoolixAC::setMode(const uint8_t mode) {
   switch (actualmode) {
     case kCoolixAuto:
     case kCoolixDry:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Coolix.cpp
       if (this->getFan() == kCoolixFanAuto)
         //  No kCoolixFanAuto in Dry/Auto mode.
         this->setFan(kCoolixFanAuto0, false);
@@ -296,12 +292,6 @@ void IRCoolixAC::setMode(const uint8_t mode) {
     default:  // Anything else, go with Auto mode.
       this->setMode(kCoolixAuto);
       return;
-=======
-      recoverSavedState();
-      remote_state = (remote_state & ~kCoolixModeMask) | (actualmode << 2);
-      // Force the temp into a known-good state.
-      setTemp(getTemp());
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Coolix.cpp
   }
   // Fan mode is a special case of Dry.
   if (mode == kCoolixFan) actualmode = kCoolixDry;
@@ -323,11 +313,7 @@ uint8_t IRCoolixAC::getFan() {
   return (getNormalState() & kCoolixFanMask) >> 13;
 }
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Coolix.cpp
 void IRCoolixAC::setFan(const uint8_t speed, const bool modecheck) {
-=======
-void IRCoolixAC::setFan(const uint8_t speed) {
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Coolix.cpp
   recoverSavedState();
   uint8_t newspeed = speed;
   switch (speed) {
@@ -354,11 +340,6 @@ void IRCoolixAC::setFan(const uint8_t speed) {
     case kCoolixFanMin:
     case kCoolixFanMed:
     case kCoolixFanMax:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Coolix.cpp
-=======
-    case kCoolixFanAuto:
-    case kCoolixFanAuto0:
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Coolix.cpp
     case kCoolixFanZoneFollow:
     case kCoolixFanFixed:
       break;
@@ -382,7 +363,6 @@ uint8_t IRCoolixAC::convertMode(const stdAc::opmode_t mode) {
       return kCoolixFan;
     default:
       return kCoolixAuto;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Coolix.cpp
   }
 }
 
@@ -484,42 +464,6 @@ String IRCoolixAC::toString() {
   result.reserve(100);  // Reserve some heap for the string to reduce fragging.
   result += addBoolToString(getPower(), F("Power"), false);
   if (!getPower()) return result;  // If it's off, there is no other info.
-=======
-  }
-}
-
-// Convert a standard A/C Fan speed into its native fan speed.
-uint8_t IRCoolixAC::convertFan(const stdAc::fanspeed_t speed) {
-  switch (speed) {
-    case stdAc::fanspeed_t::kMin:
-    case stdAc::fanspeed_t::kLow:
-      return kCoolixFanMin;
-    case stdAc::fanspeed_t::kMedium:
-      return kCoolixFanMed;
-    case stdAc::fanspeed_t::kHigh:
-    case stdAc::fanspeed_t::kMax:
-      return kCoolixFanMax;
-    default:
-      return kCoolixFanAuto;
-  }
-}
-
-// Convert the internal state into a human readable string.
-#ifdef ARDUINO
-String IRCoolixAC::toString() {
-  String result = "";
-#else
-std::string IRCoolixAC::toString() {
-  std::string result = "";
-#endif  // ARDUINO
-  result += F("Power: ");
-  if (getPower()) {
-    result += F("On");
-  } else {
-    result += F("Off");
-    return result;  // If it's off, there is no other info.
-  }
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Coolix.cpp
   // Special modes.
   if (getSwing()) {
     result += F(", Swing: Toggle");
@@ -541,7 +485,6 @@ std::string IRCoolixAC::toString() {
     result += F(", Clean: Toggle");
     return result;
   }
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Coolix.cpp
   result += addModeToString(getMode(), kCoolixAuto,
                                     kCoolixCool, kCoolixHeat,
                                     kCoolixDry, kCoolixFan);
@@ -574,66 +517,6 @@ std::string IRCoolixAC::toString() {
   // Fan mode doesn't have a temperature.
   if (getMode() != kCoolixFan) result += addTempToString(getTemp());
   result += addBoolToString(getZoneFollow(), F("Zone Follow"));
-=======
-  result += F(", Mode: ");
-  result += uint64ToString(getMode());
-  switch (getMode()) {
-    case kCoolixAuto:
-      result += F(" (AUTO)");
-      break;
-    case kCoolixCool:
-      result += F(" (COOL)");
-      break;
-    case kCoolixHeat:
-      result += F(" (HEAT)");
-      break;
-    case kCoolixDry:
-      result += F(" (DRY)");
-      break;
-    case kCoolixFan:
-      result += F(" (FAN)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-  }
-  result += F(", Fan: ");
-  result += uint64ToString(getFan());
-  switch (getFan()) {
-    case kCoolixFanAuto:
-      result += F(" (AUTO)");
-      break;
-    case kCoolixFanAuto0:
-      result += F(" (AUTO0)");
-      break;
-    case kCoolixFanMax:
-      result += F(" (MAX)");
-      break;
-    case kCoolixFanMin:
-      result += F(" (MIN)");
-      break;
-    case kCoolixFanMed:
-      result += F(" (MED)");
-      break;
-    case kCoolixFanZoneFollow:
-      result += F(" (ZONEFOLLOW)");
-      break;
-    case kCoolixFanFixed:
-      result += F(" (FIXED)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-  }
-  if (getMode() != kCoolixFan) {  // Fan mode doesn't have a temperature.
-    result += F(", Temp: ");
-    result += uint64ToString(getTemp());
-    result += 'C';
-  }
-  result += F(", Zone Follow: ");
-  if (getZoneFollow())
-    result += F("On");
-  else
-    result += F("Off");
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Coolix.cpp
   result += F(", Sensor Temp: ");
   if (getSensorTemp() > kCoolixSensorTempMax)
     result += F("Ignored");

@@ -469,6 +469,7 @@ bool XsnsCall(uint8_t Function)
 #endif  // PROFILE_XSNS_SENSOR_EVERY_SECOND
 
       if (result && ((FUNC_COMMAND == Function) ||
+                     (FUNC_PIN_STATE == Function) ||
                      (FUNC_COMMAND_SENSOR == Function)
                     )) {
         break;

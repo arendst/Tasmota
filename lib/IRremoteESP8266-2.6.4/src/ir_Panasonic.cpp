@@ -60,7 +60,6 @@ const uint32_t kPanasonicMinGap = kPanasonicMinGapTicks * kPanasonicTick;
 const uint16_t kPanasonicAcSectionGap = 10000;
 const uint16_t kPanasonicAcSection1Length = 8;
 const uint32_t kPanasonicAcMessageGap = kDefaultMessageGap;  // Just a guess.
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
 
 using irutils::addBoolToString;
 using irutils::addFanToString;
@@ -69,8 +68,6 @@ using irutils::addLabeledString;
 using irutils::addModeToString;
 using irutils::addTempToString;
 using irutils::minsToString;
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
 
 #if (SEND_PANASONIC || SEND_DENON)
 // Send a Panasonic formatted message.
@@ -261,11 +258,7 @@ void IRPanasonicAc::fixChecksum(const uint16_t length) {
 
 #if SEND_PANASONIC_AC
 void IRPanasonicAc::send(const uint16_t repeat) {
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
   this->fixChecksum();
-=======
-  fixChecksum();
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
   _irsend.sendPanasonicAC(remote_state, kPanasonicAcStateLength, repeat);
 }
 #endif  // SEND_PANASONIC_AC
@@ -317,11 +310,7 @@ void IRPanasonicAc::setModel(const panasonic_ac_remote_model_t model) {
   }
 }
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
 panasonic_ac_remote_model_t IRPanasonicAc::getModel(void) {
-=======
-panasonic_ac_remote_model_t IRPanasonicAc::getModel() {
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
   if (remote_state[23] == 0x89) return kPanasonicRkr;
   if (remote_state[17] == 0x00) {
     if ((remote_state[21] & 0x10) && (remote_state[23] & 0x01))
@@ -468,13 +457,8 @@ uint8_t IRPanasonicAc::getFan(void) {
   return (remote_state[16] >> 4) - kPanasonicAcFanOffset;
 }
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
 bool IRPanasonicAc::getQuiet(void) {
   switch (this->getModel()) {
-=======
-bool IRPanasonicAc::getQuiet() {
-  switch (getModel()) {
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
     case kPanasonicRkr:
     case kPanasonicCkp:
       return remote_state[21] & kPanasonicAcQuietCkp;
@@ -485,11 +469,7 @@ bool IRPanasonicAc::getQuiet() {
 
 void IRPanasonicAc::setQuiet(const bool on) {
   uint8_t quiet;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
   switch (this->getModel()) {
-=======
-  switch (getModel()) {
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
     case kPanasonicRkr:
     case kPanasonicCkp:
       quiet = kPanasonicAcQuietCkp;
@@ -506,13 +486,8 @@ void IRPanasonicAc::setQuiet(const bool on) {
   }
 }
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
 bool IRPanasonicAc::getPowerful(void) {
   switch (this->getModel()) {
-=======
-bool IRPanasonicAc::getPowerful() {
-  switch (getModel()) {
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
     case kPanasonicRkr:
     case kPanasonicCkp:
       return remote_state[21] & kPanasonicAcPowerfulCkp;
@@ -523,11 +498,7 @@ bool IRPanasonicAc::getPowerful() {
 
 void IRPanasonicAc::setPowerful(const bool on) {
   uint8_t powerful;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
   switch (this->getModel()) {
-=======
-  switch (getModel()) {
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
     case kPanasonicRkr:
     case kPanasonicCkp:
       powerful = kPanasonicAcPowerfulCkp;
@@ -625,7 +596,6 @@ bool IRPanasonicAc::isOffTimerEnabled(void) {
   return remote_state[13] & kPanasonicAcOffTimer;
 }
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
 // Convert a standard A/C mode into its native mode.
 uint8_t IRPanasonicAc::convertMode(const stdAc::opmode_t mode) {
   switch (mode) {
@@ -760,99 +730,12 @@ stdAc::state_t IRPanasonicAc::toCommon(void) {
   result.sleep = -1;
   result.clock = -1;
   return result;
-=======
-#ifdef ARDUINO
-String IRPanasonicAc::timeToString(const uint16_t mins_since_midnight) {
-  String result = "";
-#else
-std::string IRPanasonicAc::timeToString(const uint16_t mins_since_midnight) {
-  std::string result = "";
-#endif  // ARDUINO
-  result += uint64ToString(mins_since_midnight / 60) + ':';
-  uint8_t mins = mins_since_midnight % 60;
-  if (mins < 10) result += '0';  // Zero pad the minutes.
-  return result + uint64ToString(mins);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
-}
-
-// Convert a standard A/C mode into its native mode.
-uint8_t IRPanasonicAc::convertMode(const stdAc::opmode_t mode) {
-  switch (mode) {
-    case stdAc::opmode_t::kCool:
-      return kPanasonicAcCool;
-    case stdAc::opmode_t::kHeat:
-      return kPanasonicAcHeat;
-    case stdAc::opmode_t::kDry:
-      return kPanasonicAcDry;
-    case stdAc::opmode_t::kFan:
-      return kPanasonicAcFan;
-    default:
-      return kPanasonicAcAuto;
-  }
-}
-
-// Convert a standard A/C Fan speed into its native fan speed.
-uint8_t IRPanasonicAc::convertFan(const stdAc::fanspeed_t speed) {
-  switch (speed) {
-    case stdAc::fanspeed_t::kMin:
-      return kPanasonicAcFanMin;
-    case stdAc::fanspeed_t::kLow:
-      return kPanasonicAcFanMin + 1;
-    case stdAc::fanspeed_t::kMedium:
-      return kPanasonicAcFanMin + 2;
-    case stdAc::fanspeed_t::kHigh:
-      return kPanasonicAcFanMin + 3;
-    case stdAc::fanspeed_t::kMax:
-      return kPanasonicAcFanMax;
-    default:
-      return kPanasonicAcFanAuto;
-  }
-}
-
-// Convert a standard A/C vertical swing into its native setting.
-uint8_t IRPanasonicAc::convertSwingV(const stdAc::swingv_t position) {
-  switch (position) {
-    case stdAc::swingv_t::kHighest:
-    case stdAc::swingv_t::kHigh:
-    case stdAc::swingv_t::kMiddle:
-      return kPanasonicAcSwingVUp;
-    case stdAc::swingv_t::kLow:
-    case stdAc::swingv_t::kLowest:
-      return kPanasonicAcSwingVDown;
-    default:
-      return kPanasonicAcSwingVAuto;
-  }
-}
-
-// Convert a standard A/C horizontal swing into its native setting.
-uint8_t IRPanasonicAc::convertSwingH(const stdAc::swingh_t position) {
-  switch (position) {
-    case stdAc::swingh_t::kLeftMax:
-      return kPanasonicAcSwingHFullLeft;
-    case stdAc::swingh_t::kLeft:
-      return kPanasonicAcSwingHLeft;
-    case stdAc::swingh_t::kMiddle:
-      return kPanasonicAcSwingHMiddle;
-    case stdAc::swingh_t::kRight:
-    return kPanasonicAcSwingHRight;
-    case stdAc::swingh_t::kRightMax:
-      return kPanasonicAcSwingHFullRight;
-    default:
-      return kPanasonicAcSwingHAuto;
-  }
 }
 
 // Convert the internal state into a human readable string.
 String IRPanasonicAc::toString(void) {
   String result = "";
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
   result.reserve(180);  // Reserve some heap for the string to reduce fragging.
-=======
-#else
-std::string IRPanasonicAc::toString() {
-  std::string result = "";
-#endif  // ARDUINO
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
   result += F("Model: ");
   result += uint64ToString(getModel());
   switch (getModel()) {
@@ -870,7 +753,6 @@ std::string IRPanasonicAc::toString() {
       break;
     case kPanasonicCkp:
       result += F(" (CKP)");
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
       break;
     case kPanasonicRkr:
       result += F(" (RKR)");
@@ -886,61 +768,6 @@ std::string IRPanasonicAc::toString() {
                            kPanasonicAcFanAuto, kPanasonicAcFanAuto,
                            kPanasonicAcFanMed);
   result += addIntToString(getSwingVertical(), F("Swing (Vertical)"));
-=======
-      break;
-    case kPanasonicRkr:
-      result += F(" (RKR)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-  }
-  result += F(", Power: ");
-  if (getPower())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Mode: ");
-  result += uint64ToString(getMode());
-  switch (getMode()) {
-    case kPanasonicAcAuto:
-      result += F(" (AUTO)");
-      break;
-    case kPanasonicAcCool:
-      result += F(" (COOL)");
-      break;
-    case kPanasonicAcHeat:
-      result += F(" (HEAT)");
-      break;
-    case kPanasonicAcDry:
-      result += F(" (DRY)");
-      break;
-    case kPanasonicAcFan:
-      result += F(" (FAN)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-  }
-  result += F(", Temp: ");
-  result += uint64ToString(getTemp());
-  result += F("C, Fan: ");
-  result += uint64ToString(getFan());
-  switch (getFan()) {
-    case kPanasonicAcFanAuto:
-      result += F(" (AUTO)");
-      break;
-    case kPanasonicAcFanMax:
-      result += F(" (MAX)");
-      break;
-    case kPanasonicAcFanMin:
-      result += F(" (MIN)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-      break;
-  }
-  result += F(", Swing (Vertical): ");
-  result += uint64ToString(getSwingVertical());
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
   switch (getSwingVertical()) {
     case kPanasonicAcSwingVAuto:
       result += F(" (AUTO)");
@@ -964,12 +791,7 @@ std::string IRPanasonicAc::toString() {
     case kPanasonicCkp:
       break;  // No Horizontal Swing support.
     default:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
       result += addIntToString(getSwingHorizontal(), F("Swing (Horizontal)"));
-=======
-      result += F(", Swing (Horizontal): ");
-      result += uint64ToString(getSwingHorizontal());
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
       switch (getSwingHorizontal()) {
         case kPanasonicAcSwingHAuto:
           result += F(" (AUTO)");
@@ -994,7 +816,6 @@ std::string IRPanasonicAc::toString() {
           break;
       }
   }
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Panasonic.cpp
   result += addBoolToString(getQuiet(), F("Quiet"));
   result += addBoolToString(getPowerful(), F("Powerful"));
   result += addLabeledString(minsToString(getClock()), F("Clock"));
@@ -1004,30 +825,6 @@ std::string IRPanasonicAc::toString() {
   result += addLabeledString(
       isOffTimerEnabled() ? minsToString(getOffTimer()) : F("Off"),
       F("Off Timer"));
-=======
-  result += F(", Quiet: ");
-  if (getQuiet())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Powerful: ");
-  if (getPowerful())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Clock: ");
-  result += timeToString(getClock());
-  result += F(", On Timer: ");
-  if (isOnTimerEnabled())
-    result += timeToString(getOnTimer());
-  else
-    result += F("Off");
-  result += F(", Off Timer: ");
-  if (isOffTimerEnabled())
-    result += timeToString(getOffTimer());
-  else
-    result += F("Off");
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Panasonic.cpp
   return result;
 }
 

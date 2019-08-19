@@ -22,15 +22,6 @@
 #ifdef UNIT_TEST
 #include "IRsend_test.h"
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Gree.h
-=======
-
-//                      GGGG  RRRRRR  EEEEEEE EEEEEEE
-//                     GG  GG RR   RR EE      EE
-//                    GG      RRRRRR  EEEEE   EEEEE
-//                    GG   GG RR  RR  EE      EE
-//                     GGGGGG RR   RR EEEEEEE EEEEEEE
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Gree.h
 
 // Constants
 enum gree_ac_remote_model_t {
@@ -66,10 +57,7 @@ const uint8_t kGreeMinTemp = 16;  // Celsius
 const uint8_t kGreeMaxTemp = 30;  // Celsius
 const uint8_t kGreeFanAuto = 0;
 const uint8_t kGreeFanMin = 1;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Gree.h
 const uint8_t kGreeFanMed = 2;
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Gree.h
 const uint8_t kGreeFanMax = 3;
 
 const uint8_t kGreeSwingLastPos = 0b00000000;
@@ -114,10 +102,7 @@ class IRGreeAC {
   void stateReset(void);
 #if SEND_GREE
   void send(const uint16_t repeat = kGreeDefaultRepeat);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Gree.h
   uint8_t calibrate(void) { return _irsend.calibrate(); }
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Gree.h
 #endif  // SEND_GREE
   void begin(void);
   void on(void);
@@ -145,7 +130,6 @@ class IRGreeAC {
   void setWiFi(const bool on);
   bool getWiFi(void);
   void setSwingVertical(const bool automatic, const uint8_t position);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Gree.h
   bool getSwingVerticalAuto(void);
   uint8_t getSwingVerticalPosition(void);
   uint8_t convertMode(const stdAc::opmode_t mode);
@@ -160,22 +144,6 @@ class IRGreeAC {
   static bool validChecksum(const uint8_t state[],
                             const uint16_t length = kGreeStateLength);
   String toString(void);
-=======
-  bool getSwingVerticalAuto();
-  uint8_t getSwingVerticalPosition();
-  uint8_t convertMode(const stdAc::opmode_t mode);
-  uint8_t convertFan(const stdAc::fanspeed_t speed);
-  uint8_t convertSwingV(const stdAc::swingv_t swingv);
-  uint8_t* getRaw();
-  void setRaw(uint8_t new_code[]);
-  static bool validChecksum(const uint8_t state[],
-                            const uint16_t length = kGreeStateLength);
-#ifdef ARDUINO
-  String toString();
-#else
-  std::string toString();
-#endif
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Gree.h
 #ifndef UNIT_TEST
 
  private:
@@ -187,11 +155,7 @@ class IRGreeAC {
   uint8_t remote_state[kGreeStateLength];
   gree_ac_remote_model_t _model;
   void checksum(const uint16_t length = kGreeStateLength);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Gree.h
   void fixup(void);
-=======
-  void fixup();
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Gree.h
 };
 
 #endif  // IR_GREE_H_

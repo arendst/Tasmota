@@ -426,11 +426,7 @@ void IRMitsubishiAC::begin(void) { _irsend.begin(); }
 #if SEND_MITSUBISHI_AC
 // Send the current desired state to the IR LED.
 void IRMitsubishiAC::send(const uint16_t repeat) {
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Mitsubishi.cpp
   this->checksum();  // Ensure correct checksum before sending.
-=======
-  checksum();  // Ensure correct checksum before sending.
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Mitsubishi.cpp
   _irsend.sendMitsubishiAC(remote_state, kMitsubishiACStateLength, repeat);
 }
 #endif  // SEND_MITSUBISHI_AC
@@ -623,7 +619,6 @@ uint8_t IRMitsubishiAC::convertMode(const stdAc::opmode_t mode) {
     default:
       return kMitsubishiAcAuto;
   }
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Mitsubishi.cpp
 }
 
 // Convert a standard A/C Fan speed into its native fan speed.
@@ -659,99 +654,6 @@ uint8_t IRMitsubishiAC::convertSwingV(const stdAc::swingv_t position) {
       return kMitsubishiAcVaneAutoMove - 2;
     case stdAc::swingv_t::kAuto:
        return kMitsubishiAcVaneAutoMove;
-=======
-}
-
-// Convert a standard A/C Fan speed into its native fan speed.
-uint8_t IRMitsubishiAC::convertFan(const stdAc::fanspeed_t speed) {
-  switch (speed) {
-    case stdAc::fanspeed_t::kMin:
-      return kMitsubishiAcFanSilent;
-    case stdAc::fanspeed_t::kLow:
-      return kMitsubishiAcFanRealMax - 3;
-    case stdAc::fanspeed_t::kMedium:
-      return kMitsubishiAcFanRealMax - 2;
-    case stdAc::fanspeed_t::kHigh:
-      return kMitsubishiAcFanRealMax - 1;
-    case stdAc::fanspeed_t::kMax:
-      return kMitsubishiAcFanRealMax;
-    default:
-      return kMitsubishiAcFanAuto;
-  }
-}
-
-// Convert a standard A/C vertical swing into its native setting.
-uint8_t IRMitsubishiAC::convertSwingV(const stdAc::swingv_t position) {
-  switch (position) {
-    case stdAc::swingv_t::kHighest:
-    case stdAc::swingv_t::kHigh:
-    case stdAc::swingv_t::kMiddle:
-    case stdAc::swingv_t::kLow:
-    case stdAc::swingv_t::kLowest:
-      return kMitsubishiAcVaneAutoMove;
-    default:
-      return kMitsubishiAcVaneAuto;
-  }
-}
-
-#ifdef ARDUINO
-String IRMitsubishiAC::timeToString(uint64_t time) {
-  String result = "";
-#else
-std::string IRMitsubishiAC::timeToString(uint64_t time) {
-  std::string result = "";
-#endif  // ARDUINO
-  if (time / 6 < 10) result += '0';
-  result += uint64ToString(time / 6);
-  result += ':';
-  if (time * 10 % 60 < 10) result += '0';
-  result += uint64ToString(time * 10 % 60);
-  return result;
-}
-
-// Convert the internal state into a human readable string.
-#ifdef ARDUINO
-String IRMitsubishiAC::toString() {
-  String result = "";
-#else
-std::string IRMitsubishiAC::toString() {
-  std::string result = "";
-#endif  // ARDUINO
-  result += F("Power: ");
-  if (getPower())
-    result += F("On");
-  else
-    result += F("Off");
-  switch (getMode()) {
-    case MITSUBISHI_AC_AUTO:
-      result += F(" (AUTO)");
-      break;
-    case MITSUBISHI_AC_COOL:
-      result += F(" (COOL)");
-      break;
-    case MITSUBISHI_AC_DRY:
-      result += F(" (DRY)");
-      break;
-    case MITSUBISHI_AC_HEAT:
-      result += F(" (HEAT)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-  }
-  result += F(", Temp: ");
-  result += uint64ToString(getTemp());
-  result += F("C, FAN: ");
-  switch (getFan()) {
-    case MITSUBISHI_AC_FAN_AUTO:
-      result += F("AUTO");
-      break;
-    case MITSUBISHI_AC_FAN_MAX:
-      result += F("MAX");
-      break;
-    case MITSUBISHI_AC_FAN_SILENT:
-      result += F("SILENT");
-      break;
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Mitsubishi.cpp
     default:
        return kMitsubishiAcVaneAuto;
   }
@@ -797,7 +699,6 @@ stdAc::fanspeed_t IRMitsubishiAC::toCommonFanSpeed(const uint8_t speed) {
     case kMitsubishiAcFanSilent: return stdAc::fanspeed_t::kMin;
     default: return stdAc::fanspeed_t::kAuto;
   }
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Mitsubishi.cpp
 }
 
 // Convert a native vertical swing to it's common equivalent.
@@ -864,16 +765,11 @@ String IRMitsubishiAC::toString(void) {
                            kMitsubishiAcFanRealMax - 2);
   result += F(", Vane: ");
   switch (this->getVane()) {
-=======
-  result += F(", VANE: ");
-  switch (getVane()) {
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Mitsubishi.cpp
     case MITSUBISHI_AC_VANE_AUTO:
       result += F("AUTO");
       break;
     case MITSUBISHI_AC_VANE_AUTO_MOVE:
       result += F("AUTO MOVE");
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Mitsubishi.cpp
       break;
     default:
       result += uint64ToString(this->getVane());
@@ -882,28 +778,15 @@ String IRMitsubishiAC::toString(void) {
   switch (this->getWideVane()) {
     case kMitsubishiAcWideVaneAuto:
       result += F("AUTO");
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Mitsubishi.cpp
       break;
     default:
       result += uint64ToString(this->getWideVane());
   }
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Mitsubishi.cpp
   result += addLabeledString(minsToString(getClock() * 10), F("Time"));
   result += addLabeledString(minsToString(getStartClock() * 10), F("On timer"));
   result += addLabeledString(minsToString(getStopClock() * 10), F("Off timer"));
   result += F(", Timer: ");
   switch (this->getTimer()) {
-=======
-  result += F(", Time: ");
-  result += timeToString(getClock());
-  result += F(", On timer: ");
-  result += timeToString(getStartClock());
-  result += F(", Off timer: ");
-  result += timeToString(getStopClock());
-  result += F(", Timer: ");
-  switch (getTimer()) {
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Mitsubishi.cpp
     case kMitsubishiAcNoTimer:
       result += '-';
       break;
@@ -918,11 +801,7 @@ String IRMitsubishiAC::toString(void) {
       break;
     default:
       result += F("? (");
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Mitsubishi.cpp
       result += this->getTimer();
-=======
-      result += getTimer();
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Mitsubishi.cpp
       result += F(")\n");
   }
   return result;

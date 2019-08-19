@@ -38,12 +38,8 @@ TESTS = IRutils_test IRsend_test ir_NEC_test ir_GlobalCache_test \
 	ir_Carrier_test ir_Haier_test ir_Hitachi_test ir_GICable_test \
 	ir_Whirlpool_test ir_Lutron_test ir_Electra_test ir_Pioneer_test \
   ir_MWM_test ir_Vestel_test ir_Teco_test ir_Tcl_test ir_Lego_test IRac_test \
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/Makefile
 	ir_MitsubishiHeavy_test ir_Trotec_test ir_Argo_test ir_Goodweather_test \
 	ir_Inax_test ir_Neoclima_test
-=======
-	ir_MitsubishiHeavy_test
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/Makefile
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -88,11 +84,7 @@ PROTOCOLS = ir_NEC.o ir_Sony.o ir_Samsung.o ir_JVC.o ir_RCMM.o ir_RC5_RC6.o \
 	ir_Midea.o ir_Magiquest.o ir_Lasertag.o ir_Carrier.o ir_Haier.o \
 	ir_Hitachi.o ir_GICable.o ir_Whirlpool.o ir_Lutron.o ir_Electra.o \
 	ir_Pioneer.o ir_MWM.o ir_Vestel.o ir_Teco.o ir_Tcl.o ir_Lego.o ir_Argo.o \
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/Makefile
 	ir_Trotec.o ir_MitsubishiHeavy.o ir_Goodweather.o ir_Inax.o ir_Neoclima.o
-=======
-	ir_Trotec.o ir_MitsubishiHeavy.o
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/Makefile
 
 # All the IR Protocol header files.
 PROTOCOLS_H = $(USER_DIR)/ir_Argo.h \
@@ -119,12 +111,8 @@ PROTOCOLS_H = $(USER_DIR)/ir_Argo.h \
 		$(USER_DIR)/ir_Whirlpool.h \
 		$(USER_DIR)/ir_Vestel.h \
 		$(USER_DIR)/ir_Tcl.h \
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/Makefile
 		$(USER_DIR)/ir_Teco.h \
 		$(USER_DIR)/ir_Trotec.h
-=======
-		$(USER_DIR)/ir_Teco.h
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/Makefile
 # Common object files
 COMMON_OBJ = IRutils.o IRtimer.o IRsend.o IRrecv.o IRac.o ir_GlobalCache.o \
              $(PROTOCOLS) gtest_main.a
@@ -578,7 +566,6 @@ ir_Lego_test : $(COMMON_OBJ) ir_Lego_test.o
 ir_Argo.o : $(USER_DIR)/ir_Argo.cpp $(COMMON_DEPS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -c $(USER_DIR)/ir_Argo.cpp
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/Makefile
 ir_Argo_test.o : ir_Argo_test.cpp $(COMMON_TEST_DEPS) $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -c ir_Argo_test.cpp
 
@@ -620,7 +607,3 @@ ir_Neoclima_test.o : ir_Neoclima_test.cpp $(COMMON_TEST_DEPS) $(GTEST_HEADERS)
 
 ir_Neoclima_test : $(COMMON_OBJ) ir_Neoclima_test.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
-=======
-ir_Trotec.o : $(USER_DIR)/ir_Trotec.cpp $(COMMON_DEPS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -c $(USER_DIR)/ir_Trotec.cpp
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/Makefile

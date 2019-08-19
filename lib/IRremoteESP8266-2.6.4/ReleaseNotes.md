@@ -1,6 +1,5 @@
 # Release Notes
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/ReleaseNotes.md
 ## _v2.6.4 (20190726)_
 
 **[Bug Fixes]**
@@ -117,8 +116,6 @@
 - Minor changes to DAIKIN216 timings and features. (#693)
 
 
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/ReleaseNotes.md
 ## _v2.6.0 (20190430)_
 
 **[Bug Fixes]**

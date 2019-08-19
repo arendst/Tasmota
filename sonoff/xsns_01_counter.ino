@@ -84,10 +84,10 @@ void CounterUpdate4(void)
 
 bool CounterPinState(void)
 {
-  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
-    if (pin[GPIO_CNTR1 +i] < 99) {
-      Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
-    }
+  if ((XdrvMailbox.index >= GPIO_CNTR1_NP) && (XdrvMailbox.index < (GPIO_CNTR1_NP + MAX_COUNTERS))) {
+    bitSet(counter_no_pullup, XdrvMailbox.index - GPIO_CNTR1_NP);
+    XdrvMailbox.index -= (GPIO_CNTR1_NP - GPIO_CNTR1);
+    return true;
   }
   return false;
 }
@@ -105,17 +105,19 @@ void CounterInit(void)
   }
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_SNS_COUNTER[] PROGMEM =
-  "{s}" D_COUNTER "%d{m}%s%s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
+void CounterSaveState(void)
+{
+  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
+    if (pin[GPIO_CNTR1 +i] < 99) {
+      Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
+    }
+  }
+}
 
 void CounterShow(bool json)
 {
-  char stemp[10];
-
+  bool header = false;
   uint8_t dsxflg = 0;
-  uint8_t header = 0;
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       char counter[33];
@@ -129,11 +131,9 @@ void CounterShow(bool json)
       if (json) {
         if (!header) {
           ResponseAppend_P(PSTR(",\"COUNTER\":{"));
-          stemp[0] = '\0';
         }
-        header++;
-        ResponseAppend_P(PSTR("%s\"C%d\":%s"), stemp, i +1, counter);
-        strlcpy(stemp, ",", sizeof(stemp));
+        ResponseAppend_P(PSTR("%s\"C%d\":%s"), (header)?",":"", i +1, counter);
+        header = true;
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
           DomoticzSensor(DZ_COUNT, RtcSettings.pulse_counter[i]);
@@ -142,7 +142,8 @@ void CounterShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
       } else {
-        WSContentSend_PD(HTTP_SNS_COUNTER, i +1, counter, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
+        WSContentSend_PD(PSTR("{s}" D_COUNTER "%d{m}%s%s{e}"),
+          i +1, counter, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
 #endif  // USE_WEBSERVER
       }
     }
@@ -150,9 +151,26 @@ void CounterShow(bool json)
       RtcSettings.pulse_counter[i] = 0xFFFFFFFF;  // Set Timer to max in case of no more interrupts due to stall of measured device
     }
   }
-  if (json) {
-    if (header) {
-      ResponseJsonEnd();
+  if (header) {
+    ResponseJsonEnd();
+  }
+}
+
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+void CmndCounter(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
+    if ((XdrvMailbox.data_len > 0) && (pin[GPIO_CNTR1 + XdrvMailbox.index -1] < 99)) {
+      if ((XdrvMailbox.data[0] == '-') || (XdrvMailbox.data[0] == '+')) {
+        RtcSettings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload;
+        Settings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload;
+      } else {
+        RtcSettings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload;
+        Settings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload;
+      }
     }
     ResponseCmndIdxNumber(RtcSettings.pulse_counter[XdrvMailbox.index -1]);
   }

@@ -292,8 +292,8 @@
 #define D_TELEMETRY_PERIOD "Okres telemetrii"
 
 #define D_OTHER_PARAMETERS "Inne parametry"
-#define D_TEMPLATE "Template"
-#define D_ACTIVATE "Activate"
+#define D_TEMPLATE "Szablon"
+#define D_ACTIVATE "Aktywuj"
 #define D_WEB_ADMIN_PASSWORD "Hasło administratora Web"
 #define D_MQTT_ENABLE "MQTT aktywne"
 #define D_FRIENDLY_NAME "Twoja nazwa"
@@ -307,12 +307,6 @@
 #define D_TEMPLATE_NAME "Nazwa"
 #define D_BASE_TYPE "Na bazie"
 #define D_TEMPLATE_FLAGS "Opcje"
-
-#define D_CONFIGURE_TEMPLATE "Configure Template"
-#define D_TEMPLATE_PARAMETERS "Template parameters"
-#define D_TEMPLATE_NAME "Name"
-#define D_BASE_TYPE "Based on"
-#define D_TEMPLATE_FLAGS "Options"
 
 #define D_SAVE_CONFIGURATION "Zapisz ustawienia"
 #define D_CONFIGURATION_SAVED "Ustawienia zapisane"
@@ -532,7 +526,7 @@
 #define D_SENSOR_SAIR_TX       "SAir Tx"
 #define D_SENSOR_SPI_CS        "SPI CS"
 #define D_SENSOR_SPI_DC        "SPI DC"
-#define D_SENSOR_BACKLIGHT     "BkLight"
+#define D_SENSOR_BACKLIGHT     "Backlight"
 #define D_SENSOR_PMS5003       "PMS5003"
 #define D_SENSOR_SDS0X1_RX     "SDS0X1 Rx"
 #define D_SENSOR_SDS0X1_TX     "SDS0X1 Tx"
@@ -591,6 +585,12 @@
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
+#define D_SENSOR_BUZZER        "Buzzer"
+#define D_SENSOR_OLED_RESET    "OLED Reset"
+#define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
+#define D_SENSOR_ZIGBEE_RXD    "Zigbee Rx"
+#define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
+#define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
 
 // Units
 #define D_UNIT_AMPERE "A"

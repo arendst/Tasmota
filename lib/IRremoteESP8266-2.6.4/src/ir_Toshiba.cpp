@@ -95,11 +95,7 @@ void IRToshibaAC::begin(void) { _irsend.begin(); }
 #if SEND_TOSHIBA_AC
 // Send the current desired state to the IR LED.
 void IRToshibaAC::send(const uint16_t repeat) {
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Toshiba.cpp
   this->checksum();  // Ensure correct checksum before sending.
-=======
-  checksum();  // Ensure correct checksum before sending.
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Toshiba.cpp
   _irsend.sendToshibaAC(remote_state, kToshibaACStateLength, repeat);
 }
 #endif  // SEND_TOSHIBA_AC
@@ -258,24 +254,6 @@ uint8_t IRToshibaAC::convertMode(const stdAc::opmode_t mode) {
   }
 }
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Toshiba.cpp
-=======
-// Convert a standard A/C mode into its native mode.
-uint8_t IRToshibaAC::convertMode(const stdAc::opmode_t mode) {
-  switch (mode) {
-    case stdAc::opmode_t::kCool:
-      return kToshibaAcCool;
-    case stdAc::opmode_t::kHeat:
-      return kToshibaAcHeat;
-    case stdAc::opmode_t::kDry:
-      return kToshibaAcDry;
-    // No Fan mode.
-    default:
-      return kToshibaAcAuto;
-  }
-}
-
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Toshiba.cpp
 // Convert a standard A/C Fan speed into its native fan speed.
 uint8_t IRToshibaAC::convertFan(const stdAc::fanspeed_t speed) {
   switch (speed) {
@@ -289,7 +267,6 @@ uint8_t IRToshibaAC::convertFan(const stdAc::fanspeed_t speed) {
       return kToshibaAcFanMax - 1;
     case stdAc::fanspeed_t::kMax:
       return kToshibaAcFanMax;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Toshiba.cpp
     default:
       return kToshibaAcFanAuto;
   }
@@ -314,55 +291,6 @@ stdAc::fanspeed_t IRToshibaAC::toCommonFanSpeed(const uint8_t spd) {
     case kToshibaAcFanMax - 3: return stdAc::fanspeed_t::kLow;
     case kToshibaAcFanMax - 4: return stdAc::fanspeed_t::kMin;
     default: return stdAc::fanspeed_t::kAuto;
-=======
-    default:
-      return kToshibaAcFanAuto;
-  }
-}
-
-// Convert the internal state into a human readable string.
-#ifdef ARDUINO
-String IRToshibaAC::toString() {
-  String result = "";
-#else
-std::string IRToshibaAC::toString() {
-  std::string result = "";
-#endif  // ARDUINO
-  result += F("Power: ");
-  if (getPower())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Mode: ");
-  result += uint64ToString(getMode());
-  switch (getMode()) {
-    case kToshibaAcAuto:
-      result += F(" (AUTO)");
-      break;
-    case kToshibaAcCool:
-      result += F(" (COOL)");
-      break;
-    case kToshibaAcHeat:
-      result += F(" (HEAT)");
-      break;
-    case kToshibaAcDry:
-      result += F(" (DRY)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-  }
-  result += F(", Temp: ");
-  result += uint64ToString(getTemp());
-  result += F("C, Fan: ");
-  result += uint64ToString(getFan());
-  switch (getFan()) {
-    case kToshibaAcFanAuto:
-      result += F(" (AUTO)");
-      break;
-    case kToshibaAcFanMax:
-      result += F(" (MAX)");
-      break;
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Toshiba.cpp
   }
 }
 

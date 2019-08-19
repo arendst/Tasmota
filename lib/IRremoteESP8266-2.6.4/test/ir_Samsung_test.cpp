@@ -1069,13 +1069,8 @@ TEST(TestDecodeSamsungAC, Issue604DecodeExtended) {
   IRSamsungAc samsung(0);
   samsung.setRaw(irsend.capture.state, irsend.capture.bits / 8);
   EXPECT_EQ(
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Samsung_test.cpp
       "Power: Off, Mode: 4 (HEAT), Temp: 30C, Fan: 0 (Auto), Swing: Off, "
       "Beep: Off, Clean: Off, Quiet: Off, Powerful: Off",
-=======
-      "Power: Off, Mode: 4 (HEAT), Temp: 30C, Fan: 0 (AUTO), Swing: Off, "
-      "Beep: Off, Clean: Off, Quiet: Off",
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Samsung_test.cpp
       samsung.toString());
 }
 
@@ -1212,7 +1207,6 @@ TEST(TestDecodeSamsung36, SyntheticExample) {
   EXPECT_EQ(0xE00FF, irsend.capture.command);
   EXPECT_EQ(0x400, irsend.capture.address);
 }
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Samsung_test.cpp
 
 // https://github.com/crankyoldgit/IRremoteESP8266/issues/604
 TEST(TestIRSamsungAcClass, Issue604SendPowerHack) {
@@ -1449,5 +1443,3 @@ TEST(TestDecodeSamsungAC, Issue734PowerfulOff) {
       "Beep: Off, Clean: Off, Quiet: Off, Powerful: Off",
       ac.toString());
 }
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Samsung_test.cpp

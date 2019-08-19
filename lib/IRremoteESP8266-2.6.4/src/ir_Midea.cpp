@@ -110,7 +110,6 @@ void IRMideaAC::begin(void) { _irsend.begin(); }
 #if SEND_MIDEA
 // Send the current desired state to the IR LED.
 void IRMideaAC::send(const uint16_t repeat) {
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Midea.cpp
   this->checksum();  // Ensure correct checksum before sending.
   _irsend.sendMidea(remote_state, kMideaBits, repeat);
   // Handle toggling the swing if we need to.
@@ -118,10 +117,6 @@ void IRMideaAC::send(const uint16_t repeat) {
     _irsend.sendMidea(kMideaACToggleSwingV, kMideaBits, repeat);
   }
   _SwingVToggle = false;  // The toggle message has been sent, so reset.
-=======
-  checksum();  // Ensure correct checksum before sending.
-  _irsend.sendMidea(remote_state, kMideaBits, repeat);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Midea.cpp
 }
 #endif  // SEND_MIDEA
 
@@ -323,7 +318,6 @@ uint8_t IRMideaAC::convertMode(const stdAc::opmode_t mode) {
       return kMideaACDry;
     case stdAc::opmode_t::kFan:
       return kMideaACFan;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Midea.cpp
     default:
       return kMideaACAuto;
   }
@@ -420,88 +414,6 @@ String IRMideaAC::toString(void) {
   }
   result += addBoolToString(getSwingVToggle(), F("Swing(V) Toggle"),
                             !isSwingVToggle());
-=======
-    default:
-      return kMideaACAuto;
-  }
-}
-
-// Convert a standard A/C Fan speed into its native fan speed.
-uint8_t IRMideaAC::convertFan(const stdAc::fanspeed_t speed) {
-  switch (speed) {
-    case stdAc::fanspeed_t::kMin:
-    case stdAc::fanspeed_t::kLow:
-      return kMideaACFanLow;
-    case stdAc::fanspeed_t::kMedium:
-      return kMideaACFanMed;
-    case stdAc::fanspeed_t::kHigh:
-    case stdAc::fanspeed_t::kMax:
-      return kMideaACFanHigh;
-    default:
-      return kMideaACFanAuto;
-  }
-}
-
-// Convert the internal state into a human readable string.
-#ifdef ARDUINO
-String IRMideaAC::toString() {
-  String result = "";
-#else
-std::string IRMideaAC::toString() {
-  std::string result = "";
-#endif  // ARDUINO
-  result += F("Power: ");
-  if (getPower())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Mode: ");
-  result += uint64ToString(getMode());
-  switch (getMode()) {
-    case kMideaACAuto:
-      result += F(" (AUTO)");
-      break;
-    case kMideaACCool:
-      result += F(" (COOL)");
-      break;
-    case kMideaACHeat:
-      result += F(" (HEAT)");
-      break;
-    case kMideaACDry:
-      result += F(" (DRY)");
-      break;
-    case kMideaACFan:
-      result += F(" (FAN)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-  }
-  result += F(", Temp: ");
-  result += uint64ToString(getTemp(true));
-  result += F("C/");
-  result += uint64ToString(getTemp(false));
-  result += F("F, Fan: ");
-  result += uint64ToString(getFan());
-  switch (getFan()) {
-    case kMideaACFanAuto:
-      result += F(" (AUTO)");
-      break;
-    case kMideaACFanLow:
-      result += F(" (LOW)");
-      break;
-    case kMideaACFanMed:
-      result += F(" (MED)");
-      break;
-    case kMideaACFanHigh:
-      result += F(" (HI)");
-      break;
-  }
-  result += F(", Sleep: ");
-  if (getSleep())
-    result += F("On");
-  else
-    result += F("Off");
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Midea.cpp
   return result;
 }
 

@@ -394,11 +394,7 @@ TEST(TestHaierACClass, MessageConstuction) {
       haier.toString());
 
   uint8_t expectedState[kHaierACStateLength] = {0xA5, 0x96, 0xEA, 0xCF, 0x32,
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Haier_test.cpp
                                                 0xED, 0x6D, 0x54, 0xD4};
-=======
-                                                0xED, 0x2D, 0x74, 0xB4};
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Haier_test.cpp
   EXPECT_STATE_EQ(expectedState, haier.getRaw(), kHaierACBits);
 
   // Check that the checksum is valid.
@@ -983,11 +979,7 @@ TEST(TestDecodeHaierAC_YRW02, RealExample) {
 }
 
 // Default state of the remote needed to include hidden data.
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Haier_test.cpp
 // Ref: https://github.com/crankyoldgit/IRremoteESP8266/issues/668
-=======
-// Ref: https://github.com/markszabo/IRremoteESP8266/issues/668
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Haier_test.cpp
 TEST(TestHaierAcIssues, Issue668) {
   IRHaierAC ac(0);
   IRHaierAC acText(1);
@@ -997,7 +989,6 @@ TEST(TestHaierAcIssues, Issue668) {
   // Turn on the AC.
   ac._irsend.reset();
   char expected_on[] =
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Haier_test.cpp
       "Command: 1 (On), Mode: 1 (COOL), Temp: 25C, Fan: 0 (Auto), "
       "Swing: 0 (Off), Sleep: Off, Health: Off, Current Time: 00:00, "
       "On Timer: Off, Off Timer: Off";
@@ -1006,15 +997,6 @@ TEST(TestHaierAcIssues, Issue668) {
   uint8_t expected_on_state[9] = {
       0xA5, 0x91, 0x20, 0x00, 0x0C, 0xC0, 0x20, 0x00, 0x42};
   ac.setMode(kHaierAcCool);
-=======
-      "Command: 1 (On), Mode: 0 (AUTO), Temp: 25C, Fan: 0 (AUTO), "
-      "Swing: 0 (Off), Sleep: Off, Health: Off, Current Time: 00:00, "
-      "On Timer: Off, Off Timer: Off";
-  // State taken from real capture:
-  //   https://github.com/markszabo/IRremoteESP8266/issues/668#issuecomment-483531895
-  uint8_t expected_on_state[9] = {
-      0xA5, 0x91, 0x20, 0x00, 0x0C, 0xC0, 0x20, 0x00, 0x42};
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Haier_test.cpp
   ac.setCommand(kHaierAcCmdOn);
   EXPECT_EQ(expected_on, ac.toString());
   ac.send();
@@ -1045,19 +1027,11 @@ TEST(TestHaierAcIssues, Issue668) {
   // Increase the temp by 1.
   ac._irsend.reset();
   char expected_temp_plus_one[] =
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Haier_test.cpp
       "Command: 6 (Temp Up), Mode: 1 (COOL), Temp: 26C, Fan: 0 (Auto), "
       "Swing: 0 (Off), Sleep: Off, Health: Off, Current Time: 00:00, "
       "On Timer: Off, Off Timer: Off";
   // State taken from real capture:
   //   https://github.com/crankyoldgit/IRremoteESP8266/issues/668#issuecomment-483531895
-=======
-      "Command: 6 (Temp Up), Mode: 0 (AUTO), Temp: 26C, Fan: 0 (AUTO), "
-      "Swing: 0 (Off), Sleep: Off, Health: Off, Current Time: 00:00, "
-      "On Timer: Off, Off Timer: Off";
-  // State taken from real capture:
-  //   https://github.com/markszabo/IRremoteESP8266/issues/668#issuecomment-483531895
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Haier_test.cpp
   uint8_t expected_temp_plus_one_state[9] = {
       0xA5, 0xA6, 0x20, 0x00, 0x0C, 0xC0, 0x20, 0x00, 0x57};
   ASSERT_EQ(25, ac.getTemp());
@@ -1077,11 +1051,7 @@ TEST(TestHaierAcIssues, Issue668) {
   // Decrease the temp by 1.
   ac._irsend.reset();
   char expected_temp_minus_one[] =
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Haier_test.cpp
       "Command: 7 (Temp Down), Mode: 1 (COOL), Temp: 25C, Fan: 0 (Auto), "
-=======
-      "Command: 7 (Temp Down), Mode: 0 (AUTO), Temp: 25C, Fan: 0 (AUTO), "
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Haier_test.cpp
       "Swing: 0 (Off), Sleep: Off, Health: Off, Current Time: 00:00, "
       "On Timer: Off, Off Timer: Off";
   ASSERT_EQ(26, ac.getTemp());
@@ -1096,7 +1066,6 @@ TEST(TestHaierAcIssues, Issue668) {
   acText.setRaw(ac._irsend.capture.state);
   EXPECT_EQ(expected_temp_minus_one, acText.toString());
 }
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Haier_test.cpp
 
 TEST(TestHaierACClass, toCommon) {
   IRHaierAC ac(0);
@@ -1159,5 +1128,3 @@ TEST(TestHaierACYRW02Class, toCommon) {
   ASSERT_FALSE(ac.toCommon().beep);
   ASSERT_EQ(-1, ac.toCommon().clock);
 }
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Haier_test.cpp

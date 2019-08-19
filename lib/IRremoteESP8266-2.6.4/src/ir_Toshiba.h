@@ -23,17 +23,6 @@
 #ifdef UNIT_TEST
 #include "IRsend_test.h"
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Toshiba.h
-=======
-
-//     TTTTTTT  OOOOO   SSSSS  HH   HH IIIII BBBBB     AAA
-//       TTT   OO   OO SS      HH   HH  III  BB   B   AAAAA
-//       TTT   OO   OO  SSSSS  HHHHHHH  III  BBBBBB  AA   AA
-//       TTT   OO   OO      SS HH   HH  III  BB   BB AAAAAAA
-//       TTT    OOOO0   SSSSS  HH   HH IIIII BBBBBB  AA   AA
-
-// Toshiba A/C support added by David Conran
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Toshiba.h
 
 // Constants
 const uint8_t kToshibaAcAuto = 0;
@@ -67,10 +56,7 @@ class IRToshibaAC {
   void stateReset(void);
 #if SEND_TOSHIBA_AC
   void send(const uint16_t repeat = kToshibaACMinRepeat);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Toshiba.h
   uint8_t calibrate(void) { return _irsend.calibrate(); }
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Toshiba.h
 #endif  // SEND_TOSHIBA_AC
   void begin(void);
   void on(void);
@@ -89,18 +75,10 @@ class IRToshibaAC {
                             const uint16_t length = kToshibaACStateLength);
   uint8_t convertMode(const stdAc::opmode_t mode);
   uint8_t convertFan(const stdAc::fanspeed_t speed);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Toshiba.h
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
   stdAc::state_t toCommon(void);
   String toString(void);
-=======
-#ifdef ARDUINO
-  String toString();
-#else
-  std::string toString();
-#endif
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Toshiba.h
 #ifndef UNIT_TEST
 
  private:

@@ -25,7 +25,6 @@ const uint16_t kHitachiAcBitMark = 400;
 const uint16_t kHitachiAcOneSpace = 1250;
 const uint16_t kHitachiAcZeroSpace = 500;
 const uint32_t kHitachiAcMinGap = kDefaultMessageGap;  // Just a guess.
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Hitachi.cpp
 
 using irutils::addBoolToString;
 using irutils::addIntToString;
@@ -33,8 +32,6 @@ using irutils::addLabeledString;
 using irutils::addModeToString;
 using irutils::addFanToString;
 using irutils::addTempToString;
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Hitachi.cpp
 
 #if (SEND_HITACHI_AC || SEND_HITACHI_AC2)
 // Send a Hitachi A/C message.
@@ -277,7 +274,6 @@ uint8_t IRHitachiAc::convertMode(const stdAc::opmode_t mode) {
       return kHitachiAcDry;
     case stdAc::opmode_t::kFan:
       return kHitachiAcFan;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Hitachi.cpp
     default:
       return kHitachiAcAuto;
   }
@@ -362,92 +358,6 @@ String IRHitachiAc::toString(void) {
                            kHitachiAcFanMed);
   result += addBoolToString(getSwingVertical(), F("Swing (Vertical)"));
   result += addBoolToString(getSwingHorizontal(), F("Swing (Horizontal)"));
-=======
-    default:
-      return kHitachiAcAuto;
-  }
-}
-
-// Convert a standard A/C Fan speed into its native fan speed.
-uint8_t IRHitachiAc::convertFan(const stdAc::fanspeed_t speed) {
-  switch (speed) {
-    case stdAc::fanspeed_t::kMin:
-    case stdAc::fanspeed_t::kLow:
-      return kHitachiAcFanLow;
-    case stdAc::fanspeed_t::kMedium:
-      return kHitachiAcFanLow + 1;
-    case stdAc::fanspeed_t::kHigh:
-      return kHitachiAcFanHigh - 1;
-    case stdAc::fanspeed_t::kMax:
-      return kHitachiAcFanHigh;
-    default:
-      return kHitachiAcFanAuto;
-  }
-}
-
-// Convert the internal state into a human readable string.
-#ifdef ARDUINO
-String IRHitachiAc::toString() {
-  String result = "";
-#else
-std::string IRHitachiAc::toString() {
-  std::string result = "";
-#endif  // ARDUINO
-  result += F("Power: ");
-  if (getPower())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Mode: ");
-  result += uint64ToString(getMode());
-  switch (getMode()) {
-    case kHitachiAcAuto:
-      result += F(" (AUTO)");
-      break;
-    case kHitachiAcCool:
-      result += F(" (COOL)");
-      break;
-    case kHitachiAcHeat:
-      result += F(" (HEAT)");
-      break;
-    case kHitachiAcDry:
-      result += F(" (DRY)");
-      break;
-    case kHitachiAcFan:
-      result += F(" (FAN)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-  }
-  result += F(", Temp: ");
-  result += uint64ToString(getTemp());
-  result += F("C, Fan: ");
-  result += uint64ToString(getFan());
-  switch (getFan()) {
-    case kHitachiAcFanAuto:
-      result += F(" (AUTO)");
-      break;
-    case kHitachiAcFanLow:
-      result += F(" (LOW)");
-      break;
-    case kHitachiAcFanHigh:
-      result += F(" (HIGH)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-      break;
-  }
-  result += F(", Swing (Vertical): ");
-  if (getSwingVertical())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Swing (Horizontal): ");
-  if (getSwingHorizontal())
-    result += F("On");
-  else
-    result += F("Off");
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Hitachi.cpp
   return result;
 }
 

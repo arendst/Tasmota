@@ -20,15 +20,6 @@
 #ifdef UNIT_TEST
 #include "IRsend_test.h"
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Midea.h
-=======
-
-//                  MM    MM IIIII DDDDD   EEEEEEE   AAA
-//                  MMM  MMM  III  DD  DD  EE       AAAAA
-//                  MM MM MM  III  DD   DD EEEEE   AA   AA
-//                  MM    MM  III  DD   DD EE      AAAAAAA
-//                  MM    MM IIIII DDDDDD  EEEEEEE AA   AA
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Midea.h
 
 // Midea added by crankyoldgit & bwze
 // Ref:
@@ -83,10 +74,7 @@ class IRMideaAC {
   void stateReset(void);
 #if SEND_MIDEA
   void send(const uint16_t repeat = kMideaMinRepeat);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Midea.h
   uint8_t calibrate(void) { return _irsend.calibrate(); }
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Midea.h
 #endif  // SEND_MIDEA
   void begin(void);
   void on(void);
@@ -104,7 +92,6 @@ class IRMideaAC {
   void setRaw(const uint64_t newState);
   uint64_t getRaw(void);
   static bool validChecksum(const uint64_t state);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Midea.h
   void setSleep(const bool on);
   bool getSleep(void);
   bool isSwingVToggle(void);
@@ -116,17 +103,6 @@ class IRMideaAC {
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
   stdAc::state_t toCommon(const stdAc::state_t *prev = NULL);
   String toString(void);
-=======
-  void setSleep(const bool state);
-  bool getSleep();
-  uint8_t convertMode(const stdAc::opmode_t mode);
-  uint8_t convertFan(const stdAc::fanspeed_t speed);
-#ifdef ARDUINO
-  String toString();
-#else
-  std::string toString();
-#endif
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Midea.h
 #ifndef UNIT_TEST
 
  private:

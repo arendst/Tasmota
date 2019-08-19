@@ -28,15 +28,6 @@
 #ifdef UNIT_TEST
 #include "IRsend_test.h"
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Kelvinator.h
-=======
-
-// KK  KK EEEEEEE LL     VV     VV IIIII NN   NN   AAA   TTTTTTT  OOOOO  RRRRRR
-// KK KK  EE      LL     VV     VV  III  NNN  NN  AAAAA    TTT   OO   OO RR   RR
-// KKKK   EEEEE   LL      VV   VV   III  NN N NN AA   AA   TTT   OO   OO RRRRRR
-// KK KK  EE      LL       VV VV    III  NN  NNN AAAAAAA   TTT   OO   OO RR  RR
-// KK  KK EEEEEEE LLLLLLL   VVV    IIIII NN   NN AA   AA   TTT    OOOO0  RR   RR
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Kelvinator.h
 
 // Constants
 const uint8_t kKelvinatorAuto = 0;
@@ -150,10 +141,7 @@ class IRKelvinatorAC {
   void stateReset(void);
 #if SEND_KELVINATOR
   void send(const uint16_t repeat = kKelvinatorDefaultRepeat);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Kelvinator.h
   uint8_t calibrate(void) { return _irsend.calibrate(); }
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Kelvinator.h
 #endif  // SEND_KELVINATOR
   void begin(void);
   void on(void);
@@ -187,18 +175,10 @@ class IRKelvinatorAC {
   static bool validChecksum(const uint8_t state[],
                             const uint16_t length = kKelvinatorStateLength);
   uint8_t convertMode(const stdAc::opmode_t mode);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Kelvinator.h
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
   stdAc::state_t toCommon(void);
   String toString(void);
-=======
-#ifdef ARDUINO
-  String toString();
-#else
-  std::string toString();
-#endif
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Kelvinator.h
 #ifndef UNIT_TEST
 
  private:
@@ -209,11 +189,7 @@ class IRKelvinatorAC {
   // The state of the IR remote in IR code form.
   uint8_t remote_state[kKelvinatorStateLength];
   void checksum(const uint16_t length = kKelvinatorStateLength);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Kelvinator.h
   void fixup(void);
-=======
-  void fixup();
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Kelvinator.h
 };
 
 #endif  // IR_KELVINATOR_H_

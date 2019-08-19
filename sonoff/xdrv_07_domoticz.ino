@@ -48,8 +48,6 @@ const char kDomoticzSensors[] PROGMEM =
 char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
 char domoticz_out_topic[] = DOMOTICZ_OUT_TOPIC;
 
-bool domoticz_subscribe = false;
-uint8_t domoticz_update_flag = 1;
 int domoticz_update_timer = 0;
 uint32_t domoticz_fan_debounce = 0;             // iFan02 state debounce timer
 bool domoticz_subscribe = false;
@@ -112,7 +110,8 @@ void MqttPublishDomoticzPowerState(uint8_t device)
   if (Settings.flag.mqtt_enabled) {
     if ((device < 1) || (device > devices_present)) { device = 1; }
     if (Settings.domoticz_relay_idx[device -1]) {
-      if ((SONOFF_IFAN02 == my_module_type) && (device > 1)) {
+#ifdef USE_SONOFF_IFAN
+      if (IsModuleIfan() && (device > 1)) {
         // Fan handled by MqttPublishDomoticzFanState
       } else {
 #endif  // USE_SONOFF_IFAN
@@ -143,7 +142,8 @@ void DomoticzMqttUpdate(void)
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = Settings.domoticz_update_timer;
       for (uint32_t i = 1; i <= devices_present; i++) {
-        if ((SONOFF_IFAN02 == my_module_type) && (i > 1)) {
+#ifdef USE_SONOFF_IFAN
+        if (IsModuleIfan() && (i > 1)) {
           MqttPublishDomoticzFanState();
           break;
         } else {
@@ -231,7 +231,8 @@ bool DomoticzMqttData(void)
         if (idx == Settings.domoticz_relay_idx[i]) {
           bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
           snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
-          if ((SONOFF_IFAN02 == my_module_type) && (1 == i)) {  // Idx 2 is fanspeed
+#ifdef USE_SONOFF_IFAN
+          if (IsModuleIfan() && (1 == i)) {  // Idx 2 is fanspeed
             uint8_t svalue = 0;
             if (domoticz.containsKey("svalue1")) {
               svalue = domoticz["svalue1"];
@@ -297,62 +298,11 @@ bool DomoticzMqttData(void)
   return false;  // Process unchanged or new data
 }
 
-/*********************************************************************************************\
- * Commands
-\*********************************************************************************************/
-
-bool DomoticzCommand(void)
-{
-  char command [CMDSZ];
-  bool serviced = true;
-  uint8_t dmtcz_len = strlen(D_CMND_DOMOTICZ);  // Prep for string length change
-
-  if (!strncasecmp_P(XdrvMailbox.topic, PSTR(D_CMND_DOMOTICZ), dmtcz_len)) {  // Prefix
-    int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic +dmtcz_len, kDomoticzCommands);
-    if (-1 == command_code) {
-      serviced = false;  // Unknown command
-    }
-    else if ((CMND_IDX == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DOMOTICZ_IDX)) {
-      if (XdrvMailbox.payload >= 0) {
-        Settings.domoticz_relay_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
-        restart_flag = 2;
-      }
-      Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_LVALUE, command, XdrvMailbox.index, Settings.domoticz_relay_idx[XdrvMailbox.index -1]);
-    }
-    else if ((CMND_KEYIDX == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DOMOTICZ_IDX)) {
-      if (XdrvMailbox.payload >= 0) {
-        Settings.domoticz_key_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      }
-      Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_LVALUE, command, XdrvMailbox.index, Settings.domoticz_key_idx[XdrvMailbox.index -1]);
-    }
-    else if ((CMND_SWITCHIDX == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_DOMOTICZ_IDX)) {
-      if (XdrvMailbox.payload >= 0) {
-        Settings.domoticz_switch_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      }
-      Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.domoticz_switch_idx[XdrvMailbox.index -1]);
-    }
-    else if ((CMND_SENSORIDX == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= DZ_MAX_SENSORS)) {
-      if (XdrvMailbox.payload >= 0) {
-        Settings.domoticz_sensor_idx[XdrvMailbox.index -1] = XdrvMailbox.payload;
-      }
-      Response_P(S_JSON_DOMOTICZ_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.domoticz_sensor_idx[XdrvMailbox.index -1]);
-    }
-    else if (CMND_UPDATETIMER == command_code) {
-      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
-        Settings.domoticz_update_timer = XdrvMailbox.payload;
-      }
-      Response_P(PSTR("{\"" D_CMND_DOMOTICZ "%s\":%d}"), command, Settings.domoticz_update_timer);
-    }
-    else serviced = false;  // Unknown command
-  }
-  else serviced = false;  // Unknown command
-
-  return serviced;
-}
+/*********************************************************************************************/
 
 bool DomoticzSendKey(uint8_t key, uint8_t device, uint8_t state, uint8_t svalflg)
 {
-  bool result = 0;
+  bool result = false;
 
   if (device <= MAX_DOMOTICZ_IDX) {
     if ((Settings.domoticz_key_idx[device -1] || Settings.domoticz_switch_idx[device -1]) && (svalflg)) {
@@ -541,7 +491,9 @@ void HandleDomoticzConfiguration(void)
       WSContentSend_P(HTTP_FORM_DOMOTICZ_SWITCH,
         i +1, i, Settings.domoticz_switch_idx[i]);
     }
-    if ((SONOFF_IFAN02 == my_module_type) && (1 == i)) { break; }
+#ifdef USE_SONOFF_IFAN
+    if (IsModuleIfan() && (1 == i)) { break; }
+#endif  // USE_SONOFF_IFAN
   }
   for (uint32_t i = 0; i < DZ_MAX_SENSORS; i++) {
     WSContentSend_P(HTTP_FORM_DOMOTICZ_SENSOR,

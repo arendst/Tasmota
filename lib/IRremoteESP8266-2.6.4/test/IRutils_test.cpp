@@ -404,7 +404,6 @@ TEST(TestStrToDecodeType, strToDecodeType) {
 }
 
 TEST(TestUtils, htmlEscape) {
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/IRutils_test.cpp
   EXPECT_EQ("", irutils::htmlEscape(""));
   EXPECT_EQ("No Changes", irutils::htmlEscape("No Changes"));
   EXPECT_EQ("No\tChanges+_%^$@~`\n:\\",
@@ -540,17 +539,4 @@ TEST(TestUtils, BCD) {
   EXPECT_EQ(0x99, irutils::uint8ToBcd(99));
   EXPECT_EQ(255, irutils::bcdToUint8(0x9A));
   EXPECT_EQ(255, irutils::uint8ToBcd(100));
-=======
-  EXPECT_EQ("", htmlEscape(""));
-  EXPECT_EQ("No Changes", htmlEscape("No Changes"));
-  EXPECT_EQ("No\tChanges+_%^$@~`\n:\\", htmlEscape("No\tChanges+_%^$@~`\n:\\"));
-  EXPECT_EQ("&quot;With Changes&quot;", htmlEscape("\"With Changes\""));
-  EXPECT_EQ(
-      "&apos;&semi;&excl;&dash;&quot;&lt;&gt;&#equals;&amp;&num;&lcub;&rcub;"
-      "&lpar;&rpar;", htmlEscape("';!-\"<>=&#{}()"));
-  EXPECT_EQ("&quot;&quot;", htmlEscape("\"\""));
-  EXPECT_EQ(
-      "&amp;quot&semi;&amp;lt&semi;&amp;apos&semi;&amp;gt&semi;&amp;amp&semi;",
-      htmlEscape("&quot;&lt;&apos;&gt;&amp;"));
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/IRutils_test.cpp
 }

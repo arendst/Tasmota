@@ -20,15 +20,6 @@
 #ifdef UNIT_TEST
 #include "IRsend_test.h"
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Mitsubishi.h
-=======
-
-//    MMMMM  IIIII TTTTT   SSSS  U   U  BBBB   IIIII   SSSS  H   H  IIIII
-//    M M M    I     T    S      U   U  B   B    I    S      H   H    I
-//    M M M    I     T     SSS   U   U  BBBB     I     SSS   HHHHH    I
-//    M   M    I     T        S  U   U  B   B    I        S  H   H    I
-//    M   M  IIIII   T    SSSS    UUU   BBBBB  IIIII  SSSS   H   H  IIIII
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Mitsubishi.h
 
 // Mitsubishi (TV) decoding added from https://github.com/z3t0/Arduino-IRremote
 // Mitsubishi (TV) sending & Mitsubishi A/C support added by David Conran
@@ -79,7 +70,6 @@ class IRMitsubishiAC {
   void stateReset(void);
 #if SEND_MITSUBISHI_AC
   void send(const uint16_t repeat = kMitsubishiACMinRepeat);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Mitsubishi.h
   uint8_t calibrate(void) { return _irsend.calibrate(); }
 #endif  // SEND_MITSUBISHI_AC
   void begin(void);
@@ -117,61 +107,15 @@ class IRMitsubishiAC {
   static stdAc::swingh_t toCommonSwingH(const uint8_t pos);
   stdAc::state_t toCommon(void);
   String toString(void);
-=======
-#endif  // SEND_MITSUBISHI_AC
-  void begin();
-  void on();
-  void off();
-  void setPower(bool state);
-  bool getPower();
-  void setTemp(uint8_t temp);
-  uint8_t getTemp();
-  void setFan(uint8_t fan);
-  uint8_t getFan();
-  void setMode(uint8_t mode);
-  uint8_t getMode();
-  void setVane(uint8_t mode);
-  uint8_t getVane();
-  uint8_t* getRaw();
-  void setRaw(uint8_t* data);
-  uint8_t getClock();
-  void setClock(uint8_t clock);
-  uint8_t getStartClock();
-  void setStartClock(uint8_t clock);
-  uint8_t getStopClock();
-  void setStopClock(uint8_t clock);
-  uint8_t getTimer();
-  void setTimer(uint8_t timer);
-  uint8_t convertMode(const stdAc::opmode_t mode);
-  uint8_t convertFan(const stdAc::fanspeed_t speed);
-  uint8_t convertSwingV(const stdAc::swingv_t position);
-#ifdef ARDUINO
-  String toString();
-#else
-  std::string toString();
-#endif
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Mitsubishi.h
 #ifndef UNIT_TEST
 
  private:
   IRsend _irsend;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Mitsubishi.h
-=======
-#else
-  IRsendTest _irsend;
-#endif
-#ifdef ARDUINO
-  String timeToString(uint64_t time);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Mitsubishi.h
 #else
   IRsendTest _irsend;
 #endif
   uint8_t remote_state[kMitsubishiACStateLength];
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Mitsubishi.h
   void checksum(void);
-=======
-  void checksum();
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Mitsubishi.h
 };
 
 #endif  // IR_MITSUBISHI_H_

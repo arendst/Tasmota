@@ -17,15 +17,6 @@
 #ifdef UNIT_TEST
 #include "IRsend_test.h"
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.h
-=======
-
-//                      HH   HH   AAA   IIIII EEEEEEE RRRRRR
-//                      HH   HH  AAAAA   III  EE      RR   RR
-//                      HHHHHHH AA   AA  III  EEEEE   RRRRRR
-//                      HH   HH AAAAAAA  III  EE      RR  RR
-//                      HH   HH AA   AA IIIII EEEEEEE RR   RR
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.h
 
 // Ref:
 //   https://github.com/crankyoldgit/IRremoteESP8266/issues/404
@@ -201,10 +192,7 @@ class IRHaierAC {
 
 #if SEND_HAIER_AC
   void send(const uint16_t repeat = kHaierAcDefaultRepeat);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.h
   uint8_t calibrate(void) { return _irsend.calibrate(); }
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.h
 #endif  // SEND_HAIER_AC
   void begin(void);
 
@@ -244,22 +232,11 @@ class IRHaierAC {
   uint8_t convertMode(const stdAc::opmode_t mode);
   uint8_t convertFan(const stdAc::fanspeed_t speed);
   uint8_t convertSwingV(const stdAc::swingv_t position);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.h
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
   static stdAc::swingv_t toCommonSwingV(const uint8_t pos);
   stdAc::state_t toCommon(void);
   String toString(void);
-=======
-
-#ifdef ARDUINO
-  String toString();
-  static String timeToString(const uint16_t nr_mins);
-#else
-  std::string toString();
-  static std::string timeToString(const uint16_t nr_mins);
-#endif
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.h
 #ifndef UNIT_TEST
 
  private:
@@ -319,19 +296,11 @@ class IRHaierACYRW02 {
   uint8_t convertMode(const stdAc::opmode_t mode);
   uint8_t convertFan(const stdAc::fanspeed_t speed);
   uint8_t convertSwingV(const stdAc::swingv_t position);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.h
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
   static stdAc::swingv_t toCommonSwingV(const uint8_t pos);
   stdAc::state_t toCommon(void);
   String toString(void);
-=======
-#ifdef ARDUINO
-  String toString();
-#else
-  std::string toString();
-#endif
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.h
 #ifndef UNIT_TEST
 
  private:
@@ -340,13 +309,8 @@ class IRHaierACYRW02 {
   IRsendTest _irsend;
 #endif
   uint8_t remote_state[kHaierACYRW02StateLength];
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.h
   void stateReset(void);
   void checksum(void);
-=======
-  void stateReset();
-  void checksum();
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.h
 };
 
 #endif  // IR_HAIER_H_

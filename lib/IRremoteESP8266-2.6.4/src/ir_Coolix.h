@@ -15,15 +15,6 @@
 #ifdef UNIT_TEST
 #include "IRsend_test.h"
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Coolix.h
-=======
-
-//             CCCCC   OOOOO   OOOOO  LL      IIIII XX    XX
-//            CC    C OO   OO OO   OO LL       III   XX  XX
-//            CC      OO   OO OO   OO LL       III    XXXX
-//            CC    C OO   OO OO   OO LL       III   XX  XX
-//             CCCCC   OOOO0   OOOO0  LLLLLLL IIIII XX    XX
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Coolix.h
 
 // Supports:
 //   Brand: Beko, Model: RG57K7(B)/BGEF Remote
@@ -101,10 +92,7 @@ class IRCoolixAC {
   void stateReset();
 #if SEND_COOLIX
   void send(const uint16_t repeat = kCoolixDefaultRepeat);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Coolix.h
   uint8_t calibrate(void) { return _irsend.calibrate(); }
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Coolix.h
 #endif  // SEND_COOLIX
   void begin();
   void on();
@@ -135,18 +123,10 @@ class IRCoolixAC {
   void setRaw(const uint32_t new_code);
   uint8_t convertMode(const stdAc::opmode_t mode);
   uint8_t convertFan(const stdAc::fanspeed_t speed);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Coolix.h
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
   stdAc::state_t toCommon(const stdAc::state_t *prev = NULL);
   String toString();
-=======
-#ifdef ARDUINO
-  String toString();
-#else
-  std::string toString();
-#endif
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Coolix.h
 #ifndef UNIT_TEST
 
  private:

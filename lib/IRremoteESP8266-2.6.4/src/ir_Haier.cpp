@@ -110,10 +110,6 @@ void IRHaierAC::stateReset(void) {
   remote_state[2] = 0x20;
   remote_state[4] = 0x0C;
   remote_state[5] = 0xC0;
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.cpp
-=======
-  remote_state[6] = 0x20;
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.cpp
 
   setTemp(kHaierAcDefTemp);
   setFan(kHaierAcFanAuto);
@@ -310,7 +306,6 @@ void IRHaierAC::setSwing(const uint8_t state) {
   }
 }
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.cpp
 // Convert a standard A/C mode into its native mode.
 uint8_t IRHaierAC::convertMode(const stdAc::opmode_t mode) {
   switch (mode) {
@@ -414,72 +409,7 @@ stdAc::state_t IRHaierAC::toCommon(void) {
   result.clean = false;
   result.beep = false;
   result.clock = -1;
-=======
-// Convert a Haier time into a human readable string.
-#ifdef ARDUINO
-String IRHaierAC::timeToString(const uint16_t nr_mins) {
-  String result = "";
-#else
-std::string IRHaierAC::timeToString(const uint16_t nr_mins) {
-  std::string result = "";
-#endif  // ARDUINO
-
-  if (nr_mins / 24 < 10) result += '0';  // Zero pad.
-  result += uint64ToString(nr_mins / 60);
-  result += ':';
-  if (nr_mins % 60 < 10) result += '0';  // Zero pad.
-  result += uint64ToString(nr_mins % 60);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.cpp
   return result;
-}
-
-// Convert a standard A/C mode into its native mode.
-uint8_t IRHaierAC::convertMode(const stdAc::opmode_t mode) {
-  switch (mode) {
-    case stdAc::opmode_t::kCool:
-      return kHaierAcCool;
-    case stdAc::opmode_t::kHeat:
-      return kHaierAcHeat;
-    case stdAc::opmode_t::kDry:
-      return kHaierAcDry;
-    case stdAc::opmode_t::kFan:
-      return kHaierAcFan;
-    default:
-      return kHaierAcAuto;
-  }
-}
-
-// Convert a standard A/C Fan speed into its native fan speed.
-uint8_t IRHaierAC::convertFan(const stdAc::fanspeed_t speed) {
-  switch (speed) {
-    case stdAc::fanspeed_t::kMin:
-    case stdAc::fanspeed_t::kLow:
-      return kHaierAcFanLow;
-    case stdAc::fanspeed_t::kMedium:
-      return kHaierAcFanMed;
-    case stdAc::fanspeed_t::kHigh:
-    case stdAc::fanspeed_t::kMax:
-      return kHaierAcFanHigh;
-    default:
-      return kHaierAcFanAuto;
-  }
-}
-
-// Convert a standard A/C vertical swing into its native setting.
-uint8_t IRHaierAC::convertSwingV(const stdAc::swingv_t position) {
-  switch (position) {
-    case stdAc::swingv_t::kHighest:
-    case stdAc::swingv_t::kHigh:
-    case stdAc::swingv_t::kMiddle:
-      return kHaierAcSwingUp;
-    case stdAc::swingv_t::kLow:
-    case stdAc::swingv_t::kLowest:
-      return kHaierAcSwingDown;
-    case stdAc::swingv_t::kOff:
-      return kHaierAcSwingOff;
-    default:
-      return kHaierAcSwingChg;
-  }
 }
 
 // Convert the internal state into a human readable string.
@@ -487,12 +417,7 @@ String IRHaierAC::toString(void) {
   String result = "";
   result.reserve(150);  // Reserve some heap for the string to reduce fragging.
   uint8_t cmd = getCommand();
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.cpp
   result += addIntToString(cmd, F("Command"), false);
-=======
-  result += F("Command: ");
-  result += uint64ToString(cmd);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.cpp
   result += F(" (");
   switch (cmd) {
     case kHaierAcCmdOff:
@@ -527,7 +452,6 @@ String IRHaierAC::toString(void) {
       break;
     case kHaierAcCmdSwing:
       result += F("Swing");
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.cpp
       break;
     default:
       result += F("Unknown");
@@ -539,48 +463,6 @@ String IRHaierAC::toString(void) {
   result += addFanToString(getFan(), kHaierAcFanHigh, kHaierAcFanLow,
                            kHaierAcFanAuto, kHaierAcFanAuto, kHaierAcFanMed);
   result += addIntToString(getSwing(), F("Swing"));
-=======
-      break;
-    default:
-      result += F("Unknown");
-  }
-  result += ')';
-  result += F(", Mode: ");
-  result += uint64ToString(getMode());
-  switch (getMode()) {
-    case kHaierAcAuto:
-      result += F(" (AUTO)");
-      break;
-    case kHaierAcCool:
-      result += F(" (COOL)");
-      break;
-    case kHaierAcHeat:
-      result += F(" (HEAT)");
-      break;
-    case kHaierAcDry:
-      result += F(" (DRY)");
-      break;
-    case kHaierAcFan:
-      result += F(" (FAN)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-  }
-  result += F(", Temp: ");
-  result += uint64ToString(getTemp());
-  result += F("C, Fan: ");
-  result += uint64ToString(getFan());
-  switch (getFan()) {
-    case kHaierAcFanAuto:
-      result += F(" (AUTO)");
-      break;
-    case kHaierAcFanHigh:
-      result += F(" (MAX)");
-      break;
-  }
-  result += F(", Swing: ");
-  result += uint64ToString(getSwing());
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.cpp
   result += F(" (");
   switch (getSwing()) {
     case kHaierAcSwingOff:
@@ -599,7 +481,6 @@ String IRHaierAC::toString(void) {
       result += F("Unknown");
   }
   result += ')';
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.cpp
   result += addBoolToString(getSleep(), F("Sleep"));
   result += addBoolToString(getHealth(), F("Health"));
   result += addLabeledString(minsToString(getCurrTime()), F("Current Time"));
@@ -608,31 +489,6 @@ String IRHaierAC::toString(void) {
   result += addLabeledString(
       getOffTimer() >= 0 ? minsToString(getOffTimer()) : F("Off"),
       F("Off Timer"));
-=======
-  result += F(", Sleep: ");
-  if (getSleep())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Health: ");
-  if (getHealth())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Current Time: ");
-  result += timeToString(getCurrTime());
-  result += F(", On Timer: ");
-  if (getOnTimer() >= 0)
-    result += timeToString(getOnTimer());
-  else
-    result += F("Off");
-  result += F(", Off Timer: ");
-  if (getOffTimer() >= 0)
-    result += timeToString(getOffTimer());
-  else
-    result += F("Off");
-
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.cpp
   return result;
 }
 // End of IRHaierAC class.
@@ -890,7 +746,6 @@ uint8_t IRHaierACYRW02::convertSwingV(const stdAc::swingv_t position) {
   }
 }
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.cpp
 // Convert a native mode to it's common equivalent.
 stdAc::opmode_t IRHaierACYRW02::toCommonMode(const uint8_t mode) {
   switch (mode) {
@@ -949,30 +804,13 @@ stdAc::state_t IRHaierACYRW02::toCommon(void) {
   return result;
 }
 
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.cpp
 // Convert the internal state into a human readable string.
 String IRHaierACYRW02::toString(void) {
   String result = "";
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.cpp
   result.reserve(130);  // Reserve some heap for the string to reduce fragging.
   result += addBoolToString(getPower(), F("Power"), false);
   uint8_t cmd = getButton();
   result += addIntToString(cmd, F("Button"));
-=======
-#else
-std::string IRHaierACYRW02::toString() {
-  std::string result = "";
-#endif  // ARDUINO
-  result += F("Power: ");
-  if (getPower())
-    result += F("On");
-  else
-    result += F("Off");
-  uint8_t cmd = getButton();
-  result += F(", Button: ");
-  result += uint64ToString(cmd);
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.cpp
   result += F(" (");
   switch (cmd) {
     case kHaierAcYrw02ButtonPower:
@@ -1006,7 +844,6 @@ std::string IRHaierACYRW02::toString() {
       result += F("Unknown");
   }
   result += ')';
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.cpp
   result += addModeToString(getMode(), kHaierAcYrw02Auto, kHaierAcYrw02Cool,
                             kHaierAcYrw02Heat, kHaierAcYrw02Dry,
                             kHaierAcYrw02Fan);
@@ -1015,51 +852,6 @@ std::string IRHaierACYRW02::toString() {
                            kHaierAcYrw02FanAuto, kHaierAcYrw02FanAuto,
                            kHaierAcYrw02FanMed);
   result += addIntToString(getTurbo(), F("Turbo"));
-=======
-  result += F(", Mode: ");
-  result += uint64ToString(getMode());
-  switch (getMode()) {
-    case kHaierAcYrw02Auto:
-      result += F(" (Auto)");
-      break;
-    case kHaierAcYrw02Cool:
-      result += F(" (Cool)");
-      break;
-    case kHaierAcYrw02Heat:
-      result += F(" (Heat)");
-      break;
-    case kHaierAcYrw02Dry:
-      result += F(" (Dry)");
-      break;
-    case kHaierAcYrw02Fan:
-      result += F(" (Fan)");
-      break;
-    default:
-      result += F(" (UNKNOWN)");
-  }
-  result += F(", Temp: ");
-  result += uint64ToString(getTemp());
-  result += F("C, Fan: ");
-  result += uint64ToString(getFan());
-  switch (getFan()) {
-    case kHaierAcYrw02FanAuto:
-      result += F(" (Auto)");
-      break;
-    case kHaierAcYrw02FanHigh:
-      result += F(" (High)");
-      break;
-    case kHaierAcYrw02FanLow:
-      result += F(" (Low)");
-      break;
-    case kHaierAcYrw02FanMed:
-      result += F(" (Med)");
-      break;
-    default:
-      result += F(" (Unknown)");
-  }
-  result += F(", Turbo: ");
-  result += uint64ToString(getTurbo());
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.cpp
   result += F(" (");
   switch (getTurbo()) {
     case kHaierAcYrw02TurboOff:
@@ -1075,12 +867,7 @@ std::string IRHaierACYRW02::toString() {
       result += F("Unknown");
   }
   result += ')';
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.cpp
   result += addIntToString(getSwing(), F("Swing"));
-=======
-  result += F(", Swing: ");
-  result += uint64ToString(getSwing());
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.cpp
   result += F(" (");
   switch (getSwing()) {
     case kHaierAcYrw02SwingOff:
@@ -1105,22 +892,8 @@ std::string IRHaierACYRW02::toString() {
       result += F("Unknown");
   }
   result += ')';
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Haier.cpp
   result += addBoolToString(getSleep(), F("Sleep"));
   result += addBoolToString(getHealth(), F("Health"));
-=======
-  result += F(", Sleep: ");
-  if (getSleep())
-    result += F("On");
-  else
-    result += F("Off");
-  result += F(", Health: ");
-  if (getHealth())
-    result += F("On");
-  else
-    result += F("Off");
-
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Haier.cpp
   return result;
 }
 // End of IRHaierACYRW02 class.

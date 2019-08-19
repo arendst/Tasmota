@@ -151,8 +151,7 @@ void Ws2812UpdateHand(int position, uint32_t index)
 
   Ws2812UpdatePixelColor(position, hand_color, 1);
 
-  uint8_t range = 1;
-  if (index < WS_MARKER) range = ((Settings.ws_width[index] -1) / 2) +1;
+  uint32_t range = ((width -1) / 2) +1;
   for (uint32_t h = 1; h < range; h++) {
     float offset = (float)(range - h) / (float)range;
     Ws2812UpdatePixelColor(position -h, hand_color, offset);

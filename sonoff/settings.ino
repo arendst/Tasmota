@@ -122,6 +122,9 @@
 #ifndef IR_RCV_MIN_UNKNOWN_SIZE
 #define IR_RCV_MIN_UNKNOWN_SIZE     6          // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
 #endif
+#ifndef ENERGY_OVERTEMP
+#define ENERGY_OVERTEMP             90         // Overtemp in Celsius
+#endif
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -829,9 +832,6 @@ void SettingsDefaultSet2(void)
   // IRRemote
   Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
 
-  // IRRemote
-  Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
-
   // RF Bridge
 //  for (uint32_t i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
   memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
@@ -1189,6 +1189,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x0605000D) {
       Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
+    }
+    if (Settings.version < 0x06060001) {
+      Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
     }
 
     Settings.version = VERSION;

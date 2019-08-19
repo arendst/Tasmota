@@ -615,7 +615,6 @@ bool IRrecv::decode(decode_results *results, irparams_t *save) {
   DPRINTLN("Attempting MITSUBISHIHEAVY (88 bit) decode");
   if (decodeMitsubishiHeavy(results, kMitsubishiHeavy88Bits)) return true;
 #endif
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/IRrecv.cpp
 #if DECODE_ARGO
   DPRINTLN("Attempting Argo decode");
   if (decodeArgo(results)) return true;
@@ -652,8 +651,6 @@ bool IRrecv::decode(decode_results *results, irparams_t *save) {
   DPRINTLN("Attempting Daikin128 decode");
   if (decodeDaikin128(results)) return true;
 #endif  // DECODE_DAIKIN128
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/IRrecv.cpp
 #if DECODE_HASH
   // decodeHash returns a hash on any input.
   // Thus, it needs to be last in the list.

@@ -16,17 +16,6 @@ TEST(TestSendCoolix, SendDataOnly) {
   irsend.sendCOOLIX(0x0);
   EXPECT_EQ(
       "f38000d50"
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Coolix_test.cpp
-=======
-      "m4480s4480"
-      "m560s560m560s560m560s560m560s560m560s560m560s560m560s560m560s560"
-      "m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680"
-      "m560s560m560s560m560s560m560s560m560s560m560s560m560s560m560s560"
-      "m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680"
-      "m560s560m560s560m560s560m560s560m560s560m560s560m560s560m560s560"
-      "m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680"
-      "m560s5040"
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Coolix_test.cpp
       "m4480s4480"
       "m560s560m560s560m560s560m560s560m560s560m560s560m560s560m560s560"
       "m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680"
@@ -155,13 +144,6 @@ TEST(TestSendCoolix, SendUnusualSize) {
   irsend.sendCOOLIX(0x0, 8);
   EXPECT_EQ(
       "f38000d50"
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Coolix_test.cpp
-=======
-      "m4480s4480"
-      "m560s560m560s560m560s560m560s560m560s560m560s560m560s560m560s560"
-      "m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680"
-      "m560s5040"
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Coolix_test.cpp
       "m4480s4480"
       "m560s560m560s560m560s560m560s560m560s560m560s560m560s560m560s560"
       "m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680m560s1680"
@@ -176,27 +158,6 @@ TEST(TestSendCoolix, SendUnusualSize) {
   irsend.sendCOOLIX(0x1234567890ABCDEF, 64);
   EXPECT_EQ(
       "f38000d50"
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Coolix_test.cpp
-=======
-      "m4480s4480"
-      "m560s560m560s560m560s560m560s1680m560s560m560s560m560s1680m560s560"
-      "m560s1680m560s1680m560s1680m560s560m560s1680m560s1680m560s560m560s1680"
-      "m560s560m560s560m560s1680m560s1680m560s560m560s1680m560s560m560s560"
-      "m560s1680m560s1680m560s560m560s560m560s1680m560s560m560s1680m560s1680"
-      "m560s560m560s1680m560s560m560s1680m560s560m560s1680m560s1680m560s560"
-      "m560s1680m560s560m560s1680m560s560m560s1680m560s560m560s560m560s1680"
-      "m560s560m560s1680m560s1680m560s1680m560s1680m560s560m560s560m560s560"
-      "m560s1680m560s560m560s560m560s560m560s560m560s1680m560s1680m560s1680"
-      "m560s1680m560s560m560s560m560s1680m560s560m560s560m560s560m560s560"
-      "m560s560m560s1680m560s1680m560s560m560s1680m560s1680m560s1680m560s1680"
-      "m560s1680m560s560m560s1680m560s560m560s1680m560s560m560s1680m560s1680"
-      "m560s560m560s1680m560s560m560s1680m560s560m560s1680m560s560m560s560"
-      "m560s1680m560s1680m560s560m560s560m560s1680m560s1680m560s560m560s1680"
-      "m560s560m560s560m560s1680m560s1680m560s560m560s560m560s1680m560s560"
-      "m560s1680m560s1680m560s1680m560s560m560s1680m560s1680m560s1680m560s1680"
-      "m560s560m560s560m560s560m560s1680m560s560m560s560m560s560m560s560"
-      "m560s5040"
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Coolix_test.cpp
       "m4480s4480"
       "m560s560m560s560m560s560m560s1680m560s560m560s560m560s1680m560s560"
       "m560s1680m560s1680m560s1680m560s560m560s1680m560s1680m560s560m560s1680"
@@ -551,7 +512,6 @@ TEST(TestCoolixACClass, KnownExamples) {
   ircoolix.setRaw(0b101100101001111100000000);
   EXPECT_EQ(
       "Power: On, Mode: 0 (COOL), Fan: 4 (MIN), Temp: 17C, "
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Coolix_test.cpp
       "Zone Follow: Off, Sensor Temp: Ignored",
       ircoolix.toString());
 }
@@ -562,25 +522,10 @@ TEST(TestCoolixACClass, Issue579FanAuto0) {
   ircoolix.setRaw(0xB21F28);
   EXPECT_EQ(
       "Power: On, Mode: 2 (AUTO), Fan: 0 (AUTO0), Temp: 20C, "
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Coolix_test.cpp
       "Zone Follow: Off, Sensor Temp: Ignored",
       ircoolix.toString());
 }
 
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Coolix_test.cpp
-=======
-TEST(TestCoolixACClass, Issue579FanAuto0) {
-  IRCoolixAC ircoolix(0);
-
-  ircoolix.setRaw(0xB21F28);
-  EXPECT_EQ(
-      "Power: On, Mode: 2 (AUTO), Fan: 0 (AUTO0), Temp: 20C, "
-      "Zone Follow: Off, Sensor Temp: Ignored",
-      ircoolix.toString());
-}
-
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Coolix_test.cpp
 TEST(TestCoolixACClass, RealCaptureExample) {
   IRsendTest irsend(0);
   IRrecv irrecv(0);
@@ -621,11 +566,7 @@ TEST(TestCoolixACClass, RealCaptureExample) {
 
 
 // Tests to debug/fix:
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Coolix_test.cpp
 //   https://github.com/crankyoldgit/IRremoteESP8266/issues/624
-=======
-//   https://github.com/markszabo/IRremoteESP8266/issues/624
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Coolix_test.cpp
 TEST(TestCoolixACClass, Issue624HandleSpecialStatesBetter) {
   IRCoolixAC ac(0);
   ac.begin();
@@ -675,7 +616,6 @@ TEST(TestCoolixACClass, Issue624HandleSpecialStatesBetter) {
       ac.toString());
   EXPECT_EQ(0xB2BF40, ac.getRaw());
 }
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/test/ir_Coolix_test.cpp
 
 TEST(TestCoolixACClass, toCommon) {
   IRCoolixAC ac(0);
@@ -805,5 +745,3 @@ TEST(TestCoolixACClass, Issue722) {
       // 564,1620,566,1618,562  // Raw data matches what is expected.
       "m560s1680m560s1680m560s105040", ac._irsend.outputStr());
 }
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/test/ir_Coolix_test.cpp

@@ -44,10 +44,7 @@ class IRHitachiAc {
   void stateReset(void);
 #if SEND_HITACHI_AC
   void send(const uint16_t repeat = kHitachiAcDefaultRepeat);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Hitachi.h
   uint8_t calibrate(void) { return _irsend.calibrate(); }
-=======
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Hitachi.h
 #endif  // SEND_HITACHI_AC
   void begin(void);
   void on(void);
@@ -73,18 +70,10 @@ class IRHitachiAc {
                               const uint16_t length = kHitachiAcStateLength);
   uint8_t convertMode(const stdAc::opmode_t mode);
   uint8_t convertFan(const stdAc::fanspeed_t speed);
-<<<<<<< HEAD:lib/IRremoteESP8266-2.6.4/src/ir_Hitachi.h
   static stdAc::opmode_t toCommonMode(const uint8_t mode);
   static stdAc::fanspeed_t toCommonFanSpeed(const uint8_t speed);
   stdAc::state_t toCommon(void);
   String toString(void);
-=======
-#ifdef ARDUINO
-  String toString();
-#else
-  std::string toString();
-#endif
->>>>>>> upstream/master:lib/IRremoteESP8266-2.6.0/src/ir_Hitachi.h
 #ifndef UNIT_TEST
 
  private:
