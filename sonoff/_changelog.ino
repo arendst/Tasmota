@@ -1,4 +1,6 @@
 /*********************************************************************************************\
+ * 6.6.0.6 20190819
+ *
  * 6.6.0.5 20190816
  * Add command WebSensor<sensor number> 0/1 to control display of sensor data in web GUI (#6085)
  * Change some table locations from RAM to Flash
