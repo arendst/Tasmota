@@ -131,7 +131,7 @@ void Vl53l0Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_45
+#define XSNS_45 45
 
 bool Xsns45(byte function)
 {

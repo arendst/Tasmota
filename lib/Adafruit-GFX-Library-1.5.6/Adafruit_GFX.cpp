@@ -1220,6 +1220,7 @@ size_t Adafruit_GFX::write(uint8_t c) {
     return 1;
 }
 
+
 /**************************************************************************/
 /*!
     @brief   Set text 'magnification' size. Each increase in s makes 1 pixel that much bigger.
@@ -1606,6 +1607,7 @@ void Adafruit_GFX_Button::drawButton(boolean inverted) {
   _gfx->setTextColor(text);
   _gfx->setTextSize(_textsize_x, _textsize_y);
   _gfx->print(_label);
+
 }
 
 /**************************************************************************/

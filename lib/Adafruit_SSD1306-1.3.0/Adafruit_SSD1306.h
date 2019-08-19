@@ -24,6 +24,10 @@
 #ifndef _Adafruit_SSD1306_H_
 #define _Adafruit_SSD1306_H_
 
+#include <renderer.h>
+
+extern uint8_t *buffer;
+
 // ONE of the following three lines must be #defined:
 //#define SSD1306_128_64 ///< DEPRECTAED: old way to specify 128x64 screen
 #define SSD1306_128_32   ///< DEPRECATED: old way to specify 128x32 screen
@@ -108,12 +112,12 @@
  #define SSD1306_LCDHEIGHT  16 ///< DEPRECATED: height w/SSD1306_96_16 defined
 #endif
 
-/*! 
+/*!
     @brief  Class that stores state and functions for interacting with
             SSD1306 OLED displays.
 */
-class Adafruit_SSD1306 : public Adafruit_GFX {
- public:
+class Adafruit_SSD1306 : public Renderer {
+public:
   // NEW CONSTRUCTORS -- recommended for new projects
   Adafruit_SSD1306(uint8_t w, uint8_t h, TwoWire *twi=&Wire, int8_t rst_pin=-1,
     uint32_t clkDuring=400000UL, uint32_t clkAfter=100000UL);
@@ -134,12 +138,15 @@ class Adafruit_SSD1306 : public Adafruit_GFX {
                  uint8_t i2caddr=0, boolean reset=true,
                  boolean periphBegin=true);
   void         display(void);
-  void         clearDisplay(void);
   void         invertDisplay(boolean i);
   void         dim(boolean dim);
+
+  #if 0
+  void         clearDisplay(void);
   void         drawPixel(int16_t x, int16_t y, uint16_t color);
   virtual void drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
   virtual void drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
+  #endif
   void         startscrollright(uint8_t start, uint8_t stop);
   void         startscrollleft(uint8_t start, uint8_t stop);
   void         startscrolldiagright(uint8_t start, uint8_t stop);
@@ -148,6 +155,7 @@ class Adafruit_SSD1306 : public Adafruit_GFX {
   void         ssd1306_command(uint8_t c);
   boolean      getPixel(int16_t x, int16_t y);
   uint8_t     *getBuffer(void);
+  void        Updateframe(void);
 
  private:
   inline void  SPIwrite(uint8_t d) __attribute__((always_inline));
@@ -160,7 +168,7 @@ class Adafruit_SSD1306 : public Adafruit_GFX {
 
   SPIClass    *spi;
   TwoWire     *wire;
-  uint8_t     *buffer;
+  uint8_t     *xbuffer;
   int8_t       i2caddr, vccstate, page_end;
   int8_t       mosiPin    ,  clkPin    ,  dcPin    ,  csPin, rstPin;
 #ifdef HAVE_PORTREG

@@ -1,7 +1,7 @@
 /*
-  xdsp_02_SSD1306.ino - Display Oled SSD1306 support for Sonoff-Tasmota
+  xdsp_09_SSD1351.ino - Display SSD1351 support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends and Adafruit
+  Copyright (C) 2019  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,94 +17,81 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_I2C
+#ifdef USE_SPI
 #ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_SSD1306
+#ifdef USE_DISPLAY_SSD1351
 
-#define OLED_RESET 4
+#define XDSP_09                9
 
-#define SPRINT(A) char str[32];sprintf(str,"val: %d ",A);Serial.println((char*)str);
+#define COLORED                1
+#define UNCOLORED              0
+
+// uses about 1.9k flash + renderer class
+// using font 8 is opional (num=3)
+// very badly readable, but may be useful for graphs
+#define USE_TINY_FONT
+
+#include <SSD1351.h>
 
 extern uint8_t *buffer;
-
-#define XDSP_02                2
-
-#define OLED_ADDRESS1          0x3C         // Oled 128x32 I2C address
-#define OLED_ADDRESS2          0x3D         // Oled 128x64 I2C address
-
-#define OLED_BUFFER_COLS       40           // Max number of columns in display shadow buffer
-#define OLED_BUFFER_ROWS       16           // Max number of lines in display shadow buffer
-
-#define OLED_FONT_WIDTH        6
-#define OLED_FONT_HEIGTH       8
-
-#include <Wire.h>
-#include <renderer.h>
-#include <Adafruit_SSD1306.h>
-
-Adafruit_SSD1306 *oled1306;
+extern uint8_t color_type;
+SSD1351 *ssd1351;
 
 /*********************************************************************************************/
 
-
-void SSD1306InitDriver()
-{
+void SSD1351_InitDriver() {
   if (!Settings.display_model) {
-    if (I2cDevice(OLED_ADDRESS1)) {
-      Settings.display_address[0] = OLED_ADDRESS1;
-      Settings.display_model = XDSP_02;
-    }
-    else if (I2cDevice(OLED_ADDRESS2)) {
-      Settings.display_address[0] = OLED_ADDRESS2;
-      Settings.display_model = XDSP_02;
-    }
+    Settings.display_model = XDSP_09;
   }
 
-  if (XDSP_02 == Settings.display_model) {
+  if (XDSP_09 == Settings.display_model) {
 
-    if ((Settings.display_width != 96) && (Settings.display_width != 128)) {
-      Settings.display_width = 128;
+    if (Settings.display_width != SSD1351_WIDTH) {
+      Settings.display_width = SSD1351_WIDTH;
     }
-    if ((Settings.display_height != 16) && (Settings.display_height != 32) && (Settings.display_height != 64)) {
-      Settings.display_height = 64;
-    }
-
-    uint8_t reset_pin = -1;
-    if (pin[GPIO_OLED_RESET] < 99) {
-      reset_pin = pin[GPIO_OLED_RESET];
+    if (Settings.display_height != SSD1351_HEIGHT) {
+      Settings.display_height = SSD1351_HEIGHT;
     }
 
-    // allocate screen buffer
-    if (buffer) free(buffer);
-    buffer=(unsigned char*)calloc((Settings.display_width * Settings.display_height) / 8,1);
-    if (!buffer) return;
+    buffer=0;
+
+    // default colors
+    fg_color = SSD1351_WHITE;
+    bg_color = SSD1351_BLACK;
 
     // init renderer
-    //oled1306 = new Adafruit_SSD1306(SSD1306_LCDWIDTH,SSD1306_LCDHEIGHT);
-    oled1306 = new Adafruit_SSD1306(Settings.display_width, Settings.display_height, &Wire, reset_pin);
-    oled1306->begin(SSD1306_SWITCHCAPVCC, Settings.display_address[0],0);
-    renderer=oled1306;
-    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    if  ((pin[GPIO_SSPI_CS]<99) && (pin[GPIO_SSPI_MOSI]<99) && (pin[GPIO_SSPI_SCLK]<99)){
+      ssd1351  = new SSD1351(pin[GPIO_SSPI_CS],pin[GPIO_SSPI_MOSI],pin[GPIO_SSPI_SCLK]);
+    } else {
+      if  ((pin[GPIO_SPI_CS]<99) && (pin[GPIO_SPI_MOSI]<99) && (pin[GPIO_SPI_CLK]<99)){
+        ssd1351  = new SSD1351(pin[GPIO_SPI_CS],pin[GPIO_SPI_MOSI],pin[GPIO_SPI_CLK]);
+      } else {
+        return;
+      }
+    }
 
-    renderer->setTextColor(1,0);
+    delay(100);
+    SPI.begin();
+    ssd1351->begin();
+    renderer = ssd1351;
+    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    renderer->dim(Settings.display_dimmer);
 
 #ifdef SHOW_SPLASH
-    renderer->setTextFont(0);
-    renderer->setTextSize(2);
-    renderer->setCursor(20,20);
-    renderer->println(F("SSD1306"));
-    renderer->Updateframe();
-    renderer->DisplayOnff(1);
-#endif
+    // Welcome text
+    renderer->setTextFont(2);
+    renderer->setTextColor(SSD1351_WHITE,SSD1351_BLACK);
+    renderer->DrawStringAt(10, 60, "SSD1351", SSD1351_RED,0);
+    delay(1000);
 
+#endif
+    color_type = COLOR_COLOR;
   }
 }
 
-
-/*********************************************************************************************/
 #ifdef USE_DISPLAY_MODES1TO5
 
-void Ssd1306PrintLog(void)
+void SSD1351PrintLog(void)
 {
   disp_refresh--;
   if (!disp_refresh) {
@@ -134,7 +121,7 @@ void Ssd1306PrintLog(void)
   }
 }
 
-void Ssd1306Time(void)
+void SSD1351Time(void)
 {
   char line[12];
 
@@ -148,54 +135,49 @@ void Ssd1306Time(void)
   renderer->Updateframe();
 }
 
-void Ssd1306Refresh(void)  // Every second
+void SSD1351Refresh(void)  // Every second
 {
   if (Settings.display_mode) {  // Mode 0 is User text
     switch (Settings.display_mode) {
       case 1:  // Time
-        Ssd1306Time();
+        SSD1351Time();
         break;
       case 2:  // Local
       case 3:  // Local
       case 4:  // Mqtt
       case 5:  // Mqtt
-        Ssd1306PrintLog();
+        SSD1351PrintLog();
         break;
     }
   }
 }
 
 #endif  // USE_DISPLAY_MODES1TO5
-
+/*********************************************************************************************/
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-
-bool Xdsp02(byte function)
+bool Xdsp09(byte function)
 {
   bool result = false;
 
-  if (i2c_flg) {
-    if (FUNC_DISPLAY_INIT_DRIVER == function) {
-      SSD1306InitDriver();
-    }
-    else if (XDSP_02 == Settings.display_model) {
-
-      switch (function) {
-        case FUNC_DISPLAY_MODEL:
-          result = true;
-          break;
+  if (FUNC_DISPLAY_INIT_DRIVER == function) {
+      SSD1351_InitDriver();
+  }
+  else if (XDSP_09 == Settings.display_model) {
+    switch (function) {
+      case FUNC_DISPLAY_MODEL:
+        result = true;
+        break;
 #ifdef USE_DISPLAY_MODES1TO5
-        case FUNC_DISPLAY_EVERY_SECOND:
-          Ssd1306Refresh();
-          break;
+      case FUNC_DISPLAY_EVERY_SECOND:
+        SSD1351Refresh();
+        break;
 #endif  // USE_DISPLAY_MODES1TO5
-      }
     }
   }
   return result;
 }
-
-#endif  // USE_DISPLAY_SSD1306
+#endif  // USE_DISPLAY_SSD1351
 #endif  // USE_DISPLAY
-#endif  // USE_I2C
+#endif  // USE_SPI
