@@ -1426,7 +1426,7 @@ void CmndDisplayAddress(void)
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 255)) {
       Settings.display_address[XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
-    ResponseCmndNumber(Settings.display_address[XdrvMailbox.index -1]);
+    ResponseCmndIdxNumber(Settings.display_address[XdrvMailbox.index -1]);
   }
 }
 

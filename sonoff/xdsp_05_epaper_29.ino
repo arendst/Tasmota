@@ -1,7 +1,7 @@
 /*
   xdsp_05_epaper.ino - Display e-paper support for Sonoff-Tasmota
 
-  Copyright (C) 2018  Theo Arends, Gerhard Mutz and Waveshare
+  Copyright (C) 2019  Theo Arends, Gerhard Mutz and Waveshare
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 #ifdef USE_SPI
 #ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_EPAPER29
+#ifdef USE_DISPLAY_EPAPER_29
 
 #define XDSP_05                5
 
