@@ -140,6 +140,7 @@ public:
   void         display(void);
   void         invertDisplay(boolean i);
   void         dim(boolean dim);
+  void         DisplayOnff(int8_t on);
 
   #if 0
   void         clearDisplay(void);

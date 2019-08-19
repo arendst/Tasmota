@@ -1,5 +1,5 @@
 /*
-  xdsp_02_SSD1306.ino - Display Oled SSD1306 support for Sonoff-Tasmota
+  xdsp_02_ssd1306.ino - Display Oled SSD1306 support for Sonoff-Tasmota
 
   Copyright (C) 2019  Theo Arends and Adafruit
 
@@ -21,13 +21,11 @@
 #ifdef USE_DISPLAY
 #ifdef USE_DISPLAY_SSD1306
 
+#define XDSP_02                2
+
 #define OLED_RESET 4
 
 #define SPRINT(A) char str[32];sprintf(str,"val: %d ",A);Serial.println((char*)str);
-
-extern uint8_t *buffer;
-
-#define XDSP_02                2
 
 #define OLED_ADDRESS1          0x3C         // Oled 128x32 I2C address
 #define OLED_ADDRESS2          0x3D         // Oled 128x64 I2C address
@@ -44,8 +42,9 @@ extern uint8_t *buffer;
 
 Adafruit_SSD1306 *oled1306;
 
-/*********************************************************************************************/
+extern uint8_t *buffer;
 
+/*********************************************************************************************/
 
 void SSD1306InitDriver()
 {
@@ -75,16 +74,16 @@ void SSD1306InitDriver()
     }
 
     // allocate screen buffer
-    if (buffer) free(buffer);
-    buffer=(unsigned char*)calloc((Settings.display_width * Settings.display_height) / 8,1);
-    if (!buffer) return;
+    if (buffer) { free(buffer); }
+    buffer = (unsigned char*)calloc((Settings.display_width * Settings.display_height) / 8,1);
+    if (!buffer) { return; }
 
     // init renderer
-    //oled1306 = new Adafruit_SSD1306(SSD1306_LCDWIDTH,SSD1306_LCDHEIGHT);
+    // oled1306 = new Adafruit_SSD1306(SSD1306_LCDWIDTH,SSD1306_LCDHEIGHT);
     oled1306 = new Adafruit_SSD1306(Settings.display_width, Settings.display_height, &Wire, reset_pin);
-    oled1306->begin(SSD1306_SWITCHCAPVCC, Settings.display_address[0],0);
-    renderer=oled1306;
-    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    oled1306->begin(SSD1306_SWITCHCAPVCC, Settings.display_address[0], 0);
+    renderer = oled1306;
+    renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
 
     renderer->setTextColor(1,0);
 
@@ -99,7 +98,6 @@ void SSD1306InitDriver()
 
   }
 }
-
 
 /*********************************************************************************************/
 #ifdef USE_DISPLAY_MODES1TO5

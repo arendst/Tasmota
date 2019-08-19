@@ -1108,6 +1108,16 @@ void Adafruit_SSD1306::dim(boolean dim) {
   TRANSACTION_END
 }
 
+void Adafruit_SSD1306::DisplayOnff(int8_t on) {
+  TRANSACTION_START
+  if(on) {
+    ssd1306_command1(SSD1306_DISPLAYON);
+  } else {
+    ssd1306_command1(SSD1306_DISPLAYOFF);
+  }
+  TRANSACTION_END
+}
+
 void Adafruit_SSD1306::Updateframe(void) {
   display();
 }

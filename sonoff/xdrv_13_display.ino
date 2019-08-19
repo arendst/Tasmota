@@ -17,7 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #if defined(USE_I2C) || defined(USE_SPI)
 #ifdef USE_DISPLAY
 
@@ -28,7 +27,7 @@
 
 Renderer *renderer;
 
-enum ColorType { COLOR_BW,COLOR_COLOR};
+enum ColorType { COLOR_BW, COLOR_COLOR };
 
 #ifndef MAXBUTTONS
 #define MAXBUTTONS 16
@@ -44,7 +43,6 @@ uint16_t fg_color = 1;
 uint16_t bg_color = 0;
 uint8_t color_type = COLOR_BW;
 uint8_t auto_draw=1;
-
 
 const uint8_t DISPLAY_MAX_DRIVERS = 16;        // Max number of display drivers/models supported by xdsp_interface.ino
 const uint8_t DISPLAY_MAX_COLS = 44;           // Max number of columns allowed with command DisplayCols
@@ -86,7 +84,6 @@ void (* const DisplayCommand[])(void) PROGMEM = {
   &CmndDisplay, &CmndDisplayModel, &CmndDisplayWidth, &CmndDisplayHeight, &CmndDisplayMode, &CmndDisplayRefresh,
   &CmndDisplayDimmer, &CmndDisplayColumns, &CmndDisplayRows, &CmndDisplaySize, &CmndDisplayFont,
   &CmndDisplayRotate, &CmndDisplayText, &CmndDisplayAddress };
-
 
 char *dsp_str;
 
@@ -433,12 +430,18 @@ void DisplayText(void)
             DisplayInit(DISPLAY_INIT_FULL);
             break;
           case 'o':
-          if (!renderer) DisplayOnOff(0);
-          else renderer->DisplayOnff(0);
+            if (!renderer) {
+              DisplayOnOff(0);
+            } else {
+              renderer->DisplayOnff(0);
+            }
             break;
           case 'O':
-          if (!renderer) DisplayOnOff(1);
-          else renderer->DisplayOnff(1);
+            if (!renderer) {
+              DisplayOnOff(1);
+            } else {
+              renderer->DisplayOnff(1);
+            }
             break;
           case 'x':
             // set disp_xpos
@@ -1261,9 +1264,15 @@ void DisplayInitDriver(void)
 void DisplaySetPower(void)
 {
   disp_power = bitRead(XdrvMailbox.index, disp_device -1);
+
+AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DSP: Power %d"), disp_power);
+
   if (Settings.display_model) {
-    if (!renderer) XdspCall(FUNC_DISPLAY_POWER);
-    else renderer->DisplayOnff(disp_power);
+    if (!renderer) {
+      XdspCall(FUNC_DISPLAY_POWER);
+    } else {
+      renderer->DisplayOnff(disp_power);
+    }
   }
 }
 
@@ -1466,11 +1475,9 @@ void CmndDisplayRows(void)
   ResponseCmndNumber(Settings.display_rows);
 }
 
-
 /*********************************************************************************************\
  * optional drivers
 \*********************************************************************************************/
-
 
 #if defined(USE_SCRIPT_FATFS) && defined(USE_SCRIPT)
 void Draw_RGB_Bitmap(char *file,uint16_t xp, uint16_t yp) {
@@ -1957,7 +1964,6 @@ bool Xdrv13(uint8_t function)
       case FUNC_SET_POWER:
         DisplaySetPower();
         break;
-
       case FUNC_EVERY_SECOND:
 #ifdef USE_GRAPH
         DisplayCheckGraph();
