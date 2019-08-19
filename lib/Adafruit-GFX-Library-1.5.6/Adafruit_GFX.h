@@ -17,7 +17,7 @@ class Adafruit_GFX : public Print {
   Adafruit_GFX(int16_t w, int16_t h); // Constructor
 
   // This MUST be defined by the subclass:
-  virtual void drawPixel(int16_t x, int16_t y, uint16_t color) = 0;    ///< Virtual drawPixel() function to draw to the screen/framebuffer/etc, must be overridden in subclass. @param x X coordinate.  @param y Y coordinate. @param color 16-bit pixel color. 
+  virtual void drawPixel(int16_t x, int16_t y, uint16_t color) = 0;    ///< Virtual drawPixel() function to draw to the screen/framebuffer/etc, must be overridden in subclass. @param x X coordinate.  @param y Y coordinate. @param color 16-bit pixel color.
 
   // TRANSACTION API / CORE DRAW API
   // These MAY be overridden by the subclass to provide device-specific
@@ -51,20 +51,10 @@ class Adafruit_GFX : public Print {
 
   // These exist only with Adafruit_GFX (no subclass overrides)
   void
-    drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
     drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
       uint16_t color),
-    fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
     fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername,
       int16_t delta, uint16_t color),
-    drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
-      int16_t x2, int16_t y2, uint16_t color),
-    fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
-      int16_t x2, int16_t y2, uint16_t color),
-    drawRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
-      int16_t radius, uint16_t color),
-    fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
-      int16_t radius, uint16_t color),
     drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
       int16_t w, int16_t h, uint16_t color),
     drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
@@ -103,9 +93,21 @@ class Adafruit_GFX : public Print {
       int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h),
     getTextBounds(const String &str, int16_t x, int16_t y,
       int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h),
-    setTextSize(uint8_t s),
-    setTextSize(uint8_t sx, uint8_t sy),
     setFont(const GFXfont *f = NULL);
+
+virtual void
+    drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
+    fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
+    drawRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
+      int16_t radius, uint16_t color),
+    fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h,
+      int16_t radius, uint16_t color),
+    drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
+        int16_t x2, int16_t y2, uint16_t color),
+    fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
+        int16_t x2, int16_t y2, uint16_t color),
+    setTextSize(uint8_t s),
+    setTextSize(uint8_t sx, uint8_t sy);
 
   /**********************************************************************/
   /*!
@@ -114,7 +116,7 @@ class Adafruit_GFX : public Print {
     @param  y    Y coordinate in pixels
   */
   /**********************************************************************/
-  void setCursor(int16_t x, int16_t y) { cursor_x = x; cursor_y = y; }
+  virtual void setCursor(int16_t x, int16_t y) { cursor_x = x; cursor_y = y; }
 
   /**********************************************************************/
   /*!
@@ -168,7 +170,7 @@ class Adafruit_GFX : public Print {
 #else
   virtual void   write(uint8_t);
 #endif
-
+  size_t iwrite(uint8_t);
   /************************************************************************/
   /*!
     @brief      Get width of the display, accounting for current rotation
@@ -211,6 +213,10 @@ class Adafruit_GFX : public Print {
   /************************************************************************/
   int16_t getCursorY(void) const { return cursor_y; };
 
+  uint16_t
+    textcolor,      ///< 16-bit background color for print()
+    textbgcolor;    ///< 16-bit text color for print()
+
  protected:
   void
     charBounds(char c, int16_t *x, int16_t *y,
@@ -223,9 +229,9 @@ class Adafruit_GFX : public Print {
     _height,        ///< Display height as modified by current rotation
     cursor_x,       ///< x location to start print()ing text
     cursor_y;       ///< y location to start print()ing text
-  uint16_t
-    textcolor,      ///< 16-bit background color for print()
-    textbgcolor;    ///< 16-bit text color for print()
+  //uint16_t
+  //  textcolor,      ///< 16-bit background color for print()
+  //  textbgcolor;    ///< 16-bit text color for print()
   uint8_t
     textsize_x,      ///< Desired magnification in X-axis of text to print()
     textsize_y,      ///< Desired magnification in Y-axis of text to print()

@@ -1,5 +1,5 @@
 /*
-  xdsp_02_SSD1306.ino - Display Oled SSD1306 support for Sonoff-Tasmota
+  xdsp_07_SH1106.ino - Display Oled SH1106 support for Sonoff-Tasmota
 
   Copyright (C) 2018  Theo Arends and Adafruit
 
@@ -19,7 +19,7 @@
 
 #ifdef USE_I2C
 #ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_SSD1306
+#ifdef USE_DISPLAY_SH1106
 
 #define OLED_RESET 4
 
@@ -27,7 +27,7 @@
 
 extern uint8_t *buffer;
 
-#define XDSP_02                2
+#define XDSP_07                7
 
 #define OLED_ADDRESS1          0x3C         // Oled 128x32 I2C address
 #define OLED_ADDRESS2          0x3D         // Oled 128x64 I2C address
@@ -40,63 +40,55 @@ extern uint8_t *buffer;
 
 #include <Wire.h>
 #include <renderer.h>
-#include <Adafruit_SSD1306.h>
+#include <Adafruit_SH1106.h>
 
-Adafruit_SSD1306 *oled1306;
+Adafruit_SH1106 *oled1106;
 
 /*********************************************************************************************/
 
 
-void SSD1306InitDriver()
+void SH1106InitDriver()
 {
   if (!Settings.display_model) {
     if (I2cDevice(OLED_ADDRESS1)) {
       Settings.display_address[0] = OLED_ADDRESS1;
-      Settings.display_model = XDSP_02;
+      Settings.display_model = XDSP_07;
     }
     else if (I2cDevice(OLED_ADDRESS2)) {
       Settings.display_address[0] = OLED_ADDRESS2;
-      Settings.display_model = XDSP_02;
+      Settings.display_model = XDSP_07;
     }
   }
 
-  if (XDSP_02 == Settings.display_model) {
+  if (XDSP_07 == Settings.display_model) {
 
-    if ((Settings.display_width != 96) && (Settings.display_width != 128)) {
-      Settings.display_width = 128;
+    if (Settings.display_width != SH1106_LCDWIDTH) {
+      Settings.display_width = SH1106_LCDWIDTH;
     }
-    if ((Settings.display_height != 16) && (Settings.display_height != 32) && (Settings.display_height != 64)) {
-      Settings.display_height = 64;
-    }
-
-    uint8_t reset_pin = -1;
-    if (pin[GPIO_OLED_RESET] < 99) {
-      reset_pin = pin[GPIO_OLED_RESET];
+    if (Settings.display_height != SH1106_LCDHEIGHT) {
+      Settings.display_height = SH1106_LCDHEIGHT;
     }
 
     // allocate screen buffer
     if (buffer) free(buffer);
-    buffer=(unsigned char*)calloc((Settings.display_width * Settings.display_height) / 8,1);
+    buffer=(unsigned char*)calloc((SH1106_LCDWIDTH * SH1106_LCDHEIGHT) / 8,1);
     if (!buffer) return;
 
     // init renderer
-    //oled1306 = new Adafruit_SSD1306(SSD1306_LCDWIDTH,SSD1306_LCDHEIGHT);
-    oled1306 = new Adafruit_SSD1306(Settings.display_width, Settings.display_height, &Wire, reset_pin);
-    oled1306->begin(SSD1306_SWITCHCAPVCC, Settings.display_address[0],0);
-    renderer=oled1306;
+    oled1106 = new Adafruit_SH1106(SH1106_LCDWIDTH,SH1106_LCDHEIGHT);
+    renderer=oled1106;
+    renderer->Begin(SH1106_SWITCHCAPVCC, Settings.display_address[0],0);
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
-
     renderer->setTextColor(1,0);
 
 #ifdef SHOW_SPLASH
     renderer->setTextFont(0);
     renderer->setTextSize(2);
     renderer->setCursor(20,20);
-    renderer->println(F("SSD1306"));
+    renderer->println(F("SH1106"));
     renderer->Updateframe();
     renderer->DisplayOnff(1);
 #endif
-
   }
 }
 
@@ -104,7 +96,7 @@ void SSD1306InitDriver()
 /*********************************************************************************************/
 #ifdef USE_DISPLAY_MODES1TO5
 
-void Ssd1306PrintLog(void)
+void SH1106PrintLog(void)
 {
   disp_refresh--;
   if (!disp_refresh) {
@@ -134,7 +126,7 @@ void Ssd1306PrintLog(void)
   }
 }
 
-void Ssd1306Time(void)
+void SH1106Time(void)
 {
   char line[12];
 
@@ -148,7 +140,7 @@ void Ssd1306Time(void)
   renderer->Updateframe();
 }
 
-void Ssd1306Refresh(void)  // Every second
+void SH1106Refresh(void)  // Every second
 {
   if (Settings.display_mode) {  // Mode 0 is User text
     switch (Settings.display_mode) {
@@ -171,15 +163,15 @@ void Ssd1306Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp02(byte function)
+bool Xdsp07(byte function)
 {
   bool result = false;
 
   if (i2c_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {
-      SSD1306InitDriver();
+      SH1106InitDriver();
     }
-    else if (XDSP_02 == Settings.display_model) {
+    else if (XDSP_07 == Settings.display_model) {
 
       switch (function) {
         case FUNC_DISPLAY_MODEL:
@@ -187,7 +179,7 @@ bool Xdsp02(byte function)
           break;
 #ifdef USE_DISPLAY_MODES1TO5
         case FUNC_DISPLAY_EVERY_SECOND:
-          Ssd1306Refresh();
+          SH1106Refresh();
           break;
 #endif  // USE_DISPLAY_MODES1TO5
       }
@@ -196,6 +188,6 @@ bool Xdsp02(byte function)
   return result;
 }
 
-#endif  // USE_DISPLAY_SSD1306
+#endif  // USE_DISPLAY_SH1106
 #endif  // USE_DISPLAY
 #endif  // USE_I2C
