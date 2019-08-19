@@ -534,9 +534,4 @@
   #error "Select either USE_DISCOVERY or USE_MQTT_AWS_IOT, mDNS takes too much code space and is not needed for AWS IoT"
 #endif
 
-#define USE_DISPLAY_ILI9488
-#define USE_DISPLAY
-#define USE_SPI
-#define USE_DISPLAY_ILI9488
-
 #endif  // _MY_USER_CONFIG_H_

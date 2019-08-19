@@ -107,6 +107,7 @@ void RA8876_InitDriver()
   }
 }
 
+#ifdef USE_TOUCH_BUTTONS
 void RA8876_MQTT(uint8_t count,const char *cp) {
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
   snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"RA8876\":{\"%s%d\":\"%d\"}}"), mqtt_data,cp,count+1,(buttons[count]->vpower&0x80)>>7);
@@ -210,7 +211,7 @@ if (2 == ctouch_counter) {
   }
 }
 }
-
+#endif USE_TOUCH_BUTTONS
 /*
 void testall() {
 ra8876->clearScreen(0);
@@ -408,7 +409,9 @@ bool Xdsp10(byte function)
         result = true;
         break;
       case FUNC_DISPLAY_EVERY_50_MSECOND:
+#ifdef USE_TOUCH_BUTTONS
         if (FT5316_found) FT5316Check();
+#endif
         break;
     }
   }
