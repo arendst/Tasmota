@@ -418,8 +418,12 @@ void GetFeatures(void)
 #ifdef USE_CHIRP
   feature_sns2 |= 0x20000000;  // xsns_48_chirp.ino
 #endif
-//  feature_sns2 |= 0x40000000;
-//  feature_sns2 |= 0x80000000;
+#ifdef USE_SOLAX_X1
+  feature_sns2 |= 0x40000000;  // xsns_49_solaxX1.ino
+#endif
+#ifdef USE_PAJ7620
+  feature_sns2 |= 0x80000000;  // xsns_50_paj7620.ino
+#endif
 
 /*********************************************************************************************/
 
@@ -428,7 +432,9 @@ void GetFeatures(void)
 #ifdef USE_BUZZER
   feature5 |= 0x00000001;  // xdrv_24_buzzer.ino
 #endif
-//  feature5 |= 0x00000002;
+#ifdef USE_RDM6300
+  feature5 |= 0x00000002;  // xsns_51_rdm6300.ino
+#endif
 //  feature5 |= 0x00000004;
 //  feature5 |= 0x00000008;
 

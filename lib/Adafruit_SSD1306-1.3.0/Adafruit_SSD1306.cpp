@@ -165,7 +165,7 @@
 */
 Adafruit_SSD1306::Adafruit_SSD1306(uint8_t w, uint8_t h, TwoWire *twi,
   int8_t rst_pin, uint32_t clkDuring, uint32_t clkAfter) :
-  Adafruit_GFX(w, h), spi(NULL), wire(twi ? twi : &Wire), buffer(NULL),
+  Renderer(w, h), spi(NULL), wire(twi ? twi : &Wire), xbuffer(NULL),
   mosiPin(-1), clkPin(-1), dcPin(-1), csPin(-1), rstPin(rst_pin),
   wireClk(clkDuring), restoreClk(clkAfter) {
 }
@@ -199,7 +199,7 @@ Adafruit_SSD1306::Adafruit_SSD1306(uint8_t w, uint8_t h, TwoWire *twi,
 */
 Adafruit_SSD1306::Adafruit_SSD1306(uint8_t w, uint8_t h,
   int8_t mosi_pin, int8_t sclk_pin, int8_t dc_pin, int8_t rst_pin,
-  int8_t cs_pin) : Adafruit_GFX(w, h), spi(NULL), wire(NULL), buffer(NULL),
+  int8_t cs_pin) : Renderer(w, h), spi(NULL), wire(NULL), xbuffer(NULL),
   mosiPin(mosi_pin), clkPin(sclk_pin), dcPin(dc_pin), csPin(cs_pin),
   rstPin(rst_pin) {
 }
@@ -232,7 +232,7 @@ Adafruit_SSD1306::Adafruit_SSD1306(uint8_t w, uint8_t h,
 */
 Adafruit_SSD1306::Adafruit_SSD1306(uint8_t w, uint8_t h, SPIClass *spi,
   int8_t dc_pin, int8_t rst_pin, int8_t cs_pin, uint32_t bitrate) :
-  Adafruit_GFX(w, h), spi(spi ? spi : &SPI), wire(NULL), buffer(NULL),
+  Renderer(w, h), spi(spi ? spi : &SPI), wire(NULL), xbuffer(NULL),
   mosiPin(-1), clkPin(-1), dcPin(dc_pin), csPin(cs_pin), rstPin(rst_pin) {
 #ifdef SPI_HAS_TRANSACTION
   spiSettings = SPISettings(bitrate, MSBFIRST, SPI_MODE0);
@@ -267,8 +267,8 @@ Adafruit_SSD1306::Adafruit_SSD1306(uint8_t w, uint8_t h, SPIClass *spi,
 */
 Adafruit_SSD1306::Adafruit_SSD1306(int8_t mosi_pin, int8_t sclk_pin,
   int8_t dc_pin, int8_t rst_pin, int8_t cs_pin) :
-  Adafruit_GFX(SSD1306_LCDWIDTH, SSD1306_LCDHEIGHT), spi(NULL), wire(NULL),
-  buffer(NULL), mosiPin(mosi_pin), clkPin(sclk_pin), dcPin(dc_pin),
+  Renderer(SSD1306_LCDWIDTH, SSD1306_LCDHEIGHT), spi(NULL), wire(NULL),
+  xbuffer(NULL), mosiPin(mosi_pin), clkPin(sclk_pin), dcPin(dc_pin),
   csPin(cs_pin), rstPin(rst_pin) {
 }
 
@@ -294,9 +294,9 @@ Adafruit_SSD1306::Adafruit_SSD1306(int8_t mosi_pin, int8_t sclk_pin,
             allocation is performed there!
 */
 Adafruit_SSD1306::Adafruit_SSD1306(int8_t dc_pin, int8_t rst_pin,
-  int8_t cs_pin) : Adafruit_GFX(SSD1306_LCDWIDTH, SSD1306_LCDHEIGHT),
-  spi(&SPI), wire(NULL), buffer(NULL), mosiPin(-1), clkPin(-1),
-  dcPin(dc_pin), csPin(cs_pin), rstPin(rst_pin) {
+  int8_t cs_pin) : Renderer(SSD1306_LCDWIDTH, SSD1306_LCDHEIGHT),
+  spi(&SPI), wire(NULL), xbuffer(NULL), mosiPin(-1), clkPin(-1),
+  dcPin(dc_pin), csPin(cs_pin), rstPin(rst_pin)  {
 #ifdef SPI_HAS_TRANSACTION
   spiSettings = SPISettings(8000000, MSBFIRST, SPI_MODE0);
 #endif
@@ -317,8 +317,8 @@ Adafruit_SSD1306::Adafruit_SSD1306(int8_t dc_pin, int8_t rst_pin,
             allocation is performed there!
 */
 Adafruit_SSD1306::Adafruit_SSD1306(int8_t rst_pin) :
-  Adafruit_GFX(SSD1306_LCDWIDTH, SSD1306_LCDHEIGHT), spi(NULL), wire(&Wire),
-  buffer(NULL), mosiPin(-1), clkPin(-1), dcPin(-1), csPin(-1),
+  Renderer(SSD1306_LCDWIDTH, SSD1306_LCDHEIGHT), spi(NULL), wire(&Wire),
+  xbuffer(NULL), mosiPin(-1), clkPin(-1), dcPin(-1), csPin(-1),
   rstPin(rst_pin) {
 }
 
@@ -451,10 +451,12 @@ void Adafruit_SSD1306::ssd1306_command(uint8_t c) {
 boolean Adafruit_SSD1306::begin(uint8_t vcs, uint8_t addr, boolean reset,
   boolean periphBegin) {
 
-  if((!buffer) && !(buffer = (uint8_t *)malloc(WIDTH * ((HEIGHT + 7) / 8))))
-    return false;
+//  if((!buffer) && !(buffer = (uint8_t *)malloc(WIDTH * ((HEIGHT + 7) / 8))))
+//    return false;
 
   clearDisplay();
+
+  /*
   if(HEIGHT > 32) {
     drawBitmap((WIDTH - splash1_width) / 2, (HEIGHT - splash1_height) / 2,
       splash1_data, splash1_width, splash1_height, 1);
@@ -462,7 +464,7 @@ boolean Adafruit_SSD1306::begin(uint8_t vcs, uint8_t addr, boolean reset,
     drawBitmap((WIDTH - splash2_width) / 2, (HEIGHT - splash2_height) / 2,
       splash2_data, splash2_width, splash2_height, 1);
   }
-
+*/
   vccstate = vcs;
 
   // Setup pin directions
@@ -581,6 +583,9 @@ boolean Adafruit_SSD1306::begin(uint8_t vcs, uint8_t addr, boolean reset,
   return true; // Success
 }
 
+
+#if 0
+
 // DRAWING FUNCTIONS -------------------------------------------------------
 
 /*!
@@ -680,28 +685,7 @@ void Adafruit_SSD1306::drawFastHLine(
   else      drawFastHLineInternal(x, y, w, color);
 }
 
-void Adafruit_SSD1306::drawFastHLineInternal(
-  int16_t x, int16_t y, int16_t w, uint16_t color) {
 
-  if((y >= 0) && (y < HEIGHT)) { // Y coord in bounds?
-    if(x < 0) { // Clip left
-      w += x;
-      x  = 0;
-    }
-    if((x + w) > WIDTH) { // Clip right
-      w = (WIDTH - x);
-    }
-    if(w > 0) { // Proceed only if width is positive
-      uint8_t *pBuf = &buffer[(y / 8) * WIDTH + x],
-               mask = 1 << (y & 7);
-      switch(color) {
-       case WHITE:               while(w--) { *pBuf++ |= mask; }; break;
-       case BLACK: mask = ~mask; while(w--) { *pBuf++ &= mask; }; break;
-       case INVERSE:             while(w--) { *pBuf++ ^= mask; }; break;
-      }
-    }
-  }
-}
 
 /*!
     @brief  Draw a vertical line. This is also invoked by the Adafruit_GFX
@@ -747,6 +731,30 @@ void Adafruit_SSD1306::drawFastVLine(
 
   if(bSwap) drawFastHLineInternal(x, y, h, color);
   else      drawFastVLineInternal(x, y, h, color);
+}
+#endif
+
+void Adafruit_SSD1306::drawFastHLineInternal(
+  int16_t x, int16_t y, int16_t w, uint16_t color) {
+
+  if((y >= 0) && (y < HEIGHT)) { // Y coord in bounds?
+    if(x < 0) { // Clip left
+      w += x;
+      x  = 0;
+    }
+    if((x + w) > WIDTH) { // Clip right
+      w = (WIDTH - x);
+    }
+    if(w > 0) { // Proceed only if width is positive
+      uint8_t *pBuf = &buffer[(y / 8) * WIDTH + x],
+               mask = 1 << (y & 7);
+      switch(color) {
+       case WHITE:               while(w--) { *pBuf++ |= mask; }; break;
+       case BLACK: mask = ~mask; while(w--) { *pBuf++ &= mask; }; break;
+       case INVERSE:             while(w--) { *pBuf++ ^= mask; }; break;
+      }
+    }
+  }
 }
 
 void Adafruit_SSD1306::drawFastVLineInternal(
@@ -871,8 +879,9 @@ boolean Adafruit_SSD1306::getPixel(int16_t x, int16_t y) {
             to full byte boundary if needed.
 */
 uint8_t *Adafruit_SSD1306::getBuffer(void) {
-  return buffer;
+  return xbuffer;
 }
+
 
 // REFRESH DISPLAY ---------------------------------------------------------
 
@@ -1099,3 +1108,6 @@ void Adafruit_SSD1306::dim(boolean dim) {
   TRANSACTION_END
 }
 
+void Adafruit_SSD1306::Updateframe(void) {
+  display();
+}

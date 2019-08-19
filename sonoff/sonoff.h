@@ -24,7 +24,7 @@
  * Performance ROM (PROGMEM) vs RAM (RODATA)
 \*********************************************************************************************/
 
-//#define XFUNC_PTR_IN_ROM                    // Enable for keeping tables in ROM (PROGMEM) which seem to have access issues on some flash types
+#define XFUNC_PTR_IN_ROM                    // Enable for keeping tables in ROM (PROGMEM) which seem to have access issues on some flash types
 
 /*********************************************************************************************\
  * Default sensor states
@@ -261,13 +261,5 @@ enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, 
 const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|Timer|Rule|MaxPower|MaxEnergy|Overtemp|Light|Knx|Display|Wemo|Hue|Retry|Remote";
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
-
-/*********************************************************************************************\
- * Extern global variables
-\*********************************************************************************************/
-
-extern uint8_t light_device;  // Light device number
-extern power_t light_power;  // Light power
-extern uint8_t rotary_changed; // Rotary switch changed
 
 #endif  // _SONOFF_H_

@@ -1,4 +1,12 @@
 /*********************************************************************************************\
+ * 6.6.0.6 20190819
+ *
+ * 6.6.0.5 20190816
+ * Add command WebSensor<sensor number> 0/1 to control display of sensor data in web GUI (#6085)
+ * Change some table locations from RAM to Flash
+ * Fix wrong telemetry message when SetOption68 1 (#6191)
+ * Add support for RDM6300 125kHz RFID Reader by Gerhard Mutz
+ *
  * 6.6.0.4 20190806
  * Add support for CHIRP soil moisture sensor by Christian Baars
  * Add debug compile features using defines DEBUG_TASMOTA_CORE, DEBUG_TASMOTA_DRIVER and DEBUG_TASMOTA_SENSOR.

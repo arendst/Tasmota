@@ -488,7 +488,6 @@ struct WEB {
   uint8_t config_xor_on_set = CONFIG_FILE_XOR;
 } Web;
 
-
 // Helper function to avoid code duplication (saves 4k Flash)
 static void WebGetArg(const char* arg, char* out, size_t max)
 {
@@ -554,7 +553,7 @@ void StartWebserver(int type, IPAddress ipweb)
     WebServer->begin(); // Web server start
   }
   if (Web.state != type) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
     rules_flag.http_init = 1;
   }
   if (type) { Web.state = type; }
@@ -792,7 +791,7 @@ void WSContentSendStyle_P(const char* formatP, ...)
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
     WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // sonoff.local (192.168.2.12, 192.168.4.1)
       my_hostname,
-      (mdns_begun) ? ".local" : "",
+      (Wifi.mdns_begun) ? ".local" : "",
       (lip) ? WiFi.localIP().toString().c_str() : "",
       (lip && sip) ? ", " : "",
       (sip) ? WiFi.softAPIP().toString().c_str() : "");
@@ -1781,7 +1780,7 @@ void HandleInformation(void)
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%)"), Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()));
-  WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (mdns_begun) ? ".local" : "");
+  WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "");
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
     WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), WiFi.localIP().toString().c_str());
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), IPAddress(Settings.ip_address[1]).toString().c_str());
@@ -2400,12 +2399,13 @@ int WebSend(char *buffer)
       int http_code = http.GET();             // Start connection and send HTTP header
       if (http_code > 0) {                    // http_code will be negative on error
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
-/*
+#ifdef USE_WEBSEND_RESPONSE
           // Return received data to the user - Adds 900+ bytes to the code
-          String result = http.getString();   // File found at server - may need lot of ram or trigger out of memory!
+          const char* read = http.getString().c_str();  // File found at server - may need lot of ram or trigger out of memory!
           uint32_t j = 0;
-          for (uint32_t i = 0; i < result.length(); i++) {
-            char text = result.charAt(i);
+          char text = '.';
+          while (text != '\0') {
+            text = *read++;
             if (text > 31) {                  // Remove control characters like linefeed
               mqtt_data[j++] = text;
               if (j == sizeof(mqtt_data) -2) { break; }
@@ -2413,7 +2413,13 @@ int WebSend(char *buffer)
           }
           mqtt_data[j] = '\0';
           MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_WEBSEND));
-*/
+#ifdef USE_SCRIPT
+extern uint8_t tasm_cmd_activ;
+          // recursive call must be possible in this case
+          tasm_cmd_activ=0;
+          XdrvRulesProcess();
+#endif  // USE_SCRIPT
+#endif  // USE_WEBSEND_RESPONSE
         }
         status = 0;                           // No error - Done
       } else {
@@ -2461,13 +2467,13 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_EMULATION
   D_CMND_EMULATION "|"
 #endif
-  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR  ;
+  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR;
 
 void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
   &CmndEmulation,
 #endif
-  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor };
+  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor, &CmndWebSensor };
 
 /*********************************************************************************************\
  * Commands
@@ -2562,6 +2568,18 @@ void CmndWebColor(void)
     ResponseAppend_P(PSTR("\"#%06x\""), WebColor(i));
   }
   ResponseAppend_P(PSTR("]}"));
+}
+
+void CmndWebSensor(void)
+{
+  if (XdrvMailbox.index < MAX_XSNS_DRIVERS) {
+    if (XdrvMailbox.payload >= 0) {
+      bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+    }
+  }
+  Response_P(PSTR("{\"" D_CMND_WEBSENSOR "\":"));
+  XsnsSensorState();
+  ResponseJsonEnd();
 }
 
 /*********************************************************************************************\

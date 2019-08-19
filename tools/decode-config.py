@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.2.0030'
+VER = '2.2.0031'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -403,6 +403,11 @@ def MqttFingerprint(value, idx=None):
         fingerprint += "{:02x} ".format(ord(i))
     return "MqttFingerprint{} {}".format('' if idx is None else idx, fingerprint.strip())
 
+def WebSensor(value, idx):
+    cmd=[]
+    for i in range(0,32):
+        cmd.append("WebSensor{} {}".format(i+(idx-1)*32, "1" if (int(value,16) & (1<<i))!=0 else "0"))
+    return cmd
     
 # ----------------------------------------------------------------------
 # Tasmota configuration data definition
@@ -942,7 +947,16 @@ Setting_6_6_0_3['flag3'][0].update ({
         'pwm_multi_channels':       ('<L', (0x3A0,1,18), (None, None,                           ('SetOption',   '"SetOption68 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_6_0_5 = copy.deepcopy(Setting_6_6_0_3)
+Setting_6_6_0_5.update              ({
+    'sensors':                      ('<L',  0x7A4,       ([3],  None,                           ('Wifi',        WebSensor)), '"0x{:08x}".format($)' ),
+                                    })
+Setting_6_6_0_5['flag3'][0].update ({
+        'tuya_dimmer_min_limit':    ('<L', (0x3A0,1,19), (None, None,                           ('SetOption',   '"SetOption69 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x6060005, 0xe00, Setting_6_6_0_5),
             (0x6060003, 0xe00, Setting_6_6_0_3),
             (0x6060002, 0xe00, Setting_6_6_0_2),
             (0x6060001, 0xe00, Setting_6_6_0_1),
@@ -1816,7 +1830,7 @@ def CmndConverter(valuemapping, value, idx, fielddef):
         field definition - see "Settings dictionary" above
 
     @return:
-        converted value or None if unable to convert
+        converted value, list of values or None if unable to convert
     """
     converter, readconverter, writeconverter, group, tasmotacmnd = GetFieldDef(fielddef, fields='converter, readconverter, writeconverter, group, tasmotacmnd')
 
@@ -2461,13 +2475,21 @@ def SetCmnd(cmnds, fieldname, fielddef, valuemapping, mappedvalue, addroffset=0,
                 if group is not None and cmnd is not None:
                     if group not in cmnds:
                         cmnds[group] = []
-                    cmnds[group].append(cmnd)
+                    if isinstance(cmnd, list):
+                        for c in cmnd:
+                            cmnds[group].append(c)
+                    else:
+                        cmnds[group].append(cmnd)
         else:
             cmnd = CmndConverter(valuemapping, mappedvalue, idx, fielddef)
             if group is not None and cmnd is not None:
                 if group not in cmnds:
                     cmnds[group] = []
-                cmnds[group].append(cmnd)
+                if isinstance(cmnd, list):
+                    for c in cmnd:
+                        cmnds[group].append(c)
+                else:
+                    cmnds[group].append(cmnd)
 
     return cmnds
 

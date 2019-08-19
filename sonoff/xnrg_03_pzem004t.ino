@@ -169,22 +169,22 @@ void PzemEvery200ms(void)
   if (data_ready) {
     float value = 0;
     if (PzemRecieve(pzem_responses[pzem_read_state], &value)) {
-      energy_data_valid = 0;
+      Energy.data_valid = 0;
       switch (pzem_read_state) {
         case 1:  // Voltage as 230.2V
-          energy_voltage = value;
+          Energy.voltage = value;
           break;
         case 2:  // Current as 17.32A
-          energy_current = value;
+          Energy.current = value;
           break;
         case 3:  // Power as 20W
-          energy_active_power = value;
+          Energy.active_power = value;
           break;
         case 4:  // Total energy as 99999Wh
-          if (!energy_start || (value < energy_start)) energy_start = value;  // Init after restart and hanlde roll-over if any
-          if (value != energy_start) {
-            energy_kWhtoday += (unsigned long)((value - energy_start) * 100);
-            energy_start = value;
+          if (!Energy.start_energy || (value < Energy.start_energy)) Energy.start_energy = value;  // Init after restart and hanlde roll-over if any
+          if (value != Energy.start_energy) {
+            Energy.kWhtoday += (unsigned long)((value - Energy.start_energy) * 100);
+            Energy.start_energy = value;
           }
           EnergyUpdateToday();
           break;

@@ -49,7 +49,7 @@ memory is dynamically allocated as a result of the D section.
 copying a string to a number or reverse is supported   
 
 >**\>B**  
-executed on BOOT time  
+executed on BOOT time  and script save
 
 >**\>T**  
 executed on teleperiod time (**SENSOR** and **STATE**), get tele vars only in this section  
@@ -94,7 +94,9 @@ special variables (read only):
 **med(n x)** = calculates a 5 value median filter of x (2 filters possible n=0,1)  
 **int(x)** = gets the integer part of x (like floor)  
 **hn(x)** = converts x (0..255) to a hex nibble string  
-**st(svar c n)** = stringtoken gets the n th substring of svar separated by c  
+**st(svar c n)** = stringtoken gets the n th substring of svar separated by c
+**sl(svar)** = gets the length of a string
+**sb(svar p n)** = gets a substring from svar at position p (if p<0 counts from end) and length n     
 **s(x)** = explicit conversion from number x to string  
 **mqtts** = state of mqtt disconnected=0, connected>0  
 **wifis** = state of wifi disconnected=0, connected>0  
@@ -139,7 +141,7 @@ a single percent sign must be given as **%%**
 
 **special** cmds:
 
->**=\> print** prints to info log for debugging  
+>**print** or **=\>print** prints to info log for debugging  
 
 to save code space nearly no error messages are provided. However it is taken care of that at least it should not crash on syntax errors.  
 if a variable does not exist a **???** is given on commands  
@@ -183,11 +185,13 @@ and on the same line conditions may be bracketed  e.g. if ((a==b) and ((c==d) or
 **spin(x m)** set gpio pin x (0-16) to value m (0,1) only the last bit is used, so even values set the pin to zero and uneven values set the pin to 1  
 **spinm(x m)** set pin mode gpio pin x (0-16) to mode m (input=0,output=1,input with pullup=2)  
 **ws2812(array)** copies an array (defined with m:name) to the WS2812 LED chain  the array should be defined as long as the number of pixels. the color is coded as 24 bit RGB    
+**hsvrgb(h s v)** converts hue (0-360), saturation (0-100) and value (0-100) to RGB color  
 
 >**#name** names a subroutine, subroutines are called with **=#name**  
 **#name(param)** names a subroutines with a parameter is called with **=#name(param)**  
 subroutines end with the next '#' or '>' line or break, may be nested  
-params can be numbers or strings and on mismatch are converted  
+params can be numbers or strings and on mismatch are converted
+**=(svar)** executes a script in a string variable (dynamic or self modifying code)  
 
 >**for var from to inc**  
 **next**  

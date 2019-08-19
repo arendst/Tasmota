@@ -241,9 +241,9 @@ void AzEverySecond(void)
   }
 
   // update the clock from network time
-  if ((az_clock_update == 0) && (local_time > AZ_EPOCH)) {
+  if ((az_clock_update == 0) && (LocalTime() > AZ_EPOCH)) {
     char tmpString[16];
-    sprintf(tmpString, "C %d\r", (int)(local_time - AZ_EPOCH));
+    sprintf(tmpString, "C %d\r", (int)(LocalTime() - AZ_EPOCH));
     AzSerial->write(tmpString);
     // discard the response
     do {

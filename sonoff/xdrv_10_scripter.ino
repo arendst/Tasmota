@@ -109,7 +109,6 @@ struct M_FILT {
   float rbuff[1];
 };
 
-
 typedef union {
   uint8_t data;
   struct {
@@ -135,6 +134,7 @@ struct SCRIPT_MEM {
     uint8_t *vnp_offset;
     char *glob_snp; // string vars pointer
     char *scriptptr;
+    char *scriptptr_bu;
     char *script_ram;
     uint16_t script_size;
     uint8_t *script_pram;
@@ -161,6 +161,7 @@ int16_t last_findex;
 uint8_t tasm_cmd_activ=0;
 uint8_t fast_script=0;
 uint32_t script_lastmillis;
+
 
 char *GetNumericResult(char *lp,uint8_t lastop,float *fp,JsonObject *jo);
 char *GetStringResult(char *lp,uint8_t lastop,char *cp,JsonObject *jo);
@@ -199,8 +200,6 @@ void ScriptEverySecond(void) {
 void RulesTeleperiod(void) {
   if (bitRead(Settings.rule_enabled, 0) && mqtt_data[0]) Run_Scripter(">T",2, mqtt_data);
 }
-
-//#define USE_24C256
 
 // EEPROM MACROS
 #ifdef USE_24C256
@@ -244,6 +243,7 @@ char *script;
 
     glob_script_mem.max_ssize=SCRIPT_SVARSIZE;
     glob_script_mem.scriptptr=0;
+
     if (!*script) return -999;
 
     float fvalues[MAXVARS];
@@ -542,6 +542,7 @@ char *script;
 
     // store start of actual program here
     glob_script_mem.scriptptr=lp-1;
+    glob_script_mem.scriptptr_bu=glob_script_mem.scriptptr;
     return 0;
 
 }
@@ -710,6 +711,91 @@ float DoMedian5(uint8_t index, float in) {
   return median_array(mf->buffer,MEDIAN_SIZE);
 }
 
+#ifdef USE_LIGHT
+#ifdef USE_WS2812
+uint32_t HSVToRGB(uint16_t hue, uint8_t saturation, uint8_t value) {
+float r = 0, g = 0, b = 0;
+struct HSV {
+	float H;
+	float S;
+	float V;
+} hsv;
+
+hsv.H=hue;
+hsv.S=(float)saturation/100.0;
+hsv.V=(float)value/100.0;
+
+if (hsv.S == 0) {
+		r = hsv.V;
+		g = hsv.V;
+		b = hsv.V;
+	} else {
+		int i;
+		float f, p, q, t;
+
+		if (hsv.H == 360)
+			hsv.H = 0;
+		else
+			hsv.H = hsv.H / 60;
+
+		i = (int)trunc(hsv.H);
+		f = hsv.H - i;
+
+		p = hsv.V * (1.0 - hsv.S);
+		q = hsv.V * (1.0 - (hsv.S * f));
+		t = hsv.V * (1.0 - (hsv.S * (1.0 - f)));
+
+		switch (i)
+		{
+		case 0:
+			r = hsv.V;
+			g = t;
+			b = p;
+			break;
+
+		case 1:
+			r = q;
+			g = hsv.V;
+			b = p;
+			break;
+
+		case 2:
+			r = p;
+			g = hsv.V;
+			b = t;
+			break;
+
+		case 3:
+			r = p;
+			g = q;
+			b = hsv.V;
+			break;
+
+		case 4:
+			r = t;
+			g = p;
+			b = hsv.V;
+			break;
+
+		default:
+			r = hsv.V;
+			g = p;
+			b = q;
+			break;
+		}
+
+	}
+
+  uint8_t ir,ig,ib;
+  ir=r*255;
+  ig=g*255;
+  ib=b*255;
+
+	uint32_t rgb=(ir<<16)|(ig<<8)|ib;
+	return rgb;
+}
+#endif
+#endif
 
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
@@ -861,9 +947,15 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
       }
       if (jo->success()) {
         char *subtype=strchr(vname,'#');
+        char *subtype2;
         if (subtype) {
           *subtype=0;
           subtype++;
+          subtype2=strchr(subtype,'#');
+          if (subtype2) {
+            *subtype2=0;
+            *subtype2++;
+          }
         }
         vn=vname;
         str_value = (*jo)[vn];
@@ -875,6 +967,23 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
               jo=&jobj1;
               str_value = (*jo)[vn];
               if ((*jo)[vn].success()) {
+                // 2. stage
+                if (subtype2) {
+                  JsonObject &jobj2=(*jo)[vn];
+                  if ((*jo)[vn].success()) {
+                    vn=subtype2;
+                    jo=&jobj2;
+                    str_value = (*jo)[vn];
+                    if ((*jo)[vn].success()) {
+                      goto skip;
+                    } else {
+                      goto chknext;
+                    }
+                  } else {
+                    goto chknext;
+                  }
+                }
+                // end
                 goto skip;
               }
             } else {
@@ -1212,6 +1321,30 @@ chknext:
           }
           goto strexit;
         }
+#ifdef USE_LIGHT
+#ifdef USE_WS2812
+        if (!strncmp(vname,"hsvrgb(",7)) {
+          lp=GetNumericResult(lp+7,OPER_EQU,&fvar,0);
+          if (fvar<0 || fvar>360) fvar=0;
+          SCRIPT_SKIP_SPACES
+          // arg2
+          float fvar2;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+          if (fvar2<0 || fvar2>100) fvar2=0;
+          SCRIPT_SKIP_SPACES
+          // arg3
+          float fvar3;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar3,0);
+          if (fvar3<0 || fvar3>100) fvar3=0;
+
+          fvar=HSVToRGB(fvar,fvar2,fvar3);
+
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif
+#endif
         break;
       case 'i':
         if (!strncmp(vname,"int(",4)) {
@@ -1385,6 +1518,34 @@ chknext:
         if (!strncmp(vname,"slen",4)) {
           fvar=strlen(glob_script_mem.script_ram);
           goto exit;
+        }
+        if (!strncmp(vname,"sl(",3)) {
+          lp+=3;
+          char str[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          lp++;
+          len=0;
+          fvar=strlen(str);
+          goto exit;
+        }
+        if (!strncmp(vname,"sb(",3)) {
+          lp+=3;
+          char str[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          SCRIPT_SKIP_SPACES
+          float fvar1;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+          SCRIPT_SKIP_SPACES
+          float fvar2;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+          lp++;
+          len=0;
+          if (fvar1<0) {
+            fvar1=strlen(str)+fvar1;
+          }
+          memcpy(sp,&str[(uint8_t)fvar1],(uint8_t)fvar2);
+          sp[(uint8_t)fvar2] = '\0';
+          goto strexit;
         }
         if (!strncmp(vname,"st(",3)) {
           lp+=3;
@@ -2046,7 +2207,10 @@ exit:
 #define IF_NEST 8
 // execute section of scripter
 int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
-    uint8_t vtype=0,sindex,xflg,floop=0,globvindex;
+
+    if (tasm_cmd_activ && tlen>0) return 0;
+
+    uint8_t vtype=0,sindex,xflg,floop=0,globvindex,fromscriptcmd=0;
     int8_t globaindex;
     struct T_INDEX ind;
     uint8_t operand,lastop,numeric=1,if_state[IF_NEST],if_exe[IF_NEST],if_result[IF_NEST],and_or,ifstck=0;
@@ -2059,9 +2223,6 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
       tlen=abs(tlen);
       check=1;
     }
-
-    if (tasm_cmd_activ) return 0;
-
 
     float *dfvar,*cv_count,cv_max,cv_inc;
     char *cv_ptr;
@@ -2339,11 +2500,17 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
 #endif
 #endif
 
-            else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2)) {
+            else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2) || !strncmp(lp,"print",5)) {
                 // execute cmd
-                uint8_t sflag=0,svmqtt,swll;
-                if (*lp=='-') sflag=1;
-                lp+=2;
+                uint8_t sflag=0,pflg=0,svmqtt,swll;
+                if (*lp=='p') {
+                 pflg=1;
+                 lp+=5;
+                }
+                else {
+                  if (*lp=='-') sflag=1;
+                  lp+=2;
+                }
                 char *slp=lp;
                 SCRIPT_SKIP_SPACES
                 #define SCRIPT_CMDMEM 512
@@ -2366,8 +2533,9 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   Replace_Cmd_Vars(cmd,tmp,SCRIPT_CMDMEM/2);
                   //toSLog(tmp);
 
-                  if (!strncmp(tmp,"print",5)) {
-                    toLog(&tmp[5]);
+                  if (!strncmp(tmp,"print",5) || pflg) {
+                    if (pflg) toLog(tmp);
+                    else toLog(&tmp[5]);
                   } else {
                     if (!sflag) {
                       snprintf_P(log_data, sizeof(log_data), PSTR("Script: performs \"%s\""), tmp);
@@ -2402,9 +2570,23 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   lp++;
                   plen++;
                 }
-                Run_Scripter(slp,plen,0);
+                if (fromscriptcmd) {
+                  char *sp=glob_script_mem.scriptptr;
+                  glob_script_mem.scriptptr=glob_script_mem.scriptptr_bu;
+                  Run_Scripter(slp,plen,0);
+                  glob_script_mem.scriptptr=sp;
+                } else {
+                  Run_Scripter(slp,plen,0);
+                }
                 lp=slp;
                 goto next_line;
+            } else if (!strncmp(lp,"=(",2)) {
+                lp+=2;
+                char str[128];
+                str[0]='>';
+                lp=GetStringResult(lp,OPER_EQU,&str[1],0);
+                lp++;
+                execute_script(str);
             }
 
             // check for variable result
@@ -2545,6 +2727,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
               // called from cmdline
               lp++;
               section=1;
+              fromscriptcmd=1;
               goto startline;
             }
             if (!strncmp(lp,type,tlen)) {
@@ -3094,12 +3277,11 @@ void ScriptSaveSettings(void) {
 #endif
 
 void execute_script(char *script) {
-char *svd_sp=glob_script_mem.scriptptr;
+  char *svd_sp=glob_script_mem.scriptptr;
   strcat(script,"\n#");
   glob_script_mem.scriptptr=script;
   Run_Scripter(">",1,0);
   glob_script_mem.scriptptr=svd_sp;
-  Scripter_save_pvars();
 }
 #define D_CMND_SCRIPT "Script"
 #define D_CMND_SUBSCRIBE "Subscribe"
@@ -3134,6 +3316,7 @@ bool ScriptCommand(void) {
             if (XdrvMailbox.data[count]==';') XdrvMailbox.data[count]='\n';
           }
           execute_script(XdrvMailbox.data);
+          Scripter_save_pvars();
         }
       }
       return serviced;
@@ -3224,10 +3407,9 @@ bool ScriptMqttData(void)
         }
       }
       value.trim();
-      //Create an new event. Cannot directly call RulesProcessEvent().
-      //snprintf_P(event_data, sizeof(event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
+
       char sbuffer[128];
-      snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=%s\n"), event_item.Event.c_str(), value.c_str());
+      snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
       //toLog(sbuffer);
       execute_script(sbuffer);
     }
