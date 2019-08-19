@@ -2401,10 +2401,11 @@ int WebSend(char *buffer)
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
 #ifdef USE_WEBSEND_RESPONSE
           // Return received data to the user - Adds 900+ bytes to the code
-          String result = http.getString();   // File found at server - may need lot of ram or trigger out of memory!
+          const char* read = http.getString().c_str();  // File found at server - may need lot of ram or trigger out of memory!
           uint32_t j = 0;
-          for (uint32_t i = 0; i < result.length(); i++) {
-            char text = result.charAt(i);
+          char text = '.';
+          while (text != '\0') {
+            text = *read++;
             if (text > 31) {                  // Remove control characters like linefeed
               mqtt_data[j++] = text;
               if (j == sizeof(mqtt_data) -2) { break; }
