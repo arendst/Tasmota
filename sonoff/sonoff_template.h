@@ -191,6 +191,7 @@ enum UserSelectablePins {
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
   GPIO_ZIGBEE_TX,      // Zigbee Serial interface
   GPIO_ZIGBEE_RX,      // Zigbee Serial interface
+  GPIO_RDM6300_RX,     // RDM6300 RX
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -262,6 +263,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_OLED_RESET "|"
   D_SENSOR_SOLAXX1_TX "|" D_SENSOR_SOLAXX1_RX "|"
   D_SENSOR_ZIGBEE_TXD "|" D_SENSOR_ZIGBEE_RXD "|"
+  D_SENSOR_RDM6300_RX "|"
   ;
 
 // User selectable ADC0 functionality
@@ -661,6 +663,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SOLAX_X1
   GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
+#endif
+#ifdef USE_RDM6300
+  GPIO_RDM6300_RX,
 #endif
 };
 
