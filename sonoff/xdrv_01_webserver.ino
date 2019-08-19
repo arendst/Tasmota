@@ -2399,7 +2399,7 @@ int WebSend(char *buffer)
       int http_code = http.GET();             // Start connection and send HTTP header
       if (http_code > 0) {                    // http_code will be negative on error
         if (http_code == HTTP_CODE_OK || http_code == HTTP_CODE_MOVED_PERMANENTLY) {
-/*
+#ifdef USE_WEBSEND_RESPONSE
           // Return received data to the user - Adds 900+ bytes to the code
           String result = http.getString();   // File found at server - may need lot of ram or trigger out of memory!
           uint32_t j = 0;
@@ -2412,7 +2412,13 @@ int WebSend(char *buffer)
           }
           mqtt_data[j] = '\0';
           MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_WEBSEND));
-*/
+#ifdef USE_SCRIPT
+extern uint8_t tasm_cmd_activ;
+          // recursive call must be possible in this case
+          tasm_cmd_activ=0;
+          XdrvRulesProcess();
+#endif
+#endif
         }
         status = 0;                           // No error - Done
       } else {
