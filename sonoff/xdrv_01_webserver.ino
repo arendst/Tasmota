@@ -2418,8 +2418,8 @@ extern uint8_t tasm_cmd_activ;
           // recursive call must be possible in this case
           tasm_cmd_activ=0;
           XdrvRulesProcess();
-#endif
-#endif
+#endif  // USE_SCRIPT
+#endif  // USE_WEBSEND_RESPONSE
         }
         status = 0;                           // No error - Done
       } else {

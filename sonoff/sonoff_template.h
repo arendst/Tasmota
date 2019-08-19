@@ -628,6 +628,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_PN532_TXD,      // PN532 HSU Tx
   GPIO_PN532_RXD,      // PN532 HSU Rx
 #endif
+#ifdef USE_RDM6300
+  GPIO_RDM6300_RX,
+#endif
 #ifdef USE_MGC3130
   GPIO_MGC3130_XFER,
   GPIO_MGC3130_RESET,
@@ -658,14 +661,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,
-  GPIO_HRE_DATA
+  GPIO_HRE_DATA,
 #endif
 #ifdef USE_SOLAX_X1
   GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
-#endif
-#ifdef USE_RDM6300
-  GPIO_RDM6300_RX,
 #endif
 };
 
