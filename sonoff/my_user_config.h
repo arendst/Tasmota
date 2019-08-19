@@ -385,6 +385,7 @@
       #define MTX_ADDRESS6     0x76              // [DisplayAddress6] I2C address of sixth 8x8 matrix module
       #define MTX_ADDRESS7     0x00              // [DisplayAddress7] I2C address of seventh 8x8 matrix module
       #define MTX_ADDRESS8     0x00              // [DisplayAddress8] I2C address of eigth 8x8 matrix module
+//    #define USE_DISPLAY_SH1106                   // [DisplayModel 7] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------
@@ -395,7 +396,11 @@
   #define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT
   #endif
     #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
-//    #define USE_DISPLAY_EPAPER_29                 // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
+//    #define USE_DISPLAY_EPAPER_29                // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
+//    #define USE_DISPLAY_EPAPER_42                // [DisplayModel 6] Enable e-paper 4.2 inch display
+//    #define USE_DISPLAY_ILI9488                  // [DisplayModel 8]
+//    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9]
+//    #define USE_DISPLAY_RA8876                   // [DisplayModel 10]
 #endif  // USE_SPI
 
 // -- Serial sensors ------------------------------
