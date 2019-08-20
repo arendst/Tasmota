@@ -211,7 +211,7 @@ if (2 == ctouch_counter) {
   }
 }
 }
-#endif USE_TOUCH_BUTTONS
+#endif  // USE_TOUCH_BUTTONS
 /*
 void testall() {
 ra8876->clearScreen(0);

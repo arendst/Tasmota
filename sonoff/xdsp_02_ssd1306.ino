@@ -178,16 +178,15 @@ bool Xdsp02(byte function)
       SSD1306InitDriver();
     }
     else if (XDSP_02 == Settings.display_model) {
-
       switch (function) {
-        case FUNC_DISPLAY_MODEL:
-          result = true;
-          break;
 #ifdef USE_DISPLAY_MODES1TO5
         case FUNC_DISPLAY_EVERY_SECOND:
           Ssd1306Refresh();
           break;
 #endif  // USE_DISPLAY_MODES1TO5
+        case FUNC_DISPLAY_MODEL:
+          result = true;
+          break;
       }
     }
   }
