@@ -291,7 +291,12 @@ bool TuyaModuleSelected(void)
     Settings.my_gp.io[3] = GPIO_TUYA_RX;
     restart_flag = 2;
   }
-  light_type = LT_SERIAL1;
+  if (Settings.flag3.tuya_disable_dimmer == 0) {
+    light_type = LT_SERIAL1;
+  } else {
+    light_type = LT_BASIC;
+  }
+
   return true;
 }
 
