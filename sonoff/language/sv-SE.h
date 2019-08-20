@@ -622,6 +622,7 @@
 #define D_SENSOR_DDSU666_RX    "DDSU666 Rx"
 #define D_SENSOR_SM2135_CLK    "SM2135 Clk"
 #define D_SENSOR_SM2135_DAT    "SM2135 Dat"
+#define D_SENSOR_DALI          "DALI"
 
 // Units
 #define D_UNIT_AMPERE "A"

@@ -206,6 +206,8 @@ enum UserSelectablePins {
   GPIO_DDSU666_RX,     // DDSU666 Serial interface
   GPIO_SM2135_CLK,     // SM2135 Clk
   GPIO_SM2135_DAT,     // SM2135 Dat
+  GPIO_DALI,           // DALI
+  GPIO_DALI_INV,       // Inverted DALI
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -283,6 +285,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DDS2382_TX "|" D_SENSOR_DDS2382_RX "|"
   D_SENSOR_DDSU666_TX "|" D_SENSOR_DDSU666_RX "|"
   D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
+  D_SENSOR_DALI "|" D_SENSOR_DALI "i|"
   ;
 
 // User selectable ADC0 functionality
@@ -733,6 +736,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_A4988_MS1,     // A4988 microstep pin1
   GPIO_A4988_MS2,     // A4988 microstep pin2
   GPIO_A4988_MS3,     // A4988 microstep pin3
+#endif
+#ifdef USE_DALI
+  GPIO_DALI,           // DALI
+  GPIO_DALI_INV,       // Inverted DALI
 #endif
 };
 
