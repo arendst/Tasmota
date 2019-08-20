@@ -186,6 +186,8 @@ enum UserSelectablePins {
   GPIO_ARIRFSEL,       // Arilux RF Receive input selected
   GPIO_BUZZER,         // Buzzer
   GPIO_BUZZER_INV,     // Inverted buzzer
+  GPIO_DALI,           // DALI
+  GPIO_DALI_INV,       // Inverted DALI
   GPIO_OLED_RESET,     // OLED Display Reset
   GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
@@ -260,6 +262,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_LED_LINK "|" D_SENSOR_LED_LINK "i|"
   D_SENSOR_ARIRFSEL "|"
   D_SENSOR_BUZZER "|" D_SENSOR_BUZZER "i|"
+  D_SENSOR_DALI "|" D_SENSOR_DALI "i|"
   D_SENSOR_OLED_RESET "|"
   D_SENSOR_SOLAXX1_TX "|" D_SENSOR_SOLAXX1_RX "|"
   D_SENSOR_ZIGBEE_TXD "|" D_SENSOR_ZIGBEE_RXD "|"
@@ -493,6 +496,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_BUZZER
   GPIO_BUZZER,         // Buzzer
   GPIO_BUZZER_INV,     // Inverted buzzer
+#endif
+#ifdef USE_DALI
+  GPIO_DALI,           // DALI
+  GPIO_DALI_INV,       // Inverted DALI
 #endif
   GPIO_TXD,            // Serial interface
   GPIO_RXD,            // Serial interface

@@ -311,6 +311,7 @@
   #define TUYA_DIMMER_ID       0                 // Default dimmer Id
 #define USE_ARMTRONIX_DIMMERS                    // Add support for Armtronix Dimmers (+1k4 code)
 #define USE_PS_16_DZ                             // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
+#define USE_DALI                                 // Add DALI support
 //#define ROTARY_V1                                // Add support for MI Desk Lamp
 
 // -- Counter input -------------------------------
