@@ -48,7 +48,7 @@ enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1 };
 
 static const char * HEADER_KEYS[] = { "User-Agent", };
 
-const char HTTP_HEAD[] PROGMEM =
+const char HTTP_HEADER[] PROGMEM =
   "<!DOCTYPE html><html lang=\"" D_HTML_LANGUAGE "\" class=\"\">"
   "<head>"
   "<meta charset='utf-8'>"
@@ -753,7 +753,7 @@ void WSContentStart_P(const char* title, bool auth)
   if (title != nullptr) {
     char ctitle[strlen_P(title) +1];
     strcpy_P(ctitle, title);                       // Get title from flash to RAM
-    WSContentSend_P(HTTP_HEAD, Settings.friendlyname[0], ctitle);
+    WSContentSend_P(HTTP_HEADER, Settings.friendlyname[0], ctitle);
   }
 }
 
