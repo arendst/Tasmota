@@ -139,6 +139,7 @@ bool TuyaSetPower(void)
 bool TuyaSetChannels(void)
 {
   LightSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
+  delay(20); // Hack when power is off and dimmer is set then both commands go too soon to Serial out.
   return true;
 }
 
