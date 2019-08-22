@@ -309,7 +309,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
     if (inbetween) { pout[2] = inbetween; }
     if (pout + 3 - out > outsz) { break; }  // Better to truncate output string than overflow buffer
   }
-  pout[(inbetween) ? -1 : 0] = 0;  // Discard last inbetween
+  pout[(inbetween && insz) ? -1 : 0] = 0;   // Discard last inbetween if any input
   return out;
 }
 
@@ -1545,21 +1545,20 @@ void AddLog_Debug(PGM_P formatP, ...)
 
 void AddLogBuffer(uint32_t loglevel, uint8_t *buffer, uint32_t count)
 {
+/*
   snprintf_P(log_data, sizeof(log_data), PSTR("DMP:"));
   for (uint32_t i = 0; i < count; i++) {
     snprintf_P(log_data, sizeof(log_data), PSTR("%s %02X"), log_data, *(buffer++));
   }
   AddLog(loglevel);
-
+*/
 /*
   strcpy_P(log_data, PSTR("DMP: "));
   ToHex_P(buffer, count, log_data + strlen(log_data), sizeof(log_data) - strlen(log_data), ' ');
   AddLog(loglevel);
 */
-/*
   char hex_char[count * 3];
   AddLog_P2(loglevel, PSTR("DMP: %s"), ToHex_P(buffer, count, hex_char, sizeof(hex_char), ' '));
-*/
 }
 
 void AddLogSerial(uint32_t loglevel)
