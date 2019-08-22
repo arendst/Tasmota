@@ -719,6 +719,7 @@ void HandleHueApi(String *path)
   else if (path->endsWith("/sensors")) HueNotImplemented(path);
   else if (path->endsWith("/scenes")) HueNotImplemented(path);
   else if (path->endsWith("/rules")) HueNotImplemented(path);
+  else if (path->endsWith("/resourcelinks")) HueNotImplemented(path);
   else HueGlobalConfig(path);
 }
 
