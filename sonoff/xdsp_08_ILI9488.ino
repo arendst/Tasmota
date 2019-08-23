@@ -37,8 +37,8 @@
 #include <ILI9488.h>
 #include <FT6236.h>
 
-TouchLocation pLoc;
-uint8_t ctouch_counter = 0;
+TouchLocation ili9488_pLoc;
+uint8_t ili9488_ctouch_counter = 0;
 
 // currently fixed
 #define BACKPLANE_PIN 2
@@ -131,34 +131,34 @@ void ILI9488_MQTT(uint8_t count,const char *cp) {
 // check digitizer hit
 void FT6236Check() {
 uint16_t temp;
-ctouch_counter++;
-if (2 == ctouch_counter) {
+ili9488_ctouch_counter++;
+if (2 == ili9488_ctouch_counter) {
   // every 100 ms should be enough
-  ctouch_counter=0;
-  if (FT6236readTouchLocation(&pLoc,1)) {
+  ili9488_ctouch_counter=0;
+  if (FT6236readTouchLocation(&ili9488_pLoc,1)) {
     // did find a hit
     if (renderer) {
       uint8_t rot=renderer->getRotation();
       switch (rot) {
         case 0:
-          temp=pLoc.y;
-          pLoc.y=renderer->height()-pLoc.x;
-          pLoc.x=temp;
+          temp=ili9488_pLoc.y;
+          ili9488_pLoc.y=renderer->height()-ili9488_pLoc.x;
+          ili9488_pLoc.x=temp;
           break;
         case 1:
           break;
         case 2:
           break;
         case 3:
-          temp=pLoc.y;
-          pLoc.y=pLoc.x;
-          pLoc.x=renderer->width()-temp;
+          temp=ili9488_pLoc.y;
+          ili9488_pLoc.y=ili9488_pLoc.x;
+          ili9488_pLoc.x=renderer->width()-temp;
           break;
       }
       // now must compare with defined buttons
       for (uint8_t count=0; count<MAXBUTTONS; count++) {
         if (buttons[count]) {
-            if (buttons[count]->contains(pLoc.x,pLoc.y)) {
+            if (buttons[count]->contains(ili9488_pLoc.x,ili9488_pLoc.y)) {
                 // did hit
                 buttons[count]->press(true);
                 if (buttons[count]->justPressed()) {
@@ -205,8 +205,8 @@ if (2 == ctouch_counter) {
         }
       }
     }
-    pLoc.x=0;
-    pLoc.y=0;
+    ili9488_pLoc.x=0;
+    ili9488_pLoc.y=0;
   }
 }
 }
@@ -215,7 +215,7 @@ if (2 == ctouch_counter) {
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdsp08(byte function)
+bool Xdsp08(uint8_t function)
 {
   bool result = false;
 

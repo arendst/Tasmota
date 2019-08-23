@@ -163,7 +163,7 @@ void SH1106Refresh(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp07(byte function)
+bool Xdsp07(uint8_t function)
 {
   bool result = false;
 
