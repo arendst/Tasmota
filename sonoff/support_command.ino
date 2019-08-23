@@ -621,6 +621,9 @@ void CmndSetoption(void)
           if (18 == pindex) { // SetOption68 for multi-channel PWM, requires a reboot
             restart_flag = 2;
           }
+          if (15 == pindex) { // SetOption65 for tuya_disable_dimmer requires a reboot
+            restart_flag = 2;
+          }
         }
       }
       else {                   // SetOption32 .. 49

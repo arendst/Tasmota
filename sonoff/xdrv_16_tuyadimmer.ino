@@ -139,6 +139,7 @@ bool TuyaSetPower(void)
 bool TuyaSetChannels(void)
 {
   LightSerialDuty(((uint8_t*)XdrvMailbox.data)[0]);
+  delay(20); // Hack when power is off and dimmer is set then both commands go too soon to Serial out.
   return true;
 }
 
@@ -149,7 +150,7 @@ void LightSerialDuty(uint8_t duty)
       if (duty < 25) { duty = 25; }  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     }
 
-    if (Settings.flag3.tuya_show_dimmer == 0) {
+    if (Settings.flag3.tuya_disable_dimmer == 0) {
       if(Settings.flag3.tuya_dimmer_range_255 == 0) {
         duty = changeUIntScale(duty, 0, 255, 0, 100);
       }
@@ -160,7 +161,7 @@ void LightSerialDuty(uint8_t duty)
     }
   } else {
     Tuya.ignore_dim = false;  // reset flag
-    if (Settings.flag3.tuya_show_dimmer == 0) {
+    if (Settings.flag3.tuya_disable_dimmer == 0) {
       if(Settings.flag3.tuya_dimmer_range_255 == 0) {
         duty = changeUIntScale(duty, 0, 255, 0, 100);
       }
@@ -216,7 +217,7 @@ void TuyaPacketProcess(void)
       else if (Tuya.buffer[5] == 8) {  // dim packet
 
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Dim State=%d"), Tuya.buffer[13]);
-        if (Settings.flag3.tuya_show_dimmer == 0) {
+        if (Settings.flag3.tuya_disable_dimmer == 0) {
           if (!Settings.param[P_TUYA_DIMMER_ID]) {
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Autoconfiguring Dimmer ID %d"), Tuya.buffer[6]);
             Settings.param[P_TUYA_DIMMER_ID] = Tuya.buffer[6];
@@ -291,7 +292,12 @@ bool TuyaModuleSelected(void)
     Settings.my_gp.io[3] = GPIO_TUYA_RX;
     restart_flag = 2;
   }
-  light_type = LT_SERIAL1;
+  if (Settings.flag3.tuya_disable_dimmer == 0) {
+    light_type = LT_SERIAL1;
+  } else {
+    light_type = LT_BASIC;
+  }
+
   return true;
 }
 
