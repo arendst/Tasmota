@@ -20,7 +20,7 @@
 
 #ifdef USE_SPI
 #ifdef USE_DISPLAY
-#ifdef USE_DISPLAY_E_42
+#ifdef USE_DISPLAY_EPAPER_42
 
 #define XDSP_06                6
 
