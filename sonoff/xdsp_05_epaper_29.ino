@@ -180,7 +180,7 @@ void EpdRefresh29(void)  // Every second
  * Interface
 \*********************************************************************************************/
 
-bool Xdsp05(byte function)
+bool Xdsp05(uint8_t function)
 {
   bool result = false;
     if (FUNC_DISPLAY_INIT_DRIVER == function) {
