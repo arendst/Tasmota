@@ -472,7 +472,7 @@ bool xsns52_cmd(void) {
       char *cp=XdrvMailbox.data;
       if (*cp>='0' && *cp<='8') {
         hm17_sendcmd(*cp&7);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_IBEACON, XSNS_52,"hm17cmd",*cp&7);
+        Response_P(S_JSON_IBEACON, XSNS_52,"hm17cmd",*cp&7);
       } else if (*cp=='s') {
         cp++;
         len--;
@@ -482,24 +482,24 @@ bool xsns52_cmd(void) {
         }
         IBEACON_Serial->write((uint8_t*)cp,len);
         hm17_cmd=99;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_IBEACON1, XSNS_52,"hm17cmd",cp);
+        Response_P(S_JSON_IBEACON1, XSNS_52,"hm17cmd",cp);
       } else if (*cp=='u') {
         cp++;
         if (*cp) IB_UPDATE_TIME=atoi(cp);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_IBEACON, XSNS_52,"uintv",IB_UPDATE_TIME);
+        Response_P(S_JSON_IBEACON, XSNS_52,"uintv",IB_UPDATE_TIME);
       } else if (*cp=='t') {
         cp++;
         if (*cp) IB_TIMEOUT_TIME=atoi(cp);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_IBEACON, XSNS_52,"lintv",IB_TIMEOUT_TIME);
+        Response_P(S_JSON_IBEACON, XSNS_52,"lintv",IB_TIMEOUT_TIME);
       } else if (*cp=='c') {
         for (uint32_t cnt=0;cnt<MAX_IBEACONS;cnt++) ibeacons[cnt].FLAGS=0;
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_IBEACON1, XSNS_52,"clr list","");
+        Response_P(S_JSON_IBEACON1, XSNS_52,"clr list","");
       }
 #ifdef IBEACON_DEBUG
       else if (*cp=='d') {
         cp++;
         if (*cp) hm17_debug=atoi(cp);
-        snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_IBEACON, XSNS_52,"debug",hm17_debug);
+        Response_P(S_JSON_IBEACON, XSNS_52,"debug",hm17_debug);
       }
 #endif
   } else {
@@ -528,7 +528,7 @@ bool ibeacon_cmd(void) {
         ib_sendbeep();
       }
     }
-    snprintf_P(mqtt_data, sizeof(mqtt_data), S_JSON_IBEACON,ib_mac,rssi);
+    Response_P(S_JSON_IBEACON,ib_mac,rssi);
     return true;
   }
   return false;
