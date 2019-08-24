@@ -420,6 +420,7 @@
 //  #define USE_PN532_DATA_FUNCTION                // Add sensor40 command support for erase, setting data block content (+1k7 code, 388 bytes mem)
 //  #define USE_PN532_DATA_RAW                     // Allow DATA block to be used by non-alpha-numberic data (+ 80 bytes code, 48 bytes ram)
 //#define USE_RDM6300                              // Add support for RDM6300 125kHz RFID Reader (+0k8)
+#define USE_IBEACON                                // Add support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)  
 
 // Power monitoring sensors -----------------------
 #define USE_ENERGY_MARGIN_DETECTION              // Add support for Energy Margin detection (+1k6 code)
