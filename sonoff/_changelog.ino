@@ -1,5 +1,6 @@
 /*********************************************************************************************\
  * 6.6.0.7 20190825
+ * Expand Settings area to 4k for future use
  *
  * 6.6.0.6 20190819
  * Add I2C display driver for SH1106 oled by Gerhard Mutz

@@ -177,6 +177,7 @@ void RtcSettingsLoad(void)
     RtcSettings.valid = RTC_MEM_VALID;
     RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
     RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
+    RtcSettings.energy_usage = Settings.energy_usage;
     for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
       RtcSettings.pulse_counter[i] = Settings.pulse_counter[i];
     }
@@ -260,141 +261,6 @@ const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses
 // Version 5.2 allow for more flash space
 const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
 
-/*********************************************************************************************\
- * Optional EEPROM support based on EEPROM library and tuned for Tasmota
-\*********************************************************************************************/
-//#define USE_EEPROM
-#ifdef USE_EEPROM
-
-uint32_t eeprom_sector = SPIFFS_END;
-uint8_t* eeprom_data = 0;
-size_t eeprom_size = 0;
-bool eeprom_dirty = false;
-
-void EepromBegin(size_t size)
-{
-  if (size <= 0) { return; }
-  if (size > SPI_FLASH_SEC_SIZE - sizeof(Settings) -4) { size = SPI_FLASH_SEC_SIZE - sizeof(Settings) -4; }
-  size = (size + 3) & (~3);
-
-  // In case begin() is called a 2nd+ time, don't reallocate if size is the same
-  if (eeprom_data && size != eeprom_size) {
-    delete[] eeprom_data;
-    eeprom_data = new uint8_t[size];
-  } else if (!eeprom_data) {
-    eeprom_data = new uint8_t[size];
-  }
-  eeprom_size = size;
-
-  size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
-  uint8_t* flash_buffer;
-  flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
-  noInterrupts();
-  spi_flash_read(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE);
-  interrupts();
-  memcpy(eeprom_data, flash_buffer + flash_offset, eeprom_size);
-  delete[] flash_buffer;
-
-  eeprom_dirty = false;  // make sure dirty is cleared in case begin() is called 2nd+ time
-}
-
-size_t EepromLength(void)
-{
-  return eeprom_size;
-}
-
-uint8_t EepromRead(int const address)
-{
-  if (address < 0 || (size_t)address >= eeprom_size) { return 0; }
-  if (!eeprom_data) { return 0; }
-
-  return eeprom_data[address];
-}
-
-// Prototype needed for Arduino IDE - https://forum.arduino.cc/index.php?topic=406509.0
-template<typename T> T EepromGet(int const address, T &t);
-template<typename T> T EepromGet(int const address, T &t)
-{
-  if (address < 0 || address + sizeof(T) > eeprom_size) { return t; }
-  if (!eeprom_data) { return 0; }
-
-  memcpy((uint8_t*) &t, eeprom_data + address, sizeof(T));
-  return t;
-}
-
-void EepromWrite(int const address, uint8_t const value)
-{
-  if (address < 0 || (size_t)address >= eeprom_size) { return; }
-  if (!eeprom_data) { return; }
-
-  // Optimise eeprom_dirty. Only flagged if data written is different.
-  uint8_t* pData = &eeprom_data[address];
-  if (*pData != value) {
-    *pData = value;
-    eeprom_dirty = true;
-  }
-}
-
-// Prototype needed for Arduino IDE - https://forum.arduino.cc/index.php?topic=406509.0
-template<typename T> void EepromPut(int const address, const T &t);
-template<typename T> void EepromPut(int const address, const T &t)
-{
-  if (address < 0 || address + sizeof(T) > eeprom_size) { return; }
-  if (!eeprom_data) { return; }
-
-  // Optimise eeprom_dirty. Only flagged if data written is different.
-  if (memcmp(eeprom_data + address, (const uint8_t*)&t, sizeof(T)) != 0) {
-    eeprom_dirty = true;
-    memcpy(eeprom_data + address, (const uint8_t*)&t, sizeof(T));
-  }
-}
-
-bool EepromCommit(void)
-{
-  bool ret = false;
-  if (!eeprom_size) { return false; }
-  if (!eeprom_dirty) { return true; }
-  if (!eeprom_data) { return false; }
-
-  size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
-  uint8_t* flash_buffer;
-  flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
-  noInterrupts();
-  spi_flash_read(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE);
-  memcpy(flash_buffer + flash_offset, eeprom_data, eeprom_size);
-  if (spi_flash_erase_sector(eeprom_sector) == SPI_FLASH_RESULT_OK) {
-    if (spi_flash_write(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE) == SPI_FLASH_RESULT_OK) {
-      eeprom_dirty = false;
-      ret = true;
-    }
-  }
-  interrupts();
-  delete[] flash_buffer;
-
-  return ret;
-}
-
-uint8_t * EepromGetDataPtr()
-{
-  eeprom_dirty = true;
-  return &eeprom_data[0];
-}
-
-void EepromEnd(void)
-{
-  if (!eeprom_size) { return; }
-
-  EepromCommit();
-  if (eeprom_data) {
-    delete[] eeprom_data;
-  }
-  eeprom_data = 0;
-  eeprom_size = 0;
-  eeprom_dirty = false;
-}
-#endif  // USE_EEPROM
-/********************************************************************************************/
-
 uint16_t settings_crc = 0;
 uint32_t settings_location = SETTINGS_LOCATION;
 uint8_t *settings_buffer = nullptr;
@@ -445,7 +311,9 @@ uint16_t GetSettingsCrc(void)
   uint16_t crc = 0;
   uint8_t *bytes = (uint8_t*)&Settings;
 
-  for (uint32_t i = 0; i < sizeof(SYSCFG); i++) {
+  // Fix miscalculation if previous Settings was 3584 and current Settings is 4096 as of 0x06060007
+  uint32_t size = (Settings.version < 0x06060007) ? 3584 : sizeof(SYSCFG);
+  for (uint32_t i = 0; i < size; i++) {
     if ((i < 14) || (i > 15)) { crc += bytes[i]*(i+1); }  // Skip crc
   }
   return crc;
@@ -827,6 +695,8 @@ void SettingsDefaultSet2(void)
 //  Settings.energy_max_energy_start = 0;                           // MaxEnergyStart
 //  Settings.energy_kWhtotal = 0;
   RtcSettings.energy_kWhtotal = 0;
+//  memset((char*)&Settings.energy_usage, 0x00, sizeof(Settings.energy_usage));
+  memset((char*)&RtcSettings.energy_usage, 0x00, sizeof(RtcSettings.energy_usage));
   Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
 
   // IRRemote
@@ -1192,6 +1062,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06060001) {
       Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
+    }
+    if (Settings.version < 0x06060007) {
+      memset((char*)&Settings +0xE00, 0x00, sizeof(SYSCFG) -0xE00);
     }
 
     Settings.version = VERSION;

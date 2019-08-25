@@ -177,6 +177,15 @@ typedef union {
   };
 } SensorCfg1;
 
+typedef struct {
+  uint32_t usage1_kWhtotal;
+  uint32_t usage2_kWhtotal;
+  uint32_t return1_kWhtotal;
+  uint32_t return2_kWhtotal;
+  uint32_t last_usage_kWhtotal;
+  uint32_t last_return_kWhtotal;
+} EnergyUsage;
+
 /*
 struct SYSCFG {
   unsigned long cfg_holder;                // 000 Pre v6 header
@@ -337,7 +346,9 @@ struct SYSCFG {
   uint16_t      display_width;             // 774
   uint16_t      display_height;            // 776
 
-  uint8_t       free_778[28];              // 778
+  uint8_t       free_778[4];               // 778
+
+  EnergyUsage   energy_usage;              // 77C
 
 //  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries
   uint32_t      adc_param1;                // 794
@@ -356,7 +367,10 @@ struct SYSCFG {
   uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
-                                           // E00 - FFF free locations
+
+  uint8_t       free_e00[512];             // E00
+
+                                           // FFF last location
 } Settings;
 
 struct RTCRBT {
@@ -373,7 +387,8 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 298
   unsigned long pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
-  uint8_t       free_020[60];              // 2B0
+  EnergyUsage   energy_usage;              // 2B0
+  uint8_t       free_038[36];              // 2C8
                                            // 2EC - 2FF free locations
 } RtcSettings;
 
