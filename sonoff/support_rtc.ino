@@ -83,6 +83,14 @@ bool MidnightNow(void)
   return false;
 }
 
+bool IsDst(void)
+{
+  if (Rtc.time_timezone == Settings.toffset[1]) {
+    return true;
+  }
+  return false;
+}
+
 String GetBuildDateAndTime(void)
 {
   // "2017-03-07T11:08:02" - ISO8601:2004
