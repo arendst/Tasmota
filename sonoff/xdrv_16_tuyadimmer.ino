@@ -151,9 +151,7 @@ void LightSerialDuty(uint8_t duty)
     }
 
     if (Settings.flag3.tuya_disable_dimmer == 0) {
-      if(Settings.flag3.tuya_dimmer_range_255 == 0) {
-        duty = changeUIntScale(duty, 0, 255, 0, 100);
-      }
+      duty = changeUIntScale(duty, 0, 255, 0, Settings.param[P_TUYA_DIMMER_MAX]);
       if (Tuya.new_dim != duty) {
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Send dim value=%d (id=%d)"), duty, Settings.param[P_TUYA_DIMMER_ID]);
         TuyaSendValue(Settings.param[P_TUYA_DIMMER_ID], duty);
@@ -162,9 +160,7 @@ void LightSerialDuty(uint8_t duty)
   } else {
     Tuya.ignore_dim = false;  // reset flag
     if (Settings.flag3.tuya_disable_dimmer == 0) {
-      if(Settings.flag3.tuya_dimmer_range_255 == 0) {
-        duty = changeUIntScale(duty, 0, 255, 0, 100);
-      }
+      duty = changeUIntScale(duty, 0, 255, 0, Settings.param[P_TUYA_DIMMER_MAX]);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Send dim skipped value=%d"), duty);  // due to 0 or already set
     }
   }
@@ -214,20 +210,16 @@ void TuyaPacketProcess(void)
           ExecuteCommandPower(Tuya.buffer[6], Tuya.buffer[10], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
         }
       }
-      else if (Tuya.buffer[5] == 8) {  // dim packet
+      else if (Tuya.buffer[5] == 8) {  // Long value packet
 
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Dim State=%d"), Tuya.buffer[13]);
         if (Settings.flag3.tuya_disable_dimmer == 0) {
           if (!Settings.param[P_TUYA_DIMMER_ID]) {
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Autoconfiguring Dimmer ID %d"), Tuya.buffer[6]);
             Settings.param[P_TUYA_DIMMER_ID] = Tuya.buffer[6];
           }
           if (Settings.param[P_TUYA_DIMMER_ID] == Tuya.buffer[6]) {
-            if(Settings.flag3.tuya_dimmer_range_255 == 0) {
-              Tuya.new_dim = (uint8_t) Tuya.buffer[13];
-            } else {
-              Tuya.new_dim = changeUIntScale((uint8_t) Tuya.buffer[13], 0, 255, 0, 100);
-            }
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Dim State=%d"), Tuya.buffer[13]);
+            Tuya.new_dim = changeUIntScale((uint8_t) Tuya.buffer[13], 0, Settings.param[P_TUYA_DIMMER_MAX], 0, 100);
             if ((power || Settings.flag3.tuya_apply_o20) && (Tuya.new_dim > 0) && (abs(Tuya.new_dim - Settings.light_dimmer) > 1)) {
               Tuya.ignore_dim = true;
 
