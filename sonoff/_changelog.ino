@@ -1,4 +1,6 @@
 /*********************************************************************************************\
+ * 6.6.0.7 20190825
+ *
  * 6.6.0.6 20190819
  * Add I2C display driver for SH1106 oled by Gerhard Mutz
  * Add SPI display drivers for epaper 4.2 inch, ILI9488 TFT, SSD1351 Color oled and RA8876 TFT by Gerhard Mutz
