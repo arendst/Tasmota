@@ -154,6 +154,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 //#define USE_AZ7798                            // Add support for AZ-Instrument 7798 CO2 datalogger
 #define USE_PN532_HSU                         // Add support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #define USE_RDM6300                           // Add support for RDM6300 125kHz RFID Reader (+0k8)
+#define USE_IBEACON                           // Add support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 
 #define USE_PZEM004T                          // Add support for PZEM004T Energy monitor (+2k code)
 #define USE_PZEM_AC                           // Add support for PZEM014,016 Energy monitor (+1k1 code)
@@ -235,6 +236,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_RDM6300                            // Disable support for RDM6300 125kHz RFID Reader (+0k8)
+#undef USE_IBEACON                            // Disable support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
@@ -376,6 +378,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_RDM6300                            // Disable support for RDM6300 125kHz RFID Reader (+0k8)
+#undef USE_IBEACON                            // Disable support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
@@ -455,6 +458,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_AZ7798                             // Disable support for AZ-Instrument 7798 CO2 datalogger
 #undef USE_PN532_HSU                          // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
 #undef USE_RDM6300                            // Disable support for RDM6300 125kHz RFID Reader (+0k8)
+#undef USE_IBEACON                            // Disable support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
 
 #undef USE_PZEM004T                           // Disable PZEM004T energy sensor
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor

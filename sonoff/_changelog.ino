@@ -2,6 +2,7 @@
  * 6.6.0.6 20190819
  * Add I2C display driver for SH1106 oled by Gerhard Mutz
  * Add SPI display drivers for epaper 4.2 inch, ILI9488 TFT, SSD1351 Color oled and RA8876 TFT by Gerhard Mutz
+ * Add support for HM17 bluetooth LE passive scan of ibeacon devices by Gerhard Mutz
  *
  * 6.6.0.5 20190816
  * Add command WebSensor<sensor number> 0/1 to control display of sensor data in web GUI (#6085)

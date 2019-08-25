@@ -435,7 +435,9 @@ void GetFeatures(void)
 #ifdef USE_RDM6300
   feature5 |= 0x00000002;  // xsns_51_rdm6300.ino
 #endif
-//  feature5 |= 0x00000004;
+#ifdef USE_IBEACON
+  feature5 |= 0x00000004;  // xsns_52_ibeacon.ino
+#endif
 //  feature5 |= 0x00000008;
 
 //  feature5 |= 0x00000010;

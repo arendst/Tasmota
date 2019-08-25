@@ -634,6 +634,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_RDM6300
   GPIO_RDM6300_RX,
 #endif
+#ifdef USE_IBEACON
+  GPIO_IBEACON_RX,
+  GPIO_IBEACON_TX,
+#endif
 #ifdef USE_MGC3130
   GPIO_MGC3130_XFER,
   GPIO_MGC3130_RESET,
@@ -669,10 +673,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SOLAX_X1
   GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
-#endif
-#ifdef USE_IBEACON
-  GPIO_IBEACON_RX,
-  GPIO_IBEACON_TX,
 #endif
 };
 
