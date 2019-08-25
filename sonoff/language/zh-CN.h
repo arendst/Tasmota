@@ -400,6 +400,7 @@
   #define D_DOMOTICZ_VOLTAGE "电压/PM2.5"
   #define D_DOMOTICZ_CURRENT "电流/PM10"
   #define D_DOMOTICZ_AIRQUALITY "空气质量"
+  #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
 #define D_DOMOTICZ_UPDATE_TIMER "更新计时器"
 
 // xdrv_09_timers.ino

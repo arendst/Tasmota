@@ -400,6 +400,7 @@
   #define D_DOMOTICZ_VOLTAGE "Volt/PM2.5"
   #define D_DOMOTICZ_CURRENT "Ström/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Luftkvalitet"
+  #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
 #define D_DOMOTICZ_UPDATE_TIMER "Uppdatera timer"
 
 // xdrv_09_timers.ino

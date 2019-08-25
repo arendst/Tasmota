@@ -400,6 +400,7 @@
   #define D_DOMOTICZ_VOLTAGE "Feszültség/PM2.5"
   #define D_DOMOTICZ_CURRENT "Áram/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Légminőség"
+  #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
 #define D_DOMOTICZ_UPDATE_TIMER "Frissítési időzítő"
 
 // xdrv_09_timers.ino
