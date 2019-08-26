@@ -69,7 +69,7 @@ char htu_types[7];
 
 uint8_t HtuCheckCrc8(uint16_t data)
 {
-  for (uint8_t bit = 0; bit < 16; bit++) {
+  for (uint32_t bit = 0; bit < 16; bit++) {
     if (data & 0x8000) {
       data =  (data << 1) ^ HTU21_CRC8_POLYNOM;
     } else {

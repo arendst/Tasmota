@@ -33,20 +33,24 @@
  * Output  1..16
  * Action  0 = Off, 1 = On, 2 = Toggle, 3 = Blink or Rule if USE_RULES enabled
  *
+ * Window allows Time offset for +/- 15 minutes max as long as Time is not within Window from 00:00
 \*********************************************************************************************/
 
 #define XDRV_09             9
 
-enum TimerCommands { CMND_TIMER, CMND_TIMERS
+const char kTimerCommands[] PROGMEM = "|"  // No prefix
+  D_CMND_TIMER "|" D_CMND_TIMERS
 #ifdef USE_SUNRISE
-, CMND_LATITUDE, CMND_LONGITUDE
+  "|" D_CMND_LATITUDE "|" D_CMND_LONGITUDE
 #endif
- };
-const char kTimerCommands[] PROGMEM = D_CMND_TIMER "|" D_CMND_TIMERS
+  ;
+
+void (* const TimerCommand[])(void) PROGMEM = {
+  &CmndTimer, &CmndTimers
 #ifdef USE_SUNRISE
-"|" D_CMND_LATITUDE "|" D_CMND_LONGITUDE
+  , &CmndLatitude, &CmndLongitude
 #endif
-;
+  };
 
 uint16_t timer_last_minute = 60;
 int8_t timer_window[MAX_TIMERS] = { 0 };
@@ -60,11 +64,11 @@ int8_t timer_window[MAX_TIMERS] = { 0 };
  *         Rewrite for Arduino by 'jurs' for German Arduino forum
 \*********************************************************************************************/
 
-const double pi2 = TWO_PI;
-const double pi = PI;
-const double RAD = DEG_TO_RAD;
+const float pi2 = TWO_PI;
+const float pi = PI;
+const float RAD = DEG_TO_RAD;
 
-double JulianischesDatum(void)
+float JulianischesDatum(void)
 {
   // Gregorianischer Kalender
   int Gregor;
@@ -77,10 +81,10 @@ double JulianischesDatum(void)
     Jahr -= 1;
   }
   Gregor = (Jahr / 400) - (Jahr / 100) + (Jahr / 4);  // Gregorianischer Kalender
-  return 2400000.5 + 365.0*Jahr - 679004.0 + Gregor + (int)(30.6001 * (Monat +1)) + Tag + 0.5;
+  return 2400000.5f + 365.0f*Jahr - 679004.0f + Gregor + (int)(30.6001f * (Monat +1)) + Tag + 0.5f;
 }
 
-double InPi(double x)
+float InPi(float x)
 {
   int n = (int)(x / pi2);
   x = x - n*pi2;
@@ -88,38 +92,38 @@ double InPi(double x)
   return x;
 }
 
-double eps(double T)
+float eps(float T)
 {
   // Neigung der Erdachse
-  return RAD * (23.43929111 + (-46.8150*T - 0.00059*T*T + 0.001813*T*T*T)/3600.0);
+  return RAD * (23.43929111f + (-46.8150f*T - 0.00059f*T*T + 0.001813f*T*T*T)/3600.0f);
 }
 
-double BerechneZeitgleichung(double *DK,double T)
+float BerechneZeitgleichung(float *DK,float T)
 {
-  double RA_Mittel = 18.71506921 + 2400.0513369*T +(2.5862e-5 - 1.72e-9*T)*T*T;
-  double M = InPi(pi2 * (0.993133 + 99.997361*T));
-  double L = InPi(pi2 * (0.7859453 + M/pi2 + (6893.0*sin(M)+72.0*sin(2.0*M)+6191.2*T) / 1296.0e3));
-  double e = eps(T);
-  double RA = atan(tan(L)*cos(e));
+  float RA_Mittel = 18.71506921f + 2400.0513369f*T +(2.5862e-5f - 1.72e-9f*T)*T*T;
+  float M = InPi(pi2 * (0.993133f + 99.997361f*T));
+  float L = InPi(pi2 * (0.7859453f + M/pi2 + (6893.0f*sinf(M)+72.0f*sinf(2.0f*M)+6191.2f*T) / 1296.0e3f));
+  float e = eps(T);
+  float RA = atanf(tanf(L)*cosf(e));
   if (RA < 0.0) RA += pi;
   if (L > pi) RA += pi;
   RA = 24.0*RA/pi2;
-  *DK = asin(sin(e)*sin(L));
+  *DK = asinf(sinf(e)*sinf(L));
   // Damit 0<=RA_Mittel<24
-  RA_Mittel = 24.0 * InPi(pi2*RA_Mittel/24.0)/pi2;
-  double dRA = RA_Mittel - RA;
-  if (dRA < -12.0) dRA += 24.0;
-  if (dRA > 12.0) dRA -= 24.0;
-  dRA = dRA * 1.0027379;
+  RA_Mittel = 24.0f * InPi(pi2*RA_Mittel/24.0f)/pi2;
+  float dRA = RA_Mittel - RA;
+  if (dRA < -12.0f) dRA += 24.0f;
+  if (dRA > 12.0f) dRA -= 24.0f;
+  dRA = dRA * 1.0027379f;
   return dRA;
 }
 
 void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8_t *minute_down)
 {
-  double JD2000 = 2451545.0;
-  double JD = JulianischesDatum();
-  double T = (JD - JD2000) / 36525.0;
-  double DK;
+  float JD2000 = 2451545.0f;
+  float JD = JulianischesDatum();
+  float T = (JD - JD2000) / 36525.0f;
+  float DK;
   /*
   h (D) = -0.8333 normaler SA & SU-Gang
   h (D) = -6.0 civile Dämmerung
@@ -127,53 +131,53 @@ void DuskTillDawn(uint8_t *hour_up,uint8_t *minute_up, uint8_t *hour_down, uint8
   h (D) = -18.0 astronomische Dämmerung
   */
 //  double h = -50/60.0*RAD;
-  double h = SUNRISE_DAWN_ANGLE *RAD;
-  double B = (((double)Settings.latitude)/1000000) * RAD; // geographische Breite
-  double GeographischeLaenge = ((double)Settings.longitude)/1000000;
+  float h = SUNRISE_DAWN_ANGLE *RAD;
+  float B = (((float)Settings.latitude)/1000000) * RAD; // geographische Breite
+  float GeographischeLaenge = ((float)Settings.longitude)/1000000;
 //  double Zeitzone = 0; //Weltzeit
 //  double Zeitzone = 1; //Winterzeit
 //  double Zeitzone = 2.0;   //Sommerzeit
-  double Zeitzone = ((double)time_timezone) / 60;
-  double Zeitgleichung = BerechneZeitgleichung(&DK, T);
-  double Zeitdifferenz = 12.0*acos((sin(h) - sin(B)*sin(DK)) / (cos(B)*cos(DK)))/pi;
-  double AufgangOrtszeit = 12.0 - Zeitdifferenz - Zeitgleichung;
-  double UntergangOrtszeit = 12.0 + Zeitdifferenz - Zeitgleichung;
-  double AufgangWeltzeit = AufgangOrtszeit - GeographischeLaenge / 15.0;
-  double UntergangWeltzeit = UntergangOrtszeit - GeographischeLaenge / 15.0;
-  double Aufgang = AufgangWeltzeit + Zeitzone;         // In Stunden
-  if (Aufgang < 0.0) {
-    Aufgang += 24.0;
+  float Zeitzone = ((float)Rtc.time_timezone) / 60;
+  float Zeitgleichung = BerechneZeitgleichung(&DK, T);
+  float Zeitdifferenz = 12.0f*acosf((sinf(h) - sinf(B)*sinf(DK)) / (cosf(B)*cosf(DK)))/pi;
+  float AufgangOrtszeit = 12.0f - Zeitdifferenz - Zeitgleichung;
+  float UntergangOrtszeit = 12.0f + Zeitdifferenz - Zeitgleichung;
+  float AufgangWeltzeit = AufgangOrtszeit - GeographischeLaenge / 15.0f;
+  float UntergangWeltzeit = UntergangOrtszeit - GeographischeLaenge / 15.0f;
+  float Aufgang = AufgangWeltzeit + Zeitzone;         // In Stunden
+  if (Aufgang < 0.0f) {
+    Aufgang += 24.0f;
   } else {
-    if (Aufgang >= 24.0) Aufgang -= 24.0;
+    if (Aufgang >= 24.0f) Aufgang -= 24.0f;
   }
-  double Untergang = UntergangWeltzeit + Zeitzone;
-  if (Untergang < 0.0) {
-    Untergang += 24.0;
+  float Untergang = UntergangWeltzeit + Zeitzone;
+  if (Untergang < 0.0f) {
+    Untergang += 24.0f;
   } else {
-    if (Untergang >= 24.0) Untergang -= 24.0;
+    if (Untergang >= 24.0f) Untergang -= 24.0f;
   }
-  int AufgangMinuten = (int)(60.0*(Aufgang - (int)Aufgang)+0.5);
+  int AufgangMinuten = (int)(60.0f*(Aufgang - (int)Aufgang)+0.5f);
   int AufgangStunden = (int)Aufgang;
-  if (AufgangMinuten >= 60.0) {
-    AufgangMinuten -= 60.0;
+  if (AufgangMinuten >= 60.0f) {
+    AufgangMinuten -= 60.0f;
     AufgangStunden++;
   } else {
-    if (AufgangMinuten < 0.0) {
-      AufgangMinuten += 60.0;
+    if (AufgangMinuten < 0.0f) {
+      AufgangMinuten += 60.0f;
       AufgangStunden--;
-      if (AufgangStunden < 0.0) AufgangStunden += 24.0;
+      if (AufgangStunden < 0.0f) AufgangStunden += 24.0f;
     }
   }
-  int UntergangMinuten = (int)(60.0*(Untergang - (int)Untergang)+0.5);
+  int UntergangMinuten = (int)(60.0f*(Untergang - (int)Untergang)+0.5f);
   int UntergangStunden = (int)Untergang;
-  if (UntergangMinuten >= 60.0) {
-    UntergangMinuten -= 60.0;
+  if (UntergangMinuten >= 60.0f) {
+    UntergangMinuten -= 60.0f;
     UntergangStunden++;
   } else {
     if (UntergangMinuten<0) {
-      UntergangMinuten += 60.0;
+      UntergangMinuten += 60.0f;
       UntergangStunden--;
-      if (UntergangStunden < 0.0) UntergangStunden += 24.0;
+      if (UntergangStunden < 0.0f) UntergangStunden += 24.0f;
     }
   }
   *hour_up = AufgangStunden;
@@ -219,7 +223,7 @@ void ApplyTimerOffsets(Timer *duskdawn)
   duskdawn->time = timeBuffer;
 }
 
-String GetSun(uint8_t dawn)
+String GetSun(uint32_t dawn)
 {
   char stime[6];
 
@@ -232,7 +236,7 @@ String GetSun(uint8_t dawn)
   return String(stime);
 }
 
-uint16_t SunMinutes(uint8_t dawn)
+uint16_t SunMinutes(uint32_t dawn)
 {
   uint8_t hour[2];
   uint8_t minute[2];
@@ -246,7 +250,7 @@ uint16_t SunMinutes(uint8_t dawn)
 
 /*******************************************************************************************/
 
-void TimerSetRandomWindow(uint8_t index)
+void TimerSetRandomWindow(uint32_t index)
 {
   timer_window[index] = 0;
   if (Settings.timer[index].window) {
@@ -256,7 +260,7 @@ void TimerSetRandomWindow(uint8_t index)
 
 void TimerSetRandomWindows(void)
 {
-  for (uint8_t i = 0; i < MAX_TIMERS; i++) { TimerSetRandomWindow(i); }
+  for (uint32_t i = 0; i < MAX_TIMERS; i++) { TimerSetRandomWindow(i); }
 }
 
 void TimerEverySecond(void)
@@ -265,28 +269,34 @@ void TimerEverySecond(void)
     if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) { TimerSetRandomWindows(); }  // Midnight
     if (Settings.flag3.timers_enable && (uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
       timer_last_minute = RtcTime.minute;
-      int16_t time = (RtcTime.hour *60) + RtcTime.minute;
+      int32_t time = (RtcTime.hour *60) + RtcTime.minute;
       uint8_t days = 1 << (RtcTime.day_of_week -1);
 
-      for (uint8_t i = 0; i < MAX_TIMERS; i++) {
+      for (uint32_t i = 0; i < MAX_TIMERS; i++) {
 //        if (Settings.timer[i].device >= devices_present) Settings.timer[i].data = 0;  // Reset timer due to change in devices present
         Timer xtimer = Settings.timer[i];
-        uint16_t set_time = xtimer.time;
 #ifdef USE_SUNRISE
-        if ((1 == xtimer.mode) || (2 == xtimer.mode)) {  // Sunrise or Sunset
+        if ((1 == xtimer.mode) || (2 == xtimer.mode)) {      // Sunrise or Sunset
           ApplyTimerOffsets(&xtimer);
-          set_time = xtimer.time;
         }
 #endif
         if (xtimer.arm) {
-          set_time += timer_window[i];                // Add random time offset
-          if (set_time < 0) { set_time = 0; }         // Stay today;
-          if (set_time > 1439) { set_time = 1439; }
+          int32_t set_time = xtimer.time + timer_window[i];  // Add random time offset
+          if (set_time < 0) {
+            set_time = abs(timer_window[i]);                 // After midnight and within negative window so stay today but allow positive randomness;
+          }
+          if (set_time > 1439) {
+            set_time = xtimer.time - abs(timer_window[i]);   // Before midnight and within positive window so stay today but allow negative randomness;
+          }
+          if (set_time > 1439) { set_time = 1439; }          // Stay today
+
+          DEBUG_DRIVER_LOG(PSTR("TIM: Timer %d, Time %d, Window %d, SetTime %d"), i +1, xtimer.time, timer_window[i], set_time);
+
           if (time == set_time) {
             if (xtimer.days & days) {
               Settings.timer[i].arm = xtimer.repeat;
-#ifdef USE_RULES
-              if (3 == xtimer.power) {  // Blink becomes Rule disregarding device and allowing use of Backlog commands
+#if defined(USE_RULES) || defined(USE_SCRIPT)
+              if (3 == xtimer.power) {                       // Blink becomes Rule disregarding device and allowing use of Backlog commands
                 Response_P(PSTR("{\"Clock\":{\"Timer\":%d}}"), i +1);
                 XdrvRulesProcess();
               } else
@@ -300,24 +310,23 @@ void TimerEverySecond(void)
   }
 }
 
-void PrepShowTimer(uint8_t index)
+void PrepShowTimer(uint32_t index)
 {
-  char days[8] = { 0 };
-  char sign[2] = { 0 };
-  char soutput[80];
-
   Timer xtimer = Settings.timer[index -1];
 
-  for (uint8_t i = 0; i < 7; i++) {
+  char days[8] = { 0 };
+  for (uint32_t i = 0; i < 7; i++) {
     uint8_t mask = 1 << i;
     snprintf(days, sizeof(days), "%s%d", days, ((xtimer.days & mask) > 0));
   }
 
+  char soutput[80];
   soutput[0] = '\0';
   if (devices_present) {
     snprintf_P(soutput, sizeof(soutput), PSTR(",\"" D_JSON_TIMER_OUTPUT "\":%d"), xtimer.device +1);
   }
 #ifdef USE_SUNRISE
+  char sign[2] = { 0 };
   int16_t hour = xtimer.time / 60;
   if ((1 == xtimer.mode) || (2 == xtimer.mode)) {  // Sunrise or Sunset
     if (hour > 11) {
@@ -337,20 +346,11 @@ void PrepShowTimer(uint8_t index)
  * Commands
 \*********************************************************************************************/
 
-bool TimerCommand(void)
+void CmndTimer(void)
 {
-  char command[CMDSZ];
-  char dataBufUc[XdrvMailbox.data_len];
-  bool serviced = true;
-  uint8_t index = XdrvMailbox.index;
-
-  UpperCase(dataBufUc, XdrvMailbox.data);
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kTimerCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
-  }
-  else if ((CMND_TIMER == command_code) && (index > 0) && (index <= MAX_TIMERS)) {
-    uint8_t error = 0;
+  uint32_t index = XdrvMailbox.index;
+  if ((index > 0) && (index <= MAX_TIMERS)) {
+    uint32_t error = 0;
     if (XdrvMailbox.data_len) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= MAX_TIMERS)) {
         if (XdrvMailbox.payload == 0) {
@@ -359,9 +359,12 @@ bool TimerCommand(void)
           Settings.timer[index -1].data = Settings.timer[XdrvMailbox.payload -1].data;  // Copy timer
         }
       } else {
-#ifndef USE_RULES
+//#ifndef USE_RULES
+#if defined(USE_RULES)==0 && defined(USE_SCRIPT)==0
         if (devices_present) {
 #endif
+          char dataBufUc[XdrvMailbox.data_len];
+          UpperCase(dataBufUc, XdrvMailbox.data);
           StaticJsonBuffer<256> jsonBuffer;
           JsonObject& root = jsonBuffer.parseObject(dataBufUc);
           if (!root.success()) {
@@ -437,7 +440,8 @@ bool TimerCommand(void)
 
             index++;
           }
-#ifndef USE_RULES
+//#ifndef USE_RULES
+#if defined(USE_RULES)==0 && defined(USE_SCRIPT)==0
         } else {
           Response_P(PSTR("{\"" D_CMND_TIMER "%d\":\"" D_JSON_TIMER_NO_DEVICE "\"}"), index);  // No outputs defined so nothing to control
           error = 1;
@@ -448,62 +452,65 @@ bool TimerCommand(void)
     if (!error) {
       Response_P(PSTR("{"));
       PrepShowTimer(index);
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
     }
   }
-  else if (CMND_TIMERS == command_code) {
-    if (XdrvMailbox.data_len) {
-      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-        Settings.flag3.timers_enable = XdrvMailbox.payload;
-      }
-      if (XdrvMailbox.payload == 2) {
-        Settings.flag3.timers_enable = !Settings.flag3.timers_enable;
-      }
-    }
-
-    Response_P(S_JSON_COMMAND_SVALUE, command, GetStateText(Settings.flag3.timers_enable));
-    MqttPublishPrefixTopic_P(RESULT_OR_STAT, command);
-
-    uint8_t jsflg = 0;
-    uint8_t lines = 1;
-    for (uint8_t i = 0; i < MAX_TIMERS; i++) {
-      if (!jsflg) {
-        Response_P(PSTR("{\"" D_CMND_TIMERS "%d\":{"), lines++);
-      } else {
-        ResponseAppend_P(PSTR(","));
-      }
-      jsflg++;
-      PrepShowTimer(i +1);
-      if (jsflg > 3) {
-        ResponseAppend_P(PSTR("}}"));
-        MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_TIMERS));
-        jsflg = 0;
-      }
-    }
-    mqtt_data[0] = '\0';
-  }
-#ifdef USE_SUNRISE
-  else if (CMND_LONGITUDE == command_code) {
-    if (XdrvMailbox.data_len) {
-      Settings.longitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
-    }
-    char lbuff[33];
-    dtostrfd(((double)Settings.longitude) /1000000, 6, lbuff);
-    Response_P(S_JSON_COMMAND_SVALUE, command, lbuff);
-  }
-  else if (CMND_LATITUDE == command_code) {
-    if (XdrvMailbox.data_len) {
-      Settings.latitude = (int)(CharToDouble(XdrvMailbox.data) *1000000);
-    }
-    char lbuff[33];
-    dtostrfd(((double)Settings.latitude) /1000000, 6, lbuff);
-    Response_P(S_JSON_COMMAND_SVALUE, command, lbuff);
-  }
-#endif
-  else serviced = false;  // Unknown command
-
-  return serviced;
 }
+
+void CmndTimers(void)
+{
+  if (XdrvMailbox.data_len) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
+      Settings.flag3.timers_enable = XdrvMailbox.payload;
+    }
+    if (XdrvMailbox.payload == 2) {
+      Settings.flag3.timers_enable = !Settings.flag3.timers_enable;
+    }
+  }
+
+  ResponseCmndStateText(Settings.flag3.timers_enable);
+  MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
+
+  uint32_t jsflg = 0;
+  uint32_t lines = 1;
+  for (uint32_t i = 0; i < MAX_TIMERS; i++) {
+    if (!jsflg) {
+      Response_P(PSTR("{\"" D_CMND_TIMERS "%d\":{"), lines++);
+    } else {
+      ResponseAppend_P(PSTR(","));
+    }
+    jsflg++;
+    PrepShowTimer(i +1);
+    if (jsflg > 3) {
+      ResponseAppend_P(PSTR("}}"));
+      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_TIMERS));
+      jsflg = 0;
+    }
+  }
+  mqtt_data[0] = '\0';
+}
+
+#ifdef USE_SUNRISE
+void CmndLongitude(void)
+{
+  if (XdrvMailbox.data_len) {
+    Settings.longitude = (int)(CharToFloat(XdrvMailbox.data) *1000000);
+  }
+  char lbuff[33];
+  dtostrfd(((float)Settings.longitude) /1000000, 6, lbuff);
+  ResponseCmndChar(lbuff);
+}
+
+void CmndLatitude(void)
+{
+  if (XdrvMailbox.data_len) {
+    Settings.latitude = (int)(CharToFloat(XdrvMailbox.data) *1000000);
+  }
+  char lbuff[33];
+  dtostrfd(((float)Settings.latitude) /1000000, 6, lbuff);
+  ResponseCmndChar(lbuff);
+}
+#endif  // USE_SUNRISE
 
 /*********************************************************************************************\
  * Presentation
@@ -521,9 +528,6 @@ const char HTTP_BTN_MENU_TIMER[] PROGMEM =
 
 const char HTTP_TIMER_SCRIPT1[] PROGMEM =
   "var pt=[],ct=99;"
-  "function qs(s){"                                               // Alias to save code space
-    "return document.querySelector(s);"
-  "}"
   "function ce(i,q){"                                             // Create select option
     "var o=document.createElement('option');"
     "o.textContent=i;"
@@ -628,9 +632,9 @@ const char HTTP_TIMER_SCRIPT5[] PROGMEM =
     "}"
     "eb('bt').innerHTML=s;"                                       // Create tabs
     "if(%d>0){"                                                   // Create Output and Action drop down boxes
-      "eb('oa').innerHTML=\"<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1' name='d1'></select></span>&emsp;<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:99px;' id='p1' name='p1'></select>\";"
+      "eb('oa').innerHTML=\"<b>" D_TIMER_OUTPUT "</b>&nbsp;<span><select style='width:60px;' id='d1'></select></span>&emsp;<b>" D_TIMER_ACTION "</b>&nbsp;<select style='width:99px;' id='p1'></select>\";"
       "o=qs('#p1');ce('" D_OFF "',o);ce('" D_ON "',o);ce('" D_TOGGLE "',o);"  // Create offset direction select options
-#ifdef USE_RULES
+#if defined(USE_RULES) || defined(USE_SCRIPT)
       "ce('" D_RULE "',o);"
 #else
       "ce('" D_BLINK "',o);"
@@ -647,48 +651,48 @@ const char HTTP_TIMER_SCRIPT6[] PROGMEM =
     "o=qs('#mw');for(i=0;i<=15;i++){ce((i<10)?('0'+i):i,o);}"     // Create window minutes select options
     "o=qs('#d1');for(i=0;i<%d;i++){ce(i+1,o);}"                   // Create outputs
     "var a='" D_DAY3LIST "';"
-    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' name='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b> \"}"
+    "s='';for(i=0;i<7;i++){s+=\"<input id='w\"+i+\"' type='checkbox'><b>\"+a.substring(i*3,(i*3)+3)+\"</b> \"}"
     "eb('ds').innerHTML=s;"                                       // Create weekdays
     "eb('dP').click();"                                           // Get the element with id='dP' and click on it
   "}"
-  "window.onload=it;";
+  "wl(it);";
 const char HTTP_TIMER_STYLE[] PROGMEM =
   ".tl{float:left;border-radius:0;border:1px solid #%06x;padding:1px;width:6.25%%;}";  // COLOR_FORM, Border color needs to be the same as Fieldset background color from HTTP_HEAD_STYLE1 (transparent won't work)
 const char HTTP_FORM_TIMER1[] PROGMEM =
   "<fieldset style='min-width:470px;text-align:center;'>"
   "<legend style='text-align:left;'><b>&nbsp;" D_TIMER_PARAMETERS "&nbsp;</b></legend>"
   "<form method='post' action='" WEB_HANDLE_TIMER "' onsubmit='return st();'>"
-  "<br/><input id='e0' name='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b><br/><br/><hr/>"
-  "<input id='t0' name='t0' value='";
+  "<br><input id='e0' type='checkbox'%s><b>" D_TIMER_ENABLE "</b><br><br><hr>"
+  "<input id='t0' value='";
 const char HTTP_FORM_TIMER2[] PROGMEM =
-  "' hidden><div id='bt' name='bt'></div><br/><br/><br/>"
-  "<div id='oa' name='oa'></div><br/>"
+  "' hidden><div id='bt'></div><br><br><br>"
+  "<div id='oa' name='oa'></div><br>"
   "<div>"
-  "<input id='a0' name='a0' type='checkbox'><b>" D_TIMER_ARM "</b>&emsp;"
-  "<input id='r0' name='r0' type='checkbox'><b>" D_TIMER_REPEAT "</b>"
-  "</div><br/>"
+  "<input id='a0' type='checkbox'><b>" D_TIMER_ARM "</b>&emsp;"
+  "<input id='r0' type='checkbox'><b>" D_TIMER_REPEAT "</b>"
+  "</div><br>"
   "<div>";
 #ifdef USE_SUNRISE
 const char HTTP_FORM_TIMER3[] PROGMEM =
   "<fieldset style='width:%dpx;margin:auto;text-align:left;border:0;'>"
-  "<input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b><br/>"
-  "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b> (%s)<br/>"
-  "<input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b> (%s)<br/>"
+  "<input id='b0' name='rd' type='radio' value='0' onclick='gt();'><b>" D_TIMER_TIME "</b><br>"
+  "<input id='b1' name='rd' type='radio' value='1' onclick='gt();'><b>" D_SUNRISE "</b> (%s)<br>"
+  "<input id='b2' name='rd' type='radio' value='2' onclick='gt();'><b>" D_SUNSET "</b> (%s)<br>"
   "</fieldset>"
   "<p></p>"
-  "<span><select style='width:46px;' id='dr' name='dr'></select></span>"
+  "<span><select style='width:46px;' id='dr'></select></span>"
   "&nbsp;";
 #else
 const char HTTP_FORM_TIMER3[] PROGMEM =
   "<b>" D_TIMER_TIME "</b>&nbsp;";
 #endif  // USE_SUNRISE
 const char HTTP_FORM_TIMER4[] PROGMEM =
-  "<span><select style='width:60px;' id='ho' name='ho'></select></span>"
+  "<span><select style='width:60px;' id='ho'></select></span>"
   "&nbsp;" D_HOUR_MINUTE_SEPARATOR "&nbsp;"
-  "<span><select style='width:60px;' id='mi' name='mi'></select></span>"
+  "<span><select style='width:60px;' id='mi'></select></span>"
   "&emsp;<b>+/-</b>&nbsp;"
-  "<span><select style='width:60px;' id='mw' name='mw'></select></span>"
-  "</div><br/>"
+  "<span><select style='width:60px;' id='mw'></select></span>"
+  "</div><br>"
   "<div id='ds' name='ds'></div>";
 
 void HandleTimerConfiguration(void)
@@ -714,7 +718,7 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_TIMER_SCRIPT6, devices_present);
   WSContentSendStyle_P(HTTP_TIMER_STYLE, WebColor(COL_FORM));
   WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");
-  for (uint8_t i = 0; i < MAX_TIMERS; i++) {
+  for (uint32_t i = 0; i < MAX_TIMERS; i++) {
     WSContentSend_P(PSTR("%s%u"), (i > 0) ? "," : "", Settings.timer[i].data);
   }
   WSContentSend_P(HTTP_FORM_TIMER2);
@@ -738,7 +742,7 @@ void TimerSaveSettings(void)
   WebGetArg("t0", tmp, sizeof(tmp));
   char *p = tmp;
   snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);
-  for (uint8_t i = 0; i < MAX_TIMERS; i++) {
+  for (uint32_t i = 0; i < MAX_TIMERS; i++) {
     timer.data = strtol(p, &p, 10);
     p++;  // Skip comma
     if (timer.time < 1440) {
@@ -768,7 +772,7 @@ bool Xdrv09(uint8_t function)
 #ifdef USE_WEBSERVER
 #ifdef USE_TIMERS_WEB
     case FUNC_WEB_ADD_BUTTON:
-#ifdef USE_RULES
+#if defined(USE_RULES) || defined(USE_SCRIPT)
       WSContentSend_P(HTTP_BTN_MENU_TIMER);
 #else
       if (devices_present) { WSContentSend_P(HTTP_BTN_MENU_TIMER); }
@@ -783,7 +787,7 @@ bool Xdrv09(uint8_t function)
       TimerEverySecond();
       break;
     case FUNC_COMMAND:
-      result = TimerCommand();
+      result = DecodeCommand(kTimerCommands, TimerCommand);
       break;
   }
   return result;

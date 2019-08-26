@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.5.0.7
+ * Updated until v6.6.0.4
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -222,14 +222,14 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Pour utiliser Tasmota, veuillez activer JavaScript"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMAL<br/>merci de mettre à jour"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Firmware MINIMAL<br>merci de mettre à jour"
 #define D_WEBSERVER_ACTIVE_ON "Serveur web actif sur"
 #define D_WITH_IP_ADDRESS "avec l'adresse IP"
 #define D_WEBSERVER_STOPPED "Serveur web éteint"
 #define D_FILE_NOT_FOUND "Fichier introuvable"
 #define D_REDIRECTED "Redirection sur le portail captif"
-#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager définit AccessPoint et garde station"
-#define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager définit AccessPoint"
+#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager en mode Point d'Accès et Station"
+#define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager en mode Point d'Accès"
 #define D_TRYING_TO_CONNECT "Tentative de connexion du module au réseau"
 
 #define D_RESTART_IN "Redémarrage dans"
@@ -257,6 +257,7 @@
 #define D_MODULE_PARAMETERS "Paramètres module"
 #define D_MODULE_TYPE "Type de module"
 #define D_PULLUP_ENABLE "Inter. sans pull-up"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Entrée série"
 #define D_SERIAL_OUT "Sortie série"
@@ -306,9 +307,6 @@
 #define D_TEMPLATE_NAME "Nom"
 #define D_BASE_TYPE "Basé sur"
 #define D_TEMPLATE_FLAGS "Options"
-#define D_ALLOW_ADC0 "Entrée ADC0"
-#define D_ALLOW_ADC0_TEMP "Température ADC0"
-#define D_ALLOW_PULLUP "Pull-up utilisateur"
 
 #define D_SAVE_CONFIGURATION "Enregistrer la configuration"
 #define D_CONFIGURATION_SAVED "Configuration enregistrée"
@@ -402,6 +400,7 @@
   #define D_DOMOTICZ_VOLTAGE "Tension/PM2,5"
   #define D_DOMOTICZ_CURRENT "Courant/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Qualité de l'air"
+  #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
 #define D_DOMOTICZ_UPDATE_TIMER "Durée de rafraichissement"
 
 // xdrv_09_timers.ino
@@ -514,6 +513,7 @@
 #define D_SENSOR_BUTTON        "Bouton"     // Suffix "1"
 #define D_SENSOR_RELAY         "Relais"     // Suffix "1i"
 #define D_SENSOR_LED           "LED"        // Suffix "1i"
+#define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Compteur"   // Suffix "1"
 #define D_SENSOR_IRRECV        "RécptIR"
@@ -579,12 +579,23 @@
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
+#define D_SENSOR_ARIRFSEL      "ALux IrSel"
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
+#define D_SENSOR_BUZZER        "Buzzer"
+#define D_SENSOR_OLED_RESET    "OLED Reset"
+#define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
+#define D_SENSOR_ZIGBEE_RXD    "Zigbee Rx"
+#define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
+#define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_IBEACON_TX    "iBeacon TX"
+#define D_SENSOR_IBEACON_RX    "iBeacon RX"
+#define D_SENSOR_RDM6300_RX    "RDM6300 RX"
+#define D_SENSOR_CC1101_CS     "CC1101 CS"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -654,5 +665,29 @@
 #define D_TOTAL_REACTIVE  "Puiss réa totale"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "°"
+
+//SOLAXX1
+#define D_PV1_VOLTAGE     "Tension PV1"
+#define D_PV1_CURRENT     "Courant PV1"
+#define D_PV1_POWER       "Puissance PV1"
+#define D_PV2_VOLTAGE     "Tension PV2"
+#define D_PV2_CURRENT     "Courant PV2"
+#define D_PV2_POWER       "Puissance PV2"
+#define D_SOLAR_POWER     "Puissance solaire"
+#define D_INVERTER_POWER  "Puissance onduleur"
+#define D_STATUS          "Statut"
+#define D_WAITING         "En attente"
+#define D_CHECKING        "En test"
+#define D_WORKING         "En marche"
+#define D_FAILURE         "Défault"
+#define D_SOLAX_ERROR_0   "Aucun Code d'erreur"
+#define D_SOLAX_ERROR_1   "Défaut Perte de réseau"
+#define D_SOLAX_ERROR_2   "Défaut Tension réseau"
+#define D_SOLAX_ERROR_3   "Défaut Fréquence réseau"
+#define D_SOLAX_ERROR_4   "Défaut Tension PV"
+#define D_SOLAX_ERROR_5   "Défaut Isolation"
+#define D_SOLAX_ERROR_6   "Défaut Surchauffe"
+#define D_SOLAX_ERROR_7   "Défaut Ventilateur"
+#define D_SOLAX_ERROR_8   "Défaut Autre équipement"
 
 #endif  // _LANGUAGE_FR_FR_H_

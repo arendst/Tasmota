@@ -119,6 +119,12 @@
 #ifndef COLOR_TIMER_TAB_BACKGROUND
 #define COLOR_TIMER_TAB_BACKGROUND  "#999"     // Config timer tab background color - Light grey
 #endif
+#ifndef IR_RCV_MIN_UNKNOWN_SIZE
+#define IR_RCV_MIN_UNKNOWN_SIZE     6          // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
+#endif
+#ifndef ENERGY_OVERTEMP
+#define ENERGY_OVERTEMP             90         // Overtemp in Celsius
+#endif
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -148,7 +154,7 @@ uint32_t GetRtcSettingsCrc(void)
   uint32_t crc = 0;
   uint8_t *bytes = (uint8_t*)&RtcSettings;
 
-  for (uint16_t i = 0; i < sizeof(RTCMEM); i++) {
+  for (uint32_t i = 0; i < sizeof(RTCMEM); i++) {
     crc += bytes[i]*(i+1);
   }
   return crc;
@@ -171,7 +177,8 @@ void RtcSettingsLoad(void)
     RtcSettings.valid = RTC_MEM_VALID;
     RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
     RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
-    for (uint8_t i = 0; i < MAX_COUNTERS; i++) {
+    RtcSettings.energy_usage = Settings.energy_usage;
+    for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
       RtcSettings.pulse_counter[i] = Settings.pulse_counter[i];
     }
     RtcSettings.power = Settings.power;
@@ -194,7 +201,7 @@ uint32_t GetRtcRebootCrc(void)
   uint32_t crc = 0;
   uint8_t *bytes = (uint8_t*)&RtcReboot;
 
-  for (uint16_t i = 0; i < sizeof(RTCRBT); i++) {
+  for (uint32_t i = 0; i < sizeof(RTCRBT); i++) {
     crc += bytes[i]*(i+1);
   }
   return crc;
@@ -235,150 +242,24 @@ extern "C" {
 }
 #include "eboot_command.h"
 
-extern "C" uint32_t _SPIFFS_end;
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
 
+extern "C" uint32_t _SPIFFS_end;
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
 const uint32_t SPIFFS_END = ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
+
+#else  // Core > 2.5.2 and STAGE
+
+extern "C" uint32_t _FS_end;
+// From libraries/EEPROM/EEPROM.cpp EEPROMClass
+const uint32_t SPIFFS_END = ((uint32_t)&_FS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
+
+#endif
 
 // Version 4.2 config = eeprom area
 const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses EEPROM area
 // Version 5.2 allow for more flash space
 const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
-
-/*********************************************************************************************\
- * Optional EEPROM support based on EEPROM library and tuned for Tasmota
-\*********************************************************************************************/
-//#define USE_EEPROM
-#ifdef USE_EEPROM
-
-uint32_t eeprom_sector = SPIFFS_END;
-uint8_t* eeprom_data = 0;
-size_t eeprom_size = 0;
-bool eeprom_dirty = false;
-
-void EepromBegin(size_t size)
-{
-  if (size <= 0) { return; }
-  if (size > SPI_FLASH_SEC_SIZE - sizeof(Settings) -4) { size = SPI_FLASH_SEC_SIZE - sizeof(Settings) -4; }
-  size = (size + 3) & (~3);
-
-  // In case begin() is called a 2nd+ time, don't reallocate if size is the same
-  if (eeprom_data && size != eeprom_size) {
-    delete[] eeprom_data;
-    eeprom_data = new uint8_t[size];
-  } else if (!eeprom_data) {
-    eeprom_data = new uint8_t[size];
-  }
-  eeprom_size = size;
-
-  size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
-  uint8_t* flash_buffer;
-  flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
-  noInterrupts();
-  spi_flash_read(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE);
-  interrupts();
-  memcpy(eeprom_data, flash_buffer + flash_offset, eeprom_size);
-  delete[] flash_buffer;
-
-  eeprom_dirty = false;  // make sure dirty is cleared in case begin() is called 2nd+ time
-}
-
-size_t EepromLength(void)
-{
-  return eeprom_size;
-}
-
-uint8_t EepromRead(int const address)
-{
-  if (address < 0 || (size_t)address >= eeprom_size) { return 0; }
-  if (!eeprom_data) { return 0; }
-
-  return eeprom_data[address];
-}
-
-// Prototype needed for Arduino IDE - https://forum.arduino.cc/index.php?topic=406509.0
-template<typename T> T EepromGet(int const address, T &t);
-template<typename T> T EepromGet(int const address, T &t)
-{
-  if (address < 0 || address + sizeof(T) > eeprom_size) { return t; }
-  if (!eeprom_data) { return 0; }
-
-  memcpy((uint8_t*) &t, eeprom_data + address, sizeof(T));
-  return t;
-}
-
-void EepromWrite(int const address, uint8_t const value)
-{
-  if (address < 0 || (size_t)address >= eeprom_size) { return; }
-  if (!eeprom_data) { return; }
-
-  // Optimise eeprom_dirty. Only flagged if data written is different.
-  uint8_t* pData = &eeprom_data[address];
-  if (*pData != value) {
-    *pData = value;
-    eeprom_dirty = true;
-  }
-}
-
-// Prototype needed for Arduino IDE - https://forum.arduino.cc/index.php?topic=406509.0
-template<typename T> void EepromPut(int const address, const T &t);
-template<typename T> void EepromPut(int const address, const T &t)
-{
-  if (address < 0 || address + sizeof(T) > eeprom_size) { return; }
-  if (!eeprom_data) { return; }
-
-  // Optimise eeprom_dirty. Only flagged if data written is different.
-  if (memcmp(eeprom_data + address, (const uint8_t*)&t, sizeof(T)) != 0) {
-    eeprom_dirty = true;
-    memcpy(eeprom_data + address, (const uint8_t*)&t, sizeof(T));
-  }
-}
-
-bool EepromCommit(void)
-{
-  bool ret = false;
-  if (!eeprom_size) { return false; }
-  if (!eeprom_dirty) { return true; }
-  if (!eeprom_data) { return false; }
-
-  size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
-  uint8_t* flash_buffer;
-  flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
-  noInterrupts();
-  spi_flash_read(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE);
-  memcpy(flash_buffer + flash_offset, eeprom_data, eeprom_size);
-  if (spi_flash_erase_sector(eeprom_sector) == SPI_FLASH_RESULT_OK) {
-    if (spi_flash_write(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE) == SPI_FLASH_RESULT_OK) {
-      eeprom_dirty = false;
-      ret = true;
-    }
-  }
-  interrupts();
-  delete[] flash_buffer;
-
-  return ret;
-}
-
-uint8_t * EepromGetDataPtr()
-{
-  eeprom_dirty = true;
-  return &eeprom_data[0];
-}
-
-void EepromEnd(void)
-{
-  if (!eeprom_size) { return; }
-
-  EepromCommit();
-  if (eeprom_data) {
-    delete[] eeprom_data;
-  }
-  eeprom_data = 0;
-  eeprom_size = 0;
-  eeprom_dirty = false;
-}
-#endif  // USE_EEPROM
-/********************************************************************************************/
 
 uint16_t settings_crc = 0;
 uint32_t settings_location = SETTINGS_LOCATION;
@@ -430,7 +311,9 @@ uint16_t GetSettingsCrc(void)
   uint16_t crc = 0;
   uint8_t *bytes = (uint8_t*)&Settings;
 
-  for (uint16_t i = 0; i < sizeof(SYSCFG); i++) {
+  // Fix miscalculation if previous Settings was 3584 and current Settings is 4096 as of 0x06060007
+  uint32_t size = (Settings.version < 0x06060007) ? 3584 : sizeof(SYSCFG);
+  for (uint32_t i = 0; i < size; i++) {
     if ((i < 14) || (i > 15)) { crc += bytes[i]*(i+1); }  // Skip crc
   }
   return crc;
@@ -444,6 +327,7 @@ void SettingsSaveAll(void)
     Settings.power = 0;
   }
   XsnsCall(FUNC_SAVE_BEFORE_RESTART);
+  XdrvCall(FUNC_SAVE_BEFORE_RESTART);
 #ifdef USE_EEPROM
   EepromCommit();
 #endif
@@ -513,7 +397,7 @@ void SettingsSave(uint8_t rotate)
 #endif  // USE_EEPROM
 
     if (!stop_flash_rotate && rotate) {
-      for (uint8_t i = 1; i < CFG_ROTATES; i++) {
+      for (uint32_t i = 1; i < CFG_ROTATES; i++) {
         ESP.flashEraseSector(settings_location -i);  // Delete previous configurations by resetting to 0xFF
         delay(1);
       }
@@ -540,7 +424,7 @@ void SettingsLoad(void)
   settings_location = 0;
   uint32_t flash_location = SETTINGS_LOCATION +1;
   uint16_t cfg_holder = 0;
-  for (uint8_t i = 0; i < CFG_ROTATES; i++) {
+  for (uint32_t i = 0; i < CFG_ROTATES; i++) {
     flash_location--;
     ESP.flashRead(flash_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
 
@@ -681,7 +565,7 @@ void SettingsDefaultSet2(void)
   Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
   Settings.module = MODULE;
   ModuleDefault(WEMOS);
-//  for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
+//  for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
   strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
   strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
   strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
@@ -697,7 +581,7 @@ void SettingsDefaultSet2(void)
   Settings.ledstate = APP_LEDSTATE;
   Settings.ledmask = APP_LEDMASK;
   Settings.pulse_timer[0] = APP_PULSETIME;
-//  for (uint8_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
+//  for (uint32_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
 
   // Serial
   Settings.baudrate = APP_BAUDRATE / 1200;
@@ -737,7 +621,7 @@ void SettingsDefaultSet2(void)
   Settings.param[P_HOLD_TIME] = KEY_HOLD_TIME;  // Default 4 seconds hold time
 
   // Switch
-  for (uint8_t i = 0; i < MAX_SWITCHES; i++) { Settings.switchmode[i] = SWITCH_MODE; }
+  for (uint32_t i = 0; i < MAX_SWITCHES; i++) { Settings.switchmode[i] = SWITCH_MODE; }
 
   // MQTT
   Settings.flag.mqtt_enabled = MQTT_USE;
@@ -772,12 +656,12 @@ void SettingsDefaultSet2(void)
   char fingerprint[60];
   strlcpy(fingerprint, MQTT_FINGERPRINT1, sizeof(fingerprint));
   char *p = fingerprint;
-  for (uint8_t i = 0; i < 20; i++) {
+  for (uint32_t i = 0; i < 20; i++) {
     Settings.mqtt_fingerprint[0][i] = strtol(p, &p, 16);
   }
   strlcpy(fingerprint, MQTT_FINGERPRINT2, sizeof(fingerprint));
   p = fingerprint;
-  for (uint8_t i = 0; i < 20; i++) {
+  for (uint32_t i = 0; i < 20; i++) {
     Settings.mqtt_fingerprint[1][i] = strtol(p, &p, 16);
   }
   Settings.tele_period = TELE_PERIOD;
@@ -788,7 +672,7 @@ void SettingsDefaultSet2(void)
 //  Settings.flag2.wattage_resolution = 0;
   Settings.flag2.energy_resolution = ENERGY_RESOLUTION;
   Settings.param[P_MAX_POWER_RETRY] = MAX_POWER_RETRY;
-  Settings.energy_power_delta = DEFAULT_POWER_DELTA;
+//  Settings.energy_power_delta = 0;
   Settings.energy_power_calibration = HLW_PREF_PULSE;
   Settings.energy_voltage_calibration = HLW_UREF_PULSE;
   Settings.energy_current_calibration = HLW_IREF_PULSE;
@@ -811,19 +695,25 @@ void SettingsDefaultSet2(void)
 //  Settings.energy_max_energy_start = 0;                           // MaxEnergyStart
 //  Settings.energy_kWhtotal = 0;
   RtcSettings.energy_kWhtotal = 0;
+//  memset((char*)&Settings.energy_usage, 0x00, sizeof(Settings.energy_usage));
+  memset((char*)&RtcSettings.energy_usage, 0x00, sizeof(RtcSettings.energy_usage));
+  Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
+
+  // IRRemote
+  Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
 
   // RF Bridge
-//  for (uint8_t i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
+//  for (uint32_t i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
   memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
 
   // Domoticz
   Settings.domoticz_update_timer = DOMOTICZ_UPDATE_TIMER;
-//  for (uint8_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
+//  for (uint32_t i = 0; i < MAX_DOMOTICZ_IDX; i++) {
 //    Settings.domoticz_relay_idx[i] = 0;
 //    Settings.domoticz_key_idx[i] = 0;
 //    Settings.domoticz_switch_idx[i] = 0;
 //  }
-//  for (uint8_t i = 0; i < MAX_DOMOTICZ_SNS_IDX; i++) {
+//  for (uint32_t i = 0; i < MAX_DOMOTICZ_SNS_IDX; i++) {
 //    Settings.domoticz_sensor_idx[i] = 0;
 //  }
 
@@ -838,7 +728,7 @@ void SettingsDefaultSet2(void)
   // Rules
 //  Settings.rule_enabled = 0;
 //  Settings.rule_once = 0;
-//  for (uint8_t i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
+//  for (uint32_t i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
   Settings.flag2.calc_resolution = CALC_RESOLUTION;
 
   // Home Assistant
@@ -856,11 +746,11 @@ void SettingsDefaultSet2(void)
   //Settings.flag.decimal_text = 0;
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
-  for (uint8_t i = 0; i < MAX_PWMS; i++) {
+  for (uint32_t i = 0; i < MAX_PWMS; i++) {
     Settings.light_color[i] = 255;
 //    Settings.pwm_value[i] = 0;
   }
-//  Settings.light_correction = 0;
+  Settings.light_correction = 1;
   Settings.light_dimmer = 10;
 //  Settings.light_fade = 0;
   Settings.light_speed = 1;
@@ -885,8 +775,8 @@ void SettingsDefaultSet2(void)
   strlcpy(Settings.ntp_server[0], NTP_SERVER1, sizeof(Settings.ntp_server[0]));
   strlcpy(Settings.ntp_server[1], NTP_SERVER2, sizeof(Settings.ntp_server[1]));
   strlcpy(Settings.ntp_server[2], NTP_SERVER3, sizeof(Settings.ntp_server[2]));
-  for (uint8_t j = 0; j < 3; j++) {
-    for (uint8_t i = 0; i < strlen(Settings.ntp_server[j]); i++) {
+  for (uint32_t j = 0; j < 3; j++) {
+    for (uint32_t i = 0; i < strlen(Settings.ntp_server[j]); i++) {
       if (Settings.ntp_server[j][i] == ',') {
         Settings.ntp_server[j][i] = '.';
       }
@@ -899,7 +789,7 @@ void SettingsDefaultSet2(void)
   Settings.button_debounce = KEY_DEBOUNCE_TIME;
   Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
 
-  for (uint8_t j = 0; j < 5; j++) {
+  for (uint32_t j = 0; j < 5; j++) {
     Settings.rgbwwTable[j] = 255;
   }
 
@@ -907,7 +797,7 @@ void SettingsDefaultSet2(void)
 
   SettingsDefaultWebColor();
 
-  memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
+  memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
 }
 
 /********************************************************************************************/
@@ -980,7 +870,7 @@ void SettingsDefaultSet_5_13_1c(void)
 void SettingsDefaultWebColor(void)
 {
   char scolor[10];
-  for (uint8_t i = 0; i < COL_LAST; i++) {
+  for (uint32_t i = 0; i < COL_LAST; i++) {
     WebHexCode(i, GetTextIndexed(scolor, sizeof(scolor), i, kWebColors));
   }
 }
@@ -992,7 +882,7 @@ void SettingsDelta(void)
   if (Settings.version != VERSION) {      // Fix version dependent changes
 
     if (Settings.version < 0x05050000) {
-      for (uint8_t i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
+      for (uint32_t i = 0; i < 17; i++) { Settings.rf_code[i][0] = 0; }
       memcpy_P(Settings.rf_code[0], kDefaultRfCode, 9);
     }
     if (Settings.version < 0x05080000) {
@@ -1002,7 +892,7 @@ void SettingsDelta(void)
       Settings.light_color[1] = 0;
       Settings.light_color[2] = 0;
       Settings.light_dimmer = 10;
-      Settings.light_correction = 0;
+      Settings.light_correction = 1;
       Settings.light_fade = 0;
       Settings.light_speed = 1;
       Settings.light_scheme = 0;
@@ -1014,12 +904,12 @@ void SettingsDelta(void)
       Settings.altitude = 0;
     }
     if (Settings.version < 0x0508000B) {
-      for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) {  // Move GPIO_LEDs
+      for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) {  // Move GPIO_LEDs
         if ((Settings.my_gp.io[i] >= 25) && (Settings.my_gp.io[i] <= 32)) {  // Was GPIO_LED1
           Settings.my_gp.io[i] += 23;  // Move GPIO_LED1
         }
       }
-      for (uint8_t i = 0; i < MAX_PWMS; i++) {      // Move pwm_value and reset additional pulse_timerrs
+      for (uint32_t i = 0; i < MAX_PWMS; i++) {      // Move pwm_value and reset additional pulse_timerrs
         Settings.pwm_value[i] = Settings.pulse_timer[4 +i];
         Settings.pulse_timer[4 +i] = 0;
       }
@@ -1046,11 +936,11 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x050C0005) {
       Settings.light_rotation = 0;
-      Settings.energy_power_delta = DEFAULT_POWER_DELTA;
+      Settings.energy_power_delta = 0;
       char fingerprint[60];
       memcpy(fingerprint, Settings.mqtt_fingerprint, sizeof(fingerprint));
       char *p = fingerprint;
-      for (uint8_t i = 0; i < 20; i++) {
+      for (uint32_t i = 0; i < 20; i++) {
         Settings.mqtt_fingerprint[0][i] = strtol(p, &p, 16);
         Settings.mqtt_fingerprint[1][i] = Settings.mqtt_fingerprint[0][i];
       }
@@ -1085,7 +975,7 @@ void SettingsDelta(void)
       SettingsDefaultSet_5_13_1c();
     }
     if (Settings.version < 0x050E0002) {
-      for (uint8_t i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
+      for (uint32_t i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
       Settings.rule_enabled = Settings.flag.mqtt_serial_raw;   // Was rules_enabled until 5.14.0b
       Settings.rule_once = Settings.flag.pressure_conversion;  // Was rules_once until 5.14.0b
     }
@@ -1094,14 +984,14 @@ void SettingsDelta(void)
       Settings.cfg_crc = GetSettingsCrc();
     }
     if (Settings.version < 0x06000002) {
-      for (uint8_t i = 0; i < MAX_SWITCHES; i++) {
+      for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
         if (i < 4) {
           Settings.switchmode[i] = Settings.interlock[i];
         } else {
           Settings.switchmode[i] = SWITCH_MODE;
         }
       }
-      for (uint8_t i = 0; i < sizeof(Settings.my_gp); i++) {
+      for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) {
         if (Settings.my_gp.io[i] >= GPIO_SWT5) {  // Move up from GPIO_SWT5 to GPIO_KEY1
           Settings.my_gp.io[i] += 4;
         }
@@ -1120,7 +1010,7 @@ void SettingsDelta(void)
       Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
     }
     if (Settings.version < 0x0602010A) {
-      for (uint8_t j = 0; j < 5; j++) {
+      for (uint32_t j = 0; j < 5; j++) {
         Settings.rgbwwTable[j] = 255;
       }
     }
@@ -1128,7 +1018,7 @@ void SettingsDelta(void)
       Settings.timezone_minutes = 0;
     }
     if (Settings.version < 0x06030004) {
-      memset(&Settings.drivers, 0xFF, 32);  // Enable all possible monitors, displays, drivers and sensors
+      memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
     }
     if (Settings.version < 0x0603000E) {
       Settings.flag2.calc_resolution = CALC_RESOLUTION;
@@ -1144,7 +1034,7 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x0604010B) {
       Settings.interlock[0] = 0xFF;         // Legacy support using all relays in one interlock group
-      for (uint8_t i = 1; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }
+      for (uint32_t i = 1; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }
     }
     if (Settings.version < 0x0604010D) {
       Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;
@@ -1163,6 +1053,18 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06050007) {
       Settings.ledmask = APP_LEDMASK;
+    }
+    if (Settings.version < 0x0605000A) {
+      Settings.my_adc0 = ADC0_NONE;
+    }
+    if (Settings.version < 0x0605000D) {
+      Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
+    }
+    if (Settings.version < 0x06060001) {
+      Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
+    }
+    if (Settings.version < 0x06060007) {
+      memset((char*)&Settings +0xE00, 0x00, sizeof(SYSCFG) -0xE00);
     }
 
     Settings.version = VERSION;

@@ -51,18 +51,20 @@ void PzemDcEverySecond(void)
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "PzemDc response error %d"), error);
     } else {
+      Energy.data_valid = 0;
+
       //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
       // 01 04 10 05 40 00 0A 00 0D 00 00 00 02 00 00 00 00 00 00 D6 29
       // Id Cc Sz Volt- Curre Power------ Energy----- HiAlm LoAlm Crc--
-      energy_voltage = (float)((buffer[3] << 8) + buffer[4]) / 100.0;                                               // 655.00 V
-      energy_current = (float)((buffer[5] << 8) + buffer[6]) / 100.0;                                               // 655.00 A
-      energy_active_power = (float)((buffer[9] << 24) + (buffer[10] << 16) + (buffer[7] << 8) + buffer[8]) / 10.0;  // 429496729.0 W
+      Energy.voltage = (float)((buffer[3] << 8) + buffer[4]) / 100.0;                                               // 655.00 V
+      Energy.current = (float)((buffer[5] << 8) + buffer[6]) / 100.0;                                               // 655.00 A
+      Energy.active_power = (float)((buffer[9] << 24) + (buffer[10] << 16) + (buffer[7] << 8) + buffer[8]) / 10.0;  // 429496729.0 W
       float energy = (float)((buffer[13] << 24) + (buffer[14] << 16) + (buffer[11] << 8) + buffer[12]);             // 4294967295 Wh
 
-      if (!energy_start || (energy < energy_start)) { energy_start = energy; }  // Init after restart and handle roll-over if any
-      if (energy != energy_start) {
-        energy_kWhtoday += (unsigned long)((energy - energy_start) * 100);
-        energy_start = energy;
+      if (!Energy.start_energy || (energy < Energy.start_energy)) { Energy.start_energy = energy; }  // Init after restart and handle roll-over if any
+      if (energy != Energy.start_energy) {
+        Energy.kWhtoday += (unsigned long)((energy - Energy.start_energy) * 100);
+        Energy.start_energy = energy;
       }
       EnergyUpdateToday();
     }
@@ -83,7 +85,7 @@ void PzemDcSnsInit(void)
   uint8_t result = PzemDcModbus->Begin(9600, 2);  // Uses two stop bits!!
   if (result) {
     if (2 == result) { ClaimSerial(); }
-    energy_type_dc = true;
+    Energy.type_dc = true;
   } else {
     energy_flg = ENERGY_NONE;
   }
@@ -115,7 +117,7 @@ int Xnrg06(uint8_t function)
         PzemDcSnsInit();
         break;
       case FUNC_ENERGY_EVERY_SECOND:
-        PzemDcEverySecond();
+        if (uptime > 4) { PzemDcEverySecond(); }  // Fix start up issue #5875
         break;
     }
   }

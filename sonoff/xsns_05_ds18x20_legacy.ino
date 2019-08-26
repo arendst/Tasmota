@@ -65,11 +65,11 @@ void Ds18x20Search(void)
       num_sensors++;
     }
   }
-  for (uint8_t i = 0; i < num_sensors; i++) {
+  for (uint32_t i = 0; i < num_sensors; i++) {
     ds18x20_index[i] = i;
   }
-  for (uint8_t i = 0; i < num_sensors; i++) {
-    for (uint8_t j = i + 1; j < num_sensors; j++) {
+  for (uint32_t i = 0; i < num_sensors; i++) {
+    for (uint32_t j = i + 1; j < num_sensors; j++) {
       if (uint32_t(ds18x20_address[ds18x20_index[i]]) > uint32_t(ds18x20_address[ds18x20_index[j]])) {
         std::swap(ds18x20_index[i], ds18x20_index[j]);
       }
@@ -87,7 +87,7 @@ String Ds18x20Addresses(uint8_t sensor)
 {
   char address[20];
 
-  for (uint8_t i = 0; i < 8; i++) {
+  for (uint32_t i = 0; i < 8; i++) {
     sprintf(address+2*i, "%02X", ds18x20_address[ds18x20_index[sensor]][i]);
   }
   return String(address);
@@ -116,7 +116,7 @@ bool Ds18x20Read(uint8_t sensor, float &t)
   ds->select(ds18x20_address[ds18x20_index[sensor]]);
   ds->write(W1_READ_SCRATCHPAD); // Read Scratchpad
 
-  for (uint8_t i = 0; i < 9; i++) {
+  for (uint32_t i = 0; i < 9; i++) {
     data[i] = ds->read();
   }
   if (OneWire::crc8(data, 8) == data[8]) {
@@ -170,7 +170,7 @@ void Ds18x20Show(bool json)
   float t;
 
   uint8_t dsxflg = 0;
-  for (uint8_t i = 0; i < Ds18x20Sensors(); i++) {
+  for (uint32_t i = 0; i < Ds18x20Sensors(); i++) {
     if (Ds18x20Read(i, t)) {           // Check if read failed
       Ds18x20Type(i);
       char temperature[33];
@@ -197,7 +197,7 @@ void Ds18x20Show(bool json)
 #endif  // USE_KNX
 #ifdef USE_WEBSERVER
       } else {
-        snprintf_P(stemp, sizeof(stemp), PSTR("%s-%d"), ds18x20_types, i +1);
+        snprintf_P(stemp, sizeof(stemp), PSTR("%s%c%d"), ds18x20_types, IndexSeparator(), i +1);
         WSContentSend_PD(HTTP_SNS_TEMP, stemp, temperature, TempUnit());
 #endif  // USE_WEBSERVER
       }
@@ -205,7 +205,7 @@ void Ds18x20Show(bool json)
   }
   if (json) {
     if (dsxflg) {
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
     }
   }
   Ds18x20Search();      // Check for changes in sensors number

@@ -222,7 +222,7 @@
 
 // xdrv_02_webserver.ino
 #define D_NOSCRIPT "Разрешете JavaScript, за да използвате Tasmota"
-#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Минимален фърмуер<br/>моля надградете го"
+#define D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "Минимален фърмуер<br>моля надградете го"
 #define D_WEBSERVER_ACTIVE_ON "Уеб сървърът е активен на"
 #define D_WITH_IP_ADDRESS "с IP адрес"
 #define D_WEBSERVER_STOPPED "Уеб сървърът е спрян"
@@ -257,6 +257,7 @@
 #define D_MODULE_PARAMETERS "Параметри на модула"
 #define D_MODULE_TYPE "Тип на модула"
 #define D_PULLUP_ENABLE "Без pull-up за бутон/ключ"
+#define D_ADC "ADC"
 #define D_GPIO "GPIO"
 #define D_SERIAL_IN "Сериен вход"
 #define D_SERIAL_OUT "Сериен изход"
@@ -306,9 +307,6 @@
 #define D_TEMPLATE_NAME "Име"
 #define D_BASE_TYPE "Базиран на"
 #define D_TEMPLATE_FLAGS "Опции"
-#define D_ALLOW_ADC0 "ADC0 вход"
-#define D_ALLOW_ADC0_TEMP "Температура от ADC0"
-#define D_ALLOW_PULLUP "Потребителски избор на pull-up"
 
 #define D_SAVE_CONFIGURATION "Запазване на конфигурацията"
 #define D_CONFIGURATION_SAVED "Конфигурацията е запазена"
@@ -402,6 +400,7 @@
   #define D_DOMOTICZ_VOLTAGE "Напрежение/PM2,5"
   #define D_DOMOTICZ_CURRENT "Ток/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Качество на въздуха"
+  #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
 #define D_DOMOTICZ_UPDATE_TIMER "Период на опресняване"
 
 // xdrv_09_timers.ino
@@ -498,7 +497,6 @@
 //xsns_43_hre.ino
 #define D_LOG_HRE "HRE: "
 
-
 // sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Няма"
 #define D_SENSOR_USER          "Потребит."
@@ -515,6 +513,7 @@
 #define D_SENSOR_BUTTON        "Бутон"      // Suffix "1"
 #define D_SENSOR_RELAY         "Реле"       // Suffix "1i"
 #define D_SENSOR_LED           "Led"        // Suffix "1i"
+#define D_SENSOR_LED_LINK      "LedLink"    // Suffix "i"
 #define D_SENSOR_PWM           "PWM"        // Suffix "1"
 #define D_SENSOR_COUNTER       "Брояч"      // Suffix "1"
 #define D_SENSOR_IRRECV        "IRrecv"
@@ -580,12 +579,23 @@
 #define D_SENSOR_MY92X1_DI     "MY92x1 DI"
 #define D_SENSOR_MY92X1_DCKI   "MY92x1 DCKI"
 #define D_SENSOR_ARIRFRCV      "ALux IrRcv"
+#define D_SENSOR_ARIRFSEL      "ALux IrSel"
 #define D_SENSOR_TXD           "Serial Tx"
 #define D_SENSOR_RXD           "Serial Rx"
 #define D_SENSOR_ROTARY        "Rotary"     // Suffix "1A"
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
+#define D_SENSOR_BUZZER        "Buzzer"
+#define D_SENSOR_OLED_RESET    "OLED Reset"
+#define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
+#define D_SENSOR_ZIGBEE_RXD    "Zigbee Rx"
+#define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
+#define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_IBEACON_TX    "iBeacon TX"
+#define D_SENSOR_IBEACON_RX    "iBeacon RX"
+#define D_SENSOR_RDM6300_RX    "RDM6300 RX"
+#define D_SENSOR_CC1101_CS     "CC1101 CS"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -655,5 +665,29 @@
 #define D_TOTAL_REACTIVE  "Общо реактивна мощност"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "°"
+
+//SOLAXX1
+#define D_PV1_VOLTAGE     "PV1 Voltage"
+#define D_PV1_CURRENT     "PV1 Current"
+#define D_PV1_POWER       "PV1 Power"
+#define D_PV2_VOLTAGE     "PV2 Voltage"
+#define D_PV2_CURRENT     "PV2 Current"
+#define D_PV2_POWER       "PV2 Power"
+#define D_SOLAR_POWER     "Solar Power"
+#define D_INVERTER_POWER  "Inverter Power"
+#define D_STATUS          "Status"
+#define D_WAITING         "Waiting"
+#define D_CHECKING        "Checking"
+#define D_WORKING         "Working"
+#define D_FAILURE         "Failure"
+#define D_SOLAX_ERROR_0   "No Error Code"
+#define D_SOLAX_ERROR_1   "Grid Lost Fault"
+#define D_SOLAX_ERROR_2   "Grid Voltage Fault"
+#define D_SOLAX_ERROR_3   "Grid Frequency Fault"
+#define D_SOLAX_ERROR_4   "Pv Voltage Fault"
+#define D_SOLAX_ERROR_5   "Isolation Fault"
+#define D_SOLAX_ERROR_6   "Over Temperature Fault"
+#define D_SOLAX_ERROR_7   "Fan Fault"
+#define D_SOLAX_ERROR_8   "Other Device Fault"
 
 #endif  // _LANGUAGE_BG_BG_H_
