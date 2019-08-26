@@ -30,6 +30,8 @@ enum ExecuteCommandDaliOptions { DALI_OFF, DALI_ON };
 
 struct DALI {
   bool active = true;
+  bool enabled = DALI_DEFAULT_STATE;
+  int brightness = 254;
 } Dali;
 
 /*********************************************************************************************/
@@ -43,11 +45,23 @@ void DaliInit(void)
     AddLog_P2(LOG_LEVEL_INFO, PSTR("DALI: active on pin %d"), pin[GPIO_DALI]);
     dali.msgMode = true;
     devices_present++;
+    if (Dali.enabled)
+      dali.transmit(BROADCAST_C, ON_C);
+    else
+      dali.transmit(BROADCAST_C, OFF_C);
   } else {
     Dali.active = false;
   }
 }
 
+void MqttPublishDaliState(void)
+{
+  if (Settings.flag.mqtt_enabled) {
+    Response_P(PSTR("{\"State\":\"%s\""), Settings.state_text[Dali.enabled]);
+    ResponseAppend_P(PSTR(",\"Brightness\":%d}"), Dali.brightness);
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_SENSOR_DALI));
+  }
+}
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
@@ -70,11 +84,16 @@ void CmndDali(void)
     switch (XdrvMailbox.payload) {
     case DALI_OFF:
       dali.transmit(BROADCAST_C, OFF_C);
+      Dali.enabled = 0;
+      Dali.brightness = 0;
       break;
     case DALI_ON:
       dali.transmit(BROADCAST_C, ON_C);
+      Dali.enabled = 1;
+      Dali.brightness = 254;
       break;
     }
+    MqttPublishDaliState();
   }
 
   ResponseCmndDone();
@@ -90,6 +109,9 @@ void CmndDaliDimmer(void)
     if (XdrvMailbox.payload > 254) { XdrvMailbox.payload = 254; }
     AddLog_P2(LOG_LEVEL_INFO, PSTR("DALI: idx %d, brightness %d"), XdrvMailbox.index, XdrvMailbox.payload);
     dali.transmit(BROADCAST_DP, XdrvMailbox.payload);
+    Dali.brightness = XdrvMailbox.payload;
+    Dali.enabled = 1;
+    MqttPublishDaliState();
   }
 
   ResponseCmndDone();
@@ -105,6 +127,9 @@ bool Xdrv25(uint8_t function)
 
   if (Dali.active) {
     switch (function) {
+      case FUNC_MQTT_INIT:
+        MqttPublishDaliState();
+        break;
       case FUNC_COMMAND:
         result = DecodeCommand(kDaliCommands, DaliCommand);
         break;

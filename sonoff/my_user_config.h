@@ -315,6 +315,7 @@
 #define USE_ARMTRONIX_DIMMERS                    // Add support for Armtronix Dimmers (+1k4 code)
 #define USE_PS_16_DZ                             // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #define USE_DALI                                 // Add DALI support
+  #define DALI_DEFAULT_STATE    1                // DALI power on state (0 = off, 1 = on)
 //#define ROTARY_V1                                // Add support for MI Desk Lamp
 //#define USE_SHUTTER                              // Add Shutter support for up to 4 shutter with different motortypes (+6k code)
 
