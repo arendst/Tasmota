@@ -21,12 +21,11 @@
 #ifdef USE_TUYA_DIMMER
 
 #define XDRV_16                16
+#define XNRG_08                8
 
 #ifndef TUYA_DIMMER_ID
 #define TUYA_DIMMER_ID         0
 #endif
-
-#define TUYA_POWER_ID          1
 
 #define TUYA_CMD_HEARTBEAT     0x00
 #define TUYA_CMD_QUERY_PRODUCT 0x01
@@ -55,6 +54,7 @@ struct TUYA {
   uint8_t data_len = 0;                  // Data lenght of command
   int8_t wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()
   uint8_t heartbeat_timer = 0;           // 10 second heartbeat timer for tuya module
+  uint32_t lastPowerCheckTime = 0;       // Time when last power was checked
 
   char *buffer = nullptr;                // Serial receive buffer
   int byte_counter = 0;                  // Index in serial receive buffer
@@ -227,6 +227,25 @@ void TuyaPacketProcess(void)
               ExecuteCommand(scmnd, SRC_SWITCH);
             }
           }
+        }
+
+        if (Settings.param[P_TUYA_VOLTAGE_ID] == Tuya.buffer[6]) {
+          Energy.voltage = (float)(Tuya.buffer[12] << 8 | Tuya.buffer[13]) / 10;
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Voltage=%d"), Settings.param[P_TUYA_VOLTAGE_ID], (Tuya.buffer[12] << 8 | Tuya.buffer[13]));
+        } else if (Settings.param[P_TUYA_CURRENT_ID] == Tuya.buffer[6]) {
+          Energy.current = (float)(Tuya.buffer[12] << 8 | Tuya.buffer[13]) / 1000;
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Current=%d"), Settings.param[P_TUYA_CURRENT_ID], (Tuya.buffer[12] << 8 | Tuya.buffer[13]));
+        } else if (Settings.param[P_TUYA_POWER_ID] == Tuya.buffer[6]) {
+          Energy.active_power = (float)(Tuya.buffer[12] << 8 | Tuya.buffer[13]) / 10;
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Active_Power=%d"), Settings.param[P_TUYA_POWER_ID], (Tuya.buffer[12] << 8 | Tuya.buffer[13]));
+
+          if (Tuya.lastPowerCheckTime != 0 && Energy.active_power > 0) {
+            Energy.kWhtoday += (float)Energy.active_power * (Rtc.utc_time - Tuya.lastPowerCheckTime) / 36;
+            EnergyUpdateToday();
+          }
+          Tuya.lastPowerCheckTime = Rtc.utc_time;
+        } else if (Settings.param[P_TUYA_DIMMER_ID] != Tuya.buffer[6]){
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Unknown ID=%d"), Tuya.buffer[6]);
         }
       }
       break;
@@ -435,6 +454,27 @@ bool Xdrv16(uint8_t function)
       case FUNC_SET_CHANNELS:
         result = TuyaSetChannels();
         break;
+    }
+  }
+  return result;
+}
+
+/*********************************************************************************************\
+ * Energy Interface
+\*********************************************************************************************/
+
+int Xnrg08(uint8_t function)
+{
+  int result = 0;
+  if (FUNC_PRE_INIT == function) {
+    if (Settings.param[P_TUYA_POWER_ID] != 0) {
+        energy_flg = XNRG_08;
+    }
+    if (Settings.param[P_TUYA_CURRENT_ID] == 0) {
+      Energy.current_available = false;
+    }
+    if (Settings.param[P_TUYA_VOLTAGE_ID] == 0) {
+      Energy.voltage_available = false;
     }
   }
   return result;
