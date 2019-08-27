@@ -38,7 +38,7 @@
 
 class TasmotaSerial : public Stream {
   public:
-    TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback = 0);
+    TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback = 0,int nwmode = 0);
     virtual ~TasmotaSerial();
 
     bool begin(long speed, int stop_bits = 1);
@@ -61,12 +61,16 @@ class TasmotaSerial : public Stream {
 
     // Member variables
     bool m_valid;
+    bool m_nwmode;
     bool m_hardserial;
     bool m_hardswap;
     bool m_high_speed;
     int m_rx_pin;
     int m_tx_pin;
     int m_stop_bits;
+    int ss_byte;
+    unsigned long ss_bstart;
+    int ss_index;
     unsigned long m_bit_time;
     unsigned int m_in_pos;
     unsigned int m_out_pos;
