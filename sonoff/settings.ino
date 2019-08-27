@@ -128,6 +128,15 @@
 #ifndef TUYA_DIMMER_MAX
 #define TUYA_DIMMER_MAX             100
 #endif
+#ifndef ENERGY_TARIFF1_HOUR
+#define ENERGY_TARIFF1_HOUR         23         // Start hour "nighttime" or "off-peak" tariff
+#endif
+#ifndef ENERGY_TARIFF2_HOUR
+#define ENERGY_TARIFF2_HOUR         7          // Start hour "daytime" or "standard" tariff
+#endif
+#ifndef ENERGY_TARIFF_WEEKEND
+#define ENERGY_TARIFF_WEEKEND       1          // 0 = No difference in weekend, 1 = off-peak during weekend
+#endif
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -1070,13 +1079,17 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06060007) {
       memset((char*)&Settings +0xE00, 0x00, sizeof(SYSCFG) -0xE00);
-
+    }
+    if (Settings.version < 0x06060008) {
       // Move current tuya dimmer range to the new param.
       if (Settings.flag3.tuya_dimmer_range_255) {
         Settings.param[P_TUYA_DIMMER_MAX] = 100;
       } else {
         Settings.param[P_TUYA_DIMMER_MAX] = 255;
       }
+      Settings.param[P_ENERGY_TARIFF1] = ENERGY_TARIFF1_HOUR;
+      Settings.param[P_ENERGY_TARIFF2] = ENERGY_TARIFF2_HOUR;
+      Settings.flag3.energy_weekend = ENERGY_TARIFF_WEEKEND;
     }
 
     Settings.version = VERSION;
