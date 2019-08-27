@@ -54,8 +54,9 @@ struct TUYA {
   uint8_t data_len = 0;                  // Data lenght of command
   int8_t wifi_state = -2;                // Keep MCU wifi-status in sync with WifiState()
   uint8_t heartbeat_timer = 0;           // 10 second heartbeat timer for tuya module
+#ifdef USE_ENERGY_SENSOR
   uint32_t lastPowerCheckTime = 0;       // Time when last power was checked
-
+#endif // USE_ENERGY_SENSOR
   char *buffer = nullptr;                // Serial receive buffer
   int byte_counter = 0;                  // Index in serial receive buffer
 } Tuya;
@@ -229,6 +230,7 @@ void TuyaPacketProcess(void)
           }
         }
 
+#ifdef USE_ENERGY_SENSOR
         if (Settings.param[P_TUYA_VOLTAGE_ID] == Tuya.buffer[6]) {
           Energy.voltage = (float)(Tuya.buffer[12] << 8 | Tuya.buffer[13]) / 10;
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Voltage=%d"), Settings.param[P_TUYA_VOLTAGE_ID], (Tuya.buffer[12] << 8 | Tuya.buffer[13]));
@@ -247,6 +249,8 @@ void TuyaPacketProcess(void)
         } else if (Settings.param[P_TUYA_DIMMER_ID] != Tuya.buffer[6]){
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Unknown ID=%d"), Tuya.buffer[6]);
         }
+#endif // USE_ENERGY_SENSOR
+
       }
       break;
 
@@ -459,6 +463,7 @@ bool Xdrv16(uint8_t function)
   return result;
 }
 
+#ifdef USE_ENERGY_SENSOR
 /*********************************************************************************************\
  * Energy Interface
 \*********************************************************************************************/
@@ -479,6 +484,7 @@ int Xnrg08(uint8_t function)
   }
   return result;
 }
+#endif  // USE_ENERGY_SENSOR
 
 #endif  // USE_TUYA_DIMMER
 #endif  // USE_LIGHT
