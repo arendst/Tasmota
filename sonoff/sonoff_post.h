@@ -301,11 +301,16 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
     #define USE_DISPLAY_LCD                   // [DisplayModel 1] Enable Lcd display (I2C addresses 0x27 and 0x3F) (+6k code)
     #define USE_DISPLAY_SSD1306               // [DisplayModel 2] Enable SSD1306 Oled 128x64 display (I2C addresses 0x3C and 0x3D) (+16k code)
     #define USE_DISPLAY_MATRIX                // [DisplayModel 3] Enable 8x8 Matrix display (I2C adresseses see below) (+11k code)
+    #define USE_DISPLAY_SH1106                // [DisplayModel 7] Enable SH1106 Oled 128x64 display (I2C addresses 0x3C and 0x3D)
 
 #define USE_SPI                               // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
     #define USE_DISPLAY_ILI9341               // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
 #ifndef ARDUINO_ESP8266_RELEASE_2_3_0         // There is not enough spare RAM with core 2.3.0 to support the following
     #define USE_DISPLAY_EPAPER_29             // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
+    #define USE_DISPLAY_EPAPER_42             // [DisplayModel 6] Enable e-paper 4.2 inch display
+//    #define USE_DISPLAY_ILI9488               // [DisplayModel 8]
+//    #define USE_DISPLAY_SSD1351               // [DisplayModel 9]
+//    #define USE_DISPLAY_RA8876                // [DisplayModel 10]
 #endif
 
 #undef USE_ARILUX_RF                          // Remove support for Arilux RF remote controller (-0k8 code, 252 iram (non 2.3.0))
