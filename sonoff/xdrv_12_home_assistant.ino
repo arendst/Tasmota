@@ -242,6 +242,7 @@ void HAssAnnounceRelayLight(void)
       TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
       TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
 
+#ifdef USE_LIGHT
       if (is_light) {
         char *brightness_command_topic = stemp1;
 
@@ -278,6 +279,7 @@ void HAssAnnounceRelayLight(void)
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic);
         }
       }
+#endif  // USE_LIGHT
       TryResponseAppend_P(PSTR("}"));
     }
     MqttPublish(stopic, true);
