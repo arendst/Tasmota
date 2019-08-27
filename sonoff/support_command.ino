@@ -963,7 +963,7 @@ void CmndBaudrate(void)
 {
   if (XdrvMailbox.payload > 1200) {
     XdrvMailbox.payload /= 1200;  // Make it a valid baudrate
-    baudrate = XdrvMailbox.payload * 1200;
+    baudrate = (XdrvMailbox.payload & 0xFF) * 1200;
     SetSerialBaudrate(baudrate);
   }
   ResponseCmndNumber(Settings.baudrate * 1200);
