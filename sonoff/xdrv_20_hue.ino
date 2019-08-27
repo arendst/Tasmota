@@ -406,6 +406,9 @@ uint32_t findEchoGeneration(void) {
       break;
     }
   }
+  if (0 == user_agent.length()) {
+    gen = 1;        // if no user-agent, also revert to gen v1
+  }
 
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, D_LOG_HTTP D_HUE " User-Agent: %s, gen=%d", user_agent.c_str(), gen);  // Header collection is set in xdrv_01_webserver.ino, in StartWebserver()
 
