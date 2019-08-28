@@ -422,6 +422,34 @@ void TuyaSetWifiLed(void)
   TuyaSendCmd(TUYA_CMD_WIFI_STATE, &wifi_state, 1);
 }
 
+#ifdef USE_ENERGY_SENSOR
+/*********************************************************************************************\
+ * Energy Interface
+\*********************************************************************************************/
+
+int Xnrg08(uint8_t function)
+{
+  int result = 0;
+
+  if (TUYA_DIMMER == my_module_type) {
+    if (FUNC_PRE_INIT == function) {
+      if (!energy_flg) {
+        if (Settings.param[P_TUYA_POWER_ID] != 0) {
+          if (Settings.param[P_TUYA_CURRENT_ID] == 0) {
+            Energy.current_available = false;
+          }
+          if (Settings.param[P_TUYA_VOLTAGE_ID] == 0) {
+            Energy.voltage_available = false;
+          }
+          energy_flg = XNRG_08;
+        }
+      }
+    }
+  }
+  return result;
+}
+#endif  // USE_ENERGY_SENSOR
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -462,29 +490,6 @@ bool Xdrv16(uint8_t function)
   }
   return result;
 }
-
-#ifdef USE_ENERGY_SENSOR
-/*********************************************************************************************\
- * Energy Interface
-\*********************************************************************************************/
-
-int Xnrg08(uint8_t function)
-{
-  int result = 0;
-  if (FUNC_PRE_INIT == function) {
-    if (Settings.param[P_TUYA_POWER_ID] != 0) {
-        energy_flg = XNRG_08;
-    }
-    if (Settings.param[P_TUYA_CURRENT_ID] == 0) {
-      Energy.current_available = false;
-    }
-    if (Settings.param[P_TUYA_VOLTAGE_ID] == 0) {
-      Energy.voltage_available = false;
-    }
-  }
-  return result;
-}
-#endif  // USE_ENERGY_SENSOR
 
 #endif  // USE_TUYA_DIMMER
 #endif  // USE_LIGHT

@@ -165,10 +165,12 @@ void Energy200ms(void)
         Settings.energy_kWhtotal += Energy.kWhtoday;
         RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
         Energy.kWhtoday = 0;
+        RtcSettings.energy_kWhtoday = 0;
 
         Settings.energy_usage.usage1_kWhtotal += Energy.kWhtoday1;
         RtcSettings.energy_usage.usage1_kWhtotal = Settings.energy_usage.usage1_kWhtotal;
         Energy.kWhtoday1 = 0;
+        RtcSettings.energy_usage.usage1_kWhtoday = 0;
 
         Energy.kWhtoday_delta = 0;
         Energy.period = Energy.kWhtoday;
