@@ -785,7 +785,9 @@ void PerformEverySecond(void)
       }
       if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295 && !disable_deepsleep_switch && tele_period == 0 && prep_called == 1 ) {
         //TODO STEFAN
+        SettingsSaveAll();
         yield();
+
         if (Settings.deepsleep > MAX_DEEPSLEEP_CYCLE) {
           RtcSettings.ultradeepsleep = Settings.deepsleep;
         } else {
