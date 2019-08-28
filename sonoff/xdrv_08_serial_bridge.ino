@@ -142,7 +142,8 @@ void CmndSSerialSend(void)
 void CmndSBaudrate(void)
 {
   if (XdrvMailbox.payload > 1200) {
-    Settings.sbaudrate /= 1200;  // Make it a valid baudrate
+    XdrvMailbox.payload /= 1200;  // Make it a valid baudrate
+    Settings.sbaudrate = XdrvMailbox.payload;
     SerialBridgeSerial->begin(Settings.sbaudrate * 1200);  // Reinitialize serial port with new baud rate
   }
   ResponseCmndNumber(Settings.sbaudrate * 1200);
