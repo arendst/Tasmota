@@ -86,7 +86,7 @@ void SerialBridgeInit(void)
   serial_bridge_active = false;
   if ((pin[GPIO_SBR_RX] < 99) && (pin[GPIO_SBR_TX] < 99)) {
     SerialBridgeSerial = new TasmotaSerial(pin[GPIO_SBR_RX], pin[GPIO_SBR_TX]);
-    if (SerialBridgeSerial->begin(Settings.sbaudrate * 1200)) {  // Baud rate is stored div 1200 so it fits into one byte
+    if (SerialBridgeSerial->begin(Settings.sbaudrate * 300)) {  // Baud rate is stored div 300 so it fits into 16 bits
       if (SerialBridgeSerial->hardwareSerial()) {
         ClaimSerial();
         serial_bridge_buffer = serial_in_buffer;  // Use idle serial buffer to save RAM
@@ -141,12 +141,12 @@ void CmndSSerialSend(void)
 
 void CmndSBaudrate(void)
 {
-  if (XdrvMailbox.payload > 1200) {
-    XdrvMailbox.payload /= 1200;  // Make it a valid baudrate
+  if (XdrvMailbox.payload >= 300) {
+    XdrvMailbox.payload /= 300;  // Make it a valid baudrate
     Settings.sbaudrate = XdrvMailbox.payload;
-    SerialBridgeSerial->begin(Settings.sbaudrate * 1200);  // Reinitialize serial port with new baud rate
+    SerialBridgeSerial->begin(Settings.sbaudrate * 300);  // Reinitialize serial port with new baud rate
   }
-  ResponseCmndNumber(Settings.sbaudrate * 1200);
+  ResponseCmndNumber(Settings.sbaudrate * 300);
 }
 
 /*********************************************************************************************\

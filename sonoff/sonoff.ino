@@ -1476,7 +1476,7 @@ void setup(void)
     XdrvCall(FUNC_SETTINGS_OVERRIDE);
   }
 
-  baudrate = Settings.baudrate * 1200;
+  baudrate = Settings.baudrate * 300;
 //  mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
   seriallog_level = Settings.seriallog_level;
   seriallog_timer = SERIALLOG_TIMER;

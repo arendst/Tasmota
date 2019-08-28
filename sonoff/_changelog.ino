@@ -1,4 +1,7 @@
 /*********************************************************************************************\
+ * 6.6.0.9 20190828
+ * Change theoretical baudrate range to 300..19660500 bps in 300 increments (#6294)
+ *
  * 6.6.0.8 20190827
  * Add Tuya Energy monitoring by Shantur Rathore
  * Add phase 1 Domoticz P1 Smart Meter support using energy sensors handled by xdrv_03_energy.ino based on an idea by pablozg

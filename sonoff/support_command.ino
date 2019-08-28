@@ -961,12 +961,12 @@ void CmndSwitchDebounce(void)
 
 void CmndBaudrate(void)
 {
-  if (XdrvMailbox.payload > 1200) {
-    XdrvMailbox.payload /= 1200;  // Make it a valid baudrate
-    baudrate = (XdrvMailbox.payload & 0xFF) * 1200;
+  if (XdrvMailbox.payload >= 300) {
+    XdrvMailbox.payload /= 300;  // Make it a valid baudrate
+    baudrate = (XdrvMailbox.payload & 0xFFFF) * 300;
     SetSerialBaudrate(baudrate);
   }
-  ResponseCmndNumber(Settings.baudrate * 1200);
+  ResponseCmndNumber(Settings.baudrate * 300);
 }
 
 void CmndSerialSend(void)

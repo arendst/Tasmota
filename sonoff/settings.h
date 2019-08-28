@@ -205,7 +205,7 @@ struct SYSCFG {
   int8_t        timezone;                  // 016
   char          ota_url[101];              // 017
   char          mqtt_prefix[3][11];        // 07C
-  uint8_t       baudrate;                  // 09D
+  uint8_t       ex_baudrate;               // 09D - Free since 6.6.0.9
   uint8_t       seriallog_level;           // 09E
   uint8_t       sta_config;                // 09F
   uint8_t       sta_active;                // 0A0
@@ -288,7 +288,7 @@ struct SYSCFG {
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430
   char          serial_delimiter;          // 451
-  uint8_t       sbaudrate;                 // 452
+  uint8_t       ex_sbaudrate;              // 452 - Free since 6.6.0.9
   uint8_t       sleep;                     // 453
   uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
   uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
@@ -345,11 +345,9 @@ struct SYSCFG {
   uint8_t       web_color[18][3];          // 73E
   uint16_t      display_width;             // 774
   uint16_t      display_height;            // 776
-
-  uint8_t       free_778[4];               // 778
-
+  uint16_t      baudrate;                  // 778
+  uint16_t      sbaudrate;                 // 77A
   EnergyUsage   energy_usage;              // 77C
-
 //  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries
   uint32_t      adc_param1;                // 794
   uint32_t      adc_param2;                // 798
