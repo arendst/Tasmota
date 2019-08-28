@@ -173,7 +173,7 @@ String sendIRJsonState(const struct decode_results &results) {
   json += results.bits;
 
   if (hasACState(results.decode_type)) {
-    json += ",\"" D_JSON_IR_DATALONG "\":\"";
+    json += ",\"" D_JSON_IR_DATA "\":\"0x";
     json += resultToHexidecimal(&results);
     json += "\"";
   } else {

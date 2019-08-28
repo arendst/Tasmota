@@ -383,7 +383,6 @@
   #define D_JSON_IR_BITS "Bits"
   #define D_JSON_IR_DATA "Data"
   #define D_JSON_IR_DATALSB "DataLSB"
-  #define D_JSON_IR_DATALONG "DataLong"
   #define D_JSON_IR_RAWDATA "RawData"
   #define D_JSON_IR_REPEAT "Repeat"
 #define D_CMND_IRHVAC "IRHVAC"
