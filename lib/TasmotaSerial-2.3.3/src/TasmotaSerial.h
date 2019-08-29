@@ -20,7 +20,7 @@
 #ifndef TasmotaSerial_h
 #define TasmotaSerial_h
 /*********************************************************************************************\
- * TasmotaSerial supports up to 115200 baud with fixed buffer size of 64 bytes using optional no iram
+ * TasmotaSerial supports up to 115200 baud with default buffer size of 64 bytes using optional no iram
  *
  * Based on EspSoftwareSerial v3.4.3 by Peter Lerup (https://github.com/plerup/espsoftwareserial)
 \*********************************************************************************************/
@@ -38,7 +38,7 @@
 
 class TasmotaSerial : public Stream {
   public:
-    TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback = 0,int nwmode = 0, int buffer_size = TM_SERIAL_BUFFER_SIZE);
+    TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback = 0, int nwmode = 0, int buffer_size = TM_SERIAL_BUFFER_SIZE);
     virtual ~TasmotaSerial();
 
     bool begin(long speed, int stop_bits = 1);
@@ -60,22 +60,22 @@ class TasmotaSerial : public Stream {
     size_t txWrite(uint8_t byte);
 
     // Member variables
+    int m_rx_pin;
+    int m_tx_pin;
+    uint32_t m_stop_bits;
+    uint32_t ss_byte;
+    uint32_t ss_bstart;
+    uint32_t ss_index;
+    uint32_t m_bit_time;
+    uint32_t m_in_pos;
+    uint32_t m_out_pos;
+    uint32_t serial_buffer_size;
     bool m_valid;
     bool m_nwmode;
     bool m_hardserial;
     bool m_hardswap;
     bool m_high_speed;
-    int m_rx_pin;
-    int m_tx_pin;
-    int m_stop_bits;
-    int ss_byte;
-    unsigned long ss_bstart;
-    int ss_index;
-    unsigned long m_bit_time;
-    unsigned int m_in_pos;
-    unsigned int m_out_pos;
     uint8_t *m_buffer;
-    int serial_buffer_size;
 };
 
 #endif  // TasmotaSerial_h

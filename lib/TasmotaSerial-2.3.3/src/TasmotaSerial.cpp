@@ -79,8 +79,8 @@ static void (*ISRList[16])() = {
 TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fallback, int nwmode, int buffer_size)
 {
   m_valid = false;
-  m_hardserial = 0;
-  m_hardswap = 0;
+  m_hardserial = false;
+  m_hardswap = false;
   m_stop_bits = 1;
   m_nwmode = nwmode;
   if (!((isValidGPIOpin(receive_pin)) && (isValidGPIOpin(transmit_pin) || transmit_pin == 16))) {
@@ -90,11 +90,11 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
   m_tx_pin = transmit_pin;
   m_in_pos = m_out_pos = 0;
   if (hardware_fallback && (((3 == m_rx_pin) && (1 == m_tx_pin)) || ((3 == m_rx_pin) && (-1 == m_tx_pin)) || ((-1 == m_rx_pin) && (1 == m_tx_pin)))) {
-    m_hardserial = 1;
+    m_hardserial = true;
   }
   else if ((2 == hardware_fallback) && (((13 == m_rx_pin) && (15 == m_tx_pin)) || ((13 == m_rx_pin) && (-1 == m_tx_pin)) || ((-1 == m_rx_pin) && (15 == m_tx_pin)))) {
-    m_hardserial = 1;
-    m_hardswap = 1;
+    m_hardserial = true;
+    m_hardswap = true;
   }
   else {
     if (m_rx_pin > -1) {
@@ -104,8 +104,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
       m_bit_time = ESP.getCpuFreqMHz() * 1000000 / TM_SERIAL_BAUDRATE;
       pinMode(m_rx_pin, INPUT);
       tms_obj_list[m_rx_pin] = this;
-      if (m_nwmode) attachInterrupt(m_rx_pin, ISRList[m_rx_pin], CHANGE);
-      else attachInterrupt(m_rx_pin, ISRList[m_rx_pin], FALLING);
+      attachInterrupt(m_rx_pin, ISRList[m_rx_pin], (m_nwmode) ? CHANGE : FALLING);
     }
     if (m_tx_pin > -1) {
       pinMode(m_tx_pin, OUTPUT);
@@ -184,7 +183,7 @@ int TasmotaSerial::read()
     return Serial.read();
   } else {
     if ((-1 == m_rx_pin) || (m_in_pos == m_out_pos)) return -1;
-    uint8_t ch = m_buffer[m_out_pos];
+    uint32_t ch = m_buffer[m_out_pos];
     m_out_pos = (m_out_pos +1) % serial_buffer_size;
     return ch;
   }
@@ -214,19 +213,19 @@ size_t TasmotaSerial::write(uint8_t b)
   } else {
     if (-1 == m_tx_pin) return 0;
     if (m_high_speed) cli();  // Disable interrupts in order to get a clean transmit
-    unsigned long wait = m_bit_time;
+    uint32_t wait = m_bit_time;
     digitalWrite(m_tx_pin, HIGH);
-    unsigned long start = ESP.getCycleCount();
+    uint32_t start = ESP.getCycleCount();
     // Start bit;
     digitalWrite(m_tx_pin, LOW);
     TM_SERIAL_WAIT;
-    for (int i = 0; i < 8; i++) {
+    for (uint32_t i = 0; i < 8; i++) {
       digitalWrite(m_tx_pin, (b & 1) ? HIGH : LOW);
       TM_SERIAL_WAIT;
       b >>= 1;
     }
     // Stop bit(s)
-    for (int i = 0; i < m_stop_bits; i++) {
+    for (uint32_t i = 0; i < m_stop_bits; i++) {
       digitalWrite(m_tx_pin, HIGH);
       TM_SERIAL_WAIT;
     }
@@ -242,89 +241,89 @@ void ICACHE_RAM_ATTR TasmotaSerial::rxRead()
 void TasmotaSerial::rxRead()
 {
 #endif
-if (!m_nwmode) {
-  // Advance the starting point for the samples but compensate for the
-  // initial delay which occurs before the interrupt is delivered
-  unsigned long wait = m_bit_time + m_bit_time/3 - 500;
-  unsigned long start = ESP.getCycleCount();
-  uint8_t rec = 0;
-  for (int i = 0; i < 8; i++) {
+  if (!m_nwmode) {
+    // Advance the starting point for the samples but compensate for the
+    // initial delay which occurs before the interrupt is delivered
+    uint32_t wait = m_bit_time + m_bit_time/3 - 500;
+    uint32_t start = ESP.getCycleCount();
+    uint8_t rec = 0;
+    for (uint32_t i = 0; i < 8; i++) {
+      TM_SERIAL_WAIT;
+      rec >>= 1;
+      if (digitalRead(m_rx_pin)) rec |= 0x80;
+    }
+    // Stop bit(s)
     TM_SERIAL_WAIT;
-    rec >>= 1;
-    if (digitalRead(m_rx_pin)) rec |= 0x80;
-  }
-  // Stop bit(s)
-  TM_SERIAL_WAIT;
-  if (2 == m_stop_bits) {
-    digitalRead(m_rx_pin);
-    TM_SERIAL_WAIT;
-  }
-  // Store the received value in the buffer unless we have an overflow
-  unsigned int next = (m_in_pos+1) % serial_buffer_size;
-  if (next != (int)m_out_pos) {
-    m_buffer[m_in_pos] = rec;
-    m_in_pos = next;
-  }
-  // Must clear this bit in the interrupt register,
-  // it gets set even when interrupts are disabled
-  GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << m_rx_pin);
-} else {
-  uint8_t diff;
-  uint8_t level;
-
-  #define LASTBIT 9
-
-  GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << m_rx_pin);
-
-  level=digitalRead(m_rx_pin);
-
-  if (!level && !ss_index) {
-    // start condition
-    ss_bstart=ESP.getCycleCount()-(m_bit_time/4);
-    ss_byte=0;
-    ss_index++;
-    //digitalWrite(1, LOW);
+    if (2 == m_stop_bits) {
+      digitalRead(m_rx_pin);
+      TM_SERIAL_WAIT;
+    }
+    // Store the received value in the buffer unless we have an overflow
+    uint32_t next = (m_in_pos+1) % serial_buffer_size;
+    if (next != (int)m_out_pos) {
+      m_buffer[m_in_pos] = rec;
+      m_in_pos = next;
+    }
+    // Must clear this bit in the interrupt register,
+    // it gets set even when interrupts are disabled
+    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << m_rx_pin);
   } else {
-    // now any bit changes go here
-    // calc bit number
-    diff=(ESP.getCycleCount()-ss_bstart)/m_bit_time;
-    //digitalWrite(1, level);
+    uint32_t diff;
+    uint32_t level;
 
-    if (!level && diff>LASTBIT) {
-      // start bit of next byte, store  and restart
-      // leave irq at change
-      for (uint8_t i=ss_index;i<=LASTBIT;i++) {
-        ss_byte|=(1<<i);
-      }
-      //stobyte(0,ssp->ss_byte>>1);
-      unsigned int next = (m_in_pos+1) % serial_buffer_size;
-      if (next != (int)m_out_pos) {
-        m_buffer[m_in_pos] = ss_byte>>1;
-        m_in_pos = next;
-      }
+    #define LASTBIT 9
 
-      ss_bstart=ESP.getCycleCount()-(m_bit_time/4);
-      ss_byte=0;
-      ss_index=1;
-      return;
-    }
-    if (diff>=LASTBIT) {
-      // bit zero was 0,
-      //stobyte(0,ssp->ss_byte>>1);
-      unsigned int next = (m_in_pos+1) % serial_buffer_size;
-      if (next != (int)m_out_pos) {
-        m_buffer[m_in_pos] = ss_byte>>1;
-        m_in_pos = next;
-      }
-      ss_byte=0;
-      ss_index=0;
+    GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, 1 << m_rx_pin);
+
+    level = digitalRead(m_rx_pin);
+
+    if (!level && !ss_index) {
+      // start condition
+      ss_bstart = ESP.getCycleCount() - (m_bit_time / 4);
+      ss_byte = 0;
+      ss_index++;
+      //digitalWrite(1, LOW);
     } else {
-      // shift in
-      for (uint8_t i=ss_index;i<diff;i++) {
-        if (!level) ss_byte|=(1<<i);
+      // now any bit changes go here
+      // calc bit number
+      diff = (ESP.getCycleCount() - ss_bstart) / m_bit_time;
+      //digitalWrite(1, level);
+
+      if (!level && diff > LASTBIT) {
+        // start bit of next byte, store  and restart
+        // leave irq at change
+        for (uint32_t i = ss_index; i <= LASTBIT; i++) {
+          ss_byte |= (1 << i);
+        }
+        //stobyte(0,ssp->ss_byte>>1);
+        uint32_t next = (m_in_pos + 1) % serial_buffer_size;
+        if (next != (uint32_t)m_out_pos) {
+          m_buffer[m_in_pos] = ss_byte >> 1;
+          m_in_pos = next;
+        }
+
+        ss_bstart = ESP.getCycleCount() - (m_bit_time / 4);
+        ss_byte = 0;
+        ss_index = 1;
+        return;
       }
-      ss_index=diff;
+      if (diff >= LASTBIT) {
+        // bit zero was 0,
+        //stobyte(0,ssp->ss_byte>>1);
+        uint32_t next = (m_in_pos + 1) % serial_buffer_size;
+        if (next != (uint32_t)m_out_pos) {
+          m_buffer[m_in_pos] = ss_byte >> 1;
+          m_in_pos = next;
+        }
+        ss_byte = 0;
+        ss_index = 0;
+      } else {
+        // shift in
+        for (uint32_t i = ss_index; i < diff; i++) {
+          if (!level) ss_byte |= (1 << i);
+        }
+        ss_index = diff;
+      }
     }
   }
-}
 }
