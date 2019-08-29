@@ -172,6 +172,10 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define RGB_REMAP_BRGW         48
 #define RGB_REMAP_BGRW         54
 
+#define NEO_BB_DEFAULT         0            // NeoPixelBus BitBang speed 800kBps with reset time 50 uSec
+#define NEO_BB_WS2812X         1            // NeoPixelBus BitBang speed 800kBps with reset time 300 uSec
+#define NEO_BB_SK6812          2            // NeoPixelBus BitBang speed 800kBps with reset time 80 uSec
+
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino - soon obsolete
 #define MQTT_ESPMQTTARDUINO    3            // Mqtt esp-mqtt-arduino library by Ingo Randolf - obsolete but define is present for debugging purposes

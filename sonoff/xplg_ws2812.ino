@@ -39,11 +39,17 @@
   typedef NeoRgbFeature selectedNeoFeatureType;
 #endif  // USE_WS2812_CTYPE
 
-
 #ifdef USE_WS2812_DMA
   typedef Neo800KbpsMethod selectedNeoSpeedType;
 #else   // USE_WS2812_DMA
+// See NeoEspBitBangMethod.h for available options
+#if (USE_WS2812_BTYPE == NEO_BB_WS2812X)
+  typedef NeoEsp8266BitBangWs2812xMethod selectedNeoSpeedType;
+#elif (USE_WS2812_BTYPE == NEO_BB_SK6812)
+  typedef NeoEsp8266BitBangSk6812Method selectedNeoSpeedType;
+#else   // USE_WS2812_BTYPE
   typedef NeoEsp8266BitBang800KbpsMethod selectedNeoSpeedType;
+#endif  // USE_WS2812_BTYPE
 #endif  // USE_WS2812_DMA
   NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType> *strip = nullptr;
 
