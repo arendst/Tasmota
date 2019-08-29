@@ -647,7 +647,7 @@ void CmndSetoption(void)
               LightUpdateColorMapping();
               break;
 #endif
-#if defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)
+#if (defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)) || defined(USE_IR_REMOTE_FULL)
             case P_IR_UNKNOW_THRESHOLD:
               IrReceiveUpdateThreshold();
               break;

@@ -450,6 +450,8 @@
   #define MAX31865_PTD_BIAS   0                 // To calibrate your not-so-good PTD
 
 // -- IR Remote features --------------------------
+//#define USE_IR_REMOTE_FULL                       // Activate all protocols from IRremoteESP8266
+                                                 // actovating this option will ignore all other USE_IR_REMOTE_* options and set them all to active
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k3 code, 0k3 mem, 48 iram)
 //  #define USE_IR_SEND_AIWA                       // Support IRsend Aiwa protocol
   #define USE_IR_SEND_DISH                       // Support IRsend Dish protocol

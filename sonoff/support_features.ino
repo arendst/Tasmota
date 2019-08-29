@@ -76,7 +76,7 @@ void GetFeatures(void)
 #ifdef USE_WS2812_DMA
   feature_drv1 |= 0x00010000;  // xdrv_04_light.ino
 #endif
-#ifdef USE_IR_REMOTE
+#if defined(USE_IR_REMOTE) || defined(USE_IR_REMOTE_FULL)
   feature_drv1 |= 0x00020000;  // xdrv_05_irremote.ino
 #endif
 #ifdef USE_IR_HVAC
