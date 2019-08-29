@@ -527,9 +527,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_LIGHT) && defined(USE_WS2812)
   GPIO_WS2812,         // WS2812 Led string
 #endif
-#ifdef USE_IR_REMOTE
+#if defined(USE_IR_REMOTE) || defined(USE_IR_REMOTE_FULL)
   GPIO_IRSEND,         // IR remote
-#ifdef USE_IR_RECEIVE
+#if defined(USE_IR_RECEIVE) || defined(USE_IR_REMOTE_FULL)
   GPIO_IRRECV,         // IR receiver
 #endif
 #endif
