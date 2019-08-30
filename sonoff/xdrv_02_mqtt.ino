@@ -52,6 +52,9 @@ uint32_t mqtt_host_hash = 0;                // MQTT host name hash
 
 uint16_t mqtt_connect_count = 0;            // MQTT re-connect count
 uint16_t mqtt_retry_counter = 1;            // MQTT connection retry counter
+//stb mod
+uint16_t mqtt_retry_reboot_counter = 1;     // MQTT connection reboot after x unseccesful retries
+// end
 uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
 bool mqtt_connected = false;                // MQTT virtual connection status
 bool mqtt_allowed = false;                  // MQTT enabled and parameters valid
@@ -191,6 +194,9 @@ PubSubClient MqttClient(EspClient);
 
 void MqttInit(void)
 {
+// stb mod
+mqtt_retry_reboot_counter = Settings.mqtt_retry;
+//end
 #ifdef USE_MQTT_TLS
   tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 
@@ -469,6 +475,9 @@ void MqttConnected(void)
     AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
     mqtt_connected = true;
     mqtt_retry_counter = 0;
+    //stb mod
+    mqtt_retry_reboot_counter = Settings.mqtt_retry;
+    //
     mqtt_connect_count++;
 
     GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
@@ -505,7 +514,10 @@ void MqttConnected(void)
     Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"), (GetResetReason() == "Exception") ? ESP.getResetInfo().c_str() : GetResetReason().c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
     MqttPublishAllPowerState();
-    if (Settings.tele_period) { tele_period = Settings.tele_period -9; }  // Enable TelePeriod in 9 seconds
+
+    //stb mod
+    if (Settings.tele_period && !Settings.deepsleep) { tele_period = Settings.tele_period -9; }  // Enable TelePeriod in 9 seconds
+    //
     rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);
   }
@@ -588,6 +600,7 @@ void MqttReconnect(void)
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "AWS IoT endpoint: %s"), AWS_endpoint);
   //if (MqttClient.connect(mqtt_client, nullptr, nullptr, nullptr, 0, false, nullptr)) {
+  // boolean connect(const char* id, const char* user, const char* pass, const char* willTopic, uint8_t willQos, boolean willRetain, const char* willMessage, boolean cleanSession);
   if (MqttClient.connect(mqtt_client, nullptr, nullptr, stopic, 1, false, mqtt_data, MQTT_CLEAN_SESSION)) {
 #else
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data, MQTT_CLEAN_SESSION)) {
@@ -630,10 +643,23 @@ void MqttReconnect(void)
 #endif // !USE_MQTT_TLS_CA_CERT
 #endif // USE_MQTT_TLS
     MqttConnected();
+    //stb mod
+    mqtt_retry_reboot_counter = Settings.mqtt_retry;
+    //end
   } else {
 #ifdef USE_MQTT_TLS
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connection error: %d"), tlsClient->getLastError());
+
 #endif
+    //stb mod
+    mqtt_retry_reboot_counter--;
+    if (!mqtt_retry_reboot_counter) {
+      AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_APPLICATION D_RESTARTING));
+      EspRestart();
+    } else {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Unsuccessful. %d until reboot"), mqtt_retry_reboot_counter);
+    }
+    //
     MqttDisconnected(MqttClient.state());  // status codes are documented here http://pubsubclient.knolleary.net/api.html#state
   }
 }

@@ -127,7 +127,7 @@ uint8_t backlog_pointer = 0;                // Command backlog pointer
 //STB mod
 byte max_pcf8574_connected_ports = 0;       // Max numbers of devices comming from PCF8574 modules
 int prep_called = 0;                        // additional flag to detect a proper start of initialize sensors.
-unsigned long last_save_uptime = 0;         // Loop timer to calculate ontime
+unsigned long last_save_uptime = RtcSettings.uptime;         // Loop timer to calculate ontime
 uint8_t last_source = 0;
 byte max_pcf8574_devices = 0;               // Max numbers of PCF8574 modules
 uint8_t shutters_present = 0;
@@ -721,6 +721,14 @@ void PerformEverySecond(void)
 {
   uptime++;
 
+  //STB mod
+  RtcSettings.uptime += ((millis() - last_save_uptime) ) ;
+  AddLog_P2(LOG_LEVEL_ALL, PSTR("Uptime %ld, Deepsleep up: %ld, last save: %ld"), uptime, RtcSettings.uptime / 1000, last_save_uptime);
+  last_save_uptime = millis() ;
+
+  //end
+
+
   if (ntp_synced_message) {
     // Moved here to fix syslog UDP exception 9 during RtcSecond
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: Drift %d, (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
@@ -760,13 +768,16 @@ void PerformEverySecond(void)
 
   if (Settings.tele_period) {
     tele_period++;
+    //stb mod
+    //AddLog_P2(LOG_LEVEL_ALL, PSTR("Teleperiod %ld"), tele_period);
+    //
     if (tele_period >= Settings.tele_period -1 && prep_called == 0) {
       XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
       //STB mode
       prep_called = 1;
       // end stb mod
     }
-    if (tele_period >= Settings.tele_period && prep_called == 1) {
+    if (tele_period >= Settings.tele_period && prep_called == 1 && MqttIsConnected()) {
       tele_period = 0;
 
       MqttPublishTeleState();
@@ -795,19 +806,20 @@ void PerformEverySecond(void)
         }
         Response_P(S_OFFLINE);
         MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), false);  // Offline or remove previous retained topic
-
         yield();
-        Response_P(PSTR("{\"Time\":\"%s\", \"Uptime_s\":%d}"), GetDateAndTime(DT_LOCAL).c_str(), RtcSettings.uptime);
+        Response_P(PSTR("{\"Time\":\"%s\", \"Uptime_s\":%d}"), GetDateAndTime(DT_LOCAL).c_str(), RtcSettings.uptime /1000);
         MqttPublishPrefixTopic_P(TELE, PSTR("UPTIME_S"));
         yield();
-        delay(300);
+        MqttDisconnect();
+        PerformEverySecond();
+        uint32_t local_uptime = RtcSettings.uptime > Settings.deepsleep*1000 ? 0 : RtcSettings.uptime-500;
         RtcSettings.uptime = 0;
         RtcSettingsSave();
         // 10% of deepsleep to retry
         if (MAX_DEEPSLEEP_CYCLE < Settings.deepsleep) {
-          ESP.deepSleep(1000000 * (uint32_t)MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
+          ESP.deepSleep(1000 * ((uint32_t)MAX_DEEPSLEEP_CYCLE*1000 - local_uptime), WAKE_RF_DEFAULT);
         } else {
-          ESP.deepSleep(1000000 * Settings.deepsleep, WAKE_RF_DEFAULT);
+          ESP.deepSleep(1000 * (Settings.deepsleep*1000 - local_uptime), WAKE_RF_DEFAULT);
         }
         yield();
       }
