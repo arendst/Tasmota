@@ -83,6 +83,7 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
   m_hardswap = false;
   m_stop_bits = 1;
   m_nwmode = nwmode;
+  serial_buffer_size = buffer_size;
   if (!((isValidGPIOpin(receive_pin)) && (isValidGPIOpin(transmit_pin) || transmit_pin == 16))) {
     return;
   }
