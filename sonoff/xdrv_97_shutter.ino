@@ -386,15 +386,24 @@ void DelayForMotorStop()
 
 void Schutter_Report_Position()
 {
+  uint16_t shutter_moving = 0;
   for (byte i=0; i < shutters_present; i++) {
     if (Shutter_Direction[i] != 0) {
       char stemp1[20];
       char stemp2[10];
       dtostrfd((double)shutter_time[i] / 20, 1, stemp2);
+      shutter_moving = 1;
       //Settings.shutter_position[i] = Settings.shuttercoeff[2][i] * 5 > Shutter_Real_Position[i] ? Shutter_Real_Position[i] / Settings.shuttercoeff[2][i] : (Shutter_Real_Position[i]-Settings.shuttercoeff[0,i]) / Settings.shuttercoeff[1][i];
       AddLog_P2(LOG_LEVEL_INFO, PSTR("Shutter %d: Real Pos: %d, Target %d, source: %s, start-pos: %d %%, direction: %d, rtcshutter: %s  [s]"), i,Shutter_Real_Position[i], Shutter_Target_Position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), Settings.shutter_position[i], Shutter_Direction[i], stemp2 );
-     }
+    }
   }
+  if (rules_flag.shutter_moving > shutter_moving) {
+    rules_flag.shutter_moved = 1;
+  } else {
+    rules_flag.shutter_moved = 0;
+  }
+  rules_flag.shutter_moving = shutter_moving;
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
 }
 
 void Shutter_Relay_changed()

@@ -366,7 +366,7 @@ struct SYSCFG {
   //float         pid_initial_int[4];
   //uint16_t      pid_update_secs;
   //uint8_t       pid_auto;
-  //uint8_t       pid_manual_power;  
+  //uint8_t       pid_manual_power;
   uint8_t       shutter_accuracy;
   int16_t       shuttercoeff[5][MAX_SHUTTERS];
   uint8_t       free_681;  // size if the bucket for an interlock. Typically 1..4
@@ -431,8 +431,9 @@ struct XDRVMAILBOX {
   char         *data;
   char         *command;
 } XdrvMailbox;
-
-const uint8_t MAX_RULES_FLAG = 8;          // Number of bits used in RulesBitfield (tricky I know...)
+//stb mod
+const uint8_t MAX_RULES_FLAG = 10;          // Number of bits used in RulesBitfield (tricky I know...)
+//end
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
@@ -444,8 +445,10 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t wifi_connected : 1;
     uint16_t wifi_disconnected : 1;
     uint16_t http_init : 1;
-    uint16_t spare08 : 1;
-    uint16_t spare09 : 1;
+    //stb mod
+    uint16_t shutter_moved : 1;
+    uint16_t shutter_moving : 1;
+    // end
     uint16_t spare10 : 1;
     uint16_t spare11 : 1;
     uint16_t spare12 : 1;
