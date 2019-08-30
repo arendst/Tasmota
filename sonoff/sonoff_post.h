@@ -327,8 +327,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef CODE_IMAGE
 #define CODE_IMAGE 7
 
-#define USE_IR_REMOTE_FULL                    // activate full support of IR protocols
-
 #undef USE_EMULATION_HUE                      // disable Hue emulation - only for lights and relays
 //#undef USE_EMULATION_WEMO                     // disable Wemo emulation - only for relays
 
