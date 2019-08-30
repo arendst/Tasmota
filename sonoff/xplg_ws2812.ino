@@ -40,18 +40,32 @@
 #endif  // USE_WS2812_CTYPE
 
 #ifdef USE_WS2812_DMA
-  typedef Neo800KbpsMethod selectedNeoSpeedType;
+
+// See NeoEspDmaMethod.h for available options
+#if (USE_WS2812_HARDWARE == NEO_HW_WS2812X)
+  typedef NeoEsp8266DmaWs2812xMethod selectedNeoSpeedType;
+#elif (USE_WS2812_HARDWARE == NEO_HW_SK6812)
+  typedef NeoEsp8266DmaSk6812Method selectedNeoSpeedType;
+#elif (USE_WS2812_HARDWARE == NEO_HW_APA106)
+  typedef NeoEsp8266DmaApa106Method selectedNeoSpeedType;
+#else   // USE_WS2812_HARDWARE
+  typedef NeoEsp8266Dma800KbpsMethod selectedNeoSpeedType;
+#endif  // USE_WS2812_HARDWARE
+
 #else   // USE_WS2812_DMA
+
 // See NeoEspBitBangMethod.h for available options
-#if (USE_WS2812_BTYPE == NEO_BB_WS2812X)
+#if (USE_WS2812_HARDWARE == NEO_HW_WS2812X)
   typedef NeoEsp8266BitBangWs2812xMethod selectedNeoSpeedType;
-#elif (USE_WS2812_BTYPE == NEO_BB_SK6812)
+#elif (USE_WS2812_HARDWARE == NEO_HW_SK6812)
   typedef NeoEsp8266BitBangSk6812Method selectedNeoSpeedType;
-#else   // USE_WS2812_BTYPE
+#else   // USE_WS2812_HARDWARE
   typedef NeoEsp8266BitBang800KbpsMethod selectedNeoSpeedType;
-#endif  // USE_WS2812_BTYPE
+#endif  // USE_WS2812_HARDWARE
+
 #endif  // USE_WS2812_DMA
-  NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType> *strip = nullptr;
+
+NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType> *strip = nullptr;
 
 struct WsColor {
   uint8_t red, green, blue;
@@ -305,11 +319,8 @@ void Ws2812Bars(uint32_t schemenr)
 
 void Ws2812Init(void)
 {
-#ifdef USE_WS2812_DMA
-  strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
-#else  // USE_WS2812_DMA
+  // For DMA, the Pin is ignored as it uses GPIO3 due to DMA hardware use.
   strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
-#endif  // USE_WS2812_DMA
   strip->Begin();
   Ws2812Clear();
 }

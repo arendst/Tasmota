@@ -172,9 +172,12 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 #define RGB_REMAP_BRGW         48
 #define RGB_REMAP_BGRW         54
 
-#define NEO_BB_DEFAULT         0            // NeoPixelBus BitBang speed 800kBps with reset time 50 uSec
-#define NEO_BB_WS2812X         1            // NeoPixelBus BitBang speed 800kBps with reset time 300 uSec
-#define NEO_BB_SK6812          2            // NeoPixelBus BitBang speed 800kBps with reset time 80 uSec
+#define NEO_HW_WS2812          0            // NeoPixelBus hardware WS2812
+#define NEO_HW_WS2812X         1            // NeoPixelBus hardware WS2812x like WS2812b
+#define NEO_HW_WS2813          1            // NeoPixelBus hardware WS2813
+#define NEO_HW_SK6812          2            // NeoPixelBus hardware SK6812
+#define NEO_HW_LC8812          2            // NeoPixelBus hardware LC8812
+#define NEO_HW_APA106          3            // NeoPixelBus hardware APA106
 
 #define MQTT_PUBSUBCLIENT      1            // Mqtt PubSubClient library
 #define MQTT_TASMOTAMQTT       2            // Mqtt TasmotaMqtt library based on esp-mqtt-arduino - soon obsolete
