@@ -27,7 +27,7 @@
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
 #include <IRrecv.h>
-#include <IRUtils.h>
+#include <IRutils.h>
 #include <IRac.h>
 
 enum IrErrors { IE_RESPONSE_PROVIDED, IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_SYNTAX_IRHVAC,

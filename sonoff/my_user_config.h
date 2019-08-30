@@ -449,9 +449,17 @@
   #define MAX31865_REF_RES    430               // Reference resistor (Usually 430Ω for a PT100, 4300Ω for a PT1000)
   #define MAX31865_PTD_BIAS   0                 // To calibrate your not-so-good PTD
 
-// -- IR Remote features --------------------------
-//#define USE_IR_REMOTE_FULL                       // Activate all protocols from IRremoteESP8266
-                                                 // actovating this option will ignore all other USE_IR_REMOTE_* options and set them all to active
+// -- IR Remote features - all protocols from IRremoteESP8266 --------------------------
+// IR Full Protocols mode is activated through platform.io only.
+// Either use 'default_envs = sonoff-ircustom' and disable some features here to keep code not too big
+// or use 'default_envs = sonoff-ir' for a pre-packaged IR-dedicated firmware
+// When using 'sonoff-ircustom' or 'sonoff-ir', parameters below
+// (USE_IR_REMOTE, USE_IR_RECEIVE, USE_IR_HVAC...) are IGNORED.
+//
+// Code impact of IR full protocols is +81k code, 3k mem
+// You can reduce this size by disabling some protocols in "lib/IRremoteESP8266.x.x.x/src/IRremoteESP8266.h"
+
+// -- IR Remote features - subset of IR protocols --------------------------
 #define USE_IR_REMOTE                            // Send IR remote commands using library IRremoteESP8266 and ArduinoJson (+4k3 code, 0k3 mem, 48 iram)
 //  #define USE_IR_SEND_AIWA                       // Support IRsend Aiwa protocol
   #define USE_IR_SEND_DISH                       // Support IRsend Dish protocol
@@ -533,6 +541,8 @@
 //#define FIRMWARE_SENSORS                         // Create sonoff-sensors with useful sensors enabled
 //#define FIRMWARE_KNX_NO_EMULATION                // Create sonoff-knx with KNX but without Emulation
 //#define FIRMWARE_DISPLAYS                        // Create sonoff-display with display drivers enabled
+//#define FIRMWARE_IR                              // Create sonoff-ir with IR full protocols activated, and many sensors disabled
+//#define FIRMWARE_IR_CUSTOM                       // Create sonoff customizable with special marker to add all IR protocols
 //#define FIRMWARE_MINIMAL                         // Create sonoff-minimal as intermediate firmware for OTA-MAGIC
 
 /*********************************************************************************************\

@@ -3,6 +3,7 @@
  * Change theoretical baudrate range to 300..19660500 bps in 300 increments (#6294)
  * Add Full support of all protocols in IRremoteESP8266, to be used on dedicated-IR Tasmota version. Warning: +81k Flash when compiling with USE_IR_REMOTE_FULL
  * Add compile time define USE_WS2812_HARDWARE to select hardware type WS2812, WS2812X, WS2813, SK6812, LC8812 or APA106 (DMA mode only)
+ * Add 'sonoff-ir' pre-packaged IR-dedicated firmware and 'sonoff-ircustom' to customize firmware with IR Full protocol support
  *
  * 6.6.0.8 20190827
  * Add Tuya Energy monitoring by Shantur Rathore
