@@ -1050,6 +1050,9 @@ bool HandleRootStatusRefresh(void)
   WSContentBegin(200, CT_HTML);
   WSContentSend_P(PSTR("{t}"));
   XsnsCall(FUNC_WEB_SENSOR);
+#ifdef USE_SCRIPT_WEB_DISPLAY
+  XdrvCall(FUNC_WEB_SENSOR);
+#endif
   WSContentSend_P(PSTR("</table>"));
 
   if (devices_present) {
