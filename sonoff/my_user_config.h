@@ -549,6 +549,10 @@
  * No user configurable items below
 \*********************************************************************************************/
 
+#ifdef USE_CONFIG_OVERRIDE
+  #include "user_config_override.h"         // Configuration overrides for my_user_config.h
+#endif
+
 #if defined(USE_DISCOVERY) && defined(USE_MQTT_AWS_IOT)
   #error "Select either USE_DISCOVERY or USE_MQTT_AWS_IOT, mDNS takes too much code space and is not needed for AWS IoT"
 #endif
