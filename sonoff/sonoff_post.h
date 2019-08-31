@@ -328,7 +328,8 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define CODE_IMAGE 7
 
 #undef USE_EMULATION_HUE                      // disable Hue emulation - only for lights and relays
-//#undef USE_EMULATION_WEMO                     // disable Wemo emulation - only for relays
+#undef USE_EMULATION_WEMO                     // disable Wemo emulation - only for relays
+#undef USE_EMULATION
 
 //#undef USE_DOMOTICZ                           // Disable Domoticz
 //#undef USE_HOME_ASSISTANT                     // Disable Home Assistant
@@ -338,7 +339,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 //#undef USE_TIMERS_WEB                         // Disable support for timer webpage
 //#undef USE_SUNRISE                            // Disable support for Sunrise and sunset tools
 //#undef USE_RULES                              // Disable support for rules
-//#undef USE_DISCOVERY                            // Disable mDNS for the following services (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
+#undef USE_DISCOVERY                            // Disable mDNS for the following services (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
 
 // -- Optional modules -------------------------
 #undef USE_BUZZER                             // Disable support for a buzzer (+0k6 code)
