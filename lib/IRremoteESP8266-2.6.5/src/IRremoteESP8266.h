@@ -58,7 +58,7 @@
 // The Air Conditioner protocols are the most expensive memory-wise.
 //
 
-#if defined(FIRMWARE_IR) || defined(FIRMWARE_IR_CUSTOM)   // full IR protocols
+#ifdef USE_IR_REMOTE_FULL   // full IR protocols
 #define DECODE_HASH            true  // Semi-unique code for unknown messages
 
 #define SEND_RAW               true
