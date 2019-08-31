@@ -491,6 +491,12 @@
 
 // -- Zigbee interface ----------------------------
 //#define USE_ZIGBEE                               // Enable serial communication with Zigbee CC2530 flashed with ZNP
+  #define USE_ZIGBEE_PANID  0x1A63               // arbitrary PAN ID for Zigbee network, must be unique in the home
+  #define USE_ZIGBEE_EXTPANID 0xCCCCCCCCCCCCCCCCL // arbitrary extended PAN ID
+  #define USE_ZIGBEE_CHANNEL  0x00000800         // Zigbee Channel (11)
+  #define USE_ZIGBEE_PRECFGKEY_L 0x0F0D0B0907050301L  // note: changing requires to re-pair all devices
+  #define USE_ZIGBEE_PRECFGKEY_H 0x0D0C0A0806040200L  // note: changing requires to re-pair all devices
+  #define USE_ZIGBEE_PERMIT_JOIN false           // don't allow joining by default
 
 // ------------------------------------------------
 
