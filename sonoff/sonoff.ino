@@ -682,6 +682,11 @@ bool MqttShowSensor(void)
     }
   }
   XsnsCall(FUNC_JSON_APPEND);
+
+#ifdef USE_SCRIPT_JSON_EXPORT
+  XdrvCall(FUNC_JSON_APPEND);
+#endif
+
   bool json_data_available = (strlen(mqtt_data) - json_data_start);
   if (strstr_P(mqtt_data, PSTR(D_JSON_PRESSURE)) != nullptr) {
     ResponseAppend_P(PSTR(",\"" D_JSON_PRESSURE_UNIT "\":\"%s\""), PressureUnit().c_str());
