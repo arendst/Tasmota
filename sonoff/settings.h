@@ -400,10 +400,12 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 298
   unsigned long pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
-  uint8_t       free_020[52];              // 2B0
   //STB mod
+  uint8_t       free_020[48];              // 2B0
+  unsigned long nextwakeup;
   unsigned long uptime;
   uint32_t      ultradeepsleep;
+
   //end
 } RtcSettings;
 

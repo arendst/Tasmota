@@ -606,6 +606,28 @@ void RulesSetPower(void)
   rules_new_power = XdrvMailbox.index;
 }
 
+//stb mod
+void RulesBeforeTeleperiod(void)
+{
+  if (Settings.rule_enabled) {  // Any rule enabled
+    char json_event[32];
+
+    strncpy_P(json_event, PSTR("{\"System\":{\"PreTele\":1}}"), sizeof(json_event));
+    RulesProcessEvent(json_event);
+  }
+}
+
+void RulesAfterTeleperiod(void)
+{
+  if (Settings.rule_enabled) {  // Any rule enabled
+    char json_event[32];
+
+    strncpy_P(json_event, PSTR("{\"System\":{\"PostTele\":1}}"), sizeof(json_event));
+    RulesProcessEvent(json_event);
+  }
+}
+//
+
 void RulesTeleperiod(void)
 {
   rules_teleperiod = 1;
@@ -1312,6 +1334,14 @@ bool Xdrv10(uint8_t function)
     case FUNC_SAVE_BEFORE_RESTART:
       RulesSaveBeforeRestart();
       break;
+    //stb mod
+    case FUNC_PREP_BEFORE_TELEPERIOD:
+      RulesBeforeTeleperiod();
+      break;
+    case FUNC_AFTER_TELEPERIOD:
+        RulesAfterTeleperiod();
+        break;
+    //
 #ifdef SUPPORT_MQTT_EVENT
     case FUNC_MQTT_DATA:
       result = RulesMqttData();

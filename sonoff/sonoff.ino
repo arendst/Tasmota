@@ -772,14 +772,17 @@ void PerformEverySecond(void)
     //AddLog_P2(LOG_LEVEL_ALL, PSTR("Teleperiod %ld"), tele_period);
     //
     if (tele_period >= Settings.tele_period -1 && prep_called == 0) {
-      XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
+
       //STB mode
+      // sensores must be called later if driver switch on e.g. power.
+      XdrvCall(FUNC_PREP_BEFORE_TELEPERIOD);
+      XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
       prep_called = 1;
       // end stb mod
     }
     if (tele_period >= Settings.tele_period && prep_called == 1 && MqttIsConnected()) {
       tele_period = 0;
-
+      prep_called = 0;
       MqttPublishTeleState();
 
       mqtt_data[0] = '\0';
@@ -790,6 +793,7 @@ void PerformEverySecond(void)
 #endif  // USE_RULES
       }
       //STB mod
+      XdrvCall(FUNC_AFTER_TELEPERIOD);
       uint8 disable_deepsleep_switch = 0;
       if (pin[GPIO_SEN_SLEEP] < 99) {
         disable_deepsleep_switch = !digitalRead(pin[GPIO_SEN_SLEEP]);
@@ -807,19 +811,24 @@ void PerformEverySecond(void)
         Response_P(S_OFFLINE);
         MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), false);  // Offline or remove previous retained topic
         yield();
-        Response_P(PSTR("{\"Time\":\"%s\", \"Uptime_s\":%d}"), GetDateAndTime(DT_LOCAL).c_str(), RtcSettings.uptime /1000);
-        MqttPublishPrefixTopic_P(TELE, PSTR("UPTIME_S"));
-        yield();
         MqttDisconnect();
         PerformEverySecond();
-        uint32_t local_uptime = RtcSettings.uptime > Settings.deepsleep*1000 ? 0 : RtcSettings.uptime-500;
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("nextwakeup %ld"), RtcSettings.nextwakeup);
+        if (RtcSettings.nextwakeup > 1500000000) {
+          while (RtcSettings.nextwakeup < UtcTime()) {
+            RtcSettings.nextwakeup += Settings.deepsleep;
+            AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("incr nextwakeup %ld"), RtcSettings.nextwakeup);
+          }
+        } else {
+          RtcSettings.nextwakeup = UtcTime() + Settings.deepsleep;
+        }
         RtcSettings.uptime = 0;
         RtcSettingsSave();
         // 10% of deepsleep to retry
-        if (MAX_DEEPSLEEP_CYCLE < Settings.deepsleep) {
-          ESP.deepSleep(1000 * ((uint32_t)MAX_DEEPSLEEP_CYCLE*1000 - local_uptime), WAKE_RF_DEFAULT);
+        if (MAX_DEEPSLEEP_CYCLE < (RtcSettings.nextwakeup - UtcTime())) {
+          ESP.deepSleep(1000000 * ((uint32_t)MAX_DEEPSLEEP_CYCLE ), WAKE_RF_DEFAULT);
         } else {
-          ESP.deepSleep(1000 * (Settings.deepsleep*1000 - local_uptime), WAKE_RF_DEFAULT);
+          ESP.deepSleep(1000000 * (RtcSettings.nextwakeup - UtcTime()), WAKE_RF_DEFAULT);
         }
         yield();
       }
