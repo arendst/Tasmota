@@ -429,8 +429,9 @@
 #define USE_PZEM_AC                              // Add support for PZEM014,016 Energy monitor (+1k1 code)
 #define USE_PZEM_DC                              // Add support for PZEM003,017 Energy monitor (+1k1 code)
 #define USE_MCP39F501                            // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
+//#define USE_SDM120_2                             // Add support for Eastron SDM120-Modbus energy meter (+1k4 code)
 
-//#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
+//#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+2k4 code)
   #define SDM120_SPEED         2400              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
   #define USE_SDM220                             // Add extra parameters for SDM220 (+0k1 code)
 //#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy meter (+2k code)

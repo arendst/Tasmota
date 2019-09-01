@@ -5,6 +5,7 @@
  * Add compile time define USE_WS2812_HARDWARE to select hardware type WS2812, WS2812X, WS2813, SK6812, LC8812 or APA106 (DMA mode only)
  * Add 'sonoff-ir' pre-packaged IR-dedicated firmware and 'sonoff-ircustom' to customize firmware with IR Full protocol support
  * Add Zigbee support phase 2 - cc2530 initialization and basic ZCL decoding
+ * Add driver USE_SDM120_2 with Domoticz P1 Smart Meter functionality as future replacement for USE_SDM120 - Pls test and report
  *
  * 6.6.0.8 20190827
  * Add Tuya Energy monitoring by Shantur Rathore

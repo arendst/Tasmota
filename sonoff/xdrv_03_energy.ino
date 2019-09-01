@@ -76,6 +76,7 @@ struct ENERGY {
   float reactive_power = NAN;  // 123.1 VAr
   float power_factor = NAN;    // 0.12
   float frequency = NAN;       // 123.1 Hz
+
   float start_energy = 0;      // 12345.12345 kWh total previous
 
   float daily = 0;             // 123.123 kWh
@@ -114,7 +115,6 @@ struct ENERGY {
   uint8_t mplr_counter = 0;
   uint8_t max_energy_state  = 0;
 #endif  // USE_ENERGY_POWER_LIMIT
-
 #endif  // USE_ENERGY_MARGIN_DETECTION
 } Energy;
 
@@ -384,9 +384,14 @@ void EnergyOverTempCheck()
       Energy.voltage = 0;
       Energy.current = 0;
       Energy.active_power = 0;
+      if (!isnan(Energy.apparent_power)) { Energy.apparent_power = 0; }
+      if (!isnan(Energy.reactive_power)) { Energy.reactive_power = 0; }
       if (!isnan(Energy.frequency)) { Energy.frequency = 0; }
       if (!isnan(Energy.power_factor)) { Energy.power_factor = 0; }
       Energy.start_energy = 0;
+
+      XnrgCall(FUNC_ENERGY_RESET);
+
     }
   }
 }
@@ -450,11 +455,11 @@ void CmndEnergyReset(void)
       RtcSettings.energy_usage.usage1_kWhtotal = Settings.energy_kWhtotal;
     }
 
-    char energy_total_chr[33];
+    char energy_total_chr[FLOATSZ];
     dtostrfd(Energy.total, Settings.flag2.energy_resolution, energy_total_chr);
-    char energy_daily_chr[33];
+    char energy_daily_chr[FLOATSZ];
     dtostrfd(Energy.daily, Settings.flag2.energy_resolution, energy_daily_chr);
-    char energy_yesterday_chr[33];
+    char energy_yesterday_chr[FLOATSZ];
     dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
 
     Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}}"),
@@ -696,7 +701,7 @@ const char HTTP_ENERGY_SNS1[] PROGMEM =
   "{s}" D_POWER_FACTOR "{m}%s{e}";
 
 const char HTTP_ENERGY_SNS2[] PROGMEM =
-  "{s}" D_ENERGY_TODAY  "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_ENERGY_TODAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_YESTERDAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";      // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #endif  // USE_WEBSERVER
@@ -704,16 +709,15 @@ const char HTTP_ENERGY_SNS2[] PROGMEM =
 void EnergyShow(bool json)
 {
   char speriod[20];
-//  char sfrequency[20];
 
   bool show_energy_period = (0 == tele_period);
 
   float power_factor = Energy.power_factor;
 
-  char apparent_power_chr[33];
-  char reactive_power_chr[33];
-  char power_factor_chr[33];
-  char frequency_chr[33];
+  char apparent_power_chr[FLOATSZ];
+  char reactive_power_chr[FLOATSZ];
+  char power_factor_chr[FLOATSZ];
+  char frequency_chr[FLOATSZ];
   if (!Energy.type_dc) {
     if (Energy.current_available && Energy.voltage_available) {
       float apparent_power = Energy.apparent_power;
@@ -749,21 +753,21 @@ void EnergyShow(bool json)
     }
   }
 
-  char voltage_chr[33];
+  char voltage_chr[FLOATSZ];
   dtostrfd(Energy.voltage, Settings.flag2.voltage_resolution, voltage_chr);
-  char current_chr[33];
+  char current_chr[FLOATSZ];
   dtostrfd(Energy.current, Settings.flag2.current_resolution, current_chr);
-  char active_power_chr[33];
+  char active_power_chr[FLOATSZ];
   dtostrfd(Energy.active_power, Settings.flag2.wattage_resolution, active_power_chr);
-  char energy_daily_chr[33];
+  char energy_daily_chr[FLOATSZ];
   dtostrfd(Energy.daily, Settings.flag2.energy_resolution, energy_daily_chr);
-  char energy_yesterday_chr[33];
+  char energy_yesterday_chr[FLOATSZ];
   dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
-  char energy_total_chr[33];
+  char energy_total_chr[FLOATSZ];
   dtostrfd(Energy.total, Settings.flag2.energy_resolution, energy_total_chr);
 
   float energy = 0;
-  char energy_period_chr[33];
+  char energy_period_chr[FLOATSZ];
   if (show_energy_period) {
     if (Energy.period) energy = (float)(Energy.kWhtoday - Energy.period) / 100;
     Energy.period = Energy.kWhtoday;
@@ -789,6 +793,7 @@ void EnergyShow(bool json)
     if (Energy.current_available) {
       ResponseAppend_P(PSTR(",\"" D_JSON_CURRENT "\":%s"), current_chr);
     }
+    XnrgCall(FUNC_JSON_APPEND);
     ResponseJsonEnd();
 
 #ifdef USE_DOMOTICZ
@@ -797,7 +802,7 @@ void EnergyShow(bool json)
       DomoticzSensorPowerEnergy((int)Energy.active_power, energy_total_chr);  // PowerUsage, EnergyToday
 
       dtostrfd((Energy.total - Energy.total1) * 1000, 1, energy_total_chr);  // Tariff2
-      char energy_total1_chr[33];
+      char energy_total1_chr[FLOATSZ];
       dtostrfd(Energy.total1 * 1000, 1, energy_total1_chr);  // Tariff1
       char energy_non[2] = "0";
       DomoticzSensorP1SmartMeter(energy_total1_chr, energy_total_chr, energy_non, energy_non, (int)Energy.active_power, 0);
@@ -843,6 +848,7 @@ void EnergyShow(bool json)
       }
     }
     WSContentSend_PD(HTTP_ENERGY_SNS2, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
+    XnrgCall(FUNC_WEB_SENSOR);
 #endif  // USE_WEBSERVER
   }
 }
