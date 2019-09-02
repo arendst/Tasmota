@@ -414,11 +414,12 @@ void Shutter_Relay_changed()
   // relays_changed = bool if one of the relays that belong to the shutter changed not by shutter or pulsetimer
   char stemp1[10];
 
+  
 	for (byte i=0; i < shutters_present; i++) {
 		power_t powerstate_local = (power >> (Settings.shutter_startrelay[i] -1)) & 3;
-		uint8   manual_relays_changed = ((SwitchedRelay >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != last_source && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
-
-		if (manual_relays_changed) {
+		//uint8   manual_relays_changed = ((SwitchedRelay >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != last_source && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
+    uint8   manual_relays_changed = ((SwitchedRelay >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;
+    if (manual_relays_changed) {
       if (shutterMode == OFF_ON__OPEN_CLOSE) {
 				switch (powerstate_local) {
 					case 1:

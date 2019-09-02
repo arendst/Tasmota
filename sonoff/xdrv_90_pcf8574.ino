@@ -232,6 +232,7 @@ bool Xdrv90(uint8_t function)
           break;
     }
   }
+
   return result;
 }
 
