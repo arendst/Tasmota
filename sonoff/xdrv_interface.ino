@@ -151,6 +151,10 @@ bool (* const xdrv_func_ptr[])(uint8_t) = {   // Driver Function Pointers
   &Xdrv32,
 #endif
 
+#ifdef XDRV_90
+  &Xdrv90,
+#endif
+
 // Optional user defined drivers in range 91 - 99
 //stb mod
 #ifdef XDRV_90
