@@ -723,7 +723,7 @@ void PerformEverySecond(void)
 
   //STB mod
   RtcSettings.uptime += ((millis() - last_save_uptime) ) ;
-  AddLog_P2(LOG_LEVEL_ALL, PSTR("Uptime %ld, Deepsleep up: %ld, last save: %ld"), uptime, RtcSettings.uptime / 1000, last_save_uptime);
+  //AddLog_P2(LOG_LEVEL_ALL, PSTR("Uptime %ld, Deepsleep up: %ld, telep %ld, last save: %ld"), uptime, RtcSettings.uptime / 1000, tele_period, last_save_uptime);
   last_save_uptime = millis() ;
 
   //end
@@ -767,11 +767,15 @@ void PerformEverySecond(void)
   ResetGlobalValues();
 
   if (Settings.tele_period) {
-    tele_period++;
     //stb mod
+    // avoid Pre_Tele rule to execute just after boot.
+    if (!global_state.mqtt_down) {
+      tele_period++;
+    }
+
     //AddLog_P2(LOG_LEVEL_ALL, PSTR("Teleperiod %ld"), tele_period);
-    //
-    if (tele_period >= Settings.tele_period -1 && prep_called == 0) {
+    // Start rules PRE_TELE 3 seconds before because some driver like d18b20 need some time to come up
+    if (tele_period >= Settings.tele_period -3 && prep_called == 0) {
 
       //STB mode
       // sensores must be called later if driver switch on e.g. power.
@@ -782,7 +786,7 @@ void PerformEverySecond(void)
     }
     if (tele_period >= Settings.tele_period && prep_called == 1 && MqttIsConnected()) {
       tele_period = 0;
-      prep_called = 0;
+
       MqttPublishTeleState();
 
       mqtt_data[0] = '\0';
@@ -832,6 +836,7 @@ void PerformEverySecond(void)
         }
         yield();
       }
+      prep_called = 0;
       //end
     }
   }
@@ -1584,7 +1589,7 @@ void setup(void)
       RtcSettings.ultradeepsleep = 0;
     }
   }
-  if (RtcSettings.ultradeepsleep > 0 && RtcSettings.ultradeepsleep < 4294967295) {
+  if (RtcSettings.ultradeepsleep > 0 && RtcSettings.ultradeepsleep < 1700000000) {
      RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
      RtcReboot.fast_reboot_count = 0;
      RtcRebootSave();

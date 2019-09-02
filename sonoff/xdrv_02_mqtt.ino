@@ -516,7 +516,7 @@ void MqttConnected(void)
     MqttPublishAllPowerState();
 
     //stb mod
-    if (Settings.tele_period && !Settings.deepsleep) { tele_period = Settings.tele_period -9; }  // Enable TelePeriod in 9 seconds
+    if (Settings.tele_period && !Settings.deepsleep) { tele_period = Settings.tele_period -9; }  else {tele_period = 0;}// Enable TelePeriod in 9 seconds
     //
     rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);

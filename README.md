@@ -11,10 +11,12 @@ Additional features:
 - Added support of "counterdevider[1..MAX_COUNTERS]" (serial and MQTT command), to count only the 1 count every counterdeviderX impulses (max 65.000 impulses = 1 count, default 1s).
 - Added Support for Shutter use-Case. In this case two relays are paired into one switch. Based on the value on the first relay the second relay will set automatically. Use Setoption81 to set it. See Wiki.
 - Added more support for the shutter Use-Case. The Setoption80 is required, if someone changes the target position if the shutter is still operating. Please see Shutter wiki for more details.
-- Added full support on RULES with shutter. Full control and new events MOVING and MOVED
+- Added full support on RULES with shutter. Full control and new events Shutter#MOVING and Shutter#MOVED
 - Added Alexa support for shutters through HUE Dimmer functionality. Not perfect but ok.
 
 Changelog:
+1.09 2019-09-02
+- Fixed shutter: Relay executed by MQTT or serial did not get recognized by shutter driver.
 1.08 2019-09-01
 - Added two new triggers to rules (System#PreTele and System#PostTele). Mainly to switch on/off devices before and after TelePeriod
 - changed deepsleep time calculation. Wakeup will now 100% in sync with time. E.g. you startet at 8:00am and define 3600 seconds, the device will always wakeup near the full hour. A slightly shift will not happen anymore
