@@ -186,6 +186,11 @@ typedef struct {
   uint32_t last_return_kWhtotal;
 } EnergyUsage;
 
+typedef struct INA226CF {
+  uint32_t r_shunt;
+  uint16_t i_fs;
+}Ina226CF;
+
 /*
 struct SYSCFG {
   unsigned long cfg_holder;                // 000 Pre v6 header
@@ -367,8 +372,10 @@ struct SYSCFG {
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
   uint8_t       data8[32];                 // E00
   uint16_t      data16[16];                // E20
+  Ina226CF      ina226_config[4];          // E40
 
-  uint8_t       free_e20[448];             // E40
+  uint8_t       free_e20[416];             // E60
+
 
                                            // FFF last location
 } Settings;
