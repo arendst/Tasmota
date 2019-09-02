@@ -242,6 +242,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                          // Disable support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
+#undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
 #define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR remote commands using library IRremoteESP8266 and ArduinoJson
@@ -371,6 +372,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                          // Disable support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
+#undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
 //#define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_WS2812                             // Disable WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
@@ -465,6 +467,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 //#undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_DHT                                // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
+#undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
@@ -543,6 +546,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_PZEM_AC                            // Disable PZEM014,016 Energy monitor
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
+#undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_DHT                                // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver

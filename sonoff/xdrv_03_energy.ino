@@ -391,7 +391,6 @@ void EnergyOverTempCheck()
       Energy.start_energy = 0;
 
       XnrgCall(FUNC_ENERGY_RESET);
-
     }
   }
 }
@@ -429,7 +428,9 @@ void CmndEnergyReset(void)
         Settings.energy_kWhtoday = Energy.kWhtoday;
         RtcSettings.energy_kWhtoday = Energy.kWhtoday;
         Energy.daily = (float)Energy.kWhtoday / 100000;
-        if (!RtcSettings.energy_kWhtotal && !Energy.kWhtoday) { Settings.energy_kWhtotal_time = LocalTime(); }
+        if (!RtcSettings.energy_kWhtotal && !Energy.kWhtoday) {
+          Settings.energy_kWhtotal_time = LocalTime();
+        }
         break;
       case 2:
         Settings.energy_kWhyesterday = lnum *100;
