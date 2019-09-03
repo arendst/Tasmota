@@ -1740,6 +1740,14 @@ void SML_Init(void) {
 
 
 #ifdef USE_SCRIPT
+
+  for (uint32_t cnt=0;cnt<MAX_METERS;cnt++) {
+    if (script_meter_desc[cnt].txmem) {
+     free(script_meter_desc[cnt].txmem);
+     script_meter_desc[cnt].txmem=0;
+   }
+  }
+
   uint8_t meter_script=Run_Scripter(">M",-2,0);
   if (meter_script==99) {
     // use script definition
@@ -2056,24 +2064,6 @@ uint8_t sml_hexnibble(char chr) {
   return rVal;
 }
 
-
-uint16_t MBUS_calculateCRC(uint8_t *frame, uint8_t num) {
-  uint16_t crc, flag;
-  crc = 0xFFFF;
-  for (uint32_t i = 0; i < num; i++) {
-    crc ^= frame[i];
-    for (uint32_t j = 8; j; j--) {
-      if ((crc & 0x0001) != 0) {        // If the LSB is set
-        crc >>= 1;                      // Shift right and XOR 0xA001
-        crc ^= 0xA001;
-      } else {                          // Else LSB is not set
-        crc >>= 1;                      // Just shift right
-      }
-    }
-  }
-  return crc;
-}
-
 // send sequence every N Seconds
 void SML_Send_Seq(uint32_t meter,char *seq) {
   uint8_t sbuff[32];
@@ -2100,6 +2090,24 @@ void SML_Send_Seq(uint32_t meter,char *seq) {
   meter_ss[meter]->write(sbuff,slen);
 }
 #endif // USE_SCRIPT
+
+uint16_t MBUS_calculateCRC(uint8_t *frame, uint8_t num) {
+  uint16_t crc, flag;
+  crc = 0xFFFF;
+  for (uint32_t i = 0; i < num; i++) {
+    crc ^= frame[i];
+    for (uint32_t j = 8; j; j--) {
+      if ((crc & 0x0001) != 0) {        // If the LSB is set
+        crc >>= 1;                      // Shift right and XOR 0xA001
+        crc ^= 0xA001;
+      } else {                          // Else LSB is not set
+        crc >>= 1;                      // Just shift right
+      }
+    }
+  }
+  return crc;
+}
+
 /*
 // for odd parity init with 1
 uint8_t CalcEvenParity(uint8_t data) {
