@@ -598,10 +598,11 @@ void SetAllPower(uint8_t state, int source)
   }
 }
 
-void RestoreAllPower(power_t power_set, int source)
+void RestorePower(power_t power_set, int source)
 {
-  if (power != power_set) {
-    SetDevicePower(power, source);
+  power_t new_state = power | power_set;
+  if (power != new_state) {
+    SetDevicePower(new_state, source);
     MqttPublishAllPowerState();
   }
 }

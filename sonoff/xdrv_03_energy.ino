@@ -342,7 +342,7 @@ void EnergyMarginCheck(void)
           if (Energy.mplr_counter) {
             Response_P(PSTR("{\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
-            RestoreAllPower(Energy.mp_last_power, SRC_MAXPOWER);
+            RestorePower(Energy.mp_last_power, SRC_MAXPOWER);
           } else {
             Response_P(PSTR("{\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
@@ -360,7 +360,7 @@ void EnergyMarginCheck(void)
       Energy.max_energy_state  = 1;
       Response_P(PSTR("{\"" D_JSON_ENERGYMONITOR "\":\"%s\"}"), GetStateText(1));
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_ENERGYMONITOR));
-      RestoreAllPower(Energy.me_last_power, SRC_MAXENERGY);
+      RestorePower(Energy.me_last_power, SRC_MAXENERGY);
     }
     else if ((1 == Energy.max_energy_state ) && (energy_daily_u >= Settings.energy_max_energy)) {
       Energy.max_energy_state  = 2;
