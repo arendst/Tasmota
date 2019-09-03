@@ -171,7 +171,7 @@ void GetFeatures(void)
 #ifdef USE_PCA9685
   feature_drv2 |= 0x00004000;  // xdrv_15_pca9685.ino
 #endif
-#if defined(USE_LIGHT) && defined(USE_TUYA_DIMMER)
+#if defined(USE_LIGHT) && defined(USE_TUYA_MCU)
   feature_drv2 |= 0x00008000;  // xdrv_16_tuyadimmer.ino
 #endif
 #ifdef USE_RC_SWITCH

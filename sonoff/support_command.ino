@@ -661,7 +661,7 @@ void CmndSetoption(void)
               IrReceiveUpdateThreshold();
               break;
 #endif
-#ifdef USE_TUYA_DIMMER
+#ifdef USE_TUYA_MCU
             case P_TUYA_RELAYS:
             case P_TUYA_POWER_ID:
             case P_TUYA_CURRENT_ID:

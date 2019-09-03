@@ -1,5 +1,5 @@
 /*
-  xdrv_16_tuyadimmer.ino - Tuya dimmer support for Sonoff-Tasmota
+  xdrv_16_tuyamcu.ino - Tuya MCU support for Sonoff-Tasmota
 
   Copyright (C) 2019  digiblur, Joel Stein and Theo Arends
 
@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_LIGHT
-#ifdef USE_TUYA_DIMMER
+#ifdef USE_TUYA_MCU
 
 #define XDRV_16                16
 #define XNRG_08                8
@@ -640,5 +640,5 @@ bool Xdrv16(uint8_t function)
   return result;
 }
 
-#endif  // USE_TUYA_DIMMER
+#endif  // USE_TUYA_MCU
 #endif  // USE_LIGHT
