@@ -94,7 +94,7 @@ void SDM120Every200ms(void)
       Energy.data_valid = 0;
 
       float value;
-      ((uint8_t*)&value)[3] = buffer[3];  // Get float values
+      ((uint8_t*)&value)[3] = buffer[3];   // Get float values
       ((uint8_t*)&value)[2] = buffer[4];
       ((uint8_t*)&value)[1] = buffer[5];
       ((uint8_t*)&value)[0] = buffer[6];
@@ -129,14 +129,7 @@ void SDM120Every200ms(void)
           break;
 
         case 7:
-          if (!Energy.start_energy || (value < Energy.start_energy)) {  // 484.708 kWh
-            Energy.start_energy = value;  // Init after restart and hanlde roll-over if any
-          }
-          if (value != Energy.start_energy) {
-            Energy.kWhtoday += (unsigned long)((value - Energy.start_energy) * 100000);  // kWh to deca milli Wh
-            Energy.start_energy = value;
-          }
-          EnergyUpdateToday();
+          EnergyUpdateTotal(value, true);  // 484.708 kWh
           break;
 
 #ifdef USE_SDM220

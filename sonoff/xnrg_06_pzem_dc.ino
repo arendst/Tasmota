@@ -61,12 +61,7 @@ void PzemDcEverySecond(void)
       Energy.active_power = (float)((buffer[9] << 24) + (buffer[10] << 16) + (buffer[7] << 8) + buffer[8]) / 10.0;  // 429496729.0 W
       float energy = (float)((buffer[13] << 24) + (buffer[14] << 16) + (buffer[11] << 8) + buffer[12]);             // 4294967295 Wh
 
-      if (!Energy.start_energy || (energy < Energy.start_energy)) { Energy.start_energy = energy; }  // Init after restart and handle roll-over if any
-      if (energy != Energy.start_energy) {
-        Energy.kWhtoday += (unsigned long)((energy - Energy.start_energy) * 100);
-        Energy.start_energy = energy;
-      }
-      EnergyUpdateToday();
+      EnergyUpdateTotal(energy, false);
     }
   }
 
