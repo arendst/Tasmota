@@ -300,7 +300,7 @@ void EnergyMarginCheck(void)
           Response_P(PSTR("{\"" D_JSON_MAXPOWERREACHED "\":\"%d%s\"}"), energy_power_u, (Settings.flag.value_units) ? " " D_UNIT_WATT : "");
           MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
-          ExecuteCommandPower(1, POWER_OFF, SRC_MAXPOWER);
+          SetAllPower(POWER_ALL_OFF, SRC_MAXPOWER);
           if (!Energy.mplr_counter) {
             Energy.mplr_counter = Settings.param[P_MAX_POWER_RETRY] +1;
           }
@@ -322,7 +322,7 @@ void EnergyMarginCheck(void)
           if (Energy.mplr_counter) {
             Response_P(PSTR("{\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
-            ExecuteCommandPower(1, POWER_ON, SRC_MAXPOWER);
+            SetAllPower(POWER_ALL_ON, SRC_MAXPOWER);
           } else {
             Response_P(PSTR("{\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
@@ -340,7 +340,7 @@ void EnergyMarginCheck(void)
       Energy.max_energy_state  = 1;
       Response_P(PSTR("{\"" D_JSON_ENERGYMONITOR "\":\"%s\"}"), GetStateText(1));
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_ENERGYMONITOR));
-      ExecuteCommandPower(1, POWER_ON, SRC_MAXENERGY);
+      SetAllPower(POWER_ALL_ON, SRC_MAXENERGY);
     }
     else if ((1 == Energy.max_energy_state ) && (energy_daily_u >= Settings.energy_max_energy)) {
       Energy.max_energy_state  = 2;
@@ -348,7 +348,7 @@ void EnergyMarginCheck(void)
       Response_P(PSTR("{\"" D_JSON_MAXENERGYREACHED "\":\"%s%s\"}"), mqtt_data, (Settings.flag.value_units) ? " " D_UNIT_KILOWATTHOUR : "");
       MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
       EnergyMqttShow();
-      ExecuteCommandPower(1, POWER_OFF, SRC_MAXENERGY);
+      SetAllPower(POWER_ALL_OFF, SRC_MAXENERGY);
     }
   }
 #endif  // USE_ENERGY_POWER_LIMIT
