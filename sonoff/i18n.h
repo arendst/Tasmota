@@ -444,6 +444,10 @@
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
 
+// Commands xdrv_16_tuyadimmer.ino
+
+#define D_CMND_TUYA_MCU "TuyaMCU"
+
 // Commands xdrv_23_zigbee.ino
 #define D_CMND_ZIGBEEZNPSEND "ZigbeeZNPSend"
   #define D_JSON_ZIGBEEZNPRECEIVED "ZigbeeZNPReceived"
