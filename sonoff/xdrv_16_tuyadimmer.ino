@@ -64,10 +64,10 @@ struct TUYA {
 
 enum TuyaSupportedFunctions {
   TUYA_MCU_FUNC_NONE,
-  // TUYA_MCU_FUNC_KEY1 = 1,           // Buttons
-  // TUYA_MCU_FUNC_KEY2,
-  // TUYA_MCU_FUNC_KEY3,
-  // TUYA_MCU_FUNC_KEY4,
+  TUYA_MCU_FUNC_SWT1 = 1,           // Buttons
+  TUYA_MCU_FUNC_SWT2,
+  TUYA_MCU_FUNC_SWT3,
+  TUYA_MCU_FUNC_SWT4,
   TUYA_MCU_FUNC_REL1 = 11,           // Relays
   TUYA_MCU_FUNC_REL2,
   TUYA_MCU_FUNC_REL3,
@@ -162,7 +162,8 @@ void TuyaAddMcuFunc(uint8_t fnId, uint8_t dpId) {
 }
 
 inline bool TuyaFuncIdValid(uint8_t fnId) {
-  return (fnId >= TUYA_MCU_FUNC_REL1 && fnId <= TUYA_MCU_FUNC_REL8) ||
+  return (fnId >= TUYA_MCU_FUNC_SWT1 && fnId <= TUYA_MCU_FUNC_SWT4) ||
+  (fnId >= TUYA_MCU_FUNC_REL1 && fnId <= TUYA_MCU_FUNC_REL8) ||
     fnId == TUYA_MCU_FUNC_DIMMER ||
     (fnId >= TUYA_MCU_FUNC_POWER && fnId <= TUYA_MCU_FUNC_VOLTAGE);
 }
@@ -330,9 +331,16 @@ void TuyaPacketProcess(void)
         if (Tuya.buffer[5] == 5) {  // on/off packet
 
           if (fnId >= TUYA_MCU_FUNC_REL1 && fnId <= TUYA_MCU_FUNC_REL8) {
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Device-%d --> MCU State: %s Current State:%s"),Tuya.buffer[6],Tuya.buffer[10]?"On":"Off",bitRead(power, fnId - TUYA_MCU_FUNC_REL1)?"On":"Off");
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Relay-%d --> MCU State: %s Current State:%s"), fnId - TUYA_MCU_FUNC_REL1 + 1, Tuya.buffer[10]?"On":"Off",bitRead(power, fnId - TUYA_MCU_FUNC_REL1)?"On":"Off");
             if ((power || Settings.light_dimmer > 0) && (Tuya.buffer[10] != bitRead(power, fnId - TUYA_MCU_FUNC_REL1))) {
               ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1 + 1, Tuya.buffer[10], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
+            }
+          } else if (fnId >= TUYA_MCU_FUNC_SWT1 && fnId <= TUYA_MCU_FUNC_SWT4) {
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Switch-%d --> MCU State: %d Current State:%d"),fnId - TUYA_MCU_FUNC_SWT1 + 1,Tuya.buffer[10], SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1 + 1));
+
+            if (SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1 + 1) != Tuya.buffer[10]) {
+              SwitchSetVirtual(fnId - TUYA_MCU_FUNC_SWT1 + 1, Tuya.buffer[10]);
+              SwitchHandler(1);
             }
           }
 
