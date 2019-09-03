@@ -598,6 +598,14 @@ void SetAllPower(uint8_t state, int source)
   }
 }
 
+void RestoreAllPower(power_t power_set, int source)
+{
+  if (power != power_set) {
+    SetDevicePower(power, source);
+    MqttPublishAllPowerState();
+  }
+}
+
 void MqttShowPWMState(void)
 {
   ResponseAppend_P(PSTR("\"" D_CMND_PWM "\":{"));
