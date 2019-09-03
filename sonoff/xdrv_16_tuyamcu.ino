@@ -336,10 +336,10 @@ void TuyaPacketProcess(void)
               ExecuteCommandPower(fnId - TUYA_MCU_FUNC_REL1 + 1, Tuya.buffer[10], SRC_SWITCH);  // send SRC_SWITCH? to use as flag to prevent loop from inbound states from faceplate interaction
             }
           } else if (fnId >= TUYA_MCU_FUNC_SWT1 && fnId <= TUYA_MCU_FUNC_SWT4) {
-            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Switch-%d --> MCU State: %d Current State:%d"),fnId - TUYA_MCU_FUNC_SWT1 + 1,Tuya.buffer[10], SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1 + 1));
+            AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Switch-%d --> MCU State: %d Current State:%d"),fnId - TUYA_MCU_FUNC_SWT1 + 1,Tuya.buffer[10], SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1));
 
-            if (SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1 + 1) != Tuya.buffer[10]) {
-              SwitchSetVirtual(fnId - TUYA_MCU_FUNC_SWT1 + 1, Tuya.buffer[10]);
+            if (SwitchGetVirtual(fnId - TUYA_MCU_FUNC_SWT1) != Tuya.buffer[10]) {
+              SwitchSetVirtual(fnId - TUYA_MCU_FUNC_SWT1, Tuya.buffer[10]);
               SwitchHandler(1);
             }
           }
