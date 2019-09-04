@@ -154,9 +154,9 @@ void EnergyUpdateTotal(float value, bool kwh)
 
   if (0 == Energy.start_energy || (value < Energy.start_energy)) {
     Energy.start_energy = value;  // Init after restart and handle roll-over if any
-    RtcSettings.energy_kWhtotal = (unsigned long)(value * multiplier);
-    Energy.kWhtoday = 0;
-    RtcSettings.energy_kWhtoday = 0;
+//    RtcSettings.energy_kWhtotal = (unsigned long)(value * multiplier);
+//    Energy.kWhtoday = 0;
+//    RtcSettings.energy_kWhtoday = 0;
   }
   else if (value != Energy.start_energy) {
     Energy.kWhtoday += (unsigned long)((value - Energy.start_energy) * multiplier);
