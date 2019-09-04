@@ -269,6 +269,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ZIGBEE_TXD "|" D_SENSOR_ZIGBEE_RXD "|"
   D_SENSOR_RDM6300_RX "|"
   D_SENSOR_IBEACON_TX "|" D_SENSOR_IBEACON_RX "|"
+  D_SENSOR_DDS2382_TX "|" D_SENSOR_DDS2382_RX "|"
   ;
 
 // User selectable ADC0 functionality
@@ -675,6 +676,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_SOLAX_X1
   GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
+#endif
+#ifdef USE_DDS2382
+  GPIO_DDS2382_TX,     // Solax Inverter tx pin
+  GPIO_DDS2382_RX,     // Solax Inverter rx pin
 #endif
 };
 

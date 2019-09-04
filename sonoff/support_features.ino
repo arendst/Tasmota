@@ -438,8 +438,9 @@ void GetFeatures(void)
 #ifdef USE_IBEACON
   feature5 |= 0x00000004;  // xsns_52_ibeacon.ino
 #endif
-//  feature5 |= 0x00000008;
-
+#ifdef USE_DDS2382
+  feature5 |= 0x00000008;  // xsns_54_dds2382.ino
+#endif
 //  feature5 |= 0x00000010;
 //  feature5 |= 0x00000020;
 //  feature5 |= 0x00000040;

@@ -1,5 +1,5 @@
 /*
-  xsns_47_dds2382.ino - Eastron dds2382-Modbus energy meter support for Sonoff-Tasmota
+  xsns_54_dds2382.ino - Eastron dds2382-Modbus energy meter support for Sonoff-Tasmota
 
   Copyright (C) 2019  Matteo Campanella 
   
@@ -239,12 +239,14 @@ void DDS2382Init(void)
 {
   dds2382_state = DDS2382_STATE_INIT;
   if ((pin[GPIO_DDS2382_RX] < 99) && (pin[GPIO_DDS2382_TX] < 99)) {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "dds2382 INIT IN %d"), dds2382_state);
     DDS2382Serial = new TasmotaSerial(pin[GPIO_DDS2382_RX], pin[GPIO_DDS2382_TX], 1);
     if (DDS2382Serial->begin(DDS2382_SPEED)) {
       if (DDS2382Serial->hardwareSerial()) { ClaimSerial(); }
       DDS2382Serial->setTimeout(50);
       dds2382_state = DDS2382_STATE_READY;
     }
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "dds2382 INIT OUT %d"), dds2382_state);
   }
 }
 
@@ -308,8 +310,7 @@ void DDS2382Show(bool json)
 bool Xsns54(uint8_t function)
 {
   bool result = false;
-
-  if (dds2382_state > DDS2382_STATE_INIT) {
+  if (dds2382_state != DDS2382_STATE_INIT) {
     switch (function) {
       case FUNC_INIT:
         DDS2382Init();
