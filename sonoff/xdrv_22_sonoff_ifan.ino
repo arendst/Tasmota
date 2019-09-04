@@ -96,7 +96,7 @@ void SonoffIFanSetFanspeed(uint8_t fanspeed, bool sequence)
     fans = kIFan03Speed[fanspeed];
   }
   for (uint32_t i = 2; i < 5; i++) {
-    uint8_t state = (fans &1) + 6;                 // Add no publishPowerState
+    uint8_t state = (fans &1) + POWER_OFF_NO_STATE;  // Add no publishPowerState
     ExecuteCommandPower(i, state, SRC_IGNORE);     // Use relay 2, 3 and 4
     fans >>= 1;
   }

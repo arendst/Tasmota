@@ -110,8 +110,6 @@ struct ENERGY {
   bool max_current_flag = false;
 
 #ifdef USE_ENERGY_POWER_LIMIT
-  power_t mp_last_power = 0;
-  power_t me_last_power = 0;
   uint16_t mplh_counter = 0;
   uint16_t mplw_counter = 0;
   uint8_t mplr_counter = 0;
@@ -319,7 +317,6 @@ void EnergyMarginCheck(void)
           Response_P(PSTR("{\"" D_JSON_MAXPOWERREACHED "\":\"%d%s\"}"), energy_power_u, (Settings.flag.value_units) ? " " D_UNIT_WATT : "");
           MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
-          Energy.mp_last_power = power;
           SetAllPower(POWER_ALL_OFF, SRC_MAXPOWER);
           if (!Energy.mplr_counter) {
             Energy.mplr_counter = Settings.param[P_MAX_POWER_RETRY] +1;
@@ -342,7 +339,7 @@ void EnergyMarginCheck(void)
           if (Energy.mplr_counter) {
             Response_P(PSTR("{\"" D_JSON_POWERMONITOR "\":\"%s\"}"), GetStateText(1));
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_POWERMONITOR));
-            RestorePower(Energy.mp_last_power, SRC_MAXPOWER);
+            RestorePower(true, SRC_MAXPOWER);
           } else {
             Response_P(PSTR("{\"" D_JSON_MAXPOWERREACHEDRETRY "\":\"%s\"}"), GetStateText(0));
             MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
@@ -360,7 +357,7 @@ void EnergyMarginCheck(void)
       Energy.max_energy_state  = 1;
       Response_P(PSTR("{\"" D_JSON_ENERGYMONITOR "\":\"%s\"}"), GetStateText(1));
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_ENERGYMONITOR));
-      RestorePower(Energy.me_last_power, SRC_MAXENERGY);
+      RestorePower(true, SRC_MAXENERGY);
     }
     else if ((1 == Energy.max_energy_state ) && (energy_daily_u >= Settings.energy_max_energy)) {
       Energy.max_energy_state  = 2;
@@ -368,7 +365,6 @@ void EnergyMarginCheck(void)
       Response_P(PSTR("{\"" D_JSON_MAXENERGYREACHED "\":\"%s%s\"}"), mqtt_data, (Settings.flag.value_units) ? " " D_UNIT_KILOWATTHOUR : "");
       MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
       EnergyMqttShow();
-      Energy.me_last_power = power;
       SetAllPower(POWER_ALL_OFF, SRC_MAXENERGY);
     }
   }

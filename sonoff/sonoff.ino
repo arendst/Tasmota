@@ -90,6 +90,7 @@ unsigned long pulse_timer[MAX_PULSETIMERS] = { 0 }; // Power off timer
 unsigned long blink_timer = 0;              // Power cycle timer
 unsigned long backlog_delay = 0;            // Command backlog delay
 power_t power = 0;                          // Current copy of Settings.power
+power_t last_power = 0;                     // Last power set state
 power_t blink_power;                        // Blink power state
 power_t blink_mask = 0;                     // Blink relay active mask
 power_t blink_powersave;                    // Blink start power save state
@@ -201,7 +202,9 @@ char* Format(char* output, const char* input, int size)
       }
     }
   }
-  if (!digits) { strlcpy(output, input, size); }
+  if (!digits) {
+    strlcpy(output, input, size);
+  }
   return output;
 }
 
@@ -258,7 +261,9 @@ char* GetTopic_P(char *stopic, uint8_t prefix, char *topic, const char* subtopic
   }
   fulltopic.replace(F("#"), "");
   fulltopic.replace(F("//"), "/");
-  if (!fulltopic.endsWith("/")) fulltopic += "/";
+  if (!fulltopic.endsWith("/")) {
+    fulltopic += "/";
+  }
   snprintf_P(stopic, TOPSZ, PSTR("%s%s"), fulltopic.c_str(), romram);
   return stopic;
 }
@@ -270,7 +275,9 @@ char* GetFallbackTopic_P(char *stopic, uint8_t prefix, const char* subtopic)
 
 char* GetStateText(uint8_t state)
 {
-  if (state > 3) { state = 1; }
+  if (state > 3) {
+    state = 1;
+  }
   return Settings.state_text[state];
 }
 
@@ -312,7 +319,9 @@ void SetDevicePower(power_t rpower, int source)
       power_t mask = 1;
       uint8_t count = 0;
       for (uint32_t j = 0; j < devices_present; j++) {
-        if ((Settings.interlock[i] & mask) && (rpower & mask)) { count++; }
+        if ((Settings.interlock[i] & mask) && (rpower & mask)) {
+          count++;
+        }
         mask <<= 1;
       }
       if (count > 1) {
@@ -321,6 +330,10 @@ void SetDevicePower(power_t rpower, int source)
         rpower &= mask;
       }
     }
+  }
+
+  if (rpower) {                           // Any power set
+    last_power = rpower;
   }
 
   XdrvMailbox.index = rpower;
@@ -353,10 +366,56 @@ void SetDevicePower(power_t rpower, int source)
   }
 }
 
+void RestorePower(bool publish_power, int source)
+{
+  if (power != last_power) {
+    SetDevicePower(last_power, source);
+    if (publish_power) {
+      MqttPublishAllPowerState();
+    }
+  }
+}
+
+void SetAllPower(uint8_t state, int source)
+{
+// state 0 = POWER_OFF = Relay Off
+// state 1 = POWER_ON = Relay On (turn off after Settings.pulse_timer * 100 mSec if enabled)
+// state 2 = POWER_TOGGLE = Toggle relay
+// state 8 = POWER_OFF_NO_STATE = Relay Off and no publishPowerState
+// state 9 = POWER_ON_NO_STATE = Relay On and no publishPowerState
+// state 10 = POWER_TOGGLE_NO_STATE = Toggle relay and no publishPowerState
+// state 16 = POWER_SHOW_STATE = Show power state
+
+  bool publish_power = true;
+  if ((state >= POWER_OFF_NO_STATE) && (state <= POWER_TOGGLE_NO_STATE)) {
+    state &= 3;                           // POWER_OFF, POWER_ON or POWER_TOGGLE
+    publish_power = false;
+  }
+  if ((state >= POWER_OFF) && (state <= POWER_TOGGLE)) {
+    power_t all_on = (1 << devices_present) -1;
+    switch (state) {
+    case POWER_OFF:
+      power = 0;
+      break;
+    case POWER_ON:
+      power = all_on;
+      break;
+    case POWER_TOGGLE:
+      power ^= all_on;                    // Complement current state
+    }
+    SetDevicePower(power, source);
+  }
+  if (publish_power) {
+    MqttPublishAllPowerState();
+  }
+}
+
 void SetLedPowerIdx(uint8_t led, uint8_t state)
 {
-  if ((99 == pin[GPIO_LEDLNK]) && (0 == led)) {          // Legacy - LED1 is link led only if LED2 is present
-    if (pin[GPIO_LED2] < 99) { led = 1; }
+  if ((99 == pin[GPIO_LEDLNK]) && (0 == led)) {  // Legacy - LED1 is link led only if LED2 is present
+    if (pin[GPIO_LED2] < 99) {
+      led = 1;
+    }
   }
   if (pin[GPIO_LED1 + led] < 99) {
     uint8_t mask = 1 << led;
@@ -372,11 +431,11 @@ void SetLedPowerIdx(uint8_t led, uint8_t state)
 
 void SetLedPower(uint8_t state)
 {
-  if (99 == pin[GPIO_LEDLNK]) {                          // Legacy - Only use LED1 and/or LED2
+  if (99 == pin[GPIO_LEDLNK]) {           // Legacy - Only use LED1 and/or LED2
     SetLedPowerIdx(0, state);
   } else {
     power_t mask = 1;
-    for (uint32_t i = 0; i < leds_present; i++) {         // Map leds to power
+    for (uint32_t i = 0; i < leds_present; i++) {  // Map leds to power
       bool tstate = (power & mask);
       SetLedPowerIdx(i, tstate);
       mask <<= 1;
@@ -395,7 +454,7 @@ void SetLedLink(uint8_t state)
 {
   uint8_t led_pin = pin[GPIO_LEDLNK];
   uint8_t led_inv = ledlnk_inverted;
-  if (99 == led_pin) {                                   // Legacy - LED1 is status
+  if (99 == led_pin) {                    // Legacy - LED1 is status
     led_pin = pin[GPIO_LED1];
     led_inv = bitRead(led_inverted, 0);
   }
@@ -426,13 +485,13 @@ uint16_t GetPulseTimer(uint8_t index)
 
 bool SendKey(uint8_t key, uint8_t device, uint8_t state)
 {
-// key 0 = button_topic
-// key 1 = switch_topic
-// state 0 = off
-// state 1 = on
-// state 2 = toggle
-// state 3 = hold
-// state 9 = clear retain flag
+// key 0 = KEY_BUTTON = button_topic
+// key 1 = KEY_SWITCH = switch_topic
+// state 0 = POWER_OFF = off
+// state 1 = POWER_ON = on
+// state 2 = POWER_TOGGLE = toggle
+// state 3 = POWER_HOLD = hold
+// state 9 = CLEAR_RETAIN = clear retain flag
 
   char stopic[TOPSZ];
   char scommand[CMDSZ];
@@ -442,23 +501,25 @@ bool SendKey(uint8_t key, uint8_t device, uint8_t state)
   char *tmp = (key) ? Settings.switch_topic : Settings.button_topic;
   Format(key_topic, tmp, sizeof(key_topic));
   if (Settings.flag.mqtt_enabled && MqttIsConnected() && (strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
-    if (!key && (device > devices_present)) { device = 1; }  // Only allow number of buttons up to number of devices
+    if (!key && (device > devices_present)) {
+      device = 1;                  // Only allow number of buttons up to number of devices
+    }
     GetTopic_P(stopic, CMND, key_topic,
                GetPowerDevice(scommand, device, sizeof(scommand), (key + Settings.flag.device_index_enable)));  // cmnd/switchtopic/POWERx
-    if (9 == state) {
+    if (CLEAR_RETAIN == state) {
       mqtt_data[0] = '\0';
     } else {
-      if ((Settings.flag3.button_switch_force_local || !strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic)) && (2 == state)) {
-        state = ~(power >> (device -1)) &1;
+      if ((Settings.flag3.button_switch_force_local || !strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic)) && (POWER_TOGGLE == state)) {
+        state = ~(power >> (device -1)) &1;  // POWER_OFF or POWER_ON
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(state));
     }
 #ifdef USE_DOMOTICZ
     if (!(DomoticzSendKey(key, device, state, strlen(mqtt_data)))) {
-      MqttPublishDirect(stopic, ((key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain) && (state != 3 || !Settings.flag3.no_hold_retain));
+      MqttPublishDirect(stopic, ((key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain) && (state != POWER_HOLD || !Settings.flag3.no_hold_retain));
     }
 #else
-    MqttPublishDirect(stopic, ((key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain) && (state != 3 || !Settings.flag3.no_hold_retain));
+    MqttPublishDirect(stopic, ((key) ? Settings.flag.mqtt_switch_retain : Settings.flag.mqtt_button_retain) && (state != POWER_HOLD || !Settings.flag3.no_hold_retain));
 #endif  // USE_DOMOTICZ
     result = !Settings.flag3.button_switch_force_local;
   } else {
@@ -474,14 +535,15 @@ bool SendKey(uint8_t key, uint8_t device, uint8_t state)
 void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
 {
 // device  = Relay number 1 and up
-// state 0 = Relay Off
-// state 1 = Relay On (turn off after Settings.pulse_timer * 100 mSec if enabled)
-// state 2 = Toggle relay
-// state 3 = Blink relay
-// state 4 = Stop blinking relay
-// state 6 = Relay Off and no publishPowerState
-// state 7 = Relay On and no publishPowerState
-// state 9 = Show power state
+// state 0 = POWER_OFF = Relay Off
+// state 1 = POWER_ON = Relay On (turn off after Settings.pulse_timer * 100 mSec if enabled)
+// state 2 = POWER_TOGGLE = Toggle relay
+// state 3 = POWER_BLINK = Blink relay
+// state 4 = POWER_BLINK_STOP = Stop blinking relay
+// state 8 = POWER_OFF_NO_STATE = Relay Off and no publishPowerState
+// state 9 = POWER_ON_NO_STATE = Relay On and no publishPowerState
+// state 10 = POWER_TOGGLE_NO_STATE = Toggle relay and no publishPowerState
+// state 16 = POWER_SHOW_STATE = Show power state
 
 //  ShowSource(source);
 
@@ -495,16 +557,20 @@ void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
   }
 #endif  // USE_SONOFF_IFAN
 
-  uint8_t publish_power = 1;
-  if ((POWER_OFF_NO_STATE == state) || (POWER_ON_NO_STATE == state)) {
-    state &= 1;
-    publish_power = 0;
+  bool publish_power = true;
+  if ((state >= POWER_OFF_NO_STATE) && (state <= POWER_TOGGLE_NO_STATE)) {
+    state &= 3;                      // POWER_OFF, POWER_ON or POWER_TOGGLE
+    publish_power = false;
   }
 
-  if ((device < 1) || (device > devices_present)) device = 1;
+  if ((device < 1) || (device > devices_present)) {
+    device = 1;
+  }
   active_device = device;
 
-  if (device <= MAX_PULSETIMERS) { SetPulseTimer(device -1, 0); }
+  if (device <= MAX_PULSETIMERS) {
+    SetPulseTimer(device -1, 0);
+  }
   power_t mask = 1 << (device -1);        // Device to control
   if (state <= POWER_TOGGLE) {
     if ((blink_mask & mask)) {
@@ -546,7 +612,9 @@ void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
 #ifdef USE_KNX
     KnxUpdatePowerState(device, power);
 #endif  // USE_KNX
-    if (publish_power && Settings.flag3.hass_tele_on_power) { MqttPublishTeleState(); }
+    if (publish_power && Settings.flag3.hass_tele_on_power) {
+      MqttPublishTeleState();
+    }
     if (device <= MAX_PULSETIMERS) {  // Restart PulseTime if powered On
       SetPulseTimer(device -1, (((POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate) ? ~power : power) & mask) ? Settings.pulse_timer[device -1] : 0);
     }
@@ -566,10 +634,14 @@ void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
     uint8_t flag = (blink_mask & mask);
     blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
     MqttPublishPowerBlinkState(device);
-    if (flag) ExecuteCommandPower(device, (blink_powersave >> (device -1))&1, SRC_IGNORE);  // Restore state
+    if (flag) {
+      ExecuteCommandPower(device, (blink_powersave >> (device -1))&1, SRC_IGNORE);  // Restore state
+    }
     return;
   }
-  if (publish_power) MqttPublishPowerState(device);
+  if (publish_power) {
+    MqttPublishPowerState(device);
+  }
 }
 
 void StopAllPowerBlink(void)
@@ -583,27 +655,6 @@ void StopAllPowerBlink(void)
       MqttPublishPowerBlinkState(i);
       ExecuteCommandPower(i, (blink_powersave >> (i -1))&1, SRC_IGNORE);  // Restore state
     }
-  }
-}
-
-void SetAllPower(uint8_t state, int source)
-{
-  if ((POWER_ALL_OFF == state) || (POWER_ALL_ON == state)) {
-    power = 0;
-    if (POWER_ALL_ON == state) {
-      power = (1 << devices_present) -1;
-    }
-    SetDevicePower(power, source);
-    MqttPublishAllPowerState();
-  }
-}
-
-void RestorePower(power_t power_set, int source)
-{
-  power_t new_state = power | power_set;
-  if (power != new_state) {
-    SetDevicePower(new_state, source);
-    MqttPublishAllPowerState();
   }
 }
 

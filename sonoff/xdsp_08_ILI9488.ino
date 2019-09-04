@@ -165,7 +165,7 @@ if (2 == ili9488_ctouch_counter) {
                   uint8_t bflags=buttons[count]->vpower&0x7f;
                   if (!bflags) {
                     // real button
-                    if (!SendKey(0, count+1, POWER_TOGGLE)) {
+                    if (!SendKey(KEY_BUTTON, count+1, POWER_TOGGLE)) {
                       ExecuteCommandPower(count+1, POWER_TOGGLE, SRC_BUTTON);
                     }
                     buttons[count]->xdrawButton(bitRead(power,count));

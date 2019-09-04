@@ -165,7 +165,7 @@ void ButtonHandler(void)
           if (!Button.hold_timer[button_index]) { button_pressed = true; }  // Do not allow within 1 second
         }
         if (button_pressed) {
-          if (!SendKey(0, button_index +1, POWER_TOGGLE)) {    // Execute Toggle command via MQTT if ButtonTopic is set
+          if (!SendKey(KEY_BUTTON, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
             ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
           }
         }
@@ -174,7 +174,7 @@ void ButtonHandler(void)
         if ((PRESSED == button) && (NOT_PRESSED == Button.last_state[button_index])) {
           if (Settings.flag.button_single) {                   // SetOption13 (0) - Allow only single button press for immediate action
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BUTTON "%d " D_IMMEDIATE), button_index +1);
-            if (!SendKey(0, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
+            if (!SendKey(KEY_BUTTON, button_index +1, POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
               ExecuteCommandPower(button_index +1, POWER_TOGGLE, SRC_BUTTON);  // Execute Toggle command internally
             }
           } else {
@@ -199,14 +199,14 @@ void ButtonHandler(void)
             if (Settings.flag.button_restrict) {               // SetOption1 (0) - Button restriction
               if (Settings.param[P_HOLD_IGNORE] > 0) {         // SetOption40 (0) - Do not ignore button hold
                 if (Button.hold_timer[button_index] > loops_per_second * Settings.param[P_HOLD_IGNORE] / 10) {
-                  Button.hold_timer[button_index] = 0;                // Reset button hold counter to stay below hold trigger
-                  Button.press_counter[button_index] = 0;                // Discard button press to disable functionality
+                  Button.hold_timer[button_index] = 0;         // Reset button hold counter to stay below hold trigger
+                  Button.press_counter[button_index] = 0;      // Discard button press to disable functionality
                   DEBUG_CORE_LOG(PSTR("BTN: " D_BUTTON "%d cancel by " D_CMND_SETOPTION "40 %d"), button_index +1, Settings.param[P_HOLD_IGNORE]);
                 }
               }
               if (Button.hold_timer[button_index] == loops_per_second * Settings.param[P_HOLD_TIME] / 10) {  // SetOption32 (40) - Button hold
                 Button.press_counter[button_index] = 0;
-                SendKey(0, button_index +1, 3);                // Execute Hold command via MQTT if ButtonTopic is set
+                SendKey(KEY_BUTTON, button_index +1, POWER_HOLD);  // Execute Hold command via MQTT if ButtonTopic is set
               }
             } else {
               if (Button.hold_timer[button_index] == loops_per_second * hold_time_extent * Settings.param[P_HOLD_TIME] / 10) {  // SetOption32 (40) - Button held for factor times longer
@@ -241,7 +241,7 @@ void ButtonHandler(void)
 #if defined(USE_LIGHT) && defined(ROTARY_V1)
               if (!((0 == button_index) && RotaryButtonPressed())) {
 #endif
-                if (single_press && SendKey(0, button_index + Button.press_counter[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
+                if (single_press && SendKey(KEY_BUTTON, button_index + Button.press_counter[button_index], POWER_TOGGLE)) {  // Execute Toggle command via MQTT if ButtonTopic is set
                   // Success
                 } else {
                   if (Button.press_counter[button_index] < 3) {          // Single or Double press
