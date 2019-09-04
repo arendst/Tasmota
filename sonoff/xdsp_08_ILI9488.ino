@@ -124,8 +124,7 @@ void ILI9488_InitDriver()
 
 #ifdef USE_TOUCH_BUTTONS
 void ILI9488_MQTT(uint8_t count,const char *cp) {
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"RA8876\":{\"%s%d\":\"%d\"}}"), mqtt_data,cp,count+1,(buttons[count]->vpower&0x80)>>7);
+  ResponseTime_P(PSTR(",\"RA8876\":{\"%s%d\":\"%d\"}}"), cp,count+1,(buttons[count]->vpower&0x80)>>7);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
 }
 // check digitizer hit

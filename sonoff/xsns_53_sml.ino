@@ -1505,8 +1505,7 @@ void SML_Immediate_MQTT(const char *mp,uint8_t index,uint8_t mindex) {
         if (dp&0x10) {
           // immediate mqtt
           dtostrfd(meter_vars[index],dp&0xf,tpowstr);
-          ResponseBeginTime();
-          ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%s}}"),meter_desc_p[mindex].prefix,jname,tpowstr);
+          ResponseTime_P(PSTR(",\"%s\":{\"%s\":%s}}"),meter_desc_p[mindex].prefix,jname,tpowstr);
           MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
         }
       }
@@ -2136,8 +2135,7 @@ bool XSNS_53_cmd(void) {
         // set dump mode
         cp++;
         dump2log=atoi(cp);
-        ResponseBeginTime();
-        ResponseAppend_P(PSTR(",\"SML\":{\"CMD\":\"dump: %d\"}}"),dump2log);
+        ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"dump: %d\"}}"),dump2log);
       } else if (*cp=='c') {
           // set ounter
           cp++;
@@ -2157,12 +2155,10 @@ bool XSNS_53_cmd(void) {
               }
             }
           }
-          ResponseBeginTime();
-          ResponseAppend_P(PSTR(",\"SML\":{\"CMD\":\"counter%d: %d\"}}"),index,RtcSettings.pulse_counter[index-1]);
+          ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"counter%d: %d\"}}"),index,RtcSettings.pulse_counter[index-1]);
       } else if (*cp=='r') {
         // restart
-        ResponseBeginTime();
-        ResponseAppend_P(PSTR(",\"SML\":{\"CMD\":\"restart\"}}"));
+        ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"restart\"}}"));
         SML_CounterSaveState();
         SML_Init();
       } else {

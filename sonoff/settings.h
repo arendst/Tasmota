@@ -105,8 +105,7 @@ typedef union {
     uint32_t spare01 : 1;
     uint32_t spare02 : 1;
     uint32_t spare03 : 1;
-    uint32_t spare04 : 1;
-    uint32_t spare05 : 1;
+    uint32_t time_format : 2;              // (v6.6.0.9) - CMND_TIME
     uint32_t calc_resolution : 3;
     uint32_t weight_resolution : 2;
     uint32_t frequency_resolution : 2;

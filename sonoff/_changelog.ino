@@ -7,6 +7,8 @@
  * Add Zigbee support phase 2 - cc2530 initialization and basic ZCL decoding
  * Add driver USE_SDM120_2 with Domoticz P1 Smart Meter functionality as future replacement for USE_SDM120 - Pls test and report
  * Add command Power0 0/1/2/Off/On/Toggle to control all power outputs at once (#6340)
+ * Add time to more events (#6337)
+ * Add command Time 1/2/3 to select JSON time format ISO + Epoch, ISO or Epoch
  *
  * 6.6.0.8 20190827
  * Add Tuya Energy monitoring by Shantur Rathore
