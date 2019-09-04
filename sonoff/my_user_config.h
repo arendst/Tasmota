@@ -216,7 +216,7 @@
  * - Enable a feature by removing both // in front of it
  * - Disable a feature by preceding it with //
 \*********************************************************************************************/
-
+#define USE_DDS2382
 // -- Localization --------------------------------
   // If non selected the default en-GB will be used
 //#define MY_LANGUAGE            bg-BG           // Bulgarian in Bulgaria
