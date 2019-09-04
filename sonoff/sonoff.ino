@@ -303,7 +303,7 @@ void SetLatchingRelay(power_t lpower, uint32_t state)
   }
 }
 
-void SetDevicePower(power_t rpower, int source)
+void SetDevicePower(power_t rpower, uint32_t source)
 {
   ShowSource(source);
 
@@ -364,7 +364,7 @@ void SetDevicePower(power_t rpower, int source)
   }
 }
 
-void RestorePower(bool publish_power, int source)
+void RestorePower(bool publish_power, uint32_t source)
 {
   if (power != last_power) {
     SetDevicePower(last_power, source);
@@ -374,7 +374,7 @@ void RestorePower(bool publish_power, int source)
   }
 }
 
-void SetAllPower(uint32_t state, int source)
+void SetAllPower(uint32_t state, uint32_t source)
 {
 // state 0 = POWER_OFF = Relay Off
 // state 1 = POWER_ON = Relay On (turn off after Settings.pulse_timer * 100 mSec if enabled)
@@ -528,7 +528,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
   return result;
 }
 
-void ExecuteCommandPower(uint32_t device, uint32_t state, int source)
+void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 {
 // device  = Relay number 1 and up
 // state 0 = POWER_OFF = Relay Off
