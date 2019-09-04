@@ -173,7 +173,7 @@ String backlog[MAX_BACKLOG];                // Command backlog
 char* Format(char* output, const char* input, int size)
 {
   char *token;
-  uint8_t digits = 0;
+  uint32_t digits = 0;
 
   if (strstr(input, "%") != nullptr) {
     strlcpy(output, input, size);
@@ -222,7 +222,7 @@ char* GetOtaUrl(char *otaurl, size_t otaurl_size)
   return otaurl;
 }
 
-char* GetTopic_P(char *stopic, uint8_t prefix, char *topic, const char* subtopic)
+char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopic)
 {
   /* prefix 0 = Cmnd
      prefix 1 = Stat
@@ -268,12 +268,12 @@ char* GetTopic_P(char *stopic, uint8_t prefix, char *topic, const char* subtopic
   return stopic;
 }
 
-char* GetFallbackTopic_P(char *stopic, uint8_t prefix, const char* subtopic)
+char* GetFallbackTopic_P(char *stopic, uint32_t prefix, const char* subtopic)
 {
   return GetTopic_P(stopic, prefix +4, nullptr, subtopic);
 }
 
-char* GetStateText(uint8_t state)
+char* GetStateText(uint32_t state)
 {
   if (state > 3) {
     state = 1;
@@ -283,7 +283,7 @@ char* GetStateText(uint8_t state)
 
 /********************************************************************************************/
 
-void SetLatchingRelay(power_t lpower, uint8_t state)
+void SetLatchingRelay(power_t lpower, uint32_t state)
 {
   // power xx00 - toggle REL1 (Off) and REL3 (Off) - device 1 Off, device 2 Off
   // power xx01 - toggle REL2 (On)  and REL3 (Off) - device 1 On,  device 2 Off
@@ -296,7 +296,7 @@ void SetLatchingRelay(power_t lpower, uint8_t state)
   }
 
   for (uint32_t i = 0; i < devices_present; i++) {
-    uint8_t port = (i << 1) + ((latching_power >> i) &1);
+    uint32_t port = (i << 1) + ((latching_power >> i) &1);
     if (pin[GPIO_REL1 +port] < 99) {
       digitalWrite(pin[GPIO_REL1 +port], bitRead(rel_inverted, port) ? !state : state);
     }
@@ -305,8 +305,6 @@ void SetLatchingRelay(power_t lpower, uint8_t state)
 
 void SetDevicePower(power_t rpower, int source)
 {
-  uint8_t state;
-
   ShowSource(source);
 
   if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {  // All on and stay on
@@ -317,7 +315,7 @@ void SetDevicePower(power_t rpower, int source)
   if (Settings.flag.interlock) {          // Allow only one or no relay set
     for (uint32_t i = 0; i < MAX_INTERLOCKS; i++) {
       power_t mask = 1;
-      uint8_t count = 0;
+      uint32_t count = 0;
       for (uint32_t j = 0; j < devices_present; j++) {
         if ((Settings.interlock[i] & mask) && (rpower & mask)) {
           count++;
@@ -357,7 +355,7 @@ void SetDevicePower(power_t rpower, int source)
   }
   else {
     for (uint32_t i = 0; i < devices_present; i++) {
-      state = rpower &1;
+      power_t state = rpower &1;
       if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
         digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? !state : state);
       }
@@ -376,7 +374,7 @@ void RestorePower(bool publish_power, int source)
   }
 }
 
-void SetAllPower(uint8_t state, int source)
+void SetAllPower(uint32_t state, int source)
 {
 // state 0 = POWER_OFF = Relay Off
 // state 1 = POWER_ON = Relay On (turn off after Settings.pulse_timer * 100 mSec if enabled)
@@ -410,7 +408,7 @@ void SetAllPower(uint8_t state, int source)
   }
 }
 
-void SetLedPowerIdx(uint8_t led, uint8_t state)
+void SetLedPowerIdx(uint32_t led, uint32_t state)
 {
   if ((99 == pin[GPIO_LEDLNK]) && (0 == led)) {  // Legacy - LED1 is link led only if LED2 is present
     if (pin[GPIO_LED2] < 99) {
@@ -418,7 +416,7 @@ void SetLedPowerIdx(uint8_t led, uint8_t state)
     }
   }
   if (pin[GPIO_LED1 + led] < 99) {
-    uint8_t mask = 1 << led;
+    uint32_t mask = 1 << led;
     if (state) {
       state = 1;
       led_power |= mask;
@@ -429,7 +427,7 @@ void SetLedPowerIdx(uint8_t led, uint8_t state)
   }
 }
 
-void SetLedPower(uint8_t state)
+void SetLedPower(uint32_t state)
 {
   if (99 == pin[GPIO_LEDLNK]) {           // Legacy - Only use LED1 and/or LED2
     SetLedPowerIdx(0, state);
@@ -443,17 +441,17 @@ void SetLedPower(uint8_t state)
   }
 }
 
-void SetLedPowerAll(uint8_t state)
+void SetLedPowerAll(uint32_t state)
 {
   for (uint32_t i = 0; i < leds_present; i++) {
     SetLedPowerIdx(i, state);
   }
 }
 
-void SetLedLink(uint8_t state)
+void SetLedLink(uint32_t state)
 {
-  uint8_t led_pin = pin[GPIO_LEDLNK];
-  uint8_t led_inv = ledlnk_inverted;
+  uint32_t led_pin = pin[GPIO_LEDLNK];
+  uint32_t led_inv = ledlnk_inverted;
   if (99 == led_pin) {                    // Legacy - LED1 is status
     led_pin = pin[GPIO_LED1];
     led_inv = bitRead(led_inverted, 0);
@@ -464,26 +462,24 @@ void SetLedLink(uint8_t state)
   }
 }
 
-void SetPulseTimer(uint8_t index, uint16_t time)
+void SetPulseTimer(uint32_t index, uint32_t time)
 {
   pulse_timer[index] = (time > 111) ? millis() + (1000 * (time - 100)) : (time > 0) ? millis() + (100 * time) : 0L;
 }
 
-uint16_t GetPulseTimer(uint8_t index)
+uint32_t GetPulseTimer(uint32_t index)
 {
-  uint16_t result = 0;
-
   long time = TimePassedSince(pulse_timer[index]);
   if (time < 0) {
     time *= -1;
-    result = (time > 11100) ? (time / 1000) + 100 : (time > 0) ? time / 100 : 0;
+    return (time > 11100) ? (time / 1000) + 100 : (time > 0) ? time / 100 : 0;
   }
-  return result;
+  return 0;
 }
 
 /********************************************************************************************/
 
-bool SendKey(uint8_t key, uint8_t device, uint8_t state)
+bool SendKey(uint32_t key, uint32_t device, uint32_t state)
 {
 // key 0 = KEY_BUTTON = button_topic
 // key 1 = KEY_SWITCH = switch_topic
@@ -532,7 +528,7 @@ bool SendKey(uint8_t key, uint8_t device, uint8_t state)
   return result;
 }
 
-void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
+void ExecuteCommandPower(uint32_t device, uint32_t state, int source)
 {
 // device  = Relay number 1 and up
 // state 0 = POWER_OFF = Relay Off
@@ -631,7 +627,7 @@ void ExecuteCommandPower(uint8_t device, uint8_t state, int source)
     return;
   }
   else if (POWER_BLINK_STOP == state) {
-    uint8_t flag = (blink_mask & mask);
+    bool flag = (blink_mask & mask);
     blink_mask &= (POWER_MASK ^ mask);  // Clear device mask
     MqttPublishPowerBlinkState(device);
     if (flag) {
@@ -884,7 +880,7 @@ void Every250mSeconds(void)
 {
 // As the max amount of sleep = 250 mSec this loop should always be taken...
 
-  uint8_t blinkinterval = 1;
+  uint32_t blinkinterval = 1;
 
   state_250mS++;
   state_250mS &= 0x3;
@@ -1250,10 +1246,10 @@ void SerialInput(void)
 
 void GpioInit(void)
 {
-  uint8_t mpin;
+  uint32_t mpin;
 
   if (!ValidModule(Settings.module)) {
-    uint8_t module = MODULE;
+    uint32_t module = MODULE;
     if (!ValidModule(MODULE)) { module = SONOFF_BASIC; }
     Settings.module = module;
     Settings.last_module = module;
@@ -1290,7 +1286,7 @@ void GpioInit(void)
     my_adc0 = Settings.my_adc0;                     // Set User selected Module sensors
   }
   my_module_flag = ModuleFlag();
-  uint8_t template_adc0 = my_module_flag.data &15;
+  uint32_t template_adc0 = my_module_flag.data &15;
   if ((template_adc0 > ADC0_NONE) && (template_adc0 < ADC0_USER)) {
     my_adc0 = template_adc0;                        // Force Template override
   }
@@ -1663,8 +1659,6 @@ void setup(void)
   XdrvCall(FUNC_INIT);
   XsnsCall(FUNC_INIT);
 }
-
-uint32_t _counter = 0;
 
 void loop(void)
 {
