@@ -596,6 +596,8 @@
 #define D_SENSOR_IBEACON_RX    "iBeacon RX"
 #define D_SENSOR_RDM6300_RX    "RDM6300 RX"
 #define D_SENSOR_CC1101_CS     "CC1101 CS"
+#define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
+#define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
 
 // Units
 #define D_UNIT_AMPERE "安"

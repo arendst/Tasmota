@@ -194,6 +194,8 @@ enum UserSelectablePins {
   GPIO_RDM6300_RX,     // RDM6300 RX
   GPIO_IBEACON_TX,     // HM17 IBEACON TX
   GPIO_IBEACON_RX,     // HM17 IBEACON RX
+  GPIO_DDS2382_TX,     // DDS2382 Serial interface
+  GPIO_DDS2382_RX,     // DDS2382 Serial interface  
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality

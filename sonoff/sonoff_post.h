@@ -184,6 +184,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_SM16716                           // Add support for SM16716 RGB LED controller (+0k7 code)
 #define USE_HRE                               // Add support for Badger HR-E Water Meter (+1k4 code)
 //#define USE_SOLAX_X1                          // Add support for Solax X1 series Modbus log info (+4k1 code)
+#define USE_DDS2382                           //Add support for Hiking DDS238-2 ZN/S
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
