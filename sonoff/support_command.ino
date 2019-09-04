@@ -890,6 +890,7 @@ void CmndDeepSleep(void)
 {
   if ((XdrvMailbox.payload == 0) || ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < 4294967295))) {
     Settings.deepsleep = XdrvMailbox.payload;
+    RtcSettings.nextwakeup = 0;
   }
   Response_P( PSTR("{\"" D_CMND_DEEPSLEEP "\":\"%d%s (%d%s)\"}"), Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "", Settings.deepsleep, (Settings.flag.value_units) ? " mS" : "");
 }

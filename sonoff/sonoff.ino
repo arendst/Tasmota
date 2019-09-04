@@ -802,38 +802,60 @@ void PerformEverySecond(void)
       if (pin[GPIO_SEN_SLEEP] < 99) {
         disable_deepsleep_switch = !digitalRead(pin[GPIO_SEN_SLEEP]);
       }
-      if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295 && !disable_deepsleep_switch && tele_period == 0 && prep_called == 1 ) {
-        //TODO STEFAN
+      // new functiction AFTER_TELEPERIOD can take some time therefore <2
+      if (Settings.deepsleep > 10 && Settings.deepsleep < 4294967295 && !disable_deepsleep_switch && tele_period < 2 && prep_called == 1 ) {
         SettingsSaveAll();
-        yield();
-
-        if (Settings.deepsleep > MAX_DEEPSLEEP_CYCLE) {
-          RtcSettings.ultradeepsleep = Settings.deepsleep;
-        } else {
-            RtcSettings.ultradeepsleep = 0;
-        }
         Response_P(S_OFFLINE);
         MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), false);  // Offline or remove previous retained topic
         yield();
-        MqttDisconnect();
-        PerformEverySecond();
-        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("nextwakeup %ld"), RtcSettings.nextwakeup);
-        if (RtcSettings.nextwakeup > 1500000000) {
-          while (RtcSettings.nextwakeup < UtcTime()) {
-            RtcSettings.nextwakeup += Settings.deepsleep;
-            AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("incr nextwakeup %ld"), RtcSettings.nextwakeup);
+        if (RtcSettings.nextwakeup == 0 || RtcSettings.deepsleep_slip < 9000 || RtcSettings.deepsleep_slip > 11000) {
+          AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("Reset wrong settings wakeup: %ld, slip %ld"),  RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
+          RtcSettings.nextwakeup = UtcTime() -(RtcSettings.uptime/1000);
+          RtcSettings.deepsleep_slip = 10000;
+        }
+        //timeslip in 0.1 seconds
+        int16_t timeslip = (int16_t)(RtcSettings.nextwakeup+RtcSettings.uptime/1000-UtcTime())*10;
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("Timeslip 0.1 sec:? %d < %d < %ld"),  -Settings.deepsleep, timeslip, Settings.deepsleep );
+        //allow 10% of deepsleep error to count as valid deepsleep
+        timeslip = timeslip < -(int32_t)Settings.deepsleep ? 0 : (timeslip > (int32_t)Settings.deepsleep ? 0 : 1);
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("Normal deepsleep? %d"),  timeslip );
+        if (timeslip) {
+          //uint32_t real_rest_sleep = Settings.deepsleep+(RtcSettings.nextwakeup-UtcTime());
+          //uint32_t tobe_rest_sleep = Settings.deepsleep-(RtcSettings.uptime/1000);
+          //uint32_t drift_sleep =  (real_rest_sleep * 10000) / tobe_rest_sleep;
+          //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("now: %ld, oldwakeup %ld, real sleep %ld, tobe %ld"), UtcTime(), RtcSettings.nextwakeup, real_rest_sleep, tobe_rest_sleep);
+          //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("%% drift %ld"),  drift_sleep );
+          //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("%% RTC old drift %ld"),  RtcSettings.deepsleep_slip );
+          //RtcSettings.deepsleep_slip = (drift_sleep*RtcSettings.deepsleep_slip)/10000;
+          //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("%% RTC1 new drift %ld"),  RtcSettings.deepsleep_slip );
+          RtcSettings.deepsleep_slip = (( ((Settings.deepsleep+(RtcSettings.nextwakeup-UtcTime())) * 10000) / (Settings.deepsleep-(RtcSettings.uptime/1000)))*RtcSettings.deepsleep_slip)/10000;
+          RtcSettings.nextwakeup += Settings.deepsleep;
+          AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("%% RTC new drift %ld"),  RtcSettings.deepsleep_slip );
+        } else {
+          if (RtcSettings.nextwakeup > 1500000000) {
+            while (RtcSettings.nextwakeup < UtcTime()) {
+              RtcSettings.nextwakeup += Settings.deepsleep;
+              yield();
+              AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("incr nextwakeup %ld"), RtcSettings.nextwakeup);
+            }
+          } else {
+            RtcSettings.nextwakeup = UtcTime() + Settings.deepsleep;
           }
-        } else {
-          RtcSettings.nextwakeup = UtcTime() + Settings.deepsleep;
         }
+        Response_P(PSTR("%d"), RtcSettings.nextwakeup);
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_DOMOTICZ_UPDATE_TIMER), false);  // Offline or remove previous retained topic
+        yield();
+        MqttDisconnect();
+        String dt = GetDT(RtcSettings.nextwakeup+LocalTime()- UtcTime());  // 2017-03-07T11:08:02
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("Next wakeup %s"), (char*)dt.c_str());
+        //limit sleeptime to MAX_DEEPSLEEP_CYCLE
+        uint32_t sleeptime = MAX_DEEPSLEEP_CYCLE < (RtcSettings.nextwakeup - UtcTime()) ? (uint32_t)MAX_DEEPSLEEP_CYCLE : RtcSettings.nextwakeup - UtcTime();
         RtcSettings.uptime = 0;
+        RtcSettings.ultradeepsleep =  RtcSettings.nextwakeup - UtcTime();
+
         RtcSettingsSave();
-        // 10% of deepsleep to retry
-        if (MAX_DEEPSLEEP_CYCLE < (RtcSettings.nextwakeup - UtcTime())) {
-          ESP.deepSleep(1000000 * ((uint32_t)MAX_DEEPSLEEP_CYCLE ), WAKE_RF_DEFAULT);
-        } else {
-          ESP.deepSleep(1000000 * (RtcSettings.nextwakeup - UtcTime()), WAKE_RF_DEFAULT);
-        }
+        AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("Sleeptime %d sec, deepsleep_slip %ld"), sleeptime, RtcSettings.deepsleep_slip);
+        ESP.deepSleep(100 * RtcSettings.deepsleep_slip * sleeptime);
         yield();
       }
       prep_called = 0;
@@ -1589,7 +1611,7 @@ void setup(void)
       RtcSettings.ultradeepsleep = 0;
     }
   }
-  if (RtcSettings.ultradeepsleep > 0 && RtcSettings.ultradeepsleep < 1700000000) {
+  if (RtcSettings.ultradeepsleep > MAX_DEEPSLEEP_CYCLE && RtcSettings.ultradeepsleep < 1700000000) {
      RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
      RtcReboot.fast_reboot_count = 0;
      RtcRebootSave();
@@ -1597,15 +1619,11 @@ void setup(void)
      AddLog(LOG_LEVEL_INFO);
      snprintf_P(log_data, sizeof(log_data), PSTR("APP: online %d"), millis());
      AddLog(LOG_LEVEL_INFO);
-     if (MAX_DEEPSLEEP_CYCLE < RtcSettings.ultradeepsleep) {
-       RtcSettingsSave();
-       ESP.deepSleep(1000000 * (uint32_t)MAX_DEEPSLEEP_CYCLE, WAKE_RF_DEFAULT);
-     } else {
-       unsigned long remaining_time = RtcSettings.ultradeepsleep;
-       RtcSettings.ultradeepsleep = 0;
-       RtcSettingsSave();
-       ESP.deepSleep(1000000 * remaining_time, WAKE_RF_DEFAULT);
-     }
+     unsigned long remaining_time = RtcSettings.ultradeepsleep;
+     remaining_time = MAX_DEEPSLEEP_CYCLE < RtcSettings.ultradeepsleep ? MAX_DEEPSLEEP_CYCLE : remaining_time;
+     //RtcSettings.ultradeepsleep = MAX_DEEPSLEEP_CYCLE < RtcSettings.ultradeepsleep ? RtcSettings.ultradeepsleep : 0;
+     RtcSettingsSave();
+     ESP.deepSleep(100 * RtcSettings.deepsleep_slip * remaining_time, WAKE_RF_DEFAULT);
      yield();
   }
   //end

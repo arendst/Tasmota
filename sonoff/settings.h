@@ -401,7 +401,8 @@ struct RTCMEM {
   unsigned long pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
   //STB mod
-  uint8_t       free_020[48];              // 2B0
+  uint8_t       free_020[44];              // 2B0
+  int16_t       deepsleep_slip;
   unsigned long nextwakeup;
   unsigned long uptime;
   uint32_t      ultradeepsleep;

@@ -15,6 +15,8 @@ Additional features:
 - Added Alexa support for shutters through HUE Dimmer functionality. Not perfect but ok.
 
 Changelog:
+1.10 2019-09-04
+- Fixed issue with wakeup not working. Calculate clock correction factor to meet deepsleep time. Real deepsleep is up to 10% related on chip temperature. Correction factor will continuously improved at every wakeup. NTP Timeserver is required.
 1.09 2019-09-02
 - Fixed shutter: Relay executed by MQTT or serial did not get recognized by shutter driver.
 1.08 2019-09-01
