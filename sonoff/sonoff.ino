@@ -828,7 +828,10 @@ void PerformEverySecond(void)
           //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("%% RTC old drift %ld"),  RtcSettings.deepsleep_slip );
           //RtcSettings.deepsleep_slip = (drift_sleep*RtcSettings.deepsleep_slip)/10000;
           //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("%% RTC1 new drift %ld"),  RtcSettings.deepsleep_slip );
-          RtcSettings.deepsleep_slip = (( ((Settings.deepsleep+(RtcSettings.nextwakeup-UtcTime())) * 10000) / (Settings.deepsleep-(RtcSettings.uptime/1000)))*RtcSettings.deepsleep_slip)/10000;
+          //RtcSettings.deepsleep_slip = (( ((Settings.deepsleep+(RtcSettings.nextwakeup-UtcTime())) * 10000) / (Settings.deepsleep-(RtcSettings.uptime/1000)))*RtcSettings.deepsleep_slip)/10000;
+          RtcSettings.deepsleep_slip = (Settings.deepsleep+RtcSettings.nextwakeup-UtcTime()) *RtcSettings.deepsleep_slip / (Settings.deepsleep-(RtcSettings.uptime/1000));
+          //Avoid crazy numbers.
+          RtcSettings.deepsleep_slip = tmin(tmax(RtcSettings.deepsleep_slip, 9000),11000);
           RtcSettings.nextwakeup += Settings.deepsleep;
           AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("%% RTC new drift %ld"),  RtcSettings.deepsleep_slip );
         } else {
