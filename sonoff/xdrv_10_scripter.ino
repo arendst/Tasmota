@@ -52,6 +52,9 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_MAXPERM (MAX_RULE_MEMS*10)-4/sizeof(float)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
+// offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
+#define EPOCH_OFFSET 1546300800
+
 enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU};
 enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
 
@@ -78,9 +81,11 @@ enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
   LinkedList<MQTT_Subscription> subscriptions;
 #endif    //SUPPORT_MQTT_EVENT
 
+#ifdef USE_DISPLAY
 #ifdef USE_TOUCH_BUTTONS
 #include <renderer.h>
 extern VButton *buttons[MAXBUTTONS];
+#endif
 #endif
 
 typedef union {
@@ -134,6 +139,7 @@ struct SCRIPT_MEM {
     uint8_t *vnp_offset;
     char *glob_snp; // string vars pointer
     char *scriptptr;
+    char *section_ptr;
     char *scriptptr_bu;
     char *script_ram;
     uint16_t script_size;
@@ -1009,7 +1015,13 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
                 return lp+len;
               }
             } else {
-              if (fp) *fp=CharToFloat((char*)str_value);
+              if (fp) {
+                if (!strncmp(vn.c_str(),"Epoch",5)) {
+                  *fp=atoi(str_value)-(uint32_t)EPOCH_OFFSET;
+                } else {
+                  *fp=CharToFloat((char*)str_value);
+                }
+              }
               *vtype=NUM_RES;
               tind->bits.constant=1;
               tind->bits.is_string=0;
@@ -1056,6 +1068,12 @@ chknext:
       case 'd':
         if (!strncmp(vname,"day",3)) {
           fvar=RtcTime.day_of_month;
+          goto exit;
+        }
+        break;
+      case 'e':
+        if (!strncmp(vname,"epoch",5)) {
+          fvar=UtcTime()-(uint32_t)EPOCH_OFFSET;
           goto exit;
         }
         break;
@@ -1634,6 +1652,7 @@ chknext:
           if (sp) strlcpy(sp,Settings.mqtt_topic,glob_script_mem.max_ssize);
           goto strexit;
         }
+#ifdef USE_DISPLAY
 #ifdef USE_TOUCH_BUTTONS
         if (!strncmp(vname,"tbut[",5)) {
           GetNumericResult(vname+5,OPER_EQU,&fvar,0);
@@ -1649,6 +1668,7 @@ chknext:
           goto exit;
         }
 
+#endif
 #endif
         break;
       case 'u':
@@ -2733,7 +2753,10 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
             if (!strncmp(lp,type,tlen)) {
                 // found section
                 section=1;
-                if (check) return 99;
+                glob_script_mem.section_ptr=lp;
+                if (check) {
+                  return 99;
+                }
                 // check for subroutine
                 if (*type=='#') {
                   // check for parameter
@@ -3387,6 +3410,7 @@ bool ScriptMqttData(void)
       //This topic is subscribed by us, so serve it
       serviced = true;
       String value;
+      String lkey;
       if (event_item.Key.length() == 0) {   //If did not specify Key
         value = sData;
       } else {      //If specified Key, need to parse Key/Value from JSON data
@@ -3399,17 +3423,24 @@ bool ScriptMqttData(void)
         if ((dot = key1.indexOf('.')) > 0) {
           key2 = key1.substring(dot+1);
           key1 = key1.substring(0, dot);
+          lkey=key2;
           if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
           value = (const char *)jsonData[key1][key2];
         } else {
           if (!jsonData[key1].success()) break;
           value = (const char *)jsonData[key1];
+          lkey=key1;
         }
       }
       value.trim();
-
       char sbuffer[128];
-      snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
+
+      if (!strncmp(lkey.c_str(),"Epoch",5)) {
+        uint32_t ep=atoi(value.c_str())-(uint32_t)EPOCH_OFFSET;
+        snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=%d\n"), event_item.Event.c_str(),ep);
+      } else {
+        snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
+      }
       //toLog(sbuffer);
       execute_script(sbuffer);
     }
@@ -3542,6 +3573,93 @@ String ScriptUnsubscribe(const char * data, int data_len)
 }
 #endif //     SUPPORT_MQTT_EVENT
 
+#ifdef USE_SCRIPT_WEB_DISPLAY
+void ScriptWebShow(void) {
+  uint8_t web_script=Run_Scripter(">W",-2,0);
+  if (web_script==99) {
+    char line[128];
+    char tmp[128];
+    char *lp=glob_script_mem.section_ptr+2;
+    while (lp) {
+      while (*lp==SCRIPT_EOL) {
+       lp++;
+      }
+      if (!*lp || *lp=='#' || *lp=='>') {
+          break;
+      }
+
+      // send this line to web
+      memcpy(line,lp,sizeof(line));
+      line[sizeof(line)-1]=0;
+      char *cp=line;
+      for (uint32_t i=0; i<sizeof(line); i++) {
+        if (!*cp || *cp=='\n' || *cp=='\r') {
+          *cp=0;
+          break;
+        }
+        cp++;
+      }
+
+      Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+      WSContentSend_PD(PSTR("{s}%s{e}"),tmp);
+
+next_line:
+      if (*lp==SCRIPT_EOL) {
+        lp++;
+      } else {
+        lp = strchr(lp, SCRIPT_EOL);
+        if (!lp) break;
+        lp++;
+      }
+    }
+  }
+}
+#endif //USE_SCRIPT_WEB_DISPLAY
+
+#ifdef USE_SCRIPT_JSON_EXPORT
+void ScriptJsonAppend(void) {
+  uint8_t web_script=Run_Scripter(">J",-2,0);
+  if (web_script==99) {
+    char line[128];
+    char tmp[128];
+    char *lp=glob_script_mem.section_ptr+2;
+    while (lp) {
+      while (*lp==SCRIPT_EOL) {
+       lp++;
+      }
+      if (!*lp || *lp=='#' || *lp=='>') {
+          break;
+      }
+
+      // send this line to mqtt
+      memcpy(line,lp,sizeof(line));
+      line[sizeof(line)-1]=0;
+      char *cp=line;
+      for (uint32_t i=0; i<sizeof(line); i++) {
+        if (!*cp || *cp=='\n' || *cp=='\r') {
+          *cp=0;
+          break;
+        }
+        cp++;
+      }
+
+      Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+      ResponseAppend_P(PSTR("%s"),tmp);
+
+next_line:
+      if (*lp==SCRIPT_EOL) {
+        lp++;
+      } else {
+        lp = strchr(lp, SCRIPT_EOL);
+        if (!lp) break;
+        lp++;
+      }
+    }
+  }
+}
+#endif //USE_SCRIPT_JSON_EXPORT
+
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -3667,6 +3785,19 @@ bool Xdrv10(uint8_t function)
       result = ScriptMqttData();
       break;
 #endif    //SUPPORT_MQTT_EVENT
+#ifdef USE_SCRIPT_WEB_DISPLAY
+    case FUNC_WEB_SENSOR:
+      ScriptWebShow();
+      break;
+#endif //USE_SCRIPT_WEB_DISPLAY
+
+#ifdef USE_SCRIPT_JSON_EXPORT
+    case FUNC_JSON_APPEND:
+      ScriptJsonAppend();
+      break;
+#endif //USE_SCRIPT_JSON_EXPORT
+
+
   }
   return result;
 }

@@ -500,7 +500,7 @@ static bool WifiIsInManagerMode(){
   return (HTTP_MANAGER == Web.state || HTTP_MANAGER_RESET_ONLY == Web.state);
 }
 
-void ShowWebSource(int source)
+void ShowWebSource(uint32_t source)
 {
   if ((source > 0) && (source < SRC_MAX)) {
     char stemp1[20];
@@ -508,7 +508,7 @@ void ShowWebSource(int source)
   }
 }
 
-void ExecuteWebCommand(char* svalue, int source)
+void ExecuteWebCommand(char* svalue, uint32_t source)
 {
   ShowWebSource(source);
   ExecuteCommand(svalue, SRC_IGNORE);
@@ -1050,6 +1050,9 @@ bool HandleRootStatusRefresh(void)
   WSContentBegin(200, CT_HTML);
   WSContentSend_P(PSTR("{t}"));
   XsnsCall(FUNC_WEB_SENSOR);
+#ifdef USE_SCRIPT_WEB_DISPLAY
+  XdrvCall(FUNC_WEB_SENSOR);
+#endif
   WSContentSend_P(PSTR("</table>"));
 
   if (devices_present) {

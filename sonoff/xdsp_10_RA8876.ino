@@ -109,8 +109,7 @@ void RA8876_InitDriver()
 
 #ifdef USE_TOUCH_BUTTONS
 void RA8876_MQTT(uint8_t count,const char *cp) {
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"RA8876\":{\"%s%d\":\"%d\"}}"), mqtt_data,cp,count+1,(buttons[count]->vpower&0x80)>>7);
+  ResponseTime_P(PSTR(",\"RA8876\":{\"%s%d\":\"%d\"}}"), cp,count+1,(buttons[count]->vpower&0x80)>>7);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
 }
 
@@ -166,7 +165,7 @@ if (2 == ra8876_ctouch_counter) {
                   uint8_t bflags=buttons[count]->vpower&0x7f;
                   if (!bflags) {
                     // real button
-                    if (!SendKey(0, count+1, POWER_TOGGLE)) {
+                    if (!SendKey(KEY_BUTTON, count+1, POWER_TOGGLE)) {
                       ExecuteCommandPower(count+1, POWER_TOGGLE, SRC_BUTTON);
                     }
                     buttons[count]->xdrawButton(bitRead(power,count));

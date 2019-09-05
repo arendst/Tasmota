@@ -181,12 +181,7 @@ void PzemEvery200ms(void)
           Energy.active_power = value;
           break;
         case 4:  // Total energy as 99999Wh
-          if (!Energy.start_energy || (value < Energy.start_energy)) Energy.start_energy = value;  // Init after restart and hanlde roll-over if any
-          if (value != Energy.start_energy) {
-            Energy.kWhtoday += (unsigned long)((value - Energy.start_energy) * 100);
-            Energy.start_energy = value;
-          }
-          EnergyUpdateToday();
+          EnergyUpdateTotal(value, false);
           break;
       }
       pzem_read_state++;

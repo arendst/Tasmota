@@ -105,8 +105,7 @@ typedef union {
     uint32_t spare01 : 1;
     uint32_t spare02 : 1;
     uint32_t spare03 : 1;
-    uint32_t spare04 : 1;
-    uint32_t spare05 : 1;
+    uint32_t time_format : 2;              // (v6.6.0.9) - CMND_TIME
     uint32_t calc_resolution : 3;
     uint32_t weight_resolution : 2;
     uint32_t frequency_resolution : 2;
@@ -185,6 +184,14 @@ typedef struct {
   uint32_t last_usage_kWhtotal;
   uint32_t last_return_kWhtotal;
 } EnergyUsage;
+
+
+typedef struct {
+  uint8_t fnid = 0;
+  uint8_t dpid = 0;
+} TuyaFnidDpidMap;
+
+const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
 /*
 struct SYSCFG {
@@ -364,13 +371,13 @@ struct SYSCFG {
   unsigned long energy_frequency_calibration;  // 7C8 also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
-  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
-  uint8_t       data8[32];                 // E00
-  uint16_t      data16[16];                // E20
+  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+  TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
 
-  uint8_t       free_e20[448];             // E40
+  uint8_t       free_e20[472];             // E20
 
-                                           // FFF last location
+  uint32_t      cfg_timestamp;             // FF8
+  uint32_t      cfg_crc4;                  // FFC
 } Settings;
 
 struct RTCRBT {

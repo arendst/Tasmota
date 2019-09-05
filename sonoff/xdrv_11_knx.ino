@@ -575,7 +575,7 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       else if (chan->type < 17) // Toggle Relays
       {
         if (!toggle_inhibit) {
-          ExecuteCommandPower((chan->type) -8, 2, SRC_KNX);
+          ExecuteCommandPower((chan->type) -8, POWER_TOGGLE, SRC_KNX);
           if (Settings.flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
