@@ -40,7 +40,8 @@ bool SendEmail::send(const String& from, const String& to, const String& subject
   DEBUG_EMAIL_PORT.println(port);
 #endif
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_4_2
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
+#else
   client->setInsecure();
   bool mfln = client->probeMaxFragmentLength(host.c_str(), port, 512);
 #ifdef DEBUG_EMAIL_PORT
@@ -50,6 +51,7 @@ bool SendEmail::send(const String& from, const String& to, const String& subject
       client->setBufferSizes(512, 512);
   }
 #endif
+
 
   if (!client->connect(host.c_str(), port))
   {
