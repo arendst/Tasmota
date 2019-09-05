@@ -1269,6 +1269,10 @@ void CmndReset(void)
     restart_flag = 210 + XdrvMailbox.payload;
     Response_P(PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
     break;
+  case 99:
+    Settings.bootcount = 0;
+    ResponseCmndDone();
+    break;
   default:
     ResponseCmndChar(D_JSON_ONE_TO_RESET);
   }
