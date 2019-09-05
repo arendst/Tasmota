@@ -368,7 +368,7 @@ struct SYSCFG {
   uint8_t       data8[32];                 // E00
   uint16_t      data16[16];                // E20
   uint16_t      ina226_r_shunt[4];         // E40
-  uint16_t      ina226_i_fs[4];             // E48
+  uint16_t      ina226_i_fs[4];            // E48
 
   uint8_t       free_e20[424];             // E50
 
