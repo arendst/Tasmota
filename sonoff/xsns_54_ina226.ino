@@ -1,8 +1,25 @@
+/*
+  xsns_54_ina226.ino - INA226 Current Sensor support for Sonoff-Tasmota
+  Copyright (C) 2019  Stephen Rodgers and Theo Arends
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
 // Conditional compilation of driver
 #ifdef USE_INA226
 
 // Define driver ID
-#define XSNS_76  76
+
+#define XSNS_54  54
 
 #define INA226_MAX_ADDRESSES                    4
 #define INA226_ADDRESS1                         (0x40)    // 1000000 (A0+A1=GND)
@@ -24,7 +41,6 @@
 
 typedef struct Ina226SlaveInfo_tag {
   uint8_t address;
-  uint8_t missedCount;
   uint16_t calibrationValue;
   uint16_t config;
   uint8_t present : 1;
@@ -32,7 +48,7 @@ typedef struct Ina226SlaveInfo_tag {
 } Ina226SlaveInfo_t;
 
 /*
-* Program memory connstants
+* Program memory constants
 */
 
 static const uint8_t PROGMEM probeAddresses[INA226_MAX_ADDRESSES] = {INA226_ADDRESS1, INA226_ADDRESS2, INA226_ADDRESS3, INA226_ADDRESS4};
@@ -61,6 +77,21 @@ static void _debug_fval(const char *str, float fval, uint8_t prec = 4 )
   char fstr[32];
   dtostrfd(fval, prec, fstr);
   AddLog_P2( LOG_LEVEL_NONE, PSTR("%s: %s"), str, fstr );
+}
+
+
+/*
+* Convert 16 bit repesentation of shunt resisance to 32 bit micro ohms by looking at the msb range bit.
+* If the msb is 1, the LSB's define the number of milli ohms. (Maximum shunt resistor value 32.767 ohms)
+* If the msb is 0, the LSB's define the number of micro ohms. (Maximum shunt resistor value 0.032767 ohms)
+*/
+
+static uint32_t _expand_r_shunt(uint16_t compact_r_shunt)
+{
+  uint32_t r_shunt_uohms = (compact_r_shunt & 0x8000) ?
+  ((uint32_t)(compact_r_shunt & 0x7FFF) * 1000ul) :
+  (compact_r_shunt & 0x7FFF);
+  return r_shunt_uohms;
 }
 
 /*
@@ -113,7 +144,7 @@ void Ina226Init()
 
 
   //AddLog_P2( LOG_LEVEL_NONE, "Ina226Init");
-  //AddLog_P2( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
+  AddLog_P2( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
 
   if (!i2c_flg)
     AddLog_P2(LOG_LEVEL_DEBUG, "INA226: Initialization failed: No I2C support");
@@ -133,7 +164,7 @@ void Ina226Init()
     uint8_t addr = pgm_read_byte(probeAddresses + i);
 
     // Skip device probing if the full scale current is zero
-    if (!Settings.ina226_config[i].i_fs)
+    if (!Settings.ina226_i_fs[i])
       continue;
 
 
@@ -170,15 +201,19 @@ void Ina226Init()
     // Configuration
     p->config = config;
     // Full scale current in tenths of an amp
-    //AddLog_P2( LOG_LEVEL_NONE, "Full Scale I in tenths of an amp: %u", Settings.ina226_config[i].i_fs );
-    p->i_lsb = (((float) Settings.ina226_config[i].i_fs)/10.0f)/32768.0f;
-    //_debug_fval("i_lsb: %s", p->i_lsb, 7);
-    // Shunt resistance in microohm increments
-    //AddLog_P2( LOG_LEVEL_NONE, "Shunt R in micro-ohms: %u", Settings.ina226_config[i].r_shunt );
-    p->calibrationValue = ((uint16_t) (0.00512/(p->i_lsb * ((float) Settings.ina226_config[i].r_shunt)/1000000.0f)));
+    AddLog_P2( LOG_LEVEL_NONE, "Full Scale I in tenths of an amp: %u", Settings.ina226_i_fs[i]);
+    p->i_lsb = (((float) Settings.ina226_i_fs[i])/10.0f)/32768.0f;
+    _debug_fval("i_lsb: %s", p->i_lsb, 7);
+
+    // Get shunt resistor value in micro ohms
+    uint32_t r_shunt_uohms = _expand_r_shunt(Settings.ina226_r_shunt[i]);
+    AddLog_P2( LOG_LEVEL_NONE, "Shunt R in micro-ohms: %u", r_shunt_uohms);
+
+
+    p->calibrationValue = ((uint16_t) (0.00512/(p->i_lsb * r_shunt_uohms/1000000.0f)));
     // Device present
     p->present = true;
-    //AddLog_P2( LOG_LEVEL_NONE, "INA226 Device %d calibration value: %04X", i, p->calibrationValue);
+    AddLog_P2( LOG_LEVEL_NONE, "INA226 Device %d calibration value: %04X", i, p->calibrationValue);
 
     Ina226SetCalibration(i);
 
@@ -284,7 +319,8 @@ bool Ina226CommandSensor()
   char param_str[64];
   char *cp, *params[4];
   uint8_t i, param_count, device, p1 = XdrvMailbox.payload;
-
+  uint32_t r_shunt_uohms;
+  uint16_t compact_r_shunt_uohms;
   //AddLog_P2( LOG_LEVEL_NONE, "Command received: %d", XdrvMailbox.payload);
   //AddLog_P2( LOG_LEVEL_NONE, "Command data received: %s", XdrvMailbox.data);
 
@@ -313,12 +349,12 @@ bool Ina226CommandSensor()
     switch (p1){
       case 1: // Rerun init
         Ina226Init();
-        Response_P(PSTR("{\"Sensor76-Command-Result\":{\"SlavesFound\":%d}}"),slavesFound);
+        Response_P(PSTR("{\"Sensor54-Command-Result\":{\"SlavesFound\":%d}}"),slavesFound);
         break;
 
       case 2: // Save and restart
         restart_flag = 2;
-        Response_P(PSTR("{\"Sensor76-Command-Result\":{\"Restart_flag\":%d}}"),restart_flag);
+        Response_P(PSTR("{\"Sensor54-Command-Result\":{\"Restart_flag\":%d}}"),restart_flag);
         break;
 
       default:
@@ -333,15 +369,19 @@ bool Ina226CommandSensor()
         show_config = true;
         break;
 
-      case 1: // Set shunt resistance in microohms from user input in ohms
-        Settings.ina226_config[device].r_shunt = (uint32_t) ((CharToFloat(params[1])) * 1000000.0f);
-        //AddLog_P2( LOG_LEVEL_NONE, "r_shunt: %d", Settings.ina226_config[device].r_shunt);
+      case 1: // Set compacted shunt resistance from user input in ohms
+        r_shunt_uohms = (uint32_t) ((CharToFloat(params[1])) * 1000000.0f);
+        compact_r_shunt_uohms = (uint16_t) (r_shunt_uohms > 32767UL) ?
+        0x8000 | (r_shunt_uohms / 1000UL) :
+        r_shunt_uohms;
+        Settings.ina226_r_shunt[device] = r_shunt_uohms;
+        AddLog_P2( LOG_LEVEL_NONE, "r_shunt_compacted: %04X", Settings.ina226_r_shunt[device]);
         show_config = true;
         break;
 
       case 2: // Set full scale current in tenths of amps from user input in Amps
-        Settings.ina226_config[device].i_fs = (uint16_t) ((CharToFloat(params[1])) * 10.0f);
-        //AddLog_P2( LOG_LEVEL_NONE, "i_fs: %d", Settings.ina226_config[device].i_fs);
+        Settings.ina226_i_fs[device] = (uint16_t) ((CharToFloat(params[1])) * 10.0f);
+        AddLog_P2( LOG_LEVEL_NONE, "i_fs: %d", Settings.ina226_i_fs[device]);
         show_config = true;
         break;
 
@@ -359,11 +399,12 @@ bool Ina226CommandSensor()
     char fs_i_str[16];
 
     // Shunt resistance is stored in EEPROM in microohms. Convert to ohms
-    dtostrfd(((float)Settings.ina226_config[device].r_shunt)/1000000.0, 6, shunt_r_str);
+    r_shunt_uohms = _expand_r_shunt(Settings.ina226_r_shunt[device]);
+    dtostrfd(((float)r_shunt_uohms)/1000000.0f, 6, shunt_r_str);
     // Full scale current is stored in EEPROM in tenths of an amp. Convert to amps.
-    dtostrfd(((float)Settings.ina226_config[device].i_fs)/10.0f, 1, fs_i_str);
+    dtostrfd(((float)Settings.ina226_i_fs[device])/10.0f, 1, fs_i_str);
     // Send json response
-    Response_P(PSTR("{\"Sensor76-device-settings-%d\":{\"SHUNT_R\":%s,\"FS_I\":%s}}"),
+    Response_P(PSTR("{\"Sensor54-device-settings-%d\":{\"SHUNT_R\":%s,\"FS_I\":%s}}"),
       device + 1, shunt_r_str, fs_i_str);
   }
 
@@ -432,13 +473,13 @@ void Ina226Show(bool json)
  * @post    None.
  *
  */
-boolean Xsns76(byte callback_id) {
+boolean Xsns54(byte callback_id) {
 
   // Set return value to `false`
-  boolean result = false;
+  bool result = false;
 
-  // Check if I2C interface mode
-// if(i2c_flg) {
+  // Check if I2C interface mode is enabled
+if(i2c_flg) {
 
   // Check which callback ID is called by Tasmota
   switch (callback_id) {
@@ -454,20 +495,19 @@ boolean Xsns76(byte callback_id) {
       Ina226Show(1);
       break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Ina226Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Ina226Show(0);
+      break;
 #endif // USE_WEBSERVER
     case FUNC_SAVE_BEFORE_RESTART:
       break;
     case FUNC_COMMAND_SENSOR:
-      if (XSNS_76 == XdrvMailbox.index) {
+      if (XSNS_54 == XdrvMailbox.index) {
         result = Ina226CommandSensor();
       }
       break;
-  }
-// } // if(i2c_flg)
-
+    }
+  } // if(i2c_flg)
   // Return boolean result
   return result;
 }
