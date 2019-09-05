@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_IR_REMOTE
+#if defined(USE_IR_REMOTE) && !defined(USE_IR_REMOTE_FULL)
 /*********************************************************************************************\
  * IR Remote send and receive using IRremoteESP8266 library
 \*********************************************************************************************/
@@ -154,7 +154,7 @@ void IrReceiveCheck(void)
       } else {
         snprintf_P(svalue, sizeof(svalue), PSTR("\"0x%s\""), hvalue);
       }
-      Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
+      ResponseTime_P(PSTR(",\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, svalue);
 
       if (Settings.flag3.receive_raw) {
@@ -671,6 +671,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   const char *HVAC_Mode;
   const char *HVAC_FanMode;
   const char *HVAC_Vendor;
+  char parm_uc[12];
   int HVAC_Temp = 21;
   bool HVAC_Power = true;
 
@@ -687,11 +688,11 @@ uint32_t IrRemoteCmndIrHvacJson(void)
     return IE_INVALID_JSON;
   }
 
-  HVAC_Vendor = root[D_JSON_IRHVAC_VENDOR];
-  HVAC_Power = root[D_JSON_IRHVAC_POWER];
-  HVAC_Mode = root[D_JSON_IRHVAC_MODE];
-  HVAC_FanMode = root[D_JSON_IRHVAC_FANSPEED];
-  HVAC_Temp = root[D_JSON_IRHVAC_TEMP];
+  HVAC_Vendor = root[UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_VENDOR))];
+  HVAC_Power = root[UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_POWER))];
+  HVAC_Mode = root[UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_MODE))];
+  HVAC_FanMode = root[UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_FANSPEED))];
+  HVAC_Temp = root[UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_TEMP))];
 
 //        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received Vendor %s, Power %d, Mode %s, FanSpeed %s, Temp %d"), HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
 
@@ -1073,4 +1074,4 @@ bool Xdrv05(uint8_t function)
   return result;
 }
 
-#endif // USE_IR_REMOTE
+#endif // defined(USE_IR_REMOTE) && !defined(USE_IR_REMOTE_FULL)

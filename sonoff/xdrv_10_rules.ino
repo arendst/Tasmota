@@ -1207,7 +1207,11 @@ void CmndVariable(void)
     } else {
       if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-        dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+        if (XdrvMailbox.data[0] == '=') {  // Spaces already been skipped in data
+          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+        } else {
+          strlcpy(rules_vars[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(rules_vars[XdrvMailbox.index -1]));
+        }
 #else
         strlcpy(rules_vars[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(rules_vars[XdrvMailbox.index -1]));
 #endif  // USE_EXPRESSION
@@ -1230,7 +1234,11 @@ void CmndMemory(void)
     } else {
       if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-        dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, Settings.mems[XdrvMailbox.index -1]);
+        if (XdrvMailbox.data[0] == '=') {  // Spaces already been skipped in data
+          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, Settings.mems[XdrvMailbox.index -1]);
+        } else {
+          strlcpy(Settings.mems[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[XdrvMailbox.index -1]));
+        }
 #else
         strlcpy(Settings.mems[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[XdrvMailbox.index -1]));
 #endif  // USE_EXPRESSION

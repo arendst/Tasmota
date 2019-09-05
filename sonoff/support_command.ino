@@ -257,9 +257,18 @@ void CmndDelay(void)
 void CmndPower(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= devices_present)) {
-    if ((XdrvMailbox.payload < 0) || (XdrvMailbox.payload > 4)) { XdrvMailbox.payload = 9; }
-//      Settings.flag.device_index_enable = user_index;
+    if ((XdrvMailbox.payload < POWER_OFF) || (XdrvMailbox.payload > POWER_BLINK_STOP)) {
+      XdrvMailbox.payload = POWER_SHOW_STATE;
+    }
+//      Settings.flag.device_index_enable = XdrvMailbox.usridx;
     ExecuteCommandPower(XdrvMailbox.index, XdrvMailbox.payload, SRC_IGNORE);
+    mqtt_data[0] = '\0';
+  }
+  else if (0 == XdrvMailbox.index) {
+    if ((XdrvMailbox.payload < POWER_OFF) || (XdrvMailbox.payload > POWER_TOGGLE)) {
+      XdrvMailbox.payload = POWER_SHOW_STATE;
+    }
+    SetAllPower(XdrvMailbox.payload, SRC_IGNORE);
     mqtt_data[0] = '\0';
   }
 }
@@ -635,7 +644,7 @@ void CmndSetoption(void)
             param_low = 1;
             param_high = 250;
             break;
-          case P_TUYA_RELAYS:
+          case P_ex_TUYA_RELAYS:
             param_high = 8;
             break;
         }
@@ -647,16 +656,16 @@ void CmndSetoption(void)
               LightUpdateColorMapping();
               break;
 #endif
-#if defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)
+#if (defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)) || defined(USE_IR_REMOTE_FULL)
             case P_IR_UNKNOW_THRESHOLD:
               IrReceiveUpdateThreshold();
               break;
 #endif
-#ifdef USE_TUYA_DIMMER
-            case P_TUYA_RELAYS:
-            case P_TUYA_POWER_ID:
-            case P_TUYA_CURRENT_ID:
-            case P_TUYA_VOLTAGE_ID:
+#ifdef USE_TUYA_MCU
+//            case P_ex_TUYA_RELAYS:
+//            case P_ex_TUYA_POWER_ID:
+//            case P_ex_TUYA_CURRENT_ID:
+//            case P_ex_TUYA_VOLTAGE_ID:
             case P_TUYA_DIMMER_MAX:
               restart_flag = 2;  // Need a restart to update GUI
               break;
@@ -1260,6 +1269,10 @@ void CmndReset(void)
     restart_flag = 210 + XdrvMailbox.payload;
     Response_P(PSTR("{\"" D_CMND_RESET "\":\"" D_JSON_ERASE ", " D_JSON_RESET_AND_RESTARTING "\"}"));
     break;
+  case 99:
+    Settings.bootcount = 0;
+    ResponseCmndDone();
+    break;
   default:
     ResponseCmndChar(D_JSON_ONE_TO_RESET);
   }
@@ -1267,10 +1280,25 @@ void CmndReset(void)
 
 void CmndTime(void)
 {
+// payload 0 = (re-)enable NTP
+// payload 1 = Time format {"Time":"2019-09-04T14:31:29","Epoch":1567600289}
+// payload 2 = Time format {"Time":"2019-09-04T14:31:29"}
+// payload 3 = Time format {"Time":1567600289}
+// payload 4 = reserved
+// payload 1451602800 - disable NTP and set time to epoch
+
+  uint32_t format = Settings.flag2.time_format;
   if (XdrvMailbox.data_len > 0) {
-    RtcSetTime(XdrvMailbox.payload);
+    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 4)) {
+      Settings.flag2.time_format = XdrvMailbox.payload -1;
+      format = Settings.flag2.time_format;
+    } else {
+      format = 0;  // {"Time":"2019-09-04T14:31:29","Epoch":1567600289}
+      RtcSetTime(XdrvMailbox.payload);
+    }
   }
-  ResponseBeginTime();
+  mqtt_data[0] = '\0';
+  ResponseAppendTimeFormat(format);
   ResponseJsonEnd();
 }
 

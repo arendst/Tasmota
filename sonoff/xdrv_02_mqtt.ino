@@ -894,7 +894,7 @@ void CmndButtonRetain(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       for (uint32_t i = 1; i <= MAX_KEYS; i++) {
-        SendKey(0, i, 9);  // Clear MQTT retain in broker
+        SendKey(KEY_BUTTON, i, CLEAR_RETAIN);  // Clear MQTT retain in broker
       }
     }
     Settings.flag.mqtt_button_retain = XdrvMailbox.payload;
@@ -907,7 +907,7 @@ void CmndSwitchRetain(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       for (uint32_t i = 1; i <= MAX_SWITCHES; i++) {
-        SendKey(1, i, 9);  // Clear MQTT retain in broker
+        SendKey(KEY_SWITCH, i, CLEAR_RETAIN);  // Clear MQTT retain in broker
       }
     }
     Settings.flag.mqtt_switch_retain = XdrvMailbox.payload;

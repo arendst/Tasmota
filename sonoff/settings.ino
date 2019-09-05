@@ -1096,6 +1096,41 @@ void SettingsDelta(void)
       Settings.sbaudrate = Settings.ex_sbaudrate * 4;
     }
 
+    if (Settings.version < 0x0606000A) {
+      uint8_t tuyaindex = 0;
+      if (Settings.param[P_ex_TUYA_DIMMER_ID] > 0) {         // ex SetOption34
+        Settings.tuya_fnid_map[tuyaindex].fnid = 21;         // TUYA_MCU_FUNC_DIMMER - Move Tuya Dimmer Id to Map
+        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_DIMMER_ID];
+        tuyaindex++;
+      } else if (Settings.flag3.tuya_disable_dimmer == 1) {  // ex SetOption65
+        Settings.tuya_fnid_map[tuyaindex].fnid = 11;         // TUYA_MCU_FUNC_REL1 - Create FnID for Switches
+        Settings.tuya_fnid_map[tuyaindex].dpid = 1;
+        tuyaindex++;
+      }
+      if (Settings.param[P_ex_TUYA_RELAYS] > 0) {
+        for (uint8_t i = 0 ; i < Settings.param[P_ex_TUYA_RELAYS]; i++) {  // ex SetOption41
+          Settings.tuya_fnid_map[tuyaindex].fnid = 12 + i;   // TUYA_MCU_FUNC_REL2 -  Create FnID for Switches
+          Settings.tuya_fnid_map[tuyaindex].dpid = i + 2;
+          tuyaindex++;
+        }
+      }
+      if (Settings.param[P_ex_TUYA_POWER_ID] > 0) {          // ex SetOption46
+        Settings.tuya_fnid_map[tuyaindex].fnid = 31;         // TUYA_MCU_FUNC_POWER -  Move Tuya Power Id to Map
+        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_POWER_ID];
+        tuyaindex++;
+      }
+      if (Settings.param[P_ex_TUYA_VOLTAGE_ID] > 0) {        // ex SetOption44
+        Settings.tuya_fnid_map[tuyaindex].fnid = 33;         // TUYA_MCU_FUNC_VOLTAGE - Move Tuya Voltage Id to Map
+        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_VOLTAGE_ID];
+        tuyaindex++;
+      }
+      if (Settings.param[P_ex_TUYA_CURRENT_ID] > 0) {        // ex SetOption45
+        Settings.tuya_fnid_map[tuyaindex].fnid = 32;         // TUYA_MCU_FUNC_CURRENT - Move Tuya Current Id to Map
+        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_CURRENT_ID];
+        tuyaindex++;
+      }
+
+    }
     Settings.version = VERSION;
     SettingsSave(1);
   }
