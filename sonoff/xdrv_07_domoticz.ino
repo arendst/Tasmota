@@ -383,14 +383,19 @@ void DomoticzSensorPowerEnergy(int power, char *energy)
   DomoticzSensor(DZ_POWER_ENERGY, data);
 }
 
-void DomoticzSensorP1SmartMeter(char *usage1, char *usage2, char *return1, char *return2, int consumed, int produced)
+void DomoticzSensorP1SmartMeter(char *usage1, char *usage2, char *return1, char *return2, int power)
 {
   //usage1   = energy usage meter tariff 1, This is an incrementing counter
   //usage2   = energy usage meter tariff 2, This is an incrementing counter
   //return1  = energy return meter tariff 1, This is an incrementing counter
   //return2  = energy return meter tariff 2, This is an incrementing counter
-  //consumed = actual usage power (Watt)
-  //produced = actual return power (Watt)
+  //power    = if >= 0 actual usage power. if < 0 actual return power (Watt)
+  int consumed = power;
+  int produced = 0;
+  if (power < 0) {
+    consumed = 0;
+    produced = -power;
+  }
   char data[64];
   snprintf_P(data, sizeof(data), PSTR("%s;%s;%s;%s;%d;%d"), usage1, usage2, return1, return2, consumed, produced);
   DomoticzSensor(DZ_P1_SMART_METER, data);

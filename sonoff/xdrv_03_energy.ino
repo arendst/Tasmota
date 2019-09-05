@@ -824,7 +824,7 @@ void EnergyShow(bool json)
       char energy_total1_chr[FLOATSZ];
       dtostrfd(Energy.total1 * 1000, 1, energy_total1_chr);  // Tariff1
       char energy_non[2] = "0";
-      DomoticzSensorP1SmartMeter(energy_total1_chr, energy_total_chr, energy_non, energy_non, (int)Energy.active_power, 0);
+      DomoticzSensorP1SmartMeter(energy_total1_chr, energy_total_chr, energy_non, energy_non, (int)Energy.active_power);
 
       if (Energy.voltage_available) {
         DomoticzSensor(DZ_VOLTAGE, voltage_chr);  // Voltage
