@@ -273,8 +273,9 @@ const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses
 // Version 5.2 allow for more flash space
 const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
 
-uint16_t settings_crc = 0;
 uint32_t settings_location = SETTINGS_LOCATION;
+//uint32_t settings_crc32 = 0;
+uint16_t settings_crc = 0;
 uint8_t *settings_buffer = nullptr;
 
 /********************************************************************************************/
@@ -331,6 +332,22 @@ uint16_t GetSettingsCrc(void)
   return crc;
 }
 
+uint32_t GetSettingsCrc32(void)
+{
+  // https://create.stephan-brumme.com/crc32/#bitwise
+  uint32_t crc = 0;
+  uint8_t *bytes = (uint8_t*)&Settings;
+
+  uint32_t length = sizeof(SYSCFG) -4;  // Skip crc
+  while (length--) {
+    crc ^= *bytes++;
+    for (uint32_t j = 0; j < 8; j++) {
+      crc = (crc >> 1) ^ (-int(crc & 1) & 0xEDB88320);
+    }
+  }
+  return ~crc;
+}
+
 void SettingsSaveAll(void)
 {
   if (Settings.flag.save_state) {
@@ -340,9 +357,6 @@ void SettingsSaveAll(void)
   }
   XsnsCall(FUNC_SAVE_BEFORE_RESTART);
   XdrvCall(FUNC_SAVE_BEFORE_RESTART);
-#ifdef USE_EEPROM
-  EepromCommit();
-#endif
   SettingsSave(0);
 }
 
@@ -382,31 +396,17 @@ void SettingsSave(uint8_t rotate)
       }
     }
     Settings.save_flag++;
+    if (UtcTime() > START_VALID_TIME) {
+      Settings.cfg_timestamp = UtcTime();
+    } else {
+      Settings.cfg_timestamp++;
+    }
     Settings.cfg_size = sizeof(SYSCFG);
+//    Settings.cfg_crc32 = GetSettingsCrc32();
     Settings.cfg_crc = GetSettingsCrc();
 
-#ifdef USE_EEPROM
-    if (SPIFFS_END == settings_location) {
-      uint8_t* flash_buffer;
-      flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
-      if (eeprom_data && eeprom_size) {
-        size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
-        memcpy(flash_buffer + flash_offset, eeprom_data, eeprom_size);  // Write dirty EEPROM data
-      } else {
-        ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)flash_buffer, SPI_FLASH_SEC_SIZE);   // Read EEPROM area
-      }
-      memcpy(flash_buffer, &Settings, sizeof(Settings));
-      ESP.flashEraseSector(settings_location);
-      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)flash_buffer, SPI_FLASH_SEC_SIZE);
-      delete[] flash_buffer;
-    } else {
-      ESP.flashEraseSector(settings_location);
-      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    }
-#else
     ESP.flashEraseSector(settings_location);
     ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-#endif  // USE_EEPROM
 
     if (!stop_flash_rotate && rotate) {
       for (uint32_t i = 1; i < CFG_ROTATES; i++) {
@@ -418,6 +418,7 @@ void SettingsSave(uint8_t rotate)
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(SYSCFG));
 
     settings_crc = Settings.cfg_crc;
+//    settings_crc32 = Settings.cfg_crc32;
   }
 #endif  // FIRMWARE_MINIMAL
   RtcSettingsSave();
@@ -1102,7 +1103,7 @@ void SettingsDelta(void)
         Settings.tuya_fnid_map[tuyaindex].fnid = 21;         // TUYA_MCU_FUNC_DIMMER - Move Tuya Dimmer Id to Map
         Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_DIMMER_ID];
         tuyaindex++;
-      } else if (Settings.flag3.tuya_disable_dimmer == 1) {  // ex SetOption65
+      } else if (Settings.flag3.ex_tuya_disable_dimmer == 1) {  // ex SetOption65
         Settings.tuya_fnid_map[tuyaindex].fnid = 11;         // TUYA_MCU_FUNC_REL1 - Create FnID for Switches
         Settings.tuya_fnid_map[tuyaindex].dpid = 1;
         tuyaindex++;
