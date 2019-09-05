@@ -53,7 +53,7 @@ public:
 };
 
 // this template method class is used to track the data being sent on the uart
-// when using our own UART ISR 
+// when using our own UART ISR
 // used with NeoEsp8266Uart and NeoEsp8266AsyncUart classes
 //
 class NeoEsp8266UartInterruptContext : NeoEsp8266UartContext
@@ -77,12 +77,12 @@ public:
 private:
     volatile const uint8_t* _asyncBuff;
     volatile const uint8_t* _asyncBuffEnd;
-    volatile static NeoEsp8266UartInterruptContext* s_uartInteruptContext[2]; 
+    volatile static NeoEsp8266UartInterruptContext* s_uartInteruptContext[2];
 
     static void ICACHE_RAM_ATTR Isr(void* param);
 };
 
-// this template feature class is used a base for all others and contains 
+// this template feature class is used a base for all others and contains
 // common methods
 //
 class UartFeatureBase
@@ -129,7 +129,7 @@ public:
     }
 };
 
-// this template method class is used a base for all others and contains 
+// this template method class is used a base for all others and contains
 // common properties and methods
 //
 // used by NeoEsp8266Uart and NeoEsp8266AsyncUart
@@ -233,14 +233,14 @@ protected:
         }
         // detach context, which will disable intr, may disable ISR
         _context.Detach(T_UARTFEATURE::Index);
-        
+
         free(_pixelsSending);
     }
 
     void ICACHE_RAM_ATTR InitializeUart(uint32_t uartBaud)
     {
         T_UARTFEATURE::Init(uartBaud);
-     
+
         // attach the context, which will enable the ISR
         _context.Attach(T_UARTFEATURE::Index);
     }
@@ -248,7 +248,7 @@ protected:
     void UpdateUart(bool maintainBufferConsistency)
     {
         // Instruct ESP8266 hardware uart to send the pixels asynchronously
-        _context.StartSending(T_UARTFEATURE::Index, 
+        _context.StartSending(T_UARTFEATURE::Index,
             _pixels,
             _pixels + _sizePixels);
 
@@ -264,7 +264,10 @@ protected:
         }
 
         // swap so the user can modify without affecting the async operation
-        std::swap(_pixelsSending, _pixels);
+//        std::swap(_pixelsSending, _pixels);
+        uint8_t *temp = _pixelsSending;
+        _pixelsSending = _pixels;
+        _pixels = temp;
     }
 
 private:
@@ -383,7 +386,7 @@ private:
     };
 };
 
-// uart 0 
+// uart 0
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedWs2812x, NeoEsp8266Uart<UartFeature0, NeoEsp8266UartContext>> NeoEsp8266Uart0Ws2812xMethod;
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedSk6812, NeoEsp8266Uart<UartFeature0, NeoEsp8266UartContext>> NeoEsp8266Uart0Sk6812Method;
 typedef NeoEsp8266UartMethodBase<NeoEsp8266UartSpeedApa106, NeoEsp8266Uart<UartFeature0, NeoEsp8266UartContext>> NeoEsp8266Uart0Apa106Method;
