@@ -541,7 +541,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SM16716_DAT,    // SM16716 DATA
   GPIO_SM16716_SEL,    // SM16716 SELECT
 #endif  // USE_SM16716
-#ifdef USE_TUYA_DIMMER
+#ifdef USE_TUYA_MCU
   GPIO_TUYA_TX,        // Tuya Serial interface
   GPIO_TUYA_RX,        // Tuya Serial interface
 #endif
@@ -749,7 +749,7 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   OBI2,
   MANZOKU_EU_4,
   ESP_SWITCH,          // Switch Devices
-#ifdef USE_TUYA_DIMMER
+#ifdef USE_TUYA_MCU
   TUYA_DIMMER,         // Dimmer Devices
 #endif
 #ifdef USE_ARMTRONIX_DIMMERS
@@ -1728,7 +1728,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO14 Relay SRU 5VDC SDA (0 = Off, 1 = On )
      0, 0, 0
   },
-  { "Tuya Dimmer",     // Tuya Dimmer (ESP8266 w/ separate MCU dimmer)
+  { "Tuya MCU",     // Tuya MCU device (ESP8266 w/ separate MCU)
                        // https://www.amazon.com/gp/product/B07CTNSZZ8/ref=oh_aui_detailpage_o00_s00?ie=UTF8&psc=1
      GPIO_USER,        // Virtual Button (controlled by MCU)
      GPIO_USER,        // GPIO01 MCU serial control

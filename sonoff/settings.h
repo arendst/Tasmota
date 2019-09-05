@@ -185,6 +185,14 @@ typedef struct {
   uint32_t last_return_kWhtotal;
 } EnergyUsage;
 
+
+typedef struct {
+  uint8_t fnid = 0;
+  uint8_t dpid = 0;
+} TuyaFnidDpidMap;
+
+const uint8_t MAX_TUYA_FUNCTIONS = 16;
+
 /*
 struct SYSCFG {
   unsigned long cfg_holder;                // 000 Pre v6 header
@@ -364,10 +372,9 @@ struct SYSCFG {
   uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
-  uint8_t       data8[32];                 // E00
-  uint16_t      data16[16];                // E20
+  TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
 
-  uint8_t       free_e20[448];             // E40
+  uint8_t       free_e20[480];             // E20
 
                                            // FFF last location
 } Settings;
