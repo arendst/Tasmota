@@ -1,4 +1,7 @@
 /*********************************************************************************************\
+ * 6.6.0.10 20190905
+ * Redesign Tuya support by Shantur Rathore (#6353)
+ *
  * 6.6.0.9 20190828
  * Change theoretical baudrate range to 300..19660500 bps in 300 increments (#6294)
  * Add Full support of all protocols in IRremoteESP8266, to be used on dedicated-IR Tasmota version. Warning: +81k Flash when compiling with USE_IR_REMOTE_FULL

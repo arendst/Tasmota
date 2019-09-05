@@ -644,7 +644,7 @@ void CmndSetoption(void)
             param_low = 1;
             param_high = 250;
             break;
-          case P_TUYA_RELAYS:
+          case P_ex_TUYA_RELAYS:
             param_high = 8;
             break;
         }
@@ -662,10 +662,10 @@ void CmndSetoption(void)
               break;
 #endif
 #ifdef USE_TUYA_MCU
-            case P_TUYA_RELAYS:
-            case P_TUYA_POWER_ID:
-            case P_TUYA_CURRENT_ID:
-            case P_TUYA_VOLTAGE_ID:
+//            case P_ex_TUYA_RELAYS:
+//            case P_ex_TUYA_POWER_ID:
+//            case P_ex_TUYA_CURRENT_ID:
+//            case P_ex_TUYA_VOLTAGE_ID:
             case P_TUYA_DIMMER_MAX:
               restart_flag = 2;  // Need a restart to update GUI
               break;

@@ -377,11 +377,11 @@ void TuyaPacketProcess(void)
         }
         else if (Tuya.buffer[5] == 8) {  // Long value packet
           if (fnId == TUYA_MCU_FUNC_DIMMER) {
-            // if (!Settings.param[P_TUYA_DIMMER_ID]) {
+            // if (!Settings.param[P_ex_TUYA_DIMMER_ID]) {
             //   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Autoconfiguring Dimmer ID %d"), Tuya.buffer[6]);
-            //   Settings.param[P_TUYA_DIMMER_ID] = Tuya.buffer[6];
+            //   Settings.param[P_ex_TUYA_DIMMER_ID] = Tuya.buffer[6];
             // }
-            // if (Settings.param[P_TUYA_DIMMER_ID] == Tuya.buffer[6]) {
+            // if (Settings.param[P_ex_TUYA_DIMMER_ID] == Tuya.buffer[6]) {
               AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Dim State=%d"), Tuya.buffer[13]);
               Tuya.new_dim = changeUIntScale((uint8_t) Tuya.buffer[13], 0, Settings.param[P_TUYA_DIMMER_MAX], 0, 100);
               if ((power || Settings.flag3.tuya_apply_o20) && (Tuya.new_dim > 0) && (abs(Tuya.new_dim - Settings.light_dimmer) > 1)) {
