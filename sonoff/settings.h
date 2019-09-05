@@ -372,11 +372,9 @@ struct SYSCFG {
   uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
-  uint8_t       data8[32];                 // E00
-  uint16_t      data16[16];                // E20
-  TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];     // E40    32 bytes
+  TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
 
-  uint8_t       free_e20[416];             // E60
+  uint8_t       free_e20[480];             // E20
 
                                            // FFF last location
 } Settings;
