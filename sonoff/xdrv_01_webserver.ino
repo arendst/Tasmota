@@ -1053,6 +1053,7 @@ bool HandleRootStatusRefresh(void)
 #ifdef USE_SCRIPT_WEB_DISPLAY
   XdrvCall(FUNC_WEB_SENSOR);
 #endif
+
   WSContentSend_P(PSTR("</table>"));
 
   if (devices_present) {
@@ -2350,6 +2351,151 @@ String UrlEncode(const String& text)
 	return encoded;
 }
 
+#ifdef USE_SENDMAIL
+
+#include "sendemail.h"
+
+//SendEmail(const String& host, const int port, const String& user, const String& passwd, const int timeout, const bool ssl);
+//SendEmail::send(const String& from, const String& to, const String& subject, const String& msg)
+// sendmail [server:port:user:passwd:from:to:subject] data
+// sendmail [*:*:*:*:*:to:subject] data uses defines from user_config
+// sendmail currently only works with core 2.4.2
+
+#define SEND_MAIL_MINRAM 19*1024
+
+uint16_t SendMail(char *buffer) {
+  uint16_t count;
+  char *params,*oparams;
+  char *mserv;
+  uint16_t port;
+  char *user;
+  char *pstr;
+  char *passwd;
+  char *from;
+  char *to;
+  char *subject;
+  char *cmd;
+  char secure=0,auth=0;
+  uint16_t status=1;
+  SendEmail *mail=0;
+
+  //DebugFreeMem();
+
+// return if not enough memory
+  uint16_t mem=ESP.getFreeHeap();
+  if (mem<SEND_MAIL_MINRAM) {
+    return 4;
+  }
+
+  while (*buffer==' ') buffer++;
+
+  // copy params
+  oparams=(char*)calloc(strlen(buffer)+2,1);
+  if (!oparams) return 4;
+
+  params=oparams;
+
+  strcpy(params,buffer);
+
+  if (*params=='p') {
+      auth=1;
+      params++;
+  }
+
+  if (*params!='[') {
+      goto exit;
+  }
+  params++;
+
+  mserv=strtok(params,":");
+  if (!mserv) {
+      goto exit;
+  }
+
+  // port
+  pstr=strtok(NULL,":");
+  if (!pstr) {
+      goto exit;
+  }
+
+#ifdef EMAIL_PORT
+  if (*pstr=='*') {
+    port=EMAIL_PORT;
+  } else {
+    port=atoi(pstr);
+  }
+#else
+  port=atoi(pstr);
+#endif
+
+  user=strtok(NULL,":");
+  if (!user) {
+      goto exit;
+  }
+
+  passwd=strtok(NULL,":");
+  if (!passwd) {
+      goto exit;
+  }
+
+  from=strtok(NULL,":");
+  if (!from) {
+      goto exit;
+  }
+
+  to=strtok(NULL,":");
+  if (!to) {
+      goto exit;
+  }
+
+  subject=strtok(NULL,"]");
+  if (!subject) {
+      goto exit;
+  }
+
+  cmd=subject+strlen(subject)+1;
+
+#ifdef EMAIL_USER
+  if (*user=='*') {
+    user=(char*)EMAIL_USER;
+  }
+#endif
+#ifdef EMAIL_PASSWORD
+  if (*passwd=='*') {
+    passwd=(char*)EMAIL_PASSWORD;
+  }
+#endif
+#ifdef EMAIL_SERVER
+  if (*mserv=='*') {
+    mserv=(char*)EMAIL_SERVER;
+  }
+#endif //USE_SENDMAIL
+
+  // auth = 0 => AUTH LOGIN 1 => PLAIN LOGIN
+  // 2 seconds timeout
+  #define MAIL_TIMEOUT 2000
+  mail = new SendEmail(mserv, port,user,passwd, MAIL_TIMEOUT, auth);
+
+#ifdef EMAIL_FROM
+  if (*from=='*') {
+    from=(char*)EMAIL_FROM;
+  }
+#endif
+
+exit:
+  if (mail) {
+    bool result=mail->send(from,to,subject,cmd);
+    delete mail;
+    if (result==true) status=0;
+  }
+
+
+  if (oparams) free(oparams);
+  return status;
+}
+
+#endif
+
 int WebSend(char *buffer)
 {
   // [sonoff] POWER1 ON                                               --> Sends http://sonoff/cm?cmnd=POWER1 ON
@@ -2462,17 +2608,27 @@ bool JsonWebColor(const char* dataBuf)
   return true;
 }
 
-const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND ;
+#define D_CMND_SENDMAIL "sendmail"
+#define D_JSON_MEMORY_ERROR "memory error"
+
+
+const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND "|" D_JSON_MEMORY_ERROR;
 
 const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_EMULATION
   D_CMND_EMULATION "|"
+#endif
+#ifdef USE_SENDMAIL
+  D_CMND_SENDMAIL "|"
 #endif
   D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR;
 
 void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
   &CmndEmulation,
+#endif
+#ifdef USE_SENDMAIL
+  &CmndSendmail,
 #endif
   &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor, &CmndWebSensor };
 
@@ -2499,6 +2655,18 @@ void CmndEmulation(void)
   ResponseCmndNumber(Settings.flag2.emulation);
 }
 #endif  // USE_EMULATION
+
+#ifdef USE_SENDMAIL
+void CmndSendmail(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+      uint8_t result = SendMail(XdrvMailbox.data);
+      char stemp1[20];
+      ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
+  }
+}
+#endif  // USE_SENDMAIL
+
 
 void CmndWebServer(void)
 {
