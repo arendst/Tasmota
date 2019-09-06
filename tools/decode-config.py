@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.2.0029'
+VER = '2.3.0032'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -403,6 +403,11 @@ def MqttFingerprint(value, idx=None):
         fingerprint += "{:02x} ".format(ord(i))
     return "MqttFingerprint{} {}".format('' if idx is None else idx, fingerprint.strip())
 
+def WebSensor(value, idx):
+    cmd=[]
+    for i in range(0,32):
+        cmd.append("WebSensor{} {}".format(i+(idx-1)*32, "1" if (int(value,16) & (1<<i))!=0 else "0"))
+    return cmd
     
 # ----------------------------------------------------------------------
 # Tasmota configuration data definition
@@ -937,7 +942,55 @@ Setting_6_6_0_2.update              ({
     'display_height':               ('<H',  0x776,       (None, None,                           ('Display',     '"DisplayHeight {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_6_0_3 = copy.deepcopy(Setting_6_6_0_2)
+Setting_6_6_0_3['flag3'][0].update ({
+        'pwm_multi_channels':       ('<L', (0x3A0,1,18), (None, None,                           ('SetOption',   '"SetOption68 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_5 = copy.deepcopy(Setting_6_6_0_3)
+Setting_6_6_0_5.update              ({
+    'sensors':                      ('<L',  0x7A4,       ([3],  None,                           ('Wifi',        WebSensor)), '"0x{:08x}".format($)' ),
+                                    })
+Setting_6_6_0_5['flag3'][0].update ({
+        'tuya_dimmer_min_limit':    ('<L', (0x3A0,1,19), (None, None,                           ('SetOption',   '"SetOption69 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_6 = copy.deepcopy(Setting_6_6_0_5)
+Setting_6_6_0_6['flag3'][0].pop('tuya_show_dimmer',None)
+Setting_6_6_0_6['flag3'][0].update ({
+        'tuya_disable_dimmer':      ('<L', (0x3A0,1,15), (None, None,                           ('SetOption',   '"SetOption65 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_7 = copy.deepcopy(Setting_6_6_0_6)
+Setting_6_6_0_7.update              ({
+    'energy_usage':                 ({
+        'usage1_kWhtotal':          ('<L',  0x77C,       (None, None,                           ('Power',       None)) ),
+        'usage1_kWhtoday':          ('<L',  0x780,       (None, None,                           ('Power',       None)) ),
+        'return1_kWhtotal':         ('<L',  0x784,       (None, None,                           ('Power',       None)) ),
+        'return2_kWhtotal':         ('<L',  0x788,       (None, None,                           ('Power',       None)) ),
+        'last_usage_kWhtotal':      ('<L',  0x78C,       (None, None,                           ('Power',       None)) ),
+        'last_return_kWhtotal':     ('<L',  0x790,       (None, None,                           ('Power',       None)) ),
+                                    },      0x77C,       (None, None,                           ('Power',       None)) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_8 = copy.deepcopy(Setting_6_6_0_7)
+Setting_6_6_0_8['flag3'][0].update ({
+        'energy_weekend':           ('<L', (0x3A0,1,20), (None, None,                           ('Power',       '"Tariff3 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_9 = copy.deepcopy(Setting_6_6_0_8)
+Setting_6_6_0_9.update              ({
+    'baudrate':                     ('<H',  0x778,       (None, None,                           ('Serial',      '"Baudrate {}".format($)')), ('$ * 1200','$ / 1200') ),
+    'sbaudrate':                    ('<H',  0x77A,       (None, None,                           ('Serial',      '"SBaudrate {}".format($)')), ('$ * 1200','$ / 1200') ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x6060009,0x1000, Setting_6_6_0_9),
+            (0x6060008,0x1000, Setting_6_6_0_8),
+            (0x6060007,0x1000, Setting_6_6_0_7),
+            (0x6060006, 0xe00, Setting_6_6_0_6),
+            (0x6060005, 0xe00, Setting_6_6_0_5),
+            (0x6060003, 0xe00, Setting_6_6_0_3),
             (0x6060002, 0xe00, Setting_6_6_0_2),
             (0x6060001, 0xe00, Setting_6_6_0_1),
             (0x605000F, 0xe00, Setting_6_5_0_15),
@@ -1810,7 +1863,7 @@ def CmndConverter(valuemapping, value, idx, fielddef):
         field definition - see "Settings dictionary" above
 
     @return:
-        converted value or None if unable to convert
+        converted value, list of values or None if unable to convert
     """
     converter, readconverter, writeconverter, group, tasmotacmnd = GetFieldDef(fielddef, fields='converter, readconverter, writeconverter, group, tasmotacmnd')
 
@@ -2448,6 +2501,8 @@ def SetCmnd(cmnds, fieldname, fielddef, valuemapping, mappedvalue, addroffset=0,
 
     # a simple value
     elif isinstance(format_, (str, bool, int, float, long)):
+        if group is not None:
+            group = group.title();
         if isinstance(tasmotacmnd, tuple):
             tasmotacmnds = tasmotacmnd
             for tasmotacmnd in tasmotacmnds:
@@ -2455,13 +2510,21 @@ def SetCmnd(cmnds, fieldname, fielddef, valuemapping, mappedvalue, addroffset=0,
                 if group is not None and cmnd is not None:
                     if group not in cmnds:
                         cmnds[group] = []
-                    cmnds[group].append(cmnd)
+                    if isinstance(cmnd, list):
+                        for c in cmnd:
+                            cmnds[group].append(c)
+                    else:
+                        cmnds[group].append(cmnd)
         else:
             cmnd = CmndConverter(valuemapping, mappedvalue, idx, fielddef)
             if group is not None and cmnd is not None:
                 if group not in cmnds:
                     cmnds[group] = []
-                cmnds[group].append(cmnd)
+                if isinstance(cmnd, list):
+                    for c in cmnd:
+                        cmnds[group].append(c)
+                else:
+                    cmnds[group].append(cmnd)
 
     return cmnds
 

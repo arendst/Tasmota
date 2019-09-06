@@ -78,12 +78,12 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t no_hold_retain : 1;           // bit 12 (v6.4.1.19) - SetOption62 - Don't use retain flag on HOLD messages
     uint32_t no_power_feedback : 1;        // bit 13 (v6.5.0.9)  - SetOption63 - Don't scan relay power state at restart
     uint32_t use_underscore : 1;           // bit 14 (v6.5.0.12) - SetOption64 - Enable "_" instead of "-" as sensor index separator
-    uint32_t tuya_show_dimmer : 1;		     // bit 15 (v6.5.0.15) - SetOption65 - Enable or Disable Dimmer slider control
+    uint32_t ex_tuya_disable_dimmer : 1;   // bit 15 (v6.5.0.15) - SetOption65 - (Enable or Disable Tuya Serial Dimmer control) - free since 6.6.0.10
     uint32_t tuya_dimmer_range_255 : 1;    // bit 16 (v6.6.0.1)  - SetOption66 - Enable or Disable Dimmer range 255 slider control
     uint32_t buzzer_enable : 1;            // bit 17 (v6.6.0.1)  - SetOption67 - Enable buzzer when available
-    uint32_t spare18 : 1;
-    uint32_t spare19 : 1;
-    uint32_t spare20 : 1;
+    uint32_t pwm_multi_channels : 1;       // bit 18 (v6.6.0.3)  - SetOption68 - Enable multi-channels PWM instead of Color PWM
+    uint32_t tuya_dimmer_min_limit : 1;    // bit 19 (v6.6.0.5)  - SetOption69 - Limits Tuya dimmers to minimum of 10% (25) when enabled.
+    uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
     uint32_t spare21 : 1;
     uint32_t spare22 : 1;
     uint32_t spare23 : 1;
@@ -108,8 +108,7 @@ typedef union {
     uint32_t spare01 : 1;
     uint32_t spare02 : 1;
     uint32_t spare03 : 1;
-    uint32_t spare04 : 1;
-    uint32_t spare05 : 1;
+    uint32_t time_format : 2;              // (v6.6.0.9) - CMND_TIME
     uint32_t calc_resolution : 3;
     uint32_t weight_resolution : 2;
     uint32_t frequency_resolution : 2;
@@ -180,6 +179,23 @@ typedef union {
   };
 } SensorCfg1;
 
+typedef struct {
+  uint32_t usage1_kWhtotal;
+  uint32_t usage1_kWhtoday;
+  uint32_t return1_kWhtotal;
+  uint32_t return2_kWhtotal;
+  uint32_t last_usage_kWhtotal;
+  uint32_t last_return_kWhtotal;
+} EnergyUsage;
+
+
+typedef struct {
+  uint8_t fnid = 0;
+  uint8_t dpid = 0;
+} TuyaFnidDpidMap;
+
+const uint8_t MAX_TUYA_FUNCTIONS = 16;
+
 /*
 struct SYSCFG {
   unsigned long cfg_holder;                // 000 Pre v6 header
@@ -199,7 +215,7 @@ struct SYSCFG {
   int8_t        timezone;                  // 016
   char          ota_url[101];              // 017
   char          mqtt_prefix[3][11];        // 07C
-  uint8_t       baudrate;                  // 09D
+  uint8_t       ex_baudrate;               // 09D - Free since 6.6.0.9
   uint8_t       seriallog_level;           // 09E
   uint8_t       sta_config;                // 09F
   uint8_t       sta_active;                // 0A0
@@ -282,7 +298,7 @@ struct SYSCFG {
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430
   char          serial_delimiter;          // 451
-  uint8_t       sbaudrate;                 // 452
+  uint8_t       ex_sbaudrate;              // 452 - Free since 6.6.0.9
   uint8_t       sleep;                     // 453
   uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
   uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
@@ -339,15 +355,15 @@ struct SYSCFG {
   uint8_t       web_color[18][3];          // 73E
   uint16_t      display_width;             // 774
   uint16_t      display_height;            // 776
-
-  uint8_t       free_778[28];              // 778
-
+  uint16_t      baudrate;                  // 778
+  uint16_t      sbaudrate;                 // 77A
+  EnergyUsage   energy_usage;              // 77C
 //  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries
   uint32_t      adc_param1;                // 794
   uint32_t      adc_param2;                // 798
   int           adc_param3;                // 79C
   uint32_t      monitors;                  // 7A0
-  uint32_t      sensors[3];                // 7A4
+  uint32_t      sensors[3];                // 7A4 Normal WebSensor, Debug SetSensor
   uint32_t      displays;                  // 7B0
   uint32_t      energy_kWhtotal_time;      // 7B4
   unsigned long weight_item;               // 7B8 Weight of one item in gram * 10
@@ -358,32 +374,33 @@ struct SYSCFG {
   unsigned long energy_frequency_calibration;  // 7C8 also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
-  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+  TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
+  uint8_t       free_e20[369];             // E20
   //STB mod
-  byte          free_680[130];             // A80  give me some space to do configuration without override
-  //uint16_t      pid_parameter[4][]             // PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR
-  //float         pid_setpoint[4];
+  //uint16_t      pid_parameter[4][]             // PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR  //float         pid_setpoint[4];
   //float         pid_initial_int[4];
   //uint16_t      pid_update_secs;
   //uint8_t       pid_auto;
   //uint8_t       pid_manual_power;
-  uint8_t       shutter_accuracy;
-  int16_t       shuttercoeff[5][MAX_SHUTTERS];
-  uint8_t       free_681;  // size if the bucket for an interlock. Typically 1..4
-  uint8_t       shutter_invert[MAX_SHUTTERS];
-  uint8_t       shutter_set50percent[MAX_SHUTTERS];
-  power_t       free_682;            // 32 bit array. 1 = relay effected by interlock 0 = relay not effected
-  uint8_t       shutter_startrelay[MAX_SHUTTERS];
-  uint16_t      shutter_opentime[MAX_SHUTTERS];
-  uint16_t      shutter_closetime[MAX_SHUTTERS];
-  uint8_t       shutter_position[MAX_SHUTTERS];              // 49E
-  unsigned long uptime;                    // 748
-  uint8_t       pcf8574_config[8];         // 74B
-  uint8_t       all_relays_inverted;       //
-  uint32_t      deepsleep;                 //
-  uint16_t      pulse_devider[MAX_COUNTERS];     //
+  uint8_t       shutter_accuracy;                //F91
+  int16_t       shuttercoeff[5][MAX_SHUTTERS];   //  F92
+  uint8_t       free_681;                      //FBA  size if the bucket for an interlock. Typically 1..4
+  uint8_t       shutter_invert[MAX_SHUTTERS];       //FBB
+  uint8_t       shutter_set50percent[MAX_SHUTTERS];  //FBF
+  power_t       free_682;            // FC3   32 bit array. 1 = relay effected by interlock 0 = relay not effected
+  uint8_t       shutter_startrelay[MAX_SHUTTERS];   //FC7
+  uint16_t      shutter_opentime[MAX_SHUTTERS];   //FCB
+  uint16_t      shutter_closetime[MAX_SHUTTERS];   //FD3
+  uint8_t       shutter_position[MAX_SHUTTERS];              // FDB
+  unsigned long uptime;                    // FDF
+  uint8_t       pcf8574_config[8];         // FE3
+  uint8_t       all_relays_inverted;       //FEB
+  uint32_t      deepsleep;                 //FEC
+  uint16_t      pulse_devider[MAX_COUNTERS];     //FF0
   //end
-                                           // E00 - FFF free locations
+  uint32_t      cfg_timestamp;             // FF8
+  uint32_t      cfg_crc32;                 // FFC
 } Settings;
 
 struct RTCRBT {
@@ -400,8 +417,9 @@ struct RTCMEM {
   unsigned long energy_kWhtotal;              // 298
   unsigned long pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
+  EnergyUsage   energy_usage;              // 2B0
   //STB mod
-  uint8_t       free_020[44];              // 2B0
+  uint8_t       free_2C8[22];              // 2C8
   int16_t       deepsleep_slip;
   unsigned long nextwakeup;
   unsigned long uptime;
@@ -427,6 +445,7 @@ struct TIME_T {
 struct XDRVMAILBOX {
   bool          grpflg;
   bool          usridx;
+  uint16_t      command_code;
   uint32_t      index;
   uint32_t      data_len;
   int32_t       payload;

@@ -19,6 +19,8 @@
 
 #define XDRV_02                2
 
+// #define DEBUG_DUMP_TLS    // allow dumping of TLS Flash keys
+
 #ifdef USE_MQTT_TLS
   #include "WiFiClientSecureLightBearSSL.h"
   BearSSL::WiFiClientSecure_light *tlsClient;
@@ -26,12 +28,15 @@
   WiFiClient EspClient;                     // Wifi Client
 #endif
 
-const char kMqttCommands[] PROGMEM =
+const char kMqttCommands[] PROGMEM = "|"  // No prefix
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   D_CMND_MQTTFINGERPRINT "|"
 #endif
 #if !defined(USE_MQTT_TLS) || !defined(USE_MQTT_AWS_IOT) // user and password are disabled with AWS IoT
   D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|"
+#endif
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+  D_CMND_TLSKEY "|"
 #endif
   D_CMND_MQTTHOST "|" D_CMND_MQTTPORT "|" D_CMND_MQTTRETRY "|" D_CMND_STATETEXT "|" D_CMND_MQTTCLIENT "|"
   D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
@@ -43,49 +48,50 @@ void (* const MqttCommand[])(void) PROGMEM = {
 #if !defined(USE_MQTT_TLS) || !defined(USE_MQTT_AWS_IOT) // user and password are disabled with AWS IoT
   &CmndMqttUser, &CmndMqttPassword,
 #endif
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+  &CmndTlsKey,
+#endif
   &CmndMqttHost, &CmndMqttPort, &CmndMqttRetry, &CmndStateText, &CmndMqttClient,
   &CmndFullTopic, &CmndPrefix, &CmndGroupTopic, &CmndTopic, &CmndPublish,
   &CmndButtonTopic, &CmndSwitchTopic, &CmndButtonRetain, &CmndSwitchRetain, &CmndPowerRetain, &CmndSensorRetain };
 
-IPAddress mqtt_host_addr;                   // MQTT host IP address
-uint32_t mqtt_host_hash = 0;                // MQTT host name hash
-
-uint16_t mqtt_connect_count = 0;            // MQTT re-connect count
-uint16_t mqtt_retry_counter = 1;            // MQTT connection retry counter
-//stb mod
-uint16_t mqtt_retry_reboot_counter = 1;     // MQTT connection reboot after x unseccesful retries
-// end
-uint8_t mqtt_initial_connection_state = 2;  // MQTT connection messages state
-bool mqtt_connected = false;                // MQTT virtual connection status
-bool mqtt_allowed = false;                  // MQTT enabled and parameters valid
+struct MQTT {
+  uint16_t connect_count = 0;            // MQTT re-connect count
+  uint16_t retry_counter = 1;            // MQTT connection retry counter
+  uint8_t initial_connection_state = 2;  // MQTT connection messages state
+  bool connected = false;                // MQTT virtual connection status
+  bool allowed = false;                  // MQTT enabled and parameters valid
+  //stb mod
+  uint16_t retry_reboot_counter = 1;     // MQTT connection reboot after x unseccesful retries
+  // end
+} Mqtt;
 
 #ifdef USE_MQTT_TLS
-// see https://stackoverflow.com/questions/6357031/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-in-c
-void to_hex(unsigned char * in, size_t insz, char * out, size_t outsz) {
-	unsigned char * pin = in;
-	static const char * hex = "0123456789ABCDEF";
-	char * pout = out;
-	for (; pin < in+insz; pout +=3, pin++) {
-		pout[0] = hex[(*pin>>4) & 0xF];
-		pout[1] = hex[ *pin     & 0xF];
-		pout[2] = ' ';
-		if (pout + 3 - out > outsz){
-			/* Better to truncate output string than overflow buffer */
-			/* it would be still better to either return a status */
-			/* or ensure the target buffer is large enough and it never happen */
-			break;
-		}
-	}
-	pout[-1] = 0;
-}
 
 #ifdef USE_MQTT_AWS_IOT
-namespace aws_iot_privkey {
-  // this is where the Private Key and Certificate are stored
-  extern const br_ec_private_key *AWS_IoT_Private_Key;
-  extern const br_x509_certificate *AWS_IoT_Client_Certificate;
-}
-#endif
+#include <base64.hpp>
+
+const br_ec_private_key *AWS_IoT_Private_Key = nullptr;
+const br_x509_certificate *AWS_IoT_Client_Certificate = nullptr;
+
+class tls_entry_t {
+public:
+  uint32_t name;    // simple 4 letters name. Currently 'skey', 'crt ', 'crt1', 'crt2'
+  uint16_t start;   // start offset
+  uint16_t len;     // len of object
+};                  // 8 bytes
+
+const static uint32_t TLS_NAME_SKEY = 0x2079656B; // 'key ' little endian
+const static uint32_t TLS_NAME_CRT  = 0x20747263; // 'crt ' little endian
+
+class tls_dir_t {
+public:
+  tls_entry_t entry[4];     // 4 entries max, only 4 used today, for future use
+};                          // 4*8 = 64 bytes
+
+tls_dir_t tls_dir;          // memory copy of tls_dir from flash
+
+#endif  // USE_MQTT_AWS_IOT
 
 // A typical AWS IoT endpoint is 50 characters long, it does not fit
 // in MqttHost field (32 chars). We need to concatenate both MqttUser and MqttHost
@@ -146,7 +152,7 @@ void MakeValidMqtt(uint32_t option, char* str)
 #ifdef MQTT_HOST_DISCOVERY
 void MqttDiscoverServer(void)
 {
-  if (!mdns_begun) { return; }
+  if (!Wifi.mdns_begun) { return; }
 
   int n = MDNS.queryService("mqtt", "tcp");  // Search for mqtt service
 
@@ -195,16 +201,17 @@ PubSubClient MqttClient(EspClient);
 void MqttInit(void)
 {
 // stb mod
-mqtt_retry_reboot_counter = Settings.mqtt_retry;
+Mqtt.retry_reboot_counter = Settings.mqtt_retry;
 //end
 #ifdef USE_MQTT_TLS
   tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 
 #ifdef USE_MQTT_AWS_IOT
-  snprintf(AWS_endpoint, sizeof(AWS_endpoint), PSTR("%s%s"), Settings.mqtt_user, Settings.mqtt_host);
+  snprintf_P(AWS_endpoint, sizeof(AWS_endpoint), PSTR("%s%s"), Settings.mqtt_user, Settings.mqtt_host);
 
-  tlsClient->setClientECCert(aws_iot_privkey::AWS_IoT_Client_Certificate,
-                             aws_iot_privkey::AWS_IoT_Private_Key,
+  loadTlsDir();   // load key and certificate data from Flash
+  tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
+                             AWS_IoT_Private_Key,
                              0xFFFF /* all usages, don't care */, 0);
 #endif
 
@@ -288,7 +295,7 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
 
 void MqttRetryCounter(uint8_t value)
 {
-  mqtt_retry_counter = value;
+  Mqtt.retry_counter = value;
 }
 
 void MqttSubscribe(const char *topic)
@@ -449,20 +456,20 @@ void MqttPublishPowerBlinkState(uint32_t device)
 
 uint16_t MqttConnectCount()
 {
-  return mqtt_connect_count;
+  return Mqtt.connect_count;
 }
 
 void MqttDisconnected(int state)
 {
-  mqtt_connected = false;
-  mqtt_retry_counter = Settings.mqtt_retry;
+  Mqtt.connected = false;
+  Mqtt.retry_counter = Settings.mqtt_retry;
 
   MqttClient.disconnect();
 
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), AWS_endpoint, Settings.mqtt_port, state, mqtt_retry_counter);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), AWS_endpoint, Settings.mqtt_port, state, Mqtt.retry_counter);
 #else
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), Settings.mqtt_host, Settings.mqtt_port, state, mqtt_retry_counter);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND), Settings.mqtt_host, Settings.mqtt_port, state, Mqtt.retry_counter);
 #endif
   rules_flag.mqtt_disconnected = 1;
 }
@@ -471,14 +478,14 @@ void MqttConnected(void)
 {
   char stopic[TOPSZ];
 
-  if (mqtt_allowed) {
+  if (Mqtt.allowed) {
     AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
-    mqtt_connected = true;
-    mqtt_retry_counter = 0;
+    Mqtt.connected = true;
+    Mqtt.retry_counter = 0;
     //stb mod
-    mqtt_retry_reboot_counter = Settings.mqtt_retry;
+    Mqtt.retry_reboot_counter = Settings.mqtt_retry;
     //
-    mqtt_connect_count++;
+    Mqtt.connect_count++;
 
     GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
     Response_P(PSTR(D_ONLINE));
@@ -500,7 +507,7 @@ void MqttConnected(void)
     XdrvCall(FUNC_MQTT_SUBSCRIBE);
   }
 
-  if (mqtt_initial_connection_state) {
+  if (Mqtt.initial_connection_state) {
     Response_P(PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
       ModuleName().c_str(), my_version, my_image, GetFallbackTopic_P(stopic, CMND, ""), Settings.mqtt_grptopic);
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
@@ -521,7 +528,7 @@ void MqttConnected(void)
     rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);
   }
-  mqtt_initial_connection_state = 0;
+  Mqtt.initial_connection_state = 0;
 
   global_state.mqtt_down = 0;
   if (Settings.flag.mqtt_enabled) {
@@ -533,18 +540,24 @@ void MqttReconnect(void)
 {
   char stopic[TOPSZ];
 
-  mqtt_allowed = Settings.flag.mqtt_enabled;
-  if (mqtt_allowed) {
+  Mqtt.allowed = Settings.flag.mqtt_enabled;
+  if (Mqtt.allowed) {
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
     MqttDiscoverServer();
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
     if (!strlen(Settings.mqtt_host) || !Settings.mqtt_port) {
-      mqtt_allowed = false;
+      Mqtt.allowed = false;
     }
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+    // don't enable MQTT for AWS IoT if Private Key or Certificate are not set
+    if (!AWS_IoT_Private_Key || !AWS_IoT_Client_Certificate) {
+      Mqtt.allowed = false;
+    }
+#endif
   }
-  if (!mqtt_allowed) {
+  if (!Mqtt.allowed) {
     MqttConnected();
     return;
   }
@@ -555,8 +568,8 @@ void MqttReconnect(void)
 
   AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_ATTEMPTING_CONNECTION));
 
-  mqtt_connected = false;
-  mqtt_retry_counter = Settings.mqtt_retry;
+  Mqtt.connected = false;
+  Mqtt.retry_counter = Settings.mqtt_retry;
   global_state.mqtt_down = 1;
 
   char *mqtt_user = nullptr;
@@ -575,12 +588,16 @@ void MqttReconnect(void)
   MqttClient.setClient(EspClient);
 #endif
 
-  if (2 == mqtt_initial_connection_state) {  // Executed once just after power on and wifi is connected
-    mqtt_initial_connection_state = 1;
+  if (2 == Mqtt.initial_connection_state) {  // Executed once just after power on and wifi is connected
+    Mqtt.initial_connection_state = 1;
   }
 
   MqttClient.setCallback(MqttDataHandler);
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+  // re-assign private keys in case it was updated in between
+  tlsClient->setClientECCert(AWS_IoT_Client_Certificate,
+                             AWS_IoT_Private_Key,
+                             0xFFFF /* all usages, don't care */, 0);
   MqttClient.setServer(AWS_endpoint, Settings.mqtt_port);
 #else
   MqttClient.setServer(Settings.mqtt_host, Settings.mqtt_port);
@@ -600,7 +617,6 @@ void MqttReconnect(void)
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "AWS IoT endpoint: %s"), AWS_endpoint);
   //if (MqttClient.connect(mqtt_client, nullptr, nullptr, nullptr, 0, false, nullptr)) {
-  // boolean connect(const char* id, const char* user, const char* pass, const char* willTopic, uint8_t willQos, boolean willRetain, const char* willMessage, boolean cleanSession);
   if (MqttClient.connect(mqtt_client, nullptr, nullptr, stopic, 1, false, mqtt_data, MQTT_CLEAN_SESSION)) {
 #else
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data, MQTT_CLEAN_SESSION)) {
@@ -614,7 +630,7 @@ void MqttReconnect(void)
 #ifndef USE_MQTT_TLS_CA_CERT  // don't bother with fingerprints if using CA validation
     // create a printable version of the fingerprint received
     char buf_fingerprint[64];
-    to_hex((unsigned char *)tlsClient->getRecvPubKeyFingerprint(), 20, buf_fingerprint, 64);
+    ToHex_P((unsigned char *)tlsClient->getRecvPubKeyFingerprint(), 20, buf_fingerprint, sizeof(buf_fingerprint), ' ');
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT "Server fingerprint: %s"), buf_fingerprint);
 
     if (learn_fingerprint1 || learn_fingerprint2) {
@@ -644,20 +660,19 @@ void MqttReconnect(void)
 #endif // USE_MQTT_TLS
     MqttConnected();
     //stb mod
-    mqtt_retry_reboot_counter = Settings.mqtt_retry;
+    Mqtt.retry_reboot_counter = Settings.mqtt_retry;
     //end
   } else {
 #ifdef USE_MQTT_TLS
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connection error: %d"), tlsClient->getLastError());
-
 #endif
     //stb mod
-    mqtt_retry_reboot_counter--;
-    if (!mqtt_retry_reboot_counter) {
+    Mqtt.retry_reboot_counter--;
+    if (!Mqtt.retry_reboot_counter) {
       AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_APPLICATION D_RESTARTING));
       EspRestart();
     } else {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Unsuccessful. %d until reboot"), mqtt_retry_reboot_counter);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Unsuccessful. %d until reboot"), Mqtt.retry_reboot_counter);
     }
     //
     MqttDisconnected(MqttClient.state());  // status codes are documented here http://pubsubclient.knolleary.net/api.html#state
@@ -669,22 +684,22 @@ void MqttCheck(void)
   if (Settings.flag.mqtt_enabled) {
     if (!MqttIsConnected()) {
       global_state.mqtt_down = 1;
-      if (!mqtt_retry_counter) {
+      if (!Mqtt.retry_counter) {
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
-        if (!strlen(Settings.mqtt_host) && !mdns_begun) { return; }
+        if (!strlen(Settings.mqtt_host) && !Wifi.mdns_begun) { return; }
 #endif  // MQTT_HOST_DISCOVERY
 #endif  // USE_DISCOVERY
         MqttReconnect();
       } else {
-        mqtt_retry_counter--;
+        Mqtt.retry_counter--;
       }
     } else {
       global_state.mqtt_down = 0;
     }
   } else {
     global_state.mqtt_down = 0;
-    if (mqtt_initial_connection_state) MqttReconnect();
+    if (Mqtt.initial_connection_state) MqttReconnect();
   }
 }
 
@@ -705,11 +720,7 @@ void CmndMqttFingerprint(void)
       }
       restart_flag = 2;
     }
-    fingerprint[0] = '\0';
-    for (uint32_t i = 0; i < sizeof(Settings.mqtt_fingerprint[XdrvMailbox.index -1]); i++) {
-      snprintf_P(fingerprint, sizeof(fingerprint), PSTR("%s%s%02X"), fingerprint, (i) ? " " : "", Settings.mqtt_fingerprint[XdrvMailbox.index -1][i]);
-    }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, fingerprint);
+    ResponseCmndIdxChar(ToHex_P((unsigned char *)Settings.mqtt_fingerprint[XdrvMailbox.index -1], 20, fingerprint, sizeof(fingerprint), ' '));
   }
 }
 #endif
@@ -721,14 +732,14 @@ void CmndMqttUser(void)
     strlcpy(Settings.mqtt_user, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_USER : XdrvMailbox.data, sizeof(Settings.mqtt_user));
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_user);
+  ResponseCmndChar(Settings.mqtt_user);
 }
 
 void CmndMqttPassword(void)
 {
   if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_pwd))) {
     strlcpy(Settings.mqtt_pwd, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_PASS : XdrvMailbox.data, sizeof(Settings.mqtt_pwd));
-    Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_pwd);
+    ResponseCmndChar(Settings.mqtt_pwd);
     restart_flag = 2;
   } else {
     Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
@@ -759,16 +770,16 @@ void CmndMqttPort(void)
     Settings.mqtt_port = (1 == XdrvMailbox.payload) ? MQTT_PORT : XdrvMailbox.payload;
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.mqtt_port);
+  ResponseCmndNumber(Settings.mqtt_port);
 }
 
 void CmndMqttRetry(void)
 {
   if ((XdrvMailbox.payload >= MQTT_RETRY_SECS) && (XdrvMailbox.payload < 32001)) {
     Settings.mqtt_retry = XdrvMailbox.payload;
-    mqtt_retry_counter = Settings.mqtt_retry;
+    Mqtt.retry_counter = Settings.mqtt_retry;
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.mqtt_retry);
+  ResponseCmndNumber(Settings.mqtt_retry);
 }
 
 void CmndStateText(void)
@@ -780,7 +791,7 @@ void CmndStateText(void)
       }
       strlcpy(Settings.state_text[XdrvMailbox.index -1], XdrvMailbox.data, sizeof(Settings.state_text[0]));
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, GetStateText(XdrvMailbox.index -1));
+    ResponseCmndIdxChar(GetStateText(XdrvMailbox.index -1));
   }
 }
 
@@ -790,7 +801,7 @@ void CmndMqttClient(void)
     strlcpy(Settings.mqtt_client, (SC_DEFAULT == Shortcut()) ? MQTT_CLIENT_ID : XdrvMailbox.data, sizeof(Settings.mqtt_client));
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_client);
+  ResponseCmndChar(Settings.mqtt_client);
 }
 
 void CmndFullTopic(void)
@@ -807,7 +818,7 @@ void CmndFullTopic(void)
       restart_flag = 2;
     }
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_fulltopic);
+  ResponseCmndChar(Settings.mqtt_fulltopic);
 }
 
 void CmndPrefix(void)
@@ -819,7 +830,7 @@ void CmndPrefix(void)
 //      if (Settings.mqtt_prefix[XdrvMailbox.index -1][strlen(Settings.mqtt_prefix[XdrvMailbox.index -1])] == '/') Settings.mqtt_prefix[XdrvMailbox.index -1][strlen(Settings.mqtt_prefix[XdrvMailbox.index -1])] = 0;
       restart_flag = 2;
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.mqtt_prefix[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(Settings.mqtt_prefix[XdrvMailbox.index -1]);
   }
 }
 
@@ -837,7 +848,7 @@ void CmndPublish(void)
         mqtt_data[0] = '\0';
       }
       MqttPublishDirect(stemp1, (XdrvMailbox.index == 2));
-//        Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+//      ResponseCmndDone();
       mqtt_data[0] = '\0';
     }
   }
@@ -851,7 +862,7 @@ void CmndGroupTopic(void)
     strlcpy(Settings.mqtt_grptopic, (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data, sizeof(Settings.mqtt_grptopic));
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_grptopic);
+  ResponseCmndChar(Settings.mqtt_grptopic);
 }
 
 void CmndTopic(void)
@@ -868,7 +879,7 @@ void CmndTopic(void)
       restart_flag = 2;
     }
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_topic);
+  ResponseCmndChar(Settings.mqtt_topic);
 }
 
 void CmndButtonTopic(void)
@@ -883,7 +894,7 @@ void CmndButtonTopic(void)
       default: strlcpy(Settings.button_topic, XdrvMailbox.data, sizeof(Settings.button_topic));
     }
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.button_topic);
+  ResponseCmndChar(Settings.button_topic);
 }
 
 void CmndSwitchTopic(void)
@@ -898,7 +909,7 @@ void CmndSwitchTopic(void)
       default: strlcpy(Settings.switch_topic, XdrvMailbox.data, sizeof(Settings.switch_topic));
     }
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.switch_topic);
+  ResponseCmndChar(Settings.switch_topic);
 }
 
 void CmndButtonRetain(void)
@@ -906,12 +917,12 @@ void CmndButtonRetain(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       for (uint32_t i = 1; i <= MAX_KEYS; i++) {
-        SendKey(0, i, 9);  // Clear MQTT retain in broker
+        SendKey(KEY_BUTTON, i, CLEAR_RETAIN);  // Clear MQTT retain in broker
       }
     }
     Settings.flag.mqtt_button_retain = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag.mqtt_button_retain));
+  ResponseCmndStateText(Settings.flag.mqtt_button_retain);
 }
 
 void CmndSwitchRetain(void)
@@ -919,12 +930,12 @@ void CmndSwitchRetain(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       for (uint32_t i = 1; i <= MAX_SWITCHES; i++) {
-        SendKey(1, i, 9);  // Clear MQTT retain in broker
+        SendKey(KEY_SWITCH, i, CLEAR_RETAIN);  // Clear MQTT retain in broker
       }
     }
     Settings.flag.mqtt_switch_retain = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag.mqtt_switch_retain));
+  ResponseCmndStateText(Settings.flag.mqtt_switch_retain);
 }
 
 void CmndPowerRetain(void)
@@ -941,7 +952,7 @@ void CmndPowerRetain(void)
     }
     Settings.flag.mqtt_power_retain = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag.mqtt_power_retain));
+  ResponseCmndStateText(Settings.flag.mqtt_power_retain);
 }
 
 void CmndSensorRetain(void)
@@ -954,8 +965,193 @@ void CmndSensorRetain(void)
     }
     Settings.flag.mqtt_sensor_retain = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, GetStateText(Settings.flag.mqtt_sensor_retain));
+  ResponseCmndStateText(Settings.flag.mqtt_sensor_retain);
 }
+
+/*********************************************************************************************\
+ * TLS private key and certificate - store into Flash
+\*********************************************************************************************/
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+
+const static uint16_t tls_spi_start_sector = SPIFFS_END + 4;  // 0xXXFF
+const static uint8_t* tls_spi_start    = (uint8_t*) ((tls_spi_start_sector * SPI_FLASH_SEC_SIZE) + 0x40200000);  // 0x40XFF000
+const static size_t   tls_spi_len      = 0x1000;  // 4kb blocs
+const static size_t   tls_block_offset = 0x0400;
+const static size_t   tls_block_len    = 0x0400;   // 1kb
+const static size_t   tls_obj_store_offset = tls_block_offset + sizeof(tls_dir_t);
+
+
+inline void TlsEraseBuffer(uint8_t *buffer) {
+  memset(buffer + tls_block_offset, 0xFF, tls_block_len);
+}
+
+// static data structures for Private Key and Certificate, only the pointer
+// to binary data will change to a region in SPI Flash
+static br_ec_private_key EC = {
+	23,
+	nullptr, 0
+};
+
+static br_x509_certificate CHAIN[] = {
+	{ nullptr, 0 }
+};
+
+// load a copy of the tls_dir from flash into ram
+// and calculate the appropriate data structures for AWS_IoT_Private_Key and AWS_IoT_Client_Certificate
+void loadTlsDir(void) {
+  memcpy_P(&tls_dir, tls_spi_start + tls_block_offset, sizeof(tls_dir));
+
+  // calculate the addresses for Key and Cert in Flash
+  if ((TLS_NAME_SKEY == tls_dir.entry[0].name) && (tls_dir.entry[0].len > 0)) {
+    EC.x = (unsigned char *)(tls_spi_start + tls_obj_store_offset + tls_dir.entry[0].start);
+    EC.xlen = tls_dir.entry[0].len;
+    AWS_IoT_Private_Key = &EC;
+  } else {
+    AWS_IoT_Private_Key = nullptr;
+  }
+  if ((TLS_NAME_CRT == tls_dir.entry[1].name) && (tls_dir.entry[1].len > 0)) {
+    CHAIN[0].data = (unsigned char *) (tls_spi_start + tls_obj_store_offset + tls_dir.entry[1].start);
+    CHAIN[0].data_len = tls_dir.entry[1].len;
+    AWS_IoT_Client_Certificate = CHAIN;
+  } else {
+    AWS_IoT_Client_Certificate = nullptr;
+  }
+//Serial.printf("AWS_IoT_Private_Key = %x, AWS_IoT_Client_Certificate = %x\n", AWS_IoT_Private_Key, AWS_IoT_Client_Certificate);
+}
+
+const char ALLOCATE_ERROR[] PROGMEM = "TLSKey " D_JSON_ERROR ": cannot allocate buffer.";
+
+void CmndTlsKey(void) {
+#ifdef DEBUG_DUMP_TLS
+  if (0 == XdrvMailbox.index){
+    CmndTlsDump();
+  }
+#endif  // DEBUG_DUMP_TLS
+  if ((XdrvMailbox.index >= 1) && (XdrvMailbox.index <= 2)) {
+    tls_dir_t *tls_dir_write;
+
+    if (XdrvMailbox.data_len > 0) {   // write new value
+      // first copy SPI buffer into ram
+      uint8_t *spi_buffer = (uint8_t*) malloc(tls_spi_len);
+      if (!spi_buffer) {
+        AddLog_P(LOG_LEVEL_ERROR, ALLOCATE_ERROR);
+        return;
+      }
+      memcpy_P(spi_buffer, tls_spi_start, tls_spi_len);
+
+      // allocate buffer for decoded base64
+      uint32_t bin_len = decode_base64_length((unsigned char*)XdrvMailbox.data);
+      uint8_t  *bin_buf = nullptr;
+      if (bin_len > 0) {
+        bin_buf = (uint8_t*) malloc(bin_len + 4);
+        if (!bin_buf) {
+          AddLog_P(LOG_LEVEL_ERROR, ALLOCATE_ERROR);
+          free(spi_buffer);
+          return;
+        }
+      }
+
+      // decode base64
+      if (bin_len > 0) {
+        decode_base64((unsigned char*)XdrvMailbox.data, bin_buf);
+      }
+
+      // address of writable tls_dir in buffer
+      tls_dir_write = (tls_dir_t*) (spi_buffer + tls_block_offset);
+
+      if (1 == XdrvMailbox.index) {
+        // Try to write Private key
+        // Start by erasing all
+        TlsEraseBuffer(spi_buffer);   // Erase any previously stored data
+        if (bin_len > 0) {
+          if (bin_len != 32) {
+            // no private key was previously stored, abort
+            AddLog_P2(LOG_LEVEL_INFO, PSTR("TLSKey: Certificate must be 32 bytes: %d."), bin_len);
+            free(spi_buffer);
+            free(bin_buf);
+            return;
+          }
+          tls_entry_t *entry = &tls_dir_write->entry[0];
+          entry->name = TLS_NAME_SKEY;
+          entry->start = 0;
+          entry->len = bin_len;
+          memcpy(spi_buffer + tls_obj_store_offset + entry->start, bin_buf, entry->len);
+        } else {
+          // if lenght is zero, simply erase this SPI flash area
+        }
+      } else if (2 == XdrvMailbox.index) {
+        // Try to write Certificate
+        if (TLS_NAME_SKEY != tls_dir.entry[0].name) {
+          // no private key was previously stored, abort
+          AddLog_P(LOG_LEVEL_INFO, PSTR("TLSKey: cannot store Cert if no Key previously stored."));
+          free(spi_buffer);
+          free(bin_buf);
+          return;
+        }
+        if (bin_len <= 256) {
+          // Certificate lenght too short
+          AddLog_P2(LOG_LEVEL_INFO, PSTR("TLSKey: Certificate length too short: %d."), bin_len);
+          free(spi_buffer);
+          free(bin_buf);
+          return;
+        }
+        tls_entry_t *entry = &tls_dir_write->entry[1];
+        entry->name = TLS_NAME_CRT;
+        entry->start = (tls_dir_write->entry[0].start + tls_dir_write->entry[0].len + 3) & ~0x03; // align to 4 bytes boundary
+        entry->len = bin_len;
+        memcpy(spi_buffer + tls_obj_store_offset + entry->start, bin_buf, entry->len);
+      }
+
+      TlsWriteSpiBuffer(spi_buffer);
+      free(spi_buffer);
+      free(bin_buf);
+    }
+
+    loadTlsDir();   // reload into memory any potential change
+    Response_P(PSTR("{\"%s1\":%d,\"%s2\":%d}"),
+      XdrvMailbox.command, AWS_IoT_Private_Key ? tls_dir.entry[0].len : -1,
+      XdrvMailbox.command, AWS_IoT_Client_Certificate ? tls_dir.entry[1].len : -1);
+  }
+}
+
+
+extern "C" {
+#include "spi_flash.h"
+}
+
+void TlsWriteSpiBuffer(uint8_t *buf) {
+  bool ret = false;
+  SpiFlashOpResult res;
+
+  noInterrupts();
+  res = spi_flash_erase_sector(tls_spi_start_sector);
+  if (SPI_FLASH_RESULT_OK == res) {
+    res = spi_flash_write(tls_spi_start_sector * SPI_FLASH_SEC_SIZE, (uint32_t*) buf, SPI_FLASH_SEC_SIZE);
+    if (SPI_FLASH_RESULT_OK == res) {
+      ret = true;
+    }
+  }
+  interrupts();
+}
+
+#ifdef DEBUG_DUMP_TLS
+// Dump TLS Flash data - don't activate in production to protect your private keys
+uint32_t bswap32(uint32_t x) {
+	return	((x << 24) & 0xff000000 ) |
+		((x <<  8) & 0x00ff0000 ) |
+		((x >>  8) & 0x0000ff00 ) |
+		((x >> 24) & 0x000000ff );
+}
+void CmndTlsDump(void) {
+  uint32_t start = (uint32_t)tls_spi_start + tls_block_offset;
+  uint32_t end   = start + tls_block_len -1;
+  for (uint32_t pos = start; pos < end; pos += 0x10) {
+      uint32_t* values = (uint32_t*)(pos);
+      Serial.printf_P(PSTR("%08x:  %08x %08x %08x %08x\n"), pos, bswap32(values[0]), bswap32(values[1]), bswap32(values[2]), bswap32(values[3]));
+  }
+}
+#endif  // DEBUG_DUMP_TLS
+#endif
 
 /*********************************************************************************************\
  * Presentation
@@ -1084,11 +1280,7 @@ bool Xdrv02(uint8_t function)
         break;
 #endif  // USE_WEBSERVER
       case FUNC_COMMAND:
-        int command_code = GetCommand(kMqttCommands);
-        if (command_code >= 0) {
-          MqttCommand[command_code]();
-          result = true;
-        }
+        result = DecodeCommand(kMqttCommands, MqttCommand);
         break;
     }
   }

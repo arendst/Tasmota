@@ -52,7 +52,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.5.0.7
+ * Updated until v6.6.0.4
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -424,7 +424,8 @@
   #define D_DOMOTICZ_VOLTAGE "Voltage/PM2.5"
   #define D_DOMOTICZ_CURRENT "Current/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
-  #define D_DOMOTICZ_UPDATE_TIMER "Update Zeitplan"
+  #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
+#define D_DOMOTICZ_UPDATE_TIMER "Update Zeitplan"
 
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "Zeitplan konfigurieren"
@@ -484,7 +485,7 @@
 // xsns_18_pms5003.ino
 #define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
-#define D_PARTICALS_BEYOND "Particals"
+#define D_PARTICALS_BEYOND "Partikel"
 
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Beschl. X-Achse"
@@ -611,6 +612,14 @@
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 #define D_SENSOR_BUZZER        "Buzzer"
 #define D_SENSOR_OLED_RESET    "OLED Reset"
+#define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
+#define D_SENSOR_ZIGBEE_RXD    "Zigbee Rx"
+#define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
+#define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_IBEACON_TX    "iBeacon TX"
+#define D_SENSOR_IBEACON_RX    "iBeacon RX"
+#define D_SENSOR_RDM6300_RX    "RDM6300 RX"
+#define D_SENSOR_CC1101_CS     "CC1101 CS"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -680,5 +689,29 @@
 #define D_TOTAL_REACTIVE  "Total Blind"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Grad"
+
+//SOLAXX1
+#define D_PV1_VOLTAGE     "PV1 Spannung"
+#define D_PV1_CURRENT     "PV1 Strom"
+#define D_PV1_POWER       "PV1 Leistung"
+#define D_PV2_VOLTAGE     "PV2 Spannung"
+#define D_PV2_CURRENT     "PV2 Strom"
+#define D_PV2_POWER       "PV2 Leistung"
+#define D_SOLAR_POWER     "solare Leistung"
+#define D_INVERTER_POWER  "Inverter Leistung"
+#define D_STATUS          "Status"
+#define D_WAITING         "warten"
+#define D_CHECKING        "prüfen"
+#define D_WORKING         "arbeitet"
+#define D_FAILURE         "Fehler"
+#define D_SOLAX_ERROR_0   "Kein Fehler Code"
+#define D_SOLAX_ERROR_1   "Fehler im Solarstromnetz"
+#define D_SOLAX_ERROR_2   "Spannungsfehler im Solarstromnetz"
+#define D_SOLAX_ERROR_3   "Frequenzfehler im Solarstromnetz"
+#define D_SOLAX_ERROR_4   "Pv Spannungsfehler"
+#define D_SOLAX_ERROR_5   "Isolationsfehler"
+#define D_SOLAX_ERROR_6   "Übertemperatur"
+#define D_SOLAX_ERROR_7   "Lüfterfehler"
+#define D_SOLAX_ERROR_8   "sonstiger Fehler"
 
 #endif  // _LANGUAGE_DE_DE_H_

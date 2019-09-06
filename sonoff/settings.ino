@@ -125,6 +125,18 @@
 #ifndef ENERGY_OVERTEMP
 #define ENERGY_OVERTEMP             90         // Overtemp in Celsius
 #endif
+#ifndef TUYA_DIMMER_MAX
+#define TUYA_DIMMER_MAX             100
+#endif
+#ifndef ENERGY_TARIFF1_HOUR
+#define ENERGY_TARIFF1_HOUR         23         // Start hour "nighttime" or "off-peak" tariff
+#endif
+#ifndef ENERGY_TARIFF2_HOUR
+#define ENERGY_TARIFF2_HOUR         7          // Start hour "daytime" or "standard" tariff
+#endif
+#ifndef ENERGY_TARIFF_WEEKEND
+#define ENERGY_TARIFF_WEEKEND       1          // 0 = No difference in weekend, 1 = off-peak during weekend
+#endif
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -181,6 +193,7 @@ void RtcSettingsLoad(void)
     //end
     RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
     RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
+    RtcSettings.energy_usage = Settings.energy_usage;
     for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
       RtcSettings.pulse_counter[i] = Settings.pulse_counter[i];
     }
@@ -264,143 +277,9 @@ const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses
 // Version 5.2 allow for more flash space
 const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
 
-/*********************************************************************************************\
- * Optional EEPROM support based on EEPROM library and tuned for Tasmota
-\*********************************************************************************************/
-//#define USE_EEPROM
-#ifdef USE_EEPROM
-
-uint32_t eeprom_sector = SPIFFS_END;
-uint8_t* eeprom_data = 0;
-size_t eeprom_size = 0;
-bool eeprom_dirty = false;
-
-void EepromBegin(size_t size)
-{
-  if (size <= 0) { return; }
-  if (size > SPI_FLASH_SEC_SIZE - sizeof(Settings) -4) { size = SPI_FLASH_SEC_SIZE - sizeof(Settings) -4; }
-  size = (size + 3) & (~3);
-
-  // In case begin() is called a 2nd+ time, don't reallocate if size is the same
-  if (eeprom_data && size != eeprom_size) {
-    delete[] eeprom_data;
-    eeprom_data = new uint8_t[size];
-  } else if (!eeprom_data) {
-    eeprom_data = new uint8_t[size];
-  }
-  eeprom_size = size;
-
-  size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
-  uint8_t* flash_buffer;
-  flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
-  noInterrupts();
-  spi_flash_read(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE);
-  interrupts();
-  memcpy(eeprom_data, flash_buffer + flash_offset, eeprom_size);
-  delete[] flash_buffer;
-
-  eeprom_dirty = false;  // make sure dirty is cleared in case begin() is called 2nd+ time
-}
-
-size_t EepromLength(void)
-{
-  return eeprom_size;
-}
-
-uint8_t EepromRead(int const address)
-{
-  if (address < 0 || (size_t)address >= eeprom_size) { return 0; }
-  if (!eeprom_data) { return 0; }
-
-  return eeprom_data[address];
-}
-
-// Prototype needed for Arduino IDE - https://forum.arduino.cc/index.php?topic=406509.0
-template<typename T> T EepromGet(int const address, T &t);
-template<typename T> T EepromGet(int const address, T &t)
-{
-  if (address < 0 || address + sizeof(T) > eeprom_size) { return t; }
-  if (!eeprom_data) { return 0; }
-
-  memcpy((uint8_t*) &t, eeprom_data + address, sizeof(T));
-  return t;
-}
-
-void EepromWrite(int const address, uint8_t const value)
-{
-  if (address < 0 || (size_t)address >= eeprom_size) { return; }
-  if (!eeprom_data) { return; }
-
-  // Optimise eeprom_dirty. Only flagged if data written is different.
-  uint8_t* pData = &eeprom_data[address];
-  if (*pData != value) {
-    *pData = value;
-    eeprom_dirty = true;
-  }
-}
-
-// Prototype needed for Arduino IDE - https://forum.arduino.cc/index.php?topic=406509.0
-template<typename T> void EepromPut(int const address, const T &t);
-template<typename T> void EepromPut(int const address, const T &t)
-{
-  if (address < 0 || address + sizeof(T) > eeprom_size) { return; }
-  if (!eeprom_data) { return; }
-
-  // Optimise eeprom_dirty. Only flagged if data written is different.
-  if (memcmp(eeprom_data + address, (const uint8_t*)&t, sizeof(T)) != 0) {
-    eeprom_dirty = true;
-    memcpy(eeprom_data + address, (const uint8_t*)&t, sizeof(T));
-  }
-}
-
-bool EepromCommit(void)
-{
-  bool ret = false;
-  if (!eeprom_size) { return false; }
-  if (!eeprom_dirty) { return true; }
-  if (!eeprom_data) { return false; }
-
-  size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
-  uint8_t* flash_buffer;
-  flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
-  noInterrupts();
-  spi_flash_read(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE);
-  memcpy(flash_buffer + flash_offset, eeprom_data, eeprom_size);
-  if (spi_flash_erase_sector(eeprom_sector) == SPI_FLASH_RESULT_OK) {
-    if (spi_flash_write(eeprom_sector * SPI_FLASH_SEC_SIZE, reinterpret_cast<uint32_t*>(flash_buffer), SPI_FLASH_SEC_SIZE) == SPI_FLASH_RESULT_OK) {
-      eeprom_dirty = false;
-      ret = true;
-    }
-  }
-  interrupts();
-  delete[] flash_buffer;
-
-  return ret;
-}
-
-uint8_t * EepromGetDataPtr()
-{
-  eeprom_dirty = true;
-  return &eeprom_data[0];
-}
-
-void EepromEnd(void)
-{
-  if (!eeprom_size) { return; }
-
-  EepromCommit();
-  if (eeprom_data) {
-    delete[] eeprom_data;
-  }
-  eeprom_data = 0;
-  eeprom_size = 0;
-  eeprom_dirty = false;
-}
-#endif  // USE_EEPROM
-/********************************************************************************************/
-
-uint16_t settings_crc = 0;
 uint32_t settings_location = SETTINGS_LOCATION;
+//uint32_t settings_crc32 = 0;
+uint16_t settings_crc = 0;
 uint8_t *settings_buffer = nullptr;
 
 /********************************************************************************************/
@@ -449,10 +328,28 @@ uint16_t GetSettingsCrc(void)
   uint16_t crc = 0;
   uint8_t *bytes = (uint8_t*)&Settings;
 
-  for (uint32_t i = 0; i < sizeof(SYSCFG); i++) {
+  // Fix miscalculation if previous Settings was 3584 and current Settings is 4096 as of 0x06060007
+  uint32_t size = (Settings.version < 0x06060007) ? 3584 : sizeof(SYSCFG);
+  for (uint32_t i = 0; i < size; i++) {
     if ((i < 14) || (i > 15)) { crc += bytes[i]*(i+1); }  // Skip crc
   }
   return crc;
+}
+
+uint32_t GetSettingsCrc32(void)
+{
+  // https://create.stephan-brumme.com/crc32/#bitwise
+  uint32_t crc = 0;
+  uint8_t *bytes = (uint8_t*)&Settings;
+
+  uint32_t length = sizeof(SYSCFG) -4;  // Skip crc
+  while (length--) {
+    crc ^= *bytes++;
+    for (uint32_t j = 0; j < 8; j++) {
+      crc = (crc >> 1) ^ (-int(crc & 1) & 0xEDB88320);
+    }
+  }
+  return ~crc;
 }
 
 void SettingsSaveAll(void)
@@ -464,9 +361,6 @@ void SettingsSaveAll(void)
   }
   XsnsCall(FUNC_SAVE_BEFORE_RESTART);
   XdrvCall(FUNC_SAVE_BEFORE_RESTART);
-#ifdef USE_EEPROM
-  EepromCommit();
-#endif
   SettingsSave(0);
 }
 
@@ -506,31 +400,17 @@ void SettingsSave(uint8_t rotate)
       }
     }
     Settings.save_flag++;
+    if (UtcTime() > START_VALID_TIME) {
+      Settings.cfg_timestamp = UtcTime();
+    } else {
+      Settings.cfg_timestamp++;
+    }
     Settings.cfg_size = sizeof(SYSCFG);
+//    Settings.cfg_crc32 = GetSettingsCrc32();
     Settings.cfg_crc = GetSettingsCrc();
 
-#ifdef USE_EEPROM
-    if (SPIFFS_END == settings_location) {
-      uint8_t* flash_buffer;
-      flash_buffer = new uint8_t[SPI_FLASH_SEC_SIZE];
-      if (eeprom_data && eeprom_size) {
-        size_t flash_offset = SPI_FLASH_SEC_SIZE - eeprom_size;
-        memcpy(flash_buffer + flash_offset, eeprom_data, eeprom_size);  // Write dirty EEPROM data
-      } else {
-        ESP.flashRead(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)flash_buffer, SPI_FLASH_SEC_SIZE);   // Read EEPROM area
-      }
-      memcpy(flash_buffer, &Settings, sizeof(Settings));
-      ESP.flashEraseSector(settings_location);
-      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)flash_buffer, SPI_FLASH_SEC_SIZE);
-      delete[] flash_buffer;
-    } else {
-      ESP.flashEraseSector(settings_location);
-      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-    }
-#else
     ESP.flashEraseSector(settings_location);
     ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
-#endif  // USE_EEPROM
 
     if (!stop_flash_rotate && rotate) {
       for (uint32_t i = 1; i < CFG_ROTATES; i++) {
@@ -542,6 +422,7 @@ void SettingsSave(uint8_t rotate)
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(SYSCFG));
 
     settings_crc = Settings.cfg_crc;
+//    settings_crc32 = Settings.cfg_crc32;
   }
 #endif  // FIRMWARE_MINIMAL
   RtcSettingsSave();
@@ -720,8 +601,8 @@ void SettingsDefaultSet2(void)
 //  for (uint32_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
 
   // Serial
-  Settings.baudrate = APP_BAUDRATE / 1200;
-  Settings.sbaudrate = SOFT_BAUDRATE / 1200;
+  Settings.baudrate = APP_BAUDRATE / 300;
+  Settings.sbaudrate = SOFT_BAUDRATE / 300;
   Settings.serial_delimiter = 0xff;
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 
@@ -831,6 +712,8 @@ void SettingsDefaultSet2(void)
 //  Settings.energy_max_energy_start = 0;                           // MaxEnergyStart
 //  Settings.energy_kWhtotal = 0;
   RtcSettings.energy_kWhtotal = 0;
+//  memset((char*)&Settings.energy_usage, 0x00, sizeof(Settings.energy_usage));
+  memset((char*)&RtcSettings.energy_usage, 0x00, sizeof(RtcSettings.energy_usage));
   Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
 
   // IRRemote
@@ -899,6 +782,8 @@ void SettingsDefaultSet2(void)
   Settings.light_pixels = WS2812_LEDS;
 //  Settings.light_rotation = 0;
   SettingsDefaultSet_5_8_1();    // Clock color
+
+  Settings.param[P_TUYA_DIMMER_MAX] = TUYA_DIMMER_MAX;
 
   // Display
   SettingsDefaultSet_5_10_1();   // Display settings
@@ -1085,10 +970,10 @@ void SettingsDelta(void)
       }
     }
     if (Settings.version < 0x050C0007) {
-      Settings.baudrate = APP_BAUDRATE / 1200;
+      Settings.baudrate = APP_BAUDRATE / 300;
     }
     if (Settings.version < 0x050C0008) {
-      Settings.sbaudrate = SOFT_BAUDRATE / 1200;
+      Settings.sbaudrate = SOFT_BAUDRATE / 300;
       Settings.serial_delimiter = 0xff;
     }
     if (Settings.version < 0x050C000A) {
@@ -1202,7 +1087,60 @@ void SettingsDelta(void)
     if (Settings.version < 0x06060001) {
       Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
     }
+    if (Settings.version < 0x06060007) {
+      memset((char*)&Settings +0xE00, 0x00, sizeof(SYSCFG) -0xE00);
+    }
+    if (Settings.version < 0x06060008) {
+      // Move current tuya dimmer range to the new param.
+      if (Settings.flag3.tuya_dimmer_range_255) {
+        Settings.param[P_TUYA_DIMMER_MAX] = 100;
+      } else {
+        Settings.param[P_TUYA_DIMMER_MAX] = 255;
+      }
+      Settings.param[P_ENERGY_TARIFF1] = ENERGY_TARIFF1_HOUR;
+      Settings.param[P_ENERGY_TARIFF2] = ENERGY_TARIFF2_HOUR;
+      Settings.flag3.energy_weekend = ENERGY_TARIFF_WEEKEND;
+    }
+    if (Settings.version < 0x06060009) {
+      Settings.baudrate = Settings.ex_baudrate * 4;
+      Settings.sbaudrate = Settings.ex_sbaudrate * 4;
+    }
 
+    if (Settings.version < 0x0606000A) {
+      uint8_t tuyaindex = 0;
+      if (Settings.param[P_ex_TUYA_DIMMER_ID] > 0) {         // ex SetOption34
+        Settings.tuya_fnid_map[tuyaindex].fnid = 21;         // TUYA_MCU_FUNC_DIMMER - Move Tuya Dimmer Id to Map
+        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_DIMMER_ID];
+        tuyaindex++;
+      } else if (Settings.flag3.ex_tuya_disable_dimmer == 1) {  // ex SetOption65
+        Settings.tuya_fnid_map[tuyaindex].fnid = 11;         // TUYA_MCU_FUNC_REL1 - Create FnID for Switches
+        Settings.tuya_fnid_map[tuyaindex].dpid = 1;
+        tuyaindex++;
+      }
+      if (Settings.param[P_ex_TUYA_RELAYS] > 0) {
+        for (uint8_t i = 0 ; i < Settings.param[P_ex_TUYA_RELAYS]; i++) {  // ex SetOption41
+          Settings.tuya_fnid_map[tuyaindex].fnid = 12 + i;   // TUYA_MCU_FUNC_REL2 -  Create FnID for Switches
+          Settings.tuya_fnid_map[tuyaindex].dpid = i + 2;
+          tuyaindex++;
+        }
+      }
+      if (Settings.param[P_ex_TUYA_POWER_ID] > 0) {          // ex SetOption46
+        Settings.tuya_fnid_map[tuyaindex].fnid = 31;         // TUYA_MCU_FUNC_POWER -  Move Tuya Power Id to Map
+        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_POWER_ID];
+        tuyaindex++;
+      }
+      if (Settings.param[P_ex_TUYA_VOLTAGE_ID] > 0) {        // ex SetOption44
+        Settings.tuya_fnid_map[tuyaindex].fnid = 33;         // TUYA_MCU_FUNC_VOLTAGE - Move Tuya Voltage Id to Map
+        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_VOLTAGE_ID];
+        tuyaindex++;
+      }
+      if (Settings.param[P_ex_TUYA_CURRENT_ID] > 0) {        // ex SetOption45
+        Settings.tuya_fnid_map[tuyaindex].fnid = 32;         // TUYA_MCU_FUNC_CURRENT - Move Tuya Current Id to Map
+        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_CURRENT_ID];
+        tuyaindex++;
+      }
+
+    }
     Settings.version = VERSION;
     SettingsSave(1);
   }

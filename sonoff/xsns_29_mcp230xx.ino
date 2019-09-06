@@ -303,8 +303,8 @@ void MCP230xx_CheckForInterrupt(void) {
                       break;
                   }
                   if (int_tele) {
-                    Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230XX_INT\":{\"D%i\":%i,\"MS\":%lu}}"),
-                      GetDateAndTime(DT_LOCAL).c_str(), intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01),millis_since_last_int);
+                    ResponseTime_P(PSTR(",\"MCP230XX_INT\":{\"D%i\":%i,\"MS\":%lu}}"),
+                      intp+(mcp230xx_port*8), ((mcp230xx_intcap >> intp) & 0x01),millis_since_last_int);
                     MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR("MCP230XX_INT"));
                   }
                   if (int_event) {
@@ -729,7 +729,7 @@ void MCP230xx_OutputTelemetry(void) {
   }
   if (outputcount) {
     char stt[7];
-    Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230_OUT\": {"), GetDateAndTime(DT_LOCAL).c_str());
+    ResponseTime_P(PSTR(",\"MCP230_OUT\":{"));
     for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
       if (Settings.mcp230xx_config[pinx].pinmode >= 5) {
         sprintf(stt,ConvertNumTxt(((gpiototal>>pinx)&1),Settings.mcp230xx_config[pinx].pinmode));
@@ -744,7 +744,7 @@ void MCP230xx_OutputTelemetry(void) {
 #endif // USE_MCP230xx_OUTPUT
 
 void MCP230xx_Interrupt_Counter_Report(void) {
-  Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP230_INTTIMER\": {"), GetDateAndTime(DT_LOCAL).c_str());
+  ResponseTime_P(PSTR(",\"MCP230_INTTIMER\":{"));
   for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
     if (Settings.mcp230xx_config[pinx].int_count_en) { // Counting is enabled for this pin so we add to report
       ResponseAppend_P(PSTR("\"INTCNT_D%i\":%i,"),pinx,mcp230xx_int_counter[pinx]);
@@ -758,7 +758,7 @@ void MCP230xx_Interrupt_Counter_Report(void) {
 
 void MCP230xx_Interrupt_Retain_Report(void) {
   uint16_t retainresult = 0;
-  Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"MCP_INTRETAIN\": {"), GetDateAndTime(DT_LOCAL).c_str());
+  ResponseTime_P(PSTR(",\"MCP_INTRETAIN\":{"));
   for (uint32_t pinx = 0;pinx < mcp230xx_pincount;pinx++) {
     if (Settings.mcp230xx_config[pinx].int_retain_flag) {
       ResponseAppend_P(PSTR("\"D%i\":%i,"),pinx,mcp230xx_int_retainer[pinx]);
@@ -780,8 +780,6 @@ bool Xsns29(uint8_t function)
 
   if (i2c_flg) {
     switch (function) {
-      case FUNC_MQTT_DATA:
-        break;
       case FUNC_EVERY_SECOND:
         MCP230xx_Detect();
         if (mcp230xx_int_counter_en) {

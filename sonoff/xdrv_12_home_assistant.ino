@@ -54,7 +54,7 @@ const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
   ",\"bri_cmd_t\":\"%s\","                         // cmnd/led2/Dimmer
   "\"bri_stat_t\":\"%s\","                         // stat/led2/RESULT
   "\"bri_scl\":100,"                               // 100%
-  "\"on_cmd_type\":\"brightness\","                // power on (first), power on (last), no power on (brightness)
+  "\"on_cmd_type\":\"%s\","                        // power on (first), power on (last), no power on (brightness)
   "\"bri_val_tpl\":\"{{value_json." D_CMND_DIMMER "}}\"";
 
 const char HASS_DISCOVER_LIGHT_COLOR[] PROGMEM =
@@ -129,6 +129,7 @@ const char HASS_DISCOVER_SENSOR_HASS_STATUS[] PROGMEM =
 const char HASS_DISCOVER_DEVICE_INFO[] PROGMEM =
   ",\"uniq_id\":\"%s\","
   "\"device\":{\"identifiers\":[\"%06X\"],"
+  "\"connections\":[[\"mac\",\"%s\"]],"
   "\"name\":\"%s\","
   "\"model\":\"%s\","
   "\"sw_version\":\"%s%s\","
@@ -136,7 +137,8 @@ const char HASS_DISCOVER_DEVICE_INFO[] PROGMEM =
 
 const char HASS_DISCOVER_DEVICE_INFO_SHORT[] PROGMEM =
   ",\"uniq_id\":\"%s\","
-  "\"device\":{\"identifiers\":[\"%06X\"]}";
+  "\"device\":{\"identifiers\":[\"%06X\"],"
+  "\"connections\":[[\"mac\",\"%s\"]]}";
 
 const char HASS_DISCOVER_TOPIC_PREFIX[] PROGMEM =
   ",\"~\":\"%s\"";
@@ -237,17 +239,19 @@ void HAssAnnounceRelayLight(void)
       Shorten(&availability_topic, prefix);
 
       Response_P(HASS_DISCOVER_RELAY, name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
-      TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId());
+      TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
       TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
 
+#ifdef USE_LIGHT
       if (is_light) {
         char *brightness_command_topic = stemp1;
 
         GetTopic_P(brightness_command_topic, CMND, mqtt_topic, D_CMND_DIMMER);
         Shorten(&brightness_command_topic, prefix);
-        TryResponseAppend_P(HASS_DISCOVER_LIGHT_DIMMER, brightness_command_topic, state_topic);
+        strncpy_P(stemp3, Settings.flag.not_power_linked?PSTR("last"):PSTR("brightness"), sizeof(stemp3));
+        TryResponseAppend_P(HASS_DISCOVER_LIGHT_DIMMER, brightness_command_topic, state_topic, stemp3);
 
-        if (light_subtype >= LST_RGB) {
+        if (Light.subtype >= LST_RGB) {
           char *rgb_command_topic = stemp1;
 
           GetTopic_P(rgb_command_topic, CMND, mqtt_topic, D_CMND_COLOR);
@@ -260,14 +264,14 @@ void HAssAnnounceRelayLight(void)
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_SCHEME, effect_command_topic, state_topic);
 
         }
-        if (LST_RGBW == light_subtype) {
+        if (LST_RGBW == Light.subtype) {
           char *white_temp_command_topic = stemp1;
 
           GetTopic_P(white_temp_command_topic, CMND, mqtt_topic, D_CMND_WHITE);
           Shorten(&white_temp_command_topic, prefix);
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_WHITE, white_temp_command_topic, state_topic);
         }
-        if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
+        if ((LST_COLDWARM == Light.subtype) || (LST_RGBWC == Light.subtype)) {
           char *color_temp_command_topic = stemp1;
 
           GetTopic_P(color_temp_command_topic, CMND, mqtt_topic, D_CMND_COLORTEMPERATURE);
@@ -275,6 +279,7 @@ void HAssAnnounceRelayLight(void)
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_CT, color_temp_command_topic, state_topic);
         }
       }
+#endif  // USE_LIGHT
       TryResponseAppend_P(PSTR("}"));
     }
     MqttPublish(stopic, true);
@@ -316,7 +321,7 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
     Shorten(&state_topic, prefix);
     Shorten(&availability_topic, prefix);
     Response_P(HASS_DISCOVER_BUTTON_SWITCH, name, state_topic, Settings.state_text[toggle?2:1], availability_topic);
-    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId());
+    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
     if (strlen(prefix) > 0 ) TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
     if (toggle) TryResponseAppend_P(HASS_DISCOVER_BUTTON_SWITCH_TOGGLE);
     else TryResponseAppend_P(HASS_DISCOVER_BUTTON_SWITCH_ONOFF, Settings.state_text[0]);
@@ -415,7 +420,7 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     Shorten(&availability_topic, prefix);
 
     Response_P(HASS_DISCOVER_SENSOR, name, state_topic, availability_topic);
-    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId());
+    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
     TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
     if (!strcmp_P(subsensortype, PSTR(D_JSON_TEMPERATURE))) {
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_TEMP, TempUnit(), sensorname);
@@ -515,7 +520,7 @@ void HAssAnnounceStatusSensor(void)
 
     Response_P(HASS_DISCOVER_SENSOR, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_SENSOR_HASS_STATUS, state_topic);
-    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP.getChipId(),
+    TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP.getChipId(), WiFi.macAddress().c_str(),
                Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
     TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
     TryResponseAppend_P(PSTR("}"));

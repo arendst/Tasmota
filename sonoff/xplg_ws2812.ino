@@ -39,13 +39,33 @@
   typedef NeoRgbFeature selectedNeoFeatureType;
 #endif  // USE_WS2812_CTYPE
 
-
 #ifdef USE_WS2812_DMA
-  typedef Neo800KbpsMethod selectedNeoSpeedType;
+
+// See NeoEspDmaMethod.h for available options
+#if (USE_WS2812_HARDWARE == NEO_HW_WS2812X)
+  typedef NeoEsp8266DmaWs2812xMethod selectedNeoSpeedType;
+#elif (USE_WS2812_HARDWARE == NEO_HW_SK6812)
+  typedef NeoEsp8266DmaSk6812Method selectedNeoSpeedType;
+#elif (USE_WS2812_HARDWARE == NEO_HW_APA106)
+  typedef NeoEsp8266DmaApa106Method selectedNeoSpeedType;
+#else   // USE_WS2812_HARDWARE
+  typedef NeoEsp8266Dma800KbpsMethod selectedNeoSpeedType;
+#endif  // USE_WS2812_HARDWARE
+
 #else   // USE_WS2812_DMA
+
+// See NeoEspBitBangMethod.h for available options
+#if (USE_WS2812_HARDWARE == NEO_HW_WS2812X)
+  typedef NeoEsp8266BitBangWs2812xMethod selectedNeoSpeedType;
+#elif (USE_WS2812_HARDWARE == NEO_HW_SK6812)
+  typedef NeoEsp8266BitBangSk6812Method selectedNeoSpeedType;
+#else   // USE_WS2812_HARDWARE
   typedef NeoEsp8266BitBang800KbpsMethod selectedNeoSpeedType;
+#endif  // USE_WS2812_HARDWARE
+
 #endif  // USE_WS2812_DMA
-  NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType> *strip = nullptr;
+
+NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType> *strip = nullptr;
 
 struct WsColor {
   uint8_t red, green, blue;
@@ -222,7 +242,7 @@ void Ws2812Gradient(uint32_t schemenr)
   uint32_t range = (uint32_t)ceil((float)Settings.light_pixels / (float)repeat);
   uint32_t gradRange = (uint32_t)ceil((float)range / (float)(scheme.count - 1));
   uint32_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
-  uint32_t offset = speed > 0 ? strip_timer_counter / speed : 0;
+  uint32_t offset = speed > 0 ? Light.strip_timer_counter / speed : 0;
 
   WsColor oldColor, currentColor;
   Ws2812GradientColor(schemenr, &oldColor, range, gradRange, offset);
@@ -233,9 +253,9 @@ void Ws2812Gradient(uint32_t schemenr)
     }
     if (Settings.light_speed > 0) {
       // Blend old and current color based on time for smooth movement.
-      c.R = map(strip_timer_counter % speed, 0, speed, oldColor.red, currentColor.red);
-      c.G = map(strip_timer_counter % speed, 0, speed, oldColor.green, currentColor.green);
-      c.B = map(strip_timer_counter % speed, 0, speed, oldColor.blue, currentColor.blue);
+      c.R = map(Light.strip_timer_counter % speed, 0, speed, oldColor.red, currentColor.red);
+      c.G = map(Light.strip_timer_counter % speed, 0, speed, oldColor.green, currentColor.green);
+      c.B = map(Light.strip_timer_counter % speed, 0, speed, oldColor.blue, currentColor.blue);
     }
     else {
       // No animation, just use the current color.
@@ -269,7 +289,7 @@ void Ws2812Bars(uint32_t schemenr)
   if (kWidth[Settings.light_width] > maxSize) { maxSize = 0; }
 
   uint32_t speed = ((Settings.light_speed * 2) -1) * (STATES / 10);
-  uint32_t offset = (speed > 0) ? strip_timer_counter / speed : 0;
+  uint32_t offset = (speed > 0) ? Light.strip_timer_counter / speed : 0;
 
   WsColor mcolor[scheme.count];
   memcpy(mcolor, scheme.colors, sizeof(mcolor));
@@ -299,11 +319,8 @@ void Ws2812Bars(uint32_t schemenr)
 
 void Ws2812Init(void)
 {
-#ifdef USE_WS2812_DMA
-  strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS);  // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
-#else  // USE_WS2812_DMA
+  // For DMA, the Pin is ignored as it uses GPIO3 due to DMA hardware use.
   strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
-#endif  // USE_WS2812_DMA
   strip->Begin();
   Ws2812Clear();
 }
@@ -366,7 +383,7 @@ char* Ws2812GetColor(uint32_t led, char* scolor)
   sl_ledcolor[1] = lcolor.G;
   sl_ledcolor[2] = lcolor.B;
   scolor[0] = '\0';
-  for (uint32_t i = 0; i < light_subtype; i++) {
+  for (uint32_t i = 0; i < Light.subtype; i++) {
     if (Settings.flag.decimal_text) {
       snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", sl_ledcolor[i]);
     } else {

@@ -52,6 +52,9 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_MAXPERM (MAX_RULE_MEMS*10)-4/sizeof(float)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
+// offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
+#define EPOCH_OFFSET 1546300800
+
 enum {OPER_EQU=1,OPER_PLS,OPER_MIN,OPER_MUL,OPER_DIV,OPER_PLSEQU,OPER_MINEQU,OPER_MULEQU,OPER_DIVEQU,OPER_EQUEQU,OPER_NOTEQU,OPER_GRTEQU,OPER_LOWEQU,OPER_GRT,OPER_LOW,OPER_PERC,OPER_XOR,OPER_AND,OPER_OR,OPER_ANDEQU,OPER_OREQU,OPER_XOREQU,OPER_PERCEQU};
 enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
 
@@ -78,9 +81,11 @@ enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
   LinkedList<MQTT_Subscription> subscriptions;
 #endif    //SUPPORT_MQTT_EVENT
 
+#ifdef USE_DISPLAY
 #ifdef USE_TOUCH_BUTTONS
 #include <renderer.h>
 extern VButton *buttons[MAXBUTTONS];
+#endif
 #endif
 
 typedef union {
@@ -109,7 +114,6 @@ struct M_FILT {
   float rbuff[1];
 };
 
-
 typedef union {
   uint8_t data;
   struct {
@@ -135,6 +139,8 @@ struct SCRIPT_MEM {
     uint8_t *vnp_offset;
     char *glob_snp; // string vars pointer
     char *scriptptr;
+    char *section_ptr;
+    char *scriptptr_bu;
     char *script_ram;
     uint16_t script_size;
     uint8_t *script_pram;
@@ -161,6 +167,7 @@ int16_t last_findex;
 uint8_t tasm_cmd_activ=0;
 uint8_t fast_script=0;
 uint32_t script_lastmillis;
+
 
 char *GetNumericResult(char *lp,uint8_t lastop,float *fp,JsonObject *jo);
 char *GetStringResult(char *lp,uint8_t lastop,char *cp,JsonObject *jo);
@@ -199,8 +206,6 @@ void ScriptEverySecond(void) {
 void RulesTeleperiod(void) {
   if (bitRead(Settings.rule_enabled, 0) && mqtt_data[0]) Run_Scripter(">T",2, mqtt_data);
 }
-
-//#define USE_24C256
 
 // EEPROM MACROS
 #ifdef USE_24C256
@@ -244,6 +249,7 @@ char *script;
 
     glob_script_mem.max_ssize=SCRIPT_SVARSIZE;
     glob_script_mem.scriptptr=0;
+
     if (!*script) return -999;
 
     float fvalues[MAXVARS];
@@ -542,6 +548,7 @@ char *script;
 
     // store start of actual program here
     glob_script_mem.scriptptr=lp-1;
+    glob_script_mem.scriptptr_bu=glob_script_mem.scriptptr;
     return 0;
 
 }
@@ -710,6 +717,91 @@ float DoMedian5(uint8_t index, float in) {
   return median_array(mf->buffer,MEDIAN_SIZE);
 }
 
+#ifdef USE_LIGHT
+#ifdef USE_WS2812
+uint32_t HSVToRGB(uint16_t hue, uint8_t saturation, uint8_t value) {
+float r = 0, g = 0, b = 0;
+struct HSV {
+	float H;
+	float S;
+	float V;
+} hsv;
+
+hsv.H=hue;
+hsv.S=(float)saturation/100.0;
+hsv.V=(float)value/100.0;
+
+if (hsv.S == 0) {
+		r = hsv.V;
+		g = hsv.V;
+		b = hsv.V;
+	} else {
+		int i;
+		float f, p, q, t;
+
+		if (hsv.H == 360)
+			hsv.H = 0;
+		else
+			hsv.H = hsv.H / 60;
+
+		i = (int)trunc(hsv.H);
+		f = hsv.H - i;
+
+		p = hsv.V * (1.0 - hsv.S);
+		q = hsv.V * (1.0 - (hsv.S * f));
+		t = hsv.V * (1.0 - (hsv.S * (1.0 - f)));
+
+		switch (i)
+		{
+		case 0:
+			r = hsv.V;
+			g = t;
+			b = p;
+			break;
+
+		case 1:
+			r = q;
+			g = hsv.V;
+			b = p;
+			break;
+
+		case 2:
+			r = p;
+			g = hsv.V;
+			b = t;
+			break;
+
+		case 3:
+			r = p;
+			g = q;
+			b = hsv.V;
+			break;
+
+		case 4:
+			r = t;
+			g = p;
+			b = hsv.V;
+			break;
+
+		default:
+			r = hsv.V;
+			g = p;
+			b = q;
+			break;
+		}
+
+	}
+
+  uint8_t ir,ig,ib;
+  ir=r*255;
+  ig=g*255;
+  ib=b*255;
+
+	uint32_t rgb=(ir<<16)|(ig<<8)|ib;
+	return rgb;
+}
+#endif
+#endif
 
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
@@ -861,9 +953,15 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
       }
       if (jo->success()) {
         char *subtype=strchr(vname,'#');
+        char *subtype2;
         if (subtype) {
           *subtype=0;
           subtype++;
+          subtype2=strchr(subtype,'#');
+          if (subtype2) {
+            *subtype2=0;
+            *subtype2++;
+          }
         }
         vn=vname;
         str_value = (*jo)[vn];
@@ -875,6 +973,23 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
               jo=&jobj1;
               str_value = (*jo)[vn];
               if ((*jo)[vn].success()) {
+                // 2. stage
+                if (subtype2) {
+                  JsonObject &jobj2=(*jo)[vn];
+                  if ((*jo)[vn].success()) {
+                    vn=subtype2;
+                    jo=&jobj2;
+                    str_value = (*jo)[vn];
+                    if ((*jo)[vn].success()) {
+                      goto skip;
+                    } else {
+                      goto chknext;
+                    }
+                  } else {
+                    goto chknext;
+                  }
+                }
+                // end
                 goto skip;
               }
             } else {
@@ -900,7 +1015,13 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
                 return lp+len;
               }
             } else {
-              if (fp) *fp=CharToFloat((char*)str_value);
+              if (fp) {
+                if (!strncmp(vn.c_str(),"Epoch",5)) {
+                  *fp=atoi(str_value)-(uint32_t)EPOCH_OFFSET;
+                } else {
+                  *fp=CharToFloat((char*)str_value);
+                }
+              }
               *vtype=NUM_RES;
               tind->bits.constant=1;
               tind->bits.is_string=0;
@@ -947,6 +1068,12 @@ chknext:
       case 'd':
         if (!strncmp(vname,"day",3)) {
           fvar=RtcTime.day_of_month;
+          goto exit;
+        }
+        break;
+      case 'e':
+        if (!strncmp(vname,"epoch",5)) {
+          fvar=UtcTime()-(uint32_t)EPOCH_OFFSET;
           goto exit;
         }
         break;
@@ -1212,6 +1339,30 @@ chknext:
           }
           goto strexit;
         }
+#ifdef USE_LIGHT
+#ifdef USE_WS2812
+        if (!strncmp(vname,"hsvrgb(",7)) {
+          lp=GetNumericResult(lp+7,OPER_EQU,&fvar,0);
+          if (fvar<0 || fvar>360) fvar=0;
+          SCRIPT_SKIP_SPACES
+          // arg2
+          float fvar2;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+          if (fvar2<0 || fvar2>100) fvar2=0;
+          SCRIPT_SKIP_SPACES
+          // arg3
+          float fvar3;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar3,0);
+          if (fvar3<0 || fvar3>100) fvar3=0;
+
+          fvar=HSVToRGB(fvar,fvar2,fvar3);
+
+          lp++;
+          len=0;
+          goto exit;
+        }
+#endif
+#endif
         break;
       case 'i':
         if (!strncmp(vname,"int(",4)) {
@@ -1386,6 +1537,34 @@ chknext:
           fvar=strlen(glob_script_mem.script_ram);
           goto exit;
         }
+        if (!strncmp(vname,"sl(",3)) {
+          lp+=3;
+          char str[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          lp++;
+          len=0;
+          fvar=strlen(str);
+          goto exit;
+        }
+        if (!strncmp(vname,"sb(",3)) {
+          lp+=3;
+          char str[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,str,0);
+          SCRIPT_SKIP_SPACES
+          float fvar1;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar1,0);
+          SCRIPT_SKIP_SPACES
+          float fvar2;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar2,0);
+          lp++;
+          len=0;
+          if (fvar1<0) {
+            fvar1=strlen(str)+fvar1;
+          }
+          memcpy(sp,&str[(uint8_t)fvar1],(uint8_t)fvar2);
+          sp[(uint8_t)fvar2] = '\0';
+          goto strexit;
+        }
         if (!strncmp(vname,"st(",3)) {
           lp+=3;
           char str[SCRIPT_MAXSSIZE];
@@ -1473,6 +1652,7 @@ chknext:
           if (sp) strlcpy(sp,Settings.mqtt_topic,glob_script_mem.max_ssize);
           goto strexit;
         }
+#ifdef USE_DISPLAY
 #ifdef USE_TOUCH_BUTTONS
         if (!strncmp(vname,"tbut[",5)) {
           GetNumericResult(vname+5,OPER_EQU,&fvar,0);
@@ -1488,6 +1668,7 @@ chknext:
           goto exit;
         }
 
+#endif
 #endif
         break;
       case 'u':
@@ -1935,14 +2116,121 @@ void toSLog(const char *str) {
 #endif
 }
 
+char *Evaluate_expression(char *lp,uint8_t and_or, uint8_t *result,JsonObject  *jo) {
+  float fvar,*dfvar,fvar1;
+  uint8_t numeric;
+  struct T_INDEX ind;
+  uint8_t vtype=0,lastop;
+  uint8_t res=0;
 
+  SCRIPT_SKIP_SPACES
+
+  if (*lp=='(') {
+    lp++;
+    lp=Evaluate_expression(lp,and_or,result,jo);
+    lp++;
+    // check for next and or
+    SCRIPT_SKIP_SPACES
+    if (!strncmp(lp,"or",2)) {
+      lp+=2;
+      and_or=1;
+      SCRIPT_SKIP_SPACES
+      lp=Evaluate_expression(lp,and_or,result,jo);
+    } else if (!strncmp(lp,"and",3)) {
+      lp+=3;
+      and_or=2;
+      SCRIPT_SKIP_SPACES
+      lp=Evaluate_expression(lp,and_or,result,jo);
+    }
+    return lp;
+  }
+
+  // compare
+  dfvar=&fvar;
+  glob_script_mem.glob_error=0;
+  char *slp=lp;
+  numeric=1;
+  lp=GetNumericResult(lp,OPER_EQU,dfvar,0);
+  if (glob_script_mem.glob_error==1) {
+    // was string, not number
+	  char cmpstr[SCRIPT_MAXSSIZE];
+    lp=slp;
+    numeric=0;
+    // get the string
+    lp=isvar(lp,&vtype,&ind,0,cmpstr,0);
+	  lp=getop(lp,&lastop);
+    // compare string
+    char str[SCRIPT_MAXSSIZE];
+    lp=GetStringResult(lp,OPER_EQU,str,jo);
+    if (lastop==OPER_EQUEQU || lastop==OPER_NOTEQU) {
+      uint8_t res=0;
+      res=strcmp(cmpstr,str);
+      if (lastop==OPER_EQUEQU) res=!res;
+      if (!and_or) {
+          *result=res;
+      } else if (and_or==1) {
+          *result|=res;
+      } else {
+          *result&=res;
+      }
+    }
+
+  } else {
+    // numeric
+    // evaluate operand
+    lp=getop(lp,&lastop);
+
+    lp=GetNumericResult(lp,OPER_EQU,&fvar1,jo);
+    switch (lastop) {
+      case OPER_EQUEQU:
+          res=(*dfvar==fvar1);
+          break;
+      case OPER_NOTEQU:
+          res=(*dfvar!=fvar1);
+          break;
+      case OPER_LOW:
+          res=(*dfvar<fvar1);
+          break;
+      case OPER_LOWEQU:
+          res=(*dfvar<=fvar1);
+          break;
+      case OPER_GRT:
+          res=(*dfvar>fvar1);
+          break;
+      case OPER_GRTEQU:
+          res=(*dfvar>=fvar1);
+          break;
+      default:
+          // error
+          break;
+    }
+
+    if (!and_or) {
+      *result=res;
+    } else if (and_or==1) {
+      *result|=res;
+    } else {
+      *result&=res;
+    }
+  }
+exit:
+#if SCRIPT_DEBUG>0
+  char tbuff[128];
+  sprintf(tbuff,"p1=%d,p2=%d,cmpres=%d line: ",(int32_t)*dfvar,(int32_t)fvar1,*result);
+  toLogEOL(tbuff,lp);
+#endif
+  return lp;
+}
 
 //#define IFTHEN_DEBUG
 
 #define IF_NEST 8
 // execute section of scripter
 int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
-    uint8_t vtype=0,sindex,xflg,floop=0,globvindex;
+
+    if (tasm_cmd_activ && tlen>0) return 0;
+
+    uint8_t vtype=0,sindex,xflg,floop=0,globvindex,fromscriptcmd=0;
     int8_t globaindex;
     struct T_INDEX ind;
     uint8_t operand,lastop,numeric=1,if_state[IF_NEST],if_exe[IF_NEST],if_result[IF_NEST],and_or,ifstck=0;
@@ -1955,9 +2243,6 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
       tlen=abs(tlen);
       check=1;
     }
-
-    if (tasm_cmd_activ) return 0;
-
 
     float *dfvar,*cv_count,cv_max,cv_inc;
     char *cv_ptr;
@@ -2235,11 +2520,17 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
 #endif
 #endif
 
-            else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2)) {
+            else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2) || !strncmp(lp,"print",5)) {
                 // execute cmd
-                uint8_t sflag=0,svmqtt,swll;
-                if (*lp=='-') sflag=1;
-                lp+=2;
+                uint8_t sflag=0,pflg=0,svmqtt,swll;
+                if (*lp=='p') {
+                 pflg=1;
+                 lp+=5;
+                }
+                else {
+                  if (*lp=='-') sflag=1;
+                  lp+=2;
+                }
                 char *slp=lp;
                 SCRIPT_SKIP_SPACES
                 #define SCRIPT_CMDMEM 512
@@ -2262,8 +2553,9 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   Replace_Cmd_Vars(cmd,tmp,SCRIPT_CMDMEM/2);
                   //toSLog(tmp);
 
-                  if (!strncmp(tmp,"print",5)) {
-                    toLog(&tmp[5]);
+                  if (!strncmp(tmp,"print",5) || pflg) {
+                    if (pflg) toLog(tmp);
+                    else toLog(&tmp[5]);
                   } else {
                     if (!sflag) {
                       snprintf_P(log_data, sizeof(log_data), PSTR("Script: performs \"%s\""), tmp);
@@ -2298,26 +2590,36 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   lp++;
                   plen++;
                 }
-                Run_Scripter(slp,plen,0);
+                if (fromscriptcmd) {
+                  char *sp=glob_script_mem.scriptptr;
+                  glob_script_mem.scriptptr=glob_script_mem.scriptptr_bu;
+                  Run_Scripter(slp,plen,0);
+                  glob_script_mem.scriptptr=sp;
+                } else {
+                  Run_Scripter(slp,plen,0);
+                }
                 lp=slp;
                 goto next_line;
+            } else if (!strncmp(lp,"=(",2)) {
+                lp+=2;
+                char str[128];
+                str[0]='>';
+                lp=GetStringResult(lp,OPER_EQU,&str[1],0);
+                lp++;
+                execute_script(str);
             }
 
             // check for variable result
             if (if_state[ifstck]==1) {
-              // compare
-              dfvar=&fvar;
-              glob_script_mem.glob_error=0;
-              char *slp=lp;
-              numeric=1;
-              lp=GetNumericResult(lp,OPER_EQU,dfvar,0);
-              if (glob_script_mem.glob_error==1) {
-                // was string, not number
-                lp=slp;
-                numeric=0;
-                // get the string
-                lp=isvar(lp,&vtype,&ind,0,cmpstr,0);
+              // evaluate exxpression
+              lp=Evaluate_expression(lp,and_or,&if_result[ifstck],jo);
+              SCRIPT_SKIP_SPACES
+              if (*lp=='{' && if_state[ifstck]==1) {
+                lp+=1; // then
+                if_state[ifstck]=2;
+                if (if_exe[ifstck-1]) if_exe[ifstck]=if_result[ifstck];
               }
+              goto next_line;
             } else {
               lp=isvar(lp,&vtype,&ind,&sysvar,0,0);
               if (vtype!=VAR_NV) {
@@ -2335,192 +2637,126 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                         sysv_type=0;
                       }
                       numeric=1;
-                  } else {
-                      // string result
-                      numeric=0;
-                      sindex=index;
-                  }
-              }
-            }
-            // evaluate operand
-            lp=getop(lp,&lastop);
-            if (if_state[ifstck]==1) {
-              if (numeric) {
-                uint8_t res=0;
-                lp=GetNumericResult(lp,OPER_EQU,&fvar1,jo);
-                switch (lastop) {
-                    case OPER_EQUEQU:
-                        res=(*dfvar==fvar1);
-                        break;
-                    case OPER_NOTEQU:
-                        res=(*dfvar!=fvar1);
-                        break;
-                    case OPER_LOW:
-                        res=(*dfvar<fvar1);
-                        break;
-                    case OPER_LOWEQU:
-                        res=(*dfvar<=fvar1);
-                        break;
-                    case OPER_GRT:
-                        res=(*dfvar>fvar1);
-                        break;
-                    case OPER_GRTEQU:
-                        res=(*dfvar>=fvar1);
-                        break;
-                    default:
-                        // error
-                        break;
-                }
-
-                if (!and_or) {
-                    if_result[ifstck]=res;
-                } else if (and_or==1) {
-                    if_result[ifstck]|=res;
-                } else {
-                    if_result[ifstck]&=res;
-                }
-#if SCRIPT_DEBUG>0
-                char tbuff[128];
-                sprintf(tbuff,"p1=%d,p2=%d,cmpres=%d line: ",(int32_t)*dfvar,(int32_t)fvar1,if_result[ifstck]);
-                toLogEOL(tbuff,lp);
-#endif
-
-              } else {
-                // compare string
-                char str[SCRIPT_MAXSSIZE];
-                lp=GetStringResult(lp,OPER_EQU,str,0);
-                if (lastop==OPER_EQUEQU || lastop==OPER_NOTEQU) {
-                  uint8_t res=0;
-                  res=strcmp(cmpstr,str);
-                  if (lastop==OPER_EQUEQU) res=!res;
-                  if (!and_or) {
-                      if_result[ifstck]=res;
-                  } else if (and_or==1) {
-                      if_result[ifstck]|=res;
-                  } else {
-                      if_result[ifstck]&=res;
-                  }
-                }
-              }
-              SCRIPT_SKIP_SPACES
-              if (*lp=='{' && if_state[ifstck]==1) {
-                lp+=1; // then
-                if_state[ifstck]=2;
-                if (if_exe[ifstck-1]) if_exe[ifstck]=if_result[ifstck];
-              }
-              goto next_line;
-            } else {
-              if (numeric) {
-                char *slp=lp;
-                glob_script_mem.glob_error=0;
-                lp=GetNumericResult(lp,OPER_EQU,&fvar,jo);
-                if (glob_script_mem.glob_error==1) {
-                  // mismatch was string, not number
-                  // get the string and convert to number
-                  lp=isvar(slp,&vtype,&ind,0,cmpstr,jo);
-                  fvar=CharToFloat(cmpstr);
-                }
-                switch (lastop) {
-                    case OPER_EQU:
-                        if (glob_script_mem.var_not_found) {
-                          if (!js) toLog("var not found\n");
-                          goto next_line;
+                      lp=getop(lp,&lastop);
+                      char *slp=lp;
+                      glob_script_mem.glob_error=0;
+                      lp=GetNumericResult(lp,OPER_EQU,&fvar,jo);
+                      if (glob_script_mem.glob_error==1) {
+                        // mismatch was string, not number
+                        // get the string and convert to number
+                        lp=isvar(slp,&vtype,&ind,0,cmpstr,jo);
+                        fvar=CharToFloat(cmpstr);
+                      }
+                      switch (lastop) {
+                          case OPER_EQU:
+                              if (glob_script_mem.var_not_found) {
+                                if (!js) toLog("var not found\n");
+                                goto next_line;
+                              }
+                              *dfvar=fvar;
+                              break;
+                          case OPER_PLSEQU:
+                              *dfvar+=fvar;
+                              break;
+                          case OPER_MINEQU:
+                              *dfvar-=fvar;
+                              break;
+                          case OPER_MULEQU:
+                              *dfvar*=fvar;
+                              break;
+                          case OPER_DIVEQU:
+                              *dfvar/=fvar;
+                              break;
+                          case OPER_PERCEQU:
+                              *dfvar=fmodf(*dfvar,fvar);
+                              break;
+                          case OPER_ANDEQU:
+                              *dfvar=(uint32_t)*dfvar&(uint32_t)fvar;
+                              break;
+                          case OPER_OREQU:
+                              *dfvar=(uint32_t)*dfvar|(uint32_t)fvar;
+                              break;
+                          case OPER_XOREQU:
+                              *dfvar=(uint32_t)*dfvar^(uint32_t)fvar;
+                              break;
+                          default:
+                              // error
+                              break;
+                      }
+                      // var was changed
+                      glob_script_mem.type[globvindex].bits.changed=1;
+                      if (glob_script_mem.type[globvindex].bits.is_filter) {
+                        if (globaindex>=0) {
+                          Set_MFVal(glob_script_mem.type[globvindex].index,globaindex,*dfvar);
+                        } else {
+                          Set_MFilter(glob_script_mem.type[globvindex].index,*dfvar);
                         }
-                        *dfvar=fvar;
-                        break;
-                    case OPER_PLSEQU:
-                        *dfvar+=fvar;
-                        break;
-                    case OPER_MINEQU:
-                        *dfvar-=fvar;
-                        break;
-                    case OPER_MULEQU:
-                        *dfvar*=fvar;
-                        break;
-                    case OPER_DIVEQU:
-                        *dfvar/=fvar;
-                        break;
-                    case OPER_PERCEQU:
-                        *dfvar=fmodf(*dfvar,fvar);
-                        break;
-                    case OPER_ANDEQU:
-                        *dfvar=(uint32_t)*dfvar&(uint32_t)fvar;
-                        break;
-                    case OPER_OREQU:
-                        *dfvar=(uint32_t)*dfvar|(uint32_t)fvar;
-                        break;
-                    case OPER_XOREQU:
-                        *dfvar=(uint32_t)*dfvar^(uint32_t)fvar;
-                        break;
-                    default:
-                        // error
-                        break;
-                }
-                // var was changed
-                glob_script_mem.type[globvindex].bits.changed=1;
-                if (glob_script_mem.type[globvindex].bits.is_filter) {
-                  if (globaindex>=0) {
-                    Set_MFVal(glob_script_mem.type[globvindex].index,globaindex,*dfvar);
+                      }
+
+                      if (sysv_type) {
+                        switch (sysv_type) {
+                          case SCRIPT_LOGLEVEL:
+                            glob_script_mem.script_loglevel=*dfvar;
+                            break;
+                          case SCRIPT_TELEPERIOD:
+                            if (*dfvar<10) *dfvar=10;
+                            if (*dfvar>300) *dfvar=300;
+                            Settings.tele_period=*dfvar;
+                            break;
+                        }
+                        sysv_type=0;
+                      }
                   } else {
-                    Set_MFilter(glob_script_mem.type[globvindex].index,*dfvar);
-                  }
-                }
+                    // string result
+                    numeric=0;
+                    sindex=index;
+                    // string result
+                    char str[SCRIPT_MAXSSIZE];
+                    char *slp=lp;
+                    lp=getop(lp,&lastop);
+                    lp=GetStringResult(lp,OPER_EQU,str,jo);
+                    if (!js && glob_script_mem.var_not_found) {
+                      // mismatch
+                      lp=GetNumericResult(slp,OPER_EQU,&fvar,0);
+                      dtostrfd(fvar,6,str);
+                      glob_script_mem.var_not_found=0;
+                    }
 
-                if (sysv_type) {
-                  switch (sysv_type) {
-                    case SCRIPT_LOGLEVEL:
-                      glob_script_mem.script_loglevel=*dfvar;
-                      break;
-                    case SCRIPT_TELEPERIOD:
-                      if (*dfvar<10) *dfvar=10;
-                      if (*dfvar>300) *dfvar=300;
-                      Settings.tele_period=*dfvar;
-                      break;
+                    if (!glob_script_mem.var_not_found) {
+                      // var was changed
+                      glob_script_mem.type[globvindex].bits.changed=1;
+                      if (lastop==OPER_EQU) {
+                        strlcpy(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+                      } else if (lastop==OPER_PLSEQU) {
+                        strncat(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
+                      }
+                    }
                   }
-                  sysv_type=0;
-                }
 
-              } else {
-                // string result
-                char str[SCRIPT_MAXSSIZE];
-                char *slp=lp;
-                lp=GetStringResult(lp,OPER_EQU,str,jo);
-                if (!js && glob_script_mem.var_not_found) {
-                  // mismatch
-                  lp=GetNumericResult(slp,OPER_EQU,&fvar,0);
-                  dtostrfd(fvar,6,str);
-                  glob_script_mem.var_not_found=0;
-                }
-
-                if (!glob_script_mem.var_not_found) {
-                  // var was changed
-                  glob_script_mem.type[globvindex].bits.changed=1;
-                  if (lastop==OPER_EQU) {
-                    strlcpy(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
-                  } else if (lastop==OPER_PLSEQU) {
-                    strncat(glob_script_mem.glob_snp+(sindex*glob_script_mem.max_ssize),str,glob_script_mem.max_ssize);
-                  }
-                }
-              }
-              SCRIPT_SKIP_SPACES
-              if (*lp=='{' && if_state[ifstck]==3) {
-                lp+=1; // else
-                //if_state[ifstck]=3;
-              }
-              goto next_line;
-           }
+            }
+            SCRIPT_SKIP_SPACES
+            if (*lp=='{' && if_state[ifstck]==3) {
+              lp+=1; // else
+              //if_state[ifstck]=3;
+            }
+            goto next_line;
+          }
         } else {
             // decode line
             if (*lp=='>' && tlen==1) {
               // called from cmdline
               lp++;
               section=1;
+              fromscriptcmd=1;
               goto startline;
             }
             if (!strncmp(lp,type,tlen)) {
                 // found section
                 section=1;
-                if (check) return 99;
+                glob_script_mem.section_ptr=lp;
+                if (check) {
+                  return 99;
+                }
                 // check for subroutine
                 if (*type=='#') {
                   // check for parameter
@@ -2848,7 +3084,7 @@ void Script_FileUploadConfiguration(void)
   WSContentSend_P(HTTP_FORM_FILE_UPGb);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
-  upload_error = 0;
+  Web.upload_error = 0;
 }
 
 File upload_file;
@@ -2876,16 +3112,16 @@ void script_upload(void) {
     sprintf(npath,"%s/%s",path,upload.filename.c_str());
     SD.remove(npath);
     upload_file=SD.open(npath,FILE_WRITE);
-    if (!upload_file) upload_error=1;
+    if (!upload_file) Web.upload_error=1;
   } else if(upload.status == UPLOAD_FILE_WRITE) {
     if (upload_file) upload_file.write(upload.buf,upload.currentSize);
   } else if(upload.status == UPLOAD_FILE_END) {
     if (upload_file) upload_file.close();
-    if (upload_error) {
+    if (Web.upload_error) {
       AddLog_P(LOG_LEVEL_INFO, PSTR("HTP: upload error"));
     }
   } else {
-    upload_error=1;
+    Web.upload_error=1;
     WebServer->send(500, "text/plain", "500: couldn't create file");
   }
 }
@@ -3064,12 +3300,11 @@ void ScriptSaveSettings(void) {
 #endif
 
 void execute_script(char *script) {
-char *svd_sp=glob_script_mem.scriptptr;
+  char *svd_sp=glob_script_mem.scriptptr;
   strcat(script,"\n#");
   glob_script_mem.scriptptr=script;
   Run_Scripter(">",1,0);
   glob_script_mem.scriptptr=svd_sp;
-  Scripter_save_pvars();
 }
 #define D_CMND_SCRIPT "Script"
 #define D_CMND_SUBSCRIBE "Subscribe"
@@ -3104,6 +3339,7 @@ bool ScriptCommand(void) {
             if (XdrvMailbox.data[count]==';') XdrvMailbox.data[count]='\n';
           }
           execute_script(XdrvMailbox.data);
+          Scripter_save_pvars();
         }
       }
       return serviced;
@@ -3174,6 +3410,7 @@ bool ScriptMqttData(void)
       //This topic is subscribed by us, so serve it
       serviced = true;
       String value;
+      String lkey;
       if (event_item.Key.length() == 0) {   //If did not specify Key
         value = sData;
       } else {      //If specified Key, need to parse Key/Value from JSON data
@@ -3186,18 +3423,24 @@ bool ScriptMqttData(void)
         if ((dot = key1.indexOf('.')) > 0) {
           key2 = key1.substring(dot+1);
           key1 = key1.substring(0, dot);
+          lkey=key2;
           if (!jsonData[key1][key2].success()) break;   //Failed to get the key/value, ignore this message.
           value = (const char *)jsonData[key1][key2];
         } else {
           if (!jsonData[key1].success()) break;
           value = (const char *)jsonData[key1];
+          lkey=key1;
         }
       }
       value.trim();
-      //Create an new event. Cannot directly call RulesProcessEvent().
-      //snprintf_P(event_data, sizeof(event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
       char sbuffer[128];
-      snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=%s\n"), event_item.Event.c_str(), value.c_str());
+
+      if (!strncmp(lkey.c_str(),"Epoch",5)) {
+        uint32_t ep=atoi(value.c_str())-(uint32_t)EPOCH_OFFSET;
+        snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=%d\n"), event_item.Event.c_str(),ep);
+      } else {
+        snprintf_P(sbuffer, sizeof(sbuffer), PSTR(">%s=\"%s\"\n"), event_item.Event.c_str(), value.c_str());
+      }
       //toLog(sbuffer);
       execute_script(sbuffer);
     }
@@ -3330,6 +3573,93 @@ String ScriptUnsubscribe(const char * data, int data_len)
 }
 #endif //     SUPPORT_MQTT_EVENT
 
+#ifdef USE_SCRIPT_WEB_DISPLAY
+void ScriptWebShow(void) {
+  uint8_t web_script=Run_Scripter(">W",-2,0);
+  if (web_script==99) {
+    char line[128];
+    char tmp[128];
+    char *lp=glob_script_mem.section_ptr+2;
+    while (lp) {
+      while (*lp==SCRIPT_EOL) {
+       lp++;
+      }
+      if (!*lp || *lp=='#' || *lp=='>') {
+          break;
+      }
+
+      // send this line to web
+      memcpy(line,lp,sizeof(line));
+      line[sizeof(line)-1]=0;
+      char *cp=line;
+      for (uint32_t i=0; i<sizeof(line); i++) {
+        if (!*cp || *cp=='\n' || *cp=='\r') {
+          *cp=0;
+          break;
+        }
+        cp++;
+      }
+
+      Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+      WSContentSend_PD(PSTR("{s}%s{e}"),tmp);
+
+next_line:
+      if (*lp==SCRIPT_EOL) {
+        lp++;
+      } else {
+        lp = strchr(lp, SCRIPT_EOL);
+        if (!lp) break;
+        lp++;
+      }
+    }
+  }
+}
+#endif //USE_SCRIPT_WEB_DISPLAY
+
+#ifdef USE_SCRIPT_JSON_EXPORT
+void ScriptJsonAppend(void) {
+  uint8_t web_script=Run_Scripter(">J",-2,0);
+  if (web_script==99) {
+    char line[128];
+    char tmp[128];
+    char *lp=glob_script_mem.section_ptr+2;
+    while (lp) {
+      while (*lp==SCRIPT_EOL) {
+       lp++;
+      }
+      if (!*lp || *lp=='#' || *lp=='>') {
+          break;
+      }
+
+      // send this line to mqtt
+      memcpy(line,lp,sizeof(line));
+      line[sizeof(line)-1]=0;
+      char *cp=line;
+      for (uint32_t i=0; i<sizeof(line); i++) {
+        if (!*cp || *cp=='\n' || *cp=='\r') {
+          *cp=0;
+          break;
+        }
+        cp++;
+      }
+
+      Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+      ResponseAppend_P(PSTR("%s"),tmp);
+
+next_line:
+      if (*lp==SCRIPT_EOL) {
+        lp++;
+      } else {
+        lp = strchr(lp, SCRIPT_EOL);
+        if (!lp) break;
+        lp++;
+      }
+    }
+  }
+}
+#endif //USE_SCRIPT_JSON_EXPORT
+
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -3455,6 +3785,19 @@ bool Xdrv10(uint8_t function)
       result = ScriptMqttData();
       break;
 #endif    //SUPPORT_MQTT_EVENT
+#ifdef USE_SCRIPT_WEB_DISPLAY
+    case FUNC_WEB_SENSOR:
+      ScriptWebShow();
+      break;
+#endif //USE_SCRIPT_WEB_DISPLAY
+
+#ifdef USE_SCRIPT_JSON_EXPORT
+    case FUNC_JSON_APPEND:
+      ScriptJsonAppend();
+      break;
+#endif //USE_SCRIPT_JSON_EXPORT
+
+
   }
   return result;
 }

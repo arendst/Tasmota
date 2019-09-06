@@ -61,8 +61,8 @@
 #define D_JSON_ERASE "Erase"
 #define D_JSON_ERROR "Error"
 #define D_JSON_EVERY "Every"
-#define D_JSON_EXPORT_ACTIVE "ExportActivePower"
-#define D_JSON_EXPORT_REACTIVE "ExportReactivePower"
+#define D_JSON_EXPORT_ACTIVE "ExportActive"
+#define D_JSON_EXPORT_REACTIVE "ExportReactive"
 #define D_JSON_FAILED "Failed"
 #define D_JSON_FALLBACKTOPIC "FallbackTopic"
 #define D_JSON_FEATURES "Features"
@@ -86,8 +86,8 @@
 #define D_JSON_I2CSCAN_NO_DEVICES_FOUND "No devices found"
 #define D_JSON_ID "Id"
 #define D_JSON_ILLUMINANCE "Illuminance"
-#define D_JSON_IMPORT_ACTIVE "ImportActivePower"
-#define D_JSON_IMPORT_REACTIVE "ImportReactivePower"
+#define D_JSON_IMPORT_ACTIVE "ImportActive"
+#define D_JSON_IMPORT_REACTIVE "ImportReactive"
 #define D_JSON_INFRARED "Infrared"
 #define D_JSON_UNKNOWN "Unknown"
 #define D_JSON_LIGHT "Light"
@@ -96,6 +96,7 @@
 #define D_JSON_LOW "Low"
 #define D_JSON_MAC "Mac"
 #define D_JSON_MASK "Mask"
+#define D_JSON_MEMORY_ERROR "Memory error"
 #define D_JSON_MINIMAL "minimal"
 #define D_JSON_MODEL "Model"
 #define D_JSON_MQTT_COUNT "MqttCount"
@@ -123,6 +124,7 @@
 #define D_JSON_RESTARTING "Restarting"
 #define D_JSON_RESTARTREASON "RestartReason"
 #define D_JSON_RSSI "RSSI"
+#define D_JSON_RUNTIME "Runtime"
 #define D_JSON_SAVEADDRESS "SaveAddress"
 #define D_JSON_SAVECOUNT "SaveCount"
 #define D_JSON_SAVED "Saved"
@@ -134,6 +136,7 @@
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
 #define D_JSON_STARTUPUTC "StartupUTC"
+#define D_JSON_STATUS "Status"
 #define D_JSON_SUBNETMASK "Subnetmask"
 #define D_JSON_SUCCESSFUL "Successful"
 #define D_JSON_SUNRISE "Sunrise"
@@ -146,7 +149,7 @@
 #define D_JSON_TODAY "Today"
 #define D_JSON_TOTAL "Total"
 #define D_JSON_TOTAL_USAGE "TotalUsage"
-#define D_JSON_TOTAL_REACTIVE "TotalReactivePower"
+#define D_JSON_TOTAL_REACTIVE "TotalReactive"
 #define D_JSON_TOTAL_START_TIME "TotalStartTime"
 #define D_JSON_TVOC "TVOC"
 #define D_JSON_TYPE "Type"
@@ -165,6 +168,13 @@
 #define D_JSON_WRONG_PARAMETERS "Wrong parameters"
 #define D_JSON_YESTERDAY "Yesterday"
 #define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
+#define D_JSON_PV1_VOLTAGE "Pv1Voltage"
+#define D_JSON_PV1_CURRENT "Pv1Current"
+#define D_JSON_PV1_POWER "Pv1Power"
+#define D_JSON_PV2_VOLTAGE "Pv2Voltage"
+#define D_JSON_PV2_CURRENT "Pv2Current"
+#define D_JSON_PV2_POWER "Pv2Power"
+#define D_JSON_SOLAR_POWER "SolarPower"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
@@ -182,7 +192,6 @@
 // Commands sonoff.ino
 
 //stb mode
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
 #define D_CMND_MQTTENABLE "MqttEnable"
 #define D_CMND_DEEPSLEEP "DeepSleep"
 // end
@@ -231,9 +240,6 @@
 #define D_CMND_PWM "PWM"
 #define D_CMND_PWMFREQUENCY "PWMFrequency"
 #define D_CMND_PWMRANGE "PWMRange"
-#define D_CMND_COUNTER "Counter"
-#define D_CMND_COUNTERTYPE "CounterType"
-#define D_CMND_COUNTERDEBOUNCE "CounterDebounce"
 #define D_CMND_BUTTONDEBOUNCE "ButtonDebounce"
 #define D_CMND_SWITCHDEBOUNCE "SwitchDebounce"
 #define D_CMND_SLEEP "Sleep"
@@ -297,6 +303,7 @@
 #define D_CMND_MQTTCLIENT "MqttClient"
 #define D_CMND_MQTTUSER "MqttUser"
 #define D_CMND_MQTTPASSWORD "MqttPassword"
+#define D_CMND_TLSKEY "TLSKey"
 #define D_CMND_FULLTOPIC "FullTopic"
 #define D_CMND_PREFIX "Prefix"
   #define PRFX_MAX_STRING_LENGTH 5
@@ -324,7 +331,9 @@
 #define D_CMND_WEBREFRESH "WebRefresh"
 #define D_CMND_WEBSEND "WebSend"
 #define D_CMND_WEBCOLOR "WebColor"
+#define D_CMND_WEBSENSOR "WebSensor"
 #define D_CMND_EMULATION "Emulation"
+#define D_CMND_SENDMAIL "Sendmail"
 
 // Commands xdrv_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
@@ -381,14 +390,29 @@
   #define D_JSON_IR_PROTOCOL "Protocol"
   #define D_JSON_IR_BITS "Bits"
   #define D_JSON_IR_DATA "Data"
+  #define D_JSON_IR_DATALSB "DataLSB"
   #define D_JSON_IR_RAWDATA "RawData"
   #define D_JSON_IR_REPEAT "Repeat"
 #define D_CMND_IRHVAC "IRHVAC"
-  #define D_JSON_IRHVAC_VENDOR "VENDOR"
-  #define D_JSON_IRHVAC_POWER "POWER"
-  #define D_JSON_IRHVAC_MODE "MODE"
-  #define D_JSON_IRHVAC_FANSPEED "FANSPEED"
-  #define D_JSON_IRHVAC_TEMP "TEMP"
+  #define D_JSON_IRHVAC_VENDOR "Vendor"
+  #define D_JSON_IRHVAC_PROTOCOL "Protocol"
+  #define D_JSON_IRHVAC_MODEL "Model"
+  #define D_JSON_IRHVAC_POWER "Power"
+  #define D_JSON_IRHVAC_MODE "Mode"
+  #define D_JSON_IRHVAC_FANSPEED "FanSpeed"
+  #define D_JSON_IRHVAC_TEMP "Temp"
+  #define D_JSON_IRHVAC_CELSIUS "Celsius"
+  #define D_JSON_IRHVAC_SWINGV "SwingV"
+  #define D_JSON_IRHVAC_SWINGH "SwingH"
+  #define D_JSON_IRHVAC_LIGHT "Light"
+  #define D_JSON_IRHVAC_BEEP "Beep"
+  #define D_JSON_IRHVAC_ECONO "Econo"
+  #define D_JSON_IRHVAC_FILTER "Filter"
+  #define D_JSON_IRHVAC_TURBO "Turbo"
+  #define D_JSON_IRHVAC_QUIET "Quiet"
+  #define D_JSON_IRHVAC_CLEAN "Clean"
+  #define D_JSON_IRHVAC_SLEEP "Sleep"
+  #define D_JSON_IRHVAC_CLOCK "Clock"
 #define D_JSON_IRRECEIVED "IrReceived"
 
 // Commands xdrv_06_snfbridge.ino
@@ -407,14 +431,6 @@
 #define D_CMND_RFSYNC "RfSync"
   #define D_JSON_RFRECEIVED "RfReceived"
 #define D_CMND_RFRAW "RfRaw"
-
-// Commands xdrv_07_domoticz.ino
-#define D_CMND_DOMOTICZ "Domoticz"
-#define D_CMND_IDX "Idx"
-#define D_CMND_KEYIDX "KeyIdx"
-#define D_CMND_SWITCHIDX "SwitchIdx"
-#define D_CMND_SENSORIDX "SensorIdx"
-#define D_CMND_UPDATETIMER "UpdateTimer"
 
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
@@ -436,6 +452,16 @@
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
 
+// Commands xdrv_16_tuyadimmer.ino
+
+#define D_CMND_TUYA_MCU "TuyaMCU"
+
+// Commands xdrv_23_zigbee.ino
+#define D_CMND_ZIGBEEZNPSEND "ZigbeeZNPSend"
+  #define D_JSON_ZIGBEEZNPRECEIVED "ZigbeeZNPReceived"
+  #define D_JSON_ZIGBEEZNPSENT "ZigbeeZNPSent"
+  #define D_JSON_ZIGBEEZCLRECEIVED "ZigbeeZCLReceived"
+  #define D_JSON_ZIGBEEZCLSENT "ZigbeeZCLSent"
 /********************************************************************************************/
 
 #define D_ASTERISK_PWD "****"
@@ -566,7 +592,7 @@ const char kPrefixes[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
   D_STAT,
   D_TELE };
 
-const char kCodeImage[] PROGMEM = "sonoff|minimal|classic|sensors|knx|basic|display";
+const char kCodeImage[] PROGMEM = "sonoff|minimal|classic|sensors|knx|basic|display|ir";
 
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;

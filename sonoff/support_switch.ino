@@ -31,34 +31,36 @@ const uint8_t SWITCH_PROBE_INTERVAL = 10;   // Time in milliseconds between swit
 
 Ticker TickerSwitch;
 
-unsigned long switch_debounce = 0;          // Switch debounce timer
-uint16_t switch_no_pullup = 0;              // Switch pull-up bitmask flags
-uint8_t switch_state_buf[MAX_SWITCHES] = { 0 };
-uint8_t lastwallswitch[MAX_SWITCHES];       // Last wall switch states
-uint8_t holdwallswitch[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
-uint8_t switch_virtual[MAX_SWITCHES];       // Virtual switch states
-uint8_t switches_found = 0;
+struct SWITCH {
+  unsigned long debounce = 0;                // Switch debounce timer
+  uint16_t no_pullup_mask = 0;               // Switch pull-up bitmask flags
+  uint8_t state[MAX_SWITCHES] = { 0 };
+  uint8_t last_state[MAX_SWITCHES];          // Last wall switch states
+  uint8_t hold_timer[MAX_SWITCHES] = { 0 };  // Timer for wallswitch push button hold
+  uint8_t virtual_state[MAX_SWITCHES];       // Virtual switch states
+  uint8_t present = 0;
+} Switch;
 
 /********************************************************************************************/
 
 void SwitchPullupFlag(uint16 switch_bit)
 {
-  bitSet(switch_no_pullup, switch_bit);
+  bitSet(Switch.no_pullup_mask, switch_bit);
 }
 
 uint8_t SwitchLastState(uint8_t index)
 {
-  return lastwallswitch[index];
+  return Switch.last_state[index];
 }
 
 void SwitchSetVirtual(uint8_t index, uint8_t state)
 {
-  switch_virtual[index] = state;
+  Switch.virtual_state[index] = state;
 }
 
 uint8_t SwitchGetVirtual(uint8_t index)
 {
-  return switch_virtual[index];
+  return Switch.virtual_state[index];
 }
 
 /*********************************************************************************************/
@@ -77,29 +79,29 @@ void SwitchProbe(void)
       if (1 == digitalRead(pin[GPIO_SWT1 +i])) {
 
         if (force_high) {                               // Enabled with SwitchDebounce x1
-          if (1 == switch_virtual[i]) {
-            switch_state_buf[i] = state_filter;         // With noisy input keep current state 1 unless constant 0
+          if (1 == Switch.virtual_state[i]) {
+            Switch.state[i] = state_filter;         // With noisy input keep current state 1 unless constant 0
           }
         }
 
-        if (switch_state_buf[i] < state_filter) {
-          switch_state_buf[i]++;
-          if (state_filter == switch_state_buf[i]) {
-            switch_virtual[i] = 1;
+        if (Switch.state[i] < state_filter) {
+          Switch.state[i]++;
+          if (state_filter == Switch.state[i]) {
+            Switch.virtual_state[i] = 1;
           }
         }
       } else {
 
         if (force_low) {                                // Enabled with SwitchDebounce x2
-          if (0 == switch_virtual[i]) {
-            switch_state_buf[i] = 0;                    // With noisy input keep current state 0 unless constant 1
+          if (0 == Switch.virtual_state[i]) {
+            Switch.state[i] = 0;                    // With noisy input keep current state 0 unless constant 1
           }
         }
 
-        if (switch_state_buf[i] > 0) {
-          switch_state_buf[i]--;
-          if (0 == switch_state_buf[i]) {
-            switch_virtual[i] = 0;
+        if (Switch.state[i] > 0) {
+          Switch.state[i]--;
+          if (0 == Switch.state[i]) {
+            Switch.virtual_state[i] = 0;
           }
         }
       }
@@ -110,17 +112,17 @@ void SwitchProbe(void)
 
 void SwitchInit(void)
 {
-  switches_found = 0;
+  Switch.present = 0;
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
-    lastwallswitch[i] = 1;  // Init global to virtual switch state;
+    Switch.last_state[i] = 1;  // Init global to virtual switch state;
     if (pin[GPIO_SWT1 +i] < 99) {
-      switches_found++;
-      pinMode(pin[GPIO_SWT1 +i], bitRead(switch_no_pullup, i) ? INPUT : ((16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
-      lastwallswitch[i] = digitalRead(pin[GPIO_SWT1 +i]);  // Set global now so doesn't change the saved power state on first switch check
+      Switch.present++;
+      pinMode(pin[GPIO_SWT1 +i], bitRead(Switch.no_pullup_mask, i) ? INPUT : ((16 == pin[GPIO_SWT1 +i]) ? INPUT_PULLDOWN_16 : INPUT_PULLUP));
+      Switch.last_state[i] = digitalRead(pin[GPIO_SWT1 +i]);  // Set global now so doesn't change the saved power state on first switch check
     }
-    switch_virtual[i] = lastwallswitch[i];
+    Switch.virtual_state[i] = Switch.last_state[i];
   }
-  if (switches_found) { TickerSwitch.attach_ms(SWITCH_PROBE_INTERVAL, SwitchProbe); }
+  if (Switch.present) { TickerSwitch.attach_ms(SWITCH_PROBE_INTERVAL, SwitchProbe); }
 }
 
 /*********************************************************************************************\
@@ -138,22 +140,22 @@ void SwitchHandler(uint8_t mode)
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
     if ((pin[GPIO_SWT1 +i] < 99) || (mode)) {
 
-      if (holdwallswitch[i]) {
-        holdwallswitch[i]--;
-        if (0 == holdwallswitch[i]) {
-          SendKey(1, i +1, 3);           // Execute command via MQTT
+      if (Switch.hold_timer[i]) {
+        Switch.hold_timer[i]--;
+        if (0 == Switch.hold_timer[i]) {
+          SendKey(KEY_SWITCH, i +1, POWER_HOLD);  // Execute command via MQTT
         }
       }
 
-      button = switch_virtual[i];
+      button = Switch.virtual_state[i];
 
 // enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, MAX_SWITCH_OPTION};
 
-      if (button != lastwallswitch[i]) {
-        switchflag = 3;
+      if (button != Switch.last_state[i]) {
+        switchflag = POWER_TOGGLE +1;
         switch (Settings.switchmode[i]) {
         case TOGGLE:
-          switchflag = 2;                // Toggle
+          switchflag = POWER_TOGGLE;     // Toggle
           break;
         case FOLLOW:
           switchflag = button &1;        // Follow wall switch state
@@ -162,47 +164,47 @@ void SwitchHandler(uint8_t mode)
           switchflag = ~button &1;       // Follow inverted wall switch state
           break;
         case PUSHBUTTON:
-          if ((PRESSED == button) && (NOT_PRESSED == lastwallswitch[i])) {
-            switchflag = 2;              // Toggle with pushbutton to Gnd
+          if ((PRESSED == button) && (NOT_PRESSED == Switch.last_state[i])) {
+            switchflag = POWER_TOGGLE;   // Toggle with pushbutton to Gnd
           }
           break;
         case PUSHBUTTON_INV:
-          if ((NOT_PRESSED == button) && (PRESSED == lastwallswitch[i])) {
-            switchflag = 2;              // Toggle with releasing pushbutton from Gnd
+          if ((NOT_PRESSED == button) && (PRESSED == Switch.last_state[i])) {
+            switchflag = POWER_TOGGLE;   // Toggle with releasing pushbutton from Gnd
           }
           break;
         case PUSHBUTTON_TOGGLE:
-          if (button != lastwallswitch[i]) {
-            switchflag = 2;              // Toggle with any pushbutton change
+          if (button != Switch.last_state[i]) {
+            switchflag = POWER_TOGGLE;   // Toggle with any pushbutton change
           }
           break;
         case PUSHBUTTONHOLD:
-          if ((PRESSED == button) && (NOT_PRESSED == lastwallswitch[i])) {
-            holdwallswitch[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;
+          if ((PRESSED == button) && (NOT_PRESSED == Switch.last_state[i])) {
+            Switch.hold_timer[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;
           }
-          if ((NOT_PRESSED == button) && (PRESSED == lastwallswitch[i]) && (holdwallswitch[i])) {
-            holdwallswitch[i] = 0;
-            switchflag = 2;              // Toggle with pushbutton to Gnd
+          if ((NOT_PRESSED == button) && (PRESSED == Switch.last_state[i]) && (Switch.hold_timer[i])) {
+            Switch.hold_timer[i] = 0;
+            switchflag = POWER_TOGGLE;   // Toggle with pushbutton to Gnd
           }
           break;
         case PUSHBUTTONHOLD_INV:
-          if ((NOT_PRESSED == button) && (PRESSED == lastwallswitch[i])) {
-            holdwallswitch[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;
+          if ((NOT_PRESSED == button) && (PRESSED == Switch.last_state[i])) {
+            Switch.hold_timer[i] = loops_per_second * Settings.param[P_HOLD_TIME] / 10;
           }
-          if ((PRESSED == button) && (NOT_PRESSED == lastwallswitch[i]) && (holdwallswitch[i])) {
-            holdwallswitch[i] = 0;
-            switchflag = 2;              // Toggle with pushbutton to Gnd
+          if ((PRESSED == button) && (NOT_PRESSED == Switch.last_state[i]) && (Switch.hold_timer[i])) {
+            Switch.hold_timer[i] = 0;
+            switchflag = POWER_TOGGLE;   // Toggle with pushbutton to Gnd
           }
           break;
         }
 
-        if (switchflag < 3) {
-          if (!SendKey(1, i +1, switchflag)) {  // Execute command via MQTT
+        if (switchflag <= POWER_TOGGLE) {
+          if (!SendKey(KEY_SWITCH, i +1, switchflag)) {  // Execute command via MQTT
             ExecuteCommandPower(i +1, switchflag, SRC_SWITCH);  // Execute command internally (if i < devices_present)
           }
         }
 
-        lastwallswitch[i] = button;
+        Switch.last_state[i] = button;
       }
     }
   }
@@ -210,9 +212,9 @@ void SwitchHandler(uint8_t mode)
 
 void SwitchLoop(void)
 {
-  if (switches_found) {
-    if (TimeReached(switch_debounce)) {
-      SetNextTimeInterval(switch_debounce, Settings.switch_debounce);
+  if (Switch.present) {
+    if (TimeReached(Switch.debounce)) {
+      SetNextTimeInterval(Switch.debounce, Settings.switch_debounce);
       SwitchHandler(0);
     }
   }

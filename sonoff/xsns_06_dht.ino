@@ -34,6 +34,7 @@
 uint32_t dht_max_cycles;
 uint8_t dht_data[5];
 uint8_t dht_sensors = 0;
+bool dht_active = true;                       // DHT configured
 
 struct DHTSTRUCT {
   uint8_t     pin;
@@ -125,8 +126,9 @@ bool DhtRead(uint8_t sensor)
 
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %02X, %02X, %02X, %02X, %02X =? %02X"),
-      dht_data[0], dht_data[1], dht_data[2], dht_data[3], dht_data[4], checksum);
+    char hex_char[15];
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_CHECKSUM_FAILURE " %s =? %02X"),
+      ToHex_P(dht_data, 5, hex_char, sizeof(hex_char), ' '), checksum);
     return false;
   }
 
@@ -162,33 +164,40 @@ void DhtReadTempHum(uint8_t sensor)
   }
 }
 
-bool DhtSetup(uint8_t pin, uint8_t type)
-{
-  bool success = false;
-
-  if (dht_sensors < DHT_MAX_SENSORS) {
-    Dht[dht_sensors].pin = pin;
-    Dht[dht_sensors].type = type;
-    dht_sensors++;
-    success = true;
-  }
-  return success;
-}
-
 /********************************************************************************************/
+
+bool DhtPinState()
+{
+  if ((XdrvMailbox.index >= GPIO_DHT11) && (XdrvMailbox.index <= GPIO_SI7021)) {
+    if (dht_sensors < DHT_MAX_SENSORS) {
+      Dht[dht_sensors].pin = XdrvMailbox.payload;
+      Dht[dht_sensors].type = XdrvMailbox.index;
+      dht_sensors++;
+      XdrvMailbox.index = GPIO_DHT11;
+    } else {
+      XdrvMailbox.index = 0;
+    }
+    return true;
+  }
+  return false;
+}
 
 void DhtInit(void)
 {
-  dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
+  if (dht_sensors) {
+    dht_max_cycles = microsecondsToClockCycles(1000);  // 1 millisecond timeout for reading pulses from DHT sensor.
 
-  for (uint32_t i = 0; i < dht_sensors; i++) {
-    pinMode(Dht[i].pin, INPUT_PULLUP);
-    Dht[i].lastreadtime = 0;
-    Dht[i].lastresult = 0;
-    GetTextIndexed(Dht[i].stype, sizeof(Dht[i].stype), Dht[i].type, kSensorNames);
-    if (dht_sensors > 1) {
-      snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
+    for (uint32_t i = 0; i < dht_sensors; i++) {
+      pinMode(Dht[i].pin, INPUT_PULLUP);
+      Dht[i].lastreadtime = 0;
+      Dht[i].lastresult = 0;
+      GetTextIndexed(Dht[i].stype, sizeof(Dht[i].stype), Dht[i].type, kSensorNames);
+      if (dht_sensors > 1) {
+        snprintf_P(Dht[i].stype, sizeof(Dht[i].stype), PSTR("%s%c%02d"), Dht[i].stype, IndexSeparator(), Dht[i].pin);
+      }
     }
+  } else {
+    dht_active = false;
   }
 }
 
@@ -243,11 +252,8 @@ bool Xsns06(uint8_t function)
 {
   bool result = false;
 
-  if (dht_flg) {
+  if (dht_active) {
     switch (function) {
-      case FUNC_INIT:
-        DhtInit();
-        break;
       case FUNC_EVERY_SECOND:
         DhtEverySecond();
         break;
@@ -259,6 +265,12 @@ bool Xsns06(uint8_t function)
         DhtShow(0);
         break;
 #endif  // USE_WEBSERVER
+      case FUNC_INIT:
+        DhtInit();
+        break;
+      case FUNC_PIN_STATE:
+        result = DhtPinState();
+        break;
     }
   }
   return result;

@@ -1,10 +1,58 @@
 /*********************************************************************************************\
+ * 6.6.0.10 20190905
+ * Redesign Tuya support by Shantur Rathore (#6353)
+ * Add command Reset 99 to reset bootcount to zero (#684, #6351)
+ *
+ * 6.6.0.9 20190828
+ * Change theoretical baudrate range to 300..19660500 bps in 300 increments (#6294)
+ * Add Full support of all protocols in IRremoteESP8266, to be used on dedicated-IR Tasmota version. Warning: +81k Flash when compiling with USE_IR_REMOTE_FULL
+ * Add compile time define USE_WS2812_HARDWARE to select hardware type WS2812, WS2812X, WS2813, SK6812, LC8812 or APA106 (DMA mode only)
+ * Add 'sonoff-ir' pre-packaged IR-dedicated firmware and 'sonoff-ircustom' to customize firmware with IR Full protocol support
+ * Add Zigbee support phase 2 - cc2530 initialization and basic ZCL decoding
+ * Add driver USE_SDM120_2 with Domoticz P1 Smart Meter functionality as future replacement for USE_SDM120 - Pls test and report
+ * Add command Power0 0/1/2/Off/On/Toggle to control all power outputs at once (#6340)
+ * Add time to more events (#6337)
+ * Add command Time 1/2/3 to select JSON time format ISO + Epoch, ISO or Epoch
+ *
+ * 6.6.0.8 20190827
+ * Add Tuya Energy monitoring by Shantur Rathore
+ * Add phase 1 Domoticz P1 Smart Meter support using energy sensors handled by xdrv_03_energy.ino based on an idea by pablozg
+ *   Add commands Tariff1 0..23 (start Off-Peak hour), Tariff2 0..23 (start Standard hour) and Tariff3 0/1 (Saturday and Sunday Off-Peak)
+ *
+ * 6.6.0.7 20190825
+ * Expand Settings area to 4k for future use
+ *
+ * 6.6.0.6 20190819
+ * Add I2C display driver for SH1106 oled by Gerhard Mutz
+ * Add SPI display drivers for epaper 4.2 inch, ILI9488 TFT, SSD1351 Color oled and RA8876 TFT by Gerhard Mutz
+ * Add support for HM17 bluetooth LE passive scan of ibeacon devices by Gerhard Mutz
+ *
+ * 6.6.0.5 20190816
+ * Add command WebSensor<sensor number> 0/1 to control display of sensor data in web GUI (#6085)
+ * Change some table locations from RAM to Flash
+ * Fix wrong telemetry message when SetOption68 1 (#6191)
+ * Add support for RDM6300 125kHz RFID Reader by Gerhard Mutz
+ *
+ * 6.6.0.4 20190806
+ * Add support for CHIRP soil moisture sensor by Christian Baars
+ * Add debug compile features using defines DEBUG_TASMOTA_CORE, DEBUG_TASMOTA_DRIVER and DEBUG_TASMOTA_SENSOR.
+ *   See DEBUG_CORE_LOG example in sonoff.ino and DEBUG_DRIVER_LOG example in xdrv_09_timers.ino
+ * Add support for Solax X1 inverter by Pablo Zerón
+ * Add ZigBee support phase 1 - low level MQTT ZNP messages for CC2530 devices
+ * Add command Buzzer with optional parameters <number of beeps>,<duration of beep in 100mS steps>,<duration of silence in 100mS steps> enabled when a buzzer is configured (#5988)
+ * Add support for PAJ7620 gesture sensor by Christian Baars
+ *
  * 6.6.0.3 20190725
  * Change filename of configuration backup from using FriendlyName1 to Hostname solving diacritic issues (#2422)
+ * Change Store AWS IoT Private Key and Certificate in SPI Flash avoiding device-specific compilations
  * Upgrade library IRRemoteEsp8266 to 2.6.4, now using sendPioneer()
  * Add support for MAX31865 Thermocouple sensor by Alberto Lopez Siemens
  * Add option 0 to Width1 (Marker), Width2 (Second), Width3 (Minute) and Width4 (Hour) disabling display (#6152)
  * Add MqttCount metric to STATE (#6155)
+ * Add define USE_ENERGY_MARGIN_DETECTION to disable Energy Margin and Power Limit detection
+ * Add define USE_ENERGY_POWER_LIMIT to disable Energy Power Limit detection while Energy Margin detection is active
+ * Add allow repeat/longpress for IRSend raw, introduced IRSend<r> option (#6074)
+ * Add SetOption68 to enable multi-channel PWM instead of a single light (#6134)
  *
  * 6.6.0.2 20190714
  * Change commands Var and Mem to show all parameters when no index is given (#6107)
@@ -43,7 +91,7 @@
  * Refactor TLS based on BearSSL, warning breaking change for fingerprints validation
  * Refactor management of lights, using classes and integers instead of floats
  * Refactor UDP initial message handling from string to char using static memory and add debug info (#5505)
- * Refactor IRsend and receive for 64-bit support (#5523)
+ * Refactor IRSend and receive for 64-bit support (#5523)
  * Refactor MQTT which might solve issue (#5755)
  * Refactor IRSend by using heap when more than 199 values need to be send. May need increase of define MQTT_MAX_PACKET_SIZE too (#5950)
  * Refactor double to float in rules, and replaced trigonometric functions from stdlib with smaller versions (#6005)

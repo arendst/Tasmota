@@ -403,7 +403,7 @@ void Schutter_Report_Position()
     rules_flag.shutter_moved = 0;
   }
   rules_flag.shutter_moving = shutter_moving;
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
+  //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
 }
 
 void Shutter_Relay_changed()
@@ -414,7 +414,7 @@ void Shutter_Relay_changed()
   // relays_changed = bool if one of the relays that belong to the shutter changed not by shutter or pulsetimer
   char stemp1[10];
 
-  
+
 	for (byte i=0; i < shutters_present; i++) {
 		power_t powerstate_local = (power >> (Settings.shutter_startrelay[i] -1)) & 3;
 		//uint8   manual_relays_changed = ((SwitchedRelay >> (Settings.shutter_startrelay[i] -1)) & 3) && SRC_IGNORE != last_source && SRC_SHUTTER != last_source && SRC_PULSETIMER != last_source ;

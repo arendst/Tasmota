@@ -187,6 +187,13 @@ enum UserSelectablePins {
   GPIO_BUZZER,         // Buzzer
   GPIO_BUZZER_INV,     // Inverted buzzer
   GPIO_OLED_RESET,     // OLED Display Reset
+  GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
+  GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
+  GPIO_ZIGBEE_TX,      // Zigbee Serial interface
+  GPIO_ZIGBEE_RX,      // Zigbee Serial interface
+  GPIO_RDM6300_RX,     // RDM6300 RX
+  GPIO_IBEACON_TX,     // HM17 IBEACON TX
+  GPIO_IBEACON_RX,     // HM17 IBEACON RX
 //STB mod
   GPIO_SEN_SLEEP,
 //end
@@ -259,6 +266,10 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ARIRFSEL "|"
   D_SENSOR_BUZZER "|" D_SENSOR_BUZZER "i|"
   D_SENSOR_OLED_RESET "|"
+  D_SENSOR_SOLAXX1_TX "|" D_SENSOR_SOLAXX1_RX "|"
+  D_SENSOR_ZIGBEE_TXD "|" D_SENSOR_ZIGBEE_RXD "|"
+  D_SENSOR_RDM6300_RX "|"
+  D_SENSOR_IBEACON_TX "|" D_SENSOR_IBEACON_RX "|"
   //STB mod
   D_SENSOR_DEEPSLEEP "|"
   //end
@@ -488,8 +499,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_CNTR4,
   GPIO_CNTR4_NP,
 #endif
+#ifdef USE_BUZZER
   GPIO_BUZZER,         // Buzzer
   GPIO_BUZZER_INV,     // Inverted buzzer
+#endif
   GPIO_TXD,            // Serial interface
   GPIO_RXD,            // Serial interface
   // stb mod
@@ -520,15 +533,36 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_DS18B20) || defined(USE_DS18x20) || defined(USE_DS18x20_LEGACY)
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
 #endif
-#if defined(USE_LIGHT) && defined(USE_WS2812)
+
+// Light
+#ifdef USE_LIGHT
+#ifdef USE_WS2812
   GPIO_WS2812,         // WS2812 Led string
 #endif
-#ifdef USE_IR_REMOTE
+#ifdef USE_ARILUX_RF
+  GPIO_ARIRFRCV,       // AriLux RF Receive input
+  GPIO_ARIRFSEL,       // Arilux RF Receive input selected
+#endif
+  GPIO_DI,             // my92x1 PWM input
+  GPIO_DCKI,           // my92x1 CLK input
+#ifdef USE_SM16716
+  GPIO_SM16716_CLK,    // SM16716 CLOCK
+  GPIO_SM16716_DAT,    // SM16716 DATA
+  GPIO_SM16716_SEL,    // SM16716 SELECT
+#endif  // USE_SM16716
+#ifdef USE_TUYA_MCU
+  GPIO_TUYA_TX,        // Tuya Serial interface
+  GPIO_TUYA_RX,        // Tuya Serial interface
+#endif
+#endif  // USE_LIGHT
+
+#if defined(USE_IR_REMOTE) || defined(USE_IR_REMOTE_FULL)
   GPIO_IRSEND,         // IR remote
-#ifdef USE_IR_RECEIVE
+#if defined(USE_IR_RECEIVE) || defined(USE_IR_REMOTE_FULL)
   GPIO_IRRECV,         // IR receiver
 #endif
 #endif
+
 #ifdef USE_RC_SWITCH
   GPIO_RFSEND,         // RF transmitter
   GPIO_RFRECV,         // RF receiver
@@ -549,19 +583,22 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_HX711_SCK,      // HX711 Load Cell clock
   GPIO_HX711_DAT,      // HX711 Load Cell data
 #endif
-#if defined(USE_ENERGY_SENSOR) && defined(USE_HLW8012)
+
+// Energy sensors
+#ifdef USE_ENERGY_SENSOR
+#ifdef USE_HLW8012
   GPIO_NRG_SEL,        // HLW8012/HLJ-01 Sel output (1 = Voltage)
   GPIO_NRG_SEL_INV,    // HLW8012/HLJ-01 Sel output (0 = Voltage)
   GPIO_NRG_CF1,        // HLW8012/HLJ-01 CF1 voltage / current
   GPIO_HLW_CF,         // HLW8012 CF power
   GPIO_HJL_CF,         // HJL-01/BL0937 CF power
 #endif
-#if defined(USE_ENERGY_SENSOR) && defined(USE_I2C) && defined(USE_ADE7953)
+#if defined(USE_I2C) && defined(USE_ADE7953)
   GPIO_ADE7953_IRQ,    // ADE7953 IRQ
 #endif
   GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
-#if defined(USE_ENERGY_SENSOR) && defined(USE_MCP39F501)
+#ifdef USE_MCP39F501
   GPIO_MCP39F5_TX,     // MCP39F501 Serial interface (Shelly2)
   GPIO_MCP39F5_RX,     // MCP39F501 Serial interface (Shelly2)
   GPIO_MCP39F5_RST,    // MCP39F501 Reset (Shelly2)
@@ -578,17 +615,33 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_PZEM_DC
   GPIO_PZEM017_RX,     // PZEM-003,017 Serial Modbus interface
 #endif
+#ifdef USE_SDM120_2
+  GPIO_SDM120_TX,      // SDM120 Serial interface
+  GPIO_SDM120_RX,      // SDM120 Serial interface
+#endif
+#endif  // USE_ENERGY_SENSOR
+#ifndef USE_SDM120_2
 #ifdef USE_SDM120
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
 #endif
+#endif  // USE_SDM120_2
 #ifdef USE_SDM630
   GPIO_SDM630_TX,      // SDM630 Serial interface
   GPIO_SDM630_RX,      // SDM630 Serial interface
 #endif
+#ifdef USE_SOLAX_X1
+  GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
+  GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
+#endif
+
 #ifdef USE_SERIAL_BRIDGE
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
+#endif
+#ifdef USE_ZIGBEE
+  GPIO_ZIGBEE_TX,      // Zigbee Serial interface
+  GPIO_ZIGBEE_RX,      // Zigbee Serial interface
 #endif
 #ifdef USE_MHZ19
   GPIO_MHZ_TXD,        // MH-Z19 Serial interface
@@ -611,10 +664,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MP3_PLAYER
   GPIO_MP3_DFR562,     // RB-DFR-562, DFPlayer Mini MP3 Player Serial interface
 #endif
-#if defined(USE_LIGHT) && defined(USE_TUYA_DIMMER)
-  GPIO_TUYA_TX,        // Tuya Serial interface
-  GPIO_TUYA_RX,        // Tuya Serial interface
-#endif
 #ifdef USE_AZ7798
   GPIO_AZ_TXD,         // AZ-Instrument 7798 CO2 datalogger Serial interface
   GPIO_AZ_RXD,         // AZ-Instrument 7798 CO2 datalogger Serial interface
@@ -622,6 +671,13 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_PN532_HSU
   GPIO_PN532_TXD,      // PN532 HSU Tx
   GPIO_PN532_RXD,      // PN532 HSU Rx
+#endif
+#ifdef USE_RDM6300
+  GPIO_RDM6300_RX,
+#endif
+#ifdef USE_IBEACON
+  GPIO_IBEACON_RX,
+  GPIO_IBEACON_TX,
 #endif
 #ifdef USE_MGC3130
   GPIO_MGC3130_XFER,
@@ -632,28 +688,15 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
 #endif
-#ifdef USE_LIGHT
-  GPIO_DI,             // my92x1 PWM input
-  GPIO_DCKI,           // my92x1 CLK input
-#ifdef USE_SM16716
-  GPIO_SM16716_CLK,    // SM16716 CLOCK
-  GPIO_SM16716_DAT,    // SM16716 DATA
-  GPIO_SM16716_SEL,    // SM16716 SELECT
-#endif  // USE_SM16716
-#endif  // USE_LIGHT
 #ifdef ROTARY_V1
   GPIO_ROT1A,          // Rotary switch1 A Pin
   GPIO_ROT1B,          // Rotary switch1 B Pin
   GPIO_ROT2A,          // Rotary switch2 A Pin
   GPIO_ROT2B,          // Rotary switch2 B Pin
 #endif
-#ifdef USE_ARILUX_RF
-  GPIO_ARIRFRCV,       // AriLux RF Receive input
-  GPIO_ARIRFSEL,       // Arilux RF Receive input selected
-#endif
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,
-  GPIO_HRE_DATA
+  GPIO_HRE_DATA,
 #endif
 };
 
@@ -715,7 +758,7 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   OBI2,
   MANZOKU_EU_4,
   ESP_SWITCH,          // Switch Devices
-#ifdef USE_TUYA_DIMMER
+#ifdef USE_TUYA_MCU
   TUYA_DIMMER,         // Dimmer Devices
 #endif
 #ifdef USE_ARMTRONIX_DIMMERS
@@ -1694,7 +1737,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL1,        // GPIO14 Relay SRU 5VDC SDA (0 = Off, 1 = On )
      0, 0, 0
   },
-  { "Tuya Dimmer",     // Tuya Dimmer (ESP8266 w/ separate MCU dimmer)
+  { "Tuya MCU",     // Tuya MCU device (ESP8266 w/ separate MCU)
                        // https://www.amazon.com/gp/product/B07CTNSZZ8/ref=oh_aui_detailpage_o00_s00?ie=UTF8&psc=1
      GPIO_USER,        // Virtual Button (controlled by MCU)
      GPIO_USER,        // GPIO01 MCU serial control

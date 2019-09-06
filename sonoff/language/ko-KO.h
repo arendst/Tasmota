@@ -425,6 +425,7 @@
   #define D_DOMOTICZ_VOLTAGE "전압/PM2.5"
   #define D_DOMOTICZ_CURRENT "전류/PM10"
   #define D_DOMOTICZ_AIRQUALITY "공기질"
+  #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
 #define D_DOMOTICZ_UPDATE_TIMER "타이머 갱신"
 
 // xdrv_09_timers.ino
@@ -612,6 +613,14 @@
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
 #define D_SENSOR_BUZZER        "Buzzer"
 #define D_SENSOR_OLED_RESET    "OLED Reset"
+#define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
+#define D_SENSOR_ZIGBEE_RXD    "Zigbee Rx"
+#define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
+#define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_IBEACON_TX    "iBeacon TX"
+#define D_SENSOR_IBEACON_RX    "iBeacon RX"
+#define D_SENSOR_RDM6300_RX    "RDM6300 RX"
+#define D_SENSOR_CC1101_CS     "CC1101 CS"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -681,5 +690,29 @@
 #define D_TOTAL_REACTIVE  "Total Reactive"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "Deg"
+
+//SOLAXX1
+#define D_PV1_VOLTAGE     "PV1 Voltage"
+#define D_PV1_CURRENT     "PV1 Current"
+#define D_PV1_POWER       "PV1 Power"
+#define D_PV2_VOLTAGE     "PV2 Voltage"
+#define D_PV2_CURRENT     "PV2 Current"
+#define D_PV2_POWER       "PV2 Power"
+#define D_SOLAR_POWER     "Solar Power"
+#define D_INVERTER_POWER  "Inverter Power"
+#define D_STATUS          "Status"
+#define D_WAITING         "Waiting"
+#define D_CHECKING        "Checking"
+#define D_WORKING         "Working"
+#define D_FAILURE         "Failure"
+#define D_SOLAX_ERROR_0   "No Error Code"
+#define D_SOLAX_ERROR_1   "Grid Lost Fault"
+#define D_SOLAX_ERROR_2   "Grid Voltage Fault"
+#define D_SOLAX_ERROR_3   "Grid Frequency Fault"
+#define D_SOLAX_ERROR_4   "Pv Voltage Fault"
+#define D_SOLAX_ERROR_5   "Isolation Fault"
+#define D_SOLAX_ERROR_6   "Over Temperature Fault"
+#define D_SOLAX_ERROR_7   "Fan Fault"
+#define D_SOLAX_ERROR_8   "Other Device Fault"
 
 #endif  // _LANGUAGE_KO_KO_H_

@@ -24,7 +24,21 @@
 
 #define XSNS_01             1
 
+#define D_PRFX_COUNTER "Counter"
+#define D_CMND_COUNTERTYPE "Type"
+#define D_CMND_COUNTERDEBOUNCE "Debounce"
+//stb mod
+#define D_CMND_COUNTERDEVIDER "Devider"
+
+const char kCounterCommands[] PROGMEM = D_PRFX_COUNTER "|"  // Prefix
+  "|" D_CMND_COUNTERTYPE "|" D_CMND_COUNTERDEBOUNCE "|" D_CMND_COUNTERDEVIDER;
+
+void (* const CounterCommand[])(void) PROGMEM =
+  { &CmndCounter, &CmndCounterType, &CmndCounterDebounce, &CmndCounterDevider};
+//end
+
 unsigned long last_counter_timer[MAX_COUNTERS]; // Last counter time in micro seconds
+uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
 
 #ifndef ARDUINO_ESP8266_RELEASE_2_3_0       // Fix core 2.5.x ISR not in IRAM Exception
 void CounterUpdate(uint8_t index) ICACHE_RAM_ATTR;
@@ -71,13 +85,14 @@ void CounterUpdate4(void)
 
 /********************************************************************************************/
 
-void CounterSaveState(void)
+bool CounterPinState(void)
 {
-  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
-    if (pin[GPIO_CNTR1 +i] < 99) {
-      Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
-    }
+  if ((XdrvMailbox.index >= GPIO_CNTR1_NP) && (XdrvMailbox.index < (GPIO_CNTR1_NP + MAX_COUNTERS))) {
+    bitSet(counter_no_pullup, XdrvMailbox.index - GPIO_CNTR1_NP);
+    XdrvMailbox.index -= (GPIO_CNTR1_NP - GPIO_CNTR1);
+    return true;
   }
+  return false;
 }
 
 void CounterInit(void)
@@ -99,17 +114,19 @@ void CounterInit(void)
   }
 }
 
-#ifdef USE_WEBSERVER
-const char HTTP_SNS_COUNTER[] PROGMEM =
-  "{s}" D_COUNTER "%d{m}%s%s{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif  // USE_WEBSERVER
+void CounterSaveState(void)
+{
+  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
+    if (pin[GPIO_CNTR1 +i] < 99) {
+      Settings.pulse_counter[i] = RtcSettings.pulse_counter[i];
+    }
+  }
+}
 
 void CounterShow(bool json)
 {
-  char stemp[10];
-
+  bool header = false;
   uint8_t dsxflg = 0;
-  uint8_t header = 0;
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
       char counter[33];
@@ -125,11 +142,9 @@ void CounterShow(bool json)
       if (json) {
         if (!header) {
           ResponseAppend_P(PSTR(",\"COUNTER\":{"));
-          stemp[0] = '\0';
         }
-        header++;
-        ResponseAppend_P(PSTR("%s\"C%d\":%s"), stemp, i +1, counter);
-        strlcpy(stemp, ",", sizeof(stemp));
+        ResponseAppend_P(PSTR("%s\"C%d\":%s"), (header)?",":"", i +1, counter);
+        header = true;
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
 
@@ -141,7 +156,8 @@ void CounterShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
       } else {
-        WSContentSend_PD(HTTP_SNS_COUNTER, i +1, counter, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
+        WSContentSend_PD(PSTR("{s}" D_COUNTER "%d{m}%s%s{e}"),
+          i +1, counter, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
 #endif  // USE_WEBSERVER
       }
     }
@@ -149,61 +165,58 @@ void CounterShow(bool json)
       RtcSettings.pulse_counter[i] = 0xFFFFFFFF;  // Set Timer to max in case of no more interrupts due to stall of measured device
     }
   }
-  if (json) {
-    if (header) {
-      ResponseJsonEnd();
-    }
+  if (header) {
+    ResponseJsonEnd();
   }
 }
 
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
-//stb mod
-enum CounterCommands { CMND_COUNTER, CMND_COUNTERTYPE, CMND_COUNTERDEBOUNCE, CMND_COUNTERDEVIDER };
-const char kCounterCommands[] PROGMEM = D_CMND_COUNTER "|" D_CMND_COUNTERTYPE "|" D_CMND_COUNTERDEBOUNCE "|" D_CMND_COUNTERDEVIDER ;
-//end
-bool CounterCommand(void)
-{
-  char command[CMDSZ];
-  bool serviced = true;
 
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kCounterCommands);
-  if (CMND_COUNTER == command_code) {
-    if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
-      if ((XdrvMailbox.payload >= 0) && (pin[GPIO_CNTR1 + XdrvMailbox.index -1] < 99)) {
-//STB mode
-        Settings.pulse_devider[XdrvMailbox.index-1] = Settings.pulse_devider[XdrvMailbox.index-1] == 0 ? COUNTERDEVIDER : Settings.pulse_devider[XdrvMailbox.index-1];
-        if ((XdrvMailbox.data[0] == '-') || (XdrvMailbox.data[0] == '+')) {
-          RtcSettings.pulse_counter[XdrvMailbox.index-1] += XdrvMailbox.payload * Settings.pulse_devider[XdrvMailbox.index-1];
-          Settings.pulse_counter[XdrvMailbox.index-1] += XdrvMailbox.payload * Settings.pulse_devider[XdrvMailbox.index-1];
-        } else {
-          RtcSettings.pulse_counter[XdrvMailbox.index-1] = XdrvMailbox.payload * Settings.pulse_devider[XdrvMailbox.index-1];
-          Settings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload * Settings.pulse_devider[XdrvMailbox.index-1];
-        }
+void CmndCounter(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
+    if ((XdrvMailbox.data_len > 0) && (pin[GPIO_CNTR1 + XdrvMailbox.index -1] < 99)) {
+//STB mod
+      Settings.pulse_devider[XdrvMailbox.index-1] = Settings.pulse_devider[XdrvMailbox.index-1] == 0 ? COUNTERDEVIDER : Settings.pulse_devider[XdrvMailbox.index-1];
+      if ((XdrvMailbox.data[0] == '-') || (XdrvMailbox.data[0] == '+')) {
+        RtcSettings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload * Settings.pulse_devider[XdrvMailbox.index-1];
+        Settings.pulse_counter[XdrvMailbox.index -1] += XdrvMailbox.payload * Settings.pulse_devider[XdrvMailbox.index-1];
+      } else {
+        RtcSettings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload * Settings.pulse_devider[XdrvMailbox.index-1];
+        Settings.pulse_counter[XdrvMailbox.index -1] = XdrvMailbox.payload * Settings.pulse_devider[XdrvMailbox.index-1];
       }
-      Response_P(S_JSON_COMMAND_INDEX_LVALUE, command, XdrvMailbox.index, RtcSettings.pulse_counter[XdrvMailbox.index -1]/Settings.pulse_devider[XdrvMailbox.index -1]);
 //end
     }
+    ResponseCmndIdxNumber(RtcSettings.pulse_counter[XdrvMailbox.index -1]/Settings.pulse_devider[XdrvMailbox.index -1]);
   }
-  else if (CMND_COUNTERTYPE == command_code) {
-    if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
-      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1) && (pin[GPIO_CNTR1 + XdrvMailbox.index -1] < 99)) {
-        bitWrite(Settings.pulse_counter_type, XdrvMailbox.index -1, XdrvMailbox.payload &1);
-        RtcSettings.pulse_counter[XdrvMailbox.index -1] = 0;
-        Settings.pulse_counter[XdrvMailbox.index -1] = 0;
-      }
-      Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, bitRead(Settings.pulse_counter_type, XdrvMailbox.index -1));
+}
+
+void CmndCounterType(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1) && (pin[GPIO_CNTR1 + XdrvMailbox.index -1] < 99)) {
+      bitWrite(Settings.pulse_counter_type, XdrvMailbox.index -1, XdrvMailbox.payload &1);
+      RtcSettings.pulse_counter[XdrvMailbox.index -1] = 0;
+      Settings.pulse_counter[XdrvMailbox.index -1] = 0;
     }
+    ResponseCmndIdxNumber(bitRead(Settings.pulse_counter_type, XdrvMailbox.index -1));
   }
-  else if (CMND_COUNTERDEBOUNCE == command_code) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
-      Settings.pulse_counter_debounce = XdrvMailbox.payload;
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.pulse_counter_debounce);
+}
+
+void CmndCounterDebounce(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32001)) {
+    Settings.pulse_counter_debounce = XdrvMailbox.payload;
   }
+  ResponseCmndNumber(Settings.pulse_counter_debounce);
+}
+
 //stb mod
-   else if ((CMND_COUNTERDEVIDER == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
+void CmndCounterDevider(void)
+{
+    if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_COUNTERS)) {
       if (XdrvMailbox.payload >= 0) {
         unsigned long _counter;
         Settings.pulse_devider[XdrvMailbox.index -1] = Settings.pulse_devider[XdrvMailbox.index -1] == 0 ? COUNTERDEVIDER : Settings.pulse_devider[XdrvMailbox.index -1];
@@ -211,13 +224,11 @@ bool CounterCommand(void)
         Settings.pulse_devider[XdrvMailbox.index -1] = XdrvMailbox.payload;
         RtcSettings.pulse_counter[XdrvMailbox.index -1] = _counter * Settings.pulse_devider[XdrvMailbox.index -1];
       }
-      Response_P(S_JSON_COMMAND_INDEX_NVALUE, command, XdrvMailbox.index, Settings.pulse_devider[XdrvMailbox.index -1]);
+      ResponseCmndNumber(Settings.pulse_devider[XdrvMailbox.index -1]);
     }
- //end
-  else serviced = false;  // Unknown command
-
-  return serviced;
 }
+ //end
+
 
 /*********************************************************************************************\
  * Interface
@@ -228,9 +239,6 @@ bool Xsns01(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      CounterInit();
-      break;
     case FUNC_JSON_APPEND:
       CounterShow(1);
       break;
@@ -244,7 +252,13 @@ bool Xsns01(uint8_t function)
       CounterSaveState();
       break;
     case FUNC_COMMAND:
-      result = CounterCommand();
+      result = DecodeCommand(kCounterCommands, CounterCommand);
+      break;
+    case FUNC_INIT:
+      CounterInit();
+      break;
+    case FUNC_PIN_STATE:
+      result = CounterPinState();
       break;
   }
   return result;
