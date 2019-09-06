@@ -163,7 +163,7 @@ void DDS2382_250ms(void)
       if (DDS2382_ModbusReceiveReady()) {
         error = DDS2382_ModbusReceive();
         if (error) {
-          AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "dds2382 response error %d"), error);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "dds2382 response error %d"), error);
           dds2382_state = DDS2382_STATE_SEND_CMD;
         }
         else dds2382_state = DDS2382_STATE_PROCESS_RESPONSE;
@@ -178,7 +178,7 @@ void DDS2382_250ms(void)
       break;
     case DDS2382_STATE_PROCESS_RESPONSE:
       error = DDS2382_checkDataCRC();
-      if (error) AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "dds2382 CRC error %d"), error);
+      if (error) AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "dds2382 CRC error %d"), error);
       else {
         dds2382_data.voltage = dds2382_rx_buffer[27];
         dds2382_data.voltage <<= 8;
@@ -239,14 +239,14 @@ void DDS2382Init(void)
 {
   dds2382_state = DDS2382_STATE_INIT;
   if ((pin[GPIO_DDS2382_RX] < 99) && (pin[GPIO_DDS2382_TX] < 99)) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "dds2382 INIT IN %d"), dds2382_state);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "dds2382 INIT IN %d"), dds2382_state);
     DDS2382Serial = new TasmotaSerial(pin[GPIO_DDS2382_RX], pin[GPIO_DDS2382_TX], 1);
     if (DDS2382Serial->begin(DDS2382_SPEED)) {
       if (DDS2382Serial->hardwareSerial()) { ClaimSerial(); }
       DDS2382Serial->setTimeout(50);
       dds2382_state = DDS2382_STATE_READY;
     }
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_DEBUG "dds2382 INIT OUT %d"), dds2382_state);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "dds2382 INIT OUT %d"), dds2382_state);
   }
 }
 
