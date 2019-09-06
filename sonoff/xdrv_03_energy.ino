@@ -83,12 +83,12 @@ struct ENERGY {
   float total = 0;             // 12345.12345 kWh tariff 1 + 2
   float total1 = 0;            // 12345.12345 kWh tariff 1 - off-peak
 
-  unsigned long kWhtoday_delta = 0;  // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy.kWhtoday (HLW and CSE only)
+  unsigned long kWhtoday_delta = 0;   // 1212312345 Wh 10^-5 (deca micro Watt hours) - Overflows to Energy.kWhtoday (HLW and CSE only)
+  unsigned long kWhtoday_offset = 0;  // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
   unsigned long kWhtoday;      // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
-  unsigned long kWhtoday1;     // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
   unsigned long period = 0;    // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
 
-  uint8_t fifth_second = 0;
+  uint8_t tenth_second = 0;
   uint8_t command_code = 0;
   uint8_t data_valid = 0;
 
@@ -129,64 +129,68 @@ void EnergyUpdateToday(void)
     Energy.kWhtoday_delta -= (delta * 1000);
     Energy.kWhtoday += delta;
   }
-  uint32_t energy_diff = Energy.kWhtoday - RtcSettings.energy_kWhtoday;
 
-  RtcSettings.energy_kWhtoday = Energy.kWhtoday;
-  Energy.daily = (float)Energy.kWhtoday / 100000;
-  Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday) / 100000;
+  uint32_t energy_diff = Energy.kWhtoday_offset + Energy.kWhtoday - RtcSettings.energy_kWhtoday;
+
+  RtcSettings.energy_kWhtoday = Energy.kWhtoday_offset + Energy.kWhtoday;
+  Energy.daily = (float)(RtcSettings.energy_kWhtoday) / 100000;
+  Energy.total = (float)(RtcSettings.energy_kWhtotal + RtcSettings.energy_kWhtoday) / 100000;
 
   if ((RtcTime.hour < Settings.param[P_ENERGY_TARIFF2]) ||  // Tarrif1 = Off-Peak
       (RtcTime.hour >= Settings.param[P_ENERGY_TARIFF1]) ||
       (Settings.flag3.energy_weekend && ((RtcTime.day_of_week == 1) ||
                                          (RtcTime.day_of_week == 7)))
      ) {
-    Energy.kWhtoday1 += energy_diff;
-    RtcSettings.energy_usage.usage1_kWhtoday = Energy.kWhtoday1;
-    Energy.total1 = (float)(RtcSettings.energy_usage.usage1_kWhtotal + Energy.kWhtoday1) / 100000;
+    RtcSettings.energy_usage.usage1_kWhtoday += energy_diff;
+    Energy.total1 = (float)(RtcSettings.energy_usage.usage1_kWhtotal + RtcSettings.energy_usage.usage1_kWhtoday) / 100000;
   }
 }
 
 void EnergyUpdateTotal(float value, bool kwh)
 {
+  char energy_total_chr[FLOATSZ];
+  dtostrfd(value, 4, energy_total_chr);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: Energy Total %s %sWh"), energy_total_chr, (kwh) ? "k" : "");
+
   uint32_t multiplier = (kwh) ? 100000 : 100;  // kWh or Wh to deca milli Wh
 
   if (0 == Energy.start_energy || (value < Energy.start_energy)) {
     Energy.start_energy = value;  // Init after restart and handle roll-over if any
-//    RtcSettings.energy_kWhtotal = (unsigned long)(value * multiplier);
-//    Energy.kWhtoday = 0;
-//    RtcSettings.energy_kWhtoday = 0;
   }
   else if (value != Energy.start_energy) {
-    Energy.kWhtoday += (unsigned long)((value - Energy.start_energy) * multiplier);
-    Energy.start_energy = value;
+    Energy.kWhtoday = (unsigned long)((value - Energy.start_energy) * multiplier);
   }
   EnergyUpdateToday();
 }
 
 /*********************************************************************************************/
 
-void Energy200ms(void)
+void Energy100ms(void)
 {
   Energy.power_on = (power != 0) | Settings.flag.no_power_on_check;
 
-  Energy.fifth_second++;
-  if (5 == Energy.fifth_second) {
-    Energy.fifth_second = 0;
+  Energy.tenth_second++;
+  if (30 == Energy.tenth_second) {
+    Energy.tenth_second = 0;
+  }
+
+  if ((Energy.tenth_second % 10) == 0) {
 
     XnrgCall(FUNC_ENERGY_EVERY_SECOND);
 
     if (RtcTime.valid) {
       if (LocalTime() == Midnight()) {
-        Settings.energy_kWhyesterday = Energy.kWhtoday;
+        Settings.energy_kWhyesterday = RtcSettings.energy_kWhtoday;
 
-        Settings.energy_kWhtotal += Energy.kWhtoday;
-        RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
+        RtcSettings.energy_kWhtotal += RtcSettings.energy_kWhtoday;
+        Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
         Energy.kWhtoday = 0;
+        Energy.kWhtoday_offset = 0;
         RtcSettings.energy_kWhtoday = 0;
+        Energy.start_energy = 0;
 
-        Settings.energy_usage.usage1_kWhtotal += Energy.kWhtoday1;
-        RtcSettings.energy_usage.usage1_kWhtotal = Settings.energy_usage.usage1_kWhtotal;
-        Energy.kWhtoday1 = 0;
+        RtcSettings.energy_usage.usage1_kWhtotal += RtcSettings.energy_usage.usage1_kWhtoday;
+        Settings.energy_usage.usage1_kWhtotal = RtcSettings.energy_usage.usage1_kWhtotal;
         RtcSettings.energy_usage.usage1_kWhtoday = 0;
 
         Energy.kWhtoday_delta = 0;
@@ -205,19 +209,23 @@ void Energy200ms(void)
     }
   }
 
-  XnrgCall(FUNC_EVERY_200_MSECOND);
+  if (Energy.tenth_second &1) {
+    XnrgCall(FUNC_EVERY_200_MSECOND);
+  }
+
+  if ((Energy.tenth_second % 3) == 0) {
+    XnrgCall(FUNC_EVERY_300_MSECOND);
+  }
 }
 
 void EnergySaveState(void)
 {
   Settings.energy_kWhdoy = (RtcTime.valid) ? RtcTime.day_of_year : 0;
 
-  Settings.energy_kWhtoday = Energy.kWhtoday;
-  RtcSettings.energy_kWhtoday = Energy.kWhtoday;
+  Settings.energy_kWhtoday = RtcSettings.energy_kWhtoday;
   Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
 
-  Settings.energy_usage.usage1_kWhtoday = Energy.kWhtoday1;
-  RtcSettings.energy_usage.usage1_kWhtoday = Energy.kWhtoday1;
+  Settings.energy_usage.usage1_kWhtoday = RtcSettings.energy_usage.usage1_kWhtoday;
   Settings.energy_usage.usage1_kWhtotal = RtcSettings.energy_usage.usage1_kWhtotal;
 }
 
@@ -440,13 +448,14 @@ void CmndEnergyReset(void)
     if (p != XdrvMailbox.data) {
       switch (XdrvMailbox.index) {
       case 1:
-        Energy.kWhtoday = lnum *100;
+        Energy.kWhtoday_offset = lnum *100;
+        Energy.kWhtoday = 0;
         Energy.kWhtoday_delta = 0;
-        Energy.period = Energy.kWhtoday;
-        Settings.energy_kWhtoday = Energy.kWhtoday;
-        RtcSettings.energy_kWhtoday = Energy.kWhtoday;
-        Energy.daily = (float)Energy.kWhtoday / 100000;
-        if (!RtcSettings.energy_kWhtotal && !Energy.kWhtoday) {
+        Energy.period = Energy.kWhtoday_offset;
+        Settings.energy_kWhtoday = Energy.kWhtoday_offset;
+        RtcSettings.energy_kWhtoday = Energy.kWhtoday_offset;
+        Energy.daily = (float)Energy.kWhtoday_offset / 100000;
+        if (!RtcSettings.energy_kWhtotal && !Energy.kWhtoday_offset) {
           Settings.energy_kWhtotal_time = LocalTime();
         }
         break;
@@ -456,14 +465,14 @@ void CmndEnergyReset(void)
       case 3:
         RtcSettings.energy_kWhtotal = lnum *100;
         Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
-        Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday) / 100000;
-        Settings.energy_kWhtotal_time = (!Energy.kWhtoday) ? LocalTime() : Midnight();
+        Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
+        Settings.energy_kWhtotal_time = (!Energy.kWhtoday_offset) ? LocalTime() : Midnight();
         break;
       }
     }
 
-    if (Energy.kWhtoday1 > Energy.kWhtoday) {
-      Energy.kWhtoday1 = Energy.kWhtoday;
+    if (RtcSettings.energy_usage.usage1_kWhtoday > (Energy.kWhtoday_offset + Energy.kWhtoday)) {
+      RtcSettings.energy_usage.usage1_kWhtoday = Energy.kWhtoday_offset + Energy.kWhtoday;
     }
     if (Settings.energy_usage.usage1_kWhtoday > Settings.energy_kWhtoday) {
       Settings.energy_usage.usage1_kWhtoday = Settings.energy_kWhtoday;
@@ -704,12 +713,22 @@ void EnergySnsInit(void)
   XnrgCall(FUNC_INIT);
 
   if (energy_flg) {
-    Energy.kWhtoday = (RtcSettingsValid()) ? RtcSettings.energy_kWhtoday : (RtcTime.day_of_year == Settings.energy_kWhdoy) ? Settings.energy_kWhtoday : 0;
-    Energy.kWhtoday1 = (RtcSettingsValid()) ? RtcSettings.energy_usage.usage1_kWhtoday : (RtcTime.day_of_year == Settings.energy_kWhdoy) ? Settings.energy_usage.usage1_kWhtoday : 0;
+    if (RtcSettingsValid()) {
+      Energy.kWhtoday_offset = RtcSettings.energy_kWhtoday;
+    }
+    else if (RtcTime.day_of_year == Settings.energy_kWhdoy) {
+      Energy.kWhtoday_offset = Settings.energy_kWhtoday;
+      RtcSettings.energy_usage.usage1_kWhtoday = Settings.energy_usage.usage1_kWhtoday;
+    }
+    else {
+      Energy.kWhtoday_offset = 0;
+      RtcSettings.energy_usage.usage1_kWhtoday = 0;
+    }
+    Energy.kWhtoday = 0;
     Energy.kWhtoday_delta = 0;
-    Energy.period = Energy.kWhtoday;
+    Energy.period = Energy.kWhtoday_offset;
     EnergyUpdateToday();
-    ticker_energy.attach_ms(200, Energy200ms);
+    ticker_energy.attach_ms(100, Energy100ms);
   }
 }
 
@@ -788,8 +807,8 @@ void EnergyShow(bool json)
   float energy = 0;
   char energy_period_chr[FLOATSZ];
   if (show_energy_period) {
-    if (Energy.period) energy = (float)(Energy.kWhtoday - Energy.period) / 100;
-    Energy.period = Energy.kWhtoday;
+    if (Energy.period) energy = (float)(RtcSettings.energy_kWhtoday - Energy.period) / 100;
+    Energy.period = RtcSettings.energy_kWhtoday;
     dtostrfd(energy, Settings.flag2.wattage_resolution, energy_period_chr);
     snprintf_P(speriod, sizeof(speriod), PSTR(",\"" D_JSON_PERIOD "\":%s"), energy_period_chr);
   }

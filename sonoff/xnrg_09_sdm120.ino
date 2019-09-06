@@ -78,7 +78,7 @@ struct SDM220 {
 
 /*********************************************************************************************/
 
-void SDM120Every200ms(void)
+void SDM120Every300ms(void)
 {
   bool data_ready = Sdm120Modbus->ReceiveReady();
 
@@ -262,8 +262,8 @@ int Xnrg09(uint8_t function)
       case FUNC_INIT:
         Sdm120SnsInit();
         break;
-      case FUNC_EVERY_200_MSECOND:
-        if (uptime > 4) { SDM120Every200ms(); }
+      case FUNC_EVERY_300_MSECOND:
+        if (uptime > 4) { SDM120Every300ms(); }
         break;
 
 #ifdef USE_SDM220
