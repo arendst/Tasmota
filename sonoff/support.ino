@@ -876,13 +876,13 @@ char* ResponseGetTime(uint32_t format, char* time_str)
 {
   switch (format) {
   case 1:
-    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
+    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%u"), GetDateAndTime(DT_LOCAL).c_str(), UtcTime());
     break;
   case 2:
     snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":%u"), UtcTime());
     break;
   default:
-    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%u"), GetDateAndTime(DT_LOCAL).c_str(), UtcTime());
+    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
   }
   return time_str;
 }

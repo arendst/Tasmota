@@ -2,6 +2,7 @@
  * 6.6.0.10 20190905
  * Redesign Tuya support by Shantur Rathore (#6353)
  * Add command Reset 99 to reset bootcount to zero (#684, #6351)
+ * Change command Time 1/2/3 to select JSON time format ISO, ISO + Epoch or Epoch for legacy reason
  *
  * 6.6.0.9 20190828
  * Change theoretical baudrate range to 300..19660500 bps in 300 increments (#6294)
