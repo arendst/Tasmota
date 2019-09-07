@@ -186,7 +186,7 @@
 #define D_WARNING_MINIMAL_VERSION "ATTENZIONE Questa versione non supporta il salvataggio delle impostazioni"
 #define D_LEVEL_10 "level 1-0"
 #define D_LEVEL_01 "level 0-1"
-#define D_SERIAL_LOGGING_DISABLED "Syslog disabilitato"
+#define D_SERIAL_LOGGING_DISABLED "Log Seriale disabilitato"
 #define D_SYSLOG_LOGGING_REENABLED "Syslog ri-abilitato"
 
 #define D_SET_BAUDRATE_TO "Baudrate impostato a"
