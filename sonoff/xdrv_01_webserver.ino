@@ -1687,8 +1687,8 @@ void HandleBackupConfiguration(void)
 
   WSSend(200, CT_STREAM, "");
 
-  uint16_t cfg_crc = Settings.cfg_crc;
-  Settings.cfg_crc = GetSettingsCrc();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
+  uint32_t cfg_crc32 = Settings.cfg_crc32;
+  Settings.cfg_crc32 = GetSettingsCrc32();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
 
   memcpy(settings_buffer, &Settings, sizeof(Settings));
   if (Web.config_xor_on_set) {
@@ -1708,7 +1708,7 @@ void HandleBackupConfiguration(void)
 
   SettingsBufferFree();
 
-  Settings.cfg_crc = cfg_crc;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
+  Settings.cfg_crc32 = cfg_crc32;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -2093,12 +2093,13 @@ void HandleUploadLoop(void)
       unsigned long buffer_version = settings_buffer[11] << 24 | settings_buffer[10] << 16 | settings_buffer[9] << 8 | settings_buffer[8];
       if (buffer_version > 0x06000000) {
         uint32_t buffer_size = settings_buffer[3] << 8 | settings_buffer[2];
-        uint16_t buffer_crc = settings_buffer[15] << 8 | settings_buffer[14];
-        uint16_t crc = 0;
-        for (uint32_t i = 0; i < buffer_size; i++) {
-          if ((i < 14) || (i > 15)) { crc += settings_buffer[i]*(i+1); }  // Skip crc
+        if (buffer_version > 0x0606000A) {
+          uint32_t buffer_crc32 = settings_buffer[4095] << 24 | settings_buffer[4094] << 16 | settings_buffer[4093] << 8 | settings_buffer[4092];
+          valid_settings = (GetCfgCrc32(settings_buffer, buffer_size -4) == buffer_crc32);
+        } else {
+          uint16_t buffer_crc16 = settings_buffer[15] << 8 | settings_buffer[14];
+          valid_settings = (GetCfgCrc16(settings_buffer, buffer_size) == buffer_crc16);
         }
-        valid_settings = (buffer_crc == crc);
       } else {
         valid_settings = (settings_buffer[0] == CONFIG_FILE_SIGN);
       }

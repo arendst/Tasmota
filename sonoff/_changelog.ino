@@ -1,4 +1,7 @@
 /*********************************************************************************************\
+ * 6.6.0.11 20190907
+ * Change Settings crc calculation allowing short term backward compatibility
+ *
  * 6.6.0.10 20190905
  * Redesign Tuya support by Shantur Rathore (#6353)
  * Add command Reset 99 to reset bootcount to zero (#684, #6351)
