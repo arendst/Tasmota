@@ -78,7 +78,7 @@ struct SDM220 {
 
 /*********************************************************************************************/
 
-void SDM120Every200ms(void)
+void SDM120Every250ms(void)
 {
   bool data_ready = Sdm120Modbus->ReceiveReady();
 
@@ -86,15 +86,18 @@ void SDM120Every200ms(void)
     uint8_t buffer[9];
 
     uint32_t error = Sdm120Modbus->ReceiveBuffer(buffer, 2);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
 
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM120 response error %d"), error);
     } else {
       Energy.data_valid = 0;
 
+      //  0  1  2  3  4  5  6  7  8
+      // SA FC BC Fh Fl Sh Sl Cl Ch
+      // 01 04 04 43 66 33 34 1B 38 = 230.2 Volt
       float value;
-      ((uint8_t*)&value)[3] = buffer[3];  // Get float values
+      ((uint8_t*)&value)[3] = buffer[3];   // Get float values
       ((uint8_t*)&value)[2] = buffer[4];
       ((uint8_t*)&value)[1] = buffer[5];
       ((uint8_t*)&value)[0] = buffer[6];
@@ -129,14 +132,7 @@ void SDM120Every200ms(void)
           break;
 
         case 7:
-          if (!Energy.start_energy || (value < Energy.start_energy)) {  // 484.708 kWh
-            Energy.start_energy = value;  // Init after restart and hanlde roll-over if any
-          }
-          if (value != Energy.start_energy) {
-            Energy.kWhtoday += (unsigned long)((value - Energy.start_energy) * 100000);  // kWh to deca milli Wh
-            Energy.start_energy = value;
-          }
-          EnergyUpdateToday();
+          EnergyUpdateTotal(value, true);  // 484.708 kWh
           break;
 
 #ifdef USE_SDM220
@@ -266,8 +262,8 @@ int Xnrg09(uint8_t function)
       case FUNC_INIT:
         Sdm120SnsInit();
         break;
-      case FUNC_EVERY_200_MSECOND:
-        if (uptime > 4) { SDM120Every200ms(); }
+      case FUNC_EVERY_250_MSECOND:
+        if (uptime > 4) { SDM120Every250ms(); }
         break;
 
 #ifdef USE_SDM220

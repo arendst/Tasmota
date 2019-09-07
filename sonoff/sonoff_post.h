@@ -85,7 +85,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 // -- Optional modules -------------------------
 #define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
-#define USE_TUYA_DIMMER                       // Add support for Tuya Serial Dimmer
+#define USE_TUYA_MCU                          // Add support for Tuya Serial MCU
 #ifndef TUYA_DIMMER_ID
   #define TUYA_DIMMER_ID       0              // Default dimmer Id
 #endif
@@ -217,7 +217,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 //#ifndef USE_SONOFF_IFAN
 #define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
 //#endif
-#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_TUYA_MCU                           // Disable support for Tuya Serial MCU
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef ROTARY_V1                              // Disable support for MI Desk Lamp
@@ -345,7 +345,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 // -- Optional modules -------------------------
 #undef USE_BUZZER                             // Disable support for a buzzer (+0k6 code)
 #undef USE_SONOFF_IFAN                        // Disable support for Sonoff iFan02 and iFan03 (+2k code)
-#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_TUYA_MCU                           // Disable support for Tuya Serial MCU
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef USE_DS18x20                            // Disable Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
@@ -436,7 +436,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 // -- Optional modules -------------------------
 #define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
-//#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+//#undef USE_TUYA_MCU                         // Disable support for Tuya Serial MCU
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef ROTARY_V1                              // Disable support for MI Desk Lamp
@@ -517,7 +517,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 // -- Optional modules -------------------------
 #undef USE_SONOFF_IFAN                        // Disable support for Sonoff iFan02 and iFan03 (+2k code)
-#undef USE_TUYA_DIMMER                        // Disable support for Tuya Serial Dimmer
+#undef USE_TUYA_MCU                           // Disable support for Tuya Serial MCU
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 #undef ROTARY_V1                              // Disable support for MI Desk Lamp

@@ -124,13 +124,19 @@ void ILI9488_InitDriver()
 
 #ifdef USE_TOUCH_BUTTONS
 void ILI9488_MQTT(uint8_t count,const char *cp) {
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-  snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s,\"RA8876\":{\"%s%d\":\"%d\"}}"), mqtt_data,cp,count+1,(buttons[count]->vpower&0x80)>>7);
+  ResponseTime_P(PSTR(",\"RA8876\":{\"%s%d\":\"%d\"}}"), cp,count+1,(buttons[count]->vpower&0x80)>>7);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+}
+
+void ILI9488_RDW_BUTT(uint32_t count,uint32_t pwr) {
+  buttons[count]->xdrawButton(pwr);
+  if (pwr) buttons[count]->vpower|=0x80;
+  else buttons[count]->vpower&=0x7f;
 }
 // check digitizer hit
 void FT6236Check() {
 uint16_t temp;
+uint8_t rbutt=0,vbutt=0;
 ili9488_ctouch_counter++;
 if (2 == ili9488_ctouch_counter) {
   // every 100 ms should be enough
@@ -158,17 +164,17 @@ if (2 == ili9488_ctouch_counter) {
       // now must compare with defined buttons
       for (uint8_t count=0; count<MAXBUTTONS; count++) {
         if (buttons[count]) {
+            uint8_t bflags=buttons[count]->vpower&0x7f;
             if (buttons[count]->contains(ili9488_pLoc.x,ili9488_pLoc.y)) {
                 // did hit
                 buttons[count]->press(true);
                 if (buttons[count]->justPressed()) {
-                  uint8_t bflags=buttons[count]->vpower&0x7f;
                   if (!bflags) {
-                    // real button
-                    if (!SendKey(0, count+1, POWER_TOGGLE)) {
-                      ExecuteCommandPower(count+1, POWER_TOGGLE, SRC_BUTTON);
+                    uint8_t pwr=bitRead(power,rbutt);
+                    if (!SendKey(KEY_BUTTON, rbutt+1, POWER_TOGGLE)) {
+                      ExecuteCommandPower(rbutt+1, POWER_TOGGLE, SRC_BUTTON);
+                      ILI9488_RDW_BUTT(count,!pwr);
                     }
-                    buttons[count]->xdrawButton(bitRead(power,count));
                   } else {
                     // virtual button
                     const char *cp;
@@ -186,6 +192,11 @@ if (2 == ili9488_ctouch_counter) {
                   }
                 }
             }
+            if (!bflags) {
+              rbutt++;
+            } else {
+              vbutt++;
+            }
         }
       }
     }
@@ -193,15 +204,27 @@ if (2 == ili9488_ctouch_counter) {
     // no hit
     for (uint8_t count=0; count<MAXBUTTONS; count++) {
       if (buttons[count]) {
+        uint8_t bflags=buttons[count]->vpower&0x7f;
         buttons[count]->press(false);
         if (buttons[count]->justReleased()) {
           uint8_t bflags=buttons[count]->vpower&0x7f;
-          if (bflags>1) {
-            // push button
-            buttons[count]->vpower&=0x7f;
-            ILI9488_MQTT(count,"PBT");
+          if (bflags>0) {
+            if (bflags>1) {
+              // push button
+              buttons[count]->vpower&=0x7f;
+              ILI9488_MQTT(count,"PBT");
+            }
+            buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
           }
-          buttons[count]->xdrawButton(buttons[count]->vpower&0x80);
+        }
+        if (!bflags) {
+          // check if power button stage changed
+          uint8_t pwr=bitRead(power,rbutt);
+          uint8_t vpwr=(buttons[count]->vpower&0x80)>>7;
+          if (pwr!=vpwr) {
+            ILI9488_RDW_BUTT(count,pwr);
+          }
+          rbutt++;
         }
       }
     }

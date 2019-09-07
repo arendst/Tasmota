@@ -96,6 +96,7 @@
 #define D_JSON_LOW "Low"
 #define D_JSON_MAC "Mac"
 #define D_JSON_MASK "Mask"
+#define D_JSON_MEMORY_ERROR "Memory error"
 #define D_JSON_MINIMAL "minimal"
 #define D_JSON_MODEL "Model"
 #define D_JSON_MQTT_COUNT "MqttCount"
@@ -326,6 +327,7 @@
 #define D_CMND_WEBCOLOR "WebColor"
 #define D_CMND_WEBSENSOR "WebSensor"
 #define D_CMND_EMULATION "Emulation"
+#define D_CMND_SENDMAIL "Sendmail"
 
 // Commands xdrv_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
@@ -443,6 +445,10 @@
 #define D_CMND_TIMERS "Timers"
 #define D_CMND_LATITUDE "Latitude"
 #define D_CMND_LONGITUDE "Longitude"
+
+// Commands xdrv_16_tuyadimmer.ino
+
+#define D_CMND_TUYA_MCU "TuyaMCU"
 
 // Commands xdrv_23_zigbee.ino
 #define D_CMND_ZIGBEEZNPSEND "ZigbeeZNPSend"

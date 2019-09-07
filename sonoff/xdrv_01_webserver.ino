@@ -500,7 +500,7 @@ static bool WifiIsInManagerMode(){
   return (HTTP_MANAGER == Web.state || HTTP_MANAGER_RESET_ONLY == Web.state);
 }
 
-void ShowWebSource(int source)
+void ShowWebSource(uint32_t source)
 {
   if ((source > 0) && (source < SRC_MAX)) {
     char stemp1[20];
@@ -508,7 +508,7 @@ void ShowWebSource(int source)
   }
 }
 
-void ExecuteWebCommand(char* svalue, int source)
+void ExecuteWebCommand(char* svalue, uint32_t source)
 {
   ShowWebSource(source);
   ExecuteCommand(svalue, SRC_IGNORE);
@@ -1053,6 +1053,7 @@ bool HandleRootStatusRefresh(void)
 #ifdef USE_SCRIPT_WEB_DISPLAY
   XdrvCall(FUNC_WEB_SENSOR);
 #endif
+
   WSContentSend_P(PSTR("</table>"));
 
   if (devices_present) {
@@ -1686,8 +1687,8 @@ void HandleBackupConfiguration(void)
 
   WSSend(200, CT_STREAM, "");
 
-  uint16_t cfg_crc = Settings.cfg_crc;
-  Settings.cfg_crc = GetSettingsCrc();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
+  uint32_t cfg_crc32 = Settings.cfg_crc32;
+  Settings.cfg_crc32 = GetSettingsCrc32();  // Calculate crc (again) as it might be wrong when savedata = 0 (#3918)
 
   memcpy(settings_buffer, &Settings, sizeof(Settings));
   if (Web.config_xor_on_set) {
@@ -1707,7 +1708,7 @@ void HandleBackupConfiguration(void)
 
   SettingsBufferFree();
 
-  Settings.cfg_crc = cfg_crc;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
+  Settings.cfg_crc32 = cfg_crc32;  // Restore crc in case savedata = 0 to make sure settings will be noted as changed
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -2092,12 +2093,13 @@ void HandleUploadLoop(void)
       unsigned long buffer_version = settings_buffer[11] << 24 | settings_buffer[10] << 16 | settings_buffer[9] << 8 | settings_buffer[8];
       if (buffer_version > 0x06000000) {
         uint32_t buffer_size = settings_buffer[3] << 8 | settings_buffer[2];
-        uint16_t buffer_crc = settings_buffer[15] << 8 | settings_buffer[14];
-        uint16_t crc = 0;
-        for (uint32_t i = 0; i < buffer_size; i++) {
-          if ((i < 14) || (i > 15)) { crc += settings_buffer[i]*(i+1); }  // Skip crc
+        if (buffer_version > 0x0606000A) {
+          uint32_t buffer_crc32 = settings_buffer[4095] << 24 | settings_buffer[4094] << 16 | settings_buffer[4093] << 8 | settings_buffer[4092];
+          valid_settings = (GetCfgCrc32(settings_buffer, buffer_size -4) == buffer_crc32);
+        } else {
+          uint16_t buffer_crc16 = settings_buffer[15] << 8 | settings_buffer[14];
+          valid_settings = (GetCfgCrc16(settings_buffer, buffer_size) == buffer_crc16);
         }
-        valid_settings = (buffer_crc == crc);
       } else {
         valid_settings = (settings_buffer[0] == CONFIG_FILE_SIGN);
       }
@@ -2350,6 +2352,151 @@ String UrlEncode(const String& text)
 	return encoded;
 }
 
+#ifdef USE_SENDMAIL
+
+#include "sendemail.h"
+
+//SendEmail(const String& host, const int port, const String& user, const String& passwd, const int timeout, const bool ssl);
+//SendEmail::send(const String& from, const String& to, const String& subject, const String& msg)
+// sendmail [server:port:user:passwd:from:to:subject] data
+// sendmail [*:*:*:*:*:to:subject] data uses defines from user_config
+// sendmail currently only works with core 2.4.2
+
+#define SEND_MAIL_MINRAM 19*1024
+
+uint16_t SendMail(char *buffer) {
+  uint16_t count;
+  char *params,*oparams;
+  char *mserv;
+  uint16_t port;
+  char *user;
+  char *pstr;
+  char *passwd;
+  char *from;
+  char *to;
+  char *subject;
+  char *cmd;
+  char secure=0,auth=0;
+  uint16_t status=1;
+  SendEmail *mail=0;
+
+  //DebugFreeMem();
+
+// return if not enough memory
+  uint16_t mem=ESP.getFreeHeap();
+  if (mem<SEND_MAIL_MINRAM) {
+    return 4;
+  }
+
+  while (*buffer==' ') buffer++;
+
+  // copy params
+  oparams=(char*)calloc(strlen(buffer)+2,1);
+  if (!oparams) return 4;
+
+  params=oparams;
+
+  strcpy(params,buffer);
+
+  if (*params=='p') {
+      auth=1;
+      params++;
+  }
+
+  if (*params!='[') {
+      goto exit;
+  }
+  params++;
+
+  mserv=strtok(params,":");
+  if (!mserv) {
+      goto exit;
+  }
+
+  // port
+  pstr=strtok(NULL,":");
+  if (!pstr) {
+      goto exit;
+  }
+
+#ifdef EMAIL_PORT
+  if (*pstr=='*') {
+    port=EMAIL_PORT;
+  } else {
+    port=atoi(pstr);
+  }
+#else
+  port=atoi(pstr);
+#endif
+
+  user=strtok(NULL,":");
+  if (!user) {
+      goto exit;
+  }
+
+  passwd=strtok(NULL,":");
+  if (!passwd) {
+      goto exit;
+  }
+
+  from=strtok(NULL,":");
+  if (!from) {
+      goto exit;
+  }
+
+  to=strtok(NULL,":");
+  if (!to) {
+      goto exit;
+  }
+
+  subject=strtok(NULL,"]");
+  if (!subject) {
+      goto exit;
+  }
+
+  cmd=subject+strlen(subject)+1;
+
+#ifdef EMAIL_USER
+  if (*user=='*') {
+    user=(char*)EMAIL_USER;
+  }
+#endif
+#ifdef EMAIL_PASSWORD
+  if (*passwd=='*') {
+    passwd=(char*)EMAIL_PASSWORD;
+  }
+#endif
+#ifdef EMAIL_SERVER
+  if (*mserv=='*') {
+    mserv=(char*)EMAIL_SERVER;
+  }
+#endif //USE_SENDMAIL
+
+  // auth = 0 => AUTH LOGIN 1 => PLAIN LOGIN
+  // 2 seconds timeout
+  #define MAIL_TIMEOUT 2000
+  mail = new SendEmail(mserv, port,user,passwd, MAIL_TIMEOUT, auth);
+
+#ifdef EMAIL_FROM
+  if (*from=='*') {
+    from=(char*)EMAIL_FROM;
+  }
+#endif
+
+exit:
+  if (mail) {
+    bool result=mail->send(from,to,subject,cmd);
+    delete mail;
+    if (result==true) status=0;
+  }
+
+
+  if (oparams) free(oparams);
+  return status;
+}
+
+#endif
+
 int WebSend(char *buffer)
 {
   // [sonoff] POWER1 ON                                               --> Sends http://sonoff/cm?cmnd=POWER1 ON
@@ -2462,17 +2609,23 @@ bool JsonWebColor(const char* dataBuf)
   return true;
 }
 
-const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND ;
+const char kWebSendStatus[] PROGMEM = D_JSON_DONE "|" D_JSON_WRONG_PARAMETERS "|" D_JSON_CONNECT_FAILED "|" D_JSON_HOST_NOT_FOUND "|" D_JSON_MEMORY_ERROR;
 
 const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_EMULATION
   D_CMND_EMULATION "|"
+#endif
+#ifdef USE_SENDMAIL
+  D_CMND_SENDMAIL "|"
 #endif
   D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR;
 
 void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
   &CmndEmulation,
+#endif
+#ifdef USE_SENDMAIL
+  &CmndSendmail,
 #endif
   &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor, &CmndWebSensor };
 
@@ -2499,6 +2652,18 @@ void CmndEmulation(void)
   ResponseCmndNumber(Settings.flag2.emulation);
 }
 #endif  // USE_EMULATION
+
+#ifdef USE_SENDMAIL
+void CmndSendmail(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    uint8_t result = SendMail(XdrvMailbox.data);
+    char stemp1[20];
+    ResponseCmndChar(GetTextIndexed(stemp1, sizeof(stemp1), result, kWebSendStatus));
+  }
+}
+#endif  // USE_SENDMAIL
+
 
 void CmndWebServer(void)
 {

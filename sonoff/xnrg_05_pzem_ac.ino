@@ -64,7 +64,7 @@ void PzemAcEverySecond(void)
     uint8_t buffer[26];
 
     uint8_t error = PzemAcModbus->ReceiveBuffer(buffer, 10);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
 
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "PzemAc response error %d"), error);
@@ -82,12 +82,7 @@ void PzemAcEverySecond(void)
         Energy.power_factor = (float)((buffer[19] << 8) + buffer[20]) / 100.0;                                          // 1.00
         float energy = (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);               // 4294967295 Wh
 
-        if (!Energy.start_energy || (energy < Energy.start_energy)) { Energy.start_energy = energy; }  // Init after restart and handle roll-over if any
-        if (energy != Energy.start_energy) {
-          Energy.kWhtoday += (unsigned long)((energy - Energy.start_energy) * 100);
-          Energy.start_energy = energy;
-        }
-        EnergyUpdateToday();
+        EnergyUpdateTotal(energy, false);
 //      }
     }
   }

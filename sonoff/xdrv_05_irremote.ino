@@ -154,7 +154,7 @@ void IrReceiveCheck(void)
       } else {
         snprintf_P(svalue, sizeof(svalue), PSTR("\"0x%s\""), hvalue);
       }
-      Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
+      ResponseTime_P(PSTR(",\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, svalue);
 
       if (Settings.flag3.receive_raw) {

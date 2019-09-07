@@ -156,10 +156,10 @@ public:
   void publishMQTTReceived(void) {
     char hex_char[_payload.len()*2+2];
 		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
-    Response_P(PSTR("{\"" D_JSON_ZIGBEEZCLRECEIVED "\":{\"fc\":\"0x%02X\",\"manuf\":\"0x%04X\",\"transact\":%d,"
-                    "\"cmdid\":\"0x%02X\",\"payload\":\"%s\"}}"),
-                    _frame_control, _manuf_code, _transact_seq, _cmd_id,
-                    hex_char);
+    ResponseTime_P(PSTR(",\"" D_JSON_ZIGBEEZCLRECEIVED "\":{\"fc\":\"0x%02X\",\"manuf\":\"0x%04X\",\"transact\":%d,"
+                        "\"cmdid\":\"0x%02X\",\"payload\":\"%s\"}}"),
+                        _frame_control, _manuf_code, _transact_seq, _cmd_id,
+                        hex_char);
   	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCLSENT));
   	XdrvRulesProcess();
   }
@@ -834,7 +834,7 @@ void ZigbeeInput(void)
 			SBuffer znp_buffer = zigbee_buffer->subBuffer(2, zigbee_frame_len - 3);	// remove SOF, LEN and FCS
 
 			ToHex_P((unsigned char*)znp_buffer.getBuffer(), znp_buffer.len(), hex_char, sizeof(hex_char));
-	    Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
+	    ResponseTime_P(PSTR(",\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
 	    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZNPRECEIVED));
 	    XdrvRulesProcess();
 
