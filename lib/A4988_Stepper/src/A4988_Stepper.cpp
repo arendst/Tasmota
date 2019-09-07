@@ -17,7 +17,6 @@
 
 #include "Arduino.h"
 #include "A4988_Stepper.h"
-#include <stdlib.h>
 A4988_Stepper::A4988_Stepper( int   m_spr
                           , int   m_rpm
                           , short m_mis
@@ -27,7 +26,7 @@ A4988_Stepper::A4988_Stepper( int   m_spr
                           , short m_ms1_pin
                           , short m_ms2_pin
                           , short m_ms3_pin ) {
-  last_time     = 0; // time stamp in us of the last step taken
+  last_time     = 0;     // time stamp in us of the last step taken
   motor_SPR     = m_spr; // StepsPerRevolution
   motor_RPM     = m_rpm; // RoundsPerMinute
   motor_MIS     = m_mis; // Microsteps w/o effect if MS1-MS3 not connected - then full steps anyway
