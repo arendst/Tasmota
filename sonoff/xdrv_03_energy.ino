@@ -88,7 +88,7 @@ struct ENERGY {
   unsigned long kWhtoday;      // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
   unsigned long period = 0;    // 12312312 Wh * 10^-2 (deca milli Watt hours) - 5764 = 0.05764 kWh = 0.058 kWh = Energy.daily
 
-  uint8_t tenth_second = 0;
+  uint8_t fifth_second = 0;
   uint8_t command_code = 0;
   uint8_t data_valid = 0;
 
@@ -165,16 +165,13 @@ void EnergyUpdateTotal(float value, bool kwh)
 
 /*********************************************************************************************/
 
-void Energy100ms(void)
+void Energy200ms(void)
 {
   Energy.power_on = (power != 0) | Settings.flag.no_power_on_check;
 
-  Energy.tenth_second++;
-  if (30 == Energy.tenth_second) {
-    Energy.tenth_second = 0;
-  }
-
-  if ((Energy.tenth_second % 10) == 0) {
+  Energy.fifth_second++;
+  if (5 == Energy.fifth_second) {
+    Energy.fifth_second = 0;
 
     XnrgCall(FUNC_ENERGY_EVERY_SECOND);
 
@@ -209,13 +206,7 @@ void Energy100ms(void)
     }
   }
 
-  if (Energy.tenth_second &1) {
-    XnrgCall(FUNC_EVERY_200_MSECOND);
-  }
-
-  if ((Energy.tenth_second % 3) == 0) {
-    XnrgCall(FUNC_EVERY_300_MSECOND);
-  }
+  XnrgCall(FUNC_EVERY_200_MSECOND);
 }
 
 void EnergySaveState(void)
@@ -728,7 +719,7 @@ void EnergySnsInit(void)
     Energy.kWhtoday_delta = 0;
     Energy.period = Energy.kWhtoday_offset;
     EnergyUpdateToday();
-    ticker_energy.attach_ms(100, Energy100ms);
+    ticker_energy.attach_ms(200, Energy200ms);
   }
 }
 
@@ -906,6 +897,9 @@ bool Xdrv03(uint8_t function)
     switch (function) {
       case FUNC_LOOP:
         XnrgCall(FUNC_LOOP);
+        break;
+      case FUNC_EVERY_250_MSECOND:
+        XnrgCall(FUNC_EVERY_250_MSECOND);
         break;
 #ifdef USE_ENERGY_MARGIN_DETECTION
       case FUNC_SET_POWER:
