@@ -29,7 +29,7 @@
 
 #define INA226_REG_CONFIG                       (0x00)    // Config register
 #define INA226_RES_CONFIG                       (0x4127)  // Config register at reset
-#define INA226_DEF_CONFIG                       (0x4527)  // Our default configuration
+#define INA226_DEF_CONFIG                       (0x42FF)  // Our default configuration
 #define INA226_CONFIG_RESET                     (0x8000)  // Config register reset bit
 
 #define INA226_REG_SHUNTVOLTAGE                 (0x01)
@@ -88,8 +88,9 @@ static void _debug_fval(const char *str, float fval, uint8_t prec = 4 )
 
 static uint32_t _expand_r_shunt(uint16_t compact_r_shunt)
 {
+
   uint32_t r_shunt_uohms = (compact_r_shunt & 0x8000) ?
-  ((uint32_t)(compact_r_shunt & 0x7FFF) * 1000ul) :
+  (((uint32_t)(compact_r_shunt & 0x7FFF)) * 1000ul) :
   (compact_r_shunt & 0x7FFF);
   return r_shunt_uohms;
 }
@@ -144,7 +145,7 @@ void Ina226Init()
 
 
   //AddLog_P2( LOG_LEVEL_NONE, "Ina226Init");
-  AddLog_P2( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
+  //AddLog_P2( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
 
   if (!i2c_flg)
     AddLog_P2(LOG_LEVEL_DEBUG, "INA226: Initialization failed: No I2C support");
@@ -164,6 +165,8 @@ void Ina226Init()
     uint8_t addr = pgm_read_byte(probeAddresses + i);
 
     // Skip device probing if the full scale current is zero
+
+    //AddLog_P2( LOG_LEVEL_NONE, "fs_i[%d]: %d", i, Settings.ina226_i_fs[i]);
     if (!Settings.ina226_i_fs[i])
       continue;
 
@@ -201,19 +204,19 @@ void Ina226Init()
     // Configuration
     p->config = config;
     // Full scale current in tenths of an amp
-    AddLog_P2( LOG_LEVEL_NONE, "Full Scale I in tenths of an amp: %u", Settings.ina226_i_fs[i]);
+    //AddLog_P2( LOG_LEVEL_NONE, "Full Scale I in tenths of an amp: %u", Settings.ina226_i_fs[i]);
     p->i_lsb = (((float) Settings.ina226_i_fs[i])/10.0f)/32768.0f;
-    _debug_fval("i_lsb: %s", p->i_lsb, 7);
+    //_debug_fval("i_lsb: %s", p->i_lsb, 7);
 
     // Get shunt resistor value in micro ohms
     uint32_t r_shunt_uohms = _expand_r_shunt(Settings.ina226_r_shunt[i]);
-    AddLog_P2( LOG_LEVEL_NONE, "Shunt R in micro-ohms: %u", r_shunt_uohms);
+    //AddLog_P2( LOG_LEVEL_NONE, "Shunt R in micro-ohms: %u", r_shunt_uohms);
 
 
     p->calibrationValue = ((uint16_t) (0.00512/(p->i_lsb * r_shunt_uohms/1000000.0f)));
     // Device present
     p->present = true;
-    AddLog_P2( LOG_LEVEL_NONE, "INA226 Device %d calibration value: %04X", i, p->calibrationValue);
+    //AddLog_P2( LOG_LEVEL_NONE, "INA226 Device %d calibration value: %04X", i, p->calibrationValue);
 
     Ina226SetCalibration(i);
 
@@ -371,17 +374,23 @@ bool Ina226CommandSensor()
 
       case 1: // Set compacted shunt resistance from user input in ohms
         r_shunt_uohms = (uint32_t) ((CharToFloat(params[1])) * 1000000.0f);
-        compact_r_shunt_uohms = (uint16_t) (r_shunt_uohms > 32767UL) ?
-        0x8000 | (r_shunt_uohms / 1000UL) :
-        r_shunt_uohms;
-        Settings.ina226_r_shunt[device] = r_shunt_uohms;
-        AddLog_P2( LOG_LEVEL_NONE, "r_shunt_compacted: %04X", Settings.ina226_r_shunt[device]);
+
+
+        //AddLog_P2( LOG_LEVEL_NONE, "r_shunt_uohms: %d", r_shunt_uohms);
+        if (r_shunt_uohms > 32767){
+          uint32_t r_shunt_mohms = r_shunt_uohms/1000UL;
+          Settings.ina226_r_shunt[device] = (uint16_t) (r_shunt_mohms | 0x8000);
+        }
+        else
+          Settings.ina226_r_shunt[device] = (uint16_t) r_shunt_uohms;
+
+        //AddLog_P2( LOG_LEVEL_NONE, "r_shunt_compacted: %04X", Settings.ina226_r_shunt[device]);
         show_config = true;
         break;
 
       case 2: // Set full scale current in tenths of amps from user input in Amps
         Settings.ina226_i_fs[device] = (uint16_t) ((CharToFloat(params[1])) * 10.0f);
-        AddLog_P2( LOG_LEVEL_NONE, "i_fs: %d", Settings.ina226_i_fs[device]);
+        //AddLog_P2( LOG_LEVEL_NONE, "i_fs: %d", Settings.ina226_i_fs[device]);
         show_config = true;
         break;
 

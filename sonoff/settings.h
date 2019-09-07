@@ -370,7 +370,7 @@ struct SYSCFG {
   uint16_t      ina226_r_shunt[4];         // E40
   uint16_t      ina226_i_fs[4];            // E48
 
-  uint8_t       free_e20[424];             // E50
+  uint8_t       free_e20[432];             // E50
 
 
                                            // FFF last location
