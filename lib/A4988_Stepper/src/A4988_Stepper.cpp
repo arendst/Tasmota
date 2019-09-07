@@ -101,12 +101,12 @@ void A4988_Stepper::adjustMicrosteps() {
  }
 
 void A4988_Stepper::setMIS(short oneToSixteen) {
-   motor_MIC = oneToSixteen;
+   motor_MIS = oneToSixteen;
    adjustMicrosteps();
  }
 
  short A4988_Stepper::getMIS(void) {
-     return motor_MIC;
+     return motor_MIS;
  }
 
  void A4988_Stepper::setRPM(int howManyRounds) {

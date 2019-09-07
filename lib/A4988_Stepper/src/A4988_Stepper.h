@@ -23,7 +23,7 @@ class A4988_Stepper {
     // constructor:
     A4988_Stepper( int motor_spr
               ,   int motor_rpm
-              , short motor_mic
+              , short motor_mis
               , short motor_dir_pin
               , short motor_stp_pin
               , short motor_ena_pin
