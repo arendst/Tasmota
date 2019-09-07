@@ -371,21 +371,12 @@ struct SYSCFG {
   unsigned long energy_frequency_calibration;  // 7C8 also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
-<<<<<<< HEAD
-  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
-  uint8_t       data8[32];                 // E00
-  uint16_t      data16[16];                // E20
-  uint16_t      ina226_r_shunt[4];         // E40
-  uint16_t      ina226_i_fs[4];            // E48
-
-  uint8_t       free_e20[432];             // E50
-
-=======
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
   TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
+  uint16_t      ina226_r_shunt[4];          // E20
+  uint16_t      ina226_i_fs[4];             // E28
 
-  uint8_t       free_e20[472];             // E20
->>>>>>> upstream/development
+  uint8_t       free_e20[456];             //  E30
 
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC

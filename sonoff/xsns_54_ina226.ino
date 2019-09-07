@@ -13,6 +13,51 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+* Setup a single INA226 device at address 0x40:
+*
+* 1. Select a module type with free I2C pins.
+* 2. Configure the module to use I2C on the correct pins.
+* 3. Connect your ina226 module(s) to the I2C pins.
+* 4. Use the i2cscan console command to probe the modules and check they are present.
+* 5. Enable the first device at I2C slave address 0x40 using the following console commands:
+*    a. Sensor54 11 [shunt resistance in ohms] e.g. Sensor54 11 0.1
+*    b. Sensor54 12 [full scale current in amperes] e.g. Sensor54 12 3.0
+*    c. Sensor54 2 saves the settings and restarts Tasmota. The device should show up after the system boots again.
+*
+* Device number to I2C slave address mapping
+*
+* 1 - 0x40
+* 2 - 0x41
+* 3 - 0x44
+* 4 - 0x45
+*
+* This driver will not probe I2C bus for INA226 devices unless the full scale current is set for a device number.
+* It will map device numbers as follows:
+*
+* To set shunt resistance and full scale current, use the Sensor54 command interface as follows:
+*
+* Sensor54 10                        Return channel 1 shunt resistance and full scale current
+* Sensor54 11 [shunt_resistance]     Set INA226 channel 1 shunt resistance in ohms, floating point
+* Sensor54 12 [full_scale_current]   Set INA226 channel 1 full scale current in amperes, floating point
+* Sensor54 20                        Return channel 2 shunt resistance and full scale current
+* Sensor54 21 [shunt_resistance]     Set INA226 channel 2 shunt resistance in ohms, floating point
+* Sensor54 22 [full_scale_current]   Set INA226 channel 2 full scale current in amperes, floating point
+* Sensor54 30                        Return channel 3 shunt resistance and full scale current
+* Sensor54 31 [shunt_resistance]     Set INA226 channel 3 shunt resistance in ohms, floating point
+* Sensor54 32 [full_scale_current]   Set INA226 channel 3 full scale current in amperes, floating point
+* Sensor54 40                        Return channel 4 shunt resistance and full scale current
+* Sensor54 41 [shunt_resistance]     Set INA226 channel 4 shunt resistance in ohms, floating point
+* Sensor54 42 [full_scale_current]   Set INA226 channel 4 full scale current in amperes, floating point
+*
+* Other commands
+*
+* Sensor54 1  Rescan for devices and return the number of slaves found.
+* Sensor54 2 Save the configuration and restart
+*
+*
+*/
+
 
 // Conditional compilation of driver
 #ifdef USE_INA226
@@ -145,7 +190,7 @@ void Ina226Init()
 
 
   //AddLog_P2( LOG_LEVEL_NONE, "Ina226Init");
-  //AddLog_P2( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
+  AddLog_P2( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
 
   if (!i2c_flg)
     AddLog_P2(LOG_LEVEL_DEBUG, "INA226: Initialization failed: No I2C support");
