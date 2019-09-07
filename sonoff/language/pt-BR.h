@@ -186,7 +186,7 @@
 #define D_WARNING_MINIMAL_VERSION "AVISO: esta versão não supporta configurações persistentes"
 #define D_LEVEL_10 "nível 1-0"
 #define D_LEVEL_01 "nível 0-1"
-#define D_SERIAL_LOGGING_DISABLED "Registro do Syslog desabilitado"
+#define D_SERIAL_LOGGING_DISABLED "Registro Serial desabilitado"
 #define D_SYSLOG_LOGGING_REENABLED "Registro do Syslog reativado"
 
 #define D_SET_BAUDRATE_TO "Ajuste da velocidade para"
