@@ -16,7 +16,7 @@ doMove	KEYWORD2
 doRotate	KEYWORD2
 setRPM	KEYWORD2
 setSPR	KEYWORD2
-setMIC	KEYWORD2
+setMIS	KEYWORD2
 version	KEYWORD2
 
 #######################################

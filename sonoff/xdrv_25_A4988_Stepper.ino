@@ -52,11 +52,11 @@ void A4988Init(void)
   A4988_ms3_pin = pin[GPIO_A4988_MS3];
   A4988_spr     = 200;
   A4988_rpm     = 30;
-  A4988_mic     = 1;
+  A4988_mis     = 1;
 
   myA4988 = new A4988_Stepper( A4988_spr
                             , A4988_rpm
-                            , A4988_mic
+                            , A4988_mis
                             , A4988_dir_pin
                             , A4988_stp_pin
                             , A4988_ena_pin
@@ -65,7 +65,7 @@ void A4988Init(void)
                             , A4988_ms3_pin );
   A4988_spr     = myA4988->getSPR();
   A4988_rpm     = myA4988->getRPM();
-  A4988_mic     = myA4988->getMIC();
+  A4988_mis     = myA4988->getMIS();
   if ((A4988_ms1_pin < 99)&&(A4988_ms2_pin < 99)&&(A4988_ms3_pin < 99)&&(A4988_ena_pin<99)) {
     AddLog_P2(LOG_LEVEL_INFO, PSTR("STP: A4988-Driver initialized (%dSPR, %dRPM,%dMIC). Pins: Dir[%d]  Stp[%d]  Ena[%d]  MS1[%d] MS2[%d] MS3[%d]"),A4988_spr, A4988_rpm, A4988_mic, A4988_dir_pin,A4988_stp_pin,A4988_ena_pin,A4988_ms1_pin,A4988_ms2_pin,A4988_ms3_pin);
   } else {
@@ -229,7 +229,7 @@ void CmndSetSPR(void)
   ResponseCmndDone();
 }
 
-void CmndSetMic(void)
+void CmndSetMIS(void)
 {
   if ((pin[GPIO_A4988_MS1] < 99) && (pin[GPIO_A4988_MS2] < 99) && (pin[GPIO_A4988_MS3] < 99)) {
     short micPlease = 1;

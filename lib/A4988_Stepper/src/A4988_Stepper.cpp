@@ -20,7 +20,7 @@
 #include <stdlib.h>
 A4988_Stepper::A4988_Stepper( int   m_spr
                           , int   m_rpm
-                          , short m_mic
+                          , short m_mis
                           , short m_dir_pin
                           , short m_stp_pin
                           , short m_ena_pin
@@ -30,7 +30,7 @@ A4988_Stepper::A4988_Stepper( int   m_spr
   last_time     = 0; // time stamp in us of the last step taken
   motor_SPR     = m_spr; // StepsPerRevolution
   motor_RPM     = m_rpm; // RoundsPerMinute
-  motor_MIC     = m_mic; // Microsteps w/o effect if MS1-MS3 not connected - then full steps anyway
+  motor_MIS     = m_mis; // Microsteps w/o effect if MS1-MS3 not connected - then full steps anyway
   motor_dir_pin = m_dir_pin;
   motor_stp_pin = m_stp_pin;
   motor_ena_pin = m_ena_pin;
@@ -61,7 +61,7 @@ void A4988_Stepper::adjustPins(void) {
 
 void A4988_Stepper::adjustMicrosteps() {
    if ((motor_ms1_pin<99)&&(motor_ms2_pin<99)&&(motor_ms3_pin<99)) {
-     switch (motor_MIC){
+     switch (motor_MIS){
        case 1:
          digitalWrite(motor_ms1_pin, LOW);
          digitalWrite(motor_ms2_pin, LOW);
@@ -100,12 +100,12 @@ void A4988_Stepper::adjustMicrosteps() {
    motor_delay = 60L * 1000L * 1000L / motor_SPR / motor_RPM / motor_MIC;
  }
 
-void A4988_Stepper::setMIC(short oneToSixteen) {
+void A4988_Stepper::setMIS(short oneToSixteen) {
    motor_MIC = oneToSixteen;
    adjustMicrosteps();
  }
 
- short A4988_Stepper::getMIC(void) {
+ short A4988_Stepper::getMIS(void) {
      return motor_MIC;
  }
 
@@ -158,7 +158,7 @@ void A4988_Stepper::doMove(long howManySteps)
 
 void A4988_Stepper::doRotate(long howManyDegrees)
 { long  lSteps = 0;
-  lSteps = motor_SPR*motor_MIC*howManyDegrees/360;
+  lSteps = motor_SPR*motor_MIS*howManyDegrees/360;
   doMove(lSteps);
 }
 
