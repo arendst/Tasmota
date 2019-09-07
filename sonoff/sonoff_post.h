@@ -257,6 +257,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef USE_SM16716                            // Disable support for SM16716 RGB LED controller (+0k7 code)
 #undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
+#undef USE_A4988_Stepper                      // Disable support for A4988_Stepper
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_CLASSIC
@@ -386,6 +387,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef USE_SM16716                            // Disable support for SM16716 RGB LED controller (+0k7 code)
 #undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
+#undef USE_A4988_Stepper                      // Disable support for A4988_Stepper
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 
@@ -480,6 +482,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef USE_SM16716                            // Disable support for SM16716 RGB LED controller (+0k7 code)
 #undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
+#undef USE_A4988_Stepper                      // Disable support for A4988_Stepper
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_BASIC
@@ -561,6 +564,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
 #undef USE_SM16716                            // Disable support for SM16716 RGB LED controller (+0k7 code)
 #undef USE_HRE                                // Disable support for Badger HR-E Water Meter (+1k4 code)
+#undef USE_A4988_Stepper                      // Disable support for A4988_Stepper
 #undef DEBUG_THEO                             // Disable debug code
 #undef USE_DEBUG_DRIVER                       // Disable debug code
 #endif  // FIRMWARE_MINIMAL

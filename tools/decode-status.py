@@ -160,7 +160,7 @@ a_features = [[
     "USE_ADE7953","USE_SPS30","USE_VL53L0X","USE_MLX90614",
     "USE_MAX31865","USE_CHIRP","USE_SOLAX_X1","USE_PAJ7620"
     ],[
-    "USE_BUZZER","USE_RDM6300","USE_IBEACON","",
+    "USE_BUZZER","USE_RDM6300","USE_IBEACON","USE_A4988_Stepper",
     "","","","",
     "","","","",
     "","","","",

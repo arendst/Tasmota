@@ -456,6 +456,14 @@
   #define D_JSON_ZIGBEEZNPSENT "ZigbeeZNPSent"
   #define D_JSON_ZIGBEEZCLRECEIVED "ZigbeeZCLReceived"
   #define D_JSON_ZIGBEEZCLSENT "ZigbeeZCLSent"
+
+  // Commands xdrv_98_A4988.ino
+  #ifdef USE_A4988_Stepper
+    #define D_CMND_MOTOR "MOTOR"
+    #define D_JSON_MOTOR_COMMAND "Command"
+    #define D_JSON_MOTOR_VALUE "Value"
+  #endif
+
 /********************************************************************************************/
 
 #define D_ASTERISK_PWD "****"

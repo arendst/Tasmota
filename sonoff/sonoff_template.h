@@ -194,6 +194,12 @@ enum UserSelectablePins {
   GPIO_RDM6300_RX,     // RDM6300 RX
   GPIO_IBEACON_TX,     // HM17 IBEACON TX
   GPIO_IBEACON_RX,     // HM17 IBEACON RX
+  GPIO_A4988_DIR,      // A4988 direction pin
+  GPIO_A4988_STP,      // A4988 step pin
+  GPIO_A4988_ENA,      // A4988 enabled pin
+  GPIO_A4988_MS1,      // A4988 microstep pin1
+  GPIO_A4988_MS2,      // A4988 microstep pin2
+  GPIO_A4988_MS3,      // A4988 microstep pin3
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -267,6 +273,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_ZIGBEE_TXD "|" D_SENSOR_ZIGBEE_RXD "|"
   D_SENSOR_RDM6300_RX "|"
   D_SENSOR_IBEACON_TX "|" D_SENSOR_IBEACON_RX "|"
+  D_SENSOR_A4988_DIR "|" D_SENSOR_A4988_STP "|" D_SENSOR_A4988_ENA "|" D_SENSOR_A4988_MS1 "|" D_SENSOR_A4988_MS2 "|" D_SENSOR_A4988_MS3 "|"
   ;
 
 // User selectable ADC0 functionality
@@ -688,6 +695,15 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_HRE
   GPIO_HRE_CLOCK,
   GPIO_HRE_DATA,
+#endif
+#ifdef USE_A4988_Stepper
+  GPIO_A4988_DIR,     // A4988 direction pin
+  GPIO_A4988_STP,     // A4988 step pin
+  // folowing are not mandatory
+  GPIO_A4988_ENA,     // A4988 enabled pin
+  GPIO_A4988_MS1,     // A4988 microstep pin1
+  GPIO_A4988_MS2,     // A4988 microstep pin2
+  GPIO_A4988_MS3,     // A4988 microstep pin3
 #endif
 };
 

@@ -527,6 +527,7 @@
 #define USE_SM16716                              // Add support for SM16716 RGB LED controller (+0k7 code)
 
 //#define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
+#define USE_A4988_Stepper                                  // Add support for A4988 Stepper-Motors-Driver-circuit
 
 /*********************************************************************************************\
  * Debug features
