@@ -57,7 +57,7 @@ class A4988_Stepper {
     unsigned long motor_delay; // delay between steps, in ms
     int           motor_SPR;   // Steps Per Revolution
     int           motor_RPM;   // Rounds Per Minute
-    short         motor_MIC;   // Micro Steps
+    short         motor_MIS;   // Micro Steps
 
     // motor pins:
     short motor_dir_pin;

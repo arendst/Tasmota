@@ -92,12 +92,12 @@ void A4988_Stepper::adjustMicrosteps() {
        break;
      }
    } else {
-     motor_MIC = 1;
+     motor_MIS = 1;
    }
 }
 
  void A4988_Stepper::adjustDelay(void) {
-   motor_delay = 60L * 1000L * 1000L / motor_SPR / motor_RPM / motor_MIC;
+   motor_delay = 60L * 1000L * 1000L / motor_SPR / motor_RPM / motor_MIS;
  }
 
 void A4988_Stepper::setMIS(short oneToSixteen) {

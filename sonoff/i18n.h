@@ -462,6 +462,9 @@
     #define D_CMND_MOTOR "MOTOR"
     #define D_JSON_MOTOR_COMMAND "Command"
     #define D_JSON_MOTOR_VALUE "Value"
+    #define D_JSON_MOTOR_MOVE "doMove"
+    #define D_JSON_MOTOR_ROTATE "doRotate"
+    #define D_JSON_MOTOR_TURN "doTurn"
   #endif
 
 /********************************************************************************************/

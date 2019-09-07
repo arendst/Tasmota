@@ -38,7 +38,7 @@ short A4988_ms3_pin = pin[GPIO_MAX];
 short A4988_ena_pin = pin[GPIO_MAX];
 int   A4988_spr    = 0;
 float A4988_rpm    = 0;
-short A4988_mic    = 0;
+short A4988_mis    = 0;
 
 A4988_Stepper* myA4988 = nullptr;
 
@@ -67,12 +67,12 @@ void A4988Init(void)
   A4988_rpm     = myA4988->getRPM();
   A4988_mis     = myA4988->getMIS();
   if ((A4988_ms1_pin < 99)&&(A4988_ms2_pin < 99)&&(A4988_ms3_pin < 99)&&(A4988_ena_pin<99)) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("STP: A4988-Driver initialized (%dSPR, %dRPM,%dMIC). Pins: Dir[%d]  Stp[%d]  Ena[%d]  MS1[%d] MS2[%d] MS3[%d]"),A4988_spr, A4988_rpm, A4988_mic, A4988_dir_pin,A4988_stp_pin,A4988_ena_pin,A4988_ms1_pin,A4988_ms2_pin,A4988_ms3_pin);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("STP: A4988-Driver initialized (%dSPR, %dRPM,%dMIS). Pins: Dir[%d]  Stp[%d]  Ena[%d]  MS1[%d] MS2[%d] MS3[%d]"),A4988_spr, A4988_rpm, A4988_mis, A4988_dir_pin,A4988_stp_pin,A4988_ena_pin,A4988_ms1_pin,A4988_ms2_pin,A4988_ms3_pin);
   } else {
     if ((A4988_ena_pin<99)) {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("STP: A4988-Driver initialized (%dSPR, %dRPM,%dMIC). Pins: Dir[%d]  Stp[%d]  Ena[%d] MicroStepping hardwired"),A4988_spr, A4988_rpm, A4988_mic, A4988_dir_pin,A4988_stp_pin,A4988_ena_pin);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("STP: A4988-Driver initialized (%dSPR, %dRPM,%dMIS). Pins: Dir[%d]  Stp[%d]  Ena[%d] MicroStepping hardwired"),A4988_spr, A4988_rpm, A4988_mis, A4988_dir_pin,A4988_stp_pin,A4988_ena_pin);
     } else {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("STP: A4988-Driver initialized (%dSPR, %dRPM,%dMIC). Pins: Dir[%d]  Stp[%d] motor permanently on, MicroStepping hardwired"),A4988_spr, A4988_rpm, A4988_mic, A4988_dir_pin,A4988_stp_pin,A4988_ena_pin);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("STP: A4988-Driver initialized (%dSPR, %dRPM,%dMIS). Pins: Dir[%d]  Stp[%d] motor permanently on, MicroStepping hardwired"),A4988_spr, A4988_rpm, A4988_mis, A4988_dir_pin,A4988_stp_pin,A4988_ena_pin);
     }
   }
 }
@@ -80,65 +80,44 @@ void A4988Init(void)
 const char kA4988Commands[] PROGMEM = "MOTOR|"
   "doMove|doRotate|doTurn|setSPR|setRPM|setMIC|getSPR|getRPM|getMIC|doVader";
 
-void (* const A4988Command[])(void) PROGMEM = { &CmndMOTOR, &CmndDoMove, &CmndDoRotate, &CmndDoTurn, &CmndSetSPR, &CmndSetRPM, &CmndSetMic , &CmndGetSPR, &CmndGetRPM, &CmndGetMIC, &CmndDoVader };
+void (* const A4988Command[])(void) PROGMEM = { &CmndMOTOR, &CmndDoMove, &CmndDoRotate, &CmndDoTurn, &CmndSetSPR, &CmndSetRPM, &CmndSetMIS , &CmndGetSPR, &CmndGetRPM, &CmndGetMIS, &CmndDoVader };
 
 
 uint32_t MOTORCmndJson(void)
 {
-  // ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(3) + 40 = 96
-  // MOTOR { "command": "doMove", "value": 200 }
-  // MOTOR { "command": "doRotate", "value": 200 }
-  // MOTOR { "command": "doTurn", "value": 200 }
-
+  // MOTOR {"Command":"doMove","Value":200}
+  // MOTOR {"Command":"doRotate","Value":360}
+  // MOTOR {"Command":"doTurn","Value":1.0}
   char dataBufUc[XdrvMailbox.data_len];
   UpperCase(dataBufUc, XdrvMailbox.data);
   RemoveSpace(dataBufUc);
-  if (strlen(dataBufUc) < 8) {
-    return A4988_INVALID_JSON;
-  }
+  if (strlen(dataBufUc) < 8) { return A4988_INVALID_JSON; }
 
-  StaticJsonBuffer<40> jsonBuf;
-  JsonObject &root = jsonBuf.parseObject(dataBufUc);
-  if (!root.success()) {
-    return A4988_INVALID_JSON;
-  }
+  DynamicJsonBuffer jsonBuf;
+  JsonObject &json = jsonBuf.parseObject(dataBufUc);
+  if (!json.success()) { return A4988_INVALID_JSON; }
 
-  char parm_uc[10];
-  const char *command    = root[PSTR(parm_uc, PSTR(D_JSON_MOTOR_COMMAND))];
-  const char *commandval = root[PSTR(parm_uc, PSTR(D_JSON_MOTOR_VALUE))];
-
-  if (!(command && commandval)) {
-    return A4988_INVALID_JSON;
-  }
-
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("MOTOR: command: '%s', value: '%s'"),command, commandval);
-
-  switch (command)
-  {     case "doMove": {
-            long stepsPlease = 1;
-            stepsPlease = strtoul(commandval,nullptr,10);
-            myA4988->doMove(stepsPlease); break;
-        }
-        case "doRotate" : {
-            long degrsPlease = 1;
-            degrsPlease = strtoul(commandval,nullptr,10);
-            AddLog_P2(LOG_LEVEL_INFO, PSTR("A4988: Rotating %d degrs"), degrsPlease);
-            myA4988->doRotate(degrsPlease); break;
-        }
-        case "doTurn" : {
-          float turnsPlease = 0;
-          turnsPlease = strtod(commandval,nullptr);
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("A4988: Turning %d times"), turnsPlease);
-          myA4988->doTurn(turnsPlease); break;
-        }
-        default:
-          ResponseCmndChar(D_JSON_PROTOCOL_NOT_SUPPORTED);
-  }
-
-      return A4988_NO_ERROR;
+  if (json.containsKey(D_JSON_MOTOR_MOVE )){
+    long stepsPlease = 50;
+    stepsPlease = strtoul(json[D_JSON_MOTOR_MOVE],nullptr,10);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("A4988: Moving %d steps"), stepsPlease);
+    myA4988->doMove(stepsPlease);
+  } else if (json.containsKey(D_JSON_MOTOR_ROTATE )){
+    long degrsPlease = 45;
+    degrsPlease = strtoul(json[D_JSON_MOTOR_ROTATE],nullptr,10);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("A4988: Rotating %d degrs"), degrsPlease);
+    myA4988->doRotate(degrsPlease);
+  } else if (json.containsKey(D_JSON_MOTOR_TURN )){
+    float turnsPlease = 0.25;
+    turnsPlease = strtod(json[D_JSON_MOTOR_TURN],nullptr);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("A4988: Turning %d times"), turnsPlease);
+    myA4988->doTurn(turnsPlease);
+  } else return A4988_NO_JSON_COMMAND;
+  return A4988_NO_ERROR;
 }
 
 void CmndMOTOR(void){
+  uint32_t error;
   if (XdrvMailbox.data_len) {
     if (strstr(XdrvMailbox.data, "{") == nullptr) {
       error = A4988_NO_JSON_COMMAND;
@@ -150,6 +129,13 @@ void CmndMOTOR(void){
 }
 
 void A4988CmndResponse(uint32_t error){
+  switch (error) {
+    case A4988_NO_JSON_COMMAND:
+      ResponseCmndChar(D_JSON_INVALID_JSON);
+      break;
+    default:  // A4988_NO_ERROR
+      ResponseCmndDone();
+  }
 
 }
 
@@ -161,8 +147,8 @@ void CmndGetRPM(void) {
   AddLog_P2(LOG_LEVEL_INFO, PSTR("A4988: RPM = %d rounds"), myA4988->getRPM());
 }
 
-void CmndGetMIC(void) {
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("A4988: MIC = %d steps"), myA4988->getMIC());
+void CmndGetMIS(void) {
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("A4988: MIS = %d steps"), myA4988->getMIS());
 }
 
 void CmndDoMove(void)
@@ -232,11 +218,11 @@ void CmndSetSPR(void)
 void CmndSetMIS(void)
 {
   if ((pin[GPIO_A4988_MS1] < 99) && (pin[GPIO_A4988_MS2] < 99) && (pin[GPIO_A4988_MS3] < 99)) {
-    short micPlease = 1;
+    short misPlease = 1;
     if (XdrvMailbox.data_len > 0) {
-      micPlease = strtoul(XdrvMailbox.data,nullptr,10);
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("A4988: Microsteps set to %d"), micPlease);
-      myA4988->setMIC(micPlease);
+      misPlease = strtoul(XdrvMailbox.data,nullptr,10);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("A4988: Microsteps set to %d"), misPlease);
+      myA4988->setMIS(misPlease);
     }
   } else {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("A4988: Microsteps constant = 1. You'll have to define GPIO's for MS1-MS3 and connect them to A4988 or hardwire A4988 itself"));
