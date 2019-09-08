@@ -1,31 +1,31 @@
-/* This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
- * License as published by the Free Software Foundation; either
- * version 2.1 of the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * Drives a bipolar motor, controlled by A4988 stepper driver circuit
+/*
+ This library is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+ Drives a bipolar motor, controlled by A4988 stepper driver circuit
  */
 
 #include "Arduino.h"
 #include "A4988_Stepper.h"
 A4988_Stepper::A4988_Stepper( int   m_spr
-                          , int   m_rpm
-                          , short m_mis
-                          , short m_dir_pin
-                          , short m_stp_pin
-                          , short m_ena_pin
-                          , short m_ms1_pin
-                          , short m_ms2_pin
-                          , short m_ms3_pin ) {
+                            , int   m_rpm
+                            , short m_mis
+                            , short m_dir_pin
+                            , short m_stp_pin
+                            , short m_ena_pin
+                            , short m_ms1_pin
+                            , short m_ms2_pin
+                            , short m_ms3_pin ) {
   last_time     = 0;     // time stamp in us of the last step taken
   motor_SPR     = m_spr; // StepsPerRevolution
   motor_RPM     = m_rpm; // RoundsPerMinute
@@ -96,7 +96,7 @@ void A4988_Stepper::adjustMicrosteps() {
 }
 
  void A4988_Stepper::adjustDelay(void) {
-   motor_delay = 60L * 1000L * 1000L / motor_SPR / motor_RPM / motor_MIS;
+   motor_delay = 60L * 1000L * 1000L / motor_SPR / motor_RPM / motor_MIS/2;
  }
 
 void A4988_Stepper::setMIS(short oneToSixteen) {
@@ -147,8 +147,8 @@ void A4988_Stepper::doMove(long howManySteps)
     if (now - last_time >= motor_delay) {
       digitalWrite(motor_stp_pin, lastStepWasHigh?LOW:HIGH);
       lastStepWasHigh = !lastStepWasHigh;
-      // remeber step-time if last signal was HIGH we can pull low after 50ms as only HIGH actually moves the stepper
-      last_time = lastStepWasHigh?now-50:now;
+      // remeber step-time
+      last_time = now;
       if (!lastStepWasHigh) steps_togo--; // same here - only HIGH moves, if pulled LOW step is completed...
     }
   }

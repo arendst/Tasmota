@@ -460,8 +460,6 @@
   // Commands xdrv_25_A4988_Stepper.ino
   #ifdef USE_A4988_Stepper
     #define D_CMND_MOTOR "MOTOR"
-    #define D_JSON_MOTOR_COMMAND "Command"
-    #define D_JSON_MOTOR_VALUE "Value"
     #define D_JSON_MOTOR_MOVE "doMove"
     #define D_JSON_MOTOR_ROTATE "doRotate"
     #define D_JSON_MOTOR_TURN "doTurn"

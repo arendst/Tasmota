@@ -1,8 +1,6 @@
 
 /*
-  xsns_22_sr04.ino - SR04 ultrasonic sensor support for Sonoff-Tasmota
-
-  Copyright (C) 2019  Nuno Ferreira and Theo Arends
+  xdrv_25_A4988_Stepper.ino - A4988-StepMotorDriverCircuit- support for Sonoff-Tasmota
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -22,7 +20,7 @@
 #include <A4988_Stepper.h>
 #define XDRV_25                    25
 
-enum A4988Errors { A4988_NO_ERROR, A4988_NO_JSON_COMMAND, A4988_INVALID_JSON};
+enum A4988Errors { A4988_NO_ERROR, A4988_NO_JSON_COMMAND, A4988_INVALID_JSON, A4988_MOVE, A4988_ROTATE, A4988_TURN};
 
 short A4988_dir_pin = pin[GPIO_MAX];
 short A4988_stp_pin = pin[GPIO_MAX];
@@ -59,53 +57,79 @@ void A4988Init(void)
                             , A4988_ms3_pin );
 }
 
-const char kA4988Commands[] PROGMEM = "MOTOR|"
-  "doMove|doRotate|doTurn|setSPR|setRPM|setMIS";
+const char kA4988Commands[] PROGMEM = "|"
+  "MOTOR";
 
 void (* const A4988Command[])(void) PROGMEM = { &CmndMOTOR};
 
 uint32_t MOTORCmndJson(void)
 {
-  // MOTOR {"Command":"doMove","Value":200}
-  // MOTOR {"Command":"doRotate","Value":360}
-  // MOTOR {"Command":"doTurn","Value":1.0}
+  // MOTOR {"doMove":200}
+  // MOTOR {"doRotate":360}
+  // MOTOR {"doTurn":1.0}
+  uint32_t returnValue =A4988_NO_JSON_COMMAND;
+
+  char parm_uc[12];
   char dataBufUc[XdrvMailbox.data_len];
   UpperCase(dataBufUc, XdrvMailbox.data);
   RemoveSpace(dataBufUc);
-  if (strlen(dataBufUc) < 8) { return A4988_INVALID_JSON; }
+  if (strlen(dataBufUc) < 8) { returnValue =A4988_INVALID_JSON; }
 
   DynamicJsonBuffer jsonBuf;
   JsonObject &json = jsonBuf.parseObject(dataBufUc);
-  if (!json.success()) { return A4988_INVALID_JSON; }
-  if (json.containsKey(D_JSON_MOTOR_MOVE )){
-    long stepsPlease = 50;
-    stepsPlease = strtoul(json[D_JSON_MOTOR_MOVE],nullptr,10);
-    myA4988->doMove(stepsPlease);
-  } else if (json.containsKey(D_JSON_MOTOR_ROTATE )){
-    long degrsPlease = 45;
-    degrsPlease = strtoul(json[D_JSON_MOTOR_ROTATE],nullptr,10);
-    myA4988->doRotate(degrsPlease);
-  } else if (json.containsKey(D_JSON_MOTOR_TURN )){
-    float turnsPlease = 0.25;
-    turnsPlease = strtod(json[D_JSON_MOTOR_TURN],nullptr);
-    myA4988->doTurn(turnsPlease);
-  } else if (json.containsKey(D_JSON_MOTOR_SPR )){
-    int howManySteps =strtoul(json[D_JSON_MOTOR_SPR],nullptr,10);
-    myA4988->setSPR(howManySteps);
-  } else if (json.containsKey(D_JSON_MOTOR_RPM )){
-    int howManyRounds =strtoul(json[D_JSON_MOTOR_RPM],nullptr,10);
-    myA4988->setRPM(howManyRounds);
-  } else if (json.containsKey(D_JSON_MOTOR_MIS )){
-    short oneToSixteen =strtoul(json[D_JSON_MOTOR_MIS],nullptr,10);
-    myA4988->setMIS(oneToSixteen);
-  } else return A4988_NO_JSON_COMMAND;
-  return A4988_NO_ERROR;
+  if (json.success()) {
+    while (json.count()>0) {
+    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_SPR));
+    if (json.containsKey(parm_uc)){
+      int howManySteps =strtoul(json[parm_uc],nullptr,10);
+      myA4988->setSPR(howManySteps);
+      returnValue = A4988_NO_ERROR;
+      json.remove(parm_uc);
+    }
+    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_RPM));
+    if (json.containsKey(parm_uc)){
+      int howManyRounds =strtoul(json[parm_uc],nullptr,10);
+      myA4988->setRPM(howManyRounds);
+      returnValue = A4988_NO_ERROR;
+      json.remove(parm_uc);
+    }
+    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_MIS));
+    if (json.containsKey(parm_uc)){
+      short oneToSixteen =strtoul(json[parm_uc],nullptr,10);
+      myA4988->setMIS(oneToSixteen);
+      returnValue = A4988_NO_ERROR;
+      json.remove(parm_uc);
+    }
+    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_MOVE));
+    if (json.containsKey(parm_uc)){
+      long stepsPlease = strtoul(json[parm_uc],nullptr,10);
+      myA4988->doMove(stepsPlease);
+      returnValue = A4988_MOVE;
+      json.remove(parm_uc);
+    }
+    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_ROTATE));
+    if (json.containsKey(parm_uc)){
+      long degrsPlease = strtoul(json[parm_uc],nullptr,10);
+      myA4988->doRotate(degrsPlease);
+      returnValue = A4988_ROTATE;
+      json.remove(parm_uc);
+    }
+    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_TURN));
+    if (json.containsKey(parm_uc)){
+      float turnsPlease = strtod(json[parm_uc],nullptr);
+      myA4988->doTurn(turnsPlease);
+      returnValue = A4988_TURN;
+      json.remove(parm_uc);
+    }
+  }
+  } else returnValue =A4988_INVALID_JSON;
+  return returnValue;
 }
 
 void CmndMOTOR(void){
   uint32_t error;
   if (XdrvMailbox.data_len) {
-    if (strstr(XdrvMailbox.data, "{") == nullptr) {
+    if (strstr(XdrvMailbox.data, "}") == nullptr) {
       error = A4988_NO_JSON_COMMAND;
     } else {
       error = MOTORCmndJson();
@@ -117,7 +141,16 @@ void CmndMOTOR(void){
 void A4988CmndResponse(uint32_t error){
   switch (error) {
     case A4988_NO_JSON_COMMAND:
-      ResponseCmndChar(D_JSON_INVALID_JSON);
+      ResponseCmndChar(PSTR("Kein Commando!"));
+      break;
+    case A4988_MOVE:
+      ResponseCmndChar(PSTR("Stepping!"));
+      break;
+    case A4988_ROTATE:
+      ResponseCmndChar(PSTR("Rotating!"));
+      break;
+    case A4988_TURN:
+      ResponseCmndChar(PSTR("Turning!"));
       break;
     default:  // A4988_NO_ERROR
       ResponseCmndDone();

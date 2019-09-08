@@ -57,13 +57,13 @@
 #define BOOT_LOOP_OFFSET       1                 // [SetOption36] Number of boot loops before starting restoring defaults (0 = disable, 1..200 = boot loops offset)
 
 // -- Wifi ----------------------------------------
-#define WIFI_IP_ADDRESS        "0.0.0.0"         // [IpAddress1] Set to 0.0.0.0 for using DHCP or enter a static IP address
-#define WIFI_GATEWAY           "192.168.1.1"     // [IpAddress2] If not using DHCP set Gateway IP address
-#define WIFI_SUBNETMASK        "255.255.255.0"   // [IpAddress3] If not using DHCP set Network mask
-#define WIFI_DNS               "192.168.1.1"     // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
+#define WIFI_IP_ADDRESS        "172.17."         // [IpAddress1] Set to 0.0.0.0 for using DHCP or enter a static IP address
+#define WIFI_GATEWAY           "172.17.0.1"     // [IpAddress2] If not using DHCP set Gateway IP address
+#define WIFI_SUBNETMASK        "255.255.192.0"   // [IpAddress3] If not using DHCP set Network mask
+#define WIFI_DNS               "172.17.0.1"     // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 
-#define STA_SSID1              ""                // [Ssid1] Wifi SSID
-#define STA_PASS1              ""                // [Password1] Wifi password
+#define STA_SSID1              "Tim"                // [Ssid1] Wifi SSID
+#define STA_PASS1              "qwer1234!"                // [Password1] Wifi password
 #define STA_SSID2              ""                // [Ssid2] Optional alternate AP Wifi SSID
 #define STA_PASS2              ""                // [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_RETRY        // [WifiConfig] Default tool if wifi fails to connect
@@ -527,7 +527,7 @@
 #define USE_SM16716                              // Add support for SM16716 RGB LED controller (+0k7 code)
 
 //#define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
-#define USE_A4988_Stepper                          // Add support for A4988 Stepper-Motors-Driver-circuit (+12k7 code)
+#define USE_A4988_Stepper                          // Add support for A4988 Stepper-Motors-Driver-circuit (+10k4 code)
 
 /*********************************************************************************************\
  * Debug features
