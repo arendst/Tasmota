@@ -441,11 +441,12 @@ void GetFeatures(void)
 #ifdef USE_SML_M
   feature5 |= 0x00000008;  // xsns_53_sml.ino
 #endif
-
 #ifdef USE_INA226
   feature5 |= 0x00000010;  // xsns_54_ina226.ino
 #endif
-//  feature5 |= 0x00000020;
+#ifdef USE_A4988_Stepper
+  feature5 |= 0x00000020;  // xdrv_25_A4988.ino
+#endif
 //  feature5 |= 0x00000040;
 //  feature5 |= 0x00000080;
 

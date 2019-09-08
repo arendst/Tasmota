@@ -167,7 +167,7 @@ a_features = [[
     "USE_MAX31865","USE_CHIRP","USE_SOLAX_X1","USE_PAJ7620"
     ],[
     "USE_BUZZER","USE_RDM6300","USE_IBEACON","USE_SML_M",
-    "USE_INA226","","","",
+    "USE_INA226","USE_A4988_Stepper","","",
     "","","","",
     "","","","",
     "","","","",
