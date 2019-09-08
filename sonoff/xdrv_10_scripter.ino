@@ -2031,6 +2031,7 @@ void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
     char *cp;
     uint16_t count;
     uint8_t vtype;
+    uint8_t dprec=glob_script_mem.script_dprec;
     float fvar;
     cp=srcbuf;
     struct T_INDEX ind;
@@ -2041,13 +2042,16 @@ void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
             if (*cp=='%') {
               dstbuf[count]=*cp++;
             } else {
-              //char *scp=cp;
+              if (isdigit(*cp)) {
+                dprec=*cp&0xf;
+                cp++;
+              }
               cp=isvar(cp,&vtype,&ind,&fvar,string,0);
               if (vtype!=VAR_NV) {
                 // found variable as result
                 if (vtype==NUM_RES || (vtype&STYPE)==0) {
                     // numeric result
-                    dtostrfd(fvar,glob_script_mem.script_dprec,string);
+                    dtostrfd(fvar,dprec,string);
                 } else {
                     // string result
                 }
@@ -2650,7 +2654,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                       switch (lastop) {
                           case OPER_EQU:
                               if (glob_script_mem.var_not_found) {
-                                if (!js) toLog("var not found\n");
+                                if (!js) toLogEOL("var not found: ",lp);
                                 goto next_line;
                               }
                               *dfvar=fvar;
@@ -3587,23 +3591,21 @@ void ScriptWebShow(void) {
       if (!*lp || *lp=='#' || *lp=='>') {
           break;
       }
-
-      // send this line to web
-      memcpy(line,lp,sizeof(line));
-      line[sizeof(line)-1]=0;
-      char *cp=line;
-      for (uint32_t i=0; i<sizeof(line); i++) {
-        if (!*cp || *cp=='\n' || *cp=='\r') {
-          *cp=0;
-          break;
+      if (*lp!=';') {
+        // send this line to web
+        memcpy(line,lp,sizeof(line));
+        line[sizeof(line)-1]=0;
+        char *cp=line;
+        for (uint32_t i=0; i<sizeof(line); i++) {
+          if (!*cp || *cp=='\n' || *cp=='\r') {
+            *cp=0;
+            break;
+          }
+          cp++;
         }
-        cp++;
+        Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+        WSContentSend_PD(PSTR("{s}%s{e}"),tmp);
       }
-
-      Replace_Cmd_Vars(line,tmp,sizeof(tmp));
-      WSContentSend_PD(PSTR("{s}%s{e}"),tmp);
-
-next_line:
       if (*lp==SCRIPT_EOL) {
         lp++;
       } else {
@@ -3630,23 +3632,21 @@ void ScriptJsonAppend(void) {
       if (!*lp || *lp=='#' || *lp=='>') {
           break;
       }
-
-      // send this line to mqtt
-      memcpy(line,lp,sizeof(line));
-      line[sizeof(line)-1]=0;
-      char *cp=line;
-      for (uint32_t i=0; i<sizeof(line); i++) {
-        if (!*cp || *cp=='\n' || *cp=='\r') {
-          *cp=0;
-          break;
+      if (*lp!=';') {
+        // send this line to mqtt
+        memcpy(line,lp,sizeof(line));
+        line[sizeof(line)-1]=0;
+        char *cp=line;
+        for (uint32_t i=0; i<sizeof(line); i++) {
+          if (!*cp || *cp=='\n' || *cp=='\r') {
+            *cp=0;
+            break;
+          }
+          cp++;
         }
-        cp++;
+        Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+        ResponseAppend_P(PSTR("%s"),tmp);
       }
-
-      Replace_Cmd_Vars(line,tmp,sizeof(tmp));
-      ResponseAppend_P(PSTR("%s"),tmp);
-
-next_line:
       if (*lp==SCRIPT_EOL) {
         lp++;
       } else {
