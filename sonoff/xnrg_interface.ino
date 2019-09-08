@@ -19,8 +19,6 @@
 
 #ifdef USE_ENERGY_SENSOR
 
-uint8_t xnrg_active_driver_number = 0;
-
 #ifdef XFUNC_PTR_IN_ROM
 bool (* const xnrg_func_ptr[])(uint8_t) PROGMEM = {   // Energy driver Function Pointers
 #else
@@ -94,19 +92,21 @@ bool (* const xnrg_func_ptr[])(uint8_t) = {   // Energy driver Function Pointers
 
 const uint8_t xnrg_present = sizeof(xnrg_func_ptr) / sizeof(xnrg_func_ptr[0]);  // Number of drivers found
 
+uint8_t xnrg_active = 0;
+
 bool XnrgCall(uint8_t function)
 {
   if (FUNC_PRE_INIT == function) {
     for (uint32_t x = 0; x < xnrg_present; x++) {
       xnrg_func_ptr[x](function);
       if (energy_flg) {
-        xnrg_active_driver_number = x;
-        break;  // Stop further driver investigation
+        xnrg_active = x;
+        return true;  // Stop further driver investigation
       }
     }
   }
   else if (energy_flg) {
-    return xnrg_func_ptr[xnrg_active_driver_number](function);
+    return xnrg_func_ptr[xnrg_active](function);
   }
   return false;
 }
