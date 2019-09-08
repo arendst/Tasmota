@@ -40,7 +40,7 @@
 TasmotaModbus *Sdm120Modbus;
 
 const uint8_t sdm120_table = 8;
-const uint8_t sdm220_table = 14;
+const uint8_t sdm220_table = 13;
 
 const uint16_t sdm120_start_addresses[] {
   0x0000,   // SDM120C_VOLTAGE             [V]
@@ -54,7 +54,6 @@ const uint16_t sdm120_start_addresses[] {
 
   0X0048,   // SDM220_IMPORT_ACTIVE        [kWh]
   0X004A,   // SDM220_EXPORT_ACTIVE        [kWh]
-  0X0158,   // SDM220 TOTAL_REACTIVE       [kVArh]
   0X004C,   // SDM220_IMPORT_REACTIVE      [kVArh]
   0X004E,   // SDM220_EXPORT_REACTIVE      [kVArh]
   0X0024    // SDM220_PHASE_ANGLE          [Degree]
@@ -64,7 +63,6 @@ struct SDM120 {
   float total_active = 0;
   float import_active = NAN;
   float export_active = 0;
-  float total_reactive = 0;
   float import_reactive = 0;
   float export_reactive = 0;
   float phase_angle = 0;
@@ -142,18 +140,14 @@ void SDM120Every250ms(void)
           break;
 
         case 10:
-          Sdm120.total_reactive = value;   // 175.594 kVArh = import_reactive + export_reactive
-          break;
-
-        case 11:
           Sdm120.import_reactive = value;  // 172.750 kVArh
           break;
 
-        case 12:
+        case 11:
           Sdm120.export_reactive = value;  // 2.844 kVArh
           break;
 
-        case 13:
+        case 12:
           Sdm120.phase_angle = value;      // 0.00 Deg
           break;
       }
@@ -208,7 +202,6 @@ void Sdm220Reset(void)
 
   Sdm120.import_active = 0;
   Sdm120.export_active = 0;
-  Sdm120.total_reactive = 0;
   Sdm120.import_reactive = 0;
   Sdm120.export_reactive = 0;
   Sdm120.phase_angle = 0;
@@ -218,7 +211,6 @@ void Sdm220Reset(void)
 const char HTTP_ENERGY_SDM220[] PROGMEM =
   "{s}" D_IMPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_EXPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_TOTAL_REACTIVE "{m}%s " D_UNIT_KWARH "{e}"
   "{s}" D_IMPORT_REACTIVE "{m}%s " D_UNIT_KWARH "{e}"
   "{s}" D_EXPORT_REACTIVE "{m}%s " D_UNIT_KWARH "{e}"
   "{s}" D_PHASE_ANGLE "{m}%s " D_UNIT_ANGLE "{e}";
@@ -232,8 +224,6 @@ void Sdm220Show(bool json)
   dtostrfd(Sdm120.import_active, Settings.flag2.energy_resolution, import_active_chr);
   char export_active_chr[FLOATSZ];
   dtostrfd(Sdm120.export_active, Settings.flag2.energy_resolution, export_active_chr);
-  char total_reactive_chr[FLOATSZ];
-  dtostrfd(Sdm120.total_reactive, Settings.flag2.energy_resolution, total_reactive_chr);
   char import_reactive_chr[FLOATSZ];
   dtostrfd(Sdm120.import_reactive, Settings.flag2.energy_resolution, import_reactive_chr);
   char export_reactive_chr[FLOATSZ];
@@ -242,11 +232,11 @@ void Sdm220Show(bool json)
   dtostrfd(Sdm120.phase_angle, 2, phase_angle_chr);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_ACTIVE "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s,\"" D_JSON_IMPORT_REACTIVE "\":%s,\"" D_JSON_EXPORT_REACTIVE "\":%s,\"" D_JSON_PHASE_ANGLE "\":%s"),
-      import_active_chr, export_active_chr, total_reactive_chr, import_reactive_chr, export_reactive_chr, phase_angle_chr);
+    ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_ACTIVE "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s,\"" D_JSON_IMPORT_REACTIVE "\":%s,\"" D_JSON_EXPORT_REACTIVE "\":%s,\"" D_JSON_PHASE_ANGLE "\":%s"),
+      import_active_chr, export_active_chr, import_reactive_chr, export_reactive_chr, phase_angle_chr);
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ENERGY_SDM220, import_active_chr, export_active_chr, total_reactive_chr, import_reactive_chr, export_reactive_chr, phase_angle_chr);
+    WSContentSend_PD(HTTP_ENERGY_SDM220, import_active_chr, export_active_chr, import_reactive_chr, export_reactive_chr, phase_angle_chr);
 #endif  // USE_WEBSERVER
   }
 }
