@@ -133,7 +133,7 @@ void CmndMOTOR(void){
 void A4988CmndResponse(uint32_t error){
   switch (error) {
     case A4988_NO_JSON_COMMAND:
-      ResponseCmndChar(PSTR("Kein Commando!"));
+      ResponseCmndChar(PSTR("No command!"));
       break;
     case A4988_MOVE:
       ResponseCmndChar(PSTR("Stepping!"));

@@ -57,10 +57,10 @@
 #define BOOT_LOOP_OFFSET       1                 // [SetOption36] Number of boot loops before starting restoring defaults (0 = disable, 1..200 = boot loops offset)
 
 // -- Wifi ----------------------------------------
-#define WIFI_IP_ADDRESS        ""                // [IpAddress1] Set to 0.0.0.0 for using DHCP or enter a static IP address
-#define WIFI_GATEWAY           ""                // [IpAddress2] If not using DHCP set Gateway IP address
-#define WIFI_SUBNETMASK        ""                // [IpAddress3] If not using DHCP set Network mask
-#define WIFI_DNS               ""                // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
+#define WIFI_IP_ADDRESS        "0.0.0.0"         // [IpAddress1] Set to 0.0.0.0 for using DHCP or enter a static IP address
+#define WIFI_GATEWAY           "192.168.1.1"     // [IpAddress2] If not using DHCP set Gateway IP address
+#define WIFI_SUBNETMASK        "255.255.255.0"   // [IpAddress3] If not using DHCP set Network mask
+#define WIFI_DNS               "192.168.1.1"     // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 
 #define STA_SSID1              ""                // [Ssid1] Wifi SSID
 #define STA_PASS1              ""                // [Password1] Wifi password
@@ -341,6 +341,7 @@
 //  #define USE_ADS1115                            // Enable ADS1115 16 bit A/D converter (I2C address 0x48, 0x49, 0x4A or 0x4B) based on Adafruit ADS1x15 library (no library needed) (+0k7 code)
 //  #define USE_ADS1115_I2CDEV                     // Enable ADS1115 16 bit A/D converter (I2C address 0x48, 0x49, 0x4A or 0x4B) using library i2cdevlib-Core and i2cdevlib-ADS1115 (+2k code)
 //  #define USE_INA219                             // Enable INA219 (I2C address 0x40, 0x41 0x44 or 0x45) Low voltage and current sensor (+1k code)
+//  #define USE_INA226                             // Enable INA226 (I2C address 0x40, 0x41 0x44 or 0x45) Low voltage and current sensor (+2k3 code)
   #define USE_SHT3X                              // Enable SHT3x (I2C address 0x44 or 0x45) or SHTC3 (I2C address 0x70) sensor (+0k7 code)
 //  #define USE_TSL2561                            // Enable TSL2561 sensor (I2C address 0x29, 0x39 or 0x49) using library Joba_Tsl2561 (+2k3 code)
 //  #define USE_MGS                                // Enable Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
@@ -527,7 +528,7 @@
 #define USE_SM16716                              // Add support for SM16716 RGB LED controller (+0k7 code)
 
 //#define USE_HRE                                  // Add support for Badger HR-E Water Meter (+1k4 code)
-#define USE_A4988_Stepper                          // Add support for A4988 Stepper-Motors-Driver-circuit (+10k4 code)
+//#define USE_A4988_Stepper                        // Add support for A4988 stepper-motor-driver-circuit (+10k5 code)
 
 /*********************************************************************************************\
  * Debug features

@@ -14,7 +14,7 @@
 
  Drives a bipolar motor, controlled by A4988 stepper driver circuit
  */
-
+//
 #include "Arduino.h"
 #include "A4988_Stepper.h"
 A4988_Stepper::A4988_Stepper( int   m_spr
@@ -60,35 +60,16 @@ void A4988_Stepper::adjustPins(void) {
 
 void A4988_Stepper::adjustMicrosteps() {
    if ((motor_ms1_pin<99)&&(motor_ms2_pin<99)&&(motor_ms3_pin<99)) {
-     switch (motor_MIS){
-       case 1:
-         digitalWrite(motor_ms1_pin, LOW);
-         digitalWrite(motor_ms2_pin, LOW);
-         digitalWrite(motor_ms3_pin, LOW);
-       break;
-       case 2:
-         digitalWrite(motor_ms1_pin, HIGH);
-         digitalWrite(motor_ms2_pin, LOW);
-         digitalWrite(motor_ms3_pin, LOW);
-       break;
-          digitalWrite(motor_ms1_pin, LOW);
-          digitalWrite(motor_ms2_pin, HIGH);
-          digitalWrite(motor_ms3_pin, LOW);
-       case 4:
-          digitalWrite(motor_ms1_pin, HIGH);
-          digitalWrite(motor_ms2_pin, HIGH);
-          digitalWrite(motor_ms3_pin, LOW);
-       break;
-       case 8:
-          digitalWrite(motor_ms1_pin, LOW);
-          digitalWrite(motor_ms2_pin, LOW);
-          digitalWrite(motor_ms3_pin, HIGH);
-       break;
-       case 16:
-          digitalWrite(motor_ms1_pin, HIGH);
-          digitalWrite(motor_ms2_pin, HIGH);
-          digitalWrite(motor_ms3_pin, HIGH);
-       break;
+     unsigned short i = 0;
+     while (i < 5){
+       if (motor_MIS & (1<<i)){
+         unsigned short mask = MIS_TABLE[i];
+         digitalWrite(motor_ms1_pin, 1&mask?HIGH:LOW);
+         digitalWrite(motor_ms2_pin, 2&mask?HIGH:LOW);
+         digitalWrite(motor_ms3_pin, 4&mask?HIGH:LOW);
+         break;
+       }
+       i++;
      }
    } else {
      motor_MIS = 1;
@@ -102,6 +83,7 @@ void A4988_Stepper::adjustMicrosteps() {
 void A4988_Stepper::setMIS(short oneToSixteen) {
    motor_MIS = oneToSixteen;
    adjustMicrosteps();
+   adjustDelay();
  }
 
  short A4988_Stepper::getMIS(void) {

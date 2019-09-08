@@ -48,6 +48,7 @@ class A4988_Stepper {
     void  disable (void              );
 
     int   version (void              );
+    const unsigned short MIS_TABLE[5] = {0b000,0b001,0b010,0b011,0b111};
 
   private:
     void adjustDelay(void);
