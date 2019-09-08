@@ -274,8 +274,7 @@ const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses
 const uint8_t CFG_ROTATES = 8;          // Number of flash sectors used (handles uploads)
 
 uint32_t settings_location = SETTINGS_LOCATION;
-//uint32_t settings_crc32 = 0;
-uint16_t settings_crc = 0;
+uint32_t settings_crc32 = 0;
 uint8_t *settings_buffer = nullptr;
 
 /********************************************************************************************/
@@ -319,33 +318,40 @@ bool SettingsBufferAlloc(void)
   return true;
 }
 
-uint16_t GetSettingsCrc(void)
+uint16_t GetCfgCrc16(uint8_t *bytes, uint32_t size)
 {
   uint16_t crc = 0;
-  uint8_t *bytes = (uint8_t*)&Settings;
 
-  // Fix miscalculation if previous Settings was 3584 and current Settings is 4096 as of 0x06060007
-  uint32_t size = (Settings.version < 0x06060007) ? 3584 : sizeof(SYSCFG);
   for (uint32_t i = 0; i < size; i++) {
     if ((i < 14) || (i > 15)) { crc += bytes[i]*(i+1); }  // Skip crc
   }
   return crc;
 }
 
-uint32_t GetSettingsCrc32(void)
+uint16_t GetSettingsCrc(void)
+{
+  // Fix miscalculation if previous Settings was 3584 and current Settings is 4096 between 0x06060007 and 0x0606000A
+  uint32_t size = ((Settings.version < 0x06060007) || (Settings.version > 0x0606000A)) ? 3584 : sizeof(SYSCFG);
+  return GetCfgCrc16((uint8_t*)&Settings, size);
+}
+
+uint32_t GetCfgCrc32(uint8_t *bytes, uint32_t size)
 {
   // https://create.stephan-brumme.com/crc32/#bitwise
   uint32_t crc = 0;
-  uint8_t *bytes = (uint8_t*)&Settings;
 
-  uint32_t length = sizeof(SYSCFG) -4;  // Skip crc
-  while (length--) {
+  while (size--) {
     crc ^= *bytes++;
     for (uint32_t j = 0; j < 8; j++) {
       crc = (crc >> 1) ^ (-int(crc & 1) & 0xEDB88320);
     }
   }
   return ~crc;
+}
+
+uint32_t GetSettingsCrc32(void)
+{
+  return GetCfgCrc32((uint8_t*)&Settings, sizeof(SYSCFG) -4);  // Skip crc32
 }
 
 void SettingsSaveAll(void)
@@ -380,7 +386,7 @@ void SettingsSave(uint8_t rotate)
  * stop_flash_rotate 1 = Allow only eeprom flash slot use (SetOption12 1)
  */
 #ifndef FIRMWARE_MINIMAL
-  if ((GetSettingsCrc() != settings_crc) || rotate) {
+  if ((GetSettingsCrc32() != settings_crc32) || rotate) {
     if (1 == rotate) {   // Use eeprom flash slot only and disable flash rotate from now on (upgrade)
       stop_flash_rotate = 1;
     }
@@ -395,6 +401,7 @@ void SettingsSave(uint8_t rotate)
         settings_location = SETTINGS_LOCATION;
       }
     }
+
     Settings.save_flag++;
     if (UtcTime() > START_VALID_TIME) {
       Settings.cfg_timestamp = UtcTime();
@@ -402,8 +409,8 @@ void SettingsSave(uint8_t rotate)
       Settings.cfg_timestamp++;
     }
     Settings.cfg_size = sizeof(SYSCFG);
-//    Settings.cfg_crc32 = GetSettingsCrc32();
-    Settings.cfg_crc = GetSettingsCrc();
+    Settings.cfg_crc = GetSettingsCrc();  // Keep for backward compatibility in case of fall-back just after upgrade
+    Settings.cfg_crc32 = GetSettingsCrc32();
 
     ESP.flashEraseSector(settings_location);
     ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
@@ -417,8 +424,7 @@ void SettingsSave(uint8_t rotate)
 
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG D_SAVED_TO_FLASH_AT " %X, " D_COUNT " %d, " D_BYTES " %d"), settings_location, Settings.save_flag, sizeof(SYSCFG));
 
-    settings_crc = Settings.cfg_crc;
-//    settings_crc32 = Settings.cfg_crc32;
+    settings_crc32 = Settings.cfg_crc32;
   }
 #endif  // FIRMWARE_MINIMAL
   RtcSettingsSave();
@@ -443,7 +449,10 @@ void SettingsLoad(void)
 
     bool valid = false;
     if (Settings.version > 0x06000000) {
-      bool almost_valid = (Settings.cfg_crc == GetSettingsCrc());
+      bool almost_valid = (Settings.cfg_crc32 == GetSettingsCrc32());
+      if (Settings.version < 0x0606000B) {
+        almost_valid = (Settings.cfg_crc == GetSettingsCrc());
+      }
       // Sometimes CRC on pages below FB, overwritten by OTA, is fine but Settings are still invalid. So check cfg_holder too
       if (almost_valid && (0 == cfg_holder)) { cfg_holder = Settings.cfg_holder; }  // At FB always active cfg_holder
       valid = (cfg_holder == Settings.cfg_holder);
@@ -472,7 +481,7 @@ void SettingsLoad(void)
   if (!settings_location || (Settings.cfg_holder != (uint16_t)CFG_HOLDER)) {  // Init defaults if cfg_holder differs from user settings in my_user_config.h
     SettingsDefault();
   }
-  settings_crc = GetSettingsCrc();
+  settings_crc32 = GetSettingsCrc32();
 #endif  // FIRMWARE_MINIMAL
 
   RtcSettingsLoad();
