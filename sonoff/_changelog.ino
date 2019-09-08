@@ -2,6 +2,7 @@
  * 6.6.0.11 20190907
  * Change Settings crc calculation allowing short term backward compatibility
  * Add support for up to 4 INA226 Voltage and Current sensors by Steve Rogers (#6342)
+ * Add support for A4988 stepper-motor-driver-circuit by Tim Leuscher (#6370)
  *
  * 6.6.0.10 20190905
  * Redesign Tuya support by Shantur Rathore (#6353)
