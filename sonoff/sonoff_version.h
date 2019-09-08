@@ -22,7 +22,7 @@
 
 const uint32_t VERSION = 0x0606000A;
 //STB mod
-#define STB_VERSION         0x010A
+#define STB_VERSION         0x010B
 //end
 
 #endif  // _SONOFF_VERSION_H_

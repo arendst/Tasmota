@@ -858,10 +858,11 @@ void PerformEverySecond(void)
         Response_P(S_OFFLINE);
         MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
         yield();
-        if (RtcSettings.nextwakeup == 0 || RtcSettings.deepsleep_slip < 9000 || RtcSettings.deepsleep_slip > 11000) {
+        if (RtcSettings.nextwakeup == 0 || RtcSettings.deepsleep_slip < 9000 || RtcSettings.deepsleep_slip > 11000 || RtcSettings.nextwakeup > UtcTime()+Settings.deepsleep) {
           AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("Reset wrong settings wakeup: %ld, slip %ld"),  RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
-          RtcSettings.nextwakeup = UtcTime() -(RtcSettings.uptime/1000);
+          RtcSettings.nextwakeup = 0;
           RtcSettings.deepsleep_slip = 10000;
+          //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("new settings wakeup: %ld, slip %ld"),  RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
         }
         //timeslip in 0.1 seconds
         int16_t timeslip = (int16_t)(RtcSettings.nextwakeup+RtcSettings.uptime/1000-UtcTime())*10;
@@ -881,19 +882,13 @@ void PerformEverySecond(void)
           //RtcSettings.deepsleep_slip = (( ((Settings.deepsleep+(RtcSettings.nextwakeup-UtcTime())) * 10000) / (Settings.deepsleep-(RtcSettings.uptime/1000)))*RtcSettings.deepsleep_slip)/10000;
           RtcSettings.deepsleep_slip = (Settings.deepsleep+RtcSettings.nextwakeup-UtcTime()) *RtcSettings.deepsleep_slip / (Settings.deepsleep-(RtcSettings.uptime/1000));
           //Avoid crazy numbers.
+          AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("%% calculate drift %ld"),  RtcSettings.deepsleep_slip );
           RtcSettings.deepsleep_slip = tmin(tmax(RtcSettings.deepsleep_slip, 9000),11000);
-          RtcSettings.nextwakeup += Settings.deepsleep;
-          AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("%% w drift %ld"),  RtcSettings.deepsleep_slip );
-        } else {
-          if (RtcSettings.nextwakeup > 1500000000) {
-            while (RtcSettings.nextwakeup < UtcTime()) {
-              RtcSettings.nextwakeup += Settings.deepsleep;
-              yield();
-              AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("incr nextwakeup %ld"), RtcSettings.nextwakeup);
-            }
-          } else {
-            RtcSettings.nextwakeup = UtcTime() + Settings.deepsleep;
-          }
+
+          AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("%% new drift %ld"),  RtcSettings.deepsleep_slip );
+        }
+        if (RtcSettings.nextwakeup <= UtcTime()) {
+          RtcSettings.nextwakeup += (((UtcTime() - RtcSettings.nextwakeup) / Settings.deepsleep) + 1)*Settings.deepsleep;
         }
         Response_P(PSTR("%d"), RtcSettings.nextwakeup);
         MqttPublishPrefixTopic_P(TELE, PSTR(D_DOMOTICZ_UPDATE_TIMER), false);  // Offline or remove previous retained topic

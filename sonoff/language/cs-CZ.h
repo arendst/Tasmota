@@ -425,6 +425,7 @@
   #define D_DOMOTICZ_VOLTAGE "Napětí/PM2,5"
   #define D_DOMOTICZ_CURRENT "Proud/PM10"
   #define D_DOMOTICZ_AIRQUALITY "AirQuality"
+  #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
 #define D_DOMOTICZ_UPDATE_TIMER "Aktualizace stopek"
 
 // xdrv_09_timers.ino
