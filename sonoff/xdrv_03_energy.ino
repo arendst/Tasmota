@@ -148,9 +148,9 @@ void EnergyUpdateToday(void)
 
 void EnergyUpdateTotal(float value, bool kwh)
 {
-  char energy_total_chr[FLOATSZ];
-  dtostrfd(value, 4, energy_total_chr);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: Energy Total %s %sWh"), energy_total_chr, (kwh) ? "k" : "");
+//  char energy_total_chr[FLOATSZ];
+//  dtostrfd(value, 4, energy_total_chr);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: Energy Total %s %sWh"), energy_total_chr, (kwh) ? "k" : "");
 
   uint32_t multiplier = (kwh) ? 100000 : 100;  // kWh or Wh to deca milli Wh
 
