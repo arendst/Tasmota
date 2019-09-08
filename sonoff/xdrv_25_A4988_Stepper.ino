@@ -78,50 +78,42 @@ uint32_t MOTORCmndJson(void)
   DynamicJsonBuffer jsonBuf;
   JsonObject &json = jsonBuf.parseObject(dataBufUc);
   if (json.success()) {
-    while (json.count()>0) {
     UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_SPR));
     if (json.containsKey(parm_uc)){
       int howManySteps =strtoul(json[parm_uc],nullptr,10);
       myA4988->setSPR(howManySteps);
       returnValue = A4988_NO_ERROR;
-      json.remove(parm_uc);
     }
     UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_RPM));
     if (json.containsKey(parm_uc)){
       int howManyRounds =strtoul(json[parm_uc],nullptr,10);
       myA4988->setRPM(howManyRounds);
       returnValue = A4988_NO_ERROR;
-      json.remove(parm_uc);
     }
     UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_MIS));
     if (json.containsKey(parm_uc)){
       short oneToSixteen =strtoul(json[parm_uc],nullptr,10);
       myA4988->setMIS(oneToSixteen);
       returnValue = A4988_NO_ERROR;
-      json.remove(parm_uc);
     }
     UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_MOVE));
     if (json.containsKey(parm_uc)){
       long stepsPlease = strtoul(json[parm_uc],nullptr,10);
       myA4988->doMove(stepsPlease);
       returnValue = A4988_MOVE;
-      json.remove(parm_uc);
     }
     UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_ROTATE));
     if (json.containsKey(parm_uc)){
       long degrsPlease = strtoul(json[parm_uc],nullptr,10);
       myA4988->doRotate(degrsPlease);
       returnValue = A4988_ROTATE;
-      json.remove(parm_uc);
     }
     UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_TURN));
     if (json.containsKey(parm_uc)){
       float turnsPlease = strtod(json[parm_uc],nullptr);
       myA4988->doTurn(turnsPlease);
       returnValue = A4988_TURN;
-      json.remove(parm_uc);
     }
-  }
   } else returnValue =A4988_INVALID_JSON;
   return returnValue;
 }
