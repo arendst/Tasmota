@@ -1247,6 +1247,12 @@ void DisplayInitDriver(void)
 {
   XdspCall(FUNC_DISPLAY_INIT_DRIVER);
 
+  if (renderer) {
+    renderer->setTextFont(Settings.display_font);
+    renderer->setTextSize(Settings.display_size);
+  }
+
+
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "Display model %d"), Settings.display_model);
 
   if (Settings.display_model) {
@@ -1376,14 +1382,18 @@ void CmndDisplaySize(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
     Settings.display_size = XdrvMailbox.payload;
+    if (renderer) renderer->setTextSize(Settings.display_size);
+    else DisplaySetSize(Settings.display_size);
   }
   ResponseCmndNumber(Settings.display_size);
 }
 
 void CmndDisplayFont(void)
 {
-  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= 4)) {
+  if ((XdrvMailbox.payload >=0) && (XdrvMailbox.payload <= 4)) {
     Settings.display_font = XdrvMailbox.payload;
+    if (renderer) renderer->setTextFont(Settings.display_font);
+    else DisplaySetFont(Settings.display_font);
   }
   ResponseCmndNumber(Settings.display_font);
 }
@@ -1804,7 +1814,7 @@ void Restore_graph(uint8_t num, char *path) {
   if (!fp) return;
   char vbuff[32];
   char *cp=vbuff;
-  char buf[2];
+  uint8_t buf[2];
   uint8_t findex=0;
 
   for (uint32_t count=0;count<=gp->xs+4;count++) {

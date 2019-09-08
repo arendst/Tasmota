@@ -78,12 +78,12 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t no_hold_retain : 1;           // bit 12 (v6.4.1.19) - SetOption62 - Don't use retain flag on HOLD messages
     uint32_t no_power_feedback : 1;        // bit 13 (v6.5.0.9)  - SetOption63 - Don't scan relay power state at restart
     uint32_t use_underscore : 1;           // bit 14 (v6.5.0.12) - SetOption64 - Enable "_" instead of "-" as sensor index separator
-    uint32_t tuya_disable_dimmer : 1;      // bit 15 (v6.5.0.15) - SetOption65 - Enable or Disable Tuya Serial Dimmer control
+    uint32_t ex_tuya_disable_dimmer : 1;   // bit 15 (v6.5.0.15) - SetOption65 - (Enable or Disable Tuya Serial Dimmer control) - free since 6.6.0.10
     uint32_t tuya_dimmer_range_255 : 1;    // bit 16 (v6.6.0.1)  - SetOption66 - Enable or Disable Dimmer range 255 slider control
     uint32_t buzzer_enable : 1;            // bit 17 (v6.6.0.1)  - SetOption67 - Enable buzzer when available
     uint32_t pwm_multi_channels : 1;       // bit 18 (v6.6.0.3)  - SetOption68 - Enable multi-channels PWM instead of Color PWM
     uint32_t tuya_dimmer_min_limit : 1;    // bit 19 (v6.6.0.5)  - SetOption69 - Limits Tuya dimmers to minimum of 10% (25) when enabled.
-    uint32_t spare20 : 1;
+    uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
     uint32_t spare21 : 1;
     uint32_t spare22 : 1;
     uint32_t spare23 : 1;
@@ -105,8 +105,7 @@ typedef union {
     uint32_t spare01 : 1;
     uint32_t spare02 : 1;
     uint32_t spare03 : 1;
-    uint32_t spare04 : 1;
-    uint32_t spare05 : 1;
+    uint32_t time_format : 2;              // (v6.6.0.9) - CMND_TIME
     uint32_t calc_resolution : 3;
     uint32_t weight_resolution : 2;
     uint32_t frequency_resolution : 2;
@@ -179,12 +178,20 @@ typedef union {
 
 typedef struct {
   uint32_t usage1_kWhtotal;
-  uint32_t usage2_kWhtotal;
+  uint32_t usage1_kWhtoday;
   uint32_t return1_kWhtotal;
   uint32_t return2_kWhtotal;
   uint32_t last_usage_kWhtotal;
   uint32_t last_return_kWhtotal;
 } EnergyUsage;
+
+
+typedef struct {
+  uint8_t fnid = 0;
+  uint8_t dpid = 0;
+} TuyaFnidDpidMap;
+
+const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
 /*
 struct SYSCFG {
@@ -205,7 +212,7 @@ struct SYSCFG {
   int8_t        timezone;                  // 016
   char          ota_url[101];              // 017
   char          mqtt_prefix[3][11];        // 07C
-  uint8_t       baudrate;                  // 09D
+  uint8_t       ex_baudrate;               // 09D - Free since 6.6.0.9
   uint8_t       seriallog_level;           // 09E
   uint8_t       sta_config;                // 09F
   uint8_t       sta_active;                // 0A0
@@ -288,7 +295,7 @@ struct SYSCFG {
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430
   char          serial_delimiter;          // 451
-  uint8_t       sbaudrate;                 // 452
+  uint8_t       ex_sbaudrate;              // 452 - Free since 6.6.0.9
   uint8_t       sleep;                     // 453
   uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
   uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
@@ -345,11 +352,9 @@ struct SYSCFG {
   uint8_t       web_color[18][3];          // 73E
   uint16_t      display_width;             // 774
   uint16_t      display_height;            // 776
-
-  uint8_t       free_778[4];               // 778
-
+  uint16_t      baudrate;                  // 778
+  uint16_t      sbaudrate;                 // 77A
   EnergyUsage   energy_usage;              // 77C
-
 //  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries
   uint32_t      adc_param1;                // 794
   uint32_t      adc_param2;                // 798
@@ -366,11 +371,15 @@ struct SYSCFG {
   unsigned long energy_frequency_calibration;  // 7C8 also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
-  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE]; // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+  char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+  TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
+  uint16_t      ina226_r_shunt[4];         // E20
+  uint16_t      ina226_i_fs[4];            // E28
 
-  uint8_t       free_e00[512];             // E00
+  uint8_t       free_e30[456];             // E30
 
-                                           // FFF last location
+  uint32_t      cfg_timestamp;             // FF8
+  uint32_t      cfg_crc32;                 // FFC
 } Settings;
 
 struct RTCRBT {

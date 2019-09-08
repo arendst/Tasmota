@@ -249,34 +249,32 @@ void HlwSnsInit(void)
 
 void HlwDrvInit(void)
 {
-  if (!energy_flg) {
-    Hlw.model_type = 0;                      // HLW8012
-    if (pin[GPIO_HJL_CF] < 99) {
-      pin[GPIO_HLW_CF] = pin[GPIO_HJL_CF];
-      pin[GPIO_HJL_CF] = 99;
-      Hlw.model_type = 1;                    // HJL-01/BL0937
+  Hlw.model_type = 0;                      // HLW8012
+  if (pin[GPIO_HJL_CF] < 99) {
+    pin[GPIO_HLW_CF] = pin[GPIO_HJL_CF];
+    pin[GPIO_HJL_CF] = 99;
+    Hlw.model_type = 1;                    // HJL-01/BL0937
+  }
+
+  if (pin[GPIO_HLW_CF] < 99) {             // HLW8012 or HJL-01 based device Power monitor
+
+    Hlw.ui_flag = true;                    // Voltage on high
+    if (pin[GPIO_NRG_SEL_INV] < 99) {
+      pin[GPIO_NRG_SEL] = pin[GPIO_NRG_SEL_INV];
+      pin[GPIO_NRG_SEL_INV] = 99;
+      Hlw.ui_flag = false;                 // Voltage on low
     }
 
-    if (pin[GPIO_HLW_CF] < 99) {             // HLW8012 or HJL-01 based device Power monitor
-
-      Hlw.ui_flag = true;                    // Voltage on high
-      if (pin[GPIO_NRG_SEL_INV] < 99) {
-        pin[GPIO_NRG_SEL] = pin[GPIO_NRG_SEL_INV];
-        pin[GPIO_NRG_SEL_INV] = 99;
-        Hlw.ui_flag = false;                 // Voltage on low
+    if (pin[GPIO_NRG_CF1] < 99) {          // Voltage and/or Current monitor
+      if (99 == pin[GPIO_NRG_SEL]) {       // Voltage and/or Current selector
+        Energy.current_available = false;  // Assume Voltage
       }
-
-      if (pin[GPIO_NRG_CF1] < 99) {          // Voltage and/or Current monitor
-        if (99 == pin[GPIO_NRG_SEL]) {       // Voltage and/or Current selector
-          Energy.current_available = false;  // Assume Voltage
-        }
-      } else {
-        Energy.current_available = false;
-        Energy.voltage_available = false;
-      }
-
-      energy_flg = XNRG_01;
+    } else {
+      Energy.current_available = false;
+      Energy.voltage_available = false;
     }
+
+    energy_flg = XNRG_01;
   }
 }
 
@@ -311,28 +309,26 @@ bool HlwCommand(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg01(uint8_t function)
+bool Xnrg01(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    HlwDrvInit();
-  }
-  else if (XNRG_01 == energy_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        HlwSnsInit();
-        break;
-      case FUNC_ENERGY_EVERY_SECOND:
-        HlwEverySecond();
-        break;
-      case FUNC_EVERY_200_MSECOND:
-        HlwEvery200ms();
-        break;
-      case FUNC_COMMAND:
-        result = HlwCommand();
-        break;
-    }
+  switch (function) {
+    case FUNC_EVERY_200_MSECOND:
+      HlwEvery200ms();
+      break;
+    case FUNC_ENERGY_EVERY_SECOND:
+      HlwEverySecond();
+      break;
+    case FUNC_COMMAND:
+      result = HlwCommand();
+      break;
+    case FUNC_INIT:
+      HlwSnsInit();
+      break;
+    case FUNC_PRE_INIT:
+      HlwDrvInit();
+      break;
   }
   return result;
 }

@@ -46,7 +46,7 @@ void PzemDcEverySecond(void)
     uint8_t buffer[22];
 
     uint8_t error = PzemDcModbus->ReceiveBuffer(buffer, 8);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
 
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "PzemDc response error %d"), error);
@@ -61,12 +61,7 @@ void PzemDcEverySecond(void)
       Energy.active_power = (float)((buffer[9] << 24) + (buffer[10] << 16) + (buffer[7] << 8) + buffer[8]) / 10.0;  // 429496729.0 W
       float energy = (float)((buffer[13] << 24) + (buffer[14] << 16) + (buffer[11] << 8) + buffer[12]);             // 4294967295 Wh
 
-      if (!Energy.start_energy || (energy < Energy.start_energy)) { Energy.start_energy = energy; }  // Init after restart and handle roll-over if any
-      if (energy != Energy.start_energy) {
-        Energy.kWhtoday += (unsigned long)((energy - Energy.start_energy) * 100);
-        Energy.start_energy = energy;
-      }
-      EnergyUpdateToday();
+      EnergyUpdateTotal(energy, false);
     }
   }
 
@@ -93,10 +88,8 @@ void PzemDcSnsInit(void)
 
 void PzemDcDrvInit(void)
 {
-  if (!energy_flg) {
-    if ((pin[GPIO_PZEM017_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {
-      energy_flg = XNRG_06;
-    }
+  if ((pin[GPIO_PZEM017_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {
+    energy_flg = XNRG_06;
   }
 }
 
@@ -104,22 +97,20 @@ void PzemDcDrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg06(uint8_t function)
+bool Xnrg06(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    PzemDcDrvInit();
-  }
-  else if (XNRG_06 == energy_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        PzemDcSnsInit();
-        break;
-      case FUNC_ENERGY_EVERY_SECOND:
-        if (uptime > 4) { PzemDcEverySecond(); }  // Fix start up issue #5875
-        break;
-    }
+  switch (function) {
+    case FUNC_ENERGY_EVERY_SECOND:
+      if (uptime > 4) { PzemDcEverySecond(); }  // Fix start up issue #5875
+      break;
+    case FUNC_INIT:
+      PzemDcSnsInit();
+      break;
+    case FUNC_PRE_INIT:
+      PzemDcDrvInit();
+      break;
   }
   return result;
 }

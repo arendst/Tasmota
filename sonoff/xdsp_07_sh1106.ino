@@ -142,16 +142,17 @@ void SH1106Time(void)
 
 void SH1106Refresh(void)  // Every second
 {
+  if (!renderer) return;
   if (Settings.display_mode) {  // Mode 0 is User text
     switch (Settings.display_mode) {
       case 1:  // Time
-        Ssd1306Time();
+        SH1106Time();
         break;
       case 2:  // Local
       case 3:  // Local
       case 4:  // Mqtt
       case 5:  // Mqtt
-        Ssd1306PrintLog();
+        SH1106PrintLog();
         break;
     }
   }

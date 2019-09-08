@@ -17,7 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_IR_REMOTE
+#if defined(USE_IR_REMOTE) && !defined(USE_IR_REMOTE_FULL)
 /*********************************************************************************************\
  * IR Remote send and receive using IRremoteESP8266 library
 \*********************************************************************************************/
@@ -85,12 +85,8 @@ char* IrUint64toHex(uint64_t value, char *str, uint16_t bits)
     memmove(str + fill, str, len +1);
     memset(str, '0', fill);
   }
-  memmove(str + 2, str, strlen(str) +1);
-  str[0] = '0';
-  str[1] = 'x';
   return str;
 }
-
 
 #ifdef USE_IR_RECEIVE
 /*********************************************************************************************\
@@ -132,10 +128,17 @@ void IrReceiveCheck(void)
   decode_results results;
 
   if (irrecv->decode(&results)) {
-    char hvalue[64];
-    IrUint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 0x00123456
+    char hvalue[65];  // Max 256 bits
+    if (results.bits > 64) {
+      // This emulates IRutils resultToHexidecimal and may needs a larger IR_RCV_BUFFER_SIZE
+      uint32_t digits2 = results.bits / 8;
+      if (results.bits % 8) { digits2++; }
+      ToHex_P((unsigned char*)results.state, digits2, hvalue, sizeof(hvalue));  // Get n-bit value as hex 56341200
+    } else {
+      IrUint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 00123456
+    }
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value %s, Decode %d"),
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value 0x%s, Decode %d"),
               irsend_active, results.rawlen, results.overflow, results.bits, hvalue, results.decode_type);
 
     unsigned long now = millis();
@@ -149,9 +152,9 @@ void IrReceiveCheck(void)
       if (Settings.flag.ir_receive_decimal) {
         ulltoa(results.value, svalue, 10);
       } else {
-        snprintf_P(svalue, sizeof(svalue), PSTR("\"%s\""), hvalue);
+        snprintf_P(svalue, sizeof(svalue), PSTR("\"0x%s\""), hvalue);
       }
-      Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
+      ResponseTime_P(PSTR(",\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
         GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, svalue);
 
       if (Settings.flag3.receive_raw) {
@@ -668,6 +671,7 @@ uint32_t IrRemoteCmndIrHvacJson(void)
   const char *HVAC_Mode;
   const char *HVAC_FanMode;
   const char *HVAC_Vendor;
+  char parm_uc[12];
   int HVAC_Temp = 21;
   bool HVAC_Power = true;
 
@@ -684,11 +688,11 @@ uint32_t IrRemoteCmndIrHvacJson(void)
     return IE_INVALID_JSON;
   }
 
-  HVAC_Vendor = root[D_JSON_IRHVAC_VENDOR];
-  HVAC_Power = root[D_JSON_IRHVAC_POWER];
-  HVAC_Mode = root[D_JSON_IRHVAC_MODE];
-  HVAC_FanMode = root[D_JSON_IRHVAC_FANSPEED];
-  HVAC_Temp = root[D_JSON_IRHVAC_TEMP];
+  HVAC_Vendor = root[UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_VENDOR))];
+  HVAC_Power = root[UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_POWER))];
+  HVAC_Mode = root[UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_MODE))];
+  HVAC_FanMode = root[UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_FANSPEED))];
+  HVAC_Temp = root[UpperCase_P(parm_uc, PSTR(D_JSON_IRHVAC_TEMP))];
 
 //        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRHVAC: Received Vendor %s, Power %d, Mode %s, FanSpeed %s, Temp %d"), HVAC_Vendor, HVAC_Power, HVAC_Mode, HVAC_FanMode, HVAC_Temp);
 
@@ -921,8 +925,8 @@ uint32_t IrRemoteCmndIrSendJson(void)
   int protocol_code = GetCommandCode(protocol_text, sizeof(protocol_text), protocol, kIrRemoteProtocols);
 
   char dvalue[64];
-  char hvalue[64];
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (%s), repeat %d, protocol_code %d"),
+  char hvalue[20];
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (0x%s), repeat %d, protocol_code %d"),
     protocol_text, protocol, bits, ulltoa(data, dvalue, 10), IrUint64toHex(data, hvalue, bits), repeat, protocol_code);
 
   irsend_active = true;
@@ -1070,4 +1074,4 @@ bool Xdrv05(uint8_t function)
   return result;
 }
 
-#endif // USE_IR_REMOTE
+#endif // defined(USE_IR_REMOTE) && !defined(USE_IR_REMOTE_FULL)

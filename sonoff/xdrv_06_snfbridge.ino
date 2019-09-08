@@ -214,7 +214,7 @@ void SonoffBridgeReceivedRaw(void)
 
   if (0xB1 == serial_in_buffer[1]) { buckets = serial_in_buffer[2] << 1; }  // Bucket sniffing
 
-  Response_P(PSTR("{\"" D_CMND_RFRAW "\":{\"" D_JSON_DATA "\":\""));
+  ResponseTime_P(PSTR(",\"" D_CMND_RFRAW "\":{\"" D_JSON_DATA "\":\""));
   for (uint32_t i = 0; i < serial_in_byte_counter; i++) {
     ResponseAppend_P(PSTR("%02X"), serial_in_buffer[i]);
     if (0xB1 == serial_in_buffer[1]) {
@@ -226,6 +226,7 @@ void SonoffBridgeReceivedRaw(void)
   }
   ResponseAppend_P(PSTR("\"}}"));
   MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_CMND_RFRAW));
+
   XdrvRulesProcess();
 }
 
@@ -294,7 +295,7 @@ void SonoffBridgeReceived(void)
         } else {
           snprintf_P(stemp, sizeof(stemp), PSTR("\"%06X\""), received_id);
         }
-        Response_P(PSTR("{\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":%s,\"" D_CMND_RFKEY "\":%s}}"),
+        ResponseTime_P(PSTR(",\"" D_JSON_RFRECEIVED "\":{\"" D_JSON_SYNC "\":%d,\"" D_JSON_LOW "\":%d,\"" D_JSON_HIGH "\":%d,\"" D_JSON_DATA "\":%s,\"" D_CMND_RFKEY "\":%s}}"),
           sync_time, low_time, high_time, stemp, rfkey);
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_RFRECEIVED));
         XdrvRulesProcess();

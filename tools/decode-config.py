@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.2.0031'
+VER = '2.3.0033'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -955,7 +955,55 @@ Setting_6_6_0_5['flag3'][0].update ({
         'tuya_dimmer_min_limit':    ('<L', (0x3A0,1,19), (None, None,                           ('SetOption',   '"SetOption69 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_6_0_6 = copy.deepcopy(Setting_6_6_0_5)
+Setting_6_6_0_6['flag3'][0].pop('tuya_show_dimmer',None)
+Setting_6_6_0_6['flag3'][0].update ({
+        'tuya_disable_dimmer':      ('<L', (0x3A0,1,15), (None, None,                           ('SetOption',   '"SetOption65 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_7 = copy.deepcopy(Setting_6_6_0_6)
+Setting_6_6_0_7.update              ({
+    'energy_usage':                 ({
+        'usage1_kWhtotal':          ('<L',  0x77C,       (None, None,                           ('Power',       None)) ),
+        'usage1_kWhtoday':          ('<L',  0x780,       (None, None,                           ('Power',       None)) ),
+        'return1_kWhtotal':         ('<L',  0x784,       (None, None,                           ('Power',       None)) ),
+        'return2_kWhtotal':         ('<L',  0x788,       (None, None,                           ('Power',       None)) ),
+        'last_usage_kWhtotal':      ('<L',  0x78C,       (None, None,                           ('Power',       None)) ),
+        'last_return_kWhtotal':     ('<L',  0x790,       (None, None,                           ('Power',       None)) ),
+                                    },      0x77C,       (None, None,                           ('Power',       None)) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_8 = copy.deepcopy(Setting_6_6_0_7)
+Setting_6_6_0_8['flag3'][0].update ({
+        'energy_weekend':           ('<L', (0x3A0,1,20), (None, None,                           ('Power',       '"Tariff3 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_9 = copy.deepcopy(Setting_6_6_0_8)
+Setting_6_6_0_9.update              ({
+    'baudrate':                     ('<H',  0x778,       (None, None,                           ('Serial',      '"Baudrate {}".format($)')), ('$ * 1200','$ / 1200') ),
+    'sbaudrate':                    ('<H',  0x77A,       (None, None,                           ('Serial',      '"SBaudrate {}".format($)')), ('$ * 1200','$ / 1200') ),
+                                    })
+# ======================================================================
+Setting_6_6_0_10 = copy.deepcopy(Setting_6_6_0_9)
+Setting_6_6_0_10.update             ({
+    'cfg_timestamp':                ('<L',  0xFF8,       (None, None,                           (INTERNAL,      None)) ),
+    'cfg_crc32':                    ('<L',  0xFFC,       (None, None,                           (INTERNAL,      None)), '"0x{:08x}".format($)' ),
+    'tuya_fnid_map':                ({
+        'fnid':                     ('B',   0xE00,       (None, None,                           ('Management',  '"TuyaMCU {},{}".format($,@["tuya_fnid_map"][#-1]["dpid"]) if ($!=0 or @["tuya_fnid_map"][#-1]["dpid"]!=0) else None')) ),
+        'dpid':                     ('B',   0xE01,       (None, None,                           ('Management',  None)) ),
+                                    },      0xE00,       ([16], None,                           ('Management',  None)), (None,      None) ),
+                                    })
+Setting_6_6_0_10['flag2'][0].update ({
+        'time_format':              ('<L', (0x5BC,2, 4), (None, None,                           ('Management', '"Time {}".format($+1)')) ),
+                                    })
+Setting_6_6_0_10['flag3'][0].pop('tuya_show_dimmer',None)
+# ======================================================================
 Settings = [
+            (0x606000A,0x1000, Setting_6_6_0_10),
+            (0x6060009,0x1000, Setting_6_6_0_9),
+            (0x6060008,0x1000, Setting_6_6_0_8),
+            (0x6060007,0x1000, Setting_6_6_0_7),
+            (0x6060006, 0xe00, Setting_6_6_0_6),
             (0x6060005, 0xe00, Setting_6_6_0_5),
             (0x6060003, 0xe00, Setting_6_6_0_3),
             (0x6060002, 0xe00, Setting_6_6_0_2),
@@ -2468,6 +2516,8 @@ def SetCmnd(cmnds, fieldname, fielddef, valuemapping, mappedvalue, addroffset=0,
 
     # a simple value
     elif isinstance(format_, (str, bool, int, float, long)):
+        if group is not None:
+            group = group.title();
         if isinstance(tasmotacmnd, tuple):
             tasmotacmnds = tasmotacmnd
             for tasmotacmnd in tasmotacmnds:

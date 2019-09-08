@@ -181,12 +181,7 @@ void PzemEvery200ms(void)
           Energy.active_power = value;
           break;
         case 4:  // Total energy as 99999Wh
-          if (!Energy.start_energy || (value < Energy.start_energy)) Energy.start_energy = value;  // Init after restart and hanlde roll-over if any
-          if (value != Energy.start_energy) {
-            Energy.kWhtoday += (unsigned long)((value - Energy.start_energy) * 100);
-            Energy.start_energy = value;
-          }
-          EnergyUpdateToday();
+          EnergyUpdateTotal(value, false);
           break;
       }
       pzem_read_state++;
@@ -216,10 +211,8 @@ void PzemSnsInit(void)
 
 void PzemDrvInit(void)
 {
-  if (!energy_flg) {
-    if ((pin[GPIO_PZEM004_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {  // Any device with a Pzem004T
-      energy_flg = XNRG_03;
-    }
+  if ((pin[GPIO_PZEM004_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {  // Any device with a Pzem004T
+    energy_flg = XNRG_03;
   }
 }
 
@@ -227,22 +220,20 @@ void PzemDrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg03(uint8_t function)
+bool Xnrg03(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    PzemDrvInit();
-  }
-  else if (XNRG_03 == energy_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        PzemSnsInit();
-        break;
-      case FUNC_EVERY_200_MSECOND:
-        if (PzemSerial) { PzemEvery200ms(); }
-        break;
-    }
+  switch (function) {
+    case FUNC_EVERY_200_MSECOND:
+      if (PzemSerial) { PzemEvery200ms(); }
+      break;
+    case FUNC_INIT:
+      PzemSnsInit();
+      break;
+    case FUNC_PRE_INIT:
+      PzemDrvInit();
+      break;
   }
   return result;
 }
