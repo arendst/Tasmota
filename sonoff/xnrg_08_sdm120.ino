@@ -1,5 +1,5 @@
 /*
-  xnrg_09_sdm120.ino - Eastron SDM120-Modbus energy meter support for Sonoff-Tasmota
+  xnrg_08_sdm120.ino - Eastron SDM120-Modbus energy meter support for Sonoff-Tasmota
 
   Copyright (C) 2019  Gennaro Tortone and Theo Arends
 
@@ -25,7 +25,7 @@
  * Based on: https://github.com/reaper7/SDM_Energy_Meter
 \*********************************************************************************************/
 
-#define XNRG_09             9
+#define XNRG_08             8
 
 // can be user defined in my_user_config.h
 #ifndef SDM120_SPEED
@@ -189,10 +189,8 @@ void Sdm120SnsInit(void)
 
 void Sdm120DrvInit(void)
 {
-  if (!energy_flg) {
-    if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
-      energy_flg = XNRG_09;
-    }
+  if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
+    energy_flg = XNRG_08;
   }
 }
 
@@ -245,33 +243,31 @@ void Sdm220Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg09(uint8_t function)
+bool Xnrg08(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    Sdm120DrvInit();
-  }
-  else if (XNRG_09 == energy_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        Sdm120SnsInit();
-        break;
-      case FUNC_EVERY_250_MSECOND:
-        if (uptime > 4) { SDM120Every250ms(); }
-        break;
-      case FUNC_ENERGY_RESET:
-        Sdm220Reset();
-        break;
-      case FUNC_JSON_APPEND:
-        Sdm220Show(1);
-        break;
+  switch (function) {
+    case FUNC_EVERY_250_MSECOND:
+      if (uptime > 4) { SDM120Every250ms(); }
+      break;
+    case FUNC_JSON_APPEND:
+      Sdm220Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Sdm220Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Sdm220Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
+    case FUNC_ENERGY_RESET:
+      Sdm220Reset();
+      break;
+    case FUNC_INIT:
+      Sdm120SnsInit();
+      break;
+    case FUNC_PRE_INIT:
+      Sdm120DrvInit();
+      break;
   }
   return result;
 }

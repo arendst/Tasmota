@@ -696,7 +696,7 @@ void CmndMaxEnergyStart(void)
 void EnergyDrvInit(void)
 {
   energy_flg = ENERGY_NONE;
-  XnrgCall(FUNC_PRE_INIT);
+  XnrgCall(FUNC_PRE_INIT);  // Find first energy driver
 }
 
 void EnergySnsInit(void)
@@ -901,14 +901,14 @@ bool Xdrv03(uint8_t function)
       case FUNC_EVERY_250_MSECOND:
         XnrgCall(FUNC_EVERY_250_MSECOND);
         break;
+      case FUNC_SERIAL:
+        result = XnrgCall(FUNC_SERIAL);
+        break;
 #ifdef USE_ENERGY_MARGIN_DETECTION
       case FUNC_SET_POWER:
         Energy.power_steady_counter = 2;
         break;
 #endif  // USE_ENERGY_MARGIN_DETECTION
-      case FUNC_SERIAL:
-        result = XnrgCall(FUNC_SERIAL);
-        break;
       case FUNC_COMMAND:
         result = DecodeCommand(kEnergyCommands, EnergyCommand);
         break;
@@ -923,9 +923,6 @@ bool Xsns03(uint8_t function)
 
   if (energy_flg) {
     switch (function) {
-      case FUNC_INIT:
-        EnergySnsInit();
-        break;
       case FUNC_EVERY_SECOND:
 #ifdef USE_ENERGY_MARGIN_DETECTION
         EnergyMarginCheck();
@@ -942,6 +939,9 @@ bool Xsns03(uint8_t function)
 #endif  // USE_WEBSERVER
       case FUNC_SAVE_BEFORE_RESTART:
         EnergySaveState();
+        break;
+      case FUNC_INIT:
+        EnergySnsInit();
         break;
     }
   }

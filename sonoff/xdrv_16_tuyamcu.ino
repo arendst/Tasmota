@@ -21,7 +21,7 @@
 #ifdef USE_TUYA_MCU
 
 #define XDRV_16                16
-#define XNRG_08                8
+#define XNRG_16                16   // Needs to be the last XNRG_xx
 
 #ifndef TUYA_DIMMER_ID
 #define TUYA_DIMMER_ID         0
@@ -372,6 +372,7 @@ void TuyaPacketProcess(void)
 
         }
         else if (Tuya.buffer[5] == 8) {  // Long value packet
+          bool tuya_energy_enabled = (XNRG_16 == energy_flg);
           if (fnId == TUYA_MCU_FUNC_DIMMER) {
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Dim State=%d"), Tuya.buffer[13]);
             Tuya.new_dim = changeUIntScale((uint8_t) Tuya.buffer[13], 0, Settings.param[P_TUYA_DIMMER_MAX], 0, 100);
@@ -384,13 +385,13 @@ void TuyaPacketProcess(void)
           }
 
   #ifdef USE_ENERGY_SENSOR
-          else if (fnId == TUYA_MCU_FUNC_VOLTAGE) {
+          else if (tuya_energy_enabled && fnId == TUYA_MCU_FUNC_VOLTAGE) {
             Energy.voltage = (float)(Tuya.buffer[12] << 8 | Tuya.buffer[13]) / 10;
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Voltage=%d"), Tuya.buffer[6], (Tuya.buffer[12] << 8 | Tuya.buffer[13]));
-          } else if (fnId == TUYA_MCU_FUNC_CURRENT) {
+          } else if (tuya_energy_enabled && fnId == TUYA_MCU_FUNC_CURRENT) {
             Energy.current = (float)(Tuya.buffer[12] << 8 | Tuya.buffer[13]) / 1000;
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Current=%d"), Tuya.buffer[6], (Tuya.buffer[12] << 8 | Tuya.buffer[13]));
-          } else if (fnId == TUYA_MCU_FUNC_POWER) {
+          } else if (tuya_energy_enabled && fnId == TUYA_MCU_FUNC_POWER) {
             Energy.active_power = (float)(Tuya.buffer[12] << 8 | Tuya.buffer[13]) / 10;
             AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Rx ID=%d Active_Power=%d"), Tuya.buffer[6], (Tuya.buffer[12] << 8 | Tuya.buffer[13]));
 
@@ -601,22 +602,20 @@ void TuyaSetWifiLed(void)
  * Energy Interface
 \*********************************************************************************************/
 
-int Xnrg08(uint8_t function)
+bool Xnrg16(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
   if (TUYA_DIMMER == my_module_type) {
     if (FUNC_PRE_INIT == function) {
-      if (!energy_flg) {
-        if (TuyaGetDpId(TUYA_MCU_FUNC_POWER) != 0) {
-          if (TuyaGetDpId(TUYA_MCU_FUNC_CURRENT) == 0) {
-            Energy.current_available = false;
-          }
-          if (TuyaGetDpId(TUYA_MCU_FUNC_VOLTAGE) == 0) {
-            Energy.voltage_available = false;
-          }
-          energy_flg = XNRG_08;
+      if (TuyaGetDpId(TUYA_MCU_FUNC_POWER) != 0) {
+        if (TuyaGetDpId(TUYA_MCU_FUNC_CURRENT) == 0) {
+          Energy.current_available = false;
         }
+        if (TuyaGetDpId(TUYA_MCU_FUNC_VOLTAGE) == 0) {
+          Energy.voltage_available = false;
+        }
+        energy_flg = XNRG_16;
       }
     }
   }
