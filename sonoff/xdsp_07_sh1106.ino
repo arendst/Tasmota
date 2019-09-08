@@ -142,6 +142,7 @@ void SH1106Time(void)
 
 void SH1106Refresh(void)  // Every second
 {
+  if (!renderer) return;
   if (Settings.display_mode) {  // Mode 0 is User text
     switch (Settings.display_mode) {
       case 1:  // Time
