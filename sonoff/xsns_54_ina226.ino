@@ -1,18 +1,24 @@
 /*
   xsns_54_ina226.ino - INA226 Current Sensor support for Sonoff-Tasmota
+
   Copyright (C) 2019  Stephen Rodgers and Theo Arends
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_I2C
+#ifdef USE_INA226
 /*
 * Setup a single INA226 device at address 0x40:
 *
@@ -58,13 +64,9 @@
 *
 */
 
-
-// Conditional compilation of driver
-#ifdef USE_INA226
-
 // Define driver ID
 
-#define XSNS_54  54
+#define XSNS_54                                 54
 
 #define INA226_MAX_ADDRESSES                    4
 #define INA226_ADDRESS1                         (0x40)    // 1000000 (A0+A1=GND)
@@ -522,47 +524,45 @@ void Ina226Show(bool json)
  * It provides the Tasmota callback IDs.
  *
  * @param   byte    callback_id  Tasmota function ID.
- * @return  boolean              Return value.
+ * @return  bool                 Return value.
  * @pre     None.
  * @post    None.
  *
  */
-boolean Xsns54(byte callback_id) {
+bool Xsns54(byte callback_id) {
 
   // Set return value to `false`
   bool result = false;
 
   // Check if I2C interface mode is enabled
-if(i2c_flg) {
+  if(i2c_flg) {
 
-  // Check which callback ID is called by Tasmota
-  switch (callback_id) {
-    case FUNC_INIT:
-      Ina226Init();
-      break;
-    case FUNC_EVERY_50_MSECOND:
-      break;
-    case FUNC_EVERY_SECOND:
-      Ina226EverySecond();
-      break;
-    case FUNC_JSON_APPEND:
-      Ina226Show(1);
-      break;
+    // Check which callback ID is called by Tasmota
+    switch (callback_id) {
+      case FUNC_EVERY_SECOND:
+        Ina226EverySecond();
+        break;
+      case FUNC_INIT:
+        Ina226Init();
+        break;
+      case FUNC_JSON_APPEND:
+        Ina226Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Ina226Show(0);
-      break;
+      case FUNC_WEB_SENSOR:
+        Ina226Show(0);
+        break;
 #endif // USE_WEBSERVER
-    case FUNC_SAVE_BEFORE_RESTART:
-      break;
-    case FUNC_COMMAND_SENSOR:
-      if (XSNS_54 == XdrvMailbox.index) {
-        result = Ina226CommandSensor();
-      }
-      break;
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_54 == XdrvMailbox.index) {
+          result = Ina226CommandSensor();
+        }
+        break;
     }
   } // if(i2c_flg)
   // Return boolean result
   return result;
 }
-#endif // USE_<driver_name>
+
+#endif  // USE_INA226
+#endif  // USE_I2C

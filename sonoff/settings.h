@@ -373,10 +373,10 @@ struct SYSCFG {
   char          mems[MAX_RULE_MEMS][10];   // 7CE
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
   TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
-  uint16_t      ina226_r_shunt[4];          // E20
-  uint16_t      ina226_i_fs[4];             // E28
+  uint16_t      ina226_r_shunt[4];         // E20
+  uint16_t      ina226_i_fs[4];            // E28
 
-  uint8_t       free_e20[456];             //  E30
+  uint8_t       free_e30[456];             // E30
 
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC

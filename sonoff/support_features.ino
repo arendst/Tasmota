@@ -438,9 +438,13 @@ void GetFeatures(void)
 #ifdef USE_IBEACON
   feature5 |= 0x00000004;  // xsns_52_ibeacon.ino
 #endif
-//  feature5 |= 0x00000008;
+#ifdef USE_SML_M
+  feature5 |= 0x00000008;  // xsns_53_sml.ino
+#endif
 
-//  feature5 |= 0x00000010;
+#ifdef USE_INA226
+  feature5 |= 0x00000010;  // xsns_54_ina226.ino
+#endif
 //  feature5 |= 0x00000020;
 //  feature5 |= 0x00000040;
 //  feature5 |= 0x00000080;
