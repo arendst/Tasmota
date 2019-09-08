@@ -47,14 +47,14 @@ uint8_t mtx_done = 0;
 
 void MatrixWrite(void)
 {
-  for (uint8_t i = 0; i < mtx_matrices; i++) {
+  for (uint32_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->writeDisplay();
   }
 }
 
 void MatrixClear(void)
 {
-  for (uint8_t i = 0; i < mtx_matrices; i++) {
+  for (uint32_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
   }
   MatrixWrite();
@@ -62,7 +62,7 @@ void MatrixClear(void)
 
 void MatrixFixed(char* txt)
 {
-  for (uint8_t i = 0; i < mtx_matrices; i++) {
+  for (uint32_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
     matrix[i]->setCursor(-i *8, 0);
     matrix[i]->print(txt);
@@ -77,7 +77,7 @@ void MatrixCenter(char* txt)
 
   int len = strlen(txt);
   offset = (len < 8) ? offset = ((mtx_matrices *8) - (len *6)) / 2 : 0;
-  for (uint8_t i = 0; i < mtx_matrices; i++) {
+  for (uint32_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->clear();
     matrix[i]->setCursor(-(i *8)+offset, 0);
     matrix[i]->print(txt);
@@ -101,7 +101,7 @@ void MatrixScrollLeft(char* txt, int loop)
   disp_refresh--;
     if (!disp_refresh) {
       disp_refresh = Settings.display_refresh;
-      for (uint8_t i = 0; i < mtx_matrices; i++) {
+      for (uint32_t i = 0; i < mtx_matrices; i++) {
         matrix[i]->clear();
         matrix[i]->setCursor(mtx_x - i *8, 0);
         matrix[i]->print(txt);
@@ -144,9 +144,9 @@ void MatrixScrollUp(char* txt, int loop)
         words[wordcounter++] = p;
         p = strtok(nullptr, separators);
       }
-      for (uint8_t i = 0; i < mtx_matrices; i++) {
+      for (uint32_t i = 0; i < mtx_matrices; i++) {
         matrix[i]->clear();
-        for (uint8_t j = 0; j < wordcounter; j++) {
+        for (uint32_t j = 0; j < wordcounter; j++) {
           matrix[i]->setCursor(-i *8, mtx_y + (j *8));
           matrix[i]->println(words[j]);
         }
@@ -169,7 +169,7 @@ void MatrixScrollUp(char* txt, int loop)
 
 void MatrixInitMode(void)
 {
-  for (uint8_t i = 0; i < mtx_matrices; i++) {
+  for (uint32_t i = 0; i < mtx_matrices; i++) {
     matrix[i]->setRotation(Settings.display_rotate);  // 1
     matrix[i]->setBrightness(Settings.display_dimmer);
     matrix[i]->blinkRate(0);               // 0 - 3
@@ -213,6 +213,9 @@ void MatrixInitDriver(void)
           break;
         }
       }
+
+      Settings.display_width = mtx_matrices * 8;
+      Settings.display_height = 8;
 
       MatrixInitMode();
     }

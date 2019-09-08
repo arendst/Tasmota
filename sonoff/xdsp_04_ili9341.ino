@@ -84,6 +84,12 @@ void Ili9341InitDriver(void)
   }
 
   if (XDSP_04 == Settings.display_model) {
+    if (Settings.display_width != ILI9341_TFTWIDTH) {
+      Settings.display_width = ILI9341_TFTWIDTH;
+    }
+    if (Settings.display_height != ILI9341_TFTHEIGHT) {
+      Settings.display_height = ILI9341_TFTHEIGHT;
+    }
     tft = new Adafruit_ILI9341(pin[GPIO_SPI_CS], pin[GPIO_SPI_DC]);
     tft->begin();
 
@@ -167,12 +173,13 @@ void Ili9341PrintLog(void)
 
         tft_scroll = theight;  // Start below header
         tft->setCursor(0, tft_scroll);
-        for (uint8_t i = 0; i < last_row; i++) {
+        for (uint32_t i = 0; i < last_row; i++) {
           strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
 //          tft->fillRect(0, tft_scroll, tft->width(), theight, ILI9341_BLACK);  // Erase line
           tft->print(disp_screen_buffer[i]);
           tft_scroll += theight;
           tft->setCursor(0, tft_scroll);
+          delay(1);  // Fix background runs heap usage due to long runtime of this loop (up to 1 second)
         }
         strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
         DisplayFillScreen(last_row);

@@ -118,10 +118,12 @@
 #define D_JSON_PROGRAMSIZE "ProgramSize"
 #define D_JSON_REFERENCETEMPERATURE "ReferenceTemperature"
 #define D_JSON_RESET "Reset"
+#define D_JSON_RESISTANCE "Resistance"
 #define D_JSON_RESOLUTION "Resolution"
 #define D_JSON_RESTARTING "Restarting"
 #define D_JSON_RESTARTREASON "RestartReason"
 #define D_JSON_RSSI "RSSI"
+#define D_JSON_RUNTIME "Runtime"
 #define D_JSON_SAVEADDRESS "SaveAddress"
 #define D_JSON_SAVECOUNT "SaveCount"
 #define D_JSON_SAVED "Saved"
@@ -133,6 +135,7 @@
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
 #define D_JSON_STARTUPUTC "StartupUTC"
+#define D_JSON_STATUS "Status"
 #define D_JSON_SUBNETMASK "Subnetmask"
 #define D_JSON_SUCCESSFUL "Successful"
 #define D_JSON_SUNRISE "Sunrise"
@@ -164,6 +167,13 @@
 #define D_JSON_WRONG_PARAMETERS "Wrong parameters"
 #define D_JSON_YESTERDAY "Yesterday"
 #define D_JSON_ZERO_POINT_CALIBRATION "Zero Point Calibration"
+#define D_JSON_PV1_VOLTAGE "Pv1Voltage"
+#define D_JSON_PV1_CURRENT "Pv1Current"
+#define D_JSON_PV1_POWER "Pv1Power"
+#define D_JSON_PV2_VOLTAGE "Pv2Voltage"
+#define D_JSON_PV2_CURRENT "Pv2Current"
+#define D_JSON_PV2_POWER "Pv2Power"
+#define D_JSON_SOLAR_POWER "SolarPower"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
@@ -215,15 +225,14 @@
 #define D_CMND_WEIGHT_RESOLUTION "WeightRes"
 #define D_CMND_MODULE "Module"
 #define D_CMND_MODULES "Modules"
+#define D_CMND_ADC "ADC"
+#define D_CMND_ADCS "ADCs"
 #define D_CMND_GPIO "GPIO"
   #define D_JSON_NOT_SUPPORTED "Not supported"
 #define D_CMND_GPIOS "GPIOs"
 #define D_CMND_PWM "PWM"
 #define D_CMND_PWMFREQUENCY "PWMFrequency"
 #define D_CMND_PWMRANGE "PWMRange"
-#define D_CMND_COUNTER "Counter"
-#define D_CMND_COUNTERTYPE "CounterType"
-#define D_CMND_COUNTERDEBOUNCE "CounterDebounce"
 #define D_CMND_BUTTONDEBOUNCE "ButtonDebounce"
 #define D_CMND_SWITCHDEBOUNCE "SwitchDebounce"
 #define D_CMND_SLEEP "Sleep"
@@ -260,12 +269,14 @@
 #define D_CMND_RESET "Reset"
   #define D_JSON_RESET_AND_RESTARTING "Reset and Restarting"
   #define D_JSON_ONE_TO_RESET "1 to reset"
+#define D_CMND_TIME "Time"
 #define D_CMND_TIMEZONE "Timezone"
 #define D_CMND_TIMESTD "TimeStd"
 #define D_CMND_TIMEDST "TimeDst"
 #define D_CMND_ALTITUDE "Altitude"
 #define D_CMND_LEDPOWER "LedPower"
 #define D_CMND_LEDSTATE "LedState"
+#define D_CMND_LEDMASK "LedMask"
 #define D_CMND_I2CSCAN "I2CScan"
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
@@ -285,6 +296,7 @@
 #define D_CMND_MQTTCLIENT "MqttClient"
 #define D_CMND_MQTTUSER "MqttUser"
 #define D_CMND_MQTTPASSWORD "MqttPassword"
+#define D_CMND_TLSKEY "TLSKey"
 #define D_CMND_FULLTOPIC "FullTopic"
 #define D_CMND_PREFIX "Prefix"
   #define PRFX_MAX_STRING_LENGTH 5
@@ -311,6 +323,8 @@
 #define D_CMND_WEBLOG "WebLog"
 #define D_CMND_WEBREFRESH "WebRefresh"
 #define D_CMND_WEBSEND "WebSend"
+#define D_CMND_WEBCOLOR "WebColor"
+#define D_CMND_WEBSENSOR "WebSensor"
 #define D_CMND_EMULATION "Emulation"
 
 // Commands xdrv_03_energy.ino
@@ -369,6 +383,7 @@
   #define D_JSON_IR_BITS "Bits"
   #define D_JSON_IR_DATA "Data"
   #define D_JSON_IR_RAWDATA "RawData"
+  #define D_JSON_IR_REPEAT "Repeat"
 #define D_CMND_IRHVAC "IRHVAC"
   #define D_JSON_IRHVAC_VENDOR "VENDOR"
   #define D_JSON_IRHVAC_POWER "POWER"
@@ -394,14 +409,6 @@
   #define D_JSON_RFRECEIVED "RfReceived"
 #define D_CMND_RFRAW "RfRaw"
 
-// Commands xdrv_07_domoticz.ino
-#define D_CMND_DOMOTICZ "Domoticz"
-#define D_CMND_IDX "Idx"
-#define D_CMND_KEYIDX "KeyIdx"
-#define D_CMND_SWITCHIDX "SwitchIdx"
-#define D_CMND_SENSORIDX "SensorIdx"
-#define D_CMND_UPDATETIMER "UpdateTimer"
-
 // Commands xdrv_08_serial_bridge.ino
 #define D_CMND_SSERIALSEND "SSerialSend"
 #define D_CMND_SBAUDRATE "SBaudrate"
@@ -424,7 +431,6 @@
 
 /********************************************************************************************/
 
-#define D_ASTERIX "********"
 #define D_ASTERISK_PWD "****"
 
 #ifndef MY_LANGUAGE
@@ -497,14 +503,13 @@ const char S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE[] PROGMEM =    "{\"%s\":\"%d (" D
 const char S_JSON_COMMAND_NVALUE[] PROGMEM =                  "{\"%s\":%d}";
 const char S_JSON_COMMAND_LVALUE[] PROGMEM =                  "{\"%s\":%lu}";
 const char S_JSON_COMMAND_SVALUE[] PROGMEM =                  "{\"%s\":\"%s\"}";
-const char S_JSON_COMMAND_HVALUE[] PROGMEM =                  "{\"%s\":\"#%X\"}";
-const char S_JSON_COMMAND_ASTERIX[] PROGMEM =                 "{\"%s\":\"" D_ASTERIX "\"}";
+const char S_JSON_COMMAND_ASTERISK[] PROGMEM =                "{\"%s\":\"" D_ASTERISK_PWD "\"}";
 const char S_JSON_COMMAND_XVALUE[] PROGMEM =                  "{\"%s\":%s}";  // %s must provide quotes on non-number
 
 const char S_JSON_COMMAND_INDEX_NVALUE[] PROGMEM =            "{\"%s%d\":%d}";
 const char S_JSON_COMMAND_INDEX_LVALUE[] PROGMEM =            "{\"%s%d\":%lu}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
-const char S_JSON_COMMAND_INDEX_ASTERIX[] PROGMEM =           "{\"%s%d\":\"" D_ASTERIX "\"}";
+const char S_JSON_COMMAND_INDEX_ASTERISK[] PROGMEM =          "{\"%s%d\":\"" D_ASTERISK_PWD "\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
 const char S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE[] PROGMEM = "{\"%s%d\":\"%d (" D_JSON_ACTIVE " %d)\"}";
 
@@ -516,6 +521,8 @@ const char S_JSON_DRIVER_INDEX_SVALUE[] PROGMEM =             "{\"" D_CMND_DRIVE
 
 const char JSON_SNS_TEMP[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}";
 const char JSON_SNS_TEMPHUM[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}";
+
+const char JSON_SNS_ILLUMINANCE[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}";
 
 const char JSON_SNS_GNGPM[] PROGMEM = ",\"%s\":{\"" D_JSON_TOTAL_USAGE "\":%s,\"" D_JSON_FLOWRATE "\":%s}";
 

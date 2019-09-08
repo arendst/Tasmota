@@ -26,10 +26,13 @@
 
 const uint8_t SERIAL_BRIDGE_BUFFER_SIZE = 130;
 
-#include <TasmotaSerial.h>
+const char kSerialBridgeCommands[] PROGMEM = "|"  // No prefix
+  D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE;
 
-enum SerialBridgeCommands { CMND_SSERIALSEND, CMND_SBAUDRATE };
-const char kSerialBridgeCommands[] PROGMEM = D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE;
+void (* const SerialBridgeCommand[])(void) PROGMEM =
+  { &CmndSSerialSend, &CmndSBaudrate };
+
+#include <TasmotaSerial.h>
 
 TasmotaSerial *SerialBridgeSerial = nullptr;
 
@@ -54,7 +57,7 @@ void SerialBridgeInput(void)
 
       if ((serial_bridge_in_byte_counter < SERIAL_BRIDGE_BUFFER_SIZE -1) &&    // Add char to string if it still fits and ...
           ((isprint(serial_in_byte) && (128 == Settings.serial_delimiter)) ||  // Any char between 32 and 127
-           (serial_in_byte != Settings.serial_delimiter) ||                    // Any char between 1 and 127 and not being delimiter
+          ((serial_in_byte != Settings.serial_delimiter) && (128 != Settings.serial_delimiter)) ||  // Any char between 1 and 127 and not being delimiter
             serial_bridge_raw)) {                                              // Any char between 0 and 255
         serial_bridge_buffer[serial_bridge_in_byte_counter++] = serial_in_byte;
         serial_bridge_polling_window = millis();                               // Wait for more data
@@ -67,17 +70,11 @@ void SerialBridgeInput(void)
 
   if (serial_bridge_in_byte_counter && (millis() > (serial_bridge_polling_window + SERIAL_POLLING))) {
     serial_bridge_buffer[serial_bridge_in_byte_counter] = 0;                   // Serial data completed
-    if (!serial_bridge_raw) {
-      Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\"%s\"}"), serial_bridge_buffer);
-    } else {
-      Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\""));
-      for (int i = 0; i < serial_bridge_in_byte_counter; i++) {
-        ResponseAppend_P(PSTR("%02x"), serial_bridge_buffer[i]);
-      }
-      ResponseAppend_P(PSTR("\"}"));
-    }
+    char hex_char[(serial_bridge_in_byte_counter * 2) + 2];
+    Response_P(PSTR("{\"" D_JSON_SSERIALRECEIVED "\":\"%s\"}"),
+      (serial_bridge_raw) ? ToHex_P((unsigned char*)serial_bridge_buffer, serial_bridge_in_byte_counter, hex_char, sizeof(hex_char)) : serial_bridge_buffer);
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SSERIALRECEIVED));
-//    XdrvRulesProcess();
+    XdrvRulesProcess();
     serial_bridge_in_byte_counter = 0;
   }
 }
@@ -106,16 +103,9 @@ void SerialBridgeInit(void)
  * Commands
 \*********************************************************************************************/
 
-bool SerialBridgeCommand(void)
+void CmndSSerialSend(void)
 {
-  char command [CMDSZ];
-  bool serviced = true;
-
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kSerialBridgeCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
-  }
-  else if ((CMND_SSERIALSEND == command_code) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
     serial_bridge_raw = (XdrvMailbox.index > 3);
     if (XdrvMailbox.data_len > 0) {
       if (1 == XdrvMailbox.index) {
@@ -144,22 +134,18 @@ bool SerialBridgeCommand(void)
           codes += 2;
         }
       }
-      Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+      ResponseCmndDone();
     }
   }
-  else if (CMND_SBAUDRATE == command_code) {
-    char *p;
-    int baud = strtol(XdrvMailbox.data, &p, 10);
-    if (baud >= 1200) {
-      baud /= 1200;  // Make it a valid baudrate
-      Settings.sbaudrate = (1 == XdrvMailbox.payload) ? SOFT_BAUDRATE / 1200 : baud;
-      SerialBridgeSerial->begin(Settings.sbaudrate * 1200);  // Reinitialize serial port with new baud rate
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.sbaudrate * 1200);
-  }
-  else serviced = false;  // Unknown command
+}
 
-  return serviced;
+void CmndSBaudrate(void)
+{
+  if (XdrvMailbox.payload > 1200) {
+    Settings.sbaudrate /= 1200;  // Make it a valid baudrate
+    SerialBridgeSerial->begin(Settings.sbaudrate * 1200);  // Reinitialize serial port with new baud rate
+  }
+  ResponseCmndNumber(Settings.sbaudrate * 1200);
 }
 
 /*********************************************************************************************\
@@ -179,7 +165,7 @@ bool Xdrv08(uint8_t function)
         SerialBridgeInit();
         break;
       case FUNC_COMMAND:
-        result = SerialBridgeCommand();
+        result = DecodeCommand(kSerialBridgeCommands, SerialBridgeCommand);
         break;
     }
   }

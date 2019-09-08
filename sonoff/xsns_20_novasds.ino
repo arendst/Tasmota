@@ -77,12 +77,13 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   uint8_t novasds_cmnd[19] = {0xAA, 0xB4, byte1, byte2, byte3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (uint8_t)(sensorid & 0xFF), (uint8_t)((sensorid>>8) & 0xFF), 0x00, 0xAB};
 
   // calc crc
-  for (uint8_t i = 2; i < 17; i++) {
+  for (uint32_t i = 2; i < 17; i++) {
     novasds_cmnd[17] += novasds_cmnd[i];
   }
-  //~ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDS: Send %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X"),
-    //~ novasds_cmnd[0],novasds_cmnd[1],novasds_cmnd[2],novasds_cmnd[3],novasds_cmnd[4],novasds_cmnd[5],novasds_cmnd[6],novasds_cmnd[7],novasds_cmnd[8],novasds_cmnd[9],
-    //~ novasds_cmnd[10],novasds_cmnd[11],novasds_cmnd[12],novasds_cmnd[13],novasds_cmnd[14],novasds_cmnd[15],novasds_cmnd[16],novasds_cmnd[17],novasds_cmnd[18]);
+
+//  char hex_char[60];
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDS: Send %s"), ToHex_P((unsigned char*)novasds_cmnd, 19, hex_char, sizeof(hex_char), ' '));
+
   // send cmnd
   NovaSdsSerial->write(novasds_cmnd, sizeof(novasds_cmnd));
   NovaSdsSerial->flush();

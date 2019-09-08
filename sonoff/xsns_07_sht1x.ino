@@ -49,7 +49,7 @@ bool ShtReset(void)
   pinMode(sht_sda_pin, INPUT_PULLUP);
   pinMode(sht_scl_pin, OUTPUT);
   delay(11);
-  for (uint8_t i = 0; i < 9; i++) {
+  for (uint32_t i = 0; i < 9; i++) {
     digitalWrite(sht_scl_pin, HIGH);
     digitalWrite(sht_scl_pin, LOW);
   }
@@ -93,7 +93,7 @@ bool ShtSendCommand(const uint8_t cmd)
 bool ShtAwaitResult(void)
 {
   // Maximum 320ms for 14 bit measurement
-  for (uint8_t i = 0; i < 16; i++) {
+  for (uint32_t i = 0; i < 16; i++) {
     if (LOW == digitalRead(sht_sda_pin)) {
       return true;
     }
@@ -148,8 +148,7 @@ bool ShtRead(void)
   float rhLinear = c1 + c2 * humRaw + c3 * humRaw * humRaw;
   sht_humidity = (sht_temperature - 25) * (t1 + t2 * humRaw) + rhLinear;
   sht_temperature = ConvertTemp(sht_temperature);
-
-  SetGlobalValues(sht_temperature, sht_humidity);
+  ConvertHumidity(sht_humidity);  // Set global humidity
 
   sht_valid = SENSOR_MAX_MISS;
   return true;

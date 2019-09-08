@@ -123,7 +123,7 @@ bool XdspCall(uint8_t Function)
 {
   bool result = false;
 
-  for (uint8_t x = 0; x < xdsp_present; x++) {
+  for (uint32_t x = 0; x < xdsp_present; x++) {
     result = xdsp_func_ptr[x](Function);
 
     if (result && (FUNC_DISPLAY_MODEL == Function)) {

@@ -81,7 +81,7 @@ void Ads1115Detect(void)
     return;
   }
 
-  for (uint8_t i = 0; i < sizeof(ads1115_addresses); i++) {
+  for (uint32_t i = 0; i < sizeof(ads1115_addresses); i++) {
     ads1115_address = ads1115_addresses[i];
     ADS1115 adc0(ads1115_address);
     if (adc0.testConnection()) {
@@ -101,7 +101,7 @@ void Ads1115Show(bool json)
   if (ads1115_type) {
 
     uint8_t dsxflg = 0;
-    for (uint8_t i = 0; i < 4; i++) {
+    for (uint32_t i = 0; i < 4; i++) {
       int16_t adc_value = Ads1115GetConversion(i);
 
       if (json) {
@@ -118,7 +118,7 @@ void Ads1115Show(bool json)
     }
     if (json) {
       if (dsxflg) {
-        ResponseAppend_P(PSTR("}"));
+        ResponseJsonEnd();
       }
     }
   }

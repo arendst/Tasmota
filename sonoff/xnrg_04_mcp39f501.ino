@@ -121,7 +121,7 @@ uint8_t McpChecksum(uint8_t *data)
   uint8_t offset = 0;
   uint8_t len = data[1] -1;
 
-  for (uint8_t i = offset; i < len; i++) { checksum += data[i];	}
+  for (uint32_t i = offset; i < len; i++) { checksum += data[i];	}
   return checksum;
 }
 
@@ -130,7 +130,7 @@ unsigned long McpExtractInt(char *data, uint8_t offset, uint8_t size)
 	unsigned long result = 0;
 	unsigned long pow = 1;
 
-	for (uint8_t i = 0; i < size; i++) {
+	for (uint32_t i = 0; i < size; i++) {
 		result = result + (uint8_t)data[offset + i] * pow;
 		pow = pow * 256;
 	}
@@ -139,7 +139,7 @@ unsigned long McpExtractInt(char *data, uint8_t offset, uint8_t size)
 
 void McpSetInt(unsigned long value, uint8_t *data, uint8_t offset, size_t size)
 {
-	for (uint8_t i = 0; i < size; i++) {
+	for (uint32_t i = 0; i < size; i++) {
 		data[offset + i] = ((value >> (i * 8)) & 0xFF);
 	}
 }
@@ -154,7 +154,7 @@ void McpSend(uint8_t *data)
 
 //  AddLogBuffer(LOG_LEVEL_DEBUG_MORE, data, data[1]);
 
-  for (uint8_t i = 0; i < data[1]; i++) {
+  for (uint32_t i = 0; i < data[1]; i++) {
     McpSerial->write(data[i]);
   }
 }
@@ -454,21 +454,22 @@ void McpParseData(void)
 //  mcp_power_factor   = McpExtractInt(mcp_buffer, 20, 2);
   mcp_line_frequency = McpExtractInt(mcp_buffer, 22, 2);
 
-  if (energy_power_on) {  // Powered on
-    energy_frequency = (float)mcp_line_frequency / 1000;
-    energy_voltage = (float)mcp_voltage_rms / 10;
-    energy_active_power = (float)mcp_active_power / 100;
-    if (0 == energy_active_power) {
-      energy_current = 0;
+  if (Energy.power_on) {  // Powered on
+    Energy.frequency = (float)mcp_line_frequency / 1000;
+    Energy.voltage = (float)mcp_voltage_rms / 10;
+    Energy.active_power = (float)mcp_active_power / 100;
+    if (0 == Energy.active_power) {
+      Energy.current = 0;
     } else {
-      energy_current = (float)mcp_current_rms / 10000;
+      Energy.current = (float)mcp_current_rms / 10000;
     }
   } else {  // Powered off
-    energy_frequency = 0;
-    energy_voltage = 0;
-    energy_active_power = 0;
-    energy_current = 0;
+    Energy.frequency = 0;
+    Energy.voltage = 0;
+    Energy.active_power = 0;
+    Energy.current = 0;
   }
+  Energy.data_valid = 0;
 }
 
 /********************************************************************************************/
@@ -526,8 +527,15 @@ void McpSerialInput(void)
 
 void McpEverySecond(void)
 {
+  if (Energy.data_valid > ENERGY_WATCHDOG) {
+    mcp_voltage_rms = 0;
+    mcp_current_rms = 0;
+    mcp_active_power = 0;
+    mcp_line_frequency = 0;
+  }
+
   if (mcp_active_power) {
-    energy_kWhtoday_delta += ((mcp_active_power * 10) / 36);
+    Energy.kWhtoday_delta += ((mcp_active_power * 10) / 36);
     EnergyUpdateToday();
   }
 
@@ -594,9 +602,9 @@ bool McpCommand(void)
   bool serviced = true;
   unsigned long value = 0;
 
-  if (CMND_POWERSET == energy_command_code) {
+  if (CMND_POWERSET == Energy.command_code) {
     if (XdrvMailbox.data_len && mcp_active_power) {
-      value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 100);
+      value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 100);
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
         Settings.energy_power_calibration = value;
         mcp_calibrate |= MCP_CALIBRATE_POWER;
@@ -604,9 +612,9 @@ bool McpCommand(void)
       }
     }
   }
-  else if (CMND_VOLTAGESET == energy_command_code) {
+  else if (CMND_VOLTAGESET == Energy.command_code) {
     if (XdrvMailbox.data_len && mcp_voltage_rms) {
-      value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 10);
+      value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
       if ((value > 1000) && (value < 2600)) {  // Between 100V and 260V
         Settings.energy_voltage_calibration = value;
         mcp_calibrate |= MCP_CALIBRATE_VOLTAGE;
@@ -614,9 +622,9 @@ bool McpCommand(void)
       }
     }
   }
-  else if (CMND_CURRENTSET == energy_command_code) {
+  else if (CMND_CURRENTSET == Energy.command_code) {
     if (XdrvMailbox.data_len && mcp_current_rms) {
-      value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 10);
+      value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 10);
       if ((value > 100) && (value < 80000)) {  // Between 10mA and 8A
         Settings.energy_current_calibration = value;
         mcp_calibrate |= MCP_CALIBRATE_CURRENT;
@@ -624,9 +632,9 @@ bool McpCommand(void)
       }
     }
   }
-  else if (CMND_FREQUENCYSET == energy_command_code) {
+  else if (CMND_FREQUENCYSET == Energy.command_code) {
     if (XdrvMailbox.data_len && mcp_line_frequency) {
-      value = (unsigned long)(CharToDouble(XdrvMailbox.data) * 1000);
+      value = (unsigned long)(CharToFloat(XdrvMailbox.data) * 1000);
       if ((value > 45000) && (value < 65000)) {  // Between 45Hz and 65Hz
         Settings.energy_frequency_calibration = value;
         mcp_calibrate |= MCP_CALIBRATE_FREQUENCY;
@@ -658,7 +666,7 @@ int Xnrg04(uint8_t function)
       case FUNC_INIT:
         McpSnsInit();
         break;
-      case FUNC_EVERY_SECOND:
+      case FUNC_ENERGY_EVERY_SECOND:
         if (McpSerial) { McpEverySecond(); }
         break;
       case FUNC_COMMAND:

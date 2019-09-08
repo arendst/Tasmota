@@ -259,7 +259,7 @@ void RfSnsTheoV2Show(bool json)
 {
   bool sensor_once = false;
 
-  for (uint8_t i = 0; i < RFSNS_THEOV2_MAX_CHANNEL; i++) {
+  for (uint32_t i = 0; i < RFSNS_THEOV2_MAX_CHANNEL; i++) {
     if (rfsns_theo_v2_t1[i].time) {
       char sensor[10];
       snprintf_P(sensor, sizeof(sensor), PSTR("TV2T1C%d"), i +1);
@@ -296,7 +296,7 @@ void RfSnsTheoV2Show(bool json)
   }
 
   sensor_once = false;
-  for (uint8_t i = 0; i < RFSNS_THEOV2_MAX_CHANNEL; i++) {
+  for (uint32_t i = 0; i < RFSNS_THEOV2_MAX_CHANNEL; i++) {
     if (rfsns_theo_v2_t2[i].time) {
       char sensor[10];
       snprintf_P(sensor, sizeof(sensor), PSTR("TV2T2C%d"), i +1);
@@ -310,7 +310,7 @@ void RfSnsTheoV2Show(bool json)
         }
       } else {
         float temp = ConvertTemp((float)rfsns_theo_v2_t2[i].temp / 100);
-        float humi = (float)rfsns_theo_v2_t2[i].hum / 100;
+        float humi = ConvertHumidity((float)rfsns_theo_v2_t2[i].hum / 100);
         char temperature[33];
         dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
         char humidity[33];
@@ -453,7 +453,7 @@ void RfSnsAnalyzeAlectov2()
   if (rfsns_raw_signal->Number > RFSNS_ACH2010_MAX_PULSECOUNT) { maxidx = 9; }
   // Get message back to front as the header is almost never received complete for ACH2010
   uint8_t idx = maxidx;
-  for (uint8_t x = rfsns_raw_signal->Number; x > 0; x = x-2) {
+  for (uint32_t x = rfsns_raw_signal->Number; x > 0; x = x-2) {
     if (rfsns_raw_signal->Pulses[x-1] * rfsns_raw_signal->Multiply < 0x300) {
       rfbit = 0x80;
     } else {
@@ -528,7 +528,7 @@ uint8_t RfSnsAlectoCRC8(uint8_t *addr, uint8_t len)
   uint8_t crc = 0;
   while (len--) {
     uint8_t inbyte = *addr++;
-    for (uint8_t i = 8; i; i--) {
+    for (uint32_t i = 8; i; i--) {
       uint8_t mix = (crc ^ inbyte) & 0x80;
       crc <<= 1;
       if (mix) { crc ^= 0x31; }
@@ -558,7 +558,7 @@ void RfSnsAlectoV2Show(bool json)
       float temp = ConvertTemp(rfsns_alecto_v2->temp);
       char temperature[33];
       dtostrfd(temp, Settings.flag2.temperature_resolution, temperature);
-      float humi = (float)rfsns_alecto_v2->humi;
+      float humi = ConvertHumidity((float)rfsns_alecto_v2->humi);
       char humidity[33];
       dtostrfd(humi, Settings.flag2.humidity_resolution, humidity);
       char rain[33];

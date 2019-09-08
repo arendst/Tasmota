@@ -85,7 +85,7 @@ void SonoffScSerialInput(char *rcvstat)
       value[i++] = atoi(str);
     }
     if (value[0] > 0) {
-      for (uint8_t i = 0; i < 5; i++) {
+      for (uint32_t i = 0; i < 5; i++) {
         sc_value[i] = value[i];
       }
       sc_value[2] = (11 - sc_value[2]) * 10;  // Invert light level
@@ -112,7 +112,7 @@ void SonoffScShow(bool json)
 {
   if (sc_value[0] > 0) {
     float t = ConvertTemp(sc_value[1]);
-    float h = sc_value[0];
+    float h = ConvertHumidity(sc_value[0]);
 
     char temperature[33];
     dtostrfd(t, Settings.flag2.temperature_resolution, temperature);

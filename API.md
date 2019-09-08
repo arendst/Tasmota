@@ -1,4 +1,7 @@
-## Sonoff-Tasmota basic API information
+<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+
+# Basic API information
+
 Sonoff-Tasmota can easily be extended by developers using provided function pointers as callback Ids. This document lists the available callback function Ids. See the wiki (https://github.com/arendst/Sonoff-Tasmota/wiki/Sensor-API) for more information.
 
 Callback availability can be checked by searching for either XdrvCall, XsnsCall, XdspCall and XnrgCall.
