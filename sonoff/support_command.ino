@@ -215,10 +215,17 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
 void CmndBacklog(void)
 {
   if (XdrvMailbox.data_len) {
+
+#ifdef SUPPORT_IF_STATEMENT
+    char *blcommand = strtok(XdrvMailbox.data, ";");
+    while ((blcommand != nullptr) && (backlog.size() < MAX_BACKLOG))
+#else
     uint32_t bl_pointer = (!backlog_pointer) ? MAX_BACKLOG -1 : backlog_pointer;
     bl_pointer--;
     char *blcommand = strtok(XdrvMailbox.data, ";");
-    while ((blcommand != nullptr) && (backlog_index != bl_pointer)) {
+    while ((blcommand != nullptr) && (backlog_index != bl_pointer))
+#endif
+    {
       while(true) {
         blcommand = Trim(blcommand);
         if (!strncasecmp_P(blcommand, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG))) {
@@ -228,17 +235,27 @@ void CmndBacklog(void)
         }
       }
       if (*blcommand != '\0') {
+#ifdef SUPPORT_IF_STATEMENT
+        if (backlog.size() < MAX_BACKLOG) {
+          backlog.add(blcommand);
+        }
+#else
         backlog[backlog_index] = String(blcommand);
         backlog_index++;
         if (backlog_index >= MAX_BACKLOG) backlog_index = 0;
+#endif
       }
       blcommand = strtok(nullptr, ";");
     }
 //    ResponseCmndChar(D_JSON_APPENDED);
     mqtt_data[0] = '\0';
   } else {
-    bool blflag = (backlog_pointer == backlog_index);
+    bool blflag = BACKLOG_EMPTY;
+#ifdef SUPPORT_IF_STATEMENT
+    backlog.clear();
+#else
     backlog_pointer = backlog_index;
+#endif
     ResponseCmndChar(blflag ? D_JSON_EMPTY : D_JSON_ABORTED);
   }
 }
