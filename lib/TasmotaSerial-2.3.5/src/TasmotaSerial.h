@@ -53,6 +53,8 @@ class TasmotaSerial : public Stream {
 
     void rxRead();
 
+    uint32_t getLoopReadMetric(void) const { return m_bit_follow_metric; }
+
     using Print::write;
 
   private:
@@ -67,6 +69,8 @@ class TasmotaSerial : public Stream {
     uint32_t ss_bstart;
     uint32_t ss_index;
     uint32_t m_bit_time;
+    uint32_t m_bit_start_time;
+    uint32_t m_bit_follow_metric = 0;
     uint32_t m_in_pos;
     uint32_t m_out_pos;
     uint32_t serial_buffer_size;
@@ -74,7 +78,8 @@ class TasmotaSerial : public Stream {
     bool m_nwmode;
     bool m_hardserial;
     bool m_hardswap;
-    bool m_high_speed;
+    bool m_high_speed = false;
+    bool m_very_high_speed = false;   // above 100000 bauds
     uint8_t *m_buffer;
 };
 

@@ -583,17 +583,15 @@ void McpSnsInit(void)
 
 void McpDrvInit(void)
 {
-  if (!energy_flg) {
-    if ((pin[GPIO_MCP39F5_RX] < 99) && (pin[GPIO_MCP39F5_TX] < 99)) {
-      if (pin[GPIO_MCP39F5_RST] < 99) {
-        pinMode(pin[GPIO_MCP39F5_RST], OUTPUT);
-        digitalWrite(pin[GPIO_MCP39F5_RST], 0);  // MCP disable - Reset Delta Sigma ADC's
-      }
-      mcp_calibrate = 0;
-      mcp_timeout = 2;               // Initial wait
-      mcp_init = 2;                  // Initial setup steps
-      energy_flg = XNRG_04;
+  if ((pin[GPIO_MCP39F5_RX] < 99) && (pin[GPIO_MCP39F5_TX] < 99)) {
+    if (pin[GPIO_MCP39F5_RST] < 99) {
+      pinMode(pin[GPIO_MCP39F5_RST], OUTPUT);
+      digitalWrite(pin[GPIO_MCP39F5_RST], 0);  // MCP disable - Reset Delta Sigma ADC's
     }
+    mcp_calibrate = 0;
+    mcp_timeout = 2;               // Initial wait
+    mcp_init = 2;                  // Initial setup steps
+    energy_flg = XNRG_04;
   }
 }
 
@@ -651,28 +649,26 @@ bool McpCommand(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg04(uint8_t function)
+bool Xnrg04(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    McpDrvInit();
-  }
-  else if (XNRG_04 == energy_flg) {
-    switch (function) {
-      case FUNC_LOOP:
-        if (McpSerial) { McpSerialInput(); }
-        break;
-      case FUNC_INIT:
-        McpSnsInit();
-        break;
-      case FUNC_ENERGY_EVERY_SECOND:
-        if (McpSerial) { McpEverySecond(); }
-        break;
-      case FUNC_COMMAND:
-        result = McpCommand();
-        break;
-    }
+  switch (function) {
+    case FUNC_LOOP:
+      if (McpSerial) { McpSerialInput(); }
+      break;
+    case FUNC_ENERGY_EVERY_SECOND:
+      if (McpSerial) { McpEverySecond(); }
+      break;
+    case FUNC_COMMAND:
+      result = McpCommand();
+      break;
+    case FUNC_INIT:
+      McpSnsInit();
+      break;
+    case FUNC_PRE_INIT:
+      McpDrvInit();
+      break;
   }
   return result;
 }

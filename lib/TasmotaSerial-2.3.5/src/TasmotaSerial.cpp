@@ -27,6 +27,9 @@ extern "C" {
 
 #include <TasmotaSerial.h>
 
+// for STAGE and pre-2.6, we can have a single wrapper using attachInterruptArg()
+void ICACHE_RAM_ATTR callRxRead(void *self) { ((TasmotaSerial*)self)->rxRead(); };
+
 // As the Arduino attachInterrupt has no parameter, lists of objects
 // and callbacks corresponding to each possible GPIO pins have to be defined
 TasmotaSerial *tms_obj_list[16];
@@ -103,9 +106,14 @@ TasmotaSerial::TasmotaSerial(int receive_pin, int transmit_pin, int hardware_fal
       if (m_buffer == NULL) return;
       // Use getCycleCount() loop to get as exact timing as possible
       m_bit_time = ESP.getCpuFreqMHz() * 1000000 / TM_SERIAL_BAUDRATE;
+      m_bit_start_time = m_bit_time + m_bit_time/3 - 500; // pre-compute first wait
       pinMode(m_rx_pin, INPUT);
       tms_obj_list[m_rx_pin] = this;
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
       attachInterrupt(m_rx_pin, ISRList[m_rx_pin], (m_nwmode) ? CHANGE : FALLING);
+#else
+      attachInterruptArg(m_rx_pin, callRxRead, this, (m_nwmode) ? CHANGE : FALLING);
+#endif
     }
     if (m_tx_pin > -1) {
       pinMode(m_tx_pin, OUTPUT);
@@ -148,7 +156,9 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
   } else {
     // Use getCycleCount() loop to get as exact timing as possible
     m_bit_time = ESP.getCpuFreqMHz() * 1000000 / speed;
+    m_bit_start_time = m_bit_time + m_bit_time/3 - (ESP.getCpuFreqMHz() > 120 ? 700 : 500); // pre-compute first wait
     m_high_speed = (speed >= 9600);
+    m_very_high_speed = (speed >= 100000);
   }
   return m_valid;
 }
@@ -202,9 +212,12 @@ int TasmotaSerial::available()
 }
 
 #ifdef TM_SERIAL_USE_IRAM
-#define TM_SERIAL_WAIT { while (ESP.getCycleCount()-start < wait) if (!m_high_speed) optimistic_yield(1); wait += m_bit_time; } // Watchdog timeouts
+#define TM_SERIAL_WAIT_SND { while (ESP.getCycleCount() < wait + start) if (!m_high_speed) optimistic_yield(1); wait += m_bit_time; } // Watchdog timeouts
+#define TM_SERIAL_WAIT_RCV { while (ESP.getCycleCount() < wait + start); wait += m_bit_time; }
+#define TM_SERIAL_WAIT_RCV_LOOP { while (ESP.getCycleCount() < wait + start); }
 #else
-#define TM_SERIAL_WAIT { while (ESP.getCycleCount()-start < wait); wait += m_bit_time; }
+#define TM_SERIAL_WAIT_SND { while (ESP.getCycleCount() < wait + start); wait += m_bit_time; }
+#define TM_SERIAL_WAIT_RCV { while (ESP.getCycleCount() < wait + start); wait += m_bit_time; }
 #endif
 
 size_t TasmotaSerial::write(uint8_t b)
@@ -215,22 +228,23 @@ size_t TasmotaSerial::write(uint8_t b)
     if (-1 == m_tx_pin) return 0;
     if (m_high_speed) cli();  // Disable interrupts in order to get a clean transmit
     uint32_t wait = m_bit_time;
-    digitalWrite(m_tx_pin, HIGH);
+    //digitalWrite(m_tx_pin, HIGH);     // already in HIGH mode
     uint32_t start = ESP.getCycleCount();
     // Start bit;
     digitalWrite(m_tx_pin, LOW);
-    TM_SERIAL_WAIT;
+    TM_SERIAL_WAIT_SND;
     for (uint32_t i = 0; i < 8; i++) {
       digitalWrite(m_tx_pin, (b & 1) ? HIGH : LOW);
-      TM_SERIAL_WAIT;
+      TM_SERIAL_WAIT_SND;
       b >>= 1;
     }
     // Stop bit(s)
-    for (uint32_t i = 0; i < m_stop_bits; i++) {
-      digitalWrite(m_tx_pin, HIGH);
-      TM_SERIAL_WAIT;
-    }
+    digitalWrite(m_tx_pin, HIGH);
+    // re-enable interrupts during stop bits, it's not an issue if they are longer than expected
     if (m_high_speed) sei();
+    for (uint32_t i = 0; i < m_stop_bits; i++) {
+      TM_SERIAL_WAIT_SND;
+    }
     return 1;
   }
 }
@@ -243,27 +257,43 @@ void TasmotaSerial::rxRead()
 {
 #endif
   if (!m_nwmode) {
+    int32_t loop_read = m_very_high_speed ? serial_buffer_size : 1;
     // Advance the starting point for the samples but compensate for the
     // initial delay which occurs before the interrupt is delivered
-    uint32_t wait = m_bit_time + m_bit_time/3 - 500;
+    uint32_t wait = m_bit_start_time;
     uint32_t start = ESP.getCycleCount();
-    uint8_t rec = 0;
-    for (uint32_t i = 0; i < 8; i++) {
-      TM_SERIAL_WAIT;
-      rec >>= 1;
-      if (digitalRead(m_rx_pin)) rec |= 0x80;
-    }
-    // Stop bit(s)
-    TM_SERIAL_WAIT;
-    if (2 == m_stop_bits) {
-      digitalRead(m_rx_pin);
-      TM_SERIAL_WAIT;
-    }
-    // Store the received value in the buffer unless we have an overflow
-    uint32_t next = (m_in_pos+1) % serial_buffer_size;
-    if (next != (int)m_out_pos) {
-      m_buffer[m_in_pos] = rec;
-      m_in_pos = next;
+    while (loop_read-- > 0) {    // try to receveive all consecutive bytes in a raw
+      uint32_t rec = 0;
+      for (uint32_t i = 0; i < 8; i++) {
+        TM_SERIAL_WAIT_RCV;
+        rec >>= 1;
+        if (digitalRead(m_rx_pin)) rec |= 0x80;
+      }
+      // Store the received value in the buffer unless we have an overflow
+      uint32_t next = (m_in_pos+1) % serial_buffer_size;
+      if (next != (int)m_out_pos) {
+        m_buffer[m_in_pos] = rec;
+        m_in_pos = next;
+      }
+
+      if (loop <= 0) { break; }   // exit now if not very high speed or buffer full
+
+      bool start_of_next_byte = false;
+      for (uint32_t i = 0; i < 12; i++) {
+        TM_SERIAL_WAIT_RCV_LOOP;    // wait for 1/4 bits
+        wait += m_bit_time / 4;
+        if (!digitalRead(m_rx_pin)) {
+          // this is the start bit of the next byte
+          wait += m_bit_time;   // we have advanced in the first 1/4 of bit, and already added 1/4 of bit so we're roughly centered. Just skip start bit.
+          start_of_next_byte = true;
+          m_bit_follow_metric++;
+          break;  // exit loop
+        }
+      }
+
+      if (!start_of_next_byte) {
+        break;   // exit now if no sign of next byte
+      }
     }
     // Must clear this bit in the interrupt register,
     // it gets set even when interrupts are disabled

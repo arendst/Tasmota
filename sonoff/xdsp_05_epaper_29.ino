@@ -108,12 +108,13 @@ void EpdInitDriver29()
 #define EPD_FONT_HEIGTH        12
 void EpdPrintLog29(void)
 {
+
   disp_refresh--;
   if (!disp_refresh) {
     disp_refresh = Settings.display_refresh;
-    if (Settings.display_rotate) {
+    //if (Settings.display_rotate) {
       if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
-    }
+    //}
 
     char* txt = DisplayLogBuffer('\040');
     if (txt != nullptr) {
@@ -143,6 +144,8 @@ void EpdPrintLog29(void)
 void EpdRefresh29(void)  // Every second
 {
   if (Settings.display_mode) {  // Mode 0 is User text
+
+    if (!renderer) return;
 /*
     char tftdt[Settings.display_cols[0] +1];
     char date4[11];  // 24-04-2017

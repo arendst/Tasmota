@@ -1,7 +1,14 @@
 /*********************************************************************************************\
+ * 6.6.0.11 20190907
+ * Change Settings crc calculation allowing short term backward compatibility
+ * Add support for up to 4 INA226 Voltage and Current sensors by Steve Rogers (#6342)
+ * Change Improve reliability of TasmotaSerial at 115200 bauds and reduce IRAM usage for Stage/pre-2.6
+ * Add support for A4988 stepper-motor-driver-circuit by Tim Leuschner (#6370)
+ *
  * 6.6.0.10 20190905
  * Redesign Tuya support by Shantur Rathore (#6353)
  * Add command Reset 99 to reset bootcount to zero (#684, #6351)
+ * Change command Time 1/2/3 to select JSON time format ISO, ISO + Epoch or Epoch for legacy reason
  *
  * 6.6.0.9 20190828
  * Change theoretical baudrate range to 300..19660500 bps in 300 increments (#6294)

@@ -1,5 +1,5 @@
 /*
-  xnrg_09_sdm120.ino - Eastron SDM120-Modbus energy meter support for Sonoff-Tasmota
+  xnrg_08_sdm120.ino - Eastron SDM120-Modbus energy meter support for Sonoff-Tasmota
 
   Copyright (C) 2019  Gennaro Tortone and Theo Arends
 
@@ -25,7 +25,7 @@
  * Based on: https://github.com/reaper7/SDM_Energy_Meter
 \*********************************************************************************************/
 
-#define XNRG_09             9
+#define XNRG_08             8
 
 // can be user defined in my_user_config.h
 #ifndef SDM120_SPEED
@@ -39,46 +39,41 @@
 #include <TasmotaModbus.h>
 TasmotaModbus *Sdm120Modbus;
 
+const uint8_t sdm120_table = 8;
+const uint8_t sdm220_table = 13;
+
 const uint16_t sdm120_start_addresses[] {
-  0x0000,   // SDM120C_VOLTAGE  [V]
-  0x0006,   // SDM120C_CURRENT  [A]
-  0x000C,   // SDM120C_POWER    [W]
-  0x0012,   // SDM120C_APPARENT_POWER  [VA]
-  0x0018,   // SDM120C_REACTIVE_POWER  [VAR]
+  0x0000,   // SDM120C_VOLTAGE             [V]
+  0x0006,   // SDM120C_CURRENT             [A]
+  0x000C,   // SDM120C_POWER               [W]
+  0x0012,   // SDM120C_APPARENT_POWER      [VA]
+  0x0018,   // SDM120C_REACTIVE_POWER      [VAR]
   0x001E,   // SDM120C_POWER_FACTOR
-  0x0046,   // SDM120C_FREQUENCY  [Hz]
-#ifdef USE_SDM220
-  0x0156,   // SDM120C_TOTAL_ACTIVE_ENERGY  [Wh]
-    0X0024, // SDM220_PHASE_ANGLE [Degre]
-    0X0048, // SDM220_IMPORT_ACTIVE [kWh]
-    0X004A, // SDM220_EXPORT_ACTIVE [kWh]
-    0X004C, // SDM220_IMPORT_REACTIVE [kVArh]
-    0X004E, // SDM220_EXPORT_REACTIVE [kVArh]
-    0X0158  // SDM220 TOTAL_REACTIVE   [kVArh]
-#else  // USE_SDM220
-  0x0156    // SDM120C_TOTAL_ACTIVE_ENERGY  [Wh]
-#endif // USE_SDM220
+  0x0046,   // SDM120C_FREQUENCY           [Hz]
+  0x0156,   // SDM120C_TOTAL_ACTIVE_ENERGY [kWh]
+
+  0X0048,   // SDM220_IMPORT_ACTIVE        [kWh]
+  0X004A,   // SDM220_EXPORT_ACTIVE        [kWh]
+  0X004C,   // SDM220_IMPORT_REACTIVE      [kVArh]
+  0X004E,   // SDM220_EXPORT_REACTIVE      [kVArh]
+  0X0024    // SDM220_PHASE_ANGLE          [Degree]
 };
 
 struct SDM120 {
-  uint8_t read_state = 0;
-  uint8_t send_retry = 0;
-} Sdm120;
-
-#ifdef USE_SDM220
-struct SDM220 {
-  float phase_angle = 0;
-  float import_active = 0;
+  float total_active = 0;
+  float import_active = NAN;
   float export_active = 0;
   float import_reactive = 0;
   float export_reactive = 0;
-  float total_reactive = 0;
-} Sdm220;
-#endif  // USE_SDM220
+  float phase_angle = 0;
+  uint8_t read_state = 0;
+  uint8_t send_retry = 0;
+  uint8_t start_address_count = sdm220_table;
+} Sdm120;
 
 /*********************************************************************************************/
 
-void SDM120Every200ms(void)
+void SDM120Every250ms(void)
 {
   bool data_ready = Sdm120Modbus->ReceiveReady();
 
@@ -86,13 +81,17 @@ void SDM120Every200ms(void)
     uint8_t buffer[9];
 
     uint32_t error = Sdm120Modbus->ReceiveBuffer(buffer, 2);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, (uint8_t*)buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
 
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM120 response error %d"), error);
     } else {
+      uint32_t max_table =
       Energy.data_valid = 0;
 
+      //  0  1  2  3  4  5  6  7  8
+      // SA FC BC Fh Fl Sh Sl Cl Ch
+      // 01 04 04 43 66 33 34 1B 38 = 230.2 Volt
       float value;
       ((uint8_t*)&value)[3] = buffer[3];   // Get float values
       ((uint8_t*)&value)[2] = buffer[4];
@@ -129,39 +128,42 @@ void SDM120Every200ms(void)
           break;
 
         case 7:
-          EnergyUpdateTotal(value, true);  // 484.708 kWh
+          Sdm120.total_active = value;     // 484.708 kWh = import_active + export_active
           break;
 
-#ifdef USE_SDM220
         case 8:
-          Sdm220.phase_angle = value;      // 0.00 Deg
+          Sdm120.import_active = value;    // 478.492 kWh
           break;
 
         case 9:
-          Sdm220.import_active = value;    // 478.492 kWh
+          Sdm120.export_active = value;    // 6.216 kWh
           break;
 
         case 10:
-          Sdm220.export_active = value;    // 6.216 kWh
+          Sdm120.import_reactive = value;  // 172.750 kVArh
           break;
 
         case 11:
-          Sdm220.import_reactive = value;  // 172.750 kVArh
+          Sdm120.export_reactive = value;  // 2.844 kVArh
           break;
 
         case 12:
-          Sdm220.export_reactive = value;  // 2.844 kVArh
+          Sdm120.phase_angle = value;      // 0.00 Deg
           break;
-
-        case 13:
-          Sdm220.total_reactive = value;   // 175.594 kVArh
-          break;
-#endif  // USE_SDM220
       }
 
       Sdm120.read_state++;
-      if (sizeof(sdm120_start_addresses)/2 == Sdm120.read_state) {
+      if (Sdm120.read_state == Sdm120.start_address_count) {
         Sdm120.read_state = 0;
+
+        if (Sdm120.start_address_count > sdm120_table) {
+          if (!isnan(Sdm120.import_active)) {
+            Sdm120.total_active = Sdm120.import_active;
+          } else {
+            Sdm120.start_address_count = sdm120_table;  // No extended registers available
+          }
+        }
+        EnergyUpdateTotal(Sdm120.total_active, true);  // 484.708 kWh
       }
     }
   } // end data ready
@@ -187,30 +189,26 @@ void Sdm120SnsInit(void)
 
 void Sdm120DrvInit(void)
 {
-  if (!energy_flg) {
-    if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
-      energy_flg = XNRG_09;
-    }
+  if ((pin[GPIO_SDM120_RX] < 99) && (pin[GPIO_SDM120_TX] < 99)) {
+    energy_flg = XNRG_08;
   }
 }
 
-#ifdef USE_SDM220
-
 void Sdm220Reset(void)
 {
-  Sdm220.phase_angle = 0;
-  Sdm220.import_active = 0;
-  Sdm220.export_active = 0;
-  Sdm220.import_reactive = 0;
-  Sdm220.export_reactive = 0;
-  Sdm220.total_reactive = 0;
+  if (isnan(Sdm120.import_active)) { return; }
+
+  Sdm120.import_active = 0;
+  Sdm120.export_active = 0;
+  Sdm120.import_reactive = 0;
+  Sdm120.export_reactive = 0;
+  Sdm120.phase_angle = 0;
 }
 
 #ifdef USE_WEBSERVER
 const char HTTP_ENERGY_SDM220[] PROGMEM =
   "{s}" D_IMPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
   "{s}" D_EXPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
-  "{s}" D_TOTAL_REACTIVE "{m}%s " D_UNIT_KWARH "{e}"
   "{s}" D_IMPORT_REACTIVE "{m}%s " D_UNIT_KWARH "{e}"
   "{s}" D_EXPORT_REACTIVE "{m}%s " D_UNIT_KWARH "{e}"
   "{s}" D_PHASE_ANGLE "{m}%s " D_UNIT_ANGLE "{e}";
@@ -218,66 +216,58 @@ const char HTTP_ENERGY_SDM220[] PROGMEM =
 
 void Sdm220Show(bool json)
 {
+  if (isnan(Sdm120.import_active)) { return; }
+
   char import_active_chr[FLOATSZ];
-  dtostrfd(Sdm220.import_active, Settings.flag2.energy_resolution, import_active_chr);
+  dtostrfd(Sdm120.import_active, Settings.flag2.energy_resolution, import_active_chr);
   char export_active_chr[FLOATSZ];
-  dtostrfd(Sdm220.export_active, Settings.flag2.energy_resolution, export_active_chr);
-  char total_reactive_chr[FLOATSZ];
-  dtostrfd(Sdm220.total_reactive, Settings.flag2.energy_resolution, total_reactive_chr);
+  dtostrfd(Sdm120.export_active, Settings.flag2.energy_resolution, export_active_chr);
   char import_reactive_chr[FLOATSZ];
-  dtostrfd(Sdm220.import_reactive, Settings.flag2.energy_resolution, import_reactive_chr);
+  dtostrfd(Sdm120.import_reactive, Settings.flag2.energy_resolution, import_reactive_chr);
   char export_reactive_chr[FLOATSZ];
-  dtostrfd(Sdm220.export_reactive, Settings.flag2.energy_resolution, export_reactive_chr);
+  dtostrfd(Sdm120.export_reactive, Settings.flag2.energy_resolution, export_reactive_chr);
   char phase_angle_chr[FLOATSZ];
-  dtostrfd(Sdm220.phase_angle, 2, phase_angle_chr);
+  dtostrfd(Sdm120.phase_angle, 2, phase_angle_chr);
 
   if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_ACTIVE "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s,\"" D_JSON_IMPORT_REACTIVE "\":%s,\"" D_JSON_EXPORT_REACTIVE "\":%s,\"" D_JSON_PHASE_ANGLE "\":%s"),
-      import_active_chr, export_active_chr, total_reactive_chr, import_reactive_chr, export_reactive_chr, phase_angle_chr);
+    ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_ACTIVE "\":%s,\"" D_JSON_EXPORT_ACTIVE "\":%s,\"" D_JSON_IMPORT_REACTIVE "\":%s,\"" D_JSON_EXPORT_REACTIVE "\":%s,\"" D_JSON_PHASE_ANGLE "\":%s"),
+      import_active_chr, export_active_chr, import_reactive_chr, export_reactive_chr, phase_angle_chr);
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ENERGY_SDM220, import_active_chr, export_active_chr, total_reactive_chr, import_reactive_chr, export_reactive_chr, phase_angle_chr);
+    WSContentSend_PD(HTTP_ENERGY_SDM220, import_active_chr, export_active_chr, import_reactive_chr, export_reactive_chr, phase_angle_chr);
 #endif  // USE_WEBSERVER
   }
 }
-
-#endif  // USE_SDM220
 
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
-int Xnrg09(uint8_t function)
+bool Xnrg08(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    Sdm120DrvInit();
-  }
-  else if (XNRG_09 == energy_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        Sdm120SnsInit();
-        break;
-      case FUNC_EVERY_200_MSECOND:
-        if (uptime > 4) { SDM120Every200ms(); }
-        break;
-
-#ifdef USE_SDM220
-      case FUNC_ENERGY_RESET:
-        Sdm220Reset();
-        break;
-      case FUNC_JSON_APPEND:
-        Sdm220Show(1);
-        break;
+  switch (function) {
+    case FUNC_EVERY_250_MSECOND:
+      if (uptime > 4) { SDM120Every250ms(); }
+      break;
+    case FUNC_JSON_APPEND:
+      Sdm220Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Sdm220Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Sdm220Show(0);
+      break;
 #endif  // USE_WEBSERVER
-#endif  // USE_SDM220
-
-    }
+    case FUNC_ENERGY_RESET:
+      Sdm220Reset();
+      break;
+    case FUNC_INIT:
+      Sdm120SnsInit();
+      break;
+    case FUNC_PRE_INIT:
+      Sdm120DrvInit();
+      break;
   }
   return result;
 }

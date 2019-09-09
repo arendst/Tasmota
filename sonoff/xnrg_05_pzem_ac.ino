@@ -64,7 +64,7 @@ void PzemAcEverySecond(void)
     uint8_t buffer[26];
 
     uint8_t error = PzemAcModbus->ReceiveBuffer(buffer, 10);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
 
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "PzemAc response error %d"), error);
@@ -109,10 +109,8 @@ void PzemAcSnsInit(void)
 
 void PzemAcDrvInit(void)
 {
-  if (!energy_flg) {
-    if ((pin[GPIO_PZEM016_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {
-      energy_flg = XNRG_05;
-    }
+  if ((pin[GPIO_PZEM016_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {
+    energy_flg = XNRG_05;
   }
 }
 
@@ -120,22 +118,20 @@ void PzemAcDrvInit(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg05(uint8_t function)
+bool Xnrg05(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    PzemAcDrvInit();
-  }
-  else if (XNRG_05 == energy_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        PzemAcSnsInit();
-        break;
-      case FUNC_ENERGY_EVERY_SECOND:
-        if (uptime > 4) { PzemAcEverySecond(); }  // Fix start up issue #5875
-        break;
-    }
+  switch (function) {
+    case FUNC_ENERGY_EVERY_SECOND:
+      if (uptime > 4) { PzemAcEverySecond(); }  // Fix start up issue #5875
+      break;
+    case FUNC_INIT:
+      PzemAcSnsInit();
+      break;
+    case FUNC_PRE_INIT:
+      PzemAcDrvInit();
+      break;
   }
   return result;
 }

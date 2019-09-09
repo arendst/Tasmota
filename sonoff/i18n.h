@@ -96,6 +96,7 @@
 #define D_JSON_LOW "Low"
 #define D_JSON_MAC "Mac"
 #define D_JSON_MASK "Mask"
+#define D_JSON_MEMORY_ERROR "Memory error"
 #define D_JSON_MINIMAL "minimal"
 #define D_JSON_MODEL "Model"
 #define D_JSON_MQTT_COUNT "MqttCount"
@@ -326,6 +327,7 @@
 #define D_CMND_WEBCOLOR "WebColor"
 #define D_CMND_WEBSENSOR "WebSensor"
 #define D_CMND_EMULATION "Emulation"
+#define D_CMND_SENDMAIL "Sendmail"
 
 // Commands xdrv_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
@@ -454,6 +456,18 @@
   #define D_JSON_ZIGBEEZNPSENT "ZigbeeZNPSent"
   #define D_JSON_ZIGBEEZCLRECEIVED "ZigbeeZCLReceived"
   #define D_JSON_ZIGBEEZCLSENT "ZigbeeZCLSent"
+
+  // Commands xdrv_25_A4988_Stepper.ino
+  #ifdef USE_A4988_Stepper
+    #define D_CMND_MOTOR "MOTOR"
+    #define D_JSON_MOTOR_MOVE "doMove"
+    #define D_JSON_MOTOR_ROTATE "doRotate"
+    #define D_JSON_MOTOR_TURN "doTurn"
+    #define D_JSON_MOTOR_SPR "setSPR"
+    #define D_JSON_MOTOR_RPM "setRPM"
+    #define D_JSON_MOTOR_MIS "setMIS"
+  #endif
+
 /********************************************************************************************/
 
 #define D_ASTERISK_PWD "****"
