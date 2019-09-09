@@ -441,6 +441,10 @@
   #define SOLAXX1_SPEED        9600              // Solax X1 Modbus RS485 serial speed (default: 9600 baud)
   #define SOLAXX1_PV2                            // Solax X1 using second PV
 
+//#define USE_DDS2382                            //Add support for Hiking DDS238-2 ZN/S
+//#define DDS2382_SPEED        9600
+//#define DDS2383_ID           1
+
 // -- Low level interface devices -----------------
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)
 

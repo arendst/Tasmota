@@ -447,7 +447,9 @@ void GetFeatures(void)
 #ifdef USE_A4988_Stepper
   feature5 |= 0x00000020;  // xdrv_25_A4988.ino
 #endif
-//  feature5 |= 0x00000040;
+#ifdef USE_DDS2382
+  feature5 |= 0x00000040;  // xsns_55_dds2382.ino
+#endif
 //  feature5 |= 0x00000080;
 
 //  feature5 |= 0x00000100;
