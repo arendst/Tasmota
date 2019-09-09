@@ -276,6 +276,8 @@ void TasmotaSerial::rxRead()
         m_in_pos = next;
       }
 
+      TM_SERIAL_WAIT_RCV_LOOP;    // wait for stop bit
+      wait += m_bit_time / 4;
       if (loop <= 0) { break; }   // exit now if not very high speed or buffer full
 
       bool start_of_next_byte = false;
