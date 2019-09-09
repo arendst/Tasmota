@@ -814,7 +814,7 @@ void Every100mSeconds(void)
     if (!BACKLOG_EMPTY && !backlog_mutex) {
       backlog_mutex = true;
 #ifdef SUPPORT_IF_STATEMENT
-      ExecuteCommand((char*)backlog.pop().c_str(), SRC_BACKLOG);
+      ExecuteCommand((char*)backlog.shift().c_str(), SRC_BACKLOG);
 #else
       ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
       backlog_pointer++;
