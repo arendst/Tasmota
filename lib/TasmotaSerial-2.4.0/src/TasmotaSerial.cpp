@@ -212,12 +212,12 @@ int TasmotaSerial::available()
 }
 
 #ifdef TM_SERIAL_USE_IRAM
-#define TM_SERIAL_WAIT_SND { while (ESP.getCycleCount() < wait + start) if (!m_high_speed) optimistic_yield(1); wait += m_bit_time; } // Watchdog timeouts
-#define TM_SERIAL_WAIT_RCV { while (ESP.getCycleCount() < wait + start); wait += m_bit_time; }
-#define TM_SERIAL_WAIT_RCV_LOOP { while (ESP.getCycleCount() < wait + start); }
+#define TM_SERIAL_WAIT_SND { while (ESP.getCycleCount() < (wait + start)) if (!m_high_speed) optimistic_yield(1); wait += m_bit_time; } // Watchdog timeouts
+#define TM_SERIAL_WAIT_RCV { while (ESP.getCycleCount() < (wait + start)); wait += m_bit_time; }
+#define TM_SERIAL_WAIT_RCV_LOOP { while (ESP.getCycleCount() < (wait + start)); }
 #else
-#define TM_SERIAL_WAIT_SND { while (ESP.getCycleCount() < wait + start); wait += m_bit_time; }
-#define TM_SERIAL_WAIT_RCV { while (ESP.getCycleCount() < wait + start); wait += m_bit_time; }
+#define TM_SERIAL_WAIT_SND { while (ESP.getCycleCount() < (wait + start)); wait += m_bit_time; }
+#define TM_SERIAL_WAIT_RCV { while (ESP.getCycleCount() < (wait + start)); wait += m_bit_time; }
 #endif
 
 size_t TasmotaSerial::write(uint8_t b)
@@ -277,8 +277,13 @@ void TasmotaSerial::rxRead()
       }
 
       TM_SERIAL_WAIT_RCV_LOOP;    // wait for stop bit
+      if (2 == m_stop_bits) {
+        wait += m_bit_time;
+        TM_SERIAL_WAIT_RCV_LOOP;
+      }
       wait += m_bit_time / 4;
-      if (loop <= 0) { break; }   // exit now if not very high speed or buffer full
+
+      if (loop_read <= 0) { break; }   // exit now if not very high speed or buffer full
 
       bool start_of_next_byte = false;
       for (uint32_t i = 0; i < 12; i++) {
