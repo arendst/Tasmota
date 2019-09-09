@@ -26,7 +26,7 @@
  * Based on: https://github.com/reaper7/SDM_Energy_Meter
 \*********************************************************************************************/
 
-#define XSNS_54             54
+#define XSNS_55             55
 
 // can be user defined in my_user_config.h
 #ifndef DDS2382_SPEED
@@ -307,7 +307,7 @@ void DDS2382Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns54(uint8_t function)
+bool Xsns55(uint8_t function)
 {
   bool result = false;
   if (dds2382_state != DDS2382_STATE_INIT) {
