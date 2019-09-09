@@ -120,8 +120,6 @@ int16_t save_data_counter;                  // Counter and flag for config save 
 RulesBitfield rules_flag;                   // Rule state flags (16 bits)
 uint8_t state_250mS = 0;                    // State 250msecond per second flag
 uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
-uint8_t backlog_index = 0;                  // Command backlog index
-uint8_t backlog_pointer = 0;                // Command backlog pointer
 uint8_t sleep;                              // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
 uint8_t pin[GPIO_MAX];                      // Possible pin configurations
@@ -166,7 +164,16 @@ char serial_in_buffer[INPUT_BUFFER_SIZE];   // Receive buffer
 char mqtt_data[MESSZ];                      // MQTT publish buffer and web page ajax buffer
 char log_data[LOGSZ];                       // Logging
 char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
-String backlog[MAX_BACKLOG];                // Command backlog
+#ifdef SUPPORT_IF_STATEMENT
+  #include <LinkedList.h>
+  LinkedList<String> backlog;                // Command backlog implemented with LinkedList
+  #define BACKLOG_EMPTY (backlog.size() == 0)
+#else
+  uint8_t backlog_index = 0;                  // Command backlog index
+  uint8_t backlog_pointer = 0;                // Command backlog pointer
+  String backlog[MAX_BACKLOG];                // Command backlog buffer
+  #define BACKLOG_EMPTY (backlog_pointer == backlog_index)
+#endif
 
 /********************************************************************************************/
 
@@ -862,12 +869,16 @@ void Every100mSeconds(void)
 
   // Backlog
   if (TimeReached(backlog_delay)) {
-    if ((backlog_pointer != backlog_index) && !backlog_mutex) {
+    if (!BACKLOG_EMPTY && !backlog_mutex) {
       backlog_mutex = true;
+#ifdef SUPPORT_IF_STATEMENT
+      ExecuteCommand((char*)backlog.shift().c_str(), SRC_BACKLOG);
+#else
       ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
-      backlog_mutex = false;
       backlog_pointer++;
       if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
+#endif
+      backlog_mutex = false;
     }
   }
 }
@@ -928,7 +939,7 @@ void Every250mSeconds(void)
   case 0:                                                 // Every x.0 second
     PerformEverySecond();
 
-    if (ota_state_flag && (backlog_pointer == backlog_index)) {
+    if (ota_state_flag && BACKLOG_EMPTY) {
       ota_state_flag--;
       if (2 == ota_state_flag) {
         ota_url = Settings.ota_url;
@@ -999,7 +1010,7 @@ void Every250mSeconds(void)
     if (MidnightNow()) {
       XsnsCall(FUNC_SAVE_AT_MIDNIGHT);
     }
-    if (save_data_counter && (backlog_pointer == backlog_index)) {
+    if (save_data_counter && BACKLOG_EMPTY) {
       save_data_counter--;
       if (save_data_counter <= 0) {
         if (Settings.flag.save_state) {
@@ -1019,7 +1030,7 @@ void Every250mSeconds(void)
         save_data_counter = Settings.save_data;
       }
     }
-    if (restart_flag && (backlog_pointer == backlog_index)) {
+    if (restart_flag && BACKLOG_EMPTY) {
       if ((214 == restart_flag) || (215 == restart_flag) || (216 == restart_flag)) {
         char storage_wifi[sizeof(Settings.sta_ssid) +
                           sizeof(Settings.sta_pwd)];
