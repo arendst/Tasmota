@@ -181,8 +181,8 @@ typedef struct {
   uint32_t usage1_kWhtoday;
   uint32_t return1_kWhtotal;
   uint32_t return2_kWhtotal;
-  uint32_t last_usage_kWhtotal;
   uint32_t last_return_kWhtotal;
+  uint32_t free;
 } EnergyUsage;
 
 
