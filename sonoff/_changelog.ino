@@ -1,7 +1,7 @@
 /*********************************************************************************************\
  * 6.6.0.12 20190910
  * Redesign command Tariff to now default to 0 (=disabled) and allowing to set both Standard Time (ST) and Daylight Savings Time (DST) start hour
- *  Commands Tariff1 23 = Tariff1 ST, Tariff2 7 = Tariff2 ST, Tarriff3 22 = Tarrif1 DST, Tariff4 6 = Tariff2 DST, Tariff9 0/1 = Weekend toggle
+ *  Commands Tariff1 22,23 = Tariff1 (Off-Peak) ST,DST   Tariff2 (Standard) 6,7 = Tariff2 ST,DST   Tariff9 0/1 = Weekend toggle (1 = Off-Peak during weekend)
  *
  * 6.6.0.11 20190907
  * Change Settings crc calculation allowing short term backward compatibility

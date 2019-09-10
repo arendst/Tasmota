@@ -516,14 +516,21 @@ void CmndEnergyReset(void)
 
 void CmndTariff(void)
 {
-  // Tariff1 23 - Standard Time Tariff1 start hour
-  // Tariff2 7  - Standard Time Tariff2 start hour
-  // Tariff3 22 - Daylight Savings Time Tariff1 start hour
-  // Tariff4 6  - Daylight Savings Time Tariff2 start hour
+  // Tariff1 22,23 - Tariff1 start hour for Standard Time and Daylight Savings Time
+  // Tariff2 6,7   - Tariff2 start hour for Standard Time and Daylight Savings Time
   // Tariff9 0/1
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 24)) {
-      Settings.register8[R8_ENERGY_TARIFF1_ST + XdrvMailbox.index -1] = XdrvMailbox.payload;
+
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
+    char *p;
+    char *str = strtok_r(XdrvMailbox.data, ", ", &p);
+    uint32_t time_type = 0;
+    while ((str != nullptr) && (time_type <= 2)) {
+      uint8_t value = strtol(str, nullptr, 10);
+      if ((value >= 0) && (value < 24)) {
+        Settings.register8[R8_ENERGY_TARIFF1_ST + (XdrvMailbox.index -1) + time_type] = value;
+      }
+      str = strtok_r(nullptr, ", ", &p);
+      time_type += 2;
     }
   }
   else if (XdrvMailbox.index == 9) {
