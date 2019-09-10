@@ -13,6 +13,7 @@ env:
   - ENV=sonoff-knx
   - ENV=sonoff-sensors
   - ENV=sonoff-display
+  - ENV=sonoff-ir
   - ENV=sonoff-BG
   - ENV=sonoff-BR
   - ENV=sonoff-CN

@@ -169,19 +169,17 @@ void Ade7953EnergyEverySecond()
 
 void Ade7953DrvInit(void)
 {
-  if (!energy_flg) {
-    if (i2c_flg && (pin[GPIO_ADE7953_IRQ] < 99)) {  // Irq on GPIO16 is not supported...
-			delay(100);                                   // Need 100mS to init ADE7953
-      if (I2cDevice(ADE7953_ADDR)) {
-        if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
-          Settings.energy_power_calibration = ADE7953_PREF;
-          Settings.energy_voltage_calibration = ADE7953_UREF;
-          Settings.energy_current_calibration = ADE7953_IREF;
-        }
-        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "ADE7953", ADE7953_ADDR);
-				Ade7953.init_step = 2;
-        energy_flg = XNRG_07;
-			}
+  if (i2c_flg && (pin[GPIO_ADE7953_IRQ] < 99)) {  // Irq on GPIO16 is not supported...
+    delay(100);                                   // Need 100mS to init ADE7953
+    if (I2cDevice(ADE7953_ADDR)) {
+      if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
+        Settings.energy_power_calibration = ADE7953_PREF;
+        Settings.energy_voltage_calibration = ADE7953_UREF;
+        Settings.energy_current_calibration = ADE7953_IREF;
+      }
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "ADE7953", ADE7953_ADDR);
+      Ade7953.init_step = 2;
+      energy_flg = XNRG_07;
     }
   }
 }
@@ -234,22 +232,20 @@ bool Ade7953Command(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg07(uint8_t function)
+bool Xnrg07(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    Ade7953DrvInit();
-  }
-  else if (XNRG_07 == energy_flg) {
-    switch (function) {
-      case FUNC_ENERGY_EVERY_SECOND:
-        Ade7953EnergyEverySecond();
-        break;
-      case FUNC_COMMAND:
-        result = Ade7953Command();
-        break;
-		}
+  switch (function) {
+    case FUNC_ENERGY_EVERY_SECOND:
+      Ade7953EnergyEverySecond();
+      break;
+    case FUNC_COMMAND:
+      result = Ade7953Command();
+      break;
+    case FUNC_PRE_INIT:
+      Ade7953DrvInit();
+      break;
   }
   return result;
 }

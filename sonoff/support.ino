@@ -124,6 +124,18 @@ size_t strcspn(const char *str1, const char *str2)
   return ret;
 }
 
+// https://clc-wiki.net/wiki/C_standard_library:string.h:strpbrk
+// Locate the ﬁrst occurrence in the string pointed to by s1 of any character from the string pointed to by s2
+char* strpbrk(const char *s1, const char *s2)
+{
+  while(*s1) {
+    if (strchr(s2, *s1++)) {
+      return (char*)--s1;
+    }
+  }
+  return 0;
+}
+
 // https://opensource.apple.com/source/Libc/Libc-583/stdlib/FreeBSD/strtoull.c
 // Convert a string to an unsigned long long integer
 #ifndef __LONG_LONG_MAX__
@@ -870,7 +882,24 @@ uint32_t WebColor(uint32_t i)
  * Response data handling
 \*********************************************************************************************/
 
-int Response_P(const char* format, ...)     // Content send snprintf_P char data
+const uint16_t TIMESZ = 100;                   // Max number of characters in time string
+
+char* ResponseGetTime(uint32_t format, char* time_str)
+{
+  switch (format) {
+  case 1:
+    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%u"), GetDateAndTime(DT_LOCAL).c_str(), UtcTime());
+    break;
+  case 2:
+    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":%u"), UtcTime());
+    break;
+  default:
+    snprintf_P(time_str, TIMESZ, PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
+  }
+  return time_str;
+}
+
+int Response_P(const char* format, ...)        // Content send snprintf_P char data
 {
   // This uses char strings. Be aware of sending %% if % is needed
   va_list args;
@@ -878,6 +907,20 @@ int Response_P(const char* format, ...)     // Content send snprintf_P char data
   int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), format, args);
   va_end(args);
   return len;
+}
+
+int ResponseTime_P(const char* format, ...)    // Content send snprintf_P char data
+{
+  // This uses char strings. Be aware of sending %% if % is needed
+  va_list args;
+  va_start(args, format);
+
+  ResponseGetTime(Settings.flag2.time_format, mqtt_data);
+
+  int mlen = strlen(mqtt_data);
+  int len = vsnprintf_P(mqtt_data + mlen, sizeof(mqtt_data) - mlen, format, args);
+  va_end(args);
+  return len + mlen;
 }
 
 int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char data
@@ -891,15 +934,15 @@ int ResponseAppend_P(const char* format, ...)  // Content send snprintf_P char d
   return len + mlen;
 }
 
-int ResponseAppendTime(void)
+int ResponseAppendTimeFormat(uint32_t format)
 {
-  return ResponseAppend_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%u"), GetDateAndTime(DT_LOCAL).c_str(), UtcTime());
+  char time_str[TIMESZ];
+  return ResponseAppend_P(ResponseGetTime(format, time_str));
 }
 
-int ResponseBeginTime(void)
+int ResponseAppendTime(void)
 {
-  mqtt_data[0] = '\0';
-  return ResponseAppendTime();
+  return ResponseAppendTimeFormat(Settings.flag2.time_format);
 }
 
 int ResponseJsonEnd(void)

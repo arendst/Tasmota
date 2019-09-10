@@ -27,7 +27,7 @@
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
 #include <IRrecv.h>
-#include <IRUtils.h>
+#include <IRutils.h>
 #include <IRac.h>
 
 enum IrErrors { IE_RESPONSE_PROVIDED, IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_SYNTAX_IRHVAC,
@@ -220,7 +220,7 @@ void IrReceiveCheck(void)
 //    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
     if (!irsend_active && (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE)) {
       ir_lasttime = now;
-      Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":%s"), sendIRJsonState(results).c_str());
+      ResponseTime_P(PSTR(",\"" D_JSON_IRRECEIVED "\":%s"), sendIRJsonState(results).c_str());
 
       if (Settings.flag3.receive_raw) {
         ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":["));

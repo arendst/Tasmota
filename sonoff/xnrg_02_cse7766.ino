@@ -145,7 +145,7 @@ bool CseSerialInput(void)
         Energy.data_valid = 0;
         CseReceived();
         Cse.received = false;
-        return 1;
+        return true;
       } else {
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: " D_CHECKSUM_FAILURE));
         do {  // Sync buffer with data (issue #1907 and #3425)
@@ -167,7 +167,7 @@ bool CseSerialInput(void)
     serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
   }
   serial_in_byte = 0;  // Discard
-  return 0;
+  return false;
 }
 
 /********************************************************************************************/
@@ -208,16 +208,14 @@ void CseEverySecond(void)
 
 void CseDrvInit(void)
 {
-  if (!energy_flg) {
-    if ((3 == pin[GPIO_CSE7766_RX]) && (1 == pin[GPIO_CSE7766_TX])) {  // As it uses 8E1 currently only hardware serial is supported
-      baudrate = 4800;
-      serial_config = SERIAL_8E1;
-      if (0 == Settings.param[P_CSE7766_INVALID_POWER]) {
-        Settings.param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
-      }
-      Cse.power_invalid = Settings.param[P_CSE7766_INVALID_POWER];
-      energy_flg = XNRG_02;
+  if ((3 == pin[GPIO_CSE7766_RX]) && (1 == pin[GPIO_CSE7766_TX])) {  // As it uses 8E1 currently only hardware serial is supported
+    baudrate = 4800;
+    serial_config = SERIAL_8E1;
+    if (0 == Settings.param[P_CSE7766_INVALID_POWER]) {
+      Settings.param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
     }
+    Cse.power_invalid = Settings.param[P_CSE7766_INVALID_POWER];
+    energy_flg = XNRG_02;
   }
 }
 
@@ -249,25 +247,23 @@ bool CseCommand(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg02(uint8_t function)
+bool Xnrg02(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    CseDrvInit();
-  }
-  else if (XNRG_02 == energy_flg) {
-    switch (function) {
-      case FUNC_ENERGY_EVERY_SECOND:
-        CseEverySecond();
-        break;
-      case FUNC_COMMAND:
-        result = CseCommand();
-        break;
-      case FUNC_SERIAL:
-        result = CseSerialInput();
-        break;
-    }
+  switch (function) {
+    case FUNC_SERIAL:
+      result = CseSerialInput();
+      break;
+    case FUNC_ENERGY_EVERY_SECOND:
+      CseEverySecond();
+      break;
+    case FUNC_COMMAND:
+      result = CseCommand();
+      break;
+    case FUNC_PRE_INIT:
+      CseDrvInit();
+      break;
   }
   return result;
 }
