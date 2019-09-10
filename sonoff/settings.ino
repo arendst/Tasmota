@@ -128,15 +128,6 @@
 #ifndef TUYA_DIMMER_MAX
 #define TUYA_DIMMER_MAX             100
 #endif
-#ifndef ENERGY_TARIFF1_HOUR
-#define ENERGY_TARIFF1_HOUR         23         // Start hour "nighttime" or "off-peak" tariff
-#endif
-#ifndef ENERGY_TARIFF2_HOUR
-#define ENERGY_TARIFF2_HOUR         7          // Start hour "daytime" or "standard" tariff
-#endif
-#ifndef ENERGY_TARIFF_WEEKEND
-#define ENERGY_TARIFF_WEEKEND       1          // 0 = No difference in weekend, 1 = off-peak during weekend
-#endif
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -1097,9 +1088,6 @@ void SettingsDelta(void)
       } else {
         Settings.param[P_TUYA_DIMMER_MAX] = 255;
       }
-      Settings.param[P_ENERGY_TARIFF1] = ENERGY_TARIFF1_HOUR;
-      Settings.param[P_ENERGY_TARIFF2] = ENERGY_TARIFF2_HOUR;
-      Settings.flag3.energy_weekend = ENERGY_TARIFF_WEEKEND;
     }
     if (Settings.version < 0x06060009) {
       Settings.baudrate = Settings.ex_baudrate * 4;
@@ -1139,8 +1127,11 @@ void SettingsDelta(void)
         Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_CURRENT_ID];
         tuyaindex++;
       }
-
     }
+    if (Settings.version < 0x0606000C) {
+      memset(&Settings.register8, 0x00, sizeof(Settings.register8));
+    }
+
     Settings.version = VERSION;
     SettingsSave(1);
   }

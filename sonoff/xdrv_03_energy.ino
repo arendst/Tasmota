@@ -123,6 +123,25 @@ Ticker ticker_energy;
 
 /********************************************************************************************/
 
+bool EnergyTariff1Active()  // Off-Peak hours
+{
+  uint8_t tariff1 = Settings.register8[R8_ENERGY_TARIFF1_ST];
+  uint8_t tariff2 = Settings.register8[R8_ENERGY_TARIFF2_ST];
+  if (IsDst() && (Settings.register8[R8_ENERGY_TARIFF1_DS] != Settings.register8[R8_ENERGY_TARIFF2_DS])) {
+    tariff1 = Settings.register8[R8_ENERGY_TARIFF1_DS];
+    tariff2 = Settings.register8[R8_ENERGY_TARIFF2_DS];
+  }
+  if (tariff1 != tariff2) {
+    return ((RtcTime.hour < tariff2) ||  // Tarrif1 = Off-Peak
+            (RtcTime.hour >= tariff1) ||
+            (Settings.flag3.energy_weekend && ((RtcTime.day_of_week == 1) ||
+                                               (RtcTime.day_of_week == 7)))
+           );
+  } else {
+    return false;
+  }
+}
+
 void EnergyUpdateToday(void)
 {
   if (Energy.kWhtoday_delta > 1000) {
@@ -143,11 +162,7 @@ void EnergyUpdateToday(void)
   Energy.daily = (float)(RtcSettings.energy_kWhtoday) / 100000;
   Energy.total = (float)(RtcSettings.energy_kWhtotal + RtcSettings.energy_kWhtoday) / 100000;
 
-  if ((RtcTime.hour < Settings.param[P_ENERGY_TARIFF2]) ||  // Tarrif1 = Off-Peak
-      (RtcTime.hour >= Settings.param[P_ENERGY_TARIFF1]) ||
-      (Settings.flag3.energy_weekend && ((RtcTime.day_of_week == 1) ||
-                                         (RtcTime.day_of_week == 7)))
-     ) {
+  if (EnergyTariff1Active()) {  // Tarrif1 = Off-Peak
     RtcSettings.energy_usage.usage1_kWhtoday += energy_diff;
     RtcSettings.energy_usage.return1_kWhtotal += return_diff;
     Energy.total1 = (float)(RtcSettings.energy_usage.usage1_kWhtotal + RtcSettings.energy_usage.usage1_kWhtoday) / 100000;
@@ -414,8 +429,8 @@ void EnergyOverTempCheck()
       if (!isnan(Energy.reactive_power)) { Energy.reactive_power = 0; }
       if (!isnan(Energy.frequency)) { Energy.frequency = 0; }
       if (!isnan(Energy.power_factor)) { Energy.power_factor = 0; }
-      Energy.start_energy = 0;
       if (!isnan(Energy.export_active)) { Energy.export_active = 0; }
+      Energy.start_energy = 0;
 
       XnrgCall(FUNC_ENERGY_RESET);
     }
@@ -501,19 +516,24 @@ void CmndEnergyReset(void)
 
 void CmndTariff(void)
 {
-  // Tariff1 23
-  // Tariff2 7
-  // Tariff3 0/1
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
+  // Tariff1 23 - Standard Time Tariff1 start hour
+  // Tariff2 7  - Standard Time Tariff2 start hour
+  // Tariff3 22 - Daylight Savings Time Tariff1 start hour
+  // Tariff4 6  - Daylight Savings Time Tariff2 start hour
+  // Tariff9 0/1
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 24)) {
-      Settings.param[P_ENERGY_TARIFF1 + XdrvMailbox.index -1] = XdrvMailbox.payload;
+      Settings.register8[R8_ENERGY_TARIFF1_ST + XdrvMailbox.index -1] = XdrvMailbox.payload;
     }
   }
-  else if (XdrvMailbox.index == 3) {
+  else if (XdrvMailbox.index == 9) {
     Settings.flag3.energy_weekend = XdrvMailbox.payload & 1;
   }
-  Response_P(PSTR("{\"%s\":{\"Off-Peak\":%d,\"Standard\":%d,\"Weekend\":\"%s\"}}"),
-    XdrvMailbox.command, Settings.param[P_ENERGY_TARIFF1], Settings.param[P_ENERGY_TARIFF2], GetStateText(Settings.flag3.energy_weekend));
+  Response_P(PSTR("{\"%s\":{\"Off-Peak\":[%d,%d],\"Standard\":[%d,%d],\"Weekend\":\"%s\"}}"),
+    XdrvMailbox.command,
+    Settings.register8[R8_ENERGY_TARIFF1_ST], Settings.register8[R8_ENERGY_TARIFF1_DS],
+    Settings.register8[R8_ENERGY_TARIFF2_ST], Settings.register8[R8_ENERGY_TARIFF2_DS],
+    GetStateText(Settings.flag3.energy_weekend));
 }
 
 void CmndPowerCal(void)
