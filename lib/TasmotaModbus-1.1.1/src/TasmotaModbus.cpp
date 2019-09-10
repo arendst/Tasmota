@@ -100,7 +100,10 @@ uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count)
   }
 
   if (len < 7) { return 7; }               // 7 = Not enough data
-  if (len != buffer[2] + 5) { return 8; }  // 8 = Unexpected result
+  if (len != buffer[2] + 5) {
+    buffer[2] = len - 5;                   // As it's wrong anyway let's store actual number received in here (5 will be added by client)
+    return 8;                              // 8 = Unexpected result
+  }
 
   uint16_t crc = (buffer[len -1] << 8) | buffer[len -2];
   if (CalculateCRC(buffer, len -2) != crc) { return 9; }  // 9 = crc error
