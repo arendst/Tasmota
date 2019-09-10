@@ -57,10 +57,11 @@ void A4988Init(void)
                             , A4988_ms3_pin );
 }
 
-const char kA4988Commands[] PROGMEM = "|" //no prefix
-  "motorMove|motorRotate|motorTurn|motorMIS|motorSPR|motorRPM";
+const char kA4988Commands[] PROGMEM = "Motor|" // prefix
+  "Move|Rotate|Turn|MIS|SPR|RPM";
 
-void (* const A4988Command[])(void) PROGMEM = { &CmndDoMove,&CmndDoRotate,&CmndDoTurn,&CmndSetMIS,&CmndSetSPR,&CmndSetRPM};
+void (* const A4988Command[])(void) PROGMEM = { 
+  &CmndDoMove,&CmndDoRotate,&CmndDoTurn,&CmndSetMIS,&CmndSetSPR,&CmndSetRPM};
 
 void CmndDoMove(void) {
   if (XdrvMailbox.data_len > 0) {
