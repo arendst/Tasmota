@@ -887,7 +887,7 @@ char * findClosureBracket(char * pStart)
   if (bFindClosures) {
     return pointer;
   } else {
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -1015,7 +1015,7 @@ bool findNextObjectValue(char * &pointer, float &value)
       break;
     } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
       char * closureBracket = findClosureBracket(pointer);        //Get the position of closure bracket ")"
-      if (closureBracket != NULL) {
+      if (closureBracket != nullptr) {
         value = evaluateExpression(pointer+1, closureBracket - pointer - 2);
         pointer = closureBracket + 1;
         bSucceed = true;
@@ -1310,7 +1310,7 @@ bool findNextLogicObjectValue(char * &pointer, bool &value)
       break;
     } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
       char * closureBracket = findClosureBracket(pointer);        //Get the position of closure bracket ")"
-      if (closureBracket != NULL) {
+      if (closureBracket != nullptr) {
         value = evaluateLogicalExpression(pointer+1, closureBracket - pointer - 2);
         pointer = closureBracket + 1;
         bSucceed = true;
@@ -1555,7 +1555,7 @@ void ProcessIfStatement(const char* statements)
     while (*pos && *pos != '(') {
       pos++;
     }
-    if (NULL == *pos) break;
+    if (0 == *pos) { break; }
     char * posEnd = findClosureBracket(pos);
 
     if (true == evaluateLogicalExpression(pos + 1, posEnd - (pos + 1))) {
