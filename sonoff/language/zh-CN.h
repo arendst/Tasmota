@@ -596,16 +596,19 @@
 #define D_SENSOR_IBEACON_RX    "iBeacon RX"
 #define D_SENSOR_RDM6300_RX    "RDM6300 RX"
 #define D_SENSOR_CC1101_CS     "CC1101 CS"
-#define D_SENSOR_A4988_DIR   "A4988 DIR"
-#define D_SENSOR_A4988_STP   "A4988 STP"
-#define D_SENSOR_A4988_ENA   "A4988 ENA"
-#define D_SENSOR_A4988_MS1   "A4988 MS1"
-#define D_SENSOR_A4988_MS2   "A4988 MS2"
-#define D_SENSOR_A4988_MS3   "A4988 MS3"
+#define D_SENSOR_A4988_DIR     "A4988 DIR"
+#define D_SENSOR_A4988_STP     "A4988 STP"
+#define D_SENSOR_A4988_ENA     "A4988 ENA"
+#define D_SENSOR_A4988_MS1     "A4988 MS1"
+#define D_SENSOR_A4988_MS2     "A4988 MS2"
+#define D_SENSOR_A4988_MS3     "A4988 MS3"
+#define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
+#define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
 
 // Units
 #define D_UNIT_AMPERE "安"
 #define D_UNIT_CENTIMETER "厘米"
+#define D_UNIT_HERTZ "赫兹"
 #define D_UNIT_HOUR "时"
 #define D_UNIT_GALLONS "gal"
 #define D_UNIT_GALLONS_PER_MIN "g/m"
@@ -634,7 +637,6 @@
 #define D_UNIT_VOLT "伏"
 #define D_UNIT_WATT "瓦"
 #define D_UNIT_WATTHOUR "瓦时"
-#define D_UNIT_HERTZ "赫兹"
 #define D_UNIT_WATT_METER_QUADRAT "瓦/平米"
 
 // Log message prefix

@@ -36,63 +36,43 @@
 #include <TasmotaModbus.h>
 TasmotaModbus *PzemAcModbus;
 
-/*
-uint16_t PzemCalculateCRC(uint8_t *buffer, uint8_t num)
-{
-  uint16_t crc = 0xFFFF;
-  for (uint32_t i = 0; i < num; i++) {
-    crc ^= buffer[i];
-    for (uint32_t j = 8; j; j--) {
-      if ((crc & 0x0001) != 0) {        // If the LSB is set
-        crc >>= 1;                      // Shift right and XOR 0xA001
-        crc ^= 0xA001;
-      } else {                          // Else LSB is not set
-        crc >>= 1;                      // Just shift right
-      }
-    }
-  }
-  return crc;
-}
-*/
+uint8_t PzemAc_send_retry = 0;
+
 void PzemAcEverySecond(void)
 {
-  static uint8_t send_retry = 0;
-
   bool data_ready = PzemAcModbus->ReceiveReady();
 
   if (data_ready) {
-    uint8_t buffer[26];
+    uint8_t buffer[30];  // At least 5 + (2 * 10) = 25
 
     uint8_t error = PzemAcModbus->ReceiveBuffer(buffer, 10);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
 
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "PzemAc response error %d"), error);
     } else {
-//      if ((PzemCalculateCRC(buffer, 23)) == ((buffer[24] << 8) | buffer[23])) {
-        Energy.data_valid = 0;
+      Energy.data_valid = 0;
 
-        //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
-        // 01 04 14 08 D1 00 6C 00 00 00 F4 00 00 00 26 00 00 01 F4 00 64 00 00 51 34
-        // Id Cc Sz Volt- Current---- Power------ Energy----- Frequ PFact Alarm Crc--
-        Energy.voltage = (float)((buffer[3] << 8) + buffer[4]) / 10.0;                                                  // 6553.0 V
-        Energy.current = (float)((buffer[7] << 24) + (buffer[8] << 16) + (buffer[5] << 8) + buffer[6]) / 1000.0;        // 4294967.000 A
-        Energy.active_power = (float)((buffer[11] << 24) + (buffer[12] << 16) + (buffer[9] << 8) + buffer[10]) / 10.0;  // 429496729.0 W
-        Energy.frequency = (float)((buffer[17] << 8) + buffer[18]) / 10.0;                                              // 50.0 Hz
-        Energy.power_factor = (float)((buffer[19] << 8) + buffer[20]) / 100.0;                                          // 1.00
-        float energy = (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);               // 4294967295 Wh
+      //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+      // 01 04 14 08 D1 00 6C 00 00 00 F4 00 00 00 26 00 00 01 F4 00 64 00 00 51 34
+      // Id Cc Sz Volt- Current---- Power------ Energy----- Frequ PFact Alarm Crc--
+      Energy.voltage = (float)((buffer[3] << 8) + buffer[4]) / 10.0;                                                  // 6553.0 V
+      Energy.current = (float)((buffer[7] << 24) + (buffer[8] << 16) + (buffer[5] << 8) + buffer[6]) / 1000.0;        // 4294967.000 A
+      Energy.active_power = (float)((buffer[11] << 24) + (buffer[12] << 16) + (buffer[9] << 8) + buffer[10]) / 10.0;  // 429496729.0 W
+      Energy.frequency = (float)((buffer[17] << 8) + buffer[18]) / 10.0;                                              // 50.0 Hz
+      Energy.power_factor = (float)((buffer[19] << 8) + buffer[20]) / 100.0;                                          // 1.00
+      float energy = (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);               // 4294967295 Wh
 
-        EnergyUpdateTotal(energy, false);
-//      }
+      EnergyUpdateTotal(energy, false);
     }
   }
 
-  if (0 == send_retry || data_ready) {
-    send_retry = 5;
+  if (0 == PzemAc_send_retry || data_ready) {
+    PzemAc_send_retry = 5;
     PzemAcModbus->Send(PZEM_AC_DEVICE_ADDRESS, 0x04, 0, 10);
   }
   else {
-    send_retry--;
+    PzemAc_send_retry--;
   }
 }
 

@@ -77,7 +77,7 @@ void SDM120Every250ms(void)
   bool data_ready = Sdm120Modbus->ReceiveReady();
 
   if (data_ready) {
-    uint8_t buffer[9];
+    uint8_t buffer[14];  // At least 5 + (2 * 2) = 9
 
     uint32_t error = Sdm120Modbus->ReceiveBuffer(buffer, 2);
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
@@ -85,7 +85,6 @@ void SDM120Every250ms(void)
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM120 response error %d"), error);
     } else {
-      uint32_t max_table =
       Energy.data_valid = 0;
 
       //  0  1  2  3  4  5  6  7  8

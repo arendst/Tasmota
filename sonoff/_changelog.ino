@@ -4,6 +4,7 @@
  * Add support for up to 4 INA226 Voltage and Current sensors by Steve Rogers (#6342)
  * Change Improve reliability of TasmotaSerial at 115200 bauds and reduce IRAM usage for Stage/pre-2.6
  * Add support for A4988 stepper-motor-driver-circuit by Tim Leuschner (#6370)
+ * Add support for Hiking DDS238-2 Modbus energy meter by Matteo Campanella (#6384)
  *
  * 6.6.0.10 20190905
  * Redesign Tuya support by Shantur Rathore (#6353)

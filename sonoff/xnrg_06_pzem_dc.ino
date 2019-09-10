@@ -43,7 +43,7 @@ void PzemDcEverySecond(void)
   bool data_ready = PzemDcModbus->ReceiveReady();
 
   if (data_ready) {
-    uint8_t buffer[22];
+    uint8_t buffer[26];  // At least 5 + (2 * 8) = 21
 
     uint8_t error = PzemDcModbus->ReceiveBuffer(buffer, 8);
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
