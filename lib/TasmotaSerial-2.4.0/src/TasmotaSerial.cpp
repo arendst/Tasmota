@@ -218,6 +218,7 @@ int TasmotaSerial::available()
 #else
 #define TM_SERIAL_WAIT_SND { while (ESP.getCycleCount() < (wait + start)); wait += m_bit_time; }
 #define TM_SERIAL_WAIT_RCV { while (ESP.getCycleCount() < (wait + start)); wait += m_bit_time; }
+#define TM_SERIAL_WAIT_RCV_LOOP { while (ESP.getCycleCount() < (wait + start)); }
 #endif
 
 size_t TasmotaSerial::write(uint8_t b)
