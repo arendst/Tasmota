@@ -129,13 +129,21 @@ void IrReceiveCheck(void)
 
   if (irrecv->decode(&results)) {
     char hvalue[65];  // Max 256 bits
-    if (results.bits > 64) {
-      // This emulates IRutils resultToHexidecimal and may needs a larger IR_RCV_BUFFER_SIZE
-      uint32_t digits2 = results.bits / 8;
-      if (results.bits % 8) { digits2++; }
-      ToHex_P((unsigned char*)results.state, digits2, hvalue, sizeof(hvalue));  // Get n-bit value as hex 56341200
+
+    iridx = results.decode_type;
+    if ((iridx < 0) || (iridx > 14)) { iridx = 0; }  // UNKNOWN
+
+    if (iridx) {
+      if (results.bits > 64) {
+        // This emulates IRutils resultToHexidecimal and may needs a larger IR_RCV_BUFFER_SIZE
+        uint32_t digits2 = results.bits / 8;
+        if (results.bits % 8) { digits2++; }
+        ToHex_P((unsigned char*)results.state, digits2, hvalue, sizeof(hvalue));  // Get n-bit value as hex 56341200
+      } else {
+        IrUint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 00123456
+      }
     } else {
-      IrUint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 00123456
+      IrUint64toHex(results.value, hvalue, 32);  // UNKNOWN is always 32 bits hash
     }
 
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value 0x%s, Decode %d"),
@@ -146,16 +154,19 @@ void IrReceiveCheck(void)
     if (!irsend_active && (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE)) {
       ir_lasttime = now;
 
-      iridx = results.decode_type;
-      if ((iridx < 0) || (iridx > 14)) { iridx = 0; }  // UNKNOWN
       char svalue[64];
       if (Settings.flag.ir_receive_decimal) {
         ulltoa(results.value, svalue, 10);
       } else {
         snprintf_P(svalue, sizeof(svalue), PSTR("\"0x%s\""), hvalue);
       }
-      ResponseTime_P(PSTR(",\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
-        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, svalue);
+      ResponseTime_P(PSTR(",\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d"),
+        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits);
+      if (iridx) {
+        ResponseAppend_P(PSTR(",\"" D_JSON_IR_DATA "\":%s"), svalue);
+      } else {
+        ResponseAppend_P(PSTR(",\"" D_JSON_IR_HASH "\":%s"), svalue);
+      }
 
       if (Settings.flag3.receive_raw) {
         ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":["));

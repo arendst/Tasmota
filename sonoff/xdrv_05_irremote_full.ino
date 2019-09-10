@@ -177,20 +177,31 @@ String sendIRJsonState(const struct decode_results &results) {
     json += resultToHexidecimal(&results);
     json += "\"";
   } else {
-    json += ",\"" D_JSON_IR_DATA "\":";
+    if (UNKNOWN != results.decode_type) {
+      json += ",\"" D_JSON_IR_DATA "\":";
+    } else {
+      json += ",\"" D_JSON_IR_HASH "\":";
+    }
     if (Settings.flag.ir_receive_decimal) {
       char svalue[32];
       ulltoa(results.value, svalue, 10);
       json += svalue;
     } else {
       char hvalue[64];
-      IrUint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 0x00123456
-      json += "\"";
-      json += hvalue;
-      json += "\",\"" D_JSON_IR_DATALSB "\":\"";
-      IrUint64toHex(reverseBitsInBytes64(results.value), hvalue, results.bits);  // Get 64bit value as hex 0x00123456, LSB
-      json += hvalue;
-      json += "\"";
+      if (UNKNOWN != results.decode_type) {
+        IrUint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 0x00123456
+        json += "\"";
+        json += hvalue;
+        json += "\",\"" D_JSON_IR_DATALSB "\":\"";
+        IrUint64toHex(reverseBitsInBytes64(results.value), hvalue, results.bits);  // Get 64bit value as hex 0x00123456, LSB
+        json += hvalue;
+        json += "\"";
+      } else {    // UNKNOWN
+        IrUint64toHex(results.value, hvalue, 32);  // Unknown is always 32 bits
+        json += "\"";
+        json += hvalue;
+        json += "\"";
+      }
     }
   }
   json += ",\"" D_JSON_IR_REPEAT "\":";
