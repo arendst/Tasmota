@@ -1616,7 +1616,7 @@ void SML_Show(boolean json) {
                 if (lastmind!=mindex) {
                   // meter changed, close mqtt
                   //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s}", b_mqtt_data);
-                  ResponseAppend_P(PSTR("}"));
+                  ResponseJsonEnd();
                   // and open new
                   //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s,\"%s\":{\"%s\":%s", b_mqtt_data,meter_desc_p[mindex].prefix,jname,tpowstr);
                   ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%s"),meter_desc_p[mindex].prefix,jname,tpowstr);
@@ -1643,7 +1643,7 @@ void SML_Show(boolean json) {
     if (json) {
      //snprintf_P(b_mqtt_data, sizeof(b_mqtt_data), "%s}", b_mqtt_data);
      //ResponseAppend_P(PSTR("%s"),b_mqtt_data);
-     ResponseAppend_P(PSTR("}"));
+     ResponseJsonEnd();
    } else {
      //WSContentSend_PD(PSTR("%s"),b_mqtt_data);
    }

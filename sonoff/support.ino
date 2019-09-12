@@ -951,6 +951,11 @@ int ResponseJsonEnd(void)
   return ResponseAppend_P(PSTR("}"));
 }
 
+int ResponseJsonEndEnd(void)
+{
+  return ResponseAppend_P(PSTR("}}"));
+}
+
 /*********************************************************************************************\
  * GPIO Module and Template management
 \*********************************************************************************************/

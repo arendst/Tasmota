@@ -366,7 +366,7 @@ void CmndStatus(void)
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
     XsnsSensorState();
-    ResponseAppend_P(PSTR("}}"));
+    ResponseJsonEndEnd();
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "4"));
   }
 
@@ -795,14 +795,14 @@ void CmndModules(void)
   for (uint32_t i = 0; i <= sizeof(kModuleNiceList); i++) {
     if (i > 0) { midx = pgm_read_byte(kModuleNiceList + i -1); }
     if (!jsflg) {
-      Response_P(PSTR("{\"" D_CMND_MODULES "%d\":["), lines);
+      Response_P(PSTR("{\"" D_CMND_MODULES "%d\":{"), lines);
     } else {
       ResponseAppend_P(PSTR(","));
     }
     jsflg = true;
     uint32_t j = i ? midx +1 : 0;
-    if ((ResponseAppend_P(PSTR("\"%d (%s)\""), j, AnyModuleName(midx).c_str()) > (LOGSZ - TOPSZ)) || (i == sizeof(kModuleNiceList))) {
-      ResponseAppend_P(PSTR("]}"));
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), j, AnyModuleName(midx).c_str()) > (LOGSZ - TOPSZ)) || (i == sizeof(kModuleNiceList))) {
+      ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, UpperCase(XdrvMailbox.command, XdrvMailbox.command));
       jsflg = false;
       lines++;
@@ -839,7 +839,7 @@ void CmndGpio(void)
         if (jsflg) { ResponseAppend_P(PSTR(",")); }
         jsflg = true;
         char stemp1[TOPSZ];
-        ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":\"%d (%s)\""), i, Settings.my_gp.io[i], GetTextIndexed(stemp1, sizeof(stemp1), Settings.my_gp.io[i], kSensorNames));
+        ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s\"}"), i, Settings.my_gp.io[i], GetTextIndexed(stemp1, sizeof(stemp1), Settings.my_gp.io[i], kSensorNames));
       }
     }
     if (jsflg) {
@@ -861,14 +861,14 @@ void CmndGpios(void)
     midx = pgm_read_byte(kGpioNiceList + i);
     if ((XdrvMailbox.payload != 255) && GetUsedInModule(midx, cmodule.io)) { continue; }
     if (!jsflg) {
-      Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
+      Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":{"), lines);
     } else {
       ResponseAppend_P(PSTR(","));
     }
     jsflg = true;
     char stemp1[TOPSZ];
-    if ((ResponseAppend_P(PSTR("\"%d (%s)\""), midx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (LOGSZ - TOPSZ)) || (i == sizeof(kGpioNiceList) -1)) {
-      ResponseAppend_P(PSTR("]}"));
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), midx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (LOGSZ - TOPSZ)) || (i == sizeof(kGpioNiceList) -1)) {
+      ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, UpperCase(XdrvMailbox.command, XdrvMailbox.command));
       jsflg = false;
       lines++;

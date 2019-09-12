@@ -4,6 +4,7 @@
  *  Commands Tariff1 22,23 = Tariff1 (Off-Peak) ST,DST   Tariff2 (Standard) 6,7 = Tariff2 ST,DST   Tariff9 0/1 = Weekend toggle (1 = Off-Peak during weekend)
  * Change rename "Data" to "Hash" and limit to 32 bits when receiving UNKNOWN IR protocol (see DECODE_HASH from IRremoteESP8266)
  * Add command Gpios 255/All to show all available GPIO components (#6407)
+ * Change JSON output format for commands Adc, Adcs, Modules, Gpio and Gpios from list to dictionary (#6407)
  *
  * 6.6.0.11 20190907
  * Change Settings crc calculation allowing short term backward compatibility

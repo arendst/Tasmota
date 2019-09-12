@@ -254,7 +254,7 @@ void IrReceiveCheck(void)
         ResponseAppend_P(PSTR("],\"" D_JSON_IR_RAWDATA "Info\":[%d,%d,%d]"), extended_length, i -1, results.overflow);
       }
 
-      ResponseAppend_P(PSTR("}}"));
+      ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
 
       if (iridx) {
