@@ -604,12 +604,6 @@ const char kCodeImage[] PROGMEM = "sonoff|minimal|classic|sensors|knx|basic|disp
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;
 
-const char kOptionOff[] PROGMEM = "OFF|" D_OFF "|" D_FALSE "|" D_STOP "|" D_CELSIUS ;
-const char kOptionOn[] PROGMEM = "ON|" D_ON "|" D_TRUE "|" D_START "|" D_FAHRENHEIT "|" D_USER ;
-const char kOptionToggle[] PROGMEM = "TOGGLE|" D_TOGGLE "|" D_ADMIN ;
-const char kOptionBlink[] PROGMEM = "BLINK|" D_BLINK ;
-const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
-
 // xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_TEMP[] PROGMEM = "{s}%s " D_TEMPERATURE "{m}%s&deg;%c{e}";                    // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>

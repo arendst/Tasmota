@@ -859,20 +859,19 @@ void CmndGpios(void)
   bool jsflg = false;
   for (uint32_t i = 0; i < sizeof(kGpioNiceList); i++) {
     midx = pgm_read_byte(kGpioNiceList + i);
-    if (!GetUsedInModule(midx, cmodule.io)) {
-      if (!jsflg) {
-        Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
-      } else {
-        ResponseAppend_P(PSTR(","));
-      }
-      jsflg = true;
-      char stemp1[TOPSZ];
-      if ((ResponseAppend_P(PSTR("\"%d (%s)\""), midx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (LOGSZ - TOPSZ)) || (i == sizeof(kGpioNiceList) -1)) {
-        ResponseAppend_P(PSTR("]}"));
-        MqttPublishPrefixTopic_P(RESULT_OR_STAT, UpperCase(XdrvMailbox.command, XdrvMailbox.command));
-        jsflg = false;
-        lines++;
-      }
+    if ((XdrvMailbox.payload != 255) && GetUsedInModule(midx, cmodule.io)) { continue; }
+    if (!jsflg) {
+      Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
+    } else {
+      ResponseAppend_P(PSTR(","));
+    }
+    jsflg = true;
+    char stemp1[TOPSZ];
+    if ((ResponseAppend_P(PSTR("\"%d (%s)\""), midx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (LOGSZ - TOPSZ)) || (i == sizeof(kGpioNiceList) -1)) {
+      ResponseAppend_P(PSTR("]}"));
+      MqttPublishPrefixTopic_P(RESULT_OR_STAT, UpperCase(XdrvMailbox.command, XdrvMailbox.command));
+      jsflg = false;
+      lines++;
     }
   }
   mqtt_data[0] = '\0';
