@@ -339,6 +339,7 @@ int8_t parseCompareExpression(String &expr, String &leftExpr, String &rightExpr)
 {
   char compare_operator[3];
   int8_t compare = COMPARE_OPERATOR_NONE;
+  leftExpr = expr;
   int position;
   for (int8_t i = MAXIMUM_COMPARE_OPERATOR; i >= 0; i--) {
     snprintf_P(compare_operator, sizeof(compare_operator), kCompareOperators + (i *2));
