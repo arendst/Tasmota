@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.3.0033'
+VER = '2.3.0034'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -998,7 +998,26 @@ Setting_6_6_0_10['flag2'][0].update ({
                                     })
 Setting_6_6_0_10['flag3'][0].pop('tuya_show_dimmer',None)
 # ======================================================================
+Setting_6_6_0_11 = copy.deepcopy(Setting_6_6_0_10)
+Setting_6_6_0_11.update             ({
+    'ina226_r_shunt':               ('<H',  0xE20,       ([4], None,                            ('Power',       '"Sensor54 {}1 {}".format(#,$)')) ),
+    'ina226_i_fs':                  ('<H',  0xE28,       ([4], None,                            ('Power',       '"Sensor54 {}2 {}".format(#,$)')) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_12 = copy.deepcopy(Setting_6_6_0_11)
+Setting_6_6_0_12.update             ({
+    'register8_ENERGY_TARIFF1_ST':  ('B',   0x1D6,       (None, None,                           ('Power',       '"Tariff1 {},{}".format($,@["register8_ENERGY_TARIFF1_DS"])')) ),
+    'register8_ENERGY_TARIFF2_ST':  ('B',   0x1D7,       (None, None,                           ('Power',       '"Tariff2 {},{}".format($,@["register8_ENERGY_TARIFF2_DS"])')) ),
+    'register8_ENERGY_TARIFF1_DS':  ('B',   0x1D8,       (None, None,                           ('Power',       None)) ),
+    'register8_ENERGY_TARIFF2_DS':  ('B',   0x1D9,       (None, None,                           ('Power',       None)) ),
+                                    })
+Setting_6_6_0_12['flag3'][0].update ({
+        'energy_weekend':           ('<L', (0x3A0,1,20), (None, None,                           ('Power',       '"Tariff9 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x606000C,0x1000, Setting_6_6_0_12),
+            (0x606000B,0x1000, Setting_6_6_0_11),
             (0x606000A,0x1000, Setting_6_6_0_10),
             (0x6060009,0x1000, Setting_6_6_0_9),
             (0x6060008,0x1000, Setting_6_6_0_8),
@@ -1696,13 +1715,38 @@ def GetSettingsCrc(dobj):
     """
     if isinstance(dobj, bytearray):
         dobj = str(dobj)
+    version, size, setting = GetTemplateSetting(dobj)
+    if version < 0x06060007 or version > 0x0606000A:
+        size = 3584
     crc = 0
-    for i in range(0, len(dobj)):
+    for i in range(0, size):
         if not i in [14,15]: # Skip crc
             byte = ord(dobj[i])
             crc += byte * (i+1)
 
     return crc & 0xffff
+
+
+def GetSettingsCrc32(dobj):
+    """
+    Return binary config data calclulated crc32
+
+    @param dobj:
+        decrypted binary config data
+
+    @return:
+        4 byte unsigned integer crc value
+
+    """
+    if isinstance(dobj, bytearray):
+        dobj = str(dobj)
+    crc = 0
+    for i in range(0, len(dobj)-4):
+        crc ^= ord(dobj[i])
+        for j in range(0, 8):
+            crc = (crc >> 1) ^ (-int(crc & 1) & 0xEDB88320);
+
+    return ~crc & 0xffffffff
 
 
 def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, datadef, arraydef, validate, cmd, group, tasmotacmnd, converter, readconverter, writeconverter"):
@@ -2583,8 +2627,16 @@ def Bin2Mapping(decode_cfg):
         cfg_crc = GetField(decode_cfg, 'cfg_crc', setting['cfg_crc'], raw=True)
     else:
         cfg_crc = GetSettingsCrc(decode_cfg)
-    if cfg_crc != GetSettingsCrc(decode_cfg):
-        exit(ExitCode.DATA_CRC_ERROR, 'Data CRC error, read 0x{:x} should be 0x{:x}'.format(cfg_crc, GetSettingsCrc(decode_cfg)), type_=LogType.WARNING, doexit=not args.ignorewarning,line=inspect.getlineno(inspect.currentframe()))
+    if 'cfg_crc32' in setting:
+        cfg_crc32 = GetField(decode_cfg, 'cfg_crc32', setting['cfg_crc32'], raw=True)
+    else:
+        cfg_crc32 = GetSettingsCrc32(decode_cfg)
+    if version < 0x0606000B:
+        if cfg_crc != GetSettingsCrc(decode_cfg):
+            exit(ExitCode.DATA_CRC_ERROR, 'Data CRC error, read 0x{:4x} should be 0x{:4x}'.format(cfg_crc, GetSettingsCrc(decode_cfg)), type_=LogType.WARNING, doexit=not args.ignorewarning,line=inspect.getlineno(inspect.currentframe()))
+    else:
+        if cfg_crc32 != GetSettingsCrc32(decode_cfg):
+            exit(ExitCode.DATA_CRC_ERROR, 'Data CRC32 error, read 0x{:8x} should be 0x{:8x}'.format(cfg_crc32, GetSettingsCrc32(decode_cfg)), type_=LogType.WARNING, doexit=not args.ignorewarning,line=inspect.getlineno(inspect.currentframe()))
 
     # get valuemapping
     valuemapping = GetField(decode_cfg, None, (setting,0,(None, None, (INTERNAL, None))))
@@ -2615,6 +2667,9 @@ def Bin2Mapping(decode_cfg):
                              }
     if 'cfg_crc' in setting:
         valuemapping['header']['template'].update({'size': cfg_size})
+    if 'cfg_crc32' in setting:
+        valuemapping['header']['template'].update({'crc32': cfg_crc32})
+        valuemapping['header']['data'].update({'crc32': hex(GetSettingsCrc32(decode_cfg))})
     if 'version' in setting:
         valuemapping['header']['data'].update({'version': hex(cfg_version)})
 
@@ -2660,6 +2715,9 @@ def Mapping2Bin(decode_cfg, jsonconfig, filename=""):
         if 'cfg_crc' in setting:
             crc = GetSettingsCrc(_buffer)
             struct.pack_into(setting['cfg_crc'][0], _buffer, setting['cfg_crc'][1], crc)
+        if 'cfg_crc32' in setting:
+            crc32 = GetSettingsCrc32(_buffer)
+            struct.pack_into(setting['cfg_crc32'][0], _buffer, setting['cfg_crc32'][1], crc32)
         return _buffer
 
     else:
