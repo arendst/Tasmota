@@ -36,7 +36,11 @@
 #include <TasmotaModbus.h>
 TasmotaModbus *PzemAcModbus;
 
-uint8_t PzemAc_send_retry = 0;
+struct PZEMAC {
+  float energy = 0;
+  uint8_t send_retry = 0;
+  uint8_t phase = 0;
+} PzemAc;
 
 void PzemAcEverySecond(void)
 {
@@ -49,30 +53,40 @@ void PzemAcEverySecond(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
 
     if (error) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "PzemAc response error %d"), error);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PAC: PzemAc %d response error %d"), PZEM_AC_DEVICE_ADDRESS + PzemAc.phase, error);
     } else {
       Energy.data_valid = 0;
 
       //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
       // 01 04 14 08 D1 00 6C 00 00 00 F4 00 00 00 26 00 00 01 F4 00 64 00 00 51 34
       // Id Cc Sz Volt- Current---- Power------ Energy----- Frequ PFact Alarm Crc--
-      Energy.voltage[0] = (float)((buffer[3] << 8) + buffer[4]) / 10.0;                                                  // 6553.0 V
-      Energy.current[0] = (float)((buffer[7] << 24) + (buffer[8] << 16) + (buffer[5] << 8) + buffer[6]) / 1000.0;        // 4294967.000 A
-      Energy.active_power[0] = (float)((buffer[11] << 24) + (buffer[12] << 16) + (buffer[9] << 8) + buffer[10]) / 10.0;  // 429496729.0 W
-      Energy.frequency[0] = (float)((buffer[17] << 8) + buffer[18]) / 10.0;                                              // 50.0 Hz
-      Energy.power_factor[0] = (float)((buffer[19] << 8) + buffer[20]) / 100.0;                                          // 1.00
-      float energy = (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);               // 4294967295 Wh
+      Energy.voltage[PzemAc.phase] = (float)((buffer[3] << 8) + buffer[4]) / 10.0;                                                  // 6553.0 V
+      Energy.current[PzemAc.phase] = (float)((buffer[7] << 24) + (buffer[8] << 16) + (buffer[5] << 8) + buffer[6]) / 1000.0;        // 4294967.000 A
+      Energy.active_power[PzemAc.phase] = (float)((buffer[11] << 24) + (buffer[12] << 16) + (buffer[9] << 8) + buffer[10]) / 10.0;  // 429496729.0 W
+      Energy.frequency[PzemAc.phase] = (float)((buffer[17] << 8) + buffer[18]) / 10.0;                                              // 50.0 Hz
+      Energy.power_factor[PzemAc.phase] = (float)((buffer[19] << 8) + buffer[20]) / 100.0;                                          // 1.00
 
-      EnergyUpdateTotal(energy, false);
+      PzemAc.energy += (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);                           // 4294967295 Wh
+      if (PzemAc.phase == Energy.phase_count -1) {
+        EnergyUpdateTotal(PzemAc.energy, false);
+        PzemAc.energy = 0;
+      }
     }
   }
 
-  if (0 == PzemAc_send_retry || data_ready) {
-    PzemAc_send_retry = 5;
-    PzemAcModbus->Send(PZEM_AC_DEVICE_ADDRESS, 0x04, 0, 10);
+  if (0 == PzemAc.send_retry || data_ready) {
+    PzemAc.phase++;
+    if (PzemAc.phase >= Energy.phase_count) {
+      PzemAc.phase = 0;
+    }
+    PzemAc.send_retry = ENERGY_WATCHDOG;
+    PzemAcModbus->Send(PZEM_AC_DEVICE_ADDRESS + PzemAc.phase, 0x04, 0, 10);
   }
   else {
-    PzemAc_send_retry--;
+    PzemAc.send_retry--;
+    if ((Energy.phase_count > 1) && (0 == PzemAc.send_retry)) {
+      Energy.phase_count--;  // Decrement phases if no response after retry
+    }
   }
 }
 
@@ -82,6 +96,10 @@ void PzemAcSnsInit(void)
   uint8_t result = PzemAcModbus->Begin(9600);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+
+    Energy.phase_count = 3;  // Start off with three phases
+    PzemAc.phase = 2;
+
   } else {
     energy_flg = ENERGY_NONE;
   }

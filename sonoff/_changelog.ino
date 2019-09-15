@@ -7,7 +7,8 @@
  * Change JSON output format for commands Adc, Adcs, Modules, Gpio and Gpios from list to dictionary (#6407)
  * Add Zigbee support phase 3 - support for Xiaomi lumi.weather air quality sensor, Osram mini-switch
  * Change energy sensors for three phase/channel support
- * Add Shelly 2.5 energy dual channel support (#6160)
+ * Add support for Shelly 2.5 dual energy (#6160)
+ * Add initial support for up to three PZEM-014/-016 on serial modbus connection with addresses 1 (default), 2 and 3 (#2315)
  *
  * 6.6.0.11 20190907
  * Change Settings crc calculation allowing short term backward compatibility
