@@ -1186,6 +1186,7 @@ void CmndIf()
     parameters[XdrvMailbox.data_len] = '\0';
     ProcessIfStatement(parameters);
   }
+  ResponseCmndDone();
 }
 
 /********************************************************************************************/
