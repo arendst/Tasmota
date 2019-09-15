@@ -784,10 +784,8 @@ const char HTTP_ENERGY_SNS3[] PROGMEM =
   "{s}" D_EXPORT_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}";
 #endif  // USE_WEBSERVER
 
-char* EnergyFormat(char* result, char* input, bool json, bool single = false)
+char* EnergyFormatIndex(char* result, char* input, bool json, uint32_t index, bool single = false)
 {
-  uint8_t index = (single) ? 1 : Energy.phase_count;  // 1,2,3
-
   char layout[16];
   GetTextIndexed(layout, sizeof(layout), (index -1) + (3 * json), kEnergyPhases);
   switch (index) {
@@ -801,6 +799,12 @@ char* EnergyFormat(char* result, char* input, bool json, bool single = false)
       snprintf_P(result, FLOATSZ *3, input);
   }
   return result;
+}
+
+char* EnergyFormat(char* result, char* input, bool json, bool single = false)
+{
+  uint8_t index = (single) ? 1 : Energy.phase_count;  // 1,2,3
+  return EnergyFormatIndex(result, input, json, index, single);
 }
 
 void EnergyShow(bool json)
@@ -875,8 +879,14 @@ void EnergyShow(bool json)
   dtostrfd(Energy.daily, Settings.flag2.energy_resolution, energy_daily_chr);
   char energy_yesterday_chr[FLOATSZ];
   dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
-  char energy_total_chr[FLOATSZ];
-  dtostrfd(Energy.total, Settings.flag2.energy_resolution, energy_total_chr);
+  char energy_total_chr[3][FLOATSZ];
+  dtostrfd(Energy.total, Settings.flag2.energy_resolution, energy_total_chr[0]);
+  uint8_t energy_total_fields = 1;
+  if (Settings.register8[R8_ENERGY_TARIFF1_ST] != Settings.register8[R8_ENERGY_TARIFF2_ST]) {
+    dtostrfd(Energy.total1, Settings.flag2.energy_resolution, energy_total_chr[1]);  // Tariff1
+    dtostrfd(Energy.total - Energy.total1, Settings.flag2.energy_resolution, energy_total_chr[2]);  // Tariff2
+    energy_total_fields = 3;
+  }
   char export_active_chr[FLOATSZ];
   dtostrfd(Energy.export_active, Settings.flag2.energy_resolution, export_active_chr);
 
@@ -888,10 +898,15 @@ void EnergyShow(bool json)
     bool show_energy_period = (0 == tele_period);
 
     ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_TOTAL_START_TIME "\":\"%s\",\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s"),
-      GetDateAndTime(DT_ENERGY).c_str(), energy_total_chr, energy_yesterday_chr, energy_daily_chr);
+      GetDateAndTime(DT_ENERGY).c_str(),
+      EnergyFormatIndex(value_chr, energy_total_chr[0], json, energy_total_fields),
+      energy_yesterday_chr,
+      energy_daily_chr);
+
     if (!isnan(Energy.export_active)) {
       ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"), export_active_chr);
     }
+
     if (show_energy_period) {
       float energy = 0;
       if (Energy.period) {
@@ -929,17 +944,16 @@ void EnergyShow(bool json)
 
 #ifdef USE_DOMOTICZ
     if (show_energy_period) {  // Only send if telemetry
-      dtostrfd(Energy.total * 1000, 1, energy_total_chr);
-      DomoticzSensorPowerEnergy((int)Energy.active_power[0], energy_total_chr);  // PowerUsage, EnergyToday
+      dtostrfd(Energy.total * 1000, 1, energy_total_chr[0]);
+      DomoticzSensorPowerEnergy((int)Energy.active_power[0], energy_total_chr[0]);  // PowerUsage, EnergyToday
 
-      dtostrfd((Energy.total - Energy.total1) * 1000, 1, energy_total_chr);  // Tariff2
-      char energy_total1_chr[FLOATSZ];
-      dtostrfd(Energy.total1 * 1000, 1, energy_total1_chr);  // Tariff1
+      dtostrfd(Energy.total1 * 1000, 1, energy_total_chr[1]);  // Tariff1
+      dtostrfd((Energy.total - Energy.total1) * 1000, 1, energy_total_chr[2]);  // Tariff2
       char return1_total_chr[FLOATSZ];
       dtostrfd(RtcSettings.energy_usage.return1_kWhtotal, 1, return1_total_chr);
       char return2_total_chr[FLOATSZ];
       dtostrfd(RtcSettings.energy_usage.return2_kWhtotal, 1, return2_total_chr);
-      DomoticzSensorP1SmartMeter(energy_total1_chr, energy_total_chr, return1_total_chr, return2_total_chr, (int)Energy.active_power[0]);
+      DomoticzSensorP1SmartMeter(energy_total_chr[1], energy_total_chr[2], return1_total_chr, return2_total_chr, (int)Energy.active_power[0]);
 
       if (Energy.voltage_available) {
         DomoticzSensor(DZ_VOLTAGE, voltage_chr[0]);  // Voltage
@@ -989,7 +1003,7 @@ void EnergyShow(bool json)
           EnergyFormat(value_chr, frequency_chr[0], json));
       }
     }
-    WSContentSend_PD(HTTP_ENERGY_SNS2, energy_daily_chr, energy_yesterday_chr, energy_total_chr);
+    WSContentSend_PD(HTTP_ENERGY_SNS2, energy_daily_chr, energy_yesterday_chr, energy_total_chr[0]);
     if (!isnan(Energy.export_active)) {
       WSContentSend_PD(HTTP_ENERGY_SNS3, export_active_chr);
     }
