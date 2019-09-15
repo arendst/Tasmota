@@ -325,6 +325,24 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
   return out;
 }
 
+char* Uint64toHex(uint64_t value, char *str, uint16_t bits)
+{
+  ulltoa(value, str, 16);  // Get 64bit value
+
+  int fill = 8;
+  if ((bits > 3) && (bits < 65)) {
+    fill = bits / 4;  // Max 16
+    if (bits % 4) { fill++; }
+  }
+  int len = strlen(str);
+  fill -= len;
+  if (fill > 0) {
+    memmove(str + fill, str, len +1);
+    memset(str, '0', fill);
+  }
+  return str;
+}
+
 char* dtostrfd(double number, unsigned char prec, char *s)
 {
   if ((isnan(number)) || (isinf(number))) {  // Fix for JSON output (https://stackoverflow.com/questions/1423081/json-left-out-infinity-and-nan-json-status-in-ecmascript)

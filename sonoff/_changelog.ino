@@ -5,6 +5,7 @@
  * Change rename "Data" to "Hash" and limit to 32 bits when receiving UNKNOWN IR protocol (see DECODE_HASH from IRremoteESP8266)
  * Add command Gpios 255/All to show all available GPIO components (#6407)
  * Change JSON output format for commands Adc, Adcs, Modules, Gpio and Gpios from list to dictionary (#6407)
+ * Add Zigbee support phase 3 - support for Xiaomi lumi.weather air quality sensor, Osram mini-switch
  *
  * 6.6.0.11 20190907
  * Change Settings crc calculation allowing short term backward compatibility
