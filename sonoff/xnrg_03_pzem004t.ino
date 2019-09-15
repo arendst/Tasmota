@@ -172,13 +172,13 @@ void PzemEvery200ms(void)
       Energy.data_valid = 0;
       switch (pzem_read_state) {
         case 1:  // Voltage as 230.2V
-          Energy.voltage = value;
+          Energy.voltage[0] = value;
           break;
         case 2:  // Current as 17.32A
-          Energy.current = value;
+          Energy.current[0] = value;
           break;
         case 3:  // Power as 20W
-          Energy.active_power = value;
+          Energy.active_power[0] = value;
           break;
         case 4:  // Total energy as 99999Wh
           EnergyUpdateTotal(value, false);

@@ -128,13 +128,13 @@ void HlwEvery200ms(void)
 
   if (Hlw.cf_power_pulse_length  && Energy.power_on && !Hlw.load_off) {
     hlw_w = (Hlw.power_ratio * Settings.energy_power_calibration) / Hlw.cf_power_pulse_length ;  // W *10
-    Energy.active_power = (float)hlw_w / 10;
+    Energy.active_power[0] = (float)hlw_w / 10;
     Hlw.power_retry = 1;        // Workaround issue #5161
   } else {
     if (Hlw.power_retry) {
       Hlw.power_retry--;
     } else {
-      Energy.active_power = 0;
+      Energy.active_power[0] = 0;
     }
   }
 
@@ -175,19 +175,19 @@ void HlwEvery200ms(void)
 
         if (Hlw.cf1_voltage_pulse_length  && Energy.power_on) {     // If powered on always provide voltage
           hlw_u = (Hlw.voltage_ratio * Settings.energy_voltage_calibration) / Hlw.cf1_voltage_pulse_length ;  // V *10
-          Energy.voltage = (float)hlw_u / 10;
+          Energy.voltage[0] = (float)hlw_u / 10;
         } else {
-          Energy.voltage = 0;
+          Energy.voltage[0] = 0;
         }
 
       } else {
         Hlw.cf1_current_pulse_length = cf1_pulse_length;
 
-        if (Hlw.cf1_current_pulse_length && Energy.active_power) {   // No current if no power being consumed
+        if (Hlw.cf1_current_pulse_length && Energy.active_power[0]) {   // No current if no power being consumed
           hlw_i = (Hlw.current_ratio * Settings.energy_current_calibration) / Hlw.cf1_current_pulse_length;  // mA
-          Energy.current = (float)hlw_i / 1000;
+          Energy.current[0] = (float)hlw_i / 1000;
         } else {
-          Energy.current = 0;
+          Energy.current[0] = 0;
         }
 
       }

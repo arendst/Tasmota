@@ -98,31 +98,31 @@ void SDM120Every250ms(void)
 
       switch(Sdm120.read_state) {
         case 0:
-          Energy.voltage = value;          // 230.2 V
+          Energy.voltage[0] = value;          // 230.2 V
           break;
 
         case 1:
-          Energy.current  = value;         // 1.260 A
+          Energy.current[0]  = value;         // 1.260 A
           break;
 
         case 2:
-          Energy.active_power = value;     // -196.3 W
+          Energy.active_power[0] = value;     // -196.3 W
           break;
 
         case 3:
-          Energy.apparent_power = value;   // 223.4 VA
+          Energy.apparent_power[0] = value;   // 223.4 VA
           break;
 
         case 4:
-          Energy.reactive_power = value;   // 92.2
+          Energy.reactive_power[0] = value;   // 92.2
           break;
 
         case 5:
-          Energy.power_factor = value;     // -0.91
+          Energy.power_factor[0] = value;     // -0.91
           break;
 
         case 6:
-          Energy.frequency = value;        // 50.0 Hz
+          Energy.frequency[0] = value;        // 50.0 Hz
           break;
 
         case 7:

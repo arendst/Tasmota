@@ -56,9 +56,9 @@ void PzemDcEverySecond(void)
       //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
       // 01 04 10 05 40 00 0A 00 0D 00 00 00 02 00 00 00 00 00 00 D6 29
       // Id Cc Sz Volt- Curre Power------ Energy----- HiAlm LoAlm Crc--
-      Energy.voltage = (float)((buffer[3] << 8) + buffer[4]) / 100.0;                                               // 655.00 V
-      Energy.current = (float)((buffer[5] << 8) + buffer[6]) / 100.0;                                               // 655.00 A
-      Energy.active_power = (float)((buffer[9] << 24) + (buffer[10] << 16) + (buffer[7] << 8) + buffer[8]) / 10.0;  // 429496729.0 W
+      Energy.voltage[0] = (float)((buffer[3] << 8) + buffer[4]) / 100.0;                                               // 655.00 V
+      Energy.current[0] = (float)((buffer[5] << 8) + buffer[6]) / 100.0;                                               // 655.00 A
+      Energy.active_power[0] = (float)((buffer[9] << 24) + (buffer[10] << 16) + (buffer[7] << 8) + buffer[8]) / 10.0;  // 429496729.0 W
       float energy = (float)((buffer[13] << 24) + (buffer[14] << 16) + (buffer[11] << 8) + buffer[12]);             // 4294967295 Wh
 
       EnergyUpdateTotal(energy, false);
