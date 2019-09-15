@@ -70,24 +70,6 @@ void IrSendInit(void)
   irsend->begin();
 }
 
-char* IrUint64toHex(uint64_t value, char *str, uint16_t bits)
-{
-  ulltoa(value, str, 16);  // Get 64bit value
-
-  int fill = 8;
-  if ((bits > 3) && (bits < 65)) {
-    fill = bits / 4;  // Max 16
-    if (bits % 4) { fill++; }
-  }
-  int len = strlen(str);
-  fill -= len;
-  if (fill > 0) {
-    memmove(str + fill, str, len +1);
-    memset(str, '0', fill);
-  }
-  return str;
-}
-
 #ifdef USE_IR_RECEIVE
 /*********************************************************************************************\
  * IR Receive
@@ -140,10 +122,10 @@ void IrReceiveCheck(void)
         if (results.bits % 8) { digits2++; }
         ToHex_P((unsigned char*)results.state, digits2, hvalue, sizeof(hvalue));  // Get n-bit value as hex 56341200
       } else {
-        IrUint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 00123456
+        Uint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 00123456
       }
     } else {
-      IrUint64toHex(results.value, hvalue, 32);  // UNKNOWN is always 32 bits hash
+      Uint64toHex(results.value, hvalue, 32);  // UNKNOWN is always 32 bits hash
     }
 
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value 0x%s, Decode %d"),
@@ -938,7 +920,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
   char dvalue[64];
   char hvalue[20];
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (0x%s), repeat %d, protocol_code %d"),
-    protocol_text, protocol, bits, ulltoa(data, dvalue, 10), IrUint64toHex(data, hvalue, bits), repeat, protocol_code);
+    protocol_text, protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat, protocol_code);
 
   irsend_active = true;
   switch (protocol_code) {  // Equals IRremoteESP8266.h enum decode_type_t

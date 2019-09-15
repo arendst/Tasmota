@@ -72,27 +72,6 @@ uint64_t reverseBitsInBytes64(uint64_t b) {
   return a.i;
 }
 
-char* IrUint64toHex(uint64_t value, char *str, uint16_t bits)
-{
-  ulltoa(value, str, 16);  // Get 64bit value
-
-  int fill = 8;
-  if ((bits > 3) && (bits < 65)) {
-    fill = bits / 4;  // Max 16
-    if (bits % 4) { fill++; }
-  }
-  int len = strlen(str);
-  fill -= len;
-  if (fill > 0) {
-    memmove(str + fill, str, len +1);
-    memset(str, '0', fill);
-  }
-  memmove(str + 2, str, strlen(str) +1);
-  str[0] = '0';
-  str[1] = 'x';
-  return str;
-}
-
 /*********************************************************************************************\
  * IR Receive
 \*********************************************************************************************/
@@ -189,15 +168,15 @@ String sendIRJsonState(const struct decode_results &results) {
     } else {
       char hvalue[64];
       if (UNKNOWN != results.decode_type) {
-        IrUint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 0x00123456
+        Uint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 0x00123456
         json += "\"";
         json += hvalue;
         json += "\",\"" D_JSON_IR_DATALSB "\":\"";
-        IrUint64toHex(reverseBitsInBytes64(results.value), hvalue, results.bits);  // Get 64bit value as hex 0x00123456, LSB
+        Uint64toHex(reverseBitsInBytes64(results.value), hvalue, results.bits);  // Get 64bit value as hex 0x00123456, LSB
         json += hvalue;
         json += "\"";
       } else {    // UNKNOWN
-        IrUint64toHex(results.value, hvalue, 32);  // Unknown is always 32 bits
+        Uint64toHex(results.value, hvalue, 32);  // Unknown is always 32 bits
         json += "\"";
         json += hvalue;
         json += "\"";
@@ -460,7 +439,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
   char dvalue[32];
   char hvalue[32];
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data %s (%s), repeat %d"),
-    protocol, bits, ulltoa(data, dvalue, 10), IrUint64toHex(data, hvalue, bits), repeat);
+    protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
 
   irsend_active = true;     // deactivate receive
   bool success = irsend->send(protocol, data, bits, repeat);
