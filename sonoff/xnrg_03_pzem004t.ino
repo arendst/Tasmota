@@ -56,6 +56,13 @@ TasmotaSerial *PzemSerial = nullptr;
 
 /*********************************************************************************************/
 
+struct PZEM {
+  float energy = 0;
+  uint8_t send_retry = 0;
+  uint8_t read_state = 0;
+  uint8_t phase = 0;
+} Pzem;
+
 struct PZEMCommand {
   uint8_t command;
   uint8_t addr[4];
@@ -68,7 +75,9 @@ IPAddress pzem_ip(192, 168, 1, 1);
 uint8_t PzemCrc(uint8_t *data)
 {
   uint16_t crc = 0;
-  for (uint32_t i = 0; i < sizeof(PZEMCommand) -1; i++) crc += *data++;
+  for (uint32_t i = 0; i < sizeof(PZEMCommand) -1; i++) {
+    crc += *data++;
+  }
   return (uint8_t)(crc & 0xFF);
 }
 
@@ -77,7 +86,10 @@ void PzemSend(uint8_t cmd)
   PZEMCommand pzem;
 
   pzem.command = cmd;
-  for (uint32_t i = 0; i < sizeof(pzem.addr); i++) pzem.addr[i] = pzem_ip[i];
+  for (uint32_t i = 0; i < sizeof(pzem.addr) -1; i++) {
+    pzem.addr[i] = pzem_ip[i];
+  }
+  pzem.addr[3] = pzem_ip[3] + Pzem.phase;
   pzem.data = 0;
 
   uint8_t *bytes = (uint8_t*)&pzem;
@@ -159,42 +171,52 @@ bool PzemRecieve(uint8_t resp, float *data)
 const uint8_t pzem_commands[]  { PZEM_SET_ADDRESS, PZEM_VOLTAGE, PZEM_CURRENT, PZEM_POWER, PZEM_ENERGY };
 const uint8_t pzem_responses[] { RESP_SET_ADDRESS, RESP_VOLTAGE, RESP_CURRENT, RESP_POWER, RESP_ENERGY };
 
-uint8_t pzem_read_state = 0;
-uint8_t pzem_sendRetry = 0;
-
 void PzemEvery200ms(void)
 {
   bool data_ready = PzemReceiveReady();
 
   if (data_ready) {
     float value = 0;
-    if (PzemRecieve(pzem_responses[pzem_read_state], &value)) {
+    if (PzemRecieve(pzem_responses[Pzem.read_state], &value)) {
       Energy.data_valid = 0;
-      switch (pzem_read_state) {
+      switch (Pzem.read_state) {
         case 1:  // Voltage as 230.2V
-          Energy.voltage[0] = value;
+          Energy.voltage[Pzem.phase] = value;
           break;
         case 2:  // Current as 17.32A
-          Energy.current[0] = value;
+          Energy.current[Pzem.phase] = value;
           break;
         case 3:  // Power as 20W
-          Energy.active_power[0] = value;
+          Energy.active_power[Pzem.phase] = value;
           break;
         case 4:  // Total energy as 99999Wh
-          EnergyUpdateTotal(value, false);
+          Pzem.energy += value;
+          if (Pzem.phase == Energy.phase_count -1) {
+            EnergyUpdateTotal(Pzem.energy, false);
+            Pzem.energy = 0;
+          }
           break;
       }
-      pzem_read_state++;
-      if (5 == pzem_read_state) pzem_read_state = 1;
+      Pzem.read_state++;
+      if (5 == Pzem.read_state) {
+        Pzem.read_state = 1;
+      }
     }
   }
 
-  if (0 == pzem_sendRetry || data_ready) {
-    pzem_sendRetry = 5;
-    PzemSend(pzem_commands[pzem_read_state]);
+  if (0 == Pzem.send_retry || data_ready) {
+    Pzem.phase++;
+    if (Pzem.phase >= Energy.phase_count) {
+      Pzem.phase = 0;
+    }
+    Pzem.send_retry = 5;
+    PzemSend(pzem_commands[Pzem.read_state]);
   }
   else {
-    pzem_sendRetry--;
+    Pzem.send_retry--;
+    if ((Energy.phase_count > 1) && (0 == Pzem.send_retry)) {
+      Energy.phase_count--;  // Decrement phases if no response after retry
+    }
   }
 }
 
@@ -203,7 +225,11 @@ void PzemSnsInit(void)
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
   PzemSerial = new TasmotaSerial(pin[GPIO_PZEM004_RX], pin[GPIO_PZEM0XX_TX], 1);
   if (PzemSerial->begin(9600)) {
-    if (PzemSerial->hardwareSerial()) { ClaimSerial(); }
+    if (PzemSerial->hardwareSerial()) {
+      ClaimSerial();
+    }
+    Energy.phase_count = 3;  // Start off with three phases
+    Pzem.phase = 2;
   } else {
     energy_flg = ENERGY_NONE;
   }
