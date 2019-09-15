@@ -53,7 +53,7 @@ void PzemAcEverySecond(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
 
     if (error) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PAC: PzemAc %d response error %d"), PZEM_AC_DEVICE_ADDRESS + PzemAc.phase, error);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PAC: PzemAc %d error %d"), PZEM_AC_DEVICE_ADDRESS + PzemAc.phase, error);
     } else {
       Energy.data_valid = 0;
 
@@ -84,8 +84,8 @@ void PzemAcEverySecond(void)
   }
   else {
     PzemAc.send_retry--;
-    if ((Energy.phase_count > 1) && (0 == PzemAc.send_retry)) {
-      Energy.phase_count--;  // Decrement phases if no response after retry
+    if ((Energy.phase_count > 1) && (0 == PzemAc.send_retry) && (uptime < 30)) {
+      Energy.phase_count--;  // Decrement phases if no response after retry within 30 seconds after restart
     }
   }
 }
@@ -96,10 +96,8 @@ void PzemAcSnsInit(void)
   uint8_t result = PzemAcModbus->Begin(9600);
   if (result) {
     if (2 == result) { ClaimSerial(); }
-
     Energy.phase_count = 3;  // Start off with three phases
     PzemAc.phase = 2;
-
   } else {
     energy_flg = ENERGY_NONE;
   }

@@ -214,8 +214,8 @@ void PzemEvery200ms(void)
   }
   else {
     Pzem.send_retry--;
-    if ((Energy.phase_count > 1) && (0 == Pzem.send_retry)) {
-      Energy.phase_count--;  // Decrement phases if no response after retry
+    if ((Energy.phase_count > 1) && (0 == Pzem.send_retry) && (uptime < 30)) {
+      Energy.phase_count--;  // Decrement phases if no response after retry within 30 seconds after restart
     }
   }
 }

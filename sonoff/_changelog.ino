@@ -10,6 +10,7 @@
  * Add support for Shelly 2.5 dual energy (#6160)
  * Add initial support for up to three PZEM-014/-016 on serial modbus connection with addresses 1 (default), 2 and 3 (#2315)
  * Add initial support for up to three PZEM-004T on serial connection with addresses x.x.x.1 (default), 2 and 3 (#2315)
+ * Add initial support for up to three PZEM-003/-017 on serial modbus connection with addresses 1 (default), 2 and 3 (#2315)
  *
  * 6.6.0.11 20190907
  * Change Settings crc calculation allowing short term backward compatibility
