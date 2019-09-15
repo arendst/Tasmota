@@ -149,7 +149,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_NOVA_SDS                          // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 #define USE_SERIAL_BRIDGE                     // Add support for software Serial Bridge (+0k8 code)
 //#define USE_SDM120                            // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
-#define USE_SDM630                            // Add support for Eastron SDM630-Modbus energy meter (+2k code)
+//#define USE_SDM630                            // Add support for Eastron SDM630-Modbus energy meter (+2k code)
 #define USE_MP3_PLAYER                        // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10             // Set the startup volume on init, the range can be 0..30(max)
 //#define USE_AZ7798                            // Add support for AZ-Instrument 7798 CO2 datalogger
@@ -162,6 +162,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_PZEM_DC                           // Add support for PZEM003,017 Energy monitor (+1k1 code)
 #define USE_MCP39F501                         // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
 #define USE_SDM120_2                          // Add support for Eastron SDM120-Modbus energy monitor (+1k1 code)
+#define USE_SDM630_2                          // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #define USE_DDS2382                           // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 
 #define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
@@ -247,6 +248,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                          // Disable support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
 #undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM630_2                           // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                            // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 
 #define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
@@ -300,6 +302,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
   #undef USE_PZEM_DC                          // Disable PZEM003,017 Energy monitor
   #undef USE_MCP39F501                        // Disable MCP39F501 Energy monitor as used in Shelly 2
   #undef USE_SDM120_2                         // Disable support for Eastron SDM120-Modbus energy meter
+  #undef USE_SDM630_2                         // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #undef USE_DDS2382                          // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_DOMOTICZ                           // Disable Domoticz
@@ -382,6 +385,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                          // Disable support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
 #undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM630_2                           // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                            // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 
 //#define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
@@ -478,11 +482,11 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 //#undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM630_2                           // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                            // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 
 #undef USE_DHT                                // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
-#undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
 #undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
@@ -563,6 +567,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_PZEM_DC                            // Disable PZEM003,017 Energy monitor
 #undef USE_MCP39F501                          // Disable MCP39F501 Energy monitor as used in Shelly 2
 #undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
+#undef USE_SDM630_2                           // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                            // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 
 #undef USE_DHT                                // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor

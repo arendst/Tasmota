@@ -11,6 +11,7 @@
  * Add initial support for up to three PZEM-014/-016 on serial modbus connection with addresses 1 (default), 2 and 3 (#2315)
  * Add initial support for up to three PZEM-004T on serial connection with addresses x.x.x.1 (default), 2 and 3 (#2315)
  * Add initial support for up to three PZEM-003/-017 on serial modbus connection with addresses 1 (default), 2 and 3 (#2315)
+ * Add driver USE_SDM630_2 as future replacement for USE_SDM630 - Pls test and report
  *
  * 6.6.0.11 20190907
  * Change Settings crc calculation allowing short term backward compatibility

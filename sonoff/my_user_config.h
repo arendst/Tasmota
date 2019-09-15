@@ -433,6 +433,8 @@
 #define USE_MCP39F501                            // Add support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
 //#define USE_SDM120_2                             // Add support for Eastron SDM120-Modbus energy monitor (+1k1 code)
   #define SDM120_SPEED         2400              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
+//#define USE_SDM630_2                             // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
+  #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
 //#define USE_DDS2382                              // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #define DDS2382_SPEED        9600              // Hiking DDS2382 Modbus RS485 serial speed (default: 9600 baud)
 
@@ -440,7 +442,7 @@
 //  #define SDM120_SPEED         2400              // SDM120-Modbus RS485 serial speed (default: 2400 baud)
   #define USE_SDM220                             // Add extra parameters for SDM220 (+0k1 code)
 //#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy meter (+2k code)
-  #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
+//  #define SDM630_SPEED         9600              // SDM630-Modbus RS485 serial speed (default: 9600 baud)
 //#define USE_SOLAX_X1                             // Add support for Solax X1 series Modbus log info (+4k1 code)
   #define SOLAXX1_SPEED        9600              // Solax X1 Modbus RS485 serial speed (default: 9600 baud)
   #define SOLAXX1_PV2                            // Solax X1 using second PV

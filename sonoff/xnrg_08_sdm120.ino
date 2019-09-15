@@ -83,7 +83,7 @@ void SDM120Every250ms(void)
     AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
 
     if (error) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM120 response error %d"), error);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDM: SDM120 error %d"), error);
     } else {
       Energy.data_valid = 0;
 
