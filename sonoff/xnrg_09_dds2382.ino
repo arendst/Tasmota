@@ -47,7 +47,7 @@ void Dds2382EverySecond(void)
     uint8_t buffer[46];  // At least 5 + (2 * 18) = 41
 
     uint32_t error = Dds2382Modbus->ReceiveBuffer(buffer, 18);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Dds2382Modbus->ReceiveCount());
 
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "DDS2382 response error %d"), error);

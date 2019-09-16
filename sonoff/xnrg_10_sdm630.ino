@@ -73,7 +73,7 @@ void SDM630Every250ms(void)
     uint8_t buffer[14];  // At least 5 + (2 * 2) = 9
 
     uint32_t error = Sdm630Modbus->ReceiveBuffer(buffer, 2);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Sdm630Modbus->ReceiveCount());
 
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDM: SDM630 error %d"), error);
