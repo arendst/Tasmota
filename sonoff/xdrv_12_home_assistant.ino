@@ -152,6 +152,11 @@ const char HASS_DISCOVER_DEVICE_INFO_SHORT[] PROGMEM =
 const char HASS_DISCOVER_TOPIC_PREFIX[] PROGMEM =
   ",\"~\":\"%s\"";
 
+const char HASS_DISCOVER_INFO_WIFI[] PROGMEM =
+  // Combined WiFi sensor, not usable for graph in Hass //
+  ",\"val_tpl\":\"{{[value_json.Wifi." D_JSON_SSID ", value_json.Wifi." D_JSON_RSSI "] | join (' (') + '%%)' }}\","
+  "\"dev_cla\":\"signal_strength\""; // device_class: signal_strength
+
 uint8_t hass_init_step = 0;
 uint8_t hass_mode = 0;
 int hass_tele_period = 0;
@@ -554,6 +559,41 @@ void HAssPublishStatus(void)
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_HASS_STATE));
 }
 
+void HAssAnnounceWifiSensor(void)
+{
+  char stopic[TOPSZ];
+  char stemp1[TOPSZ];
+  char stemp2[TOPSZ];
+  char unique_id[30];
+
+  // Announce sensor
+  mqtt_data[0] = '\0';  // Clear retained message
+
+  // Clear or Set topic
+  snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_conn"), ESP.getChipId());
+  snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
+
+  if (Settings.flag.hass_discovery) {
+    char name[33+11]; // friendlyname(33) + + " " + "connection"
+    char *state_topic = stemp1;
+    char *availability_topic = stemp2;
+    char prefix[TOPSZ];
+
+    snprintf_P(name, sizeof(name), PSTR("%s Connection"), Settings.friendlyname[0]); // "Connection" could be translated, should be added to language files
+    GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_STATE));
+    GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
+    FindPrefix(state_topic, availability_topic, prefix);
+    Shorten(&state_topic, prefix);
+    Shorten(&availability_topic, prefix);
+
+    Response_P(HASS_DISCOVER_SENSOR, name, state_topic, availability_topic);
+    TryResponseAppend_P(HASS_DISCOVER_INFO_WIFI, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
+    TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
+    TryResponseAppend_P(PSTR("}"));
+  }
+  MqttPublish(stopic, true);
+}
+
 void HAssDiscovery(void)
 {
   // Configure Tasmota for default Home Assistant parameters to keep discovery message as short as possible
@@ -584,6 +624,9 @@ void HAssDiscovery(void)
 
     // Send info about status sensor
     HAssAnnounceStatusSensor();
+    
+    // Send info about Wifi
+    HAssAnnounceWifiSensor();
   }
 }
 
