@@ -176,6 +176,7 @@ void Sdm630SnsInit(void)
   uint8_t result = Sdm630Modbus->Begin(SDM630_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
+    Energy.phase_count = 3;
   } else {
     energy_flg = ENERGY_NONE;
   }
