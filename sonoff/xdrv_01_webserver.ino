@@ -92,6 +92,7 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "wl(u);";
 
 const char HTTP_SCRIPT_ROOT[] PROGMEM =
+
   "function la(p){"
     "var a='';"
     "if(la.arguments.length==1){"
@@ -110,6 +111,12 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "x.send();"
     "lt=setTimeout(la,%d);"               // Settings.web_refresh
   "}"
+#ifdef USE_SCRIPT_WEB_DISPLAY
+  "function seva(par,ivar){"
+    "la('&sv='+ivar+'_'+par);"
+  "}"
+#endif
+
 
 #ifdef USE_JAVASCRIPT_ES6
   "lb=p=>la('&d='+p);"                    // Dark - Bright &d related to lb(value) and WebGetArg("d", tmp, sizeof(tmp));
@@ -1008,6 +1015,10 @@ bool HandleRootStatusRefresh(void)
   if (!WebServer->hasArg("m")) {     // Status refresh requested
     return false;
   }
+
+  #ifdef USE_SCRIPT_WEB_DISPLAY
+    Script_Check_HTML_Setvars();
+  #endif
 
   char tmp[8];                       // WebGetArg numbers only
   char svalue[32];                   // Command and number parameter
