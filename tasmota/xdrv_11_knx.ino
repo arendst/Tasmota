@@ -58,10 +58,14 @@ address_t KNX_addr;        // KNX Address converter variable
 #define KNX_Empty 255
 
 #define TOGGLE_INHIBIT_TIME 15 // 15*50mseg = 750mseg (inhibit time for not toggling again relays by a KNX toggle command)
+//#define UDP_ENHANCEMENT_COUNT 2 // try 2 times extra (3 times total) to deal with UDP packet loss
+#define UDP_ENHANCEMENT_COUNT 4 // MAURITS Long distance wifi, so I retry 4 times
+#define COMMAND_REFLECT_PREVENT_TIME 2 // 2*50=100msec inhibit time for not reflecting KNX commands back to the network
 
 float last_temp;
 float last_hum;
 uint8_t toggle_inhibit;
+byte command_reflect_prevent;
 
 typedef struct __device_parameters
 {
@@ -581,14 +585,20 @@ void KNX_CB_Action(message_t const &msg, void *arg)
   switch (msg.ct)
   {
     case KNX_CT_WRITE:
+      command_reflect_prevent = COMMAND_REFLECT_PREVENT_TIME;
       if (chan->type < 9) // Set Relays
       {
-        ExecuteCommandPower(chan->type, msg.data[0], SRC_KNX);
+        if (!toggle_inhibit) {
+          ExecuteCommandPower(chan->type, msg.data[0], SRC_KNX);
+          if (Settings.flag.knx_enable_enhancement) {
+            toggle_inhibit = TOGGLE_INHIBIT_TIME;
+          }
+        }
       }
       else if (chan->type < 17) // Toggle Relays
       {
         if (!toggle_inhibit) {
-          ExecuteCommandPower((chan->type) -8, POWER_TOGGLE, SRC_KNX);
+          ExecuteCommandPower((chan->type) -8, 2, SRC_KNX);
           if (Settings.flag.knx_enable_enhancement) {
             toggle_inhibit = TOGGLE_INHIBIT_TIME;
           }
@@ -632,24 +642,27 @@ void KNX_CB_Action(message_t const &msg, void *arg)
       {
         knx.answer_1bit(msg.received_on, chan->last_state);
         if (Settings.flag.knx_enable_enhancement) {
-          knx.answer_1bit(msg.received_on, chan->last_state);
-          knx.answer_1bit(msg.received_on, chan->last_state);
+          for ( byte i = 0; i < UDP_ENHANCEMENT_COUNT; ++i) {
+            knx.answer_1bit(msg.received_on, chan->last_state);
+          }
         }
       }
       else if (chan->type == KNX_TEMPERATURE) // Reply Temperature
       {
         knx.answer_2byte_float(msg.received_on, last_temp);
         if (Settings.flag.knx_enable_enhancement) {
-          knx.answer_2byte_float(msg.received_on, last_temp);
-          knx.answer_2byte_float(msg.received_on, last_temp);
+          for ( byte i = 0; i < UDP_ENHANCEMENT_COUNT; ++i) {
+            knx.answer_2byte_float(msg.received_on, last_temp);
+          }
         }
       }
       else if (chan->type == KNX_HUMIDITY) // Reply Humidity
       {
         knx.answer_2byte_float(msg.received_on, last_hum);
         if (Settings.flag.knx_enable_enhancement) {
-          knx.answer_2byte_float(msg.received_on, last_hum);
-          knx.answer_2byte_float(msg.received_on, last_hum);
+          for ( byte i = 0; i < UDP_ENHANCEMENT_COUNT; ++i) {
+            knx.answer_2byte_float(msg.received_on, last_hum);
+          }
         }
       }
 #ifdef USE_RULES
@@ -680,15 +693,21 @@ void KnxUpdatePowerState(uint8_t device, power_t state)
   uint8_t i = KNX_GA_Search(device);
   while ( i != KNX_Empty ) {
     KNX_addr.value = Settings.knx_GA_addr[i];
-    knx.write_1bit(KNX_addr, device_param[device -1].last_state);
-    if (Settings.flag.knx_enable_enhancement) {
+    if (command_reflect_prevent) {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d NOT " D_SENT_TO " %d.%d.%d (no reflections)"),
+       device_param_ga[device -1], device_param[device -1].last_state,
+       KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
+    } else {
       knx.write_1bit(KNX_addr, device_param[device -1].last_state);
-      knx.write_1bit(KNX_addr, device_param[device -1].last_state);
+      if (Settings.flag.knx_enable_enhancement) {
+        for ( byte i = 0; i < UDP_ENHANCEMENT_COUNT; ++i) {
+          knx.write_1bit(KNX_addr, device_param[device -1].last_state);
+        }
+      }
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
+       device_param_ga[device -1], device_param[device -1].last_state,
+       KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
     }
-
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
-     device_param_ga[device -1], device_param[device -1].last_state,
-     KNX_addr.ga.area, KNX_addr.ga.line, KNX_addr.ga.member);
 
     i = KNX_GA_Search(device, i + 1);
   }
@@ -716,8 +735,9 @@ void KnxSendButtonPower(void)
     KNX_addr.value = Settings.knx_GA_addr[i];
     knx.write_1bit(KNX_addr, !(state == 0));
     if (Settings.flag.knx_enable_enhancement) {
-      knx.write_1bit(KNX_addr, !(state == 0));
-      knx.write_1bit(KNX_addr, !(state == 0));
+      for ( byte i = 0; i < UDP_ENHANCEMENT_COUNT; ++i) {
+        knx.write_1bit(KNX_addr, !(state == 0));
+      }
     }
 
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
@@ -747,8 +767,9 @@ void KnxSensor(uint8_t sensor_type, float value)
     KNX_addr.value = Settings.knx_GA_addr[i];
     knx.write_2byte_float(KNX_addr, value);
     if (Settings.flag.knx_enable_enhancement) {
-      knx.write_2byte_float(KNX_addr, value);
-      knx.write_2byte_float(KNX_addr, value);
+      for ( byte i = 0; i < UDP_ENHANCEMENT_COUNT; ++i) {
+        knx.write_2byte_float(KNX_addr, value);
+      }
     }
 
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s " D_SENT_TO " %d.%d.%d "),
@@ -1033,8 +1054,9 @@ void CmndKnxTxCmnd(void)
       KNX_addr.value = Settings.knx_GA_addr[i];
       knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
       if (Settings.flag.knx_enable_enhancement) {
-        knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
-        knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
+        for ( byte i = 0; i < UDP_ENHANCEMENT_COUNT; ++i) {
+          knx.write_1bit(KNX_addr, !(XdrvMailbox.payload == 0));
+        }
       }
 
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %d " D_SENT_TO " %d.%d.%d"),
@@ -1062,8 +1084,9 @@ void CmndKnxTxVal(void)
 
       knx.write_2byte_float(KNX_addr, tempvar);
       if (Settings.flag.knx_enable_enhancement) {
-        knx.write_2byte_float(KNX_addr, tempvar);
-        knx.write_2byte_float(KNX_addr, tempvar);
+        for ( byte i = 0; i < UDP_ENHANCEMENT_COUNT; ++i) {
+          knx.write_2byte_float(KNX_addr, tempvar);
+        }
       }
 
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_KNX "%s = %s " D_SENT_TO " %d.%d.%d"),
