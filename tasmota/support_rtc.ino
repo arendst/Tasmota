@@ -54,6 +54,7 @@ struct RTC {
   bool midnight_now = false;
   bool user_time_entry = false;               // Override NTP by user setting
 } Rtc;
+uint32_t ntp_time_prev; // Remember previous ntp with large drift
 
 uint32_t UtcTime(void)
 {
