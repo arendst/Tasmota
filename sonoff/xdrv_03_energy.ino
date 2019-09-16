@@ -37,14 +37,15 @@
 #define D_CMND_VOLTAGECAL "VoltageCal"
 #define D_CMND_CURRENTCAL "CurrentCal"
 #define D_CMND_TARIFF "Tariff"
+#define D_CMND_MODULEADDRESS "ModuleAddress"
 
 enum EnergyCommands {
   CMND_POWERCAL, CMND_VOLTAGECAL, CMND_CURRENTCAL,
-  CMND_POWERSET, CMND_VOLTAGESET, CMND_CURRENTSET, CMND_FREQUENCYSET };
+  CMND_POWERSET, CMND_VOLTAGESET, CMND_CURRENTSET, CMND_FREQUENCYSET, CMND_MODULEADDRESS };
 
 const char kEnergyCommands[] PROGMEM = "|"  // No prefix
   D_CMND_POWERCAL "|" D_CMND_VOLTAGECAL "|" D_CMND_CURRENTCAL "|"
-  D_CMND_POWERSET "|" D_CMND_VOLTAGESET "|" D_CMND_CURRENTSET "|" D_CMND_FREQUENCYSET "|"
+  D_CMND_POWERSET "|" D_CMND_VOLTAGESET "|" D_CMND_CURRENTSET "|" D_CMND_FREQUENCYSET "|" D_CMND_MODULEADDRESS "|"
 #ifdef USE_ENERGY_MARGIN_DETECTION
   D_CMND_POWERDELTA "|" D_CMND_POWERLOW "|" D_CMND_POWERHIGH "|" D_CMND_VOLTAGELOW "|" D_CMND_VOLTAGEHIGH "|" D_CMND_CURRENTLOW "|" D_CMND_CURRENTHIGH "|"
 #ifdef USE_ENERGY_POWER_LIMIT
@@ -57,7 +58,7 @@ const char kEnergyCommands[] PROGMEM = "|"  // No prefix
 
 void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndPowerCal, &CmndVoltageCal, &CmndCurrentCal,
-  &CmndPowerSet, &CmndVoltageSet, &CmndCurrentSet, &CmndFrequencySet,
+  &CmndPowerSet, &CmndVoltageSet, &CmndCurrentSet, &CmndFrequencySet, &CmndModuleAddress,
 #ifdef USE_ENERGY_MARGIN_DETECTION
   &CmndPowerDelta, &CmndPowerLow, &CmndPowerHigh, &CmndVoltageLow, &CmndVoltageHigh, &CmndCurrentLow, &CmndCurrentHigh,
 #ifdef USE_ENERGY_POWER_LIMIT
@@ -611,6 +612,16 @@ void CmndFrequencySet(void)
   Energy.command_code = CMND_FREQUENCYSET;
   if (XnrgCall(FUNC_COMMAND)) {  // Hz
     EnergyCommandResponse(Settings.energy_frequency_calibration, UNIT_MILLISECOND);
+  }
+}
+
+void CmndModuleAddress(void)
+{
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 4) && (1 == Energy.phase_count)) {
+    Energy.command_code = CMND_MODULEADDRESS;
+    if (XnrgCall(FUNC_COMMAND)) {  // Module address
+      ResponseCmndDone();
+    }
   }
 }
 

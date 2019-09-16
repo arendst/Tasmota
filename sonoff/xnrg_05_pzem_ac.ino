@@ -40,6 +40,8 @@ struct PZEMAC {
   float energy = 0;
   uint8_t send_retry = 0;
   uint8_t phase = 0;
+  uint8_t address = 0;
+  uint8_t address_step = ADDR_IDLE;
 } PzemAc;
 
 void PzemAcEverySecond(void)
@@ -49,27 +51,34 @@ void PzemAcEverySecond(void)
   if (data_ready) {
     uint8_t buffer[30];  // At least 5 + (2 * 10) = 25
 
-    uint8_t error = PzemAcModbus->ReceiveBuffer(buffer, 10);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, (buffer[2]) ? buffer[2] +5 : sizeof(buffer));
+    uint8_t registers = 10;
+    if (ADDR_RECEIVE == PzemAc.address_step) {
+      registers = 2;     // Need 1 byte extra as response is F8 06 00 02 00 01 FD A3
+      PzemAc.address_step--;
+    }
+    uint8_t error = PzemAcModbus->ReceiveBuffer(buffer, registers);
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, PzemAcModbus->ReceiveCount());
 
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PAC: PzemAc %d error %d"), PZEM_AC_DEVICE_ADDRESS + PzemAc.phase, error);
     } else {
       Energy.data_valid = 0;
+      if (10 == registers) {
 
-      //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
-      // 01 04 14 08 D1 00 6C 00 00 00 F4 00 00 00 26 00 00 01 F4 00 64 00 00 51 34
-      // Id Cc Sz Volt- Current---- Power------ Energy----- Frequ PFact Alarm Crc--
-      Energy.voltage[PzemAc.phase] = (float)((buffer[3] << 8) + buffer[4]) / 10.0;                                                  // 6553.0 V
-      Energy.current[PzemAc.phase] = (float)((buffer[7] << 24) + (buffer[8] << 16) + (buffer[5] << 8) + buffer[6]) / 1000.0;        // 4294967.000 A
-      Energy.active_power[PzemAc.phase] = (float)((buffer[11] << 24) + (buffer[12] << 16) + (buffer[9] << 8) + buffer[10]) / 10.0;  // 429496729.0 W
-      Energy.frequency[PzemAc.phase] = (float)((buffer[17] << 8) + buffer[18]) / 10.0;                                              // 50.0 Hz
-      Energy.power_factor[PzemAc.phase] = (float)((buffer[19] << 8) + buffer[20]) / 100.0;                                          // 1.00
+        //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+        // 01 04 14 08 D1 00 6C 00 00 00 F4 00 00 00 26 00 00 01 F4 00 64 00 00 51 34
+        // Id Cc Sz Volt- Current---- Power------ Energy----- Frequ PFact Alarm Crc--
+        Energy.voltage[PzemAc.phase] = (float)((buffer[3] << 8) + buffer[4]) / 10.0;                                                  // 6553.0 V
+        Energy.current[PzemAc.phase] = (float)((buffer[7] << 24) + (buffer[8] << 16) + (buffer[5] << 8) + buffer[6]) / 1000.0;        // 4294967.000 A
+        Energy.active_power[PzemAc.phase] = (float)((buffer[11] << 24) + (buffer[12] << 16) + (buffer[9] << 8) + buffer[10]) / 10.0;  // 429496729.0 W
+        Energy.frequency[PzemAc.phase] = (float)((buffer[17] << 8) + buffer[18]) / 10.0;                                              // 50.0 Hz
+        Energy.power_factor[PzemAc.phase] = (float)((buffer[19] << 8) + buffer[20]) / 100.0;                                          // 1.00
 
-      PzemAc.energy += (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);                           // 4294967295 Wh
-      if (PzemAc.phase == Energy.phase_count -1) {
-        EnergyUpdateTotal(PzemAc.energy, false);
-        PzemAc.energy = 0;
+        PzemAc.energy += (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);                           // 4294967295 Wh
+        if (PzemAc.phase == Energy.phase_count -1) {
+          EnergyUpdateTotal(PzemAc.energy, false);
+          PzemAc.energy = 0;
+        }
       }
     }
   }
@@ -80,7 +89,12 @@ void PzemAcEverySecond(void)
       PzemAc.phase = 0;
     }
     PzemAc.send_retry = ENERGY_WATCHDOG;
-    PzemAcModbus->Send(PZEM_AC_DEVICE_ADDRESS + PzemAc.phase, 0x04, 0, 10);
+    if (ADDR_SEND == PzemAc.address_step) {
+      PzemAcModbus->Send(0xF8, 0x06, 0x0002, (uint16_t)PzemAc.address);
+      PzemAc.address_step--;
+    } else {
+      PzemAcModbus->Send(PZEM_AC_DEVICE_ADDRESS + PzemAc.phase, 0x04, 0, 10);
+    }
   }
   else {
     PzemAc.send_retry--;
@@ -110,6 +124,19 @@ void PzemAcDrvInit(void)
   }
 }
 
+bool PzemAcCommand(void)
+{
+  bool serviced = true;
+
+  if (CMND_MODULEADDRESS == Energy.command_code) {
+    PzemAc.address = XdrvMailbox.payload;  // Valid addresses are 1, 2 and 3
+    PzemAc.address_step = ADDR_SEND;
+  }
+  else serviced = false;  // Unknown command
+
+  return serviced;
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -121,6 +148,9 @@ bool Xnrg05(uint8_t function)
   switch (function) {
     case FUNC_ENERGY_EVERY_SECOND:
       if (uptime > 4) { PzemAcEverySecond(); }  // Fix start up issue #5875
+      break;
+    case FUNC_COMMAND:
+      result = PzemAcCommand();
       break;
     case FUNC_INIT:
       PzemAcSnsInit();

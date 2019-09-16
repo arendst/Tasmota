@@ -40,6 +40,8 @@ struct PZEMDC {
   float energy = 0;
   uint8_t send_retry = 0;
   uint8_t channel = 0;
+  uint8_t address = 0;
+  uint8_t address_step = ADDR_IDLE;
 } PzemDc;
 
 void PzemDcEverySecond(void)
@@ -49,25 +51,32 @@ void PzemDcEverySecond(void)
   if (data_ready) {
     uint8_t buffer[26];  // At least 5 + (2 * 8) = 21
 
-    uint8_t error = PzemDcModbus->ReceiveBuffer(buffer, 8);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
+    uint8_t registers = 8;
+    if (ADDR_RECEIVE == PzemDc.address_step) {
+      registers = 2;     // Need 1 byte extra as response is F8 06 00 02 00 01 FD A3
+      PzemDc.address_step--;
+    }
+    uint8_t error = PzemDcModbus->ReceiveBuffer(buffer, registers);
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, PzemDcModbus->ReceiveCount());
 
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PDC: PzemDc %d error %d"), PZEM_DC_DEVICE_ADDRESS + PzemDc.channel, error);
     } else {
       Energy.data_valid = 0;
+      if (8 == registers) {
 
-      //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
-      // 01 04 10 05 40 00 0A 00 0D 00 00 00 02 00 00 00 00 00 00 D6 29
-      // Id Cc Sz Volt- Curre Power------ Energy----- HiAlm LoAlm Crc--
-      Energy.voltage[PzemDc.channel] = (float)((buffer[3] << 8) + buffer[4]) / 100.0;                                               // 655.00 V
-      Energy.current[PzemDc.channel] = (float)((buffer[5] << 8) + buffer[6]) / 100.0;                                               // 655.00 A
-      Energy.active_power[PzemDc.channel] = (float)((buffer[9] << 24) + (buffer[10] << 16) + (buffer[7] << 8) + buffer[8]) / 10.0;  // 429496729.0 W
+        //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20
+        // 01 04 10 05 40 00 0A 00 0D 00 00 00 02 00 00 00 00 00 00 D6 29
+        // Id Cc Sz Volt- Curre Power------ Energy----- HiAlm LoAlm Crc--
+        Energy.voltage[PzemDc.channel] = (float)((buffer[3] << 8) + buffer[4]) / 100.0;                                               // 655.00 V
+        Energy.current[PzemDc.channel] = (float)((buffer[5] << 8) + buffer[6]) / 100.0;                                               // 655.00 A
+        Energy.active_power[PzemDc.channel] = (float)((buffer[9] << 24) + (buffer[10] << 16) + (buffer[7] << 8) + buffer[8]) / 10.0;  // 429496729.0 W
 
-      PzemDc.energy += (float)((buffer[13] << 24) + (buffer[14] << 16) + (buffer[11] << 8) + buffer[12]);             // 4294967295 Wh
-      if (PzemDc.channel == Energy.phase_count -1) {
-        EnergyUpdateTotal(PzemDc.energy, false);
-        PzemDc.energy = 0;
+        PzemDc.energy += (float)((buffer[13] << 24) + (buffer[14] << 16) + (buffer[11] << 8) + buffer[12]);             // 4294967295 Wh
+        if (PzemDc.channel == Energy.phase_count -1) {
+          EnergyUpdateTotal(PzemDc.energy, false);
+          PzemDc.energy = 0;
+        }
       }
     }
   }
@@ -78,7 +87,12 @@ void PzemDcEverySecond(void)
       PzemDc.channel = 0;
     }
     PzemDc.send_retry = ENERGY_WATCHDOG;
-    PzemDcModbus->Send(PZEM_DC_DEVICE_ADDRESS + PzemDc.channel, 0x04, 0, 8);
+    if (ADDR_SEND == PzemDc.address_step) {
+      PzemDcModbus->Send(0xF8, 0x06, 0x0002, (uint16_t)PzemDc.address);
+      PzemDc.address_step--;
+    } else {
+      PzemDcModbus->Send(PZEM_DC_DEVICE_ADDRESS + PzemDc.channel, 0x04, 0, 8);
+    }
   }
   else {
     PzemDc.send_retry--;
@@ -109,6 +123,19 @@ void PzemDcDrvInit(void)
   }
 }
 
+bool PzemDcCommand(void)
+{
+  bool serviced = true;
+
+  if (CMND_MODULEADDRESS == Energy.command_code) {
+    PzemDc.address = XdrvMailbox.payload;  // Valid addresses are 1, 2 and 3
+    PzemDc.address_step = ADDR_SEND;
+  }
+  else serviced = false;  // Unknown command
+
+  return serviced;
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -120,6 +147,9 @@ bool Xnrg06(uint8_t function)
   switch (function) {
     case FUNC_ENERGY_EVERY_SECOND:
       if (uptime > 4) { PzemDcEverySecond(); }  // Fix start up issue #5875
+      break;
+    case FUNC_COMMAND:
+      result = PzemDcCommand();
       break;
     case FUNC_INIT:
       PzemDcSnsInit();

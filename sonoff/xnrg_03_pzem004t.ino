@@ -59,8 +59,9 @@ TasmotaSerial *PzemSerial = nullptr;
 struct PZEM {
   float energy = 0;
   uint8_t send_retry = 0;
-  uint8_t read_state = 0;
+  uint8_t read_state = 0;  // Set address
   uint8_t phase = 0;
+  uint8_t address = 0;
 } Pzem;
 
 struct PZEMCommand {
@@ -69,8 +70,6 @@ struct PZEMCommand {
   uint8_t data;
   uint8_t crc;
 };
-
-IPAddress pzem_ip(192, 168, 1, 1);
 
 uint8_t PzemCrc(uint8_t *data)
 {
@@ -86,10 +85,10 @@ void PzemSend(uint8_t cmd)
   PZEMCommand pzem;
 
   pzem.command = cmd;
-  for (uint32_t i = 0; i < sizeof(pzem.addr) -1; i++) {
-    pzem.addr[i] = pzem_ip[i];
-  }
-  pzem.addr[3] = pzem_ip[3] + Pzem.phase;
+  pzem.addr[0] = 0;    // Address 0.0.0.1
+  pzem.addr[1] = 0;
+  pzem.addr[2] = 0;
+  pzem.addr[3] = ((PZEM_SET_ADDRESS == cmd) && Pzem.address) ? Pzem.address : 1 + Pzem.phase;
   pzem.data = 0;
 
   uint8_t *bytes = (uint8_t*)&pzem;
@@ -97,6 +96,8 @@ void PzemSend(uint8_t cmd)
 
   PzemSerial->flush();
   PzemSerial->write(bytes, sizeof(pzem));
+
+  Pzem.address = 0;
 }
 
 bool PzemReceiveReady(void)
@@ -209,6 +210,9 @@ void PzemEvery200ms(void)
     if (Pzem.phase >= Energy.phase_count) {
       Pzem.phase = 0;
     }
+    if (Pzem.address) {
+      Pzem.read_state = 0;  // Set address
+    }
     Pzem.send_retry = 5;
     PzemSend(pzem_commands[Pzem.read_state]);
   }
@@ -230,6 +234,7 @@ void PzemSnsInit(void)
     }
     Energy.phase_count = 3;  // Start off with three phases
     Pzem.phase = 2;
+    Pzem.read_state = 1;
   } else {
     energy_flg = ENERGY_NONE;
   }
@@ -240,6 +245,18 @@ void PzemDrvInit(void)
   if ((pin[GPIO_PZEM004_RX] < 99) && (pin[GPIO_PZEM0XX_TX] < 99)) {  // Any device with a Pzem004T
     energy_flg = XNRG_03;
   }
+}
+
+bool PzemCommand(void)
+{
+  bool serviced = true;
+
+  if (CMND_MODULEADDRESS == Energy.command_code) {
+    Pzem.address = XdrvMailbox.payload;  // Valid addresses are 1, 2 and 3
+  }
+  else serviced = false;  // Unknown command
+
+  return serviced;
 }
 
 /*********************************************************************************************\
@@ -253,6 +270,9 @@ bool Xnrg03(uint8_t function)
   switch (function) {
     case FUNC_EVERY_200_MSECOND:
       if (PzemSerial) { PzemEvery200ms(); }
+      break;
+    case FUNC_COMMAND:
+      result = PzemCommand();
       break;
     case FUNC_INIT:
       PzemSnsInit();
