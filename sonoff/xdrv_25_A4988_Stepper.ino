@@ -22,8 +22,6 @@
 #include <A4988_Stepper.h>
 #define XDRV_25                    25
 
-enum A4988Errors { A4988_NO_ERROR, A4988_NO_JSON_COMMAND, A4988_INVALID_JSON, A4988_MOVE, A4988_ROTATE, A4988_TURN};
-
 short A4988_dir_pin = pin[GPIO_MAX];
 short A4988_stp_pin = pin[GPIO_MAX];
 short A4988_ms1_pin = pin[GPIO_MAX];
@@ -59,97 +57,58 @@ void A4988Init(void)
                             , A4988_ms3_pin );
 }
 
-const char kA4988Commands[] PROGMEM = "|"
-  "MOTOR";
+const char kA4988Commands[] PROGMEM = "Motor|" // prefix
+  "Move|Rotate|Turn|MIS|SPR|RPM";
 
-void (* const A4988Command[])(void) PROGMEM = { &CmndMOTOR};
+void (* const A4988Command[])(void) PROGMEM = { 
+  &CmndDoMove,&CmndDoRotate,&CmndDoTurn,&CmndSetMIS,&CmndSetSPR,&CmndSetRPM};
 
-uint32_t MOTORCmndJson(void)
-{
-  // MOTOR {"doMove":200}
-  // MOTOR {"doRotate":360}
-  // MOTOR {"doTurn":1.0}
-  uint32_t returnValue =A4988_NO_JSON_COMMAND;
-
-  char parm_uc[12];
-  char dataBufUc[XdrvMailbox.data_len];
-  UpperCase(dataBufUc, XdrvMailbox.data);
-  RemoveSpace(dataBufUc);
-  if (strlen(dataBufUc) < 8) { returnValue =A4988_INVALID_JSON; }
-
-  DynamicJsonBuffer jsonBuf;
-  JsonObject &json = jsonBuf.parseObject(dataBufUc);
-  if (json.success()) {
-    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_SPR));
-    if (json.containsKey(parm_uc)){
-      int howManySteps =strtoul(json[parm_uc],nullptr,10);
-      myA4988->setSPR(howManySteps);
-      returnValue = A4988_NO_ERROR;
-    }
-    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_RPM));
-    if (json.containsKey(parm_uc)){
-      int howManyRounds =strtoul(json[parm_uc],nullptr,10);
-      myA4988->setRPM(howManyRounds);
-      returnValue = A4988_NO_ERROR;
-    }
-    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_MIS));
-    if (json.containsKey(parm_uc)){
-      short oneToSixteen =strtoul(json[parm_uc],nullptr,10);
-      myA4988->setMIS(oneToSixteen);
-      returnValue = A4988_NO_ERROR;
-    }
-    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_MOVE));
-    if (json.containsKey(parm_uc)){
-      long stepsPlease = strtoul(json[parm_uc],nullptr,10);
-      myA4988->doMove(stepsPlease);
-      returnValue = A4988_MOVE;
-    }
-    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_ROTATE));
-    if (json.containsKey(parm_uc)){
-      long degrsPlease = strtoul(json[parm_uc],nullptr,10);
-      myA4988->doRotate(degrsPlease);
-      returnValue = A4988_ROTATE;
-    }
-    UpperCase_P(parm_uc, PSTR(D_JSON_MOTOR_TURN));
-    if (json.containsKey(parm_uc)){
-      float turnsPlease = strtod(json[parm_uc],nullptr);
-      myA4988->doTurn(turnsPlease);
-      returnValue = A4988_TURN;
-    }
-  } else returnValue =A4988_INVALID_JSON;
-  return returnValue;
+void CmndDoMove(void) {
+  if (XdrvMailbox.data_len > 0) {
+    long stepsPlease = strtoul(XdrvMailbox.data,nullptr,10);
+    myA4988->doMove(stepsPlease);
+    ResponseCmndDone();
+  }
 }
 
-void CmndMOTOR(void){
-  uint32_t error;
-  if (XdrvMailbox.data_len) {
-    if (strstr(XdrvMailbox.data, "}") == nullptr) {
-      error = A4988_NO_JSON_COMMAND;
-    } else {
-      error = MOTORCmndJson();
-    }
+void CmndDoRotate(void) {
+  if (XdrvMailbox.data_len > 0) {
+    long degrsPlease = strtoul(XdrvMailbox.data,nullptr,10);
+    myA4988->doRotate(degrsPlease);
+    ResponseCmndDone();
   }
-  A4988CmndResponse(error);
 }
 
-void A4988CmndResponse(uint32_t error){
-  switch (error) {
-    case A4988_NO_JSON_COMMAND:
-      ResponseCmndChar(PSTR("No command!"));
-      break;
-    case A4988_MOVE:
-      ResponseCmndChar(PSTR("Stepping!"));
-      break;
-    case A4988_ROTATE:
-      ResponseCmndChar(PSTR("Rotating!"));
-      break;
-    case A4988_TURN:
-      ResponseCmndChar(PSTR("Turning!"));
-      break;
-    default:  // A4988_NO_ERROR
-      ResponseCmndDone();
+void CmndDoTurn(void) {
+  if (XdrvMailbox.data_len > 0) {
+    float turnsPlease = strtod(XdrvMailbox.data,nullptr);
+    myA4988->doTurn(turnsPlease);
+    ResponseCmndDone();
   }
+}
 
+void CmndSetMIS(void) {
+  if ((pin[GPIO_A4988_MS1] < 99) && (pin[GPIO_A4988_MS2] < 99) && (pin[GPIO_A4988_MS3] < 99) && (XdrvMailbox.data_len > 0)) {
+    short newMIS = strtoul(XdrvMailbox.data,nullptr,10);
+    myA4988->setMIS(newMIS);
+    ResponseCmndDone();
+  }
+}
+
+void CmndSetSPR(void) {
+  if (XdrvMailbox.data_len > 0) {
+    int newSPR = strtoul(XdrvMailbox.data,nullptr,10);
+    myA4988->setSPR(newSPR);
+    ResponseCmndDone();
+  }
+}
+
+void CmndSetRPM(void) {
+  if (XdrvMailbox.data_len > 0) {
+    short newRPM = strtoul(XdrvMailbox.data,nullptr,10);
+    myA4988->setRPM(newRPM);
+    ResponseCmndDone();
+  }
 }
 
 /*********************************************************************************************\

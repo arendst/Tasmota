@@ -299,7 +299,7 @@ void BreakTime(uint32_t time_input, TIME_T &tm)
   strlcpy(tm.name_of_month, kMonthNames + (month *3), 4);
   tm.month = month + 1;      // jan is month 1
   tm.day_of_month = time + 1;         // day of month
-  tm.valid = (time_input > 1451602800);  // 2016-01-01
+  tm.valid = (time_input > START_VALID_TIME);  // 2016-01-01
 }
 
 uint32_t MakeTime(TIME_T &tm)
@@ -374,9 +374,9 @@ void RtcSecond(void)
     uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
     if (!global_state.wifi_down && (((offset == RtcTime.second) && ((RtcTime.year < 2016) || (Rtc.ntp_sync_minute == RtcTime.minute))) || ntp_force_sync)) {
       Rtc.ntp_time = sntp_get_current_timestamp();
-      if (Rtc.ntp_time > 1451602800) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
+      if (Rtc.ntp_time > START_VALID_TIME) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
         ntp_force_sync = false;
-        if (Rtc.utc_time > 1451602800) { Rtc.drift_time = Rtc.ntp_time - Rtc.utc_time; }
+        if (Rtc.utc_time > START_VALID_TIME) { Rtc.drift_time = Rtc.ntp_time - Rtc.utc_time; }
         Rtc.utc_time = Rtc.ntp_time;
         Rtc.ntp_sync_minute = 60;  // Sync so block further requests
         if (Rtc.restart_time == 0) {
@@ -391,7 +391,7 @@ void RtcSecond(void)
   //      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "(" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
         ntp_synced_message = true;
 
-        if (Rtc.local_time < 1451602800) {  // 2016-01-01
+        if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
           rules_flag.time_init = 1;
         } else {
           rules_flag.time_set = 1;
@@ -403,7 +403,7 @@ void RtcSecond(void)
   }
   Rtc.utc_time++;
   Rtc.local_time = Rtc.utc_time;
-  if (Rtc.local_time > 1451602800) {  // 2016-01-01
+  if (Rtc.local_time > START_VALID_TIME) {  // 2016-01-01
     int16_t timezone_minutes = Settings.timezone_minutes;
     if (Settings.timezone < 0) { timezone_minutes *= -1; }
     Rtc.time_timezone = (Settings.timezone * SECS_PER_HOUR) + (timezone_minutes * SECS_PER_MIN);
@@ -447,7 +447,7 @@ void RtcSecond(void)
 
 void RtcSetTime(uint32_t epoch)
 {
-  if (epoch < 1451602800) {  // 2016-01-01
+  if (epoch < START_VALID_TIME) {  // 2016-01-01
     Rtc.user_time_entry = false;
     ntp_force_sync = true;
   } else {

@@ -581,8 +581,11 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
       MqttPublishPowerBlinkState(device);
     }
 
-    if (Settings.flag.interlock && !interlock_mutex) {  // Clear all but masked relay in interlock group
-      interlock_mutex = true;
+    if (Settings.flag.interlock &&
+        !interlock_mutex &&
+        ((POWER_ON == state) || ((POWER_TOGGLE == state) && !(power & mask)))
+       ) {
+      interlock_mutex = true;                           // Clear all but masked relay in interlock group if new set requested
       for (uint32_t i = 0; i < MAX_INTERLOCKS; i++) {
         if (Settings.interlock[i] & mask) {             // Find interlock group
           for (uint32_t j = 0; j < devices_present; j++) {

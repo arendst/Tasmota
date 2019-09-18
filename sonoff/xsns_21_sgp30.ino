@@ -134,7 +134,7 @@ void Sgp30Show(bool json)
       if (global_update) {
         ResponseAppend_P(PSTR(",\"" D_JSON_AHUM "\":%s"),abs_hum);
       }
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, sgp.eCO2);
 #endif  // USE_DOMOTICZ

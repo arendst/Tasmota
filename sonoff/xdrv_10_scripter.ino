@@ -2045,6 +2045,8 @@ void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
               if (isdigit(*cp)) {
                 dprec=*cp&0xf;
                 cp++;
+              } else {
+                dprec=glob_script_mem.script_dprec;
               }
               cp=isvar(cp,&vtype,&ind,&fvar,string,0);
               if (vtype!=VAR_NV) {
@@ -3204,6 +3206,7 @@ void HandleScriptTextareaConfiguration(void) {
 }
 
 void HandleScriptConfiguration(void) {
+
     if (!HttpCheckPriviledgedAccess()) { return; }
 
     AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_CONFIGURE_SCRIPT);
@@ -3343,7 +3346,6 @@ bool ScriptCommand(void) {
             if (XdrvMailbox.data[count]==';') XdrvMailbox.data[count]='\n';
           }
           execute_script(XdrvMailbox.data);
-          Scripter_save_pvars();
         }
       }
       return serviced;
@@ -3578,6 +3580,70 @@ String ScriptUnsubscribe(const char * data, int data_len)
 #endif //     SUPPORT_MQTT_EVENT
 
 #ifdef USE_SCRIPT_WEB_DISPLAY
+
+
+void Script_Check_HTML_Setvars(void) {
+
+  if (!HttpCheckPriviledgedAccess()) { return; }
+
+  if (WebServer->hasArg("sv")) {
+    String stmp = WebServer->arg("sv");
+    char cmdbuf[64];
+    memset(cmdbuf,0,sizeof(cmdbuf));
+    char *cp=cmdbuf;
+    *cp++='>';
+    strncpy(cp,stmp.c_str(),sizeof(cmdbuf)-1);
+    char *cp1=strchr(cp,'_');
+    if (!cp1) return;
+    *cp1=0;
+    char vname[32];
+    strncpy(vname,cp,sizeof(vname));
+    *cp1='=';
+    cp1++;
+
+    struct T_INDEX ind;
+    uint8_t vtype;
+    isvar(vname,&vtype,&ind,0,0,0);
+    if (vtype!=NUM_RES && vtype&STYPE) {
+      // string type must insert quotes
+      uint8_t tlen=strlen(cp1);
+      memmove(cp1+1,cp1,tlen);
+      *cp1='\"';
+      *(cp1+tlen+1)='\"';
+    }
+
+    //toLog(cmdbuf);
+    execute_script(cmdbuf);
+  }
+}
+
+const char SCRIPT_MSG_SLIDER[] PROGMEM =
+  "<div><span class='p'>%s</span><center><b>%s</b><span class='q'>%s</span></div>"
+  "<div><input type='range' min='%d' max='%d' value='%d' onchange='seva(value,\"%s\")'></div>";
+
+const char SCRIPT_MSG_BUTTON[] PROGMEM =
+  "<div><button type='submit' onclick='seva(%d,\"%s\")'>%s</button></div>";
+
+const char SCRIPT_MSG_CHKBOX[] PROGMEM =
+  "<div><center><label><b>%s</b><input type='checkbox' %s onchange='seva(%d,\"%s\")'></label></div>";
+
+const char SCRIPT_MSG_TEXTINP[] PROGMEM =
+  "<div><center><label><b>%s</b><input type='text'  value='%s' style='width:200px' onchange='seva(value,\"%s\")'></label></div>";
+
+//<input onkeypress="if(event.key == 'Enter') {console.log('Test')}">
+//<input onBlur="if (this.value == '') { var field = this; setTimeout(function() { field.focus(); }, 0); }" type="text">
+
+void ScriptGetVarname(char *nbuf,char *sp, uint32_t blen) {
+uint32_t cnt;
+  for (cnt=0;cnt<blen-1;cnt++) {
+    if (*sp==' ' || *sp==')') {
+      break;
+    }
+    nbuf[cnt]=*sp++;
+  }
+  nbuf[cnt]=0;
+}
+
 void ScriptWebShow(void) {
   uint8_t web_script=Run_Scripter(">W",-2,0);
   if (web_script==99) {
@@ -3603,8 +3669,112 @@ void ScriptWebShow(void) {
           }
           cp++;
         }
-        Replace_Cmd_Vars(line,tmp,sizeof(tmp));
-        WSContentSend_PD(PSTR("{s}%s{e}"),tmp);
+        // check for input elements
+        if (!strncmp(line,"sl(",3)) {
+          // insert slider sl(min max var left mid right)
+          char *lp=line;
+          float min;
+          lp=GetNumericResult(lp+3,OPER_EQU,&min,0);
+          SCRIPT_SKIP_SPACES
+          // arg2
+          float max;
+          lp=GetNumericResult(lp,OPER_EQU,&max,0);
+          SCRIPT_SKIP_SPACES
+          float val;
+          char *slp=lp;
+          lp=GetNumericResult(lp,OPER_EQU,&val,0);
+          SCRIPT_SKIP_SPACES
+
+          char vname[16];
+          ScriptGetVarname(vname,slp,sizeof(vname));
+
+          char left[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,left,0);
+          SCRIPT_SKIP_SPACES
+          char mid[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,mid,0);
+          SCRIPT_SKIP_SPACES
+          char right[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,right,0);
+          SCRIPT_SKIP_SPACES
+
+          WSContentSend_PD(SCRIPT_MSG_SLIDER,left,mid,right,(uint32_t)min,(uint32_t)max,(uint32_t)val,vname);
+
+
+        } else if (!strncmp(line,"ck(",3)) {
+          char *lp=line+3;
+          char *slp=lp;
+          float val;
+          lp=GetNumericResult(lp,OPER_EQU,&val,0);
+          SCRIPT_SKIP_SPACES
+
+          char vname[16];
+          ScriptGetVarname(vname,slp,sizeof(vname));
+
+          char label[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,label,0);
+          char *cp;
+          uint8_t uval;
+          if (val>0) {
+            cp="checked='checked'";
+            uval=0;
+          } else {
+            cp="";
+            uval=1;
+          }
+          WSContentSend_PD(SCRIPT_MSG_CHKBOX,label,cp,uval,vname);
+
+        } else if (!strncmp(line,"bu(",3)) {
+          char *lp=line+3;
+          char *slp=lp;
+          float val;
+          lp=GetNumericResult(lp,OPER_EQU,&val,0);
+          SCRIPT_SKIP_SPACES
+
+          char vname[16];
+          ScriptGetVarname(vname,slp,sizeof(vname));
+
+          SCRIPT_SKIP_SPACES
+          char ontxt[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,ontxt,0);
+          SCRIPT_SKIP_SPACES
+          char offtxt[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,offtxt,0);
+
+          char *cp;
+          uint8_t uval;
+          if (val>0) {
+            cp=ontxt;
+            uval=0;
+          } else {
+            cp=offtxt;
+            uval=1;
+          }
+          WSContentSend_PD(SCRIPT_MSG_BUTTON,uval,vname,cp);
+
+        } else if (!strncmp(line,"tx(",3)) {
+          char *lp=line+3;
+          char *slp=lp;
+          char str[SCRIPT_MAXSSIZE];
+          lp=ForceStringVar(lp,str);
+          SCRIPT_SKIP_SPACES
+          char label[SCRIPT_MAXSSIZE];
+          lp=GetStringResult(lp,OPER_EQU,label,0);
+
+          char vname[16];
+          ScriptGetVarname(vname,slp,sizeof(vname));
+
+          WSContentSend_PD(SCRIPT_MSG_TEXTINP,label,str,vname);
+
+        }
+        else {
+          Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+          if (tmp[0]=='@') {
+            WSContentSend_PD(PSTR("<div>%s</div>"),&tmp[1]);
+          } else {
+            WSContentSend_PD(PSTR("{s}%s{e}"),tmp);
+          }
+        }
       }
       if (*lp==SCRIPT_EOL) {
         lp++;
@@ -3735,6 +3905,7 @@ bool Xdrv10(uint8_t function)
       // assure permanent memory is 4 byte aligned
       { uint32_t ptr=(uint32_t)glob_script_mem.script_pram;
       ptr&=0xfffffffc;
+      ptr+=4;
       glob_script_mem.script_pram=(uint8_t*)ptr;
       glob_script_mem.script_pram_size-=4;
       }
@@ -3767,6 +3938,7 @@ bool Xdrv10(uint8_t function)
     case FUNC_WEB_ADD_HANDLER:
       WebServer->on("/" WEB_HANDLE_SCRIPT, HandleScriptConfiguration);
       WebServer->on("/ta",HTTP_POST, HandleScriptTextareaConfiguration);
+
 #ifdef USE_SCRIPT_FATFS
       WebServer->on("/u3", HTTP_POST,[]() { WebServer->sendHeader("Location","/u3");WebServer->send(303);},script_upload);
       WebServer->on("/u3", HTTP_GET,ScriptFileUploadSuccess);

@@ -70,24 +70,6 @@ void IrSendInit(void)
   irsend->begin();
 }
 
-char* IrUint64toHex(uint64_t value, char *str, uint16_t bits)
-{
-  ulltoa(value, str, 16);  // Get 64bit value
-
-  int fill = 8;
-  if ((bits > 3) && (bits < 65)) {
-    fill = bits / 4;  // Max 16
-    if (bits % 4) { fill++; }
-  }
-  int len = strlen(str);
-  fill -= len;
-  if (fill > 0) {
-    memmove(str + fill, str, len +1);
-    memset(str, '0', fill);
-  }
-  return str;
-}
-
 #ifdef USE_IR_RECEIVE
 /*********************************************************************************************\
  * IR Receive
@@ -129,13 +111,21 @@ void IrReceiveCheck(void)
 
   if (irrecv->decode(&results)) {
     char hvalue[65];  // Max 256 bits
-    if (results.bits > 64) {
-      // This emulates IRutils resultToHexidecimal and may needs a larger IR_RCV_BUFFER_SIZE
-      uint32_t digits2 = results.bits / 8;
-      if (results.bits % 8) { digits2++; }
-      ToHex_P((unsigned char*)results.state, digits2, hvalue, sizeof(hvalue));  // Get n-bit value as hex 56341200
+
+    iridx = results.decode_type;
+    if ((iridx < 0) || (iridx > 14)) { iridx = 0; }  // UNKNOWN
+
+    if (iridx) {
+      if (results.bits > 64) {
+        // This emulates IRutils resultToHexidecimal and may needs a larger IR_RCV_BUFFER_SIZE
+        uint32_t digits2 = results.bits / 8;
+        if (results.bits % 8) { digits2++; }
+        ToHex_P((unsigned char*)results.state, digits2, hvalue, sizeof(hvalue));  // Get n-bit value as hex 56341200
+      } else {
+        Uint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 00123456
+      }
     } else {
-      IrUint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 00123456
+      Uint64toHex(results.value, hvalue, 32);  // UNKNOWN is always 32 bits hash
     }
 
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_IRR "Echo %d, RawLen %d, Overflow %d, Bits %d, Value 0x%s, Decode %d"),
@@ -146,16 +136,19 @@ void IrReceiveCheck(void)
     if (!irsend_active && (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE)) {
       ir_lasttime = now;
 
-      iridx = results.decode_type;
-      if ((iridx < 0) || (iridx > 14)) { iridx = 0; }  // UNKNOWN
       char svalue[64];
       if (Settings.flag.ir_receive_decimal) {
         ulltoa(results.value, svalue, 10);
       } else {
         snprintf_P(svalue, sizeof(svalue), PSTR("\"0x%s\""), hvalue);
       }
-      ResponseTime_P(PSTR(",\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d,\"" D_JSON_IR_DATA "\":%s"),
-        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits, svalue);
+      ResponseTime_P(PSTR(",\"" D_JSON_IRRECEIVED "\":{\"" D_JSON_IR_PROTOCOL "\":\"%s\",\"" D_JSON_IR_BITS "\":%d"),
+        GetTextIndexed(sirtype, sizeof(sirtype), iridx, kIrRemoteProtocols), results.bits);
+      if (iridx) {
+        ResponseAppend_P(PSTR(",\"" D_JSON_IR_DATA "\":%s"), svalue);
+      } else {
+        ResponseAppend_P(PSTR(",\"" D_JSON_IR_HASH "\":%s"), svalue);
+      }
 
       if (Settings.flag3.receive_raw) {
         ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":["));
@@ -178,7 +171,7 @@ void IrReceiveCheck(void)
         ResponseAppend_P(PSTR("],\"" D_JSON_IR_RAWDATA "Info\":[%d,%d,%d]"), extended_length, i -1, results.overflow);
       }
 
-      ResponseAppend_P(PSTR("}}"));
+      ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
 
       if (iridx) {
@@ -927,7 +920,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
   char dvalue[64];
   char hvalue[20];
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol_text %s, protocol %s, bits %d, data %s (0x%s), repeat %d, protocol_code %d"),
-    protocol_text, protocol, bits, ulltoa(data, dvalue, 10), IrUint64toHex(data, hvalue, bits), repeat, protocol_code);
+    protocol_text, protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat, protocol_code);
 
   irsend_active = true;
   switch (protocol_code) {  // Equals IRremoteESP8266.h enum decode_type_t

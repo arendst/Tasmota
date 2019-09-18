@@ -37,21 +37,28 @@ class TasmotaModbus : public TasmotaSerial {
     bool ReceiveReady();
 
     /* Return codes:
-     * 0 - No error
-     * 1 - Illegal function
-     * 2 - Illegal address
-     * 3 - Illegal data
-     * 4 - Slave error
-     * 7 - Not enough minimal data received
-     * 8 - Not enough data receieved
-     * 9 - Crc error
+     * 0 = No error
+     * 1 = Illegal Function,
+     * 2 = Illegal Data Address,
+     * 3 = Illegal Data Value,
+     * 4 = Slave Error
+     * 5 = Acknowledge but not finished (no error)
+     * 6 = Slave Busy
+     * 7 = Not enough minimal data received
+     * 8 = Memory Parity error
+     * 9 = Crc error
+     * 10 = Gateway Path Unavailable
+     * 11 = Gateway Target device failed to respond
      */
     uint8_t ReceiveBuffer(uint8_t *buffer, uint8_t register_count);
     uint8_t Receive16BitRegister(uint16_t *value);
     uint8_t Receive32BitRegister(float *value);
 
+    uint8_t ReceiveCount(void) { return mb_len; }
+
   private:
     uint8_t mb_address;
+    uint8_t mb_len;
 };
 
 #endif  // TasmotaModbus_h

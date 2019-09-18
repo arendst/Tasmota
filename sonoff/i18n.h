@@ -385,6 +385,7 @@
   #define D_JSON_IR_BITS "Bits"
   #define D_JSON_IR_DATA "Data"
   #define D_JSON_IR_DATALSB "DataLSB"
+  #define D_JSON_IR_HASH "Hash"
   #define D_JSON_IR_RAWDATA "RawData"
   #define D_JSON_IR_REPEAT "Repeat"
 #define D_CMND_IRHVAC "IRHVAC"
@@ -451,7 +452,9 @@
 #define D_CMND_TUYA_MCU "TuyaMCU"
 
 // Commands xdrv_23_zigbee.ino
+#define D_CMND_ZIGBEE_PERMITJOIN "ZigbeePermitJoin"
 #define D_CMND_ZIGBEEZNPSEND "ZigbeeZNPSend"
+  #define D_JSON_ZIGBEE_STATUS "ZigbeeStatus"
   #define D_JSON_ZIGBEEZNPRECEIVED "ZigbeeZNPReceived"
   #define D_JSON_ZIGBEEZNPSENT "ZigbeeZNPSent"
   #define D_JSON_ZIGBEEZCLRECEIVED "ZigbeeZCLReceived"
@@ -536,8 +539,8 @@ const char S_JSON_COMMAND_SVALUE_SPACE_UNIT[] PROGMEM =       "{\"%s\":\"%s %s\"
 const char S_JSON_COMMAND_NVALUE_UNIT[] PROGMEM =             "{\"%s\":\"%d%s\"}";
 const char S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT[] PROGMEM = "{\"%s\":\"%d%s (%d%s)\"}";
 
-const char S_JSON_COMMAND_NVALUE_SVALUE[] PROGMEM =           "{\"%s\":\"%d (%s)\"}";
-const char S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE[] PROGMEM =    "{\"%s\":\"%d (" D_JSON_ACTIVE " %d)\"}";
+const char S_JSON_COMMAND_NVALUE_SVALUE[] PROGMEM =           "{\"%s\":{\"%d\":\"%s\"}}";
+const char S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE[] PROGMEM =    "{\"%s\":{\"%d\":{\"" D_JSON_ACTIVE "\":\"%d\"}}}";
 
 const char S_JSON_COMMAND_NVALUE[] PROGMEM =                  "{\"%s\":%d}";
 const char S_JSON_COMMAND_LVALUE[] PROGMEM =                  "{\"%s\":%lu}";
@@ -550,7 +553,7 @@ const char S_JSON_COMMAND_INDEX_LVALUE[] PROGMEM =            "{\"%s%d\":%lu}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
 const char S_JSON_COMMAND_INDEX_ASTERISK[] PROGMEM =          "{\"%s%d\":\"" D_ASTERISK_PWD "\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
-const char S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE[] PROGMEM = "{\"%s%d\":\"%d (" D_JSON_ACTIVE " %d)\"}";
+const char S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE[] PROGMEM = "{\"%s%d\":{\"%d\":{\"" D_JSON_ACTIVE "\":\"%d\"}}}";
 
 const char S_JSON_SENSOR_INDEX_NVALUE[] PROGMEM =             "{\"" D_CMND_SENSOR "%d\":%d}";
 const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =             "{\"" D_CMND_SENSOR "%d\":\"%s\"}";
@@ -602,12 +605,6 @@ const char kCodeImage[] PROGMEM = "sonoff|minimal|classic|sensors|knx|basic|disp
 
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;
-
-const char kOptionOff[] PROGMEM = "OFF|" D_OFF "|" D_FALSE "|" D_STOP "|" D_CELSIUS ;
-const char kOptionOn[] PROGMEM = "ON|" D_ON "|" D_TRUE "|" D_START "|" D_FAHRENHEIT "|" D_USER ;
-const char kOptionToggle[] PROGMEM = "TOGGLE|" D_TOGGLE "|" D_ADMIN ;
-const char kOptionBlink[] PROGMEM = "BLINK|" D_BLINK ;
-const char kOptionBlinkOff[] PROGMEM = "BLINKOFF|" D_BLINKOFF ;
 
 // xdrv_02_webserver.ino
 #ifdef USE_WEBSERVER

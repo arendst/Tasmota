@@ -77,15 +77,14 @@ void SDM120Every250ms(void)
   bool data_ready = Sdm120Modbus->ReceiveReady();
 
   if (data_ready) {
-    uint8_t buffer[9];
+    uint8_t buffer[14];  // At least 5 + (2 * 2) = 9
 
     uint32_t error = Sdm120Modbus->ReceiveBuffer(buffer, 2);
-    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, sizeof(buffer));
+    AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, Sdm120Modbus->ReceiveCount());
 
     if (error) {
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "SDM120 response error %d"), error);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDM: SDM120 error %d"), error);
     } else {
-      uint32_t max_table =
       Energy.data_valid = 0;
 
       //  0  1  2  3  4  5  6  7  8
@@ -99,31 +98,31 @@ void SDM120Every250ms(void)
 
       switch(Sdm120.read_state) {
         case 0:
-          Energy.voltage = value;          // 230.2 V
+          Energy.voltage[0] = value;          // 230.2 V
           break;
 
         case 1:
-          Energy.current  = value;         // 1.260 A
+          Energy.current[0]  = value;         // 1.260 A
           break;
 
         case 2:
-          Energy.active_power = value;     // -196.3 W
+          Energy.active_power[0] = value;     // -196.3 W
           break;
 
         case 3:
-          Energy.apparent_power = value;   // 223.4 VA
+          Energy.apparent_power[0] = value;   // 223.4 VA
           break;
 
         case 4:
-          Energy.reactive_power = value;   // 92.2
+          Energy.reactive_power[0] = value;   // 92.2
           break;
 
         case 5:
-          Energy.power_factor = value;     // -0.91
+          Energy.power_factor[0] = value;     // -0.91
           break;
 
         case 6:
-          Energy.frequency = value;        // 50.0 Hz
+          Energy.frequency[0] = value;        // 50.0 Hz
           break;
 
         case 7:

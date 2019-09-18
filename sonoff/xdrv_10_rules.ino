@@ -339,6 +339,7 @@ int8_t parseCompareExpression(String &expr, String &leftExpr, String &rightExpr)
 {
   char compare_operator[3];
   int8_t compare = COMPARE_OPERATOR_NONE;
+  leftExpr = expr;
   int position;
   for (int8_t i = MAXIMUM_COMPARE_OPERATOR; i >= 0; i--) {
     snprintf_P(compare_operator, sizeof(compare_operator), kCompareOperators + (i *2));
@@ -684,7 +685,7 @@ void RulesTeleperiod(void)
 bool RulesMqttData(void)
 {
   bool serviced = false;
-  if (XdrvMailbox.data_len < 1 || XdrvMailbox.data_len > 128) {
+  if (XdrvMailbox.data_len < 1 || XdrvMailbox.data_len > 256) {
     return false;
   }
   String sTopic = XdrvMailbox.topic;
@@ -703,7 +704,7 @@ bool RulesMqttData(void)
       if (event_item.Key.length() == 0) {   //If did not specify Key
         value = sData;
       } else {      //If specified Key, need to parse Key/Value from JSON data
-        StaticJsonBuffer<400> jsonBuf;
+        StaticJsonBuffer<500> jsonBuf;
         JsonObject& jsonData = jsonBuf.parseObject(sData);
         String key1 = event_item.Key;
         String key2;
@@ -1185,6 +1186,7 @@ void CmndIf()
     parameters[XdrvMailbox.data_len] = '\0';
     ProcessIfStatement(parameters);
   }
+  ResponseCmndDone();
 }
 
 /********************************************************************************************/

@@ -36,14 +36,22 @@
 
 #define ADE7953_ADDR            0x38
 
+const uint8_t Ade7953Registers[] {
+  0x1B,  // RMS current channel B (Relay 1)
+  0x13,  // Active power channel B
+  0x11,  // Apparent power channel B
+  0x15,  // Reactive power channel B
+  0x1A,  // RMS current channel A (Relay 2)
+  0x12,  // Active power channel A
+  0x10,  // Apparent power channel A
+  0x14,  // Reactive power channel A
+  0x1C   // RMS voltage (Both relays)
+};
+
 struct Ade7953 {
-  uint32_t active_power = 0;
-  uint32_t active_power1 = 0;
-  uint32_t active_power2 = 0;
-  uint32_t current_rms = 0;
-  uint32_t current_rms1 = 0;
-  uint32_t current_rms2 = 0;
   uint32_t voltage_rms = 0;
+  uint32_t current_rms[2] = { 0, 0 };
+  uint32_t active_power[2] = { 0, 0 };
   uint8_t init_step = 0;
 } Ade7953;
 
@@ -80,7 +88,7 @@ void Ade7953Write(uint16_t reg, uint32_t val)
   }
 }
 
-uint32_t Ade7953Read(uint16_t reg)
+int32_t Ade7953Read(uint16_t reg)
 {
 	uint32_t response = 0;
 
@@ -109,48 +117,65 @@ void Ade7953Init(void)
 
 void Ade7953GetData(void)
 {
-  int32_t active_power;
+  int32_t reg[2][4];
+  for (uint32_t i = 0; i < sizeof(Ade7953Registers); i++) {
+    int32_t value = Ade7953Read(0x300 + Ade7953Registers[i]);
+    if (8 == i) {
+      Ade7953.voltage_rms = value;  // RMS voltage (Both relays)
+    } else {
+      reg[i >> 2][i &3] = value;
+    }
+  }
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("ADE: %d, [%d, %d, %d, %d], [%d, %d, %d, %d]"),
+    Ade7953.voltage_rms, reg[0][0], reg[0][1], reg[0][2], reg[0][3],
+                         reg[1][0], reg[1][1], reg[1][2], reg[1][3]);
 
-  Ade7953.voltage_rms = Ade7953Read(0x31C);      // Both relays
-  Ade7953.current_rms1 = Ade7953Read(0x31B);     // Relay 1
-  if (Ade7953.current_rms1 < 2000) {             // No load threshold (20mA)
-    Ade7953.current_rms1 = 0;
-    Ade7953.active_power1 = 0;
-  } else {
-    active_power = (int32_t)Ade7953Read(0x313) * -1;  // Relay 1
-    Ade7953.active_power1 = (active_power > 0) ? active_power : 0;
+  uint32_t apparent_power[2] = { 0, 0 };
+  uint32_t reactive_power[2] = { 0, 0 };
+
+  for (uint32_t channel = 0; channel < 2; channel++) {
+    Ade7953.current_rms[channel] = reg[channel][0];
+    if (Ade7953.current_rms[channel] < 2000) {           // No load threshold (20mA)
+      Ade7953.current_rms[channel] = 0;
+      Ade7953.active_power[channel] = 0;
+    } else {
+      Ade7953.active_power[channel] = abs(reg[channel][1]);
+      apparent_power[channel] = abs(reg[channel][2]);
+      reactive_power[channel] = abs(reg[channel][3]);
+    }
   }
-  Ade7953.current_rms2 = Ade7953Read(0x31A);     // Relay 2
-  if (Ade7953.current_rms2 < 2000) {             // No load threshold (20mA)
-    Ade7953.current_rms2 = 0;
-    Ade7953.active_power2 = 0;
-  } else {
-    active_power = (int32_t)Ade7953Read(0x312);  // Relay 2
-    Ade7953.active_power2 = (active_power > 0) ? active_power : 0;
-  }
-  // First phase only supports accumulated Current and Power
-  Ade7953.current_rms = Ade7953.current_rms1 + Ade7953.current_rms2;
-  Ade7953.active_power = Ade7953.active_power1 + Ade7953.active_power2;
+
+  uint32_t current_rms_sum = Ade7953.current_rms[0] + Ade7953.current_rms[1];
+  uint32_t active_power_sum = Ade7953.active_power[0] + Ade7953.active_power[1];
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ADE: U %d, I %d + %d = %d, P %d + %d = %d"),
-    Ade7953.voltage_rms, Ade7953.current_rms1, Ade7953.current_rms2, Ade7953.current_rms, Ade7953.active_power1, Ade7953.active_power2, Ade7953.active_power);
+    Ade7953.voltage_rms, Ade7953.current_rms[0], Ade7953.current_rms[1], current_rms_sum, Ade7953.active_power[0], Ade7953.active_power[1], active_power_sum);
 
   if (Energy.power_on) {  // Powered on
-    Energy.voltage = (float)Ade7953.voltage_rms / Settings.energy_voltage_calibration;
-    Energy.active_power = (float)Ade7953.active_power / (Settings.energy_power_calibration / 10);
-    if (0 == Energy.active_power) {
-      Energy.current = 0;
-    } else {
-      Energy.current = (float)Ade7953.current_rms / (Settings.energy_current_calibration * 10);
+    Energy.voltage[0] = (float)Ade7953.voltage_rms / Settings.energy_voltage_calibration;
+
+    for (uint32_t channel = 0; channel < 2; channel++) {
+      Energy.active_power[channel] = (float)Ade7953.active_power[channel] / (Settings.energy_power_calibration / 10);
+      Energy.reactive_power[channel] = (float)reactive_power[channel] / (Settings.energy_power_calibration / 10);
+      Energy.apparent_power[channel] = (float)apparent_power[channel] / (Settings.energy_power_calibration / 10);
+      if (0 == Energy.active_power[channel]) {
+        Energy.current[channel] = 0;
+      } else {
+        Energy.current[channel] = (float)Ade7953.current_rms[channel] / (Settings.energy_current_calibration * 10);
+      }
     }
   } else {  // Powered off
-    Energy.voltage = 0;
-    Energy.active_power = 0;
-    Energy.current = 0;
+    Energy.voltage[0] = 0;
+    for (uint32_t channel = 0; channel < 2; channel++) {
+      Energy.current[channel] = 0;
+      Energy.active_power[channel] = 0;
+      Energy.reactive_power[channel] = 0;
+      Energy.apparent_power[channel] = 0;
+    }
   }
 
-  if (Ade7953.active_power) {
-    Energy.kWhtoday_delta += ((Ade7953.active_power * (100000 / (Settings.energy_power_calibration / 10))) / 3600);
+  if (active_power_sum) {
+    Energy.kWhtoday_delta += ((active_power_sum * (100000 / (Settings.energy_power_calibration / 10))) / 3600);
     EnergyUpdateToday();
   }
 }
@@ -179,6 +204,10 @@ void Ade7953DrvInit(void)
       }
       AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "ADE7953", ADE7953_ADDR);
       Ade7953.init_step = 2;
+
+      Energy.phase_count = 2;                     // Handle two channels as two phases
+      Energy.voltage_common = true;               // Use common voltage
+
       energy_flg = XNRG_07;
     }
   }
@@ -188,6 +217,7 @@ bool Ade7953Command(void)
 {
   bool serviced = true;
 
+  uint32_t channel = (2 == XdrvMailbox.index) ? 1 : 0;
   uint32_t value = (uint32_t)(CharToFloat(XdrvMailbox.data) * 100);  // 1.23 = 123
 
   if (CMND_POWERCAL == Energy.command_code) {
@@ -203,9 +233,9 @@ bool Ade7953Command(void)
     // Service in xdrv_03_energy.ino
   }
   else if (CMND_POWERSET == Energy.command_code) {
-    if (XdrvMailbox.data_len && Ade7953.active_power) {
+    if (XdrvMailbox.data_len && Ade7953.active_power[channel]) {
       if ((value > 100) && (value < 200000)) {  // Between 1W and 2000W
-        Settings.energy_power_calibration = (Ade7953.active_power * 1000) / value;  // 0.00 W
+        Settings.energy_power_calibration = (Ade7953.active_power[channel] * 1000) / value;  // 0.00 W
       }
     }
   }
@@ -217,9 +247,9 @@ bool Ade7953Command(void)
     }
   }
   else if (CMND_CURRENTSET == Energy.command_code) {
-    if (XdrvMailbox.data_len && Ade7953.current_rms) {
+    if (XdrvMailbox.data_len && Ade7953.current_rms[channel]) {
       if ((value > 2000) && (value < 1000000)) {  // Between 20mA and 10A
-        Settings.energy_current_calibration = ((Ade7953.current_rms * 100) / value) * 100;  // 0.00 mA
+        Settings.energy_current_calibration = ((Ade7953.current_rms[channel] * 100) / value) * 100;  // 0.00 mA
       }
     }
   }
