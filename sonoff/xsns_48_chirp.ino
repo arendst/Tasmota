@@ -23,7 +23,7 @@
   1.0.0.1 20190917  changed   - rework of the inner loop to enable delays in the middle of I2C-reads
                     changed   - use DEBUG_SENSOR_LOG, change ILLUMINANCE to DARKNESS
                     changed   - do not publish missing temperature reads
-                    added     - now really support for the (slower) CHIRP-Sensor
+                    added     - now really support the (slower) CHIRP-Sensor
   ---
   1.0.0.0 20190608  started   - further development by Christian Baars  - https://github.com/Staars/Sonoff-Tasmota
                     forked    - from arendst/tasmota                    - https://github.com/arendst/Sonoff-Tasmota
@@ -418,7 +418,7 @@ void ChirpShow(bool json)
           if(chirp_sensor[i].temperature!=-1){ // this is the error code -> no temperature
             ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s"),str_temperature);
           }
-          ResponseAppend_P(PSTR(",\"" D_JSON_DARKNESS "\":\"%s}"),str_light);
+          ResponseAppend_P(PSTR(",\"" D_JSON_DARKNESS "\":%s}"),str_light);
         }
         else {
           ResponseAppend_P(PSTR(",\"%s%u\":{\"sleeping\"}"),chirp_name, i);
