@@ -30,7 +30,7 @@ _Make sure your have performed every step and checked the applicable boxes befor
 - [ ] Searched the problem in the wiki (https://github.com/arendst/Sonoff-Tasmota/wiki/Troubleshooting)
 - [ ] Searched the problem in the forum (https://groups.google.com/d/forum/sonoffusers)
 - [ ] Searched the problem in the chat (https://discord.gg/Ks2Kzd4)
-- [ ] Device used (i.e. Sonoff Basic): _____
+- [ ] Device used (e.g., Sonoff Basic): _____
 - [ ] Tasmota binary firmware version number used: _____
   - [ ] Pre-compiled
   - [ ] Self-compiled
