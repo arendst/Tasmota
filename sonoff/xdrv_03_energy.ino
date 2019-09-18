@@ -190,6 +190,13 @@ void EnergyUpdateTotal(float value, bool kwh)
   else if (value != Energy.start_energy) {
     Energy.kWhtoday = (unsigned long)((value - Energy.start_energy) * multiplier);
   }
+
+  if (Energy.total < value){
+    RtcSettings.energy_kWhtotal = (unsigned long)((value * multiplier) - Energy.kWhtoday_offset - Energy.kWhtoday);
+    Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
+    Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
+    Settings.energy_kWhtotal_time = (!Energy.kWhtoday_offset) ? LocalTime() : Midnight();
+  }
   EnergyUpdateToday();
 }
 
