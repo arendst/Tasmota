@@ -718,7 +718,7 @@ float DoMedian5(uint8_t index, float in) {
 }
 
 #ifdef USE_LIGHT
-#ifdef USE_WS2812
+//#ifdef USE_WS2812
 uint32_t HSVToRGB(uint16_t hue, uint8_t saturation, uint8_t value) {
 float r = 0, g = 0, b = 0;
 struct HSV {
@@ -801,7 +801,7 @@ if (hsv.S == 0) {
 	return rgb;
 }
 #endif
-#endif
+//#endif
 
 // vtype => ff=nothing found, fe=constant number,fd = constant string else bit 7 => 80 = string, 0 = number
 // no flash strings here for performance reasons!!!
@@ -1339,8 +1339,17 @@ chknext:
           }
           goto strexit;
         }
+        if (!strncmp(vname,"hx(",3)) {
+          lp=GetNumericResult(lp+3,OPER_EQU,&fvar,0);
+          lp++;
+          len=0;
+          if (sp) {
+            sprintf(sp,"%08x",(uint32_t)fvar);
+          }
+          goto strexit;
+        }
 #ifdef USE_LIGHT
-#ifdef USE_WS2812
+//#ifdef USE_WS2812
         if (!strncmp(vname,"hsvrgb(",7)) {
           lp=GetNumericResult(lp+7,OPER_EQU,&fvar,0);
           if (fvar<0 || fvar>360) fvar=0;
@@ -1361,7 +1370,7 @@ chknext:
           len=0;
           goto exit;
         }
-#endif
+//#endif
 #endif
         break;
       case 'i':
@@ -1903,6 +1912,11 @@ char *GetStringResult(char *lp,uint8_t lastop,char *cp,JsonObject *jo) {
   char str[SCRIPT_MAXSSIZE],str1[SCRIPT_MAXSSIZE];
   while (1) {
     lp=isvar(lp,&vtype,&ind,0,str1,jo);
+    if (vtype!=STR_RES && !(vtype&STYPE)) {
+      // numeric type
+      glob_script_mem.glob_error=1;
+      return lp;
+    }
     switch (lastop) {
         case OPER_EQU:
           strlcpy(str,str1,sizeof(str));
@@ -2015,13 +2029,13 @@ struct T_INDEX ind;
 char *ForceStringVar(char *lp,char *dstr) {
   float fvar;
   char *slp=lp;
-  glob_script_mem.var_not_found=0;
+  glob_script_mem.glob_error=0;
   lp=GetStringResult(lp,OPER_EQU,dstr,0);
-  if (glob_script_mem.var_not_found) {
+  if (glob_script_mem.glob_error) {
     // mismatch
     lp=GetNumericResult(slp,OPER_EQU,&fvar,0);
     dtostrfd(fvar,6,dstr);
-    glob_script_mem.var_not_found=0;
+    glob_script_mem.glob_error=0;
   }
   return lp;
 }
@@ -2718,14 +2732,14 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                     sindex=index;
                     // string result
                     char str[SCRIPT_MAXSSIZE];
-                    char *slp=lp;
                     lp=getop(lp,&lastop);
+                    char *slp=lp;
                     lp=GetStringResult(lp,OPER_EQU,str,jo);
-                    if (!js && glob_script_mem.var_not_found) {
+                    if (!js && glob_script_mem.glob_error) {
                       // mismatch
                       lp=GetNumericResult(slp,OPER_EQU,&fvar,0);
                       dtostrfd(fvar,6,str);
-                      glob_script_mem.var_not_found=0;
+                      glob_script_mem.glob_error=0;
                     }
 
                     if (!glob_script_mem.var_not_found) {
@@ -3954,12 +3968,16 @@ bool Xdrv10(uint8_t function)
       break;
 #ifdef SUPPORT_MQTT_EVENT
     case FUNC_MQTT_DATA:
-      result = ScriptMqttData();
+      if (bitRead(Settings.rule_enabled, 0)) {
+        result = ScriptMqttData();
+      }
       break;
 #endif    //SUPPORT_MQTT_EVENT
 #ifdef USE_SCRIPT_WEB_DISPLAY
     case FUNC_WEB_SENSOR:
-      ScriptWebShow();
+      if (bitRead(Settings.rule_enabled, 0)) {
+        ScriptWebShow();
+      }
       break;
 #endif //USE_SCRIPT_WEB_DISPLAY
 
