@@ -83,6 +83,8 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef CODE_IMAGE
 #define CODE_IMAGE 3
 
+#undef USE_DISCOVERY                          // Disable mDNS (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
+
 // -- Optional modules -------------------------
 #define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
 #define USE_TUYA_MCU                          // Add support for Tuya Serial MCU
