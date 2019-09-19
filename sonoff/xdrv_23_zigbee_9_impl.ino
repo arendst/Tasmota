@@ -25,7 +25,7 @@ const uint32_t ZIGBEE_BUFFER_SIZE = 256;  // Max ZNP frame is SOF+LEN+CMD1+CMD2+
 const uint8_t  ZIGBEE_SOF = 0xFE;
 
 // Status code used for ZigbeeStatus MQTT message
-// Ex: {"ZigbeeStatus":{"code": 3,"message":"Configured, starting coordinator"}}
+// Ex: {"ZigbeeStatus":{"Status": 3,"Message":"Configured, starting coordinator"}}
 const uint8_t  ZIGBEE_STATUS_OK = 0;                    // Zigbee started and working
 const uint8_t  ZIGBEE_STATUS_BOOT = 1;                  // CC2530 booting
 const uint8_t  ZIGBEE_STATUS_RESET_CONF = 2;            // Resetting CC2530 configuration
@@ -33,8 +33,9 @@ const uint8_t  ZIGBEE_STATUS_STARTING = 3;              // Starting CC2530 as co
 const uint8_t  ZIGBEE_STATUS_PERMITJOIN_CLOSE = 20;     // Disable PermitJoin
 const uint8_t  ZIGBEE_STATUS_PERMITJOIN_OPEN_60 = 21;   // Enable PermitJoin for 60 seconds
 const uint8_t  ZIGBEE_STATUS_PERMITJOIN_OPEN_XX = 22;   // Enable PermitJoin until next boot
-const uint8_t  ZIGBEE_STATUS_DEVICE_VERSION = 50;       // Status: CC2530 ZNP Version
-const uint8_t  ZIGBEE_STATUS_DEVICE_INFO = 51;          // Status: CC2530 Device Configuration
+const uint8_t  ZIGBEE_STATUS_DEVICE_ANNOUNCE = 30;      // Device announces its address
+const uint8_t  ZIGBEE_STATUS_CC_VERSION = 50;           // Status: CC2530 ZNP Version
+const uint8_t  ZIGBEE_STATUS_CC_INFO = 51;              // Status: CC2530 Device Configuration
 const uint8_t  ZIGBEE_STATUS_UNSUPPORTED_VERSION = 98;  // Unsupported ZNP version
 const uint8_t  ZIGBEE_STATUS_ABORT = 99;                // Fatal error, Zigbee not working
 
@@ -170,6 +171,8 @@ SBuffer *zigbee_buffer = nullptr;
 // Macro to define message to send and receive
 #define ZBM(n, x...) const uint8_t n[] PROGMEM = { x };
 
+#define USE_ZIGBEE_CHANNEL_MASK (1 << (USE_ZIGBEE_CHANNEL))
+
 // ZBS_* Zigbee Send
 // ZBR_* Zigbee Recv
 ZBM(ZBS_RESET, Z_AREQ | Z_SYS, SYS_RESET, 0x00 )        	  // 410001 SYS_RESET_REQ Hardware reset
@@ -197,7 +200,7 @@ ZBM(ZBR_EXTPAN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_Success, CONF_EXTEND
 ZBM(ZBS_CHANN, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_CHANLIST )				// 260484
 ZBM(ZBR_CHANN, Z_SRSP | Z_SAPI, SAPI_READ_CONFIGURATION, Z_Success, CONF_CHANLIST,
                0x04 /* len */,
-               Z_B0(USE_ZIGBEE_CHANNEL), Z_B1(USE_ZIGBEE_CHANNEL), Z_B2(USE_ZIGBEE_CHANNEL), Z_B3(USE_ZIGBEE_CHANNEL),
+               Z_B0(USE_ZIGBEE_CHANNEL_MASK), Z_B1(USE_ZIGBEE_CHANNEL_MASK), Z_B2(USE_ZIGBEE_CHANNEL_MASK), Z_B3(USE_ZIGBEE_CHANNEL_MASK),
                )				// 6604008404xxxxxxxx
 
 ZBM(ZBS_PFGK, Z_SREQ | Z_SAPI, SAPI_READ_CONFIGURATION, CONF_PRECFGKEY )				// 260462
@@ -230,7 +233,7 @@ ZBM(ZBS_W_EXTPAN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_EXTENDED_PAN_I
                   ) // 26052D086263151D004B1200
 // Write Channel ID
 ZBM(ZBS_W_CHANN, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_CHANLIST, 0x04 /* len */,
-                Z_B0(USE_ZIGBEE_CHANNEL), Z_B1(USE_ZIGBEE_CHANNEL), Z_B2(USE_ZIGBEE_CHANNEL), Z_B3(USE_ZIGBEE_CHANNEL),
+                Z_B0(USE_ZIGBEE_CHANNEL_MASK), Z_B1(USE_ZIGBEE_CHANNEL_MASK), Z_B2(USE_ZIGBEE_CHANNEL_MASK), Z_B3(USE_ZIGBEE_CHANNEL_MASK),
                 /*0x00, 0x08, 0x00, 0x00*/ )				// 26058404xxxxxxxx
 // Write Logical Type = 00 = coordinator
 ZBM(ZBS_W_LOGTYP, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_LOGICAL_TYPE, 0x01 /* len */, 0x00 )				// 2605870100
@@ -326,7 +329,8 @@ ZBM(ZBR_PERMITJOIN_AREQ_OPEN_XX, Z_AREQ | Z_ZDO, ZDO_PERMIT_JOIN_IND, 0xFF /* Du
 ZBM(ZBR_PERMITJOIN_AREQ_RSP,  Z_AREQ | Z_ZDO, ZDO_MGMT_PERMIT_JOIN_RSP, 0x00, 0x00 /* srcAddr*/, Z_Success )   // 45B6000000
 
 // Filters for ZCL frames
-ZBM(ZBR_AF_INCOMING_MESSAGE, Z_AREQ | Z_AF, AF_INCOMING_MSG)    // 4481
+ZBM(ZBR_AF_INCOMING_MESSAGE, Z_AREQ | Z_AF, AF_INCOMING_MSG)              // 4481
+ZBM(ZBR_END_DEVICE_ANNCE_IND, Z_AREQ | Z_ZDO, ZDO_END_DEVICE_ANNCE_IND)   // 45C1
 
 static const Zigbee_Instruction zb_prog[] PROGMEM = {
   ZI_LABEL(0)
@@ -487,10 +491,10 @@ int32_t Z_ReceiveDeviceInfo(int32_t res, class SBuffer &buf) {
   char hex[20];
   Uint64toHex(long_adr, hex, 64);
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
-                  "\"code\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
+                  "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
                   ",\"DeviceType\":%d,\"DeviceState\":%d"
                   ",\"NumAssocDevices\":%d"),
-                  ZIGBEE_STATUS_DEVICE_INFO, hex, short_adr, device_type, device_state,
+                  ZIGBEE_STATUS_CC_INFO, hex, short_adr, device_type, device_state,
                   device_associated);
 
   if (device_associated > 0) {
@@ -528,9 +532,9 @@ int32_t Z_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
   uint32_t revision = buf.get32(7);
 
   Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
-                  "\"code\":%d,\"MajorRel\":%d,\"MinorRel\":%d"
+                  "\"Status\":%d,\"MajorRel\":%d,\"MinorRel\":%d"
                   ",\"MaintRel\":%d,\"Revision\":%d}}"),
-                  ZIGBEE_STATUS_DEVICE_VERSION, major_rel, minor_rel,
+                  ZIGBEE_STATUS_CC_VERSION, major_rel, minor_rel,
                   maint_rel, revision);
 
   MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATUS));
@@ -543,53 +547,90 @@ int32_t Z_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
   }
 }
 
-int32_t Z_Recv_Default(int32_t res, class SBuffer &buf) {
+bool Z_ReceiveMatchPrefix(const class SBuffer &buf, const uint8_t *match) {
+  if ( (pgm_read_byte(&match[0]) == buf.get8(0)) &&
+       (pgm_read_byte(&match[1]) == buf.get8(1)) ) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
+  Z_ShortAddress    srcAddr = buf.get16(2);
+  Z_ShortAddress    nwkAddr = buf.get16(4);
+  Z_IEEEAddress     ieeeAddr = buf.get64(6);
+  uint8_t           capabilities = buf.get8(14);
+
+  char hex[20];
+  Uint64toHex(ieeeAddr, hex, 64);
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
+                  "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
+                  ",\"PowerSource\":%s,\"ReceiveWhenIdle\":%s,\"Security\":%s}}"),
+                  ZIGBEE_STATUS_DEVICE_ANNOUNCE, hex, nwkAddr,
+                  (capabilities & 0x04) ? "true" : "false",
+                  (capabilities & 0x08) ? "true" : "false",
+                  (capabilities & 0x40) ? "true" : "false"
+                  );
+
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCLRECEIVED));
+  XdrvRulesProcess();
+  return -1;
+}
+
+int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
+  uint16_t        groupid = buf.get16(2);
+  uint16_t        clusterid = buf.get16(4);
+  Z_ShortAddress  srcaddr = buf.get16(6);
+  uint8_t         srcendpoint = buf.get8(8);
+  uint8_t         dstendpoint = buf.get8(9);
+  uint8_t         wasbroadcast = buf.get8(10);
+  uint8_t         linkquality = buf.get8(11);
+  uint8_t         securityuse = buf.get8(12);
+  uint32_t        timestamp = buf.get32(13);
+  uint8_t         seqnumber = buf.get8(17);
+
+  ZCLFrame zcl_received = ZCLFrame::parseRawFrame(buf, 19, buf.get8(18), clusterid, groupid);
+
+  zcl_received.publishMQTTReceived(groupid, clusterid, srcaddr,
+                                  srcendpoint, dstendpoint, wasbroadcast,
+                                  linkquality, securityuse, seqnumber,
+                                  timestamp);
+
+  char shortaddr[8];
+  snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
+
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& json_root = jsonBuffer.createObject();
+  JsonObject& json = json_root.createNestedObject(shortaddr);
+  if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
+   zcl_received.parseRawAttributes(json);
+  } else if (zcl_received.isClusterSpecificCommand()) {
+   zcl_received.parseClusterSpecificCommand(json);
+  }
+  zcl_received.postProcessAttributes(json);
+
+  String msg("");
+  msg.reserve(100);
+  json_root.printTo(msg);
+
+  Response_P(PSTR("%s"), msg.c_str());
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCLRECEIVED));
+  XdrvRulesProcess();
+  return -1;
+}
+
+int32_t Z_Recv_Default(int32_t res, const class SBuffer &buf) {
   // Default message handler for new messages
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZIG: Z_Recv_Default"));
   if (zigbee.init_phase) {
     // if still during initialization phase, ignore any unexpected message
   	return -1;	// ignore message
   } else {
-    if ( (pgm_read_byte(&ZBR_AF_INCOMING_MESSAGE[0]) == buf.get8(0)) &&
-         (pgm_read_byte(&ZBR_AF_INCOMING_MESSAGE[1]) == buf.get8(1)) ) {
-      uint16_t        groupid = buf.get16(2);
-      uint16_t        clusterid = buf.get16(4);
-      Z_ShortAddress  srcaddr = buf.get16(6);
-      uint8_t         srcendpoint = buf.get8(8);
-      uint8_t         dstendpoint = buf.get8(9);
-      uint8_t         wasbroadcast = buf.get8(10);
-      uint8_t         linkquality = buf.get8(11);
-      uint8_t         securityuse = buf.get8(12);
-      uint32_t        timestamp = buf.get32(13);
-      uint8_t         seqnumber = buf.get8(17);
-
-      ZCLFrame zcl_received = ZCLFrame::parseRawFrame(buf, 19, buf.get8(18), clusterid, groupid);
-
-      zcl_received.publishMQTTReceived(groupid, clusterid, srcaddr,
-                                       srcendpoint, dstendpoint, wasbroadcast,
-                                       linkquality, securityuse, seqnumber,
-                                       timestamp);
-
-      char shortaddr[8];
-      snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
-
-      DynamicJsonBuffer jsonBuffer;
-      JsonObject& json_root = jsonBuffer.createObject();
-      JsonObject& json = json_root.createNestedObject(shortaddr);
-      if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
-        zcl_received.parseRawAttributes(json);
-      } else if (zcl_received.isClusterSpecificCommand()) {
-        zcl_received.parseClusterSpecificCommand(json);
-      }
-      zcl_received.postProcessAttributes(json);
-
-      String msg("");
-      msg.reserve(100);
-      json_root.printTo(msg);
-
-      Response_P(PSTR("%s"), msg.c_str());
-    	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCLRECEIVED));
-    	XdrvRulesProcess();
+    if (Z_ReceiveMatchPrefix(buf, ZBR_AF_INCOMING_MESSAGE)) {
+      return Z_ReceiveAfIncomingMessage(res, buf);
+    } else if (Z_ReceiveMatchPrefix(buf, ZBR_END_DEVICE_ANNCE_IND)) {
+      return Z_ReceiveEndDeviceAnnonce(res, buf);
     }
     return -1;
   }
@@ -753,7 +794,7 @@ void ZigbeeStateMachine_Run(void) {
         AddLog_P(cur_d8, (char*) cur_ptr1);
         break;
       case ZGB_INSTR_MQTT_STATUS:
-        Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{\"code\":%d,\"message\":\"%s\"}}"),
+        Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{\"Status\":%d,\"Message\":\"%s\"}}"),
                           cur_d8, (char*) cur_ptr1);
       	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATUS));
       	XdrvRulesProcess();
