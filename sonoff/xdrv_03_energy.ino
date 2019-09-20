@@ -523,7 +523,7 @@ void CmndEnergyReset(void)
     uint32_t values[2];
 
     while ((str != nullptr) && (position <= 1)) {
-      uint8_t value = strtol(str, nullptr, 10);
+      uint32_t value = strtoul(str, nullptr, 10);
       values[position] = value;
       str = strtok_r(nullptr, ", ", &p);
       position += 1;
