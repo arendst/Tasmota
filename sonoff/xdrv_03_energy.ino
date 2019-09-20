@@ -167,12 +167,14 @@ void EnergyUpdateToday(void)
   Energy.daily = (float)(RtcSettings.energy_kWhtoday) / 100000;
   Energy.total = (float)(RtcSettings.energy_kWhtotal + RtcSettings.energy_kWhtoday) / 100000;
 
-  if (EnergyTariff1Active()) {  // Tarrif1 = Off-Peak
-    RtcSettings.energy_usage.usage1_kWhtotal += energy_diff;
-    RtcSettings.energy_usage.return1_kWhtotal += return_diff;
-  } else {
-    RtcSettings.energy_usage.usage2_kWhtotal += energy_diff;
-    RtcSettings.energy_usage.return2_kWhtotal += return_diff;
+  if (RtcTime.valid){
+    if (EnergyTariff1Active()) {  // Tarrif1 = Off-Peak
+      RtcSettings.energy_usage.usage1_kWhtotal += energy_diff;
+      RtcSettings.energy_usage.return1_kWhtotal += return_diff;
+    } else {
+      RtcSettings.energy_usage.usage2_kWhtotal += energy_diff;
+      RtcSettings.energy_usage.return2_kWhtotal += return_diff;
+    }
   }
 }
 
