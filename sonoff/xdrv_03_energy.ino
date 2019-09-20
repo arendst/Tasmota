@@ -514,6 +514,43 @@ void CmndEnergyReset(void)
     Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}}"),
       XdrvMailbox.command, energy_total_chr, energy_yesterday_chr, energy_daily_chr);
   }
+
+  if ((XdrvMailbox.index > 3) && (XdrvMailbox.index <= 5)) {
+    char *p;
+    char *str = strtok_r(XdrvMailbox.data, ", ", &p);
+    uint32_t position = 0;
+    uint32_t values[2];
+
+    while ((str != nullptr) && (position <= 1)) {
+      uint8_t value = strtol(str, nullptr, 10);
+      values[position] = value;
+      str = strtok_r(nullptr, ", ", &p);
+      position += 1;
+    }
+
+    switch (XdrvMailbox.index)
+    {
+      case 4:
+        // Reset energy_usage.usage totals
+        RtcSettings.energy_usage.usage1_kWhtotal = values[0];
+        RtcSettings.energy_usage.usage2_kWhtotal = values[1];
+        Settings.energy_usage.usage1_kWhtotal = RtcSettings.energy_usage.usage1_kWhtotal;
+        Settings.energy_usage.usage2_kWhtotal = RtcSettings.energy_usage.usage2_kWhtotal;
+        break;
+      case 5:
+        // Reset energy_usage.return totals
+        RtcSettings.energy_usage.return1_kWhtotal = values[0];
+        RtcSettings.energy_usage.return2_kWhtotal = values[1];
+        Settings.energy_usage.return1_kWhtotal = RtcSettings.energy_usage.return1_kWhtotal;
+        Settings.energy_usage.return2_kWhtotal = RtcSettings.energy_usage.return2_kWhtotal;
+        break;
+      }
+
+    Response_P(PSTR("{\"%s\":{\"Usage\":[%d,%d],\"Export\":[%d,%d]}}"),
+    XdrvMailbox.command,
+    Settings.energy_usage.usage1_kWhtotal, Settings.energy_usage.usage2_kWhtotal,
+    Settings.energy_usage.return1_kWhtotal, Settings.energy_usage.return2_kWhtotal);
+  }
 }
 
 void CmndTariff(void)
