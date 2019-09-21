@@ -85,7 +85,7 @@ void SDM120Every250ms(void)
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDM: SDM120 error %d"), error);
     } else {
-      Energy.data_valid = 0;
+      Energy.data_valid[0] = 0;
 
       //  0  1  2  3  4  5  6  7  8
       // SA FC BC Fh Fl Sh Sl Cl Ch

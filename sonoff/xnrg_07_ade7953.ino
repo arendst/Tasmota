@@ -155,6 +155,7 @@ void Ade7953GetData(void)
     Energy.voltage[0] = (float)Ade7953.voltage_rms / Settings.energy_voltage_calibration;
 
     for (uint32_t channel = 0; channel < 2; channel++) {
+      Energy.data_valid[channel] = 0;
       Energy.active_power[channel] = (float)Ade7953.active_power[channel] / (Settings.energy_power_calibration / 10);
       Energy.reactive_power[channel] = (float)reactive_power[channel] / (Settings.energy_power_calibration / 10);
       Energy.apparent_power[channel] = (float)apparent_power[channel] / (Settings.energy_power_calibration / 10);
@@ -165,13 +166,8 @@ void Ade7953GetData(void)
       }
     }
   } else {  // Powered off
-    Energy.voltage[0] = 0;
-    for (uint32_t channel = 0; channel < 2; channel++) {
-      Energy.current[channel] = 0;
-      Energy.active_power[channel] = 0;
-      Energy.reactive_power[channel] = 0;
-      Energy.apparent_power[channel] = 0;
-    }
+    Energy.data_valid[0] = ENERGY_WATCHDOG;
+    Energy.data_valid[1] = ENERGY_WATCHDOG;
   }
 
   if (active_power_sum) {

@@ -92,7 +92,7 @@ struct ENERGY {
 
   uint8_t fifth_second = 0;
   uint8_t command_code = 0;
-  uint8_t data_valid = 0;
+  uint8_t data_valid[3] = { 0, 0, 0 };
 
   uint8_t phase_count = 1;                      // Number of phases active
   bool voltage_common = false;                  // Use single voltage
@@ -423,18 +423,22 @@ void EnergyMqttShow(void)
 }
 #endif  // USE_ENERGY_MARGIN_DETECTION
 
-void EnergyOverTempCheck()
+void EnergyEverySecond()
 {
+  // Overtemp check
   if (global_update) {
     if (power && (global_temperature != 9999) && (global_temperature > Settings.param[P_OVER_TEMP])) {  // Device overtemp, turn off relays
       SetAllPower(POWER_ALL_OFF, SRC_OVERTEMP);
     }
   }
-  if (Energy.data_valid <= ENERGY_WATCHDOG) {
-    Energy.data_valid++;
-    if (Energy.data_valid > ENERGY_WATCHDOG) {
-      // Reset energy registers
-      for (uint32_t i = 0; i < Energy.phase_count; i++) {
+
+  // Invalid data reset
+  uint32_t data_valid = Energy.phase_count;
+  for (uint32_t i = 0; i < Energy.phase_count; i++) {
+    if (Energy.data_valid[i] <= ENERGY_WATCHDOG) {
+      Energy.data_valid[i]++;
+      if (Energy.data_valid[i] > ENERGY_WATCHDOG) {
+        // Reset energy registers
         Energy.voltage[i] = 0;
         Energy.current[i] = 0;
         Energy.active_power[i] = 0;
@@ -442,13 +446,21 @@ void EnergyOverTempCheck()
         if (!isnan(Energy.reactive_power[i])) { Energy.reactive_power[i] = 0; }
         if (!isnan(Energy.frequency[i])) { Energy.frequency[i] = 0; }
         if (!isnan(Energy.power_factor[i])) { Energy.power_factor[i] = 0; }
-      }
-      if (!isnan(Energy.export_active)) { Energy.export_active = 0; }
-      Energy.start_energy = 0;
 
-      XnrgCall(FUNC_ENERGY_RESET);
+        data_valid--;
+      }
     }
   }
+  if (!data_valid) {
+    if (!isnan(Energy.export_active)) { Energy.export_active = 0; }
+    Energy.start_energy = 0;
+
+    XnrgCall(FUNC_ENERGY_RESET);
+  }
+
+#ifdef USE_ENERGY_MARGIN_DETECTION
+  EnergyMarginCheck();
+#endif  // USE_ENERGY_MARGIN_DETECTION
 }
 
 /*********************************************************************************************\
@@ -1092,10 +1104,7 @@ bool Xsns03(uint8_t function)
   if (energy_flg) {
     switch (function) {
       case FUNC_EVERY_SECOND:
-#ifdef USE_ENERGY_MARGIN_DETECTION
-        EnergyMarginCheck();
-#endif  // USE_ENERGY_MARGIN_DETECTION
-        EnergyOverTempCheck();
+        EnergyEverySecond();
         break;
       case FUNC_JSON_APPEND:
         EnergyShow(true);

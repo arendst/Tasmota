@@ -179,7 +179,7 @@ void PzemEvery200ms(void)
   if (data_ready) {
     float value = 0;
     if (PzemRecieve(pzem_responses[Pzem.read_state], &value)) {
-      Energy.data_valid = 0;
+      Energy.data_valid[Pzem.phase] = 0;
       switch (Pzem.read_state) {
         case 1:  // Voltage as 230.2V
           Energy.voltage[Pzem.phase] = value;
