@@ -154,20 +154,21 @@ void EnergyUpdateToday(void)
     Energy.kWhtoday += delta;
   }
 
-  uint32_t energy_diff = (uint32_t)(Energy.total * 1000) - RtcSettings.energy_usage.last_usage_kWhtotal;
-  RtcSettings.energy_usage.last_usage_kWhtotal = (uint32_t)(Energy.total * 1000);
-
-  uint32_t return_diff = 0;
-  if (!isnan(Energy.export_active)) {
-    return_diff = (uint32_t)(Energy.export_active * 1000) - RtcSettings.energy_usage.last_return_kWhtotal;
-    RtcSettings.energy_usage.last_return_kWhtotal = (uint32_t)(Energy.export_active * 1000);
-  }
-
   RtcSettings.energy_kWhtoday = Energy.kWhtoday_offset + Energy.kWhtoday;
   Energy.daily = (float)(RtcSettings.energy_kWhtoday) / 100000;
   Energy.total = (float)(RtcSettings.energy_kWhtotal + RtcSettings.energy_kWhtoday) / 100000;
 
-  if (RtcTime.valid){
+  if (RtcTime.valid){ // We calc the difference only if we have a valid RTC time.
+
+    uint32_t energy_diff = (uint32_t)(Energy.total * 1000) - RtcSettings.energy_usage.last_usage_kWhtotal;
+    RtcSettings.energy_usage.last_usage_kWhtotal = (uint32_t)(Energy.total * 1000);
+
+    uint32_t return_diff = 0;
+    if (!isnan(Energy.export_active)) {
+      return_diff = (uint32_t)(Energy.export_active * 1000) - RtcSettings.energy_usage.last_return_kWhtotal;
+      RtcSettings.energy_usage.last_return_kWhtotal = (uint32_t)(Energy.export_active * 1000);
+    }
+
     if (EnergyTariff1Active()) {  // Tarrif1 = Off-Peak
       RtcSettings.energy_usage.usage1_kWhtotal += energy_diff;
       RtcSettings.energy_usage.return1_kWhtotal += return_diff;
@@ -193,12 +194,12 @@ void EnergyUpdateTotal(float value, bool kwh)
     Energy.kWhtoday = (unsigned long)((value - Energy.start_energy) * multiplier);
   }
 
-  if (Energy.total < value){
+  if (Energy.total < (value - 0.01)){ // We subtract a little offset to avoid continuous updates
     RtcSettings.energy_kWhtotal = (unsigned long)((value * multiplier) - Energy.kWhtoday_offset - Energy.kWhtoday);
     Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
     Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
     Settings.energy_kWhtotal_time = (!Energy.kWhtoday_offset) ? LocalTime() : Midnight();
-    RtcSettings.energy_usage.last_usage_kWhtotal = (uint32_t)(Energy.total * 1000);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: Energy Total updated with hardware value"));
   }
   EnergyUpdateToday();
 }
@@ -522,7 +523,7 @@ void CmndEnergyReset(void)
     uint32_t values[2];
 
     while ((str != nullptr) && (position <= 1)) {
-      uint8_t value = strtol(str, nullptr, 10);
+      uint32_t value = strtoul(str, nullptr, 10);
       values[position] = value;
       str = strtok_r(nullptr, ", ", &p);
       position += 1;
