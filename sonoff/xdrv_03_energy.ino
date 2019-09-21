@@ -504,16 +504,6 @@ void CmndEnergyReset(void)
         break;
       }
     }
-
-    char energy_total_chr[FLOATSZ];
-    dtostrfd(Energy.total, Settings.flag2.energy_resolution, energy_total_chr);
-    char energy_daily_chr[FLOATSZ];
-    dtostrfd(Energy.daily, Settings.flag2.energy_resolution, energy_daily_chr);
-    char energy_yesterday_chr[FLOATSZ];
-    dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
-
-    Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s}}"),
-      XdrvMailbox.command, energy_total_chr, energy_yesterday_chr, energy_daily_chr);
   }
 
   if ((XdrvMailbox.index > 3) && (XdrvMailbox.index <= 5)) {
@@ -546,12 +536,18 @@ void CmndEnergyReset(void)
         Settings.energy_usage.return2_kWhtotal = RtcSettings.energy_usage.return2_kWhtotal;
         break;
       }
+  }
 
-    Response_P(PSTR("{\"%s\":{\"Usage\":[%d,%d],\"Export\":[%d,%d]}}"),
-    XdrvMailbox.command,
+  char energy_total_chr[FLOATSZ];
+  dtostrfd(Energy.total, Settings.flag2.energy_resolution, energy_total_chr);
+  char energy_daily_chr[FLOATSZ];
+  dtostrfd(Energy.daily, Settings.flag2.energy_resolution, energy_daily_chr);
+  char energy_yesterday_chr[FLOATSZ];
+  dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
+  Response_P(PSTR("{\"%s\":{\"" D_JSON_TOTAL "\":%s,\"" D_JSON_YESTERDAY "\":%s,\"" D_JSON_TODAY "\":%s,\"" D_JSON_USAGE "\":[%d,%d],\"" D_JSON_EXPORT "\":[%d,%d]}}"),
+    XdrvMailbox.command, energy_total_chr, energy_yesterday_chr, energy_daily_chr,
     Settings.energy_usage.usage1_kWhtotal, Settings.energy_usage.usage2_kWhtotal,
     Settings.energy_usage.return1_kWhtotal, Settings.energy_usage.return2_kWhtotal);
-  }
 }
 
 void CmndTariff(void)

@@ -175,6 +175,8 @@
 #define D_JSON_PV2_CURRENT "Pv2Current"
 #define D_JSON_PV2_POWER "Pv2Power"
 #define D_JSON_SOLAR_POWER "SolarPower"
+#define D_JSON_USAGE "Usage"
+#define D_JSON_EXPORT "Export"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
