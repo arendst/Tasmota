@@ -3,6 +3,7 @@
  * Add command EnergyReset4 x,x to initialize total usage for two tarrifs
  * Add command EnergyReset5 x,x to initialize total export (or production) for two tarrifs
  * Add command Sensor34 8,0 and Sensor34 8,1 to disable/enable JSON message on weight change over 4 gram
+ * Add JSON array index support to rules evaluation allowing trigger on ENERGY#POWER[2]>0.60 from JSON ..,"Power":[0.00,0.68],.. (#6160)
  *
  * 6.6.0.12 20190910
  * Redesign command Tariff to now default to 0 (=disabled) and allowing to set both Standard Time (ST) and Daylight Savings Time (DST) start hour
