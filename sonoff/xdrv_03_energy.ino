@@ -933,8 +933,8 @@ void EnergyShow(bool json)
   dtostrfd(Energy.total, Settings.flag2.energy_resolution, energy_total_chr[0]);
   uint8_t energy_total_fields = 1;
   if (Settings.register8[R8_ENERGY_TARIFF1_ST] != Settings.register8[R8_ENERGY_TARIFF2_ST]) {
-    dtostrfd(RtcSettings.energy_usage.usage1_kWhtotal, Settings.flag2.energy_resolution, energy_total_chr[1]);  // Tariff1
-    dtostrfd(RtcSettings.energy_usage.usage2_kWhtotal, Settings.flag2.energy_resolution, energy_total_chr[2]);  // Tariff2
+    dtostrfd((float)RtcSettings.energy_usage.usage1_kWhtotal / 1000, Settings.flag2.energy_resolution, energy_total_chr[1]);  // Tariff1
+    dtostrfd((float)RtcSettings.energy_usage.usage2_kWhtotal / 1000, Settings.flag2.energy_resolution, energy_total_chr[2]);  // Tariff2
     energy_total_fields = 3;
   }
   char export_active_chr[FLOATSZ];
