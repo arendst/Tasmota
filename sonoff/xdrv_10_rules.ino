@@ -261,7 +261,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 
   const char* str_value;
   if ((pos = rule_name.indexOf("[")) > 0) {            // "CURRENT[1]"
-    int rule_name_idx = atoi(rule_name.substring(pos +1).c_str());
+    int rule_name_idx = rule_name.substring(pos +1).toInt();
     if ((rule_name_idx < 1) || (rule_name_idx > 6)) {  // Allow indexes 1 to 6
       rule_name_idx = 1;
     }
