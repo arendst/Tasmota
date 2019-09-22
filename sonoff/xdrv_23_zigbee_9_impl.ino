@@ -261,7 +261,9 @@ ZBM(ZBS_W_ZDODCB, Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_ZDO_DIRECT_CB,
 ZBM(ZBS_WNV_INITZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_ITEM_INIT, ZNP_HAS_CONFIGURED & 0xFF, ZNP_HAS_CONFIGURED >> 8,
                        0x01, 0x00 /* InitLen 16 bits */, 0x01 /* len */, 0x00 )  // 2107000F01000100 - 610709
 // Init succeeded
-ZBM(ZBR_WNV_INIT_OK, Z_SRSP | Z_SYS, SYS_OSAL_NV_ITEM_INIT, Z_Created )				// 610709 - NV Write
+//ZBM(ZBR_WNV_INIT_OK, Z_SRSP | Z_SYS, SYS_OSAL_NV_ITEM_INIT, Z_Created )				// 610709 - NV Write
+ZBM(ZBR_WNV_INIT_OK, Z_SRSP | Z_SYS, SYS_OSAL_NV_ITEM_INIT )				  // 6107xx, Success if 610700 or 610709 - NV Write
+
 // Write ZNP Has Configured
 ZBM(ZBS_WNV_ZNPHC, Z_SREQ | Z_SYS, SYS_OSAL_NV_WRITE, Z_B0(ZNP_HAS_CONFIGURED), Z_B1(ZNP_HAS_CONFIGURED),
                    0x00 /* offset */, 0x01 /* len */, 0x55 )				// 2109000F000155 - 610900
@@ -349,7 +351,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_SEND(ZBS_ZNPHC)                        // check value of ZNP Has Configured
     ZI_WAIT_RECV(2000, ZBR_ZNPHC)
     ZI_SEND(ZBS_VERSION)                      // check ZNP software version
-    ZI_WAIT_RECV_FUNC(1000, ZBR_VERSION, &Z_ReceiveCheckVersion)  // Check version
+    ZI_WAIT_RECV_FUNC(2000, ZBR_VERSION, &Z_ReceiveCheckVersion)  // Check version
     ZI_SEND(ZBS_PAN)                          // check PAN ID
     ZI_WAIT_RECV(1000, ZBR_PAN)
     ZI_SEND(ZBS_EXTPAN)                       // check EXT PAN ID
@@ -457,7 +459,7 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_WAIT_RECV(1000, ZBR_W_OK)
     // Now mark the device as ready, writing 0x55 in memory slot 0x0F00
     ZI_SEND(ZBS_WNV_INITZNPHC)                    // Init NV ZNP Has Configured
-    ZI_WAIT_RECV(1000, ZBR_WNV_INIT_OK)
+    ZI_WAIT_RECV_FUNC(1000, ZBR_WNV_INIT_OK, &Z_CheckNVWrite)
     ZI_SEND(ZBS_WNV_ZNPHC)                        // Write NV ZNP Has Configured
     ZI_WAIT_RECV(1000, ZBR_WNV_OK)
 
@@ -514,6 +516,18 @@ int32_t Z_ReceiveDeviceInfo(int32_t res, class SBuffer &buf) {
   XdrvRulesProcess();
 
   return res;
+}
+
+int32_t Z_CheckNVWrite(int32_t res, class SBuffer &buf) {
+  // Check the status after NV Init "ZNP Has Configured"
+  // Good response should be 610700 or 610709 (Success or Created)
+  // We only filter the response on 6107 and check the code in this function
+  uint8_t status = buf.get8(2);
+  if ((0x00 == status) || (0x09 == status)) {
+    return 0;   // Ok, continue
+  } else {
+    return -2;  // Error
+  }
 }
 
 int32_t Z_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
@@ -973,7 +987,7 @@ void ZigbeeInput(void)
 			SBuffer znp_buffer = zigbee_buffer->subBuffer(2, zigbee_frame_len - 3);	// remove SOF, LEN and FCS
 
 			ToHex_P((unsigned char*)znp_buffer.getBuffer(), znp_buffer.len(), hex_char, sizeof(hex_char));
-	    ResponseTime_P(PSTR(",\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
+	    Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
 	    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZNPRECEIVED));
 	    XdrvRulesProcess();
 
