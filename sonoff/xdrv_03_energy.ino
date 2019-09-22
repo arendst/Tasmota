@@ -929,18 +929,21 @@ void EnergyShow(bool json)
   dtostrfd(Energy.daily, Settings.flag2.energy_resolution, energy_daily_chr);
   char energy_yesterday_chr[FLOATSZ];
   dtostrfd((float)Settings.energy_kWhyesterday / 100000, Settings.flag2.energy_resolution, energy_yesterday_chr);
+
   char energy_total_chr[3][FLOATSZ];
   dtostrfd(Energy.total, Settings.flag2.energy_resolution, energy_total_chr[0]);
+  char export_active_chr[3][FLOATSZ];
+  dtostrfd(Energy.export_active, Settings.flag2.energy_resolution, export_active_chr[0]);
   uint8_t energy_total_fields = 1;
   if (Settings.register8[R8_ENERGY_TARIFF1_ST] != Settings.register8[R8_ENERGY_TARIFF2_ST]) {
     dtostrfd((float)RtcSettings.energy_usage.usage1_kWhtotal / 1000, Settings.flag2.energy_resolution, energy_total_chr[1]);  // Tariff1
     dtostrfd((float)RtcSettings.energy_usage.usage2_kWhtotal / 1000, Settings.flag2.energy_resolution, energy_total_chr[2]);  // Tariff2
+    dtostrfd((float)RtcSettings.energy_usage.return1_kWhtotal / 1000, Settings.flag2.energy_resolution, export_active_chr[1]);  // Tariff1
+    dtostrfd((float)RtcSettings.energy_usage.return2_kWhtotal / 1000, Settings.flag2.energy_resolution, export_active_chr[2]);  // Tariff2
     energy_total_fields = 3;
   }
-  char export_active_chr[FLOATSZ];
-  dtostrfd(Energy.export_active, Settings.flag2.energy_resolution, export_active_chr);
 
-  char value_chr[FLOATSZ *3];
+  char value_chr[FLOATSZ *3];   // Used by EnergyFormatIndex
   char value2_chr[FLOATSZ *3];
   char value3_chr[FLOATSZ *3];
 
@@ -954,7 +957,8 @@ void EnergyShow(bool json)
       energy_daily_chr);
 
     if (!isnan(Energy.export_active)) {
-      ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"), export_active_chr);
+      ResponseAppend_P(PSTR(",\"" D_JSON_EXPORT_ACTIVE "\":%s"),
+        EnergyFormatIndex(value_chr, export_active_chr[0], json, energy_total_fields));
     }
 
     if (show_energy_period) {
@@ -999,10 +1003,9 @@ void EnergyShow(bool json)
 
       dtostrfd(RtcSettings.energy_usage.usage1_kWhtotal, 1, energy_total_chr[1]);  // Tariff1
       dtostrfd(RtcSettings.energy_usage.usage2_kWhtotal, 1, energy_total_chr[2]);  // Tariff2
-      char energy_return_chr[2][FLOATSZ];
-      dtostrfd(RtcSettings.energy_usage.return1_kWhtotal, 1, energy_return_chr[0]);
-      dtostrfd(RtcSettings.energy_usage.return2_kWhtotal, 1, energy_return_chr[1]);
-      DomoticzSensorP1SmartMeter(energy_total_chr[1], energy_total_chr[2], energy_return_chr[0], energy_return_chr[1], (int)Energy.active_power[0]);
+      dtostrfd(RtcSettings.energy_usage.return1_kWhtotal, 1, export_active_chr[1]);
+      dtostrfd(RtcSettings.energy_usage.return2_kWhtotal, 1, export_active_chr[2]);
+      DomoticzSensorP1SmartMeter(energy_total_chr[1], energy_total_chr[2], export_active_chr[1], export_active_chr[2], (int)Energy.active_power[0]);
 
       if (Energy.voltage_available) {
         DomoticzSensor(DZ_VOLTAGE, voltage_chr[0]);  // Voltage
@@ -1054,7 +1057,7 @@ void EnergyShow(bool json)
     }
     WSContentSend_PD(HTTP_ENERGY_SNS2, energy_daily_chr, energy_yesterday_chr, energy_total_chr[0]);
     if (!isnan(Energy.export_active)) {
-      WSContentSend_PD(HTTP_ENERGY_SNS3, export_active_chr);
+      WSContentSend_PD(HTTP_ENERGY_SNS3, export_active_chr[0]);
     }
 
     XnrgCall(FUNC_WEB_SENSOR);
