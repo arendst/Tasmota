@@ -66,6 +66,7 @@ long hx_last_weight = 0;
 long hx_sum_weight = 0;
 long hx_offset = 0;
 long hx_scale = 1;
+long hx_weight_diff = 0;
 uint8_t hx_type = 1;
 uint8_t hx_sample_count = 0;
 uint8_t hx_calibrate_step = HX_CAL_END;
@@ -74,6 +75,7 @@ uint8_t hx_calibrate_msg = 0;
 uint8_t hx_pin_sck;
 uint8_t hx_pin_dout;
 bool hx_tare_flg = false;
+bool hx_weight_changed = false;
 
 /*********************************************************************************************/
 
@@ -156,6 +158,8 @@ void HxCalibrationStateTextJson(uint8_t msg_id)
  * Sensor34 6                      - Show item weigth in decigram
  * Sensor34 6 <weight in decigram> - Set item weight
  * Sensor34 7                      - Save current weight to be used as start weight on restart
+ * Sensor34 8 0                    - Disable JSON weight change message
+ * Sensor34 8 1                    - Enable JSON weight change message
 \*********************************************************************************************/
 
 bool HxCommand(void)
@@ -212,15 +216,21 @@ bool HxCommand(void)
       Settings.energy_frequency_calibration = hx_weight;
       Response_P(S_JSON_SENSOR_INDEX_SVALUE, XSNS_34, D_JSON_DONE);
       break;
+    case 8:  // Json on weight change
+      if (strstr(XdrvMailbox.data, ",") != nullptr) {
+        Settings.SensorBits1.hx711_json_weight_change = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10) & 1;
+      }
+      show_parms = true;
+      break;
     default:
-      serviced = false;
+      show_parms = true;
   }
 
   if (show_parms) {
     char item[33];
     dtostrfd((float)Settings.weight_item / 10, 1, item);
-    Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\"" D_JSON_WEIGHT_ITEM "\":%s}}"),
-      Settings.weight_reference, Settings.weight_calibration, Settings.weight_max * 1000, item);
+    Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\"" D_JSON_WEIGHT_ITEM "\":%s,\"WeightChange\":\"%s\"}}"),
+      Settings.weight_reference, Settings.weight_calibration, Settings.weight_max * 1000, item, GetStateText(Settings.SensorBits1.hx711_json_weight_change));
   }
 
   return serviced;
@@ -336,6 +346,21 @@ void HxEvery100mSecond(void)
       }
     } else {
       hx_weight += hx_last_weight;                   // grams
+
+      if (Settings.SensorBits1.hx711_json_weight_change) {
+        if (abs(hx_weight - hx_weight_diff) > 4) {     // Use 4 gram threshold to decrease "ghost" weights
+          hx_weight_diff = hx_weight;
+          hx_weight_changed = true;
+        }
+        else if (hx_weight_changed && (hx_weight == hx_weight_diff)) {
+          mqtt_data[0] = '\0';
+          ResponseAppendTime();
+          HxShow(true);
+          ResponseJsonEnd();
+          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+          hx_weight_changed = false;
+        }
+      }
     }
 
     hx_sum_weight = 0;
@@ -499,9 +524,6 @@ bool Xsns34(uint8_t function)
 
   if (hx_type) {
     switch (function) {
-      case FUNC_INIT:
-        HxInit();
-        break;
       case FUNC_EVERY_100_MSECOND:
         HxEvery100mSecond();
         break;
@@ -532,6 +554,9 @@ bool Xsns34(uint8_t function)
         break;
 #endif  // USE_HX711_GUI
 #endif  // USE_WEBSERVER
+      case FUNC_INIT:
+        HxInit();
+        break;
     }
   }
   return result;
