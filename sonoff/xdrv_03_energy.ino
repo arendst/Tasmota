@@ -38,6 +38,7 @@
 #define D_CMND_CURRENTCAL "CurrentCal"
 #define D_CMND_TARIFF "Tariff"
 #define D_CMND_MODULEADDRESS "ModuleAddress"
+#define D_CMND_ENERGY_SAVE_TIME "EnergySaveTime"
 
 enum EnergyCommands {
   CMND_POWERCAL, CMND_VOLTAGECAL, CMND_CURRENTCAL,
@@ -54,7 +55,7 @@ const char kEnergyCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SAFEPOWER "|" D_CMND_SAFEPOWERHOLD "|"  D_CMND_SAFEPOWERWINDOW "|"
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
-  D_CMND_ENERGYRESET "|" D_CMND_TARIFF ;
+  D_CMND_ENERGYRESET "|" D_CMND_TARIFF "|" D_CMND_ENERGY_SAVE_TIME;
 
 void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndPowerCal, &CmndVoltageCal, &CmndCurrentCal,
@@ -67,7 +68,7 @@ void (* const EnergyCommand[])(void) PROGMEM = {
   &CmndSafePower, &CmndSafePowerHold, &CmndSafePowerWindow,
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
-  &CmndEnergyReset, &CmndTariff };
+  &CmndEnergyReset, &CmndTariff, &CmndEnergySaveTime};
 
 const char kEnergyPhases[] PROGMEM = "|%s / %s|%s / %s / %s||[%s,%s]|[%s,%s,%s]";
 
@@ -124,6 +125,8 @@ struct ENERGY {
 } Energy;
 
 Ticker ticker_energy;
+
+uint32_t save_counter = 0;
 
 /********************************************************************************************/
 
@@ -425,6 +428,13 @@ void EnergyMqttShow(void)
 
 void EnergyEverySecond()
 {
+  // Save Energy data every (x) minutes
+  save_counter++;
+  if (save_counter >= (Settings.energy_save_time * 60) && Settings.energy_save_time != 0){
+    EnergySaveState();
+    save_counter = 0;
+  }
+
   // Overtemp check
   if (global_update) {
     if (power && (global_temperature != 9999) && (global_temperature > Settings.param[P_OVER_TEMP])) {  // Device overtemp, turn off relays
@@ -554,9 +564,6 @@ void CmndEnergyReset(void)
         }
         Settings.energy_usage.return1_kWhtotal = RtcSettings.energy_usage.return1_kWhtotal;
         Settings.energy_usage.return2_kWhtotal = RtcSettings.energy_usage.return2_kWhtotal;
-
-
-
         break;
       }
   }
@@ -608,6 +615,21 @@ void CmndTariff(void)
     Settings.register8[R8_ENERGY_TARIFF1_ST], Settings.register8[R8_ENERGY_TARIFF1_DS],
     Settings.register8[R8_ENERGY_TARIFF2_ST], Settings.register8[R8_ENERGY_TARIFF2_DS],
     GetStateText(Settings.flag3.energy_weekend));
+}
+
+void CmndEnergySaveTime(void)
+{
+  // SaveEnergyTime 30 - Number of minutes to save Energy data in the eeprom (Be care, eeproms have limited write cycles)
+  char *p;
+  uint16_t time = strtol(XdrvMailbox.data, &p, 10);
+
+  if (time >= 30 && time <= 1440) // Only values between 30 minutes and 24 hours (in minutes)
+  {
+    Settings.energy_save_time = time;
+  }else{
+    Settings.energy_save_time = 0;
+  }
+  Response_P(PSTR("{\"%s\":{\"EnergySaveTime\": %d}}"), XdrvMailbox.command, Settings.energy_save_time);
 }
 
 void CmndPowerCal(void)

@@ -711,6 +711,7 @@ void SettingsDefaultSet2(void)
 //  memset((char*)&Settings.energy_usage, 0x00, sizeof(Settings.energy_usage));
   memset((char*)&RtcSettings.energy_usage, 0x00, sizeof(RtcSettings.energy_usage));
   Settings.param[P_OVER_TEMP] = ENERGY_OVERTEMP;
+  Settings.energy_save_time = 0;
 
   // IRRemote
   Settings.param[P_IR_UNKNOW_THRESHOLD] = IR_RCV_MIN_UNKNOWN_SIZE;
