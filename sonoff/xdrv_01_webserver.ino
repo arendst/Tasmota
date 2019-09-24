@@ -92,7 +92,7 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "wl(u);";
 
 const char HTTP_SCRIPT_ROOT[] PROGMEM =
-
+  "var rfsh=1;"
   "function la(p){"
     "var a='';"
     "if(la.arguments.length==1){"
@@ -107,13 +107,29 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
         "eb('l1').innerHTML=s;"
       "}"
     "};"
-    "x.open('GET','.?m=1'+a,true);"       // ?m related to WebServer->hasArg("m")
-    "x.send();"
-    "lt=setTimeout(la,%d);"               // Settings.web_refresh
+    "if (rfsh) {"
+      "x.open('GET','.?m=1'+a,true);"       // ?m related to WebServer->hasArg("m")
+      "x.send();"
+      "lt=setTimeout(la,%d);"               // Settings.web_refresh
+    "}"
   "}"
 #ifdef USE_SCRIPT_WEB_DISPLAY
   "function seva(par,ivar){"
     "la('&sv='+ivar+'_'+par);"
+  "}"
+  "function siva(par,ivar){"
+    "rfsh=1;"
+    "la('&sv='+ivar+'_'+par);"
+    "rfsh=0;"
+  "}"
+  "function pr(f){"
+    "if (f) {"
+      "lt=setTimeout(la,%d);"
+      "rfsh=1;"
+    "} else {"
+      "clearTimeout(lt);"
+      "rfsh=0;"
+    "}"
   "}"
 #endif
 
@@ -939,7 +955,11 @@ void HandleRoot(void)
   char stemp[5];
 
   WSContentStart_P(S_MAIN_MENU);
+#ifdef USE_SCRIPT_WEB_DISPLAY
+  WSContentSend_P(HTTP_SCRIPT_ROOT, Settings.web_refresh, Settings.web_refresh);
+#else
   WSContentSend_P(HTTP_SCRIPT_ROOT, Settings.web_refresh);
+#endif
   WSContentSendStyle();
 
   WSContentSend_P(PSTR("<div id='l1' name='l1'></div>"));
