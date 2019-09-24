@@ -92,8 +92,8 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "wl(u);";
 
 
-#ifdef USE_SCRIPT_WEB_DISPLAY
 const char HTTP_SCRIPT_ROOT[] PROGMEM =
+#ifdef USE_SCRIPT_WEB_DISPLAY
   "var rfsh=1;"
   "function la(p){"
     "var a='';"
@@ -133,7 +133,6 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "}"
   "}"
 #else // USE_SCRIPT_WEB_DISPLAY
-const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "function la(p){"
     "var a='';"
     "if(la.arguments.length==1){"
