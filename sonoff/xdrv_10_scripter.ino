@@ -42,8 +42,9 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_DEBUG 0
 
 #define MAXVARS 50
-#define MAXNVARS 45
 #define MAXSVARS 5
+#define MAXNVARS MAXVARS-MAXSVARS
+
 #define MAXFILT 5
 #define SCRIPT_SVARSIZE 20
 #define SCRIPT_MAXSSIZE 48
@@ -465,6 +466,10 @@ char *script;
         }
         namep++;
         index++;
+        if (index>255) {
+          free(glob_script_mem.script_mem);
+          return -5;
+        }
     }
 
     // copy string variables
