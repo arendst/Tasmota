@@ -98,7 +98,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_COUNTER                           // Enable counters
 #undef USE_ADC_VCC                            // Add Analog input on selected devices
 #define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
-//#define USE_DS18x20_LEGACY                     // For more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 
 #define USE_I2C                               // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 #define USE_SHT                               // Add I2C emulating code for SHT1X sensor (+1k4 code)
@@ -415,7 +414,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
  * Mandatory define for DS18x20 if changed by above image selections
 \*********************************************************************************************/
 
-#if defined(USE_DS18x20) || defined(USE_DS18x20_LEGACY)
+#if defined(USE_DS18x20)
 #else
 #define USE_DS18B20                           // Default DS18B20 sensor needs no external library
 #endif
@@ -461,7 +460,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 #undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
-#undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
 #undef USE_DS18B20                            // Disable internal DS18B20 sensor
 #undef USE_I2C                                // Disable all I2C sensors and devices
 #undef USE_SPI                                // Disable all SPI devices
@@ -546,7 +544,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 #undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
-#undef USE_DS18x20_LEGACY                     // Disable DS18x20 sensor
 #undef USE_DS18B20                            // Disable internal DS18B20 sensor
 #undef USE_I2C                                // Disable all I2C sensors and devices
 #undef USE_SPI                                // Disable all SPI devices
