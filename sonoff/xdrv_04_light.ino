@@ -2281,7 +2281,7 @@ void CmndChannel(void)
       light_controller.changeChannels(Light.current_color);
       coldim = true;
     }
-    ResponseCmndIdxNumber(Light.current_color[XdrvMailbox.index -1] * 100 / 255);
+    ResponseCmndIdxNumber(changeUIntScale(Light.current_color[XdrvMailbox.index -1],0,255,0,100));
     if (coldim) {
       LightPreparePower();
     }
