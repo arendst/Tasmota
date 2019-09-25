@@ -74,7 +74,11 @@ uint8_t OneWireReset(void)
   uint8_t retries = 125;
 
   //noInterrupts();
+#ifdef DS18B20_INTERNAL_PULLUP
+  pinMode(ds18x20_pin, INPUT_PULLUP);
+#else
   pinMode(ds18x20_pin, INPUT);
+#endif
   do {
     if (--retries == 0) {
       return 0;
@@ -84,7 +88,11 @@ uint8_t OneWireReset(void)
   pinMode(ds18x20_pin, OUTPUT);
   digitalWrite(ds18x20_pin, LOW);
   delayMicroseconds(480);
+#ifdef DS18B20_INTERNAL_PULLUP
+  pinMode(ds18x20_pin, INPUT_PULLUP);
+#else
   pinMode(ds18x20_pin, INPUT);
+#endif
   delayMicroseconds(70);
   uint8_t r = !digitalRead(ds18x20_pin);
   //interrupts();
@@ -113,7 +121,11 @@ uint8_t OneWireReadBit(void)
   pinMode(ds18x20_pin, OUTPUT);
   digitalWrite(ds18x20_pin, LOW);
   delayMicroseconds(3);
+#ifdef DS18B20_INTERNAL_PULLUP
+  pinMode(ds18x20_pin, INPUT_PULLUP);
+#else
   pinMode(ds18x20_pin, INPUT);
+#endif
   delayMicroseconds(10);
   uint8_t r = digitalRead(ds18x20_pin);
   //interrupts();
@@ -432,7 +444,7 @@ void Ds18x20Show(bool json)
 
       if (json) {
         if (1 == ds18x20_sensors) {
-          ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}"), ds18x20_types, temperature);
+          ResponseAppend_P(JSON_SNS_TEMP, ds18x20_types, temperature);
         } else {
           char address[17];
           for (uint32_t j = 0; j < 6; j++) {
