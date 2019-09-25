@@ -1,4 +1,6 @@
 /*********************************************************************************************\
+ * 6.6.0.14 20190925
+ *
  * 6.6.0.13 20190922
  * Add command EnergyReset4 x,x to initialize total usage for two tarrifs
  * Add command EnergyReset5 x,x to initialize total export (or production) for two tarrifs
