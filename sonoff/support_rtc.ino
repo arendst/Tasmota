@@ -120,10 +120,17 @@ String GetBuildDateAndTime(void)
   return String(bdt);  // 2017-03-07T11:08:02
 }
 
+String GetMinuteTime(uint32_t minutes)
+{
+  char tm[6];
+  snprintf_P(tm, sizeof(tm), PSTR("%02d:%02d"), minutes / 60, minutes % 60);
+
+  return String(tm);  // 03:45
+}
+
 String GetTimeZone(void)
 {
   char tz[7];
-
   snprintf_P(tz, sizeof(tz), PSTR("%+03d:%02d"), Rtc.time_timezone / 60, abs(Rtc.time_timezone % 60));
 
   return String(tz);  // -03:45

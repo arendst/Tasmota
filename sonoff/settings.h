@@ -373,8 +373,9 @@ struct SYSCFG {
   TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
   uint16_t      ina226_r_shunt[4];         // E20
   uint16_t      ina226_i_fs[4];            // E28
+  uint16_t      tariff[4][2];              // E30
 
-  uint8_t       free_e30[456];             // E30
+  uint8_t       free_e40[440];             // E40
 
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC

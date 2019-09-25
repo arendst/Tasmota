@@ -1,5 +1,6 @@
 /*********************************************************************************************\
  * 6.6.0.14 20190925
+ * Change command Tariffx to allow time entries like 23 (hours), 1320 (minutes) or 23:00. NOTE: As this is development branch previous tariffs are lost! (#6488)
  *
  * 6.6.0.13 20190922
  * Add command EnergyReset4 x,x to initialize total usage for two tarrifs

@@ -252,7 +252,7 @@ enum SettingsParamIndex { P_HOLD_TIME, P_MAX_POWER_RETRY, P_ex_TUYA_DIMMER_ID, P
                           P_ex_ENERGY_TARIFF1, P_ex_ENERGY_TARIFF2,  // SetOption47 .. SetOption48
                           P_MAX_PARAM8 };  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
 
-enum SettingsRegister8 { R8_ENERGY_TARIFF1_ST, R8_ENERGY_TARIFF2_ST, R8_ENERGY_TARIFF1_DS, R8_ENERGY_TARIFF2_DS,
+enum SettingsRegister8 { R8_SPARE00, R8_SPARE01, R8_SPARE02, R8_SPARE03,
                          R8_SPARE04, R8_SPARE05, R8_SPARE06, R8_SPARE07,
                          R8_SPARE08, R8_SPARE09, R8_SPARE10, R8_SPARE11,
                          R8_SPARE12, R8_SPARE13, R8_SPARE14, R8_SPARE15,

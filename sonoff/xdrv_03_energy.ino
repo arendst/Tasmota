@@ -129,18 +129,18 @@ Ticker ticker_energy;
 
 bool EnergyTariff1Active()  // Off-Peak hours
 {
-  uint8_t tariff1 = Settings.register8[R8_ENERGY_TARIFF1_ST];
-  uint8_t tariff2 = Settings.register8[R8_ENERGY_TARIFF2_ST];
-  if (IsDst() && (Settings.register8[R8_ENERGY_TARIFF1_DS] != Settings.register8[R8_ENERGY_TARIFF2_DS])) {
-    tariff1 = Settings.register8[R8_ENERGY_TARIFF1_DS];
-    tariff2 = Settings.register8[R8_ENERGY_TARIFF2_DS];
+  uint8_t dst = 0;
+  if (IsDst() && (Settings.tariff[0][1] != Settings.tariff[1][1])) {
+    dst = 1;
   }
-  if (tariff1 != tariff2) {
-    return ((RtcTime.hour < tariff2) ||  // Tarrif1 = Off-Peak
-            (RtcTime.hour >= tariff1) ||
+  if (Settings.tariff[0][dst] != Settings.tariff[1][dst]) {
+    uint32_t minutes = MinutesPastMidnight();
+    return ((minutes < Settings.tariff[1][dst]) ||  // Tarrif1 = Off-Peak
+            (minutes >= Settings.tariff[0][dst]) ||
             (Settings.flag3.energy_weekend && ((RtcTime.day_of_week == 1) ||
                                                (RtcTime.day_of_week == 7)))
            );
+
   } else {
     return false;
   }
@@ -583,30 +583,46 @@ void CmndEnergyReset(void)
 
 void CmndTariff(void)
 {
-  // Tariff1 22,23 - Tariff1 start hour for Standard Time and Daylight Savings Time
-  // Tariff2 6,7   - Tariff2 start hour for Standard Time and Daylight Savings Time
+  // Tariff1 22:00,23:00 - Tariff1 start hour for Standard Time and Daylight Savings Time
+  // Tariff2 6:00,7:00   - Tariff2 start hour for Standard Time and Daylight Savings Time
+  // Tariffx 1320, 1380  = minutes and also 22:00, 23:00
+  // Tariffx 22, 23      = hours and also 22:00, 23:00
   // Tariff9 0/1
 
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
-    char *p;
-    char *str = strtok_r(XdrvMailbox.data, ", ", &p);
+    uint32_t tariff = XdrvMailbox.index -1;
     uint32_t time_type = 0;
-    while ((str != nullptr) && (time_type <= 2)) {
-      uint8_t value = strtol(str, nullptr, 10);
-      if ((value >= 0) && (value < 24)) {
-        Settings.register8[R8_ENERGY_TARIFF1_ST + (XdrvMailbox.index -1) + time_type] = value;
+    char *p;
+    char *str = strtok_r(XdrvMailbox.data, ", ", &p);  // 23:15, 22:30
+    while ((str != nullptr) && (time_type < 2)) {
+      char *q;
+      uint32_t value = strtol(str, &q, 10);            // 23 or 22
+      Settings.tariff[tariff][time_type] = value;
+      if (value < 24) {                                // Below 24 is hours
+        Settings.tariff[tariff][time_type] *= 60;      // Multiply hours by 60 minutes
+        char *minute = strtok_r(nullptr, ":", &q);
+        if (minute) {
+          value = strtol(minute, nullptr, 10);         // 15 or 30
+          if (value > 59) {
+            value = 59;
+          }
+          Settings.tariff[tariff][time_type] += value;
+        }
+      }
+      if (Settings.tariff[tariff][time_type] > 1439) {
+        Settings.tariff[tariff][time_type] = 1439;     // Max is 23:59
       }
       str = strtok_r(nullptr, ", ", &p);
-      time_type += 2;
+      time_type++;
     }
   }
   else if (XdrvMailbox.index == 9) {
     Settings.flag3.energy_weekend = XdrvMailbox.payload & 1;
   }
-  Response_P(PSTR("{\"%s\":{\"Off-Peak\":[%d,%d],\"Standard\":[%d,%d],\"Weekend\":\"%s\"}}"),
+  Response_P(PSTR("{\"%s\":{\"Off-Peak\":{\"STD\":\"%s\",\"DST\":\"%s\"},\"Standard\":{\"STD\":\"%s\",\"DST\":\"%s\"},\"Weekend\":\"%s\"}}"),
     XdrvMailbox.command,
-    Settings.register8[R8_ENERGY_TARIFF1_ST], Settings.register8[R8_ENERGY_TARIFF1_DS],
-    Settings.register8[R8_ENERGY_TARIFF2_ST], Settings.register8[R8_ENERGY_TARIFF2_DS],
+    GetMinuteTime(Settings.tariff[0][0]).c_str(),GetMinuteTime(Settings.tariff[0][1]).c_str(),
+    GetMinuteTime(Settings.tariff[1][0]).c_str(),GetMinuteTime(Settings.tariff[1][1]).c_str(),
     GetStateText(Settings.flag3.energy_weekend));
 }
 
@@ -954,7 +970,8 @@ void EnergyShow(bool json)
   char export_active_chr[3][FLOATSZ];
   dtostrfd(Energy.export_active, Settings.flag2.energy_resolution, export_active_chr[0]);
   uint8_t energy_total_fields = 1;
-  if (Settings.register8[R8_ENERGY_TARIFF1_ST] != Settings.register8[R8_ENERGY_TARIFF2_ST]) {
+
+  if (Settings.tariff[0][0] != Settings.tariff[1][0]) {
     dtostrfd((float)RtcSettings.energy_usage.usage1_kWhtotal / 100000, Settings.flag2.energy_resolution, energy_total_chr[1]);  // Tariff1
     dtostrfd((float)RtcSettings.energy_usage.usage2_kWhtotal / 100000, Settings.flag2.energy_resolution, energy_total_chr[2]);  // Tariff2
     dtostrfd((float)RtcSettings.energy_usage.return1_kWhtotal / 100000, Settings.flag2.energy_resolution, export_active_chr[1]);  // Tariff1
