@@ -364,12 +364,15 @@ void HueLightStatus2(uint8_t device, String *response)
     char fname[33];
     strcpy(fname, Settings.friendlyname[MAX_FRIENDLYNAMES-1]);
     uint32_t fname_len = strlen(fname);
-    if (fname_len >= 33-3) {
-      fname[33-3] = 0x00;
-      fname_len = 33-3;
-    }
+    if (fname_len > 30) { fname_len = 30; }
     fname[fname_len++] = '-';
-    fname[fname_len++] = '0' + device - MAX_FRIENDLYNAMES;
+    if (device - MAX_FRIENDLYNAMES < 10) {
+      fname[fname_len++] = '0' + device - MAX_FRIENDLYNAMES;
+    } else {
+      fname[fname_len++] = 'A' + device - MAX_FRIENDLYNAMES - 10;
+    }
+    fname[fname_len] = 0x00;
+
     response->replace("{j1", fname);
   }
   response->replace("{j2", GetHueDeviceId(device));
