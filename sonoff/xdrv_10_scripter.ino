@@ -1500,6 +1500,21 @@ chknext:
           len+=1;
           goto exit;
         }
+        // stb mod
+        #ifdef USE_SHUTTER
+        if (!strncmp(vname,"sht[",4)) {
+          GetNumericResult(vname+4,OPER_EQU,&fvar,0);
+          uint8_t index=fvar;
+          if (index<=shutters_present) {
+            fvar=Settings.shutter_position[index-1];
+          } else {
+            fvar=-1;
+          }
+          len+=1;
+          goto exit;
+        }
+        #endif
+        // end
         if (!strncmp(vname,"pc[",3)) {
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
           uint8_t index=fvar;
