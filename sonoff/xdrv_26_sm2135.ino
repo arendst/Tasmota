@@ -28,7 +28,7 @@
 #define SM2135_ADDR         0x40  // 0x40 .. 0x46
 
 //#define SM2135_CURRENT      0x24  // Defaults: 20mA for RGB, 30mA for CW
-#define SM2135_CURRENT      0x16  // Defaults: 15mA for RGB, 40mA for CW
+#define SM2135_CURRENT      0x16  // 3 x 15mA for RGB, 2 x 40mA/2 for CW
 
 #define SM2135_RGB          0x00
 #define SM2135_CW           0x80
@@ -49,8 +49,8 @@ bool Sm2135SetChannels(void)
       // Scale down to 255 total to fix max power usage of 9W (=40mA)
       // Currently not needed with setting 2 x 40mA/2 = 40mA = 9W = 255 (handled by lights.ino)
 
-      buffer[3] <<= 1;  // Divide by 2
-      buffer[4] <<= 1;  // Divide by 2
+      buffer[3] >>= 1;  // Divide by 2
+      buffer[4] >>= 1;  // Divide by 2
     }
     Wire.beginTransmission(SM2135_ADDR);
     Wire.write(SM2135_CURRENT);           // Set current to 40mA
