@@ -26,7 +26,10 @@
 #define XDRV_26             26
 
 #define SM2135_ADDR         0x40  // 0x40 .. 0x46
-#define SM2135_CURRENT      0x24  // Defaults: 20mA for RGB, 30mA for CW
+
+//#define SM2135_CURRENT      0x24  // Defaults: 20mA for RGB, 30mA for CW
+#define SM2135_CURRENT      0x16  // Defaults: 15mA for RGB, 40mA for CW
+
 #define SM2135_RGB          0x00
 #define SM2135_CW           0x80
 
@@ -38,25 +41,38 @@ bool Sm2135SetChannels(void)
 {
   char *buffer = XdrvMailbox.data;
 
-  // EXPERIMENTAL: Figure out if selecting RGB or CW blanks the opposite
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SM1: R %d G %d B %d, C %d W %d"), buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
 
-  if (('\0' == buffer[3]) && ('\0' == buffer[4])) {
+  if (('\0' == buffer[0]) && ('\0' == buffer[1]) && ('\0' == buffer[2])) {
+    // No color so must be Cold/Warm
+    if ((buffer[3] + buffer[4]) >= (1 * 256)) {
+      // Scale down to 255 total to fix max power usage of 9W (=40mA)
+      // Currently not needed with setting 2 x 40mA/2 = 40mA = 9W = 255 (handled by lights.ino)
+
+      buffer[3] <<= 1;  // Divide by 2
+      buffer[4] <<= 1;  // Divide by 2
+    }
     Wire.beginTransmission(SM2135_ADDR);
-    Wire.write(SM2135_CURRENT);           // Set current
+    Wire.write(SM2135_CURRENT);           // Set current to 40mA
+    Wire.write(SM2135_CW);                // Select CW - Shutdown RGB?
+    Wire.endTransmission();
+    delay(1);
+    Wire.beginTransmission(SM2135_ADDR +5);
+    Wire.write(buffer[3]);                // Cold
+    Wire.write(buffer[4]);                // Warm
+    Wire.endTransmission();
+  } else {
+    // Color
+    if ((buffer[0] + buffer[1] + buffer[2]) >= (3 * 256)) {
+      // Scale down to 765 total to fix max power usage of 9W
+      // Currently not needed with setting 3 x 15mA = 45mA = 11W = 765
+    }
+    Wire.beginTransmission(SM2135_ADDR);
+    Wire.write(SM2135_CURRENT);           // Set current to 15mA
     Wire.write(SM2135_RGB);               // Select RGB - Shutdown CW?
     Wire.write(buffer[0]);                // Red
     Wire.write(buffer[1]);                // Green
     Wire.write(buffer[2]);                // Blue
-    Wire.endTransmission();
-  } else {
-    Wire.beginTransmission(SM2135_ADDR);
-    Wire.write(SM2135_CURRENT);           // Set current
-    Wire.write(SM2135_CW);                // Select CW - Shutdown RGB?
-    Wire.endTransmission();
-
-    Wire.beginTransmission(SM2135_ADDR +5);
-    Wire.write(buffer[4]);                // Cold
-    Wire.write(buffer[3]);                // Warm
     Wire.endTransmission();
   }
 
