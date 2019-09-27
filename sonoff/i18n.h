@@ -291,6 +291,7 @@
   #define D_JSON_BASE "BASE"
 
 // Commands xdrv_01_mqtt.ino
+#define D_CMND_MQTTLOG "MqttLog"
 #define D_CMND_MQTTHOST "MqttHost"
 #define D_CMND_MQTTPORT "MqttPort"
 #define D_CMND_MQTTRETRY "MqttRetry"

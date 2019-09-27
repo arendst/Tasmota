@@ -2,6 +2,7 @@
  * 6.6.0.14 20190925
  * Change command Tariffx to allow time entries like 23 (hours), 1320 (minutes) or 23:00. NOTE: As this is development branch previous tariffs are lost! (#6488)
  * Remove support for define USE_DS18x20_LEGACY and legacy DS18x20 driver (#6486)
+ * Add initial support for MQTT logging using command MqttLog <loglevel> (#6498)
  *
  * 6.6.0.13 20190922
  * Add command EnergyReset4 x,x to initialize total usage for two tarrifs
