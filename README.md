@@ -16,13 +16,17 @@ Additional features:
 Changelog:
 1.12 2019-09-25
 - added sht[ ] for scripts to access the position of a shutter.
+
 1.10 2019-09-04
 - Fixed issue with wakeup not working. Calculate clock correction factor to meet deepsleep time. Real deepsleep is up to 10% related on chip temperature. Correction factor will continuously improved at every wakeup. NTP Timeserver is required.
+
 1.09 2019-09-02
 - Fixed shutter: Relay executed by MQTT or serial did not get recognized by shutter driver.
+
 1.08 2019-09-01
 - Added two new triggers to rules (System#PreTele and System#PostTele). Mainly to switch on/off devices before and after TelePeriod
 - changed deepsleep time calculation. Wakeup will now 100% in sync with time. E.g. you startet at 8:00am and define 3600 seconds, the device will always wakeup near the full hour. A slightly shift will not happen anymore
+
 1.07 2019-08-30
 - Added two new triggers to rules to better control the shutters (SHUTTER#MOVING and SHUTTER#MOVED). Last one reports actual position of the shutter.
 
