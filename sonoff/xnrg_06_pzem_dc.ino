@@ -62,7 +62,7 @@ void PzemDcEverySecond(void)
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PDC: PzemDc %d error %d"), PZEM_DC_DEVICE_ADDRESS + PzemDc.channel, error);
     } else {
-      Energy.data_valid = 0;
+      Energy.data_valid[PzemDc.channel] = 0;
       if (8 == registers) {
 
         //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20

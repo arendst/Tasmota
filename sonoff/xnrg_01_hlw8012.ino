@@ -89,7 +89,7 @@ void HlwCfInterrupt(void)  // Service Power
     Hlw.cf_pulse_last_time = us;
     Hlw.energy_period_counter++;
   }
-  Energy.data_valid = 0;
+  Energy.data_valid[0] = 0;
 }
 
 void HlwCf1Interrupt(void)  // Service Voltage and Current
@@ -108,7 +108,7 @@ void HlwCf1Interrupt(void)  // Service Voltage and Current
       Hlw.cf1_timer = 8;  // We need up to HLW_SAMPLE_COUNT samples within 1 second (low current could take up to 0.3 second)
     }
   }
-  Energy.data_valid = 0;
+  Energy.data_valid[0] = 0;
 }
 
 /********************************************************************************************/
@@ -199,7 +199,7 @@ void HlwEvery200ms(void)
 
 void HlwEverySecond(void)
 {
-  if (Energy.data_valid > ENERGY_WATCHDOG) {
+  if (Energy.data_valid[0] > ENERGY_WATCHDOG) {
     Hlw.cf1_voltage_pulse_length  = 0;
     Hlw.cf1_current_pulse_length = 0;
     Hlw.cf_power_pulse_length  = 0;

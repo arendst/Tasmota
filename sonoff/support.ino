@@ -1571,6 +1571,7 @@ void AddLog(uint32_t loglevel)
     if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
   }
 #endif  // USE_WEBSERVER
+  if (!global_state.mqtt_down && (loglevel <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
   if (!global_state.wifi_down && (loglevel <= syslog_level)) { Syslog(); }
 }
 

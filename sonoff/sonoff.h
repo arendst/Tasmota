@@ -113,7 +113,7 @@ const uint16_t SERIALLOG_TIMER = 600;       // Seconds to disable SerialLog
 const uint8_t OTA_ATTEMPTS = 5;             // Number of times to try fetching the new firmware
 
 const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in (serial and http) command buffer
-const uint16_t FLOATSZ = 33;                // Max number of characters in float result from dtostrfd
+const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
 const uint16_t TOPSZ = 100;                 // Max number of characters in topic string
 const uint16_t LOGSZ = 520;                 // Max number of characters in log
@@ -252,11 +252,11 @@ enum SettingsParamIndex { P_HOLD_TIME, P_MAX_POWER_RETRY, P_ex_TUYA_DIMMER_ID, P
                           P_ex_ENERGY_TARIFF1, P_ex_ENERGY_TARIFF2,  // SetOption47 .. SetOption48
                           P_MAX_PARAM8 };  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
 
-enum SettingsRegister8 { R8_ENERGY_TARIFF1_ST, R8_ENERGY_TARIFF2_ST, R8_ENERGY_TARIFF1_DS, R8_ENERGY_TARIFF2_DS,
+enum SettingsRegister8 { R8_SPARE00, R8_SPARE01, R8_SPARE02, R8_SPARE03,
                          R8_SPARE04, R8_SPARE05, R8_SPARE06, R8_SPARE07,
                          R8_SPARE08, R8_SPARE09, R8_SPARE10, R8_SPARE11,
                          R8_SPARE12, R8_SPARE13, R8_SPARE14, R8_SPARE15,
-                         R8_SPARE16, R8_SPARE17 };  // Max size is 18 (Settings.register8[])
+                         R8_SPARE16 };  // Max size is 17 (Settings.register8[])
 
 enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_AIRQUALITY, DZ_P1_SMART_METER, DZ_MAX_SENSORS};
 

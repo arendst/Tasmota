@@ -531,7 +531,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_DHT22,          // DHT21, DHT22, AM2301, AM2302, AM2321
   GPIO_SI7021,         // iTead SI7021
 #endif
-#if defined(USE_DS18B20) || defined(USE_DS18x20) || defined(USE_DS18x20_LEGACY)
+#if defined(USE_DS18B20) || defined(USE_DS18x20)
   GPIO_DSB,            // Single wire DS18B20 or DS18S20
 #endif
 
