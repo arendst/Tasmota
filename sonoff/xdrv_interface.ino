@@ -817,16 +817,16 @@ const uint8_t kXdrvList[] = {
 #endif
 
 #ifdef XDRV_97
-  XDRV_97
+  XDRV_97,
 #endif
 
-// #ifdef XDRV_98
-//   XDRV_98,
-// #endif
-//
-// #ifdef XDRV_99
-//   XDRV_99
-// #endif
+#ifdef XDRV_98
+ XDRV_98,
+#endif
+
+#ifdef XDRV_99
+ XDRV_99
+#endif
 };
 
 /*********************************************************************************************/

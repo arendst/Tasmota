@@ -7,9 +7,11 @@
 .piolibdeps
 .clang_complete
 .gcc-flags.json
+.cache
 sonoff/user_config_override.h
 build
 firmware.map
+firmware.asm
 
 ## Visual Studio Code specific ######
 .vscode

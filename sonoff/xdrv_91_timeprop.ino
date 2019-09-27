@@ -195,7 +195,7 @@ bool Timeprop_Command()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_91
+#define XDRV_91 91
 
 bool Xdrv91(uint8_t function)
 {

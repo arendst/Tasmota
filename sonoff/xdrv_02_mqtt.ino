@@ -41,6 +41,7 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
   D_CMND_MQTTHOST "|" D_CMND_MQTTPORT "|" D_CMND_MQTTRETRY "|" D_CMND_STATETEXT "|" D_CMND_MQTTCLIENT "|"
   D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
+
 void (* const MqttCommand[])(void) PROGMEM = {
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   &CmndMqttFingerprint,
@@ -754,13 +755,13 @@ void CmndMqttHost(void)
     setLongMqttHost((SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_HOST : XdrvMailbox.data);
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, AWS_endpoint);
+  ResponseCmndChar(AWS_endpoint);
 #else
   if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_host))) {
     strlcpy(Settings.mqtt_host, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? MQTT_HOST : XdrvMailbox.data, sizeof(Settings.mqtt_host));
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, Settings.mqtt_host);
+  ResponseCmndChar(Settings.mqtt_host);
 #endif
 }
 
@@ -899,7 +900,7 @@ void CmndButtonTopic(void)
 
 void CmndSwitchTopic(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.switch_topic))) {
+  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.switch_topic))) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
     switch (Shortcut()) {

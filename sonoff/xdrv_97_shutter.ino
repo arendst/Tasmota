@@ -478,7 +478,7 @@ void SetShutterPosition(uint8_t device, uint8_t position)
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_97
+#define XDRV_97  97
 
 bool Xdrv97(uint8_t function)
 {
@@ -523,4 +523,4 @@ bool Xdrv97(uint8_t function)
   return result;
 }
 
-#endif
+#endif //USE_SHUTTER

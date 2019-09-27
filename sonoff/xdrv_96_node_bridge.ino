@@ -464,7 +464,7 @@ bool Xdrv96(byte function)
 }
 
 
-#define XSNS_96
+#define XSNS_96 96
 
 bool Xsns96(uint8_t function)
 {

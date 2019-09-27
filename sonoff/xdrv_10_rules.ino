@@ -259,8 +259,17 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   JsonObject &root = jsonBuf.parseObject(event);
   if (!root.success()) { return false; }               // No valid JSON data
 
-  float value = 0;
-  const char* str_value = root[rule_task][rule_name];
+  const char* str_value;
+  if ((pos = rule_name.indexOf("[")) > 0) {            // "CURRENT[1]"
+    int rule_name_idx = rule_name.substring(pos +1).toInt();
+    if ((rule_name_idx < 1) || (rule_name_idx > 6)) {  // Allow indexes 1 to 6
+      rule_name_idx = 1;
+    }
+    rule_name = rule_name.substring(0, pos);           // "CURRENT"
+    str_value = root[rule_task][rule_name][rule_name_idx -1];  // "ENERGY" and "CURRENT" and 0
+  } else {
+    str_value = root[rule_task][rule_name];            // "INA219" and "CURRENT"
+  }
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
 //  rule_task.c_str(), rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
@@ -271,6 +280,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   Rules.event_value = str_value;                       // Prepare %value%
 
   // Step 3: Compare rule (value)
+  float value = 0;
   if (str_value) {
     value = CharToFloat((char*)str_value);
     int int_value = int(value);

@@ -210,7 +210,7 @@ bool pcf8574_detect()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_90
+#define XDRV_90 90
 
 bool Xdrv90(uint8_t function)
 {

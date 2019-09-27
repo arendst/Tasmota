@@ -354,7 +354,7 @@ static void run_pid()
  * Interface
 \*********************************************************************************************/
 
-#define XDRV_92
+#define XDRV_92 92
 
 bool Xdrv92(uint8_t function)
 {

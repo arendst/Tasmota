@@ -191,6 +191,16 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
     XdrvMailbox.topic = type;
     XdrvMailbox.data = dataBuf;
 
+#ifdef USE_SCRIPT_SUB_COMMAND
+  // allow overwrite tasmota cmds
+    if (!XdrvCall(FUNC_COMMAND)) {
+      if (!DecodeCommand(kTasmotaCommands, TasmotaCommand)) {
+        if (!XsnsCall(FUNC_COMMAND)) {
+            type = nullptr;  // Unknown command
+        }
+      }
+    }
+#else
     if (!DecodeCommand(kTasmotaCommands, TasmotaCommand)) {
       if (!XdrvCall(FUNC_COMMAND)) {
         if (!XsnsCall(FUNC_COMMAND)) {
@@ -198,6 +208,8 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
         }
       }
     }
+#endif
+
   }
 
   if (type == nullptr) {
@@ -221,10 +233,17 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
 void CmndBacklog(void)
 {
   if (XdrvMailbox.data_len) {
+
+#ifdef SUPPORT_IF_STATEMENT
+    char *blcommand = strtok(XdrvMailbox.data, ";");
+    while ((blcommand != nullptr) && (backlog.size() < MAX_BACKLOG))
+#else
     uint32_t bl_pointer = (!backlog_pointer) ? MAX_BACKLOG -1 : backlog_pointer;
     bl_pointer--;
     char *blcommand = strtok(XdrvMailbox.data, ";");
-    while ((blcommand != nullptr) && (backlog_index != bl_pointer)) {
+    while ((blcommand != nullptr) && (backlog_index != bl_pointer))
+#endif
+    {
       while(true) {
         blcommand = Trim(blcommand);
         if (!strncasecmp_P(blcommand, PSTR(D_CMND_BACKLOG), strlen(D_CMND_BACKLOG))) {
@@ -234,17 +253,27 @@ void CmndBacklog(void)
         }
       }
       if (*blcommand != '\0') {
+#ifdef SUPPORT_IF_STATEMENT
+        if (backlog.size() < MAX_BACKLOG) {
+          backlog.add(blcommand);
+        }
+#else
         backlog[backlog_index] = String(blcommand);
         backlog_index++;
         if (backlog_index >= MAX_BACKLOG) backlog_index = 0;
+#endif
       }
       blcommand = strtok(nullptr, ";");
     }
 //    ResponseCmndChar(D_JSON_APPENDED);
     mqtt_data[0] = '\0';
   } else {
-    bool blflag = (backlog_pointer == backlog_index);
+    bool blflag = BACKLOG_EMPTY;
+#ifdef SUPPORT_IF_STATEMENT
+    backlog.clear();
+#else
     backlog_pointer = backlog_index;
+#endif
     ResponseCmndChar(blflag ? D_JSON_EMPTY : D_JSON_ABORTED);
   }
 }
@@ -355,7 +384,7 @@ void CmndStatus(void)
     XsnsDriverState();
     ResponseAppend_P(PSTR(",\"Sensors\":"));
     XsnsSensorState();
-    ResponseAppend_P(PSTR("}}"));
+    ResponseJsonEndEnd();
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "4"));
   }
 
@@ -784,14 +813,14 @@ void CmndModules(void)
   for (uint32_t i = 0; i <= sizeof(kModuleNiceList); i++) {
     if (i > 0) { midx = pgm_read_byte(kModuleNiceList + i -1); }
     if (!jsflg) {
-      Response_P(PSTR("{\"" D_CMND_MODULES "%d\":["), lines);
+      Response_P(PSTR("{\"" D_CMND_MODULES "%d\":{"), lines);
     } else {
       ResponseAppend_P(PSTR(","));
     }
     jsflg = true;
     uint32_t j = i ? midx +1 : 0;
-    if ((ResponseAppend_P(PSTR("\"%d (%s)\""), j, AnyModuleName(midx).c_str()) > (LOGSZ - TOPSZ)) || (i == sizeof(kModuleNiceList))) {
-      ResponseAppend_P(PSTR("]}"));
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), j, AnyModuleName(midx).c_str()) > (LOGSZ - TOPSZ)) || (i == sizeof(kModuleNiceList))) {
+      ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_STAT, UpperCase(XdrvMailbox.command, XdrvMailbox.command));
       jsflg = false;
       lines++;
@@ -828,7 +857,7 @@ void CmndGpio(void)
         if (jsflg) { ResponseAppend_P(PSTR(",")); }
         jsflg = true;
         char stemp1[TOPSZ];
-        ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":\"%d (%s)\""), i, Settings.my_gp.io[i], GetTextIndexed(stemp1, sizeof(stemp1), Settings.my_gp.io[i], kSensorNames));
+        ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s\"}"), i, Settings.my_gp.io[i], GetTextIndexed(stemp1, sizeof(stemp1), Settings.my_gp.io[i], kSensorNames));
       }
     }
     if (jsflg) {
@@ -848,20 +877,19 @@ void CmndGpios(void)
   bool jsflg = false;
   for (uint32_t i = 0; i < sizeof(kGpioNiceList); i++) {
     midx = pgm_read_byte(kGpioNiceList + i);
-    if (!GetUsedInModule(midx, cmodule.io)) {
-      if (!jsflg) {
-        Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":["), lines);
-      } else {
-        ResponseAppend_P(PSTR(","));
-      }
-      jsflg = true;
-      char stemp1[TOPSZ];
-      if ((ResponseAppend_P(PSTR("\"%d (%s)\""), midx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (LOGSZ - TOPSZ)) || (i == sizeof(kGpioNiceList) -1)) {
-        ResponseAppend_P(PSTR("]}"));
-        MqttPublishPrefixTopic_P(RESULT_OR_STAT, UpperCase(XdrvMailbox.command, XdrvMailbox.command));
-        jsflg = false;
-        lines++;
-      }
+    if ((XdrvMailbox.payload != 255) && GetUsedInModule(midx, cmodule.io)) { continue; }
+    if (!jsflg) {
+      Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":{"), lines);
+    } else {
+      ResponseAppend_P(PSTR(","));
+    }
+    jsflg = true;
+    char stemp1[TOPSZ];
+    if ((ResponseAppend_P(PSTR("\"%d\":\"%s\""), midx, GetTextIndexed(stemp1, sizeof(stemp1), midx, kSensorNames)) > (LOGSZ - TOPSZ)) || (i == sizeof(kGpioNiceList) -1)) {
+      ResponseJsonEndEnd();
+      MqttPublishPrefixTopic_P(RESULT_OR_STAT, UpperCase(XdrvMailbox.command, XdrvMailbox.command));
+      jsflg = false;
+      lines++;
     }
   }
   mqtt_data[0] = '\0';
@@ -1292,8 +1320,8 @@ void CmndReset(void)
 void CmndTime(void)
 {
 // payload 0 = (re-)enable NTP
-// payload 1 = Time format {"Time":"2019-09-04T14:31:29","Epoch":1567600289}
-// payload 2 = Time format {"Time":"2019-09-04T14:31:29"}
+// payload 1 = Time format {"Time":"2019-09-04T14:31:29"}
+// payload 2 = Time format {"Time":"2019-09-04T14:31:29","Epoch":1567600289}
 // payload 3 = Time format {"Time":1567600289}
 // payload 4 = reserved
 // payload 1451602800 - disable NTP and set time to epoch
@@ -1304,7 +1332,7 @@ void CmndTime(void)
       Settings.flag2.time_format = XdrvMailbox.payload -1;
       format = Settings.flag2.time_format;
     } else {
-      format = 0;  // {"Time":"2019-09-04T14:31:29","Epoch":1567600289}
+      format = 1;  // {"Time":"2019-09-04T14:31:29","Epoch":1567600289}
       RtcSetTime(XdrvMailbox.payload);
     }
   }

@@ -373,30 +373,51 @@ void HueLightStatus2(uint8_t device, String *response)
     char fname[33];
     strcpy(fname, Settings.friendlyname[MAX_FRIENDLYNAMES-1]);
     uint32_t fname_len = strlen(fname);
-    if (fname_len >= 33-3) {
-      fname[33-3] = 0x00;
-      fname_len = 33-3;
-    }
+    if (fname_len > 30) { fname_len = 30; }
     fname[fname_len++] = '-';
-    fname[fname_len++] = '0' + device - MAX_FRIENDLYNAMES;
+    if (device - MAX_FRIENDLYNAMES < 10) {
+      fname[fname_len++] = '0' + device - MAX_FRIENDLYNAMES;
+    } else {
+      fname[fname_len++] = 'A' + device - MAX_FRIENDLYNAMES - 10;
+    }
+    fname[fname_len] = 0x00;
+
     response->replace("{j1", fname);
   }
   response->replace("{j2", GetHueDeviceId(device));
 }
 
 // generate a unique lightId mixing local IP address and device number
-// it is limited to 16 devices.
-// last 24 bits of Mac address + 4 bits of local light
-uint32_t EncodeLightId(uint8_t idx)
+// it is limited to 32 devices.
+// last 24 bits of Mac address + 4 bits of local light + high bit for relays 16-31, relay 32 is mapped to 0
+uint32_t EncodeLightId(uint8_t relay_id)
 {
   uint8_t mac[6];
   WiFi.macAddress(mac);
-  uint32_t id = (mac[3] << 20) | (mac[4] << 12) | (mac[5] << 4) | (idx & 0xF);
+  uint32_t id = 0;
+
+  if (relay_id >= 32) {   // for Relay #32, we encode as 0
+    relay_id = 0;
+  }
+  if (relay_id > 15) {
+    id = (1 << 28);
+  }
+
+  id |= (mac[3] << 20) | (mac[4] << 12) | (mac[5] << 4) | (relay_id & 0xF);
   return id;
 }
 
-uint32_t DecodeLightId(uint32_t id) {
-  return id & 0xF;
+// get hue_id and decode the relay_id
+// 4 LSB decode to 1-15, if bit 28 is set, it encodes 16-31, if 0 then 32
+uint32_t DecodeLightId(uint32_t hue_id) {
+  uint8_t relay_id = hue_id & 0xF;
+  if (hue_id & (1 << 28)) {   // check if bit 25 is set, if so we have
+    relay_id += 16;
+  }
+  if (0 == relay_id) {        // special value 0 is actually relay #32
+    relay_id = 32;
+  }
+  return relay_id;
 }
 
 static const char * FIRST_GEN_UA[] = {  // list of User-Agents signature

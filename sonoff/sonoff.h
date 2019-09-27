@@ -113,7 +113,7 @@ const uint16_t SERIALLOG_TIMER = 600;       // Seconds to disable SerialLog
 const uint8_t OTA_ATTEMPTS = 5;             // Number of times to try fetching the new firmware
 
 const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in (serial and http) command buffer
-const uint16_t FLOATSZ = 33;                // Max number of characters in float result from dtostrfd
+const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
 const uint16_t TOPSZ = 100;                 // Max number of characters in topic string
 const uint16_t LOGSZ = 520;                 // Max number of characters in log
@@ -249,12 +249,18 @@ enum ButtonStates { PRESSED, NOT_PRESSED };
 
 enum Shortcuts { SC_CLEAR, SC_DEFAULT, SC_USER };
 
-enum SettingsParamIndex {P_HOLD_TIME, P_MAX_POWER_RETRY, P_ex_TUYA_DIMMER_ID, P_MDNS_DELAYED_START, P_BOOT_LOOP_OFFSET, P_RGB_REMAP, P_IR_UNKNOW_THRESHOLD,  // SetOption32 .. SetOption38
-                         P_CSE7766_INVALID_POWER, P_HOLD_IGNORE, P_ex_TUYA_RELAYS, P_OVER_TEMP,  // SetOption39 .. SetOption42
-                         P_TUYA_DIMMER_MAX, P_ex_TUYA_VOLTAGE_ID, P_ex_TUYA_CURRENT_ID, P_ex_TUYA_POWER_ID,  // SetOption43 .. SetOption46
-                         P_ENERGY_TARIFF1, P_ENERGY_TARIFF2,  // SetOption47 .. SetOption48
-                         P_MAX_PARAM8};  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
+enum SettingsParamIndex { P_HOLD_TIME, P_MAX_POWER_RETRY, P_ex_TUYA_DIMMER_ID, P_MDNS_DELAYED_START, P_BOOT_LOOP_OFFSET, P_RGB_REMAP, P_IR_UNKNOW_THRESHOLD,  // SetOption32 .. SetOption38
+                          P_CSE7766_INVALID_POWER, P_HOLD_IGNORE, P_ex_TUYA_RELAYS, P_OVER_TEMP,  // SetOption39 .. SetOption42
+                          P_TUYA_DIMMER_MAX,
+                          P_ex_TUYA_VOLTAGE_ID, P_ex_TUYA_CURRENT_ID, P_ex_TUYA_POWER_ID,  // SetOption43 .. SetOption46
+                          P_ex_ENERGY_TARIFF1, P_ex_ENERGY_TARIFF2,  // SetOption47 .. SetOption48
+                          P_MAX_PARAM8 };  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
 
+enum SettingsRegister8 { R8_SPARE00, R8_SPARE01, R8_SPARE02, R8_SPARE03,
+                         R8_SPARE04, R8_SPARE05, R8_SPARE06, R8_SPARE07,
+                         R8_SPARE08, R8_SPARE09, R8_SPARE10, R8_SPARE11,
+                         R8_SPARE12, R8_SPARE13, R8_SPARE14, R8_SPARE15,
+                         R8_SPARE16, R8_SPARE17 };  // Max size is 18 (Settings.register8[])
 //stb mod
 enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_AIRQUALITY, DZ_P1_SMART_METER, DZ_SHUTTER, DZ_MAX_SENSORS};
 //end
@@ -269,7 +275,7 @@ enum LightTypes    { LT_BASIC, LT_PWM1,    LT_PWM2,      LT_PWM3,   LT_PWM4,  LT
 enum LightSchemes {LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX};
 
 enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_PIN_STATE, FUNC_MODULE_INIT, FUNC_PRE_INIT, FUNC_INIT,
-                    FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND,
+                    FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_300_MSECOND, FUNC_EVERY_SECOND,
                     FUNC_SAVE_AT_MIDNIGHT, FUNC_SAVE_BEFORE_RESTART,
                     FUNC_PREP_BEFORE_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_SENSOR, FUNC_COMMAND, FUNC_COMMAND_SENSOR, FUNC_COMMAND_DRIVER,
                     FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA,
@@ -281,6 +287,7 @@ enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_PIN_STATE, FUNC_MODULE_INIT, FU
                     FUNC_RULES_PROCESS, FUNC_SERIAL, FUNC_FREE_MEM, FUNC_BUTTON_PRESSED,
                     FUNC_WEB_ADD_BUTTON, FUNC_WEB_ADD_MAIN_BUTTON, FUNC_WEB_ADD_HANDLER, FUNC_SET_CHANNELS};
 //stb mod
+enum AddressConfigSteps { ADDR_IDLE, ADDR_RECEIVE, ADDR_SEND };
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
                      SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,SRC_MAX  };
 const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|Timer|Rule|MaxPower|MaxEnergy|Overtemp|Light|Knx|Display|Wemo|Hue|Retry|Remote|Shutter";

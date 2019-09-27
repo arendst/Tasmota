@@ -131,7 +131,8 @@ void SH1106Time(void)
   char line[12];
 
   renderer->clearDisplay();
-  renderer->setTextSize(2);
+  renderer->setTextSize(Settings.display_size);
+  renderer->setTextFont(Settings.display_font);
   renderer->setCursor(0, 0);
   snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);  // [ 12:34:56 ]
   renderer->println(line);
@@ -142,16 +143,17 @@ void SH1106Time(void)
 
 void SH1106Refresh(void)  // Every second
 {
+  if (!renderer) return;
   if (Settings.display_mode) {  // Mode 0 is User text
     switch (Settings.display_mode) {
       case 1:  // Time
-        Ssd1306Time();
+        SH1106Time();
         break;
       case 2:  // Local
       case 3:  // Local
       case 4:  // Mqtt
       case 5:  // Mqtt
-        Ssd1306PrintLog();
+        SH1106PrintLog();
         break;
     }
   }

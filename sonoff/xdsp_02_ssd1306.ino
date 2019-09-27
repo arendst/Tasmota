@@ -137,7 +137,8 @@ void Ssd1306Time(void)
   char line[12];
 
   renderer->clearDisplay();
-  renderer->setTextSize(2);
+  renderer->setTextSize(Settings.display_size);
+  renderer->setTextFont(Settings.display_font);
   renderer->setCursor(0, 0);
   snprintf_P(line, sizeof(line), PSTR(" %02d" D_HOUR_MINUTE_SEPARATOR "%02d" D_MINUTE_SECOND_SEPARATOR "%02d"), RtcTime.hour, RtcTime.minute, RtcTime.second);  // [ 12:34:56 ]
   renderer->println(line);
@@ -148,6 +149,8 @@ void Ssd1306Time(void)
 
 void Ssd1306Refresh(void)  // Every second
 {
+  if (!renderer) return;
+
   if (Settings.display_mode) {  // Mode 0 is User text
     switch (Settings.display_mode) {
       case 1:  // Time

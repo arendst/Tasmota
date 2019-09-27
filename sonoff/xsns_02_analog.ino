@@ -196,12 +196,12 @@ void CmndAdc(void)
     restart_flag = 2;
   }
   char stemp1[TOPSZ];
-  Response_P(PSTR("{\"" D_CMND_ADC "0\":\"%d (%s)\"}"), Settings.my_adc0, GetTextIndexed(stemp1, sizeof(stemp1), Settings.my_adc0, kAdc0Names));
+  Response_P(PSTR("{\"" D_CMND_ADC "0\":{\"%d\":\"%s\"}}"), Settings.my_adc0, GetTextIndexed(stemp1, sizeof(stemp1), Settings.my_adc0, kAdc0Names));
 }
 
 void CmndAdcs(void)
 {
-  Response_P(PSTR("{\"" D_CMND_ADCS "\":["));
+  Response_P(PSTR("{\"" D_CMND_ADCS "\":{"));
   bool jsflg = false;
   char stemp1[TOPSZ];
   for (uint32_t i = 0; i < ADC0_END; i++) {
@@ -209,9 +209,9 @@ void CmndAdcs(void)
       ResponseAppend_P(PSTR(","));
     }
     jsflg = true;
-    ResponseAppend_P(PSTR("\"%d (%s)\""), i, GetTextIndexed(stemp1, sizeof(stemp1), i, kAdc0Names));
+    ResponseAppend_P(PSTR("\"%d\":\"%s\""), i, GetTextIndexed(stemp1, sizeof(stemp1), i, kAdc0Names));
   }
-  ResponseAppend_P(PSTR("]}"));
+  ResponseJsonEndEnd();
 }
 
 void CmndAdcParam(void)

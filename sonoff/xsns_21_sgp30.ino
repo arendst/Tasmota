@@ -124,17 +124,14 @@ void Sgp30Show(bool json)
   if (sgp30_ready) {
     char abs_hum[33];
 
-    if (global_update && global_humidity>0 && global_temperature!=9999) {
-      // has humidity + temperature
-      dtostrfd(sgp30_abshum,4,abs_hum);
-    }
-
     if (json) {
       ResponseAppend_P(PSTR(",\"SGP30\":{\"" D_JSON_ECO2 "\":%d,\"" D_JSON_TVOC "\":%d"), sgp.eCO2, sgp.TVOC);
-      if (global_update) {
+      if (global_update && global_humidity>0 && global_temperature!=9999) {
+        // has humidity + temperature
+        dtostrfd(sgp30_abshum,4,abs_hum);
         ResponseAppend_P(PSTR(",\"" D_JSON_AHUM "\":%s"),abs_hum);
       }
-      ResponseAppend_P(PSTR("}"));
+      ResponseJsonEnd();
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) DomoticzSensor(DZ_AIRQUALITY, sgp.eCO2);
 #endif  // USE_DOMOTICZ

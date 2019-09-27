@@ -69,7 +69,7 @@ uint16_t FT6236GetButtonMask(void) {
 
 void FT6236begin(uint8_t i2c_addr) {
  FT6236_i2c_addr=i2c_addr;
- Wire.begin(FT6236_i2c_addr);
+ Wire.begin();
  FT6236writeTouchRegister(0,FT6236_MODE_NORMAL);
  lenLibVersion = FT6236readTouchAddr(0x0a1, FT6236buf, 2 );
  firmwareId = FT6236readTouchRegister( 0xa6 );

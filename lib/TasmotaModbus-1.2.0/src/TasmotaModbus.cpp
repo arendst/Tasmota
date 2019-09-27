@@ -61,10 +61,10 @@ void TasmotaModbus::Send(uint8_t device_address, uint8_t function_code, uint16_t
 
   frame[0] = mb_address;        // 0xFE default device address or dedicated like 0x01
   frame[1] = function_code;
-  frame[2] = (uint8_t)(start_address >> 8);
-  frame[3] = (uint8_t)(start_address);
-  frame[4] = (uint8_t)(register_count >> 8);
-  frame[5] = (uint8_t)(register_count);
+  frame[2] = (uint8_t)(start_address >> 8);   // MSB
+  frame[3] = (uint8_t)(start_address);        // LSB
+  frame[4] = (uint8_t)(register_count >> 8);  // MSB
+  frame[5] = (uint8_t)(register_count);       // LSB
   uint16_t crc = CalculateCRC(frame, 6);
   frame[6] = (uint8_t)(crc);
   frame[7] = (uint8_t)(crc >> 8);
@@ -80,32 +80,48 @@ bool TasmotaModbus::ReceiveReady()
 
 uint8_t TasmotaModbus::ReceiveBuffer(uint8_t *buffer, uint8_t register_count)
 {
-  uint8_t len = 0;
+  mb_len = 0;
   uint32_t last = millis();
-  while ((available() > 0) && (len < (register_count *2) + 5) && (millis() - last < 10)) {
+  while ((available() > 0) && (mb_len < (register_count *2) + 5) && (millis() - last < 10)) {
     uint8_t data = (uint8_t)read();
-    if (!len) {                  // Skip leading data as provided by hardware serial
+    if (!mb_len) {               // Skip leading data as provided by hardware serial
       if (mb_address == data) {
-        buffer[len++] = data;
+        buffer[mb_len++] = data;
       }
     } else {
-      buffer[len++] = data;
-      if (3 == len) {
+      buffer[mb_len++] = data;
+      if (3 == mb_len) {
         if (buffer[1] & 0x80) {  // 01 84 02 f2 f1
-          return buffer[2];      // 1 = Illegal Function, 2 = Illegal Address, 3 = Illegal Data, 4 = Slave Error
+          return buffer[2];      // 1 = Illegal Function,
+                                 // 2 = Illegal Data Address,
+                                 // 3 = Illegal Data Value,
+                                 // 4 = Slave Error
+                                 // 5 = Acknowledge but not finished (no error)
+                                 // 6 = Slave Busy
+                                 // 8 = Memory Parity error
+                                 // 10 = Gateway Path Unavailable
+                                 // 11 = Gateway Target device failed to respond
         }
       }
     }
     last = millis();
   }
 
-  if (len < 7) { return 7; }               // 7 = Not enough data
-  if (len != buffer[2] + 5) { return 8; }  // 8 = Unexpected result
+  if (mb_len < 7) { return 7; }  // 7 = Not enough data
 
-  uint16_t crc = (buffer[len -1] << 8) | buffer[len -2];
-  if (CalculateCRC(buffer, len -2) != crc) { return 9; }  // 9 = crc error
+/*
+  if (mb_len != buffer[2] + 5) {
+    buffer[2] = mb_len - 5;      // As it's wrong anyway let's store actual number received in here (5 will be added by client)
+    return 3;                    // 3 = Unexpected result
+  }
+*/
 
-  return 0;                                // 0 = No error
+  uint16_t crc = (buffer[mb_len -1] << 8) | buffer[mb_len -2];
+  if (CalculateCRC(buffer, mb_len -2) != crc) {
+    return 9;                    // 9 = crc error
+  }
+
+  return 0;                      // 0 = No error
 }
 
 uint8_t TasmotaModbus::Receive16BitRegister(uint16_t *value)

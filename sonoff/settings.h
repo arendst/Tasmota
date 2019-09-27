@@ -174,18 +174,18 @@ typedef union {
     uint8_t spare3 : 1;
     uint8_t spare4 : 1;
     uint8_t spare5 : 1;
-    uint8_t spare6 : 1;
+    uint8_t hx711_json_weight_change : 1;  // Sensor34 8,x - Enable JSON message on weight change
     uint8_t mhz19b_abc_disable : 1;        // Disable ABC (Automatic Baseline Correction for MHZ19(B) (0 = Enabled (default), 1 = Disabled with Sensor15 command)
   };
 } SensorCfg1;
 
 typedef struct {
   uint32_t usage1_kWhtotal;
-  uint32_t usage1_kWhtoday;
+  uint32_t usage2_kWhtotal;
   uint32_t return1_kWhtotal;
   uint32_t return2_kWhtotal;
-  uint32_t last_usage_kWhtotal;
   uint32_t last_return_kWhtotal;
+  uint32_t last_usage_kWhtotal;
 } EnergyUsage;
 
 
@@ -230,9 +230,7 @@ struct SYSCFG {
   uint8_t       weblog_level;              // 1AC
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
   uint8_t       adc_param_type;            // 1D5
-
-  uint8_t       free_1D6[18];              // 1D6  Free since 5.12.0e
-
+  uint8_t       register8[18];             // 1D6 - 18 x 8-bit registers indexed by enum SettingsRegister8
   uint8_t       sps30_inuse_hours;         // 1E8
   char          mqtt_host[33];             // 1E9 - Keep together with below as being copied as one chunck with reset 6
   uint16_t      mqtt_port;                 // 20A - Keep together
@@ -376,7 +374,11 @@ struct SYSCFG {
   char          mems[MAX_RULE_MEMS][10];   // 7CE
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
   TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
-  uint8_t       free_e20[369];             // E20
+  uint16_t      ina226_r_shunt[4];         // E20
+  uint16_t      ina226_i_fs[4];            // E28
+  uint16_t      tariff[4][2];              // E30
+
+  uint8_t       free_e40[337];             // E20
   //STB mod
   //uint16_t      pid_parameter[4][]             // PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR  //float         pid_setpoint[4];
   //float         pid_initial_int[4];

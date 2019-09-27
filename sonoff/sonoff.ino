@@ -120,17 +120,14 @@ int16_t save_data_counter;                  // Counter and flag for config save 
 RulesBitfield rules_flag;                   // Rule state flags (16 bits)
 uint8_t state_250mS = 0;                    // State 250msecond per second flag
 uint8_t latching_relay_pulse = 0;           // Latching relay pulse timer
-uint8_t backlog_index = 0;                  // Command backlog index
-uint8_t backlog_pointer = 0;                // Command backlog pointer
-
 //STB mod
 byte max_pcf8574_connected_ports = 0;       // Max numbers of devices comming from PCF8574 modules
 int prep_called = 0;                        // additional flag to detect a proper start of initialize sensors.
 unsigned long last_save_uptime = RtcSettings.uptime;         // Loop timer to calculate ontime
 uint8_t last_source = 0;
 byte max_pcf8574_devices = 0;               // Max numbers of PCF8574 modules
-uint8_t shutters_present = 0;
-power_t shutter_mask = 0;
+uint8_t shutters_present = 0;              // Number of actual define shutters
+power_t shutter_mask = 0;                  // Bit Array to mark all relays hat belong to at least one shutter
 //end
 uint8_t sleep;                              // Current copy of Settings.sleep
 uint8_t blinkspeed = 1;                     // LED blink rate
@@ -176,7 +173,16 @@ char serial_in_buffer[INPUT_BUFFER_SIZE];   // Receive buffer
 char mqtt_data[MESSZ];                      // MQTT publish buffer and web page ajax buffer
 char log_data[LOGSZ];                       // Logging
 char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
-String backlog[MAX_BACKLOG];                // Command backlog
+#ifdef SUPPORT_IF_STATEMENT
+  #include <LinkedList.h>
+  LinkedList<String> backlog;                // Command backlog implemented with LinkedList
+  #define BACKLOG_EMPTY (backlog.size() == 0)
+#else
+  uint8_t backlog_index = 0;                  // Command backlog index
+  uint8_t backlog_pointer = 0;                // Command backlog pointer
+  String backlog[MAX_BACKLOG];                // Command backlog buffer
+  #define BACKLOG_EMPTY (backlog_pointer == backlog_index)
+#endif
 
 /********************************************************************************************/
 
@@ -441,13 +447,13 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
   }
 }
 
-void SetLedPower(uint8_t state)
+void SetLedPower(uint32_t state)
 {
-  if (99 == pin[GPIO_LEDLNK]) {                          // Legacy - Only use LED1 and/or LED2
+  if (99 == pin[GPIO_LEDLNK]) {           // Legacy - Only use LED1 and/or LED2
     SetLedPowerIdx(0, state);
   } else {
     power_t mask = 1;
-    for (uint32_t i = 0; i < leds_present; i++) {         // Map leds to power
+    for (uint32_t i = 0; i < leds_present; i++) {  // Map leds to power
       bool tstate = (power & mask);
       SetLedPowerIdx(i, tstate);
       mask <<= 1;
@@ -588,8 +594,11 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
       MqttPublishPowerBlinkState(device);
     }
 
-    if (Settings.flag.interlock && !interlock_mutex) {  // Clear all but masked relay in interlock group
-      interlock_mutex = true;
+    if (Settings.flag.interlock &&
+        !interlock_mutex &&
+        ((POWER_ON == state) || ((POWER_TOGGLE == state) && !(power & mask)))
+       ) {
+      interlock_mutex = true;                           // Clear all but masked relay in interlock group if new set requested
       for (uint32_t i = 0; i < MAX_INTERLOCKS; i++) {
         if (Settings.interlock[i] & mask) {             // Find interlock group
           for (uint32_t j = 0; j < devices_present; j++) {
@@ -749,9 +758,11 @@ bool MqttShowSensor(void)
     }
   }
   XsnsCall(FUNC_JSON_APPEND);
-  //stb mod
+
+#ifdef USE_SCRIPT_JSON_EXPORT
   XdrvCall(FUNC_JSON_APPEND);
-  //
+#endif
+
   bool json_data_available = (strlen(mqtt_data) - json_data_start);
   if (strstr_P(mqtt_data, PSTR(D_JSON_PRESSURE)) != nullptr) {
     ResponseAppend_P(PSTR(",\"" D_JSON_PRESSURE_UNIT "\":\"%s\""), PressureUnit().c_str());
@@ -910,7 +921,7 @@ void PerformEverySecond(void)
       //end
     }
   }
-
+ 
   XdrvCall(FUNC_EVERY_SECOND);
   XsnsCall(FUNC_EVERY_SECOND);
 }
@@ -957,12 +968,16 @@ void Every100mSeconds(void)
 
   // Backlog
   if (TimeReached(backlog_delay)) {
-    if ((backlog_pointer != backlog_index) && !backlog_mutex) {
+    if (!BACKLOG_EMPTY && !backlog_mutex) {
       backlog_mutex = true;
+#ifdef SUPPORT_IF_STATEMENT
+      ExecuteCommand((char*)backlog.shift().c_str(), SRC_BACKLOG);
+#else
       ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
-      backlog_mutex = false;
       backlog_pointer++;
       if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
+#endif
+      backlog_mutex = false;
     }
   }
 }
@@ -1023,7 +1038,7 @@ void Every250mSeconds(void)
   case 0:                                                 // Every x.0 second
     PerformEverySecond();
 
-    if (ota_state_flag && (backlog_pointer == backlog_index)) {
+    if (ota_state_flag && BACKLOG_EMPTY) {
       ota_state_flag--;
       if (2 == ota_state_flag) {
         ota_url = Settings.ota_url;
@@ -1094,7 +1109,7 @@ void Every250mSeconds(void)
     if (MidnightNow()) {
       XsnsCall(FUNC_SAVE_AT_MIDNIGHT);
     }
-    if (save_data_counter && (backlog_pointer == backlog_index)) {
+    if (save_data_counter && BACKLOG_EMPTY) {
       save_data_counter--;
       if (save_data_counter <= 0) {
         if (Settings.flag.save_state) {
@@ -1114,7 +1129,7 @@ void Every250mSeconds(void)
         save_data_counter = Settings.save_data;
       }
     }
-    if (restart_flag && (backlog_pointer == backlog_index)) {
+    if (restart_flag && BACKLOG_EMPTY) {
       if ((214 == restart_flag) || (215 == restart_flag) || (216 == restart_flag)) {
         char storage_wifi[sizeof(Settings.sta_ssid) +
                           sizeof(Settings.sta_pwd)];

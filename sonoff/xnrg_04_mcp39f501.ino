@@ -455,21 +455,18 @@ void McpParseData(void)
   mcp_line_frequency = McpExtractInt(mcp_buffer, 22, 2);
 
   if (Energy.power_on) {  // Powered on
-    Energy.frequency = (float)mcp_line_frequency / 1000;
-    Energy.voltage = (float)mcp_voltage_rms / 10;
-    Energy.active_power = (float)mcp_active_power / 100;
-    if (0 == Energy.active_power) {
-      Energy.current = 0;
+    Energy.data_valid[0] = 0;
+    Energy.frequency[0] = (float)mcp_line_frequency / 1000;
+    Energy.voltage[0] = (float)mcp_voltage_rms / 10;
+    Energy.active_power[0] = (float)mcp_active_power / 100;
+    if (0 == Energy.active_power[0]) {
+      Energy.current[0] = 0;
     } else {
-      Energy.current = (float)mcp_current_rms / 10000;
+      Energy.current[0] = (float)mcp_current_rms / 10000;
     }
   } else {  // Powered off
-    Energy.frequency = 0;
-    Energy.voltage = 0;
-    Energy.active_power = 0;
-    Energy.current = 0;
+    Energy.data_valid[0] = ENERGY_WATCHDOG;
   }
-  Energy.data_valid = 0;
 }
 
 /********************************************************************************************/
@@ -527,7 +524,7 @@ void McpSerialInput(void)
 
 void McpEverySecond(void)
 {
-  if (Energy.data_valid > ENERGY_WATCHDOG) {
+  if (Energy.data_valid[0] > ENERGY_WATCHDOG) {
     mcp_voltage_rms = 0;
     mcp_current_rms = 0;
     mcp_active_power = 0;
@@ -583,17 +580,15 @@ void McpSnsInit(void)
 
 void McpDrvInit(void)
 {
-  if (!energy_flg) {
-    if ((pin[GPIO_MCP39F5_RX] < 99) && (pin[GPIO_MCP39F5_TX] < 99)) {
-      if (pin[GPIO_MCP39F5_RST] < 99) {
-        pinMode(pin[GPIO_MCP39F5_RST], OUTPUT);
-        digitalWrite(pin[GPIO_MCP39F5_RST], 0);  // MCP disable - Reset Delta Sigma ADC's
-      }
-      mcp_calibrate = 0;
-      mcp_timeout = 2;               // Initial wait
-      mcp_init = 2;                  // Initial setup steps
-      energy_flg = XNRG_04;
+  if ((pin[GPIO_MCP39F5_RX] < 99) && (pin[GPIO_MCP39F5_TX] < 99)) {
+    if (pin[GPIO_MCP39F5_RST] < 99) {
+      pinMode(pin[GPIO_MCP39F5_RST], OUTPUT);
+      digitalWrite(pin[GPIO_MCP39F5_RST], 0);  // MCP disable - Reset Delta Sigma ADC's
     }
+    mcp_calibrate = 0;
+    mcp_timeout = 2;               // Initial wait
+    mcp_init = 2;                  // Initial setup steps
+    energy_flg = XNRG_04;
   }
 }
 
@@ -651,28 +646,26 @@ bool McpCommand(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg04(uint8_t function)
+bool Xnrg04(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    McpDrvInit();
-  }
-  else if (XNRG_04 == energy_flg) {
-    switch (function) {
-      case FUNC_LOOP:
-        if (McpSerial) { McpSerialInput(); }
-        break;
-      case FUNC_INIT:
-        McpSnsInit();
-        break;
-      case FUNC_ENERGY_EVERY_SECOND:
-        if (McpSerial) { McpEverySecond(); }
-        break;
-      case FUNC_COMMAND:
-        result = McpCommand();
-        break;
-    }
+  switch (function) {
+    case FUNC_LOOP:
+      if (McpSerial) { McpSerialInput(); }
+      break;
+    case FUNC_ENERGY_EVERY_SECOND:
+      if (McpSerial) { McpEverySecond(); }
+      break;
+    case FUNC_COMMAND:
+      result = McpCommand();
+      break;
+    case FUNC_INIT:
+      McpSnsInit();
+      break;
+    case FUNC_PRE_INIT:
+      McpDrvInit();
+      break;
   }
   return result;
 }

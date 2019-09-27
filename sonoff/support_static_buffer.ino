@@ -23,6 +23,8 @@ typedef struct SBuffer_impl {
   uint8_t buf[];                     // the actual data
 } SBuffer_impl;
 
+
+
 typedef class SBuffer {
 
 protected:
@@ -43,7 +45,8 @@ public:
   inline size_t getLen(void) const { return _buf->len; }
   inline size_t len(void) const { return _buf->len; }
   inline uint8_t *getBuffer(void) const { return _buf->buf; }
-  inline uint8_t *buf(void) const { return _buf->buf; }
+  inline uint8_t *buf(size_t i = 0) const { return &_buf->buf[i]; }
+  inline char    *charptr(size_t i = 0) const { return (char*) &_buf->buf[i]; }
 
   virtual ~SBuffer(void) {
     delete[] _buf;
@@ -54,6 +57,12 @@ public:
     _buf->len = (len <= _buf->size) ? len : _buf->size;
     if (old_len < _buf->len) {
       memset((void*) &_buf->buf[old_len], 0, _buf->len - old_len);
+    }
+  }
+
+  void set8(const size_t offset, const uint8_t data) {
+    if (offset < _buf->len) {
+      _buf->buf[offset] = data;
     }
   }
 
@@ -124,6 +133,15 @@ public:
     }
     return 0;
   }
+  uint64_t get64(const size_t offset) const {
+    if (offset < len() - 7) {
+      return (uint64_t)_buf->buf[offset]          | ((uint64_t)_buf->buf[offset+1] <<  8) |
+            ((uint64_t)_buf->buf[offset+2] << 16) | ((uint64_t)_buf->buf[offset+3] << 24) |
+            ((uint64_t)_buf->buf[offset+4] << 32) | ((uint64_t)_buf->buf[offset+5] << 40) |
+            ((uint64_t)_buf->buf[offset+6] << 48) | ((uint64_t)_buf->buf[offset+7] << 56);
+    }
+    return 0;
+  }
 
   SBuffer subBuffer(const size_t start, size_t len) const {
     if (start >= _buf->len) {
@@ -136,6 +154,32 @@ public:
     memcpy(buf2.buf(), buf()+start, len);
     buf2._buf->len = len;
     return buf2;
+  }
+
+  static SBuffer SBufferFromHex(const char *hex, size_t len) {
+    size_t buf_len = (len + 3) / 2;
+    SBuffer buf2(buf_len);
+    uint8_t val;
+
+    for (; len > 1; len -= 2) {
+      val = asc2byte(*hex++) << 4;
+      val |= asc2byte(*hex++);
+      buf2.add8(val);
+    }
+    return buf2;
+  }
+
+protected:
+
+  static uint8_t asc2byte(char chr) {
+    uint8_t rVal = 0;
+    if (isdigit(chr)) { rVal = chr - '0'; }
+    else if (chr >= 'A' && chr <= 'F') { rVal = chr + 10 - 'A'; }
+    else if (chr >= 'a' && chr <= 'f') { rVal = chr + 10 - 'a'; }
+    return rVal;
+  }
+
+  static void unHex(const char* in, uint8_t *out, size_t len) {
   }
 
 protected:

@@ -89,7 +89,7 @@ void HlwCfInterrupt(void)  // Service Power
     Hlw.cf_pulse_last_time = us;
     Hlw.energy_period_counter++;
   }
-  Energy.data_valid = 0;
+  Energy.data_valid[0] = 0;
 }
 
 void HlwCf1Interrupt(void)  // Service Voltage and Current
@@ -108,7 +108,7 @@ void HlwCf1Interrupt(void)  // Service Voltage and Current
       Hlw.cf1_timer = 8;  // We need up to HLW_SAMPLE_COUNT samples within 1 second (low current could take up to 0.3 second)
     }
   }
-  Energy.data_valid = 0;
+  Energy.data_valid[0] = 0;
 }
 
 /********************************************************************************************/
@@ -128,13 +128,13 @@ void HlwEvery200ms(void)
 
   if (Hlw.cf_power_pulse_length  && Energy.power_on && !Hlw.load_off) {
     hlw_w = (Hlw.power_ratio * Settings.energy_power_calibration) / Hlw.cf_power_pulse_length ;  // W *10
-    Energy.active_power = (float)hlw_w / 10;
+    Energy.active_power[0] = (float)hlw_w / 10;
     Hlw.power_retry = 1;        // Workaround issue #5161
   } else {
     if (Hlw.power_retry) {
       Hlw.power_retry--;
     } else {
-      Energy.active_power = 0;
+      Energy.active_power[0] = 0;
     }
   }
 
@@ -175,19 +175,19 @@ void HlwEvery200ms(void)
 
         if (Hlw.cf1_voltage_pulse_length  && Energy.power_on) {     // If powered on always provide voltage
           hlw_u = (Hlw.voltage_ratio * Settings.energy_voltage_calibration) / Hlw.cf1_voltage_pulse_length ;  // V *10
-          Energy.voltage = (float)hlw_u / 10;
+          Energy.voltage[0] = (float)hlw_u / 10;
         } else {
-          Energy.voltage = 0;
+          Energy.voltage[0] = 0;
         }
 
       } else {
         Hlw.cf1_current_pulse_length = cf1_pulse_length;
 
-        if (Hlw.cf1_current_pulse_length && Energy.active_power) {   // No current if no power being consumed
+        if (Hlw.cf1_current_pulse_length && Energy.active_power[0]) {   // No current if no power being consumed
           hlw_i = (Hlw.current_ratio * Settings.energy_current_calibration) / Hlw.cf1_current_pulse_length;  // mA
-          Energy.current = (float)hlw_i / 1000;
+          Energy.current[0] = (float)hlw_i / 1000;
         } else {
-          Energy.current = 0;
+          Energy.current[0] = 0;
         }
 
       }
@@ -199,7 +199,7 @@ void HlwEvery200ms(void)
 
 void HlwEverySecond(void)
 {
-  if (Energy.data_valid > ENERGY_WATCHDOG) {
+  if (Energy.data_valid[0] > ENERGY_WATCHDOG) {
     Hlw.cf1_voltage_pulse_length  = 0;
     Hlw.cf1_current_pulse_length = 0;
     Hlw.cf_power_pulse_length  = 0;
@@ -249,34 +249,32 @@ void HlwSnsInit(void)
 
 void HlwDrvInit(void)
 {
-  if (!energy_flg) {
-    Hlw.model_type = 0;                      // HLW8012
-    if (pin[GPIO_HJL_CF] < 99) {
-      pin[GPIO_HLW_CF] = pin[GPIO_HJL_CF];
-      pin[GPIO_HJL_CF] = 99;
-      Hlw.model_type = 1;                    // HJL-01/BL0937
+  Hlw.model_type = 0;                      // HLW8012
+  if (pin[GPIO_HJL_CF] < 99) {
+    pin[GPIO_HLW_CF] = pin[GPIO_HJL_CF];
+    pin[GPIO_HJL_CF] = 99;
+    Hlw.model_type = 1;                    // HJL-01/BL0937
+  }
+
+  if (pin[GPIO_HLW_CF] < 99) {             // HLW8012 or HJL-01 based device Power monitor
+
+    Hlw.ui_flag = true;                    // Voltage on high
+    if (pin[GPIO_NRG_SEL_INV] < 99) {
+      pin[GPIO_NRG_SEL] = pin[GPIO_NRG_SEL_INV];
+      pin[GPIO_NRG_SEL_INV] = 99;
+      Hlw.ui_flag = false;                 // Voltage on low
     }
 
-    if (pin[GPIO_HLW_CF] < 99) {             // HLW8012 or HJL-01 based device Power monitor
-
-      Hlw.ui_flag = true;                    // Voltage on high
-      if (pin[GPIO_NRG_SEL_INV] < 99) {
-        pin[GPIO_NRG_SEL] = pin[GPIO_NRG_SEL_INV];
-        pin[GPIO_NRG_SEL_INV] = 99;
-        Hlw.ui_flag = false;                 // Voltage on low
+    if (pin[GPIO_NRG_CF1] < 99) {          // Voltage and/or Current monitor
+      if (99 == pin[GPIO_NRG_SEL]) {       // Voltage and/or Current selector
+        Energy.current_available = false;  // Assume Voltage
       }
-
-      if (pin[GPIO_NRG_CF1] < 99) {          // Voltage and/or Current monitor
-        if (99 == pin[GPIO_NRG_SEL]) {       // Voltage and/or Current selector
-          Energy.current_available = false;  // Assume Voltage
-        }
-      } else {
-        Energy.current_available = false;
-        Energy.voltage_available = false;
-      }
-
-      energy_flg = XNRG_01;
+    } else {
+      Energy.current_available = false;
+      Energy.voltage_available = false;
     }
+
+    energy_flg = XNRG_01;
   }
 }
 
@@ -311,28 +309,26 @@ bool HlwCommand(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg01(uint8_t function)
+bool Xnrg01(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    HlwDrvInit();
-  }
-  else if (XNRG_01 == energy_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        HlwSnsInit();
-        break;
-      case FUNC_ENERGY_EVERY_SECOND:
-        HlwEverySecond();
-        break;
-      case FUNC_EVERY_200_MSECOND:
-        HlwEvery200ms();
-        break;
-      case FUNC_COMMAND:
-        result = HlwCommand();
-        break;
-    }
+  switch (function) {
+    case FUNC_EVERY_200_MSECOND:
+      HlwEvery200ms();
+      break;
+    case FUNC_ENERGY_EVERY_SECOND:
+      HlwEverySecond();
+      break;
+    case FUNC_COMMAND:
+      result = HlwCommand();
+      break;
+    case FUNC_INIT:
+      HlwSnsInit();
+      break;
+    case FUNC_PRE_INIT:
+      HlwDrvInit();
+      break;
   }
   return result;
 }
