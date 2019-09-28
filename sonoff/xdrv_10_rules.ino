@@ -97,7 +97,7 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
 #ifdef USE_EXPRESSION
   #include <LinkedList.h>                 // Import LinkedList library
 
-  const char kExpressionOperators[] PROGMEM = "+-*/%^";
+  const char kExpressionOperators[] PROGMEM = "+-*/%^\0";
   #define EXPRESSION_OPERATOR_ADD         0
   #define EXPRESSION_OPERATOR_SUBTRACT    1
   #define EXPRESSION_OPERATOR_MULTIPLY    2
@@ -1062,10 +1062,16 @@ bool findNextOperator(char * &pointer, int8_t &op)
       pointer++;
       continue;
     }
-    if (char *pch = strchr(kExpressionOperators, *pointer)) {      //If it is an operator
-      op = (int8_t)(pch - kExpressionOperators);
-      pointer++;
-      bSucceed = true;
+    op = EXPRESSION_OPERATOR_ADD;
+    const char *pch = kExpressionOperators;
+    char ch;
+    while ((ch = pgm_read_byte(pch++)) != '\0') {
+      if (ch == *pointer) {
+        bSucceed = true;
+        pointer++;
+        break;
+      }
+      op++;
     }
     break;
   }
@@ -1173,7 +1179,7 @@ float evaluateExpression(const char * expression, unsigned int len)
   for (int32_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
     int index = 0;
     while (index < operators.size()) {
-      if (priority == kExpressionOperatorsPriorities[(operators.get(index))]) {     //need to calculate the operator first
+      if (priority == pgm_read_byte(kExpressionOperatorsPriorities + operators.get(index))) {     //need to calculate the operator first
         //get current object value and remove the next object with current operator
         va = calculateTwoValues(object_values.get(index), object_values.remove(index + 1), operators.remove(index));
         //Replace the current value with the result
