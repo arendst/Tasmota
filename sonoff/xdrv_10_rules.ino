@@ -919,6 +919,10 @@ bool findNextNumber(char * &pNumber, float &value)
 {
   bool bSucceed = false;
   String sNumber = "";
+  if (*pNumber == '-') {
+    sNumber = "-";
+    pNumber++;
+  }
   while (*pNumber) {
     if (isdigit(*pNumber) || (*pNumber == '.')) {
       sNumber += *pNumber;
@@ -996,7 +1000,7 @@ bool findNextVariableValue(char * &pVarname, float &value)
 /*
  * Find next object in expression and evaluate it
  *     An object could be:
- *     - A float number start with a digit, like 0.787
+ *     - A float number start with a digit or minus, like 0.787, -3
  *     - A variable name, like VAR1, MEM3
  *     - An expression enclosed with a pair of round brackets, (.....)
  * Input:
@@ -1018,7 +1022,7 @@ bool findNextObjectValue(char * &pointer, float &value)
       pointer++;
       continue;
     }
-    if (isdigit(*pointer)) {      //This object is a number
+    if (isdigit(*pointer) || (*pointer) == '-') {      //This object is a number
       bSucceed = findNextNumber(pointer, value);
       break;
     } else if (isalpha(*pointer)) {     //Should be a variable like VAR12, MEM1
