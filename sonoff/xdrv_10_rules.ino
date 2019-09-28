@@ -1027,7 +1027,7 @@ bool findNextObjectValue(char * &pointer, float &value)
     } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
       char * closureBracket = findClosureBracket(pointer);        //Get the position of closure bracket ")"
       if (closureBracket != nullptr) {
-        value = evaluateExpression(pointer+1, closureBracket - pointer - 2);
+        value = evaluateExpression(pointer+1, closureBracket - pointer - 1);
         pointer = closureBracket + 1;
         bSucceed = true;
       }
@@ -1323,7 +1323,7 @@ bool findNextLogicObjectValue(char * &pointer, bool &value)
     } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
       char * closureBracket = findClosureBracket(pointer);        //Get the position of closure bracket ")"
       if (closureBracket != nullptr) {
-        value = evaluateLogicalExpression(pointer+1, closureBracket - pointer - 2);
+        value = evaluateLogicalExpression(pointer+1, closureBracket - pointer - 1);
         pointer = closureBracket + 1;
         bSucceed = true;
       }
