@@ -134,13 +134,18 @@ bool EnergyTariff1Active()  // Off-Peak hours
     dst = 1;
   }
   if (Settings.tariff[0][dst] != Settings.tariff[1][dst]) {
+    if (Settings.flag3.energy_weekend && ((RtcTime.day_of_week == 1) ||
+                                          (RtcTime.day_of_week == 7))) {
+      return true;
+    }
     uint32_t minutes = MinutesPastMidnight();
-    return ((minutes < Settings.tariff[1][dst]) ||  // Tarrif1 = Off-Peak
-            (minutes >= Settings.tariff[0][dst]) ||
-            (Settings.flag3.energy_weekend && ((RtcTime.day_of_week == 1) ||
-                                               (RtcTime.day_of_week == 7)))
-           );
-
+    if (Settings.tariff[0][dst] > Settings.tariff[1][dst]) {
+      // {"Tariff":{"Off-Peak":{"STD":"22:00","DST":"23:00"},"Standard":{"STD":"06:00","DST":"07:00"},"Weekend":"OFF"}}
+      return ((minutes >= Settings.tariff[0][dst]) || (minutes < Settings.tariff[1][dst]));
+    } else {
+      // {"Tariff":{"Off-Peak":{"STD":"00:29","DST":"01:29"},"Standard":{"STD":"07:29","DST":"08:29"},"Weekend":"OFF"}}
+      return ((minutes >= Settings.tariff[0][dst]) && (minutes < Settings.tariff[1][dst]));
+    }
   } else {
     return false;
   }
