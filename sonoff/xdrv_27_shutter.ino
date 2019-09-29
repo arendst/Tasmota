@@ -51,7 +51,7 @@ void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay,
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterInvert, &CmndShutterCalibration };
 
-const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_SHUTTER "%d\":{\"position\":%d,\"direction\":%d}";
+const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d}";
 
 Ticker TickerShutter;
 
@@ -211,7 +211,7 @@ void Schutter_Update_Position()
         Shutter_Start_Position[i] = Shutter_Real_Position[i];
 
         // sending MQTT result to broker
-        snprintf_P(scommand, sizeof(scommand),PSTR("%s%d"), D_SHUTTER, i+1);
+        snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
         GetTopic_P(stopic, STAT, mqtt_topic, scommand);
         Response_P("%d", Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
         MqttPublish(stopic, Settings.flag.mqtt_power_retain);
