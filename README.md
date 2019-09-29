@@ -14,6 +14,9 @@ Additional features:
 - Added Alexa support for shutters through HUE Dimmer functionality. Not perfect but ok.
 
 Changelog:
+1.12 2019-09-29
+- fixed issue that configuration did not stay.
+
 1.12 2019-09-25
 - added sht[ ] for scripts to access the position of a shutter.
 

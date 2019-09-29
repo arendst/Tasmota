@@ -378,7 +378,7 @@ struct SYSCFG {
   uint16_t      ina226_i_fs[4];            // E28
   uint16_t      tariff[4][2];              // E30
 
-  uint8_t       free_e40[337];             // E20
+  uint8_t       free_e40[333];             // E40
   //STB mod
   //uint16_t      pid_parameter[4][]             // PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR  //float         pid_setpoint[4];
   //float         pid_initial_int[4];
@@ -392,7 +392,7 @@ struct SYSCFG {
   uint8_t       shutter_set50percent[MAX_SHUTTERS];  //FBF
   power_t       free_682;            // FC3   32 bit array. 1 = relay effected by interlock 0 = relay not effected
   uint8_t       shutter_startrelay[MAX_SHUTTERS];   //FC7
-  uint16_t      shutter_opentime[MAX_SHUTTERS];   //FCB
+  uint16_t      shutter_opentime[MAX_SHUTTERS];   //FCF
   uint16_t      shutter_closetime[MAX_SHUTTERS];   //FD3
   uint8_t       shutter_position[MAX_SHUTTERS];              // FDB
   unsigned long uptime;                    // FDF
