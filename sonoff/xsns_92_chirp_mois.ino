@@ -173,7 +173,7 @@ void chirp_Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_92
+#define XSNS_92 92
 
 boolean Xsns92(byte function)
 {

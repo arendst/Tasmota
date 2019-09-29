@@ -326,7 +326,7 @@ if (counter_measure == 20) {
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_94
+#define XSNS_94 94
 
 bool Xsns94(uint8_t function)
 {

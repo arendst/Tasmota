@@ -73,7 +73,7 @@ void SwitchStateShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_95
+#define XSNS_95 95
 
 bool Xsns95(uint8_t function)
 {

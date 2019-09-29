@@ -897,9 +897,9 @@ void PerformEverySecond(void)
         }
         // it may happen that wakeup in just <5 seconds in future
         // in this case also add deepsleep to nextwakeup
-        if (RtcSettings.nextwakeup <= UtcTime() - 5) {
+        if (RtcSettings.nextwakeup <= UtcTime() - MIN_DEEPSLEEP_TIME) {
           // ensure nextwakeup is at least in the future
-          RtcSettings.nextwakeup += (tmax(0, ((UtcTime() - RtcSettings.nextwakeup) / Settings.deepsleep)) + 1)*Settings.deepsleep;
+          RtcSettings.nextwakeup += ( ((UtcTime() + MIN_DEEPSLEEP_TIME - RtcSettings.nextwakeup) / Settings.deepsleep) + 1)*Settings.deepsleep;
         }
         Response_P(PSTR("%d"), RtcSettings.nextwakeup);
         MqttPublishPrefixTopic_P(TELE, PSTR(D_DOMOTICZ_UPDATE_TIMER), false);  // Offline or remove previous retained topic

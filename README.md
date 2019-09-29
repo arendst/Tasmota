@@ -14,6 +14,9 @@ Additional features:
 - Added Alexa support for shutters through HUE Dimmer functionality. Not perfect but ok.
 
 Changelog:
+1.13 2019-09-29
+- ensure deepsleep is at least MIN_DEEPSLEEP_TIME (default 5sec) to avoid infinite sleep
+
 1.12 2019-09-29
 - fixed issue that configuration did not stay.
 

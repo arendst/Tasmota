@@ -90,7 +90,7 @@ dtostrf(((float)Voltage()/1000),5,3,volt);
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_93
+#define XSNS_93 93
 
 bool Xsns93(uint8_t function)
 {
