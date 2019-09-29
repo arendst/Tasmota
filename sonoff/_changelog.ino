@@ -4,6 +4,7 @@
  * Remove support for define USE_DS18x20_LEGACY and legacy DS18x20 driver (#6486)
  * Add initial support for MQTT logging using command MqttLog <loglevel> (#6498)
  * Add Zigbee more support - collect endpoints and clusters, added ZigbeeDump command
+ * Add initial support for shutters by Stefan Bode (#288)
  *
  * 6.6.0.13 20190922
  * Add command EnergyReset4 x,x to initialize total usage for two tarrifs

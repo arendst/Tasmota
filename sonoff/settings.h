@@ -93,7 +93,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
-    uint32_t spare30 : 1;
+    uint32_t shutter_mode : 1;             // bit 30 (v6.6.0.15) - SetOption80 - Enable shutter support
     uint32_t spare31 : 1;
   };
 } SysBitfield3;
@@ -227,7 +227,8 @@ struct SYSCFG {
   uint8_t       weblog_level;              // 1AC
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
   uint8_t       adc_param_type;            // 1D5
-  uint8_t       register8[17];             // 1D6 - 17 x 8-bit registers indexed by enum SettingsRegister8
+  uint8_t       register8[16];             // 1D6 - 16 x 8-bit registers indexed by enum SettingsRegister8
+  uint8_t       shutter_accuracy;          // 1E6
   uint8_t       mqttlog_level;             // 1E7
   uint8_t       sps30_inuse_hours;         // 1E8
   char          mqtt_host[33];             // 1E9 - Keep together with below as being copied as one chunck with reset 6
@@ -376,7 +377,15 @@ struct SYSCFG {
   uint16_t      ina226_i_fs[4];            // E28
   uint16_t      tariff[4][2];              // E30
 
-  uint8_t       free_e40[440];             // E40
+  uint16_t      shutter_opentime[MAX_SHUTTERS];      // E40
+  uint16_t      shutter_closetime[MAX_SHUTTERS];     // E48
+  int16_t       shuttercoeff[5][MAX_SHUTTERS];       // E50
+  uint8_t       shutter_invert[MAX_SHUTTERS];        // E78
+  uint8_t       shutter_set50percent[MAX_SHUTTERS];  // E7C
+  uint8_t       shutter_position[MAX_SHUTTERS];      // E80
+  uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
+
+  uint8_t       free_e88[368];             // E88
 
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC
@@ -427,7 +436,11 @@ struct XDRVMAILBOX {
   char         *command;
 } XdrvMailbox;
 
+#ifdef USE_SHUTTER
+const uint8_t MAX_RULES_FLAG = 10;         // Number of bits used in RulesBitfield (tricky I know...)
+#else
 const uint8_t MAX_RULES_FLAG = 8;          // Number of bits used in RulesBitfield (tricky I know...)
+#endif  // USE_SHUTTER
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
@@ -439,8 +452,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t wifi_connected : 1;
     uint16_t wifi_disconnected : 1;
     uint16_t http_init : 1;
-    uint16_t spare08 : 1;
-    uint16_t spare09 : 1;
+    uint16_t shutter_moved : 1;
+    uint16_t shutter_moving : 1;
     uint16_t spare10 : 1;
     uint16_t spare11 : 1;
     uint16_t spare12 : 1;

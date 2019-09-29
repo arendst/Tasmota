@@ -442,6 +442,11 @@
 #define D_ENERGY_YESTERDAY "昨日用电量"
 #define D_ENERGY_TOTAL "总用电量"
 
+// xdrv_27_shutter.ino
+#define D_OPEN "Open"
+#define D_CLOSE "Close"
+#define D_DOMOTICZ_SHUTTER "Shutter"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "传感器正忙"
 #define D_SENSOR_CRC_ERROR "传感器 CRC 校验错误"

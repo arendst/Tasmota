@@ -605,6 +605,10 @@ void RulesEvery50ms(void)
             case 5: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event)); break;
             case 6: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
             case 7: strncpy_P(json_event, PSTR("{\"HTTP\":{\"Initialized\":1}}"), sizeof(json_event)); break;
+#ifdef USE_SHUTTER
+            case 8: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moved\":1}}"), sizeof(json_event)); break;
+            case 9: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moving\":1}}"), sizeof(json_event)); break;
+#endif  // USE_SHUTTER
           }
           if (json_event[0]) {
             RulesProcessEvent(json_event);
@@ -1881,9 +1885,6 @@ bool Xdrv10(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_PRE_INIT:
-      RulesInit();
-      break;
     case FUNC_EVERY_50_MSECOND:
       RulesEvery50ms();
       break;
@@ -1910,6 +1911,9 @@ bool Xdrv10(uint8_t function)
       result = RulesMqttData();
       break;
 #endif  // SUPPORT_MQTT_EVENT
+    case FUNC_PRE_INIT:
+      RulesInit();
+      break;
   }
   return result;
 }

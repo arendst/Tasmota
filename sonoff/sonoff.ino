@@ -96,6 +96,7 @@ power_t blink_mask = 0;                     // Blink relay active mask
 power_t blink_powersave;                    // Blink start power save state
 power_t latching_power = 0;                 // Power state at latching start
 power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
+power_t shutter_mask = 0;                   // Bit Array to mark all relays that belong to at least one shutter
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 int serial_in_byte_counter = 0;             // Index in receive buffer
 int ota_state_flag = 0;                     // OTA state flag
@@ -138,6 +139,8 @@ uint8_t seriallog_level;                    // Current copy of Settings.seriallo
 uint8_t syslog_level;                       // Current copy of Settings.syslog_level
 uint8_t my_module_type;                     // Current copy of Settings.module or user template type
 uint8_t my_adc0;                            // Active copy of Module ADC0
+uint8_t last_source = 0;
+uint8_t shutters_present = 0;               // Number of actual define shutters
 //uint8_t mdns_delayed_start = 0;             // mDNS delayed start
 bool serial_local = false;                  // Handle serial locally;
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic

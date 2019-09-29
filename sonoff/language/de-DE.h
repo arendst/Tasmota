@@ -442,6 +442,11 @@
 #define D_ENERGY_YESTERDAY "Energie gestern"
 #define D_ENERGY_TOTAL "Energie insgesamt"
 
+// xdrv_27_shutter.ino
+#define D_OPEN "Open"
+#define D_CLOSE "Close"
+#define D_DOMOTICZ_SHUTTER "Shutter"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor beschäftigt"
 #define D_SENSOR_CRC_ERROR "Sensor CRC-Fehler"

@@ -442,6 +442,11 @@
 #define D_ENERGY_YESTERDAY "צריכה בעבר"
 #define D_ENERGY_TOTAL "צריכה כללית"
 
+// xdrv_27_shutter.ino
+#define D_OPEN "Open"
+#define D_CLOSE "Close"
+#define D_DOMOTICZ_SHUTTER "Shutter"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "שרת עסוק"
 #define D_SENSOR_CRC_ERROR "בחיישן CRC שגיאת"
