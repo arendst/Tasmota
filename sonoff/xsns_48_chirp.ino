@@ -32,7 +32,6 @@
 
 */
 
-#define USE_CHIRP
 #ifdef USE_I2C
 #ifdef USE_CHIRP
 
