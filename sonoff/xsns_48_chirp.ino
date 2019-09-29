@@ -21,9 +21,10 @@
   --------------------------------------------------------------------------------------------
 
   1.0.0.1 20190917  changed   - rework of the inner loop to enable delays in the middle of I2C-reads
+                    changed   - double send address change only for fw>0x25
                     changed   - use DEBUG_SENSOR_LOG, change ILLUMINANCE to DARKNESS
-                    changed   - do not publish missing temperature reads
-                    added     - now really support the (slower) CHIRP-Sensor
+                    changed   - do not publish missing temperature reads, show fw-version as hex
+                    added     - now really support the (slower) CHIRP!-Sensor
   ---
   1.0.0.0 20190608  started   - further development by Christian Baars  - https://github.com/Staars/Sonoff-Tasmota
                     forked    - from arendst/tasmota                    - https://github.com/arendst/Sonoff-Tasmota
@@ -36,7 +37,8 @@
 #ifdef USE_CHIRP
 
 /*********************************************************************************************\
- * CHIRP - Soil moisture sensor
+ * CHIRP - Chirp!-sensor and I2C-soil-moisture-sensor
+ * !! The I2C-soil-moisture-sensor is the preferred one !!
  * 
  * I2C Address: 0x20 - standard address, is changeable
 \*********************************************************************************************/
@@ -82,7 +84,7 @@ enum CHIRP_Commands {                                 // commands useable in con
 #define CHIRP_GET_LIGHT             0x04          // 16 bit, read, -> higher value means darker environment, noisy data, not calibrated
 #define CHIRP_GET_TEMPERATURE       0x05          // 16 bit, read
 #define CHIRP_RESET                 0x06          // no value, write
-#define CHIRP_GET_VERSION           0x07          // 8 bit, read, -> 22 means 2.2
+#define CHIRP_GET_VERSION           0x07          // 8 bit, read, -> 0x22 means 2.2
 #define CHIRP_SLEEP                 0x08          // no value, write
 #define CHIRP_GET_BUSY              0x09          // 8 bit, read, -> 1 = busy, 0 = otherwise
 
@@ -187,24 +189,35 @@ void ChirpSelect(uint8_t sensor) {
   }
 }
 
-/********************************************************************************************/
+/******************************************************************************************************************/
 
 uint8_t ChirpReadVersion(uint8_t addr) {
-  return (I2cRead8(addr, CHIRP_GET_VERSION));
+  return (I2cRead8(addr, CHIRP_GET_VERSION)); // the Chirp!-sensor does not provide fw-version and we will get 255
 }
 
-/********************************************************************************************/
+/******************************************************************************************************************/
 
 bool ChirpSet(uint8_t addr) {
   if(addr < 128){
     if (I2cWrite8(chirp_sensor[chirp_current].address, CHIRP_SET_ADDRESS, addr)){
-      I2cWrite8(chirp_sensor[chirp_current].address, CHIRP_SET_ADDRESS, addr); // two calls are needed for sensor firmware version 2.6
+      if(chirp_sensor[chirp_current].version>0x25 && chirp_sensor[chirp_current].version != 255){
+        delay(5);  
+        I2cWrite8(chirp_sensor[chirp_current].address, CHIRP_SET_ADDRESS, addr); 
+        // two calls are needed for sensor firmware version 2.6, but maybe dangerous before
+      }
       DEBUG_SENSOR_LOG(PSTR("CHIRP: Wrote adress %u "), addr);
       ChirpReset(chirp_sensor[chirp_current].address);
       chirp_sensor[chirp_current].address = addr;
+      chirp_timeout_count = 10;
+      chirp_next_job = 0;
+      if(chirp_sensor[chirp_current].version == 255){ // this should be Chirp! and it seems to need a power cycle (or RESET to GND)
+          AddLog_P2(LOG_LEVEL_INFO, PSTR("CHIRP: wrote new address %u, please power off device"), addr);
+          chirp_sensor[chirp_current].version == 0; // make it "invisible"
+      }
       return true;
     }
   }
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("CHIRP: address %u incorrect and not used"), addr);
   return false;
 }
 
@@ -222,11 +235,12 @@ bool ChirpScan() {
         AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "CHIRP:", address);    
         if(chirp_found_sensors<CHIRP_MAX_SENSOR_COUNT){
           chirp_sensor[chirp_found_sensors].address = address; // push next sensor, as long as there is space in the array
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: fw %u"), chirp_sensor[chirp_found_sensors].version);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: fw %x"), chirp_sensor[chirp_found_sensors].version);
         }
         chirp_found_sensors++;
       }
     }
+    // chirp_timeout_count = 11; // wait a second to read the real fw-version in the next step
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Found %u CHIRP sensor(s)."), chirp_found_sensors);
     if (chirp_found_sensors == 0) {return false;}
     else {return true;}
@@ -365,10 +379,11 @@ void ChirpEvery100MSecond(void)
           case 14:
           if (Settings.tele_period > 16){
               chirp_timeout_count = (Settings.tele_period - 17) * 10;  // sync it with the TELEPERIOD, we need about up to 17 seconds to measure
-              DEBUG_SENSOR_LOG(PSTR("CHIRP: timeout: %u, tele: %u"), chirp_timeout_count, Settings.tele_period);
+              DEBUG_SENSOR_LOG(PSTR("CHIRP: timeout 1/10 sec: %u, tele: %u"), chirp_timeout_count, Settings.tele_period);
             }
           else{
             AddLog_P2(LOG_LEVEL_INFO, PSTR("CHIRP: TELEPERIOD must be > 16 seconds !"));
+            // we could overwrite it to i.e. 20 seconds here
           }
           chirp_next_job = 1;                                 // back to step 1
           break;
@@ -408,10 +423,15 @@ void ChirpShow(bool json)
       char str_temperature[33];
       double t_temperature = ((double) chirp_sensor[i].temperature )/10.0;   
       dtostrfd(t_temperature, Settings.flag2.temperature_resolution, str_temperature);
-      char str_light[33];      
+      char str_light[33];
       dtostrfd(chirp_sensor[i].light, 0, str_light);
-      char str_version[33];      
-      dtostrfd(chirp_sensor[i].version, 0, str_version);
+      char str_version[7];
+      if(chirp_sensor[i].version == 255){
+        strncpy_P(str_version, PSTR("Chirp!"), sizeof(str_version)); 
+      }
+      else{
+        sprintf(str_version, "%x", chirp_sensor[i].version);  
+      }
       if (json) {
         if(!chirp_sensor[i].explicitSleep) {
           ResponseAppend_P(PSTR(",\"%s%u\":{\"" D_JSON_MOISTURE "\":%s"),chirp_name, i, str_moisture);
@@ -426,7 +446,7 @@ void ChirpShow(bool json)
   #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
               DomoticzTempHumSensor(str_temperature, str_moisture);
-              DomoticzSensor(DZ_ILLUMINANCE,chirp_sensor[i].light);
+              DomoticzSensor(DZ_ILLUMINANCE,chirp_sensor[i].light); // this is not LUX!!
         }
   #endif  // USE_DOMOTICZ
   #ifdef USE_WEBSERVER
