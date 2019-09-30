@@ -628,11 +628,11 @@ bool MCP230xx_Command(void) {
 #ifdef USE_MCP230xx_OUTPUT
     if (Settings.mcp230xx_config[pin].pinmode >= 5) {
       uint8_t pincmd = Settings.mcp230xx_config[pin].pinmode - 5;
-      if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "ON")) {
+      if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "ON")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "1"))) {
         MCP230xx_SetOutPin(pin,abs(pincmd-1));
         return serviced;
       }
-      if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "OFF")) {
+      if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "OFF")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "0"))) {
         MCP230xx_SetOutPin(pin,pincmd);
         return serviced;
       }
