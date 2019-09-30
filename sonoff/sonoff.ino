@@ -315,6 +315,7 @@ void SetLatchingRelay(power_t lpower, uint32_t state)
 void SetDevicePower(power_t rpower, uint32_t source)
 {
   ShowSource(source);
+  last_source = source;
 
   if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {  // All on and stay on
     power = (1 << devices_present) -1;
