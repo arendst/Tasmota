@@ -276,6 +276,12 @@ void HueLightStatus1(uint8_t device, String *response)
   if (bri > 254)  bri = 254;    // Philips Hue bri is between 1 and 254
   if (bri < 1)    bri = 1;
 
+#ifdef USE_SHUTTER
+  if (ShutterState(device)) {
+    bri = (float)(Settings.shutter_invert[device-1] ? 100 - Settings.shutter_position[device-1] : Settings.shutter_position[device-1]) / 100;
+  }
+#endif
+
   if (light_type) {
     light_state.getHSB(&hue, &sat, nullptr);
 
@@ -364,30 +370,51 @@ void HueLightStatus2(uint8_t device, String *response)
     char fname[33];
     strcpy(fname, Settings.friendlyname[MAX_FRIENDLYNAMES-1]);
     uint32_t fname_len = strlen(fname);
-    if (fname_len >= 33-3) {
-      fname[33-3] = 0x00;
-      fname_len = 33-3;
-    }
+    if (fname_len > 30) { fname_len = 30; }
     fname[fname_len++] = '-';
-    fname[fname_len++] = '0' + device - MAX_FRIENDLYNAMES;
+    if (device - MAX_FRIENDLYNAMES < 10) {
+      fname[fname_len++] = '0' + device - MAX_FRIENDLYNAMES;
+    } else {
+      fname[fname_len++] = 'A' + device - MAX_FRIENDLYNAMES - 10;
+    }
+    fname[fname_len] = 0x00;
+
     response->replace("{j1", fname);
   }
   response->replace("{j2", GetHueDeviceId(device));
 }
 
 // generate a unique lightId mixing local IP address and device number
-// it is limited to 16 devices.
-// last 24 bits of Mac address + 4 bits of local light
-uint32_t EncodeLightId(uint8_t idx)
+// it is limited to 32 devices.
+// last 24 bits of Mac address + 4 bits of local light + high bit for relays 16-31, relay 32 is mapped to 0
+uint32_t EncodeLightId(uint8_t relay_id)
 {
   uint8_t mac[6];
   WiFi.macAddress(mac);
-  uint32_t id = (mac[3] << 20) | (mac[4] << 12) | (mac[5] << 4) | (idx & 0xF);
+  uint32_t id = 0;
+
+  if (relay_id >= 32) {   // for Relay #32, we encode as 0
+    relay_id = 0;
+  }
+  if (relay_id > 15) {
+    id = (1 << 28);
+  }
+
+  id |= (mac[3] << 20) | (mac[4] << 12) | (mac[5] << 4) | (relay_id & 0xF);
   return id;
 }
 
-uint32_t DecodeLightId(uint32_t id) {
-  return id & 0xF;
+// get hue_id and decode the relay_id
+// 4 LSB decode to 1-15, if bit 28 is set, it encodes 16-31, if 0 then 32
+uint32_t DecodeLightId(uint32_t hue_id) {
+  uint8_t relay_id = hue_id & 0xF;
+  if (hue_id & (1 << 28)) {   // check if bit 25 is set, if so we have
+    relay_id += 16;
+  }
+  if (0 == relay_id) {        // special value 0 is actually relay #32
+    relay_id = 32;
+  }
+  return relay_id;
 }
 
 static const char * FIRST_GEN_UA[] = {  // list of User-Agents signature
@@ -476,12 +503,22 @@ void HueLights(String *path)
         response += ",\"";
       }
     }
+#ifdef USE_SCRIPT
+    Script_Check_Hue(&response);
+#endif
     response += "}";
   }
   else if (path->endsWith("/state")) {               // Got ID/state
     path->remove(0,8);                               // Remove /lights/
     path->remove(path->indexOf("/state"));           // Remove /state
     device = DecodeLightId(atoi(path->c_str()));
+
+#ifdef USE_SCRIPT
+    if (device>devices_present) {
+      return Script_Handle_Hue(path);
+    }
+#endif
+
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -498,19 +535,32 @@ void HueLights(String *path)
         response.replace("{id", String(EncodeLightId(device)));
         response.replace("{cm", "on");
 
-        on = hue_json["on"];
-        switch(on)
-        {
-          case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
-                       response.replace("{re", "false");
-                       break;
-          case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
-                       response.replace("{re", "true");
-                       break;
-          default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
-                       break;
+#ifdef USE_SHUTTER
+        if (ShutterState(device)) {
+          if (!change) {
+            on = hue_json["on"];
+            bri = on ? 1.0f : 0.0f; // when bri is not part of this request then calculate it
+            change = true;
+          }
+          response.replace("{re", on ? "true" : "false");
+        } else {
+#endif
+          on = hue_json["on"];
+          switch(on)
+          {
+            case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
+                        response.replace("{re", "false");
+                        break;
+            case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
+                        response.replace("{re", "true");
+                        break;
+            default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
+                        break;
+          }
+          resp = true;
+#ifdef USE_SHUTTER
         }
-        resp = true;
+#endif  // USE_SHUTTER
       }
 
       if (light_type && (local_light_subtype >= LST_SINGLE)) {
@@ -616,6 +666,12 @@ void HueLights(String *path)
         resp = true;
       }
       if (change) {
+#ifdef USE_SHUTTER
+        if (ShutterState(device)) {
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_invert[device-1]);
+          ShutterSetPosition(device, bri * 100.0f );
+        } else
+#endif
         if (light_type && (local_light_subtype > LST_NONE)) {   // not relay
           if (!Settings.flag3.pwm_multi_channels) {
             if (g_gotct) {
@@ -649,6 +705,14 @@ void HueLights(String *path)
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "/lights path=%s", path->c_str());
     path->remove(0,8);                               // Remove /lights/
     device = DecodeLightId(atoi(path->c_str()));
+
+#ifdef USE_SCRIPT
+    if (device>devices_present) {
+      Script_HueStatus(&response,device-devices_present-1);
+      goto exit;
+}
+#endif
+
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -660,6 +724,7 @@ void HueLights(String *path)
     response = "{}";
     code = 406;
   }
+  exit:
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_JSON, response);
 }

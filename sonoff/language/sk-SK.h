@@ -442,6 +442,11 @@
 #define D_ENERGY_YESTERDAY "Spotreba včera"
 #define D_ENERGY_TOTAL "Celková spotreba"
 
+// xdrv_27_shutter.ino
+#define D_OPEN "Open"
+#define D_CLOSE "Close"
+#define D_DOMOTICZ_SHUTTER "Shutter"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor DS18x20 obsadený"
 #define D_SENSOR_CRC_ERROR "Sensor DS18x20 chyba CRC"

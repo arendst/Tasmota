@@ -75,7 +75,7 @@ public:
   	XdrvRulesProcess();
   }
 
-  static ZCLFrame parseRawFrame(SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid) { // parse a raw frame and build the ZCL frame object
+  static ZCLFrame parseRawFrame(const SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid) { // parse a raw frame and build the ZCL frame object
     uint32_t i = offset;
     ZCLHeaderFrameControl_t frame_control;
     uint16_t manuf_code = 0;
@@ -133,6 +133,16 @@ private:
   SBuffer                 _payload;
 };
 
+char Hex36Char(uint8_t value) {
+  // convert an integer from 0 to 46, to a single digit 0-9A-Z
+  if (value < 10) {
+    return '0' + value;
+  } else if (value < 46) {
+    return 'A' + value - 10;
+  } else {
+    return '?';   // out of range
+  }
+}
 
 // Zigbee ZCL converters
 
@@ -374,17 +384,17 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
 void ZCLFrame::parseRawAttributes(JsonObject& json, uint8_t offset) {
   uint32_t i = offset;
   uint32_t len = _payload.len();
-  uint32_t attrid = _cluster_id << 16;      // set high 16 bits with cluster id
 
-  while (len + offset - i >= 3) {
-    attrid = (attrid & 0xFFFF0000) | _payload.get16(i);    // get lower 16 bits
+  while (len - i >= 3) {
+    uint16_t attrid = _payload.get16(i);
     i += 2;
 
-    char shortaddr[12];
-    snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%08X"), attrid);
+    char shortaddr[16];
+    snprintf_P(shortaddr, sizeof(shortaddr), PSTR("%c_%04X_%04X"),
+                Hex36Char(_cmd_id), _cluster_id, attrid);
 
     // exception for Xiaomi lumi.weather - specific field to be treated as octet and not char
-    if (0x0000FF01 == attrid) {
+    if ((0x0000 == _cluster_id) && (0xFF01 == attrid)) {
       if (0x42 == _payload.get8(i)) {
         _payload.set8(i, 0x41);   // change type from 0x42 to 0x41
       }
@@ -394,14 +404,13 @@ void ZCLFrame::parseRawAttributes(JsonObject& json, uint8_t offset) {
 }
 
 // Parse non-normalized attributes
-// The key is 24 bits, high 16 bits is cluserid, low 8 bits is command id
+// The key is "s_" followed by 16 bits clusterId, "_" followed by 8 bits command id
 void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
   uint32_t i = offset;
   uint32_t len = _payload.len();
-  uint32_t attrid = _cluster_id << 8 | _cmd_id;
 
   char attrid_str[12];
-  snprintf_P(attrid_str, sizeof(attrid_str), PSTR("0x%06X"), attrid);   // 24 bits
+  snprintf_P(attrid_str, sizeof(attrid_str), PSTR("s_%04X_%02X"), _cluster_id, _cmd_id);
 
   char hex_char[_payload.len()*2+2];
   ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
@@ -409,211 +418,333 @@ void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
   json[attrid_str] = hex_char;
 }
 
-#define ZCL_MODELID       "0x00000005"      // Cluster 0x0000, attribute 0x05
-#define ZCL_TEMPERATURE   "0x04020000"      // Cluster 0x0402, attribute 0x00
-#define ZCL_PRESSURE      "0x04030000"      // Cluster 0x0403, attribute 0x00
-#define ZCL_PRESSURE_SCALED       "0x04030010"      // Cluster 0x0403, attribute 0x10
-#define ZCL_PRESSURE_SCALE        "0x04030014"      // Cluster 0x0403, attribute 0x14
-#define ZCL_HUMIDITY      "0x04050000"      // Cluster 0x0403, attribute 0x00
-#define ZCL_LUMI_WEATHER  "0x0000FF01"      // Cluster 0x0000, attribute 0xFF01 - proprietary
+// return value:
+// 0 = keep initial value
+// 1 = remove initial value
+typedef int32_t (*Z_AttrConverter)(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param);
+typedef struct Z_AttributeConverter {
+  const char * filter;
+  const char * name;
+  Z_AttrConverter func;
+  void * param;
+} Z_AttributeConverter;
 
-#define ZCL_OO_OFF        "0x000600"        // Cluster 0x0006, cmd 0x00 - On/Off - Off
-#define ZCL_OO_ON         "0x000601"        // Cluster 0x0006, cmd 0x01 - On/Off - On
-#define ZCL_COLORTEMP_MOVE "0x03000A"       // Cluster 0x0300, cmd 0x0A, Move to Color Temp
-#define ZCL_LC_MOVE        "0x000800"       // Cluster 0x0008, cmd 0x00, Level Control Move to Level
-#define ZCL_LC_MOVE_1      "0x000801"       // Cluster 0x0008, cmd 0x01, Level Control Move
-#define ZCL_LC_STEP        "0x000802"       // Cluster 0x0008, cmd 0x02, Level Control Step
-#define ZCL_LC_STOP        "0x000803"       // Cluster 0x0008, cmd 0x03, Level Control Stop
-#define ZCL_LC_MOVE_WOO    "0x000804"       // Cluster 0x0008, cmd 0x04, Level Control Move to Level, with On/Off
-#define ZCL_LC_MOVE_1_WOO  "0x000805"       // Cluster 0x0008, cmd 0x05, Level Control Move, with On/Off
-#define ZCL_LC_STEP_WOO    "0x000806"       // Cluster 0x0008, cmd 0x05, Level Control Step, with On/Off
-#define ZCL_LC_STOP_WOO    "0x000807"       // Cluster 0x0008, cmd 0x07, Level Control Stop
+const float Z_100 PROGMEM = 100.0f;
+const float Z_10  PROGMEM =  10.0f;
+
+// list of post-processing directives
+const Z_AttributeConverter Z_PostProcess[] = {
+  { "A_0000_0005",  D_JSON_MODEL D_JSON_ID, &Z_Copy,                nullptr },     // ModelID
+
+  { "A_0400_0000",  D_JSON_ILLUMINANCE,     &Z_Copy,                nullptr },    // Illuminance (in Lux)
+  { "A_0400_0004",  "LightSensorType",      &Z_Copy,                nullptr },    // LightSensorType
+  { "A_0400_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
+
+  { "A_0401_0000",  "LevelStatus",          &Z_Copy,                nullptr },    // Illuminance (in Lux)
+  { "A_0401_0001",  "LightSensorType",      &Z_Copy,                nullptr },    // LightSensorType
+  { "A_0401_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
+
+  { "A_0402_0000",  D_JSON_TEMPERATURE,     &Z_ConvFloatDivider,    (void*) &Z_100 },   // Temperature
+  { "A_0402_????",  nullptr,                &Z_Remove,              nullptr },     // Remove all other values
+
+  { "A_0403_0000",  D_JSON_PRESSURE_UNIT,   &Z_Const_Keep,          (void*) D_UNIT_PRESSURE},     // Pressure Unit
+  { "A_0403_0000",  D_JSON_PRESSURE,        &Z_Copy,                nullptr },     // Pressure
+  { "A_0403_????",  nullptr,                &Z_Remove,              nullptr },     // Remove all other Pressure values
+
+  { "A_0404_0000",  D_JSON_FLOWRATE,        &Z_ConvFloatDivider,    (void*) &Z_10 },    // Flow (in m3/h)
+  { "A_0404_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
+
+  { "A_0405_0000",  D_JSON_HUMIDITY,        &Z_ConvFloatDivider,    (void*) &Z_100 },   // Humidity
+  { "A_0405_????",  nullptr,                &Z_Remove,              nullptr },     // Remove all other values
+
+  { "A_0406_0000",  "Occupancy",            &Z_Copy,                nullptr },    // Occupancy (map8)
+  { "A_0406_0001",  "OccupancySensorType",  &Z_Copy,                nullptr },    // OccupancySensorType
+  { "A_0406_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
+
+  // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
+  { "A_0000_FF01",  nullptr,                &Z_AqaraSensor,         nullptr },    // Occupancy (map8)
+  // // 0x0b04 Electrical Measurement
+  // { "A_0B04_0100",  "DCVoltage",            &Z_Copy,                nullptr },    // Occupancy (map8)
+  // { "A_0B04_0001",  "OccupancySensorType",  &Z_Copy,                nullptr },    // OccupancySensorType
+  // { "A_0B04_????",  "",                     &Z_Remove,              nullptr },    // Remove all other values
+};
+
+// ======================================================================
+// Remove attribute
+int32_t Z_Remove(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+  return 1;   // remove original key
+}
+
+// Copy value as-is
+int32_t Z_Copy(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+  json[new_name] = value;
+  return 1;   // remove original key
+}
+
+// Copy value as-is
+int32_t Z_Const_Keep(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+  json[new_name] = (char*)param;
+  return 0;   // keep original key
+}
+
+// Convert int to float with divider
+int32_t Z_ConvFloatDivider(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+  float f_value = value;
+  float *divider = (float*) param;
+  json[new_name] = f_value / *divider;
+  return 1;   // remove original key
+}
+
+int32_t Z_AqaraSensor(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+  String hex = value;
+  SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
+  uint32_t i = 0;
+  uint32_t len = buf2.len();
+  char shortaddr[8];
+  char tmp[] = "tmp";   // for obscure reasons, it must be converted from const char* to char*, otherwise ArduinoJson gets confused
+
+  JsonVariant sub_value;
+
+  while (len - i >= 2) {
+    uint8_t attrid = buf2.get8(i++);
+
+    i += parseSingleAttribute(json, tmp, buf2, i, len);
+    float val = json[tmp];
+    json.remove(tmp);
+    if (0x64 == attrid) {
+      json[F(D_JSON_TEMPERATURE)] = val / 100.0f;
+    } else if (0x65 == attrid) {
+      json[F(D_JSON_HUMIDITY)] = val / 100.0f;
+    } else if (0x66 == attrid) {
+      json[F(D_JSON_PRESSURE)] = val / 100.0f;
+      json[F(D_JSON_PRESSURE_UNIT)] = F(D_UNIT_PRESSURE);   // hPa
+    } else if (0x01 == attrid) {
+      json[F(D_JSON_VOLTAGE)] = val / 1000.0f;
+      json[F("Battery")] = toPercentageCR2032(val);
+    }
+  }
+  return 1;   // remove original key
+}
+// ======================================================================
+
+#define ZCL_MODELID         "A_0000_0005"     // Cmd 0x0A - Cluster 0x0000, attribute 0x05
+#define ZCL_TEMPERATURE     "A_0402_0000"     // Cmd 0x0A - Cluster 0x0402, attribute 0x00
+#define ZCL_PRESSURE        "A_0403_0000"     // Cmd 0x0A - Cluster 0x0403, attribute 0x00
+#define ZCL_PRESSURE_SCALED "A_0403_0010"     // Cmd 0x0A - Cluster 0x0403, attribute 0x10
+#define ZCL_PRESSURE_SCALE  "A_0403_0014"     // Cmd 0x0A - Cluster 0x0403, attribute 0x14
+#define ZCL_HUMIDITY        "A_0405_0000"     // Cmd 0x0A - Cluster 0x0403, attribute 0x00
+#define ZCL_LUMI_WEATHER    "A_0000_FF01"     // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
+
+// Cluster Specific commands
+#define ZCL_OO_OFF          "s_0006_00"       // Cluster 0x0006, cmd 0x00 - On/Off - Off
+#define ZCL_OO_ON           "s_0006_01"       // Cluster 0x0006, cmd 0x01 - On/Off - On
+#define ZCL_COLORTEMP_MOVE  "s_0300_0A"       // Cluster 0x0300, cmd 0x0A, Move to Color Temp
+#define ZCL_LC_MOVE         "s_0008_00"       // Cluster 0x0008, cmd 0x00, Level Control Move to Level
+#define ZCL_LC_MOVE_1       "s_0008_01"       // Cluster 0x0008, cmd 0x01, Level Control Move
+#define ZCL_LC_STEP         "s_0008_02"       // Cluster 0x0008, cmd 0x02, Level Control Step
+#define ZCL_LC_STOP         "s_0008_03"       // Cluster 0x0008, cmd 0x03, Level Control Stop
+#define ZCL_LC_MOVE_WOO     "s_0008_04"       // Cluster 0x0008, cmd 0x04, Level Control Move to Level, with On/Off
+#define ZCL_LC_MOVE_1_WOO   "s_0008_05"       // Cluster 0x0008, cmd 0x05, Level Control Move, with On/Off
+#define ZCL_LC_STEP_WOO     "s_0008_06"       // Cluster 0x0008, cmd 0x05, Level Control Step, with On/Off
+#define ZCL_LC_STOP_WOO     "s_0008_07"       // Cluster 0x0008, cmd 0x07, Level Control Stop
+
+// inspired from https://github.com/torvalds/linux/blob/master/lib/glob.c
+bool mini_glob_match(char const *pat, char const *str) {
+	for (;;) {
+		unsigned char c = *str++;
+		unsigned char d = *pat++;
+
+		switch (d) {
+		case '?':	/* Wildcard: anything but nul */
+			if (c == '\0')
+				return false;
+			break;
+		case '\\':
+			d = *pat++;
+			/*FALLTHROUGH*/
+		default:	/* Literal character */
+			if (c == d) {
+				if (d == '\0')
+					return true;
+				break;
+			}
+			return false;	/* No point continuing */
+		}
+	}
+}
 
 void ZCLFrame::postProcessAttributes(JsonObject& json) {
-  const __FlashStringHelper *key;
+  // iterate on json elements
+  for (auto kv : json) {
+    String key = kv.key;
+    JsonVariant& value = kv.value;
 
-  // ModelID ZCL 3.2
-  key = F(ZCL_MODELID);
-  if (json.containsKey(key)) {
-    json[F(D_JSON_MODEL D_JSON_ID)] = json[key];
-    json.remove(key);
-  }
+    // Iterate on filter
+    for (uint32_t i = 0; i < sizeof(Z_PostProcess) / sizeof(Z_PostProcess[0]); i++) {
+      const Z_AttributeConverter *converter = &Z_PostProcess[i];
 
-  // Temperature ZCL 4.4
-  key = F(ZCL_TEMPERATURE);
-  if (json.containsKey(key)) {
-    // parse temperature
-    int32_t temperature = json[key];
-    json.remove(key);
-    json[F(D_JSON_TEMPERATURE)] = temperature / 100.0f;
-  }
+      if (mini_glob_match(converter->filter, key.c_str())) {
+        int32_t drop = (*converter->func)(json, key.c_str(), value, converter->name, converter->param);
+        if (drop) {
+          json.remove(key);
+        }
 
-  // Pressure ZCL 4.5
-  key = F(ZCL_PRESSURE);
-  if (json.containsKey(key)) {
-    json[F(D_JSON_PRESSURE)] = json[key];
-    json[F(D_JSON_PRESSURE_UNIT)] = F(D_UNIT_PRESSURE);   // hPa
-    json.remove(key);
-  }
-  json.remove(F(ZCL_PRESSURE_SCALE));
-  json.remove(F(ZCL_PRESSURE_SCALED));
-
-  // Humidity ZCL 4.7
-  key = F(ZCL_HUMIDITY);
-  if (json.containsKey(key)) {
-    // parse temperature
-    uint32_t humidity = json[key];
-    json.remove(key);
-    json[F(D_JSON_HUMIDITY)] = humidity / 100.0f;
-  }
-
-  // Osram Mini Switch
-  key = F(ZCL_OO_OFF);
-  if (json.containsKey(key)) {
-    json.remove(key);
-    json[F(D_CMND_POWER)] = F("Off");
-  }
-  key = F(ZCL_OO_ON);
-  if (json.containsKey(key)) {
-    json.remove(key);
-    json[F(D_CMND_POWER)] = F("On");
-  }
-  key = F(ZCL_COLORTEMP_MOVE);
-  if (json.containsKey(key)) {
-    String hex = json[key];
-    SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-    uint16_t color_temp = buf2.get16(0);
-    uint16_t transition_time = buf2.get16(2);
-    json.remove(key);
-    json[F("ColorTemp")] = color_temp;
-    json[F("TransitionTime")] = transition_time / 10.0f;
-  }
-  key = F(ZCL_LC_MOVE_WOO);
-  if (json.containsKey(key)) {
-    String hex = json[key];
-    SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-    uint8_t level = buf2.get8(0);
-    uint16_t transition_time = buf2.get16(1);
-    json.remove(key);
-    json[F("Dimmer")] = changeUIntScale(level, 0, 255, 0, 100);  // change to percentage
-    json[F("TransitionTime")] = transition_time / 10.0f;
-    if (0 == level) {
-      json[F(D_CMND_POWER)] = F("Off");
-    } else {
-      json[F(D_CMND_POWER)] = F("On");
+      }
     }
   }
-  key = F(ZCL_LC_MOVE);
-  if (json.containsKey(key)) {
-    String hex = json[key];
-    SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-    uint8_t level = buf2.get8(0);
-    uint16_t transition_time = buf2.get16(1);
-    json.remove(key);
-    json[F("Dimmer")] = changeUIntScale(level, 0, 255, 0, 100);  // change to percentage
-    json[F("TransitionTime")] = transition_time / 10.0f;
-  }
-  key = F(ZCL_LC_MOVE_1);
-  if (json.containsKey(key)) {
-    String hex = json[key];
-    SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-    uint8_t move_mode = buf2.get8(0);
-    uint8_t move_rate = buf2.get8(1);
-    json.remove(key);
-    json[F("Move")] = move_mode ? F("Down") : F("Up");
-    json[F("Rate")] = move_rate;
-  }
-  key = F(ZCL_LC_MOVE_1_WOO);
-  if (json.containsKey(key)) {
-    String hex = json[key];
-    SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-    uint8_t move_mode = buf2.get8(0);
-    uint8_t move_rate = buf2.get8(1);
-    json.remove(key);
-    json[F("Move")] = move_mode ? F("Down") : F("Up");
-    json[F("Rate")] = move_rate;
-    if (0 == move_mode) {
-      json[F(D_CMND_POWER)] = F("On");
-    }
-  }
-  key = F(ZCL_LC_STEP);
-  if (json.containsKey(key)) {
-    String hex = json[key];
-    SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-    uint8_t step_mode = buf2.get8(0);
-    uint8_t step_size = buf2.get8(1);
-    uint16_t transition_time = buf2.get16(2);
-    json.remove(key);
-    json[F("Step")] = step_mode ? F("Down") : F("Up");
-    json[F("StepSize")] = step_size;
-    json[F("TransitionTime")] = transition_time / 10.0f;
-  }
-  key = F(ZCL_LC_STEP_WOO);
-  if (json.containsKey(key)) {
-    String hex = json[key];
-    SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-    uint8_t step_mode = buf2.get8(0);
-    uint8_t step_size = buf2.get8(1);
-    uint16_t transition_time = buf2.get16(2);
-    json.remove(key);
-    json[F("Step")] = step_mode ? F("Down") : F("Up");
-    json[F("StepSize")] = step_size;
-    json[F("TransitionTime")] = transition_time / 10.0f;
-    if (0 == step_mode) {
-      json[F(D_CMND_POWER)] = F("On");
-    }
-  }
-  key = F(ZCL_LC_STOP);
-  if (json.containsKey(key)) {
-    json.remove(key);
-    json[F("Stop")] = 1;
-  }
-  key = F(ZCL_LC_STOP_WOO);
-  if (json.containsKey(key)) {
-    json.remove(key);
-    json[F("Stop")] = 1;
-  }
-
-  // Lumi.weather proprietary field
-  key = F(ZCL_LUMI_WEATHER);
-  if (json.containsKey(key)) {
-    String hex = json[key];
-    SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject& json_lumi = jsonBuffer.createObject();
-    uint32_t i = 0;
-    uint32_t len = buf2.len();
-    char shortaddr[8];
-
-    while (len - i >= 2) {
-      uint8_t attrid = buf2.get8(i++);
-
-      snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%02X"), attrid);
-
-      i += parseSingleAttribute(json_lumi, shortaddr, buf2, i, len);
-    }
-    // parse output
-    if (json_lumi.containsKey("0x64")) {    // Temperature
-      int32_t temperature = json_lumi["0x64"];
-      json[F(D_JSON_TEMPERATURE)] = temperature / 100.0f;
-    }
-    if (json_lumi.containsKey("0x65")) {    // Humidity
-      uint32_t humidity = json_lumi["0x65"];
-      json[F(D_JSON_HUMIDITY)] = humidity / 100.0f;
-    }
-    if (json_lumi.containsKey("0x66")) {    // Pressure
-      int32_t pressure = json_lumi["0x66"];
-      json[F(D_JSON_PRESSURE)] = pressure / 100.0f;
-      json[F(D_JSON_PRESSURE_UNIT)] = F(D_UNIT_PRESSURE);   // hPa
-    }
-    if (json_lumi.containsKey("0x01")) {    // Battery Voltage
-      uint32_t voltage = json_lumi["0x01"];
-      json[F(D_JSON_VOLTAGE)] = voltage / 1000.0f;
-      json[F("Battery")] = toPercentageCR2032(voltage);
-    }
-    json.remove(key);
-  }
-
 }
+
+//void ZCLFrame::postProcessAttributes2(JsonObject& json) {
+// void postProcessAttributes2(JsonObject& json) {
+//   const __FlashStringHelper *key;
+//
+//   // Osram Mini Switch
+//   key = F(ZCL_OO_OFF);
+//   if (json.containsKey(key)) {
+//     json.remove(key);
+//     json[F(D_CMND_POWER)] = F("Off");
+//   }
+//   key = F(ZCL_OO_ON);
+//   if (json.containsKey(key)) {
+//     json.remove(key);
+//     json[F(D_CMND_POWER)] = F("On");
+//   }
+//   key = F(ZCL_COLORTEMP_MOVE);
+//   if (json.containsKey(key)) {
+//     String hex = json[key];
+//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
+//     uint16_t color_temp = buf2.get16(0);
+//     uint16_t transition_time = buf2.get16(2);
+//     json.remove(key);
+//     json[F("ColorTemp")] = color_temp;
+//     json[F("TransitionTime")] = transition_time / 10.0f;
+//   }
+//   key = F(ZCL_LC_MOVE_WOO);
+//   if (json.containsKey(key)) {
+//     String hex = json[key];
+//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
+//     uint8_t level = buf2.get8(0);
+//     uint16_t transition_time = buf2.get16(1);
+//     json.remove(key);
+//     json[F("Dimmer")] = changeUIntScale(level, 0, 255, 0, 100);  // change to percentage
+//     json[F("TransitionTime")] = transition_time / 10.0f;
+//     if (0 == level) {
+//       json[F(D_CMND_POWER)] = F("Off");
+//     } else {
+//       json[F(D_CMND_POWER)] = F("On");
+//     }
+//   }
+//   key = F(ZCL_LC_MOVE);
+//   if (json.containsKey(key)) {
+//     String hex = json[key];
+//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
+//     uint8_t level = buf2.get8(0);
+//     uint16_t transition_time = buf2.get16(1);
+//     json.remove(key);
+//     json[F("Dimmer")] = changeUIntScale(level, 0, 255, 0, 100);  // change to percentage
+//     json[F("TransitionTime")] = transition_time / 10.0f;
+//   }
+//   key = F(ZCL_LC_MOVE_1);
+//   if (json.containsKey(key)) {
+//     String hex = json[key];
+//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
+//     uint8_t move_mode = buf2.get8(0);
+//     uint8_t move_rate = buf2.get8(1);
+//     json.remove(key);
+//     json[F("Move")] = move_mode ? F("Down") : F("Up");
+//     json[F("Rate")] = move_rate;
+//   }
+//   key = F(ZCL_LC_MOVE_1_WOO);
+//   if (json.containsKey(key)) {
+//     String hex = json[key];
+//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
+//     uint8_t move_mode = buf2.get8(0);
+//     uint8_t move_rate = buf2.get8(1);
+//     json.remove(key);
+//     json[F("Move")] = move_mode ? F("Down") : F("Up");
+//     json[F("Rate")] = move_rate;
+//     if (0 == move_mode) {
+//       json[F(D_CMND_POWER)] = F("On");
+//     }
+//   }
+//   key = F(ZCL_LC_STEP);
+//   if (json.containsKey(key)) {
+//     String hex = json[key];
+//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
+//     uint8_t step_mode = buf2.get8(0);
+//     uint8_t step_size = buf2.get8(1);
+//     uint16_t transition_time = buf2.get16(2);
+//     json.remove(key);
+//     json[F("Step")] = step_mode ? F("Down") : F("Up");
+//     json[F("StepSize")] = step_size;
+//     json[F("TransitionTime")] = transition_time / 10.0f;
+//   }
+//   key = F(ZCL_LC_STEP_WOO);
+//   if (json.containsKey(key)) {
+//     String hex = json[key];
+//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
+//     uint8_t step_mode = buf2.get8(0);
+//     uint8_t step_size = buf2.get8(1);
+//     uint16_t transition_time = buf2.get16(2);
+//     json.remove(key);
+//     json[F("Step")] = step_mode ? F("Down") : F("Up");
+//     json[F("StepSize")] = step_size;
+//     json[F("TransitionTime")] = transition_time / 10.0f;
+//     if (0 == step_mode) {
+//       json[F(D_CMND_POWER)] = F("On");
+//     }
+//   }
+//   key = F(ZCL_LC_STOP);
+//   if (json.containsKey(key)) {
+//     json.remove(key);
+//     json[F("Stop")] = 1;
+//   }
+//   key = F(ZCL_LC_STOP_WOO);
+//   if (json.containsKey(key)) {
+//     json.remove(key);
+//     json[F("Stop")] = 1;
+//   }
+//
+//   // Lumi.weather proprietary field
+//   key = F(ZCL_LUMI_WEATHER);
+//   if (json.containsKey(key)) {
+//     String hex = json[key];
+//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
+//     DynamicJsonBuffer jsonBuffer;
+//     JsonObject& json_lumi = jsonBuffer.createObject();
+//     uint32_t i = 0;
+//     uint32_t len = buf2.len();
+//     char shortaddr[8];
+//
+//     while (len - i >= 2) {
+//       uint8_t attrid = buf2.get8(i++);
+//
+//       snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%02X"), attrid);
+//
+//       //json[shortaddr] = parseSingleAttribute(json_lumi, buf2, i, len, nullptr, 0);
+//     }
+//     // parse output
+//     if (json_lumi.containsKey("0x64")) {    // Temperature
+//       int32_t temperature = json_lumi["0x64"];
+//       json[F(D_JSON_TEMPERATURE)] = temperature / 100.0f;
+//     }
+//     if (json_lumi.containsKey("0x65")) {    // Humidity
+//       uint32_t humidity = json_lumi["0x65"];
+//       json[F(D_JSON_HUMIDITY)] = humidity / 100.0f;
+//     }
+//     if (json_lumi.containsKey("0x66")) {    // Pressure
+//       int32_t pressure = json_lumi["0x66"];
+//       json[F(D_JSON_PRESSURE)] = pressure / 100.0f;
+//       json[F(D_JSON_PRESSURE_UNIT)] = F(D_UNIT_PRESSURE);   // hPa
+//     }
+//     if (json_lumi.containsKey("0x01")) {    // Battery Voltage
+//       uint32_t voltage = json_lumi["0x01"];
+//       json[F(D_JSON_VOLTAGE)] = voltage / 1000.0f;
+//       json[F("Battery")] = toPercentageCR2032(voltage);
+//     }
+//     json.remove(key);
+//   }
+//
+// }
 
 #endif // USE_ZIGBEE

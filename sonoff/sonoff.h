@@ -67,6 +67,7 @@ const uint8_t MAX_XNRG_DRIVERS = 32;        // Max number of allowed energy driv
 const uint8_t MAX_XDSP_DRIVERS = 32;        // Max number of allowed display drivers
 const uint8_t MAX_XDRV_DRIVERS = 96;        // Max number of allowed driver drivers
 const uint8_t MAX_XSNS_DRIVERS = 96;        // Max number of allowed sensor drivers
+const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
 const uint8_t MAX_RULE_MEMS = 5;            // Max number of saved vars
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
@@ -113,7 +114,7 @@ const uint16_t SERIALLOG_TIMER = 600;       // Seconds to disable SerialLog
 const uint8_t OTA_ATTEMPTS = 5;             // Number of times to try fetching the new firmware
 
 const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in (serial and http) command buffer
-const uint16_t FLOATSZ = 33;                // Max number of characters in float result from dtostrfd
+const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
 const uint16_t TOPSZ = 100;                 // Max number of characters in topic string
 const uint16_t LOGSZ = 520;                 // Max number of characters in log
@@ -252,13 +253,13 @@ enum SettingsParamIndex { P_HOLD_TIME, P_MAX_POWER_RETRY, P_ex_TUYA_DIMMER_ID, P
                           P_ex_ENERGY_TARIFF1, P_ex_ENERGY_TARIFF2,  // SetOption47 .. SetOption48
                           P_MAX_PARAM8 };  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49
 
-enum SettingsRegister8 { R8_ENERGY_TARIFF1_ST, R8_ENERGY_TARIFF2_ST, R8_ENERGY_TARIFF1_DS, R8_ENERGY_TARIFF2_DS,
+enum SettingsRegister8 { R8_SPARE00, R8_SPARE01, R8_SPARE02, R8_SPARE03,
                          R8_SPARE04, R8_SPARE05, R8_SPARE06, R8_SPARE07,
                          R8_SPARE08, R8_SPARE09, R8_SPARE10, R8_SPARE11,
-                         R8_SPARE12, R8_SPARE13, R8_SPARE14, R8_SPARE15,
-                         R8_SPARE16, R8_SPARE17 };  // Max size is 18 (Settings.register8[])
+                         R8_SPARE12, R8_SPARE13, R8_SPARE14, R8_SPARE15 };  // Max size is 16 (Settings.register8[])
 
-enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT, DZ_AIRQUALITY, DZ_P1_SMART_METER, DZ_MAX_SENSORS};
+enum DomoticzSensors {DZ_TEMP, DZ_TEMP_HUM, DZ_TEMP_HUM_BARO, DZ_POWER_ENERGY, DZ_ILLUMINANCE, DZ_COUNT, DZ_VOLTAGE, DZ_CURRENT,
+                      DZ_AIRQUALITY, DZ_P1_SMART_METER, DZ_SHUTTER, DZ_MAX_SENSORS};
 
 enum Ws2812ClockIndex { WS_SECOND, WS_MINUTE, WS_HOUR, WS_MARKER };
 enum Ws2812Color { WS_RED, WS_GREEN, WS_BLUE };
@@ -282,8 +283,10 @@ enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_PIN_STATE, FUNC_MODULE_INIT, FU
 enum AddressConfigSteps { ADDR_IDLE, ADDR_RECEIVE, ADDR_SEND };
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
-                     SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_MAX };
-const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|Timer|Rule|MaxPower|MaxEnergy|Overtemp|Light|Knx|Display|Wemo|Hue|Retry|Remote";
+                     SRC_TIMER, SRC_RULE, SRC_MAXPOWER, SRC_MAXENERGY, SRC_OVERTEMP, SRC_LIGHT, SRC_KNX, SRC_DISPLAY, SRC_WEMO, SRC_HUE, SRC_RETRY, SRC_REMOTE, SRC_SHUTTER,
+                     SRC_MAX };
+const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Serial|WebGui|WebCommand|WebConsole|PulseTimer|"
+                                      "Timer|Rule|MaxPower|MaxEnergy|Overtemp|Light|Knx|Display|Wemo|Hue|Retry|Remote|Shutter";
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 

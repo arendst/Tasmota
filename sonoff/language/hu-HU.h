@@ -442,6 +442,11 @@
 #define D_ENERGY_YESTERDAY "Tegnapi energia"
 #define D_ENERGY_TOTAL "Összes energia"
 
+// xdrv_27_shutter.ino
+#define D_OPEN "Open"
+#define D_CLOSE "Close"
+#define D_DOMOTICZ_SHUTTER "Shutter"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Szenzor foglalt"
 #define D_SENSOR_CRC_ERROR "Szenzor CRC hiba"

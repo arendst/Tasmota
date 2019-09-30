@@ -185,6 +185,18 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
     XdrvMailbox.topic = type;
     XdrvMailbox.data = dataBuf;
 
+#ifdef USE_SCRIPT_SUB_COMMAND
+  // allow overwrite tasmota cmds
+    if (!Script_SubCmd()) {
+      if (!DecodeCommand(kTasmotaCommands, TasmotaCommand)) {
+        if (!XdrvCall(FUNC_COMMAND)) {
+          if (!XsnsCall(FUNC_COMMAND)) {
+            type = nullptr;  // Unknown command
+          }
+        }
+      }
+    }
+#else //USE_SCRIPT_SUB_COMMAND
     if (!DecodeCommand(kTasmotaCommands, TasmotaCommand)) {
       if (!XdrvCall(FUNC_COMMAND)) {
         if (!XsnsCall(FUNC_COMMAND)) {
@@ -192,6 +204,8 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
         }
       }
     }
+#endif //USE_SCRIPT_SUB_COMMAND
+
   }
 
   if (type == nullptr) {

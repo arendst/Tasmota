@@ -97,7 +97,7 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
 #ifdef USE_EXPRESSION
   #include <LinkedList.h>                 // Import LinkedList library
 
-  const char kExpressionOperators[] PROGMEM = "+-*/%^";
+  const char kExpressionOperators[] PROGMEM = "+-*/%^\0";
   #define EXPRESSION_OPERATOR_ADD         0
   #define EXPRESSION_OPERATOR_SUBTRACT    1
   #define EXPRESSION_OPERATOR_MULTIPLY    2
@@ -259,8 +259,17 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   JsonObject &root = jsonBuf.parseObject(event);
   if (!root.success()) { return false; }               // No valid JSON data
 
-  float value = 0;
-  const char* str_value = root[rule_task][rule_name];
+  const char* str_value;
+  if ((pos = rule_name.indexOf("[")) > 0) {            // "CURRENT[1]"
+    int rule_name_idx = rule_name.substring(pos +1).toInt();
+    if ((rule_name_idx < 1) || (rule_name_idx > 6)) {  // Allow indexes 1 to 6
+      rule_name_idx = 1;
+    }
+    rule_name = rule_name.substring(0, pos);           // "CURRENT"
+    str_value = root[rule_task][rule_name][rule_name_idx -1];  // "ENERGY" and "CURRENT" and 0
+  } else {
+    str_value = root[rule_task][rule_name];            // "INA219" and "CURRENT"
+  }
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
 //  rule_task.c_str(), rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
@@ -271,6 +280,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   Rules.event_value = str_value;                       // Prepare %value%
 
   // Step 3: Compare rule (value)
+  float value = 0;
   if (str_value) {
     value = CharToFloat((char*)str_value);
     int int_value = int(value);
@@ -595,6 +605,10 @@ void RulesEvery50ms(void)
             case 5: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event)); break;
             case 6: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
             case 7: strncpy_P(json_event, PSTR("{\"HTTP\":{\"Initialized\":1}}"), sizeof(json_event)); break;
+#ifdef USE_SHUTTER
+            case 8: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moved\":1}}"), sizeof(json_event)); break;
+            case 9: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moving\":1}}"), sizeof(json_event)); break;
+#endif  // USE_SHUTTER
           }
           if (json_event[0]) {
             RulesProcessEvent(json_event);
@@ -909,6 +923,10 @@ bool findNextNumber(char * &pNumber, float &value)
 {
   bool bSucceed = false;
   String sNumber = "";
+  if (*pNumber == '-') {
+    sNumber = "-";
+    pNumber++;
+  }
   while (*pNumber) {
     if (isdigit(*pNumber) || (*pNumber == '.')) {
       sNumber += *pNumber;
@@ -986,7 +1004,7 @@ bool findNextVariableValue(char * &pVarname, float &value)
 /*
  * Find next object in expression and evaluate it
  *     An object could be:
- *     - A float number start with a digit, like 0.787
+ *     - A float number start with a digit or minus, like 0.787, -3
  *     - A variable name, like VAR1, MEM3
  *     - An expression enclosed with a pair of round brackets, (.....)
  * Input:
@@ -1008,7 +1026,7 @@ bool findNextObjectValue(char * &pointer, float &value)
       pointer++;
       continue;
     }
-    if (isdigit(*pointer)) {      //This object is a number
+    if (isdigit(*pointer) || (*pointer) == '-') {      //This object is a number
       bSucceed = findNextNumber(pointer, value);
       break;
     } else if (isalpha(*pointer)) {     //Should be a variable like VAR12, MEM1
@@ -1017,7 +1035,7 @@ bool findNextObjectValue(char * &pointer, float &value)
     } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
       char * closureBracket = findClosureBracket(pointer);        //Get the position of closure bracket ")"
       if (closureBracket != nullptr) {
-        value = evaluateExpression(pointer+1, closureBracket - pointer - 2);
+        value = evaluateExpression(pointer+1, closureBracket - pointer - 1);
         pointer = closureBracket + 1;
         bSucceed = true;
       }
@@ -1052,10 +1070,16 @@ bool findNextOperator(char * &pointer, int8_t &op)
       pointer++;
       continue;
     }
-    if (char *pch = strchr(kExpressionOperators, *pointer)) {      //If it is an operator
-      op = (int8_t)(pch - kExpressionOperators);
-      pointer++;
-      bSucceed = true;
+    op = EXPRESSION_OPERATOR_ADD;
+    const char *pch = kExpressionOperators;
+    char ch;
+    while ((ch = pgm_read_byte(pch++)) != '\0') {
+      if (ch == *pointer) {
+        bSucceed = true;
+        pointer++;
+        break;
+      }
+      op++;
     }
     break;
   }
@@ -1163,7 +1187,7 @@ float evaluateExpression(const char * expression, unsigned int len)
   for (int32_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
     int index = 0;
     while (index < operators.size()) {
-      if (priority == kExpressionOperatorsPriorities[(operators.get(index))]) {     //need to calculate the operator first
+      if (priority == pgm_read_byte(kExpressionOperatorsPriorities + operators.get(index))) {     //need to calculate the operator first
         //get current object value and remove the next object with current operator
         va = calculateTwoValues(object_values.get(index), object_values.remove(index + 1), operators.remove(index));
         //Replace the current value with the result
@@ -1313,7 +1337,7 @@ bool findNextLogicObjectValue(char * &pointer, bool &value)
     } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
       char * closureBracket = findClosureBracket(pointer);        //Get the position of closure bracket ")"
       if (closureBracket != nullptr) {
-        value = evaluateLogicalExpression(pointer+1, closureBracket - pointer - 2);
+        value = evaluateLogicalExpression(pointer+1, closureBracket - pointer - 1);
         pointer = closureBracket + 1;
         bSucceed = true;
       }
@@ -1861,9 +1885,6 @@ bool Xdrv10(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_PRE_INIT:
-      RulesInit();
-      break;
     case FUNC_EVERY_50_MSECOND:
       RulesEvery50ms();
       break;
@@ -1890,6 +1911,9 @@ bool Xdrv10(uint8_t function)
       result = RulesMqttData();
       break;
 #endif  // SUPPORT_MQTT_EVENT
+    case FUNC_PRE_INIT:
+      RulesInit();
+      break;
   }
   return result;
 }

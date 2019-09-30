@@ -138,6 +138,8 @@ uint8_t seriallog_level;                    // Current copy of Settings.seriallo
 uint8_t syslog_level;                       // Current copy of Settings.syslog_level
 uint8_t my_module_type;                     // Current copy of Settings.module or user template type
 uint8_t my_adc0;                            // Active copy of Module ADC0
+uint8_t last_source = 0;                    // Last command source
+uint8_t shutters_present = 0;               // Number of actual define shutters
 //uint8_t mdns_delayed_start = 0;             // mDNS delayed start
 bool serial_local = false;                  // Handle serial locally;
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
@@ -745,10 +747,7 @@ bool MqttShowSensor(void)
     }
   }
   XsnsCall(FUNC_JSON_APPEND);
-
-#ifdef USE_SCRIPT_JSON_EXPORT
   XdrvCall(FUNC_JSON_APPEND);
-#endif
 
   bool json_data_available = (strlen(mqtt_data) - json_data_start);
   if (strstr_P(mqtt_data, PSTR(D_JSON_PRESSURE)) != nullptr) {

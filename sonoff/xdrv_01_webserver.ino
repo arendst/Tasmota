@@ -91,8 +91,48 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "}"
   "wl(u);";
 
-const char HTTP_SCRIPT_ROOT[] PROGMEM =
 
+const char HTTP_SCRIPT_ROOT[] PROGMEM =
+#ifdef USE_SCRIPT_WEB_DISPLAY
+  "var rfsh=1;"
+  "function la(p){"
+    "var a='';"
+    "if(la.arguments.length==1){"
+      "a=p;"
+      "clearTimeout(lt);"
+    "}"
+    "if(x!=null){x.abort();}"             // Abort if no response within 2 seconds (happens on restart 1)
+    "x=new XMLHttpRequest();"
+    "x.onreadystatechange=function(){"
+      "if(x.readyState==4&&x.status==200){"
+        "var s=x.responseText.replace(/{t}/g,\"<table style='width:100%%'>\").replace(/{s}/g,\"<tr><th>\").replace(/{m}/g,\"</th><td>\").replace(/{e}/g,\"</td></tr>\").replace(/{c}/g,\"%%'><div style='text-align:center;font-weight:\");"
+        "eb('l1').innerHTML=s;"
+      "}"
+    "};"
+    "if (rfsh) {"
+      "x.open('GET','.?m=1'+a,true);"       // ?m related to WebServer->hasArg("m")
+      "x.send();"
+      "lt=setTimeout(la,%d);"               // Settings.web_refresh
+    "}"
+  "}"
+  "function seva(par,ivar){"
+    "la('&sv='+ivar+'_'+par);"
+  "}"
+  "function siva(par,ivar){"
+    "rfsh=1;"
+    "la('&sv='+ivar+'_'+par);"
+    "rfsh=0;"
+  "}"
+  "function pr(f){"
+    "if (f) {"
+      "lt=setTimeout(la,%d);"
+      "rfsh=1;"
+    "} else {"
+      "clearTimeout(lt);"
+      "rfsh=0;"
+    "}"
+  "}"
+#else  // USE_SCRIPT_WEB_DISPLAY
   "function la(p){"
     "var a='';"
     "if(la.arguments.length==1){"
@@ -111,12 +151,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "x.send();"
     "lt=setTimeout(la,%d);"               // Settings.web_refresh
   "}"
-#ifdef USE_SCRIPT_WEB_DISPLAY
-  "function seva(par,ivar){"
-    "la('&sv='+ivar+'_'+par);"
-  "}"
-#endif
-
+#endif  // USE_SCRIPT_WEB_DISPLAY
 
 #ifdef USE_JAVASCRIPT_ES6
   "lb=p=>la('&d='+p);"                    // Dark - Bright &d related to lb(value) and WebGetArg("d", tmp, sizeof(tmp));
@@ -128,7 +163,29 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "function lc(p){"
     "la('&t='+p);"                        // &t related to WebGetArg("t", tmp, sizeof(tmp));
   "}"
-#endif
+#endif  // USE_JAVASCRIPT_ES6
+
+#ifdef USE_SHUTTER
+#ifdef USE_JAVASCRIPT_ES6
+  "ld1=p=>la('&u1='+p);"
+  "ld2=p=>la('&u2='+p);"
+  "ld3=p=>la('&u3='+p);"
+  "ld4=p=>la('&u4='+p);"
+#else
+  "function ld1(p){"
+    "la('&u1='+p);"
+  "}"
+  "function ld2(p){"
+    "la('&u2='+p);"
+  "}"
+  "function ld3(p){"
+    "la('&u3='+p);"
+  "}"
+  "function ld4(p){"
+    "la('&u4='+p);"
+  "}"
+#endif  // USE_JAVASCRIPT_ES6
+#endif  // USE_SHUTTER
 
   "wl(la);";
 
@@ -344,6 +401,11 @@ const char HTTP_MSG_SLIDER1[] PROGMEM =
 const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><span class='p'>" D_DARKLIGHT "</span><span class='q'>" D_BRIGHTLIGHT "</span></div>"
   "<div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>";
+#ifdef USE_SHUTTER
+const char HTTP_MSG_SLIDER3[] PROGMEM =
+  "<div><span class='p'>" D_CLOSE "</span><span class='q'>" D_OPEN "</span></div>"
+  "<div><input type='range' min='0' max='100' value='%d' onchange='ld%d(value)'></div>";
+#endif  // USE_SHUTTER
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br>";
 
@@ -518,6 +580,7 @@ void ShowWebSource(uint32_t source)
 void ExecuteWebCommand(char* svalue, uint32_t source)
 {
   ShowWebSource(source);
+  last_source = source;
   ExecuteCommand(svalue, SRC_IGNORE);
 }
 
@@ -939,7 +1002,11 @@ void HandleRoot(void)
   char stemp[5];
 
   WSContentStart_P(S_MAIN_MENU);
+#ifdef USE_SCRIPT_WEB_DISPLAY
+  WSContentSend_P(HTTP_SCRIPT_ROOT, Settings.web_refresh, Settings.web_refresh);
+#else
   WSContentSend_P(HTTP_SCRIPT_ROOT, Settings.web_refresh);
+#endif
   WSContentSendStyle();
 
   WSContentSend_P(PSTR("<div id='l1' name='l1'></div>"));
@@ -952,6 +1019,13 @@ void HandleRoot(void)
       WSContentSend_P(HTTP_MSG_SLIDER2, Settings.light_dimmer);
     }
 #endif
+#ifdef USE_SHUTTER
+    if (Settings.flag3.shutter_mode) {
+      for (uint32_t i = 0; i < shutters_present; i++) {
+        WSContentSend_P(HTTP_MSG_SLIDER3, Settings.shutter_position[i], i+1);
+      }
+    }
+#endif  // USE_SHUTTER
     WSContentSend_P(HTTP_TABLE100);
     WSContentSend_P(PSTR("<tr>"));
 #ifdef USE_SONOFF_IFAN
@@ -1052,6 +1126,17 @@ bool HandleRootStatusRefresh(void)
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
+#ifdef USE_SHUTTER
+  char webindex[5];                 // WebGetArg name
+  for (uint32_t j = 1; j < 5; j++) {
+    snprintf_P(webindex, sizeof(webindex), PSTR("u%d"), j);
+    WebGetArg(webindex, tmp, sizeof(tmp));  // 0 - 100 percent
+    if (strlen(tmp)) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("ShutterPosition%d %s"), j, tmp);
+      ExecuteWebCommand(svalue, SRC_WEBGUI);
+    }
+  }
+#endif  // USE_SHUTTER
   WebGetArg("k", tmp, sizeof(tmp));  // 1 - 16 Pre defined RF keys
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);

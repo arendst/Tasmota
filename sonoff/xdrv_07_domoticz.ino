@@ -42,7 +42,7 @@ const char DOMOTICZ_MESSAGE[] PROGMEM = "{\"idx\":%d,\"nvalue\":%d,\"svalue\":\"
 
 const char kDomoticzSensors[] PROGMEM =
   D_DOMOTICZ_TEMP "|" D_DOMOTICZ_TEMP_HUM "|" D_DOMOTICZ_TEMP_HUM_BARO "|" D_DOMOTICZ_POWER_ENERGY "|" D_DOMOTICZ_ILLUMINANCE "|"
-  D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT "|" D_DOMOTICZ_AIRQUALITY "|" D_DOMOTICZ_P1_SMART_METER ;
+  D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT "|" D_DOMOTICZ_AIRQUALITY "|" D_DOMOTICZ_P1_SMART_METER "|" D_DOMOTICZ_SHUTTER ;
 
 char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
 char domoticz_out_topic[] = DOMOTICZ_OUT_TOPIC;
@@ -347,8 +347,15 @@ void DomoticzSensor(uint8_t idx, char *data)
       Response_P(PSTR("{\"idx\":%d,\"nvalue\":%s,\"Battery\":%d,\"RSSI\":%d}"),
         Settings.domoticz_sensor_idx[idx], data, DomoticzBatteryQuality(), DomoticzRssiQuality());
     } else {
+      uint8_t nvalue = 0;
+#ifdef USE_SHUTTER
+      if (DZ_SHUTTER == idx) {
+        uint8_t position = atoi(data);
+        nvalue = position < 2 ? 0 : (position == 100 ? 1 : 2);
+      }
+#endif  // USE_SHUTTER
       Response_P(DOMOTICZ_MESSAGE,
-        Settings.domoticz_sensor_idx[idx], 0, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
+        Settings.domoticz_sensor_idx[idx], nvalue, data, DomoticzBatteryQuality(), DomoticzRssiQuality());
     }
     MqttPublish(domoticz_in_topic);
     memcpy(mqtt_data, dmess, sizeof(dmess));

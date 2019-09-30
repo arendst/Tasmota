@@ -143,7 +143,7 @@ bool CseSerialInput(void)
       uint8_t checksum = 0;
       for (uint32_t i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
       if (checksum == serial_in_buffer[23]) {
-        Energy.data_valid = 0;
+        Energy.data_valid[0] = 0;
         CseReceived();
         Cse.received = false;
         return true;
@@ -175,7 +175,7 @@ bool CseSerialInput(void)
 
 void CseEverySecond(void)
 {
-  if (Energy.data_valid > ENERGY_WATCHDOG) {
+  if (Energy.data_valid[0] > ENERGY_WATCHDOG) {
     Cse.voltage_cycle = 0;
     Cse.current_cycle = 0;
     Cse.power_cycle = 0;

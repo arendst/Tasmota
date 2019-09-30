@@ -442,6 +442,11 @@
 #define D_ENERGY_YESTERDAY "Използвана енергия вчера"
 #define D_ENERGY_TOTAL "Използвана енергия общо"
 
+// xdrv_27_shutter.ino
+#define D_OPEN "Open"
+#define D_CLOSE "Close"
+#define D_DOMOTICZ_SHUTTER "Shutter"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Датчикът DS18x20 е зает"
 #define D_SENSOR_CRC_ERROR "Датчик DS18x20 - грешка CRC"

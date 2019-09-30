@@ -313,6 +313,7 @@
 #define USE_ARMTRONIX_DIMMERS                    // Add support for Armtronix Dimmers (+1k4 code)
 #define USE_PS_16_DZ                             // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 //#define ROTARY_V1                                // Add support for MI Desk Lamp
+//#define USE_SHUTTER                              // Add Shutter support for up to 4 shutter with different motortypes (+6k code)
 
 // -- Counter input -------------------------------
 #define USE_COUNTER                              // Enable inputs as counter (+0k8 code)
@@ -321,11 +322,9 @@
 //#define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
 
 // -- One wire sensors ----------------------------
-                                                 // WARNING: Select none for default one DS18B20 sensor or enable one of the following two options for multiple sensors
-//#define USE_DS18x20_LEGACY                       // Optional for more than one DS18x20 sensors with dynamic scan using library OneWire (+1k5 code)
 #define USE_DS18x20                              // Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
-//  #define W1_PARASITE_POWER                      // If using USE_DS18x20 then optimize for parasite powered sensors
-//  #define DS18B20_INTERNAL_PULLUP                // Use INPUT_PULLUP internal pullup resistors for single DS18B20
+//  #define W1_PARASITE_POWER                      // Optimize for parasite powered sensors
+//  #define DS18B20_INTERNAL_PULLUP                // Use INPUT_PULLUP internal pullup resistor
 
 // -- I2C sensors ---------------------------------
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
@@ -498,10 +497,10 @@
     #define IR_RCV_MIN_UNKNOWN_SIZE 6            // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
 
 // -- Zigbee interface ----------------------------
-//#define USE_ZIGBEE                               // Enable serial communication with Zigbee CC2530 flashed with ZNP
-  #define USE_ZIGBEE_PANID  0x1A63               // arbitrary PAN ID for Zigbee network, must be unique in the home
+//#define USE_ZIGBEE                                // Enable serial communication with Zigbee CC2530 flashed with ZNP
+  #define USE_ZIGBEE_PANID  0x1A63                // arbitrary PAN ID for Zigbee network, must be unique in the home
   #define USE_ZIGBEE_EXTPANID 0xCCCCCCCCCCCCCCCCL // arbitrary extended PAN ID
-  #define USE_ZIGBEE_CHANNEL  0x00000800         // Zigbee Channel (11)
+  #define USE_ZIGBEE_CHANNEL  11                  // Zigbee Channel (11-26)
   #define USE_ZIGBEE_PRECFGKEY_L 0x0F0D0B0907050301L  // note: changing requires to re-pair all devices
   #define USE_ZIGBEE_PRECFGKEY_H 0x0D0C0A0806040200L  // note: changing requires to re-pair all devices
   #define USE_ZIGBEE_PERMIT_JOIN false           // don't allow joining by default
