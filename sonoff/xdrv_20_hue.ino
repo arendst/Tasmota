@@ -669,7 +669,7 @@ void HueLights(String *path)
 #ifdef USE_SHUTTER
         if (ShutterState(device)) {
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_invert[device-1]);
-          SetShutterPosition(device, bri * 100.0f );
+          ShutterSetPosition(device, bri * 100.0f );
         } else
 #endif
         if (light_type && (local_light_subtype > LST_NONE)) {   // not relay
