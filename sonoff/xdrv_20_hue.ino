@@ -503,12 +503,22 @@ void HueLights(String *path)
         response += ",\"";
       }
     }
+#ifdef USE_SCRIPT
+    Script_Check_Hue(&response);
+#endif
     response += "}";
   }
   else if (path->endsWith("/state")) {               // Got ID/state
     path->remove(0,8);                               // Remove /lights/
     path->remove(path->indexOf("/state"));           // Remove /state
     device = DecodeLightId(atoi(path->c_str()));
+
+#ifdef USE_SCRIPT
+    if (device>devices_present) {
+      return Script_Handle_Hue(path);
+    }
+#endif
+
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -695,6 +705,14 @@ void HueLights(String *path)
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "/lights path=%s", path->c_str());
     path->remove(0,8);                               // Remove /lights/
     device = DecodeLightId(atoi(path->c_str()));
+
+#ifdef USE_SCRIPT
+    if (device>devices_present) {
+      Script_HueStatus(&response,device-devices_present-1);
+      goto exit;
+}
+#endif
+
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -706,6 +724,7 @@ void HueLights(String *path)
     response = "{}";
     code = 406;
   }
+  exit:
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_JSON, response);
 }

@@ -41,8 +41,13 @@ keywords if then else endif, or, and are better readable for beginners (others m
 
 #define SCRIPT_DEBUG 0
 
+
+#ifndef MAXVARS
 #define MAXVARS 50
+#endif
+#ifndef MAXSVARS
 #define MAXSVARS 5
+#endif
 #define MAXNVARS MAXVARS-MAXSVARS
 
 #define MAXFILT 5
@@ -62,7 +67,9 @@ enum {SCRIPT_LOGLEVEL=1,SCRIPT_TELEPERIOD};
 #ifdef USE_SCRIPT_FATFS
 #include <SPI.h>
 #include <SD.h>
+#ifndef FAT_SCRIPT_SIZE
 #define FAT_SCRIPT_SIZE 4096
+#endif
 #define FAT_SCRIPT_NAME "script.txt"
 #if USE_LONG_FILE_NAMES==1
 #warning ("FATFS long filenames not supported");
@@ -215,7 +222,11 @@ void RulesTeleperiod(void) {
 #include <Eeprom24C128_256.h>
 #define EEPROM_ADDRESS 0x50
 // strange bug, crashes with powers of 2 ??? 4096 crashes
+#ifndef EEP_SCRIPT_SIZE
 #define EEP_SCRIPT_SIZE 4095
+#endif
+
+
 static Eeprom24C128_256 eeprom(EEPROM_ADDRESS);
 // eeprom.writeBytes(address, length, buffer);
 #define EEP_WRITE(A,B,C) eeprom.writeBytes(A,B,(uint8_t*)C);
@@ -471,6 +482,8 @@ char *script;
           return -5;
         }
     }
+    // variables usage info
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("Script: nv=%d, tv=%d, vns=%d, ram=%d"), nvars, svars, index, glob_script_mem.script_mem_size);
 
     // copy string variables
     char *cp1=glob_script_mem.glob_snp;
@@ -1514,19 +1527,6 @@ chknext:
           len+=1;
           goto exit;
         }
-#ifdef USE_SHUTTER
-        if (!strncmp(vname,"sht[",4)) {
-          GetNumericResult(vname+4,OPER_EQU,&fvar,0);
-          uint8_t index=fvar;
-          if (index<=shutters_present) {
-            fvar=Settings.shutter_position[index-1];
-          } else {
-            fvar=-1;
-          }
-          len+=1;
-          goto exit;
-        }
-#endif
         if (!strncmp(vname,"pc[",3)) {
           GetNumericResult(vname+3,OPER_EQU,&fvar,0);
           uint8_t index=fvar;
@@ -1643,6 +1643,20 @@ chknext:
         }
         if (!strncmp(vname,"sunset",6)) {
           fvar=SunMinutes(1);
+          goto exit;
+        }
+#endif
+
+#ifdef USE_SHUTTER
+        if (!strncmp(vname,"sht[",4)) {
+          GetNumericResult(vname+4,OPER_EQU,&fvar,0);
+          uint8_t index=fvar;
+          if (index<=shutters_present) {
+            fvar=Settings.shutter_position[index-1];
+          } else {
+            fvar=-1;
+          }
+          len+=1;
           goto exit;
         }
 #endif
@@ -3352,9 +3366,352 @@ void ScriptSaveSettings(void) {
 #endif
 
 
+#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
+
+/*
+"state": {
+"temperature": 2674,
+"lastupdated": "2017-08-04T12:13:04"
+},
+"config": {
+"on": true,
+"battery": 100,
+"reachable": true,
+"alert": "none",
+"ledindication": false,
+"usertest": false,
+"pending": []
+},
+"name": "Hue temperature sensor 1",
+"type": "ZLLTemperature",
+"modelid": "SML001",
+"manufacturername": "Philips",
+"swversion": "6.1.0.18912",
+"uniqueid": "xxx"
+}
+*/
+
+#define HUE_DEV_MVNUM 5
+#define HUE_DEV_NSIZE 16
+struct HUE_SCRIPT {
+  char name[HUE_DEV_NSIZE];
+  uint8_t type;
+  uint8_t index[HUE_DEV_MVNUM];
+  uint8_t vindex[HUE_DEV_MVNUM];
+} hue_script[32];
+
+
+const char SCRIPT_HUE_LIGHTS_STATUS_JSON1[] PROGMEM =
+  "{\"state\":"
+  "{\"on\":{state},"
+  "{light_status}"
+  "\"alert\":\"none\","
+  "\"effect\":\"none\","
+  "\"reachable\":true}"
+  ",\"type\":\"{type}\","
+  "\"name\":\"{j1\","
+  "\"modelid\":\"LCT007\","
+  "\"uniqueid\":\"{j2\","
+  "\"swversion\":\"5.50.1.19085\"}";
+
+
+void Script_HueStatus(String *response, uint16_t hue_devs) {
+  *response+=FPSTR(SCRIPT_HUE_LIGHTS_STATUS_JSON1);
+  uint8_t pwr=glob_script_mem.fvars[hue_script[hue_devs].index[0]-1];
+  response->replace("{state}", (pwr ? "true" : "false"));
+  String light_status = "";
+  if (hue_script[hue_devs].index[1]>0) {
+    // bri
+    light_status += "\"bri\":";
+    uint32_t bri=glob_script_mem.fvars[hue_script[hue_devs].index[1]-1];
+    if (bri > 254)  bri = 254;
+    if (bri < 1)    bri = 1;
+    light_status += String(bri);
+    light_status += ",";
+  }
+  if (hue_script[hue_devs].index[2]>0) {
+    // hue
+    uint32_t hue=glob_script_mem.fvars[hue_script[hue_devs].index[2]-1];
+    //hue = changeUIntScale(hue, 0, 359, 0, 65535);
+    light_status += "\"hue\":";
+    light_status += String(hue);
+    light_status += ",";
+  }
+  if (hue_script[hue_devs].index[3]>0) {
+    // sat
+    uint32_t sat=glob_script_mem.fvars[hue_script[hue_devs].index[3]-1] ;
+    if (sat > 254)  sat = 254;
+    if (sat < 1)    sat = 1;
+    light_status += "\"sat\":";
+    light_status += String(sat);
+    light_status += ",";
+  }
+  if (hue_script[hue_devs].index[4]>0) {
+    // ct
+    uint32_t ct=glob_script_mem.fvars[hue_script[hue_devs].index[4]-1];
+    light_status += "\"ct\":";
+    light_status += String(ct);
+    light_status += ",";
+  }
+
+  response->replace("{light_status}", light_status);
+  response->replace("{j1",hue_script[hue_devs].name);
+  response->replace("{j2", GetHueDeviceId(hue_devs<<8));
+
+  if (hue_script[hue_devs].type=='E') {
+    response->replace("{type}","Extended color light");
+  } else {
+    response->replace("{type}","color light");
+  }
+
+
+}
+
+void Script_Check_Hue(String *response) {
+  if (!bitRead(Settings.rule_enabled, 0)) return;
+
+  uint8_t hue_script_found=Run_Scripter(">H",-2,0);
+  if (hue_script_found!=99) return;
+
+  char line[128];
+  char tmp[128];
+  uint8_t hue_devs=0;
+  uint8_t vindex=0;
+  char *cp;
+  char *lp=glob_script_mem.section_ptr+2;
+  while (lp) {
+    SCRIPT_SKIP_SPACES
+    while (*lp==SCRIPT_EOL) {
+     lp++;
+    }
+    if (!*lp || *lp=='#' || *lp=='>') {
+        break;
+    }
+    if (*lp!=';') {
+      // check this line
+      memcpy(line,lp,sizeof(line));
+      line[sizeof(line)-1]=0;
+      cp=line;
+      for (uint32_t i=0; i<sizeof(line); i++) {
+        if (!*cp || *cp=='\n' || *cp=='\r') {
+          *cp=0;
+          break;
+        }
+        cp++;
+      }
+      Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+      // check for hue defintions
+      // NAME, TYPE , vars
+      cp=tmp;
+      cp=strchr(cp,',');
+      if (!cp) break;
+      *cp=0;
+      // copy name
+      strlcpy(hue_script[hue_devs].name,tmp,HUE_DEV_NSIZE);
+      cp++;
+      while (*cp==' ') cp++;
+      // get type
+      hue_script[hue_devs].type=*cp;
+
+      for (vindex=0;vindex<HUE_DEV_MVNUM;vindex++) {
+        hue_script[hue_devs].index[vindex]=0;
+      }
+      vindex=0;
+      while (1) {
+        cp=strchr(cp,',');
+        if (!cp) break;
+        // get vars, on,hue,sat,bri,ct,
+        cp++;
+        while (*cp==' ') cp++;
+
+        vindex==0xff;
+        if (!strncmp(cp,"on=",3)) {
+          cp+=3;
+          vindex=0;
+        } else if (!strncmp(cp,"bri=",4)) {
+          cp+=4;
+          vindex=1;
+        } else if (!strncmp(cp,"hue=",4)) {
+          cp+=4;
+          vindex=2;
+        } else if (!strncmp(cp,"sat=",4)) {
+          cp+=4;
+          vindex=3;
+        } else if (!strncmp(cp,"ct=",3)) {
+          cp+=3;
+          vindex=4;
+        } else {
+          // error
+          vindex==0xff;
+          break;
+        }
+        if (vindex!=0xff) {
+          struct T_INDEX ind;
+          uint8_t vtype;
+          char vname[16];
+          for (uint32_t cnt=0;cnt<sizeof(vname)-1;cnt++) {
+            if (*cp==',' || *cp==0) {
+              vname[cnt]=0;
+              break;
+            }
+            vname[cnt]=*cp++;
+          }
+          isvar(vname,&vtype,&ind,0,0,0);
+          if (vtype!=VAR_NV) {
+            // found variable as result
+            if (vtype==NUM_RES || (vtype&STYPE)==0) {
+              hue_script[hue_devs].vindex[vindex]=ind.index;
+              hue_script[hue_devs].index[vindex]=glob_script_mem.type[ind.index].index+1;
+            } else {
+            //  break;
+            }
+          }
+        }
+      }
+      // append response
+      if (response) {
+        *response+=",\""+String(EncodeLightId(hue_devs+devices_present+1))+"\":";
+        Script_HueStatus(response,hue_devs);
+      }
+
+      hue_devs++;
+    }
+    if (*lp==SCRIPT_EOL) {
+      lp++;
+    } else {
+      lp = strchr(lp, SCRIPT_EOL);
+      if (!lp) break;
+      lp++;
+    }
+  }
+#if 0
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Hue: %d"), hue_devs);
+  toLog(">>>>");
+  toLog(response->c_str());
+  toLog(response->c_str()+LOGSZ);
+#endif
+}
+
+const char sHUE_LIGHT_RESPONSE_JSON[] PROGMEM =
+  "{\"success\":{\"/lights/{id/state/{cm\":{re}}";
+const char sHUE_ERROR_JSON[] PROGMEM =
+  "[{\"error\":{\"type\":901,\"address\":\"/\",\"description\":\"Internal Error\"}}]";
+
+
+// get alexa arguments
+void Script_Handle_Hue(String *path) {
+  String response;
+  int code = 200;
+  uint16_t tmp = 0;
+  uint16_t hue = 0;
+  uint8_t  sat = 0;
+  uint8_t  bri = 254;
+  uint16_t ct = 0;
+  bool resp = false;
+
+  uint8_t device = DecodeLightId(atoi(path->c_str()));
+  uint8_t index = device-devices_present-1;
+
+  if (WebServer->args()) {
+    response = "[";
+
+    StaticJsonBuffer<400> jsonBuffer;
+    JsonObject &hue_json = jsonBuffer.parseObject(WebServer->arg((WebServer->args())-1));
+    if (hue_json.containsKey("on")) {
+
+      response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
+      response.replace("{id", String(EncodeLightId(device)));
+      response.replace("{cm", "on");
+
+      bool on = hue_json["on"];
+      switch(on)
+      {
+        case false : glob_script_mem.fvars[hue_script[index].index[0]-1]=0;
+                     response.replace("{re", "false");
+                     break;
+        case true  : glob_script_mem.fvars[hue_script[index].index[0]-1]=1;
+                     response.replace("{re", "true");
+                     break;
+      }
+      glob_script_mem.type[hue_script[index].vindex[0]].bits.changed=1;
+      resp = true;
+    }
+    if (hue_json.containsKey("bri")) {             // Brightness is a scale from 1 (the minimum the light is capable of) to 254 (the maximum). Note: a brightness of 1 is not off.
+      tmp = hue_json["bri"];
+      bri=tmp;
+      if (254 <= bri) { bri = 255; }
+      if (resp) { response += ","; }
+      response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
+      response.replace("{id", String(EncodeLightId(device)));
+      response.replace("{cm", "bri");
+      response.replace("{re", String(tmp));
+      glob_script_mem.fvars[hue_script[index].index[1]-1]=bri;
+      glob_script_mem.type[hue_script[index].vindex[1]].bits.changed=1;
+      resp = true;
+    }
+    if (hue_json.containsKey("hue")) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
+      tmp = hue_json["hue"];
+      //hue = changeUIntScale(tmp, 0, 65535, 0, 359);
+      //tmp = changeUIntScale(hue, 0, 359, 0, 65535);
+      hue=tmp;
+      if (resp) { response += ","; }
+      response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
+      response.replace("{id", String(EncodeLightId(device)));
+      response.replace("{cm", "hue");
+      response.replace("{re", String(tmp));
+      glob_script_mem.fvars[hue_script[index].index[2]-1]=hue;
+      glob_script_mem.type[hue_script[index].vindex[2]].bits.changed=1;
+      resp = true;
+    }
+    if (hue_json.containsKey("sat")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
+      tmp = hue_json["sat"];
+      sat=tmp;
+      if (254 <= sat) { sat = 255; }
+      if (resp) { response += ","; }
+      response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
+      response.replace("{id", String(EncodeLightId(device)));
+      response.replace("{cm", "sat");
+      response.replace("{re", String(tmp));
+      glob_script_mem.fvars[hue_script[index].index[3]-1]=sat;
+      glob_script_mem.type[hue_script[index].vindex[3]].bits.changed=1;
+      resp = true;
+    }
+    if (hue_json.containsKey("ct")) {  // Color temperature 153 (Cold) to 500 (Warm)
+      ct = hue_json["ct"];
+      if (resp) { response += ","; }
+      response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
+      response.replace("{id", String(EncodeLightId(device)));
+      response.replace("{cm", "ct");
+      response.replace("{re", String(ct));
+      glob_script_mem.fvars[hue_script[index].index[4]-1]=ct;
+      glob_script_mem.type[hue_script[index].vindex[4]].bits.changed=1;
+      resp = true;
+    }
+    response += "]";
+
+  } else {
+    response = FPSTR(sHUE_ERROR_JSON);
+  }
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
+  WSSend(code, CT_JSON, response);
+  if (resp) {
+    Run_Scripter(">E",2,0);
+  }
+}
+#endif  // hue interface
+
+
 #ifdef USE_SCRIPT_SUB_COMMAND
 bool Script_SubCmd(void) {
   if (!bitRead(Settings.rule_enabled, 0)) return false;
+
+  if (tasm_cmd_activ) return false;
+
+  char command[CMDSZ];
+  strlcpy(command,XdrvMailbox.topic,CMDSZ);
+  uint32_t pl=XdrvMailbox.payload;
+  char pld[64];
+  strlcpy(pld,XdrvMailbox.data,sizeof(pld));
 
   char cmdbuff[128];
   char *cp=cmdbuff;
@@ -3377,7 +3734,14 @@ bool Script_SubCmd(void) {
   uint32_t res=Run_Scripter(cmdbuff,tlen+1,0);
   //AddLog_P2(LOG_LEVEL_INFO,">>%d",res);
   if (res) return false;
-  else return true;
+  else {
+    if (pl>=0) {
+      Response_P(S_JSON_COMMAND_NVALUE, command, pl);
+    } else {
+      Response_P(S_JSON_COMMAND_SVALUE, command, pld);
+    }
+  }
+  return true;
 }
 #endif
 
@@ -3400,22 +3764,10 @@ bool ScriptCommand(void) {
   bool serviced = true;
   uint8_t index = XdrvMailbox.index;
 
+  if (tasm_cmd_activ) return false;
+
   int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kScriptCommands);
   if (-1 == command_code) {
-#ifdef USE_SCRIPT_SUB_COMMAND
-    strlcpy(command,XdrvMailbox.topic,CMDSZ);
-    uint32_t pl=XdrvMailbox.payload;
-    char pld[64];
-    strlcpy(pld,XdrvMailbox.data,sizeof(pld));
-    if (Script_SubCmd()) {
-      if (pl>=0) {
-        Response_P(S_JSON_COMMAND_NVALUE, command, pl);
-      } else {
-        Response_P(S_JSON_COMMAND_SVALUE, command, pld);
-      }
-      return serviced;
-    }
-#endif
     serviced = false;  // Unknown command
   }
   else if ((CMND_SCRIPT == command_code) && (index > 0)) {
@@ -4085,6 +4437,7 @@ bool Xdrv10(uint8_t function)
       if (bitRead(Settings.rule_enabled, 0)) {
         Run_Scripter(">B",2,0);
         fast_script=Run_Scripter(">F",-2,0);
+        Script_Check_Hue(0);
       }
       break;
     case FUNC_EVERY_100_MSECOND:
