@@ -92,7 +92,7 @@ int32_t ShutterPercentToRealPosition(uint8_t percent,uint8_t index)
 	}
 }
 
-uint8_t ShutterRealToPercentlPosition(int32_t realpos, uint8_t index)
+uint8_t ShutterRealToPercentPosition(int32_t realpos, uint8_t index)
 {
 	if (Settings.shutter_set50percent[index] != 50) {
 		return Settings.shuttercoeff[2][index] * 5 > realpos ? realpos / Settings.shuttercoeff[2][index] : (realpos-Settings.shuttercoeff[0][index]) / Settings.shuttercoeff[1][index];
@@ -205,7 +205,7 @@ void ShutterUpdatePosition(void)
         uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter.direction[i] == 1 ? 0 : 1) ;
         char stemp2[10];
 
-        Settings.shutter_position[i] = ShutterRealToPercentlPosition(Shutter.real_position[i], i);
+        Settings.shutter_position[i] = ShutterRealToPercentPosition(Shutter.real_position[i], i);
         //Settings.shutter_position[i] = Settings.shuttercoeff[2][i] * 5 > Shutter.real_position[i] ? (Shutter.real_position[i] * 10 / Settings.shuttercoeff[2][i] + 4)/10 : ((Shutter.real_position[i]-Settings.shuttercoeff[0,i]) *10 / Settings.shuttercoeff[1][i] +4) / 10;
 
         if (0 < Settings.shutter_position[i] && Settings.shutter_position[i] < 100) {
@@ -392,7 +392,7 @@ void CmndShutterStop(void)
       //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Stop moving shutter %d: direction: %d"), XdrvMailbox.index, Shutter.direction[index]);
 
       int32_t temp_realpos = Shutter.start_position[index] + ( (Shutter.time[index]+10) * (Shutter.direction[index] > 0 ? 100 : -Shutter.close_velocity[index]));
-      XdrvMailbox.payload = ShutterRealToPercentlPosition(temp_realpos, index);
+      XdrvMailbox.payload = ShutterRealToPercentPosition(temp_realpos, index);
       //XdrvMailbox.payload = Settings.shuttercoeff[2][index] * 5 > temp_realpos ? temp_realpos / Settings.shuttercoeff[2][index] : (temp_realpos-Settings.shuttercoeff[0,index]) / Settings.shuttercoeff[1][index];
       last_source = SRC_WEBGUI;
       CmndShutterPosition();
@@ -451,7 +451,7 @@ void CmndShutterPosition(void)
         Shutter.switched_relay = 0;
       }
     } else {
-      target_pos_percent = ShutterRealToPercentlPosition(Shutter.real_position[index], index);
+      target_pos_percent = ShutterRealToPercentPosition(Shutter.real_position[index], index);
     }
     ResponseCmndIdxNumber(Settings.shutter_invert[index]  ? 100 - target_pos_percent : target_pos_percent);
   }
