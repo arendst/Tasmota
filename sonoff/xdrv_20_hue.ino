@@ -276,12 +276,6 @@ void HueLightStatus1(uint8_t device, String *response)
   if (bri > 254)  bri = 254;    // Philips Hue bri is between 1 and 254
   if (bri < 1)    bri = 1;
 
-#ifdef USE_SHUTTER
-  if (ShutterState(device)) {
-    bri = (float)(Settings.shutter_invert[device-1] ? 100 - Settings.shutter_position[device-1] : Settings.shutter_position[device-1]) / 100;
-  }
-#endif
-
   if (light_type) {
     light_state.getHSB(&hue, &sat, nullptr);
 
@@ -458,6 +452,7 @@ void HueGlobalConfig(String *path)
       response += ",\"";
     }
   }
+
   response += F("},\"groups\":{},\"schedules\":{},\"config\":");
   HueConfigResponse(&response);
   response += "}";
@@ -503,12 +498,23 @@ void HueLights(String *path)
         response += ",\"";
       }
     }
+#ifdef USE_SCRIPT
+    Script_Check_Hue(&response);
+#endif
     response += "}";
+
   }
   else if (path->endsWith("/state")) {               // Got ID/state
     path->remove(0,8);                               // Remove /lights/
     path->remove(path->indexOf("/state"));           // Remove /state
     device = DecodeLightId(atoi(path->c_str()));
+
+#ifdef USE_SCRIPT
+    if (device>devices_present) {
+      return Script_Handle_Hue(path);
+    }
+#endif
+
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -525,32 +531,19 @@ void HueLights(String *path)
         response.replace("{id", String(EncodeLightId(device)));
         response.replace("{cm", "on");
 
-#ifdef USE_SHUTTER
-        if (ShutterState(device)) {
-          if (!change) {
-            on = hue_json["on"];
-            bri = on ? 1.0f : 0.0f; // when bri is not part of this request then calculate it
-            change = true;
-          }
-          response.replace("{re", on ? "true" : "false");
-        } else {
-#endif
-          on = hue_json["on"];
-          switch(on)
-          {
-            case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
-                        response.replace("{re", "false");
-                        break;
-            case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
-                        response.replace("{re", "true");
-                        break;
-            default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
-                        break;
-          }
-          resp = true;
-#ifdef USE_SHUTTER
+        on = hue_json["on"];
+        switch(on)
+        {
+          case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
+                       response.replace("{re", "false");
+                       break;
+          case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
+                       response.replace("{re", "true");
+                       break;
+          default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
+                       break;
         }
-#endif  // USE_SHUTTER
+        resp = true;
       }
 
       if (light_type && (local_light_subtype >= LST_SINGLE)) {
@@ -656,12 +649,6 @@ void HueLights(String *path)
         resp = true;
       }
       if (change) {
-#ifdef USE_SHUTTER
-        if (ShutterState(device)) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_invert[device-1]);
-          SetShutterPosition(device, bri * 100.0f );
-        } else
-#endif
         if (light_type && (local_light_subtype > LST_NONE)) {   // not relay
           if (!Settings.flag3.pwm_multi_channels) {
             if (g_gotct) {
@@ -695,17 +682,27 @@ void HueLights(String *path)
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "/lights path=%s", path->c_str());
     path->remove(0,8);                               // Remove /lights/
     device = DecodeLightId(atoi(path->c_str()));
+
+#ifdef USE_SCRIPT
+    if (device>devices_present) {
+      Script_HueStatus(&response,device-devices_present-1);
+      goto exit;
+    }
+#endif
+
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
     response += F("{\"state\":");
     HueLightStatus1(device, &response);
     HueLightStatus2(device, &response);
+
   }
   else {
     response = "{}";
     code = 406;
   }
+  exit:
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_JSON, response);
 }
