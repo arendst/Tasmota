@@ -655,9 +655,9 @@ bool MCP230xx_Command(void) {
       intmode = atoi(subStr(sub_string, XdrvMailbox.data, ",", 4));
     }
 #ifdef USE_MCP230xx_OUTPUT
-    if ((pin < mcp230xx_pincount) && (pinmode > 0) && (pinmode < 7) && (pullup < 2)) {
+    if ((pin < mcp230xx_pincount) && (pinmode > 0) && (pinmode < 7) && (pullup < 2) && (paramcount > 2)) {
 #else // not use OUTPUT
-    if ((pin < mcp230xx_pincount) && (pinmode > 0) && (pinmode < 5) && (pullup < 2)) {
+    if ((pin < mcp230xx_pincount) && (pinmode > 0) && (pinmode < 5) && (pullup < 2) && (paramcount > 2)) {
 #endif // USE_MCP230xx_OUTPUT
       Settings.mcp230xx_config[pin].pinmode=pinmode;
       Settings.mcp230xx_config[pin].pullup=pullup;
