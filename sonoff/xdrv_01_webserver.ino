@@ -1128,7 +1128,7 @@ bool HandleRootStatusRefresh(void)
   }
 #ifdef USE_SHUTTER
   char webindex[5];                 // WebGetArg name
-  for (uint32_t j = 1; j < 5; j++) {
+  for (uint32_t j = 1; j <= shutters_present; j++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("u%d"), j);
     WebGetArg(webindex, tmp, sizeof(tmp));  // 0 - 100 percent
     if (strlen(tmp)) {
