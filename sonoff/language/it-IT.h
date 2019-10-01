@@ -447,6 +447,14 @@
 #define D_CLOSE "Close"
 #define D_DOMOTICZ_SHUTTER "Shutter"
 
+// xdrv_28_pcf8574.ino
+#define D_CONFIGURE_PCF8574 "Configure PCF8574"
+#define D_PCF8574_PARAMETERS "PCF8574 parameters"
+#define D_INVERT_PORTS "Invert Ports"
+#define D_DEVICE "Device"
+#define D_DEVICE_INPUT "Input"
+#define D_DEVICE_OUTPUT "Output"
+
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensore occupato"
 #define D_SENSOR_CRC_ERROR "Sensore errore CRC"

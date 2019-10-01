@@ -126,7 +126,9 @@ a_setoption = [[
     "Enable Weekend Energy Tariff",
     "","","",
     "","","","",
-    "","","",""
+    "","",
+    "Enable shutter support",
+    "Invert PCF8574 ports"
     ]]
 
 a_features = [[
@@ -167,8 +169,8 @@ a_features = [[
     "USE_MAX31865","USE_CHIRP","USE_SOLAX_X1","USE_PAJ7620"
     ],[
     "USE_BUZZER","USE_RDM6300","USE_IBEACON","USE_SML_M",
-    "USE_INA226","USE_A4988_Stepper","USE_DDS2382","",
-    "","","","",
+    "USE_INA226","USE_A4988_Stepper","USE_DDS2382","USE_SM2135",
+    "USE_SHUTTER","USE_PCF8574","","",
     "","","","",
     "","","","",
     "","","","",
