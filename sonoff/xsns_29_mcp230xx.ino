@@ -636,7 +636,7 @@ bool MCP230xx_Command(void) {
         MCP230xx_SetOutPin(pin,pincmd);
         return serviced;
       }
-      if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "T"))   {
+      if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "T")) || (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 2), "2")))  {
         MCP230xx_SetOutPin(pin,2);
         return serviced;
       }
