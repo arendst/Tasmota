@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.6.0.4
+ * Updated until v6.6.0.14
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -443,17 +443,17 @@
 #define D_ENERGY_TOTAL "Energía Total"
 
 // xdrv_27_shutter.ino
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_DOMOTICZ_SHUTTER "Shutter"
+#define D_OPEN "Abrir"
+#define D_CLOSE "Cerrar"
+#define D_DOMOTICZ_SHUTTER "Cortina"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_PCF8574_PARAMETERS "PCF8574 parameters"
-#define D_INVERT_PORTS "Invert Ports"
-#define D_DEVICE "Device"
-#define D_DEVICE_INPUT "Input"
-#define D_DEVICE_OUTPUT "Output"
+#define D_CONFIGURE_PCF8574 "Configurar PCF8574"
+#define D_PCF8574_PARAMETERS "Parámetros de PCF8574"
+#define D_INVERT_PORTS "Invertir Puertos"
+#define D_DEVICE "Dispositivo"
+#define D_DEVICE_INPUT "Entrada"
+#define D_DEVICE_OUTPUT "Salida"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor ocupado"
