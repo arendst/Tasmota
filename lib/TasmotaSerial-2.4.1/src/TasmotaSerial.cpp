@@ -213,6 +213,7 @@ int TasmotaSerial::available()
 
 #ifdef TM_SERIAL_USE_IRAM
 #define TM_SERIAL_WAIT_SND { while (ESP.getCycleCount() < (wait + start)) if (!m_high_speed) optimistic_yield(1); wait += m_bit_time; } // Watchdog timeouts
+#define TM_SERIAL_WAIT_SND_FAST { while (ESP.getCycleCount() < (wait + start)); wait += m_bit_time; }
 #define TM_SERIAL_WAIT_RCV { while (ESP.getCycleCount() < (wait + start)); wait += m_bit_time; }
 #define TM_SERIAL_WAIT_RCV_LOOP { while (ESP.getCycleCount() < (wait + start)); }
 #else
@@ -221,31 +222,58 @@ int TasmotaSerial::available()
 #define TM_SERIAL_WAIT_RCV_LOOP { while (ESP.getCycleCount() < (wait + start)); }
 #endif
 
+#ifdef TM_SERIAL_USE_IRAM
+void ICACHE_RAM_ATTR TasmotaSerial::_fast_write(uint8_t b) {
+#else
+void TasmotaSerial::_fast_write(uint8_t b) {
+#endif
+  uint32_t wait = m_bit_time;
+  uint32_t start = ESP.getCycleCount();
+  // Start bit;
+  digitalWrite(m_tx_pin, LOW);
+  TM_SERIAL_WAIT_SND_FAST;
+  for (uint32_t i = 0; i < 8; i++) {
+    digitalWrite(m_tx_pin, (b & 1) ? HIGH : LOW);
+    TM_SERIAL_WAIT_SND_FAST;
+    b >>= 1;
+  }
+  // Stop bit(s)
+  digitalWrite(m_tx_pin, HIGH);
+  for (uint32_t i = 0; i < m_stop_bits; i++) {
+    TM_SERIAL_WAIT_SND_FAST;
+  }
+}
+
 size_t TasmotaSerial::write(uint8_t b)
 {
   if (m_hardserial) {
     return Serial.write(b);
   } else {
     if (-1 == m_tx_pin) return 0;
-    if (m_high_speed) cli();  // Disable interrupts in order to get a clean transmit
-    uint32_t wait = m_bit_time;
-    //digitalWrite(m_tx_pin, HIGH);     // already in HIGH mode
-    uint32_t start = ESP.getCycleCount();
-    // Start bit;
-    digitalWrite(m_tx_pin, LOW);
-    TM_SERIAL_WAIT_SND;
-    for (uint32_t i = 0; i < 8; i++) {
-      digitalWrite(m_tx_pin, (b & 1) ? HIGH : LOW);
+    if (m_high_speed) {
+      cli();  // Disable interrupts in order to get a clean transmit
+      _fast_write(b);
+      sei();
+    } else {
+      uint32_t wait = m_bit_time;
+      //digitalWrite(m_tx_pin, HIGH);     // already in HIGH mode
+      uint32_t start = ESP.getCycleCount();
+      // Start bit;
+      digitalWrite(m_tx_pin, LOW);
       TM_SERIAL_WAIT_SND;
-      b >>= 1;
+      for (uint32_t i = 0; i < 8; i++) {
+        digitalWrite(m_tx_pin, (b & 1) ? HIGH : LOW);
+        TM_SERIAL_WAIT_SND;
+        b >>= 1;
+      }
+      // Stop bit(s)
+      digitalWrite(m_tx_pin, HIGH);
+      // re-enable interrupts during stop bits, it's not an issue if they are longer than expected
+      for (uint32_t i = 0; i < m_stop_bits; i++) {
+        TM_SERIAL_WAIT_SND;
+      }
     }
-    // Stop bit(s)
-    digitalWrite(m_tx_pin, HIGH);
-    // re-enable interrupts during stop bits, it's not an issue if they are longer than expected
-    if (m_high_speed) sei();
-    for (uint32_t i = 0; i < m_stop_bits; i++) {
-      TM_SERIAL_WAIT_SND;
-    }
+
     return 1;
   }
 }
