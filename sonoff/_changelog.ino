@@ -5,7 +5,7 @@
  * Add initial support for MQTT logging using command MqttLog <loglevel> (#6498)
  * Add Zigbee more support - collect endpoints and clusters, added ZigbeeDump command
  * Add initial support for shutters by Stefan Bode (#288)
- * Add use case for sensor29 pin,1 and sensor29 pin,0 to substitute ON and OFF respectively with MCP230xx driver
+ * Add command to MCP230xx: sensor29 pin,0/1/2 for OFF/ON/TOGGLE
  *
  * 6.6.0.13 20190922
  * Add command EnergyReset4 x,x to initialize total usage for two tarrifs
