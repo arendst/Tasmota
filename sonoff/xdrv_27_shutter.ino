@@ -435,7 +435,7 @@ void CmndShutterPosition(void)
         ShutterStartInit(index, new_shutterdirection, Shutter.target_position[index]);
         Shutter.operations[index]++;
         if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE) {
-          ExecuteCommandPower(Settings.shutter_startrelay[index] , 0, SRC_SHUTTER);
+          ExecuteCommandPower(Settings.shutter_startrelay[index], 0, SRC_SHUTTER);
           //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Delay5 5s, xdrv %d"), XdrvMailbox.payload);
           ShutterDelayForMotorStop();
           // Code for shutters with circuit safe configuration, switch the direction Relay
@@ -453,7 +453,7 @@ void CmndShutterPosition(void)
     } else {
       target_pos_percent = ShutterRealToPercentPosition(Shutter.real_position[index], index);
     }
-    XdrvMailbox.index = index +1;
+    XdrvMailbox.index = index +1;  // Fix random index for ShutterClose
     ResponseCmndIdxNumber(Settings.shutter_invert[index] ? 100 - target_pos_percent : target_pos_percent);
   }
 }
