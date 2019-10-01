@@ -107,8 +107,6 @@ void ShutterInit(void)
   Shutter.mask = 0;
   //Initialize to get relay that changed
   Shutter.old_power = power;
-  char shutter_open_chr[10];
-  char shutter_close_chr[10];
   bool relay_in_interlock = false;
 
   AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Accuracy digits: %d"), Settings.shutter_accuracy);
@@ -164,9 +162,11 @@ void ShutterInit(void)
       Shutter.real_position[i] = ShutterPercentToRealPosition(Settings.shutter_position[i], i);
       //Shutter.real_position[i] =   Settings.shutter_position[i] <= 5 ?  Settings.shuttercoeff[2][i] * Settings.shutter_position[i] : Settings.shuttercoeff[1][i] * Settings.shutter_position[i] + Settings.shuttercoeff[0,i];
       Shutter.start_position[i] = Shutter.real_position[i];
-      dtostrfd((float)Shutter.open_time[i] / 10 , 1, shutter_open_chr);
-      dtostrfd((float)Shutter.close_time[i] / 10, 1, shutter_close_chr);
 
+      char shutter_open_chr[10];
+      dtostrfd((float)Shutter.open_time[i] / 10 , 1, shutter_open_chr);
+      char shutter_close_chr[10];
+      dtostrfd((float)Shutter.close_time[i] / 10, 1, shutter_close_chr);
       AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoedffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, shuttermode %d"),
         i, Settings.shutter_startrelay[i], Shutter.real_position[i], Settings.shutter_position[i], Shutter.close_velocity[i], Shutter.open_max[i], shutter_open_chr, shutter_close_chr,
         Settings.shuttercoeff[0][i], Settings.shuttercoeff[1][i], Settings.shuttercoeff[2][i], Settings.shuttercoeff[3][i], Settings.shuttercoeff[4][i],
