@@ -894,6 +894,7 @@ void PerformEverySecond(void)
           RtcSettings.deepsleep_slip = tmin(tmax(RtcSettings.deepsleep_slip, 9000),11000);
 
           AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("%% new drift %ld"),  RtcSettings.deepsleep_slip );
+          RtcSettings.nextwakeup += Settings.deepsleep;
         }
         // it may happen that wakeup in just <5 seconds in future
         // in this case also add deepsleep to nextwakeup

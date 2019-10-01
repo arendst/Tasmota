@@ -571,7 +571,7 @@ void ShowWebSource(uint32_t source)
 void ExecuteWebCommand(char* svalue, uint32_t source)
 {
   ShowWebSource(source);
-  //STB mode
+  //STB mod
   last_source = source;
   //end
 

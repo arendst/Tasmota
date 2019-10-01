@@ -17,6 +17,8 @@
 
 Ticker TickerShutter;
 
+uint8_t calibrate_pos[6] = {0,30,50,70,90,100};
+
 enum ShutterCommands {
   CMND_OPEN, CMND_CLOSE, CMND_STOP, CMND_POSITION, CMND_OPENTIME, CMND_CLOSETIME, CMND_SHUTTERRELAY, CMND_SET50PERCENT, CMND_SHUTTERSETCLOSE, CMND_SHUTTERINVERT, CMND_CALIBRATIONMATIX };
 const char kShutterCommands[] PROGMEM =
@@ -41,6 +43,7 @@ power_t old_power = power;                              // preserve old bitmask 
 power_t SwitchedRelay = 0;                              // bitmatrix that contain the relays that was lastly changed.
 uint32_t shutter_time[MAX_SHUTTERS] ;
 uint8_t shutterMode = 0;                                // operation mode definition. see enum type above OFF_OPEN-OFF_CLOSE, OFF_ON-OPEN_CLOSE, PULSE_OPEN-PULSE_CLOSE
+uint16_t messwerte[5] = {30,50,70,90,100};
 
 void Rtc_ms50_Second()
 {
@@ -54,7 +57,24 @@ int32_t percent_to_realposition(uint8_t percent,uint8_t index)
 	if (Settings.shutter_set50percent[index] != 50) {
     return  percent <= 5 ?  Settings.shuttercoeff[2][index] * percent : Settings.shuttercoeff[1][index] * percent + Settings.shuttercoeff[0][index];
 	} else {
-		return  percent <= 5 ?  Settings.shuttercoeff[2][index] * percent : Settings.shuttercoeff[1][index] * percent + Settings.shuttercoeff[0][index];
+    uint16_t realpos;
+
+    for (uint8_t i=0 ; i < 5 ; i++) {
+      if (percent*10 > Settings.shuttercoeff[i][index]) {
+        realpos = Shutter_Open_Max[index] * calibrate_pos[i+1] / 100;
+        //AddLog_P2(LOG_LEVEL_INFO, PSTR("Realposition TEMP1: %d, %% %d, coeff %d"), realpos, percent, Settings.shuttercoeff[i][index]);
+      } else {
+        if ( i == 0) {
+          realpos =  percent * Shutter_Open_Max[index] * calibrate_pos[i+1] / Settings.shuttercoeff[i][index] / 10;
+        } else {
+          //uint16_t addon = ( percent*10 - Settings.shuttercoeff[i-1][index] ) * Shutter_Open_Max[index] * (calibrate_pos[i+1] - calibrate_pos[i]) / (Settings.shuttercoeff[i][index] -Settings.shuttercoeff[i-1][index]) / 100;
+          //AddLog_P2(LOG_LEVEL_INFO, PSTR("Realposition TEMP2: %d, %% %d, coeff %d"), addon, (calibrate_pos[i+1] - calibrate_pos[i]), (Settings.shuttercoeff[i][index] -Settings.shuttercoeff[i-1][index]));
+          realpos += ( percent*10 - Settings.shuttercoeff[i-1][index] ) * Shutter_Open_Max[index] * (calibrate_pos[i+1] - calibrate_pos[i]) / (Settings.shuttercoeff[i][index] -Settings.shuttercoeff[i-1][index]) / 100;
+        }
+        break;
+      }
+    }
+		return  realpos;
 	}
 }
 
@@ -62,9 +82,27 @@ uint8_t realposition_to_percent(int32_t realpos, uint8_t index)
 {
 	if (Settings.shutter_set50percent[index] != 50) {
 		return Settings.shuttercoeff[2][index] * 5 > realpos ? realpos / Settings.shuttercoeff[2][index] : (realpos-Settings.shuttercoeff[0][index]) / Settings.shuttercoeff[1][index];
-	} else {
-		return Settings.shuttercoeff[2][index] * 5 > realpos ? realpos / Settings.shuttercoeff[2][index] : (realpos-Settings.shuttercoeff[0][index]) / Settings.shuttercoeff[1][index];
-	}
+  } else {
+    uint16_t realpercent;
+
+    for (uint8_t i=0 ; i < 5 ; i++) {
+      if (realpos > Shutter_Open_Max[index] * calibrate_pos[i+1] / 100) {
+        realpercent = Settings.shuttercoeff[i][index] /10;
+        //AddLog_P2(LOG_LEVEL_INFO, PSTR("Realpercent TEMP1: %d, %% %d, coeff %d"), realpercent, realpos, Shutter_Open_Max[index] * calibrate_pos[i+1] / 100);
+      } else {
+        if ( i == 0) {
+          realpercent =  ( realpos - (Shutter_Open_Max[index] * calibrate_pos[i] / 100) ) * 10 * Settings.shuttercoeff[i][index] / calibrate_pos[i+1] / Shutter_Open_Max[index];
+        } else {
+          //uint16_t addon = ( realpos - (Shutter_Open_Max[index] * calibrate_pos[i] / 100) ) * 10 * (Settings.shuttercoeff[i][index] - Settings.shuttercoeff[i-1][index]) / (calibrate_pos[i+1] - calibrate_pos[i])/ Shutter_Open_Max[index];
+          //uint16_t addon = ( percent*10 - Settings.shuttercoeff[i-1][index] ) * Shutter_Open_Max[index] * (calibrate_pos[i+1] - calibrate_pos[i]) / (Settings.shuttercoeff[i][index] -Settings.shuttercoeff[i-1][index]) / 100;
+          //AddLog_P2(LOG_LEVEL_INFO, PSTR("Realpercent TEMP2: %d, delta %d,  %% %d, coeff %d"), addon,( realpos - (Shutter_Open_Max[index] * calibrate_pos[i] / 100) ) , (calibrate_pos[i+1] - calibrate_pos[i])* Shutter_Open_Max[index]/100, (Settings.shuttercoeff[i][index] -Settings.shuttercoeff[i-1][index]));
+          realpercent += ( realpos -  (Shutter_Open_Max[index] * calibrate_pos[i] / 100) ) * 10 * (Settings.shuttercoeff[i][index] - Settings.shuttercoeff[i-1][index]) / (calibrate_pos[i+1] - calibrate_pos[i]) / Shutter_Open_Max[index] ;
+        }
+        break;
+      }
+    }
+    return realpercent;
+  }
 }
 
 void ShutterInit()
@@ -82,7 +120,7 @@ void ShutterInit()
   for (byte i=0;i < MAX_SHUTTERS; i++) {
     // upgrade to 0.1sec calculation base.
     if ( Settings.shutter_accuracy == 0) {
-      Settings.shutter_closetime[i] = Settings.shutter_closetime[i] * 10;
+      Settings.shutter_closetime[i] = Settings.shutter_closetime[i] / (calibrate_pos[i+1] - calibrate_pos[i]);
       Settings.shutter_opentime[i] = Settings.shutter_opentime[i] * 10;
     }
     // set startrelay to 1 on first init, but only to shutter 1. 90% usecase
@@ -122,10 +160,15 @@ void ShutterInit()
       Shutter_Close_Velocity[i] =  Shutter_Open_Max[i] /  Shutter_Close_Time[i] / 2 ;
 
       // calculate a ramp slope at the first 5 percent to compensate that shutters move with down part later than the upper part
-      Settings.shuttercoeff[1][i] = Shutter_Open_Max[i] * (100 - Settings.shutter_set50percent[i] ) / 5000;
-      Settings.shuttercoeff[0][i] = Shutter_Open_Max[i] - (Settings.shuttercoeff[1][i] * 100);
-      Settings.shuttercoeff[2][i] = (Settings.shuttercoeff[0][i] + 5 * Settings.shuttercoeff[1][i]) / 5;
+      if (Settings.shutter_set50percent[i] != 50) {
+        Settings.shuttercoeff[1][i] = Shutter_Open_Max[i] * (100 - Settings.shutter_set50percent[i] ) / 5000;
+        Settings.shuttercoeff[0][i] = Shutter_Open_Max[i] - (Settings.shuttercoeff[1][i] * 100);
+        Settings.shuttercoeff[2][i] = (Settings.shuttercoeff[0][i] + 5 * Settings.shuttercoeff[1][i]) / 5;
+      } else {
+
+      }
       shutter_mask |= 3 << (Settings.shutter_startrelay[i] -1)  ;
+
 
       Shutter_Real_Position[i] = percent_to_realposition(Settings.shutter_position[i], i);
       //Shutter_Real_Position[i] =   Settings.shutter_position[i] <= 5 ?  Settings.shuttercoeff[2][i] * Settings.shutter_position[i] : Settings.shuttercoeff[1][i] * Settings.shutter_position[i] + Settings.shuttercoeff[0,i];
@@ -312,6 +355,24 @@ bool ShutterCommand()
   }
   else if ((CMND_CALIBRATIONMATIX == command_code) && (index > 0) && (index <= MAX_SHUTTERS)) {
     if (XdrvMailbox.data_len > 0) {
+        uint32_t i = 0;
+        char *str_ptr;
+        char* version_dup = strdup(XdrvMailbox.data);  // Duplicate the version_str as strtok_r will modify it.
+        // Loop through the version string, splitting on '.' seperators.
+        for (char *str = strtok_r(version_dup, " ", &str_ptr); str && i < 5; str = strtok_r(nullptr, " ", &str_ptr), i++) {
+          int field = atoi(str);
+          // The fields in a version string can only range from 0-255.
+          if ((field < 0) || (field > 255)) {
+            free(version_dup);
+            return false;
+          }
+          messwerte[i] = field;
+        }
+        for (uint8_t j=0 ; j < 5 ; j++) {
+          Settings.shuttercoeff[j][i] = messwerte[j] * 1000 / messwerte[4];
+          //AddLog_P2(LOG_LEVEL_INFO, PSTR("Settings.shuttercoeff j: %d, i: %d, value: %d, messwert %d"), j,i,Settings.shuttercoeff[j][i], messwerte[j]);
+        }
+        ShutterInit();
         Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, XdrvMailbox.data);
     }
   }
