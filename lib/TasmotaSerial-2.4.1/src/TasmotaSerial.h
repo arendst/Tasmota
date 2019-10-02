@@ -81,6 +81,8 @@ class TasmotaSerial : public Stream {
     bool m_high_speed = false;
     bool m_very_high_speed = false;   // above 100000 bauds
     uint8_t *m_buffer;
+
+    void _fast_write(uint8_t b);      // IRAM minimized version
 };
 
 #endif  // TasmotaSerial_h
