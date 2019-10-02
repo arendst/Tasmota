@@ -698,10 +698,10 @@ void RulesTeleperiod(void)
  */
 bool RulesMqttData(void)
 {
-  bool serviced = false;
   if (XdrvMailbox.data_len < 1 || XdrvMailbox.data_len > 256) {
     return false;
   }
+  bool serviced = false;
   String sTopic = XdrvMailbox.topic;
   String sData = XdrvMailbox.data;
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);

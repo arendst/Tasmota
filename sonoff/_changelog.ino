@@ -7,6 +7,10 @@
  * Add initial support for shutters by Stefan Bode (#288)
  * Add command to MCP230xx: sensor29 pin,0/1/2 for OFF/ON/TOGGLE
  * Add initial support for PCF8574 I2C I/O Expander (currently output only) by Stefan Bode
+ * Add command SetOption71 0/1 to switch between different Modbus Active Energy registers on DDS238-2 energy meters (#6531)
+ * Change command SetOption43 to make it more general. Now supports PS_16_DZ driver too (#6547)
+ * Change command handling by moving buffers up in chain solving MQTTlog support (#6524)
+ * Change detection of non-MQTT commands by allowing non-space characters as delimiter (#6540)
  * Fix TasmotaSerial: move serial send to IRAM for high speed baud rates
  *
  * 6.6.0.13 20190922

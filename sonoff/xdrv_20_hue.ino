@@ -36,7 +36,7 @@ const char HUE_RESPONSE[] PROGMEM =
   "CACHE-CONTROL: max-age=100\r\n"
   "EXT:\r\n"
   "LOCATION: http://%s:80/description.xml\r\n"
-  "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.17.0\r\n"
+  "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.24.0\r\n"  // was 1.17
   "hue-bridgeid: %s\r\n";
 const char HUE_ST1[] PROGMEM =
   "ST: upnp:rootdevice\r\n"
@@ -503,7 +503,7 @@ void HueLights(String *path)
         response += ",\"";
       }
     }
-#ifdef USE_SCRIPT
+#ifdef USE_SCRIPT_HUE
     Script_Check_Hue(&response);
 #endif
     response += "}";
@@ -513,7 +513,7 @@ void HueLights(String *path)
     path->remove(path->indexOf("/state"));           // Remove /state
     device = DecodeLightId(atoi(path->c_str()));
 
-#ifdef USE_SCRIPT
+#ifdef USE_SCRIPT_HUE
     if (device>devices_present) {
       return Script_Handle_Hue(path);
     }
@@ -706,7 +706,7 @@ void HueLights(String *path)
     path->remove(0,8);                               // Remove /lights/
     device = DecodeLightId(atoi(path->c_str()));
 
-#ifdef USE_SCRIPT
+#ifdef USE_SCRIPT_HUE
     if (device>devices_present) {
       Script_HueStatus(&response,device-devices_present-1);
       goto exit;
@@ -799,7 +799,11 @@ bool Xdrv20(uint8_t function)
 {
   bool result = false;
 
+#ifdef USE_SCRIPT_HUE
+  if ((EMUL_HUE == Settings.flag2.emulation)) {
+#else
   if (devices_present && (EMUL_HUE == Settings.flag2.emulation)) {
+#endif
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/description.xml", HandleUpnpSetupHue);
