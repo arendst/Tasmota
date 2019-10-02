@@ -54,8 +54,10 @@ void Dds2382EverySecond(void)
     } else {
       Energy.data_valid[0] = 0;
 
-      //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40
-      // SA FC BC EnergyTotal             ExportActiv ImportActiv                         Volta Curre APowe RPowe PFact Frequ Crc--
+      //           0     1     2     3     4     5     6     7     8     9     A     B     C     D     E     F    10    11           = ModBus register
+      //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40  = Buffer index
+      // SA FC BC EnergyTotal             ExportActiv ImportActiv                         Volta Curre APowe RPowe PFact Frequ Crc--  = DDS238-2 ZN/S version 1 (#6384)
+      // SA FC BC EnergyTotal                                     ExportActiv ImportActiv Volta Curre APowe RPowe PFact Frequ Crc--  = DDS238-2 ZN/S version 2 (#6531)
 
       Energy.voltage[0] = (float)((buffer[27] << 8) + buffer[28]) / 10.0;
       Energy.current[0] = (float)((buffer[29] << 8) + buffer[30]) / 100.0;
@@ -63,9 +65,12 @@ void Dds2382EverySecond(void)
       Energy.reactive_power[0] = (float)((buffer[33] << 8) + buffer[34]);
       Energy.power_factor[0] = (float)((buffer[35] << 8) + buffer[36]) / 1000.0;                                          // 1.00
       Energy.frequency[0] = (float)((buffer[37] << 8) + buffer[38]) / 100.0;                                              // 50.0 Hz
-      Energy.export_active = (float)((buffer[11] << 24) + (buffer[12] << 16) + (buffer[13] << 8) + buffer[14]) / 100.0;  // 429496729.0 W
-//      float energy_total = (float)((buffer[3] << 24) + (buffer[4] << 16) + (buffer[5] << 8) + buffer[6]) / 100.0;  // 429496729.0 W
-      float import_active = (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[17] << 8) + buffer[18]) / 100.0;  // 429496729.0 W
+      uint8_t offset = 11;
+      if (Settings.flag3.dds2382_model) {
+        offset = 19;
+      }
+      Energy.export_active = (float)((buffer[offset] << 24) + (buffer[offset +1] << 16) + (buffer[offset +2] << 8) + buffer[offset +3]) / 100.0;  // 429496729.0 W
+      float import_active = (float)((buffer[offset +4] << 24) + (buffer[offset +5] << 16) + (buffer[offset +6] << 8) + buffer[offset +7]) / 100.0;  // 429496729.0 W
 
       EnergyUpdateTotal(import_active, false);  // 484.708 kWh
     }
