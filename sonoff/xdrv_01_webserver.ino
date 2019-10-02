@@ -91,6 +91,7 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "}"
   "wl(u);";
 
+
 const char HTTP_SCRIPT_ROOT[] PROGMEM =
 #ifdef USE_SCRIPT_WEB_DISPLAY
   "var rfsh=1;"
@@ -131,7 +132,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
       "rfsh=0;"
     "}"
   "}"
-#else // USE_SCRIPT_WEB_DISPLAY
+#else  // USE_SCRIPT_WEB_DISPLAY
   "function la(p){"
     "var a='';"
     "if(la.arguments.length==1){"
@@ -150,8 +151,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "x.send();"
     "lt=setTimeout(la,%d);"               // Settings.web_refresh
   "}"
-#endif // USE_SCRIPT_WEB_DISPLAY
-
+#endif  // USE_SCRIPT_WEB_DISPLAY
 
 #ifdef USE_JAVASCRIPT_ES6
   "lb=p=>la('&d='+p);"                    // Dark - Bright &d related to lb(value) and WebGetArg("d", tmp, sizeof(tmp));
@@ -163,10 +163,15 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "function lc(p){"
     "la('&t='+p);"                        // &t related to WebGetArg("t", tmp, sizeof(tmp));
   "}"
-#endif
+#endif  // USE_JAVASCRIPT_ES6
 
-  "wl(la);"
-//stb nod
+#ifdef USE_SHUTTER
+#ifdef USE_JAVASCRIPT_ES6
+  "ld1=p=>la('&u1='+p);"
+  "ld2=p=>la('&u2='+p);"
+  "ld3=p=>la('&u3='+p);"
+  "ld4=p=>la('&u4='+p);"
+#else
   "function ld1(p){"
     "la('&u1='+p);"
   "}"
@@ -178,8 +183,12 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "}"
   "function ld4(p){"
     "la('&u4='+p);"
-  "}";
-//end
+  "}"
+#endif  // USE_JAVASCRIPT_ES6
+#endif  // USE_SHUTTER
+
+  "wl(la);";
+
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
   "function c(l){"
     "eb('s1').value=l.innerText||l.textContent;"
@@ -392,11 +401,11 @@ const char HTTP_MSG_SLIDER1[] PROGMEM =
 const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><span class='p'>" D_DARKLIGHT "</span><span class='q'>" D_BRIGHTLIGHT "</span></div>"
   "<div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>";
-//stb mod
+#ifdef USE_SHUTTER
 const char HTTP_MSG_SLIDER3[] PROGMEM =
   "<div><span class='p'>" D_CLOSE "</span><span class='q'>" D_OPEN "</span></div>"
   "<div><input type='range' min='0' max='100' value='%d' onchange='ld%d(value)'></div>";
-//end
+#endif  // USE_SHUTTER
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br>";
 
@@ -571,10 +580,7 @@ void ShowWebSource(uint32_t source)
 void ExecuteWebCommand(char* svalue, uint32_t source)
 {
   ShowWebSource(source);
-  //STB mod
   last_source = source;
-  //end
-
   ExecuteCommand(svalue, SRC_IGNORE);
 }
 
@@ -1013,15 +1019,15 @@ void HandleRoot(void)
       WSContentSend_P(HTTP_MSG_SLIDER2, Settings.light_dimmer);
     }
 #endif
+#ifdef USE_SHUTTER
+    if (Settings.flag3.shutter_mode) {
+      for (uint32_t i = 0; i < shutters_present; i++) {
+        WSContentSend_P(HTTP_MSG_SLIDER3, Settings.shutter_position[i], i+1);
+      }
+    }
+#endif  // USE_SHUTTER
     WSContentSend_P(HTTP_TABLE100);
     WSContentSend_P(PSTR("<tr>"));
-  // stb mod
-  if (Settings.flag3.shutter_mode) {
-  	for (uint32_t i=0; i < shutters_present; i++) {
-  	  WSContentSend_P( HTTP_MSG_SLIDER3, Settings.shutter_position[i], i+1);
-  	}
-  }
-  //end
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) {
       WSContentSend_P(HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
@@ -1120,29 +1126,17 @@ bool HandleRootStatusRefresh(void)
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-//stb mod
-  WebGetArg("u1", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "1 %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
+#ifdef USE_SHUTTER
+  char webindex[5];                 // WebGetArg name
+  for (uint32_t j = 1; j <= shutters_present; j++) {
+    snprintf_P(webindex, sizeof(webindex), PSTR("u%d"), j);
+    WebGetArg(webindex, tmp, sizeof(tmp));  // 0 - 100 percent
+    if (strlen(tmp)) {
+      snprintf_P(svalue, sizeof(svalue), PSTR("ShutterPosition%d %s"), j, tmp);
+      ExecuteWebCommand(svalue, SRC_WEBGUI);
+    }
   }
-  WebGetArg("u2", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "2 %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
-  }
-  WebGetArg("u3", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "3 %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
-  }
-  WebGetArg("u4", tmp, sizeof(tmp));
-  if (strlen(tmp)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_POSITION "4 %s"), tmp);
-    ExecuteWebCommand(svalue, SRC_WEBGUI);
-  }
-// end
-
+#endif  // USE_SHUTTER
   WebGetArg("k", tmp, sizeof(tmp));  // 1 - 16 Pre defined RF keys
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);

@@ -36,7 +36,7 @@ const char HUE_RESPONSE[] PROGMEM =
   "CACHE-CONTROL: max-age=100\r\n"
   "EXT:\r\n"
   "LOCATION: http://%s:80/description.xml\r\n"
-  "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.17.0\r\n"
+  "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.24.0\r\n"  // was 1.17
   "hue-bridgeid: %s\r\n";
 const char HUE_ST1[] PROGMEM =
   "ST: upnp:rootdevice\r\n"
@@ -276,15 +276,12 @@ void HueLightStatus1(uint8_t device, String *response)
   if (bri > 254)  bri = 254;    // Philips Hue bri is between 1 and 254
   if (bri < 1)    bri = 1;
 
-//stb mod
-  bool on = power & (1 << (device-1));
 #ifdef USE_SHUTTER
-  if(Settings.flag3.shutter_mode &&  (shutter_mask & (1 << (Settings.shutter_startrelay[device-1]-1))) ) {
-    bri = (float)(Settings.shutter_invert[device-1] ? 100 - Settings.shutter_position[device-1]: Settings.shutter_position[device-1]) / 100;
-    on = bri > 0 ? 1 : 0;
+  if (ShutterState(device)) {
+    bri = (float)(Settings.shutter_invert[device-1] ? 100 - Settings.shutter_position[device-1] : Settings.shutter_position[device-1]) / 100;
   }
 #endif
-//end
+
   if (light_type) {
     light_state.getHSB(&hue, &sat, nullptr);
 
@@ -524,12 +521,22 @@ void HueLights(String *path)
         response += ",\"";
       }
     }
+#ifdef USE_SCRIPT_HUE
+    Script_Check_Hue(&response);
+#endif
     response += "}";
   }
   else if (path->endsWith("/state")) {               // Got ID/state
     path->remove(0,8);                               // Remove /lights/
     path->remove(path->indexOf("/state"));           // Remove /state
     device = DecodeLightId(atoi(path->c_str()));
+
+#ifdef USE_SCRIPT_HUE
+    if (device>devices_present) {
+      return Script_Handle_Hue(path);
+    }
+#endif
+
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -545,36 +552,33 @@ void HueLights(String *path)
         response += FPSTR(HUE_LIGHT_RESPONSE_JSON);
         response.replace("{id", String(EncodeLightId(device)));
         response.replace("{cm", "on");
-//stb mod
+
 #ifdef USE_SHUTTER
-      if(Settings.flag3.shutter_mode &&  (shutter_mask & (1 << (Settings.shutter_startrelay[device-1]-1))) ) {
-          if(!change) {
+        if (ShutterState(device)) {
+          if (!change) {
             on = hue_json["on"];
             bri = on ? 1.0f : 0.0f; // when bri is not part of this request then calculate it
             change = true;
           }
           response.replace("{re", on ? "true" : "false");
-        }
-        else
-        {
+        } else {
 #endif
-//end
-        on = hue_json["on"];
-        switch(on)
-        {
-          case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
-                       response.replace("{re", "false");
-                       break;
-          case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
-                       response.replace("{re", "true");
-                       break;
-          default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
-                       break;
+          on = hue_json["on"];
+          switch(on)
+          {
+            case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
+                        response.replace("{re", "false");
+                        break;
+            case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
+                        response.replace("{re", "true");
+                        break;
+            default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
+                        break;
+          }
+          resp = true;
+#ifdef USE_SHUTTER
         }
-        resp = true;
-        //stb mod
-        }
-        //end
+#endif  // USE_SHUTTER
       }
 
       if (light_type && (local_light_subtype >= LST_SINGLE)) {
@@ -680,15 +684,12 @@ void HueLights(String *path)
         resp = true;
       }
       if (change) {
-//stb mode
 #ifdef USE_SHUTTER
-        if(Settings.flag3.shutter_mode &&  (shutter_mask & (1 << (Settings.shutter_startrelay[device-1]-1))) ) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"),Settings.shutter_invert[device-1]);
-          SetShutterPosition(device,  bri  * 100.0f );
+        if (ShutterState(device)) {
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_invert[device-1]);
+          ShutterSetPosition(device, bri * 100.0f );
         } else
 #endif
-//end
-
         if (light_type && (local_light_subtype > LST_NONE)) {   // not relay
           if (!Settings.flag3.pwm_multi_channels) {
             if (g_gotct) {
@@ -722,6 +723,14 @@ void HueLights(String *path)
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "/lights path=%s", path->c_str());
     path->remove(0,8);                               // Remove /lights/
     device = DecodeLightId(atoi(path->c_str()));
+
+#ifdef USE_SCRIPT_HUE
+    if (device>devices_present) {
+      Script_HueStatus(&response,device-devices_present-1);
+      goto exit;
+}
+#endif
+
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -733,6 +742,7 @@ void HueLights(String *path)
     response = "{}";
     code = 406;
   }
+  exit:
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_JSON, response);
 }
@@ -807,7 +817,11 @@ bool Xdrv20(uint8_t function)
 {
   bool result = false;
 
+#ifdef USE_SCRIPT_HUE
+  if ((EMUL_HUE == Settings.flag2.emulation)) {
+#else
   if (devices_present && (EMUL_HUE == Settings.flag2.emulation)) {
+#endif
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/description.xml", HandleUpnpSetupHue);
