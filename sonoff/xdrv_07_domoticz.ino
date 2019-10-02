@@ -45,7 +45,6 @@ const char kDomoticzSensors[] PROGMEM =
   D_DOMOTICZ_COUNT "|" D_DOMOTICZ_VOLTAGE "|" D_DOMOTICZ_CURRENT "|" D_DOMOTICZ_AIRQUALITY "|" D_DOMOTICZ_P1_SMART_METER "|" D_DOMOTICZ_SHUTTER ;
 
 char domoticz_in_topic[] = DOMOTICZ_IN_TOPIC;
-char domoticz_out_topic[] = DOMOTICZ_OUT_TOPIC;
 
 int domoticz_update_timer = 0;
 uint32_t domoticz_fan_debounce = 0;             // iFan02 state debounce timer
@@ -166,7 +165,7 @@ void DomoticzMqttSubscribe(void)
   }
   if (domoticz_subscribe) {
     char stopic[TOPSZ];
-    snprintf_P(stopic, sizeof(stopic), PSTR("%s/#"), domoticz_out_topic); // domoticz topic
+    snprintf_P(stopic, sizeof(stopic), PSTR(DOMOTICZ_OUT_TOPIC "/#")); // domoticz topic
     MqttSubscribe(stopic);
   }
 }
@@ -201,7 +200,7 @@ bool DomoticzMqttData(void)
 {
   domoticz_update_flag = true;
 
-  if (strncasecmp(XdrvMailbox.topic, domoticz_out_topic, strlen(domoticz_out_topic)) != 0) {
+  if (strncasecmp_P(XdrvMailbox.topic, PSTR(DOMOTICZ_OUT_TOPIC), strlen(DOMOTICZ_OUT_TOPIC)) != 0) {
     return false;  // Process unchanged data
   }
 
