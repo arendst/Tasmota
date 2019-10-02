@@ -81,55 +81,61 @@ void ResponseCmndIdxChar(const char* value)
 
 /********************************************************************************************/
 
-void ExecuteCommand(char *cmnd, uint32_t source)
+void ExecuteCommand(const char *cmnd, uint32_t source)
 {
-  char *start;
-  char *token;
-
+  // cmnd: "status 0"  = stopic "status" and svalue " 0"
+  // cmnd: "var1 =1"   = stopic "var1" and svalue " =1"
+  // cmnd: "var1=1"    = stopic "var1" and svalue "=1"
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("ExecuteCommand"));
 #endif
   ShowSource(source);
 
-  token = strtok(cmnd, " ");
-  if (token != nullptr) {
-    start = strrchr(token, '/');   // Skip possible cmnd/sonoff/ preamble
-    if (start) { token = start +1; }
+  const char *pos = cmnd;
+  while (*pos && isspace(*pos)) {
+    pos++;                         // Skip all spaces
   }
-  uint32_t size = (token != nullptr) ? strlen(token) : 0;
-  char stopic[size +2];  // / + \0
-  snprintf_P(stopic, sizeof(stopic), PSTR("/%s"), (token == nullptr) ? "" : token);
 
-  token = strtok(nullptr, "");
-  size = (token != nullptr) ? strlen(token) : 0;
-  char svalue[size +1];
-  strlcpy(svalue, (token == nullptr) ? "" : token, sizeof(svalue));       // Fixed 5.8.0b
-  CommandHandler(stopic, (uint8_t*)svalue, strlen(svalue));
+  const char *start = pos;
+  // Get a command. Commands can only use letters, digits and underscores
+  while (*pos && (isalpha(*pos) || isdigit(*pos) || '_' == *pos || '/' == *pos)) {
+    if ('/' == *pos) {            // Skip possible cmnd/sonoff/ preamble
+      start = pos + 1;
+    }
+    pos++;
+  }
+  if ('\0' == *start || pos <= start) {
+    return;                      // Did not find any command to execute
+  }
+
+  uint32_t size = pos - start;
+  char stopic[size + 2];         // with leader '/' and end '\0'
+  stopic[0] = '/';
+  memcpy(stopic+1, start, size);
+  stopic[size+1] = '\0';
+
+  char svalue[strlen(pos) +1];   // pos point to the start of parameters
+  strlcpy(svalue, pos, sizeof(svalue));
+  CommandHandler(stopic, svalue, strlen(svalue));
 }
 
 /********************************************************************************************/
 
-// topic:                    /power1  data: toggle  = Console command
-// topic:         cmnd/sonoff/power1  data: toggle  = Mqtt command using topic
-// topic:        cmnd/sonoffs/power1  data: toggle  = Mqtt command using a group topic
-// topic: cmnd/DVES_83BB10_fb/power1  data: toggle  = Mqtt command using fallback topic
+// topicBuf:                    /power1  dataBuf: toggle  = Console command
+// topicBuf:         cmnd/sonoff/power1  dataBuf: toggle  = Mqtt command using topic
+// topicBuf:        cmnd/sonoffs/power1  dataBuf: toggle  = Mqtt command using a group topic
+// topicBuf: cmnd/DVES_83BB10_fb/power1  dataBuf: toggle  = Mqtt command using fallback topic
 
-void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
+void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 {
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("CommandHandler"));
 #endif
 
-  char topicBuf[TOPSZ];
-  strlcpy(topicBuf, topic, sizeof(topicBuf));
-
-  uint32_t i = 0;
-  for (i = 0; i < data_len; i++) {
-    if (!isspace(data[i])) { break; }  // Skip leading spaces in data
+  while (*dataBuf && isspace(*dataBuf)) {
+    dataBuf++;                           // Skip leading spaces in data
+    data_len--;
   }
-  data_len -= i;
-  char dataBuf[data_len+1];
-  memcpy(dataBuf, data +i, sizeof(dataBuf));
 
   bool grpflg = (strstr(topicBuf, Settings.mqtt_grptopic) != nullptr);
 
@@ -137,8 +143,9 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
   GetFallbackTopic_P(stemp1, CMND, "");  // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
   fallback_topic_flag = (!strncmp(topicBuf, stemp1, strlen(stemp1)));
 
-  char *type = strrchr(topicBuf, '/');  // Last part of received topic is always the command (type)
+  char *type = strrchr(topicBuf, '/');   // Last part of received topic is always the command (type)
 
+  uint32_t i = 0;
   uint32_t index = 1;
   bool user_index = false;
   if (type != nullptr) {
@@ -156,7 +163,7 @@ void CommandHandler(char* topic, uint8_t* data, uint32_t data_len)
     type[i] = '\0';
   }
 
-  DEBUG_CORE_LOG(PSTR("CMD: " D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " \"%s\", " D_DATA " \"%s\""), grpflg, index, type, dataBuf);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CMD: " D_GROUP " %d, " D_INDEX " %d, " D_COMMAND " \"%s\", " D_DATA " \"%s\""), grpflg, index, type, dataBuf);
 
   if (type != nullptr) {
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_ERROR "\"}"));
@@ -686,11 +693,9 @@ void CmndSetoption(void)
               IrReceiveUpdateThreshold();
               break;
 #endif
-#ifdef USE_TUYA_MCU
             case P_DIMMER_MAX:
               restart_flag = 2;  // Need a restart to update GUI
               break;
-#endif
           }
         }
       }
