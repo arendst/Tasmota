@@ -279,7 +279,11 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
 //  if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) { Serial.println(dataBuf); }
 
   // MQTT pre-processing
-  if (XdrvMqttData(topic, strlen(topic), (char*)data, data_len)) { return; }
+  XdrvMailbox.index = strlen(topic);
+  XdrvMailbox.data_len = data_len;
+  XdrvMailbox.topic = topic;
+  XdrvMailbox.data = (char*)data;
+  if (XdrvCall(FUNC_MQTT_DATA)) { return; }
 
   ShowSource(SRC_MQTT);
 
