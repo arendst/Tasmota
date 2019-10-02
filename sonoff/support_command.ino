@@ -687,7 +687,7 @@ void CmndSetoption(void)
               break;
 #endif
 #ifdef USE_TUYA_MCU
-            case P_TUYA_DIMMER_MAX:
+            case P_DIMMER_MAX:
               restart_flag = 2;  // Need a restart to update GUI
               break;
 #endif
