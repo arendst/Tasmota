@@ -593,9 +593,9 @@ void CmndShutterCalibration(void)  // ????
           }
           messwerte[i] = field;
         }
-        for (uint8_t j=0 ; j < 5 ; j++) {
-          Settings.shuttercoeff[j][i] = messwerte[j] * 1000 / messwerte[4];
-          //AddLog_P2(LOG_LEVEL_INFO, PSTR("Settings.shuttercoeff j: %d, i: %d, value: %d, messwert %d"), j,i,Settings.shuttercoeff[j][i], messwerte[j]);
+        for (i=0 ; i < 5 ; i++) {
+          Settings.shuttercoeff[i][XdrvMailbox.index-1] = messwerte[i] * 1000 / messwerte[4];
+          AddLog_P2(LOG_LEVEL_INFO, PSTR("Settings.shuttercoeff í: %d, i: %d, value: %d, messwert %d"), i,XdrvMailbox.index-1,Settings.shuttercoeff[i][XdrvMailbox.index-1], messwerte[i]);
         }
         ShutterInit();
         ResponseCmndIdxChar(XdrvMailbox.data);
