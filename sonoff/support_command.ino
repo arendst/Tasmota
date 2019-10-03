@@ -566,7 +566,7 @@ void CmndPulsetime(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PULSETIMERS)) {
     uint32_t items = 1;
-    if (!XdrvMailbox.usridx) {
+    if (!XdrvMailbox.usridx && !XdrvMailbox.data_len) {
       items = MAX_PULSETIMERS;
     } else {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 65536)) {
@@ -576,10 +576,11 @@ void CmndPulsetime(void)
     }
     mqtt_data[0] = '\0';
     for (uint32_t i = 0; i < items; i++) {
+      uint32_t index = (1 == items) ? XdrvMailbox.index : i +1;
       ResponseAppend_P(PSTR("%c\"%s%d\":{\"" D_JSON_SET "\":%d,\"" D_JSON_REMAINING "\":%d}"),
         (i) ? ',' : '{',
-        XdrvMailbox.command, (1 == items) ? XdrvMailbox.index : i +1,
-        Settings.pulse_timer[XdrvMailbox.index -1], GetPulseTimer(XdrvMailbox.index -1));
+        XdrvMailbox.command, index,
+        Settings.pulse_timer[index -1], GetPulseTimer(index -1));
     }
     ResponseJsonEnd();
   }
