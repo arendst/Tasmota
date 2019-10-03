@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Параметри на лога"
 #define D_SERIAL_LOG_LEVEL "Степен на серийния лог"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "Степен на уеб лога"
 #define D_SYS_LOG_LEVEL "Степен на системния лог"
 #define D_MORE_DEBUG "Още дебъгване"

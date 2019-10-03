@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "日志设置"
 #define D_SERIAL_LOG_LEVEL "串口日志级别"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "Web 日志级别"
 #define D_SYS_LOG_LEVEL "Syslog 日志级别"
 #define D_MORE_DEBUG "全部调试"

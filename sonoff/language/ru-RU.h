@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Параметры Logging"
 #define D_SERIAL_LOG_LEVEL "Serial лог уровень"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "Web лог уровень"
 #define D_SYS_LOG_LEVEL "System лог уровень"
 #define D_MORE_DEBUG "Дополнительная информация для отладки"

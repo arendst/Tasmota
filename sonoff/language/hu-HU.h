@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Naplózási paraméterek"
 #define D_SERIAL_LOG_LEVEL "Soros naplózási szint"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "Web naplózási szint"
 #define D_SYS_LOG_LEVEL "Syslog szint"
 #define D_MORE_DEBUG "Részletes hibakeresés"

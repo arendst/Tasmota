@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Параметри журналу"
 #define D_SERIAL_LOG_LEVEL "Serial рівень"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "Web рівень"
 #define D_SYS_LOG_LEVEL "System рівень"
 #define D_MORE_DEBUG "Додаткова інформація для налагодження"

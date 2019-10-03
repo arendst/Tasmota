@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Paramètres du journal"
 #define D_SERIAL_LOG_LEVEL "Niveau de journalisation série"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "Niveau de journalisation web"
 #define D_SYS_LOG_LEVEL "Niveau SysLog"
 #define D_MORE_DEBUG "Plus de debug"

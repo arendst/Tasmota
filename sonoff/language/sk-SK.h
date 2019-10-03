@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Voľba logovania"
 #define D_SERIAL_LOG_LEVEL "Sériová úroveň logu"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "Webová úroveň logu"
 #define D_SYS_LOG_LEVEL "Systemová úroveň logu"
 #define D_MORE_DEBUG "Viac debug informácí"

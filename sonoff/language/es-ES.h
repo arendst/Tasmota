@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Parámetros Logging"
 #define D_SERIAL_LOG_LEVEL "Nivel de log Serial"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "Nivel de log Web"
 #define D_SYS_LOG_LEVEL "Nivel de Syslog"
 #define D_MORE_DEBUG "Más Debug"

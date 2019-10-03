@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "פרמטרי לוגים"
 #define D_SERIAL_LOG_LEVEL "רמת לוג עבור סריאל"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "רמת לוג עבור אתר"
 #define D_SYS_LOG_LEVEL "Syslog רמת לוג עבור שרת"
 #define D_MORE_DEBUG "מיפוי נוסף"

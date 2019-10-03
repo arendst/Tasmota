@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Loglama parametreleri"
 #define D_SERIAL_LOG_LEVEL "Serial log seviyesi"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "Web log seviyesi"
 #define D_SYS_LOG_LEVEL "Syslog seviyesi"
 #define D_MORE_DEBUG "Hata ayıklama devamı"

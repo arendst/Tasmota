@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Παράμετροι καταγραφής"
 #define D_SERIAL_LOG_LEVEL "Επίπεδο Σειριακής"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "Επίπεδο Web"
 #define D_SYS_LOG_LEVEL "Επίπεδο Syslog"
 #define D_MORE_DEBUG "More debug"
