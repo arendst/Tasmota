@@ -1,5 +1,6 @@
 /*********************************************************************************************\
  * 6.6.0.15 20191003
+ * Change command PulseTime JSON message format and allow display of all pulsetimer information (#6519)
  *
  * 6.6.0.14 20190925
  * Change command Tariffx to allow time entries like 23 (hours), 1320 (minutes) or 23:00. NOTE: As this is development branch previous tariffs are lost! (#6488)

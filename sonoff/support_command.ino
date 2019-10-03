@@ -565,11 +565,23 @@ void CmndPowerOnState(void)
 void CmndPulsetime(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_PULSETIMERS)) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 65536)) {
-      Settings.pulse_timer[XdrvMailbox.index -1] = XdrvMailbox.payload;  // 0 - 65535
-      SetPulseTimer(XdrvMailbox.index -1, XdrvMailbox.payload);
+    uint32_t items = 1;
+    if (!XdrvMailbox.usridx) {
+      items = MAX_PULSETIMERS;
+    } else {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 65536)) {
+        Settings.pulse_timer[XdrvMailbox.index -1] = XdrvMailbox.payload;  // 0 - 65535
+        SetPulseTimer(XdrvMailbox.index -1, XdrvMailbox.payload);
+      }
     }
-    Response_P(S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE, XdrvMailbox.command, XdrvMailbox.index, Settings.pulse_timer[XdrvMailbox.index -1], GetPulseTimer(XdrvMailbox.index -1));
+    mqtt_data[0] = '\0';
+    for (uint32_t i = 0; i < items; i++) {
+      ResponseAppend_P(PSTR("%c\"%s%d\":{\"" D_JSON_SET "\":%d,\"" D_JSON_REMAINING "\":%d}"),
+        (i) ? ',' : '{',
+        XdrvMailbox.command, (1 == items) ? XdrvMailbox.index : i +1,
+        Settings.pulse_timer[XdrvMailbox.index -1], GetPulseTimer(XdrvMailbox.index -1));
+    }
+    ResponseJsonEnd();
   }
 }
 

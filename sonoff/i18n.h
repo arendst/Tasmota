@@ -118,6 +118,7 @@
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
 #define D_JSON_REFERENCETEMPERATURE "ReferenceTemperature"
+#define D_JSON_REMAINING "Remaining"
 #define D_JSON_RESET "Reset"
 #define D_JSON_RESISTANCE "Resistance"
 #define D_JSON_RESOLUTION "Resolution"
@@ -132,6 +133,7 @@
 #define D_JSON_SDKVERSION "SDK"
 #define D_JSON_SELECTED "selected"
 #define D_JSON_SERIALRECEIVED "SerialReceived"
+#define D_JSON_SET "Set"
 #define D_JSON_SSID "SSId"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
@@ -557,7 +559,6 @@ const char S_JSON_COMMAND_INDEX_LVALUE[] PROGMEM =            "{\"%s%d\":%lu}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
 const char S_JSON_COMMAND_INDEX_ASTERISK[] PROGMEM =          "{\"%s%d\":\"" D_ASTERISK_PWD "\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
-const char S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE[] PROGMEM = "{\"%s%d\":{\"%d\":{\"" D_JSON_ACTIVE "\":\"%d\"}}}";
 
 const char S_JSON_SENSOR_INDEX_NVALUE[] PROGMEM =             "{\"" D_CMND_SENSOR "%d\":%d}";
 const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =             "{\"" D_CMND_SENSOR "%d\":\"%s\"}";
