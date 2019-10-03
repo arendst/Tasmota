@@ -617,6 +617,8 @@
 #define D_SENSOR_A4988_MS3     "A4988 MS3"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
+#define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
+#define D_SENSOR_DDSU666_RX    "DDSU666 Rx"
 
 // Units
 #define D_UNIT_AMPERE "А"
