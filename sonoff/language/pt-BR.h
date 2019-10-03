@@ -14,7 +14,6 @@
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef _LANGUAGE_PT_BR_H_
@@ -444,15 +443,15 @@
 #define D_ENERGY_TOTAL "Consumo total de energia"
 
 // xdrv_27_shutter.ino
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_DOMOTICZ_SHUTTER "Shutter"
+#define D_OPEN "Aberta"
+#define D_CLOSE "Fechada"
+#define D_DOMOTICZ_SHUTTER "Persiana"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_PCF8574_PARAMETERS "PCF8574 parameters"
-#define D_INVERT_PORTS "Invert Ports"
-#define D_DEVICE "Device"
+#define D_CONFIGURE_PCF8574 "Configura PCF8574"
+#define D_PCF8574_PARAMETERS "Parâmetros PCF8574"
+#define D_INVERT_PORTS "Portas Invertidas"
+#define D_DEVICE "Dispositivo"
 #define D_DEVICE_INPUT "Input"
 #define D_DEVICE_OUTPUT "Output"
 
