@@ -202,6 +202,8 @@ enum UserSelectablePins {
   GPIO_A4988_MS3,      // A4988 microstep pin3
   GPIO_DDS2382_TX,     // DDS2382 Serial interface
   GPIO_DDS2382_RX,     // DDS2382 Serial interface
+  GPIO_DDSU666_TX,     // DDSU666 Serial interface
+  GPIO_DDSU666_RX,     // DDSU666 Serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -277,6 +279,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_IBEACON_TX "|" D_SENSOR_IBEACON_RX "|"
   D_SENSOR_A4988_DIR "|" D_SENSOR_A4988_STP "|" D_SENSOR_A4988_ENA "|" D_SENSOR_A4988_MS1 "|" D_SENSOR_A4988_MS2 "|" D_SENSOR_A4988_MS3 "|"
   D_SENSOR_DDS2382_TX "|" D_SENSOR_DDS2382_RX "|"
+  D_SENSOR_DDSU666_TX "|" D_SENSOR_DDSU666_RX "|"
   ;
 
 // User selectable ADC0 functionality
@@ -645,6 +648,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
 #endif
+#ifdef USE_DDSU666
+  GPIO_DDSU666_TX,     // DDSU666 Serial interface
+  GPIO_DDSU666_RX,     // DDSU666 Serial interface
+#endif  // USE_DDSU666
 
 #ifdef USE_SERIAL_BRIDGE
   GPIO_SBR_TX,         // Serial Bridge Serial interface
