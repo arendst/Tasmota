@@ -204,6 +204,8 @@ enum UserSelectablePins {
   GPIO_DDS2382_RX,     // DDS2382 Serial interface
   GPIO_DDSU666_TX,     // DDSU666 Serial interface
   GPIO_DDSU666_RX,     // DDSU666 Serial interface
+  GPIO_SM2135_CLK,     // SM2135 Clk
+  GPIO_SM2135_DAT,     // SM2135 Dat
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -280,6 +282,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_A4988_DIR "|" D_SENSOR_A4988_STP "|" D_SENSOR_A4988_ENA "|" D_SENSOR_A4988_MS1 "|" D_SENSOR_A4988_MS2 "|" D_SENSOR_A4988_MS3 "|"
   D_SENSOR_DDS2382_TX "|" D_SENSOR_DDS2382_RX "|"
   D_SENSOR_DDSU666_TX "|" D_SENSOR_DDSU666_RX "|"
+  D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
   ;
 
 // User selectable ADC0 functionality
@@ -554,6 +557,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SM16716_DAT,    // SM16716 DATA
   GPIO_SM16716_SEL,    // SM16716 SELECT
 #endif  // USE_SM16716
+#ifdef USE_SM2135
+  GPIO_SM2135_CLK,     // SM2135 CLOCK
+  GPIO_SM2135_DAT,     // SM2135 DATA
+#endif  // USE_SM2135
 #ifdef USE_TUYA_MCU
   GPIO_TUYA_TX,        // Tuya Serial interface
   GPIO_TUYA_RX,        // Tuya Serial interface

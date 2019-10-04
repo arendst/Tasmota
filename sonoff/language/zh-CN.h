@@ -620,6 +620,8 @@
 #define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
 #define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
 #define D_SENSOR_DDSU666_RX    "DDSU666 Rx"
+#define D_SENSOR_SM2135_CLK    "SM2135 Clk"
+#define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 
 // Units
 #define D_UNIT_AMPERE "安"

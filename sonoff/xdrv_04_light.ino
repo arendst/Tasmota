@@ -2014,6 +2014,10 @@ void LightAnimate(void)
 
       XdrvMailbox.data = (char*)cur_col;
       XdrvMailbox.data_len = sizeof(cur_col);
+
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "R%d G%d B%d, C%d W%d"),
+        cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
+
       if (XdrvCall(FUNC_SET_CHANNELS)) {
         // Serviced
       }
