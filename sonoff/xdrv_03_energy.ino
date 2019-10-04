@@ -199,7 +199,7 @@ void EnergyUpdateTotal(float value, bool kwh)
     Energy.kWhtoday = (unsigned long)((value - Energy.start_energy) * multiplier);
   }
 
-  if (Energy.total < (value - 0.01)){ // We subtract a little offset to avoid continuous updates
+  if (Energy.total < (value - 0.01) && Settings.flag3.hardware_energy_total){ // We subtract a little offset to avoid continuous updates
     RtcSettings.energy_kWhtotal = (unsigned long)((value * multiplier) - Energy.kWhtoday_offset - Energy.kWhtoday);
     Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
     Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
