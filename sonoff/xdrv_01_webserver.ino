@@ -1648,7 +1648,7 @@ void LoggingSaveSettings(void)
   WebGetArg("l1", tmp, sizeof(tmp));
   Settings.weblog_level = (!strlen(tmp)) ? WEB_LOG_LEVEL : atoi(tmp);
   WebGetArg("l2", tmp, sizeof(tmp));
-  Settings.mqttlog_level = (!strlen(tmp)) ? WEB_LOG_LEVEL : atoi(tmp);
+  Settings.mqttlog_level = (!strlen(tmp)) ? MQTT_LOG_LEVEL : atoi(tmp);
   WebGetArg("l3", tmp, sizeof(tmp));
   SetSyslog((!strlen(tmp)) ? SYS_LOG_LEVEL : atoi(tmp));
   WebGetArg("lh", tmp, sizeof(tmp));
