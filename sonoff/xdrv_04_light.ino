@@ -1228,7 +1228,7 @@ void LightMy92x1Write(uint8_t data)
 void LightMy92x1Init(void)
 {
   uint8_t chips = 1;                    // 1 (AiLight)
-  if (LT_RGBWC == light_type) {
+  if ((LT_RGBWC == light_type) || (LOHAS_RGBW == my_module_type)) {
     chips = 2;                          // 2 (Sonoff B1)
   }
 
@@ -1250,15 +1250,18 @@ void LightMy92x1Init(void)
 
 void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w, uint8_t duty_c)
 {
-  uint8_t channels[2] = { 4, 6 };
+  uint8_t channels[3] = { 4, 6, 6 };
 
   uint8_t didx = 0;                     // 0 (AiLight)
   if (LT_RGBWC == light_type) {
     didx = 1;                           // 1 (Sonoff B1)
   }
-
-  uint8_t duty[2][6] = {{ duty_r, duty_g, duty_b, duty_w, 0, 0 },        // Definition for RGBW channels
-                        { duty_w, duty_c, 0, duty_g, duty_r, duty_b }};  // Definition for RGBWC channels
+  if (LOHAS_RGBW == my_module_type) {
+    didx = 2;                          // 2 (Lohas RGBW)
+  }
+  uint8_t duty[3][6] = {{ duty_r, duty_g, duty_b, duty_w, 0, 0 },        // Definition for RGBW channels
+                        { duty_w, duty_c, 0, duty_g, duty_r, duty_b },   // Definition for RGBWC channels
+                        { duty_r, duty_g, duty_b, duty_w, duty_w, duty_w }};  // Lohas RGBW uses up to 3 CW channels 
 
   os_delay_us(12);                      // TStop > 12us.
   for (uint32_t channel = 0; channel < channels[didx]; channel++) {
