@@ -36,7 +36,7 @@ enum UserSelectablePins {
   GPIO_SWT1,           // User connected external switches
   GPIO_SWT2,
   GPIO_SWT3,
-  GPIO_SWT4,
+  GPIO_SWT
   GPIO_SWT5,
   GPIO_SWT6,
   GPIO_SWT7,
@@ -2118,7 +2118,7 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL4,        // GPIO15 WIFI_O3 Relay 4 (0 = Off, 1 = On) controlling the fan
      0, 0
   },
-  { "Lohas RGBW",      // LOHAS RBGW - (ESP8266 - 2 my9291 chips) - dual and triple channels of cool white 
+  { "Lohas RGBW",      // LOHAS RBGW - (ESP8266 - 2 my9231 chips) - dual and triple channels of cool white 
      GPIO_KEY1,        // GPIO00 Pad
      GPIO_USER,        // GPIO01 Serial RXD and Optional sensor pad
      GPIO_USER,        // GPIO02 Optional sensor SDA pad
