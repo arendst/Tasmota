@@ -386,6 +386,7 @@ enum SupportedModules {
   SYF05,
   SONOFF_L1,
   SONOFF_IFAN03,
+  LOHAS_RGBW,
   MAXMODULE};
 
 #define USER_MODULE        255
@@ -815,6 +816,7 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   AILIGHT,             // Light Bulbs
   PHILIPS,
   SYF05,
+  LOHAS_RGBW,
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
   WEMOS
@@ -2115,7 +2117,25 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_REL2,        // GPIO14 WIFI_O1 Relay 2 (0 = Off, 1 = On) controlling the fan
      GPIO_REL4,        // GPIO15 WIFI_O3 Relay 4 (0 = Off, 1 = On) controlling the fan
      0, 0
-  }
+  },
+  { "Lohas RGBW",      // LOHAS RBGW - (ESP8266 - 2 my9291 chips) - dual and triple channels of cool white 
+     GPIO_KEY1,        // GPIO00 Pad
+     GPIO_USER,        // GPIO01 Serial RXD and Optional sensor pad
+     GPIO_USER,        // GPIO02 Optional sensor SDA pad
+     GPIO_USER,        // GPIO03 Serial TXD and Optional sensor pad
+     0, 0,
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     0,
+     GPIO_DI,          // GPIO13 my9291 DI
+     0,
+     GPIO_DCKI,        // GPIO15 my9291 DCKI
+     0, 0
+  }  
 };
 
 #endif  // _SONOFF_TEMPLATE_H_
