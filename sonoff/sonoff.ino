@@ -1430,6 +1430,9 @@ void GpioInit(void)
   else if (AILIGHT == my_module_type) {     // RGBW led
     light_type = LT_RGBW;
   }
+  else if (LOHAS_RGBW == my_module_type) {     // RGBW led with 2 or more CW led channels
+    light_type = LT_RGBW;
+  }
   else if (SONOFF_B1 == my_module_type) {   // RGBWC led
     light_type = LT_RGBWC;
   }
