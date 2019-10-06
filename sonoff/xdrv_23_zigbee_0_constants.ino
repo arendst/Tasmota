@@ -422,7 +422,7 @@ enum ZCL_Global_Commands {
 
 };
 
-enum class ZclGlobalCommandId : uint8_t {
-};
+const uint16_t Z_ProfileIds[]   PROGMEM = { 0x0104, 0x0109, 0xA10E, 0xC05E };
+const char     Z_ProfileNames[] PROGMEM = "ZigBee Home Automation|ZigBee Smart Energy|ZigBee Green Power|ZigBee Light Link";
 
 #endif // USE_ZIGBEE

@@ -55,7 +55,7 @@ public:
                            uint32_t timestamp) {
     char hex_char[_payload.len()*2+2];
 		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
-    Response_P(PSTR("{\"" D_JSON_ZIGBEEZCLRECEIVED "\":{"
+    Response_P(PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
                     "\"groupid\":%d," "\"clusterid\":%d," "\"srcaddr\":\"0x%04X\","
                     "\"srcendpoint\":%d," "\"dstendpoint\":%d," "\"wasbroadcast\":%d,"
                     "\"linkquality\":%d," "\"securityuse\":%d," "\"seqnumber\":%d,"
@@ -71,7 +71,7 @@ public:
 
     ResponseJsonEnd();      // append '}'
     ResponseJsonEnd();      // append '}'
-  	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCLSENT));
+  	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   	XdrvRulesProcess();
   }
 
@@ -100,8 +100,9 @@ public:
   }
 
   void parseRawAttributes(JsonObject& json, uint8_t offset = 0);
+  void parseReadAttributes(JsonObject& json, uint8_t offset = 0);
   void parseClusterSpecificCommand(JsonObject& json, uint8_t offset = 0);
-  void postProcessAttributes(JsonObject& json);
+  void postProcessAttributes(uint16_t shortaddr, JsonObject& json);
 
   inline void setGroupId(uint16_t groupid) {
     _group_id = groupid;
@@ -208,7 +209,7 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
         }
       }
       break;
-    case 0x23:      // uint16
+    case 0x23:      // uint32
       {
         uint32_t uint32_val = buf.get32(i);
         i += 4;
@@ -403,6 +404,27 @@ void ZCLFrame::parseRawAttributes(JsonObject& json, uint8_t offset) {
   }
 }
 
+// ZCL_READ_ATTRIBUTES_RESPONSE
+void ZCLFrame::parseReadAttributes(JsonObject& json, uint8_t offset) {
+  uint32_t i = offset;
+  uint32_t len = _payload.len();
+
+  while (len - i >= 4) {
+    uint16_t attrid = _payload.get16(i);
+    i += 2;
+    uint8_t status = _payload.get8(i++);
+
+    if (0 == status) {
+      char shortaddr[16];
+      snprintf_P(shortaddr, sizeof(shortaddr), PSTR("%c_%04X_%04X"),
+                  Hex36Char(_cmd_id), _cluster_id, attrid);
+
+      i += parseSingleAttribute(json, shortaddr, _payload, i, len);
+    }
+  }
+}
+
+
 // Parse non-normalized attributes
 // The key is "s_" followed by 16 bits clusterId, "_" followed by 8 bits command id
 void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
@@ -421,7 +443,7 @@ void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
 // return value:
 // 0 = keep initial value
 // 1 = remove initial value
-typedef int32_t (*Z_AttrConverter)(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param);
+typedef int32_t (*Z_AttrConverter)(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param);
 typedef struct Z_AttributeConverter {
   const char * filter;
   const char * name;
@@ -434,7 +456,19 @@ const float Z_10  PROGMEM =  10.0f;
 
 // list of post-processing directives
 const Z_AttributeConverter Z_PostProcess[] = {
-  { "A_0000_0005",  D_JSON_MODEL D_JSON_ID, &Z_Copy,                nullptr },     // ModelID
+  { "?_0000_0004",  nullptr,                &Z_ManufKeep,           nullptr },    // record Manufacturer
+  { "?_0000_0005",  nullptr,                &Z_ModelKeep,           nullptr },    // record Model
+
+  { "?_0000_0000",  "ZCLVersion",           &Z_Copy,                nullptr },
+  { "?_0000_0001",  "AppVersion",           &Z_Copy,                nullptr },
+  { "?_0000_0002",  "StackVersion",         &Z_Copy,                nullptr },
+  { "?_0000_0003",  "HWVersion",            &Z_Copy,                nullptr }, 
+  { "?_0000_0004",  "Manufacturer",         &Z_Copy,                nullptr },
+  { "?_0000_0005",  D_JSON_MODEL D_JSON_ID, &Z_Copy,                nullptr },
+  { "?_0000_0006",  "DateCode",             &Z_Copy,                nullptr },
+  { "?_0000_0007",  "PowerSource",          &Z_Copy,                nullptr },
+  { "?_0000_4000",  "SWBuildID",            &Z_Copy,                nullptr },
+  { "A_0000_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
 
   { "A_0400_0000",  D_JSON_ILLUMINANCE,     &Z_Copy,                nullptr },    // Illuminance (in Lux)
   { "A_0400_0004",  "LightSensorType",      &Z_Copy,                nullptr },    // LightSensorType
@@ -469,38 +503,50 @@ const Z_AttributeConverter Z_PostProcess[] = {
   // { "A_0B04_????",  "",                     &Z_Remove,              nullptr },    // Remove all other values
 };
 
+
+// ======================================================================
+// Record Manuf
+int32_t Z_ManufKeep(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+  zigbee_devices.setManufId(shortaddr, value.as<const char*>());
+  return 0;   // keep original key
+}
+//
+int32_t Z_ModelKeep(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+  zigbee_devices.setModelId(shortaddr, value.as<const char*>());
+  return 0;   // keep original key
+}
+
 // ======================================================================
 // Remove attribute
-int32_t Z_Remove(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+int32_t Z_Remove(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
   return 1;   // remove original key
 }
 
 // Copy value as-is
-int32_t Z_Copy(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+int32_t Z_Copy(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
   json[new_name] = value;
   return 1;   // remove original key
 }
 
 // Copy value as-is
-int32_t Z_Const_Keep(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+int32_t Z_Const_Keep(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
   json[new_name] = (char*)param;
   return 0;   // keep original key
 }
 
 // Convert int to float with divider
-int32_t Z_ConvFloatDivider(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+int32_t Z_ConvFloatDivider(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
   float f_value = value;
   float *divider = (float*) param;
   json[new_name] = f_value / *divider;
   return 1;   // remove original key
 }
 
-int32_t Z_AqaraSensor(JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
+int32_t Z_AqaraSensor(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const char *new_name, void * param) {
   String hex = value;
   SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
   uint32_t i = 0;
   uint32_t len = buf2.len();
-  char shortaddr[8];
   char tmp[] = "tmp";   // for obscure reasons, it must be converted from const char* to char*, otherwise ArduinoJson gets confused
 
   JsonVariant sub_value;
@@ -573,7 +619,7 @@ bool mini_glob_match(char const *pat, char const *str) {
 	}
 }
 
-void ZCLFrame::postProcessAttributes(JsonObject& json) {
+void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
   // iterate on json elements
   for (auto kv : json) {
     String key = kv.key;
@@ -584,7 +630,7 @@ void ZCLFrame::postProcessAttributes(JsonObject& json) {
       const Z_AttributeConverter *converter = &Z_PostProcess[i];
 
       if (mini_glob_match(converter->filter, key.c_str())) {
-        int32_t drop = (*converter->func)(json, key.c_str(), value, converter->name, converter->param);
+        int32_t drop = (*converter->func)(shortaddr, json, key.c_str(), value, converter->name, converter->param);
         if (drop) {
           json.remove(key);
         }
