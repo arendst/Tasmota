@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.3.0034'
+VER = '2.3.0035'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -43,7 +43,7 @@ Usage: decode-config.py [-f <filename>] [-d <host>] [-P <port>]
                         [--cmnd-indent <indent>] [--cmnd-groups]
                         [--cmnd-nogroups] [--cmnd-sort] [--cmnd-unsort]
                         [-c <filename>] [-S] [-T json|cmnd|command]
-                        [-g {Control,Devices,Display,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,Timer,Wifi} ...]]
+                        [-g {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi} ...]]
                         [--ignore-warnings] [-h] [-H] [-v] [-V]
 
     Backup/Restore Sonoff-Tasmota configuration data. Args that start with '--'
@@ -123,7 +123,7 @@ Usage: decode-config.py [-f <filename>] [-d <host>] [-P <port>]
                             (default do not output on backup or restore usage)
       -T, --output-format json|cmnd|command
                             display output format (default: 'json')
-      -g, --group {Control,Devices,Display,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,Timer,Wifi}
+      -g, --group {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi}
                             limit data processing to command groups (default no
                             filter)
       --ignore-warnings     do not exit on warnings. Not recommended, used by your
@@ -832,6 +832,9 @@ Setting_6_4_1_7['flag3'][0].update ({
                                     })
 # ======================================================================
 Setting_6_4_1_8 = copy.deepcopy(Setting_6_4_1_7)
+Setting_6_4_1_8.update              ({
+    'my_gp':                        ('B',   0x484,       ([17], None,                           ('Management',  '"Gpio{} {}".format(#,$)')) ),
+                                    })
 Setting_6_4_1_8['flag3'][0].update ({
         'split_interlock':          ('<L', (0x3A0,1,13), (None, None,                           ('SetOption',   '"SetOption63 {}".format($)')) ),
                                     })
@@ -908,7 +911,12 @@ Setting_6_5_0_9['flag3'][0].update ({
         'no_power_feedback':        ('<L', (0x3A0,1,13), (None, None,                           ('SetOption',   '"SetOption63 {}".format($)')) ),
                                     })
 # ======================================================================
-Setting_6_5_0_11 = copy.deepcopy(Setting_6_5_0_9)
+Setting_6_5_0_10 = copy.deepcopy(Setting_6_5_0_9)
+Setting_6_5_0_10.update             ({
+    'my_adc0':                      ('B',   0x495,       (None, None,                           ('Sensor',      '"Adc {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_5_0_11 = copy.deepcopy(Setting_6_5_0_10)
 Setting_6_5_0_11['flag3'][0].update ({
         'use_underscore':           ('<L', (0x3A0,1,14), (None, None,                           ('SetOption',   '"SetOption64 {}".format($)')) ),
                                     })
@@ -1015,7 +1023,48 @@ Setting_6_6_0_12['flag3'][0].update ({
         'energy_weekend':           ('<L', (0x3A0,1,20), (None, None,                           ('Power',       '"Tariff9 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_6_0_13 = copy.deepcopy(Setting_6_6_0_12)
+Setting_6_6_0_13['SensorBits1'][0].update ({
+        'hx711_json_weight_change': ('B',  (0x717,1, 6), (None, None,                           ('Sensor',      '"Sensor34 8 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_14 = copy.deepcopy(Setting_6_6_0_13)
+Setting_6_6_0_14.pop('register8_ENERGY_TARIFF1_ST',None)
+Setting_6_6_0_14.pop('register8_ENERGY_TARIFF2_ST',None)
+Setting_6_6_0_14.pop('register8_ENERGY_TARIFF1_DS',None)
+Setting_6_6_0_14.pop('register8_ENERGY_TARIFF2_DS',None)
+Setting_6_6_0_14.update             ({
+    'register8':                    ('B',   0x1D6,       ([16], None,                           ('Power',       None)) ),
+    'tariff1_0':                    ('<H',  0xE30,       (None, None,                           ('Power',       '"Tariff1 {:02d}:{:02d},{:02d}:{:02d}".format(@["tariff1_0"]/60,@["tariff1_0"]%60,@["tariff1_1"]/60,@["tariff1_1"]%60)')) ),
+    'tariff1_1':                    ('<H',  0xE32,       (None, None,                           ('Power',       None)) ),
+    'tariff2_0':                    ('<H',  0xE34,       (None, None,                           ('Power',       '"Tariff2 {:02d}:{:02d},{:02d}:{:02d}".format(@["tariff2_0"]/60,@["tariff2_0"]%60,@["tariff2_1"]/60,@["tariff2_1"]%60)')) ),
+    'tariff2_1':                    ('<H',  0xE36,       (None, None,                           ('Power',       None)) ),
+    'mqttlog_level':                ('B',   0x1E7,       (None, None,                           ('Management', '"MqttLog {}".format($)')) ),
+    'pcf8574_config':               ('B',   0xE88,       ([8],  None,                           ('Devices',     None)) ),
+    'shutter_accuracy':             ('B',   0x1E6,       (None, None,                           ('Shutter',     None)) ),
+    'shutter_opentime':             ('<H',  0xE40,       ([4],  None,                           ('Shutter',     '"ShutterOpenDuration{} {:.1f}".format(#,$/10)')) ),
+    'shutter_closetime':            ('<H',  0xE48,       ([4],  None,                           ('Shutter',     '"ShutterCloseDuration{} {:.1f}".format(#,$/10)')) ),
+    'shuttercoeff':                 ('<H',  0xE50,       ([5,4],None,                           ('Shutter',     None)) ),
+    'shutter_invert':               ('B',   0xE78,       ([4],  None,                           ('Shutter',     '"ShutterInvert{} {}".format(#,$)')) ),
+    'shutter_set50percent':         ('B',   0xE7C,       ([4],  None,                           ('Shutter',     '"ShutterSetHalfway{} {}".format(#,$)')) ),
+    'shutter_position':             ('B',   0xE80,       ([4],  None,                           ('Shutter',     '"ShutterPosition{} {}".format(#,$)')) ),
+    'shutter_startrelay':           ('B',   0xE84,       ([4],  None,                           ('Shutter',     '"ShutterRelay{} {}".format(#,$)')) ),
+                                    })
+Setting_6_6_0_14['flag3'][0].update ({
+        'dds2382_model':            ('<L', (0x3A0,1,21), (None, None,                           ('SetOption',   '"SetOption71 {}".format($)')) ),
+        'shutter_mode':             ('<L', (0x3A0,1,30), (None, None,                           ('SetOption',   '"SetOption80 {}".format($)')) ),
+        'pcf8574_ports_inverted':   ('<L', (0x3A0,1,31), (None, None,                           ('SetOption',   '"SetOption81 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_15 = copy.deepcopy(Setting_6_6_0_14)
+Setting_6_6_0_15['flag3'][0].update ({
+        'hardware_energy_total':    ('<L', (0x3A0,1,22), (None, None,                           ('SetOption',   '"SetOption72 {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x606000F,0x1000, Setting_6_6_0_15),
+            (0x606000E,0x1000, Setting_6_6_0_14),
+            (0x606000D,0x1000, Setting_6_6_0_13),
             (0x606000C,0x1000, Setting_6_6_0_12),
             (0x606000B,0x1000, Setting_6_6_0_11),
             (0x606000A,0x1000, Setting_6_6_0_10),
@@ -1030,7 +1079,7 @@ Settings = [
             (0x605000F, 0xe00, Setting_6_5_0_15),
             (0x605000C, 0xe00, Setting_6_5_0_12),
             (0x605000B, 0xe00, Setting_6_5_0_11),
-            (0x605000B, 0xe00, Setting_6_5_0_11),
+            (0x605000A, 0xe00, Setting_6_5_0_10),
             (0x6050009, 0xe00, Setting_6_5_0_9),
             (0x6050007, 0xe00, Setting_6_5_0_7),
             (0x6050006, 0xe00, Setting_6_5_0_6),
@@ -2162,7 +2211,7 @@ def IsFilterGroup(group):
         if group is None:
             return False
         if group == '*':
-            return False
+            return True
         if group.title() != INTERNAL.title() and group.title() not in (groupname.title() for groupname in args.filter):
             return False
     return True

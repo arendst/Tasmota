@@ -219,7 +219,7 @@ If you do not want using auto extensions use the <code>--no-extension</code> par
                         [--cmnd-indent &lt;indent&gt;] [--cmnd-groups]
                         [--cmnd-nogroups] [--cmnd-<span class="hljs-keyword">sort</span>] [--cmnd-unsort]
                         [-c &lt;filename&gt;] [-S] [-T json|cmnd|command]
-                        [-<span class="hljs-keyword">g</span> {Control,Devices,<span class="hljs-keyword">Display</span>,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,<span class="hljs-keyword">Timer</span>,Wifi} [{Control,Devices,<span class="hljs-keyword">Display</span>,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,<span class="hljs-keyword">Timer</span>,Wifi} ...]]
+                        [-g {Control,Devices,Display,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,Timer,Wifi} ...]]
                         [--ignore-warnings] [-<span class="hljs-keyword">h</span>] [-<span class="hljs-keyword">H</span>] [-v] [-V]
 
 Backup/<span class="hljs-keyword">Restore</span> Sonoff-Tasmota configuration data. <span class="hljs-keyword">Args</span> that start with '--'
@@ -299,7 +299,7 @@ Common:
                         (default <span class="hljs-keyword">do</span> not output <span class="hljs-keyword">on</span> backup or <span class="hljs-keyword">restore</span> usage)
   -T, --output-<span class="hljs-keyword">format</span> json|cmnd|command
                         <span class="hljs-keyword">display</span> output <span class="hljs-keyword">format</span> (default: 'json')
-  -<span class="hljs-keyword">g</span>, --group {Control,Devices,<span class="hljs-keyword">Display</span>,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,<span class="hljs-keyword">Timer</span>,Wifi}
+  -g, --group {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi}
                         limit data processing to command groups (default <span class="hljs-keyword">no</span>
                         filter)
   --ignore-warnings     <span class="hljs-keyword">do</span> not <span class="hljs-keyword">exit</span> <span class="hljs-keyword">on</span> warnings. Not recommended, used <span class="hljs-keyword">by</span> your
