@@ -38,7 +38,7 @@ const uint8_t  ZIGBEE_STATUS_UNSUPPORTED_VERSION = 98;  // Unsupported ZNP versi
 const uint8_t  ZIGBEE_STATUS_ABORT = 99;                // Fatal error, Zigbee not working
 
 typedef int32_t (*ZB_Func)(uint8_t value);
-typedef int32_t (*ZB_RecvMsgFunc)(int32_t res, class SBuffer &buf);
+typedef int32_t (*ZB_RecvMsgFunc)(int32_t res, const class SBuffer &buf);
 
 typedef union Zigbee_Instruction {
   struct {
@@ -283,8 +283,6 @@ ZBM(AREQ_ZDO_NODEDESCRSP, Z_AREQ | Z_ZDO, ZDO_NODE_DESC_RSP)    // 4582
 // ServerMask (2 bytes) - 0100 - Primary Trust Center
 // MaxOutTransferSize (2 bytes) - A000 = 160
 // DescriptorCapabilities (1 byte) - 00
-ZBM(AREQ_ZDO_SIMPLEDESCRSP, Z_AREQ | Z_ZDO, ZDO_SIMPLE_DESC_RSP)    // 4584
-ZBM(AREQ_ZDO_ACTIVEEPRSP, Z_AREQ | Z_ZDO, ZDO_ACTIVE_EP_RSP)    // 4585
 
 // Z_ZDO:activeEpReq
 ZBM(ZBS_ZDO_ACTIVEEPREQ, Z_SREQ | Z_ZDO, ZDO_ACTIVE_EP_REQ, 0x00, 0x00, 0x00, 0x00)  // 250500000000
@@ -313,12 +311,7 @@ ZBM(ZBR_PERMITJOINREQ, Z_SRSP | Z_ZDO, ZDO_MGMT_PERMIT_JOIN_REQ, Z_Success)    /
 ZBM(ZBR_PERMITJOIN_AREQ_CLOSE, Z_AREQ | Z_ZDO, ZDO_PERMIT_JOIN_IND, 0x00 /* Duration */)      // 45CB00
 ZBM(ZBR_PERMITJOIN_AREQ_OPEN_60, Z_AREQ | Z_ZDO, ZDO_PERMIT_JOIN_IND, 60 /* Duration */)      // 45CB3C
 ZBM(ZBR_PERMITJOIN_AREQ_OPEN_FF, Z_AREQ | Z_ZDO, ZDO_PERMIT_JOIN_IND, 0xFF /* Duration */)    // 45CBFF
-ZBM(ZBR_PERMITJOIN_AREQ_OPEN_XX, Z_AREQ | Z_ZDO, ZDO_PERMIT_JOIN_IND )    // 45CB
 ZBM(ZBR_PERMITJOIN_AREQ_RSP,  Z_AREQ | Z_ZDO, ZDO_MGMT_PERMIT_JOIN_RSP, 0x00, 0x00 /* srcAddr*/, Z_Success )   // 45B6000000
-
-// Filters for ZCL frames
-ZBM(ZBR_AF_INCOMING_MESSAGE, Z_AREQ | Z_AF, AF_INCOMING_MSG)              // 4481
-ZBM(ZBR_END_DEVICE_ANNCE_IND, Z_AREQ | Z_ZDO, ZDO_END_DEVICE_ANNCE_IND)   // 45C1
 
 static const Zigbee_Instruction zb_prog[] PROGMEM = {
   ZI_LABEL(0)
@@ -326,7 +319,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_RECV_UNEXPECTED(&Z_Recv_Default)
-    ZI_WAIT(15000)                             // wait for 15 seconds for Tasmota to stabilize
+    ZI_WAIT(10000)                             // wait for 10 seconds for Tasmota to stabilize
     ZI_ON_ERROR_GOTO(50)
 
     ZI_MQTT_STATUS(ZIGBEE_STATUS_BOOT, "Booting")
@@ -337,7 +330,6 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_LOG(LOG_LEVEL_INFO, "ZIG: checking device configuration")
     ZI_SEND(ZBS_ZNPHC)                        // check value of ZNP Has Configured
     ZI_WAIT_RECV(2000, ZBR_ZNPHC)
-    ZI_WAIT(100)
     ZI_SEND(ZBS_VERSION)                      // check ZNP software version
     ZI_WAIT_RECV_FUNC(2000, ZBR_VERSION, &Z_ReceiveCheckVersion)  // Check version
     ZI_SEND(ZBS_PAN)                          // check PAN ID
