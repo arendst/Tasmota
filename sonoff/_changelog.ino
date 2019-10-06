@@ -3,6 +3,7 @@
  * Change command PulseTime JSON message format and allow display of all pulsetimer information (#6519)
  * Add support for Chint DDSU666 Modbus energy meter by Pablo Zerón
  * Add support for SM2135 as used in Action LSC Smart Led E14 (#6495)
+ * Add command SetOption72 0/1 to switch between software (0) or hardware (1) energy total counter (#6561)
  *
  * 6.6.0.14 20190925
  * Change command Tariffx to allow time entries like 23 (hours), 1320 (minutes) or 23:00. NOTE: As this is development branch previous tariffs are lost! (#6488)
