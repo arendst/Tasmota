@@ -404,7 +404,7 @@ class LightStateClass {
       if (b) { *b = _b; }
     }
 
-    // get full brightness values for wamr and cold channels.
+    // get full brightness values for warm and cold channels.
     // either w=c=0 (off) or w+c >= 255
     void getCW(uint8_t *rc, uint8_t *rw) {
       if (rc) { *rc = _wc; }
@@ -1776,12 +1776,13 @@ void LightAnimate(void)
         cur_col_10bits[i] = changeUIntScale(cur_col[i], 0, 255, 0, 1023);
       }
 
-      if (PHILIPS == my_module_type) {
-        calcGammaXiaomiBulbs(cur_col, cur_col_10bits);
-      } else if (Light.pwm_multi_channels) {
+      if (Light.pwm_multi_channels) {
         calcGammaMultiChannels(cur_col, cur_col_10bits);
-      } else {  // PHILIPS != my_module_type
+      } else {
         calcGammaBulbs(cur_col, cur_col_10bits);
+        if (PHILIPS == my_module_type) {
+          calcGammaCTPwm(cur_col, cur_col_10bits);
+        }
 
         // Now see if we need to mix RGB and True White
         // Valid only for LST_RGBW, LST_RGBWC, rgbwwTable[4] is zero, and white is zero (see doc)
@@ -1870,22 +1871,25 @@ void LightAnimate(void)
   }
 }
 
-// Do specific computation for Xiaomi Bulbs
-void calcGammaXiaomiBulbs(uint8_t cur_col[5], uint16_t cur_col_10bits[5]) {
+// Do specific computation is SetOption73 is on, Color Temp is a separate PWM channel
+void calcGammaCTPwm(uint8_t cur_col[5], uint16_t cur_col_10bits[5]) {
   // Xiaomi Philips bulbs follow a different scheme:
-  uint8_t cold;   // channel 1 is the color tone, mapped to cold channel (0..255)
-  light_state.getCW(&cold, nullptr);
-  cur_col[1] = cold;
-  cur_col_10bits[1] = changeUIntScale(cur_col[1], 0, 255, 0, 1023);
+  uint8_t cold, warm;   // channel 1 is the color tone, mapped to cold channel (0..255)
+  light_state.getCW(&cold, &warm);
+  // channels for white are always the last two channels
+  uint32_t cw1 = Light.subtype - 1;       // address for the ColorTone PWM
+  uint32_t cw0 = Light.subtype - 2;       // address for the White Brightness PWM
+  cur_col[cw1] = changeUIntScale(cold, 0, cold + warm, 0, 255);   // 
+  cur_col_10bits[cw1] = changeUIntScale(cur_col[cw1], 0, 255, 0, 1023);
   // now set channel 0 to overall brightness
   uint8_t pxBri = light_state.getBriCT();
   // channel 0=intensity, channel1=temperature
   if (Settings.light_correction) { // gamma correction
-    cur_col[0] = ledGamma(pxBri);
-    cur_col_10bits[0] = ledGamma(pxBri, 10);    // 10 bits gamma correction
+    cur_col[cw0] = ledGamma(pxBri);
+    cur_col_10bits[cw0] = ledGamma(pxBri, 10);    // 10 bits gamma correction
   } else {
-    cur_col[0] = pxBri;
-    cur_col_10bits[0] = changeUIntScale(pxBri, 0, 255, 0, 1023);  // no gamma, extend to 10 bits
+    cur_col[cw0] = pxBri;
+    cur_col_10bits[cw0] = changeUIntScale(pxBri, 0, 255, 0, 1023);  // no gamma, extend to 10 bits
   }
 }
 
@@ -1936,7 +1940,7 @@ void calcGammaBulbs(uint8_t cur_col[5], uint16_t cur_col_10bits[5]) {
       }
     }
     // If RGBW or Single channel, also adjust White channel
-    if (LST_COLDWARM != Light.subtype) {
+    if ((LST_COLDWARM != Light.subtype) && (LST_RGBWC != Light.subtype)) {
       cur_col_10bits[3] = ledGamma(cur_col[3], 10);
       cur_col[3] = ledGamma(cur_col[3]);
     }
