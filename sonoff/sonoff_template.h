@@ -36,7 +36,7 @@ enum UserSelectablePins {
   GPIO_SWT1,           // User connected external switches
   GPIO_SWT2,
   GPIO_SWT3,
-  GPIO_SWT
+  GPIO_SWT4,
   GPIO_SWT5,
   GPIO_SWT6,
   GPIO_SWT7,
