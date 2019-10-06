@@ -86,7 +86,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
     uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71 - Select different Modbus registers for Active Energy (#6531)
     uint32_t hardware_energy_total : 1;    // bit 22 (v6.6.0.15) - SetOption72 - Enable / Disable hardware energy total counter as reference (#6561)
-    uint32_t spare23 : 1;
+    uint32_t white_temp_as_pwm : 1;        // bit 23 (v6.6.0.15) - SetOption73 - Enable Color Temp as a PWM channel, instead of seperate CW/W channels (#6534)
     uint32_t spare24 : 1;
     uint32_t spare25 : 1;
     uint32_t spare26 : 1;

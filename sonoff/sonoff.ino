@@ -1413,6 +1413,9 @@ void GpioInit(void)
     devices_present = 0;
     baudrate = 19200;
   }
+  else if (PHILIPS == my_module_type) {
+    Settings.flag3.white_temp_as_pwm = true;    // force SetOption73 for Module 48
+  }
 
   if (!light_type) {
     devices_present = 0;
