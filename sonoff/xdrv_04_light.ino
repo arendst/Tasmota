@@ -1185,91 +1185,6 @@ void AriluxRfDisable(void)
 }
 #endif  // USE_ARILUX_RF
 
-/*********************************************************************************************\
- * Sonoff B1 and AiLight inspired by OpenLight https://github.com/icamgo/noduino-sdk
-\*********************************************************************************************/
-
-extern "C" {
-  void os_delay_us(unsigned int);
-}
-
-uint8_t light_pdi_pin;
-uint8_t light_pdcki_pin;
-
-void LightDiPulse(uint8_t times)
-{
-  for (uint32_t i = 0; i < times; i++) {
-    digitalWrite(light_pdi_pin, HIGH);
-    digitalWrite(light_pdi_pin, LOW);
-  }
-}
-
-void LightDckiPulse(uint8_t times)
-{
-  for (uint32_t i = 0; i < times; i++) {
-    digitalWrite(light_pdcki_pin, HIGH);
-    digitalWrite(light_pdcki_pin, LOW);
-  }
-}
-
-void LightMy92x1Write(uint8_t data)
-{
-  for (uint32_t i = 0; i < 4; i++) {     // Send 8bit Data
-    digitalWrite(light_pdcki_pin, LOW);
-    digitalWrite(light_pdi_pin, (data & 0x80));
-    digitalWrite(light_pdcki_pin, HIGH);
-    data = data << 1;
-    digitalWrite(light_pdi_pin, (data & 0x80));
-    digitalWrite(light_pdcki_pin, LOW);
-    digitalWrite(light_pdi_pin, LOW);
-    data = data << 1;
-  }
-}
-
-void LightMy92x1Init(void)
-{
-  uint8_t chips = 1;                    // 1 (AiLight)
-  if (LT_RGBWC == light_type) {
-    chips = 2;                          // 2 (Sonoff B1)
-  }
-
-  LightDckiPulse(chips * 32);           // Clear all duty register
-  os_delay_us(12);                      // TStop > 12us.
-  // Send 12 DI pulse, after 6 pulse's falling edge store duty data, and 12
-  // pulse's rising edge convert to command mode.
-  LightDiPulse(12);
-  os_delay_us(12);                      // Delay >12us, begin send CMD data
-  for (uint32_t n = 0; n < chips; n++) { // Send CMD data
-    LightMy92x1Write(0x18);             // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
-  }
-  os_delay_us(12);                      // TStart > 12us. Delay 12 us.
-  // Send 16 DI pulse, at 14 pulse's falling edge store CMD data, and
-  // at 16 pulse's falling edge convert to duty mode.
-  LightDiPulse(16);
-  os_delay_us(12);                      // TStop > 12us.
-}
-
-void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w, uint8_t duty_c)
-{
-  uint8_t channels[2] = { 4, 6 };
-
-  uint8_t didx = 0;                     // 0 (AiLight)
-  if (LT_RGBWC == light_type) {
-    didx = 1;                           // 1 (Sonoff B1)
-  }
-
-  uint8_t duty[2][6] = {{ duty_r, duty_g, duty_b, duty_w, 0, 0 },        // Definition for RGBW channels
-                        { duty_w, duty_c, 0, duty_g, duty_r, duty_b }};  // Definition for RGBWC channels
-
-  os_delay_us(12);                      // TStop > 12us.
-  for (uint32_t channel = 0; channel < channels[didx]; channel++) {
-    LightMy92x1Write(duty[didx][channel]);  // Send 8bit Data
-  }
-  os_delay_us(12);                      // TStart > 12us. Ready for send DI pulse.
-  LightDiPulse(8);                      // Send 8 DI pulse. After 8 pulse falling edge, store old data.
-  os_delay_us(12);                      // TStop > 12us.
-}
-
 /********************************************************************************************/
 
 void LightPwmOffset(uint32_t offset)
@@ -1308,12 +1223,6 @@ bool LightModuleInit(void)
       digitalWrite(14, LOW);
     }
     light_type = LT_PWM2;
-  }
-  else if (AILIGHT == my_module_type) {     // RGBW led
-    light_type = LT_RGBW;
-  }
-  else if (SONOFF_B1 == my_module_type) {   // RGBWC led
-    light_type = LT_RGBWC;
   }
 #ifdef USE_WS2812
   if (!light_type && (pin[GPIO_WS2812] < 99)) {  // RGB led
@@ -1380,6 +1289,7 @@ void LightInit(void)
     max_scheme = LS_MAX + WS2812_SCHEMES;
   }
 #endif  // USE_WS2812 ************************************************************************
+/*
   else {
     light_pdi_pin = pin[GPIO_DI];
     light_pdcki_pin = pin[GPIO_DCKI];
@@ -1391,7 +1301,7 @@ void LightInit(void)
 
     LightMy92x1Init();
   }
-
+*/
   if (Light.subtype < LST_RGB) {
     max_scheme = LS_POWER;
   }
@@ -1954,10 +1864,6 @@ void LightAnimate(void)
         Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
       }
 #endif  // USE_ES2812 ************************************************************************
-      else if (light_type > LT_WS2812) {
-        //AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Cur_Col %d,%d,%d,%d,%d"), cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
-        LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
-      }
       XdrvMailbox.data = tmp_data;
       XdrvMailbox.data_len = tmp_data_len;
     }

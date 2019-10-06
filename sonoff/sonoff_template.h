@@ -550,8 +550,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_ARIRFRCV,       // AriLux RF Receive input
   GPIO_ARIRFSEL,       // Arilux RF Receive input selected
 #endif
+#ifdef USE_MY92X1
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
+#endif  // USE_MY92X1
 #ifdef USE_SM16716
   GPIO_SM16716_CLK,    // SM16716 CLOCK
   GPIO_SM16716_DAT,    // SM16716 DATA
