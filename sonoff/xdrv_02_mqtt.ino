@@ -251,7 +251,7 @@ bool MqttPublishLib(const char* topic, bool retained)
   return result;
 }
 
-void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
+void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len)
 {
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("MqttDataHandler"));
@@ -262,8 +262,8 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
 
   // Do not execute multiple times if Prefix1 equals Prefix2
   if (!strcmp(Settings.mqtt_prefix[0], Settings.mqtt_prefix[1])) {
-    char *str = strstr(topic, Settings.mqtt_prefix[0]);
-    if ((str == topic) && mqtt_cmnd_publish) {
+    char *str = strstr(mqtt_topic, Settings.mqtt_prefix[0]);
+    if ((str == mqtt_topic) && mqtt_cmnd_publish) {
       if (mqtt_cmnd_publish > 3) {
         mqtt_cmnd_publish -= 3;
       } else {
@@ -273,13 +273,22 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     }
   }
 
-  data[data_len] = 0;
+  // Save MQTT data ASAP as it's data is discarded by PubSubClient with next publish as used in MQTTlog
+  char topic[TOPSZ];
+  strlcpy(topic, mqtt_topic, sizeof(topic));
+  mqtt_data[data_len] = 0;
+  char data[data_len +1];
+  memcpy(data, mqtt_data, sizeof(data));
 
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_RECEIVED_TOPIC " %s, " D_DATA_SIZE " %d, " D_DATA " %s"), topic, data_len, data);
-//  if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) { Serial.println(dataBuf); }
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_RECEIVED_TOPIC " \"%s\", " D_DATA_SIZE " %d, " D_DATA " \"%s\""), topic, data_len, data);
+//  if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) { Serial.println(data); }
 
   // MQTT pre-processing
-  if (XdrvMqttData(topic, strlen(topic), (char*)data, data_len)) { return; }
+  XdrvMailbox.index = strlen(topic);
+  XdrvMailbox.data_len = data_len;
+  XdrvMailbox.topic = topic;
+  XdrvMailbox.data = (char*)data;
+  if (XdrvCall(FUNC_MQTT_DATA)) { return; }
 
   ShowSource(SRC_MQTT);
 

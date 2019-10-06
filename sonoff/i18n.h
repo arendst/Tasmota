@@ -118,6 +118,7 @@
 #define D_JSON_PROGRAMFLASHSIZE "ProgramFlashSize"
 #define D_JSON_PROGRAMSIZE "ProgramSize"
 #define D_JSON_REFERENCETEMPERATURE "ReferenceTemperature"
+#define D_JSON_REMAINING "Remaining"
 #define D_JSON_RESET "Reset"
 #define D_JSON_RESISTANCE "Resistance"
 #define D_JSON_RESOLUTION "Resolution"
@@ -132,6 +133,7 @@
 #define D_JSON_SDKVERSION "SDK"
 #define D_JSON_SELECTED "selected"
 #define D_JSON_SERIALRECEIVED "SerialReceived"
+#define D_JSON_SET "Set"
 #define D_JSON_SSID "SSId"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
@@ -456,12 +458,13 @@
 
 // Commands xdrv_23_zigbee.ino
 #define D_CMND_ZIGBEE_PERMITJOIN "ZigbeePermitJoin"
-#define D_CMND_ZIGBEE_DUMP "ZigbeeDump"
+#define D_CMND_ZIGBEE_STATUS "ZigbeeStatus"
 #define D_CMND_ZIGBEEZNPSEND "ZigbeeZNPSend"
   #define D_JSON_ZIGBEE_STATUS "ZigbeeStatus"
   #define D_JSON_ZIGBEEZNPRECEIVED "ZigbeeZNPReceived"
   #define D_JSON_ZIGBEEZNPSENT "ZigbeeZNPSent"
-  #define D_JSON_ZIGBEEZCLRECEIVED "ZigbeeZCLReceived"
+  #define D_JSON_ZIGBEEZCL_RECEIVED "ZigbeeZCLReceived"
+  #define D_JSON_ZIGBEEZCL_RAW_RECEIVED "ZigbeeZCLRawReceived"
   #define D_JSON_ZIGBEEZCLSENT "ZigbeeZCLSent"
 
   // Commands xdrv_25_A4988_Stepper.ino
@@ -557,7 +560,6 @@ const char S_JSON_COMMAND_INDEX_LVALUE[] PROGMEM =            "{\"%s%d\":%lu}";
 const char S_JSON_COMMAND_INDEX_SVALUE[] PROGMEM =            "{\"%s%d\":\"%s\"}";
 const char S_JSON_COMMAND_INDEX_ASTERISK[] PROGMEM =          "{\"%s%d\":\"" D_ASTERISK_PWD "\"}";
 const char S_JSON_COMMAND_INDEX_SVALUE_SVALUE[] PROGMEM =     "{\"%s%d\":\"%s%s\"}";
-const char S_JSON_COMMAND_INDEX_NVALUE_ACTIVE_NVALUE[] PROGMEM = "{\"%s%d\":{\"%d\":{\"" D_JSON_ACTIVE "\":\"%d\"}}}";
 
 const char S_JSON_SENSOR_INDEX_NVALUE[] PROGMEM =             "{\"" D_CMND_SENSOR "%d\":%d}";
 const char S_JSON_SENSOR_INDEX_SVALUE[] PROGMEM =             "{\"" D_CMND_SENSOR "%d\":\"%s\"}";

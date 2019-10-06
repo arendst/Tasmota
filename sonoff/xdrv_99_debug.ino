@@ -57,6 +57,10 @@
 #define D_CMND_HELP      "Help"
 #define D_CMND_RTCDUMP   "RtcDump"
 #define D_CMND_SETSENSOR "SetSensor"
+#define D_CMND_I2CWRITE  "I2CWrite"
+#define D_CMND_I2CREAD   "I2CRead"
+#define D_CMND_I2CSTRETCH "I2CStretch"
+#define D_CMND_I2CCLOCK  "I2CClock"
 
 const char kDebugCommands[] PROGMEM = "|"  // No prefix
   D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|"
@@ -70,7 +74,8 @@ const char kDebugCommands[] PROGMEM = "|"  // No prefix
 #ifdef DEBUG_THEO
   D_CMND_EXCEPTION "|"
 #endif
-  D_CMND_FLASHDUMP "|" D_CMND_FLASHMODE "|" D_CMND_FREEMEM"|" D_CMND_HELP "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR ;
+  D_CMND_FLASHDUMP "|" D_CMND_FLASHMODE "|" D_CMND_FREEMEM"|" D_CMND_HELP "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR "|"
+  D_CMND_I2CWRITE "|" D_CMND_I2CREAD "|" D_CMND_I2CSTRETCH "|" D_CMND_I2CCLOCK ;
 
 void (* const DebugCommand[])(void) PROGMEM = {
   &CmndCfgDump, &CmndCfgPeek, &CmndCfgPoke,
@@ -84,7 +89,8 @@ void (* const DebugCommand[])(void) PROGMEM = {
 #ifdef DEBUG_THEO
   &CmndException,
 #endif
-  &CmndFlashDump, &CmndFlashMode, &CmndFreemem, &CmndHelp, &CmndRtcDump, &CmndSetSensor };
+  &CmndFlashDump, &CmndFlashMode, &CmndFreemem, &CmndHelp, &CmndRtcDump, &CmndSetSensor,
+  &CmndI2cWrite, &CmndI2cRead, &CmndI2cStretch, &CmndI2cClock };
 
 uint32_t CPU_loops = 0;
 uint32_t CPU_last_millis = 0;
@@ -565,6 +571,84 @@ void CmndFlashDump(void)
     AddLog_P2(LOG_LEVEL_INFO, PSTR("%06X:  %08X %08X %08X %08X  %08X %08X %08X %08X"), pos - flash_start,
       DebugSwap32(values[0]), DebugSwap32(values[1]), DebugSwap32(values[2]), DebugSwap32(values[3]),
       DebugSwap32(values[4]), DebugSwap32(values[5]), DebugSwap32(values[6]), DebugSwap32(values[7]));
+  }
+  ResponseCmndDone();
+}
+
+void CmndI2cWrite(void)
+{
+  // I2cWrite <address>,<data>..
+  if (i2c_flg) {
+    char* parms = XdrvMailbox.data;
+    uint8_t buffer[100];
+    uint32_t index = 0;
+
+    char *p;
+    char *data = strtok_r(parms, " ,", &p);
+    while (data != NULL && index < sizeof(buffer)) {
+      buffer[index++] = strtol(data, nullptr, 16);
+      data = strtok_r(nullptr, " ,", &p);
+    }
+
+    if (index > 1) {
+      AddLogBuffer(LOG_LEVEL_INFO, buffer, index);
+
+      Wire.beginTransmission(buffer[0]);
+      for (uint32_t i = 1; i < index; i++) {
+        Wire.write(buffer[i]);
+      }
+      int result = Wire.endTransmission();
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("I2C: Result %d"), result);
+    }
+  }
+  ResponseCmndDone();
+}
+
+void CmndI2cRead(void)
+{
+  // I2cRead <address>,<size>
+  if (i2c_flg) {
+    char* parms = XdrvMailbox.data;
+    uint8_t buffer[100];
+    uint32_t index = 0;
+
+    char *p;
+    char *data = strtok_r(parms, " ,", &p);
+    while (data != NULL && index < sizeof(buffer)) {
+      buffer[index++] = strtol(data, nullptr, 16);
+      data = strtok_r(nullptr, " ,", &p);
+    }
+
+    if (index > 0) {
+      uint8_t size = 1;
+      if (index > 1) {
+        size = buffer[1];
+      }
+      Wire.requestFrom(buffer[0], size);
+      index = 0;
+      while (Wire.available() && index < sizeof(buffer)) {
+        buffer[index++] = Wire.read();
+      }
+      if (index > 0) {
+        AddLogBuffer(LOG_LEVEL_INFO, buffer, index);
+      }
+    }
+  }
+  ResponseCmndDone();
+}
+
+void CmndI2cStretch(void)
+{
+  if (i2c_flg && (XdrvMailbox.payload > 0)) {
+    Wire.setClockStretchLimit(XdrvMailbox.payload);
+  }
+  ResponseCmndDone();
+}
+
+void CmndI2cClock(void)
+{
+  if (i2c_flg && (XdrvMailbox.payload > 0)) {
+    Wire.setClock(XdrvMailbox.payload);
   }
   ResponseCmndDone();
 }

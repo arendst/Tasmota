@@ -68,6 +68,7 @@ const uint8_t MAX_XDSP_DRIVERS = 32;        // Max number of allowed display dri
 const uint8_t MAX_XDRV_DRIVERS = 96;        // Max number of allowed driver drivers
 const uint8_t MAX_XSNS_DRIVERS = 96;        // Max number of allowed sensor drivers
 const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
+const uint8_t MAX_PCF8574 = 8;              // Max number of PCF8574 devices
 const uint8_t MAX_RULE_MEMS = 5;            // Max number of saved vars
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
@@ -248,7 +249,7 @@ enum Shortcuts { SC_CLEAR, SC_DEFAULT, SC_USER };
 
 enum SettingsParamIndex { P_HOLD_TIME, P_MAX_POWER_RETRY, P_ex_TUYA_DIMMER_ID, P_MDNS_DELAYED_START, P_BOOT_LOOP_OFFSET, P_RGB_REMAP, P_IR_UNKNOW_THRESHOLD,  // SetOption32 .. SetOption38
                           P_CSE7766_INVALID_POWER, P_HOLD_IGNORE, P_ex_TUYA_RELAYS, P_OVER_TEMP,  // SetOption39 .. SetOption42
-                          P_TUYA_DIMMER_MAX,
+                          P_DIMMER_MAX,
                           P_ex_TUYA_VOLTAGE_ID, P_ex_TUYA_CURRENT_ID, P_ex_TUYA_POWER_ID,  // SetOption43 .. SetOption46
                           P_ex_ENERGY_TARIFF1, P_ex_ENERGY_TARIFF2,  // SetOption47 .. SetOption48
                           P_MAX_PARAM8 };  // Max is PARAM8_SIZE (18) - SetOption32 until SetOption49

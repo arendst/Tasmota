@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.6.0.4
+ * Updated until v6.6.0.14
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -284,9 +284,10 @@
 
 #define D_LOGGING_PARAMETERS "Logging-Einstellungen"
 #define D_SERIAL_LOG_LEVEL "Seriell-Log Level"
+#define D_MQTT_LOG_LEVEL "Mqtt-Log Level"
 #define D_WEB_LOG_LEVEL "Web-Log Level"
 #define D_SYS_LOG_LEVEL "Sys-Log Level"
-#define D_MORE_DEBUG "More debug"
+#define D_MORE_DEBUG "Mehr Details"
 #define D_SYSLOG_HOST "Sys-Log Host"
 #define D_SYSLOG_PORT "Sys-Log Port"
 #define D_TELEMETRY_PERIOD "Telemetrieperiode"
@@ -443,9 +444,17 @@
 #define D_ENERGY_TOTAL "Energie insgesamt"
 
 // xdrv_27_shutter.ino
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_DOMOTICZ_SHUTTER "Shutter"
+#define D_OPEN "Öffnen"
+#define D_CLOSE "Schliessen"
+#define D_DOMOTICZ_SHUTTER "Rollo"
+
+// xdrv_28_pcf8574.ino
+#define D_CONFIGURE_PCF8574 "Konfiguriere PCF8574"
+#define D_PCF8574_PARAMETERS "PCF8574 Parameter"
+#define D_INVERT_PORTS "Invertiere Ports"
+#define D_DEVICE "Gerät"
+#define D_DEVICE_INPUT "Eingang"
+#define D_DEVICE_OUTPUT "Ausgang"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor beschäftigt"
@@ -609,6 +618,10 @@
 #define D_SENSOR_A4988_MS3     "A4988 MS3"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
+#define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
+#define D_SENSOR_DDSU666_RX    "DDSU666 Rx"
+#define D_SENSOR_SM2135_CLK    "SM2135 Clk"
+#define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 
 // Units
 #define D_UNIT_AMPERE "A"

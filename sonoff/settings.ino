@@ -125,8 +125,8 @@
 #ifndef ENERGY_OVERTEMP
 #define ENERGY_OVERTEMP             90         // Overtemp in Celsius
 #endif
-#ifndef TUYA_DIMMER_MAX
-#define TUYA_DIMMER_MAX             100
+#ifndef DEFAULT_DIMMER_MAX
+#define DEFAULT_DIMMER_MAX             100
 #endif
 
 enum WebColors {
@@ -678,6 +678,7 @@ void SettingsDefaultSet2(void)
     Settings.mqtt_fingerprint[1][i] = strtol(p, &p, 16);
   }
   Settings.tele_period = TELE_PERIOD;
+  Settings.mqttlog_level = MQTT_LOG_LEVEL;
 
   // Energy
   Settings.flag2.current_resolution = 3;
@@ -774,7 +775,7 @@ void SettingsDefaultSet2(void)
 //  Settings.light_rotation = 0;
   SettingsDefaultSet_5_8_1();    // Clock color
 
-  Settings.param[P_TUYA_DIMMER_MAX] = TUYA_DIMMER_MAX;
+  Settings.param[P_DIMMER_MAX] = DEFAULT_DIMMER_MAX;
 
   // Display
   SettingsDefaultSet_5_10_1();   // Display settings
@@ -1084,9 +1085,9 @@ void SettingsDelta(void)
     if (Settings.version < 0x06060008) {
       // Move current tuya dimmer range to the new param.
       if (Settings.flag3.tuya_dimmer_range_255) {
-        Settings.param[P_TUYA_DIMMER_MAX] = 100;
+        Settings.param[P_DIMMER_MAX] = 100;
       } else {
-        Settings.param[P_TUYA_DIMMER_MAX] = 255;
+        Settings.param[P_DIMMER_MAX] = 255;
       }
     }
     if (Settings.version < 0x06060009) {

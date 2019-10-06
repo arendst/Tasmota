@@ -3366,30 +3366,8 @@ void ScriptSaveSettings(void) {
 #endif
 
 
-#if defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
+#if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
 
-/*
-"state": {
-"temperature": 2674,
-"lastupdated": "2017-08-04T12:13:04"
-},
-"config": {
-"on": true,
-"battery": 100,
-"reachable": true,
-"alert": "none",
-"ledindication": false,
-"usertest": false,
-"pending": []
-},
-"name": "Hue temperature sensor 1",
-"type": "ZLLTemperature",
-"modelid": "SML001",
-"manufacturername": "Philips",
-"swversion": "6.1.0.18912",
-"uniqueid": "xxx"
-}
-*/
 
 #define HUE_DEV_MVNUM 5
 #define HUE_DEV_NSIZE 16
@@ -3414,8 +3392,76 @@ const char SCRIPT_HUE_LIGHTS_STATUS_JSON1[] PROGMEM =
   "\"uniqueid\":\"{j2\","
   "\"swversion\":\"5.50.1.19085\"}";
 
+/*
+const char SCRIPT_HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
+  "{\"state\":"
+  "{\"temperature\": 2674,"
+  "\"lastupdated\": \"2019-08-04T12:13:04\"},"
+  "\"config\": {"
+  "\"on\": true,"
+  "\"battery\": 100,"
+  "\"reachable\": true,"
+  "\"alert\": \"none\","
+  "\"ledindication\": false,"
+  "\"usertest\": false,"
+  "\"pending\": []"
+  "},"
+  "\"name\": \"{j1\","
+  "\"type\": \"ZLLTemperature\","
+  "\"modelid\": \"SML001\","
+  "\"manufacturername\": \"Philips\","
+  "\"swversion\": \"6.1.0.18912\","
+  "\"uniqueid\": \"{j2\"}";
+*/
+
+
+const char SCRIPT_HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
+"{\"state\":{"
+"\"presence\":{state},"
+"\"lastupdated\":\"2017-10-01T12:37:30\""
+"},"
+"\"swupdate\":{"
+"\"state\":\"noupdates\","
+"\"lastinstall\": null"
+"},"
+"\"config\":{"
+"\"on\":true,"
+"\"battery\":100,"
+"\"reachable\":true,"
+"\"alert\":\"none\","
+"\"ledindication\":false,"
+"\"usertest\":false,"
+"\"sensitivity\":2,"
+"\"sensitivitymax\":2,"
+"\"pending\":[]"
+"},"
+"\"name\":\"{j1\","
+"\"type\":\"ZLLPresence\","
+"\"modelid\":\"SML001\","
+"\"manufacturername\":\"Philips\","
+"\"swversion\":\"6.1.0.18912\","
+"\"uniqueid\":\"{j2\""
+"}";
+
+/*
+  temperature ZLLTemperature
+  lightlevel ZLLLightLevel
+  presence ZLLPresence
+  */
+
+
 
 void Script_HueStatus(String *response, uint16_t hue_devs) {
+
+  if (hue_script[hue_devs].type=='P') {
+    *response+=FPSTR(SCRIPT_HUE_LIGHTS_STATUS_JSON2);
+    response->replace("{j1",hue_script[hue_devs].name);
+    response->replace("{j2", GetHueDeviceId(hue_devs));
+    uint8_t pwr=glob_script_mem.fvars[hue_script[hue_devs].index[0]-1];
+    response->replace("{state}", (pwr ? "true" : "false"));
+    return;
+  }
+
   *response+=FPSTR(SCRIPT_HUE_LIGHTS_STATUS_JSON1);
   uint8_t pwr=glob_script_mem.fvars[hue_script[hue_devs].index[0]-1];
   response->replace("{state}", (pwr ? "true" : "false"));
@@ -3454,16 +3500,44 @@ void Script_HueStatus(String *response, uint16_t hue_devs) {
     light_status += ",";
   }
 
-  response->replace("{light_status}", light_status);
-  response->replace("{j1",hue_script[hue_devs].name);
-  response->replace("{j2", GetHueDeviceId(hue_devs<<8));
-
-  if (hue_script[hue_devs].type=='E') {
-    response->replace("{type}","Extended color light");
-  } else {
-    response->replace("{type}","color light");
+  float temp;
+  switch (hue_script[hue_devs].type) {
+    case 'E':
+      response->replace("{type}","Extended color light");
+      break;
+    case 'S':
+      response->replace("{type}","color light");
+      break;
+    case 'T':
+      response->replace("{type}","ZLLTemperature");
+      temp=glob_script_mem.fvars[hue_script[hue_devs].index[2]-1];
+      light_status += "\"temperature\":";
+      light_status += String(temp*100);
+      light_status += ",";
+      break;
+    case 'L':
+      response->replace("{type}","ZLLLightLevel");
+      temp=glob_script_mem.fvars[hue_script[hue_devs].index[2]-1];
+      light_status += "\"lightlevel\":";
+      light_status += String(temp);
+      light_status += ",";
+      break;
+    case 'P':
+      response->replace("{type}","ZLLPresence");
+      temp=glob_script_mem.fvars[hue_script[hue_devs].index[0]-1];
+      light_status += "\"presence\":";
+      if (temp==0)light_status += "false";
+      else light_status += "true";
+      light_status += ",";
+      break;
+    default:
+      response->replace("{type}","color light");
+      break;
   }
 
+  response->replace("{light_status}", light_status);
+  response->replace("{j1",hue_script[hue_devs].name);
+  response->replace("{j2", GetHueDeviceId(hue_devs));
 
 }
 
@@ -3570,7 +3644,13 @@ void Script_Check_Hue(String *response) {
       }
       // append response
       if (response) {
-        *response+=",\""+String(EncodeLightId(hue_devs+devices_present+1))+"\":";
+        if (devices_present) {
+          *response+=",\"";
+        }
+        else {
+          if (hue_devs>0) *response+=",\"";
+        }
+        *response+=String(EncodeLightId(hue_devs+devices_present+1))+"\":";
         Script_HueStatus(response,hue_devs);
       }
 
@@ -3584,16 +3664,22 @@ void Script_Check_Hue(String *response) {
       lp++;
     }
   }
-#if 0
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Hue: %d"), hue_devs);
-  toLog(">>>>");
-  toLog(response->c_str());
-  toLog(response->c_str()+LOGSZ);
+#if 1
+  if (response) {
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Hue: %d"), hue_devs);
+    toLog(">>>>");
+    toLog(response->c_str());
+    toLog(response->c_str()+LOGSZ);
+  }
 #endif
 }
 
 const char sHUE_LIGHT_RESPONSE_JSON[] PROGMEM =
   "{\"success\":{\"/lights/{id/state/{cm\":{re}}";
+
+const char sHUE_SENSOR_RESPONSE_JSON[] PROGMEM =
+  "{\"success\":{\"/lights/{id/state/{cm\":{re}}";
+
 const char sHUE_ERROR_JSON[] PROGMEM =
   "[{\"error\":{\"type\":901,\"address\":\"/\",\"description\":\"Internal Error\"}}]";
 
@@ -3649,6 +3735,27 @@ void Script_Handle_Hue(String *path) {
       glob_script_mem.type[hue_script[index].vindex[1]].bits.changed=1;
       resp = true;
     }
+    if (hue_json.containsKey("xy")) {             // Saturation of the light. 254 is the most saturated (colored) and 0 is the least saturated (white).
+      float x, y;
+      x = hue_json["xy"][0];
+      y = hue_json["xy"][1];
+      const String &x_str = hue_json["xy"][0];
+      const String &y_str = hue_json["xy"][1];
+      uint8_t rr,gg,bb;
+      LightStateClass::XyToRgb(x, y, &rr, &gg, &bb);
+      LightStateClass::RgbToHsb(rr, gg, bb, &hue, &sat, nullptr);
+      if (resp) { response += ","; }
+      response += FPSTR(sHUE_LIGHT_RESPONSE_JSON);
+      response.replace("{id", String(device));
+      response.replace("{cm", "xy");
+      response.replace("{re", "[" + x_str + "," + y_str + "]");
+      glob_script_mem.fvars[hue_script[index].index[2]-1]=hue;
+      glob_script_mem.type[hue_script[index].vindex[2]].bits.changed=1;
+      glob_script_mem.fvars[hue_script[index].index[3]-1]=sat;
+      glob_script_mem.type[hue_script[index].vindex[3]].bits.changed=1;
+      resp = true;
+    }
+
     if (hue_json.containsKey("hue")) {             // The hue value is a wrapping value between 0 and 65535. Both 0 and 65535 are red, 25500 is green and 46920 is blue.
       tmp = hue_json["hue"];
       //hue = changeUIntScale(tmp, 0, 65535, 0, 359);
@@ -4067,7 +4174,7 @@ const char SCRIPT_MSG_BUTTONa_TBL[] PROGMEM =
   "<td style=\"width:%d%%\"><button type='submit' onclick='seva(%d,\"%s\")'>%s</button></td>";
 
 const char SCRIPT_MSG_BUTTONb[] PROGMEM =
-  "<img width=\"%d%%\"><\img>";
+  "<img width=\"%d%%\"></img>";
 
 const char SCRIPT_MSG_BUT_START[] PROGMEM =
   "<div>";
@@ -4437,7 +4544,9 @@ bool Xdrv10(uint8_t function)
       if (bitRead(Settings.rule_enabled, 0)) {
         Run_Scripter(">B",2,0);
         fast_script=Run_Scripter(">F",-2,0);
+#if defined(USE_SCRIPT_HUE) && defined(USE_WEBSERVER) && defined(USE_EMULATION) && defined(USE_EMULATION_HUE) && defined(USE_LIGHT)
         Script_Check_Hue(0);
+#endif
       }
       break;
     case FUNC_EVERY_100_MSECOND:

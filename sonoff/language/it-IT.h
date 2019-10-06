@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Parametri Logging"
 #define D_SERIAL_LOG_LEVEL "Livello di log Seriale"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "livello di log Web"
 #define D_SYS_LOG_LEVEL "livello di log Sys"
 #define D_MORE_DEBUG "Debug aggiuntivo"
@@ -443,9 +444,17 @@
 #define D_ENERGY_TOTAL "Energia Totale"
 
 // xdrv_27_shutter.ino
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_DOMOTICZ_SHUTTER "Shutter"
+#define D_OPEN "Aperta"
+#define D_CLOSE "Chiusa"
+#define D_DOMOTICZ_SHUTTER "Serranda"
+
+// xdrv_28_pcf8574.ino
+#define D_CONFIGURE_PCF8574 "Configura PCF8574"
+#define D_PCF8574_PARAMETERS "Parametri PCF8574"
+#define D_INVERT_PORTS "Porte Invertite"
+#define D_DEVICE "Dispositivo"
+#define D_DEVICE_INPUT "Input"
+#define D_DEVICE_OUTPUT "Output"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensore occupato"
@@ -609,6 +618,10 @@
 #define D_SENSOR_A4988_MS3     "A4988 MS3"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
+#define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
+#define D_SENSOR_DDSU666_RX    "DDSU666 Rx"
+#define D_SENSOR_SM2135_CLK    "SM2135 Clk"
+#define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 
 // Units
 #define D_UNIT_AMPERE "A"

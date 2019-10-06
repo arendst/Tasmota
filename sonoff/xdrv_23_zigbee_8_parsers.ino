@@ -188,7 +188,7 @@ int32_t Z_ReceiveNodeDesc(int32_t res, const class SBuffer &buf) {
                     complexDescriptorAvailable ? "true" : "false"
                     );
 
-    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCLRECEIVED));
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
     XdrvRulesProcess();
   }
 
@@ -205,7 +205,7 @@ int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
 
 
   for (uint32_t i = 0; i < activeEpCount; i++) {
-    Z_AddDeviceEndpoint(nwkAddr, activeEpList[i]);
+    zigbee_devices.addEndoint(nwkAddr, activeEpList[i]);
   }
 
   for (uint32_t i = 0; i < activeEpCount; i++) {
@@ -220,9 +220,31 @@ int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
     ResponseAppend_P(PSTR("\"0x%02X\""), activeEpList[i]);
   }
   ResponseAppend_P(PSTR("]}}"));
-  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCLRECEIVED));
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   XdrvRulesProcess();
   return -1;
+}
+
+void Z_SendAFInfoRequest(uint16_t shortaddr, uint8_t endpoint, uint16_t clusterid, uint8_t transacid) {
+  SBuffer buf(100);
+  buf.add8(Z_SREQ | Z_AF);        // 24
+  buf.add8(AF_DATA_REQUEST);      // 01
+  buf.add16(shortaddr);
+  buf.add8(endpoint);             // dest endpoint
+  buf.add8(0x01);                 // source endpoint
+  buf.add16(clusterid);
+  buf.add8(transacid);
+  buf.add8(0x30);                 // 30 options
+  buf.add8(0x1E);                 // 1E radius
+
+  buf.add8(3 + 2*sizeof(uint16_t)); // Len = 0x07
+  buf.add8(0x00);                 // Frame Control Field
+  buf.add8(transacid);            // Transaction Sequance Number
+  buf.add8(ZCL_READ_ATTRIBUTES);  // 00 Command
+  buf.add16(0x0004);              // 0400 ManufacturerName
+  buf.add16(0x0005);              // 0500 ModelIdentifier
+
+  ZigbeeZNPSend(buf.getBuffer(), buf.len());
 }
 
 
@@ -240,18 +262,17 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
   uint8_t           numOutCluster = buf.get8(15 + numInCluster*2);
 
   if (0 == status) {
+    zigbee_devices.addEndointProfile(nwkAddr, endpoint, profileId);
     for (uint32_t i = 0; i < numInCluster; i++) {
-      Z_AddDeviceCluster(nwkAddr, endpoint, buf.get16(15 + i*2), false);
+      zigbee_devices.addCluster(nwkAddr, endpoint, buf.get16(15 + i*2), false);
     }
     for (uint32_t i = 0; i < numOutCluster; i++) {
-      Z_AddDeviceCluster(nwkAddr, endpoint, buf.get16(16 + numInCluster*2 + i*2), true);
+      zigbee_devices.addCluster(nwkAddr, endpoint, buf.get16(16 + numInCluster*2 + i*2), true);
     }
-    // String dump = Z_DumpDevices();
-    // Serial.printf(">>> Devices dump = %s\n", dump.c_str());
 
     Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
                     "\"Status\":%d,\"Endpoint\":\"0x%02X\""
-                    ",\"ProfileId\":\"0x%04X\",\"DeviceId\":\"0x%04X\",\"DeviceVerion\":%d"
+                    ",\"ProfileId\":\"0x%04X\",\"DeviceId\":\"0x%04X\",\"DeviceVersion\":%d"
                     "\"InClusters\":["),
                     ZIGBEE_STATUS_SIMPLE_DESC, endpoint,
                     profileId, deviceId, deviceVersion);
@@ -265,8 +286,14 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
       ResponseAppend_P(PSTR("\"0x%04X\""), buf.get16(16 + numInCluster*2 + i*2));
     }
     ResponseAppend_P(PSTR("]}}"));
-    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCLRECEIVED));
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
     XdrvRulesProcess();
+
+    uint8_t cluster = zigbee_devices.findClusterEndpointIn(nwkAddr, 0x0000);
+Serial.printf(">>> Endpoint is 0x%02X for cluster 0x%04X\n", cluster, 0x0000);
+    if (cluster) {
+      Z_SendAFInfoRequest(nwkAddr, cluster, 0x0000, 0x01); // TODO
+    }
   }
   return -1;
 }
@@ -277,9 +304,7 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
   Z_IEEEAddress     ieeeAddr = buf.get64(6);
   uint8_t           capabilities = buf.get8(14);
 
-  Z_AddDeviceLongAddr(nwkAddr, ieeeAddr);
-//   String dump = Z_DumpDevices();
-// Serial.printf(">>> Devices dump = %s\n", dump.c_str());
+  zigbee_devices.updateDevice(nwkAddr, ieeeAddr);
 
   char hex[20];
   Uint64toHex(ieeeAddr, hex, 64);
@@ -292,7 +317,7 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
                   (capabilities & 0x40) ? "true" : "false"
                   );
 
-  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCLRECEIVED));
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   XdrvRulesProcess();
   Z_SendActiveEpReq(nwkAddr);
   return -1;
@@ -325,20 +350,46 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   JsonObject& json = json_root.createNestedObject(shortaddr);
   if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
    zcl_received.parseRawAttributes(json);
+  } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
+    zcl_received.parseReadAttributes(json);
   } else if (zcl_received.isClusterSpecificCommand()) {
    zcl_received.parseClusterSpecificCommand(json);
   }
-  zcl_received.postProcessAttributes(json);
-
   String msg("");
   msg.reserve(100);
   json_root.printTo(msg);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeZCLRawReceived: %s"), msg.c_str());
 
+  zcl_received.postProcessAttributes(srcaddr, json);
+
+  msg = "";
+  json_root.printTo(msg);
   Response_P(PSTR("%s"), msg.c_str());
-  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCLRECEIVED));
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   XdrvRulesProcess();
   return -1;
 }
+
+typedef struct Z_Dispatcher {
+  const uint8_t*  match;
+  ZB_RecvMsgFunc  func;
+} Z_Dispatcher;
+
+// Filters for ZCL frames
+ZBM(AREQ_AF_INCOMING_MESSAGE, Z_AREQ | Z_AF, AF_INCOMING_MSG)              // 4481
+ZBM(AREQ_END_DEVICE_ANNCE_IND, Z_AREQ | Z_ZDO, ZDO_END_DEVICE_ANNCE_IND)   // 45C1
+ZBM(AREQ_PERMITJOIN_OPEN_XX, Z_AREQ | Z_ZDO, ZDO_PERMIT_JOIN_IND )    // 45CB
+ZBM(AREQ_ZDO_ACTIVEEPRSP, Z_AREQ | Z_ZDO, ZDO_ACTIVE_EP_RSP)    // 4585
+ZBM(AREQ_ZDO_SIMPLEDESCRSP, Z_AREQ | Z_ZDO, ZDO_SIMPLE_DESC_RSP)    // 4584
+
+const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
+  { AREQ_AF_INCOMING_MESSAGE,     &Z_ReceiveAfIncomingMessage },
+  { AREQ_END_DEVICE_ANNCE_IND,    &Z_ReceiveEndDeviceAnnonce },
+  { AREQ_PERMITJOIN_OPEN_XX,      &Z_ReceivePermitJoinStatus },
+  { AREQ_ZDO_NODEDESCRSP,         &Z_ReceiveNodeDesc },
+  { AREQ_ZDO_ACTIVEEPRSP,         &Z_ReceiveActiveEp },
+  { AREQ_ZDO_SIMPLEDESCRSP,       &Z_ReceiveSimpleDesc },
+};
 
 int32_t Z_Recv_Default(int32_t res, const class SBuffer &buf) {
   // Default message handler for new messages
@@ -347,18 +398,10 @@ int32_t Z_Recv_Default(int32_t res, const class SBuffer &buf) {
     // if still during initialization phase, ignore any unexpected message
   	return -1;	// ignore message
   } else {
-    if (Z_ReceiveMatchPrefix(buf, ZBR_AF_INCOMING_MESSAGE)) {
-      return Z_ReceiveAfIncomingMessage(res, buf);
-    } else if (Z_ReceiveMatchPrefix(buf, ZBR_END_DEVICE_ANNCE_IND)) {
-      return Z_ReceiveEndDeviceAnnonce(res, buf);
-    } else if (Z_ReceiveMatchPrefix(buf, ZBR_PERMITJOIN_AREQ_OPEN_XX)) {
-      return Z_ReceivePermitJoinStatus(res, buf);
-    } else if (Z_ReceiveMatchPrefix(buf, AREQ_ZDO_NODEDESCRSP)) {
-      return Z_ReceiveNodeDesc(res, buf);
-    } else if (Z_ReceiveMatchPrefix(buf, AREQ_ZDO_ACTIVEEPRSP)) {
-      return Z_ReceiveActiveEp(res, buf);
-    } else if (Z_ReceiveMatchPrefix(buf, AREQ_ZDO_SIMPLEDESCRSP)) {
-      return Z_ReceiveSimpleDesc(res, buf);
+    for (uint32_t i = 0; i < sizeof(Z_DispatchTable)/sizeof(Z_Dispatcher); i++) {
+      if (Z_ReceiveMatchPrefix(buf, Z_DispatchTable[i].match)) {
+        (*Z_DispatchTable[i].func)(res, buf);
+      }
     }
     return -1;
   }

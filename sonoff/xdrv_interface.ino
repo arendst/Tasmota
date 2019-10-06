@@ -847,16 +847,6 @@ void XsnsDriverState(void)
 
 /*********************************************************************************************/
 
-bool XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t sdataBuf)
-{
-  XdrvMailbox.index = stopicBuf;
-  XdrvMailbox.data_len = sdataBuf;
-  XdrvMailbox.topic = topicBuf;
-  XdrvMailbox.data = dataBuf;
-
-  return XdrvCall(FUNC_MQTT_DATA);
-}
-
 bool XdrvRulesProcess(void)
 {
   return XdrvCallDriver(10, FUNC_RULES_PROCESS);

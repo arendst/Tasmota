@@ -84,8 +84,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t pwm_multi_channels : 1;       // bit 18 (v6.6.0.3)  - SetOption68 - Enable multi-channels PWM instead of Color PWM
     uint32_t tuya_dimmer_min_limit : 1;    // bit 19 (v6.6.0.5)  - SetOption69 - Limits Tuya dimmers to minimum of 10% (25) when enabled.
     uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
-    uint32_t spare21 : 1;
-    uint32_t spare22 : 1;
+    uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71 - Select different Modbus registers for Active Energy (#6531)
+    uint32_t hardware_energy_total : 1;    // bit 22 (v6.6.0.15) - SetOption72 - Enable / Disable hardware energy total counter as reference (#6561)
     uint32_t spare23 : 1;
     uint32_t spare24 : 1;
     uint32_t spare25 : 1;
@@ -93,8 +93,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
-    uint32_t shutter_mode : 1;             // bit 30 (v6.6.0.15) - SetOption80 - Enable shutter support
-    uint32_t spare31 : 1;
+    uint32_t shutter_mode : 1;             // bit 30 (v6.6.0.14) - SetOption80 - Enable shutter support
+    uint32_t pcf8574_ports_inverted : 1;   // bit 31 (v6.6.0.14) - SetOption81 - Invert all ports on PCF8574 devices
   };
 } SysBitfield3;
 
@@ -376,7 +376,6 @@ struct SYSCFG {
   uint16_t      ina226_r_shunt[4];         // E20
   uint16_t      ina226_i_fs[4];            // E28
   uint16_t      tariff[4][2];              // E30
-
   uint16_t      shutter_opentime[MAX_SHUTTERS];      // E40
   uint16_t      shutter_closetime[MAX_SHUTTERS];     // E48
   int16_t       shuttercoeff[5][MAX_SHUTTERS];       // E50
@@ -384,8 +383,9 @@ struct SYSCFG {
   uint8_t       shutter_set50percent[MAX_SHUTTERS];  // E7C
   uint8_t       shutter_position[MAX_SHUTTERS];      // E80
   uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
+  uint8_t       pcf8574_config[MAX_PCF8574];         // E88
 
-  uint8_t       free_e88[368];             // E88
+  uint8_t       free_e90[360];             // E90
 
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC

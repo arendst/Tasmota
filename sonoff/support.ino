@@ -1460,8 +1460,8 @@ void I2cScan(char *devs, unsigned int devs_len)
 
 void I2cSetActive(uint32_t addr, uint32_t count = 1)
 {
-  addr &= 0x7F;
-  count &= 0x7F;
+  addr &= 0x7F;         // Max I2C address is 127
+  count &= 0x7F;        // Max 4 x 32 bits available
   while (count-- && (addr < 128)) {
     i2c_active[addr / 32] |= (1 << (addr % 32));
     addr++;
@@ -1471,7 +1471,7 @@ void I2cSetActive(uint32_t addr, uint32_t count = 1)
 
 bool I2cActive(uint32_t addr)
 {
-  addr &= 0x7F;
+  addr &= 0x7F;         // Max I2C address is 127
   if (i2c_active[addr / 32] & (1 << (addr % 32))) {
     return true;
   }
@@ -1480,16 +1480,12 @@ bool I2cActive(uint32_t addr)
 
 bool I2cDevice(uint8_t addr)
 {
+  addr &= 0x7F;         // Max I2C address is 127
   if (I2cActive(addr)) {
     return false;       // If already active report as not present;
   }
-  for (uint8_t address = 1; address <= 127; address++) {
-    Wire.beginTransmission(address);
-    if (!Wire.endTransmission() && (address == addr)) {
-      return true;      // Report as present;
-    }
-  }
-  return false;
+  Wire.beginTransmission(addr);
+  return (0 == Wire.endTransmission());
 }
 #endif  // USE_I2C
 

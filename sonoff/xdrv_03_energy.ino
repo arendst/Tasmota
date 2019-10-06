@@ -199,7 +199,7 @@ void EnergyUpdateTotal(float value, bool kwh)
     Energy.kWhtoday = (unsigned long)((value - Energy.start_energy) * multiplier);
   }
 
-  if (Energy.total < (value - 0.01)){ // We subtract a little offset to avoid continuous updates
+  if ((Energy.total < (value - 0.01)) && Settings.flag3.hardware_energy_total) { // We subtract a little offset to avoid continuous updates
     RtcSettings.energy_kWhtotal = (unsigned long)((value * multiplier) - Energy.kWhtoday_offset - Energy.kWhtoday);
     Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
     Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
@@ -331,11 +331,11 @@ void EnergyMarginCheck(void)
       jsonflg = true;
     }
     if (EnergyMargin(false, Settings.energy_min_current, energy_current_u, flag, Energy.min_current_flag)) {
-      ResponseAppend_P(PSTR("%s%s\"" D_CMND_CURRENTLOW "\":\"%s\""), (jsonflg)?",":"", GetStateText(flag));
+      ResponseAppend_P(PSTR("%s\"" D_CMND_CURRENTLOW "\":\"%s\""), (jsonflg)?",":"", GetStateText(flag));
       jsonflg = true;
     }
     if (EnergyMargin(true, Settings.energy_max_current, energy_current_u, flag, Energy.max_current_flag)) {
-      ResponseAppend_P(PSTR("%s%s\"" D_CMND_CURRENTHIGH "\":\"%s\""), (jsonflg)?",":"", GetStateText(flag));
+      ResponseAppend_P(PSTR("%s\"" D_CMND_CURRENTHIGH "\":\"%s\""), (jsonflg)?",":"", GetStateText(flag));
       jsonflg = true;
     }
     if (jsonflg) {
