@@ -1,5 +1,5 @@
 /*
-  xdrv_26_sm2135.ino - sm2135 five channel led support for Sonoff-Tasmota
+  xlgt_04_sm2135.ino - sm2135 five channel led support for Sonoff-Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -25,7 +25,7 @@
  * {"NAME":"LSC RGBCW LED","GPIO":[0,0,0,0,0,0,0,0,181,0,180,0,0],"FLAG":0,"BASE":18}
 \*********************************************************************************************/
 
-#define XDRV_26             26
+#define XLGT_04             4
 
 #define SM2135_ADDR_MC      0xC0  // Max current register
 #define SM2135_ADDR_CH      0xC1  // RGB or CW channel select register
@@ -56,7 +56,6 @@ const uint8_t SM2135_CURRENT = (SM2135_20MA << 4) | SM2135_10MA;
 struct SM2135 {
   uint8_t clk = 0;
   uint8_t data = 0;
-  bool found = true;
 } Sm2135;
 
 uint8_t Sm2135Write(uint8_t data)
@@ -87,19 +86,21 @@ void Sm2135Send(uint8_t *buffer, uint8_t size)
   digitalWrite(Sm2135.data, HIGH);
 }
 
+/********************************************************************************************/
+
 bool Sm2135SetChannels(void)
 {
-  char *buffer = XdrvMailbox.data;
-  uint8_t data[8];
+  uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
+  uint8_t data[6];
 
-  if (('\0' == buffer[0]) && ('\0' == buffer[1]) && ('\0' == buffer[2])) {
+  if ((0 == cur_col[0]) && (0 == cur_col[1]) && (0 == cur_col[2])) {
     // No color so must be Cold/Warm
 /*
-    if ((buffer[3] + buffer[4]) >= (1 * 256)) {
+    if ((cur_col[3] + cur_col[4]) >= (1 * 256)) {
       // Scale down to 255 total to fix max power usage of 9W (=40mA)
 
-//      buffer[3] >>= 1;  // Divide by 2
-//      buffer[4] >>= 1;  // Divide by 2
+//      cur_col[3] >>= 1;  // Divide by 2
+//      cur_col[4] >>= 1;  // Divide by 2
     }
 */
     data[0] = SM2135_ADDR_MC;
@@ -108,13 +109,13 @@ bool Sm2135SetChannels(void)
     Sm2135Send(data, 3);
     delay(1);
     data[0] = SM2135_ADDR_C;
-    data[1] = buffer[4];  // Warm
-    data[2] = buffer[3];  // Cold
+    data[1] = cur_col[4];  // Warm
+    data[2] = cur_col[3];  // Cold
     Sm2135Send(data, 3);
   } else {
     // Color
 /*
-    if ((buffer[0] + buffer[1] + buffer[2]) >= (3 * 256)) {
+    if ((cur_col[0] + cur_col[1] + cur_col[2]) >= (3 * 256)) {
       // Scale down to 765 total to fix max power usage of 9W
       // Currently not needed with setting 3 x 15mA = 45mA = 11W = 765
     }
@@ -122,16 +123,16 @@ bool Sm2135SetChannels(void)
     data[0] = SM2135_ADDR_MC;
     data[1] = SM2135_CURRENT;
     data[2] = SM2135_RGB;
-    data[3] = buffer[1];  // Green
-    data[4] = buffer[0];  // Red
-    data[5] = buffer[2];  // Blue
+    data[3] = cur_col[1];  // Green
+    data[4] = cur_col[0];  // Red
+    data[5] = cur_col[2];  // Blue
     Sm2135Send(data, 6);
   }
 
   return true;
 }
 
-bool Sm2135ModuleSelected(void)
+void Sm2135ModuleSelected(void)
 {
   if ((pin[GPIO_SM2135_CLK] < 99) && (pin[GPIO_SM2135_DAT] < 99)) {
     Sm2135.clk = pin[GPIO_SM2135_CLK];
@@ -143,30 +144,26 @@ bool Sm2135ModuleSelected(void)
     digitalWrite(Sm2135.clk, HIGH);
 
     light_type = LT_RGBWC;
+    light_flg = XLGT_04;
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: SM2135 Found"));
-  } else {
-    Sm2135.found = false;
   }
-  return Sm2135.found;
 }
 
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
 
-bool Xdrv26(uint8_t function)
+bool Xlgt04(uint8_t function)
 {
   bool result = false;
 
-  if (Sm2135.found) {
-    switch (function) {
-      case FUNC_SET_CHANNELS:
-        result = Sm2135SetChannels();
-        break;
-      case FUNC_MODULE_INIT:
-        result = Sm2135ModuleSelected();
-        break;
-    }
+  switch (function) {
+    case FUNC_SET_CHANNELS:
+      result = Sm2135SetChannels();
+      break;
+    case FUNC_MODULE_INIT:
+      Sm2135ModuleSelected();
+      break;
   }
   return result;
 }
