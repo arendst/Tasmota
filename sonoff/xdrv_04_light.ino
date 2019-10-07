@@ -1879,10 +1879,11 @@ void calcGammaCTPwm(uint8_t cur_col[5], uint16_t cur_col_10bits[5]) {
   // channels for white are always the last two channels
   uint32_t cw1 = Light.subtype - 1;       // address for the ColorTone PWM
   uint32_t cw0 = Light.subtype - 2;       // address for the White Brightness PWM
+  // overall brightness
+  uint16_t pxBri = cur_col[cw0] + cur_col[cw1];
+  if (pxBri > 255) { pxBri = 255; }
   cur_col[cw1] = changeUIntScale(cold, 0, cold + warm, 0, 255);   // 
   cur_col_10bits[cw1] = changeUIntScale(cur_col[cw1], 0, 255, 0, 1023);
-  // now set channel 0 to overall brightness
-  uint8_t pxBri = light_state.getBriCT();
   // channel 0=intensity, channel1=temperature
   if (Settings.light_correction) { // gamma correction
     cur_col[cw0] = ledGamma(pxBri);
