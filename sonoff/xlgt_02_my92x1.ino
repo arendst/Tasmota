@@ -124,8 +124,6 @@ void My92x1ModuleSelected(void)
     digitalWrite(My92x1.pdi_pin, LOW);
     digitalWrite(My92x1.pdcki_pin, LOW);
 
-    LightMy92x1Init();
-
     My92x1.model = 2;
     light_type = LT_RGBW;                    // RGBW (2 chips) as used in Lohas
     if (AILIGHT == my_module_type) {         // RGBW (1 chip) as used in Ailight
@@ -136,6 +134,9 @@ void My92x1ModuleSelected(void)
       My92x1.model = 1;
       light_type = LT_RGBWC;
     }
+
+    LightMy92x1Init();
+
     light_flg = XLGT_02;
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: MY29x1 Found"));
   }
