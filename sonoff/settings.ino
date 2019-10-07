@@ -1132,6 +1132,10 @@ void SettingsDelta(void)
     if (Settings.version < 0x0606000C) {
       memset(&Settings.register8, 0x00, sizeof(Settings.register8));
     }
+    if (Settings.version < 0x0606000F) {
+      Settings.shutter_accuracy = 0;
+      Settings.mqttlog_level = MQTT_LOG_LEVEL;
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);
