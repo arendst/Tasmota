@@ -26,8 +26,9 @@
 #define XLGT_02             2
 
 struct MY92X1 {
-  uint8_t pdi_pin;
-  uint8_t pdcki_pin;
+  uint8_t pdi_pin = 0;
+  uint8_t pdcki_pin = 0;
+  uint8_t model = 0;
 } My92x1;
 
 extern "C" {
@@ -66,18 +67,15 @@ void LightMy92x1Write(uint8_t data)
 
 void LightMy92x1Init(void)
 {
-  uint8_t chips = 1;                    // 1 (AiLight)
-  if (LT_RGBWC == light_type) {
-    chips = 2;                          // 2 (Sonoff B1)
-  }
+  uint8_t chips[3] = { 1, 2, 2 };
 
-  LightDckiPulse(chips * 32);           // Clear all duty register
+  LightDckiPulse(chips[My92x1.model] * 32);  // Clear all duty register
   os_delay_us(12);                      // TStop > 12us.
   // Send 12 DI pulse, after 6 pulse's falling edge store duty data, and 12
   // pulse's rising edge convert to command mode.
   LightDiPulse(12);
   os_delay_us(12);                      // Delay >12us, begin send CMD data
-  for (uint32_t n = 0; n < chips; n++) { // Send CMD data
+  for (uint32_t n = 0; n < chips[My92x1.model]; n++) {  // Send CMD data
     LightMy92x1Write(0x18);             // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
   }
   os_delay_us(12);                      // TStart > 12us. Delay 12 us.
@@ -89,19 +87,15 @@ void LightMy92x1Init(void)
 
 void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w, uint8_t duty_c)
 {
-  uint8_t channels[2] = { 4, 6 };
+  uint8_t channels[3] = { 4, 6, 6 };
 
-  uint8_t didx = 0;                     // 0 (AiLight)
-  if (LT_RGBWC == light_type) {
-    didx = 1;                           // 1 (Sonoff B1)
-  }
-
-  uint8_t duty[2][6] = {{ duty_r, duty_g, duty_b, duty_w, duty_w, duty_w },   // Definition for RGBW(WW) channels
-                        { duty_w, duty_c, 0, duty_g, duty_r, duty_b }};       // Definition for RGBWC channels
+  uint8_t duty[3][6] = {{ duty_r, duty_g, duty_b, duty_w, 0, 0 },             // Definition for RGBW channels
+                        { duty_w, duty_c, 0, duty_g, duty_r, duty_b },        // Definition for RGBWC channels
+                        { duty_r, duty_g, duty_b, duty_w, duty_w, duty_w }};  // Definition for RGBWWW channels as used in Lohas which uses up to 3 CW channels
 
   os_delay_us(12);                      // TStop > 12us.
-  for (uint32_t channel = 0; channel < channels[didx]; channel++) {
-    LightMy92x1Write(duty[didx][channel]);  // Send 8bit Data
+  for (uint32_t channel = 0; channel < channels[My92x1.model]; channel++) {
+    LightMy92x1Write(duty[My92x1.model][channel]);  // Send 8bit Data
   }
   os_delay_us(12);                      // TStart > 12us. Ready for send DI pulse.
   LightDiPulse(8);                      // Send 8 DI pulse. After 8 pulse falling edge, store old data.
@@ -132,10 +126,14 @@ void My92x1ModuleSelected(void)
 
     LightMy92x1Init();
 
-    if (AILIGHT == my_module_type) {         // RGBW(WW) led
-      light_type = LT_RGBW;
+    My92x1.model = 2;
+    light_type = LT_RGBW;                    // RGBW (2 chips) as used in Lohas
+    if (AILIGHT == my_module_type) {         // RGBW (1 chip) as used in Ailight
+      My92x1.model = 0;
+//      light_type = LT_RGBW;
     }
-    else if (SONOFF_B1 == my_module_type) {  // RGBWC led
+    else if (SONOFF_B1 == my_module_type) {  // RGBWC (2 chips) as used in Sonoff B1
+      My92x1.model = 1;
       light_type = LT_RGBWC;
     }
     light_flg = XLGT_02;
