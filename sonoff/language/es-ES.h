@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.6.0.14
+ * Updated until v6.6.0.15
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -283,10 +283,10 @@
 #define D_FULL_TOPIC "Full Topic"
 
 #define D_LOGGING_PARAMETERS "Parámetros Logging"
-#define D_SERIAL_LOG_LEVEL "Nivel de log Serial"
-#define D_MQTT_LOG_LEVEL "Mqtt log level"
-#define D_WEB_LOG_LEVEL "Nivel de log Web"
-#define D_SYS_LOG_LEVEL "Nivel de Syslog"
+#define D_SERIAL_LOG_LEVEL "Nivel de log por Serial"
+#define D_MQTT_LOG_LEVEL "Nivel de log por Mqtt"
+#define D_WEB_LOG_LEVEL "Nivel de log por Web"
+#define D_SYS_LOG_LEVEL "Nivel de log por Syslog"
 #define D_MORE_DEBUG "Más Debug"
 #define D_SYSLOG_HOST "Host del Syslog"
 #define D_SYSLOG_PORT "Puerto del Syslog"
