@@ -31,12 +31,9 @@
  *  5          PWM5       RGBCW  yes        (H801, Arilux LC11)
  *  9          reserved          no
  * 10          reserved          yes
- * 11          +WS2812    RGB(W) no         (One WS2812 RGB or RGBW ledstrip)
+ * 11          +WS2812    RGB    no         (One WS2812 RGB or RGBW ledstrip)
  * 12          AiLight    RGBW   no
  * 13          Sonoff B1  RGBCW  yes
- * 19          SM16716    RGB    no
- * 20          SM16716+W  RGBW   no
- * 21          SM16716+CW RGBCW  yes
  *
  * light_scheme  WS2812  3+ Colors  1+2 Colors  Effect
  * ------------  ------  ---------  ----------  -----------------
@@ -55,7 +52,6 @@
  * 12            yes     no         no          Fire
  *
 \*********************************************************************************************/
-
 
 /*********************************************************************************************\
  *
@@ -128,21 +124,16 @@
 #define XDRV_04              4
 // #define DEBUG_LIGHT
 
+enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX };
+
 const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
-const uint8_t WS2812_SCHEMES = 7;      // Number of additional WS2812 schemes supported by xdrv_ws2812.ino
 
 const char kLightCommands[] PROGMEM = "|"  // No prefix
-#ifdef USE_WS2812
-  D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH "|"
-#endif  // USE_WS2812
   D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
   D_CMND_RGBWWTABLE "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
   D_CMND_WHITE "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR "|UNDOCA" ;
 
 void (* const LightCommand[])(void) PROGMEM = {
-#ifdef USE_WS2812
-  &CmndLed, &CmndPixels, &CmndRotation, &CmndWidth,
-#endif  // USE_WS2812
   &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndLedTable, &CmndFade,
   &CmndRgbwwTable, &CmndScheme, &CmndSpeed, &CmndWakeup, &CmndWakeupDuration,
   &CmndWhite, &CmndChannel, &CmndHsbColor, &CmndUndocA };
@@ -258,6 +249,7 @@ struct LIGHT {
   uint8_t wakeup_dimmer = 0;
   uint8_t fixed_color_index = 1;
   uint8_t pwm_offset = 0;                 // Offset in color buffer
+  uint8_t max_scheme = LS_MAX -1;
 
   bool update = true;
   bool pwm_multi_channels = false;        // SetOption68, treat each PWM channel as an independant dimmer
@@ -1224,11 +1216,7 @@ bool LightModuleInit(void)
     }
     light_type = LT_PWM2;
   }
-#ifdef USE_WS2812
-  if (!light_type && (pin[GPIO_WS2812] < 99)) {  // RGB led
-    light_type = LT_WS2812;
-  }
-#endif  // USE_WS2812
+
   // post-process for lights
   if (Settings.flag3.pwm_multi_channels) {
     uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
@@ -1241,17 +1229,9 @@ bool LightModuleInit(void)
 
 void LightInit(void)
 {
-  uint8_t max_scheme = LS_MAX -1;
-
   Light.device = devices_present;
   Light.subtype = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7); // Always 0 - LST_MAX (5)
   Light.pwm_multi_channels = Settings.flag3.pwm_multi_channels;
-
-#if defined(USE_WS2812) && (USE_WS2812_CTYPE > NEO_3LED)
-  if (LT_WS2812 == light_type) {
-    Light.subtype++;  // from RGB to RGBW
-  }
-#endif
 
   if ((LST_SINGLE < Light.subtype) && Light.pwm_multi_channels) {
     // we treat each PWM channel as an independant one, hence we switch to
@@ -1283,25 +1263,8 @@ void LightInit(void)
       }
     }
   }
-#ifdef USE_WS2812  // ************************************************************************
-  else if (LT_WS2812 == light_type) {
-    Ws2812Init();
-    max_scheme = LS_MAX + WS2812_SCHEMES;
-  }
-#endif  // USE_WS2812 ************************************************************************
-/*
-  else {
-    light_pdi_pin = pin[GPIO_DI];
-    light_pdcki_pin = pin[GPIO_DCKI];
 
-    pinMode(light_pdi_pin, OUTPUT);
-    pinMode(light_pdcki_pin, OUTPUT);
-    digitalWrite(light_pdi_pin, LOW);
-    digitalWrite(light_pdcki_pin, LOW);
-
-    LightMy92x1Init();
-  }
-*/
+  uint32_t max_scheme = Light.max_scheme;
   if (Light.subtype < LST_RGB) {
     max_scheme = LS_POWER;
   }
@@ -1480,7 +1443,7 @@ void LightState(uint8_t append)
       if (Light.subtype >= LST_RGB) {
         ResponseAppend_P(PSTR(",\"" D_CMND_SCHEME "\":%d"), Settings.light_scheme);
       }
-      if (LT_WS2812 == light_type) {
+      if (Light.max_scheme > LS_MAX) {
         ResponseAppend_P(PSTR(",\"" D_CMND_WIDTH "\":%d"), Settings.light_width);
       }
       ResponseAppend_P(PSTR(",\"" D_CMND_FADE "\":\"%s\",\"" D_CMND_SPEED "\":%d,\"" D_CMND_LEDTABLE "\":\"%s\""),
@@ -1736,12 +1699,8 @@ void LightAnimate(void)
       case LS_RANDOM:
         LightRandomColor();
         break;
-#ifdef USE_WS2812  // ************************************************************************
       default:
-        if (LT_WS2812 == light_type) {
-          Ws2812ShowScheme(Settings.light_scheme -LS_MAX);
-        }
-#endif  // USE_WS2812 ************************************************************************
+        XlgtCall(FUNC_SET_SCHEME);
     }
   }
 
@@ -1860,11 +1819,6 @@ void LightAnimate(void)
       else if (XdrvCall(FUNC_SET_CHANNELS)) {
         // Serviced
       }
-#ifdef USE_WS2812  // ************************************************************************
-      else if (LT_WS2812 == light_type) {
-        Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
-      }
-#endif  // USE_ES2812 ************************************************************************
       XdrvMailbox.data = tmp_data;
       XdrvMailbox.data_len = tmp_data_len;
     }
@@ -1882,7 +1836,7 @@ void calcGammaCTPwm(uint8_t cur_col[5], uint16_t cur_col_10bits[5]) {
   // overall brightness
   uint16_t pxBri = cur_col[cw0] + cur_col[cw1];
   if (pxBri > 255) { pxBri = 255; }
-  cur_col[cw1] = changeUIntScale(cold, 0, cold + warm, 0, 255);   // 
+  cur_col[cw1] = changeUIntScale(cold, 0, cold + warm, 0, 255);   //
   cur_col_10bits[cw1] = changeUIntScale(cur_col[cw1], 0, 255, 0, 1023);
   // channel 0=intensity, channel1=temperature
   if (Settings.light_correction) { // gamma correction
@@ -2169,76 +2123,11 @@ void CmndHsbColor(void)
   }
 }
 
-#ifdef USE_WS2812  //  ***********************************************************************
-void CmndLed(void)
-{
-  if ((LT_WS2812 == light_type) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= Settings.light_pixels)) {
-    if (XdrvMailbox.data_len > 0) {
-      char *p;
-      uint16_t idx = XdrvMailbox.index;
-      Ws2812ForceSuspend();
-      for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(nullptr, " ", &p)) {
-        if (LightColorEntry(color, strlen(color))) {
-          Ws2812SetColor(idx, Light.entry_color[0], Light.entry_color[1], Light.entry_color[2], Light.entry_color[3]);
-          idx++;
-          if (idx > Settings.light_pixels) { break; }
-        } else {
-          break;
-        }
-      }
-
-      Ws2812ForceUpdate();
-    }
-    char scolor[LIGHT_COLOR_SIZE];
-    ResponseCmndIdxChar(Ws2812GetColor(XdrvMailbox.index, scolor));
-  }
-}
-
-void CmndPixels(void)
-{
-  if (LT_WS2812 == light_type) {
-    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= WS2812_MAX_LEDS)) {
-      Settings.light_pixels = XdrvMailbox.payload;
-      Settings.light_rotation = 0;
-      Ws2812Clear();
-      Light.update = true;
-    }
-    ResponseCmndNumber(Settings.light_pixels);
-  }
-}
-
-void CmndRotation(void)
-{
-  if (LT_WS2812 == light_type) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < Settings.light_pixels)) {
-      Settings.light_rotation = XdrvMailbox.payload;
-    }
-    ResponseCmndNumber(Settings.light_rotation);
-  }
-}
-
-void CmndWidth(void)
-{
-  if ((LT_WS2812 == light_type) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
-    if (1 == XdrvMailbox.index) {
-      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 4)) {
-        Settings.light_width = XdrvMailbox.payload;
-      }
-      ResponseCmndNumber(Settings.light_width);
-    } else {
-      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32)) {
-        Settings.ws_width[XdrvMailbox.index -2] = XdrvMailbox.payload;
-      }
-      ResponseCmndIdxNumber(Settings.ws_width[XdrvMailbox.index -2]);
-    }
-  }
-}
-#endif  // USE_WS2812 ************************************************************************
-
 void CmndScheme(void)
 {
   if (Light.subtype >= LST_RGB) {
-    uint32_t max_scheme = (LT_WS2812 == light_type) ? LS_MAX + WS2812_SCHEMES : LS_MAX -1;
+    uint32_t max_scheme = Light.max_scheme;
+
     if (1 == XdrvMailbox.data_len) {
       if (('+' == XdrvMailbox.data[0]) && (Settings.light_scheme < max_scheme)) {
         XdrvMailbox.payload = Settings.light_scheme + ((0 == Settings.light_scheme) ? 2 : 1);  // Skip wakeup
@@ -2435,6 +2324,9 @@ bool Xdrv04(uint8_t function)
         break;
       case FUNC_COMMAND:
         result = DecodeCommand(kLightCommands, LightCommand);
+        if (!result) {
+          result = XlgtCall(FUNC_COMMAND);
+        }
         break;
       case FUNC_PRE_INIT:
         LightInit();

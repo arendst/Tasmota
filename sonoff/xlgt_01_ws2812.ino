@@ -1,7 +1,7 @@
 /*
-  xplg_ws2812.ino - ws2812 led string support for Sonoff-Tasmota
+  xlgt_01_ws2812.ino - led string support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Heiko Krupp and Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,7 +21,29 @@
 #ifdef USE_WS2812
 /*********************************************************************************************\
  * WS2812 RGB / RGBW Leds using NeopixelBus library
+ *
+ * light_scheme  WS2812  3+ Colors  1+2 Colors  Effect
+ * ------------  ------  ---------  ----------  -----------------
+ *  0            yes     no         no          Clock
+ *  1            yes     no         no          Incandescent
+ *  2            yes     no         no          RGB
+ *  3            yes     no         no          Christmas
+ *  4            yes     no         no          Hanukkah
+ *  5            yes     no         no          Kwanzaa
+ *  6            yes     no         no          Rainbow
+ *  7            yes     no         no          Fire
+ *
 \*********************************************************************************************/
+
+#define XLGT_01             1
+
+const uint8_t WS2812_SCHEMES = 8;      // Number of WS2812 schemes
+
+const char kWs2812Commands[] PROGMEM = "|"  // No prefix
+  D_CMND_LED "|" D_CMND_PIXELS "|" D_CMND_ROTATION "|" D_CMND_WIDTH ;
+
+void (* const Ws2812Command[])(void) PROGMEM = {
+  &CmndLed, &CmndPixels, &CmndRotation, &CmndWidth };
 
 #include <NeoPixelBus.h>
 
@@ -83,7 +105,7 @@ WsColor kHanukkah[2] = { 0,0,255, 255,255,255 };
 WsColor kwanzaa[3] = { 255,0,0, 0,0,0, 0,255,0 };
 WsColor kRainbow[7] = { 255,0,0, 255,128,0, 255,255,0, 0,255,0, 0,0,255, 128,0,255, 255,0,255 };
 WsColor kFire[3] = { 255,0,0, 255,102,0, 255,192,0 };
-ColorScheme kSchemes[WS2812_SCHEMES] = {
+ColorScheme kSchemes[WS2812_SCHEMES -1] = {  // Skip clock scheme
   kIncandescent, 2,
   kRgb, 3,
   kChristmas, 2,
@@ -105,8 +127,11 @@ uint8_t kWsRepeat[5] = {
     2,     // Largest
     1 };   // All
 
-uint8_t ws_show_next = 1;
-bool ws_suspend_update = false;
+struct WS2812 {
+  uint8_t show_next = 1;
+  uint8_t scheme_offset = 0;
+  bool suspend_update = false;
+} Ws2812;
 
 /********************************************************************************************/
 
@@ -313,23 +338,11 @@ void Ws2812Bars(uint32_t schemenr)
   Ws2812StripShow();
 }
 
-/*********************************************************************************************\
- * Public
-\*********************************************************************************************/
-
-void Ws2812Init(void)
-{
-  // For DMA, the Pin is ignored as it uses GPIO3 due to DMA hardware use.
-  strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
-  strip->Begin();
-  Ws2812Clear();
-}
-
 void Ws2812Clear(void)
 {
   strip->ClearTo(0);
   strip->Show();
-  ws_show_next = 1;
+  Ws2812.show_next = 1;
 }
 
 void Ws2812SetColor(uint32_t led, uint8_t red, uint8_t green, uint8_t blue, uint8_t white)
@@ -353,20 +366,10 @@ void Ws2812SetColor(uint32_t led, uint8_t red, uint8_t green, uint8_t blue, uint
     }
   }
 
-  if (!ws_suspend_update) {
+  if (!Ws2812.suspend_update) {
     strip->Show();
-    ws_show_next = 1;
+    Ws2812.show_next = 1;
   }
-}
-
-void Ws2812ForceSuspend (void) {
-  ws_suspend_update = true;
-}
-
-void Ws2812ForceUpdate (void) {
-  ws_suspend_update = false;
-  strip->Show();
-  ws_show_next = 1;
 }
 
 char* Ws2812GetColor(uint32_t led, char* scolor)
@@ -393,13 +396,42 @@ char* Ws2812GetColor(uint32_t led, char* scolor)
   return scolor;
 }
 
-void Ws2812ShowScheme(uint32_t scheme)
+/*********************************************************************************************\
+ * Public - used by scripter only
+\*********************************************************************************************/
+
+void Ws2812ForceSuspend (void)
 {
+  Ws2812.suspend_update = true;
+}
+
+void Ws2812ForceUpdate (void)
+{
+  Ws2812.suspend_update = false;
+  strip->Show();
+  Ws2812.show_next = 1;
+}
+
+/********************************************************************************************/
+
+bool Ws2812SetChannels(void)
+{
+  uint8_t *cur_col = (uint8_t*)XdrvMailbox.data;
+
+  Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
+
+  return true;
+}
+
+void Ws2812ShowScheme(void)
+{
+  uint32_t scheme = Settings.light_scheme - Ws2812.scheme_offset;
+
   switch (scheme) {
     case 0:  // Clock
-      if ((1 == state_250mS) || (ws_show_next)) {
+      if ((1 == state_250mS) || (Ws2812.show_next)) {
         Ws2812Clock();
-        ws_show_next = 0;
+        Ws2812.show_next = 0;
       }
       break;
     default:
@@ -408,9 +440,117 @@ void Ws2812ShowScheme(uint32_t scheme)
       } else {
         Ws2812Bars(scheme -1);
       }
-      ws_show_next = 1;
+      Ws2812.show_next = 1;
       break;
   }
+}
+
+void Ws2812ModuleSelected(void)
+{
+  if (pin[GPIO_WS2812] < 99) {  // RGB led
+
+    // For DMA, the Pin is ignored as it uses GPIO3 due to DMA hardware use.
+    strip = new NeoPixelBus<selectedNeoFeatureType, selectedNeoSpeedType>(WS2812_MAX_LEDS, pin[GPIO_WS2812]);
+    strip->Begin();
+
+    Ws2812Clear();
+
+    Ws2812.scheme_offset = Light.max_scheme +1;
+    Light.max_scheme += WS2812_SCHEMES;
+
+#if (USE_WS2812_CTYPE > NEO_3LED)
+    light_type = LT_RGBW;
+#else
+    light_type = LT_RGB;
+#endif
+    light_flg = XLGT_01;
+  }
+}
+
+/********************************************************************************************/
+
+void CmndLed(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= Settings.light_pixels)) {
+    if (XdrvMailbox.data_len > 0) {
+      char *p;
+      uint16_t idx = XdrvMailbox.index;
+      Ws2812ForceSuspend();
+      for (char *color = strtok_r(XdrvMailbox.data, " ", &p); color; color = strtok_r(nullptr, " ", &p)) {
+        if (LightColorEntry(color, strlen(color))) {
+          Ws2812SetColor(idx, Light.entry_color[0], Light.entry_color[1], Light.entry_color[2], Light.entry_color[3]);
+          idx++;
+          if (idx > Settings.light_pixels) { break; }
+        } else {
+          break;
+        }
+      }
+      Ws2812ForceUpdate();
+    }
+    char scolor[LIGHT_COLOR_SIZE];
+    ResponseCmndIdxChar(Ws2812GetColor(XdrvMailbox.index, scolor));
+  }
+}
+
+void CmndPixels(void)
+{
+  if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload <= WS2812_MAX_LEDS)) {
+    Settings.light_pixels = XdrvMailbox.payload;
+    Settings.light_rotation = 0;
+    Ws2812Clear();
+    Light.update = true;
+  }
+  ResponseCmndNumber(Settings.light_pixels);
+}
+
+void CmndRotation(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < Settings.light_pixels)) {
+    Settings.light_rotation = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Settings.light_rotation);
+}
+
+void CmndWidth(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
+    if (1 == XdrvMailbox.index) {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 4)) {
+        Settings.light_width = XdrvMailbox.payload;
+      }
+      ResponseCmndNumber(Settings.light_width);
+    } else {
+      if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32)) {
+        Settings.ws_width[XdrvMailbox.index -2] = XdrvMailbox.payload;
+      }
+      ResponseCmndIdxNumber(Settings.ws_width[XdrvMailbox.index -2]);
+    }
+  }
+}
+
+/*********************************************************************************************\
+ * Interface
+\*********************************************************************************************/
+
+bool Xlgt01(uint8_t function)
+{
+  bool result = false;
+
+  switch (function) {
+    case FUNC_SET_CHANNELS:
+      result = Ws2812SetChannels();
+      break;
+    case FUNC_SET_SCHEME:
+      Ws2812ShowScheme();
+      break;
+    case FUNC_COMMAND:
+      result = DecodeCommand(kWs2812Commands, Ws2812Command);
+      break;
+    case FUNC_MODULE_INIT:
+      Ws2812ModuleSelected();
+      break;
+  }
+  return result;
 }
 
 #endif  // USE_WS2812
