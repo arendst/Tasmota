@@ -85,9 +85,9 @@ void PzemSend(uint8_t cmd)
   PZEMCommand pzem;
 
   pzem.command = cmd;
-  pzem.addr[0] = 0;    // Address 0.0.0.1
-  pzem.addr[1] = 0;
-  pzem.addr[2] = 0;
+  pzem.addr[0] = 192;    // Address 192.168.1.1 for Tasmota legacy reason
+  pzem.addr[1] = 168;
+  pzem.addr[2] = 1;
   pzem.addr[3] = ((PZEM_SET_ADDRESS == cmd) && Pzem.address) ? Pzem.address : 1 + Pzem.phase;
   pzem.data = 0;
 
@@ -113,6 +113,7 @@ bool PzemRecieve(uint8_t resp, float *data)
   // A1 00 00 0A 00 00 AB - Current (0.1A)
   // A1 00 00 00 00 00 A1 - No current
   // A2 00 16 00 00 00 B8 - Power (22W)
+  // A2 08 98 00 00 00 42 - Power (2200W)
   // A2 00 00 00 00 00 A2 - No power
   // A3 00 08 A4 00 00 4F - Energy (2.212kWh)
   // A3 01 86 9F 00 00 C9 - Energy (99.999kWh)
@@ -124,11 +125,7 @@ bool PzemRecieve(uint8_t resp, float *data)
   while ((len < sizeof(PZEMCommand)) && (millis() - start < PZEM_DEFAULT_READ_TIMEOUT)) {
     if (PzemSerial->available() > 0) {
       uint8_t c = (uint8_t)PzemSerial->read();
-      if (!c && !len) {
-        continue;  // skip 0 at startup
-      }
-      if ((1 == len) && (buffer[0] == c)) {
-        len--;
+      if (!len && ((c & 0xF8) != 0xA0)) {  // 10100xxx
         continue;  // fix skewed data
       }
       buffer[len++] = c;
@@ -172,7 +169,7 @@ bool PzemRecieve(uint8_t resp, float *data)
 const uint8_t pzem_commands[]  { PZEM_SET_ADDRESS, PZEM_VOLTAGE, PZEM_CURRENT, PZEM_POWER, PZEM_ENERGY };
 const uint8_t pzem_responses[] { RESP_SET_ADDRESS, RESP_VOLTAGE, RESP_CURRENT, RESP_POWER, RESP_ENERGY };
 
-void PzemEvery200ms(void)
+void PzemEvery250ms(void)
 {
   bool data_ready = PzemReceiveReady();
 
@@ -202,17 +199,26 @@ void PzemEvery200ms(void)
       if (5 == Pzem.read_state) {
         Pzem.read_state = 1;
       }
+
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PZM: Retry %d"), 5 - Pzem.send_retry);
     }
   }
 
   if (0 == Pzem.send_retry || data_ready) {
-    Pzem.phase++;
-    if (Pzem.phase >= Energy.phase_count) {
-      Pzem.phase = 0;
+    if (1 == Pzem.read_state) {
+      if (0 == Pzem.phase) {
+        Pzem.phase = Energy.phase_count -1;
+      } else {
+        Pzem.phase--;
+      }
+
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PZM: Probing address %d, Max phases %d"), Pzem.phase +1, Energy.phase_count);
     }
+
     if (Pzem.address) {
       Pzem.read_state = 0;  // Set address
     }
+
     Pzem.send_retry = 5;
     PzemSend(pzem_commands[Pzem.read_state]);
   }
@@ -233,7 +239,7 @@ void PzemSnsInit(void)
       ClaimSerial();
     }
     Energy.phase_count = 3;  // Start off with three phases
-    Pzem.phase = 2;
+    Pzem.phase = 0;
     Pzem.read_state = 1;
   } else {
     energy_flg = ENERGY_NONE;
@@ -252,7 +258,9 @@ bool PzemCommand(void)
   bool serviced = true;
 
   if (CMND_MODULEADDRESS == Energy.command_code) {
-    Pzem.address = XdrvMailbox.payload;  // Valid addresses are 1, 2 and 3
+    if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 4)) {
+      Pzem.address = XdrvMailbox.payload;  // Valid addresses are 1, 2 and 3
+    }
   }
   else serviced = false;  // Unknown command
 
@@ -268,8 +276,8 @@ bool Xnrg03(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_EVERY_200_MSECOND:
-      if (PzemSerial) { PzemEvery200ms(); }
+    case FUNC_EVERY_250_MSECOND:
+      if (PzemSerial && (uptime > 4)) { PzemEvery250ms(); }
       break;
     case FUNC_COMMAND:
       result = PzemCommand();
