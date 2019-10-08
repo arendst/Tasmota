@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.6.0.4
+ * Updated until v6.6.0.15
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -125,8 +125,8 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Fact de puiss"
 #define D_POWERUSAGE "Puissance"
-#define D_POWERUSAGE_ACTIVE "Puiss act"
-#define D_POWERUSAGE_APPARENT "Puiss app"
+#define D_POWERUSAGE_ACTIVE "Puiss active"
+#define D_POWERUSAGE_APPARENT "Puiss apparente"
 #define D_POWERUSAGE_REACTIVE "Puiss réactive"
 #define D_PRESSURE "Pression"
 #define D_PRESSUREATSEALEVEL "PressionMer"
@@ -284,7 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Paramètres du journal"
 #define D_SERIAL_LOG_LEVEL "Niveau de journalisation série"
-#define D_MQTT_LOG_LEVEL "Mqtt log level"
+#define D_MQTT_LOG_LEVEL "Niveau de journalisation MQTT"
 #define D_WEB_LOG_LEVEL "Niveau de journalisation web"
 #define D_SYS_LOG_LEVEL "Niveau SysLog"
 #define D_MORE_DEBUG "Plus de debug"
@@ -444,17 +444,17 @@
 #define D_ENERGY_TOTAL "Énergie totale"
 
 // xdrv_27_shutter.ino
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_DOMOTICZ_SHUTTER "Shutter"
+#define D_OPEN "Ouvert"
+#define D_CLOSE "Fermé"
+#define D_DOMOTICZ_SHUTTER "Volet"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_PCF8574_PARAMETERS "PCF8574 parameters"
-#define D_INVERT_PORTS "Invert Ports"
-#define D_DEVICE "Device"
-#define D_DEVICE_INPUT "Input"
-#define D_DEVICE_OUTPUT "Output"
+#define D_CONFIGURE_PCF8574 "Configurer PCF8574"
+#define D_PCF8574_PARAMETERS "Paramètres PCF8574"
+#define D_INVERT_PORTS "Inverser les Ports"
+#define D_DEVICE "Module"
+#define D_DEVICE_INPUT "Entrée"
+#define D_DEVICE_OUTPUT "Sortie"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Capteur occupé"
@@ -684,11 +684,11 @@
 
 //SDM220
 #define D_PHASE_ANGLE     "Angle de phase"
-#define D_IMPORT_ACTIVE   "Puiss act conso"
-#define D_EXPORT_ACTIVE   "Puiss act fournie"
-#define D_IMPORT_REACTIVE "Puiss réa conso"
-#define D_EXPORT_REACTIVE "Puiss réa fournie"
-#define D_TOTAL_REACTIVE  "Puiss réa totale"
+#define D_IMPORT_ACTIVE   "Énergie act conso"
+#define D_EXPORT_ACTIVE   "Énergie act fournie"
+#define D_IMPORT_REACTIVE "Énergie réa conso"
+#define D_EXPORT_REACTIVE "Énergie réa fournie"
+#define D_TOTAL_REACTIVE  "Énergie réa totale"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "°"
 
