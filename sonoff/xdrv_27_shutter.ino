@@ -92,7 +92,15 @@ int32_t ShutterPercentToRealPosition(uint8_t percent,uint8_t index)
     return  percent <= 5 ?  Settings.shuttercoeff[2][index] * percent : Settings.shuttercoeff[1][index] * percent + Settings.shuttercoeff[0][index];
 	} else {
     uint16_t realpos;
-
+    // check against DIV 0
+    for (uint8_t j=0 ; j < 5 ; j++) {
+      if (Settings.shuttercoeff[j][index] == 0) {
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("SHT: RESET/INIT CALIBRATION MATRIX DIV 0"));
+        for (uint8_t k=0 ; k < 5 ; k++) {
+          Settings.shuttercoeff[k][index] = messwerte[k] * 1000 / messwerte[4];
+        }
+      }
+    }
     for (uint8_t i=0 ; i < 5 ; i++) {
       if (percent*10 > Settings.shuttercoeff[i][index]) {
         realpos = Shutter.open_max[index] * calibrate_pos[i+1] / 100;
@@ -182,7 +190,8 @@ void ShutterInit(void)
 
       TickerShutter.attach_ms(50, ShutterRtc50mS );
       // default the 50 percent should not have any impact without changing it. set to 60
-      Settings.shutter_set50percent[i] = (Settings.shutter_set50percent[i] == 0 ? 50 : Settings.shutter_set50percent[i]);
+      Settings.shutter_set50percent[i] = Settings.shutter_set50percent[i] > 0 ? Settings.shutter_set50percent[i] : 50;
+
       // use 10 sec. as default to allow everybody to play without deep initialize
       Shutter.open_time[i] = Settings.shutter_opentime[i] > 0 ? Settings.shutter_opentime[i] : 100;
       Shutter.close_time[i] = Settings.shutter_closetime[i] > 0 ? Settings.shutter_closetime[i] : 100;
