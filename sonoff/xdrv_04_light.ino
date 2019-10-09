@@ -1075,7 +1075,7 @@ bool LightModuleInit(void)
     devices_present += pwm_channels - 1;  // add the pwm channels controls at the end
   }
 
-  return (light_type > 0);
+  return (light_type > LT_BASIC);
 }
 
 void LightInit(void)

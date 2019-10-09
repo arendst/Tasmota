@@ -1413,17 +1413,19 @@ void GpioInit(void)
     devices_present = 0;
     baudrate = 19200;
   }
-
-  if (!light_type) {
-    devices_present = 0;
-    for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
-      if (pin[GPIO_PWM1 +i] < 99) {
-        pwm_present = true;
-        pinMode(pin[GPIO_PWM1 +i], OUTPUT);
-        analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
+  else {
+    if (!light_type) {
+      devices_present = 0;
+      for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
+        if (pin[GPIO_PWM1 +i] < 99) {
+          pwm_present = true;
+          pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+          analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
+        }
       }
     }
   }
+
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (pin[GPIO_REL1 +i] < 99) {
       pinMode(pin[GPIO_REL1 +i], OUTPUT);
