@@ -450,15 +450,6 @@ void HueGlobalConfig(String *path)
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
   for (uint32_t i = 1; i <= maxhue; i++) {
-//stb mod
-// skip broadcast for devices named Sonoff*
-    if (strncmp (Settings.friendlyname[i-1], "Sonoff", 6) == 0) {
-      AddLog_P2(LOG_LEVEL_ERROR, PSTR("Skip broadcasting default device: %s"),Settings.friendlyname[i-1]);
-      continue;
-    } else {
-      AddLog_P2(LOG_LEVEL_ERROR, PSTR("Broadcast OK device: %s"),Settings.friendlyname[i-1]);
-    }
-// end
     response += EncodeLightId(i);
     response += F("\":{\"state\":");
     HueLightStatus1(i, &response);
@@ -504,15 +495,6 @@ void HueLights(String *path)
   if (path->endsWith("/lights")) {                   // Got /lights
     response = "{\"";
     for (uint32_t i = 1; i <= maxhue; i++) {
-    //stb mode
-      // skip broadcast for devices named Sonoff*
-          if (strncmp (Settings.friendlyname[i-1], "Sonoff", 6) == 0) {
-            AddLog_P2(LOG_LEVEL_ERROR, PSTR("2Skip broadcasting default device: %s"),Settings.friendlyname[i-1]);
-            continue;
-          } else {
-            AddLog_P2(LOG_LEVEL_ERROR, PSTR("2Broadcast OK device: %s"),Settings.friendlyname[i-1]);
-          }
-      // end
       response += EncodeLightId(i);
       response += F("\":{\"state\":");
       HueLightStatus1(i, &response);

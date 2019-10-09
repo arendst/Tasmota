@@ -84,9 +84,10 @@ void PzemAcEverySecond(void)
   }
 
   if (0 == PzemAc.send_retry || data_ready) {
-    PzemAc.phase++;
-    if (PzemAc.phase >= Energy.phase_count) {
-      PzemAc.phase = 0;
+    if (0 == PzemAc.phase) {
+      PzemAc.phase = Energy.phase_count -1;
+    } else {
+      PzemAc.phase--;
     }
     PzemAc.send_retry = ENERGY_WATCHDOG;
     if (ADDR_SEND == PzemAc.address_step) {
@@ -111,7 +112,7 @@ void PzemAcSnsInit(void)
   if (result) {
     if (2 == result) { ClaimSerial(); }
     Energy.phase_count = 3;  // Start off with three phases
-    PzemAc.phase = 2;
+    PzemAc.phase = 0;
   } else {
     energy_flg = ENERGY_NONE;
   }

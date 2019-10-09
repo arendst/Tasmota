@@ -165,6 +165,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_SDM120_2                          // Add support for Eastron SDM120-Modbus energy monitor (+1k1 code)
 #define USE_SDM630_2                          // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #define USE_DDS2382                           // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
+#define USE_DDSU666                           // Add support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 
 #define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #define USE_MAX31855                          // Add support for MAX31855 K-Type thermocouple sensor using softSPI
@@ -251,6 +252,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630_2                           // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                            // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
+#undef USE_DDSU666                            // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 
 #define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -305,6 +307,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
   #undef USE_SDM120_2                         // Disable support for Eastron SDM120-Modbus energy meter
   #undef USE_SDM630_2                         // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #undef USE_DDS2382                          // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
+  #undef USE_DDSU666                          // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 #undef USE_EMULATION                          // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_DOMOTICZ                           // Disable Domoticz
 #undef USE_HOME_ASSISTANT                     // Disable Home Assistant
@@ -388,6 +391,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630_2                           // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                            // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
+#undef USE_DDSU666                            // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 
 //#define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -484,6 +488,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630_2                           // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                            // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
+#undef USE_DDSU666                            // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 
 #undef USE_DHT                                // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -568,6 +573,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_SDM120_2                           // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630_2                           // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                            // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
+#undef USE_DDSU666                            // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 
 #undef USE_DHT                                // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI

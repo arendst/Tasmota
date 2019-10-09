@@ -84,8 +84,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t pwm_multi_channels : 1;       // bit 18 (v6.6.0.3)  - SetOption68 - Enable multi-channels PWM instead of Color PWM
     uint32_t tuya_dimmer_min_limit : 1;    // bit 19 (v6.6.0.5)  - SetOption69 - Limits Tuya dimmers to minimum of 10% (25) when enabled.
     uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
-    uint32_t spare21 : 1;
-    uint32_t spare22 : 1;
+    uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71 - Select different Modbus registers for Active Energy (#6531)
+    uint32_t hardware_energy_total : 1;    // bit 22 (v6.6.0.15) - SetOption72 - Enable / Disable hardware energy total counter as reference (#6561)
     uint32_t spare23 : 1;
     uint32_t spare24 : 1;
     uint32_t spare25 : 1;
@@ -93,11 +93,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
-// STB mod
-    uint32_t shutter_mode : 1;
-    uint32_t spare31 : 1;
-
-// end
+    uint32_t shutter_mode : 1;             // bit 30 (v6.6.0.14) - SetOption80 - Enable shutter support
+    uint32_t pcf8574_ports_inverted : 1;   // bit 31 (v6.6.0.14) - SetOption81 - Invert all ports on PCF8574 devices
   };
 } SysBitfield3;
 
@@ -230,7 +227,9 @@ struct SYSCFG {
   uint8_t       weblog_level;              // 1AC
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
   uint8_t       adc_param_type;            // 1D5
-  uint8_t       register8[18];             // 1D6 - 18 x 8-bit registers indexed by enum SettingsRegister8
+  uint8_t       register8[16];             // 1D6 - 16 x 8-bit registers indexed by enum SettingsRegister8
+  uint8_t       shutter_accuracy;          // 1E6
+  uint8_t       mqttlog_level;             // 1E7
   uint8_t       sps30_inuse_hours;         // 1E8
   char          mqtt_host[33];             // 1E9 - Keep together with below as being copied as one chunck with reset 6
   uint16_t      mqtt_port;                 // 20A - Keep together
@@ -377,30 +376,17 @@ struct SYSCFG {
   uint16_t      ina226_r_shunt[4];         // E20
   uint16_t      ina226_i_fs[4];            // E28
   uint16_t      tariff[4][2];              // E30
+  uint16_t      shutter_opentime[MAX_SHUTTERS];      // E40
+  uint16_t      shutter_closetime[MAX_SHUTTERS];     // E48
+  int16_t       shuttercoeff[5][MAX_SHUTTERS];       // E50
+  uint8_t       shutter_invert[MAX_SHUTTERS];        // E78
+  uint8_t       shutter_set50percent[MAX_SHUTTERS];  // E7C
+  uint8_t       shutter_position[MAX_SHUTTERS];      // E80
+  uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
+  uint8_t       pcf8574_config[MAX_PCF8574];         // E88
 
-  uint8_t       free_e40[333];             // E40
-  //STB mod
-  //uint16_t      pid_parameter[4][]             // PID_PROPBAND, PID_INTEGRAL_TIME, PID_DERIVATIVE_TIME, PID_MAX_INTERVAL, PID_DERIV_SMOOTH_FACTOR  //float         pid_setpoint[4];
-  //float         pid_initial_int[4];
-  //uint16_t      pid_update_secs;
-  //uint8_t       pid_auto;
-  //uint8_t       pid_manual_power;
-  uint8_t       shutter_accuracy;                //F91
-  int16_t       shuttercoeff[5][MAX_SHUTTERS];   //  F92
-  uint8_t       free_681;                      //FBA  size if the bucket for an interlock. Typically 1..4
-  uint8_t       shutter_invert[MAX_SHUTTERS];       //FBB
-  uint8_t       shutter_set50percent[MAX_SHUTTERS];  //FBF
-  power_t       free_682;            // FC3   32 bit array. 1 = relay effected by interlock 0 = relay not effected
-  uint8_t       shutter_startrelay[MAX_SHUTTERS];   //FC7
-  uint16_t      shutter_opentime[MAX_SHUTTERS];   //FCF
-  uint16_t      shutter_closetime[MAX_SHUTTERS];   //FD3
-  uint8_t       shutter_position[MAX_SHUTTERS];              // FDB
-  unsigned long uptime;                    // FDF
-  uint8_t       pcf8574_config[8];         // FE3
-  uint8_t       all_relays_inverted;       //FEB
-  uint32_t      deepsleep;                 //FEC
-  uint16_t      pulse_devider[MAX_COUNTERS];     //FF0
-  //end
+  uint8_t       free_e90[360];             // E90
+
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC
 } Settings;
@@ -420,14 +406,8 @@ struct RTCMEM {
   unsigned long pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
   EnergyUsage   energy_usage;              // 2B0
-  //STB mod
-  uint8_t       free_2C8[22];              // 2C8
-  int16_t       deepsleep_slip;
-  unsigned long nextwakeup;
-  unsigned long uptime;
-  uint32_t      ultradeepsleep;
-
-  //end
+  uint8_t       free_038[36];              // 2C8
+                                           // 2EC - 2FF free locations
 } RtcSettings;
 
 struct TIME_T {
@@ -455,9 +435,12 @@ struct XDRVMAILBOX {
   char         *data;
   char         *command;
 } XdrvMailbox;
-//stb mod
-const uint8_t MAX_RULES_FLAG = 10;          // Number of bits used in RulesBitfield (tricky I know...)
-//end
+
+#ifdef USE_SHUTTER
+const uint8_t MAX_RULES_FLAG = 10;         // Number of bits used in RulesBitfield (tricky I know...)
+#else
+const uint8_t MAX_RULES_FLAG = 8;          // Number of bits used in RulesBitfield (tricky I know...)
+#endif  // USE_SHUTTER
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint16_t data;                           // Allow bit manipulation
   struct {
@@ -469,10 +452,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint16_t wifi_connected : 1;
     uint16_t wifi_disconnected : 1;
     uint16_t http_init : 1;
-    //stb mod
     uint16_t shutter_moved : 1;
     uint16_t shutter_moving : 1;
-    // end
     uint16_t spare10 : 1;
     uint16_t spare11 : 1;
     uint16_t spare12 : 1;

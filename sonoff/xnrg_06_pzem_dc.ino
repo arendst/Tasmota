@@ -82,9 +82,10 @@ void PzemDcEverySecond(void)
   }
 
   if (0 == PzemDc.send_retry || data_ready) {
-    PzemDc.channel++;
-    if (PzemDc.channel >= Energy.phase_count) {
-      PzemDc.channel = 0;
+    if (0 == PzemDc.channel) {
+      PzemDc.channel = Energy.phase_count -1;
+    } else {
+      PzemDc.channel--;
     }
     PzemDc.send_retry = ENERGY_WATCHDOG;
     if (ADDR_SEND == PzemDc.address_step) {
@@ -110,7 +111,7 @@ void PzemDcSnsInit(void)
     if (2 == result) { ClaimSerial(); }
     Energy.type_dc = true;
     Energy.phase_count = 3;  // Start off with three channels
-    PzemDc.channel = 2;
+    PzemDc.channel = 0;
   } else {
     energy_flg = ENERGY_NONE;
   }

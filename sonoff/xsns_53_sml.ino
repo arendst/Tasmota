@@ -847,13 +847,15 @@ uint8_t Serial_peek() {
   return meter_ss[num-1]->peek();
 }
 
+uint8_t sml_logindex;
+
 void Dump2log(void) {
 
 int16_t index=0,hcnt=0;
 uint32_t d_lastms;
 uint8_t dchars[16];
 
-  if (!SML_SAVAILABLE) return;
+  //if (!SML_SAVAILABLE) return;
 
   if (dump2log&8) {
     // combo mode
@@ -898,7 +900,25 @@ uint8_t dchars[16];
       }
     }
   } else {
-    //while (SML_SAVAILABLE) {
+    if (meter_desc_p[(dump2log&7)-1].type=='o') {
+      // obis
+      while (SML_SAVAILABLE) {
+        char c=SML_SREAD&0x7f;
+        if (c=='\n' || c=='\r') {
+          log_data[sml_logindex]=0;
+          AddLog(LOG_LEVEL_INFO);
+          sml_logindex=2;
+          log_data[0]=':';
+          log_data[1]=' ';
+          break;
+        }
+        log_data[sml_logindex]=c;
+        if (sml_logindex<sizeof(log_data)-2) {
+          sml_logindex++;
+        }
+      }
+    } else {
+      //while (SML_SAVAILABLE) {
       index=0;
       log_data[index]=':';
       index++;
@@ -907,45 +927,36 @@ uint8_t dchars[16];
       d_lastms=millis();
       while ((millis()-d_lastms)<40) {
         if (SML_SAVAILABLE) {
-          if (meter_desc_p[(dump2log&7)-1].type=='o') {
-            // obis
-            char c=SML_SREAD&0x7f;
-            if (c=='\n' || c=='\r') break;
-            log_data[index]=c;
-            index++;
+          unsigned char c;
+          if (meter_desc_p[(dump2log&7)-1].type=='e') {
+            // ebus
+            c=SML_SREAD;
+            sprintf(&log_data[index],"%02x ",c);
+            index+=3;
+            if (c==EBUS_SYNC) break;
           } else {
-            unsigned char c;
-            if (meter_desc_p[(dump2log&7)-1].type=='e') {
-              // ebus
-              c=SML_SREAD;
-              sprintf(&log_data[index],"%02x ",c);
-              index+=3;
-              if (c==EBUS_SYNC) break;
+            // sml
+            if (sml_start==0x77) {
+              sml_start=0;
             } else {
-              // sml
-              if (sml_start==0x77) {
-                sml_start=0;
-              } else {
-                c=SML_SPEAK;
-                if (c==0x77) {
-                  sml_start=c;
-                  break;
-                }
+              c=SML_SPEAK;
+              if (c==0x77) {
+                sml_start=c;
+                break;
               }
-              c=SML_SREAD;
-              sprintf(&log_data[index],"%02x ",c);
-              index+=3;
             }
+            c=SML_SREAD;
+            sprintf(&log_data[index],"%02x ",c);
+            index+=3;
           }
         }
       }
-      if (index>0) {
+      if (index>2) {
         log_data[index]=0;
         AddLog(LOG_LEVEL_INFO);
       }
     }
-  //}
-
+  }
 }
 
 // skip sml entries
@@ -1750,6 +1761,7 @@ void SML_Show(boolean json) {
    }
 
 
+/*
 #ifdef USE_DOMOTICZ
   if (json && !tele_period) {
     char str[16];
@@ -1761,6 +1773,7 @@ void SML_Show(boolean json) {
     DomoticzSensor(DZ_CURRENT, str);  // Current
   }
 #endif  // USE_DOMOTICZ
+*/
 }
 
 struct SML_COUNTER {

@@ -1,45 +1,4 @@
 <img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
-## Stefan Bode fork of Tasmota-Master
-I keep this version in sync with the current development of the master. Anyhow my use case is a little bit different. Even, if I have some SONOFF devices, I like to build(solder) my own based on different versions of the ESP8266, depending on my different requirements (batterie, external Antenna, add on I2C devices and others). Additionally I try to improve the overall project.
-
-Additional features:
-- DeepSleep support up to 136 Years (deepsleep=xxx [sec]). Support also 1day or more deepsleep. Just define deepsleep e.g. 1 day = 86400. (wakes up every hour for <0.3 seconds until time reached. just set deepsleep through serial or MQTT to a value in sec from 10 - 4.294.967.295 (136 Years :-))
-- Improved Startuptime incl TLS MQTT and measurement in <9 sek
-- Support for I2C 8-channel DIO extension board PCF-8574 (large extension to support 32 relays and pulsetimers on 8 relays (can be changed by changing constant MAX_PULSETIMER).
-- Report total UPTIME (seconds) between two deepsleep cycle. This allows to see uptime, even if connect was not successfull or there was a reboot. Using RTC memory to ensure correct uptime
-- Added support of "counterdevider[1..MAX_COUNTERS]" (serial and MQTT command), to count only the 1 count every counterdeviderX impulses (max 65.000 impulses = 1 count, default 1s).
-- Added Support for Shutter use-Case. In this case two relays are paired into one switch. Based on the value on the first relay the second relay will set automatically. Use Setoption81 to set it. See Wiki.
-- Added more support for the shutter Use-Case. The Setoption80 is required, if someone changes the target position if the shutter is still operating. Please see Shutter wiki for more details.
-- Added full support on RULES with shutter. Full control and new events Shutter#MOVING and Shutter#MOVED
-- Added Alexa support for shutters through HUE Dimmer functionality. Not perfect but ok.
-
-Changelog:
-1.14 2019-10-01
-- added the long awaiting functionality for detailed position calibration of the Shutter
-
-1.13 2019-09-29
-- ensure deepsleep is at least MIN_DEEPSLEEP_TIME (default 5sec) to avoid infinite sleep
-
-1.12 2019-09-29
-- fixed issue that configuration did not stay.
-
-1.12 2019-09-25
-- added sht[ ] for scripts to access the position of a shutter.
-
-1.10 2019-09-04
-- Fixed issue with wakeup not working. Calculate clock correction factor to meet deepsleep time. Real deepsleep is up to 10% related on chip temperature. Correction factor will continuously improved at every wakeup. NTP Timeserver is required.
-
-1.09 2019-09-02
-- Fixed shutter: Relay executed by MQTT or serial did not get recognized by shutter driver.
-
-1.08 2019-09-01
-- Added two new triggers to rules (System#PreTele and System#PostTele). Mainly to switch on/off devices before and after TelePeriod
-- changed deepsleep time calculation. Wakeup will now 100% in sync with time. E.g. you startet at 8:00am and define 3600 seconds, the device will always wakeup near the full hour. A slightly shift will not happen anymore
-
-1.07 2019-08-30
-- Added two new triggers to rules to better control the shutters (SHUTTER#MOVING and SHUTTER#MOVED). Last one reports actual position of the shutter.
-
-**Note that deep sleep on ESP-01 is not possible without hardware modifications because it's required to connect GPIO16 to RST, see https://github.com/stefanbode/Sonoff-Tasmota/issues/40. The same applies most likely to other modules like ESP-02, ESP-04 etc**
 
 # Sonoff-Tasmota
 Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web UI, rules and timers, OTA updates, custom device templates and sensor support**. Allows control over **MQTT**, **HTTP**, **Serial** and **KNX** for integrations with smart home systems. Written for Arduino IDE and PlatformIO.
@@ -49,7 +8,7 @@ Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.
 [![License](https://img.shields.io/github/license/arendst/Sonoff-Tasmota.svg)](https://github.com/arendst/Sonoff-Tasmota/blob/development/LICENSE.txt)
 [![Chat](https://img.shields.io/discord/479389167382691863.svg)](https://discord.gg/Ks2Kzd4)
 
-If you like **Sonoff-Tasmota**, give it a star, or fork it and contribute!
+If you like **Sonoff-Tasmota**, give it a star, or fork it, and contribute!
 
 [![GitHub stars](https://img.shields.io/github/stars/arendst/Sonoff-Tasmota.svg?style=social&label=Star)](https://github.com/arendst/Sonoff-Tasmota/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Sonoff-Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Sonoff-Tasmota/network)
@@ -66,12 +25,16 @@ In addition to the [release webpage](https://github.com/arendst/Sonoff-Tasmota/r
 
 See [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for detailed change information.
 
-The development codebase is checked hourly for changes and if new commits have been merged and compile successfuly they will be posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA too). It is important to note that these are based on the current development codebase and it is not recommended to flash it to devices used in production or which are hard to reach in the event that you need to manually flash the device if OTA failed. The last compiled commit number is also posted on the same page along with the current build status (if a firmware rebuild is in progress).
+Unless your Tasmota based device exhibits a problem or you need to make use of a feature that is not available in the Tasmota version currently installed on your device, leave your device alone - it works so don't make unnecessary changes! If the release version (i.e., the master branch) exhibits problems for your device and configuration, you should upgrade to the latest development version instead to see if your problem is resolved.  
+
+The Tasmota development codebase is checked every 1-2 hours for changes. If new commits have been merged and they compile successfuly, new binary files for every variant and Core will be posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA too). The last compiled commit number is also posted on the same page along with the current build status (if a firmware rebuild is in progress). It is important to note that these binaries are based on the current development codebase. These commits are tested as much as is possible and are typically quite stable. However, it is infeasible to test on the hudreds of different types of devices with the specific configurations that are permitted.  
+
+Note that there is a chance, as with any upgrade, that the device may not function as expected. You must always account for the possibility that you may need to flash the device via the serial programming interface if the OTA fails. Even with the master release, you should always attempt to test the device or a similar prototype before upgrading a device which is in production or is hard to reach. And, as always, make a backup of the device configuration before beginning any firmware update. 
 
 ## Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
 
-A Sonoff device is not a toy. It uses Mains AC so there is a danger of electrocution if not installed properly. If you don't know how to install it, please call an electrician. Remember: _**SAFETY FIRST**_. It is not worth risk to yourself, your family, and your home if you don't know exactly what you are doing. Never try to flash a Sonoff device while it is connected to MAINS AC.
+An ESP82xx Wi-Fi device is not a toy. It uses Mains AC so there is a danger of electrocution if not installed properly. If you don't know how to install it, please call an electrician. Remember: _**SAFETY FIRST**_. It is not worth risk to yourself, your family, and your home if you don't know exactly what you are doing. Never try to flash a device using the serial programming interface while it is connected to MAINS AC.
 
 We don't take any responsibility nor liability for using this software nor for the installation or any tips, advice, videos, etc. given by any member of this site or any related site.
 
@@ -84,14 +47,12 @@ Download one of the released binaries from https://github.com/arendst/Sonoff-Tas
 ## Important User Compilation Information
 If you want to compile Sonoff-Tasmota yourself keep in mind the following:
 
-- Only Flash Mode **DOUT** is supported. Do not use Flash Mode DIO / QIO / QOUT as it might seem to brick your device. See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Theo's-Tasmota-Tips) for background information.
-- Sonoff-Tasmota uses a 1M linker script WITHOUT spiffs **1M (no SPIFFS)** for optimal code space. If you compile using ESP/Arduino library 2.3.0 then download the provided new linker script to your Arduino IDE or Platformio base folder. Later version of ESP/Arduino library already contain the correct linker script. See [Wiki > Prerequisites](https://github.com/arendst/Sonoff-Tasmota/wiki/Prerequisites).
+- Only Flash Mode **DOUT** is supported. Do not use Flash Mode DIO / QIO / QOUT as it might seem to brick your device. See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Flashing) for background information.
+- Sonoff-Tasmota uses a 1M linker script WITHOUT spiffs **1M (no SPIFFS)** for optimal code space. If you compile using ESP/Arduino library 2.3.0 then download the provided new linker script to your Arduino IDE or Platformio base folder. Later versions of ESP/Arduino library already contain the correct linker script. See [Wiki > Prerequisites](https://github.com/arendst/Sonoff-Tasmota/wiki/Prerequisites).
 - To make compile time changes to Sonoff-Tasmota it can use the ``user_config_override.h`` file. It assures keeping your settings when you download and compile a new version. To use ``user_config.override.h`` you will have to make a copy of the provided ``user_config_override_sample.h`` file and add your setting overrides. To enable the override file you will need to use a compile define as documented in the ``user_config_override_sample.h`` file.
 
-## Version Information
-- Sonoff-Tasmota provides all (Sonoff) modules in one file and starts with module Sonoff Basic.
-- Once uploaded, select [Module](https://github.com/arendst/Sonoff-Tasmota/wiki/Modules) using the configuration webpage, the commands ```Modules``` and ```Module``` or configure the [Template](https://github.com/arendst/Sonoff-Tasmota/wiki/Templates) for your device
-- After reboot select config menu again or use commands ```GPIOs``` and ```GPIO``` to change GPIO with desired sensor.
+## Configuration Information
+Please refer to the Installation and configuration articles in the [wiki](https://github.com/arendst/Sonoff-Tasmota/wiki).
 
 ## Migration Information
 See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:

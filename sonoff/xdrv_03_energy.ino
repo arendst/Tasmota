@@ -134,13 +134,18 @@ bool EnergyTariff1Active()  // Off-Peak hours
     dst = 1;
   }
   if (Settings.tariff[0][dst] != Settings.tariff[1][dst]) {
+    if (Settings.flag3.energy_weekend && ((RtcTime.day_of_week == 1) ||
+                                          (RtcTime.day_of_week == 7))) {
+      return true;
+    }
     uint32_t minutes = MinutesPastMidnight();
-    return ((minutes < Settings.tariff[1][dst]) ||  // Tarrif1 = Off-Peak
-            (minutes >= Settings.tariff[0][dst]) ||
-            (Settings.flag3.energy_weekend && ((RtcTime.day_of_week == 1) ||
-                                               (RtcTime.day_of_week == 7)))
-           );
-
+    if (Settings.tariff[0][dst] > Settings.tariff[1][dst]) {
+      // {"Tariff":{"Off-Peak":{"STD":"22:00","DST":"23:00"},"Standard":{"STD":"06:00","DST":"07:00"},"Weekend":"OFF"}}
+      return ((minutes >= Settings.tariff[0][dst]) || (minutes < Settings.tariff[1][dst]));
+    } else {
+      // {"Tariff":{"Off-Peak":{"STD":"00:29","DST":"01:29"},"Standard":{"STD":"07:29","DST":"08:29"},"Weekend":"OFF"}}
+      return ((minutes >= Settings.tariff[0][dst]) && (minutes < Settings.tariff[1][dst]));
+    }
   } else {
     return false;
   }
@@ -194,7 +199,7 @@ void EnergyUpdateTotal(float value, bool kwh)
     Energy.kWhtoday = (unsigned long)((value - Energy.start_energy) * multiplier);
   }
 
-  if (Energy.total < (value - 0.01)){ // We subtract a little offset to avoid continuous updates
+  if ((Energy.total < (value - 0.01)) && Settings.flag3.hardware_energy_total) { // We subtract a little offset to avoid continuous updates
     RtcSettings.energy_kWhtotal = (unsigned long)((value * multiplier) - Energy.kWhtoday_offset - Energy.kWhtoday);
     Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
     Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
@@ -326,11 +331,11 @@ void EnergyMarginCheck(void)
       jsonflg = true;
     }
     if (EnergyMargin(false, Settings.energy_min_current, energy_current_u, flag, Energy.min_current_flag)) {
-      ResponseAppend_P(PSTR("%s%s\"" D_CMND_CURRENTLOW "\":\"%s\""), (jsonflg)?",":"", GetStateText(flag));
+      ResponseAppend_P(PSTR("%s\"" D_CMND_CURRENTLOW "\":\"%s\""), (jsonflg)?",":"", GetStateText(flag));
       jsonflg = true;
     }
     if (EnergyMargin(true, Settings.energy_max_current, energy_current_u, flag, Energy.max_current_flag)) {
-      ResponseAppend_P(PSTR("%s%s\"" D_CMND_CURRENTHIGH "\":\"%s\""), (jsonflg)?",":"", GetStateText(flag));
+      ResponseAppend_P(PSTR("%s\"" D_CMND_CURRENTHIGH "\":\"%s\""), (jsonflg)?",":"", GetStateText(flag));
       jsonflg = true;
     }
     if (jsonflg) {

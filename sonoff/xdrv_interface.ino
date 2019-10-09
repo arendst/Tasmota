@@ -821,11 +821,11 @@ const uint8_t kXdrvList[] = {
 #endif
 
 #ifdef XDRV_98
- XDRV_98,
+  XDRV_98,
 #endif
 
 #ifdef XDRV_99
- XDRV_99
+  XDRV_99
 #endif
 };
 
@@ -846,16 +846,6 @@ void XsnsDriverState(void)
 }
 
 /*********************************************************************************************/
-
-bool XdrvMqttData(char *topicBuf, uint16_t stopicBuf, char *dataBuf, uint16_t sdataBuf)
-{
-  XdrvMailbox.index = stopicBuf;
-  XdrvMailbox.data_len = sdataBuf;
-  XdrvMailbox.topic = topicBuf;
-  XdrvMailbox.data = dataBuf;
-
-  return XdrvCall(FUNC_MQTT_DATA);
-}
 
 bool XdrvRulesProcess(void)
 {

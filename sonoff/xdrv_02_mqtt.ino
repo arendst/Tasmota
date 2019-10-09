@@ -39,7 +39,7 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
   D_CMND_TLSKEY "|"
 #endif
   D_CMND_MQTTHOST "|" D_CMND_MQTTPORT "|" D_CMND_MQTTRETRY "|" D_CMND_STATETEXT "|" D_CMND_MQTTCLIENT "|"
-  D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|"
+  D_CMND_FULLTOPIC "|" D_CMND_PREFIX "|" D_CMND_GROUPTOPIC "|" D_CMND_TOPIC "|" D_CMND_PUBLISH "|" D_CMND_MQTTLOG "|"
   D_CMND_BUTTONTOPIC "|" D_CMND_SWITCHTOPIC "|" D_CMND_BUTTONRETAIN "|" D_CMND_SWITCHRETAIN "|" D_CMND_POWERRETAIN "|" D_CMND_SENSORRETAIN ;
 
 void (* const MqttCommand[])(void) PROGMEM = {
@@ -53,7 +53,7 @@ void (* const MqttCommand[])(void) PROGMEM = {
   &CmndTlsKey,
 #endif
   &CmndMqttHost, &CmndMqttPort, &CmndMqttRetry, &CmndStateText, &CmndMqttClient,
-  &CmndFullTopic, &CmndPrefix, &CmndGroupTopic, &CmndTopic, &CmndPublish,
+  &CmndFullTopic, &CmndPrefix, &CmndGroupTopic, &CmndTopic, &CmndPublish, &CmndMqttlog,
   &CmndButtonTopic, &CmndSwitchTopic, &CmndButtonRetain, &CmndSwitchRetain, &CmndPowerRetain, &CmndSensorRetain };
 
 struct MQTT {
@@ -62,9 +62,6 @@ struct MQTT {
   uint8_t initial_connection_state = 2;  // MQTT connection messages state
   bool connected = false;                // MQTT virtual connection status
   bool allowed = false;                  // MQTT enabled and parameters valid
-  //stb mod
-  uint16_t retry_reboot_counter = 1;     // MQTT connection reboot after x unseccesful retries
-  // end
 } Mqtt;
 
 #ifdef USE_MQTT_TLS
@@ -201,9 +198,6 @@ PubSubClient MqttClient(EspClient);
 
 void MqttInit(void)
 {
-// stb mod
-Mqtt.retry_reboot_counter = Settings.mqtt_retry;
-//end
 #ifdef USE_MQTT_TLS
   tlsClient = new BearSSL::WiFiClientSecure_light(1024,1024);
 
@@ -257,7 +251,7 @@ bool MqttPublishLib(const char* topic, bool retained)
   return result;
 }
 
-void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
+void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len)
 {
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("MqttDataHandler"));
@@ -268,8 +262,8 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
 
   // Do not execute multiple times if Prefix1 equals Prefix2
   if (!strcmp(Settings.mqtt_prefix[0], Settings.mqtt_prefix[1])) {
-    char *str = strstr(topic, Settings.mqtt_prefix[0]);
-    if ((str == topic) && mqtt_cmnd_publish) {
+    char *str = strstr(mqtt_topic, Settings.mqtt_prefix[0]);
+    if ((str == mqtt_topic) && mqtt_cmnd_publish) {
       if (mqtt_cmnd_publish > 3) {
         mqtt_cmnd_publish -= 3;
       } else {
@@ -279,13 +273,22 @@ void MqttDataHandler(char* topic, uint8_t* data, unsigned int data_len)
     }
   }
 
-  data[data_len] = 0;
+  // Save MQTT data ASAP as it's data is discarded by PubSubClient with next publish as used in MQTTlog
+  char topic[TOPSZ];
+  strlcpy(topic, mqtt_topic, sizeof(topic));
+  mqtt_data[data_len] = 0;
+  char data[data_len +1];
+  memcpy(data, mqtt_data, sizeof(data));
 
-  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_RECEIVED_TOPIC " %s, " D_DATA_SIZE " %d, " D_DATA " %s"), topic, data_len, data);
-//  if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) { Serial.println(dataBuf); }
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_MQTT D_RECEIVED_TOPIC " \"%s\", " D_DATA_SIZE " %d, " D_DATA " \"%s\""), topic, data_len, data);
+//  if (LOG_LEVEL_DEBUG_MORE <= seriallog_level) { Serial.println(data); }
 
   // MQTT pre-processing
-  if (XdrvMqttData(topic, strlen(topic), (char*)data, data_len)) { return; }
+  XdrvMailbox.index = strlen(topic);
+  XdrvMailbox.data_len = data_len;
+  XdrvMailbox.topic = topic;
+  XdrvMailbox.data = (char*)data;
+  if (XdrvCall(FUNC_MQTT_DATA)) { return; }
 
   ShowSource(SRC_MQTT);
 
@@ -309,6 +312,35 @@ void MqttUnsubscribe(const char *topic)
 {
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_MQTT D_UNSUBSCRIBE_FROM " %s"), topic);
   MqttUnsubscribeLib(topic);
+}
+
+void MqttPublishLogging(const char *mxtime)
+{
+  if (Settings.flag.mqtt_enabled) {
+    if (MqttIsConnected()) {
+
+      char saved_mqtt_data[MESSZ];
+      memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
+//      ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
+      Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
+
+      char romram[33];
+      char stopic[TOPSZ];
+      snprintf_P(romram, sizeof(romram), PSTR("LOGGING"));
+      GetTopic_P(stopic, STAT, mqtt_topic, romram);
+
+      char *me;
+      if (!strcmp(Settings.mqtt_prefix[0], Settings.mqtt_prefix[1])) {
+        me = strstr(stopic, Settings.mqtt_prefix[0]);
+        if (me == stopic) {
+          mqtt_cmnd_publish += 3;
+        }
+      }
+      MqttPublishLib(stopic, false);
+
+      memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
+    }
+  }
 }
 
 void MqttPublishDirect(const char* topic, bool retained)
@@ -483,9 +515,6 @@ void MqttConnected(void)
     AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
     Mqtt.connected = true;
     Mqtt.retry_counter = 0;
-    //stb mod
-    Mqtt.retry_reboot_counter = Settings.mqtt_retry;
-    //
     Mqtt.connect_count++;
 
     GetTopic_P(stopic, TELE, mqtt_topic, S_LWT);
@@ -522,10 +551,7 @@ void MqttConnected(void)
     Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"), (GetResetReason() == "Exception") ? ESP.getResetInfo().c_str() : GetResetReason().c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
     MqttPublishAllPowerState();
-
-    //stb mod
-    if (Settings.tele_period && !Settings.deepsleep) { tele_period = Settings.tele_period -9; }  else {tele_period = 0;}// Enable TelePeriod in 9 seconds
-    //
+    if (Settings.tele_period) { tele_period = Settings.tele_period -9; }  // Enable TelePeriod in 9 seconds
     rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);
   }
@@ -660,22 +686,10 @@ void MqttReconnect(void)
 #endif // !USE_MQTT_TLS_CA_CERT
 #endif // USE_MQTT_TLS
     MqttConnected();
-    //stb mod
-    Mqtt.retry_reboot_counter = Settings.mqtt_retry;
-    //end
   } else {
 #ifdef USE_MQTT_TLS
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "TLS connection error: %d"), tlsClient->getLastError());
 #endif
-    //stb mod
-    Mqtt.retry_reboot_counter--;
-    if (!Mqtt.retry_reboot_counter) {
-      AddLog_P(LOG_LEVEL_ERROR, PSTR(D_LOG_APPLICATION D_RESTARTING));
-      EspRestart();
-    } else {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Unsuccessful. %d until reboot"), Mqtt.retry_reboot_counter);
-    }
-    //
     MqttDisconnected(MqttClient.state());  // status codes are documented here http://pubsubclient.knolleary.net/api.html#state
   }
 }
@@ -747,6 +761,14 @@ void CmndMqttPassword(void)
   }
 }
 #endif // USE_MQTT_AWS_IOT
+
+void CmndMqttlog(void)
+{
+  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) {
+    Settings.mqttlog_level = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Settings.mqttlog_level);
+}
 
 void CmndMqttHost(void)
 {
