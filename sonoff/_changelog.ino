@@ -1,4 +1,7 @@
 /*********************************************************************************************\
+ * 6.6.0.17 20191009
+ * Add command SetOption34 0..255 to set backlog delay. Default value is 200 (mSeconds) (#6562)
+ *
  * 6.6.0.16 20191008
  * Change PZEM004T default address mask from 0.0.0.x to 192.168.1.x for legacy reason (#6585)
  * Fix PZEM004T, PZEMAC and PZEMDC autodetection (#6585)

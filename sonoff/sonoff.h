@@ -124,7 +124,7 @@ const uint16_t MIN_MESSZ = 893;             // Min number of characters in MQTT 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
 
 const uint8_t MAX_BACKLOG = 30;             // Max number of commands in backlog
-const uint32_t MIN_BACKLOG_DELAY = 2;       // Minimal backlog delay in 0.1 seconds
+const uint32_t MIN_BACKLOG_DELAY = 200;     // Minimal backlog delay in mSeconds
 
 const uint32_t SOFT_BAUDRATE = 9600;        // Default software serial baudrate
 const uint32_t APP_BAUDRATE = 115200;       // Default serial baudrate
@@ -245,7 +245,7 @@ enum ButtonStates { PRESSED, NOT_PRESSED };
 
 enum Shortcuts { SC_CLEAR, SC_DEFAULT, SC_USER };
 
-enum SettingsParamIndex { P_HOLD_TIME, P_MAX_POWER_RETRY, P_ex_TUYA_DIMMER_ID, P_MDNS_DELAYED_START, P_BOOT_LOOP_OFFSET, P_RGB_REMAP, P_IR_UNKNOW_THRESHOLD,  // SetOption32 .. SetOption38
+enum SettingsParamIndex { P_HOLD_TIME, P_MAX_POWER_RETRY, P_BACKLOG_DELAY, P_MDNS_DELAYED_START, P_BOOT_LOOP_OFFSET, P_RGB_REMAP, P_IR_UNKNOW_THRESHOLD,  // SetOption32 .. SetOption38
                           P_CSE7766_INVALID_POWER, P_HOLD_IGNORE, P_ex_TUYA_RELAYS, P_OVER_TEMP,  // SetOption39 .. SetOption42
                           P_DIMMER_MAX,
                           P_ex_TUYA_VOLTAGE_ID, P_ex_TUYA_CURRENT_ID, P_ex_TUYA_POWER_ID,  // SetOption43 .. SetOption46

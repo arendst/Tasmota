@@ -566,6 +566,7 @@ void SettingsDefaultSet2(void)
 //  Settings.flag.value_units = 0;
 //  Settings.flag.stop_flash_rotate = 0;
   Settings.save_data = SAVE_DATA;
+  Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
   Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;
   Settings.param[P_RGB_REMAP] = RGB_REMAP_RGBW;
   Settings.sleep = APP_SLEEP;
@@ -1097,9 +1098,9 @@ void SettingsDelta(void)
 
     if (Settings.version < 0x0606000A) {
       uint8_t tuyaindex = 0;
-      if (Settings.param[P_ex_TUYA_DIMMER_ID] > 0) {         // ex SetOption34
+      if (Settings.param[P_BACKLOG_DELAY] > 0) {         // ex SetOption34
         Settings.tuya_fnid_map[tuyaindex].fnid = 21;         // TUYA_MCU_FUNC_DIMMER - Move Tuya Dimmer Id to Map
-        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_DIMMER_ID];
+        Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_BACKLOG_DELAY];
         tuyaindex++;
       } else if (Settings.flag3.ex_tuya_disable_dimmer == 1) {  // ex SetOption65
         Settings.tuya_fnid_map[tuyaindex].fnid = 11;         // TUYA_MCU_FUNC_REL1 - Create FnID for Switches
@@ -1135,6 +1136,9 @@ void SettingsDelta(void)
     if (Settings.version < 0x0606000F) {
       Settings.shutter_accuracy = 0;
       Settings.mqttlog_level = MQTT_LOG_LEVEL;
+    }
+    if (Settings.version < 0x06060011) {
+      Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
     }
 
     Settings.version = VERSION;

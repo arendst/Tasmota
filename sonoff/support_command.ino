@@ -180,7 +180,8 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 
     DEBUG_CORE_LOG(PSTR("CMD: Payload %d"), payload);
 
-    backlog_delay = millis() + (100 * MIN_BACKLOG_DELAY);
+//    backlog_delay = millis() + (100 * MIN_BACKLOG_DELAY);
+    backlog_delay = millis() + Settings.param[P_BACKLOG_DELAY];
 
     char command[CMDSZ];
     XdrvMailbox.command = command;
@@ -283,7 +284,7 @@ void CmndBacklog(void)
 
 void CmndDelay(void)
 {
-  if ((XdrvMailbox.payload >= MIN_BACKLOG_DELAY) && (XdrvMailbox.payload <= 3600)) {
+  if ((XdrvMailbox.payload >= (MIN_BACKLOG_DELAY / 100)) && (XdrvMailbox.payload <= 3600)) {
     backlog_delay = millis() + (100 * XdrvMailbox.payload);
   }
   uint32_t bl_delay = 0;

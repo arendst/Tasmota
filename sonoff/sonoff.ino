@@ -1642,10 +1642,10 @@ void loop(void)
 
   ButtonLoop();
   SwitchLoop();
-  BacklogLoop();
 #ifdef ROTARY_V1
   RotaryLoop();
 #endif
+  BacklogLoop();
 
   if (TimeReached(state_50msecond)) {
     SetNextTimeInterval(state_50msecond, 50);
