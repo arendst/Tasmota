@@ -870,21 +870,6 @@ void Every100mSeconds(void)
       }
     }
   }
-
-  // Backlog
-  if (TimeReached(backlog_delay)) {
-    if (!BACKLOG_EMPTY && !backlog_mutex) {
-      backlog_mutex = true;
-#ifdef SUPPORT_IF_STATEMENT
-      ExecuteCommand((char*)backlog.shift().c_str(), SRC_BACKLOG);
-#else
-      ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
-      backlog_pointer++;
-      if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
-#endif
-      backlog_mutex = false;
-    }
-  }
 }
 
 /*-------------------------------------------------------------------------------------------*\
@@ -1629,6 +1614,23 @@ void setup(void)
   XsnsCall(FUNC_INIT);
 }
 
+static void BacklogLoop()
+{
+  if (TimeReached(backlog_delay)) {
+    if (!BACKLOG_EMPTY && !backlog_mutex) {
+      backlog_mutex = true;
+#ifdef SUPPORT_IF_STATEMENT
+      ExecuteCommand((char*)backlog.shift().c_str(), SRC_BACKLOG);
+#else
+      ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
+      backlog_pointer++;
+      if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
+#endif
+      backlog_mutex = false;
+    }
+  }
+}
+
 void loop(void)
 {
   uint32_t my_sleep = millis();
@@ -1640,6 +1642,7 @@ void loop(void)
 
   ButtonLoop();
   SwitchLoop();
+  BacklogLoop();
 #ifdef ROTARY_V1
   RotaryLoop();
 #endif
