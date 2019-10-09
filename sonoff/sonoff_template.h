@@ -202,9 +202,10 @@ enum UserSelectablePins {
   GPIO_A4988_MS3,      // A4988 microstep pin3
   GPIO_DDS2382_TX,     // DDS2382 Serial interface
   GPIO_DDS2382_RX,     // DDS2382 Serial interface
-//STB mod
-  GPIO_SEN_SLEEP,
-//end
+  GPIO_DDSU666_TX,     // DDSU666 Serial interface
+  GPIO_DDSU666_RX,     // DDSU666 Serial interface
+  GPIO_SM2135_CLK,     // SM2135 Clk
+  GPIO_SM2135_DAT,     // SM2135 Dat
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -280,9 +281,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_IBEACON_TX "|" D_SENSOR_IBEACON_RX "|"
   D_SENSOR_A4988_DIR "|" D_SENSOR_A4988_STP "|" D_SENSOR_A4988_ENA "|" D_SENSOR_A4988_MS1 "|" D_SENSOR_A4988_MS2 "|" D_SENSOR_A4988_MS3 "|"
   D_SENSOR_DDS2382_TX "|" D_SENSOR_DDS2382_RX "|"
-  //STB mod
-  D_SENSOR_DEEPSLEEP "|"
-  //end
+  D_SENSOR_DDSU666_TX "|" D_SENSOR_DDSU666_RX "|"
+  D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
   ;
 
 // User selectable ADC0 functionality
@@ -515,9 +515,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
   GPIO_TXD,            // Serial interface
   GPIO_RXD,            // Serial interface
-  // stb mod
-  GPIO_SEN_SLEEP, 
-  //end
 #ifdef USE_I2C
   GPIO_I2C_SCL,        // I2C SCL
   GPIO_I2C_SDA,        // I2C SDA
@@ -553,13 +550,19 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_ARIRFRCV,       // AriLux RF Receive input
   GPIO_ARIRFSEL,       // Arilux RF Receive input selected
 #endif
+#ifdef USE_MY92X1
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
+#endif  // USE_MY92X1
 #ifdef USE_SM16716
   GPIO_SM16716_CLK,    // SM16716 CLOCK
   GPIO_SM16716_DAT,    // SM16716 DATA
   GPIO_SM16716_SEL,    // SM16716 SELECT
 #endif  // USE_SM16716
+#ifdef USE_SM2135
+  GPIO_SM2135_CLK,     // SM2135 CLOCK
+  GPIO_SM2135_DAT,     // SM2135 DATA
+#endif  // USE_SM2135
 #ifdef USE_TUYA_MCU
   GPIO_TUYA_TX,        // Tuya Serial interface
   GPIO_TUYA_RX,        // Tuya Serial interface
@@ -654,6 +657,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
 #endif
+#ifdef USE_DDSU666
+  GPIO_DDSU666_TX,     // DDSU666 Serial interface
+  GPIO_DDSU666_RX,     // DDSU666 Serial interface
+#endif  // USE_DDSU666
 
 #ifdef USE_SERIAL_BRIDGE
   GPIO_SBR_TX,         // Serial Bridge Serial interface

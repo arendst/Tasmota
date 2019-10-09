@@ -125,8 +125,8 @@
 #ifndef ENERGY_OVERTEMP
 #define ENERGY_OVERTEMP             90         // Overtemp in Celsius
 #endif
-#ifndef TUYA_DIMMER_MAX
-#define TUYA_DIMMER_MAX             100
+#ifndef DEFAULT_DIMMER_MAX
+#define DEFAULT_DIMMER_MAX             100
 #endif
 
 enum WebColors {
@@ -178,10 +178,6 @@ void RtcSettingsLoad(void)
   if (RtcSettings.valid != RTC_MEM_VALID) {
     memset(&RtcSettings, 0, sizeof(RTCMEM));
     RtcSettings.valid = RTC_MEM_VALID;
-    //STB mod
-    RtcSettings.uptime = Settings.uptime;
-    RtcSettings.ultradeepsleep = 0;
-    //end
     RtcSettings.energy_kWhtoday = Settings.energy_kWhtoday;
     RtcSettings.energy_kWhtotal = Settings.energy_kWhtotal;
     RtcSettings.energy_usage = Settings.energy_usage;
@@ -682,6 +678,7 @@ void SettingsDefaultSet2(void)
     Settings.mqtt_fingerprint[1][i] = strtol(p, &p, 16);
   }
   Settings.tele_period = TELE_PERIOD;
+  Settings.mqttlog_level = MQTT_LOG_LEVEL;
 
   // Energy
   Settings.flag2.current_resolution = 3;
@@ -763,11 +760,6 @@ void SettingsDefaultSet2(void)
   //Settings.flag.decimal_text = 0;
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
-
-//STB mod
-  Settings.deepsleep = 0;
-//end
-
   for (uint32_t i = 0; i < MAX_PWMS; i++) {
     Settings.light_color[i] = 255;
 //    Settings.pwm_value[i] = 0;
@@ -783,7 +775,7 @@ void SettingsDefaultSet2(void)
 //  Settings.light_rotation = 0;
   SettingsDefaultSet_5_8_1();    // Clock color
 
-  Settings.param[P_TUYA_DIMMER_MAX] = TUYA_DIMMER_MAX;
+  Settings.param[P_DIMMER_MAX] = DEFAULT_DIMMER_MAX;
 
   // Display
   SettingsDefaultSet_5_10_1();   // Display settings
@@ -1093,9 +1085,9 @@ void SettingsDelta(void)
     if (Settings.version < 0x06060008) {
       // Move current tuya dimmer range to the new param.
       if (Settings.flag3.tuya_dimmer_range_255) {
-        Settings.param[P_TUYA_DIMMER_MAX] = 100;
+        Settings.param[P_DIMMER_MAX] = 100;
       } else {
-        Settings.param[P_TUYA_DIMMER_MAX] = 255;
+        Settings.param[P_DIMMER_MAX] = 255;
       }
     }
     if (Settings.version < 0x06060009) {
@@ -1139,6 +1131,10 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x0606000C) {
       memset(&Settings.register8, 0x00, sizeof(Settings.register8));
+    }
+    if (Settings.version < 0x0606000F) {
+      Settings.shutter_accuracy = 0;
+      Settings.mqttlog_level = MQTT_LOG_LEVEL;
     }
 
     Settings.version = VERSION;

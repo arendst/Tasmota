@@ -123,7 +123,7 @@ size_t strcspn(const char *str1, const char *str2)
   }
   return ret;
 }
- 
+
 // https://clc-wiki.net/wiki/C_standard_library:string.h:strpbrk
 // Locate the first occurrence in the string pointed to by s1 of any character from the string pointed to by s2
 char* strpbrk(const char *s1, const char *s2)
@@ -1264,6 +1264,7 @@ void SetNextTimeInterval(unsigned long& timer, const unsigned long step)
 #ifdef USE_I2C
 const uint8_t I2C_RETRY_COUNTER = 3;
 
+uint32_t i2c_active[4] = { 0 };
 uint32_t i2c_buffer = 0;
 
 bool I2cValidRead(uint8_t addr, uint8_t reg, uint8_t size)
@@ -1457,15 +1458,34 @@ void I2cScan(char *devs, unsigned int devs_len)
   }
 }
 
-bool I2cDevice(uint8_t addr)
+void I2cSetActive(uint32_t addr, uint32_t count = 1)
 {
-  for (uint8_t address = 1; address <= 127; address++) {
-    Wire.beginTransmission(address);
-    if (!Wire.endTransmission() && (address == addr)) {
-      return true;
-    }
+  addr &= 0x7F;         // Max I2C address is 127
+  count &= 0x7F;        // Max 4 x 32 bits available
+  while (count-- && (addr < 128)) {
+    i2c_active[addr / 32] |= (1 << (addr % 32));
+    addr++;
+  }
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
+}
+
+bool I2cActive(uint32_t addr)
+{
+  addr &= 0x7F;         // Max I2C address is 127
+  if (i2c_active[addr / 32] & (1 << (addr % 32))) {
+    return true;
   }
   return false;
+}
+
+bool I2cDevice(uint8_t addr)
+{
+  addr &= 0x7F;         // Max I2C address is 127
+  if (I2cActive(addr)) {
+    return false;       // If already active report as not present;
+  }
+  Wire.beginTransmission(addr);
+  return (0 == Wire.endTransmission());
 }
 #endif  // USE_I2C
 
@@ -1571,6 +1591,7 @@ void AddLog(uint32_t loglevel)
     if (!web_log_index) web_log_index++;   // Index 0 is not allowed as it is the end of char string
   }
 #endif  // USE_WEBSERVER
+  if (!global_state.mqtt_down && (loglevel <= Settings.mqttlog_level)) { MqttPublishLogging(mxtime); }
   if (!global_state.wifi_down && (loglevel <= syslog_level)) { Syslog(); }
 }
 

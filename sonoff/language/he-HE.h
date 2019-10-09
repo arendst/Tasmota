@@ -20,30 +20,6 @@
 #ifndef _LANGUAGE_HE_HE_H_
 #define _LANGUAGE_HE_HE_H_
 
-//STB mod
-#define D_JSON_MOISTURE "Moisture"
-#define D_JSON_DISTANCE "Distance"
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
-#define D_CMND_MQTTENABLE "MqttEnable"
-#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
-#define D_CMND_OPEN "shutteropen"
-#define D_CMND_CLOSE "shutterclose"
-#define D_CMND_STOP "shutterstop"
-#define D_CMND_POSITION "shutterposition"
-#define D_CMND_OPENTIME "shutteropenduration"
-#define D_CMND_CLOSETIME "shuttercloseduration"
-#define D_CMND_SHUTTERRELAY "shutterrelay"
-#define D_CMND_CALIBRATIONMATIX "shuttercalibration"
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_SHUTTER "SHUTTER"
-#define D_CMND_SET50PERCENT "shutter50percent"
-#define D_CMND_SHUTTERSETCLOSE "shuttersetclose"
-#define D_CMND_SHUTTERINVERT "shutterinvert"
-#define D_DOMOTICZ_SHUTTER "Shutter"
-//end
-
 /*************************** ATTENTION *******************************\
  *
  * Due to memory constraints only UTF-8 is supported.
@@ -308,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "פרמטרי לוגים"
 #define D_SERIAL_LOG_LEVEL "רמת לוג עבור סריאל"
+#define D_MQTT_LOG_LEVEL "Mqtt log level"
 #define D_WEB_LOG_LEVEL "רמת לוג עבור אתר"
 #define D_SYS_LOG_LEVEL "Syslog רמת לוג עבור שרת"
 #define D_MORE_DEBUG "מיפוי נוסף"
@@ -465,6 +442,19 @@
 #define D_ENERGY_TODAY "צריכה יומית"
 #define D_ENERGY_YESTERDAY "צריכה בעבר"
 #define D_ENERGY_TOTAL "צריכה כללית"
+
+// xdrv_27_shutter.ino
+#define D_OPEN "Open"
+#define D_CLOSE "Close"
+#define D_DOMOTICZ_SHUTTER "Shutter"
+
+// xdrv_28_pcf8574.ino
+#define D_CONFIGURE_PCF8574 "Configure PCF8574"
+#define D_PCF8574_PARAMETERS "PCF8574 parameters"
+#define D_INVERT_PORTS "Invert Ports"
+#define D_DEVICE "Device"
+#define D_DEVICE_INPUT "Input"
+#define D_DEVICE_OUTPUT "Output"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "שרת עסוק"
@@ -628,6 +618,10 @@
 #define D_SENSOR_A4988_MS3     "A4988 MS3"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
+#define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
+#define D_SENSOR_DDSU666_RX    "DDSU666 Rx"
+#define D_SENSOR_SM2135_CLK    "SM2135 Clk"
+#define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 
 // Units
 #define D_UNIT_AMPERE "A"

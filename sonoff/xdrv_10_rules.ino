@@ -97,7 +97,7 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
 #ifdef USE_EXPRESSION
   #include <LinkedList.h>                 // Import LinkedList library
 
-  const char kExpressionOperators[] PROGMEM = "+-*/%^";
+  const char kExpressionOperators[] PROGMEM = "+-*/%^\0";
   #define EXPRESSION_OPERATOR_ADD         0
   #define EXPRESSION_OPERATOR_SUBTRACT    1
   #define EXPRESSION_OPERATOR_MULTIPLY    2
@@ -605,10 +605,10 @@ void RulesEvery50ms(void)
             case 5: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event)); break;
             case 6: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
             case 7: strncpy_P(json_event, PSTR("{\"HTTP\":{\"Initialized\":1}}"), sizeof(json_event)); break;
-            //stb mod
+#ifdef USE_SHUTTER
             case 8: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moved\":1}}"), sizeof(json_event)); break;
             case 9: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moving\":1}}"), sizeof(json_event)); break;
-            //
+#endif  // USE_SHUTTER
           }
           if (json_event[0]) {
             RulesProcessEvent(json_event);
@@ -678,28 +678,6 @@ void RulesSetPower(void)
   Rules.new_power = XdrvMailbox.index;
 }
 
-//stb mod
-void RulesBeforeTeleperiod(void)
-{
-  if (Settings.rule_enabled) {  // Any rule enabled
-    char json_event[32];
-
-    strncpy_P(json_event, PSTR("{\"System\":{\"PreTele\":1}}"), sizeof(json_event));
-    RulesProcessEvent(json_event);
-  }
-}
-
-void RulesAfterTeleperiod(void)
-{
-  if (Settings.rule_enabled) {  // Any rule enabled
-    char json_event[32];
-
-    strncpy_P(json_event, PSTR("{\"System\":{\"PostTele\":1}}"), sizeof(json_event));
-    RulesProcessEvent(json_event);
-  }
-}
-//
-
 void RulesTeleperiod(void)
 {
   Rules.teleperiod = true;
@@ -720,10 +698,10 @@ void RulesTeleperiod(void)
  */
 bool RulesMqttData(void)
 {
-  bool serviced = false;
   if (XdrvMailbox.data_len < 1 || XdrvMailbox.data_len > 256) {
     return false;
   }
+  bool serviced = false;
   String sTopic = XdrvMailbox.topic;
   String sData = XdrvMailbox.data;
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
@@ -945,6 +923,10 @@ bool findNextNumber(char * &pNumber, float &value)
 {
   bool bSucceed = false;
   String sNumber = "";
+  if (*pNumber == '-') {
+    sNumber = "-";
+    pNumber++;
+  }
   while (*pNumber) {
     if (isdigit(*pNumber) || (*pNumber == '.')) {
       sNumber += *pNumber;
@@ -1022,7 +1004,7 @@ bool findNextVariableValue(char * &pVarname, float &value)
 /*
  * Find next object in expression and evaluate it
  *     An object could be:
- *     - A float number start with a digit, like 0.787
+ *     - A float number start with a digit or minus, like 0.787, -3
  *     - A variable name, like VAR1, MEM3
  *     - An expression enclosed with a pair of round brackets, (.....)
  * Input:
@@ -1044,7 +1026,7 @@ bool findNextObjectValue(char * &pointer, float &value)
       pointer++;
       continue;
     }
-    if (isdigit(*pointer)) {      //This object is a number
+    if (isdigit(*pointer) || (*pointer) == '-') {      //This object is a number
       bSucceed = findNextNumber(pointer, value);
       break;
     } else if (isalpha(*pointer)) {     //Should be a variable like VAR12, MEM1
@@ -1053,7 +1035,7 @@ bool findNextObjectValue(char * &pointer, float &value)
     } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
       char * closureBracket = findClosureBracket(pointer);        //Get the position of closure bracket ")"
       if (closureBracket != nullptr) {
-        value = evaluateExpression(pointer+1, closureBracket - pointer - 2);
+        value = evaluateExpression(pointer+1, closureBracket - pointer - 1);
         pointer = closureBracket + 1;
         bSucceed = true;
       }
@@ -1088,10 +1070,16 @@ bool findNextOperator(char * &pointer, int8_t &op)
       pointer++;
       continue;
     }
-    if (char *pch = strchr(kExpressionOperators, *pointer)) {      //If it is an operator
-      op = (int8_t)(pch - kExpressionOperators);
-      pointer++;
-      bSucceed = true;
+    op = EXPRESSION_OPERATOR_ADD;
+    const char *pch = kExpressionOperators;
+    char ch;
+    while ((ch = pgm_read_byte(pch++)) != '\0') {
+      if (ch == *pointer) {
+        bSucceed = true;
+        pointer++;
+        break;
+      }
+      op++;
     }
     break;
   }
@@ -1199,7 +1187,7 @@ float evaluateExpression(const char * expression, unsigned int len)
   for (int32_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
     int index = 0;
     while (index < operators.size()) {
-      if (priority == kExpressionOperatorsPriorities[(operators.get(index))]) {     //need to calculate the operator first
+      if (priority == pgm_read_byte(kExpressionOperatorsPriorities + operators.get(index))) {     //need to calculate the operator first
         //get current object value and remove the next object with current operator
         va = calculateTwoValues(object_values.get(index), object_values.remove(index + 1), operators.remove(index));
         //Replace the current value with the result
@@ -1349,7 +1337,7 @@ bool findNextLogicObjectValue(char * &pointer, bool &value)
     } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
       char * closureBracket = findClosureBracket(pointer);        //Get the position of closure bracket ")"
       if (closureBracket != nullptr) {
-        value = evaluateLogicalExpression(pointer+1, closureBracket - pointer - 2);
+        value = evaluateLogicalExpression(pointer+1, closureBracket - pointer - 1);
         pointer = closureBracket + 1;
         bSucceed = true;
       }
@@ -1897,9 +1885,6 @@ bool Xdrv10(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_PRE_INIT:
-      RulesInit();
-      break;
     case FUNC_EVERY_50_MSECOND:
       RulesEvery50ms();
       break;
@@ -1921,19 +1906,14 @@ bool Xdrv10(uint8_t function)
     case FUNC_SAVE_BEFORE_RESTART:
       RulesSaveBeforeRestart();
       break;
-    //stb mod
-    case FUNC_PREP_BEFORE_TELEPERIOD:
-      RulesBeforeTeleperiod();
-      break;
-    case FUNC_AFTER_TELEPERIOD:
-        RulesAfterTeleperiod();
-        break;
-    //
 #ifdef SUPPORT_MQTT_EVENT
     case FUNC_MQTT_DATA:
       result = RulesMqttData();
       break;
 #endif  // SUPPORT_MQTT_EVENT
+    case FUNC_PRE_INIT:
+      RulesInit();
+      break;
   }
   return result;
 }

@@ -257,6 +257,7 @@ struct LIGHT {
   uint8_t wakeup_active = 0;
   uint8_t wakeup_dimmer = 0;
   uint8_t fixed_color_index = 1;
+  uint8_t pwm_offset = 0;                 // Offset in color buffer
 
   bool update = true;
   bool pwm_multi_channels = false;        // SetOption68, treat each PWM channel as an independant dimmer
@@ -403,7 +404,7 @@ class LightStateClass {
       if (b) { *b = _b; }
     }
 
-    // get full brightness values for wamr and cold channels.
+    // get full brightness values for warm and cold channels.
     // either w=c=0 (off) or w+c >= 255
     void getCW(uint8_t *rc, uint8_t *rw) {
       if (rc) { *rc = _wc; }
@@ -1184,186 +1185,59 @@ void AriluxRfDisable(void)
 }
 #endif  // USE_ARILUX_RF
 
-/*********************************************************************************************\
- * Sonoff B1 and AiLight inspired by OpenLight https://github.com/icamgo/noduino-sdk
-\*********************************************************************************************/
-
-extern "C" {
-  void os_delay_us(unsigned int);
-}
-
-uint8_t light_pdi_pin;
-uint8_t light_pdcki_pin;
-
-void LightDiPulse(uint8_t times)
-{
-  for (uint32_t i = 0; i < times; i++) {
-    digitalWrite(light_pdi_pin, HIGH);
-    digitalWrite(light_pdi_pin, LOW);
-  }
-}
-
-void LightDckiPulse(uint8_t times)
-{
-  for (uint32_t i = 0; i < times; i++) {
-    digitalWrite(light_pdcki_pin, HIGH);
-    digitalWrite(light_pdcki_pin, LOW);
-  }
-}
-
-void LightMy92x1Write(uint8_t data)
-{
-  for (uint32_t i = 0; i < 4; i++) {     // Send 8bit Data
-    digitalWrite(light_pdcki_pin, LOW);
-    digitalWrite(light_pdi_pin, (data & 0x80));
-    digitalWrite(light_pdcki_pin, HIGH);
-    data = data << 1;
-    digitalWrite(light_pdi_pin, (data & 0x80));
-    digitalWrite(light_pdcki_pin, LOW);
-    digitalWrite(light_pdi_pin, LOW);
-    data = data << 1;
-  }
-}
-
-void LightMy92x1Init(void)
-{
-  uint8_t chips = 1;                    // 1 (AiLight)
-  if (LT_RGBWC == light_type) {
-    chips = 2;                          // 2 (Sonoff B1)
-  }
-
-  LightDckiPulse(chips * 32);           // Clear all duty register
-  os_delay_us(12);                      // TStop > 12us.
-  // Send 12 DI pulse, after 6 pulse's falling edge store duty data, and 12
-  // pulse's rising edge convert to command mode.
-  LightDiPulse(12);
-  os_delay_us(12);                      // Delay >12us, begin send CMD data
-  for (uint32_t n = 0; n < chips; n++) { // Send CMD data
-    LightMy92x1Write(0x18);             // ONE_SHOT_DISABLE, REACTION_FAST, BIT_WIDTH_8, FREQUENCY_DIVIDE_1, SCATTER_APDM
-  }
-  os_delay_us(12);                      // TStart > 12us. Delay 12 us.
-  // Send 16 DI pulse, at 14 pulse's falling edge store CMD data, and
-  // at 16 pulse's falling edge convert to duty mode.
-  LightDiPulse(16);
-  os_delay_us(12);                      // TStop > 12us.
-}
-
-void LightMy92x1Duty(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b, uint8_t duty_w, uint8_t duty_c)
-{
-  uint8_t channels[2] = { 4, 6 };
-
-  uint8_t didx = 0;                     // 0 (AiLight)
-  if (LT_RGBWC == light_type) {
-    didx = 1;                           // 1 (Sonoff B1)
-  }
-
-  uint8_t duty[2][6] = {{ duty_r, duty_g, duty_b, duty_w, 0, 0 },        // Definition for RGBW channels
-                        { duty_w, duty_c, 0, duty_g, duty_r, duty_b }};  // Definition for RGBWC channels
-
-  os_delay_us(12);                      // TStop > 12us.
-  for (uint32_t channel = 0; channel < channels[didx]; channel++) {
-    LightMy92x1Write(duty[didx][channel]);  // Send 8bit Data
-  }
-  os_delay_us(12);                      // TStart > 12us. Ready for send DI pulse.
-  LightDiPulse(8);                      // Send 8 DI pulse. After 8 pulse falling edge, store old data.
-  os_delay_us(12);                      // TStop > 12us.
-}
-
-#ifdef USE_SM16716
-/*********************************************************************************************\
- * SM16716 - Controlling RGB over a synchronous serial line
- * Copyright (C) 2019  Gabor Simon
- *
- * Source: https://community.home-assistant.io/t/cheap-uk-wifi-bulbs-with-tasmota-teardown-help-tywe3s/40508/27
- *
-\*********************************************************************************************/
-
-#define D_LOG_SM16716       "SM16716: "
-
-uint8_t sm16716_pin_clk     = 100;
-uint8_t sm16716_pin_dat     = 100;
-uint8_t sm16716_pin_sel     = 100;
-uint8_t sm16716_enabled     = 0;
-
-void SM16716_SendBit(uint8_t v)
-{
-  /* NOTE:
-   * According to the spec sheet, max freq is 30 MHz, that is 16.6 ns per high/low half of the
-   * clk square wave. That is less than the overhead of 'digitalWrite' at this clock rate,
-   * so no additional delays are needed yet. */
-
-  digitalWrite(sm16716_pin_dat, (v != 0) ? HIGH : LOW);
-  //delayMicroseconds(1);
-  digitalWrite(sm16716_pin_clk, HIGH);
-  //delayMicroseconds(1);
-  digitalWrite(sm16716_pin_clk, LOW);
-}
-
-void SM16716_SendByte(uint8_t v)
-{
-  uint8_t mask;
-
-  for (mask = 0x80; mask; mask >>= 1) {
-    SM16716_SendBit(v & mask);
-  }
-}
-
-void SM16716_Update(uint8_t duty_r, uint8_t duty_g, uint8_t duty_b)
-{
-  if (sm16716_pin_sel < 99) {
-    uint8_t sm16716_should_enable = (duty_r | duty_g | duty_b);
-    if (!sm16716_enabled && sm16716_should_enable) {
-      DEBUG_DRIVER_LOG(PSTR(D_LOG_SM16716 "turning color on"));
-      sm16716_enabled = 1;
-      digitalWrite(sm16716_pin_sel, HIGH);
-      // in testing I found it takes a minimum of ~380us to wake up the chip
-      // tested on a Merkury RGBW with an SM726EB
-      delayMicroseconds(1000);
-      SM16716_Init();
-    }
-    else if (sm16716_enabled && !sm16716_should_enable) {
-      DEBUG_DRIVER_LOG(PSTR(D_LOG_SM16716 "turning color off"));
-      sm16716_enabled = 0;
-      digitalWrite(sm16716_pin_sel, LOW);
-    }
-  }
-  DEBUG_DRIVER_LOG(PSTR(D_LOG_SM16716 "Update; rgb=%02x%02x%02x"), duty_r, duty_g, duty_b);
-
-  // send start bit
-  SM16716_SendBit(1);
-  SM16716_SendByte(duty_r);
-  SM16716_SendByte(duty_g);
-  SM16716_SendByte(duty_b);
-
-  // send a 'do it' pulse
-  // (if multiple chips are chained, each one processes the 1st '1rgb' 25-bit block and
-  // passes on the rest, right until the one starting with 0)
-  //SM16716_Init();
-  SM16716_SendBit(0);
-  SM16716_SendByte(0);
-  SM16716_SendByte(0);
-  SM16716_SendByte(0);
-}
-
-bool SM16716_ModuleSelected(void)
-{
-  sm16716_pin_clk = pin[GPIO_SM16716_CLK];
-  sm16716_pin_dat = pin[GPIO_SM16716_DAT];
-  sm16716_pin_sel = pin[GPIO_SM16716_SEL];
-  DEBUG_DRIVER_LOG(PSTR(D_LOG_SM16716 "ModuleSelected; clk_pin=%d, dat_pin=%d)"), sm16716_pin_clk, sm16716_pin_dat);
-  return (sm16716_pin_clk < 99) && (sm16716_pin_dat < 99);
-}
-
-void SM16716_Init(void)
-{
-  for (uint32_t t_init = 0; t_init < 50; ++t_init) {
-    SM16716_SendBit(0);
-  }
-}
-
-#endif  // ifdef USE_SM16716
-
 /********************************************************************************************/
+
+void LightPwmOffset(uint32_t offset)
+{
+  Light.pwm_offset = offset;
+}
+
+bool LightModuleInit(void)
+{
+  light_type = LT_BASIC;                     // Use basic PWM control if SetOption15 = 0
+
+  if (Settings.flag.pwm_control) {
+    for (uint32_t i = 0; i < MAX_PWMS; i++) {
+      if (pin[GPIO_PWM1 +i] < 99) { light_type++; }  // Use Dimmer/Color control for all PWM as SetOption15 = 1
+    }
+  }
+
+  light_flg = 0;
+  if (XlgtCall(FUNC_MODULE_INIT)) {
+    // serviced
+  }
+  else if (SONOFF_BN == my_module_type) {   // PWM Single color led (White)
+    light_type = LT_PWM1;
+  }
+  else if (SONOFF_LED == my_module_type) {  // PWM Dual color led (White warm and cold)
+    if (!my_module.io[4]) {                 // Fix Sonoff Led instabilities
+      pinMode(4, OUTPUT);                   // Stop floating outputs
+      digitalWrite(4, LOW);
+    }
+    if (!my_module.io[5]) {
+      pinMode(5, OUTPUT);                   // Stop floating outputs
+      digitalWrite(5, LOW);
+    }
+    if (!my_module.io[14]) {
+      pinMode(14, OUTPUT);                  // Stop floating outputs
+      digitalWrite(14, LOW);
+    }
+    light_type = LT_PWM2;
+  }
+#ifdef USE_WS2812
+  if (!light_type && (pin[GPIO_WS2812] < 99)) {  // RGB led
+    light_type = LT_WS2812;
+  }
+#endif  // USE_WS2812
+  // post-process for lights
+  if (Settings.flag3.pwm_multi_channels) {
+    uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
+    if (0 == pwm_channels) { pwm_channels = 1; }
+    devices_present += pwm_channels - 1;  // add the pwm channels controls at the end
+  }
+
+  return (light_type > 0);
+}
 
 void LightInit(void)
 {
@@ -1402,20 +1276,6 @@ void LightInit(void)
         pinMode(pin[GPIO_PWM1 +i], OUTPUT);
       }
     }
-    if (SONOFF_LED == my_module_type) { // Fix Sonoff Led instabilities
-      if (!my_module.io[4]) {
-        pinMode(4, OUTPUT);             // Stop floating outputs
-        digitalWrite(4, LOW);
-      }
-      if (!my_module.io[5]) {
-        pinMode(5, OUTPUT);             // Stop floating outputs
-        digitalWrite(5, LOW);
-      }
-      if (!my_module.io[14]) {
-        pinMode(14, OUTPUT);            // Stop floating outputs
-        digitalWrite(14, LOW);
-      }
-    }
     if (pin[GPIO_ARIRFRCV] < 99) {
       if (pin[GPIO_ARIRFSEL] < 99) {
         pinMode(pin[GPIO_ARIRFSEL], OUTPUT);
@@ -1429,32 +1289,7 @@ void LightInit(void)
     max_scheme = LS_MAX + WS2812_SCHEMES;
   }
 #endif  // USE_WS2812 ************************************************************************
-#ifdef USE_SM16716
-  else if (LT_SM16716 == light_type - Light.subtype) {
-    // init PWM
-    for (uint32_t i = 0; i < Light.subtype; i++) {
-      Settings.pwm_value[i] = 0;        // Disable direct PWM control
-      if (pin[GPIO_PWM1 +i] < 99) {
-        pinMode(pin[GPIO_PWM1 +i], OUTPUT);
-      }
-    }
-    // init sm16716
-    pinMode(sm16716_pin_clk, OUTPUT);
-    digitalWrite(sm16716_pin_clk, LOW);
-
-    pinMode(sm16716_pin_dat, OUTPUT);
-    digitalWrite(sm16716_pin_dat, LOW);
-
-    if (sm16716_pin_sel < 99) {
-      pinMode(sm16716_pin_sel, OUTPUT);
-      digitalWrite(sm16716_pin_sel, LOW);
-      // no need to call SM16716_Init here, it will be called after sel goes HIGH
-    } else {
-      // no sel pin means you have an 'always on' chip, so init right away
-      SM16716_Init();
-    }
-  }
-#endif  // ifdef USE_SM16716
+/*
   else {
     light_pdi_pin = pin[GPIO_DI];
     light_pdcki_pin = pin[GPIO_DCKI];
@@ -1466,7 +1301,7 @@ void LightInit(void)
 
     LightMy92x1Init();
   }
-
+*/
   if (Light.subtype < LST_RGB) {
     max_scheme = LS_POWER;
   }
@@ -1941,12 +1776,13 @@ void LightAnimate(void)
         cur_col_10bits[i] = changeUIntScale(cur_col[i], 0, 255, 0, 1023);
       }
 
-      if (PHILIPS == my_module_type) {
-        calcGammaXiaomiBulbs(cur_col, cur_col_10bits);
-      } else if (Light.pwm_multi_channels) {
+      if (Light.pwm_multi_channels) {
         calcGammaMultiChannels(cur_col, cur_col_10bits);
-      } else {  // PHILIPS != my_module_type
+      } else {
         calcGammaBulbs(cur_col, cur_col_10bits);
+        if (PHILIPS == my_module_type) {
+          calcGammaCTPwm(cur_col, cur_col_10bits);
+        }
 
         // Now see if we need to mix RGB and True White
         // Valid only for LST_RGBW, LST_RGBWC, rgbwwTable[4] is zero, and white is zero (see doc)
@@ -2001,10 +1837,10 @@ void LightAnimate(void)
 
       // now apply the actual PWM values, adjusted and remapped 10-bits range
       if (light_type < LT_PWM6) {   // only for direct PWM lights, not for Tuya, Armtronix...
-        for (uint32_t i = 0; i < Light.subtype; i++) {
+        for (uint32_t i = 0; i < (Light.subtype - Light.pwm_offset); i++) {
           if (pin[GPIO_PWM1 +i] < 99) {
             //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col_10bits[i], i+1, cur_col[i]);
-            analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
+            analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - cur_col_10bits[(i + Light.pwm_offset)] : cur_col_10bits[(i + Light.pwm_offset)]);
           }
         }
       }
@@ -2014,7 +1850,14 @@ void LightAnimate(void)
 
       XdrvMailbox.data = (char*)cur_col;
       XdrvMailbox.data_len = sizeof(cur_col);
-      if (XdrvCall(FUNC_SET_CHANNELS)) {
+
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "R%d G%d B%d, C%d W%d"),
+        cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
+
+      if (XlgtCall(FUNC_SET_CHANNELS)) {
+        // Serviced
+      }
+      else if (XdrvCall(FUNC_SET_CHANNELS)) {
         // Serviced
       }
 #ifdef USE_WS2812  // ************************************************************************
@@ -2022,45 +1865,32 @@ void LightAnimate(void)
         Ws2812SetColor(0, cur_col[0], cur_col[1], cur_col[2], cur_col[3]);
       }
 #endif  // USE_ES2812 ************************************************************************
-#ifdef USE_SM16716
-      else if (LT_SM16716 == light_type - Light.subtype) {
-        // handle any PWM pins, skipping the first 3 values for sm16716
-        for (uint32_t i = 3; i < Light.subtype; i++) {
-          if (pin[GPIO_PWM1 +i-3] < 99) {
-            //AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "Cur_Col%d 10 bits %d, Pwm%d %d"), i, cur_col[i], i+1, curcol);
-            analogWrite(pin[GPIO_PWM1 +i-3], bitRead(pwm_inverted, i-3) ? Settings.pwm_range - cur_col_10bits[i] : cur_col_10bits[i]);
-          }
-        }
-        // handle sm16716 update
-        SM16716_Update(cur_col[0], cur_col[1], cur_col[2]);
-      }
-#endif  // ifdef USE_SM16716
-      else if (light_type > LT_WS2812) {
-        //AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Cur_Col %d,%d,%d,%d,%d"), cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
-        LightMy92x1Duty(cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
-      }
       XdrvMailbox.data = tmp_data;
       XdrvMailbox.data_len = tmp_data_len;
     }
   }
 }
 
-// Do specific computation for Xiaomi Bulbs
-void calcGammaXiaomiBulbs(uint8_t cur_col[5], uint16_t cur_col_10bits[5]) {
+// Do specific computation is SetOption73 is on, Color Temp is a separate PWM channel
+void calcGammaCTPwm(uint8_t cur_col[5], uint16_t cur_col_10bits[5]) {
   // Xiaomi Philips bulbs follow a different scheme:
-  uint8_t cold;   // channel 1 is the color tone, mapped to cold channel (0..255)
-  light_state.getCW(&cold, nullptr);
-  cur_col[1] = cold;
-  cur_col_10bits[1] = changeUIntScale(cur_col[1], 0, 255, 0, 1023);
-  // now set channel 0 to overall brightness
-  uint8_t pxBri = light_state.getBriCT();
+  uint8_t cold, warm;   // channel 1 is the color tone, mapped to cold channel (0..255)
+  light_state.getCW(&cold, &warm);
+  // channels for white are always the last two channels
+  uint32_t cw1 = Light.subtype - 1;       // address for the ColorTone PWM
+  uint32_t cw0 = Light.subtype - 2;       // address for the White Brightness PWM
+  // overall brightness
+  uint16_t pxBri = cur_col[cw0] + cur_col[cw1];
+  if (pxBri > 255) { pxBri = 255; }
+  cur_col[cw1] = changeUIntScale(cold, 0, cold + warm, 0, 255);   // 
+  cur_col_10bits[cw1] = changeUIntScale(cur_col[cw1], 0, 255, 0, 1023);
   // channel 0=intensity, channel1=temperature
   if (Settings.light_correction) { // gamma correction
-    cur_col[0] = ledGamma(pxBri);
-    cur_col_10bits[0] = ledGamma(pxBri, 10);    // 10 bits gamma correction
+    cur_col[cw0] = ledGamma(pxBri);
+    cur_col_10bits[cw0] = ledGamma(pxBri, 10);    // 10 bits gamma correction
   } else {
-    cur_col[0] = pxBri;
-    cur_col_10bits[0] = changeUIntScale(pxBri, 0, 255, 0, 1023);  // no gamma, extend to 10 bits
+    cur_col[cw0] = pxBri;
+    cur_col_10bits[cw0] = changeUIntScale(pxBri, 0, 255, 0, 1023);  // no gamma, extend to 10 bits
   }
 }
 
@@ -2111,7 +1941,7 @@ void calcGammaBulbs(uint8_t cur_col[5], uint16_t cur_col_10bits[5]) {
       }
     }
     // If RGBW or Single channel, also adjust White channel
-    if (LST_COLDWARM != Light.subtype) {
+    if ((LST_COLDWARM != Light.subtype) && (LST_RGBWC != Light.subtype)) {
       cur_col_10bits[3] = ledGamma(cur_col[3], 10);
       cur_col[3] = ledGamma(cur_col[3]);
     }
@@ -2584,11 +2414,11 @@ bool Xdrv04(uint8_t function)
 {
   bool result = false;
 
-  if (light_type) {
+  if (FUNC_MODULE_INIT == function) {
+    return LightModuleInit();
+  }
+  else if (light_type) {
     switch (function) {
-      case FUNC_PRE_INIT:
-        LightInit();
-        break;
       case FUNC_EVERY_50_MSECOND:
         LightAnimate();
 #ifdef USE_ARILUX_RF
@@ -2605,6 +2435,9 @@ bool Xdrv04(uint8_t function)
         break;
       case FUNC_COMMAND:
         result = DecodeCommand(kLightCommands, LightCommand);
+        break;
+      case FUNC_PRE_INIT:
+        LightInit();
         break;
     }
   }

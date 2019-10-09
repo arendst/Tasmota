@@ -20,30 +20,6 @@
 #ifndef _LANGUAGE_ES_ES_H_
 #define _LANGUAGE_ES_ES_H_
 
-//STB mod
-#define D_JSON_MOISTURE "Moisture"
-#define D_JSON_DISTANCE "Distance"
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_CMND_COUNTERDEVIDER "CounterDevider"
-#define D_CMND_MQTTENABLE "MqttEnable"
-#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
-#define D_CMND_OPEN "shutteropen"
-#define D_CMND_CLOSE "shutterclose"
-#define D_CMND_STOP "shutterstop"
-#define D_CMND_POSITION "shutterposition"
-#define D_CMND_OPENTIME "shutteropenduration"
-#define D_CMND_CLOSETIME "shuttercloseduration"
-#define D_CMND_SHUTTERRELAY "shutterrelay"
-#define D_CMND_CALIBRATIONMATIX "shuttercalibration"
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_SHUTTER "SHUTTER"
-#define D_CMND_SET50PERCENT "shutter50percent"
-#define D_CMND_SHUTTERSETCLOSE "shuttersetclose"
-#define D_CMND_SHUTTERINVERT "shutterinvert"
-#define D_DOMOTICZ_SHUTTER "Shutter"
-//end
-
 /*************************** ATTENTION *******************************\
  *
  * Due to memory constraints only UTF-8 is supported.
@@ -52,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.6.0.4
+ * Updated until v6.6.0.15
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -307,9 +283,10 @@
 #define D_FULL_TOPIC "Full Topic"
 
 #define D_LOGGING_PARAMETERS "Parámetros Logging"
-#define D_SERIAL_LOG_LEVEL "Nivel de log Serial"
-#define D_WEB_LOG_LEVEL "Nivel de log Web"
-#define D_SYS_LOG_LEVEL "Nivel de Syslog"
+#define D_SERIAL_LOG_LEVEL "Nivel de log por Serial"
+#define D_MQTT_LOG_LEVEL "Nivel de log por Mqtt"
+#define D_WEB_LOG_LEVEL "Nivel de log por Web"
+#define D_SYS_LOG_LEVEL "Nivel de log por Syslog"
 #define D_MORE_DEBUG "Más Debug"
 #define D_SYSLOG_HOST "Host del Syslog"
 #define D_SYSLOG_PORT "Puerto del Syslog"
@@ -465,6 +442,19 @@
 #define D_ENERGY_TODAY "Energía Hoy"
 #define D_ENERGY_YESTERDAY "Energía Ayer"
 #define D_ENERGY_TOTAL "Energía Total"
+
+// xdrv_27_shutter.ino
+#define D_OPEN "Abrir"
+#define D_CLOSE "Cerrar"
+#define D_DOMOTICZ_SHUTTER "Cortina"
+
+// xdrv_28_pcf8574.ino
+#define D_CONFIGURE_PCF8574 "Configurar PCF8574"
+#define D_PCF8574_PARAMETERS "Parámetros de PCF8574"
+#define D_INVERT_PORTS "Invertir Puertos"
+#define D_DEVICE "Dispositivo"
+#define D_DEVICE_INPUT "Entrada"
+#define D_DEVICE_OUTPUT "Salida"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Sensor ocupado"
@@ -628,6 +618,10 @@
 #define D_SENSOR_A4988_MS3     "A4988 MS3"
 #define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
 #define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
+#define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
+#define D_SENSOR_DDSU666_RX    "DDSU666 Rx"
+#define D_SENSOR_SM2135_CLK    "SM2135 Clk"
+#define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 
 // Units
 #define D_UNIT_AMPERE "A"

@@ -169,15 +169,15 @@ String sendIRJsonState(const struct decode_results &results) {
       char hvalue[64];
       if (UNKNOWN != results.decode_type) {
         Uint64toHex(results.value, hvalue, results.bits);  // Get 64bit value as hex 0x00123456
-        json += "\"";
+        json += "\"0x";
         json += hvalue;
-        json += "\",\"" D_JSON_IR_DATALSB "\":\"";
+        json += "\",\"" D_JSON_IR_DATALSB "\":\"0x";
         Uint64toHex(reverseBitsInBytes64(results.value), hvalue, results.bits);  // Get 64bit value as hex 0x00123456, LSB
         json += hvalue;
         json += "\"";
       } else {    // UNKNOWN
         Uint64toHex(results.value, hvalue, 32);  // Unknown is always 32 bits
-        json += "\"";
+        json += "\"0x";
         json += hvalue;
         json += "\"";
       }
@@ -210,7 +210,7 @@ void IrReceiveCheck(void)
 //    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
     if (!irsend_active && (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE)) {
       ir_lasttime = now;
-      ResponseTime_P(PSTR(",\"" D_JSON_IRRECEIVED "\":%s"), sendIRJsonState(results).c_str());
+      Response_P(PSTR("{\"" D_JSON_IRRECEIVED "\":%s"), sendIRJsonState(results).c_str());
 
       if (Settings.flag3.receive_raw) {
         ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":["));
@@ -438,7 +438,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
 
   char dvalue[32];
   char hvalue[32];
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data %s (%s), repeat %d"),
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("IRS: protocol %d, bits %d, data 0x%s (%s), repeat %d"),
     protocol, bits, ulltoa(data, dvalue, 10), Uint64toHex(data, hvalue, bits), repeat);
 
   irsend_active = true;     // deactivate receive
