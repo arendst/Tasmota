@@ -86,6 +86,7 @@ void ArmtronixRequestState(void)
 
 bool ArmtronixModuleSelected(void)
 {
+  devices_present++;
   light_type = LT_SERIAL2;
   return true;
 }

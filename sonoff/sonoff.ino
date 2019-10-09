@@ -1389,14 +1389,14 @@ void GpioInit(void)
   }
 #endif  // USE_I2C
 
-  devices_present = 1;
-
+  devices_present = 0;
   light_type = LT_BASIC;                     // Use basic PWM control if SetOption15 = 0
   if (XdrvCall(FUNC_MODULE_INIT)) {
     // Serviced
   }
   else if (YTF_IR_BRIDGE == my_module_type) {
     ClaimSerial();  // Stop serial loopback mode
+//    devices_present = 1;
   }
   else if (SONOFF_DUAL == my_module_type) {
     Settings.flag.mqtt_serial = 0;
@@ -1415,7 +1415,6 @@ void GpioInit(void)
   }
 
   if (!light_type) {
-    devices_present = 0;
     for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
       if (pin[GPIO_PWM1 +i] < 99) {
         pwm_present = true;

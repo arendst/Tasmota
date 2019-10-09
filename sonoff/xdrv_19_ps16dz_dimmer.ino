@@ -125,10 +125,11 @@ bool PS16DZModuleSelected(void)
   switch (my_module_type)
   {
     case PS_16_DZ:
+      devices_present++;
       light_type = LT_SERIAL1;
       break;
-
     case SONOFF_L1:
+      devices_present++;
       light_type = LT_PWM3;
       break;
   }

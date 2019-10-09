@@ -1068,6 +1068,10 @@ bool LightModuleInit(void)
     light_type = LT_PWM2;
   }
 
+  if (light_type > LT_BASIC) {
+    devices_present++;
+  }
+
   // post-process for lights
   if (Settings.flag3.pwm_multi_channels) {
     uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
@@ -1075,7 +1079,7 @@ bool LightModuleInit(void)
     devices_present += pwm_channels - 1;  // add the pwm channels controls at the end
   }
 
-  return (light_type > 0);
+  return (light_type > LT_BASIC);
 }
 
 void LightInit(void)
