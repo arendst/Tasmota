@@ -124,7 +124,7 @@ const uint16_t MIN_MESSZ = 893;             // Min number of characters in MQTT 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
 
 const uint8_t MAX_BACKLOG = 30;             // Max number of commands in backlog
-const uint32_t MIN_BACKLOG_DELAY = 0;       // Minimal backlog delay in 0.1 seconds
+const uint32_t MIN_BACKLOG_DELAY = 2;       // Minimal backlog delay in 0.1 seconds
 
 const uint32_t SOFT_BAUDRATE = 9600;        // Default software serial baudrate
 const uint32_t APP_BAUDRATE = 115200;       // Default serial baudrate
