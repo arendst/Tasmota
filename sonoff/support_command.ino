@@ -466,6 +466,10 @@ void CmndStatus(void)
     ResponseJsonEnd();
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "11"));
   }
+
+#ifdef USE_SCRIPT_STATUS
+  if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">U",2,mqtt_data);
+#endif
   mqtt_data[0] = '\0';
 }
 
