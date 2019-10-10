@@ -366,6 +366,7 @@
 #define D_CMND_COLOR "Color"
 #define D_CMND_COLORTEMPERATURE "CT"
 #define D_CMND_DIMMER "Dimmer"
+#define D_CMND_DIMMER_RANGE "DimmerRange"
 #define D_CMND_HSBCOLOR "HSBColor"
 #define D_CMND_LED "Led"
 #define D_CMND_LEDTABLE "LedTable"
