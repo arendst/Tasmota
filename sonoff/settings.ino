@@ -128,6 +128,11 @@
 #ifndef DEFAULT_DIMMER_MAX
 #define DEFAULT_DIMMER_MAX             100
 #endif
+#ifndef DEFAULT_DIMMER_MIN
+#define DEFAULT_DIMMER_MIN             10
+#endif
+
+
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -776,7 +781,8 @@ void SettingsDefaultSet2(void)
 //  Settings.light_rotation = 0;
   SettingsDefaultSet_5_8_1();    // Clock color
 
-  Settings.param[P_DIMMER_MAX] = DEFAULT_DIMMER_MAX;
+  Settings.dimmer_hw_max = DEFAULT_DIMMER_MAX;
+  Settings.dimmer_hw_min = DEFAULT_DIMMER_MIN;
 
   // Display
   SettingsDefaultSet_5_10_1();   // Display settings
@@ -1085,10 +1091,10 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06060008) {
       // Move current tuya dimmer range to the new param.
-      if (Settings.flag3.tuya_dimmer_range_255) {
-        Settings.param[P_DIMMER_MAX] = 100;
+      if (Settings.flag3.ex_tuya_dimmer_range_255) {
+        Settings.param[P_ex_DIMMER_MAX] = 100;
       } else {
-        Settings.param[P_DIMMER_MAX] = 255;
+        Settings.param[P_ex_DIMMER_MAX] = 255;
       }
     }
     if (Settings.version < 0x06060009) {
@@ -1139,6 +1145,18 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06060011) {
       Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
+    }
+
+    if (Settings.version < 0x06060012) {
+      Settings.dimmer_hw_max = Settings.param[P_ex_DIMMER_MAX];
+      Settings.dimmer_hw_min = DEFAULT_DIMMER_MIN;
+      if (TUYA_DIMMER == Settings.module) {
+        if (Settings.flag3.ex_tuya_dimmer_min_limit) {
+          Settings.dimmer_hw_min = 25;
+        } else {
+          Settings.dimmer_hw_min = 1;
+        }
+      }
     }
 
     Settings.version = VERSION;

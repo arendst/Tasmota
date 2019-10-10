@@ -129,12 +129,12 @@ enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_M
 const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 
 const char kLightCommands[] PROGMEM = "|"  // No prefix
-  D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
+  D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
   D_CMND_RGBWWTABLE "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
   D_CMND_WHITE "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR "|UNDOCA" ;
 
 void (* const LightCommand[])(void) PROGMEM = {
-  &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndLedTable, &CmndFade,
+  &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndDimmerRange, &CmndLedTable, &CmndFade,
   &CmndRgbwwTable, &CmndScheme, &CmndSpeed, &CmndWakeup, &CmndWakeupDuration,
   &CmndWhite, &CmndChannel, &CmndHsbColor, &CmndUndocA };
 
@@ -2056,6 +2056,29 @@ void CmndDimmer(void)
   } else {
     ResponseCmndNumber(Settings.light_dimmer);
   }
+}
+
+void CmndDimmerRange(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    char *p;
+    uint8_t i = 0;
+    uint16_t parm[2] = { 0 };
+    for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 2; str = strtok_r(nullptr, ", ", &p)) {
+      parm[i] = strtoul(str, nullptr, 0);
+      i++;
+    }
+
+    if (parm[0] < parm[1]) {
+      Settings.dimmer_hw_min = parm[0];
+      Settings.dimmer_hw_max = parm[1];
+      restart_flag = 2;
+    } else {
+      AddLog_P2(LOG_LEVEL_ERROR, PSTR("Light: Dimmer minimum %d should be less than maximum %d"), parm[0], parm[1]);
+    }
+  }
+
+  Response_P(PSTR("{" D_CMND_DIMMER_RANGE ":{\"min\":%d, \"max\":%d}}"), Settings.dimmer_hw_min, Settings.dimmer_hw_max);
 }
 
 void CmndLedTable(void)
