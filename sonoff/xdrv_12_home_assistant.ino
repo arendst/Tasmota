@@ -91,6 +91,10 @@ const char HASS_DISCOVER_SENSOR_TEMP[] PROGMEM =
   "\"val_tpl\":\"{{value_json['%s'].Temperature}}\"," // "SI7021-14":{"Temperature":null,"Humidity":null} -> {{ value_json['SI7021-14'].Temperature }}
   "\"dev_cla\":\"temperature\"";                      // temperature
 
+const char HASS_DISCOVER_DS18X20_MULTI[] PROGMEM =
+  ",\"json_attributes_topic\":\"%s\","
+  "\"json_attributes_template\":\"{{{'Id':value_json['%s'].Id}|tojson}}\""; // Add DS18X20 Id as information field
+
 const char HASS_DISCOVER_SENSOR_HUM[] PROGMEM =
   ",\"unit_of_meas\":\"%%\","                         // %
   "\"val_tpl\":\"{{value_json['%s'].Humidity}}\","    // "SI7021-14":{"Temperature":null,"Humidity":null} -> {{ value_json['SI7021-14'].Humidity }}
@@ -103,7 +107,7 @@ const char HASS_DISCOVER_SENSOR_PRESS[] PROGMEM =
 
 //ENERGY
 const char HASS_DISCOVER_SENSOR_KWH[] PROGMEM =
-  ",\"unit_of_meas\":\"kWh\","                        // kWh
+  ",\"unit_of_meas\":\"kWh\","                 // kWh
   "\"val_tpl\":\"{{value_json['%s'].%s}}\","  // "ENERGY":{"TotalStartTime":null,"Total":null,"Yesterday":null,"Today":null,"Power":null,"ApparentPower":null,"ReactivePower":null,"Factor":null,"Voltage":null,"Current":null} -> {{ value_json['ENERGY'].Total/Yesterday/Today }}
   "\"dev_cla\":\"power\"";                    // power
 
@@ -347,7 +351,7 @@ void HAssAnnounceSwitches(void)
   // Send info about buttons
   char *tmp = Settings.switch_topic;
   Format(sw_topic, tmp, sizeof(sw_topic));
-  if (strlen(sw_topic) != 0) {
+  if ((strlen(sw_topic) != 0) && strcmp(sw_topic, "0")) {
     for (uint32_t switch_index = 0; switch_index < MAX_SWITCHES; switch_index++) {
       uint8_t switch_present = 0;
       uint8_t toggle = 1;
@@ -376,7 +380,7 @@ void HAssAnnounceButtons(void)
   // Send info about buttons
   char *tmp = Settings.button_topic;
   Format(key_topic, tmp, sizeof(key_topic));
-  if (strlen(key_topic) != 0) {
+  if ((strlen(key_topic) != 0) && strcmp(key_topic, "0")) {
     for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
       uint8_t button_present = 0;
       uint8_t toggle = 1;
@@ -432,6 +436,9 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
     TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
     if (!strcmp_P(subsensortype, PSTR(D_JSON_TEMPERATURE))) {
+      if (!strncmp_P(sensorname, "DS18B20-", 8)){
+        TryResponseAppend_P(HASS_DISCOVER_DS18X20_MULTI, state_topic, sensorname); // Add 'Id' as additional information
+      }
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_TEMP, TempUnit(), sensorname);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_HUMIDITY))) {
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_HUM, sensorname);
@@ -449,8 +456,7 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_AMPERE, sensorname, subsensortype);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_ILLUMINANCE))){
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_ILLUMINANCE, sensorname, subsensortype);
-    }
-    else {
+    } else {
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_ANY, sensorname, subsensortype);
     }
     TryResponseAppend_P(PSTR("}"));
@@ -469,7 +475,7 @@ void HAssAnnounceSensors(void)
     XsnsNextCall(FUNC_JSON_APPEND, hass_xsns_index);  // ,"INA219":{"Voltage":4.494,"Current":0.020,"Power":0.089}
     tele_period = tele_period_save;
 
-    char sensordata[256];                             // Copy because we need to write to mqtt_data
+    char sensordata[512];                             // Copy because we need to write to mqtt_data
     strlcpy(sensordata, mqtt_data, sizeof(sensordata));
 
     if (strlen(sensordata)) {
