@@ -846,6 +846,7 @@ public:
       // We apply dimmer in priority to RGB
       uint8_t bri = _state->DimmerToBri(Settings.light_dimmer);
       if (Settings.light_color[0] + Settings.light_color[1] + Settings.light_color[2] > 0) {
+        _state->setColorMode(LCM_RGB);
         _state->setBriRGB(bri);
       } else {
         _state->setBriCT(bri);
