@@ -5,6 +5,11 @@ sudo: false
 install:
   - pip install -U platformio
 
+cache:
+  directories:
+  - .cache
+  - $HOME/.platformio
+
 env:
   - ENV=sonoff
   - ENV=sonoff-minimal
