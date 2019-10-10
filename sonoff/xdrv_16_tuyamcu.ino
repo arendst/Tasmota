@@ -484,7 +484,6 @@ bool TuyaModuleSelected(void)
   }
 
   if (TuyaGetDpId(TUYA_MCU_FUNC_DIMMER) != 0) {
-    devices_present++;
     light_type = LT_SERIAL1;
   } else {
     light_type = LT_BASIC;
