@@ -285,6 +285,10 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
   ;
 
+const char kSensorNamesFixed[] PROGMEM =
+  D_SENSOR_SPI_MISO "|" D_SENSOR_SPI_MOSI "|" D_SENSOR_SPI_CLK "|"
+  D_SENSOR_USER;
+
 // User selectable ADC0 functionality
 enum UserSelectableAdc0 {
   ADC0_NONE,           // Not used

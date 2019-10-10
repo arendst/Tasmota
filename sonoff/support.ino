@@ -1067,11 +1067,16 @@ void SetModuleType()
   my_module_type = (USER_MODULE == Settings.module) ? Settings.user_template_base : Settings.module;
 }
 
+bool FlashPin(uint32_t pin)
+{
+  return (((pin > 5) && (pin < 9)) || (11 == pin));
+}
+
 uint8_t ValidPin(uint32_t pin, uint32_t gpio)
 {
   uint8_t result = gpio;
 
-  if (((pin > 5) && (pin < 9)) || (11 == pin)) {
+  if (FlashPin(pin)) {
     result = GPIO_NONE;  // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
   if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {

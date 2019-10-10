@@ -868,11 +868,25 @@ void CmndGpio(void)
     Response_P(PSTR("{"));
     bool jsflg = false;
     for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) {
-      if (ValidGPIO(i, cmodule.io[i])) {
+      if (ValidGPIO(i, cmodule.io[i]) || ((GPIO_USER == XdrvMailbox.payload) && !FlashPin(i))) {
         if (jsflg) { ResponseAppend_P(PSTR(",")); }
         jsflg = true;
+        uint8_t sensor_type = Settings.my_gp.io[i];
+        if (!ValidGPIO(i, cmodule.io[i])) {
+          sensor_type = cmodule.io[i];
+          if (GPIO_USER == sensor_type) {  // A user GPIO equals a not connected (=GPIO_NONE) GPIO here
+            sensor_type = GPIO_NONE;
+          }
+        }
+        uint8_t sensor_name_idx = sensor_type;
+        const char *sensor_names = kSensorNames;
+        if (sensor_type > GPIO_FIX_START) {
+          sensor_name_idx = sensor_type - GPIO_FIX_START -1;
+          sensor_names = kSensorNamesFixed;
+        }
         char stemp1[TOPSZ];
-        ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s\"}"), i, Settings.my_gp.io[i], GetTextIndexed(stemp1, sizeof(stemp1), Settings.my_gp.io[i], kSensorNames));
+        ResponseAppend_P(PSTR("\"" D_CMND_GPIO "%d\":{\"%d\":\"%s\"}"),
+          i, sensor_type, GetTextIndexed(stemp1, sizeof(stemp1), sensor_name_idx, sensor_names));
       }
     }
     if (jsflg) {
