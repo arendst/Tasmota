@@ -593,7 +593,9 @@ void ws2812_set_array(float *array ,uint8_t len) {
 #define NTYPE 0
 #define STYPE 0x80
 
+#ifndef FLT_MAX
 #define FLT_MAX 99999999
+#endif
 
 float median_array(float *array,uint8_t len) {
     uint8_t ind[len];
@@ -2571,7 +2573,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
 #endif
 #endif
 
-            else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2) || !strncmp(lp,"print",5)) {
+            else if (!strncmp(lp,"=>",2) || !strncmp(lp,"->",2) || !strncmp(lp,"+>",2) || !strncmp(lp,"print",5)) {
                 // execute cmd
                 uint8_t sflag=0,pflg=0,svmqtt,swll;
                 if (*lp=='p') {
@@ -2580,6 +2582,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                 }
                 else {
                   if (*lp=='-') sflag=1;
+                  if (*lp=='+') sflag=2;
                   lp+=2;
                 }
                 char *slp=lp;
@@ -2609,18 +2612,21 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                     else toLog(&tmp[5]);
                   } else {
                     if (!sflag) {
+                      tasm_cmd_activ=1;
                       snprintf_P(log_data, sizeof(log_data), PSTR("Script: performs \"%s\""), tmp);
                       AddLog(glob_script_mem.script_loglevel&0x7f);
+                    } else if (sflag==2) {
+                      // allow recursive call
                     } else {
+                      tasm_cmd_activ=1;
                       svmqtt=Settings.flag.mqtt_enabled;
                       swll=Settings.weblog_level;
                       Settings.flag.mqtt_enabled=0;
                       Settings.weblog_level=0;
                     }
-                    tasm_cmd_activ=1;
                     ExecuteCommand((char*)tmp, SRC_RULE);
                     tasm_cmd_activ=0;
-                    if (sflag) {
+                    if (sflag==1) {
                       Settings.flag.mqtt_enabled=svmqtt;
                       Settings.weblog_level=swll;
                     }
@@ -3388,7 +3394,7 @@ const char SCRIPT_HUE_LIGHTS_STATUS_JSON1[] PROGMEM =
   "\"reachable\":true}"
   ",\"type\":\"{type}\","
   "\"name\":\"{j1\","
-  "\"modelid\":\"LCT007\","
+  "\"modelid\":\"{m1}\","
   "\"uniqueid\":\"{j2\","
   "\"swversion\":\"5.50.1.19085\"}";
 
@@ -3444,16 +3450,61 @@ const char SCRIPT_HUE_LIGHTS_STATUS_JSON2[] PROGMEM =
 "}";
 
 /*
+
+
+Color Ligh
+Dimmable Light
+Color Temperature Light
+Extended Color Light
+On/Off light
+
+ZGPSwitch
+ZLLSwitch
+CLIPSwitch
+CLIPOpenClose
+CLIPPresence
+CLIPTemperature
+CLIPHumidity
+Daylight
+CLIPLightlevel
+
+
   temperature ZLLTemperature
   lightlevel ZLLLightLevel
   presence ZLLPresence
   */
 
 
+/*
+
+case 'T':
+response->replace("{type}","ZLLTemperature");
+temp=glob_script_mem.fvars[hue_script[hue_devs].index[2]-1];
+light_status += "\"temperature\":";
+light_status += String(temp*100);
+light_status += ",";
+break;
+case 'L':
+response->replace("{type}","ZLLLightLevel");
+temp=glob_script_mem.fvars[hue_script[hue_devs].index[2]-1];
+light_status += "\"lightlevel\":";
+light_status += String(temp);
+light_status += ",";
+break;
+case 'P':
+response->replace("{type}","ZLLPresence");
+temp=glob_script_mem.fvars[hue_script[hue_devs].index[0]-1];
+light_status += "\"presence\":";
+if (temp==0)light_status += "false";
+else light_status += "true";
+light_status += ",";
+break;
+*/
+
 
 void Script_HueStatus(String *response, uint16_t hue_devs) {
 
-  if (hue_script[hue_devs].type=='P') {
+  if (hue_script[hue_devs].type=='p') {
     *response+=FPSTR(SCRIPT_HUE_LIGHTS_STATUS_JSON2);
     response->replace("{j1",hue_script[hue_devs].name);
     response->replace("{j2", GetHueDeviceId(hue_devs));
@@ -3502,36 +3553,29 @@ void Script_HueStatus(String *response, uint16_t hue_devs) {
 
   float temp;
   switch (hue_script[hue_devs].type) {
-    case 'E':
-      response->replace("{type}","Extended color light");
+    case 'C':
+      response->replace("{type}","Color Ligh"); // alexa ok
+      response->replace("{m1","LST001");
       break;
-    case 'S':
-      response->replace("{type}","color light");
+    case 'D':
+      response->replace("{type}","Dimmable Light"); // alexa NO
+      response->replace("{m1","LWB004");
       break;
     case 'T':
-      response->replace("{type}","ZLLTemperature");
-      temp=glob_script_mem.fvars[hue_script[hue_devs].index[2]-1];
-      light_status += "\"temperature\":";
-      light_status += String(temp*100);
-      light_status += ",";
+      response->replace("{type}","Color Temperature Light"); // alexa NO
+      response->replace("{m1","LTW011");
       break;
-    case 'L':
-      response->replace("{type}","ZLLLightLevel");
-      temp=glob_script_mem.fvars[hue_script[hue_devs].index[2]-1];
-      light_status += "\"lightlevel\":";
-      light_status += String(temp);
-      light_status += ",";
+    case 'E':
+      response->replace("{type}","Extended color light"); // alexa ok
+      response->replace("{m1","LCT007");
       break;
-    case 'P':
-      response->replace("{type}","ZLLPresence");
-      temp=glob_script_mem.fvars[hue_script[hue_devs].index[0]-1];
-      light_status += "\"presence\":";
-      if (temp==0)light_status += "false";
-      else light_status += "true";
-      light_status += ",";
+    case 'S':
+      response->replace("{type}","On/Off light"); // alexa ok
+      response->replace("{m1","LCT007");
       break;
     default:
       response->replace("{type}","color light");
+      response->replace("{m1","LST001");
       break;
   }
 
@@ -3664,7 +3708,7 @@ void Script_Check_Hue(String *response) {
       lp++;
     }
   }
-#if 1
+#if 0
   if (response) {
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Hue: %d"), hue_devs);
     toLog(">>>>");
