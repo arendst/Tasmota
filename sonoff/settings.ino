@@ -126,13 +126,11 @@
 #define ENERGY_OVERTEMP             90         // Overtemp in Celsius
 #endif
 #ifndef DEFAULT_DIMMER_MAX
-#define DEFAULT_DIMMER_MAX             100
+#define DEFAULT_DIMMER_MAX          100
 #endif
 #ifndef DEFAULT_DIMMER_MIN
-#define DEFAULT_DIMMER_MIN             10
+#define DEFAULT_DIMMER_MIN          0
 #endif
-
-
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -1146,16 +1144,20 @@ void SettingsDelta(void)
     if (Settings.version < 0x06060011) {
       Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
     }
-
     if (Settings.version < 0x06060012) {
-      Settings.dimmer_hw_max = Settings.param[P_ex_DIMMER_MAX];
       Settings.dimmer_hw_min = DEFAULT_DIMMER_MIN;
+      Settings.dimmer_hw_max = DEFAULT_DIMMER_MAX;
       if (TUYA_DIMMER == Settings.module) {
         if (Settings.flag3.ex_tuya_dimmer_min_limit) {
           Settings.dimmer_hw_min = 25;
         } else {
           Settings.dimmer_hw_min = 1;
         }
+        Settings.dimmer_hw_max = Settings.param[P_ex_DIMMER_MAX];
+      }
+      else if (PS_16_DZ == Settings.module) {
+        Settings.dimmer_hw_min = 10;
+        Settings.dimmer_hw_max = Settings.param[P_ex_DIMMER_MAX];
       }
     }
 

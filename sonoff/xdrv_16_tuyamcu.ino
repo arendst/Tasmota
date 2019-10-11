@@ -124,14 +124,14 @@ void CmndTuyaMcu(void) {
 
   }
 
-  Response_P(PSTR("{" D_CMND_TUYA_MCU ":["));
+  Response_P(PSTR("{\"" D_CMND_TUYA_MCU "\":["));
   bool added = false;
   for (uint8_t i = 0; i < MAX_TUYA_FUNCTIONS; i++) {
     if (Settings.tuya_fnid_map[i].fnid != 0) {
       if (added) {
         ResponseAppend_P(PSTR(","));
       }
-      ResponseAppend_P(PSTR("{\"fnId\":%d, \"dpId\":%d}" ), Settings.tuya_fnid_map[i].fnid, Settings.tuya_fnid_map[i].dpid);
+      ResponseAppend_P(PSTR("{\"fnId\":%d,\"dpId\":%d}" ), Settings.tuya_fnid_map[i].fnid, Settings.tuya_fnid_map[i].dpid);
       added = true;
     }
   }
