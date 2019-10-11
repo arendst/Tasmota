@@ -241,18 +241,18 @@ void WifiBegin(uint8_t flag, uint8_t channel)
 
 #if LWIP_IPV6
   for (bool configured = false; !configured;) {
-    uint16_t cfgcnt=0;
-    for (auto addr : addrList)
-    {
-      if ((configured = !addr.isLocal() && addr.isV6()) || cfgcnt==30) break; // IPv6 is mandatory but stop after 15 seconds
+    uint16_t cfgcnt = 0;
+    for (auto addr : addrList) {
+      if ((configured = !addr.isLocal() && addr.isV6()) || cfgcnt==30) {
+        break;  // IPv6 is mandatory but stop after 15 seconds
+      }
       delay(500);  // Loop until real IPv6 address is aquired or too many tries failed
       cfgcnt++;
     }
   }
   for (auto a : addrList) {
-    if(!a.isLocal() && !a.isLegacy())
-    {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("WIFi: Got IPv6 global address %s"),a.toString().c_str());
+    if (!a.isLocal() && !a.isLegacy()) {
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Got IPv6 global address %s"), a.toString().c_str());
     }
   }
 #endif
