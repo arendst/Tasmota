@@ -213,6 +213,7 @@
 #define D_MQTT_SERVICE_FOUND "發現MQTT服務:"
 #define D_FOUND_AT "found at"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog主機未找到"
+#define D_CONNECT_V6_ADDR_INFO "Got IPv6 global address"
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "保存到 flash:"

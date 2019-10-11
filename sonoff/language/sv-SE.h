@@ -213,6 +213,7 @@
 #define D_MQTT_SERVICE_FOUND "MQTT-tjänst hittades på"
 #define D_FOUND_AT "hittades vid"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog-värd hittades inte"
+#define D_CONNECT_V6_ADDR_INFO "Got IPv6 global address"
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "Sparade till flash vid"
