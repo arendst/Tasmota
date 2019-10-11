@@ -213,7 +213,6 @@
 #define D_MQTT_SERVICE_FOUND "MQTT 서비스 발견"
 #define D_FOUND_AT "다음에서 발견"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog 호스트가 발견되지 않았습니다"
-#define D_CONNECT_V6_ADDR_INFO "Got IPv6 global address"
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "플래시에 저장"

@@ -213,7 +213,6 @@
 #define D_MQTT_SERVICE_FOUND "MQTT сервис service найдено"
 #define D_FOUND_AT "найдено в"
 #define D_SYSLOG_HOST_NOT_FOUND "System лог хост не найден"
-#define D_CONNECT_V6_ADDR_INFO "Got IPv6 global address"
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "Сохранено во флэш-память"

@@ -252,7 +252,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   for (auto a : addrList) {
     if(!a.isLocal() && !a.isLegacy())
     {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECT_V6_ADDR_INFO " %s"),a.toString().c_str());
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("WIFi: Got IPv6 global address %s"),a.toString().c_str());
     }
   }
 #endif

@@ -213,7 +213,6 @@
 #define D_MQTT_SERVICE_FOUND "Üzerinden MQTT serivisi tespit edildi"
 #define D_FOUND_AT "(bulundu)"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog hostu bulunamadı"
-#define D_CONNECT_V6_ADDR_INFO "Got IPv6 global address"
 
 // settings.ino
 #define D_SAVED_TO_FLASH_AT "Bellekten (Flash) kaydedidi:"
