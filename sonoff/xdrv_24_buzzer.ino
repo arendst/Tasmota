@@ -37,6 +37,11 @@ struct BUZZER {
 
 /*********************************************************************************************/
 
+void BuzzerOff(void)
+{
+  digitalWrite(pin[GPIO_BUZZER], Buzzer.inverted);  // Buzzer Off
+}
+
 //void BuzzerBeep(uint32_t count = 1, uint32_t on = 1, uint32_t off = 1, uint32_t tune = 0);
 void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune)
 {
@@ -63,7 +68,10 @@ void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune)
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("BUZ: %d(%d),%d,%d,0x%08X(0x%08X)"), count, Buzzer.count, on, off, tune, Buzzer.tune);
 
-  Buzzer.enable = true;
+  Buzzer.enable = (Buzzer.count > 0);
+  if (!Buzzer.enable) {
+    BuzzerOff();
+  }
 }
 
 void BuzzerBeep(uint32_t count) {
@@ -93,7 +101,7 @@ void BuzzerInit(void)
 {
   if (pin[GPIO_BUZZER] < 99) {
     pinMode(pin[GPIO_BUZZER], OUTPUT);
-    digitalWrite(pin[GPIO_BUZZER], Buzzer.inverted);  // Buzzer Off
+    BuzzerOff();
   } else {
     Buzzer.active = false;
   }
@@ -139,23 +147,28 @@ void CmndBuzzer(void)
   // All parameters are optional
   //
   // Buzzer             = Buzzer 1,1,1 = Beep once with both duration and pause set to 100mS
+  // Buzzer 0           = Stop active beep cycle
   // Buzzer 2           = Beep twice with duration 200mS and pause 100mS
   // Buzzer 2,3         = Beep twice with duration 300mS and pause 100mS
   // Buzzer 2,3,4       = Beep twice with duration 300mS and pause 400mS
   // Buzzer 2,3,4,0xF54 = Beep a sequence once indicated by 0xF54 = 1111 0101 01 with duration 300mS and pause 400mS
 
   if (XdrvMailbox.data_len > 0) {
-    char *p;
-    uint32_t i = 0;
-    uint32_t parm[4] = { 0 };
-    for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 4; str = strtok_r(nullptr, ", ", &p)) {
-      parm[i] = strtoul(str, nullptr, 0);
-      i++;
+    if (XdrvMailbox.payload > 0) {
+      char *p;
+      uint32_t i = 0;
+      uint32_t parm[4] = { 0 };
+      for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 4; str = strtok_r(nullptr, ", ", &p)) {
+        parm[i] = strtoul(str, nullptr, 0);
+        i++;
+      }
+      for (uint32_t i = 0; i < 3; i++) {
+        if (parm[i] < 1) { parm[i] = 1; }  // Default Count, On time, Off time
+      }
+      BuzzerBeep(parm[0], parm[1], parm[2], parm[3]);
+    } else {
+      BuzzerBeep(0);
     }
-    for (uint32_t i = 0; i < 3; i++) {
-      if (parm[i] < 1) { parm[i] = 1; }  // Default Count, On time, Off time
-    }
-    BuzzerBeep(parm[0], parm[1], parm[2], parm[3]);
   } else {
     BuzzerBeep(1);
   }
