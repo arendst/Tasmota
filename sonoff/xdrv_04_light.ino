@@ -87,7 +87,7 @@
  *     survive a reboot and can be stored in flash - in saveSettings()
  *  .b Actual channel values are computed from RGB or CT combined with brightness.
  *     Range is still 0..255 (8 bits) - in getActualRGBCW()
- *  .c The 5 internal channels RGBWC are mapped to the actual channels supproted
+ *  .c The 5 internal channels RGBWC are mapped to the actual channels supported
  *     by the light_type: in calcLevels()
  *     1 channel  - 0:Brightness
  *     2 channels - 0:Coldwhite 1:Warmwhite
