@@ -204,7 +204,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   String rule_name, rule_param;
   int8_t compareOperator = parseCompareExpression(rule_expr, rule_name, rule_param);    //Parse the compare expression.Return operator and the left, right part of expression
 
-  char rule_svalue[CMDSZ] = { 0 };
+  char rule_svalue[80] = { 0 };
   float rule_value = 0;
   if (compareOperator != COMPARE_OPERATOR_NONE) {
     for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
