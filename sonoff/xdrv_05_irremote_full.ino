@@ -198,14 +198,10 @@ String sendIRJsonState(const struct decode_results &results) {
 
 void IrReceiveCheck(void)
 {
-  char sirtype[14];  // Max is AIWA_RC_T501
-  int8_t iridx = 0;
-
   decode_results results;
 
   if (irrecv->decode(&results)) {
     uint32_t now = millis();
-
 
 //    if ((now - ir_lasttime > IR_TIME_AVOID_DUPLICATE) && (UNKNOWN != results.decode_type) && (results.bits > 0)) {
     if (!irsend_active && (now - ir_lasttime > IR_TIME_AVOID_DUPLICATE)) {
@@ -236,13 +232,7 @@ void IrReceiveCheck(void)
       ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
 
-      if (iridx) {
-        XdrvRulesProcess();
-#ifdef USE_DOMOTICZ
-        unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]
-        DomoticzSensor(DZ_COUNT, value);                      // Send data as Domoticz Counter value
-#endif  // USE_DOMOTICZ
-      }
+      XdrvRulesProcess();
     }
 
     irrecv->resume();
