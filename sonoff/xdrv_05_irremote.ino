@@ -174,13 +174,13 @@ void IrReceiveCheck(void)
       ResponseJsonEndEnd();
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_IRRECEIVED));
 
-      if (iridx) {
-        XdrvRulesProcess();
+      XdrvRulesProcess();
 #ifdef USE_DOMOTICZ
+      if (iridx) {
         unsigned long value = results.value | (iridx << 28);  // [Protocol:4, Data:28]
         DomoticzSensor(DZ_COUNT, value);                      // Send data as Domoticz Counter value
-#endif  // USE_DOMOTICZ
       }
+#endif  // USE_DOMOTICZ
     }
 
     irrecv->resume();
