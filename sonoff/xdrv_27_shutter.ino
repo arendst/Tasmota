@@ -91,7 +91,7 @@ int32_t ShutterPercentToRealPosition(uint8_t percent,uint8_t index)
 	if (Settings.shutter_set50percent[index] != 50) {
     return  percent <= 5 ?  Settings.shuttercoeff[2][index] * percent : Settings.shuttercoeff[1][index] * percent + Settings.shuttercoeff[0][index];
 	} else {
-    uint16_t realpos;
+    uint32_t realpos;
     // check against DIV 0
     for (uint8_t j=0 ; j < 5 ; j++) {
       if (Settings.shuttercoeff[j][index] == 0) {
