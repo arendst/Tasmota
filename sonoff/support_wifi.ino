@@ -244,15 +244,11 @@ void WifiBegin(uint8_t flag, uint8_t channel)
     uint16_t cfgcnt = 0;
     for (auto addr : addrList) {
       if ((configured = !addr.isLocal() && addr.isV6()) || cfgcnt==30) {
+        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Got IPv6 global address %s"), addr.toString().c_str());
         break;  // IPv6 is mandatory but stop after 15 seconds
       }
       delay(500);  // Loop until real IPv6 address is aquired or too many tries failed
       cfgcnt++;
-    }
-  }
-  for (auto a : addrList) {
-    if (!a.isLocal() && !a.isLegacy()) {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Got IPv6 global address %s"), a.toString().c_str());
     }
   }
 #endif
@@ -380,9 +376,26 @@ void WifiSetState(uint8_t state)
   global_state.wifi_down = state ^1;
 }
 
+#ifdef LWIP_IPV6
+bool WifiCheckIPv6(void)
+{
+  bool ipv6_global=false;
+
+  for (auto a : addrList) {
+    if(!a.isLocal() && a.isV6()) ipv6_global=true;
+  }
+  return ipv6_global;
+}
+#endif
+
 void WifiCheckIp(void)
 {
+#ifdef LWIP_IPV6
+  if(WifiCheckIPv6()) {
+    Wifi.status = WL_CONNECTED;
+#else
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
+#endif
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
     Wifi.retry = Wifi.retry_init;
@@ -520,7 +533,11 @@ void WifiCheck(uint8_t param)
         Wifi.counter = WIFI_CHECK_SEC;
         WifiCheckIp();
       }
+#ifdef LWIP_IPV6
+      if (WifiCheckIPv6()) {
+#else
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !Wifi.config_type) {
+#endif
         WifiSetState(1);
 
         if (Settings.flag3.use_wifi_rescan) {
