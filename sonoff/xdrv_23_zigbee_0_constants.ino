@@ -19,6 +19,8 @@
 
 #ifdef USE_ZIGBEE
 
+#define ZIGBEE_VERBOSE      // output versbose MQTT Zigbee logs. Will remain active for now
+
 typedef uint64_t Z_IEEEAddress;
 typedef uint16_t Z_ShortAddress;
 

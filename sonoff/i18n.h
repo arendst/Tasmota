@@ -460,13 +460,17 @@
 // Commands xdrv_23_zigbee.ino
 #define D_CMND_ZIGBEE_PERMITJOIN "ZigbeePermitJoin"
 #define D_CMND_ZIGBEE_STATUS "ZigbeeStatus"
+#define D_CMND_ZIGBEE_RESET "ZigbeeReset"
+  #define D_JSON_ZIGBEE_CC2530 "CC2530"
 #define D_CMND_ZIGBEEZNPSEND "ZigbeeZNPSend"
   #define D_JSON_ZIGBEE_STATUS "ZigbeeStatus"
   #define D_JSON_ZIGBEEZNPRECEIVED "ZigbeeZNPReceived"
   #define D_JSON_ZIGBEEZNPSENT "ZigbeeZNPSent"
   #define D_JSON_ZIGBEEZCL_RECEIVED "ZigbeeZCLReceived"
   #define D_JSON_ZIGBEEZCL_RAW_RECEIVED "ZigbeeZCLRawReceived"
-  #define D_JSON_ZIGBEEZCLSENT "ZigbeeZCLSent"
+#define D_CMND_ZIGBEE_ZCL_SEND "ZigbeeZCLSend"
+  #define D_JSON_ZIGBEE_ZCL_SENT "ZigbeeZCLSent"
+#define D_CMND_ZIGBEE_PROBE "ZigbeeProbe"
 
   // Commands xdrv_25_A4988_Stepper.ino
   #ifdef USE_A4988_Stepper
