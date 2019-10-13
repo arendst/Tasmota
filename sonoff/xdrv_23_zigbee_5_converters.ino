@@ -53,6 +53,7 @@ public:
                            uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
                            uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
                            uint32_t timestamp) {
+#ifdef ZIGBEE_VERBOSE
     char hex_char[_payload.len()*2+2];
 		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
     Response_P(PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
@@ -73,6 +74,7 @@ public:
     ResponseJsonEnd();      // append '}'
   	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
   	XdrvRulesProcess();
+#endif
   }
 
   static ZCLFrame parseRawFrame(const SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid) { // parse a raw frame and build the ZCL frame object
@@ -133,17 +135,6 @@ private:
   uint16_t                _group_id = 0;
   SBuffer                 _payload;
 };
-
-char Hex36Char(uint8_t value) {
-  // convert an integer from 0 to 46, to a single digit 0-9A-Z
-  if (value < 10) {
-    return '0' + value;
-  } else if (value < 46) {
-    return 'A' + value - 10;
-  } else {
-    return '?';   // out of range
-  }
-}
 
 // Zigbee ZCL converters
 
@@ -299,19 +290,29 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
       i += buf.get8(i) + 1;
       break;
 
-
-    // TODO
     case 0x08:      // data8
-      i++;
-      break;
     case 0x18:      // map8
-      i++;
+      {
+        uint8_t uint8_val = buf.get8(i);
+        i += 1;
+        json[attrid_str] = uint8_val;
+      }
       break;
+    case 0x09:      // data16
     case 0x19:      // map16
-      i += 2;
+      {
+        uint16_t uint16_val = buf.get16(i);
+        i += 2;
+        json[attrid_str] = uint16_val;
+      }
       break;
+    case 0x0B:      // data32
     case 0x1B:      // map32
-      i += 4;
+      {
+        uint32_t uint32_val = buf.get32(i);
+        i += 4;
+        json[attrid_str] = uint32_val;
+      }
       break;
     // enum
     case 0x30:      // enum8
@@ -319,6 +320,7 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
       i += attrtype - 0x2F;
       break;
 
+    // TODO
     case 0x39:      // float
       i += 4;
       break;
@@ -345,9 +347,7 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
       break;
 
     // Other un-implemented data types
-    case 0x09:      // data16
     case 0x0A:      // data24
-    case 0x0B:      // data32
     case 0x0C:      // data40
     case 0x0D:      // data48
     case 0x0E:      // data56
@@ -381,7 +381,6 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
 
 
 // First pass, parse all attributes in their native format
-// The key is 32 bits, high 16 bits is cluserid, low 16 bits is attribute id
 void ZCLFrame::parseRawAttributes(JsonObject& json, uint8_t offset) {
   uint32_t i = offset;
   uint32_t len = _payload.len();
@@ -390,9 +389,9 @@ void ZCLFrame::parseRawAttributes(JsonObject& json, uint8_t offset) {
     uint16_t attrid = _payload.get16(i);
     i += 2;
 
-    char shortaddr[16];
-    snprintf_P(shortaddr, sizeof(shortaddr), PSTR("%c_%04X_%04X"),
-                Hex36Char(_cmd_id), _cluster_id, attrid);
+    char key[16];
+    snprintf_P(key, sizeof(key), PSTR("%04X_%02X_%04X"),
+                _cluster_id, _cmd_id, attrid);
 
     // exception for Xiaomi lumi.weather - specific field to be treated as octet and not char
     if ((0x0000 == _cluster_id) && (0xFF01 == attrid)) {
@@ -400,7 +399,7 @@ void ZCLFrame::parseRawAttributes(JsonObject& json, uint8_t offset) {
         _payload.set8(i, 0x41);   // change type from 0x42 to 0x41
       }
     }
-    i += parseSingleAttribute(json, shortaddr, _payload, i, len);
+    i += parseSingleAttribute(json, key, _payload, i, len);
   }
 }
 
@@ -415,11 +414,11 @@ void ZCLFrame::parseReadAttributes(JsonObject& json, uint8_t offset) {
     uint8_t status = _payload.get8(i++);
 
     if (0 == status) {
-      char shortaddr[16];
-      snprintf_P(shortaddr, sizeof(shortaddr), PSTR("%c_%04X_%04X"),
-                  Hex36Char(_cmd_id), _cluster_id, attrid);
+      char key[16];
+      snprintf_P(key, sizeof(key), PSTR("%04X_%02X_%04X"),
+                  _cluster_id, _cmd_id, attrid);
 
-      i += parseSingleAttribute(json, shortaddr, _payload, i, len);
+      i += parseSingleAttribute(json, key, _payload, i, len);
     }
   }
 }
@@ -432,7 +431,7 @@ void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
   uint32_t len = _payload.len();
 
   char attrid_str[12];
-  snprintf_P(attrid_str, sizeof(attrid_str), PSTR("s_%04X_%02X"), _cluster_id, _cmd_id);
+  snprintf_P(attrid_str, sizeof(attrid_str), PSTR("%04X!%02X"), _cmd_id, _cluster_id);
 
   char hex_char[_payload.len()*2+2];
   ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
@@ -456,51 +455,51 @@ const float Z_10  PROGMEM =  10.0f;
 
 // list of post-processing directives
 const Z_AttributeConverter Z_PostProcess[] = {
-  { "?_0000_0004",  nullptr,                &Z_ManufKeep,           nullptr },    // record Manufacturer
-  { "?_0000_0005",  nullptr,                &Z_ModelKeep,           nullptr },    // record Model
+  { "0000_0?_0004",  nullptr,                &Z_ManufKeep,           nullptr },    // record Manufacturer
+  { "0000_0?_0005",  nullptr,                &Z_ModelKeep,           nullptr },    // record Model
 
-  { "?_0000_0000",  "ZCLVersion",           &Z_Copy,                nullptr },
-  { "?_0000_0001",  "AppVersion",           &Z_Copy,                nullptr },
-  { "?_0000_0002",  "StackVersion",         &Z_Copy,                nullptr },
-  { "?_0000_0003",  "HWVersion",            &Z_Copy,                nullptr }, 
-  { "?_0000_0004",  "Manufacturer",         &Z_Copy,                nullptr },
-  { "?_0000_0005",  D_JSON_MODEL D_JSON_ID, &Z_Copy,                nullptr },
-  { "?_0000_0006",  "DateCode",             &Z_Copy,                nullptr },
-  { "?_0000_0007",  "PowerSource",          &Z_Copy,                nullptr },
-  { "?_0000_4000",  "SWBuildID",            &Z_Copy,                nullptr },
-  { "A_0000_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
+  { "0000_0?_0000",  "ZCLVersion",           &Z_Copy,                nullptr },
+  { "0000_0?_0001",  "AppVersion",           &Z_Copy,                nullptr },
+  { "0000_0?_0002",  "StackVersion",         &Z_Copy,                nullptr },
+  { "0000_0?_0003",  "HWVersion",            &Z_Copy,                nullptr }, 
+  { "0000_0?_0004",  "Manufacturer",         &Z_Copy,                nullptr },
+  { "0000_0?_0005",  D_JSON_MODEL D_JSON_ID, &Z_Copy,                nullptr },
+  { "0000_0?_0006",  "DateCode",             &Z_Copy,                nullptr },
+  { "0000_0?_0007",  "PowerSource",          &Z_Copy,                nullptr },
+  { "0000_0?_4000",  "SWBuildID",            &Z_Copy,                nullptr },
+  { "0000_0?_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
 
-  { "A_0400_0000",  D_JSON_ILLUMINANCE,     &Z_Copy,                nullptr },    // Illuminance (in Lux)
-  { "A_0400_0004",  "LightSensorType",      &Z_Copy,                nullptr },    // LightSensorType
-  { "A_0400_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
+  { "0400_0A_0000",  D_JSON_ILLUMINANCE,     &Z_Copy,                nullptr },    // Illuminance (in Lux)
+  { "0400_0A_0004",  "LightSensorType",      &Z_Copy,                nullptr },    // LightSensorType
+  { "0400_0A_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
 
-  { "A_0401_0000",  "LevelStatus",          &Z_Copy,                nullptr },    // Illuminance (in Lux)
-  { "A_0401_0001",  "LightSensorType",      &Z_Copy,                nullptr },    // LightSensorType
-  { "A_0401_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
+  { "0401_0A_0000",  "LevelStatus",          &Z_Copy,                nullptr },    // Illuminance (in Lux)
+  { "0401_0A_0001",  "LightSensorType",      &Z_Copy,                nullptr },    // LightSensorType
+  { "0401_0A_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
 
-  { "A_0402_0000",  D_JSON_TEMPERATURE,     &Z_ConvFloatDivider,    (void*) &Z_100 },   // Temperature
-  { "A_0402_????",  nullptr,                &Z_Remove,              nullptr },     // Remove all other values
+  { "0402_0A_0000",  D_JSON_TEMPERATURE,     &Z_ConvFloatDivider,    (void*) &Z_100 },   // Temperature
+  { "0402_0A_????",  nullptr,                &Z_Remove,              nullptr },     // Remove all other values
 
-  { "A_0403_0000",  D_JSON_PRESSURE_UNIT,   &Z_Const_Keep,          (void*) D_UNIT_PRESSURE},     // Pressure Unit
-  { "A_0403_0000",  D_JSON_PRESSURE,        &Z_Copy,                nullptr },     // Pressure
-  { "A_0403_????",  nullptr,                &Z_Remove,              nullptr },     // Remove all other Pressure values
+  { "0403_0A_0000",  D_JSON_PRESSURE_UNIT,   &Z_Const_Keep,          (void*) D_UNIT_PRESSURE},     // Pressure Unit
+  { "0403_0A_0000",  D_JSON_PRESSURE,        &Z_Copy,                nullptr },     // Pressure
+  { "0403_0A_????",  nullptr,                &Z_Remove,              nullptr },     // Remove all other Pressure values
 
-  { "A_0404_0000",  D_JSON_FLOWRATE,        &Z_ConvFloatDivider,    (void*) &Z_10 },    // Flow (in m3/h)
-  { "A_0404_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
+  { "0404_0A_0000",  D_JSON_FLOWRATE,        &Z_ConvFloatDivider,    (void*) &Z_10 },    // Flow (in m3/h)
+  { "0404_0A_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
 
-  { "A_0405_0000",  D_JSON_HUMIDITY,        &Z_ConvFloatDivider,    (void*) &Z_100 },   // Humidity
-  { "A_0405_????",  nullptr,                &Z_Remove,              nullptr },     // Remove all other values
+  { "0405_0A_0000",  D_JSON_HUMIDITY,        &Z_ConvFloatDivider,    (void*) &Z_100 },   // Humidity
+  { "0405_0A_????",  nullptr,                &Z_Remove,              nullptr },     // Remove all other values
 
-  { "A_0406_0000",  "Occupancy",            &Z_Copy,                nullptr },    // Occupancy (map8)
-  { "A_0406_0001",  "OccupancySensorType",  &Z_Copy,                nullptr },    // OccupancySensorType
-  { "A_0406_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
+  { "0406_0A_0000",  "Occupancy",            &Z_Copy,                nullptr },    // Occupancy (map8)
+  { "0406_0A_0001",  "OccupancySensorType",  &Z_Copy,                nullptr },    // OccupancySensorType
+  { "0406_0A_????",  nullptr,                &Z_Remove,              nullptr },    // Remove all other values
 
   // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
-  { "A_0000_FF01",  nullptr,                &Z_AqaraSensor,         nullptr },    // Occupancy (map8)
+  { "0000_0A_FF01",  nullptr,                &Z_AqaraSensor,         nullptr },    // Occupancy (map8)
   // // 0x0b04 Electrical Measurement
-  // { "A_0B04_0100",  "DCVoltage",            &Z_Copy,                nullptr },    // Occupancy (map8)
-  // { "A_0B04_0001",  "OccupancySensorType",  &Z_Copy,                nullptr },    // OccupancySensorType
-  // { "A_0B04_????",  "",                     &Z_Remove,              nullptr },    // Remove all other values
+  // { "0B04_0100",  "DCVoltage",            &Z_Copy,                nullptr },    // 
+  // { "0B04_0001",  "OccupancySensorType",  &Z_Copy,                nullptr },    // 
+  // { "0B04_????",  "",                     &Z_Remove,              nullptr },    // 
 };
 
 
@@ -573,13 +572,13 @@ int32_t Z_AqaraSensor(uint16_t shortaddr, JsonObject& json, const char *name, Js
 }
 // ======================================================================
 
-#define ZCL_MODELID         "A_0000_0005"     // Cmd 0x0A - Cluster 0x0000, attribute 0x05
-#define ZCL_TEMPERATURE     "A_0402_0000"     // Cmd 0x0A - Cluster 0x0402, attribute 0x00
-#define ZCL_PRESSURE        "A_0403_0000"     // Cmd 0x0A - Cluster 0x0403, attribute 0x00
-#define ZCL_PRESSURE_SCALED "A_0403_0010"     // Cmd 0x0A - Cluster 0x0403, attribute 0x10
-#define ZCL_PRESSURE_SCALE  "A_0403_0014"     // Cmd 0x0A - Cluster 0x0403, attribute 0x14
-#define ZCL_HUMIDITY        "A_0405_0000"     // Cmd 0x0A - Cluster 0x0403, attribute 0x00
-#define ZCL_LUMI_WEATHER    "A_0000_FF01"     // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
+// #define ZCL_MODELID         "A_0000_0005"     // Cmd 0x0A - Cluster 0x0000, attribute 0x05
+// #define ZCL_TEMPERATURE     "A_0402_0000"     // Cmd 0x0A - Cluster 0x0402, attribute 0x00
+// #define ZCL_PRESSURE        "A_0403_0000"     // Cmd 0x0A - Cluster 0x0403, attribute 0x00
+// #define ZCL_PRESSURE_SCALED "A_0403_0010"     // Cmd 0x0A - Cluster 0x0403, attribute 0x10
+// #define ZCL_PRESSURE_SCALE  "A_0403_0014"     // Cmd 0x0A - Cluster 0x0403, attribute 0x14
+// #define ZCL_HUMIDITY        "A_0405_0000"     // Cmd 0x0A - Cluster 0x0403, attribute 0x00
+// #define ZCL_LUMI_WEATHER    "A_0000_FF01"     // Cmd 0x0A - Cluster 0x0000, attribute 0xFF01 - proprietary
 
 // Cluster Specific commands
 #define ZCL_OO_OFF          "s_0006_00"       // Cluster 0x0006, cmd 0x00 - On/Off - Off

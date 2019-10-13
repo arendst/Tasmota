@@ -23,6 +23,7 @@
 
 const uint32_t ZIGBEE_BUFFER_SIZE = 256;  // Max ZNP frame is SOF+LEN+CMD1+CMD2+250+FCS = 255
 const uint8_t  ZIGBEE_SOF = 0xFE;
+const uint8_t  ZIGBEE_SOF_ALT = 0xFF;
 
 //#define Z_USE_SOFTWARE_SERIAL
 
@@ -36,10 +37,12 @@ TasmotaSerial *ZigbeeSerial = nullptr;
 
 
 const char kZigbeeCommands[] PROGMEM = "|" D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEE_PERMITJOIN
-                                "|" D_CMND_ZIGBEE_STATUS;
+                                "|" D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_ZCL_SEND
+                                "|" D_CMND_ZIGBEE_PROBE;
 
 void (* const ZigbeeCommand[])(void) PROGMEM = { &CmndZigbeeZNPSend, &CmndZigbeePermitJoin,
-                                &CmndZigbeeStatus };
+                                &CmndZigbeeStatus, &CmndZigbeeReset, &CmndZigbeeZCLSend,
+                                &CmndZigbeeProbe };
 
 int32_t ZigbeeProcessInput(class SBuffer &buf) {
   if (!zigbee.state_machine) { return -1; }     // if state machine is stopped, send 'ignore' message
@@ -140,6 +143,13 @@ void ZigbeeInput(void)
 		if (0 == zigbee_buffer->len()) {  // make sure all variables are correctly initialized
 			zigbee_frame_len = 5;
 			fcs = ZIGBEE_SOF;
+      // there is a rare race condition when an interrupt occurs when receiving the first byte
+      // in this case the first bit (lsb) is missed and Tasmota receives 0xFF instead of 0xFE
+      // We forgive this mistake, and next bytes are automatically resynchronized
+      if (ZIGBEE_SOF_ALT == zigbee_in_byte) {
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeInput forgiven first byte %02X (only for statistics)"), zigbee_in_byte);
+        zigbee_in_byte = ZIGBEE_SOF;
+      }
 		}
 
     if ((0 == zigbee_buffer->len()) && (ZIGBEE_SOF != zigbee_in_byte)) {
@@ -189,10 +199,12 @@ void ZigbeeInput(void)
 
 			SBuffer znp_buffer = zigbee_buffer->subBuffer(2, zigbee_frame_len - 3);	// remove SOF, LEN and FCS
 
+#ifdef ZIGBEE_VERBOSE
 			ToHex_P((unsigned char*)znp_buffer.getBuffer(), znp_buffer.len(), hex_char, sizeof(hex_char));
 	    Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
 	    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZNPRECEIVED));
 	    XdrvRulesProcess();
+#endif
 
 			// now process the message
       ZigbeeProcessInput(znp_buffer);
@@ -233,6 +245,34 @@ void ZigbeeInit(void)
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
+
+uint32_t strToUInt(const JsonVariant &val) {
+  // if the string starts with 0x, it is considered Hex, otherwise it is an int
+  if (val.is<unsigned int>()) {
+    return val.as<unsigned int>();
+  } else {
+    if (val.is<char*>()) {
+      return strtoull(val.as<char*>(), nullptr, 0);
+    }
+  }
+  return 0;   // couldn't parse anything
+}
+
+const unsigned char ZIGBEE_FACTORY_RESET[] PROGMEM = "2112000F0100";  // Z_SREQ | Z_SYS, SYS_OSAL_NV_DELETE, 0x0F00 id, 0x0001 len
+// Do a factory reset of the CC2530
+void CmndZigbeeReset(void) {
+  if (ZigbeeSerial) {
+    switch (XdrvMailbox.payload) {
+    case 1:
+      ZigbeeZNPSend(ZIGBEE_FACTORY_RESET, sizeof(ZIGBEE_FACTORY_RESET));
+      restart_flag = 2;
+      ResponseCmndChar(D_JSON_ZIGBEE_CC2530 " " D_JSON_RESET_AND_RESTARTING);
+      break;
+    default:
+      ResponseCmndChar(D_JSON_ONE_TO_RESET);
+    }
+  }
+}
 
 void CmndZigbeeStatus(void) {
   if (ZigbeeSerial) {
@@ -288,12 +328,148 @@ void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
 		ZigbeeSerial->write(fcs);			// finally send fcs checksum byte
 		AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("ZNPSend FCS %02X"), fcs);
   }
+#ifdef ZIGBEE_VERBOSE
 	// Now send a MQTT message to report the sent message
 	char hex_char[(len * 2) + 2];
 	Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPSENT "\":\"%s\"}"),
 			ToHex_P(msg, len, hex_char, sizeof(hex_char)));
 	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZNPSENT));
 	XdrvRulesProcess();
+#endif
+}
+
+void ZigbeeZCLSend(uint16_t dtsAddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, uint8_t transacId = 1) {
+  SBuffer buf(25+len);
+  buf.add8(Z_SREQ | Z_AF);        // 24
+  buf.add8(AF_DATA_REQUEST);      // 01
+  buf.add16(dtsAddr);
+  buf.add8(endpoint);             // dest endpoint
+  buf.add8(0x01);                 // source endpoint
+  buf.add16(clusterId);
+  buf.add8(transacId);                 // transacId
+  buf.add8(0x30);                 // 30 options
+  buf.add8(0x1E);                 // 1E radius
+
+  buf.add8(3 + len);
+  buf.add8(0x10 | (clusterSpecific ? 0x01 : 0x00));                 // Frame Control Field
+  buf.add8(transacId);            // Transaction Sequance Number
+  buf.add8(cmdId);
+  buf.addBuffer(msg, len);             // add the payload
+
+  ZigbeeZNPSend(buf.getBuffer(), buf.len());
+}
+
+inline int8_t hexValue(char c) {
+  if ((c >= '0') && (c <= '9')) {
+    return c - '0';
+  }
+  if ((c >= 'A') && (c <= 'F')) {
+    return 10 + c - 'A';
+  }
+  if ((c >= 'a') && (c <= 'f')) {
+    return 10 + c - 'a';
+  }
+  return -1;
+}
+
+uint32_t parseHex(const char **data, size_t max_len = 8) {
+  uint32_t ret = 0;
+  for (uint32_t i = 0; i < max_len; i++) {
+    int8_t v = hexValue(**data);
+    if (v < 0) { break; }     // non hex digit, we stop parsing
+    ret = (ret << 4) | v;
+    *data += 1;
+  }
+  return ret;
+}
+
+void CmndZigbeeZCLSend(void) {
+  char parm_uc[12];   // used to convert JSON keys to uppercase
+  // ZigbeeZCLSend { "dst":"0x1234", "cluster":"0x0300", "endpoint":"0x01", "cmd":10, "data":"AABBCC" }
+  char dataBufUc[XdrvMailbox.data_len];
+  UpperCase(dataBufUc, XdrvMailbox.data);
+  RemoveSpace(dataBufUc);
+  if (strlen(dataBufUc) < 8) { ResponseCmndChar(D_JSON_INVALID_JSON); return; }
+
+  DynamicJsonBuffer jsonBuf;
+  JsonObject &json = jsonBuf.parseObject(dataBufUc);
+  if (!json.success()) { ResponseCmndChar(D_JSON_INVALID_JSON); return; }
+
+  // params
+  uint16_t dstAddr = 0xFFFF;      // 0xFFFF is braodcast, so considered invalid
+  uint16_t clusterId = 0x0000;    // 0x0000 is a valid default value
+  uint8_t  endpoint = 0x00;       // 0x00 is invalid for the dst endpoint
+  uint8_t  cmd = ZCL_READ_ATTRIBUTES; // default command is READ_ATTRIBUTES
+  bool     clusterSpecific = false;
+  const char* data = "";             // empty string is valid
+
+  UpperCase_P(parm_uc, PSTR("device"));
+  if (json.containsKey(parm_uc)) { dstAddr = strToUInt(json[parm_uc]); }
+  UpperCase_P(parm_uc, PSTR("endpoint"));
+  if (json.containsKey(parm_uc)) { endpoint = strToUInt(json[parm_uc]); }
+  UpperCase_P(parm_uc, PSTR("cmd"));
+  if (json.containsKey(parm_uc)) { data = json[parm_uc].as<const char*>(); }
+
+  // Parse 'cmd' in the form "AAAA_BB/CCCCCCCC" or "AAAA!BB/CCCCCCCC"
+  // where AA is the cluster number, BBBB the command number, CCCC... the payload
+  // First delimiter is '_' for a global command, or '!' for a cluster specific commanc
+  clusterId = parseHex(&data, 4);
+
+  // delimiter
+  if (('_' == *data) || ('!' == *data)) {
+    if ('!' == *data) { clusterSpecific = true; }
+    data++;
+  } else {
+    ResponseCmndChar("Wrong delimiter for payload");
+    return;
+  }
+  // parse cmd number
+  cmd = parseHex(&data, 2);
+
+  // move to end of payload
+  // delimiter is optional
+  if ('/' == *data) { data++; }   // skip delimiter
+
+  size_t size = strlen(data);
+  SBuffer buf((size+2)/2);    // actual bytes buffer for data
+
+  while (*data) {
+    uint8_t code = parseHex(&data, 2);
+    buf.add8(code);
+  }
+
+  if (0 == endpoint) {
+    // endpoint is not specified, let's try to find it from shortAddr
+    endpoint = zigbee_devices.findClusterEndpointIn(dstAddr, clusterId);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CmndZigbeeZCLSend: guessing endpoint 0x%02X"), endpoint);
+  }
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CmndZigbeeZCLSend: dstAddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %s"),
+    dstAddr, clusterId, endpoint, cmd, data);
+
+  if (0 == endpoint) {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("CmndZigbeeZCLSend: unspecified endpoint"));
+    return;
+  }
+
+  // everything is good, we can send the command
+  ZigbeeZCLSend(dstAddr, clusterId, endpoint, cmd, clusterSpecific, buf.getBuffer(), buf.len());
+  ResponseCmndDone();
+}
+
+// Probe a specific device to get its endpoints and supported clusters
+void CmndZigbeeProbe(void) {
+  char dataBufUc[XdrvMailbox.data_len];
+  UpperCase(dataBufUc, XdrvMailbox.data);
+  RemoveSpace(dataBufUc);
+  if (strlen(dataBufUc) < 3) { ResponseCmndChar("Invalid destination"); return; }
+
+  // TODO, for now ignore friendly names
+  uint16_t shortaddr = strtoull(dataBufUc, nullptr, 0);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CmndZigbeeScan: short addr 0x%04X"), shortaddr);
+
+  // everything is good, we can send the command
+  Z_SendActiveEpReq(shortaddr);
+  ResponseCmndDone();
 }
 
 // Allow or Deny pairing of new Zigbee devices
