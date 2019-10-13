@@ -37,7 +37,7 @@ struct PCF8574 {
   uint8_t pin_mask[MAX_PCF8574] = { 0 };
   uint8_t max_connected_ports = 0;        // Max numbers of devices comming from PCF8574 modules
   uint8_t max_devices = 0;                // Max numbers of PCF8574 modules
-  char stype[8];
+  char stype[9];
   bool type = true;
 } Pcf8574;
 
@@ -95,6 +95,7 @@ void Pcf8574Init()
     pcf8574_address++;
     if ((PCF8574_ADDR1 + 8) == pcf8574_address) {
       pcf8574_address = PCF8574_ADDR2;
+      i=0;
     }
   }
   if (Pcf8574.max_devices) {
@@ -118,7 +119,7 @@ void Pcf8574Init()
         }
       }
     }
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("PCF: Total devices %d, PCF8574 output ports %d"), devices_present, Pcf8574.max_connected_ports);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("PCF: Total devices %d, PCF8574 output ports %d"), Pcf8574.max_devices, Pcf8574.max_connected_ports);
   }
 }
 
