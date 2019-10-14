@@ -386,8 +386,8 @@ struct SYSCFG {
   uint8_t       pcf8574_config[MAX_PCF8574];         // E88
   uint16_t      dimmer_hw_min;                // E8A
   uint16_t      dimmer_hw_max;                // E8C
-
-  uint8_t       free_e90[356];             // E90
+  uint32_t      deepsleep;                    // E90
+  uint8_t       free_e94[352];             // E94
 
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC
