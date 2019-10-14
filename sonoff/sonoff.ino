@@ -1211,6 +1211,7 @@ void SerialInput(void)
       }
     }
 
+#ifdef USE_SONOFF_SC
 /*-------------------------------------------------------------------------------------------*\
  * Sonoff SC 19200 baud serial interface
 \*-------------------------------------------------------------------------------------------*/
@@ -1222,11 +1223,11 @@ void SerialInput(void)
         Serial.flush();
         return;
       }
-    }
-
+    } else
+#endif  // USE_SONOFF_SC
 /*-------------------------------------------------------------------------------------------*/
 
-    else if (!Settings.flag.mqtt_serial && (serial_in_byte == '\n')) {
+    if (!Settings.flag.mqtt_serial && (serial_in_byte == '\n')) {
       serial_in_buffer[serial_in_byte_counter] = 0;                              // Serial data completed
       seriallog_level = (Settings.seriallog_level < LOG_LEVEL_INFO) ? (uint8_t)LOG_LEVEL_INFO : Settings.seriallog_level;
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_COMMAND "%s"), serial_in_buffer);
@@ -1400,11 +1401,13 @@ void GpioInit(void)
     devices_present = 4;
     baudrate = 19200;
   }
+#ifdef USE_SONOFF_SC
   else if (SONOFF_SC == my_module_type) {
     Settings.flag.mqtt_serial = 0;
     devices_present = 0;
     baudrate = 19200;
   }
+#endif  // USE_SONOFF_SC
 
   if (!light_type) {
     for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only

@@ -308,6 +308,7 @@
 //  #define SUPPORT_MQTT_EVENT                     // Support trigger event with MQTT subscriptions (+3k5 code)
 
 // -- Optional modules ----------------------------
+#define USE_SONOFF_SC                            // Add support for Sonoff Sc (+1k1 code)
 #define USE_BUZZER                               // Add support for a buzzer (+0k6 code)
 #define USE_SONOFF_IFAN                          // Add support for Sonoff iFan02 and iFan03 (+2k code)
 #define USE_TUYA_MCU                             // Add support for Tuya Serial MCU

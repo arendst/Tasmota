@@ -17,6 +17,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_SONOFF_SC
 /*********************************************************************************************\
   Sonoff Sc
 
@@ -173,3 +174,5 @@ bool Xsns04(uint8_t function)
   }
   return result;
 }
+
+#endif  // USE_SONOFF_SC
