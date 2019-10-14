@@ -1510,6 +1510,7 @@ void setup(void)
   if (Settings.param[P_BOOT_LOOP_OFFSET]) {
     // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
     if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET]) {       // Restart twice
+      AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
       Settings.flag3.user_esp8285_enable = 0;       // Disable ESP8285 Generic GPIOs interfering with flash SPI
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +1) {  // Restart 3 times
         for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
@@ -1531,7 +1532,14 @@ void setup(void)
         Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
   //      Settings.last_module = SONOFF_BASIC;
       }
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
+      if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +5) {  // Restarted 7 times
+        SettingsErase(0);                             // Reset all settings
+        SettingsDefault();
+        SettingsSaveAll();
+        RtcReboot.fast_reboot_count = 0;
+        RtcRebootSave();
+        EspRestart();
+      }
     }
   }
 
