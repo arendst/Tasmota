@@ -384,10 +384,11 @@ struct SYSCFG {
   uint8_t       shutter_position[MAX_SHUTTERS];      // E80
   uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
   uint8_t       pcf8574_config[MAX_PCF8574];         // E88
-  uint16_t      dimmer_hw_min;                // E8A
-  uint16_t      dimmer_hw_max;                // E8C
+  uint16_t      dimmer_hw_min;             // E90
+  uint16_t      dimmer_hw_max;             // E92
+  uint32_t      deepsleep;                 // E94
 
-  uint8_t       free_e90[356];             // E90
+  uint8_t       free_e98[352];             // E98
 
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC
@@ -408,7 +409,12 @@ struct RTCMEM {
   unsigned long pulse_counter[MAX_COUNTERS];  // 29C
   power_t       power;                     // 2AC
   EnergyUsage   energy_usage;              // 2B0
-  uint8_t       free_038[36];              // 2C8
+  unsigned long nextwakeup;                // 2C8
+  unsigned long uptime_old;                // 2CC
+  uint32_t      ultradeepsleep;            // 2D0
+  uint16_t      deepsleep_slip;            // 2D4
+
+  uint8_t       free_022[22];              // 2D6
                                            // 2EC - 2FF free locations
 } RtcSettings;
 

@@ -3,6 +3,7 @@
  * Add command DimmerRange in Light module to support 2 byte dimming ranges from Tuya
  * Add Zigbee additional commands and sending messages to control devices (#6095)
  * Fix Rules were not triggered with IR unknown protocol or in sonoff-it (#6629)
+ * Add define USE_DEEPSLEEP and command DeepSleepTime 0 or 10..86400 (seconds) to enter deepsleep mode (#6638)
  *
  * 6.6.0.17 20191009
  * Add command SetOption34 0..255 to set backlog delay. Default value is 200 (mSeconds) (#6562)
