@@ -410,7 +410,7 @@ struct RTCMEM {
   power_t       power;                     // 2AC
   EnergyUsage   energy_usage;              // 2B0
   unsigned long nextwakeup;                // 2C8
-  unsigned long uptime_old;                // 2CC
+  uint8_t       free_004[4];               // 2CC
   uint32_t      ultradeepsleep;            // 2D0
   uint16_t      deepsleep_slip;            // 2D4
 
