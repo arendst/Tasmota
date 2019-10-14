@@ -25,7 +25,7 @@
 #define XDRV_90            90
 
 
-#define MAX_DEEPSLEEP_CYCLE    60         // Maximum time for a deepsleep
+#define MAX_DEEPSLEEP_CYCLE    3600         // Maximum time for a deepsleep
 #define MIN_DEEPSLEEP_TIME      5
 
 
