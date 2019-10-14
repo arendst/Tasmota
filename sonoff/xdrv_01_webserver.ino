@@ -2461,7 +2461,8 @@ String UrlEncode(const String& text)
 // sendmail [*:*:*:*:*:to:subject] data uses defines from user_config
 // sendmail currently only works with core 2.4.2
 
-#define SEND_MAIL_MINRAM 19*1024
+
+#define SEND_MAIL_MINRAM 12*1024
 
 uint16_t SendMail(char *buffer) {
   uint16_t count;
