@@ -177,6 +177,9 @@ char web_log[WEB_LOG_SIZE] = {'\0'};        // Web log buffer
   String backlog[MAX_BACKLOG];                // Command backlog buffer
   #define BACKLOG_EMPTY (backlog_pointer == backlog_index)
 #endif
+int prep_called = 0;                        // additional flag to detect a proper start of initialize sensors.
+
+
 
 /********************************************************************************************/
 
@@ -809,10 +812,14 @@ void PerformEverySecond(void)
 
   if (Settings.tele_period) {
     tele_period++;
-    if (tele_period == Settings.tele_period -1) {
+    // increase time for prepare and document state to ensure TELEPERIOD deliver results
+    if (tele_period == Settings.tele_period -3 && prep_called == 0) {
+      // sensores must be called later if driver switch on e.g. power on deepsleep	    
+      XdrvCall(FUNC_PREP_BEFORE_TELEPERIOD);
       XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
+      prep_called = 1;
     }
-    if (tele_period >= Settings.tele_period) {
+    if (tele_period >= Settings.tele_period && prep_called == 1) {
       tele_period = 0;
 
       MqttPublishTeleState();
@@ -824,6 +831,8 @@ void PerformEverySecond(void)
         RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_RULES
       }
+      prep_called = 1;
+      XdrvCall(FUNC_AFTER_TELEPERIOD);
     }
   }
 
