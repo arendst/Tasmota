@@ -316,6 +316,7 @@
 #define USE_PS_16_DZ                             // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
 //#define ROTARY_V1                                // Add support for MI Desk Lamp
 //#define USE_SHUTTER                              // Add Shutter support for up to 4 shutter with different motortypes (+6k code)
+//#define USE_DEEPSLEEP                            //Add support for deepsleep
 
 // -- Optional light modules ----------------------
 #define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
