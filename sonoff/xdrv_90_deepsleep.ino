@@ -1,5 +1,5 @@
 /*
-  xdrv_90_deepsleep.ino - Shutter/Blind support for Sonoff-Tasmota
+  xdrv_90_deepsleep.ino - DeepSleep support for ESP8266 devices
 
   Copyright (C) 2019  Stefan Bode
 
@@ -40,12 +40,6 @@ void (* const DeepsleepCommand[])(void) PROGMEM = {
 
 const char JSON_DEEPSLEEP[] PROGMEM = "\"" D_PRFX_DEEPSLEEP "%d\":{\"Time\":%d}";
 
-struct DEEPSLEEP {
-  unsigned long last_save_uptime = 0;                       // bit mask with 11 at the position of relays that belong to at least ONE shutter
-
-} Deepsleep;
-
-
 void DeepSleepInit(void)
 {
   if (pin[GPIO_SEN_SLEEP] < 99) {
@@ -64,8 +58,6 @@ void DeepSleepInit(void)
   }
   RtcSettings.ultradeepsleep = 0;
 }
-
-
 
 /*********************************************************************************************\
  * Commands
