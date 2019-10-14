@@ -35,7 +35,7 @@ const uint8_t WIFI_RETRY_OFFSET_SEC = 20;  // seconds
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
 #if LWIP_IPV6
 #include <AddrList.h>                      // IPv6 DualStack
-#endif
+#endif  // LWIP_IPV6=1
 
 struct WIFI {
   uint32_t last_event = 0;                 // Last wifi connection event
@@ -251,7 +251,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
       cfgcnt++;
     }
   }
-#endif
+#endif  // LWIP_IPV6=1
 }
 
 void WifiBeginAfterScan()
@@ -376,7 +376,7 @@ void WifiSetState(uint8_t state)
   global_state.wifi_down = state ^1;
 }
 
-#ifdef LWIP_IPV6
+#if LWIP_IPV6
 bool WifiCheckIPv6(void)
 {
   bool ipv6_global=false;
@@ -386,16 +386,16 @@ bool WifiCheckIPv6(void)
   }
   return ipv6_global;
 }
-#endif
+#endif  // LWIP_IPV6=1
 
 void WifiCheckIp(void)
 {
-#ifdef LWIP_IPV6
+#if LWIP_IPV6
   if(WifiCheckIPv6()) {
     Wifi.status = WL_CONNECTED;
 #else
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
-#endif
+#endif  // LWIP_IPV6=1
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
     Wifi.retry = Wifi.retry_init;
@@ -533,11 +533,11 @@ void WifiCheck(uint8_t param)
         Wifi.counter = WIFI_CHECK_SEC;
         WifiCheckIp();
       }
-#ifdef LWIP_IPV6
+#if LWIP_IPV6
       if (WifiCheckIPv6()) {
 #else
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !Wifi.config_type) {
-#endif
+#endif  // LWIP_IPV6=1
         WifiSetState(1);
 
         if (Settings.flag3.use_wifi_rescan) {
