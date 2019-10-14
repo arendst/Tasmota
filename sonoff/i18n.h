@@ -193,6 +193,8 @@
 
 #define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 
+#define D_SENSOR_DEEPSLEEP "DeepSleep Switch"
+
 // Commands sonoff.ino
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
