@@ -1,10 +1,12 @@
+#ifdef USE_SENDMAIL
+
 #include "sendemail.h"
 
 // enable serial debugging
 //#define DEBUG_EMAIL_PORT Serial
 
 SendEmail::SendEmail(const String& host, const int port, const String& user, const String& passwd, const int timeout, const int auth_used) :
-    host(host), port(port), user(user), passwd(passwd), timeout(timeout), ssl(ssl), auth_used(auth_used), client(new WiFiClientSecure())
+    host(host), port(port), user(user), passwd(passwd), timeout(timeout), ssl(ssl), auth_used(auth_used), client(new BearSSL::WiFiClientSecure_light(1024,1024))
 {
 
 }
@@ -22,7 +24,7 @@ String SendEmail::readClient()
   return r;
 }
 
-void SetSerialBaudrate(int baudrate);
+//void SetSerialBaudrate(int baudrate);
 
 bool SendEmail::send(const String& from, const String& to, const String& subject, const String& msg)
 {
@@ -42,21 +44,23 @@ bool SendEmail::send(const String& from, const String& to, const String& subject
 
 #if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
 #else
-  client->setInsecure();
+  //client->setInsecure();
+  /*
   bool mfln = client->probeMaxFragmentLength(host.c_str(), port, 512);
 #ifdef DEBUG_EMAIL_PORT
   DEBUG_EMAIL_PORT.printf("MFLN supported: %s\n", mfln ? "yes" : "no");
 #endif
   if (mfln) {
       client->setBufferSizes(512, 512);
-  }
+  }*/
 #endif
 
 
   if (!client->connect(host.c_str(), port))
   {
 #ifdef DEBUG_EMAIL_PORT
-      DEBUG_EMAIL_PORT.println("Connection failed");
+      DEBUG_EMAIL_PORT.println("Connection failed: ");
+      //DEBUG_EMAIL_PORT.println (client->getLastSSLError());
 #endif
     return false;
   }
@@ -302,3 +306,5 @@ int SendEmail::base64_encode(char *output, const char *input, int inputLen) {
 	return encLen;
 }
 #endif
+
+#endif // USE_SENDMAIL
