@@ -7,6 +7,7 @@
  * Add define USE_SONOFF_RF to enable/disable Sonoff Rf support (#6648)
  * Add incremental beeps to Ifan03 remote control fan speed buttons (#6636)
  * Add rule support after every command execution like Fanspeed#Data=2 (#6636)
+ * Fix handling of ligth channels when pwm_multichannel (Option68) is enabled
  *
  * 6.6.0.17 20191009
  * Add command SetOption34 0..255 to set backlog delay. Default value is 200 (mSeconds) (#6562)
