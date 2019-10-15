@@ -835,7 +835,7 @@ void SerialSendRaw(char *codes)
 
   int size = strlen(codes);
 
-  while (size > 0) {
+  while (size > 1) {
     strlcpy(stemp, codes, sizeof(stemp));
     code = strtol(stemp, &p, 16);
     Serial.write(code);
