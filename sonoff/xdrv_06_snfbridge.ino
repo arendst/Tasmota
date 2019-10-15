@@ -21,6 +21,8 @@
   Sonoff RF Bridge 433
 \*********************************************************************************************/
 
+#ifdef USE_RF_BRIDGE
+
 #define XDRV_06                   6
 
 const uint32_t SFB_TIME_AVOID_DUPLICATE = 2000;  // Milliseconds
@@ -584,3 +586,5 @@ bool Xdrv06(uint8_t function)
   }
   return result;
 }
+
+#endif  // USE_RF_BRIDGE
