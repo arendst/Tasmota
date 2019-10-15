@@ -473,7 +473,7 @@
 #define D_CMND_ZIGBEE_PROBE "ZigbeeProbe"
 
   // Commands xdrv_25_A4988_Stepper.ino
-  #ifdef USE_A4988_Stepper
+  #ifdef USE_A4988_STEPPER
     #define D_CMND_MOTOR "MOTOR"
     #define D_JSON_MOTOR_MOVE "doMove"
     #define D_JSON_MOTOR_ROTATE "doRotate"
