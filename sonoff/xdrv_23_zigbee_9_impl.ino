@@ -291,7 +291,7 @@ void CmndZigbeeZNPSend(void)
 
 		SBuffer buf((size+1)/2);
 
-    while (size > 0) {
+    while (size > 1) {
       char stemp[3];
       strlcpy(stemp, codes, sizeof(stemp));
       code = strtol(stemp, nullptr, 16);
