@@ -11,6 +11,7 @@
  * Add WebUI for multiple, independent PWM channels
  * Remove default DS18B20 driver and only support define DS18x20 (#6647)
  * Add support for PMS3003 dust particle sensor
+ * Add support for EX-Store WiFi Dimmer V4
  *
  * 6.6.0.17 20191009
  * Add command SetOption34 0..255 to set backlog delay. Default value is 200 (mSeconds) (#6562)

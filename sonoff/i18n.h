@@ -483,6 +483,18 @@
     #define D_JSON_MOTOR_MIS "setMIS"
   #endif
 
+  // Commands xdrv_29_exsdimmer.ino
+  #ifdef USE_EXS_DIMMER
+    #define D_CMND_EXS_GATE "ExsGate"
+    #define D_CMND_EXS_DIMM "ExsDimm"
+    #define D_CMND_EXS_DIMM_TBL "ExsDimmTbl"
+    #define D_CMND_EXS_DIMM_VAL "ExsDimmVal"
+    #define D_CMND_EXS_GATES "ExsGates"
+    #define D_CMND_EXS_DIMMS "ExsDimms"
+    #define D_CMND_EXS_CH_LOCK "ExsChLock"
+    #define D_CMND_EXS_STATE "ExsState"
+  #endif
+
 /********************************************************************************************/
 
 #define D_ASTERISK_PWD "****"

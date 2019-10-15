@@ -546,6 +546,10 @@
 
 // -- End of general directives -------------------
 
+//#define USE_EXS_DIMMER                           // Add support for ES-Store WiFi Dimmer (+2k6 code)
+//  #define EXS_DEBUG                                // Add debug logging to EXS dimmer driver
+//  #define EXS_MCU_CMNDS                            // Add command to send MCU commands (+0k8 code)
+
 /*********************************************************************************************\
  * Debug features
 \*********************************************************************************************/
