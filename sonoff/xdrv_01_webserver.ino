@@ -153,38 +153,16 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
 #endif  // USE_SCRIPT_WEB_DISPLAY
 
 #ifdef USE_JAVASCRIPT_ES6
-  "lb=p=>la('&d='+p);"                    // Dark - Bright &d related to lb(value) and WebGetArg("d", tmp, sizeof(tmp));
-  "lc=p=>la('&t='+p);"                    // Cold - Warm &t related to lc(value) and WebGetArg("t", tmp, sizeof(tmp));
+  "lb=(v,p)=>la(`&${v}=${p}`);"
+  "lc=(v,i,p)=>la(`&${v}${i}=${p}`);"
 #else
-  "function lb(p){"
-    "la('&d='+p);"                        // &d related to WebGetArg("d", tmp, sizeof(tmp));
+  "function lb(v,p){"
+    "la('&'+v+'='+p);"
   "}"
-  "function lc(p){"
-    "la('&t='+p);"                        // &t related to WebGetArg("t", tmp, sizeof(tmp));
+  "function lc(v,i,p){"
+    "la('&'+v+i+'='+p);"
   "}"
 #endif  // USE_JAVASCRIPT_ES6
-
-#ifdef USE_SHUTTER
-#ifdef USE_JAVASCRIPT_ES6
-  "ld1=p=>la('&u1='+p);"
-  "ld2=p=>la('&u2='+p);"
-  "ld3=p=>la('&u3='+p);"
-  "ld4=p=>la('&u4='+p);"
-#else
-  "function ld1(p){"
-    "la('&u1='+p);"
-  "}"
-  "function ld2(p){"
-    "la('&u2='+p);"
-  "}"
-  "function ld3(p){"
-    "la('&u3='+p);"
-  "}"
-  "function ld4(p){"
-    "la('&u4='+p);"
-  "}"
-#endif  // USE_JAVASCRIPT_ES6
-#endif  // USE_SHUTTER
 
   "wl(la);";
 
@@ -395,16 +373,11 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
   "<h2>%s</h2>";
 
 const char HTTP_MSG_SLIDER1[] PROGMEM =
-  "<div><span class='p'>" D_COLDLIGHT "</span><span class='q'>" D_WARMLIGHT "</span></div>"
-  "<div><input type='range' min='153' max='500' value='%d' onchange='lc(value)'></div>";
+  "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
+  "<div><input type='range' min='%d' max='%d' value='%d' onchange='lb(\"%c\", value)'></div>";
 const char HTTP_MSG_SLIDER2[] PROGMEM =
-  "<div><span class='p'>" D_DARKLIGHT "</span><span class='q'>" D_BRIGHTLIGHT "</span></div>"
-  "<div><input type='range' min='1' max='100' value='%d' onchange='lb(value)'></div>";
-#ifdef USE_SHUTTER
-const char HTTP_MSG_SLIDER3[] PROGMEM =
-  "<div><span class='p'>" D_CLOSE "</span><span class='q'>" D_OPEN "</span></div>"
-  "<div><input type='range' min='0' max='100' value='%d' onchange='ld%d(value)'></div>";
-#endif  // USE_SHUTTER
+  "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
+  "<div><input type='range' min='%d' max='%d' value='%d' onchange='lc(\"%c\", %d, value)'></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br>";
 
@@ -1012,16 +985,31 @@ void HandleRoot(void)
   if (devices_present) {
 #ifdef USE_LIGHT
     if (light_type) {
-      if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
-        WSContentSend_P(HTTP_MSG_SLIDER1, LightGetColorTemp());
-      }
-      WSContentSend_P(HTTP_MSG_SLIDER2, Settings.light_dimmer);
+      if (!Settings.flag3.pwm_multi_channels) {
+	if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
+	  // Cold - Warm &t related to lb("t", value) and WebGetArg("t", tmp, sizeof(tmp));
+	  WSContentSend_P(HTTP_MSG_SLIDER1, F(D_COLDLIGHT), F(D_WARMLIGHT),
+			  153, 500, LightGetColorTemp(), 't');
+	}
+	// Dark - Bright &d related to lb("d", value) and WebGetArg("d", tmp, sizeof(tmp));
+	WSContentSend_P(HTTP_MSG_SLIDER1, F(D_DARKLIGHT), F(D_BRIGHTLIGHT),
+			1, 100, Settings.light_dimmer, 'd');
+      } else {  // Settings.flag3.pwm_multi_channels
+	uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
+	for (uint32_t i = 0; i < pwm_channels; i++) {
+	  snprintf_P(stemp, sizeof(stemp), PSTR("c%d"), i);
+	  WSContentSend_P(HTTP_MSG_SLIDER2, stemp, FPSTR("100%"),
+			  1, 100,
+			  changeUIntScale(Settings.light_color[i], 0, 255, 0, 100), 'd', i+1);
+	}
+      }   // Settings.flag3.pwm_multi_channels
     }
 #endif
 #ifdef USE_SHUTTER
     if (Settings.flag3.shutter_mode) {
       for (uint32_t i = 0; i < shutters_present; i++) {
-        WSContentSend_P(HTTP_MSG_SLIDER3, Settings.shutter_position[i], i+1);
+	WSContentSend_P(HTTP_MSG_SLIDER2, F(D_CLOSE), F(D_OPEN),
+			0, 100, Settings.shutter_position[i], 'u', i+1);
       }
     }
 #endif  // USE_SHUTTER
@@ -1097,6 +1085,7 @@ bool HandleRootStatusRefresh(void)
 
   char tmp[8];                       // WebGetArg numbers only
   char svalue[32];                   // Command and number parameter
+  char webindex[5];                  // WebGetArg name
 
   WebGetArg("o", tmp, sizeof(tmp));  // 1 - 16 Device number for button Toggle or Fanspeed
   if (strlen(tmp)) {
@@ -1122,13 +1111,21 @@ bool HandleRootStatusRefresh(void)
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
+  uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
+  for (uint32_t j = 1; j <= pwm_channels; j++) {
+    snprintf_P(webindex, sizeof(webindex), PSTR("d%d"), j);
+    WebGetArg(webindex, tmp, sizeof(tmp));  // 0 - 100 percent
+    if (strlen(tmp)) {
+      snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_CHANNEL "%d %s"), j, tmp);
+      ExecuteWebCommand(svalue, SRC_WEBGUI);
+    }
+  }
   WebGetArg("t", tmp, sizeof(tmp));  // 153 - 500 Color temperature
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 #ifdef USE_SHUTTER
-  char webindex[5];                 // WebGetArg name
   for (uint32_t j = 1; j <= shutters_present; j++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("u%d"), j);
     WebGetArg(webindex, tmp, sizeof(tmp));  // 0 - 100 percent

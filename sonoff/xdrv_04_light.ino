@@ -420,6 +420,14 @@ class LightStateClass {
       getActualRGBCW(&channels[0], &channels[1], &channels[2], &channels[3], &channels[4]);
     }
 
+    void getChannelsRaw(uint8_t *channels) {
+      channels[0] = _r;
+      channels[1] = _g;
+      channels[2] = _b;
+      channels[3] = _wc;
+      channels[4] = _ww;
+    }
+
     void getHSB(uint16_t *hue, uint8_t *sat, uint8_t *bri) {
       if (hue) { *hue = _hue; }
       if (sat) { *sat = _sat; }
@@ -601,6 +609,16 @@ class LightStateClass {
       AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightStateClass::setHS RGB raw (%d %d %d) HS (%d %d) bri (%d)", _r, _g, _b, _hue, _sat, _briRGB);
 #endif
   }
+
+  // set all 5 channels at once, don't modify the values in ANY way
+  // Channels are: R G B CW WW
+  void setChannelsRaw(uint8_t *channels) {
+    _r = channels[0];
+    _g = channels[1];
+    _b = channels[2];
+    _wc = channels[3];
+    _ww = channels[4];
+}
 
   // set all 5 channels at once.
   // Channels are: R G B CW WW
@@ -838,10 +856,13 @@ public:
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::loadSettings light_type/sub (%d %d)",
       light_type, Light.subtype);
 #endif
-    // first try setting CW, if zero, it select RGB mode
-    _state->setCW(Settings.light_color[3], Settings.light_color[4], true);
-    _state->setRGB(Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
-    if (!_pwm_multi_channels) {
+    if (_pwm_multi_channels) {
+      _state->setChannelsRaw(Settings.light_color);
+    } else {
+      // first try setting CW, if zero, it select RGB mode
+      _state->setCW(Settings.light_color[3], Settings.light_color[4], true);
+      _state->setRGB(Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
+
       // only if non-multi channel
       // We apply dimmer in priority to RGB
       uint8_t bri = _state->DimmerToBri(Settings.light_dimmer);
@@ -893,16 +914,13 @@ public:
   // calculate the levels for each channel
   void calcLevels() {
     uint8_t r,g,b,c,w,briRGB,briCT;
-    _state->getActualRGBCW(&r,&g,&b,&c,&w);
 
     if (_pwm_multi_channels) { // if PWM multi channel, no more transformation required
-      Light.current_color[0] = r;
-      Light.current_color[1] = g;
-      Light.current_color[2] = b;
-      Light.current_color[3] = c;
-      Light.current_color[4] = w;
+      _state->getChannelsRaw(Light.current_color);
       return;
     }
+
+    _state->getActualRGBCW(&r,&g,&b,&c,&w);
     briRGB = _state->getBriRGB();
     briCT = _state->getBriCT();
 
@@ -948,9 +966,7 @@ public:
   void saveSettings() {
     if (Light.pwm_multi_channels) {
       // simply save each channel
-      _state->getActualRGBCW(&Settings.light_color[0], &Settings.light_color[1],
-                             &Settings.light_color[2], &Settings.light_color[3],
-                             &Settings.light_color[4]);
+      _state->getChannelsRaw(Settings.light_color);
       Settings.light_dimmer = 100;    // arbitrary value, unused in this mode
     } else {
       uint8_t cm = _state->getColorMode();
@@ -980,13 +996,16 @@ public:
   // Channels are: R G B CW WW
   // Brightness is automatically recalculated to adjust channels to the desired values
   void changeChannels(uint8_t *channels) {
-    if (LST_COLDWARM == Light.subtype) {
+    if (Light.pwm_multi_channels) {
+      _state->setChannelsRaw(channels);
+    } else if (LST_COLDWARM == Light.subtype) {
       // remap channels 0-1 to 3-4 if cold/warm
       uint8_t remapped_channels[5] = {0,0,0,channels[0],channels[1]};
       _state->setChannels(remapped_channels);
     } else {
       _state->setChannels(channels);
     }
+
     saveSettings();
     calcLevels();
   }
