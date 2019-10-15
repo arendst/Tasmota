@@ -125,7 +125,7 @@ void SonoffIfanReceived(void)
         snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_FANSPEED " %d"), action);
         ExecuteCommand(svalue, SRC_REMOTE);
 #ifdef USE_BUZZER
-        BuzzerEnabledBeep(action);              // Beep action times
+        BuzzerEnabledBeep((action) ? action : 1, (action) ? 1 : 4);  // Beep action times
 #endif
       }
     } else {
@@ -140,7 +140,7 @@ void SonoffIfanReceived(void)
   if (7 == mode) {
     // AA 55 01 07 00 01 01 0A - Rf long press - forget RF codes
 #ifdef USE_BUZZER
-    BuzzerEnabledBeep(4);                       // Beep four times
+    BuzzerEnabledBeep(4, 1);                       // Beep four times
 #endif
   }
 

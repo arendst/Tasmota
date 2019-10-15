@@ -5,6 +5,8 @@
  * Fix Rules were not triggered with IR unknown protocol or in sonoff-it (#6629)
  * Add define USE_DEEPSLEEP and command DeepSleepTime 0 or 10..86400 (seconds) to enter deepsleep mode (#6638)
  * Add define USE_SONOFF_RF to enable/disable Sonoff Rf support (#6648)
+ * Add incremental beeps to Ifan03 remote control fan speed buttons (#6636)
+ * Add rule support after every command execution like Fanspeed#Data=2 (#6636)
  *
  * 6.6.0.17 20191009
  * Add command SetOption34 0..255 to set backlog delay. Default value is 200 (mSeconds) (#6562)

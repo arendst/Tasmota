@@ -45,8 +45,8 @@ void BuzzerOff(void)
 //void BuzzerBeep(uint32_t count = 1, uint32_t on = 1, uint32_t off = 1, uint32_t tune = 0);
 void BuzzerBeep(uint32_t count, uint32_t on, uint32_t off, uint32_t tune)
 {
-  Buzzer.set[0] = off;
-  Buzzer.set[1] = on;
+  Buzzer.set[0] = off;         // off duration in 100 mSec steps
+  Buzzer.set[1] = on;          // on duration in 100 mSec steps
   Buzzer.duration = 1;         // Start buzzer on first step
   Buzzer.tune = 0;
   if (tune) {
@@ -78,10 +78,10 @@ void BuzzerBeep(uint32_t count) {
   BuzzerBeep(count, 1, 1, 0);
 }
 
-void BuzzerEnabledBeep(uint32_t count)
+void BuzzerEnabledBeep(uint32_t count, uint32_t duration)
 {
   if (Settings.flag3.buzzer_enable) {  // SetOption67
-    BuzzerBeep(count);
+    BuzzerBeep(count, duration, 1, 0);
   }
 }
 
