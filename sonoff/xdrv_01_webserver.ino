@@ -91,7 +91,6 @@ const char HTTP_SCRIPT_COUNTER[] PROGMEM =
   "}"
   "wl(u);";
 
-
 const char HTTP_SCRIPT_ROOT[] PROGMEM =
 #ifdef USE_SCRIPT_WEB_DISPLAY
   "var rfsh=1;"
@@ -1046,7 +1045,7 @@ void HandleRoot(void)
 #endif  // USE_SONOFF_IFAN
     WSContentSend_P(PSTR("</tr></table>"));
   }
-#ifdef USE_RF_BRIDGE	
+#ifdef USE_SONOFF_RF
   if (SONOFF_BRIDGE == my_module_type) {
     WSContentSend_P(HTTP_TABLE100);
     WSContentSend_P(PSTR("<tr>"));
@@ -1060,8 +1059,8 @@ void HandleRoot(void)
     }
     WSContentSend_P(PSTR("</tr></table>"));
   }
-#endif  // USE_RF_BRIDGE
-	
+#endif  // USE_SONOFF_RF
+
 #ifndef FIRMWARE_MINIMAL
   XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
   XsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
@@ -1139,12 +1138,13 @@ bool HandleRootStatusRefresh(void)
     }
   }
 #endif  // USE_SHUTTER
+#ifdef USE_SONOFF_RF
   WebGetArg("k", tmp, sizeof(tmp));  // 1 - 16 Pre defined RF keys
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_RFKEY "%s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-
+#endif  // USE_SONOFF_RF
   WSContentBegin(200, CT_HTML);
   WSContentSend_P(PSTR("{t}"));
   XsnsCall(FUNC_WEB_SENSOR);
@@ -2102,7 +2102,7 @@ void HandleUploadLoop(void)
         Web.config_block_count = 0;
       }
       else {
-#if (defined (USE_RF_FLASH) && defined(USE_RF_BRIDGE))
+#ifdef USE_RF_FLASH
         if ((SONOFF_BRIDGE == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a RF bridge FW file
           Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_EFM8BB1;

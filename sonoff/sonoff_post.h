@@ -602,6 +602,10 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef NO_EXTRA_4K_HEAP                       // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
 #endif
 
+#ifndef USE_SONOFF_RF
+#undef USE_RF_FLASH                           // Disable RF firmware flash when SOnoff Rf is disabled
+#endif
+
 #ifndef SWITCH_MODE
 #define SWITCH_MODE            TOGGLE         // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
 #endif

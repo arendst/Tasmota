@@ -775,9 +775,9 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   SONOFF_IFAN02,       // Sonoff Fan
   SONOFF_IFAN03,
 #endif
-#ifdef USE_RF_BRIDGE 
+#ifdef USE_SONOFF_RF
   SONOFF_BRIDGE,       // Sonoff Bridge
-#endif  
+#endif
   SONOFF_SV,           // Sonoff Development Devices
   SONOFF_DEV,
   CH1,                 // Relay Devices

@@ -448,28 +448,28 @@ void GetFeatures(void)
   feature5 |= 0x00000020;  // xdrv_25_A4988.ino
 #endif
 #ifdef USE_DDS2382
-  feature5 |= 0x00000040;  // Xnrg_09_dds2382.ino
+  feature5 |= 0x00000040;  // xnrg_09_dds2382.ino
 #endif
 #ifdef USE_SM2135
-  feature5 |= 0x00000080;  // Xdrv_026_sm2135.ino
+  feature5 |= 0x00000080;  // xdrv_026_sm2135.ino
 #endif
 #ifdef USE_SHUTTER
-  feature5 |= 0x00000100;  // Xdrv_027_shutter.ino
+  feature5 |= 0x00000100;  // xdrv_027_shutter.ino
 #endif
 #ifdef USE_PCF8574
-  feature5 |= 0x00000200;  // Xdrv_028_pcf8574.ino
+  feature5 |= 0x00000200;  // xdrv_028_pcf8574.ino
 #endif
 #ifdef USE_DDSU666
-  feature5 |= 0x00000400;  // Xnrg_11_ddsu666.ino
+  feature5 |= 0x00000400;  // xnrg_11_ddsu666.ino
 #endif
 #ifdef USE_DEEPSLEEP
-  feature5 |= 0x00000800;  // Xdrv_029_deepsleep.ino
+  feature5 |= 0x00000800;  // xdrv_029_deepsleep.ino
 #endif
 #ifdef USE_SONOFF_SC
-  feature5 |= 0x00001000;
+  feature5 |= 0x00001000;  // xsns_04_snfsc.ino
 #endif
-#ifdef USE_RF_BRIDGE
-  feature5 |= 0x00002000;
+#ifdef USE_SONOFF_RF
+  feature5 |= 0x00002000;  // xdrv_06_snfbridge.ino
 #endif
 //  feature5 |= 0x00004000;
 //  feature5 |= 0x00008000;

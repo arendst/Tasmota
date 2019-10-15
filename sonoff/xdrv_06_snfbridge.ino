@@ -17,11 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef USE_SONOFF_RF
 /*********************************************************************************************\
   Sonoff RF Bridge 433
 \*********************************************************************************************/
-
-#ifdef USE_RF_BRIDGE
 
 #define XDRV_06                   6
 
@@ -587,4 +586,4 @@ bool Xdrv06(uint8_t function)
   return result;
 }
 
-#endif  // USE_RF_BRIDGE
+#endif  // USE_SONOFF_RF
