@@ -1046,6 +1046,7 @@ void HandleRoot(void)
 #endif  // USE_SONOFF_IFAN
     WSContentSend_P(PSTR("</tr></table>"));
   }
+#ifdef USE_RF_BRIDGE	
   if (SONOFF_BRIDGE == my_module_type) {
     WSContentSend_P(HTTP_TABLE100);
     WSContentSend_P(PSTR("<tr>"));
@@ -1059,7 +1060,8 @@ void HandleRoot(void)
     }
     WSContentSend_P(PSTR("</tr></table>"));
   }
-
+#endif  // USE_RF_BRIDGE
+	
 #ifndef FIRMWARE_MINIMAL
   XdrvCall(FUNC_WEB_ADD_MAIN_BUTTON);
   XsnsCall(FUNC_WEB_ADD_MAIN_BUTTON);
@@ -2100,7 +2102,7 @@ void HandleUploadLoop(void)
         Web.config_block_count = 0;
       }
       else {
-#ifdef USE_RF_FLASH
+#if (defined (USE_RF_FLASH) && defined(USE_RF_BRIDGE))
         if ((SONOFF_BRIDGE == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a RF bridge FW file
           Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_EFM8BB1;

@@ -468,7 +468,9 @@ void GetFeatures(void)
 #ifdef USE_SONOFF_SC
   feature5 |= 0x00001000;
 #endif
-//  feature5 |= 0x00002000;
+#ifdef USE_RF_BRIDGE
+  feature5 |= 0x00002000;
+#endif
 //  feature5 |= 0x00004000;
 //  feature5 |= 0x00008000;
 
