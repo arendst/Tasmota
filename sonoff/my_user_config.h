@@ -524,7 +524,7 @@
   #define USE_ZIGBEE_PRECFGKEY_H 0x0D0C0A0806040200L  // note: changing requires to re-pair all devices
   #define USE_ZIGBEE_PERMIT_JOIN false           // don't allow joining by default
 
-// ------------------------------------------------
+// -- Other sensors/drivers -----------------------
 
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 
