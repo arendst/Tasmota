@@ -986,30 +986,30 @@ void HandleRoot(void)
 #ifdef USE_LIGHT
     if (light_type) {
       if (!Settings.flag3.pwm_multi_channels) {
-	if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
-	  // Cold - Warm &t related to lb("t", value) and WebGetArg("t", tmp, sizeof(tmp));
-	  WSContentSend_P(HTTP_MSG_SLIDER1, F(D_COLDLIGHT), F(D_WARMLIGHT),
-			  153, 500, LightGetColorTemp(), 't');
-	}
-	// Dark - Bright &d related to lb("d", value) and WebGetArg("d", tmp, sizeof(tmp));
-	WSContentSend_P(HTTP_MSG_SLIDER1, F(D_DARKLIGHT), F(D_BRIGHTLIGHT),
-			1, 100, Settings.light_dimmer, 'd');
+        if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
+          // Cold - Warm &t related to lb("t", value) and WebGetArg("t", tmp, sizeof(tmp));
+          WSContentSend_P(HTTP_MSG_SLIDER1, F(D_COLDLIGHT), F(D_WARMLIGHT),
+            153, 500, LightGetColorTemp(), 't');
+        }
+        // Dark - Bright &d related to lb("d", value) and WebGetArg("d", tmp, sizeof(tmp));
+        WSContentSend_P(HTTP_MSG_SLIDER1, F(D_DARKLIGHT), F(D_BRIGHTLIGHT),
+          1, 100, Settings.light_dimmer, 'd');
       } else {  // Settings.flag3.pwm_multi_channels
-	uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
-	for (uint32_t i = 0; i < pwm_channels; i++) {
-	  snprintf_P(stemp, sizeof(stemp), PSTR("c%d"), i);
-	  WSContentSend_P(HTTP_MSG_SLIDER2, stemp, FPSTR("100%"),
-			  1, 100,
-			  changeUIntScale(Settings.light_color[i], 0, 255, 0, 100), 'd', i+1);
-	}
-      }   // Settings.flag3.pwm_multi_channels
+        uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
+        for (uint32_t i = 0; i < pwm_channels; i++) {
+          snprintf_P(stemp, sizeof(stemp), PSTR("c%d"), i);
+          WSContentSend_P(HTTP_MSG_SLIDER2, stemp, FPSTR("100%"),
+            1, 100,
+            changeUIntScale(Settings.light_color[i], 0, 255, 0, 100), 'd', i+1);
+        }
+      }  // Settings.flag3.pwm_multi_channels
     }
 #endif
 #ifdef USE_SHUTTER
     if (Settings.flag3.shutter_mode) {
       for (uint32_t i = 0; i < shutters_present; i++) {
-	WSContentSend_P(HTTP_MSG_SLIDER2, F(D_CLOSE), F(D_OPEN),
-			0, 100, Settings.shutter_position[i], 'u', i+1);
+        WSContentSend_P(HTTP_MSG_SLIDER2, F(D_CLOSE), F(D_OPEN),
+          0, 100, Settings.shutter_position[i], 'u', i+1);
       }
     }
 #endif  // USE_SHUTTER
