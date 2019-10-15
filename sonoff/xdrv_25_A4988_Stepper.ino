@@ -18,7 +18,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_A4988_Stepper
+#ifdef USE_A4988_STEPPER
 #include <A4988_Stepper.h>
 #define XDRV_25                    25
 
