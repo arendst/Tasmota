@@ -415,15 +415,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif  // FIRMWARE_IR
 
 /*********************************************************************************************\
- * Mandatory define for DS18x20 if changed by above image selections
-\*********************************************************************************************/
-
-#if defined(USE_DS18x20)
-#else
-#define USE_DS18B20                           // Default DS18B20 sensor needs no external library
-#endif
-
-/*********************************************************************************************\
  * [sonoff-basic.bin]
  * Provide an image without sensors
 \*********************************************************************************************/
