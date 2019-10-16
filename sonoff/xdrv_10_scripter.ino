@@ -177,6 +177,10 @@ uint8_t fast_script=0;
 uint32_t script_lastmillis;
 
 
+#ifdef USE_BUTTON_EVENT
+int8_t script_button[MAX_KEYS];
+#endif
+
 char *GetNumericResult(char *lp,uint8_t lastop,float *fp,JsonObject *jo);
 char *GetStringResult(char *lp,uint8_t lastop,char *cp,JsonObject *jo);
 char *ForceStringVar(char *lp,char *dstr);
@@ -1062,6 +1066,18 @@ chknext:
           }
           goto exit;
         }
+#ifdef USE_BUTTON_EVENT
+        if (!strncmp(vname,"bt[",3)) {
+          // tasmota button state
+          GetNumericResult(vname+3,OPER_EQU,&fvar,0);
+          uint32_t index=fvar;
+          if (index<1 || index>MAX_KEYS) index=1;
+          fvar=script_button[index-1];
+          script_button[index-1]|=0x80;
+          len++;
+          goto exit;
+        }
+#endif
         break;
       case 'c':
         if (!strncmp(vname,"chg[",4)) {
@@ -2122,7 +2138,20 @@ void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
               }
             }
         } else {
-            dstbuf[count]=*cp;
+            if (*cp=='\\') {
+              cp++;
+              if (*cp=='n') {
+                dstbuf[count]='\n';
+              } else if (*cp=='r') {
+                dstbuf[count]='\r';
+              } else if (*cp=='\\') {
+                dstbuf[count]='\\';
+              } else {
+                dstbuf[count]=*cp;
+              }
+            } else {
+              dstbuf[count]=*cp;
+            }
             if (*cp==0) {
                 break;
             }
@@ -2970,22 +2999,80 @@ const char HTTP_FORM_SCRIPT1[] PROGMEM =
     "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>script enable</b><br/>"
     "<br><textarea  id='t1' name='t1' rows='8' cols='80' maxlength='%d' style='font-size: 12pt' >";
 
-
 const char HTTP_FORM_SCRIPT1b[] PROGMEM =
     "</textarea>"
     "<script type='text/javascript'>"
     "eb('charNum').innerHTML='-';"
-    "var textarea=qs('textarea');"
-    "textarea.addEventListener('input',function(){"
+    "var ta=eb('t1');"
+    "ta.addEventListener('keydown',function(e){"
+    "e = e || window.event;"
     "var ml=this.getAttribute('maxlength');"
     "var cl=this.value.length;"
     "if(cl>=ml){"
-    "eb('charNum').innerHTML='no more chars';"
+      "eb('charNum').innerHTML='no more chars';"
     "}else{"
-    "eb('charNum').innerHTML=ml-cl+' chars left';"
+      "eb('charNum').innerHTML=ml-cl+' chars left';"
     "}"
 
+#if 0
+    // catch shift ctrl v
+    "if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.which === 86) {"
+    // clipboard fails here
+      "var paste = window.clipboardData.getData('Text');"
+      //"var paste = e.view.clipboardData.getData('Text');"
+
+      "var out=\"\";"
+      "var re=/\\r\\n|\\n\\r|\\n|\\r/g;"
+      "var allLines=paste.replace(re,\"\\n\").split(\"\\n\");"
+      "allLines.forEach((line) => {"
+        "if(line.length>0) {"
+          "if(line.charAt(0)!=';'){"
+            "out+=line+'\\n';"
+          "}"
+        "}"
+      "});"
+      "alert(out);"
+    "}"
+#endif
+
+    "return true;"
     "});"
+
+
+// this works only once on a reloaded page
+#ifdef SCRIPT_STRIP_COMMENTS
+    "ta.addEventListener('paste',function(e){"
+      "let paste = (e.clipboardData || window.clipboardData).getData('text');"
+      "var ml=this.getAttribute('maxlength');"
+      "if(paste.length>=ml){"
+        "var out=\"\";"
+        "var re=/\\r\\n|\\n\\r|\\n|\\r/g;"
+        "var allLines=paste.replace(re,\"\\n\").split(\"\\n\");"
+        "allLines.forEach((line) => {"
+          "if(line.length>0) {"
+            "if(line.charAt(0)!=';'){"
+              "out+=line+'\\n';"
+            "}"
+          "}"
+        "});"
+        "event.preventDefault();"
+        "eb('t1').textContent=out;"
+      "}"
+
+    //  "alert(out);"
+    // this pastes the text on the wrong position ????
+    //"const selection = Window.getSelection();"
+    //"if (!selection.rangeCount) return false;"
+    //"selection.deleteFromDocument();"
+    //"selection.getRangeAt(0).insertNode(document.createTextNode(paste));"
+
+    //"return true;"
+
+    "});"
+
+
+#endif
+
     "</script>";
 
 const char HTTP_SCRIPT_FORM_END[] PROGMEM =
@@ -3291,7 +3378,15 @@ void HandleScriptConfiguration(void) {
     WSContentStart_P(S_CONFIGURE_SCRIPT);
     WSContentSendStyle();
     WSContentSend_P(HTTP_FORM_SCRIPT);
+
+
+#ifdef xSCRIPT_STRIP_COMMENTS
+    uint16_t ssize=glob_script_mem.script_size;
+    if (bitRead(Settings.rule_enabled, 1)) ssize*=2;
+    WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? " checked" : "",ssize);
+#else
     WSContentSend_P(HTTP_FORM_SCRIPT1,1,1,bitRead(Settings.rule_enabled,0) ? " checked" : "",glob_script_mem.script_size);
+#endif
 
     // script is to larg for WSContentSend_P
     if (glob_script_mem.script_ram[0]) {
@@ -3328,6 +3423,38 @@ void ScriptSaveSettings(void) {
 
     str.replace("\r\n","\n");
     str.replace("\r","\n");
+
+#ifdef xSCRIPT_STRIP_COMMENTS
+    if (bitRead(Settings.rule_enabled, 1)) {
+      char *sp=(char*)str.c_str();
+      char *sp1=sp;
+      char *dp=sp;
+      uint8_t flg=0;
+      while (*sp) {
+        while (*sp==' ') sp++;
+        sp1=sp;
+        sp=strchr(sp,'\n');
+        if (!sp) {
+          flg=1;
+        } else {
+          *sp=0;
+        }
+        if (*sp1!=';') {
+          uint8_t slen=strlen(sp1);
+          if (slen) {
+            strcpy(dp,sp1);
+            dp+=slen;
+            *dp++='\n';
+          }
+        }
+        if (flg) {
+          *dp=0;
+          break;
+        }
+        sp++;
+      }
+    }
+#endif
 
     strlcpy(glob_script_mem.script_ram,str.c_str(), glob_script_mem.script_size);
 
@@ -3923,11 +4050,20 @@ bool ScriptCommand(void) {
   }
   else if ((CMND_SCRIPT == command_code) && (index > 0)) {
 
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 2)) {
+    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 4)) {
       switch (XdrvMailbox.payload) {
         case 0: // Off
         case 1: // On
-        bitWrite(Settings.rule_enabled, index -1, XdrvMailbox.payload);
+          bitWrite(Settings.rule_enabled, index -1, XdrvMailbox.payload);
+          break;
+#ifdef xSCRIPT_STRIP_COMMENTS
+        case 2:
+          bitWrite(Settings.rule_enabled, 1,0);
+          break;
+        case 3:
+          bitWrite(Settings.rule_enabled, 1,1);
+          break;
+#endif
       }
     } else {
       if ('>' == XdrvMailbox.data[0]) {
@@ -4519,6 +4655,12 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_pram=(uint8_t*)Settings.mems[0];
       glob_script_mem.script_pram_size=MAX_RULE_MEMS*10;
 
+#ifdef USE_BUTTON_EVENT
+      for (uint32_t cnt=0;cnt<MAX_KEYS;cnt++) {
+        script_button[cnt]=-1;
+      }
+#endif
+
 #ifdef USE_24C256
 #ifndef USE_SCRIPT_FATFS
       if (i2c_flg) {
@@ -4644,14 +4786,28 @@ bool Xdrv10(uint8_t function)
 
 #ifdef USE_SCRIPT_JSON_EXPORT
     case FUNC_JSON_APPEND:
-      ScriptJsonAppend();
+      if (bitRead(Settings.rule_enabled, 0)) {
+        ScriptJsonAppend();
+      }
       break;
 #endif //USE_SCRIPT_JSON_EXPORT
 
+#ifdef USE_BUTTON_EVENT
+    case FUNC_BUTTON_PRESSED:
+      if (bitRead(Settings.rule_enabled, 0)) {
+        if ((script_button[XdrvMailbox.index]&1)!=(XdrvMailbox.payload&1)) {
+          script_button[XdrvMailbox.index]=XdrvMailbox.payload;
+          Run_Scripter(">b",2,0);
+        }
+      }
+      break;
+#endif
 
   }
   return result;
 }
+
+
 
 #endif  // Do not USE_RULES
 #endif  // USE_SCRIPT
