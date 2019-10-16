@@ -97,7 +97,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 #define USE_COUNTER                           // Enable counters
 #undef USE_ADC_VCC                            // Add Analog input on selected devices
-#define USE_DS18x20                           // For more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
+#define USE_DS18x20                           // Add support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
 #define USE_I2C                               // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 #define USE_SHT                               // Add I2C emulating code for SHT1X sensor (+1k4 code)
@@ -364,7 +364,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_TUYA_MCU                           // Disable support for Tuya Serial MCU
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-#undef USE_DS18x20                            // Disable Optional for more than one DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
+#undef USE_DS18x20                            // Disable support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
 #undef USE_I2C                                // Disable all I2C sensors
 #undef USE_SPI                                // Disable all SPI devices
@@ -415,15 +415,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif  // FIRMWARE_IR
 
 /*********************************************************************************************\
- * Mandatory define for DS18x20 if changed by above image selections
-\*********************************************************************************************/
-
-#if defined(USE_DS18x20)
-#else
-#define USE_DS18B20                           // Default DS18B20 sensor needs no external library
-#endif
-
-/*********************************************************************************************\
  * [sonoff-basic.bin]
  * Provide an image without sensors
 \*********************************************************************************************/
@@ -464,7 +455,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 #undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
-#undef USE_DS18B20                            // Disable internal DS18B20 sensor
 #undef USE_I2C                                // Disable all I2C sensors and devices
 #undef USE_SPI                                // Disable all SPI devices
 #undef USE_DISPLAY                            // Disable Display support
@@ -549,7 +539,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 #undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
-#undef USE_DS18B20                            // Disable internal DS18B20 sensor
 #undef USE_I2C                                // Disable all I2C sensors and devices
 #undef USE_SPI                                // Disable all SPI devices
 #undef USE_DISPLAY                            // Disable Display support
@@ -637,9 +626,8 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif
 
 #ifndef MESSZ
-//#define MESSZ                  405          // Max number of characters in JSON message string (6 x DS18x20 sensors)
 //#define MESSZ                  893          // Max number of characters in JSON message string (Hass discovery and nice MQTT_MAX_PACKET_SIZE = 1000)
-#define MESSZ                  (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string (6 x DS18x20 sensors)
+#define MESSZ                  (MQTT_MAX_PACKET_SIZE -TOPSZ -7)  // Max number of characters in JSON message string
 #endif
 
 //#include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)

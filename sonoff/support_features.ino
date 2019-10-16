@@ -240,10 +240,10 @@ void GetFeatures(void)
   feature_sns1 |= 0x00000008;  // xnrg_03_pzem004t.ino
 #endif
 #ifdef USE_DS18B20
-  feature_sns1 |= 0x00000010;  // xsns_05_ds18b20.ino
+  feature_sns1 |= 0x00000010;  // xsns_05_ds18b20.ino - no more support since 6.6.0.18
 #endif
 #ifdef USE_DS18x20_LEGACY
-  feature_sns1 |= 0x00000020;  // xsns_05_ds18x20_legacy.ino - no more supported since 6.6.0.14
+  feature_sns1 |= 0x00000020;  // xsns_05_ds18x20_legacy.ino - no more support since 6.6.0.14
 #endif
 #ifdef USE_DS18x20
   feature_sns1 |= 0x00000040;  // xsns_05_ds18x20.ino
