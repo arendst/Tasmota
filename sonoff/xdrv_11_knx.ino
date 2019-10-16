@@ -492,7 +492,9 @@ void KNX_INIT(void)
   if (GetUsedInModule(GPIO_DHT11, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
   if (GetUsedInModule(GPIO_DHT22, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
   if (GetUsedInModule(GPIO_SI7021, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+#ifdef USE_DS18x20
   if (GetUsedInModule(GPIO_DSB, my_module.io)) { device_param[KNX_TEMPERATURE-1].show = true; }
+#endif
   if (GetUsedInModule(GPIO_DHT11, my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
   if (GetUsedInModule(GPIO_DHT22, my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
   if (GetUsedInModule(GPIO_SI7021, my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
