@@ -731,7 +731,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_HRE_CLOCK,
   GPIO_HRE_DATA,
 #endif
-#ifdef USE_A4988_Stepper
+#ifdef USE_A4988_STEPPER
   GPIO_A4988_DIR,     // A4988 direction pin
   GPIO_A4988_STP,     // A4988 step pin
   // folowing are not mandatory

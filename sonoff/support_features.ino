@@ -444,7 +444,7 @@ void GetFeatures(void)
 #ifdef USE_INA226
   feature5 |= 0x00000010;  // xsns_54_ina226.ino
 #endif
-#ifdef USE_A4988_Stepper
+#ifdef USE_A4988_STEPPER
   feature5 |= 0x00000020;  // xdrv_25_A4988.ino
 #endif
 #ifdef USE_DDS2382
