@@ -204,7 +204,7 @@ void EnergyUpdateTotal(float value, bool kwh)
     Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
     Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
     Settings.energy_kWhtotal_time = (!Energy.kWhtoday_offset) ? LocalTime() : Midnight();
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: Energy Total updated with hardware value"));
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NRG: Energy Total updated with hardware value"));
   }
   EnergyUpdateToday();
 }
@@ -499,6 +499,7 @@ void CmndEnergyReset(void)
         Energy.kWhtoday_offset = lnum *100;
         Energy.kWhtoday = 0;
         Energy.kWhtoday_delta = 0;
+        Energy.start_energy = 0;
         Energy.period = Energy.kWhtoday_offset;
         Settings.energy_kWhtoday = Energy.kWhtoday_offset;
         RtcSettings.energy_kWhtoday = Energy.kWhtoday_offset;
@@ -515,15 +516,14 @@ void CmndEnergyReset(void)
         // Reset Energy Total
         RtcSettings.energy_kWhtotal = lnum *100;
         Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
-        Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
+//        Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
         Settings.energy_kWhtotal_time = (!Energy.kWhtoday_offset) ? LocalTime() : Midnight();
         RtcSettings.energy_usage.last_usage_kWhtotal = (uint32_t)(Energy.total * 1000);
         break;
       }
     }
   }
-
-  if ((XdrvMailbox.index > 3) && (XdrvMailbox.index <= 5)) {
+  else if ((XdrvMailbox.index > 3) && (XdrvMailbox.index <= 5)) {
     char *p;
     char *str = strtok_r(XdrvMailbox.data, ", ", &p);
     int32_t position = -1;
@@ -559,12 +559,11 @@ void CmndEnergyReset(void)
         }
         Settings.energy_usage.return1_kWhtotal = RtcSettings.energy_usage.return1_kWhtotal;
         Settings.energy_usage.return2_kWhtotal = RtcSettings.energy_usage.return2_kWhtotal;
-
-
-
         break;
       }
   }
+
+  Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
 
   char energy_total_chr[FLOATSZ];
   dtostrfd(Energy.total, Settings.flag2.energy_resolution, energy_total_chr);
