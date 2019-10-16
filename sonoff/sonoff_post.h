@@ -533,6 +533,8 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 
 // -- Optional modules -------------------------
 #undef USE_SONOFF_IFAN                        // Disable support for Sonoff iFan02 and iFan03 (+2k code)
+#undef USE_SONOFF_SC                          // Disable support for Sonoff Sc (+1k1 code)
+#undef USE_BUZZER                             // Disable support for a buzzer (+0k6 code)
 #undef USE_TUYA_MCU                           // Disable support for Tuya Serial MCU
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
@@ -573,6 +575,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
 #undef USE_HX711                              // Disable support for HX711 load cell
+#undef USE_SONOFF_RF                          // Disable support for Sonoff Rf Bridge (+3k2 code)
 #undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
