@@ -4,6 +4,8 @@ python:
 sudo: false
 install:
   - pip install -U platformio
+  - platformio upgrade
+  - platformio update
 
 cache:
   directories:
