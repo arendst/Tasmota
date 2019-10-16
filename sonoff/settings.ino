@@ -361,6 +361,36 @@ void SettingsSaveAll(void)
 }
 
 /*********************************************************************************************\
+ * Quick power cycle monitoring
+\*********************************************************************************************/
+
+void UpdateQuickPowerCycle(bool update)
+{
+  uint32_t pc_register;
+  uint32_t pc_location = SETTINGS_LOCATION - CFG_ROTATES;
+
+  ESP.flashRead(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
+  if (update && ((pc_register & 0xFFFFFFF0) == 0xFFA55AB0)) {
+    uint32_t counter = ((pc_register & 0xF) << 1) & 0xF;
+    if (0 == counter) {  // 4 power cycles in a row
+      SettingsErase(2);  // Quickly reset all settings including QuickPowerCycle flag
+      EspRestart();      // And restart
+    } else {
+      pc_register = 0xFFA55AB0 | counter;
+      ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Flag %02X"), counter);  // Won't show as too early in power on sequence
+    }
+  }
+  else if (pc_register != 0xFFA55ABF) {
+    pc_register = 0xFFA55ABF;
+    // Assume flash is default all ones and setting a bit to zero does not need an erase
+    ESP.flashEraseSector(pc_location);
+    ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Reset"));  // Won't show as too early in power on sequence
+  }
+}
+
+/*********************************************************************************************\
  * Config Save - Save parameters to Flash ONLY if any parameter has changed
 \*********************************************************************************************/
 
@@ -486,6 +516,7 @@ void SettingsErase(uint8_t type)
   /*
     0 = Erase from program end until end of physical flash
     1 = Erase SDK parameter area at end of linker memory model (0x0FDxxx - 0x0FFFFF) solving possible wifi errors
+    2 = Erase Tasmota settings
   */
 
 #ifndef FIRMWARE_MINIMAL
@@ -496,6 +527,10 @@ void SettingsErase(uint8_t type)
   if (1 == type) {
     _sectorStart = SETTINGS_LOCATION +2;  // SDK parameter area above EEPROM area (0x0FDxxx - 0x0FFFFF)
     _sectorEnd = SETTINGS_LOCATION +5;
+  }
+  else if (2 == type) {
+    _sectorStart = SETTINGS_LOCATION - CFG_ROTATES;  // Tasmota parameter area (0x0F4xxx - 0x0FBFFF)
+    _sectorEnd = SETTINGS_LOCATION +1;
   }
 
   bool _serialoutput = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);

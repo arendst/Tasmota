@@ -781,6 +781,7 @@ void PerformEverySecond(void)
   if (BOOT_LOOP_TIME == uptime) {
     RtcReboot.fast_reboot_count = 0;
     RtcRebootSave();
+    UpdateQuickPowerCycle(false);
 
     Settings.bootcount++;              // Moved to here to stop flash writes during start-up
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
@@ -1471,7 +1472,10 @@ void setup(void)
   global_state.data = 3;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
 
   RtcRebootLoad();
-  if (!RtcRebootValid()) { RtcReboot.fast_reboot_count = 0; }
+  if (!RtcRebootValid()) {
+    RtcReboot.fast_reboot_count = 0;
+    UpdateQuickPowerCycle(true);  // As RTC is invalid it must be a power cycle
+  }
   RtcReboot.fast_reboot_count++;
   RtcRebootSave();
 
@@ -1544,6 +1548,8 @@ void setup(void)
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }
   }
+
+//  UpdateQuickPowerCycle(true);  // Test location
 
   Format(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
   Format(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
