@@ -33,9 +33,6 @@ const uint8_t WIFI_CHECK_SEC = 20;         // seconds
 const uint8_t WIFI_RETRY_OFFSET_SEC = 20;  // seconds
 
 #include <ESP8266WiFi.h>                   // Wifi, MQTT, Ota, WifiManager
-#if LWIP_IPV6
-#include <AddrList.h>                      // IPv6 DualStack
-#endif  // LWIP_IPV6=1
 
 struct WIFI {
   uint32_t last_event = 0;                 // Last wifi connection event
@@ -238,20 +235,6 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   }
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
     Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
-
-#if LWIP_IPV6
-  for (bool configured = false; !configured;) {
-    uint16_t cfgcnt = 0;
-    for (auto addr : addrList) {
-      if ((configured = !addr.isLocal() && addr.isV6()) || cfgcnt==30) {
-        AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI "Got IPv6 global address %s"), addr.toString().c_str());
-        break;  // IPv6 is mandatory but stop after 15 seconds
-      }
-      delay(500);  // Loop until real IPv6 address is aquired or too many tries failed
-      cfgcnt++;
-    }
-  }
-#endif  // LWIP_IPV6=1
 }
 
 void WifiBeginAfterScan()
@@ -376,26 +359,9 @@ void WifiSetState(uint8_t state)
   global_state.wifi_down = state ^1;
 }
 
-#if LWIP_IPV6
-bool WifiCheckIPv6(void)
-{
-  bool ipv6_global=false;
-
-  for (auto a : addrList) {
-    if(!a.isLocal() && a.isV6()) ipv6_global=true;
-  }
-  return ipv6_global;
-}
-#endif  // LWIP_IPV6=1
-
 void WifiCheckIp(void)
 {
-#if LWIP_IPV6
-  if(WifiCheckIPv6()) {
-    Wifi.status = WL_CONNECTED;
-#else
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
-#endif  // LWIP_IPV6=1
     WifiSetState(1);
     Wifi.counter = WIFI_CHECK_SEC;
     Wifi.retry = Wifi.retry_init;
@@ -533,11 +499,7 @@ void WifiCheck(uint8_t param)
         Wifi.counter = WIFI_CHECK_SEC;
         WifiCheckIp();
       }
-#if LWIP_IPV6
-      if (WifiCheckIPv6()) {
-#else
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !Wifi.config_type) {
-#endif  // LWIP_IPV6=1
         WifiSetState(1);
 
         if (Settings.flag3.use_wifi_rescan) {
