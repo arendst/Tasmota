@@ -222,15 +222,21 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_RULES                              // Disable support for rules
 
 // -- Optional modules -------------------------
-//#ifndef USE_SONOFF_IFAN
-#define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
-//#endif
+#undef ROTARY_V1                              // Disable support for MI Desk Lamp
+#define USE_SONOFF_RF                         // Add support for Sonoff Rf Bridge (+3k2 code)
+  #undef USE_RF_FLASH                         // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#define USE_SONOFF_SC                         // Add support for Sonoff Sc (+1k1 code)
 #undef USE_TUYA_MCU                           // Disable support for Tuya Serial MCU
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-#undef ROTARY_V1                              // Disable support for MI Desk Lamp
+#define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
+#undef USE_BUZZER                             // Disable support for a buzzer (+0k6 code)
+#undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
+#undef USE_SHUTTER                            // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
+#undef USE_DEEPSLEEP                          // Disable support for deepsleep (+1k code)
 
 #undef USE_COUNTER                            // Disable counters
+#define USE_DS18x20                           // Add support for DS18x20 sensors with id sort, single scan and read retry (+2k6 code)
 #undef USE_I2C                                // Disable all I2C sensors
 #undef USE_SPI                                // Disable all SPI devices
 #undef USE_MHZ19                              // Disable support for MH-Z19 CO2 sensor
@@ -259,11 +265,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR remote commands using library IRremoteESP8266 and ArduinoJson
 #undef USE_IR_RECEIVE                         // Disable support for IR receiver
-#undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
 #undef USE_HX711                              // Disable support for HX711 load cell
-#undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
@@ -300,6 +304,19 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef CODE_IMAGE
 #define CODE_IMAGE 6
 
+#undef ROTARY_V1                              // Disable support for MI Desk Lamp
+#undef USE_SONOFF_RF                          // Disable support for Sonoff Rf Bridge (+3k2 code)
+  #undef USE_RF_FLASH                         // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_SONOFF_SC                          // Disable support for Sonoff Sc (+1k1 code)
+//#undef USE_TUYA_MCU                           // Disable support for Tuya Serial MCU
+#undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
+#undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
+#undef USE_SONOFF_IFAN                        // Disable support for Sonoff iFan02 and iFan03 (+2k code)
+#undef USE_BUZZER                             // Disable support for a buzzer (+0k6 code)
+#undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
+#undef USE_SHUTTER                            // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
+#undef USE_DEEPSLEEP                          // Disable support for deepsleep (+1k code)
+
 #undef USE_ENERGY_SENSOR                      // Disable energy sensors (-14k code)
   #undef USE_PZEM004T                         // Disable PZEM004T energy sensor
   #undef USE_PZEM_AC                          // Disable PZEM014,016 Energy monitor
@@ -331,8 +348,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 //    #define USE_DISPLAY_RA8876                // [DisplayModel 10]
 #endif
 
-#undef USE_ARILUX_RF                          // Remove support for Arilux RF remote controller (-0k8 code, 252 iram (non 2.3.0))
-#undef USE_RF_FLASH                           // Remove support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB (-3k code)
 #endif  // FIRMWARE_DISPLAYS
 
 /*********************************************************************************************\
@@ -359,12 +374,19 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 //#undef USE_RULES                              // Disable support for rules
 #undef USE_DISCOVERY                            // Disable mDNS for the following services (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
 
-// -- Optional modules -------------------------
-#undef USE_BUZZER                             // Disable support for a buzzer (+0k6 code)
-#undef USE_SONOFF_IFAN                        // Disable support for Sonoff iFan02 and iFan03 (+2k code)
+#undef ROTARY_V1                              // Disable support for MI Desk Lamp
+#undef USE_SONOFF_RF                          // Disable support for Sonoff Rf Bridge (+3k2 code)
+  #undef USE_RF_FLASH                         // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_SONOFF_SC                          // Disable support for Sonoff Sc (+1k1 code)
 #undef USE_TUYA_MCU                           // Disable support for Tuya Serial MCU
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
+#undef USE_SONOFF_IFAN                        // Disable support for Sonoff iFan02 and iFan03 (+2k code)
+#undef USE_BUZZER                             // Disable support for a buzzer (+0k6 code)
+#undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
+#undef USE_SHUTTER                            // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
+#undef USE_DEEPSLEEP                          // Disable support for deepsleep (+1k code)
+
 #undef USE_DS18x20                            // Disable support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
 #undef USE_I2C                                // Disable all I2C sensors
@@ -448,11 +470,18 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 //#undef USE_RULES                              // Disable support for rules
 
 // -- Optional modules -------------------------
-#define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
-//#undef USE_TUYA_MCU                         // Disable support for Tuya Serial MCU
+#undef ROTARY_V1                              // Disable support for MI Desk Lamp
+#undef USE_SONOFF_RF                          // Disable support for Sonoff Rf Bridge (+3k2 code)
+  #undef USE_RF_FLASH                         // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_SONOFF_SC                          // Disable support for Sonoff Sc (+1k1 code)
+//#undef USE_TUYA_MCU                           // Disable support for Tuya Serial MCU
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-#undef ROTARY_V1                              // Disable support for MI Desk Lamp
+#undef USE_SONOFF_IFAN                        // Disable support for Sonoff iFan02 and iFan03 (+2k code)
+#undef USE_BUZZER                             // Disable support for a buzzer (+0k6 code)
+#undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
+#undef USE_SHUTTER                            // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
+#undef USE_DEEPSLEEP                          // Disable support for deepsleep (+1k code)
 
 #undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
@@ -485,11 +514,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
-#undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
 #undef USE_HX711                              // Disable support for HX711 load cell
-#undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
@@ -532,11 +559,18 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_LIGHT                              // Disable support for lights
 
 // -- Optional modules -------------------------
-#undef USE_SONOFF_IFAN                        // Disable support for Sonoff iFan02 and iFan03 (+2k code)
+#undef ROTARY_V1                              // Disable support for MI Desk Lamp
+#undef USE_SONOFF_RF                          // Disable support for Sonoff Rf Bridge (+3k2 code)
+  #undef USE_RF_FLASH                         // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
+#undef USE_SONOFF_SC                          // Disable support for Sonoff Sc (+1k1 code)
 #undef USE_TUYA_MCU                           // Disable support for Tuya Serial MCU
 #undef USE_ARMTRONIX_DIMMERS                  // Disable support for Armtronix Dimmers (+1k4 code)
 #undef USE_PS_16_DZ                           // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-#undef ROTARY_V1                              // Disable support for MI Desk Lamp
+#undef USE_SONOFF_IFAN                        // Disable support for Sonoff iFan02 and iFan03 (+2k code)
+#undef USE_BUZZER                             // Disable support for a buzzer (+0k6 code)
+#undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
+#undef USE_SHUTTER                            // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
+#undef USE_DEEPSLEEP                          // Disable support for deepsleep (+1k code)
 
 #undef USE_COUNTER                            // Disable counters
 #undef USE_DS18x20                            // Disable DS18x20 sensor
@@ -569,11 +603,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_IR_REMOTE                          // Disable IR driver
 #undef USE_WS2812                             // Disable WS2812 Led string
-#undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
 #undef USE_HX711                              // Disable support for HX711 load cell
-#undef USE_RF_FLASH                           // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
 #undef USE_TX20_WIND_SENSOR                   // Disable support for La Crosse TX20 anemometer
 #undef USE_RC_SWITCH                          // Disable support for RF transceiver using library RcSwitch
 #undef USE_RF_SENSOR                          // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
