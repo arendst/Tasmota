@@ -1073,6 +1073,7 @@ chknext:
           uint32_t index=fvar;
           if (index<1 || index>MAX_KEYS) index=1;
           fvar=script_button[index-1];
+          script_button[index-1]|=0x80;
           len++;
           goto exit;
         }
@@ -4794,7 +4795,7 @@ bool Xdrv10(uint8_t function)
 #ifdef USE_BUTTON_EVENT
     case FUNC_BUTTON_PRESSED:
       if (bitRead(Settings.rule_enabled, 0)) {
-        if (script_button[XdrvMailbox.index]!=XdrvMailbox.payload) {
+        if ((script_button[XdrvMailbox.index]&1)!=(XdrvMailbox.payload&1)) {
           script_button[XdrvMailbox.index]=XdrvMailbox.payload;
           Run_Scripter(">b",2,0);
         }
