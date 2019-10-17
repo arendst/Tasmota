@@ -1,5 +1,5 @@
 /*
-  xsns_48_solaxX1.ino - Solax X1 inverter RS485 support for Sonoff-Tasmota
+  xnrg_12_solaxX1.ino - Solax X1 inverter RS485 support for Sonoff-Tasmota
 
   Copyright (C) 2019  Pablo Zerón
 
@@ -17,12 +17,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef USE_SOLAX_X1
+#ifdef USE_ENERGY_SENSOR
+#ifdef USE_SOLAX_X1_NRG
 /*********************************************************************************************\
  * Solax X1 Inverter
 \*********************************************************************************************/
 
-#define XSNS_49            49
+#define XNRG_12            12
 
 #ifndef SOLAXX1_SPEED
 #define SOLAXX1_SPEED      9600      // default solax rs485 speed
@@ -101,10 +102,6 @@ struct SOLAXX1 {
   float dc2_voltage = 0;
   float dc1_current = 0;
   float dc2_current = 0;
-  float ac_current = 0;
-  float ac_voltage = 0;
-  float frequency = 0;
-  float power = 0;
   float energy_total = 0;
   float runtime_total = 0;
   float dc1_power = 0;
@@ -178,6 +175,7 @@ uint8_t solaxX1_RS485Receive(uint8_t *value)
   }
 
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, value, len);
+
   uint16_t crc = solaxX1_calculateCRC(value, len - 2); // calculate out crc bytes
 
   if (value[len - 1] == lowByte(crc) && value[len - 2] == highByte(crc))
@@ -245,7 +243,7 @@ uint8_t solaxX1_ParseErrorCode(uint32_t code){
 uint8_t solaxX1_send_retry = 0;
 uint8_t solaxX1_nodata_count = 0;
 
-void solaxX1EverySecond(void) // Every Second
+void solaxX1250MSecond(void) // Every Second
 {
   uint8_t value[61] = {0};
   bool data_ready = solaxX1_RS485ReceiveReady();
@@ -262,22 +260,23 @@ void solaxX1EverySecond(void) // Every Second
       else
       {
         solaxX1_nodata_count = 0;
-        solaxX1_send_retry = 3;
+        solaxX1_send_retry = 12;
+        Energy.data_valid[0] = 0;
 
-        solaxX1.temperature =   (float)((value[9] << 8) | value[10]); // Temperature
-        solaxX1.energy_today =  (float)((value[11] << 8) | value[12]) * 0.1f; // Energy Today
-        solaxX1.dc1_voltage =   (float)((value[13] << 8) | value[14]) * 0.1f; // PV1 Voltage
-        solaxX1.dc2_voltage =   (float)((value[15] << 8) | value[16]) * 0.1f; // PV2 Voltage
-        solaxX1.dc1_current =   (float)((value[17] << 8) | value[18]) * 0.1f; // PV1 Current
-        solaxX1.dc2_current =   (float)((value[19] << 8) | value[20]) * 0.1f; // PV2 Current
-        solaxX1.ac_current =    (float)((value[21] << 8) | value[22]) * 0.1f; // AC Current
-        solaxX1.ac_voltage =    (float)((value[23] << 8) | value[24]) * 0.1f; // AC Voltage
-        solaxX1.frequency =     (float)((value[25] << 8) | value[26]) * 0.01f; // AC Frequency
-        solaxX1.power =         (float)((value[27] << 8) | value[28]); // AC Power
+        solaxX1.temperature =    (float)((value[9] << 8) | value[10]); // Temperature
+        solaxX1.energy_today =   (float)((value[11] << 8) | value[12]) * 0.1f; // Energy Today
+        solaxX1.dc1_voltage =    (float)((value[13] << 8) | value[14]) * 0.1f; // PV1 Voltage
+        solaxX1.dc2_voltage =    (float)((value[15] << 8) | value[16]) * 0.1f; // PV2 Voltage
+        solaxX1.dc1_current =    (float)((value[17] << 8) | value[18]) * 0.1f; // PV1 Current
+        solaxX1.dc2_current =    (float)((value[19] << 8) | value[20]) * 0.1f; // PV2 Current
+        Energy.current[0] =      (float)((value[21] << 8) | value[22]) * 0.1f; // AC Current
+        Energy.voltage[0] =      (float)((value[23] << 8) | value[24]) * 0.1f; // AC Voltage
+        Energy.frequency[0] =    (float)((value[25] << 8) | value[26]) * 0.01f; // AC Frequency
+        Energy.active_power[0] = (float)((value[27] << 8) | value[28]); // AC Power
         //temporal = (float)((value[29] << 8) | value[30]) * 0.1f; // Not Used
-        solaxX1.energy_total =  (float)((value[31] << 8) | (value[32] << 8) | (value[33] << 8) | value[34]) * 0.1f; // Energy Total
-        solaxX1.runtime_total = (float)((value[35] << 8) | (value[36] << 8) | (value[37] << 8) | value[38]); // Work Time Total
-        solaxX1.status =        (uint8_t)((value[39] << 8) | value[40]); // Work mode
+        solaxX1.energy_total =   (float)((value[31] << 8) | (value[32] << 8) | (value[33] << 8) | value[34]) * 0.1f; // Energy Total
+        solaxX1.runtime_total =  (float)((value[35] << 8) | (value[36] << 8) | (value[37] << 8) | value[38]); // Work Time Total
+        solaxX1.status =         (uint8_t)((value[39] << 8) | value[40]); // Work mode
         //temporal = (float)((value[41] << 8) | value[42]); // Grid voltage fault value 0.1V
         //temporal = (float)((value[43] << 8) | value[44]); // Gird frequency fault value 0.01Hz
         //temporal = (float)((value[45] << 8) | value[46]); // Dc injection fault value 1mA
@@ -285,33 +284,32 @@ void solaxX1EverySecond(void) // Every Second
         //temporal = (float)((value[49] << 8) | value[50]); // Pv1 voltage fault value 0.1V
         //temporal = (float)((value[51] << 8) | value[52]); // Pv2 voltage fault value 0.1V
         //temporal = (float)((value[53] << 8) | value[54]); // GFC fault value
-        solaxX1.errorCode =     (uint32_t)((value[58] << 8) | (value[57] << 8) | (value[56] << 8) | value[55]); // Error Code
+        solaxX1.errorCode =      (uint32_t)((value[58] << 8) | (value[57] << 8) | (value[56] << 8) | value[55]); // Error Code
 
         solaxX1.dc1_power = solaxX1.dc1_voltage * solaxX1.dc1_current;
         solaxX1.dc2_power = solaxX1.dc2_voltage * solaxX1.dc2_current;
 
         solaxX1_QueryLiveData();
-      }
+        EnergyUpdateTotal(solaxX1.energy_total, true);  // 484.708 kWh
+      } 
     } // End data Ready
 
     if (0 == solaxX1_send_retry && 255 != solaxX1_nodata_count) {
-      solaxX1_send_retry = 3;
+      solaxX1_send_retry = 12;
       solaxX1_QueryLiveData();
     }
-
+    
     // While the inverter has not stable ambient light, will send an address adquired but go offline again,
     // so no data will be received when the query is send, then we start the countdown to set the inverter as offline again.
     if (255 == solaxX1_nodata_count) {
       solaxX1_nodata_count = 0;
-      solaxX1_send_retry = 3;
+      solaxX1_send_retry = 12; 
     }
   } // end hasAddress && (data_ready || solaxX1_send_retry == 0)
   else
-  {
-
-    DEBUG_SENSOR_LOG(PSTR("SX1: No Data count: %d"), solaxX1_nodata_count);
-
-    if (solaxX1_nodata_count < 10) // max. seconds without data
+  { 
+    if ((solaxX1_nodata_count % 4) == 0) { DEBUG_SENSOR_LOG(PSTR("SX1: No Data count: %d"), solaxX1_nodata_count); }
+    if (solaxX1_nodata_count < 10 * 4) // max. seconds without data
     {
       solaxX1_nodata_count++;
     }
@@ -319,15 +317,16 @@ void solaxX1EverySecond(void) // Every Second
     {
       // no data from RS485, reset values to 0 and set inverter as offline
       solaxX1_nodata_count = 255;
-      solaxX1_send_retry = 3;
+      solaxX1_send_retry = 12; 
       protocolStatus.status = 0b00001000; // queryOffline
+      Energy.data_valid[0] = ENERGY_WATCHDOG;
 
-      solaxX1.temperature = solaxX1.dc1_voltage = solaxX1.dc2_voltage = solaxX1.dc1_current = solaxX1.dc2_current = solaxX1.ac_current = 0;
-      solaxX1.ac_voltage = solaxX1.frequency = solaxX1.power = solaxX1.dc1_power = solaxX1.dc2_power = solaxX1.status = 0;
+      solaxX1.temperature = solaxX1.dc1_voltage = solaxX1.dc2_voltage = solaxX1.dc1_current = solaxX1.dc2_current = solaxX1.dc1_power = 0;
+      solaxX1.dc2_power = solaxX1.status = Energy.current[0] = Energy.voltage[0] = Energy.frequency[0] = Energy.active_power[0] = 0;
       //solaxX1.energy_today = solaxX1.energy_total = solaxX1.runtime_total = 0;
     }
   }
-
+  
   if (!protocolStatus.hasAddress && (data_ready || solaxX1_send_retry == 0))
   {
     if (data_ready)
@@ -382,7 +381,7 @@ void solaxX1EverySecond(void) // Every Second
         protocolStatus.status = 0b00001000; // queryOffline
         DEBUG_SENSOR_LOG(PSTR("SX1: Set Query Offline"));
       }
-      solaxX1_send_retry = 3;
+      solaxX1_send_retry = 12;
     }
 
     // request to the inverter the serial number if offline
@@ -404,36 +403,31 @@ void solaxX1EverySecond(void) // Every Second
     solaxX1_send_retry--;
 }
 
-void solaxX1Init(void)
+void solaxX1SnsInit(void)
 {
-  AddLog_P(LOG_LEVEL_DEBUG, PSTR("Solax X1 Inverter Init"));
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SX1: Solax X1 Inverter Init"));
   DEBUG_SENSOR_LOG(PSTR("SX1: RX pin: %d, TX pin: %d"), pin[GPIO_SOLAXX1_RX], pin[GPIO_SOLAXX1_TX]);
-  solaxX1_Init = 0;
   protocolStatus.status = 0b00100000; // hasAddress
-
-  if ((pin[GPIO_SOLAXX1_RX] < 99) && (pin[GPIO_SOLAXX1_TX] < 99))
+  
+  solaxX1Serial = new TasmotaSerial(pin[GPIO_SOLAXX1_RX], pin[GPIO_SOLAXX1_TX], 1);
+  if (solaxX1Serial->begin(SOLAXX1_SPEED))
   {
-    solaxX1Serial = new TasmotaSerial(pin[GPIO_SOLAXX1_RX], pin[GPIO_SOLAXX1_TX], 1);
-    if (solaxX1Serial->begin(SOLAXX1_SPEED))
-    {
-      if (solaxX1Serial->hardwareSerial())
-      {
-        ClaimSerial();
-      }
-      solaxX1_Init = 1;
-    }
+    if (solaxX1Serial->hardwareSerial()) { ClaimSerial(); }
+  }else {
+    energy_flg = ENERGY_NONE;
+  }
+}
+
+void solaxX1DrvInit(void)
+{
+  if ((pin[GPIO_SOLAXX1_RX] < 99) && (pin[GPIO_SOLAXX1_TX] < 99)) {
+    energy_flg = XNRG_12;
   }
 }
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_solaxX1_DATA1[] PROGMEM =
-    "{s}" D_SOLAX_X1 " " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-    "{s}" D_SOLAX_X1 " " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-    "{s}" D_SOLAX_X1 " " D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"
-    "{s}" D_SOLAX_X1 " " D_INVERTER_POWER "{m}%s " D_UNIT_WATT "{e}"
     "{s}" D_SOLAX_X1 " " D_SOLAR_POWER "{m}%s " D_UNIT_WATT "{e}"
-    "{s}" D_SOLAX_X1 " " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
-    "{s}" D_SOLAX_X1 " " D_ENERGY_TODAY "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
     "{s}" D_SOLAX_X1 " " D_PV1_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
     "{s}" D_SOLAX_X1 " " D_PV1_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
     "{s}" D_SOLAX_X1 " " D_PV1_POWER "{m}%s " D_UNIT_WATT "{e}";
@@ -451,20 +445,8 @@ const char HTTP_SNS_solaxX1_DATA3[] PROGMEM =
 
 void solaxX1Show(bool json)
 {
-  char voltage[33];
-  dtostrfd(solaxX1.ac_voltage, Settings.flag2.voltage_resolution, voltage);
-  char current[33];
-  dtostrfd(solaxX1.ac_current, Settings.flag2.current_resolution, current);
-  char inverter_power[33];
-  dtostrfd(solaxX1.power, Settings.flag2.wattage_resolution, inverter_power);
   char solar_power[33];
   dtostrfd(solaxX1.dc1_power + solaxX1.dc2_power, Settings.flag2.wattage_resolution, solar_power);
-  char frequency[33];
-  dtostrfd(solaxX1.frequency, Settings.flag2.frequency_resolution, frequency);
-  char energy_total[33];
-  dtostrfd(solaxX1.energy_total, Settings.flag2.energy_resolution, energy_total);
-  char energy_today[33];
-  dtostrfd(solaxX1.energy_today, Settings.flag2.energy_resolution, energy_today);
   char pv1_voltage[33];
   dtostrfd(solaxX1.dc1_voltage, Settings.flag2.voltage_resolution, pv1_voltage);
   char pv1_current[33];
@@ -488,38 +470,20 @@ void solaxX1Show(bool json)
 
   if (json)
   {
-    ResponseAppend_P(PSTR(",\"" D_RSLT_ENERGY "\":{\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_ACTIVE_POWERUSAGE "\":%s,\""
-                                D_JSON_SOLAR_POWER "\":%s,\"" D_JSON_FREQUENCY "\":%s,\"" D_JSON_TOTAL "\":%s,\"" D_JSON_TODAY "\":%s,\""
-                                D_JSON_PV1_VOLTAGE "\":%s,\"" D_JSON_PV1_CURRENT "\":%s,\"" D_JSON_PV1_POWER "\":%s"),
-                                voltage, current, inverter_power,
-                                solar_power, frequency, energy_total, energy_today,
-                                pv1_voltage, pv1_current, pv1_power);
+    ResponseAppend_P(PSTR(",\"" D_JSON_SOLAR_POWER "\":%s,\"" D_JSON_PV1_VOLTAGE "\":%s,\"" D_JSON_PV1_CURRENT "\":%s,\"" D_JSON_PV1_POWER "\":%s"),
+                                solar_power, pv1_voltage, pv1_current, pv1_power);
 #ifdef SOLAXX1_PV2
     ResponseAppend_P(PSTR(",\"" D_JSON_PV2_VOLTAGE "\":%s,\"" D_JSON_PV2_CURRENT "\":%s,\"" D_JSON_PV2_POWER "\":%s"),
                                 pv2_voltage, pv2_current, pv2_power);
 #endif
-    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d}"),
+    ResponseAppend_P(PSTR(",\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_RUNTIME "\":%s,\"" D_JSON_STATUS "\":\"%s\",\"" D_JSON_ERROR "\":%d"),
                                 temperature, runtime, status, solaxX1.errorCode);
 
-
-#ifdef USE_DOMOTICZ
-    if (0 == tele_period)
-    {
-      char energy_total_chr[33];
-      dtostrfd(solaxX1.energy_total * 1000, 1, energy_total_chr);
-
-      DomoticzSensor(DZ_VOLTAGE, voltage);
-      DomoticzSensor(DZ_CURRENT, current);
-      // Only do the updates if the values are greater than 0, to avoid wrong data representation in domoticz
-      if (solaxX1.temperature  > 0) DomoticzSensor(DZ_TEMP, temperature);
-      if (solaxX1.energy_total > 0) DomoticzSensorPowerEnergy((int)solaxX1.power, energy_total_chr);
-    }
-#endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
   }
   else
   {
-    WSContentSend_PD(HTTP_SNS_solaxX1_DATA1, voltage, current, frequency, inverter_power, solar_power, energy_total, energy_today, pv1_voltage, pv1_current, pv1_power);
+    WSContentSend_PD(HTTP_SNS_solaxX1_DATA1, solar_power, pv1_voltage, pv1_current, pv1_power);
 #ifdef SOLAXX1_PV2
     WSContentSend_PD(HTTP_SNS_solaxX1_DATA2, pv2_voltage, pv2_current, pv2_power);
 #endif
@@ -535,31 +499,32 @@ void solaxX1Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-bool Xsns49(uint8_t function)
+bool Xnrg12(uint8_t function)
 {
   bool result = false;
 
-  if (solaxX1_Init)
+  switch (function)
   {
-    switch (function)
-    {
-    case FUNC_INIT:
-      solaxX1Init();
-      break;
-    case FUNC_EVERY_SECOND:
-      if (uptime > 4) { solaxX1EverySecond(); }
-      break;
-    case FUNC_JSON_APPEND:
-      solaxX1Show(1);
-      break;
+  case FUNC_EVERY_250_MSECOND:
+    if (uptime > 4) { solaxX1250MSecond(); }
+    break;
+  case FUNC_INIT:
+    solaxX1SnsInit();
+    break;
+  case FUNC_PRE_INIT:
+    solaxX1DrvInit();
+    break;
+  case FUNC_JSON_APPEND:
+    solaxX1Show(1);
+    break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      solaxX1Show(0);
-      break;
+  case FUNC_WEB_SENSOR:
+    solaxX1Show(0);
+    break;
 #endif  // USE_WEBSERVER
     }
-  }
   return result;
 }
 
-#endif  // USE_SOLAX_X1
+#endif  // USE_SOLAX_X1_NRG
+#endif  // USE_ENERGY_SENSOR
