@@ -778,10 +778,13 @@ void PerformEverySecond(void)
     ntp_synced_message = false;
   }
 
+  if (POWER_CYCLE_TIME == uptime) {
+    UpdateQuickPowerCycle(false);
+  }
+
   if (BOOT_LOOP_TIME == uptime) {
     RtcReboot.fast_reboot_count = 0;
     RtcRebootSave();
-    UpdateQuickPowerCycle(false);
 
     Settings.bootcount++;              // Moved to here to stop flash writes during start-up
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
