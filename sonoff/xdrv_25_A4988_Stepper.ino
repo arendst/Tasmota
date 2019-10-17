@@ -19,8 +19,13 @@
 */
 
 #ifdef USE_A4988_STEPPER
-#include <A4988_Stepper.h>
+/*********************************************************************************************\
+ * A4988 Stepper motor driver circuit
+\*********************************************************************************************/
+
 #define XDRV_25                    25
+
+#include <A4988_Stepper.h>
 
 short A4988_dir_pin = pin[GPIO_MAX];
 short A4988_stp_pin = pin[GPIO_MAX];
@@ -60,7 +65,7 @@ void A4988Init(void)
 const char kA4988Commands[] PROGMEM = "Motor|" // prefix
   "Move|Rotate|Turn|MIS|SPR|RPM";
 
-void (* const A4988Command[])(void) PROGMEM = { 
+void (* const A4988Command[])(void) PROGMEM = {
   &CmndDoMove,&CmndDoRotate,&CmndDoTurn,&CmndSetMIS,&CmndSetSPR,&CmndSetRPM};
 
 void CmndDoMove(void) {
@@ -130,4 +135,4 @@ bool Xdrv25(uint8_t function)
   return result;
 }
 
-#endif
+#endif  // USE_A4988_STEPPER
