@@ -131,8 +131,7 @@ const char HASS_DISCOVER_SENSOR_ILLUMINANCE[] PROGMEM =
   "\"dev_cla\":\"illuminance\"";                       // illuminance
 
 const char HASS_DISCOVER_SENSOR_ANY[] PROGMEM =
-  ",\"unit_of_meas\":\" \","                          // " " As unit of measurement to get a value graph in Hass
-  "\"val_tpl\":\"{{value_json['%s'].%s}}\"";          // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
+  ",\"val_tpl\":\"{{value_json['%s'].%s}}\"";          // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
 
 const char HASS_DISCOVER_SENSOR_HASS_STATUS[] PROGMEM =
   ",\"json_attributes_topic\":\"%s\","
@@ -405,28 +404,41 @@ void HAssAnnounceButtons(void)
   }
 }
 
-void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
+void HAssAnnounceSensor(const char* sensorname, const char* subsensortype) 
 {
   char stopic[TOPSZ];
   char stemp1[TOPSZ];
   char stemp2[TOPSZ];
   char unique_id[30];
+  bool is_sensor = true;  
 
   // Announce sensor, special handling of temperature and humidity sensors
   mqtt_data[0] = '\0';  // Clear retained message
 
   // Clear or Set topic
   snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_%s_%s"), ESP.getChipId(), sensorname, subsensortype);
-  snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
-
+  if (!strncmp_P(sensorname, "MPR121", 6)) {    // Add more exceptions here. Perhaps MCP230XX?
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/binary_sensor/%s/config"), unique_id);
+    is_sensor = false;
+  } else {
+    snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
+  }
   if (Settings.flag.hass_discovery) {
     char name[33+42]; // friendlyname(33) + " " + sensorname(20?) + " " + sensortype(20?)
     char prefix[TOPSZ];
     char *state_topic = stemp1;
     char *availability_topic = stemp2;
 
+    // sensor or binary_sensor? //
+    if (!is_sensor) {
+      snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/binary_sensor/%s/config"), unique_id);
+      GetTopic_P(state_topic, STAT, mqtt_topic, PSTR(D_RSLT_RESULT));
+    } else {
+      snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/sensor/%s/config"), unique_id);
+      GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_SENSOR));
+    }
+
     snprintf_P(name, sizeof(name), PSTR("%s %s %s"), Settings.friendlyname[0], sensorname, subsensortype);
-    GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_SENSOR));
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
     FindPrefix(state_topic, availability_topic, prefix);
     Shorten(&state_topic, prefix);
@@ -436,9 +448,6 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
     TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
     if (!strcmp_P(subsensortype, PSTR(D_JSON_TEMPERATURE))) {
-      if (!strncmp_P(sensorname, "DS18B20-", 8)){
-        TryResponseAppend_P(HASS_DISCOVER_DS18X20_MULTI, state_topic, sensorname); // Add 'Id' as additional information
-      }
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_TEMP, TempUnit(), sensorname);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_HUMIDITY))) {
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_HUM, sensorname);
@@ -457,7 +466,10 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_ILLUMINANCE))){
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_ILLUMINANCE, sensorname, subsensortype);
     } else {
-      TryResponseAppend_P(HASS_DISCOVER_SENSOR_ANY, sensorname, subsensortype);
+        if (is_sensor){      
+        TryResponseAppend_P(PSTR(",\"unit_of_meas\":\" \""));   // " " As unit of measurement to get a value graph (not available for binary sensors) 
+      } 
+      TryResponseAppend_P(HASS_DISCOVER_SENSOR_ANY, sensorname, subsensortype);     
     }
     TryResponseAppend_P(PSTR("}"));
   }
@@ -489,14 +501,14 @@ void HAssAnnounceSensors(void)
       StaticJsonBuffer<500> jsonBuffer;
       JsonObject& root = jsonBuffer.parseObject(sensordata);
       if (!root.success()) {
-        AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: failed to parse '%s'"), sensordata);
+        AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: jsonBuffer failed to parse '%s'"), sensordata);
         continue;
       }
       for (auto sensor : root) {
         const char* sensorname = sensor.key;
         JsonObject& sensors = sensor.value.as<JsonObject>();
         if (!sensors.success()) {
-          AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: failed to parse '%s'"), sensordata);
+          AddLog_P2(LOG_LEVEL_ERROR, PSTR("HASS: JsonObject failed to parse '%s'"), sensordata);
           continue;
         }
         for (auto subsensor : sensors) {
