@@ -646,6 +646,14 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_DDS2382_TX,     // DDS2382 Serial interface
   GPIO_DDS2382_RX,     // DDS2382 Serial interface
 #endif
+#ifdef USE_DDSU666
+  GPIO_DDSU666_TX,     // DDSU666 Serial interface
+  GPIO_DDSU666_RX,     // DDSU666 Serial interface
+#endif  // USE_DDSU666
+#ifdef USE_SOLAX_X1
+  GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
+  GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
+#endif // USE_SOLAX_X1
 #endif  // USE_ENERGY_SENSOR
 #ifndef USE_SDM120_2
 #ifdef USE_SDM120
@@ -659,14 +667,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SDM630_RX,      // SDM630 Serial interface
 #endif
 #endif  // USE_SDM630_2
-#ifdef USE_SOLAX_X1
-  GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
-  GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
-#endif
-#ifdef USE_DDSU666
-  GPIO_DDSU666_TX,     // DDSU666 Serial interface
-  GPIO_DDSU666_RX,     // DDSU666 Serial interface
-#endif  // USE_DDSU666
 
 #ifdef USE_SERIAL_BRIDGE
   GPIO_SBR_TX,         // Serial Bridge Serial interface
