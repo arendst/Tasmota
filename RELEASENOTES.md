@@ -10,13 +10,11 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 3. Migrate to **Sonoff-Tasmota 5.14**
 4. Migrate to **Sonoff-Tasmota 6.x**
 
+## Change of supported Core versions
+This release will be supported from ESP8266/Arduino library Core version **pre-2.6.0** due to reported security and stability issues on previous Core version. Although it might still compile on previous Core versions all support will be removed starting from the next Release.
+
 ## Support of TLS
-TLS support for core 2.3.0 is removed.
-
-TLS is supported on core 2.4.2 and up. To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. See full documentation on https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
-
-## Core version 2.3.0 vs 2.4.2 vs 2.5.2
-This release is based on ESP8266/Arduino library core 2.3.0 as some people encountered wifi related issues on core 2.4.2 and 2.5.2. For others core 2.4.2 or 2.5.2 is working just fine. All version are available from http://thehackbox.org/tasmota/release/
+To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. See full documentation on https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
 
 ## Change in default initial configuration tool
 Firmware binary **sonoff-classic.bin** supports **WifiManager, Wps and SmartConfig** for initial configuration. The default tool is **Wps**.
@@ -98,9 +96,10 @@ Module            | Description
 68 WAGA CHCZ02MB  | WAGA life CHCZ02MB Wifi Smart Switch with Energy Monitoring
 69 SYF05          | Sunyesmart SYF05 RGBWW Wifi Led Bulb
 70 Sonoff L1      | Sonoff L1 light strip
+71 Sonoff iFan03  | Sonoff iFan03 Wifi Smart Ceiling Fan with Light
 
 ## Provided Binary Downloads
-The following binary downloads have been compiled with ESP8266/Arduino library core version **2.3.0**.
+The following binary downloads have been compiled with ESP8266/Arduino library core version **pre-2.6.0**.
 
 - **sonoff.bin** = The Sonoff version without Wps and SmartConfig configuration but adds more sensors. **RECOMMENDED RELEASE BINARY**
 - **sonoff-basic.bin** = The Basic version without Wps and SmartConfig configuration and most sensors.
@@ -110,10 +109,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - **sonoff-sensors.bin** = The Sensors version without Wps and SmartConfig configuration but adds even more useful sensors.
 - **sonoff-display.bin** = The Display version without Wps and SmartConfig configuration and Energy Monitoring but adds display support.
 - **sonoff-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
-
-Core version **2.4.2** binaries can be found at http://thehackbox.org/tasmota/release/020402/
-
-Core version **2.5.2** binaries can be found at http://thehackbox.org/tasmota/release/020502/
 
 ## Available Features and Sensors
 
@@ -142,12 +137,47 @@ Core version **2.5.2** binaries can be found at http://thehackbox.org/tasmota/re
 | USE_SCRIPT            | - | - | - | - | - | - | - |
 | USE_EXPRESSION        | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
+| ROTARY_V1             | - | - | - | - | - | - | - |
+| USE_SONOFF_RF         | - | - | - | x | x | x | - |
+| USE_RF_FLASH          | - | - | - | x | x | x | - |
+| USE_SONOFF_SC         | - | - | - | x | - | x | - |
+| USE_TUYA_MCU          | - | x | - | x | x | x | x |
+| USE_ARMTRONIX_DIMMERS | - | - | - | x | x | - | - |
+| USE_PS_16_DZ          | - | - | - | x | x | x | - |
+| USE_SONOFF_IFAN       | - | - | - | x | x | x | - |
+| USE_BUZZER            | - | - | - | x | x | x | - |
+| USE_ARILUX_RF         | - | - | - | x | x | x | - |
+| USE_SHUTTER           | - | - | - | - | - | - | - |
+| USE_DEEPSLEEP         | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |
+| Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
+| USE_LIGHT             | - | x | x | x | x | x | x |
+| USE_WS2812            | - | - | x | x | x | x | x |
+| USE_WS2812_DMA        | - | - | - | - | - | - | - |
+| USE_MY92X1            | - | - | - | x | x | x | x |
+| USE_SM16716           | - | - | - | x | x | x | x |
+| USE_SM2135            | - | - | - | x | x | x | x |
+| USE_SONOFF_L1         | - | - | - | x | x | x | x |
+|                       |   |   |   |   |   |   |   |
+| USE_ENERGY_SENSOR     | - | x | x | x | x | x | - |
+| USE_PZEM004T          | - | - | - | x | x | x | - |
+| USE_PZEM_AC           | - | - | - | x | x | x | - |
+| USE_PZEM_DC           | - | - | - | x | x | x | - |
+| USE_MCP39F501         | - | x | - | x | x | x | - |
+| USE_SDM120_2          | - | - | - | - | - | x | - |
+| USE_SDM630_2          | - | - | - | - | - | x | - |
+| USE_DDS2382           | - | - | - | - | - | x | - |
+| USE_DDSU666           | - | - | - | - | - | x | - |
+| USE_SDM120            | - | - | - | - | - | - | - |
+| USE_SDM630            | - | - | - | - | - | - | - |
+| USE_SOLAX_X1          | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |
 | USE_ADC_VCC           | x | x | x | - | - | - | - |
 | USE_COUNTER           | - | - | - | x | x | x | x |
-| USE_DS18B20           | - | - | - | - | - | - | - | Single sensor
-| USE_DS18x20           | - | - | x | x | x | x | x | Multiple sensors
-| USE_DS18x20_LEGACY    | - | - | - | - | - | - | - | Multiple sensors
+| USE_DS18x20           | - | - | x | x | x | x | x |
 | USE_DHT               | - | - | x | x | x | x | x |
+| USE_MAX31855          | - | - | - | - | - | x | - |
+| USE_MAX31865          | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
 | USE_I2C               | - | - | - | x | x | x | x |
@@ -160,6 +190,7 @@ Core version **2.5.2** binaries can be found at http://thehackbox.org/tasmota/re
 | USE_ADS1115           | - | - | - | - | - | x | - |
 | USE_ADS1115_I2CDEV    | - | - | - | - | - | - | - |
 | USE_INA219            | - | - | - | - | - | x | - |
+| USE_INA226            | - | - | - | - | - | - | - |
 | USE_SHT3X             | - | - | - | x | x | x | x |
 | USE_TSL2561           | - | - | - | - | - | x | - |
 | USE_MGS               | - | - | - | - | - | x | - |
@@ -180,6 +211,9 @@ Core version **2.5.2** binaries can be found at http://thehackbox.org/tasmota/re
 | USE_ADE7953           | - | - | - | x | x | x | x |
 | USE_VL53L0X           | - | - | - | - | - | - | - |
 | USE_MLX90614          | - | - | - | - | - | - | - |
+| USE_CHIRP             | - | - | - | - | - | - | - |
+| USE_PAJ7620           | - | - | - | - | - | - | - |
+| USE_PCF8574           | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
@@ -187,41 +221,35 @@ Core version **2.5.2** binaries can be found at http://thehackbox.org/tasmota/re
 | USE_SENSEAIR          | - | - | - | x | x | x | x |
 | USE_PMS5003           | - | - | - | x | x | x | x |
 | USE_NOVA_SDS          | - | - | - | x | x | x | x |
-| USE_ENERGY_SENSOR     | - | x | x | x | x | x | - |
-| USE_PZEM004T          | - | - | - | x | x | x | - |
-| USE_PZEM_AC           | - | - | - | x | x | x | - |
-| USE_PZEM_DC           | - | - | - | x | x | x | - |
-| USE_MCP39F501         | - | x | - | x | x | x | - |
 | USE_SERIAL_BRIDGE     | - | - | - | x | x | x | x |
-| USE_SDM120            | - | - | - | - | - | x | - |
-| USE_SDM630            | - | - | - | - | - | x | - |
 | USE_MP3_PLAYER        | - | - | - | - | - | x | - |
-| USE_TUYA_DIMMER       | - | x | - | x | x | x | x |
-| USE_ARMTRONIX_DIMMERS | - | x | - | x | x | x | x |
-| USE_PS_16_DZ          | - | x | - | x | x | x | x |
 | USE_AZ7798            | - | - | - | - | - | - | - |
 | USE_PN532_HSU         | - | - | - | - | - | x | - |
+| USE_ZIGBEE            | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |
 | USE_IR_REMOTE         | - | - | - | x | x | x | x |
 | USE_IR_HVAC           | - | - | - | - | - | x | - |
 | USE_IR_RECEIVE        | - | - | - | x | x | x | x |
-| USE_WS2812            | - | - | x | x | x | x | x |
-| USE_WS2812_DMA        | - | - | - | - | - | - | - |
-| USE_ARILUX_RF         | - | - | - | x | x | x | - |
+|                       |   |   |   |   |   |   |   |
 | USE_SR04              | - | - | - | x | x | x | x |
 | USE_TM1638            | - | - | - | - | - | x | - |
 | USE_HX711             | - | - | - | x | x | x | x |
-| USE_RF_FLASH          | - | - | - | x | x | x | - |
-| USE_TX20_WIND_SENSOR  | - | - | - | x | x | x | x |
-| USE_RC_SWITCH         | - | - | - | x | x | x | x |
+| USE_TX20_WIND_SENSOR  | - | - | - | - | - | x | - |
+| USE_RC_SWITCH         | - | - | - | - | - | x | - |
 | USE_RF_SENSOR         | - | - | - | - | - | x | - | AlectoV2 only
-| USE_SM16716           | - | x | x | x | x | x | x |
 | USE_HRE               | - | - | - | - | - | x | - |
+| USE_A4988_STEPPER     | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |
 | USE_DISPLAY           | - | - | - | - | - | - | x |
 | USE_DISPLAY_LCD       | - | - | - | - | - | - | x |
 | USE_DISPLAY_SSD1306   | - | - | - | - | - | - | x |
 | USE_DISPLAY_MATRIX    | - | - | - | - | - | - | x |
 | USE_DISPLAY_ILI9341   | - | - | - | - | - | - | x |
 | USE_DISPLAY_EPAPER_29 | - | - | - | - | - | - | x | Disabled for core 2.3.0
+| USE_DISPLAY_EPAPER_42 | - | - | - | - | - | - | - |
+| USE_DISPLAY_ILI9488   | - | - | - | - | - | - | - |
+| USE_DISPLAY_SSD1351   | - | - | - | - | - | - | - |
+| USE_DISPLAY_RA8876    | - | - | - | - | - | - | - |
 
 ## Changelog
 Version 6.6.0 20190707
