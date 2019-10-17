@@ -763,7 +763,7 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   SONOFF_T13,
   SONOFF_LED,          // Sonoff Light Devices
   SONOFF_BN,
-#ifdef USE_PS_16_DZ
+#ifdef USE_SONOFF_L1
   SONOFF_L1,
 #endif
   SONOFF_B1,           // Sonoff Light Bulbs

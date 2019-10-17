@@ -86,6 +86,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_DISCOVERY                          // Disable mDNS (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
 
 // -- Optional modules -------------------------
+//#define ROTARY_V1                             // Add support for MI Desk Lamp
 #define USE_SONOFF_IFAN                       // Add support for Sonoff iFan02 and iFan03 (+2k code)
 #define USE_TUYA_MCU                          // Add support for Tuya Serial MCU
 #ifndef TUYA_DIMMER_ID
@@ -93,7 +94,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif
 //#define USE_ARMTRONIX_DIMMERS                 // Add support for Armtronix Dimmers (+1k4 code)
 #define USE_PS_16_DZ                          // Add support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-//#define ROTARY_V1                             // Add support for MI Desk Lamp
 
 #define USE_COUNTER                           // Enable counters
 #undef USE_ADC_VCC                            // Add Analog input on selected devices
@@ -150,8 +150,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
   //#define PMS_MODEL_PMS3003                      // Enable support of PMS3003 instead of PMS5003/PMS7003 (needs the USE_PMS5003 above)
 #define USE_NOVA_SDS                          // Add support for SDS011 and SDS021 particle concentration sensor (+0k7 code)
 #define USE_SERIAL_BRIDGE                     // Add support for software Serial Bridge (+0k8 code)
-//#define USE_SDM120                            // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
-//#define USE_SDM630                            // Add support for Eastron SDM630-Modbus energy meter (+2k code)
 #define USE_MP3_PLAYER                        // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10             // Set the startup volume on init, the range can be 0..30(max)
 //#define USE_AZ7798                            // Add support for AZ-Instrument 7798 CO2 datalogger
@@ -167,6 +165,8 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_SDM630_2                          // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #define USE_DDS2382                           // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #define USE_DDSU666                           // Add support for Chint DDSU666 Modbus energy monitor (+0k6 code)
+//#define USE_SDM120                            // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
+//#define USE_SDM630                            // Add support for Eastron SDM630-Modbus energy meter (+2k code)
 
 #define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #define USE_MAX31855                          // Add support for MAX31855 K-Type thermocouple sensor using softSPI
@@ -419,7 +419,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 //#define USE_DHT                               // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                           // Disable MAX31855 K-Type thermocouple sensor using softSPI
 #undef USE_WS2812                             // Disable WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
-#undef USE_ARILUX_RF                          // Disable support for Arilux RF remote controller
 #undef USE_SR04                               // Disable support for for HC-SR04 ultrasonic devices
 #undef USE_TM1638                             // Disable support for TM1638 switches copying Switch1 .. Switch8
 #undef USE_HX711                              // Disable support for HX711 load cell
