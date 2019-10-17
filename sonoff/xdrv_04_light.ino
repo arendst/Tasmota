@@ -1679,15 +1679,19 @@ void LightAnimate(void)
         }
       }
 
+      // Some devices need scaled RGB like Sonoff L1
+      uint8_t scale_col[3];
+      uint32_t max = (cur_col[0] > cur_col[1] && cur_col[0] > cur_col[2]) ? cur_col[0] : (cur_col[1] > cur_col[2]) ? cur_col[1] : cur_col[2];   // 0..255
+      for (uint32_t i = 0; i < 3; i++) {
+        scale_col[i] = (0 == max) ? 255 : (255 > max) ? changeUIntScale(cur_col[i], 0, max, 0, 255) : cur_col[i];
+      }
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: R%d(%d) G%d(%d) B%d(%d), C%d W%d, D%d"),
+        cur_col[0], scale_col[0], cur_col[1], scale_col[1], cur_col[2], scale_col[2], cur_col[3], cur_col[4], light_state.getDimmer());
+
       char *tmp_data = XdrvMailbox.data;
-      uint16_t tmp_data_len = XdrvMailbox.data_len;
-
+      char *tmp_topic = XdrvMailbox.topic;
       XdrvMailbox.data = (char*)cur_col;
-      XdrvMailbox.data_len = sizeof(cur_col);
-
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "R%d G%d B%d, C%d W%d"),
-        cur_col[0], cur_col[1], cur_col[2], cur_col[3], cur_col[4]);
-
+      XdrvMailbox.topic = (char*)scale_col;
       if (XlgtCall(FUNC_SET_CHANNELS)) {
         // Serviced
       }
@@ -1695,7 +1699,7 @@ void LightAnimate(void)
         // Serviced
       }
       XdrvMailbox.data = tmp_data;
-      XdrvMailbox.data_len = tmp_data_len;
+      XdrvMailbox.topic = tmp_topic;
     }
   }
 }
