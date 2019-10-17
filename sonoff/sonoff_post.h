@@ -189,10 +189,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_SDM630_2                             // Add support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #define USE_DDS2382                              // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #define USE_DDSU666                              // Add support for Chint DDSU666 Modbus energy monitor (+0k6 code)
-//#define USE_SOLAX_X1_NRG                         // Add support for Solax X1 series Modbus log info (+3k1 code)
+//#define USE_SOLAX_X1                             // Add support for Solax X1 series Modbus log info (+3k1 code)
 //#define USE_SDM120                               // Add support for Eastron SDM120-Modbus energy meter (+1k7 code)
 //#define USE_SDM630                               // Add support for Eastron SDM630-Modbus energy meter (+2k code)
-//#define USE_SOLAX_X1                             // Add support for Solax X1 series Modbus log info (+3k6 code)
 
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
@@ -295,10 +294,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_SDM630_2                              // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
-#undef USE_SOLAX_X1_NRG                          // Disable support for Solax X1 series Modbus log info (+3k1 code)
+#undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k1 code)
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy meter
-#undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k6 code)
 
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -378,10 +376,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
   #undef USE_SDM630_2                            // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #undef USE_DDS2382                             // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #undef USE_DDSU666                             // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
-  #undef USE_SOLAX_X1_NRG                        // Disable support for Solax X1 series Modbus log info (+3k1 code)
+  #undef USE_SOLAX_X1                            // Disable support for Solax X1 series Modbus log info (+3k1 code)
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy meter
-#undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k6 code)
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
   #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
@@ -460,10 +457,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
   #undef USE_SDM630_2                            // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
   #undef USE_DDS2382                             // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #undef USE_DDSU666                             // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
-  #undef USE_SOLAX_X1_NRG                        // Disable support for Solax X1 series Modbus log info (+3k1 code)
+  #undef USE_SOLAX_X1                            // Disable support for Solax X1 series Modbus log info (+3k1 code)
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy meter
-#undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k6 code)
 
 #undef USE_DS18x20                               // Disable support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
@@ -576,10 +572,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_SDM630_2                              // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
-#undef USE_SOLAX_X1_NRG                          // Disable support for Solax X1 series Modbus log info (+3k1 code)
+#undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k1 code)
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy meter
-#undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+4k1 code)
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -679,10 +674,9 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_SDM630_2                              // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
-#undef USE_SOLAX_X1_NRG                          // Disable support for Solax X1 series Modbus log info (+3k1 code)
+#undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k1 code)
 #undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
 #undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy meter
-#undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k6 code)
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
