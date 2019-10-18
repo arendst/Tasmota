@@ -838,8 +838,8 @@ void PerformEverySecond(void)
     }
   }
 
-  XdrvCall(FUNC_EVERY_SECOND);
-  XsnsCall(FUNC_EVERY_SECOND);
+  //XdrvCall(FUNC_EVERY_SECOND);
+  //XsnsCall(FUNC_EVERY_SECOND);
 }
 
 /*********************************************************************************************\
@@ -1682,6 +1682,10 @@ void loop(void)
     Every250mSeconds();
     XdrvCall(FUNC_EVERY_250_MSECOND);
     XsnsCall(FUNC_EVERY_250_MSECOND);
+    if (!state_250mS) {
+      XdrvCall(FUNC_EVERY_SECOND);
+      XsnsCall(FUNC_EVERY_SECOND);
+    }
   }
 
   if (!serial_local) { SerialInput(); }
