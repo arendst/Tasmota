@@ -164,12 +164,10 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_PZEM_AC           | - | - | - | x | x | x | - |
 | USE_PZEM_DC           | - | - | - | x | x | x | - |
 | USE_MCP39F501         | - | x | - | x | x | x | - |
-| USE_SDM120_2          | - | - | - | - | - | x | - |
-| USE_SDM630_2          | - | - | - | - | - | x | - |
+| USE_SDM120            | - | - | - | - | - | x | - |
+| USE_SDM630            | - | - | - | - | - | x | - |
 | USE_DDS2382           | - | - | - | - | - | x | - |
 | USE_DDSU666           | - | - | - | - | - | x | - |
-| USE_SDM120            | - | - | - | - | - | - | - |
-| USE_SDM630            | - | - | - | - | - | - | - |
 | USE_SOLAX_X1          | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | USE_ADC_VCC           | x | x | x | - | - | - | - |
