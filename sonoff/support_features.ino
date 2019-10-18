@@ -472,9 +472,11 @@ void GetFeatures(void)
   feature5 |= 0x00002000;  // xdrv_06_snfbridge.ino
 #endif
 #ifdef USE_SONOFF_L1
-  feature5 |= 0x00004000;
+  feature5 |= 0x00004000;  // xlgt_05_sonoff_l1.ino
 #endif
-//  feature5 |= 0x00008000;
+#ifdef USE_EXS_DIMMER
+  feature5 |= 0x00008000;  // xdrv_30_exs_dimmer.ino
+#endif
 
 //  feature5 |= 0x00010000;
 //  feature5 |= 0x00020000;

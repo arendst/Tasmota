@@ -2,6 +2,7 @@
  * 6.6.0.20 20191018
  * Add command SetOption65 0/1 to disable (1) fast power cycle detection fixing unwanted brownout trigger
  * Add absolute PowerDelta using command PowerDelta 101..32000 where 101 = 101-100 = 1W, 202 = 202-100 = 102W (#5901)
+ * Add support for EX-Store WiFi Dimmer V4 (#5856)
  *
  * 6.6.0.19 20191018
  * Replace obsolete xsns_23_sdm120 with xnrg_08_sdm120 and consolidate define USE_SDM120

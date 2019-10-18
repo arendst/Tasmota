@@ -101,6 +101,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
 //#define USE_SHUTTER                              // Add Shutter support for up to 4 shutter with different motortypes (+6k code)
 //#define USE_DEEPSLEEP                            // Add support for deepsleep (+1k code)
+//#define USE_EXS_DIMMER                         // Add support for EX-Store WiFi Dimmer
 
 // -- Optional light modules ----------------------
 #define USE_LIGHT                                // Add Dimmer/Light support
@@ -256,6 +257,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_ARILUX_RF                             // Disable support for Arilux RF remote controller
 #undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
 #undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
+#undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
 
 // -- Optional light modules ----------------------
 //#undef USE_LIGHT                                 // Disable Dimmer/Light support
@@ -364,6 +366,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_ARILUX_RF                             // Disable support for Arilux RF remote controller
 #undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
 #undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
+#undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors (-14k code)
   #undef USE_PZEM004T                            // Disable PZEM004T energy sensor
@@ -435,6 +438,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_ARILUX_RF                             // Disable support for Arilux RF remote controller
 #undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
 #undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
+#undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
 
 // -- Optional light modules ----------------------
 //#undef USE_LIGHT                                 // Also disable all Dimmer/Light support
@@ -532,6 +536,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_ARILUX_RF                             // Disable support for Arilux RF remote controller
 #undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
 #undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
+#undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
 
 // -- Optional light modules ----------------------
 //#undef USE_LIGHT                                 // Also disable all Dimmer/Light support
@@ -631,6 +636,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_ARILUX_RF                             // Disable support for Arilux RF remote controller
 #undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
 #undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
+#undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
 
 // -- Optional light modules ----------------------
 #undef USE_LIGHT                                 // Disable support for lights
