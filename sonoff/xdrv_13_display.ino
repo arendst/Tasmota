@@ -111,6 +111,7 @@ uint8_t dsp_on;
 char **disp_log_buffer;
 char **disp_screen_buffer;
 char disp_temp[2];    // C or F
+char disp_pres[5];   // hPa or mmHg
 
 uint8_t disp_log_buffer_cols = 0;
 uint8_t disp_log_buffer_idx = 0;
@@ -995,6 +996,7 @@ void DisplayLogBufferInit(void)
     disp_refresh = Settings.display_refresh;
 
     snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%c"), TempUnit());
+    snprintf_P(disp_pres, sizeof(disp_pres), PressureUnit().c_str());
 
     DisplayReAllocLogBuffer();
 
@@ -1079,7 +1081,7 @@ void DisplayJsonValue(const char* topic, const char* device, const char* mkey, c
     snprintf_P(svalue, sizeof(svalue), PSTR("%s%%"), value);
   }
   else if ((quantity_code >= JSON_PRESSURE) && (quantity_code <= JSON_PRESSUREATSEALEVEL)) {
-    snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_PRESSURE), value);
+    snprintf_P(svalue, sizeof(svalue), PSTR("%s%s"), value, disp_pres);
   }
   else if (JSON_ILLUMINANCE == quantity_code) {
     snprintf_P(svalue, sizeof(svalue), PSTR("%s" D_UNIT_LUX), value);
@@ -1130,7 +1132,6 @@ void DisplayAnalyzeJson(char *topic, char *json)
 // tele/wemos5/SENSOR {"Time":"2017-09-20T11:53:53","SHT1X":{"Temperature":20.1,"Humidity":58.9},"HTU21":{"Temperature":20.7,"Humidity":58.5},"BMP280":{"Temperature":21.6,"Pressure":1020.3},"TempUnit":"C"}
 // tele/th1/SENSOR    {"Time":"2017-09-20T11:54:48","DS18B20":{"Temperature":49.7},"TempUnit":"C"}
 
-  const char *tempunit;
 
 //  char jsonStr[MESSZ];
 //  strlcpy(jsonStr, json, sizeof(jsonStr));  // Save original before destruction by JsonObject
@@ -1140,10 +1141,14 @@ void DisplayAnalyzeJson(char *topic, char *json)
   JsonObject &root = jsonBuf.parseObject(jsonStr);
   if (root.success()) {
 
-    tempunit = root[D_JSON_TEMPERATURE_UNIT];
-    if (tempunit) {
-      snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%s"), tempunit);
-//      AddLog_P2(LOG_LEVEL_DEBUG, disp_temp);
+    const char *unit;
+    unit = root[D_JSON_TEMPERATURE_UNIT];
+    if (unit) {
+      snprintf_P(disp_temp, sizeof(disp_temp), PSTR("%s"), unit);  // C or F
+    }
+    unit = root[D_JSON_PRESSURE_UNIT];
+    if (unit) {
+      snprintf_P(disp_pres, sizeof(disp_pres), PSTR("%s"), unit);  // hPa or mmHg
     }
 
     for (JsonObject::iterator it = root.begin(); it != root.end(); ++it) {
