@@ -837,9 +837,6 @@ void PerformEverySecond(void)
       XdrvCall(FUNC_AFTER_TELEPERIOD);
     }
   }
-
-  //XdrvCall(FUNC_EVERY_SECOND);
-  //XsnsCall(FUNC_EVERY_SECOND);
 }
 
 /*********************************************************************************************\
@@ -937,8 +934,6 @@ void Every250mSeconds(void)
 
   switch (state_250mS) {
   case 0:                                                 // Every x.0 second
-    PerformEverySecond();
-
     if (ota_state_flag && BACKLOG_EMPTY) {
       ota_state_flag--;
       if (2 == ota_state_flag) {
@@ -1682,10 +1677,12 @@ void loop(void)
     Every250mSeconds();
     XdrvCall(FUNC_EVERY_250_MSECOND);
     XsnsCall(FUNC_EVERY_250_MSECOND);
-    if (!state_250mS) {
-      XdrvCall(FUNC_EVERY_SECOND);
-      XsnsCall(FUNC_EVERY_SECOND);
-    }
+  }
+  if (TimeReached(state_second)) {
+    SetNextTimeInterval(state_second, 1000);
+    PerformEverySecond();
+    XdrvCall(FUNC_EVERY_SECOND);
+    XsnsCall(FUNC_EVERY_SECOND);
   }
 
   if (!serial_local) { SerialInput(); }
