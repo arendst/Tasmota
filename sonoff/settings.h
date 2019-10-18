@@ -348,7 +348,7 @@ struct SYSCFG {
   uint8_t       rgbwwTable[5];             // 71A
   uint8_t       user_template_base;        // 71F
   mytmplt       user_template;             // 720  29 bytes
-  uint8_t       novasds_period;            // 73D
+  uint8_t       novasds_startingoffset;    // 73D
   uint8_t       web_color[18][3];          // 73E
   uint16_t      display_width;             // 774
   uint16_t      display_height;            // 776
