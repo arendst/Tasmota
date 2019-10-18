@@ -259,7 +259,7 @@ struct SYSCFG {
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
   char          state_text[4][11];         // 313
-  uint8_t       ex_energy_power_delta;     // 33F
+  uint8_t       ex_energy_power_delta;     // 33F - Free since 6.6.0.20
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
   unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344

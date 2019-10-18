@@ -104,9 +104,9 @@ struct ENERGY {
   bool power_on = true;
 
 #ifdef USE_ENERGY_MARGIN_DETECTION
-  float power_history[3] = { 0 };
+  uint16_t power_history[3] = { 0 };
   uint8_t power_steady_counter = 8;  // Allow for power on stabilization
-  uint8_t power_delta = 0;
+  bool power_delta = false;
   bool min_power_flag = false;
   bool max_power_flag = false;
   bool min_voltage_flag = false;
@@ -279,41 +279,39 @@ bool EnergyMargin(bool type, uint16_t margin, uint16_t value, bool &flag, bool &
 
 void EnergyMarginCheck(void)
 {
-  uint16_t energy_daily_u = 0;
-  uint16_t energy_power_u = 0;
-  uint16_t energy_voltage_u = 0;
-  uint16_t energy_current_u = 0;
-  bool flag;
-  bool jsonflg;
-
   if (Energy.power_steady_counter) {
     Energy.power_steady_counter--;
     return;
   }
 
+  uint16_t energy_power_u = (uint16_t)(Energy.active_power[0]);
+
   if (Settings.energy_power_delta) {
-    float delta = abs(Energy.power_history[0] - Energy.active_power[0]);
-    // Any delta compared to minimal delta
-    float min_power = (Energy.power_history[0] > Energy.active_power[0]) ? Energy.active_power[0] : Energy.power_history[0];
-    if (((delta / min_power) * 100) > Settings.energy_power_delta) {
-      Energy.power_delta = 1;
+    uint16_t delta = abs(Energy.power_history[0] - energy_power_u);
+    uint16_t min_power = (Energy.power_history[0] > energy_power_u) ? energy_power_u : Energy.power_history[0];
+
+    DEBUG_DRIVER_LOG(PSTR("NRG: Delta %d, Power %d"), delta, min_power);
+
+    if ( ((Settings.energy_power_delta < 101) && (((delta * 100) / min_power) > Settings.energy_power_delta)) ||  // 1..100 = Percentage
+         ((Settings.energy_power_delta > 100) && (delta > (Settings.energy_power_delta -100))) ) {                // 101..32000 = Absolute
+      Energy.power_delta = true;
       Energy.power_history[1] = Energy.active_power[0];  // We only want one report so reset history
       Energy.power_history[2] = Energy.active_power[0];
     }
   }
   Energy.power_history[0] = Energy.power_history[1];  // Shift in history every second allowing power changes to settle for up to three seconds
   Energy.power_history[1] = Energy.power_history[2];
-  Energy.power_history[2] = Energy.active_power[0];
+  Energy.power_history[2] = energy_power_u;
 
   if (Energy.power_on && (Settings.energy_min_power || Settings.energy_max_power || Settings.energy_min_voltage || Settings.energy_max_voltage || Settings.energy_min_current || Settings.energy_max_current)) {
-    energy_power_u = (uint16_t)(Energy.active_power[0]);
-    energy_voltage_u = (uint16_t)(Energy.voltage[0]);
-    energy_current_u = (uint16_t)(Energy.current[0] * 1000);
+    uint16_t energy_voltage_u = (uint16_t)(Energy.voltage[0]);
+    uint16_t energy_current_u = (uint16_t)(Energy.current[0] * 1000);
 
     DEBUG_DRIVER_LOG(PSTR("NRG: W %d, U %d, I %d"), energy_power_u, energy_voltage_u, energy_current_u);
 
     Response_P(PSTR("{"));
-    jsonflg = false;
+    bool flag;
+    bool jsonflg = false;
     if (EnergyMargin(false, Settings.energy_min_power, energy_power_u, flag, Energy.min_power_flag)) {
       ResponseAppend_P(PSTR("%s\"" D_CMND_POWERLOW "\":\"%s\""), (jsonflg)?",":"", GetStateText(flag));
       jsonflg = true;
@@ -392,7 +390,7 @@ void EnergyMarginCheck(void)
 
   // Max Energy
   if (Settings.energy_max_energy) {
-    energy_daily_u = (uint16_t)(Energy.daily * 1000);
+    uint16_t energy_daily_u = (uint16_t)(Energy.daily * 1000);
     if (!Energy.max_energy_state  && (RtcTime.hour == Settings.energy_max_energy_start)) {
       Energy.max_energy_state  = 1;
       ResponseTime_P(PSTR(",\"" D_JSON_ENERGYMONITOR "\":\"%s\"}"), GetStateText(1));
@@ -424,7 +422,7 @@ void EnergyMqttShow(void)
   tele_period = tele_period_save;
   ResponseJsonEnd();
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-  Energy.power_delta = 0;
+  Energy.power_delta = false;
 }
 #endif  // USE_ENERGY_MARGIN_DETECTION
 
@@ -708,10 +706,10 @@ void CmndModuleAddress(void)
 #ifdef USE_ENERGY_MARGIN_DETECTION
 void CmndPowerDelta(void)
 {
-  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 101)) {
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32000)) {
     Settings.energy_power_delta = XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_power_delta, UNIT_PERCENTAGE);
+  EnergyCommandResponse(Settings.energy_power_delta, (Settings.energy_power_delta < 101) ? UNIT_PERCENTAGE : UNIT_WATT);
 }
 
 void CmndPowerLow(void)
