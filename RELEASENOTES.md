@@ -149,6 +149,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_ARILUX_RF         | - | - | - | x | x | x | - |
 | USE_SHUTTER           | - | - | - | - | - | - | - |
 | USE_DEEPSLEEP         | - | - | - | - | - | - | - |
+| USE_EXS_DIMMER        | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
 | USE_LIGHT             | - | x | x | x | x | x | x |
