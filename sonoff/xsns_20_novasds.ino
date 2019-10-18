@@ -151,7 +151,7 @@ void NovaSdsSecond(void)                 // Every second
     NovaSdsSetWorkPeriod();
     novasds_valid=1;
   }
-  if((Settings.tele_period - STARTING_OFFSET <= 0))
+  if((Settings.tele_period - Settings.novasds_startingoffset <= 0))
   {
     if(!cont_mode)
     { //switched to continuous mode
@@ -162,7 +162,7 @@ void NovaSdsSecond(void)                 // Every second
   else
     cont_mode = 0;
 
-  if(tele_period == Settings.tele_period - STARTING_OFFSET && !cont_mode)
+  if(tele_period == Settings.tele_period -  Settings.novasds_startingoffset && !cont_mode)
   { //lets start fan and laser
     NovaSdsCommand(NOVA_SDS_SLEEP_AND_WORK, NOVA_SDS_SET_MODE, NOVA_SDS_WORK, NOVA_SDS_DEVICE_ID, nullptr);  
   }
@@ -191,10 +191,10 @@ void NovaSdsSecond(void)                 // Every second
 bool NovaSdsCommandSensor(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 256)) {
-    Settings.novasds_period = XdrvMailbox.payload;
-    NovaSdsSetWorkPeriod();
+    if( XdrvMailbox.payload < 10 ) Settings.novasds_startingoffset = 10;
+    else Settings.novasds_startingoffset = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_20, Settings.novasds_period);
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_20, Settings.novasds_startingoffset);
 
   return true;
 }

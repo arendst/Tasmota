@@ -849,7 +849,7 @@ void SettingsDefaultSet2(void)
     Settings.rgbwwTable[j] = 255;
   }
 
-  Settings.novasds_period = WORKING_PERIOD;
+  Settings.novasds_startingoffset = STARTING_OFFSET;
 
   SettingsDefaultWebColor();
 
@@ -1102,7 +1102,7 @@ void SettingsDelta(void)
       Settings.param[P_RGB_REMAP] = RGB_REMAP_RGBW;
     }
     if (Settings.version < 0x06050003) {
-      Settings.novasds_period = WORKING_PERIOD;
+      Settings.novasds_startingoffset = STARTING_OFFSET;
     }
     if (Settings.version < 0x06050006) {
       SettingsDefaultWebColor();
