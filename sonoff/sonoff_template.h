@@ -634,11 +634,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_PZEM_DC
   GPIO_PZEM017_RX,     // PZEM-003,017 Serial Modbus interface
 #endif
-#ifdef USE_SDM120_2
+#ifdef USE_SDM120
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
 #endif
-#ifdef USE_SDM630_2
+#ifdef USE_SDM630
   GPIO_SDM630_TX,      // SDM630 Serial interface
   GPIO_SDM630_RX,      // SDM630 Serial interface
 #endif
@@ -655,18 +655,6 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
 #endif // USE_SOLAX_X1
 #endif  // USE_ENERGY_SENSOR
-#ifndef USE_SDM120_2
-#ifdef USE_SDM120
-  GPIO_SDM120_TX,      // SDM120 Serial interface
-  GPIO_SDM120_RX,      // SDM120 Serial interface
-#endif
-#endif  // USE_SDM120_2
-#ifndef USE_SDM630_2
-#ifdef USE_SDM630
-  GPIO_SDM630_TX,      // SDM630 Serial interface
-  GPIO_SDM630_RX,      // SDM630 Serial interface
-#endif
-#endif  // USE_SDM630_2
 
 #ifdef USE_SERIAL_BRIDGE
   GPIO_SBR_TX,         // Serial Bridge Serial interface

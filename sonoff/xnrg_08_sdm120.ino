@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_ENERGY_SENSOR
-#ifdef USE_SDM120_2
+#ifdef USE_SDM120
 /*********************************************************************************************\
  * Eastron SDM120 or SDM220 Modbus energy meter
  *
@@ -265,5 +265,5 @@ bool Xnrg08(uint8_t function)
   return result;
 }
 
-#endif  // USE_SDM120_2
+#endif  // USE_SDM120
 #endif  // USE_ENERGY_SENSOR

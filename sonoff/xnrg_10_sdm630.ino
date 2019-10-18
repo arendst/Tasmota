@@ -18,7 +18,7 @@
 */
 
 #ifdef USE_ENERGY_SENSOR
-#ifdef USE_SDM630_2
+#ifdef USE_SDM630
 /*********************************************************************************************\
  * Eastron SDM630-Modbus energy meter
  *
@@ -213,5 +213,5 @@ bool Xnrg10(uint8_t function)
   return result;
 }
 
-#endif  // USE_SDM630_2
+#endif  // USE_SDM630
 #endif  // USE_ENERGY_SENSOR

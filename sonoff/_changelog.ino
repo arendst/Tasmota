@@ -1,4 +1,9 @@
 /*********************************************************************************************\
+ * 6.6.0.19 20191018
+ * Replace obsolete xsns_23_sdm120 with xnrg_08_sdm120 and consolidate define USE_SDM120
+ * Replace obsolete xsns_25_sdm630 with xnrg_10_sdm630 and consolidate define USE_SDM630
+ * Replace obsolete xsns_49_solaxX1 with xnrg_12_solaxX1 (#6677)
+ *
  * 6.6.0.18 20191010
  * Add command DimmerRange in Light module to support 2 byte dimming ranges from Tuya
  * Add Zigbee additional commands and sending messages to control devices (#6095)

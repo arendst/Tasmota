@@ -306,13 +306,13 @@ void GetFeatures(void)
   feature_sns1 |= 0x02000000;  // xsns_22_sr04.ino
 #endif
 #ifdef USE_SDM120
-  feature_sns1 |= 0x04000000;  // xsns_23_sdm120.ino
+  feature_sns1 |= 0x04000000;  // xnrg_08_sdm120.ino
 #endif
 #ifdef USE_SI1145
   feature_sns1 |= 0x08000000;  // xsns_24_si1145.ino
 #endif
 #ifdef USE_SDM630
-  feature_sns1 |= 0x10000000;  // xsns_25_sdm630.ino
+  feature_sns1 |= 0x10000000;  // xnrg_10_sdm630.ino
 #endif
 #ifdef USE_LM75AD
   feature_sns1 |= 0x20000000;  // xsns_26_lm75ad.ino
@@ -419,7 +419,7 @@ void GetFeatures(void)
   feature_sns2 |= 0x20000000;  // xsns_48_chirp.ino
 #endif
 #ifdef USE_SOLAX_X1
-  feature_sns2 |= 0x40000000;  // xsns_49_solaxX1.ino
+  feature_sns2 |= 0x40000000;  // xnrg_12_solaxX1.ino
 #endif
 #ifdef USE_PAJ7620
   feature_sns2 |= 0x80000000;  // xsns_50_paj7620.ino
