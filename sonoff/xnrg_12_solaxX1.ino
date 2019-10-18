@@ -291,23 +291,23 @@ void solaxX1250MSecond(void) // Every Second
 
         solaxX1_QueryLiveData();
         EnergyUpdateTotal(solaxX1.energy_total, true);  // 484.708 kWh
-      } 
+      }
     } // End data Ready
 
     if (0 == solaxX1_send_retry && 255 != solaxX1_nodata_count) {
       solaxX1_send_retry = 12;
       solaxX1_QueryLiveData();
     }
-    
+
     // While the inverter has not stable ambient light, will send an address adquired but go offline again,
     // so no data will be received when the query is send, then we start the countdown to set the inverter as offline again.
     if (255 == solaxX1_nodata_count) {
       solaxX1_nodata_count = 0;
-      solaxX1_send_retry = 12; 
+      solaxX1_send_retry = 12;
     }
   } // end hasAddress && (data_ready || solaxX1_send_retry == 0)
   else
-  { 
+  {
     if ((solaxX1_nodata_count % 4) == 0) { DEBUG_SENSOR_LOG(PSTR("SX1: No Data count: %d"), solaxX1_nodata_count); }
     if (solaxX1_nodata_count < 10 * 4) // max. seconds without data
     {
@@ -317,7 +317,7 @@ void solaxX1250MSecond(void) // Every Second
     {
       // no data from RS485, reset values to 0 and set inverter as offline
       solaxX1_nodata_count = 255;
-      solaxX1_send_retry = 12; 
+      solaxX1_send_retry = 12;
       protocolStatus.status = 0b00001000; // queryOffline
       Energy.data_valid[0] = ENERGY_WATCHDOG;
 
@@ -326,7 +326,7 @@ void solaxX1250MSecond(void) // Every Second
       //solaxX1.energy_today = solaxX1.energy_total = solaxX1.runtime_total = 0;
     }
   }
-  
+
   if (!protocolStatus.hasAddress && (data_ready || solaxX1_send_retry == 0))
   {
     if (data_ready)
@@ -408,12 +408,11 @@ void solaxX1SnsInit(void)
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("SX1: Solax X1 Inverter Init"));
   DEBUG_SENSOR_LOG(PSTR("SX1: RX pin: %d, TX pin: %d"), pin[GPIO_SOLAXX1_RX], pin[GPIO_SOLAXX1_TX]);
   protocolStatus.status = 0b00100000; // hasAddress
-  
+
   solaxX1Serial = new TasmotaSerial(pin[GPIO_SOLAXX1_RX], pin[GPIO_SOLAXX1_TX], 1);
-  if (solaxX1Serial->begin(SOLAXX1_SPEED))
-  {
+  if (solaxX1Serial->begin(SOLAXX1_SPEED)) {
     if (solaxX1Serial->hardwareSerial()) { ClaimSerial(); }
-  }else {
+  } else {
     energy_flg = ENERGY_NONE;
   }
 }
@@ -503,26 +502,25 @@ bool Xnrg12(uint8_t function)
 {
   bool result = false;
 
-  switch (function)
-  {
-  case FUNC_EVERY_250_MSECOND:
-    if (uptime > 4) { solaxX1250MSecond(); }
-    break;
-  case FUNC_INIT:
-    solaxX1SnsInit();
-    break;
-  case FUNC_PRE_INIT:
-    solaxX1DrvInit();
-    break;
-  case FUNC_JSON_APPEND:
-    solaxX1Show(1);
-    break;
+  switch (function) {
+    case FUNC_EVERY_250_MSECOND:
+      if (uptime > 4) { solaxX1250MSecond(); }
+      break;
+    case FUNC_JSON_APPEND:
+      solaxX1Show(1);
+      break;
 #ifdef USE_WEBSERVER
-  case FUNC_WEB_SENSOR:
-    solaxX1Show(0);
-    break;
+    case FUNC_WEB_SENSOR:
+      solaxX1Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
+    case FUNC_INIT:
+      solaxX1SnsInit();
+      break;
+    case FUNC_PRE_INIT:
+      solaxX1DrvInit();
+      break;
+  }
   return result;
 }
 
