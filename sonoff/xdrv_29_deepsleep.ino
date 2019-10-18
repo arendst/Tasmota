@@ -66,9 +66,6 @@ void CheckForDeepsleep(void)
   // new function AFTER_TELEPERIOD can take some time therefore <2
   if ((Settings.deepsleep > 10) && (Settings.deepsleep < 4294967295) && !disable_deepsleep_switch && (tele_period < 2) && prep_called) {
     SettingsSaveAll();
-    Response_P(S_OFFLINE);
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
-    yield();
     // deepsleep_slip is ideally 10.000 == 100%
     // typically the device has up to 4% slip. Anything else is a wrong setting in the deepsleep_slip
     // therefore all values >110% or <90% will be resetted to 100% to avoid crazy sleep times.
@@ -102,16 +99,17 @@ void CheckForDeepsleep(void)
       // ensure nextwakeup is at least in the future
       RtcSettings.nextwakeup += (((UtcTime() + MIN_DEEPSLEEP_TIME - RtcSettings.nextwakeup) / Settings.deepsleep) + 1) * Settings.deepsleep;
     }
-    Response_P(PSTR("%d"), RtcSettings.nextwakeup);
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_DOMOTICZ_UPDATE_TIMER), false);  // Offline or remove previous retained topic
-    yield();
-    MqttDisconnect();
     String dt = GetDT(RtcSettings.nextwakeup + LocalTime() - UtcTime());  // 2017-03-07T11:08:02
 //    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("DSL: Next wakeup %s"), (char*)dt.c_str());
     //limit sleeptime to MAX_DEEPSLEEP_CYCLE
     //uint32_t sleeptime = MAX_DEEPSLEEP_CYCLE < (RtcSettings.nextwakeup - UtcTime()) ? (uint32_t)MAX_DEEPSLEEP_CYCLE : RtcSettings.nextwakeup - UtcTime();
     uint32_t sleeptime = tmin((uint32_t)MAX_DEEPSLEEP_CYCLE , RtcSettings.nextwakeup - UtcTime());
-
+    Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%d}}"), (char*)dt.c_str(), RtcSettings.nextwakeup);
+    MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_STATUS "1"), false);
+    Response_P(S_OFFLINE);
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
+    yield();
+    MqttDisconnect();
     RtcSettings.ultradeepsleep =  RtcSettings.nextwakeup - UtcTime();
 //    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("DSL: Sleeptime %d sec, deepsleep_slip %ld"), sleeptime, RtcSettings.deepsleep_slip);
     RtcSettingsSave();
