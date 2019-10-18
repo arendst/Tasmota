@@ -1210,6 +1210,8 @@ void SettingsDelta(void)
       Settings.ex_sbaudrate = 0;
 
       Settings.flag3.fast_power_cycle_disable = 0;
+      Settings.energy_power_delta = Settings.ex_energy_power_delta;
+      Settings.ex_energy_power_delta = 0;
     }
 
     Settings.version = VERSION;

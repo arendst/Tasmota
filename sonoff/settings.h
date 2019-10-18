@@ -259,7 +259,7 @@ struct SYSCFG {
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
   char          state_text[4][11];         // 313
-  uint8_t       energy_power_delta;        // 33F
+  uint8_t       ex_energy_power_delta;     // 33F
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
   unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
@@ -387,8 +387,9 @@ struct SYSCFG {
   uint16_t      dimmer_hw_min;             // E90
   uint16_t      dimmer_hw_max;             // E92
   uint32_t      deepsleep;                 // E94
+  uint16_t      energy_power_delta;        // E98
 
-  uint8_t       free_e98[352];             // E98
+  uint8_t       free_e9a[350];             // E9A
 
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC
