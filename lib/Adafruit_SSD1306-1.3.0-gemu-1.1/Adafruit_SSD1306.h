@@ -141,6 +141,7 @@ public:
   void         invertDisplay(boolean i);
   void         dim(boolean dim);
   void         DisplayOnff(int8_t on);
+  void         DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font);
 
   #if 0
   void         clearDisplay(void);
