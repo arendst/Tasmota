@@ -584,6 +584,22 @@ boolean Adafruit_SSD1306::begin(uint8_t vcs, uint8_t addr, boolean reset,
 }
 
 
+void Adafruit_SSD1306::DisplayInit(int8_t p,int8_t size,int8_t rot,int8_t font) {
+// ignore update mode
+  //if (p==DISPLAY_INIT_MODE) {
+    setRotation(rot);
+    invertDisplay(false);
+    setTextWrap(false);         // Allow text to run off edges
+    cp437(true);
+    setTextFont(font);
+    setTextSize(size);
+    setTextColor(WHITE,BLACK);
+    setCursor(0,0);
+    fillScreen(BLACK);
+    Updateframe();
+  //}
+}
+
 #if 0
 
 // DRAWING FUNCTIONS -------------------------------------------------------
