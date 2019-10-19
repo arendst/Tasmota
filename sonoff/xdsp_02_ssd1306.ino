@@ -84,7 +84,7 @@ void SSD1306InitDriver()
     oled1306->begin(SSD1306_SWITCHCAPVCC, Settings.display_address[0], 0);
     renderer = oled1306;
     renderer->DisplayInit(DISPLAY_INIT_MODE, Settings.display_size, Settings.display_rotate, Settings.display_font);
-
+    renderer->setRotation(Settings.display_rotate);
     renderer->setTextColor(1,0);
 
 #ifdef SHOW_SPLASH

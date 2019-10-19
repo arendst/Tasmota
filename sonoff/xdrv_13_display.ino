@@ -127,7 +127,9 @@ bool disp_subscribed = false;
 void DisplayInit(uint8_t mode)
 {
   if (renderer)  {
-    renderer->DisplayInit(mode,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    renderer->DisplayInit(mode, Settings.display_size, Settings.display_rotate, Settings.display_font);
+    // Add below line as the parameters above do nothing
+    renderer->setRotation(Settings.display_rotate);
   }
   else {
     dsp_init = mode;

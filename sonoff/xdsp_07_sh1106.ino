@@ -79,6 +79,7 @@ void SH1106InitDriver()
     renderer=oled1106;
     renderer->Begin(SH1106_SWITCHCAPVCC, Settings.display_address[0],0);
     renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+    renderer->setRotation(Settings.display_rotate);
     renderer->setTextColor(1,0);
 
 #ifdef SHOW_SPLASH
