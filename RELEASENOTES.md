@@ -10,16 +10,18 @@ See [wiki migration path](https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade
 3. Migrate to **Sonoff-Tasmota 5.14**
 4. Migrate to **Sonoff-Tasmota 6.x**
 
-## Change of supported Core versions
-This release will be supported from ESP8266/Arduino library Core version **pre-2.6.0** due to reported security and stability issues on previous Core version. Although it might still compile on previous Core versions all support will be removed starting from the next Release.
+## Supported Core versions
+This release will be supported from ESP8266/Arduino library Core version **pre-2.6.0** due to reported security and stability issues on previous Core version.
+
+Although it might still compile on previous Core versions all support will be removed starting in the next Release.
 
 ## Support of TLS
 To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. See full documentation on https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
 
 ## Change in default initial configuration tool
-Firmware binary **sonoff-classic.bin** supports **WifiManager, Wps and SmartConfig** for initial configuration. The default tool is **Wps**.
+Firmware binary **sonoff-classic.bin** supports **WifiManager, Wps and SmartConfig** for initial configuration. The default tool is **Wps**. To save code space all other binaries support **WifiManager only**.
 
-To save memory space all other binaries support **WifiManager only**.
+The next release will remove support for **WPS** and **SmartConfig**
 
 ## Supported Modules
 The following hardware modules are supported.
@@ -97,158 +99,164 @@ Module            | Description
 69 SYF05          | Sunyesmart SYF05 RGBWW Wifi Led Bulb
 70 Sonoff L1      | Sonoff L1 light strip
 71 Sonoff iFan03  | Sonoff iFan03 Wifi Smart Ceiling Fan with Light
+72 EXS Dimmer     | EXS Wifi Dimmer v4
 
 ## Provided Binary Downloads
 The following binary downloads have been compiled with ESP8266/Arduino library core version **pre-2.6.0**.
 
-- **sonoff.bin** = The Sonoff version without Wps and SmartConfig configuration but adds more sensors. **RECOMMENDED RELEASE BINARY**
-- **sonoff-basic.bin** = The Basic version without Wps and SmartConfig configuration and most sensors.
+- **sonoff.bin** = The Sonoff version adds more sensors. **RECOMMENDED RELEASE BINARY**
+- **sonoff-basic.bin** = The Basic version without most sensors.
 - **sonoff-classic.bin** = The Classic version allows initial installation using either WifiManager, Wps or SmartConfig.
-- **sonoff-BG.bin** to **sonoff-TW.bin** = The Sonoff version without Wps and SmartConfig configuration in different languages.
-- **sonoff-knx.bin** = The Knx version without Wps and SmartConfig configuration and some other features but adds KNX support.
-- **sonoff-sensors.bin** = The Sensors version without Wps and SmartConfig configuration but adds even more useful sensors.
-- **sonoff-display.bin** = The Display version without Wps and SmartConfig configuration and Energy Monitoring but adds display support.
+- **sonoff-BG.bin** to **sonoff-TW.bin** = The Sonoff version in different languages.
+- **sonoff-knx.bin** = The Knx version without some features but adds KNX support.
+- **sonoff-sensors.bin** = The Sensors version adds even more useful sensors.
+- **sonoff-ir** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features.
+- **sonoff-display.bin** = The Display version without Energy Monitoring but adds display support.
 - **sonoff-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
 
 ## Available Features and Sensors
 
-| Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
-|-----------------------|---------|-------|---------|--------|------|---------|---------|--------
-| MY_LANGUAGE en-GB     | x | x | x | x | x | x | x |
-| USE_WPS               | - | - | x | - | - | - | - | WPS
-| USE_SMARTCONFIG       | - | - | x | - | - | - | - | SmartConfig
-| USE_ARDUINO_OTA       | - | - | - | - | - | - | - |
-| USE_DOMOTICZ          | - | - | x | x | x | x | - |
-| USE_HOME_ASSISTANT    | - | - | - | x | x | x | - |
-| USE_MQTT_TLS          | - | - | - | - | - | - | - |
-| USE_MQTT_TLS_CA_CERT  | - | - | - | - | - | - | - |
-| USE_MQTT_AWS_IOT      | - | - | - | - | - | - | - |
-| USE_KNX               | - | - | - | - | x | - | - |
-| USE_WEBSERVER         | x | x | x | x | x | x | x | WifiManager
-| USE_EMULATION_HUE     | - | x | x | x | - | x | - |
-| USE_EMULATION_WEMO    | - | x | x | x | - | x | - |
-| USE_DISCOVERY         | - | - | x | x | x | x | x |
-| WEBSERVER_ADVERTISE   | - | - | x | x | x | x | x |
-| MQTT_HOST_DISCOVERY   | - | - | x | x | x | x | x |
-| USE_TIMERS            | - | x | - | x | x | x | x |
-| USE_TIMERS_WEB        | - | x | - | x | x | x | x |
-| USE_SUNRISE           | - | x | - | x | x | x | x |
-| USE_RULES             | - | x | - | x | x | x | x |
-| USE_SCRIPT            | - | - | - | - | - | - | - |
-| USE_EXPRESSION        | - | - | - | - | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| ROTARY_V1             | - | - | - | - | - | - | - |
-| USE_SONOFF_RF         | - | - | - | x | x | x | - |
-| USE_RF_FLASH          | - | - | - | x | x | x | - |
-| USE_SONOFF_SC         | - | - | - | x | - | x | - |
-| USE_TUYA_MCU          | - | x | - | x | x | x | x |
-| USE_ARMTRONIX_DIMMERS | - | - | - | x | x | - | - |
-| USE_PS_16_DZ          | - | - | - | x | x | x | - |
-| USE_SONOFF_IFAN       | - | - | - | x | x | x | - |
-| USE_BUZZER            | - | - | - | x | x | x | - |
-| USE_ARILUX_RF         | - | - | - | x | x | x | - |
-| USE_SHUTTER           | - | - | - | - | - | - | - |
-| USE_DEEPSLEEP         | - | - | - | - | - | - | - |
-| USE_EXS_DIMMER        | - | - | - | - | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
-| USE_LIGHT             | - | x | x | x | x | x | x |
-| USE_WS2812            | - | - | x | x | x | x | x |
-| USE_WS2812_DMA        | - | - | - | - | - | - | - |
-| USE_MY92X1            | - | - | - | x | x | x | x |
-| USE_SM16716           | - | - | - | x | x | x | x |
-| USE_SM2135            | - | - | - | x | x | x | x |
-| USE_SONOFF_L1         | - | - | - | x | x | x | x |
-|                       |   |   |   |   |   |   |   |
-| USE_ENERGY_SENSOR     | - | x | x | x | x | x | - |
-| USE_PZEM004T          | - | - | - | x | x | x | - |
-| USE_PZEM_AC           | - | - | - | x | x | x | - |
-| USE_PZEM_DC           | - | - | - | x | x | x | - |
-| USE_MCP39F501         | - | x | - | x | x | x | - |
-| USE_SDM120            | - | - | - | - | - | x | - |
-| USE_SDM630            | - | - | - | - | - | x | - |
-| USE_DDS2382           | - | - | - | - | - | x | - |
-| USE_DDSU666           | - | - | - | - | - | x | - |
-| USE_SOLAX_X1          | - | - | - | - | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| USE_ADC_VCC           | x | x | x | - | - | - | - |
-| USE_COUNTER           | - | - | - | x | x | x | x |
-| USE_DS18x20           | - | - | x | x | x | x | x |
-| USE_DHT               | - | - | x | x | x | x | x |
-| USE_MAX31855          | - | - | - | - | - | x | - |
-| USE_MAX31865          | - | - | - | - | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
-| USE_I2C               | - | - | - | x | x | x | x |
-| USE_SHT               | - | - | - | x | x | x | x |
-| USE_HTU               | - | - | - | x | x | x | x |
-| USE_BMP               | - | - | - | x | x | x | x |
-| USE_BME680            | - | - | - | - | - | x | - |
-| USE_BH1750            | - | - | - | x | x | x | x |
-| USE_VEML6070          | - | - | - | - | - | x | - |
-| USE_ADS1115           | - | - | - | - | - | x | - |
-| USE_ADS1115_I2CDEV    | - | - | - | - | - | - | - |
-| USE_INA219            | - | - | - | - | - | x | - |
-| USE_INA226            | - | - | - | - | - | - | - |
-| USE_SHT3X             | - | - | - | x | x | x | x |
-| USE_TSL2561           | - | - | - | - | - | x | - |
-| USE_MGS               | - | - | - | - | - | x | - |
-| USE_SGP30             | - | - | - | x | x | x | x |
-| USE_SI1145            | - | - | - | - | - | - | - |
-| USE_LM75AD            | - | - | - | x | x | x | x |
-| USE_APDS9960          | - | - | - | - | - | - | - |
-| USE_MCP230xx          | - | - | - | - | - | - | - |
-| USE_PCA9685           | - | - | - | - | - | - | - |
-| USE_MPR121            | - | - | - | - | - | - | - |
-| USE_CCS811            | - | - | - | - | - | - | - |
-| USE_MPU6050           | - | - | - | - | - | - | - |
-| USE_DS3231            | - | - | - | - | - | - | - |
-| USE_MGC3130           | - | - | - | - | - | - | - |
-| USE_MAX44009          | - | - | - | - | - | - | - |
-| USE_SCD30             | - | - | - | - | - | x | - |
-| USE_SPS30             | - | - | - | - | - | - | - |
-| USE_ADE7953           | - | - | - | x | x | x | x |
-| USE_VL53L0X           | - | - | - | - | - | - | - |
-| USE_MLX90614          | - | - | - | - | - | - | - |
-| USE_CHIRP             | - | - | - | - | - | - | - |
-| USE_PAJ7620           | - | - | - | - | - | - | - |
-| USE_PCF8574           | - | - | - | - | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | classic | sonoff | knx  | sensors | display | Remarks
-| USE_SPI               | - | - | - | - | - | - | x |
-| USE_MHZ19             | - | - | - | x | x | x | x |
-| USE_SENSEAIR          | - | - | - | x | x | x | x |
-| USE_PMS5003           | - | - | - | x | x | x | x |
-| USE_NOVA_SDS          | - | - | - | x | x | x | x |
-| USE_SERIAL_BRIDGE     | - | - | - | x | x | x | x |
-| USE_MP3_PLAYER        | - | - | - | - | - | x | - |
-| USE_AZ7798            | - | - | - | - | - | - | - |
-| USE_PN532_HSU         | - | - | - | - | - | x | - |
-| USE_ZIGBEE            | - | - | - | - | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| USE_IR_REMOTE         | - | - | - | x | x | x | x |
-| USE_IR_HVAC           | - | - | - | - | - | x | - |
-| USE_IR_RECEIVE        | - | - | - | x | x | x | x |
-|                       |   |   |   |   |   |   |   |
-| USE_SR04              | - | - | - | x | x | x | x |
-| USE_TM1638            | - | - | - | - | - | x | - |
-| USE_HX711             | - | - | - | x | x | x | x |
-| USE_TX20_WIND_SENSOR  | - | - | - | - | - | x | - |
-| USE_RC_SWITCH         | - | - | - | - | - | x | - |
-| USE_RF_SENSOR         | - | - | - | - | - | x | - | AlectoV2 only
-| USE_HRE               | - | - | - | - | - | x | - |
-| USE_A4988_STEPPER     | - | - | - | - | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| USE_DISPLAY           | - | - | - | - | - | - | x |
-| USE_DISPLAY_LCD       | - | - | - | - | - | - | x |
-| USE_DISPLAY_SSD1306   | - | - | - | - | - | - | x |
-| USE_DISPLAY_MATRIX    | - | - | - | - | - | - | x |
-| USE_DISPLAY_ILI9341   | - | - | - | - | - | - | x |
-| USE_DISPLAY_EPAPER_29 | - | - | - | - | - | - | x | Disabled for core 2.3.0
-| USE_DISPLAY_EPAPER_42 | - | - | - | - | - | - | - |
-| USE_DISPLAY_ILI9488   | - | - | - | - | - | - | - |
-| USE_DISPLAY_SSD1351   | - | - | - | - | - | - | - |
-| USE_DISPLAY_RA8876    | - | - | - | - | - | - | - |
+| Feature or Sensor     | minimal | basic | classic | sonoff | knx | sensors | ir | display | Remarks
+|-----------------------|---------|-------|---------|--------|-----|---------|----|---------|--------
+| MY_LANGUAGE en-GB     | x | x | x | x | x | x | x | x |
+| USE_WPS               | - | - | x | - | - | - | - | - | WPS
+| USE_SMARTCONFIG       | - | - | x | - | - | - | - | - | SmartConfig
+| USE_ARDUINO_OTA       | - | - | - | - | - | - | - | - |
+| USE_DOMOTICZ          | - | - | x | x | x | x | x | - |
+| USE_HOME_ASSISTANT    | - | - | - | x | x | x | x | - |
+| USE_MQTT_TLS          | - | - | - | - | - | - | - | - |
+| USE_MQTT_TLS_CA_CERT  | - | - | - | - | - | - | - | - |
+| USE_MQTT_AWS_IOT      | - | - | - | - | - | - | - | - |
+| USE_KNX               | - | - | - | - | x | - | - | - |
+| USE_WEBSERVER         | x | x | x | x | x | x | x | x | WifiManager
+| USE_JAVASCRIPT_ES6    | - | - | - | - | - | - | - | - |
+| USE_WEBSEND_RESPONSE  | - | - | - | - | - | - | - | - |
+| USE_EMULATION_HUE     | - | x | x | x | - | x | - | - |
+| USE_EMULATION_WEMO    | - | x | x | x | - | x | - | - |
+| USE_DISCOVERY         | - | - | x | x | x | - | - | x |
+| WEBSERVER_ADVERTISE   | - | - | x | x | x | - | - | x |
+| MQTT_HOST_DISCOVERY   | - | - | x | x | x | - | - | x |
+| USE_TIMERS            | - | x | - | x | x | x | x | x |
+| USE_TIMERS_WEB        | - | x | - | x | x | x | x | x |
+| USE_SUNRISE           | - | x | - | x | x | x | x | x |
+| USE_RULES             | - | x | - | x | x | x | x | x |
+| USE_SCRIPT            | - | - | - | - | - | - | - | - |
+| USE_EXPRESSION        | - | - | - | - | - | - | - | - |
+| SUPPORT_IF_STATEMENT  | - | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |   |
+| ROTARY_V1             | - | - | - | - | - | - | - | - |
+| USE_SONOFF_RF         | - | - | - | x | x | x | - | - |
+| USE_RF_FLASH          | - | - | - | x | x | x | - | - |
+| USE_SONOFF_SC         | - | - | - | x | - | x | - | - |
+| USE_TUYA_MCU          | - | x | - | x | x | x | - | x |
+| USE_ARMTRONIX_DIMMERS | - | - | - | x | x | - | - | - |
+| USE_PS_16_DZ          | - | - | - | x | x | x | - | - |
+| USE_SONOFF_IFAN       | - | - | - | x | x | x | - | - |
+| USE_BUZZER            | - | - | - | x | x | x | - | - |
+| USE_ARILUX_RF         | - | - | - | x | x | x | - | - |
+| USE_SHUTTER           | - | - | - | - | - | - | - | - |
+| USE_DEEPSLEEP         | - | - | - | - | - | - | - | - |
+| USE_EXS_DIMMER        | - | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |   |
+| Feature or Sensor     | minimal | basic | classic | sonoff | knx | sensors | ir | display | Remarks
+| USE_LIGHT             | - | x | x | x | x | x | x | x |
+| USE_WS2812            | - | - | x | x | x | x | - | x |
+| USE_WS2812_DMA        | - | - | - | - | - | - | - | - |
+| USE_MY92X1            | - | - | - | x | x | x | - | x |
+| USE_SM16716           | - | - | - | x | x | x | - | x |
+| USE_SM2135            | - | - | - | x | x | x | - | x |
+| USE_SONOFF_L1         | - | - | - | x | x | x | - | x |
+|                       |   |   |   |   |   |   |   |   |
+| USE_ENERGY_SENSOR     | - | x | x | x | x | x | - | - |
+| USE_PZEM004T          | - | - | - | x | x | x | - | - |
+| USE_PZEM_AC           | - | - | - | x | x | x | - | - |
+| USE_PZEM_DC           | - | - | - | x | x | x | - | - |
+| USE_MCP39F501         | - | x | - | x | x | x | - | - |
+| USE_SDM120            | - | - | - | - | - | x | - | - |
+| USE_SDM630            | - | - | - | - | - | x | - | - |
+| USE_DDS2382           | - | - | - | - | - | x | - | - |
+| USE_DDSU666           | - | - | - | - | - | x | - | - |
+| USE_SOLAX_X1          | - | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |   |
+| USE_ADC_VCC           | x | x | x | - | - | - | - | - |
+| USE_COUNTER           | - | - | - | x | x | x | x | x |
+| USE_DS18x20           | - | - | x | x | x | x | - | x |
+| USE_DHT               | - | - | x | x | x | x | x | x |
+| USE_MAX31855          | - | - | - | - | - | x | - | - |
+| USE_MAX31865          | - | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |   |
+| Feature or Sensor     | minimal | basic | classic | sonoff | knx | sensors | ir | display | Remarks
+| USE_I2C               | - | - | - | x | x | x | - | x |
+| USE_SHT               | - | - | - | x | x | x | - | x |
+| USE_HTU               | - | - | - | x | x | x | - | x |
+| USE_BMP               | - | - | - | x | x | x | - | x |
+| USE_BME680            | - | - | - | - | - | x | - | - |
+| USE_BH1750            | - | - | - | x | x | x | - | x |
+| USE_VEML6070          | - | - | - | - | - | x | - | - |
+| USE_ADS1115           | - | - | - | - | - | x | - | - |
+| USE_ADS1115_I2CDEV    | - | - | - | - | - | - | - | - |
+| USE_INA219            | - | - | - | - | - | x | - | - |
+| USE_INA226            | - | - | - | - | - | - | - | - |
+| USE_SHT3X             | - | - | - | x | x | x | - | x |
+| USE_TSL2561           | - | - | - | - | - | x | - | - |
+| USE_MGS               | - | - | - | - | - | x | - | - |
+| USE_SGP30             | - | - | - | x | x | x | - | x |
+| USE_SI1145            | - | - | - | - | - | - | - | - |
+| USE_LM75AD            | - | - | - | x | x | x | - | x |
+| USE_APDS9960          | - | - | - | - | - | - | - | - |
+| USE_MCP230xx          | - | - | - | - | - | - | - | - |
+| USE_PCA9685           | - | - | - | - | - | - | - | - |
+| USE_MPR121            | - | - | - | - | - | - | - | - |
+| USE_CCS811            | - | - | - | - | - | - | - | - |
+| USE_MPU6050           | - | - | - | - | - | - | - | - |
+| USE_DS3231            | - | - | - | - | - | - | - | - |
+| USE_MGC3130           | - | - | - | - | - | - | - | - |
+| USE_MAX44009          | - | - | - | - | - | - | - | - |
+| USE_SCD30             | - | - | - | - | - | x | - | - |
+| USE_SPS30             | - | - | - | - | - | - | - | - |
+| USE_ADE7953           | - | - | - | x | x | x | - | x |
+| USE_VL53L0X           | - | - | - | - | - | - | - | - |
+| USE_MLX90614          | - | - | - | - | - | - | - | - |
+| USE_CHIRP             | - | - | - | - | - | - | - | - |
+| USE_PAJ7620           | - | - | - | - | - | - | - | - |
+| USE_PCF8574           | - | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |   |
+| Feature or Sensor     | minimal | basic | classic | sonoff | knx | sensors | ir | display | Remarks
+| USE_SPI               | - | - | - | - | - | - | - | x |
+| USE_MHZ19             | - | - | - | x | x | x | - | x |
+| USE_SENSEAIR          | - | - | - | x | x | x | - | x |
+| USE_PMS5003           | - | - | - | x | x | x | - | x |
+| USE_NOVA_SDS          | - | - | - | x | x | x | - | x |
+| USE_SERIAL_BRIDGE     | - | - | - | x | x | x | - | x |
+| USE_MP3_PLAYER        | - | - | - | - | - | x | - | - |
+| USE_AZ7798            | - | - | - | - | - | - | - | - |
+| USE_PN532_HSU         | - | - | - | - | - | x | - | - |
+| USE_ZIGBEE            | - | - | - | - | - | - | - | - | Experimental
+|                       |   |   |   |   |   |   |   |   |
+| USE_IR_REMOTE         | - | - | - | x | x | x | x | x |
+| USE_IR_HVAC           | - | - | - | - | - | x | x | - |
+| USE_IR_RECEIVE        | - | - | - | x | x | x | x | x |
+|                       |   |   |   |   |   |   |   |   |
+| USE_SR04              | - | - | - | x | x | x | - | x |
+| USE_TM1638            | - | - | - | - | - | x | - | - |
+| USE_HX711             | - | - | - | x | x | x | - | x |
+| USE_TX20_WIND_SENSOR  | - | - | - | - | - | x | - | - |
+| USE_RC_SWITCH         | - | - | - | - | - | x | - | - |
+| USE_RF_SENSOR         | - | - | - | - | - | x | - | - | AlectoV2 only
+| USE_HRE               | - | - | - | - | - | x | - | - |
+| USE_A4988_STEPPER     | - | - | - | - | - | - | - | - |
+|                       |   |   |   |   |   |   |   |   |
+| USE_DISPLAY           | - | - | - | - | - | - | - | x |
+| USE_DISPLAY_LCD       | - | - | - | - | - | - | - | x |
+| USE_DISPLAY_SSD1306   | - | - | - | - | - | - | - | x |
+| USE_DISPLAY_MATRIX    | - | - | - | - | - | - | - | x |
+| USE_DISPLAY_SH1106    | - | - | - | - | - | - | - | x |
+| USE_DISPLAY_ILI9341   | - | - | - | - | - | - | - | x |
+| USE_DISPLAY_EPAPER_29 | - | - | - | - | - | - | - | x | Disabled for core 2.3.0
+| USE_DISPLAY_EPAPER_42 | - | - | - | - | - | - | - | x | Disabled for core 2.3.0
+| USE_DISPLAY_ILI9488   | - | - | - | - | - | - | - | - |
+| USE_DISPLAY_SSD1351   | - | - | - | - | - | - | - | - |
+| USE_DISPLAY_RA8876    | - | - | - | - | - | - | - | - |
 
 ## Changelog
 Version 6.6.0 20190707
