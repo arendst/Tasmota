@@ -1,0 +1,25 @@
+#######################################
+# Syntax Coloring Map for ArduinoHexParse
+# (esp8266)
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+ArduinoHexParse	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+ArduinoHexParse  KEYWORD2
+ParseLine        KEYWORD2
+GetFlashPage     KEYWORD2
+GetLoadAddress   KEYWORD2
+IsFlashPageReady KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
