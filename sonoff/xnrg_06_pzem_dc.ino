@@ -31,7 +31,8 @@
 
 #define XNRG_06                    6
 
-#define PZEM_DC_DEVICE_ADDRESS  0x01  // PZEM default address
+const uint8_t PZEM_DC_DEVICE_ADDRESS = 0x01;  // PZEM default address
+const uint32_t PZEM_DC_STABILIZE = 30;        // Number of seconds to stabilize configuration
 
 #include <TasmotaModbus.h>
 TasmotaModbus *PzemDcModbus;
@@ -77,7 +78,9 @@ void PzemDcEverySecond(void)
         PzemDc.energy += (float)((buffer[13] << 24) + (buffer[14] << 16) + (buffer[11] << 8) + buffer[12]);             // 4294967295 Wh
         if (PzemDc.channel == Energy.phase_count -1) {
           if (PzemDc.energy > PzemDc.last_energy) {  // Handle missed channel
-            EnergyUpdateTotal(PzemDc.energy, false);
+            if (uptime > PZEM_DC_STABILIZE) {
+              EnergyUpdateTotal(PzemDc.energy, false);
+            }
             PzemDc.last_energy = PzemDc.energy;
           }
           PzemDc.energy = 0;
@@ -102,7 +105,7 @@ void PzemDcEverySecond(void)
   }
   else {
     PzemDc.send_retry--;
-    if ((Energy.phase_count > 1) && (0 == PzemDc.send_retry) && (uptime < 30)) {
+    if ((Energy.phase_count > 1) && (0 == PzemDc.send_retry) && (uptime < PZEM_DC_STABILIZE)) {
       Energy.phase_count--;  // Decrement channels if no response after retry within 30 seconds after restart
     }
   }

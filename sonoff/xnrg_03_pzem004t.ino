@@ -30,6 +30,8 @@
 
 #define XNRG_03                  3
 
+const uint32_t PZEM_STABILIZE = 30;        // Number of seconds to stabilize configuration
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *PzemSerial = nullptr;
@@ -192,7 +194,9 @@ void PzemEvery250ms(void)
           Pzem.energy += value;
           if (Pzem.phase == Energy.phase_count -1) {
             if (Pzem.energy > Pzem.last_energy) {  // Handle missed phase
-              EnergyUpdateTotal(Pzem.energy, false);
+              if (uptime > PZEM_STABILIZE) {
+                EnergyUpdateTotal(Pzem.energy, false);
+              }
               Pzem.last_energy = Pzem.energy;
             }
             Pzem.energy = 0;
@@ -228,7 +232,7 @@ void PzemEvery250ms(void)
   }
   else {
     Pzem.send_retry--;
-    if ((Energy.phase_count > 1) && (0 == Pzem.send_retry) && (uptime < 30)) {
+    if ((Energy.phase_count > 1) && (0 == Pzem.send_retry) && (uptime < PZEM_STABILIZE)) {
       Energy.phase_count--;  // Decrement phases if no response after retry within 30 seconds after restart
     }
   }
