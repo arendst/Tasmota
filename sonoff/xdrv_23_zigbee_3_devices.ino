@@ -363,10 +363,10 @@ String Z_Devices::dump(uint8_t dump_mode) const {
     JsonObject& dev = devices.createNestedObject();
 
     snprintf_P(hex, sizeof(hex), PSTR("0x%04X"), shortaddr);
-    dev[F("ShortAddr")] = hex;
+    dev[F(D_JSON_ZIGBEE_DEVICE)] = hex;
 
     if (device.friendlyName.length() > 0) {
-      dev[F("FriendlyName")] = device.friendlyName;
+      dev[F(D_JSON_ZIGBEE_NAME)] = device.friendlyName;
     }
 
     if (1 == dump_mode) {

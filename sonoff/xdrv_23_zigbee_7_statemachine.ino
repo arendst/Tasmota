@@ -319,7 +319,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_TIMEOUT_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_ON_RECV_UNEXPECTED(&Z_Recv_Default)
-    ZI_WAIT(10000)                             // wait for 10 seconds for Tasmota to stabilize
+    ZI_WAIT(10500)                             // wait for 10 seconds for Tasmota to stabilize
     ZI_ON_ERROR_GOTO(50)
 
     //ZI_MQTT_STATUS(ZIGBEE_STATUS_BOOT, "Booting")
