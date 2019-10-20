@@ -539,6 +539,9 @@ double buffer[MEDIAN_SIZE];
 int8_t index;
 } sml_mf[MAX_VARS];
 
+#ifndef FLT_MAX
+#define FLT_MAX 99999999
+#endif
 
 double sml_median_array(double *array,uint8_t len) {
       uint8_t ind[len];
@@ -1802,11 +1805,19 @@ void SML_CounterUpd4(void) ICACHE_RAM_ATTR;
 #endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
 void SML_CounterUpd(uint8_t index) {
-  uint32_t ltime=millis()-sml_counters[index].sml_counter_ltime;
-  sml_counters[index].sml_counter_ltime=millis();
-  if (ltime>sml_counters[index].sml_debounce) {
-    RtcSettings.pulse_counter[index]++;
-    InjektCounterValue(sml_counters[index].sml_cnt_old_state,RtcSettings.pulse_counter[index]);
+
+  uint8_t level=digitalRead(meter_desc_p[sml_counters[index].sml_cnt_old_state].srcpin);
+  if (!level) {
+    // falling edge
+    uint32_t ltime=millis()-sml_counters[index].sml_counter_ltime;
+    sml_counters[index].sml_counter_ltime=millis();
+    if (ltime>sml_counters[index].sml_debounce) {
+      RtcSettings.pulse_counter[index]++;
+      InjektCounterValue(sml_counters[index].sml_cnt_old_state,RtcSettings.pulse_counter[index]);
+    }
+  } else {
+    // rising edge
+    sml_counters[index].sml_counter_ltime=millis();
   }
 }
 
@@ -2040,7 +2051,7 @@ init10:
           // check for irq mode
           if (meter_desc_p[meters].params<=0) {
             // init irq mode
-            attachInterrupt(meter_desc_p[meters].srcpin, counter_callbacks[cindex], FALLING);
+            attachInterrupt(meter_desc_p[meters].srcpin, counter_callbacks[cindex], CHANGE);
             sml_counters[cindex].sml_cnt_old_state=meters;
             sml_counters[cindex].sml_debounce=-meter_desc_p[meters].params;
           }
@@ -2232,6 +2243,11 @@ void SML_Send_Seq(uint32_t meter,char *seq) {
     *ucp++=highByte(crc);
     slen+=4;
   }
+  if (script_meter_desc[meter].type=='o') {
+    for (uint32_t cnt=0;cnt<slen;cnt++) {
+      sbuff[cnt]|=(CalcEvenParity(sbuff[cnt])<<7);
+    }
+  }
   if (script_meter_desc[meter].type=='p') {
     *ucp++=0xc0;
     *ucp++=0xa8;
@@ -2267,7 +2283,7 @@ uint8_t SML_PzemCrc(uint8_t *data, uint8_t len) {
   for (uint32_t i = 0; i < len; i++) crc += *data++;
   return (uint8_t)(crc & 0xFF);
 }
-/*
+
 // for odd parity init with 1
 uint8_t CalcEvenParity(uint8_t data) {
 uint8_t parity=0;
@@ -2278,7 +2294,7 @@ uint8_t parity=0;
   }
   return parity;
 }
-*/
+
 
 
 // dump to log shows serial data on console
@@ -2294,7 +2310,12 @@ bool XSNS_53_cmd(void) {
       if (*cp=='d') {
         // set dump mode
         cp++;
-        dump2log=atoi(cp);
+        uint8_t index=atoi(cp);
+        if ((index&7)>meters_used) index=1;
+        if (index>0 && meter_desc_p[(index&7)-1].type=='c') {
+          index=0;
+        }
+        dump2log=index;
         ResponseTime_P(PSTR(",\"SML\":{\"CMD\":\"dump: %d\"}}"),dump2log);
       } else if (*cp=='c') {
           // set ounter
