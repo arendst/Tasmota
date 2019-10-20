@@ -149,7 +149,7 @@ uint16_t SendMail(char *buffer) {
 
   // 2 seconds timeout
 #ifndef MAIL_TIMEOUT
-  #define MAIL_TIMEOUT 500
+  #define MAIL_TIMEOUT 2000
 #endif
   mail = new SendEmail(mserv,port,user,passwd, MAIL_TIMEOUT, auth);
 
