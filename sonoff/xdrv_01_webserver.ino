@@ -44,7 +44,7 @@ const uint16_t HTTP_REFRESH_TIME = 2345;                 // milliseconds
 uint8_t *efm8bb1_update = nullptr;
 #endif  // USE_RF_FLASH
 
-enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1 };
+enum UploadTypes { UPL_TASMOTA, UPL_SETTINGS, UPL_EFM8BB1, UPL_ARDUINOSLAVE };
 
 static const char * HEADER_KEYS[] = { "User-Agent", };
 
@@ -2037,12 +2037,25 @@ void HandleUploadDone(void)
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     WSContentSend_P(HTTP_MSG_RSTRT);
     ShowWebSource(SRC_WEBGUI);
+#ifdef USE_ARDUINO_SLAVE
+    if (ArduinoSlave_GetFlagFlashing()) {
+      restart_flag = 0;
+    } else { // It was a normal firmware file, or we are ready to restart device
+      restart_flag = 2;
+    }
+#else    
     restart_flag = 2;  // Always restart to re-enable disabled features during update
+#endif    
   }
   SettingsBufferFree();
   WSContentSend_P(PSTR("</div><br>"));
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
+#ifdef USE_ARDUINO_SLAVE
+  if (ArduinoSlave_GetFlagFlashing()) {
+    ArduinoSlave_Flash();
+  }
+#endif  
 }
 
 void HandleUploadLoop(void)
@@ -2108,6 +2121,14 @@ void HandleUploadLoop(void)
           if (Web.upload_error != 0) { return; }
         } else
 #endif  // USE_RF_FLASH
+#ifdef USE_ARDUINO_SLAVE
+        if ((WEMOS == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO SLAVE hex file
+          Update.end();              // End esp8266 update session
+          Web.upload_file_type = UPL_ARDUINOSLAVE;
+          Web.upload_error = ArduinoSlave_UpdateInit();
+          if (Web.upload_error != 0) { return; }
+        } else
+#endif
         {
           if (upload.buf[0] != 0xE9) {
             Web.upload_error = 3;  // Magic byte is not 0xE9
@@ -2166,6 +2187,11 @@ void HandleUploadLoop(void)
       }
     }
 #endif  // USE_RF_FLASH
+#ifdef USE_ARDUINO_SLAVE
+    else if (UPL_ARDUINOSLAVE == Web.upload_file_type) {
+      ArduinoSlave_WriteBuffer(upload.buf, upload.currentSize);
+    }
+#endif
     else {  // firmware
       if (!Web.upload_error && (Update.write(upload.buf, upload.currentSize) != upload.currentSize)) {
         Web.upload_error = 5;  // Upload buffer miscompare
@@ -2217,6 +2243,13 @@ void HandleUploadLoop(void)
       Web.upload_file_type = UPL_TASMOTA;
     }
 #endif  // USE_RF_FLASH
+#ifdef USE_ARDUINO_SLAVE
+    else if (UPL_ARDUINOSLAVE == Web.upload_file_type) {
+      // Done writing the hex to SPI flash
+      ArduinoSlave_SetFlagFlashing(true); // So we know on upload success page if it needs to flash hex or do a normal restart
+      Web.upload_file_type = UPL_TASMOTA;
+    }
+#endif
     else {
       if (!Update.end(true)) { // true to set the size to the current progress
         if (_serialoutput) { Update.printError(Serial); }
