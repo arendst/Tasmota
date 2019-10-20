@@ -834,8 +834,6 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
 
         }
       }
-    } else {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("postProcessAttributes: wrong format for attribute : %s"), key);
     }
   }
 }
