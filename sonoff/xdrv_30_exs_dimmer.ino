@@ -251,20 +251,6 @@ bool ExsSyncState()
   ExsSyncState(1);
 }
 
-static inline void ExsSetChannelV10(uint8_t channel, const uint8_t *buffer)
-{
-  Exs.dimmer.channel[channel].on = buffer[0];
-  Exs.dimmer.channel[channel].dimm = buffer[1];
-  Exs.dimmer.channel[channel].bright_tbl = 0;
-}
-
-static inline void ExsSetChannel(uint8_t channel, const uint8_t *buffer)
-{
-  Exs.dimmer.channel[channel].on = buffer[0];
-  Exs.dimmer.channel[channel].dimm = buffer[1];
-  Exs.dimmer.channel[channel].bright_tbl = buffer[2];
-}
-
 void ExsDebugState()
 {
 #ifdef EXS_DEBUG
@@ -288,21 +274,71 @@ void ExsPacketProcess(void)
   switch (cmd)
   {
   case EXS_GET_VALUES:
+      /*
+         format firmware 2.1
+         0. byte  = startMarker
+         1. byte  =  0. crc of bytes 2(CMD) - 11(GATE_LOCK)
+         2. byte  =  1. len_Of_Payload
+         3. byte  =  2. CMD
+         4. byte  =  3. MAJOR
+         5. byte  =  4. MINOR
+         6. byte  =  5. GATE1_ON
+         7. byte  =  6. GATE1_DIMM
+         8. byte  =  7. GATE1.BRIGHT
+         9. byte  =  8. GATE2_ON
+        10. byte  =  9. GATE2_DIMM
+        11. byte  = 10. GATE2.BRIGHT
+        12. byte  = 11. GATE_LOCK
+        13. byte  = '\0'
+      */
     if (len > 9)
     {
       Exs.dimmer.version_major = Exs.buffer[3];
       Exs.dimmer.version_minor = Exs.buffer[4];
-      ExsSetChannel(0, &Exs.buffer[5]);
-      ExsSetChannel(1, &Exs.buffer[8]);
+
+      //Exs.dimmer.channel[0].on = Exs.buffer[5];
+      Exs.dimmer.channel[0].on = Exs.buffer[6];
+      Exs.dimmer.channel[0].dimm = Exs.buffer[6];
+      Exs.dimmer.channel[0].bright_tbl = Exs.buffer[7];
+
+      //Exs.dimmer.channel[1].on = Exs.buffer[8];
+      Exs.dimmer.channel[1].on = Exs.buffer[9];
+      Exs.dimmer.channel[1].dimm = Exs.buffer[9];
+      Exs.dimmer.channel[1].bright_tbl = Exs.buffer[10];
+
       Exs.dimmer.gate_lock = Exs.buffer[11];
     }
     else
+      /*
+         format firmware 1.0
+         0. byte  = startMarker
+         1. byte  =  0. crc of bytes 2(CMD) - 9(GATE_LOCK)
+         2. byte  =  1. len_Of_Payload
+         3. byte  =  2. CMD
+         4. byte  =  3. GATE1_ON
+         5. byte  =  4. GATE1_DIMM
+         6. byte  =  5. GATE1.BRIGHT
+         7. byte  =  6. GATE2_ON
+         8. byte  =  7. GATE2_DIMM
+         9. byte  =  8. GATE2.BRIGHT
+        10. byte  =  9. GATE_LOCK
+        11. byte  = '\0'
+    */
     {
       Exs.dimmer.version_major = 1;
       Exs.dimmer.version_minor = 0;
-      ExsSetChannel(0, &Exs.buffer[3]);
-      ExsSetChannel(1, &Exs.buffer[5]);
-      Exs.dimmer.gate_lock = Exs.buffer[8];
+
+      //Exs.dimmer.channel[0].on = Exs.buffer[3] - 48;
+      Exs.dimmer.channel[0].on = Exs.buffer[4] - 48;
+      Exs.dimmer.channel[0].dimm = Exs.buffer[4] - 48;
+      Exs.dimmer.channel[0].bright_tbl = Exs.buffer[5] - 48;
+
+      //Exs.dimmer.channel[1].on = Exs.buffer[6] - 48;
+      Exs.dimmer.channel[1].on = Exs.buffer[7] - 48;
+      Exs.dimmer.channel[1].dimm = Exs.buffer[7] - 48;
+      Exs.dimmer.channel[1].bright_tbl = Exs.buffer[8] - 48;
+
+      Exs.dimmer.gate_lock = Exs.buffer[9] - 48;
     }
 
     ExsDebugState();
@@ -313,7 +349,6 @@ void ExsPacketProcess(void)
     break;
   }
 }
-
 /*
  * API Functions
  */
@@ -360,11 +395,11 @@ void EsxMcuStart(void)
   int retries = 3;
 
 #ifdef EXS_DEBUG
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EXS: Request MCU configuration, PIN %d to Low"), pin[GPIO_EXS_MCU_RESET]);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EXS: Request MCU configuration, PIN %d to Low"), pin[GPIO_EXS_ENABLE]);
 #endif
 
-  pinMode(pin[GPIO_EXS_MCU_RESET], OUTPUT);
-  digitalWrite(pin[GPIO_EXS_MCU_RESET], LOW);
+  pinMode(pin[GPIO_EXS_ENABLE], OUTPUT);
+  digitalWrite(pin[GPIO_EXS_ENABLE], LOW);
 
   delay(1); // wait 1ms fot the MCU to come online
 
@@ -461,36 +496,22 @@ void ExsSerialInput(void)
 #ifdef EXS_MCU_CMNDS
 
 #define D_PRFX_EXS "Exs"
-#define D_CMND_EXS_GATE "Gate"
 #define D_CMND_EXS_DIMM "Dimm"
 #define D_CMND_EXS_DIMM_TBL "DimmTbl"
 #define D_CMND_EXS_DIMM_VAL "DimmVal"
-#define D_CMND_EXS_GATES "Gates"
 #define D_CMND_EXS_DIMMS "Dimms"
 #define D_CMND_EXS_CH_LOCK "ChLock"
 #define D_CMND_EXS_STATE "State"
 
 const char kExsCommands[] PROGMEM = D_PRFX_EXS "|"
-  D_CMND_EXS_GATE "|"
   D_CMND_EXS_DIMM "|" D_CMND_EXS_DIMM_TBL "|" D_CMND_EXS_DIMM_VAL "|"
-  D_CMND_EXS_GATES "|" D_CMND_EXS_DIMMS "|" D_CMND_EXS_CH_LOCK "|"
+  D_CMND_EXS_DIMMS "|" D_CMND_EXS_CH_LOCK "|"
   D_CMND_EXS_STATE;
 
 void (* const ExsCommand[])(void) PROGMEM =
-  { &CmndExsGate,
-    &CmndExsDimm,  &CmndExsDimmTbl,  &CmndExsDimmVal,
-    &CmndExsGates,  &CmndExsDimms,  &CmndExsChLock,
+  { &CmndExsDimm,  &CmndExsDimmTbl,  &CmndExsDimmVal,
+    &CmndExsDimms,  &CmndExsChLock,
     &CmndExsState };
-
-void CmndExsGate(void)
-{
-  if ((XdrvMailbox.index == 1 || XdrvMailbox.index == 2) &&
-      (XdrvMailbox.payload == 0 || XdrvMailbox.payload == 1)) {
-    ExsSendCmd(EXS_GATE_1_ON + 0x10 * (XdrvMailbox.index - 1) +
-               XdrvMailbox.payload ^ 1, 0);
-  }
-  CmndExsState();
-}
 
 void CmndExsDimm(void)
 {
@@ -518,14 +539,6 @@ void CmndExsDimmVal(void)
       (XdrvMailbox.payload > 0 || XdrvMailbox.payload <= 255)) {
     ExsSendCmd(EXS_DIMM_1_VAL + 0x10 * (XdrvMailbox.index - 1),
                XdrvMailbox.payload);
-  }
-  CmndExsState();
-}
-
-void CmndExsGates(void)
-{
-  if (XdrvMailbox.payload == 0 || XdrvMailbox.payload == 1) {
-    ExsSendCmd(EXS_GATES_ON + XdrvMailbox.payload ^ 1, 0);
   }
   CmndExsState();
 }

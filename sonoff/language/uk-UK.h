@@ -626,7 +626,7 @@
 #define D_SENSOR_SM2135_CLK    "SM2135 Clk"
 #define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 #define D_SENSOR_DEEPSLEEP     "DeepSleep"
-#define D_SENSOR_EXS_MCU_RESET "EXS Reset"
+#define D_SENSOR_EXS_ENABLE    "EXS Enable"
 
 // Units
 #define D_UNIT_AMPERE "А"
