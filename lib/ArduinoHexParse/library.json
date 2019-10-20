@@ -1,0 +1,12 @@
+{
+    "name": "ArduinoHexParse",
+    "version": "0.0.1",
+    "description": "Parse hex files created by Arduino for Uno/Mini/Nano",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/arendst/Sonoff-Tasmota/lib/ArduinoHexParse"
+    },
+    "frameworks": "arduino",
+    "platforms": "espressif8266"
+}
