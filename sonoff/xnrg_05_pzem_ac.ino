@@ -38,6 +38,7 @@ TasmotaModbus *PzemAcModbus;
 
 struct PZEMAC {
   float energy = 0;
+  float last_energy = 0;
   uint8_t send_retry = 0;
   uint8_t phase = 0;
   uint8_t address = 0;
@@ -65,7 +66,8 @@ void PzemAcEverySecond(void)
       Energy.data_valid[PzemAc.phase] = 0;
       if (10 == registers) {
 
-        //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
+        //           0     1     2     3     4     5     6     7     8     9           = ModBus register
+        //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24  = Buffer index
         // 01 04 14 08 D1 00 6C 00 00 00 F4 00 00 00 26 00 00 01 F4 00 64 00 00 51 34
         // Id Cc Sz Volt- Current---- Power------ Energy----- Frequ PFact Alarm Crc--
         Energy.voltage[PzemAc.phase] = (float)((buffer[3] << 8) + buffer[4]) / 10.0;                                                  // 6553.0 V
@@ -76,9 +78,13 @@ void PzemAcEverySecond(void)
 
         PzemAc.energy += (float)((buffer[15] << 24) + (buffer[16] << 16) + (buffer[13] << 8) + buffer[14]);                           // 4294967295 Wh
         if (PzemAc.phase == Energy.phase_count -1) {
-          EnergyUpdateTotal(PzemAc.energy, false);
+          if (PzemAc.energy > PzemAc.last_energy) {  // Handle missed phase
+            EnergyUpdateTotal(PzemAc.energy, false);
+            PzemAc.last_energy = PzemAc.energy;
+          }
           PzemAc.energy = 0;
         }
+
       }
     }
   }
