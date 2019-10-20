@@ -3,37 +3,48 @@
 #include "sendemail.h"
 
 // enable serial debugging
-//#define DEBUG_EMAIL_PORT Serial
+//#define DEBUG_EMAIL_PORT
 
-//SendEmail(const String& host, const int port, const String& user, const String& passwd, const int timeout, const bool ssl);
-//SendEmail::send(const String& from, const String& to, const String& subject, const String& msg)
-// sendmail [server:port:user:passwd:from:to:subject] data
-// sendmail [*:*:*:*:*:to:subject] data uses defines from user_config
-// sendmail currently only works with core 2.4.2
+// sendmail works only with server port 465 SSL and doesnt support STARTTLS (not supported in Arduino)
+// only a couple of mailservers support this (e.g. gmail,gmx,yahoo,freenetmail)
+// sendmail [server:port:user:passwd:from:to:subject] body
+// sendmail [*:*:*:*:*:to:subject] data uses defines from user_config_overwrite
+// #define EMAIL_USER "user"
+// #define EMAIL_PASSWORD "passwd"
+// #define EMAIL_FROM "<mr.x@gmail.com>"
+// #define EMAIL_SERVER "smtp.gmail.com"
+// #define EMAIL_PORT 465
+// if email body consist of a single * and scripter is present
+// and a section >m is found, the lines in this section (until #) are sent
+// as email body
+
+// sendmail works with pre2.6 using Light BearSSL
 //HW Watchdog 8.44 sec.
 //SW Watchdog 3.2 sec.
 
+#ifndef SEND_MAIL_MINRAM
 #define SEND_MAIL_MINRAM 12*1024
+#endif
+
+#define xPSTR(a) a
 
 uint16_t SendMail(char *buffer) {
-  uint16_t count;
   char *params,*oparams;
-  char *mserv;
+  const char *mserv;
   uint16_t port;
-  char *user;
-  char *pstr;
-  char *passwd;
-  char *from;
-  char *to;
-  char *subject;
-  char *cmd;
-  char secure=0,auth=0;
+  const char *user;
+  const char *pstr;
+  const char *passwd;
+  const char *from;
+  const char *to;
+  const char *subject;
+  const char *cmd;
+  char auth=0;
   uint16_t status=1;
   SendEmail *mail=0;
   uint16_t blen;
   char *endcmd;
 
-  //DebugFreeMem();
 
 // return if not enough memory
   uint16_t mem=ESP.getFreeHeap();
@@ -65,9 +76,7 @@ uint16_t SendMail(char *buffer) {
   cmd=endcmd+1;
 
   #ifdef DEBUG_EMAIL_PORT
-    SetSerialBaudrate(115200);
-    DEBUG_EMAIL_PORT.print("mailsize: ");
-    DEBUG_EMAIL_PORT.println(blen);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("mailsize: %d"),blen);
   #endif
 
   mserv=strtok(params,":");
@@ -119,43 +128,39 @@ uint16_t SendMail(char *buffer) {
 
 #ifdef EMAIL_USER
   if (*user=='*') {
-    user=(char*)EMAIL_USER;
+    user=xPSTR(EMAIL_USER);
   }
 #endif
 #ifdef EMAIL_PASSWORD
   if (*passwd=='*') {
-    passwd=(char*)EMAIL_PASSWORD;
+    passwd=xPSTR(EMAIL_PASSWORD);
   }
 #endif
 #ifdef EMAIL_SERVER
   if (*mserv=='*') {
-    mserv=(char*)EMAIL_SERVER;
+    mserv=xPSTR(EMAIL_SERVER);
   }
 #endif //USE_SENDMAIL
 
 
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(mserv);
-  DEBUG_EMAIL_PORT.println(port);
-  DEBUG_EMAIL_PORT.println(user);
-  DEBUG_EMAIL_PORT.println(passwd);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s - %d - %s - %s"),mserv,port,user,passwd);
 #endif
 
   // 2 seconds timeout
-  #define MAIL_TIMEOUT 500
+#ifndef MAIL_TIMEOUT
+  #define MAIL_TIMEOUT 2000
+#endif
   mail = new SendEmail(mserv,port,user,passwd, MAIL_TIMEOUT, auth);
 
 #ifdef EMAIL_FROM
   if (*from=='*') {
-    from=(char*)EMAIL_FROM;
+    from=xPSTR(EMAIL_FROM);
   }
 #endif
 
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(from);
-  DEBUG_EMAIL_PORT.println(to);
-  DEBUG_EMAIL_PORT.println(subject);
-  DEBUG_EMAIL_PORT.println(cmd);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s - %s - %s - %s"),from,to,subject,cmd);
 #endif
 
   if (mail) {
@@ -169,13 +174,11 @@ exit:
   return status;
 }
 
-
+void script_send_email_body(BearSSL::WiFiClientSecure_light *client);
 
 
 SendEmail::SendEmail(const String& host, const int port, const String& user, const String& passwd, const int timeout, const int auth_used) :
-    host(host), port(port), user(user), passwd(passwd), timeout(timeout), ssl(ssl), auth_used(auth_used), client(new BearSSL::WiFiClientSecure_light(1024,1024))
-{
-
+    host(host), port(port), user(user), passwd(passwd), timeout(timeout), ssl(ssl), auth_used(auth_used), client(new BearSSL::WiFiClientSecure_light(1024,1024)) {
 }
 
 String SendEmail::readClient() {
@@ -190,10 +193,7 @@ String SendEmail::readClient() {
   return r;
 }
 
-//void SetSerialBaudrate(int baudrate);
-
-bool SendEmail::send(const String& from, const String& to, const String& subject, const char *msg)
-{
+bool SendEmail::send(const String& from, const String& to, const String& subject, const char *msg) {
 bool status=false;
 String buffer;
 
@@ -204,24 +204,19 @@ String buffer;
   client->setTimeout(timeout);
   // smtp connect
 #ifdef DEBUG_EMAIL_PORT
-  SetSerialBaudrate(115200);
-  DEBUG_EMAIL_PORT.print("Connecting: ");
-  DEBUG_EMAIL_PORT.print(host);
-  DEBUG_EMAIL_PORT.print(":");
-  DEBUG_EMAIL_PORT.println(port);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("Connecting: %s on port %d"),host.c_str(),port);
 #endif
 
   if (!client->connect(host.c_str(), port)) {
 #ifdef DEBUG_EMAIL_PORT
-      DEBUG_EMAIL_PORT.println("Connection failed: ");
-      //DEBUG_EMAIL_PORT.println (client->getLastSSLError());
+    AddLog_P(LOG_LEVEL_INFO, PSTR("Connection failed"));
 #endif
     goto exit;
   }
 
   buffer = readClient();
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
   if (!buffer.startsWith(F("220"))) {
     goto exit;
@@ -232,61 +227,52 @@ String buffer;
 
   client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
   buffer = readClient();
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
   if (!buffer.startsWith(F("250"))) {
     goto exit;
   }
   if (user.length()>0  && passwd.length()>0 ) {
 
-    //buffer = F("STARTTLS");
-    //client->println(buffer);
-
     buffer = F("AUTH LOGIN");
     client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
-    DEBUG_EMAIL_PORT.println(buffer);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
     buffer = readClient();
 #ifdef DEBUG_EMAIL_PORT
-    DEBUG_EMAIL_PORT.println(buffer);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
     if (!buffer.startsWith(F("334")))
     {
       goto exit;
     }
     base64 b;
-    //buffer = user;
-    //buffer = b.encode(buffer);
     buffer = b.encode(user);
 
     client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
-  //DEBUG_EMAIL_PORT.println(user);
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
     buffer = readClient();
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
     if (!buffer.startsWith(F("334"))) {
       goto exit;
     }
-    //buffer = this->passwd;
-    //buffer = b.encode(buffer);
     buffer = b.encode(passwd);
     client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
-  //DEBUG_EMAIL_PORT.println(passwd);
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
     buffer = readClient();
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
     if (!buffer.startsWith(F("235"))) {
       goto exit;
@@ -298,11 +284,11 @@ String buffer;
   buffer += from;
   client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
   buffer = readClient();
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
   if (!buffer.startsWith(F("250"))) {
     goto exit;
@@ -311,11 +297,11 @@ String buffer;
   buffer += to;
   client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
   buffer = readClient();
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
   if (!buffer.startsWith(F("250"))) {
     goto exit;
@@ -324,11 +310,11 @@ String buffer;
   buffer = F("DATA");
   client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
   buffer = readClient();
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
   if (!buffer.startsWith(F("354"))) {
     goto exit;
@@ -337,32 +323,40 @@ String buffer;
   buffer += from;
   client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
   buffer = F("To: ");
   buffer += to;
   client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
   buffer = F("Subject: ");
   buffer += subject;
   buffer += F("\r\n");
   client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
 
+#ifdef USE_SCRIPT
+  if (*msg=='*' && *(msg+1)==0) {
+    script_send_email_body(client);
+  } else {
+    client->println(msg);
+  }
+#else
   client->println(msg);
+#endif
   client->println('.');
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(msg);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
 
   buffer = F("QUIT");
   client->println(buffer);
 #ifdef DEBUG_EMAIL_PORT
-  DEBUG_EMAIL_PORT.println(buffer);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("%s"),buffer.c_str());
 #endif
 
   status=true;

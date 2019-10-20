@@ -2100,6 +2100,7 @@ void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
     cp=srcbuf;
     struct T_INDEX ind;
     char string[SCRIPT_MAXSSIZE];
+    dstsize-=2;
     for (count=0;count<dstsize;count++) {
         if (*cp=='%') {
             cp++;
@@ -2121,8 +2122,11 @@ void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
                 } else {
                     // string result
                 }
-                strcpy(&dstbuf[count],string);
-                count+=strlen(string)-1;
+                uint8_t slen=strlen(string);
+                if (count+slen<dstsize-1) {
+                  strcpy(&dstbuf[count],string);
+                  count+=slen-1;
+                }
                 cp++;
               } else {
                 strcpy(&dstbuf[count],"???");
@@ -2158,6 +2162,7 @@ void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
             cp++;
         }
     }
+    dstbuf[count]=0;
 }
 
 void toLog(const char *str) {
@@ -2621,7 +2626,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                 if (cmdmem) {
                   char *cmd=cmdmem;
                   uint16_t count;
-                  for (count=0; count<SCRIPT_CMDMEM/2-1; count++) {
+                  for (count=0; count<SCRIPT_CMDMEM/2-2; count++) {
                     //if (*lp=='\r' || *lp=='\n' || *lp=='}') {
                     if (!*lp || *lp=='\r' || *lp=='\n') {
                         cmd[count]=0;
@@ -4307,8 +4312,9 @@ String ScriptUnsubscribe(const char * data, int data_len)
 }
 #endif //     SUPPORT_MQTT_EVENT
 
-#ifdef USE_SCRIPT_WEB_DISPLAY
 
+
+#ifdef USE_SCRIPT_WEB_DISPLAY
 
 void Script_Check_HTML_Setvars(void) {
 
@@ -4595,6 +4601,50 @@ void ScriptWebShow(void) {
   }
 }
 #endif //USE_SCRIPT_WEB_DISPLAY
+
+
+#ifdef USE_SENDMAIL
+void script_send_email_body(BearSSL::WiFiClientSecure_light *client) {
+uint8_t msect=Run_Scripter(">m",-2,0);
+  if (msect==99) {
+    char line[128];
+    char tmp[128];
+    char *lp=glob_script_mem.section_ptr+2;
+    while (lp) {
+      while (*lp==SCRIPT_EOL) {
+       lp++;
+      }
+      if (!*lp || *lp=='#' || *lp=='>') {
+          break;
+      }
+      if (*lp!=';') {
+        // send this line to smtp
+        memcpy(line,lp,sizeof(line));
+        line[sizeof(line)-1]=0;
+        char *cp=line;
+        for (uint32_t i=0; i<sizeof(line); i++) {
+          if (!*cp || *cp=='\n' || *cp=='\r') {
+            *cp=0;
+            break;
+          }
+          cp++;
+        }
+        Replace_Cmd_Vars(line,tmp,sizeof(tmp));
+        client->println(tmp);
+      }
+      if (*lp==SCRIPT_EOL) {
+        lp++;
+      } else {
+        lp = strchr(lp, SCRIPT_EOL);
+        if (!lp) break;
+        lp++;
+      }
+    }
+  } else {
+    client->println("*");
+  }
+}
+#endif
 
 #ifdef USE_SCRIPT_JSON_EXPORT
 void ScriptJsonAppend(void) {
