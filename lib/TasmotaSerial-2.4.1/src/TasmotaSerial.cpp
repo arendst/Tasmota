@@ -158,7 +158,7 @@ bool TasmotaSerial::begin(long speed, int stop_bits) {
     m_bit_time = ESP.getCpuFreqMHz() * 1000000 / speed;
     m_bit_start_time = m_bit_time + m_bit_time/3 - (ESP.getCpuFreqMHz() > 120 ? 700 : 500); // pre-compute first wait
     m_high_speed = (speed >= 9600);
-    m_very_high_speed = (speed >= 100000);
+    m_very_high_speed = (speed >= 50000);
   }
   return m_valid;
 }
