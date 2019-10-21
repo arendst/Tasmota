@@ -144,6 +144,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_EXPRESSION        | - | - | - | - | - | - | - | - |
 | SUPPORT_IF_STATEMENT  | - | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |   |
+| Feature or Sensor     | minimal | basic | classic | sonoff | knx | sensors | ir | display | Remarks
 | ROTARY_V1             | - | - | - | - | - | - | - | - |
 | USE_SONOFF_RF         | - | - | - | x | x | x | - | - |
 | USE_RF_FLASH          | - | - | - | x | x | x | - | - |
@@ -245,7 +246,9 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_RF_SENSOR         | - | - | - | - | - | x | - | - | AlectoV2 only
 | USE_HRE               | - | - | - | - | - | x | - | - |
 | USE_A4988_STEPPER     | - | - | - | - | - | - | - | - |
+| USE_ARDUINO_SLAVE     | - | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |   |
+| Feature or Sensor     | minimal | basic | classic | sonoff | knx | sensors | ir | display | Remarks
 | USE_DISPLAY           | - | - | - | - | - | - | - | x |
 | USE_DISPLAY_LCD       | - | - | - | - | - | - | - | x |
 | USE_DISPLAY_SSD1306   | - | - | - | - | - | - | - | x |
