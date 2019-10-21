@@ -708,6 +708,10 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define SWITCH_MODE            TOGGLE            // TOGGLE, FOLLOW or FOLLOW_INV (the wall switch state)
 #endif
 
+#ifndef STARTING_OFFSET                          // NOVA SDS parameter used in settings
+#define STARTING_OFFSET      30
+#endif
+
 #ifndef MQTT_FINGERPRINT1
 // Set an all-zeros default fingerprint to activate auto-learning on first connection (AWS IoT)
 #define MQTT_FINGERPRINT1      "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
