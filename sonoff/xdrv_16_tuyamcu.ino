@@ -538,12 +538,10 @@ void TuyaSerialInput(void)
     else if ((Tuya.cmd_status == 3) && (Tuya.byte_counter == (6 + Tuya.data_len)) && (Tuya.cmd_checksum == serial_in_byte)) { // Compare checksum and process packet
       Tuya.buffer[Tuya.byte_counter++] = serial_in_byte;
 
-      snprintf_P(log_data, sizeof(log_data), PSTR("TYA: RX Packet: \""));
-      for (uint32_t i = 0; i < Tuya.byte_counter; i++) {
-        snprintf_P(log_data, sizeof(log_data), PSTR("%s%02x"), log_data, Tuya.buffer[i]);
-      }
-      snprintf_P(log_data, sizeof(log_data), PSTR("%s\""), log_data);
-      AddLog(LOG_LEVEL_DEBUG);
+      char hex_char[(Tuya.byte_counter * 2) + 2];
+      Response_P(PSTR("{\"" D_JSON_TUYA_MCU_RECEIVED "\":\"%s\"}"), ToHex_P((unsigned char*)Tuya.buffer, Tuya.byte_counter, hex_char, sizeof(hex_char)));
+      MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
+      XdrvRulesProcess();
 
       TuyaPacketProcess();
       Tuya.byte_counter = 0;
