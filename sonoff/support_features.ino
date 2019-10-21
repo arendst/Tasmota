@@ -477,8 +477,9 @@ void GetFeatures(void)
 #ifdef USE_EXS_DIMMER
   feature5 |= 0x00008000;  // xdrv_30_exs_dimmer.ino
 #endif
-
-//  feature5 |= 0x00010000;
+#ifdef USE_ARDUINO_SLAVE
+  feature5 |= 0x00010000;  // xdrv_31_arduino_slave.ino
+#endif
 //  feature5 |= 0x00020000;
 //  feature5 |= 0x00040000;
 //  feature5 |= 0x00080000;
