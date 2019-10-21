@@ -210,7 +210,8 @@ enum UserSelectablePins {
   GPIO_EXS_ENABLE,     // EXS MCU Enable
   GPIO_ARDUINO_TXD,    // Arduino Slave TX
   GPIO_ARDUINO_RXD,    // Arduino Slave RX
-  GPIO_ARDUINO_RESET,  // Arduino Reset Pin
+  GPIO_ARDUINO_RST,    // Arduino Reset Pin
+  GPIO_ARDUINO_RST_INV,  // Arduino Reset Pin inverted
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -289,7 +290,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DDSU666_TX "|" D_SENSOR_DDSU666_RX "|"
   D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
-  D_SENSOR_ARDUINO_TX "|" D_SENSOR_ARDUINO_RX "|" D_SENSOR_ARDUINO_RESET "|"
+  D_SENSOR_ARDUINO_TX "|" D_SENSOR_ARDUINO_RX "|" D_SENSOR_ARDUINO_RESET "|" D_SENSOR_ARDUINO_RESET "i|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -705,7 +706,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_ARDUINO_SLAVE
   GPIO_ARDUINO_TXD,    // Arduino Slave TX
   GPIO_ARDUINO_RXD,    // Arduino Slave RX
-  GPIO_ARDUINO_RESET,  // Arduino Reset Pin
+  GPIO_ARDUINO_RST,    // Arduino Reset Pin
+  GPIO_ARDUINO_RST_INV,  // Arduino Reset Pin inverted
 #endif
 #ifdef USE_RDM6300
   GPIO_RDM6300_RX,
