@@ -26,7 +26,7 @@
  * Based on:
  *   PZEM-003,017 docs Https://pan.baidu.com/s/1V9bDWj3RK2u6_fbBJ3GtqQ password rq37
  *
- * Hardware Serial will be selected if GPIO1 = [99 PZEM017 Rx] and GPIO3 = [62 PZEM0XX Tx]
+ * Hardware Serial will be selected if GPIO1 = [62 PZEM0XX Tx] and GPIO3 = [99 PZEM017 Rx]
 \*********************************************************************************************/
 
 #define XNRG_06                    6

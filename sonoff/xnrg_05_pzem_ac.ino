@@ -20,13 +20,14 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_PZEM_AC
 /*********************************************************************************************\
- * PZEM-014 - AC 220V 10A Energy
- * PZEM-016 - AC 220V 100A Energy
+ * PZEM-004T V3 - AC 220V 10/100A Energy
+ * PZEM-014     - AC 220V 10A Energy
+ * PZEM-016     - AC 220V 100A Energy
  *
  * Based on:
  *   PZEM-014,016 docs https://pan.baidu.com/s/1B0MdMgURyjtO1oQa2lavKw password ytkv
  *
- * Hardware Serial will be selected if GPIO1 = [98 PZEM016 Rx] and GPIO3 = [62 PZEM0XX Tx]
+ * Hardware Serial will be selected if GPIO1 = [62 PZEM0XX Tx] and GPIO3 = [98 PZEM016 Rx]
 \*********************************************************************************************/
 
 #define XNRG_05                    5

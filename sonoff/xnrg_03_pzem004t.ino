@@ -20,12 +20,12 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_PZEM004T
 /*********************************************************************************************\
- * PZEM004T - Energy
+ * PZEM-004T V1 and V2 - Energy
  *
  * Source: Victor Ferrer https://github.com/vicfergar/Sonoff-MQTT-OTA-Arduino
  * Based on: PZEM004T library https://github.com/olehs/PZEM004T
  *
- * Hardware Serial will be selected if GPIO1 = [63 PZEM004 Rx] and GPIO3 = [62 PZEM0XX Tx]
+ * Hardware Serial will be selected if GPIO1 = [62 PZEM0XX Tx] and GPIO3 = [63 PZEM004 Rx]
 \*********************************************************************************************/
 
 #define XNRG_03                  3
