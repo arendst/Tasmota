@@ -352,7 +352,7 @@ void EnergyMarginCheck(void)
       } else {
         Energy.mplh_counter--;
         if (!Energy.mplh_counter) {
-          ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "\":\"%d%s\"}"), energy_power_u, (Settings.flag.value_units) ? " " D_UNIT_WATT : "");
+          ResponseTime_P(PSTR(",\"" D_JSON_MAXPOWERREACHED "\":%d}"), energy_power_u);
           MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
           EnergyMqttShow();
           SetAllPower(POWER_ALL_OFF, SRC_MAXPOWER);
@@ -399,8 +399,9 @@ void EnergyMarginCheck(void)
     }
     else if ((1 == Energy.max_energy_state ) && (energy_daily_u >= Settings.energy_max_energy)) {
       Energy.max_energy_state  = 2;
-      dtostrfd(Energy.daily, 3, mqtt_data);
-      ResponseTime_P(PSTR(",\"" D_JSON_MAXENERGYREACHED "\":\"%s%s\"}"), mqtt_data, (Settings.flag.value_units) ? " " D_UNIT_KILOWATTHOUR : "");
+      char stemp[FLOATSZ];
+      dtostrfd(Energy.daily, 3, stemp);
+      ResponseTime_P(PSTR(",\"" D_JSON_MAXENERGYREACHED "\":%s}"), stemp);
       MqttPublishPrefixTopic_P(STAT, S_RSLT_WARNING);
       EnergyMqttShow();
       SetAllPower(POWER_ALL_OFF, SRC_MAXENERGY);
@@ -470,19 +471,10 @@ void EnergyEverySecond()
  * Commands
 \*********************************************************************************************/
 
-void EnergyCommandResponse(uint32_t nvalue, uint32_t unit)
+void EnergyCommandCalResponse(uint32_t nvalue)
 {
-  if (UNIT_MILLISECOND == unit) {
-    snprintf_P(XdrvMailbox.command, CMDSZ, PSTR("%sCal"), XdrvMailbox.command);
-    unit = UNIT_MICROSECOND;
-  }
-
-  if (Settings.flag.value_units) {
-    char sunit[CMDSZ];
-    Response_P(S_JSON_COMMAND_LVALUE_SPACE_UNIT, XdrvMailbox.command, nvalue, GetTextIndexed(sunit, sizeof(sunit), unit, kUnitNames));
-  } else {
-    Response_P(S_JSON_COMMAND_LVALUE, XdrvMailbox.command, nvalue);
-  }
+  snprintf_P(XdrvMailbox.command, CMDSZ, PSTR("%sCal"), XdrvMailbox.command);
+  ResponseCmndNumber(nvalue);
 }
 
 void CmndEnergyReset(void)
@@ -635,7 +627,7 @@ void CmndPowerCal(void)
     if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) {
       Settings.energy_power_calibration = XdrvMailbox.payload;
     }
-    EnergyCommandResponse(Settings.energy_power_calibration, UNIT_MICROSECOND);
+    ResponseCmndNumber(Settings.energy_power_calibration);
   }
 }
 
@@ -646,7 +638,7 @@ void CmndVoltageCal(void)
     if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) {
       Settings.energy_voltage_calibration = XdrvMailbox.payload;
     }
-    EnergyCommandResponse(Settings.energy_voltage_calibration, UNIT_MICROSECOND);
+    ResponseCmndNumber(Settings.energy_voltage_calibration);
   }
 }
 
@@ -657,7 +649,7 @@ void CmndCurrentCal(void)
     if ((XdrvMailbox.payload > 999) && (XdrvMailbox.payload < 32001)) {
       Settings.energy_current_calibration = XdrvMailbox.payload;
     }
-    EnergyCommandResponse(Settings.energy_current_calibration, UNIT_MICROSECOND);
+    ResponseCmndNumber(Settings.energy_current_calibration);
   }
 }
 
@@ -665,7 +657,7 @@ void CmndPowerSet(void)
 {
   Energy.command_code = CMND_POWERSET;
   if (XnrgCall(FUNC_COMMAND)) {  // Watt
-    EnergyCommandResponse(Settings.energy_power_calibration, UNIT_MILLISECOND);
+    EnergyCommandCalResponse(Settings.energy_power_calibration);
   }
 }
 
@@ -673,7 +665,7 @@ void CmndVoltageSet(void)
 {
   Energy.command_code = CMND_VOLTAGESET;
   if (XnrgCall(FUNC_COMMAND)) {  // Volt
-    EnergyCommandResponse(Settings.energy_voltage_calibration, UNIT_MILLISECOND);
+    EnergyCommandCalResponse(Settings.energy_voltage_calibration);
   }
 }
 
@@ -681,7 +673,7 @@ void CmndCurrentSet(void)
 {
   Energy.command_code = CMND_CURRENTSET;
   if (XnrgCall(FUNC_COMMAND)) {  // milliAmpere
-    EnergyCommandResponse(Settings.energy_current_calibration, UNIT_MILLISECOND);
+    EnergyCommandCalResponse(Settings.energy_current_calibration);
   }
 }
 
@@ -689,7 +681,7 @@ void CmndFrequencySet(void)
 {
   Energy.command_code = CMND_FREQUENCYSET;
   if (XnrgCall(FUNC_COMMAND)) {  // Hz
-    EnergyCommandResponse(Settings.energy_frequency_calibration, UNIT_MILLISECOND);
+    EnergyCommandCalResponse(Settings.energy_frequency_calibration);
   }
 }
 
@@ -709,7 +701,7 @@ void CmndPowerDelta(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 32000)) {
     Settings.energy_power_delta = XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_power_delta, (Settings.energy_power_delta < 101) ? UNIT_PERCENTAGE : UNIT_WATT);
+  ResponseCmndNumber(Settings.energy_power_delta);
 }
 
 void CmndPowerLow(void)
@@ -717,7 +709,7 @@ void CmndPowerLow(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
     Settings.energy_min_power = XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_min_power, UNIT_WATT);
+  ResponseCmndNumber(Settings.energy_min_power);
 }
 
 void CmndPowerHigh(void)
@@ -725,7 +717,7 @@ void CmndPowerHigh(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
     Settings.energy_max_power = XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_max_power, UNIT_WATT);
+  ResponseCmndNumber(Settings.energy_max_power);
 }
 
 void CmndVoltageLow(void)
@@ -733,7 +725,7 @@ void CmndVoltageLow(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 501)) {
     Settings.energy_min_voltage = XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_min_voltage, UNIT_VOLT);
+  ResponseCmndNumber(Settings.energy_min_voltage);
 }
 
 void CmndVoltageHigh(void)
@@ -741,7 +733,7 @@ void CmndVoltageHigh(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 501)) {
     Settings.energy_max_voltage = XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_max_voltage, UNIT_VOLT);
+  ResponseCmndNumber(Settings.energy_max_voltage);
 }
 
 void CmndCurrentLow(void)
@@ -749,7 +741,7 @@ void CmndCurrentLow(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 16001)) {
     Settings.energy_min_current = XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_min_current, UNIT_MILLIAMPERE);
+  ResponseCmndNumber(Settings.energy_min_current);
 }
 
 void CmndCurrentHigh(void)
@@ -757,7 +749,7 @@ void CmndCurrentHigh(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 16001)) {
     Settings.energy_max_current = XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_max_current, UNIT_MILLIAMPERE);
+  ResponseCmndNumber(Settings.energy_max_current);
 }
 
 #ifdef USE_ENERGY_POWER_LIMIT
@@ -766,7 +758,7 @@ void CmndMaxPower(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
     Settings.energy_max_power_limit = XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_max_power_limit, UNIT_WATT);
+  ResponseCmndNumber(Settings.energy_max_power_limit);
 }
 
 void CmndMaxPowerHold(void)
@@ -774,7 +766,7 @@ void CmndMaxPowerHold(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
     Settings.energy_max_power_limit_hold = (1 == XdrvMailbox.payload) ? MAX_POWER_HOLD : XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_max_power_limit_hold, UNIT_SECOND);
+  ResponseCmndNumber(Settings.energy_max_power_limit_hold);
 }
 
 void CmndMaxPowerWindow(void)
@@ -782,7 +774,7 @@ void CmndMaxPowerWindow(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
     Settings.energy_max_power_limit_window = (1 == XdrvMailbox.payload) ? MAX_POWER_WINDOW : XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_max_power_limit_window, UNIT_SECOND);
+  ResponseCmndNumber(Settings.energy_max_power_limit_window);
 }
 
 void CmndSafePower(void)
@@ -790,7 +782,7 @@ void CmndSafePower(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
     Settings.energy_max_power_safe_limit = XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_max_power_safe_limit, UNIT_WATT);
+  ResponseCmndNumber(Settings.energy_max_power_safe_limit);
 }
 
 void CmndSafePowerHold(void)
@@ -798,7 +790,7 @@ void CmndSafePowerHold(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 3601)) {
     Settings.energy_max_power_safe_limit_hold = (1 == XdrvMailbox.payload) ? SAFE_POWER_HOLD : XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_max_power_safe_limit_hold, UNIT_SECOND);
+  ResponseCmndNumber(Settings.energy_max_power_safe_limit_hold);
 }
 
 void CmndSafePowerWindow(void)
@@ -806,7 +798,7 @@ void CmndSafePowerWindow(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 1440)) {
     Settings.energy_max_power_safe_limit_window = (1 == XdrvMailbox.payload) ? SAFE_POWER_WINDOW : XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_max_power_safe_limit_window, UNIT_MINUTE);
+  ResponseCmndNumber(Settings.energy_max_power_safe_limit_window);
 }
 
 void CmndMaxEnergy(void)
@@ -815,7 +807,7 @@ void CmndMaxEnergy(void)
     Settings.energy_max_energy = XdrvMailbox.payload;
     Energy.max_energy_state  = 3;
   }
-  EnergyCommandResponse(Settings.energy_max_energy, UNIT_WATTHOUR);
+  ResponseCmndNumber(Settings.energy_max_energy);
 }
 
 void CmndMaxEnergyStart(void)
@@ -823,7 +815,7 @@ void CmndMaxEnergyStart(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload < 24)) {
     Settings.energy_max_energy_start = XdrvMailbox.payload;
   }
-  EnergyCommandResponse(Settings.energy_max_energy_start, UNIT_HOUR);
+  ResponseCmndNumber(Settings.energy_max_energy_start);
 }
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION

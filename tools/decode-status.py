@@ -53,7 +53,7 @@ a_on_off = ["OFF","ON "]
 a_setoption = [[
     "Save power state and use after restart",
     "Restrict button actions to single, double and hold",
-    "Show value units in JSON messages",
+    "(not used) Show value units in JSON messages",
     "MQTT enabled",
     "Respond as Command topic instead of RESULT",
     "MQTT retain on Power",

@@ -2,6 +2,7 @@
  * 6.6.0.21 20191022
  * Remove support for WPS and SmartConfig in favour of Web server (!) based WifiManager (#6680)
  * Remove binary sonoff-classic (#6680)
+ * Remove command SetOption2
  *
  * 6.6.0.20 20191018
  * Add command SetOption65 0/1 to disable (1) fast power cycle detection fixing unwanted brownout trigger

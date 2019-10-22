@@ -27,7 +27,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   struct {                                 // SetOption0 .. SetOption31
     uint32_t save_state : 1;               // bit 0              - SetOption0  - Save power state and use after restart
     uint32_t button_restrict : 1;          // bit 1              - SetOption1  - Control button multipress
-    uint32_t value_units : 1;              // bit 2              - SetOption2  - Add units to JSON status messages
+    uint32_t ex_value_units : 1;           // bit 2              - SetOption2  - Add units to JSON status messages - removed 6.6.0.21
     uint32_t mqtt_enabled : 1;             // bit 3              - SetOption3  - Control MQTT
     uint32_t mqtt_response : 1;            // bit 4              - SetOption4  - Switch between MQTT RESULT or COMMAND
     uint32_t mqtt_power_retain : 1;        // bit 5              - CMND_POWERRETAIN

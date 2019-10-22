@@ -495,7 +495,8 @@ void CmndSleep(void)
     sleep = XdrvMailbox.payload;
     WiFiSetSleepMode();
   }
-  Response_P(S_JSON_COMMAND_NVALUE_UNIT_NVALUE_UNIT, XdrvMailbox.command, sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "", Settings.sleep, (Settings.flag.value_units) ? " " D_UNIT_MILLISECOND : "");
+  Response_P(S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, XdrvMailbox.command, Settings.sleep, sleep);
+
 }
 
 void CmndUpgrade(void)
@@ -1306,7 +1307,7 @@ void CmndTeleperiod(void)
     if ((Settings.tele_period > 0) && (Settings.tele_period < 10)) Settings.tele_period = 10;   // Do not allow periods < 10 seconds
     tele_period = Settings.tele_period;
   }
-  Response_P(S_JSON_COMMAND_NVALUE_UNIT, XdrvMailbox.command, Settings.tele_period, (Settings.flag.value_units) ? " " D_UNIT_SECOND : "");
+  ResponseCmndNumber(Settings.tele_period);
 }
 
 void CmndReset(void)
