@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.3.0035'
+VER = '2.3.0036'
 
 """
     decode-config.py - Backup/Restore Sonoff-Tasmota configuration data
@@ -993,6 +993,7 @@ Setting_6_6_0_9.update              ({
                                     })
 # ======================================================================
 Setting_6_6_0_10 = copy.deepcopy(Setting_6_6_0_9)
+Setting_6_6_0_10['flag3'][0].pop('tuya_disable_dimmer',None)
 Setting_6_6_0_10.update             ({
     'cfg_timestamp':                ('<L',  0xFF8,       (None, None,                           (INTERNAL,      None)) ),
     'cfg_crc32':                    ('<L',  0xFFC,       (None, None,                           (INTERNAL,      None)), '"0x{:08x}".format($)' ),
@@ -1061,7 +1062,28 @@ Setting_6_6_0_15['flag3'][0].update ({
         'hardware_energy_total':    ('<L', (0x3A0,1,22), (None, None,                           ('SetOption',   '"SetOption72 {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_6_0_18 = copy.deepcopy(Setting_6_6_0_15)
+Setting_6_6_0_18['flag3'][0].pop('tuya_dimmer_range_255',None)
+Setting_6_6_0_18['flag3'][0].pop('tuya_dimmer_min_limit',None)
+Setting_6_6_0_18.pop('novasds_period',None)
+Setting_6_6_0_18.update             ({
+    'dimmer_hw_min':                ('<H',  0xE90,       (None, None,                           ('Light',       '"DimmerRange {},{}".format($,@["dimmer_hw_max"])')) ),
+    'dimmer_hw_max':                ('<H',  0xE92,       (None, None,                           ('Light',       None)) ),
+    'deepsleep':                    ('<H',  0xE94,       (None, '0 or 10 <= $ <= 86400',        ('Management',  '"DeepSleepTime {}".format($)')) ),
+    'novasds_startingoffset':       ('B',   0x73D,       (None, '1 <= $ <= 255',                ('Sensor',      '"Sensor20 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_6_6_0_20 = copy.deepcopy(Setting_6_6_0_18)
+Setting_6_6_0_20['flag3'][0].update ({
+        'fast_power_cycle_disable': ('<L', (0x3A0,1,15), (None, None,                           ('SetOption',   '"SetOption65 {}".format($)')) ),
+                                    })
+Setting_6_6_0_20.update             ({
+    'energy_power_delta':           ('<H',  0xE98,       (None, '0 <= $ < 32000',               ('Power',       '"PowerDelta {}".format($)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x6060014,0x1000, Setting_6_6_0_20),
+            (0x6060012,0x1000, Setting_6_6_0_18),
             (0x606000F,0x1000, Setting_6_6_0_15),
             (0x606000E,0x1000, Setting_6_6_0_14),
             (0x606000D,0x1000, Setting_6_6_0_13),
@@ -2717,7 +2739,7 @@ def Bin2Mapping(decode_cfg):
     if 'cfg_crc' in setting:
         valuemapping['header']['template'].update({'size': cfg_size})
     if 'cfg_crc32' in setting:
-        valuemapping['header']['template'].update({'crc32': cfg_crc32})
+        valuemapping['header']['template'].update({'crc32': hex(cfg_crc32)})
         valuemapping['header']['data'].update({'crc32': hex(GetSettingsCrc32(decode_cfg))})
     if 'version' in setting:
         valuemapping['header']['data'].update({'version': hex(cfg_version)})
