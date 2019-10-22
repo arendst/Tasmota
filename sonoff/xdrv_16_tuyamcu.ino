@@ -44,6 +44,7 @@
 
 #define TUYA_TYPE_BOOL         0x01
 #define TUYA_TYPE_VALUE        0x02
+#define TUYA_TYPE_STRING       0x03
 #define TUYA_TYPE_ENUM         0x04
 
 #define TUYA_BUFFER_SIZE       256
@@ -103,12 +104,55 @@ enum TuyaSupportedFunctions {
 };
 
 const char kTuyaCommand[] PROGMEM = "|"  // No prefix
-  D_CMND_TUYA_MCU;
+  D_CMND_TUYA_MCU "|" D_CMND_TUYA_MCU_SEND_STATE;
 
 void (* const TuyaCommand[])(void) PROGMEM = {
-  &CmndTuyaMcu
+  &CmndTuyaMcu, &CmndTuyaSend
 };
 
+/*
+
+TuyaSend<x> dpId,data
+
+TuyaSend1 11,1 -> Sends boolean (Type 1) data 0/1 to dpId 11 (Max data length 1 byte)
+TuyaSend2 11,100 -> Sends integer (Type 2) data 100 to dpId 11 (Max data length 4 bytes)
+TuyaSend2 11,0xAABBCCDD -> Sends 4 bytes (Type 2) data to dpId 11 (Max data length 4 bytes)
+TuyaSend3 11,ThisIsTheData -> Sends the supplied string (Type 3) to dpId 11 ( Max data length not-known)
+TuyaSend4 11,1 -> Sends enum (Type 4) data 0/1/2/3/4/5 to dpId 11 (Max data length 1 bytes)
+
+*/
+
+
+void CmndTuyaSend(void) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
+    if (XdrvMailbox.data_len > 0) {
+
+      char *p;
+      char *data;
+      uint8_t i = 0;
+      uint8_t dpId = 0;
+      for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 2; str = strtok_r(nullptr, ", ", &p)) {
+        if ( i == 0) {
+          dpId = strtoul(str, nullptr, 0);
+        } else {
+          data = str;
+        }
+        i++;
+      }
+
+      if (1 == XdrvMailbox.index) {
+        TuyaSendBool(dpId, strtoul(data, nullptr, 0));
+      } else if (2 == XdrvMailbox.index) {
+        TuyaSendValue(dpId, strtoull(data, nullptr, 0));
+      } else if (3 == XdrvMailbox.index) {
+        TuyaSendString(dpId, data);
+      } else if (4 == XdrvMailbox.index) {
+        TuyaSendEnum(dpId, strtoul(data, nullptr, 0));
+      }
+    }
+    ResponseCmndDone();
+  }
+}
 
 /*
 
@@ -252,6 +296,7 @@ void TuyaSendState(uint8_t id, uint8_t type, uint8_t* value)
   payload_buffer[1] = type;
   switch (type) {
     case TUYA_TYPE_BOOL:
+    case TUYA_TYPE_ENUM:
       payload_len += 1;
       payload_buffer[2] = 0x00;
       payload_buffer[3] = 0x01;
@@ -266,6 +311,7 @@ void TuyaSendState(uint8_t id, uint8_t type, uint8_t* value)
       payload_buffer[6] = value[1];
       payload_buffer[7] = value[0];
       break;
+
   }
 
   TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, payload_len);
@@ -279,6 +325,28 @@ void TuyaSendBool(uint8_t id, bool value)
 void TuyaSendValue(uint8_t id, uint32_t value)
 {
   TuyaSendState(id, TUYA_TYPE_VALUE, (uint8_t*)(&value));
+}
+
+void TuyaSendEnum(uint8_t id, uint32_t value)
+{
+  TuyaSendState(id, TUYA_TYPE_ENUM, (uint8_t*)(&value));
+}
+
+void TuyaSendString(uint8_t id, char data[]) {
+
+  uint16_t len = strlen(data);
+  uint16_t payload_len = 4 + len;
+  uint8_t payload_buffer[payload_len];
+  payload_buffer[0] = id;
+  payload_buffer[1] = TUYA_TYPE_STRING;
+  payload_buffer[2] = len >> 8;
+  payload_buffer[3] = len & 0xFF;
+
+  for (uint16_t i = 0; i < len; i++) {
+    payload_buffer[4+i] = data[i];
+  }
+
+  TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, payload_len);
 }
 
 bool TuyaSetPower(void)

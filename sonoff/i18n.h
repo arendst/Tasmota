@@ -452,6 +452,7 @@
 // Commands xdrv_16_tuyadimmer.ino
 
 #define D_CMND_TUYA_MCU "TuyaMCU"
+#define D_CMND_TUYA_MCU_SEND_STATE "TuyaSend"
 #define D_JSON_TUYA_MCU_RECEIVED "TuyaMcuReceived"
 
 // Commands xdrv_23_zigbee.ino
