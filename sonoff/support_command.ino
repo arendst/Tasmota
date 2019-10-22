@@ -1186,6 +1186,9 @@ void CmndWifiConfig(void)
 {
   char stemp1[TOPSZ];
   if ((XdrvMailbox.payload >= WIFI_RESTART) && (XdrvMailbox.payload < MAX_WIFI_OPTION)) {
+    if ((EX_WIFI_SMARTCONFIG == XdrvMailbox.payload) || (EX_WIFI_WPSCONFIG == XdrvMailbox.payload)) {
+      XdrvMailbox.payload = WIFI_MANAGER;
+    }
     Settings.sta_config = XdrvMailbox.payload;
     wifi_state_flag = Settings.sta_config;
     snprintf_P(stemp1, sizeof(stemp1), kWifiConfig[Settings.sta_config]);
