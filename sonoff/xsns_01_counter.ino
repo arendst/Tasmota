@@ -34,10 +34,13 @@ const char kCounterCommands[] PROGMEM = D_PRFX_COUNTER "|"  // Prefix
 void (* const CounterCommand[])(void) PROGMEM =
   { &CmndCounter, &CmndCounterType, &CmndCounterDebounce };
 
-unsigned long last_counter_timer[MAX_COUNTERS]; // Last counter time in micro seconds
-uint8_t counter_no_pullup = 0;              // Counter input pullup flag (1 = No pullup)
+struct COUNTER {
+  uint32_t timer[MAX_COUNTERS];  // Last counter time in micro seconds
+  uint8_t no_pullup = 0;         // Counter input pullup flag (1 = No pullup)
+  bool any_counter = false;
+} Counter;
 
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0       // Fix core 2.5.x ISR not in IRAM Exception
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0  // Fix core 2.5.x ISR not in IRAM Exception
 void CounterUpdate(uint8_t index) ICACHE_RAM_ATTR;
 void CounterUpdate1(void) ICACHE_RAM_ATTR;
 void CounterUpdate2(void) ICACHE_RAM_ATTR;
@@ -47,37 +50,36 @@ void CounterUpdate4(void) ICACHE_RAM_ATTR;
 
 void CounterUpdate(uint8_t index)
 {
-  unsigned long counter_debounce_time = micros() - last_counter_timer[index -1];
-  if (counter_debounce_time > Settings.pulse_counter_debounce * 1000) {
-    last_counter_timer[index -1] = micros();
-    if (bitRead(Settings.pulse_counter_type, index -1)) {
-      RtcSettings.pulse_counter[index -1] = counter_debounce_time;
+  uint32_t time = micros();
+  uint32_t debounce_time = time - Counter.timer[index];
+  if (debounce_time > Settings.pulse_counter_debounce * 1000) {
+    Counter.timer[index] = time;
+    if (bitRead(Settings.pulse_counter_type, index)) {
+      RtcSettings.pulse_counter[index] = debounce_time;
     } else {
-      RtcSettings.pulse_counter[index -1]++;
+      RtcSettings.pulse_counter[index]++;
     }
-
-//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CNTR: Interrupt %d"), index);
   }
 }
 
 void CounterUpdate1(void)
 {
-  CounterUpdate(1);
+  CounterUpdate(0);
 }
 
 void CounterUpdate2(void)
 {
-  CounterUpdate(2);
+  CounterUpdate(1);
 }
 
 void CounterUpdate3(void)
 {
-  CounterUpdate(3);
+  CounterUpdate(2);
 }
 
 void CounterUpdate4(void)
 {
-  CounterUpdate(4);
+  CounterUpdate(3);
 }
 
 /********************************************************************************************/
@@ -85,7 +87,7 @@ void CounterUpdate4(void)
 bool CounterPinState(void)
 {
   if ((XdrvMailbox.index >= GPIO_CNTR1_NP) && (XdrvMailbox.index < (GPIO_CNTR1_NP + MAX_COUNTERS))) {
-    bitSet(counter_no_pullup, XdrvMailbox.index - GPIO_CNTR1_NP);
+    bitSet(Counter.no_pullup, XdrvMailbox.index - GPIO_CNTR1_NP);
     XdrvMailbox.index -= (GPIO_CNTR1_NP - GPIO_CNTR1);
     return true;
   }
@@ -99,8 +101,23 @@ void CounterInit(void)
 
   for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
     if (pin[GPIO_CNTR1 +i] < 99) {
-      pinMode(pin[GPIO_CNTR1 +i], bitRead(counter_no_pullup, i) ? INPUT : INPUT_PULLUP);
+      Counter.any_counter = true;
+      pinMode(pin[GPIO_CNTR1 +i], bitRead(Counter.no_pullup, i) ? INPUT : INPUT_PULLUP);
       attachInterrupt(pin[GPIO_CNTR1 +i], counter_callbacks[i], FALLING);
+    }
+  }
+}
+
+void CounterEverySecond(void)
+{
+  for (uint32_t i = 0; i < MAX_COUNTERS; i++) {
+    if (pin[GPIO_CNTR1 +i] < 99) {
+      if (bitRead(Settings.pulse_counter_type, i)) {
+        uint32_t time = micros() - Counter.timer[i];
+        if (time > 4200000000) {  // 70 minutes
+          RtcSettings.pulse_counter[i] = 4200000000;  // Set Timer to max in case of no more interrupts due to stall of measured device
+        }
+      }
     }
   }
 }
@@ -146,9 +163,6 @@ void CounterShow(bool json)
           i +1, counter, (bitRead(Settings.pulse_counter_type, i)) ? " " D_UNIT_SECOND : "");
 #endif  // USE_WEBSERVER
       }
-    }
-    if (bitRead(Settings.pulse_counter_type, i)) {
-      RtcSettings.pulse_counter[i] = 0xFFFFFFFF;  // Set Timer to max in case of no more interrupts due to stall of measured device
     }
   }
   if (header) {
@@ -204,28 +218,36 @@ bool Xsns01(uint8_t function)
 {
   bool result = false;
 
-  switch (function) {
-    case FUNC_JSON_APPEND:
-      CounterShow(1);
-      break;
+  if (Counter.any_counter) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        CounterEverySecond();
+        break;
+      case FUNC_JSON_APPEND:
+        CounterShow(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      CounterShow(0);
-      break;
+      case FUNC_WEB_SENSOR:
+        CounterShow(0);
+        break;
 #endif  // USE_WEBSERVER
-    case FUNC_SAVE_BEFORE_RESTART:
-    case FUNC_SAVE_AT_MIDNIGHT:
-      CounterSaveState();
-      break;
-    case FUNC_COMMAND:
-      result = DecodeCommand(kCounterCommands, CounterCommand);
-      break;
-    case FUNC_INIT:
-      CounterInit();
-      break;
-    case FUNC_PIN_STATE:
-      result = CounterPinState();
-      break;
+      case FUNC_SAVE_BEFORE_RESTART:
+      case FUNC_SAVE_AT_MIDNIGHT:
+        CounterSaveState();
+        break;
+      case FUNC_COMMAND:
+        result = DecodeCommand(kCounterCommands, CounterCommand);
+        break;
+    }
+  } else {
+    switch (function) {
+      case FUNC_INIT:
+        CounterInit();
+        break;
+      case FUNC_PIN_STATE:
+        result = CounterPinState();
+        break;
+    }
   }
   return result;
 }
