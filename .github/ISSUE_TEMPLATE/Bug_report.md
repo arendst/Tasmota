@@ -8,7 +8,8 @@ about: Create a report to help us improve
 > This BUG issue template is meant to REPORT Tasmota software BUGS ONLY>
 >  
 > Please DO NOT OPEN AN ISSUE:
->  - If your Tasmota version is not the latest from the development branch, please update your device before submitting your issue. Your problem might already be solved. The latest precompiled binaries of Tasmota can be downloaded from http://thehackbox.org/tasmota/  
+>  - If your Tasmota version is not the latest from the development branch, please update your device before submitting your issue. Your problem might already be solved. The latest precompiled binaries of Tasmota can be downloaded from http://thehackbox.org/tasmota/ 
+>  - If you have a issue when flashing was done via Tuya Convert  
 >  - If your issue is a flashing issue, please address it to the [Tasmota Support Chat](https://discord.gg/Ks2Kzd4)  
 >  - If your issue is compilation problem, please address it to the [Tasmota Support Chat](https://discord.gg/Ks2Kzd4)  
 >  - If your issue has been addressed before (i.e., duplicated issue), please ask in the original issue  
