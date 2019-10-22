@@ -47,6 +47,9 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
 #endif
   &CmndSensor, &CmndDriver };
 
+const char kWifiConfig[] PROGMEM =
+  D_WCFG_0_RESTART "||" D_WCFG_2_WIFIMANAGER "||" D_WCFG_4_RETRY "|" D_WCFG_5_WAIT "|" D_WCFG_6_SERIAL "|" D_WCFG_7_WIFIMANAGER_RESET_ONLY;
+
 /********************************************************************************************/
 
 void ResponseCmndNumber(int value)
@@ -1184,23 +1187,18 @@ void CmndHostname(void)
 
 void CmndWifiConfig(void)
 {
-  char stemp1[TOPSZ];
   if ((XdrvMailbox.payload >= WIFI_RESTART) && (XdrvMailbox.payload < MAX_WIFI_OPTION)) {
     if ((EX_WIFI_SMARTCONFIG == XdrvMailbox.payload) || (EX_WIFI_WPSCONFIG == XdrvMailbox.payload)) {
       XdrvMailbox.payload = WIFI_MANAGER;
     }
     Settings.sta_config = XdrvMailbox.payload;
     wifi_state_flag = Settings.sta_config;
-    snprintf_P(stemp1, sizeof(stemp1), kWifiConfig[Settings.sta_config]);
-    Response_P(PSTR("{\"" D_CMND_WIFICONFIG "\":\"%s " D_JSON_SELECTED "\"}"), stemp1);
     if (WifiState() > WIFI_RESTART) {
-//          ResponseAppend_P(PSTR(" after restart"));
       restart_flag = 2;
     }
-  } else {
-    snprintf_P(stemp1, sizeof(stemp1), kWifiConfig[Settings.sta_config]);
-    Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings.sta_config, stemp1);
   }
+  char stemp1[TOPSZ];
+  Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings.sta_config, GetTextIndexed(stemp1, sizeof(stemp1), Settings.sta_config, kWifiConfig));
 }
 
 void CmndFriendlyname(void)
