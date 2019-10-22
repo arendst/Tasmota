@@ -575,11 +575,7 @@ void TuyaSetWifiLed(void)
 {
   uint8_t wifi_state = 0x02;
   switch(WifiState()){
-    case WIFI_SMARTCONFIG:
-      wifi_state = 0x00;
-      break;
     case WIFI_MANAGER:
-    case WIFI_WPSCONFIG:
       wifi_state = 0x01;
       break;
     case WIFI_RESTART:

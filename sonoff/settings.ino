@@ -1213,6 +1213,11 @@ void SettingsDelta(void)
       Settings.energy_power_delta = Settings.ex_energy_power_delta;
       Settings.ex_energy_power_delta = 0;
     }
+    if (Settings.version < 0x06060015) {
+      if ((EX_WIFI_SMARTCONFIG == Settings.sta_config) || (EX_WIFI_WPSCONFIG == Settings.sta_config)) {
+        Settings.sta_config = WIFI_MANAGER;
+      }
+    }
 
     Settings.version = VERSION;
     SettingsSave(1);

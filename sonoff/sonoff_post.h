@@ -24,18 +24,17 @@
  * Function declarations
 \*********************************************************************************************/
 
+/*
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "user_interface.h"
 
-// Function prototypes
-void WifiWpsStatusCallback(wps_cb_status status);
-
 #ifdef __cplusplus
 }
 #endif
+*/
 
 //#ifdef USE_KNX  // Enabling this will fail compilation. It has no impact if not used. (20180417)
 #include <esp-knx-ip.h>
@@ -81,7 +80,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #ifdef FIRMWARE_SENSORS
 
 #undef CODE_IMAGE
-#define CODE_IMAGE 3
+#define CODE_IMAGE 2
 
 #undef USE_DISCOVERY                             // Disable mDNS (+8k code or +23.5k code with core 2_5_x, +0.3k mem)
 
@@ -218,108 +217,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
- * [sonoff-classic.bin]
- * Provide an image close to version 5.12.0 but still within 499k program space to allow one time OTA
-\*********************************************************************************************/
-
-#ifdef FIRMWARE_CLASSIC
-
-#undef CODE_IMAGE
-#define CODE_IMAGE 2
-
-#define USE_ADC_VCC                              // Display Vcc in Power status. Disable for use as Analog input on selected devices
-#ifndef USE_WPS
-#define USE_WPS                                  // Add support for WPS as initial wifi configuration tool (+33k code, 1k mem (5k mem with core v2.4.2+))
-#endif
-#ifndef USE_SMARTCONFIG
-#define USE_SMARTCONFIG                          // Add support for Wifi SmartConfig as initial wifi configuration tool (+23k code, +0.6k mem)
-#endif
-#undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
-//#undef USE_DOMOTICZ                              // Disable Domoticz
-#undef USE_HOME_ASSISTANT                        // Disable Home Assistant
-#undef USE_KNX                                   // Disable KNX IP Protocol Support
-#undef USE_CUSTOM                                // Disable Custom features
-#undef USE_TIMERS                                // Disable support for up to 16 timers
-#undef USE_TIMERS_WEB                            // Disable support for timer webpage
-#undef USE_SUNRISE                               // Disable support for Sunrise and sunset tools
-#undef USE_RULES                                 // Disable support for rules
-#undef USE_SCRIPT                                // Disable support for script (+17k code)
-
-// -- Optional modules ----------------------------
-#undef ROTARY_V1                                 // Disable support for MI Desk Lamp
-#undef USE_SONOFF_RF                             // Disable support for Sonoff Rf Bridge (+3k2 code)
-  #undef USE_RF_FLASH                            // Disable support for flashing the EFM8BB1 chip on the Sonoff RF Bridge. C2CK must be connected to GPIO4, C2D to GPIO5 on the PCB
-#undef USE_SONOFF_SC                             // Disable support for Sonoff Sc (+1k1 code)
-#undef USE_TUYA_MCU                              // Disable support for Tuya Serial MCU
-#undef USE_ARMTRONIX_DIMMERS                     // Disable support for Armtronix Dimmers (+1k4 code)
-#undef USE_PS_16_DZ                              // Disable support for PS-16-DZ Dimmer and Sonoff L1 (+2k code)
-#undef USE_SONOFF_IFAN                           // Disable support for Sonoff iFan02 and iFan03 (+2k code)
-#undef USE_BUZZER                                // Disable support for a buzzer (+0k6 code)
-#undef USE_ARILUX_RF                             // Disable support for Arilux RF remote controller
-#undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
-#undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
-#undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
-
-// -- Optional light modules ----------------------
-//#undef USE_LIGHT                                 // Disable Dimmer/Light support
-#define USE_WS2812                               // WS2812 Led string using library NeoPixelBus (+5k code, +1k mem, 232 iram) - Disable by //
-//  #define USE_WS2812_DMA                         // DMA supports only GPIO03 (= Serial RXD) (+1k mem). When USE_WS2812_DMA is enabled expect Exceptions on Pow
-  #define USE_WS2812_HARDWARE  NEO_HW_WS2812     // Hardware type (NEO_HW_WS2812, NEO_HW_WS2812X, NEO_HW_WS2813, NEO_HW_SK6812, NEO_HW_LC8812, NEO_HW_APA106)
-  #define USE_WS2812_CTYPE     NEO_GRB           // Color type (NEO_RGB, NEO_GRB, NEO_BRG, NEO_RBG, NEO_RGBW, NEO_GRBW)
-#undef USE_MY92X1                                // Disable support for MY92X1 RGBCW led controller as used in Sonoff B1, Ailight and Lohas
-#undef USE_SM16716                               // Disable support for SM16716 RGB LED controller (+0k7 code)
-#undef USE_SM2135                                // Disable support for SM2135 RGBCW led control as used in Action LSC (+0k6 code)
-#undef USE_SONOFF_L1                             // Disable support for Sonoff L1 led control
-
-#undef USE_COUNTER                               // Disable counters
-#define USE_DS18x20                              // Add support for DS18x20 sensors with id sort, single scan and read retry (+2k6 code)
-#undef USE_I2C                                   // Disable all I2C sensors
-#undef USE_SPI                                   // Disable all SPI devices
-
-#undef USE_MHZ19                                 // Disable support for MH-Z19 CO2 sensor
-#undef USE_SENSEAIR                              // Disable support for SenseAir K30, K70 and S8 CO2 sensor
-#undef USE_PMS5003                               // Disable support for PMS5003 and PMS7003 particle concentration sensor
-#undef USE_NOVA_SDS                              // Disable support for SDS011 and SDS021 particle concentration sensor
-#undef USE_SERIAL_BRIDGE                         // Disable support for software Serial Bridge
-#undef USE_MP3_PLAYER                            // Disable DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
-#undef USE_AZ7798                                // Disable support for AZ-Instrument 7798 CO2 datalogger
-#undef USE_PN532_HSU                             // Disable support for PN532 using HSU (Serial) interface (+1k8 code, 140 bytes mem)
-#undef USE_RDM6300                               // Disable support for RDM6300 125kHz RFID Reader (+0k8)
-#undef USE_IBEACON                               // Disable support for bluetooth LE passive scan of ibeacon devices (uses HM17 module)
-
-//#undef USE_ENERGY_SENSOR                         // Disable energy sensors (-14k code)
-#undef USE_PZEM004T                              // Disable PZEM004T energy sensor
-#undef USE_PZEM_AC                               // Disable PZEM014,016 Energy monitor
-#undef USE_PZEM_DC                               // Disable PZEM003,017 Energy monitor
-#undef USE_MCP39F501                             // Disable support for MCP39F501 Energy monitor as used in Shelly 2 (+3k1 code)
-#undef USE_SDM120                                // Disable support for Eastron SDM120-Modbus energy meter
-#undef USE_SDM630                                // Disable support for Eastron SDM630-Modbus energy monitor (+0k6 code)
-#undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
-#undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
-#undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k1 code)
-
-#define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
-#undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
-#undef USE_MAX31865                              // Disable support for MAX31865 RTD sensors using softSPI
-#undef USE_IR_REMOTE                             // Disable IR remote commands using library IRremoteESP8266 and ArduinoJson
-#undef USE_IR_RECEIVE                            // Disable support for IR receiver
-
-#undef USE_ZIGBEE                                // Disable serial communication with Zigbee CC2530 flashed with ZNP
-
-#undef USE_SR04                                  // Disable support for for HC-SR04 ultrasonic devices
-#undef USE_TM1638                                // Disable support for TM1638 switches copying Switch1 .. Switch8
-#undef USE_HX711                                 // Disable support for HX711 load cell
-#undef USE_TX20_WIND_SENSOR                      // Disable support for La Crosse TX20 anemometer
-#undef USE_RC_SWITCH                             // Disable support for RF transceiver using library RcSwitch
-#undef USE_RF_SENSOR                             // Disable support for RF sensor receiver (434MHz or 868MHz) (+0k8 code)
-#undef USE_HRE                                   // Disable support for Badger HR-E Water Meter (+1k4 code)
-#undef USE_A4988_STEPPER                         // Disable support for A4988_Stepper
-#undef USE_ARDUINO_SLAVE                         // Disable support for Arduino Uno/Pro Mini via serial interface including flashing (+2k3 code, 44 mem)
-#undef DEBUG_THEO                                // Disable debug code
-#undef USE_DEBUG_DRIVER                          // Disable debug code
-#endif  // FIRMWARE_CLASSIC
-
-/*********************************************************************************************\
  * [sonoff-knx.bin]
  * Provide a dedicated KNX image allowing enough code and memory space
 \*********************************************************************************************/
@@ -327,7 +224,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #ifdef FIRMWARE_KNX_NO_EMULATION
 
 #undef CODE_IMAGE
-#define CODE_IMAGE 4
+#define CODE_IMAGE 3
 
 #ifndef USE_KNX
 #define USE_KNX                                  // Enable KNX IP Protocol Support (+23k code, +3k3 mem)
@@ -347,7 +244,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #ifdef FIRMWARE_DISPLAYS
 
 #undef CODE_IMAGE
-#define CODE_IMAGE 6
+#define CODE_IMAGE 5
 
 #undef USE_EMULATION                             // Disable Belkin WeMo and Hue Bridge emulation for Alexa (-16k code, -2k mem)
 #undef USE_EMULATION_HUE                         // Disable Hue Bridge emulation for Alexa (+14k code, +2k mem common)
@@ -411,7 +308,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #ifdef FIRMWARE_IR
 
 #undef CODE_IMAGE
-#define CODE_IMAGE 7
+#define CODE_IMAGE 6
 
 #undef USE_EMULATION
 #undef USE_EMULATION_HUE                         // Disable Hue emulation - only for lights and relays
@@ -501,13 +398,11 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #ifdef FIRMWARE_BASIC
 
 #undef CODE_IMAGE
-#define CODE_IMAGE 5
+#define CODE_IMAGE 4
 
 #undef APP_SLEEP
 #define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_BASIC
 
-#undef USE_WPS                                   // Disable support for WPS as initial wifi configuration tool
-#undef USE_SMARTCONFIG                           // Disable support for Wifi SmartConfig as initial wifi configuration tool
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
@@ -607,8 +502,6 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef CODE_IMAGE
 #define CODE_IMAGE 1
 
-#undef USE_WPS                                   // Disable support for WPS as initial wifi configuration tool
-#undef USE_SMARTCONFIG                           // Disable support for Wifi SmartConfig as initial wifi configuration tool
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #undef USE_DOMOTICZ                              // Disable Domoticz
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
@@ -701,9 +594,8 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
  * Mandatory defines satisfying possible disabled defines
 \*********************************************************************************************/
 
-#ifndef USE_WPS                                  // See https://github.com/esp8266/Arduino/pull/4889
+                                                 // See https://github.com/esp8266/Arduino/pull/4889
 #undef NO_EXTRA_4K_HEAP                          // Allocate 4k heap for WPS in ESP8166/Arduino core v2.4.2 (was always allocated in previous versions)
-#endif
 
 #ifndef USE_SONOFF_RF
 #undef USE_RF_FLASH                              // Disable RF firmware flash when SOnoff Rf is disabled
@@ -714,7 +606,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif
 
 #ifndef STARTING_OFFSET                          // NOVA SDS parameter used in settings
-#define STARTING_OFFSET      30
+#define STARTING_OFFSET        30
 #endif
 
 #ifndef MQTT_FINGERPRINT1

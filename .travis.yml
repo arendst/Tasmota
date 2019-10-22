@@ -16,7 +16,6 @@ env:
   - ENV=sonoff
   - ENV=sonoff-minimal
   - ENV=sonoff-basic
-  - ENV=sonoff-classic
   - ENV=sonoff-knx
   - ENV=sonoff-sensors
   - ENV=sonoff-display

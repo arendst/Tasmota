@@ -113,10 +113,10 @@ void GetFeatures(void)
   feature_drv1 |= 0x10000000;  // xdrv_11_knx.ino
 #endif
 #ifdef USE_WPS
-  feature_drv1 |= 0x20000000;  // support.ino
+  feature_drv1 |= 0x20000000;  // support.ino - removed with version 6.6.0.21
 #endif
 #ifdef USE_SMARTCONFIG
-  feature_drv1 |= 0x40000000;  // support.ino
+  feature_drv1 |= 0x40000000;  // support.ino - removed with version 6.6.0.21
 #endif
 #ifdef USE_ENERGY_POWER_LIMIT
   feature_drv1 |= 0x80000000;  // xdrv_03_energy.ino

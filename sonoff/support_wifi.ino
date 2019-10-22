@@ -45,7 +45,6 @@ struct WIFI {
   uint8_t retry_init;
   uint8_t retry;
   uint8_t status;
-  uint8_t wps_result;
   uint8_t config_type = 0;
   uint8_t config_counter = 0;
   uint8_t mdns_begun = 0;                  // mDNS active
@@ -75,46 +74,9 @@ bool WifiConfigCounter(void)
   return (Wifi.config_counter);
 }
 
-extern "C" {
-#include "user_interface.h"
-}
-
-void WifiWpsStatusCallback(wps_cb_status status);
-
-void WifiWpsStatusCallback(wps_cb_status status)
-{
-/* from user_interface.h:
-  enum wps_cb_status {
-    WPS_CB_ST_SUCCESS = 0,
-    WPS_CB_ST_FAILED,
-    WPS_CB_ST_TIMEOUT,
-    WPS_CB_ST_WEP,      // WPS failed because that WEP is not supported
-    WPS_CB_ST_SCAN_ERR, // can not find the target WPS AP
-  };
-*/
-  Wifi.wps_result = status;
-  if (WPS_CB_ST_SUCCESS == Wifi.wps_result) {
-    wifi_wps_disable();
-  } else {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WPS_FAILED_WITH_STATUS " %d"), Wifi.wps_result);
-    Wifi.config_counter = 2;
-  }
-}
-
-bool WifiWpsConfigDone(void)
-{
-  return (!Wifi.wps_result);
-}
-
-bool WifiWpsConfigBegin(void)
-{
-  Wifi.wps_result = 99;
-  if (!wifi_wps_disable()) { return false; }
-  if (!wifi_wps_enable(WPS_TYPE_PBC)) { return false; }  // so far only WPS_TYPE_PBC is supported (SDK 2.0.0)
-  if (!wifi_set_wps_cb((wps_st_cb_t) &WifiWpsStatusCallback)) { return false; }
-  if (!wifi_wps_start()) { return false; }
-  return true;
-}
+//extern "C" {
+//#include "user_interface.h"
+//}
 
 void WifiConfig(uint8_t type)
 {
@@ -126,15 +88,11 @@ void WifiConfig(uint8_t type)
     WiFi.disconnect();                       // Solve possible Wifi hangs
     Wifi.config_type = type;
 
-#ifndef USE_WPS
-    if (WIFI_WPSCONFIG == Wifi.config_type) { Wifi.config_type = WIFI_MANAGER; }
-#endif  // USE_WPS
 #ifndef USE_WEBSERVER
-    if (WIFI_MANAGER == Wifi.config_type) { Wifi.config_type = WIFI_SMARTCONFIG; }
+    if (WIFI_MANAGER == Wifi.config_type) {
+      Wifi.config_type = WIFI_SERIAL;
+    }
 #endif  // USE_WEBSERVER
-#ifndef USE_SMARTCONFIG
-    if (WIFI_SMARTCONFIG == Wifi.config_type) { Wifi.config_type = WIFI_SERIAL; }
-#endif  // USE_SMARTCONFIG
 
     Wifi.config_counter = WIFI_CONFIG_SEC;   // Allow up to WIFI_CONFIG_SECS seconds for phone to provide ssid/pswd
     Wifi.counter = Wifi.config_counter +5;
@@ -145,23 +103,6 @@ void WifiConfig(uint8_t type)
     else if (WIFI_SERIAL == Wifi.config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_6_SERIAL " " D_ACTIVE_FOR_3_MINUTES));
     }
-#ifdef USE_SMARTCONFIG
-    else if (WIFI_SMARTCONFIG == Wifi.config_type) {
-      AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_1_SMARTCONFIG " " D_ACTIVE_FOR_3_MINUTES));
-      WiFi.mode(WIFI_STA);      // Disable AP mode
-      WiFi.beginSmartConfig();
-    }
-#endif  // USE_SMARTCONFIG
-#ifdef USE_WPS
-    else if (WIFI_WPSCONFIG == Wifi.config_type) {
-      if (WifiWpsConfigBegin()) {
-        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG " " D_ACTIVE_FOR_3_MINUTES));
-      } else {
-        AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_3_WPSCONFIG " " D_FAILED_TO_START));
-        Wifi.config_counter = 3;
-      }
-    }
-#endif  // USE_WPS
 #ifdef USE_WEBSERVER
     else if (WIFI_MANAGER == Wifi.config_type || WIFI_MANAGER_RESET_ONLY == Wifi.config_type) {
       AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_WCFG_2_WIFIMANAGER " " D_ACTIVE_FOR_3_MINUTES));
@@ -452,7 +393,7 @@ void WifiCheckIp(void)
           AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
         } else {
           if (('\0' == Settings.sta_ssid[0][0]) && ('\0' == Settings.sta_ssid[1][0])) {
-            wifi_config_tool = WIFI_CONFIG_NO_SSID;    // Skip empty SSIDs and start Wifi config tool
+            wifi_config_tool = WIFI_MANAGER;  // Skip empty SSIDs and start Wifi config tool
             Wifi.retry = 0;
           } else {
             AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_ATTEMPTING_CONNECTION));
@@ -487,9 +428,7 @@ void WifiCheck(uint8_t param)
   Wifi.counter--;
   switch (param) {
   case WIFI_SERIAL:
-  case WIFI_SMARTCONFIG:
   case WIFI_MANAGER:
-  case WIFI_WPSCONFIG:
     WifiConfig(param);
     break;
   default:
@@ -497,16 +436,6 @@ void WifiCheck(uint8_t param)
       Wifi.config_counter--;
       Wifi.counter = Wifi.config_counter +5;
       if (Wifi.config_counter) {
-#ifdef USE_SMARTCONFIG
-        if ((WIFI_SMARTCONFIG == Wifi.config_type) && WiFi.smartConfigDone()) {
-          Wifi.config_counter = 0;
-        }
-#endif  // USE_SMARTCONFIG
-#ifdef USE_WPS
-        if ((WIFI_WPSCONFIG == Wifi.config_type) && WifiWpsConfigDone()) {
-          Wifi.config_counter = 0;
-        }
-#endif  // USE_WPS
         if (!Wifi.config_counter) {
           if (strlen(WiFi.SSID().c_str())) {
             strlcpy(Settings.sta_ssid[0], WiFi.SSID().c_str(), sizeof(Settings.sta_ssid[0]));
@@ -515,13 +444,10 @@ void WifiCheck(uint8_t param)
             strlcpy(Settings.sta_pwd[0], WiFi.psk().c_str(), sizeof(Settings.sta_pwd[0]));
           }
           Settings.sta_active = 0;
-          AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_1_SMARTCONFIG D_CMND_SSID "1 %s"), Settings.sta_ssid[0]);
+          AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER D_CMND_SSID "1 %s"), Settings.sta_ssid[0]);
         }
       }
       if (!Wifi.config_counter) {
-#ifdef USE_SMARTCONFIG
-        if (WIFI_SMARTCONFIG == Wifi.config_type) { WiFi.stopSmartConfig(); }
-#endif  // USE_SMARTCONFIG
 //        SettingsSdkErase();  //  Disabled v6.1.0b due to possible bad wifi connects
         restart_flag = 2;
       }

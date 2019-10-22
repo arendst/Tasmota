@@ -258,9 +258,7 @@
 #define D_CMND_WIFICONFIG "WifiConfig"
   #define WCFG_MAX_STRING_LENGTH 12
   #define D_WCFG_0_RESTART "Restart"
-  #define D_WCFG_1_SMARTCONFIG "SmartConfig"
   #define D_WCFG_2_WIFIMANAGER "WifiManager"
-  #define D_WCFG_3_WPSCONFIG "WPSConfig"
   #define D_WCFG_4_RETRY "Retry"
   #define D_WCFG_5_WAIT "Wait"
   #define D_WCFG_6_SERIAL "Serial"
@@ -599,16 +597,16 @@ const char S_OFFLINE[] PROGMEM = D_OFFLINE;
 // sonoff.ino
 #define MAX_BUTTON_COMMANDS  5  // Max number of button commands supported
 const char kCommands[MAX_BUTTON_COMMANDS][14] PROGMEM = {
-  D_CMND_WIFICONFIG " 1",   // Press button three times
+  D_CMND_WIFICONFIG " 2",   // Press button three times
   D_CMND_WIFICONFIG " 2",   // Press button four times
-  D_CMND_WIFICONFIG " 3",   // Press button five times
+  D_CMND_WIFICONFIG " 2",   // Press button five times
   D_CMND_RESTART " 1",      // Press button six times
   D_CMND_UPGRADE " 1" };    // Press button seven times
 const char kWifiConfig[MAX_WIFI_OPTION][WCFG_MAX_STRING_LENGTH] PROGMEM = {
   D_WCFG_0_RESTART,
-  D_WCFG_1_SMARTCONFIG,
   D_WCFG_2_WIFIMANAGER,
-  D_WCFG_3_WPSCONFIG,
+  D_WCFG_2_WIFIMANAGER,
+  D_WCFG_2_WIFIMANAGER,
   D_WCFG_4_RETRY,
   D_WCFG_5_WAIT,
   D_WCFG_6_SERIAL,
@@ -618,7 +616,7 @@ const char kPrefixes[3][PRFX_MAX_STRING_LENGTH] PROGMEM = {
   D_STAT,
   D_TELE };
 
-const char kCodeImage[] PROGMEM = "sonoff|minimal|classic|sensors|knx|basic|display|ir";
+const char kCodeImage[] PROGMEM = "sonoff|minimal|sensors|knx|basic|display|ir";
 
 // support.ino
 static const char kMonthNames[] = D_MONTH3LIST;
