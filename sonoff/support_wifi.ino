@@ -74,10 +74,6 @@ bool WifiConfigCounter(void)
   return (Wifi.config_counter);
 }
 
-//extern "C" {
-//#include "user_interface.h"
-//}
-
 void WifiConfig(uint8_t type)
 {
   if (!Wifi.config_type) {
