@@ -24,7 +24,6 @@
  * Function declarations
 \*********************************************************************************************/
 
-/*
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,7 +33,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-*/
 
 //#ifdef USE_KNX  // Enabling this will fail compilation. It has no impact if not used. (20180417)
 #include <esp-knx-ip.h>
