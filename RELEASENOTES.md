@@ -99,6 +99,8 @@ Module            | Description
 71 Sonoff iFan03  | Sonoff iFan03 Wifi Smart Ceiling Fan with Light
 72 EXS Dimmer     | EXS Wifi Dimmer v4
 
+Over 500 additional devices are supported using [templates](TEMPLATES.md).
+
 ## Provided Binary Downloads
 The following binary downloads have been compiled with ESP8266/Arduino library core version **pre-2.6.0**.
 
@@ -257,5 +259,120 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_DISPLAY_RA8876    | - | - | - | - | - | - | - |
 
 ## Changelog
-Version 6.7.0 20191101
- * TBS
+Version 6.7.0 20191025
+ * Remove support for WPS and SmartConfig in favour of Web server (!) based WifiManager (#6680)
+ * Remove binary sonoff-classic (#6680)
+ * Remove command ``SetOption2``
+ * Remove default DS18B20 driver and only support define **USE_DS18x20** (#6647)
+ * Remove support for define **USE_DS18x20_LEGACY** and legacy DS18x20 driver (#6486)
+ * Replace xsns_23_sdm120 with xnrg_08_sdm120
+ * Replace xsns_25_sdm630 with xnrg_10_sdm630
+ * Replace xsns_49_solaxX1 with xnrg_12_solaxX1 (#6677)
+ * Change Sonoff L1 support by adding define **USE_SONOFF_L1**
+ * Change light drivers internals to ease management
+ * Change command ``PulseTime`` JSON message format and allow display of all pulsetimer information (#6519)
+ * Change command ``SetOption43`` to make it more general. Now supports PS_16_DZ driver too (#6544)
+ * Change command handling by moving buffers up in chain solving ``MQTTlog`` support (#6529)
+ * Change commands ``Var`` and ``Mem`` to show all parameters when no index is given (#6107)
+ * Change detection of non-MQTT commands by allowing non-space characters as delimiter (#6540)
+ * Change rename "Data" to "Hash" and limit to 32 bits when receiving UNKNOWN IR protocol (see DECODE_HASH from IRremoteESP8266)
+ * Change JSON output format for commands ``Adc``, ``Adcs``, ``Modules``, ``Gpio`` and ``Gpios`` from list to dictionary (#6407)
+ * Change energy sensors for three phase/channel support
+ * Change Settings crc calculation allowing short term backward compatibility
+ * Change Improve reliability of TasmotaSerial at 115200 bauds and reduce IRAM usage
+ * Change Tuya support by Shantur Rathore removing commands ``SetOption34, 41, 44, 45, 46 and 65`` (#6353)
+ * Change theoretical baudrate range to 300..19660500 bps in 300 increments (#6294)
+ * Change Settings area to 4k for future use
+ * Change some table locations from RAM to Flash
+ * Change filename of configuration backup from using FriendlyName1 to Hostname solving diacritic issues (#2422)
+ * Change Store AWS IoT Private Key and Certificate in SPI Flash avoiding device-specific compilations
+ * Change defines **USE_TX20_WIND_SENSOR** and **USE_RC_SWITCH** in my_user_config.h to disable to lower iram usage enabling latest core compilation (#6060, #6062)
+ * Fix handling of ligth channels when pwm_multichannel (``SetOption68``) is enabled
+ * Fix better handling of PWM White Temperature mode for Module 48 (#6534)
+ * Fix TasmotaSerial: move serial send to IRAM for high speed baud rates
+ * Fix Domoticz battery level set to 100 if define **USE_ADC_VCC** is not used (#6033)
+ * Fix Force Elliptic Curve for Letsencrypt TLS #6042
+ * Fix WeMo emulation for 1G echo and 2G echo dot (#6086)
+ * Fix Xiaomi Philips brightness (#6091)
+ * Add support for EX-Store WiFi Dimmer V4 (#5856)
+ * Add support for Arduino serial connection (EXPERIMENTAL)
+ * Add support for Zigbee devices Xiaomi lumi.weather air quality sensor, Osram mini-switch
+ * Add support for Zigbee device cc2530 initialization and basic ZCL decoding
+ * Add support for PMS3003 dust particle sensor
+ * Add support for Chint DDSU666 Modbus energy meter by Pablo Zerón
+ * Add support for SM2135 as used in Action LSC Smart Led E14 (#6495)
+ * Add support for Shelly 2.5 dual energy (#6160)
+ * Add support for shutters by Stefan Bode (#288)
+ * Add support for PCF8574 I2C I/O Expander (currently output only) by Stefan Bode
+ * Add support for up to three PZEM-014/-016 on one serial modbus connection with addresses 1 (default), 2 and 3 (#2315)
+ * Add support for up to three PZEM-004T on one serial connection with addresses 192.168.1.1 (default), 2 and 3 (#2315)
+ * Add support for up to three PZEM-003/-017 on one serial modbus connection with addresses 1 (default), 2 and 3 (#2315)
+ * Add support for up to 4 INA226 Voltage and Current sensors by Steve Rogers (#6342)
+ * Add support for A4988 stepper-motor-driver-circuit by Tim Leuschner (#6370)
+ * Add support for Hiking DDS238-2 Modbus energy meter by Matteo Campanella (#6384)
+ * Add support for HM17 bluetooth LE passive scan of ibeacon devices by Gerhard Mutz
+ * Add support for Solax X1 inverter by Pablo Zerón
+ * Add support for PAJ7620 gesture sensor by Christian Baars
+ * Add support for MAX31865 Thermocouple sensor by Alberto Lopez Siemens
+ * Add support for RDM6300 125kHz RFID Reader by Gerhard Mutz
+ * Add support for CHIRP soil moisture sensor by Christian Baars
+ * Add support for Sonoff iFan03 as module 71 (#5988)
+ * Add support for a buzzer
+ * Add support for IRSend long press ('repeat' feature from IRRemoteESP8266) (#6074)
+ * Add support for IRHVAC Midea/Komeco protocol (#3227)
+ * Add support for more IRSend protocols enabled in my_user_config.h
+ * Add support for IRSend Pioneer protocol (#6100)
+ * Add support for up to 4 INA219 sensors (#6046)
+ * Add support for I2C display driver SH1106 oled by Gerhard Mutz
+ * Add support for SPI display drivers epaper 4.2 inch, ILI9488 TFT, SSD1351 Color oled and RA8876 TFT by Gerhard Mutz
+ * Add command ``Buzzer`` with optional parameters <number of beeps>,<duration of beep in 100mS steps>,<duration of silence in 100mS steps> enabled when a buzzer is configured (#5988)
+ * Add command ``DimmerRange`` in Light module to support 2 byte dimming ranges from Tuya
+ * Add command ``DisplayHeight`` to set pixel height on supported devices
+ * Add command ``DisplayWidth`` to set pixel width on supported devices
+ * Add command ``EnergyReset4 x,x`` to initialize total usage for two tarrifs
+ * Add command ``EnergyReset5 x,x`` to initialize total export (or production) for two tarrifs
+ * Add command ``Gpio 255/All`` to show physical GPIO configuration of all non-flash pins (#6407)
+ * Add command ``Gpios 255/All`` to show all available GPIO components (#6407)
+ * Add command ``ModuleAddress 1/2/3`` to set Pzem module address when a single module is connected (#2315)
+ * Add command ``MqttLog <loglevel>`` for support of MQTT logging (#6498)
+ * Add command ``Power0 0/1/2/Off/On/Toggle`` to control all power outputs at once (#6340)
+ * Add command ``PowerDelta 101..32000`` for absolute power delta where 101 = 101-100 = 1W, 202 = 202-100 = 102W (#5901)
+ * Add command ``Reset 99`` to reset bootcount to zero (#684, #6351)
+ * Add command ``Sensor29 pin,0/1/2`` for OFF/ON/TOGGLE
+ * Add command ``Sensor34 8,0`` and ``Sensor34 8,1`` to disable/enable JSON message on weight change over 4 gram
+ * Add command ``SetOption34 0..255`` to set backlog delay. Default value is 200 (mSeconds) (#6562)
+ * Add command ``SetOption42 0..255`` to set overtemperature (Celsius only) threshold resulting in power off all on energy monitoring devices. Default setting is 90 (#6036)
+ * Add command ``SetOption65 0/1`` to disable (1) fast power cycle detection fixing unwanted brownout trigger
+ * Add command ``SetOption66 0/1`` to enable or disable Tuya dimmer range 255 slider control
+ * Add command ``SetOption67 0/1`` to disable or enable a buzzer as used in iFan03
+ * Add command ``SetOption68 0/1`` to enable multi-channel PWM instead of a single light (#6134)
+ * Add command ``SetOption71 0/1`` to switch between different Modbus Active Energy registers on DDS238-2 energy meters (#6531)
+ * Add command ``SetOption72 0/1`` to switch between software (0) or hardware (1) energy total counter (#6561)
+ * Add command ``Time`` to disable NTP and set UTC time as Epoch value if above 1451602800 (=20160101). ``Time 0`` re-enables NTP (#5279)
+ * Add command ``Time 1/2/3`` to select JSON time format ISO + Epoch, ISO or Epoch
+ * Add command ``Tariff`` to default to 0 (=disabled) and allowing to set both Standard Time (ST) and Daylight Savings Time (DST) start hour
+     ex. ``Tariff1 22,23`` = Tariff1 (Off-Peak) ST,DST   ``Tariff2 6,7`` = Tariff2 (Standard) ST,DST   ``Tariff9 0/1`` = Weekend toggle (1 = Off-Peak during weekend)
+ * Add command ``WebSensor<sensor number> 0/1`` to control display of sensor data in web GUI (#6085)
+ * Add command ``ZigbeeRead`` (#6095)
+ * Add define **USE_DEEPSLEEP** and command ``DeepSleepTime 0 or 10..86400`` (seconds) to enter deepsleep mode (#6638)
+ * Add define **USE_ENERGY_MARGIN_DETECTION** to disable Energy Margin and Power Limit detection
+ * Add define **USE_ENERGY_POWER_LIMIT** to disable Energy Power Limit detection while Energy Margin detection is active
+ * Add define **USE_SONOFF_RF** to enable/disable Sonoff Rf support (#6648)
+ * Add define **USE_WS2812_HARDWARE** to select hardware type WS2812, WS2812X, WS2813, SK6812, LC8812 or APA106 (DMA mode only)
+ * Add incremental beeps to Ifan03 remote control fan speed buttons (#6636)
+ * Add rule support after every command execution like Fanspeed#Data=2 (#6636)
+ * Add WebUI for multiple, independent PWM channels
+ * Add JSON array index support to rules evaluation allowing trigger on ENERGY#POWER[2]>0.60 from JSON ..,"Power":[0.00,0.68],.. (#6160)
+ * Add Full support of all protocols in IRremoteESP8266, to be used on dedicated-IR Tasmota version. Warning: +81k Flash when compiling with **USE_IR_REMOTE_FULL**
+ * Add 'sonoff-ir' pre-packaged IR-dedicated firmware and 'sonoff-ircustom' to customize firmware with IR Full protocol support
+ * Add Tuya Energy monitoring by Shantur Rathore
+ * Add Domoticz P1 Smart Meter support using energy sensors handled by xdrv_03_energy.ino based on an idea by pablozg
+ * Add debug compile features using defines **DEBUG_TASMOTA_CORE**, **DEBUG_TASMOTA_DRIVER** and **DEBUG_TASMOTA_SENSOR**.
+     See **DEBUG_CORE_LOG** example in sonoff.ino and **DEBUG_DRIVER_LOG** example in xdrv_09_timers.ino
+ * Add option 0 to ``Width1`` (Marker), ``Width2`` (Second), ``Width3`` (Minute) and ``Width4`` (Hour) disabling display (#6152)
+ * Add MqttCount metric to STATE (#6155)
+ * Add allow repeat/longpress for IRSend raw, introduced ``IRSend<r>`` option (#6074)
+ * Add Oled reset GPIO option "OLED reset"
+ * Add blend RGB leds with White leds for better whites (#5895, #5704)
+ * Add AZ7798 automatic setting of clock display (#6034)
+ * Add Epoch and UptimeSec to JSON messages (#6068)
