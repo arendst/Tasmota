@@ -280,7 +280,7 @@ Version 6.7.0 20191025
  * Change energy sensors for three phase/channel support
  * Change Settings crc calculation allowing short term backward compatibility
  * Change Improve reliability of TasmotaSerial at 115200 bauds and reduce IRAM usage
- * Change Tuya support by Shantur Rathore removing commands ``SetOption34, 41, 44, 45, 46, 65, 66 and 69`` (#6353)
+ * Change Tuya support by Shantur Rathore removing tuya related commands ``SetOption34, 41, 44, 45, 46, 65, 66 and 69`` (#6353)
  * Change theoretical baudrate range to 300..19660500 bps in 300 increments (#6294)
  * Change Settings area to 4k for future use
  * Change some table locations from RAM to Flash
