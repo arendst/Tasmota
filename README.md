@@ -48,7 +48,7 @@ Download one of the released binaries from https://github.com/arendst/Sonoff-Tas
 If you want to compile Sonoff-Tasmota yourself keep in mind the following:
 
 - Only Flash Mode **DOUT** is supported. Do not use Flash Mode DIO / QIO / QOUT as it might seem to brick your device. See [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Flashing) for background information.
-- Sonoff-Tasmota uses a 1M linker script WITHOUT spiffs **1M (no SPIFFS)** for optimal code space. If you compile using ESP/Arduino library 2.3.0 then download the provided new linker script to your Arduino IDE or Platformio base folder. Later versions of ESP/Arduino library already contain the correct linker script. See [Wiki > Prerequisites](https://github.com/arendst/Sonoff-Tasmota/wiki/Prerequisites).
+- Sonoff-Tasmota uses a 1M linker script WITHOUT spiffs **1M (no SPIFFS)** for optimal code space.
 - To make compile time changes to Sonoff-Tasmota it can use the ``user_config_override.h`` file. It assures keeping your settings when you download and compile a new version. To use ``user_config.override.h`` you will have to make a copy of the provided ``user_config_override_sample.h`` file and add your setting overrides. To enable the override file you will need to use a compile define as documented in the ``user_config_override_sample.h`` file.
 
 ## Configuration Information
