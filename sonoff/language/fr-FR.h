@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.5.0.7
+ * Updated until v6.6.0.15
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -125,8 +125,8 @@
 #define D_PORT "Port"
 #define D_POWER_FACTOR "Fact de puiss"
 #define D_POWERUSAGE "Puissance"
-#define D_POWERUSAGE_ACTIVE "Puiss act"
-#define D_POWERUSAGE_APPARENT "Puiss app"
+#define D_POWERUSAGE_ACTIVE "Puiss active"
+#define D_POWERUSAGE_APPARENT "Puiss apparente"
 #define D_POWERUSAGE_REACTIVE "Puiss réactive"
 #define D_PRESSURE "Pression"
 #define D_PRESSUREATSEALEVEL "PressionMer"
@@ -228,8 +228,8 @@
 #define D_WEBSERVER_STOPPED "Serveur web éteint"
 #define D_FILE_NOT_FOUND "Fichier introuvable"
 #define D_REDIRECTED "Redirection sur le portail captif"
-#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager définit AccessPoint et garde station"
-#define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager définit AccessPoint"
+#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifimanager en mode Point d'Accès et Station"
+#define D_WIFIMANAGER_SET_ACCESSPOINT "Wifimanager en mode Point d'Accès"
 #define D_TRYING_TO_CONNECT "Tentative de connexion du module au réseau"
 
 #define D_RESTART_IN "Redémarrage dans"
@@ -284,6 +284,7 @@
 
 #define D_LOGGING_PARAMETERS "Paramètres du journal"
 #define D_SERIAL_LOG_LEVEL "Niveau de journalisation série"
+#define D_MQTT_LOG_LEVEL "Niveau de journalisation MQTT"
 #define D_WEB_LOG_LEVEL "Niveau de journalisation web"
 #define D_SYS_LOG_LEVEL "Niveau SysLog"
 #define D_MORE_DEBUG "Plus de debug"
@@ -400,6 +401,7 @@
   #define D_DOMOTICZ_VOLTAGE "Tension/PM2,5"
   #define D_DOMOTICZ_CURRENT "Courant/PM10"
   #define D_DOMOTICZ_AIRQUALITY "Qualité de l'air"
+  #define D_DOMOTICZ_P1_SMART_METER "P1SmartMeter"
 #define D_DOMOTICZ_UPDATE_TIMER "Durée de rafraichissement"
 
 // xdrv_09_timers.ino
@@ -440,6 +442,19 @@
 #define D_ENERGY_TODAY "Énergie aujourd'hui"
 #define D_ENERGY_YESTERDAY "Énergie hier"
 #define D_ENERGY_TOTAL "Énergie totale"
+
+// xdrv_27_shutter.ino
+#define D_OPEN "Ouvert"
+#define D_CLOSE "Fermé"
+#define D_DOMOTICZ_SHUTTER "Volet"
+
+// xdrv_28_pcf8574.ino
+#define D_CONFIGURE_PCF8574 "Configurer PCF8574"
+#define D_PCF8574_PARAMETERS "Paramètres PCF8574"
+#define D_INVERT_PORTS "Inverser les Ports"
+#define D_DEVICE "Module"
+#define D_DEVICE_INPUT "Entrée"
+#define D_DEVICE_OUTPUT "Sortie"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Capteur occupé"
@@ -526,6 +541,9 @@
 #define D_SENSOR_SAIR_TX       "SAir Tx"
 #define D_SENSOR_SPI_CS        "SPI CS"
 #define D_SENSOR_SPI_DC        "SPI DC"
+#define D_SENSOR_SPI_MISO      "SPI MISO"
+#define D_SENSOR_SPI_MOSI      "SPI MOSI"
+#define D_SENSOR_SPI_CLK       "SPI CLK"
 #define D_SENSOR_BACKLIGHT     "RétroÉcl"
 #define D_SENSOR_PMS5003       "PMS5003"
 #define D_SENSOR_SDS0X1_RX     "SDS0X1 Rx"
@@ -585,6 +603,33 @@
 #define D_SENSOR_HRE_CLOCK     "HRE Clock"
 #define D_SENSOR_HRE_DATA      "HRE Data"
 #define D_SENSOR_ADE7953_IRQ   "ADE7953 IRQ"
+#define D_SENSOR_BUZZER        "Buzzer"
+#define D_SENSOR_OLED_RESET    "OLED Reset"
+#define D_SENSOR_ZIGBEE_TXD    "Zigbee Tx"
+#define D_SENSOR_ZIGBEE_RXD    "Zigbee Rx"
+#define D_SENSOR_SOLAXX1_TX    "SolaxX1 Tx"
+#define D_SENSOR_SOLAXX1_RX    "SolaxX1 Rx"
+#define D_SENSOR_IBEACON_TX    "iBeacon TX"
+#define D_SENSOR_IBEACON_RX    "iBeacon RX"
+#define D_SENSOR_RDM6300_RX    "RDM6300 RX"
+#define D_SENSOR_CC1101_CS     "CC1101 CS"
+#define D_SENSOR_A4988_DIR     "A4988 DIR"
+#define D_SENSOR_A4988_STP     "A4988 STP"
+#define D_SENSOR_A4988_ENA     "A4988 ENA"
+#define D_SENSOR_A4988_MS1     "A4988 MS1"
+#define D_SENSOR_A4988_MS2     "A4988 MS2"
+#define D_SENSOR_A4988_MS3     "A4988 MS3"
+#define D_SENSOR_DDS2382_TX    "DDS238-2 Tx"
+#define D_SENSOR_DDS2382_RX    "DDS238-2 Rx"
+#define D_SENSOR_DDSU666_TX    "DDSU666 Tx"
+#define D_SENSOR_DDSU666_RX    "DDSU666 Rx"
+#define D_SENSOR_SM2135_CLK    "SM2135 Clk"
+#define D_SENSOR_SM2135_DAT    "SM2135 Dat"
+#define D_SENSOR_DEEPSLEEP     "DeepSleep"
+#define D_SENSOR_EXS_ENABLE    "EXS Enable"
+#define D_SENSOR_ARDUINO_TX    "Arduino TX"
+#define D_SENSOR_ARDUINO_RX    "Arduino RX"
+#define D_SENSOR_ARDUINO_RESET "Arduino RST"
 
 // Units
 #define D_UNIT_AMPERE "A"
@@ -647,12 +692,36 @@
 
 //SDM220
 #define D_PHASE_ANGLE     "Angle de phase"
-#define D_IMPORT_ACTIVE   "Puiss act conso"
-#define D_EXPORT_ACTIVE   "Puiss act fournie"
-#define D_IMPORT_REACTIVE "Puiss réa conso"
-#define D_EXPORT_REACTIVE "Puiss réa fournie"
-#define D_TOTAL_REACTIVE  "Puiss réa totale"
+#define D_IMPORT_ACTIVE   "Énergie act conso"
+#define D_EXPORT_ACTIVE   "Énergie act fournie"
+#define D_IMPORT_REACTIVE "Énergie réa conso"
+#define D_EXPORT_REACTIVE "Énergie réa fournie"
+#define D_TOTAL_REACTIVE  "Énergie réa totale"
 #define D_UNIT_KWARH      "kVArh"
 #define D_UNIT_ANGLE      "°"
+
+//SOLAXX1
+#define D_PV1_VOLTAGE     "Tension PV1"
+#define D_PV1_CURRENT     "Courant PV1"
+#define D_PV1_POWER       "Puissance PV1"
+#define D_PV2_VOLTAGE     "Tension PV2"
+#define D_PV2_CURRENT     "Courant PV2"
+#define D_PV2_POWER       "Puissance PV2"
+#define D_SOLAR_POWER     "Puissance solaire"
+#define D_INVERTER_POWER  "Puissance onduleur"
+#define D_STATUS          "Statut"
+#define D_WAITING         "En attente"
+#define D_CHECKING        "En test"
+#define D_WORKING         "En marche"
+#define D_FAILURE         "Défault"
+#define D_SOLAX_ERROR_0   "Aucun Code d'erreur"
+#define D_SOLAX_ERROR_1   "Défaut Perte de réseau"
+#define D_SOLAX_ERROR_2   "Défaut Tension réseau"
+#define D_SOLAX_ERROR_3   "Défaut Fréquence réseau"
+#define D_SOLAX_ERROR_4   "Défaut Tension PV"
+#define D_SOLAX_ERROR_5   "Défaut Isolation"
+#define D_SOLAX_ERROR_6   "Défaut Surchauffe"
+#define D_SOLAX_ERROR_7   "Défaut Ventilateur"
+#define D_SOLAX_ERROR_8   "Défaut Autre équipement"
 
 #endif  // _LANGUAGE_FR_FR_H_

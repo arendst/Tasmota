@@ -1,0 +1,74 @@
+language: c
+env:
+  - BD=esp8266:esp8266:nodemcuv2:xtal=80,eesz=4M3M,ip=lm2f,exception=disabled
+  # - BD=esp8266:esp8266:d1_mini:xtal=80,eesz=4M3M,ip=lm2f,exception=disabled
+before_install:
+  - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16"
+  - sleep 3
+  - export DISPLAY=:1.0
+  - wget http://downloads.arduino.cc/arduino-1.8.8-linux64.tar.xz
+  - tar xf arduino-1.8.8-linux64.tar.xz
+  - sudo mv arduino-1.8.8 /usr/local/share/arduino
+  - sudo ln -s /usr/local/share/arduino/arduino /usr/local/bin/arduino
+  - wget https://raw.githubusercontent.com/google/styleguide/gh-pages/cpplint/cpplint.py
+install:
+  - ln -s $PWD /usr/local/share/arduino/libraries/
+  - git clone https://github.com/tzapu/WiFiManager.git /usr/local/share/arduino/libraries/WiFiManager
+  - git clone https://github.com/knolleary/pubsubclient.git /usr/local/share/arduino/libraries/PubSubClient
+  - git clone https://github.com/bblanchon/ArduinoJson.git --branch 5.x /usr/local/share/arduino/libraries/ArduinoJson
+  - arduino --pref "boardsmanager.additional.urls=http://arduino.esp8266.com/stable/package_esp8266com_index.json" --save-prefs
+  - arduino --install-boards esp8266:esp8266
+  - arduino --board $BD --save-prefs
+  - arduino --pref "compiler.warning_level=all" --save-prefs
+  - sudo apt-get install jq
+  - sudo apt-get purge python-enum34
+  - sudo apt-get install pylint3
+script: echo Running checks
+notifications:
+  email:
+    on_success: change
+    on_failure: change
+jobs:
+  include:
+    - script:
+      # Check that everything compiles. (Part 1)
+      - arduino --verify --board $BD $PWD/examples/IRrecvDemo/IRrecvDemo.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/IRGCSendDemo/IRGCSendDemo.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/IRGCTCPServer/IRGCTCPServer.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/IRServer/IRServer.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/IRrecvDumpV2/IRrecvDumpV2.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/IRsendDemo/IRsendDemo.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/JVCPanasonicSendDemo/JVCPanasonicSendDemo.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/TurnOnDaikinAC/TurnOnDaikinAC.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/TurnOnFujitsuAC/TurnOnFujitsuAC.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/TurnOnKelvinatorAC/TurnOnKelvinatorAC.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/TurnOnMitsubishiAC/TurnOnMitsubishiAC.ino 2> /dev/null
+    - script:
+      # Check that everything compiles. (Part 2)
+      - arduino --verify --board $BD $PWD/examples/IRsendProntoDemo/IRsendProntoDemo.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/TurnOnTrotecAC/TurnOnTrotecAC.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/LGACSend/LGACSend.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/TurnOnArgoAC/TurnOnArgoAC.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/IRMQTTServer/IRMQTTServer.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/TurnOnToshibaAC/TurnOnToshibaAC.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/ControlSamsungAC/ControlSamsungAC.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/TurnOnPanasonicAC/TurnOnPanasonicAC.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/TurnOnMitsubishiHeavyAc/TurnOnMitsubishiHeavyAc.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/DumbIRRepeater/DumbIRRepeater.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/SmartIRRepeater/SmartIRRepeater.ino 2> /dev/null
+      - arduino --verify --board $BD $PWD/examples/CommonAcControl/CommonAcControl.ino 2> /dev/null
+    - script:
+      # Check the version numbers match.
+      - LIB_VERSION=$(egrep "^#define\s+_IRREMOTEESP8266_VERSION_\s+" src/IRremoteESP8266.h  | cut -d\" -f2)
+      - test ${LIB_VERSION} == "$(jq -r .version library.json)"
+      - grep -q "^version=${LIB_VERSION}$" library.properties
+      # Check the tools programs compile.
+      - (cd tools; make all)
+      # Check for lint issues.
+      - shopt -s nullglob
+      - python cpplint.py --extensions=c,cc,cpp,ino --headers=h,hpp {src,test,tools}/*.{h,c,cc,cpp,hpp,ino} examples/*/*.{h,c,cc,cpp,hpp,ino}
+      - pylint3 -d F0001 {src,test,tools}/*.py
+      - shopt -u nullglob
+      # Build and run the unit tests.
+      - (cd test; make run)
+      - (cd tools; make run_tests)

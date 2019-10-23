@@ -118,7 +118,10 @@
 #define CO2_HIGH                     1200    // Above this CO2 value show red light
 #endif
 
-#define AZ_READ_TIMEOUT              400     // Must be way less than 1000 but enough to read 9 bytes at 9600 bps
+#define AZ_READ_TIMEOUT              400     // Must be way less than 1000 but enough to read 25 bytes at 9600 bps
+
+#define AZ_CLOCK_UPDATE_INTERVAL (24UL * 60 * 60) // periodically update clock display (24 hours)
+#define AZ_EPOCH (946684800UL)               // 2000-01-01 00:00:00
 
 TasmotaSerial *AzSerial;
 
@@ -129,11 +132,14 @@ double az_temperature = 0;
 double az_humidity = 0;
 uint8_t az_received = 0;
 uint8_t az_state = 0;
+unsigned long az_clock_update = 10;         // timer for periodically updating clock display
 
 /*********************************************************************************************/
 
 void AzEverySecond(void)
 {
+  unsigned long start = millis();
+
   az_state++;
   if (5 == az_state) {                      // every 5 seconds
     az_state = 0;
@@ -143,7 +149,6 @@ void AzEverySecond(void)
     az_received = 0;
 
     uint8_t az_response[32];
-    unsigned long start = millis();
     uint8_t counter = 0;
     uint8_t i, j;
     uint8_t response_substr[16];
@@ -233,6 +238,25 @@ void AzEverySecond(void)
     }
     response_substr[j] = 0;                 // add null terminator
     az_humidity = ConvertHumidity(CharToFloat((char*)response_substr));
+  }
+
+  // update the clock from network time
+  if ((az_clock_update == 0) && (LocalTime() > AZ_EPOCH)) {
+    char tmpString[16];
+    sprintf(tmpString, "C %d\r", (int)(LocalTime() - AZ_EPOCH));
+    AzSerial->write(tmpString);
+    // discard the response
+    do {
+      if (AzSerial->available() > 0) {
+        if(AzSerial->read() == 0x0d) { break; }
+      } else {
+        delay(5);
+      }
+    } while(((millis() - start) < AZ_READ_TIMEOUT));
+    az_clock_update = AZ_CLOCK_UPDATE_INTERVAL;
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "AZ7798 clock updated"));
+  } else {
+    az_clock_update--;
   }
 }
 

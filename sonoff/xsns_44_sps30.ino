@@ -253,8 +253,7 @@ void SPS30_Show(bool json) {
 
 void CmdClean(void) {
   sps30_cmd(SPS_CMD_CLEAN);
-  Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-  ResponseAppend_P(PSTR(",\"SPS30\":{\"CFAN\":\"true\"}}"));
+  ResponseTime_P(PSTR(",\"SPS30\":{\"CFAN\":\"true\"}}"));
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
 }
 

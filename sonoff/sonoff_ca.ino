@@ -30,9 +30,9 @@
  * https://letsencrypt.org/certificates/
  * Downloaded from https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem.txt
  *
- * to convert do: ‘bearssl ta lets-encrypt-x3-cross-signed.pem.txt’
+ * to convert do: "bearssl ta lets-encrypt-x3-cross-signed.pem.txt"
  * then copy and paste below, chain the generic names to the same as below
- * remove ‘static’ and add ‘PROGMEM’
+ * remove "static" and add "PROGMEM"
 \*********************************************************************************************/
 
 static const unsigned char PROGMEM TA0_DN[] = {
@@ -97,9 +97,9 @@ static const br_x509_trust_anchor PROGMEM LetsEncryptX3CrossSigned_TA = {
  * https://letsencrypt.org/certificates/
  * Downloaded from https://www.amazontrust.com/repository/AmazonRootCA1.pem
  *
- * to convert do: ‘bearssl ta AmazonRootCA1.pem’
+ * to convert do: "bearssl ta AmazonRootCA1.pem"
  * then copy and paste below, chain the generic names to the same as below
- * remove ‘static’ and add ‘PROGMEM’
+ * remove "static" and add "PROGMEM"
 \*********************************************************************************************/
 
 

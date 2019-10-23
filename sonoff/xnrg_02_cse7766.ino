@@ -37,21 +37,24 @@
 #define CSE_PREF                    1000
 #define CSE_UREF                    100
 
-uint8_t cse_receive_flag = 0;
+struct CSE {
+  long voltage_cycle = 0;
+  long current_cycle = 0;
+  long power_cycle = 0;
+  long power_cycle_first = 0;
+  long cf_pulses = 0;
+  long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 
-long voltage_cycle = 0;
-long current_cycle = 0;
-long power_cycle = 0;
-long power_cycle_first = 0;
-long cf_pulses = 0;
-long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
-uint8_t cse_power_invalid = 0;
+  uint8_t power_invalid = 0;
+  bool received = false;
+} Cse;
 
 void CseReceived(void)
 {
   //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
-  // 55 5A 02 F7 60 00 03 5A 00 40 10 04 8B 9F 51 A6 58 18 72 75 61 AC A1 30 - Power not valid (load below 5W)
-  // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36
+  // F2 5A 02 F7 60 00 03 61 00 40 10 05 72 40 51 A6 58 63 10 1B E1 7F 4D 4E - F2 = Power cycle exceeds range - takes too long - No load
+  // 55 5A 02 F7 60 00 03 5A 00 40 10 04 8B 9F 51 A6 58 18 72 75 61 AC A1 30 - 55 = Ok, 61 = Power not valid (load below 5W)
+  // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36 - 55 = Ok, 71 = Ok
   // Hd Id VCal---- Voltage- ICal---- Current- PCal---- Power--- Ad CF--- Ck
 
   uint8_t header = serial_in_buffer[0];
@@ -84,54 +87,54 @@ void CseReceived(void)
   }
 
   uint8_t adjustement = serial_in_buffer[20];
-  voltage_cycle = serial_in_buffer[5] << 16 | serial_in_buffer[6] << 8 | serial_in_buffer[7];
-  current_cycle = serial_in_buffer[11] << 16 | serial_in_buffer[12] << 8 | serial_in_buffer[13];
-  power_cycle = serial_in_buffer[17] << 16 | serial_in_buffer[18] << 8 | serial_in_buffer[19];
-  cf_pulses = serial_in_buffer[21] << 8 | serial_in_buffer[22];
+  Cse.voltage_cycle = serial_in_buffer[5] << 16 | serial_in_buffer[6] << 8 | serial_in_buffer[7];
+  Cse.current_cycle = serial_in_buffer[11] << 16 | serial_in_buffer[12] << 8 | serial_in_buffer[13];
+  Cse.power_cycle = serial_in_buffer[17] << 16 | serial_in_buffer[18] << 8 | serial_in_buffer[19];
+  Cse.cf_pulses = serial_in_buffer[21] << 8 | serial_in_buffer[22];
 
-  if (energy_power_on) {  // Powered on
+  if (Energy.power_on) {  // Powered on
     if (adjustement & 0x40) {  // Voltage valid
-      energy_voltage = (float)(Settings.energy_voltage_calibration * CSE_UREF) / (float)voltage_cycle;
+      Energy.voltage[0] = (float)(Settings.energy_voltage_calibration * CSE_UREF) / (float)Cse.voltage_cycle;
     }
     if (adjustement & 0x10) {  // Power valid
-      cse_power_invalid = 0;
+      Cse.power_invalid = 0;
       if ((header & 0xF2) == 0xF2) {  // Power cycle exceeds range
-        energy_active_power = 0;
+        Energy.active_power[0] = 0;
       } else {
-        if (0 == power_cycle_first) { power_cycle_first = power_cycle; }  // Skip first incomplete power_cycle
-        if (power_cycle_first != power_cycle) {
-          power_cycle_first = -1;
-          energy_active_power = (float)(Settings.energy_power_calibration * CSE_PREF) / (float)power_cycle;
+        if (0 == Cse.power_cycle_first) { Cse.power_cycle_first = Cse.power_cycle; }  // Skip first incomplete Cse.power_cycle
+        if (Cse.power_cycle_first != Cse.power_cycle) {
+          Cse.power_cycle_first = -1;
+          Energy.active_power[0] = (float)(Settings.energy_power_calibration * CSE_PREF) / (float)Cse.power_cycle;
         } else {
-          energy_active_power = 0;
+          Energy.active_power[0] = 0;
         }
       }
     } else {
-      if (cse_power_invalid < Settings.param[P_CSE7766_INVALID_POWER]) {  // Allow measurements down to about 1W
-        cse_power_invalid++;
+      if (Cse.power_invalid < Settings.param[P_CSE7766_INVALID_POWER]) {  // Allow measurements down to about 1W
+        Cse.power_invalid++;
       } else {
-        power_cycle_first = 0;
-        energy_active_power = 0;  // Powered on but no load
+        Cse.power_cycle_first = 0;
+        Energy.active_power[0] = 0;  // Powered on but no load
       }
     }
     if (adjustement & 0x20) {  // Current valid
-      if (0 == energy_active_power) {
-        energy_current = 0;
+      if (0 == Energy.active_power[0]) {
+        Energy.current[0] = 0;
       } else {
-        energy_current = (float)Settings.energy_current_calibration / (float)current_cycle;
+        Energy.current[0] = (float)Settings.energy_current_calibration / (float)Cse.current_cycle;
       }
     }
   } else {  // Powered off
-    power_cycle_first = 0;
-    energy_voltage = 0;
-    energy_active_power = 0;
-    energy_current = 0;
+    Cse.power_cycle_first = 0;
+    Energy.voltage[0] = 0;
+    Energy.active_power[0] = 0;
+    Energy.current[0] = 0;
   }
 }
 
 bool CseSerialInput(void)
 {
-  if (cse_receive_flag) {
+  if (Cse.received) {
     serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
     if (24 == serial_in_byte_counter) {
 
@@ -140,10 +143,10 @@ bool CseSerialInput(void)
       uint8_t checksum = 0;
       for (uint32_t i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
       if (checksum == serial_in_buffer[23]) {
-        energy_data_valid = 0;
+        Energy.data_valid[0] = 0;
         CseReceived();
-        cse_receive_flag = 0;
-        return 1;
+        Cse.received = false;
+        return true;
       } else {
         AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: " D_CHECKSUM_FAILURE));
         do {  // Sync buffer with data (issue #1907 and #3425)
@@ -151,52 +154,52 @@ bool CseSerialInput(void)
           serial_in_byte_counter--;
         } while ((serial_in_byte_counter > 2) && (0x5A != serial_in_buffer[1]));
         if (0x5A != serial_in_buffer[1]) {
-          cse_receive_flag = 0;
+          Cse.received = false;
           serial_in_byte_counter = 0;
         }
       }
     }
   } else {
     if ((0x5A == serial_in_byte) && (1 == serial_in_byte_counter)) {  // 0x5A - Packet header 2
-      cse_receive_flag = 1;
+      Cse.received = true;
     } else {
       serial_in_byte_counter = 0;
     }
     serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
   }
   serial_in_byte = 0;  // Discard
-  return 0;
+  return false;
 }
 
 /********************************************************************************************/
 
 void CseEverySecond(void)
 {
-  if (energy_data_valid > ENERGY_WATCHDOG) {
-    voltage_cycle = 0;
-    current_cycle = 0;
-    power_cycle = 0;
+  if (Energy.data_valid[0] > ENERGY_WATCHDOG) {
+    Cse.voltage_cycle = 0;
+    Cse.current_cycle = 0;
+    Cse.power_cycle = 0;
   } else {
     long cf_frequency = 0;
 
-    if (CSE_PULSES_NOT_INITIALIZED == cf_pulses_last_time) {
-      cf_pulses_last_time = cf_pulses;  // Init after restart
+    if (CSE_PULSES_NOT_INITIALIZED == Cse.cf_pulses_last_time) {
+      Cse.cf_pulses_last_time = Cse.cf_pulses;  // Init after restart
     } else {
-      if (cf_pulses < cf_pulses_last_time) {  // Rolled over after 65535 pulses
-        cf_frequency = (65536 - cf_pulses_last_time) + cf_pulses;
+      if (Cse.cf_pulses < Cse.cf_pulses_last_time) {  // Rolled over after 65535 pulses
+        cf_frequency = (65536 - Cse.cf_pulses_last_time) + Cse.cf_pulses;
       } else {
-        cf_frequency = cf_pulses - cf_pulses_last_time;
+        cf_frequency = Cse.cf_pulses - Cse.cf_pulses_last_time;
       }
-      if (cf_frequency && energy_active_power)  {
+      if (cf_frequency && Energy.active_power[0])  {
         unsigned long delta = (cf_frequency * Settings.energy_power_calibration) / 36;
         // prevent invalid load delta steps even checksum is valid (issue #5789):
         if (delta <= (3680*100/36) * 10 ) {  // max load for S31/Pow R2: 3.68kW
-          cf_pulses_last_time = cf_pulses;
-          energy_kWhtoday_delta += delta;
+          Cse.cf_pulses_last_time = Cse.cf_pulses;
+          Energy.kWhtoday_delta += delta;
         }
         else {
           AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Load overflow"));
-          cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
+          Cse.cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
         }
         EnergyUpdateToday();
       }
@@ -206,16 +209,14 @@ void CseEverySecond(void)
 
 void CseDrvInit(void)
 {
-  if (!energy_flg) {
-    if ((3 == pin[GPIO_CSE7766_RX]) && (1 == pin[GPIO_CSE7766_TX])) {  // As it uses 8E1 currently only hardware serial is supported
-      baudrate = 4800;
-      serial_config = SERIAL_8E1;
-      if (0 == Settings.param[P_CSE7766_INVALID_POWER]) {
-        Settings.param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
-      }
-      cse_power_invalid = Settings.param[P_CSE7766_INVALID_POWER];
-      energy_flg = XNRG_02;
+  if ((3 == pin[GPIO_CSE7766_RX]) && (1 == pin[GPIO_CSE7766_TX])) {  // As it uses 8E1 currently only hardware serial is supported
+    baudrate = 4800;
+    serial_config = SERIAL_8E1;
+    if (0 == Settings.param[P_CSE7766_INVALID_POWER]) {
+      Settings.param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
     }
+    Cse.power_invalid = Settings.param[P_CSE7766_INVALID_POWER];
+    energy_flg = XNRG_02;
   }
 }
 
@@ -223,19 +224,19 @@ bool CseCommand(void)
 {
   bool serviced = true;
 
-  if (CMND_POWERSET == energy_command_code) {
-    if (XdrvMailbox.data_len && power_cycle) {
-      Settings.energy_power_calibration = (unsigned long)(CharToFloat(XdrvMailbox.data) * power_cycle) / CSE_PREF;
+  if (CMND_POWERSET == Energy.command_code) {
+    if (XdrvMailbox.data_len && Cse.power_cycle) {
+      Settings.energy_power_calibration = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.power_cycle) / CSE_PREF;
     }
   }
-  else if (CMND_VOLTAGESET == energy_command_code) {
-    if (XdrvMailbox.data_len && voltage_cycle) {
-      Settings.energy_voltage_calibration = (unsigned long)(CharToFloat(XdrvMailbox.data) * voltage_cycle) / CSE_UREF;
+  else if (CMND_VOLTAGESET == Energy.command_code) {
+    if (XdrvMailbox.data_len && Cse.voltage_cycle) {
+      Settings.energy_voltage_calibration = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.voltage_cycle) / CSE_UREF;
     }
   }
-  else if (CMND_CURRENTSET == energy_command_code) {
-    if (XdrvMailbox.data_len && current_cycle) {
-      Settings.energy_current_calibration = (unsigned long)(CharToFloat(XdrvMailbox.data) * current_cycle) / 1000;
+  else if (CMND_CURRENTSET == Energy.command_code) {
+    if (XdrvMailbox.data_len && Cse.current_cycle) {
+      Settings.energy_current_calibration = (unsigned long)(CharToFloat(XdrvMailbox.data) * Cse.current_cycle) / 1000;
     }
   }
   else serviced = false;  // Unknown command
@@ -247,25 +248,23 @@ bool CseCommand(void)
  * Interface
 \*********************************************************************************************/
 
-int Xnrg02(uint8_t function)
+bool Xnrg02(uint8_t function)
 {
-  int result = 0;
+  bool result = false;
 
-  if (FUNC_PRE_INIT == function) {
-    CseDrvInit();
-  }
-  else if (XNRG_02 == energy_flg) {
-    switch (function) {
-      case FUNC_ENERGY_EVERY_SECOND:
-        CseEverySecond();
-        break;
-      case FUNC_COMMAND:
-        result = CseCommand();
-        break;
-      case FUNC_SERIAL:
-        result = CseSerialInput();
-        break;
-    }
+  switch (function) {
+    case FUNC_SERIAL:
+      result = CseSerialInput();
+      break;
+    case FUNC_ENERGY_EVERY_SECOND:
+      CseEverySecond();
+      break;
+    case FUNC_COMMAND:
+      result = CseCommand();
+      break;
+    case FUNC_PRE_INIT:
+      CseDrvInit();
+      break;
   }
   return result;
 }

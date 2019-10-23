@@ -21,7 +21,8 @@
 */
 
 #include "my_user_config.h"
-#ifdef USE_MQTT_TLS
+//#ifdef USE_MQTT_TLS
+#if defined(USE_MQTT_TLS) || defined (USE_SENDMAIL)
 
 //#define DEBUG_TLS
 
@@ -758,7 +759,7 @@ extern "C" {
 	// We limit to a single cipher to reduce footprint
   // we reference it, don't put in PROGMEM
   static const uint16_t suites[] = {
-#ifdef USE_MQTT_AWS_IOT
+#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_TLS_FORCE_EC_CIPHER)
 		BR_TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
 #else
 		BR_TLS_RSA_WITH_AES_128_GCM_SHA256
@@ -785,8 +786,8 @@ extern "C" {
 		br_ssl_engine_set_aes_ctr(&cc->eng, &br_aes_small_ctr_vtable);
 		br_ssl_engine_set_ghash(&cc->eng, &br_ghash_ctmul32);
 
-#ifdef USE_MQTT_AWS_IOT
-		// we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt
+#if defined(USE_MQTT_AWS_IOT) || defined(USE_MQTT_TLS_FORCE_EC_CIPHER)
+		// we support only P256 EC curve for AWS IoT, no EC curve for Letsencrypt unless forced
 		br_ssl_engine_set_ec(&cc->eng, &br_ec_p256_m15);
 #endif
   }

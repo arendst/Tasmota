@@ -45,24 +45,52 @@
 \*********************************************************************************************/
 
 #define D_CMND_CFGDUMP   "CfgDump"
-#define D_CMND_CFGPOKE   "CfgPoke"
 #define D_CMND_CFGPEEK   "CfgPeek"
+#define D_CMND_CFGPOKE   "CfgPoke"
 #define D_CMND_CFGSHOW   "CfgShow"
 #define D_CMND_CFGXOR    "CfgXor"
 #define D_CMND_CPUCHECK  "CpuChk"
 #define D_CMND_EXCEPTION "Exception"
-#define D_CMND_FREEMEM   "FreeMem"
-#define D_CMND_RTCDUMP   "RtcDump"
-#define D_CMND_HELP      "Help"
-#define D_CMND_SETSENSOR "SetSensor"
+#define D_CMND_FLASHDUMP "FlashDump"
 #define D_CMND_FLASHMODE "FlashMode"
+#define D_CMND_FREEMEM   "FreeMem"
+#define D_CMND_HELP      "Help"
+#define D_CMND_RTCDUMP   "RtcDump"
+#define D_CMND_SETSENSOR "SetSensor"
+#define D_CMND_I2CWRITE  "I2CWrite"
+#define D_CMND_I2CREAD   "I2CRead"
+#define D_CMND_I2CSTRETCH "I2CStretch"
+#define D_CMND_I2CCLOCK  "I2CClock"
 
-enum DebugCommands {
-  CMND_CFGDUMP, CMND_CFGPEEK, CMND_CFGPOKE, CMND_CFGSHOW, CMND_CFGXOR,
-  CMND_CPUCHECK, CMND_EXCEPTION, CMND_FREEMEM, CMND_RTCDUMP, CMND_SETSENSOR, CMND_FLASHMODE, CMND_HELP };
-const char kDebugCommands[] PROGMEM =
-  D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|" D_CMND_CFGSHOW "|" D_CMND_CFGXOR "|"
-  D_CMND_CPUCHECK "|" D_CMND_EXCEPTION "|" D_CMND_FREEMEM "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR "|" D_CMND_FLASHMODE "|" D_CMND_HELP;
+const char kDebugCommands[] PROGMEM = "|"  // No prefix
+  D_CMND_CFGDUMP "|" D_CMND_CFGPEEK "|" D_CMND_CFGPOKE "|"
+#ifdef USE_DEBUG_SETTING_NAMES
+  D_CMND_CFGSHOW "|"
+#endif
+#ifdef USE_WEBSERVER
+  D_CMND_CFGXOR "|"
+#endif
+  D_CMND_CPUCHECK "|"
+#ifdef DEBUG_THEO
+  D_CMND_EXCEPTION "|"
+#endif
+  D_CMND_FLASHDUMP "|" D_CMND_FLASHMODE "|" D_CMND_FREEMEM"|" D_CMND_HELP "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR "|"
+  D_CMND_I2CWRITE "|" D_CMND_I2CREAD "|" D_CMND_I2CSTRETCH "|" D_CMND_I2CCLOCK ;
+
+void (* const DebugCommand[])(void) PROGMEM = {
+  &CmndCfgDump, &CmndCfgPeek, &CmndCfgPoke,
+#ifdef USE_DEBUG_SETTING_NAMES
+  &CmndCfgShow,
+#endif
+#ifdef USE_WEBSERVER
+  &CmndCfgXor,
+#endif
+  &CmndCpuCheck,
+#ifdef DEBUG_THEO
+  &CmndException,
+#endif
+  &CmndFlashDump, &CmndFlashMode, &CmndFreemem, &CmndHelp, &CmndRtcDump, &CmndSetSensor,
+  &CmndI2cWrite, &CmndI2cRead, &CmndI2cStretch, &CmndI2cClock };
 
 uint32_t CPU_loops = 0;
 uint32_t CPU_last_millis = 0;
@@ -113,8 +141,6 @@ Decoding 14 results
 0x4021ffb4: snprintf_P(char*, unsigned int, char const*, ...) at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/pgmspace.cpp line 146
 0x40201118: atol at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
 0x40201128: atoi at C:\Data2\Arduino\arduino-1.8.1-esp-2.3.0\portable\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/core_esp8266_noniso.c line 45
-0x4020fafb: MqttDataHandler(char*, unsigned char*, unsigned int) at R:\Arduino\Work-ESP8266\Theo\sonoff\sonoff-4\sonoff/sonoff.ino line 679 (discriminator 1)
-0x4022321b: pp_attach at ?? line ?
 
 00:00:08 MQTT: tele/sonoff/INFO3 = {"Started":"Fatal exception:28 flag:2 (EXCEPTION) epc1:0x4000bf64 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000007 depc:0x00000000"}
 */
@@ -400,92 +426,231 @@ void SetFlashMode(uint8_t mode)
   if (ESP.flashRead(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
     if (_buffer[2] != mode) {  // DOUT
       _buffer[2] = mode;
-      if (ESP.flashEraseSector(address / FLASH_SECTOR_SIZE)) ESP.flashWrite(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
+      if (ESP.flashEraseSector(address / FLASH_SECTOR_SIZE)) {
+        ESP.flashWrite(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
+      }
     }
   }
   delete[] _buffer;
 }
 
-/*******************************************************************************************/
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
 
-bool DebugCommand(void)
+void CmndHelp(void)
 {
-  char command[CMDSZ];
-  bool serviced = true;
+  AddLog_P(LOG_LEVEL_INFO, PSTR("HLP: "), kDebugCommands);
+  ResponseCmndDone();
+}
 
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kDebugCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
-  }
-  else if (CMND_HELP == command_code) {
-    AddLog_P(LOG_LEVEL_INFO, kDebugCommands);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
-  }
-  else if (CMND_RTCDUMP == command_code) {
-    DebugRtcDump(XdrvMailbox.data);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
-  }
-  else if (CMND_CFGDUMP == command_code) {
-    DebugCfgDump(XdrvMailbox.data);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
-  }
-  else if (CMND_CFGPEEK == command_code) {
-    DebugCfgPeek(XdrvMailbox.data);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
-  }
-  else if (CMND_CFGPOKE == command_code) {
-    DebugCfgPoke(XdrvMailbox.data);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
-  }
+void CmndRtcDump(void)
+{
+  DebugRtcDump(XdrvMailbox.data);
+  ResponseCmndDone();
+}
+
+void CmndCfgDump(void)
+{
+  DebugCfgDump(XdrvMailbox.data);
+  ResponseCmndDone();
+}
+
+void CmndCfgPeek(void)
+{
+  DebugCfgPeek(XdrvMailbox.data);
+  ResponseCmndDone();
+}
+
+void CmndCfgPoke(void)
+{
+  DebugCfgPoke(XdrvMailbox.data);
+  ResponseCmndDone();
+}
+
 #ifdef USE_DEBUG_SETTING_NAMES
-  else if (CMND_CFGSHOW == command_code) {
-    DebugCfgShow(XdrvMailbox.payload);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
-  }
+void CmndCfgShow(void)
+{
+  DebugCfgShow(XdrvMailbox.payload);
+  ResponseCmndDone();
+}
 #endif  // USE_DEBUG_SETTING_NAMES
-#ifdef USE_WEBSERVER
-  else if (CMND_CFGXOR == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      config_xor_on_set = XdrvMailbox.payload;
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, config_xor_on_set);
-  }
-#endif  // USE_WEBSERVER
-#ifdef DEBUG_THEO
-  else if (CMND_EXCEPTION == command_code) {
-    if (XdrvMailbox.data_len > 0) ExceptionTest(XdrvMailbox.payload);
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
-  }
-#endif  // DEBUG_THEO
-  else if (CMND_CPUCHECK == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      CPU_load_check = XdrvMailbox.payload;
-      CPU_last_millis = CPU_last_loop_time;
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, CPU_load_check);
-  }
-  else if (CMND_FREEMEM == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      CPU_show_freemem = XdrvMailbox.payload;
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, CPU_show_freemem);
-  }
-  else if ((CMND_SETSENSOR == command_code) && (XdrvMailbox.index < MAX_XSNS_DRIVERS)) {
-    if ((XdrvMailbox.payload >= 0) && XsnsPresent(XdrvMailbox.index)) {
-      bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
-      if (1 == XdrvMailbox.payload) { restart_flag = 2; }  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
-    }
-    Response_P(S_JSON_COMMAND_XVALUE, command, XsnsGetSensors().c_str());
-  }
-  else if (CMND_FLASHMODE == command_code) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
-      SetFlashMode(XdrvMailbox.payload);
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, ESP.getFlashChipMode());
-  }
-  else serviced = false;  // Unknown command
 
-  return serviced;
+#ifdef USE_WEBSERVER
+void CmndCfgXor(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    Web.config_xor_on_set = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(Web.config_xor_on_set);
+}
+#endif  // USE_WEBSERVER
+
+#ifdef DEBUG_THEO
+void CmndException(void)
+{
+  if (XdrvMailbox.data_len > 0) { ExceptionTest(XdrvMailbox.payload); }
+  ResponseCmndDone();
+}
+#endif  // DEBUG_THEO
+
+void CmndCpuCheck(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    CPU_load_check = XdrvMailbox.payload;
+    CPU_last_millis = CPU_last_loop_time;
+  }
+  ResponseCmndNumber(CPU_load_check);
+}
+
+void CmndFreemem(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    CPU_show_freemem = XdrvMailbox.payload;
+  }
+  ResponseCmndNumber(CPU_show_freemem);
+}
+
+void CmndSetSensor(void)
+{
+  if (XdrvMailbox.index < MAX_XSNS_DRIVERS) {
+    if (XdrvMailbox.payload >= 0) {
+      bitWrite(Settings.sensors[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      if (1 == XdrvMailbox.payload) {
+        restart_flag = 2;  // To safely re-enable a sensor currently most sensor need to follow complete restart init cycle
+      }
+    }
+    Response_P(PSTR("{\"" D_CMND_SETSENSOR "\":"));
+    XsnsSensorState();
+    ResponseJsonEnd();
+  }
+}
+
+void CmndFlashMode(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 3)) {
+    SetFlashMode(XdrvMailbox.payload);
+  }
+  ResponseCmndNumber(ESP.getFlashChipMode());
+}
+
+uint32_t DebugSwap32(uint32_t x) {
+	return	((x << 24) & 0xff000000 ) |
+		((x <<  8) & 0x00ff0000 ) |
+		((x >>  8) & 0x0000ff00 ) |
+		((x >> 24) & 0x000000ff );
+}
+
+void CmndFlashDump(void)
+{
+  // FlashDump
+  // FlashDump 0xFF000
+  // FlashDump 0xFC000 10
+  const uint32_t flash_start = 0x40200000;  // Start address flash
+  const uint8_t bytes_per_cols = 0x20;
+  const uint32_t max = (SPIFFS_END + 5) * SPI_FLASH_SEC_SIZE;  // 0x100000 for 1M flash, 0x400000 for 4M flash
+
+  uint32_t start = flash_start;
+  uint32_t rows = 8;
+
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= (max - bytes_per_cols))) {
+    start += (XdrvMailbox.payload &0x7FFFFFFC);  // Fix exception as flash access is only allowed on 4 byte boundary
+
+    char *p;
+    uint32_t is_payload = strtol(XdrvMailbox.data, &p, 16);
+    rows = strtol(p, &p, 10);
+    if (0 == rows) { rows = 8; }
+  }
+  uint32_t end = start + (rows * bytes_per_cols);
+  if ((end - flash_start) > max) {
+    end = flash_start + max;
+  }
+
+  for (uint32_t pos = start; pos < end; pos += bytes_per_cols) {
+    uint32_t* values = (uint32_t*)(pos);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("%06X:  %08X %08X %08X %08X  %08X %08X %08X %08X"), pos - flash_start,
+      DebugSwap32(values[0]), DebugSwap32(values[1]), DebugSwap32(values[2]), DebugSwap32(values[3]),
+      DebugSwap32(values[4]), DebugSwap32(values[5]), DebugSwap32(values[6]), DebugSwap32(values[7]));
+  }
+  ResponseCmndDone();
+}
+
+void CmndI2cWrite(void)
+{
+  // I2cWrite <address>,<data>..
+  if (i2c_flg) {
+    char* parms = XdrvMailbox.data;
+    uint8_t buffer[100];
+    uint32_t index = 0;
+
+    char *p;
+    char *data = strtok_r(parms, " ,", &p);
+    while (data != NULL && index < sizeof(buffer)) {
+      buffer[index++] = strtol(data, nullptr, 16);
+      data = strtok_r(nullptr, " ,", &p);
+    }
+
+    if (index > 1) {
+      AddLogBuffer(LOG_LEVEL_INFO, buffer, index);
+
+      Wire.beginTransmission(buffer[0]);
+      for (uint32_t i = 1; i < index; i++) {
+        Wire.write(buffer[i]);
+      }
+      int result = Wire.endTransmission();
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("I2C: Result %d"), result);
+    }
+  }
+  ResponseCmndDone();
+}
+
+void CmndI2cRead(void)
+{
+  // I2cRead <address>,<size>
+  if (i2c_flg) {
+    char* parms = XdrvMailbox.data;
+    uint8_t buffer[100];
+    uint32_t index = 0;
+
+    char *p;
+    char *data = strtok_r(parms, " ,", &p);
+    while (data != NULL && index < sizeof(buffer)) {
+      buffer[index++] = strtol(data, nullptr, 16);
+      data = strtok_r(nullptr, " ,", &p);
+    }
+
+    if (index > 0) {
+      uint8_t size = 1;
+      if (index > 1) {
+        size = buffer[1];
+      }
+      Wire.requestFrom(buffer[0], size);
+      index = 0;
+      while (Wire.available() && index < sizeof(buffer)) {
+        buffer[index++] = Wire.read();
+      }
+      if (index > 0) {
+        AddLogBuffer(LOG_LEVEL_INFO, buffer, index);
+      }
+    }
+  }
+  ResponseCmndDone();
+}
+
+void CmndI2cStretch(void)
+{
+  if (i2c_flg && (XdrvMailbox.payload > 0)) {
+    Wire.setClockStretchLimit(XdrvMailbox.payload);
+  }
+  ResponseCmndDone();
+}
+
+void CmndI2cClock(void)
+{
+  if (i2c_flg && (XdrvMailbox.payload > 0)) {
+    Wire.setClock(XdrvMailbox.payload);
+  }
+  ResponseCmndDone();
 }
 
 /*********************************************************************************************\
@@ -500,14 +665,14 @@ bool Xdrv99(uint8_t function)
     case FUNC_LOOP:
       CpuLoadLoop();
       break;
+    case FUNC_FREE_MEM:
+      if (CPU_show_freemem) { DebugFreeMem(); }
+      break;
     case FUNC_PRE_INIT:
       CPU_last_millis = millis();
       break;
     case FUNC_COMMAND:
-      result = DebugCommand();
-      break;
-    case FUNC_FREE_MEM:
-      if (CPU_show_freemem) { DebugFreeMem(); }
+      result = DecodeCommand(kDebugCommands, DebugCommand);
       break;
   }
   return result;

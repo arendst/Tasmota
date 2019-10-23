@@ -21,6 +21,7 @@ e.g. temp=hum\*(100/37.5)+temp-(timer\*hum%10)
 no spaces allowed between math operations
 Comparison operators **==,!=,\>,\>=,<,<=**  
 **and** , **or** support  
+hexadecimal numbers are supported with prefix 0x
 
 strings support **+** and **+=** operators  
 string comparison **==,!=**  
@@ -48,10 +49,14 @@ memory is dynamically allocated as a result of the D section.
 copying a string to a number or reverse is supported   
 
 >**\>B**  
-executed on BOOT time  
+executed on BOOT time  and script save
 
 >**\>T**  
 executed on teleperiod time (**SENSOR** and **STATE**), get tele vars only in this section  
+remark: json variable names (like all others) may not contain math operators like - , you should set setoption64 1 to replace - with underscore
+
+>**\>F**  
+executed every 100 ms  
 
 >**\>S**  
 executed every second  
@@ -76,6 +81,8 @@ special variables (read only):
 **gtopic** = mqtt group topic  
 **prefixn** = prefix n = 1-3    
 **pwr[x]** = tasmota power state  (x = 1-N)  
+**pc[x]** = tasmota pulse counter value  (x = 1-4)  
+**tbut[x]** = touch screen button state  (x = 1-N)  
 **sw[x]** = tasmota switch state  (x = 1-N)  
 >**pin[x]** = gpio pin level (x = 0-16)  
 **pn[x]** = pin number for sensor code x, 99 if none  
@@ -87,7 +94,9 @@ special variables (read only):
 **med(n x)** = calculates a 5 value median filter of x (2 filters possible n=0,1)  
 **int(x)** = gets the integer part of x (like floor)  
 **hn(x)** = converts x (0..255) to a hex nibble string  
-**st(svar c n)** = stringtoken gets the n th substring of svar separated by c  
+**st(svar c n)** = stringtoken gets the n th substring of svar separated by c
+**sl(svar)** = gets the length of a string
+**sb(svar p n)** = gets a substring from svar at position p (if p<0 counts from end) and length n     
 **s(x)** = explicit conversion from number x to string  
 **mqtts** = state of mqtt disconnected=0, connected>0  
 **wifis** = state of wifi disconnected=0, connected>0  
@@ -128,10 +137,11 @@ variable that special variable is discarded
 **Tasmota** cmds start with **=\>**  
 within cmds you can replace text with variables with **%varname%**  
 a single percent sign must be given as **%%**  
+**->** is equivalent but doesnt send mqtt or any weblog (silent execute, usefull to reduce traffic)
 
 **special** cmds:
 
->**=\> print** prints to info log for debugging  
+>**print** or **=\>print** prints to info log for debugging  
 
 to save code space nearly no error messages are provided. However it is taken care of that at least it should not crash on syntax errors.  
 if a variable does not exist a **???** is given on commands  
@@ -164,19 +174,24 @@ then
 
 remarks:  
 the last closing bracket must be on a single line  
-the condition may not be enclosed in brackets  
+the condition may be enclosed in brackets  
+and on the same line conditions may be bracketed  e.g. if ((a==b) and ((c==d) or (c==e)) and (s!="x"))  
+
 
 >**break** exits a section or terminates a for next loop  
 **dpx** sets decimal precision to x (0-9)  
 **svars** save permanent vars  
 **delay(x)** pauses x milliseconds (should be as short as possible)  
 **spin(x m)** set gpio pin x (0-16) to value m (0,1) only the last bit is used, so even values set the pin to zero and uneven values set the pin to 1  
-**spinm(x m)** set pin mode gpio pin x (0-16) to mode m (input=0,output=1)  
+**spinm(x m)** set pin mode gpio pin x (0-16) to mode m (input=0,output=1,input with pullup=2)  
+**ws2812(array)** copies an array (defined with m:name) to the WS2812 LED chain  the array should be defined as long as the number of pixels. the color is coded as 24 bit RGB    
+**hsvrgb(h s v)** converts hue (0-360), saturation (0-100) and value (0-100) to RGB color  
 
 >**#name** names a subroutine, subroutines are called with **=#name**  
 **#name(param)** names a subroutines with a parameter is called with **=#name(param)**  
 subroutines end with the next '#' or '>' line or break, may be nested  
-params can be numbers or strings and on mismatch are converted  
+params can be numbers or strings and on mismatch are converted
+**=(svar)** executes a script in a string variable (dynamic or self modifying code)  
 
 >**for var from to inc**  
 **next**  
@@ -186,7 +201,7 @@ specifies a for next loop, (loop count must not be less then 1)
 **case a**  
 **case b**  
 **ends**  
-specifies a switch case selector  
+specifies a switch case selector  (numeric or string)
 
 **sd card support**  
 enable by CARD_CS = gpio pin of card chip select (+ 10k flash)  
@@ -228,6 +243,18 @@ extended commands   (+0,9k flash)
 can be used e.g. to set variables  e.g. **script >mintmp=15**  
 more then one line may be executed seperated by a semicolon e.g. **script >mintmp=15;maxtemp=40**   
 script itself cant be set because the size would not fit the mqtt buffers
+
+**subscribe,unsubscribe**
+>if \#defined SUPPORT_MQTT_EVENT command subscribe and unsubscribe are supported. in contrast to rules no event is generated but the event name specifies a variable defined in D section and this variable is automatically set on transmission of the subscribed item  
+
+**summary of optional defines**  
+>\#define USE_SCRIPT_FATFS CS_PIN : enables SD card support (on spi bus) also enables 4k script buffer  
+\#define USE_SCRIPT_FATFS_EXT : enables additional FS commands  
+\#define SDCARD_DIR : enables support for WEBUI for SD card directory up and download  
+\#define USE_24C256 : enables use of 24C256 i2c eeprom to expand script buffer (defaults to 4k)  
+\#define SUPPORT_MQTT_EVENT : enables support for subscribe unsubscribe  
+\#define USE_TOUCH_BUTTONS : enable virtual touch button support with touch displays  
+
 
 ***example script***  
 meant to show some of the possibilities    
@@ -366,7 +393,7 @@ endif
 =\>WebSend %url% dimmer %dimmer%  
 
 ; show on display  
-dprec0  
+dp0  
 =\>displaytext [c1l1f1s2p20] dimmer=%dimmer%  
 
 =\>print %upsecs% %uptime% %time% %sunrise% %sunset% %tstamp%  
@@ -524,7 +551,7 @@ str=""
 **\>B**  
 ; set sensor file download link   
 fl1("slog.txt")  
-; delete file in case we want to start fresh
+; delete file in case we want to start fresh  
 ;fd("slog.txt")  
 
 
@@ -613,7 +640,7 @@ punit=PressureUnit
 // update display every teleperiod time  
 if upsecs%tper==0  
 then  
-dprec2  
+dp2  
 =>%DT% [f1p7x0y5]%temp% %tunit%  
 =>%DT% [p5x70y5]%hum% %%[x250y5t]   
 =>%DT% [p11x140y5]%press% %punit%  
@@ -621,7 +648,7 @@ dprec2
 =>%DT% [p10x160y25]eCO2: %eco2% ppm  
 =>%DT% [p10c26l5]ahum: %ahum% g^m3  
 
-dprec0  
+dp0  
 =>%DT% [p25c1l5]WR 1 (Dach)  : %wr1% W  
 =>%DT% [p25c1l6]WR 2 (Garage): %-wr3% W  
 =>%DT% [p25c1l7]WR 3 (Garten): %-wr2% W  
@@ -697,14 +724,14 @@ endif
 ; update graph every teleperiod  
 if upsecs%tper==0  
 then  
-dprec2  
+dp2  
 =>%DT% [f1Ci3x40y260w30Ci1]  
 =>%DT% [Ci7x120y220t]  
 =>%DT% [Ci7x180y220T]  
 =>%DT% [Ci7p8x120y240]%temp% %tunit%   
 =>%DT% [Ci7x120y260]%press% %punit%  
 =>%DT% [Ci7x120y280]%dist% mm  
-dprec0  
+dp0  
 =>%DT% [g0:%zwz%g1:%wr1%g2:%-wr2%g3:%-wr3%]  
 if zwz>0  
 then

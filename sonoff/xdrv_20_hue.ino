@@ -36,7 +36,7 @@ const char HUE_RESPONSE[] PROGMEM =
   "CACHE-CONTROL: max-age=100\r\n"
   "EXT:\r\n"
   "LOCATION: http://%s:80/description.xml\r\n"
-  "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.17.0\r\n"
+  "SERVER: Linux/3.14.0 UPnP/1.0 IpBridge/1.24.0\r\n"  // was 1.17
   "hue-bridgeid: %s\r\n";
 const char HUE_ST1[] PROGMEM =
   "ST: upnp:rootdevice\r\n"
@@ -243,6 +243,22 @@ uint16_t prev_ct  = 254;
 char     prev_x_str[24] = "\0"; // store previously set xy by Alexa app
 char     prev_y_str[24] = "\0";
 
+uint8_t getLocalLightSubtype(uint8_t device) {
+  if (light_type) {
+    if (device >= Light.device) {
+      if (Settings.flag3.pwm_multi_channels) {
+        return LST_SINGLE;     // If SetOption68, each channel acts like a dimmer
+      } else {
+        return Light.subtype;  // the actual light
+      }
+    } else {
+      return LST_NONE;       // relays
+    }
+  } else {
+    return LST_NONE;
+  }
+}
+
 void HueLightStatus1(uint8_t device, String *response)
 {
   uint16_t ct = 0;
@@ -251,14 +267,24 @@ void HueLightStatus1(uint8_t device, String *response)
   uint16_t hue = 0;
   uint8_t  sat = 0;
   uint8_t  bri = 254;
+  uint32_t echo_gen = findEchoGeneration();   // 1 for 1st gen =+ Echo Dot 2nd gen, 2 for 2nd gen and above
+  // local_light_subtype simulates the Light.subtype for 'device'
+  // For relays LST_NONE, for dimmers LST_SINGLE
+  uint8_t local_light_subtype = getLocalLightSubtype(device);
 
+  bri = LightGetBri(device);   // get Dimmer corrected with SetOption68
+  if (bri > 254)  bri = 254;    // Philips Hue bri is between 1 and 254
+  if (bri < 1)    bri = 1;
+
+#ifdef USE_SHUTTER
+  if (ShutterState(device)) {
+    bri = (float)(Settings.shutter_invert[device-1] ? 100 - Settings.shutter_position[device-1] : Settings.shutter_position[device-1]) / 100;
+  }
+#endif
 
   if (light_type) {
     light_state.getHSB(&hue, &sat, nullptr);
-    bri = light_state.getBri();
 
-    if (bri > 254)  bri = 254;    // Philips Hue bri is between 1 and 254
-    if (bri < 1)    bri = 1;
     if ((bri > prev_bri ? bri - prev_bri : prev_bri - bri) < 1)
       bri = prev_bri;
 
@@ -293,17 +319,17 @@ void HueLightStatus1(uint8_t device, String *response)
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON1);
   response->replace("{state}", (power & (1 << (device-1))) ? "true" : "false");
   // Brightness for all devices with PWM
-  //if (LST_SINGLE <= light_subtype) {
-  light_status += "\"bri\":";
-  light_status += String(bri);
-  light_status += ",";
-  //}
-  if (LST_COLDWARM <= light_subtype) {
+  if ((1 == echo_gen) || (LST_SINGLE <= local_light_subtype)) { // force dimmer for 1st gen Echo
+    light_status += "\"bri\":";
+    light_status += String(bri);
+    light_status += ",";
+  }
+  if (LST_COLDWARM <= local_light_subtype) {
     light_status += F("\"colormode\":\"");
     light_status += (g_gotct ? "ct" : "hs");
     light_status += "\",";
   }
-  if (LST_RGB <= light_subtype) {  // colors
+  if (LST_RGB <= local_light_subtype) {  // colors
     if (prev_x_str[0] && prev_y_str[0]) {
       light_status += "\"xy\":[";
       light_status += prev_x_str;
@@ -327,10 +353,10 @@ void HueLightStatus1(uint8_t device, String *response)
     light_status += String(sat);
     light_status += ",";
   }
-  if (LST_COLDWARM == light_subtype || LST_RGBW <= light_subtype) {  // white temp
+  if (LST_COLDWARM == local_light_subtype || LST_RGBW <= local_light_subtype) {  // white temp
     light_status += "\"ct\":";
-    light_status += String(ct > 0 ? ct : 284);
-    light_status += ",";  // if no ct, default to medium white
+    light_status += String(ct > 0 ? ct : 284);  // if no ct, default to medium white
+    light_status += ",";
   }
   response->replace("{light_status}", light_status);
 }
@@ -338,29 +364,88 @@ void HueLightStatus1(uint8_t device, String *response)
 void HueLightStatus2(uint8_t device, String *response)
 {
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON2);
-  response->replace("{j1", Settings.friendlyname[device-1]);
+  if (device <= MAX_FRIENDLYNAMES) {
+    response->replace("{j1", Settings.friendlyname[device-1]);
+  } else {
+    char fname[33];
+    strcpy(fname, Settings.friendlyname[MAX_FRIENDLYNAMES-1]);
+    uint32_t fname_len = strlen(fname);
+    if (fname_len > 30) { fname_len = 30; }
+    fname[fname_len++] = '-';
+    if (device - MAX_FRIENDLYNAMES < 10) {
+      fname[fname_len++] = '0' + device - MAX_FRIENDLYNAMES;
+    } else {
+      fname[fname_len++] = 'A' + device - MAX_FRIENDLYNAMES - 10;
+    }
+    fname[fname_len] = 0x00;
+
+    response->replace("{j1", fname);
+  }
   response->replace("{j2", GetHueDeviceId(device));
 }
 
 // generate a unique lightId mixing local IP address and device number
-// it is limited to 16 devices.
-// last 24 bits of Mac address + 4 bits of local light
-uint32_t EncodeLightId(uint8_t idx)
+// it is limited to 32 devices.
+// last 24 bits of Mac address + 4 bits of local light + high bit for relays 16-31, relay 32 is mapped to 0
+uint32_t EncodeLightId(uint8_t relay_id)
 {
   uint8_t mac[6];
   WiFi.macAddress(mac);
-  uint32_t id = (mac[3] << 20) | (mac[4] << 12) | (mac[5] << 4) | (idx & 0xF);
+  uint32_t id = 0;
+
+  if (relay_id >= 32) {   // for Relay #32, we encode as 0
+    relay_id = 0;
+  }
+  if (relay_id > 15) {
+    id = (1 << 28);
+  }
+
+  id |= (mac[3] << 20) | (mac[4] << 12) | (mac[5] << 4) | (relay_id & 0xF);
   return id;
 }
 
-uint32_t DecodeLightId(uint32_t id) {
-  return id & 0xF;
+// get hue_id and decode the relay_id
+// 4 LSB decode to 1-15, if bit 28 is set, it encodes 16-31, if 0 then 32
+uint32_t DecodeLightId(uint32_t hue_id) {
+  uint8_t relay_id = hue_id & 0xF;
+  if (hue_id & (1 << 28)) {   // check if bit 25 is set, if so we have
+    relay_id += 16;
+  }
+  if (0 == relay_id) {        // special value 0 is actually relay #32
+    relay_id = 32;
+  }
+  return relay_id;
+}
+
+static const char * FIRST_GEN_UA[] = {  // list of User-Agents signature
+  "AEOBC",                              // Echo Dot 2ng Generation
+};
+
+// Check if the Echo device is of 1st generation, which triggers different results
+uint32_t findEchoGeneration(void) {
+  // result is 1 for 1st gen, 2 for 2nd gen and further
+  String user_agent = WebServer->header("User-Agent");
+  uint32_t gen = 2;
+
+  for (uint32_t i = 0; i < sizeof(FIRST_GEN_UA)/sizeof(char*); i++) {
+    if (user_agent.indexOf(FIRST_GEN_UA[i]) >= 0) {  // found
+      gen = 1;
+      break;
+    }
+  }
+  if (0 == user_agent.length()) {
+    gen = 1;        // if no user-agent, also revert to gen v1
+  }
+
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, D_LOG_HTTP D_HUE " User-Agent: %s, gen=%d", user_agent.c_str(), gen);  // Header collection is set in xdrv_01_webserver.ino, in StartWebserver()
+
+  return gen;
 }
 
 void HueGlobalConfig(String *path)
 {
   String response;
-  uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
 
   path->remove(0,1);                                 // cut leading / to get <id>
   response = F("{\"lights\":{\"");
@@ -403,7 +488,8 @@ void HueLights(String *path)
   bool on = false;
   bool change = false;  // need to change a parameter to the light
   uint8_t device = 1;
-  uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  uint8_t local_light_subtype = Light.subtype;
+  uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
 
   path->remove(0,path->indexOf("/lights"));          // Remove until /lights
   if (path->endsWith("/lights")) {                   // Got /lights
@@ -417,15 +503,27 @@ void HueLights(String *path)
         response += ",\"";
       }
     }
+#ifdef USE_SCRIPT_HUE
+    Script_Check_Hue(&response);
+#endif
     response += "}";
   }
   else if (path->endsWith("/state")) {               // Got ID/state
     path->remove(0,8);                               // Remove /lights/
     path->remove(path->indexOf("/state"));           // Remove /state
     device = DecodeLightId(atoi(path->c_str()));
+
+#ifdef USE_SCRIPT_HUE
+    if (device>devices_present) {
+      return Script_Handle_Hue(path);
+    }
+#endif
+
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
+    local_light_subtype = getLocalLightSubtype(device); // get the subtype for this device
+
     if (WebServer->args()) {
       response = "[";
 
@@ -437,29 +535,46 @@ void HueLights(String *path)
         response.replace("{id", String(EncodeLightId(device)));
         response.replace("{cm", "on");
 
-        on = hue_json["on"];
-        switch(on)
-        {
-          case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
-                       response.replace("{re", "false");
-                       break;
-          case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
-                       response.replace("{re", "true");
-                       break;
-          default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
-                       break;
+#ifdef USE_SHUTTER
+        if (ShutterState(device)) {
+          if (!change) {
+            on = hue_json["on"];
+            bri = on ? 1.0f : 0.0f; // when bri is not part of this request then calculate it
+            change = true;
+          }
+          response.replace("{re", on ? "true" : "false");
+        } else {
+#endif
+          on = hue_json["on"];
+          switch(on)
+          {
+            case false : ExecuteCommandPower(device, POWER_OFF, SRC_HUE);
+                        response.replace("{re", "false");
+                        break;
+            case true  : ExecuteCommandPower(device, POWER_ON, SRC_HUE);
+                        response.replace("{re", "true");
+                        break;
+            default    : response.replace("{re", (power & (1 << (device-1))) ? "true" : "false");
+                        break;
+          }
+          resp = true;
+#ifdef USE_SHUTTER
         }
-        resp = true;
+#endif  // USE_SHUTTER
       }
 
-      if (light_type) {
-        light_state.getHSB(&hue, &sat, nullptr);
-        bri = light_state.getBri();   // get the combined bri for CT and RGB, not only the RGB one
-        ct = light_state.getCT();
-        uint8_t color_mode = light_state.getColorMode();
-        if (LCM_RGB == color_mode) { g_gotct = false; }
-        if (LCM_CT  == color_mode) { g_gotct = true; }
-        // If LCM_BOTH == color_mode, leave g_gotct unchanged
+      if (light_type && (local_light_subtype >= LST_SINGLE)) {
+        if (!Settings.flag3.pwm_multi_channels) {
+          light_state.getHSB(&hue, &sat, nullptr);
+          bri = light_state.getBri();   // get the combined bri for CT and RGB, not only the RGB one
+          ct = light_state.getCT();
+          uint8_t color_mode = light_state.getColorMode();
+          if (LCM_RGB == color_mode) { g_gotct = false; }
+          if (LCM_CT  == color_mode) { g_gotct = true; }
+          // If LCM_BOTH == color_mode, leave g_gotct unchanged
+        } else {    // treat each channel as simple dimmer
+          bri = LightGetBri(device);
+        }
       }
       prev_x_str[0] = prev_y_str[0] = 0;  // reset xy string
 
@@ -473,7 +588,7 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "bri");
         response.replace("{re", String(tmp));
-        if (LST_SINGLE <= light_subtype) {
+        if (LST_SINGLE <= Light.subtype) {
           change = true;
         }
         resp = true;
@@ -514,7 +629,7 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "hue");
         response.replace("{re", String(tmp));
-        if (LST_RGB <= light_subtype) {
+        if (LST_RGB <= Light.subtype) {
           g_gotct = false;
           change = true;
         }
@@ -530,7 +645,7 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "sat");
         response.replace("{re", String(tmp));
-        if (LST_RGB <= light_subtype) {
+        if (LST_RGB <= Light.subtype) {
           g_gotct = false;
           change = true;
         }
@@ -544,25 +659,36 @@ void HueLights(String *path)
         response.replace("{id", String(device));
         response.replace("{cm", "ct");
         response.replace("{re", String(ct));
-        if ((LST_COLDWARM == light_subtype) || (LST_RGBW <= light_subtype)) {
+        if ((LST_COLDWARM == Light.subtype) || (LST_RGBW <= Light.subtype)) {
           g_gotct = true;
           change = true;
         }
         resp = true;
       }
       if (change) {
-        if (light_type) {
-          if (g_gotct) {
-            light_controller.changeCTB(ct, bri);
-          } else {
-            light_controller.changeHSB(hue, sat, bri);
+#ifdef USE_SHUTTER
+        if (ShutterState(device)) {
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_invert[device-1]);
+          ShutterSetPosition(device, bri * 100.0f );
+        } else
+#endif
+        if (light_type && (local_light_subtype > LST_NONE)) {   // not relay
+          if (!Settings.flag3.pwm_multi_channels) {
+            if (g_gotct) {
+              light_controller.changeCTB(ct, bri);
+            } else {
+              light_controller.changeHSB(hue, sat, bri);
+            }
+            LightPreparePower();
+          } else {  // SetOption68 On, each channel is a dimmer
+            LightSetBri(device, bri);
           }
-          LightPreparePower();
-          if (LST_COLDWARM <= light_subtype) {
+          if (LST_COLDWARM <= local_light_subtype) {
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
           } else {
             MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_DIMMER));
           }
+          XdrvRulesProcess();
         }
         change = false;
       }
@@ -576,8 +702,17 @@ void HueLights(String *path)
     }
   }
   else if(path->indexOf("/lights/") >= 0) {          // Got /lights/ID
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, "/lights path=%s", path->c_str());
     path->remove(0,8);                               // Remove /lights/
     device = DecodeLightId(atoi(path->c_str()));
+
+#ifdef USE_SCRIPT_HUE
+    if (device>devices_present) {
+      Script_HueStatus(&response,device-devices_present-1);
+      goto exit;
+}
+#endif
+
     if ((device < 1) || (device > maxhue)) {
       device = 1;
     }
@@ -589,6 +724,7 @@ void HueLights(String *path)
     response = "{}";
     code = 406;
   }
+  exit:
   AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_HTTP D_HUE " Result (%s)"), response.c_str());
   WSSend(code, CT_JSON, response);
 }
@@ -599,7 +735,7 @@ void HueGroups(String *path)
  * http://sonoff/api/username/groups?1={"name":"Woonkamer","lights":[],"type":"Room","class":"Living room"})
  */
   String response = "{}";
-  uint8_t maxhue = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
+  uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
 
   if (path->endsWith("/0")) {
     response = FPSTR(HUE_GROUP0_STATUS_JSON);
@@ -651,6 +787,7 @@ void HandleHueApi(String *path)
   else if (path->endsWith("/sensors")) HueNotImplemented(path);
   else if (path->endsWith("/scenes")) HueNotImplemented(path);
   else if (path->endsWith("/rules")) HueNotImplemented(path);
+  else if (path->endsWith("/resourcelinks")) HueNotImplemented(path);
   else HueGlobalConfig(path);
 }
 
@@ -662,7 +799,11 @@ bool Xdrv20(uint8_t function)
 {
   bool result = false;
 
+#ifdef USE_SCRIPT_HUE
+  if ((EMUL_HUE == Settings.flag2.emulation)) {
+#else
   if (devices_present && (EMUL_HUE == Settings.flag2.emulation)) {
+#endif
     switch (function) {
       case FUNC_WEB_ADD_HANDLER:
         WebServer->on("/description.xml", HandleUpnpSetupHue);

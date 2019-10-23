@@ -142,30 +142,30 @@ bool Xsns33(uint8_t function)
         break;
       case FUNC_EVERY_SECOND:
         TIME_T tmpTime;
-        if (!ds3231ReadStatus && DS3231chipDetected && utc_time < 1451602800 ) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
+        if (!ds3231ReadStatus && DS3231chipDetected && Rtc.utc_time < START_VALID_TIME ) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
           ntp_force_sync = true; //force to sync with ntp
-          utc_time = ReadFromDS3231(); //we read UTC TIME from DS3231
+          Rtc.utc_time = ReadFromDS3231(); //we read UTC TIME from DS3231
           // from this line, we just copy the function from "void RtcSecond()" at the support.ino ,line 2143 and above
           // We need it to set rules etc.
-          BreakTime(utc_time, tmpTime);
-          if (utc_time < 1451602800 ) {
+          BreakTime(Rtc.utc_time, tmpTime);
+          if (Rtc.utc_time < START_VALID_TIME ) {
             ds3231ReadStatus = true; //if time in DS3231 is valid, do  not update again
           }
           RtcTime.year = tmpTime.year + 1970;
-          daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
-          standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
+          Rtc.daylight_saving_time = RuleToTime(Settings.tflag[1], RtcTime.year);
+          Rtc.standard_time = RuleToTime(Settings.tflag[0], RtcTime.year);
           AddLog_P2(LOG_LEVEL_INFO, PSTR("Set time from DS3231 to RTC (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                      GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
-          if (local_time < 1451602800) {  // 2016-01-01
+          if (Rtc.local_time < START_VALID_TIME) {  // 2016-01-01
             rules_flag.time_init = 1;
           } else {
             rules_flag.time_set = 1;
           }
         }
-        else if (!ds3231WriteStatus && DS3231chipDetected &&  utc_time > 1451602800 && abs(utc_time - ReadFromDS3231()) > 60) {//if time is valid and is drift from RTC in more that 60 second
+        else if (!ds3231WriteStatus && DS3231chipDetected &&  Rtc.utc_time > START_VALID_TIME && abs(Rtc.utc_time - ReadFromDS3231()) > 60) {//if time is valid and is drift from RTC in more that 60 second
           AddLog_P2(LOG_LEVEL_INFO, PSTR("Write Time TO DS3231 from NTP (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
                      GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
-          SetDS3231Time (utc_time); //update the DS3231 time
+          SetDS3231Time (Rtc.utc_time); //update the DS3231 time
           ds3231WriteStatus = true;
         }
         break;

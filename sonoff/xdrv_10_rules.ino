@@ -78,6 +78,7 @@
 #define D_CMND_CALC_RESOLUTION "CalcRes"
 #define D_CMND_SUBSCRIBE "Subscribe"
 #define D_CMND_UNSUBSCRIBE "Unsubscribe"
+#define D_CMND_IF "If"
 
 #define D_JSON_INITIATED "Initiated"
 
@@ -96,7 +97,7 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
 #ifdef USE_EXPRESSION
   #include <LinkedList.h>                 // Import LinkedList library
 
-  const char kExpressionOperators[] PROGMEM = "+-*/%^";
+  const char kExpressionOperators[] PROGMEM = "+-*/%^\0";
   #define EXPRESSION_OPERATOR_ADD         0
   #define EXPRESSION_OPERATOR_SUBTRACT    1
   #define EXPRESSION_OPERATOR_MULTIPLY    2
@@ -106,10 +107,39 @@ const char kCompareOperators[] PROGMEM = "=\0>\0<\0|\0==!=>=<=";
 
   const uint8_t kExpressionOperatorsPriorities[] PROGMEM = {1, 1, 2, 2, 3, 4};
   #define MAX_EXPRESSION_OPERATOR_PRIORITY    4
+
+
+  #define LOGIC_OPERATOR_AND        1
+  #define LOGIC_OPERATOR_OR         2
+
+  #define IF_BLOCK_INVALID        -1
+  #define IF_BLOCK_ANY            0
+  #define IF_BLOCK_ELSEIF         1
+  #define IF_BLOCK_ELSE           2
+  #define IF_BLOCK_ENDIF          3
 #endif  // USE_EXPRESSION
 
-enum RulesCommands { CMND_RULE, CMND_RULETIMER, CMND_EVENT, CMND_VAR, CMND_MEM, CMND_ADD, CMND_SUB, CMND_MULT, CMND_SCALE, CMND_CALC_RESOLUTION, CMND_SUBSCRIBE, CMND_UNSUBSCRIBE };
-const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|" D_CMND_ADD "|" D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION "|" D_CMND_SUBSCRIBE "|" D_CMND_UNSUBSCRIBE ;
+const char kRulesCommands[] PROGMEM = "|"  // No prefix
+  D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMND_EVENT "|" D_CMND_VAR "|" D_CMND_MEM "|"
+  D_CMND_ADD "|"  D_CMND_SUB "|" D_CMND_MULT "|" D_CMND_SCALE "|" D_CMND_CALC_RESOLUTION
+#ifdef SUPPORT_MQTT_EVENT
+  "|" D_CMND_SUBSCRIBE "|" D_CMND_UNSUBSCRIBE
+#endif
+#ifdef SUPPORT_IF_STATEMENT
+  "|" D_CMND_IF
+#endif
+  ;
+
+void (* const RulesCommand[])(void) PROGMEM = {
+  &CmndRule, &CmndRuleTimer, &CmndEvent, &CmndVariable, &CmndMemory,
+  &CmndAddition, &CmndSubtract, &CmndMultiply, &CmndScale, &CmndCalcResolution
+#ifdef SUPPORT_MQTT_EVENT
+  , &CmndSubscribe, &CmndUnsubscribe
+#endif
+#ifdef SUPPORT_IF_STATEMENT
+  , &CmndIf
+#endif
+  };
 
 #ifdef SUPPORT_MQTT_EVENT
   #include <LinkedList.h>                 // Import LinkedList library
@@ -119,30 +149,34 @@ const char kRulesCommands[] PROGMEM = D_CMND_RULE "|" D_CMND_RULETIMER "|" D_CMN
     String Key;
   } MQTT_Subscription;
   LinkedList<MQTT_Subscription> subscriptions;
-#endif    //SUPPORT_MQTT_EVENT
+#endif  // SUPPORT_MQTT_EVENT
 
-String rules_event_value;
-unsigned long rules_timer[MAX_RULE_TIMERS] = { 0 };
-uint8_t rules_quota = 0;
-long rules_new_power = -1;
-long rules_old_power = -1;
-long rules_old_dimm = -1;
+struct RULES {
+  String event_value;
+  unsigned long timer[MAX_RULE_TIMERS] = { 0 };
+  uint32_t triggers[MAX_RULE_SETS] = { 0 };
+  uint8_t trigger_count[MAX_RULE_SETS] = { 0 };
 
-uint32_t rules_triggers[MAX_RULE_SETS] = { 0 };
-uint16_t rules_last_minute = 60;
-uint8_t rules_trigger_count[MAX_RULE_SETS] = { 0 };
-uint8_t rules_teleperiod = 0;
+  long new_power = -1;
+  long old_power = -1;
+  long old_dimm = -1;
 
-char event_data[100];
-char vars[MAX_RULE_VARS][33] = { 0 };
+  uint16_t last_minute = 60;
+  uint16_t vars_event = 0;
+  uint8_t mems_event = 0;
+  bool teleperiod = false;
+
+  char event_data[100];
+} Rules;
+
+char rules_vars[MAX_RULE_VARS][33] = {{ 0 }};
+
 #if (MAX_RULE_VARS>16)
 #error MAX_RULE_VARS is bigger than 16
 #endif
 #if (MAX_RULE_MEMS>5)
 #error MAX_RULE_MEMS is bigger than 5
 #endif
-uint16_t vars_event = 0;
-uint8_t mems_event = 0;
 
 /*******************************************************************************************/
 
@@ -160,32 +194,23 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   if (pos == -1) { return false; }                     // No # sign in rule
 
   String rule_task = rule.substring(0, pos);           // "INA219" or "SYSTEM"
-  if (rules_teleperiod) {
+  if (Rules.teleperiod) {
     int ppos = rule_task.indexOf("TELE-");             // "TELE-INA219" or "INA219"
     if (ppos == -1) { return false; }                  // No pre-amble in rule
     rule_task = rule.substring(5, pos);                // "INA219" or "SYSTEM"
   }
 
-  String rule_name = rule.substring(pos +1);           // "CURRENT>0.100" or "BOOT" or "%var1%" or "MINUTE|5"
+  String rule_expr = rule.substring(pos +1);           // "CURRENT>0.100" or "BOOT" or "%var1%" or "MINUTE|5"
+  String rule_name, rule_param;
+  int8_t compareOperator = parseCompareExpression(rule_expr, rule_name, rule_param);    //Parse the compare expression.Return operator and the left, right part of expression
 
-  char compare_operator[3];
-  int8_t compare = COMPARE_OPERATOR_NONE;
-  for (int32_t i = MAXIMUM_COMPARE_OPERATOR; i >= 0; i--) {
-    snprintf_P(compare_operator, sizeof(compare_operator), kCompareOperators + (i *2));
-    if ((pos = rule_name.indexOf(compare_operator)) > 0) {
-      compare = i;
-      break;
-    }
-  }
-
-  char rule_svalue[CMDSZ] = { 0 };
+  char rule_svalue[80] = { 0 };
   float rule_value = 0;
-  if (compare != COMPARE_OPERATOR_NONE) {
-    String rule_param = rule_name.substring(pos + strlen(compare_operator));
+  if (compareOperator != COMPARE_OPERATOR_NONE) {
     for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
       snprintf_P(stemp, sizeof(stemp), PSTR("%%VAR%d%%"), i +1);
       if (rule_param.startsWith(stemp)) {
-        rule_param = vars[i];
+        rule_param = rules_vars[i];
         break;
       }
     }
@@ -227,7 +252,6 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     } else {
       rule_value = CharToFloat((char*)rule_svalue);   // 0.1      - This saves 9k code over toFLoat()!
     }
-    rule_name = rule_name.substring(0, pos);           // "CURRENT"
   }
 
   // Step2: Search rule_task and rule_name
@@ -235,23 +259,33 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   JsonObject &root = jsonBuf.parseObject(event);
   if (!root.success()) { return false; }               // No valid JSON data
 
-  float value = 0;
-  const char* str_value = root[rule_task][rule_name];
+  const char* str_value;
+  if ((pos = rule_name.indexOf("[")) > 0) {            // "CURRENT[1]"
+    int rule_name_idx = rule_name.substring(pos +1).toInt();
+    if ((rule_name_idx < 1) || (rule_name_idx > 6)) {  // Allow indexes 1 to 6
+      rule_name_idx = 1;
+    }
+    rule_name = rule_name.substring(0, pos);           // "CURRENT"
+    str_value = root[rule_task][rule_name][rule_name_idx -1];  // "ENERGY" and "CURRENT" and 0
+  } else {
+    str_value = root[rule_task][rule_name];            // "INA219" and "CURRENT"
+  }
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
-//  rule_task.c_str(), rule_name.c_str(), rule_svalue, rules_trigger_count[rule_set], bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
+//  rule_task.c_str(), rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
 
   if (!root[rule_task][rule_name].success()) { return false; }
   // No value but rule_name is ok
 
-  rules_event_value = str_value;                       // Prepare %value%
+  Rules.event_value = str_value;                       // Prepare %value%
 
   // Step 3: Compare rule (value)
+  float value = 0;
   if (str_value) {
     value = CharToFloat((char*)str_value);
     int int_value = int(value);
     int int_rule_value = int(rule_value);
-    switch (compare) {
+    switch (compareOperator) {
       case COMPARE_OPERATOR_EXACT_DIVISION:
         match = (int_rule_value && (int_value % int_rule_value) == 0);
         break;
@@ -283,17 +317,52 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 
   if (bitRead(Settings.rule_once, rule_set)) {
     if (match) {                                       // Only allow match state changes
-      if (!bitRead(rules_triggers[rule_set], rules_trigger_count[rule_set])) {
-        bitSet(rules_triggers[rule_set], rules_trigger_count[rule_set]);
+      if (!bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set])) {
+        bitSet(Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
       } else {
         match = false;
       }
     } else {
-      bitClear(rules_triggers[rule_set], rules_trigger_count[rule_set]);
+      bitClear(Rules.triggers[rule_set], Rules.trigger_count[rule_set]);
     }
   }
 
   return match;
+}
+
+/********************************************************************************************/
+/*
+ * Parse a comparison expression.
+ * Get 3 parts - left expression, compare operator and right expression.
+ * Input:
+ *      expr        - A comparison expression like VAR1 >= MEM1 + 10
+ *      leftExpr    - Used to accept returned left parts of expression
+ *      rightExpr   - Used to accept returned right parts of expression
+ * Output:
+ *      leftExpr    - Left parts of expression
+ *      rightExpr   - Right parts of expression
+ * Return:
+ *      compare operator
+ *      COMPARE_OPERATOR_NONE   - failed
+ */
+int8_t parseCompareExpression(String &expr, String &leftExpr, String &rightExpr)
+{
+  char compare_operator[3];
+  int8_t compare = COMPARE_OPERATOR_NONE;
+  leftExpr = expr;
+  int position;
+  for (int8_t i = MAXIMUM_COMPARE_OPERATOR; i >= 0; i--) {
+    snprintf_P(compare_operator, sizeof(compare_operator), kCompareOperators + (i *2));
+    if ((position = expr.indexOf(compare_operator)) > 0) {
+      compare = i;
+      leftExpr = expr.substring(0, position);
+      leftExpr.trim();
+      rightExpr = expr.substring(position + strlen(compare_operator));
+      rightExpr.trim();
+      break;
+    }
+  }
+  return compare;
 }
 
 /*******************************************************************************************/
@@ -309,7 +378,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
   String rules = Settings.rules[rule_set];
 
-  rules_trigger_count[rule_set] = 0;
+  Rules.trigger_count[rule_set] = 0;
   int plen = 0;
   int plen2 = 0;
   bool stop_all_rules = false;
@@ -337,7 +406,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
     String commands = rules.substring(pevt +4, plen);     // "Backlog Dimmer 10;Color 100000"
     plen += 6;
-    rules_event_value = "";
+    Rules.event_value = "";
     String event = event_saved;
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
@@ -348,10 +417,10 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       ucommand.toUpperCase();
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
       if (ucommand.indexOf("EVENT ") != -1) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
-      commands.replace(F("%value%"), rules_event_value);
+      commands.replace(F("%value%"), Rules.event_value);
       for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%var%d%%"), i +1);
-        commands.replace(stemp, vars[i]);
+        commands.replace(stemp, rules_vars[i]);
       }
       for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%%mem%d%%"), i +1);
@@ -372,12 +441,15 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 
 //      Response_P(S_JSON_COMMAND_SVALUE, D_CMND_RULE, D_JSON_INITIATED);
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
-
+#ifdef SUPPORT_IF_STATEMENT
+      char *pCmd = command;
+      RulesPreprocessCommand(pCmd);      //Do pre-process for IF statement
+#endif
       ExecuteCommand(command, SRC_RULE);
       serviced = true;
       if (stop_all_rules) { return serviced; }     // If BREAK was used, Stop execution of this rule set
     }
-    rules_trigger_count[rule_set]++;
+    Rules.trigger_count[rule_set]++;
   }
   return serviced;
 }
@@ -428,7 +500,7 @@ void RulesInit(void)
       bitWrite(Settings.rule_once, i, 0);
     }
   }
-  rules_teleperiod = 0;
+  Rules.teleperiod = false;
 }
 
 void RulesEvery50ms(void)
@@ -436,12 +508,12 @@ void RulesEvery50ms(void)
   if (Settings.rule_enabled) {  // Any rule enabled
     char json_event[120];
 
-    if (-1 == rules_new_power) { rules_new_power = power; }
-    if (rules_new_power != rules_old_power) {
-      if (rules_old_power != -1) {
+    if (-1 == Rules.new_power) { Rules.new_power = power; }
+    if (Rules.new_power != Rules.old_power) {
+      if (Rules.old_power != -1) {
         for (uint32_t i = 0; i < devices_present; i++) {
-          uint8_t new_state = (rules_new_power >> i) &1;
-          if (new_state != ((rules_old_power >> i) &1)) {
+          uint8_t new_state = (Rules.new_power >> i) &1;
+          if (new_state != ((Rules.old_power >> i) &1)) {
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"State\":%d}}"), i +1, new_state);
             RulesProcessEvent(json_event);
           }
@@ -449,7 +521,7 @@ void RulesEvery50ms(void)
       } else {
         // Boot time POWER OUTPUTS (Relays) Status
         for (uint32_t i = 0; i < devices_present; i++) {
-          uint8_t new_state = (rules_new_power >> i) &1;
+          uint8_t new_state = (Rules.new_power >> i) &1;
           snprintf_P(json_event, sizeof(json_event), PSTR("{\"Power%d\":{\"Boot\":%d}}"), i +1, new_state);
           RulesProcessEvent(json_event);
         }
@@ -459,29 +531,29 @@ void RulesEvery50ms(void)
           if ((pin[GPIO_SWT1 +i] < 99) || ((pin[GPIO_TM16CLK] < 99) && (pin[GPIO_TM16DIO] < 99) && (pin[GPIO_TM16STB] < 99))) {
 #else
           if (pin[GPIO_SWT1 +i] < 99) {
-#endif // USE_TM1638
+#endif  // USE_TM1638
             bool swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"" D_JSON_SWITCH "%d\":{\"Boot\":%d}}"), i +1, (swm ^ SwitchLastState(i)));
             RulesProcessEvent(json_event);
           }
         }
       }
-      rules_old_power = rules_new_power;
+      Rules.old_power = Rules.new_power;
     }
-    else if (rules_old_dimm != Settings.light_dimmer) {
-      if (rules_old_dimm != -1) {
+    else if (Rules.old_dimm != Settings.light_dimmer) {
+      if (Rules.old_dimm != -1) {
         snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"State\":%d}}"), Settings.light_dimmer);
       } else {
         // Boot time DIMMER VALUE
         snprintf_P(json_event, sizeof(json_event), PSTR("{\"Dimmer\":{\"Boot\":%d}}"), Settings.light_dimmer);
       }
       RulesProcessEvent(json_event);
-      rules_old_dimm = Settings.light_dimmer;
+      Rules.old_dimm = Settings.light_dimmer;
     }
-    else if (event_data[0]) {
+    else if (Rules.event_data[0]) {
       char *event;
       char *parameter;
-      event = strtok_r(event_data, "=", &parameter);     // event_data = fanspeed=10
+      event = strtok_r(Rules.event_data, "=", &parameter);     // Rules.event_data = fanspeed=10
       if (event) {
         event = Trim(event);
         if (parameter) {
@@ -490,27 +562,27 @@ void RulesEvery50ms(void)
           parameter = event + strlen(event);  // '\0'
         }
         snprintf_P(json_event, sizeof(json_event), PSTR("{\"Event\":{\"%s\":\"%s\"}}"), event, parameter);
-        event_data[0] ='\0';
+        Rules.event_data[0] ='\0';
         RulesProcessEvent(json_event);
       } else {
-        event_data[0] ='\0';
+        Rules.event_data[0] ='\0';
       }
     }
-    else if (vars_event || mems_event){
-      if (vars_event) {
+    else if (Rules.vars_event || Rules.mems_event){
+      if (Rules.vars_event) {
         for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
-          if (bitRead(vars_event, i)) {
-            bitClear(vars_event, i);
-            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, vars[i]);
+          if (bitRead(Rules.vars_event, i)) {
+            bitClear(Rules.vars_event, i);
+            snprintf_P(json_event, sizeof(json_event), PSTR("{\"Var%d\":{\"State\":%s}}"), i+1, rules_vars[i]);
             RulesProcessEvent(json_event);
             break;
           }
         }
       }
-      if (mems_event) {
+      if (Rules.mems_event) {
         for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
-          if (bitRead(mems_event, i)) {
-            bitClear(mems_event, i);
+          if (bitRead(Rules.mems_event, i)) {
+            bitClear(Rules.mems_event, i);
             snprintf_P(json_event, sizeof(json_event), PSTR("{\"Mem%d\":{\"State\":%s}}"), i+1, Settings.mems[i]);
             RulesProcessEvent(json_event);
             break;
@@ -533,6 +605,10 @@ void RulesEvery50ms(void)
             case 5: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Connected\":1}}"), sizeof(json_event)); break;
             case 6: strncpy_P(json_event, PSTR("{\"WIFI\":{\"Disconnected\":1}}"), sizeof(json_event)); break;
             case 7: strncpy_P(json_event, PSTR("{\"HTTP\":{\"Initialized\":1}}"), sizeof(json_event)); break;
+#ifdef USE_SHUTTER
+            case 8: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moved\":1}}"), sizeof(json_event)); break;
+            case 9: strncpy_P(json_event, PSTR("{\"SHUTTER\":{\"Moving\":1}}"), sizeof(json_event)); break;
+#endif  // USE_SHUTTER
           }
           if (json_event[0]) {
             RulesProcessEvent(json_event);
@@ -569,16 +645,16 @@ void RulesEverySecond(void)
     char json_event[120];
 
     if (RtcTime.valid) {
-      if ((uptime > 60) && (RtcTime.minute != rules_last_minute)) {  // Execute from one minute after restart every minute only once
-        rules_last_minute = RtcTime.minute;
+      if ((uptime > 60) && (RtcTime.minute != Rules.last_minute)) {  // Execute from one minute after restart every minute only once
+        Rules.last_minute = RtcTime.minute;
         snprintf_P(json_event, sizeof(json_event), PSTR("{\"Time\":{\"Minute\":%d}}"), MinutesPastMidnight());
         RulesProcessEvent(json_event);
       }
     }
     for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
-      if (rules_timer[i] != 0L) {           // Timer active?
-        if (TimeReached(rules_timer[i])) {  // Timer finished?
-          rules_timer[i] = 0L;              // Turn off this timer
+      if (Rules.timer[i] != 0L) {           // Timer active?
+        if (TimeReached(Rules.timer[i])) {  // Timer finished?
+          Rules.timer[i] = 0L;              // Turn off this timer
           snprintf_P(json_event, sizeof(json_event), PSTR("{\"Rules\":{\"Timer\":%d}}"), i +1);
           RulesProcessEvent(json_event);
         }
@@ -599,14 +675,14 @@ void RulesSaveBeforeRestart(void)
 
 void RulesSetPower(void)
 {
-  rules_new_power = XdrvMailbox.index;
+  Rules.new_power = XdrvMailbox.index;
 }
 
 void RulesTeleperiod(void)
 {
-  rules_teleperiod = 1;
+  Rules.teleperiod = true;
   RulesProcess();
-  rules_teleperiod = 0;
+  Rules.teleperiod = false;
 }
 
 #ifdef SUPPORT_MQTT_EVENT
@@ -622,10 +698,10 @@ void RulesTeleperiod(void)
  */
 bool RulesMqttData(void)
 {
-  bool serviced = false;
-  if (XdrvMailbox.data_len < 1 || XdrvMailbox.data_len > 128) {
+  if (XdrvMailbox.data_len < 1 || XdrvMailbox.data_len > 256) {
     return false;
   }
+  bool serviced = false;
   String sTopic = XdrvMailbox.topic;
   String sData = XdrvMailbox.data;
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: MQTT Topic %s, Event %s"), XdrvMailbox.topic, XdrvMailbox.data);
@@ -642,7 +718,7 @@ bool RulesMqttData(void)
       if (event_item.Key.length() == 0) {   //If did not specify Key
         value = sData;
       } else {      //If specified Key, need to parse Key/Value from JSON data
-        StaticJsonBuffer<400> jsonBuf;
+        StaticJsonBuffer<500> jsonBuf;
         JsonObject& jsonData = jsonBuf.parseObject(sData);
         String key1 = event_item.Key;
         String key2;
@@ -660,7 +736,7 @@ bool RulesMqttData(void)
       }
       value.trim();
       //Create an new event. Cannot directly call RulesProcessEvent().
-      snprintf_P(event_data, sizeof(event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
+      snprintf_P(Rules.event_data, sizeof(Rules.event_data), PSTR("%s=%s"), event_item.Event.c_str(), value.c_str());
     }
   }
   return serviced;
@@ -677,19 +753,19 @@ bool RulesMqttData(void)
  *      Subscribe
  *        Subscribe command without any parameter will list all topics currently subscribed.
  * Input:
- *      data      - A char buffer with all the parameters
- *      data_len  - Length of the parameters
+ *      XdrvMailbox.data      - A char buffer with all the parameters
+ *      XdrvMailbox.data_len  - Length of the parameters
  * Return:
  *      A string include subscribed event, topic and key.
  */
-String RulesSubscribe(const char *data, int data_len)
+void CmndSubscribe(void)
 {
   MQTT_Subscription subscription_item;
   String events;
-  if (data_len > 0) {
-    char parameters[data_len+1];
-    memcpy(parameters, data, data_len);
-    parameters[data_len] = '\0';
+  if (XdrvMailbox.data_len > 0) {
+    char parameters[XdrvMailbox.data_len+1];
+    memcpy(parameters, XdrvMailbox.data, XdrvMailbox.data_len);
+    parameters[XdrvMailbox.data_len] = '\0';
     String event_name, topic, key;
 
     char * pos = strtok(parameters, ",");
@@ -748,28 +824,28 @@ String RulesSubscribe(const char *data, int data_len)
         + subscription_item.Key + "; ");
     }
   }
-  return events;
+  ResponseCmndChar(events.c_str());
 }
 
 /********************************************************************************************/
 /*
  * Unsubscribe specified MQTT event. If no event specified, Unsubscribe all.
  * Command Unsubscribe format:
- *      Unsubscribe [<event_name>]
+ *      UnSubscribe [<event_name>]
  * Input:
- *      data      - Event name
- *      data_len  - Length of the parameters
+ *      XdrvMailbox.data      - Event name
+ *      XdrvMailbox.data_len  - Length of the parameters
  * Return:
  *      list all the events unsubscribed.
  */
-String RulesUnsubscribe(const char * data, int data_len)
+void CmndUnsubscribe(void)
 {
   MQTT_Subscription subscription_item;
   String events;
-  if (data_len > 0) {
+  if (XdrvMailbox.data_len > 0) {
     for (uint32_t index = 0; index < subscriptions.size(); index++) {
       subscription_item = subscriptions.get(index);
-      if (subscription_item.Event.equalsIgnoreCase(data)) {
+      if (subscription_item.Event.equalsIgnoreCase(XdrvMailbox.data)) {
         String stopic = subscription_item.Topic + "/#";
         MqttUnsubscribe(stopic.c_str());
         events = subscription_item.Event;
@@ -778,7 +854,7 @@ String RulesUnsubscribe(const char * data, int data_len)
       }
     }
   } else {
-    //If did not specify the event name, unsubscribe all event
+    // If did not specify the event name, unsubscribe all event
     String stopic;
     while (subscriptions.size() > 0) {
       events.concat(subscriptions.get(0).Event + "; ");
@@ -787,11 +863,49 @@ String RulesUnsubscribe(const char * data, int data_len)
       subscriptions.remove(0);
     }
   }
-  return events;
+  ResponseCmndChar(events.c_str());
 }
-#endif //     SUPPORT_MQTT_EVENT
+
+#endif  // SUPPORT_MQTT_EVENT
 
 #ifdef USE_EXPRESSION
+/********************************************************************************************/
+/*
+ * Looking for matched bracket - ")"
+ * Search buffer from current loction, skip all nested bracket pairs, find the matched close bracket.
+ * Input:
+ *      pStart    - Point to a char buffer start with "("
+ * Output:
+ *      N/A
+ * Return:
+ *      position of matched close bracket
+ */
+char * findClosureBracket(char * pStart)
+{
+  char * pointer = pStart + 1;
+  //Look for the matched closure parenthesis.")"
+  bool bFindClosures = false;
+  uint8_t matchClosures = 1;
+  while (*pointer)
+  {
+    if (*pointer == ')') {
+      matchClosures--;
+      if (matchClosures == 0) {
+        bFindClosures = true;
+        break;
+      }
+    } else if (*pointer == '(') {
+      matchClosures++;
+    }
+    pointer++;
+  }
+  if (bFindClosures) {
+    return pointer;
+  } else {
+    return nullptr;
+  }
+}
+
 /********************************************************************************************/
 /*
  * Parse a number value
@@ -809,6 +923,10 @@ bool findNextNumber(char * &pNumber, float &value)
 {
   bool bSucceed = false;
   String sNumber = "";
+  if (*pNumber == '-') {
+    sNumber = "-";
+    pNumber++;
+  }
   while (*pNumber) {
     if (isdigit(*pNumber) || (*pNumber == '.')) {
       sNumber += *pNumber;
@@ -854,7 +972,7 @@ bool findNextVariableValue(char * &pVarname, float &value)
   if (sVarName.startsWith(F("VAR"))) {
     int index = sVarName.substring(3).toInt();
     if (index > 0 && index <= MAX_RULE_VARS) {
-      value = CharToFloat(vars[index -1]);
+      value = CharToFloat(rules_vars[index -1]);
     }
   } else if (sVarName.startsWith(F("MEM"))) {
     int index = sVarName.substring(3).toInt();
@@ -886,7 +1004,7 @@ bool findNextVariableValue(char * &pVarname, float &value)
 /*
  * Find next object in expression and evaluate it
  *     An object could be:
- *     - A float number start with a digit, like 0.787
+ *     - A float number start with a digit or minus, like 0.787, -3
  *     - A variable name, like VAR1, MEM3
  *     - An expression enclosed with a pair of round brackets, (.....)
  * Input:
@@ -908,35 +1026,17 @@ bool findNextObjectValue(char * &pointer, float &value)
       pointer++;
       continue;
     }
-    if (isdigit(*pointer)) {      //This object is a number
+    if (isdigit(*pointer) || (*pointer) == '-') {      //This object is a number
       bSucceed = findNextNumber(pointer, value);
       break;
     } else if (isalpha(*pointer)) {     //Should be a variable like VAR12, MEM1
       bSucceed = findNextVariableValue(pointer, value);
       break;
     } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
-      pointer++;
-      char * sub_exp_start = pointer; //Find out the sub expression between a pair of parenthesis. "()"
-      unsigned int sub_exp_len = 0;
-      //Look for the matched closure parenthesis.")"
-      bool bFindClosures = false;
-      uint8_t matchClosures = 1;
-      while (*pointer)
-      {
-        if (*pointer == ')') {
-          matchClosures--;
-          if (matchClosures == 0) {
-            sub_exp_len = pointer - sub_exp_start;
-            bFindClosures = true;
-            break;
-          }
-        } else if (*pointer == '(') {
-          matchClosures++;
-        }
-        pointer++;
-      }
-      if (bFindClosures) {
-        value = evaluateExpression(sub_exp_start, sub_exp_len);
+      char * closureBracket = findClosureBracket(pointer);        //Get the position of closure bracket ")"
+      if (closureBracket != nullptr) {
+        value = evaluateExpression(pointer+1, closureBracket - pointer - 1);
+        pointer = closureBracket + 1;
         bSucceed = true;
       }
       break;
@@ -970,10 +1070,16 @@ bool findNextOperator(char * &pointer, int8_t &op)
       pointer++;
       continue;
     }
-    if (char *pch = strchr(kExpressionOperators, *pointer)) {      //If it is an operator
-      op = (int8_t)(pch - kExpressionOperators);
-      pointer++;
-      bSucceed = true;
+    op = EXPRESSION_OPERATOR_ADD;
+    const char *pch = kExpressionOperators;
+    char ch;
+    while ((ch = pgm_read_byte(pch++)) != '\0') {
+      if (ch == *pointer) {
+        bSucceed = true;
+        pointer++;
+        break;
+      }
+      op++;
     }
     break;
   }
@@ -1081,7 +1187,7 @@ float evaluateExpression(const char * expression, unsigned int len)
   for (int32_t priority = MAX_EXPRESSION_OPERATOR_PRIORITY; priority>0; priority--) {
     int index = 0;
     while (index < operators.size()) {
-      if (priority == kExpressionOperatorsPriorities[(operators.get(index))]) {     //need to calculate the operator first
+      if (priority == pgm_read_byte(kExpressionOperatorsPriorities + operators.get(index))) {     //need to calculate the operator first
         //get current object value and remove the next object with current operator
         va = calculateTwoValues(object_values.get(index), object_values.remove(index + 1), operators.remove(index));
         //Replace the current value with the result
@@ -1093,19 +1199,485 @@ float evaluateExpression(const char * expression, unsigned int len)
   }
   return object_values.get(0);
 }
-#endif          //USE_EXPRESSION
+#endif  // USE_EXPRESSION
 
-bool RulesCommand(void)
+#ifdef  SUPPORT_IF_STATEMENT
+void CmndIf()
 {
-  char command[CMDSZ];
-  bool serviced = true;
-  uint8_t index = XdrvMailbox.index;
-
-  int command_code = GetCommandCode(command, sizeof(command), XdrvMailbox.topic, kRulesCommands);
-  if (-1 == command_code) {
-    serviced = false;  // Unknown command
+  if (XdrvMailbox.data_len > 0) {
+    char parameters[XdrvMailbox.data_len+1];
+    memcpy(parameters, XdrvMailbox.data, XdrvMailbox.data_len);
+    parameters[XdrvMailbox.data_len] = '\0';
+    ProcessIfStatement(parameters);
   }
-  else if ((CMND_RULE == command_code) && (index > 0) && (index <= MAX_RULE_SETS)) {
+  ResponseCmndDone();
+}
+
+/********************************************************************************************/
+/*
+ * Evaluate a comparison expression.
+ * Get the logic value of expression, true or false
+ * Input:
+ *      expression    - A comparison expression like VAR1 >= MEM1 + 10
+ *      len           - Length of expression
+ * Output:
+ *      N/A
+ * Return:
+ *      logic value of comparison expression
+ */
+bool evaluateComparisonExpression(const char *expression, int len)
+{
+  bool bResult = true;
+  char expbuf[len + 1];
+  memcpy(expbuf, expression, len);
+  expbuf[len] = '\0';
+  String compare_expression = expbuf;
+  String leftExpr, rightExpr;
+  int8_t compareOp = parseCompareExpression(compare_expression, leftExpr, rightExpr);
+
+  double leftValue = evaluateExpression(leftExpr.c_str(), leftExpr.length());
+  double rightValue = evaluateExpression(rightExpr.c_str(), rightExpr.length());
+  switch (compareOp) {
+    case COMPARE_OPERATOR_EXACT_DIVISION:
+      bResult = (rightValue != 0 && leftValue == int(leftValue)
+          && rightValue == int(rightValue) && (int(leftValue) % int(rightValue)) == 0);
+      break;
+    case COMPARE_OPERATOR_EQUAL:
+      bResult = leftExpr.equalsIgnoreCase(rightExpr);  // Compare strings - this also works for hexadecimals
+      break;
+    case COMPARE_OPERATOR_BIGGER:
+      bResult = (leftValue > rightValue);
+      break;
+    case COMPARE_OPERATOR_SMALLER:
+      bResult = (leftValue < rightValue);
+      break;
+    case COMPARE_OPERATOR_NUMBER_EQUAL:
+      bResult = (leftValue == rightValue);
+      break;
+    case COMPARE_OPERATOR_NOT_EQUAL:
+      bResult = (leftValue != rightValue);
+      break;
+    case COMPARE_OPERATOR_BIGGER_EQUAL:
+      bResult = (leftValue >= rightValue);
+      break;
+    case COMPARE_OPERATOR_SMALLER_EQUAL:
+      bResult = (leftValue <= rightValue);
+      break;
+  }
+  return bResult;
+}
+
+/********************************************************************************************/
+/*
+ * Looking for a logical operator, either "AND" or "OR"
+ * A logical operator is expected at this moment. If we find something else, this function will fail.
+ * Input:
+ *      pointer     - Point to a char buffer
+ *      op          - Used to accpet the logical operator type
+ * Output:
+ *      Pointer     - pointer will forward to next character after the logical operator.
+ *      op          - The logical operator type we found
+ * Return:
+ *      true    - succeed
+ *      false   - failed
+ */
+bool findNextLogicOperator(char * &pointer, int8_t &op)
+{
+  bool bSucceed = false;
+  while (*pointer && isspace(*pointer)) {
+    //Skip spaces
+    pointer++;
+  }
+  if (*pointer) {
+    if (strncasecmp_P(pointer, PSTR("AND "), 4) == 0) {
+      op = LOGIC_OPERATOR_AND;
+      pointer += 4;
+      bSucceed = true;
+    } else if (strncasecmp_P(pointer, PSTR("OR "), 3) == 0) {
+      op = LOGIC_OPERATOR_OR;
+      pointer += 3;
+      bSucceed = true;
+    }
+  }
+  return bSucceed;
+}
+
+/********************************************************************************************/
+/*
+ * Find next logical object and get its value
+ *      A logical object could be:
+ *        - A comparison expression.
+ *        - A logical expression bracketed with a pair of parenthesis.
+ * Input:
+ *      pointer     - A char pointer point to a start of logical object
+ *      value       - Used to accept the result value
+ * Output:
+ *      pointer     - Pointer forward to next character after the object
+ *      value       - boolean type, the value of the logical object.
+ * Return:
+ *      true    - succeed
+ *      false   - failed
+ */
+bool findNextLogicObjectValue(char * &pointer, bool &value)
+{
+  bool bSucceed = false;
+  while (*pointer && isspace(*pointer)) {
+    //Skip leading spaces
+    pointer++;
+  }
+  char * pExpr = pointer;
+  while (*pointer) {
+    if (isalpha(*pointer)
+       && (strncasecmp_P(pointer, PSTR("AND "), 4) == 0
+       || strncasecmp_P(pointer, PSTR("OR "), 3) == 0))
+    {      //We have a logic operator, should stop
+      value = evaluateComparisonExpression(pExpr, pointer - pExpr);
+      bSucceed = true;
+      break;
+    } else if (*pointer == '(') {     //It is a sub expression bracketed with ()
+      char * closureBracket = findClosureBracket(pointer);        //Get the position of closure bracket ")"
+      if (closureBracket != nullptr) {
+        value = evaluateLogicalExpression(pointer+1, closureBracket - pointer - 1);
+        pointer = closureBracket + 1;
+        bSucceed = true;
+      }
+      break;
+    }
+    pointer++;
+  }
+  if (!bSucceed && pointer > pExpr) {
+    //The whole buffer is an comparison expression
+    value = evaluateComparisonExpression(pExpr, pointer - pExpr);
+    bSucceed = true;
+  }
+  return bSucceed;
+}
+
+/********************************************************************************************/
+/*
+ * Evaluate a logical expression
+ *    Logic expression is constructed with multiple comparison expressions and logical
+ *    operators between them. For example: Mem1==0 AND (time > sunrise + 60).
+ *    Parenthesis are allowed to change the priority of logical operators.
+ * Input:
+ *      expression  - A logical expression
+ *      len         - Length of the expression
+ * Output:
+ *      N/A
+ * Return:
+ *      boolean     - the value of logical expression
+ */
+bool evaluateLogicalExpression(const char * expression, int len)
+{
+  bool bResult = false;
+  //Make a copy first
+  char expbuff[len + 1];
+  memcpy(expbuff, expression, len);
+  expbuff[len] = '\0';
+
+  //snprintf_P(log_data, sizeof(log_data), PSTR("EvalLogic: |%s|"), expbuff);
+  //AddLog(LOG_LEVEL_DEBUG);
+  char * pointer = expbuff;
+  LinkedList<bool> values;
+  LinkedList<int8_t> logicOperators;
+  //Find first comparison expression
+  bool bValue;
+  if (findNextLogicObjectValue(pointer, bValue)) {
+    values.add(bValue);
+  } else {
+    return false;
+  }
+  int8_t op;
+  while (*pointer) {
+    if (findNextLogicOperator(pointer, op)
+      && (*pointer) && findNextLogicObjectValue(pointer, bValue))
+    {
+      logicOperators.add(op);
+      values.add(bValue);
+    } else {
+      break;
+    }
+  }
+  //Calculate all "AND" first
+  int index = 0;
+  while (index < logicOperators.size()) {
+    if (logicOperators.get(index) == LOGIC_OPERATOR_AND) {
+      values.set(index, values.get(index) && values.get(index+1));
+      values.remove(index + 1);
+      logicOperators.remove(index);
+    } else {
+      index++;
+    }
+  }
+  //Then, calculate all "OR"
+  index = 0;
+  while (index < logicOperators.size()) {
+    if (logicOperators.get(index) == LOGIC_OPERATOR_OR) {
+      values.set(index, values.get(index) || values.get(index+1));
+      values.remove(index + 1);
+      logicOperators.remove(index);
+    } else {
+      index++;
+    }
+  }
+  return values.get(0);
+}
+
+/********************************************************************************************/
+/*
+ * This function search in a buffer to find out an IF block start from current position
+ *   Note: All the tokens found during the searching will be changed to NULL terminated string.
+ *         Please make a copy before call this function if you still need it.
+ * Input:
+ *      pointer     - Point to a NULL end string buffer with the commands
+ *      lenWord     - Accept the length of block end word
+ *      block_type  - The block type you are looking for.
+ * Output:
+ *      pointer     - pointer point to the end of if block.
+ *      lenWord     - The length of block end word ("ENDIF", "ELSEIF", "ELSE")
+ * Return:
+ *      The block type we find.
+ *      IF_BLOCK_INVALID    - Failed.
+ */
+int8_t findIfBlock(char * &pointer, int &lenWord, int8_t block_type)
+{
+  int8_t foundBlock = IF_BLOCK_INVALID;
+  //First break into words delimited by space or ";"
+  const char * word;
+  while (*pointer) {
+    if (!isalpha(*pointer)) {
+      pointer++;
+      continue;
+    }
+    word = pointer;
+    while (*pointer && isalpha(*pointer)) {
+      pointer++;
+    }
+    lenWord = pointer - word;
+
+    if (2 == lenWord && 0 == strncasecmp_P(word, PSTR("IF"), 2)) {
+    //if we find a new "IF" that means this is nested if block
+      //Try to finish this nested if block
+      if (findIfBlock(pointer, lenWord, IF_BLOCK_ENDIF) != IF_BLOCK_ENDIF) {
+        //If failed, we done.
+        break;
+      }
+    } else if ( (IF_BLOCK_ENDIF == block_type || IF_BLOCK_ANY == block_type)
+      && (5 == lenWord) && (0 == strncasecmp_P(word, PSTR("ENDIF"), 5)))
+    {
+      //Find an "ENDIF"
+      foundBlock = IF_BLOCK_ENDIF;
+      break;
+    } else if ( (IF_BLOCK_ELSEIF == block_type || IF_BLOCK_ANY == block_type)
+      && (6 == lenWord) && (0 == strncasecmp_P(word, PSTR("ELSEIF"), 6)))
+    {
+      //Find an "ELSEIF"
+      foundBlock = IF_BLOCK_ELSEIF;
+      break;
+    } else if ( (IF_BLOCK_ELSE == block_type || IF_BLOCK_ANY == block_type)
+      && (4 == lenWord) && (0 == strncasecmp_P(word, PSTR("ELSE"), 4)))
+    {
+      //Find an "ELSE"
+      foundBlock = IF_BLOCK_ELSE;
+      break;
+    }
+  }
+  return foundBlock;
+}
+
+/********************************************************************************************/
+/*
+ * This function is used to execute a commands block in if statement when one of the condition is true.
+ * Input:
+ *      commands    - A char buffer include (but not limited) the commands block need to execute
+ *      len         - Length of the commands block
+ * Output:
+        N/A
+ * Return:
+ *      void
+ */
+void ExecuteCommandBlock(const char * commands, int len)
+{
+  char cmdbuff[len + 1];    //apply enough space
+  memcpy(cmdbuff, commands, len);
+  cmdbuff[len] = '\0';
+
+  //snprintf_P(log_data, sizeof(log_data), PSTR("ExecCmd: |%s|"), cmdbuff);
+  //AddLog(LOG_LEVEL_DEBUG);
+  char oneCommand[len + 1];     //To put one command
+  int insertPosition = 0;       //When insert into backlog, we should do it by 0, 1, 2 ...
+  char * pos = cmdbuff;
+  int lenEndBlock = 0;
+  while (*pos) {
+    if (isspace(*pos) || '\x1e' == *pos || ';' == *pos) {
+      pos++;
+      continue;
+    }
+    if (strncasecmp_P(pos, PSTR("BACKLOG "), 8) == 0) {
+      //Skip "BACKLOG " and set not first command flag. So all followed command will be send to backlog
+      pos += 8;
+      continue;
+    }
+    if (strncasecmp_P(pos, PSTR("IF "), 3) == 0) {
+      //Has a nested IF statement
+      //Find the matched ENDIF
+      char *pEndif = pos + 3;    //Skip "IF "
+      if (IF_BLOCK_ENDIF != findIfBlock(pEndif, lenEndBlock, IF_BLOCK_ENDIF)) {
+        //Cannot find matched endif, stop execution.
+        break;
+      }
+      //We has the whole IF statement, copy to oneCommand
+      memcpy(oneCommand, pos, pEndif - pos);
+      oneCommand[pEndif - pos] = '\0';
+      pos = pEndif;
+    } else {    //Normal command
+      //Looking for the command end single - '\x1e'
+      char *pEndOfCommand = strpbrk(pos, "\x1e;");
+      if (NULL == pEndOfCommand) {
+        pEndOfCommand = pos + strlen(pos);
+      }
+      memcpy(oneCommand, pos, pEndOfCommand - pos);
+      oneCommand[pEndOfCommand - pos] = '\0';
+      pos = pEndOfCommand;
+    }
+    //Start to process current command we found
+    //Going to insert the command into backlog
+    String sCurrentCommand = oneCommand;
+    sCurrentCommand.trim();
+    if (sCurrentCommand.length() > 0
+      && backlog.size() < MAX_BACKLOG && !backlog_mutex)
+    {
+      //Insert into backlog
+      backlog_mutex = true;
+      backlog.add(insertPosition, sCurrentCommand);
+      backlog_mutex = false;
+      insertPosition++;
+    }
+  }
+  return;
+}
+
+/********************************************************************************************/
+/*
+ * Execute IF statement. This is the place to run a "IF ..." command.
+ * Input:
+ *      statements  - The IF statement we are going to process
+ * Output:
+        N/A
+ * Return:
+ *      void
+ */
+void ProcessIfStatement(const char* statements)
+{
+  String conditionExpression;
+  int len = strlen(statements);
+  char statbuff[len + 1];
+  memcpy(statbuff, statements, len + 1);
+  char *pos = statbuff;
+  int lenEndBlock = 0;
+  while (true) {             //Each loop process one IF (or ELSEIF) block
+    //Find and test the condition expression followed the IF or ELSEIF
+    //Search for the open bracket first
+    while (*pos && *pos != '(') {
+      pos++;
+    }
+    if (0 == *pos) { break; }
+    char * posEnd = findClosureBracket(pos);
+
+    if (true == evaluateLogicalExpression(pos + 1, posEnd - (pos + 1))) {
+      //Looking for matched "ELSEIF", "ELSE" or "ENDIF", then Execute this block
+      char * cmdBlockStart = posEnd + 1;
+      char * cmdBlockEnd = cmdBlockStart;
+      int8_t nextBlock = findIfBlock(cmdBlockEnd, lenEndBlock, IF_BLOCK_ANY);
+      if (IF_BLOCK_INVALID == nextBlock) {
+        //Failed
+        break;
+      }
+      ExecuteCommandBlock(cmdBlockStart, cmdBlockEnd - cmdBlockStart - lenEndBlock);
+      pos = cmdBlockEnd;
+      break;
+    } else {      //Does not match the IF condition, going to check elseif and else
+      pos = posEnd + 1;
+      int8_t nextBlock = findIfBlock(pos, lenEndBlock, IF_BLOCK_ANY);
+      if (IF_BLOCK_ELSEIF == nextBlock) {
+        //Continue process next ELSEIF block like IF
+        continue;
+      } else if (IF_BLOCK_ELSE == nextBlock) {
+        //Looking for matched "ENDIF" then execute this block
+        char * cmdBlockEnd = pos;
+        int8_t nextBlock = findIfBlock(cmdBlockEnd, lenEndBlock, IF_BLOCK_ENDIF);
+        if (IF_BLOCK_ENDIF != nextBlock) {
+          //Failed
+          break;
+        }
+        ExecuteCommandBlock(pos, cmdBlockEnd - pos - lenEndBlock);
+        break;
+      } else {    // IF_BLOCK_ENDIF == nextBlock
+        //We done
+        break;
+      }
+    }
+  }
+}
+
+/********************************************************************************************/
+/*
+ * This function is called in Rules event handler to process any command between DO ... ENDON (BREAK)
+ *    - Do escape (convert ";" into "\x1e") for all IF statements.
+ * Input:
+ *      commands    - The commands block need to execute
+ * Output:
+        N/A
+ * Return:
+ *      void
+ */
+void RulesPreprocessCommand(char *pCommands)
+{
+  char * cmd = pCommands;
+  int lenEndBlock = 0;
+  while (*cmd) {
+    //Skip all ";" and space between two commands
+    if (';' == *cmd || isspace(*cmd)) {
+      cmd++;
+    }
+    else if (strncasecmp_P(cmd, PSTR("IF "), 3) == 0) {      //found IF block
+                                                             //We are going to look for matched "ENDIF"
+      char * pIfStart = cmd;
+      char * pIfEnd = pIfStart + 3;   //Skip "IF "
+                                      //int pIfStart = cmd - command;      //"IF" statement block start at position (relative to command start)
+      if (IF_BLOCK_ENDIF == findIfBlock(pIfEnd, lenEndBlock, IF_BLOCK_ENDIF)) {
+        //Found the ENDIF
+        cmd = pIfEnd;   //Will continue process from here
+        //Escapte from ";" to "\x1e".
+        //By remove all ";" in IF statement block, we can prevent backlog command cut the whole block as multiple commands
+        while (pIfStart < pIfEnd) {
+          if (';' == *pIfStart)
+            *pIfStart = '\x1e';
+          pIfStart++;
+        }
+      }
+      else {    //Did not find the matched ENDIF, stop processing
+        break;
+      }
+    }
+    else {      //Other commands, skip it
+      while (*cmd && ';' != *cmd) {
+        cmd++;
+      }
+    }
+  }
+  return;
+}
+#endif          //SUPPORT_IF_STATEMENT
+
+/*********************************************************************************************\
+ * Commands
+\*********************************************************************************************/
+
+void CmndRule(void)
+{
+  uint8_t index = XdrvMailbox.index;
+  if ((index > 0) && (index <= MAX_RULE_SETS)) {
     if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.rules[index -1]))) {
       if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 10)) {
         switch (XdrvMailbox.payload) {
@@ -1145,86 +1717,142 @@ bool RulesCommand(void)
           strlcpy(Settings.rules[index -1] + offset, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.rules[index -1]));
         }
       }
-      rules_triggers[index -1] = 0;  // Reset once flag
+      Rules.triggers[index -1] = 0;  // Reset once flag
     }
     snprintf_P (mqtt_data, sizeof(mqtt_data), PSTR("{\"%s%d\":\"%s\",\"Once\":\"%s\",\"StopOnError\":\"%s\",\"Free\":%d,\"Rules\":\"%s\"}"),
-      command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
+      XdrvMailbox.command, index, GetStateText(bitRead(Settings.rule_enabled, index -1)), GetStateText(bitRead(Settings.rule_once, index -1)),
       GetStateText(bitRead(Settings.rule_stop, index -1)), sizeof(Settings.rules[index -1]) - strlen(Settings.rules[index -1]) -1, Settings.rules[index -1]);
   }
-  else if ((CMND_RULETIMER == command_code) && (index > 0) && (index <= MAX_RULE_TIMERS)) {
+}
+
+void CmndRuleTimer(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_TIMERS)) {
     if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
       float timer_set = evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len);
-      rules_timer[index -1] = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
+      Rules.timer[XdrvMailbox.index -1] = (timer_set > 0) ? millis() + (1000 * timer_set) : 0;
 #else
-      rules_timer[index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
-#endif      //USE_EXPRESSION
+      Rules.timer[XdrvMailbox.index -1] = (XdrvMailbox.payload > 0) ? millis() + (1000 * XdrvMailbox.payload) : 0;
+#endif  // USE_EXPRESSION
     }
     mqtt_data[0] = '\0';
     for (uint32_t i = 0; i < MAX_RULE_TIMERS; i++) {
-      ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (rules_timer[i]) ? (rules_timer[i] - millis()) / 1000 : 0);
+      ResponseAppend_P(PSTR("%c\"T%d\":%d"), (i) ? ',' : '{', i +1, (Rules.timer[i]) ? (Rules.timer[i] - millis()) / 1000 : 0);
     }
     ResponseJsonEnd();
   }
-  else if (CMND_EVENT == command_code) {
-    if (XdrvMailbox.data_len > 0) {
-      strlcpy(event_data, XdrvMailbox.data, sizeof(event_data));
-    }
-    Response_P(S_JSON_COMMAND_SVALUE, command, D_JSON_DONE);
+}
+
+void CmndEvent(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    strlcpy(Rules.event_data, XdrvMailbox.data, sizeof(Rules.event_data));
   }
-  else if ((CMND_VAR == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
-    if (XdrvMailbox.data_len > 0) {
+  ResponseCmndDone();
+}
+
+void CmndVariable(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
+    if (!XdrvMailbox.usridx) {
+      mqtt_data[0] = '\0';
+      for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
+        ResponseAppend_P(PSTR("%c\"Var%d\":\"%s\""), (i) ? ',' : '{', i +1, rules_vars[i]);
+      }
+      ResponseJsonEnd();
+    } else {
+      if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-      dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, vars[index -1]);
+        if (XdrvMailbox.data[0] == '=') {  // Spaces already been skipped in data
+          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+        } else {
+          strlcpy(rules_vars[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(rules_vars[XdrvMailbox.index -1]));
+        }
 #else
-      strlcpy(vars[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(vars[index -1]));
-#endif      //USE_EXPRESSION
-      bitSet(vars_event, index -1);
+        strlcpy(rules_vars[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(rules_vars[XdrvMailbox.index -1]));
+#endif  // USE_EXPRESSION
+        bitSet(Rules.vars_event, XdrvMailbox.index -1);
+      }
+      ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
   }
-  else if ((CMND_MEM == command_code) && (index > 0) && (index <= MAX_RULE_MEMS)) {
-    if (XdrvMailbox.data_len > 0) {
+}
+
+void CmndMemory(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_MEMS)) {
+    if (!XdrvMailbox.usridx) {
+      mqtt_data[0] = '\0';
+      for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
+        ResponseAppend_P(PSTR("%c\"Mem%d\":\"%s\""), (i) ? ',' : '{', i +1, Settings.mems[i]);
+      }
+      ResponseJsonEnd();
+    } else {
+      if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION
-      dtostrfd(evaluateExpression(XdrvMailbox.data, XdrvMailbox.data_len), Settings.flag2.calc_resolution, Settings.mems[index -1]);
+        if (XdrvMailbox.data[0] == '=') {  // Spaces already been skipped in data
+          dtostrfd(evaluateExpression(XdrvMailbox.data + 1, XdrvMailbox.data_len - 1), Settings.flag2.calc_resolution, Settings.mems[XdrvMailbox.index -1]);
+        } else {
+          strlcpy(Settings.mems[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[XdrvMailbox.index -1]));
+        }
 #else
-      strlcpy(Settings.mems[index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[index -1]));
-#endif      //USE_EXPRESSION
-      bitSet(mems_event, index -1);
+        strlcpy(Settings.mems[XdrvMailbox.index -1], ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data, sizeof(Settings.mems[XdrvMailbox.index -1]));
+#endif  // USE_EXPRESSION
+        bitSet(Rules.mems_event, XdrvMailbox.index -1);
+      }
+      ResponseCmndIdxChar(Settings.mems[XdrvMailbox.index -1]);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, Settings.mems[index -1]);
   }
-  else if (CMND_CALC_RESOLUTION == command_code) {
-    if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
-      Settings.flag2.calc_resolution = XdrvMailbox.payload;
-    }
-    Response_P(S_JSON_COMMAND_NVALUE, command, Settings.flag2.calc_resolution);
+}
+
+void CmndCalcResolution(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 7)) {
+    Settings.flag2.calc_resolution = XdrvMailbox.payload;
   }
-  else if ((CMND_ADD == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
+  ResponseCmndNumber(Settings.flag2.calc_resolution);
+}
+
+void CmndAddition(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      float tempvar = CharToFloat(vars[index -1]) + CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
-      bitSet(vars_event, index -1);
+      float tempvar = CharToFloat(rules_vars[XdrvMailbox.index -1]) + CharToFloat(XdrvMailbox.data);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+      bitSet(Rules.vars_event, XdrvMailbox.index -1);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
   }
-  else if ((CMND_SUB == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
+}
+
+void CmndSubtract(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      float tempvar = CharToFloat(vars[index -1]) - CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
-      bitSet(vars_event, index -1);
+      float tempvar = CharToFloat(rules_vars[XdrvMailbox.index -1]) - CharToFloat(XdrvMailbox.data);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+      bitSet(Rules.vars_event, XdrvMailbox.index -1);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
   }
-  else if ((CMND_MULT == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
+}
+
+void CmndMultiply(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
-      float tempvar = CharToFloat(vars[index -1]) * CharToFloat(XdrvMailbox.data);
-      dtostrfd(tempvar, Settings.flag2.calc_resolution, vars[index -1]);
-      bitSet(vars_event, index -1);
+      float tempvar = CharToFloat(rules_vars[XdrvMailbox.index -1]) * CharToFloat(XdrvMailbox.data);
+      dtostrfd(tempvar, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+      bitSet(Rules.vars_event, XdrvMailbox.index -1);
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
+    ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
   }
-  else if ((CMND_SCALE == command_code) && (index > 0) && (index <= MAX_RULE_VARS)) {
+}
+
+void CmndScale(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_VARS)) {
     if (XdrvMailbox.data_len > 0) {
       if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
@@ -1235,28 +1863,17 @@ bool RulesCommand(void)
         float toLow = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4));
         float toHigh = CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 5));
         float value = map_double(valueIN, fromLow, fromHigh, toLow, toHigh);
-        dtostrfd(value, Settings.flag2.calc_resolution, vars[index -1]);
-        bitSet(vars_event, index -1);
+        dtostrfd(value, Settings.flag2.calc_resolution, rules_vars[XdrvMailbox.index -1]);
+        bitSet(Rules.vars_event, XdrvMailbox.index -1);
       }
     }
-    Response_P(S_JSON_COMMAND_INDEX_SVALUE, command, index, vars[index -1]);
-#ifdef SUPPORT_MQTT_EVENT
-  } else if (CMND_SUBSCRIBE == command_code) {			//MQTT Subscribe command. Subscribe <Event>, <Topic> [, <Key>]
-    String result = RulesSubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
-    Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
-  } else if (CMND_UNSUBSCRIBE == command_code) {			//MQTT Un-subscribe command. UnSubscribe <Event>
-    String result = RulesUnsubscribe(XdrvMailbox.data, XdrvMailbox.data_len);
-    Response_P(S_JSON_COMMAND_SVALUE, command, result.c_str());
-#endif        //SUPPORT_MQTT_EVENT
+    ResponseCmndIdxChar(rules_vars[XdrvMailbox.index -1]);
   }
-  else serviced = false;  // Unknown command
-
-  return serviced;
 }
 
 float map_double(float x, float in_min, float in_max, float out_min, float out_max)
 {
- return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 /*********************************************************************************************\
@@ -1268,9 +1885,6 @@ bool Xdrv10(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_PRE_INIT:
-      RulesInit();
-      break;
     case FUNC_EVERY_50_MSECOND:
       RulesEvery50ms();
       break;
@@ -1284,7 +1898,7 @@ bool Xdrv10(uint8_t function)
       RulesSetPower();
       break;
     case FUNC_COMMAND:
-      result = RulesCommand();
+      result = DecodeCommand(kRulesCommands, RulesCommand);
       break;
     case FUNC_RULES_PROCESS:
       result = RulesProcess();
@@ -1296,7 +1910,10 @@ bool Xdrv10(uint8_t function)
     case FUNC_MQTT_DATA:
       result = RulesMqttData();
       break;
-#endif    //SUPPORT_MQTT_EVENT
+#endif  // SUPPORT_MQTT_EVENT
+    case FUNC_PRE_INIT:
+      RulesInit();
+      break;
   }
   return result;
 }

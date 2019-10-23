@@ -36,6 +36,7 @@ bool udp_response_mutex = false;         // M-Search response mutex to control r
 \*********************************************************************************************/
 
 const char URN_BELKIN_DEVICE[] PROGMEM = "urn:belkin:device:**";
+const char URN_BELKIN_DEVICE_CAP[] PROGMEM = "urn:Belkin:device:**";
 const char UPNP_ROOTDEVICE[] PROGMEM = "upnp:rootdevice";
 const char SSDPSEARCH_ALL[] PROGMEM = "ssdpsearch:all";
 const char SSDP_ALL[] PROGMEM = "ssdp:all";
@@ -84,7 +85,11 @@ void PollUdp(void)
 //      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("\n%s"), packet_buffer);
 
       // Simple Service Discovery Protocol (SSDP)
+#ifdef USE_SCRIPT_HUE
+      if (!udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
+#else
       if (devices_present && !udp_response_mutex && (strstr_P(packet_buffer, PSTR("M-SEARCH")) != nullptr)) {
+#endif
         udp_response_mutex = true;
 
         udp_remote_ip = PortUdp.remoteIP();

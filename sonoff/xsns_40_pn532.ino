@@ -417,10 +417,7 @@ void PN532_ScanForTag(void)
       char card_datas[34];
 #endif // USE_PN532_DATA_FUNCTION
 
-      sprintf(uids,"");
-      for (uint32_t i = 0;i < uid_len;i++) {
-        sprintf(uids,"%s%02X",uids,uid[i]);
-      }
+      ToHex_P((unsigned char*)uid, uid_len, uids, sizeof(uids));
 
 #ifdef USE_PN532_DATA_FUNCTION
       if (uid_len == 4) { // Lets try to read block 1 of the mifare classic card for more information
@@ -497,12 +494,10 @@ void PN532_ScanForTag(void)
       pn532_function = 0;
 #endif // USE_PN532_DATA_FUNCTION
 
-      Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\""), GetDateAndTime(DT_LOCAL).c_str());
-
 #ifdef USE_PN532_DATA_FUNCTION
-      ResponseAppend_P(PSTR(",\"PN532\":{\"UID\":\"%s\", \"DATA\":\"%s\"}}"), uids, card_datas);
+      ResponseTime_P(PSTR(",\"PN532\":{\"UID\":\"%s\", \"DATA\":\"%s\"}}"), uids, card_datas);
 #else
-      ResponseAppend_P(PSTR(",\"PN532\":{\"UID\":\"%s\"}}"), uids);
+      ResponseTime_P(PSTR(",\"PN532\":{\"UID\":\"%s\"}}"), uids);
 #endif // USE_PN532_DATA_FUNCTION
 
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
@@ -544,7 +539,7 @@ bool PN532_Command(void)
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"E")) {
     pn532_function = 1; // Block 1 of next card/tag will be reset to 0x00...
     AddLog_P(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be erased"));
-    Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"PN532\":{\"COMMAND\":\"E\"}}"), GetDateAndTime(DT_LOCAL).c_str());
+    ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"E\"}}"));
     return serviced;
   }
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1),"S")) {
@@ -560,7 +555,7 @@ bool PN532_Command(void)
       pn532_newdata[pn532_newdata_len] = 0x00; // Null terminate the string
       pn532_function = 2;
       AddLog_P2(LOG_LEVEL_INFO, PSTR("NFC: PN532 NFC - Next scanned tag data block 1 will be set to '%s'"), pn532_newdata);
-      Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"PN532\":{\"COMMAND\":\"S\"}}"), GetDateAndTime(DT_LOCAL).c_str());
+      ResponseTime_P(PSTR(",\"PN532\":{\"COMMAND\":\"S\"}}"));
       return serviced;
     }
   }

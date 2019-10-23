@@ -62,7 +62,7 @@ void WemoRespondToMSearch(int echo_type)
   if (PortUdp.beginPacket(udp_remote_ip, udp_remote_port)) {
     char type[24];
     if (1 == echo_type) {              // type1 echo 1g & dot 2g
-      strcpy_P(type, URN_BELKIN_DEVICE);
+      strcpy_P(type, URN_BELKIN_DEVICE_CAP);
     } else {                           // type2 echo 2g (echo, plus, show)
       strcpy_P(type, UPNP_ROOTDEVICE);
     }

@@ -31,14 +31,11 @@
 
 #include <TasmotaSerial.h>
 
-#ifndef WORKING_PERIOD
-#define WORKING_PERIOD                5       // NodaSDS sleep working period in minutes
+#ifndef STARTING_OFFSET
+#define STARTING_OFFSET               30      // Turn on NovaSDS XX-seconds before tele_period is reached
 #endif
-#ifndef NOVA_SDS_REINIT_CHECK
-#define NOVA_SDS_REINIT_CHECK         80      // NodaSDS reinitalized check in seconds
-#endif
-#ifndef NOVA_SDS_QUERY_INTERVAL
-#define NOVA_SDS_QUERY_INTERVAL       3       // NodaSDS query interval in seconds
+#if STARTING_OFFSET < 10
+#error "Please set STARTING_OFFSET >= 10"
 #endif
 #ifndef NOVA_SDS_RECDATA_TIMEOUT
 #define NOVA_SDS_RECDATA_TIMEOUT      150     // NodaSDS query data timeout in ms
@@ -51,11 +48,14 @@ TasmotaSerial *NovaSdsSerial;
 
 uint8_t novasds_type = 1;
 uint8_t novasds_valid = 0;
+uint8_t cont_mode = 1;
 
 struct sds011data {
   uint16_t pm100;
   uint16_t pm25;
 } novasds_data;
+uint16_t pm100_sum;
+uint16_t pm25_sum;
 
 // NovaSDS commands
 #define NOVA_SDS_REPORTING_MODE       2       // Cmnd "data reporting mode"
@@ -68,8 +68,8 @@ struct sds011data {
   #define NOVA_SDS_SET_MODE             1       // Subcmnd "set mode"
   #define NOVA_SDS_REPORT_ACTIVE        0       // Subcmnd "report active mode" - Sensor received query data command to report a measurement data
   #define NOVA_SDS_REPORT_QUERY         1       // Subcmnd "report query mode" - Sensor automatically reports a measurement data in a work period
-  #define NOVA_SDS_WORK                 0       // Subcmnd "work mode"
-  #define NOVA_SDS_SLEEP                1       // Subcmnd "sleep mode"
+  #define NOVA_SDS_SLEEP                0       // Subcmnd "sleep mode"
+  #define NOVA_SDS_WORK                 1       // Subcmnd "work mode"
 
 
 bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensorid, uint8_t *buffer)
@@ -80,9 +80,10 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
   for (uint32_t i = 2; i < 17; i++) {
     novasds_cmnd[17] += novasds_cmnd[i];
   }
-  //~ AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDS: Send %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X"),
-    //~ novasds_cmnd[0],novasds_cmnd[1],novasds_cmnd[2],novasds_cmnd[3],novasds_cmnd[4],novasds_cmnd[5],novasds_cmnd[6],novasds_cmnd[7],novasds_cmnd[8],novasds_cmnd[9],
-    //~ novasds_cmnd[10],novasds_cmnd[11],novasds_cmnd[12],novasds_cmnd[13],novasds_cmnd[14],novasds_cmnd[15],novasds_cmnd[16],novasds_cmnd[17],novasds_cmnd[18]);
+
+//  char hex_char[60];
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDS: Send %s"), ToHex_P((unsigned char*)novasds_cmnd, 19, hex_char, sizeof(hex_char), ' '));
+
   // send cmnd
   NovaSdsSerial->write(novasds_cmnd, sizeof(novasds_cmnd));
   NovaSdsSerial->flush();
@@ -123,10 +124,10 @@ bool NovaSdsCommand(uint8_t byte1, uint8_t byte2, uint8_t byte3, uint16_t sensor
 
 void NovaSdsSetWorkPeriod(void)
 {
-  // set sensor working period
-  NovaSdsCommand(NOVA_SDS_WORKING_PERIOD, NOVA_SDS_SET_MODE, Settings.novasds_period, NOVA_SDS_DEVICE_ID, nullptr);
-  // set sensor report only on query
-  NovaSdsCommand(NOVA_SDS_REPORTING_MODE, NOVA_SDS_SET_MODE, NOVA_SDS_REPORT_QUERY,   NOVA_SDS_DEVICE_ID, nullptr);
+    // set sensor working period to default
+    NovaSdsCommand(NOVA_SDS_WORKING_PERIOD, NOVA_SDS_SET_MODE, 0, NOVA_SDS_DEVICE_ID, nullptr);
+    // set sensor report on query
+    NovaSdsCommand(NOVA_SDS_REPORTING_MODE, NOVA_SDS_SET_MODE, NOVA_SDS_REPORT_QUERY,   NOVA_SDS_DEVICE_ID, nullptr);
 }
 
 bool NovaSdsReadData(void)
@@ -145,18 +146,39 @@ bool NovaSdsReadData(void)
 
 void NovaSdsSecond(void)                 // Every second
 {
-  if (0 == (uptime % NOVA_SDS_REINIT_CHECK)) {
-    if (!novasds_valid) {
-      NovaSdsSetWorkPeriod();
+  if (!novasds_valid)
+  { //communication problem, reinit
+    NovaSdsSetWorkPeriod();
+    novasds_valid=1;
+  }
+  if((Settings.tele_period - Settings.novasds_startingoffset <= 0))
+  {
+    if(!cont_mode)
+    { //switched to continuous mode
+      cont_mode = 1;
+      NovaSdsCommand(NOVA_SDS_SLEEP_AND_WORK, NOVA_SDS_SET_MODE, NOVA_SDS_WORK, NOVA_SDS_DEVICE_ID, nullptr);
     }
-  } else if (0 == (uptime % NOVA_SDS_QUERY_INTERVAL)) {
-    if (NovaSdsReadData()) {
-      novasds_valid = 10;
-    } else {
-      if (novasds_valid) {
-        novasds_valid--;
-      }
-    }
+  }
+  else
+    cont_mode = 0;
+
+  if(tele_period == Settings.tele_period -  Settings.novasds_startingoffset && !cont_mode)
+  { //lets start fan and laser
+    NovaSdsCommand(NOVA_SDS_SLEEP_AND_WORK, NOVA_SDS_SET_MODE, NOVA_SDS_WORK, NOVA_SDS_DEVICE_ID, nullptr);  
+  }
+  if(tele_period >= Settings.tele_period-5 && tele_period <= Settings.tele_period-2)
+  { //we are doing 4 measurements here
+    if(!(NovaSdsReadData())) novasds_valid=0;
+    pm100_sum += novasds_data.pm100;
+    pm25_sum  += novasds_data.pm25;
+  }
+  if(tele_period == Settings.tele_period-1)
+  { //calculate the average of 4 measuremens
+    novasds_data.pm100 = pm100_sum >> 2;
+    novasds_data.pm25  = pm25_sum >> 2;
+    if(!cont_mode)
+      NovaSdsCommand(NOVA_SDS_SLEEP_AND_WORK, NOVA_SDS_SET_MODE, NOVA_SDS_SLEEP, NOVA_SDS_DEVICE_ID, nullptr);  //stop fan and laser
+    pm100_sum = pm25_sum = 0;
   }
 }
 
@@ -169,10 +191,10 @@ void NovaSdsSecond(void)                 // Every second
 bool NovaSdsCommandSensor(void)
 {
   if ((XdrvMailbox.payload > 0) && (XdrvMailbox.payload < 256)) {
-    Settings.novasds_period = XdrvMailbox.payload;
-    NovaSdsSetWorkPeriod();
+    if( XdrvMailbox.payload < 10 ) Settings.novasds_startingoffset = 10;
+    else Settings.novasds_startingoffset = XdrvMailbox.payload;
   }
-  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_20, Settings.novasds_period);
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_20, Settings.novasds_startingoffset);
 
   return true;
 }

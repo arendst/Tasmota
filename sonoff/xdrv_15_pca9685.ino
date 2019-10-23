@@ -166,8 +166,7 @@ bool PCA9685_Command(void)
 
 void PCA9685_OutputTelemetry(bool telemetry) {
   if (0 == pca9685_detected) { return; }  // We do not do this if the PCA9685 has not been detected
-  Response_P(PSTR("{\"" D_JSON_TIME "\":\"%s\",\"PCA9685\": {"), GetDateAndTime(DT_LOCAL).c_str());
-  ResponseAppend_P(PSTR("\"PWM_FREQ\":%i,"),pca9685_freq);
+  ResponseTime_P(PSTR(",\"PCA9685\":{\"PWM_FREQ\":%i,"),pca9685_freq);
   for (uint32_t pin=0;pin<16;pin++) {
     ResponseAppend_P(PSTR("\"PWM%i\":%i,"),pin,pca9685_pin_pwm_value[pin]);
   }

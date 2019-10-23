@@ -1,14 +1,48 @@
 language: python
 python:
-  - '2.7'
+  - '3.7'
 sudo: false
-cache:
-  directories:
-    - "~/.platformio"
 install:
   - pip install -U platformio
+  - platformio upgrade
+  - platformio update
+
+cache:
+  directories:
+  - .cache
+  - $HOME/.platformio
+
+env:
+  - ENV=sonoff
+  - ENV=sonoff-minimal
+  - ENV=sonoff-basic
+  - ENV=sonoff-knx
+  - ENV=sonoff-sensors
+  - ENV=sonoff-display
+  - ENV=sonoff-ir
+  - ENV=sonoff-BG
+  - ENV=sonoff-BR
+  - ENV=sonoff-CN
+  - ENV=sonoff-CZ
+  - ENV=sonoff-DE
+  - ENV=sonoff-ES
+  - ENV=sonoff-FR
+  - ENV=sonoff-GR
+  - ENV=sonoff-HE
+  - ENV=sonoff-HU
+  - ENV=sonoff-IT
+  - ENV=sonoff-KO
+  - ENV=sonoff-NL
+  - ENV=sonoff-PL
+  - ENV=sonoff-PT
+  - ENV=sonoff-RU
+  - ENV=sonoff-SE
+  - ENV=sonoff-SK
+  - ENV=sonoff-TR
+  - ENV=sonoff-TW
+  - ENV=sonoff-UK
 
 script:
-  - platformio run
+  - platformio run -e $ENV
 before_deploy:
   - for file in .pioenvs/*/firmware.bin; do cp $file ${file%/*}.bin; done

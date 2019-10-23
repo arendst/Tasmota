@@ -1,5 +1,5 @@
 /*
-  xdsp_05_epaper_29.ino - 2.9 Inch display e-paper support for Sonoff-Tasmota
+  xdsp_05_epaper.ino - Display e-paper support for Sonoff-Tasmota
 
   Copyright (C) 2019  Theo Arends, Gerhard Mutz and Waveshare
 
@@ -26,8 +26,8 @@
 #define EPD_TOP                12
 #define EPD_FONT_HEIGTH        12
 
-#define COLORED                0
-#define UNCOLORED              1
+#define COLORED                1
+#define UNCOLORED              0
 
 // using font 8 is opional (num=3)
 // very badly readable, but may be useful for graphs
@@ -36,187 +36,104 @@
 #include <epd2in9.h>
 #include <epdpaint.h>
 
-unsigned char image[(EPD_HEIGHT * EPD_WIDTH) / 8];
-
-Paint paint(image, EPD_WIDTH, EPD_HEIGHT);    // width should be the multiple of 8
-Epd epd;
-sFONT *selected_font;
-
+//unsigned char image[(EPD_HEIGHT * EPD_WIDTH) / 8];
+extern uint8_t *buffer;
 uint16_t epd_scroll;
+
+Epd *epd;
 
 /*********************************************************************************************/
 
-void EpdInitMode(void)
-{
-  // whiten display with full update
-  epd.Init(lut_full_update);
-
-  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
-  epd.DisplayFrame();
-  delay(3000);
-
-  // switch to partial update
-  epd.Init(lut_partial_update);
-
-  // Clear image memory
-  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
-  epd.DisplayFrame();
-  delay(500);
-
-  selected_font = &Font12;
-
-  paint.SetRotate(Settings.display_rotate);
-/*
-  // Welcome text
-  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(50, 50, "Waveshare E-Paper Display!", selected_font, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-  delay(1000);
-*/
-  paint.Clear(UNCOLORED);
-
-  epd_scroll = EPD_TOP;
-}
-
-void EpdInitPartial(void)
-{
-  epd.Init(lut_partial_update);
-  //paint.Clear(UNCOLORED);
-  epd.DisplayFrame();
-  delay(500);
-}
-
-void EpdInitFull(void)
-{
-  epd.Init(lut_full_update);
-  //paint.Clear(UNCOLORED);
-  //epd.ClearFrameMemory(0xFF);
-  epd.DisplayFrame();
-  delay(3000);
-}
-
-void EpdInit(uint8_t mode)
-{
-  switch(mode) {
-    case DISPLAY_INIT_MODE:
-      EpdInitMode();
-      break;
-    case DISPLAY_INIT_PARTIAL:
-      EpdInitPartial();
-      break;
-    case DISPLAY_INIT_FULL:
-      EpdInitFull();
-      break;
-  }
-}
-
-void EpdInitDriver(void)
+void EpdInitDriver29()
 {
   if (!Settings.display_model) {
     Settings.display_model = XDSP_05;
   }
 
   if (XDSP_05 == Settings.display_model) {
+    if (Settings.display_width != EPD_WIDTH) {
+      Settings.display_width = EPD_WIDTH;
+    }
+    if (Settings.display_height != EPD_HEIGHT) {
+      Settings.display_height = EPD_HEIGHT;
+    }
+
+    // allocate screen buffer
+    if (buffer) free(buffer);
+    buffer=(unsigned char*)calloc((EPD_WIDTH * EPD_HEIGHT) / 8,1);
+    if (!buffer) return;
+
+    // init renderer
+    epd  = new Epd(EPD_WIDTH,EPD_HEIGHT);
+
+    // whiten display with full update, takes 3 seconds
     if ((pin[GPIO_SPI_CS] < 99) && (pin[GPIO_SPI_CLK] < 99) && (pin[GPIO_SPI_MOSI] < 99)) {
-      epd.cs_pin = pin[GPIO_SPI_CS];
-      epd.sclk_pin = pin[GPIO_SPI_CLK];   // 14
-      epd.mosi_pin = pin[GPIO_SPI_MOSI];  // 13
-      EpdInitMode();
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EPD: HardSPI CS %d, CLK %d, MOSI %d"), epd.cs_pin, epd.sclk_pin, epd.mosi_pin);
+      epd->Begin(pin[GPIO_SPI_CS],pin[GPIO_SPI_MOSI],pin[GPIO_SPI_CLK]);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EPD: HardSPI CS %d, CLK %d, MOSI %d"),pin[GPIO_SPI_CS], pin[GPIO_SPI_CLK], pin[GPIO_SPI_MOSI]);
     }
     else if ((pin[GPIO_SSPI_CS] < 99) && (pin[GPIO_SSPI_SCLK] < 99) && (pin[GPIO_SSPI_MOSI] < 99)) {
-      epd.cs_pin = pin[GPIO_SSPI_CS];
-      epd.sclk_pin = pin[GPIO_SSPI_SCLK];
-      epd.mosi_pin = pin[GPIO_SSPI_MOSI];
-      EpdInitMode();
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EPD: SoftSPI CS %d, CLK %d, MOSI %d"), epd.cs_pin, epd.sclk_pin, epd.mosi_pin);
+      epd->Begin(pin[GPIO_SSPI_CS],pin[GPIO_SSPI_MOSI],pin[GPIO_SSPI_SCLK]);
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EPD: SoftSPI CS %d, CLK %d, MOSI %d"),pin[GPIO_SSPI_CS], pin[GPIO_SSPI_SCLK], pin[GPIO_SSPI_MOSI]);
+    } else {
+      free(buffer);
+      return;
     }
+
+    renderer = epd;
+    epd->Init(DISPLAY_INIT_FULL);
+    epd->Init(DISPLAY_INIT_PARTIAL);
+    renderer->DisplayInit(DISPLAY_INIT_MODE,Settings.display_size,Settings.display_rotate,Settings.display_font);
+
+    renderer->setTextColor(1,0);
+
+#ifdef SHOW_SPLASH
+    // Welcome text
+    renderer->setTextFont(1);
+    renderer->DrawStringAt(50, 50, "Waveshare E-Paper Display!", COLORED,0);
+    renderer->Updateframe();
+    delay(1000);
+    renderer->fillScreen(0);
+#endif
+
   }
 }
 
 /*********************************************************************************************/
 
-void EpdClear(void)
-{
-  paint.Clear(UNCOLORED);
-}
 
-void EpdSetFont(uint8_t font)
-{
-  if (1 == font) {
-    selected_font = &Font12;
-  } else {
-#ifdef USE_TINY_FONT
-    if (2 == font) {
-      selected_font = &Font24;
-    } else {
-      selected_font = &Font8;
-    }
-#else
-    selected_font = &Font24;
-#endif
-  }
-}
-
-void EpdDisplayFrame(void)
-{
-  epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-  epd.Sleep();
-}
-
-void EpdDrawStringAt(uint16_t x, uint16_t y, char *str, uint8_t color, uint8_t flag)
-{
-  if (!flag) {
-    paint.DrawStringAt(x, y, str, selected_font, color);
-  } else {
-    paint.DrawStringAt((x-1) * selected_font->Width, (y-1) * selected_font->Height, str, selected_font, color);
-  }
-}
-
-// not needed
-void EpdDisplayOnOff(uint8_t on)
-{
-
-}
-
-void EpdOnOff(void)
-{
-  EpdDisplayOnOff(disp_power);
-}
 
 /*********************************************************************************************/
 
 #ifdef USE_DISPLAY_MODES1TO5
-
-void EpdPrintLog(void)
+#define EPD_FONT_HEIGTH        12
+void EpdPrintLog29(void)
 {
+
   disp_refresh--;
   if (!disp_refresh) {
     disp_refresh = Settings.display_refresh;
-    if (Settings.display_rotate) {
+    //if (Settings.display_rotate) {
       if (!disp_screen_buffer_cols) { DisplayAllocScreenBuffer(); }
-    }
+    //}
 
     char* txt = DisplayLogBuffer('\040');
     if (txt != nullptr) {
       uint8_t size = Settings.display_size;
       uint16_t theight = size * EPD_FONT_HEIGTH;
 
-      EpdSetFont(size);
+      renderer->setTextFont(size);
       uint8_t last_row = Settings.display_rows -1;
 
 //      epd_scroll = theight;  // Start below header
       epd_scroll = 0;  // Start at top with no header
       for (uint32_t i = 0; i < last_row; i++) {
         strlcpy(disp_screen_buffer[i], disp_screen_buffer[i +1], disp_screen_buffer_cols);
-        EpdDrawStringAt(0, epd_scroll, disp_screen_buffer[i], COLORED, 0);
+        renderer->DrawStringAt(0, epd_scroll, disp_screen_buffer[i], COLORED, 0);
         epd_scroll += theight;
       }
       strlcpy(disp_screen_buffer[last_row], txt, disp_screen_buffer_cols);
       DisplayFillScreen(last_row);
-      EpdDrawStringAt(0, epd_scroll, disp_screen_buffer[last_row], COLORED, 0);
+      renderer->DrawStringAt(0, epd_scroll, disp_screen_buffer[last_row], COLORED, 0);
 //      EpdDisplayFrame();
 
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION "[%s]"), txt);
@@ -224,9 +141,11 @@ void EpdPrintLog(void)
   }
 }
 
-void EpdRefresh(void)  // Every second
+void EpdRefresh29(void)  // Every second
 {
   if (Settings.display_mode) {  // Mode 0 is User text
+
+    if (!renderer) return;
 /*
     char tftdt[Settings.display_cols[0] +1];
     char date4[11];  // 24-04-2017
@@ -249,8 +168,8 @@ void EpdRefresh(void)  // Every second
       case 3:  // Local
       case 4:  // Mqtt
       case 5:  // Mqtt
-        EpdPrintLog();
-        EpdDisplayFrame();
+        EpdPrintLog29();
+        renderer->Updateframe();
         break;
     }
 
@@ -267,78 +186,24 @@ void EpdRefresh(void)  // Every second
 bool Xdsp05(uint8_t function)
 {
   bool result = false;
-
-  if (spi_flg || soft_spi_flg) {
     if (FUNC_DISPLAY_INIT_DRIVER == function) {
-      EpdInitDriver();
+      EpdInitDriver29();
     }
     else if (XDSP_05 == Settings.display_model) {
-
-      if (!dsp_color) { dsp_color = COLORED; }
-
       switch (function) {
         case FUNC_DISPLAY_MODEL:
           result = true;
           break;
-        case FUNC_DISPLAY_INIT:
-          EpdInit(dsp_init);
-          break;
-        case FUNC_DISPLAY_POWER:
-          EpdOnOff();
-          break;
-        case FUNC_DISPLAY_CLEAR:
-          EpdClear();
-          break;
-        case FUNC_DISPLAY_DRAW_HLINE:
-          paint.DrawHorizontalLine(dsp_x, dsp_y, dsp_len, dsp_color);
-          break;
-        case FUNC_DISPLAY_DRAW_VLINE:
-          paint.DrawVerticalLine(dsp_x, dsp_y, dsp_len, dsp_color);
-          break;
-        case FUNC_DISPLAY_DRAW_LINE:
-          paint.DrawLine(dsp_x, dsp_y, dsp_x2, dsp_y2, dsp_color);
-          break;
-        case FUNC_DISPLAY_DRAW_CIRCLE:
-          paint.DrawCircle(dsp_x, dsp_y, dsp_rad, dsp_color);
-          break;
-        case FUNC_DISPLAY_FILL_CIRCLE:
-          paint.DrawFilledCircle(dsp_x, dsp_y, dsp_rad, dsp_color);
-          break;
-        case FUNC_DISPLAY_DRAW_RECTANGLE:
-          paint.DrawRectangle(dsp_x, dsp_y, dsp_x + dsp_x2, dsp_y + dsp_y2, dsp_color);
-          break;
-        case FUNC_DISPLAY_FILL_RECTANGLE:
-          paint.DrawFilledRectangle(dsp_x, dsp_y, dsp_x + dsp_x2, dsp_y + dsp_y2, dsp_color);
-          break;
-        case FUNC_DISPLAY_DRAW_FRAME:
-          EpdDisplayFrame();
-          break;
-        case FUNC_DISPLAY_TEXT_SIZE:
-//          EpdSetFontorSize(Settings.display_size);
-          break;
-        case FUNC_DISPLAY_FONT_SIZE:
-          EpdSetFont(Settings.display_font);
-          break;
-        case FUNC_DISPLAY_DRAW_STRING:
-          EpdDrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);
-          break;
-        case FUNC_DISPLAY_ONOFF:
-          EpdDisplayOnOff(dsp_on);
-          break;
-        case FUNC_DISPLAY_ROTATION:
-          paint.SetRotate(Settings.display_rotate);
-          break;
 #ifdef USE_DISPLAY_MODES1TO5
         case FUNC_DISPLAY_EVERY_SECOND:
-          EpdRefresh();
+          EpdRefresh29();
           break;
 #endif  // USE_DISPLAY_MODES1TO5
       }
     }
-  }
   return result;
 }
 
-#endif  // USE_DISPLAY_EPAPER_29
+#endif  // USE_DISPLAY_EPAPER
 #endif  // USE_DISPLAY
 #endif  // USE_SPI
