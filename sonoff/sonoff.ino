@@ -544,9 +544,11 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
   KnxSendButtonPower(key, device, state);
 #endif  // USE_KNX
   // publish a stat/RESULT for switches and buttons state for home automation //
-  snprintf_P(sb_topic, sizeof(sb_topic), GetTopic_P(state_topic, STAT, mqtt_topic, PSTR(D_RSLT_RESULT))); 
-  Response_P(PSTR("{\"%s%d\":%d}"), (key) ? "SWITCH" : "BUTTON", device, state);
-  MqttPublish(sb_topic, false);	
+  if (Settings.flag.hass_discovery) {
+    snprintf_P(sb_topic, sizeof(sb_topic), GetTopic_P(state_topic, STAT, mqtt_topic, PSTR(D_RSLT_RESULT))); 
+    Response_P(PSTR("{\"%s%d\":%d}"), (key) ? "SWITCH" : "BUTTON", device, state);
+    MqttPublish(sb_topic, false);
+  }
 	
   return result;
 }
