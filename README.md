@@ -25,11 +25,11 @@ In addition to the [release webpage](https://github.com/arendst/Sonoff-Tasmota/r
 
 See [sonoff/_changelog.ino](https://github.com/arendst/Sonoff-Tasmota/blob/development/sonoff/_changelog.ino) for detailed change information.
 
-Unless your Tasmota powered device exhibits a problem or you need to make use of a feature that is not available in the Tasmota version currently installed on your device, leave your device alone - it works so don't make unnecessary changes! If the release version (i.e., the master branch) exhibits unexpected behaviour for your device and configuration, you should upgrade to the latest development version instead to see if your problem is resolved as some bugs in previous releases or development builds may already have been resolved.  
+Unless your Tasmota powered device exhibits a problem or you need to make use of a feature that is not available in the Tasmota version currently installed on your device, leave your device alone - it works so don't make unnecessary changes! If the release version (i.e., the master branch) exhibits unexpected behaviour for your device and configuration, you should upgrade to the latest development version instead to see if your problem is resolved as some bugs in previous releases or development builds may already have been resolved.
 
-The Tasmota development codebase is checked every 1-2 hours for changes. If new commits have been merged and they compile successfuly, new binary files for every variant (excluding non-English languages) will be posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA updates too). The last compiled commit number is also indicated on the same page. It is important to note that these binaries are based on the current development codebase. These commits are tested as much as is possible and are typically quite stable. However, it is infeasible to test on the hundreds of different types of devices with all the available configuration options permitted.  
+The Tasmota development codebase is checked every 1-2 hours for changes. If new commits have been merged and they compile successfuly, new binary files for every variant (excluding non-English languages) will be posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA updates too). The last compiled commit number is also indicated on the same page. It is important to note that these binaries are based on the current development codebase. These commits are tested as much as is possible and are typically quite stable. However, it is infeasible to test on the hundreds of different types of devices with all the available configuration options permitted.
 
-Note that there is a chance, as with any upgrade, that the device may not function as expected. You must always account for the possibility that you may need to flash the device via the serial programming interface if the OTA upgrade fails. Even with the master release, you should always attempt to test the device or a similar prototype before upgrading a device which is in production or is hard to reach. And, as always, make a backup of the device configuration before beginning any firmware update. 
+Note that there is a chance, as with any upgrade, that the device may not function as expected. You must always account for the possibility that you may need to flash the device via the serial programming interface if the OTA upgrade fails. Even with the master release, you should always attempt to test the device or a similar prototype before upgrading a device which is in production or is hard to reach. And, as always, make a backup of the device configuration before beginning any firmware update.
 
 ## Disclaimer
 :warning: **DANGER OF ELECTROCUTION** :warning:
@@ -88,17 +88,26 @@ Libraries used with Sonoff-Tasmota are:
 - [Adafruit CCS811](https://github.com/adafruit/Adafruit_CCS811)
 - [Adafruit ILI9341](https://github.com/adafruit/Adafruit_ILI9341)
 - [Adafruit LED Backpack](https://github.com/adafruit/Adafruit-LED-Backpack-Library)
+- [Adafruit MAX31865](https://github.com/adafruit/Adafruit_MAX31865)
 - [Adafruit SGP30](https://github.com/adafruit/Adafruit_SGP30)
+- Adafruit based SH1106
 - [Adafruit SSD1306](https://github.com/adafruit/Adafruit_SSD1306)
+- Adafruit based SSD1351
 - [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library)
+- Arduino Hex Parser
 - [ArduinoJson](https://arduinojson.org/)
+- AT24C256 I2C eeprom
+- [Base64](https://github.com/Densaugeo/base64_arduino)
+- [Bear SSL](https://github.com/earlephilhower/bearssl-esp8266.git)
 - [Bosch BME680](https://github.com/BoschSensortec/BME680_driver)
 - [C2 Programmer](http://app.cear.ufpb.br/~lucas.hartmann/tag/efm8bb1/)
 - [esp-epaper-29-ws-20171230-gemu](https://github.com/gemu2015/Sonoff-Tasmota/tree/displays/lib)
 - [esp-knx-ip](https://github.com/envy/esp-knx-ip)
 - FrogmoreScd30
+- FT6236
 - [I2Cdevlib](https://github.com/jrowberg/i2cdevlib)
 - [IRremoteEsp8266](https://github.com/markszabo/IRremoteESP8266)
+- [JaretBurkett ILI9488](https://github.com/jaretburkett/ILI9488)
 - [JobaTsl2561](https://github.com/joba-1/Joba_Tsl2561)
 - [LinkedList](https://github.com/ivanseidel/LinkedList)
 - [Liquid Cristal](https://github.com/marcoschwartz/LiquidCrystal_I2C)
@@ -108,6 +117,10 @@ Libraries used with Sonoff-Tasmota are:
 - [OneWire](https://github.com/PaulStoffregen/OneWire)
 - [PubSubClient](https://github.com/knolleary/pubsubclient)
 - [rc-switch](https://github.com/sui77/rc-switch)
+- TasmotaModbus
+- TasmotaSerial
+- [Vl53l0x](https://github.com/pololu/vl53l0x-arduino)
+- Xlatb Ra8876
 
 ### People inspiring me
 People helping to keep the show on the road:
@@ -132,12 +145,13 @@ People helping to keep the show on the road:
 - Raymond Mouthaan for managing Wemos Wiki information
 - Norbert Richter for his decode-config.py tool
 - Andre Thomas for providing [thehackbox](http://thehackbox.org/tasmota/) OTA support and daily development builds
-- Joel Stein and digiblur for their Tuya research and driver
+- Joel Stein, digiblur and Shantur Rathore for their Tuya research and driver
 - Frogmore42 and Jason2866 for providing many issue answers
 - Blakadder for editing the wiki and providing template management
-- Stephan Hadinger for refactoring light driver and enhancing HueEmulation
-- tmo for designing the official logo
-- Many more providing Tips, Wips, Pocs or PRs
+- Stephan Hadinger for refactoring light driver, enhancing HueEmulation and Zigbee support
+- tmo for designing the official Tasmota logo
+- Stefan Bode for his Shutter and Deep sleep drivers
+- Many more providing Tips, Wips, Pocs, PRs and Donations
 
 ## License
 
