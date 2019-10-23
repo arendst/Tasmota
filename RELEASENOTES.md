@@ -280,7 +280,7 @@ Version 6.7.0 20191025
  * Change energy sensors for three phase/channel support
  * Change Settings crc calculation allowing short term backward compatibility
  * Change Improve reliability of TasmotaSerial at 115200 bauds and reduce IRAM usage
- * Change Tuya support by Shantur Rathore removing commands ``SetOption34, 41, 44, 45, 46 and 65`` (#6353)
+ * Change Tuya support by Shantur Rathore removing commands ``SetOption34, 41, 44, 45, 46, 65, 66 and 69`` (#6353)
  * Change theoretical baudrate range to 300..19660500 bps in 300 increments (#6294)
  * Change Settings area to 4k for future use
  * Change some table locations from RAM to Flash
@@ -343,7 +343,6 @@ Version 6.7.0 20191025
  * Add command ``SetOption34 0..255`` to set backlog delay. Default value is 200 (mSeconds) (#6562)
  * Add command ``SetOption42 0..255`` to set overtemperature (Celsius only) threshold resulting in power off all on energy monitoring devices. Default setting is 90 (#6036)
  * Add command ``SetOption65 0/1`` to disable (1) fast power cycle detection fixing unwanted brownout trigger
- * Add command ``SetOption66 0/1`` to enable or disable Tuya dimmer range 255 slider control
  * Add command ``SetOption67 0/1`` to disable or enable a buzzer as used in iFan03
  * Add command ``SetOption68 0/1`` to enable multi-channel PWM instead of a single light (#6134)
  * Add command ``SetOption71 0/1`` to switch between different Modbus Active Energy registers on DDS238-2 energy meters (#6531)
