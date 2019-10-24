@@ -524,7 +524,7 @@ void CmndOtaUrl(void)
 
 void CmndSeriallog(void)
 {
-  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) {
+  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_DEBUG_MORE)) {
     Settings.flag.mqtt_serial = 0;
     SetSeriallog(XdrvMailbox.payload);
   }
@@ -1075,7 +1075,7 @@ void CmndSerialDelimiter(void)
 
 void CmndSyslog(void)
 {
-  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) {
+  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_DEBUG_MORE)) {
     SetSyslog(XdrvMailbox.payload);
   }
   Response_P(S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, XdrvMailbox.command, Settings.syslog_level, syslog_level);
