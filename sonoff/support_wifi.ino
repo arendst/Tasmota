@@ -323,12 +323,22 @@ bool WifiCheckIPv6(void)
   }
   return ipv6_global;
 }
+
+bool WifiCheckIPAddrStatus(void)	// Return false for 169.254.x.x or fe80::/64
+{
+  bool ip_global=false;
+
+  for (auto a : addrList) {
+    if(!a.isLocal()) ip_global=true;
+  }
+  return ip_global;
+}
 #endif  // LWIP_IPV6=1
 
 void WifiCheckIp(void)
 {
 #if LWIP_IPV6
-  if(WifiCheckIPv6()) {
+  if(WifiCheckIPAddrStatus()) {
     Wifi.status = WL_CONNECTED;
 #else
   if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0)) {
@@ -456,7 +466,7 @@ void WifiCheck(uint8_t param)
         WifiCheckIp();
       }
 #if LWIP_IPV6
-      if (WifiCheckIPv6()) {
+      if (WifiCheckIPAddrStatus()) {
 #else
       if ((WL_CONNECTED == WiFi.status()) && (static_cast<uint32_t>(WiFi.localIP()) != 0) && !Wifi.config_type) {
 #endif  // LWIP_IPV6=1
