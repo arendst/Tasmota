@@ -157,7 +157,7 @@
 #define D_TO "zu"
 #define D_TOGGLE "An/Aus"
 #define D_TOPIC "topic"
-#define D_TOTAL_USAGE "Gesamtnutzung"
+#define D_TOTAL_USAGE "Gesamtverbrauch"
 #define D_TRANSMIT "Übertragen"
 #define D_TRUE "wahr"
 #define D_TVOC "TVOC"
