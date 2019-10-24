@@ -346,7 +346,7 @@ void MqttPublishLogging(const char *mxtime)
 void MqttPublishDirect(const char* topic, bool retained)
 {
   char sretained[CMDSZ];
-  char slog_type[10];
+  char slog_type[20];
 
 #ifdef USE_DEBUG_DRIVER
   ShowFreeMem(PSTR("MqttPublishDirect"));
