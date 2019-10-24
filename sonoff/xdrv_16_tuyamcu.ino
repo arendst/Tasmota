@@ -610,6 +610,7 @@ bool TuyaModuleSelected(void)
 
   if (TuyaGetDpId(TUYA_MCU_FUNC_LOWPOWER_MODE) != 0) {
     Tuya.low_power_mode = true;
+    Settings.flag3.fast_power_cycle_disable = true;
   }
 
   UpdateDevices();
