@@ -139,7 +139,7 @@
 #define D_RESTARTING "Перезавантаження"
 #define D_RESTART_REASON "Причина перезавантаження"
 #define D_RESTORE "відновлення"
-#define D_RETAINED "нерозподілений"
+#define D_RETAINED "зберігати"
 #define D_RULE "Правило"
 #define D_SAVE "Зберегти"
 #define D_SENSOR "Давач"
