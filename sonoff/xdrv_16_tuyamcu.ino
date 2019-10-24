@@ -415,7 +415,7 @@ void TuyaProcessStatePacket(void) {
   char scmnd[20];
   uint8_t fnId = TuyaGetFuncId(Tuya.buffer[6]);
 
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: FnId=%d is set for dpId=%d"), fnId, Tuya.buffer[6]);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: fnId=%d is set for dpId=%d"), fnId, Tuya.buffer[6]);
   // if (TuyaFuncIdValid(fnId)) {
     if (Tuya.buffer[5] == 5) {  // on/off packet
 
@@ -663,7 +663,22 @@ void TuyaSerialInput(void)
       Tuya.buffer[Tuya.byte_counter++] = serial_in_byte;
 
       char hex_char[(Tuya.byte_counter * 2) + 2];
-      Response_P(PSTR("{\"" D_JSON_TUYA_MCU_RECEIVED "\":\"%s\"}"), ToHex_P((unsigned char*)Tuya.buffer, Tuya.byte_counter, hex_char, sizeof(hex_char)));
+      uint16_t len = Tuya.buffer[4] << 8 | Tuya.buffer[5];
+      Response_P(PSTR("{\"" D_JSON_TUYA_MCU_RECEIVED "\":{\"Data\":\"%s\",\"Cmnd\":%d"), ToHex_P((unsigned char*)Tuya.buffer, Tuya.byte_counter, hex_char, sizeof(hex_char)), Tuya.buffer[3]);
+
+      if (len > 0) {
+        ResponseAppend_P(PSTR(",\"CmndData\":\"%s\""), ToHex_P((unsigned char*)&Tuya.buffer[6], len, hex_char, sizeof(hex_char)));
+        if (TUYA_CMD_STATE == Tuya.buffer[3]) {
+          uint16_t dpDataLen = Tuya.buffer[8] << 8 | Tuya.buffer[9];
+          ResponseAppend_P(PSTR(",\"DpId\":%d,\"DpIdType\":%d,\"DpIdData\":\"%s\""), Tuya.buffer[6], Tuya.buffer[7], ToHex_P((unsigned char*)&Tuya.buffer[10], dpDataLen, hex_char, sizeof(hex_char)));
+          if (TUYA_TYPE_STRING == Tuya.buffer[7]) {
+            ResponseAppend_P(PSTR(",\"Type3Data\":\"%.*s\""), dpDataLen, (char *)&Tuya.buffer[10]);
+          }
+        }
+      }
+
+      ResponseAppend_P(PSTR("}}"));
+
       MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
       XdrvRulesProcess();
 
