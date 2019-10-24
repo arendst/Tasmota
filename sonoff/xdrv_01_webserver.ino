@@ -1625,7 +1625,7 @@ void HandleLoggingConfiguration(void)
       GetTextIndexed(stemp1, sizeof(stemp1), idx, kLoggingOptions),
       GetTextIndexed(stemp2, sizeof(stemp2), dlevel[idx], kLoggingLevels),
       idx);
-    for (uint32_t i = LOG_LEVEL_NONE; i < LOG_LEVEL_ALL; i++) {
+    for (uint32_t i = LOG_LEVEL_NONE; i <= LOG_LEVEL_DEBUG_MORE; i++) {
       WSContentSend_P(PSTR("<option%s value='%d'>%d %s</option>"),
         (i == llevel) ? " selected" : "", i, i,
         GetTextIndexed(stemp1, sizeof(stemp1), i, kLoggingLevels));
@@ -2676,7 +2676,7 @@ void CmndWebPassword(void)
 
 void CmndWeblog(void)
 {
-  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) {
+  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_DEBUG_MORE)) {
     Settings.weblog_level = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings.weblog_level);

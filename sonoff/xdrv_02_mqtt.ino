@@ -764,7 +764,7 @@ void CmndMqttPassword(void)
 
 void CmndMqttlog(void)
 {
-  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_ALL)) {
+  if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_DEBUG_MORE)) {
     Settings.mqttlog_level = XdrvMailbox.payload;
   }
   ResponseCmndNumber(Settings.mqttlog_level);

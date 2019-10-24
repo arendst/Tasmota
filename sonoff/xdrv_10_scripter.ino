@@ -2211,33 +2211,49 @@ char *Evaluate_expression(char *lp,uint8_t and_or, uint8_t *result,JsonObject  *
   struct T_INDEX ind;
   uint8_t vtype=0,lastop;
   uint8_t res=0;
+  char *llp=lp;
+  char *slp;
 
   SCRIPT_SKIP_SPACES
-
   if (*lp=='(') {
+    uint8_t res=0;
+    uint8_t xand_or=0;
     lp++;
-    lp=Evaluate_expression(lp,and_or,result,jo);
-    lp++;
+
+loop:
+    SCRIPT_SKIP_SPACES
+    lp=Evaluate_expression(lp,xand_or,&res,jo);
+    if (*lp==')') {
+      lp++;
+      goto exit0;
+    }
     // check for next and or
     SCRIPT_SKIP_SPACES
     if (!strncmp(lp,"or",2)) {
       lp+=2;
-      and_or=1;
-      SCRIPT_SKIP_SPACES
-      lp=Evaluate_expression(lp,and_or,result,jo);
+      xand_or=1;
+      goto loop;
     } else if (!strncmp(lp,"and",3)) {
       lp+=3;
-      and_or=2;
-      SCRIPT_SKIP_SPACES
-      lp=Evaluate_expression(lp,and_or,result,jo);
+      xand_or=2;
+      goto loop;
     }
-    return lp;
+exit0:
+    if (!and_or) {
+      *result=res;
+    } else if (and_or==1) {
+      *result|=res;
+    } else {
+      *result&=res;
+    }
+    goto exit10;
   }
 
+  llp=lp;
   // compare
   dfvar=&fvar;
   glob_script_mem.glob_error=0;
-  char *slp=lp;
+  slp=lp;
   numeric=1;
   lp=GetNumericResult(lp,OPER_EQU,dfvar,0);
   if (glob_script_mem.glob_error==1) {
@@ -2252,23 +2268,15 @@ char *Evaluate_expression(char *lp,uint8_t and_or, uint8_t *result,JsonObject  *
     char str[SCRIPT_MAXSSIZE];
     lp=GetStringResult(lp,OPER_EQU,str,jo);
     if (lastop==OPER_EQUEQU || lastop==OPER_NOTEQU) {
-      uint8_t res=0;
       res=strcmp(cmpstr,str);
       if (lastop==OPER_EQUEQU) res=!res;
-      if (!and_or) {
-          *result=res;
-      } else if (and_or==1) {
-          *result|=res;
-      } else {
-          *result&=res;
-      }
+      goto exit;
     }
 
   } else {
     // numeric
     // evaluate operand
     lp=getop(lp,&lastop);
-
     lp=GetNumericResult(lp,OPER_EQU,&fvar1,jo);
     switch (lastop) {
       case OPER_EQUEQU:
@@ -2294,6 +2302,7 @@ char *Evaluate_expression(char *lp,uint8_t and_or, uint8_t *result,JsonObject  *
           break;
     }
 
+exit:
     if (!and_or) {
       *result=res;
     } else if (and_or==1) {
@@ -2302,11 +2311,13 @@ char *Evaluate_expression(char *lp,uint8_t and_or, uint8_t *result,JsonObject  *
       *result&=res;
     }
   }
-exit:
+
+
+exit10:
 #if SCRIPT_DEBUG>0
   char tbuff[128];
-  sprintf(tbuff,"p1=%d,p2=%d,cmpres=%d line: ",(int32_t)*dfvar,(int32_t)fvar1,*result);
-  toLogEOL(tbuff,lp);
+  sprintf(tbuff,"p1=%d,p2=%d,cmpres=%d,and_or=%d line: ",(int32_t)*dfvar,(int32_t)fvar1,*result,and_or);
+  toLogEOL(tbuff,llp);
 #endif
   return lp;
 }
