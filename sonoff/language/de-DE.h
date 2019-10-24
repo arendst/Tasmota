@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.6.0.14
+ * Updated until v6.6.0.21
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -157,7 +157,7 @@
 #define D_TO "zu"
 #define D_TOGGLE "An/Aus"
 #define D_TOPIC "topic"
-#define D_TOTAL_USAGE "Total Usage"
+#define D_TOTAL_USAGE "Gesamtverbrauch"
 #define D_TRANSMIT "Übertragen"
 #define D_TRUE "wahr"
 #define D_TVOC "TVOC"
@@ -320,11 +320,11 @@
 #define D_MAC_ADDRESS "MAC-Adresse"
 #define D_MQTT_HOST "MQTT Host"
 #define D_MQTT_PORT "MQTT Port"
-#define D_MQTT_CLIENT "MQTT client"
-#define D_MQTT_USER "MQTT-Benutzer"
-#define D_MQTT_TOPIC "MQTT topic"
-#define D_MQTT_GROUP_TOPIC "MQTT group topic"
-#define D_MQTT_FULL_TOPIC "MQTT full topic"
+#define D_MQTT_CLIENT "MQTT Client"
+#define D_MQTT_USER "MQTT Benutzer"
+#define D_MQTT_TOPIC "MQTT Topic"
+#define D_MQTT_GROUP_TOPIC "MQTT Group Topic"
+#define D_MQTT_FULL_TOPIC "MQTT Full Topic"
 #define D_MDNS_DISCOVERY "mDNS-Ermittlung"
 #define D_MDNS_ADVERTISE "mDNS-Bekanntmachung"
 #define D_ESP_CHIP_ID "ESP Chip ID"
@@ -335,15 +335,15 @@
 #define D_UPGRADE_BY_WEBSERVER "Update über Web-Server"
 #define D_OTA_URL "OTA-URL"
 #define D_START_UPGRADE "Update starten"
-#define D_UPGRADE_BY_FILE_UPLOAD "Update-Datei hochladen"
+#define D_UPGRADE_BY_FILE_UPLOAD "Update Datei hochladen"
 #define D_UPLOAD_STARTED "Upload gestartet"
 #define D_UPGRADE_STARTED "Update gestartet"
 #define D_UPLOAD_DONE "Upload abgeschlossen"
-#define D_UPLOAD_ERR_1 "keine Datei ausgewählt"
-#define D_UPLOAD_ERR_2 "ungenügend Speicherplatz"
-#define D_UPLOAD_ERR_3 "magic byte ist nicht 0xE9"
-#define D_UPLOAD_ERR_4 "Flash-Größe des Programmes ist größer als der reale Flashspeicher"
-#define D_UPLOAD_ERR_5 "Upload-buffer-Vergleich weicht ab"
+#define D_UPLOAD_ERR_1 "Keine Datei ausgewählt"
+#define D_UPLOAD_ERR_2 "Ungenügend Speicherplatz"
+#define D_UPLOAD_ERR_3 "Magic Byte ist nicht 0xE9"
+#define D_UPLOAD_ERR_4 "Datei überschreitet vorhdn. Flashspeicher"
+#define D_UPLOAD_ERR_5 "Upload Buffer Vergleich weicht ab"
 #define D_UPLOAD_ERR_6 "Upload fehlgeschlagen. Aktiviere logging 3"
 #define D_UPLOAD_ERR_7 "Upload abgebrochen"
 #define D_UPLOAD_ERR_8 "Datei ungültig"
@@ -641,7 +641,7 @@
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"
-#define D_UNIT_KILOOHM "kOhm"
+#define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m3"
