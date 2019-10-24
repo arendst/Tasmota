@@ -537,9 +537,10 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
     Response_P(PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
     result = XdrvRulesProcess();
   }
-#ifdef USE_KNX
-  KnxSendButtonPower(key, device, state);
-#endif  // USE_KNX
+  int32_t payload_save = XdrvMailbox.payload;
+  XdrvMailbox.payload = key << 16 | state << 8 | device;
+  XsnsCall(FUNC_ANY_KEY);
+  XdrvMailbox.payload = payload_save;
   return result;
 }
 

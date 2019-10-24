@@ -672,8 +672,13 @@ void KnxUpdatePowerState(uint8_t device, power_t state)
 }
 
 
-void KnxSendButtonPower(uint8_t key, uint8_t device, uint8_t state)
+void KnxSendButtonPower(void)
 {
+  if (!(Settings.flag.knx_enabled)) { return; }
+
+  uint32_t key = (XdrvMailbox.payload >> 16) & 0xFF;
+  uint32_t device = XdrvMailbox.payload & 0xFF;
+  uint32_t state = (XdrvMailbox.payload >> 8) & 0xFF;
 // key 0 = button_topic
 // key 1 = switch_topic
 // state 0 = off
@@ -681,9 +686,6 @@ void KnxSendButtonPower(uint8_t key, uint8_t device, uint8_t state)
 // state 2 = toggle
 // state 3 = hold
 // state 9 = clear retain flag
-  if (!(Settings.flag.knx_enabled)) { return; }
-//  if (key)
-//  {
 
 // Search all the registered GA that has that output (variable: device) as parameter
   uint8_t i = KNX_GA_Search(device + 8);
@@ -1207,8 +1209,13 @@ bool Xdrv11(uint8_t function)
       case FUNC_LOOP:
         if (!global_state.wifi_down) { knx.loop(); }  // Process knx events
         break;
-      case FUNC_PRE_INIT:
-        KNX_INIT();
+      case FUNC_EVERY_50_MSECOND:
+        if (toggle_inhibit) {
+          toggle_inhibit--;
+        }
+        break;
+      case FUNC_ANY_KEY:
+        KnxSendButtonPower();
         break;
 #ifdef USE_WEBSERVER
 #ifdef USE_KNX_WEB_MENU
@@ -1220,13 +1227,11 @@ bool Xdrv11(uint8_t function)
         break;
 #endif // USE_KNX_WEB_MENU
 #endif  // USE_WEBSERVER
-      case FUNC_EVERY_50_MSECOND:
-        if (toggle_inhibit) {
-          toggle_inhibit--;
-        }
-        break;
       case FUNC_COMMAND:
         result = DecodeCommand(kKnxCommands, KnxCommand);
+        break;
+      case FUNC_PRE_INIT:
+        KNX_INIT();
         break;
 //      case FUNC_SET_POWER:
 //        break;

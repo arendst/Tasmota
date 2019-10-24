@@ -404,13 +404,13 @@ void HAssAnnounceButtons(void)
   }
 }
 
-void HAssAnnounceSensor(const char* sensorname, const char* subsensortype) 
+void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
 {
   char stopic[TOPSZ];
   char stemp1[TOPSZ];
   char stemp2[TOPSZ];
   char unique_id[30];
-  bool is_sensor = true;  
+  bool is_sensor = true;
 
   // Announce sensor, special handling of temperature and humidity sensors
   mqtt_data[0] = '\0';  // Clear retained message
@@ -466,10 +466,10 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_ILLUMINANCE))){
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_ILLUMINANCE, sensorname, subsensortype);
     } else {
-        if (is_sensor){      
-        TryResponseAppend_P(PSTR(",\"unit_of_meas\":\" \""));   // " " As unit of measurement to get a value graph (not available for binary sensors) 
-      } 
-      TryResponseAppend_P(HASS_DISCOVER_SENSOR_ANY, sensorname, subsensortype);     
+        if (is_sensor){
+        TryResponseAppend_P(PSTR(",\"unit_of_meas\":\" \""));   // " " As unit of measurement to get a value graph (not available for binary sensors)
+      }
+      TryResponseAppend_P(HASS_DISCOVER_SENSOR_ANY, sensorname, subsensortype);
     }
     TryResponseAppend_P(PSTR("}"));
   }
@@ -611,6 +611,22 @@ void HAssDiscover(void)
   hass_init_step = 1;                        // Delayed discovery
 }
 
+void HAssAnyKey(void)
+{
+  if (!Settings.flag.hass_discovery) { return; }
+
+  uint32_t key = (XdrvMailbox.payload >> 16) & 0xFF;
+  uint32_t device = XdrvMailbox.payload & 0xFF;
+  uint32_t state = (XdrvMailbox.payload >> 8) & 0xFF;
+
+  char scommand[CMDSZ];
+  snprintf_P(scommand, sizeof(scommand), PSTR("%s%d"), (key) ? "SWITCH" : "BUTTON", device);
+  char stopic[TOPSZ];
+  GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
+  Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(state, device -1)));
+  MqttPublish(stopic);
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -621,10 +637,6 @@ bool Xdrv12(uint8_t function)
 
   if (Settings.flag.mqtt_enabled) {
     switch (function) {
-      case FUNC_MQTT_INIT:
-        hass_mode = 0;                       // Discovery only if Settings.flag.hass_discovery is set
-        hass_init_step = 2;                  // Delayed discovery
-        break;
       case FUNC_EVERY_SECOND:
         if (hass_init_step) {
           hass_init_step--;
@@ -640,6 +652,13 @@ bool Xdrv12(uint8_t function)
             HAssPublishStatus();
           }
         }
+        break;
+      case FUNC_ANY_KEY:
+        HAssAnyKey();
+        break;
+      case FUNC_MQTT_INIT:
+        hass_mode = 0;                       // Discovery only if Settings.flag.hass_discovery is set
+        hass_init_step = 2;                  // Delayed discovery
         break;
     }
   }
