@@ -1198,8 +1198,8 @@ void SettingsDelta(void)
       }
     }
     if (Settings.version < 0x06060014) {
-      // Clear unused parameters for future use
 /*
+      // Clear unused parameters for future use
       Settings.flag3.ex_tuya_dimmer_range_255 = 0;
       Settings.flag3.ex_tuya_dimmer_min_limit = 0;
       Settings.param[P_ex_TUYA_RELAYS] = 0;
