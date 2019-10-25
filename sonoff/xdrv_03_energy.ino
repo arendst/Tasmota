@@ -292,11 +292,13 @@ void EnergyMarginCheck(void)
 
     DEBUG_DRIVER_LOG(PSTR("NRG: Delta %d, Power %d"), delta, min_power);
 
-    if ( ((Settings.energy_power_delta < 101) && (((delta * 100) / min_power) > Settings.energy_power_delta)) ||  // 1..100 = Percentage
-         ((Settings.energy_power_delta > 100) && (delta > (Settings.energy_power_delta -100))) ) {                // 101..32000 = Absolute
-      Energy.power_delta = true;
-      Energy.power_history[1] = Energy.active_power[0];  // We only want one report so reset history
-      Energy.power_history[2] = Energy.active_power[0];
+    if (delta) {  // Fix divide by 0 exception (#6741)
+      if (((Settings.energy_power_delta < 101) && (((delta * 100) / min_power) > Settings.energy_power_delta)) ||  // 1..100 = Percentage
+          ((Settings.energy_power_delta > 100) && (delta > (Settings.energy_power_delta -100)))) {                 // 101..32000 = Absolute
+        Energy.power_delta = true;
+        Energy.power_history[1] = Energy.active_power[0];  // We only want one report so reset history
+        Energy.power_history[2] = Energy.active_power[0];
+      }
     }
   }
   Energy.power_history[0] = Energy.power_history[1];  // Shift in history every second allowing power changes to settle for up to three seconds
