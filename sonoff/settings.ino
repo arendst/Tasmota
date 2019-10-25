@@ -1199,6 +1199,7 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06060014) {
       // Clear unused parameters for future use
+/*
       Settings.flag3.ex_tuya_dimmer_range_255 = 0;
       Settings.flag3.ex_tuya_dimmer_min_limit = 0;
       Settings.param[P_ex_TUYA_RELAYS] = 0;
@@ -1208,7 +1209,7 @@ void SettingsDelta(void)
       Settings.param[P_ex_TUYA_POWER_ID] = 0;
       Settings.ex_baudrate = 0;
       Settings.ex_sbaudrate = 0;
-
+*/
       Settings.flag3.fast_power_cycle_disable = 0;
       Settings.energy_power_delta = Settings.ex_energy_power_delta;
       Settings.ex_energy_power_delta = 0;
