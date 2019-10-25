@@ -154,7 +154,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_ARILUX_RF         | - | - | x | x | x | - | - |
 | USE_SHUTTER           | - | - | - | - | - | - | - |
 | USE_DEEPSLEEP         | - | - | - | - | - | - | - |
-| USE_EXS_DIMMER        | - | - | - | - | - | - | - |
+| USE_EXS_DIMMER        | - | - | x | x | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | basic | sonoff | knx | sensors | ir | display | Remarks
 | USE_LIGHT             | - | x | x | x | x | x | x |
@@ -252,8 +252,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_DISPLAY_MATRIX    | - | - | - | - | - | - | x |
 | USE_DISPLAY_SH1106    | - | - | - | - | - | - | x |
 | USE_DISPLAY_ILI9341   | - | - | - | - | - | - | x |
-| USE_DISPLAY_EPAPER_29 | - | - | - | - | - | - | x | Disabled for core 2.3.0
-| USE_DISPLAY_EPAPER_42 | - | - | - | - | - | - | x | Disabled for core 2.3.0
+| USE_DISPLAY_EPAPER_29 | - | - | - | - | - | - | x |
+| USE_DISPLAY_EPAPER_42 | - | - | - | - | - | - | x |
 | USE_DISPLAY_ILI9488   | - | - | - | - | - | - | - |
 | USE_DISPLAY_SSD1351   | - | - | - | - | - | - | - |
 | USE_DISPLAY_RA8876    | - | - | - | - | - | - | - |
