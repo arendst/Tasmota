@@ -1126,7 +1126,7 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06060008) {
       // Move current tuya dimmer range to the new param.
-      if (Settings.flag3.ex_tuya_dimmer_range_255) {
+      if (Settings.flag3.tuya_serial_mqtt_publish) { // ex Settings.flag3.ex_tuya_dimmer_range_255 SetOption
         Settings.param[P_ex_DIMMER_MAX] = 100;
       } else {
         Settings.param[P_ex_DIMMER_MAX] = 255;
@@ -1200,7 +1200,7 @@ void SettingsDelta(void)
     if (Settings.version < 0x06060014) {
       // Clear unused parameters for future use
 /*
-      Settings.flag3.ex_tuya_dimmer_range_255 = 0;
+      Settings.flag3.tuya_serial_mqtt_publish = 0;  // ex Settings.flag3.ex_tuya_dimmer_range_255
       Settings.flag3.ex_tuya_dimmer_min_limit = 0;
       Settings.param[P_ex_TUYA_RELAYS] = 0;
       Settings.param[P_ex_DIMMER_MAX] = 0;
