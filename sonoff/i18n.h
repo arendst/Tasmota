@@ -453,7 +453,7 @@
 
 #define D_CMND_TUYA_MCU "TuyaMCU"
 #define D_CMND_TUYA_MCU_SEND_STATE "TuyaSend"
-#define D_JSON_TUYA_MCU_RECEIVED "TuyaMcuReceived"
+#define D_JSON_TUYA_MCU_RECEIVED "TuyaReceived"
 
 // Commands xdrv_23_zigbee.ino
 #define D_CMND_ZIGBEE_PERMITJOIN "ZigbeePermitJoin"
