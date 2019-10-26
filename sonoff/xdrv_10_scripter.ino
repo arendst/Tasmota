@@ -2731,7 +2731,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   uint8_t index=glob_script_mem.type[ind.index].index;
                   if ((vtype&STYPE)==0) {
                       // numeric result
-                      if (ind.bits.settable) {
+                      if (ind.bits.settable || ind.bits.is_filter) {
                         dfvar=&sysvar;
                         sysv_type=ind.index;
                       } else {
