@@ -154,7 +154,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_ARILUX_RF         | - | - | x | x | x | - | - |
 | USE_SHUTTER           | - | - | - | - | - | - | - |
 | USE_DEEPSLEEP         | - | - | - | - | - | - | - |
-| USE_EXS_DIMMER        | - | - | - | - | - | - | - |
+| USE_EXS_DIMMER        | - | - | x | x | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | basic | sonoff | knx | sensors | ir | display | Remarks
 | USE_LIGHT             | - | x | x | x | x | x | x |
@@ -252,14 +252,14 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_DISPLAY_MATRIX    | - | - | - | - | - | - | x |
 | USE_DISPLAY_SH1106    | - | - | - | - | - | - | x |
 | USE_DISPLAY_ILI9341   | - | - | - | - | - | - | x |
-| USE_DISPLAY_EPAPER_29 | - | - | - | - | - | - | x | Disabled for core 2.3.0
-| USE_DISPLAY_EPAPER_42 | - | - | - | - | - | - | x | Disabled for core 2.3.0
+| USE_DISPLAY_EPAPER_29 | - | - | - | - | - | - | x |
+| USE_DISPLAY_EPAPER_42 | - | - | - | - | - | - | x |
 | USE_DISPLAY_ILI9488   | - | - | - | - | - | - | - |
 | USE_DISPLAY_SSD1351   | - | - | - | - | - | - | - |
 | USE_DISPLAY_RA8876    | - | - | - | - | - | - | - |
 
 ## Changelog
-Version 6.7.0 20191025
+Version 6.7.1 20191026
  * Remove support for WPS and SmartConfig in favour of Web server (!) based WifiManager (#6680)
  * Remove binary sonoff-classic (#6680)
  * Remove command ``SetOption2``
@@ -287,6 +287,7 @@ Version 6.7.0 20191025
  * Change filename of configuration backup from using FriendlyName1 to Hostname solving diacritic issues (#2422)
  * Change Store AWS IoT Private Key and Certificate in SPI Flash avoiding device-specific compilations
  * Change defines **USE_TX20_WIND_SENSOR** and **USE_RC_SWITCH** in my_user_config.h to disable to lower iram usage enabling latest core compilation (#6060, #6062)
+ * Fix PowerDelta related exception0: epc1:0x4000dce5 (#6750)
  * Fix handling of ligth channels when pwm_multichannel (``SetOption68``) is enabled
  * Fix better handling of PWM White Temperature mode for Module 48 (#6534)
  * Fix TasmotaSerial: move serial send to IRAM for high speed baud rates
