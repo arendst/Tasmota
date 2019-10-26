@@ -292,7 +292,7 @@ void EnergyMarginCheck(void)
 
     DEBUG_DRIVER_LOG(PSTR("NRG: Delta %d, Power %d"), delta, min_power);
 
-    if (delta) {  // Fix divide by 0 exception (#6741)
+    if ((delta > 0) && (min_power > 0)) {  // Fix divide by 0 exception (#6741)
       if (((Settings.energy_power_delta < 101) && (((delta * 100) / min_power) > Settings.energy_power_delta)) ||  // 1..100 = Percentage
           ((Settings.energy_power_delta > 100) && (delta > (Settings.energy_power_delta -100)))) {                 // 101..32000 = Absolute
         Energy.power_delta = true;
