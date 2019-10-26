@@ -681,7 +681,7 @@ void TuyaSerialInput(void)
       ResponseAppend_P(PSTR("}}"));
 
       if (Settings.flag3.tuya_serial_mqtt_publish) {
-        MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
+        MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_JSON_TUYA_MCU_RECEIVED));
       } else {
         AddLog_P(LOG_LEVEL_DEBUG, mqtt_data);
       }
