@@ -2733,7 +2733,12 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                       // numeric result
                       if (ind.bits.settable || ind.bits.is_filter) {
                         dfvar=&sysvar;
-                        sysv_type=ind.index;
+                        if (ind.bits.settable) {
+                          sysv_type=ind.index;
+                        } else {
+                          sysv_type=0;
+                        }
+
                       } else {
                         dfvar=&glob_script_mem.fvars[index];
                         sysv_type=0;
