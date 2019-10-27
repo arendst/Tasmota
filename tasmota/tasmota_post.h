@@ -70,7 +70,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif
 
 /*********************************************************************************************\
- * [sonoff-sensors.bin]
+ * [tasmota-sensors.bin]
  * Provide an image with useful supported sensors enabled
 \*********************************************************************************************/
 
@@ -214,7 +214,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
- * [sonoff-knx.bin]
+ * [tasmota-knx.bin]
  * Provide a dedicated KNX image allowing enough code and memory space
 \*********************************************************************************************/
 
@@ -234,7 +234,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif  // FIRMWARE_KNX_NO_EMULATION
 
 /*********************************************************************************************\
- * [sonoff-display.bin]
+ * [tasmota-display.bin]
  * Provide an image with display drivers enabled
 \*********************************************************************************************/
 
@@ -298,7 +298,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif  // FIRMWARE_DISPLAYS
 
 /*********************************************************************************************\
- * [sonoff-ir.bin]
+ * [tasmota-ir.bin]
  * Provide a dedicated image with IR full protocol support, with limited additional features
 \*********************************************************************************************/
 
@@ -388,7 +388,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif  // FIRMWARE_IR
 
 /*********************************************************************************************\
- * [sonoff-basic.bin]
+ * [tasmota-basic.bin]
  * Provide an image without sensors
 \*********************************************************************************************/
 
@@ -490,7 +490,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif  // FIRMWARE_BASIC
 
 /*********************************************************************************************\
- * [sonoff-minimal.bin]
+ * [tasmota-minimal.bin]
  * Provide the smallest image possible while still enabling a webserver for intermediate image load
 \*********************************************************************************************/
 

@@ -3,6 +3,7 @@
  * Change ArduinoSlave to TasmotaSlave (Experimental)
  * Add support for Tuya battery powered devices (#6735)
  * Change repository name from Sonoff-Tasmota to Tasmota
+ * Change all code references from Sonoff to Tasmota
  *
  * 6.7.1 20191026
  * Release

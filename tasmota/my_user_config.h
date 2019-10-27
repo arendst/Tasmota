@@ -79,7 +79,7 @@
 #define MQTT_LOG_LEVEL         LOG_LEVEL_NONE    // [MqttLog] (LOG_LEVEL_NONE, LOG_LEVEL_ERROR, LOG_LEVEL_INFO, LOG_LEVEL_DEBUG, LOG_LEVEL_DEBUG_MORE)
 
 // -- Ota -----------------------------------------
-#define OTA_URL                "http://thehackbox.org/tasmota/release/sonoff.bin"  // [OtaUrl]
+#define OTA_URL                "http://thehackbox.org/tasmota/release/tasmota.bin"  // [OtaUrl]
 
 // -- MQTT ----------------------------------------
 #define MQTT_USE               1                 // [SetOption3] Select default MQTT use (0 = Off, 1 = On)
@@ -468,9 +468,9 @@
 
 // -- IR Remote features - all protocols from IRremoteESP8266 --------------------------
 // IR Full Protocols mode is activated through platform.io only.
-// Either use 'default_envs = sonoff-ircustom' and disable some features here to keep code not too big
-// or use 'default_envs = sonoff-ir' for a pre-packaged IR-dedicated firmware
-// When using 'sonoff-ircustom' or 'sonoff-ir', parameters below
+// Either use 'default_envs = tasmota-ircustom' and disable some features here to keep code not too big
+// or use 'default_envs = tasmota-ir' for a pre-packaged IR-dedicated firmware
+// When using 'tasmota-ircustom' or 'tasmota-ir', parameters below
 // (USE_IR_REMOTE, USE_IR_RECEIVE, USE_IR_HVAC...) are IGNORED.
 //
 // Code impact of IR full protocols is +81k code, 3k mem
@@ -555,13 +555,13 @@
  * See RELEASENOTES.md for selected features
 \*********************************************************************************************/
 
-//#define FIRMWARE_BASIC                           // Create sonoff-basic with no sensors
-//#define FIRMWARE_SENSORS                         // Create sonoff-sensors with useful sensors enabled
-//#define FIRMWARE_KNX_NO_EMULATION                // Create sonoff-knx with KNX but without Emulation
-//#define FIRMWARE_DISPLAYS                        // Create sonoff-display with display drivers enabled
-//#define FIRMWARE_IR                              // Create sonoff-ir with IR full protocols activated, and many sensors disabled
-//#define FIRMWARE_IR_CUSTOM                       // Create sonoff customizable with special marker to add all IR protocols
-//#define FIRMWARE_MINIMAL                         // Create sonoff-minimal as intermediate firmware for OTA-MAGIC
+//#define FIRMWARE_BASIC                           // Create tasmota-basic with no sensors
+//#define FIRMWARE_SENSORS                         // Create tasmota-sensors with useful sensors enabled
+//#define FIRMWARE_KNX_NO_EMULATION                // Create tasmota-knx with KNX but without Emulation
+//#define FIRMWARE_DISPLAYS                        // Create tasmota-display with display drivers enabled
+//#define FIRMWARE_IR                              // Create tasmota-ir with IR full protocols activated, and many sensors disabled
+//#define FIRMWARE_IR_CUSTOM                       // Create tasmota customizable with special marker to add all IR protocols
+//#define FIRMWARE_MINIMAL                         // Create tasmota-minimal as intermediate firmware for OTA-MAGIC
 
 /*********************************************************************************************\
  * No user configurable items below

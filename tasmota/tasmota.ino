@@ -71,7 +71,7 @@
 
 const char kSleepMode[] PROGMEM = "Dynamic|Normal";
 const char kPrefixes[] PROGMEM = D_CMND "|" D_STAT "|" D_TELE;
-const char kCodeImage[] PROGMEM = "sonoff|minimal|sensors|knx|basic|display|ir";
+const char kCodeImage[] PROGMEM = "tasmota|minimal|sensors|knx|basic|display|ir";
 
 // Global variables
 SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
