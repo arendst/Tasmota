@@ -8,7 +8,8 @@ See [wiki migration path](https://github.com/arendst/Tasmota/wiki/Upgrade#migrat
 1. Migrate to **Sonoff-Tasmota 3.9.x**
 2. Migrate to **Sonoff-Tasmota 4.x**
 3. Migrate to **Sonoff-Tasmota 5.14**
-4. Migrate to **Sonoff-Tasmota 6.x**
+4. Migrate to **Sonoff-Tasmota 6.7.1**
+5. Migrate to **Tasmota 7.x**
 
 ## Supported Core versions
 This release will be supported from ESP8266/Arduino library Core version **pre-2.6.0** due to reported security and stability issues on previous Core version.
@@ -104,8 +105,8 @@ Over 500 additional devices are supported using [templates](TEMPLATES.md).
 ## Provided Binary Downloads
 The following binary downloads have been compiled with ESP8266/Arduino library core version **pre-2.6.0**.
 
-- **sonoff.bin** = The Sonoff version with sensors. **RECOMMENDED RELEASE BINARY**
-- **sonoff-BG.bin** to **sonoff-TW.bin** = The Sonoff version in different languages.
+- **sonoff.bin** = The Tasmota version with sensors. **RECOMMENDED RELEASE BINARY**
+- **sonoff-BG.bin** to **sonoff-TW.bin** = The Tasmota version in different languages.
 - **sonoff-basic.bin** = The Basic version without most sensors.
 - **sonoff-knx.bin** = The Knx version without some features but adds KNX support.
 - **sonoff-sensors.bin** = The Sensors version adds more useful sensors.
@@ -368,7 +369,7 @@ Version 6.7.1 20191026
  * Add Tuya Energy monitoring by Shantur Rathore
  * Add Domoticz P1 Smart Meter support using energy sensors handled by xdrv_03_energy.ino based on an idea by pablozg
  * Add debug compile features using defines **DEBUG_TASMOTA_CORE**, **DEBUG_TASMOTA_DRIVER** and **DEBUG_TASMOTA_SENSOR**.
-     See **DEBUG_CORE_LOG** example in sonoff.ino and **DEBUG_DRIVER_LOG** example in xdrv_09_timers.ino
+     See **DEBUG_CORE_LOG** example in tasmota.ino and **DEBUG_DRIVER_LOG** example in xdrv_09_timers.ino
  * Add option 0 to ``Width1`` (Marker), ``Width2`` (Second), ``Width3`` (Minute) and ``Width4`` (Hour) disabling display (#6152)
  * Add MqttCount metric to STATE (#6155)
  * Add allow repeat/longpress for IRSend raw, introduced ``IRSend<r>`` option (#6074)

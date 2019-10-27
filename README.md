@@ -23,7 +23,7 @@ In addition to the [release webpage](https://github.com/arendst/Tasmota/releases
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Build Status](https://img.shields.io/travis/arendst/Tasmota.svg)](https://travis-ci.org/arendst/Tasmota)
 
-See [sonoff/_changelog.ino](https://github.com/arendst/Tasmota/blob/development/sonoff/_changelog.ino) for detailed change information.
+See [tasmota/_changelog.ino](https://github.com/arendst/Tasmota/blob/development/tasmota/_changelog.ino) for detailed change information.
 
 Unless your Tasmota powered device exhibits a problem or you need to make use of a feature that is not available in the Tasmota version currently installed on your device, leave your device alone - it works so don't make unnecessary changes! If the release version (i.e., the master branch) exhibits unexpected behaviour for your device and configuration, you should upgrade to the latest development version instead to see if your problem is resolved as some bugs in previous releases or development builds may already have been resolved.
 
@@ -60,7 +60,8 @@ See [wiki migration path](https://github.com/arendst/Tasmota/wiki/Upgrade#migrat
 1. Migrate to **Sonoff-Tasmota 3.9.x**
 2. Migrate to **Sonoff-Tasmota 4.x**
 3. Migrate to **Sonoff-Tasmota 5.14**
-4. Migrate to **Sonoff-Tasmota 6.x**
+4. Migrate to **Sonoff-Tasmota 6.7.1**
+5. Migrate to **Tasmota 7.x**
 
 ## Support Information
 <img src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoffbasic.jpg" width="250" align="right" />
