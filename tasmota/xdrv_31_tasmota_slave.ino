@@ -224,7 +224,7 @@ uint8_t TasmotaSlave_waitForSerialData(int dataCount, int timeout)
 uint8_t TasmotaSlave_sendBytes(uint8_t* bytes, int count)
 {
   TasmotaSlave_Serial->write(bytes, count);
-  TasmotaSlave_waitForSerialData(2, 1000);
+  TasmotaSlave_waitForSerialData(2, 250);
   uint8_t sync = TasmotaSlave_Serial->read();
   uint8_t ok = TasmotaSlave_Serial->read();
   if ((sync == 0x14) && (ok == 0x10)) {
@@ -257,7 +257,7 @@ uint8_t TasmotaSlave_exitProgMode(void)
   return TasmotaSlave_execCmd(CMND_STK_LEAVE_PROGMODE); // Exit programming mode
 }
 
-void TasmotaSlave_SetupFlash(void)
+uint8_t TasmotaSlave_SetupFlash(void)
 {
   uint8_t ProgParams[] = {0x86, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01, 0x03, 0xff, 0xff, 0xff, 0xff, 0x00, 0x80, 0x04, 0x00, 0x00, 0x00, 0x80, 0x00};
   uint8_t ExtProgParams[] = {0x05, 0x04, 0xd7, 0xc2, 0x00};
@@ -265,48 +265,47 @@ void TasmotaSlave_SetupFlash(void)
   if (TasmotaSlave_Serial->hardwareSerial()) {
     ClaimSerial();
   }
+
   TasmotaSlave_Reset();
 
-  uint8_t timer = 0;
-  bool no_error = false;
-  while (200 > timer) {
+  uint8_t timeout = 0;
+  uint8_t no_error = 0;
+  while (50 > timeout) {
     if (TasmotaSlave_execCmd(CMND_STK_GET_SYNC)) {
-      timer = 200;
-      no_error = true;
+      timeout = 200;
+      no_error = 1;
     }
+    timeout++;
     delay(1);
   }
-
   if (no_error) {
     AddLog_P2(LOG_LEVEL_INFO, PSTR("TasmotaSlave: Found bootloader"));
   } else {
+    no_error = 0;
     AddLog_P2(LOG_LEVEL_INFO, PSTR("TasmotaSlave: Bootloader could not be found"));
   }
-
   if (no_error) {
     if (TasmotaSlave_execParam(CMND_STK_SET_DEVICE, ProgParams, sizeof(ProgParams))) {
     } else {
-      no_error = true;
+      no_error = 0;
       AddLog_P2(LOG_LEVEL_INFO, PSTR("TasmotaSlave: Could not configure device for programming (1)"));
     }
   }
-
   if (no_error) {
     if (TasmotaSlave_execParam(CMND_STK_SET_DEVICE_EXT, ExtProgParams, sizeof(ExtProgParams))) {
     } else {
-      no_error = true;
+      no_error = 0;
       AddLog_P2(LOG_LEVEL_INFO, PSTR("TasmotaSlave: Could not configure device for programming (2)"));
     }
   }
-
   if (no_error) {
     if (TasmotaSlave_execCmd(CMND_STK_ENTER_PROGMODE)) {
     } else {
-      no_error = true;
+      no_error = 0;
       AddLog_P2(LOG_LEVEL_INFO, PSTR("TasmotaSlave: Failed to put bootloader into programming mode"));
     }
   }
-
+  return no_error;
 }
 
 uint8_t TasmotaSlave_loadAddress(uint8_t adrHi, uint8_t adrLo)
@@ -324,7 +323,7 @@ void TasmotaSlave_FlashPage(uint8_t addr_h, uint8_t addr_l, uint8_t* data)
     TasmotaSlave_Serial->write(data[i]);
   }
   TasmotaSlave_Serial->write(CONST_STK_CRC_EOP);
-  TasmotaSlave_waitForSerialData(2, 1000);
+  TasmotaSlave_waitForSerialData(2, 250);
   TasmotaSlave_Serial->read();
   TasmotaSlave_Serial->read();
 }
@@ -337,9 +336,15 @@ void TasmotaSlave_Flash(void)
   char thishexline[50];
   uint8_t position = 0;
   char* flash_buffer;
+
   SimpleHexParse hexParse = SimpleHexParse();
 
-  TasmotaSlave_SetupFlash();
+  if (!TasmotaSlave_SetupFlash()) {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("TasmotaSlave: Flashing aborted!"));
+    TSlave.flashing  = false;
+    restart_flag = 2;
+    return;
+  }
 
   flash_buffer = new char[SPI_FLASH_SEC_SIZE];
   uint32_t flash_start = TasmotaSlave_FlashStart() * SPI_FLASH_SEC_SIZE;
@@ -418,6 +423,7 @@ void TasmotaSlave_Init(void)
         if (TasmotaSlave_Serial->hardwareSerial()) {
           ClaimSerial();
         }
+        TasmotaSlave_Serial->setTimeout(50);
         if (pin[GPIO_TASMOTASLAVE_RST_INV] < 99) {
           pin[GPIO_TASMOTASLAVE_RST] = pin[GPIO_TASMOTASLAVE_RST_INV];
           pin[GPIO_TASMOTASLAVE_RST_INV] = 99;
