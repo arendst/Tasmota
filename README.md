@@ -95,7 +95,6 @@ Libraries used with Tasmota are:
 - [Adafruit SSD1306](https://github.com/adafruit/Adafruit_SSD1306)
 - Adafruit based SSD1351
 - [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library)
-- Arduino Hex Parser
 - [ArduinoJson](https://arduinojson.org/)
 - AT24C256 I2C eeprom
 - [Base64](https://github.com/Densaugeo/base64_arduino)
