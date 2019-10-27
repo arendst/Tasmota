@@ -1,9 +1,13 @@
 /*********************************************************************************************\
+ * 6.7.1.1 20191026
+ * Change ArduinoSlave to TasmotaSlave (Experimental)
+ * Add support for Tuya battery powered devices (#6735)
+ * Change repository name from Sonoff-Tasmota to Tasmota
+ *
  * 6.7.1 20191026
  * Release
  * Fix on energy monitoring devices using PowerDelta Exception0 with epc1:0x4000dce5 = Divide by zero (#6750)
  * Fix Script array bug (#6751)
- * Move ArduinoSlave to TasmotaSlave (Experimental)
  *
  * 6.7.0 20191025
  * Release
