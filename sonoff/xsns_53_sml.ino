@@ -1,5 +1,5 @@
 /*
-  xsns_53_sml.ino - SML,OBIS,EBUS,RAW,COUNTER interface for Sonoff-Tasmota
+  xsns_53_sml.ino - SML,OBIS,EBUS,RAW,COUNTER interface for Tasmota
 
   Created by Gerhard Mutz on 07.10.11.
   adapted for Tasmota

@@ -1,5 +1,5 @@
 /*
-  xdrv_14_mp3.ino - MP3 support for Sonoff-Tasmota
+  xdrv_14_mp3.ino - MP3 support for Tasmota
 
   Copyright (C) 2019  gemu2015, mike2nl and Theo Arends
 
@@ -57,7 +57,7 @@
   ---
   0.9.0.0 20180901  started - further development by mike2nl  - https://github.com/mike2nl/Sonoff-Tasmota
                     base    - code base from gemu2015 ;-)     - https://github.com/gemu2015/Sonoff-Tasmota
-                    forked  - from arendst/tasmota            - https://github.com/arendst/Sonoff-Tasmota
+                    forked  - from arendst/tasmota            - https://github.com/arendst/Tasmota
 
 */
 

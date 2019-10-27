@@ -1,5 +1,5 @@
 /*
-  xdrv_23_zigbee_constants.ino - zigbee support for Sonoff-Tasmota
+  xdrv_23_zigbee_constants.ino - zigbee support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Stephan Hadinger
 

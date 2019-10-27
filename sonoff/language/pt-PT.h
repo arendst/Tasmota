@@ -1,5 +1,5 @@
 /*
-  pt-PT.h - localization for Portuguese - Portugal for Sonoff-Tasmota
+  pt-PT.h - localization for Portuguese - Portugal for Tasmota
 
   Copyright (C) 2019  Paulo Paiva
 

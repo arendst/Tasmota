@@ -1,5 +1,5 @@
 /*
-  xlgt_04_sm2135.ino - sm2135 five channel led support for Sonoff-Tasmota
+  xlgt_04_sm2135.ino - sm2135 five channel led support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

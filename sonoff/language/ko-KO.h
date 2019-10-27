@@ -1,5 +1,5 @@
 /*
-  ko-KO.h - localization for Korean - Korean for Sonoff-Tasmota
+  ko-KO.h - localization for Korean - Korean for Tasmota
 
   Copyright (C) 2019  Theo Arends (translated by NyaamZ)
 

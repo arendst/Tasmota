@@ -1,5 +1,5 @@
 /*
-  xsns_32_mpu6050.ino - MPU6050 gyroscope and temperature sensor support for Sonoff-Tasmota
+  xsns_32_mpu6050.ino - MPU6050 gyroscope and temperature sensor support for Tasmota
 
   Copyright (C) 2019  Oliver Welter
 

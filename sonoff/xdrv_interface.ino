@@ -1,5 +1,5 @@
 /*
-  xdrv_interface.ino - Driver interface support for Sonoff-Tasmota
+  xdrv_interface.ino - Driver interface support for Tasmota
 
   Copyright (C) 2019  Theo Arends inspired by ESPEasy
 

@@ -1,5 +1,5 @@
 /*
-  xnrg_09_dds2382.ino - Hiking DDS238-2 Modbus energy meter support for Sonoff-Tasmota
+  xnrg_09_dds2382.ino - Hiking DDS238-2 Modbus energy meter support for Tasmota
 
   Copyright (C) 2019  Matteo Campanella - based on the work of Gennaro Tortone
 

@@ -1,5 +1,5 @@
 /*
-  settings.ino - user settings for Sonoff-Tasmota
+  settings.ino - user settings for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

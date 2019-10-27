@@ -1,5 +1,5 @@
 /*
-  sonoff_version.h - Version header file for Sonoff-Tasmota
+  sonoff_version.h - Version header file for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

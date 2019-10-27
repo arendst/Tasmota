@@ -1,5 +1,5 @@
 /*
-  xdrv_13_display.ino - Display support for Sonoff-Tasmota
+  xdrv_13_display.ino - Display support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

@@ -1,5 +1,5 @@
 /*
-  xdrv_02_mqtt.ino - mqtt support for Sonoff-Tasmota
+  xdrv_02_mqtt.ino - mqtt support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

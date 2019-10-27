@@ -1,5 +1,5 @@
 /*
-  xdsp_08_ILI9488.ino - Display ILI9488 support for Sonoff-Tasmota
+  xdsp_08_ILI9488.ino - Display ILI9488 support for Tasmota
 
   Copyright (C) 2019  Theo Arends, Gerhard Mutz
 

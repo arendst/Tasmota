@@ -1,5 +1,5 @@
 /*
-  xsns_13_ina219.ino - INA219 Current Sensor support for Sonoff-Tasmota
+  xsns_13_ina219.ino - INA219 Current Sensor support for Tasmota
 
   Copyright (C) 2019  Stefan Bode and Theo Arends
 
@@ -233,13 +233,13 @@ void Ina219Show(bool json)
   for (int i=0; i<sizeof(ina219_type); i++)
     if (ina219_type[i] && ina219_valid[i])
       num_found++;
-  
+
   int sensor_num = 0;
   for (int i=0; i<sizeof(ina219_type); i++) {
     if (!ina219_type[i] || !ina219_valid[i])
       continue;
     sensor_num++;
-    
+
     char voltage[16];
     dtostrfd(ina219_voltage[i], Settings.flag2.voltage_resolution, voltage);
     char current[16];
@@ -251,7 +251,7 @@ void Ina219Show(bool json)
       snprintf_P(name, sizeof(name), PSTR("%s%c%d"), ina219_types, IndexSeparator(), sensor_num);
     else
       snprintf_P(name, sizeof(name), PSTR("%s"), ina219_types);
-    
+
     if (json) {
       ResponseAppend_P(PSTR(",\"%s\":{\"Id\":%02x,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
                        name, ina219_addresses[i], voltage, current, power);

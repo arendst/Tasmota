@@ -1,5 +1,5 @@
 /*
-  xdsp_interface.ino - Display interface support for Sonoff-Tasmota
+  xdsp_interface.ino - Display interface support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

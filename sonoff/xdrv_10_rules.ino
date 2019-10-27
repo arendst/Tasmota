@@ -1,5 +1,5 @@
 /*
-  xdrv_10_rules.ino - rule support for Sonoff-Tasmota
+  xdrv_10_rules.ino - rule support for Tasmota
 
   Copyright (C) 2019  ESP Easy Group and Theo Arends
 

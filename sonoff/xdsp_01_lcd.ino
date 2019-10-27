@@ -1,5 +1,5 @@
 /*
-  xdsp_01_lcd.ino - Display LCD support for Sonoff-Tasmota
+  xdsp_01_lcd.ino - Display LCD support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Adafruit
 

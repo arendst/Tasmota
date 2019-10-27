@@ -1,5 +1,5 @@
 /*
-  xsns_interface.ino - Sensor interface support for Sonoff-Tasmota
+  xsns_interface.ino - Sensor interface support for Tasmota
 
   Copyright (C) 2019  Theo Arends inspired by ESPEasy
 

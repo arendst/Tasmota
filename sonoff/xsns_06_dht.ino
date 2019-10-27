@@ -1,5 +1,5 @@
 /*
-  xsns_06_dht.ino - DHTxx, AM23xx and SI7021 temperature and humidity sensor support for Sonoff-Tasmota
+  xsns_06_dht.ino - DHTxx, AM23xx and SI7021 temperature and humidity sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

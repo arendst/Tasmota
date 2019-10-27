@@ -1,5 +1,5 @@
 /*
-  user_config_override.h - user configuration overrides my_user_config.h for Sonoff-Tasmota
+  user_config_override.h - user configuration overrides my_user_config.h for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

@@ -1,5 +1,5 @@
 /*
-  sonoff_template.h - template settings for Sonoff-Tasmota
+  sonoff_template.h - template settings for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

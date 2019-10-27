@@ -1,5 +1,5 @@
 /*
-  xdrv_18_armtronix_dimmers.ino - Armtronix dimmers support for Sonoff-Tasmota
+  xdrv_18_armtronix_dimmers.ino - Armtronix dimmers support for Tasmota
 
   Copyright (C) 2019  wvdv2002 and Theo Arends
 

@@ -1,5 +1,5 @@
 /*
-  he-HE.h - localization for Hebrew - Israel for Sonoff-Tasmota
+  he-HE.h - localization for Hebrew - Israel for Tasmota
 
   Copyright (C) 2019  Yuval Mejahez
 

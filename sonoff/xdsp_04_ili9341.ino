@@ -1,5 +1,5 @@
 /*
-  xdsp_04_ili9341.ino - Display Tft Ili9341 support for Sonoff-Tasmota
+  xdsp_04_ili9341.ino - Display Tft Ili9341 support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Adafruit
 

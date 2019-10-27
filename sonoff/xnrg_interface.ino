@@ -1,5 +1,5 @@
 /*
-  xnrg_interface.ino - Energy driver interface support for Sonoff-Tasmota
+  xnrg_interface.ino - Energy driver interface support for Tasmota
 
   Copyright (C) 2019  Theo Arends inspired by ESPEasy
 

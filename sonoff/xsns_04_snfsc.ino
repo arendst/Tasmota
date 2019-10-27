@@ -1,5 +1,5 @@
 /*
-  xsns_04_snfsc.ino - sonoff SC support for Sonoff-Tasmota
+  xsns_04_snfsc.ino - sonoff SC support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

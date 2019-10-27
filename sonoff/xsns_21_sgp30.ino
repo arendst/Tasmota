@@ -1,5 +1,5 @@
 /*
-  xsns_21_sgp30.ino - SGP30 gas and air quality sensor support for Sonoff-Tasmota
+  xsns_21_sgp30.ino - SGP30 gas and air quality sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

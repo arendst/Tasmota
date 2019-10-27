@@ -1,5 +1,5 @@
 /*
-  xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Sonoff-Tasmota
+  xsns_01_counter.ino - Counter sensors (water meters, electricity meters etc.) sensor support for Tasmota
 
   Copyright (C) 2019  Maarten Damen and Theo Arends
 

@@ -1,5 +1,5 @@
 /*
-  xsns_02_analog.ino - ESP8266 ADC support for Sonoff-Tasmota
+  xsns_02_analog.ino - ESP8266 ADC support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

@@ -1,5 +1,5 @@
 /*
-  support_features.ino - feature support for Sonoff-Tasmota
+  support_features.ino - feature support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

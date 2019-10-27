@@ -1,5 +1,5 @@
 /*
-  xdsp_03_matrix.ino - Display 8x8 matrix support for Sonoff-Tasmota
+  xdsp_03_matrix.ino - Display 8x8 matrix support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Adafruit
 

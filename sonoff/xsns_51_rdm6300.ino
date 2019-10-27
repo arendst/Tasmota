@@ -1,5 +1,5 @@
 /*
-  xsns_51_rdm6300.ino - Support for RDM6300 NFC Tag Reader
+  xsns_51_rdm6300.ino - Support for RDM6300 NFC Tag Reader on Tasmota
 
   Copyright (C) 2019  Gerhard Mutz and Theo Arends
 

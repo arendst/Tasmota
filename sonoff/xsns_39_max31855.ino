@@ -1,5 +1,5 @@
 /*
-  xsns_39_max31855.ino - MAX31855 thermocouple sensor support for Sonoff-Tasmota
+  xsns_39_max31855.ino - MAX31855 thermocouple sensor support for Tasmota
 
   Copyright (C) 2019  Markus Past
 

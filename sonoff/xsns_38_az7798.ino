@@ -1,5 +1,5 @@
 /*
-  xsns_38_az7798.ino - AZ_Instrument 7798 CO2/temperature/humidity meter support for Sonoff-Tasmota
+  xsns_38_az7798.ino - AZ_Instrument 7798 CO2/temperature/humidity meter support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -38,7 +38,7 @@
  * WeMos D1 Mini is powered from the incoming 5V.
  *
  * This implementation was derived from xsns_15_mhz19.ino from
- * Sonoff-Tasmota-6.3.0 by Arthur de Beun.
+ * Tasmota-6.3.0 by Arthur de Beun.
  *
  * The serial comms protocol is not publicly documented, that I could find.
  * The info below was obtained by reverse-engineering.

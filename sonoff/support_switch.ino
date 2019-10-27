@@ -1,5 +1,5 @@
 /*
-  support_switch.ino - switch support for Sonoff-Tasmota
+  support_switch.ino - switch support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

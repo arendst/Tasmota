@@ -1,5 +1,5 @@
 /*
-  xnrg_11_ddsu666.ino - Chint DDSU666-Modbus energy meter support for Sonoff-Tasmota
+  xnrg_11_ddsu666.ino - Chint DDSU666-Modbus energy meter support for Tasmota
 
   Copyright (C) 2019  Pablo Zerón and Theo Arends
 
@@ -70,7 +70,7 @@ void DDSU666Every250ms(void)
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDM: Ddsu666 error %d"), error);
     } else {
       Energy.data_valid[0] = 0;
-     
+
       //  0  1  2  3  4  5  6  7  8
       // SA FC BC Fh Fl Sh Sl Cl Ch
       // 01 04 04 43 66 33 34 1B 38 = 230.2 Volt

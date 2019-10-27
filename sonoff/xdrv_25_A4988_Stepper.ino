@@ -1,6 +1,6 @@
 
 /*
-  xdrv_25_a4988_stepper.ino - A4988 StepMotorDriverCircuit- support for Sonoff-Tasmota
+  xdrv_25_a4988_stepper.ino - A4988 StepMotorDriverCircuit- support for Tasmota
 
   Copyright (C) 2019  Tim Leuscher and Theo Arends
 

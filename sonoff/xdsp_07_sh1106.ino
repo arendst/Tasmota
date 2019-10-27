@@ -1,5 +1,5 @@
 /*
-  xdsp_07_SH1106.ino - Display Oled SH1106 support for Sonoff-Tasmota
+  xdsp_07_SH1106.ino - Display Oled SH1106 support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Adafruit
 

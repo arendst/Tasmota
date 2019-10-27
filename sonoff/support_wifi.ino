@@ -1,5 +1,5 @@
 /*
-  support_wifi.ino - wifi support for Sonoff-Tasmota
+  support_wifi.ino - wifi support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -119,7 +119,7 @@ void WiFiSetSleepMode(void)
  *   where there is a requirement for the accurancy of the TCP timer.
  *
  * Sleep is disabled in core 2.4.1 and 2.4.2 as there are bugs in their SDKs
- * See https://github.com/arendst/Sonoff-Tasmota/issues/2559
+ * See https://github.com/arendst/Tasmota/issues/2559
  */
 
 // Sleep explanation: https://github.com/esp8266/Arduino/blob/3f0c601cfe81439ce17e9bd5d28994a7ed144482/libraries/ESP8266WiFi/src/ESP8266WiFiGeneric.cpp#L255

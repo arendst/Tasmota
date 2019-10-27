@@ -1,5 +1,5 @@
 /*
-  xsns_33_ds3231.ino - ds3231 RTC chip, act like sensor support for Sonoff-Tasmota
+  xsns_33_ds3231.ino - ds3231 RTC chip, act like sensor support for Tasmota
 
   Copyright (C) 2019  Guy Elgabsi (guy.elg AT gmail.com)
 

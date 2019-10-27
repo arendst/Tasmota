@@ -1,5 +1,5 @@
 /*
-  xdsp_02_ssd1306.ino - Display Oled SSD1306 support for Sonoff-Tasmota
+  xdsp_02_ssd1306.ino - Display Oled SSD1306 support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Adafruit
 

@@ -1,5 +1,5 @@
 /*
-  xsns_27_apds9960.ino - Support for I2C APDS9960 Proximity Sensor for Sonoff-Tasmota
+  xsns_27_apds9960.ino - Support for I2C APDS9960 Proximity Sensor for Tasmota
 
   Copyright (C) 2019  Shawn Hymel/Sparkfun and Theo Arends
 

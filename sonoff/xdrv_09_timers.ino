@@ -1,5 +1,5 @@
 /*
-  xdrv_09_timers.ino - timer support for Sonoff-Tasmota
+  xdrv_09_timers.ino - timer support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

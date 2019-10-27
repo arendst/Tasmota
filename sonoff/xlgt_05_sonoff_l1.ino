@@ -1,5 +1,5 @@
 /*
-  xlgt_05_sonoff_l1.ino - Sonoff L1 led support for Sonoff-Tasmota
+  xlgt_05_sonoff_l1.ino - Sonoff L1 led support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

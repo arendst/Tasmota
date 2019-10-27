@@ -1,5 +1,5 @@
 /*
-  xdrv_30_exs_dimmer.ino - ex-store dimmer support for Sonoff-Tasmota
+  xdrv_30_exs_dimmer.ino - ex-store dimmer support for Tasmota
 
   Copyright (C) 2019  Andreas Schultz
 

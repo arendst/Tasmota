@@ -1,5 +1,5 @@
 /*
-  xdrv_11_knx.ino - KNX IP Protocol support for Sonoff-Tasmota
+  xdrv_11_knx.ino - KNX IP Protocol support for Tasmota
 
   Copyright (C) 2019  Adrian Scillato  (https://github.com/ascillato)
 

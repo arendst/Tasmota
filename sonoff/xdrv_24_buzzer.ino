@@ -1,5 +1,5 @@
 /*
-  xdrv_24_Buzzer.ino - buzzer support for Sonoff-Tasmota
+  xdrv_24_Buzzer.ino - buzzer support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

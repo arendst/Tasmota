@@ -1,5 +1,5 @@
 /*
-  xdrv_17_rcswitch.ino - RF transceiver using RcSwitch library for Sonoff-Tasmota
+  xdrv_17_rcswitch.ino - RF transceiver using RcSwitch library for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

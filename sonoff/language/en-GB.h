@@ -1,5 +1,5 @@
 /*
-  en-GB.h - localization for English - United Kingdom for Sonoff-Tasmota
+  en-GB.h - localization for English - United Kingdom for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

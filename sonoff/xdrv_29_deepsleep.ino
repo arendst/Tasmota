@@ -1,5 +1,5 @@
 /*
-  xdrv_29_deepsleep.ino - DeepSleep support for Sonoff-Tasmota
+  xdrv_29_deepsleep.ino - DeepSleep support for Tasmota
 
   Copyright (C) 2019  Stefan Bode
 

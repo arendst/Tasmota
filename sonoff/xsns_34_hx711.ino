@@ -1,5 +1,5 @@
 /*
-  xsns_34_hx711.ino - HX711 load cell support for Sonoff-Tasmota
+  xsns_34_hx711.ino - HX711 load cell support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

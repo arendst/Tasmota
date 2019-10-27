@@ -1,5 +1,5 @@
 /*
-  xnrg_05_pzem_ac.ino - PZEM-014,016 Modbus AC energy sensor support for Sonoff-Tasmota
+  xnrg_05_pzem_ac.ino - PZEM-014,016 Modbus AC energy sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

@@ -1,5 +1,5 @@
 /*
-  xlgt_02_my92x1.ino - led support for Sonoff-Tasmota
+  xlgt_02_my92x1.ino - led support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

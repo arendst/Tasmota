@@ -1,5 +1,5 @@
 /*
-  xdrv_04_light.ino - PWM, WS2812 and sonoff led support for Sonoff-Tasmota
+  xdrv_04_light.ino - PWM, WS2812 and sonoff led support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

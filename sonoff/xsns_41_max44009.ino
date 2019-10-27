@@ -1,5 +1,5 @@
 /*
-  xsns_41_max44009.ino - MAX44009 ambient light sensor support for Sonoff-Tasmota
+  xsns_41_max44009.ino - MAX44009 ambient light sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

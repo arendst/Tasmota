@@ -1,5 +1,5 @@
 /*
-  xdrv_20_hue.ino - Philips Hue support for Sonoff-Tasmota
+  xdrv_20_hue.ino - Philips Hue support for Tasmota
 
   Copyright (C) 2019  Heiko Krupp and Theo Arends
 

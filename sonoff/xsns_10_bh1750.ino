@@ -1,5 +1,5 @@
 /*
-  xsns_10_bh1750.ino - BH1750 ambient light sensor support for Sonoff-Tasmota
+  xsns_10_bh1750.ino - BH1750 ambient light sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

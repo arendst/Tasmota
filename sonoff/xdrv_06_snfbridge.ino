@@ -1,5 +1,5 @@
 /*
-  xdrv_06_snfbridge.ino - sonoff RF bridge 433 support for Sonoff-Tasmota
+  xdrv_06_snfbridge.ino - sonoff RF bridge 433 support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Erik Andrén Zachrisson (fw update)
 
@@ -52,7 +52,7 @@ struct SONOFFBRIDGE {
  * EFM8BB1 RF microcontroller in-situ firmware update
  *
  * Enables upload of EFM8BB1 firmware provided by https://github.com/Portisch/RF-Bridge-EFM8BB1 using the web gui.
- * Based on source by Erik Andrén Zachrisson (https://github.com/arendst/Sonoff-Tasmota/pull/2886)
+ * Based on source by Erik Andrén Zachrisson (https://github.com/arendst/Tasmota/pull/2886)
 \*********************************************************************************************/
 
 #include "ihx.h"

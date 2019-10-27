@@ -1,5 +1,5 @@
 /*
-  xnrg_04_mcp39f501.ino - MCP39F501 energy sensor support for Sonoff-Tasmota
+  xnrg_04_mcp39f501.ino - MCP39F501 energy sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

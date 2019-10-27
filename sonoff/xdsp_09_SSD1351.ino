@@ -1,5 +1,5 @@
 /*
-  xdsp_09_SSD1351.ino - Display SSD1351 support for Sonoff-Tasmota
+  xdsp_09_SSD1351.ino - Display SSD1351 support for Tasmota
 
   Copyright (C) 2019  Gerhard Mutz and Theo Arends
 

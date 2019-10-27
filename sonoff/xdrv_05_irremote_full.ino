@@ -1,5 +1,5 @@
 /*
-  xdrv_05_irremote_full.ino - complete intefration of IRremoteESP8266
+  xdrv_05_irremote_full.ino - complete integration of IRremoteESP8266 for Tasmota
 
   Copyright (C) 2019  Heiko Krupp, Lazar Obradovic, Theo Arends, Stephan Hadinger
 

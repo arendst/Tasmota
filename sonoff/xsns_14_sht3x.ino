@@ -1,5 +1,5 @@
 /*
-  xsns_14_sht3x.ino - SHT3X temperature and humidity sensor support for Sonoff-Tasmota
+  xsns_14_sht3x.ino - SHT3X temperature and humidity sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

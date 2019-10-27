@@ -1,5 +1,5 @@
 /*
-  fr-FR.h - localization for French - France for Sonoff-Tasmota
+  fr-FR.h - localization for French - France for Tasmota
 
   Copyright (C) 2019  Olivier Francais
 

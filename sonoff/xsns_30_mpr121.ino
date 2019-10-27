@@ -2,7 +2,7 @@
  *
  *  @file        xsns_30_mpr121.ino
  *
- *  @package     Sonoff-Tasmota
+ *  @package     Tasmota
  *  @subpackage  Sensors
  *  @name        MPR121
  *
@@ -13,7 +13,7 @@
  *  @date        $Date$
  *  @version     $Id$
  *
- *  @link        https://github.com/arendst/Sonoff-Tasmota/wiki/MPR121               \endlink
+ *  @link        https://github.com/arendst/Tasmota/wiki/MPR121               \endlink
  *  @link        https://www.sparkfun.com/datasheets/Components/MPR121.pdf           \endlink
  *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3891.pdf    \endlink
  *  @link        http://cache.freescale.com/files/sensors/doc/app_note/AN3892.pdf    \endlink

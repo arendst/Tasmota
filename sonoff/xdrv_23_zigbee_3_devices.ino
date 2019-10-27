@@ -1,5 +1,5 @@
 /*
-  xdrv_23_zigbee.ino - zigbee support for Sonoff-Tasmota
+  xdrv_23_zigbee.ino - zigbee support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Stephan Hadinger
 
@@ -202,7 +202,7 @@ int32_t Z_Devices::findLongAddr(uint64_t longaddr) {
 }
 
 //
-// We have a seen a shortaddr on the network, get the corresponding 
+// We have a seen a shortaddr on the network, get the corresponding
 //
 Z_Device & Z_Devices::getShortAddr(uint16_t shortaddr) {
   if (!shortaddr) { return *(Z_Device*) nullptr; }   // this is not legal

@@ -1,5 +1,5 @@
 /*
-  xsns_09_bmp.ino - BMP pressure, temperature, humidity and gas sensor support for Sonoff-Tasmota
+  xsns_09_bmp.ino - BMP pressure, temperature, humidity and gas sensor support for Tasmota
 
   Copyright (C) 2019  Heiko Krupp and Theo Arends
 

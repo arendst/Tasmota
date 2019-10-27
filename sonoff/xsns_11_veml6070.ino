@@ -1,5 +1,5 @@
 /*
-  xsns_11_veml6070.ino - VEML6070 ultra violet light sensor support for Sonoff-Tasmota
+  xsns_11_veml6070.ino - VEML6070 ultra violet light sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -73,7 +73,7 @@
                               - in user_config, show or show-NOT the uv raw value
                     added     - lots of #defines for automatic calulations to get the best possible values
                     added     - error messages for LOG_LEVEL_DEBUG
-                    added     - lots of information in one of the last postings in: https://github.com/arendst/Sonoff-Tasmota/issues/3844
+                    added     - lots of information in one of the last postings in: https://github.com/arendst/Tasmota/issues/3844
                     debugging - without the softly hit ;-) from @andrethomas about Serial.print i would never done it. Thank You Andre
                     safety    - personal, please read this: http://www.segurancaetrabalho.com.br/download/uv_index_karel_vanicek.pdf
                     next      - possible i will add the calculation for LAT and LONG coordinates for much more precission
@@ -81,7 +81,7 @@
                               - add a #define to select how many characters are shown benhind the decimal point for the UV Index
   ---
   1.0.0.0 20180912  started   - further development by mike2nl  - https://github.com/mike2nl/Sonoff-Tasmota
-                    forked    - from arendst/tasmota            - https://github.com/arendst/Sonoff-Tasmota
+                    forked    - from arendst/tasmota            - https://github.com/arendst/Tasmota
                     base      - code base from arendst too
 
 */

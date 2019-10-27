@@ -1,5 +1,5 @@
 /*
-  support_udp.ino - Udp support for Sonoff-Tasmota
+  support_udp.ino - Udp support for Tasmota
 
   Copyright (C) 2019  Heiko Krupp and Theo Arends
 

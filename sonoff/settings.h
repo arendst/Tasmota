@@ -1,5 +1,5 @@
 /*
-  settings.h - setting variables for Sonoff-Tasmota
+  settings.h - setting variables for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

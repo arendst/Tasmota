@@ -1,5 +1,5 @@
 /*
-  xdrv_23_zigbee.ino - zigbee support for Sonoff-Tasmota
+  xdrv_23_zigbee.ino - zigbee support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Stephan Hadinger
 
@@ -78,7 +78,7 @@ const char     Z_RebootReason[] PROGMEM = "Power-up|External|Watchdog";
 int32_t Z_Reboot(int32_t res, class SBuffer &buf) {
   // print information about the reboot of device
   // 4180.02.02.00.02.06.03
-  // 
+  //
   uint8_t reason = buf.get8(2);
   uint8_t transport_rev = buf.get8(3);
   uint8_t product_id = buf.get8(4);
@@ -387,7 +387,7 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   JsonObject& json_root = jsonBuffer.createObject();
   JsonObject& json1 = json_root.createNestedObject(F(D_CMND_ZIGBEE_RECEIVED));
   JsonObject& json = json1.createNestedObject(shortaddr);
-  
+
   // TODO add name field if it is known
   if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
    zcl_received.parseRawAttributes(json);

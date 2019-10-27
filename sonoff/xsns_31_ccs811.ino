@@ -1,5 +1,5 @@
 /*
-  xsns_31_ccs811.ino - CCS811 gas and air quality sensor support for Sonoff-Tasmota
+  xsns_31_ccs811.ino - CCS811 gas and air quality sensor support for Tasmota
 
   Copyright (C) 2019  Gerhard Mutz and Theo Arends
 

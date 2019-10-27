@@ -1,5 +1,5 @@
 /*
-  sonoff.h - Master header file for Sonoff-Tasmota
+  sonoff.h - Master header file for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

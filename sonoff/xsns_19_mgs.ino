@@ -1,5 +1,5 @@
 /*
-  xsns_19_mgs.ino - Xadow and Grove Mutichannel Gas sensor support for Sonoff-Tasmota
+  xsns_19_mgs.ino - Xadow and Grove Mutichannel Gas sensor support for Tasmota
 
   Copyright (C) 2019  Palich2000 and Theo Arends
 

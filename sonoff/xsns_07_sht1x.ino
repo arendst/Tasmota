@@ -1,5 +1,5 @@
 /*
-  xsns_07_sht1x.ino - SHT1x temperature and sensor support for Sonoff-Tasmota
+  xsns_07_sht1x.ino - SHT1x temperature and sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

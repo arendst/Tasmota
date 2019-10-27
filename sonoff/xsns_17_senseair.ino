@@ -1,5 +1,5 @@
 /*
-  xsns_17_senseair.ino - SenseAir CO2 sensor support for Sonoff-Tasmota
+  xsns_17_senseair.ino - SenseAir CO2 sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

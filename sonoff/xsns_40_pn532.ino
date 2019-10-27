@@ -1,5 +1,5 @@
 /*
-  xsns_40_pn532.ino - Support for PN532 (HSU) NFC Tag Reader
+  xsns_40_pn532.ino - Support for PN532 (HSU) NFC Tag Reader on Tasmota
 
   Copyright (C) 2019  Andre Thomas and Theo Arends
 

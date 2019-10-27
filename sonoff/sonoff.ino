@@ -1,5 +1,5 @@
 /*
-  sonoff.ino - Sonoff-Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
+  sonoff.ino - Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
 
   Copyright (C) 2019  Theo Arends
 
@@ -27,7 +27,7 @@
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
-#include "sonoff_version.h"                 // Sonoff-Tasmota version information
+#include "sonoff_version.h"                 // Tasmota version information
 #include "sonoff.h"                         // Enumeration used in my_user_config.h
 #include "my_user_config.h"                 // Fixed user configurable options
 #ifdef USE_MQTT_TLS

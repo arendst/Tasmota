@@ -1,5 +1,5 @@
 /*
-  xnrg_01_hlw8012.ino - HLW8012 (Sonoff Pow) energy sensor support for Sonoff-Tasmota
+  xnrg_01_hlw8012.ino - HLW8012 (Sonoff Pow) energy sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

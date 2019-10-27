@@ -1,5 +1,5 @@
 /*
-  xsns_42_scd30.ino - SC30 CO2 sensor support for Sonoff-Tasmota
+  xsns_42_scd30.ino - SC30 CO2 sensor support for Tasmota
 
   Copyright (C) 2019 Frogmore42
 

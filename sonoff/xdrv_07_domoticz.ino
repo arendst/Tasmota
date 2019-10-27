@@ -1,5 +1,5 @@
 /*
-  xdrv_07_domoticz.ino - domoticz support for Sonoff-Tasmota
+  xdrv_07_domoticz.ino - domoticz support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

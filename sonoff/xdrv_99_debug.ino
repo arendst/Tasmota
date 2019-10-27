@@ -1,5 +1,5 @@
 /*
-  xdrv_99_debug.ino - debug support for Sonoff-Tasmota
+  xdrv_99_debug.ino - debug support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

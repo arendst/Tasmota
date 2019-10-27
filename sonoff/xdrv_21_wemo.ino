@@ -1,5 +1,5 @@
 /*
-  xdrv_21_wemo.ino - wemo support for Sonoff-Tasmota
+  xdrv_21_wemo.ino - wemo support for Tasmota
 
   Copyright (C) 2019  Heiko Krupp and Theo Arends
 

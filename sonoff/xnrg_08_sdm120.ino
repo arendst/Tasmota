@@ -1,5 +1,5 @@
 /*
-  xnrg_08_sdm120.ino - Eastron SDM120-Modbus energy meter support for Sonoff-Tasmota
+  xnrg_08_sdm120.ino - Eastron SDM120-Modbus energy meter support for Tasmota
 
   Copyright (C) 2019  Gennaro Tortone and Theo Arends
 

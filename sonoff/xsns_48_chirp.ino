@@ -1,5 +1,5 @@
 /*
-  xsns_48_chirp.ino - soil moisture sensor support for Sonoff-Tasmota
+  xsns_48_chirp.ino - soil moisture sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends & Christian Baars
 
@@ -27,7 +27,7 @@
                     added     - now really support the (slower) CHIRP!-Sensor
   ---
   1.0.0.0 20190608  started   - further development by Christian Baars  - https://github.com/Staars/Sonoff-Tasmota
-                    forked    - from arendst/tasmota                    - https://github.com/arendst/Sonoff-Tasmota
+                    forked    - from arendst/tasmota                    - https://github.com/arendst/Tasmota
                     base      - code base from arendst and              - https://github.com/Miceuz/i2c-moisture-sensor
 
 */
@@ -38,7 +38,7 @@
 /*********************************************************************************************\
  * CHIRP - Chirp!-sensor and I2C-soil-moisture-sensor
  * !! The I2C-soil-moisture-sensor is the preferred one !!
- * 
+ *
  * I2C Address: 0x20 - standard address, is changeable
 \*********************************************************************************************/
 
@@ -94,7 +94,7 @@ enum CHIRP_Commands {                                 // commands useable in con
 void ChirpWriteI2CRegister(uint8_t addr, uint8_t reg) {
   Wire.beginTransmission(addr);
   Wire.write(reg);
-  Wire.endTransmission(); 
+  Wire.endTransmission();
 } // now the original CHIRP needs 1100 ms delay
 
 uint16_t ChirpFinishReadI2CRegister16bit(uint8_t addr) {
@@ -138,7 +138,7 @@ void ChirpReset(uint8_t addr) {
 
 void ChirpResetAll(void) {
     for (uint32_t i = 0; i < chirp_found_sensors; i++) {
-      if (chirp_sensor[i].version) { 
+      if (chirp_sensor[i].version) {
         ChirpReset(chirp_sensor[i].address);
         }
     }
@@ -160,7 +160,7 @@ void ChirpSleep(uint8_t addr) {
 
 // void ChirpSleepAll(void) {
 //     for (uint32_t i = 0; i < chirp_found_sensors; i++) {
-//       if (chirp_sensor[i].version) { 
+//       if (chirp_sensor[i].version) {
 //         ChirpSleep(chirp_sensor[i].address);
 //         }
 //     }
@@ -170,7 +170,7 @@ void ChirpSleep(uint8_t addr) {
 
 // void ChirpAutoWakeAll(void) {
 //     for (uint32_t i = 0; i < chirp_found_sensors; i++) {
-//       if (chirp_sensor[i].version && !chirp_sensor[i].explicitSleep) { 
+//       if (chirp_sensor[i].version && !chirp_sensor[i].explicitSleep) {
 //         ChirpReadVersion(chirp_sensor[i].address);
 //         }
 //     }
@@ -200,8 +200,8 @@ bool ChirpSet(uint8_t addr) {
   if(addr < 128){
     if (I2cWrite8(chirp_sensor[chirp_current].address, CHIRP_SET_ADDRESS, addr)){
       if(chirp_sensor[chirp_current].version>0x25 && chirp_sensor[chirp_current].version != 255){
-        delay(5);  
-        I2cWrite8(chirp_sensor[chirp_current].address, CHIRP_SET_ADDRESS, addr); 
+        delay(5);
+        I2cWrite8(chirp_sensor[chirp_current].address, CHIRP_SET_ADDRESS, addr);
         // two calls are needed for sensor firmware version 2.6, but maybe dangerous before
       }
       DEBUG_SENSOR_LOG(PSTR("CHIRP: Wrote adress %u "), addr);
@@ -231,7 +231,7 @@ bool ChirpScan() {
       delay(2);
       chirp_sensor[chirp_found_sensors].version = ChirpReadVersion(address);
       if(chirp_sensor[chirp_found_sensors].version > 0) {
-        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "CHIRP:", address);    
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "CHIRP:", address);
         if(chirp_found_sensors<CHIRP_MAX_SENSOR_COUNT){
           chirp_sensor[chirp_found_sensors].address = address; // push next sensor, as long as there is space in the array
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: fw %x"), chirp_sensor[chirp_found_sensors].version);
@@ -262,7 +262,7 @@ void ChirpDetect(void)
 
 void ChirpServiceAllSensors(uint8_t job){
   for (uint32_t i = 0; i < chirp_found_sensors; i++) {
-    if (chirp_sensor[i].version && !chirp_sensor[i].explicitSleep) { 
+    if (chirp_sensor[i].version && !chirp_sensor[i].explicitSleep) {
       DEBUG_SENSOR_LOG(PSTR("CHIRP: prepare for sensor at address 0x%x"), chirp_sensor[i].address);
       switch(job){
         case 0:
@@ -290,7 +290,7 @@ void ChirpServiceAllSensors(uint8_t job){
         break;
       }
     }
-  }  
+  }
 }
 
 /********************************************************************************************/
@@ -313,65 +313,65 @@ void ChirpEvery100MSecond(void)
           break;
           case 2:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: prepare moisture read"));
-          ChirpServiceAllSensors(0);  
-          chirp_timeout_count = 11;  // wait 1.1 seconds, 
+          ChirpServiceAllSensors(0);
+          chirp_timeout_count = 11;  // wait 1.1 seconds,
           chirp_next_job++;
           break;
           case 3:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: finish moisture read"));
-          ChirpServiceAllSensors(1); 
+          ChirpServiceAllSensors(1);
           chirp_next_job++;
           break;
           case 4:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: prepare moisture read - 2nd"));
-          ChirpServiceAllSensors(0); 
-          chirp_timeout_count = 11;  // wait 1.1 seconds, 
+          ChirpServiceAllSensors(0);
+          chirp_timeout_count = 11;  // wait 1.1 seconds,
           chirp_next_job++;
           break;
           case 5:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: finish moisture read - 2nd"));
-          ChirpServiceAllSensors(1); 
+          ChirpServiceAllSensors(1);
           chirp_next_job++;
           break;
           case 6:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: prepare temperature read"));
-          ChirpServiceAllSensors(2); 
-          chirp_timeout_count = 11;  // wait 1.1 seconds, 
+          ChirpServiceAllSensors(2);
+          chirp_timeout_count = 11;  // wait 1.1 seconds,
           chirp_next_job++;
           break;
           case 7:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: finish temperature read"));
-          ChirpServiceAllSensors(3); 
+          ChirpServiceAllSensors(3);
           chirp_next_job++;
           break;
           case 8:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: prepare temperature read - 2nd"));
           ChirpServiceAllSensors(2);
-          chirp_timeout_count = 11;  // wait 1.1 seconds, 
+          chirp_timeout_count = 11;  // wait 1.1 seconds,
           chirp_next_job++;
           break;
           case 9:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: finish temperature read - 2nd"));
           ChirpServiceAllSensors(3);
           chirp_next_job++;
-          break;       
+          break;
           case 10:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: start light measure process"));
           ChirpServiceAllSensors(4);
-          chirp_timeout_count = 90;  // wait 9 seconds,  
+          chirp_timeout_count = 90;  // wait 9 seconds,
           chirp_next_job++;
           break;
           case 11:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: prepare light read"));
           ChirpServiceAllSensors(5);
-          chirp_timeout_count = 11;  // wait 1.1 seconds, 
+          chirp_timeout_count = 11;  // wait 1.1 seconds,
           chirp_next_job++;
           break;
           case 12:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: finish light read"));
           ChirpServiceAllSensors(6);
           chirp_next_job++;
-          break;     
+          break;
           case 13:
           DEBUG_SENSOR_LOG(PSTR("CHIRP: paused, waiting for TELE"));
           break;
@@ -417,19 +417,19 @@ void ChirpShow(bool json)
   for (uint32_t i = 0; i < chirp_found_sensors; i++) {
     if (chirp_sensor[i].version) {
       // convert double values to string
-      char str_moisture[33];      
+      char str_moisture[33];
       dtostrfd(chirp_sensor[i].moisture, 0, str_moisture);
       char str_temperature[33];
-      double t_temperature = ((double) chirp_sensor[i].temperature )/10.0;   
+      double t_temperature = ((double) chirp_sensor[i].temperature )/10.0;
       dtostrfd(t_temperature, Settings.flag2.temperature_resolution, str_temperature);
       char str_light[33];
       dtostrfd(chirp_sensor[i].light, 0, str_light);
       char str_version[7];
       if(chirp_sensor[i].version == 0xff){
-        strncpy_P(str_version, PSTR("Chirp!"), sizeof(str_version)); 
+        strncpy_P(str_version, PSTR("Chirp!"), sizeof(str_version));
       }
       else{
-        sprintf(str_version, "%x", chirp_sensor[i].version);  
+        sprintf(str_version, "%x", chirp_sensor[i].version);
       }
       if (json) {
         if(!chirp_sensor[i].explicitSleep) {
@@ -458,14 +458,14 @@ void ChirpShow(bool json)
           WSContentSend_PD(HTTP_SNS_MOISTURE, str_moisture);
           WSContentSend_PD(HTTP_SNS_DARKNESS, str_light);
           if(chirp_sensor[i].temperature!=-1){ // this is the error code -> no temperature
-            WSContentSend_PD(HTTP_SNS_TEMP, " ",str_temperature, TempUnit());   
+            WSContentSend_PD(HTTP_SNS_TEMP, " ",str_temperature, TempUnit());
           }
         }
-  
+
   #endif  // USE_WEBSERVER
       }
     }
-  }  
+  }
 }
 
 /*********************************************************************************************\
@@ -491,9 +491,9 @@ bool ChirpCmd(void) {
         else {
           if (command_code == CMND_CHIRP_SELECT)  { ChirpSelect(255); }                                       //show active sensor
         Response_P(S_JSON_CHIRP_COMMAND, command, XdrvMailbox.payload);
-        }     
+        }
         break;
-      case CMND_CHIRP_SCAN: 
+      case CMND_CHIRP_SCAN:
       case CMND_CHIRP_SLEEP:
       case CMND_CHIRP_WAKE:
       case CMND_CHIRP_RESET:
@@ -502,7 +502,7 @@ bool ChirpCmd(void) {
         if (command_code == CMND_CHIRP_SLEEP)    {  chirp_sensor[chirp_current].explicitSleep = true;         // we do not touch this sensor in the read functions
                                                     ChirpSleep(chirp_sensor[chirp_current].address); }
         if (command_code == CMND_CHIRP_WAKE)     {  chirp_sensor[chirp_current].explicitSleep = false;        // back in action
-                                                    ChirpReadVersion(chirp_sensor[chirp_current].address); }  // just use read version as wakeup call                                         
+                                                    ChirpReadVersion(chirp_sensor[chirp_current].address); }  // just use read version as wakeup call
         if (command_code == CMND_CHIRP_RESET)    { ChirpReset(chirp_sensor[chirp_current].address); }
         Response_P(S_JSON_CHIRP_COMMAND, command, XdrvMailbox.payload);
         break;
@@ -523,7 +523,7 @@ bool Xsns48(uint8_t function)
 {
   bool result = false;
 
-  if (i2c_flg) {  
+  if (i2c_flg) {
     switch (function) {
       case FUNC_INIT:
         ChirpDetect();         // We can call CHIRPSCAN later to re-detect
@@ -531,10 +531,10 @@ bool Xsns48(uint8_t function)
       case FUNC_EVERY_100_MSECOND:
         if(chirp_found_sensors > 0){
           ChirpEvery100MSecond();
-        }    
+        }
         break;
       case FUNC_COMMAND:
-        result = ChirpCmd();  
+        result = ChirpCmd();
         break;
       case FUNC_JSON_APPEND:
         ChirpShow(1);

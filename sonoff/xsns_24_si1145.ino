@@ -1,5 +1,5 @@
 /*
-  xsns_24_si1145.ino - SI1145/46/47 UV Index / IR / Visible light sensor support for Sonoff-Tasmota
+  xsns_24_si1145.ino - SI1145/46/47 UV Index / IR / Visible light sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

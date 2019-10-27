@@ -1,5 +1,5 @@
 /*
-  xsns_20_novasds.ino - Nova SDS011/SDS021 particle concentration sensor support for Sonoff-Tasmota
+  xsns_20_novasds.ino - Nova SDS011/SDS021 particle concentration sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -164,7 +164,7 @@ void NovaSdsSecond(void)                 // Every second
 
   if(tele_period == Settings.tele_period -  Settings.novasds_startingoffset && !cont_mode)
   { //lets start fan and laser
-    NovaSdsCommand(NOVA_SDS_SLEEP_AND_WORK, NOVA_SDS_SET_MODE, NOVA_SDS_WORK, NOVA_SDS_DEVICE_ID, nullptr);  
+    NovaSdsCommand(NOVA_SDS_SLEEP_AND_WORK, NOVA_SDS_SET_MODE, NOVA_SDS_WORK, NOVA_SDS_DEVICE_ID, nullptr);
   }
   if(tele_period >= Settings.tele_period-5 && tele_period <= Settings.tele_period-2)
   { //we are doing 4 measurements here

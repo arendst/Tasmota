@@ -1,5 +1,5 @@
 /*
-  support_button.ino - button support for Sonoff-Tasmota
+  support_button.ino - button support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

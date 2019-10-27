@@ -1,5 +1,5 @@
 /*
-  xdrv_05_irremote.ino - infra red support for Sonoff-Tasmota
+  xdrv_05_irremote.ino - infra red support for Tasmota
 
   Copyright (C) 2019  Heiko Krupp, Lazar Obradovic and Theo Arends
 

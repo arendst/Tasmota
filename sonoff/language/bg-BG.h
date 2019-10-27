@@ -1,5 +1,5 @@
 /*
-  bg-BG.h - localization for Bulgaria - Bulgarian for Sonoff-Tasmota
+  bg-BG.h - localization for Bulgaria - Bulgarian for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

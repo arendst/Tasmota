@@ -1,5 +1,5 @@
 /*
-  support_buffer.ino - Static binary buffer for Zigbee
+  support_buffer.ino - Static binary buffer for Zigbee on Tasmota
 
   Copyright (C) 2019  Theo Arends and Stephan Hadinger
 

@@ -1,5 +1,5 @@
 /*
-  xsns_99_vl53l0x.ino - VL53L0X
+  xsns_99_vl53l0x.ino - VL53L0X support for Tasmota
 
   Copyright (C) 2018  Theo Arends and Gerhard Mutz
 

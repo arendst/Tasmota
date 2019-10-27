@@ -1,5 +1,5 @@
 /*
-  xsns_44_sps30.ino - Sensirion SPS30
+  xsns_44_sps30.ino - Sensirion SPS30 support for Tasmota
 
   Copyright (C) 2019  Gerhard Mutz and Theo Arends
 

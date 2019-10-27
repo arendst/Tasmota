@@ -1,5 +1,5 @@
 /*
-  ru-RU.h - localization for Russian - Rissia for Sonoff-Tasmota
+  ru-RU.h - localization for Russian - Rissia for Tasmota
 
   Copyright (C) 2019  Theo Arends / roman-vn
 

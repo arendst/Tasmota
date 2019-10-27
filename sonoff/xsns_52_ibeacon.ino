@@ -1,5 +1,5 @@
 /*
-  xsns_52_ibeacon.ino - Support for HM17 BLE Module + ibeacon reader
+  xsns_52_ibeacon.ino - Support for HM17 BLE Module + ibeacon reader on Tasmota
 
   Copyright (C) 2019  Gerhard Mutz and Theo Arends
 

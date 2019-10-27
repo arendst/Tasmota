@@ -1,5 +1,5 @@
 /*
-  xsns_28_tm1638.ino - TM1638 8 switch, led and 7 segment unit support for Sonoff-Tasmota
+  xsns_28_tm1638.ino - TM1638 8 switch, led and 7 segment unit support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

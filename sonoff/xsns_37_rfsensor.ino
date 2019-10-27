@@ -1,5 +1,5 @@
 /*
-  xsns_37_rfsensor.ino - RF sensor receiver for Sonoff-Tasmota
+  xsns_37_rfsensor.ino - RF sensor receiver for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

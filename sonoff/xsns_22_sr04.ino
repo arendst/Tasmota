@@ -1,5 +1,5 @@
 /*
-  xsns_22_sr04.ino - SR04 ultrasonic sensor support for Sonoff-Tasmota
+  xsns_22_sr04.ino - SR04 ultrasonic sensor support for Tasmota
 
   Copyright (C) 2019  Nuno Ferreira and Theo Arends
 

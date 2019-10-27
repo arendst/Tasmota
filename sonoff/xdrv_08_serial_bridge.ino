@@ -1,5 +1,5 @@
 /*
-  xdrv_08_serial_bridge.ino - serial bridge support for Sonoff-Tasmota
+  xdrv_08_serial_bridge.ino - serial bridge support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Dániel Zoltán Tolnai
 

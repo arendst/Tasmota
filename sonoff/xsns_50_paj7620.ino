@@ -1,5 +1,5 @@
 /*
-  xsns_50_paj7620.ino - gesture sensor support for Sonoff-Tasmota
+  xsns_50_paj7620.ino - gesture sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends & Christian Baars
 
@@ -23,7 +23,7 @@
 
   ---
   1.0.0.0 20190808  started   - further development by Christian Baars  - https://github.com/Staars/Sonoff-Tasmota
-                    forked    - from arendst/tasmota                    - https://github.com/arendst/Sonoff-Tasmota
+                    forked    - from arendst/tasmota                    - https://github.com/arendst/Tasmota
                     base      - code base from arendst and              - https://github.com/Seeed-Studio/Gesture_PAJ7620
 
 */
@@ -33,7 +33,7 @@
 
 /*********************************************************************************************\
  * PAJ7620 - Gesture sensor
- * 
+ *
  * I2C Address: 0x73 - standard address
 \*********************************************************************************************/
 
@@ -43,7 +43,7 @@
 
 #define PAJ7620_BANK_SEL		        0xEF 	            // 8 bit, write -> 0 or 1
 
-// the registers are organized in 2 banks  
+// the registers are organized in 2 banks
 // bank: 0
 #define PAJ7620_GET_GESTURE           0x43            // 8 bit, read
 #define PAJ7620_PROXIMITY_AVG_Y       0x6c            // 8 bit, read -> 255: near , lower numbers: far
@@ -63,7 +63,7 @@
 // bank: 1
 // nothing at the moment
 
-const uint8_t PAJ7620initRegisterArray[][2] PROGMEM = {	// set all needed registers 
+const uint8_t PAJ7620initRegisterArray[][2] PROGMEM = {	// set all needed registers
     {0xEF,0x00},  // bank 0
 	{0x32,0x29},	{0x33,0x01},	{0x34,0x00},  {0x35,0x01},	{0x36,0x00},	{0x37,0x07},	{0x38,0x17},	{0x39,0x06},
 	{0x3A,0x12},	{0x3F,0x00},	{0x40,0x02},	{0x41,0xFF},	{0x42,0x01},	{0x46,0x2D},	{0x47,0x0F},	{0x48,0x3C},
@@ -148,7 +148,7 @@ char       PAJ7620_name[9];
 
 uint32_t PAJ7620_timeout_counter = 10;    // the time interval is 100 ms -> i.e. 10 is 1 second (= start up interval)
 uint32_t PAJ7620_next_job = 0;            // 0 = detect, 1 = init, 2 = wait for gesture, 255 = sensor not found and do nothing
-uint32_t PAJ7620_mode = 1;								// 0 = mute, 1 = gestures only, 2 = gestures, 3 = corner, 4 = PIN, 5 = xy 
+uint32_t PAJ7620_mode = 1;								// 0 = mute, 1 = gestures only, 2 = gestures, 3 = corner, 4 = PIN, 5 = xy
 
 struct {
   uint8_t current;
@@ -160,7 +160,7 @@ struct {
 bool PAJ7620_finished_gesture = false;
 char PAJ7620_currentGestureName[6];
 
-struct{ 
+struct{
   uint8_t x;
   uint8_t y;
   uint8_t last_x;
@@ -279,7 +279,7 @@ void PAJ7620ReadGesture(void){
       DEBUG_SENSOR_LOG(PSTR("PAJ7620: gesture: %u"),PAJ7620_gesture.current );
       PAJ7620DecodeGesture();
       }
-    
+
     break;
     case 2:
     PAJ7620_state.proximity = I2cRead8(PAJ7620_ADDR, PAJ7620_PROXIMITY_AVG_Y);
@@ -306,7 +306,7 @@ void PAJ7620ReadGesture(void){
         // ---
         // 3|4
         switch(PAJ7620_state.y){
-          case 0: case 1: case 2: case 3: case 4: case 5:// case 0..5: would be nicer 
+          case 0: case 1: case 2: case 3: case 4: case 5:// case 0..5: would be nicer
             PAJ7620_state.corner = 3;
             break;
           case 9: case 10: case 11: case 12: case 13: case 14:
@@ -315,7 +315,7 @@ void PAJ7620ReadGesture(void){
           default:
           break;
         }
-        if(PAJ7620_state.corner!=0){      
+        if(PAJ7620_state.corner!=0){
           switch(PAJ7620_state.x){
           case 0: case 1: case 2: case 3: case 4: case 5:
             break;
@@ -373,7 +373,7 @@ void PAJ7620Detect(void)
 	uint8_t PAJ7620_ver = I2cRead8(PAJ7620_ADDR,2);
   if (PAJ7620_id == 0x7620) { // this device ID makes sense ;)
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PAJ7620: sensor found with ID: 0x%x and VER: %u"), PAJ7620_id, PAJ7620_ver);
-    uint8_t PAJ7620_model = 0; 
+    uint8_t PAJ7620_model = 0;
     GetTextIndexed(PAJ7620_name, sizeof(PAJ7620_name), PAJ7620_model, kPAJ7620Types);
     PAJ7620_next_job = 1; // now init
   }
@@ -391,7 +391,7 @@ void PAJ7620Init(void)
     uint32_t raw;
     uint8_t reg_val[4];
   } buf;
-  for(uint32_t i = 0; i < (sizeof(PAJ7620initRegisterArray)/2); i+=2) 
+  for(uint32_t i = 0; i < (sizeof(PAJ7620initRegisterArray)/2); i+=2)
 	{
     buf.raw = pgm_read_dword(PAJ7620initRegisterArray+i);
     DEBUG_SENSOR_LOG("%x %x %x %x",buf.reg_val[0],buf.reg_val[1],buf.reg_val[2],buf.reg_val[3]);
@@ -519,12 +519,12 @@ void PAJ7620Show(bool json)
 bool PAJ7620Cmd(void) {
   bool serviced = true;
 			if (XdrvMailbox.data_len > 0) {
-				DEBUG_SENSOR_LOG(PSTR("PAJ7620: got argument for mode"));  
+				DEBUG_SENSOR_LOG(PSTR("PAJ7620: got argument for mode"));
         PAJ7620SelectMode(XdrvMailbox.payload);     //select mode
         Response_P(S_JSON_PAJ7620_COMMAND_NVALUE, XdrvMailbox.command, XdrvMailbox.payload);
         }
       else {
-        DEBUG_SENSOR_LOG(PSTR("PAJ7620: show mode")); 
+        DEBUG_SENSOR_LOG(PSTR("PAJ7620: show mode"));
         Response_P(S_JSON_PAJ7620_COMMAND_NVALUE, XdrvMailbox.command, PAJ7620_mode);
       }
   return serviced;
@@ -538,15 +538,15 @@ bool Xsns50(uint8_t function)
 {
   bool result = false;
 
-  if (i2c_flg) {  
+  if (i2c_flg) {
     switch (function) {
       case FUNC_INIT:
-        DEBUG_SENSOR_LOG(PSTR("PAJ7620: 1 second until init"));    
+        DEBUG_SENSOR_LOG(PSTR("PAJ7620: 1 second until init"));
         break;
 			case FUNC_COMMAND_SENSOR:
 				if (XSNS_50 == XdrvMailbox.index){
           result = PAJ7620Cmd();
-        }  
+        }
         break;
       case FUNC_EVERY_100_MSECOND:
         if(PAJ7620_next_job <255) {

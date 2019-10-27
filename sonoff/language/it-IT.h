@@ -1,5 +1,5 @@
 /*
-  it-IT.h - localization for Italian - Italy for Sonoff-Tasmota
+  it-IT.h - localization for Italian - Italy for Tasmota
 
   Copyright (C) 2019 Gennaro Tortone - some mods by Antonio Fragola
 

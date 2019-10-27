@@ -1,5 +1,5 @@
 /*
-  xnrg_12_solaxX1.ino - Solax X1 inverter RS485 support for Sonoff-Tasmota
+  xnrg_12_solaxX1.ino - Solax X1 inverter RS485 support for Tasmota
 
   Copyright (C) 2019  Pablo Zerón
 

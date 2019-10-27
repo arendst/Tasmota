@@ -1,5 +1,5 @@
 /*
-  i18n.h - internationalization for Sonoff-Tasmota
+  i18n.h - internationalization for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

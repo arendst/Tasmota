@@ -1,5 +1,5 @@
 /*
-  xsns_08_htu21.ino - HTU21 temperature and humidity sensor support for Sonoff-Tasmota
+  xsns_08_htu21.ino - HTU21 temperature and humidity sensor support for Tasmota
 
   Copyright (C) 2019  Heiko Krupp and Theo Arends
 

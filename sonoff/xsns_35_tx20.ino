@@ -1,5 +1,5 @@
 /*
-  xsns_35_Tx20.ino - La Crosse Tx20 wind sensor support for Sonoff-Tasmota
+  xsns_35_Tx20.ino - La Crosse Tx20 wind sensor support for Tasmota
 
   Copyright (C) 2019  Thomas Eckerstorfer and Theo Arends
 

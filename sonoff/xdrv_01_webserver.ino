@@ -1,5 +1,5 @@
 /*
-  xdrv_01_webserver.ino - webserver for Sonoff-Tasmota
+  xdrv_01_webserver.ino - webserver for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -474,7 +474,7 @@ const char HTTP_COUNTER[] PROGMEM =
   "<br><div id='t' style='text-align:center;'></div>";
 
 const char HTTP_END[] PROGMEM =
-  "<div style='text-align:right;font-size:11px;'><hr/><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>Sonoff-Tasmota %s " D_BY " Theo Arends</a></div>"
+  "<div style='text-align:right;font-size:11px;'><hr/><a href='https://bit.ly/tasmota' target='_blank' style='color:#aaa;'>Tasmota %s " D_BY " Theo Arends</a></div>"
   "</div>"
   "</body>"
   "</html>";

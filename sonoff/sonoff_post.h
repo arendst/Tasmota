@@ -1,5 +1,5 @@
 /*
-  sonoff_post.h - Post header file for Sonoff-Tasmota
+  sonoff_post.h - Post header file for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -97,7 +97,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
 //#define USE_SHUTTER                              // Add Shutter support for up to 4 shutter with different motortypes (+6k code)
 //#define USE_DEEPSLEEP                            // Add support for deepsleep (+1k code)
-//#define USE_EXS_DIMMER                         // Add support for EX-Store WiFi Dimmer
+#define USE_EXS_DIMMER                         // Add support for EX-Store WiFi Dimmer
 
 // -- Optional light modules ----------------------
 #define USE_LIGHT                                // Add Dimmer/Light support

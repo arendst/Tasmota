@@ -1,5 +1,5 @@
 /*
-  xsns_12_ads1115_ada.ino - ADS1115 A/D Converter support for Sonoff-Tasmota
+  xsns_12_ads1115_ada.ino - ADS1115 A/D Converter support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

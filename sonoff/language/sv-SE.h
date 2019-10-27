@@ -1,5 +1,5 @@
 /*
-  sv-SE.h - localization for Swedish - Svenska for Sonoff-Tasmota
+  sv-SE.h - localization for Swedish - Svenska for Tasmota
 
   Copyright (C) 2019  Gunnar Norin
 

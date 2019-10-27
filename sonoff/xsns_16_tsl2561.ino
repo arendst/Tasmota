@@ -1,5 +1,5 @@
 /*
-  xsns_16_tsl2561.ino - TSL2561 light sensor support for Sonoff-Tasmota
+  xsns_16_tsl2561.ino - TSL2561 light sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Joachim Banzhaf
 

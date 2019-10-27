@@ -1,5 +1,5 @@
 /*
-  xsns_05_ds18x20.ino - DS18x20 temperature sensor support for Sonoff-Tasmota
+  xsns_05_ds18x20.ino - DS18x20 temperature sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

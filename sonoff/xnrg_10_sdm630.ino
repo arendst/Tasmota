@@ -1,5 +1,5 @@
 /*
-  xnrg_10_sdm630.ino - Eastron SDM630-Modbus energy meter support for Sonoff-Tasmota
+  xnrg_10_sdm630.ino - Eastron SDM630-Modbus energy meter support for Tasmota
 
   Copyright (C) 2019  Gennaro Tortone and Theo Arends
 

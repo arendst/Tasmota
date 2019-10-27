@@ -1,5 +1,5 @@
 /*
-  xdrv_27_shutter.ino - Shutter/Blind support for Sonoff-Tasmota
+  xdrv_27_shutter.ino - Shutter/Blind support for Tasmota
 
   Copyright (C) 2019  Stefan Bode
 

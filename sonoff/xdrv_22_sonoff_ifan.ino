@@ -1,5 +1,5 @@
 /*
-  xdrv_22_sonoff_ifan.ino - sonoff iFan02 and iFan03 support for Sonoff-Tasmota
+  xdrv_22_sonoff_ifan.ino - sonoff iFan02 and iFan03 support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

@@ -1,5 +1,5 @@
 /*
-  support_float.ino - Small floating point support for Sonoff-Tasmota
+  support_float.ino - Small floating point support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Stephan Hadinger
 

@@ -1,5 +1,5 @@
 /*
-  xnrg_02_cse7766.ino - CSE7766 and HLW8032 energy sensor support for Sonoff-Tasmota
+  xnrg_02_cse7766.ino - CSE7766 and HLW8032 energy sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

@@ -1,5 +1,5 @@
 /*
-  xdsp_05_epaper.ino - Display e-paper support for Sonoff-Tasmota
+  xdsp_05_epaper.ino - Display e-paper support for Tasmota
 
   Copyright (C) 2019  Theo Arends, Gerhard Mutz and Waveshare
 

@@ -1,5 +1,5 @@
 /*
-  xdrv_16_tuyamcu.ino - Tuya MCU support for Sonoff-Tasmota
+  xdrv_16_tuyamcu.ino - Tuya MCU support for Tasmota
 
   Copyright (C) 2019  digiblur, Joel Stein and Theo Arends
 

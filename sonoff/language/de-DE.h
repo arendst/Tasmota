@@ -1,5 +1,5 @@
 /*
-  de-DE.h - localization for German - Germany for Sonoff-Tasmota
+  de-DE.h - localization for German - Germany for Tasmota
 
   Copyright (C) 2019  VinceMasuka
 

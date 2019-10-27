@@ -1,5 +1,5 @@
 /*
-  xlgt_01_ws2812.ino - led string support for Sonoff-Tasmota
+  xlgt_01_ws2812.ino - led string support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

@@ -1,5 +1,5 @@
 /*
-  xsns_54_ina226.ino - INA226 Current Sensor support for Sonoff-Tasmota
+  xsns_54_ina226.ino - INA226 Current Sensor support for Tasmota
 
   Copyright (C) 2019  Stephen Rodgers and Theo Arends
 

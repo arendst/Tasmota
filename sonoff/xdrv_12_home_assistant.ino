@@ -1,5 +1,5 @@
 /*
-  xdrv_12_home_assistant.ino - home assistant support for Sonoff-Tasmota
+  xdrv_12_home_assistant.ino - home assistant support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -133,7 +133,7 @@ const char HASS_DISCOVER_SENSOR_HASS_STATUS[] PROGMEM =
   ",\"json_attributes_topic\":\"%s\","
   "\"unit_of_meas\":\" \","                            // " " As unit of measurement to get a value graph in Hass
   "\"val_tpl\":\"{{value_json['" D_JSON_RSSI "']}}\"," // "COUNTER":{"C1":0} -> {{ value_json['COUNTER'].C1 }}
-  "\"ic\":\"mdi:information-outline\""; 
+  "\"ic\":\"mdi:information-outline\"";
 
 const char HASS_DISCOVER_DEVICE_INFO[] PROGMEM =
   ",\"uniq_id\":\"%s\","
@@ -322,7 +322,7 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
     GetPowerDevice(value_template, device+1, sizeof(value_template),
                    key + Settings.flag.device_index_enable); // Force index for Switch 1, Index on Button1 is controlled by Settings.flag.device_index_enable
     //GetTopic_P(state_topic, CMND, topic, value_template); // State of button is sent as CMND TOGGLE, state of switch is sent as ON/OFF
-    GetTopic_P(state_topic, STAT, mqtt_topic, PSTR(D_RSLT_RESULT));    
+    GetTopic_P(state_topic, STAT, mqtt_topic, PSTR(D_RSLT_RESULT));
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
     FindPrefix(state_topic, availability_topic, prefix);
 
@@ -621,7 +621,7 @@ void HAssAnyKey(void)
   char stopic[TOPSZ];
   GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
   Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(state));
-  MqttPublish(stopic);  
+  MqttPublish(stopic);
 }
 
 /*********************************************************************************************\

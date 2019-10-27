@@ -1,5 +1,5 @@
 /*
-  xsns_15_mhz19.ino - MH-Z19(B) CO2 sensor support for Sonoff-Tasmota
+  xsns_15_mhz19.ino - MH-Z19(B) CO2 sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

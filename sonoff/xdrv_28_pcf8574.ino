@@ -1,5 +1,5 @@
 /*
-  xdrv_28_pcf8574.ino - PCF8574 I2C support for Sonoff-Tasmota
+  xdrv_28_pcf8574.ino - PCF8574 I2C support for Tasmota
 
   Copyright (C) 2019  Stefan Bode
 

@@ -1,5 +1,5 @@
 /*
-  support_rotary.ino - rotary switch support for Sonoff-Tasmota
+  support_rotary.ino - rotary switch support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

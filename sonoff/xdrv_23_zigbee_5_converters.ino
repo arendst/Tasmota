@@ -1,5 +1,5 @@
 /*
-  xdrv_23_zigbee_converters.ino - zigbee support for Sonoff-Tasmota
+  xdrv_23_zigbee_converters.ino - zigbee support for Tasmota
 
   Copyright (C) 2019  Theo Arends and Stephan Hadinger
 
@@ -459,7 +459,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0000, 0x0000,  "ZCLVersion",           &Z_Copy },
   { 0x0000, 0x0001,  "AppVersion",           &Z_Copy },
   { 0x0000, 0x0002,  "StackVersion",         &Z_Copy },
-  { 0x0000, 0x0003,  "HWVersion",            &Z_Copy }, 
+  { 0x0000, 0x0003,  "HWVersion",            &Z_Copy },
   { 0x0000, 0x0004,  "Manufacturer",         &Z_ManufKeep },    // record Manufacturer
   { 0x0000, 0x0005,  D_JSON_MODEL D_JSON_ID, &Z_ModelKeep },    // record Model
   { 0x0000, 0x0006,  "DateCode",             &Z_Copy },
@@ -670,10 +670,10 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0B01, 0x000E,  "PowerThreshold",       &Z_Copy },
 
   { 0x0400, 0x0000,  D_JSON_ILLUMINANCE,     &Z_Copy },    // Illuminance (in Lux)
-  { 0x0400, 0x0001,  "MinMeasuredValue",     &Z_Copy },    // 
-  { 0x0400, 0x0002,  "MaxMeasuredValue",     &Z_Copy },    // 
-  { 0x0400, 0x0003,  "Tolerance",            &Z_Copy },    // 
-  { 0x0400, 0x0004,  "LightSensorType",      &Z_Copy },    // 
+  { 0x0400, 0x0001,  "MinMeasuredValue",     &Z_Copy },    //
+  { 0x0400, 0x0002,  "MaxMeasuredValue",     &Z_Copy },    //
+  { 0x0400, 0x0003,  "Tolerance",            &Z_Copy },    //
+  { 0x0400, 0x0004,  "LightSensorType",      &Z_Copy },    //
   { 0x0400, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
 
   { 0x0401, 0x0000,  "LevelStatus",          &Z_Copy },    // Illuminance (in Lux)
@@ -681,33 +681,33 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0401, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
 
   { 0x0402, 0x0000,  D_JSON_TEMPERATURE,     &Z_FloatDiv100 },   // Temperature
-  { 0x0402, 0x0001,  "MinMeasuredValue",     &Z_FloatDiv100 },    // 
-  { 0x0402, 0x0002,  "MaxMeasuredValue",     &Z_FloatDiv100 },    // 
-  { 0x0402, 0x0003,  "Tolerance",            &Z_FloatDiv100 },    // 
+  { 0x0402, 0x0001,  "MinMeasuredValue",     &Z_FloatDiv100 },    //
+  { 0x0402, 0x0002,  "MaxMeasuredValue",     &Z_FloatDiv100 },    //
+  { 0x0402, 0x0003,  "Tolerance",            &Z_FloatDiv100 },    //
   { 0x0402, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other values
 
   { 0x0403, 0x0000,  D_JSON_PRESSURE_UNIT,   &Z_AddPressureUnit },     // Pressure Unit
   { 0x0403, 0x0000,  D_JSON_PRESSURE,        &Z_Copy },     // Pressure
-  { 0x0403, 0x0001,  "MinMeasuredValue",     &Z_Copy },    // 
-  { 0x0403, 0x0002,  "MaxMeasuredValue",     &Z_Copy },    // 
-  { 0x0403, 0x0003,  "Tolerance",            &Z_Copy },    // 
-  { 0x0403, 0x0010,  "ScaledValue",          &Z_Copy },    // 
-  { 0x0403, 0x0011,  "MinScaledValue",       &Z_Copy },    // 
-  { 0x0403, 0x0012,  "MaxScaledValue",       &Z_Copy },    // 
-  { 0x0403, 0x0013,  "ScaledTolerance",      &Z_Copy },    // 
-  { 0x0403, 0x0014,  "Scale",                &Z_Copy },    // 
+  { 0x0403, 0x0001,  "MinMeasuredValue",     &Z_Copy },    //
+  { 0x0403, 0x0002,  "MaxMeasuredValue",     &Z_Copy },    //
+  { 0x0403, 0x0003,  "Tolerance",            &Z_Copy },    //
+  { 0x0403, 0x0010,  "ScaledValue",          &Z_Copy },    //
+  { 0x0403, 0x0011,  "MinScaledValue",       &Z_Copy },    //
+  { 0x0403, 0x0012,  "MaxScaledValue",       &Z_Copy },    //
+  { 0x0403, 0x0013,  "ScaledTolerance",      &Z_Copy },    //
+  { 0x0403, 0x0014,  "Scale",                &Z_Copy },    //
   { 0x0403, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other Pressure values
 
   { 0x0404, 0x0000,  D_JSON_FLOWRATE,        &Z_FloatDiv10 },    // Flow (in m3/h)
-  { 0x0404, 0x0001,  "MinMeasuredValue",     &Z_Copy },    // 
-  { 0x0404, 0x0002,  "MaxMeasuredValue",     &Z_Copy },    // 
-  { 0x0404, 0x0003,  "Tolerance",            &Z_Copy },    // 
+  { 0x0404, 0x0001,  "MinMeasuredValue",     &Z_Copy },    //
+  { 0x0404, 0x0002,  "MaxMeasuredValue",     &Z_Copy },    //
+  { 0x0404, 0x0003,  "Tolerance",            &Z_Copy },    //
   { 0x0404, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
 
   { 0x0405, 0x0000,  D_JSON_HUMIDITY,        &Z_FloatDiv100 },   // Humidity
-  { 0x0405, 0x0001,  "MinMeasuredValue",     &Z_Copy },    // 
-  { 0x0405, 0x0002,  "MaxMeasuredValue",     &Z_Copy },    // 
-  { 0x0405, 0x0003,  "Tolerance",            &Z_Copy },    // 
+  { 0x0405, 0x0001,  "MinMeasuredValue",     &Z_Copy },    //
+  { 0x0405, 0x0002,  "MaxMeasuredValue",     &Z_Copy },    //
+  { 0x0405, 0x0003,  "Tolerance",            &Z_Copy },    //
   { 0x0405, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other values
 
   { 0x0406, 0x0000,  "Occupancy",            &Z_Copy },    // Occupancy (map8)

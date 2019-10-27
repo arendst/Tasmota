@@ -1,5 +1,5 @@
 /*
-  xsns_18_pms5003.ino - PMS3003, PMS5003, PMS7003 particle concentration sensor support for Sonoff-Tasmota
+  xsns_18_pms5003.ino - PMS3003, PMS5003, PMS7003 particle concentration sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -198,7 +198,7 @@ void PmsShow(bool json)
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      
+
 #ifdef PMS_MODEL_PMS3003
         WSContentSend_PD(HTTP_PMS3003_SNS,
 //        pms_data.pm10_standard, pms_data.pm25_standard, pms_data.pm100_standard,

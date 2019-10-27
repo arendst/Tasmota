@@ -1,5 +1,5 @@
 /*
-  xlgt_03_sm16716.ino - sm16716 three channel led support for Sonoff-Tasmota
+  xlgt_03_sm16716.ino - sm16716 three channel led support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

@@ -1,5 +1,5 @@
 /*
-  xdrv_03_energy.ino - Energy sensor support for Sonoff-Tasmota
+  xdrv_03_energy.ino - Energy sensor support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 

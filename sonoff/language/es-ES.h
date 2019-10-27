@@ -1,5 +1,5 @@
 /*
-  es-ES.h - localization for Spanish - Spain for Sonoff-Tasmota
+  es-ES.h - localization for Spanish - Spain for Tasmota
 
   Copyright (C) 2019  Adrian Scillato
 

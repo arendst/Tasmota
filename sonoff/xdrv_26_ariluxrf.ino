@@ -1,5 +1,5 @@
 /*
-  xdrv_26_ariluxrf.ino - Arilux Rf support for Sonoff-Tasmota
+  xdrv_26_ariluxrf.ino - Arilux Rf support for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
