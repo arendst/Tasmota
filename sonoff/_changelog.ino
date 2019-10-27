@@ -3,6 +3,7 @@
  * Release
  * Fix on energy monitoring devices using PowerDelta Exception0 with epc1:0x4000dce5 = Divide by zero (#6750)
  * Fix Script array bug (#6751)
+ * Move ArduinoSlave to TasmotaSlave (Experimental)
  *
  * 6.7.0 20191025
  * Release
