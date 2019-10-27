@@ -1,5 +1,5 @@
 /*
-  sonoff_version.h - Version header file for Tasmota
+  tasmota_version.h - Version header file for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -17,9 +17,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _SONOFF_VERSION_H_
-#define _SONOFF_VERSION_H_
+#ifndef _TASMOTA_VERSION_H_
+#define _TASMOTA_VERSION_H_
 
 const uint32_t VERSION = 0x06070101;
 
-#endif  // _SONOFF_VERSION_H_
+#endif  // _TASMOTA_VERSION_H_

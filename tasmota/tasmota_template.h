@@ -1,5 +1,5 @@
 /*
-  sonoff_template.h - template settings for Tasmota
+  tasmota_template.h - template settings for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _SONOFF_TEMPLATE_H_
-#define _SONOFF_TEMPLATE_H_
+#ifndef _TASMOTA_TEMPLATE_H_
+#define _TASMOTA_TEMPLATE_H_
 
 // User selectable GPIO functionality
 // ATTENTION: Only add at the end of this list just before GPIO_SENSOR_END
@@ -2163,4 +2163,4 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
   }
 };
 
-#endif  // _SONOFF_TEMPLATE_H_
+#endif  // _TASMOTA_TEMPLATE_H_

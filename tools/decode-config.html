@@ -1,5 +1,5 @@
 <h1 id="decode-config-py">decode-config.py</h1>
-<p><em>decode-config.py</em> is able to backup and restore Sonoff-Tasmota configuration.</p>
+<p><em>decode-config.py</em> is able to backup and restore Tasmota configuration.</p>
 <p>In comparison with the Tasmota build-in &quot;Backup/Restore Configuration&quot; function <em>decode-config.py</em></p>
 <ul>
 <li>uses human readable and editable <a href="http://www.json.org/">JSON</a>-format for backup/restore,</li>
@@ -12,7 +12,7 @@
 <tr>
 <th>&nbsp;</th>
 <th style="text-align:center">decode-config.py<br />*.json file</th>
-<th style="text-align:center">Sonoff-Tasmota<br />*.dmp file</th>
+<th style="text-align:center">Tasmota<br />*.dmp file</th>
 </tr>
 </thead>
 <tbody>
@@ -77,9 +77,9 @@
 <ul>
 <li><p><a href="https://en.wikipedia.org/wiki/Python_(programming_language">Python</a>)<br>This program is written in <a href="https://en.wikipedia.org/wiki/Python_(programming_language">Python</a>) so you need to install a working python environment (for details see <a href="https://docs.python.org/2.7/using/index.html">Python Setup and Usage</a>)</p>
 </li>
-<li><p><a href="https://github.com/arendst/Sonoff-Tasmota">Sonoff-Tasmota</a> <a href="https://github.com/arendst/Sonoff-Tasmota/releases">Firmware</a> with Web-Server enabled:</p>
+<li><p><a href="https://github.com/arendst/Tasmota">Tasmota</a> <a href="https://github.com/arendst/Tasmota/releases">Firmware</a> with Web-Server enabled:</p>
 <ul>
-<li>To backup or restore configurations from or to a Sonoff-Tasmota device you need a firmare with enabled web-server in admin mode (command <a href="https://github.com/arendst/Sonoff-Tasmota/wiki/Commands#wifi">WebServer 2</a>). This is the Tasmota default.</li>
+<li>To backup or restore configurations from or to a Tasmota device you need a firmare with enabled web-server in admin mode (command <a href="https://github.com/arendst/Tasmota/wiki/Commands#wifi">WebServer 2</a>). This is the Tasmota default.</li>
 <li>If using your own compiled firmware be aware to enable the web-server (<code>#define USE_WEBSERVER</code> and <code>#define WEB_SERVER 2</code>).</li>
 </ul>
 </li>
@@ -91,7 +91,7 @@
 <h3 id="-json-format">.json Format</h3>
 <p>Configuration data in <a href="http://www.json.org/">JSON</a>-format.<br>This format is decrypted, human readable and editable and can also be used for the <code>--restore-file</code> parameter.<br>This file will be created by <em>decode-config.py</em> using the <code>--backup-file</code> with <code>--backup-type json</code> parameter, this is the default.</p>
 <h3 id="-bin-format">.bin Format</h3>
-<p>Configuration data in binary format.<br>This format is binary decryptet, editable (e.g. using a hex editor) and can also be used for <code>--restore-file</code> command.<br>It will be created by <em>decode-config.py</em> using <code>--backup-file</code> with <code>--backup-type bin</code>.<br>Note:<br>The .bin file contains the same information as the original .dmp file from Tasmota &quot;Backup/Restore Configuration&quot; but it is decrpted and  4 byte longer than an original (it is a prefix header at the beginning). .bin file data starting at address 4 contains the same as the <strong>struct SYSCFG</strong> from Tasmota <a href="https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/settings.h">settings.h</a> in decrypted format.</p>
+<p>Configuration data in binary format.<br>This format is binary decryptet, editable (e.g. using a hex editor) and can also be used for <code>--restore-file</code> command.<br>It will be created by <em>decode-config.py</em> using <code>--backup-file</code> with <code>--backup-type bin</code>.<br>Note:<br>The .bin file contains the same information as the original .dmp file from Tasmota &quot;Backup/Restore Configuration&quot; but it is decrpted and  4 byte longer than an original (it is a prefix header at the beginning). .bin file data starting at address 4 contains the same as the <strong>struct SYSCFG</strong> from Tasmota <a href="https://github.com/arendst/Tasmota/blob/master/sonoff/settings.h">settings.h</a> in decrypted format.</p>
 <h4 id="file-extensions">File extensions</h4>
 <p>You don&#39;t need to append exensions for your file name as <em>decode-config.py</em> uses auto extension as default. The extension will be choose based on file contents and <code>--backup-type</code> parameter.
 If you do not want using auto extensions use the <code>--no-extension</code> parameter.</p>
@@ -108,14 +108,14 @@ If you do not want using auto extensions use the <code>--no-extension</code> par
 <pre><code>decode-config<span class="hljs-selector-class">.py</span> -d sonoff-<span class="hljs-number">4281</span>
 </code></pre><p>will output a human readable configuration in <a href="http://www.json.org/">JSON</a>-format:</p>
 <pre><code>{
-  <span class="hljs-string">"altitude"</span>: <span class="hljs-number">112</span>, 
-  <span class="hljs-string">"baudrate"</span>: <span class="hljs-number">115200</span>, 
-  <span class="hljs-string">"blinkcount"</span>: <span class="hljs-number">10</span>, 
-  <span class="hljs-string">"blinktime"</span>: <span class="hljs-number">10</span>, 
+  <span class="hljs-string">"altitude"</span>: <span class="hljs-number">112</span>,
+  <span class="hljs-string">"baudrate"</span>: <span class="hljs-number">115200</span>,
+  <span class="hljs-string">"blinkcount"</span>: <span class="hljs-number">10</span>,
+  <span class="hljs-string">"blinktime"</span>: <span class="hljs-number">10</span>,
 ...
   <span class="hljs-string">"ws_width"</span>: [
-    <span class="hljs-number">1</span>, 
-    <span class="hljs-number">3</span>, 
+    <span class="hljs-number">1</span>,
+    <span class="hljs-number">3</span>,
     <span class="hljs-number">5</span>
   ]
 }
@@ -141,29 +141,29 @@ If you do not want using auto extensions use the <code>--no-extension</code> par
 
 {
   ...
-  <span class="hljs-string">"hostname"</span>: <span class="hljs-string">"%s-%04d"</span>, 
+  <span class="hljs-string">"hostname"</span>: <span class="hljs-string">"%s-%04d"</span>,
   <span class="hljs-string">"ip_address"</span>: [
-    <span class="hljs-string">"0.0.0.0"</span>, 
-    <span class="hljs-string">"192.168.12.1"</span>, 
-    <span class="hljs-string">"255.255.255.0"</span>, 
+    <span class="hljs-string">"0.0.0.0"</span>,
+    <span class="hljs-string">"192.168.12.1"</span>,
+    <span class="hljs-string">"255.255.255.0"</span>,
     <span class="hljs-string">"192.168.12.1"</span>
-  ], 
+  ],
   <span class="hljs-string">"ntp_server"</span>: [
-    <span class="hljs-string">"ntp.localnet.home"</span>, 
-    <span class="hljs-string">"ntp2.localnet.home"</span>, 
+    <span class="hljs-string">"ntp.localnet.home"</span>,
+    <span class="hljs-string">"ntp2.localnet.home"</span>,
     <span class="hljs-string">"192.168.12.1"</span>
-  ], 
-  <span class="hljs-string">"sta_active"</span>: <span class="hljs-number">0</span>, 
-  <span class="hljs-string">"sta_config"</span>: <span class="hljs-number">5</span>, 
+  ],
+  <span class="hljs-string">"sta_active"</span>: <span class="hljs-number">0</span>,
+  <span class="hljs-string">"sta_config"</span>: <span class="hljs-number">5</span>,
   <span class="hljs-string">"sta_pwd"</span>: [
-    <span class="hljs-string">"myWlAnPaszxwo!z"</span>, 
+    <span class="hljs-string">"myWlAnPaszxwo!z"</span>,
     <span class="hljs-string">"myWlAnPaszxwo!z2"</span>
-  ], 
+  ],
   <span class="hljs-string">"sta_ssid"</span>: [
-    <span class="hljs-string">"wlan.1"</span>, 
+    <span class="hljs-string">"wlan.1"</span>,
     <span class="hljs-string">"my-wlan"</span>
-  ], 
-  <span class="hljs-string">"web_password"</span>: <span class="hljs-string">"myPaszxwo!z"</span>, 
+  ],
+  <span class="hljs-string">"web_password"</span>: <span class="hljs-string">"myPaszxwo!z"</span>,
   <span class="hljs-string">"webserver"</span>: <span class="hljs-number">2</span>
   ...
 }
@@ -194,7 +194,7 @@ If you do not want using auto extensions use the <code>--no-extension</code> par
 <h3 id="filter-data">Filter data</h3>
 <p>The huge number of Tasmota configuration data can be overstrained and confusing, so the most of the configuration data are grouped into categories. </p>
 <p>With <em>decode-config.py</em> the following categories are available:   <code>Display</code>, <code>Domoticz</code>, <code>Internal</code>, <code>KNX</code>, <code>Led</code>, <code>Logging</code>, <code>MCP230xx</code>, <code>MQTT</code>, <code>Main</code>, <code>Management</code>, <code>Pow</code>, <code>Sensor</code>, <code>Serial</code>, <code>SetOption</code>, <code>SonoffRF</code>, <code>System</code>, <code>Timers</code>, <code>Wifi</code></p>
-<p>These are similary to the categories on <a href="Tasmota Command Wiki">https://github.com/arendst/Sonoff-Tasmota/wiki/Commands</a>.</p>
+<p>These are similary to the categories on <a href="Tasmota Command Wiki">https://github.com/arendst/Tasmota/wiki/Commands</a>.</p>
 <p>To filter outputs to a subset of groups use the <code>-g</code> or <code>--group</code> arg concatenating the grooup you want, e. g.</p>
 <pre><code>decode-config<span class="hljs-selector-class">.py</span> -d sonoff-<span class="hljs-number">4281</span> -c my<span class="hljs-selector-class">.conf</span> --output-format cmnd --group Main MQTT Management Wifi
 </code></pre><h3 id="configuration-file">Configuration file</h3>
@@ -222,7 +222,7 @@ If you do not want using auto extensions use the <code>--no-extension</code> par
                         [-g {Control,Devices,Display,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,KNX,Light,MQTT,Management,Power,Rules,Sensor,Serial,SetOption,SonoffRF,System,Timer,Wifi} ...]]
                         [--ignore-warnings] [-<span class="hljs-keyword">h</span>] [-<span class="hljs-keyword">H</span>] [-v] [-V]
 
-Backup/<span class="hljs-keyword">Restore</span> Sonoff-Tasmota configuration data. <span class="hljs-keyword">Args</span> that start with '--'
+Backup/<span class="hljs-keyword">Restore</span> Tasmota configuration data. <span class="hljs-keyword">Args</span> that start with '--'
 (eg. -f) can also be <span class="hljs-keyword">set</span> <span class="hljs-keyword">in</span> a config <span class="hljs-keyword">file</span> (specified via -c). Config <span class="hljs-keyword">file</span>
 <span class="hljs-keyword">syntax</span> allows: key=value, flag=true, stuff=[a,b,c] (<span class="hljs-keyword">for</span> details, see <span class="hljs-keyword">syntax</span> at
 https:<span class="hljs-comment">//goo.gl/R74nmi). If an arg is specified in more than one place, then</span>

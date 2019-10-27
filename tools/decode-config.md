@@ -1,14 +1,14 @@
 # decode-config.py
-_decode-config.py_ is able to backup and restore Sonoff-Tasmota configuration.
+_decode-config.py_ is able to backup and restore Tasmota configuration.
 
 In comparison with the Tasmota build-in "Backup/Restore Configuration" function _decode-config.py_
 * uses human readable and editable [JSON](http://www.json.org/)-format for backup/restore,
 * can restore previously backup and changed [JSON](http://www.json.org/)-format files,
 * is able to create Tasmota compatible command list with related config parameter
 
-Comparing backup files created by *decode-config.py* and *.dmp files created by Tasmota "Backup/Restore Configuration":  
+Comparing backup files created by *decode-config.py* and *.dmp files created by Tasmota "Backup/Restore Configuration":
 
-| &nbsp;                  | decode-config.py<br />*.json file | Sonoff-Tasmota<br />*.dmp file |
+| &nbsp;                  | decode-config.py<br />*.json file | Tasmota<br />*.dmp file |
 |-------------------------|:-------------------------------:|:-----------------------------------:|
 | Encrypted               |                No               |                 Yes                 |
 | Readable                |               Yes               |                  No                 |
@@ -41,28 +41,28 @@ _decode-config.py_ is compatible with Tasmota version from v5.10.0 up to now.
   * [Notes](decode-config.md#notes)
 
 ## Prerequisite
-* [Python](https://en.wikipedia.org/wiki/Python_(programming_language))  
+* [Python](https://en.wikipedia.org/wiki/Python_(programming_language))
   This program is written in [Python](https://en.wikipedia.org/wiki/Python_(programming_language)) so you need to install a working python environment (for details see [Python Setup and Usage](https://docs.python.org/2.7/using/index.html))
 
-* [Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota) [Firmware](https://github.com/arendst/Sonoff-Tasmota/releases) with Web-Server enabled:
-  * To backup or restore configurations from or to a Sonoff-Tasmota device you need a firmare with enabled web-server in admin mode (command [WebServer 2](https://github.com/arendst/Sonoff-Tasmota/wiki/Commands#wifi)). This is the Tasmota default.
+* [Tasmota](https://github.com/arendst/Tasmota) [Firmware](https://github.com/arendst/Tasmota/releases) with Web-Server enabled:
+  * To backup or restore configurations from or to a Tasmota device you need a firmare with enabled web-server in admin mode (command [WebServer 2](https://github.com/arendst/Tasmota/wiki/Commands#wifi)). This is the Tasmota default.
   * If using your own compiled firmware be aware to enable the web-server (`#define USE_WEBSERVER` and `#define WEB_SERVER 2`).
 
 ## File Types
-_decode-config.py_ can handle the following backup file types:  
+_decode-config.py_ can handle the following backup file types:
 ### .dmp Format
-Configuration data as used by Tasmota "Backup/Restore Configuration" web interface.  
+Configuration data as used by Tasmota "Backup/Restore Configuration" web interface.
 This format is binary and encrypted.
 ### .json Format
-Configuration data in [JSON](http://www.json.org/)-format.  
-This format is decrypted, human readable and editable and can also be used for the `--restore-file` parameter.  
+Configuration data in [JSON](http://www.json.org/)-format.
+This format is decrypted, human readable and editable and can also be used for the `--restore-file` parameter.
 This file will be created by _decode-config.py_ using the `--backup-file` with `--backup-type json` parameter, this is the default.
 ### .bin Format
-Configuration data in binary format.  
-This format is binary decryptet, editable (e.g. using a hex editor) and can also be used for `--restore-file` command.  
-It will be created by _decode-config.py_ using `--backup-file` with `--backup-type bin`.  
-Note:  
-The .bin file contains the same information as the original .dmp file from Tasmota "Backup/Restore Configuration" but it is decrpted and  4 byte longer than an original (it is a prefix header at the beginning). .bin file data starting at address 4 contains the same as the **struct SYSCFG** from Tasmota [settings.h](https://github.com/arendst/Sonoff-Tasmota/blob/master/sonoff/settings.h) in decrypted format.
+Configuration data in binary format.
+This format is binary decryptet, editable (e.g. using a hex editor) and can also be used for `--restore-file` command.
+It will be created by _decode-config.py_ using `--backup-file` with `--backup-type bin`.
+Note:
+The .bin file contains the same information as the original .dmp file from Tasmota "Backup/Restore Configuration" but it is decrpted and  4 byte longer than an original (it is a prefix header at the beginning). .bin file data starting at address 4 contains the same as the **struct SYSCFG** from Tasmota [settings.h](https://github.com/arendst/Tasmota/blob/master/sonoff/settings.h) in decrypted format.
 
 #### File extensions
 You don't need to append exensions for your file name as _decode-config.py_ uses auto extension as default. The extension will be choose based on file contents and `--backup-type` parameter.
@@ -74,35 +74,35 @@ After download don't forget to set the executable flag under linux with `chmod +
 ### Basics
 At least pass a source where you want to read the configuration data from using `-f <filename>` or `-d <host>`:
 
-The source can be either 
+The source can be either
 * a Tasmota device hostname or IP using the `-d <host>` parameter
 * a Tasmota `*.dmp` configuration file using `-f <filename>` parameter
 
-Example:  
+Example:
 
     decode-config.py -d sonoff-4281
 
 will output a human readable configuration in [JSON](http://www.json.org/)-format:
 
     {
-      "altitude": 112, 
-      "baudrate": 115200, 
-      "blinkcount": 10, 
-      "blinktime": 10, 
+      "altitude": 112,
+      "baudrate": 115200,
+      "blinkcount": 10,
+      "blinktime": 10,
     ...
       "ws_width": [
-        1, 
-        3, 
+        1,
+        3,
         5
       ]
     }
 
 
 ### Save backup file
-To save the output as backup file use `--backup-file <filename>`, you can use placeholder for Version, Friendlyname and Hostname:  
+To save the output as backup file use `--backup-file <filename>`, you can use placeholder for Version, Friendlyname and Hostname:
 
     decode-config.py -d sonoff-4281 --backup-file Config_@f_@v
-    
+
 If you have setup a WebPassword within Tasmota, use
 
     decode-config.py -d sonoff-4281 -p <yourpassword> --backup-file Config_@f_@v
@@ -112,10 +112,10 @@ will create a file like `Config_Sonoff_6.4.0.json` (the part `Sonoff` and `6.4.0
 ### Restore backup file
 Reading back a saved (and possible changed) backup file use the `--restore-file <filename>` parameter. This will read the (changed) configuration data from this file and send it back to the source device or filename.
 
-To restore the previously save backup file `Config_Sonoff_6.2.1.json` to device `sonoff-4281` use:  
+To restore the previously save backup file `Config_Sonoff_6.2.1.json` to device `sonoff-4281` use:
 
     decode-config.py -d sonoff-4281 --restore-file Config_Sonoff_6.2.1.json
-    
+
 with password set by WebPassword:
 
     decode-config.py -d sonoff-4281 -p <yourpassword> --restore-file Config_Sonoff_6.2.1.json
@@ -134,29 +134,29 @@ Example:
 
     {
       ...
-      "hostname": "%s-%04d", 
+      "hostname": "%s-%04d",
       "ip_address": [
-        "0.0.0.0", 
-        "192.168.12.1", 
-        "255.255.255.0", 
+        "0.0.0.0",
+        "192.168.12.1",
+        "255.255.255.0",
         "192.168.12.1"
-      ], 
+      ],
       "ntp_server": [
-        "ntp.localnet.home", 
-        "ntp2.localnet.home", 
+        "ntp.localnet.home",
+        "ntp2.localnet.home",
         "192.168.12.1"
-      ], 
-      "sta_active": 0, 
-      "sta_config": 5, 
+      ],
+      "sta_active": 0,
+      "sta_config": 5,
       "sta_pwd": [
-        "myWlAnPaszxwo!z", 
+        "myWlAnPaszxwo!z",
         "myWlAnPaszxwo!z2"
-      ], 
+      ],
       "sta_ssid": [
-        "wlan.1", 
+        "wlan.1",
         "my-wlan"
-      ], 
-      "web_password": "myPaszxwo!z", 
+      ],
+      "web_password": "myPaszxwo!z",
       "webserver": 2
       ...
     }
@@ -192,11 +192,11 @@ Example:
 Note: A few very specific module commands like MPC230xx, KNX and some Display commands are not supported. These are still available by JSON output.
 
 ### Filter data
-The huge number of Tasmota configuration data can be overstrained and confusing, so the most of the configuration data are grouped into categories. 
+The huge number of Tasmota configuration data can be overstrained and confusing, so the most of the configuration data are grouped into categories.
 
 With _decode-config.py_ the following categories are available:   `Display`, `Domoticz`, `Internal`, `KNX`, `Led`, `Logging`, `MCP230xx`, `MQTT`, `Main`, `Management`, `Pow`, `Sensor`, `Serial`, `SetOption`, `SonoffRF`, `System`, `Timers`, `Wifi`
 
-These are similary to the categories on [https://github.com/arendst/Sonoff-Tasmota/wiki/Commands](Tasmota Command Wiki).
+These are similary to the categories on [https://github.com/arendst/Tasmota/wiki/Commands](Tasmota Command Wiki).
 
 To filter outputs to a subset of groups use the `-g` or `--group` arg concatenating the grooup you want, e. g.
 
@@ -240,7 +240,7 @@ For advanced help use `-H` or `--full-help`:
                             [-g {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi} ...]]
                             [--ignore-warnings] [-h] [-H] [-v] [-V]
 
-    Backup/Restore Sonoff-Tasmota configuration data. Args that start with '--'
+    Backup/Restore Tasmota configuration data. Args that start with '--'
     (eg. -f) can also be set in a config file (specified via -c). Config file
     syntax allows: key=value, flag=true, stuff=[a,b,c] (for details, see syntax at
     https://goo.gl/R74nmi). If an arg is specified in more than one place, then
@@ -383,8 +383,8 @@ will produce JSON configuration files for host sonoff1, sonoff2 and sonoff3 usin
 ## Notes
 Some general notes:
 * Filename replacement macros **@h** and **@H**:
-  * **@h**  
-The **@h** replacement macro uses the hostname configured with the Tasomta Wifi `Hostname <host>` command (defaults to `%s-%04d`). It will not use the network hostname of your device because this is not available when working with files only (e.g. `--file <filename>` as source).  
+  * **@h**
+The **@h** replacement macro uses the hostname configured with the Tasomta Wifi `Hostname <host>` command (defaults to `%s-%04d`). It will not use the network hostname of your device because this is not available when working with files only (e.g. `--file <filename>` as source).
 To prevent having a useless % in your filename, **@h** will not replaced by configuration data hostname if this contains '%' characters.
-  * **@H**  
+  * **@H**
 If you want to use the network hostname within your filename, use the **@H** replacement macro instead - but be aware this will only replaced if you are using a network device as source (`-d`, `--device`, `--host`); it will not work when using a file as source (`-f`, `--file`)

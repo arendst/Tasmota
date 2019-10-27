@@ -1,5 +1,5 @@
 /*
-  sonoff_post.h - Post header file for Tasmota
+  tasmota_post.h - Post header file for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _SONOFF_POST_H_
-#define _SONOFF_POST_H_
+#ifndef _TASMOTA_POST_H_
+#define _TASMOTA_POST_H_
 
 /*********************************************************************************************\
  * Function declarations
@@ -664,4 +664,4 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define DEBUG_SENSOR_LOG(...)
 #endif
 
-#endif  // _SONOFF_POST_H_
+#endif  // _TASMOTA_POST_H_

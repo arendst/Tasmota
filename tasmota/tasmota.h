@@ -1,5 +1,5 @@
 /*
-  sonoff.h - Master header file for Tasmota
+  tasmota.h - Master header file for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _SONOFF_H_
-#define _SONOFF_H_
+#ifndef _TASMOTA_H_
+#define _TASMOTA_H_
 
 /*********************************************************************************************\
  * Performance ROM (PROGMEM) vs RAM (RODATA)
@@ -285,4 +285,4 @@ const char kCommandSource[] PROGMEM = "I|MQTT|Restart|Button|Switch|Backlog|Seri
 
 const uint8_t kDefaultRfCode[9] PROGMEM = { 0x21, 0x16, 0x01, 0x0E, 0x03, 0x48, 0x2E, 0x1A, 0x00 };
 
-#endif  // _SONOFF_H_
+#endif  // _TASMOTA_H_

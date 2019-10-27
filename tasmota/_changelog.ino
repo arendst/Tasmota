@@ -233,7 +233,7 @@
  * Add command SetOption64 0/1 to switch between "-" or "_" as sensor index separator impacting DS18X20, DHT, BMP and SHT3X sensor names (#5689)
  * Add command SetOption65 0/1 and more Tuya Serial based device support (#5815)
  * Add command WebColor to change GUI colors on the fly
- * Add support for AWS IoT with TLS 1.2 on core 2.4.2 and up. Full doc here: https://github.com/arendst/Sonoff-Tasmota/wiki/AWS-IoT
+ * Add support for AWS IoT with TLS 1.2 on core 2.4.2 and up. Full doc here: https://github.com/arendst/Tasmota/wiki/AWS-IoT
  * Add support for Badger HR-E Water Meter (#5539)
  * Add support for Shelly 2.5 Energy and overtemp Monitoring (#5592)
  * Add support for color and colortone for Philips Hue emulation via Alexa (#5600 #4809)
@@ -583,7 +583,7 @@
  * Revert sonoff-minimal removals causing failure of wifi connection (#3177)
  *
  * 6.1.0 20180706
- * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Sonoff-Tasmota/wiki/Upgrade#migration-path
+ * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Tasmota/wiki/Upgrade#migration-path
  * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
  * Change number of supported switches from 4 to 8 (#2885, #3086)
  * Change BME680 driver from Adafruit to Bosch BME680 library (#2969)
@@ -1175,7 +1175,7 @@
  * 5.0.5 20170508
  * Add command FullTopic with tokens %topic% (replaced by command Topic value) and
  *  %prefix% (replaced by command Prefix<x> values) for more flexible topic definitions (#244)
- *  See wiki > MQTT Features https://github.com/arendst/Sonoff-Tasmota/wiki/MQTT-Features for more information
+ *  See wiki > MQTT Features https://github.com/arendst/Tasmota/wiki/MQTT-Features for more information
  *
  * 5.0.4 20170505
  * Add Sonoff Pow Energy Total up to 40 MWh

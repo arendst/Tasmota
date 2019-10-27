@@ -1,5 +1,5 @@
 /*
-  sonoff.ino - Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
+  tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
 
   Copyright (C) 2019  Theo Arends
 
@@ -27,15 +27,15 @@
 
 // Location specific includes
 #include <core_version.h>                   // Arduino_Esp8266 version information (ARDUINO_ESP8266_RELEASE and ARDUINO_ESP8266_RELEASE_2_3_0)
-#include "sonoff_version.h"                 // Tasmota version information
-#include "sonoff.h"                         // Enumeration used in my_user_config.h
+#include "tasmota_version.h"                // Tasmota version information
+#include "tasmota.h"                        // Enumeration used in my_user_config.h
 #include "my_user_config.h"                 // Fixed user configurable options
 #ifdef USE_MQTT_TLS
-  #include <t_bearssl.h>                    // we need to include before "sonoff_post.h" to take precedence over the BearSSL version in Arduino
+  #include <t_bearssl.h>                    // we need to include before "tasmota_post.h" to take precedence over the BearSSL version in Arduino
 #endif  // USE_MQTT_TLS
-#include "sonoff_post.h"                    // Configuration overrides for all previous includes
+#include "tasmota_post.h"                   // Configuration overrides for all previous includes
 #include "i18n.h"                           // Language support configured by my_user_config.h
-#include "sonoff_template.h"                // Hardware configuration
+#include "tasmota_template.h"               // Hardware configuration
 
 
 #ifdef ARDUINO_ESP8266_RELEASE_2_4_0
@@ -102,7 +102,7 @@ int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 int serial_in_byte_counter = 0;             // Index in receive buffer
 int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
-int restart_flag = 0;                       // Sonoff restart flag
+int restart_flag = 0;                       // Tasmota restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
 int tele_period = 1;                        // Tele period timer
 int blinks = 201;                           // Number of LED blinks

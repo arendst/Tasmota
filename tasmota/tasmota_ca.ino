@@ -1,5 +1,5 @@
 /*
-  sonoff_ca.ino - Certificate authorities for Tasmota, LetsEncrypt and AWS
+  tasmota_ca.ino - Certificate authorities for Tasmota, LetsEncrypt and AWS
 
   Copyright (C) 2019  Theo Arends
 

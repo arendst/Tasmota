@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  decode-status.py - decode status for Sonoff-Tasmota
+  decode-status.py - decode status for Tasmota
 
   Copyright (C) 2019 Theo Arends
 
