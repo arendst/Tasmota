@@ -208,9 +208,10 @@ enum UserSelectablePins {
   GPIO_SM2135_DAT,     // SM2135 Dat
   GPIO_DEEPSLEEP,      // Kill switch for deepsleep
   GPIO_EXS_ENABLE,     // EXS MCU Enable
-  GPIO_TASMOTASLAVE_TXD,    // Arduino Slave TX
-  GPIO_TASMOTASLAVE_RXD,    // Arduino Slave RX
-  GPIO_TASMOTASLAVE_RST,    // Arduino Reset Pin
+  GPIO_TASMOTASLAVE_TXD,     // Slave TX
+  GPIO_TASMOTASLAVE_RXD,     // Slave RX
+  GPIO_TASMOTASLAVE_RST,     // Slave Reset Pin
+  GPIO_TASMOTASLAVE_RST_INV, // Slave Reset Inverted
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -289,7 +290,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DDSU666_TX "|" D_SENSOR_DDSU666_RX "|"
   D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
-  D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|"
+  D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -703,9 +704,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_PN532_RXD,      // PN532 HSU Rx
 #endif
 #ifdef USE_TASMOTA_SLAVE
-  GPIO_TASMOTASLAVE_TXD,    // Tasmota Slave TX
-  GPIO_TASMOTASLAVE_RXD,    // Tasmota Slave RX
-  GPIO_TASMOTASLAVE_RST,    // Tasmota Reset Pin
+  GPIO_TASMOTASLAVE_TXD,     // Tasmota Slave TX
+  GPIO_TASMOTASLAVE_RXD,     // Tasmota Slave RX
+  GPIO_TASMOTASLAVE_RST,     // Tasmota Slave Reset
+  GPIO_TASMOTASLAVE_RST_INV, // Tasmota Slave Reset Inverted
 #endif
 #ifdef USE_RDM6300
   GPIO_RDM6300_RX,

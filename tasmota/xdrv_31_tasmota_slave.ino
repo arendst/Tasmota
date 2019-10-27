@@ -134,6 +134,7 @@ struct TSLAVE {
   uint32_t spi_hex_size = 0;
   uint32_t spi_sector_counter = 0;
   uint8_t spi_sector_cursor = 0;
+  uint8_t inverted = LOW;
   bool type = false;
   bool flashing  = false;
   bool SerialEnabled = false;
@@ -198,9 +199,11 @@ uint8_t TasmotaSlave_UpdateInit(void)
 void TasmotaSlave_Reset(void)
 {
   if (TSlave.SerialEnabled) {
-    digitalWrite(pin[GPIO_TASMOTASLAVE_RST], LOW);
+    digitalWrite(pin[GPIO_TASMOTASLAVE_RST], !TSlave.inverted);
     delay(1);
-    digitalWrite(pin[GPIO_TASMOTASLAVE_RST], HIGH);
+    digitalWrite(pin[GPIO_TASMOTASLAVE_RST], TSlave.inverted);
+    delay(1);
+    digitalWrite(pin[GPIO_TASMOTASLAVE_RST], !TSlave.inverted);
     delay(5);
   }
 }
@@ -408,15 +411,21 @@ void TasmotaSlave_Init(void)
     return;
   }
   if (!TSlave.SerialEnabled) {
-    if ((pin[GPIO_TASMOTASLAVE_RXD] < 99) && (pin[GPIO_TASMOTASLAVE_TXD] < 99) && (pin[GPIO_TASMOTASLAVE_RST] < 99)) {
+    if ((pin[GPIO_TASMOTASLAVE_RXD] < 99) && (pin[GPIO_TASMOTASLAVE_TXD] < 99) &&
+        ((pin[GPIO_TASMOTASLAVE_RST] < 99) || (pin[GPIO_TASMOTASLAVE_RST_INV] < 99))) {
       TasmotaSlave_Serial = new TasmotaSerial(pin[GPIO_TASMOTASLAVE_RXD], pin[GPIO_TASMOTASLAVE_TXD], 1, 0, 200);
       if (TasmotaSlave_Serial->begin(USE_TASMOTA_SLAVE_SERIAL_SPEED)) {
         if (TasmotaSlave_Serial->hardwareSerial()) {
           ClaimSerial();
         }
+        if (pin[GPIO_TASMOTASLAVE_RST_INV] < 99) {
+          pin[GPIO_TASMOTASLAVE_RST] = pin[GPIO_TASMOTASLAVE_RST_INV];
+          pin[GPIO_TASMOTASLAVE_RST_INV] = 99;
+          TSlave.inverted = HIGH;
+        }
         pinMode(pin[GPIO_TASMOTASLAVE_RST], OUTPUT);
-        TasmotaSlave_Reset();
         TSlave.SerialEnabled = true;
+        TasmotaSlave_Reset();
         AddLog_P2(LOG_LEVEL_INFO, PSTR("Tasmota Slave Enabled"));
       }
     }
