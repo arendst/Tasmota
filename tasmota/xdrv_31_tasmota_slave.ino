@@ -43,6 +43,7 @@
 
 #define CMND_FEATURES                  0x01
 #define CMND_JSON                      0x02
+#define CMND_SECOND_TICK               0x03
 
 #define PARAM_DATA_START               0xFE
 #define PARAM_DATA_END                 0xFF
@@ -144,8 +145,8 @@ struct TSLAVE {
 typedef union {
   uint16_t data;
   struct {
-    uint16_t json : 1;
-    uint16_t spare1 : 1;
+    uint16_t json : 1;              // Slave supports providing a JSON for TELEPERIOD
+    uint16_t second_tick : 1;       // Slave supports receiving a FUNC_EVERY_SECOND callback with no response
     uint16_t spare2 : 1;
     uint16_t spare3 : 1;
     uint16_t spare4 : 1;
@@ -378,6 +379,7 @@ void TasmotaSlave_Flash(void)
     }
   }
   TasmotaSlave_exitProgMode();
+  AddLog_P2(LOG_LEVEL_INFO, PSTR("TasmotaSlave: Flash done!"));
   TSlave.flashing  = false;
   restart_flag = 2;
 }
@@ -485,6 +487,11 @@ bool Xdrv31(uint8_t function)
   switch (function) {
     case FUNC_EVERY_SECOND:
       TasmotaSlave_Init();
+      if (TSlave.type) {
+        if (TSlaveSettings.features.second_tick) {
+          TasmotaSlave_sendCmnd(CMND_SECOND_TICK, 0);
+        }
+      }
       break;
     case FUNC_JSON_APPEND:
       TasmotaSlave_Show();
