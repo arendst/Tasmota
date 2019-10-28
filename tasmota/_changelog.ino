@@ -1,6 +1,7 @@
 /*********************************************************************************************\
  * 7.0.0.1 20191027
  * Remove references to versions before 6.x
+ * Change default GUI to dark theme
  *
  * 6.7.1.1 20191026
  * Change ArduinoSlave to TasmotaSlave (Experimental)

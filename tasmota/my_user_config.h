@@ -132,7 +132,12 @@
 #define WEB_PASSWORD           ""                // [WebPassword] Web server Admin mode Password for WEB_USERNAME (empty string = Disable)
 #define FRIENDLY_NAME          "Tasmota"         // [FriendlyName] Friendlyname up to 32 characters used by webpages and Alexa
 #define EMULATION              EMUL_NONE         // [Emulation] Select Belkin WeMo (single relay/light) or Hue Bridge emulation (multi relay/light) (EMUL_NONE, EMUL_WEMO or EMUL_HUE)
+
+// -- HTTP GUI Colors -----------------------------
 // HTML hex color codes. Only 3 and 6 digit hex string values are supported!! See https://www.w3schools.com/colors/colors_hex.asp
+// Light theme
+// webcolor {"webcolor":["#000","#fff","#f2f2f2","#000","#fff","#000","#fff"]}
+/*
 #define COLOR_TEXT                  "#000"       // [WebColor1] Global text color - Black
 #define COLOR_BACKGROUND            "#fff"       // [WebColor2] Global background color - White
 #define COLOR_FORM                  "#f2f2f2"    // [WebColor3] Form background color - Greyish
@@ -140,6 +145,18 @@
 #define COLOR_INPUT                 "#fff"       // [WebColor5] Input background color - White
 #define COLOR_CONSOLE_TEXT          "#000"       // [WebColor6] Console text color - Black
 #define COLOR_CONSOLE               "#fff"       // [WebColor7] Console background color - White
+*/
+// Dark theme
+// webcolor {"webcolor":["#eee","#181818","#4f4f4f","#000","#ddd","#6a9955","#1e1e1e"]}
+#define COLOR_TEXT                  "#eee"       // [WebColor1] Global text color - Whiteish
+#define COLOR_BACKGROUND            "#181818"    // [WebColor2] Global background color - Blackish
+#define COLOR_FORM                  "#4f4f4f"    // [WebColor3] Form background color - Greyish
+#define COLOR_INPUT_TEXT            "#000"       // [WebColor4] Input text color - Black
+#define COLOR_INPUT                 "#ddd"       // [WebColor5] Input background color - Darker white
+#define COLOR_CONSOLE_TEXT          "#6a9955"    // [WebColor6] Console text color - Greenish
+#define COLOR_CONSOLE               "#1e1e1e"    // [WebColor7] Console background color - Blackish
+
+// Other colors
 #define COLOR_TEXT_WARNING          "#f00"       // [WebColor8] Warning text color - Red
 #define COLOR_TEXT_SUCCESS          "#008000"    // [WebColor9] Success text color - Green
 #define COLOR_BUTTON_TEXT           "#fff"       // [WebColor10] Button text color - White
