@@ -79,14 +79,14 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t no_power_feedback : 1;        // bit 13 (v6.5.0.9)  - SetOption63 - Don't scan relay power state at restart
     uint32_t use_underscore : 1;           // bit 14 (v6.5.0.12) - SetOption64 - Enable "_" instead of "-" as sensor index separator
     uint32_t fast_power_cycle_disable : 1; // bit 15 (v6.6.0.20) - SetOption65 - Disable fast power cycle detection for device reset
-    uint32_t tuya_serial_mqtt_publish : 1;    // bit 16 (v6.6.0.21)  - SetOption66 - Enable or Disable TuyaMcuReceived messages over Mqtt
+    uint32_t tuya_serial_mqtt_publish : 1; // bit 16 (v6.6.0.21) - SetOption66 - Enable TuyaMcuReceived messages over Mqtt
     uint32_t buzzer_enable : 1;            // bit 17 (v6.6.0.1)  - SetOption67 - Enable buzzer when available
     uint32_t pwm_multi_channels : 1;       // bit 18 (v6.6.0.3)  - SetOption68 - Enable multi-channels PWM instead of Color PWM
-    uint32_t ex_tuya_dimmer_min_limit : 1;    // bit 19 (v6.6.0.5)  - SetOption69 - Limits Tuya dimmers to minimum of 10% (25) when enabled.
+    uint32_t ex_tuya_dimmer_min_limit : 1; // bit 19 (v6.6.0.5)  - SetOption69 - Limits Tuya dimmers to minimum of 10% (25) when enabled.
     uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
     uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71 - Select different Modbus registers for Active Energy (#6531)
     uint32_t hardware_energy_total : 1;    // bit 22 (v6.6.0.15) - SetOption72 - Enable / Disable hardware energy total counter as reference (#6561)
-    uint32_t spare23 : 1;
+    uint32_t cors_enabled : 1;             // bit 23 (v7.0.0.1)  - SetOption73 - Enable HTTP CORS
     uint32_t spare24 : 1;
     uint32_t spare25 : 1;
     uint32_t spare26 : 1;

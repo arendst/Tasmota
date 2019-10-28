@@ -667,14 +667,19 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
   return true;
 }
 
+void HttpHeaderCors(void)
+{
+  if (Settings.flag3.cors_enabled) {
+    WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+  }
+}
+
 void WSHeaderSend(void)
 {
   WebServer->sendHeader(F("Cache-Control"), F("no-cache, no-store, must-revalidate"));
   WebServer->sendHeader(F("Pragma"), F("no-cache"));
   WebServer->sendHeader(F("Expires"), F("-1"));
-#ifndef ARDUINO_ESP8266_RELEASE_2_3_0
-  WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
-#endif
+  HttpHeaderCors();
 }
 
 /**********************************************************************************************
@@ -2273,7 +2278,7 @@ void HandleUploadLoop(void)
 
 void HandlePreflightRequest(void)
 {
-  WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
+  HttpHeaderCors();
   WebServer->sendHeader(F("Access-Control-Allow-Methods"), F("GET, POST"));
   WebServer->sendHeader(F("Access-Control-Allow-Headers"), F("authorization"));
   WSSend(200, CT_HTML, "");
