@@ -124,7 +124,7 @@ TuyaSend4 11,1 -> Sends enum (Type 4) data 0/1/2/3/4/5 to dpId 11 (Max data leng
 
 
 void CmndTuyaSend(void) {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
     if (XdrvMailbox.data_len > 0) {
 
       char *p;
