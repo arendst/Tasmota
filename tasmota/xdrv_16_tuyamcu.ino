@@ -148,6 +148,8 @@ void CmndTuyaSend(void) {
         TuyaSendString(dpId, data);
       } else if (4 == XdrvMailbox.index) {
         TuyaSendEnum(dpId, strtoul(data, nullptr, 0));
+      } else if (5 == XdrvMailbox.index) {
+        TuyaSendHex(data);
       }
     }
     ResponseCmndDone();
@@ -347,6 +349,22 @@ void TuyaSendString(uint8_t id, char data[]) {
   }
 
   TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, payload_len);
+}
+
+void TuyaSendHex(char data[]) {
+
+  std::string hex = data;
+  uint8_t payload_buffer[255];
+  uint16_t len = 0;
+
+  for (unsigned int i = 0; i < hex.length(); i += 2) {
+    std::string byteString = hex.substr(i, 2);
+    char byte = (char) strtol(byteString.c_str(), NULL, 16); 
+    payload_buffer[len] = byte;
+    len++;
+  }
+
+   TuyaSendCmd(TUYA_CMD_SET_DP, payload_buffer, len);
 }
 
 bool TuyaSetPower(void)
