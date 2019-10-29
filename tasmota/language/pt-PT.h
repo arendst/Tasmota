@@ -499,7 +499,7 @@
 #define D_CALIBRATION "Calibração"
 
 //xsns_35_tx20.ino
-#define D_TX20_WIND_DIRECTION "Direção do vento
+#define D_TX20_WIND_DIRECTION "Direção do vento"
 #define D_TX20_WIND_SPEED "Velocidade do vento"
 #define D_TX20_WIND_SPEED_AVG "Velocidade média do vento"
 #define D_TX20_WIND_SPEED_MAX "Velocidade máxima do vento"
