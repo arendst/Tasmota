@@ -377,8 +377,8 @@ void LightSerialDuty(uint16_t duty)
 {
   uint8_t dpid = TuyaGetDpId(TUYA_MCU_FUNC_DIMMER);
   if (duty > 0 && !Tuya.ignore_dim && TuyaSerial && dpid > 0) {
-    if (duty < Settings.dimmer_hw_min) { duty = Settings.dimmer_hw_min; }  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     duty = changeUIntScale(duty, 0, 255, 0, Settings.dimmer_hw_max);
+    if (duty < Settings.dimmer_hw_min) { duty = Settings.dimmer_hw_min; }  // dimming acts odd below 25(10%) - this mirrors the threshold set on the faceplate itself
     if (Tuya.new_dim != duty) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: Send dim value=%d (id=%d)"), duty, dpid);
       TuyaSendValue(dpid, duty);
