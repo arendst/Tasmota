@@ -1030,7 +1030,6 @@ void SettingsDelta(void)
       Settings.baudrate = Settings.ex_baudrate * 4;
       Settings.sbaudrate = Settings.ex_sbaudrate * 4;
     }
-
     if (Settings.version < 0x0606000A) {
       uint8_t tuyaindex = 0;
       if (Settings.param[P_BACKLOG_DELAY] > 0) {             // ex SetOption34
@@ -1062,7 +1061,6 @@ void SettingsDelta(void)
       if (Settings.param[P_ex_TUYA_CURRENT_ID] > 0) {        // ex SetOption45
         Settings.tuya_fnid_map[tuyaindex].fnid = 32;         // TUYA_MCU_FUNC_CURRENT - Move Tuya Current Id to Map
         Settings.tuya_fnid_map[tuyaindex].dpid = Settings.param[P_ex_TUYA_CURRENT_ID];
-        tuyaindex++;
       }
     }
     if (Settings.version < 0x0606000C) {
