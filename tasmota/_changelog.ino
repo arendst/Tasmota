@@ -4,6 +4,7 @@
  * Change default GUI to dark theme
  * Add command SetOption73 0/1 to re-enable HTTP Cross-Origin Resource Sharing (CORS) now default disabled (#6767)
  * Add frequency to ADE7953 energy monitor as used in Shelly 2.5 by ljakob (#6778)
+ * Add command SetOption74 0/1 to enable DS18x20 internal pull-up and remove define DS18B20_INTERNAL_PULLUP (#6795)
  *
  * 6.7.1.1 20191026
  * Change ArduinoSlave to TasmotaSlave (Experimental)

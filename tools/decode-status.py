@@ -126,7 +126,7 @@ a_setoption = [[
     "Enable Weekend Energy Tariff",
     "Select different Modbus registers for Active Energy",
     "Enable HTTP CORS",
-    "",
+    "Enable internal pullup for single DS18x20 sensor",
     "","","","",
     "","",
     "Enable shutter support",
