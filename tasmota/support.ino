@@ -74,8 +74,8 @@ void OsWatchLoop(void)
 
 String GetResetReason(void)
 {
-  char buff[32];
   if (oswatch_blocked_loop) {
+    char buff[32];
     strncpy_P(buff, PSTR(D_JSON_BLOCKED_LOOP), sizeof(buff));
     return String(buff);
   } else {
@@ -288,12 +288,11 @@ char* ulltoa(unsigned long long value, char *str, int radix)
   char digits[64];
   char *dst = str;
   int i = 0;
-  int n = 0;
 
 //  if (radix < 2 || radix > 36) { radix = 10; }
 
   do {
-    n = value % radix;
+    int n = value % radix;
     digits[i++] = (n < 10) ? (char)n+'0' : (char)n-10+'A';
     value /= radix;
   } while (value != 0);
@@ -599,10 +598,9 @@ bool NewerVersion(char* version_str)
 
 char* GetPowerDevice(char* dest, uint32_t idx, size_t size, uint32_t option)
 {
-  char sidx[8];
-
   strncpy_P(dest, S_RSLT_POWER, size);                // POWER
   if ((devices_present + option) > 1) {
+    char sidx[8];
     snprintf_P(sidx, sizeof(sidx), PSTR("%d"), idx);  // x
     strncat(dest, sidx, size - strlen(dest) -1);      // POWERx
   }
@@ -1545,7 +1543,6 @@ void GetLog(uint32_t idx, char** entry_pp, size_t* len_p)
 void Syslog(void)
 {
   // Destroys log_data
-  char syslog_preamble[64];  // Hostname + Id
 
   uint32_t current_hash = GetHash(Settings.syslog_host, strlen(Settings.syslog_host));
   if (syslog_host_hash != current_hash) {
@@ -1553,6 +1550,7 @@ void Syslog(void)
     WiFi.hostByName(Settings.syslog_host, syslog_host_addr);  // If sleep enabled this might result in exception so try to do it once using hash
   }
   if (PortUdp.beginPacket(syslog_host_addr, Settings.syslog_port)) {
+    char syslog_preamble[64];  // Hostname + Id
     snprintf_P(syslog_preamble, sizeof(syslog_preamble), PSTR("%s ESP-"), my_hostname);
     memmove(log_data + strlen(syslog_preamble), log_data, sizeof(log_data) - strlen(syslog_preamble));
     log_data[sizeof(log_data) -1] = '\0';

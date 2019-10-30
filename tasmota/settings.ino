@@ -522,8 +522,6 @@ void SettingsErase(uint8_t type)
   */
 
 #ifndef FIRMWARE_MINIMAL
-  bool result;
-
   uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
   uint32_t _sectorEnd = ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE;
   if (1 == type) {
@@ -540,7 +538,7 @@ void SettingsErase(uint8_t type)
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
 
   for (uint32_t _sector = _sectorStart; _sector < _sectorEnd; _sector++) {
-    result = ESP.flashEraseSector(_sector);
+    bool result = ESP.flashEraseSector(_sector);
     if (_serialoutput) {
       Serial.print(F(D_LOG_APPLICATION D_ERASED_SECTOR " "));
       Serial.print(_sector);

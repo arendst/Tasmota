@@ -283,9 +283,6 @@ void BreakTime(uint32_t time_input, TIME_T &tm)
   time -= days;              // now it is days in this year, starting at 0
   tm.day_of_year = time;
 
-  days = 0;
-  month = 0;
-  month_length = 0;
   for (month = 0; month < 12; month++) {
     if (1 == month) { // february
       if (LEAP_YEAR(year)) {

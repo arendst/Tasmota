@@ -124,10 +124,9 @@ double TaylorLog(double x)
   double step = ((x - 1) * (x - 1)) / ((x + 1) * (x + 1));   // Store step to not have to calculate it each time
   double totalValue = 0;
   double powe = 1;
-  double y;
   for (uint32_t count = 0; count < 10; count++) {            // Experimental number of 10 iterations
     z *= step;
-    y = (1 / powe) * z;
+    double y = (1 / powe) * z;
     totalValue = totalValue + y;
     powe = powe + 2;
   }

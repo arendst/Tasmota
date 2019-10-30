@@ -133,8 +133,6 @@ void SwitchHandler(uint8_t mode)
 {
   if (uptime < 4) { return; }                                  // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
-  uint8_t button = NOT_PRESSED;
-  uint8_t switchflag;
   uint16_t loops_per_second = 1000 / Settings.switch_debounce;
 
   for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
@@ -147,12 +145,12 @@ void SwitchHandler(uint8_t mode)
         }
       }
 
-      button = Switch.virtual_state[i];
+      uint8_t button = Switch.virtual_state[i];
 
 // enum SwitchModeOptions {TOGGLE, FOLLOW, FOLLOW_INV, PUSHBUTTON, PUSHBUTTON_INV, PUSHBUTTONHOLD, PUSHBUTTONHOLD_INV, PUSHBUTTON_TOGGLE, MAX_SWITCH_OPTION};
 
       if (button != Switch.last_state[i]) {
-        switchflag = POWER_TOGGLE +1;
+        uint8_t switchflag = POWER_TOGGLE +1;
         switch (Settings.switchmode[i]) {
         case TOGGLE:
           switchflag = POWER_TOGGLE;     // Toggle

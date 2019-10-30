@@ -109,8 +109,6 @@ void ButtonHandler(void)
 {
   if (uptime < 4) { return; }                                   // Block GPIO for 4 seconds after poweron to workaround Wemos D1 / Obi RTS circuit
 
-  uint8_t button = NOT_PRESSED;
-  uint8_t button_present = 0;
   uint8_t hold_time_extent = IMMINENT_RESET_FACTOR;             // Extent hold time factor in case of iminnent Reset command
   uint16_t loops_per_second = 1000 / Settings.button_debounce;  // ButtonDebounce (50)
   char scmnd[20];
@@ -118,8 +116,8 @@ void ButtonHandler(void)
 //  uint8_t maxdev = (devices_present > MAX_KEYS) ? MAX_KEYS : devices_present;
 //  for (uint32_t button_index = 0; button_index < maxdev; button_index++) {
   for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
-    button = NOT_PRESSED;
-    button_present = 0;
+    uint8_t button = NOT_PRESSED;
+    uint8_t button_present = 0;
 
     if (!button_index && ((SONOFF_DUAL == my_module_type) || (CH4 == my_module_type))) {
       button_present = 1;

@@ -148,11 +148,11 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 
   char *type = strrchr(topicBuf, '/');   // Last part of received topic is always the command (type)
 
-  uint32_t i = 0;
   uint32_t index = 1;
   bool user_index = false;
   if (type != nullptr) {
     type++;
+    uint32_t i;
     for (i = 0; i < strlen(type); i++) {
       type[i] = toupper(type[i]);
     }
@@ -902,11 +902,10 @@ void CmndGpios(void)
 {
   myio cmodule;
   ModuleGpios(&cmodule);
-  uint32_t midx;
   uint32_t lines = 1;
   bool jsflg = false;
   for (uint32_t i = 0; i < sizeof(kGpioNiceList); i++) {
-    midx = pgm_read_byte(kGpioNiceList + i);
+    uint32_t midx = pgm_read_byte(kGpioNiceList + i);
     if ((XdrvMailbox.payload != 255) && GetUsedInModule(midx, cmodule.io)) { continue; }
     if (!jsflg) {
       Response_P(PSTR("{\"" D_CMND_GPIOS "%d\":{"), lines);
