@@ -37,6 +37,7 @@
 #define D_CMND_SHUTTER_INVERT "Invert"
 #define D_CMND_SHUTTER_CLIBRATION "Calibration"
 #define D_CMND_SHUTTER_MOTORDELAY "MotorDelay"
+
 #define D_SHUTTER "SHUTTER"
 
 const uint16_t MOTOR_STOP_TIME = 500;  // in mS
@@ -55,7 +56,7 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterStop, &CmndShutterPosition,
   &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay,
-  &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterInvert, &CmndShutterCalibration ,CmndShutterMotorDelay};
+  &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay};
 
 const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"direction\":%d}";
 
@@ -78,6 +79,7 @@ struct SHUTTER {
   uint16_t operations[MAX_SHUTTERS];
   int8_t  direction[MAX_SHUTTERS];        // 1 == UP , 0 == stop; -1 == down
   uint8_t mode = 0;                       // operation mode definition. see enum type above SHT_OFF_OPEN__OFF_CLOSE, SHT_OFF_ON__OPEN_CLOSE, SHT_PULSE_OPEN__PULSE_CLOSE
+  uint8_t motordelay[MAX_SHUTTERS];                 // initial motorstarttime in 0.05sec.
 } Shutter;
 
 void ShutterRtc50mS(void)
@@ -212,15 +214,16 @@ void ShutterInit(void)
       Shutter.real_position[i] = ShutterPercentToRealPosition(Settings.shutter_position[i], i);
       //Shutter.real_position[i] =   Settings.shutter_position[i] <= 5 ?  Settings.shuttercoeff[2][i] * Settings.shutter_position[i] : Settings.shuttercoeff[1][i] * Settings.shutter_position[i] + Settings.shuttercoeff[0,i];
       Shutter.start_position[i] = Shutter.real_position[i];
+      Shutter.motordelay[i] = Settings.shutter_motordelay[i];
 
       char shutter_open_chr[10];
       dtostrfd((float)Shutter.open_time[i] / 10 , 1, shutter_open_chr);
       char shutter_close_chr[10];
       dtostrfd((float)Shutter.close_time[i] / 10, 1, shutter_close_chr);
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoedffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, shuttermode %d"),
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoedffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, shuttermode %d,motordelay %d"),
         i, Settings.shutter_startrelay[i], Shutter.real_position[i], Settings.shutter_position[i], Shutter.close_velocity[i], Shutter.open_max[i], shutter_open_chr, shutter_close_chr,
         Settings.shuttercoeff[0][i], Settings.shuttercoeff[1][i], Settings.shuttercoeff[2][i], Settings.shuttercoeff[3][i], Settings.shuttercoeff[4][i],
-        Shutter.mask, Settings.shutter_invert[i], Shutter.mode);
+        Shutter.mask, Settings.shutter_invert[i], Shutter.mode, Shutter.motordelay[i]);
 
     } else {
       // terminate loop at first INVALID shutter.
@@ -238,7 +241,7 @@ void ShutterUpdatePosition(void)
   for (uint32_t i = 0; i < shutters_present; i++) {
     if (Shutter.direction[i] != 0) {
       //char stemp1[20];
-      Shutter.real_position[i] = Shutter.start_position[i] + ( Shutter.time[i] * (Shutter.direction[i] > 0 ? 100 : -Shutter.close_velocity[i]));
+      Shutter.real_position[i] = Shutter.start_position[i]  + ( (Shutter.time[i] - Shutter.motordelay[i]) * (Shutter.direction[i] > 0 ? 100 : -Shutter.close_velocity[i]));
       // avoid real position leaving the boundaries.
       Shutter.real_position[i] = Shutter.real_position[i] < 0 ? 0 : (Shutter.real_position[i] > Shutter.open_max[i] ? Shutter.open_max[i] : Shutter.real_position[i]) ;
 
@@ -534,6 +537,19 @@ void CmndShutterCloseTime(void)
   }
 }
 
+void CmndShutterMotorDelay(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    if (XdrvMailbox.data_len > 0) {
+      Settings.shutter_motordelay[XdrvMailbox.index -1] = (uint16_t)(20 * CharToFloat(XdrvMailbox.data));
+      ShutterInit();
+    }
+    char time_chr[10];
+    dtostrfd((float)(Settings.shutter_motordelay[XdrvMailbox.index -1]) / 20, 1, time_chr);
+    ResponseCmndIdxChar(time_chr);
+  }
+}
+
 void CmndShutterRelay(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SHUTTERS)) {
@@ -596,8 +612,9 @@ void CmndShutterCalibration(void)  // ????
         // Loop through the version string, splitting on '.' seperators.
         for (char *str = strtok_r(version_dup, " ", &str_ptr); str && i < 5; str = strtok_r(nullptr, " ", &str_ptr), i++) {
           int field = atoi(str);
-          // The fields in a version string can only range from 0-255.
-          if ((field < 0) || (field > 255)) {
+          // The fields in a version string can only range from 1-255.
+          // and following value must be higher than previous one
+          if ((field <= 0) || (field > 255) ||  ( (i>0) && (field <= messwerte[i-1]) ) ) {
             free(version_dup);
             break;
           }
@@ -605,7 +622,7 @@ void CmndShutterCalibration(void)  // ????
         }
         for (i=0 ; i < 5 ; i++) {
           Settings.shuttercoeff[i][XdrvMailbox.index-1] = messwerte[i] * 1000 / messwerte[4];
-          AddLog_P2(LOG_LEVEL_INFO, PSTR("Settings.shuttercoeff í: %d, i: %d, value: %d, messwert %d"), i,XdrvMailbox.index-1,Settings.shuttercoeff[i][XdrvMailbox.index-1], messwerte[i]);
+          AddLog_P2(LOG_LEVEL_INFO, PSTR("Settings.shuttercoeff: %d, i: %d, value: %d, messwert %d"), i,XdrvMailbox.index-1,Settings.shuttercoeff[i][XdrvMailbox.index-1], messwerte[i]);
         }
         ShutterInit();
         ResponseCmndIdxChar(XdrvMailbox.data);
