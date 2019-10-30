@@ -388,8 +388,8 @@ struct SYSCFG {
   uint16_t      dimmer_hw_max;             // E92
   uint32_t      deepsleep;                 // E94
   uint16_t      energy_power_delta;        // E98
-
-  uint8_t       free_e9a[350];             // E9A
+  uint8_t       shutter_motordelay[MAX_SHUTTERS];      // E9A
+  uint8_t       free_e9e[346];             // E9E
 
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC
