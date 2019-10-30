@@ -3,6 +3,7 @@
  * Remove references to versions before 6.x
  * Change default GUI to dark theme
  * Add command SetOption73 0/1 to re-enable HTTP Cross-Origin Resource Sharing (CORS) now default disabled (#6767)
+ * Add frequency to ADE7953 energy monitor as used in Shelly 2.5 by ljakob (#6778)
  *
  * 6.7.1.1 20191026
  * Change ArduinoSlave to TasmotaSlave (Experimental)

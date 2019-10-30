@@ -95,7 +95,7 @@ struct ENERGY {
   uint8_t data_valid[3] = { 0, 0, 0 };
 
   uint8_t phase_count = 1;                      // Number of phases active
-  bool voltage_common = false;                  // Use single voltage
+  bool voltage_common = false;                  // Use single voltage and frequency
 
   bool voltage_available = true;                // Enable if voltage is measured
   bool current_available = true;                // Enable if current is measured
@@ -1014,7 +1014,7 @@ void EnergyShow(bool json)
       }
       if (!isnan(Energy.frequency[0])) {
         ResponseAppend_P(PSTR(",\"" D_JSON_FREQUENCY "\":%s"),
-          EnergyFormat(value_chr, frequency_chr[0], json));
+          EnergyFormat(value_chr, frequency_chr[0], json, Energy.voltage_common));
       }
     }
     if (Energy.voltage_available) {
@@ -1084,7 +1084,7 @@ void EnergyShow(bool json)
       }
       if (!isnan(Energy.frequency[0])) {
         WSContentSend_PD(PSTR("{s}" D_FREQUENCY "{m}%s " D_UNIT_HERTZ "{e}"),
-          EnergyFormat(value_chr, frequency_chr[0], json));
+          EnergyFormat(value_chr, frequency_chr[0], json, Energy.voltage_common));
       }
     }
     WSContentSend_PD(HTTP_ENERGY_SNS2, energy_daily_chr, energy_yesterday_chr, energy_total_chr[0]);
