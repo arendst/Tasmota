@@ -256,11 +256,22 @@ const uint32_t SPIFFS_END = ((uint32_t)&_SPIFFS_end - 0x40200000) / SPI_FLASH_SE
 
 #else  // Core > 2.5.2 and STAGE
 
+#if AUTOFLASHSIZE
+
+#include "flash_hal.h"
+
+// From libraries/EEPROM/EEPROM.cpp EEPROMClass
+const uint32_t SPIFFS_END = (FS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
+
+#else
+
 extern "C" uint32_t _FS_end;
 // From libraries/EEPROM/EEPROM.cpp EEPROMClass
 const uint32_t SPIFFS_END = ((uint32_t)&_FS_end - 0x40200000) / SPI_FLASH_SEC_SIZE;
 
-#endif
+#endif  // AUTOFLASHSIZE
+
+#endif  // All cores < pre-2.6.0
 
 // Version 4.2 config = eeprom area
 const uint32_t SETTINGS_LOCATION = SPIFFS_END;  // No need for SPIFFS as it uses EEPROM area
