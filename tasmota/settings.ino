@@ -814,13 +814,41 @@ void SettingsDefaultSet2(void)
 //  Settings.light_wakeup = 0;
   Settings.light_pixels = WS2812_LEDS;
 //  Settings.light_rotation = 0;
-  SettingsDefaultSet_5_8_1();    // Clock color
+  Settings.ws_width[WS_SECOND] = 1;
+  Settings.ws_color[WS_SECOND][WS_RED] = 255;
+//  Settings.ws_color[WS_SECOND][WS_GREEN] = 0;
+  Settings.ws_color[WS_SECOND][WS_BLUE] = 255;
+  Settings.ws_width[WS_MINUTE] = 3;
+//  Settings.ws_color[WS_MINUTE][WS_RED] = 0;
+  Settings.ws_color[WS_MINUTE][WS_GREEN] = 255;
+//  Settings.ws_color[WS_MINUTE][WS_BLUE] = 0;
+  Settings.ws_width[WS_HOUR] = 5;
+  Settings.ws_color[WS_HOUR][WS_RED] = 255;
+//  Settings.ws_color[WS_HOUR][WS_GREEN] = 0;
+//  Settings.ws_color[WS_HOUR][WS_BLUE] = 0;
 
   Settings.dimmer_hw_max = DEFAULT_DIMMER_MAX;
   Settings.dimmer_hw_min = DEFAULT_DIMMER_MIN;
 
   // Display
-  SettingsDefaultSet_5_10_1();   // Display settings
+//  Settings.display_model = 0;
+  Settings.display_mode = 1;
+  Settings.display_refresh = 2;
+  Settings.display_rows = 2;
+  Settings.display_cols[0] = 16;
+  Settings.display_cols[1] = 8;
+  Settings.display_dimmer = 1;
+  Settings.display_size = 1;
+  Settings.display_font = 1;
+//  Settings.display_rotate = 0;
+  Settings.display_address[0] = MTX_ADDRESS1;
+  Settings.display_address[1] = MTX_ADDRESS2;
+  Settings.display_address[2] = MTX_ADDRESS3;
+  Settings.display_address[3] = MTX_ADDRESS4;
+  Settings.display_address[4] = MTX_ADDRESS5;
+  Settings.display_address[5] = MTX_ADDRESS6;
+  Settings.display_address[6] = MTX_ADDRESS7;
+  Settings.display_address[7] = MTX_ADDRESS8;
 
   // Time
   if (((APP_TIMEZONE > -14) && (APP_TIMEZONE < 15)) || (99 == APP_TIMEZONE)) {
@@ -842,7 +870,8 @@ void SettingsDefaultSet2(void)
   }
   Settings.latitude = (int)((double)LATITUDE * 1000000);
   Settings.longitude = (int)((double)LONGITUDE * 1000000);
-  SettingsDefaultSet_5_13_1c();  // Time STD/DST settings
+  SettingsResetStd();
+  SettingsResetDst();
 
   Settings.button_debounce = KEY_DEBOUNCE_TIME;
   Settings.switch_debounce = SWITCH_DEBOUNCE_TIME;
@@ -859,45 +888,6 @@ void SettingsDefaultSet2(void)
 }
 
 /********************************************************************************************/
-
-void SettingsDefaultSet_5_8_1(void)
-{
-//  Settings.flag.ws_clock_reverse = 0;
-  Settings.ws_width[WS_SECOND] = 1;
-  Settings.ws_color[WS_SECOND][WS_RED] = 255;
-  Settings.ws_color[WS_SECOND][WS_GREEN] = 0;
-  Settings.ws_color[WS_SECOND][WS_BLUE] = 255;
-  Settings.ws_width[WS_MINUTE] = 3;
-  Settings.ws_color[WS_MINUTE][WS_RED] = 0;
-  Settings.ws_color[WS_MINUTE][WS_GREEN] = 255;
-  Settings.ws_color[WS_MINUTE][WS_BLUE] = 0;
-  Settings.ws_width[WS_HOUR] = 5;
-  Settings.ws_color[WS_HOUR][WS_RED] = 255;
-  Settings.ws_color[WS_HOUR][WS_GREEN] = 0;
-  Settings.ws_color[WS_HOUR][WS_BLUE] = 0;
-}
-
-void SettingsDefaultSet_5_10_1(void)
-{
-  Settings.display_model = 0;
-  Settings.display_mode = 1;
-  Settings.display_refresh = 2;
-  Settings.display_rows = 2;
-  Settings.display_cols[0] = 16;
-  Settings.display_cols[1] = 8;
-  Settings.display_dimmer = 1;
-  Settings.display_size = 1;
-  Settings.display_font = 1;
-  Settings.display_rotate = 0;
-  Settings.display_address[0] = MTX_ADDRESS1;
-  Settings.display_address[1] = MTX_ADDRESS2;
-  Settings.display_address[2] = MTX_ADDRESS3;
-  Settings.display_address[3] = MTX_ADDRESS4;
-  Settings.display_address[4] = MTX_ADDRESS5;
-  Settings.display_address[5] = MTX_ADDRESS6;
-  Settings.display_address[6] = MTX_ADDRESS7;
-  Settings.display_address[7] = MTX_ADDRESS8;
-}
 
 void SettingsResetStd(void)
 {
@@ -917,12 +907,6 @@ void SettingsResetDst(void)
   Settings.tflag[1].month = TIME_DST_MONTH;
   Settings.tflag[1].hour = TIME_DST_HOUR;
   Settings.toffset[1] = TIME_DST_OFFSET;
-}
-
-void SettingsDefaultSet_5_13_1c(void)
-{
-  SettingsResetStd();
-  SettingsResetDst();
 }
 
 void SettingsDefaultWebColor(void)
