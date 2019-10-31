@@ -98,6 +98,44 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
   };
 } SysBitfield3;
 
+typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
+  uint32_t data;                           // Allow bit manipulation using SetOption
+  struct {                                 // SetOption82 .. SetOption113
+    uint32_t spare00 : 1;
+    uint32_t spare01 : 1;
+    uint32_t spare02 : 1;
+    uint32_t spare03 : 1;
+    uint32_t spare04 : 1;
+    uint32_t spare05 : 1;
+    uint32_t spare06 : 1;
+    uint32_t spare07 : 1;
+    uint32_t spare08 : 1;
+    uint32_t spare09 : 1;
+    uint32_t spare10 : 1;
+    uint32_t spare11 : 1;
+    uint32_t spare12 : 1;
+    uint32_t spare13 : 1;
+    uint32_t spare14 : 1;
+    uint32_t spare15 : 1;
+    uint32_t spare16 : 1;
+    uint32_t spare17 : 1;
+    uint32_t spare18 : 1;
+    uint32_t spare19 : 1;
+    uint32_t spare20 : 1;
+    uint32_t spare21 : 1;
+    uint32_t spare22 : 1;
+    uint32_t spare23 : 1;
+    uint32_t spare24 : 1;
+    uint32_t spare25 : 1;
+    uint32_t spare26 : 1;
+    uint32_t spare27 : 1;
+    uint32_t spare28 : 1;
+    uint32_t spare29 : 1;
+    uint32_t spare30 : 1;
+    uint32_t spare31 : 1;
+  };
+} SysBitfield4;
+
 typedef union {
   uint32_t data;                           // Allow bit manipulation
   struct {
@@ -227,7 +265,13 @@ struct SYSCFG {
   uint8_t       weblog_level;              // 1AC
   uint8_t       mqtt_fingerprint[2][20];   // 1AD
   uint8_t       adc_param_type;            // 1D5
-  uint8_t       register8[16];             // 1D6 - 16 x 8-bit registers indexed by enum SettingsRegister8
+
+  uint8_t       free_1d6[10];              // 1D6
+
+  SysBitfield4  flag4;                     // 1E0
+
+  uint8_t       free_1e4[2];               // 1E4
+
   uint8_t       shutter_accuracy;          // 1E6
   uint8_t       mqttlog_level;             // 1E7
   uint8_t       sps30_inuse_hours;         // 1E8
@@ -389,6 +433,7 @@ struct SYSCFG {
   uint32_t      deepsleep;                 // E94
   uint16_t      energy_power_delta;        // E98
   uint8_t       shutter_motordelay[MAX_SHUTTERS];      // E9A
+
   uint8_t       free_e9e[346];             // E9E
 
   uint32_t      cfg_timestamp;             // FF8

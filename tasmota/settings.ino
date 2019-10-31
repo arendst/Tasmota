@@ -1064,7 +1064,7 @@ void SettingsDelta(void)
       }
     }
     if (Settings.version < 0x0606000C) {
-      memset(&Settings.register8, 0x00, sizeof(Settings.register8));
+      memset((char*)&Settings +0x1D6, 0x00, 16);
     }
     if (Settings.version < 0x0606000F) {
       Settings.shutter_accuracy = 0;

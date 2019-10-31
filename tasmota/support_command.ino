@@ -372,10 +372,11 @@ void CmndStatus(void)
   if ((0 == payload) || (3 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS3_LOGGING "\":{\"" D_CMND_SERIALLOG "\":%d,\"" D_CMND_WEBLOG "\":%d,\"" D_CMND_MQTTLOG "\":%d,\"" D_CMND_SYSLOG "\":%d,\""
                           D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\""
-                          D_JSON_RESOLUTION "\":\"%08X\",\"" D_CMND_SETOPTION "\":[\"%08X\",\"%s\",\"%08X\"]}}"),
+                          D_JSON_RESOLUTION "\":\"%08X\",\"" D_CMND_SETOPTION "\":[\"%08X\",\"%s\",\"%08X\",\"%08X\"]}}"),
                           Settings.seriallog_level, Settings.weblog_level, Settings.mqttlog_level, Settings.syslog_level,
                           Settings.syslog_host, Settings.syslog_port, Settings.sta_ssid[0], Settings.sta_ssid[1], Settings.tele_period,
-                          Settings.flag2.data, Settings.flag.data, ToHex_P((unsigned char*)Settings.param, PARAM8_SIZE, stemp2, sizeof(stemp2)), Settings.flag3.data);
+                          Settings.flag2.data, Settings.flag.data, ToHex_P((unsigned char*)Settings.param, PARAM8_SIZE, stemp2, sizeof(stemp2)),
+                          Settings.flag3.data, Settings.flag4.data);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "3"));
   }
 
@@ -627,7 +628,7 @@ void CmndSavedata(void)
 
 void CmndSetoption(void)
 {
-  if (XdrvMailbox.index < 82) {
+  if (XdrvMailbox.index < 114) {
     uint32_t ptype;
     uint32_t pindex;
     if (XdrvMailbox.index <= 31) {         // SetOption0 .. 31 = Settings.flag
@@ -638,9 +639,14 @@ void CmndSetoption(void)
       ptype = 2;
       pindex = XdrvMailbox.index -32;      // 0 .. 17 (= PARAM8_SIZE -1)
     }
-    else {                     // SetOption50 .. 81 = Settings.flag3
+
+    else if (XdrvMailbox.index <= 81) {    // SetOption50 .. 81 = Settings.flag3
       ptype = 1;
       pindex = XdrvMailbox.index -50;      // 0 .. 31
+    }
+    else {                                 // SetOption82 .. 113 = Settings.flag4
+      ptype = 3;
+      pindex = XdrvMailbox.index -82;      // 0 .. 31
     }
     if (XdrvMailbox.payload >= 0) {
       if (0 == ptype) {        // SetOption0 .. 31
@@ -690,6 +696,11 @@ void CmndSetoption(void)
           }
         }
       }
+      else if (3 == ptype) {     // SetOption82 .. 113
+        if (XdrvMailbox.payload <= 1) {
+          bitWrite(Settings.flag4.data, pindex, XdrvMailbox.payload);
+        }
+      }
       else {                     // SetOption32 .. 49
         uint32_t param_low = 0;
         uint32_t param_high = 255;
@@ -716,9 +727,18 @@ void CmndSetoption(void)
       }
     }
     if (ptype < 99) {
-      char stemp1[TOPSZ];
-      if (2 == ptype) { snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), Settings.param[pindex]); }
-      ResponseCmndIdxChar((2 == ptype) ? stemp1 : (1 == ptype) ? GetStateText(bitRead(Settings.flag3.data, pindex)) : GetStateText(bitRead(Settings.flag.data, pindex)));
+      if (2 == ptype) {
+        ResponseCmndIdxNumber(Settings.param[pindex]);
+      } else {
+        uint32_t flag = Settings.flag.data;
+        if (1 == ptype) {
+          flag = Settings.flag3.data;
+        }
+        else if (3 == ptype) {
+          flag = Settings.flag4.data;
+        }
+        ResponseCmndIdxChar(GetStateText(bitRead(flag, pindex)));
+      }
     }
   }
 }
