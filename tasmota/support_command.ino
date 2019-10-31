@@ -699,6 +699,9 @@ void CmndSetoption(void)
             param_low = 1;
             param_high = 250;
             break;
+          case P_RGB_REMAP:
+            restart_flag = 2;    // SetOption37 needs a reboot in most cases
+            break;
         }
         if ((XdrvMailbox.payload >= param_low) && (XdrvMailbox.payload <= param_high)) {
           Settings.param[pindex] = XdrvMailbox.payload;
