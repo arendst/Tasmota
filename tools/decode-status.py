@@ -125,9 +125,11 @@ a_setoption = [[
     "(not used) Limits Tuya MCU dimmers to minimum of 10% (25) when enabled",
     "Enable Weekend Energy Tariff",
     "Select different Modbus registers for Active Energy",
+    "Enable hardware energy total counter as reference",
     "Enable HTTP CORS",
     "Enable internal pullup for single DS18x20 sensor",
-    "","","","",
+    "GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)",
+    "","",
     "","",
     "Enable shutter support",
     "Invert PCF8574 ports"
