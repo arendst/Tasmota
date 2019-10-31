@@ -632,76 +632,24 @@ void CmndSetoption(void)
     uint32_t ptype;
     uint32_t pindex;
     if (XdrvMailbox.index <= 31) {         // SetOption0 .. 31 = Settings.flag
-      ptype = 0;
+      ptype = 2;
       pindex = XdrvMailbox.index;          // 0 .. 31
     }
     else if (XdrvMailbox.index <= 49) {    // SetOption32 .. 49 = Settings.param
-      ptype = 2;
+      ptype = 1;
       pindex = XdrvMailbox.index -32;      // 0 .. 17 (= PARAM8_SIZE -1)
     }
-
     else if (XdrvMailbox.index <= 81) {    // SetOption50 .. 81 = Settings.flag3
-      ptype = 1;
+      ptype = 3;
       pindex = XdrvMailbox.index -50;      // 0 .. 31
     }
     else {                                 // SetOption82 .. 113 = Settings.flag4
-      ptype = 3;
+      ptype = 4;
       pindex = XdrvMailbox.index -82;      // 0 .. 31
     }
+
     if (XdrvMailbox.payload >= 0) {
-      if (0 == ptype) {        // SetOption0 .. 31
-        if (XdrvMailbox.payload <= 1) {
-          switch (pindex) {
-            case 5:            // mqtt_power_retain (CMND_POWERRETAIN)
-            case 6:            // mqtt_button_retain (CMND_BUTTONRETAIN)
-            case 7:            // mqtt_switch_retain (CMND_SWITCHRETAIN)
-            case 9:            // mqtt_sensor_retain (CMND_SENSORRETAIN)
-            case 14:           // interlock (CMND_INTERLOCK)
-            case 22:           // mqtt_serial (SerialSend and SerialLog)
-            case 23:           // mqtt_serial_raw (SerialSend)
-            case 25:           // knx_enabled (Web config)
-            case 27:           // knx_enable_enhancement (Web config)
-              ptype = 99;      // Command Error
-              break;           // Ignore command SetOption
-            case 3:            // mqtt
-            case 15:           // pwm_control
-              restart_flag = 2;
-            default:
-              bitWrite(Settings.flag.data, pindex, XdrvMailbox.payload);
-          }
-          if (12 == pindex) {  // stop_flash_rotate
-            stop_flash_rotate = XdrvMailbox.payload;
-            SettingsSave(2);
-          }
-#ifdef USE_HOME_ASSISTANT
-          if ((19 == pindex) || (30 == pindex)) {
-            HAssDiscover();    // Delayed execution to provide enough resources during hass_discovery or hass_light
-          }
-#endif  // USE_HOME_ASSISTANT
-        }
-      }
-      else if (1 == ptype) {     // SetOption50 .. 81
-        if (XdrvMailbox.payload <= 1) {
-          bitWrite(Settings.flag3.data, pindex, XdrvMailbox.payload);
-          if (5 == pindex) {     // SetOption55
-            if (0 == XdrvMailbox.payload) {
-              restart_flag = 2;  // Disable mDNS needs restart
-            }
-          }
-          if (10 == pindex) {    // SetOption60 enable or disable traditional sleep
-            WiFiSetSleepMode();  // Update WiFi sleep mode accordingly
-          }
-          if (18 == pindex) {    // SetOption68 for multi-channel PWM, requires a reboot
-            restart_flag = 2;
-          }
-        }
-      }
-      else if (3 == ptype) {     // SetOption82 .. 113
-        if (XdrvMailbox.payload <= 1) {
-          bitWrite(Settings.flag4.data, pindex, XdrvMailbox.payload);
-        }
-      }
-      else {                     // SetOption32 .. 49
+      if (1 == ptype) {                    // SetOption32 .. 49
         uint32_t param_low = 0;
         uint32_t param_high = 255;
         switch (pindex) {
@@ -710,15 +658,13 @@ void CmndSetoption(void)
             param_low = 1;
             param_high = 250;
             break;
-          case P_RGB_REMAP:
-            restart_flag = 2;    // SetOption37 needs a reboot in most cases
-            break;
         }
         if ((XdrvMailbox.payload >= param_low) && (XdrvMailbox.payload <= param_high)) {
           Settings.param[pindex] = XdrvMailbox.payload;
 #ifdef USE_LIGHT
           if (P_RGB_REMAP == pindex) {
             LightUpdateColorMapping();
+            restart_flag = 2;              // SetOption37 needs a reboot in most cases
           }
 #endif
 #if (defined(USE_IR_REMOTE) && defined(USE_IR_RECEIVE)) || defined(USE_IR_REMOTE_FULL)
@@ -726,18 +672,74 @@ void CmndSetoption(void)
             IrReceiveUpdateThreshold();
           }
 #endif
+        } else {
+          ptype = 99;                      // Command Error
+        }
+      } else {
+        if (XdrvMailbox.payload <= 1) {
+          if (2 == ptype) {                // SetOption0 .. 31
+            switch (pindex) {
+              case 5:                      // mqtt_power_retain (CMND_POWERRETAIN)
+              case 6:                      // mqtt_button_retain (CMND_BUTTONRETAIN)
+              case 7:                      // mqtt_switch_retain (CMND_SWITCHRETAIN)
+              case 9:                      // mqtt_sensor_retain (CMND_SENSORRETAIN)
+              case 14:                     // interlock (CMND_INTERLOCK)
+              case 22:                     // mqtt_serial (SerialSend and SerialLog)
+              case 23:                     // mqtt_serial_raw (SerialSend)
+              case 25:                     // knx_enabled (Web config)
+              case 27:                     // knx_enable_enhancement (Web config)
+                ptype = 99;                // Command Error
+                break;                     // Ignore command SetOption
+              case 3:                      // mqtt
+              case 15:                     // pwm_control
+                restart_flag = 2;
+              default:
+                bitWrite(Settings.flag.data, pindex, XdrvMailbox.payload);
+            }
+            if (12 == pindex) {            // stop_flash_rotate
+              stop_flash_rotate = XdrvMailbox.payload;
+              SettingsSave(2);
+            }
+  #ifdef USE_HOME_ASSISTANT
+            if ((19 == pindex) || (30 == pindex)) {
+              HAssDiscover();              // Delayed execution to provide enough resources during hass_discovery or hass_light
+            }
+  #endif  // USE_HOME_ASSISTANT
+          }
+          else if (3 == ptype) {           // SetOption50 .. 81
+            bitWrite(Settings.flag3.data, pindex, XdrvMailbox.payload);
+            switch (pindex) {
+              case 5:                      // SetOption55
+                if (0 == XdrvMailbox.payload) {
+                  restart_flag = 2;        // Disable mDNS needs restart
+                }
+                break;
+              case 10:                     // SetOption60 enable or disable traditional sleep
+                WiFiSetSleepMode();        // Update WiFi sleep mode accordingly
+                break;
+              case 18:                     // SetOption68 for multi-channel PWM, requires a reboot
+                restart_flag = 2;
+                break;
+            }
+          }
+          else if (4 == ptype) {           // SetOption82 .. 113
+            bitWrite(Settings.flag4.data, pindex, XdrvMailbox.payload);
+          }
+        } else {
+          ptype = 99;                      // Command Error
         }
       }
     }
+
     if (ptype < 99) {
-      if (2 == ptype) {
+      if (1 == ptype) {
         ResponseCmndIdxNumber(Settings.param[pindex]);
       } else {
         uint32_t flag = Settings.flag.data;
-        if (1 == ptype) {
+        if (3 == ptype) {
           flag = Settings.flag3.data;
         }
-        else if (3 == ptype) {
+        else if (4 == ptype) {
           flag = Settings.flag4.data;
         }
         ResponseCmndIdxChar(GetStateText(bitRead(flag, pindex)));
