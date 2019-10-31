@@ -86,7 +86,7 @@ a_setoption = [[
     ],[
     "Key hold time (ms)",
     "Sonoff POW Max_Power_Retry",
-    "(not used) Tuya MCU device id",
+    "Backlog delay (ms)",
     "(not used) mDNS delayed start (Sec)",
     "Boot loop retry offset (0 = disable)",
     "RGBWW remap",
@@ -99,8 +99,8 @@ a_setoption = [[
     "(not used) Tuya MCU voltage Id",
     "(not used) Tuya MCU current Id",
     "(not used) Tuya MCU power Id",
-    "Energy Tariff1 start hour",
-    "Energy Tariff2 start hour",
+    "(not used) Energy Tariff1 start hour",
+    "(not used) Energy Tariff2 start hour",
     "",
     ],[
     "Timers enabled",
@@ -131,6 +131,15 @@ a_setoption = [[
     "","",
     "Enable shutter support",
     "Invert PCF8574 ports"
+    ],[
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","",""
     ]]
 
 a_features = [[
@@ -246,7 +255,7 @@ def StartDecode():
                             options.append(str("{0:2d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))
                             i += 1
 
-                if r in (0, 2): #registers 1 and 3 hold binary values
+                if r in (0, 2, 3): #registers 1 and 3 hold binary values
                     for opt_idx, option in enumerate(opt_group):
                         i_register = int(register,16)
                         state = (i_register >> opt_idx) & 1

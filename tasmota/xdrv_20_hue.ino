@@ -361,6 +361,13 @@ void HueLightStatus1(uint8_t device, String *response)
   response->replace("{light_status}", light_status);
 }
 
+// Check whether this device should be reported to Alexa or considered hidden.
+// Any device whose friendly name start with "$" is considered hidden
+bool HueActive(uint8_t device) {
+  if (device > MAX_FRIENDLYNAMES) { device = MAX_FRIENDLYNAMES; }
+  return '$' != Settings.friendlyname[device-1][0];
+}
+
 void HueLightStatus2(uint8_t device, String *response)
 {
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON2);
@@ -442,20 +449,22 @@ uint32_t findEchoGeneration(void) {
   return gen;
 }
 
-void HueGlobalConfig(String *path)
-{
+void HueGlobalConfig(String *path) {
   String response;
   uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
 
   path->remove(0,1);                                 // cut leading / to get <id>
-  response = F("{\"lights\":{\"");
+  response = F("{\"lights\":{");
+  bool appending = false;                             // do we need to add a comma to append
   for (uint32_t i = 1; i <= maxhue; i++) {
-    response += EncodeLightId(i);
-    response += F("\":{\"state\":");
-    HueLightStatus1(i, &response);
-    HueLightStatus2(i, &response);
-    if (i < maxhue) {
-      response += ",\"";
+    if (HueActive(i)) {
+      if (appending) { response += ","; }
+      response += "\"";
+      response += EncodeLightId(i);
+      response += F("\":{\"state\":");
+      HueLightStatus1(i, &response);
+      HueLightStatus2(i, &response);
+      appending = true;
     }
   }
   response += F("},\"groups\":{},\"schedules\":{},\"config\":");
@@ -493,14 +502,17 @@ void HueLights(String *path)
 
   path->remove(0,path->indexOf("/lights"));          // Remove until /lights
   if (path->endsWith("/lights")) {                   // Got /lights
-    response = "{\"";
+    response = "{";
+    bool appending = false;
     for (uint32_t i = 1; i <= maxhue; i++) {
-      response += EncodeLightId(i);
-      response += F("\":{\"state\":");
-      HueLightStatus1(i, &response);
-      HueLightStatus2(i, &response);
-      if (i < maxhue) {
-        response += ",\"";
+      if (HueActive(i)) {
+        if (appending) { response += ","; }
+        response += "\"";
+        response += EncodeLightId(i);
+        response += F("\":{\"state\":");
+        HueLightStatus1(i, &response);
+        HueLightStatus2(i, &response);
+        appending = true;
       }
     }
 #ifdef USE_SCRIPT_HUE
