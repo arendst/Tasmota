@@ -1,12 +1,13 @@
 /*********************************************************************************************\
  * 7.0.0.1 20191027
- * Remove references to versions before 6.x
+ * Remove references to versions before 6.0
  * Change default GUI to dark theme
  * Add command SetOption73 0/1 to re-enable HTTP Cross-Origin Resource Sharing (CORS) now default disabled (#6767)
  * Add frequency to ADE7953 energy monitor as used in Shelly 2.5 by ljakob (#6778)
  * Add command SetOption74 0/1 to enable DS18x20 internal pull-up and remove define DS18B20_INTERNAL_PULLUP (#6795)
  * Fix better control of RGB/White when SetOption37 >128, added Dimmer1 and Dimmer2 commands (#6714)
  * Add hide Alexa objects with friendlyname starting with '$' (#6722, #6762)
+ * Add command SetOption75 0/1 to switch between grouptopic (0) using fulltopic replacing %topic% or (1) is cmnd/<grouptopic> (#6779)
  *
  * 6.7.1.1 20191026
  * Change ArduinoSlave to TasmotaSlave (Experimental)

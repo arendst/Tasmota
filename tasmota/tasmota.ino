@@ -243,18 +243,26 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
      prefix 4 = Cmnd fallback
      prefix 5 = Stat fallback
      prefix 6 = Tele fallback
+     prefix 8 = Cmnd topic
+     prefix 9 = Stat topic
+     prefix 10 = Tele topic
   */
   char romram[CMDSZ];
   String fulltopic;
 
   snprintf_P(romram, sizeof(romram), subtopic);
   if (fallback_topic_flag || (prefix > 3)) {
+    bool fallback = (prefix < 8);
     prefix &= 3;
     char stemp[11];
     fulltopic = GetTextIndexed(stemp, sizeof(stemp), prefix, kPrefixes);
     fulltopic += F("/");
-    fulltopic += mqtt_client;
-    fulltopic += F("_fb");                    // cmnd/<mqttclient>_fb
+    if (fallback) {
+      fulltopic += mqtt_client;
+      fulltopic += F("_fb");                  // cmnd/<mqttclient>_fb
+    } else {
+      fulltopic += topic;                     // cmnd/<grouptopic>
+    }
   } else {
     fulltopic = Settings.mqtt_fulltopic;
     if ((0 == prefix) && (-1 == fulltopic.indexOf(FPSTR(MQTT_TOKEN_PREFIX)))) {
@@ -282,9 +290,16 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
   return stopic;
 }
 
-char* GetFallbackTopic_P(char *stopic, uint32_t prefix, const char* subtopic)
+char* GetGroupTopic_P(char *stopic, const char* subtopic)
 {
-  return GetTopic_P(stopic, prefix +4, nullptr, subtopic);
+  // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/#
+  // SetOption75 1: cmnd/<grouptopic>
+  return GetTopic_P(stopic, (Settings.flag3.grouptopic_mode) ? CMND +8 : CMND, Settings.mqtt_grptopic, subtopic);
+}
+
+char* GetFallbackTopic_P(char *stopic, const char* subtopic)
+{
+  return GetTopic_P(stopic, CMND +4, nullptr, subtopic);
 }
 
 char* GetStateText(uint32_t state)

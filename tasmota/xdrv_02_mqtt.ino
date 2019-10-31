@@ -528,9 +528,9 @@ void MqttConnected(void)
     GetTopic_P(stopic, CMND, mqtt_topic, PSTR("#"));
     MqttSubscribe(stopic);
     if (strstr_P(Settings.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != nullptr) {
-      GetTopic_P(stopic, CMND, Settings.mqtt_grptopic, PSTR("#"));
+      GetGroupTopic_P(stopic, PSTR("#"));  // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/# or SetOption75 1: cmnd/<grouptopic>
       MqttSubscribe(stopic);
-      GetFallbackTopic_P(stopic, CMND, PSTR("#"));
+      GetFallbackTopic_P(stopic, PSTR("#"));
       MqttSubscribe(stopic);
     }
 
@@ -538,8 +538,9 @@ void MqttConnected(void)
   }
 
   if (Mqtt.initial_connection_state) {
+    char stopic2[TOPSZ];
     Response_P(PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
-      ModuleName().c_str(), my_version, my_image, GetFallbackTopic_P(stopic, CMND, ""), Settings.mqtt_grptopic);
+      ModuleName().c_str(), my_version, my_image, GetFallbackTopic_P(stopic, ""), GetGroupTopic_P(stopic2, ""));
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
     if (Settings.webserver) {

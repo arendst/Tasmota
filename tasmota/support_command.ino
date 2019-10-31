@@ -143,7 +143,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
   bool grpflg = (strstr(topicBuf, Settings.mqtt_grptopic) != nullptr);
 
   char stemp1[TOPSZ];
-  GetFallbackTopic_P(stemp1, CMND, "");  // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
+  GetFallbackTopic_P(stemp1, "");  // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
   fallback_topic_flag = (!strncmp(topicBuf, stemp1, strlen(stemp1)));
 
   char *type = strrchr(topicBuf, '/');   // Last part of received topic is always the command (type)
@@ -718,6 +718,7 @@ void CmndSetoption(void)
                 WiFiSetSleepMode();        // Update WiFi sleep mode accordingly
                 break;
               case 18:                     // SetOption68 for multi-channel PWM, requires a reboot
+              case 25:                     // SetOption75 grouptopic change
                 restart_flag = 2;
                 break;
             }
