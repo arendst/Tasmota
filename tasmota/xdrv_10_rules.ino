@@ -365,6 +365,29 @@ int8_t parseCompareExpression(String &expr, String &leftExpr, String &rightExpr)
   return compare;
 }
 
+void RulesVarReplace(String &commands, const String &sfind, const String &replace)
+{
+//  String ufind = sfind;
+//  ufind.toUpperCase();
+//  char *find = (char*)ufind.c_str();
+  char *find = (char*)sfind.c_str();
+  uint32_t flen = strlen(find);
+
+  String ucommand = commands;
+  ucommand.toUpperCase();
+  char *read_from = (char*)ucommand.c_str();
+  char *write_to = (char*)commands.c_str();
+  char *found_at;
+  while ((found_at = strstr(read_from, find)) != nullptr) {
+    write_to += (found_at - read_from);
+    memmove_P(write_to, find, flen);                      // Make variable Uppercase
+    write_to += flen;
+    read_from = found_at + flen;
+  }
+
+  commands.replace(find, replace);
+}
+
 /*******************************************************************************************/
 
 bool RuleSetProcess(uint8_t rule_set, String &event_saved)
@@ -402,7 +425,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     if (plen == -1) { plen = 9999; }
     if (plen2 == -1) { plen2 = 9999; }
     plen = tmin(plen, plen2);
-    if (plen == plen2) { stop_all_rules = true; }     // If BREAK was used, Stop execution of this rule set
+    if (plen == plen2) { stop_all_rules = true; }         // If BREAK was used, Stop execution of this rule set
 
     String commands = rules.substring(pevt +4, plen);     // "Backlog Dimmer 10;Color 100000"
     plen += 6;
@@ -417,21 +440,22 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       ucommand.toUpperCase();
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
       if (ucommand.indexOf("EVENT ") != -1) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
-      commands.replace(F("%value%"), Rules.event_value);
+
+      RulesVarReplace(commands, F("%VALUE%"), Rules.event_value);
       for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
-        snprintf_P(stemp, sizeof(stemp), PSTR("%%var%d%%"), i +1);
-        commands.replace(stemp, rules_vars[i]);
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%VAR%d%%"), i +1);
+        RulesVarReplace(commands, stemp, rules_vars[i]);
       }
       for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
-        snprintf_P(stemp, sizeof(stemp), PSTR("%%mem%d%%"), i +1);
-        commands.replace(stemp, Settings.mems[i]);
+        snprintf_P(stemp, sizeof(stemp), PSTR("%%MEM%d%%"), i +1);
+        RulesVarReplace(commands, stemp, Settings.mems[i]);
       }
-      commands.replace(F("%time%"), String(MinutesPastMidnight()));
-      commands.replace(F("%uptime%"), String(MinutesUptime()));
-      commands.replace(F("%timestamp%"), GetDateAndTime(DT_LOCAL).c_str());
+      RulesVarReplace(commands, F("%TIME%"), String(MinutesPastMidnight()));
+      RulesVarReplace(commands, F("%UPTIME%"), String(MinutesUptime()));
+      RulesVarReplace(commands, F("%TIMESTAMP%"), GetDateAndTime(DT_LOCAL));
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
-      commands.replace(F("%sunrise%"), String(SunMinutes(0)));
-      commands.replace(F("%sunset%"), String(SunMinutes(1)));
+      RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
+      RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
 #endif  // USE_TIMERS and USE_SUNRISE
 
       char command[commands.length() +1];
@@ -443,11 +467,11 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
 //      MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_RULE));
 #ifdef SUPPORT_IF_STATEMENT
       char *pCmd = command;
-      RulesPreprocessCommand(pCmd);      //Do pre-process for IF statement
+      RulesPreprocessCommand(pCmd);                       // Do pre-process for IF statement
 #endif
       ExecuteCommand(command, SRC_RULE);
       serviced = true;
-      if (stop_all_rules) { return serviced; }     // If BREAK was used, Stop execution of this rule set
+      if (stop_all_rules) { return serviced; }            // If BREAK was used, Stop execution of this rule set
     }
     Rules.trigger_count[rule_set]++;
   }
