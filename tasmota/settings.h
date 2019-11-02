@@ -432,10 +432,13 @@ struct SYSCFG {
   uint16_t      dimmer_hw_max;             // E92
   uint32_t      deepsleep;                 // E94
   uint16_t      energy_power_delta;        // E98
-  uint8_t       shutter_motordelay[MAX_SHUTTERS];      // E9A
-  uint8_t       free_e9e[342];             // E9E
-  uint8_t       web_color2[1][3];          // FF4
-  uint8_t       free_ff7      ;            // FF7
+  uint8_t       shutter_motordelay[MAX_SHUTTERS];    // E9A
+
+  uint8_t       free_e9e[2];               // E9E
+
+  uint8_t       web_color2[2][3];          // EA0 - Needs to be on integer distance / 3 from web_color
+
+  uint8_t       free_ea4[338];             // EA6
 
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC

@@ -2579,7 +2579,7 @@ bool JsonWebColor(const char* dataBuf)
   // Default (light)
   // {"WebColor":["#000000","#ffffff","#f2f2f2","#000000","#ffffff","#000000","#ffffff","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999","#000000"]}
   // Alternative (Dark)
-  // {"webcolor":["#eeeeee","#181818","#4f4f4f","#000000","#dddddd","#008000","#222222","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999","#000000"]}
+  // {"Webcolor":["#eeeeee","#181818","#4f4f4f","#000000","#dddddd","#6a9955","#1e1e1e","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999","#eeeeee"]}
 
   char dataBufLc[strlen(dataBuf) +1];
   LowerCase(dataBufLc, dataBuf);

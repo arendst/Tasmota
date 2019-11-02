@@ -1115,6 +1115,10 @@ void SettingsDelta(void)
       }
     }
 
+    if (Settings.version < 0x07000002) {
+      char scolor[10];
+      WebHexCode(18, GetTextIndexed(scolor, sizeof(scolor), 18, kWebColors));
+    }
     Settings.version = VERSION;
     SettingsSave(1);
   }

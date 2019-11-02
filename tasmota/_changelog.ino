@@ -1,4 +1,7 @@
 /*********************************************************************************************\
+ * 7.0.0.2 20191102
+ * Add command WebColor19 to control color of Module and Name (#6811)
+ *
  * 7.0.0.1 20191027
  * Remove references to versions before 6.0
  * Change default GUI to dark theme

@@ -883,8 +883,9 @@ void WebHexCode(uint32_t i, const char* code)
     color = w | (w << 4);                                                            // 00112233
   }
 */
-  uint32_t j = sizeof(Settings.web_color)/3;          // First area contains j=18 colors
-  if (i < j) { 
+  uint32_t j = sizeof(Settings.web_color) / 3;          // First area contains j = 18 colors
+/*
+  if (i < j) {
     Settings.web_color[i][0] = (color >> 16) & 0xFF;  // Red
     Settings.web_color[i][1] = (color >> 8) & 0xFF;   // Green
     Settings.web_color[i][2] = color & 0xFF;          // Blue
@@ -892,14 +893,30 @@ void WebHexCode(uint32_t i, const char* code)
     Settings.web_color2[i-j][0] = (color >> 16) & 0xFF;  // Red
     Settings.web_color2[i-j][1] = (color >> 8) & 0xFF;   // Green
     Settings.web_color2[i-j][2] = color & 0xFF;          // Blue
-  }	  
+  }
+*/
+  if (i >= j) {
+    // Calculate i to index in Settings.web_color2 - Dirty(!) but saves 128 bytes code
+    i += ((((uint8_t*)&Settings.web_color2 - (uint8_t*)&Settings.web_color) / 3) - j);
+  }
+  Settings.web_color[i][0] = (color >> 16) & 0xFF;  // Red
+  Settings.web_color[i][1] = (color >> 8) & 0xFF;   // Green
+  Settings.web_color[i][2] = color & 0xFF;          // Blue
 }
 
 uint32_t WebColor(uint32_t i)
 {
-  uint32_t j = sizeof(Settings.web_color)/3;          // First area contains j=18 colors
+  uint32_t j = sizeof(Settings.web_color) / 3;          // First area contains j = 18 colors
+/*
   uint32_t tcolor = (i<j)? (Settings.web_color[i][0] << 16) | (Settings.web_color[i][1] << 8) | Settings.web_color[i][2] :
                            (Settings.web_color2[i-j][0] << 16) | (Settings.web_color2[i-j][1] << 8) | Settings.web_color2[i-j][2];
+*/
+  if (i >= j) {
+    // Calculate i to index in Settings.web_color2 - Dirty(!) but saves 128 bytes code
+    i += ((((uint8_t*)&Settings.web_color2 - (uint8_t*)&Settings.web_color) / 3) - j);
+  }
+  uint32_t tcolor = (Settings.web_color[i][0] << 16) | (Settings.web_color[i][1] << 8) | Settings.web_color[i][2];
+
   return tcolor;
 }
 
