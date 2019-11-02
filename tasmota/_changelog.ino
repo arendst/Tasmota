@@ -8,6 +8,7 @@
  * Fix better control of RGB/White when SetOption37 >128, added Dimmer1 and Dimmer2 commands (#6714)
  * Add hide Alexa objects with friendlyname starting with '$' (#6722, #6762)
  * Add command SetOption75 0/1 to switch between grouptopic (0) using fulltopic replacing %topic% or (1) is cmnd/<grouptopic> (#6779)
+ * Change Update IRremoteESP8266 to v2.7.0
  *
  * 6.7.1.1 20191026
  * Change ArduinoSlave to TasmotaSlave (Experimental)
