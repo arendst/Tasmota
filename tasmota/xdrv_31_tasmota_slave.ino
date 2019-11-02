@@ -583,8 +583,8 @@ bool Xdrv31(uint8_t function)
       if ((TSlave.type) && (TSlaveSettings.features.func_every_100_msecond)) {
         if (TasmotaSlave_Serial->available()) {
           TasmotaSlave_ProcessIn();
-          }
         }
+      }
       break;
     case FUNC_EVERY_SECOND:
       if ((TSlave.type) && (TSlaveSettings.features.func_every_second)) {
