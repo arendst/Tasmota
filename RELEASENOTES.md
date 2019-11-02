@@ -14,7 +14,7 @@ See [wiki migration path](https://github.com/arendst/Tasmota/wiki/Upgrade#migrat
 ## Supported Core versions
 This release will be supported from ESP8266/Arduino library Core version **pre-2.6.0** due to reported security and stability issues on previous Core version.
 
-Although it might still compile on previous Core versions all support will be removed starting in the next Release.
+Although it might still compile on previous Core versions all support will be removed starting in the near future.
 
 ## Support of TLS
 To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. See full documentation on https://github.com/arendst/Tasmota/wiki/AWS-IoT
@@ -219,6 +219,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_CHIRP             | - | - | - | - | - | - | - |
 | USE_PAJ7620           | - | - | - | - | - | - | - |
 | USE_PCF8574           | - | - | - | - | - | - | - |
+| USE_HIH6              | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
@@ -261,6 +262,17 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 Version 7.1.0 Betty
+ * Remove support for versions before 6.0
  * Change ArduinoSlave to TasmotaSlave (Experimental)
  * Change repository name from Sonoff-Tasmota to Tasmota and all code references from Sonoff to Tasmota
+ * Change default GUI to dark theme
+ * Change IRremoteESP8266 library to v2.7.0
+ * Fix better control of RGB/White when SetOption37 >128, added Dimmer1 and Dimmer2 commands (#6714)
  * Add support for Tuya battery powered devices (#6735)
+ * Add support for Honeywell I2C HIH series Humidity and Temperetaure sensor (#6808)
+ * Add command WebColor19 to control color of Module and Name (#6811)
+ * Add command SetOption73 0/1 to re-enable HTTP Cross-Origin Resource Sharing (CORS) now default disabled (#6767)
+ * Add command SetOption74 0/1 to enable DS18x20 internal pull-up and remove define DS18B20_INTERNAL_PULLUP (#6795)
+ * Add command SetOption75 0/1 to switch between grouptopic (0) using fulltopic replacing %topic% or (1) is cmnd/<grouptopic> (#6779)
+ * Add frequency to ADE7953 energy monitor as used in Shelly 2.5 by ljakob (#6778)
+ * Add hide Alexa objects with friendlyname starting with '$' (#6722, #6762)
