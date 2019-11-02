@@ -480,7 +480,9 @@ void GetFeatures(void)
 #ifdef USE_ARDUINO_SLAVE
   feature5 |= 0x00010000;  // xdrv_31_arduino_slave.ino
 #endif
-//  feature5 |= 0x00020000;
+#ifdef USE_HIH6
+  feature5 |= 0x00020000;  // xsns_55_hih_series.ino
+#endif
 //  feature5 |= 0x00040000;
 //  feature5 |= 0x00080000;
 
