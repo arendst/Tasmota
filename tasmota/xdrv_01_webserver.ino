@@ -364,7 +364,7 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
 #ifdef FIRMWARE_MINIMAL
   "<div style='text-align:center;color:#%06x;'><h3>" D_MINIMAL_FIRMWARE_PLEASE_UPGRADE "</h3></div>"  // COLOR_TEXT_WARNING
 #endif
-  "<div style='text-align:center;'><noscript>" D_NOSCRIPT "<br></noscript>"
+  "<div style='text-align:center;color:#%06x;'><noscript>" D_NOSCRIPT "<br></noscript>" // COLOR_TITLE
 #ifdef LANGUAGE_MODULE_NAME
   "<h3>" D_MODULE " %s</h3>"
 #else
@@ -832,6 +832,7 @@ void WSContentSendStyle_P(const char* formatP, ...)
 #ifdef FIRMWARE_MINIMAL
     WebColor(COL_TEXT_WARNING),
 #endif
+    WebColor(COL_TITLE),
     ModuleName().c_str(), Settings.friendlyname[0]);
   if (Settings.flag3.gui_hostname_ip) {
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);

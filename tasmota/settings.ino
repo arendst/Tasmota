@@ -119,6 +119,9 @@
 #ifndef COLOR_TIMER_TAB_BACKGROUND
 #define COLOR_TIMER_TAB_BACKGROUND  "#999"     // Config timer tab background color - Light grey
 #endif
+#ifndef COLOR_TITLE_TEXT
+#define COLOR_TITLE_TEXT			      COLOR_TEXT // Title text color defaults to global text color either dark or light
+#endif
 #ifndef IR_RCV_MIN_UNKNOWN_SIZE
 #define IR_RCV_MIN_UNKNOWN_SIZE     6          // Set the smallest sized "UNKNOWN" message packets we actually care about (default 6, max 255)
 #endif
@@ -137,7 +140,7 @@ enum WebColors {
   COL_INPUT_TEXT, COL_INPUT, COL_CONSOLE_TEXT, COL_CONSOLE,
   COL_TEXT_WARNING, COL_TEXT_SUCCESS,
   COL_BUTTON_TEXT, COL_BUTTON, COL_BUTTON_HOVER, COL_BUTTON_RESET, COL_BUTTON_RESET_HOVER, COL_BUTTON_SAVE, COL_BUTTON_SAVE_HOVER,
-  COL_TIMER_TAB_TEXT, COL_TIMER_TAB_BACKGROUND,
+  COL_TIMER_TAB_TEXT, COL_TIMER_TAB_BACKGROUND, COL_TITLE,
   COL_LAST };
 
 const char kWebColors[] PROGMEM =
@@ -145,7 +148,7 @@ const char kWebColors[] PROGMEM =
   COLOR_INPUT_TEXT "|" COLOR_INPUT "|" COLOR_CONSOLE_TEXT "|" COLOR_CONSOLE "|"
   COLOR_TEXT_WARNING "|" COLOR_TEXT_SUCCESS "|"
   COLOR_BUTTON_TEXT "|" COLOR_BUTTON "|" COLOR_BUTTON_HOVER "|" COLOR_BUTTON_RESET "|" COLOR_BUTTON_RESET_HOVER "|" COLOR_BUTTON_SAVE "|" COLOR_BUTTON_SAVE_HOVER "|"
-  COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND;
+  COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND "|" COLOR_TITLE_TEXT;
 
 /*********************************************************************************************\
  * RTC memory
