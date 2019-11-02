@@ -2163,11 +2163,12 @@ void CmndColorTemperature(void)
 void CmndDimmer(void)
 {
   uint32_t dimmer;
-
-  if ((1 == XdrvMailbox.index) || (2 == XdrvMailbox.index)) {    // Dimmer1 is RGB, Dimmer 2 iw white
-    dimmer = light_state.getDimmer(XdrvMailbox.index);
-  } else {
+  if (XdrvMailbox.index > 2) { XdrvMailbox.index = 1; }
+  
+  if ((light_controller.isCTRGBLinked()) || (0 == XdrvMailbox.index)) {
     dimmer = light_state.getDimmer();
+  } else {
+    dimmer = light_state.getDimmer(XdrvMailbox.index);
   }
   // Handle +/- special command
   if (1 == XdrvMailbox.data_len) {
@@ -2179,10 +2180,17 @@ void CmndDimmer(void)
   }
   // If value is ok, change it, otherwise report old value
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-    if ((1 == XdrvMailbox.index) || (2 == XdrvMailbox.index)) {
-      light_controller.changeDimmer(XdrvMailbox.payload, XdrvMailbox.index);
-    } else {
+    if (light_controller.isCTRGBLinked()) {
+      // normal state, linked RGB and CW
       light_controller.changeDimmer(XdrvMailbox.payload);
+    } else {
+      if (0 != XdrvMailbox.index) {
+        light_controller.changeDimmer(XdrvMailbox.payload, XdrvMailbox.index);
+      } else {
+        // change both dimmers
+        light_controller.changeDimmer(XdrvMailbox.payload, 1);
+        light_controller.changeDimmer(XdrvMailbox.payload, 2);
+      }
     }
     Light.update = true;
     LightPreparePower();
