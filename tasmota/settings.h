@@ -433,8 +433,9 @@ struct SYSCFG {
   uint32_t      deepsleep;                 // E94
   uint16_t      energy_power_delta;        // E98
   uint8_t       shutter_motordelay[MAX_SHUTTERS];      // E9A
-
-  uint8_t       free_e9e[346];             // E9E
+  uint8_t       free_e9e[342];             // E9E
+  uint8_t       web_color2[1][3];          // FF4
+  uint8_t       free_ff7      ;            // FF7
 
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC
