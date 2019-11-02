@@ -43,11 +43,13 @@
 
 #define CMND_FEATURES                  0x01
 #define CMND_JSON                      0x02
-#define CMND_SECOND_TICK               0x03
+#define CMND_FUNC_EVERY_SECOND         0x03
+#define CMND_FUNC_EVERY_100_MSECOND    0x04
+#define CMND_SLAVE_SEND                0x05
+#define CMND_PUBLISH_TELE              0x06
 
 #define PARAM_DATA_START               0xFE
 #define PARAM_DATA_END                 0xFF
-
 
 #include <TasmotaSerial.h>
 
@@ -143,24 +145,40 @@ struct TSLAVE {
 } TSlave;
 
 typedef union {
-  uint16_t data;
+  uint32_t data;
   struct {
-    uint16_t json : 1;              // Slave supports providing a JSON for TELEPERIOD
-    uint16_t second_tick : 1;       // Slave supports receiving a FUNC_EVERY_SECOND callback with no response
-    uint16_t spare2 : 1;
-    uint16_t spare3 : 1;
-    uint16_t spare4 : 1;
-    uint16_t spare5 : 1;
-    uint16_t spare6 : 1;
-    uint16_t spare7 : 1;
-    uint16_t spare8 : 1;
-    uint16_t spare9 : 1;
-    uint16_t spare10 : 1;
-    uint16_t spare11 : 1;
-    uint16_t spare12 : 1;
-    uint16_t spare13 : 1;
-    uint16_t spare14 : 1;
-    uint16_t spare15 : 1;
+    uint32_t func_json_append : 1;              // Slave supports providing a JSON for TELEPERIOD
+    uint32_t func_every_second : 1;             // Slave supports receiving a FUNC_EVERY_SECOND callback with no response
+    uint32_t func_every_100_msecond : 1;        // Slave supports receiving a FUNC_EVERY_100_MSECOND callback with no response
+    uint32_t func_slave_send : 1;               // Slave supports receiving commands with "slave send xxx"
+    uint32_t spare4 : 1;
+    uint32_t spare5 : 1;
+    uint32_t spare6 : 1;
+    uint32_t spare7 : 1;
+    uint32_t spare8 : 1;
+    uint32_t spare9 : 1;
+    uint32_t spare10 : 1;
+    uint32_t spare11 : 1;
+    uint32_t spare12 : 1;
+    uint32_t spare13 : 1;
+    uint32_t spare14 : 1;
+    uint32_t spare15 : 1;
+    uint32_t spare16 : 1;
+    uint32_t spare17 : 1;
+    uint32_t spare18 : 1;
+    uint32_t spare19 : 1;
+    uint32_t spare20 : 1;
+    uint32_t spare21 : 1;
+    uint32_t spare22 : 1;
+    uint32_t spare23 : 1;
+    uint32_t spare24 : 1;
+    uint32_t spare25 : 1;
+    uint32_t spare26 : 1;
+    uint32_t spare27 : 1;
+    uint32_t spare28 : 1;
+    uint32_t spare29 : 1;
+    uint32_t spare30 : 1;
+    uint32_t spare31 : 1;
   };
 } TSlaveFeatureCfg;
 
@@ -169,18 +187,17 @@ typedef union {
  * Tasmota as master
  */
 
-struct FEATURES {
+struct TSLAVE_FEATURES {
   uint32_t features_version;
   TSlaveFeatureCfg features;
-  uint16_t spare4;
 } TSlaveSettings;
 
-struct COMMAND {
+struct TSLAVE_COMMAND {
   uint8_t command;
   uint8_t parameter;
   uint8_t unused2;
   uint8_t unused3;
-} Command;
+} TSlaveCommand;
 
 TasmotaSerial *TasmotaSlave_Serial;
 
@@ -444,7 +461,7 @@ void TasmotaSlave_Init(void)
     TasmotaSlave_Serial->readBytesUntil(char(PARAM_DATA_START), buffer, sizeof(buffer));
     uint8_t len = TasmotaSlave_Serial->readBytesUntil(char(PARAM_DATA_END), buffer, sizeof(buffer));
     memcpy(&TSlaveSettings, &buffer, sizeof(TSlaveSettings));
-    if (20191026 <= TSlaveSettings.features_version) {
+    if (20191101 <= TSlaveSettings.features_version) {
       TSlave.type = true;
       AddLog_P2(LOG_LEVEL_INFO, PSTR("Tasmota Slave Version %u"), TSlaveSettings.features_version);
     }
@@ -453,7 +470,7 @@ void TasmotaSlave_Init(void)
 
 void TasmotaSlave_Show(void)
 {
-  if ((TSlave.type) && (TSlaveSettings.features.json)) {
+  if ((TSlave.type) && (TSlaveSettings.features.func_json_append)) {
     char buffer[100];
     TasmotaSlave_sendCmnd(CMND_JSON, 0);
     TasmotaSlave_Serial->readBytesUntil(char(PARAM_DATA_START), buffer, sizeof(buffer)-1);
@@ -465,16 +482,93 @@ void TasmotaSlave_Show(void)
 
 void TasmotaSlave_sendCmnd(uint8_t cmnd, uint8_t param)
 {
-  Command.command = cmnd;
-  Command.parameter = param;
-  char buffer[sizeof(Command)+2];
+  TSlaveCommand.command = cmnd;
+  TSlaveCommand.parameter = param;
+  char buffer[sizeof(TSlaveCommand)+2];
   buffer[0] = CMND_START;
-  memcpy(&buffer[1], &Command, sizeof(Command));
-  buffer[sizeof(Command)+1] = CMND_END;
+  memcpy(&buffer[1], &TSlaveCommand, sizeof(TSlaveCommand));
+  buffer[sizeof(TSlaveCommand)+1] = CMND_END;
   for (uint8_t ca = 0; ca < sizeof(buffer); ca++) {
     TasmotaSlave_Serial->write(buffer[ca]);
   }
 }
+
+const char kTasmotaSlaveCommands[] PROGMEM = "|"  // No prefix
+  "Slave" ;
+
+void (* const TasmotaSlaveCommand[])(void) PROGMEM = {
+  &CmndTasmotaSlave };
+
+void CmndTasmotaSlave(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    uint8_t paramcount = 1;
+    for (uint8_t idx = 0; idx < strlen(XdrvMailbox.data); idx++) {
+      if ((' ' == XdrvMailbox.data[idx]) || (',' == XdrvMailbox.data[idx])) {
+        XdrvMailbox.data[idx] = ','; // Make it a comma irrespective whether its a space or a comma
+        paramcount++;
+      }
+      UpperCase(XdrvMailbox.data,XdrvMailbox.data);
+
+      char sub_string[XdrvMailbox.data_len];
+
+      if (1 == paramcount) { // Single parameter commands
+        if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "RESET"))  {
+          TasmotaSlave_Reset();
+          TSlave.type = false;  // Force redetection
+          TSlave.waitstate = 7; // give it at least 3 seconds to restart from bootloader
+        }
+      }
+      if (2 == paramcount) { // Double parameter commands
+        if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "SEND")) && (TSlaveSettings.features.func_slave_send))  {
+          char tmp[XdrvMailbox.data_len];
+          sprintf(tmp, "%s", subStr(sub_string, XdrvMailbox.data, ",", 2));
+          TasmotaSlave_sendCmnd(CMND_SLAVE_SEND, strlen(tmp));
+          TasmotaSlave_Serial->write(char(PARAM_DATA_START));
+          for (uint8_t ci = 0; ci < strlen(tmp); ci++) {
+            TasmotaSlave_Serial->write(tmp[ci]);
+          }
+          TasmotaSlave_Serial->write(char(PARAM_DATA_END));
+        }
+      }
+    }
+  }
+  ResponseCmndDone();
+}
+
+void TasmotaSlave_ProcessIn(void)
+{
+  uint8_t cmnd = TasmotaSlave_Serial->read();
+  switch (cmnd) {
+    case CMND_START:
+      TasmotaSlave_waitForSerialData(sizeof(TSlaveCommand),50);
+      uint8_t buffer[sizeof(TSlaveCommand)];
+      for (uint8_t idx = 0; idx < sizeof(TSlaveCommand); idx++) {
+        buffer[idx] = TasmotaSlave_Serial->read();
+      }
+      TasmotaSlave_Serial->read(); // read trailing byte of command
+      memcpy(&TSlaveCommand, &buffer, sizeof(TSlaveCommand));
+      if (CMND_PUBLISH_TELE == TSlaveCommand.command) { // We need to publish stat/ with incoming stream as content
+        char inbuf[sizeof(TSlaveCommand.parameter)+1];
+        TasmotaSlave_waitForSerialData(TSlaveCommand.parameter, 50);
+        TasmotaSlave_Serial->read(); // Read leading byte
+        for (uint8_t idx = 0; idx < TSlaveCommand.parameter; idx++) {
+          inbuf[idx] = TasmotaSlave_Serial->read();
+        }
+        TasmotaSlave_Serial->read(); // Read trailing byte
+        inbuf[TSlaveCommand.parameter] = '\0';
+        Response_P(PSTR("{\"TasmotaSlave\":"));
+        ResponseAppend_P("%s", inbuf);
+        ResponseJsonEnd();
+        MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
+        XdrvRulesProcess();
+      }
+      break;
+    default:
+      break;
+  }
+}
+
 
 /*********************************************************************************************\
  * Interface
@@ -485,16 +579,26 @@ bool Xdrv31(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_EVERY_SECOND:
-      TasmotaSlave_Init();
-      if (TSlave.type) {
-        if (TSlaveSettings.features.second_tick) {
-          TasmotaSlave_sendCmnd(CMND_SECOND_TICK, 0);
+    case FUNC_EVERY_100_MSECOND:
+      if ((TSlave.type) && (TSlaveSettings.features.func_every_100_msecond)) {
+        if (TasmotaSlave_Serial->available()) {
+          TasmotaSlave_ProcessIn();
         }
       }
       break;
+    case FUNC_EVERY_SECOND:
+      if ((TSlave.type) && (TSlaveSettings.features.func_every_second)) {
+        TasmotaSlave_sendCmnd(CMND_FUNC_EVERY_SECOND, 0);
+      }
+      TasmotaSlave_Init();
+      break;
     case FUNC_JSON_APPEND:
-      TasmotaSlave_Show();
+      if ((TSlave.type) && (TSlaveSettings.features.func_json_append)) {
+        TasmotaSlave_Show();
+      }
+      break;
+    case FUNC_COMMAND:
+      result = DecodeCommand(kTasmotaSlaveCommands, TasmotaSlaveCommand);
       break;
   }
   return result;
