@@ -1221,10 +1221,10 @@ bool DisplayMqttData(void)
 
     snprintf_P(stopic, sizeof(stopic) , PSTR("%s/"), Settings.mqtt_prefix[2]);  // tele/
     char *tp = strstr(XdrvMailbox.topic, stopic);
-    if (tp) {                                                // tele/sonoff/SENSOR
+    if (tp) {                                                // tele/tasmota/SENSOR
       if (Settings.display_mode &0x04) {
-        tp = tp + strlen(stopic);                              // sonoff/SENSOR
-        char *topic = strtok(tp, "/");                         // sonoff
+        tp = tp + strlen(stopic);                              // tasmota/SENSOR
+        char *topic = strtok(tp, "/");                         // tasmota
         DisplayAnalyzeJson(topic, XdrvMailbox.data);
       }
       return true;

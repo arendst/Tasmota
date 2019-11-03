@@ -24,7 +24,7 @@
  * Using libraries:
  *   ESP KNX IP library (https://github.com/envy/esp-knx-ip)
 
-Constants in sonoff.h
+Constants in tasmota.h
 -----------------------
 
 #define MAX_KNX_GA             10            Max number of KNX Group Addresses to read that can be set

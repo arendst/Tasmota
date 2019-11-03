@@ -484,7 +484,7 @@ void HueAuthentication(String *path)
 void HueLights(String *path)
 {
 /*
- * http://sonoff/api/username/lights/1/state?1={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
+ * http://tasmota/api/username/lights/1/state?1={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
  */
   String response;
   int code = 200;
@@ -744,7 +744,7 @@ void HueLights(String *path)
 void HueGroups(String *path)
 {
 /*
- * http://sonoff/api/username/groups?1={"name":"Woonkamer","lights":[],"type":"Room","class":"Living room"})
+ * http://tasmota/api/username/groups?1={"name":"Woonkamer","lights":[],"type":"Room","class":"Living room"})
  */
   String response = "{}";
   uint8_t maxhue = (devices_present > MAX_HUE_DEVICES) ? MAX_HUE_DEVICES : devices_present;
@@ -774,9 +774,9 @@ void HandleHueApi(String *path)
    * (c) Heiko Krupp, 2017
    *
    * Hue URL
-   * http://sonoff/api/username/lights/1/state with post data {"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
+   * http://tasmota/api/username/lights/1/state with post data {"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
    * is converted by webserver to
-   * http://sonoff/api/username/lights/1/state with arg plain={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
+   * http://tasmota/api/username/lights/1/state with arg plain={"on":true,"hue":56100,"sat":254,"bri":254,"alert":"none","transitiontime":40}
    */
 
   uint8_t args = 0;

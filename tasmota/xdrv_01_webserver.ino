@@ -837,7 +837,7 @@ void WSContentSendStyle_P(const char* formatP, ...)
   if (Settings.flag3.gui_hostname_ip) {                // SetOption53 - Show hostanme and IP address in GUI main menu
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
-    WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // sonoff.local (192.168.2.12, 192.168.4.1)
+    WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // tasmota.local (192.168.2.12, 192.168.4.1)
       my_hostname,
       (Wifi.mdns_begun) ? ".local" : "",
       (lip) ? WiFi.localIP().toString().c_str() : "",
@@ -2494,10 +2494,10 @@ String UrlEncode(const String& text)
 
 int WebSend(char *buffer)
 {
-  // [sonoff] POWER1 ON                                               --> Sends http://sonoff/cm?cmnd=POWER1 ON
+  // [tasmota] POWER1 ON                                               --> Sends http://tasmota/cm?cmnd=POWER1 ON
   // [192.168.178.86:80,admin:joker] POWER1 ON                        --> Sends http://hostname:80/cm?user=admin&password=joker&cmnd=POWER1 ON
-  // [sonoff] /any/link/starting/with/a/slash.php?log=123             --> Sends http://sonoff/any/link/starting/with/a/slash.php?log=123
-  // [sonoff,admin:joker] /any/link/starting/with/a/slash.php?log=123 --> Sends http://sonoff/any/link/starting/with/a/slash.php?log=123
+  // [tasmota] /any/link/starting/with/a/slash.php?log=123             --> Sends http://tasmota/any/link/starting/with/a/slash.php?log=123
+  // [tasmota,admin:joker] /any/link/starting/with/a/slash.php?log=123 --> Sends http://tasmota/any/link/starting/with/a/slash.php?log=123
 
   char *host;
   char *user;

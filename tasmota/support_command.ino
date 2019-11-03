@@ -102,7 +102,7 @@ void ExecuteCommand(const char *cmnd, uint32_t source)
   const char *start = pos;
   // Get a command. Commands can only use letters, digits and underscores
   while (*pos && (isalpha(*pos) || isdigit(*pos) || '_' == *pos || '/' == *pos)) {
-    if ('/' == *pos) {            // Skip possible cmnd/sonoff/ preamble
+    if ('/' == *pos) {            // Skip possible cmnd/tasmota/ preamble
       start = pos + 1;
     }
     pos++;
@@ -125,8 +125,8 @@ void ExecuteCommand(const char *cmnd, uint32_t source)
 /********************************************************************************************/
 
 // topicBuf:                    /power1  dataBuf: toggle  = Console command
-// topicBuf:         cmnd/sonoff/power1  dataBuf: toggle  = Mqtt command using topic
-// topicBuf:        cmnd/sonoffs/power1  dataBuf: toggle  = Mqtt command using a group topic
+// topicBuf:         cmnd/tasmota/power1  dataBuf: toggle  = Mqtt command using topic
+// topicBuf:        cmnd/tasmotas/power1  dataBuf: toggle  = Mqtt command using a group topic
 // topicBuf: cmnd/DVES_83BB10_fb/power1  dataBuf: toggle  = Mqtt command using fallback topic
 
 void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)

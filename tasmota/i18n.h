@@ -193,7 +193,7 @@
 
 #define D_LOG_SOME_SETTINGS_RESET "Some settings have been reset"
 
-// Commands sonoff.ino
+// Commands tasmota.ino
 #define D_CMND_BACKLOG "Backlog"
 #define D_CMND_DELAY "Delay"
 #define D_CMND_STATUS "Status"

@@ -182,7 +182,7 @@
 #define D_WARMLIGHT "Teplé světlo"
 #define D_WEB_SERVER "Web Server"
 
-// sonoff.ino
+// tasmota.ino
 #define D_WARNING_MINIMAL_VERSION "UPOZORNĚNÍ Tato verze nepodporuje trvalé nastavení"
 #define D_LEVEL_10 "úroveň 1-0"
 #define D_LEVEL_01 "úroveň 0-1"
@@ -511,7 +511,7 @@
 //xsns_43_hre.ino
 #define D_LOG_HRE "HRE: "
 
-// sonoff_template.h - keep them as short as possible to be able to fit them in GUI drop down box
+// tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Není"
 #define D_SENSOR_USER          "User"
 #define D_SENSOR_DHT11         "DHT11"
