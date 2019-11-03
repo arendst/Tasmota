@@ -1543,8 +1543,8 @@ void CmndI2cDriver(void)
   if (XdrvMailbox.index < MAX_I2C_DRIVERS) {
     if (XdrvMailbox.payload >= 0) {
       bitWrite(Settings.i2c_drivers[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+      restart_flag = 2;
     }
-    restart_flag = 2;
   }
   Response_P(PSTR("{\"" D_CMND_I2CDRIVER "\":"));
   XI2cDriverState();
