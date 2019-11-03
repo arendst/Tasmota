@@ -8,6 +8,8 @@
 
 // Common
 
+#ifdef USE_IR_REMOTE_FULL   // full IR protocols
+
 String kUnknownStr = D_STR_UNKNOWN;
 String kProtocolStr = D_STR_PROTOCOL;
 String kPowerStr = D_STR_POWER;
@@ -147,3 +149,5 @@ String kFalseStr = D_STR_FALSE;
 String kRepeatStr = D_STR_REPEAT;
 String kCodeStr = D_STR_CODE;
 String kBitsStr = D_STR_BITS;
+
+#endif // USE_IR_REMOTE_FULL   // full IR protocols

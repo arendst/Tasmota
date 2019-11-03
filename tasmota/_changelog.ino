@@ -5,6 +5,7 @@
  * Fix wrong Dimmer behavior introduced with #6799 when SetOption37 < 128
  * Change add DS18x20 support in Tasmota-IR
  * Add Zigbee command support, considered as v1.0 for full Zigbee support
+ * Fix Reduce flash size after change to IRremoteESP8266 v2.7.0
  *
  * 7.0.0.1 20191027
  * Remove references to versions before 6.0
