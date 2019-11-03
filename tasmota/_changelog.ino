@@ -3,6 +3,7 @@
  * Add command WebColor19 to control color of Module and Name (#6811)
  * Add support for Honeywell I2C HIH series Humidity and Temperetaure sensor (#6808)
  * Fix wrong Dimmer behavior introduced with #6799 when SetOption37 < 128
+ * Change add DS18x20 support in Tasmota-IR
  *
  * 7.0.0.1 20191027
  * Remove references to versions before 6.0

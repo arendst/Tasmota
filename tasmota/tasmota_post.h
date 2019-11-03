@@ -356,7 +356,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
   #undef USE_DDSU666                             // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
   #undef USE_SOLAX_X1                            // Disable support for Solax X1 series Modbus log info (+3k1 code)
 
-#undef USE_DS18x20                               // Disable support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
+//#undef USE_DS18x20                               // Disable support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
 #undef USE_I2C                                   // Disable all I2C sensors
 #undef USE_SPI                                   // Disable all SPI devices
