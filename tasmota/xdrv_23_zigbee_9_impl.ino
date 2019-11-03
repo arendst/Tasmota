@@ -37,11 +37,11 @@ TasmotaSerial *ZigbeeSerial = nullptr;
 
 
 const char kZigbeeCommands[] PROGMEM = "|" D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEE_PERMITJOIN
-                                "|" D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_ZCL_SEND
-                                "|" D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ;
+                                "|" D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND
+                                "|" D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ ;
 
 void (* const ZigbeeCommand[])(void) PROGMEM = { &CmndZigbeeZNPSend, &CmndZigbeePermitJoin,
-                                &CmndZigbeeStatus, &CmndZigbeeReset, &CmndZigbeeZCLSend,
+                                &CmndZigbeeStatus, &CmndZigbeeReset, &CmndZigbeeSend,
                                 &CmndZigbeeProbe, &CmndZigbeeRead };
 
 int32_t ZigbeeProcessInput(class SBuffer &buf) {
@@ -246,7 +246,7 @@ void ZigbeeInit(void)
  * Commands
 \*********************************************************************************************/
 
-uint32_t strToUInt(const JsonVariant &val) {
+uint32_t strToUInt(const JsonVariant val) {
   // if the string starts with 0x, it is considered Hex, otherwise it is an int
   if (val.is<unsigned int>()) {
     return val.as<unsigned int>();
@@ -258,7 +258,9 @@ uint32_t strToUInt(const JsonVariant &val) {
   return 0;   // couldn't parse anything
 }
 
-const unsigned char ZIGBEE_FACTORY_RESET[] PROGMEM = "2112000F0100";  // Z_SREQ | Z_SYS, SYS_OSAL_NV_DELETE, 0x0F00 id, 0x0001 len
+const unsigned char ZIGBEE_FACTORY_RESET[] PROGMEM = 
+  { Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 /* len */, 0x01 /* STARTOPT_CLEAR_CONFIG */};
+//"2605030101";  // Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 len, 0x01 STARTOPT_CLEAR_CONFIG
 // Do a factory reset of the CC2530
 void CmndZigbeeReset(void) {
   if (ZigbeeSerial) {
@@ -276,7 +278,7 @@ void CmndZigbeeReset(void) {
 
 void CmndZigbeeStatus(void) {
   if (ZigbeeSerial) {
-    String dump = zigbee_devices.dump(XdrvMailbox.payload);
+    String dump = zigbee_devices.dump(XdrvMailbox.index, XdrvMailbox.payload);
     Response_P(PSTR("{\"%s%d\":%s}"), XdrvMailbox.command, XdrvMailbox.payload, dump.c_str());
   }
 }
@@ -385,37 +387,15 @@ uint32_t parseHex(const char **data, size_t max_len = 8) {
   return ret;
 }
 
-void CmndZigbeeZCLSend(void) {
-  char parm_uc[12];   // used to convert JSON keys to uppercase
-  // ZigbeeZCLSend { "dst":"0x1234", "endpoint":"0x01", "cmd":"AABBCC" }
-  char dataBufUc[XdrvMailbox.data_len];
-  UpperCase(dataBufUc, XdrvMailbox.data);
-  RemoveSpace(dataBufUc);
-  if (strlen(dataBufUc) < 8) { ResponseCmndChar(D_JSON_INVALID_JSON); return; }
+void zigbeeZCLSendStr(uint16_t dstAddr, uint8_t endpoint, const char *data) {
 
-  DynamicJsonBuffer jsonBuf;
-  JsonObject &json = jsonBuf.parseObject(dataBufUc);
-  if (!json.success()) { ResponseCmndChar(D_JSON_INVALID_JSON); return; }
-
-  // params
-  uint16_t dstAddr = 0xFFFF;      // 0xFFFF is braodcast, so considered invalid
-  uint16_t clusterId = 0x0000;    // 0x0000 is a valid default value
-  uint8_t  endpoint = 0x00;       // 0x00 is invalid for the dst endpoint
+  uint16_t cluster = 0x0000;    // 0x0000 is a valid default value
   uint8_t  cmd = ZCL_READ_ATTRIBUTES; // default command is READ_ATTRIBUTES
   bool     clusterSpecific = false;
-  const char* data = "";             // empty string is valid
-
-  UpperCase_P(parm_uc, PSTR("device"));
-  if (json.containsKey(parm_uc)) { dstAddr = strToUInt(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR("endpoint"));
-  if (json.containsKey(parm_uc)) { endpoint = strToUInt(json[parm_uc]); }
-  UpperCase_P(parm_uc, PSTR("cmd"));
-  if (json.containsKey(parm_uc)) { data = json[parm_uc].as<const char*>(); }
-
   // Parse 'cmd' in the form "AAAA_BB/CCCCCCCC" or "AAAA!BB/CCCCCCCC"
   // where AA is the cluster number, BBBB the command number, CCCC... the payload
   // First delimiter is '_' for a global command, or '!' for a cluster specific commanc
-  clusterId = parseHex(&data, 4);
+  cluster = parseHex(&data, 4);
 
   // delimiter
   if (('_' == *data) || ('!' == *data)) {
@@ -442,24 +422,149 @@ void CmndZigbeeZCLSend(void) {
 
   if (0 == endpoint) {
     // endpoint is not specified, let's try to find it from shortAddr
-    endpoint = zigbee_devices.findClusterEndpointIn(dstAddr, clusterId);
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CmndZigbeeZCLSend: guessing endpoint 0x%02X"), endpoint);
+    endpoint = zigbee_devices.findClusterEndpointIn(dstAddr, cluster);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZigbeeSend: guessing endpoint 0x%02X"), endpoint);
   }
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CmndZigbeeZCLSend: dstAddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %s"),
-    dstAddr, clusterId, endpoint, cmd, data);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZigbeeSend: dstAddr 0x%04X, cluster 0x%04X, endpoint 0x%02X, cmd 0x%02X, data %s"),
+    dstAddr, cluster, endpoint, cmd, data);
 
   if (0 == endpoint) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR("CmndZigbeeZCLSend: unspecified endpoint"));
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeSend: unspecified endpoint"));
     return;
   }
 
   // everything is good, we can send the command
-  ZigbeeZCLSend(dstAddr, clusterId, endpoint, cmd, clusterSpecific, buf.getBuffer(), buf.len());
+  ZigbeeZCLSend(dstAddr, cluster, endpoint, cmd, clusterSpecific, buf.getBuffer(), buf.len());
   ResponseCmndDone();
+}
+
+// Get an JSON attribute, with case insensitive key search
+JsonVariant &getCaseInsensitive(const JsonObject &json, const char *needle) {
+  // key can be in PROGMEM
+  if ((nullptr == &json) || (nullptr == needle) || (0 == pgm_read_byte(needle))) {
+    return *(JsonVariant*)nullptr;
+  }
+
+  for (auto kv : json) {
+    const char *key = kv.key;
+    JsonVariant &value = kv.value;
+
+    if (0 == strcasecmp_P(key, needle)) {
+      return value;
+    }
+  }
+  // if not found
+  return *(JsonVariant*)nullptr;
+}
+
+void CmndZigbeeSend(void) {
+  // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":1} }
+  // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":"3"} }
+  // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":"0xFF"} }
+  // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":null} }
+  // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":false} }
+  // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":true} }
+  // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":"true"} }
+  // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"ShutterClose":null} }
+  // ZigbeeSend { "devicse":"0x1234", "endpoint":"0x03", "send":{"Power":1} }
+  // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Color":"1,2"} }
+  // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Color":"0x1122,0xFFEE"} }
+  if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
+  DynamicJsonBuffer jsonBuf;
+  JsonObject &json = jsonBuf.parseObject(XdrvMailbox.data);
+  if (!json.success()) { ResponseCmndChar(D_JSON_INVALID_JSON); return; }
+
+  // params
+  static char delim[] = ", ";     // delimiters for parameters
+  uint16_t device = 0xFFFF;       // 0xFFFF is broadcast, so considered valid
+  uint8_t  endpoint = 0x00;       // 0x00 is invalid for the dst endpoint
+  String   cmd_str = "";          // the actual low-level command, either specified or computed
+
+  const JsonVariant &val_device = getCaseInsensitive(json, PSTR("device"));
+  if (nullptr != &val_device) { device = strToUInt(val_device); }
+  const JsonVariant &val_endpoint = getCaseInsensitive(json, PSTR("endpoint"));
+  if (nullptr != &val_endpoint) { endpoint = strToUInt(val_endpoint); }
+  const JsonVariant val_cmd = getCaseInsensitive(json, PSTR("Send"));
+  if (nullptr != &val_cmd) {
+    // probe the type of the argument
+    // If JSON object, it's high level commands
+    // If String, it's a low level command
+    if (val_cmd.is<JsonObject>()) {
+      // we have a high-level command
+      JsonObject &cmd_obj = val_cmd.as<JsonObject&>();
+      int32_t cmd_size = cmd_obj.size();
+      if (cmd_size > 1) {
+        Response_P(PSTR("Only 1 command allowed (%d)"), cmd_size);
+        return;
+      } else if (1 == cmd_size) {
+        // We have exactly 1 command, parse it
+        JsonObject::iterator it = cmd_obj.begin();    // just get the first key/value
+        String key = it->key;
+        JsonVariant& value = it->value;
+        uint32_t x = 0, y = 0, z = 0;
+
+        const __FlashStringHelper* tasmota_cmd = zigbeeFindCommand(key.c_str());
+        if (tasmota_cmd) {
+          cmd_str = tasmota_cmd;
+        } else {
+          Response_P(PSTR("Unrecognized zigbee command: %s"), key.c_str());
+          return;
+        }
+
+        // parse the JSON value, depending on its type fill in x,y,z
+        if (value.is<bool>()) {
+          x = value.as<bool>() ? 1 : 0;
+        } else if (value.is<unsigned int>()) {
+          x = value.as<unsigned int>();
+        } else {
+          // if non-bool or non-int, trying char*
+          const char *s_const = value.as<const char*>();
+          if (s_const != nullptr) {
+            char s[strlen(s_const)+1];
+            strcpy(s, s_const);
+            if ((nullptr != s) && (0x00 != *s)) {     // ignore any null or empty string, could represent 'null' json value
+              char *sval = strtok(s, delim);
+              if (sval) {
+                x = ZigbeeAliasOrNumber(sval);
+                sval = strtok(nullptr, delim);
+                if (sval) {
+                  y = ZigbeeAliasOrNumber(sval);
+                  sval = strtok(nullptr, delim);
+                  if (sval) {
+                    z = ZigbeeAliasOrNumber(sval);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZigbeeSend: command_template = %s"), cmd_str.c_str());
+        cmd_str = zigbeeCmdAddParams(cmd_str.c_str(), x, y, z);   // fill in parameters
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZigbeeSend: command_final    = %s"), cmd_str.c_str());
+      } else {
+        // we have zero command, pass through until last error for missing command
+      }
+    } else if (val_cmd.is<char*>()) {
+      // low-level command
+      cmd_str = val_cmd.as<String>();
+    } else {
+      // we have an unsupported command type, just ignore it and fallback to missing command
+    }
+
+    AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeCmd_actual: ZigbeeZCLSend {\"device\":\"0x%04X\",\"endpoint\":%d,\"send\":\"%s\"}"),
+              device, endpoint, cmd_str.c_str());
+    zigbeeZCLSendStr(device, endpoint, cmd_str.c_str());
+  } else {
+    Response_P(PSTR("Missing zigbee 'Send'"));
+    return;
+  }
+
 }
 
 // Probe a specific device to get its endpoints and supported clusters
 void CmndZigbeeProbe(void) {
+  if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
   char dataBufUc[XdrvMailbox.data_len];
   UpperCase(dataBufUc, XdrvMailbox.data);
   RemoveSpace(dataBufUc);
@@ -476,34 +581,33 @@ void CmndZigbeeProbe(void) {
 
 // Send an attribute read command to a device, specifying cluster and list of attributes
 void CmndZigbeeRead(void) {
-  char parm_uc[12];   // used to convert JSON keys to uppercase
   // ZigbeeRead {"Device":"0xF289","Cluster":0,"Endpoint":3,"Attr":5}
   // ZigbeeRead {"Device":"0xF289","Cluster":"0x0000","Endpoint":"0x0003","Attr":"0x0005"}
   // ZigbeeRead {"Device":"0xF289","Cluster":0,"Endpoint":3,"Attr":[5,6,7,4]}
-  char dataBufUc[XdrvMailbox.data_len];
-  UpperCase(dataBufUc, XdrvMailbox.data);
-  RemoveSpace(dataBufUc);
-  if (strlen(dataBufUc) < 8) { ResponseCmndChar(D_JSON_INVALID_JSON); return; }
-
+  if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
   DynamicJsonBuffer jsonBuf;
-  JsonObject &json = jsonBuf.parseObject(dataBufUc);
+  JsonObject &json = jsonBuf.parseObject(XdrvMailbox.data);
   if (!json.success()) { ResponseCmndChar(D_JSON_INVALID_JSON); return; }
 
   // params
-  uint16_t dstAddr = 0x0000;    // default to local address
-  uint16_t cluster = 0x0000;      // default to general clsuter
+  uint16_t device = 0xFFFF;       // 0xFFFF is braodcast, so considered valid
+  uint16_t cluster = 0x0000;      // default to general cluster
   uint8_t  endpoint = 0x00;       // 0x00 is invalid for the dst endpoint
-  size_t          attrs_len = 0;
-  uint8_t* attrs = nullptr;             // empty string is valid
+  size_t   attrs_len = 0;
+  uint8_t* attrs = nullptr;       // empty string is valid
 
-  dstAddr  = strToUInt(json[UpperCase_P(parm_uc, PSTR("device"))]);
-  endpoint = strToUInt(json[UpperCase_P(parm_uc, PSTR("endpoint"))]);
-  cluster  = strToUInt(json[UpperCase_P(parm_uc, PSTR("cluster"))]);
-  UpperCase_P(parm_uc, PSTR("Attr"));
-  if (json.containsKey(parm_uc)) {
-    const JsonVariant& attr_data =  json[parm_uc];
-    if (attr_data.is<JsonArray>()) {
-      JsonArray& attr_arr = attr_data;
+
+  const JsonVariant &val_device = getCaseInsensitive(json, PSTR("Device"));
+  if (nullptr != &val_device) { device = strToUInt(val_device); }
+  const JsonVariant val_cluster = getCaseInsensitive(json, PSTR("Cluster"));
+  if (nullptr != &val_cluster) { cluster = strToUInt(val_cluster); }
+  const JsonVariant &val_endpoint = getCaseInsensitive(json, PSTR("Endpoint"));
+  if (nullptr != &val_endpoint) { endpoint = strToUInt(val_endpoint); }
+
+  const JsonVariant &val_attr = getCaseInsensitive(json, PSTR("Read"));
+  if (nullptr != &val_attr) {
+    if (val_attr.is<JsonArray>()) {
+      JsonArray& attr_arr = val_attr;
       attrs_len = attr_arr.size() * 2;
       attrs = new uint8_t[attrs_len];
 
@@ -517,13 +621,13 @@ void CmndZigbeeRead(void) {
     } else {
       attrs_len = 2;
       attrs = new uint8_t[attrs_len];
-      uint16_t val = strToUInt(attr_data);
+      uint16_t val = strToUInt(val_attr);
       attrs[0] = val & 0xFF;    // little endian
       attrs[1] = val >> 8;
     }
   }
 
- ZigbeeZCLSend(dstAddr, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, false /* we do want a response */);
+ ZigbeeZCLSend(device, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, false /* we do want a response */);
 
  if (attrs) { delete[] attrs; }
 }
@@ -531,6 +635,7 @@ void CmndZigbeeRead(void) {
 // Allow or Deny pairing of new Zigbee devices
 void CmndZigbeePermitJoin(void)
 {
+  if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
   uint32_t payload = XdrvMailbox.payload;
   if (payload < 0) { payload = 0; }
   if ((99 != payload) && (payload > 1)) { payload = 1; }

@@ -68,7 +68,7 @@ public:
   void updateLastSeen(uint16_t shortaddr);
 
   // Dump json
-  String dump(uint8_t dump_mode) const;
+  String dump(uint32_t dump_mode, int32_t device_num = 0) const;
 
 private:
   std::vector<Z_Device> _devices = {};
@@ -349,13 +349,21 @@ void Z_Devices::updateLastSeen(uint16_t shortaddr) {
 // Dump the internal memory of Zigbee devices
 // Mode = 1: simple dump of devices addresses and names
 // Mode = 2: Mode 1 + also dump the endpoints, profiles and clusters
-String Z_Devices::dump(uint8_t dump_mode) const {
+String Z_Devices::dump(uint32_t dump_mode, int32_t device_num) const {
   DynamicJsonBuffer jsonBuffer;
   JsonArray& json = jsonBuffer.createArray();
   JsonArray& devices = json;
   //JsonArray& devices = json.createNestedArray(F("ZigbeeDevices"));
 
-  for (std::vector<Z_Device>::const_iterator it = _devices.begin(); it != _devices.end(); ++it) {
+  // if device_num == 0, then we show all devices.
+  // When no payload, the default is -99. In this case change it to 0.
+  if (device_num < 0) { device_num = 0; }
+
+  uint32_t device_current = 1;
+  for (std::vector<Z_Device>::const_iterator it = _devices.begin(); it != _devices.end(); ++it, ++device_current) {
+    // ignore non-current device, if specified device is non-zero
+    if ((device_num > 0) && (device_num != device_current)) { continue; }
+
     const Z_Device& device = *it;
     uint16_t shortaddr = device.shortaddr;
     char hex[20];
@@ -369,7 +377,7 @@ String Z_Devices::dump(uint8_t dump_mode) const {
       dev[F(D_JSON_ZIGBEE_NAME)] = device.friendlyName;
     }
 
-    if (1 == dump_mode) {
+    if (2 <= dump_mode) {
       Uint64toHex(device.longaddr, hex, 64);
       dev[F("IEEEAddr")] = hex;
       if (device.modelId.length() > 0) {
@@ -381,7 +389,7 @@ String Z_Devices::dump(uint8_t dump_mode) const {
     }
 
     // If dump_mode == 2, dump a lot more details
-    if (2 == dump_mode) {
+    if (3 <= dump_mode) {
       JsonObject& dev_endpoints = dev.createNestedObject(F("Endpoints"));
       for (std::vector<uint32_t>::const_iterator ite = device.endpoints.begin() ; ite != device.endpoints.end(); ++ite) {
         uint32_t ep_profile = *ite;
