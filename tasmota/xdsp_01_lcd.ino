@@ -22,6 +22,7 @@
 #ifdef USE_DISPLAY_LCD
 
 #define XDSP_01                1
+#define XI2C_03                3            // See I2CDEVICES.md
 
 #define LCD_ADDRESS1           0x27         // LCD I2C address option 1
 #define LCD_ADDRESS2           0x3F         // LCD I2C address option 2
@@ -189,6 +190,8 @@ void LcdRefresh(void)  // Every second
 
 bool Xdsp01(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_03)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

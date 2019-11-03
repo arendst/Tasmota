@@ -21,6 +21,7 @@
 #ifdef USE_SCD30
 
 #define XSNS_42 42
+#define XI2C_29 29  // See I2CDEVICES.md
 
 #define SCD30_MAX_MISSED_READS 3
 #define SCD30_STATE_NO_ERROR 0
@@ -472,6 +473,8 @@ void Scd30Show(bool json)
 
 bool Xsns42(byte function)
 {
+  if (!XI2cEnabled(XI2C_29)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

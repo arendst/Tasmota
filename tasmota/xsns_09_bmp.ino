@@ -28,6 +28,7 @@
 \*********************************************************************************************/
 
 #define XSNS_09              9
+#define XI2C_10              10  // See I2CDEVICES.md
 
 #define BMP_ADDR1            0x76
 #define BMP_ADDR2            0x77
@@ -623,6 +624,8 @@ void BmpShow(bool json)
 
 bool Xsns09(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_10)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

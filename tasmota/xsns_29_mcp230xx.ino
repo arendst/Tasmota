@@ -29,6 +29,7 @@
 \*********************************************************************************************/
 
 #define XSNS_29                   29
+#define XI2C_22                   22  // See I2CDEVICES.md
 
 /*
    Default register locations for MCP23008 - They change for MCP23017 in default bank mode
@@ -776,6 +777,8 @@ void MCP230xx_Interrupt_Retain_Report(void) {
 
 bool Xsns29(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_22)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

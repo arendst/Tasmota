@@ -67,6 +67,7 @@
 // Define driver ID
 
 #define XSNS_54                                 54
+#define XI2C_35                                 35  // See I2CDEVICES.md
 
 #define INA226_MAX_ADDRESSES                    4
 #define INA226_ADDRESS1                         (0x40)    // 1000000 (A0+A1=GND)
@@ -529,7 +530,9 @@ void Ina226Show(bool json)
  * @post    None.
  *
  */
-bool Xsns54(byte callback_id) {
+bool Xsns54(byte callback_id)
+{
+  if (!XI2cEnabled(XI2C_35)) { return false; }
 
   // Set return value to `false`
   bool result = false;

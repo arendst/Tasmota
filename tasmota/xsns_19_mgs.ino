@@ -27,6 +27,7 @@
 \*********************************************************************************************/
 
 #define XSNS_19            19
+#define XI2C_17            17  // See I2CDEVICES.md
 
 #ifndef MGS_SENSOR_ADDR
 #define MGS_SENSOR_ADDR    0x04             // Default Mutichannel Gas sensor i2c address
@@ -92,6 +93,8 @@ void MGSShow(bool json)
 
 bool Xsns19(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_17)) { return false; }
+
   bool result = false;
   static int detected = false;
 

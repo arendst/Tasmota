@@ -28,6 +28,7 @@
 \*********************************************************************************************/
 
 #define XSNS_21             21
+#define XI2C_18             18  // See I2CDEVICES.md
 
 #include "Adafruit_SGP30.h"
 Adafruit_SGP30 sgp;
@@ -153,6 +154,8 @@ void Sgp30Show(bool json)
 
 bool Xsns21(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_18)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

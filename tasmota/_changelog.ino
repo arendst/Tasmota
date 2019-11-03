@@ -1,4 +1,7 @@
 /*********************************************************************************************\
+ * 7.0.0.3 20191103
+ * Initial support for I2C driver runtime control using command I2CDriver and document I2CDEVICES.md
+ *
  * 7.0.0.2 20191102
  * Add command WebColor19 to control color of Module and Name (#6811)
  * Add support for Honeywell I2C HIH series Humidity and Temperetaure sensor (#6808)

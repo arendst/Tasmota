@@ -28,6 +28,7 @@
 extern uint8_t *buffer;
 
 #define XDSP_07                7
+#define XI2C_06                6            // See I2CDEVICES.md
 
 #define OLED_ADDRESS1          0x3C         // Oled 128x32 I2C address
 #define OLED_ADDRESS2          0x3D         // Oled 128x64 I2C address
@@ -167,6 +168,8 @@ void SH1106Refresh(void)  // Every second
 
 bool Xdsp07(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_06)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

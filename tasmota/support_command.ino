@@ -28,7 +28,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|"
 #ifdef USE_I2C
-  D_CMND_I2CSCAN "|"
+  D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
   D_CMND_SENSOR "|" D_CMND_DRIVER;
 
@@ -43,7 +43,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask,
 #ifdef USE_I2C
-  &CmndI2cScan,
+  &CmndI2cScan, CmndI2cDriver,
 #endif
   &CmndSensor, &CmndDriver };
 
@@ -1536,6 +1536,19 @@ void CmndI2cScan(void)
   if (i2c_flg) {
     I2cScan(mqtt_data, sizeof(mqtt_data));
   }
+}
+
+void CmndI2cDriver(void)
+{
+  if (XdrvMailbox.index < MAX_I2C_DRIVERS) {
+    if (XdrvMailbox.payload >= 0) {
+      bitWrite(Settings.i2c_drivers[XdrvMailbox.index / 32], XdrvMailbox.index % 32, XdrvMailbox.payload &1);
+    }
+    restart_flag = 2;
+  }
+  Response_P(PSTR("{\"" D_CMND_I2CDRIVER "\":"));
+  XI2cDriverState();
+  ResponseJsonEnd();
 }
 #endif  // USE_I2C
 

@@ -26,6 +26,7 @@
 \*********************************************************************************************/
 
 #define XSNS_14             14
+#define XI2C_15             15         // See I2CDEVICES.md
 
 #define SHT3X_ADDR_GND      0x44       // address pin low (GND)
 #define SHT3X_ADDR_VDD      0x45       // address pin high (VDD)
@@ -138,6 +139,8 @@ void Sht3xShow(bool json)
 
 bool Xsns14(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_15)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

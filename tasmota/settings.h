@@ -436,10 +436,11 @@ struct SYSCFG {
 
   uint8_t       free_e9e[2];               // E9E
 
-  uint8_t       web_color2[2][3];          // EA0 - Needs to be on integer distance / 3 from web_color
+  uint8_t       web_color2[2][3];          // EA0 - Needs to be on integer / 3 distance from web_color
 
-  uint8_t       free_ea4[338];             // EA6
+  uint8_t       free_ea4[326];             // EA6
 
+  uint32_t      i2c_drivers[3];            // FEC I2cDriver
   uint32_t      cfg_timestamp;             // FF8
   uint32_t      cfg_crc32;                 // FFC
 } Settings;

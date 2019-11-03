@@ -33,6 +33,7 @@
 \*********************************************************************************************/
 
 #define XSNS_36                 36
+#define XI2C_27                 27  // See I2CDEVICES.md
 
 #warning **** MGC3130: It is recommended to disable all unneeded I2C-drivers ****
 
@@ -602,6 +603,8 @@ bool MGC3130CommandSensor()
 
 bool Xsns36(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_27)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

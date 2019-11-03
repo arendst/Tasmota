@@ -22,6 +22,7 @@
 #ifdef USE_DISPLAY_MATRIX
 
 #define XDSP_03                    3
+#define XI2C_05                    5  // See I2CDEVICES.md
 
 #define MTX_MAX_SCREEN_BUFFER      80
 
@@ -330,6 +331,8 @@ void MatrixRefresh(void)  // Every second
 
 bool Xdsp03(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_05)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

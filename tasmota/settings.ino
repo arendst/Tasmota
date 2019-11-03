@@ -897,6 +897,7 @@ void SettingsDefaultSet2(void)
   SettingsDefaultWebColor();
 
   memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
+  SettingsEnableAllI2cDrivers();
 }
 
 /********************************************************************************************/
@@ -927,6 +928,13 @@ void SettingsDefaultWebColor(void)
   for (uint32_t i = 0; i < COL_LAST; i++) {
     WebHexCode(i, GetTextIndexed(scolor, sizeof(scolor), i, kWebColors));
   }
+}
+
+void SettingsEnableAllI2cDrivers(void)
+{
+  Settings.i2c_drivers[0] = 0xFFFFFFFF;
+  Settings.i2c_drivers[1] = 0xFFFFFFFF;
+  Settings.i2c_drivers[2] = 0xFFFFFFFF;
 }
 
 /********************************************************************************************/
@@ -1119,6 +1127,9 @@ void SettingsDelta(void)
       Settings.web_color2[0][0] = Settings.web_color[0][0];
       Settings.web_color2[0][1] = Settings.web_color[0][1];
       Settings.web_color2[0][2] = Settings.web_color[0][2];
+    }
+    if (Settings.version < 0x07000003) {
+      SettingsEnableAllI2cDrivers();
     }
     Settings.version = VERSION;
     SettingsSave(1);

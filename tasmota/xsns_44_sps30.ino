@@ -21,6 +21,7 @@
 #ifdef USE_SPS30
 
 #define XSNS_44 44
+#define XI2C_30 30  // See I2CDEVICES.md
 
 #define SPS30_ADDR 0x69
 
@@ -283,6 +284,8 @@ bool SPS30_cmd(void) {
 
 bool Xsns44(byte function)
 {
+  if (!XI2cEnabled(XI2C_30)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

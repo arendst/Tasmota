@@ -28,6 +28,7 @@
 \*********************************************************************************************/
 
 #define XSNS_31             31
+#define XI2C_24             24  // See I2CDEVICES.md
 
 #include "Adafruit_CCS811.h"
 
@@ -103,6 +104,8 @@ void CCS811Show(bool json)
 
 bool Xsns31(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_24)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

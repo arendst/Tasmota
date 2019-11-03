@@ -30,6 +30,7 @@
 \*********************************************************************************************/
 
 #define XSNS_55             55
+#define XI2C_36             36  // See I2CDEVICES.md
 
 #define HIH6_ADDR           0x27
 
@@ -134,6 +135,8 @@ void Hih6Show(bool json)
 
 bool Xsns55(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_36)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

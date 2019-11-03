@@ -26,6 +26,7 @@
 \*********************************************************************************************/
 
 #define XDRV_28           28
+#define XI2C_02           2     // See I2CDEVICES.md
 
 #define PCF8574_ADDR1     0x20  // PCF8574
 #define PCF8574_ADDR2     0x38  // PCF8574A
@@ -222,6 +223,8 @@ void Pcf8574SaveSettings()
 
 bool Xdrv28(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_02)) { return false; }
+
   bool result = false;
 
   if (i2c_flg && Pcf8574.type) {

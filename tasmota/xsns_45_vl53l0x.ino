@@ -20,6 +20,9 @@
 #ifdef USE_I2C
 #ifdef USE_VL53L0X
 
+#define XSNS_45 45
+#define XI2C_31 31  // See I2CDEVICES.md
+
 #include <Wire.h>
 #include "VL53L0X.h"
 VL53L0X sensor;
@@ -131,10 +134,10 @@ void Vl53l0Show(boolean json)
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_45 45
-
 bool Xsns45(byte function)
 {
+  if (!XI2cEnabled(XI2C_31)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

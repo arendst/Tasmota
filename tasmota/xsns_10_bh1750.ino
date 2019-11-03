@@ -26,6 +26,7 @@
 \*********************************************************************************************/
 
 #define XSNS_10              10
+#define XI2C_11              11  // See I2CDEVICES.md
 
 #define BH1750_ADDR1         0x23
 #define BH1750_ADDR2         0x5C
@@ -112,6 +113,8 @@ void Bh1750Show(bool json)
 
 bool Xsns10(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_11)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

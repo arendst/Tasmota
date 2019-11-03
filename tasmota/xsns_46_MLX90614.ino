@@ -20,7 +20,8 @@
 #ifdef USE_I2C
 #ifdef USE_MLX90614
 
-#define XSNS_46                          46
+#define XSNS_46         46
+#define XI2C_32         32  // See I2CDEVICES.md
 
 #define I2_ADR_IRT      0x5a
 
@@ -116,6 +117,8 @@ void MLX90614_Show(uint8_t json) {
 
 bool Xsns46(byte function)
 {
+  if (!XI2cEnabled(XI2C_32)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

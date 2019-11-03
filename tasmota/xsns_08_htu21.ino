@@ -28,6 +28,7 @@
 \*********************************************************************************************/
 
 #define XSNS_08             8
+#define XI2C_09             9       // See I2CDEVICES.md
 
 #define HTU21_ADDR          0x40
 
@@ -280,6 +281,8 @@ void HtuShow(bool json)
 
 bool Xsns08(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_09)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

@@ -22,6 +22,7 @@
 #ifdef USE_DISPLAY_SSD1306
 
 #define XDSP_02                2
+#define XI2C_04                4            // See I2CDEVICES.md
 
 #define OLED_RESET 4
 
@@ -173,6 +174,8 @@ void Ssd1306Refresh(void)  // Every second
 
 bool Xdsp02(byte function)
 {
+  if (!XI2cEnabled(XI2C_04)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

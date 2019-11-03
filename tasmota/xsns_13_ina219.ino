@@ -28,6 +28,7 @@
 \*********************************************************************************************/
 
 #define XSNS_13                                 13
+#define XI2C_14                                 14        // See I2CDEVICES.md
 
 #define INA219_ADDRESS1                         (0x40)    // 1000000 (A0+A1=GND)
 #define INA219_ADDRESS2                         (0x41)    // 1000000 (A0=Vcc, A1=GND)
@@ -275,6 +276,8 @@ void Ina219Show(bool json)
 
 bool Xsns13(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_14)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

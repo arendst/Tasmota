@@ -26,6 +26,7 @@
 \*********************************************************************************************/
 
 #define XSNS_41			           41
+#define XI2C_28                28  // See I2CDEVICES.md
 
 #define MAX44009_ADDR1         0x4A
 #define MAX44009_ADDR2         0x4B
@@ -149,6 +150,8 @@ void Max4409Show(bool json)
 
 bool Xsns41(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_28)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

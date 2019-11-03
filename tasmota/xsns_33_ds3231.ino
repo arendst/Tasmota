@@ -33,6 +33,7 @@
   \*********************************************************************************************/
 
 #define XSNS_33             33
+#define XI2C_26             26  // See I2CDEVICES.md
 
 //DS3232 I2C Address
 #ifndef USE_RTC_ADDR
@@ -133,6 +134,8 @@ void SetDS3231Time (uint32_t epoch_time) {
 
 bool Xsns33(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_26)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

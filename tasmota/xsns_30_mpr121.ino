@@ -48,6 +48,7 @@
  * Assign Tasmota sensor model ID
  */
 #define XSNS_30          30
+#define XI2C_23          23  // See I2CDEVICES.md
 
 /** @defgroup group1 MPR121
  *  MPR121 preprocessor directives
@@ -399,6 +400,8 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
  */
 bool Xsns30(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_23)) { return false; }
+
 	// ???
 	bool result = false;
 

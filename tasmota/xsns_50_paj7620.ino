@@ -38,6 +38,7 @@
 \*********************************************************************************************/
 
 #define XSNS_50                     50
+#define XI2C_34                     34  // See I2CDEVICES.md
 
 #define PAJ7620_ADDR                0x73              // standard address
 
@@ -536,6 +537,8 @@ bool PAJ7620Cmd(void) {
 
 bool Xsns50(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_34)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

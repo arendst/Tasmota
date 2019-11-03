@@ -29,6 +29,7 @@
 \*********************************************************************************************/
 
 #define XNRG_07                 7
+#define XI2C_07                 7  // See I2CDEVICES.md
 
 #define ADE7953_PREF            1540
 #define ADE7953_UREF            26000
@@ -268,6 +269,8 @@ bool Ade7953Command(void)
 
 bool Xnrg07(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_07)) { return false; }
+
   bool result = false;
 
   switch (function) {

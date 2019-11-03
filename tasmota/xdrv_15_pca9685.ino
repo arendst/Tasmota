@@ -21,6 +21,7 @@
 #ifdef USE_PCA9685
 
 #define XDRV_15                     15
+#define XI2C_01                     1  // See I2CDEVICES.md
 
 #define PCA9685_REG_MODE1           0x00
 #define PCA9685_REG_LED0_ON_L       0x06
@@ -178,6 +179,8 @@ void PCA9685_OutputTelemetry(bool telemetry) {
 
 bool Xdrv15(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_01)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

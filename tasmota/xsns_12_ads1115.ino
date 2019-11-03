@@ -41,6 +41,7 @@
 \*********************************************************************************************/
 
 #define XSNS_12                         12
+#define XI2C_13                         13        // See I2CDEVICES.md
 
 #define ADS1115_ADDRESS_ADDR_GND        0x48      // address pin low (GND)
 #define ADS1115_ADDRESS_ADDR_VDD        0x49      // address pin high (VCC)
@@ -241,6 +242,8 @@ void Ads1115Show(bool json)
 
 bool Xsns12(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_13)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

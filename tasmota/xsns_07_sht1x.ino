@@ -29,6 +29,7 @@
 \*********************************************************************************************/
 
 #define XSNS_07             7
+#define XI2C_08             8  // See I2CDEVICES.md
 
 enum {
   SHT1X_CMD_MEASURE_TEMP  = B00000011,
@@ -220,6 +221,8 @@ void ShtShow(bool json)
 
 bool Xsns07(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_08)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

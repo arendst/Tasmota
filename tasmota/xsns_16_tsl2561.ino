@@ -28,6 +28,7 @@
 \*********************************************************************************************/
 
 #define XSNS_16             16
+#define XI2C_16             16  // See I2CDEVICES.md
 
 #include <Tsl2561Util.h>
 
@@ -121,6 +122,8 @@ void Tsl2561Show(bool json)
 
 bool Xsns16(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_16)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

@@ -43,6 +43,8 @@
 \*********************************************************************************************/
 
 #define XSNS_48                       48
+#define XI2C_33                       33  // See I2CDEVICES.md
+
 #define CHIRP_MAX_SENSOR_COUNT        3            // 127 is expectectd to be the max number
 
 #define CHIRP_ADDR_STANDARD           0x20         // standard address
@@ -521,6 +523,8 @@ bool ChirpCmd(void) {
 
 bool Xsns48(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_33)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

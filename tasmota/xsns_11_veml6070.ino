@@ -95,6 +95,7 @@
 \*********************************************************************************************/
 
 #define XSNS_11                     11
+#define XI2C_12                     12              // See I2CDEVICES.md
 
 #define VEML6070_ADDR_H             0x39            // on some PCB boards the address can be changed by a solder point,
 #define VEML6070_ADDR_L             0x38            // to have no address conflicts with other I2C sensors and/or hardware
@@ -304,6 +305,8 @@ void Veml6070Show(bool json)
 
 bool Xsns11(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_12)) { return false; }
+
   bool result = false;
 
   if (i2c_flg && !(pin[GPIO_ADE7953_IRQ] < 99)) {  // The ADE7953 uses I2C address 0x38 too but needs priority

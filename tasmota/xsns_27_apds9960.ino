@@ -37,6 +37,7 @@
 \*********************************************************************************************/
 
 #define XSNS_27             27
+#define XI2C_21             21  // See I2CDEVICES.md
 
 #if defined(USE_SHT) || defined(USE_VEML6070) || defined(USE_TSL2561)
   #warning **** Turned off conflicting drivers SHT and VEML6070 ****
@@ -2026,6 +2027,8 @@ bool APDS9960CommandSensor(void)
 
 bool Xsns27(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_21)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

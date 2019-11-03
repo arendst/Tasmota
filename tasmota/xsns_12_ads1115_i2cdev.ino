@@ -41,6 +41,7 @@
 \*********************************************************************************************/
 
 #define XSNS_12             12
+#define XI2C_13             13  // See I2CDEVICES.md
 
 #include <ADS1115.h>
 
@@ -130,6 +131,8 @@ void Ads1115Show(bool json)
 
 bool Xsns12(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_13)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

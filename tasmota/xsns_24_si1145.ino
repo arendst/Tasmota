@@ -28,6 +28,7 @@
 \*********************************************************************************************/
 
 #define XSNS_24                             24
+#define XI2C_19                             19  // See I2CDEVICES.md
 
 #define SI114X_ADDR                         0X60
 //
@@ -350,6 +351,8 @@ void Si1145Show(bool json)
 
 bool Xsns24(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_19)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

@@ -28,6 +28,7 @@
 \*********************************************************************************************/
 
 #define XSNS_32                          32
+#define XI2C_25                          25  // See I2CDEVICES.md
 
 #define D_SENSOR_MPU6050                 "MPU6050"
 
@@ -225,6 +226,8 @@ void MPU_6050Show(bool json)
 
 bool Xsns32(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_25)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {

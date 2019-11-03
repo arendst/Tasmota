@@ -29,6 +29,7 @@
 \*********************************************************************************************/
 
 #define XSNS_26                 26
+#define XI2C_20                 20  // See I2CDEVICES.md
 
 #define LM75AD_ADDRESS1					0x48
 #define LM75AD_ADDRESS2					0x49
@@ -103,6 +104,8 @@ void LM75ADShow(bool json)
 
 bool Xsns26(uint8_t function)
 {
+  if (!XI2cEnabled(XI2C_20)) { return false; }
+
   bool result = false;
 
   if (i2c_flg) {
