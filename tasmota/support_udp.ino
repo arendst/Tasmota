@@ -75,7 +75,7 @@ bool UdpConnect(void)
 void PollUdp(void)
 {
   if (udp_connected) {
-    if (PortUdp.parsePacket()) {
+    while (PortUdp.parsePacket()) {
       char packet_buffer[UDP_BUFFER_SIZE];     // buffer to hold incoming UDP/SSDP packet
 
       int len = PortUdp.read(packet_buffer, UDP_BUFFER_SIZE -1);
@@ -134,7 +134,7 @@ void PollUdp(void)
       }
 
     }
-    delay(1);
+    optimistic_yield(100);
   }
 }
 
