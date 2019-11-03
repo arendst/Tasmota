@@ -461,7 +461,7 @@ void TasmotaSlave_Init(void)
     TasmotaSlave_Serial->readBytesUntil(char(PARAM_DATA_START), buffer, sizeof(buffer));
     uint8_t len = TasmotaSlave_Serial->readBytesUntil(char(PARAM_DATA_END), buffer, sizeof(buffer));
     memcpy(&TSlaveSettings, &buffer, sizeof(TSlaveSettings));
-    if (20191101 <= TSlaveSettings.features_version) {
+    if (20191101 == TSlaveSettings.features_version) {
       TSlave.type = true;
       AddLog_P2(LOG_LEVEL_INFO, PSTR("Tasmota Slave Version %u"), TSlaveSettings.features_version);
     }
@@ -493,45 +493,33 @@ void TasmotaSlave_sendCmnd(uint8_t cmnd, uint8_t param)
   }
 }
 
-const char kTasmotaSlaveCommands[] PROGMEM = "|"  // No prefix
-  "Slave" ;
+#define D_PRFX_SLAVE "Slave"
+#define D_CMND_SLAVE_RESET "Reset"
+#define D_CMND_SLAVE_SEND "Send"
+
+const char kTasmotaSlaveCommands[] PROGMEM = D_PRFX_SLAVE "|"
+  D_CMND_SLAVE_RESET "|" D_CMND_SLAVE_SEND;
 
 void (* const TasmotaSlaveCommand[])(void) PROGMEM = {
-  &CmndTasmotaSlave };
+  &CmndTasmotaSlaveReset, &CmndTasmotaSlaveSend };
 
-void CmndTasmotaSlave(void)
+void CmndTasmotaSlaveReset(void)
 {
-  if (XdrvMailbox.data_len > 0) {
-    uint8_t paramcount = 1;
-    for (uint8_t idx = 0; idx < strlen(XdrvMailbox.data); idx++) {
-      if ((' ' == XdrvMailbox.data[idx]) || (',' == XdrvMailbox.data[idx])) {
-        XdrvMailbox.data[idx] = ','; // Make it a comma irrespective whether its a space or a comma
-        paramcount++;
-      }
-      UpperCase(XdrvMailbox.data,XdrvMailbox.data);
+  TasmotaSlave_Reset();
+  TSlave.type = false;  // Force redetection
+  TSlave.waitstate = 7; // give it at least 3 seconds to restart from bootloader
+  ResponseCmndDone();
+}
 
-      char sub_string[XdrvMailbox.data_len];
-
-      if (1 == paramcount) { // Single parameter commands
-        if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "RESET"))  {
-          TasmotaSlave_Reset();
-          TSlave.type = false;  // Force redetection
-          TSlave.waitstate = 7; // give it at least 3 seconds to restart from bootloader
-        }
-      }
-      if (2 == paramcount) { // Double parameter commands
-        if ((!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "SEND")) && (TSlaveSettings.features.func_slave_send))  {
-          char tmp[XdrvMailbox.data_len];
-          sprintf(tmp, "%s", subStr(sub_string, XdrvMailbox.data, ",", 2));
-          TasmotaSlave_sendCmnd(CMND_SLAVE_SEND, strlen(tmp));
-          TasmotaSlave_Serial->write(char(PARAM_DATA_START));
-          for (uint8_t ci = 0; ci < strlen(tmp); ci++) {
-            TasmotaSlave_Serial->write(tmp[ci]);
-          }
-          TasmotaSlave_Serial->write(char(PARAM_DATA_END));
-        }
-      }
+void CmndTasmotaSlaveSend(void)
+{
+  if (0 < XdrvMailbox.data_len) {
+    TasmotaSlave_sendCmnd(CMND_SLAVE_SEND, XdrvMailbox.data_len);
+    TasmotaSlave_Serial->write(char(PARAM_DATA_START));
+    for (uint8_t idx = 0; idx < XdrvMailbox.data_len; idx++) {
+      TasmotaSlave_Serial->write(XdrvMailbox.data[idx]);
     }
+    TasmotaSlave_Serial->write(char(PARAM_DATA_END));
   }
   ResponseCmndDone();
 }
