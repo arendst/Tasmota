@@ -80,7 +80,7 @@ void BuzzerBeep(uint32_t count) {
 
 void BuzzerEnabledBeep(uint32_t count, uint32_t duration)
 {
-  if (Settings.flag3.buzzer_enable) {  // SetOption67
+  if (Settings.flag3.buzzer_enable) {  // SetOption67 - Enable buzzer when available
     BuzzerBeep(count, duration, 1, 0);
   }
 }

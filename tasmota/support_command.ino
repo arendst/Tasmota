@@ -485,11 +485,11 @@ void CmndState(void)
 {
   mqtt_data[0] = '\0';
   MqttShowState();
-  if (Settings.flag3.hass_tele_on_power) {
+  if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
   }
 #ifdef USE_HOME_ASSISTANT
-  if (Settings.flag.hass_discovery) {  // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
+  if (Settings.flag.hass_discovery) {       // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
     HAssPublishStatus();
   }
 #endif  // USE_HOME_ASSISTANT

@@ -316,7 +316,8 @@ bool ShutterState(uint8_t device)
 {
   device--;
   device &= 3;
-  return (Settings.flag3.shutter_mode && (Shutter.mask & (1 << (Settings.shutter_startrelay[device]-1))) );
+  return (Settings.flag3.shutter_mode &&  // SetOption80 - Enable shutter support
+          (Shutter.mask & (1 << (Settings.shutter_startrelay[device]-1))) );
 }
 
 void ShutterStartInit(uint8_t index, uint8_t direction, int32_t target_pos)
@@ -638,7 +639,7 @@ bool Xdrv27(uint8_t function)
 {
   bool result = false;
 
-  if (Settings.flag3.shutter_mode) {  // SetOption80 1
+  if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
     switch (function) {
       case FUNC_PRE_INIT:
         ShutterInit();

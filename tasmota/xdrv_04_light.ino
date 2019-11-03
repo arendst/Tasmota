@@ -1127,10 +1127,10 @@ bool LightModuleInit(void)
   }
 
   // post-process for lights
-  if (Settings.flag3.pwm_multi_channels) {
+  if (Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
     uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
     if (0 == pwm_channels) { pwm_channels = 1; }
-    devices_present += pwm_channels - 1;  // add the pwm channels controls at the end
+    devices_present += pwm_channels - 1;    // add the pwm channels controls at the end
   } else if ((Settings.param[P_RGB_REMAP] & 128) && (LST_RGBW <= (light_type & 7))) {
     // if RGBW or RGBCW, and SetOption37 >= 128, we manage RGB and W separately, hence adding a device
     devices_present++;
@@ -1143,7 +1143,7 @@ void LightInit(void)
 {
   Light.device = devices_present;
   Light.subtype = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7); // Always 0 - LST_MAX (5)
-  Light.pwm_multi_channels = Settings.flag3.pwm_multi_channels;
+  Light.pwm_multi_channels = Settings.flag3.pwm_multi_channels;  // SetOption68 - Enable multi-channels PWM instead of Color PWM
 
   if (LST_RGBW <= Light.subtype) {
     // only change if RGBW or RGBCW
@@ -1458,7 +1458,9 @@ void LightPreparePower(void)
 #endif  // USE_DOMOTICZ
   }
 
-  if (Settings.flag3.hass_tele_on_power) { MqttPublishTeleState(); }
+  if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+    MqttPublishTeleState();
+  }
 
 #ifdef DEBUG_LIGHT
   AddLog_P2(LOG_LEVEL_DEBUG, "LightPreparePower End power=%d Light.power=%d", power, Light.power);
@@ -2122,7 +2124,9 @@ void CmndScheme(void)
       LightPowerOn();
       Light.strip_timer_counter = 0;
       // Publish state message for Hass
-      if (Settings.flag3.hass_tele_on_power) { MqttPublishTeleState(); }
+      if (Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
+        MqttPublishTeleState();
+      }
     }
     ResponseCmndNumber(Settings.light_scheme);
   }

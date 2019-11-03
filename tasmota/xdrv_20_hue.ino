@@ -246,7 +246,7 @@ char     prev_y_str[24] = "\0";
 uint8_t getLocalLightSubtype(uint8_t device) {
   if (light_type) {
     if (device >= Light.device) {
-      if (Settings.flag3.pwm_multi_channels) {
+      if (Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
         return LST_SINGLE;     // If SetOption68, each channel acts like a dimmer
       } else {
         return Light.subtype;  // the actual light
@@ -576,7 +576,7 @@ void HueLights(String *path)
       }
 
       if (light_type && (local_light_subtype >= LST_SINGLE)) {
-        if (!Settings.flag3.pwm_multi_channels) {
+        if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
           light_state.getHSB(&hue, &sat, nullptr);
           bri = light_state.getBri();   // get the combined bri for CT and RGB, not only the RGB one
           ct = light_state.getCT();
@@ -685,7 +685,7 @@ void HueLights(String *path)
         } else
 #endif
         if (light_type && (local_light_subtype > LST_NONE)) {   // not relay
-          if (!Settings.flag3.pwm_multi_channels) {
+          if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 - Enable multi-channels PWM instead of Color PWM
             if (g_gotct) {
               light_controller.changeCTB(ct, bri);
             } else {

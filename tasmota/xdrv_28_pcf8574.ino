@@ -113,7 +113,7 @@ void Pcf8574Init()
         //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PCF: I2C shift i %d: %d. Powerstate: %d, devices_present: %d"), i,_result, Settings.power>>i&1, devices_present);
         if (_result > 0) {
           Pcf8574.pin[devices_present] = i + 8 * idx;
-          bitWrite(rel_inverted, devices_present, Settings.flag3.pcf8574_ports_inverted);
+          bitWrite(rel_inverted, devices_present, Settings.flag3.pcf8574_ports_inverted);  // SetOption81 - Invert all ports on PCF8574 devices
           devices_present++;
           Pcf8574.max_connected_ports++;
         }
@@ -159,7 +159,7 @@ void HandlePcf8574(void)
 
   WSContentStart_P(D_CONFIGURE_PCF8574);
   WSContentSendStyle();
-  WSContentSend_P(HTTP_FORM_I2C_PCF8574_1, (Settings.flag3.pcf8574_ports_inverted) ? " checked" : "");
+  WSContentSend_P(HTTP_FORM_I2C_PCF8574_1, (Settings.flag3.pcf8574_ports_inverted) ? " checked" : "");  // SetOption81 - Invert all ports on PCF8574 devices
   WSContentSend_P(HTTP_TABLE100);
   for (uint32_t idx = 0; idx < Pcf8574.max_devices; idx++) {
     for (uint32_t idx2 = 0; idx2 < 8; idx2++) {  // 8 ports on PCF8574
@@ -186,7 +186,7 @@ void Pcf8574SaveSettings()
 
   //AddLog_P(LOG_LEVEL_DEBUG, PSTR("PCF: Start working on Save arguements: inverted:%d")), WebServer->hasArg("b1");
 
-  Settings.flag3.pcf8574_ports_inverted = WebServer->hasArg("b1");
+  Settings.flag3.pcf8574_ports_inverted = WebServer->hasArg("b1");  // SetOption81 - Invert all ports on PCF8574 devices
   for (byte idx = 0; idx < Pcf8574.max_devices; idx++) {
     byte count=0;
     byte n = Settings.pcf8574_config[idx];

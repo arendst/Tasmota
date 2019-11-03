@@ -150,7 +150,7 @@ void IrReceiveCheck(void)
         ResponseAppend_P(PSTR(",\"" D_JSON_IR_HASH "\":%s"), svalue);
       }
 
-      if (Settings.flag3.receive_raw) {
+      if (Settings.flag3.receive_raw) {  // SetOption58 - Add IR Raw data to JSON message
         ResponseAppend_P(PSTR(",\"" D_JSON_IR_RAWDATA "\":["));
         uint16_t i;
         for (i = 1; i < results.rawlen; i++) {

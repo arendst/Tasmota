@@ -358,7 +358,7 @@ void HAssAnnounceSwitches(void)
 
       // Check if MQTT message will be ON/OFF or TOGGLE
       if (Settings.switchmode[switch_index] == FOLLOW || Settings.switchmode[switch_index] == FOLLOW_INV ||
-          Settings.flag3.button_switch_force_local ||
+          Settings.flag3.button_switch_force_local ||   // SetOption61 - Force local operation when button/switch topic is set
           !strcmp(mqtt_topic, sw_topic) || !strcmp(Settings.mqtt_grptopic, sw_topic))
       {
         toggle = 0; // MQTT message will be ON/OFF
@@ -390,7 +390,7 @@ void HAssAnnounceButtons(void)
       }
 
       // Check if MQTT message will be ON/OFF or TOGGLE
-      if (Settings.flag3.button_switch_force_local ||
+      if (Settings.flag3.button_switch_force_local ||  // SetOption61 - Force local operation when button/switch topic is set
           !strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic))
       {
         toggle = 0; // MQTT message will be ON/OFF
@@ -575,7 +575,7 @@ void HAssDiscovery(void)
   if (Settings.flag.hass_discovery) {        // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
     Settings.flag.mqtt_response = 0;         // SetOption4  - Switch between MQTT RESULT or COMMAND - Response always as RESULT and not as uppercase command
     Settings.flag.decimal_text = 1;          // SetOption17 - Switch between decimal or hexadecimal output - Respond with decimal color values
-    Settings.flag3.hass_tele_on_power = 1;   // send tele/STATE message as stat/RESULT
+    Settings.flag3.hass_tele_on_power = 1;   // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT - send tele/STATE message as stat/RESULT
 //    Settings.light_scheme = 0;             // To just control color it needs to be Scheme 0
     if (strcmp_P(Settings.mqtt_fulltopic, PSTR("%topic%/%prefix%/"))) {
       strncpy_P(Settings.mqtt_fulltopic, PSTR("%topic%/%prefix%/"), sizeof(Settings.mqtt_fulltopic));

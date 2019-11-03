@@ -134,7 +134,7 @@ bool EnergyTariff1Active()  // Off-Peak hours
     dst = 1;
   }
   if (Settings.tariff[0][dst] != Settings.tariff[1][dst]) {
-    if (Settings.flag3.energy_weekend && ((RtcTime.day_of_week == 1) ||
+    if (Settings.flag3.energy_weekend && ((RtcTime.day_of_week == 1) ||   // CMND_TARIFF
                                           (RtcTime.day_of_week == 7))) {
       return true;
     }
@@ -199,7 +199,8 @@ void EnergyUpdateTotal(float value, bool kwh)
     Energy.kWhtoday = (unsigned long)((value - Energy.start_energy) * multiplier);
   }
 
-  if ((Energy.total < (value - 0.01)) && Settings.flag3.hardware_energy_total) { // We subtract a little offset to avoid continuous updates
+  if ((Energy.total < (value - 0.01)) &&       // We subtract a little offset to avoid continuous updates
+      Settings.flag3.hardware_energy_total) {  // SetOption72 - Enable hardware energy total counter as reference (#6561)
     RtcSettings.energy_kWhtotal = (unsigned long)((value * multiplier) - Energy.kWhtoday_offset - Energy.kWhtoday);
     Settings.energy_kWhtotal = RtcSettings.energy_kWhtotal;
     Energy.total = (float)(RtcSettings.energy_kWhtotal + Energy.kWhtoday_offset + Energy.kWhtoday) / 100000;
@@ -613,13 +614,13 @@ void CmndTariff(void)
     }
   }
   else if (XdrvMailbox.index == 9) {
-    Settings.flag3.energy_weekend = XdrvMailbox.payload & 1;
+    Settings.flag3.energy_weekend = XdrvMailbox.payload & 1;  // CMND_TARIFF
   }
   Response_P(PSTR("{\"%s\":{\"Off-Peak\":{\"STD\":\"%s\",\"DST\":\"%s\"},\"Standard\":{\"STD\":\"%s\",\"DST\":\"%s\"},\"Weekend\":\"%s\"}}"),
     XdrvMailbox.command,
     GetMinuteTime(Settings.tariff[0][0]).c_str(),GetMinuteTime(Settings.tariff[0][1]).c_str(),
     GetMinuteTime(Settings.tariff[1][0]).c_str(),GetMinuteTime(Settings.tariff[1][1]).c_str(),
-    GetStateText(Settings.flag3.energy_weekend));
+    GetStateText(Settings.flag3.energy_weekend));             // CMND_TARIFF
 }
 
 void CmndPowerCal(void)

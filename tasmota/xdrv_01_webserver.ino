@@ -669,7 +669,7 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
 
 void HttpHeaderCors(void)
 {
-  if (Settings.flag3.cors_enabled) {
+  if (Settings.flag3.cors_enabled) {  // SetOption73 - Enable HTTP CORS
     WebServer->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
   }
 }
@@ -834,7 +834,7 @@ void WSContentSendStyle_P(const char* formatP, ...)
 #endif
     WebColor(COL_TITLE),
     ModuleName().c_str(), Settings.friendlyname[0]);
-  if (Settings.flag3.gui_hostname_ip) {
+  if (Settings.flag3.gui_hostname_ip) {                // SetOption53 - Show hostanme and IP address in GUI main menu
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
     WSContentSend_P(PSTR("<h4>%s%s (%s%s%s)</h4>"),    // sonoff.local (192.168.2.12, 192.168.4.1)
@@ -991,7 +991,7 @@ void HandleRoot(void)
   if (devices_present) {
 #ifdef USE_LIGHT
     if (light_type) {
-      if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 0
+      if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
         if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
           // Cold - Warm &t related to lb("t", value) and WebGetArg("t", tmp, sizeof(tmp));
           WSContentSend_P(HTTP_MSG_SLIDER1, F(D_COLDLIGHT), F(D_WARMLIGHT),
@@ -1000,7 +1000,7 @@ void HandleRoot(void)
         // Dark - Bright &d related to lb("d", value) and WebGetArg("d", tmp, sizeof(tmp));
         WSContentSend_P(HTTP_MSG_SLIDER1, F(D_DARKLIGHT), F(D_BRIGHTLIGHT),
           1, 100, Settings.light_dimmer, 'd');
-      } else {  // Settings.flag3.pwm_multi_channels - SetOption68 1
+      } else {  // Settings.flag3.pwm_multi_channels - SetOption68 1 - Enable multi-channels PWM instead of Color PWM
         uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
         for (uint32_t i = 0; i < pwm_channels; i++) {
           snprintf_P(stemp, sizeof(stemp), PSTR("c%d"), i);
@@ -1012,7 +1012,7 @@ void HandleRoot(void)
     }
 #endif
 #ifdef USE_SHUTTER
-    if (Settings.flag3.shutter_mode) {  // SetOption80 1
+    if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
       for (uint32_t i = 0; i < shutters_present; i++) {
         WSContentSend_P(HTTP_MSG_SLIDER2, F(D_CLOSE), F(D_OPEN),
           0, 100, Settings.shutter_position[i], 'u', i+1);
@@ -1927,8 +1927,8 @@ void HandleInformation(void)
 #endif // USE_EMULATION
 
 #ifdef USE_DISCOVERY
-  WSContentSend_P(PSTR("}1" D_MDNS_DISCOVERY "}2%s"), (Settings.flag3.mdns_enabled) ? D_ENABLED : D_DISABLED);
-  if (Settings.flag3.mdns_enabled) {
+  WSContentSend_P(PSTR("}1" D_MDNS_DISCOVERY "}2%s"), (Settings.flag3.mdns_enabled) ? D_ENABLED : D_DISABLED);  // SetOption55 - Control mDNS service
+  if (Settings.flag3.mdns_enabled) {  // SetOption55 - Control mDNS service
 #ifdef WEBSERVER_ADVERTISE
     WSContentSend_P(PSTR("}1" D_MDNS_ADVERTISE "}2" D_WEB_SERVER));
 #else

@@ -355,8 +355,8 @@ void ExsPacketProcess(void)
 bool ExsModuleSelected(void)
 {
   Settings.light_correction = 0;
-  Settings.flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
-  Settings.flag3.pwm_multi_channels = 1;
+  Settings.flag.mqtt_serial = 0;          // CMND_SERIALSEND and CMND_SERIALLOG
+  Settings.flag3.pwm_multi_channels = 1;  // SetOption68 - Enable multi-channels PWM instead of Color PWM
   SetSeriallog(LOG_LEVEL_NONE);
 
   devices_present = +2;

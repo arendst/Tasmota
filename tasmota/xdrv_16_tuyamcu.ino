@@ -445,7 +445,8 @@ void TuyaProcessStatePacket(void) {
       if (fnId == TUYA_MCU_FUNC_DIMMER) {
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: RX Dim State=%d"), packetValue);
         Tuya.new_dim = changeUIntScale(packetValue, 0, Settings.dimmer_hw_max, 0, 100);
-        if ((power || Settings.flag3.tuya_apply_o20) && (Tuya.new_dim > 0) && (abs(Tuya.new_dim - Settings.light_dimmer) > 1)) {
+        if ((power || Settings.flag3.tuya_apply_o20) &&  // SetOption54 - Apply SetOption20 settings to Tuya device
+            (Tuya.new_dim > 0) && (abs(Tuya.new_dim - Settings.light_dimmer) > 1)) {
           Tuya.ignore_dim = true;
 
           snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_DIMMER " %d"), Tuya.new_dim );
@@ -610,7 +611,7 @@ bool TuyaModuleSelected(void)
 
   if (TuyaGetDpId(TUYA_MCU_FUNC_LOWPOWER_MODE) != 0) {
     Tuya.low_power_mode = true;
-    Settings.flag3.fast_power_cycle_disable = true;
+    Settings.flag3.fast_power_cycle_disable = true;  // SetOption65 - Disable fast power cycle detection for device reset
   }
 
   UpdateDevices();
@@ -680,7 +681,7 @@ void TuyaSerialInput(void)
 
       ResponseAppend_P(PSTR("}}"));
 
-      if (Settings.flag3.tuya_serial_mqtt_publish) {
+      if (Settings.flag3.tuya_serial_mqtt_publish) {  // SetOption66 - Enable TuyaMcuReceived messages over Mqtt
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_TUYA_MCU_RECEIVED));
       } else {
         AddLog_P(LOG_LEVEL_DEBUG, mqtt_data);

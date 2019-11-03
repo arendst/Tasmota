@@ -267,7 +267,8 @@ void TimerEverySecond(void)
 {
   if (RtcTime.valid) {
     if (!RtcTime.hour && !RtcTime.minute && !RtcTime.second) { TimerSetRandomWindows(); }  // Midnight
-    if (Settings.flag3.timers_enable && (uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
+    if (Settings.flag3.timers_enable &&                            // CMND_TIMERS
+        (uptime > 60) && (RtcTime.minute != timer_last_minute)) {  // Execute from one minute after restart every minute only once
       timer_last_minute = RtcTime.minute;
       int32_t time = (RtcTime.hour *60) + RtcTime.minute;
       uint8_t days = 1 << (RtcTime.day_of_week -1);
@@ -461,14 +462,14 @@ void CmndTimers(void)
 {
   if (XdrvMailbox.data_len) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
-      Settings.flag3.timers_enable = XdrvMailbox.payload;
+      Settings.flag3.timers_enable = XdrvMailbox.payload;            // CMND_TIMERS
     }
     if (XdrvMailbox.payload == 2) {
-      Settings.flag3.timers_enable = !Settings.flag3.timers_enable;
+      Settings.flag3.timers_enable = !Settings.flag3.timers_enable;  // CMND_TIMERS
     }
   }
 
-  ResponseCmndStateText(Settings.flag3.timers_enable);
+  ResponseCmndStateText(Settings.flag3.timers_enable);               // CMND_TIMERS
   MqttPublishPrefixTopic_P(RESULT_OR_STAT, XdrvMailbox.command);
 
   uint32_t jsflg = 0;
@@ -717,7 +718,7 @@ void HandleTimerConfiguration(void)
   WSContentSend_P(HTTP_TIMER_SCRIPT5, MAX_TIMERS, devices_present);
   WSContentSend_P(HTTP_TIMER_SCRIPT6, devices_present);
   WSContentSendStyle_P(HTTP_TIMER_STYLE, WebColor(COL_FORM));
-  WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");
+  WSContentSend_P(HTTP_FORM_TIMER1, (Settings.flag3.timers_enable) ? " checked" : "");  // CMND_TIMERS
   for (uint32_t i = 0; i < MAX_TIMERS; i++) {
     WSContentSend_P(PSTR("%s%u"), (i > 0) ? "," : "", Settings.timer[i].data);
   }
@@ -738,10 +739,10 @@ void TimerSaveSettings(void)
   char tmp[MAX_TIMERS *12];  // Need space for MAX_TIMERS x 10 digit numbers separated by a comma
   Timer timer;
 
-  Settings.flag3.timers_enable = WebServer->hasArg("e0");
+  Settings.flag3.timers_enable = WebServer->hasArg("e0");  // CMND_TIMERS
   WebGetArg("t0", tmp, sizeof(tmp));
   char *p = tmp;
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);
+  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CMND_TIMERS " %d"), Settings.flag3.timers_enable);  // CMND_TIMERS
   for (uint32_t i = 0; i < MAX_TIMERS; i++) {
     timer.data = strtol(p, &p, 10);
     p++;  // Skip comma

@@ -125,10 +125,10 @@ void WiFiSetSleepMode(void)
 // Sleep explanation: https://github.com/esp8266/Arduino/blob/3f0c601cfe81439ce17e9bd5d28994a7ed144482/libraries/ESP8266WiFi/src/ESP8266WiFiGeneric.cpp#L255
 #if defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2)
 #else  // Enabled in 2.3.0, 2.4.0 and stage
-  if (sleep && Settings.flag3.sleep_normal) {
-    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);  // Allow light sleep during idle times
+  if (sleep && Settings.flag3.sleep_normal) {  // SetOption60 - Enable normal sleep instead of dynamic sleep
+    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);       // Allow light sleep during idle times
   } else {
-    WiFi.setSleepMode(WIFI_MODEM_SLEEP);  // Disable sleep (Esp8288/Arduino core and sdk default)
+    WiFi.setSleepMode(WIFI_MODEM_SLEEP);       // Disable sleep (Esp8288/Arduino core and sdk default)
   }
 #endif
 }
@@ -407,7 +407,7 @@ void WifiCheckIp(void)
         }
     }
     if (Wifi.retry) {
-      if (Settings.flag3.use_wifi_scan) {
+      if (Settings.flag3.use_wifi_scan) {  // SetOption56 - Scan wifi network at restart for configured AP's
         if (Wifi.retry_init == Wifi.retry) {
           Wifi.scan_state = 1;    // Select scanned SSID
         }
@@ -472,7 +472,7 @@ void WifiCheck(uint8_t param)
 #endif  // LWIP_IPV6=1
         WifiSetState(1);
 
-        if (Settings.flag3.use_wifi_rescan) {
+        if (Settings.flag3.use_wifi_rescan) {  // SetOption57 - Scan wifi network every 44 minutes for configured AP's
           if (!(uptime % (60 * WIFI_RESCAN_MINUTES))) {
             Wifi.scan_state = 2;
           }
@@ -486,7 +486,7 @@ void WifiCheck(uint8_t param)
 #endif  // FIRMWARE_MINIMAL
 
 #ifdef USE_DISCOVERY
-        if (Settings.flag3.mdns_enabled) {
+        if (Settings.flag3.mdns_enabled) {  // SetOption55 - Control mDNS service
           if (!Wifi.mdns_begun) {
 //            if (mdns_delayed_start) {
 //              AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_MDNS D_ATTEMPTING_CONNECTION));

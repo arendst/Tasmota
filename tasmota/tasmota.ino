@@ -294,7 +294,7 @@ char* GetGroupTopic_P(char *stopic, const char* subtopic)
 {
   // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/#
   // SetOption75 1: cmnd/<grouptopic>
-  return GetTopic_P(stopic, (Settings.flag3.grouptopic_mode) ? CMND +8 : CMND, Settings.mqtt_grptopic, subtopic);
+  return GetTopic_P(stopic, (Settings.flag3.grouptopic_mode) ? CMND +8 : CMND, Settings.mqtt_grptopic, subtopic);  // SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
 }
 
 char* GetFallbackTopic_P(char *stopic, const char* subtopic)
@@ -535,8 +535,11 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
     if (CLEAR_RETAIN == state) {
       mqtt_data[0] = '\0';
     } else {
-      if ((Settings.flag3.button_switch_force_local || !strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic)) && (POWER_TOGGLE == state)) {
-        state = ~(power >> (device -1)) &1;  // POWER_OFF or POWER_ON
+      if ((Settings.flag3.button_switch_force_local ||      // SetOption61 - Force local operation when button/switch topic is set
+           !strcmp(mqtt_topic, key_topic) ||
+           !strcmp(Settings.mqtt_grptopic, key_topic)) &&
+          (POWER_TOGGLE == state)) {
+        state = ~(power >> (device -1)) &1;                 // POWER_OFF or POWER_ON
       }
       snprintf_P(mqtt_data, sizeof(mqtt_data), GetStateText(state));
     }
@@ -549,7 +552,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
 #ifdef USE_DOMOTICZ
     }
 #endif  // USE_DOMOTICZ
-    result = !Settings.flag3.button_switch_force_local;
+    result = !Settings.flag3.button_switch_force_local;  // SetOption61 - Force local operation when button/switch topic is set
   } else {
     Response_P(PSTR("{\"%s%d\":{\"State\":%d}}"), (key) ? "Switch" : "Button", device, state);
     result = XdrvRulesProcess();
@@ -644,7 +647,7 @@ void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 #ifdef USE_KNX
     KnxUpdatePowerState(device, power);
 #endif  // USE_KNX
-    if (publish_power && Settings.flag3.hass_tele_on_power) {
+    if (publish_power && Settings.flag3.hass_tele_on_power) {  // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT
       MqttPublishTeleState();
     }
     if (device <= MAX_PULSETIMERS) {  // Restart PulseTime if powered On
@@ -716,7 +719,8 @@ void MqttShowState(void)
 #endif
 
   ResponseAppend_P(PSTR(",\"" D_JSON_HEAPSIZE "\":%d,\"SleepMode\":\"%s\",\"Sleep\":%u,\"LoadAvg\":%u,\"MqttCount\":%u"),
-    ESP.getFreeHeap()/1024, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode), sleep, loop_load_avg, MqttConnectCount());
+    ESP.getFreeHeap()/1024, GetTextIndexed(stemp1, sizeof(stemp1), Settings.flag3.sleep_normal, kSleepMode),  // SetOption60 - Enable normal sleep instead of dynamic sleep
+    sleep, loop_load_avg, MqttConnectCount());
 
   for (uint32_t i = 1; i <= devices_present; i++) {
 #ifdef USE_LIGHT
@@ -1546,7 +1550,7 @@ void setup(void)
   if (Settings.param[P_BOOT_LOOP_OFFSET]) {
     // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
     if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET]) {       // Restart twice
-      Settings.flag3.user_esp8285_enable = 0;       // Disable ESP8285 Generic GPIOs interfering with flash SPI
+      Settings.flag3.user_esp8285_enable = 0;       // SetOption51 - Enable ESP8285 user GPIO's - Disable ESP8285 Generic GPIOs interfering with flash SPI
       if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET] +1) {  // Restart 3 times
         for (uint32_t i = 0; i < MAX_RULE_SETS; i++) {
           if (bitRead(Settings.rule_stop, i)) {
@@ -1624,7 +1628,7 @@ void setup(void)
 
   // Issue #526 and #909
   for (uint32_t i = 0; i < devices_present; i++) {
-    if (!Settings.flag3.no_power_feedback) {  // #5594 and #5663
+    if (!Settings.flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
       if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
         bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
       }
@@ -1718,15 +1722,15 @@ void loop(void)
 
   uint32_t my_activity = millis() - my_sleep;
 
-  if (Settings.flag3.sleep_normal) {
-    //  yield();       // yield == delay(0), delay contains yield, auto yield in loop
-    delay(sleep);  // https://github.com/esp8266/Arduino/issues/2021
+  if (Settings.flag3.sleep_normal) {              // SetOption60 - Enable normal sleep instead of dynamic sleep
+    //  yield();                                  // yield == delay(0), delay contains yield, auto yield in loop
+    delay(sleep);                                 // https://github.com/esp8266/Arduino/issues/2021
   } else {
     if (my_activity < (uint32_t)sleep) {
-      delay((uint32_t)sleep - my_activity);  // Provide time for background tasks like wifi
+      delay((uint32_t)sleep - my_activity);       // Provide time for background tasks like wifi
     } else {
       if (global_state.wifi_down) {
-        delay(my_activity /2); // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
+        delay(my_activity /2);                    // If wifi down and my_activity > setoption36 then force loop delay to 1/3 of my_activity period
       }
     }
   }
