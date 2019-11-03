@@ -402,7 +402,7 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
 
   zcl_received.postProcessAttributes(srcaddr, json);
   // Add linkquality
-  json[F("_" D_CMND_ZIGBEE_LINKQUALITY)] = linkquality;   // prefix with underscore for metadata
+  json[F(D_CMND_ZIGBEE_LINKQUALITY)] = linkquality;   // prefix with underscore for metadata
 
   msg = "";
   json_root.printTo(msg);
