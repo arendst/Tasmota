@@ -67,6 +67,7 @@ const uint8_t MAX_XNRG_DRIVERS = 32;        // Max number of allowed energy driv
 const uint8_t MAX_XDSP_DRIVERS = 32;        // Max number of allowed display drivers
 const uint8_t MAX_XDRV_DRIVERS = 96;        // Max number of allowed driver drivers
 const uint8_t MAX_XSNS_DRIVERS = 96;        // Max number of allowed sensor drivers
+const uint8_t MAX_I2C_DRIVERS = 96;         // Max number of allowed i2c drivers
 const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
 const uint8_t MAX_PCF8574 = 8;              // Max number of PCF8574 devices
 const uint8_t MAX_RULE_MEMS = 5;            // Max number of saved vars
