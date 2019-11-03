@@ -31,17 +31,33 @@ const Z_CommandConverter Z_Commands[] = {
   { "Dimmer",       "0008!04/xx0A00" },       // Move to Level with On/Off, xx=0..254 (255 is invalid)
   { "Dimmer+",      "0008!06/001902" },       // Step up by 10%, 0.2 secs
   { "Dimmer-",      "0008!06/011902" },       // Step down by 10%, 0.2 secs
+  { "DimmerStop",   "0008!03" },              // Stop any Dimmer animation
+  { "ResetAlarm",   "0009!00/xxyyyy" },       // Reset alarm (alarm code + cluster identifier)
+  { "ResetAllAlarms","0009!01" },             // Reset all alarms
   { "Hue",          "0300!00/xx000A00" },     // Move to Hue, shortest time, 1s
   { "Sat",          "0300!03/xx0A00" },       // Move to Sat
   { "HueSat",       "0300!06/xxyy0A00" },     // Hue, Sat
   { "Color",        "0300!07/xxxxyyyy0A00" }, // x, y (uint16)
   { "CT",           "0300!0A/xxxx0A00" },     // Color Temperature Mireds (uint16)
+  { "Shutter",      "0102!xx" },
   { "ShutterOpen",  "0102!00"},
   { "ShutterClose", "0102!01"},
   { "ShutterStop",  "0102!02"},
   { "ShutterLift",  "0102!05xx"},           // Lift percentage, 0%=open, 100%=closed
   { "ShutterTilt",  "0102!08xx"},           // Tilt percentage
 };
+
+const __FlashStringHelper* zigbeeFindCommand(const char *command) {
+  char parm_uc[16];   // used to convert JSON keys to uppercase
+  for (uint32_t i = 0; i < sizeof(Z_Commands) / sizeof(Z_Commands[0]); i++) {
+    const Z_CommandConverter *conv = &Z_Commands[i];
+    if (0 == strcasecmp_P(command, conv->tasmota_cmd)) {
+      return (const __FlashStringHelper*) conv->zcl_cmd;
+    }
+  }
+
+  return nullptr;
+}
 
 inline bool isXYZ(char c) {
   return (c >= 'x') && (c <= 'z');
@@ -54,8 +70,7 @@ inline char hexDigit(uint32_t h) {
 }
 
 // replace all xx/yy/zz substrings with unsigned ints, and the corresponding len (8, 16 or 32 bits)
-// zcl_cmd can be in PROGMEM
-String SendZCLCommand_P(const char *zcl_cmd_P, uint32_t x, uint32_t y, uint32_t z) {
+String zigbeeCmdAddParams(const char *zcl_cmd_P, uint32_t x, uint32_t y, uint32_t z) {
   size_t len = strlen_P(zcl_cmd_P);
   char zcl_cmd[len+1];
   strcpy_P(zcl_cmd, zcl_cmd_P);     // copy into RAM
@@ -87,6 +102,28 @@ String SendZCLCommand_P(const char *zcl_cmd_P, uint32_t x, uint32_t y, uint32_t 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SendZCLCommand_P: zcl_cmd = %s"), zcl_cmd);
 
   return String(zcl_cmd);
+}
+
+const char kZ_Alias[] PROGMEM = "OFF|" D_OFF "|" D_FALSE "|" D_STOP  "|" "OPEN" "|"           // 0
+                                "ON|"  D_ON  "|" D_TRUE  "|" D_START "|" "CLOSE" "|"          // 1
+                                "TOGGLE|" D_TOGGLE "|"                                        // 2
+                                "ALL" ;                                                       // 255
+
+const uint8_t kZ_Numbers[] PROGMEM = { 0,0,0,0,0,
+                                       1,1,1,1,1,
+                                       2,2,
+                                       255 };
+
+uint32_t ZigbeeAliasOrNumber(const char *state_text) {
+  char command[16];
+  int state_number = GetCommandCode(command, sizeof(command), state_text, kZ_Alias);
+  if (state_number >= 0) {
+    // found an alias, get its value
+    return pgm_read_byte(kZ_Numbers + state_number);
+  } else {
+    // no alias found, convert it as number
+    return strtoul(state_text, nullptr, 0);
+  }
 }
 
 #endif // USE_ZIGBEE

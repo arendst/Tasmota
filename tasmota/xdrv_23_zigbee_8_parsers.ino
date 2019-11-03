@@ -325,7 +325,6 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
     XdrvRulesProcess();
 
     uint8_t cluster = zigbee_devices.findClusterEndpointIn(nwkAddr, 0x0000);
-//Serial.printf(">>> Endpoint is 0x%02X for cluster 0x%04X\n", cluster, 0x0000);
     if (cluster) {
       Z_SendAFInfoRequest(nwkAddr, cluster, 0x0000, 0x01); // TODO, do we need tarnsacId counter?
     }
