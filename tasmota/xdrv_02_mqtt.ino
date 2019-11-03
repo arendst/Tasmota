@@ -316,7 +316,7 @@ void MqttUnsubscribe(const char *topic)
 
 void MqttPublishLogging(const char *mxtime)
 {
-  if (Settings.flag.mqtt_enabled) {
+  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     if (MqttIsConnected()) {
 
       char saved_mqtt_data[MESSZ];
@@ -355,7 +355,7 @@ void MqttPublishDirect(const char* topic, bool retained)
   sretained[0] = '\0';
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
 
-  if (Settings.flag.mqtt_enabled) {
+  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     if (MqttIsConnected()) {
       if (MqttPublishLib(topic, retained)) {
         snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
@@ -366,7 +366,7 @@ void MqttPublishDirect(const char* topic, bool retained)
     }
   }
 
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s%s = %s"), slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, mqtt_data);
+  snprintf_P(log_data, sizeof(log_data), PSTR("%s%s = %s"), slog_type, (Settings.flag.mqtt_enabled) ? topic : strrchr(topic,'/')+1, mqtt_data);  // SetOption3 - Enable MQTT
   if (strlen(log_data) >= (sizeof(log_data) - strlen(sretained) -1)) {
     log_data[sizeof(log_data) - strlen(sretained) -5] = '\0';
     snprintf_P(log_data, sizeof(log_data), PSTR("%s ..."), log_data);
@@ -415,7 +415,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
   char romram[33];
   char stopic[TOPSZ];
 
-  snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings.flag.mqtt_response) ? S_RSLT_RESULT : subtopic);
+  snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings.flag.mqtt_response) ? S_RSLT_RESULT : subtopic);  // SetOption4 - Switch between MQTT RESULT or COMMAND
   for (uint32_t i = 0; i < strlen(romram); i++) {
     romram[i] = toupper(romram[i]);
   }
@@ -443,20 +443,20 @@ void MqttPublishPowerState(uint32_t device)
       DomoticzUpdateFanState();  // RC Button feedback
 #endif  // USE_DOMOTICZ
       snprintf_P(scommand, sizeof(scommand), PSTR(D_CMND_FANSPEED));
-      GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
+      GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);  // SetOption4 - Switch between MQTT RESULT or COMMAND
       Response_P(S_JSON_COMMAND_NVALUE, scommand, GetFanspeed());
       MqttPublish(stopic);
     }
   } else {
 #endif  // USE_SONOFF_IFAN
-    GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable);
-    GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);
+    GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable);           // SetOption26 - Switch between POWER or POWER1
+    GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);  // SetOption4 - Switch between MQTT RESULT or COMMAND
     Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(bitRead(power, device -1)));
     MqttPublish(stopic);
 
     GetTopic_P(stopic, STAT, mqtt_topic, scommand);
     Response_P(GetStateText(bitRead(power, device -1)));
-    MqttPublish(stopic, Settings.flag.mqtt_power_retain);
+    MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
 #ifdef USE_SONOFF_IFAN
   }
 #endif  // USE_SONOFF_IFAN
@@ -480,7 +480,7 @@ void MqttPublishPowerBlinkState(uint32_t device)
     device = 1;
   }
   Response_P(PSTR("{\"%s\":\"" D_JSON_BLINK " %s\"}"),
-    GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable), GetStateText(bitRead(blink_mask, device -1)));
+    GetPowerDevice(scommand, device, sizeof(scommand), Settings.flag.device_index_enable), GetStateText(bitRead(blink_mask, device -1)));  // SetOption26 - Switch between POWER or POWER1
 
   MqttPublishPrefixTopic_P(RESULT_OR_STAT, S_RSLT_POWER);
 }
@@ -559,7 +559,7 @@ void MqttConnected(void)
   Mqtt.initial_connection_state = 0;
 
   global_state.mqtt_down = 0;
-  if (Settings.flag.mqtt_enabled) {
+  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     rules_flag.mqtt_connected = 1;
   }
 }
@@ -568,7 +568,7 @@ void MqttReconnect(void)
 {
   char stopic[TOPSZ];
 
-  Mqtt.allowed = Settings.flag.mqtt_enabled;
+  Mqtt.allowed = Settings.flag.mqtt_enabled;  // SetOption3 - Enable MQTT
   if (Mqtt.allowed) {
 #ifdef USE_DISCOVERY
 #ifdef MQTT_HOST_DISCOVERY
@@ -697,7 +697,7 @@ void MqttReconnect(void)
 
 void MqttCheck(void)
 {
-  if (Settings.flag.mqtt_enabled) {
+  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     if (!MqttIsConnected()) {
       global_state.mqtt_down = 1;
       if (!Mqtt.retry_counter) {
@@ -836,8 +836,8 @@ void CmndFullTopic(void)
     char stemp1[TOPSZ];
     strlcpy(stemp1, (SC_DEFAULT == Shortcut()) ? MQTT_FULLTOPIC : XdrvMailbox.data, sizeof(stemp1));
     if (strcmp(stemp1, Settings.mqtt_fulltopic)) {
-      Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
+      Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);          // Offline or remove previous retained topic
       strlcpy(Settings.mqtt_fulltopic, stemp1, sizeof(Settings.mqtt_fulltopic));
       restart_flag = 2;
     }
@@ -897,8 +897,8 @@ void CmndTopic(void)
     char stemp1[TOPSZ];
     strlcpy(stemp1, (SC_DEFAULT == Shortcut()) ? MQTT_TOPIC : XdrvMailbox.data, sizeof(stemp1));
     if (strcmp(stemp1, Settings.mqtt_topic)) {
-      Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
+      Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);          // Offline or remove previous retained topic
       strlcpy(Settings.mqtt_topic, stemp1, sizeof(Settings.mqtt_topic));
       restart_flag = 2;
     }
@@ -944,9 +944,9 @@ void CmndButtonRetain(void)
         SendKey(KEY_BUTTON, i, CLEAR_RETAIN);  // Clear MQTT retain in broker
       }
     }
-    Settings.flag.mqtt_button_retain = XdrvMailbox.payload;
+    Settings.flag.mqtt_button_retain = XdrvMailbox.payload;  // CMND_BUTTONRETAIN
   }
-  ResponseCmndStateText(Settings.flag.mqtt_button_retain);
+  ResponseCmndStateText(Settings.flag.mqtt_button_retain);   // CMND_BUTTONRETAIN
 }
 
 void CmndSwitchRetain(void)
@@ -957,9 +957,9 @@ void CmndSwitchRetain(void)
         SendKey(KEY_SWITCH, i, CLEAR_RETAIN);  // Clear MQTT retain in broker
       }
     }
-    Settings.flag.mqtt_switch_retain = XdrvMailbox.payload;
+    Settings.flag.mqtt_switch_retain = XdrvMailbox.payload;  // CMND_SWITCHRETAIN
   }
-  ResponseCmndStateText(Settings.flag.mqtt_switch_retain);
+  ResponseCmndStateText(Settings.flag.mqtt_switch_retain);   // CMND_SWITCHRETAIN
 }
 
 void CmndPowerRetain(void)
@@ -969,14 +969,14 @@ void CmndPowerRetain(void)
       char stemp1[TOPSZ];
       char scommand[CMDSZ];
       for (uint32_t i = 1; i <= devices_present; i++) {  // Clear MQTT retain in broker
-        GetTopic_P(stemp1, STAT, mqtt_topic, GetPowerDevice(scommand, i, sizeof(scommand), Settings.flag.device_index_enable));
+        GetTopic_P(stemp1, STAT, mqtt_topic, GetPowerDevice(scommand, i, sizeof(scommand), Settings.flag.device_index_enable));  // SetOption26 - Switch between POWER or POWER1
         mqtt_data[0] = '\0';
-        MqttPublish(stemp1, Settings.flag.mqtt_power_retain);
+        MqttPublish(stemp1, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
       }
     }
-    Settings.flag.mqtt_power_retain = XdrvMailbox.payload;
+    Settings.flag.mqtt_power_retain = XdrvMailbox.payload;     // CMND_POWERRETAIN
   }
-  ResponseCmndStateText(Settings.flag.mqtt_power_retain);
+  ResponseCmndStateText(Settings.flag.mqtt_power_retain);      // CMND_POWERRETAIN
 }
 
 void CmndSensorRetain(void)
@@ -984,12 +984,12 @@ void CmndSensorRetain(void)
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 1)) {
     if (!XdrvMailbox.payload) {
       mqtt_data[0] = '\0';
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_ENERGY), Settings.flag.mqtt_sensor_retain);
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_ENERGY), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
     }
-    Settings.flag.mqtt_sensor_retain = XdrvMailbox.payload;
+    Settings.flag.mqtt_sensor_retain = XdrvMailbox.payload;                                   // CMND_SENSORRETAIN
   }
-  ResponseCmndStateText(Settings.flag.mqtt_sensor_retain);
+  ResponseCmndStateText(Settings.flag.mqtt_sensor_retain);                                    // CMND_SENSORRETAIN
 }
 
 /*********************************************************************************************\
@@ -1250,8 +1250,8 @@ void MqttSaveSettings(void)
   strlcpy(stemp2, (!strlen(tmp)) ? MQTT_FULLTOPIC : tmp, sizeof(stemp2));
   MakeValidMqtt(1, stemp2);
   if ((strcmp(stemp, Settings.mqtt_topic)) || (strcmp(stemp2, Settings.mqtt_fulltopic))) {
-    Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");
-    MqttPublishPrefixTopic_P(TELE, S_LWT, true);  // Offline or remove previous retained topic
+    Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
+    MqttPublishPrefixTopic_P(TELE, S_LWT, true);                // Offline or remove previous retained topic
   }
   strlcpy(Settings.mqtt_topic, stemp, sizeof(Settings.mqtt_topic));
   strlcpy(Settings.mqtt_fulltopic, stemp2, sizeof(Settings.mqtt_fulltopic));
@@ -1287,7 +1287,7 @@ bool Xdrv02(uint8_t function)
 {
   bool result = false;
 
-  if (Settings.flag.mqtt_enabled) {
+  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     switch (function) {
       case FUNC_PRE_INIT:
         MqttInit();

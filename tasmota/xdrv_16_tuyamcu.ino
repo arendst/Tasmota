@@ -404,7 +404,7 @@ void TuyaRequestState(void)
 
 void TuyaResetWifi(void)
 {
-  if (!Settings.flag.button_restrict) {
+  if (!Settings.flag.button_restrict) {  // SetOption1 - Control button multipress
     char scmnd[20];
     snprintf_P(scmnd, sizeof(scmnd), D_CMND_WIFICONFIG " %d", 2);
     ExecuteCommand(scmnd, SRC_BUTTON);

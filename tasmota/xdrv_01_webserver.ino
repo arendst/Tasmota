@@ -991,7 +991,7 @@ void HandleRoot(void)
   if (devices_present) {
 #ifdef USE_LIGHT
     if (light_type) {
-      if (!Settings.flag3.pwm_multi_channels) {
+      if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 0
         if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
           // Cold - Warm &t related to lb("t", value) and WebGetArg("t", tmp, sizeof(tmp));
           WSContentSend_P(HTTP_MSG_SLIDER1, F(D_COLDLIGHT), F(D_WARMLIGHT),
@@ -1000,7 +1000,7 @@ void HandleRoot(void)
         // Dark - Bright &d related to lb("d", value) and WebGetArg("d", tmp, sizeof(tmp));
         WSContentSend_P(HTTP_MSG_SLIDER1, F(D_DARKLIGHT), F(D_BRIGHTLIGHT),
           1, 100, Settings.light_dimmer, 'd');
-      } else {  // Settings.flag3.pwm_multi_channels
+      } else {  // Settings.flag3.pwm_multi_channels - SetOption68 1
         uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
         for (uint32_t i = 0; i < pwm_channels; i++) {
           snprintf_P(stemp, sizeof(stemp), PSTR("c%d"), i);
@@ -1012,7 +1012,7 @@ void HandleRoot(void)
     }
 #endif
 #ifdef USE_SHUTTER
-    if (Settings.flag3.shutter_mode) {
+    if (Settings.flag3.shutter_mode) {  // SetOption80 1
       for (uint32_t i = 0; i < shutters_present; i++) {
         WSContentSend_P(HTTP_MSG_SLIDER2, F(D_CLOSE), F(D_OPEN),
           0, 100, Settings.shutter_position[i], 'u', i+1);
@@ -1625,7 +1625,7 @@ void HandleLoggingConfiguration(void)
   char stemp2[32];
   uint8_t dlevel[4] = { LOG_LEVEL_INFO, LOG_LEVEL_INFO, LOG_LEVEL_NONE, LOG_LEVEL_NONE };
   for (uint32_t idx = 0; idx < 4; idx++) {
-    if ((2==idx) && !Settings.flag.mqtt_enabled) { continue; }
+    if ((2==idx) && !Settings.flag.mqtt_enabled) { continue; }  // SetOption3 - Enable MQTT
     uint32_t llevel = (0==idx)?Settings.seriallog_level:(1==idx)?Settings.weblog_level:(2==idx)?Settings.mqttlog_level:Settings.syslog_level;
     WSContentSend_P(PSTR("<p><b>%s</b> (%s)<br><select id='l%d'>"),
       GetTextIndexed(stemp1, sizeof(stemp1), idx, kLoggingOptions),
@@ -1689,7 +1689,7 @@ void HandleOtherConfiguration(void)
   TemplateJson();
   char stemp[strlen(mqtt_data) +1];
   strlcpy(stemp, mqtt_data, sizeof(stemp));  // Get JSON template
-  WSContentSend_P(HTTP_FORM_OTHER, stemp, (USER_MODULE == Settings.module) ? " checked disabled" : "", (Settings.flag.mqtt_enabled) ? " checked" : "");
+  WSContentSend_P(HTTP_FORM_OTHER, stemp, (USER_MODULE == Settings.module) ? " checked disabled" : "", (Settings.flag.mqtt_enabled) ? " checked" : "");  // SetOption3 - Enable MQTT
 
   uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
 #ifdef USE_SONOFF_IFAN
@@ -1738,7 +1738,7 @@ void OtherSaveSettings(void)
 
   WebGetArg("wp", tmp, sizeof(tmp));
   strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
-  Settings.flag.mqtt_enabled = WebServer->hasArg("b1");
+  Settings.flag.mqtt_enabled = WebServer->hasArg("b1");  // SetOption3 - Enable MQTT
 #ifdef USE_EMULATION
   WebGetArg("b2", tmp, sizeof(tmp));
   Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
@@ -1900,7 +1900,7 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_MAC_ADDRESS "}2%s"), WiFi.softAPmacAddress().c_str());
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-  if (Settings.flag.mqtt_enabled) {
+  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
 #ifdef USE_MQTT_AWS_IOT
     WSContentSend_P(PSTR("}1" D_MQTT_HOST "}2%s%s"), Settings.mqtt_user, Settings.mqtt_host);
     WSContentSend_P(PSTR("}1" D_MQTT_PORT "}2%d"), Settings.mqtt_port);
@@ -2039,7 +2039,7 @@ void HandleUploadDone(void)
     }
     WSContentSend_P(error);
     DEBUG_CORE_LOG(PSTR("UPL: %s"), error);
-    stop_flash_rotate = Settings.flag.stop_flash_rotate;
+    stop_flash_rotate = Settings.flag.stop_flash_rotate;  // SetOption12 - Switch between dynamic or fixed slot flash save location
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
     WSContentSend_P(HTTP_MSG_RSTRT);
@@ -2099,7 +2099,9 @@ void HandleUploadLoop(void)
 #ifdef USE_ARILUX_RF
       AriluxRfDisable();  // Prevent restart exception on Arilux Interrupt routine
 #endif  // USE_ARILUX_RF
-      if (Settings.flag.mqtt_enabled) MqttDisconnect();
+      if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
+        MqttDisconnect();
+      }
       uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
       if (!Update.begin(maxSketchSpace)) {         //start with max available size
 

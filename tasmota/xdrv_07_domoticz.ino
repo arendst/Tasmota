@@ -82,7 +82,7 @@ int DomoticzRssiQuality(void)
 #ifdef USE_SONOFF_IFAN
 void MqttPublishDomoticzFanState()
 {
-  if (Settings.flag.mqtt_enabled && Settings.domoticz_relay_idx[1]) {
+  if (Settings.flag.mqtt_enabled && Settings.domoticz_relay_idx[1]) {  // SetOption3 - Enable MQTT
     char svalue[8];  // Fanspeed value
 
     int fan_speed = GetFanspeed();
@@ -105,7 +105,7 @@ void DomoticzUpdateFanState()
 
 void MqttPublishDomoticzPowerState(uint8_t device)
 {
-  if (Settings.flag.mqtt_enabled) {
+  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     if ((device < 1) || (device > devices_present)) { device = 1; }
     if (Settings.domoticz_relay_idx[device -1]) {
 #ifdef USE_SONOFF_IFAN
@@ -574,7 +574,7 @@ bool Xdrv07(uint8_t function)
 {
   bool result = false;
 
-  if (Settings.flag.mqtt_enabled) {
+  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     switch (function) {
       case FUNC_EVERY_SECOND:
         DomoticzMqttUpdate();

@@ -74,7 +74,7 @@ float MAX31855_GetProbeTemperature(int32_t RawData){
 
     float result = (RawData * 0.25);                // MAX31855 LSB resolution is 0.25°C for probe temperature
 
-    return (Settings.flag.temperature_conversion) ? ConvertTemp(result) : result;   // Check if we have to convert to Fahrenheit
+    return ConvertTemp(result);                     // Check if we have to convert to Fahrenheit
 }
 
 /*
@@ -89,7 +89,7 @@ float MAX31855_GetReferenceTemperature(int32_t RawData){
 
     float result = (RawData * 0.0625);              // MAX31855 LSB resolution is 0.0625°C for reference temperature
 
-    return (Settings.flag.temperature_conversion) ? ConvertTemp(result) : result;   // Check if we have to convert to Fahrenheit
+    return ConvertTemp(result);                     // Check if we have to convert to Fahrenheit
 }
 
 /*

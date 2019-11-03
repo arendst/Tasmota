@@ -200,7 +200,7 @@ uint8_t MGC3130enableAirwheel[] = {0x10, 0x00, 0x00, 0xA2, 0x90, 0x00 , 0x00, 0x
 void MGC3130_triggerTele(){
     mqtt_data[0] = '\0';
     if (MqttShowSensor()) {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
     #ifdef USE_RULES
       RulesTeleperiod();  // Allow rule based HA messages
     #endif  // USE_RULES

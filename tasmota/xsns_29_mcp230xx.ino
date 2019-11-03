@@ -161,7 +161,7 @@ void MCP230xx_ApplySettings(void) {
 #ifdef USE_MCP230xx_OUTPUT
         case 5 ... 6:
           reg_iodir &= ~(1 << idx);
-          if (Settings.flag.save_state) { // Firmware configuration wants us to use the last pin state
+          if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart - Firmware configuration wants us to use the last pin state
             reg_portpins |= (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].saved_state << idx);
           } else {
             if (Settings.mcp230xx_config[idx+(mcp230xx_port*8)].pullup) {
@@ -347,7 +347,7 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
   uint8_t portpins;
   uint8_t port = 0;
   uint8_t pinmo = Settings.mcp230xx_config[pin].pinmode;
-  uint8_t interlock = Settings.flag.interlock;
+  uint8_t interlock = Settings.flag.interlock;  // CMND_INTERLOCK - Enable/disable interlock
   int pinadd = (pin % 2)+1-(3*(pin % 2)); //check if pin is odd or even and convert to 1 (if even) or -1 (if odd)
   char cmnd[7], stt[4];
   if (pin > 7) { port = 1; }
@@ -374,7 +374,7 @@ void MCP230xx_SetOutPin(uint8_t pin,uint8_t pinstate) {
     }
   }
   I2cWrite8(USE_MCP230xx_ADDR, MCP230xx_GPIO + port, portpins);
-  if (Settings.flag.save_state) { // Firmware configured to save last known state in settings
+  if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart - Firmware configured to save last known state in settings
     Settings.mcp230xx_config[pin].saved_state=portpins>>(pin-(port*8))&1;
     Settings.mcp230xx_config[pin+pinadd].saved_state=portpins>>(pin+pinadd-(port*8))&1;
   }
@@ -737,7 +737,7 @@ void MCP230xx_OutputTelemetry(void) {
       }
     }
     ResponseAppend_P(PSTR("\"END\":1}}"));
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
   }
 }
 
@@ -752,7 +752,7 @@ void MCP230xx_Interrupt_Counter_Report(void) {
     }
   }
   ResponseAppend_P(PSTR("\"END\":1}}"));
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
   mcp230xx_int_sec_counter = 0;
 }
 
@@ -767,7 +767,7 @@ void MCP230xx_Interrupt_Retain_Report(void) {
     }
   }
   ResponseAppend_P(PSTR("\"Value\":%u}}"),retainresult);
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
 }
 
 /*********************************************************************************************\

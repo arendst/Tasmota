@@ -619,8 +619,8 @@ float ConvertTemp(float c)
   global_update = uptime;
   global_temperature = c;
 
-  if (!isnan(c) && Settings.flag.temperature_conversion) {
-    result = c * 1.8 + 32;  // Fahrenheit
+  if (!isnan(c) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
+    result = c * 1.8 + 32;                                    // Fahrenheit
   }
   return result;
 }
@@ -629,15 +629,15 @@ float ConvertTempToCelsius(float c)
 {
   float result = c;
 
-  if (!isnan(c) && Settings.flag.temperature_conversion) {
-    result = (c - 32) / 1.8;  // Celsius
+  if (!isnan(c) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
+    result = (c - 32) / 1.8;                                  // Celsius
   }
   return result;
 }
 
 char TempUnit(void)
 {
-  return (Settings.flag.temperature_conversion) ? 'F' : 'C';
+  return (Settings.flag.temperature_conversion) ? 'F' : 'C';  // SetOption8  - Switch between Celsius or Fahrenheit
 }
 
 float ConvertHumidity(float h)
@@ -655,8 +655,8 @@ float ConvertPressure(float p)
   global_update = uptime;
   global_pressure = p;
 
-  if (!isnan(p) && Settings.flag.pressure_conversion) {
-    result = p * 0.75006375541921;  // mmHg
+  if (!isnan(p) && Settings.flag.pressure_conversion) {  // SetOption24 - Switch between hPa or mmHg pressure unit
+    result = p * 0.75006375541921;                       // mmHg
   }
   return result;
 }

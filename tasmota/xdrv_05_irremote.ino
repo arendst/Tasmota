@@ -137,7 +137,7 @@ void IrReceiveCheck(void)
       ir_lasttime = now;
 
       char svalue[64];
-      if (Settings.flag.ir_receive_decimal) {
+      if (Settings.flag.ir_receive_decimal) {  // SetOption29 - IR receive data format
         ulltoa(results.value, svalue, 10);
       } else {
         snprintf_P(svalue, sizeof(svalue), PSTR("\"0x%s\""), hvalue);

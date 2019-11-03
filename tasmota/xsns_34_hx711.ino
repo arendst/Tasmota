@@ -360,7 +360,7 @@ void HxEvery100mSecond(void)
           ResponseAppendTime();
           HxShow(true);
           ResponseJsonEnd();
-          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
           Hx.weight_changed = false;
         }
       }

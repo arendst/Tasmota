@@ -154,7 +154,7 @@ void PS16DZSerialInput(void)
       else if (!strncmp(Ps16dz.rx_buffer+3, "SETTING", 7)) {
         // AT+SETTING=enterESPTOUCH - When ON button is held for over 5 seconds
         // AT+SETTING=exitESPTOUCH  - When ON button is pressed
-        if (!Settings.flag.button_restrict) {
+        if (!Settings.flag.button_restrict) {  // SetOption1 - Control button multipress
           int state = WIFI_MANAGER;
           if (!strncmp(Ps16dz.rx_buffer+10, "=exit", 5)) { state = WIFI_RETRY; }
           if (state != Settings.sta_config) {

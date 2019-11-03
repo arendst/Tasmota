@@ -161,7 +161,7 @@ String sendIRJsonState(const struct decode_results &results) {
     } else {
       json += ",\"" D_JSON_IR_HASH "\":";
     }
-    if (Settings.flag.ir_receive_decimal) {
+    if (Settings.flag.ir_receive_decimal) {  // SetOption29 - IR receive data format
       char svalue[32];
       ulltoa(results.value, svalue, 10);
       json += svalue;

@@ -213,7 +213,7 @@ void EnergyUpdateTotal(float value, bool kwh)
 
 void Energy200ms(void)
 {
-  Energy.power_on = (power != 0) | Settings.flag.no_power_on_check;
+  Energy.power_on = (power != 0) | Settings.flag.no_power_on_check;  // SetOption21 - Show voltage even if powered off
 
   Energy.fifth_second++;
   if (5 == Energy.fifth_second) {
@@ -424,7 +424,7 @@ void EnergyMqttShow(void)
   EnergyShow(true);
   tele_period = tele_period_save;
   ResponseJsonEnd();
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
   Energy.power_delta = false;
 }
 #endif  // USE_ENERGY_MARGIN_DETECTION

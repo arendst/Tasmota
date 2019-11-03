@@ -520,7 +520,7 @@ void WifiCheck(uint8_t param)
 #endif  // USE_WEBSERVER
 
 #ifdef USE_KNX
-        if (!knx_started && Settings.flag.knx_enabled) {
+        if (!knx_started && Settings.flag.knx_enabled) {  // CMND_KNX_ENABLED
           KNXStart();
           knx_started = true;
         }
@@ -574,7 +574,9 @@ void WifiDisconnect(void)
 void EspRestart(void)
 {
   delay(100);                 // Allow time for message xfer - disabled v6.1.0b
-  if (Settings.flag.mqtt_enabled) MqttDisconnect();
+  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
+    MqttDisconnect();
+  }
   WifiDisconnect();
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();

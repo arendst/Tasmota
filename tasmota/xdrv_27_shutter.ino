@@ -174,7 +174,7 @@ void ShutterInit(void)
       // Determine shutter types
       Shutter.mask |= 3 << (Settings.shutter_startrelay[i] -1)  ;
 
-      for (uint32_t j = 0; j < MAX_INTERLOCKS * Settings.flag.interlock; j++) {
+      for (uint32_t j = 0; j < MAX_INTERLOCKS * Settings.flag.interlock; j++) {  // CMND_INTERLOCK - Enable/disable interlock
         //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Interlock state i=%d %d, flag %d, , shuttermask %d, maskedIL %d"),i, Settings.interlock[i], Settings.flag.interlock,Shutter.mask, Settings.interlock[i]&Shutter.mask);
         if (Settings.interlock[j] && Settings.interlock[j] & Shutter.mask) {
           //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Relay in Interlock group"));
@@ -275,7 +275,7 @@ void ShutterUpdatePosition(void)
         snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
         GetTopic_P(stopic, STAT, mqtt_topic, scommand);
         Response_P("%d", Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
-        MqttPublish(stopic, Settings.flag.mqtt_power_retain);
+        MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
 
         switch (Shutter.mode) {
           case SHT_PULSE_OPEN__PULSE_CLOSE:
@@ -638,7 +638,7 @@ bool Xdrv27(uint8_t function)
 {
   bool result = false;
 
-  if (Settings.flag3.shutter_mode) {
+  if (Settings.flag3.shutter_mode) {  // SetOption80 1
     switch (function) {
       case FUNC_PRE_INIT:
         ShutterInit();

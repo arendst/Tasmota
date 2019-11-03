@@ -1812,7 +1812,7 @@ void handleGesture(void) {
 
     mqtt_data[0] = '\0';
     if (MqttShowSensor()) {
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
 #ifdef USE_RULES
       RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_RULES

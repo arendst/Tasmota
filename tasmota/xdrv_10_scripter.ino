@@ -2664,15 +2664,15 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                       // allow recursive call
                     } else {
                       tasm_cmd_activ=1;
-                      svmqtt=Settings.flag.mqtt_enabled;
+                      svmqtt=Settings.flag.mqtt_enabled;  // SetOption3 - Enable MQTT
                       swll=Settings.weblog_level;
-                      Settings.flag.mqtt_enabled=0;
+                      Settings.flag.mqtt_enabled=0;       // SetOption3 - Enable MQTT
                       Settings.weblog_level=0;
                     }
                     ExecuteCommand((char*)tmp, SRC_RULE);
                     tasm_cmd_activ=0;
                     if (sflag==1) {
-                      Settings.flag.mqtt_enabled=svmqtt;
+                      Settings.flag.mqtt_enabled=svmqtt;  // SetOption3  - Enable MQTT
                       Settings.weblog_level=swll;
                     }
                   }

@@ -300,7 +300,7 @@ void CmndPower(void)
     if ((XdrvMailbox.payload < POWER_OFF) || (XdrvMailbox.payload > POWER_BLINK_STOP)) {
       XdrvMailbox.payload = POWER_SHOW_STATE;
     }
-//      Settings.flag.device_index_enable = XdrvMailbox.usridx;
+//      Settings.flag.device_index_enable = XdrvMailbox.usridx;  // SetOption26 - Switch between POWER or POWER1
     ExecuteCommandPower(XdrvMailbox.index, XdrvMailbox.payload, SRC_IGNORE);
     mqtt_data[0] = '\0';
   }
@@ -324,7 +324,7 @@ void CmndStatus(void)
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
   if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1]) && (!payload)) { option++; }  // TELE
 
-  if ((!Settings.flag.mqtt_enabled) && (6 == payload)) { payload = 99; }
+  if ((!Settings.flag.mqtt_enabled) && (6 == payload)) { payload = 99; }  // SetOption3 - Enable MQTT
   if (!energy_flg && (9 == payload)) { payload = 99; }
 
   if ((0 == payload) || (99 == payload)) {
@@ -346,8 +346,14 @@ void CmndStatus(void)
                           D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d}}"),
                           ModuleNr(), stemp, mqtt_topic,
                           Settings.button_topic, power, Settings.poweronstate, Settings.ledstate,
-                          Settings.ledmask, Settings.save_data, Settings.flag.save_state, Settings.switch_topic,
-                          stemp2, Settings.flag.mqtt_button_retain, Settings.flag.mqtt_switch_retain, Settings.flag.mqtt_sensor_retain, Settings.flag.mqtt_power_retain);
+                          Settings.ledmask, Settings.save_data,
+                          Settings.flag.save_state,           // SetOption0 - Save power state and use after restart
+                          Settings.switch_topic,
+                          stemp2,
+                          Settings.flag.mqtt_button_retain,   // CMND_BUTTONRETAIN
+                          Settings.flag.mqtt_switch_retain,   // CMND_SWITCHRETAIN
+                          Settings.flag.mqtt_sensor_retain,   // CMND_SENSORRETAIN
+                          Settings.flag.mqtt_power_retain);   // CMND_POWERRETAIN
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS));
   }
 
@@ -404,7 +410,7 @@ void CmndStatus(void)
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "5"));
   }
 
-  if (((0 == payload) || (6 == payload)) && Settings.flag.mqtt_enabled) {
+  if (((0 == payload) || (6 == payload)) && Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
 #ifdef USE_MQTT_AWS_IOT
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS6_MQTT "\":{\"" D_CMND_MQTTHOST "\":\"%s%s\",\"" D_CMND_MQTTPORT "\":%d,\"" D_CMND_MQTTCLIENT D_JSON_MASK "\":\"%s\",\""
                           D_CMND_MQTTCLIENT "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d}}"),
@@ -483,7 +489,7 @@ void CmndState(void)
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
   }
 #ifdef USE_HOME_ASSISTANT
-  if (Settings.flag.hass_discovery) {
+  if (Settings.flag.hass_discovery) {  // SetOption19 - Control Home Assistantautomatic discovery (See SetOption59)
     HAssPublishStatus();
   }
 #endif  // USE_HOME_ASSISTANT
@@ -526,7 +532,7 @@ void CmndOtaUrl(void)
 void CmndSeriallog(void)
 {
   if ((XdrvMailbox.payload >= LOG_LEVEL_NONE) && (XdrvMailbox.payload <= LOG_LEVEL_DEBUG_MORE)) {
-    Settings.flag.mqtt_serial = 0;
+    Settings.flag.mqtt_serial = 0;       // CMND_SERIALSEND and CMND_SERIALLOG
     SetSeriallog(XdrvMailbox.payload);
   }
   Response_P(S_JSON_COMMAND_NVALUE_ACTIVE_NVALUE, XdrvMailbox.command, Settings.seriallog_level, seriallog_level);
@@ -1061,8 +1067,8 @@ void CmndSerialSend(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 5)) {
     SetSeriallog(LOG_LEVEL_NONE);
-    Settings.flag.mqtt_serial = 1;
-    Settings.flag.mqtt_serial_raw = (XdrvMailbox.index > 3) ? 1 : 0;
+    Settings.flag.mqtt_serial = 1;                                  // CMND_SERIALSEND and CMND_SERIALLOG
+    Settings.flag.mqtt_serial_raw = (XdrvMailbox.index > 3) ? 1 : 0;  // CMND_SERIALSEND3
     if (XdrvMailbox.data_len > 0) {
       if (1 == XdrvMailbox.index) {
         Serial.printf("%s\n", XdrvMailbox.data);                    // "Hello Tiger\n"
@@ -1290,7 +1296,7 @@ void CmndInterlock(void)
           if (minimal_bits < 2) { Settings.interlock[i] = 0; }  // Discard single relay as interlock
         }
       } else {
-        Settings.flag.interlock = XdrvMailbox.payload &1;                   // Enable/disable interlock
+        Settings.flag.interlock = XdrvMailbox.payload &1;       // CMND_INTERLOCK - Enable/disable interlock
         if (Settings.flag.interlock) {
           SetDevicePower(power, SRC_IGNORE);                    // Remove multiple relays if set
         }
@@ -1320,7 +1326,7 @@ void CmndInterlock(void)
     }
     ResponseAppend_P(PSTR("\"}"));
   } else {
-    Settings.flag.interlock = 0;
+    Settings.flag.interlock = 0;                                // CMND_INTERLOCK - Enable/disable interlock
     ResponseCmndStateText(Settings.flag.interlock);
   }
 }

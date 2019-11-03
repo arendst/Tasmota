@@ -291,7 +291,7 @@ void SonoffBridgeReceived(void)
             }
           }
         }
-        if (Settings.flag.rf_receive_decimal) {
+        if (Settings.flag.rf_receive_decimal) {  // SetOption28 - RF receive data format
           snprintf_P(stemp, sizeof(stemp), PSTR("%u"), received_id);
         } else {
           snprintf_P(stemp, sizeof(stemp), PSTR("\"%06X\""), received_id);
@@ -578,7 +578,7 @@ bool Xdrv06(uint8_t function)
         SonoffBridgeSendCommand(0xA7);  // Stop reading RF signals enabling iTead default RF handling
         break;
       case FUNC_PRE_INIT:
-        Settings.flag.mqtt_serial = 0;
+        Settings.flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
         baudrate = 19200;
         break;
     }

@@ -500,7 +500,7 @@ void PN532_ScanForTag(void)
       ResponseTime_P(PSTR(",\"PN532\":{\"UID\":\"%s\"}}"), uids);
 #endif // USE_PN532_DATA_FUNCTION
 
-      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+      MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
 
 #ifdef USE_PN532_CAUSE_EVENTS
 

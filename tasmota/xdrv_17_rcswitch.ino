@@ -62,7 +62,7 @@ void RfReceiveCheck(void)
       rf_lasttime = now;
 
       char stemp[16];
-      if (Settings.flag.rf_receive_decimal) {      // SetOption28 (0 = hexadecimal, 1 = decimal)
+      if (Settings.flag.rf_receive_decimal) {      // SetOption28 - RF receive data format (0 = hexadecimal, 1 = decimal)
         snprintf_P(stemp, sizeof(stemp), PSTR("%u"), (uint32_t)data);
       } else {
         snprintf_P(stemp, sizeof(stemp), PSTR("\"0x%lX\""), (uint32_t)data);

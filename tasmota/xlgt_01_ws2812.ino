@@ -191,7 +191,9 @@ void Ws2812UpdateHand(int position, uint32_t index)
 
   position = (position + Settings.light_rotation) % Settings.light_pixels;
 
-  if (Settings.flag.ws_clock_reverse) position = Settings.light_pixels -position;
+  if (Settings.flag.ws_clock_reverse) {  // SetOption16 - Switch between clockwise or counter-clockwise
+    position = Settings.light_pixels -position;
+  }
   WsColor hand_color = { Settings.ws_color[index][WS_RED], Settings.ws_color[index][WS_GREEN], Settings.ws_color[index][WS_BLUE] };
 
   Ws2812UpdatePixelColor(position, hand_color, 1);
@@ -387,7 +389,7 @@ char* Ws2812GetColor(uint32_t led, char* scolor)
   sl_ledcolor[2] = lcolor.B;
   scolor[0] = '\0';
   for (uint32_t i = 0; i < Light.subtype; i++) {
-    if (Settings.flag.decimal_text) {
+    if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output (0 = hexadecimal, 1 = decimal)
       snprintf_P(scolor, 25, PSTR("%s%s%d"), scolor, (i > 0) ? "," : "", sl_ledcolor[i]);
     } else {
       snprintf_P(scolor, 25, PSTR("%s%02X"), scolor, sl_ledcolor[i]);
