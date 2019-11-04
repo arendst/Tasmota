@@ -125,6 +125,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_MQTT_TLS          | - | - | - | - | - | - | - |
 | USE_MQTT_TLS_CA_CERT  | - | - | - | - | - | - | - |
 | USE_MQTT_AWS_IOT      | - | - | - | - | - | - | - |
+| USE_4K_RSA            | - | - | - | - | - | - | - |
 | USE_KNX               | - | - | - | x | - | - | - |
 | USE_WEBSERVER         | x | x | x | x | x | x | x |
 | USE_JAVASCRIPT_ES6    | - | - | - | - | - | - | - |
