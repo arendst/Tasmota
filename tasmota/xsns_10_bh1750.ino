@@ -113,27 +113,25 @@ void Bh1750Show(bool json)
 
 bool Xsns10(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_11)) { return false; }
+  if (!I2cEnabled(XI2C_11)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        Bh1750Detect();
-        break;
-      case FUNC_EVERY_SECOND:
-        Bh1750EverySecond();
-        break;
-      case FUNC_JSON_APPEND:
-        Bh1750Show(1);
-        break;
+  switch (function) {
+    case FUNC_INIT:
+      Bh1750Detect();
+      break;
+    case FUNC_EVERY_SECOND:
+      Bh1750EverySecond();
+      break;
+    case FUNC_JSON_APPEND:
+      Bh1750Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Bh1750Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Bh1750Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

@@ -190,28 +190,27 @@ void LcdRefresh(void)  // Every second
 
 bool Xdsp01(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_03)) { return false; }
+  if (!I2cEnabled(XI2C_03)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    if (FUNC_DISPLAY_INIT_DRIVER == function) {
-      LcdInitDriver();
-    }
-    else if (XDSP_01 == Settings.display_model) {
-      switch (function) {
-        case FUNC_DISPLAY_MODEL:
-          result = true;
-          break;
-        case FUNC_DISPLAY_INIT:
-          LcdInit(dsp_init);
-          break;
-        case FUNC_DISPLAY_POWER:
-          LcdDisplayOnOff(disp_power);
-          break;
-        case FUNC_DISPLAY_CLEAR:
-          lcd->clear();
-          break;
+  if (FUNC_DISPLAY_INIT_DRIVER == function) {
+    LcdInitDriver();
+  }
+  else if (XDSP_01 == Settings.display_model) {
+    switch (function) {
+      case FUNC_DISPLAY_MODEL:
+        result = true;
+        break;
+      case FUNC_DISPLAY_INIT:
+        LcdInit(dsp_init);
+        break;
+      case FUNC_DISPLAY_POWER:
+        LcdDisplayOnOff(disp_power);
+        break;
+      case FUNC_DISPLAY_CLEAR:
+        lcd->clear();
+        break;
 //        case FUNC_DISPLAY_DRAW_HLINE:
 //          break;
 //        case FUNC_DISPLAY_DRAW_VLINE:
@@ -230,20 +229,19 @@ bool Xdsp01(uint8_t function)
 //          break;
 //        case FUNC_DISPLAY_FONT_SIZE:
 //          break;
-        case FUNC_DISPLAY_DRAW_STRING:
-          LcdDrawStringAt();
-          break;
-        case FUNC_DISPLAY_ONOFF:
-          LcdDisplayOnOff(dsp_on);
-          break;
+      case FUNC_DISPLAY_DRAW_STRING:
+        LcdDrawStringAt();
+        break;
+      case FUNC_DISPLAY_ONOFF:
+        LcdDisplayOnOff(dsp_on);
+        break;
 //        case FUNC_DISPLAY_ROTATION:
 //          break;
 #ifdef USE_DISPLAY_MODES1TO5
-        case FUNC_DISPLAY_EVERY_SECOND:
-          LcdRefresh();
-          break;
+      case FUNC_DISPLAY_EVERY_SECOND:
+        LcdRefresh();
+        break;
 #endif  // USE_DISPLAY_MODES1TO5
-      }
     }
   }
   return result;

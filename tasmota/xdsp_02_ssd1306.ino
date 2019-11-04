@@ -174,25 +174,23 @@ void Ssd1306Refresh(void)  // Every second
 
 bool Xdsp02(byte function)
 {
-  if (!XI2cEnabled(XI2C_04)) { return false; }
+  if (!I2cEnabled(XI2C_04)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    if (FUNC_DISPLAY_INIT_DRIVER == function) {
-      SSD1306InitDriver();
-    }
-    else if (XDSP_02 == Settings.display_model) {
-      switch (function) {
+  if (FUNC_DISPLAY_INIT_DRIVER == function) {
+    SSD1306InitDriver();
+  }
+  else if (XDSP_02 == Settings.display_model) {
+    switch (function) {
 #ifdef USE_DISPLAY_MODES1TO5
-        case FUNC_DISPLAY_EVERY_SECOND:
-          Ssd1306Refresh();
-          break;
+      case FUNC_DISPLAY_EVERY_SECOND:
+        Ssd1306Refresh();
+        break;
 #endif  // USE_DISPLAY_MODES1TO5
-        case FUNC_DISPLAY_MODEL:
-          result = true;
-          break;
-      }
+      case FUNC_DISPLAY_MODEL:
+        result = true;
+        break;
     }
   }
   return result;

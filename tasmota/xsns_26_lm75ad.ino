@@ -104,24 +104,22 @@ void LM75ADShow(bool json)
 
 bool Xsns26(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_20)) { return false; }
+  if (!I2cEnabled(XI2C_20)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_EVERY_SECOND:
-        LM75ADDetect();
-        break;
-      case FUNC_JSON_APPEND:
-        LM75ADShow(1);
-        break;
+  switch (function) {
+    case FUNC_EVERY_SECOND:
+      LM75ADDetect();
+      break;
+    case FUNC_JSON_APPEND:
+      LM75ADShow(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        LM75ADShow(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      LM75ADShow(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

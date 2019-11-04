@@ -242,24 +242,22 @@ void Ads1115Show(bool json)
 
 bool Xsns12(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_13)) { return false; }
+  if (!I2cEnabled(XI2C_13)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_PREP_BEFORE_TELEPERIOD:
-        Ads1115Detect();
-        break;
-      case FUNC_JSON_APPEND:
-        Ads1115Show(1);
-        break;
+  switch (function) {
+    case FUNC_PREP_BEFORE_TELEPERIOD:
+      Ads1115Detect();
+      break;
+    case FUNC_JSON_APPEND:
+      Ads1115Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Ads1115Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Ads1115Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

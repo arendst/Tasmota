@@ -331,32 +331,30 @@ void MatrixRefresh(void)  // Every second
 
 bool Xdsp03(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_05)) { return false; }
+  if (!I2cEnabled(XI2C_05)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    if (FUNC_DISPLAY_INIT_DRIVER == function) {
-      MatrixInitDriver();
-    }
-    else if (XDSP_03 == Settings.display_model) {
-      switch (function) {
-        case FUNC_DISPLAY_MODEL:
-          result = true;
-          break;
-        case FUNC_DISPLAY_INIT:
-          MatrixInit(dsp_init);
-          break;
-        case FUNC_DISPLAY_EVERY_50_MSECOND:
-          MatrixRefresh();
-          break;
-        case FUNC_DISPLAY_POWER:
-          MatrixOnOff();
-          break;
-        case FUNC_DISPLAY_DRAW_STRING:
-          MatrixDrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);
-          break;
-      }
+  if (FUNC_DISPLAY_INIT_DRIVER == function) {
+    MatrixInitDriver();
+  }
+  else if (XDSP_03 == Settings.display_model) {
+    switch (function) {
+      case FUNC_DISPLAY_MODEL:
+        result = true;
+        break;
+      case FUNC_DISPLAY_INIT:
+        MatrixInit(dsp_init);
+        break;
+      case FUNC_DISPLAY_EVERY_50_MSECOND:
+        MatrixRefresh();
+        break;
+      case FUNC_DISPLAY_POWER:
+        MatrixOnOff();
+        break;
+      case FUNC_DISPLAY_DRAW_STRING:
+        MatrixDrawStringAt(dsp_x, dsp_y, dsp_str, dsp_color, dsp_flag);
+        break;
     }
   }
   return result;

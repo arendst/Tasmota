@@ -603,33 +603,31 @@ bool MGC3130CommandSensor()
 
 bool Xsns36(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_27)) { return false; }
+  if (!I2cEnabled(XI2C_27)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    if ((FUNC_INIT == function) && (pin[GPIO_MGC3130_XFER] < 99) && (pin[GPIO_MGC3130_RESET] < 99)) {
-      MGC3130_detect();
-    }
-    else if (MGC3130_type) {
-      switch (function) {
-        case FUNC_EVERY_50_MSECOND:
-          MGC3130_loop();
-          break;
-        case FUNC_COMMAND_SENSOR:
-          if (XSNS_36 == XdrvMailbox.index) {
-            result = MGC3130CommandSensor();
-          }
-          break;
-        case FUNC_JSON_APPEND:
-          MGC3130_show(1);
-          break;
+  if ((FUNC_INIT == function) && (pin[GPIO_MGC3130_XFER] < 99) && (pin[GPIO_MGC3130_RESET] < 99)) {
+    MGC3130_detect();
+  }
+  else if (MGC3130_type) {
+    switch (function) {
+      case FUNC_EVERY_50_MSECOND:
+        MGC3130_loop();
+        break;
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_36 == XdrvMailbox.index) {
+          result = MGC3130CommandSensor();
+        }
+        break;
+      case FUNC_JSON_APPEND:
+        MGC3130_show(1);
+        break;
 #ifdef USE_WEBSERVER
-        case FUNC_WEB_SENSOR:
-          MGC3130_show(0);
-          break;
+      case FUNC_WEB_SENSOR:
+        MGC3130_show(0);
+        break;
 #endif  // USE_WEBSERVER
-      }
     }
   }
   return result;

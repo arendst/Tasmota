@@ -104,24 +104,22 @@ void CCS811Show(bool json)
 
 bool Xsns31(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_24)) { return false; }
+  if (!I2cEnabled(XI2C_24)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_EVERY_SECOND:
-        CCS811Update();
-        break;
-      case FUNC_JSON_APPEND:
-        CCS811Show(1);
-        break;
+  switch (function) {
+    case FUNC_EVERY_SECOND:
+      CCS811Update();
+      break;
+    case FUNC_JSON_APPEND:
+      CCS811Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        CCS811Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      CCS811Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

@@ -117,27 +117,25 @@ void MLX90614_Show(uint8_t json) {
 
 bool Xsns46(byte function)
 {
-  if (!XI2cEnabled(XI2C_32)) { return false; }
+  if (!I2cEnabled(XI2C_32)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        MLX90614_Init();
+  switch (function) {
+    case FUNC_INIT:
+      MLX90614_Init();
+      break;
+    case FUNC_EVERY_SECOND:
+      MLX90614_Every_Second();
+      break;
+    case FUNC_JSON_APPEND:
+      MLX90614_Show(1);
         break;
-      case FUNC_EVERY_SECOND:
-        MLX90614_Every_Second();
-        break;
-      case FUNC_JSON_APPEND:
-        MLX90614_Show(1);
-          break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        MLX90614_Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      MLX90614_Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

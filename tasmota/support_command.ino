@@ -1547,7 +1547,7 @@ void CmndI2cDriver(void)
     }
   }
   Response_P(PSTR("{\"" D_CMND_I2CDRIVER "\":"));
-  XI2cDriverState();
+  I2cDriverState();
   ResponseJsonEnd();
 }
 #endif  // USE_I2C

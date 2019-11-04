@@ -221,28 +221,26 @@ void ShtShow(bool json)
 
 bool Xsns07(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_08)) { return false; }
+  if (!I2cEnabled(XI2C_08)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
+  switch (function) {
 //      case FUNC_PREP_BEFORE_TELEPERIOD:  // As this is not a real I2C device it may interfere with other sensors
-      case FUNC_INIT:                      // Move detection to restart only removing interference
-        ShtDetect();
-        break;
-      case FUNC_EVERY_SECOND:
-        ShtEverySecond();
-        break;
-      case FUNC_JSON_APPEND:
-        ShtShow(1);
-        break;
+    case FUNC_INIT:                      // Move detection to restart only removing interference
+      ShtDetect();
+      break;
+    case FUNC_EVERY_SECOND:
+      ShtEverySecond();
+      break;
+    case FUNC_JSON_APPEND:
+      ShtShow(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        ShtShow(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      ShtShow(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

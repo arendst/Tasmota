@@ -624,27 +624,25 @@ void BmpShow(bool json)
 
 bool Xsns09(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_10)) { return false; }
+  if (!I2cEnabled(XI2C_10)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        BmpDetect();
-        break;
-      case FUNC_EVERY_SECOND:
-        BmpEverySecond();
-        break;
-      case FUNC_JSON_APPEND:
-        BmpShow(1);
-        break;
+  switch (function) {
+    case FUNC_INIT:
+      BmpDetect();
+      break;
+    case FUNC_EVERY_SECOND:
+      BmpEverySecond();
+      break;
+    case FUNC_JSON_APPEND:
+      BmpShow(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        BmpShow(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      BmpShow(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

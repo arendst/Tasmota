@@ -305,28 +305,27 @@ void Veml6070Show(bool json)
 
 bool Xsns11(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_12)) { return false; }
+  if (!I2cEnabled(XI2C_12) ||
+     (pin[GPIO_ADE7953_IRQ] < 99)) { return false; }  // The ADE7953 uses I2C address 0x38 too but needs priority
 
   bool result = false;
 
-  if (i2c_flg && !(pin[GPIO_ADE7953_IRQ] < 99)) {  // The ADE7953 uses I2C address 0x38 too but needs priority
-    switch (function) {
-      case FUNC_INIT:
-        Veml6070Detect();         // 1[ms], detect and init the sensor
-        Veml6070UvTableInit();    // 1[ms], initalize the UV compare table only once
-        break;
-      case FUNC_EVERY_SECOND:
-        Veml6070EverySecond();    // 10..15[ms], tested with OLED display, do all the actions needed to get all sensor values
-        break;
-      case FUNC_JSON_APPEND:
-        Veml6070Show(1);
-        break;
+  switch (function) {
+    case FUNC_INIT:
+      Veml6070Detect();         // 1[ms], detect and init the sensor
+      Veml6070UvTableInit();    // 1[ms], initalize the UV compare table only once
+      break;
+    case FUNC_EVERY_SECOND:
+      Veml6070EverySecond();    // 10..15[ms], tested with OLED display, do all the actions needed to get all sensor values
+      break;
+    case FUNC_JSON_APPEND:
+      Veml6070Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Veml6070Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Veml6070Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

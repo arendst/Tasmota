@@ -150,27 +150,25 @@ void Max4409Show(bool json)
 
 bool Xsns41(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_28)) { return false; }
+  if (!I2cEnabled(XI2C_28)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        Max4409Detect();
-        break;
-      case FUNC_EVERY_SECOND:
-        Max4409EverySecond();
-        break;
-      case FUNC_JSON_APPEND:
-        Max4409Show(1);
-        break;
+  switch (function) {
+    case FUNC_INIT:
+      Max4409Detect();
+      break;
+    case FUNC_EVERY_SECOND:
+      Max4409EverySecond();
+      break;
+    case FUNC_JSON_APPEND:
+      Max4409Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Max4409Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Max4409Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

@@ -777,60 +777,56 @@ void MCP230xx_Interrupt_Retain_Report(void) {
 
 bool Xsns29(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_22)) { return false; }
+  if (!I2cEnabled(XI2C_22)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_EVERY_SECOND:
-        MCP230xx_Detect();
-        if (mcp230xx_int_counter_en) {
-          mcp230xx_int_sec_counter++;
-          if (mcp230xx_int_sec_counter >= Settings.mcp230xx_int_timer) { // Interrupt counter interval reached, lets report
-            MCP230xx_Interrupt_Counter_Report();
-          }
+  switch (function) {
+    case FUNC_EVERY_SECOND:
+      MCP230xx_Detect();
+      if (mcp230xx_int_counter_en) {
+        mcp230xx_int_sec_counter++;
+        if (mcp230xx_int_sec_counter >= Settings.mcp230xx_int_timer) { // Interrupt counter interval reached, lets report
+          MCP230xx_Interrupt_Counter_Report();
         }
-        if (tele_period == 0) {
-          if (mcp230xx_int_retainer_en) { // We have pins configured for interrupt retain reporting
-            MCP230xx_Interrupt_Retain_Report();
-          }
+      }
+      if (tele_period == 0) {
+        if (mcp230xx_int_retainer_en) { // We have pins configured for interrupt retain reporting
+          MCP230xx_Interrupt_Retain_Report();
         }
+      }
 #ifdef USE_MCP230xx_OUTPUT
-        if (tele_period == 0) {
-          MCP230xx_OutputTelemetry();
-        }
+      if (tele_period == 0) {
+        MCP230xx_OutputTelemetry();
+      }
 #endif // USE_MCP230xx_OUTPUT
-        break;
-      case FUNC_EVERY_50_MSECOND:
-        if ((mcp230xx_int_en) && (mcp230xx_type)) { // Only check for interrupts if its enabled on one of the pins
-          mcp230xx_int_prio_counter++;
-          if ((mcp230xx_int_prio_counter) >= (Settings.mcp230xx_int_prio)) {
-            MCP230xx_CheckForInterrupt();
-            mcp230xx_int_prio_counter=0;
-          }
+      break;
+    case FUNC_EVERY_50_MSECOND:
+      if ((mcp230xx_int_en) && (mcp230xx_type)) { // Only check for interrupts if its enabled on one of the pins
+        mcp230xx_int_prio_counter++;
+        if ((mcp230xx_int_prio_counter) >= (Settings.mcp230xx_int_prio)) {
+          MCP230xx_CheckForInterrupt();
+          mcp230xx_int_prio_counter=0;
         }
-        break;
-      case FUNC_JSON_APPEND:
-        MCP230xx_Show(1);
-        break;
-      case FUNC_COMMAND_SENSOR:
-        if (XSNS_29 == XdrvMailbox.index) {
-          result = MCP230xx_Command();
-        }
-        break;
+      }
+      break;
+    case FUNC_JSON_APPEND:
+      MCP230xx_Show(1);
+      break;
+    case FUNC_COMMAND_SENSOR:
+      if (XSNS_29 == XdrvMailbox.index) {
+        result = MCP230xx_Command();
+      }
+      break;
 #ifdef USE_WEBSERVER
 #ifdef USE_MCP230xx_OUTPUT
 #ifdef USE_MCP230xx_DISPLAYOUTPUT
-      case FUNC_WEB_SENSOR:
-        MCP230xx_UpdateWebData();
-        break;
+    case FUNC_WEB_SENSOR:
+      MCP230xx_UpdateWebData();
+      break;
 #endif // USE_MCP230xx_DISPLAYOUTPUT
 #endif // USE_MCP230xx_OUTPUT
 #endif // USE_WEBSERVER
-      default:
-        break;
-    }
   }
   return result;
 }

@@ -537,34 +537,32 @@ bool PAJ7620Cmd(void) {
 
 bool Xsns50(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_34)) { return false; }
+  if (!I2cEnabled(XI2C_34)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        DEBUG_SENSOR_LOG(PSTR("PAJ7620: 1 second until init"));
-        break;
-			case FUNC_COMMAND_SENSOR:
-				if (XSNS_50 == XdrvMailbox.index){
-          result = PAJ7620Cmd();
-        }
-        break;
-      case FUNC_EVERY_100_MSECOND:
-        if(PAJ7620_next_job <255) {
-          PAJ7620Loop();
-        }
-        break;
-      case FUNC_JSON_APPEND:
-        PAJ7620Show(1);
-        break;
+  switch (function) {
+    case FUNC_INIT:
+      DEBUG_SENSOR_LOG(PSTR("PAJ7620: 1 second until init"));
+      break;
+    case FUNC_COMMAND_SENSOR:
+      if (XSNS_50 == XdrvMailbox.index){
+        result = PAJ7620Cmd();
+      }
+      break;
+    case FUNC_EVERY_100_MSECOND:
+      if(PAJ7620_next_job <255) {
+        PAJ7620Loop();
+      }
+      break;
+    case FUNC_JSON_APPEND:
+      PAJ7620Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        PAJ7620Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      PAJ7620Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

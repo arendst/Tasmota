@@ -168,26 +168,24 @@ void SH1106Refresh(void)  // Every second
 
 bool Xdsp07(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_06)) { return false; }
+  if (!I2cEnabled(XI2C_06)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    if (FUNC_DISPLAY_INIT_DRIVER == function) {
-      SH1106InitDriver();
-    }
-    else if (XDSP_07 == Settings.display_model) {
+  if (FUNC_DISPLAY_INIT_DRIVER == function) {
+    SH1106InitDriver();
+  }
+  else if (XDSP_07 == Settings.display_model) {
 
-      switch (function) {
-        case FUNC_DISPLAY_MODEL:
-          result = true;
-          break;
+    switch (function) {
+      case FUNC_DISPLAY_MODEL:
+        result = true;
+        break;
 #ifdef USE_DISPLAY_MODES1TO5
-        case FUNC_DISPLAY_EVERY_SECOND:
-          SH1106Refresh();
-          break;
+      case FUNC_DISPLAY_EVERY_SECOND:
+        SH1106Refresh();
+        break;
 #endif  // USE_DISPLAY_MODES1TO5
-      }
     }
   }
   return result;

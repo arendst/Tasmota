@@ -226,30 +226,28 @@ void MPU_6050Show(bool json)
 
 bool Xsns32(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_25)) { return false; }
+  if (!I2cEnabled(XI2C_25)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_PREP_BEFORE_TELEPERIOD:
-        MPU_6050Detect();
-        break;
-      case FUNC_EVERY_SECOND:
-        if (tele_period == Settings.tele_period -3) {
-          MPU_6050PerformReading();
-        }
-        break;
-      case FUNC_JSON_APPEND:
-        MPU_6050Show(1);
-        break;
-#ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        MPU_6050Show(0);
+  switch (function) {
+    case FUNC_PREP_BEFORE_TELEPERIOD:
+      MPU_6050Detect();
+      break;
+    case FUNC_EVERY_SECOND:
+      if (tele_period == Settings.tele_period -3) {
         MPU_6050PerformReading();
-        break;
+      }
+      break;
+    case FUNC_JSON_APPEND:
+      MPU_6050Show(1);
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_WEB_SENSOR:
+      MPU_6050Show(0);
+      MPU_6050PerformReading();
+      break;
 #endif // USE_WEBSERVER
-    }
   }
   return result;
 }

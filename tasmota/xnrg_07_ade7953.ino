@@ -269,7 +269,7 @@ bool Ade7953Command(void)
 
 bool Xnrg07(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_07)) { return false; }
+  if (!I2cEnabled(XI2C_07)) { return false; }
 
   bool result = false;
 

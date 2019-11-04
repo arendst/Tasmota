@@ -179,26 +179,22 @@ void PCA9685_OutputTelemetry(bool telemetry) {
 
 bool Xdrv15(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_01)) { return false; }
+  if (!I2cEnabled(XI2C_01)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_EVERY_SECOND:
-        PCA9685_Detect();
-        if (tele_period == 0) {
-          PCA9685_OutputTelemetry(true);
-        }
-        break;
-      case FUNC_COMMAND_DRIVER:
-        if (XDRV_15 == XdrvMailbox.index) {
-          result = PCA9685_Command();
-        }
-        break;
-      default:
-        break;
-    }
+  switch (function) {
+    case FUNC_EVERY_SECOND:
+      PCA9685_Detect();
+      if (tele_period == 0) {
+        PCA9685_OutputTelemetry(true);
+      }
+      break;
+    case FUNC_COMMAND_DRIVER:
+      if (XDRV_15 == XdrvMailbox.index) {
+        result = PCA9685_Command();
+      }
+      break;
   }
   return result;
 }

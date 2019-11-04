@@ -284,32 +284,30 @@ bool SPS30_cmd(void) {
 
 bool Xsns44(byte function)
 {
-  if (!XI2cEnabled(XI2C_30)) { return false; }
+  if (!I2cEnabled(XI2C_30)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        SPS30_Detect();
-        break;
-      case FUNC_EVERY_SECOND:
-        SPS30_Every_Second();
-        break;
-      case FUNC_JSON_APPEND:
-        SPS30_Show(1);
-        break;
-      case FUNC_COMMAND_SENSOR:
-        if (XSNS_44 == XdrvMailbox.index) {
-          result = SPS30_cmd();
-        }
-        break;
+  switch (function) {
+    case FUNC_INIT:
+      SPS30_Detect();
+      break;
+    case FUNC_EVERY_SECOND:
+      SPS30_Every_Second();
+      break;
+    case FUNC_JSON_APPEND:
+      SPS30_Show(1);
+      break;
+    case FUNC_COMMAND_SENSOR:
+      if (XSNS_44 == XdrvMailbox.index) {
+        result = SPS30_cmd();
+      }
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        SPS30_Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      SPS30_Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

@@ -139,24 +139,22 @@ void Sht3xShow(bool json)
 
 bool Xsns14(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_15)) { return false; }
+  if (!I2cEnabled(XI2C_15)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        Sht3xDetect();
-        break;
-      case FUNC_JSON_APPEND:
-        Sht3xShow(1);
-        break;
+  switch (function) {
+    case FUNC_INIT:
+      Sht3xDetect();
+      break;
+    case FUNC_JSON_APPEND:
+      Sht3xShow(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Sht3xShow(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Sht3xShow(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

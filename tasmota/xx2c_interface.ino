@@ -412,23 +412,12 @@ const uint8_t kI2cList[] = {
 
 /*********************************************************************************************/
 
-bool XI2cEnabled(uint32_t i2c_index)
+bool I2cEnabled(uint32_t i2c_index)
 {
-/*
-  if (i2c_index < sizeof(kI2cList)) {
-#ifdef XFUNC_PTR_IN_ROM
-    uint32_t index = pgm_read_byte(kI2cList + i2c_index);
-#else
-    uint32_t index = kI2cList[i2c_index];
-#endif
-    return bitRead(Settings.i2c_drivers[index / 32], index % 32);
-  }
-  return true;
-*/
-  return bitRead(Settings.i2c_drivers[i2c_index / 32], i2c_index % 32);
+  return (i2c_flg && bitRead(Settings.i2c_drivers[i2c_index / 32], i2c_index % 32));
 }
 
-void XI2cDriverState(void)
+void I2cDriverState(void)
 {
   ResponseAppend_P(PSTR("\""));  // Use string for enable/disable signal
   for (uint32_t i = 0; i < sizeof(kI2cList); i++) {

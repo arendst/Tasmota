@@ -136,27 +136,25 @@ void Vl53l0Show(boolean json)
 
 bool Xsns45(byte function)
 {
-  if (!XI2cEnabled(XI2C_31)) { return false; }
+  if (!I2cEnabled(XI2C_31)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        Vl53l0Detect();
-        break;
-      case FUNC_EVERY_250_MSECOND:
-        Vl53l0Every_250MSecond();
-        break;
-      case FUNC_JSON_APPEND:
-        Vl53l0Show(1);
-        break;
+  switch (function) {
+    case FUNC_INIT:
+      Vl53l0Detect();
+      break;
+    case FUNC_EVERY_250_MSECOND:
+      Vl53l0Every_250MSecond();
+      break;
+    case FUNC_JSON_APPEND:
+      Vl53l0Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Vl53l0Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Vl53l0Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

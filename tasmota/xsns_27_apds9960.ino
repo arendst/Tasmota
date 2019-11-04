@@ -2027,32 +2027,30 @@ bool APDS9960CommandSensor(void)
 
 bool Xsns27(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_21)) { return false; }
+  if (!I2cEnabled(XI2C_21)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    if (FUNC_INIT == function) {
-      APDS9960_detect();
-    } else if (APDS9960type) {
-      switch (function) {
-        case FUNC_EVERY_50_MSECOND:
-            APDS9960_loop();
-            break;
-        case FUNC_COMMAND_SENSOR:
-            if (XSNS_27 == XdrvMailbox.index) {
-            result = APDS9960CommandSensor();
-            }
-            break;
-        case FUNC_JSON_APPEND:
-            APDS9960_show(1);
-            break;
-#ifdef USE_WEBSERVER
-        case FUNC_WEB_SENSOR:
-          APDS9960_show(0);
+  if (FUNC_INIT == function) {
+    APDS9960_detect();
+  } else if (APDS9960type) {
+    switch (function) {
+      case FUNC_EVERY_50_MSECOND:
+          APDS9960_loop();
           break;
+      case FUNC_COMMAND_SENSOR:
+          if (XSNS_27 == XdrvMailbox.index) {
+          result = APDS9960CommandSensor();
+          }
+          break;
+      case FUNC_JSON_APPEND:
+          APDS9960_show(1);
+          break;
+#ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        APDS9960_show(0);
+        break;
 #endif  // USE_WEBSERVER
-      }
     }
   }
   return result;

@@ -532,37 +532,33 @@ void Ina226Show(bool json)
  */
 bool Xsns54(byte callback_id)
 {
-  if (!XI2cEnabled(XI2C_35)) { return false; }
+  if (!I2cEnabled(XI2C_35)) { return false; }
 
   // Set return value to `false`
   bool result = false;
 
-  // Check if I2C interface mode is enabled
-  if(i2c_flg) {
-
-    // Check which callback ID is called by Tasmota
-    switch (callback_id) {
-      case FUNC_EVERY_SECOND:
-        Ina226EverySecond();
-        break;
-      case FUNC_INIT:
-        Ina226Init();
-        break;
-      case FUNC_JSON_APPEND:
-        Ina226Show(1);
-        break;
+  // Check which callback ID is called by Tasmota
+  switch (callback_id) {
+    case FUNC_EVERY_SECOND:
+      Ina226EverySecond();
+      break;
+    case FUNC_INIT:
+      Ina226Init();
+      break;
+    case FUNC_JSON_APPEND:
+      Ina226Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Ina226Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Ina226Show(0);
+      break;
 #endif // USE_WEBSERVER
-      case FUNC_COMMAND_SENSOR:
-        if (XSNS_54 == XdrvMailbox.index) {
-          result = Ina226CommandSensor();
-        }
-        break;
-    }
-  } // if(i2c_flg)
+    case FUNC_COMMAND_SENSOR:
+      if (XSNS_54 == XdrvMailbox.index) {
+        result = Ina226CommandSensor();
+      }
+      break;
+  }
   // Return boolean result
   return result;
 }

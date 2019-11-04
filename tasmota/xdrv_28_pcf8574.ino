@@ -223,27 +223,25 @@ void Pcf8574SaveSettings()
 
 bool Xdrv28(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_02)) { return false; }
+  if (!I2cEnabled(XI2C_02) || !Pcf8574.type) { return false; }
 
   bool result = false;
 
-  if (i2c_flg && Pcf8574.type) {
-    switch (function) {
-      case FUNC_SET_POWER:
-        Pcf8574SwitchRelay();
-        break;
+  switch (function) {
+    case FUNC_SET_POWER:
+      Pcf8574SwitchRelay();
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_ADD_BUTTON:
-        WSContentSend_P(HTTP_BTN_MENU_PCF8574);
-        break;
-      case FUNC_WEB_ADD_HANDLER:
-        WebServer->on("/" WEB_HANDLE_PCF8574, HandlePcf8574);
-        break;
+    case FUNC_WEB_ADD_BUTTON:
+      WSContentSend_P(HTTP_BTN_MENU_PCF8574);
+      break;
+    case FUNC_WEB_ADD_HANDLER:
+      WebServer->on("/" WEB_HANDLE_PCF8574, HandlePcf8574);
+      break;
 #endif  // USE_WEBSERVER
-      case FUNC_PRE_INIT:
-        Pcf8574Init();
-        break;
-    }
+    case FUNC_PRE_INIT:
+      Pcf8574Init();
+      break;
   }
   return result;
 }

@@ -281,27 +281,25 @@ void HtuShow(bool json)
 
 bool Xsns08(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_09)) { return false; }
+  if (!I2cEnabled(XI2C_09)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        HtuDetect();
-        break;
-      case FUNC_EVERY_SECOND:
-        HtuEverySecond();
-        break;
-      case FUNC_JSON_APPEND:
-        HtuShow(1);
-        break;
+  switch (function) {
+    case FUNC_INIT:
+      HtuDetect();
+      break;
+    case FUNC_EVERY_SECOND:
+      HtuEverySecond();
+      break;
+    case FUNC_JSON_APPEND:
+      HtuShow(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        HtuShow(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      HtuShow(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
   }
   return result;
 }

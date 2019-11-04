@@ -135,27 +135,25 @@ void Hih6Show(bool json)
 
 bool Xsns55(uint8_t function)
 {
-  if (!XI2cEnabled(XI2C_36)) { return false; }
+  if (!I2cEnabled(XI2C_36)) { return false; }
 
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_EVERY_SECOND:
-        Hih6EverySecond();
-        break;
-      case FUNC_JSON_APPEND:
-        Hih6Show(1);
-        break;
+  switch (function) {
+    case FUNC_EVERY_SECOND:
+      Hih6EverySecond();
+      break;
+    case FUNC_JSON_APPEND:
+      Hih6Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Hih6Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Hih6Show(0);
+      break;
 #endif  // USE_WEBSERVER
-      case FUNC_INIT:
-        Hih6Detect();
-        break;
-    }
+    case FUNC_INIT:
+      Hih6Detect();
+      break;
   }
   return result;
 }
