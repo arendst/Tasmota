@@ -187,9 +187,9 @@ void Ads1115GetValues(uint8_t address)
   ads1115_address = old_address;
 }
 
-void Ads1115toJSON(char *comma_j)
+void Ads1115toJSON(char *name, int index, char *comma_j)
 {
-  ResponseAppend_P(PSTR("%s{"), comma_j);
+  ResponseAppend_P(PSTR("%s\"%s_%d\":{"), comma_j,name,index);
   char *comma = (char*)"";
   for (uint32_t i = 0; i < 4; i++) {
     ResponseAppend_P(PSTR("%s\"A%d\":%d"), comma, i, ads1115_values[i]);
@@ -212,19 +212,15 @@ void Ads1115Show(bool json)
 {
   if (!ads1115_type) { return; }
 
-  if (json) {
-    ResponseAppend_P(PSTR(",\"ADS1115\":"));
-  }
-
   char *comma = (char*)"";
 
   for (uint32_t t = 0; t < sizeof(ads1115_addresses); t++) {
     //AddLog_P2(LOG_LEVEL_INFO, "Logging ADS1115 %02x", ads1115_addresses[t]);
     if (ads1115_found[t]) {
+      comma = (char*)",";
       Ads1115GetValues(ads1115_addresses[t]);
       if (json) {
-        Ads1115toJSON(comma);
-        comma = (char*)",";
+        Ads1115toJSON("ADS1115", t, comma);
       }
 #ifdef USE_WEBSERVER
       else {
