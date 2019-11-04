@@ -51,7 +51,7 @@
 #define SM2135_60MA         0x0A
 
 //                              RGB current         CW current
-const uint8_t SM2135_CURRENT = (SM2135_20MA << 4) | SM2135_10MA;
+const uint8_t SM2135_CURRENT = (SM2135_20MA << 4) | SM2135_15MA;  // See https://github.com/arendst/Tasmota/issues/6495#issuecomment-549121683
 
 struct SM2135 {
   uint8_t clk = 0;
