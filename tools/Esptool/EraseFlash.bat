@@ -1,1 +1,1 @@
-esptool.py --port COM5 --baud 115200 erase_flash
+esptool.py --baud 115200 erase_flash
