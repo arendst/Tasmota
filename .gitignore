@@ -19,6 +19,3 @@ firmware.asm
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 *.bak
-
-platformio.ini
-.gitignore
