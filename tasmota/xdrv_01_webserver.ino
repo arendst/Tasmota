@@ -352,7 +352,7 @@ const char HTTP_HEAD_STYLE2[] PROGMEM =
   ".bred:hover{background:#%06x;}"  // COLOR_BUTTON_RESET_HOVER
   ".bgrn{background:#%06x;}"  // COLOR_BUTTON_SAVE
   ".bgrn:hover{background:#%06x;}"  // COLOR_BUTTON_SAVE_HOVER
-  "a{text-decoration:none;}"
+  "a{color: #00BFFF;text-decoration:none;}"
   ".p{float:left;text-align:left;}"
   ".q{float:right;text-align:right;}";
 const char HTTP_HEAD_STYLE3[] PROGMEM =
@@ -2578,10 +2578,10 @@ extern uint8_t tasm_cmd_activ;
 
 bool JsonWebColor(const char* dataBuf)
 {
-  // Default (light)
+  // Default (Dark theme)
+  // {"WebColor":["#eaeaea","#252525","#4f4f4f","#000000","#dddddd","#65c115","#1f1f1f","#ff5661","#008000","#faffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#faffff","#999999","#eaeaea"]}
+  // Default pre v7 (Light theme)
   // {"WebColor":["#000000","#ffffff","#f2f2f2","#000000","#ffffff","#000000","#ffffff","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999","#000000"]}
-  // Alternative (Dark)
-  // {"Webcolor":["#eeeeee","#181818","#4f4f4f","#000000","#dddddd","#6a9955","#1e1e1e","#ff0000","#008000","#ffffff","#1fa3ec","#0e70a4","#d43535","#931f1f","#47c266","#5aaf6f","#ffffff","#999999","#eeeeee"]}
 
   char dataBufLc[strlen(dataBuf) +1];
   LowerCase(dataBufLc, dataBuf);

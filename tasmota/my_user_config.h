@@ -147,28 +147,28 @@
 #define COLOR_CONSOLE               "#fff"       // [WebColor7] Console background color - White
 */
 // Dark theme
-// webcolor {"webcolor":["#eee","#181818","#4f4f4f","#000","#ddd","#6a9955","#1e1e1e"]}
-#define COLOR_TEXT                  "#eee"       // [WebColor1] Global text color - Whiteish
-#define COLOR_BACKGROUND            "#181818"    // [WebColor2] Global background color - Blackish
-#define COLOR_FORM                  "#4f4f4f"    // [WebColor3] Form background color - Greyish
+// webcolor {"webcolor":["#eaeaea","#252525","#4f4f4f","#000","#ddd","#65c115","#1f1f1f"]}
+#define COLOR_TEXT                  "#eaeaea"       // [WebColor1] Global text color - Very light gray
+#define COLOR_BACKGROUND            "#252525"    // [WebColor2] Global background color - Very dark gray (mostly black)
+#define COLOR_FORM                  "#4f4f4f"    // [WebColor3] Form background color - Very dark gray
 #define COLOR_INPUT_TEXT            "#000"       // [WebColor4] Input text color - Black
-#define COLOR_INPUT                 "#ddd"       // [WebColor5] Input background color - Darker white
-#define COLOR_CONSOLE_TEXT          "#6a9955"    // [WebColor6] Console text color - Greenish
-#define COLOR_CONSOLE               "#1e1e1e"    // [WebColor7] Console background color - Blackish
+#define COLOR_INPUT                 "#ddd"       // [WebColor5] Input background color - Very light gray
+#define COLOR_CONSOLE_TEXT          "#65c115"    // [WebColor6] Console text color - Strong Green
+#define COLOR_CONSOLE               "#1f1f1f"    // [WebColor7] Console background color - Very dark gray (mostly black)
 
 // Other colors
-#define COLOR_TEXT_WARNING          "#f00"       // [WebColor8] Warning text color - Red
-#define COLOR_TEXT_SUCCESS          "#008000"    // [WebColor9] Success text color - Green
-#define COLOR_BUTTON_TEXT           "#fff"       // [WebColor10] Button text color - White
-#define COLOR_BUTTON                "#1fa3ec"    // [WebColor11] Button color - Blueish
-#define COLOR_BUTTON_HOVER          "#0e70a4"    // [WebColor12] Button color when hovered over - Darker blueish
-#define COLOR_BUTTON_RESET          "#d43535"    // [WebColor13] Restart/Reset/Delete button color - Redish
-#define COLOR_BUTTON_RESET_HOVER    "#931f1f"    // [WebColor14] Restart/Reset/Delete button color when hovered over - Darker redish
-#define COLOR_BUTTON_SAVE           "#47c266"    // [WebColor15] Save button color - Greenish
-#define COLOR_BUTTON_SAVE_HOVER     "#5aaf6f"    // [WebColor16] Save button color when hovered over - Darker greenish
-#define COLOR_TIMER_TAB_TEXT        "#fff"       // [WebColor17] Config timer tab text color - White
-#define COLOR_TIMER_TAB_BACKGROUND  "#999"       // [WebColor18] Config timer tab background color - Light grey
-#define COLOR_TITLE_TEXT            COLOR_TEXT   // [WebColor19] Title text color - Whiteish
+#define COLOR_TEXT_WARNING          "#ff5661"    // [WebColor8] Warning text color - Brick Red
+#define COLOR_TEXT_SUCCESS          "#008000"    // [WebColor9] Success text color - Dark lime green
+#define COLOR_BUTTON_TEXT           "#faffff"    // [WebColor10] Button text color - Very pale (mostly white) cyan
+#define COLOR_BUTTON                "#1fa3ec"    // [WebColor11] Button color - Vivid blue
+#define COLOR_BUTTON_HOVER          "#0e70a4"    // [WebColor12] Button color when hovered over - Dark blue
+#define COLOR_BUTTON_RESET          "#d43535"    // [WebColor13] Restart/Reset/Delete button color - Strong red
+#define COLOR_BUTTON_RESET_HOVER    "#931f1f"    // [WebColor14] Restart/Reset/Delete button color when hovered over - Dark red
+#define COLOR_BUTTON_SAVE           "#47c266"    // [WebColor15] Save button color - Moderate lime green
+#define COLOR_BUTTON_SAVE_HOVER     "#5aaf6f"    // [WebColor16] Save button color when hovered over - Dark moderate lime green
+#define COLOR_TIMER_TAB_TEXT        "#faffff"    // [WebColor17] Config timer tab text color - Very pale (mostly white) cyan.
+#define COLOR_TIMER_TAB_BACKGROUND  "#999"       // [WebColor18] Config timer tab background color - Dark gray
+#define COLOR_TITLE_TEXT            COLOR_TEXT   // [WebColor19] Title text color - Very light gray
 
 // -- mDNS ----------------------------------------
 #define MDNS_ENABLED           0                 // [SetOption55] Use mDNS (0 = Disable, 1 = Enable)
