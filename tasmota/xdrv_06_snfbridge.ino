@@ -468,7 +468,7 @@ void CmndRfBridge(void)  // RfSync, RfLow, RfHigh, RfHost and RfCode
   if (10 == radix) {
     snprintf_P(stemp, sizeof(stemp), PSTR("%d"), code);
   } else {
-    snprintf_P(stemp, sizeof(stemp), PSTR("\"#%X\""), code);
+    snprintf_P(stemp, sizeof(stemp), PSTR("\"#%06X\""), code);
   }
   Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, stemp);
 }
