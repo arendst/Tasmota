@@ -117,11 +117,13 @@ CONFIG REGISTER
 #define ADS1115_REG_CONFIG_CQUE_4CONV   (0x0002)  // Assert ALERT/RDY after four conversions
 #define ADS1115_REG_CONFIG_CQUE_NONE    (0x0003)  // Disable the comparator and put ALERT/RDY in high state (default)
 
-uint8_t ads1115_type = 0;
-uint8_t ads1115_address;
-uint8_t ads1115_addresses[] = { ADS1115_ADDRESS_ADDR_GND, ADS1115_ADDRESS_ADDR_VDD, ADS1115_ADDRESS_ADDR_SDA, ADS1115_ADDRESS_ADDR_SCL };
-uint8_t ads1115_found[] = {false,false,false,false};
-int16_t ads1115_values[4];
+struct ADS1115 {
+  uint8_t count = 0;
+  uint8_t address;
+  uint8_t addresses[4] = { ADS1115_ADDRESS_ADDR_GND, ADS1115_ADDRESS_ADDR_VDD, ADS1115_ADDRESS_ADDR_SDA, ADS1115_ADDRESS_ADDR_SCL };
+  uint8_t found[4] = {false,false,false,false};
+} Ads1115;
+
 //Ads1115StartComparator(channel, ADS1115_REG_CONFIG_MODE_SINGLE);
 //Ads1115StartComparator(channel, ADS1115_REG_CONFIG_MODE_CONTIN);
 void Ads1115StartComparator(uint8_t channel, uint16_t mode)
@@ -139,7 +141,7 @@ void Ads1115StartComparator(uint8_t channel, uint16_t mode)
   config |= (ADS1115_REG_CONFIG_MUX_SINGLE_0 + (0x1000 * channel));
 
   // Write config register to the ADC
-  I2cWrite16(ads1115_address, ADS1115_REG_POINTER_CONFIG, config);
+  I2cWrite16(Ads1115.address, ADS1115_REG_POINTER_CONFIG, config);
 }
 
 int16_t Ads1115GetConversion(uint8_t channel)
@@ -148,12 +150,12 @@ int16_t Ads1115GetConversion(uint8_t channel)
   // Wait for the conversion to complete
   delay(ADS1115_CONVERSIONDELAY);
   // Read the conversion results
-  I2cRead16(ads1115_address, ADS1115_REG_POINTER_CONVERT);
+  I2cRead16(Ads1115.address, ADS1115_REG_POINTER_CONVERT);
 
   Ads1115StartComparator(channel, ADS1115_REG_CONFIG_MODE_CONTIN);
   delay(ADS1115_CONVERSIONDELAY);
   // Read the conversion results
-  uint16_t res = I2cRead16(ads1115_address, ADS1115_REG_POINTER_CONVERT);
+  uint16_t res = I2cRead16(Ads1115.address, ADS1115_REG_POINTER_CONVERT);
   return (int16_t)res;
 }
 
@@ -161,79 +163,66 @@ int16_t Ads1115GetConversion(uint8_t channel)
 
 void Ads1115Detect(void)
 {
+  if (Ads1115.count) { return; }
+
   uint16_t buffer;
-  for (uint32_t i = 0; i < sizeof(ads1115_addresses); i++) {
-    if (!ads1115_found[i]) {
-      ads1115_address = ads1115_addresses[i];
-      if (I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONVERT) &&
-          I2cValidRead16(&buffer, ads1115_address, ADS1115_REG_POINTER_CONFIG)) {
+  for (uint32_t i = 0; i < sizeof(Ads1115.addresses); i++) {
+    if (!Ads1115.found[i]) {
+      Ads1115.address = Ads1115.addresses[i];
+      if (I2cValidRead16(&buffer, Ads1115.address, ADS1115_REG_POINTER_CONVERT) &&
+          I2cValidRead16(&buffer, Ads1115.address, ADS1115_REG_POINTER_CONFIG)) {
         Ads1115StartComparator(i, ADS1115_REG_CONFIG_MODE_CONTIN);
-        ads1115_type = 1;
-        ads1115_found[i] = 1;
-        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "ADS1115", ads1115_address);
+        Ads1115.count++;
+        Ads1115.found[i] = 1;
+        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "ADS1115", Ads1115.address);
       }
     }
-  }
-}
-
-void Ads1115GetValues(uint8_t address)
-{
-  uint8_t old_address = ads1115_address;
-  ads1115_address = address;
-  for (uint32_t i = 0; i < 4; i++) {
-    ads1115_values[i] = Ads1115GetConversion(i);
-    //AddLog_P2(LOG_LEVEL_INFO, "Logging ADS1115 %02x (%i) = %i", address, i, ads1115_values[i] );
-  }
-  ads1115_address = old_address;
-}
-
-void Ads1115toJSON(char *comma_j)
-{
-  ResponseAppend_P(PSTR("%s{"), comma_j);
-  char *comma = (char*)"";
-  for (uint32_t i = 0; i < 4; i++) {
-    ResponseAppend_P(PSTR("%s\"A%d\":%d"), comma, i, ads1115_values[i]);
-    comma = (char*)",";
-  }
-  ResponseJsonEnd();
-}
-
-void Ads1115toString(uint8_t address)
-{
-  char label[15];
-  snprintf_P(label, sizeof(label), "ADS1115(%02x)", address);
-
-  for (uint32_t i = 0; i < 4; i++) {
-    WSContentSend_PD(HTTP_SNS_ANALOG, label, i, ads1115_values[i]);
   }
 }
 
 void Ads1115Show(bool json)
 {
-  if (!ads1115_type) { return; }
+  if (!Ads1115.count) { return; }
 
-  if (json) {
-    ResponseAppend_P(PSTR(",\"ADS1115\":"));
-  }
+  int16_t values[4];
 
-  char *comma = (char*)"";
+  for (uint32_t t = 0; t < sizeof(Ads1115.addresses); t++) {
+    //AddLog_P2(LOG_LEVEL_INFO, "Logging ADS1115 %02x", Ads1115.addresses[t]);
+    if (Ads1115.found[t]) {
 
-  for (uint32_t t = 0; t < sizeof(ads1115_addresses); t++) {
-    //AddLog_P2(LOG_LEVEL_INFO, "Logging ADS1115 %02x", ads1115_addresses[t]);
-    if (ads1115_found[t]) {
-      Ads1115GetValues(ads1115_addresses[t]);
+      uint8_t old_address = Ads1115.address;
+      Ads1115.address = Ads1115.addresses[t];
+      for (uint32_t i = 0; i < 4; i++) {
+        values[i] = Ads1115GetConversion(i);
+        //AddLog_P2(LOG_LEVEL_INFO, "Logging ADS1115 %02x (%i) = %i", address, i, values[i] );
+      }
+      Ads1115.address = old_address;
+
+      char label[15];
+      if (1 == Ads1115.count) {
+        // "ADS1115":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
+        snprintf_P(label, sizeof(label), PSTR("ADS1115"));
+      } else {
+        // "ADS1115-48":{"A0":3240,"A1":3235,"A2":3269,"A3":3269},"ADS1115-49":{"A0":3240,"A1":3235,"A2":3269,"A3":3269}
+        snprintf_P(label, sizeof(label), PSTR("ADS1115%c%02x"), IndexSeparator(), Ads1115.addresses[t]);
+      }
+
       if (json) {
-        Ads1115toJSON(comma);
-        comma = (char*)",";
+        ResponseAppend_P(PSTR(",\"%s\":{"), label);
+        for (uint32_t i = 0; i < 4; i++) {
+          ResponseAppend_P(PSTR("%s\"A%d\":%d"), (0 == i) ? "" : ",", i, values[i]);
+        }
+        ResponseJsonEnd();
       }
 #ifdef USE_WEBSERVER
       else {
-        Ads1115toString(ads1115_addresses[t]);
+        for (uint32_t i = 0; i < 4; i++) {
+          WSContentSend_PD(HTTP_SNS_ANALOG, label, i, values[i]);
+        }
       }
 #endif  // USE_WEBSERVER
     }
   }
-
 }
 
 /*********************************************************************************************\
@@ -247,7 +236,7 @@ bool Xsns12(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_PREP_BEFORE_TELEPERIOD:
+    case FUNC_INIT:
       Ads1115Detect();
       break;
     case FUNC_JSON_APPEND:
