@@ -456,7 +456,7 @@
   //#define PMS_MODEL_PMS3003                      // Enable support of PMS3003 instead of PMS5003/PMS7003 (needs the USE_PMS5003 above)
 #define USE_NOVA_SDS                             // Add support for SDS011 and SDS021 particle concentration sensor (+1k5 code)
   #define STARTING_OFFSET      30                // Turn on NovaSDS XX-seconds before tele_period is reached
-#define USE_HPMA                                 // Add support for Honeywell HPMA115S0 particle concentration sensor
+//#define USE_HPMA                                 // Add support for Honeywell HPMA115S0 particle concentration sensor (+1k4)
 #define USE_SERIAL_BRIDGE                        // Add support for software Serial Bridge (+0k8 code)
 //#define USE_MP3_PLAYER                           // Use of the DFPlayer Mini MP3 Player RB-DFR-562 commands: play, volume and stop
   #define MP3_VOLUME           10                // Set the startup volume on init, the range can be 0..30(max)

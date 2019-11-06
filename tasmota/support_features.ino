@@ -483,7 +483,9 @@ void GetFeatures(void)
 #ifdef USE_HIH6
   feature5 |= 0x00020000;  // xsns_55_hih_series.ino
 #endif
-//  feature5 |= 0x00040000;
+#ifdef USE_HPMA
+  feature5 |= 0x00040000;
+#endif
 //  feature5 |= 0x00080000;
 
 //  feature5 |= 0x00100000;
