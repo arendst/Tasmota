@@ -96,6 +96,8 @@ uint8_t xlgt_active = 0;
 
 bool XlgtCall(uint8_t function)
 {
+  DEBUG_TRACE_LOG(PSTR("LGT: %d"), function);
+
   if (FUNC_MODULE_INIT == function) {
     for (uint32_t x = 0; x < xlgt_present; x++) {
       xlgt_func_ptr[x](function);

@@ -447,7 +447,7 @@ void Bme680Read(uint8_t bmp_idx)
 
 void BmpDetect(void)
 {
-  if (bmp_count) return;
+  if (bmp_count) { return; }
 
   int bmp_sensor_size = BMP_MAX_SENSORS * sizeof(bmp_sensors_t);
   if (!bmp_sensors) {
@@ -457,6 +457,7 @@ void BmpDetect(void)
   memset(bmp_sensors, 0, bmp_sensor_size);  // Init defaults to 0
 
   for (uint32_t i = 0; i < BMP_MAX_SENSORS; i++) {
+    if (I2cActive(bmp_addresses[i])) { continue; }
     uint8_t bmp_type = I2cRead8(bmp_addresses[i], BMP_REGISTER_CHIPID);
     if (bmp_type) {
       bmp_sensors[bmp_count].bmp_address = bmp_addresses[i];
@@ -482,8 +483,9 @@ void BmpDetect(void)
 #endif  // USE_BME680
       }
       if (success) {
+        I2cSetActive(bmp_sensors[bmp_count].bmp_address);
         GetTextIndexed(bmp_sensors[bmp_count].bmp_name, sizeof(bmp_sensors[bmp_count].bmp_name), bmp_sensors[bmp_count].bmp_model, kBmpTypes);
-        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, bmp_sensors[bmp_count].bmp_name, bmp_sensors[bmp_count].bmp_address);
+        AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, bmp_sensors[bmp_count].bmp_name, bmp_sensors[bmp_count].bmp_address);
         bmp_count++;
       }
     }

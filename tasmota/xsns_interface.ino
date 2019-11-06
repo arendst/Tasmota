@@ -890,6 +890,8 @@ bool XsnsCall(uint8_t Function)
 {
   bool result = false;
 
+  DEBUG_TRACE_LOG(PSTR("SNS: %d"), Function);
+
 #ifdef PROFILE_XSNS_EVERY_SECOND
   uint32_t profile_start_millis = millis();
 #endif  // PROFILE_XSNS_EVERY_SECOND

@@ -96,6 +96,8 @@ uint8_t xnrg_active = 0;
 
 bool XnrgCall(uint8_t function)
 {
+  DEBUG_TRACE_LOG(PSTR("NRG: %d"), function);
+
   if (FUNC_PRE_INIT == function) {
     for (uint32_t x = 0; x < xnrg_present; x++) {
       xnrg_func_ptr[x](function);

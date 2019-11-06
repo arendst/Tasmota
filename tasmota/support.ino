@@ -1506,14 +1506,23 @@ bool I2cActive(uint32_t addr)
   return false;
 }
 
-bool I2cDevice(uint8_t addr)
+bool I2cDevice(uint32_t addr)
 {
   addr &= 0x7F;         // Max I2C address is 127
   if (I2cActive(addr)) {
     return false;       // If already active report as not present;
   }
-  Wire.beginTransmission(addr);
+  Wire.beginTransmission((uint8_t)addr);
   return (0 == Wire.endTransmission());
+}
+
+bool I2cSetDevice(uint32_t addr)
+{
+  bool result = I2cDevice(addr);
+  if (result) {
+    I2cSetActive(addr, 1);
+  }
+  return result;
 }
 #endif  // USE_I2C
 

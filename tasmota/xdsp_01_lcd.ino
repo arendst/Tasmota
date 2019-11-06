@@ -58,17 +58,19 @@ void LcdInit(uint8_t mode)
 void LcdInitDriver(void)
 {
   if (!Settings.display_model) {
-    if (I2cDevice(LCD_ADDRESS1)) {
+    if (I2cSetDevice(LCD_ADDRESS1)) {
       Settings.display_address[0] = LCD_ADDRESS1;
       Settings.display_model = XDSP_01;
     }
-    else if (I2cDevice(LCD_ADDRESS2)) {
+    else if (I2cSetDevice(LCD_ADDRESS2)) {
       Settings.display_address[0] = LCD_ADDRESS2;
       Settings.display_model = XDSP_01;
     }
   }
 
   if (XDSP_01 == Settings.display_model) {
+    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "LCD", Settings.display_address[0]);
+
     Settings.display_width = Settings.display_cols[0];
     Settings.display_height = Settings.display_rows;
     lcd = new LiquidCrystal_I2C(Settings.display_address[0], Settings.display_cols[0], Settings.display_rows);

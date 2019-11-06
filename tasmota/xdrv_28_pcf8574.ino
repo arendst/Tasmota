@@ -80,8 +80,7 @@ void Pcf8574Init()
 
   //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PCF: Probing addr: 0x%x for PCF8574"), pcf8574_address);
 
-    if (I2cDevice(pcf8574_address)) {
-      I2cSetActive(pcf8574_address);
+    if (I2cSetDevice(pcf8574_address)) {
       Pcf8574.type = true;
 
       Pcf8574.address[Pcf8574.max_devices] = pcf8574_address;
@@ -91,7 +90,7 @@ void Pcf8574Init()
       if (pcf8574_address >= PCF8574_ADDR2) {
         strcpy(Pcf8574.stype, "PCF8574A");
       }
-      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, Pcf8574.stype, pcf8574_address);
+      AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, Pcf8574.stype, pcf8574_address);
     }
     pcf8574_address++;
     if ((PCF8574_ADDR1 + 8) == pcf8574_address) {

@@ -200,8 +200,11 @@ void HtuDetect(void)
   if (htu_type) { return; }
 
   htu_address = HTU21_ADDR;
+  if (I2cActive(htu_address)) { return; }
+
   htu_type = HtuReadDeviceId();
   if (htu_type) {
+    I2cSetActive(htu_address);
     uint8_t index = 0;
     HtuInit();
     switch (htu_type) {
@@ -224,7 +227,7 @@ void HtuDetect(void)
         htu_delay_humidity = 23;
     }
     GetTextIndexed(htu_types, sizeof(htu_types), index, kHtuTypes);
-    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, htu_types, htu_address);
+    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, htu_types, htu_address);
   }
 }
 

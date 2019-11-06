@@ -165,16 +165,18 @@ void Ads1115Detect(void)
 {
   if (Ads1115.count) { return; }
 
-  uint16_t buffer;
   for (uint32_t i = 0; i < sizeof(Ads1115.addresses); i++) {
     if (!Ads1115.found[i]) {
       Ads1115.address = Ads1115.addresses[i];
+      if (I2cActive(Ads1115.address)) { continue; }
+      uint16_t buffer;
       if (I2cValidRead16(&buffer, Ads1115.address, ADS1115_REG_POINTER_CONVERT) &&
           I2cValidRead16(&buffer, Ads1115.address, ADS1115_REG_POINTER_CONFIG)) {
         Ads1115StartComparator(i, ADS1115_REG_CONFIG_MODE_CONTIN);
+        I2cSetActive(Ads1115.address);
         Ads1115.count++;
         Ads1115.found[i] = 1;
-        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "ADS1115", Ads1115.address);
+        AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "ADS1115", Ads1115.address);
       }
     }
   }

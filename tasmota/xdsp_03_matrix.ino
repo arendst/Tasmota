@@ -199,7 +199,7 @@ void MatrixInitDriver(void)
   mtx_buffer = (char*)(malloc(MTX_MAX_SCREEN_BUFFER));
   if (mtx_buffer != nullptr) {
     if (!Settings.display_model) {
-      if (I2cDevice(Settings.display_address[1])) {
+      if (I2cSetDevice(Settings.display_address[1])) {
         Settings.display_model = XDSP_03;
       }
     }
@@ -208,6 +208,7 @@ void MatrixInitDriver(void)
       mtx_state = 1;
       for (mtx_matrices = 0; mtx_matrices < 8; mtx_matrices++) {
         if (Settings.display_address[mtx_matrices]) {
+          AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "8x8Matrix", Settings.display_address[mtx_matrices]);
           matrix[mtx_matrices] = new Adafruit_8x8matrix();
           matrix[mtx_matrices]->begin(Settings.display_address[mtx_matrices]);
         } else {

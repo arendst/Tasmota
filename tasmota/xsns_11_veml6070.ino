@@ -129,19 +129,21 @@ char       str_uvrisk_text[10];
 
 void Veml6070Detect(void)
 {
-  if (veml6070_type) {
-    return;
-  }
+  if (veml6070_type) { return; }
+  if (I2cActive(VEML6070_ADDR_L)) { return; }
+
   // init the UV sensor
   Wire.beginTransmission(VEML6070_ADDR_L);
   Wire.write((itime << 2) | 0x02);
   uint8_t status   = Wire.endTransmission();
   // action on status
   if (!status) {
+    I2cSetActive(VEML6070_ADDR_L);
     veml6070_type      = 1;
+    Veml6070UvTableInit();    // 1[ms], initalize the UV compare table only once
     uint8_t veml_model = 0;
     GetTextIndexed(veml6070_name, sizeof(veml6070_name), veml_model, kVemlTypes);
-    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "VEML6070", VEML6070_ADDR_L);
+    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "VEML6070", VEML6070_ADDR_L);
   }
 }
 
@@ -171,15 +173,19 @@ void Veml6070EverySecond(void)
 {
   // all = 10..15[ms]
   if (11 == (uptime %100)) {
-    Veml6070ModeCmd(1);			                  // on = 1[ms], wakeup the UV sensor
-    Veml6070Detect();                         // 1[ms], check for sensor and init with IT time
-    Veml6070ModeCmd(0);                       // off = 5[ms], suspend the UV sensor
+    if (!veml6070_type) {
+//      Veml6070ModeCmd(1);			                  // on = 1[ms], wakeup the UV sensor - THIS CORRUPTS OTHER I2C DEVICES
+      Veml6070Detect();                         // 1[ms], check for sensor and init with IT time
+//      Veml6070ModeCmd(0);                       // off = 5[ms], suspend the UV sensor - THIS CORRUPTS OTHER I2C DEVICES
+    }
   } else {
-    Veml6070ModeCmd(1);			                  // 1[ms], wakeup the UV sensor
-    uvlevel = Veml6070ReadUv();               // 1..2[ms], get UV raw values
-    uvrisk  = Veml6070UvRiskLevel(uvlevel);   // 0..1[ms], get UV risk level
-    uvpower = Veml6070UvPower(uvrisk);        // 2[ms], get UV power in W/m2
-    Veml6070ModeCmd(0);                       // off = 5[ms], suspend the UV sensor
+    if (veml6070_type) {
+      Veml6070ModeCmd(1);			                  // 1[ms], wakeup the UV sensor
+      uvlevel = Veml6070ReadUv();               // 1..2[ms], get UV raw values
+      uvrisk  = Veml6070UvRiskLevel(uvlevel);   // 0..1[ms], get UV risk level
+      uvpower = Veml6070UvPower(uvrisk);        // 2[ms], get UV power in W/m2
+      Veml6070ModeCmd(0);                       // off = 5[ms], suspend the UV sensor
+    }
   }
 }
 
@@ -305,16 +311,11 @@ void Veml6070Show(bool json)
 
 bool Xsns11(uint8_t function)
 {
-  if (!I2cEnabled(XI2C_12) ||
-     (pin[GPIO_ADE7953_IRQ] < 99)) { return false; }  // The ADE7953 uses I2C address 0x38 too but needs priority
+  if (!I2cEnabled(XI2C_12)) { return false; }
 
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      Veml6070Detect();         // 1[ms], detect and init the sensor
-      Veml6070UvTableInit();    // 1[ms], initalize the UV compare table only once
-      break;
     case FUNC_EVERY_SECOND:
       Veml6070EverySecond();    // 10..15[ms], tested with OLED display, do all the actions needed to get all sensor values
       break;
@@ -326,6 +327,9 @@ bool Xsns11(uint8_t function)
       Veml6070Show(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:
+      Veml6070Detect();         // 1[ms], detect and init the sensor
+      break;
   }
   return result;
 }

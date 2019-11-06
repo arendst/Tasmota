@@ -889,6 +889,8 @@ bool XdrvCall(uint8_t Function)
 {
   bool result = false;
 
+  DEBUG_TRACE_LOG(PSTR("DRV: %d"), Function);
+
   for (uint32_t x = 0; x < xdrv_present; x++) {
     result = xdrv_func_ptr[x](Function);
 

@@ -823,12 +823,6 @@ void CmndMaxEnergyStart(void)
 #endif  // USE_ENERGY_POWER_LIMIT
 #endif  // USE_ENERGY_MARGIN_DETECTION
 
-void EnergyDrvInit(void)
-{
-  energy_flg = ENERGY_NONE;
-  XnrgCall(FUNC_PRE_INIT);  // Find first energy driver
-}
-
 void EnergySnsInit(void)
 {
   XnrgCall(FUNC_INIT);
@@ -1107,7 +1101,8 @@ bool Xdrv03(uint8_t function)
   bool result = false;
 
   if (FUNC_PRE_INIT == function) {
-    EnergyDrvInit();
+    energy_flg = ENERGY_NONE;
+    XnrgCall(FUNC_PRE_INIT);  // Find first energy driver
   }
   else if (energy_flg) {
     switch (function) {

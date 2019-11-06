@@ -669,4 +669,10 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define DEBUG_SENSOR_LOG(...)
 #endif
 
+#ifdef DEBUG_TASMOTA_TRACE
+#define DEBUG_TRACE_LOG(...) AddLog_Debug(__VA_ARGS__)
+#else
+#define DEBUG_TRACE_LOG(...)
+#endif
+
 #endif  // _TASMOTA_POST_H_

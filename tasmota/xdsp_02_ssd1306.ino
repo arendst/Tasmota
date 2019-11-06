@@ -50,17 +50,18 @@ extern uint8_t *buffer;
 void SSD1306InitDriver()
 {
   if (!Settings.display_model) {
-    if (I2cDevice(OLED_ADDRESS1)) {
+    if (I2cSetDevice(OLED_ADDRESS1)) {
       Settings.display_address[0] = OLED_ADDRESS1;
       Settings.display_model = XDSP_02;
     }
-    else if (I2cDevice(OLED_ADDRESS2)) {
+    else if (I2cSetDevice(OLED_ADDRESS2)) {
       Settings.display_address[0] = OLED_ADDRESS2;
       Settings.display_model = XDSP_02;
     }
   }
 
   if (XDSP_02 == Settings.display_model) {
+    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "OLED", Settings.display_address[0]);
 
     if ((Settings.display_width != 64) && (Settings.display_width != 96) && (Settings.display_width != 128)) {
       Settings.display_width = 128;
