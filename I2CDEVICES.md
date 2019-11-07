@@ -60,3 +60,6 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   34  | USE_PAJ7620         | xsns_50 | PAJ7620  | 0x73        | Gesture sensor
   35  | USE_INA226          | xsns_54 | INA226   | 0x40 - 0x41, 0x44 - 0x45 | Low voltage current sensor
   36  | USE_HIH6            | xsns_55 | HIH6130  | 0x27        | Temperature and Humidity sensor
+  37  | USE_24C256          | xdrv_10 | 24C256   | 0x50        | Scripter EEPROM storage
+  38  | USE_DISPLAY_ILI9488 | xdsp_08 | FT6236   | 0x38        | Touch panel controller
+  39  | USE_DISPLAY_RA8876  | xdsp_10 | FT5316   | 0x38        | Touch panel controller

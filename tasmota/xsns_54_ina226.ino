@@ -176,6 +176,19 @@ bool Ina226TestPresence(uint8_t device)
 
 }
 
+void Ina226ResetActive(void)
+{
+  Ina226SlaveInfo_t *p = slaveInfo;
+
+  for (uint32_t i = 0; i < INA226_MAX_ADDRESSES; i++) {
+    p = &slaveInfo[i];
+    // Address
+    uint8_t addr = p->address;
+    if (addr) {
+      I2cResetActive(addr);
+    }
+  }
+}
 
 /*
 * Initialize INA226 devices
@@ -183,20 +196,17 @@ bool Ina226TestPresence(uint8_t device)
 
 void Ina226Init()
 {
-
-
   uint32_t i;
 
   slavesFound = 0;
 
   Ina226SlaveInfo_t *p = slaveInfo;
 
-
   //AddLog_P2( LOG_LEVEL_NONE, "Ina226Init");
-  AddLog_P2( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
+//  AddLog_P2( LOG_LEVEL_NONE, "Size of Settings: %d bytes", sizeof(Settings));
 
-  if (!i2c_flg)
-    AddLog_P2(LOG_LEVEL_DEBUG, "INA226: Initialization failed: No I2C support");
+//  if (!i2c_flg)
+//    AddLog_P2(LOG_LEVEL_DEBUG, "INA226: Initialization failed: No I2C support");
 
 
   // Clear slave info data
@@ -209,8 +219,10 @@ void Ina226Init()
 
   // Detect devices
 
-  for (i = 0; (i < INA226_MAX_ADDRESSES); i++){
+  for (i = 0; i < INA226_MAX_ADDRESSES; i++){
     uint8_t addr = pgm_read_byte(probeAddresses + i);
+
+    if (I2cActive(addr)) { continue; }
 
     // Skip device probing if the full scale current is zero
 
@@ -245,6 +257,8 @@ void Ina226Init()
         continue; // No device
 
     // store data in slave info struct.
+
+    I2cSetActive(addr);
 
     p = &slaveInfo[i];
     // Address
@@ -399,6 +413,7 @@ bool Ina226CommandSensor()
     // Device-less commands
     switch (p1){
       case 1: // Rerun init
+        Ina226ResetActive();
         Ina226Init();
         Response_P(PSTR("{\"Sensor54-Command-Result\":{\"SlavesFound\":%d}}"),slavesFound);
         break;
@@ -542,9 +557,6 @@ bool Xsns54(byte callback_id)
     case FUNC_EVERY_SECOND:
       Ina226EverySecond();
       break;
-    case FUNC_INIT:
-      Ina226Init();
-      break;
     case FUNC_JSON_APPEND:
       Ina226Show(1);
       break;
@@ -557,6 +569,9 @@ bool Xsns54(byte callback_id)
       if (XSNS_54 == XdrvMailbox.index) {
         result = Ina226CommandSensor();
       }
+      break;
+    case FUNC_INIT:
+      Ina226Init();
       break;
   }
   // Return boolean result

@@ -22,6 +22,7 @@
 #ifdef USE_DISPLAY_RA8876
 
 #define XDSP_10                10
+#define XI2C_39                39  // See I2CDEVICES.md
 
 #define COLORED                1
 #define UNCOLORED              0
@@ -97,7 +98,7 @@ void RA8876_InitDriver()
 #endif
     color_type = COLOR_COLOR;
 
-    if (i2c_flg && I2cDevice(FT5316_address)) {
+    if (I2cEnabled(XI2C_39) && I2cSetDevice(FT5316_address)) {
       FT6236begin(FT5316_address);
       FT5316_found=1;
     } else {

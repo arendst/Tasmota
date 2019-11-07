@@ -127,11 +127,10 @@ unsigned char cmdb[6];
   Wire.endTransmission();
 }
 
-void SPS30_Detect() {
+void SPS30_Detect(void)
+{
+  if (!I2cSetDevice(SPS30_ADDR)) { return; }
 
-  if (!I2cDevice(SPS30_ADDR)) {
-    return;
-  }
   uint8_t dcode[32];
   sps30_get_data(SPS_CMD_GET_SERIAL,dcode,sizeof(dcode));
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("sps30 found with serial: %s"),dcode);
@@ -289,25 +288,25 @@ bool Xsns44(byte function)
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      SPS30_Detect();
-      break;
     case FUNC_EVERY_SECOND:
       SPS30_Every_Second();
       break;
     case FUNC_JSON_APPEND:
       SPS30_Show(1);
       break;
-    case FUNC_COMMAND_SENSOR:
-      if (XSNS_44 == XdrvMailbox.index) {
-        result = SPS30_cmd();
-      }
-      break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:
       SPS30_Show(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_COMMAND_SENSOR:
+      if (XSNS_44 == XdrvMailbox.index) {
+        result = SPS30_cmd();
+      }
+      break;
+    case FUNC_INIT:
+      SPS30_Detect();
+      break;
   }
   return result;
 }

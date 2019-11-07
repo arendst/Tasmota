@@ -3,6 +3,7 @@
  * Initial support for I2C driver runtime control using command I2CDriver and document I2CDEVICES.md
  * Fix random crash caused by UPNP flood
  * Add support for Honeywell HPMA115S0 particle concentration sensor by David Hunt (#6843)
+ * Remove driver xsns_12_ads1115_i2cdev replaced by xsns_12_ads1115
  *
  * 7.0.0.2 20191102
  * Add command WebColor19 to control color of Module and Name (#6811)

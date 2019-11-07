@@ -32,27 +32,17 @@ uint16_t vl53l0x_distance;
 uint16_t Vl53l0_buffer[5];
 uint8_t Vl53l0_index;
 
-
 /********************************************************************************************/
 
-void Vl53l0Detect()
+void Vl53l0Detect(void)
 {
+  if (vl53l0x_ready) { return; }
 
-  if (!I2cDevice(0x29)) {
-    return;
-  }
+  if (!I2cSetDevice(0x29)) { return; }
 
-  if (vl53l0x_ready) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR("VL53L1X is ready"));
-    return;
-  }
+  if (!sensor.init()) { return; }
 
-  if (sensor.init()==true) {
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "VL53L0X", sensor.getAddress());
-    AddLog(LOG_LEVEL_DEBUG);
-  } else {
-    return;
-  }
+  AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "VL53L0X", sensor.getAddress());
 
   sensor.setTimeout(500);
 
@@ -64,10 +54,7 @@ void Vl53l0Detect()
   vl53l0x_ready = 1;
 
   Vl53l0_index=0;
-
 }
-
-#define D_UNIT_MILLIMETER "mm"
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_VL53L0X[] PROGMEM =
@@ -76,11 +63,12 @@ const char HTTP_SNS_VL53L0X[] PROGMEM =
 
 #define USE_VL_MEDIAN
 
-void Vl53l0Every_250MSecond() {
+void Vl53l0Every_250MSecond(void)
+{
+  if (!vl53l0x_ready) { return; }
+
   uint16_t tbuff[5],tmp;
   uint8_t flag;
-
-  if (!vl53l0x_ready) return;
 
   // every 200 ms
   uint16_t dist = sensor.readRangeContinuousMillimeters();
@@ -116,9 +104,7 @@ void Vl53l0Every_250MSecond() {
 
 void Vl53l0Show(boolean json)
 {
-  if (!vl53l0x_ready) {
-    return;
-  }
+  if (!vl53l0x_ready) { return; }
 
   if (json) {
     ResponseAppend_P(PSTR(",\"VL53L0X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l0x_distance);
@@ -127,7 +113,6 @@ void Vl53l0Show(boolean json)
     WSContentSend_PD(HTTP_SNS_VL53L0X, vl53l0x_distance);
 #endif
   }
-
 }
 
 /*********************************************************************************************\
@@ -141,9 +126,6 @@ bool Xsns45(byte function)
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      Vl53l0Detect();
-      break;
     case FUNC_EVERY_250_MSECOND:
       Vl53l0Every_250MSecond();
       break;
@@ -155,6 +137,9 @@ bool Xsns45(byte function)
       Vl53l0Show(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:
+      Vl53l0Detect();
+      break;
   }
   return result;
 }

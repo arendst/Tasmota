@@ -226,10 +226,6 @@ bool Xsns07(uint8_t function)
   bool result = false;
 
   switch (function) {
-//      case FUNC_PREP_BEFORE_TELEPERIOD:  // As this is not a real I2C device it may interfere with other sensors
-    case FUNC_INIT:                      // Move detection to restart only removing interference
-      ShtDetect();
-      break;
     case FUNC_EVERY_SECOND:
       ShtEverySecond();
       break;
@@ -241,6 +237,9 @@ bool Xsns07(uint8_t function)
       ShtShow(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:                      // Move detection to restart only removing interference
+      ShtDetect();
+      break;
   }
   return result;
 }

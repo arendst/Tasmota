@@ -38,6 +38,7 @@ keywords if then else endif, or, and are better readable for beginners (others m
 \*********************************************************************************************/
 
 #define XDRV_10             10
+#define XI2C_37             37  // See I2CDEVICES.md
 
 #define SCRIPT_DEBUG 0
 
@@ -4729,8 +4730,8 @@ bool Xdrv10(uint8_t function)
 
 #ifdef USE_24C256
 #ifndef USE_SCRIPT_FATFS
-      if (i2c_flg) {
-        if (I2cDevice(EEPROM_ADDRESS)) {
+      if (I2cEnabled(XI2C_37)) {
+        if (I2cSetDevice(EEPROM_ADDRESS)) {
           // found 32kb eeprom
           char *script;
           script=(char*)calloc(EEP_SCRIPT_SIZE+4,1);

@@ -116,18 +116,12 @@ void MPU_6050SetAccelOffsets(int x, int y, int z)
 
 void MPU_6050Detect(void)
 {
-  if (MPU_6050_found)
-  {
-    return;
-  }
+  if (MPU_6050_found) { return; }
 
   for (uint32_t i = 0; i < sizeof(MPU_6050_addresses); i++)
   {
-    if(!I2cDevice(MPU_6050_addresses[i]))
-      {
-        break;
-      }
     MPU_6050_address = MPU_6050_addresses[i];
+    if (!I2cSetDevice(MPU_6050_address)) { break; }
     mpu6050.setAddr(MPU_6050_addresses[i]);
 
 #ifdef USE_MPU6050_DMP
@@ -231,9 +225,6 @@ bool Xsns32(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_PREP_BEFORE_TELEPERIOD:
-      MPU_6050Detect();
-      break;
     case FUNC_EVERY_SECOND:
       if (tele_period == Settings.tele_period -3) {
         MPU_6050PerformReading();
@@ -248,6 +239,9 @@ bool Xsns32(uint8_t function)
       MPU_6050PerformReading();
       break;
 #endif // USE_WEBSERVER
+    case FUNC_INIT:
+      MPU_6050Detect();
+      break;
   }
   return result;
 }

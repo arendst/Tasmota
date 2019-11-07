@@ -29,13 +29,12 @@ uint8_t mlx_ready;
 float obj_temp;
 float amb_temp;
 
-void MLX90614_Init() {
-
-  if (!I2cDevice(I2_ADR_IRT)) {
-    return;
-  }
+void MLX90614_Init(void)
+{
+  if (!I2cSetDevice(I2_ADR_IRT)) { return; }
 
   mlx_ready=1;
+  AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "MLX90614", I2_ADR_IRT);
 
   // not needed on tasmota
   //Wire.begin();
@@ -122,9 +121,6 @@ bool Xsns46(byte function)
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      MLX90614_Init();
-      break;
     case FUNC_EVERY_SECOND:
       MLX90614_Every_Second();
       break;
@@ -136,6 +132,9 @@ bool Xsns46(byte function)
       MLX90614_Show(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:
+      MLX90614_Init();
+      break;
   }
   return result;
 }

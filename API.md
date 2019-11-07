@@ -68,3 +68,69 @@ FUNC_DISPLAY_FONT_SIZE        |      | 6.1.1.7  |
 FUNC_DISPLAY_ROTATION         |      | 6.1.1.7  |
 FUNC_DISPLAY_DRAW_STRING      |      | 6.1.1.7  |
 FUNC_DISPLAY_ONOFF            |      | 6.1.1.7  |
+
+## Init sequence
+The following list contains the callback init sequence
+
+CFG: Loaded from flash at FB, Count 1581
+xdrv - FUNC_SETTINGS_OVERRIDE
+xdrv - FUNC_PIN_STATE
+xsns - FUNC_PIN_STATE
+xdrv - FUNC_MODULE_INIT
+xlgt - FUNC_MODULE_INIT
+xdrv - FUNC_PRE_INIT
+xnrg - FUNC_PRE_INIT
+SRC: Restart
+xdrv - FUNC_SET_POWER
+xlgt - FUNC_SET_CHANNELS
+xdrv - FUNC_SET_DEVICE_POWER
+Project tasmota Wemos 2 Version 7.0.0.3(tasmota)-STAGE
+xdrv - FUNC_INIT
+xsns - FUNC_INIT
+I2C: ADS1115 found at 0x48
+xdrv - FUNC_LOOP
+xsns - FUNC_LOOP
+xdrv - FUNC_EVERY_50_MSECOND
+xlgt - FUNC_SET_CHANNELS
+xsns - FUNC_EVERY_50_MSECOND
+xdrv - FUNC_EVERY_100_MSECOND
+xsns - FUNC_EVERY_100_MSECOND
+xdrv - FUNC_EVERY_250_MSECOND
+xsns - FUNC_EVERY_250_MSECOND
+xdrv - FUNC_EVERY_SECOND
+xsns - FUNC_EVERY_SECOND
+WIF: Attempting connection...
+WIF: Network (re)scan started...
+WIF: Attempting connection...
+WIF: Attempting connection...
+WIF: Attempting connection...
+WIF: Network 0, AP1, SSId indebuurt1, Channel 1, BSSId 24:D3:F2:97:C0:A1, RSSI -86, Encryption 1
+WIF: Network 1, AP2, SSId indebuurt2, Channel 5, BSSId A0:AB:1B:7D:42:AC, RSSI -42, Encryption 1
+WIF: Network 2, AP-, SSId indebuurt3, Channel 12, BSSId 60:E3:27:58:77:E6, RSSI -84, Encryption 1
+WIF: Connecting to AP2 indebuurt2 in mode 11N as wemos2...
+WIF: Attempting connection...
+WIF: Attempting connection...
+WIF: Attempting connection...
+WIF: Connected
+xdrv - FUNC_WEB_ADD_HANDLER
+xsns - FUNC_WEB_ADD_HANDLER
+HTP: Web server active on wemos2 with IP address 192.168.2.191
+NTP: Drift 0, (UTC) Wed Nov 06 13:57:08 2019, (DST) Sun Mar 31 02:00:00 2019, (STD) Sun Oct 27 03:00:00 2019
+APP: Boot Count 500
+MQT: Attempting connection...
+MQT: Connected
+MQT: tele/wemos2/LWT = Online (retained)
+MQT: cmnd/wemos2/POWER =
+MQT: Subscribe to cmnd/wemos2/#
+MQT: Subscribe to cmnd/sonoffs/#
+MQT: Subscribe to cmnd/DVES_15568C_fb/#
+xdrv - FUNC_MQTT_SUBSCRIBE
+MQT: tele/wemos2/INFO1 = {"Module":"Generic","Version":"7.0.0.3(tasmota)","FallbackTopic":"cmnd/DVES_15568C_fb/","GroupTopic":"cmnd/sonoffs/"}
+MQT: tele/wemos2/INFO2 = {"WebServerMode":"Admin","Hostname":"wemos2","IPAddress":"192.168.2.191"}
+MQT: tele/wemos2/INFO3 = {"RestartReason":"Software/System restart"}
+MQT: stat/wemos2/RESULT = {"POWER1":"OFF"}
+MQT: stat/wemos2/POWER1 = OFF
+MQT: stat/wemos2/RESULT = {"POWER2":"ON"}
+MQT: stat/wemos2/POWER2 = ON
+xdrv - FUNC_MQTT_INIT
+CFG: Saved to flash at FA, Count 1582, Bytes 4096

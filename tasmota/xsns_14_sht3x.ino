@@ -84,7 +84,9 @@ void Sht3xDetect(void)
   float t;
   float h;
   for (uint32_t i = 0; i < SHT3X_MAX_SENSORS; i++) {
+    if (I2cActive(sht3x_addresses[i])) { continue; }
     if (Sht3xRead(t, h, sht3x_addresses[i])) {
+      I2cSetActive(sht3x_addresses[i]);
       sht3x_sensors[sht3x_count].address = sht3x_addresses[i];
       GetTextIndexed(sht3x_sensors[sht3x_count].types, sizeof(sht3x_sensors[sht3x_count].types), i, kShtTypes);
       AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, sht3x_sensors[sht3x_count].types, sht3x_sensors[sht3x_count].address);
@@ -144,9 +146,6 @@ bool Xsns14(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      Sht3xDetect();
-      break;
     case FUNC_JSON_APPEND:
       Sht3xShow(1);
       break;
@@ -155,6 +154,9 @@ bool Xsns14(uint8_t function)
       Sht3xShow(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:
+      Sht3xDetect();
+      break;
   }
   return result;
 }

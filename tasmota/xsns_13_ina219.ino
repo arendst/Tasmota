@@ -198,13 +198,14 @@ bool Ina219CommandSensor(void)
 
 void Ina219Detect(void)
 {
-  for (int i=0; i<sizeof(ina219_type); i++) {
-    if (ina219_type[i])
-      continue;
+  for (uint32_t i = 0; i < sizeof(ina219_type); i++) {
+    if (ina219_type[i]) { continue; }
     uint16_t addr = ina219_addresses[i];
+    if (I2cActive(addr)) { continue; }
     if (Ina219SetCalibration(Settings.ina219_mode, addr)) {
-        ina219_type[i] = 1;
-        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, ina219_types, addr);
+      I2cSetActive(addr);
+      ina219_type[i] = 1;
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, ina219_types, addr);
     }
   }
 }
@@ -286,9 +287,6 @@ bool Xsns13(uint8_t function)
         result = Ina219CommandSensor();
       }
       break;
-    case FUNC_INIT:
-      Ina219Detect();
-      break;
     case FUNC_EVERY_SECOND:
       Ina219EverySecond();
       break;
@@ -300,6 +298,9 @@ bool Xsns13(uint8_t function)
       Ina219Show(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:
+      Ina219Detect();
+      break;
   }
   return result;
 }

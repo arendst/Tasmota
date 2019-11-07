@@ -67,12 +67,12 @@ void Tsl2561Detect(void)
   if (tsl2561_type) { return; }
   uint8_t id;
 
-  if (I2cDevice(0x29) || I2cDevice(0x39) || I2cDevice(0x49)) {
+  if (I2cSetDevice(0x29) || I2cSetDevice(0x39) || I2cSetDevice(0x49)) {
     Tsl.begin();
     if (!Tsl.id(id)) return;
     if (Tsl.on()) {
       tsl2561_type = 1;
-      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, tsl2561_types, Tsl.address(), id);
+      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, tsl2561_types, Tsl.address());
     }
   }
 }
@@ -127,9 +127,6 @@ bool Xsns16(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      Tsl2561Detect();
-      break;
     case FUNC_EVERY_SECOND:
       Tsl2561EverySecond();
       break;
@@ -141,6 +138,9 @@ bool Xsns16(uint8_t function)
       Tsl2561Show(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:
+      Tsl2561Detect();
+      break;
   }
   return result;
 }

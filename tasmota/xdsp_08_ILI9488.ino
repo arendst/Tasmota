@@ -22,6 +22,7 @@
 #ifdef USE_DISPLAY_ILI9488
 
 #define XDSP_08                8
+#define XI2C_38                38  // See I2CDEVICES.md
 
 #define COLORED                1
 #define UNCOLORED              0
@@ -112,7 +113,7 @@ void ILI9488_InitDriver()
     color_type = COLOR_COLOR;
     // start digitizer with fixed adress
 
-    if (i2c_flg && I2cDevice(FT6236_address)) {
+    if (I2cEnabled(XI2C_38) && I2cSetDevice(FT6236_address)) {
       FT6236begin(FT6236_address);
       FT6236_found=1;
     } else {
