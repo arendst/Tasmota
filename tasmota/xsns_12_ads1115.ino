@@ -238,9 +238,6 @@ bool Xsns12(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      Ads1115Detect();
-      break;
     case FUNC_JSON_APPEND:
       Ads1115Show(1);
       break;
@@ -249,6 +246,9 @@ bool Xsns12(uint8_t function)
       Ads1115Show(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:
+      Ads1115Detect();
+      break;
   }
   return result;
 }
