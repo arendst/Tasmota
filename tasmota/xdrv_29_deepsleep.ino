@@ -141,7 +141,7 @@ void CmndDeepsleepTime(void)
   if ((XdrvMailbox.payload == 0) || ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < (24 * 60 * 60)))) {  // Allow max 24 hours sleep
     Settings.deepsleep = XdrvMailbox.payload;
     RtcSettings.nextwakeup = 0;
-    tele_period = Settings.tele_period -3;  // Initiate start DeepSleep on next finish of forced TelePeriod
+    tele_period = Settings.tele_period -1;  // Initiate start DeepSleep on next finish of forced TelePeriod
   }
   Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.deepsleep);
 }

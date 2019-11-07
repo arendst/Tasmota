@@ -839,13 +839,7 @@ void PerformEverySecond(void)
 
   if (Settings.tele_period) {
     tele_period++;
-    // increase time for prepare and document state to ensure TELEPERIOD deliver results
-    if (tele_period == Settings.tele_period -3) {
-      // sensors must be called later if driver switch on e.g. power on deepsleep
-      XdrvCall(FUNC_PREP_BEFORE_TELEPERIOD);
-      XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
-    }
-   if (tele_period >= Settings.tele_period) {
+    if (tele_period >= Settings.tele_period) {
       tele_period = 0;
 
       MqttPublishTeleState();
