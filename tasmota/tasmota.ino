@@ -157,7 +157,6 @@ bool spi_flg = false;                       // SPI configured
 bool soft_spi_flg = false;                  // Software SPI configured
 bool ntp_force_sync = false;                // Force NTP sync
 bool ntp_synced_message = false;            // NTP synced message flag
-bool prep_called = false;                   // Deep sleep flag to detect a proper start of initialize sensors
 myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
 gpio_flag my_module_flag;                   // Active copy of Template GPIO flags
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
@@ -841,13 +840,12 @@ void PerformEverySecond(void)
   if (Settings.tele_period) {
     tele_period++;
     // increase time for prepare and document state to ensure TELEPERIOD deliver results
-    if (tele_period == Settings.tele_period -3 && !prep_called) {
-      // sensores must be called later if driver switch on e.g. power on deepsleep
+    if (tele_period == Settings.tele_period -3) {
+      // sensors must be called later if driver switch on e.g. power on deepsleep
       XdrvCall(FUNC_PREP_BEFORE_TELEPERIOD);
       XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
-      prep_called = true;
     }
-   if (tele_period >= Settings.tele_period && prep_called) {
+   if (tele_period >= Settings.tele_period) {
       tele_period = 0;
 
       MqttPublishTeleState();
@@ -859,7 +857,6 @@ void PerformEverySecond(void)
         RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_RULES
       }
-      prep_called = true;
       XdrvCall(FUNC_AFTER_TELEPERIOD);
     }
   }

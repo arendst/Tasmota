@@ -20,6 +20,12 @@
 #ifdef USE_DEEPSLEEP
 /*********************************************************************************************\
  * DeepSleep Support
+ *
+ * - For wakeup from DeepSleep needs GPIO16 to be connected to RST
+ * - GPIO_DEEPSLEEP may be used to stop DeepSleep when connected to Gnd
+ * - GPIO16 may be configured as GPIO_DEEPSLEEP
+ *
+ * See wiki https://github.com/arendst/Tasmota/wiki/DeepSleep
 \*********************************************************************************************/
 
 #define XDRV_29                29
@@ -36,16 +42,24 @@ const char kDeepsleepCommands[] PROGMEM = D_PRFX_DEEPSLEEP "|"
 void (* const DeepsleepCommand[])(void) PROGMEM = {
   &CmndDeepsleepTime };
 
-const char JSON_DEEPSLEEP[] PROGMEM = "\"" D_PRFX_DEEPSLEEP "%d\":{\"Time\":%d}";
+bool DeepSleepEnabled(void)
+{
+  if (0 == Settings.deepsleep) {
+    return false;
+  }
+
+  if (pin[GPIO_DEEPSLEEP] < 99) {
+    pinMode(pin[GPIO_DEEPSLEEP], INPUT_PULLUP);
+    return (digitalRead(pin[GPIO_DEEPSLEEP]));    // Disable DeepSleep if user holds pin GPIO_DEEPSLEEP low
+  }
+
+  return true;
+}
 
 void DeepSleepInit(void)
 {
-  if (pin[GPIO_DEEPSLEEP] < 99) {
-    if (!digitalRead(pin[GPIO_DEEPSLEEP])) {
-      RtcSettings.ultradeepsleep = 0;
-    }
-  }
-  if ((RtcSettings.ultradeepsleep > MAX_DEEPSLEEP_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
+  // Go back to sleep after 60 minutes if requested deepsleep has not been reached
+  if (DeepSleepEnabled() && (RtcSettings.ultradeepsleep > MAX_DEEPSLEEP_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
      RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
      RtcReboot.fast_reboot_count = 0;
      RtcRebootSave();
@@ -53,18 +67,16 @@ void DeepSleepInit(void)
      RtcSettingsSave();
      ESP.deepSleep(100 * RtcSettings.deepsleep_slip * (MAX_DEEPSLEEP_CYCLE < RtcSettings.ultradeepsleep ? MAX_DEEPSLEEP_CYCLE : RtcSettings.ultradeepsleep), WAKE_RF_DEFAULT);
      yield();
+     // Sleeping
   }
+  // Stay awake
   RtcSettings.ultradeepsleep = 0;
 }
 
-void CheckForDeepsleep(void)
+void DeepSleepCheck(void)
 {
-  uint8_t disable_deepsleep_switch = 0;
-  if (pin[GPIO_DEEPSLEEP] < 99) {
-    disable_deepsleep_switch = !digitalRead(pin[GPIO_DEEPSLEEP]);
-  }
   // new function AFTER_TELEPERIOD can take some time therefore <2
-  if ((Settings.deepsleep > 10) && (Settings.deepsleep < 4294967295) && !disable_deepsleep_switch && (tele_period < 2) && prep_called) {
+  if (DeepSleepEnabled() && (Settings.deepsleep > 10) && (Settings.deepsleep < 4294967295)) {
     SettingsSaveAll();
     // deepsleep_slip is ideally 10.000 == 100%
     // typically the device has up to 4% slip. Anything else is a wrong setting in the deepsleep_slip
@@ -115,8 +127,8 @@ void CheckForDeepsleep(void)
     RtcSettingsSave();
     ESP.deepSleep(100 * RtcSettings.deepsleep_slip * sleeptime);
     yield();
+    // Sleeping
   }
-  prep_called = false;
 }
 
 /*********************************************************************************************\
@@ -129,6 +141,7 @@ void CmndDeepsleepTime(void)
   if ((XdrvMailbox.payload == 0) || ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < (24 * 60 * 60)))) {  // Allow max 24 hours sleep
     Settings.deepsleep = XdrvMailbox.payload;
     RtcSettings.nextwakeup = 0;
+    tele_period = Settings.tele_period -3;  // Initiate start DeepSleep on next finish of forced TelePeriod
   }
   Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.deepsleep);
 }
@@ -143,7 +156,7 @@ bool Xdrv29(uint8_t function)
 
   switch (function) {
     case FUNC_AFTER_TELEPERIOD:
-      CheckForDeepsleep();
+      DeepSleepCheck();
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kDeepsleepCommands, DeepsleepCommand);
