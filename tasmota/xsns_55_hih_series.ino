@@ -24,6 +24,7 @@
  *
  * https://sensing.honeywell.com/HIH6130-021-001-humidity-sensors
  * https://sensing.honeywell.com/i2c-comms-humidicon-tn-009061-2-en-final-07jun12.pdf
+ * https://sensing.honeywell.com/command-mode-humidicon-tn-009062-3-en-final-07jun12.pdf
  * https://github.com/ControlEverythingCommunity/HIH6130/blob/master/Arduino/HIH6130.ino
  *
  * I2C Address: 0x27
@@ -45,7 +46,7 @@ struct HIH6 {
 bool Hih6Read(void)
 {
   Wire.beginTransmission(HIH6_ADDR);
-  Wire.write(0x00);                                   // Select data register
+//  Wire.write(0x00);                                   // Select data register
   if (Wire.endTransmission() != 0) { return false; }  // In case of error
 
 //  delay(40);                                          // Wait for Valid data or use Stale data
@@ -61,10 +62,10 @@ bool Hih6Read(void)
 
 //  uint8_t status = data[0] >> 6;  // 0 = Valid data, 1 = Stale data, 2 = Command mode, 3 = Not used
 
+  Hih6.humidity = ConvertHumidity(((float)(((data[0] & 0x3F) << 8) | data[1]) * 100.0) / 16383.0);
   // Convert the data to 14-bits
-  int temp = ((data[2] * 256) + (data[3] & 0xFC)) / 4;
-  Hih6.temperature = ConvertTemp((temp / 16384.0) * 165.0 - 40.0);
-  Hih6.humidity = ConvertHumidity(((((data[0] & 0x3F) * 256) + data[1]) * 100.0) / 16383.0);
+  int temp = ((data[2] << 8) | (data[3] & 0xFC)) / 4;
+  Hih6.temperature = ConvertTemp(((float)temp / 16384.0) * 165.0 - 40.0);
 
   Hih6.valid = SENSOR_MAX_MISS;
   return true;
@@ -76,6 +77,7 @@ void Hih6Detect(void)
 {
   if (Hih6.type) { return; }
 
+  if (uptime < 2) { delay(20); } // Skip entering power on comand mode
   Hih6.type = Hih6Read();
   if (Hih6.type) {
     AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, Hih6.types, HIH6_ADDR);
