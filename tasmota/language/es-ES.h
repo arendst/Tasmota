@@ -1,8 +1,6 @@
 /*
   es-ES.h - localization for Spanish - Spain for Tasmota
 
-#define D_SENSOR_HPMA_RX       "HPMA Rx"
-#define D_SENSOR_HPMA_RX       "HPMA Rx"
   Copyright (C) 2019  Adrian Scillato
 
   This program is free software: you can redistribute it and/or modify
@@ -30,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.6.0.15
+ * Updated until v7.0.0.3
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
