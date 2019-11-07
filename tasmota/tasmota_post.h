@@ -507,7 +507,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef USE_HOME_ASSISTANT                        // Disable Home Assistant
 #undef USE_MQTT_TLS                              // Disable TLS support won't work as the MQTTHost is not set
 #undef USE_KNX                                   // Disable KNX IP Protocol Support
-#undef USE_KNX_NO_EMULATION                      // Disable KNX IP Protocol Support
+#undef FIRMWARE_KNX_NO_EMULATION                 // Disable KNX IP Protocol Support
 //#undef USE_WEBSERVER                             // Disable Webserver
 #undef USE_WEBSEND_RESPONSE                      // Disable command WebSend response message (+1k code)
 #undef USE_EMULATION                             // Disable Wemo or Hue emulation
