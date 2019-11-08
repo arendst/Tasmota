@@ -108,6 +108,25 @@ void WifiConfig(uint8_t type)
   }
 }
 
+void WifiSetMode(WiFiMode_t wifi_mode)
+{
+  if (WiFi.getMode() == wifi_mode) { return; }
+
+  if (wifi_mode != WIFI_OFF) {
+    // See: https://github.com/esp8266/Arduino/issues/6172#issuecomment-500457407
+    WiFi.forceSleepWake(); // Make sure WiFi is really active.
+    delay(100);
+  }
+
+  if (wifi_mode == WIFI_OFF) {
+    delay(1000);
+    WiFi.forceSleepBegin();
+    delay(1);
+  } else {
+    delay(30); // Must allow for some time to init.
+  }
+}
+
 void WiFiSetSleepMode(void)
 {
 /* Excerpt from the esp8266 non os sdk api reference (v2.2.1):
@@ -143,13 +162,15 @@ void WifiBegin(uint8_t flag, uint8_t channel)
 
 #ifdef ARDUINO_ESP8266_RELEASE_2_3_0  // (!strncmp_P(ESP.getSdkVersion(),PSTR("1.5.3"),5))
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_WIFI, PSTR(D_PATCH_ISSUE_2186));
-  WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
+//  WiFi.mode(WIFI_OFF);      // See https://github.com/esp8266/Arduino/issues/2186
+  WifiSetMode(WIFI_OFF);
 #endif
 
   WiFi.persistent(false);   // Solve possible wifi init errors (re-add at 6.2.1.16 #4044, #4083)
   WiFi.disconnect(true);    // Delete SDK wifi config
   delay(200);
-  WiFi.mode(WIFI_STA);      // Disable AP mode
+//  WiFi.mode(WIFI_STA);      // Disable AP mode
+  WifiSetMode(WIFI_STA);
   WiFiSetSleepMode();
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11N) { WiFi.setPhyMode(WIFI_PHY_MODE_11N); }  // B/G/N
 //  if (WiFi.getPhyMode() != WIFI_PHY_MODE_11G) { WiFi.setPhyMode(WIFI_PHY_MODE_11G); }  // B/G
@@ -549,9 +570,15 @@ int WifiState(void)
   return state;
 }
 
+void WifiSetOutputPower(void)
+{
+  WiFi.setOutputPower((float)(Settings.wifi_output_power) / 10);
+}
+
 void WifiConnect(void)
 {
   WifiSetState(0);
+  WifiSetOutputPower();
   WiFi.persistent(false);     // Solve possible wifi init errors
   Wifi.status = 0;
   Wifi.retry_init = WIFI_RETRY_OFFSET_SEC + ((ESP.getChipId() & 0xF) * 2);
@@ -581,3 +608,6 @@ void EspRestart(void)
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
 }
+
+
+

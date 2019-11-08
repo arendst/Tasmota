@@ -1,4 +1,7 @@
 /*********************************************************************************************\
+ * 7.0.0.4 20191108
+ * Add command WifiPower 0 .. 20.5 to set Wifi Output Power which will be default set to 17dB
+ *
  * 7.0.0.3 20191103
  * Initial support for I2C driver runtime control using command I2CDriver and document I2CDEVICES.md
  * Fix random crash caused by UPNP flood

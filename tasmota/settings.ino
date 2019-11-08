@@ -656,6 +656,7 @@ void SettingsDefaultSet2(void)
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 
   // Wifi
+  Settings.wifi_output_power = 170;
   ParseIp(&Settings.ip_address[0], WIFI_IP_ADDRESS);
   ParseIp(&Settings.ip_address[1], WIFI_GATEWAY);
   ParseIp(&Settings.ip_address[2], WIFI_SUBNETMASK);
@@ -1130,6 +1131,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x07000003) {
       SettingsEnableAllI2cDrivers();
+    }
+    if (Settings.version < 0x07000004) {
+      Settings.wifi_output_power = 170;
     }
     Settings.version = VERSION;
     SettingsSave(1);

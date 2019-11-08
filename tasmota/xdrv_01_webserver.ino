@@ -614,10 +614,12 @@ void WifiManagerBegin(bool reset_only)
 {
   // setup AP
   if (!global_state.wifi_down) {
-    WiFi.mode(WIFI_AP_STA);
+//    WiFi.mode(WIFI_AP_STA);
+    WifiSetMode(WIFI_AP_STA);
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION));
   } else {
-    WiFi.mode(WIFI_AP);
+//    WiFi.mode(WIFI_AP);
+    WifiSetMode(WIFI_AP);
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI D_WIFIMANAGER_SET_ACCESSPOINT));
   }
 
