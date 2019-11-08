@@ -12,8 +12,8 @@ The following table lists the supported I2C devices
 Index | Define              | Driver  | Device   | Address(es) | Description
 ------|---------------------|---------|----------|-------------|-----------------------------------------------
    1  | USE_PCA9685         | xdrv_15 | PCA9685  | 0x40 - 0x47 | 16-channel 12-bit pwm driver
-   2  | USE_PCF8574         | xdrv_28 | PCF8574  | 0x20 - 0x27 | 8-bit I/O expander
-   2  | USE_PCF8574         | xdrv_28 | PCF8574A | 0x38 - 0x3F | 8-bit I/O expander
+   2  | USE_PCF8574         | xdrv_28 | PCF8574  | 0x20 - 0x26 | 8-bit I/O expander
+   2  | USE_PCF8574         | xdrv_28 | PCF8574A | 0x39 - 0x3F | 8-bit I/O expander
    3  | USE_DISPLAY_LCD     | xdsp_01 |          | 0x27, 0x3F  | LCD display
    4  | USE_DISPLAY_SSD1306 | xdsp_02 | SSD1306  | 0x3C - 0x3D | Oled display
    5  | USE_DISPLAY_MATRIX  | xdsp_03 | HT16K33  | 0x70 - 0x77 | 8x8 led matrix
@@ -44,8 +44,8 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   19  | USE_SI1145          | xsns_24 | SI1147   | 0x60        | Ultra violet index and light sensor
   20  | USE_LM75AD          | xsns_26 | LM75AD   | 0x48 - 0x4F | Temperature sensor
   21  | USE_APDS9960        | xsns_27 | APDS9960 | 0x39        | Proximity ambient light RGB and gesture sensor
-  22  | USE_MCP230xx        | xsns_29 | MCP23008 | 0x20 - 0x27 | 16-bit I/O expander
-  22  | USE_MCP230xx        | xsns_29 | MCP23017 | 0x20 - 0x27 | 16-bit I/O expander
+  22  | USE_MCP230xx        | xsns_29 | MCP23008 | 0x20 - 0x26 | 16-bit I/O expander
+  22  | USE_MCP230xx        | xsns_29 | MCP23017 | 0x20 - 0x26 | 16-bit I/O expander
   23  | USE_MPR121          | xsns_30 | MPR121   | 0x5A - 0x5D | Proximity capacitive touch sensor
   24  | USE_CCS811          | xsns_31 | CCS811   | 0x5A        | Gas (TVOC) and air quality sensor
   25  | USE_MPU6050         | xsns_32 | MPU6050  | 0x68 - 0x69 | 3-axis gyroscope and temperature sensor

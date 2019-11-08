@@ -1,6 +1,9 @@
 /*********************************************************************************************\
  * 7.0.0.4 20191108
  * Add command WifiPower 0 .. 20.5 to set Wifi Output Power which will be default set to 17dB
+ * Change supported PCF8574 I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
+ * Change supported PCF8574A I2C address range to 0x39 - 0x3F allowing other I2C devices with address 0x38 to be used at the same time
+ * Change supported MCP230xx I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
  *
  * 7.0.0.3 20191103
  * Initial support for I2C driver runtime control using command I2CDriver and document I2CDEVICES.md

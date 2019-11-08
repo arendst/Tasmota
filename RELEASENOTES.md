@@ -220,7 +220,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_CHIRP             | - | - | - | - | - | - | - |
 | USE_PAJ7620           | - | - | - | - | - | - | - |
 | USE_PCF8574           | - | - | - | - | - | - | - |
-| USE_HIH6              | - | - | - | - | - | - | - |
+| USE_HIH6              | - | - | - | - | x | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |

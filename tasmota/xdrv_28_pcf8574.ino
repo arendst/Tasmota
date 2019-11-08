@@ -22,7 +22,8 @@
 /*********************************************************************************************\
  * PCF8574 - I2C IO Expander
  *
- * I2C Address: PCF8574 = 0x20 .. 0x27, PCF8574A = 0x38 .. 0x3F
+ * I2C Address: PCF8574  = 0x20 .. 0x27 (0x27 is not supported),
+ *              PCF8574A = 0x39 .. 0x3F (0x38 is not supported)
 \*********************************************************************************************/
 
 #define XDRV_28           28
@@ -76,7 +77,7 @@ void Pcf8574Init()
   Pcf8574.type = false;
 
   uint8_t pcf8574_address = PCF8574_ADDR1;
-  for (uint32_t i = 0; i < MAX_PCF8574; i++) {
+  while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +8)) {
 
   //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PCF: Probing addr: 0x%x for PCF8574"), pcf8574_address);
 
@@ -92,13 +93,13 @@ void Pcf8574Init()
       }
       AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, Pcf8574.stype, pcf8574_address);
     }
+
     pcf8574_address++;
-    if ((PCF8574_ADDR1 + 8) == pcf8574_address) {
-      pcf8574_address = PCF8574_ADDR2;
-      i=0;
+    if ((PCF8574_ADDR1 +7) == pcf8574_address) {  // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
+      pcf8574_address = PCF8574_ADDR2 +1;
     }
   }
-  if (Pcf8574.max_devices) {
+  if (Pcf8574.type) {
     for (uint32_t i = 0; i < sizeof(Pcf8574.pin); i++) {
       Pcf8574.pin[i] = 99;
     }

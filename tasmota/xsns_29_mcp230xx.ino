@@ -25,7 +25,7 @@
    Docs at https://www.microchip.com/wwwproducts/en/MCP23008
            https://www.microchip.com/wwwproducts/en/MCP23017
 
-   I2C Address: 0x20 - 0x27
+   I2C Address: 0x20 - 0x26 (0x27 is not supported)
 \*********************************************************************************************/
 
 #define XSNS_29                   29
