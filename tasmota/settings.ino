@@ -134,6 +134,12 @@
 #ifndef DEFAULT_DIMMER_MIN
 #define DEFAULT_DIMMER_MIN          0
 #endif
+#ifndef DEFAULT_LIGHT_DIMMER
+#define DEFAULT_LIGHT_DIMMER        10
+#endif
+#ifndef DEFAULT_LIGHT_COMPONENT
+#define DEFAULT_LIGHT_COMPONENT     255
+#endif
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -815,11 +821,11 @@ void SettingsDefaultSet2(void)
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
   for (uint32_t i = 0; i < MAX_PWMS; i++) {
-    Settings.light_color[i] = 255;
+    Settings.light_color[i] = DEFAULT_LIGHT_COMPONENT;
 //    Settings.pwm_value[i] = 0;
   }
   Settings.light_correction = 1;
-  Settings.light_dimmer = 10;
+  Settings.light_dimmer = DEFAULT_LIGHT_DIMMER;
 //  Settings.light_fade = 0;
   Settings.light_speed = 1;
 //  Settings.light_scheme = 0;
