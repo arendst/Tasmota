@@ -1,7 +1,8 @@
-<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+![Tasmota logo](/tools/logo/TASMOTA_FullLogo_Vector.svg)
 
-# Tasmota
-Alternative firmware for _ESP8266 based devices_ like [iTead](https://www.itead.cc/) _**Sonoff**_ with **web UI, rules and timers, OTA updates, custom device templates and sensor support**. Allows control over **MQTT**, **HTTP**, **Serial** and **KNX** for integrations with smart home systems. Written for Arduino IDE and PlatformIO.
+Open source operating system for ESP8266.
+
+Tasmota is open source firmware for _[ESP8266](https://en.wikipedia.org/wiki/ESP8266) based devices_ featuring **a web user interface, simple OTA updates, automation with timers or rules and entirely local control** over **MQTT**, **HTTP**, **Serial** and **KNX** for integrations with smart home solutions. Written for Arduino IDE and PlatformIO.
 
 [![GitHub version](https://img.shields.io/github/release/arendst/Tasmota.svg)](https://github.com/arendst/Tasmota/releases/latest)
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Tasmota/total.svg)](https://github.com/arendst/Tasmota/releases/latest)
