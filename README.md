@@ -1,8 +1,6 @@
 ![Tasmota logo](/tools/logo/TASMOTA_FullLogo_Vector.svg)
 
-Open source operating system for ESP8266.
-
-Tasmota is open source firmware for _[ESP8266](https://en.wikipedia.org/wiki/ESP8266) based devices_ featuring **a web user interface, simple OTA updates, automation with timers or rules and entirely local control** over **MQTT**, **HTTP**, **Serial** and **KNX** for integrations with smart home solutions. Written for Arduino IDE and PlatformIO.
+Alternative firmware for [ESP8266](https://en.wikipedia.org/wiki/ESP8266) based devices with **easy configuration using webUI, OTA updates, automation using timers or rules, expandability and entirely local control over MQTT, HTTP, Serial or KNX**. Written for Arduino IDE and PlatformIO.
 
 [![GitHub version](https://img.shields.io/github/release/arendst/Tasmota.svg)](https://github.com/arendst/Tasmota/releases/latest)
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Tasmota/total.svg)](https://github.com/arendst/Tasmota/releases/latest)
