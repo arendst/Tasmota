@@ -30,22 +30,25 @@
 #define XSNS_21             21
 #define XI2C_18             18  // See I2CDEVICES.md
 
+#define SGP30_ADDRESS       0x58
+
 #include "Adafruit_SGP30.h"
 Adafruit_SGP30 sgp;
 
-uint8_t sgp30_type = 0;
-uint8_t sgp30_ready = 0;
+bool sgp30_type = false;
+bool sgp30_ready = false;
 float sgp30_abshum;
 
 /********************************************************************************************/
 
-void sgp30_Init(void) {
+void sgp30_Init(void)
+{
+  if (sgp30_type || I2cActive(SGP30_ADDRESS)) { return; }
+
   if (sgp.begin()) {
-    sgp30_type = 1;
-//      snprintf_P(log_data, sizeof(log_data), PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
-//      AddLog(LOG_LEVEL_DEBUG);
-    snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, "SGP30", 0x58);
-    AddLog(LOG_LEVEL_DEBUG);
+    sgp30_type = true;
+//    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SGP: Serialnumber 0x%04X-0x%04X-0x%04X"), sgp.serialnumber[0], sgp.serialnumber[1], sgp.serialnumber[2]);
+    I2cSetActiveFound(SGP30_ADDRESS, "SGP30");
   }
 }
 
@@ -67,12 +70,10 @@ float sgp30_AbsoluteHumidity(float temperature, float humidity,char tempUnit) {
   }
 
   if (tempUnit != 'C') {
-        temperature = (temperature - 32.0) * (5.0 / 9.0); /*conversion to [°C]*/
+    temperature = (temperature - 32.0) * (5.0 / 9.0); /*conversion to [°C]*/
   }
 
   temp = POW_FUNC(2.718281828, (17.67 * temperature) / (temperature + 243.5));
-
-
 
   //return (6.112 * temp * humidity * 2.1674) / (273.15 + temperature); 	//simplified version
   return (6.112 * temp * humidity * mw) / ((273.15 + temperature) * r); 	//long version
@@ -82,40 +83,39 @@ float sgp30_AbsoluteHumidity(float temperature, float humidity,char tempUnit) {
 
 void Sgp30Update(void)  // Perform every second to ensure proper operation of the baseline compensation algorithm
 {
-  sgp30_ready = 0;
-  if (!sgp.IAQmeasure() || !sgp30_type) {
-    // retry to init every 100 seconds
+  if (!sgp30_type) {
     if (21 == (uptime %100)) {
       sgp30_Init();
     }
-    return;  // Measurement failed
-  }
-  if (global_update && global_humidity>0 && global_temperature!=9999) {
-    // abs hum in mg/m3
-    sgp30_abshum=sgp30_AbsoluteHumidity(global_temperature,global_humidity,TempUnit());
-    sgp.setHumidity(sgp30_abshum*1000);
-  }
-  sgp30_ready = 1;
+  } else {
+    sgp30_ready = false;
+    if (!sgp.IAQmeasure()) {
+      return;  // Measurement failed
+    }
+    if (global_update && (global_humidity > 0) && (global_temperature != 9999)) {
+      // abs hum in mg/m3
+      sgp30_abshum=sgp30_AbsoluteHumidity(global_temperature,global_humidity,TempUnit());
+      sgp.setHumidity(sgp30_abshum*1000);
+    }
+    sgp30_ready = true;
 
-  // these should normally be stored permanently and used for fast restart
-  if (!(uptime%SAVE_PERIOD)) {
-    // store settings every N seconds
-    uint16_t TVOC_base;
-    uint16_t eCO2_base;
+    // these should normally be stored permanently and used for fast restart
+    if (!(uptime%SAVE_PERIOD)) {
+      // store settings every N seconds
+      uint16_t TVOC_base;
+      uint16_t eCO2_base;
 
-    if (!sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) return;  // Failed to get baseline readings
-//      snprintf_P(log_data, sizeof(log_data), PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
-//      AddLog(LOG_LEVEL_DEBUG);
-
+      if (!sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) return;  // Failed to get baseline readings
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
+    }
   }
 }
-
 
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_SGP30[] PROGMEM =
   "{s}SGP30 " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}"                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}SGP30 " D_TVOC "{m}%d " D_UNIT_PARTS_PER_BILLION "{e}";
-const char HTTP_SNS_AHUM[] PROGMEM = "{s}SGP30 " "Abs Humidity" "{m}%s g/m3{e}";
+const char HTTP_SNS_AHUM[] PROGMEM = "{s}SGP30 Abs Humidity{m}%s g/m3{e}";
 #endif
 
 #define D_JSON_AHUM "aHumidity"
@@ -147,7 +147,6 @@ void Sgp30Show(bool json)
   }
 }
 
-
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -159,9 +158,6 @@ bool Xsns21(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      sgp30_Init();
-      break;
     case FUNC_EVERY_SECOND:
       Sgp30Update();
       break;
@@ -173,6 +169,9 @@ bool Xsns21(uint8_t function)
       Sgp30Show(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:
+      sgp30_Init();
+      break;
   }
   return result;
 }

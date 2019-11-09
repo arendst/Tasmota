@@ -34,7 +34,7 @@ void MLX90614_Init(void)
   if (!I2cSetDevice(I2_ADR_IRT)) { return; }
 
   mlx_ready=1;
-  AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "MLX90614", I2_ADR_IRT);
+  AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "MLX90614", I2_ADR_IRT);
 
   // not needed on tasmota
   //Wire.begin();

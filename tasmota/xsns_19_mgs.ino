@@ -49,8 +49,7 @@ void MGSPrepare(void)
 
   gas.begin(MGS_SENSOR_ADDR);
   if (!gas.isError()) {
-    I2cSetActive(MGS_SENSOR_ADDR);
-    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "MultiGasSensor", MGS_SENSOR_ADDR);
+    I2cSetActiveFound(MGS_SENSOR_ADDR, "MultiGas");
     mgs_detected = true;
   }
 }

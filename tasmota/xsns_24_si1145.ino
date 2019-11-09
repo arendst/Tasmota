@@ -183,7 +183,7 @@
 #define SI114X_IRQEN_PS2                    0x08
 #define SI114X_IRQEN_PS3                    0x10
 
-uint8_t si1145_type = 0;
+bool si1145_type = false;
 
 /********************************************************************************************/
 
@@ -308,11 +308,11 @@ uint16_t Si1145ReadIR(void)
 
 void Si1145Update(void)
 {
-  if (!si1145_type) {
-    if (Si1145Begin()) {
-      si1145_type = 1;
-      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "SI1145", SI114X_ADDR);
-    }
+  if (si1145_type || I2cActive(SI114X_ADDR)) { return; }
+
+  if (Si1145Begin()) {
+    si1145_type = true;
+    I2cSetActiveFound(SI114X_ADDR, "SI1145");
   }
 }
 
@@ -341,7 +341,10 @@ void Si1145Show(bool json)
 #endif
     }
   } else {
-    si1145_type = 0;
+    if (si1145_type) {
+      I2cResetActive(SI114X_ADDR);
+    }
+    si1145_type = false;
   }
 }
 

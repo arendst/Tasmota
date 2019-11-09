@@ -138,12 +138,11 @@ void Veml6070Detect(void)
   uint8_t status   = Wire.endTransmission();
   // action on status
   if (!status) {
-    I2cSetActive(VEML6070_ADDR_L);
     veml6070_type      = 1;
     Veml6070UvTableInit();    // 1[ms], initalize the UV compare table only once
     uint8_t veml_model = 0;
     GetTextIndexed(veml6070_name, sizeof(veml6070_name), veml_model, kVemlTypes);
-    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "VEML6070", VEML6070_ADDR_L);
+    I2cSetActiveFound(VEML6070_ADDR_L, "VEML6070");
   }
 }
 
@@ -200,7 +199,7 @@ void Veml6070ModeCmd(bool mode_cmd)
   uint8_t status   = Wire.endTransmission();
   // action on status
   if (!status) {
-    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "VEML6070 mode_cmd", VEML6070_ADDR_L);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_DEBUG "VEML6070 mode_cmd"));
   }
 }
 

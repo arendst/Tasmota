@@ -91,7 +91,7 @@ void Pcf8574Init()
       if (pcf8574_address >= PCF8574_ADDR2) {
         strcpy(Pcf8574.stype, "PCF8574A");
       }
-      AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, Pcf8574.stype, pcf8574_address);
+      I2cSetActiveFound(pcf8574_address, Pcf8574.stype);
     }
 
     pcf8574_address++;

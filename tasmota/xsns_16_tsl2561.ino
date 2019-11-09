@@ -72,7 +72,7 @@ void Tsl2561Detect(void)
     if (!Tsl.id(id)) return;
     if (Tsl.on()) {
       tsl2561_type = 1;
-      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, tsl2561_types, Tsl.address());
+      I2cSetActiveFound(Tsl.address(), tsl2561_types);
     }
   }
 }

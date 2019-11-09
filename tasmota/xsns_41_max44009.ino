@@ -95,7 +95,7 @@ void Max4409Detect(void)
         Wire.write(MAX44009_CONTINUOUS_AUTO_MODE);
         if (0 == Wire.endTransmission()) {
           max44009_found = 1;
-          AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, max44009_types, max44009_address);
+          AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, max44009_types, max44009_address);
           break;
         }
       }

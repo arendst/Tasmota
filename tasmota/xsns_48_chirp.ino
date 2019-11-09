@@ -233,7 +233,7 @@ bool ChirpScan() {
       delay(2);
       chirp_sensor[chirp_found_sensors].version = ChirpReadVersion(address);
       if(chirp_sensor[chirp_found_sensors].version > 0) {
-        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "CHIRP:", address);
+        AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "CHIRP", address);
         if(chirp_found_sensors<CHIRP_MAX_SENSOR_COUNT){
           chirp_sensor[chirp_found_sensors].address = address; // push next sensor, as long as there is space in the array
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: fw %x"), chirp_sensor[chirp_found_sensors].version);

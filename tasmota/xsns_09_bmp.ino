@@ -483,9 +483,8 @@ void BmpDetect(void)
 #endif  // USE_BME680
       }
       if (success) {
-        I2cSetActive(bmp_sensors[bmp_count].bmp_address);
         GetTextIndexed(bmp_sensors[bmp_count].bmp_name, sizeof(bmp_sensors[bmp_count].bmp_name), bmp_sensors[bmp_count].bmp_model, kBmpTypes);
-        AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, bmp_sensors[bmp_count].bmp_name, bmp_sensors[bmp_count].bmp_address);
+        I2cSetActiveFound(bmp_sensors[bmp_count].bmp_address, bmp_sensors[bmp_count].bmp_name);
         bmp_count++;
       }
     }

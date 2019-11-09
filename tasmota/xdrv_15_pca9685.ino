@@ -53,9 +53,8 @@ void PCA9685_Detect(void)
     I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, 0x20);
     if (I2cValidRead8(&buffer, USE_PCA9685_ADDR, PCA9685_REG_MODE1)) {
       if (0x20 == buffer) {
-        I2cSetActive(USE_PCA9685_ADDR);
         pca9685_detected = 1;
-        AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "PCA9685", USE_PCA9685_ADDR);
+        I2cSetActiveFound(USE_PCA9685_ADDR, "PCA9685");
         PCA9685_Reset(); // Reset the controller
       }
     }

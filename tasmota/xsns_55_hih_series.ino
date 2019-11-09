@@ -80,8 +80,7 @@ void Hih6Detect(void)
   if (uptime < 2) { delay(20); } // Skip entering power on comand mode
   Hih6.type = Hih6Read();
   if (Hih6.type) {
-    I2cSetActive(HIH6_ADDR);
-    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, Hih6.types, HIH6_ADDR);
+    I2cSetActiveFound(HIH6_ADDR, Hih6.types);
   }
 }
 

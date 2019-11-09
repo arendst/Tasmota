@@ -257,9 +257,6 @@ void Ina226Init()
         continue; // No device
 
     // store data in slave info struct.
-
-    I2cSetActive(addr);
-
     p = &slaveInfo[i];
     // Address
     p->address = addr;
@@ -282,9 +279,9 @@ void Ina226Init()
 
     Ina226SetCalibration(i);
 
-    //AddLog_P2( LOG_LEVEL_NONE, S_LOG_I2C_FOUND_AT, Ina226Str, addr );
-    slavesFound++;
+    I2cSetActiveFound(addr, Ina226Str);
 
+    slavesFound++;
   }
 }
 

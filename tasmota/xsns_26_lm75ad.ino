@@ -53,13 +53,14 @@ void LM75ADDetect(void)
 {
   if (lm75ad_type) { return; }
 
-  uint16_t buffer;
   for (uint32_t i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
+    if (I2cActive(lm75ad_address)) { continue; }
+    uint16_t buffer;
     if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
       if (buffer == 0x4B00) {
         lm75ad_type = 1;
-        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "LM75AD", lm75ad_address);
+        I2cSetActiveFound(lm75ad_address, "LM75AD");
         break;
       }
     }

@@ -145,7 +145,7 @@ void MPU_6050Detect(void)
 
   if (MPU_6050_found)
   {
-    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, D_SENSOR_MPU6050, MPU_6050_address);
+    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, D_SENSOR_MPU6050, MPU_6050_address);
   }
 }
 

@@ -64,9 +64,8 @@ void Bh1750Detect(void)
     Wire.beginTransmission(bh1750_address);
     Wire.write(BH1750_CONTINUOUS_HIGH_RES_MODE);
     if (!Wire.endTransmission()) {
-      I2cSetActive(bh1750_address);
       bh1750_type = 1;
-      AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, bh1750_types, bh1750_address);
+      I2cSetActiveFound(bh1750_address, bh1750_types);
       break;
     }
   }

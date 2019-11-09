@@ -69,7 +69,7 @@ void LcdInitDriver(void)
   }
 
   if (XDSP_01 == Settings.display_model) {
-    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "LCD", Settings.display_address[0]);
+    I2cSetActiveFound(Settings.display_address[0], "LCD");
 
     Settings.display_width = Settings.display_cols[0];
     Settings.display_height = Settings.display_rows;

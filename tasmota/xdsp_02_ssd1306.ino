@@ -61,7 +61,7 @@ void SSD1306InitDriver()
   }
 
   if (XDSP_02 == Settings.display_model) {
-    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "OLED", Settings.display_address[0]);
+    I2cSetActiveFound(Settings.display_address[0], "SSD1306");
 
     if ((Settings.display_width != 64) && (Settings.display_width != 96) && (Settings.display_width != 128)) {
       Settings.display_width = 128;

@@ -502,7 +502,7 @@ bool MGC3130_detect(void)
   success = MGC3130_receiveMessage(); // This should read the firmware info
   if (success) {
     strcpy_P(MGC3130stype, PSTR("MGC3130"));
-    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, MGC3130stype, MGC3130_I2C_ADDR);
+    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, MGC3130stype, MGC3130_I2C_ADDR);
     MGC3130_currentGesture[0] = '\0';
     MGC3130_type = true;
   } else {

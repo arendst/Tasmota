@@ -207,7 +207,7 @@ void Ade7953DrvInit(void)
         Settings.energy_voltage_calibration = ADE7953_UREF;
         Settings.energy_current_calibration = ADE7953_IREF;
       }
-      AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "ADE7953", ADE7953_ADDR);
+      I2cSetActiveFound(ADE7953_ADDR, "ADE7953");
       Ade7953.init_step = 2;
 
       Energy.phase_count = 2;                     // Handle two channels as two phases

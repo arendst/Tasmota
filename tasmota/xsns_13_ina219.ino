@@ -203,9 +203,8 @@ void Ina219Detect(void)
     uint16_t addr = ina219_addresses[i];
     if (I2cActive(addr)) { continue; }
     if (Ina219SetCalibration(Settings.ina219_mode, addr)) {
-      I2cSetActive(addr);
       ina219_type[i] = 1;
-      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, ina219_types, addr);
+      I2cSetActiveFound(addr, ina219_types);
     }
   }
 }
