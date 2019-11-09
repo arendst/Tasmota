@@ -616,7 +616,7 @@
  * Revert sonoff-minimal removals causing failure of wifi connection (#3177)
  *
  * 6.1.0 20180706
- * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Tasmota/wiki/Upgrade#migration-path
+ * Remove version 3, 4 and pre 5.2 settings auto-upgrade. See https://github.com/arendst/Tasmota/wiki/Upgrading#migration-path
  * Change default CFG_HOLDER from 0x20161209 to 4617 (=0x1209) - no impact on default upgrades
  * Change number of supported switches from 4 to 8 (#2885, #3086)
  * Change BME680 driver from Adafruit to Bosch BME680 library (#2969)
