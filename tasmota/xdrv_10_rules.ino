@@ -404,8 +404,8 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
   Rules.trigger_count[rule_set] = 0;
   int plen = 0;
   int plen2 = 0;
-  bool stop_all_rules = false;
   while (true) {
+    bool stop_all_rules = false;
     rules = rules.substring(plen);                        // Select relative to last rule
     rules.trim();
     if (!rules.length()) { return serviced; }             // No more rules
