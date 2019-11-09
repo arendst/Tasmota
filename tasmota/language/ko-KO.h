@@ -211,7 +211,7 @@
 #define D_CHECKING_CONNECTION "연결 체크 중..."
 #define D_QUERY_DONE "쿼리 완료. MQTT 서비스 발견"
 #define D_MQTT_SERVICE_FOUND "MQTT 서비스 발견"
-#define D_FOUND_AT "다음을견"
+#define D_FOUND_AT "다음을 발견"
 #define D_SYSLOG_HOST_NOT_FOUND "Syslog 호스트가 발견되지 않았습니다"
 
 // settings.ino
