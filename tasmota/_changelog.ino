@@ -4,6 +4,7 @@
  * Change supported PCF8574 I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
  * Change supported PCF8574A I2C address range to 0x39 - 0x3F allowing other I2C devices with address 0x38 to be used at the same time
  * Change supported MCP230xx I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
+ * Add Keep last channels values when Color command end with '=' #6799
  *
  * 7.0.0.3 20191103
  * Initial support for I2C driver runtime control using command I2CDriver and document I2CDEVICES.md
