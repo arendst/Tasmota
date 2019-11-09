@@ -27,7 +27,7 @@
 
 #include <Adafruit_TSL2591.h>
 
-Adafruit_TSL2591 tsl = Adafruit_TSL2591(2591);
+Adafruit_TSL2591 tsl = Adafruit_TSL2591();
 
 uint8_t tsl2591_type = 0;
 uint8_t tsl2591_valid = 0;

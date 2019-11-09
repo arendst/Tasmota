@@ -54,29 +54,6 @@
 #define TSL2591_LUX_COEFC         (0.59F)  ///< CH1 coefficient A
 #define TSL2591_LUX_COEFD         (0.86F)  ///< CH2 coefficient B
 
-/// TSL2591 Register map
-enum
-{
-  TSL2591_REGISTER_ENABLE             = 0x00, // Enable register
-  TSL2591_REGISTER_CONTROL            = 0x01, // Control register
-  TSL2591_REGISTER_THRESHOLD_AILTL    = 0x04, // ALS low threshold lower byte
-  TSL2591_REGISTER_THRESHOLD_AILTH    = 0x05, // ALS low threshold upper byte
-  TSL2591_REGISTER_THRESHOLD_AIHTL    = 0x06, // ALS high threshold lower byte
-  TSL2591_REGISTER_THRESHOLD_AIHTH    = 0x07, // ALS high threshold upper byte
-  TSL2591_REGISTER_THRESHOLD_NPAILTL  = 0x08, // No Persist ALS low threshold lower byte
-  TSL2591_REGISTER_THRESHOLD_NPAILTH  = 0x09, // No Persist ALS low threshold higher byte
-  TSL2591_REGISTER_THRESHOLD_NPAIHTL  = 0x0A, // No Persist ALS high threshold lower byte
-  TSL2591_REGISTER_THRESHOLD_NPAIHTH  = 0x0B, // No Persist ALS high threshold higher byte
-  TSL2591_REGISTER_PERSIST_FILTER     = 0x0C, // Interrupt persistence filter
-  TSL2591_REGISTER_PACKAGE_PID        = 0x11, // Package Identification
-  TSL2591_REGISTER_DEVICE_ID          = 0x12, // Device Identification
-  TSL2591_REGISTER_DEVICE_STATUS      = 0x13, // Internal Status
-  TSL2591_REGISTER_CHAN0_LOW          = 0x14, // Channel 0 data, low byte
-  TSL2591_REGISTER_CHAN0_HIGH         = 0x15, // Channel 0 data, high byte
-  TSL2591_REGISTER_CHAN1_LOW          = 0x16, // Channel 1 data, low byte
-  TSL2591_REGISTER_CHAN1_HIGH         = 0x17, // Channel 1 data, high byte
-};
-
 /// Enumeration for the sensor integration timing
 typedef enum
 {
@@ -88,29 +65,6 @@ typedef enum
   TSL2591_INTEGRATIONTIME_600MS     = 0x05,  // 600 millis
 }
 tsl2591IntegrationTime_t;
-
-/// Enumeration for the persistance filter (for interrupts)
-typedef enum
-{
-  //  bit 7:4: 0
-  TSL2591_PERSIST_EVERY             = 0x00, // Every ALS cycle generates an interrupt
-  TSL2591_PERSIST_ANY               = 0x01, // Any value outside of threshold range
-  TSL2591_PERSIST_2                 = 0x02, // 2 consecutive values out of range
-  TSL2591_PERSIST_3                 = 0x03, // 3 consecutive values out of range
-  TSL2591_PERSIST_5                 = 0x04, // 5 consecutive values out of range
-  TSL2591_PERSIST_10                = 0x05, // 10 consecutive values out of range
-  TSL2591_PERSIST_15                = 0x06, // 15 consecutive values out of range
-  TSL2591_PERSIST_20                = 0x07, // 20 consecutive values out of range
-  TSL2591_PERSIST_25                = 0x08, // 25 consecutive values out of range
-  TSL2591_PERSIST_30                = 0x09, // 30 consecutive values out of range
-  TSL2591_PERSIST_35                = 0x0A, // 35 consecutive values out of range
-  TSL2591_PERSIST_40                = 0x0B, // 40 consecutive values out of range
-  TSL2591_PERSIST_45                = 0x0C, // 45 consecutive values out of range
-  TSL2591_PERSIST_50                = 0x0D, // 50 consecutive values out of range
-  TSL2591_PERSIST_55                = 0x0E, // 55 consecutive values out of range
-  TSL2591_PERSIST_60                = 0x0F, // 60 consecutive values out of range
-}
-tsl2591Persist_t;
 
 /// Enumeration for the sensor gain
 typedef enum
@@ -131,7 +85,7 @@ tsl2591Gain_t;
 class Adafruit_TSL2591
 {
  public:
-  Adafruit_TSL2591(int32_t sensorID = -1);
+  Adafruit_TSL2591();
   
   boolean   begin   ( void );
   void      enable  ( void );
@@ -146,11 +100,6 @@ class Adafruit_TSL2591
   tsl2591IntegrationTime_t getTiming();
   tsl2591Gain_t            getGain();
 
-  // Interrupt
-  void    clearInterrupt(void);
-  void    registerInterrupt(uint16_t lowerThreshold, uint16_t upperThreshold, tsl2591Persist_t persist);
-  uint8_t getStatus();
-  
  private:
   void      write8  ( uint8_t r);
   void      write8  ( uint8_t r, uint8_t v );
@@ -159,7 +108,6 @@ class Adafruit_TSL2591
 
   tsl2591IntegrationTime_t _integration;
   tsl2591Gain_t _gain;
-  int32_t _sensorID;
 
   boolean _initialized;
 };

@@ -56,18 +56,40 @@
 
 #include "Adafruit_TSL2591.h"
 
+/// TSL2591 Register map
+enum
+{
+  TSL2591_REGISTER_ENABLE             = 0x00, // Enable register
+  TSL2591_REGISTER_CONTROL            = 0x01, // Control register
+  TSL2591_REGISTER_THRESHOLD_AILTL    = 0x04, // ALS low threshold lower byte
+  TSL2591_REGISTER_THRESHOLD_AILTH    = 0x05, // ALS low threshold upper byte
+  TSL2591_REGISTER_THRESHOLD_AIHTL    = 0x06, // ALS high threshold lower byte
+  TSL2591_REGISTER_THRESHOLD_AIHTH    = 0x07, // ALS high threshold upper byte
+  TSL2591_REGISTER_THRESHOLD_NPAILTL  = 0x08, // No Persist ALS low threshold lower byte
+  TSL2591_REGISTER_THRESHOLD_NPAILTH  = 0x09, // No Persist ALS low threshold higher byte
+  TSL2591_REGISTER_THRESHOLD_NPAIHTL  = 0x0A, // No Persist ALS high threshold lower byte
+  TSL2591_REGISTER_THRESHOLD_NPAIHTH  = 0x0B, // No Persist ALS high threshold higher byte
+  TSL2591_REGISTER_PERSIST_FILTER     = 0x0C, // Interrupt persistence filter
+  TSL2591_REGISTER_PACKAGE_PID        = 0x11, // Package Identification
+  TSL2591_REGISTER_DEVICE_ID          = 0x12, // Device Identification
+  TSL2591_REGISTER_DEVICE_STATUS      = 0x13, // Internal Status
+  TSL2591_REGISTER_CHAN0_LOW          = 0x14, // Channel 0 data, low byte
+  TSL2591_REGISTER_CHAN0_HIGH         = 0x15, // Channel 0 data, high byte
+  TSL2591_REGISTER_CHAN1_LOW          = 0x16, // Channel 1 data, low byte
+  TSL2591_REGISTER_CHAN1_HIGH         = 0x17, // Channel 1 data, high byte
+};
+
+
 /**************************************************************************/
 /*!
     @brief  Instantiates a new Adafruit TSL2591 class
-    @param  sensorID An optional ID # so you can track this sensor, it will tag sensorEvents you create.
 */
 /**************************************************************************/
-Adafruit_TSL2591::Adafruit_TSL2591(int32_t sensorID)
+Adafruit_TSL2591::Adafruit_TSL2591()
 {
   _initialized = false;
   _integration = TSL2591_INTEGRATIONTIME_100MS;
   _gain        = TSL2591_GAIN_MED;
-  _sensorID    = sensorID;
 
   // we cant do wire initialization till later, because we havent loaded Wire yet
 }
@@ -362,72 +384,6 @@ uint16_t Adafruit_TSL2591::getLuminosity (uint8_t channel)
 
   // unknown channel!
   return 0;
-}
-
-/************************************************************************/
-/*!
-    @brief  Set up the interrupt to go off when light level is outside the lower/upper range.
-    @param  lowerThreshold Raw light data reading level that is the lower value threshold for interrupt
-    @param  upperThreshold Raw light data reading level that is the higher value threshold for interrupt
-    @param  persist How many counts we must be outside range for interrupt to fire, default is any single value
-*/
-/**************************************************************************/
-void Adafruit_TSL2591::registerInterrupt(uint16_t lowerThreshold, uint16_t upperThreshold, tsl2591Persist_t persist = TSL2591_PERSIST_ANY)
-{
-  if (!_initialized) {
-    if (!begin()) {
-      return;
-    }
-  }
-
-  enable();
-  write8(TSL2591_COMMAND_BIT | TSL2591_REGISTER_PERSIST_FILTER,  persist);
-  write8(TSL2591_COMMAND_BIT | TSL2591_REGISTER_THRESHOLD_AILTL, lowerThreshold);
-  write8(TSL2591_COMMAND_BIT | TSL2591_REGISTER_THRESHOLD_AILTH, lowerThreshold >> 8);
-  write8(TSL2591_COMMAND_BIT | TSL2591_REGISTER_THRESHOLD_AIHTL, upperThreshold);
-  write8(TSL2591_COMMAND_BIT | TSL2591_REGISTER_THRESHOLD_AIHTH, upperThreshold >> 8);
-  disable();
-}
-
-/************************************************************************/
-/*!
-    @brief  Clear interrupt status
-*/
-/**************************************************************************/
-void Adafruit_TSL2591::clearInterrupt()
-{
-  if (!_initialized) {
-    if (!begin()) {
-      return;
-    }
-  }
-
-  enable();
-  write8(TSL2591_CLEAR_INT);
-  disable();
-}
-
-
-/************************************************************************/
-/*!
-    @brief  Gets the most recent sensor event from the hardware status register.
-    @return Sensor status as a byte. Bit 0 is ALS Valid. Bit 4 is ALS Interrupt. Bit 5 is No-persist Interrupt.
-*/
-/**************************************************************************/
-uint8_t Adafruit_TSL2591::getStatus(void)
-{
-  if (!_initialized) {
-    if (!begin()) {
-      return 0;
-    }
-  }
-
-  // Enable the device
-  enable();
-  uint8_t x;
-  x = read8(TSL2591_COMMAND_BIT | TSL2591_REGISTER_DEVICE_STATUS);
-  disable();
-  return x;
 }
 
 uint8_t Adafruit_TSL2591::read8(uint8_t reg)
