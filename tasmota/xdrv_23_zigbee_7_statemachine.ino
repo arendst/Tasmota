@@ -76,7 +76,7 @@ enum Zigbee_StateMachine_Instruction_Set {
   ZGB_INSTR_8_BYTES = 0x80,
   ZGB_INSTR_CALL = 0x80,                // call a function
   ZGB_INSTR_LOG,                        // log a message, if more detailed logging required, call a function
-  ZGB_INSTR_MQTT_STATUS,                // send MQTT status string with code
+  ZGB_INSTR_MQTT_STATE,                 // send MQTT status string with code
   ZGB_INSTR_SEND,                       // send a ZNP message
   ZGB_INSTR_WAIT_UNTIL,                 // wait until the specified message is received, ignore all others
   ZGB_INSTR_WAIT_RECV,                  // wait for a message according to the filter
@@ -98,7 +98,7 @@ enum Zigbee_StateMachine_Instruction_Set {
 
 #define ZI_CALL(f, x)       { .i = { ZGB_INSTR_CALL, (x), 0x0000} }, { .p = (const void*)(f) },
 #define ZI_LOG(x, m)        { .i = { ZGB_INSTR_LOG,    (x), 0x0000 } }, { .p = ((const void*)(m)) },
-#define ZI_MQTT_STATUS(x, m) { .i = { ZGB_INSTR_MQTT_STATUS,    (x), 0x0000 } }, { .p = ((const void*)(m)) },
+#define ZI_MQTT_STATE(x, m) { .i = { ZGB_INSTR_MQTT_STATE,    (x), 0x0000 } }, { .p = ((const void*)(m)) },
 #define ZI_ON_RECV_UNEXPECTED(f) { .i = { ZGB_ON_RECV_UNEXPECTED, 0x00, 0x0000} }, { .p = (const void*)(f) },
 #define ZI_SEND(m)          { .i = { ZGB_INSTR_SEND, sizeof(m), 0x0000} }, { .p = (const void*)(m) },
 #define ZI_WAIT_RECV(x, m)  { .i = { ZGB_INSTR_WAIT_RECV, sizeof(m), (x)} }, { .p = (const void*)(m) },
@@ -322,7 +322,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     ZI_WAIT(10500)                             // wait for 10 seconds for Tasmota to stabilize
     ZI_ON_ERROR_GOTO(50)
 
-    //ZI_MQTT_STATUS(ZIGBEE_STATUS_BOOT, "Booting")
+    //ZI_MQTT_STATE(ZIGBEE_STATUS_BOOT, "Booting")
     //ZI_LOG(LOG_LEVEL_INFO, "ZIG: rebooting device")
     ZI_SEND(ZBS_RESET)                        // reboot cc2530 just in case we rebooted ESP8266 but not cc2530
     ZI_WAIT_RECV_FUNC(5000, ZBR_RESET, &Z_Reboot)             // timeout 5s
@@ -346,7 +346,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     // all is good, we can start
 
   ZI_LABEL(ZIGBEE_LABEL_START)                // START ZNP App
-    ZI_MQTT_STATUS(ZIGBEE_STATUS_STARTING, "Configured, starting coordinator")
+    ZI_MQTT_STATE(ZIGBEE_STATUS_STARTING, "Configured, starting coordinator")
     //ZI_CALL(&Z_State_Ready, 1)                // Now accept incoming messages
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     // Z_ZDO:startupFromApp
@@ -382,7 +382,7 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     //ZI_WAIT_UNTIL(500, ZBR_PERMITJOIN_AREQ_OPEN_FF)
 
   ZI_LABEL(ZIGBEE_LABEL_READY)
-    ZI_MQTT_STATUS(ZIGBEE_STATUS_OK, "Started")
+    ZI_MQTT_STATE(ZIGBEE_STATUS_OK, "Started")
     ZI_LOG(LOG_LEVEL_INFO, "ZIG: zigbee device ready, listening...")
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
@@ -390,7 +390,7 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_GOTO(ZIGBEE_LABEL_READY)
 
   ZI_LABEL(ZIGBEE_LABEL_PERMIT_JOIN_CLOSE)
-    //ZI_MQTT_STATUS(ZIGBEE_STATUS_PERMITJOIN_CLOSE, "Disable Pairing mode")
+    //ZI_MQTT_STATE(ZIGBEE_STATUS_PERMITJOIN_CLOSE, "Disable Pairing mode")
     ZI_SEND(ZBS_PERMITJOINREQ_CLOSE)              // Closing the Permit Join
     ZI_WAIT_RECV(1000, ZBR_PERMITJOINREQ)
     //ZI_WAIT_UNTIL(1000, ZBR_PERMITJOIN_AREQ_RSP)  // not sure it's useful
@@ -398,7 +398,7 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_GOTO(ZIGBEE_LABEL_MAIN_LOOP)
 
   ZI_LABEL(ZIGBEE_LABEL_PERMIT_JOIN_OPEN_60)
-    //ZI_MQTT_STATUS(ZIGBEE_STATUS_PERMITJOIN_OPEN_60, "Enable Pairing mode for 60 seconds")
+    //ZI_MQTT_STATE(ZIGBEE_STATUS_PERMITJOIN_OPEN_60, "Enable Pairing mode for 60 seconds")
     ZI_SEND(ZBS_PERMITJOINREQ_OPEN_60)
     ZI_WAIT_RECV(1000, ZBR_PERMITJOINREQ)
     //ZI_WAIT_UNTIL(1000, ZBR_PERMITJOIN_AREQ_RSP)  // not sure it's useful
@@ -406,7 +406,7 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_GOTO(ZIGBEE_LABEL_MAIN_LOOP)
 
   ZI_LABEL(ZIGBEE_LABEL_PERMIT_JOIN_OPEN_XX)
-    //ZI_MQTT_STATUS(ZIGBEE_STATUS_PERMITJOIN_OPEN_XX, "Enable Pairing mode until next boot")
+    //ZI_MQTT_STATE(ZIGBEE_STATUS_PERMITJOIN_OPEN_XX, "Enable Pairing mode until next boot")
     ZI_SEND(ZBS_PERMITJOINREQ_OPEN_XX)
     ZI_WAIT_RECV(1000, ZBR_PERMITJOINREQ)
     //ZI_WAIT_UNTIL(1000, ZBR_PERMITJOIN_AREQ_RSP)  // not sure it's useful
@@ -414,7 +414,7 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_GOTO(ZIGBEE_LABEL_MAIN_LOOP)
 
   ZI_LABEL(50)                                    // reformat device
-    ZI_MQTT_STATUS(ZIGBEE_STATUS_RESET_CONF, "Reseting configuration")
+    ZI_MQTT_STATE(ZIGBEE_STATUS_RESET_CONF, "Reseting configuration")
     //ZI_LOG(LOG_LEVEL_INFO, "ZIG: zigbee bad configuration of device, doing a factory reset")
     ZI_ON_ERROR_GOTO(ZIGBEE_LABEL_ABORT)
     ZI_SEND(ZBS_FACTRES)                          // factory reset
@@ -447,11 +447,11 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_GOTO(ZIGBEE_LABEL_START)
 
   ZI_LABEL(ZIGBEE_LABEL_UNSUPPORTED_VERSION)
-    ZI_MQTT_STATUS(ZIGBEE_STATUS_UNSUPPORTED_VERSION, "Only ZNP 1.2 is currently supported")
+    ZI_MQTT_STATE(ZIGBEE_STATUS_UNSUPPORTED_VERSION, "Only ZNP 1.2 is currently supported")
     ZI_GOTO(ZIGBEE_LABEL_ABORT)
 
   ZI_LABEL(ZIGBEE_LABEL_ABORT)                    // Label 99: abort
-    ZI_MQTT_STATUS(ZIGBEE_STATUS_ABORT, "Abort")
+    ZI_MQTT_STATE(ZIGBEE_STATUS_ABORT, "Abort")
     ZI_LOG(LOG_LEVEL_ERROR, "ZIG: Abort")
     ZI_STOP(ZIGBEE_LABEL_ABORT)
 };
@@ -608,10 +608,10 @@ void ZigbeeStateMachine_Run(void) {
       case ZGB_INSTR_LOG:
         AddLog_P(cur_d8, (char*) cur_ptr1);
         break;
-      case ZGB_INSTR_MQTT_STATUS:
-        Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{\"Status\":%d,\"Message\":\"%s\"}}"),
+      case ZGB_INSTR_MQTT_STATE:
+        Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{\"Status\":%d,\"Message\":\"%s\"}}"),
                           cur_d8, (char*) cur_ptr1);
-      	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATUS));
+      	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
       	XdrvRulesProcess();
         break;
       case ZGB_INSTR_SEND:

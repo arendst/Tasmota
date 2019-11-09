@@ -35,7 +35,7 @@ int32_t Z_ReceiveDeviceInfo(int32_t res, class SBuffer &buf) {
 
   char hex[20];
   Uint64toHex(long_adr, hex, 64);
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
                   ",\"DeviceType\":%d,\"DeviceState\":%d"
                   ",\"NumAssocDevices\":%d"),
@@ -55,7 +55,7 @@ int32_t Z_ReceiveDeviceInfo(int32_t res, class SBuffer &buf) {
 
   ResponseJsonEnd();      // append '}'
   ResponseJsonEnd();      // append '}'
-  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATUS));
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
   XdrvRulesProcess();
 
   return res;
@@ -90,13 +90,13 @@ int32_t Z_Reboot(int32_t res, class SBuffer &buf) {
   if (reason > 3) { reason = 3; }
   GetTextIndexed(reason_str, sizeof(reason_str), reason, Z_RebootReason);
 
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"Message\":\"%s\",\"RestartReason\":\"%s\""
                   ",\"MajorRel\":%d,\"MinorRel\":%d}}"),
                   ZIGBEE_STATUS_BOOT, "CC2530 booted", reason_str,
                   major_rel, minor_rel);
 
-  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATUS));
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
   XdrvRulesProcess();
 
   if ((0x02 == major_rel) && (0x06 == minor_rel)) {
@@ -121,13 +121,13 @@ int32_t Z_ReceiveCheckVersion(int32_t res, class SBuffer &buf) {
   uint8_t maint_rel = buf.get8(6);
   uint32_t revision = buf.get32(7);
 
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"MajorRel\":%d,\"MinorRel\":%d"
                   ",\"MaintRel\":%d,\"Revision\":%d}}"),
                   ZIGBEE_STATUS_CC_VERSION, major_rel, minor_rel,
                   maint_rel, revision);
 
-  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATUS));
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
   XdrvRulesProcess();
 
   if ((0x02 == major_rel) && (0x06 == minor_rel)) {
@@ -162,13 +162,13 @@ int32_t Z_ReceivePermitJoinStatus(int32_t res, const class SBuffer &buf) {
     status_code = ZIGBEE_STATUS_PERMITJOIN_CLOSE;
     message = PSTR("Disable Pairing mode");
   }
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"Message\":\""),
                   status_code);
   ResponseAppend_P(message, duration);
   ResponseAppend_P(PSTR("\"}}"));
 
-  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATUS));
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEE_STATE));
   XdrvRulesProcess();
   return -1;
 }
@@ -217,7 +217,7 @@ int32_t Z_ReceiveNodeDesc(int32_t res, const class SBuffer &buf) {
     if (deviceType > 3) { deviceType = 3; }
     bool              complexDescriptorAvailable = (logicalType & 0x08) ? 1 : 0;
 
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                     "\"Status\":%d,\"NodeType\":\"%s\",\"ComplexDesc\":%s}}"),
                     ZIGBEE_STATUS_NODE_DESC, Z_DeviceType[deviceType],
                     complexDescriptorAvailable ? "true" : "false"
@@ -247,7 +247,7 @@ int32_t Z_ReceiveActiveEp(int32_t res, const class SBuffer &buf) {
     Z_SendSimpleDescReq(nwkAddr, activeEpList[i]);
   }
 
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"ActiveEndpoints\":["),
                   ZIGBEE_STATUS_ACTIVE_EP);
   for (uint32_t i = 0; i < activeEpCount; i++) {
@@ -305,7 +305,7 @@ int32_t Z_ReceiveSimpleDesc(int32_t res, const class SBuffer &buf) {
       zigbee_devices.addCluster(nwkAddr, endpoint, buf.get16(16 + numInCluster*2 + i*2), true);
     }
 
-    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
+    Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                     "\"Status\":%d,\"Endpoint\":\"0x%02X\""
                     ",\"ProfileId\":\"0x%04X\",\"DeviceId\":\"0x%04X\",\"DeviceVersion\":%d"
                     "\"InClusters\":["),
@@ -342,7 +342,7 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
 
   char hex[20];
   Uint64toHex(ieeeAddr, hex, 64);
-  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATUS "\":{"
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
                   "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
                   ",\"PowerSource\":%s,\"ReceiveWhenIdle\":%s,\"Security\":%s}}"),
                   ZIGBEE_STATUS_DEVICE_ANNOUNCE, hex, nwkAddr,
@@ -402,7 +402,7 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
 
   zcl_received.postProcessAttributes(srcaddr, json);
   // Add linkquality
-  json[F(D_CMND_ZIGBEE_LINKQUALITY)] = linkquality;   // prefix with underscore for metadata
+  json[F(D_CMND_ZIGBEE_LINKQUALITY)] = linkquality;
 
   msg = "";
   json_root.printTo(msg);
