@@ -2,7 +2,7 @@
 #!/bin/bash
 
 TASMOTA_VOLUME='/tasmota'
-USER_CONFIG_OVERRIDE="${TASMOTA_VOLUME}/sonoff/user_config_override.h"
+USER_CONFIG_OVERRIDE="${TASMOTA_VOLUME}/tasmota/user_config_override.h"
 
 if [ -d $TASMOTA_VOLUME ]; then
 	cd $TASMOTA_VOLUME
