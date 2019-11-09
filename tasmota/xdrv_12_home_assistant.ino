@@ -449,7 +449,7 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_HUMIDITY))) {
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_HUM, sensorname);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_PRESSURE)) 
-               || !strcmp_P(subsensortype, PSTR(D_JSON_PRESSUREATSEALEVEL))) {
+               || !strcmp_P(subsensortype, PSTR(D_JSON_PRESSUREATSEALEVEL))){
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_PRESS, PressureUnit().c_str(), sensorname, subsensortype);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_TOTAL))
                || !strcmp_P(subsensortype, PSTR(D_JSON_TODAY))
