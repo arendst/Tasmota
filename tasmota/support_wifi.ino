@@ -118,6 +118,10 @@ void WifiSetMode(WiFiMode_t wifi_mode)
     delay(100);
   }
 
+  if (!WiFi.mode(wifi_mode)) {
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Cannot set Mode"));
+  }
+
   if (wifi_mode == WIFI_OFF) {
     delay(1000);
     WiFi.forceSleepBegin();
