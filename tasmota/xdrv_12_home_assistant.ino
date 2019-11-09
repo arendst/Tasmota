@@ -96,7 +96,7 @@ const char HASS_DISCOVER_SENSOR_HUM[] PROGMEM =
 
 const char HASS_DISCOVER_SENSOR_PRESS[] PROGMEM =
   ",\"unit_of_meas\":\"%s\","                         // PressureUnit() setting
-  "\"val_tpl\":\"{{value_json['%s'].Pressure}}\","    // "BME280":{"Temperature":19.7,"Humidity":27.8,"Pressure":990.1} -> {{ value_json['BME280'].Pressure }}
+  "\"val_tpl\":\"{{value_json['%s'].%s}}\","          // "BME280":{"Temperature":19.7,"Humidity":27.8,"Pressure":990.1} -> {{ value_json['BME280'].Pressure }}
   "\"dev_cla\":\"pressure\"";                         // pressure
 
 //ENERGY
@@ -448,8 +448,9 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_TEMP, TempUnit(), sensorname);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_HUMIDITY))) {
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_HUM, sensorname);
-    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_PRESSURE))) {
-      TryResponseAppend_P(HASS_DISCOVER_SENSOR_PRESS, PressureUnit().c_str(), sensorname);
+    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_PRESSURE)) 
+               || !strcmp_P(subsensortype, PSTR(D_JSON_PRESSUREATSEALEVEL))){
+      TryResponseAppend_P(HASS_DISCOVER_SENSOR_PRESS, PressureUnit().c_str(), sensorname, subsensortype);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_TOTAL))
                || !strcmp_P(subsensortype, PSTR(D_JSON_TODAY))
                || !strcmp_P(subsensortype, PSTR(D_JSON_YESTERDAY))){
