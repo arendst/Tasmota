@@ -33,8 +33,8 @@
 #include "Adafruit_CCS811.h"
 
 Adafruit_CCS811 ccs;
-uint8_t CCS811_ready;
-uint8_t CCS811_type;
+uint8_t CCS811_ready = 0;
+uint8_t CCS811_type = 0;;
 uint16_t eCO2;
 uint16_t TVOC;
 uint8_t tcnt = 0;
@@ -45,6 +45,8 @@ uint8_t ecnt = 0;
 
 void CCS811Update(void)  // Perform every n second
 {
+  if (I2cActive(CCS811_ADDRESS)) { return; }
+
   tcnt++;
   if (tcnt >= EVERYNSECONDS) {
     tcnt = 0;
@@ -53,7 +55,7 @@ void CCS811Update(void)  // Perform every n second
       sint8_t res = ccs.begin(CCS811_ADDRESS);
       if (!res) {
         CCS811_type = 1;
-        AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "CCS811", 0x5A);
+        I2cSetActiveFound(CCS811_ADDRESS, "CCS811");
       } else {
         //AddLog_P2(LOG_LEVEL_DEBUG, "CCS811 init failed: %d",res);
       }

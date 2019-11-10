@@ -42,7 +42,7 @@ void Vl53l0Detect(void)
 
   if (!sensor.init()) { return; }
 
-  AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "VL53L0X", sensor.getAddress());
+  I2cSetActiveFound(sensor.getAddress(), "VL53L0X");
 
   sensor.setTimeout(500);
 

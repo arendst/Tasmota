@@ -224,36 +224,35 @@ bool ChirpSet(uint8_t addr) {
 
 /********************************************************************************************/
 
-bool ChirpScan() {
-    ChirpClockSet();
-    chirp_found_sensors = 0;
-    for (uint8_t address = 1; address <= 127; address++) {
-      chirp_sensor[chirp_found_sensors].version = 0;
-      chirp_sensor[chirp_found_sensors].version = ChirpReadVersion(address);
-      delay(2);
-      chirp_sensor[chirp_found_sensors].version = ChirpReadVersion(address);
-      if(chirp_sensor[chirp_found_sensors].version > 0) {
-        AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "CHIRP", address);
-        if(chirp_found_sensors<CHIRP_MAX_SENSOR_COUNT){
-          chirp_sensor[chirp_found_sensors].address = address; // push next sensor, as long as there is space in the array
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: fw %x"), chirp_sensor[chirp_found_sensors].version);
-        }
-        chirp_found_sensors++;
+bool ChirpScan()
+{
+  ChirpClockSet();
+  chirp_found_sensors = 0;
+  for (uint8_t address = 1; address <= 127; address++) {
+    chirp_sensor[chirp_found_sensors].version = 0;
+    chirp_sensor[chirp_found_sensors].version = ChirpReadVersion(address);
+    delay(2);
+    chirp_sensor[chirp_found_sensors].version = ChirpReadVersion(address);
+    if (chirp_sensor[chirp_found_sensors].version > 0) {
+      I2cSetActiveFound(address, "CHIRP");
+      if (chirp_found_sensors<CHIRP_MAX_SENSOR_COUNT) {
+        chirp_sensor[chirp_found_sensors].address = address; // push next sensor, as long as there is space in the array
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("CHIRP: fw %x"), chirp_sensor[chirp_found_sensors].version);
       }
+      chirp_found_sensors++;
     }
-    // chirp_timeout_count = 11; // wait a second to read the real fw-version in the next step
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Found %u CHIRP sensor(s)."), chirp_found_sensors);
-    if (chirp_found_sensors == 0) {return false;}
-    else {return true;}
+  }
+  // chirp_timeout_count = 11; // wait a second to read the real fw-version in the next step
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Found %u CHIRP sensor(s)."), chirp_found_sensors);
+  return (chirp_found_sensors > 0);
 }
 
 /********************************************************************************************/
 
 void ChirpDetect(void)
 {
-  if (chirp_next_job > 0) {
-    return;
-  }
+  if (chirp_next_job > 0) { return; }
+
   DEBUG_SENSOR_LOG(PSTR("CHIRP: scan will start ..."));
   if (ChirpScan()) {
     uint8_t chirp_model = 0;  // TODO: ??
@@ -528,9 +527,6 @@ bool Xsns48(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      ChirpDetect();         // We can call CHIRPSCAN later to re-detect
-      break;
     case FUNC_EVERY_100_MSECOND:
       if(chirp_found_sensors > 0){
         ChirpEvery100MSecond();
@@ -548,6 +544,9 @@ bool Xsns48(uint8_t function)
       ChirpShow(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:
+      ChirpDetect();         // We can call CHIRPSCAN later to re-detect
+      break;
   }
   return result;
 }
