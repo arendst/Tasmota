@@ -58,16 +58,18 @@ bool DeepSleepEnabled(void)
 
 void DeepSleepInit(void)
 {
-  // Go back to sleep after 60 minutes if requested deepsleep has not been reached
-  if (DeepSleepEnabled() && (RtcSettings.ultradeepsleep > MAX_DEEPSLEEP_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
-     RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
-     RtcReboot.fast_reboot_count = 0;
-     RtcRebootSave();
-     AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
-     RtcSettingsSave();
-     ESP.deepSleep(100 * RtcSettings.deepsleep_slip * (MAX_DEEPSLEEP_CYCLE < RtcSettings.ultradeepsleep ? MAX_DEEPSLEEP_CYCLE : RtcSettings.ultradeepsleep), WAKE_RF_DEFAULT);
-     yield();
-     // Sleeping
+  if (DeepSleepEnabled()) {
+    RtcReboot.fast_reboot_count = 0;
+    RtcRebootSave();
+    if ((RtcSettings.ultradeepsleep > MAX_DEEPSLEEP_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
+      // Go back to sleep after 60 minutes if requested deepsleep has not been reached
+      RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
+      AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
+      RtcSettingsSave();
+      ESP.deepSleep(100 * RtcSettings.deepsleep_slip * (MAX_DEEPSLEEP_CYCLE < RtcSettings.ultradeepsleep ? MAX_DEEPSLEEP_CYCLE : RtcSettings.ultradeepsleep), WAKE_RF_DEFAULT);
+      yield();
+      // Sleeping
+    }
   }
   // Stay awake
   RtcSettings.ultradeepsleep = 0;
@@ -137,8 +139,8 @@ void DeepSleepCheck(void)
 
 void CmndDeepsleepTime(void)
 {
-//  if ((XdrvMailbox.payload == 0) || ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < 4294967295))) {
-  if ((XdrvMailbox.payload == 0) || ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < (24 * 60 * 60)))) {  // Allow max 24 hours sleep
+  if ((XdrvMailbox.payload == 0) ||
+     ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < (10 * 366 * 24 * 60 * 60)))) {  // Allow max 10 years sleep
     Settings.deepsleep = XdrvMailbox.payload;
     RtcSettings.nextwakeup = 0;
     tele_period = Settings.tele_period -1;  // Initiate start DeepSleep on next finish of forced TelePeriod
