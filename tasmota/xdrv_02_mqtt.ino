@@ -432,9 +432,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic)
 void MqttPublishTeleSensor(void)
 {
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
-#if defined(USE_RULES) || defined(USE_SCRIPT)
-  RulesTeleperiod();  // Allow rule based HA messages
-#endif  // USE_RULES
+  XdrvRulesProcess();
 }
 
 void MqttPublishPowerState(uint32_t device)

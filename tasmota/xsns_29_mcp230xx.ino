@@ -742,7 +742,7 @@ void MCP230xx_OutputTelemetry(void) {
       }
     }
     ResponseAppend_P(PSTR("\"END\":1}}"));
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+    MqttPublishTeleSensor();
   }
 }
 
@@ -757,7 +757,7 @@ void MCP230xx_Interrupt_Counter_Report(void) {
     }
   }
   ResponseAppend_P(PSTR("\"END\":1}}"));
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+  MqttPublishTeleSensor();
   mcp230xx_int_sec_counter = 0;
 }
 
@@ -772,7 +772,7 @@ void MCP230xx_Interrupt_Retain_Report(void) {
     }
   }
   ResponseAppend_P(PSTR("\"Value\":%u}}"),retainresult);
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+  MqttPublishTeleSensor();
 }
 
 /*********************************************************************************************\

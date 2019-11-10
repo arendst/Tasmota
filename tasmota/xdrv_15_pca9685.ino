@@ -181,7 +181,7 @@ void PCA9685_OutputTelemetry(bool telemetry) {
   }
   ResponseAppend_P(PSTR("\"END\":1}}"));
   if (telemetry) {
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+    MqttPublishTeleSensor();
   }
 }
 

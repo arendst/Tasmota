@@ -851,7 +851,14 @@ void PerformEverySecond(void)
       tele_period = 0;
 
       MqttPublishTeleState();
-      MqttPublishSensor();
+
+      mqtt_data[0] = '\0';
+      if (MqttShowSensor()) {
+        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+#if defined(USE_RULES) || defined(USE_SCRIPT)
+        RulesTeleperiod();  // Allow rule based HA messages
+#endif  // USE_RULES
+      }
 
       XdrvCall(FUNC_AFTER_TELEPERIOD);
     }

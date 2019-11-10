@@ -254,7 +254,7 @@ void SPS30_Show(bool json) {
 void CmdClean(void) {
   sps30_cmd(SPS_CMD_CLEAN);
   ResponseTime_P(PSTR(",\"SPS30\":{\"CFAN\":\"true\"}}"));
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+  MqttPublishTeleSensor();
 }
 
 bool SPS30_cmd(void) {
