@@ -1683,15 +1683,15 @@ void LightAnimate(void)
       //     Light.power, Light.new_color[0], Light.new_color[1], Light.new_color[2],
       //     Light.new_color[3], Light.new_color[4]);
       // #endif
-    }
-
-    if (!light_controller.isCTRGBLinked()) {
-      // we have 2 power bits for RGB and White
-      if (0 == (Light.power & 1)) {
-        Light.new_color[0] = Light.new_color[1] = Light.new_color[2] = 0;
-      }
-      if (0 == (Light.power & 2)) {
-        Light.new_color[3] = Light.new_color[4] = 0;
+    } else {
+      if (!light_controller.isCTRGBLinked()) {
+        // we have 2 power bits for RGB and White
+        if (0 == (Light.power & 1)) {
+          Light.new_color[0] = Light.new_color[1] = Light.new_color[2] = 0;
+        }
+        if (0 == (Light.power & 2)) {
+          Light.new_color[3] = Light.new_color[4] = 0;
+        }
       }
     }
 
