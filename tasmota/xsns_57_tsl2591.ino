@@ -1,5 +1,7 @@
 /*
-  xsns_57_tsl2591.ino - TSL2591 light sensor support for Sonoff-Tasmota
+  xsns_57_tsl2591.ino - TSL2591 light sensor support for Tasmota
+
+  Copyright (C) 2019  Markus Bösling and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -21,9 +23,13 @@
  * TSL2591 - Light Intensity
  *
  * I2C Addresses: 0x29 (low), 0x39 (float) or 0x49 (high)
+ * (Used library supports address 0x29 only)
 \*********************************************************************************************/
 
 #define XSNS_57             57
+#define XI2C_40             40    // See I2CDEVICES.md
+
+#define TSL2591_ADDRESS     0x29  // Used library only supports this address only
 
 #include <Adafruit_TSL2591.h>
 
@@ -35,13 +41,15 @@ float tsl2591_lux = 0;
 
 void Tsl2591Init(void)
 {
-  if (tsl2591_type) {
-    return;
-  }
-  if (tsl.begin()) {
-    tsl.setGain(TSL2591_GAIN_MED);
-    tsl.setTiming(TSL2591_INTEGRATIONTIME_300MS);
-    tsl2591_type = 1;
+  if (tsl2591_type) { return; }
+
+  if (I2cSetDevice(0x29) || I2cSetDevice(0x39) || I2cSetDevice(0x49)) {
+    if (tsl.begin()) {
+      tsl.setGain(TSL2591_GAIN_MED);
+      tsl.setTiming(TSL2591_INTEGRATIONTIME_300MS);
+      tsl2591_type = 1;
+      I2cSetActiveFound(TSL2591_ADDRESS, "TSL2591");
+    }
   }
 }
 
@@ -57,7 +65,9 @@ bool Tsl2591Read(void)
 
 void Tsl2591EverySecond(void)
 {
-  Tsl2591Read();
+  if (tsl2591_type) {
+    Tsl2591Read();
+  }
 }
 
 #ifdef USE_WEBSERVER
@@ -89,25 +99,25 @@ void Tsl2591Show(bool json)
 
 bool Xsns57(uint8_t function)
 {
+  if (!I2cEnabled(XI2C_40)) { return false; }
+
   bool result = false;
 
-  if (i2c_flg) {
-    switch (function) {
-      case FUNC_INIT:
-        Tsl2591Init();
-        break;
-      case FUNC_EVERY_SECOND:
-        Tsl2591EverySecond();
-        break;
-      case FUNC_JSON_APPEND:
-        Tsl2591Show(1);
-        break;
+  switch (function) {
+    case FUNC_EVERY_SECOND:
+      Tsl2591EverySecond();
+      break;
+    case FUNC_JSON_APPEND:
+      Tsl2591Show(1);
+      break;
 #ifdef USE_WEBSERVER
-      case FUNC_WEB_SENSOR:
-        Tsl2591Show(0);
-        break;
+    case FUNC_WEB_SENSOR:
+      Tsl2591Show(0);
+      break;
 #endif  // USE_WEBSERVER
-    }
+    case FUNC_INIT:
+      Tsl2591Init();
+      break;
   }
   return result;
 }

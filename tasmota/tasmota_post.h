@@ -130,7 +130,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 //#define USE_INA226                               // Enable INA226 (I2C address 0x40, 0x41 0x44 or 0x45) Low voltage and current sensor (+2k3 code)
 #define USE_SHT3X                                // Add I2C code for SHT3x sensor (+0k6 code)
 #define USE_TSL2561                              // Add I2C code for TSL2561 sensor using library Adafruit TSL2561 Arduino (+1k2 code)
-//#define USE_TSL2591                              // Add I2C code for TSL2591 sensor
+//#define USE_TSL2591                              // Add I2C code for TSL2591 sensor library Adafruit_TSL2591 (+1k6 code)
 #define USE_MGS                                  // Add I2C code for Xadow and Grove Mutichannel Gas sensor using library Multichannel_Gas_Sensor (+10k code)
 #define USE_SGP30                                // Add I2C code for SGP30 sensor (+1k1 code)
 //#define USE_SI1145                               // Add I2C code for SI1145/46/47 sensor (+1k code)

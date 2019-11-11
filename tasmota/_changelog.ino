@@ -4,10 +4,11 @@
  * Change supported PCF8574 I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
  * Change supported PCF8574A I2C address range to 0x39 - 0x3F allowing other I2C devices with address 0x38 to be used at the same time
  * Change supported MCP230xx I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
- * Add Keep last channels values when Color command end with '=' #6799
+ * Add Keep last channels values when Color command end with '=' (#6799)
+ * Add support for I2C sensor TLS2591 Light Intensity sensor (#6873)
  *
  * 7.0.0.3 20191103
- * Initial support for I2C driver runtime control using command I2CDriver and document I2CDEVICES.md
+ * Add command I2cDriver for I2C driver runtime control using document I2CDEVICES.md
  * Fix random crash caused by UPNP flood
  * Add support for Honeywell HPMA115S0 particle concentration sensor by David Hunt (#6843)
  * Remove driver xsns_12_ads1115_i2cdev replaced by xsns_12_ads1115
