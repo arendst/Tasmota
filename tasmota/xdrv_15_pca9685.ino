@@ -39,7 +39,7 @@
   #define USE_PCA9685_FREQ          50
 #endif
 
-uint8_t pca9685_detected = 0;
+bool pca9685_detected = false;
 uint16_t pca9685_freq = USE_PCA9685_FREQ;
 uint16_t pca9685_pin_pwm_value[16];
 
@@ -53,7 +53,7 @@ void PCA9685_Detect(void)
     I2cWrite8(USE_PCA9685_ADDR, PCA9685_REG_MODE1, 0x20);
     if (I2cValidRead8(&buffer, USE_PCA9685_ADDR, PCA9685_REG_MODE1)) {
       if (0x20 == buffer) {
-        pca9685_detected = 1;
+        pca9685_detected = true;
         I2cSetActiveFound(USE_PCA9685_ADDR, "PCA9685");
         PCA9685_Reset(); // Reset the controller
       }
@@ -173,8 +173,10 @@ bool PCA9685_Command(void)
   return serviced;
 }
 
-void PCA9685_OutputTelemetry(bool telemetry) {
-  if (0 == pca9685_detected) { return; }  // We do not do this if the PCA9685 has not been detected
+void PCA9685_OutputTelemetry(bool telemetry)
+{
+  if (!pca9685_detected) { return; }  // We do not do this if the PCA9685 has not been detected
+
   ResponseTime_P(PSTR(",\"PCA9685\":{\"PWM_FREQ\":%i,"),pca9685_freq);
   for (uint32_t pin=0;pin<16;pin++) {
     ResponseAppend_P(PSTR("\"PWM%i\":%i,"),pin,pca9685_pin_pwm_value[pin]);
@@ -193,7 +195,6 @@ bool Xdrv15(uint8_t function)
 
   switch (function) {
     case FUNC_EVERY_SECOND:
-      PCA9685_Detect();
       if (tele_period == 0) {
         PCA9685_OutputTelemetry(true);
       }
@@ -202,6 +203,9 @@ bool Xdrv15(uint8_t function)
       if (XDRV_15 == XdrvMailbox.index) {
         result = PCA9685_Command();
       }
+      break;
+    case FUNC_INIT:
+      PCA9685_Detect();
       break;
   }
   return result;
