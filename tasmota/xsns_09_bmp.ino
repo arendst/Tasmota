@@ -517,14 +517,8 @@ void BmpRead(void)
 
 void BmpEverySecond(void)
 {
-  if (91 == (uptime %100)) {
-    // 1mS
-    BmpDetect();
-  }
-  else {
-    // 2mS
-    BmpRead();
-  }
+  // 2mS
+  BmpRead();
 }
 
 void BmpShow(bool json)
@@ -630,9 +624,6 @@ bool Xsns09(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_INIT:
-      BmpDetect();
-      break;
     case FUNC_EVERY_SECOND:
       BmpEverySecond();
       break;
@@ -644,6 +635,9 @@ bool Xsns09(uint8_t function)
       BmpShow(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:
+      BmpDetect();
+      break;
   }
   return result;
 }
