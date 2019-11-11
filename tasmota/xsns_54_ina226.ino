@@ -125,7 +125,7 @@ static void _debug_fval(const char *str, float fval, uint8_t prec = 4 )
 {
   char fstr[32];
   dtostrfd(fval, prec, fstr);
-  AddLog_P2( LOG_LEVEL_NONE, PSTR("%s: %s"), str, fstr );
+  AddLog_P2( LOG_LEVEL_DEBUG, PSTR("%s: %s"), str, fstr );
 }
 
 
