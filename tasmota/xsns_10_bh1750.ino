@@ -56,16 +56,14 @@ bool Bh1750Read(void)
 
 void Bh1750Detect(void)
 {
-  if (bh1750_type) { return; }
-
   for (uint32_t i = 0; i < sizeof(bh1750_addresses); i++) {
     bh1750_address = bh1750_addresses[i];
     if (I2cActive(bh1750_address)) { continue; }
     Wire.beginTransmission(bh1750_address);
     Wire.write(BH1750_CONTINUOUS_HIGH_RES_MODE);
     if (!Wire.endTransmission()) {
-      bh1750_type = 1;
       I2cSetActiveFound(bh1750_address, bh1750_types);
+      bh1750_type = 1;
       break;
     }
   }
@@ -73,18 +71,9 @@ void Bh1750Detect(void)
 
 void Bh1750EverySecond(void)
 {
-  if (90 == (uptime %100)) {
-    // 1mS
-    Bh1750Detect();
-  }
-  else {
-    // 1mS
-    if (bh1750_type) {
-      if (!Bh1750Read()) {
-        AddLogMissed(bh1750_types, bh1750_valid);
-//        if (!bh1750_valid) { bh1750_type = 0; }
-      }
-    }
+  // 1mS
+  if (!Bh1750Read()) {
+    AddLogMissed(bh1750_types, bh1750_valid);
   }
 }
 
@@ -116,21 +105,23 @@ bool Xsns10(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_INIT:
-      Bh1750Detect();
-      break;
-    case FUNC_EVERY_SECOND:
-      Bh1750EverySecond();
-      break;
-    case FUNC_JSON_APPEND:
-      Bh1750Show(1);
-      break;
+  if (FUNC_INIT == function) {
+    Bh1750Detect();
+  }
+  else if (bh1750_type) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        Bh1750EverySecond();
+        break;
+      case FUNC_JSON_APPEND:
+        Bh1750Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Bh1750Show(0);
-      break;
+      case FUNC_WEB_SENSOR:
+        Bh1750Show(0);
+        break;
 #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

@@ -199,21 +199,24 @@ struct mpr121 {
 	uint16_t previous[4] = { 0x0000, 0x0000, 0x0000, 0x0000 };    /** Current values in electrode register of sensor */
 };
 
+bool mpr21_found = false;
 
 /**
  * The function Mpr121Init() soft-resets, detects and configures up to 4x MPR121 sensors.
  *
  * @param   struct  *pS       Struct with MPR121 status and data.
+ *          bool    initial   true - Initial call, false - next calls
  * @return  void
  * @pre     None.
  * @post    None.
  *
  */
-void Mpr121Init(struct mpr121 *pS)
+void Mpr121Init(struct mpr121 *pS, bool initial)
 {
-
 	// Loop through I2C addresses
 	for (uint32_t i = 0; i < sizeof(pS->i2c_addr[i]); i++) {
+
+    if (initial && I2cActive(pS->i2c_addr[i])) { continue; }
 
 		// Soft reset sensor and check if connected at I2C address
 		pS->connected[i] = (I2cWrite8(pS->i2c_addr[i], MPR121_SRST_REG, MPR121_SRST_VAL)
@@ -221,7 +224,10 @@ void Mpr121Init(struct mpr121 *pS)
 		if (pS->connected[i]) {
 
 			// Log sensor found
-			AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_I2C "MPR121(%c) " D_FOUND_AT " 0x%X"), pS->id[i], pS->i2c_addr[i]);
+      mpr21_found = true;
+			char device_name[16];
+			snprintf_P(device_name, sizeof(device_name), PSTR("MPR121(%c)"), pS->id[i]);
+      I2cSetActiveFound(pS->i2c_addr[i], device_name);
 
 			// Set thresholds for registers 0x41 - 0x5A (ExTTH and ExRTH)
 			for (uint32_t j = 0; j < 13; j++) {
@@ -326,7 +332,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 			// Read data
 			if (!I2cValidRead16LE(&pS->current[i], pS->i2c_addr[i], MPR121_ELEX_REG)) {
 				AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_I2C "MPR121%c: ERROR: Cannot read data!"), pS->id[i]);
-				Mpr121Init(pS);
+				Mpr121Init(pS, false);
 				return;
 			}
 			// Check if OVCF bit is set
@@ -335,7 +341,7 @@ void Mpr121Show(struct mpr121 *pS, uint8_t function)
 				// Clear OVCF bit
 				I2cWrite8(pS->i2c_addr[i], MPR121_ELEX_REG, 0x00);
 				AddLog_P2(LOG_LEVEL_ERROR, PSTR(D_LOG_I2C "MPR121%c: ERROR: Excess current detected! Fix circuits if it happens repeatedly! Soft-resetting MPR121 ..."), pS->id[i]);
-				Mpr121Init(pS);
+				Mpr121Init(pS, false);
 				return;
 			}
 		}
@@ -402,36 +408,36 @@ bool Xsns30(uint8_t function)
 {
   if (!I2cEnabled(XI2C_23)) { return false; }
 
-	// ???
 	bool result = false;
 
 	// Sensor state/data struct
 	static struct mpr121 mpr121;
 
-	// Check if I2C is enabled
-	switch (function) {
-
+  if (FUNC_INIT == function) {
 		// Initialize Sensors
-	case FUNC_INIT:
-		Mpr121Init(&mpr121);
-		break;
+		Mpr121Init(&mpr121, true);
+  }
+  else if (mpr21_found) {
 
-		// Run ever 50 milliseconds (near real-time functions)
-	case FUNC_EVERY_50_MSECOND:
-		Mpr121Show(&mpr121, FUNC_EVERY_50_MSECOND);
-		break;
+		switch (function) {
 
-		// Generate JSON telemetry string
-	case FUNC_JSON_APPEND:
-		Mpr121Show(&mpr121, FUNC_JSON_APPEND);
-		break;
+			// Run ever 50 milliseconds (near real-time functions)
+		case FUNC_EVERY_50_MSECOND:
+			Mpr121Show(&mpr121, FUNC_EVERY_50_MSECOND);
+			break;
+
+			// Generate JSON telemetry string
+		case FUNC_JSON_APPEND:
+			Mpr121Show(&mpr121, FUNC_JSON_APPEND);
+			break;
 
 #ifdef USE_WEBSERVER
-		// Show sensor data on main web page
-	case FUNC_WEB_SENSOR:
-		Mpr121Show(&mpr121, FUNC_WEB_SENSOR);
-		break;
+			// Show sensor data on main web page
+		case FUNC_WEB_SENSOR:
+			Mpr121Show(&mpr121, FUNC_WEB_SENSOR);
+			break;
 #endif				// USE_WEBSERVER
+		}
 	}
 	// Return bool result
 	return result;

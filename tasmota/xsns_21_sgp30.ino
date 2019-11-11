@@ -43,7 +43,7 @@ float sgp30_abshum;
 
 void sgp30_Init(void)
 {
-  if (sgp30_type || I2cActive(SGP30_ADDRESS)) { return; }
+  if (I2cActive(SGP30_ADDRESS)) { return; }
 
   if (sgp.begin()) {
     sgp30_type = true;
@@ -83,31 +83,25 @@ float sgp30_AbsoluteHumidity(float temperature, float humidity,char tempUnit) {
 
 void Sgp30Update(void)  // Perform every second to ensure proper operation of the baseline compensation algorithm
 {
-  if (!sgp30_type) {
-    if (21 == (uptime %100)) {
-      sgp30_Init();
-    }
-  } else {
-    sgp30_ready = false;
-    if (!sgp.IAQmeasure()) {
-      return;  // Measurement failed
-    }
-    if (global_update && (global_humidity > 0) && (global_temperature != 9999)) {
-      // abs hum in mg/m3
-      sgp30_abshum=sgp30_AbsoluteHumidity(global_temperature,global_humidity,TempUnit());
-      sgp.setHumidity(sgp30_abshum*1000);
-    }
-    sgp30_ready = true;
+  sgp30_ready = false;
+  if (!sgp.IAQmeasure()) {
+    return;  // Measurement failed
+  }
+  if (global_update && (global_humidity > 0) && (global_temperature != 9999)) {
+    // abs hum in mg/m3
+    sgp30_abshum=sgp30_AbsoluteHumidity(global_temperature,global_humidity,TempUnit());
+    sgp.setHumidity(sgp30_abshum*1000);
+  }
+  sgp30_ready = true;
 
-    // these should normally be stored permanently and used for fast restart
-    if (!(uptime%SAVE_PERIOD)) {
-      // store settings every N seconds
-      uint16_t TVOC_base;
-      uint16_t eCO2_base;
+  // these should normally be stored permanently and used for fast restart
+  if (!(uptime%SAVE_PERIOD)) {
+    // store settings every N seconds
+    uint16_t TVOC_base;
+    uint16_t eCO2_base;
 
-      if (!sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) return;  // Failed to get baseline readings
+    if (!sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) return;  // Failed to get baseline readings
 //      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SGP: Baseline values eCO2 0x%04X, TVOC 0x%04X"), eCO2_base, TVOC_base);
-    }
   }
 }
 
@@ -157,21 +151,23 @@ bool Xsns21(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      Sgp30Update();
-      break;
-    case FUNC_JSON_APPEND:
-      Sgp30Show(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Sgp30Show(0);
-      break;
-#endif  // USE_WEBSERVER
-    case FUNC_INIT:
-      sgp30_Init();
-      break;
+  if (FUNC_INIT == function) {
+    sgp30_Init();
+  }
+  else if (sgp30_type) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        Sgp30Update();
+        break;
+      case FUNC_JSON_APPEND:
+        Sgp30Show(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        Sgp30Show(0);
+        break;
+  #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

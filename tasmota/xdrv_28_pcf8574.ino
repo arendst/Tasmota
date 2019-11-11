@@ -40,7 +40,7 @@ struct PCF8574 {
   uint8_t max_connected_ports = 0;        // Max numbers of devices comming from PCF8574 modules
   uint8_t max_devices = 0;                // Max numbers of PCF8574 modules
   char stype[9];
-  bool type = true;
+  bool type = false;
 } Pcf8574;
 
 void Pcf8574SwitchRelay(void)
@@ -74,8 +74,6 @@ void Pcf8574SwitchRelay(void)
 
 void Pcf8574Init()
 {
-  Pcf8574.type = false;
-
   uint8_t pcf8574_address = PCF8574_ADDR1;
   while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +8)) {
 
@@ -223,25 +221,27 @@ void Pcf8574SaveSettings()
 
 bool Xdrv28(uint8_t function)
 {
-  if (!I2cEnabled(XI2C_02) || !Pcf8574.type) { return false; }
+  if (!I2cEnabled(XI2C_02)) { return false; }
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_SET_POWER:
-      Pcf8574SwitchRelay();
-      break;
+  if (FUNC_PRE_INIT == function) {
+    Pcf8574Init();
+  }
+  else if (Pcf8574.type) {
+    switch (function) {
+      case FUNC_SET_POWER:
+        Pcf8574SwitchRelay();
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_ADD_BUTTON:
-      WSContentSend_P(HTTP_BTN_MENU_PCF8574);
-      break;
-    case FUNC_WEB_ADD_HANDLER:
-      WebServer->on("/" WEB_HANDLE_PCF8574, HandlePcf8574);
-      break;
+      case FUNC_WEB_ADD_BUTTON:
+        WSContentSend_P(HTTP_BTN_MENU_PCF8574);
+        break;
+      case FUNC_WEB_ADD_HANDLER:
+        WebServer->on("/" WEB_HANDLE_PCF8574, HandlePcf8574);
+        break;
 #endif  // USE_WEBSERVER
-    case FUNC_PRE_INIT:
-      Pcf8574Init();
-      break;
+    }
   }
   return result;
 }

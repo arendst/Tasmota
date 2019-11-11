@@ -43,8 +43,6 @@ void MGSInit(void) {
 
 void MGSPrepare(void)
 {
-  if (mgs_detected) { return; }
-
   if (I2cActive(MGS_SENSOR_ADDR)) { return; }
 
   gas.begin(MGS_SENSOR_ADDR);
@@ -67,8 +65,6 @@ const char HTTP_MGS_GAS[] PROGMEM = "{s}MGS %s{m}%s " D_UNIT_PARTS_PER_MILLION "
 
 void MGSShow(bool json)
 {
-  if (!mgs_detected) { return; }
-
   char buffer[33];
   if (json) {
     ResponseAppend_P(PSTR(",\"MGS\":{\"NH3\":%s"), measure_gas(NH3, buffer));
@@ -103,18 +99,20 @@ bool Xsns19(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_JSON_APPEND:
-      MGSShow(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      MGSShow(0);
-      break;
-#endif  // USE_WEBSERVER
-    case FUNC_INIT:
-      MGSPrepare();
-      break;
+  if (FUNC_INIT == function) {
+    MGSPrepare();
+  }
+  else if (mgs_detected) {
+    switch (function) {
+      case FUNC_JSON_APPEND:
+        MGSShow(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        MGSShow(0);
+        break;
+  #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

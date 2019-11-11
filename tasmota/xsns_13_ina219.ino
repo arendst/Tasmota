@@ -96,6 +96,7 @@ uint8_t ina219_valid[4] = {0,0,0,0};
 float ina219_voltage[4] = {0,0,0,0};
 float ina219_current[4] = {0,0,0,0};
 char ina219_types[] = "INA219";
+uint8_t ina219_count = 0;
 
 bool Ina219SetCalibration(uint8_t mode, uint16_t addr)
 {
@@ -162,8 +163,7 @@ float Ina219GetCurrent_mA(uint16_t addr)
 bool Ina219Read(void)
 {
   for (int i=0; i<sizeof(ina219_type); i++) {
-    if (!ina219_type[i])
-      continue;
+    if (!ina219_type[i]) { continue; }
     uint16_t addr = ina219_addresses[i];
     ina219_voltage[i] = Ina219GetBusVoltage_V(addr) + (Ina219GetShuntVoltage_mV(addr) / 1000);
     ina219_current[i] = Ina219GetCurrent_mA(addr) / 1000;
@@ -183,15 +183,13 @@ bool Ina219Read(void)
 
 bool Ina219CommandSensor(void)
 {
-  bool serviced = true;
-
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 2)) {
     Settings.ina219_mode = XdrvMailbox.payload;
     restart_flag = 2;
   }
   Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_13, Settings.ina219_mode);
 
-  return serviced;
+  return true;
 }
 
 /********************************************************************************************/
@@ -199,26 +197,20 @@ bool Ina219CommandSensor(void)
 void Ina219Detect(void)
 {
   for (uint32_t i = 0; i < sizeof(ina219_type); i++) {
-    if (ina219_type[i]) { continue; }
     uint16_t addr = ina219_addresses[i];
     if (I2cActive(addr)) { continue; }
     if (Ina219SetCalibration(Settings.ina219_mode, addr)) {
-      ina219_type[i] = 1;
       I2cSetActiveFound(addr, ina219_types);
+      ina219_type[i] = 1;
+      ina219_count++;
     }
   }
 }
 
 void Ina219EverySecond(void)
 {
-  if (87 == (uptime %100)) {
-    // 4 x 2mS
-    Ina219Detect();
-  }
-  else {
-    // 4 x 3mS
-    Ina219Read();
-  }
+  // 4 x 3mS
+  Ina219Read();
 }
 
 #ifdef USE_WEBSERVER
@@ -280,26 +272,28 @@ bool Xsns13(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_COMMAND_SENSOR:
-      if ((XSNS_13 == XdrvMailbox.index) && (ina219_type)) {
-        result = Ina219CommandSensor();
-      }
-      break;
-    case FUNC_EVERY_SECOND:
-      Ina219EverySecond();
-      break;
-    case FUNC_JSON_APPEND:
-      Ina219Show(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Ina219Show(0);
-      break;
-#endif  // USE_WEBSERVER
-    case FUNC_INIT:
-      Ina219Detect();
-      break;
+  if (FUNC_INIT == function) {
+    Ina219Detect();
+  }
+  else if (ina219_count) {
+    switch (function) {
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_13 == XdrvMailbox.index) {
+          result = Ina219CommandSensor();
+        }
+        break;
+      case FUNC_EVERY_SECOND:
+        Ina219EverySecond();
+        break;
+      case FUNC_JSON_APPEND:
+        Ina219Show(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        Ina219Show(0);
+        break;
+  #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

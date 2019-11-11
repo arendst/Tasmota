@@ -45,7 +45,6 @@ uint16_t pca9685_pin_pwm_value[16];
 
 void PCA9685_Detect(void)
 {
-  if (pca9685_detected) { return; }
   if (I2cActive(USE_PCA9685_ADDR)) { return; }
 
   uint8_t buffer;
@@ -175,8 +174,6 @@ bool PCA9685_Command(void)
 
 void PCA9685_OutputTelemetry(bool telemetry)
 {
-  if (!pca9685_detected) { return; }  // We do not do this if the PCA9685 has not been detected
-
   ResponseTime_P(PSTR(",\"PCA9685\":{\"PWM_FREQ\":%i,"),pca9685_freq);
   for (uint32_t pin=0;pin<16;pin++) {
     ResponseAppend_P(PSTR("\"PWM%i\":%i,"),pin,pca9685_pin_pwm_value[pin]);
@@ -193,20 +190,22 @@ bool Xdrv15(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      if (tele_period == 0) {
-        PCA9685_OutputTelemetry(true);
-      }
-      break;
-    case FUNC_COMMAND_DRIVER:
-      if (XDRV_15 == XdrvMailbox.index) {
-        result = PCA9685_Command();
-      }
-      break;
-    case FUNC_INIT:
-      PCA9685_Detect();
-      break;
+  if (FUNC_INIT == function) {
+    PCA9685_Detect();
+  }
+  else if (pca9685_detected) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        if (tele_period == 0) {
+          PCA9685_OutputTelemetry(true);
+        }
+        break;
+      case FUNC_COMMAND_DRIVER:
+        if (XDRV_15 == XdrvMailbox.index) {
+          result = PCA9685_Command();
+        }
+        break;
+    }
   }
   return result;
 }

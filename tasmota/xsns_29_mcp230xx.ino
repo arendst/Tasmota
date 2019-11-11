@@ -140,9 +140,10 @@ uint8_t MCP230xx_readGPIO(uint8_t port) {
   return I2cRead8(USE_MCP230xx_ADDR, MCP230xx_GPIO + port);
 }
 
-void MCP230xx_ApplySettings(void) {
+void MCP230xx_ApplySettings(void)
+{
   uint8_t int_en = 0;
-  for (uint32_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
+  for (uint32_t mcp230xx_port = 0; mcp230xx_port < mcp230xx_type; mcp230xx_port++) {
     uint8_t reg_gppu = 0;
     uint8_t reg_gpinten = 0;
     uint8_t reg_iodir = 0xFF;
@@ -201,7 +202,7 @@ void MCP230xx_ApplySettings(void) {
 
 void MCP230xx_Detect(void)
 {
-  if (mcp230xx_type || I2cActive(USE_MCP230xx_ADDR)) { return; }
+  if (I2cActive(USE_MCP230xx_ADDR)) { return; }
 
   uint8_t buffer;
 
@@ -235,7 +236,7 @@ void MCP230xx_CheckForInterrupt(void) {
   uint8_t intf;
   uint8_t mcp230xx_intcap = 0;
   uint8_t report_int;
-  for (uint32_t mcp230xx_port=0;mcp230xx_port<mcp230xx_type;mcp230xx_port++) {
+  for (uint32_t mcp230xx_port = 0; mcp230xx_port < mcp230xx_type; mcp230xx_port++) {
     if (I2cValidRead8(&intf,USE_MCP230xx_ADDR,MCP230xx_INTF+mcp230xx_port)) {
       if (intf > 0) {
         if (I2cValidRead8(&mcp230xx_intcap, USE_MCP230xx_ADDR, MCP230xx_INTCAP+mcp230xx_port)) {
@@ -323,20 +324,16 @@ void MCP230xx_CheckForInterrupt(void) {
 
 void MCP230xx_Show(bool json)
 {
-  if (mcp230xx_type) {
-    if (json) {
-      if (mcp230xx_type > 0) { // we have at least 8 pins
-        uint8_t gpio = MCP230xx_readGPIO(0);
-        ResponseAppend_P(PSTR(",\"MCP230XX\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i"),
-                   (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
-        if (2 == mcp230xx_type) {
-          gpio = MCP230xx_readGPIO(1);
-          ResponseAppend_P(PSTR(",\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i"),
-                     (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
-        }
-        ResponseJsonEnd();
-      }
+  if (json) {
+    uint8_t gpio = MCP230xx_readGPIO(0);
+    ResponseAppend_P(PSTR(",\"MCP230XX\":{\"D0\":%i,\"D1\":%i,\"D2\":%i,\"D3\":%i,\"D4\":%i,\"D5\":%i,\"D6\":%i,\"D7\":%i"),
+                (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
+    if (2 == mcp230xx_type) {
+      gpio = MCP230xx_readGPIO(1);
+      ResponseAppend_P(PSTR(",\"D8\":%i,\"D9\":%i,\"D10\":%i,\"D11\":%i,\"D12\":%i,\"D13\":%i,\"D14\":%i,\"D15\":%i"),
+                  (gpio>>0)&1,(gpio>>1)&1,(gpio>>2)&1,(gpio>>3)&1,(gpio>>4)&1,(gpio>>5)&1,(gpio>>6)&1,(gpio>>7)&1);
     }
+    ResponseJsonEnd();
   }
 }
 
@@ -423,8 +420,6 @@ void MCP230xx_Reset(uint8_t pinmode) {
 
 bool MCP230xx_Command(void)
 {
-  if (!mcp230xx_type) { return false; }
-
   bool serviced = true;
   bool validpin = false;
   uint8_t paramcount = 0;
@@ -699,8 +694,6 @@ const char HTTP_SNS_MCP230xx_OUTPUT[] PROGMEM = "{s}MCP230XX D%d{m}%s{e}"; // {s
 
 void MCP230xx_UpdateWebData(void)
 {
-  if (!mcp230xx_type) { return; }
-
   uint8_t gpio1 = MCP230xx_readGPIO(0);
   uint8_t gpio2 = 0;
   if (2 == mcp230xx_type) {
@@ -720,8 +713,8 @@ void MCP230xx_UpdateWebData(void)
 
 #ifdef USE_MCP230xx_OUTPUT
 
-void MCP230xx_OutputTelemetry(void) {
-  if (0 == mcp230xx_type) { return; }  // We do not do this if the MCP has not been detected
+void MCP230xx_OutputTelemetry(void)
+{
   uint8_t outputcount = 0;
   uint16_t gpiototal = 0;
   uint8_t gpioa = 0;
@@ -785,19 +778,21 @@ bool Xsns29(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_50_MSECOND:
-      if ((mcp230xx_int_en) && (mcp230xx_type)) { // Only check for interrupts if its enabled on one of the pins
-        mcp230xx_int_prio_counter++;
-        if ((mcp230xx_int_prio_counter) >= (Settings.mcp230xx_int_prio)) {
-          MCP230xx_CheckForInterrupt();
-          mcp230xx_int_prio_counter=0;
-        }
-      }
-      break;
-    case FUNC_EVERY_SECOND:
+  if (FUNC_INIT == function) {
       MCP230xx_Detect();
-      if (mcp230xx_type) {
+  }
+  else if (mcp230xx_type) {
+    switch (function) {
+      case FUNC_EVERY_50_MSECOND:
+        if (mcp230xx_int_en) { // Only check for interrupts if its enabled on one of the pins
+          mcp230xx_int_prio_counter++;
+          if ((mcp230xx_int_prio_counter) >= (Settings.mcp230xx_int_prio)) {
+            MCP230xx_CheckForInterrupt();
+            mcp230xx_int_prio_counter=0;
+          }
+        }
+        break;
+      case FUNC_EVERY_SECOND:
         if (mcp230xx_int_counter_en) {
           mcp230xx_int_sec_counter++;
           if (mcp230xx_int_sec_counter >= Settings.mcp230xx_int_timer) { // Interrupt counter interval reached, lets report
@@ -812,25 +807,25 @@ bool Xsns29(uint8_t function)
           MCP230xx_OutputTelemetry();
 #endif // USE_MCP230xx_OUTPUT
         }
-      }
-      break;
-    case FUNC_JSON_APPEND:
-      MCP230xx_Show(1);
-      break;
-    case FUNC_COMMAND_SENSOR:
-      if (XSNS_29 == XdrvMailbox.index) {
-        result = MCP230xx_Command();
-      }
-      break;
+        break;
+      case FUNC_JSON_APPEND:
+        MCP230xx_Show(1);
+        break;
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_29 == XdrvMailbox.index) {
+          result = MCP230xx_Command();
+        }
+        break;
 #ifdef USE_WEBSERVER
 #ifdef USE_MCP230xx_OUTPUT
 #ifdef USE_MCP230xx_DISPLAYOUTPUT
-    case FUNC_WEB_SENSOR:
-      MCP230xx_UpdateWebData();
-      break;
+      case FUNC_WEB_SENSOR:
+        MCP230xx_UpdateWebData();
+        break;
 #endif // USE_MCP230xx_DISPLAYOUTPUT
 #endif // USE_MCP230xx_OUTPUT
 #endif // USE_WEBSERVER
+    }
   }
   return result;
 }

@@ -163,8 +163,6 @@ int16_t Ads1115GetConversion(uint8_t channel)
 
 void Ads1115Detect(void)
 {
-  if (Ads1115.count) { return; }
-
   for (uint32_t i = 0; i < sizeof(Ads1115.addresses); i++) {
     if (!Ads1115.found[i]) {
       Ads1115.address = Ads1115.addresses[i];
@@ -173,9 +171,9 @@ void Ads1115Detect(void)
       if (I2cValidRead16(&buffer, Ads1115.address, ADS1115_REG_POINTER_CONVERT) &&
           I2cValidRead16(&buffer, Ads1115.address, ADS1115_REG_POINTER_CONFIG)) {
         Ads1115StartComparator(i, ADS1115_REG_CONFIG_MODE_CONTIN);
-        Ads1115.count++;
-        Ads1115.found[i] = 1;
         I2cSetActiveFound(Ads1115.address, "ADS1115");
+        Ads1115.found[i] = 1;
+        Ads1115.count++;
       }
     }
   }
@@ -183,8 +181,6 @@ void Ads1115Detect(void)
 
 void Ads1115Show(bool json)
 {
-  if (!Ads1115.count) { return; }
-
   int16_t values[4];
 
   for (uint32_t t = 0; t < sizeof(Ads1115.addresses); t++) {
@@ -236,18 +232,20 @@ bool Xsns12(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_JSON_APPEND:
-      Ads1115Show(1);
-      break;
+  if (FUNC_INIT == function) {
+    Ads1115Detect();
+  }
+  else if (Ads1115.count) {
+    switch (function) {
+      case FUNC_JSON_APPEND:
+        Ads1115Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Ads1115Show(0);
-      break;
+      case FUNC_WEB_SENSOR:
+        Ads1115Show(0);
+        break;
 #endif  // USE_WEBSERVER
-    case FUNC_INIT:
-      Ads1115Detect();
-      break;
+    }
   }
   return result;
 }

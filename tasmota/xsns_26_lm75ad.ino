@@ -51,8 +51,6 @@ uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3
 
 void LM75ADDetect(void)
 {
-  if (lm75ad_type) { return; }
-
   for (uint32_t i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
     if (I2cActive(lm75ad_address)) { continue; }
@@ -67,7 +65,8 @@ void LM75ADDetect(void)
   }
 }
 
-float LM75ADGetTemp(void) {
+float LM75ADGetTemp(void)
+{
   int16_t sign = 1;
 
   uint16_t t = I2cRead16(lm75ad_address, LM75_TEMP_REGISTER);
@@ -81,21 +80,19 @@ float LM75ADGetTemp(void) {
 
 void LM75ADShow(bool json)
 {
-  if (lm75ad_type) {
-    float t = LM75ADGetTemp();
-    char temperature[33];
-    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+  float t = LM75ADGetTemp();
+  char temperature[33];
+  dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
-    if (json) {
-      ResponseAppend_P(PSTR(",\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), temperature);
+  if (json) {
+    ResponseAppend_P(PSTR(",\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), temperature);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
+    if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, "LM75AD", temperature, TempUnit());
+  } else {
+    WSContentSend_PD(HTTP_SNS_TEMP, "LM75AD", temperature, TempUnit());
 #endif  // USE_WEBSERVER
-    }
   }
 }
 
@@ -109,18 +106,20 @@ bool Xsns26(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_JSON_APPEND:
-      LM75ADShow(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      LM75ADShow(0);
-      break;
-#endif  // USE_WEBSERVER
-    case FUNC_INIT:
-      LM75ADDetect();
-      break;
+  if (FUNC_INIT == function) {
+    LM75ADDetect();
+  }
+  else if (lm75ad_type) {
+    switch (function) {
+      case FUNC_JSON_APPEND:
+        LM75ADShow(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        LM75ADShow(0);
+        break;
+  #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }
