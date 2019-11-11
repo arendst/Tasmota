@@ -154,6 +154,7 @@ void WiFiSetSleepMode(void)
     WiFi.setSleepMode(WIFI_MODEM_SLEEP);       // Disable sleep (Esp8288/Arduino core and sdk default)
   }
 #endif
+  WifiSetOutputPower();
 }
 
 void WifiBegin(uint8_t flag, uint8_t channel)
