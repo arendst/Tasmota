@@ -31,15 +31,16 @@
 *    b. Sensor54 12 [full scale current in amperes] e.g. Sensor54 12 3.0
 *    c. Sensor54 2 saves the settings and restarts Tasmota. The device should show up after the system boots again.
 *
+*
+* This driver will not probe I2C bus for INA226 devices unless the full scale current is set for a device number.
+* It will map device numbers as follows:
+*
 * Device number to I2C slave address mapping
 *
 * 1 - 0x40
 * 2 - 0x41
 * 3 - 0x44
 * 4 - 0x45
-*
-* This driver will not probe I2C bus for INA226 devices unless the full scale current is set for a device number.
-* It will map device numbers as follows:
 *
 * To set shunt resistance and full scale current, use the Sensor54 command interface as follows:
 *
@@ -124,7 +125,7 @@ static void _debug_fval(const char *str, float fval, uint8_t prec = 4 )
 {
   char fstr[32];
   dtostrfd(fval, prec, fstr);
-  AddLog_P2( LOG_LEVEL_NONE, PSTR("%s: %s"), str, fstr );
+  AddLog_P2( LOG_LEVEL_DEBUG, PSTR("%s: %s"), str, fstr );
 }
 
 
@@ -512,7 +513,7 @@ void Ina226Show(bool json)
 
 
     if (json) {
-      ResponseAppend_P(PSTR(",\"%s\":{\"Id\":%02x,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
+      ResponseAppend_P(PSTR(",\"%s\":{\"Id\":%d,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
                        name, i, voltage, current, power);
 #ifdef USE_DOMOTICZ
       if (0 == tele_period) {
