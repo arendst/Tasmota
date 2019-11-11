@@ -71,8 +71,6 @@ uint16_t read_irtmp(uint8_t flag)
 
 void MLX90614_Every_Second(void)
 {
-  if (!mlx_ready) { return; }
-
   uint16_t uval = read_irtmp(1);
   if (uval & 0x8000) {
     obj_temp = -999;
@@ -95,8 +93,6 @@ void MLX90614_Every_Second(void)
 
 void MLX90614_Show(uint8_t json)
 {
-  if (!mlx_ready) { return; }
-
   char obj_tstr[16];
   dtostrfd(obj_temp, Settings.flag2.temperature_resolution, obj_tstr);
   char amb_tstr[16];
@@ -121,21 +117,23 @@ bool Xsns46(byte function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      MLX90614_Every_Second();
-      break;
-    case FUNC_JSON_APPEND:
-      MLX90614_Show(1);
-      break;
+  if (FUNC_INIT == function) {
+    MLX90614_Init();
+  }
+  else if (mlx_ready) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        MLX90614_Every_Second();
+        break;
+      case FUNC_JSON_APPEND:
+        MLX90614_Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      MLX90614_Show(0);
-      break;
+      case FUNC_WEB_SENSOR:
+        MLX90614_Show(0);
+        break;
 #endif  // USE_WEBSERVER
-    case FUNC_INIT:
-      MLX90614_Init();
-      break;
+    }
   }
   return result;
 }

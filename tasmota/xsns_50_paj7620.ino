@@ -309,7 +309,6 @@ void PAJ7620ReadGesture(void)
 
 void PAJ7620Detect(void)
 {
-  PAJ7620_next_job = 255; // do not loop
   if (I2cActive(PAJ7620_ADDR)) { return; }
 
   PAJ7620SelectBank(0);
@@ -351,13 +350,8 @@ void PAJ7620Init(void)
 
 void PAJ7620Loop(void)
 {
-  if (255 == PAJ7620_next_job) { return; }
-
   if (0 == PAJ7620_timeout_counter) {
     switch (PAJ7620_next_job) {
-      case 0:
-        PAJ7620Detect();
-        break;
       case 1:
         PAJ7620Init();
         break;
@@ -376,8 +370,6 @@ void PAJ7620Loop(void)
 
 void PAJ7620Show(bool json)
 {
-  if (255 == PAJ7620_next_job) { return; }
-
   if (json) {
     if (PAJ7620_currentGestureName[0] != '\0' ) {
       ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%u}"), PAJ7620_name, PAJ7620_currentGestureName, PAJ7620_gesture.same);
@@ -436,18 +428,23 @@ bool Xsns50(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_COMMAND_SENSOR:
-      if (XSNS_50 == XdrvMailbox.index){
-        result = PAJ7620CommandSensor();
-      }
-      break;
-    case FUNC_EVERY_100_MSECOND:
-      PAJ7620Loop();
-      break;
-    case FUNC_JSON_APPEND:
-      PAJ7620Show(1);
-      break;
+  if (FUNC_INIT == function) {
+    PAJ7620Detect();
+  }
+  else if (PAJ7620_next_job) {
+    switch (function) {
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_50 == XdrvMailbox.index){
+          result = PAJ7620CommandSensor();
+        }
+        break;
+      case FUNC_EVERY_100_MSECOND:
+        PAJ7620Loop();
+        break;
+      case FUNC_JSON_APPEND:
+        PAJ7620Show(1);
+        break;
+    }
   }
   return result;
 }
