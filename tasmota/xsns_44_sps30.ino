@@ -130,6 +130,7 @@ unsigned char cmdb[6];
 void SPS30_Detect(void)
 {
   if (!I2cSetDevice(SPS30_ADDR)) { return; }
+  I2cSetActiveFound(SPS30_ADDR, "SPS30");
 
   uint8_t dcode[32];
   sps30_get_data(SPS_CMD_GET_SERIAL,dcode,sizeof(dcode));
@@ -155,10 +156,7 @@ const char HTTP_SNS_SPS30_c[] PROGMEM ="{s}SPS30 " "TYPSIZ" "{m}%s " "um" "{e}";
 //uint8_t sps30_inuse_hours;
 
 void SPS30_Every_Second() {
-
-  if (!sps30_ready) return;
   if (!sps30_running) return;
-
 
   if (uptime%10==0) {
     uint8_t vars[sizeof(float)*10];
@@ -192,16 +190,11 @@ void SPS30_Every_Second() {
 
 }
 
-void SPS30_Show(bool json) {
+void SPS30_Show(bool json)
+{
+  if (!sps30_running) { return; }
+
   char str[64];
-  if (!sps30_ready) {
-    return;
-  }
-
-  if (!sps30_running) {
-    return;
-  }
-
   if (json) {
     dtostrfd(sps30_result.PM1_0,PMDP,str);
     ResponseAppend_P(PSTR(",\"SPS30\":{\"" "PM1_0" "\":%s"), str);
@@ -248,16 +241,17 @@ void SPS30_Show(bool json) {
     WSContentSend_PD(HTTP_SNS_SPS30_c,str);
 #endif
   }
-
 }
 
-void CmdClean(void) {
+void CmdClean(void)
+{
   sps30_cmd(SPS_CMD_CLEAN);
   ResponseTime_P(PSTR(",\"SPS30\":{\"CFAN\":\"true\"}}"));
   MqttPublishTeleSensor();
 }
 
-bool SPS30_cmd(void) {
+bool SPS30_cmd(void)
+{
   bool serviced = true;
   if (XdrvMailbox.data_len > 0) {
       char *cp=XdrvMailbox.data;
@@ -280,33 +274,34 @@ bool SPS30_cmd(void) {
  * Interface
 \*********************************************************************************************/
 
-
 bool Xsns44(byte function)
 {
   if (!I2cEnabled(XI2C_30)) { return false; }
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      SPS30_Every_Second();
-      break;
-    case FUNC_JSON_APPEND:
-      SPS30_Show(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      SPS30_Show(0);
-      break;
-#endif  // USE_WEBSERVER
-    case FUNC_COMMAND_SENSOR:
-      if (XSNS_44 == XdrvMailbox.index) {
-        result = SPS30_cmd();
-      }
-      break;
-    case FUNC_INIT:
-      SPS30_Detect();
-      break;
+  if (FUNC_INIT == function) {
+    SPS30_Detect();
+  }
+  else if (sps30_ready) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        SPS30_Every_Second();
+        break;
+      case FUNC_JSON_APPEND:
+        SPS30_Show(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        SPS30_Show(0);
+        break;
+  #endif  // USE_WEBSERVER
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_44 == XdrvMailbox.index) {
+          result = SPS30_cmd();
+        }
+        break;
+    }
   }
   return result;
 }

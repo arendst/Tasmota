@@ -36,8 +36,6 @@ uint8_t Vl53l0_index;
 
 void Vl53l0Detect(void)
 {
-  if (vl53l0x_ready) { return; }
-
   if (!I2cSetDevice(0x29)) { return; }
 
   if (!sensor.init()) { return; }
@@ -65,8 +63,6 @@ const char HTTP_SNS_VL53L0X[] PROGMEM =
 
 void Vl53l0Every_250MSecond(void)
 {
-  if (!vl53l0x_ready) { return; }
-
   uint16_t tbuff[5],tmp;
   uint8_t flag;
 
@@ -104,8 +100,6 @@ void Vl53l0Every_250MSecond(void)
 
 void Vl53l0Show(boolean json)
 {
-  if (!vl53l0x_ready) { return; }
-
   if (json) {
     ResponseAppend_P(PSTR(",\"VL53L0X\":{\"" D_JSON_DISTANCE "\":%d}"), vl53l0x_distance);
 #ifdef USE_WEBSERVER
@@ -125,21 +119,23 @@ bool Xsns45(byte function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_250_MSECOND:
-      Vl53l0Every_250MSecond();
-      break;
-    case FUNC_JSON_APPEND:
-      Vl53l0Show(1);
-      break;
+  if (FUNC_INIT == function) {
+    Vl53l0Detect();
+  }
+  else if (vl53l0x_ready) {
+    switch (function) {
+      case FUNC_EVERY_250_MSECOND:
+        Vl53l0Every_250MSecond();
+        break;
+      case FUNC_JSON_APPEND:
+        Vl53l0Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Vl53l0Show(0);
-      break;
+      case FUNC_WEB_SENSOR:
+        Vl53l0Show(0);
+        break;
 #endif  // USE_WEBSERVER
-    case FUNC_INIT:
-      Vl53l0Detect();
-      break;
+    }
   }
   return result;
 }

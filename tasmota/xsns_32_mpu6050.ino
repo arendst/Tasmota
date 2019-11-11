@@ -67,8 +67,6 @@ MPU6050 mpu6050;
 
 void MPU_6050PerformReading(void)
 {
-  if (!MPU_6050_found) { return; }
-
 #ifdef USE_MPU6050_DMP
     mpu6050.resetFIFO(); // with a default dampling rate of 200Hz, we create a delay of approx. 5ms with a complete read cycle
     MPU6050_dmp.fifoCount = mpu6050.getFIFOCount();
@@ -118,8 +116,6 @@ void MPU_6050SetAccelOffsets(int x, int y, int z)
 
 void MPU_6050Detect(void)
 {
-  if (MPU_6050_found) { return; }
-
   for (uint32_t i = 0; i < sizeof(MPU_6050_addresses); i++)
   {
     MPU_6050_address = MPU_6050_addresses[i];
@@ -144,8 +140,7 @@ void MPU_6050Detect(void)
     Settings.flag2.axis_resolution = 2;  // Need to be services by command Sensor32
   }
 
-  if (MPU_6050_found)
-  {
+  if (MPU_6050_found) {
     I2cSetActiveFound(MPU_6050_address, D_SENSOR_MPU6050);
   }
 }
@@ -169,8 +164,6 @@ const char HTTP_SNS_AXIS[] PROGMEM =
 
 void MPU_6050Show(bool json)
 {
-  if (!MPU_6050_found) { return; }
-
   MPU_6050PerformReading();
 
   double tempConv = (MPU_6050_temperature / 340.0 + 35.53);
@@ -225,24 +218,26 @@ bool Xsns32(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      if (tele_period == Settings.tele_period -3) {
-        MPU_6050PerformReading();
-      }
-      break;
-    case FUNC_JSON_APPEND:
-      MPU_6050Show(1);
-      break;
+  if (FUNC_INIT == function) {
+    MPU_6050Detect();
+  }
+  else if (MPU_6050_found) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        if (tele_period == Settings.tele_period -3) {
+          MPU_6050PerformReading();
+        }
+        break;
+      case FUNC_JSON_APPEND:
+        MPU_6050Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      MPU_6050Show(0);
-      MPU_6050PerformReading();
-      break;
+      case FUNC_WEB_SENSOR:
+        MPU_6050Show(0);
+        MPU_6050PerformReading();
+        break;
 #endif // USE_WEBSERVER
-    case FUNC_INIT:
-      MPU_6050Detect();
-      break;
+    }
   }
   return result;
 }

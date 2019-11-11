@@ -72,7 +72,7 @@ bool DS3231chipDetected = false;
   ----------------------------------------------------------------------*/
 void DS3231Detect(void)
 {
-  if (DS3231chipDetected || I2cActive(USE_RTC_ADDR)) { return; }
+  if (I2cActive(USE_RTC_ADDR)) { return; }
 
   if (I2cValidRead(USE_RTC_ADDR, RTC_STATUS, 1)) {
     I2cSetActiveFound(USE_RTC_ADDR, "DS3231");
@@ -129,8 +129,6 @@ void SetDS3231Time (uint32_t epoch_time) {
 
 void DS3231EverySecond(void)
 {
-  if (!DS3231chipDetected) { return; }
-
   TIME_T tmpTime;
   if (!ds3231ReadStatus && Rtc.utc_time < START_VALID_TIME ) { // We still did not sync with NTP (time not valid) , so, read time  from DS3231
     ntp_force_sync = true; //force to sync with ntp
@@ -170,13 +168,15 @@ bool Xsns33(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      DS3231EverySecond();
-      break;
-    case FUNC_INIT:
-      DS3231Detect();
-      break;
+  if (FUNC_INIT == function) {
+    DS3231Detect();
+  }
+  else if (DS3231chipDetected) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        DS3231EverySecond();
+        break;
+    }
   }
   return result;
 }

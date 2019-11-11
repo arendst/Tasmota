@@ -66,8 +66,6 @@ bool Max4409Read_lum(void)
 
 void Max4409Detect(void)
 {
-  if (max44009_found) { return; }
-
   uint8_t buffer1;
   uint8_t buffer2;
   for (uint32_t i = 0; 0 != max44009_addresses[i]; i++) {
@@ -101,9 +99,7 @@ void Max4409Detect(void)
 
 void Max4409EverySecond(void)
 {
-  if (max44009_found) {
-    Max4409Read_lum();
-  }
+  Max4409Read_lum();
 }
 
 void Max4409Show(bool json)
@@ -150,21 +146,23 @@ bool Xsns41(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      Max4409EverySecond();
-      break;
-    case FUNC_JSON_APPEND:
-      Max4409Show(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Max4409Show(0);
-      break;
-#endif  // USE_WEBSERVER
-    case FUNC_INIT:
-      Max4409Detect();
-      break;
+  if (FUNC_INIT == function) {
+    Max4409Detect();
+  }
+  else if (max44009_found) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        Max4409EverySecond();
+        break;
+      case FUNC_JSON_APPEND:
+        Max4409Show(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        Max4409Show(0);
+        break;
+  #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }
