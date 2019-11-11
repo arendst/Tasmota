@@ -45,7 +45,7 @@
 #define LM75_THYST_REGISTER     0x02
 #define LM75_TOS_REGISTER       0x03
 
-uint8_t lm75ad_type = 0;
+bool lm75ad_type = false;
 uint8_t lm75ad_address;
 uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3, LM75AD_ADDRESS4, LM75AD_ADDRESS5, LM75AD_ADDRESS6, LM75AD_ADDRESS7, LM75AD_ADDRESS8 };
 
@@ -59,7 +59,7 @@ void LM75ADDetect(void)
     uint16_t buffer;
     if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
       if (buffer == 0x4B00) {
-        lm75ad_type = 1;
+        lm75ad_type = true;
         I2cSetActiveFound(lm75ad_address, "LM75AD");
         break;
       }
@@ -110,9 +110,6 @@ bool Xsns26(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_EVERY_SECOND:
-      LM75ADDetect();
-      break;
     case FUNC_JSON_APPEND:
       LM75ADShow(1);
       break;
@@ -121,6 +118,9 @@ bool Xsns26(uint8_t function)
       LM75ADShow(0);
       break;
 #endif  // USE_WEBSERVER
+    case FUNC_INIT:
+      LM75ADDetect();
+      break;
   }
   return result;
 }
