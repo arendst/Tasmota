@@ -6,6 +6,7 @@
  * Change supported MCP230xx I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
  * Add Keep last channels values when Color command end with '=' (#6799)
  * Add support for I2C sensor TLS2591 Light Intensity sensor (#6873)
+ * Change Kept only NEC/RC5/RC6/HASH IR protocols in standard Tasmota, all other protocols require Tasmota-IR, saving 4K
  *
  * 7.0.0.3 20191103
  * Add command I2cDriver for I2C driver runtime control using document I2CDEVICES.md
