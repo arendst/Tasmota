@@ -104,7 +104,6 @@ int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
 int restart_flag = 0;                       // Tasmota restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
-int tele_period = 1;                        // Tele period timer
 int blinks = 201;                           // Number of LED blinks
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
@@ -114,6 +113,7 @@ float global_temperature = 9999;            // Provide a global temperature to b
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
 float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
 char *ota_url;                              // OTA url string pointer
+uint16_t tele_period = TELE_PERIOD_START;   // Tele period timer
 uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
@@ -846,8 +846,13 @@ void PerformEverySecond(void)
   ResetGlobalValues();
 
   if (Settings.tele_period) {
+    if (tele_period >= TELE_PERIOD_START) {
+      if (!global_state.wifi_down) {
+        tele_period = 0;  // Allow teleperiod once wifi is connected
+      }
+    }
     tele_period++;
-    if (tele_period >= Settings.tele_period) {
+    if (tele_period == Settings.tele_period) {
       tele_period = 0;
 
       MqttPublishTeleState();

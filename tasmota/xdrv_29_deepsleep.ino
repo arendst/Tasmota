@@ -42,9 +42,12 @@ const char kDeepsleepCommands[] PROGMEM = D_PRFX_DEEPSLEEP "|"
 void (* const DeepsleepCommand[])(void) PROGMEM = {
   &CmndDeepsleepTime };
 
+uint32_t deepsleep_sleeptime = 0;
+uint8_t deepsleep_flag = 0;
+
 bool DeepSleepEnabled(void)
 {
-  if (0 == Settings.deepsleep) {
+  if (Settings.deepsleep < 10) {
     return false;
   }
 
@@ -77,59 +80,81 @@ void DeepSleepInit(void)
 
 void DeepSleepCheck(void)
 {
-  // new function AFTER_TELEPERIOD can take some time therefore <2
-  if (DeepSleepEnabled() && (Settings.deepsleep > 10) && (Settings.deepsleep < 4294967295)) {
-    SettingsSaveAll();
-    // deepsleep_slip is ideally 10.000 == 100%
-    // typically the device has up to 4% slip. Anything else is a wrong setting in the deepsleep_slip
-    // therefore all values >110% or <90% will be resetted to 100% to avoid crazy sleep times.
-    // This should normally never executed, but can happen an manual wakeup and problems during wakeup
-    if ((RtcSettings.nextwakeup == 0) || (RtcSettings.deepsleep_slip < 9000) || (RtcSettings.deepsleep_slip > 11000) || (RtcSettings.nextwakeup > (UtcTime() + Settings.deepsleep))) {
-      AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Reset wrong settings wakeup: %ld, slip %ld"),  RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
-      RtcSettings.nextwakeup = 0;
-      RtcSettings.deepsleep_slip = 10000;
-//    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("new settings wakeup: %ld, slip %ld"), RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
-    }
-    // timeslip in 0.1 seconds between the real wakeup and the calculated wakeup
-    // because deepsleep is in second and timeslip in 0.1 sec the compare always check if the slip is in the 10% range
-    int16_t timeslip = (int16_t)(RtcSettings.nextwakeup+millis()/1000-UtcTime())*10;
-//    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("DSL: Timeslip 0.1 sec:? %d < %d < %ld"), -Settings.deepsleep, timeslip, Settings.deepsleep );
-    //allow 10% of deepsleep error to count as valid deepsleep; expecting 3-4%
-    // if more then 10% timeslip = 0 == non valid wakeup; maybe manual
-    timeslip = (timeslip < -(int32_t)Settings.deepsleep) ? 0 : (timeslip > (int32_t)Settings.deepsleep) ? 0 : 1;
-//    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("DSL: Normal deepsleep? %d"), timeslip );
-    if (timeslip) {
-      RtcSettings.deepsleep_slip = (Settings.deepsleep + RtcSettings.nextwakeup-UtcTime()) * RtcSettings.deepsleep_slip / (Settings.deepsleep - (millis() / 1000));
-      //Avoid crazy numbers. Again maximum 10% deviation.
-//      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("DSL: %% calculate drift %ld"), RtcSettings.deepsleep_slip );
-      RtcSettings.deepsleep_slip = tmin(tmax(RtcSettings.deepsleep_slip, 9000),11000);
+  // Deepsleep_slip is ideally 10.000 == 100%
+  // Typically the device has up to 4% slip. Anything else is a wrong setting in the deepsleep_slip
+  // Therefore all values >110% or <90% will be resetted to 100% to avoid crazy sleep times.
+  // This should normally never executed, but can happen an manual wakeup and problems during wakeup
+  if ((RtcSettings.nextwakeup == 0) ||
+      (RtcSettings.deepsleep_slip < 9000) ||
+      (RtcSettings.deepsleep_slip > 11000) ||
+      (RtcSettings.nextwakeup > (UtcTime() + Settings.deepsleep))) {
+    AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Reset wrong settings wakeup: %ld, slip %ld"),
+      RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
+    RtcSettings.nextwakeup = 0;
+    RtcSettings.deepsleep_slip = 10000;
+  }
 
-//      AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("DSL: %% new drift %ld"), RtcSettings.deepsleep_slip );
-      RtcSettings.nextwakeup += Settings.deepsleep;
+  // Timeslip in 0.1 seconds between the real wakeup and the calculated wakeup
+  // Because deepsleep is in second and timeslip in 0.1 sec the compare always check if the slip is in the 10% range
+  int16_t timeslip = (int16_t)(RtcSettings.nextwakeup + millis() / 1000 - UtcTime()) * 10;
+
+  // Allow 10% of deepsleep error to count as valid deepsleep; expecting 3-4%
+  // if more then 10% timeslip = 0 == non valid wakeup; maybe manual
+  timeslip = (timeslip < -(int32_t)Settings.deepsleep) ? 0 : (timeslip > (int32_t)Settings.deepsleep) ? 0 : 1;
+  if (timeslip) {
+    RtcSettings.deepsleep_slip = (Settings.deepsleep + RtcSettings.nextwakeup - UtcTime()) * RtcSettings.deepsleep_slip / (Settings.deepsleep - (millis() / 1000));
+    // Avoid crazy numbers. Again maximum 10% deviation.
+    RtcSettings.deepsleep_slip = tmin(tmax(RtcSettings.deepsleep_slip, 9000), 11000);
+    RtcSettings.nextwakeup += Settings.deepsleep;
+  }
+
+  // It may happen that wakeup in just <5 seconds in future
+  // In this case also add deepsleep to nextwakeup
+  if (RtcSettings.nextwakeup <= (UtcTime() - MIN_DEEPSLEEP_TIME)) {
+    // ensure nextwakeup is at least in the future
+    RtcSettings.nextwakeup += (((UtcTime() + MIN_DEEPSLEEP_TIME - RtcSettings.nextwakeup) / Settings.deepsleep) + 1) * Settings.deepsleep;
+  }
+
+  String dt = GetDT(RtcSettings.nextwakeup + LocalTime() - UtcTime());  // 2017-03-07T11:08:02
+  // Limit sleeptime to MAX_DEEPSLEEP_CYCLE
+  // uint32_t deepsleep_sleeptime = MAX_DEEPSLEEP_CYCLE < (RtcSettings.nextwakeup - UtcTime()) ? (uint32_t)MAX_DEEPSLEEP_CYCLE : RtcSettings.nextwakeup - UtcTime();
+  deepsleep_sleeptime = tmin((uint32_t)MAX_DEEPSLEEP_CYCLE ,RtcSettings.nextwakeup - UtcTime());
+
+  // stat/tasmota/STATUS = {"DeepSleep":{"Time":"2019-11-12T21:33:45","Epoch":1573590825}}
+  Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%d}}"), (char*)dt.c_str(), RtcSettings.nextwakeup);
+  MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_STATUS));
+
+//  Response_P(S_OFFLINE);
+//  MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
+}
+
+void DeepSleepStart(void)
+{
+  AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Sleeping"));  // Won't show in GUI
+
+  WifiShutdown();
+  RtcSettings.ultradeepsleep = RtcSettings.nextwakeup - UtcTime();
+  RtcSettingsSave();
+
+  ESP.deepSleep(100 * RtcSettings.deepsleep_slip * deepsleep_sleeptime);
+  yield();
+}
+
+void DeepSleepEverySecond(void)
+{
+  if (!deepsleep_flag) { return; }
+
+  if (DeepSleepEnabled()) {
+    if (4 == deepsleep_flag) {  // Allow 4 seconds to update web console before deepsleep
+      SettingsSaveAll();
+      DeepSleepCheck();
     }
-    // it may happen that wakeup in just <5 seconds in future
-    // in this case also add deepsleep to nextwakeup
-    if (RtcSettings.nextwakeup <= (UtcTime() - MIN_DEEPSLEEP_TIME)) {
-      // ensure nextwakeup is at least in the future
-      RtcSettings.nextwakeup += (((UtcTime() + MIN_DEEPSLEEP_TIME - RtcSettings.nextwakeup) / Settings.deepsleep) + 1) * Settings.deepsleep;
+    deepsleep_flag--;
+    if (deepsleep_flag <= 0) {
+      DeepSleepStart();
     }
-    String dt = GetDT(RtcSettings.nextwakeup + LocalTime() - UtcTime());  // 2017-03-07T11:08:02
-//    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("DSL: Next wakeup %s"), (char*)dt.c_str());
-    //limit sleeptime to MAX_DEEPSLEEP_CYCLE
-    //uint32_t sleeptime = MAX_DEEPSLEEP_CYCLE < (RtcSettings.nextwakeup - UtcTime()) ? (uint32_t)MAX_DEEPSLEEP_CYCLE : RtcSettings.nextwakeup - UtcTime();
-    uint32_t sleeptime = tmin((uint32_t)MAX_DEEPSLEEP_CYCLE , RtcSettings.nextwakeup - UtcTime());
-    Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%d}}"), (char*)dt.c_str(), RtcSettings.nextwakeup);
-    MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_STATUS "1"), false);
-    Response_P(S_OFFLINE);
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);  // Offline or remove previous retained topic
-    yield();
-    MqttDisconnect();
-    RtcSettings.ultradeepsleep =  RtcSettings.nextwakeup - UtcTime();
-//    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("DSL: Sleeptime %d sec, deepsleep_slip %ld"), sleeptime, RtcSettings.deepsleep_slip);
-    RtcSettingsSave();
-    ESP.deepSleep(100 * RtcSettings.deepsleep_slip * sleeptime);
-    yield();
-    // Sleeping
+  } else {
+    deepsleep_flag = 0;
   }
 }
 
@@ -139,11 +164,11 @@ void DeepSleepCheck(void)
 
 void CmndDeepsleepTime(void)
 {
-  if ((XdrvMailbox.payload == 0) ||
+  if ((0 == XdrvMailbox.payload) ||
      ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < (10 * 366 * 24 * 60 * 60)))) {  // Allow max 10 years sleep
     Settings.deepsleep = XdrvMailbox.payload;
     RtcSettings.nextwakeup = 0;
-    tele_period = Settings.tele_period -1;  // Initiate start DeepSleep on next finish of forced TelePeriod
+    deepsleep_flag = (0 == XdrvMailbox.payload) ? 0 : 4;
   }
   Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.deepsleep);
 }
@@ -157,8 +182,13 @@ bool Xdrv29(uint8_t function)
   bool result = false;
 
   switch (function) {
+    case FUNC_EVERY_SECOND:
+      DeepSleepEverySecond();
+      break;
     case FUNC_AFTER_TELEPERIOD:
-      DeepSleepCheck();
+      if (!deepsleep_flag) {
+        deepsleep_flag = 4;  // Start deepsleep in 4 seconds
+      }
       break;
     case FUNC_COMMAND:
       result = DecodeCommand(kDeepsleepCommands, DeepsleepCommand);

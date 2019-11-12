@@ -603,13 +603,18 @@ void WifiDisconnect(void)
   WiFi.persistent(false);     // Do not use SDK storage of SSID/WPA parameters
 }
 
-void EspRestart(void)
+void WifiShutdown(void)
 {
   delay(100);                 // Allow time for message xfer - disabled v6.1.0b
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     MqttDisconnect();
   }
   WifiDisconnect();
+}
+
+void EspRestart(void)
+{
+  WifiShutdown();
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
 }
