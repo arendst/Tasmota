@@ -41,9 +41,8 @@ float tsl2591_lux = 0;
 
 void Tsl2591Init(void)
 {
-  if (tsl2591_type) { return; }
-
-  if (I2cSetDevice(0x29) || I2cSetDevice(0x39) || I2cSetDevice(0x49)) {
+//  if (I2cSetDevice(0x29) || I2cSetDevice(0x39) || I2cSetDevice(0x49)) {
+  if (I2cSetDevice(0x29)) {
     if (tsl.begin()) {
       tsl.setGain(TSL2591_GAIN_MED);
       tsl.setTiming(TSL2591_INTEGRATIONTIME_300MS);
@@ -65,9 +64,7 @@ bool Tsl2591Read(void)
 
 void Tsl2591EverySecond(void)
 {
-  if (tsl2591_type) {
-    Tsl2591Read();
-  }
+  Tsl2591Read();
 }
 
 #ifdef USE_WEBSERVER
@@ -103,21 +100,23 @@ bool Xsns57(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      Tsl2591EverySecond();
-      break;
-    case FUNC_JSON_APPEND:
-      Tsl2591Show(1);
-      break;
+  if (FUNC_INIT == function) {
+    Tsl2591Init();
+  }
+  else if (tsl2591_type) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        Tsl2591EverySecond();
+        break;
+      case FUNC_JSON_APPEND:
+        Tsl2591Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Tsl2591Show(0);
-      break;
+      case FUNC_WEB_SENSOR:
+        Tsl2591Show(0);
+        break;
 #endif  // USE_WEBSERVER
-    case FUNC_INIT:
-      Tsl2591Init();
-      break;
+    }
   }
   return result;
 }

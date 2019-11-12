@@ -40,6 +40,8 @@
  * !! The I2C-soil-moisture-sensor is the preferred one !!
  *
  * I2C Address: 0x20 - standard address, is changeable
+ * - Uses I2C clock stretching
+ * - Scans all I2C addresses
 \*********************************************************************************************/
 
 #define XSNS_48                       48
