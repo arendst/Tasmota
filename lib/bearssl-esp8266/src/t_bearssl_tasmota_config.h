@@ -20,7 +20,11 @@
 #endif
 
 #ifndef BR_MAX_RSA_SIZE
+#ifdef USE_4K_RSA
+#define BR_MAX_RSA_SIZE 4096    // max 4096 bits RSA keys
+#else
 #define BR_MAX_RSA_SIZE 2048    // max 2048 bits RSA keys
+#endif
 #endif
 
 #ifndef BR_MAX_EC_SIZE

@@ -8,7 +8,7 @@
 .clang_complete
 .gcc-flags.json
 .cache
-sonoff/user_config_override.h
+tasmota/user_config_override.h
 build
 firmware.map
 firmware.asm
