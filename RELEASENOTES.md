@@ -3,6 +3,7 @@
 # RELEASE NOTES
 
 ## Migration Information
+
 See [wiki migration path](https://github.com/arendst/Tasmota/wiki/Upgrading#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
 1. Migrate to **Sonoff-Tasmota 3.9.x**
@@ -12,17 +13,21 @@ See [wiki migration path](https://github.com/arendst/Tasmota/wiki/Upgrading#migr
 5. Migrate to **Tasmota 7.x**
 
 ## Supported Core versions
-This release will be supported from ESP8266/Arduino library Core version **pre-2.6.0** due to reported security and stability issues on previous Core version.
 
-Although it might still compile on previous Core versions all support will be removed starting in the near future.
+This release will be supported from ESP8266/Arduino library Core version **2.6.0** due to reported security and stability issues on previous Core version.
+
+Although it might still compile on previous Core versions all support will be removed in the near future.
 
 ## Support of TLS
+
 To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. See full documentation on https://github.com/arendst/Tasmota/wiki/AWS-IoT
 
 ## Initial configuration tools
+
 For initial configuration this release supports Webserver based **WifiManager** or **Serial** based command interface only. Support for **WPS** and **SmartConfig** has been removed.
 
 ## Supported Modules
+
 The following hardware modules are supported.
 
 Module            | Description
@@ -103,7 +108,8 @@ Module            | Description
 Over 500 additional devices are supported using [templates](TEMPLATES.md).
 
 ## Provided Binary Downloads
-The following binary downloads have been compiled with ESP8266/Arduino library core version **pre-2.6.0**.
+
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.6.0**.
 
 - **tasmota.bin** = The Tasmota version with sensors. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -199,6 +205,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_INA226            | - | - | - | - | - | - | - |
 | USE_SHT3X             | - | - | x | x | x | - | x |
 | USE_TSL2561           | - | - | - | - | x | - | - |
+| USE_TSL2591           | - | - | - | - | - | - | - |
 | USE_MGS               | - | - | - | - | x | - | - |
 | USE_SGP30             | - | - | x | x | x | - | x |
 | USE_SI1145            | - | - | - | - | - | - | - |
@@ -235,7 +242,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_ZIGBEE            | - | - | - | - | - | - | - | Experimental
 |                       |   |   |   |   |   |   |   |
 | USE_IR_REMOTE         | - | - | x | x | x | x | x |
-| USE_IR_HVAC           | - | - | - | - | x | x | - |
 | USE_IR_RECEIVE        | - | - | x | x | x | x | x |
 |                       |   |   |   |   |   |   |   |
 | USE_SR04              | - | - | x | x | x | - | x |
@@ -246,7 +252,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_RF_SENSOR         | - | - | - | - | x | - | - | AlectoV2 only
 | USE_HRE               | - | - | - | - | x | - | - |
 | USE_A4988_STEPPER     | - | - | - | - | - | - | - |
-| USE_ARDUINO_SLAVE     | - | - | - | - | - | - | - | Experimental
+| USE_TASMOTA_SLAVE     | - | - | - | - | - | - | - | Experimental
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
 | USE_DISPLAY           | - | - | - | - | - | - | x |
@@ -262,18 +268,30 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_DISPLAY_RA8876    | - | - | - | - | - | - | - |
 
 ## Changelog
+
 Version 7.1.0 Betty
- * Remove support for versions before 6.0
- * Change ArduinoSlave to TasmotaSlave (Experimental)
- * Change repository name from Sonoff-Tasmota to Tasmota and all code references from Sonoff to Tasmota
- * Change default GUI to dark theme
- * Change IRremoteESP8266 library to v2.7.0
- * Fix better control of RGB/White when SetOption37 >128, added Dimmer1 and Dimmer2 commands (#6714)
- * Add support for Tuya battery powered devices (#6735)
- * Add support for Honeywell I2C HIH series Humidity and Temperetaure sensor (#6808)
- * Add command WebColor19 to control color of Module and Name (#6811)
- * Add command SetOption73 0/1 to re-enable HTTP Cross-Origin Resource Sharing (CORS) now default disabled (#6767)
- * Add command SetOption74 0/1 to enable DS18x20 internal pull-up and remove define DS18B20_INTERNAL_PULLUP (#6795)
- * Add command SetOption75 0/1 to switch between grouptopic (0) using fulltopic replacing %topic% or (1) is cmnd/<grouptopic> (#6779)
- * Add frequency to ADE7953 energy monitor as used in Shelly 2.5 by ljakob (#6778)
- * Add hide Alexa objects with friendlyname starting with '$' (#6722, #6762)
+ - Remove update support for versions before 6.0
+ - Remove driver xsns_12_ads1115_i2cdev replaced by xsns_12_ads1115
+ - Change repository name from Sonoff-Tasmota to Tasmota and all code references from Sonoff to Tasmota
+ - Change default GUI to dark theme
+ - Change ArduinoSlave to TasmotaSlave
+ - Change IRremoteESP8266 library to v2.7.0
+ - Change supported IR protocols in non dedicated IR firmware to NEC, RC5 and RC6 only
+ - Change supported PCF8574 I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
+ - Change supported PCF8574A I2C address range to 0x39 - 0x3F allowing other I2C devices with address 0x38 to be used at the same time
+ - Change supported MCP230xx I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
+ - Fix better control of RGB/White when SetOption37 >128, added Dimmer1 and Dimmer2 commands (#6714)
+ - Fix random crash caused by UPNP flood
+ - Add support for Tuya battery powered devices (#6735)
+ - Add support for Honeywell I2C HIH series Humidity and Temperetaure sensor (#6808)
+ - Add support for Honeywell HPMA115S0 particle concentration sensor by David Hunt (#6843)
+ - Add support for I2C sensor TLS2591 Light Intensity sensor (#6873)
+ - Add command WebColor19 to control color of Module and Name (#6811)
+ - Add command SetOption73 0/1 to re-enable HTTP Cross-Origin Resource Sharing (CORS) now default disabled (#6767)
+ - Add command SetOption74 0/1 to enable DS18x20 internal pull-up and remove define DS18B20_INTERNAL_PULLUP (#6795)
+ - Add command SetOption75 0/1 to switch between grouptopic (0) using fulltopic replacing %topic% or (1) is cmnd/<grouptopic> (#6779)
+ - Add command I2cDriver for I2C driver runtime control using document I2CDEVICES.md
+ - Add command WifiPower 0 .. 20.5 to set Wifi Output Power which will be default set to 17dBm
+ - Add frequency to ADE7953 energy monitor as used in Shelly 2.5 by ljakob (#6778)
+ - Add hide Alexa objects with friendlyname starting with '$' (#6722, #6762)
+ - Add Zigbee command support, considered as v1.0 for full Zigbee support

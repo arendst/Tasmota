@@ -486,8 +486,9 @@ void GetFeatures(void)
 #ifdef USE_HPMA
   feature5 |= 0x00040000;
 #endif
-//  feature5 |= 0x00080000;
-
+#ifdef USE_TSL2591
+  feature5 |= 0x00080000;
+#endif
 //  feature5 |= 0x00100000;
 //  feature5 |= 0x00200000;
 //  feature5 |= 0x00400000;
