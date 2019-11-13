@@ -476,7 +476,7 @@ void CmndShutterPosition(void)
     int8_t target_pos_percent = XdrvMailbox.payload < 0 ? 0 : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
     // webgui still send also on inverted shutter the native position.
     target_pos_percent = Settings.shutter_invert[index] &&  SRC_WEBGUI != last_source ? 100 - target_pos_percent : target_pos_percent;
-    if (target_pos_percent != -99) {
+    if (XdrvMailbox.payload != -99) {
       //target_pos_percent = Settings.shutter_invert[index] ? 100 - target_pos_percent : target_pos_percent;
       Shutter.target_position[index] = ShutterPercentToRealPosition(target_pos_percent, index);
       //Shutter.target_position[index] = XdrvMailbox.payload < 5 ?  Settings.shuttercoeff[2][index] * XdrvMailbox.payload : Settings.shuttercoeff[1][index] * XdrvMailbox.payload + Settings.shuttercoeff[0,index];
