@@ -3,7 +3,7 @@
 # RELEASE NOTES
 
 ## Migration Information
-See [wiki migration path](https://github.com/arendst/Tasmota/wiki/Upgrade#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
+See [wiki migration path](https://github.com/arendst/Tasmota/wiki/Upgrading#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
 1. Migrate to **Sonoff-Tasmota 3.9.x**
 2. Migrate to **Sonoff-Tasmota 4.x**
@@ -220,7 +220,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 | USE_CHIRP             | - | - | - | - | - | - | - |
 | USE_PAJ7620           | - | - | - | - | - | - | - |
 | USE_PCF8574           | - | - | - | - | - | - | - |
-| USE_HIH6              | - | - | - | - | - | - | - |
+| USE_HIH6              | - | - | - | - | x | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |

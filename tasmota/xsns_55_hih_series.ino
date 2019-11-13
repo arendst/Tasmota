@@ -74,30 +74,21 @@ bool Hih6Read(void)
 
 void Hih6Detect(void)
 {
-  if (Hih6.type) { return; }
   if (I2cActive(HIH6_ADDR)) { return; }
 
   if (uptime < 2) { delay(20); } // Skip entering power on comand mode
   Hih6.type = Hih6Read();
   if (Hih6.type) {
-    I2cSetActive(HIH6_ADDR);
-    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, Hih6.types, HIH6_ADDR);
+    I2cSetActiveFound(HIH6_ADDR, Hih6.types);
   }
 }
 
 void Hih6EverySecond(void)
 {
-  if ((100 - XSNS_55) == (uptime %100)) {
-    // 1mS
-    Hih6Detect();
-  }
-  else if (uptime &1) {
+  if (uptime &1) {
     // HIH6130: 30mS
-    if (Hih6.type) {
-      if (!Hih6Read()) {
-        AddLogMissed(Hih6.types, Hih6.valid);
-//        if (!Hih6.valid) { Hih6.type = 0; }
-      }
+    if (!Hih6Read()) {
+      AddLogMissed(Hih6.types, Hih6.valid);
     }
   }
 }
@@ -142,21 +133,23 @@ bool Xsns55(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      Hih6EverySecond();
-      break;
-    case FUNC_JSON_APPEND:
-      Hih6Show(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Hih6Show(0);
-      break;
-#endif  // USE_WEBSERVER
-    case FUNC_INIT:
-      Hih6Detect();
-      break;
+  if (FUNC_INIT == function) {
+    Hih6Detect();
+  }
+  else if (Hih6.type) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        Hih6EverySecond();
+        break;
+      case FUNC_JSON_APPEND:
+        Hih6Show(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        Hih6Show(0);
+        break;
+  #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

@@ -426,6 +426,7 @@ void ShutterSetPosition(uint8_t device, uint8_t position)
 void CmndShutterOpen(void)
 {
   XdrvMailbox.payload = 100;
+  XdrvMailbox.data_len = 3;
   last_source = SRC_WEBGUI;
   CmndShutterPosition();
 }
@@ -433,6 +434,7 @@ void CmndShutterOpen(void)
 void CmndShutterClose(void)
 {
   XdrvMailbox.payload = 0;
+  XdrvMailbox.data_len = 1;
   last_source = SRC_WEBGUI;
   CmndShutterPosition();
 }
@@ -461,12 +463,20 @@ void CmndShutterPosition(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
     uint32_t index = XdrvMailbox.index -1;
     //limit the payload
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Position in: payload %d, index %d, source %d"), XdrvMailbox.payload , XdrvMailbox.index, last_source );
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Position in: payload %s (%d), payload %d, index %d, source %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, last_source );
 
+    if (XdrvMailbox.data_len > 1 &&  XdrvMailbox.payload <=0) {
+      UpperCase(XdrvMailbox.data, XdrvMailbox.data);
+      if (!strcmp(XdrvMailbox.data,"UP"))   { CmndShutterOpen(); }
+      if (!strcmp(XdrvMailbox.data,"DOWN")) { CmndShutterClose(); }
+      if (!strcmp(XdrvMailbox.data,"STOP")) { CmndShutterStop(); }
+      return;
+    }
+	  
     int8_t target_pos_percent = XdrvMailbox.payload < 0 ? 0 : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
     // webgui still send also on inverted shutter the native position.
     target_pos_percent = Settings.shutter_invert[index] &&  SRC_WEBGUI != last_source ? 100 - target_pos_percent : target_pos_percent;
-    if (target_pos_percent != -99) {
+    if (XdrvMailbox.payload != -99) {
       //target_pos_percent = Settings.shutter_invert[index] ? 100 - target_pos_percent : target_pos_percent;
       Shutter.target_position[index] = ShutterPercentToRealPosition(target_pos_percent, index);
       //Shutter.target_position[index] = XdrvMailbox.payload < 5 ?  Settings.shuttercoeff[2][index] * XdrvMailbox.payload : Settings.shuttercoeff[1][index] * XdrvMailbox.payload + Settings.shuttercoeff[0,index];

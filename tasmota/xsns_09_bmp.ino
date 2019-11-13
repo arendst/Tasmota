@@ -447,8 +447,6 @@ void Bme680Read(uint8_t bmp_idx)
 
 void BmpDetect(void)
 {
-  if (bmp_count) { return; }
-
   int bmp_sensor_size = BMP_MAX_SENSORS * sizeof(bmp_sensors_t);
   if (!bmp_sensors) {
     bmp_sensors = (bmp_sensors_t*)malloc(bmp_sensor_size);
@@ -483,9 +481,8 @@ void BmpDetect(void)
 #endif  // USE_BME680
       }
       if (success) {
-        I2cSetActive(bmp_sensors[bmp_count].bmp_address);
         GetTextIndexed(bmp_sensors[bmp_count].bmp_name, sizeof(bmp_sensors[bmp_count].bmp_name), bmp_sensors[bmp_count].bmp_model, kBmpTypes);
-        AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, bmp_sensors[bmp_count].bmp_name, bmp_sensors[bmp_count].bmp_address);
+        I2cSetActiveFound(bmp_sensors[bmp_count].bmp_address, bmp_sensors[bmp_count].bmp_name);
         bmp_count++;
       }
     }
@@ -494,8 +491,6 @@ void BmpDetect(void)
 
 void BmpRead(void)
 {
-  if (!bmp_sensors) { return; }
-
   for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     switch (bmp_sensors[bmp_idx].bmp_type) {
       case BMP180_CHIPID:
@@ -516,22 +511,8 @@ void BmpRead(void)
   ConvertHumidity(bmp_sensors[0].bmp_humidity);  // Set global humidity
 }
 
-void BmpEverySecond(void)
-{
-  if (91 == (uptime %100)) {
-    // 1mS
-    BmpDetect();
-  }
-  else {
-    // 2mS
-    BmpRead();
-  }
-}
-
 void BmpShow(bool json)
 {
-  if (!bmp_sensors) { return; }
-
   for (uint32_t bmp_idx = 0; bmp_idx < bmp_count; bmp_idx++) {
     if (bmp_sensors[bmp_idx].bmp_type) {
       float bmp_sealevel = 0.0;
@@ -630,21 +611,23 @@ bool Xsns09(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_INIT:
-      BmpDetect();
-      break;
-    case FUNC_EVERY_SECOND:
-      BmpEverySecond();
-      break;
-    case FUNC_JSON_APPEND:
-      BmpShow(1);
-      break;
+  if (FUNC_INIT == function) {
+    BmpDetect();
+  }
+  else if (bmp_count) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        BmpRead();
+        break;
+      case FUNC_JSON_APPEND:
+        BmpShow(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      BmpShow(0);
-      break;
+      case FUNC_WEB_SENSOR:
+        BmpShow(0);
+        break;
 #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

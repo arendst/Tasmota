@@ -107,7 +107,7 @@ void RDM6300_ScanForTag() {
     rdm_uid_str[9]=0;
 
     ResponseTime_P(PSTR(",\"RDM6300\":{\"UID\":\"%s\"}}"), rdm_uid_str);
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+    MqttPublishTeleSensor();
 /*
     char command[24];
     sprintf(command,"event RDM6300=%s",rdm_uid_str);

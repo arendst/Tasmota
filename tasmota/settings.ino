@@ -134,6 +134,12 @@
 #ifndef DEFAULT_DIMMER_MIN
 #define DEFAULT_DIMMER_MIN          0
 #endif
+#ifndef DEFAULT_LIGHT_DIMMER
+#define DEFAULT_LIGHT_DIMMER        10
+#endif
+#ifndef DEFAULT_LIGHT_COMPONENT
+#define DEFAULT_LIGHT_COMPONENT     255
+#endif
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -619,7 +625,7 @@ void SettingsDefaultSet2(void)
 //  Settings.flag.stop_flash_rotate = 0;
   Settings.save_data = SAVE_DATA;
   Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
-  Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;
+  Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
   Settings.param[P_RGB_REMAP] = RGB_REMAP_RGBW;
   Settings.sleep = APP_SLEEP;
   if (Settings.sleep < 50) {
@@ -656,6 +662,7 @@ void SettingsDefaultSet2(void)
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 
   // Wifi
+  Settings.wifi_output_power = 170;
   ParseIp(&Settings.ip_address[0], WIFI_IP_ADDRESS);
   ParseIp(&Settings.ip_address[1], WIFI_GATEWAY);
   ParseIp(&Settings.ip_address[2], WIFI_SUBNETMASK);
@@ -814,11 +821,11 @@ void SettingsDefaultSet2(void)
   Settings.pwm_frequency = PWM_FREQ;
   Settings.pwm_range = PWM_RANGE;
   for (uint32_t i = 0; i < MAX_PWMS; i++) {
-    Settings.light_color[i] = 255;
+    Settings.light_color[i] = DEFAULT_LIGHT_COMPONENT;
 //    Settings.pwm_value[i] = 0;
   }
   Settings.light_correction = 1;
-  Settings.light_dimmer = 10;
+  Settings.light_dimmer = DEFAULT_LIGHT_DIMMER;
 //  Settings.light_fade = 0;
   Settings.light_speed = 1;
 //  Settings.light_scheme = 0;
@@ -1000,7 +1007,7 @@ void SettingsDelta(void)
       for (uint32_t i = 1; i < MAX_INTERLOCKS; i++) { Settings.interlock[i] = 0; }
     }
     if (Settings.version < 0x0604010D) {
-      Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;
+      Settings.param[P_BOOT_LOOP_OFFSET] = BOOT_LOOP_OFFSET;  // SetOption36
     }
     if (Settings.version < 0x06040110) {
       ModuleDefault(WEMOS);
@@ -1130,6 +1137,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x07000003) {
       SettingsEnableAllI2cDrivers();
+    }
+    if (Settings.version < 0x07000004) {
+      Settings.wifi_output_power = 170;
     }
     Settings.version = VERSION;
     SettingsSave(1);

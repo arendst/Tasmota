@@ -548,7 +548,7 @@ void ibeacon_mqtt(const char *mac,const char *rssi) {
   s_rssi[4]=0;
   int16_t n_rssi=atoi(s_rssi);
   ResponseTime_P(PSTR(",\"" D_CMND_IBEACON "_%s\":{\"RSSI\":%d}}"),s_mac,n_rssi);
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+  MqttPublishTeleSensor();
 }
 
 

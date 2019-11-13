@@ -104,7 +104,6 @@ int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
 int restart_flag = 0;                       // Tasmota restart flag
 int wifi_state_flag = WIFI_RESTART;         // Wifi state flag
-int tele_period = 1;                        // Tele period timer
 int blinks = 201;                           // Number of LED blinks
 uint32_t uptime = 0;                        // Counting every second until 4294967295 = 130 year
 uint32_t loop_load_avg = 0;                 // Indicative loop load average
@@ -114,6 +113,7 @@ float global_temperature = 9999;            // Provide a global temperature to b
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
 float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
 char *ota_url;                              // OTA url string pointer
+uint16_t tele_period = 9999;                // Tele period timer
 uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
@@ -790,6 +790,14 @@ bool MqttShowSensor(void)
   return json_data_available;
 }
 
+void MqttPublishSensor(void)
+{
+  mqtt_data[0] = '\0';
+  if (MqttShowSensor()) {
+    MqttPublishTeleSensor();
+  }
+}
+
 /********************************************************************************************/
 
 void PerformEverySecond(void)
@@ -838,20 +846,27 @@ void PerformEverySecond(void)
   ResetGlobalValues();
 
   if (Settings.tele_period) {
-    tele_period++;
-    if (tele_period >= Settings.tele_period) {
-      tele_period = 0;
-
-      MqttPublishTeleState();
-
-      mqtt_data[0] = '\0';
-      if (MqttShowSensor()) {
-        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
-#if defined(USE_RULES) || defined(USE_SCRIPT)
-        RulesTeleperiod();  // Allow rule based HA messages
-#endif  // USE_RULES
+    if (tele_period >= 9999) {
+      if (!global_state.wifi_down) {
+        tele_period = 0;  // Allow teleperiod once wifi is connected
       }
-      XdrvCall(FUNC_AFTER_TELEPERIOD);
+    } else {
+      tele_period++;
+      if (tele_period >= Settings.tele_period) {
+        tele_period = 0;
+
+        MqttPublishTeleState();
+
+        mqtt_data[0] = '\0';
+        if (MqttShowSensor()) {
+          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+#if defined(USE_RULES) || defined(USE_SCRIPT)
+          RulesTeleperiod();  // Allow rule based HA messages
+#endif  // USE_RULES
+        }
+
+        XdrvCall(FUNC_AFTER_TELEPERIOD);
+      }
     }
   }
 }
@@ -1260,7 +1275,7 @@ void SerialInput(void)
   if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {  // CMND_SERIALSEND and CMND_SERIALLOG
     serial_in_buffer[serial_in_byte_counter] = 0;                                // Serial data completed
     char hex_char[(serial_in_byte_counter * 2) + 2];
-    Response_P(PSTR(",\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"),
+    Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"),
       (Settings.flag.mqtt_serial_raw) ? ToHex_P((unsigned char*)serial_in_buffer, serial_in_byte_counter, hex_char, sizeof(hex_char)) : serial_in_buffer);
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
     XdrvRulesProcess();
@@ -1538,7 +1553,7 @@ void setup(void)
 #endif
 #endif  // USE_EMULATION
 
-  if (Settings.param[P_BOOT_LOOP_OFFSET]) {
+  if (Settings.param[P_BOOT_LOOP_OFFSET]) {         // SetOption36
     // Disable functionality as possible cause of fast restart within BOOT_LOOP_TIME seconds (Exception, WDT or restarts)
     if (RtcReboot.fast_reboot_count > Settings.param[P_BOOT_LOOP_OFFSET]) {       // Restart twice
       Settings.flag3.user_esp8285_enable = 0;       // SetOption51 - Enable ESP8285 user GPIO's - Disable ESP8285 Generic GPIOs interfering with flash SPI

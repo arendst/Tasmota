@@ -197,14 +197,11 @@ bool HtuRead(void)
 
 void HtuDetect(void)
 {
-  if (htu_type) { return; }
-
   htu_address = HTU21_ADDR;
   if (I2cActive(htu_address)) { return; }
 
   htu_type = HtuReadDeviceId();
   if (htu_type) {
-    I2cSetActive(htu_address);
     uint8_t index = 0;
     HtuInit();
     switch (htu_type) {
@@ -227,23 +224,16 @@ void HtuDetect(void)
         htu_delay_humidity = 23;
     }
     GetTextIndexed(htu_types, sizeof(htu_types), index, kHtuTypes);
-    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, htu_types, htu_address);
+    I2cSetActiveFound(htu_address, htu_types);
   }
 }
 
 void HtuEverySecond(void)
 {
-  if (92 == (uptime %100)) {
-    // 1mS
-    HtuDetect();
-  }
-  else if (uptime &1) {
+  if (uptime &1) {  // Every 2 seconds
     // HTU21: 68mS, SI70xx: 37mS
-    if (htu_type) {
-      if (!HtuRead()) {
-        AddLogMissed(htu_types, htu_valid);
-//        if (!htu_valid) { htu_type = 0; }
-      }
+    if (!HtuRead()) {
+      AddLogMissed(htu_types, htu_valid);
     }
   }
 }
@@ -288,21 +278,23 @@ bool Xsns08(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_INIT:
-      HtuDetect();
-      break;
-    case FUNC_EVERY_SECOND:
-      HtuEverySecond();
-      break;
-    case FUNC_JSON_APPEND:
-      HtuShow(1);
-      break;
+  if (FUNC_INIT == function) {
+    HtuDetect();
+  }
+  else if (htu_type) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        HtuEverySecond();
+        break;
+      case FUNC_JSON_APPEND:
+        HtuShow(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      HtuShow(0);
-      break;
+      case FUNC_WEB_SENSOR:
+        HtuShow(0);
+        break;
 #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

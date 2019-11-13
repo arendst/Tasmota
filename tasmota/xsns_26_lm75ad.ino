@@ -45,28 +45,28 @@
 #define LM75_THYST_REGISTER     0x02
 #define LM75_TOS_REGISTER       0x03
 
-uint8_t lm75ad_type = 0;
+bool lm75ad_type = false;
 uint8_t lm75ad_address;
 uint8_t lm75ad_addresses[] = { LM75AD_ADDRESS1, LM75AD_ADDRESS2, LM75AD_ADDRESS3, LM75AD_ADDRESS4, LM75AD_ADDRESS5, LM75AD_ADDRESS6, LM75AD_ADDRESS7, LM75AD_ADDRESS8 };
 
 void LM75ADDetect(void)
 {
-  if (lm75ad_type) { return; }
-
-  uint16_t buffer;
   for (uint32_t i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
+    if (I2cActive(lm75ad_address)) { continue; }
+    uint16_t buffer;
     if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
       if (buffer == 0x4B00) {
-        lm75ad_type = 1;
-        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "LM75AD", lm75ad_address);
+        lm75ad_type = true;
+        I2cSetActiveFound(lm75ad_address, "LM75AD");
         break;
       }
     }
   }
 }
 
-float LM75ADGetTemp(void) {
+float LM75ADGetTemp(void)
+{
   int16_t sign = 1;
 
   uint16_t t = I2cRead16(lm75ad_address, LM75_TEMP_REGISTER);
@@ -80,21 +80,19 @@ float LM75ADGetTemp(void) {
 
 void LM75ADShow(bool json)
 {
-  if (lm75ad_type) {
-    float t = LM75ADGetTemp();
-    char temperature[33];
-    dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
+  float t = LM75ADGetTemp();
+  char temperature[33];
+  dtostrfd(t, Settings.flag2.temperature_resolution, temperature);
 
-    if (json) {
-      ResponseAppend_P(PSTR(",\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), temperature);
+  if (json) {
+    ResponseAppend_P(PSTR(",\"LM75AD\":{\"" D_JSON_TEMPERATURE "\":%s}"), temperature);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
+    if (0 == tele_period) DomoticzSensor(DZ_TEMP, temperature);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, "LM75AD", temperature, TempUnit());
+  } else {
+    WSContentSend_PD(HTTP_SNS_TEMP, "LM75AD", temperature, TempUnit());
 #endif  // USE_WEBSERVER
-    }
   }
 }
 
@@ -108,18 +106,20 @@ bool Xsns26(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      LM75ADDetect();
-      break;
-    case FUNC_JSON_APPEND:
-      LM75ADShow(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      LM75ADShow(0);
-      break;
-#endif  // USE_WEBSERVER
+  if (FUNC_INIT == function) {
+    LM75ADDetect();
+  }
+  else if (lm75ad_type) {
+    switch (function) {
+      case FUNC_JSON_APPEND:
+        LM75ADShow(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        LM75ADShow(0);
+        break;
+  #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

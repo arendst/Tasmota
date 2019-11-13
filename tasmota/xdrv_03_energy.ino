@@ -425,7 +425,7 @@ void EnergyMqttShow(void)
   EnergyShow(true);
   tele_period = tele_period_save;
   ResponseJsonEnd();
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+  MqttPublishTeleSensor();
   Energy.power_delta = false;
 }
 #endif  // USE_ENERGY_MARGIN_DETECTION

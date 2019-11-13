@@ -116,8 +116,6 @@ void MPU_6050SetAccelOffsets(int x, int y, int z)
 
 void MPU_6050Detect(void)
 {
-  if (MPU_6050_found) { return; }
-
   for (uint32_t i = 0; i < sizeof(MPU_6050_addresses); i++)
   {
     MPU_6050_address = MPU_6050_addresses[i];
@@ -140,12 +138,10 @@ void MPU_6050Detect(void)
     MPU_6050_found = mpu6050.testConnection();
 #endif //USE_MPU6050_DMP
     Settings.flag2.axis_resolution = 2;  // Need to be services by command Sensor32
-
   }
 
-  if (MPU_6050_found)
-  {
-    AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, D_SENSOR_MPU6050, MPU_6050_address);
+  if (MPU_6050_found) {
+    I2cSetActiveFound(MPU_6050_address, D_SENSOR_MPU6050);
   }
 }
 
@@ -168,49 +164,47 @@ const char HTTP_SNS_AXIS[] PROGMEM =
 
 void MPU_6050Show(bool json)
 {
-  if (MPU_6050_found) {
-    MPU_6050PerformReading();
+  MPU_6050PerformReading();
 
-    double tempConv = (MPU_6050_temperature / 340.0 + 35.53);
-    char temperature[33];
-    dtostrfd(tempConv, Settings.flag2.temperature_resolution, temperature);
-    char axis_ax[33];
-    dtostrfd(MPU_6050_ax, Settings.flag2.axis_resolution, axis_ax);
-    char axis_ay[33];
-    dtostrfd(MPU_6050_ay, Settings.flag2.axis_resolution, axis_ay);
-    char axis_az[33];
-    dtostrfd(MPU_6050_az, Settings.flag2.axis_resolution, axis_az);
-    char axis_gx[33];
-    dtostrfd(MPU_6050_gx, Settings.flag2.axis_resolution, axis_gx);
-    char axis_gy[33];
-    dtostrfd(MPU_6050_gy, Settings.flag2.axis_resolution, axis_gy);
-    char axis_gz[33];
-    dtostrfd(MPU_6050_gz, Settings.flag2.axis_resolution, axis_gz);
+  double tempConv = (MPU_6050_temperature / 340.0 + 35.53);
+  char temperature[33];
+  dtostrfd(tempConv, Settings.flag2.temperature_resolution, temperature);
+  char axis_ax[33];
+  dtostrfd(MPU_6050_ax, Settings.flag2.axis_resolution, axis_ax);
+  char axis_ay[33];
+  dtostrfd(MPU_6050_ay, Settings.flag2.axis_resolution, axis_ay);
+  char axis_az[33];
+  dtostrfd(MPU_6050_az, Settings.flag2.axis_resolution, axis_az);
+  char axis_gx[33];
+  dtostrfd(MPU_6050_gx, Settings.flag2.axis_resolution, axis_gx);
+  char axis_gy[33];
+  dtostrfd(MPU_6050_gy, Settings.flag2.axis_resolution, axis_gy);
+  char axis_gz[33];
+  dtostrfd(MPU_6050_gz, Settings.flag2.axis_resolution, axis_gz);
 
-    if (json) {
-      char json_axis_ax[25];
-      snprintf_P(json_axis_ax, sizeof(json_axis_ax), PSTR(",\"" D_JSON_AXIS_AX "\":%s"), axis_ax);
-      char json_axis_ay[25];
-      snprintf_P(json_axis_ay, sizeof(json_axis_ay), PSTR(",\"" D_JSON_AXIS_AY "\":%s"), axis_ay);
-      char json_axis_az[25];
-      snprintf_P(json_axis_az, sizeof(json_axis_az), PSTR(",\"" D_JSON_AXIS_AZ "\":%s"), axis_az);
-      char json_axis_gx[25];
-      snprintf_P(json_axis_gx, sizeof(json_axis_gx), PSTR(",\"" D_JSON_AXIS_GX "\":%s"), axis_gx);
-      char json_axis_gy[25];
-      snprintf_P(json_axis_gy, sizeof(json_axis_gy), PSTR(",\"" D_JSON_AXIS_GY "\":%s"), axis_gy);
-      char json_axis_gz[25];
-      snprintf_P(json_axis_gz, sizeof(json_axis_gz), PSTR(",\"" D_JSON_AXIS_GZ "\":%s"), axis_gz);
-      ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s%s%s%s%s%s}"),
-        D_SENSOR_MPU6050, temperature, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz);
+  if (json) {
+    char json_axis_ax[25];
+    snprintf_P(json_axis_ax, sizeof(json_axis_ax), PSTR(",\"" D_JSON_AXIS_AX "\":%s"), axis_ax);
+    char json_axis_ay[25];
+    snprintf_P(json_axis_ay, sizeof(json_axis_ay), PSTR(",\"" D_JSON_AXIS_AY "\":%s"), axis_ay);
+    char json_axis_az[25];
+    snprintf_P(json_axis_az, sizeof(json_axis_az), PSTR(",\"" D_JSON_AXIS_AZ "\":%s"), axis_az);
+    char json_axis_gx[25];
+    snprintf_P(json_axis_gx, sizeof(json_axis_gx), PSTR(",\"" D_JSON_AXIS_GX "\":%s"), axis_gx);
+    char json_axis_gy[25];
+    snprintf_P(json_axis_gy, sizeof(json_axis_gy), PSTR(",\"" D_JSON_AXIS_GY "\":%s"), axis_gy);
+    char json_axis_gz[25];
+    snprintf_P(json_axis_gz, sizeof(json_axis_gz), PSTR(",\"" D_JSON_AXIS_GZ "\":%s"), axis_gz);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s%s%s%s%s%s}"),
+      D_SENSOR_MPU6050, temperature, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz);
 #ifdef USE_DOMOTICZ
-      DomoticzSensor(DZ_TEMP, temperature);
+    DomoticzSensor(DZ_TEMP, temperature);
 #endif // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-    } else {
-      WSContentSend_PD(HTTP_SNS_TEMP, D_SENSOR_MPU6050, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_AXIS, axis_ax, axis_ay, axis_az, axis_gx, axis_gy, axis_gz);
+  } else {
+    WSContentSend_PD(HTTP_SNS_TEMP, D_SENSOR_MPU6050, temperature, TempUnit());
+    WSContentSend_PD(HTTP_SNS_AXIS, axis_ax, axis_ay, axis_az, axis_gx, axis_gy, axis_gz);
 #endif // USE_WEBSERVER
-    }
   }
 }
 
@@ -224,24 +218,26 @@ bool Xsns32(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      if (tele_period == Settings.tele_period -3) {
-        MPU_6050PerformReading();
-      }
-      break;
-    case FUNC_JSON_APPEND:
-      MPU_6050Show(1);
-      break;
+  if (FUNC_INIT == function) {
+    MPU_6050Detect();
+  }
+  else if (MPU_6050_found) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        if (tele_period == Settings.tele_period -3) {
+          MPU_6050PerformReading();
+        }
+        break;
+      case FUNC_JSON_APPEND:
+        MPU_6050Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      MPU_6050Show(0);
-      MPU_6050PerformReading();
-      break;
+      case FUNC_WEB_SENSOR:
+        MPU_6050Show(0);
+        MPU_6050PerformReading();
+        break;
 #endif // USE_WEBSERVER
-    case FUNC_INIT:
-      MPU_6050Detect();
-      break;
+    }
   }
   return result;
 }

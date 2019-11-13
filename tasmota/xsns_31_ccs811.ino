@@ -30,18 +30,29 @@
 #define XSNS_31             31
 #define XI2C_24             24  // See I2CDEVICES.md
 
+#define EVERYNSECONDS 5
+
 #include "Adafruit_CCS811.h"
 
 Adafruit_CCS811 ccs;
-uint8_t CCS811_ready;
-uint8_t CCS811_type;
+uint8_t CCS811_ready = 0;
+uint8_t CCS811_type = 0;;
 uint16_t eCO2;
 uint16_t TVOC;
 uint8_t tcnt = 0;
 uint8_t ecnt = 0;
 
 /********************************************************************************************/
-#define EVERYNSECONDS 5
+
+void CCS811Detect(void)
+{
+  if (I2cActive(CCS811_ADDRESS)) { return; }
+
+  if (!ccs.begin(CCS811_ADDRESS)) {
+    CCS811_type = 1;
+    I2cSetActiveFound(CCS811_ADDRESS, "CCS811");
+  }
+}
 
 void CCS811Update(void)  // Perform every n second
 {
@@ -49,30 +60,20 @@ void CCS811Update(void)  // Perform every n second
   if (tcnt >= EVERYNSECONDS) {
     tcnt = 0;
     CCS811_ready = 0;
-    if (!CCS811_type) {
-      sint8_t res = ccs.begin(CCS811_ADDRESS);
-      if (!res) {
-        CCS811_type = 1;
-        AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "CCS811", 0x5A);
-      } else {
-        //AddLog_P2(LOG_LEVEL_DEBUG, "CCS811 init failed: %d",res);
+    if (ccs.available()) {
+      if (!ccs.readData()){
+        TVOC = ccs.getTVOC();
+        eCO2 = ccs.geteCO2();
+        CCS811_ready = 1;
+        if (global_update && global_humidity>0 && global_temperature!=9999) { ccs.setEnvironmentalData((uint8_t)global_humidity, global_temperature); }
+        ecnt = 0;
       }
     } else {
-      if (ccs.available()) {
-        if (!ccs.readData()){
-          TVOC = ccs.getTVOC();
-          eCO2 = ccs.geteCO2();
-          CCS811_ready = 1;
-          if (global_update && global_humidity>0 && global_temperature!=9999) { ccs.setEnvironmentalData((uint8_t)global_humidity, global_temperature); }
-          ecnt = 0;
-        }
-      } else {
-        // failed, count up
-        ecnt++;
-        if (ecnt > 6) {
-          // after 30 seconds, restart
-          ccs.begin(CCS811_ADDRESS);
-        }
+      // failed, count up
+      ecnt++;
+      if (ecnt > 6) {
+        // after 30 seconds, restart
+        ccs.begin(CCS811_ADDRESS);
       }
     }
   }
@@ -108,18 +109,23 @@ bool Xsns31(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      CCS811Update();
-      break;
-    case FUNC_JSON_APPEND:
-      CCS811Show(1);
-      break;
+  if (FUNC_INIT == function) {
+    CCS811Detect();
+  }
+  else if (CCS811_type) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        CCS811Update();
+        break;
+      case FUNC_JSON_APPEND:
+        CCS811Show(1);
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      CCS811Show(0);
-      break;
+      case FUNC_WEB_SENSOR:
+        CCS811Show(0);
+        break;
 #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

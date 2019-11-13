@@ -183,7 +183,12 @@
 #define SI114X_IRQEN_PS2                    0x08
 #define SI114X_IRQEN_PS3                    0x10
 
-uint8_t si1145_type = 0;
+uint16_t si1145_visible;
+uint16_t si1145_infrared;
+uint16_t si1145_uvindex;
+
+bool si1145_type = false;
+uint8_t si1145_valid = 0;
 
 /********************************************************************************************/
 
@@ -306,13 +311,33 @@ uint16_t Si1145ReadIR(void)
 
 /********************************************************************************************/
 
+bool Si1145Read(void)
+{
+  if (si1145_valid) { si1145_valid--; }
+
+  if (!Si1145Present()) { return false; }
+
+  si1145_visible = Si1145ReadVisible();
+  si1145_infrared = Si1145ReadIR();
+  si1145_uvindex = Si1145ReadUV();
+  si1145_valid = SENSOR_MAX_MISS;
+  return true;
+}
+
+void Si1145Detect(void)
+{
+  if (I2cActive(SI114X_ADDR)) { return; }
+
+  if (Si1145Begin()) {
+    si1145_type = true;
+    I2cSetActiveFound(SI114X_ADDR, "SI1145");
+  }
+}
+
 void Si1145Update(void)
 {
-  if (!si1145_type) {
-    if (Si1145Begin()) {
-      si1145_type = 1;
-      AddLog_P2(LOG_LEVEL_DEBUG, S_LOG_I2C_FOUND_AT, "SI1145", SI114X_ADDR);
-    }
+  if (!Si1145Read()) {
+    AddLogMissed("SI1145", si1145_valid);
   }
 }
 
@@ -325,23 +350,18 @@ const char HTTP_SNS_SI1145[] PROGMEM =
 
 void Si1145Show(bool json)
 {
-  if (si1145_type && Si1145Present()) {
-    uint16_t visible = Si1145ReadVisible();
-    uint16_t infrared = Si1145ReadIR();
-    uint16_t uvindex = Si1145ReadUV();
+  if (si1145_valid) {
     if (json) {
       ResponseAppend_P(PSTR(",\"SI1145\":{\"" D_JSON_ILLUMINANCE "\":%d,\"" D_JSON_INFRARED "\":%d,\"" D_JSON_UV_INDEX "\":%d.%d}"),
-        visible, infrared, uvindex /100, uvindex %100);
+        si1145_visible, si1145_infrared, si1145_uvindex /100, si1145_uvindex %100);
 #ifdef USE_DOMOTICZ
-      if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, visible);
+      if (0 == tele_period) DomoticzSensor(DZ_ILLUMINANCE, si1145_visible);
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_SI1145, visible, infrared, uvindex /100, uvindex %100);
+      WSContentSend_PD(HTTP_SNS_SI1145, si1145_visible, si1145_infrared, si1145_uvindex /100, si1145_uvindex %100);
 #endif
     }
-  } else {
-    si1145_type = 0;
   }
 }
 
@@ -355,18 +375,23 @@ bool Xsns24(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_EVERY_SECOND:
-      Si1145Update();
-      break;
-    case FUNC_JSON_APPEND:
-      Si1145Show(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      Si1145Show(0);
-      break;
-#endif  // USE_WEBSERVER
+  if (FUNC_INIT == function) {
+    Si1145Detect();
+  }
+  else if (si1145_type) {
+    switch (function) {
+      case FUNC_EVERY_SECOND:
+        Si1145Update();
+        break;
+      case FUNC_JSON_APPEND:
+        Si1145Show(1);
+        break;
+  #ifdef USE_WEBSERVER
+      case FUNC_WEB_SENSOR:
+        Si1145Show(0);
+        break;
+  #endif  // USE_WEBSERVER
+    }
   }
   return result;
 }

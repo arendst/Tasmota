@@ -22,7 +22,8 @@
 /*********************************************************************************************\
  * PCF8574 - I2C IO Expander
  *
- * I2C Address: PCF8574 = 0x20 .. 0x27, PCF8574A = 0x38 .. 0x3F
+ * I2C Address: PCF8574  = 0x20 .. 0x27 (0x27 is not supported),
+ *              PCF8574A = 0x39 .. 0x3F (0x38 is not supported)
 \*********************************************************************************************/
 
 #define XDRV_28           28
@@ -39,7 +40,7 @@ struct PCF8574 {
   uint8_t max_connected_ports = 0;        // Max numbers of devices comming from PCF8574 modules
   uint8_t max_devices = 0;                // Max numbers of PCF8574 modules
   char stype[9];
-  bool type = true;
+  bool type = false;
 } Pcf8574;
 
 void Pcf8574SwitchRelay(void)
@@ -73,10 +74,8 @@ void Pcf8574SwitchRelay(void)
 
 void Pcf8574Init()
 {
-  Pcf8574.type = false;
-
   uint8_t pcf8574_address = PCF8574_ADDR1;
-  for (uint32_t i = 0; i < MAX_PCF8574; i++) {
+  while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +8)) {
 
   //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PCF: Probing addr: 0x%x for PCF8574"), pcf8574_address);
 
@@ -90,15 +89,15 @@ void Pcf8574Init()
       if (pcf8574_address >= PCF8574_ADDR2) {
         strcpy(Pcf8574.stype, "PCF8574A");
       }
-      AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, Pcf8574.stype, pcf8574_address);
+      I2cSetActiveFound(pcf8574_address, Pcf8574.stype);
     }
+
     pcf8574_address++;
-    if ((PCF8574_ADDR1 + 8) == pcf8574_address) {
-      pcf8574_address = PCF8574_ADDR2;
-      i=0;
+    if ((PCF8574_ADDR1 +7) == pcf8574_address) {  // Support I2C addresses 0x20 to 0x26 and 0x39 to 0x3F
+      pcf8574_address = PCF8574_ADDR2 +1;
     }
   }
-  if (Pcf8574.max_devices) {
+  if (Pcf8574.type) {
     for (uint32_t i = 0; i < sizeof(Pcf8574.pin); i++) {
       Pcf8574.pin[i] = 99;
     }
@@ -222,25 +221,27 @@ void Pcf8574SaveSettings()
 
 bool Xdrv28(uint8_t function)
 {
-  if (!I2cEnabled(XI2C_02) || !Pcf8574.type) { return false; }
+  if (!I2cEnabled(XI2C_02)) { return false; }
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_SET_POWER:
-      Pcf8574SwitchRelay();
-      break;
+  if (FUNC_PRE_INIT == function) {
+    Pcf8574Init();
+  }
+  else if (Pcf8574.type) {
+    switch (function) {
+      case FUNC_SET_POWER:
+        Pcf8574SwitchRelay();
+        break;
 #ifdef USE_WEBSERVER
-    case FUNC_WEB_ADD_BUTTON:
-      WSContentSend_P(HTTP_BTN_MENU_PCF8574);
-      break;
-    case FUNC_WEB_ADD_HANDLER:
-      WebServer->on("/" WEB_HANDLE_PCF8574, HandlePcf8574);
-      break;
+      case FUNC_WEB_ADD_BUTTON:
+        WSContentSend_P(HTTP_BTN_MENU_PCF8574);
+        break;
+      case FUNC_WEB_ADD_HANDLER:
+        WebServer->on("/" WEB_HANDLE_PCF8574, HandlePcf8574);
+        break;
 #endif  // USE_WEBSERVER
-    case FUNC_PRE_INIT:
-      Pcf8574Init();
-      break;
+    }
   }
   return result;
 }

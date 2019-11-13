@@ -429,6 +429,12 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic)
   MqttPublishPrefixTopic_P(prefix, subtopic, false);
 }
 
+void MqttPublishTeleSensor(void)
+{
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+  XdrvRulesProcess();
+}
+
 void MqttPublishPowerState(uint32_t device)
 {
   char stopic[TOPSZ];
@@ -552,7 +558,9 @@ void MqttConnected(void)
     Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"), (GetResetReason() == "Exception") ? ESP.getResetInfo().c_str() : GetResetReason().c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
     MqttPublishAllPowerState();
-    if (Settings.tele_period) { tele_period = Settings.tele_period -9; }  // Enable TelePeriod in 9 seconds
+    if (Settings.tele_period) {
+      tele_period = Settings.tele_period -5;  // Enable TelePeriod in 5 seconds
+    }
     rules_flag.system_boot = 1;
     XdrvCall(FUNC_MQTT_INIT);
   }

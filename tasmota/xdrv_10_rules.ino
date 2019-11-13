@@ -425,16 +425,15 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     if (plen == -1) { plen = 9999; }
     if (plen2 == -1) { plen2 = 9999; }
     plen = tmin(plen, plen2);
-    if (plen == plen2) { stop_all_rules = true; }         // If BREAK was used, Stop execution of this rule set
 
     String commands = rules.substring(pevt +4, plen);     // "Backlog Dimmer 10;Color 100000"
-    plen += 6;
     Rules.event_value = "";
     String event = event_saved;
 
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 
     if (RulesRuleMatch(rule_set, event, event_trigger)) {
+      if (plen == plen2) { stop_all_rules = true; }         // If BREAK was used on a triggered rule, Stop execution of this rule set
       commands.trim();
       String ucommand = commands;
       ucommand.toUpperCase();
@@ -473,6 +472,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       serviced = true;
       if (stop_all_rules) { return serviced; }            // If BREAK was used, Stop execution of this rule set
     }
+    plen += 6;
     Rules.trigger_count[rule_set]++;
   }
   return serviced;

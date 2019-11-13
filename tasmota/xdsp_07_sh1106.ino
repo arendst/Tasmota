@@ -62,7 +62,7 @@ void SH1106InitDriver()
   }
 
   if (XDSP_07 == Settings.display_model) {
-    AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, "OLED", Settings.display_address[0]);
+    I2cSetActiveFound(Settings.display_address[0], "SH1106");
 
     if (Settings.display_width != SH1106_LCDWIDTH) {
       Settings.display_width = SH1106_LCDWIDTH;

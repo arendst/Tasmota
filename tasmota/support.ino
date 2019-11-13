@@ -1508,6 +1508,12 @@ void I2cSetActive(uint32_t addr, uint32_t count = 1)
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("I2C: Active %08X,%08X,%08X,%08X"), i2c_active[0], i2c_active[1], i2c_active[2], i2c_active[3]);
 }
 
+void I2cSetActiveFound(uint32_t addr, const char *types)
+{
+  I2cSetActive(addr);
+  AddLog_P2(LOG_LEVEL_INFO, S_LOG_I2C_FOUND_AT, types, addr);
+}
+
 bool I2cActive(uint32_t addr)
 {
   addr &= 0x7F;         // Max I2C address is 127

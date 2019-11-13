@@ -879,7 +879,16 @@ public:
       // We apply dimmer in priority to RGB
       uint8_t bri = _state->DimmerToBri(Settings.light_dimmer);
       if (Settings.light_color[0] + Settings.light_color[1] + Settings.light_color[2] > 0) {
-        _state->setColorMode(LCM_RGB);
+        // The default values are #FFFFFFFFFF, in this case we avoid setting all channels
+        // at the same time, see #6534
+        if ( (DEFAULT_LIGHT_COMPONENT == Settings.light_color[0]) &&
+             (DEFAULT_LIGHT_COMPONENT == Settings.light_color[1]) &&
+             (DEFAULT_LIGHT_COMPONENT == Settings.light_color[2]) &&
+             (DEFAULT_LIGHT_COMPONENT == Settings.light_color[3]) &&
+             (DEFAULT_LIGHT_COMPONENT == Settings.light_color[4]) &&
+             (DEFAULT_LIGHT_DIMMER    == Settings.light_dimmer) ) {
+          _state->setColorMode(LCM_RGB);
+        }
         _state->setBriRGB(bri);
       } else {
         _state->setBriCT(bri);
@@ -1674,15 +1683,15 @@ void LightAnimate(void)
       //     Light.power, Light.new_color[0], Light.new_color[1], Light.new_color[2],
       //     Light.new_color[3], Light.new_color[4]);
       // #endif
-    }
-
-    if (!light_controller.isCTRGBLinked()) {
-      // we have 2 power bits for RGB and White
-      if (0 == (Light.power & 1)) {
-        Light.new_color[0] = Light.new_color[1] = Light.new_color[2] = 0;
-      }
-      if (0 == (Light.power & 2)) {
-        Light.new_color[3] = Light.new_color[4] = 0;
+    } else {
+      if (!light_controller.isCTRGBLinked()) {
+        // we have 2 power bits for RGB and White
+        if (0 == (Light.power & 1)) {
+          Light.new_color[0] = Light.new_color[1] = Light.new_color[2] = 0;
+        }
+        if (0 == (Light.power & 2)) {
+          Light.new_color[3] = Light.new_color[4] = 0;
+        }
       }
     }
 
@@ -1901,6 +1910,11 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
   }
 
   memset(&Light.entry_color, 0x00, sizeof(Light.entry_color));
+  // erase all channels except if the last character is '=', #6799
+  while ((buffer_length > 0) && ('=' == buffer[buffer_length - 1])) {
+    buffer_length--;  // remove all trailing '='            
+    memcpy(&Light.entry_color, &Light.current_color, sizeof(Light.entry_color));
+  }
   if (strstr(buffer, ",") != nullptr) {             // Decimal entry
     int8_t i = 0;
     for (str = strtok_r(buffer, ",", &p); str && i < 6; str = strtok_r(nullptr, ",", &p)) {

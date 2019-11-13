@@ -30,7 +30,6 @@
 
 #ifdef USE_I2C
 #ifdef USE_PAJ7620
-
 /*********************************************************************************************\
  * PAJ7620 - Gesture sensor
  *
@@ -38,34 +37,34 @@
 \*********************************************************************************************/
 
 #define XSNS_50                     50
-#define XI2C_34                     34  // See I2CDEVICES.md
+#define XI2C_34                     34              // See I2CDEVICES.md
 
-#define PAJ7620_ADDR                0x73              // standard address
+#define PAJ7620_ADDR                0x73            // standard address
 
-#define PAJ7620_BANK_SEL		        0xEF 	            // 8 bit, write -> 0 or 1
+#define PAJ7620_BANK_SEL		        0xEF 	          // 8 bit, write -> 0 or 1
 
 // the registers are organized in 2 banks
 // bank: 0
-#define PAJ7620_GET_GESTURE           0x43            // 8 bit, read
-#define PAJ7620_PROXIMITY_AVG_Y       0x6c            // 8 bit, read -> 255: near , lower numbers: far
+#define PAJ7620_GET_GESTURE         0x43            // 8 bit, read
+#define PAJ7620_PROXIMITY_AVG_Y     0x6c            // 8 bit, read -> 255: near , lower numbers: far
 
-#define PAJ7620_OBJECT_CENTER_X       0xad						// 5 bit, read
-#define PAJ7620_OBJECT_CENTER_Y       0xaf						// 5 bit, read
+#define PAJ7620_OBJECT_CENTER_X     0xad						// 5 bit, read
+#define PAJ7620_OBJECT_CENTER_Y     0xaf						// 5 bit, read
 
-#define PAJ7620_DOWN                  1               // readings from PAJ7620_GET_GESTURE
-#define PAJ7620_UP                    2
-#define PAJ7620_RIGHT                 4
-#define PAJ7620_LEFT                  8
-#define PAJ7620_NEAR                  16
-#define PAJ7620_FAR                   32
-#define PAJ7620_CW                    64
-#define PAJ7620_CCW                   128
+#define PAJ7620_DOWN                1               // readings from PAJ7620_GET_GESTURE
+#define PAJ7620_UP                  2
+#define PAJ7620_RIGHT               4
+#define PAJ7620_LEFT                8
+#define PAJ7620_NEAR                16
+#define PAJ7620_FAR                 32
+#define PAJ7620_CW                  64
+#define PAJ7620_CCW                 128
 
 // bank: 1
 // nothing at the moment
 
 const uint8_t PAJ7620initRegisterArray[][2] PROGMEM = {	// set all needed registers
-    {0xEF,0x00},  // bank 0
+  {0xEF,0x00},  // bank 0
 	{0x32,0x29},	{0x33,0x01},	{0x34,0x00},  {0x35,0x01},	{0x36,0x00},	{0x37,0x07},	{0x38,0x17},	{0x39,0x06},
 	{0x3A,0x12},	{0x3F,0x00},	{0x40,0x02},	{0x41,0xFF},	{0x42,0x01},	{0x46,0x2D},	{0x47,0x0F},	{0x48,0x3C},
 	{0x49,0x00},	{0x4A,0x1E},	{0x4B,0x00},	{0x4C,0x20},	{0x4D,0x00},	{0x4E,0x1A},	{0x4F,0x14},	{0x50,0x00},
@@ -102,50 +101,15 @@ const uint8_t PAJ7620initRegisterArray[][2] PROGMEM = {	// set all needed regist
  * constants
 \*********************************************************************************************/
 
-#define D_CMND_PAJ7620 "PAJ7620"
-
-const char S_JSON_PAJ7620_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_PAJ7620 "%s\":%d}";
-
-const char kPAJ7620Types[] PROGMEM = "PAJ7620";
+const char kPaj7620Directions[] PROGMEM = "Down|Up|Right|Left|Near|Far|CW|CCW";
 
 const uint8_t PAJ7620_PIN[]= {1,2,3,4}; // TOP-SECRET!! ;)
-
-
-/*********************************************************************************************\
- * helper function
-\*********************************************************************************************/
-
-void PAJ7620SelectBank(uint8_t bank)
-{
-  switch(bank){
-		case 0:
-      I2cWrite(PAJ7620_ADDR, PAJ7620_BANK_SEL, 0, 1);
-			break;
-		case 1:
-      I2cWrite(PAJ7620_ADDR, PAJ7620_BANK_SEL, 1, 1);
-			break;
-		default:
-			break;
-	}
-}
-
-/********************************************************************************************/
-
-void PAJ7620TriggerTele(){
-  mqtt_data[0] = '\0';
-  if (MqttShowSensor()) {
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
-#ifdef USE_RULES
-    RulesTeleperiod();  // Allow rule based HA messages
-#endif  // USE_RULES
-  }
-}
 
 /********************************************************************************************\
 | *globals
 \*********************************************************************************************/
 
-char       PAJ7620_name[9];
+char PAJ7620_name[] = "PAJ7620";
 
 uint32_t PAJ7620_timeout_counter = 10;    // the time interval is 100 ms -> i.e. 10 is 1 second (= start up interval)
 uint32_t PAJ7620_next_job = 0;            // 0 = detect, 1 = init, 2 = wait for gesture, 255 = sensor not found and do nothing
@@ -176,46 +140,29 @@ struct{
     } PIN;
 } PAJ7620_state;
 
-/********************************************************************************************/
+/*********************************************************************************************\
+ * helper function
+\*********************************************************************************************/
+
+void PAJ7620SelectBank(uint8_t bank)
+{
+  I2cWrite(PAJ7620_ADDR, PAJ7620_BANK_SEL, bank &1, 1);
+}
 
 /********************************************************************************************/
+
 void PAJ7620DecodeGesture(void)
 {
-  switch (PAJ7620_gesture.current) { // we will accept only "clean" recognized gestures, the sensor can report multiple gestures at once via bitfield, but these are discarded
-    case PAJ7620_DOWN:
-      DEBUG_SENSOR_LOG(PSTR("DOWN"));
-      snprintf_P(PAJ7620_currentGestureName, sizeof(PAJ7620_currentGestureName), PSTR("Down"));
-      if(PAJ7620_gesture.unfinished){            // for better recognition of NEAR and FAR
-        PAJ7620_finished_gesture = true;      // consider the gesture finished only in the second try, this adds some delay for up,down,left,right
-        break;
-      }
-      PAJ7620_gesture.unfinished = PAJ7620_gesture.current;  // save the gesture, maybe it will be the final one
-      PAJ7620_timeout_counter = 5; // 0.5 (plus 0.3) seconds time interval to go into the sensing area and change movement to NEAR or FAR
-      break;
-    case PAJ7620_UP:
-      DEBUG_SENSOR_LOG(PSTR("UP"));
-      snprintf_P(PAJ7620_currentGestureName, sizeof(PAJ7620_currentGestureName), PSTR("Up"));
-      if(PAJ7620_gesture.unfinished){
-        PAJ7620_finished_gesture = true;
-        break;
-      }
-      PAJ7620_gesture.unfinished = PAJ7620_gesture.current;
-      PAJ7620_timeout_counter = 5;
-      break;
-    case PAJ7620_RIGHT:
-      DEBUG_SENSOR_LOG(PSTR("RIGHT"));
-      snprintf_P(PAJ7620_currentGestureName, sizeof(PAJ7620_currentGestureName), PSTR("Right"));
-      if(PAJ7620_gesture.unfinished){
-        PAJ7620_finished_gesture = true;
-        break;
-      }
-      PAJ7620_gesture.unfinished = PAJ7620_gesture.current;
-      PAJ7620_timeout_counter = 5;
-      break;
+  uint32_t index = 0;
+  switch (PAJ7620_gesture.current) {  // We will accept only "clean" recognized gestures, the sensor can report multiple gestures at once via bitfield, but these are discarded
     case PAJ7620_LEFT:
-      DEBUG_SENSOR_LOG(PSTR("LEFT"));
-      snprintf_P(PAJ7620_currentGestureName, sizeof(PAJ7620_currentGestureName), PSTR("Left"));
-      if(PAJ7620_gesture.unfinished){
+      index++;  // 3
+    case PAJ7620_RIGHT:
+      index++;  // 2
+    case PAJ7620_UP:
+      index++;  // 1
+    case PAJ7620_DOWN:
+      if (PAJ7620_gesture.unfinished) {
         PAJ7620_finished_gesture = true;
         break;
       }
@@ -223,143 +170,138 @@ void PAJ7620DecodeGesture(void)
       PAJ7620_timeout_counter = 5;
       break;
     case PAJ7620_NEAR:
-      DEBUG_SENSOR_LOG(PSTR("NEAR"));
-      snprintf_P(PAJ7620_currentGestureName, sizeof(PAJ7620_currentGestureName), PSTR("Near"));
+      index = 4;
       PAJ7620_finished_gesture = true;
       PAJ7620_timeout_counter = 25; // more time to "escape" from gesture (will be 2.8 second)
       break;
     case PAJ7620_FAR:
-      DEBUG_SENSOR_LOG(PSTR("FAR"));
-      snprintf_P(PAJ7620_currentGestureName, sizeof(PAJ7620_currentGestureName), PSTR("Far"));
+      index = 5;
       PAJ7620_finished_gesture = true;
       PAJ7620_timeout_counter = 25;
       break;
     case PAJ7620_CW:
-      DEBUG_SENSOR_LOG(PSTR("ClockWise"));
-      snprintf_P(PAJ7620_currentGestureName, sizeof(PAJ7620_currentGestureName), PSTR("CW"));
+      index = 6;
       PAJ7620_finished_gesture = true;
       break;
     case PAJ7620_CCW:
-      DEBUG_SENSOR_LOG(PSTR("CounterClockWise"));
-      snprintf_P(PAJ7620_currentGestureName, sizeof(PAJ7620_currentGestureName), PSTR("CCW"));
+      index = 7;
       PAJ7620_finished_gesture = true;
       break;
     default:
-      if(PAJ7620_gesture.unfinished){
+      index = 8;
+      if (PAJ7620_gesture.unfinished) {
         PAJ7620_finished_gesture = true; // this will finish up, down, left, right
-        break;
       }
       break;
   }
-if(PAJ7620_finished_gesture){
-  if (PAJ7620_gesture.unfinished){
-    if(PAJ7620_gesture.current!=PAJ7620_NEAR && PAJ7620_gesture.current!=PAJ7620_FAR){
-      PAJ7620_gesture.current = PAJ7620_gesture.unfinished; // to count correctly for up, down, right, left
-      }
+  if (index < 8) {
+    GetTextIndexed(PAJ7620_currentGestureName, sizeof(PAJ7620_currentGestureName), index, kPaj7620Directions);
   }
-  if (PAJ7620_gesture.current == PAJ7620_gesture.last){
-    PAJ7620_gesture.same++;
+
+  if (PAJ7620_finished_gesture) {
+    if (PAJ7620_gesture.unfinished) {
+      if ((PAJ7620_gesture.current != PAJ7620_NEAR) && (PAJ7620_gesture.current != PAJ7620_FAR)) {
+        PAJ7620_gesture.current = PAJ7620_gesture.unfinished; // to count correctly for up, down, right, left
+      }
     }
-  else{
-    PAJ7620_gesture.same = 1;
+    if (PAJ7620_gesture.current == PAJ7620_gesture.last) {
+      PAJ7620_gesture.same++;
+    } else {
+      PAJ7620_gesture.same = 1;
     }
-  PAJ7620_gesture.last = PAJ7620_gesture.current;
-  PAJ7620_finished_gesture = false;
-  PAJ7620_gesture.unfinished = 0;
-  PAJ7620_timeout_counter += 3; // add delay 0.3 seconds for every kind of gesture
-  PAJ7620TriggerTele();
+    PAJ7620_gesture.last = PAJ7620_gesture.current;
+    PAJ7620_finished_gesture = false;
+    PAJ7620_gesture.unfinished = 0;
+    PAJ7620_timeout_counter += 3; // add delay 0.3 seconds for every kind of gesture
+    MqttPublishSensor();
   }
 }
 
 /********************************************************************************************/
-void PAJ7620ReadGesture(void){
-  switch(PAJ7620_mode){
+
+void PAJ7620ReadGesture(void)
+{
+  switch (PAJ7620_mode) {
     case 1:
-    PAJ7620_gesture.current = I2cRead8(PAJ7620_ADDR,PAJ7620_GET_GESTURE);
-    if(PAJ7620_gesture.current > 0 || PAJ7620_gesture.unfinished){
-      DEBUG_SENSOR_LOG(PSTR("PAJ7620: gesture: %u"),PAJ7620_gesture.current );
-      PAJ7620DecodeGesture();
+      PAJ7620_gesture.current = I2cRead8(PAJ7620_ADDR,PAJ7620_GET_GESTURE);
+      if ((PAJ7620_gesture.current > 0) || PAJ7620_gesture.unfinished) {
+        DEBUG_SENSOR_LOG(PSTR("PAJ: gesture: %u"), PAJ7620_gesture.current);
+        PAJ7620DecodeGesture();
       }
-
-    break;
+      break;
     case 2:
-    PAJ7620_state.proximity = I2cRead8(PAJ7620_ADDR, PAJ7620_PROXIMITY_AVG_Y);
-    if((PAJ7620_state.proximity>0)||(PAJ7620_state.last_proximity>0))
-    {
-      if(PAJ7620_state.proximity!=PAJ7620_state.last_proximity){
-        PAJ7620_state.last_proximity = PAJ7620_state.proximity;
-        DEBUG_SENSOR_LOG(PSTR("PAJ7620: Proximity: %u"),PAJ7620_state.proximity );
-        PAJ7620TriggerTele();
+      PAJ7620_state.proximity = I2cRead8(PAJ7620_ADDR, PAJ7620_PROXIMITY_AVG_Y);
+      if ((PAJ7620_state.proximity > 0) || (PAJ7620_state.last_proximity > 0)) {
+        if (PAJ7620_state.proximity != PAJ7620_state.last_proximity) {
+          PAJ7620_state.last_proximity = PAJ7620_state.proximity;
+          DEBUG_SENSOR_LOG(PSTR("PAJ: Proximity: %u"), PAJ7620_state.proximity);
+          MqttPublishSensor();
+        }
       }
-    }
-    break;
-    case 3: case 4: case 5:
-    PAJ7620_state.x = I2cRead8(PAJ7620_ADDR, PAJ7620_OBJECT_CENTER_X);
-    PAJ7620_state.y = I2cRead8(PAJ7620_ADDR, PAJ7620_OBJECT_CENTER_Y);
-    if(PAJ7620_state.y>0 && PAJ7620_state.x>0){
-      if(PAJ7620_state.y!=PAJ7620_state.last_y || PAJ7620_state.x!=PAJ7620_state.last_x){
-        PAJ7620_state.last_y = PAJ7620_state.y;
-        PAJ7620_state.last_x = PAJ7620_state.x;
-        DEBUG_SENSOR_LOG(PSTR("PAJ7620: x: %u   y: %u"), PAJ7620_state.x, PAJ7620_state.y);
+      break;
+    case 3:
+    case 4:
+    case 5:
+      PAJ7620_state.x = I2cRead8(PAJ7620_ADDR, PAJ7620_OBJECT_CENTER_X);
+      PAJ7620_state.y = I2cRead8(PAJ7620_ADDR, PAJ7620_OBJECT_CENTER_Y);
+      if ((PAJ7620_state.y > 0) && (PAJ7620_state.x > 0)) {
+        if ((PAJ7620_state.y != PAJ7620_state.last_y) || (PAJ7620_state.x != PAJ7620_state.last_x)) {
+          PAJ7620_state.last_y = PAJ7620_state.y;
+          PAJ7620_state.last_x = PAJ7620_state.x;
+          DEBUG_SENSOR_LOG(PSTR("PAJ: x: %u   y: %u"), PAJ7620_state.x, PAJ7620_state.y);
 
-        PAJ7620_state.corner = 0;
-        // 1|2
-        // ---
-        // 3|4
-        switch(PAJ7620_state.y){
-          case 0: case 1: case 2: case 3: case 4: case 5:// case 0..5: would be nicer
-            PAJ7620_state.corner = 3;
-            break;
-          case 9: case 10: case 11: case 12: case 13: case 14:
-            PAJ7620_state.corner = 1;
-            break;
-          default:
-          break;
-        }
-        if(PAJ7620_state.corner!=0){
-          switch(PAJ7620_state.x){
-          case 0: case 1: case 2: case 3: case 4: case 5:
-            break;
-          case 9: case 10: case 11: case 12: case 13: case 14:
-            PAJ7620_state.corner++;
-            break;
-          default:
           PAJ7620_state.corner = 0;
-          break;
+          // 1|2
+          // ---
+          // 3|4
+          switch (PAJ7620_state.y) {
+            case 0: case 1: case 2: case 3: case 4: case 5:// case 0..5: would be nicer
+              PAJ7620_state.corner = 3;
+              break;
+            case 9: case 10: case 11: case 12: case 13: case 14:
+              PAJ7620_state.corner = 1;
+              break;
           }
-        }
-        DEBUG_SENSOR_LOG(PSTR("PAJ7620: corner: %u"), PAJ7620_state.corner);
-        // PIN-part:
-        if(PAJ7620_state.PIN.countdown == 0){
-            PAJ7620_state.PIN.step=0;
-            PAJ7620_state.PIN.valid=0;
-        }
-        if(!PAJ7620_state.PIN.step){
-          if(PAJ7620_state.corner == PAJ7620_PIN[PAJ7620_state.PIN.step]){
-            PAJ7620_state.PIN.step=1;
-            PAJ7620_state.PIN.countdown=7;
+          if (PAJ7620_state.corner != 0) {
+            switch (PAJ7620_state.x) {
+              case 0: case 1: case 2: case 3: case 4: case 5:
+                break;
+              case 9: case 10: case 11: case 12: case 13: case 14:
+                PAJ7620_state.corner++;
+                break;
+              default:
+                PAJ7620_state.corner = 0;
+                break;
+            }
           }
-        }
-        else{
-          if(PAJ7620_state.corner == PAJ7620_PIN[PAJ7620_state.PIN.step]){
-            PAJ7620_state.PIN.step+=1;
-            PAJ7620_state.PIN.countdown=7;
+          DEBUG_SENSOR_LOG(PSTR("PAJ: corner: %u"), PAJ7620_state.corner);
+          // PIN-part:
+          if (PAJ7620_state.PIN.countdown == 0) {
+            PAJ7620_state.PIN.step = 0;
+            PAJ7620_state.PIN.valid = 0;
           }
-          else{
-            PAJ7620_state.PIN.countdown-=1;
+          if (!PAJ7620_state.PIN.step) {
+            if (PAJ7620_state.corner == PAJ7620_PIN[PAJ7620_state.PIN.step]) {
+              PAJ7620_state.PIN.step = 1;
+              PAJ7620_state.PIN.countdown = 7;
+            }
+          } else {
+            if (PAJ7620_state.corner == PAJ7620_PIN[PAJ7620_state.PIN.step]) {
+              PAJ7620_state.PIN.step += 1;
+              PAJ7620_state.PIN.countdown = 7;
+            } else {
+              PAJ7620_state.PIN.countdown -= 1;
+            }
           }
+          if (PAJ7620_state.PIN.step == 4) {
+            PAJ7620_state.PIN.valid = 1;
+            DEBUG_SENSOR_LOG(PSTR("PAJ: PIN valid!!"));
+            PAJ7620_state.PIN.countdown = 0; // will restart in the next loop
+          }
+          MqttPublishSensor();
         }
-        if(PAJ7620_state.PIN.step == 4){
-          PAJ7620_state.PIN.valid = 1;
-          DEBUG_SENSOR_LOG(PSTR("PAJ7620: PIN valid!!"));
-          PAJ7620_state.PIN.countdown = 0; // will restart in the next loop
-        }
-        PAJ7620TriggerTele();
-        }
-    }
-    break;
-    default:
-    break;
+      }
+      break;
   }
 }
 
@@ -367,168 +309,113 @@ void PAJ7620ReadGesture(void){
 
 void PAJ7620Detect(void)
 {
-  DEBUG_SENSOR_LOG(PSTR("PAJ7620: scan will start ..."));
+  if (I2cActive(PAJ7620_ADDR)) { return; }
+
   PAJ7620SelectBank(0);
   PAJ7620SelectBank(0); // do it twice
   uint16_t PAJ7620_id = I2cRead16LE(PAJ7620_ADDR,0); // read ID from reg 1 and 0
 	uint8_t PAJ7620_ver = I2cRead8(PAJ7620_ADDR,2);
-  if (PAJ7620_id == 0x7620) { // this device ID makes sense ;)
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PAJ7620: sensor found with ID: 0x%x and VER: %u"), PAJ7620_id, PAJ7620_ver);
-    uint8_t PAJ7620_model = 0;
-    GetTextIndexed(PAJ7620_name, sizeof(PAJ7620_name), PAJ7620_model, kPAJ7620Types);
+  if (0x7620 == PAJ7620_id) { // this device ID makes sense ;)
+    I2cSetActiveFound(PAJ7620_ADDR, PAJ7620_name);
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("PAJ: ID: 0x%x and VER: %u"), PAJ7620_id, PAJ7620_ver);
     PAJ7620_next_job = 1; // now init
   }
   else {
-    DEBUG_SENSOR_LOG(PSTR("PAJ7620: sensor not found, false ID 0x%x"), PAJ7620_id);
-    PAJ7620_next_job = 255; // do not loop
+    DEBUG_SENSOR_LOG(PSTR("PAJ: sensor not found, false ID 0x%x"), PAJ7620_id);
   }
 }
 
 /********************************************************************************************/
+
 void PAJ7620Init(void)
 {
-  DEBUG_SENSOR_LOG(PSTR("PAJ7620: init sensor start %u"),millis());
+  DEBUG_SENSOR_LOG(PSTR("PAJ: init sensor start %u"),millis());
   union{
     uint32_t raw;
     uint8_t reg_val[4];
   } buf;
-  for(uint32_t i = 0; i < (sizeof(PAJ7620initRegisterArray)/2); i+=2)
+
+  for (uint32_t i = 0; i < (sizeof(PAJ7620initRegisterArray) / 2); i += 2)
 	{
-    buf.raw = pgm_read_dword(PAJ7620initRegisterArray+i);
-    DEBUG_SENSOR_LOG("%x %x %x %x",buf.reg_val[0],buf.reg_val[1],buf.reg_val[2],buf.reg_val[3]);
+    buf.raw = pgm_read_dword(PAJ7620initRegisterArray + i);
+    DEBUG_SENSOR_LOG("PAJ: %x %x %x %x",buf.reg_val[0],buf.reg_val[1],buf.reg_val[2],buf.reg_val[3]);
     I2cWrite(PAJ7620_ADDR, buf.reg_val[0], buf.reg_val[1], 1);
     I2cWrite(PAJ7620_ADDR, buf.reg_val[2], buf.reg_val[3], 1);
 	}
-  DEBUG_SENSOR_LOG(PSTR("PAJ7620: init sensor done %u"),millis());
+  DEBUG_SENSOR_LOG(PSTR("PAJ: init sensor done %u"),millis());
   PAJ7620_next_job = 2; // now loop and wait for gestures
 }
 
 /********************************************************************************************/
 
-void PAJ7620SelectMode(uint16_t mode){
-	DEBUG_SENSOR_LOG(PSTR("PAJ7620: set mode to %u"),mode);
-	switch(mode){
-		case 0:
-    PAJ7620_mode = 0;
-		break;
-		case 1:
-    PAJ7620_mode = 1;
-    break;
-    case 2:
-    PAJ7620_mode = 2;
-    break;
-    case 3:
-    PAJ7620_mode = 3;
-    break;
-    case 4:
-    PAJ7620_mode = 4;
-    break;
-    case 5:
-    PAJ7620_mode = 5;
-    break;
-		default:
-		break;
-	}
-}
-/********************************************************************************************/
-
 void PAJ7620Loop(void)
 {
-  if(PAJ7620_timeout_counter == 0){
-    switch(PAJ7620_next_job){
-      case 0:
-      PAJ7620Detect();
-      break;
+  if (0 == PAJ7620_timeout_counter) {
+    switch (PAJ7620_next_job) {
       case 1:
-      PAJ7620Init();
-      break;
+        PAJ7620Init();
+        break;
       case 2:
-			if(PAJ7620_mode != 0){
-				PAJ7620ReadGesture();
-				}
-      break;
-      default:
-      break;
+        if (PAJ7620_mode != 0) {
+          PAJ7620ReadGesture();
+        }
+        break;
     }
-  }
-  else {
+  } else {
     PAJ7620_timeout_counter--;
   }
 }
-
-/********************************************************************************************/
-// normaly in i18n.h
-
-#define D_JSON_PAJ7620 "PAJ7620"
-
-#ifdef USE_WEBSERVER
-  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-
- const char HTTP_SNS_PAJ7620[] PROGMEM = "{s} " D_JSON_PAJ7620 ": {m}%s {e}";
- const char HTTP_SNS_PAJ7620VER[] PROGMEM = "{s} PAJ7620 at address: {m}0x73{e}"
-                                          "{s} version: {m}1 {e}";  // only hard-coded ATM                                                                                          ;
-
-#endif  // USE_WEBSERVER
-
 
 /********************************************************************************************/
 
 void PAJ7620Show(bool json)
 {
   if (json) {
-    if((PAJ7620_currentGestureName[0] != '\0' )){
+    if (PAJ7620_currentGestureName[0] != '\0' ) {
       ResponseAppend_P(PSTR(",\"%s\":{\"%s\":%u}"), PAJ7620_name, PAJ7620_currentGestureName, PAJ7620_gesture.same);
       PAJ7620_currentGestureName[0] = '\0';
       return;
     }
-    switch(PAJ7620_mode){
+    switch (PAJ7620_mode) {
       case 2:
-      if(PAJ7620_mode>1){
         ResponseAppend_P(PSTR(",\"%s\":{\"Proximity\":%u}"), PAJ7620_name, PAJ7620_state.proximity);
-      }
-      break;
+        break;
       case 3:
-      if(PAJ7620_mode>1 && PAJ7620_state.corner>0){
-        ResponseAppend_P(PSTR(",\"%s\":{\"Corner\":%u}"), PAJ7620_name, PAJ7620_state.corner);
-      }
-      break;
+        if (PAJ7620_state.corner > 0) {
+          ResponseAppend_P(PSTR(",\"%s\":{\"Corner\":%u}"), PAJ7620_name, PAJ7620_state.corner);
+        }
+        break;
       case 4:
-      if(PAJ7620_mode>1 && PAJ7620_state.PIN.valid){
-        ResponseAppend_P(PSTR(",\"%s\":{\"PIN\":%u}"), PAJ7620_name, 1); //TODO:  more than one PIN
-        PAJ7620_state.PIN.valid = 0;
-      }
-      break;
+        if (PAJ7620_state.PIN.valid) {
+          ResponseAppend_P(PSTR(",\"%s\":{\"PIN\":%u}"), PAJ7620_name, 1); //TODO:  more than one PIN
+          PAJ7620_state.PIN.valid = 0;
+        }
+        break;
       case 5:
-      if(PAJ7620_mode>1){
         ResponseAppend_P(PSTR(",\"%s\":{\"x\":%u,\"y\":%u}"), PAJ7620_name, PAJ7620_state.x, PAJ7620_state.y);
-      }
-      break;
-      default:
-      break;
+        break;
     }
-  #ifdef USE_WEBSERVER
-      } else {
-        WSContentSend_PD(HTTP_SNS_PAJ7620VER);
-  #endif  // USE_WEBSERVER
-      }
+  }
 }
 
 /*********************************************************************************************\
- * check the PAJ7620 commands
+ * Command Sensor50
+ *
+ * 1 - Gesture mode
+ * 2 - Proximity mode
+ * 3 - Corner mode
+ * 4 - PIN mode
+ * 5 - X/Y mode
 \*********************************************************************************************/
 
-bool PAJ7620Cmd(void) {
-  bool serviced = true;
-			if (XdrvMailbox.data_len > 0) {
-				DEBUG_SENSOR_LOG(PSTR("PAJ7620: got argument for mode"));
-        PAJ7620SelectMode(XdrvMailbox.payload);     //select mode
-        Response_P(S_JSON_PAJ7620_COMMAND_NVALUE, XdrvMailbox.command, XdrvMailbox.payload);
-        }
-      else {
-        DEBUG_SENSOR_LOG(PSTR("PAJ7620: show mode"));
-        Response_P(S_JSON_PAJ7620_COMMAND_NVALUE, XdrvMailbox.command, PAJ7620_mode);
-      }
-  return serviced;
+bool PAJ7620CommandSensor(void)
+{
+  if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 5)) {
+    PAJ7620_mode = XdrvMailbox.payload;
+  }
+  Response_P(S_JSON_SENSOR_INDEX_NVALUE, XSNS_50, PAJ7620_mode);
+
+  return true;
 }
 
 /*********************************************************************************************\
@@ -541,28 +428,23 @@ bool Xsns50(uint8_t function)
 
   bool result = false;
 
-  switch (function) {
-    case FUNC_INIT:
-      DEBUG_SENSOR_LOG(PSTR("PAJ7620: 1 second until init"));
-      break;
-    case FUNC_COMMAND_SENSOR:
-      if (XSNS_50 == XdrvMailbox.index){
-        result = PAJ7620Cmd();
-      }
-      break;
-    case FUNC_EVERY_100_MSECOND:
-      if(PAJ7620_next_job <255) {
+  if (FUNC_INIT == function) {
+    PAJ7620Detect();
+  }
+  else if (PAJ7620_next_job) {
+    switch (function) {
+      case FUNC_COMMAND_SENSOR:
+        if (XSNS_50 == XdrvMailbox.index){
+          result = PAJ7620CommandSensor();
+        }
+        break;
+      case FUNC_EVERY_100_MSECOND:
         PAJ7620Loop();
-      }
-      break;
-    case FUNC_JSON_APPEND:
-      PAJ7620Show(1);
-      break;
-#ifdef USE_WEBSERVER
-    case FUNC_WEB_SENSOR:
-      PAJ7620Show(0);
-      break;
-#endif  // USE_WEBSERVER
+        break;
+      case FUNC_JSON_APPEND:
+        PAJ7620Show(1);
+        break;
+    }
   }
   return result;
 }
