@@ -6,7 +6,7 @@ Tasmota can easily be extended by developers using provided function pointers as
 
 Callback availability can be checked by searching for either XdrvCall, XsnsCall, XdspCall, XnrgCall and XlgtCall.
 
-## Driver, Sensor and Energy Callback Ids
+## Driver, Sensor, Energy and Light Callback Ids
 
 The following table lists Callback Ids and their availability for a Driver, Sensor or Energy service.
 
@@ -84,6 +84,7 @@ FUNC_DISPLAY_ONOFF            |      |
 
 The following list shows a typical callback init sequence
 
+```
 CFG: Loaded from flash at FB, Count 1581
 xdrv - FUNC_SETTINGS_OVERRIDE
 xdrv - FUNC_PIN_STATE
@@ -146,3 +147,4 @@ MQT: stat/wemos2/RESULT = {"POWER2":"ON"}
 MQT: stat/wemos2/POWER2 = ON
 xdrv - FUNC_MQTT_INIT
 CFG: Saved to flash at FA, Count 1582, Bytes 4096
+```
