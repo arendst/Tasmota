@@ -113,7 +113,7 @@ float global_temperature = 9999;            // Provide a global temperature to b
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
 float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
 char *ota_url;                              // OTA url string pointer
-uint16_t tele_period = TELE_PERIOD_START;   // Tele period timer
+uint16_t tele_period = 9999;                // Tele period timer
 uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
 uint16_t blink_counter = 0;                 // Number of blink cycles
 uint16_t seriallog_timer = 0;               // Timer to disable Seriallog
@@ -846,26 +846,27 @@ void PerformEverySecond(void)
   ResetGlobalValues();
 
   if (Settings.tele_period) {
-    if (tele_period >= TELE_PERIOD_START) {
+    if (tele_period >= 9999) {
       if (!global_state.wifi_down) {
         tele_period = 0;  // Allow teleperiod once wifi is connected
       }
-    }
-    tele_period++;
-    if (tele_period == Settings.tele_period) {
-      tele_period = 0;
+    } else {
+      tele_period++;
+      if (tele_period >= Settings.tele_period) {
+        tele_period = 0;
 
-      MqttPublishTeleState();
+        MqttPublishTeleState();
 
-      mqtt_data[0] = '\0';
-      if (MqttShowSensor()) {
-        MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
+        mqtt_data[0] = '\0';
+        if (MqttShowSensor()) {
+          MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);  // CMND_SENSORRETAIN
 #if defined(USE_RULES) || defined(USE_SCRIPT)
-        RulesTeleperiod();  // Allow rule based HA messages
+          RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_RULES
-      }
+        }
 
-      XdrvCall(FUNC_AFTER_TELEPERIOD);
+        XdrvCall(FUNC_AFTER_TELEPERIOD);
+      }
     }
   }
 }

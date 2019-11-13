@@ -169,6 +169,11 @@ void CmndDeepsleepTime(void)
     Settings.deepsleep = XdrvMailbox.payload;
     RtcSettings.nextwakeup = 0;
     deepsleep_flag = (0 == XdrvMailbox.payload) ? 0 : 4;
+    if (deepsleep_flag) {
+      if (!Settings.tele_period) {
+        Settings.tele_period = TELE_PERIOD;  // Need teleperiod to go back to sleep
+      }
+    }
   }
   Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.deepsleep);
 }
