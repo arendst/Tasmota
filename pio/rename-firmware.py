@@ -9,4 +9,4 @@ def obj_ren_after_bin(source, target, env):
         os.remove(new_file)
     os.rename(str(target[0]), new_file)
 
-env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [obj_ren_after_bin]) 
+env.AddPostAction("$BUILD_DIR/${PROGNAME}.bin", [obj_ren_after_bin])
