@@ -612,6 +612,20 @@ char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
   return GetPowerDevice(dest, idx, size, 0);
 }
 
+String GetDeviceHardware(void)
+{
+  // esptool.py get_efuses
+  uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
+  uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
+//  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
+//  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FUS: efuses 0x%08X 0x%08X, name %s"), efuse1, efuse2);
+
+  bool is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
+  return String((is_8285) ? F("ESP8285") : F("ESP8266EX"));
+}
+
 float ConvertTemp(float c)
 {
   float result = c;
