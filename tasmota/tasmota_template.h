@@ -97,8 +97,8 @@ enum UserSelectablePins {
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
-  GPIO_SR04_TRIG,      // SR04 Trigger pin
-  GPIO_SR04_ECHO,      // SR04 Echo pin
+  GPIO_SR04_TRIG,      // SR04 Trigger/TX pin
+  GPIO_SR04_ECHO,      // SR04 Echo/RX pin
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
   GPIO_SDM630_TX,      // SDM630 Serial interface
@@ -603,8 +603,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_RF_SENSOR,      // Rf receiver with sensor decoding
 #endif
 #ifdef USE_SR04
-  GPIO_SR04_TRIG,      // SR04 Trigger pin
-  GPIO_SR04_ECHO,      // SR04 Echo pin
+  GPIO_SR04_TRIG,      // SR04 Tri/TXgger pin
+  GPIO_SR04_ECHO,      // SR04 Ech/RXo pin
 #endif
 #ifdef USE_TM1638
   GPIO_TM16CLK,        // TM1638 Clock
