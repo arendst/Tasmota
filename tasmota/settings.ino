@@ -542,7 +542,7 @@ void SettingsErase(uint8_t type)
     For Esptool:
     The only way to erase whole flash is esptool which uses direct SPI writes to flash.
 
-    The default erase function is EspTool (EsptoolEraseSector)
+    The default erase function is EspTool (EsptoolErase)
 
     0 = Erase from program end until end of flash as seen by SDK
     1 = Erase 16k SDK parameter area near end of flash as seen by SDK (0x0xFCxxx - 0x0xFFFFF) solving possible wifi errors
@@ -564,15 +564,16 @@ void SettingsErase(uint8_t type)
     _sectorEnd = SETTINGS_LOCATION +1;
   }
 
-  bool _serialoutput = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);
-
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
+
+/*
+  bool _serialoutput = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);
 
   for (uint32_t _sector = _sectorStart; _sector < _sectorEnd; _sector++) {
 
-//    bool result = ESP.flashEraseSector(_sector);  // Arduino core - erases flash as seen by SDK
+    bool result = ESP.flashEraseSector(_sector);  // Arduino core - erases flash as seen by SDK
 //    bool result = !SPIEraseSector(_sector);       // SDK - erases flash as seen by SDK
-    bool result = EsptoolEraseSector(_sector);    // Esptool - erases flash completely
+//    bool result = EsptoolEraseSector(_sector);    // Esptool - erases flash completely (slow)
 
     if (_serialoutput) {
       Serial.print(F(D_LOG_APPLICATION D_ERASED_SECTOR " "));
@@ -588,6 +589,9 @@ void SettingsErase(uint8_t type)
     }
     OsWatchLoop();
   }
+*/
+  EsptoolErase(_sectorStart, _sectorEnd);     // Esptool - erases flash completely (fast)
+
 #endif  // FIRMWARE_MINIMAL
 }
 
