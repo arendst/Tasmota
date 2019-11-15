@@ -231,6 +231,12 @@ void RtcRebootSave(void)
   }
 }
 
+void RtcRebootReset(void)
+{
+  RtcReboot.fast_reboot_count = 0;
+  RtcRebootSave();
+}
+
 void RtcRebootLoad(void)
 {
   ESP.rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));  // 0x280
@@ -1148,6 +1154,10 @@ void SettingsDelta(void)
     if (Settings.version < 0x07000004) {
       Settings.wifi_output_power = 170;
     }
+    if (Settings.version < 0x07000005) {
+      restart_flag = 213;  // Perform a sdk wifi parameter reset and restart
+    }
+
     Settings.version = VERSION;
     SettingsSave(1);
   }
