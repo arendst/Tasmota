@@ -816,7 +816,8 @@ void PerformEverySecond(void)
   }
 
   if (BOOT_LOOP_TIME == uptime) {
-    RtcRebootReset();
+    RtcReboot.fast_reboot_count = 0;
+    RtcRebootSave();
 
 #ifdef USE_DEEPSLEEP
     if (!(DeepSleepEnabled() && !Settings.flag3.bootcount_update)) {
