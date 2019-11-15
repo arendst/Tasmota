@@ -402,6 +402,7 @@ enum SupportedModules {
   SONOFF_L1,
   SONOFF_IFAN03,
   EXS_DIMMER,
+  SONOFF_MINI
   MAXMODULE};
 
 #define USER_MODULE        255
@@ -846,7 +847,8 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   SYF05,
   YTF_IR_BRIDGE,
   WITTY,               // Development Devices
-  WEMOS
+  WEMOS,
+  SONOFF_MINI,
 };
 
 // Default module settings
@@ -2169,7 +2171,28 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_USER,        // GPIO14
      0,                // GPIO15
      0, 0
-  }
+  },
+    { "Sonoff Mini",   // SONOFF_MINI - Sonoff Mini
+     GPIO_KEY1,        // GPIO00 Button
+     0,                // GPIO01
+     0,                // GPIO02
+     0,                // GPIO03
+     GPIO_SWT1_NP,     // GPIO04 Switch
+     0,                // GPIO05
+                       // GPIO06
+                       // GPIO07
+                       // GPIO08
+     0,                // GPIO09
+     0,                // GPIO10
+                       // GPIO11
+     GPIO_REL1,        // GPIO12 Red Led and Relay (0 = Off, 1 = On)
+     GPIO_LED1_INV,    // GPIO13 Green Led (0 = On, 1 = Off) - Link and Power status
+     0,                // GPIO14
+     0,                // GPIO15
+     GPIO_USER,        // GPIO16
+     0                 // ADC0 Analog input
+  },
+
 };
 
 #endif  // _TASMOTA_TEMPLATE_H_
