@@ -7,6 +7,7 @@
  * Add Keep last channels values when Color command end with '=' (#6799)
  * Add support for I2C sensor TLS2591 Light Intensity sensor (#6873)
  * Change Kept only NEC/RC5/RC6/HASH IR protocols in standard Tasmota, all other protocols require Tasmota-IR, saving 4K
+ * Add command SetOption76 0/1 to enable incrementing bootcount when deepsleep is enabled (#6930)
  *
  * 7.0.0.3 20191103
  * Add command I2cDriver for I2C driver runtime control using document I2CDEVICES.md

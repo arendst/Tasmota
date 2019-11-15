@@ -89,7 +89,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t cors_enabled : 1;             // bit 23 (v7.0.0.1)  - SetOption73 - Enable HTTP CORS
     uint32_t ds18x20_internal_pullup : 1;  // bit 24 (v7.0.0.1)  - SetOption74 - Enable internal pullup for single DS18x20 sensor
     uint32_t grouptopic_mode : 1;          // bit 25 (v7.0.0.1)  - SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
-    uint32_t spare26 : 1;
+    uint32_t bootcount_update : 1;         // bit 26 (v7.0.0.4)  - SetOption76 - Enable incrementing bootcount when deepsleep is enabled
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
