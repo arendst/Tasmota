@@ -49,6 +49,9 @@
 
 #define TUYA_BUFFER_SIZE       256
 
+#define TUYA_MCU_STATUS_UPDATE_INTERVAL 60
+#define TUYA_MCU_STATUS_UPDATE_DUMP_DELAY 10
+
 #include <TasmotaSerial.h>
 
 TasmotaSerial *TuyaSerial = nullptr;
@@ -68,8 +71,17 @@ struct TUYA {
   int byte_counter = 0;                  // Index in serial receive buffer
   bool low_power_mode = false;           // Normal or Low power mode protocol
   bool send_success_next_second = false; // Second command success in low power mode
+  uint8_t mcustatus_timer = 0;           // timer for MCU status update
 } Tuya;
 
+typedef struct TUYA_STATE {
+  uint8_t dpId = 0;
+  uint8_t dpIdType = 0;
+  char *dpIdData = nullptr;
+  int dpDataLen = 0;
+  struct TUYA_STATE *next;
+} TuyaState;
+TuyaState *TuyaMCUState = nullptr;
 
 enum TuyaSupportedFunctions {
   TUYA_MCU_FUNC_NONE,
@@ -632,6 +644,96 @@ void TuyaInit(void)
     }
   }
   Tuya.heartbeat_timer = 0; // init heartbeat timer when dimmer init is done
+  Tuya.mcustatus_timer = 0;
+
+  TuyaMCUState = (TUYA_STATE*)(calloc(1, sizeof(struct TUYA_STATE)));
+  TuyaRequestMCUState();
+}
+
+void TuyaRequestMCUState(){
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaRequestMCUState Called"));
+
+  TuyaSerial->write(0x55);                  // Tuya header 55AA
+  TuyaSerial->write(0xAA);
+  TuyaSerial->write(0x0);
+  TuyaSerial->write(0x1);
+  TuyaSerial->write(0x0);
+  TuyaSerial->write(0x0);
+  TuyaSerial->write(0x0);
+  TuyaSerial->flush();
+}
+
+void TuyaSaveState(void){
+  uint8_t dpId = Tuya.buffer[6];
+  uint16_t dpDataLen = Tuya.buffer[8] << 8 | Tuya.buffer[9];
+  TuyaState *s = TuyaMCUState;
+
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaSaveState Called"));
+
+  // search or insert entry for item
+  do {
+    if( s->dpId == dpId || s->dpId == 0 ){
+      break;
+    }
+    s = s->next;
+  } while( s );
+
+  if( s == nullptr ){ // item not found, allocating it
+    s = TuyaMCUState;
+    while( s->next ) s = s->next;
+    s->next = (TUYA_STATE*)(calloc(1, sizeof(struct TUYA_STATE)));
+    s = s->next;
+  }
+
+  if( s != nullptr ){  // update dpId entry
+    s->dpId = dpId;
+    s->dpIdType = Tuya.buffer[7];
+    if( s->dpIdData != nullptr ){
+      free(s->dpIdData);
+    }
+    s->dpDataLen = dpDataLen;
+    s->dpIdData = (char*)calloc(1, sizeof(char)*(dpDataLen+1));
+    memcpy( s->dpIdData, (unsigned char*)&Tuya.buffer[10], sizeof(char)*dpDataLen );
+  }
+}
+
+void TuyaDumpState(void){
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaDumpState Called"));
+
+  bool first = true;
+  Response_P(PSTR("{\"" D_JSON_TUYA_MCU_STATUS "\":["));
+
+  TuyaState *s = TuyaMCUState;
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaDumpState Starting (%x)"), s);
+  while( s != nullptr && s->dpId != 0){
+    if( !first ){
+      ResponseAppend_P(PSTR(","));
+    }
+    first = false;
+
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TYA: TuyaDumpState Found Item (%d/%d: %d/%s)"), s->dpId, s->dpIdType, s->dpDataLen, s->dpIdData);
+    if( TUYA_TYPE_STRING == s->dpIdType ){
+      ResponseAppend_P(PSTR("{\"DpId\":%d,\"DpIdType\":%d,\"DpIdData\":\"%s\"}"), s->dpId, s->dpIdType, s->dpIdData);
+    }
+    else if( TUYA_TYPE_BOOL == s->dpIdType ){
+      ResponseAppend_P(PSTR("{\"DpId\":%d,\"DpIdType\":%d,\"DpIdData\":%u}"), s->dpId, s->dpIdType, (unsigned char)s->dpIdData[0]);
+    }
+    else if( TUYA_TYPE_VALUE == s->dpIdType ){
+      int value = s->dpIdData[0] << 3 | s->dpIdData[1] << 2 | s->dpIdData[2] << 1 | s->dpIdData[3];
+      ResponseAppend_P(PSTR("{\"DpId\":%d,\"DpIdType\":%d,\"DpIdData\":%d}"), s->dpId, s->dpIdType, value);
+    }
+    else {
+      char hex_char[s->dpDataLen + 2];
+      ResponseAppend_P(PSTR("{\"DpId\":%d,\"DpIdType\":%d,\"DpIdData\":\"%s\"}"), s->dpId, s->dpIdType, ToHex_P((unsigned char*)&s->dpIdData[0], s->dpDataLen, hex_char, sizeof(hex_char)));
+    }
+
+    s = s->next;
+  }
+
+  ResponseAppend_P(PSTR("]}"));
+
+  MqttPublishPrefixTopic_P(STAT, PSTR(D_JSON_TUYA_MCU_RECEIVED), true);
+  AddLog_P(LOG_LEVEL_DEBUG, mqtt_data);
 }
 
 void TuyaSerialInput(void)
@@ -662,10 +764,16 @@ void TuyaSerialInput(void)
       Tuya.buffer[Tuya.byte_counter++] = serial_in_byte;
     }
     else if ((Tuya.cmd_status == 3) && (Tuya.byte_counter == (6 + Tuya.data_len)) && (Tuya.cmd_checksum == serial_in_byte)) { // Compare checksum and process packet
+
       Tuya.buffer[Tuya.byte_counter++] = serial_in_byte;
 
       char hex_char[(Tuya.byte_counter * 2) + 2];
       uint16_t len = Tuya.buffer[4] << 8 | Tuya.buffer[5];
+
+      if (TUYA_CMD_STATE == Tuya.buffer[3]) {
+        TuyaSaveState();
+      }
+
       Response_P(PSTR("{\"" D_JSON_TUYA_MCU_RECEIVED "\":{\"Data\":\"%s\",\"Cmnd\":%d"), ToHex_P((unsigned char*)Tuya.buffer, Tuya.byte_counter, hex_char, sizeof(hex_char)), Tuya.buffer[3]);
 
       if (len > 0) {
@@ -813,6 +921,14 @@ bool Xdrv16(uint8_t function)
           }
         } else {
             TuyaSendLowPowerSuccessIfNeeded();
+        }
+        Tuya.mcustatus_timer++;
+        if( Tuya.mcustatus_timer > TUYA_MCU_STATUS_UPDATE_INTERVAL ){
+          Tuya.mcustatus_timer = 0;
+          TuyaRequestMCUState();
+        }
+        else if( Tuya.mcustatus_timer == TUYA_MCU_STATUS_UPDATE_DUMP_DELAY ){
+          TuyaDumpState();
         }
         break;
       case FUNC_SET_CHANNELS:

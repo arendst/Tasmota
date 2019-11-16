@@ -456,6 +456,7 @@
 #define D_CMND_TUYA_MCU "TuyaMCU"
 #define D_CMND_TUYA_MCU_SEND_STATE "TuyaSend"
 #define D_JSON_TUYA_MCU_RECEIVED "TuyaReceived"
+#define D_JSON_TUYA_MCU_STATUS "TuyaStatus"
 
 // Commands xdrv_23_zigbee.ino
 #define D_ZIGBEE_NOT_STARTED "Zigbee not started (yet)"
