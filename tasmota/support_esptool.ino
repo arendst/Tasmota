@@ -77,7 +77,6 @@ static void spi_write_enable(void)
   while(READ_REG(SPI_CMD_REG) != 0) { }
 }
 
-/*
 bool EsptoolEraseSector(uint32_t sector)
 {
   spi_write_enable();
@@ -90,7 +89,6 @@ bool EsptoolEraseSector(uint32_t sector)
 
   return true;
 }
-*/
 
 void EsptoolErase(uint32_t start_sector, uint32_t end_sector)
 {
@@ -100,18 +98,18 @@ void EsptoolErase(uint32_t start_sector, uint32_t end_sector)
   while (remaining_erase_sector > 0) {
     spi_write_enable();
 
-    uint32_t command = SPI_FLASH_SE;              // Sector erase, 4KB
+    uint32_t command = SPI_FLASH_SE;              // Sector erase, 4kB
     uint32_t sectors_to_erase = 1;
     if (remaining_erase_sector >= SECTORS_PER_BLOCK &&
         next_erase_sector % SECTORS_PER_BLOCK == 0) {
-      command = SPI_FLASH_BE;                     // Block erase 64KB if we have space for it
+      command = SPI_FLASH_BE;                     // Block erase 64kB if we have space for it
       sectors_to_erase = SECTORS_PER_BLOCK;
     }
     uint32_t addr = next_erase_sector * SPI_FLASH_SEC_SIZE;
 
     spi_wait_ready();
     WRITE_REG(SPI_ADDR_REG, addr & 0xffffff);
-    WRITE_REG(SPI_CMD_REG, command);              // Sector erase, 4KB
+    WRITE_REG(SPI_CMD_REG, command);              // Perform erase, 4kB or 65kB
     while(READ_REG(SPI_CMD_REG) != 0) { }
     remaining_erase_sector -= sectors_to_erase;
     next_erase_sector += sectors_to_erase;

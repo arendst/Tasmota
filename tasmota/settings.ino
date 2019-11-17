@@ -539,6 +539,25 @@ void SettingsLoad(void)
   RtcSettingsLoad();
 }
 
+void EspErase(uint32_t start_sector, uint32_t end_sector)
+{
+  bool serial_output = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);
+  for (uint32_t sector = start_sector; sector < end_sector; sector++) {
+
+    bool result = ESP.flashEraseSector(sector);  // Arduino core - erases flash as seen by SDK
+//    bool result = !SPIEraseSector(sector);       // SDK - erases flash as seen by SDK
+//    bool result = EsptoolEraseSector(sector);    // Esptool - erases flash completely (slow)
+
+    if (serial_output) {
+      Serial.printf_P(PSTR(D_LOG_APPLICATION D_ERASED_SECTOR " %d %s\n"), sector, (result) ? D_OK : D_ERROR);
+      delay(10);
+    } else {
+      yield();
+    }
+    OsWatchLoop();
+  }
+}
+
 void SettingsErase(uint8_t type)
 {
   /*
@@ -572,31 +591,8 @@ void SettingsErase(uint8_t type)
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
 
-/*
-  bool _serialoutput = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);
-
-  for (uint32_t _sector = _sectorStart; _sector < _sectorEnd; _sector++) {
-
-    bool result = ESP.flashEraseSector(_sector);  // Arduino core - erases flash as seen by SDK
-//    bool result = !SPIEraseSector(_sector);       // SDK - erases flash as seen by SDK
-//    bool result = EsptoolEraseSector(_sector);    // Esptool - erases flash completely (slow)
-
-    if (_serialoutput) {
-      Serial.print(F(D_LOG_APPLICATION D_ERASED_SECTOR " "));
-      Serial.print(_sector);
-      if (result) {
-        Serial.println(F(" " D_OK));
-      } else {
-        Serial.println(F(" " D_ERROR));
-      }
-      delay(10);
-    } else {
-      yield();
-    }
-    OsWatchLoop();
-  }
-*/
-  EsptoolErase(_sectorStart, _sectorEnd);     // Esptool - erases flash completely (fast)
+//  EspErase(_sectorStart, _sectorEnd);         // Arduino core and SDK - erases flash as seen by SDK
+  EsptoolErase(_sectorStart, _sectorEnd);     // Esptool - erases flash completely
 
 #endif  // FIRMWARE_MINIMAL
 }
