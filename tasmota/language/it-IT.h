@@ -691,6 +691,7 @@
 #define D_LOG_UPLOAD "UPL: "       // Upload
 #define D_LOG_UPNP "UPP: "         // UPnP
 #define D_LOG_WIFI "WIF: "         // Wifi
+#define D_LOG_ZIGBEE "ZIG: "       // Zigbee
 
 //SDM220
 #define D_PHASE_ANGLE     "Angolo Fase"
