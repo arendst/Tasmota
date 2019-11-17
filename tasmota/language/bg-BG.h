@@ -427,7 +427,6 @@
 #define D_DELETE "Изтриване"
 #define D_REPLY "Отговор"
 #define D_KNX_GROUP_ADDRESS_TO_READ "Групови адреси за получаване на данни"
-#define D_LOG_KNX "KNX: "
 #define D_RECEIVED_FROM "Получен от"
 #define D_KNX_COMMAND_WRITE "Писане"
 #define D_KNX_COMMAND_READ "Четене"
@@ -507,9 +506,6 @@
 #define D_TX20_EAST "И"
 #define D_TX20_SOUTH "Ю"
 #define D_TX20_WEST "З"
-
-//xsns_43_hre.ino
-#define D_LOG_HRE "HRE: "
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Няма"
@@ -666,32 +662,6 @@
 #define D_UNIT_WATT "W"
 #define D_UNIT_WATTHOUR "Wh"
 #define D_UNIT_WATT_METER_QUADRAT "W/m²"
-
-// Log message prefix
-#define D_LOG_APPLICATION "APP: "  // Application
-#define D_LOG_BRIDGE "BRG: "       // Bridge
-#define D_LOG_CONFIG "CFG: "       // Settings
-#define D_LOG_COMMAND "CMD: "      // Command
-#define D_LOG_DEBUG "DBG: "        // Debug
-#define D_LOG_DHT "DHT: "          // DHT sensor
-#define D_LOG_DOMOTICZ "DOM: "     // Domoticz
-#define D_LOG_DSB "DSB: "          // DS18xB20 sensor
-#define D_LOG_HTTP "HTP: "         // HTTP webserver
-#define D_LOG_I2C "I2C: "          // I2C
-#define D_LOG_IRR "IRR: "          // Infra Red Received
-#define D_LOG_LOG "LOG: "          // Logging
-#define D_LOG_MODULE "MOD: "       // Module
-#define D_LOG_MDNS "DNS: "         // mDNS
-#define D_LOG_MQTT "MQT: "         // MQTT
-#define D_LOG_OTHER "OTH: "        // Other
-#define D_LOG_RESULT "RSL: "       // Result
-#define D_LOG_RFR "RFR: "          // RF Received
-#define D_LOG_SERIAL "SER: "       // Serial
-#define D_LOG_SHT1 "SHT: "         // SHT1x sensor
-#define D_LOG_UPLOAD "UPL: "       // Upload
-#define D_LOG_UPNP "UPP: "         // UPnP
-#define D_LOG_WIFI "WIF: "         // Wifi
-#define D_LOG_ZIGBEE "ZIG: "       // Zigbee
 
 //SDM220
 #define D_PHASE_ANGLE     "Фазов ъгъл"
