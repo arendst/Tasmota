@@ -5,7 +5,7 @@ _Written for Arduino IDE and PlatformIO._
 
 [![GitHub version](https://img.shields.io/github/release/arendst/Tasmota.svg)](https://github.com/arendst/Tasmota/releases/latest)
 [![GitHub download](https://img.shields.io/github/downloads/arendst/Tasmota/total.svg)](https://github.com/arendst/Tasmota/releases/latest)
-[![License](https://img.shields.io/github/license/arendst/Tasmota.svg)](https://github.com/arendst/Tasmota/blob/master/LICENSE.txt)
+[![License](https://img.shields.io/github/license/arendst/Tasmota.svg)](LICENSE.txt)
 [![Chat](https://img.shields.io/discord/479389167382691863.svg)](https://discord.gg/Ks2Kzd4)
 
 If you like **Tasmota**, give it a star, or fork it and contribute!
@@ -14,7 +14,7 @@ If you like **Tasmota**, give it a star, or fork it and contribute!
 [![GitHub forks](https://img.shields.io/github/forks/arendst/Tasmota.svg?style=social&label=Fork)](https://github.com/arendst/Tasmota/network)
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
-See [RELEASENOTES.md](https://github.com/arendst/Tasmota/blob/master/RELEASENOTES.md) for release information.
+See [RELEASENOTES.md](RELEASENOTES.md) for release information.
 
 In addition to the [release webpage](https://github.com/arendst/Tasmota/releases/latest) the binaries can also be downloaded from http://thehackbox.org/tasmota/release/
 
@@ -24,7 +24,7 @@ In addition to the [release webpage](https://github.com/arendst/Tasmota/releases
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Build Status](https://img.shields.io/travis/arendst/Tasmota.svg)](https://travis-ci.org/arendst/Tasmota)
 
-See [tasmota/_changelog.ino](https://github.com/arendst/Tasmota/blob/development/tasmota/_changelog.ino) for detailed change information.
+See [tasmota/_changelog.ino](tasmota/_changelog.ino) for detailed change information.
 
 Unless your Tasmota powered device exhibits a problem or you need to make use of a feature that is not available in the Tasmota version currently installed on your device, leave your device alone - it works so don't make unnecessary changes! If the release version (i.e., the master branch) exhibits unexpected behaviour for your device and configuration, you should upgrade to the latest development version instead to see if your problem is resolved as some bugs in previous releases or development builds may already have been resolved.
 
