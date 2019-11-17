@@ -65,7 +65,7 @@ See [wiki migration path](https://github.com/arendst/Tasmota/wiki/Upgrading#migr
 1. Migrate to **Sonoff-Tasmota 3.9.x**
 2. Migrate to **Sonoff-Tasmota 4.x**
 3. Migrate to **Sonoff-Tasmota 5.14**
-4. Migrate to **Sonoff-Tasmota 6.7.1**
+4. Migrate to **Sonoff-Tasmota 6.x**
 5. Migrate to **Tasmota 7.x**
 
 ## Support Information
