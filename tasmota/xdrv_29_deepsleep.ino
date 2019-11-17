@@ -62,8 +62,7 @@ bool DeepSleepEnabled(void)
 void DeepSleepInit(void)
 {
   if (DeepSleepEnabled()) {
-    RtcReboot.fast_reboot_count = 0;
-    RtcRebootSave();
+    RtcRebootReset();
     if ((RtcSettings.ultradeepsleep > MAX_DEEPSLEEP_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
       // Go back to sleep after 60 minutes if requested deepsleep has not been reached
       RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;

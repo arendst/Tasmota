@@ -34,18 +34,23 @@ const char HASS_DISCOVER_RELAY[] PROGMEM =
 
 const char HASS_DISCOVER_BUTTON_SWITCH[] PROGMEM =
   "{\"name\":\"%s\","                              // dualr2 1 BTN
-  "\"stat_t\":\"%s\","                             // stat/RESULT/ (implies "\"optimistic\":\"false\",")
-  "\"value_template\":\"{{value_json.%s}}\","      // BUTTON1
-  "\"pl_on\":\"%s\","                              // ON
+  "\"stat_t\":\"%s\","                             // dualr2/stat/BUTTON1/ (implies "\"optimistic\":\"false\",")
   "\"avty_t\":\"%s\","                             // tele/dualr2/LWT
   "\"pl_avail\":\"" D_ONLINE "\","                 // Online
   "\"pl_not_avail\":\"" D_OFFLINE "\"";            // Offline
 
-const char HASS_DISCOVER_BUTTON_SWITCH_TOGGLE[] PROGMEM =
-  ",\"off_delay\":1";                              // Hass has no support for TOGGLE, fake it by resetting to OFF after 1s
+const char HASS_DISCOVER_BUTTON_TOGGLE[] PROGMEM =
+  ",\"value_template\":\"{{value_json.%s}}\","      // STATE
+  "\"pl_on\":\"%s\","                              // TOGGLE
+  "\"off_delay\":1";                              // Hass has no support for TOGGLE, fake it by resetting to OFF after 1s
 
+const char HASS_DISCOVER_SWITCH_TOGGLE[] PROGMEM =
+  ",\"value_template\":\"{%%if is_state(entity_id,\\\"on\\\")-%%}OFF{%%-else-%%}ON{%%-endif%%}\"";      // A switch must maintain his state until the next update
+ 
 const char HASS_DISCOVER_BUTTON_SWITCH_ONOFF[] PROGMEM =
-  ",\"frc_upd\":true,"                             // In ON/OFF case, enable force_update to make automations work
+  ",\"value_template\":\"{{value_json.%s}}\","      // STATE
+  "\"frc_upd\":true,"                             // In ON/OFF case, enable force_update to make automations work
+  "\"pl_on\":\"%s\","                              // ON
   "\"pl_off\":\"%s\"";                             // OFF
 
 const char HASS_DISCOVER_LIGHT_DIMMER[] PROGMEM =
@@ -319,21 +324,25 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
     char jsoname[8];
 
     snprintf_P(name, sizeof(name), PSTR("%s %s%d"), Settings.friendlyname[0], key?"Switch":"Button", device+1);
+    snprintf_P(jsoname, sizeof(jsoname), PSTR("%s%d"), key?"SWITCH":"BUTTON", device+1);
     GetPowerDevice(value_template, device+1, sizeof(value_template),
                    key + Settings.flag.device_index_enable); // Force index for Switch 1, Index on Button1 is controlled by SetOption26 - Switch between POWER or POWER1
     //GetTopic_P(state_topic, CMND, topic, value_template); // State of button is sent as CMND TOGGLE, state of switch is sent as ON/OFF
-    GetTopic_P(state_topic, STAT, mqtt_topic, PSTR(D_RSLT_RESULT));
+    GetTopic_P(state_topic, STAT, mqtt_topic, (PSTR("/'%s'"), jsoname));
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
     FindPrefix(state_topic, availability_topic, prefix);
 
     Shorten(&state_topic, prefix);
     Shorten(&availability_topic, prefix);
-    snprintf_P(jsoname, sizeof(jsoname), PSTR("%s%d"), key?"SWITCH":"BUTTON", device+1);
-    Response_P(HASS_DISCOVER_BUTTON_SWITCH, name, state_topic, jsoname, Settings.state_text[toggle?2:1], availability_topic);
+    Response_P(HASS_DISCOVER_BUTTON_SWITCH, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
     if (strlen(prefix) > 0 ) TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
-    if (toggle) TryResponseAppend_P(HASS_DISCOVER_BUTTON_SWITCH_TOGGLE);
-    else TryResponseAppend_P(HASS_DISCOVER_BUTTON_SWITCH_ONOFF, Settings.state_text[0]);
+    if (toggle) {
+      if (!key) { 
+        TryResponseAppend_P(HASS_DISCOVER_BUTTON_TOGGLE, PSTR(D_RSLT_STATE), Settings.state_text[toggle?2:1]);
+      } else {TryResponseAppend_P(HASS_DISCOVER_SWITCH_TOGGLE);}
+    }
+    else TryResponseAppend_P(HASS_DISCOVER_BUTTON_SWITCH_ONOFF, PSTR(D_RSLT_STATE), Settings.state_text[toggle?2:1], Settings.state_text[0]);
 
     TryResponseAppend_P(PSTR("}"));
   }
@@ -620,8 +629,10 @@ void HAssAnyKey(void)
   char scommand[CMDSZ];
   snprintf_P(scommand, sizeof(scommand), PSTR("%s%d"), (key) ? "SWITCH" : "BUTTON", device);
   char stopic[TOPSZ];
-  GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);  // SetOption4 - Switch between MQTT RESULT or COMMAND
-  Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(state));
+  //GetTopic_P(stopic, STAT, mqtt_topic, (Settings.flag.mqtt_response) ? scommand : S_RSLT_RESULT);  // SetOption4 - Switch between MQTT RESULT or COMMAND
+  //Response_P(S_JSON_COMMAND_SVALUE, scommand, GetStateText(state));
+  GetTopic_P(stopic, STAT, mqtt_topic, scommand);
+  Response_P(S_JSON_COMMAND_SVALUE, PSTR(D_RSLT_STATE), GetStateText(state));
   MqttPublish(stopic);
 }
 

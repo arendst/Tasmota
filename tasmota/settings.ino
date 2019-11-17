@@ -231,6 +231,12 @@ void RtcRebootSave(void)
   }
 }
 
+void RtcRebootReset(void)
+{
+  RtcReboot.fast_reboot_count = 0;
+  RtcRebootSave();
+}
+
 void RtcRebootLoad(void)
 {
   ESP.rtcUserMemoryRead(100 - sizeof(RTCRBT), (uint32_t*)&RtcReboot, sizeof(RTCRBT));  // 0x280
@@ -533,65 +539,68 @@ void SettingsLoad(void)
   RtcSettingsLoad();
 }
 
-void SettingsErase(uint8_t type)
+void EspErase(uint32_t start_sector, uint32_t end_sector)
 {
-  /*
-    0 = Erase from program end until end of physical flash
-    1 = Erase SDK parameter area at end of linker memory model (0x0FDxxx - 0x0FFFFF) solving possible wifi errors
-    2 = Erase Tasmota settings
-  */
+  bool serial_output = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);
+  for (uint32_t sector = start_sector; sector < end_sector; sector++) {
 
-#ifndef FIRMWARE_MINIMAL
-  uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
-  uint32_t _sectorEnd = ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE;
-  if (1 == type) {
-    _sectorStart = SETTINGS_LOCATION +2;  // SDK parameter area above EEPROM area (0x0FDxxx - 0x0FFFFF)
-    _sectorEnd = SETTINGS_LOCATION +5;
-  }
-  else if (2 == type) {
-    _sectorStart = SETTINGS_LOCATION - CFG_ROTATES;  // Tasmota parameter area (0x0F4xxx - 0x0FBFFF)
-    _sectorEnd = SETTINGS_LOCATION +1;
-  }
+    bool result = ESP.flashEraseSector(sector);  // Arduino core - erases flash as seen by SDK
+//    bool result = !SPIEraseSector(sector);       // SDK - erases flash as seen by SDK
+//    bool result = EsptoolEraseSector(sector);    // Esptool - erases flash completely (slow)
 
-  bool _serialoutput = (LOG_LEVEL_DEBUG_MORE <= seriallog_level);
-
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
-
-  for (uint32_t _sector = _sectorStart; _sector < _sectorEnd; _sector++) {
-    bool result = ESP.flashEraseSector(_sector);
-    if (_serialoutput) {
-      Serial.print(F(D_LOG_APPLICATION D_ERASED_SECTOR " "));
-      Serial.print(_sector);
-      if (result) {
-        Serial.println(F(" " D_OK));
-      } else {
-        Serial.println(F(" " D_ERROR));
-      }
+    if (serial_output) {
+      Serial.printf_P(PSTR(D_LOG_APPLICATION D_ERASED_SECTOR " %d %s\n"), sector, (result) ? D_OK : D_ERROR);
       delay(10);
+    } else {
+      yield();
     }
     OsWatchLoop();
   }
-#endif  // FIRMWARE_MINIMAL
 }
 
-// Copied from 2.4.0 as 2.3.0 is incomplete
-bool SettingsEraseConfig(void) {
-  const size_t cfgSize = 0x4000;
-  size_t cfgAddr = ESP.getFlashChipSize() - cfgSize;
+void SettingsErase(uint8_t type)
+{
+  /*
+    For Arduino core and SDK:
+    Erase only works from flash start address to SDK recognized flash end address (flashchip->chip_size = ESP.getFlashChipSize).
+    Addresses above SDK recognized size (up to ESP.getFlashChipRealSize) are not accessable.
+    For Esptool:
+    The only way to erase whole flash is esptool which uses direct SPI writes to flash.
 
-  for (size_t offset = 0; offset < cfgSize; offset += SPI_FLASH_SEC_SIZE) {
-    if (!ESP.flashEraseSector((cfgAddr + offset) / SPI_FLASH_SEC_SIZE)) {
-      return false;
-    }
+    The default erase function is EspTool (EsptoolErase)
+
+    0 = Erase from program end until end of flash as seen by SDK
+    1 = Erase 16k SDK parameter area near end of flash as seen by SDK (0x0xFCxxx - 0x0xFFFFF) solving possible wifi errors
+    2 = Erase Tasmota settings (0x0xF3xxx - 0x0xFBFFF)
+  */
+
+#ifndef FIRMWARE_MINIMAL
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SDK: Flash size 0x%08X"), flashchip->chip_size);
+
+  uint32_t _sectorStart = (ESP.getSketchSize() / SPI_FLASH_SEC_SIZE) + 1;
+  uint32_t _sectorEnd = ESP.getFlashChipRealSize() / SPI_FLASH_SEC_SIZE;
+//  uint32_t _sectorEnd = ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE;
+  if (1 == type) {
+    // source Esp.cpp and core_esp8266_phy.cpp
+    _sectorStart = (ESP.getFlashChipSize() / SPI_FLASH_SEC_SIZE) - 4;
   }
-  return true;
+  else if (2 == type) {
+    _sectorStart = SETTINGS_LOCATION - CFG_ROTATES;  // Tasmota parameter area (0x0F3xxx - 0x0FBFFF)
+    _sectorEnd = SETTINGS_LOCATION +1;
+  }
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_ERASE " %d " D_UNIT_SECTORS), _sectorEnd - _sectorStart);
+
+//  EspErase(_sectorStart, _sectorEnd);         // Arduino core and SDK - erases flash as seen by SDK
+  EsptoolErase(_sectorStart, _sectorEnd);     // Esptool - erases flash completely
+
+#endif  // FIRMWARE_MINIMAL
 }
 
 void SettingsSdkErase(void)
 {
   WiFi.disconnect(true);    // Delete SDK wifi config
   SettingsErase(1);
-  SettingsEraseConfig();
   delay(1000);
 }
 
@@ -1141,6 +1150,7 @@ void SettingsDelta(void)
     if (Settings.version < 0x07000004) {
       Settings.wifi_output_power = 170;
     }
+
     Settings.version = VERSION;
     SettingsSave(1);
   }

@@ -87,126 +87,10 @@ bool OsWatchBlockedLoop(void)
 {
   return oswatch_blocked_loop;
 }
+
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
-
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-// Functions not available in 2.3.0
-
-// http://clc-wiki.net/wiki/C_standard_library:string.h:memchr
-void* memchr(const void* ptr, int value, size_t num)
-{
-  unsigned char *p = (unsigned char*)ptr;
-  while (num--) {
-    if (*p != (unsigned char)value) {
-      p++;
-    } else {
-      return p;
-    }
-  }
-  return 0;
-}
-
-// http://clc-wiki.net/wiki/C_standard_library:string.h:strcspn
-// Get span until any character in string
-size_t strcspn(const char *str1, const char *str2)
-{
-  size_t ret = 0;
-  while (*str1) {
-    if (strchr(str2, *str1)) {  // Slow
-      return ret;
-    } else {
-      str1++;
-      ret++;
-    }
-  }
-  return ret;
-}
-
-// https://clc-wiki.net/wiki/C_standard_library:string.h:strpbrk
-// Locate the first occurrence in the string pointed to by s1 of any character from the string pointed to by s2
-char* strpbrk(const char *s1, const char *s2)
-{
-  while(*s1) {
-    if (strchr(s2, *s1++)) {
-      return (char*)--s1;
-    }
-  }
-  return 0;
-}
-
-// https://opensource.apple.com/source/Libc/Libc-583/stdlib/FreeBSD/strtoull.c
-// Convert a string to an unsigned long long integer
-#ifndef __LONG_LONG_MAX__
-#define __LONG_LONG_MAX__ 9223372036854775807LL
-#endif
-#ifndef ULLONG_MAX
-#define ULLONG_MAX (__LONG_LONG_MAX__ * 2ULL + 1)
-#endif
-
-unsigned long long strtoull(const char *__restrict nptr, char **__restrict endptr, int base)
-{
-  const char *s = nptr;
-  char c;
-  do { c = *s++; } while (isspace((unsigned char)c));                         // Trim leading spaces
-
-  int neg = 0;
-  if (c == '-') {                                                             // Set minus flag and/or skip sign
-    neg = 1;
-    c = *s++;
-  } else {
-    if (c == '+') {
-      c = *s++;
-    }
-  }
-
-  if ((base == 0 || base == 16) && (c == '0') && (*s == 'x' || *s == 'X')) {  // Set Hexadecimal
-    c = s[1];
-    s += 2;
-    base = 16;
-  }
-  if (base == 0) { base = (c == '0') ? 8 : 10; }                              // Set Octal or Decimal
-
-  unsigned long long acc = 0;
-  int any = 0;
-  if (base > 1 && base < 37) {
-    unsigned long long cutoff = ULLONG_MAX / base;
-    int cutlim = ULLONG_MAX % base;
-    for ( ; ; c = *s++) {
-      if (c >= '0' && c <= '9')
-        c -= '0';
-      else if (c >= 'A' && c <= 'Z')
-        c -= 'A' - 10;
-      else if (c >= 'a' && c <= 'z')
-        c -= 'a' - 10;
-      else
-        break;
-
-      if (c >= base)
-        break;
-
-      if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
-        any = -1;
-      else {
-        any = 1;
-        acc *= base;
-        acc += c;
-      }
-    }
-    if (any < 0) {
-      acc = ULLONG_MAX;                                                       // Range error
-    }
-    else if (any && neg) {
-      acc = -acc;
-    }
-  }
-
-  if (endptr != nullptr) { *endptr = (char *)(any ? s - 1 : nptr); }
-
-  return acc;
-}
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
 // Get span until single character in string
 size_t strchrspn(const char *str1, int character)
@@ -610,6 +494,20 @@ char* GetPowerDevice(char* dest, uint32_t idx, size_t size, uint32_t option)
 char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
 {
   return GetPowerDevice(dest, idx, size, 0);
+}
+
+String GetDeviceHardware(void)
+{
+  // esptool.py get_efuses
+  uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
+  uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
+//  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
+//  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FUS: efuses 0x%08X 0x%08X, name %s"), efuse1, efuse2);
+
+  bool is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
+  return String((is_8285) ? F("ESP8285") : F("ESP8266EX"));
 }
 
 float ConvertTemp(float c)

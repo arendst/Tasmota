@@ -435,7 +435,6 @@ const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
 
 int32_t Z_Recv_Default(int32_t res, const class SBuffer &buf) {
   // Default message handler for new messages
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZIG: Z_Recv_Default"));
   if (zigbee.init_phase) {
     // if still during initialization phase, ignore any unexpected message
   	return -1;	// ignore message
