@@ -69,7 +69,7 @@ MPU6050 mpu6050;
 void MPU_6050PerformReading(void)
 {
 #ifdef USE_MPU6050_DMP
-    mpu6050.resetFIFO(); // with a default dampling rate of 200Hz, we create a delay of approx. 5ms with a complete read cycle
+    mpu6050.resetFIFO(); // with a default sampling rate of 200Hz, we create a delay of approx. 5ms with a complete read cycle
     MPU6050_dmp.fifoCount = mpu6050.getFIFOCount();
     while (MPU6050_dmp.fifoCount < MPU6050_dmp.packetSize) MPU6050_dmp.fifoCount = mpu6050.getFIFOCount();
     mpu6050.getFIFOBytes(MPU6050_dmp.fifoBuffer, MPU6050_dmp.packetSize);
@@ -147,6 +147,10 @@ void MPU_6050Detect(void)
   }
 }
 
+#define D_YAW "Yaw"
+#define D_PITCH "Pitch"
+#define D_ROLL "Roll"
+
 #ifdef USE_WEBSERVER
 const char HTTP_SNS_AXIS[] PROGMEM =
   "{s}" D_SENSOR_MPU6050 " " D_AX_AXIS "{m}%s{e}"                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
@@ -154,13 +158,13 @@ const char HTTP_SNS_AXIS[] PROGMEM =
   "{s}" D_SENSOR_MPU6050 " " D_AZ_AXIS "{m}%s{e}"                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}" D_SENSOR_MPU6050 " " D_GX_AXIS "{m}%s{e}"                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}" D_SENSOR_MPU6050 " " D_GY_AXIS "{m}%s{e}"                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-  "{s}" D_SENSOR_MPU6050 " " D_GZ_AXIS "{m}%s{e}"                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}" D_SENSOR_MPU6050 " " D_GZ_AXIS "{m}%s{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 #ifdef USE_MPU6050_DMP
+const char HTTP_SNS_YPR[] PROGMEM =
   "{s}" D_SENSOR_MPU6050 " " D_YAW "{m}%s{e}"                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-  "{s}" D_SENSOR_MPU6050 " " D_PITCH "{m}%s{e}"                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-  "{s}" D_SENSOR_MPU6050 " " D_ROLL "{m}%s{e}"                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-#endif // USE_MPU_DMP
-  ;
+  "{s}" D_SENSOR_MPU6050 " " D_PITCH "{m}%s{e}"                                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}" D_SENSOR_MPU6050 " " D_ROLL "{m}%s{e}";                                // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif // USE_MPU6050_DMP
 #endif // USE_WEBSERVER
 
 #define D_JSON_AXIS_AX "AccelXAxis"
@@ -169,6 +173,9 @@ const char HTTP_SNS_AXIS[] PROGMEM =
 #define D_JSON_AXIS_GX "GyroXAxis"
 #define D_JSON_AXIS_GY "GyroYAxis"
 #define D_JSON_AXIS_GZ "GyroZAxis"
+#define D_JSON_YAW "Yaw"
+#define D_JSON_PITCH "Pitch"
+#define D_JSON_ROLL "Roll"
 
 void MPU_6050Show(bool json)
 {
@@ -203,8 +210,20 @@ void MPU_6050Show(bool json)
     snprintf_P(json_axis_gy, sizeof(json_axis_gy), PSTR(",\"" D_JSON_AXIS_GY "\":%s"), axis_gy);
     char json_axis_gz[25];
     snprintf_P(json_axis_gz, sizeof(json_axis_gz), PSTR(",\"" D_JSON_AXIS_GZ "\":%s"), axis_gz);
+#ifdef USE_MPU6050_DMP
+    char json_ypr_y[25];
+    snprintf_P(json_ypr_y, sizeof(json_ypr_y), PSTR(",\"" D_JSON_YAW "\":%s"), MPU6050_dmp.yawPitchRoll[0]);
+    char json_ypr_p[25];
+    snprintf_P(json_ypr_p, sizeof(json_ypr_p), PSTR(",\"" D_JSON_PITCH "\":%s"), MPU6050_dmp.yawPitchRoll[1]);
+    char json_ypr_r[25];
+    snprintf_P(json_ypr_r, sizeof(json_ypr_r), PSTR(",\"" D_JSON_ROLL "\":%s"), MPU6050_dmp.yawPitchRoll[2]);
+    ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s%s%s%s%s%s%s%s%s}"),
+      D_SENSOR_MPU6050, temperature, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz,
+      json_ypr_y, json_ypr_p, json_ypr_r);
+#else
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s%s%s%s%s%s}"),
       D_SENSOR_MPU6050, temperature, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz);
+#endif // USE_MPU6050_DMP
 #ifdef USE_DOMOTICZ
     DomoticzSensor(DZ_TEMP, temperature);
 #endif // USE_DOMOTICZ
@@ -212,6 +231,7 @@ void MPU_6050Show(bool json)
   } else {
     WSContentSend_PD(HTTP_SNS_TEMP, D_SENSOR_MPU6050, temperature, TempUnit());
     WSContentSend_PD(HTTP_SNS_AXIS, axis_ax, axis_ay, axis_az, axis_gx, axis_gy, axis_gz);
+    WSContentSend_PD(HTTP_SNS_YPR,  MPU6050_dmp.yawPitchRoll[0],  MPU6050_dmp.yawPitchRoll[1],  MPU6050_dmp.yawPitchRoll[2]);
 #endif // USE_WEBSERVER
   }
 }
