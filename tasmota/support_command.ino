@@ -57,6 +57,13 @@ void ResponseCmndNumber(int value)
   Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, value);
 }
 
+void ResponseCmndFloat(float value, uint32_t decimals)
+{
+  char stemp1[TOPSZ];
+  dtostrfd(value, decimals, stemp1);
+  Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, stemp1);  // Return float value without quotes
+}
+
 void ResponseCmndIdxNumber(int value)
 {
   Response_P(S_JSON_COMMAND_INDEX_NVALUE, XdrvMailbox.command, XdrvMailbox.index, value);
@@ -498,12 +505,14 @@ void CmndState(void)
 
 void CmndTempOffset(void)
 {
-  if ((XdrvMailbox.payload > -127) && (XdrvMailbox.payload < 127) && (XdrvMailbox.data_len > 0)) {
-    Settings.temp_comp = XdrvMailbox.payload;
+  if (XdrvMailbox.data_len > 0) {
+    int value = (int)(CharToFloat(XdrvMailbox.data) * 10);
+    if ((value > -127) && (value < 127)) {
+      Settings.temp_comp = value;
+    }
   }
-  ResponseCmndNumber(Settings.temp_comp);
+  ResponseCmndFloat((float)(Settings.temp_comp) / 10, 1);
 }
-
 
 void CmndSleep(void)
 {
@@ -1549,9 +1558,7 @@ void CmndWifiPower(void)
     }
     WifiSetOutputPower();
   }
-  char stemp1[TOPSZ];
-  dtostrfd((float)(Settings.wifi_output_power) / 10, 1, stemp1);
-  Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, stemp1);  // Return float value without quotes
+  ResponseCmndFloat((float)(Settings.wifi_output_power) / 10, 1);
 }
 
 #ifdef USE_I2C
