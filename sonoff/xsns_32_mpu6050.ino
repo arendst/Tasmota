@@ -56,6 +56,7 @@ int16_t MPU_6050_temperature = 0;
   VectorInt16 aaReal;     // [x, y, z]            gravity-free accel sensor measurements
   VectorFloat gravity;    // [x, y, z]            gravity vector
   float euler[3];         // [psi, theta, phi]    Euler angle container
+  float yawPitchRoll[3];  // [yaw, pitch roll]    Yaw-pitch-roll container
   } MPU6050_DMP;
 
   MPU6050_DMP MPU6050_dmp;
@@ -78,6 +79,7 @@ void MPU_6050PerformReading(void)
     mpu6050.dmpGetAccel(&MPU6050_dmp.aa, MPU6050_dmp.fifoBuffer);
     mpu6050.dmpGetGravity(&MPU6050_dmp.gravity, &MPU6050_dmp.q);
     mpu6050.dmpGetLinearAccel(&MPU6050_dmp.aaReal, &MPU6050_dmp.aa, &MPU6050_dmp.gravity);
+    mpu6050.dmpGetYawPitchRoll(MPU6050_dmp.yawPitchRoll, &MPU6050_dmp.q, &MPU6050_dmp.gravity);
     MPU_6050_gx = MPU6050_dmp.euler[0] * 180/M_PI;
     MPU_6050_gy = MPU6050_dmp.euler[1] * 180/M_PI;
     MPU_6050_gz = MPU6050_dmp.euler[2] * 180/M_PI;
@@ -161,7 +163,13 @@ const char HTTP_SNS_AXIS[] PROGMEM =
   "{s}" D_SENSOR_MPU6050 " " D_AZ_AXIS "{m}%s{e}"                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}" D_SENSOR_MPU6050 " " D_GX_AXIS "{m}%s{e}"                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
   "{s}" D_SENSOR_MPU6050 " " D_GY_AXIS "{m}%s{e}"                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
-  "{s}" D_SENSOR_MPU6050 " " D_GZ_AXIS "{m}%s{e}";                             // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}" D_SENSOR_MPU6050 " " D_GZ_AXIS "{m}%s{e}"                              // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#ifdef USE_MPU6050_DMP
+  "{s}" D_SENSOR_MPU6050 " " D_YAW "{m}%s{e}"                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}" D_SENSOR_MPU6050 " " D_PITCH "{m}%s{e}"                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+  "{s}" D_SENSOR_MPU6050 " " D_ROLL "{m}%s{e}"                                  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+#endif // USE_MPU_DMP
+  ;
 #endif // USE_WEBSERVER
 
 #define D_JSON_AXIS_AX "AccelXAxis"
