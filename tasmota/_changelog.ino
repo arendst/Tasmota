@@ -1,4 +1,8 @@
 /*********************************************************************************************\
+ * 7.0.0.5 20191118
+ * Fix boot loop regression
+ * Add command TempOffset -12.6 .. 12.6 to set global temperature sensor offset (#6958)
+ *
  * 7.0.0.4 20191108
  * Add command WifiPower 0 .. 20.5 to set Wifi Output Power which will be default set to 17dBm
  * Change supported PCF8574 I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time

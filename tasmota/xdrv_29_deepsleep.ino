@@ -59,15 +59,15 @@ bool DeepSleepEnabled(void)
   return true;
 }
 
-void DeepSleepInit(void)
+void DeepSleepReInit(void)
 {
-  if (DeepSleepEnabled()) {
-    RtcRebootReset();
+  if ((ResetReason() == REASON_DEEP_SLEEP_AWAKE) && DeepSleepEnabled()) {
     if ((RtcSettings.ultradeepsleep > MAX_DEEPSLEEP_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
       // Go back to sleep after 60 minutes if requested deepsleep has not been reached
       RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
       AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
       RtcSettingsSave();
+      RtcRebootReset();
       ESP.deepSleep(100 * RtcSettings.deepsleep_slip * (MAX_DEEPSLEEP_CYCLE < RtcSettings.ultradeepsleep ? MAX_DEEPSLEEP_CYCLE : RtcSettings.ultradeepsleep), WAKE_RF_DEFAULT);
       yield();
       // Sleeping
@@ -198,7 +198,7 @@ bool Xdrv29(uint8_t function)
       result = DecodeCommand(kDeepsleepCommands, DeepsleepCommand);
       break;
     case FUNC_PRE_INIT:
-      DeepSleepInit();
+      DeepSleepReInit();
       break;
   }
   return result;
