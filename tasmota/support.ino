@@ -520,6 +520,7 @@ float ConvertTemp(float c)
   if (!isnan(c) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
     result = c * 1.8 + 32;                                    // Fahrenheit
   }
+  result = result + (0.1 * Settings.temp_comp);
   return result;
 }
 
@@ -530,6 +531,7 @@ float ConvertTempToCelsius(float c)
   if (!isnan(c) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
     result = (c - 32) / 1.8;                                  // Celsius
   }
+  result = result + (0.1 * Settings.temp_comp);
   return result;
 }
 
