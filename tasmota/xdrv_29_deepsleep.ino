@@ -42,6 +42,8 @@ const char kDeepsleepCommands[] PROGMEM = D_PRFX_DEEPSLEEP "|"
 void (* const DeepsleepCommand[])(void) PROGMEM = {
   &CmndDeepsleepTime };
 
+const uint32_t MAX_DEEPSLEEP = 10 * 366 * 24 * 60 * 60;  // Allow max 10 years sleep
+
 uint32_t deepsleep_sleeptime = 0;
 uint8_t deepsleep_flag = 0;
 
@@ -61,6 +63,10 @@ bool DeepSleepEnabled(void)
 
 void DeepSleepReInit(void)
 {
+  // do a sanity check on deepsleep value
+  if ((0xFFFFFFFF == Settings.deepsleep) || (Settings.deepsleep > MAX_DEEPSLEEP)) {
+    Settings.deepsleep = 0;     // issue #6961
+  }
   if ((ResetReason() == REASON_DEEP_SLEEP_AWAKE) && DeepSleepEnabled()) {
     if ((RtcSettings.ultradeepsleep > MAX_DEEPSLEEP_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
       // Go back to sleep after 60 minutes if requested deepsleep has not been reached
@@ -164,7 +170,7 @@ void DeepSleepEverySecond(void)
 void CmndDeepsleepTime(void)
 {
   if ((0 == XdrvMailbox.payload) ||
-     ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < (10 * 366 * 24 * 60 * 60)))) {  // Allow max 10 years sleep
+     ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < MAX_DEEPSLEEP))) {
     Settings.deepsleep = XdrvMailbox.payload;
     RtcSettings.nextwakeup = 0;
     deepsleep_flag = (0 == XdrvMailbox.payload) ? 0 : 4;
