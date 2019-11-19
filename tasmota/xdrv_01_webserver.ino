@@ -1026,8 +1026,8 @@ void HandleRoot(void)
           LightGetHSB(&hue, &sat, &bri);
           AddLog_P2(LOG_LEVEL_INFO, PSTR("HSB: %u %u %u "), hue,sat,bri);
 
-          WSContentSend_P(HTTP_MSG_SLIDER3, F("red, orange, yellow, green, blue, indigo, violet);border-radius:0.3em;"), 0, 359, hue, 'u'); // hue
-          WSContentSend_P(HTTP_MSG_SLIDER3, hexColor, 0, 99, sat, 'n'); // saturation
+          WSContentSend_P(HTTP_MSG_SLIDER3, F("red, orange, yellow, green, blue, indigo, violet);border-radius:0.3em;"), 1, 359, hue, 'u'); // hue
+          WSContentSend_P(HTTP_MSG_SLIDER3, hexColor, 1, 100, changeUIntScale(sat, 0, 255, 0, 100), 'n'); // saturation
         }
     }
 #endif // USE_LIGHT
