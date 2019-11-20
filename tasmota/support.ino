@@ -24,22 +24,6 @@ extern "C" {
 extern struct rst_info resetInfo;
 }
 
-uint32_t ResetReason(void)
-{
-  /*
-    user_interface.h
-    REASON_DEFAULT_RST      = 0,    // normal startup by power on
-    REASON_WDT_RST          = 1,    // hardware watch dog reset
-    REASON_EXCEPTION_RST    = 2,    // exception reset, GPIO status won’t change
-    REASON_SOFT_WDT_RST     = 3,    // software watch dog reset, GPIO status won’t change
-    REASON_SOFT_RESTART     = 4,    // software restart ,system_restart , GPIO status won’t change
-    REASON_DEEP_SLEEP_AWAKE = 5,    // wake up from deep-sleep
-    REASON_EXT_SYS_RST      = 6     // external system reset
-  */
-
-  return resetInfo.reason;
-}
-
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
@@ -92,6 +76,26 @@ void OsWatchLoop(void)
 //  while(1) delay(1000);  // this will trigger the os watch
 }
 
+bool OsWatchBlockedLoop(void)
+{
+  return oswatch_blocked_loop;
+}
+
+uint32_t ResetReason(void)
+{
+  /*
+    user_interface.h
+    REASON_DEFAULT_RST      = 0,  // "Power on"                normal startup by power on
+    REASON_WDT_RST          = 1,  // "Hardware Watchdog"       hardware watch dog reset
+    REASON_EXCEPTION_RST    = 2,  // "Exception"               exception reset, GPIO status won’t change
+    REASON_SOFT_WDT_RST     = 3,  // "Software Watchdog"       software watch dog reset, GPIO status won’t change
+    REASON_SOFT_RESTART     = 4,  // "Software/System restart" software restart ,system_restart , GPIO status won’t change
+    REASON_DEEP_SLEEP_AWAKE = 5,  // "Deep-Sleep Wake"         wake up from deep-sleep
+    REASON_EXT_SYS_RST      = 6   // "External System"         external system reset
+  */
+  return resetInfo.reason;
+}
+
 String GetResetReason(void)
 {
   if (oswatch_blocked_loop) {
@@ -103,9 +107,10 @@ String GetResetReason(void)
   }
 }
 
-bool OsWatchBlockedLoop(void)
+String GetResetReasonInfo(void)
 {
-  return oswatch_blocked_loop;
+  // "Fatal exception:0 flag:2 (EXCEPTION) epc1:0x704022a7 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000000 depc:0x00000000"
+  return (ResetReason() == REASON_EXCEPTION_RST) ? ESP.getResetInfo() : GetResetReason();
 }
 
 /*********************************************************************************************\
