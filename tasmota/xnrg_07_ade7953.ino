@@ -185,7 +185,7 @@ void Ade7953GetData(void)
   }
 }
 
-void Ade7953EnergyEverySecond()
+void Ade7953EnergyEverySecond(void)
 {
 	if (Ade7953.init_step) {
     if (1 == Ade7953.init_step) {

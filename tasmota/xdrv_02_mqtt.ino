@@ -468,7 +468,7 @@ void MqttPublishPowerState(uint32_t device)
 #endif  // USE_SONOFF_IFAN
 }
 
-void MqttPublishAllPowerState()
+void MqttPublishAllPowerState(void)
 {
   for (uint32_t i = 1; i <= devices_present; i++) {
     MqttPublishPowerState(i);
@@ -493,7 +493,7 @@ void MqttPublishPowerBlinkState(uint32_t device)
 
 /*********************************************************************************************/
 
-uint16_t MqttConnectCount()
+uint16_t MqttConnectCount(void)
 {
   return Mqtt.connect_count;
 }

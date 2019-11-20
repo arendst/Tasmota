@@ -391,7 +391,7 @@ char* NoAlNumToUnderscore(char* dest, const char* source)
   return dest;
 }
 
-char IndexSeparator()
+char IndexSeparator(void)
 {
 /*
   // 20 bytes more costly !?!
@@ -414,7 +414,7 @@ void SetShortcutDefault(void)
   }
 }
 
-uint8_t Shortcut()
+uint8_t Shortcut(void)
 {
   uint8_t result = 10;
 
@@ -921,7 +921,7 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
-uint8_t ModuleNr()
+uint8_t ModuleNr(void)
 {
   // 0    = User module (255)
   // 1 up = Template module 0 up
@@ -953,7 +953,7 @@ String AnyModuleName(uint32_t index)
   }
 }
 
-String ModuleName()
+String ModuleName(void)
 {
   return AnyModuleName(Settings.module);
 }
@@ -985,7 +985,7 @@ void ModuleGpios(myio *gp)
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
 }
 
-gpio_flag ModuleFlag()
+gpio_flag ModuleFlag(void)
 {
   gpio_flag flag;
 
@@ -1005,7 +1005,7 @@ void ModuleDefault(uint32_t module)
   memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
 }
 
-void SetModuleType()
+void SetModuleType(void)
 {
   my_module_type = (USER_MODULE == Settings.module) ? Settings.user_template_base : Settings.module;
 }
@@ -1033,7 +1033,7 @@ bool ValidGPIO(uint32_t pin, uint32_t gpio)
   return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
 }
 
-bool ValidAdc()
+bool ValidAdc(void)
 {
   gpio_flag flag = ModuleFlag();
   uint32_t template_adc0 = flag.data &15;
@@ -1133,7 +1133,7 @@ bool JsonTemplate(const char* dataBuf)
   return true;
 }
 
-void TemplateJson()
+void TemplateJson(void)
 {
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
   for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {

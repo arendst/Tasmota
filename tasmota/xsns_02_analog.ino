@@ -101,7 +101,7 @@ void AdcEvery250ms(void)
 }
 #endif  // USE_RULES
 
-uint16_t AdcGetLux()
+uint16_t AdcGetLux(void)
 {
   int adc = AdcRead(2);
   // Source: https://www.allaboutcircuits.com/projects/design-a-luxmeter-using-a-light-dependent-resistor/
