@@ -75,7 +75,10 @@ const char kDebugCommands[] PROGMEM = "|"  // No prefix
   D_CMND_EXCEPTION "|"
 #endif
   D_CMND_FLASHDUMP "|" D_CMND_FLASHMODE "|" D_CMND_FREEMEM"|" D_CMND_HELP "|" D_CMND_RTCDUMP "|" D_CMND_SETSENSOR "|"
-  D_CMND_I2CWRITE "|" D_CMND_I2CREAD "|" D_CMND_I2CSTRETCH "|" D_CMND_I2CCLOCK ;
+#ifdef USE_I2C
+  D_CMND_I2CWRITE "|" D_CMND_I2CREAD "|" D_CMND_I2CSTRETCH "|" D_CMND_I2CCLOCK
+#endif
+  ;
 
 void (* const DebugCommand[])(void) PROGMEM = {
   &CmndCfgDump, &CmndCfgPeek, &CmndCfgPoke,
@@ -90,7 +93,10 @@ void (* const DebugCommand[])(void) PROGMEM = {
   &CmndException,
 #endif
   &CmndFlashDump, &CmndFlashMode, &CmndFreemem, &CmndHelp, &CmndRtcDump, &CmndSetSensor,
-  &CmndI2cWrite, &CmndI2cRead, &CmndI2cStretch, &CmndI2cClock };
+#ifdef USE_I2C
+  &CmndI2cWrite, &CmndI2cRead, &CmndI2cStretch, &CmndI2cClock
+#endif
+  };
 
 uint32_t CPU_loops = 0;
 uint32_t CPU_last_millis = 0;
@@ -575,6 +581,7 @@ void CmndFlashDump(void)
   ResponseCmndDone();
 }
 
+#ifdef USE_I2C
 void CmndI2cWrite(void)
 {
   // I2cWrite <address>,<data>..
@@ -652,6 +659,7 @@ void CmndI2cClock(void)
   }
   ResponseCmndDone();
 }
+#endif // USE_I2C
 
 /*********************************************************************************************\
  * Interface
