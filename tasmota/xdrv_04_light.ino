@@ -1617,8 +1617,8 @@ void LightAnimate(void)
     }
   }
   else {
-    if (Settings.sleep > 50) {
-      sleep = 50;                 // set a minimal value of 50 milliseconds to ensure that animations are smooth
+    if (Settings.sleep > 10) {
+      sleep = 10;                 // set a minimal value of 50 milliseconds to ensure that animations are smooth
     } else {
       sleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
     }
