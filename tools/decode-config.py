@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-VER = '2.3.0036'
+from __future__ import print_function
+VER = '2.4.0037'
 
 """
     decode-config.py - Backup/Restore Tasmota configuration data
@@ -43,7 +44,7 @@ Usage: decode-config.py [-f <filename>] [-d <host>] [-P <port>]
                         [--cmnd-indent <indent>] [--cmnd-groups]
                         [--cmnd-nogroups] [--cmnd-sort] [--cmnd-unsort]
                         [-c <filename>] [-S] [-T json|cmnd|command]
-                        [-g {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi} ...]]
+                        [-g {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Rf,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Rf,System,Timer,Wifi} ...]]
                         [--ignore-warnings] [-h] [-H] [-v] [-V]
 
     Backup/Restore Tasmota configuration data. Args that start with '--'
@@ -123,7 +124,7 @@ Usage: decode-config.py [-f <filename>] [-d <host>] [-P <port>]
                             (default do not output on backup or restore usage)
       -T, --output-format json|cmnd|command
                             display output format (default: 'json')
-      -g, --group {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi}
+      -g, --group {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Rf,System,Timer,Wifi}
                             limit data processing to command groups (default no
                             filter)
       --ignore-warnings     do not exit on warnings. Not recommended, used by your
@@ -184,7 +185,7 @@ import io
 import sys, platform
 def ModuleImportError(module):
     er = str(module)
-    print >> sys.stderr, "{}. Try 'pip install {}' to install it".format(er,er.split(' ')[len(er.split(' '))-1])
+    print('{}, try "pip install {}"'.format(er,er.split(' ')[len(er.split(' '))-1]), file=sys.stderr)
     sys.exit(ExitCode.MODULE_NOT_FOUND)
 try:
     from datetime import datetime
@@ -198,8 +199,11 @@ try:
     import json
     import configargparse
     import pycurl
-    import urllib2
-except ImportError, e:
+    if sys.version_info.major==2:
+        import urllib2
+    else:
+        import urllib
+except ImportError as e:
     ModuleImportError(e)
 
 # ======================================================================
@@ -276,7 +280,7 @@ Settings dictionary describes the config file fields definition:
                     defines the use of data at <addrdef>
                     format is defined in 'struct module format string'
                     see
-                    https://docs.python.org/2.7/library/struct.html#format-strings
+                    https://docs.python.org/3.8/library/struct.html#format-strings
                 <setting>:      <setting>
                     A dictionary describes a (sub)setting dictonary
                     and can recursively define another <setting>
@@ -556,7 +560,7 @@ Setting_5_10_0 = {
         'pulse_counter_type4':      ('<H', (0x5D0,1,3),  (None, None,                           ('Sensor',      '"CounterType4 {}".format($)')) ),
                                     },      0x5D0,       (None, None,                           ('Sensor',      None)), (None,      None) ),
     'pulse_counter_debounce':       ('<H',  0x5D2,       (None, '0 <= $ <= 3200',               ('Sensor',      '"CounterDebounce {}".format($)')) ),
-    'rf_code':                      ('B',   0x5D4,       ([17,9],None,                          ('SonoffRF',    None)), '"0x{:02x}".format($)'),
+    'rf_code':                      ('B',   0x5D4,       ([17,9],None,                          ('Rf',          None)), '"0x{:02x}".format($)'),
 }
 # ======================================================================
 Setting_5_11_0 = copy.deepcopy(Setting_5_10_0)
@@ -1043,8 +1047,8 @@ Setting_6_6_0_14.update             ({
     'mqttlog_level':                ('B',   0x1E7,       (None, None,                           ('Management', '"MqttLog {}".format($)')) ),
     'pcf8574_config':               ('B',   0xE88,       ([8],  None,                           ('Devices',     None)) ),
     'shutter_accuracy':             ('B',   0x1E6,       (None, None,                           ('Shutter',     None)) ),
-    'shutter_opentime':             ('<H',  0xE40,       ([4],  None,                           ('Shutter',     '"ShutterOpenDuration{} {:.1f}".format(#,$/10)')) ),
-    'shutter_closetime':            ('<H',  0xE48,       ([4],  None,                           ('Shutter',     '"ShutterCloseDuration{} {:.1f}".format(#,$/10)')) ),
+    'shutter_opentime':             ('<H',  0xE40,       ([4],  None,                           ('Shutter',     '"ShutterOpenDuration{} {:.1f}".format(#,$/10.0)')) ),
+    'shutter_closetime':            ('<H',  0xE48,       ([4],  None,                           ('Shutter',     '"ShutterCloseDuration{} {:.1f}".format(#,$/10.0)')) ),
     'shuttercoeff':                 ('<H',  0xE50,       ([5,4],None,                           ('Shutter',     None)) ),
     'shutter_invert':               ('B',   0xE78,       ([4],  None,                           ('Shutter',     '"ShutterInvert{} {}".format(#,$)')) ),
     'shutter_set50percent':         ('B',   0xE7C,       ([4],  None,                           ('Shutter',     '"ShutterSetHalfway{} {}".format(#,$)')) ),
@@ -1081,7 +1085,55 @@ Setting_6_6_0_20.update             ({
     'energy_power_delta':           ('<H',  0xE98,       (None, '0 <= $ < 32000',               ('Power',       '"PowerDelta {}".format($)')) ),
                                     })
 # ======================================================================
+Setting_6_6_0_21 = copy.deepcopy(Setting_6_6_0_20)
+Setting_6_6_0_21['flag'][0].pop('value_units',None)
+Setting_6_6_0_21['flag3'][0].pop('tuya_dimmer_range_255',None)
+Setting_6_6_0_21['flag3'][0].update ({
+        'tuya_serial_mqtt_publish': ('<L', (0x3A0,1,16), (None, None,                           ('SetOption',   '"SetOption66 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_7_0_0_1 = copy.deepcopy(Setting_6_6_0_21)
+Setting_7_0_0_1.pop('register8',None)
+Setting_7_0_0_1.update             ({
+    'shutter_motordelay':           ('B',   0xE9A,       ([4],  None,                           ('Shutter',     '"ShutterMotorDelay{} {:.1f}".format(#,$/20.0)')) ),
+    'flag4':                        ('<L',  0x1E0,       (None, None,                           ('System',      None)), '"0x{:08x}".format($)' ),
+                                    })
+Setting_7_0_0_1['flag3'][0].update ({
+        'cors_enabled':             ('<L', (0x3A0,1,23), (None, None,                           ('SetOption',   '"SetOption73 {}".format($)')) ),
+        'ds18x20_internal_pullup':  ('<L', (0x3A0,1,24), (None, None,                           ('SetOption',   '"SetOption74 {}".format($)')) ),
+        'grouptopic_mode':          ('<L', (0x3A0,1,25), (None, None,                           ('SetOption',   '"SetOption75 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_7_0_0_2 = copy.deepcopy(Setting_7_0_0_1)
+Setting_7_0_0_2.update             ({
+    'web_color2':                   ('3B',  0xEA0,       ([1],  None,                           ('Wifi',        '"WebColor{} {}{:06x}".format(#+18,chr(35),int($,0))')), '"0x{:06x}".format($)' ),
+                                    })
+# ======================================================================
+Setting_7_0_0_3 = copy.deepcopy(Setting_7_0_0_2)
+Setting_7_0_0_3.update             ({
+    'i2c_drivers':                  ('<L',  0xFEC,       ([3],  None,                           ('Management',  None)),'"0x{:08x}".format($)' ),
+                                    })
+# ======================================================================
+Setting_7_0_0_4 = copy.deepcopy(Setting_7_0_0_3)
+Setting_7_0_0_4.update             ({
+    'wifi_output_power':            ('B',   0x1E5,       (None, None,                           ('Wifi',        '"WifiPower {:.1f}".format($/10.0)')) ),
+                                    })
+Setting_7_0_0_4['flag3'][0].update ({
+        'bootcount_update':         ('<L', (0x3A0,1,26), (None, None,                           ('SetOption',   '"SetOption76 {}".format($)')) ),
+                                    })
+# ======================================================================
+Setting_7_0_0_5 = copy.deepcopy(Setting_7_0_0_4)
+Setting_7_0_0_5.update             ({
+    'temp_comp':                    ('b',   0xE9E,       (None, None,                           ('Sensor',      '"TempOffset {:.1f}".format($/10.0)')) ),
+                                    })
+# ======================================================================
 Settings = [
+            (0x7000005,0x1000, Setting_7_0_0_5),
+            (0x7000004,0x1000, Setting_7_0_0_4),
+            (0x7000003,0x1000, Setting_7_0_0_3),
+            (0x7000002,0x1000, Setting_7_0_0_2),
+            (0x7000001,0x1000, Setting_7_0_0_1),
+            (0x6060015,0x1000, Setting_6_6_0_21),
             (0x6060014,0x1000, Setting_6_6_0_20),
             (0x6060012,0x1000, Setting_6_6_0_18),
             (0x606000F,0x1000, Setting_6_6_0_15),
@@ -1162,13 +1214,14 @@ def message(msg, type_=None, status=None, line=None):
     @param status:
         status number
     """
-    print >> sys.stderr, '{styp}{sdelimiter}{sstatus}{slineno}{scolon}{smgs}'.format(\
-                            styp=type_ if type_ is not None else '',
-                            sdelimiter=' ' if status is not None and status > 0 and type_ is not None else '',
-                            sstatus=status if status is not None and status > 0 else '',
-                            scolon=': ' if type_ is not None or line is not None else '',
-                            smgs=msg,
-                            slineno=' (@{:04d})'.format(line) if line is not None else '')
+    print('{styp}{sdelimiter}{sstatus}{slineno}{scolon}{smgs}'.format(\
+            styp=type_ if type_ is not None else '',
+            sdelimiter=' ' if status is not None and status > 0 and type_ is not None else '',
+            sstatus=status if status is not None and status > 0 else '',
+            scolon=': ' if type_ is not None or line is not None else '',
+            smgs=msg,
+            slineno=' (@{:04d})'.format(line) if line is not None else '')
+            , file=sys.stderr)
 
 
 def exit(status=0, msg="end", type_=LogType.ERROR, src=None, doexit=True, line=None):
@@ -1200,11 +1253,11 @@ def ShortHelp(doexit=True):
     @param doexit:
         sys.exit with OK if True
     """
-    print parser.description
+    print(parser.description)
     print
     parser.print_usage()
     print
-    print "For advanced help use '{prog} -H' or '{prog} --full-help'".format(prog=os.path.basename(sys.argv[0]))
+    print("For advanced help use '{prog} -H' or '{prog} --full-help'".format(prog=os.path.basename(sys.argv[0])))
     if doexit:
         sys.exit(ExitCode.OK)
 
@@ -1554,8 +1607,8 @@ def LoadTasmotaConfig(filename):
     try:
         with open(filename, "rb") as tasmotafile:
             encode_cfg = tasmotafile.read()
-    except Exception, e:
-        exit(e[0], "'{}' {}".format(filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
+    except Exception as e:
+        exit(e.args[0], "'{}' {}".format(filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
 
     return encode_cfg
 
@@ -1597,8 +1650,8 @@ def TasmotaGet(cmnd, host, port, username=DEFAULTS['source']['username'], passwo
         c.perform()
         responsecode = c.getinfo(c.RESPONSE_CODE)
         response = header.response()
-    except Exception, e:
-        exit(e[0], e[1],line=inspect.getlineno(inspect.currentframe()))
+    except Exception as e:
+        exit(e.args[0], e.args[1], line=inspect.getlineno(inspect.currentframe()))
     finally:
         c.close()
 
@@ -1727,8 +1780,8 @@ def PushTasmotaConfig(encode_cfg, host, port, username=DEFAULTS['source']['usern
     try:
         c.perform()
         responsecode = c.getinfo(c.RESPONSE_CODE)
-    except Exception, e:
-        return e[0], e[1]
+    except Exception as e:
+        return e.args[0], e.args[1]
 
     c.close()
 
@@ -1839,7 +1892,7 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
 
     # calling with nothing is wrong
     if fielddef is None:
-        print >> sys.stderr, '<fielddef> is None'
+        print('<fielddef> is None', file=sys.stderr)
         raise SyntaxError('<fielddef> error')
 
     # get top level items
@@ -1850,7 +1903,7 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
         # converter present
         format_, addrdef, datadef, converter = fielddef
     else:
-        print >> sys.stderr, 'wrong <fielddef> {} length ({}) in setting'.format(fielddef, len(fielddef))
+        print('wrong <fielddef> {} length ({}) in setting'.format(fielddef, len(fielddef)), file=sys.stderr)
         raise SyntaxError('<fielddef> error')
 
     # ignore calls with 'root' setting
@@ -1858,7 +1911,7 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
         return eval(fields)
 
     if not isinstance(format_, (unicode,str,dict)):
-        print >> sys.stderr, 'wrong <format> {} type {} in <fielddef> {}'.format(format_, type(format_), fielddef)
+        print('wrong <format> {} type {} in <fielddef> {}'.format(format_, type(format_), fielddef), file=sys.stderr)
         raise SyntaxError('<fielddef> error')
 
     # extract addrdef items
@@ -1868,16 +1921,16 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
             # baseaddr bit definition
             baseaddr, bits, bitshift = baseaddr
             if not isinstance(bits, int):
-                print >> sys.stderr, '<bits> must be defined as integer in <fielddef> {}'.format(bits, fielddef)
+                print('<bits> must be defined as integer in <fielddef> {}'.format(bits, fielddef), file=sys.stderr)
                 raise SyntaxError('<fielddef> error')
             if not isinstance(bitshift, int):
-                print >> sys.stderr, '<bitshift> must be defined as integer in <fielddef> {}'.format(bitshift, fielddef)
+                print('<bitshift> must be defined as integer in <fielddef> {}'.format(bitshift, fielddef), file=sys.stderr)
                 raise SyntaxError('<fielddef> error')
         else:
-            print >> sys.stderr, 'wrong <addrdef> {} length ({}) in <fielddef> {}'.format(addrdef, len(addrdef), fielddef)
+            print('wrong <addrdef> {} length ({}) in <fielddef> {}'.format(addrdef, len(addrdef), fielddef), file=sys.stderr)
             raise SyntaxError('<fielddef> error')
     if not isinstance(baseaddr, int):
-        print >> sys.stderr, '<baseaddr> must be defined as integer in <fielddef> {}'.format(baseaddr, fielddef)
+        print('<baseaddr> must be defined as integer in <fielddef> {}'.format(baseaddr, fielddef), file=sys.stderr)
         raise SyntaxError('<fielddef> error')
 
     # extract datadef items
@@ -1893,27 +1946,27 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
             if isinstance(cmd, (tuple)) and len(cmd) == 2:
                 group, tasmotacmnd = cmd
                 if group is not None and not isinstance(group, (str, unicode)):
-                    print >> sys.stderr, 'wrong <group> {} in <fielddef> {}'.format(group, fielddef)
+                    print('wrong <group> {} in <fielddef> {}'.format(group, fielddef), file=sys.stderr)
                     raise SyntaxError('<fielddef> error')
                 if tasmotacmnd is isinstance(tasmotacmnd, tuple):
                     tasmotacmnds = tasmotacmnd
                     for tasmotacmnd in tasmotacmnds:
                         if tasmotacmnd is not None and not callable(tasmotacmnd) and not isinstance(tasmotacmnd, (str, unicode)):
-                            print >> sys.stderr, 'wrong <tasmotacmnd> {} in <fielddef> {}'.format(tasmotacmnd, fielddef)
+                            print('wrong <tasmotacmnd> {} in <fielddef> {}'.format(tasmotacmnd, fielddef), file=sys.stderr)
                             raise SyntaxError('<fielddef> error')
                 else:
                     if tasmotacmnd is not None and not callable(tasmotacmnd) and not isinstance(tasmotacmnd, (str, unicode)):
-                        print >> sys.stderr, 'wrong <tasmotacmnd> {} in <fielddef> {}'.format(tasmotacmnd, fielddef)
+                        print('wrong <tasmotacmnd> {} in <fielddef> {}'.format(tasmotacmnd, fielddef), file=sys.stderr)
                         raise SyntaxError('<fielddef> error')
             else:
-                print >> sys.stderr, 'wrong <cmd> {} length ({}) in <fielddef> {}'.format(cmd, len(cmd), fielddef)
+                print('wrong <cmd> {} length ({}) in <fielddef> {}'.format(cmd, len(cmd), fielddef), file=sys.stderr)
                 raise SyntaxError('<fielddef> error')
         else:
-            print >> sys.stderr, 'wrong <datadef> {} length ({}) in <fielddef> {}'.format(datadef, len(datadef), fielddef)
+            print('wrong <datadef> {} length ({}) in <fielddef> {}'.format(datadef, len(datadef), fielddef), file=sys.stderr)
             raise SyntaxError('<fielddef> error')
 
         if validate is not None and (not isinstance(validate, (unicode,str)) and not callable(validate)):
-            print >> sys.stderr, 'wrong <validate> {} type {} in <fielddef> {}'.format(validate, type(validate), fielddef)
+            print('wrong <validate> {} type {} in <fielddef> {}'.format(validate, type(validate), fielddef), file=sys.stderr)
             raise SyntaxError('<fielddef> error')
 
     # convert single int into one-dimensional list
@@ -1921,7 +1974,7 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
         arraydef = [arraydef]
 
     if arraydef is not None and not isinstance(arraydef, (list)):
-        print >> sys.stderr, 'wrong <arraydef> {} type {} in <fielddef> {}'.format(arraydef, type(arraydef), fielddef)
+        print('wrong <arraydef> {} type {} in <fielddef> {}'.format(arraydef, type(arraydef), fielddef), file=sys.stderr)
         raise SyntaxError('<fielddef> error')
 
     # get read/write converter items
@@ -1931,13 +1984,13 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
             # converter has read/write converter
             readconverter, writeconverter = converter
             if readconverter is not None  and not isinstance(readconverter, (str,unicode)) and not callable(readconverter):
-                print >> sys.stderr, 'wrong <readconverter> {} type {} in <fielddef> {}'.format(readconverter, type(readconverter), fielddef)
+                print('wrong <readconverter> {} type {} in <fielddef> {}'.format(readconverter, type(readconverter), fielddef), file=sys.stderr)
                 raise SyntaxError('<fielddef> error')
             if writeconverter is not None and (not isinstance(writeconverter, (bool,str,unicode)) and not callable(writeconverter)):
-                print >> sys.stderr, 'wrong <writeconverter> {} type {} in <fielddef> {}'.format(writeconverter, type(writeconverter), fielddef)
+                print('wrong <writeconverter> {} type {} in <fielddef> {}'.format(writeconverter, type(writeconverter), fielddef), file=sys.stderr)
                 raise SyntaxError('<fielddef> error')
         else:
-            print >> sys.stderr, 'wrong <converter> {} length ({}) in <fielddef> {}'.format(converter, len(converter), fielddef)
+            print('wrong <converter> {} length ({}) in <fielddef> {}'.format(converter, len(converter), fielddef), file=sys.stderr)
             raise SyntaxError('<fielddef> error')
 
 
@@ -1975,8 +2028,8 @@ def ReadWriteConverter(value, fielddef, read=True, raw=False):
                 return eval(conv.replace('$','value'))
             elif callable(conv):     # use as format function
                 return conv(value)
-        except Exception, e:
-            exit(e[0], e[1], type_=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
+        except Exception as e:
+            exit(e.args[0], e.args[1], type_=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
 
     return value
 
@@ -2294,7 +2347,7 @@ def SetFieldValue(fielddef, dobj, addr, value):
     formatcnt = GetFormatCount(format_)
     singletype, bitsize = GetFormatType(format_)
     if args.debug >= 2:
-        print >> sys.stderr, "SetFieldValue(): fielddef {}, addr 0x{:04x}  value {}  formatcnt {}  singletype {}  bitsize {}  ".format(fielddef,addr,value,formatcnt,singletype,bitsize)
+        print("SetFieldValue(): fielddef {}, addr 0x{:04x}  value {}  formatcnt {}  singletype {}  bitsize {}  ".format(fielddef,addr,value,formatcnt,singletype,bitsize), file=sys.stderr)
     if not format_[-1:].lower() in ['s','p']:
         addr += (bitsize / 8) * formatcnt
         for _ in range(0, formatcnt):
@@ -2305,7 +2358,7 @@ def SetFieldValue(fielddef, dobj, addr, value):
             if isinstance(value,int) and value < 0 and val > maxsigned:
                 val = ((maxunsigned+1)-val) * (-1)
             if args.debug >= 3:
-                print >> sys.stderr, "SetFieldValue(): Single type - fielddef {}, addr 0x{:04x}  value {}  singletype {}  bitsize {}".format(fielddef,addr,val,singletype,bitsize)
+                print("SetFieldValue(): Single type - fielddef {}, addr 0x{:04x}  value {}  singletype {}  bitsize {}".format(fielddef,addr,val,singletype,bitsize), file=sys.stderr)
             try:
                 struct.pack_into(singletype, dobj, addr, val)
             except struct.error as e:
@@ -2317,7 +2370,7 @@ def SetFieldValue(fielddef, dobj, addr, value):
             value >>= bitsize
     else:
         if args.debug >= 3:
-            print >> sys.stderr, "SetFieldValue(): String type - fielddef {}, addr 0x{:04x}  value {}  format_ {}".format(fielddef,addr,value,format_)
+            print("SetFieldValue(): String type - fielddef {}, addr 0x{:04x}  value {}  format_ {}".format(fielddef,addr,value,format_), file=sys.stderr)
         try:
             struct.pack_into(format_, dobj, addr, value)
         except struct.error as e:
@@ -2427,7 +2480,7 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
     # do not write readonly values
     if writeconverter is False:
         if args.debug >= 2:
-            print >> sys.stderr, "SetField(): Readonly '{}' using '{}'/{}{} @{} skipped".format(fieldname, format_, arraydef, bits, hex(baseaddr+addroffset))
+            print("SetField(): Readonly '{}' using '{}'/{}{} @{} skipped".format(fieldname, format_, arraydef, bits, hex(baseaddr+addroffset)), file=sys.stderr)
         return dobj
 
     # <arraydef> contains a list
@@ -2465,16 +2518,16 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
         if format_[-1:] in ['c']:
             try:
                 value = ReadWriteConverter(restore.encode(STR_ENCODING)[0], fielddef, read=False)
-            except Exception, e:
-                exit(e[0], e[1], type_=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
+            except Exception as e:
+                exit(e.args[0], e.args[1], type_=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
                 valid = False
 
         # bool
         elif format_[-1:] in ['?']:
             try:
                 value = ReadWriteConverter(bool(restore), fielddef, read=False)
-            except Exception, e:
-                exit(e[0], e[1], type_=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
+            except Exception as e:
+                exit(e.args[0], e.args[1], type_=LogType.WARNING, line=inspect.getlineno(inspect.currentframe()))
                 valid = False
 
         # integer
@@ -2560,7 +2613,7 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
                 if args.debug >= 2:
                     sbits = " {} bits shift {}".format(bits, bitshift) if bits else ""
                     strvalue = "{} [{}]".format(_value, hex(value)) if isinstance(_value, int) else _value
-                    print >> sys.stderr, "SetField(): Set '{}' using '{}'/{}{} @{} to {}".format(fieldname, format_, arraydef, sbits, hex(baseaddr+addroffset), strvalue)
+                    print("SetField(): Set '{}' using '{}'/{}{} @{} to {}".format(fieldname, format_, arraydef, sbits, hex(baseaddr+addroffset), strvalue), file=sys.stderr)
                 if fieldname != 'cfg_crc' and fieldname != '_':
                     prevvalue = GetFieldValue(fielddef, dobj, baseaddr+addroffset)
                     dobj = SetFieldValue(fielddef, dobj, baseaddr+addroffset, value)
@@ -2569,7 +2622,7 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
                         message("Value for '{}' changed from {} to {}".format(fieldname, prevvalue, curvalue), type_=LogType.INFO)
                 else:
                     if args.debug >= 2:
-                        print >> sys.stderr, "SetField(): Special field '{}' using '{}'/{}{} @{} skipped".format(fieldname, format_, arraydef, bits, hex(baseaddr+addroffset))
+                        print("SetField(): Special field '{}' using '{}'/{}{} @{} skipped".format(fieldname, format_, arraydef, bits, hex(baseaddr+addroffset)), file=sys.stderr)
         else:
             sformat = "file '{sfile}' - {{'{sname}': {svalue}}} ({serror})"+errformat
             exit(ExitCode.RESTORE_DATA_ERROR, sformat.format(sfile=filename, sname=fieldname, serror=err, svalue=_value, smin=min_, smax=max_), type_=LogType.WARNING, doexit=not args.ignorewarning)
@@ -2871,8 +2924,8 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
         try:
             with open(backup_filename, "wb") as backupfp:
                 backupfp.write(encode_cfg)
-        except Exception, e:
-            exit(e[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
+        except Exception as e:
+            exit(e.args[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
 
     # binary format
     elif backupfileformat.lower() == FileType.BIN.lower():
@@ -2884,8 +2937,8 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
             with open(backup_filename, "wb") as backupfp:
                 backupfp.write(struct.pack('<L',BINARYFILE_MAGIC))
                 backupfp.write(decode_cfg)
-        except Exception, e:
-            exit(e[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
+        except Exception as e:
+            exit(e.args[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
 
     # JSON format
     elif backupfileformat.lower() == FileType.JSON.lower():
@@ -2896,8 +2949,8 @@ def Backup(backupfile, backupfileformat, encode_cfg, decode_cfg, configmapping):
         try:
             with open(backup_filename, "w") as backupfp:
                 json.dump(configmapping, backupfp, sort_keys=args.jsonsort, indent=None if args.jsonindent < 0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
-        except Exception, e:
-            exit(e[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
+        except Exception as e:
+            exit(e.args[0], "'{}' {}".format(backup_filename, e[1]),line=inspect.getlineno(inspect.currentframe()))
 
     if args.verbose:
         srctype = 'device'
@@ -2940,8 +2993,8 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
         try:
             with open(restorefilename, "rb") as restorefp:
                 new_encode_cfg = restorefp.read()
-        except Exception, e:
-            exit(e[0], "'{}' {}".format(restorefilename, e[1]),line=inspect.getlineno(inspect.currentframe()))
+        except Exception as e:
+            exit(e.args[0], "'{}' {}".format(restorefilename, e[1]),line=inspect.getlineno(inspect.currentframe()))
 
     elif filetype == FileType.BIN:
         if args.verbose:
@@ -2949,8 +3002,8 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
         try:
             with open(restorefilename, "rb") as restorefp:
                 restorebin = restorefp.read()
-        except Exception, e:
-            exit(e[0], "'{}' {}".format(restorefilename, e[1]),line=inspect.getlineno(inspect.currentframe()))
+        except Exception as e:
+            exit(e.args[0], "'{}' {}".format(restorefilename, e[1]),line=inspect.getlineno(inspect.currentframe()))
         header = struct.unpack_from('<L', restorebin, 0)[0]
         if header == BINARYFILE_MAGIC:
             decode_cfg = restorebin[4:]                     # remove header from encrypted config file
@@ -3004,8 +3057,8 @@ def Restore(restorefile, backupfileformat, encode_cfg, decode_cfg, configmapping
                 try:
                     with open(args.tasmotafile, "wb") as outputfile:
                         outputfile.write(new_encode_cfg)
-                except Exception, e:
-                    exit(e[0], "'{}' {}".format(args.tasmotafile, e[1]),line=inspect.getlineno(inspect.currentframe()))
+                except Exception as e:
+                    exit(e.args[0], "'{}' {}".format(args.tasmotafile, e[1]),line=inspect.getlineno(inspect.currentframe()))
                 if args.verbose:
                     message("Restore successful to file '{}' using restore file '{}'".format(args.tasmotafile, restorefilename), type_=LogType.INFO)
 
@@ -3026,10 +3079,10 @@ def OutputTasmotaCmnds(tasmotacmnds):
     def OutputTasmotaSubCmnds(cmnds):
         if args.cmndsort:
             for cmnd in sorted(cmnds, key = lambda cmnd:[int(c) if c.isdigit() else c for c in re.split('(\d+)', cmnd)]):
-                print "{}{}".format(" "*args.cmndindent, cmnd)
+                print("{}{}".format(" "*args.cmndindent, cmnd))
         else:
             for cmnd in cmnds:
-                print "{}{}".format(" "*args.cmndindent, cmnd)
+                print("{}{}".format(" "*args.cmndindent, cmnd))
 
     groups = GetGroupList(Settings[0][2])
 
@@ -3038,7 +3091,7 @@ def OutputTasmotaCmnds(tasmotacmnds):
             if group.title() in (groupname.title() for groupname in tasmotacmnds):
                 cmnds = tasmotacmnds[group]
                 print
-                print "# {}:".format(group)
+                print("# {}:".format(group))
                 OutputTasmotaSubCmnds(cmnds)
 
     else:
@@ -3245,10 +3298,10 @@ def ParseArgs():
     args = parser.parse_args()
 
     if args.debug >= 1:
-        print >> sys.stderr, parser.format_values()
-        print >> sys.stderr, "Settings:"
+        print(parser.format_values(), file=sys.stderr)
+        print("Settings:", file=sys.stderr)
         for k in args.__dict__:
-            print >> sys.stderr, "  "+str(k), "= ",eval('args.{}'.format(k))
+            print("  "+str(k), "= ",eval('args.{}'.format(k)), file=sys.stderr)
     return args
 
 
@@ -3280,7 +3333,7 @@ if __name__ == "__main__":
         # no config source given
         ShortHelp(False)
         print
-        print parser.epilog
+        print(parser.epilog)
         sys.exit(ExitCode.OK)
 
     if len(encode_cfg) == 0:
@@ -3309,7 +3362,7 @@ if __name__ == "__main__":
     # json screen output
     if (args.backupfile is None and args.restorefile is None) or args.output:
         if args.outputformat == 'json':
-            print json.dumps(configmapping, sort_keys=args.jsonsort, indent=None if args.jsonindent<0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') )
+            print(json.dumps(configmapping, sort_keys=args.jsonsort, indent=None if args.jsonindent<0 else args.jsonindent, separators=(',', ':') if args.jsoncompact else (', ', ': ') ))
 
         if args.outputformat == 'cmnd' or args.outputformat == 'command':
             tasmotacmnds = Mapping2Cmnd(decode_cfg, configmapping)
