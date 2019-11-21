@@ -80,7 +80,7 @@ int DomoticzRssiQuality(void)
 }
 
 #ifdef USE_SONOFF_IFAN
-void MqttPublishDomoticzFanState()
+void MqttPublishDomoticzFanState(void)
 {
   if (Settings.flag.mqtt_enabled && Settings.domoticz_relay_idx[1]) {  // SetOption3 - Enable MQTT
     char svalue[8];  // Fanspeed value
@@ -94,7 +94,7 @@ void MqttPublishDomoticzFanState()
   }
 }
 
-void DomoticzUpdateFanState()
+void DomoticzUpdateFanState(void)
 {
   if (domoticz_update_flag) {
     MqttPublishDomoticzFanState();

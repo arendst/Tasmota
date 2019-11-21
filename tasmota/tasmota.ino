@@ -1661,7 +1661,7 @@ void setup(void)
   XsnsCall(FUNC_INIT);
 }
 
-static void BacklogLoop()
+void BacklogLoop(void)
 {
   if (TimeReached(backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {

@@ -201,7 +201,7 @@ uint16_t solaxX1_calculateCRC(uint8_t *bExternTxPackage, uint8_t bLen)
   return wChkSum;
 }
 
-void solaxX1_SendInverterAddress()
+void solaxX1_SendInverterAddress(void)
 {
   source[0] = 0x00;
   destination[0] = 0x00;
@@ -213,7 +213,7 @@ void solaxX1_SendInverterAddress()
   solaxX1_RS485Send(24);
 }
 
-void solaxX1_QueryLiveData()
+void solaxX1_QueryLiveData(void)
 {
   source[0] = 0x01;
   destination[0] = 0x00;

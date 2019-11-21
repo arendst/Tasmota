@@ -30,11 +30,13 @@
 
 #define XDRV_29                29
 
-#define MAX_DEEPSLEEP_CYCLE  3600         // Maximum time for a deepsleep
-#define MIN_DEEPSLEEP_TIME      5
-
 #define D_PRFX_DEEPSLEEP "DeepSleep"
 #define D_CMND_DEEPSLEEP_TIME "Time"
+
+const uint32_t DEEPSLEEP_MAX = 10 * 366 * 24 * 60 * 60;  // Allow max 10 years sleep
+const uint32_t DEEPSLEEP_MAX_CYCLE = 60 * 60;            // Maximum time for a deepsleep as defined by chip hardware
+const uint32_t DEEPSLEEP_MIN_TIME = 5;                   // Allow 5 seconds skew
+const uint32_t DEEPSLEEP_START_COUNTDOWN = 4;            // Allow 4 seconds to update web console before deepsleep
 
 const char kDeepsleepCommands[] PROGMEM = D_PRFX_DEEPSLEEP "|"
   D_CMND_DEEPSLEEP_TIME ;
@@ -47,28 +49,29 @@ uint8_t deepsleep_flag = 0;
 
 bool DeepSleepEnabled(void)
 {
-  if (Settings.deepsleep < 10) {
-    return false;
+  if ((Settings.deepsleep < 10) || (Settings.deepsleep > DEEPSLEEP_MAX)) {
+    Settings.deepsleep = 0;     // Issue #6961
+    return false;               // Disabled
   }
 
   if (pin[GPIO_DEEPSLEEP] < 99) {
     pinMode(pin[GPIO_DEEPSLEEP], INPUT_PULLUP);
-    return (digitalRead(pin[GPIO_DEEPSLEEP]));    // Disable DeepSleep if user holds pin GPIO_DEEPSLEEP low
+    return (digitalRead(pin[GPIO_DEEPSLEEP]));  // Disable DeepSleep if user holds pin GPIO_DEEPSLEEP low
   }
 
-  return true;
+  return true;                  // Enabled
 }
 
 void DeepSleepReInit(void)
 {
   if ((ResetReason() == REASON_DEEP_SLEEP_AWAKE) && DeepSleepEnabled()) {
-    if ((RtcSettings.ultradeepsleep > MAX_DEEPSLEEP_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
+    if ((RtcSettings.ultradeepsleep > DEEPSLEEP_MAX_CYCLE) && (RtcSettings.ultradeepsleep < 1700000000)) {
       // Go back to sleep after 60 minutes if requested deepsleep has not been reached
-      RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - MAX_DEEPSLEEP_CYCLE;
+      RtcSettings.ultradeepsleep = RtcSettings.ultradeepsleep - DEEPSLEEP_MAX_CYCLE;
       AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Remain DeepSleep %d"), RtcSettings.ultradeepsleep);
       RtcSettingsSave();
       RtcRebootReset();
-      ESP.deepSleep(100 * RtcSettings.deepsleep_slip * (MAX_DEEPSLEEP_CYCLE < RtcSettings.ultradeepsleep ? MAX_DEEPSLEEP_CYCLE : RtcSettings.ultradeepsleep), WAKE_RF_DEFAULT);
+      ESP.deepSleep(100 * RtcSettings.deepsleep_slip * (DEEPSLEEP_MAX_CYCLE < RtcSettings.ultradeepsleep ? DEEPSLEEP_MAX_CYCLE : RtcSettings.ultradeepsleep), WAKE_RF_DEFAULT);
       yield();
       // Sleeping
     }
@@ -77,7 +80,7 @@ void DeepSleepReInit(void)
   RtcSettings.ultradeepsleep = 0;
 }
 
-void DeepSleepCheck(void)
+void DeepSleepPrepare(void)
 {
   // Deepsleep_slip is ideally 10.000 == 100%
   // Typically the device has up to 4% slip. Anything else is a wrong setting in the deepsleep_slip
@@ -87,8 +90,7 @@ void DeepSleepCheck(void)
       (RtcSettings.deepsleep_slip < 9000) ||
       (RtcSettings.deepsleep_slip > 11000) ||
       (RtcSettings.nextwakeup > (UtcTime() + Settings.deepsleep))) {
-    AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Reset wrong settings wakeup: %ld, slip %ld"),
-      RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
+    AddLog_P2(LOG_LEVEL_ERROR, PSTR("DSL: Reset wrong settings wakeup: %ld, slip %ld"), RtcSettings.nextwakeup, RtcSettings.deepsleep_slip );
     RtcSettings.nextwakeup = 0;
     RtcSettings.deepsleep_slip = 10000;
   }
@@ -109,15 +111,15 @@ void DeepSleepCheck(void)
 
   // It may happen that wakeup in just <5 seconds in future
   // In this case also add deepsleep to nextwakeup
-  if (RtcSettings.nextwakeup <= (UtcTime() - MIN_DEEPSLEEP_TIME)) {
+  if (RtcSettings.nextwakeup <= (UtcTime() - DEEPSLEEP_MIN_TIME)) {
     // ensure nextwakeup is at least in the future
-    RtcSettings.nextwakeup += (((UtcTime() + MIN_DEEPSLEEP_TIME - RtcSettings.nextwakeup) / Settings.deepsleep) + 1) * Settings.deepsleep;
+    RtcSettings.nextwakeup += (((UtcTime() + DEEPSLEEP_MIN_TIME - RtcSettings.nextwakeup) / Settings.deepsleep) + 1) * Settings.deepsleep;
   }
 
   String dt = GetDT(RtcSettings.nextwakeup + LocalTime() - UtcTime());  // 2017-03-07T11:08:02
-  // Limit sleeptime to MAX_DEEPSLEEP_CYCLE
-  // uint32_t deepsleep_sleeptime = MAX_DEEPSLEEP_CYCLE < (RtcSettings.nextwakeup - UtcTime()) ? (uint32_t)MAX_DEEPSLEEP_CYCLE : RtcSettings.nextwakeup - UtcTime();
-  deepsleep_sleeptime = tmin((uint32_t)MAX_DEEPSLEEP_CYCLE ,RtcSettings.nextwakeup - UtcTime());
+  // Limit sleeptime to DEEPSLEEP_MAX_CYCLE
+  // uint32_t deepsleep_sleeptime = DEEPSLEEP_MAX_CYCLE < (RtcSettings.nextwakeup - UtcTime()) ? (uint32_t)DEEPSLEEP_MAX_CYCLE : RtcSettings.nextwakeup - UtcTime();
+  deepsleep_sleeptime = tmin((uint32_t)DEEPSLEEP_MAX_CYCLE ,RtcSettings.nextwakeup - UtcTime());
 
   // stat/tasmota/STATUS = {"DeepSleep":{"Time":"2019-11-12T21:33:45","Epoch":1573590825}}
   Response_P(PSTR("{\"" D_PRFX_DEEPSLEEP "\":{\"" D_JSON_TIME "\":\"%s\",\"Epoch\":%d}}"), (char*)dt.c_str(), RtcSettings.nextwakeup);
@@ -144,9 +146,9 @@ void DeepSleepEverySecond(void)
   if (!deepsleep_flag) { return; }
 
   if (DeepSleepEnabled()) {
-    if (4 == deepsleep_flag) {  // Allow 4 seconds to update web console before deepsleep
+    if (DEEPSLEEP_START_COUNTDOWN == deepsleep_flag) {  // Allow 4 seconds to update web console before deepsleep
       SettingsSaveAll();
-      DeepSleepCheck();
+      DeepSleepPrepare();
     }
     deepsleep_flag--;
     if (deepsleep_flag <= 0) {
@@ -164,10 +166,10 @@ void DeepSleepEverySecond(void)
 void CmndDeepsleepTime(void)
 {
   if ((0 == XdrvMailbox.payload) ||
-     ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < (10 * 366 * 24 * 60 * 60)))) {  // Allow max 10 years sleep
+     ((XdrvMailbox.payload > 10) && (XdrvMailbox.payload < DEEPSLEEP_MAX))) {
     Settings.deepsleep = XdrvMailbox.payload;
     RtcSettings.nextwakeup = 0;
-    deepsleep_flag = (0 == XdrvMailbox.payload) ? 0 : 4;
+    deepsleep_flag = (0 == XdrvMailbox.payload) ? 0 : DEEPSLEEP_START_COUNTDOWN;
     if (deepsleep_flag) {
       if (!Settings.tele_period) {
         Settings.tele_period = TELE_PERIOD;  // Need teleperiod to go back to sleep
@@ -190,8 +192,8 @@ bool Xdrv29(uint8_t function)
       DeepSleepEverySecond();
       break;
     case FUNC_AFTER_TELEPERIOD:
-      if (!deepsleep_flag) {
-        deepsleep_flag = 4;  // Start deepsleep in 4 seconds
+      if (DeepSleepEnabled() && !deepsleep_flag) {
+        deepsleep_flag = DEEPSLEEP_START_COUNTDOWN;  // Start deepsleep in 4 seconds
       }
       break;
     case FUNC_COMMAND:

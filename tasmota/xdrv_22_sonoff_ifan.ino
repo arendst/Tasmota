@@ -43,7 +43,7 @@ bool ifan_restart_flag = true;
 
 /*********************************************************************************************/
 
-bool IsModuleIfan()
+bool IsModuleIfan(void)
 {
   return ((SONOFF_IFAN02 == my_module_type) || (SONOFF_IFAN03 == my_module_type));
 }
