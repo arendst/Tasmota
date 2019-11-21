@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-VER = '2.4.0037'
+from past.builtins import long
+VER = '2.4.0039'
 
 """
     decode-config.py - Backup/Restore Tasmota configuration data
@@ -23,8 +24,8 @@ VER = '2.4.0037'
 
 
 Requirements:
-     - Python
-     - pip install json pycurl urllib2 configargparse
+     - Python 2.x:
+         pip install json requests urllib2 configargparse
 
 
 Instructions:
@@ -198,7 +199,7 @@ try:
     import inspect
     import json
     import configargparse
-    import pycurl
+    import requests
     if sys.version_info.major==2:
         import urllib2
     else:
@@ -1246,6 +1247,38 @@ def exit(status=0, msg="end", type_=LogType.ERROR, src=None, doexit=True, line=N
         sys.exit(exitcode)
 
 
+def debug(args):
+    """
+    Get debug level
+
+    @param args:
+        configargparse.parse_args() result
+
+    @return:
+        debug level
+    """
+    return 0 if args.debug is None else args.debug
+
+
+def instance(type_):
+    """
+    Creates Python2/3 compatible isinstance test type(s)
+
+    @param args:
+        Python3 instance type
+
+    @return:
+        Python2/3 compatible isinstance type(s)
+    """
+    newtype = type_
+    if sys.version_info.major==2:
+        if type_==str:
+            newtype = (str,unicode)
+        elif isinstance(type_, tuple) and str in type_:
+            newtype = newtype + (unicode,)
+    return newtype
+
+
 def ShortHelp(doexit=True):
     """
     Show short help (usage) only - ued by own -h handling
@@ -1260,36 +1293,6 @@ def ShortHelp(doexit=True):
     print("For advanced help use '{prog} -H' or '{prog} --full-help'".format(prog=os.path.basename(sys.argv[0])))
     if doexit:
         sys.exit(ExitCode.OK)
-
-
-class HTTPHeader:
-    """
-    pycurl helper class retrieving the request header
-    """
-    def __init__(self):
-        self.contents = ''
-
-    def clear(self):
-        self.contents = ''
-
-    def store(self, _buffer):
-        self.contents = "{}{}".format(self.contents, _buffer)
-
-    def response(self):
-        header = str(self.contents).split('\n')
-        if len(header) > 0:
-            return header[0].rstrip()
-        return ''
-
-    def contenttype(self):
-        for item in str(self.contents).split('\n'):
-            ditem = item.split(":")
-            if ditem[0].strip().lower() == 'content-type' and len(ditem) > 1:
-                return ditem[1].strip()
-        return ''
-
-    def __str__(self):
-        return self.contents
 
 
 class CustomHelpFormatter(configargparse.HelpFormatter):
@@ -1336,9 +1339,6 @@ class CustomHelpFormatter(configargparse.HelpFormatter):
 def GetTemplateSizes():
     """
     Get all possible template sizes as list
-
-    @param version:
-        <int> version number from read binary data to search for
 
     @return:
         template sizes as list []
@@ -1472,7 +1472,7 @@ def GetVersionStr(version):
     @return:
         version string
     """
-    if isinstance(version, (unicode,str)):
+    if isinstance(version, instance(str)):
         version = int(version, 0)
     major = ((version>>24) & 0xff)
     minor = ((version>>16) & 0xff)
@@ -1629,43 +1629,21 @@ def TasmotaGet(cmnd, host, port, username=DEFAULTS['source']['username'], passwo
     @return:
         binary config data (encrypted) or None on error
     """
-    body = None
 
     # read config direct from device via http
-    c = pycurl.Curl()
-    buffer = io.BytesIO()
-    c.setopt(c.WRITEDATA, buffer)
-    header = HTTPHeader()
-    c.setopt(c.HEADERFUNCTION, header.store)
-    c.setopt(c.FOLLOWLOCATION, True)
-    c.setopt(c.URL, MakeUrl(host, port, cmnd))
+    url = MakeUrl(host, port, cmnd)
+    auth = None
     if username is not None and password is not None:
-        c.setopt(c.HTTPAUTH, c.HTTPAUTH_BASIC)
-        c.setopt(c.USERPWD, username + ':' + password)
-    c.setopt(c.HTTPGET, True)
-    c.setopt(c.VERBOSE, False)
+        auth = (username, password)
+    res = requests.get(url, auth=auth)
 
-    responsecode = 200
-    try:
-        c.perform()
-        responsecode = c.getinfo(c.RESPONSE_CODE)
-        response = header.response()
-    except Exception as e:
-        exit(e.args[0], e.args[1], line=inspect.getlineno(inspect.currentframe()))
-    finally:
-        c.close()
+    if not res.ok:
+        exit(res.status_code, "Error on http GET request for {} - {}".format(url,res.reason), line=inspect.getlineno(inspect.currentframe()))
 
-    if responsecode >= 400:
-        exit(responsecode, 'HTTP result: {}'.format(header.response()),line=inspect.getlineno(inspect.currentframe()))
-    elif contenttype is not None and header.contenttype()!=contenttype:
+    if contenttype is not None and res.headers['Content-Type']!=contenttype:
         exit(ExitCode.DOWNLOAD_CONFIG_ERROR, "Device did not response properly, may be Tasmota webserver admin mode is disabled (WebServer 2)",line=inspect.getlineno(inspect.currentframe()))
 
-    try:
-        body = buffer.getvalue()
-    except:
-        pass
-
-    return responsecode, body
+    return res.status_code, res.content
 
 
 def GetTasmotaHostname(host, port, username=DEFAULTS['source']['username'], password=None):
@@ -1741,7 +1719,7 @@ def PushTasmotaConfig(encode_cfg, host, port, username=DEFAULTS['source']['usern
         errorcode, errorstring
         errorcode=0 if success, otherwise http response or exception code
     """
-    if isinstance(encode_cfg, bytearray):
+    if isinstance(encode_cfg, (bytes,bytearray)):
         encode_cfg = str(encode_cfg)
 
     # get restore config page first to set internal Tasmota vars
@@ -1749,48 +1727,21 @@ def PushTasmotaConfig(encode_cfg, host, port, username=DEFAULTS['source']['usern
     if body is None:
         return responsecode, "ERROR"
 
-    # post data
-    c = pycurl.Curl()
-    header = HTTPHeader()
-    buffer_ = io.BytesIO()
-    c.setopt(c.HEADERFUNCTION, header.store)
-    c.setopt(c.WRITEFUNCTION, lambda x: None)
-    c.setopt(c.WRITEDATA, buffer_)
-    c.setopt(c.POST, 1)
-    c.setopt(c.URL, MakeUrl(host, port, 'u2'))
+    # ~ # post data
+    url = MakeUrl(host, port, "u2")
+    auth = None
     if username is not None and password is not None:
-        c.setopt(c.HTTPAUTH, c.HTTPAUTH_BASIC)
-        c.setopt(c.USERPWD, username + ':' + password)
-    try:
-        isfile = os.path.isfile(encode_cfg)
-    except:
-        isfile = False
-    if isfile:
-        c.setopt(c.HTTPPOST, [("file", (c.FORM_FILE, encode_cfg))])
-    else:
-        # use as binary data
-        c.setopt(c.HTTPPOST, [
-            ('fileupload', (
-                c.FORM_BUFFER, '{sprog}_v{sver}.dmp'.format(sprog=os.path.basename(sys.argv[0]), sver=VER),
-                c.FORM_BUFFERPTR, encode_cfg
-            )),
-        ])
+        auth = (username, password)
+    files = {'u2':('{sprog}_v{sver}.dmp'.format(sprog=os.path.basename(sys.argv[0]), sver=VER), encode_cfg)}
+    res = requests.post(url, auth=auth, files=files)
 
-    responsecode = 200
-    try:
-        c.perform()
-        responsecode = c.getinfo(c.RESPONSE_CODE)
-    except Exception as e:
-        return e.args[0], e.args[1]
+    if not res.ok:
+        exit(res.status_code, "Error on http POST request for {} - {}".format(url,res.reason), line=inspect.getlineno(inspect.currentframe()))
 
-    c.close()
+    if res.headers['Content-Type']!='text/html':
+        exit(ExitCode.DOWNLOAD_CONFIG_ERROR, "Device did not response properly, may be Tasmota webserver admin mode is disabled (WebServer 2)",line=inspect.getlineno(inspect.currentframe()))
 
-    if responsecode >= 400:
-        return responsecode, header.response()
-    elif header.contenttype() != 'text/html':
-        return ExitCode.UPLOAD_CONFIG_ERROR, "Device did not response properly, may be Tasmota webserver admin mode is disabled (WebServer 2)"
-
-    body = buffer_.getvalue()
+    body = res.content
 
     findUpload = body.find("Upload")
     if findUpload < 0:
@@ -1818,7 +1769,7 @@ def DecryptEncrypt(obj):
     @return:
         decrypted configuration (if obj contains encrypted data)
     """
-    if isinstance(obj, bytearray):
+    if isinstance(obj, (bytes,bytearray)):
         obj = str(obj)
     dobj  = obj[0:2]
     for i in range(2, len(obj)):
@@ -1837,7 +1788,7 @@ def GetSettingsCrc(dobj):
         2 byte unsigned integer crc value
 
     """
-    if isinstance(dobj, bytearray):
+    if isinstance(dobj, (bytes,bytearray)):
         dobj = str(dobj)
     version, size, setting = GetTemplateSetting(dobj)
     if version < 0x06060007 or version > 0x0606000A:
@@ -1862,7 +1813,7 @@ def GetSettingsCrc32(dobj):
         4 byte unsigned integer crc value
 
     """
-    if isinstance(dobj, bytearray):
+    if isinstance(dobj, (bytes,bytearray)):
         dobj = str(dobj)
     crc = 0
     for i in range(0, len(dobj)-4):
@@ -1907,35 +1858,35 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
         raise SyntaxError('<fielddef> error')
 
     # ignore calls with 'root' setting
-    if isinstance(format_, dict) and baseaddr is None and datadef is None:
+    if isinstance(format_, instance(dict)) and baseaddr is None and datadef is None:
         return eval(fields)
 
-    if not isinstance(format_, (unicode,str,dict)):
+    if not isinstance(format_, instance((str,dict))):
         print('wrong <format> {} type {} in <fielddef> {}'.format(format_, type(format_), fielddef), file=sys.stderr)
         raise SyntaxError('<fielddef> error')
 
     # extract addrdef items
     baseaddr = addrdef
-    if isinstance(baseaddr, (list,tuple)):
+    if isinstance(baseaddr, instance((list,tuple))):
         if len(baseaddr) == 3:
             # baseaddr bit definition
             baseaddr, bits, bitshift = baseaddr
-            if not isinstance(bits, int):
+            if not isinstance(bits, instance(int)):
                 print('<bits> must be defined as integer in <fielddef> {}'.format(bits, fielddef), file=sys.stderr)
                 raise SyntaxError('<fielddef> error')
-            if not isinstance(bitshift, int):
+            if not isinstance(bitshift, instance(int)):
                 print('<bitshift> must be defined as integer in <fielddef> {}'.format(bitshift, fielddef), file=sys.stderr)
                 raise SyntaxError('<fielddef> error')
         else:
             print('wrong <addrdef> {} length ({}) in <fielddef> {}'.format(addrdef, len(addrdef), fielddef), file=sys.stderr)
             raise SyntaxError('<fielddef> error')
-    if not isinstance(baseaddr, int):
+    if not isinstance(baseaddr, instance(int)):
         print('<baseaddr> must be defined as integer in <fielddef> {}'.format(baseaddr, fielddef), file=sys.stderr)
         raise SyntaxError('<fielddef> error')
 
     # extract datadef items
     arraydef = datadef
-    if isinstance(datadef, (tuple)):
+    if isinstance(datadef, instance((tuple))):
         if len(datadef) == 2:
             # datadef has a validator
             arraydef, validate = datadef
@@ -1943,19 +1894,19 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
             # datadef has a validator and cmd set
             arraydef, validate, cmd = datadef
             # cmd must be a tuple with 2 objects
-            if isinstance(cmd, (tuple)) and len(cmd) == 2:
+            if isinstance(cmd, instance((tuple))) and len(cmd) == 2:
                 group, tasmotacmnd = cmd
-                if group is not None and not isinstance(group, (str, unicode)):
+                if group is not None and not isinstance(group, instance(str)):
                     print('wrong <group> {} in <fielddef> {}'.format(group, fielddef), file=sys.stderr)
                     raise SyntaxError('<fielddef> error')
-                if tasmotacmnd is isinstance(tasmotacmnd, tuple):
+                if tasmotacmnd is isinstance(tasmotacmnd, instance(tuple)):
                     tasmotacmnds = tasmotacmnd
                     for tasmotacmnd in tasmotacmnds:
-                        if tasmotacmnd is not None and not callable(tasmotacmnd) and not isinstance(tasmotacmnd, (str, unicode)):
+                        if tasmotacmnd is not None and not callable(tasmotacmnd) and not isinstance(tasmotacmnd, instance(str)):
                             print('wrong <tasmotacmnd> {} in <fielddef> {}'.format(tasmotacmnd, fielddef), file=sys.stderr)
                             raise SyntaxError('<fielddef> error')
                 else:
-                    if tasmotacmnd is not None and not callable(tasmotacmnd) and not isinstance(tasmotacmnd, (str, unicode)):
+                    if tasmotacmnd is not None and not callable(tasmotacmnd) and not isinstance(tasmotacmnd, instance(str)):
                         print('wrong <tasmotacmnd> {} in <fielddef> {}'.format(tasmotacmnd, fielddef), file=sys.stderr)
                         raise SyntaxError('<fielddef> error')
             else:
@@ -1965,28 +1916,28 @@ def GetFieldDef(fielddef, fields="format_, addrdef, baseaddr, bits, bitshift, da
             print('wrong <datadef> {} length ({}) in <fielddef> {}'.format(datadef, len(datadef), fielddef), file=sys.stderr)
             raise SyntaxError('<fielddef> error')
 
-        if validate is not None and (not isinstance(validate, (unicode,str)) and not callable(validate)):
+        if validate is not None and (not isinstance(validate, instance(str)) and not callable(validate)):
             print('wrong <validate> {} type {} in <fielddef> {}'.format(validate, type(validate), fielddef), file=sys.stderr)
             raise SyntaxError('<fielddef> error')
 
     # convert single int into one-dimensional list
-    if isinstance(arraydef, int):
+    if isinstance(arraydef, instance(int)):
         arraydef = [arraydef]
 
-    if arraydef is not None and not isinstance(arraydef, (list)):
+    if arraydef is not None and not isinstance(arraydef, instance((list))):
         print('wrong <arraydef> {} type {} in <fielddef> {}'.format(arraydef, type(arraydef), fielddef), file=sys.stderr)
         raise SyntaxError('<fielddef> error')
 
     # get read/write converter items
     readconverter = converter
-    if isinstance(converter, (tuple)):
+    if isinstance(converter, instance((tuple))):
         if len(converter) == 2:
             # converter has read/write converter
             readconverter, writeconverter = converter
-            if readconverter is not None  and not isinstance(readconverter, (str,unicode)) and not callable(readconverter):
+            if readconverter is not None  and not isinstance(readconverter, instance(str)) and not callable(readconverter):
                 print('wrong <readconverter> {} type {} in <fielddef> {}'.format(readconverter, type(readconverter), fielddef), file=sys.stderr)
                 raise SyntaxError('<fielddef> error')
-            if writeconverter is not None and (not isinstance(writeconverter, (bool,str,unicode)) and not callable(writeconverter)):
+            if writeconverter is not None and (not isinstance(writeconverter, instance((bool,str))) and not callable(writeconverter)):
                 print('wrong <writeconverter> {} type {} in <fielddef> {}'.format(writeconverter, type(writeconverter), fielddef), file=sys.stderr)
                 raise SyntaxError('<fielddef> error')
         else:
@@ -2024,7 +1975,7 @@ def ReadWriteConverter(value, fielddef, read=True, raw=False):
     if not raw and converter is not None:
         conv = readconverter if read else writeconverter
         try:
-            if isinstance(conv, str): # evaluate strings
+            if isinstance(conv, instance(str)): # evaluate strings
                 return eval(conv.replace('$','value'))
             elif callable(conv):     # use as format function
                 return conv(value)
@@ -2061,7 +2012,7 @@ def CmndConverter(valuemapping, value, idx, fielddef):
     if tasmotacmnd is not None and (callable(tasmotacmnd) or len(tasmotacmnd) > 0):
         if idx is not None:
             idx += 1
-        if isinstance(tasmotacmnd, str): # evaluate strings
+        if isinstance(tasmotacmnd, instance(str)): # evaluate strings
             if idx is not None:
                 evalstr = tasmotacmnd.replace('$','value').replace('#','idx').replace('@','valuemapping')
             else:
@@ -2100,7 +2051,7 @@ def ValidateValue(value, fielddef):
 
     valid = True
     try:
-        if isinstance(validate, str): # evaluate strings
+        if isinstance(validate, instance(str)): # evaluate strings
             valid = eval(validate.replace('$','value'))
         elif callable(validate):     # use as format function
             valid = validate(value)
@@ -2121,7 +2072,7 @@ def GetFormatCount(format_):
         prefix count or 1 if not specified
     """
 
-    if isinstance(format_, str):
+    if isinstance(format_, instance(str)):
         match = re.search("\s*(\d+)", format_)
         if match:
             return int(match.group(0))
@@ -2142,7 +2093,7 @@ def GetFormatType(format_):
 
     formattype = format_
     bitsize = 0
-    if isinstance(format_, str):
+    if isinstance(format_, instance(str)):
         match = re.search("\s*(\D+)", format_)
         if match:
             formattype = match.group(0)
@@ -2204,7 +2155,7 @@ def GetFieldLength(fielddef):
     format_, addrdef, arraydef = GetFieldDef(fielddef, fields='format_, addrdef, arraydef')
 
     # <arraydef> contains a integer list
-    if isinstance(arraydef, list) and len(arraydef) > 0:
+    if isinstance(arraydef, instance(list)) and len(arraydef) > 0:
         # arraydef contains a list
         # calc size recursive by sum of all elements
         for i in range(0, arraydef[0]):
@@ -2215,7 +2166,7 @@ def GetFieldLength(fielddef):
             else:
                 length += GetFieldLength( (format_, addrdef, None) )
 
-    elif isinstance(format_, dict):
+    elif isinstance(format_, instance(dict)):
             # -> iterate through format
             addr = None
             setting = format_
@@ -2227,7 +2178,7 @@ def GetFieldLength(fielddef):
                     length += _len
 
     # a simple value
-    elif isinstance(format_, str):
+    elif isinstance(format_, instance(str)):
         length = struct.calcsize(format_)
 
     return length
@@ -2253,7 +2204,7 @@ def GetSubfieldDef(fielddef):
         arraydef = None
 
     # create new datadef
-    if isinstance(datadef, tuple):
+    if isinstance(datadef, instance(tuple)):
         if cmd is not None:
             datadef = (arraydef, validate, cmd)
         else:
@@ -2346,7 +2297,7 @@ def SetFieldValue(fielddef, dobj, addr, value):
     format_, bits, bitshift = GetFieldDef(fielddef, fields='format_, bits, bitshift')
     formatcnt = GetFormatCount(format_)
     singletype, bitsize = GetFormatType(format_)
-    if args.debug >= 2:
+    if debug(args) >= 2:
         print("SetFieldValue(): fielddef {}, addr 0x{:04x}  value {}  formatcnt {}  singletype {}  bitsize {}  ".format(fielddef,addr,value,formatcnt,singletype,bitsize), file=sys.stderr)
     if not format_[-1:].lower() in ['s','p']:
         addr += (bitsize / 8) * formatcnt
@@ -2355,9 +2306,9 @@ def SetFieldValue(fielddef, dobj, addr, value):
             maxunsigned = ((2**bitsize) - 1)
             maxsigned = ((2**bitsize)>>1)-1
             val = value & maxunsigned
-            if isinstance(value,int) and value < 0 and val > maxsigned:
+            if isinstance(value,instance(int)) and value < 0 and val > maxsigned:
                 val = ((maxunsigned+1)-val) * (-1)
-            if args.debug >= 3:
+            if debug(args) >= 3:
                 print("SetFieldValue(): Single type - fielddef {}, addr 0x{:04x}  value {}  singletype {}  bitsize {}".format(fielddef,addr,val,singletype,bitsize), file=sys.stderr)
             try:
                 struct.pack_into(singletype, dobj, addr, val)
@@ -2369,7 +2320,7 @@ def SetFieldValue(fielddef, dobj, addr, value):
                      line=inspect.getlineno(inspect.currentframe()))
             value >>= bitsize
     else:
-        if args.debug >= 3:
+        if debug(args) >= 3:
             print("SetFieldValue(): String type - fielddef {}, addr 0x{:04x}  value {}  format_ {}".format(fielddef,addr,value,format_), file=sys.stderr)
         try:
             struct.pack_into(format_, dobj, addr, value)
@@ -2402,7 +2353,7 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
         field mapping
     """
 
-    if isinstance(dobj, bytearray):
+    if isinstance(dobj, instance((bytes,bytearray))):
         dobj = str(dobj)
 
     valuemapping = None
@@ -2415,7 +2366,7 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
         return valuemapping
 
     # <arraydef> contains a integer list
-    if isinstance(arraydef, list) and len(arraydef) > 0:
+    if isinstance(arraydef, instance(list)) and len(arraydef) > 0:
         valuemapping = []
         offset = 0
         for i in range(0, arraydef[0]):
@@ -2427,7 +2378,7 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
             offset += length
 
     # <format> contains a dict
-    elif isinstance(format_, dict):
+    elif isinstance(format_, instance(dict)):
         mapping_value = {}
         # -> iterate through format
         for name in format_:
@@ -2439,7 +2390,7 @@ def GetField(dobj, fieldname, fielddef, raw=False, addroffset=0):
         valuemapping = copy.deepcopy(mapping_value)
 
     # a simple value
-    elif isinstance(format_, (str, bool, int, float, long)):
+    elif isinstance(format_, instance((str, bool, int, float, long))):
         if GetFieldLength(fielddef) != 0:
             valuemapping = ReadWriteConverter(GetFieldValue(fielddef, dobj, baseaddr+addroffset), fielddef, read=True, raw=raw)
 
@@ -2479,12 +2430,12 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
 
     # do not write readonly values
     if writeconverter is False:
-        if args.debug >= 2:
+        if debug(args) >= 2:
             print("SetField(): Readonly '{}' using '{}'/{}{} @{} skipped".format(fieldname, format_, arraydef, bits, hex(baseaddr+addroffset)), file=sys.stderr)
         return dobj
 
     # <arraydef> contains a list
-    if isinstance(arraydef, list) and len(arraydef) > 0:
+    if isinstance(arraydef, instance(list)) and len(arraydef) > 0:
         offset = 0
         if len(restore) > arraydef[0]:
             exit(ExitCode.RESTORE_DATA_ERROR, "file '{sfile}', array '{sname}[{selem}]' exceeds max number of elements [{smax}]".format(sfile=filename, sname=fieldname, selem=len(restore), smax=arraydef[0]), type_=LogType.WARNING, doexit=not args.ignorewarning, line=inspect.getlineno(inspect.currentframe()))
@@ -2499,13 +2450,13 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
             offset += length
 
     # <format> contains a dict
-    elif isinstance(format_, dict):
+    elif isinstance(format_, instance(dict)):
         for name in format_:    # -> iterate through format
             if name in restore:
                 dobj = SetField(dobj, name, format_[name], restore[name], addroffset=addroffset, filename=filename)
 
     # a simple value
-    elif isinstance(format_, (str, bool, int, float, long)):
+    elif isinstance(format_, instance((str, bool, int, float, long))):
         valid = True
         err = ""
         errformat = ""
@@ -2533,7 +2484,7 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
         # integer
         elif format_[-1:] in ['b','B','h','H','i','I','l','L','q','Q','P']:
             value = ReadWriteConverter(restore, fielddef, read=False)
-            if isinstance(value, (str, unicode)):
+            if isinstance(value, instance(str)):
                 value = int(value, 0)
             else:
                 value = int(value)
@@ -2605,14 +2556,14 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
             # copy value before possible change below
             _value = value
 
-        if isinstance(_value, (str, unicode)):
+        if isinstance(_value, instance(str)):
             _value = "'{}'".format(_value)
 
         if valid:
             if not skip:
-                if args.debug >= 2:
+                if debug(args) >= 2:
                     sbits = " {} bits shift {}".format(bits, bitshift) if bits else ""
-                    strvalue = "{} [{}]".format(_value, hex(value)) if isinstance(_value, int) else _value
+                    strvalue = "{} [{}]".format(_value, hex(value)) if isinstance(_value, instance(int)) else _value
                     print("SetField(): Set '{}' using '{}'/{}{} @{} to {}".format(fieldname, format_, arraydef, sbits, hex(baseaddr+addroffset), strvalue), file=sys.stderr)
                 if fieldname != 'cfg_crc' and fieldname != '_':
                     prevvalue = GetFieldValue(fielddef, dobj, baseaddr+addroffset)
@@ -2621,7 +2572,7 @@ def SetField(dobj, fieldname, fielddef, restore, addroffset=0, filename=""):
                     if prevvalue != curvalue and args.verbose:
                         message("Value for '{}' changed from {} to {}".format(fieldname, prevvalue, curvalue), type_=LogType.INFO)
                 else:
-                    if args.debug >= 2:
+                    if debug(args) >= 2:
                         print("SetField(): Special field '{}' using '{}'/{}{} @{} skipped".format(fieldname, format_, arraydef, bits, hex(baseaddr+addroffset)), file=sys.stderr)
         else:
             sformat = "file '{sfile}' - {{'{sname}': {svalue}}} ({serror})"+errformat
@@ -2662,7 +2613,7 @@ def SetCmnd(cmnds, fieldname, fielddef, valuemapping, mappedvalue, addroffset=0,
         return cmnds
 
     # <arraydef> contains a list
-    if isinstance(arraydef, list) and len(arraydef) > 0:
+    if isinstance(arraydef, instance(list)) and len(arraydef) > 0:
         offset = 0
         if len(mappedvalue) > arraydef[0]:
             exit(ExitCode.RESTORE_DATA_ERROR, "array '{sname}[{selem}]' exceeds max number of elements [{smax}]".format(sname=fieldname, selem=len(mappedvalue), smax=arraydef[0]), type_=LogType.WARNING, doexit=not args.ignorewarning, line=inspect.getlineno(inspect.currentframe()))
@@ -2677,23 +2628,23 @@ def SetCmnd(cmnds, fieldname, fielddef, valuemapping, mappedvalue, addroffset=0,
             offset += length
 
     # <format> contains a dict
-    elif isinstance(format_, dict):
+    elif isinstance(format_, instance(dict)):
         for name in format_:    # -> iterate through format
             if name in mappedvalue:
                 cmnds = SetCmnd(cmnds, name, format_[name], valuemapping, mappedvalue[name], addroffset=addroffset, idx=idx)
 
     # a simple value
-    elif isinstance(format_, (str, bool, int, float, long)):
+    elif isinstance(format_, instance((str, bool, int, float, long))):
         if group is not None:
             group = group.title();
-        if isinstance(tasmotacmnd, tuple):
+        if isinstance(tasmotacmnd, instance(tuple)):
             tasmotacmnds = tasmotacmnd
             for tasmotacmnd in tasmotacmnds:
                 cmnd = CmndConverter(valuemapping, mappedvalue, idx, fielddef)
                 if group is not None and cmnd is not None:
                     if group not in cmnds:
                         cmnds[group] = []
-                    if isinstance(cmnd, list):
+                    if isinstance(cmnd, instance(list)):
                         for c in cmnd:
                             cmnds[group].append(c)
                     else:
@@ -2703,7 +2654,7 @@ def SetCmnd(cmnds, fieldname, fielddef, valuemapping, mappedvalue, addroffset=0,
             if group is not None and cmnd is not None:
                 if group not in cmnds:
                     cmnds[group] = []
-                if isinstance(cmnd, list):
+                if isinstance(cmnd, instance(list)):
                     for c in cmnd:
                         cmnds[group].append(c)
                 else:
@@ -2722,7 +2673,7 @@ def Bin2Mapping(decode_cfg):
     @return:
         valuemapping data as mapping dictionary
     """
-    if isinstance(decode_cfg, bytearray):
+    if isinstance(decode_cfg, instance((bytes,bytearray))):
         decode_cfg = str(decode_cfg)
 
     # get binary header and template to use
@@ -2814,7 +2765,7 @@ def Mapping2Bin(decode_cfg, jsonconfig, filename=""):
     @return:
         changed binary config data (decrypted) or None on error
     """
-    if isinstance(decode_cfg, str):
+    if isinstance(decode_cfg, instance(str)):
         decode_cfg = bytearray(decode_cfg)
 
 
@@ -2864,7 +2815,7 @@ def Mapping2Cmnd(decode_cfg, valuemapping, filename=""):
     @return:
         Tasmota command mapping {group: [cmnd <,cmnd <,...>>]}
     """
-    if isinstance(decode_cfg, str):
+    if isinstance(decode_cfg, instance(str)):
         decode_cfg = bytearray(decode_cfg)
 
     # get binary header data to use the correct version template from device
@@ -3297,7 +3248,7 @@ def ParseArgs():
 
     args = parser.parse_args()
 
-    if args.debug >= 1:
+    if debug(args) >= 1:
         print(parser.format_values(), file=sys.stderr)
         print("Settings:", file=sys.stderr)
         for k in args.__dict__:
