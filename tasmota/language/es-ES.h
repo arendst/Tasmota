@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v7.0.0.3
+ * Updated until v7.0.0.5
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -75,7 +75,7 @@
 #define D_COUNTER "Contador"
 #define D_CURRENT "Corriente"          // As in Voltage and Current
 #define D_DATA "Datos"
-#define D_DARKLIGHT "Oscura"
+#define D_DARKLIGHT "Oscuro"
 #define D_DEBUG "Debug"
 #define D_DISABLED "Deshabilitado"
 #define D_DISTANCE "Distancia"
