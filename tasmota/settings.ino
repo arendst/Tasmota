@@ -314,7 +314,9 @@ void SetFlashModeDout(void)
   if (ESP.flashRead(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE)) {
     if (_buffer[2] != 3) {  // DOUT
       _buffer[2] = 3;
-      if (ESP.flashEraseSector(address / FLASH_SECTOR_SIZE)) ESP.flashWrite(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
+      if (ESP.flashEraseSector(address / FLASH_SECTOR_SIZE)) {
+        ESP.flashWrite(address, (uint32_t*)_buffer, FLASH_SECTOR_SIZE);
+      }
     }
   }
   delete[] _buffer;
@@ -412,8 +414,9 @@ void UpdateQuickPowerCycle(bool update)
   else if (pc_register != 0xFFA55ABF) {
     pc_register = 0xFFA55ABF;
     // Assume flash is default all ones and setting a bit to zero does not need an erase
-    ESP.flashEraseSector(pc_location);
-    ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
+    if (ESP.flashEraseSector(pc_location)) {
+      ESP.flashWrite(pc_location * SPI_FLASH_SEC_SIZE, (uint32*)&pc_register, sizeof(pc_register));
+    }
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("QPC: Reset"));
   }
 }
@@ -464,8 +467,9 @@ void SettingsSave(uint8_t rotate)
     Settings.cfg_crc = GetSettingsCrc();  // Keep for backward compatibility in case of fall-back just after upgrade
     Settings.cfg_crc32 = GetSettingsCrc32();
 
-    ESP.flashEraseSector(settings_location);
-    ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    if (ESP.flashEraseSector(settings_location)) {
+      ESP.flashWrite(settings_location * SPI_FLASH_SEC_SIZE, (uint32*)&Settings, sizeof(SYSCFG));
+    }
 
     if (!stop_flash_rotate && rotate) {
       for (uint32_t i = 1; i < CFG_ROTATES; i++) {
