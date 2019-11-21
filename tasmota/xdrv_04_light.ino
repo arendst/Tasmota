@@ -1240,10 +1240,11 @@ void LightUpdateColorMapping(void)
 void LightSetDimmer(uint8_t dimmer) {
   light_controller.changeDimmer(dimmer);
 }
-
+#ifdef USE_COLORPICKER
 uint32_t LightGetHSB(uint16_t *hue,uint8_t  *sat, uint8_t *bri) {
   light_state.getHSB(hue, sat, bri);
 }
+#endif // USE_COLORPICKER
 
 // If SetOption68 is set, get the brightness for a specific device
 uint8_t LightGetBri(uint8_t device) {
