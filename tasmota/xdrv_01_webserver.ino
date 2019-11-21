@@ -733,7 +733,7 @@ void _WSContentSend(const String& content)        // Low level sendContent for a
   DEBUG_CORE_LOG(PSTR("WEB: Chunk size %d"), len);
 }
 
-void WSContentFlush()
+void WSContentFlush(void)
 {
   if (Web.chunk_buffer.length() > 0) {
     _WSContentSend(Web.chunk_buffer);                  // Flush chunk buffer

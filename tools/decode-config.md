@@ -211,7 +211,7 @@ Note: A few very specific module commands like MPC230xx, KNX and some Display co
 ### Filter data
 The huge number of Tasmota configuration data can be overstrained and confusing, so the most of the configuration data are grouped into categories.
 
-With _decode-config.py_ the following categories are available:   `Display`, `Domoticz`, `Internal`, `KNX`, `Led`, `Logging`, `MCP230xx`, `MQTT`, `Main`, `Management`, `Pow`, `Sensor`, `Serial`, `SetOption`, `SonoffRF`, `System`, `Timers`, `Wifi`
+With _decode-config.py_ the following categories are available:   `Display`, `Domoticz`, `Internal`, `KNX`, `Led`, `Logging`, `MCP230xx`, `MQTT`, `Main`, `Management`, `Pow`, `Sensor`, `Serial`, `SetOption`, `RF`, `System`, `Timers`, `Wifi`
 
 These are similary to the categories on [https://github.com/arendst/Tasmota/wiki/Commands](Tasmota Command Wiki).
 
@@ -254,7 +254,7 @@ For advanced help use `-H` or `--full-help`:
                             [--cmnd-indent <indent>] [--cmnd-groups]
                             [--cmnd-nogroups] [--cmnd-sort] [--cmnd-unsort]
                             [-c <filename>] [-S] [-T json|cmnd|command]
-                            [-g {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi} ...]]
+                            [-g {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rf,Rules,Sensor,Serial,Setoption,Shutter,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rf,Rules,Sensor,Serial,Setoption,Shutter,System,Timer,Wifi} ...]]
                             [--ignore-warnings] [-h] [-H] [-v] [-V]
 
     Backup/Restore Tasmota configuration data. Args that start with '--'
@@ -334,7 +334,7 @@ For advanced help use `-H` or `--full-help`:
                             (default do not output on backup or restore usage)
       -T, --output-format json|cmnd|command
                             display output format (default: 'json')
-      -g, --group {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi}
+      -g, --group {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rf,Rules,Sensor,Serial,Setoption,Shutter,System,Timer,Wifi}
                             limit data processing to command groups (default no
                             filter)
       --ignore-warnings     do not exit on warnings. Not recommended, used by your

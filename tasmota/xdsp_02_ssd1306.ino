@@ -47,7 +47,7 @@ extern uint8_t *buffer;
 
 /*********************************************************************************************/
 
-void SSD1306InitDriver()
+void SSD1306InitDriver(void)
 {
   if (!Settings.display_model) {
     if (I2cSetDevice(OLED_ADDRESS1)) {

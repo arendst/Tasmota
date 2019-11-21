@@ -92,7 +92,7 @@ IRrecv *irrecv = nullptr;
 
 unsigned long ir_lasttime = 0;
 
-void IrReceiveUpdateThreshold()
+void IrReceiveUpdateThreshold(void)
 {
   if (irrecv != nullptr) {
     if (Settings.param[P_IR_UNKNOW_THRESHOLD] < 6) { Settings.param[P_IR_UNKNOW_THRESHOLD] = 6; }
