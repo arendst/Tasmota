@@ -161,6 +161,10 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "}"
   "function lc(v,i,p){"
     "la('&'+v+i+'='+p);"
+  "}" 
+  "function ld(v,p){"
+  "eb('s').style.backgroundImage='linear-gradient(to right,grey,hsl('+p+',100%%,50%%))';"
+  "la('&'+v+'='+p);"
   "}"
 #endif  // USE_JAVASCRIPT_ES6
 
@@ -378,6 +382,10 @@ const char HTTP_MSG_SLIDER1[] PROGMEM =
 const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
   "<div><input type='range' min='%d' max='%d' value='%d' onchange='lc(\"%c\", %d, value)'></div>";
+const char HTTP_MSG_SLIDER3[] PROGMEM = // HUE
+  "<br><div style='background-image:linear-gradient(to right, %s'><input type='range' min='%d' max='%d' value='%d' onchange='ld(\"%c\", value)'></div><br>";
+const char HTTP_MSG_SLIDER4[] PROGMEM = // SATURATION
+  "<br><div id='s' style='background-image:linear-gradient(to right, %s'><input type='range' min='%d' max='%d' value='%d' onchange='lb(\"%c\", value)'></div><br>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br>";
 
@@ -1014,8 +1022,19 @@ void HandleRoot(void)
             changeUIntScale(Settings.light_color[i], 0, 255, 0, 100), 'd', i+1);
         }
       }  // Settings.flag3.pwm_multi_channels
+        if (light_type > 3) {
+          char hexColor[65];
+          snprintf_P(hexColor, sizeof(hexColor), PSTR("grey,#%02X%02X%02X );border-radius:0.3em;"), Settings.light_color[0],Settings.light_color[1],Settings.light_color[2]);
+          uint16_t hue;
+          uint8_t sat;
+          uint8_t bri;
+          LightGetHSB(&hue, &sat, &bri);
+          // AddLog_P2(LOG_LEVEL_INFO, PSTR("HSB: %u %u %u "), hue,sat,bri);
+          WSContentSend_P(HTTP_MSG_SLIDER3, F("red,orange,yellow,green,blue,indigo,violet,red);border-radius:0.3em;"), 1, 359, hue, 'u'); // hue
+          WSContentSend_P(HTTP_MSG_SLIDER4, hexColor, 1, 100, changeUIntScale(sat, 0, 255, 0, 100), 'n'); // saturation
+        }
     }
-#endif
+#endif // USE_LIGHT
 #ifdef USE_SHUTTER
     if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
       for (uint32_t i = 0; i < shutters_present; i++) {
@@ -1134,6 +1153,16 @@ bool HandleRootStatusRefresh(void)
   WebGetArg("t", tmp, sizeof(tmp));  // 153 - 500 Color temperature
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  WebGetArg("u", tmp, sizeof(tmp));  // 0 - 359 Hue value
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_HSBCOLOR  "1 %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  WebGetArg("n", tmp, sizeof(tmp));  // 0 - 99 Saturation value
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_HSBCOLOR  "2 %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 #ifdef USE_SHUTTER
