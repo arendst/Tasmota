@@ -358,7 +358,8 @@ const char HTTP_HEAD_STYLE2[] PROGMEM =
   ".bgrn:hover{background:#%06x;}"  // COLOR_BUTTON_SAVE_HOVER
   "a{color:#%06x;text-decoration:none;}"  // COLOR_BUTTON
   ".p{float:left;text-align:left;}"
-  ".q{float:right;text-align:right;}";
+  ".q{float:right;text-align:right;}"
+  ".r{border-radius:0.3em;padding:2px;margin:6px 2px;}";
 const char HTTP_HEAD_STYLE3[] PROGMEM =
   "</style>"
 
@@ -378,18 +379,14 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
 
 const char HTTP_MSG_SLIDER1[] PROGMEM =
   "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
-  "<div><input type='range' min='%d' max='%d' value='%d' onchange='lb(\"%c\",value)'></div>"
-  "<div></div>";
+  "<div><input type='range' min='%d' max='%d' value='%d' onchange='lb(\"%c\",value)'></div>";
 const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
-  "<div><input type='range' min='%d' max='%d' value='%d' onchange='lc(\"%c\",%d,value)'></div>"
-  "<div></div>";
-const char HTTP_MSG_SLIDER3[] PROGMEM = // HUE
-  "<div style='background-image:linear-gradient(to right,red,orange,yellow,green,blue,indigo,violet,red);border-radius:0.3em;'><input type='range' min='1' max='359' value='%d' onchange='ld(\"u\",value)'></div>"
-  "<div></div>";
-const char HTTP_MSG_SLIDER4[] PROGMEM = // SATURATION
-  "<div id='s' style='background-image:linear-gradient(to right,grey,#%s);border-radius:0.3em;'><input type='range' min='1' max='100' value='%d' onchange='lb(\"n\",value)'></div>"
-  "<div></div>";
+  "<div><input type='range' min='%d' max='%d' value='%d' onchange='lc(\"%c\",%d,value)'></div>";
+const char HTTP_MSG_SLIDER_HUE[] PROGMEM =  // Hue
+  "<div class='r' style='background-image:linear-gradient(to right,red,orange,yellow,green,blue,indigo,violet,red);'><input type='range' min='1' max='359' value='%d' onchange='ld(\"u\",value)'></div>";
+const char HTTP_MSG_SLIDER_SAT[] PROGMEM =  // Saturation
+  "<div class='r' style='background-image:linear-gradient(to right,grey,#%02X%02X%02X);' id='s'><input type='range' min='1' max='100' value='%d' onchange='lb(\"n\",value)'></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br>";
 
@@ -1031,10 +1028,8 @@ void HandleRoot(void)
         uint8_t sat;
         uint8_t bri;
         LightGetHSB(&hue, &sat, &bri);
-        WSContentSend_P(HTTP_MSG_SLIDER3, hue); // hue
-        char hex_color[10];
-        snprintf_P(hex_color, sizeof(hex_color), PSTR("%02X%02X%02X"), Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
-        WSContentSend_P(HTTP_MSG_SLIDER4, hex_color, changeUIntScale(sat, 0, 255, 0, 100)); // saturation
+        WSContentSend_P(HTTP_MSG_SLIDER_HUE, hue);  // Hue
+        WSContentSend_P(HTTP_MSG_SLIDER_SAT, Settings.light_color[0], Settings.light_color[1], Settings.light_color[2], changeUIntScale(sat, 0, 255, 0, 100));  // Saturation
       }
     }
 #endif // USE_LIGHT
