@@ -1,5 +1,5 @@
 
-# Development
+## Unreleased (development)
 
 ### 7.0.0.6 20191122
  * Add colorpicker to WebUI by Christian Staars (#6984)
@@ -54,7 +54,7 @@
  * Change repository name from Sonoff-Tasmota to Tasmota
  * Change all code references from Sonoff to Tasmota
 
-# Released
+## Released
 ### 6.7.1 20191026
  * Release
  * Fix on energy monitoring devices using PowerDelta Exception0 with epc1:0x4000dce5 = Divide by zero (#6750)
