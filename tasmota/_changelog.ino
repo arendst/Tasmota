@@ -1,4 +1,7 @@
 /*********************************************************************************************\
+ * 7.0.0.6 20191122
+ * Add colorpicker to WebUI by Christian Staars (#6984)
+ *
  * 7.0.0.5 20191118
  * Fix boot loop regression
  * Add command TempOffset -12.6 .. 12.6 to set global temperature sensor offset (#6958)
