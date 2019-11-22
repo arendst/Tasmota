@@ -385,12 +385,10 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><input type='range' min='%d' max='%d' value='%d' onchange='lc(\"%c\",%d,value)'></div>"
   "<div></div>";
 const char HTTP_MSG_SLIDER3[] PROGMEM = // HUE
-//  "<br><div style='background-image:linear-gradient(to right, %s'><input type='range' min='%d' max='%d' value='%d' onchange='ld(\"%c\", value)'></div><br>";
-  "<div style='background-image:linear-gradient(to right,%s'><input type='range' min='%d' max='%d' value='%d' onchange='ld(\"%c\",value)'></div>"
+  "<div style='background-image:linear-gradient(to right,red,orange,yellow,green,blue,indigo,violet,red);border-radius:0.3em;'><input type='range' min='1' max='359' value='%d' onchange='ld(\"u\",value)'></div>"
   "<div></div>";
 const char HTTP_MSG_SLIDER4[] PROGMEM = // SATURATION
-//  "<br><div id='s' style='background-image:linear-gradient(to right, %s'><input type='range' min='%d' max='%d' value='%d' onchange='lb(\"%c\", value)'></div><br>";
-  "<div id='s' style='background-image:linear-gradient(to right,%s'><input type='range' min='%d' max='%d' value='%d' onchange='lb(\"%c\",value)'></div>"
+  "<div id='s' style='background-image:linear-gradient(to right,grey,#%s);border-radius:0.3em;'><input type='range' min='1' max='100' value='%d' onchange='lb(\"n\",value)'></div>"
   "<div></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br>";
@@ -1028,16 +1026,15 @@ void HandleRoot(void)
             changeUIntScale(Settings.light_color[i], 0, 255, 0, 100), 'd', i+1);
         }
       }  // Settings.flag3.pwm_multi_channels
-      if ((light_type & 7) > 3) {
-        char hexColor[65];
-        snprintf_P(hexColor, sizeof(hexColor), PSTR("grey,#%02X%02X%02X );border-radius:0.3em;"), Settings.light_color[0],Settings.light_color[1],Settings.light_color[2]);
+      if ((light_type & 7) > 2) {
         uint16_t hue;
         uint8_t sat;
         uint8_t bri;
         LightGetHSB(&hue, &sat, &bri);
-        // AddLog_P2(LOG_LEVEL_INFO, PSTR("HSB: %u %u %u "), hue,sat,bri);
-        WSContentSend_P(HTTP_MSG_SLIDER3, F("red,orange,yellow,green,blue,indigo,violet,red);border-radius:0.3em;"), 1, 359, hue, 'u'); // hue
-        WSContentSend_P(HTTP_MSG_SLIDER4, hexColor, 1, 100, changeUIntScale(sat, 0, 255, 0, 100), 'n'); // saturation
+        WSContentSend_P(HTTP_MSG_SLIDER3, hue); // hue
+        char hex_color[10];
+        snprintf_P(hex_color, sizeof(hex_color), PSTR("%02X%02X%02X"), Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
+        WSContentSend_P(HTTP_MSG_SLIDER4, hex_color, changeUIntScale(sat, 0, 255, 0, 100)); // saturation
       }
     }
 #endif // USE_LIGHT
