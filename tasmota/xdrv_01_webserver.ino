@@ -1028,7 +1028,7 @@ void HandleRoot(void)
             changeUIntScale(Settings.light_color[i], 0, 255, 0, 100), 'd', i+1);
         }
       }  // Settings.flag3.pwm_multi_channels
-      if (light_type > 2) {
+      if ((light_type & 7) > 3) {
         char hexColor[65];
         snprintf_P(hexColor, sizeof(hexColor), PSTR("grey,#%02X%02X%02X );border-radius:0.3em;"), Settings.light_color[0],Settings.light_color[1],Settings.light_color[2]);
         uint16_t hue;
