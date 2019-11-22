@@ -1,4 +1,4 @@
-<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" style="margin:5px;float:right;width:50"></img>
 
 # Support
 
