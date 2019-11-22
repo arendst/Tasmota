@@ -24,7 +24,7 @@ In addition to the [release webpage](https://github.com/arendst/Tasmota/releases
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Build Status](https://img.shields.io/travis/arendst/Tasmota.svg)](https://travis-ci.org/arendst/Tasmota)
 
-See [tasmota/_changelog.ino](tasmota/_changelog.ino) for detailed change information.
+See [tasmota/CHANGELOG.md](tasmota/CHANGELOG.md) for detailed change information.
 
 Unless your Tasmota powered device exhibits a problem or you need to make use of a feature that is not available in the Tasmota version currently installed on your device, leave your device alone - it works so don't make unnecessary changes! If the release version (i.e., the master branch) exhibits unexpected behaviour for your device and configuration, you should upgrade to the latest development version instead to see if your problem is resolved as some bugs in previous releases or development builds may already have been resolved.
 
@@ -42,10 +42,10 @@ We don't take any responsibility nor liability for using this software nor for t
 
 ## Note
 
-Please do not ask to add new devices unless it requires additional code for new features. If the device is not listed as a module, try using [Templates](https://github.com/arendst/Tasmota/wiki/Templates) first. If it is not listed in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates) create your own [Template](https://github.com/arendst/Tasmota/wiki/Templates#creating-your-template-).
+Please do not ask to add new devices unless it requires additional code for new features. If the device is not listed as a module, try using [Templates](https://tasmota.github.io/docs/#/Templates) first. If it is not listed in the [Tasmota Device Templates Repository](http://blakadder.github.io/templates) create your own [Template](https://tasmota.github.io/docs/#/Templates?id=creating-your-template).
 
 ## Quick Install
-Download one of the released binaries from https://github.com/arendst/Tasmota/releases and flash it to your hardware as [documented in the wiki](https://github.com/arendst/Tasmota/wiki/Flashing).
+Download one of the released binaries from https://github.com/arendst/Tasmota/releases and flash it to your hardware [using our installation guide](https://tasmota.github.io/docs/#/installation/).
 
 ## Important User Compilation Information
 If you want to compile Tasmota yourself keep in mind the following:
@@ -56,11 +56,11 @@ If you want to compile Tasmota yourself keep in mind the following:
 
 ## Configuration Information
 
-Please refer to the installation and configuration articles in the [wiki](https://github.com/arendst/Tasmota/wiki).
+Please refer to the installation and configuration articles in our [documentation](https://tasmota.github.io/docs).
 
 ## Migration Information
 
-See [wiki migration path](https://github.com/arendst/Tasmota/wiki/Upgrading#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
+See [wiki migration path](https://tasmota.github.io/docs/#/Upgrading?id=migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
 1. Migrate to **Sonoff-Tasmota 3.9.x**
 2. Migrate to **Sonoff-Tasmota 4.x**
@@ -74,8 +74,8 @@ See [wiki migration path](https://github.com/arendst/Tasmota/wiki/Upgrading#migr
 
 For a database of supported devices see [Tasmota Device Templates Repository](https://blakadder.github.io/templates)
 
-See [Wiki](https://github.com/arendst/Tasmota/wiki) for use instructions and how-to's.<br />
-See [Community](https://groups.google.com/d/forum/sonoffusers) for forum.<br />
+See [Wiki](https://tasmota.github.io/docs) for use instructions and how-to's.   
+See [Community](https://groups.google.com/d/forum/sonoffusers) for forum.   
 Visit [Discord Chat](https://discord.gg/Ks2Kzd4) for discussions and troubleshooting.
 
 ## Contribute
@@ -84,7 +84,7 @@ You can contribute to Tasmota by
 - providing Pull Requests (Features, Proof of Concepts, Language files or Fixes)
 - testing new released features and report issues
 - donating to acquire hardware for testing and implementing or out of gratitude
-- contributing missing documentation for features and devices on our [Wiki](https://github.com/arendst/Tasmota/wiki)
+- contributing missing [documentation](https://tasmota.github.io/docs) for features and devices 
 
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
