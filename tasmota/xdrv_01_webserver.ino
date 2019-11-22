@@ -384,7 +384,8 @@ const char HTTP_MSG_SLIDER2[] PROGMEM =
   "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
   "<div><input type='range' min='%d' max='%d' value='%d' onchange='lc(\"%c\",%d,value)'></div>";
 const char HTTP_MSG_SLIDER_HUE[] PROGMEM =  // Hue
-  "<div class='r' style='background-image:linear-gradient(to right,red,orange,yellow,green,blue,indigo,violet,red);'><input type='range' min='1' max='359' value='%d' onchange='ld(\"u\",value)'></div>";
+  "<div class='r' style='background-image:linear-gradient(to right,#800,#f00 5%%,#ff0 20%%,#0f0 35%%,#0ff 50%%,#00f 65%%,#f0f 80%%,#f00 95%%,#800);'>"
+  "<input type='range' min='1' max='359' value='%d' onchange='ld(\"u\",value)'></div>";
 const char HTTP_MSG_SLIDER_SAT[] PROGMEM =  // Saturation
   "<div class='r' style='background-image:linear-gradient(to right,grey,#%02X%02X%02X);' id='s'><input type='range' min='1' max='100' value='%d' onchange='lb(\"n\",value)'></div>";
 const char HTTP_MSG_RSTRT[] PROGMEM =
