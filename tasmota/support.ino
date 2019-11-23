@@ -714,15 +714,15 @@ bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void))
   return false;
 }
 
-const char kOptions[] PROGMEM = "OFF|" D_OFF "|" D_FALSE "|" D_STOP "|" D_CELSIUS "|"              // 0
-                                "ON|" D_ON "|" D_TRUE "|" D_START "|" D_FAHRENHEIT "|" D_USER "|"  // 1
-                                "TOGGLE|" D_TOGGLE "|" D_ADMIN "|"                                 // 2
-                                "BLINK|" D_BLINK "|"                                               // 3
-                                "BLINKOFF|" D_BLINKOFF "|"                                         // 4
-                                "ALL" ;                                                            // 255
+const char kOptions[] PROGMEM = "OFF|" D_OFF "|FALSE|" D_FALSE "|STOP|" D_STOP "|" D_CELSIUS "|"              // 0
+                                "ON|" D_ON "|TRUE|" D_TRUE "|START|" D_START "|" D_FAHRENHEIT "|" D_USER "|"  // 1
+                                "TOGGLE|" D_TOGGLE "|" D_ADMIN "|"                                            // 2
+                                "BLINK|" D_BLINK "|"                                                          // 3
+                                "BLINKOFF|" D_BLINKOFF "|"                                                    // 4
+                                "ALL" ;                                                                       // 255
 
-const uint8_t sNumbers[] PROGMEM = { 0,0,0,0,0,
-                                     1,1,1,1,1,1,
+const uint8_t sNumbers[] PROGMEM = { 0,0,0,0,0,0,0,
+                                     1,1,1,1,1,1,1,1,
                                      2,2,2,
                                      3,3,
                                      4,4,
