@@ -287,6 +287,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
  - Change Reset erase end address from as seen by SDK (getFlashChipSize) to full flash size (getFlashChipRealSize)
  - Fix better control of RGB/White when ``SetOption37`` >128, added ``Dimmer1`` and ``Dimmer2`` commands (#6714)
  - Fix random crash caused by UPNP flood
+ - Fix Wifi instability when light is on, due to sleep=0 (#6961, #6608)
  - Add support for Tuya battery powered devices (#6735)
  - Add support for Honeywell I2C HIH series Humidity and Temperetaure sensor (#6808)
  - Add support for Honeywell HPMA115S0 particle concentration sensor by David Hunt (#6843)
@@ -302,3 +303,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
  - Add frequency to ADE7953 energy monitor as used in Shelly 2.5 by ljakob (#6778)
  - Add hide Alexa objects with friendlyname starting with '$' (#6722, #6762)
  - Add Zigbee command support, considered as v1.0 for full Zigbee support
+ - Add colorpicker to WebUI by Christian Staars (#6984)
