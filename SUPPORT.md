@@ -1,4 +1,4 @@
-<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
+<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" style="margin:5px;float:right;width:50"></img>
 
 # Support
 
@@ -6,10 +6,9 @@ If you're looking for support on **Tasmota** there are some options available:
 
 ## Documentation:
 
-* [Wiki Pages](https://github.com/arendst/Tasmota/wiki): For information on how to Flash Tasmota, configure and use it.
-* [FAQ](https://github.com/arendst/Tasmota/wiki/FAQ): For information on common problems and solutions.
-* [Troubleshooting Information](https://github.com/arendst/Tasmota/wiki/Troubleshooting): For ways to debug and troubleshoot.
-* [Commands Information](https://github.com/arendst/Tasmota/wiki/Commands): For information on all the commands supported by Tasmota.
+* [Documentation Site](https://tasmota.github.io/docs): For information on how to flash Tasmota, configure, use and expand it
+* [FAQ and Troubleshooting](https://tasmota.github.io/docs/#/faq/): For information on common problems and solutions.
+* [Commands Information](https://tasmota.github.io/docs/#/Commands): For information on all the commands supported by Tasmota.
 
 ## Support's Community:
 

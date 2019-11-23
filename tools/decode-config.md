@@ -55,14 +55,14 @@ pip install pycurl configargparse
 
 Install [Python 2.7](https://www.python.org/download/releases/2.7/) then install dependencies. For PyCurl you need to [download pycurl‑7.43.0.3‑cp27‑cp27m‑win_amd64.whl](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pycurl) for Windows 10 64bit.
 ```
-pip install pycurl-7.43.0.3-cp27-cp27m-win_amd64.whl configargparse
+pip install pycurl-7.43.0.3-cp27-cp27m-win_amd64.whl
 // run the command from the folder where you downloaded the file
 
 pip install configargparse
 ```
 
 * [Tasmota](https://github.com/arendst/Tasmota) [Firmware](https://github.com/arendst/Tasmota/releases) with Web-Server enabled:
-  * To backup or restore configurations from or to a Tasmota device you need a firmare with enabled web-server in admin mode (command [WebServer 2](https://github.com/arendst/Tasmota/wiki/Commands#wifi)). This is the Tasmota default.
+  * To backup or restore configurations from or to a Tasmota device you need a firmare with enabled web-server in admin mode (command [WebServer 2](https://tasmota.github.io/docs/#/Commands#wifi)). This is the Tasmota default.
   * If using your own compiled firmware be aware to enable the web-server (`#define USE_WEBSERVER` and `#define WEB_SERVER 2`).
 
 ## File Types
@@ -213,7 +213,7 @@ The huge number of Tasmota configuration data can be overstrained and confusing,
 
 With _decode-config.py_ the following categories are available:   `Display`, `Domoticz`, `Internal`, `KNX`, `Led`, `Logging`, `MCP230xx`, `MQTT`, `Main`, `Management`, `Pow`, `Sensor`, `Serial`, `SetOption`, `RF`, `System`, `Timers`, `Wifi`
 
-These are similary to the categories on [https://github.com/arendst/Tasmota/wiki/Commands](Tasmota Command Wiki).
+These are similary to the categories on [https://tasmota.github.io/docs/#/Commands](Tasmota Command Wiki).
 
 To filter outputs to a subset of groups use the `-g` or `--group` arg concatenating the grooup you want, e. g.
 
