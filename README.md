@@ -74,8 +74,8 @@ See [wiki migration path](https://tasmota.github.io/docs/#/Upgrading?id=migratio
 
 For a database of supported devices see [Tasmota Device Templates Repository](https://blakadder.github.io/templates)
 
-See [Wiki](https://tasmota.github.io/docs) for use instructions and how-to's.   
-See [Community](https://groups.google.com/d/forum/sonoffusers) for forum.   
+See [Wiki](https://tasmota.github.io/docs) for use instructions and how-to's.
+See [Community](https://groups.google.com/d/forum/sonoffusers) for forum.
 Visit [Discord Chat](https://discord.gg/Ks2Kzd4) for discussions and troubleshooting.
 
 ## Contribute
@@ -84,54 +84,11 @@ You can contribute to Tasmota by
 - providing Pull Requests (Features, Proof of Concepts, Language files or Fixes)
 - testing new released features and report issues
 - donating to acquire hardware for testing and implementing or out of gratitude
-- contributing missing [documentation](https://tasmota.github.io/docs) for features and devices 
+- contributing missing [documentation](https://tasmota.github.io/docs) for features and devices
 
 [![donate](https://img.shields.io/badge/donate-PayPal-blue.svg)](https://paypal.me/tasmota)
 
 ## Credits
-
-### Libraries Used
-
-Libraries used with Tasmota are:
-- [ESP8266 core for Arduino](https://github.com/esp8266/Arduino)
-- [Adafruit CCS811](https://github.com/adafruit/Adafruit_CCS811)
-- [Adafruit ILI9341](https://github.com/adafruit/Adafruit_ILI9341)
-- [Adafruit LED Backpack](https://github.com/adafruit/Adafruit-LED-Backpack-Library)
-- [Adafruit MAX31865](https://github.com/adafruit/Adafruit_MAX31865)
-- [Adafruit SGP30](https://github.com/adafruit/Adafruit_SGP30)
-- Adafruit based SH1106
-- [Adafruit SSD1306](https://github.com/adafruit/Adafruit_SSD1306)
-- [Adafruit TSL2591](https://github.com/adafruit/Adafruit_TSL2591_Library)
-- Adafruit based SSD1351
-- [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library)
-- [ArduinoJson](https://arduinojson.org/)
-- AT24C256 I2C eeprom
-- [Base64](https://github.com/Densaugeo/base64_arduino)
-- [Bear SSL](https://github.com/earlephilhower/bearssl-esp8266.git)
-- [Bosch BME680](https://github.com/BoschSensortec/BME680_driver)
-- [C2 Programmer](http://app.cear.ufpb.br/~lucas.hartmann/tag/efm8bb1/)
-- [esp-epaper-29-ws-20171230-gemu](https://github.com/gemu2015/Sonoff-Tasmota/tree/displays/lib)
-- [esp-knx-ip](https://github.com/envy/esp-knx-ip)
-- FrogmoreScd30
-- FT6236
-- [I2Cdevlib](https://github.com/jrowberg/i2cdevlib)
-- [IRremoteEsp8266](https://github.com/markszabo/IRremoteESP8266)
-- [JaretBurkett ILI9488](https://github.com/jaretburkett/ILI9488)
-- [JobaTsl2561](https://github.com/joba-1/Joba_Tsl2561)
-- [LinkedList](https://github.com/ivanseidel/LinkedList)
-- [Liquid Cristal](https://github.com/marcoschwartz/LiquidCrystal_I2C)
-- [MultiChannelGasSensor](http://wiki.seeedstudio.com/Grove-Multichannel_Gas_Sensor/)
-- [NeoPixelBus](https://github.com/Makuna/NeoPixelBus)
-- [NewPing](https://bitbucket.org/teckel12/arduino-new-ping/wiki/Home)
-- [OneWire](https://github.com/PaulStoffregen/OneWire)
-- [PubSubClient](https://github.com/knolleary/pubsubclient)
-- [rc-switch](https://github.com/sui77/rc-switch)
-- TasmotaModbus
-- TasmotaSerial
-- [Vl53l0x](https://github.com/pololu/vl53l0x-arduino)
-- Xlatb Ra8876
-
-### People inspiring me
 
 People helping to keep the show on the road:
 - David Lang providing initial issue resolution and code optimizations
