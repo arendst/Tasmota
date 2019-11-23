@@ -1092,6 +1092,12 @@ bool GetUsedInModule(uint32_t val, uint8_t *arr)
   if ((val >= GPIO_REL1_INV) && (val < GPIO_REL1_INV + MAX_RELAYS)) {
     offset = -(GPIO_REL1_INV - GPIO_REL1);
   }
+  if ((val >= GPIO_REL1_OC) && (val < GPIO_REL1_OC + MAX_RELAYS)) {
+    offset = -(GPIO_REL1_OC - GPIO_REL1);
+  }
+  if ((val >= GPIO_REL1_OC_INV) && (val < GPIO_REL1_OC_INV + MAX_RELAYS)) {
+    offset = -(GPIO_REL1_OC_INV - GPIO_REL1);
+  }
 
   if ((val >= GPIO_LED1) && (val < GPIO_LED1 + MAX_LEDS)) {
     offset = (GPIO_LED1_INV - GPIO_LED1);

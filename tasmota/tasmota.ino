@@ -98,6 +98,7 @@ power_t blink_mask = 0;                     // Blink relay active mask
 power_t blink_powersave;                    // Blink start power save state
 power_t latching_power = 0;                 // Power state at latching start
 power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
+power_t rel_opencollector = 0;              // Relay OC flag (1 = (make in an input if bit is 1))
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 int serial_in_byte_counter = 0;             // Index in receive buffer
 int ota_state_flag = 0;                     // OTA state flag
@@ -311,6 +312,22 @@ char* GetStateText(uint32_t state)
 
 /********************************************************************************************/
 
+// function to relace the three time this is used
+void SetRelay(uint8_t port, uint8_t state)
+{
+  uint8_t val = bitRead(rel_inverted, port) ? !state : state;
+  uint8_t isopencollector = bitRead(rel_opencollector, port) ? 1 : 0;
+  digitalWrite(pin[GPIO_REL1 +port], val);
+  if ((val == 0) || (!isopencollector)) {
+    pinMode(pin[GPIO_REL1 +port], OUTPUT);
+  } else {
+    // for 'opencollector' outputs, set the 'output' pin to be an input pin when 'high' is set
+    // this allows the pin to not absorb current when at 3.3v, and so work with 5v relays.
+    // NOTE: allowing the pin to rise to 5v may not be RECOMMENDED.  No guarantees it won't torch the device.
+    pinMode(pin[GPIO_REL1 +port], INPUT);
+  }
+}
+
 void SetLatchingRelay(power_t lpower, uint32_t state)
 {
   // power xx00 - toggle REL1 (Off) and REL3 (Off) - device 1 Off, device 2 Off
@@ -326,7 +343,7 @@ void SetLatchingRelay(power_t lpower, uint32_t state)
   for (uint32_t i = 0; i < devices_present; i++) {
     uint32_t port = (i << 1) + ((latching_power >> i) &1);
     if (pin[GPIO_REL1 +port] < 99) {
-      digitalWrite(pin[GPIO_REL1 +port], bitRead(rel_inverted, port) ? !state : state);
+      SetRelay(port, state);
     }
   }
 }
@@ -386,7 +403,7 @@ void SetDevicePower(power_t rpower, uint32_t source)
     for (uint32_t i = 0; i < devices_present; i++) {
       power_t state = rpower &1;
       if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
-        digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? !state : state);
+        SetRelay(i, state);
       }
       rpower >>= 1;
     }
@@ -1370,6 +1387,15 @@ void GpioInit(void)
         bitSet(rel_inverted, mpin - GPIO_REL1_INV);
         mpin -= (GPIO_REL1_INV - GPIO_REL1);
       }
+      else if ((mpin >= GPIO_REL1_OC) && (mpin < (GPIO_REL1_OC + MAX_RELAYS))) {
+        bitSet(rel_opencollector, mpin - GPIO_REL1_OC);
+        mpin -= (GPIO_REL1_OC - GPIO_REL1);
+      }
+      else if ((mpin >= GPIO_REL1_OC_INV) && (mpin < (GPIO_REL1_OC_INV + MAX_RELAYS))) {
+        bitSet(rel_opencollector, mpin - GPIO_REL1_OC_INV);
+        bitSet(rel_inverted, mpin - GPIO_REL1_OC_INV);
+        mpin -= (GPIO_REL1_OC_INV - GPIO_REL1);
+      }
       else if ((mpin >= GPIO_LED1_INV) && (mpin < (GPIO_LED1_INV + MAX_LEDS))) {
         bitSet(led_inverted, mpin - GPIO_LED1_INV);
         mpin -= (GPIO_LED1_INV - GPIO_LED1);
@@ -1458,10 +1484,9 @@ void GpioInit(void)
   }
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (pin[GPIO_REL1 +i] < 99) {
-      pinMode(pin[GPIO_REL1 +i], OUTPUT);
       devices_present++;
       if (EXS_RELAY == my_module_type) {
-        digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? 1 : 0);
+        SetRelay(i, 0);
         if (i &1) { devices_present--; }
       }
     }

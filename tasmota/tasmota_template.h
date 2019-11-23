@@ -214,6 +214,22 @@ enum UserSelectablePins {
   GPIO_TASMOTASLAVE_RST_INV, // Slave Reset Inverted
   GPIO_HPMA_RX,        // Honeywell HPMA115S0 Serial interface
   GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
+  GPIO_REL1_OC,           // Relays
+  GPIO_REL2_OC,
+  GPIO_REL3_OC,
+  GPIO_REL4_OC,
+  GPIO_REL5_OC,
+  GPIO_REL6_OC,
+  GPIO_REL7_OC,
+  GPIO_REL8_OC,
+  GPIO_REL1_OC_INV,
+  GPIO_REL2_OC_INV,
+  GPIO_REL3_OC_INV,
+  GPIO_REL4_OC_INV,
+  GPIO_REL5_OC_INV,
+  GPIO_REL6_OC_INV,
+  GPIO_REL7_OC_INV,
+  GPIO_REL8_OC_INV,
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -294,6 +310,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
   D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
+  D_SENSOR_RELAY "1oc|" D_SENSOR_RELAY "2oc|" D_SENSOR_RELAY "3oc|" D_SENSOR_RELAY "4oc|" D_SENSOR_RELAY "5oc|" D_SENSOR_RELAY "6oc|" D_SENSOR_RELAY "7oc|" D_SENSOR_RELAY "8oc|"
+  D_SENSOR_RELAY "1oci|" D_SENSOR_RELAY "2oci|" D_SENSOR_RELAY "3oci|" D_SENSOR_RELAY "4oci|" D_SENSOR_RELAY "5oci|" D_SENSOR_RELAY "6oci|" D_SENSOR_RELAY "7oci|" D_SENSOR_RELAY "8oci|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -481,20 +499,36 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SWT8_NP,
   GPIO_REL1,           // Relays
   GPIO_REL1_INV,
+  GPIO_REL1_OC,           // Relays
+  GPIO_REL1_OC_INV,
   GPIO_REL2,
   GPIO_REL2_INV,
+  GPIO_REL2_OC,           // Relays
+  GPIO_REL2_OC_INV,
   GPIO_REL3,
   GPIO_REL3_INV,
+  GPIO_REL3_OC,           // Relays
+  GPIO_REL3_OC_INV,
   GPIO_REL4,
   GPIO_REL4_INV,
+  GPIO_REL4_OC,           // Relays
+  GPIO_REL4_OC_INV,
   GPIO_REL5,
   GPIO_REL5_INV,
+  GPIO_REL5_OC,           // Relays
+  GPIO_REL5_OC_INV,
   GPIO_REL6,
   GPIO_REL6_INV,
+  GPIO_REL6_OC,           // Relays
+  GPIO_REL6_OC_INV,
   GPIO_REL7,
   GPIO_REL7_INV,
+  GPIO_REL7_OC,           // Relays
+  GPIO_REL7_OC_INV,
   GPIO_REL8,
   GPIO_REL8_INV,
+  GPIO_REL8_OC,           // Relays
+  GPIO_REL8_OC_INV,
   GPIO_LED1,           // Leds
   GPIO_LED1_INV,
   GPIO_LED2,
