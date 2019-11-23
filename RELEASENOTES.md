@@ -22,7 +22,7 @@ Although it might still compile on previous Core versions all support will be re
 
 ## Support of TLS
 
-To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/#/AWS-IoT)
+To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/#/integrations/AWS-IoT)
 
 ## Initial configuration tools
 
