@@ -163,6 +163,10 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "la('&'+v+i+'='+p);"
   "}"
 #endif  // USE_JAVASCRIPT_ES6
+  "function ld(v,p){"
+  "eb('s').style.backgroundImage='linear-gradient(to right,grey,hsl('+p+',100%%,50%%))';"
+  "la('&'+v+'='+p);"
+  "}"
 
   "wl(la);";
 
@@ -354,7 +358,8 @@ const char HTTP_HEAD_STYLE2[] PROGMEM =
   ".bgrn:hover{background:#%06x;}"  // COLOR_BUTTON_SAVE_HOVER
   "a{color:#%06x;text-decoration:none;}"  // COLOR_BUTTON
   ".p{float:left;text-align:left;}"
-  ".q{float:right;text-align:right;}";
+  ".q{float:right;text-align:right;}"
+  ".r{border-radius:0.3em;padding:2px;margin:6px 2px;}";
 const char HTTP_HEAD_STYLE3[] PROGMEM =
   "</style>"
 
@@ -372,12 +377,17 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
 #endif
   "<h2>%s</h2>";
 
-const char HTTP_MSG_SLIDER1[] PROGMEM =
-  "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
-  "<div><input type='range' min='%d' max='%d' value='%d' onchange='lb(\"%c\", value)'></div>";
-const char HTTP_MSG_SLIDER2[] PROGMEM =
-  "<div><span class='p'>%s</span><span class='q'>%s</span></div>"
-  "<div><input type='range' min='%d' max='%d' value='%d' onchange='lc(\"%c\", %d, value)'></div>";
+const char HTTP_MSG_SLIDER_GRADIENT[] PROGMEM =
+  "<div id='%s' class='r' style='background-image:linear-gradient(to right,%s,%s);'><input type='range' min='%d' max='%d' value='%d' onchange='lb(\"%c\",value)'></div>";
+const char HTTP_MSG_SLIDER_HUE[] PROGMEM =
+  "<div class='r' style='background-image:linear-gradient(to right,#800,#f00 5%%,#ff0 20%%,#0f0 35%%,#0ff 50%%,#00f 65%%,#f0f 80%%,#f00 95%%,#800);'>"
+  "<input type='range' min='1' max='359' value='%d' onchange='ld(\"u\",value)'></div>";
+const char HTTP_MSG_SLIDER_CHANNEL[] PROGMEM =
+  "<div class='r' style='background-image:linear-gradient(to right,#000,%s);'><input type='range' min='1' max='100' value='%d' onchange='lc(\"d\",%d,value)'></div>";
+const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
+  "<div><span class='p'>" D_CLOSE "</span><span class='q'>" D_OPEN "</span></div>"
+  "<div><input type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'></div>";
+
 const char HTTP_MSG_RSTRT[] PROGMEM =
   "<br><div style='text-align:center;'>" D_DEVICE_WILL_RESTART "</div><br>";
 
@@ -510,6 +520,7 @@ const char kUploadErrors[] PROGMEM =
   "|" D_UPLOAD_ERR_10 "|" D_UPLOAD_ERR_11 "|" D_UPLOAD_ERR_12 "|" D_UPLOAD_ERR_13
 #endif
   ;
+const char kChannelColors[] PROGMEM = "#f00|#0f0|#00f|#fff|#ff0";  // Red, Green, Blue, ColdWhite, WarmWhite
 
 const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
@@ -951,6 +962,8 @@ void HandleWifiLogin(void)
   WSContentStop();
 }
 
+
+
 void HandleRoot(void)
 {
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
@@ -982,7 +995,7 @@ void HandleRoot(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_MAIN_MENU);
 
-  char stemp[5];
+  char stemp[10];
 
   WSContentStart_P(S_MAIN_MENU);
 #ifdef USE_SCRIPT_WEB_DISPLAY
@@ -996,31 +1009,38 @@ void HandleRoot(void)
   if (devices_present) {
 #ifdef USE_LIGHT
     if (light_type) {
+      uint8_t light_subtype = light_type &7;
       if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
-        if ((LST_COLDWARM == (light_type &7)) || (LST_RGBWC == (light_type &7))) {
+        if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
           // Cold - Warm &t related to lb("t", value) and WebGetArg("t", tmp, sizeof(tmp));
-          WSContentSend_P(HTTP_MSG_SLIDER1, F(D_COLDLIGHT), F(D_WARMLIGHT),
-            153, 500, LightGetColorTemp(), 't');
+          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "a", "#fff", "#ff0", 153, 500, LightGetColorTemp(), 't');  // White to Yellow
+        }
+        if (light_subtype > 2) {
+          uint16_t hue;
+          uint8_t sat;
+          uint8_t bri;
+          LightGetHSB(&hue, &sat, &bri);
+          WSContentSend_P(HTTP_MSG_SLIDER_HUE, hue);  // Hue
+          snprintf_P(stemp, sizeof(stemp), PSTR("#%02X%02X%02X"), Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
+          // Saturation "s" related to eb('s').style.backgroundImage='linear-gradient(to right,grey,hsl('+p+',100%%,50%%))';
+          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "s", "grey", stemp, 1, 100, changeUIntScale(sat, 0, 255, 0, 100), 'n');
         }
         // Dark - Bright &d related to lb("d", value) and WebGetArg("d", tmp, sizeof(tmp));
-        WSContentSend_P(HTTP_MSG_SLIDER1, F(D_DARKLIGHT), F(D_BRIGHTLIGHT),
-          1, 100, Settings.light_dimmer, 'd');
+        WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "b", "#000", "#fff", 1, 100, Settings.light_dimmer, 'd');  // Black to White
       } else {  // Settings.flag3.pwm_multi_channels - SetOption68 1 - Enable multi-channels PWM instead of Color PWM
-        uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
+        uint32_t pwm_channels = light_subtype > LST_MAX ? LST_MAX : light_subtype;
         for (uint32_t i = 0; i < pwm_channels; i++) {
-          snprintf_P(stemp, sizeof(stemp), PSTR("c%d"), i);
-          WSContentSend_P(HTTP_MSG_SLIDER2, stemp, FPSTR("100%"),
-            1, 100,
-            changeUIntScale(Settings.light_color[i], 0, 255, 0, 100), 'd', i+1);
+          uint8_t index = (pwm_channels < 3) ? i +3 : i;
+          WSContentSend_P(HTTP_MSG_SLIDER_CHANNEL, GetTextIndexed(stemp, sizeof(stemp), index, kChannelColors),
+            changeUIntScale(Settings.light_color[i], 0, 255, 0, 100), i+1);  // Dark to Light
         }
       }  // Settings.flag3.pwm_multi_channels
     }
-#endif
+#endif // USE_LIGHT
 #ifdef USE_SHUTTER
     if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
       for (uint32_t i = 0; i < shutters_present; i++) {
-        WSContentSend_P(HTTP_MSG_SLIDER2, F(D_CLOSE), F(D_OPEN),
-          0, 100, Settings.shutter_position[i], 'u', i+1);
+        WSContentSend_P(HTTP_MSG_SLIDER_SHUTTER, Settings.shutter_position[i], i+1);
       }
     }
 #endif  // USE_SHUTTER
@@ -1134,6 +1154,16 @@ bool HandleRootStatusRefresh(void)
   WebGetArg("t", tmp, sizeof(tmp));  // 153 - 500 Color temperature
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  WebGetArg("u", tmp, sizeof(tmp));  // 0 - 359 Hue value
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_HSBCOLOR  "1 %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  WebGetArg("n", tmp, sizeof(tmp));  // 0 - 99 Saturation value
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_HSBCOLOR  "2 %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
 #ifdef USE_SHUTTER

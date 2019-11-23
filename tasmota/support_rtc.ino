@@ -373,10 +373,13 @@ void RtcSecond(void)
 {
   TIME_T tmpTime;
 
-  if (!Rtc.user_time_entry) {
-    if ((Rtc.ntp_sync_minute > 59) && (RtcTime.minute > 2)) Rtc.ntp_sync_minute = 1;                 // If sync prepare for a new cycle
+  if (!Rtc.user_time_entry && !global_state.wifi_down) {
+    uint8_t uptime_minute = (uptime / 60) % 60;  // 0 .. 59
+    if ((Rtc.ntp_sync_minute > 59) && (uptime_minute > 2)) {
+      Rtc.ntp_sync_minute = 1;                   // If sync prepare for a new cycle
+    }
     uint8_t offset = (uptime < 30) ? RtcTime.second : (((ESP.getChipId() & 0xF) * 3) + 3) ;  // First try ASAP to sync. If fails try once every 60 seconds based on chip id
-    if (!global_state.wifi_down && (((offset == RtcTime.second) && ((RtcTime.year < 2016) || (Rtc.ntp_sync_minute == RtcTime.minute))) || ntp_force_sync)) {
+    if ( (((offset == RtcTime.second) && ( (RtcTime.year < 2016) || (Rtc.ntp_sync_minute == uptime_minute))) || ntp_force_sync ) ) {
       Rtc.ntp_time = sntp_get_current_timestamp();
       if (Rtc.ntp_time > START_VALID_TIME) {  // Fix NTP bug in core 2.4.1/SDK 2.2.1 (returns Thu Jan 01 08:00:10 1970 after power on)
         ntp_force_sync = false;
@@ -405,7 +408,8 @@ void RtcSecond(void)
       }
     }
   }
-  Rtc.utc_time++;
+
+  Rtc.utc_time++;  // Increment every second
   Rtc.local_time = Rtc.utc_time;
   if (Rtc.local_time > START_VALID_TIME) {  // 2016-01-01
     int16_t timezone_minutes = Settings.timezone_minutes;
@@ -434,8 +438,8 @@ void RtcSecond(void)
     Rtc.time_timezone /= 60;
     if (!Settings.energy_kWhtotal_time) { Settings.energy_kWhtotal_time = Rtc.local_time; }
   }
-  BreakTime(Rtc.local_time, RtcTime);
 
+  BreakTime(Rtc.local_time, RtcTime);
   if (RtcTime.valid) {
     if (!Rtc.midnight) {
       Rtc.midnight = Rtc.local_time - (RtcTime.hour * 3600) - (RtcTime.minute * 60) - RtcTime.second;
