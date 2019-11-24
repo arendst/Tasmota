@@ -33,8 +33,8 @@ const uint8_t kIFan03Sequence[MAX_FAN_SPEED][MAX_FAN_SPEED] = {{0, 2, 2, 2}, {0,
 const char kSonoffIfanCommands[] PROGMEM = "|"  // No prefix
   D_CMND_FANSPEED;
 
-void (* const SonoffIfanCommand[])(void) PROGMEM =
-  { &CmndFanspeed };
+void (* const SonoffIfanCommand[])(void) PROGMEM = {
+  &CmndFanspeed };
 
 uint8_t ifan_fanspeed_timer = 0;
 uint8_t ifan_fanspeed_goal = 0;

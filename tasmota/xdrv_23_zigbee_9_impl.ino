@@ -36,13 +36,15 @@ TasmotaSerial *ZigbeeSerial = nullptr;
 #endif
 
 
-const char kZigbeeCommands[] PROGMEM = "|" D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEE_PERMITJOIN
-                                "|" D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND
-                                "|" D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ ;
+const char kZigbeeCommands[] PROGMEM = "|"
+  D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEE_PERMITJOIN "|"
+  D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|"
+  D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ ;
 
-void (* const ZigbeeCommand[])(void) PROGMEM = { &CmndZigbeeZNPSend, &CmndZigbeePermitJoin,
-                                &CmndZigbeeStatus, &CmndZigbeeReset, &CmndZigbeeSend,
-                                &CmndZigbeeProbe, &CmndZigbeeRead };
+void (* const ZigbeeCommand[])(void) PROGMEM = {
+  &CmndZigbeeZNPSend, &CmndZigbeePermitJoin,
+  &CmndZigbeeStatus, &CmndZigbeeReset, &CmndZigbeeSend,
+  &CmndZigbeeProbe, &CmndZigbeeRead };
 
 int32_t ZigbeeProcessInput(class SBuffer &buf) {
   if (!zigbee.state_machine) { return -1; }     // if state machine is stopped, send 'ignore' message
@@ -260,7 +262,7 @@ uint32_t strToUInt(const JsonVariant val) {
   return 0;   // couldn't parse anything
 }
 
-const unsigned char ZIGBEE_FACTORY_RESET[] PROGMEM = 
+const unsigned char ZIGBEE_FACTORY_RESET[] PROGMEM =
   { Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 /* len */, 0x01 /* STARTOPT_CLEAR_CONFIG */};
 //"2605030101";  // Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 len, 0x01 STARTOPT_CLEAR_CONFIG
 // Do a factory reset of the CC2530

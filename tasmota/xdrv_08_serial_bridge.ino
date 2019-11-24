@@ -29,8 +29,8 @@ const uint8_t SERIAL_BRIDGE_BUFFER_SIZE = 130;
 const char kSerialBridgeCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SSERIALSEND "|" D_CMND_SBAUDRATE;
 
-void (* const SerialBridgeCommand[])(void) PROGMEM =
-  { &CmndSSerialSend, &CmndSBaudrate };
+void (* const SerialBridgeCommand[])(void) PROGMEM = {
+  &CmndSSerialSend, &CmndSBaudrate };
 
 #include <TasmotaSerial.h>
 
