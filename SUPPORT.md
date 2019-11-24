@@ -7,7 +7,7 @@ If you're looking for support on **Tasmota** there are some options available:
 ## Documentation:
 
 * [Documentation Site](https://tasmota.github.io/docs): For information on how to flash Tasmota, configure, use and expand it
-* [FAQ and Troubleshooting](https://tasmota.github.io/docs/#/faq/): For information on common problems and solutions.
+* [FAQ and Troubleshooting](https://tasmota.github.io/docs/#/help/): For information on common problems and solutions.
 * [Commands Information](https://tasmota.github.io/docs/#/Commands): For information on all the commands supported by Tasmota.
 
 ## Support's Community:
