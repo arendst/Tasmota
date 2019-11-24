@@ -219,27 +219,27 @@ void Epd42::SetLut(void) {
     unsigned int count;
     SendCommand(LUT_FOR_VCOM);                            //vcom
     for(count = 0; count < 44; count++) {
-        SendData(lut_vcom0[count]);
+        SendData(pgm_read_byte(&lut_vcom0[count]));
     }
 
     SendCommand(LUT_WHITE_TO_WHITE);                      //ww --
     for(count = 0; count < 42; count++) {
-        SendData(lut_ww[count]);
+        SendData(pgm_read_byte(&lut_ww[count]));
     }
 
     SendCommand(LUT_BLACK_TO_WHITE);                      //bw r
     for(count = 0; count < 42; count++) {
-        SendData(lut_bw[count]);
+        SendData(pgm_read_byte(&lut_bw[count]));
     }
 
     SendCommand(LUT_WHITE_TO_BLACK);                      //wb w
     for(count = 0; count < 42; count++) {
-        SendData(lut_wb[count]);
+        SendData(pgm_read_byte(&lut_wb[count]));
     }
 
     SendCommand(LUT_BLACK_TO_BLACK);                      //bb b
     for(count = 0; count < 42; count++) {
-        SendData(lut_bb[count]);
+        SendData(pgm_read_byte(&lut_bb[count]));
     }
 }
 
@@ -252,27 +252,27 @@ void Epd42::SetLutQuick(void) {
     unsigned int count;
     SendCommand(LUT_FOR_VCOM);                            //vcom
     for(count = 0; count < 44; count++) {
-        SendData(lut_vcom0_quick[count]);
+        SendData(pgm_read_byte(&lut_vcom0_quick[count]));
     }
 
     SendCommand(LUT_WHITE_TO_WHITE);                      //ww --
     for(count = 0; count < 42; count++) {
-        SendData(lut_ww_quick[count]);
+        SendData(pgm_read_byte(&lut_ww_quick[count]));
     }
 
     SendCommand(LUT_BLACK_TO_WHITE);                      //bw r
     for(count = 0; count < 42; count++) {
-        SendData(lut_bw_quick[count]);
+        SendData(pgm_read_byte(&lut_bw_quick[count]));
     }
 
     SendCommand(LUT_WHITE_TO_BLACK);                      //wb w
     for(count = 0; count < 42; count++) {
-        SendData(lut_wb_quick[count]);
+        SendData(pgm_read_byte(&lut_wb_quick[count]));
     }
 
     SendCommand(LUT_BLACK_TO_BLACK);                      //bb b
     for(count = 0; count < 42; count++) {
-        SendData(lut_bb_quick[count]);
+        SendData(pgm_read_byte(&lut_bb_quick[count]));
     }
 }
 
@@ -387,7 +387,7 @@ void Epd42::Sleep() {
     SendData(0xA5);
 }
 
-const unsigned char lut_vcom0[] =
+const unsigned char lut_vcom0[] PROGMEM =
 {
 0x40, 0x17, 0x00, 0x00, 0x00, 0x02,
 0x00, 0x17, 0x17, 0x00, 0x00, 0x02,
@@ -398,7 +398,7 @@ const unsigned char lut_vcom0[] =
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-const unsigned char lut_vcom0_quick[] =
+const unsigned char lut_vcom0_quick[] PROGMEM =
 {
 0x00, 0x0E, 0x00, 0x00, 0x00, 0x01,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -411,7 +411,8 @@ const unsigned char lut_vcom0_quick[] =
 
 
 
-const unsigned char lut_ww[] ={
+const unsigned char lut_ww[] PROGMEM =
+{
 0x40, 0x17, 0x00, 0x00, 0x00, 0x02,
 0x90, 0x17, 0x17, 0x00, 0x00, 0x02,
 0x40, 0x0A, 0x01, 0x00, 0x00, 0x01,
@@ -421,7 +422,8 @@ const unsigned char lut_ww[] ={
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-const unsigned char lut_ww_quick[] ={
+const unsigned char lut_ww_quick[] PROGMEM =
+{
 0xA0, 0x0E, 0x00, 0x00, 0x00, 0x01,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -432,7 +434,8 @@ const unsigned char lut_ww_quick[] ={
 };
 
 
-const unsigned char lut_bw[] ={
+const unsigned char lut_bw[] PROGMEM =
+{
 0x40, 0x17, 0x00, 0x00, 0x00, 0x02,
 0x90, 0x17, 0x17, 0x00, 0x00, 0x02,
 0x40, 0x0A, 0x01, 0x00, 0x00, 0x01,
@@ -443,7 +446,8 @@ const unsigned char lut_bw[] ={
 };
 
 
-const unsigned char lut_bw_quick[] ={
+const unsigned char lut_bw_quick[] PROGMEM =
+{
 0xA0, 0x0E, 0x00, 0x00, 0x00, 0x01,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -453,7 +457,8 @@ const unsigned char lut_bw_quick[] ={
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-const unsigned char lut_bb[] ={
+const unsigned char lut_bb[] PROGMEM =
+{
 0x80, 0x17, 0x00, 0x00, 0x00, 0x02,
 0x90, 0x17, 0x17, 0x00, 0x00, 0x02,
 0x80, 0x0A, 0x01, 0x00, 0x00, 0x01,
@@ -463,7 +468,8 @@ const unsigned char lut_bb[] ={
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-const unsigned char lut_bb_quick[] ={
+const unsigned char lut_bb_quick[] PROGMEM =
+{
 0x50, 0x0E, 0x00, 0x00, 0x00, 0x01,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -474,7 +480,8 @@ const unsigned char lut_bb_quick[] ={
 };
 
 
-const unsigned char lut_wb[] ={
+const unsigned char lut_wb[] PROGMEM =
+{
 0x80, 0x17, 0x00, 0x00, 0x00, 0x02,
 0x90, 0x17, 0x17, 0x00, 0x00, 0x02,
 0x80, 0x0A, 0x01, 0x00, 0x00, 0x01,
@@ -484,7 +491,8 @@ const unsigned char lut_wb[] ={
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-const unsigned char lut_wb_quick[] ={
+const unsigned char lut_wb_quick[] PROGMEM =
+{
 0x50, 0x0E, 0x00, 0x00, 0x00, 0x01,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

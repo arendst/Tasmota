@@ -1,14 +1,48 @@
 language: python
 python:
-  - '2.7'
+  - '3.7'
 sudo: false
-cache:
-  directories:
-    - "~/.platformio"
 install:
   - pip install -U platformio
+  - platformio upgrade
+  - platformio update
+
+cache:
+  directories:
+  - .cache
+  - $HOME/.platformio
+
+env:
+  - ENV=tasmota
+  - ENV=tasmota-minimal
+  - ENV=tasmota-basic
+  - ENV=tasmota-knx
+  - ENV=tasmota-sensors
+  - ENV=tasmota-display
+  - ENV=tasmota-ir
+  - ENV=tasmota-BG
+  - ENV=tasmota-BR
+  - ENV=tasmota-CN
+  - ENV=tasmota-CZ
+  - ENV=tasmota-DE
+  - ENV=tasmota-ES
+  - ENV=tasmota-FR
+  - ENV=tasmota-GR
+  - ENV=tasmota-HE
+  - ENV=tasmota-HU
+  - ENV=tasmota-IT
+  - ENV=tasmota-KO
+  - ENV=tasmota-NL
+  - ENV=tasmota-PL
+  - ENV=tasmota-PT
+  - ENV=tasmota-RU
+  - ENV=tasmota-SE
+  - ENV=tasmota-SK
+  - ENV=tasmota-TR
+  - ENV=tasmota-TW
+  - ENV=tasmota-UK
 
 script:
-  - platformio run
+  - platformio run -e $ENV
 before_deploy:
   - for file in .pioenvs/*/firmware.bin; do cp $file ${file%/*}.bin; done

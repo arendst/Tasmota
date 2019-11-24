@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-  decode-status.py - decode status for Sonoff-Tasmota
+  decode-status.py - decode status for Tasmota
 
   Copyright (C) 2019 Theo Arends
 
@@ -53,7 +53,7 @@ a_on_off = ["OFF","ON "]
 a_setoption = [[
     "Save power state and use after restart",
     "Restrict button actions to single, double and hold",
-    "Show value units in JSON messages",
+    "(not used) Show value units in JSON messages",
     "MQTT enabled",
     "Respond as Command topic instead of RESULT",
     "MQTT retain on Power",
@@ -86,17 +86,22 @@ a_setoption = [[
     ],[
     "Key hold time (ms)",
     "Sonoff POW Max_Power_Retry",
-    "Tuya dimmer device id",
+    "Backlog delay (ms)",
     "(not used) mDNS delayed start (Sec)",
     "Boot loop retry offset (0 = disable)",
     "RGBWW remap",
     "IR Unknown threshold",
     "CSE7766 invalid power margin",
     "Ignore hold time (s)",
-    "Number of Tuya relays",
+    "(not used) Number of Tuya MCU relays",
     "Over temperature threshold (celsius)",
+    "(not used) Tuya MCU max dimmer value",
+    "(not used) Tuya MCU voltage Id",
+    "(not used) Tuya MCU current Id",
+    "(not used) Tuya MCU power Id",
+    "(not used) Energy Tariff1 start hour",
+    "(not used) Energy Tariff2 start hour",
     "",
-    "","","","","","",
     ],[
     "Timers enabled",
     "Generic ESP8285 GPIO enabled",
@@ -113,11 +118,27 @@ a_setoption = [[
     "Do not use retain flag on HOLD messages",
     "Do not scan relay power state at restart",
     "Use _ instead of - as sensor index separator",
-    "Disable Dimmer slider control",
-    "Disable Dimmer range 255 slider control",
+    "Disable fast power cycle detection for device reset",
+    "Enable TuyaMcuReceived messages over Mqtt",
     "Enable buzzer when available",
     "Enable multi-channels PWM instead of Color PWM",
-    "",
+    "(not used) Limits Tuya MCU dimmers to minimum of 10% (25) when enabled",
+    "Enable Weekend Energy Tariff",
+    "Select different Modbus registers for Active Energy",
+    "Enable hardware energy total counter as reference",
+    "Enable HTTP CORS",
+    "Enable internal pullup for single DS18x20 sensor",
+    "GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)",
+    "","",
+    "","",
+    "Enable shutter support",
+    "Invert PCF8574 ports"
+    ],[
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
+    "","","","",
     "","","","",
     "","","","",
     "","","",""
@@ -160,11 +181,11 @@ a_features = [[
     "USE_ADE7953","USE_SPS30","USE_VL53L0X","USE_MLX90614",
     "USE_MAX31865","USE_CHIRP","USE_SOLAX_X1","USE_PAJ7620"
     ],[
-    "USE_BUZZER","USE_RDM6300","","",
-    "","","","",
-    "","","","",
-    "","","","",
-    "","","","",
+    "USE_BUZZER","USE_RDM6300","USE_IBEACON","USE_SML_M",
+    "USE_INA226","USE_A4988_STEPPER","USE_DDS2382","USE_SM2135",
+    "USE_SHUTTER","USE_PCF8574","USE_DDSU666","USE_DEEPSLEEP",
+    "USE_SONOFF_SC","USE_SONOFF_RF","USE_SONOFF_L1","USE_EXS_DIMMER",
+    "USE_ARDUINO_SLAVE","USE_HIH6","USE_HPMA","USE_TSL2591",
     "","","","",
     "","","","",
     "","","",""
@@ -236,7 +257,7 @@ def StartDecode():
                             options.append(str("{0:2d} ({1:3d}) {2}".format(i, split_register[opt_idx], option)))
                             i += 1
 
-                if r in (0, 2): #registers 1 and 3 hold binary values
+                if r in (0, 2, 3): #registers 1 and 3 hold binary values
                     for opt_idx, option in enumerate(opt_group):
                         i_register = int(register,16)
                         state = (i_register >> opt_idx) & 1
