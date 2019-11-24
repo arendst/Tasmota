@@ -164,7 +164,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "}"
 #endif  // USE_JAVASCRIPT_ES6
   "function ld(v,p){"
-  "eb('s').style.backgroundImage='linear-gradient(to right,grey,hsl('+p+',100%%,50%%))';"
+  "eb('s').style.background='linear-gradient(to right,#fff,hsl('+p+',100%%,50%%))';"
   "la('&'+v+'='+p);"
   "}"
 
@@ -1022,8 +1022,8 @@ void HandleRoot(void)
           LightGetHSB(&hue, &sat, &bri);
           WSContentSend_P(HTTP_MSG_SLIDER_HUE, hue);  // Hue
           snprintf_P(stemp, sizeof(stemp), PSTR("#%02X%02X%02X"), Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
-          // Saturation "s" related to eb('s').style.backgroundImage='linear-gradient(to right,grey,hsl('+p+',100%%,50%%))';
-          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "s", "grey", stemp, 1, 100, changeUIntScale(sat, 0, 255, 0, 100), 'n');
+          // Saturation "s" related to eb('s').style.background='linear-gradient(to right,#fff,hsl('+p+',100%%,50%%))';
+          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "s", "#fff", stemp, 1, 100, changeUIntScale(sat, 0, 255, 0, 100), 'n');
         }
         // Dark - Bright &d related to lb("d", value) and WebGetArg("d", tmp, sizeof(tmp));
         WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "b", "#000", "#fff", 1, 100, Settings.light_dimmer, 'd');  // Black to White
