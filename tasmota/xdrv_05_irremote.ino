@@ -26,15 +26,16 @@
 
 #include <IRremoteESP8266.h>
 
-enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_SYNTAX_IRHVAC };
+enum IrErrors { IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND };
 
 const char kIrRemoteCommands[] PROGMEM = "|" D_CMND_IRSEND ;
 
-void (* const IrRemoteCommand[])(void) PROGMEM = { &CmndIrSend };
+// Keep below IrRemoteCommand lines exactly as below as otherwise Arduino IDE prototyping will fail (#6982)
+void (* const IrRemoteCommand[])(void) PROGMEM = {
+  &CmndIrSend };
 
 // Based on IRremoteESP8266.h enum decode_type_t
-static const uint8_t MAX_STANDARD_IR = SHARP;   // this is the last code mapped to decode_type_t
-enum IrVendors { IR_BASE = MAX_STANDARD_IR };
+static const uint8_t MAX_STANDARD_IR = NEC;   // this is the last code mapped to decode_type_t
 const char kIrRemoteProtocols[] PROGMEM = "UNKNOWN|RC5|RC6|NEC";
 
 /*********************************************************************************************\
@@ -86,7 +87,7 @@ void IrReceiveInit(void)
 
 void IrReceiveCheck(void)
 {
-  char sirtype[14];  // Max is AIWA_RC_T501
+  char sirtype[8];  // Max is UNKNOWN
   int8_t iridx = 0;
 
   decode_results results;
@@ -95,7 +96,7 @@ void IrReceiveCheck(void)
     char hvalue[65];  // Max 256 bits
 
     iridx = results.decode_type;
-    if ((iridx < 0) || (iridx > 14)) { iridx = 0; }  // UNKNOWN
+    if ((iridx < 0) || (iridx > MAX_STANDARD_IR)) { iridx = 0; }  // UNKNOWN
 
     if (iridx) {
       if (results.bits > 64) {

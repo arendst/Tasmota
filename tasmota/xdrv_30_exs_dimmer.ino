@@ -508,10 +508,10 @@ const char kExsCommands[] PROGMEM = D_PRFX_EXS "|"
   D_CMND_EXS_DIMMS "|" D_CMND_EXS_CH_LOCK "|"
   D_CMND_EXS_STATE;
 
-void (* const ExsCommand[])(void) PROGMEM =
-  { &CmndExsDimm,  &CmndExsDimmTbl,  &CmndExsDimmVal,
-    &CmndExsDimms,  &CmndExsChLock,
-    &CmndExsState };
+void (* const ExsCommand[])(void) PROGMEM = {
+  &CmndExsDimm,  &CmndExsDimmTbl,  &CmndExsDimmVal,
+  &CmndExsDimms,  &CmndExsChLock,
+  &CmndExsState };
 
 void CmndExsDimm(void)
 {

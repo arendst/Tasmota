@@ -186,8 +186,8 @@ void AdcShow(bool json)
 const char kAdcCommands[] PROGMEM = "|"  // No prefix
   D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_ADCPARAM;
 
-void (* const AdcCommand[])(void) PROGMEM =
-  { &CmndAdc, &CmndAdcs, &CmndAdcParam };
+void (* const AdcCommand[])(void) PROGMEM = {
+  &CmndAdc, &CmndAdcs, &CmndAdcParam };
 
 void CmndAdc(void)
 {

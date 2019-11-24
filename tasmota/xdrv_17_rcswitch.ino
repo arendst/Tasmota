@@ -35,8 +35,8 @@
 const char kRfSendCommands[] PROGMEM = "|"  // No prefix
   D_CMND_RFSEND;
 
-void (* const RfSendCommand[])(void) PROGMEM =
-  { &CmndRfSend };
+void (* const RfSendCommand[])(void) PROGMEM = {
+  &CmndRfSend };
 
 #include <RCSwitch.h>
 

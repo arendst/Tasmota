@@ -164,7 +164,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "}"
 #endif  // USE_JAVASCRIPT_ES6
   "function ld(v,p){"
-  "eb('s').style.backgroundImage='linear-gradient(to right,grey,hsl('+p+',100%%,50%%))';"
+  "eb('s').style.background='linear-gradient(to right,#fff,hsl('+p+',100%%,50%%))';"
   "la('&'+v+'='+p);"
   "}"
 
@@ -345,6 +345,7 @@ const char HTTP_HEAD_STYLE1[] PROGMEM =
   "p{margin:0.5em 0;}"
   "input{width:100%%;box-sizing:border-box;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;background:#%06x;color:#%06x;}"  // COLOR_INPUT, COLOR_INPUT_TEXT
   "input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}"
+  "input[type=range]{width:99%%;}"
   "select{width:100%%;background:#%06x;color:#%06x;}"  // COLOR_INPUT, COLOR_INPUT_TEXT
   "textarea{resize:none;width:98%%;height:318px;padding:5px;overflow:auto;background:#%06x;color:#%06x;}"  // COLOR_CONSOLE, COLOR_CONSOLE_TEXT
   "body{text-align:center;font-family:verdana,sans-serif;background:#%06x;}"  // COLOR_BACKGROUND
@@ -520,7 +521,6 @@ const char kUploadErrors[] PROGMEM =
   "|" D_UPLOAD_ERR_10 "|" D_UPLOAD_ERR_11 "|" D_UPLOAD_ERR_12 "|" D_UPLOAD_ERR_13
 #endif
   ;
-const char kChannelColors[] PROGMEM = "#f00|#0f0|#00f|#fff|#ff0";  // Red, Green, Blue, ColdWhite, WarmWhite
 
 const uint16_t DNS_PORT = 53;
 enum HttpOptions {HTTP_OFF, HTTP_USER, HTTP_ADMIN, HTTP_MANAGER, HTTP_MANAGER_RESET_ONLY};
@@ -1022,8 +1022,8 @@ void HandleRoot(void)
           LightGetHSB(&hue, &sat, &bri);
           WSContentSend_P(HTTP_MSG_SLIDER_HUE, hue);  // Hue
           snprintf_P(stemp, sizeof(stemp), PSTR("#%02X%02X%02X"), Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
-          // Saturation "s" related to eb('s').style.backgroundImage='linear-gradient(to right,grey,hsl('+p+',100%%,50%%))';
-          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "s", "grey", stemp, 1, 100, changeUIntScale(sat, 0, 255, 0, 100), 'n');
+          // Saturation "s" related to eb('s').style.background='linear-gradient(to right,#fff,hsl('+p+',100%%,50%%))';
+          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "s", "#fff", stemp, 1, 100, changeUIntScale(sat, 0, 255, 0, 100), 'n');
         }
         // Dark - Bright &d related to lb("d", value) and WebGetArg("d", tmp, sizeof(tmp));
         WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "b", "#000", "#fff", 1, 100, Settings.light_dimmer, 'd');  // Black to White
@@ -1031,8 +1031,7 @@ void HandleRoot(void)
         uint32_t pwm_channels = light_subtype > LST_MAX ? LST_MAX : light_subtype;
         for (uint32_t i = 0; i < pwm_channels; i++) {
           uint8_t index = (pwm_channels < 3) ? i +3 : i;
-          WSContentSend_P(HTTP_MSG_SLIDER_CHANNEL, GetTextIndexed(stemp, sizeof(stemp), index, kChannelColors),
-            changeUIntScale(Settings.light_color[i], 0, 255, 0, 100), i+1);  // Dark to Light
+          WSContentSend_P(HTTP_MSG_SLIDER_CHANNEL, "#fff", changeUIntScale(Settings.light_color[i], 0, 255, 0, 100), i+1);  // Dark to Light
         }
       }  // Settings.flag3.pwm_multi_channels
     }
