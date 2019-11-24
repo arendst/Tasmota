@@ -1594,8 +1594,8 @@ void LightAnimate(void)
       sleep = Settings.sleep;
     }
   } else {	
-    if (Settings.sleep > PWM_MIN_SLEEP) {	
-      sleep = PWM_MIN_SLEEP;      // set a minimal value of 50 milliseconds to ensure that animations are smooth	
+    if (Settings.sleep > PWM_MAX_SLEEP) {	
+      sleep = PWM_MAX_SLEEP;      // set a maxumum value of 50 milliseconds to ensure that animations are smooth	
     } else {	
       sleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
     }
