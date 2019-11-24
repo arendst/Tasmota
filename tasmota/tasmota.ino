@@ -98,7 +98,9 @@ power_t blink_mask = 0;                     // Blink relay active mask
 power_t blink_powersave;                    // Blink start power save state
 power_t latching_power = 0;                 // Power state at latching start
 power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
-power_t rel_opencollector = 0;              // Relay OC flag (1 = (make in an input if bit is 1))
+#ifdef USE_RELAYS_OC
+power_t rel_opencollector = 0;              // Relay OC flag (1 = (use pin mode to control output, pin value set is always 0))
+#endif
 int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 int serial_in_byte_counter = 0;             // Index in receive buffer
 int ota_state_flag = 0;                     // OTA state flag
@@ -316,16 +318,24 @@ char* GetStateText(uint32_t state)
 void SetRelay(uint8_t port, uint8_t state)
 {
   uint8_t val = bitRead(rel_inverted, port) ? !state : state;
+#ifdef USE_RELAYS_OC
+  uint8_t valwrite = val;
   uint8_t isopencollector = bitRead(rel_opencollector, port) ? 1 : 0;
-  digitalWrite(pin[GPIO_REL1 +port], val);
+  if (isopencollector) valwrite = 0; // if OC, never need to actually write a 1, in fact, desirable not to.
+  digitalWrite(pin[GPIO_REL1 +port], valwrite);
   if ((val == 0) || (!isopencollector)) {
     pinMode(pin[GPIO_REL1 +port], OUTPUT);
   } else {
     // for 'opencollector' outputs, set the 'output' pin to be an input pin when 'high' is set
     // this allows the pin to not absorb current when at 3.3v, and so work with 5v relays.
     // NOTE: allowing the pin to rise to 5v may not be RECOMMENDED.  No guarantees it won't torch the device.
+    // but the CEO of expressive has confirmed 5V tolerance on inputs.
     pinMode(pin[GPIO_REL1 +port], INPUT);
   }
+#else
+  digitalWrite(pin[GPIO_REL1 +port], val);
+  pinMode(pin[GPIO_REL1 +port], OUTPUT);
+#endif
 }
 
 void SetLatchingRelay(power_t lpower, uint32_t state)
@@ -1387,6 +1397,7 @@ void GpioInit(void)
         bitSet(rel_inverted, mpin - GPIO_REL1_INV);
         mpin -= (GPIO_REL1_INV - GPIO_REL1);
       }
+#ifdef USE_RELAYS_OC
       else if ((mpin >= GPIO_REL1_OC) && (mpin < (GPIO_REL1_OC + MAX_RELAYS))) {
         bitSet(rel_opencollector, mpin - GPIO_REL1_OC);
         mpin -= (GPIO_REL1_OC - GPIO_REL1);
@@ -1396,6 +1407,7 @@ void GpioInit(void)
         bitSet(rel_inverted, mpin - GPIO_REL1_OC_INV);
         mpin -= (GPIO_REL1_OC_INV - GPIO_REL1);
       }
+#endif
       else if ((mpin >= GPIO_LED1_INV) && (mpin < (GPIO_LED1_INV + MAX_LEDS))) {
         bitSet(led_inverted, mpin - GPIO_LED1_INV);
         mpin -= (GPIO_LED1_INV - GPIO_LED1);
