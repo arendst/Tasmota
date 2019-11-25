@@ -97,8 +97,8 @@ enum UserSelectablePins {
   GPIO_SDS0X1_RX,      // Nova Fitness SDS011 Serial interface
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
-  GPIO_SR04_TRIG,      // SR04 Trigger pin
-  GPIO_SR04_ECHO,      // SR04 Echo pin
+  GPIO_SR04_TRIG,      // SR04 Trigger/TX pin
+  GPIO_SR04_ECHO,      // SR04 Echo/RX pin
   GPIO_SDM120_TX,      // SDM120 Serial interface
   GPIO_SDM120_RX,      // SDM120 Serial interface
   GPIO_SDM630_TX,      // SDM630 Serial interface
@@ -603,8 +603,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_RF_SENSOR,      // Rf receiver with sensor decoding
 #endif
 #ifdef USE_SR04
-  GPIO_SR04_TRIG,      // SR04 Trigger pin
-  GPIO_SR04_ECHO,      // SR04 Echo pin
+  GPIO_SR04_TRIG,      // SR04 Tri/TXgger pin
+  GPIO_SR04_ECHO,      // SR04 Ech/RXo pin
 #endif
 #ifdef USE_TM1638
   GPIO_TM16CLK,        // TM1638 Clock
@@ -628,8 +628,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_I2C) && defined(USE_ADE7953)
   GPIO_ADE7953_IRQ,    // ADE7953 IRQ
 #endif
+#ifdef USE_CSE7766
   GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
+#endif
 #ifdef USE_MCP39F501
   GPIO_MCP39F5_TX,     // MCP39F501 Serial interface (Shelly2)
   GPIO_MCP39F5_RX,     // MCP39F501 Serial interface (Shelly2)

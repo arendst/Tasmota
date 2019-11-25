@@ -388,7 +388,7 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
   // String pp;    // pretty print
   // json[attrid_str].prettyPrintTo(pp);
   // // now store the attribute
-  // AddLog_P2(LOG_LEVEL_INFO, PSTR("ZIG: ZCL attribute decoded, id %s, type 0x%02X, val=%s"),
+  // AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "ZCL attribute decoded, id %s, type 0x%02X, val=%s"),
   //                                attrid_str, attrtype, pp.c_str());
   return i - offset;    // how much have we increased the index
 }

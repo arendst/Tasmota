@@ -89,7 +89,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t cors_enabled : 1;             // bit 23 (v7.0.0.1)  - SetOption73 - Enable HTTP CORS
     uint32_t ds18x20_internal_pullup : 1;  // bit 24 (v7.0.0.1)  - SetOption74 - Enable internal pullup for single DS18x20 sensor
     uint32_t grouptopic_mode : 1;          // bit 25 (v7.0.0.1)  - SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
-    uint32_t spare26 : 1;
+    uint32_t bootcount_update : 1;         // bit 26 (v7.0.0.4)  - SetOption76 - Enable incrementing bootcount when deepsleep is enabled
     uint32_t spare27 : 1;
     uint32_t spare28 : 1;
     uint32_t spare29 : 1;
@@ -434,8 +434,9 @@ struct SYSCFG {
   uint32_t      deepsleep;                 // E94
   uint16_t      energy_power_delta;        // E98
   uint8_t       shutter_motordelay[MAX_SHUTTERS];    // E9A
+  int8_t        temp_comp;                 // E9E
 
-  uint8_t       free_e9e[2];               // E9E
+  uint8_t       free_e9f[1];               // E9F
 
   uint8_t       web_color2[2][3];          // EA0 - Needs to be on integer / 3 distance from web_color
 

@@ -36,13 +36,15 @@ TasmotaSerial *ZigbeeSerial = nullptr;
 #endif
 
 
-const char kZigbeeCommands[] PROGMEM = "|" D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEE_PERMITJOIN
-                                "|" D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND
-                                "|" D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ ;
+const char kZigbeeCommands[] PROGMEM = "|"
+  D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEE_PERMITJOIN "|"
+  D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|"
+  D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ ;
 
-void (* const ZigbeeCommand[])(void) PROGMEM = { &CmndZigbeeZNPSend, &CmndZigbeePermitJoin,
-                                &CmndZigbeeStatus, &CmndZigbeeReset, &CmndZigbeeSend,
-                                &CmndZigbeeProbe, &CmndZigbeeRead };
+void (* const ZigbeeCommand[])(void) PROGMEM = {
+  &CmndZigbeeZNPSend, &CmndZigbeePermitJoin,
+  &CmndZigbeeStatus, &CmndZigbeeReset, &CmndZigbeeSend,
+  &CmndZigbeeProbe, &CmndZigbeeRead };
 
 int32_t ZigbeeProcessInput(class SBuffer &buf) {
   if (!zigbee.state_machine) { return -1; }     // if state machine is stopped, send 'ignore' message
@@ -66,7 +68,7 @@ int32_t ZigbeeProcessInput(class SBuffer &buf) {
       }
     }
 
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZIG: ZigbeeProcessInput: recv_prefix_match = %d, recv_filter_match = %d"), recv_prefix_match, recv_filter_match);
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "ZigbeeProcessInput: recv_prefix_match = %d, recv_filter_match = %d"), recv_prefix_match, recv_filter_match);
   }
 
   // if there is a recv_callback, call it now
@@ -105,7 +107,7 @@ int32_t ZigbeeProcessInput(class SBuffer &buf) {
       res = (*zigbee.recv_unexpected)(res, buf);
     }
   }
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZIG: ZigbeeProcessInput: res = %d"), res);
+  AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "ZigbeeProcessInput: res = %d"), res);
 
   // change state accordingly
   if (0 == res) {
@@ -184,7 +186,7 @@ void ZigbeeInput(void)
 		ToHex_P((unsigned char*)zigbee_buffer->getBuffer(), zigbee_buffer->len(), hex_char, sizeof(hex_char));
 
 #ifndef Z_USE_SOFTWARE_SERIAL
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZIG: Bytes follor_read_metric = %0d"), ZigbeeSerial->getLoopReadMetric());
+    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Bytes follow_read_metric = %0d"), ZigbeeSerial->getLoopReadMetric());
 #endif
 		// buffer received, now check integrity
 		if (zigbee_buffer->len() != zigbee_frame_len) {
@@ -195,15 +197,17 @@ void ZigbeeInput(void)
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received bad FCS frame %s, %d"), hex_char, fcs);
 		} else {
 			// frame is correct
-			AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received correct frame %s"), hex_char);
+			//AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_JSON_ZIGBEEZNPRECEIVED ": received correct frame %s"), hex_char);
 
 			SBuffer znp_buffer = zigbee_buffer->subBuffer(2, zigbee_frame_len - 3);	// remove SOF, LEN and FCS
 
 #ifdef ZIGBEE_VERBOSE
 			ToHex_P((unsigned char*)znp_buffer.getBuffer(), znp_buffer.len(), hex_char, sizeof(hex_char));
-	    Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
-	    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZNPRECEIVED));
-	    XdrvRulesProcess();
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPRECEIVED " %s"),
+                                 hex_char);
+	    // Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
+	    // MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZNPRECEIVED));
+	    // XdrvRulesProcess();
 #endif
 
 			// now process the message
@@ -258,7 +262,7 @@ uint32_t strToUInt(const JsonVariant val) {
   return 0;   // couldn't parse anything
 }
 
-const unsigned char ZIGBEE_FACTORY_RESET[] PROGMEM = 
+const unsigned char ZIGBEE_FACTORY_RESET[] PROGMEM =
   { Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 /* len */, 0x01 /* STARTOPT_CLEAR_CONFIG */};
 //"2605030101";  // Z_SREQ | Z_SAPI, SAPI_WRITE_CONFIGURATION, CONF_STARTUP_OPTION, 0x01 len, 0x01 STARTOPT_CLEAR_CONFIG
 // Do a factory reset of the CC2530
@@ -333,10 +337,8 @@ void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
 #ifdef ZIGBEE_VERBOSE
 	// Now send a MQTT message to report the sent message
 	char hex_char[(len * 2) + 2];
-	Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPSENT "\":\"%s\"}"),
-			ToHex_P(msg, len, hex_char, sizeof(hex_char)));
-	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZNPSENT));
-	XdrvRulesProcess();
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPSENT " %s"),
+                               		ToHex_P(msg, len, hex_char, sizeof(hex_char)));
 #endif
 }
 

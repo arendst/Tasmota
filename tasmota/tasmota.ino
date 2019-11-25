@@ -816,11 +816,16 @@ void PerformEverySecond(void)
   }
 
   if (BOOT_LOOP_TIME == uptime) {
-    RtcReboot.fast_reboot_count = 0;
-    RtcRebootSave();
+    RtcRebootReset();
 
-    Settings.bootcount++;              // Moved to here to stop flash writes during start-up
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
+#ifdef USE_DEEPSLEEP
+    if (!(DeepSleepEnabled() && !Settings.flag3.bootcount_update)) {
+#endif
+      Settings.bootcount++;              // Moved to here to stop flash writes during start-up
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_BOOT_COUNT " %d"), Settings.bootcount);
+#ifdef USE_DEEPSLEEP
+    }
+#endif
   }
 
   if (seriallog_timer) {
@@ -1495,10 +1500,6 @@ void GpioInit(void)
   XdrvCall(FUNC_PRE_INIT);
 }
 
-extern "C" {
-extern struct rst_info resetInfo;
-}
-
 void setup(void)
 {
   global_state.data = 3;  // Init global state (wifi_down, mqtt_down) to solve possible network issues
@@ -1577,7 +1578,7 @@ void setup(void)
         Settings.module = SONOFF_BASIC;             // Reset module to Sonoff Basic
   //      Settings.last_module = SONOFF_BASIC;
       }
-      AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_LOG_SOME_SETTINGS_RESET " (%d)"), RtcReboot.fast_reboot_count);
     }
   }
 
@@ -1600,7 +1601,7 @@ void setup(void)
   if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
     SetDevicePower(1, SRC_RESTART);
   } else {
-    if ((resetInfo.reason == REASON_DEFAULT_RST) || (resetInfo.reason == REASON_EXT_SYS_RST)) {
+    if ((ResetReason() == REASON_DEFAULT_RST) || (ResetReason() == REASON_EXT_SYS_RST)) {
       switch (Settings.poweronstate) {
       case POWER_ALL_OFF:
       case POWER_ALL_OFF_PULSETIME_ON:
@@ -1660,7 +1661,7 @@ void setup(void)
   XsnsCall(FUNC_INIT);
 }
 
-static void BacklogLoop()
+void BacklogLoop(void)
 {
   if (TimeReached(backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {

@@ -2,27 +2,34 @@
 
 # RELEASE NOTES
 
+### Sonoff-Tasmota is now Tasmota
+
 ## Migration Information
-See [wiki migration path](https://github.com/arendst/Tasmota/wiki/Upgrading#migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
+
+See [migration path](https://tasmota.github.io/docs/#/Upgrading?id=migration-path) for instructions how to migrate to a major version. Pay attention to the following version breaks due to dynamic settings updates:
 
 1. Migrate to **Sonoff-Tasmota 3.9.x**
 2. Migrate to **Sonoff-Tasmota 4.x**
 3. Migrate to **Sonoff-Tasmota 5.14**
-4. Migrate to **Sonoff-Tasmota 6.7.1**
+4. Migrate to **Sonoff-Tasmota 6.x**
 5. Migrate to **Tasmota 7.x**
 
 ## Supported Core versions
-This release will be supported from ESP8266/Arduino library Core version **pre-2.6.0** due to reported security and stability issues on previous Core version.
 
-Although it might still compile on previous Core versions all support will be removed starting in the near future.
+This release will be supported from ESP8266/Arduino library Core version **2.6.1** due to reported security and stability issues on previous Core version.
+
+Although it might still compile on previous Core versions all support will be removed in the near future.
 
 ## Support of TLS
-To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. See full documentation on https://github.com/arendst/Tasmota/wiki/AWS-IoT
+
+To save resources when TLS is enabled mDNS needs to be disabled. In addition to TLS using fingerprints now also user supplied CA certs and AWS IoT is supported. Read [full documentation](https://tasmota.github.io/docs/#/integrations/AWS-IoT)
 
 ## Initial configuration tools
+
 For initial configuration this release supports Webserver based **WifiManager** or **Serial** based command interface only. Support for **WPS** and **SmartConfig** has been removed.
 
 ## Supported Modules
+
 The following hardware modules are supported.
 
 Module            | Description
@@ -103,7 +110,8 @@ Module            | Description
 Over 500 additional devices are supported using [templates](TEMPLATES.md).
 
 ## Provided Binary Downloads
-The following binary downloads have been compiled with ESP8266/Arduino library core version **pre-2.6.0**.
+
+The following binary downloads have been compiled with ESP8266/Arduino library core version **2.6.1**.
 
 - **tasmota.bin** = The Tasmota version with sensors. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
@@ -114,166 +122,39 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - **tasmota-display.bin** = The Display version without Energy Monitoring but adds display support.
 - **tasmota-minimal.bin** = The Minimal version allows intermediate OTA uploads to support larger versions and does NOT change any persistent parameter. This version **should NOT be used for initial installation**.
 
-## Available Features and Sensors
-
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
-|-----------------------|---------|-------|--------|-----|---------|----|---------|--------
-| MY_LANGUAGE en-GB     | x | x | x | x | x | x | x |
-| USE_ARDUINO_OTA       | - | - | - | - | - | - | - |
-| USE_DOMOTICZ          | - | - | x | x | x | x | - |
-| USE_HOME_ASSISTANT    | - | - | x | x | x | x | - |
-| USE_MQTT_TLS          | - | - | - | - | - | - | - |
-| USE_MQTT_TLS_CA_CERT  | - | - | - | - | - | - | - |
-| USE_MQTT_AWS_IOT      | - | - | - | - | - | - | - |
-| USE_4K_RSA            | - | - | - | - | - | - | - |
-| USE_KNX               | - | - | - | x | - | - | - |
-| USE_WEBSERVER         | x | x | x | x | x | x | x |
-| USE_JAVASCRIPT_ES6    | - | - | - | - | - | - | - |
-| USE_WEBSEND_RESPONSE  | - | - | - | - | - | - | - |
-| USE_EMULATION_HUE     | - | x | x | - | x | - | - |
-| USE_EMULATION_WEMO    | - | x | x | - | x | - | - |
-| USE_DISCOVERY         | - | - | x | x | - | - | x |
-| WEBSERVER_ADVERTISE   | - | - | x | x | - | - | x |
-| MQTT_HOST_DISCOVERY   | - | - | x | x | - | - | x |
-| USE_TIMERS            | - | x | x | x | x | x | x |
-| USE_TIMERS_WEB        | - | x | x | x | x | x | x |
-| USE_SUNRISE           | - | x | x | x | x | x | x |
-| USE_RULES             | - | x | x | x | x | x | x |
-| USE_SCRIPT            | - | - | - | - | - | - | - |
-| USE_EXPRESSION        | - | - | - | - | - | - | - |
-| SUPPORT_IF_STATEMENT  | - | - | - | - | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
-| ROTARY_V1             | - | - | - | - | - | - | - |
-| USE_SONOFF_RF         | - | - | x | x | x | - | - |
-| USE_RF_FLASH          | - | - | x | x | x | - | - |
-| USE_SONOFF_SC         | - | - | x | - | x | - | - |
-| USE_TUYA_MCU          | - | x | x | x | x | - | x |
-| USE_ARMTRONIX_DIMMERS | - | - | x | x | - | - | - |
-| USE_PS_16_DZ          | - | - | x | x | x | - | - |
-| USE_SONOFF_IFAN       | - | - | x | x | x | - | - |
-| USE_BUZZER            | - | - | x | x | x | - | - |
-| USE_ARILUX_RF         | - | - | x | x | x | - | - |
-| USE_SHUTTER           | - | - | - | - | - | - | - |
-| USE_DEEPSLEEP         | - | - | - | - | - | - | - |
-| USE_EXS_DIMMER        | - | - | x | x | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
-| USE_LIGHT             | - | x | x | x | x | x | x |
-| USE_WS2812            | - | - | x | x | x | - | x |
-| USE_WS2812_DMA        | - | - | - | - | - | - | - |
-| USE_MY92X1            | - | - | x | x | x | - | x |
-| USE_SM16716           | - | - | x | x | x | - | x |
-| USE_SM2135            | - | - | x | x | x | - | x |
-| USE_SONOFF_L1         | - | - | x | x | x | - | x |
-|                       |   |   |   |   |   |   |   |
-| USE_ENERGY_SENSOR     | - | x | x | x | x | - | - |
-| USE_PZEM004T          | - | - | x | x | x | - | - |
-| USE_PZEM_AC           | - | - | x | x | x | - | - |
-| USE_PZEM_DC           | - | - | x | x | x | - | - |
-| USE_MCP39F501         | - | x | x | x | x | - | - |
-| USE_SDM120            | - | - | - | - | x | - | - |
-| USE_SDM630            | - | - | - | - | x | - | - |
-| USE_DDS2382           | - | - | - | - | x | - | - |
-| USE_DDSU666           | - | - | - | - | x | - | - |
-| USE_SOLAX_X1          | - | - | - | - | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| USE_ADC_VCC           | x | x | - | - | - | - | - |
-| USE_COUNTER           | - | - | x | x | x | x | x |
-| USE_DS18x20           | - | - | x | x | x | - | x |
-| USE_DHT               | - | - | x | x | x | x | x |
-| USE_MAX31855          | - | - | - | - | x | - | - |
-| USE_MAX31865          | - | - | - | - | - | - | - |
-|                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
-| USE_I2C               | - | - | x | x | x | - | x |
-| USE_SHT               | - | - | x | x | x | - | x |
-| USE_HTU               | - | - | x | x | x | - | x |
-| USE_BMP               | - | - | x | x | x | - | x |
-| USE_BME680            | - | - | - | - | x | - | - |
-| USE_BH1750            | - | - | x | x | x | - | x |
-| USE_VEML6070          | - | - | - | - | x | - | - |
-| USE_ADS1115           | - | - | - | - | x | - | - |
-| USE_ADS1115_I2CDEV    | - | - | - | - | - | - | - |
-| USE_INA219            | - | - | - | - | x | - | - |
-| USE_INA226            | - | - | - | - | - | - | - |
-| USE_SHT3X             | - | - | x | x | x | - | x |
-| USE_TSL2561           | - | - | - | - | x | - | - |
-| USE_MGS               | - | - | - | - | x | - | - |
-| USE_SGP30             | - | - | x | x | x | - | x |
-| USE_SI1145            | - | - | - | - | - | - | - |
-| USE_LM75AD            | - | - | x | x | x | - | x |
-| USE_APDS9960          | - | - | - | - | - | - | - |
-| USE_MCP230xx          | - | - | - | - | - | - | - |
-| USE_PCA9685           | - | - | - | - | - | - | - |
-| USE_MPR121            | - | - | - | - | - | - | - |
-| USE_CCS811            | - | - | - | - | - | - | - |
-| USE_MPU6050           | - | - | - | - | - | - | - |
-| USE_DS3231            | - | - | - | - | - | - | - |
-| USE_MGC3130           | - | - | - | - | - | - | - |
-| USE_MAX44009          | - | - | - | - | - | - | - |
-| USE_SCD30             | - | - | - | - | x | - | - |
-| USE_SPS30             | - | - | - | - | - | - | - |
-| USE_ADE7953           | - | - | x | x | x | - | x |
-| USE_VL53L0X           | - | - | - | - | - | - | - |
-| USE_MLX90614          | - | - | - | - | - | - | - |
-| USE_CHIRP             | - | - | - | - | - | - | - |
-| USE_PAJ7620           | - | - | - | - | - | - | - |
-| USE_PCF8574           | - | - | - | - | - | - | - |
-| USE_HIH6              | - | - | - | - | x | - | - |
-|                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
-| USE_SPI               | - | - | - | - | - | - | x |
-| USE_MHZ19             | - | - | x | x | x | - | x |
-| USE_SENSEAIR          | - | - | x | x | x | - | x |
-| USE_PMS5003           | - | - | x | x | x | - | x |
-| USE_NOVA_SDS          | - | - | x | x | x | - | x |
-| USE_SERIAL_BRIDGE     | - | - | x | x | x | - | x |
-| USE_MP3_PLAYER        | - | - | - | - | x | - | - |
-| USE_AZ7798            | - | - | - | - | - | - | - |
-| USE_PN532_HSU         | - | - | - | - | x | - | - |
-| USE_ZIGBEE            | - | - | - | - | - | - | - | Experimental
-|                       |   |   |   |   |   |   |   |
-| USE_IR_REMOTE         | - | - | x | x | x | x | x |
-| USE_IR_HVAC           | - | - | - | - | x | x | - |
-| USE_IR_RECEIVE        | - | - | x | x | x | x | x |
-|                       |   |   |   |   |   |   |   |
-| USE_SR04              | - | - | x | x | x | - | x |
-| USE_TM1638            | - | - | - | - | x | - | - |
-| USE_HX711             | - | - | x | x | x | - | x |
-| USE_TX20_WIND_SENSOR  | - | - | - | - | x | - | - |
-| USE_RC_SWITCH         | - | - | - | - | x | - | - |
-| USE_RF_SENSOR         | - | - | - | - | x | - | - | AlectoV2 only
-| USE_HRE               | - | - | - | - | x | - | - |
-| USE_A4988_STEPPER     | - | - | - | - | - | - | - |
-| USE_ARDUINO_SLAVE     | - | - | - | - | - | - | - | Experimental
-|                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
-| USE_DISPLAY           | - | - | - | - | - | - | x |
-| USE_DISPLAY_LCD       | - | - | - | - | - | - | x |
-| USE_DISPLAY_SSD1306   | - | - | - | - | - | - | x |
-| USE_DISPLAY_MATRIX    | - | - | - | - | - | - | x |
-| USE_DISPLAY_SH1106    | - | - | - | - | - | - | x |
-| USE_DISPLAY_ILI9341   | - | - | - | - | - | - | x |
-| USE_DISPLAY_EPAPER_29 | - | - | - | - | - | - | x |
-| USE_DISPLAY_EPAPER_42 | - | - | - | - | - | - | x |
-| USE_DISPLAY_ILI9488   | - | - | - | - | - | - | - |
-| USE_DISPLAY_SSD1351   | - | - | - | - | - | - | - |
-| USE_DISPLAY_RA8876    | - | - | - | - | - | - | - |
+[Complete list](BUILDS.md) of available feature and sensors.
 
 ## Changelog
-Version 7.1.0 Betty
- * Remove support for versions before 6.0
- * Change ArduinoSlave to TasmotaSlave (Experimental)
- * Change repository name from Sonoff-Tasmota to Tasmota and all code references from Sonoff to Tasmota
- * Change default GUI to dark theme
- * Change IRremoteESP8266 library to v2.7.0
- * Fix better control of RGB/White when SetOption37 >128, added Dimmer1 and Dimmer2 commands (#6714)
- * Add support for Tuya battery powered devices (#6735)
- * Add support for Honeywell I2C HIH series Humidity and Temperetaure sensor (#6808)
- * Add command WebColor19 to control color of Module and Name (#6811)
- * Add command SetOption73 0/1 to re-enable HTTP Cross-Origin Resource Sharing (CORS) now default disabled (#6767)
- * Add command SetOption74 0/1 to enable DS18x20 internal pull-up and remove define DS18B20_INTERNAL_PULLUP (#6795)
- * Add command SetOption75 0/1 to switch between grouptopic (0) using fulltopic replacing %topic% or (1) is cmnd/<grouptopic> (#6779)
- * Add frequency to ADE7953 energy monitor as used in Shelly 2.5 by ljakob (#6778)
- * Add hide Alexa objects with friendlyname starting with '$' (#6722, #6762)
+
+### Version 7.1.0 Betty
+
+ - Remove update support for versions before 6.0
+ - Remove driver xsns_12_ads1115_i2cdev replaced by xsns_12_ads1115
+ - Remove most IR protocols from non dedicated IR firmware except NEC, RC5 and RC6
+ - Change repository name from Sonoff-Tasmota to Tasmota and all code references from Sonoff to Tasmota
+ - Change default GUI to dark theme
+ - Change ArduinoSlave to TasmotaSlave
+ - Change IRremoteESP8266 library to v2.7.0
+ - Change supported PCF8574 I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
+ - Change supported PCF8574A I2C address range to 0x39 - 0x3F allowing other I2C devices with address 0x38 to be used at the same time
+ - Change supported MCP230xx I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
+ - Change Reset erase end address from as seen by SDK (getFlashChipSize) to full flash size (getFlashChipRealSize)
+ - Fix better control of RGB/White when ``SetOption37`` >128, added ``Dimmer1`` and ``Dimmer2`` commands (#6714)
+ - Fix random crash caused by UPNP flood
+ - Fix Wifi instability when light is on, due to sleep=0 (#6961, #6608)
+ - Add support for Tuya battery powered devices (#6735)
+ - Add support for Honeywell I2C HIH series Humidity and Temperetaure sensor (#6808)
+ - Add support for Honeywell HPMA115S0 particle concentration sensor by David Hunt (#6843)
+ - Add support for I2C sensor TLS2591 Light Intensity sensor (#6873)
+ - Add command ``SetOption73 0/1`` to re-enable HTTP Cross-Origin Resource Sharing (CORS) now default disabled (#6767)
+ - Add command ``SetOption74 0/1`` to enable DS18x20 internal pull-up and remove define DS18B20_INTERNAL_PULLUP (#6795)
+ - Add command ``SetOption75 0/1`` to switch between grouptopic (0) using fulltopic replacing %topic% or (1) is cmnd/\<grouptopic\> (#6779)
+ - Add command ``SetOption76 0/1`` to enable incrementing bootcount when deepsleep is enabled (#6930)
+ - Add command ``I2cDriver`` for I2C driver runtime control using document I2CDEVICES.md
+ - Add command ``TempOffset -12.6 .. 12.6`` to set global temperature sensor offset (#6958)
+ - Add command ``WebColor19`` to control color of Module and Name (#6811)
+ - Add command ``WifiPower 0 .. 20.5`` to set Wifi Output Power which will be default set to 17dBm
+ - Add frequency to ADE7953 energy monitor as used in Shelly 2.5 by ljakob (#6778)
+ - Add hide Alexa objects with friendlyname starting with '$' (#6722, #6762)
+ - Add Zigbee command support, considered as v1.0 for full Zigbee support
+ - Add colorpicker to WebUI by Christian Staars (#6984)

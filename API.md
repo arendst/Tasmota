@@ -2,76 +2,89 @@
 
 # Basic API information
 
-Tasmota can easily be extended by developers using provided function pointers as callback Ids. This document lists the available callback function Ids. See the wiki (https://github.com/arendst/Tasmota/wiki/Sensor-API) for more information.
+Tasmota can easily be extended by developers using provided function pointers as callback Ids. This document lists the available callback function Ids. Read [Sensor API](https://tasmota.github.io/docs/#/Sensor-API) for more information.
 
-Callback availability can be checked by searching for either XdrvCall, XsnsCall, XdspCall and XnrgCall.
+Callback availability can be checked by searching for either XdrvCall, XsnsCall, XdspCall, XnrgCall and XlgtCall.
 
-## Driver, Sensor and Energy Callback Ids
+## Driver, Sensor, Energy and Light Callback Ids
+
 The following table lists Callback Ids and their availability for a Driver, Sensor or Energy service.
 
-Callback Id                 | Bool | Version  | xdrv | xsns | xnrg | Description
-----------------------------|------|----------|------|------|------|----------------------------------
-FUNC_SETTINGS_OVERRIDE      |      | 6.2.1.19 |  x   |      |      | Override start-up settings
-FUNC_MODULE_INIT            |  x   | 6.2.1.17 |  x   |      |      | Init module specific parameters
-FUNC_PRE_INIT               |      |          |  x   |      |  x   | Once GPIO have been established
-FUNC_INIT                   |      |          |  x   |  x   |  x   | At end of initialisation
-FUNC_LOOP                   |      |          |  x   |      |      | In main loop
-FUNC_EVERY_50_MSECOND       |      |          |  x   |  x   |      |
-FUNC_EVERY_100_MSECOND      |      |          |  x   |  x   |      |
-FUNC_EVERY_200_MSECOND      |      |          |      |  x   |  x   |
-FUNC_EVERY_250_MSECOND      |      |          |  x   |      |      |
-FUNC_EVERY_SECOND           |      |          |  x   |  x   |  x   |
-FUNC_PREP_BEFORE_TELEPERIOD |      |          |      |  x   |      | Deprecated. Use a FUNC_EVERY_
-FUNC_JSON_APPEND            |      |          |      |  x   |      | Extend teleperiod JSON text
-FUNC_WEB_APPEND             |      |          |      |  x   |      | Extend webgui ajax info
-FUNC_SAVE_BEFORE_RESTART    |      |          |      |  x   |      | Just before a planned restart
-FUNC_COMMAND                |  x   |          |  x   |  x   |      | When a command is not recognized
-FUNC_COMMAND_DRIVER         |  x   | 6.4.1.21 |  x   |      |      | When command Driver\<id\> is executed
-FUNC_COMMAND_SENSOR         |  x   | 6.4.1.21 |      |  x   |      | When command Sensor\<id\> is executed
-FUNC_MQTT_SUBSCRIBE         |      | 5.12.0k  |  x   |      |      | At end of MQTT subscriptions
-FUNC_MQTT_INIT              |      | 5.12.0k  |  x   |      |      | Once at end of MQTT connection
-FUNC_MQTT_DATA              |  x   | 5.12.0k  |  x   |      |      | Before decoding command
-FUNC_SET_POWER              |      |          |  x   |      |      | Before setting relays
-FUNC_SET_DEVICE_POWER       |  x   | 6.2.1.18 |  x   |      |      | Set relay
-FUNC_SHOW_SENSOR            |      |          |  x   |      |      | When FUNC_JSON_APPEND completes
-FUNC_RULES_PROCESS          |  x   | 6.0.0    |  x   |      |      | Process specific rule
-FUNC_SERIAL                 |  x   |          |  x   |      |  x   | Process serial data
-FUNC_FREE_MEM               |      |          |  x   |      |      | Show free memory for debugging
-FUNC_BUTTON_PRESSED         |  x   | 6.2.1.18 |  x   |      |      | When a button is pressed
-FUNC_WEB_ADD_BUTTON         |      | 6.2.1.14 |  x   |  x   |      | Add a Configuration Button to GUI
-FUNC_WEB_ADD_MAIN_BUTTON    |      | 6.2.1.14 |  x   |  x   |      | Add a main button to GUI
-FUNC_WEB_ADD_HANDLER        |      | 6.2.1.14 |  x   |  x   |      | Add a webserver handler
+Callback Id                 | Bool | xdrv | xsns | xnrg | xlgt | Description
+----------------------------|------|------|------|------|------|----------------------------------
+FUNC_SETTINGS_OVERRIDE      |      |  x   |      |      |      | Override start-up settings
+FUNC_PIN_STATE              |  x   |  1   |  2   |      |      | At GPIO configuration
+FUNC_MODULE_INIT            |  x   |  1   |      |      |  2   | Init module specific parameters
+FUNC_PRE_INIT               |      |  1   |      |  2   |      | Once GPIO have been established
+FUNC_INIT                   |      |  1   |  3   |  2   |      | At end of initialisation
+FUNC_LOOP                   |      |  1   |  2   |      |      | In main loop
+FUNC_EVERY_50_MSECOND       |      |  1   |  2   |      |      |
+FUNC_EVERY_100_MSECOND      |      |  1   |  2   |      |      |
+FUNC_EVERY_200_MSECOND      |      |      |      |  x   |      |
+FUNC_EVERY_250_MSECOND      |      |  1   |  3   |  2   |      |
+FUNC_EVERY_SECOND           |      |  1   |  2   |      |      |
+FUNC_SAVE_AT_MIDNIGHT       |      |      |  x   |      |      | At midnight
+FUNC_SAVE_BEFORE_RESTART    |      |  2   |  1   |      |      | Just before a planned restart
+FUNC_AFTER_TELEPERIOD       |      |  x   |      |      |      | At end of teleperiod
+FUNC_JSON_APPEND            |      |  2   |  1   |  3   |      | Extend teleperiod JSON text
+FUNC_WEB_SENSOR             |      |  2   |  1   |  3   |      | Add sensor data to web GUI
+FUNC_COMMAND                |  x   |  1   |  2   |  3   |  4   | When a command is not recognized
+FUNC_COMMAND_DRIVER         |  x   |  x   |      |      |      | When command Driver\<id\> is executed
+FUNC_COMMAND_SENSOR         |  x   |      |  x   |      |      | When command Sensor\<id\> is executed
+FUNC_MQTT_SUBSCRIBE         |      |  x   |      |      |      | At end of MQTT subscriptions
+FUNC_MQTT_INIT              |      |  x   |      |      |      | Once at end of MQTT connection
+FUNC_MQTT_DATA              |  x   |  x   |      |      |      | Before decoding command
+FUNC_SET_POWER              |      |  x   |      |      |      | Before setting relays
+FUNC_SET_DEVICE_POWER       |  x   |  x   |      |      |      | Set relay
+FUNC_SHOW_SENSOR            |      |  x   |      |      |      | When FUNC_JSON_APPEND completes
+FUNC_ANY_KEY                |      |  x   |      |      |      |
+FUNC_ENERGY_EVERY_SECOND    |      |      |      |  x   |      |
+FUNC_ENERGY_RESET           |      |      |      |  x   |      |
+FUNC_RULES_PROCESS          |  x   |  x   |      |      |      | Process specific rule
+FUNC_SERIAL                 |  x   |  1   |      |  2   |  3   | Process serial data
+FUNC_FREE_MEM               |      |  x   |      |      |      | Show free memory for debugging
+FUNC_BUTTON_PRESSED         |  x   |  x   |      |      |      | When a button is pressed
+FUNC_WEB_ADD_BUTTON         |      |  1   |  2   |      |      | Add a Configuration Button to GUI
+FUNC_WEB_ADD_MAIN_BUTTON    |      |  1   |  2   |      |      | Add a main button to GUI
+FUNC_WEB_ADD_HANDLER        |      |  1   |  2   |      |      | Add a webserver handler
+FUNC_SET_CHANNELS           |      |  2   |      |      |  1   |
+FUNC_SET_SCHEME             |      |      |      |      |  x   |
+
+The numbers represent the sequence of execution
 
 ## Display Call back Ids
+
 The following table lists all Callback Ids for a Display service.
 
-Callback Id                   | Bool | Version  | Description
-------------------------------|------|----------|---------------------
-FUNC_DISPLAY_INIT_DRIVER      |      | 6.1.1.7  |
-FUNC_DISPLAY_INIT             |      | 6.1.1.7  |
-FUNC_DISPLAY_EVERY_50_MSECOND |      | 6.1.1.7  |
-FUNC_DISPLAY_EVERY_SECOND     |      | 6.1.1.7  |
-FUNC_DISPLAY_MODEL            |  x   | 6.1.1.7  |
-FUNC_DISPLAY_MODE             |      | 6.1.1.7  |
-FUNC_DISPLAY_POWER            |      | 6.1.1.7  |
-FUNC_DISPLAY_CLEAR            |      | 6.1.1.7  |
-FUNC_DISPLAY_DRAW_FRAME       |      | 6.1.1.7  |
-FUNC_DISPLAY_DRAW_HLINE       |      | 6.1.1.7  |
-FUNC_DISPLAY_DRAW_VLINE       |      | 6.1.1.7  |
-FUNC_DISPLAY_DRAW_LINE        |      | 6.1.1.7  |
-FUNC_DISPLAY_DRAW_CIRCLE      |      | 6.1.1.7  |
-FUNC_DISPLAY_FILL_CIRCLE      |      | 6.1.1.7  |
-FUNC_DISPLAY_DRAW_RECTANGLE   |      | 6.1.1.7  |
-FUNC_DISPLAY_FILL_RECTANGLE   |      | 6.1.1.7  |
-FUNC_DISPLAY_TEXT_SIZE        |      | 6.1.1.7  |
-FUNC_DISPLAY_FONT_SIZE        |      | 6.1.1.7  |
-FUNC_DISPLAY_ROTATION         |      | 6.1.1.7  |
-FUNC_DISPLAY_DRAW_STRING      |      | 6.1.1.7  |
-FUNC_DISPLAY_ONOFF            |      | 6.1.1.7  |
+Callback Id                   | Bool | Description
+------------------------------|------|---------------------
+FUNC_DISPLAY_INIT_DRIVER      |      |
+FUNC_DISPLAY_INIT             |      |
+FUNC_DISPLAY_EVERY_50_MSECOND |      |
+FUNC_DISPLAY_EVERY_SECOND     |      |
+FUNC_DISPLAY_MODEL            |  x   |
+FUNC_DISPLAY_MODE             |      |
+FUNC_DISPLAY_POWER            |      |
+FUNC_DISPLAY_CLEAR            |      |
+FUNC_DISPLAY_DRAW_FRAME       |      |
+FUNC_DISPLAY_DRAW_HLINE       |      |
+FUNC_DISPLAY_DRAW_VLINE       |      |
+FUNC_DISPLAY_DRAW_LINE        |      |
+FUNC_DISPLAY_DRAW_CIRCLE      |      |
+FUNC_DISPLAY_FILL_CIRCLE      |      |
+FUNC_DISPLAY_DRAW_RECTANGLE   |      |
+FUNC_DISPLAY_FILL_RECTANGLE   |      |
+FUNC_DISPLAY_TEXT_SIZE        |      |
+FUNC_DISPLAY_FONT_SIZE        |      |
+FUNC_DISPLAY_ROTATION         |      |
+FUNC_DISPLAY_DRAW_STRING      |      |
+FUNC_DISPLAY_ONOFF            |      |
 
 ## Init sequence
-The following list contains the callback init sequence
 
+The following list shows a typical callback init sequence
+
+```
 CFG: Loaded from flash at FB, Count 1581
 xdrv - FUNC_SETTINGS_OVERRIDE
 xdrv - FUNC_PIN_STATE
@@ -134,3 +147,4 @@ MQT: stat/wemos2/RESULT = {"POWER2":"ON"}
 MQT: stat/wemos2/POWER2 = ON
 xdrv - FUNC_MQTT_INIT
 CFG: Saved to flash at FA, Count 1582, Bytes 4096
+```

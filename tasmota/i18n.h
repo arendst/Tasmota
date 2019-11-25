@@ -290,6 +290,7 @@
   #define D_JSON_GPIO "GPIO"
   #define D_JSON_FLAG "FLAG"
   #define D_JSON_BASE "BASE"
+#define D_CMND_TEMPOFFSET "TempOffset"
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTLOG "MqttLog"
@@ -488,6 +489,36 @@
     #define D_JSON_MOTOR_RPM "setRPM"
     #define D_JSON_MOTOR_MIS "setMIS"
   #endif
+
+/********************************************************************************************/
+
+// Log message prefix
+#define D_LOG_APPLICATION "APP: "  // Application
+#define D_LOG_BRIDGE "BRG: "       // Bridge
+#define D_LOG_CONFIG "CFG: "       // Settings
+#define D_LOG_COMMAND "CMD: "      // Command
+#define D_LOG_DEBUG "DBG: "        // Debug
+#define D_LOG_DHT "DHT: "          // DHT sensor
+#define D_LOG_DOMOTICZ "DOM: "     // Domoticz
+#define D_LOG_DSB "DSB: "          // DS18xB20 sensor
+#define D_LOG_HTTP "HTP: "         // HTTP webserver
+#define D_LOG_HRE "HRE: "
+#define D_LOG_I2C "I2C: "          // I2C
+#define D_LOG_IRR "IRR: "          // Infra Red Received
+#define D_LOG_KNX "KNX: "
+#define D_LOG_LOG "LOG: "          // Logging
+#define D_LOG_MODULE "MOD: "       // Module
+#define D_LOG_MDNS "DNS: "         // mDNS
+#define D_LOG_MQTT "MQT: "         // MQTT
+#define D_LOG_OTHER "OTH: "        // Other
+#define D_LOG_RESULT "RSL: "       // Result
+#define D_LOG_RFR "RFR: "          // RF Received
+#define D_LOG_SERIAL "SER: "       // Serial
+#define D_LOG_SHT1 "SHT: "         // SHT1x sensor
+#define D_LOG_UPLOAD "UPL: "       // Upload
+#define D_LOG_UPNP "UPP: "         // UPnP
+#define D_LOG_WIFI "WIF: "         // Wifi
+#define D_LOG_ZIGBEE "ZIG: "       // Zigbee
 
 /********************************************************************************************/
 

@@ -20,6 +20,10 @@
 IPAddress syslog_host_addr;      // Syslog host IP address
 uint32_t syslog_host_hash = 0;   // Syslog host name hash
 
+extern "C" {
+extern struct rst_info resetInfo;
+}
+
 /*********************************************************************************************\
  * Watchdog extension (https://github.com/esp8266/Arduino/issues/1532)
 \*********************************************************************************************/
@@ -72,6 +76,26 @@ void OsWatchLoop(void)
 //  while(1) delay(1000);  // this will trigger the os watch
 }
 
+bool OsWatchBlockedLoop(void)
+{
+  return oswatch_blocked_loop;
+}
+
+uint32_t ResetReason(void)
+{
+  /*
+    user_interface.h
+    REASON_DEFAULT_RST      = 0,  // "Power on"                normal startup by power on
+    REASON_WDT_RST          = 1,  // "Hardware Watchdog"       hardware watch dog reset
+    REASON_EXCEPTION_RST    = 2,  // "Exception"               exception reset, GPIO status won’t change
+    REASON_SOFT_WDT_RST     = 3,  // "Software Watchdog"       software watch dog reset, GPIO status won’t change
+    REASON_SOFT_RESTART     = 4,  // "Software/System restart" software restart ,system_restart , GPIO status won’t change
+    REASON_DEEP_SLEEP_AWAKE = 5,  // "Deep-Sleep Wake"         wake up from deep-sleep
+    REASON_EXT_SYS_RST      = 6   // "External System"         external system reset
+  */
+  return resetInfo.reason;
+}
+
 String GetResetReason(void)
 {
   if (oswatch_blocked_loop) {
@@ -83,130 +107,15 @@ String GetResetReason(void)
   }
 }
 
-bool OsWatchBlockedLoop(void)
+String GetResetReasonInfo(void)
 {
-  return oswatch_blocked_loop;
+  // "Fatal exception:0 flag:2 (EXCEPTION) epc1:0x704022a7 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000000 depc:0x00000000"
+  return (ResetReason() == REASON_EXCEPTION_RST) ? ESP.getResetInfo() : GetResetReason();
 }
+
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
-
-#ifdef ARDUINO_ESP8266_RELEASE_2_3_0
-// Functions not available in 2.3.0
-
-// http://clc-wiki.net/wiki/C_standard_library:string.h:memchr
-void* memchr(const void* ptr, int value, size_t num)
-{
-  unsigned char *p = (unsigned char*)ptr;
-  while (num--) {
-    if (*p != (unsigned char)value) {
-      p++;
-    } else {
-      return p;
-    }
-  }
-  return 0;
-}
-
-// http://clc-wiki.net/wiki/C_standard_library:string.h:strcspn
-// Get span until any character in string
-size_t strcspn(const char *str1, const char *str2)
-{
-  size_t ret = 0;
-  while (*str1) {
-    if (strchr(str2, *str1)) {  // Slow
-      return ret;
-    } else {
-      str1++;
-      ret++;
-    }
-  }
-  return ret;
-}
-
-// https://clc-wiki.net/wiki/C_standard_library:string.h:strpbrk
-// Locate the first occurrence in the string pointed to by s1 of any character from the string pointed to by s2
-char* strpbrk(const char *s1, const char *s2)
-{
-  while(*s1) {
-    if (strchr(s2, *s1++)) {
-      return (char*)--s1;
-    }
-  }
-  return 0;
-}
-
-// https://opensource.apple.com/source/Libc/Libc-583/stdlib/FreeBSD/strtoull.c
-// Convert a string to an unsigned long long integer
-#ifndef __LONG_LONG_MAX__
-#define __LONG_LONG_MAX__ 9223372036854775807LL
-#endif
-#ifndef ULLONG_MAX
-#define ULLONG_MAX (__LONG_LONG_MAX__ * 2ULL + 1)
-#endif
-
-unsigned long long strtoull(const char *__restrict nptr, char **__restrict endptr, int base)
-{
-  const char *s = nptr;
-  char c;
-  do { c = *s++; } while (isspace((unsigned char)c));                         // Trim leading spaces
-
-  int neg = 0;
-  if (c == '-') {                                                             // Set minus flag and/or skip sign
-    neg = 1;
-    c = *s++;
-  } else {
-    if (c == '+') {
-      c = *s++;
-    }
-  }
-
-  if ((base == 0 || base == 16) && (c == '0') && (*s == 'x' || *s == 'X')) {  // Set Hexadecimal
-    c = s[1];
-    s += 2;
-    base = 16;
-  }
-  if (base == 0) { base = (c == '0') ? 8 : 10; }                              // Set Octal or Decimal
-
-  unsigned long long acc = 0;
-  int any = 0;
-  if (base > 1 && base < 37) {
-    unsigned long long cutoff = ULLONG_MAX / base;
-    int cutlim = ULLONG_MAX % base;
-    for ( ; ; c = *s++) {
-      if (c >= '0' && c <= '9')
-        c -= '0';
-      else if (c >= 'A' && c <= 'Z')
-        c -= 'A' - 10;
-      else if (c >= 'a' && c <= 'z')
-        c -= 'a' - 10;
-      else
-        break;
-
-      if (c >= base)
-        break;
-
-      if (any < 0 || acc > cutoff || (acc == cutoff && c > cutlim))
-        any = -1;
-      else {
-        any = 1;
-        acc *= base;
-        acc += c;
-      }
-    }
-    if (any < 0) {
-      acc = ULLONG_MAX;                                                       // Range error
-    }
-    else if (any && neg) {
-      acc = -acc;
-    }
-  }
-
-  if (endptr != nullptr) { *endptr = (char *)(any ? s - 1 : nptr); }
-
-  return acc;
-}
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
 
 // Get span until single character in string
 size_t strchrspn(const char *str1, int character)
@@ -487,7 +396,7 @@ char* NoAlNumToUnderscore(char* dest, const char* source)
   return dest;
 }
 
-char IndexSeparator()
+char IndexSeparator(void)
 {
 /*
   // 20 bytes more costly !?!
@@ -510,7 +419,7 @@ void SetShortcutDefault(void)
   }
 }
 
-uint8_t Shortcut()
+uint8_t Shortcut(void)
 {
   uint8_t result = 10;
 
@@ -612,6 +521,32 @@ char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
   return GetPowerDevice(dest, idx, size, 0);
 }
 
+bool IsEsp8285(void)
+{
+  // esptool.py get_efuses
+  uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
+  uint32_t efuse2 = *(uint32_t*)(0x3FF00054);
+//  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
+//  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
+
+  bool is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
+  if (is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
+    is_8285 = false;  // ESP8285 can only have 1M flash
+  }
+  return is_8285;
+}
+
+String GetDeviceHardware(void)
+{
+  char buff[10];
+  if (IsEsp8285()) {
+    strcpy_P(buff, PSTR("ESP8285"));
+  } else {
+    strcpy_P(buff, PSTR("ESP8266EX"));
+  }
+  return String(buff);
+}
+
 float ConvertTemp(float c)
 {
   float result = c;
@@ -622,6 +557,7 @@ float ConvertTemp(float c)
   if (!isnan(c) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
     result = c * 1.8 + 32;                                    // Fahrenheit
   }
+  result = result + (0.1 * Settings.temp_comp);
   return result;
 }
 
@@ -632,6 +568,7 @@ float ConvertTempToCelsius(float c)
   if (!isnan(c) && Settings.flag.temperature_conversion) {    // SetOption8 - Switch between Celsius or Fahrenheit
     result = (c - 32) / 1.8;                                  // Celsius
   }
+  result = result + (0.1 * Settings.temp_comp);
   return result;
 }
 
@@ -777,15 +714,15 @@ bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void))
   return false;
 }
 
-const char kOptions[] PROGMEM = "OFF|" D_OFF "|" D_FALSE "|" D_STOP "|" D_CELSIUS "|"              // 0
-                                "ON|" D_ON "|" D_TRUE "|" D_START "|" D_FAHRENHEIT "|" D_USER "|"  // 1
-                                "TOGGLE|" D_TOGGLE "|" D_ADMIN "|"                                 // 2
-                                "BLINK|" D_BLINK "|"                                               // 3
-                                "BLINKOFF|" D_BLINKOFF "|"                                         // 4
-                                "ALL" ;                                                            // 255
+const char kOptions[] PROGMEM = "OFF|" D_OFF "|FALSE|" D_FALSE "|STOP|" D_STOP "|" D_CELSIUS "|"              // 0
+                                "ON|" D_ON "|TRUE|" D_TRUE "|START|" D_START "|" D_FAHRENHEIT "|" D_USER "|"  // 1
+                                "TOGGLE|" D_TOGGLE "|" D_ADMIN "|"                                            // 2
+                                "BLINK|" D_BLINK "|"                                                          // 3
+                                "BLINKOFF|" D_BLINKOFF "|"                                                    // 4
+                                "ALL" ;                                                                       // 255
 
-const uint8_t sNumbers[] PROGMEM = { 0,0,0,0,0,
-                                     1,1,1,1,1,1,
+const uint8_t sNumbers[] PROGMEM = { 0,0,0,0,0,0,0,
+                                     1,1,1,1,1,1,1,1,
                                      2,2,2,
                                      3,3,
                                      4,4,
@@ -1001,7 +938,7 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
-uint8_t ModuleNr()
+uint8_t ModuleNr(void)
 {
   // 0    = User module (255)
   // 1 up = Template module 0 up
@@ -1033,7 +970,7 @@ String AnyModuleName(uint32_t index)
   }
 }
 
-String ModuleName()
+String ModuleName(void)
 {
   return AnyModuleName(Settings.module);
 }
@@ -1065,7 +1002,7 @@ void ModuleGpios(myio *gp)
 //  AddLogBuffer(LOG_LEVEL_DEBUG, (uint8_t *)gp, sizeof(myio));
 }
 
-gpio_flag ModuleFlag()
+gpio_flag ModuleFlag(void)
 {
   gpio_flag flag;
 
@@ -1085,7 +1022,7 @@ void ModuleDefault(uint32_t module)
   memcpy_P(&Settings.user_template, &kModules[module], sizeof(mytmplt));
 }
 
-void SetModuleType()
+void SetModuleType(void)
 {
   my_module_type = (USER_MODULE == Settings.module) ? Settings.user_template_base : Settings.module;
 }
@@ -1100,11 +1037,14 @@ uint8_t ValidPin(uint32_t pin, uint32_t gpio)
   uint8_t result = gpio;
 
   if (FlashPin(pin)) {
-    result = GPIO_NONE;  // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
+    result = GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
-  if ((WEMOS == Settings.module) && (!Settings.flag3.user_esp8285_enable)) {  // SetOption51 - Enable ESP8285 user GPIO's
-    if ((pin == 9) || (pin == 10)) { result = GPIO_NONE; }  // Disable possible flash GPIO9 and GPIO10
+  if (!IsEsp8285() && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
+    if ((pin == 9) || (pin == 10)) {
+      result = GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
+    }
   }
+
   return result;
 }
 
@@ -1113,7 +1053,7 @@ bool ValidGPIO(uint32_t pin, uint32_t gpio)
   return (GPIO_USER == ValidPin(pin, gpio));  // Only allow GPIO_USER pins
 }
 
-bool ValidAdc()
+bool ValidAdc(void)
 {
   gpio_flag flag = ModuleFlag();
   uint32_t template_adc0 = flag.data &15;
@@ -1213,7 +1153,7 @@ bool JsonTemplate(const char* dataBuf)
   return true;
 }
 
-void TemplateJson()
+void TemplateJson(void)
 {
   Response_P(PSTR("{\"" D_JSON_NAME "\":\"%s\",\"" D_JSON_GPIO "\":["), Settings.user_template.name);
   for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {

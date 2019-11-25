@@ -55,14 +55,14 @@ pip install pycurl configargparse
 
 Install [Python 2.7](https://www.python.org/download/releases/2.7/) then install dependencies. For PyCurl you need to [download pycurl‑7.43.0.3‑cp27‑cp27m‑win_amd64.whl](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pycurl) for Windows 10 64bit.
 ```
-pip install pycurl-7.43.0.3-cp27-cp27m-win_amd64.whl configargparse
+pip install pycurl-7.43.0.3-cp27-cp27m-win_amd64.whl
 // run the command from the folder where you downloaded the file
 
 pip install configargparse
 ```
 
 * [Tasmota](https://github.com/arendst/Tasmota) [Firmware](https://github.com/arendst/Tasmota/releases) with Web-Server enabled:
-  * To backup or restore configurations from or to a Tasmota device you need a firmare with enabled web-server in admin mode (command [WebServer 2](https://github.com/arendst/Tasmota/wiki/Commands#wifi)). This is the Tasmota default.
+  * To backup or restore configurations from or to a Tasmota device you need a firmare with enabled web-server in admin mode (command [WebServer 2](https://tasmota.github.io/docs/#/Commands#wifi)). This is the Tasmota default.
   * If using your own compiled firmware be aware to enable the web-server (`#define USE_WEBSERVER` and `#define WEB_SERVER 2`).
 
 ## File Types
@@ -211,9 +211,9 @@ Note: A few very specific module commands like MPC230xx, KNX and some Display co
 ### Filter data
 The huge number of Tasmota configuration data can be overstrained and confusing, so the most of the configuration data are grouped into categories.
 
-With _decode-config.py_ the following categories are available:   `Display`, `Domoticz`, `Internal`, `KNX`, `Led`, `Logging`, `MCP230xx`, `MQTT`, `Main`, `Management`, `Pow`, `Sensor`, `Serial`, `SetOption`, `SonoffRF`, `System`, `Timers`, `Wifi`
+With _decode-config.py_ the following categories are available:   `Display`, `Domoticz`, `Internal`, `KNX`, `Led`, `Logging`, `MCP230xx`, `MQTT`, `Main`, `Management`, `Pow`, `Sensor`, `Serial`, `SetOption`, `RF`, `System`, `Timers`, `Wifi`
 
-These are similary to the categories on [https://github.com/arendst/Tasmota/wiki/Commands](Tasmota Command Wiki).
+These are similary to the categories on [https://tasmota.github.io/docs/#/Commands](Tasmota Command Wiki).
 
 To filter outputs to a subset of groups use the `-g` or `--group` arg concatenating the grooup you want, e. g.
 
@@ -254,7 +254,7 @@ For advanced help use `-H` or `--full-help`:
                             [--cmnd-indent <indent>] [--cmnd-groups]
                             [--cmnd-nogroups] [--cmnd-sort] [--cmnd-unsort]
                             [-c <filename>] [-S] [-T json|cmnd|command]
-                            [-g {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi} ...]]
+                            [-g {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rf,Rules,Sensor,Serial,Setoption,Shutter,System,Timer,Wifi} [{Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rf,Rules,Sensor,Serial,Setoption,Shutter,System,Timer,Wifi} ...]]
                             [--ignore-warnings] [-h] [-H] [-v] [-V]
 
     Backup/Restore Tasmota configuration data. Args that start with '--'
@@ -334,7 +334,7 @@ For advanced help use `-H` or `--full-help`:
                             (default do not output on backup or restore usage)
       -T, --output-format json|cmnd|command
                             display output format (default: 'json')
-      -g, --group {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rules,Sensor,Serial,Setoption,Shutter,Sonoffrf,System,Timer,Wifi}
+      -g, --group {Control,Devices,Display,Domoticz,Internal,Knx,Light,Management,Mqtt,Power,Rf,Rules,Sensor,Serial,Setoption,Shutter,System,Timer,Wifi}
                             limit data processing to command groups (default no
                             filter)
       --ignore-warnings     do not exit on warnings. Not recommended, used by your

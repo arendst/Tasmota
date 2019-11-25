@@ -100,7 +100,6 @@ const uint16_t PWM_MAX = 4000;              // [PWM_MAX] Maximum frequency - Def
 const uint16_t PWM_MIN = 100;               // [PWM_MIN] Minimum frequency - Default: 100
                                             //    For Dimmers use double of your mains AC frequecy (100 for 50Hz and 120 for 60Hz)
                                             //    For Controlling Servos use 50 and also set PWM_FREQ as 50 (DO NOT USE THESE VALUES FOR DIMMERS)
-//#define PWM_LIGHTSCHEME0_IGNORE_SLEEP       // Do not change sleep value for LightAnimate() scheme 0
 
 const uint16_t MAX_POWER_HOLD = 10;         // Time in SECONDS to allow max agreed power
 const uint16_t MAX_POWER_WINDOW = 30;       // Time in SECONDS to disable allow max agreed power
@@ -262,7 +261,7 @@ enum LightTypes    { LT_BASIC, LT_PWM1,    LT_PWM2,      LT_PWM3,   LT_PWM4,  LT
                      LT_NU8,   LT_SERIAL1, LT_SERIAL2,   LT_RGB,    LT_RGBW,  LT_RGBWC, LT_NU14, LT_NU15 };  // Do not insert new fields
 
 enum XsnsFunctions {FUNC_SETTINGS_OVERRIDE, FUNC_PIN_STATE, FUNC_MODULE_INIT, FUNC_PRE_INIT, FUNC_INIT,
-                    FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_300_MSECOND, FUNC_EVERY_SECOND,
+                    FUNC_LOOP, FUNC_EVERY_50_MSECOND, FUNC_EVERY_100_MSECOND, FUNC_EVERY_200_MSECOND, FUNC_EVERY_250_MSECOND, FUNC_EVERY_SECOND,
                     FUNC_SAVE_AT_MIDNIGHT, FUNC_SAVE_BEFORE_RESTART,
                     FUNC_AFTER_TELEPERIOD, FUNC_JSON_APPEND, FUNC_WEB_SENSOR, FUNC_COMMAND, FUNC_COMMAND_SENSOR, FUNC_COMMAND_DRIVER,
                     FUNC_MQTT_SUBSCRIBE, FUNC_MQTT_INIT, FUNC_MQTT_DATA,

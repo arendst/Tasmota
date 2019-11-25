@@ -13,8 +13,9 @@
 #include "Arduino.h"
 
 #define HPM_CMD_RESP_HEAD 0x40
-#define HPM_MAX_RESP_SIZE 8 // max command response size is 8 bytes
+#define HPM_MAX_RESP_SIZE 16 // max command response size is 16 bytes
 #define HPM_READ_PARTICLE_MEASURMENT_LEN 5
+#define HPM_READ_PARTICLE_MEASURMENT_LEN_C 13
 
 enum CMD_TYPE_T {
     READ_PARTICLE_MEASURMENT = 0x04,
@@ -53,8 +54,8 @@ public:
     /**
      * @brief Function that sends a read command to sensor
      * @return  returns true if valid measurements were read from sensor
-     */boolean ReadParticleMeasurement(unsigned int * pm2_5, unsigned int * pm10)
-    ;
+     */
+    boolean ReadParticleMeasurement(unsigned int * pm2_5, unsigned int * pm10);
 
     /**
      * @brief Function that starts sensor measurement
@@ -108,7 +109,7 @@ private:
      * @param size of buffer
      * @return  void
      */
-    void SendCmd(unsigned char * command, unsigned int size);
+    void SendCmd(const char * command, unsigned int size);
 
     /**
     * @brief Function that reads command response from sensor

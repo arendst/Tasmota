@@ -72,7 +72,7 @@ void Pcf8574SwitchRelay(void)
   }
 }
 
-void Pcf8574Init()
+void Pcf8574Init(void)
 {
   uint8_t pcf8574_address = PCF8574_ADDR1;
   while ((Pcf8574.max_devices < MAX_PCF8574) && (pcf8574_address < PCF8574_ADDR2 +8)) {
@@ -178,7 +178,7 @@ void HandlePcf8574(void)
   WSContentStop();
 }
 
-void Pcf8574SaveSettings()
+void Pcf8574SaveSettings(void)
 {
   char stemp[7];
   char tmp[100];

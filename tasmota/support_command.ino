@@ -26,7 +26,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SYSLOG "|" D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|"
   D_CMND_SERIALDELIMITER "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|"
   D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
-  D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_WIFIPOWER "|"
+  D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -41,7 +41,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport, &CmndSerialSend, &CmndBaudrate,
   &CmndSerialDelimiter, &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig,
   &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
-  &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndWifiPower,
+  &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndWifiPower, &CmndTempOffset,
 #ifdef USE_I2C
   &CmndI2cScan, CmndI2cDriver,
 #endif
@@ -55,6 +55,13 @@ const char kWifiConfig[] PROGMEM =
 void ResponseCmndNumber(int value)
 {
   Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, value);
+}
+
+void ResponseCmndFloat(float value, uint32_t decimals)
+{
+  char stemp1[TOPSZ];
+  dtostrfd(value, decimals, stemp1);
+  Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, stemp1);  // Return float value without quotes
 }
 
 void ResponseCmndIdxNumber(int value)
@@ -362,16 +369,17 @@ void CmndStatus(void)
                           D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_JSON_STARTUPUTC "\":\"%s\",\"" D_CMND_SLEEP "\":%d,\""
                           D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_JSON_SAVEADDRESS "\":\"%X\"}}"),
                           baudrate, Settings.mqtt_grptopic, Settings.ota_url,
-                          GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
+                          GetResetReasonInfo().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
                           Settings.cfg_holder, Settings.bootcount, Settings.save_flag, GetSettingsAddress());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "1"));
   }
 
   if ((0 == payload) || (2 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\""
-                          D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\"}}"),
+                          D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
+                          "\"Hardware\":\"%s\"}}"),
                           my_version, my_image, GetBuildDateAndTime().c_str(),
-                          ESP.getBootVersion(), ESP.getSdkVersion());
+                          ESP.getBootVersion(), ESP.getSdkVersion(), GetDeviceHardware().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
   }
 
@@ -493,6 +501,17 @@ void CmndState(void)
     HAssPublishStatus();
   }
 #endif  // USE_HOME_ASSISTANT
+}
+
+void CmndTempOffset(void)
+{
+  if (XdrvMailbox.data_len > 0) {
+    int value = (int)(CharToFloat(XdrvMailbox.data) * 10);
+    if ((value > -127) && (value < 127)) {
+      Settings.temp_comp = value;
+    }
+  }
+  ResponseCmndFloat((float)(Settings.temp_comp) / 10, 1);
 }
 
 void CmndSleep(void)
@@ -1539,9 +1558,7 @@ void CmndWifiPower(void)
     }
     WifiSetOutputPower();
   }
-  char stemp1[TOPSZ];
-  dtostrfd((float)(Settings.wifi_output_power) / 10, 1, stemp1);
-  Response_P(S_JSON_COMMAND_XVALUE, XdrvMailbox.command, stemp1);  // Return float value without quotes
+  ResponseCmndFloat((float)(Settings.wifi_output_power) / 10, 1);
 }
 
 #ifdef USE_I2C

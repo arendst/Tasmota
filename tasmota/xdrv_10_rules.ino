@@ -1226,7 +1226,7 @@ float evaluateExpression(const char * expression, unsigned int len)
 #endif  // USE_EXPRESSION
 
 #ifdef  SUPPORT_IF_STATEMENT
-void CmndIf()
+void CmndIf(void)
 {
   if (XdrvMailbox.data_len > 0) {
     char parameters[XdrvMailbox.data_len+1];

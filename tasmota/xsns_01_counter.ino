@@ -31,8 +31,8 @@
 const char kCounterCommands[] PROGMEM = D_PRFX_COUNTER "|"  // Prefix
   "|" D_CMND_COUNTERTYPE "|" D_CMND_COUNTERDEBOUNCE ;
 
-void (* const CounterCommand[])(void) PROGMEM =
-  { &CmndCounter, &CmndCounterType, &CmndCounterDebounce };
+void (* const CounterCommand[])(void) PROGMEM = {
+  &CmndCounter, &CmndCounterType, &CmndCounterDebounce };
 
 struct COUNTER {
   uint32_t timer[MAX_COUNTERS];  // Last counter time in micro seconds

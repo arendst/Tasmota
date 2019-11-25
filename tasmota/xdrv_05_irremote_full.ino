@@ -33,9 +33,11 @@
 enum IrErrors { IE_RESPONSE_PROVIDED, IE_NO_ERROR, IE_INVALID_RAWDATA, IE_INVALID_JSON, IE_SYNTAX_IRSEND, IE_SYNTAX_IRHVAC,
                 IE_UNSUPPORTED_HVAC, IE_UNSUPPORTED_PROTOCOL };
 
-const char kIrRemoteCommands[] PROGMEM = "|" D_CMND_IRHVAC "|" D_CMND_IRSEND ; // No prefix
+const char kIrRemoteCommands[] PROGMEM = "|"
+  D_CMND_IRHVAC "|" D_CMND_IRSEND ; // No prefix
 
-void (* const IrRemoteCommand[])(void) PROGMEM = { &CmndIrHvac, &CmndIrSend };
+void (* const IrRemoteCommand[])(void) PROGMEM = {
+  &CmndIrHvac, &CmndIrSend };
 
 /*********************************************************************************************\
  * IR Send
@@ -92,7 +94,7 @@ IRrecv *irrecv = nullptr;
 
 unsigned long ir_lasttime = 0;
 
-void IrReceiveUpdateThreshold()
+void IrReceiveUpdateThreshold(void)
 {
   if (irrecv != nullptr) {
     if (Settings.param[P_IR_UNKNOW_THRESHOLD] < 6) { Settings.param[P_IR_UNKNOW_THRESHOLD] = 6; }

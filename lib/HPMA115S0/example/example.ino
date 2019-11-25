@@ -6,7 +6,7 @@
  * @license MIT
  */
 
-#include <HPMA115S0.h>
+#include <hpma115S0.h>
 #include <SoftwareSerial.h>
 
 //Create an instance of software serial
