@@ -1207,7 +1207,7 @@ void sml_empty_receiver(uint32_t meters) {
 
 void sml_shift_in(uint32_t meters,uint32_t shard) {
   uint32_t count;
-  if (meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='p') {
+  if (meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='M' && meter_desc_p[meters].type!='p') {
     // shift in
     for (count=0; count<SML_BSIZ-1; count++) {
       smltbuf[meters][count]=smltbuf[meters][count+1];
@@ -1221,7 +1221,7 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
     smltbuf[meters][SML_BSIZ-1]=iob;
   } else if (meter_desc_p[meters].type=='r') {
     smltbuf[meters][SML_BSIZ-1]=iob;
-  } else if (meter_desc_p[meters].type=='m') {
+  } else if (meter_desc_p[meters].type=='m' || meter_desc_p[meters].type=='M') {
     smltbuf[meters][meter_spos[meters]] = iob;
     meter_spos[meters]++;
     if (meter_spos[meters]>=9) {
@@ -1263,7 +1263,7 @@ void sml_shift_in(uint32_t meters,uint32_t shard) {
 		}
   }
   sb_counter++;
-  if (meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='p') SML_Decode(meters);
+  if (meter_desc_p[meters].type!='e' && meter_desc_p[meters].type!='m' && meter_desc_p[meters].type!='M' && meter_desc_p[meters].type!='p') SML_Decode(meters);
 }
 
 
@@ -1523,7 +1523,7 @@ void SML_Decode(uint8_t index) {
           }
         } else {
           double dval;
-          if (meter_desc_p[mindex].type!='e' && meter_desc_p[mindex].type!='r' && meter_desc_p[mindex].type!='m' && meter_desc_p[mindex].type!='p') {
+          if (meter_desc_p[mindex].type!='e' && meter_desc_p[mindex].type!='r' && meter_desc_p[mindex].type!='m' && meter_desc_p[mindex].type!='M' && meter_desc_p[mindex].type!='p') {
             // get numeric values
             if (meter_desc_p[mindex].type=='o' || meter_desc_p[mindex].type=='c') {
               dval=CharToDouble((char*)cp);
@@ -2061,7 +2061,7 @@ init10:
     } else {
       // serial input, init
 #ifdef SPECIAL_SS
-        if (meter_desc_p[meters].type=='m' || meter_desc_p[meters].type=='p') {
+        if (meter_desc_p[meters].type=='m' || meter_desc_p[meters].type=='M' || meter_desc_p[meters].type=='p') {
           meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1);
         } else {
           meter_ss[meters] = new TasmotaSerial(meter_desc_p[meters].srcpin,meter_desc_p[meters].trxpin,1,1);
@@ -2072,7 +2072,12 @@ init10:
         if (meter_ss[meters]->begin(meter_desc_p[meters].params)) {
           meter_ss[meters]->flush();
         }
-        if (meter_ss[meters]->hardwareSerial()) { ClaimSerial(); }
+        if (meter_ss[meters]->hardwareSerial()) {
+          if (meter_desc_p[meters].type=='M') {
+            Serial.begin(meter_desc_p[meters].params, SERIAL_8E1);
+          }
+          ClaimSerial();
+        }
 
     }
   }
@@ -2234,7 +2239,7 @@ void SML_Send_Seq(uint32_t meter,char *seq) {
     slen++;
     if (slen>=sizeof(sbuff)) break;
   }
-  if (script_meter_desc[meter].type=='m') {
+  if (script_meter_desc[meter].type=='m' || script_meter_desc[meter].type=='M') {
     *ucp++=0;
     *ucp++=2;
     // append crc
