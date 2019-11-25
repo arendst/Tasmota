@@ -130,7 +130,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
       "clearTimeout(lt);"
       "rfsh=0;"
     "}"
-  "}"
+  "}";
 #else  // USE_SCRIPT_WEB_DISPLAY
   "function la(p){"
     "var a='';"
@@ -149,9 +149,10 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "x.open('GET','.?m=1'+a,true);"       // ?m related to WebServer->hasArg("m")
     "x.send();"
     "lt=setTimeout(la,%d);"               // Settings.web_refresh
-  "}"
+  "}";
 #endif  // USE_SCRIPT_WEB_DISPLAY
 
+const char HTTP_SCRIPT_ROOT_PART2[] PROGMEM =
   "function lc(v,i,p){"
     "if(v=='h'||v=='d'){"                 // Hue or Brightness changed so change Saturation colors too
       "var sl=eb('sl4').value;"
@@ -159,7 +160,6 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "}"
     "la('&'+v+i+'='+p);"
   "}"
-
   "wl(la);";
 
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
@@ -990,6 +990,8 @@ void HandleRoot(void)
 #else
   WSContentSend_P(HTTP_SCRIPT_ROOT, Settings.web_refresh);
 #endif
+  WSContentSend_P(HTTP_SCRIPT_ROOT_PART2);
+
   WSContentSendStyle();
 
   WSContentSend_P(PSTR("<div id='l1' name='l1'></div>"));
