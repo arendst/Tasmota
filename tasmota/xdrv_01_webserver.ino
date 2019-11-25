@@ -766,8 +766,15 @@ void WSContentSend_P(const char* formatP, ...)     // Content send snprintf_P ch
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
   va_start(arg, formatP);
-  vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
+  int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
   va_end(arg);
+
+#ifdef DEBUG_TASMOTA_CORE
+  if (len > (sizeof(mqtt_data) -1)) {
+    mqtt_data[33] = '\0';
+    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSend_P size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(mqtt_data), mqtt_data);
+  }
+#endif
 
   _WSContentSendBuffer();
 }
@@ -779,6 +786,13 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
   va_start(arg, formatP);
   int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
   va_end(arg);
+
+#ifdef DEBUG_TASMOTA_CORE
+  if (len > (sizeof(mqtt_data) -1)) {
+    mqtt_data[33] = '\0';
+    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSend_PD size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(mqtt_data), mqtt_data);
+  }
+#endif
 
   if (D_DECIMAL_SEPARATOR[0] != '.') {
     for (uint32_t i = 0; i < len; i++) {
@@ -829,8 +843,16 @@ void WSContentSendStyle_P(const char* formatP, ...)
     // This uses char strings. Be aware of sending %% if % is needed
     va_list arg;
     va_start(arg, formatP);
-    vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
+    int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
     va_end(arg);
+
+#ifdef DEBUG_TASMOTA_CORE
+  if (len > (sizeof(mqtt_data) -1)) {
+    mqtt_data[33] = '\0';
+    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSendStyle_P size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(mqtt_data), mqtt_data);
+  }
+#endif
+
     _WSContentSendBuffer();
   }
   WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_TEXT),
