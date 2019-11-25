@@ -130,7 +130,7 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
       "clearTimeout(lt);"
       "rfsh=0;"
     "}"
-  "}"
+  "}";
 #else  // USE_SCRIPT_WEB_DISPLAY
   "function la(p){"
     "var a='';"
@@ -149,9 +149,10 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "x.open('GET','.?m=1'+a,true);"       // ?m related to WebServer->hasArg("m")
     "x.send();"
     "lt=setTimeout(la,%d);"               // Settings.web_refresh
-  "}"
+  "}";
 #endif  // USE_SCRIPT_WEB_DISPLAY
 
+const char HTTP_SCRIPT_ROOT_PART2[] PROGMEM =
   "function lc(v,i,p){"
     "if(v=='h'||v=='d'){"                 // Hue or Brightness changed so change Saturation colors too
       "var sl=eb('sl4').value;"
@@ -159,7 +160,6 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
     "}"
     "la('&'+v+i+'='+p);"
   "}"
-
   "wl(la);";
 
 const char HTTP_SCRIPT_WIFI[] PROGMEM =
@@ -766,8 +766,15 @@ void WSContentSend_P(const char* formatP, ...)     // Content send snprintf_P ch
   // This uses char strings. Be aware of sending %% if % is needed
   va_list arg;
   va_start(arg, formatP);
-  vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
+  int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
   va_end(arg);
+
+#ifdef DEBUG_TASMOTA_CORE
+  if (len > (sizeof(mqtt_data) -1)) {
+    mqtt_data[33] = '\0';
+    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSend_P size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(mqtt_data), mqtt_data);
+  }
+#endif
 
   _WSContentSendBuffer();
 }
@@ -779,6 +786,13 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
   va_start(arg, formatP);
   int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
   va_end(arg);
+
+#ifdef DEBUG_TASMOTA_CORE
+  if (len > (sizeof(mqtt_data) -1)) {
+    mqtt_data[33] = '\0';
+    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSend_PD size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(mqtt_data), mqtt_data);
+  }
+#endif
 
   if (D_DECIMAL_SEPARATOR[0] != '.') {
     for (uint32_t i = 0; i < len; i++) {
@@ -829,8 +843,16 @@ void WSContentSendStyle_P(const char* formatP, ...)
     // This uses char strings. Be aware of sending %% if % is needed
     va_list arg;
     va_start(arg, formatP);
-    vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
+    int len = vsnprintf_P(mqtt_data, sizeof(mqtt_data), formatP, arg);
     va_end(arg);
+
+#ifdef DEBUG_TASMOTA_CORE
+  if (len > (sizeof(mqtt_data) -1)) {
+    mqtt_data[33] = '\0';
+    DEBUG_CORE_LOG(PSTR("ERROR: WSContentSendStyle_P size %d > mqtt_data size %d. Start of data [%s...]"), len, sizeof(mqtt_data), mqtt_data);
+  }
+#endif
+
     _WSContentSendBuffer();
   }
   WSContentSend_P(HTTP_HEAD_STYLE3, WebColor(COL_TEXT),
@@ -990,6 +1012,8 @@ void HandleRoot(void)
 #else
   WSContentSend_P(HTTP_SCRIPT_ROOT, Settings.web_refresh);
 #endif
+  WSContentSend_P(HTTP_SCRIPT_ROOT_PART2);
+
   WSContentSendStyle();
 
   WSContentSend_P(PSTR("<div id='l1' name='l1'></div>"));
