@@ -1173,7 +1173,7 @@ void LightInit(void)
     light_controller.setCTRGBLinked(ct_rgb_linked);
   }
 
-  if ((LST_SINGLE < Light.subtype) && Light.pwm_multi_channels) {
+  if ((LST_SINGLE <= Light.subtype) && Light.pwm_multi_channels) {
     // we treat each PWM channel as an independant one, hence we switch to
     light_controller.setPWMMultiChannel(true);
     Light.device = devices_present - Light.subtype + 1; // adjust if we also have relays
@@ -1255,6 +1255,10 @@ void LightSetDimmer(uint8_t dimmer) {
 
 uint32_t LightGetHSB(uint16_t *hue,uint8_t  *sat, uint8_t *bri) {
   light_state.getHSB(hue, sat, bri);
+}
+
+void LightHsToRgb(uint16_t hue, uint8_t sat, uint8_t *r_r, uint8_t *r_g, uint8_t *r_b) {
+  light_state.HsToRgb(hue, sat, r_r, r_g, r_b);
 }
 
 // If SetOption68 is set, get the brightness for a specific device
@@ -1363,6 +1367,7 @@ void LightState(uint8_t append)
 {
   char scolor[LIGHT_COLOR_SIZE];
   char scommand[33];
+  bool unlinked = !light_controller.isCTRGBLinked() && (Light.subtype >= LST_RGBW);  // there are 2 power and dimmers for RGB and White
 
   if (append) {
     ResponseAppend_P(PSTR(","));
@@ -1370,8 +1375,18 @@ void LightState(uint8_t append)
     Response_P(PSTR("{"));
   }
   if (!Light.pwm_multi_channels) {
-    GetPowerDevice(scommand, Light.device, sizeof(scommand), Settings.flag.device_index_enable);  // SetOption26 - Switch between POWER or POWER1
-    ResponseAppend_P(PSTR("\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"), scommand, GetStateText(Light.power), light_state.getDimmer());
+    if (unlinked) {
+      // RGB and W are unlinked, we display the second Power/Dimmer
+      ResponseAppend_P(PSTR("\"" D_RSLT_POWER "%d\":\"%s\",\"" D_CMND_DIMMER "%d\":%d"
+                           ",\"" D_RSLT_POWER "%d\":\"%s\",\"" D_CMND_DIMMER "%d\":%d"),
+                            Light.device, GetStateText(Light.power & 1), Light.device, light_state.getDimmer(1),
+                            Light.device + 1, GetStateText(Light.power & 2 ? 1 : 0), Light.device + 1, light_state.getDimmer(2));
+    } else {
+      GetPowerDevice(scommand, Light.device, sizeof(scommand), Settings.flag.device_index_enable);  // SetOption26 - Switch between POWER or POWER1
+      ResponseAppend_P(PSTR("\"%s\":\"%s\",\"" D_CMND_DIMMER "\":%d"), scommand, GetStateText(Light.power & 1),
+                      light_state.getDimmer());
+    }
+
 
     if (Light.subtype > LST_SINGLE) {
       ResponseAppend_P(PSTR(",\"" D_CMND_COLOR "\":\"%s\""), LightGetColor(scolor));
@@ -1423,8 +1438,7 @@ void LightState(uint8_t append)
   }
 }
 
-void LightPreparePower(void)
-{
+void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = only CT, 3 = both RGB and CT
 #ifdef DEBUG_LIGHT
   AddLog_P2(LOG_LEVEL_DEBUG, "LightPreparePower power=%d Light.power=%d", power, Light.power);
 #endif
@@ -1462,20 +1476,24 @@ void LightPreparePower(void)
       }
     } else {
       // RGB
-      if (light_state.getBriRGB() && !(Light.power & 1)) {
-        if (!Settings.flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
-          ExecuteCommandPower(Light.device, POWER_ON_NO_STATE, SRC_LIGHT);
+      if (channels & 1) {
+        if (light_state.getBriRGB() && !(Light.power & 1)) {
+          if (!Settings.flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
+            ExecuteCommandPower(Light.device, POWER_ON_NO_STATE, SRC_LIGHT);
+          }
+        } else if (!light_state.getBriRGB() && (Light.power & 1)) {
+          ExecuteCommandPower(Light.device, POWER_OFF_NO_STATE, SRC_LIGHT);
         }
-      } else if (!light_state.getBri() && (Light.power & 1)) {
-        ExecuteCommandPower(Light.device, POWER_OFF_NO_STATE, SRC_LIGHT);
       }
       // White CT
-      if (light_state.getBriCT() && !(Light.power & 2)) {
-        if (!Settings.flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
-          ExecuteCommandPower(Light.device + 1, POWER_ON_NO_STATE, SRC_LIGHT);
+      if (channels & 2) {
+        if (light_state.getBriCT() && !(Light.power & 2)) {
+          if (!Settings.flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
+            ExecuteCommandPower(Light.device + 1, POWER_ON_NO_STATE, SRC_LIGHT);
+          }
+        } else if (!light_state.getBriCT() && (Light.power & 2)) {
+          ExecuteCommandPower(Light.device + 1, POWER_OFF_NO_STATE, SRC_LIGHT);
         }
-      } else if (!light_state.getBri() && (Light.power & 2)) {
-        ExecuteCommandPower(Light.device + 1, POWER_OFF_NO_STATE, SRC_LIGHT);
       }
     }
 #ifdef USE_DOMOTICZ
@@ -1594,11 +1612,11 @@ void LightAnimate(void)
       sleep = Settings.sleep;
     }
   } else {
-#ifdef PWM_LIGHTSCHEME0_IGNORE_SLEEP
-    sleep = (LS_POWER == Settings.light_scheme) && (!Light.fade_running) ? Settings.sleep : 0;  // If no animation then use sleep as is
-#else
-    sleep = 0;
-#endif // PWM_LIGHTSCHEME0_IGNORE_SLEEP
+    if (Settings.sleep > PWM_MAX_SLEEP) {
+      sleep = PWM_MAX_SLEEP;      // set a maxumum value of 50 milliseconds to ensure that animations are smooth
+    } else {
+      sleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
+    }
     switch (Settings.light_scheme) {
       case LS_POWER:
         light_controller.calcLevels(Light.new_color);
@@ -1650,8 +1668,8 @@ void LightAnimate(void)
     LightApplyPower(Light.new_color, Light.power);
 
     // AddLog_P2(LOG_LEVEL_INFO, PSTR("last_color (%02X%02X%02X%02X%02X) new_color (%02X%02X%02X%02X%02X) power %d"),
-    // Light.last_color[0], Light.last_color[1], Light.last_color[2], Light.last_color[3], Light.last_color[4], 
-    // Light.new_color[0], Light.new_color[1], Light.new_color[2], Light.new_color[3], Light.new_color[4], 
+    // Light.last_color[0], Light.last_color[1], Light.last_color[2], Light.last_color[3], Light.last_color[4],
+    // Light.new_color[0], Light.new_color[1], Light.new_color[2], Light.new_color[3], Light.new_color[4],
     // Light.power
     // );
 
@@ -1983,7 +2001,7 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
   memset(&Light.entry_color, 0x00, sizeof(Light.entry_color));
   // erase all channels except if the last character is '=', #6799
   while ((buffer_length > 0) && ('=' == buffer[buffer_length - 1])) {
-    buffer_length--;  // remove all trailing '='            
+    buffer_length--;  // remove all trailing '='
     memcpy(&Light.entry_color, &Light.current_color, sizeof(Light.entry_color));
   }
   if (strstr(buffer, ",") != nullptr) {             // Decimal entry
@@ -2071,7 +2089,7 @@ void CmndSupportColor(void)
     ResponseCmndIdxChar(scolor);
   }
   if (coldim) {
-    LightPreparePower();
+    LightPreparePower();    // no parameter, recalculate Power for all channels
   }
 }
 
@@ -2102,11 +2120,12 @@ void CmndWhite(void)
 void CmndChannel(void)
 {
   if ((XdrvMailbox.index >= Light.device) && (XdrvMailbox.index < Light.device + Light.subtype )) {
-    bool coldim = false;
+    uint32_t light_index = XdrvMailbox.index - Light.device;
+    power_t coldim = 0;   // bit flag to update
 
     // Handle +/- special command
     if (1 == XdrvMailbox.data_len) {
-      uint8_t channel = changeUIntScale(Light.current_color[XdrvMailbox.index - Light.device],0,255,0,100);
+      uint8_t channel = changeUIntScale(Light.current_color[light_index],0,255,0,100);
       if ('+' == XdrvMailbox.data[0]) {
         XdrvMailbox.payload = (channel > 89) ? 100 : channel + 10;
       } else if ('-' == XdrvMailbox.data[0]) {
@@ -2116,23 +2135,28 @@ void CmndChannel(void)
 
     //  Set "Channel" directly - this allows Color and Direct PWM control to coexist
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      Light.current_color[XdrvMailbox.index - Light.device] = changeUIntScale(XdrvMailbox.payload,0,100,0,255);
+      Light.current_color[light_index] = changeUIntScale(XdrvMailbox.payload,0,100,0,255);
       if (Light.pwm_multi_channels) {
-        // if (!Settings.flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
-        //   Light.power = Light.power | (1 << (XdrvMailbox.index - Light.device));  // ask to turn on channel
-        // }
+        coldim = 1 << light_index;      // change the specified channel
       } else {
-        // if we change channels 1,2,3 then turn off CT mode (unless non-linked)
-        if ((XdrvMailbox.index <= 3) && (light_controller.isCTRGBLinked())) {
-          Light.current_color[3] = Light.current_color[4] = 0;
+        if (light_controller.isCTRGBLinked()) {
+          // if we change channels 1,2,3 then turn off CT mode (unless non-linked)
+          if ((light_index < 3) && (light_controller.isCTRGBLinked())) {
+            Light.current_color[3] = Light.current_color[4] = 0;
+          } else {
+            Light.current_color[0] = Light.current_color[1] = Light.current_color[2] = 0;
+          }
+          coldim = 1;
+        } else {
+          if (light_index < 3) { coldim = 1; }    // RGB
+          else { coldim = 2; }                    // CT
         }
       }
       light_controller.changeChannels(Light.current_color);
-      coldim = true;
     }
-    ResponseCmndIdxNumber(changeUIntScale(Light.current_color[XdrvMailbox.index -1],0,255,0,100));
+    ResponseCmndIdxNumber(changeUIntScale(Light.current_color[light_index],0,255,0,100));
     if (coldim) {
-      LightPreparePower();
+      LightPreparePower(coldim);
     }
   }
 }
@@ -2179,7 +2203,7 @@ void CmndHsbColor(void)
       }
       if (validHSB) {
         light_controller.changeHSB(HSB[0], HSB[1], HSB[2]);
-        LightPreparePower();
+        LightPreparePower(1);
         MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
       }
     } else {
@@ -2242,7 +2266,7 @@ void CmndColorTemperature(void)
     }
     if ((XdrvMailbox.payload >= 153) && (XdrvMailbox.payload <= 500)) {  // https://developers.meethue.com/documentation/core-concepts
       light_controller.changeCTB(XdrvMailbox.payload, light_state.getBri());
-      LightPreparePower();
+      LightPreparePower(2);
     } else {
       ResponseCmndNumber(ct);
     }
@@ -2272,17 +2296,19 @@ void CmndDimmer(void)
     if (light_controller.isCTRGBLinked()) {
       // normal state, linked RGB and CW
       light_controller.changeDimmer(XdrvMailbox.payload);
+      LightPreparePower();
     } else {
       if (0 != XdrvMailbox.index) {
         light_controller.changeDimmer(XdrvMailbox.payload, XdrvMailbox.index);
+        LightPreparePower(1 << (XdrvMailbox.index - 1));    // recalculate only the target dimmer
       } else {
         // change both dimmers
         light_controller.changeDimmer(XdrvMailbox.payload, 1);
         light_controller.changeDimmer(XdrvMailbox.payload, 2);
+        LightPreparePower();
       }
     }
     Light.update = true;
-    LightPreparePower();
   } else {
     ResponseCmndNumber(dimmer);
   }

@@ -152,20 +152,12 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
   "}"
 #endif  // USE_SCRIPT_WEB_DISPLAY
 
-#ifdef USE_JAVASCRIPT_ES6
-  "lb=(v,p)=>la(`&${v}=${p}`);"
-  "lc=(v,i,p)=>la(`&${v}${i}=${p}`);"
-#else
-  "function lb(v,p){"
-    "la('&'+v+'='+p);"
-  "}"
   "function lc(v,i,p){"
+    "if(v=='h'||v=='d'){"                 // Hue or Brightness changed so change Saturation colors too
+      "var sl=eb('sl4').value;"
+      "eb('s').style.background='linear-gradient(to right,rgb('+sl+'%%,'+sl+'%%,'+sl+'%%),hsl('+eb('sl2').value+',100%%,50%%))';"
+    "}"
     "la('&'+v+i+'='+p);"
-  "}"
-#endif  // USE_JAVASCRIPT_ES6
-  "function ld(v,p){"
-  "eb('s').style.background='linear-gradient(to right,#fff,hsl('+p+',100%%,50%%))';"
-  "la('&'+v+'='+p);"
   "}"
 
   "wl(la);";
@@ -379,12 +371,9 @@ const char HTTP_HEAD_STYLE3[] PROGMEM =
   "<h2>%s</h2>";
 
 const char HTTP_MSG_SLIDER_GRADIENT[] PROGMEM =
-  "<div id='%s' class='r' style='background-image:linear-gradient(to right,%s,%s);'><input type='range' min='%d' max='%d' value='%d' onchange='lb(\"%c\",value)'></div>";
-const char HTTP_MSG_SLIDER_HUE[] PROGMEM =
-  "<div class='r' style='background-image:linear-gradient(to right,#800,#f00 5%%,#ff0 20%%,#0f0 35%%,#0ff 50%%,#00f 65%%,#f0f 80%%,#f00 95%%,#800);'>"
-  "<input type='range' min='1' max='359' value='%d' onchange='ld(\"u\",value)'></div>";
-const char HTTP_MSG_SLIDER_CHANNEL[] PROGMEM =
-  "<div class='r' style='background-image:linear-gradient(to right,#000,%s);'><input type='range' min='1' max='100' value='%d' onchange='lc(\"d\",%d,value)'></div>";
+  "<div id='%s' class='r' style='background-image:linear-gradient(to right,%s,%s);'>"
+  "<input id='sl%d' type='range' min='%d' max='%d' value='%d' onchange='lc(\"%c\",%d,value)'>"
+  "</div>";
 const char HTTP_MSG_SLIDER_SHUTTER[] PROGMEM =
   "<div><span class='p'>" D_CLOSE "</span><span class='q'>" D_OPEN "</span></div>"
   "<div><input type='range' min='0' max='100' value='%d' onchange='lc(\"u\",%d,value)'></div>";
@@ -962,8 +951,6 @@ void HandleWifiLogin(void)
   WSContentStop();
 }
 
-
-
 void HandleRoot(void)
 {
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
@@ -1012,26 +999,64 @@ void HandleRoot(void)
       uint8_t light_subtype = light_type &7;
       if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
         if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
-          // Cold - Warm &t related to lb("t", value) and WebGetArg("t", tmp, sizeof(tmp));
-          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "a", "#fff", "#ff0", 153, 500, LightGetColorTemp(), 't');  // White to Yellow
+
+          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Cold Warm
+            "a",             // a - Unique HTML id
+            "#fff", "#ff0",  // White to Yellow
+            1,               // sl1
+            153, 500,        // Range color temperature
+            LightGetColorTemp(),
+            't', 0);         // t0 - Value id releated to lc("t0", value) and WebGetArg("t0", tmp, sizeof(tmp));
         }
         if (light_subtype > 2) {
           uint16_t hue;
           uint8_t sat;
-          uint8_t bri;
-          LightGetHSB(&hue, &sat, &bri);
-          WSContentSend_P(HTTP_MSG_SLIDER_HUE, hue);  // Hue
-          snprintf_P(stemp, sizeof(stemp), PSTR("#%02X%02X%02X"), Settings.light_color[0], Settings.light_color[1], Settings.light_color[2]);
-          // Saturation "s" related to eb('s').style.background='linear-gradient(to right,#fff,hsl('+p+',100%%,50%%))';
-          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "s", "#fff", stemp, 1, 100, changeUIntScale(sat, 0, 255, 0, 100), 'n');
+          LightGetHSB(&hue, &sat, nullptr);
+
+          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Hue
+            "b",             // b - Unique HTML id
+            "#800", "#f00 5%,#ff0 20%,#0f0 35%,#0ff 50%,#00f 65%,#f0f 80%,#f00 95%,#800",  // Hue colors
+            2,               // sl2 - Unique range HTML id - Used as source for Saturation end color
+            1, 359,          // Range valid Hue
+            hue,
+            'h', 0);         // h0 - Value id
+
+          uint8_t dcolor = changeUIntScale(Settings.light_dimmer, 0, 100, 0, 255);
+          char scolor[8];
+          snprintf_P(scolor, sizeof(scolor), PSTR("#%02X%02X%02X"), dcolor, dcolor, dcolor);  // Saturation start color from Black to White
+          uint8_t red, green, blue;
+          LightHsToRgb(hue, 255, &red, &green, &blue);
+          snprintf_P(stemp, sizeof(stemp), PSTR("#%02X%02X%02X"), red, green, blue);  // Saturation end color
+
+          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Saturation
+            "s",             // s - Unique HTML id related to eb('s').style.background='linear-gradient(to right,rgb('+sl+'%%,'+sl+'%%,'+sl+'%%),hsl('+eb('sl2').value+',100%%,50%%))';
+            scolor, stemp,   // Brightness to max current color
+            3,               // sl3 - Unique range HTML id - Not used
+            1, 100,          // Range 1 to 100%
+            changeUIntScale(sat, 0, 255, 0, 100),
+            'n', 0);         // n0 - Value id
         }
-        // Dark - Bright &d related to lb("d", value) and WebGetArg("d", tmp, sizeof(tmp));
-        WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT, "b", "#000", "#fff", 1, 100, Settings.light_dimmer, 'd');  // Black to White
+
+        WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Brightness - Black to White
+          "c",               // c - Unique HTML id
+          "#000", "#fff",    // Black to White
+          4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color
+          1, 100,            // Range 1 to 100%
+          Settings.light_dimmer,
+          'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
       } else {  // Settings.flag3.pwm_multi_channels - SetOption68 1 - Enable multi-channels PWM instead of Color PWM
         uint32_t pwm_channels = light_subtype > LST_MAX ? LST_MAX : light_subtype;
+        stemp[0] = 'd'; stemp[1] = '0'; stemp[2] = '\0';  // d0
         for (uint32_t i = 0; i < pwm_channels; i++) {
-          uint8_t index = (pwm_channels < 3) ? i +3 : i;
-          WSContentSend_P(HTTP_MSG_SLIDER_CHANNEL, "#fff", changeUIntScale(Settings.light_color[i], 0, 255, 0, 100), i+1);  // Dark to Light
+          stemp[1]++;        // d1 to d5 - Make unique ids
+
+          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Channel brightness - Black to White
+            stemp,           // d1 to d5 - Unique HTML id
+            "#000", "#fff",  // Black to White
+            i+1,             // sl1 to sl5 - Unique range HTML id - Not used
+            1, 100,          // Range 1 to 100%
+            changeUIntScale(Settings.light_color[i], 0, 255, 0, 100),
+            'd', i+1);       // d1 to d5 - Value id
         }
       }  // Settings.flag3.pwm_multi_channels
     }
@@ -1136,7 +1161,7 @@ bool HandleRootStatusRefresh(void)
     }
 #endif  // USE_SONOFF_IFAN
   }
-  WebGetArg("d", tmp, sizeof(tmp));  // 0 - 100 Dimmer value
+  WebGetArg("d0", tmp, sizeof(tmp));  // 0 - 100 Dimmer value
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
@@ -1150,17 +1175,17 @@ bool HandleRootStatusRefresh(void)
       ExecuteWebCommand(svalue, SRC_WEBGUI);
     }
   }
-  WebGetArg("t", tmp, sizeof(tmp));  // 153 - 500 Color temperature
+  WebGetArg("t0", tmp, sizeof(tmp));  // 153 - 500 Color temperature
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_COLORTEMPERATURE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  WebGetArg("u", tmp, sizeof(tmp));  // 0 - 359 Hue value
+  WebGetArg("h0", tmp, sizeof(tmp));  // 0 - 359 Hue value
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_HSBCOLOR  "1 %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
-  WebGetArg("n", tmp, sizeof(tmp));  // 0 - 99 Saturation value
+  WebGetArg("n0", tmp, sizeof(tmp));  // 0 - 99 Saturation value
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_HSBCOLOR  "2 %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
