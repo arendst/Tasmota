@@ -31,58 +31,37 @@
 #define MLX90614_TOBJ1  0x07
 #define MLX90614_TOBJ2  0x08
 
-bool mlx_ready = false;
-float obj_temp;
-float amb_temp;
+struct  {
+  union {
+    uint16_t value;
+    uint32_t i2c_buf;
+    };
+  float obj_temp;
+  float amb_temp;
+  bool ready = false;
+} mlx90614;
 
 void MLX90614_Init(void)
 {
   if (!I2cSetDevice(I2_ADR_IRT)) { return; }
-
   I2cSetActiveFound(I2_ADR_IRT, "MLX90614");
-  mlx_ready = true;
-
-  // not needed on tasmota
-  //Wire.begin();
-  //delay(500);
-}
-
-// return ir temp
-// 0 = chip, 1 = object temperature
-// * 0.02 - 273.15
-uint16_t read_irtmp(uint8_t flag)
-{
-  Wire.beginTransmission(I2_ADR_IRT);
-  if (!flag) {
-    Wire.write(MLX90614_TA);
-  } else {
-    Wire.write(MLX90614_TOBJ1);
-  }
-  Wire.endTransmission(false);
-
-  Wire.requestFrom(I2_ADR_IRT, 3);
-  uint8_t low = Wire.read();
-  uint8_t hig = Wire.read();
-  Wire.read();
-
-  uint16_t val = ((uint16_t)hig << 8) | low;
-  return val;
+  mlx90614.ready = true;
 }
 
 void MLX90614_Every_Second(void)
 {
-  uint16_t uval = read_irtmp(1);
-  if (uval & 0x8000) {
-    obj_temp = -999;
-  } else {
-    obj_temp = ((float)uval * 0.02) - 273.15;
-  }
-  uval = read_irtmp(0);
-  if (uval & 0x8000) {
-    amb_temp = -999;
-  } else {
-    amb_temp = ((float)uval * 0.02) - 273.15;
-  }
+    mlx90614.i2c_buf = I2cRead24(I2_ADR_IRT, MLX90614_TOBJ1);
+    if (mlx90614.value & 0x8000) {
+      mlx90614.obj_temp = -999;
+    } else {
+      mlx90614.obj_temp = ((float)mlx90614.value * 0.02) - 273.15;
+    }
+    mlx90614.i2c_buf = I2cRead24(I2_ADR_IRT,MLX90614_TA);
+    if (mlx90614.value & 0x8000) {
+      mlx90614.amb_temp = -999;
+    } else {
+      mlx90614.amb_temp = ((float)mlx90614.value * 0.02) - 273.15;
+    }
 }
 
 #ifdef USE_WEBSERVER
@@ -94,9 +73,9 @@ void MLX90614_Every_Second(void)
 void MLX90614_Show(uint8_t json)
 {
   char obj_tstr[16];
-  dtostrfd(obj_temp, Settings.flag2.temperature_resolution, obj_tstr);
+  dtostrfd(mlx90614.obj_temp, Settings.flag2.temperature_resolution, obj_tstr);
   char amb_tstr[16];
-  dtostrfd(amb_temp, Settings.flag2.temperature_resolution, amb_tstr);
+  dtostrfd(mlx90614.amb_temp, Settings.flag2.temperature_resolution, amb_tstr);
 
   if (json) {
     ResponseAppend_P(PSTR(",\"MLX90614\":{\"OBJTMP\":%s,\"AMBTMP\":%s}"), obj_tstr, amb_tstr);
@@ -120,7 +99,7 @@ bool Xsns46(byte function)
   if (FUNC_INIT == function) {
     MLX90614_Init();
   }
-  else if (mlx_ready) {
+  else if (mlx90614.ready) {
     switch (function) {
       case FUNC_EVERY_SECOND:
         MLX90614_Every_Second();
