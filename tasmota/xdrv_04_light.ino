@@ -1257,6 +1257,10 @@ uint32_t LightGetHSB(uint16_t *hue,uint8_t  *sat, uint8_t *bri) {
   light_state.getHSB(hue, sat, bri);
 }
 
+void LightHsToRgb(uint16_t hue, uint8_t sat, uint8_t *r_r, uint8_t *r_g, uint8_t *r_b) {
+  light_state.HsToRgb(hue, sat, r_r, r_g, r_b);
+}
+
 // If SetOption68 is set, get the brightness for a specific device
 uint8_t LightGetBri(uint8_t device) {
   uint8_t bri = 254;   // default value if relay
@@ -1607,10 +1611,10 @@ void LightAnimate(void)
     if (!Light.fade_running) {
       sleep = Settings.sleep;
     }
-  } else {	
-    if (Settings.sleep > PWM_MAX_SLEEP) {	
-      sleep = PWM_MAX_SLEEP;      // set a maxumum value of 50 milliseconds to ensure that animations are smooth	
-    } else {	
+  } else {
+    if (Settings.sleep > PWM_MAX_SLEEP) {
+      sleep = PWM_MAX_SLEEP;      // set a maxumum value of 50 milliseconds to ensure that animations are smooth
+    } else {
       sleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
     }
     switch (Settings.light_scheme) {
@@ -1664,8 +1668,8 @@ void LightAnimate(void)
     LightApplyPower(Light.new_color, Light.power);
 
     // AddLog_P2(LOG_LEVEL_INFO, PSTR("last_color (%02X%02X%02X%02X%02X) new_color (%02X%02X%02X%02X%02X) power %d"),
-    // Light.last_color[0], Light.last_color[1], Light.last_color[2], Light.last_color[3], Light.last_color[4], 
-    // Light.new_color[0], Light.new_color[1], Light.new_color[2], Light.new_color[3], Light.new_color[4], 
+    // Light.last_color[0], Light.last_color[1], Light.last_color[2], Light.last_color[3], Light.last_color[4],
+    // Light.new_color[0], Light.new_color[1], Light.new_color[2], Light.new_color[3], Light.new_color[4],
     // Light.power
     // );
 
@@ -1997,7 +2001,7 @@ bool LightColorEntry(char *buffer, uint32_t buffer_length)
   memset(&Light.entry_color, 0x00, sizeof(Light.entry_color));
   // erase all channels except if the last character is '=', #6799
   while ((buffer_length > 0) && ('=' == buffer[buffer_length - 1])) {
-    buffer_length--;  // remove all trailing '='            
+    buffer_length--;  // remove all trailing '='
     memcpy(&Light.entry_color, &Light.current_color, sizeof(Light.entry_color));
   }
   if (strstr(buffer, ",") != nullptr) {             // Decimal entry
