@@ -1070,17 +1070,17 @@ void HandleRoot(void)
           'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
       } else {  // Settings.flag3.pwm_multi_channels - SetOption68 1 - Enable multi-channels PWM instead of Color PWM
         uint32_t pwm_channels = light_subtype > LST_MAX ? LST_MAX : light_subtype;
-        stemp[0] = 'd'; stemp[1] = '0'; stemp[2] = '\0';  // d0
+        stemp[0] = 'e'; stemp[1] = '0'; stemp[2] = '\0';  // d0
         for (uint32_t i = 0; i < pwm_channels; i++) {
-          stemp[1]++;        // d1 to d5 - Make unique ids
+          stemp[1]++;        // e1 to e5 - Make unique ids
 
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Channel brightness - Black to White
-            stemp,           // d1 to d5 - Unique HTML id
+            stemp,           // e1 to e5 - Unique HTML id
             "#000", "#fff",  // Black to White
             i+1,             // sl1 to sl5 - Unique range HTML id - Not used
             1, 100,          // Range 1 to 100%
             changeUIntScale(Settings.light_color[i], 0, 255, 0, 100),
-            'd', i+1);       // d1 to d5 - Value id
+            'e', i+1);       // e1 to e5 - Value id
         }
       }  // Settings.flag3.pwm_multi_channels
     }
@@ -1192,7 +1192,7 @@ bool HandleRootStatusRefresh(void)
   }
   uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);
   for (uint32_t j = 1; j <= pwm_channels; j++) {
-    snprintf_P(webindex, sizeof(webindex), PSTR("d%d"), j);
+    snprintf_P(webindex, sizeof(webindex), PSTR("e%d"), j);
     WebGetArg(webindex, tmp, sizeof(tmp));  // 0 - 100 percent
     if (strlen(tmp)) {
       snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_CHANNEL "%d %s"), j, tmp);
