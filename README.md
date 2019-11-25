@@ -118,6 +118,7 @@ People helping to keep the show on the road:
 - Stephan Hadinger for refactoring light driver, enhancing HueEmulation and Zigbee support
 - tmo for designing the official Tasmota logo
 - Stefan Bode for his Shutter and Deep sleep drivers
+- Jacek Ziółkowski for his [TDM](https://github.com/jziolkowski/tdm) management tool
 - Many more providing Tips, Wips, Pocs, PRs and Donations
 
 ## License
