@@ -236,7 +236,7 @@
 #define D_SECONDS "초"
 #define D_DEVICE_WILL_RESTART "이 장치는 몇 초 후 재시작됩니다"
 #define D_BUTTON_TOGGLE "켜기/끄기"
-#define D_CONFIGURATION "설정"
+#define D_CONFIGURATION "설정 메뉴"
 #define D_INFORMATION "정보"
 #define D_FIRMWARE_UPGRADE "펌웨어 업그레이드"
 #define D_CONSOLE "콘솔"
@@ -250,11 +250,11 @@
 #define D_CONFIGURE_OTHER "기타 설정"
 #define D_CONFIRM_RESET_CONFIGURATION "설정 초기화 확인"
 #define D_RESET_CONFIGURATION "설정 초기화"
-#define D_BACKUP_CONFIGURATION "백업 설정"
-#define D_RESTORE_CONFIGURATION "복원 설정"
+#define D_BACKUP_CONFIGURATION "설정 백업"
+#define D_RESTORE_CONFIGURATION "설정 복구"
 #define D_MAIN_MENU "메인 메뉴"
 
-#define D_MODULE_PARAMETERS "모듈 파라미터"
+#define D_MODULE_PARAMETERS "모듈 설정"
 #define D_MODULE_TYPE "모듈 타입"
 #define D_PULLUP_ENABLE "버튼 없음/스위치 당김"
 #define D_ADC "ADC"
@@ -262,8 +262,8 @@
 #define D_SERIAL_IN "Serial In"
 #define D_SERIAL_OUT "Serial Out"
 
-#define D_WIFI_PARAMETERS "Wifi 파리미터"
-#define D_SCAN_FOR_WIFI_NETWORKS "Wifi 네트워크를 검색 중.."
+#define D_WIFI_PARAMETERS "Wifi 설정"
+#define D_SCAN_FOR_WIFI_NETWORKS "Wifi 네트워크를 검색.."
 #define D_SCAN_DONE "검색 완료"
 #define D_NO_NETWORKS_FOUND "발견된 네트워크가 없습니다"
 #define D_REFRESH_TO_SCAN_AGAIN "검색 재시도"
@@ -278,11 +278,11 @@
 #define D_AP2_SSID "AP2 SSId"
 #define D_AP2_PASSWORD "AP2 비밀번호"
 
-#define D_MQTT_PARAMETERS "MQTT 파라미터"
+#define D_MQTT_PARAMETERS "MQTT 설정"
 #define D_CLIENT "클라이언트"
 #define D_FULL_TOPIC "Full Topic"
 
-#define D_LOGGING_PARAMETERS "로그 파라미터"
+#define D_LOGGING_PARAMETERS "로그 설정"
 #define D_SERIAL_LOG_LEVEL "Serial 로그 레벨"
 #define D_MQTT_LOG_LEVEL "Mqtt 로그 레벨"
 #define D_WEB_LOG_LEVEL "Web 로그 레벨"
@@ -292,7 +292,7 @@
 #define D_SYSLOG_PORT "시스템로그 포트"
 #define D_TELEMETRY_PERIOD "보고 주기"
 
-#define D_OTHER_PARAMETERS "기타 파라미터"
+#define D_OTHER_PARAMETERS "기타 설정"
 #define D_TEMPLATE "템플릿"
 #define D_ACTIVATE "활성화"
 #define D_WEB_ADMIN_PASSWORD "Web Admin 비밀번호"
@@ -304,7 +304,7 @@
 #define D_MULTI_DEVICE "다수 장치"
 
 #define D_CONFIGURE_TEMPLATE "템플릿 설정"
-#define D_TEMPLATE_PARAMETERS "템플릿 상세"
+#define D_TEMPLATE_PARAMETERS "템플릿 설정"
 #define D_TEMPLATE_NAME "이름"
 #define D_BASE_TYPE "Based on"
 #define D_TEMPLATE_FLAGS "옵션"
@@ -335,7 +335,7 @@
 #define D_UPGRADE_BY_WEBSERVER "웹 서버에서 업그레이드"
 #define D_OTA_URL "OTA Url"
 #define D_START_UPGRADE "업그레이드 시작"
-#define D_UPGRADE_BY_FILE_UPLOAD "업로드 된 파일로 업그레이드"
+#define D_UPGRADE_BY_FILE_UPLOAD "파일에서 업로드해 업그레이드"
 #define D_UPLOAD_STARTED "업로드 시작됨"
 #define D_UPGRADE_STARTED "업그레이드 시작됨"
 #define D_UPLOAD_DONE "업그레이드 완료"
@@ -387,7 +387,7 @@
 #define D_3_RESPONSE_PACKETS_SENT "3 요청 패킷이 전송됨"
 
 // xdrv_07_domoticz.ino
-#define D_DOMOTICZ_PARAMETERS "Domoticz 파라미터"
+#define D_DOMOTICZ_PARAMETERS "Domoticz 설정"
 #define D_DOMOTICZ_IDX "Idx"
 #define D_DOMOTICZ_KEY_IDX "Key idx"
 #define D_DOMOTICZ_SWITCH_IDX "스위치 idx"
@@ -406,7 +406,7 @@
 
 // xdrv_09_timers.ino
 #define D_CONFIGURE_TIMER "타이머 설정"
-#define D_TIMER_PARAMETERS "타이머 파라미터"
+#define D_TIMER_PARAMETERS "타이머 설정"
 #define D_TIMER_ENABLE "타이머 사용"
 #define D_TIMER_ARM "Arm"
 #define D_TIMER_TIME "시간"
@@ -417,7 +417,7 @@
 
 // xdrv_10_knx.ino
 #define D_CONFIGURE_KNX "KNX 설정"
-#define D_KNX_PARAMETERS "KNX 파라미터"
+#define D_KNX_PARAMETERS "KNX 설정"
 #define D_KNX_GENERAL_CONFIG "일반"
 #define D_KNX_PHYSICAL_ADDRESS "물리적 주소"
 #define D_KNX_PHYSICAL_ADDRESS_NOTE "( KNX 네트워크 상에서 반드시 고유한 이름이어야 합니다 )"
