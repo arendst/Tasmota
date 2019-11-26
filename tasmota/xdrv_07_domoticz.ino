@@ -617,6 +617,7 @@ void DomoticzSaveSettings(void)
 bool Xdrv07(uint8_t function)
 {
   bool result = false;
+
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     switch (function) {
       case FUNC_EVERY_SECOND:
