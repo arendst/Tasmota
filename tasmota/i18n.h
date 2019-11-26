@@ -494,7 +494,6 @@
     #define D_JSON_MOTOR_MIS "setMIS"
   #endif
 
-  // Commands xdrv_27_Shutter.ino
   #ifdef USE_SHUTTER
     #define D_PRFX_SHUTTER "Shutter"
     #define D_CMND_SHUTTER_OPEN "Open"

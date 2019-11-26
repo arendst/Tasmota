@@ -528,12 +528,12 @@ void CmndShutterPosition(void)
     //limit the payload
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Pos. in: payload %s (%d), payload %d, idx %d, src %d"), XdrvMailbox.data , XdrvMailbox.data_len, XdrvMailbox.payload , XdrvMailbox.index, last_source );
 
+    // value 0 with data_len > 0 can mean Open
     if (XdrvMailbox.data_len > 1 &&  XdrvMailbox.payload <=0) {
       UpperCase(XdrvMailbox.data, XdrvMailbox.data);
-      if (!strcmp(XdrvMailbox.data,"UP"))   { CmndShutterOpen(); }
-      if (!strcmp(XdrvMailbox.data,"DOWN")) { CmndShutterClose(); }
-      if (!strcmp(XdrvMailbox.data,"STOP")) { CmndShutterStop(); }
-      return;
+      if (!strcmp(XdrvMailbox.data,"UP"))   { CmndShutterOpen(); return; }
+      if (!strcmp(XdrvMailbox.data,"DOWN")) { CmndShutterClose(); return; }
+      if (!strcmp(XdrvMailbox.data,"STOP")) { CmndShutterStop(); return; }
     }
 
     int8_t target_pos_percent = XdrvMailbox.payload < 0 ? 0 : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
