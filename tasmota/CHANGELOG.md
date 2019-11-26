@@ -5,6 +5,7 @@
 - Add colorpicker to WebUI by Christian Staars (#6984)
 - Change new Fade system much smoother, Speed now up to 40 (#6942, #3714)
 - Fix Arduino IDE function prototyping compile error (#6982)
+- Change update lib IRremoteESP8266 updated to v2.7.1, -2.7k flash and -1.5k RAM for Tasmota-IR
 
 ### 7.0.0.5 20191118
 
