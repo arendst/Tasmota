@@ -51,7 +51,7 @@
 //#define DWS74_BUG
 
 // max 23 chars
-#if DMY_LANGUAGE==de-DE
+#if MY_LANGUAGE==de-DE
 // german web text
 #define D_TPWRIN "Verbrauch"
 #define D_TPWROUT "Einspeisung"
