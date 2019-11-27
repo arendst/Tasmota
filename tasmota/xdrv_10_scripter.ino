@@ -1059,6 +1059,19 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
 
 chknext:
     switch (vname[0]) {
+      case 'a':
+#ifdef USE_ANGLE_FUNC
+        if (!strncmp(vname,"acos(",5)) {
+            lp+=5;
+            lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+            fvar=acosf(fvar);
+            lp++;
+            len=0;
+            goto exit;
+        }
+#endif
+        break;
+
       case 'b':
         if (!strncmp(vname,"boot",4)) {
           if (rules_flag.system_boot) {
@@ -1676,6 +1689,24 @@ chknext:
             fvar=-1;
           }
           len+=1;
+          goto exit;
+        }
+#endif
+#ifdef USE_ANGLE_FUNC
+        if (!strncmp(vname,"sin(",4)) {
+          lp+=4;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          fvar=sinf(fvar);
+          lp++;
+          len=0;
+          goto exit;
+        }
+        if (!strncmp(vname,"sqrt(",5)) {
+          lp+=5;
+          lp=GetNumericResult(lp,OPER_EQU,&fvar,0);
+          fvar=sqrtf(fvar);
+          lp++;
+          len=0;
           goto exit;
         }
 #endif
@@ -4730,8 +4761,8 @@ bool Xdrv10(uint8_t function)
 
 #ifdef USE_24C256
 #ifndef USE_SCRIPT_FATFS
-      if (I2cEnabled(XI2C_37)) {
-        if (I2cSetDevice(EEPROM_ADDRESS)) {
+	  if (I2cEnabled(XI2C_37)) {
+	    if (I2cSetDevice(EEPROM_ADDRESS)) {
           // found 32kb eeprom
           char *script;
           script=(char*)calloc(EEP_SCRIPT_SIZE+4,1);
