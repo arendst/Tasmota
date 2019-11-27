@@ -1453,21 +1453,25 @@ void SML_Decode(uint8_t index) {
               cp+=2;
             } else if (*mp=='u' && *(mp+1)=='u') {
               uint8_t val = *cp++;
+              mbus_dval=val;
               ebus_dval=val;
               mp+=2;
             } else if (*mp=='s' && *(mp+1)=='s' && *(mp+2)=='S' && *(mp+3)=='S') {
               int16_t val = *cp|(*(cp+1)<<8);
+              mbus_dval=val;
               ebus_dval=val;
               mp+=4;
               cp+=2;
             } else if (*mp=='S' && *(mp+1)=='S' && *(mp+2)=='s' && *(mp+3)=='s') {
               int16_t val = cp[1]|(cp[0]<<8);
+              mbus_dval=val;
               ebus_dval=val;
               mp+=4;
               cp+=2;
             }
             else if (*mp=='s' && *(mp+1)=='s') {
               int8_t val = *cp++;
+              mbus_dval=val;
               ebus_dval=val;
               mp+=2;
             }
