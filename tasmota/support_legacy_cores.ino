@@ -22,8 +22,6 @@
  * Functions not available in core 2.3.0
 \*********************************************************************************************/
 
-// Functions not available in 2.3.0
-
 // http://clc-wiki.net/wiki/C_standard_library:string.h:memchr
 void* memchr(const void* ptr, int value, size_t num)
 {
@@ -137,6 +135,15 @@ unsigned long long strtoull(const char *__restrict nptr, char **__restrict endpt
   return acc;
 }
 
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+
+
+
+#if defined(ARDUINO_ESP8266_RELEASE_2_3_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_0) || defined(ARDUINO_ESP8266_RELEASE_2_4_1) || defined(ARDUINO_ESP8266_RELEASE_2_4_2) || defined(ARDUINO_ESP8266_RELEASE_2_5_0) || defined(ARDUINO_ESP8266_RELEASE_2_5_1) || defined(ARDUINO_ESP8266_RELEASE_2_5_2)
+/*********************************************************************************************\
+ * Functions not available in core before 2.6.0
+\*********************************************************************************************/
+
 // https://github.com/arendst/Tasmota/issues/6856#issuecomment-554258914
 void* memmove_P(void *dest, const void *src, size_t n)
 {
@@ -147,7 +154,4 @@ void* memmove_P(void *dest, const void *src, size_t n)
   }
 }
 
-#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
-/*********************************************************************************************\
- *
-\*********************************************************************************************/
+#endif  // ARDUINO_ESP8266_RELEASE < 2_6_0

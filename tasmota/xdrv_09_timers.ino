@@ -497,9 +497,7 @@ void CmndLongitude(void)
   if (XdrvMailbox.data_len) {
     Settings.longitude = (int)(CharToFloat(XdrvMailbox.data) *1000000);
   }
-  char lbuff[33];
-  dtostrfd(((float)Settings.longitude) /1000000, 6, lbuff);
-  ResponseCmndChar(lbuff);
+  ResponseCmndFloat((float)(Settings.longitude) /1000000, 6);
 }
 
 void CmndLatitude(void)
@@ -507,9 +505,7 @@ void CmndLatitude(void)
   if (XdrvMailbox.data_len) {
     Settings.latitude = (int)(CharToFloat(XdrvMailbox.data) *1000000);
   }
-  char lbuff[33];
-  dtostrfd(((float)Settings.latitude) /1000000, 6, lbuff);
-  ResponseCmndChar(lbuff);
+  ResponseCmndFloat((float)(Settings.latitude) /1000000, 6);
 }
 #endif  // USE_SUNRISE
 

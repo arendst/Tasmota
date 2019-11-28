@@ -217,7 +217,7 @@ void WifiBegin(uint8_t flag, uint8_t channel)
 #endif  // LWIP_IPV6=1
 }
 
-void WifiBeginAfterScan()
+void WifiBeginAfterScan(void)
 {
   static int8_t best_network_db;
 
@@ -314,12 +314,12 @@ void WifiBeginAfterScan()
   }
 }
 
-uint16_t WifiLinkCount()
+uint16_t WifiLinkCount(void)
 {
   return Wifi.link_count;
 }
 
-String WifiDowntime()
+String WifiDowntime(void)
 {
   return GetDuration(Wifi.downtime);
 }
@@ -615,7 +615,6 @@ void WifiShutdown(void)
 void EspRestart(void)
 {
   WifiShutdown();
-  RtcRebootReset();
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
 }

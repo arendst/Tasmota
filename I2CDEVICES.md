@@ -1,6 +1,4 @@
-<img src="/tools/logo/TASMOTA_FullLogo_Vector.svg" alt="Logo" align="right" height="76"/>
-
-# Tasmota I2C devices
+# I2C devices
 
 Tasmota supports several I2C devices but to use them they mostly need to be enabled at compile time to solve possible address conflicts.
 

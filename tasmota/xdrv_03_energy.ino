@@ -430,7 +430,7 @@ void EnergyMqttShow(void)
 }
 #endif  // USE_ENERGY_MARGIN_DETECTION
 
-void EnergyEverySecond()
+void EnergyEverySecond(void)
 {
   // Overtemp check
   if (global_update) {

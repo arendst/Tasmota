@@ -53,7 +53,11 @@ void LM75ADDetect(void)
 {
   for (uint32_t i = 0; i < sizeof(lm75ad_addresses); i++) {
     lm75ad_address = lm75ad_addresses[i];
-    if (I2cActive(lm75ad_address)) { continue; }
+    if (I2cActive(lm75ad_address)) { 
+      continue; }
+    if (!I2cSetDevice(lm75ad_address)) {
+      break; // do not make the next step without a confirmed device on the bus
+    }
     uint16_t buffer;
     if (I2cValidRead16(&buffer, lm75ad_address, LM75_THYST_REGISTER)) {
       if (buffer == 0x4B00) {
