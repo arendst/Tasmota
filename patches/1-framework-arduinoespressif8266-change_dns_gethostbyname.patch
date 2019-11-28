@@ -1,0 +1,6 @@
+619a620,622
+> #ifdef LWIP_IPV6
+>     err_t err = dns_gethostbyname_addrtype(aHostname, &addr, &wifi_dns_found_callback, &aResult,LWIP_DNS_ADDRTYPE_DEFAULT);
+> #else
+620a624
+> #endif
