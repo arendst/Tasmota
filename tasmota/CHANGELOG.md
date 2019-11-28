@@ -6,6 +6,7 @@
 - Change new Fade system much smoother, Speed now up to 40 (#6942, #3714)
 - Fix Arduino IDE function prototyping compile error (#6982)
 - Change update lib IRremoteESP8266 updated to v2.7.1, -2.7k flash and -1.5k RAM for Tasmota-IR
+- Fix auto--power on/off when setting channel to non-zero or zero value, when SetOption68 1
 - Fix postpone saving settings to flash until Fade is complete, avoids pause in Fade
 
 ### 7.0.0.5 20191118
