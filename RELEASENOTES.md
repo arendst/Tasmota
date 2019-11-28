@@ -128,33 +128,39 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ### Version 7.1.0 Betty
 
- - Remove update support for versions before 6.0
- - Remove driver xsns_12_ads1115_i2cdev replaced by xsns_12_ads1115
- - Remove most IR protocols from non dedicated IR firmware except NEC, RC5 and RC6
- - Change repository name from Sonoff-Tasmota to Tasmota and all code references from Sonoff to Tasmota
- - Change default GUI to dark theme
- - Change ArduinoSlave to TasmotaSlave
- - Change IRremoteESP8266 library to v2.7.0
- - Change supported PCF8574 I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
- - Change supported PCF8574A I2C address range to 0x39 - 0x3F allowing other I2C devices with address 0x38 to be used at the same time
- - Change supported MCP230xx I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
- - Change Reset erase end address from as seen by SDK (getFlashChipSize) to full flash size (getFlashChipRealSize)
- - Fix better control of RGB/White when ``SetOption37`` >128, added ``Dimmer1`` and ``Dimmer2`` commands (#6714)
- - Fix random crash caused by UPNP flood
- - Fix Wifi instability when light is on, due to sleep=0 (#6961, #6608)
- - Add support for Tuya battery powered devices (#6735)
- - Add support for Honeywell I2C HIH series Humidity and Temperetaure sensor (#6808)
- - Add support for Honeywell HPMA115S0 particle concentration sensor by David Hunt (#6843)
- - Add support for I2C sensor TLS2591 Light Intensity sensor (#6873)
- - Add command ``SetOption73 0/1`` to re-enable HTTP Cross-Origin Resource Sharing (CORS) now default disabled (#6767)
- - Add command ``SetOption74 0/1`` to enable DS18x20 internal pull-up and remove define DS18B20_INTERNAL_PULLUP (#6795)
- - Add command ``SetOption75 0/1`` to switch between grouptopic (0) using fulltopic replacing %topic% or (1) is cmnd/\<grouptopic\> (#6779)
- - Add command ``SetOption76 0/1`` to enable incrementing bootcount when deepsleep is enabled (#6930)
- - Add command ``I2cDriver`` for I2C driver runtime control using document I2CDEVICES.md
- - Add command ``TempOffset -12.6 .. 12.6`` to set global temperature sensor offset (#6958)
- - Add command ``WebColor19`` to control color of Module and Name (#6811)
- - Add command ``WifiPower 0 .. 20.5`` to set Wifi Output Power which will be default set to 17dBm
- - Add frequency to ADE7953 energy monitor as used in Shelly 2.5 by ljakob (#6778)
- - Add hide Alexa objects with friendlyname starting with '$' (#6722, #6762)
- - Add Zigbee command support, considered as v1.0 for full Zigbee support
- - Add colorpicker to WebUI by Christian Staars (#6984)
+- Remove update support for versions before 6.0
+- Remove driver xsns_12_ads1115_i2cdev replaced by xsns_12_ads1115
+- Remove most IR protocols from non dedicated IR firmware except NEC, RC5 and RC6
+- Change repository name from Sonoff-Tasmota to Tasmota and all code references from Sonoff to Tasmota
+- Change documentation from wiki to [documentation repository](https://tasmota.github.io/docs/) by @Blakadder
+- Change default GUI to dark theme
+- Change ArduinoSlave to TasmotaSlave
+- Change IRremoteESP8266 library to v2.7.1
+- Change supported PCF8574 I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
+- Change supported PCF8574A I2C address range to 0x39 - 0x3F allowing other I2C devices with address 0x38 to be used at the same time
+- Change supported MCP230xx I2C address range to 0x20 - 0x26 allowing other I2C devices with address 0x27 to be used at the same time
+- Change Reset erase end address from as seen by SDK (getFlashChipSize) to full flash size (getFlashChipRealSize)
+- Change new Fade system much smoother, Speed now up to 40 (#6942, #3714)
+- Fix better control of RGB/White when ``SetOption37`` >128, added ``Dimmer1`` and ``Dimmer2`` commands (#6714)
+- Fix random crash caused by UPNP flood
+- Fix check deepsleep for valid values in Settings (#6961)
+- Fix Wifi instability when light is on, due to ``Sleep 0`` (#6961, #6608)
+- Fix auto-power on/off when setting channel to non-zero or zero value, when ``SetOption68 1``
+- Fix postpone saving settings to flash until Fade is complete, avoids pause in Fade
+- Add support for Tuya battery powered devices (#6735)
+- Add support for Honeywell I2C HIH series Humidity and Temperetaure sensor (#6808)
+- Add support for Honeywell HPMA115S0 particle concentration sensor by David Hunt (#6843)
+- Add support for I2C sensor TLS2591 Light Intensity sensor (#6873)
+- Add command ``SetOption73 0/1`` to re-enable HTTP Cross-Origin Resource Sharing (CORS) now default disabled (#6767)
+- Add command ``SetOption74 0/1`` to enable DS18x20 internal pull-up and remove define DS18B20_INTERNAL_PULLUP (#6795)
+- Add command ``SetOption75 0/1`` to switch between grouptopic (0) using fulltopic replacing %topic% or (1) is cmnd/\<grouptopic\> (#6779)
+- Add command ``SetOption76 0/1`` to enable incrementing bootcount when deepsleep is enabled (#6930)
+- Add command ``I2cDriver`` for I2C driver runtime control using document I2CDEVICES.md
+- Add command ``TempOffset -12.6 .. 12.6`` to set global temperature sensor offset (#6958)
+- Add command ``WebColor19`` to control color of Module and Name (#6811)
+- Add command ``WifiPower 0 .. 20.5`` to set Wifi Output Power which will be default set to 17dBm
+- Add frequency to ADE7953 energy monitor as used in Shelly 2.5 by ljakob (#6778)
+- Add hide Alexa objects with friendlyname starting with '$' (#6722, #6762)
+- Add Zigbee command support, considered as v1.0 for full Zigbee support
+- Add hardware detection to be overruled with ``SetOption51`` (#6969)
+- Add Colorpicker to WebUI by Christian Staars (#6984)
