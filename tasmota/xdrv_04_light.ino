@@ -1444,27 +1444,24 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
 #endif
   // If multi-channels, then we only switch off channels with a value of zero
   if (Light.pwm_multi_channels) {
-//     for (uint32_t i = 0; i < Light.subtype; i++) {
-//       // if channel is non-null, channel is supposed to be on, but it is off, do Power On
-//       if ((Light.current_color[i]) && (bitRead(Light.power, i)) && (0 == bitRead(power, i + Light.device - 1))) {
-//         ExecuteCommandPower(Light.device + i, POWER_ON_NO_STATE, SRC_LIGHT);
-//         //bitSet(Settings.power, i + Light.device - 1);
-//         #ifdef DEBUG_LIGHT
-//           AddLog_P2(LOG_LEVEL_DEBUG, "ExecuteCommandPower ON device=%d", Light.device + i);
-//         #endif
-//       }
-//       // if channel is zero and channel is on, set it off
-//       if ((0 == Light.current_color[i]) && bitRead(power, i + Light.device - 1)) {
-//         ExecuteCommandPower(Light.device + i, POWER_OFF_NO_STATE, SRC_LIGHT);
-//         //bitClear(Settings.power, i + Light.device - 1);
-//         #ifdef DEBUG_LIGHT
-//           AddLog_P2(LOG_LEVEL_DEBUG, "ExecuteCommandPower OFF device=%d", Light.device + i);
-//         #endif
-//       }
-// #ifdef USE_DOMOTICZ
-//       DomoticzUpdatePowerState(Light.device + i);
-// #endif  // USE_DOMOTICZ
-//     }
+    for (uint32_t i = 0; i < Light.subtype; i++) {
+      if (bitRead(channels, i)) {
+        // if channel is non-null, channel is supposed to be on, but it is off, do Power On
+        if ((Light.current_color[i]) && (!bitRead(Light.power, i))) {
+          if (!Settings.flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
+            ExecuteCommandPower(Light.device + i, POWER_ON_NO_STATE, SRC_LIGHT);
+          }
+        } else {
+          // if channel is zero and channel is on, set it off
+          if ((0 == Light.current_color[i]) && bitRead(Light.power, i)) {
+            ExecuteCommandPower(Light.device + i, POWER_OFF_NO_STATE, SRC_LIGHT);
+          }
+        }
+  #ifdef USE_DOMOTICZ
+        DomoticzUpdatePowerState(Light.device + i);
+  #endif  // USE_DOMOTICZ
+      }
+    }
   } else {
     if (light_controller.isCTRGBLinked()) {   // linked, standard
       if (light_state.getBri() && !(Light.power)) {
