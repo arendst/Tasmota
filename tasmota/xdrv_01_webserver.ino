@@ -1065,7 +1065,7 @@ void HandleRoot(void)
           "c",               // c - Unique HTML id
           "#000", "#fff",    // Black to White
           4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color
-          0, 100,            // Range 0 to 100%
+          Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100%
           Settings.light_dimmer,
           'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
       } else {  // Settings.flag3.pwm_multi_channels - SetOption68 1 - Enable multi-channels PWM instead of Color PWM

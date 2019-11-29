@@ -155,6 +155,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add command ``SetOption74 0/1`` to enable DS18x20 internal pull-up and remove define DS18B20_INTERNAL_PULLUP (#6795)
 - Add command ``SetOption75 0/1`` to switch between grouptopic (0) using fulltopic replacing %topic% or (1) is cmnd/\<grouptopic\> (#6779)
 - Add command ``SetOption76 0/1`` to enable incrementing bootcount when deepsleep is enabled (#6930)
+- Add command ``SetOption77 0/1`` to keep power on when slider is far left
 - Add command ``I2cDriver`` for I2C driver runtime control using document I2CDEVICES.md
 - Add command ``TempOffset -12.6 .. 12.6`` to set global temperature sensor offset (#6958)
 - Add command ``WebColor19`` to control color of Module and Name (#6811)

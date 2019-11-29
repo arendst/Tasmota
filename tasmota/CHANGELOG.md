@@ -8,6 +8,7 @@
 - Change update lib IRremoteESP8266 updated to v2.7.1, -2.7k flash and -1.5k RAM for Tasmota-IR
 - Fix auto--power on/off when setting channel to non-zero or zero value, when SetOption68 1
 - Fix postpone saving settings to flash until Fade is complete, avoids pause in Fade
+- Add command ``SetOption77 0/1`` to keep power on when slider is far left
 
 ### 7.0.0.5 20191118
 
