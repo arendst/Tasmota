@@ -4,11 +4,11 @@
 
 **Any contribution helps our team and makes Tasmota better for the entire community!**
 
-Everybody is welcome and invited to contribute to Sonoff-Tasmota Project by:
+Everybody is welcome and invited to contribute to Tasmota Project by:
 
 * Testing newly released features and reporting issues.
 * Providing Pull Requests (Features, Proof of Concepts, Language files or Fixes)
-* Contributing missing documentation for features and devices on our [Wiki](https://github.com/arendst/Sonoff-Tasmota/wiki/Contributing)
+* Contributing missing documentation for features and devices in our [documentation](https://tasmota.github.io/docs/#/Contributing)
 
 This document describes rules that are in effect for this repository, meant for handling issues by contributors in the issue tracker and PRs.
 
@@ -44,10 +44,10 @@ A Pull Request (PR) is the process where code modifications are managed in GitHu
 The process is straight-forward.
 
  - Read [How to get faster PR reviews](https://github.com/kubernetes/community/blob/master/contributors/guide/pull-requests.md#best-practices-for-faster-reviews) by Kubernetes (but skip step 0)
- - Fork the Sonoff-Tasmota Repository [git repository](https://github.com/arendst/Sonoff-Tasmota).
+ - Fork the Tasmota Repository [git repository](https://github.com/arendst/Tasmota).
  - Write/Change the code in your Fork for a new feature, bug fix, new sensor, optimization, etc.
  - Ensure tests work.
- - Create a Pull Request against the [**dev**](https://github.com/arendst/Sonoff-Tasmota/tree/dev) branch of Sonoff-Tasmota.
+ - Create a Pull Request against the [**dev**](https://github.com/arendst/Tasmota/tree/dev) branch of Tasmota.
 
 1. All pull requests must be done against the dev branch.
 2. Only relevant files should be touched (Also beware if your editor has auto-formatting feature enabled).

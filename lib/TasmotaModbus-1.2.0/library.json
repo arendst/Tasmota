@@ -8,7 +8,7 @@
     "repository":
     {
         "type": "git",
-        "url": "https://github.com/arendst/Sonoff-Tasmota/lib/TasmotaModbus"
+        "url": "https://github.com/arendst/Tasmota/lib/TasmotaModbus"
     },
     "frameworks": "arduino",
     "platforms": "espressif8266"
