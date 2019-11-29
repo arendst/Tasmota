@@ -196,6 +196,14 @@ void MPU_6050Show(bool json)
   dtostrfd(MPU_6050_gy, Settings.flag2.axis_resolution, axis_gy);
   char axis_gz[33];
   dtostrfd(MPU_6050_gz, Settings.flag2.axis_resolution, axis_gz);
+#ifdef USE_MPU6050_DMP
+  char axis_yaw[33];
+  dtostrfd(MPU6050_dmp.yawPitchRoll[0] / PI * 180.0, Settings.flag2.axis_resolution, axis_yaw);
+  char axis_pitch[33];
+  dtostrfd(MPU6050_dmp.yawPitchRoll[1] / PI * 180.0, Settings.flag2.axis_resolution, axis_pitch);
+  char axis_roll[33];
+  dtostrfd(MPU6050_dmp.yawPitchRoll[2] / PI * 180.0, Settings.flag2.axis_resolution, axis_roll);
+#endif // USE_MPU6050_DMP
 
   if (json) {
     char json_axis_ax[25];
@@ -212,11 +220,11 @@ void MPU_6050Show(bool json)
     snprintf_P(json_axis_gz, sizeof(json_axis_gz), PSTR(",\"" D_JSON_AXIS_GZ "\":%s"), axis_gz);
 #ifdef USE_MPU6050_DMP
     char json_ypr_y[25];
-    snprintf_P(json_ypr_y, sizeof(json_ypr_y), PSTR(",\"" D_JSON_YAW "\":%s"), MPU6050_dmp.yawPitchRoll[0]);
+    snprintf_P(json_ypr_y, sizeof(json_ypr_y), PSTR(",\"" D_JSON_YAW "\":%s"), axis_yaw);
     char json_ypr_p[25];
-    snprintf_P(json_ypr_p, sizeof(json_ypr_p), PSTR(",\"" D_JSON_PITCH "\":%s"), MPU6050_dmp.yawPitchRoll[1]);
+    snprintf_P(json_ypr_p, sizeof(json_ypr_p), PSTR(",\"" D_JSON_PITCH "\":%s"), axis_pitch);
     char json_ypr_r[25];
-    snprintf_P(json_ypr_r, sizeof(json_ypr_r), PSTR(",\"" D_JSON_ROLL "\":%s"), MPU6050_dmp.yawPitchRoll[2]);
+    snprintf_P(json_ypr_r, sizeof(json_ypr_r), PSTR(",\"" D_JSON_ROLL "\":%s"), axis_roll);
     ResponseAppend_P(PSTR(",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s%s%s%s%s%s%s%s%s%s}"),
       D_SENSOR_MPU6050, temperature, json_axis_ax, json_axis_ay, json_axis_az, json_axis_gx, json_axis_gy, json_axis_gz,
       json_ypr_y, json_ypr_p, json_ypr_r);
@@ -231,7 +239,9 @@ void MPU_6050Show(bool json)
   } else {
     WSContentSend_PD(HTTP_SNS_TEMP, D_SENSOR_MPU6050, temperature, TempUnit());
     WSContentSend_PD(HTTP_SNS_AXIS, axis_ax, axis_ay, axis_az, axis_gx, axis_gy, axis_gz);
-    WSContentSend_PD(HTTP_SNS_YPR,  MPU6050_dmp.yawPitchRoll[0],  MPU6050_dmp.yawPitchRoll[1],  MPU6050_dmp.yawPitchRoll[2]);
+#ifdef USE_MPU6050_DMP
+    WSContentSend_PD(HTTP_SNS_YPR, axis_yaw, axis_pitch, axis_roll);
+#endif // USE_MPU6050_DMP
 #endif // USE_WEBSERVER
   }
 }
