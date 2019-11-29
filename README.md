@@ -28,7 +28,7 @@ See [tasmota/CHANGELOG.md](tasmota/CHANGELOG.md) for detailed change information
 
 Unless your Tasmota powered device exhibits a problem or you need to make use of a feature that is not available in the Tasmota version currently installed on your device, leave your device alone - it works so don't make unnecessary changes! If the release version (i.e., the master branch) exhibits unexpected behaviour for your device and configuration, you should upgrade to the latest development version instead to see if your problem is resolved as some bugs in previous releases or development builds may already have been resolved.
 
-The Tasmota development codebase is checked every 1-2 hours for changes. If new commits have been merged and they compile successfuly, new binary files for every variant (excluding non-English languages) will be posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA updates too). The last compiled commit number is also indicated on the same page. It is important to note that these binaries are based on the current development codebase. These commits are tested as much as is possible and are typically quite stable. However, it is infeasible to test on the hundreds of different types of devices with all the available configuration options permitted.
+The Tasmota development codebase is checked every 1-2 hours for changes. If new commits have been merged and they compile successfuly, new binary files for every variant will be posted at http://thehackbox.org/tasmota/ (this web address can be used for OTA updates too). The last compiled commit number is also indicated on the same page. It is important to note that these binaries are based on the current development codebase. These commits are tested as much as is possible and are typically quite stable. However, it is infeasible to test on the hundreds of different types of devices with all the available configuration options permitted.
 
 Note that there is a chance, as with any upgrade, that the device may not function as expected. You must always account for the possibility that you may need to flash the device via the serial programming interface if the OTA upgrade fails. Even with the master release, you should always attempt to test the device or a similar prototype before upgrading a device which is in production or is hard to reach. And, as always, make a backup of the device configuration before beginning any firmware update.
 
@@ -74,9 +74,26 @@ See [wiki migration path](https://tasmota.github.io/docs/#/Upgrading?id=migratio
 
 For a database of supported devices see [Tasmota Device Templates Repository](https://blakadder.github.io/templates)
 
-See [Wiki](https://tasmota.github.io/docs) for use instructions and how-to's.
-See [Community](https://groups.google.com/d/forum/sonoffusers) for forum.
-Visit [Discord Chat](https://discord.gg/Ks2Kzd4) for discussions and troubleshooting.
+If you're looking for support on **Tasmota** there are some options available:
+
+### Documentation:
+
+* [Documentation Site](https://tasmota.github.io/docs): For information on how to flash Tasmota, configure, use and expand it
+* [FAQ and Troubleshooting](https://tasmota.github.io/docs/#/help/): For information on common problems and solutions.
+* [Commands Information](https://tasmota.github.io/docs/#/Commands): For information on all the commands supported by Tasmota.
+
+### Support's Community:
+
+* [Tasmota Forum](https://groups.google.com/d/forum/sonoffusers): For usage and discussions.
+* [Tasmota Support Chat](https://discord.gg/Ks2Kzd4): For support, troubleshooting and general questions. You have better chances to get fast answers from members of the Tasmota Community.
+* [Search in Issues](https://github.com/arendst/Tasmota/issues): You might find an answer to your question by searching current or closed issues.
+
+### Developers' Community:
+
+* [Bug Report](https://github.com/arendst/Tasmota/issues/new?template=Bug_report.md): For reporting Bugs of Tasmota Software.
+* [Feature Request](https://github.com/arendst/Tasmota/issues/new?template=Feature_request.md): For requesting features/functions to Tasmota Software.
+* [Troubleshooting](https://github.com/arendst/Tasmota/issues/new?template=Custom.md): As a last resort, you can open new *Troubleshooting* issue on GitHub if the solution could not be found using the other channels. Just remember: the more info you provide the more chances you'll have to get an accurate answer.
+* [Issue a question](https://github.com/arendst/Tasmota/issues/new/choose): As a last resort, you can open a new *Question* issue on GitHub if the answer could not be found using the other channels. Just remember: the more info you provide the more chances you'll have to get an accurate answer.
 
 ## Contribute
 

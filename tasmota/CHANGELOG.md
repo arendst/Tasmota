@@ -1,5 +1,12 @@
 ## Unreleased (development)
 
+
+## Released
+
+### 7.1.0 20191129
+
+- Release
+
 ### 7.0.0.6 20191122
 
 - Add colorpicker to WebUI by Christian Staars (#6984)
@@ -8,6 +15,7 @@
 - Change update lib IRremoteESP8266 updated to v2.7.1, -2.7k flash and -1.5k RAM for Tasmota-IR
 - Fix auto--power on/off when setting channel to non-zero or zero value, when SetOption68 1
 - Fix postpone saving settings to flash until Fade is complete, avoids pause in Fade
+- Add command ``SetOption77 0/1`` to keep power on when slider is far left
 
 ### 7.0.0.5 20191118
 
@@ -63,8 +71,6 @@
 - Change ArduinoSlave to TasmotaSlave
 - Add support for Tuya battery powered devices (#6735)
 - Change repository name from Sonoff-Tasmota to Tasmota and all code references from Sonoff to Tasmota
-
-## Released
 
 ### 6.7.1 20191026
 
