@@ -1,5 +1,7 @@
 ## Unreleased (development)
 
+- TasmotaSlave bugfix for buffer overrun on Tele
+- TasmotaSlave add support for executing commands on Tasmota
 
 ## Released
 
