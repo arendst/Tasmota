@@ -1,5 +1,12 @@
 ## Unreleased (development)
 
+
+## Released
+
+### 7.1.0 20191129
+
+- Release
+
 ### 7.0.0.6 20191122
 
 - Add colorpicker to WebUI by Christian Staars (#6984)
@@ -64,8 +71,6 @@
 - Change ArduinoSlave to TasmotaSlave
 - Add support for Tuya battery powered devices (#6735)
 - Change repository name from Sonoff-Tasmota to Tasmota and all code references from Sonoff to Tasmota
-
-## Released
 
 ### 6.7.1 20191026
 
