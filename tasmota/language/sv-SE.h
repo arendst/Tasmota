@@ -71,6 +71,7 @@
 #define D_COLDLIGHT "Kallt"
 #define D_COMMAND "Kommando"
 #define D_CONNECTED "Ansluten"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Räkna"
 #define D_COUNTER "Räknare"
 #define D_CURRENT "Ström"          // As in Voltage and Current

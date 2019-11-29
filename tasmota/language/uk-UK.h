@@ -71,6 +71,7 @@
 #define D_COLDLIGHT "Холодний"
 #define D_COMMAND "Команда"
 #define D_CONNECTED "Під'єднано"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Розмір"
 #define D_COUNTER "Лічильник"
 #define D_CURRENT "Струм"           // As in Voltage and Current

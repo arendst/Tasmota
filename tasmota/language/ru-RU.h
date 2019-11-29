@@ -71,6 +71,7 @@
 #define D_COLDLIGHT "Холодный"
 #define D_COMMAND "Команда"
 #define D_CONNECTED "Соединен"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Подсчет"
 #define D_COUNTER "Счетчик"
 #define D_CURRENT "Ток"          // As in Voltage and Current
