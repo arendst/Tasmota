@@ -4,6 +4,7 @@
 
 - Fix slider for devices with one or two channels like only white or white/yellow
 - Fix TasmotaSlave buffer overrun on Tele
+- Fix light scheme 4 speed (#7072)
 - Add support for TasmotaSlave executing commands on Tasmota
 
 ## Released

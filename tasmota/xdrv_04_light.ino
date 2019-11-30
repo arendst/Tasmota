@@ -242,6 +242,7 @@ struct LIGHT {
   uint8_t color_remap[LST_MAX];
 
   uint8_t wheel = 0;
+  uint8_t random = 0;
   uint8_t subtype = 0;                    // LST_ subtype
   uint8_t device = 0;
   uint8_t old_power = 1;
@@ -1541,26 +1542,17 @@ void LightCycleColor(int8_t direction)
   if (Light.strip_timer_counter % (Settings.light_speed * 2)) {
     return;
   }
-  Light.wheel += direction;
+
+  if (0 == direction) {
+    if (Light.random == Light.wheel) {
+      Light.random = random(255);
+    }
+    Light.wheel += (Light.random < Light.wheel) ? -1 : 1;
+  } else {
+    Light.wheel += direction;
+  }
   LightWheel(Light.wheel);
   memcpy(Light.new_color, Light.entry_color, sizeof(Light.new_color));
-}
-
-void LightRandomColor(void)
-{
-  bool update = false;
-  for (uint32_t i = 0; i < LST_RGB; i++) {
-    if (Light.new_color[i] != Light.current_color[i]) {
-      update = true;
-    }
-  }
-  if (!update) {
-    Light.wheel = random(255);
-    LightWheel(Light.wheel);
-    memcpy(Light.current_color, Light.entry_color, sizeof(Light.current_color));
-  }
-
-  memcpy(Light.new_color, Light.current_color, sizeof(Light.new_color));
 }
 
 void LightSetPower(void)
@@ -1652,7 +1644,7 @@ void LightAnimate(void)
         LightCycleColor(-1);
         break;
       case LS_RANDOM:
-        LightRandomColor();
+        LightCycleColor(0);
         break;
       default:
         XlgtCall(FUNC_SET_SCHEME);
