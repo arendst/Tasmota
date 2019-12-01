@@ -5,6 +5,7 @@
 - Remove inconsistent hardware detection introduced in version 7.0.0.5
 - Fix lost functionality of GPIO9 and GPIO10 on some devices (#7080)
 - Change light color schemes 2, 3 and 4 from color wheel to Hue driven
+- Fix Zigbee uses Hardware Serial if GPIO 1/3 or GPIO 13/15 and SerialLog 0 (#7071)
 
 ## Released
 
