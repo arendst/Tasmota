@@ -76,19 +76,19 @@ For a database of supported devices see [Tasmota Device Templates Repository](ht
 
 If you're looking for support on **Tasmota** there are some options available:
 
-### Documentation:
+### Documentation
 
 * [Documentation Site](https://tasmota.github.io/docs): For information on how to flash Tasmota, configure, use and expand it
 * [FAQ and Troubleshooting](https://tasmota.github.io/docs/#/help/): For information on common problems and solutions.
 * [Commands Information](https://tasmota.github.io/docs/#/Commands): For information on all the commands supported by Tasmota.
 
-### Support's Community:
+### Support's Community
 
 * [Tasmota Forum](https://groups.google.com/d/forum/sonoffusers): For usage and discussions.
 * [Tasmota Support Chat](https://discord.gg/Ks2Kzd4): For support, troubleshooting and general questions. You have better chances to get fast answers from members of the Tasmota Community.
 * [Search in Issues](https://github.com/arendst/Tasmota/issues): You might find an answer to your question by searching current or closed issues.
 
-### Developers' Community:
+### Developers' Community
 
 * [Bug Report](https://github.com/arendst/Tasmota/issues/new?template=Bug_report.md): For reporting Bugs of Tasmota Software.
 * [Feature Request](https://github.com/arendst/Tasmota/issues/new?template=Feature_request.md): For requesting features/functions to Tasmota Software.
