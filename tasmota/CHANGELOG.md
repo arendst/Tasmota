@@ -2,6 +2,8 @@
 
 ### 7.1.1.1 20191201
 
+- Remove inconsistent hardware detection introduced in version 7.0.0.5
+- Fix lost functionality of GPIO9 and GPIO10 on some devices (#7080)
 - Change light color schemes 2, 3 and 4 from color wheel to Hue driven
 
 ## Released
