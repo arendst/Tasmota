@@ -2,7 +2,7 @@
 
 ### 7.1.1.1 20191201
 
-- Version bump
+- Change light color schemes 2, 3 and 4 from color wheel to Hue driven
 
 ## Released
 

@@ -241,8 +241,8 @@ struct LIGHT {
   uint8_t last_color[LST_MAX];
   uint8_t color_remap[LST_MAX];
 
-  uint8_t wheel = 0;
-  uint8_t random = 0;
+  uint16_t wheel = 0;
+  uint16_t random = 0;
   uint8_t subtype = 0;                    // LST_ subtype
   uint8_t device = 0;
   uint8_t old_power = 1;
@@ -1510,33 +1510,6 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
   LightState(0);
 }
 
-void LightWheel(uint8_t wheel_pos)
-{
-  wheel_pos = 255 - wheel_pos;
-  if (wheel_pos < 85) {
-    Light.entry_color[0] = 255 - wheel_pos * 3;
-    Light.entry_color[1] = 0;
-    Light.entry_color[2] = wheel_pos * 3;
-  } else if (wheel_pos < 170) {
-    wheel_pos -= 85;
-    Light.entry_color[0] = 0;
-    Light.entry_color[1] = wheel_pos * 3;
-    Light.entry_color[2] = 255 - wheel_pos * 3;
-  } else {
-    wheel_pos -= 170;
-    Light.entry_color[0] = wheel_pos * 3;
-    Light.entry_color[1] = 255 - wheel_pos * 3;
-    Light.entry_color[2] = 0;
-  }
-  Light.entry_color[3] = 0;
-  Light.entry_color[4] = 0;
-  float dimmer = 100 / (float)Settings.light_dimmer;
-  for (uint32_t i = 0; i < LST_RGB; i++) {
-    float temp = (float)Light.entry_color[i] / dimmer + 0.5f;
-    Light.entry_color[i] = (uint8_t)temp;
-  }
-}
-
 void LightCycleColor(int8_t direction)
 {
   if (Light.strip_timer_counter % (Settings.light_speed * 2)) {
@@ -1545,14 +1518,19 @@ void LightCycleColor(int8_t direction)
 
   if (0 == direction) {
     if (Light.random == Light.wheel) {
-      Light.random = random(255);
+      Light.random = random(358) +1;  // Random Hue
     }
     Light.wheel += (Light.random < Light.wheel) ? -1 : 1;
   } else {
     Light.wheel += direction;
   }
-  LightWheel(Light.wheel);
-  memcpy(Light.new_color, Light.entry_color, sizeof(Light.new_color));
+  if (Light.wheel > 359) { Light.wheel = 1; }  // Loop Hue colors
+  if (Light.wheel < 1) { Light.wheel = 359; }  // Loop Hue colors
+
+  uint8_t sat;
+  light_state.getHSB(nullptr, &sat, nullptr);  // Allow user control over Saturation
+  light_state.setHS(Light.wheel, sat);
+  light_controller.calcLevels(Light.new_color);
 }
 
 void LightSetPower(void)
