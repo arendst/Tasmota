@@ -1,7 +1,7 @@
 /*
-  xsns_46_GP2Y10.ino - ESP8266 GP2Y10 support for Sonoff-Tasmota
+  xsns_58_GP2Y10.ino - ESP8266 GP2Y10 support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2019  Arnout Smeenge
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 
 #ifdef USE_GP2Y10
 /*********************************************************************************************\
- * ADC support
+ * GP2Y10 support
 \*********************************************************************************************/
 
 #define XSNS_58                       58
