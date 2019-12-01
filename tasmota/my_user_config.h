@@ -533,6 +533,8 @@
 
 #define USE_SR04                                 // Add support for HC-SR04 ultrasonic devices (+1k code)
 
+//#define USE_GP2Y10				// Add support for Sharp GP2Y10XX dust sensor (from sonoffSC)
+
 //#define USE_TM1638                               // Add support for TM1638 switches copying Switch1 .. Switch8 (+1k code)
 #define USE_HX711                                // Add support for HX711 load cell (+1k5 code)
 //  #define USE_HX711_GUI                          // Add optional web GUI to HX711 as scale (+1k8 code)

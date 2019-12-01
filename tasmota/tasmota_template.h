@@ -214,6 +214,7 @@ enum UserSelectablePins {
   GPIO_TASMOTASLAVE_RST_INV, // Slave Reset Inverted
   GPIO_HPMA_RX,        // Honeywell HPMA115S0 Serial interface
   GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
+  GPIO_GP2Y10,         // Sharp GP2Y10XX Dust sensor (from SonofSC)
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -294,6 +295,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
   D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
+  D_SENSOR_GP2Y10 "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -308,6 +310,7 @@ enum UserSelectableAdc0 {
   ADC0_LIGHT,          // Light sensor
   ADC0_BUTTON,         // Button
   ADC0_BUTTON_INV,
+  ADC0_GP2Y10,         // Sharp GP2Y10XX Dust sensor
 //  ADC0_SWITCH,         // Switch
 //  ADC0_SWITCH_INV,
   ADC0_END };
@@ -324,6 +327,7 @@ const char kAdc0Names[] PROGMEM =
   D_TEMPERATURE "|" D_LIGHT "|"
   D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|"
 //  D_SENSOR_SWITCH "|" D_SENSOR_SWITCH "i|"
+  D_SENSOR_GP2Y10 "|"
   ;
 
 /********************************************************************************************/
@@ -752,6 +756,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_A4988_MS1,     // A4988 microstep pin1
   GPIO_A4988_MS2,     // A4988 microstep pin2
   GPIO_A4988_MS3,     // A4988 microstep pin3
+#endif
+#ifdef USE_GPY10
+  GPIO_GP2Y10,
 #endif
 #ifdef USE_DEEPSLEEP
   GPIO_DEEPSLEEP
