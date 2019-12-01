@@ -47,6 +47,7 @@
 #define CMND_FUNC_EVERY_100_MSECOND    0x04
 #define CMND_SLAVE_SEND                0x05
 #define CMND_PUBLISH_TELE              0x06
+#define CMND_EXECUTE_CMND              0x07
 
 #define PARAM_DATA_START               0xFE
 #define PARAM_DATA_END                 0xFF
@@ -142,6 +143,7 @@ struct TSLAVE {
   bool flashing  = false;
   bool SerialEnabled = false;
   uint8_t waitstate = 0;            // We use this so that features detection does not slow down other stuff on startup
+  bool unsupported = false;
 } TSlave;
 
 typedef union {
@@ -461,9 +463,14 @@ void TasmotaSlave_Init(void)
     TasmotaSlave_Serial->readBytesUntil(char(PARAM_DATA_START), buffer, sizeof(buffer));
     uint8_t len = TasmotaSlave_Serial->readBytesUntil(char(PARAM_DATA_END), buffer, sizeof(buffer));
     memcpy(&TSlaveSettings, &buffer, sizeof(TSlaveSettings));
-    if (20191101 == TSlaveSettings.features_version) {
+    if (20191129 == TSlaveSettings.features_version) {
       TSlave.type = true;
       AddLog_P2(LOG_LEVEL_INFO, PSTR("Tasmota Slave Version %u"), TSlaveSettings.features_version);
+    } else {
+      if ((!TSlave.unsupported) && (TSlaveSettings.features_version > 0)) {
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("Tasmota Slave Version %u not supported!"), TSlaveSettings.features_version);
+        TSlave.unsupported = true;
+      }
     }
   }
 }
@@ -506,8 +513,9 @@ void (* const TasmotaSlaveCommand[])(void) PROGMEM = {
 void CmndTasmotaSlaveReset(void)
 {
   TasmotaSlave_Reset();
-  TSlave.type = false;  // Force redetection
-  TSlave.waitstate = 7; // give it at least 3 seconds to restart from bootloader
+  TSlave.type = false;        // Force redetection
+  TSlave.waitstate = 7;       // give it at least 3 seconds to restart from bootloader
+  TSlave.unsupported = false; // Reset unsupported flag
   ResponseCmndDone();
 }
 
@@ -536,20 +544,24 @@ void TasmotaSlave_ProcessIn(void)
       }
       TasmotaSlave_Serial->read(); // read trailing byte of command
       memcpy(&TSlaveCommand, &buffer, sizeof(TSlaveCommand));
+      char inbuf[TSlaveCommand.parameter+1];
+      TasmotaSlave_waitForSerialData(TSlaveCommand.parameter, 50);
+      TasmotaSlave_Serial->read(); // Read leading byte
+      for (uint8_t idx = 0; idx < TSlaveCommand.parameter; idx++) {
+        inbuf[idx] = TasmotaSlave_Serial->read();
+      }
+      TasmotaSlave_Serial->read(); // Read trailing byte
+      inbuf[TSlaveCommand.parameter] = '\0';
+
       if (CMND_PUBLISH_TELE == TSlaveCommand.command) { // We need to publish stat/ with incoming stream as content
-        char inbuf[sizeof(TSlaveCommand.parameter)+1];
-        TasmotaSlave_waitForSerialData(TSlaveCommand.parameter, 50);
-        TasmotaSlave_Serial->read(); // Read leading byte
-        for (uint8_t idx = 0; idx < TSlaveCommand.parameter; idx++) {
-          inbuf[idx] = TasmotaSlave_Serial->read();
-        }
-        TasmotaSlave_Serial->read(); // Read trailing byte
-        inbuf[TSlaveCommand.parameter] = '\0';
         Response_P(PSTR("{\"TasmotaSlave\":"));
         ResponseAppend_P("%s", inbuf);
         ResponseJsonEnd();
         MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
         XdrvRulesProcess();
+      }
+      if (CMND_EXECUTE_CMND == TSlaveCommand.command) { // We need to execute the incoming command
+        ExecuteCommand(inbuf, SRC_IGNORE);
       }
       break;
     default:
