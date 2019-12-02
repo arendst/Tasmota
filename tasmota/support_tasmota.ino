@@ -565,7 +565,7 @@ void MqttShowState(void)
       if (i == LightDevice())  { LightState(1); }    // call it only once
     } else {
 #endif
-      ResponseAppend_P(PSTR(",\"%s\":\"%s\""), GetPowerDevice(stemp1, i, sizeof(stemp1), Settings.flag.device_index_enable),  // SetOption26 - Switch between POWER or POWER1
+      ResponseAppend_P(PSTR(",\"%s\":{\"STATE\":\"%s\"}"), GetPowerDevice(stemp1, i, sizeof(stemp1), Settings.flag.device_index_enable),  // SetOption26 - Switch between POWER or POWER1
                                                GetStateText(bitRead(power, i-1)));
 #ifdef USE_SONOFF_IFAN
       if (IsModuleIfan()) {
@@ -592,7 +592,7 @@ void MqttPublishTeleState(void)
   mqtt_data[0] = '\0';
   MqttShowState();
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
-#ifdef USE_SCRIPT
+#if defined(USE_RULES) || defined(USE_SCRIPT)
   RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_SCRIPT
 }
