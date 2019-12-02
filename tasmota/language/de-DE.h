@@ -628,6 +628,7 @@
 #define D_SENSOR_SLAVE_TX    "Slave TX"
 #define D_SENSOR_SLAVE_RX    "Slave RX"
 #define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_GP2Y10      "GP2Y10"
 
 // Units
 #define D_UNIT_AMPERE "A"
