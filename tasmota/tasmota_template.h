@@ -377,6 +377,8 @@ enum SupportedModules {
   BLITZWOLF_BWSHP,
   SHELLY1,
   SHELLY2,
+  SHELLY2_5_SWT,
+  SHELLY2_5_BTN,
   PHILIPS,
   NEO_COOLCAM,
   ESP_SWITCH,
@@ -804,6 +806,8 @@ const uint8_t kModuleNiceList[] PROGMEM = {
   WION,
   SHELLY1,
   SHELLY2,
+  SHELLY2_5_SWT,
+  SHELLY2_5_BTN,
   BLITZWOLF_BWSHP,     // Socket Relay Devices with Energy Monitoring
   TECKIN,
   TECKIN_US,
@@ -1701,6 +1705,46 @@ const mytmplt kModules[MAXMODULE] PROGMEM = {
      GPIO_MCP39F5_RST, // GPIO15 MCP39F501 Reset
      0,
      0
+  },
+  { "Shelly 2.5 swt",// SHELLY2.5 - Shelly2.5 (ESP8266 - 2MB) - https://shelly.cloud/shelly-25-wifi-smart-relay-roller-shutter-home-automation/
+     GPIO_LED1,        // GPIO00
+     GPIO_USER,        // GPIO01
+     GPIO_KEY1,        // GPIO02 Button1
+     GPIO_USER,        // GPIO03
+     GPIO_REL1,        // GPIO04
+     GPIO_SWT2_NP,    // GPIO05
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_I2C_SDA,     // GPIO12
+     GPIO_SWT1_NP,    // GPIO13
+     GPIO_I2C_SCL,     // GPIO14
+     GPIO_REL2,        // GPIO15
+     GPIO_ADE7953_IRQ, // GPIO16
+     ADC0_TEMP         // ADC0
+  },
+  { "Shelly 2.5 btn",  // SHELLY2.5 - Shelly2.5 (ESP8266 - 2MB) - https://shelly.cloud/shelly-25-wifi-smart-relay-roller-shutter-home-automation/
+     GPIO_LED1,        // GPIO00
+     GPIO_USER,        // GPIO01
+     GPIO_KEY1,        // GPIO02 Button1
+     GPIO_USER,        // GPIO03
+     GPIO_REL1,        // GPIO04
+     GPIO_KEY2_INV,    // GPIO05
+                       // GPIO06 (SD_CLK   Flash)
+                       // GPIO07 (SD_DATA0 Flash QIO/DIO/DOUT)
+                       // GPIO08 (SD_DATA1 Flash QIO/DIO/DOUT)
+     0,                // GPIO09 (SD_DATA2 Flash QIO or ESP8285)
+     0,                // GPIO10 (SD_DATA3 Flash QIO or ESP8285)
+                       // GPIO11 (SD_CMD   Flash)
+     GPIO_I2C_SDA,     // GPIO12
+     GPIO_KEY1_INV,    // GPIO13
+     GPIO_I2C_SCL,     // GPIO14
+     GPIO_REL2,        // GPIO15
+     GPIO_ADE7953_IRQ, // GPIO16
+     ADC0_TEMP         // ADC0
   },
   { "Xiaomi Philips",  // PHILIPS - Xiaomi Philips bulb (ESP8266)
      0, 0, 0, 0, 0, 0,
