@@ -76,10 +76,10 @@ struct SHUTTER {
   uint16_t open_time[MAX_SHUTTERS];       // duration to open the shutter
   uint16_t close_time[MAX_SHUTTERS];      // duration to close the shutter
   uint16_t close_velocity[MAX_SHUTTERS];  // in relation to open velocity. higher value = faster
-  uint16_t operations[MAX_SHUTTERS];
   int8_t  direction[MAX_SHUTTERS];        // 1 == UP , 0 == stop; -1 == down
   uint8_t mode = 0;                       // operation mode definition. see enum type above SHT_OFF_OPEN__OFF_CLOSE, SHT_OFF_ON__OPEN_CLOSE, SHT_PULSE_OPEN__PULSE_CLOSE
   uint8_t motordelay[MAX_SHUTTERS];                 // initial motorstarttime in 0.05sec.
+  uint16_t pwm_frequency;
 } Shutter;
 
 void ShutterRtc50mS(void)
@@ -237,45 +237,32 @@ void ShutterUpdatePosition(void)
 {
   char scommand[CMDSZ];
   char stopic[TOPSZ];
+  char stemp2[10];
 
   for (uint32_t i = 0; i < shutters_present; i++) {
     if (Shutter.direction[i] != 0) {
       //char stemp1[20];
+
+      if (pin[GPIO_PWM1]+i < 99 && Shutter.pwm_frequency != 1000) {
+        Shutter.pwm_frequency += 100;
+        Shutter.pwm_frequency = (Shutter.pwm_frequency > 1000 ? 1000 : Shutter.pwm_frequency);
+        analogWriteFreq(Shutter.pwm_frequency);
+        analogWrite(pin[GPIO_PWM1]+i, 50);
+      }
+
       Shutter.real_position[i] = Shutter.start_position[i]  + ( (Shutter.time[i] - Shutter.motordelay[i]) * (Shutter.direction[i] > 0 ? 100 : -Shutter.close_velocity[i]));
       // avoid real position leaving the boundaries.
-      Shutter.real_position[i] = Shutter.real_position[i] < 0 ? 0 : (Shutter.real_position[i] > Shutter.open_max[i] ? Shutter.open_max[i] : Shutter.real_position[i]) ;
+      if (Shutter.real_position[i] < 0 || Shutter.real_position[i] >  Shutter.open_max[i]) {
+        dtostrfd((float)Shutter.time[i] / 20, 1, stemp2);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: ShutterTEMP %d: Real Pos. %d, Stoppos: %ld, direction %d, rtcshutter: %s [s]"), i, Shutter.real_position[i], Settings.shutter_position[i],  Shutter.direction[i], stemp2);
 
-      // Add additional runtime, if shutter did not reach the endstop for some time.
-      if (Shutter.target_position[i] == Shutter.real_position[i] && Shutter.target_position[i] == 0) {
-        // for every operation add 5x50ms = 250ms to stop position
-        //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Adding additional runtime"));
-        Shutter.real_position[i] += 500 * Shutter.operations[i] ;
-        Shutter.operations[i]  = 0;
+        Shutter.real_position[i] = Shutter.real_position[i] < 0 ? 0 : (Shutter.real_position[i] > Shutter.open_max[i] ? Shutter.open_max[i] : Shutter.real_position[i]) ;
       }
+
       if (Shutter.real_position[i] * Shutter.direction[i] >= Shutter.target_position[i] * Shutter.direction[i] ) {
         // calculate relay number responsible for current movement.
         //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Stop Condition detected: real: %d, Target: %d, direction: %d"),Shutter.real_position[i], Shutter.target_position[i],Shutter.direction[i]);
         uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter.direction[i] == 1 ? 0 : 1) ;
-        char stemp2[10];
-
-        Settings.shutter_position[i] = ShutterRealToPercentPosition(Shutter.real_position[i], i);
-        //Settings.shutter_position[i] = Settings.shuttercoeff[2][i] * 5 > Shutter.real_position[i] ? (Shutter.real_position[i] * 10 / Settings.shuttercoeff[2][i] + 4)/10 : ((Shutter.real_position[i]-Settings.shuttercoeff[0,i]) *10 / Settings.shuttercoeff[1][i] +4) / 10;
-
-        if (0 < Settings.shutter_position[i] && Settings.shutter_position[i] < 100) {
-          Shutter.operations[i]++;
-        } else {
-          Shutter.operations[i]  = 0;
-        }
-
-        dtostrfd((float)Shutter.time[i] / 20, 1, stemp2);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d: Real Pos. %d, Stoppos: %ld, relay: %d, direction %d, pulsetimer: %d, rtcshutter: %s [s], operationtime %d"), i, Shutter.real_position[i], Settings.shutter_position[i], cur_relay -1, Shutter.direction[i], Settings.pulse_timer[cur_relay -1], stemp2, Shutter.operations[i]);
-        Shutter.start_position[i] = Shutter.real_position[i];
-
-        // sending MQTT result to broker
-        snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
-        GetTopic_P(stopic, STAT, mqtt_topic, scommand);
-        Response_P("%d", Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
-        MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
 
         switch (Shutter.mode) {
           case SHT_PULSE_OPEN__PULSE_CLOSE:
@@ -288,8 +275,21 @@ void ShutterUpdatePosition(void)
           break;
           case SHT_OFF_ON__OPEN_CLOSE:
             // This is a failsafe configuration. Relay1 ON/OFF Relay2 -1/1 direction
+            if (pin[GPIO_PWM1 ]+i < 99) {
+              Shutter.pwm_frequency = 0;
+              //slow down for acurate position
+              analogWriteFreq(500);
+              analogWrite(pin[GPIO_PWM1]+i, 50);
+              analogWriteFreq(0);
+              while (RtcSettings.pulse_counter[i] < (Shutter.target_position[i]-Shutter.start_position[i])*Shutter.direction[i]/2) {
+                delay(1);
+              }
+              analogWrite(pin[GPIO_PWM1]+i, 0);
+              Shutter.real_position[i] = RtcSettings.pulse_counter[i]*Shutter.direction[i]*2+Shutter.start_position[i];
+            }
             if ((1 << (Settings.shutter_startrelay[i]-1)) & power) {
               ExecuteCommandPower(Settings.shutter_startrelay[i], 0, SRC_SHUTTER);
+              ExecuteCommandPower(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
             }
           break;
           case SHT_OFF_OPEN__OFF_CLOSE:
@@ -300,6 +300,18 @@ void ShutterUpdatePosition(void)
             }
           break;
         }
+        Settings.shutter_position[i] = ShutterRealToPercentPosition(Shutter.real_position[i], i);
+
+        dtostrfd((float)Shutter.time[i] / 20, 1, stemp2);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d: Real Pos. %d, Stoppos: %ld, relay: %d, direction %d, pulsetimer: %d, rtcshutter: %s [s]"), i, Shutter.real_position[i], Settings.shutter_position[i], cur_relay -1, Shutter.direction[i], Settings.pulse_timer[cur_relay -1], stemp2);
+        Shutter.start_position[i] = Shutter.real_position[i];
+
+        // sending MQTT result to broker
+        snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
+        GetTopic_P(stopic, STAT, mqtt_topic, scommand);
+        Response_P("%d", Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i]);
+        MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
+
         Shutter.direction[i] = 0;
         uint8_t position =  Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i];
         Response_P(PSTR("{"));
@@ -326,6 +338,12 @@ void ShutterStartInit(uint8_t index, uint8_t direction, int32_t target_pos)
   Shutter.target_position[index] = target_pos;
   Shutter.start_position[index] = Shutter.real_position[index];
   Shutter.time[index] = 0;
+  if (pin[GPIO_PWM1]+index < 99) {
+    Shutter.pwm_frequency = 0;
+    analogWriteFreq(Shutter.pwm_frequency);
+    analogWrite(pin[GPIO_PWM1]+index, 0);
+    RtcSettings.pulse_counter[index] = 0;
+  }
   //AddLog_P2(LOG_LEVEL_INFO,  PSTR("SHT: Start shutter: %d from %d to %d in directin %d"), index, Shutter.start_position[index], Shutter.target_position[index], Shutter.direction[index]);
 }
 
@@ -426,7 +444,6 @@ void ShutterSetPosition(uint8_t device, uint8_t position)
 void CmndShutterOpen(void)
 {
   XdrvMailbox.payload = 100;
-  XdrvMailbox.data_len = 3;
   last_source = SRC_WEBGUI;
   CmndShutterPosition();
 }
@@ -434,7 +451,7 @@ void CmndShutterOpen(void)
 void CmndShutterClose(void)
 {
   XdrvMailbox.payload = 0;
-  XdrvMailbox.data_len = 1;
+  XdrvMailbox.data_len = 0;
   last_source = SRC_WEBGUI;
   CmndShutterPosition();
 }
@@ -445,7 +462,7 @@ void CmndShutterStop(void)
     uint32_t index = XdrvMailbox.index -1;
     if (Shutter.direction[index] != 0) {
 
-      //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Stop moving shutter %d: direction: %d"), XdrvMailbox.index, Shutter.direction[index]);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Stop moving shutter %d: direction: %d"), XdrvMailbox.index, Shutter.direction[index]);
 
       int32_t temp_realpos = Shutter.start_position[index] + ( (Shutter.time[index]+10) * (Shutter.direction[index] > 0 ? 100 : -Shutter.close_velocity[index]));
       XdrvMailbox.payload = ShutterRealToPercentPosition(temp_realpos, index);
@@ -472,7 +489,7 @@ void CmndShutterPosition(void)
       if (!strcmp(XdrvMailbox.data,"STOP")) { CmndShutterStop(); }
       return;
     }
-	  
+
     int8_t target_pos_percent = XdrvMailbox.payload < 0 ? 0 : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
     // webgui still send also on inverted shutter the native position.
     target_pos_percent = Settings.shutter_invert[index] &&  SRC_WEBGUI != last_source ? 100 - target_pos_percent : target_pos_percent;
@@ -497,7 +514,6 @@ void CmndShutterPosition(void)
       }
       if (Shutter.direction[index] !=  new_shutterdirection ) {
         ShutterStartInit(index, new_shutterdirection, Shutter.target_position[index]);
-        Shutter.operations[index]++;
         if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE) {
           ExecuteCommandPower(Settings.shutter_startrelay[index], 0, SRC_SHUTTER);
           //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Delay5 5s, xdrv %d"), XdrvMailbox.payload);
@@ -556,7 +572,7 @@ void CmndShutterMotorDelay(void)
       ShutterInit();
     }
     char time_chr[10];
-    dtostrfd((float)(Settings.shutter_motordelay[XdrvMailbox.index -1]) / 20, 1, time_chr);
+    dtostrfd((float)(Settings.shutter_motordelay[XdrvMailbox.index -1]) / 20, 2, time_chr);
     ResponseCmndIdxChar(time_chr);
   }
 }
