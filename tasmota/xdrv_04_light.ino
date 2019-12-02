@@ -241,8 +241,8 @@ struct LIGHT {
   uint8_t last_color[LST_MAX];
   uint8_t color_remap[LST_MAX];
 
-  uint16_t wheel = 0;
-  uint16_t random = 0;
+  uint8_t wheel = 0;
+  uint8_t random = 0;
   uint8_t subtype = 0;                    // LST_ subtype
   uint8_t device = 0;
   uint8_t old_power = 1;
@@ -1518,18 +1518,18 @@ void LightCycleColor(int8_t direction)
 
   if (0 == direction) {
     if (Light.random == Light.wheel) {
-      Light.random = random(358) +1;  // Random Hue
+      Light.random = random(255);
     }
-    Light.wheel += (Light.random < Light.wheel) ? -1 : 1;
-  } else {
-    Light.wheel += direction;
+    direction = (Light.random < Light.wheel) ? -1 : 1;
   }
-  if (Light.wheel > 359) { Light.wheel = 1; }  // Loop Hue colors
-  if (Light.wheel < 1) { Light.wheel = 359; }  // Loop Hue colors
+  Light.wheel += direction;
+  uint16_t hue = changeUIntScale(Light.wheel, 0, 255, 0, 359);  // Scale to hue to keep amount of steps low (max 255 instead of 359)
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
 
   uint8_t sat;
   light_state.getHSB(nullptr, &sat, nullptr);  // Allow user control over Saturation
-  light_state.setHS(Light.wheel, sat);
+  light_state.setHS(hue, sat);
   light_controller.calcLevels(Light.new_color);
 }
 
