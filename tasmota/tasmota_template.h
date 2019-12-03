@@ -630,8 +630,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_I2C) && defined(USE_ADE7953)
   GPIO_ADE7953_IRQ,    // ADE7953 IRQ
 #endif
+#ifdef USE_CSE7766
   GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
+#endif
 #ifdef USE_MCP39F501
   GPIO_MCP39F5_TX,     // MCP39F501 Serial interface (Shelly2)
   GPIO_MCP39F5_RX,     // MCP39F501 Serial interface (Shelly2)
