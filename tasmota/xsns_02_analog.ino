@@ -55,8 +55,8 @@
 //        ADC0
 // Default settings for a 20A/1V Current Transformer. Analog peak to peak range is measured and converted to RMS current using ANALOG_CT_MULTIPLIER
 #define ANALOG_CT_CURRENT_OR_POWER 2          // (uint32_t) 0 for current, 1 for power, 2 for both, 3 or other for none
-#define ANALOG_CT_MULTIPLIER       2146       // (uint32_t) Multiplier*100000 to convert raw ADC peak to peak range 0..1023 to RMS current in Amps
-#define ANALOG_CT_VOLTAGE          2300       // (int) Convert current in Amps to apparrent power in Watts using voltage in Volts*10
+#define ANALOG_CT_MULTIPLIER       2146       // (uint32_t) Multiplier*100000 to convert raw ADC peak to peak range 0..1023 to RMS current in Amps. Value of 100000 corresponds to 1
+#define ANALOG_CT_VOLTAGE          2300       // (int) Convert current in Amps to apparrent power in Watts using voltage in Volts*10. Value of 2200 corresponds to 220V
 
 uint16_t adc_last_value = 0;
 float adc_temp = 0;
