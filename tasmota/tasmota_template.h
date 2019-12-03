@@ -323,9 +323,10 @@ enum ProgramSelectableAdc0 {
 const char kAdc0Names[] PROGMEM =
   D_SENSOR_NONE "|" D_ANALOG_INPUT "|"
   D_TEMPERATURE "|" D_LIGHT "|"
-  D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|" D_SENSOR_CT_POWER "|"
+  D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|"
+  D_SENSOR_CT_POWER;
 //  D_SENSOR_SWITCH "|" D_SENSOR_SWITCH "i|"
-  ;
+
 
 /********************************************************************************************/
 
