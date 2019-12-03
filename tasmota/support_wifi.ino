@@ -118,8 +118,10 @@ void WifiSetMode(WiFiMode_t wifi_mode)
     delay(100);
   }
 
-  if (!WiFi.mode(wifi_mode)) {
-    AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_WIFI "Cannot set Mode"));
+  uint32_t retry = 2;
+  while (!WiFi.mode(wifi_mode) && retry--) {
+    AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR("Retry set Mode..."));
+    delay(100);
   }
 
   if (wifi_mode == WIFI_OFF) {

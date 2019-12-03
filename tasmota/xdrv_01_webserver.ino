@@ -154,9 +154,11 @@ const char HTTP_SCRIPT_ROOT[] PROGMEM =
 
 const char HTTP_SCRIPT_ROOT_PART2[] PROGMEM =
   "function lc(v,i,p){"
-    "if(v=='h'||v=='d'){"                 // Hue or Brightness changed so change Saturation colors too
-      "var sl=eb('sl4').value;"
-      "eb('s').style.background='linear-gradient(to right,rgb('+sl+'%%,'+sl+'%%,'+sl+'%%),hsl('+eb('sl2').value+',100%%,50%%))';"
+    "if(eb('s')){"                        // Check if Saturation is in DOM otherwise javascript fails on la()
+      "if(v=='h'||v=='d'){"               // Hue or Brightness changed so change Saturation colors too
+        "var sl=eb('sl4').value;"
+        "eb('s').style.background='linear-gradient(to right,rgb('+sl+'%%,'+sl+'%%,'+sl+'%%),hsl('+eb('sl2').value+',100%%,50%%))';"
+      "}"
     "}"
     "la('&'+v+i+'='+p);"
   "}"
@@ -1065,7 +1067,7 @@ void HandleRoot(void)
           "c",               // c - Unique HTML id
           "#000", "#fff",    // Black to White
           4,                 // sl4 - Unique range HTML id - Used as source for Saturation begin color
-          0, 100,            // Range 0 to 100%
+          Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100%
           Settings.light_dimmer,
           'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
       } else {  // Settings.flag3.pwm_multi_channels - SetOption68 1 - Enable multi-channels PWM instead of Color PWM
