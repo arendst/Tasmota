@@ -110,7 +110,7 @@
 #define D_JSON_POWERUSAGE "Power"
 #define D_JSON_ACTIVE_POWERUSAGE "ActivePower"
 #define D_JSON_APPARENT_POWERUSAGE "ApparentPower"
-#define D_JSON_REACTIVE_D_SNSUSAGE "ReactivePower"
+#define D_JSON_REACTIVE_POWERUSAGE "ReactivePower"
 #define D_JSON_PRESSURE "Pressure"
 #define D_JSON_PRESSUREATSEALEVEL "SeaPressure"
 #define D_JSON_PRESSURE_UNIT "PressureUnit"
