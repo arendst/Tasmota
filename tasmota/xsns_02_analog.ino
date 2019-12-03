@@ -47,8 +47,21 @@
 #define ANALOG_LDR_LUX_CALC_SCALAR    12518931         // Experimental
 #define ANALOG_LDR_LUX_CALC_EXPONENT  -1.4050          // Experimental
 
+// CT Based Apparrent Power Measurement Parameters
+// 3V3 --- R1 ----v--- R1 --- Gnd
+//                |
+//         CT+   CT-
+//          |
+//        ADC0
+// Default settings for a 20A/1V Current Transformer. Analog peak to peak range is measured and converted to RMS current using ANALOG_CT_MULTIPLIER
+#define ANALOG_CT_CURRENT_OR_POWER 2          // (uint32_t) 0 for current, 1 for power, 2 for both, 3 or other for none
+#define ANALOG_CT_MULTIPLIER       2146       // (uint32_t) Multiplier*100000 to convert raw ADC peak to peak range 0..1023 to RMS current in Amps
+#define ANALOG_CT_VOLTAGE          2300       // (int) Convert current in Amps to apparrent power in Watts using voltage in Volts*10
+
 uint16_t adc_last_value = 0;
 float adc_temp = 0;
+float adc_amps = 0;
+uint16_t adc_watts = 0;
 
 void AdcInit(void)
 {
@@ -66,6 +79,12 @@ void AdcInit(void)
       Settings.adc_param2 = ANALOG_LDR_LUX_CALC_SCALAR;
       Settings.adc_param3 = ANALOG_LDR_LUX_CALC_EXPONENT * 10000;
     }
+    else if (ADC0_CT_POWER == my_adc0) {
+      Settings.adc_param_type = ADC0_CT_POWER;
+      Settings.adc_param1 = ANALOG_CT_CURRENT_OR_POWER;   //(uint32_t) 0
+      Settings.adc_param2 = ANALOG_CT_MULTIPLIER;         //(uint32_t) 100000
+      Settings.adc_param3 = ANALOG_CT_VOLTAGE;            //(int)      10
+    }
   }
 }
 
@@ -80,10 +99,42 @@ uint16_t AdcRead(uint8_t factor)
   uint16_t analog = 0;
   for (uint32_t i = 0; i < samples; i++) {
     analog += analogRead(A0);
+
     delay(1);
   }
   analog >>= factor;
   return analog;
+}
+
+void AdcGetCurrentPower(uint8_t factor)
+{
+  // factor 1 = 2 samples
+  // factor 2 = 4 samples
+  // factor 3 = 8 samples
+  // factor 4 = 16 samples
+  // factor 5 = 32 samples
+  uint8_t samples = 1 << factor;
+  uint16_t analog = 0;
+  uint16_t analog_min = 1023;
+  uint16_t analog_max = 0;
+  for (uint32_t i = 0; i < samples; i++) {
+    analog = analogRead(A0);
+    if (analog < analog_min) {
+      analog_min=analog;
+    }
+    if (analog > analog_max) {
+      analog_max=analog;
+    }
+
+    delay(1);
+  }
+
+  adc_amps=(float)(analog_max-analog_min)*((float)(Settings.adc_param2)/100000);
+  adc_watts=(uint16_t)(adc_amps*((float)(Settings.adc_param3)/10));
+  //adc_amps=(float)(analog_max-analog_min);
+  //adc_watts=(uint16_t)adc_amps;
+
+  return;
 }
 
 #ifdef USE_RULES
@@ -122,6 +173,8 @@ void AdcEverySecond(void)
     double BC = (double)Settings.adc_param3 / 10000;
     double T = BC / (BC / ANALOG_T0 + TaylorLog(Rt / (double)Settings.adc_param2));
     adc_temp = ConvertTemp(TO_CELSIUS(T));
+  } else if (ADC0_CT_POWER == my_adc0) {
+    AdcGetCurrentPower(5);
   }
 }
 
@@ -176,6 +229,39 @@ void AdcShow(bool json)
 #endif  // USE_WEBSERVER
     }
   }
+  else if (ADC0_CT_POWER == my_adc0 && ( Settings.adc_param1 < 3) ) {
+    AdcGetCurrentPower(5);
+    if ( (Settings.adc_param1 == 0) || (Settings.adc_param1 == 2) ){
+      char current[33];
+      dtostrfd(adc_amps, Settings.flag2.current_resolution, current);
+      if (json) {
+        ResponseAppend_P(JSON_SNS_CURRENT, "ANALOG", current);
+#ifdef USE_DOMOTICZ
+        if (0 == tele_period) {
+          DomoticzSensor(DZ_CURRENT, current);
+        }
+#endif  // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+      } else {
+        WSContentSend_PD(HTTP_SNS_CURRENT, "", current, D_UNIT_AMPERE);
+#endif  // USE_WEBSERVER
+      }
+    }
+    if ( (Settings.adc_param1 == 1) || (Settings.adc_param1 == 2) ){
+      if (json) {
+        ResponseAppend_P(JSON_SNS_POWER, "ANALOG", adc_watts);
+#ifdef USE_DOMOTICZ
+        if (0 == tele_period) {
+          DomoticzSensor(DZ_POWER_ENERGY, adc_watts);
+        }
+#endif  // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+      } else {
+        WSContentSend_PD(HTTP_SNS_POWER, "", adc_watts, D_UNIT_WATT);
+#endif  // USE_WEBSERVER
+      }
+    }
+  }
 }
 
 /*********************************************************************************************\
@@ -186,8 +272,8 @@ void AdcShow(bool json)
 const char kAdcCommands[] PROGMEM = "|"  // No prefix
   D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_ADCPARAM;
 
-void (* const AdcCommand[])(void) PROGMEM = {
-  &CmndAdc, &CmndAdcs, &CmndAdcParam };
+void (* const AdcCommand[])(void) PROGMEM =
+  { &CmndAdc, &CmndAdcs, &CmndAdcParam };
 
 void CmndAdc(void)
 {
@@ -217,7 +303,7 @@ void CmndAdcs(void)
 void CmndAdcParam(void)
 {
   if (XdrvMailbox.data_len) {
-    if ((ADC0_TEMP == XdrvMailbox.payload) || (ADC0_LIGHT == XdrvMailbox.payload)) {
+    if ((ADC0_TEMP == XdrvMailbox.payload) || (ADC0_LIGHT == XdrvMailbox.payload) ) {
 //      if ((XdrvMailbox.payload == my_adc0) && ((ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0))) {
       if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
@@ -228,7 +314,24 @@ void CmndAdcParam(void)
         Settings.adc_param1 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
         Settings.adc_param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
         Settings.adc_param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)) * 10000);
-      } else {                                         // Set default values based on current adc type
+      } else       {                                         // Set default values based on current adc type
+      // AdcParam 2
+      // AdcParam 3
+      Settings.adc_param_type = 0;
+      AdcInit();
+    }
+  } else if (ADC0_CT_POWER == XdrvMailbox.payload) {
+  //      if ((XdrvMailbox.payload == my_adc0) && ((ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0))) {
+        if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
+          char sub_string[XdrvMailbox.data_len +1];
+          // AdcParam 2, 32000, 10000, 3350
+          // AdcParam 3, 10000, 12518931, -1.405
+          Settings.adc_param_type = XdrvMailbox.payload;
+  //          Settings.adc_param_type = my_adc0;
+          Settings.adc_param1 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
+          Settings.adc_param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
+          Settings.adc_param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)));
+        } else       {                                         // Set default values based on current adc type
         // AdcParam 2
         // AdcParam 3
         Settings.adc_param_type = 0;
@@ -236,7 +339,6 @@ void CmndAdcParam(void)
       }
     }
   }
-
   // AdcParam
   int value = Settings.adc_param3;
   uint8_t precision;
@@ -263,7 +365,7 @@ bool Xsns02(uint8_t function)
       result = DecodeCommand(kAdcCommands, AdcCommand);
       break;
     default:
-      if ((ADC0_INPUT == my_adc0) || (ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0)) {
+      if ((ADC0_INPUT == my_adc0) || (ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0) || (ADC0_CT_POWER == my_adc0)) {
         switch (function) {
 #ifdef USE_RULES
           case FUNC_EVERY_250_MSECOND:

@@ -308,6 +308,7 @@ enum UserSelectableAdc0 {
   ADC0_LIGHT,          // Light sensor
   ADC0_BUTTON,         // Button
   ADC0_BUTTON_INV,
+  ADC0_CT_POWER,       // Apparrent power using current transformer
 //  ADC0_SWITCH,         // Switch
 //  ADC0_SWITCH_INV,
   ADC0_END };
@@ -323,6 +324,7 @@ const char kAdc0Names[] PROGMEM =
   D_SENSOR_NONE "|" D_ANALOG_INPUT "|"
   D_TEMPERATURE "|" D_LIGHT "|"
   D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|"
+  D_SENSOR_CT_POWER "|"
 //  D_SENSOR_SWITCH "|" D_SENSOR_SWITCH "i|"
   ;
 
@@ -628,10 +630,8 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #if defined(USE_I2C) && defined(USE_ADE7953)
   GPIO_ADE7953_IRQ,    // ADE7953 IRQ
 #endif
-#ifdef USE_CSE7766
   GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
-#endif
 #ifdef USE_MCP39F501
   GPIO_MCP39F5_TX,     // MCP39F501 Serial interface (Shelly2)
   GPIO_MCP39F5_RX,     // MCP39F501 Serial interface (Shelly2)
