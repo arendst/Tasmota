@@ -63,6 +63,7 @@
 #define D_JSON_EVERY "Every"
 #define D_JSON_EXPORT_ACTIVE "ExportActive"
 #define D_JSON_EXPORT_REACTIVE "ExportReactive"
+#define D_JSON_ENERGY "Energy"
 #define D_JSON_FAILED "Failed"
 #define D_JSON_FALLBACKTOPIC "FallbackTopic"
 #define D_JSON_FEATURES "Features"
@@ -570,7 +571,9 @@ const char JSON_SNS_ILLUMINANCE[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\"
 const char JSON_SNS_GNGPM[] PROGMEM = ",\"%s\":{\"" D_JSON_TOTAL_USAGE "\":%s,\"" D_JSON_FLOWRATE "\":%s}";
 
 const char JSON_SNS_CURRENT[] PROGMEM = ",\"%s\":{\"" D_JSON_CURRENT "\":%s}";
+const char JSON_SNS_VOLTAGE[] PROGMEM = ",\"%s\":{\"" D_JSON_VOLTAGE "\":%s}";
 const char JSON_SNS_POWER[] PROGMEM = ",\"%s\":{\"" D_JSON_POWERUSAGE "\":%d}";
+const char JSON_SNS_ENERGY[] PROGMEM = ",\"%s\":{\"" D_JSON_ENERGY "\":%s}";
 
 const char S_LOG_I2C_FOUND_AT[] PROGMEM = D_LOG_I2C "%s " D_FOUND_AT " 0x%x";
 
@@ -600,6 +603,8 @@ const char HTTP_SNS_GALLONS[] PROGMEM = "{s}%s " D_TOTAL_USAGE "{m}%s " D_UNIT_G
 const char HTTP_SNS_GPM[] PROGMEM = "{s}%s " D_FLOW_RATE "{m}%s " D_UNIT_GALLONS_PER_MIN" {e}";   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_CURRENT[] PROGMEM = "{s}%s " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}";                    // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_POWER[] PROGMEM = "{s}%s " D_POWERUSAGE "{m}%d " D_UNIT_WATT "{e}";                    // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_VOLTAGE[] PROGMEM = "{s}%s " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}";                    // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_ENERGY[] PROGMEM = "{s}%s " D_ENERGY_TOTAL "{m}%s " D_UNIT_KILOWATTHOUR "{e}";                    // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 
 
 const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;

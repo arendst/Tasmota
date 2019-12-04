@@ -54,14 +54,21 @@
 //          |
 //        ADC0
 // Default settings for a 20A/1V Current Transformer. Analog peak to peak range is measured and converted to RMS current using ANALOG_CT_MULTIPLIER
-#define ANALOG_CT_CURRENT_OR_POWER 2          // (uint32_t) 0 for current, 1 for power, 2 for both, 3 or other for none
+#define ANALOG_CT_FLAGS            0          // (uint32_t) reserved for possible future use
 #define ANALOG_CT_MULTIPLIER       2146       // (uint32_t) Multiplier*100000 to convert raw ADC peak to peak range 0..1023 to RMS current in Amps. Value of 100000 corresponds to 1
 #define ANALOG_CT_VOLTAGE          2300       // (int) Convert current in Amps to apparrent power in Watts using voltage in Volts*10. Value of 2200 corresponds to 220V
+
+#define CT_FLAG_ENERGY_RESET       (1 << 0)   // Reset energy total
 
 uint16_t adc_last_value = 0;
 float adc_temp = 0;
 float adc_amps = 0;
 uint16_t adc_watts = 0;
+float adc_kwh = 0;
+float adc_voltage = 0;
+uint32_t previous_millis = 0;
+
+float adv_voltage = 0;
 
 void AdcInit(void)
 {
@@ -81,7 +88,7 @@ void AdcInit(void)
     }
     else if (ADC0_CT_POWER == my_adc0) {
       Settings.adc_param_type = ADC0_CT_POWER;
-      Settings.adc_param1 = ANALOG_CT_CURRENT_OR_POWER;   //(uint32_t) 0
+      Settings.adc_param1 = ANALOG_CT_FLAGS;              //(uint32_t) 0
       Settings.adc_param2 = ANALOG_CT_MULTIPLIER;         //(uint32_t) 100000
       Settings.adc_param3 = ANALOG_CT_VOLTAGE;            //(int)      10
     }
@@ -117,6 +124,8 @@ void AdcGetCurrentPower(uint8_t factor)
   uint16_t analog = 0;
   uint16_t analog_min = 1023;
   uint16_t analog_max = 0;
+  uint32_t current_millis =0;
+  float    watts_temp;
   for (uint32_t i = 0; i < samples; i++) {
     analog = analogRead(A0);
     if (analog < analog_min) {
@@ -130,7 +139,12 @@ void AdcGetCurrentPower(uint8_t factor)
   }
 
   adc_amps=(float)(analog_max-analog_min)*((float)(Settings.adc_param2)/100000);
-  adc_watts=(uint16_t)(adc_amps*((float)(Settings.adc_param3)/10));
+  adc_voltage=(float)(Settings.adc_param3)/10;
+  watts_temp=adc_amps*adc_voltage;
+  adc_watts=(uint16_t)(watts_temp);
+  current_millis=millis();
+  adc_kwh=adc_kwh+((watts_temp*(current_millis-previous_millis))/3600000000);
+  previous_millis=current_millis;
   //adc_amps=(float)(analog_max-analog_min);
   //adc_watts=(uint16_t)adc_amps;
 
@@ -229,37 +243,37 @@ void AdcShow(bool json)
 #endif  // USE_WEBSERVER
     }
   }
-  else if (ADC0_CT_POWER == my_adc0 && ( Settings.adc_param1 < 3) ) {
+  else if (ADC0_CT_POWER == my_adc0) {
     AdcGetCurrentPower(5);
-    if ( (Settings.adc_param1 == 0) || (Settings.adc_param1 == 2) ){
-      char current[33];
-      dtostrfd(adc_amps, Settings.flag2.current_resolution, current);
-      if (json) {
-        ResponseAppend_P(JSON_SNS_CURRENT, "ANALOG", current);
+    char current[33];
+    dtostrfd(adc_amps, Settings.flag2.current_resolution, current);
+    char kwh[33];
+    dtostrfd(adc_kwh, Settings.flag2.energy_resolution, kwh);
+    char voltage[33];
+    dtostrfd(adc_voltage, Settings.flag2.voltage_resolution, voltage);
+    char watts[33];
+    itoa(adc_watts,watts,10);
+
+    if (json) {
+      ResponseAppend_P(JSON_SNS_CURRENT, "ANALOG", current);
+      ResponseAppend_P(JSON_SNS_VOLTAGE, "ANALOG", voltage);
+      ResponseAppend_P(JSON_SNS_POWER, "ANALOG", adc_watts);
+      ResponseAppend_P(JSON_SNS_ENERGY, "ANALOG", kwh);
+
 #ifdef USE_DOMOTICZ
-        if (0 == tele_period) {
-          DomoticzSensor(DZ_CURRENT, current);
-        }
+      if (0 == tele_period) {
+        DomoticzSensor(DZ_CURRENT, current);
+        DomoticzSensor(DZ_POWER_ENERGY, watts);
+        DomoticzSensor(DZ_VOLTAGE, voltage);
+      }
 #endif  // USE_DOMOTICZ
 #ifdef USE_WEBSERVER
-      } else {
-        WSContentSend_PD(HTTP_SNS_CURRENT, "", current, D_UNIT_AMPERE);
+    } else {
+      WSContentSend_PD(HTTP_SNS_CURRENT, "", current, D_UNIT_AMPERE);
+      WSContentSend_PD(HTTP_SNS_VOLTAGE, "", voltage, D_UNIT_VOLT);
+      WSContentSend_PD(HTTP_SNS_POWER, "", adc_watts, D_UNIT_WATT);
+      WSContentSend_PD(HTTP_SNS_ENERGY, "", kwh, D_UNIT_KILOWATTHOUR);
 #endif  // USE_WEBSERVER
-      }
-    }
-    if ( (Settings.adc_param1 == 1) || (Settings.adc_param1 == 2) ){
-      if (json) {
-        ResponseAppend_P(JSON_SNS_POWER, "ANALOG", adc_watts);
-#ifdef USE_DOMOTICZ
-        if (0 == tele_period) {
-          DomoticzSensor(DZ_POWER_ENERGY, adc_watts);
-        }
-#endif  // USE_DOMOTICZ
-#ifdef USE_WEBSERVER
-      } else {
-        WSContentSend_PD(HTTP_SNS_POWER, "", adc_watts, D_UNIT_WATT);
-#endif  // USE_WEBSERVER
-      }
     }
   }
 }
@@ -331,6 +345,12 @@ void CmndAdcParam(void)
           Settings.adc_param1 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
           Settings.adc_param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
           Settings.adc_param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)));
+ // Process param1 flags
+          if( (Settings.adc_param1 & CT_FLAG_ENERGY_RESET) > 0){
+            adc_kwh = 0;
+            Settings.adc_param1 ^= CT_FLAG_ENERGY_RESET;            // Cancel energy reset flag
+          }
+
         } else       {                                         // Set default values based on current adc type
         // AdcParam 2
         // AdcParam 3
