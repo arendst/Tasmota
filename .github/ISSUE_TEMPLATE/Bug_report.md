@@ -38,7 +38,7 @@ _Make sure your have performed every step and checked the applicable boxes befor
   - [ ] Self-compiled
     - [ ] IDE / Compiler used: _____
 - [ ] Flashing tools used: _____
-- [ ] Provide the output of command: ``Backlog Template; Module; GPIO``:
+- [ ] Provide the output of command: ``Backlog Template; Module; GPIO 255``:
   ```
   Configuration output here:
 
