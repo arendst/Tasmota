@@ -27,6 +27,7 @@
 // Parameters for equation
 bool gpy_active = true;
 bool gpy_gpio_pin = false;
+int last_value = 0;
 
 void GPYInit(void)
 {
@@ -60,22 +61,27 @@ uint16_t GPYRead(uint8_t factor)
   uint8_t samples = 1 << factor;
   uint16_t analog = 0;
 
-  noInterrupts();
   byte x;
   for (x = 0; x < samples; x++)
   {
+    noInterrupts();
     digitalWrite(pin[GPIO_GP2Y10], LOW);
     delayMicroseconds(280);
     analog += analogRead(A0);
     delayMicroseconds(40);
     digitalWrite(pin[GPIO_GP2Y10], HIGH);
-    delayMicroseconds(9680);
+    interrupts();
+    if (x < (samples - 1)) { delayMicroseconds(9680); }
+
   }
-  interrupts();
 
-  int qual = 100 - ((analog*100) >> (factor+10));
 
-  return qual;
+  // exponential running average
+  int qual = 10000 - ((analog*10000) >> (factor+10));
+
+  last_value = (0.1 * qual) + 0.9 * last_value;
+
+  return last_value / 100;
 }
 
 #ifdef USE_RULES
@@ -97,7 +103,7 @@ void GPYEverySecond(void)
 void GPYShow(bool json)
 {
   if (gpy_active) {
-      uint16_t gpy_quality = GPYRead(4);
+      uint16_t gpy_quality = GPYRead(0);   //only one sample
         if (json) {
           ResponseAppend_P(JSON_SNS_AIRQUALITY, D_SENSOR_GP2Y10, gpy_quality);
     #ifdef USE_WEBSERVER
