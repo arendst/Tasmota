@@ -670,8 +670,13 @@ void SettingsDefaultSet2(void)
 //  for (uint32_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
 
   // Serial
-  Settings.baudrate = APP_BAUDRATE / 300;
+
+  SerialCfg config = SettingToSerialCfg(Settings.serial_config);
+  config.baudrate = APP_BAUDRATE / 300;
+  Settings.serial_config = SerialCfgToSetting(config);
+
   Settings.sbaudrate = SOFT_BAUDRATE / 300;
+  //Settings.serial_config = SERIAL_8N1;
   Settings.serial_delimiter = 0xff;
   Settings.seriallog_level = SERIAL_LOG_LEVEL;
 
@@ -1059,7 +1064,10 @@ void SettingsDelta(void)
       }
     }
     if (Settings.version < 0x06060009) {
-      Settings.baudrate = Settings.ex_baudrate * 4;
+      SerialCfg config = SettingToSerialCfg(Settings.serial_config);
+      config.baudrate = Settings.ex_baudrate * 4;
+      Settings.serial_config = SerialCfgToSetting(config);
+
       Settings.sbaudrate = Settings.ex_sbaudrate * 4;
     }
     if (Settings.version < 0x0606000A) {
@@ -1159,4 +1167,27 @@ void SettingsDelta(void)
     Settings.version = VERSION;
     SettingsSave(1);
   }
+}
+
+/* Performs the bitwise operations needed for translating the serial port settings 16-bit word
+  to the SerialCfg struct: */
+SerialCfg SettingToSerialCfg(uint16_t setting)
+{
+  SerialCfg serial_config;
+
+  serial_config.baudrate = (uint16_t) (setting >> 2) & 0x3FFF;
+  serial_config.mode = (uint8_t) (setting) & 0x3;
+
+  return serial_config;
+}
+
+/* Performs the bitwise operations needed for translating from the SerialCfg struct 
+  to the serial port settings 16-bit word: */
+uint16_t SerialCfgToSetting(SerialCfg serial_config)
+{
+  uint16_t setting;
+
+  setting = (uint16_t) ((uint16_t) (serial_config.baudrate << 2 & 0xFFFC)) | (serial_config.mode & 0x3);
+
+  return setting;
 }

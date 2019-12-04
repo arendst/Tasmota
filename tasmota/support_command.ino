@@ -23,10 +23,10 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|" D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|"
   D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_FREQUENCY_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_WEIGHT_RESOLUTION "|"
   D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_TEMPLATE "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|"
-  D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SYSLOG "|" D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|"
-  D_CMND_SERIALDELIMITER "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|"
-  D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
-  D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|"
+  D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SYSLOG "|" D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_SERIALSEND "|" D_CMND_SERIALCONFIG "|"
+  D_CMND_BAUDRATE "|" D_CMND_SERIALDELIMITER "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" 
+  D_CMND_WIFICONFIG "|" D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" 
+  D_CMND_TIMESTD "|" D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -38,7 +38,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndSetoption, &CmndTemperatureResolution, &CmndHumidityResolution, &CmndPressureResolution, &CmndPowerResolution,
   &CmndVoltageResolution, &CmndFrequencyResolution, &CmndCurrentResolution, &CmndEnergyResolution, &CmndWeightResolution,
   &CmndModule, &CmndModules, &CmndGpio, &CmndGpios, &CmndTemplate, &CmndPwm, &CmndPwmfrequency, &CmndPwmrange,
-  &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport, &CmndSerialSend, &CmndBaudrate,
+  &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport, &CmndSerialSend, &CmndSerialConfig, &CmndBaudrate,
   &CmndSerialDelimiter, &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig,
   &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndWifiPower, &CmndTempOffset,
@@ -1072,14 +1072,44 @@ void CmndSwitchDebounce(void)
   ResponseCmndNumber(Settings.switch_debounce);
 }
 
+/**
+ * Changes the Serial port number of bits, parity and stop bits.
+ * For the time being this command only has effect on the hardware
+ * serial port (GPIO1 and GPIO3)
+ * 
+ * Meaning of the values:
+ * 
+ *   0 - 7N1 (7 data bits / no parity / 1 stop bit)
+ *   1 - 7E1 (7 data bits / even parity / 1 stop bit)
+ *   2 - 8N1 (8 data bits / no parity / 1 stop bit)
+ *   3 - 8E1 (8 data bits / even parity / 1 stop bit)
+ * 
+ */
+
+void CmndSerialConfig(void)
+{
+  // a frugal validation to check if the provided serial port mode is valid:
+
+  if (XdrvMailbox.payload >= 0 && XdrvMailbox.payload <= 3) {
+    uint8_t mode = (uint8_t) (XdrvMailbox.payload & 3);
+
+    SetSerialConfig(mode);
+  }
+
+  SerialCfg config = SettingToSerialCfg(Settings.serial_config);
+
+  ResponseCmndNumber(config.mode);
+}
+
 void CmndBaudrate(void)
 {
-  if (XdrvMailbox.payload >= 300) {
-    XdrvMailbox.payload /= 300;  // Make it a valid baudrate
-    baudrate = (XdrvMailbox.payload & 0xFFFF) * 300;
-    SetSerialBaudrate(baudrate);
+  if (XdrvMailbox.payload >= 300) {    
+    SetSerialBaudrate(XdrvMailbox.payload);
   }
-  ResponseCmndNumber(Settings.baudrate * 300);
+
+  SerialCfg config = SettingToSerialCfg(Settings.serial_config);
+
+  ResponseCmndNumber(config.baudrate * 300);
 }
 
 void CmndSerialSend(void)

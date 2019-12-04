@@ -231,6 +231,26 @@ typedef struct {
 
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
+/** 
+ *  Structure used for holding the hardware serial port settings.
+ *  
+ *  Description of the fields:
+ * 
+ *  baudrate - the baud rate multiplier, which can range from 0 - 15360 (multiply by 300 to obtain the actual baud rate)
+ *  mode - encodes a selection of the main serial port settings.
+ * 
+ *  The mode field can take the following values:
+ * 
+ *    0 - 7N1 (7 data bits / no parity / 1 stop bit)
+ *    1 - 7E1 (7 data bits / even parity / 1 stop bit)
+ *    2 - 8N1 (8 data bits / no parity / 1 stop bit)
+ *    3 - 8E1 (8 data bits / even parity / 1 stop bit)
+ */
+typedef struct {
+  uint16_t baudrate;          // the baud rate multiplier, which can range from 0 - 15360 (multiply by 300 to obtain the actual baud rate)
+  uint8_t  mode;              // encodes a selection of the main serial port settings: 8E1, 8N1, 7E1 and 7N1
+} SerialCfg;
+
 /*
 struct SYSCFG {
   unsigned long cfg_holder;                // 000 Pre v6 header
@@ -397,7 +417,7 @@ struct SYSCFG {
   uint8_t       web_color[18][3];          // 73E
   uint16_t      display_width;             // 774
   uint16_t      display_height;            // 776
-  uint16_t      baudrate;                  // 778
+  uint16_t      serial_config;             // 778 - 11 MSB's define the baud rate; 5 LSB's define the serial config (e.g. 8N1). Maps to the SerialCfg struct.
   uint16_t      sbaudrate;                 // 77A
   EnergyUsage   energy_usage;              // 77C
 //  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries

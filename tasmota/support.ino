@@ -738,16 +738,42 @@ int GetStateNumber(char *state_text)
   return state_number;
 }
 
-void SetSerialBaudrate(int baudrate)
+void SetSerialConfig(uint8_t mode)
 {
-  Settings.baudrate = baudrate / 300;
+  SerialCfg config = SettingToSerialCfg(Settings.serial_config);
+  config.mode = mode;
+  Settings.serial_config = SerialCfgToSetting(config);
+
+  SerialConfig hardware_serial_config = ConvertSettingByteToSerialConfig(mode);
+
+  if (seriallog_level) {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SET_SERIAL_CONFIG_TO " %d"), mode);
+  }
+
+  delay(100);
+  Serial.flush();
+
+  Serial.begin(Serial.baudRate(), hardware_serial_config);
+  delay(10);
+  Serial.println();
+}
+
+void SetSerialBaudrate(uint32_t baudrate)
+{
+  SerialCfg config = SettingToSerialCfg(Settings.serial_config);
+  config.baudrate = ((baudrate / 300) & 0x3FFF);
+  Settings.serial_config = SerialCfgToSetting(config);
+
+  SerialConfig hardware_serial_config = ConvertSettingByteToSerialConfig(config.mode);
+
   if (Serial.baudRate() != baudrate) {
     if (seriallog_level) {
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
     }
     delay(100);
     Serial.flush();
-    Serial.begin(baudrate, serial_config);
+
+    Serial.begin(baudrate, hardware_serial_config);
     delay(10);
     Serial.println();
   }
@@ -759,7 +785,10 @@ void ClaimSerial(void)
   AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
   baudrate = Serial.baudRate();
-  Settings.baudrate = baudrate / 300;
+
+  SerialCfg config = SettingToSerialCfg(Settings.serial_config);
+  config.baudrate = baudrate / 300;
+  Settings.serial_config = SerialCfgToSetting(config);
 }
 
 void SerialSendRaw(char *codes)
@@ -1646,4 +1675,29 @@ void AddLogSerial(uint32_t loglevel)
 void AddLogMissed(char *sensor, uint32_t misses)
 {
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SNS: %s missed %d"), sensor, SENSOR_MAX_MISS - misses);
+}
+
+SerialConfig ConvertSettingByteToSerialConfig(uint8_t setting_byte) 
+{
+  SerialConfig hardware_serial_config;
+
+  switch(setting_byte) {
+    case 0:
+      hardware_serial_config = SERIAL_7N1;
+      break;
+    case 1:
+      hardware_serial_config = SERIAL_7E1;
+      break;      
+    case 2:
+      hardware_serial_config = SERIAL_8N1;
+      break;
+    case 3:
+      hardware_serial_config = SERIAL_8E1;
+      break;
+    default:
+      hardware_serial_config = SERIAL_8N1;
+      break;
+  }
+
+  return hardware_serial_config;
 }
