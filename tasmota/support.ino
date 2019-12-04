@@ -521,7 +521,7 @@ char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
   return GetPowerDevice(dest, idx, size, 0);
 }
 
-bool IsEsp8285(void)
+void GetEspHardwareType(void)
 {
   // esptool.py get_efuses
   uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
@@ -529,17 +529,16 @@ bool IsEsp8285(void)
 //  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
 //  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
 
-  bool is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
+  is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
   if (is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
     is_8285 = false;  // ESP8285 can only have 1M flash
   }
-  return is_8285;
 }
 
 String GetDeviceHardware(void)
 {
   char buff[10];
-  if (IsEsp8285()) {
+  if (is_8285) {
     strcpy_P(buff, PSTR("ESP8285"));
   } else {
     strcpy_P(buff, PSTR("ESP8266EX"));
@@ -1063,18 +1062,18 @@ bool FlashPin(uint32_t pin)
 
 uint8_t ValidPin(uint32_t pin, uint32_t gpio)
 {
-  uint8_t result = gpio;
-
   if (FlashPin(pin)) {
-    result = GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
+    return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
-  if (!IsEsp8285() && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
+
+//  if (!is_8285 && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
+  if ((WEMOS == Settings.module) && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
     if ((pin == 9) || (pin == 10)) {
-      result = GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
+      return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
     }
   }
 
-  return result;
+  return gpio;
 }
 
 bool ValidGPIO(uint32_t pin, uint32_t gpio)

@@ -1510,33 +1510,6 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
   LightState(0);
 }
 
-void LightWheel(uint8_t wheel_pos)
-{
-  wheel_pos = 255 - wheel_pos;
-  if (wheel_pos < 85) {
-    Light.entry_color[0] = 255 - wheel_pos * 3;
-    Light.entry_color[1] = 0;
-    Light.entry_color[2] = wheel_pos * 3;
-  } else if (wheel_pos < 170) {
-    wheel_pos -= 85;
-    Light.entry_color[0] = 0;
-    Light.entry_color[1] = wheel_pos * 3;
-    Light.entry_color[2] = 255 - wheel_pos * 3;
-  } else {
-    wheel_pos -= 170;
-    Light.entry_color[0] = wheel_pos * 3;
-    Light.entry_color[1] = 255 - wheel_pos * 3;
-    Light.entry_color[2] = 0;
-  }
-  Light.entry_color[3] = 0;
-  Light.entry_color[4] = 0;
-  float dimmer = 100 / (float)Settings.light_dimmer;
-  for (uint32_t i = 0; i < LST_RGB; i++) {
-    float temp = (float)Light.entry_color[i] / dimmer + 0.5f;
-    Light.entry_color[i] = (uint8_t)temp;
-  }
-}
-
 void LightCycleColor(int8_t direction)
 {
   if (Light.strip_timer_counter % (Settings.light_speed * 2)) {
@@ -1547,12 +1520,17 @@ void LightCycleColor(int8_t direction)
     if (Light.random == Light.wheel) {
       Light.random = random(255);
     }
-    Light.wheel += (Light.random < Light.wheel) ? -1 : 1;
-  } else {
-    Light.wheel += direction;
+    direction = (Light.random < Light.wheel) ? -1 : 1;
   }
-  LightWheel(Light.wheel);
-  memcpy(Light.new_color, Light.entry_color, sizeof(Light.new_color));
+  Light.wheel += direction;
+  uint16_t hue = changeUIntScale(Light.wheel, 0, 255, 0, 359);  // Scale to hue to keep amount of steps low (max 255 instead of 359)
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
+
+  uint8_t sat;
+  light_state.getHSB(nullptr, &sat, nullptr);  // Allow user control over Saturation
+  light_state.setHS(hue, sat);
+  light_controller.calcLevels(Light.new_color);
 }
 
 void LightSetPower(void)
@@ -1593,12 +1571,16 @@ void LightAnimate(void)
 {
   uint8_t cur_col[LST_MAX];
   uint16_t light_still_on = 0;
+  bool power_off = false;
 
   Light.strip_timer_counter++;
   if (!Light.power) {                   // All channels powered off
     Light.strip_timer_counter = 0;
     if (!Light.fade_running) {
       sleep = Settings.sleep;
+    }
+    if (Settings.light_scheme >= LS_MAX) {
+      power_off = true;
     }
   } else {
     if (Settings.sleep > PWM_MAX_SLEEP) {
@@ -1651,7 +1633,7 @@ void LightAnimate(void)
     }
   }
 
-  if (Settings.light_scheme < LS_MAX) {     // exclude WS281X Neopixel
+  if ((Settings.light_scheme < LS_MAX) || power_off) {  // exclude WS281X Neopixel schemes
 
     // Apply power modifiers to Light.new_color
     LightApplyPower(Light.new_color, Light.power);
@@ -1736,7 +1718,7 @@ void LightAnimate(void)
         cur_col_10bits[i] = orig_col_10bits[Light.color_remap[i]];
       }
 
-      if (!Settings.light_fade) { // no fade
+      if (!Settings.light_fade || power_off) { // no fade
         // record the current value for a future Fade
         memcpy(Light.fade_start_8, cur_col, sizeof(Light.fade_start_8));
         memcpy(Light.fade_start_10, cur_col_10bits, sizeof(Light.fade_start_10));
