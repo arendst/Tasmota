@@ -233,6 +233,14 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     if (rule_param.startsWith(stemp)) {
       rule_param = GetDateAndTime(DT_LOCAL).c_str();
     }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%TOPIC%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(Settings.mqtt_topic);
+    }
+    snprintf_P(stemp, sizeof(stemp), PSTR("%%GTOPIC%%"));
+    if (rule_param.startsWith(stemp)) {
+      rule_param = String(Settings.mqtt_grptopic);
+    }
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
     snprintf_P(stemp, sizeof(stemp), PSTR("%%SUNRISE%%"));
     if (rule_param.startsWith(stemp)) {
@@ -373,6 +381,7 @@ void RulesVarReplace(String &commands, const String &sfind, const String &replac
   char *find = (char*)sfind.c_str();
   uint32_t flen = strlen(find);
 
+AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Find in = %s, Search = %s, replace with %s"), commands.c_str(), find, replace.c_str());
   String ucommand = commands;
   ucommand.toUpperCase();
   char *read_from = (char*)ucommand.c_str();
@@ -452,6 +461,8 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%TIME%"), String(MinutesPastMidnight()));
       RulesVarReplace(commands, F("%UPTIME%"), String(MinutesUptime()));
       RulesVarReplace(commands, F("%TIMESTAMP%"), GetDateAndTime(DT_LOCAL));
+      RulesVarReplace(commands, F("%TOPIC%"), String(Settings.mqtt_topic));
+      RulesVarReplace(commands, F("%GTOPIC%"), String(Settings.mqtt_grptopic));
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
