@@ -417,7 +417,7 @@ struct SYSCFG {
   uint8_t       web_color[18][3];          // 73E
   uint16_t      display_width;             // 774
   uint16_t      display_height;            // 776
-  uint16_t      serial_config;             // 778 - 11 MSB's define the baud rate; 5 LSB's define the serial config (e.g. 8N1). Maps to the SerialCfg struct.
+  uint16_t      serial_config;             // 778 - 14 MSB's define the baud rate; 2 LSB's define the serial config (e.g. 8N1). Maps to the SerialCfg struct.
   uint16_t      sbaudrate;                 // 77A
   EnergyUsage   energy_usage;              // 77C
 //  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries
