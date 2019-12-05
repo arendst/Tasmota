@@ -499,7 +499,10 @@ const uint8_t meter[]=
 #define USE_SML_MEDIAN_FILTER
 
 // max number of vars , may be adjusted
+#ifndef MAX_VARS
 #define MAX_VARS 20
+#endif
+
 // max number of meters , may be adjusted
 #define MAX_METERS 5
 double meter_vars[MAX_VARS];
