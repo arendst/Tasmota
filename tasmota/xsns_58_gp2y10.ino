@@ -79,7 +79,7 @@ uint16_t GPYRead(uint8_t factor)
   // exponential running average
   int qual = 10000 - ((analog*10000) >> (factor+10));
 
-  last_value = (0.1 * qual) + 0.9 * last_value;
+  last_value = (0.05 * qual) + 0.95 * last_value;
 
   return last_value / 100;
 }
@@ -93,7 +93,7 @@ void GPYEvery250ms(void)
 
 void GPYEverySecond(void)
 {
-
+  GPYRead(0);
 }
 
 /*********************************************************************************************\
