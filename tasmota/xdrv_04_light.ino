@@ -241,8 +241,8 @@ struct LIGHT {
   uint8_t last_color[LST_MAX];
   uint8_t color_remap[LST_MAX];
 
-  uint16_t wheel = 0;
-  uint16_t random = 0;
+  uint8_t wheel = 0;
+  uint8_t random = 0;
   uint8_t subtype = 0;                    // LST_ subtype
   uint8_t device = 0;
   uint8_t old_power = 1;
@@ -1518,18 +1518,18 @@ void LightCycleColor(int8_t direction)
 
   if (0 == direction) {
     if (Light.random == Light.wheel) {
-      Light.random = random(358) +1;  // Random Hue
+      Light.random = random(255);
     }
-    Light.wheel += (Light.random < Light.wheel) ? -1 : 1;
-  } else {
-    Light.wheel += direction;
+    direction = (Light.random < Light.wheel) ? -1 : 1;
   }
-  if (Light.wheel > 359) { Light.wheel = 1; }  // Loop Hue colors
-  if (Light.wheel < 1) { Light.wheel = 359; }  // Loop Hue colors
+  Light.wheel += direction;
+  uint16_t hue = changeUIntScale(Light.wheel, 0, 255, 0, 359);  // Scale to hue to keep amount of steps low (max 255 instead of 359)
+
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
 
   uint8_t sat;
   light_state.getHSB(nullptr, &sat, nullptr);  // Allow user control over Saturation
-  light_state.setHS(Light.wheel, sat);
+  light_state.setHS(hue, sat);
   light_controller.calcLevels(Light.new_color);
 }
 
@@ -1571,12 +1571,16 @@ void LightAnimate(void)
 {
   uint8_t cur_col[LST_MAX];
   uint16_t light_still_on = 0;
+  bool power_off = false;
 
   Light.strip_timer_counter++;
   if (!Light.power) {                   // All channels powered off
     Light.strip_timer_counter = 0;
     if (!Light.fade_running) {
       sleep = Settings.sleep;
+    }
+    if (Settings.light_scheme >= LS_MAX) {
+      power_off = true;
     }
   } else {
     if (Settings.sleep > PWM_MAX_SLEEP) {
@@ -1629,7 +1633,7 @@ void LightAnimate(void)
     }
   }
 
-  if (Settings.light_scheme < LS_MAX) {     // exclude WS281X Neopixel
+  if ((Settings.light_scheme < LS_MAX) || power_off) {  // exclude WS281X Neopixel schemes
 
     // Apply power modifiers to Light.new_color
     LightApplyPower(Light.new_color, Light.power);
@@ -1714,7 +1718,7 @@ void LightAnimate(void)
         cur_col_10bits[i] = orig_col_10bits[Light.color_remap[i]];
       }
 
-      if (!Settings.light_fade) { // no fade
+      if (!Settings.light_fade || power_off) { // no fade
         // record the current value for a future Fade
         memcpy(Light.fade_start_8, cur_col, sizeof(Light.fade_start_8));
         memcpy(Light.fade_start_10, cur_col_10bits, sizeof(Light.fade_start_10));

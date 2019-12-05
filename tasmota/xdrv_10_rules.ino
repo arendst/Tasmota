@@ -452,6 +452,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%TIME%"), String(MinutesPastMidnight()));
       RulesVarReplace(commands, F("%UPTIME%"), String(MinutesUptime()));
       RulesVarReplace(commands, F("%TIMESTAMP%"), GetDateAndTime(DT_LOCAL));
+      RulesVarReplace(commands, F("%TOPIC%"), Settings.mqtt_topic);
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));
