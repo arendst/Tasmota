@@ -31,7 +31,7 @@ const uint64_t crash_sig   = 0xDEADBEEFCCAA5588L;     // arbitrary signature to 
 const uint64_t crash_empty = 0xFFFFFFFFFFFFFFFFL;     // all ones means the flash was correctly erased
 const uint32_t dump_max_len = 1024;                   // dump only 1024 bytes of stack, i.e. 256 addresses
 
-static bool stacktrace_armed = false;        // should we record the stacktrace
+static bool stacktrace_armed = true;        // should we record the stacktrace
 
 typedef struct CrashRecorder_t {
   uint64_t crash_signature = crash_sig;
