@@ -74,6 +74,13 @@ void ResponseCmndChar(const char* value)
   Response_P(S_JSON_COMMAND_SVALUE, XdrvMailbox.command, value);
 }
 
+void ResponseCmndChar_P(const char* value)
+{
+  char tmp[strlen_P(value) + 1];
+  strcpy_P(tmp, value);
+  ResponseCmndChar(tmp);
+}
+
 void ResponseCmndStateText(uint32_t value)
 {
   ResponseCmndChar(GetStateText(value));

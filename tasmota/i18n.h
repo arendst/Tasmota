@@ -490,6 +490,17 @@
     #define D_JSON_MOTOR_MIS "setMIS"
   #endif
 
+// Commands xdrv_32_crash_recorder.ino
+#define D_CMND_CRASHRECORD "CrashRecord"
+#define D_CMND_CRASHDUMP "CrashDump"
+#define D_CMND_CRASH "Crash"
+  #define D_JSON_ONE_TO_CRASH "1 to crash"
+  #define D_JSON_CRASH_RECORD "Crashrecord"
+  #define D_JSON_CRASH_RECORD_ERASED "Crashrecord erased"
+  #define D_JSON_CRASH_RECORD_PRESENT D_CMND_CRASHDUMP " already present, use 1 to erase"
+  #define D_JSON_ERR_ERASE_SECTOR "unable to erase sector"
+  #define D_JSON_NO_DUMP "no dump found"
+
 /********************************************************************************************/
 
 // Log message prefix

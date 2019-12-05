@@ -6,6 +6,7 @@
 - Fix Zigbee uses Hardware Serial if GPIO 1/3 or GPIO 13/15 and SerialLog 0 (#7071)
 - Fix WS2812 power control (#7090)
 - Change light color schemes 2, 3 and 4 from color wheel to Hue driven
+- Add Crash Recorder to help investigate rare crashes
 
 ## Released
 
