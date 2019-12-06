@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 7.1.2.2 20191206
+
+- Add command ``SerialConfig 0..23`` or ``SerialConfig 8N1`` to select Serial Config (#7108)
+
 ### 7.1.2.1 20191206
 
 - Add rule var ``%topic%`` (#5522)

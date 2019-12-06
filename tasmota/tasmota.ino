@@ -74,8 +74,6 @@ const char kCodeImage[] PROGMEM = "tasmota|minimal|sensors|knx|basic|display|ir"
  * Global variables
 \*********************************************************************************************/
 
-SerialConfig serial_config = SERIAL_8N1;    // Serial interface configuration 8 data bits, No parity, 1 stop bit
-
 WiFiUDP PortUdp;                            // UDP Syslog and Alexa
 
 unsigned long feature_drv1;                 // Compiled driver feature map

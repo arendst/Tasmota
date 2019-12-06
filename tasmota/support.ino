@@ -737,19 +737,50 @@ int GetStateNumber(char *state_text)
   return state_number;
 }
 
+String GetSerialConfig(void)
+{
+  // Settings.serial_config layout
+  // b000000xx - 5, 6, 7 or 8 data bits
+  // b00000x00 - 1 or 2 stop bits
+  // b000xx000 - None, Even or Odd parity
+
+  const char kParity[] = "NEOI";
+
+  char config[4];
+  config[0] = '5' + (Settings.serial_config & 0x3);
+  config[1] = kParity[(Settings.serial_config >> 3) & 0x3];
+  config[2] = '1' + ((Settings.serial_config >> 2) & 0x1);
+  config[3] = '\0';
+  return String(config);
+}
+
+void SetSerialBegin(uint32_t baudrate)
+{
+  if (seriallog_level) {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Set Serial to %s %d bit/s"), GetSerialConfig().c_str(), baudrate);
+    delay(100);
+  }
+  Serial.flush();
+  Serial.begin(baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
+  delay(10);
+  Serial.println();
+}
+
+void SetSerialConfig(uint32_t serial_config)
+{
+  if (serial_config == Settings.serial_config) { return; }
+  if (serial_config > TS_SERIAL_8O2) { return; }
+
+  Settings.serial_config = serial_config;
+  SetSerialBegin(Serial.baudRate());
+}
+
 void SetSerialBaudrate(int baudrate)
 {
   Settings.baudrate = baudrate / 300;
-  if (Serial.baudRate() != baudrate) {
-    if (seriallog_level) {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
-    }
-    delay(100);
-    Serial.flush();
-    Serial.begin(baudrate, serial_config);
-    delay(10);
-    Serial.println();
-  }
+  if (Serial.baudRate() == baudrate) { return; }
+
+  SetSerialBegin(baudrate);
 }
 
 void ClaimSerial(void)

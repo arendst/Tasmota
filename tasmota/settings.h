@@ -269,9 +269,7 @@ struct SYSCFG {
   uint8_t       free_1d6[10];              // 1D6
 
   SysBitfield4  flag4;                     // 1E0
-
-  uint8_t       free_1e4;                  // 1E4
-
+  uint8_t       serial_config;             // 1E4
   uint8_t       wifi_output_power;         // 1E5
   uint8_t       shutter_accuracy;          // 1E6
   uint8_t       mqttlog_level;             // 1E7

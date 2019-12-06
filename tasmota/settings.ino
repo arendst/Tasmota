@@ -156,6 +156,23 @@ const char kWebColors[] PROGMEM =
   COLOR_BUTTON_TEXT "|" COLOR_BUTTON "|" COLOR_BUTTON_HOVER "|" COLOR_BUTTON_RESET "|" COLOR_BUTTON_RESET_HOVER "|" COLOR_BUTTON_SAVE "|" COLOR_BUTTON_SAVE_HOVER "|"
   COLOR_TIMER_TAB_TEXT "|" COLOR_TIMER_TAB_BACKGROUND "|" COLOR_TITLE_TEXT;
 
+enum TasmotaSerialConfig {
+  TS_SERIAL_5N1, TS_SERIAL_6N1, TS_SERIAL_7N1, TS_SERIAL_8N1,
+  TS_SERIAL_5N2, TS_SERIAL_6N2, TS_SERIAL_7N2, TS_SERIAL_8N2,
+  TS_SERIAL_5E1, TS_SERIAL_6E1, TS_SERIAL_7E1, TS_SERIAL_8E1,
+  TS_SERIAL_5E2, TS_SERIAL_6E2, TS_SERIAL_7E2, TS_SERIAL_8E2,
+  TS_SERIAL_5O1, TS_SERIAL_6O1, TS_SERIAL_7O1, TS_SERIAL_8O1,
+  TS_SERIAL_5O2, TS_SERIAL_6O2, TS_SERIAL_7O2, TS_SERIAL_8O2 };
+
+const uint8_t kTasmotaSerialConfig[] PROGMEM = {
+  SERIAL_5N1, SERIAL_6N1, SERIAL_7N1, SERIAL_8N1,
+  SERIAL_5N2, SERIAL_6N2, SERIAL_7N2, SERIAL_8N2,
+  SERIAL_5E1, SERIAL_6E1, SERIAL_7E1, SERIAL_8E1,
+  SERIAL_5E2, SERIAL_6E2, SERIAL_7E2, SERIAL_8E2,
+  SERIAL_5O1, SERIAL_6O1, SERIAL_7O1, SERIAL_8O1,
+  SERIAL_5O2, SERIAL_6O2, SERIAL_7O2, SERIAL_8O2
+};
+
 /*********************************************************************************************\
  * RTC memory
 \*********************************************************************************************/
@@ -670,6 +687,7 @@ void SettingsDefaultSet2(void)
 //  for (uint32_t i = 1; i < MAX_PULSETIMERS; i++) { Settings.pulse_timer[i] = 0; }
 
   // Serial
+  Settings.serial_config = TS_SERIAL_8N1;
   Settings.baudrate = APP_BAUDRATE / 300;
   Settings.sbaudrate = SOFT_BAUDRATE / 300;
   Settings.serial_delimiter = 0xff;
@@ -1154,6 +1172,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x07000004) {
       Settings.wifi_output_power = 170;
+    }
+    if (Settings.version < 0x07010202) {
+      Settings.serial_config = TS_SERIAL_8N1;
     }
 
     Settings.version = VERSION;
