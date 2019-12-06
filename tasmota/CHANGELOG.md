@@ -5,7 +5,12 @@
 - Fix lost functionality of GPIO9 and GPIO10 on some devices (#7080)
 - Fix Zigbee uses Hardware Serial if GPIO 1/3 or GPIO 13/15 and SerialLog 0 (#7071)
 - Fix WS2812 power control (#7090)
-- Change light color schemes 2, 3 and 4 from color wheel to Hue driven
+- Change light color schemes 2, 3 and 4 from color wheel to Hue driven with user Saturation control
+- Change log buffer size from 520 to 700 characters accomodating full rule text (#7110)
+- Add rule var ``%topic%`` (#5522)
+- Add rule triggers ``tele_power1#state`` and multiple ``tele-wifi1#xxx`` (#7093)
+- Add experimental support for stepper motor shutter control
+- Add optional USE_MQTT_TLS to tasmota-minimal.bin (#7115)
 
 ## Released
 
