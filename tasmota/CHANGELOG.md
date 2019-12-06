@@ -1,5 +1,18 @@
 ## Unreleased (development)
 
+### 7.1.2.1 20191206
+
+- Add rule var ``%topic%`` (#5522)
+- Add rule triggers ``tele_power1#state`` and multiple ``tele-wifi1#xxx`` (#7093)
+- Add experimental support for stepper motor shutter control
+- Add optional USE_MQTT_TLS to tasmota-minimal.bin (#7115)
+
+## Released
+
+### 7.1.2 20191206
+
+- Maintenance Release
+
 ### 7.1.1.1 20191201
 
 - Fix lost functionality of GPIO9 and GPIO10 on some devices (#7080)
@@ -7,12 +20,6 @@
 - Fix WS2812 power control (#7090)
 - Change light color schemes 2, 3 and 4 from color wheel to Hue driven with user Saturation control
 - Change log buffer size from 520 to 700 characters accomodating full rule text (#7110)
-- Add rule var ``%topic%`` (#5522)
-- Add rule triggers ``tele_power1#state`` and multiple ``tele-wifi1#xxx`` (#7093)
-- Add experimental support for stepper motor shutter control
-- Add optional USE_MQTT_TLS to tasmota-minimal.bin (#7115)
-
-## Released
 
 ### 7.1.1 20191201
 
