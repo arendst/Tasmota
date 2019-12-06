@@ -47,9 +47,10 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 7.1.1 Betty
+### Version 7.1.2 Betty
 
-- Fix slider for devices with one or two channels like only white or white/yellow
-- Fix TasmotaSlave buffer overrun on Tele
-- Fix light scheme 4 speed (#7072)
-- Add support for TasmotaSlave executing commands on Tasmota
+- Fix lost functionality of GPIO9 and GPIO10 on some devices (#7080)
+- Fix Zigbee uses Hardware Serial if GPIO 1/3 or GPIO 13/15 and SerialLog 0 (#7071)
+- Fix WS2812 power control (#7090)
+- Change light color schemes 2, 3 and 4 from color wheel to Hue driven with user Saturation control
+- Change log buffer size from 520 to 700 characters accomodating full rule text (#7110)

@@ -38,31 +38,31 @@ _Make sure your have performed every step and checked the applicable boxes befor
   - [ ] Self-compiled
     - [ ] IDE / Compiler used: _____
 - [ ] Flashing tools used: _____
-- [ ] Provide the output of command: ``Backlog Template; Module; GPIO 255``:
-  ```
+- [ ] Provide the output of command: `Backlog Template; Module; GPIO 255`:
+```
   Configuration output here:
 
 
-  ```
-- [ ] If using rules, provide the output of this command: ``Backlog Rule1; Rule2; Rule3``:
-  ```
+```
+- [ ] If using rules, provide the output of this command: `Backlog Rule1; Rule2; Rule3`:
+```
   Rules output here:
 
 
-  ```
-- [ ] Provide the output of this command: ``Status 0``:
-  ```
+```
+- [ ] Provide the output of this command: `Status 0`:
+```
   STATUS 0 output here:
 
 
-  ```
+```
 - [ ] Provide the output of the Console log output when you experience your issue; if applicable:
-  _(Please use_ ``weblog 4`` _for more debug information)_
-  ```
+  _(Please use_ `weblog 4` _for more debug information)_
+```
   Console output here:
 
 
-  ```
+```
 
 ### TO REPRODUCE
 _Steps to reproduce the behavior:_
