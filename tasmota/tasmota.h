@@ -131,7 +131,7 @@ const uint32_t SOFT_BAUDRATE = 9600;        // Default software serial baudrate
 const uint32_t APP_BAUDRATE = 115200;       // Default serial baudrate
 const uint32_t SERIAL_POLLING = 100;        // Serial receive polling in ms
 const uint32_t ZIGBEE_POLLING = 100;        // Serial receive polling in ms
-const uint8_t MAX_STATUS = 12;              // Max number of status lines
+const uint8_t MAX_STATUS = 11;              // Max number of status lines
 
 const uint32_t START_VALID_TIME = 1451602800;  // Time is synced and after 2016-01-01
 

@@ -483,13 +483,6 @@ void CmndStatus(void)
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "11"));
   }
 
-  if ((0 == payload) || (12 == payload)) {
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS12_STATUS "\":"));
-    CrashDump();
-    ResponseJsonEnd();
-    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "12"));
-  }
-
 #ifdef USE_SCRIPT_STATUS
   if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">U",2,mqtt_data);
 #endif
@@ -570,9 +563,6 @@ void CmndRestart(void)
   case 1:
     restart_flag = 2;
     ResponseCmndChar(D_JSON_RESTARTING);
-    break;
-  case -1:
-    CmndCrash();    // force a crash
     break;
   case 99:
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
