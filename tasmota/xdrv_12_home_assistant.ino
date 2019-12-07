@@ -86,6 +86,7 @@ const char HASS_DISCOVER_SENSOR[] PROGMEM =
   "{\"name\":\"%s\","                                 // dualr2 1 BTN
   "\"stat_t\":\"%s\","                                // cmnd/dualr2/POWER  (implies "\"optimistic\":\"false\",")
   "\"avty_t\":\"%s\","                                // tele/dualr2/LWT
+  "\"frc_upd\":true,"                                 // force update for better graph representation 
   "\"pl_avail\":\"" D_ONLINE "\","                    // Online
   "\"pl_not_avail\":\"" D_OFFLINE "\"";               // Offline
 
