@@ -293,8 +293,6 @@
   #define D_JSON_FLAG "FLAG"
   #define D_JSON_BASE "BASE"
 #define D_CMND_TEMPOFFSET "TempOffset"
-#define D_CMND_CRASH "Crash"
-  #define D_JSON_ONE_TO_CRASH "1 to crash"
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTLOG "MqttLog"

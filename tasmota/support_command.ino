@@ -30,9 +30,6 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
-#ifdef USE_CRASH
-  D_CMND_CRASH "|"
-#endif
   D_CMND_SENSOR "|" D_CMND_DRIVER ;
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
@@ -47,9 +44,6 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndWifiPower, &CmndTempOffset,
 #ifdef USE_I2C
   &CmndI2cScan, CmndI2cDriver,
-#endif
-#ifdef USE_CRASH
-  &CmndCrash,
 #endif
   &CmndSensor, &CmndDriver };
 
@@ -576,6 +570,9 @@ void CmndRestart(void)
   case 1:
     restart_flag = 2;
     ResponseCmndChar(D_JSON_RESTARTING);
+    break;
+  case -1:
+    CmndCrash();    // force a crash
     break;
   case 99:
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));

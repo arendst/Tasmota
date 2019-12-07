@@ -46,12 +46,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 // Generate a crash to test the crash recorder
 void CmndCrash(void)
 {
-  if (1 == XdrvMailbox.payload) {
-    volatile uint32_t dummy;
-    dummy = *((uint32_t*) 0x00000000);                // invalid address
-  } else {
-    ResponseCmndChar(D_JSON_ONE_TO_CRASH);
-  }
+  volatile uint32_t dummy;
+  dummy = *((uint32_t*) 0x00000000);
 }
 
 // Clear the RTC dump area when we do a normal reboot, this avoids garbage data to stay in RTC
