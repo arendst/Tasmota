@@ -1071,6 +1071,19 @@ void CmndTlsKey(void) {
       }
       memcpy_P(spi_buffer, tls_spi_start, tls_spi_len);
 
+      // remove any white space from the base64
+      char *cursor = XdrvMailbox.data;
+      uint32_t offset = 0;
+      while (1) {
+        *cursor = *(cursor + offset);
+        if ((' ' == *cursor) || ('\t' == *cursor) || ('\n' == *cursor)) {   // if space found, remove this char until end of string
+          offset++;
+        } else {
+          if (0 == *cursor) { break; }
+          cursor++;
+        }
+      }
+
       // allocate buffer for decoded base64
       uint32_t bin_len = decode_base64_length((unsigned char*)XdrvMailbox.data);
       uint8_t  *bin_buf = nullptr;
