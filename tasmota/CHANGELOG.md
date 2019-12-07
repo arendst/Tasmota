@@ -3,6 +3,7 @@
 ### 7.1.2.2 20191206
 
 - Add command ``SerialConfig 0..23`` or ``SerialConfig 8N1`` to select Serial Config (#7108)
+- Add save call stack in RTC memory in case of crash, command ``Status 12`` to dump the stack
 
 ### 7.1.2.1 20191206
 
