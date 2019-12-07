@@ -30,7 +30,10 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
-  D_CMND_SENSOR "|" D_CMND_DRIVER;
+#ifdef USE_CRASH
+  D_CMND_CRASH "|"
+#endif
+  D_CMND_SENSOR "|" D_CMND_DRIVER ;
 
 void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBacklog, &CmndDelay, &CmndPower, &CmndStatus, &CmndState, &CmndSleep, &CmndUpgrade, &CmndUpgrade, &CmndOtaUrl,
@@ -44,6 +47,9 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndWifiPower, &CmndTempOffset,
 #ifdef USE_I2C
   &CmndI2cScan, CmndI2cDriver,
+#endif
+#ifdef USE_CRASH
+  &CmndCrash,
 #endif
   &CmndSensor, &CmndDriver };
 
@@ -481,6 +487,13 @@ void CmndStatus(void)
     MqttShowState();
     ResponseJsonEnd();
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "11"));
+  }
+
+  if ((0 == payload) || (12 == payload)) {
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS12_STATUS "\":"));
+    CrashDump();
+    ResponseJsonEnd();
+    MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "12"));
   }
 
 #ifdef USE_SCRIPT_STATUS

@@ -208,6 +208,7 @@
   #define D_STATUS9_MARGIN "PTH"
   #define D_STATUS10_SENSOR "SNS"
   #define D_STATUS11_STATUS "STS"
+  #define D_STATUS12_STATUS "STK"
 #define D_CMND_STATE "State"
 #define D_CMND_POWER "Power"
 #define D_CMND_FANSPEED "FanSpeed"
@@ -292,6 +293,8 @@
   #define D_JSON_FLAG "FLAG"
   #define D_JSON_BASE "BASE"
 #define D_CMND_TEMPOFFSET "TempOffset"
+#define D_CMND_CRASH "Crash"
+  #define D_JSON_ONE_TO_CRASH "1 to crash"
 
 // Commands xdrv_01_mqtt.ino
 #define D_CMND_MQTTLOG "MqttLog"
