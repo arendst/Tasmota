@@ -69,10 +69,8 @@ void CrashDump(void)
 
   for (uint32_t i = 0; i < count; i++) {
     ESP.rtcUserMemoryRead(i, (uint32_t*)&value, sizeof(value));
-    if ((value >= 0x40000000) && (value < 0x40300000)) {
-      if (i > 0) { ResponseAppend_P(PSTR(",")); }
-      ResponseAppend_P(PSTR("\"%08x\""), value);
-    }
+    if (i > 0) { ResponseAppend_P(PSTR(",")); }
+    ResponseAppend_P(PSTR("\"%08x\""), value);
   }
   ResponseAppend_P(PSTR("]}"));
 }
