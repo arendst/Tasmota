@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 7.1.2.3 20191208
+
+- Redesign Exception reporting removing exception details from both MQTT info and Status 1. Now consolidated in Status 12 if available.
+
 ### 7.1.2.2 20191206
 
 - Add command ``SerialConfig 0..23`` or ``SerialConfig 8N1`` to select Serial Config (#7108)
