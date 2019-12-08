@@ -1638,11 +1638,11 @@ void HandleWifiConfiguration(void)
           int quality = WifiGetRssiAsQuality(WiFi.RSSI(indices[i]));
           int auth = WiFi.encryptionType(indices[i]);
           char encryption[20];
-          WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%s %d%%</span></div>"),
+          WSContentSend_P(PSTR("<div><a href='#p' onclick='c(this)'>%s</a>&nbsp;(%d)&nbsp<span class='q'>%s %d%% (%d dBm)</span></div>"),
             HtmlEscape(WiFi.SSID(indices[i])).c_str(),
             WiFi.channel(indices[i]),
             GetTextIndexed(encryption, sizeof(encryption), auth +1, kEncryptionType),
-            quality
+            quality, WiFi.RSSI()
           );
           delay(0);
 
@@ -1970,7 +1970,7 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, Settings.friendlyname[i]);
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-  WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%)"), Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()));
+  WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI());
   WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "");
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
     WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), WiFi.localIP().toString().c_str());

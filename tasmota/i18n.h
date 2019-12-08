@@ -134,6 +134,7 @@
 #define D_JSON_SELECTED "selected"
 #define D_JSON_SERIALRECEIVED "SerialReceived"
 #define D_JSON_SET "Set"
+#define D_JSON_SIGNAL "Signal"
 #define D_JSON_SSID "SSId"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
