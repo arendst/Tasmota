@@ -555,7 +555,7 @@ void MqttConnected(void)
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "2"));
     }
 #endif  // USE_WEBSERVER
-    Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"), GetResetReasonInfo().c_str());
+    Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"), GetResetReason().c_str());
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
     MqttPublishAllPowerState();
     if (Settings.tele_period) {

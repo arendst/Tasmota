@@ -107,12 +107,6 @@ String GetResetReason(void)
   }
 }
 
-String GetResetReasonInfo(void)
-{
-  // "Fatal exception:0 flag:2 (EXCEPTION) epc1:0x704022a7 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000000 depc:0x00000000"
-  return (ResetReason() == REASON_EXCEPTION_RST) ? ESP.getResetInfo() : GetResetReason();
-}
-
 /*********************************************************************************************\
  * Miscellaneous
 \*********************************************************************************************/
