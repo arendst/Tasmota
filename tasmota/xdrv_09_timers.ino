@@ -554,10 +554,10 @@ const char HTTP_TIMER_SCRIPT2[] PROGMEM =
     "o=qs('#ho');"
     "e=o.childElementCount;"
     "if(b==1){"
-      "qs('#dr').disabled='';"
+      "qs('#dr').style.visibility='';"
       "if(e>12){for(i=12;i<=23;i++){o.removeChild(o.lastElementChild);}}"  // Create offset hours select options
     "}else{"
-      "qs('#dr').disabled='disabled';"
+      "qs('#dr').style.visibility='hidden';"
       "if(e<23){for(i=12;i<=23;i++){ce(i,o);}}"                   // Create hours select options
     "}"
   "}";
