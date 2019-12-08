@@ -72,6 +72,7 @@
 #define D_COMMAND "Εντολή"
 #define D_CONNECTED "Συνδεδεμένο"
 #define D_COUNT "Μέτρηση"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNTER "Μετρητής"
 #define D_CURRENT "Ένταση"          // As in Voltage and Current
 #define D_DATA "Δεδομένα"
