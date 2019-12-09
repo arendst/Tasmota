@@ -1,20 +1,29 @@
 ## Unreleased (development)
 
+### 7.1.2.4 20191209
+
+- Change HTTP CORS from command ``SetOption73 0/1`` to ``Cors <cors_domain>`` allowing user control of specific CORS domain by Shantur Rathore (#7066)
+- Add Wifi Signal Strength in dBm in addition to RSSI Wifi Experience by Andreas Schultz (#7145)
+- Add Yaw, Pitch and Roll support for MPU6050 by Philip Barclay (#7058)
+
 ### 7.1.2.3 20191208
 
 - Redesign Exception reporting removing exception details from both MQTT info and Status 1. Now consolidated in Status 12 if available.
 
 ### 7.1.2.2 20191206
 
-- Add command ``SerialConfig 0..23`` or ``SerialConfig 8N1`` to select Serial Config (#7108)
-- Add save call stack in RTC memory in case of crash, command ``Status 12`` to dump the stack
+- Remove rule trigger ``tele_power1#state`` due to compatibility
+- Add command ``SerialConfig 0..23`` or ``SerialConfig 8N1`` to select Serial Config based in PR by Luis Teixeira (#7108)
+- Add save call stack in RTC memory in case of crash, command ``Status 12`` to dump the stack by Stefan Hadinger
+- Add Home Assistant force update by Frederico Leoni (#7140, #7074)
 
 ### 7.1.2.1 20191206
 
-- Add rule var ``%topic%`` (#5522)
-- Add rule triggers ``tele_power1#state`` and multiple ``tele-wifi1#xxx`` (#7093)
-- Add experimental support for stepper motor shutter control
-- Add optional USE_MQTT_TLS to tasmota-minimal.bin (#7115)
+- Add SML bus decoder syntax support for byte order by Gerhard Mutz (#7112)
+- Add rule var ``%topic%`` by Adrian Scillato (#5522)
+- Add rule triggers ``tele_power1#state`` and multiple ``tele-wifi1#xxx`` by Adrian Scillato (#7093)
+- Add experimental support for stepper motor shutter control by Stefan Bode
+- Add optional USE_MQTT_TLS to tasmota-minimal.bin by Bohdan Kmit (#7115)
 
 ## Released
 

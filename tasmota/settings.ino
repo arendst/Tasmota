@@ -1181,7 +1181,6 @@ void SettingsDelta(void)
     if (Settings.version < 0x07010202) {
       Settings.serial_config = TS_SERIAL_8N1;
     }
-
     if (Settings.version < 0x07010204) {
       if (Settings.flag3.ex_cors_enabled == 1) {
         strlcpy(Settings.cors_domain, CORS_ENABLED_ALL, sizeof(Settings.cors_domain));

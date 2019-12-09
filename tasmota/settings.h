@@ -86,7 +86,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t energy_weekend : 1;           // bit 20 (v6.6.0.8)  - CMND_TARIFF
     uint32_t dds2382_model : 1;            // bit 21 (v6.6.0.14) - SetOption71 - Select different Modbus registers for Active Energy (#6531)
     uint32_t hardware_energy_total : 1;    // bit 22 (v6.6.0.15) - SetOption72 - Enable hardware energy total counter as reference (#6561)
-    uint32_t ex_cors_enabled : 1;             // bit 23 (v7.0.0.1)  - SetOption73 - Enable HTTP CORS
+    uint32_t ex_cors_enabled : 1;          // bit 23 (v7.0.0.1)  - SetOption73 - Enable HTTP CORS
     uint32_t ds18x20_internal_pullup : 1;  // bit 24 (v7.0.0.1)  - SetOption74 - Enable internal pullup for single DS18x20 sensor
     uint32_t grouptopic_mode : 1;          // bit 25 (v7.0.0.1)  - SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
     uint32_t bootcount_update : 1;         // bit 26 (v7.0.0.4)  - SetOption76 - Enable incrementing bootcount when deepsleep is enabled
@@ -437,9 +437,9 @@ struct SYSCFG {
   uint8_t       free_e9f[1];               // E9F
 
   uint8_t       web_color2[2][3];          // EA0 - Needs to be on integer / 3 distance from web_color
+  char          cors_domain[33];           // EA6
 
-  char          cors_domain[33];           // EC1
-  uint8_t       free_ea4[293];             // EA6
+  uint8_t       free_ec1[293];             // EC1
 
   uint32_t      i2c_drivers[3];            // FEC I2cDriver
   uint32_t      cfg_timestamp;             // FF8
