@@ -194,10 +194,10 @@ void ShutterInit(void)
         }
       } else {
         Shutter.mode = SHT_OFF_ON__OPEN_CLOSE;
-        if (pin[GPIO_PWM1 ]+i < 99) {
+        if (pin[GPIO_PWM1+i] < 99) {
           Shutter.pwm_frequency = 0;
           analogWriteFreq(Shutter.pwm_frequency);
-          analogWrite(pin[GPIO_PWM1]+i, 50);
+          analogWrite(pin[GPIO_PWM1+i], 50);
         }
       }
 
@@ -257,11 +257,11 @@ void ShutterUpdatePosition(void)
       // Counter should be initiated to 0 to count movement.
       // 0..1000 in step 100 = 10 steps with 0.05 sec = 0.5sec total ramp time from start to
       // full speed.
-      if (pin[GPIO_PWM1]+i < 99 && Shutter.pwm_frequency != Shutter.max_pwm_frequency) {
+      if (pin[GPIO_PWM1+i] < 99 && Shutter.pwm_frequency != Shutter.max_pwm_frequency) {
         Shutter.pwm_frequency += Shutter.max_pwm_frequency/20;
         Shutter.pwm_frequency = (Shutter.pwm_frequency > Shutter.max_pwm_frequency ? Shutter.max_pwm_frequency : Shutter.pwm_frequency);
         analogWriteFreq(Shutter.pwm_frequency);
-        analogWrite(pin[GPIO_PWM1]+i, 50);
+        analogWrite(pin[GPIO_PWM1+i], 50);
       }
 
       Shutter.real_position[i] = Shutter.start_position[i]  + ( (Shutter.time[i] - Shutter.motordelay[i]) * (Shutter.direction[i] > 0 ? 100 : -Shutter.close_velocity[i]));
@@ -287,21 +287,21 @@ void ShutterUpdatePosition(void)
             // This is a failsafe configuration. Relay1 ON/OFF Relay2 -1/1 direction
             // Only allow PWM microstepping if PWM and COUNTER are defined.
             // see wiki to connect PWM and COUNTER
-            if (pin[GPIO_PWM1 ]+i < 99 && pin[GPIO_CNTR1 ]+i < 99 ) {
+            if (pin[GPIO_PWM1+i] < 99 && pin[GPIO_CNTR1+i] < 99 ) {
               int16_t missing_steps = ((Shutter.target_position[i]-Shutter.start_position[i])*Shutter.direction[i]*Shutter.max_pwm_frequency/2000) - RtcSettings.pulse_counter[i];
               Shutter.pwm_frequency = 0;
               //slow down for acurate position
               analogWriteFreq(500);
-              analogWrite(pin[GPIO_PWM1]+i, 50);
+              analogWrite(pin[GPIO_PWM1+i], 50);
               //prepare for stop PWM
               Shutter.motordelay[i] = -2 + Shutter.motordelay[i] + missing_steps/(Shutter.max_pwm_frequency/20);
               AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Missing steps %d, adjust motordelay %d, counter %d, temp realpos %d"), missing_steps, Shutter.motordelay[i],RtcSettings.pulse_counter[i] ,Shutter.real_position[i]);
-              Settings.shutter_motordelay[i]=Shutter.motordelay[i];
+              Settings.shutter_motordelay[i]=(missing_steps > 0 ? Shutter.motordelay[i] : 0);
               analogWriteFreq(0);
               while (RtcSettings.pulse_counter[i] < (uint32_t)(Shutter.target_position[i]-Shutter.start_position[i])*Shutter.direction[i]*Shutter.max_pwm_frequency/2000) {
                 delay(1);
               }
-              analogWrite(pin[GPIO_PWM1]+i, 0);
+              analogWrite(pin[GPIO_PWM1+i], 0);
               Shutter.real_position[i] = ((int32_t)RtcSettings.pulse_counter[i]*Shutter.direction[i]*2000 / Shutter.max_pwm_frequency)+Shutter.start_position[i];
               //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT:Realpos %d, pulsecount %d, startpos %d, int32 %d"), Shutter.real_position[i],RtcSettings.pulse_counter[i], Shutter.start_position[i],  ((int32_t)RtcSettings.pulse_counter[i]*Shutter.direction[i]*2000 / Shutter.max_pwm_frequency));
 
@@ -357,12 +357,12 @@ void ShutterStartInit(uint8_t index, uint8_t direction, int32_t target_pos)
   Shutter.target_position[index] = target_pos;
   Shutter.start_position[index] = Shutter.real_position[index];
   Shutter.time[index] = 0;
-  if (pin[GPIO_PWM1]+index < 99) {
+  if (pin[GPIO_PWM1+index] < 99) {
     Shutter.pwm_frequency = 0;
     analogWriteFreq(Shutter.pwm_frequency);
-    analogWrite(pin[GPIO_PWM1]+index, 0);
+    analogWrite(pin[GPIO_PWM1+index], 0);
     // can be operated without counter, but then not that acurate.
-    if (pin[GPIO_CNTR1]+index < 99) {
+    if (pin[GPIO_CNTR1+index] < 99) {
       RtcSettings.pulse_counter[index] = 0;
     }
   }
@@ -459,6 +459,10 @@ void ShutterSetPosition(uint8_t device, uint8_t position)
 
 void CmndShutterOpen(void)
 {
+  //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Payload close: %d, index %d"), XdrvMailbox.payload, XdrvMailbox.index);
+  if ( XdrvMailbox.index == 1 && XdrvMailbox.payload != -99) {
+    XdrvMailbox.index = XdrvMailbox.payload;
+  }
   XdrvMailbox.payload = 100;
   last_source = SRC_WEBGUI;
   CmndShutterPosition();
@@ -466,6 +470,10 @@ void CmndShutterOpen(void)
 
 void CmndShutterClose(void)
 {
+  //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Payload open: %d, index %d"), XdrvMailbox.payload, XdrvMailbox.index);
+  if ( XdrvMailbox.index == 1 && XdrvMailbox.payload != -99) {
+    XdrvMailbox.index = XdrvMailbox.payload;
+  }
   XdrvMailbox.payload = 0;
   XdrvMailbox.data_len = 0;
   last_source = SRC_WEBGUI;
@@ -475,6 +483,9 @@ void CmndShutterClose(void)
 void CmndShutterStop(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    if ( XdrvMailbox.index == 1 && XdrvMailbox.payload != -99) {
+      XdrvMailbox.index = XdrvMailbox.payload;
+    }
     uint32_t index = XdrvMailbox.index -1;
     if (Shutter.direction[index] != 0) {
 
