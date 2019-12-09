@@ -1106,7 +1106,19 @@ void HandleRoot(void)
       }
     } else {
 #endif  // USE_SONOFF_IFAN
-      for (uint32_t idx = 1; idx <= devices_present; idx++) {
+
+
+  	//  display shutter dedicated buttons first...													//// fork lh61
+      uint32 btn = 1;
+#ifdef USE_SHUTTER
+      if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
+        for (btn=1; btn <= 2*shutters_present; btn++) {
+          WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, btn,(btn%2) ?"▲":"▼","");		// Up arrow: ?,? Dn arrow ?, ?
+        }
+      }
+#endif  // USE_SHUTTER
+	  //  ... then remaining buttons
+    for (uint32_t idx = btn; idx <= devices_present; idx++) {
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
         WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
       }
