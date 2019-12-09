@@ -377,6 +377,23 @@ char* Trim(char* p)
   return p;
 }
 
+char* RemoveAllSpaces(char* p)
+{
+  // remove any white space from the base64
+  char *cursor = p;
+  uint32_t offset = 0;
+  while (1) {
+    *cursor = *(cursor + offset);
+    if ((' ' == *cursor) || ('\t' == *cursor) || ('\n' == *cursor)) {   // if space found, remove this char until end of string
+      offset++;
+    } else {
+      if (0 == *cursor) { break; }
+      cursor++;
+    }
+  }
+  return p;
+}
+
 char* NoAlNumToUnderscore(char* dest, const char* source)
 {
   char* write = dest;
