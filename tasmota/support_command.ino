@@ -380,9 +380,12 @@ void CmndStatus(void)
   if ((0 == payload) || (2 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\""
                           D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
-                          "\"Hardware\":\"%s\"}}"),
+                          "\"Hardware\":\"%s\""
+                          "%s}}"),
                           my_version, my_image, GetBuildDateAndTime().c_str(),
-                          ESP.getBootVersion(), ESP.getSdkVersion(), GetDeviceHardware().c_str());
+                          ESP.getBootVersion(), ESP.getSdkVersion(),
+                          GetDeviceHardware().c_str(),
+                          SettingsCharUsage().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
   }
 

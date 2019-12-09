@@ -630,6 +630,47 @@ void SettingsSdkErase(void)
   delay(1000);
 }
 
+String SettingsCharUsage(void)
+{
+  uint32_t str_len = 0;
+  uint32_t str_size = 0;
+
+  for (uint32_t i = 0; i < 2; i++) {
+    str_len += strlen(Settings.sta_ssid[i]);     str_size += sizeof(Settings.sta_ssid[i]);
+    str_len += strlen(Settings.sta_pwd[i]);      str_size += sizeof(Settings.sta_pwd[i]);
+  }
+  for (uint32_t i = 0; i < 3; i++) {
+    str_len += strlen(Settings.mqtt_prefix[i]);  str_size += sizeof(Settings.mqtt_prefix[i]);
+    str_len += strlen(Settings.ntp_server[i]);   str_size += sizeof(Settings.ntp_server[i]);
+  }
+  for (uint32_t i = 0; i < 4; i++) {
+    str_len += strlen(Settings.state_text[i]);   str_size += sizeof(Settings.state_text[i]);
+    str_len += strlen(Settings.friendlyname[i]); str_size += sizeof(Settings.friendlyname[i]);
+  }
+  for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
+    str_len += strlen(Settings.mems[i]);         str_size += sizeof(Settings.mems[i]);
+  }
+
+  str_len += strlen(Settings.ota_url);        str_size += sizeof(Settings.ota_url);
+  str_len += strlen(Settings.hostname);       str_size += sizeof(Settings.hostname);
+  str_len += strlen(Settings.syslog_host);    str_size += sizeof(Settings.syslog_host);
+  str_len += strlen(Settings.mqtt_host);      str_size += sizeof(Settings.mqtt_host);
+  str_len += strlen(Settings.mqtt_client);    str_size += sizeof(Settings.mqtt_client);
+  str_len += strlen(Settings.mqtt_user);      str_size += sizeof(Settings.mqtt_user);
+  str_len += strlen(Settings.mqtt_pwd);       str_size += sizeof(Settings.mqtt_pwd);
+  str_len += strlen(Settings.mqtt_topic);     str_size += sizeof(Settings.mqtt_topic);
+  str_len += strlen(Settings.button_topic);   str_size += sizeof(Settings.button_topic);
+  str_len += strlen(Settings.switch_topic);   str_size += sizeof(Settings.switch_topic);
+  str_len += strlen(Settings.mqtt_grptopic);  str_size += sizeof(Settings.mqtt_grptopic);
+  str_len += strlen(Settings.web_password);   str_size += sizeof(Settings.web_password);
+  str_len += strlen(Settings.mqtt_fulltopic); str_size += sizeof(Settings.mqtt_fulltopic);
+  str_len += strlen(Settings.cors_domain);    str_size += sizeof(Settings.cors_domain);
+
+  char data[30];
+  snprintf_P(data, sizeof(data), PSTR(",\"CR\":\"%d/%d\""), str_len, str_size);  // Char Usage Ratio
+  return String(data);
+}
+
 /********************************************************************************************/
 
 void SettingsDefault(void)
