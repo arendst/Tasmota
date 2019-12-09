@@ -3,6 +3,7 @@
 ### 7.1.2.4 20191209
 
 - Change HTTP CORS from command ``SetOption73 0/1`` to ``Cors <cors_domain>`` allowing user control of specific CORS domain by Shantur Rathore (#7066)
+- Revert removal of exception details from MQTT info on restart
 - Add Wifi Signal Strength in dBm in addition to RSSI Wifi Experience by Andreas Schultz (#7145)
 - Add Yaw, Pitch and Roll support for MPU6050 by Philip Barclay (#7058)
 
