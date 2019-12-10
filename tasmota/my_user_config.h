@@ -62,8 +62,8 @@
 #define WIFI_SUBNETMASK        "255.255.255.0"   // [IpAddress3] If not using DHCP set Network mask
 #define WIFI_DNS               "192.168.1.1"     // [IpAddress4] If not using DHCP set DNS IP address (might be equal to WIFI_GATEWAY)
 
-#define STA_SSID1              ""                // [Ssid1] Wifi SSID
-#define STA_PASS1              ""                // [Password1] Wifi password
+#define STA_SSID1              "HundKatzeMausIoT"                // [Ssid1] Wifi SSID
+#define STA_PASS1              "MarkusStraub2019"                // [Password1] Wifi password
 #define STA_SSID2              ""                // [Ssid2] Optional alternate AP Wifi SSID
 #define STA_PASS2              ""                // [Password2] Optional alternate AP Wifi password
 #define WIFI_CONFIG_TOOL       WIFI_RETRY        // [WifiConfig] Default tool if wifi fails to connect (default option: 4 - WIFI_RETRY)
@@ -84,9 +84,9 @@
 // -- MQTT ----------------------------------------
 #define MQTT_USE               1                 // [SetOption3] Select default MQTT use (0 = Off, 1 = On)
 
-#define MQTT_HOST              ""                // [MqttHost]
-#define MQTT_FINGERPRINT1      "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"  // [MqttFingerprint1]
-#define MQTT_FINGERPRINT2      "A5 02 FF 13 99 9F 8B 39 8E F1 83 4F 11 23 65 0B 32 36 FC 07"  // [MqttFingerprint2]
+#define MQTT_HOST              "192.168.1.201"                // [MqttHost]
+#define MQTT_FINGERPRINT1      ""  // [MqttFingerprint1]
+#define MQTT_FINGERPRINT2      ""  // [MqttFingerprint2]
 #define MQTT_PORT              1883              // [MqttPort] MQTT port (10123 on CloudMQTT)
 #define MQTT_USER              "DVES_USER"       // [MqttUser] MQTT user
 #define MQTT_PASS              "DVES_PASS"       // [MqttPassword] MQTT password
@@ -436,7 +436,7 @@
 #endif  // USE_I2C
 
 // -- SPI sensors ---------------------------------
-//#define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
+#define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
 
 #ifdef USE_SPI
   #ifndef USE_DISPLAY
@@ -494,8 +494,8 @@
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)
 
 //#define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
-//#define USE_MAX31865                             // Add support for MAX31865 RTD sensors using softSPI
-  #define MAX31865_PTD_WIRES  2                 // PTDs come in several flavors. Pick yours
+  #define USE_MAX31865                             // Add support for MAX31865 RTD sensors using softSPI
+  #define MAX31865_PTD_WIRES  3                 // PTDs come in several flavors. Pick yours
   #define MAX31865_PTD_RES    100               // Nominal PTD resistance at 0°C (100Ω for a PT100, 1000Ω for a PT1000, YMMV!)
   #define MAX31865_REF_RES    430               // Reference resistor (Usually 430Ω for a PT100, 4300Ω for a PT1000)
   #define MAX31865_PTD_BIAS   0                 // To calibrate your not-so-good PTD
