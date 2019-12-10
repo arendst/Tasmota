@@ -4,6 +4,7 @@
 
 - Change HTTP CORS from command ``SetOption73 0/1`` to ``Cors <cors_domain>`` allowing user control of specific CORS domain by Shantur Rathore (#7066)
 - Change GUI Shutter button text to Up and Down Arrows based on PR by Xavier Muller (#7166)
+- Change amount of supported DHT sensors from 3 to 4 by Xavier Muller (#7167)
 - Revert removal of exception details from MQTT info on restart
 - Add Wifi Signal Strength in dBm in addition to RSSI Wifi Experience by Andreas Schultz (#7145)
 - Add Yaw, Pitch and Roll support for MPU6050 by Philip Barclay (#7058)
