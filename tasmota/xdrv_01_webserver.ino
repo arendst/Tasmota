@@ -1107,6 +1107,21 @@ void HandleRoot(void)
     } else {
 #endif  // USE_SONOFF_IFAN
       for (uint32_t idx = 1; idx <= devices_present; idx++) {
+#ifdef USE_SHUTTER
+        if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
+          bool shutter_used = false;
+          for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
+            if (Settings.shutter_startrelay[i] == (((idx -1) & 0xFFFFFFFE) +1)) {
+              shutter_used = true;
+              break;
+            }
+          }
+          if (shutter_used) {
+            WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx, (idx % 2) ? "▲" : "▼" , "");
+            continue;
+          }
+        }
+#endif  // USE_SHUTTER
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
         WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
       }

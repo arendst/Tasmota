@@ -47,10 +47,18 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 7.1.2 Betty
+### Version 7.1.2.4
 
-- Fix lost functionality of GPIO9 and GPIO10 on some devices (#7080)
-- Fix Zigbee uses Hardware Serial if GPIO 1/3 or GPIO 13/15 and SerialLog 0 (#7071)
-- Fix WS2812 power control (#7090)
-- Change light color schemes 2, 3 and 4 from color wheel to Hue driven with user Saturation control
-- Change log buffer size from 520 to 700 characters accomodating full rule text (#7110)
+- Change Exception reporting removing exception details from ``Status 1`` and consolidated in ``Status 12`` if available
+- Change HTTP CORS from command ``SetOption73 0/1`` to ``Cors <cors_domain>`` allowing user control of specific CORS domain by Shantur Rathore (#7066)
+- Change GUI Shutter button text to Up and Down Arrows based on PR by Xavier Muller (#7166)
+- Add command ``SerialConfig 0..23`` or ``SerialConfig 8N1`` to select Serial Config based in PR by Luis Teixeira (#7108)
+- Add rule var ``%topic%`` by Adrian Scillato (#5522)
+- Add rule triggers ``tele-wifi1#xxx`` by Adrian Scillato (#7093)
+- Add SML bus decoder syntax support for byte order by Gerhard Mutz (#7112)
+- Add experimental support for stepper motor shutter control by Stefan Bode
+- Add optional USE_MQTT_TLS to tasmota-minimal.bin by Bohdan Kmit (#7115)
+- Add save call stack in RTC memory in case of crash, command ``Status 12`` to dump the stack by Stefan Hadinger
+- Add Home Assistant force update by Frederico Leoni (#7140, #7074)
+- Add Wifi Signal Strength in dBm in addition to RSSI Wifi Experience by Andreas Schultz (#7145)
+- Add Yaw, Pitch and Roll support for MPU6050 by Philip Barclay (#7058)
