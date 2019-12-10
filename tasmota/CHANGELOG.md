@@ -9,6 +9,7 @@
 - Add Wifi Signal Strength in dBm in addition to RSSI Wifi Experience by Andreas Schultz (#7145)
 - Add Yaw, Pitch and Roll support for MPU6050 by Philip Barclay (#7058)
 - Add reporting of raw weight to JSON from HX711 to overcome auto-tare functionality by @tobox (#7171)
+- Fix flashing H801 led at boot (#7165, #649)
 
 ### 7.1.2.3 20191208
 
