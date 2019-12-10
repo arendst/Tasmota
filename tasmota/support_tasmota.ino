@@ -1286,15 +1286,19 @@ void GpioInit(void)
   }
 #endif  // USE_SONOFF_SC
 
-  if (!light_type) {
-    for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
-      if (pin[GPIO_PWM1 +i] < 99) {
+  for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
+    if (pin[GPIO_PWM1 +i] < 99) {
+      pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+      if (light_type) {
+        // force PWM GPIOs to low or high mode, see #7165
+        analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);
+      } else {
         pwm_present = true;
-        pinMode(pin[GPIO_PWM1 +i], OUTPUT);
         analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
       }
     }
   }
+
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (pin[GPIO_REL1 +i] < 99) {
       pinMode(pin[GPIO_REL1 +i], OUTPUT);
