@@ -63,3 +63,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add Home Assistant force update by Frederico Leoni (#7140, #7074)
 - Add Wifi Signal Strength in dBm in addition to RSSI Wifi Experience by Andreas Schultz (#7145)
 - Add Yaw, Pitch and Roll support for MPU6050 by Philip Barclay (#7058)
+- Add reporting of raw weight to JSON from HX711 to overcome auto-tare functionality by @tobox (#7171)
