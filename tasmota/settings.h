@@ -433,9 +433,7 @@ struct SYSCFG {
   uint16_t      energy_power_delta;        // E98
   uint8_t       shutter_motordelay[MAX_SHUTTERS];    // E9A
   int8_t        temp_comp;                 // E9E
-
-  uint8_t       free_e9f[1];               // E9F
-
+  uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0 - Needs to be on integer / 3 distance from web_color
   char          cors_domain[33];           // EA6
 
