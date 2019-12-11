@@ -71,6 +71,7 @@
 #define D_COLDLIGHT "Hideg fény"
 #define D_COMMAND "Parancs"
 #define D_CONNECTED "Csatlakoztatva"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Szám"
 #define D_COUNTER "Számláló"
 #define D_CURRENT "Áramerősség"          // As in Voltage and Current

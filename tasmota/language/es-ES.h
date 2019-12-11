@@ -71,6 +71,7 @@
 #define D_COLDLIGHT "Fría"
 #define D_COMMAND "Comando"
 #define D_CONNECTED "Conectado"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Conteo"
 #define D_COUNTER "Contador"
 #define D_CURRENT "Corriente"          // As in Voltage and Current

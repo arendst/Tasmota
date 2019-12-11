@@ -72,6 +72,7 @@
 #define D_COMMAND "Opdracht"
 #define D_CONNECTED "Verbonden"
 #define D_COUNT "Aantal"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNTER "Teller"
 #define D_CURRENT "Stroom"          // As in Voltage and Current
 #define D_DATA "Data"

@@ -71,6 +71,7 @@
 #define D_COLDLIGHT "冷"
 #define D_COMMAND "命令:"
 #define D_CONNECTED "已連接"
+#define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "數量:"
 #define D_COUNTER "Counter"
 #define D_CURRENT "電流"          // As in Voltage and Current

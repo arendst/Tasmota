@@ -140,6 +140,10 @@
 #ifndef DEFAULT_LIGHT_COMPONENT
 #define DEFAULT_LIGHT_COMPONENT     255
 #endif
+#ifndef CORS_ENABLED_ALL
+#define CORS_ENABLED_ALL            "*"
+#endif
+
 
 enum WebColors {
   COL_TEXT, COL_BACKGROUND, COL_FORM,
@@ -718,6 +722,7 @@ void SettingsDefaultSet2(void)
   Settings.weblog_level = WEB_LOG_LEVEL;
   strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
   Settings.flag3.mdns_enabled = MDNS_ENABLED;
+  strlcpy(Settings.cors_domain, CORS_DOMAIN, sizeof(Settings.cors_domain));
 
   // Button
 //  Settings.flag.button_restrict = 0;
@@ -1175,6 +1180,13 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x07010202) {
       Settings.serial_config = TS_SERIAL_8N1;
+    }
+    if (Settings.version < 0x07010204) {
+      if (Settings.flag3.ex_cors_enabled == 1) {
+        strlcpy(Settings.cors_domain, CORS_ENABLED_ALL, sizeof(Settings.cors_domain));
+      } else {
+        Settings.cors_domain[0] = 0;
+      }
     }
 
     Settings.version = VERSION;

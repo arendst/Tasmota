@@ -28,7 +28,7 @@
 
 #define XSNS_06          6
 
-#define DHT_MAX_SENSORS  3
+#define DHT_MAX_SENSORS  4
 #define DHT_MAX_RETRY    8
 
 uint32_t dht_max_cycles;

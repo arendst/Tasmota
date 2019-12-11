@@ -334,6 +334,9 @@ void CmndStatus(void)
   if ((!Settings.flag.mqtt_enabled) && (6 == payload)) { payload = 99; }  // SetOption3 - Enable MQTT
   if (!energy_flg && (9 == payload)) { payload = 99; }
 
+  bool exception_flg = (ResetReason() == REASON_EXCEPTION_RST);
+  if (!exception_flg && (12 == payload)) { payload = 99; }
+
   if ((0 == payload) || (99 == payload)) {
     uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
 #ifdef USE_SONOFF_IFAN
@@ -369,7 +372,7 @@ void CmndStatus(void)
                           D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_JSON_STARTUPUTC "\":\"%s\",\"" D_CMND_SLEEP "\":%d,\""
                           D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_JSON_SAVEADDRESS "\":\"%X\"}}"),
                           baudrate, Settings.mqtt_grptopic, Settings.ota_url,
-                          GetResetReasonInfo().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
+                          GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
                           Settings.cfg_holder, Settings.bootcount, Settings.save_flag, GetSettingsAddress());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "1"));
   }
@@ -377,9 +380,12 @@ void CmndStatus(void)
   if ((0 == payload) || (2 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\""
                           D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
-                          "\"Hardware\":\"%s\"}}"),
+                          "\"Hardware\":\"%s\""
+                          "%s}}"),
                           my_version, my_image, GetBuildDateAndTime().c_str(),
-                          ESP.getBootVersion(), ESP.getSdkVersion(), GetDeviceHardware().c_str());
+                          ESP.getBootVersion(), ESP.getSdkVersion(),
+                          GetDeviceHardware().c_str(),
+                          GetStatistics().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
   }
 
@@ -483,6 +489,15 @@ void CmndStatus(void)
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "11"));
   }
 
+  if (exception_flg) {
+    if ((0 == payload) || (12 == payload)) {
+      Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS12_STATUS "\":"));
+      CrashDump();
+      ResponseJsonEnd();
+      MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "12"));
+    }
+  }
+
 #ifdef USE_SCRIPT_STATUS
   if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">U",2,mqtt_data);
 #endif
@@ -563,6 +578,9 @@ void CmndRestart(void)
   case 1:
     restart_flag = 2;
     ResponseCmndChar(D_JSON_RESTARTING);
+    break;
+  case -1:
+    CmndCrash();    // force a crash
     break;
   case 99:
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));

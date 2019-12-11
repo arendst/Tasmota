@@ -554,10 +554,10 @@ const char HTTP_TIMER_SCRIPT2[] PROGMEM =
     "o=qs('#ho');"
     "e=o.childElementCount;"
     "if(b==1){"
-      "qs('#dr').disabled='';"
+      "qs('#dr').style.visibility='';"
       "if(e>12){for(i=12;i<=23;i++){o.removeChild(o.lastElementChild);}}"  // Create offset hours select options
     "}else{"
-      "qs('#dr').disabled='disabled';"
+      "qs('#dr').style.visibility='hidden';"
       "if(e<23){for(i=12;i<=23;i++){ce(i,o);}}"                   // Create hours select options
     "}"
   "}";
@@ -583,7 +583,7 @@ const char HTTP_TIMER_SCRIPT3[] PROGMEM =
     "if(m==0){s|=l;}"                                             // Get time
 #ifdef USE_SUNRISE
     "if((m==1)||(m==2)){"
-      "if(qs('#dr').selectedIndex>0){l+=720;}"                    // If negative offset, add 12h to given offset time
+      "if(qs('#dr').selectedIndex>0){if(l>0){l+=720;}}"           // If negative offset and delta-time > 0, add 12h to given offset time
       "s|=l&0x7FF;"                                               // Save offset instead of time
     "}"
 #endif
