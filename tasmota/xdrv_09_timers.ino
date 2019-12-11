@@ -583,7 +583,7 @@ const char HTTP_TIMER_SCRIPT3[] PROGMEM =
     "if(m==0){s|=l;}"                                             // Get time
 #ifdef USE_SUNRISE
     "if((m==1)||(m==2)){"
-      "if(qs('#dr').selectedIndex>0){l+=720;}"                    // If negative offset, add 12h to given offset time
+      "if(qs('#dr').selectedIndex>0){if(l>0){l+=720;}}"           // If negative offset and delta-time > 0, add 12h to given offset time
       "s|=l&0x7FF;"                                               // Save offset instead of time
     "}"
 #endif
