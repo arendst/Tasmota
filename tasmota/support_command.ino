@@ -385,7 +385,7 @@ void CmndStatus(void)
                           my_version, my_image, GetBuildDateAndTime().c_str(),
                           ESP.getBootVersion(), ESP.getSdkVersion(),
                           GetDeviceHardware().c_str(),
-                          SettingsCharUsage().c_str());
+                          GetStatistics().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
   }
 
