@@ -43,6 +43,9 @@ void StatisticsChar(const char* text)
 
 String GetStatistics(void)
 {
+  Stats.str_len = 0;
+  Stats.str_char = 0;
+
   for (uint32_t i = 0; i < 2; i++) {
     StatisticsChar(Settings.sta_ssid[i]);
     StatisticsChar(Settings.sta_pwd[i]);
