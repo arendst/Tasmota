@@ -349,15 +349,18 @@ void BacklogLoop(void)
 {
   if (TimeReached(backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {
-      backlog_mutex = true;
 #ifdef SUPPORT_IF_STATEMENT
-      ExecuteCommand((char*)backlog.shift().c_str(), SRC_BACKLOG);
+      backlog_mutex = true;
+      String cmd = backlog.shift();
+      backlog_mutex = false;
+      ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
 #else
+      backlog_mutex = true;
       ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
       backlog_pointer++;
       if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
-#endif
       backlog_mutex = false;
+#endif
     }
   }
 }
