@@ -494,6 +494,24 @@
     #define D_JSON_MOTOR_MIS "setMIS"
   #endif
 
+  // Commands xdrv_27_Shutter.ino
+  #ifdef USE_SHUTTER
+    #define D_PRFX_SHUTTER "Shutter"
+    #define D_CMND_SHUTTER_OPEN "Open"
+    #define D_CMND_SHUTTER_CLOSE "Close"
+    #define D_CMND_SHUTTER_STOP "Stop"
+    #define D_CMND_SHUTTER_POSITION "Position"
+    #define D_CMND_SHUTTER_OPENTIME "OpenDuration"
+    #define D_CMND_SHUTTER_CLOSETIME "CloseDuration"
+    #define D_CMND_SHUTTER_RELAY "Relay"
+    #define D_CMND_SHUTTER_SETHALFWAY "SetHalfway"
+    #define D_CMND_SHUTTER_SETCLOSE "SetClose"
+    #define D_CMND_SHUTTER_INVERT "Invert"
+    #define D_CMND_SHUTTER_CLIBRATION "Calibration"
+    #define D_CMND_SHUTTER_MOTORDELAY "MotorDelay"
+    #define D_CMND_SHUTTER_FREQUENCY "Frequency"
+  #endif
+
 /********************************************************************************************/
 
 // Log message prefix
