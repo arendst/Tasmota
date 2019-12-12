@@ -230,8 +230,8 @@ void ShutterInit(void)
       dtostrfd((float)Shutter.open_time[i] / 10 , 1, shutter_open_chr);
       char shutter_close_chr[10];
       dtostrfd((float)Shutter.close_time[i] / 10, 1, shutter_close_chr);
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoedffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, shuttermode %d,motordelay %d"),
-        i, Settings.shutter_startrelay[i], Shutter.real_position[i], Settings.shutter_position[i], Shutter.close_velocity[i], Shutter.open_max[i], shutter_open_chr, shutter_close_chr,
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoeffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, shuttermode %d,motordelay %d"),
+        i+1, Settings.shutter_startrelay[i], Shutter.real_position[i], Settings.shutter_position[i], Shutter.close_velocity[i], Shutter.open_max[i], shutter_open_chr, shutter_close_chr,
         Settings.shuttercoeff[0][i], Settings.shuttercoeff[1][i], Settings.shuttercoeff[2][i], Settings.shuttercoeff[3][i], Settings.shuttercoeff[4][i],
         Shutter.mask, Settings.shutter_invert[i], Shutter.mode, Shutter.motordelay[i]);
 
@@ -322,7 +322,7 @@ void ShutterUpdatePosition(void)
         Settings.shutter_position[i] = ShutterRealToPercentPosition(Shutter.real_position[i], i);
 
         dtostrfd((float)Shutter.time[i] / 20, 1, stemp2);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d: Real Pos. %d, Stoppos: %ld, relay: %d, direction %d, pulsetimer: %d, motordelay %d, rtcshutter: %s [s]"), i, Shutter.real_position[i], Settings.shutter_position[i], cur_relay -1, Shutter.direction[i], Settings.pulse_timer[cur_relay -1], Shutter.motordelay[i],stemp2);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d: Real Pos. %d, Stoppos: %ld, relay: %d, direction %d, pulsetimer: %d, motordelay %d, rtcshutter: %s [s]"), i+1, Shutter.real_position[i], Settings.shutter_position[i], cur_relay -1, Shutter.direction[i], Settings.pulse_timer[cur_relay -1], Shutter.motordelay[i],stemp2);
         Shutter.start_position[i] = Shutter.real_position[i];
 
         // sending MQTT result to broker
@@ -385,7 +385,7 @@ void ShutterReportPosition(void)
       dtostrfd((float)Shutter.time[i] / 20, 2, stemp2);
       shutter_moving = 1;
       //Settings.shutter_position[i] = Settings.shuttercoeff[2][i] * 5 > Shutter.real_position[i] ? Shutter.real_position[i] / Settings.shuttercoeff[2][i] : (Shutter.real_position[i]-Settings.shuttercoeff[0,i]) / Settings.shuttercoeff[1][i];
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d: Real Pos: %d, Target %d, source: %s, start-pos: %d %%, direction: %d, motordelay %d, rtcshutter: %s  [s]"), i,Shutter.real_position[i], Shutter.target_position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), Settings.shutter_position[i], Shutter.direction[i], Shutter.motordelay[i], stemp2 );
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d: Real Pos: %d, Target %d, source: %s, start-pos: %d %%, direction: %d, motordelay %d, rtcshutter: %s  [s]"), i+1,Shutter.real_position[i], Shutter.target_position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), Settings.shutter_position[i], Shutter.direction[i], Shutter.motordelay[i], stemp2 );
     }
   }
   if (rules_flag.shutter_moving > shutter_moving) {
@@ -427,7 +427,7 @@ void ShutterRelayChanged(void)
 			} else {
         if (Shutter.direction[i] != 0 && (!powerstate_local || (powerstate_local && Shutter.mode == SHT_PULSE_OPEN__PULSE_CLOSE))) {
 					Shutter.target_position[i] = Shutter.real_position[i];
-					AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d: Switch OFF motor. Target: %ld, source: %s, powerstate_local %ld, Shutter.switched_relay %d, manual change %d"), i, Shutter.target_position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate_local,Shutter.switched_relay,manual_relays_changed);
+					AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d: Switch OFF motor. Target: %ld, source: %s, powerstate_local %ld, Shutter.switched_relay %d, manual change %d"), i+1, Shutter.target_position[i], GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate_local,Shutter.switched_relay,manual_relays_changed);
 				} else {
 					last_source = SRC_SHUTTER; // avoid switch off in the next loop
 					if (powerstate_local == 2) { // testing on CLOSE relay, if ON
@@ -440,7 +440,7 @@ void ShutterRelayChanged(void)
 					  ShutterStartInit(i, 1, Shutter.open_max[i]);
 					}
 				}
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d: Target: %ld, powerstatelocal %d"), i, Shutter.target_position[i], powerstate_local);
+        AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d: Target: %ld, powerstatelocal %d"), i+1, Shutter.target_position[i], powerstate_local);
 			}
 		}
 	}
