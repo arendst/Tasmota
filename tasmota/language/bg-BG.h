@@ -83,7 +83,7 @@
 #define D_DNS_SERVER "DNS Сървър"
 #define D_DONE "Изпълнено"
 #define D_DST_TIME "Лятно време"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "Емулация"
 #define D_ENABLED "Разрешен"
 #define D_ERASE "Изтриване"
