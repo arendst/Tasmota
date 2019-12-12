@@ -1123,7 +1123,7 @@ void HandleRoot(void)
         }
 #endif  // USE_SHUTTER
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        if(pin[GPIO_REL1 + idx-1] < 99) {   // only display relays        
+        if(pin[GPIO_REL1 + idx-1] < 99)    // only display relays        
           WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
       }
 #ifdef USE_SONOFF_IFAN

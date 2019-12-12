@@ -1308,7 +1308,7 @@ void GpioInit(void)
         if (i &1) { devices_present--; }
       }
     }
-    if (pin[GPIO_SWT1 +i] < 99) {
+    if (pin[GPIO_SWT1 +i] < 99) 
       devices_present=i+1;   // highest relay or switch numer defines devices present.    
   }
 
