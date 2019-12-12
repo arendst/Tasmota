@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.6.0.15
+ * Updated until v7.1.2.4
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -71,7 +71,7 @@
 #define D_COLDLIGHT "Froid"
 #define D_COMMAND "Commande"
 #define D_CONNECTED "Connecté"
-#define D_CORS_DOMAIN "CORS Domain"
+#define D_CORS_DOMAIN "Domaine CORS"
 #define D_COUNT "Compte"
 #define D_COUNTER "Compteur"
 #define D_CURRENT "Courant"          // As in Voltage and Current
@@ -281,7 +281,7 @@
 
 #define D_MQTT_PARAMETERS "Paramètres MQTT"
 #define D_CLIENT "Client"
-#define D_FULL_TOPIC "topic complet"
+#define D_FULL_TOPIC "Topic complet"
 
 #define D_LOGGING_PARAMETERS "Paramètres du journal"
 #define D_SERIAL_LOG_LEVEL "Niveau de journalisation série"
@@ -688,7 +688,7 @@
 #define D_CHECKING        "En test"
 #define D_WORKING         "En marche"
 #define D_FAILURE         "Défault"
-#define D_SOLAX_ERROR_0   "Aucun Code d'erreur"
+#define D_SOLAX_ERROR_0   "Aucun code d'erreur"
 #define D_SOLAX_ERROR_1   "Défaut Perte de réseau"
 #define D_SOLAX_ERROR_2   "Défaut Tension réseau"
 #define D_SOLAX_ERROR_3   "Défaut Fréquence réseau"
