@@ -57,6 +57,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix duplicated ``Backlog`` when using Event inside a Backlog by Adrian Scillato (#7178, #7147)
 - Fix Gui Timer when using a negative zero offset of -00:00 by Peter Ooms (#7174)
 - Add command ``SerialConfig 0..23`` or ``SerialConfig 8N1`` to select Serial Config based in PR by Luis Teixeira (#7108)
+- Add command ``Sensor34 9 <weight code>`` to set minimum delta to trigger JSON message by @tobox (#7188)
 - Add rule var ``%topic%`` by Adrian Scillato (#5522)
 - Add rule triggers ``tele-wifi1#xxx`` by Adrian Scillato (#7093)
 - Add SML bus decoder syntax support for byte order by Gerhard Mutz (#7112)
