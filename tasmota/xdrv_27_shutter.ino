@@ -214,7 +214,7 @@ void ShutterInit(void)
       dtostrfd((float)Shutter.open_time[i] / 10 , 1, shutter_open_chr);
       char shutter_close_chr[10];
       dtostrfd((float)Shutter.close_time[i] / 10, 1, shutter_close_chr);
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoedffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, shuttermode %d,motordelay %d"),
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100 Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoeffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, shuttermode %d,motordelay %d"),
         i+1, Settings.shutter_startrelay[i], Shutter.real_position[i], Settings.shutter_position[i], Shutter.close_velocity[i], Shutter.open_max[i], shutter_open_chr, shutter_close_chr,
         Settings.shuttercoeff[0][i], Settings.shuttercoeff[1][i], Settings.shuttercoeff[2][i], Settings.shuttercoeff[3][i], Settings.shuttercoeff[4][i],
         Shutter.mask, Settings.shutter_invert[i], Shutter.mode, Shutter.motordelay[i]);
