@@ -75,6 +75,7 @@
 #define D_COUNT "Szám"
 #define D_COUNTER "Számláló"
 #define D_CURRENT "Áramerősség"          // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "Adat"
 #define D_DARKLIGHT "Min. fényerő"
 #define D_DEBUG "Debug"
@@ -119,6 +120,7 @@
 #define D_NONE "nincs"
 #define D_OFF "Ki"
 #define D_OFFLINE "Offline"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "OK"
 #define D_ON "Be"
 #define D_ONLINE "Online"

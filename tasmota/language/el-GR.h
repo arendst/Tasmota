@@ -75,6 +75,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNTER "Μετρητής"
 #define D_CURRENT "Ένταση"          // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "Δεδομένα"
 #define D_DARKLIGHT "Σκοτεινό"
 #define D_DEBUG "Debug"
@@ -119,6 +120,7 @@
 #define D_NONE "Κανένα"
 #define D_OFF "Off"
 #define D_OFFLINE "Offline"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "Ok"
 #define D_ON "On"
 #define D_ONLINE "Online"

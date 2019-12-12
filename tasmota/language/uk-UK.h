@@ -75,6 +75,7 @@
 #define D_COUNT "Розмір"
 #define D_COUNTER "Лічильник"
 #define D_CURRENT "Струм"           // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "Дані"
 #define D_DARKLIGHT "Темний"
 #define D_DEBUG "Налагодження"
@@ -119,6 +120,7 @@
 #define D_NONE "Нічого"
 #define D_OFF "Вимк."
 #define D_OFFLINE "Офф-лайн"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "Ок"
 #define D_ON "Увімк."
 #define D_ONLINE "Он-лайн"

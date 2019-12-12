@@ -75,6 +75,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNTER "Teller"
 #define D_CURRENT "Stroom"          // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "Data"
 #define D_DARKLIGHT "Donker"
 #define D_DEBUG "Debug"
@@ -119,6 +120,7 @@
 #define D_NONE "Geen"
 #define D_OFF "Uit"
 #define D_OFFLINE "Offline"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "Ok"
 #define D_ON "Aan"
 #define D_ONLINE "Online"

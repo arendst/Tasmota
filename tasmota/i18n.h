@@ -272,6 +272,7 @@
   #define D_JSON_ONE_TO_RESTART "1 to restart"
 #define D_CMND_RESET "Reset"
   #define D_JSON_RESET_AND_RESTARTING "Reset and Restarting"
+  #define D_JSON_RESET_DOWN_STATS "Counts reset"
   #define D_JSON_ONE_TO_RESET "1 to reset"
 #define D_CMND_TIME "Time"
 #define D_CMND_TIMEZONE "Timezone"

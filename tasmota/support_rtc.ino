@@ -240,6 +240,12 @@ String GetUptime(void)
   return GetDuration(UpTime());
 }
 
+void ClrUpTime(void)
+{
+  Rtc.restart_time = Rtc.utc_time;
+  uptime = 0;               // sonoff.ino variable
+}
+
 uint32_t MinutesPastMidnight(void)
 {
   uint32_t minutes = 0;

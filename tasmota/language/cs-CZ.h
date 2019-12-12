@@ -75,6 +75,7 @@
 #define D_COUNT "Počítej"
 #define D_COUNTER "Počítadlo"
 #define D_CURRENT "Proud"          // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "Data"
 #define D_DARKLIGHT "Tmavý"
 #define D_DEBUG "Debug"
@@ -119,6 +120,7 @@
 #define D_NONE "Žádný"
 #define D_OFF "Vyp."
 #define D_OFFLINE "Neaktivní"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "OK"
 #define D_ON "Zap."
 #define D_ONLINE "Aktivní"

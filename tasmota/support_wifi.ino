@@ -326,6 +326,13 @@ String WifiDowntime(void)
   return GetDuration(Wifi.downtime);
 }
 
+void WifiResetStats(void)
+{
+  Wifi.last_event = UpTime();
+  Wifi.downtime = 0;
+  Wifi.link_count = 0;  
+}
+
 void WifiSetState(uint8_t state)
 {
   if (state == global_state.wifi_down) {

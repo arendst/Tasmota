@@ -75,6 +75,7 @@
 #define D_COUNT "Sayı"
 #define D_COUNTER "Sayaç"
 #define D_CURRENT "Current"          // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "Data"
 #define D_DARKLIGHT "Karanlık"
 #define D_DEBUG "Hata Ayıklama"
@@ -119,6 +120,7 @@
 #define D_NONE "None"
 #define D_OFF "Off"
 #define D_OFFLINE "Çevirimdışı"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "Tamam"
 #define D_ON "On"
 #define D_ONLINE "Çevirimiçi"

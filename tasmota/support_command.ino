@@ -1423,6 +1423,13 @@ void CmndTeleperiod(void)
 void CmndReset(void)
 {
   switch (XdrvMailbox.payload) {
+  case 0:       // Only reset cycling counters (Boot, Wifi, Mqtt), Uptime and Wifi down time
+    Settings.bootcount = 0;
+    WifiResetStats();
+    MqttResetStats();
+    ClrUpTime();
+    ResponseCmndChar(D_JSON_RESET_DOWN_STATS);
+    break;
   case 1:
     restart_flag = 211;
     ResponseCmndChar(D_JSON_RESET_AND_RESTARTING);

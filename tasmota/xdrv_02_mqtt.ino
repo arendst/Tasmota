@@ -498,6 +498,11 @@ uint16_t MqttConnectCount(void)
   return Mqtt.connect_count;
 }
 
+void MqttResetStats(void)
+{
+  Mqtt.connect_count = 0;
+}
+
 void MqttDisconnected(int state)
 {
   Mqtt.connected = false;

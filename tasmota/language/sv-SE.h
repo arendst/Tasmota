@@ -75,6 +75,7 @@
 #define D_COUNT "Räkna"
 #define D_COUNTER "Räknare"
 #define D_CURRENT "Ström"          // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "Data"
 #define D_DARKLIGHT "Mörkt"
 #define D_DEBUG "Debug"
@@ -119,6 +120,7 @@
 #define D_NONE "Ingen"
 #define D_OFF "Av"
 #define D_OFFLINE "Off-line"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "Ok"
 #define D_ON "På"
 #define D_ONLINE "Ansluten"

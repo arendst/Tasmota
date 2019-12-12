@@ -75,6 +75,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNTER "Counter"
 #define D_CURRENT "전류"          // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "Data"
 #define D_DARKLIGHT "어둡게"
 #define D_DEBUG "디버그"
@@ -119,6 +120,7 @@
 #define D_NONE "없음"
 #define D_OFF "꺼짐"
 #define D_OFFLINE "오프라인"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "Ok"
 #define D_ON "켜짐"
 #define D_ONLINE "온라인"

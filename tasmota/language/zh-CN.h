@@ -75,6 +75,7 @@
 #define D_COUNT "数量:"
 #define D_COUNTER "计数器"
 #define D_CURRENT "电流"          // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "数据:"
 #define D_DARKLIGHT "暗"
 #define D_DEBUG "调试"
@@ -119,6 +120,7 @@
 #define D_NONE "无"
 #define D_OFF "关"
 #define D_OFFLINE "离线"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "好"
 #define D_ON "开"
 #define D_ONLINE "在线"

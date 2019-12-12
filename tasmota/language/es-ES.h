@@ -75,6 +75,7 @@
 #define D_COUNT "Conteo"
 #define D_COUNTER "Contador"
 #define D_CURRENT "Corriente"          // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "Datos"
 #define D_DARKLIGHT "Oscuro"
 #define D_DEBUG "Debug"
@@ -119,6 +120,7 @@
 #define D_NONE "Ninguno"
 #define D_OFF "Apagado"
 #define D_OFFLINE "Offline"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "Ok"
 #define D_ON "Encendido"
 #define D_ONLINE "Online"

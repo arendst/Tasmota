@@ -75,6 +75,8 @@
 #define D_COUNT "סופר"
 #define D_COUNTER "מונה"
 #define D_CURRENT "נוכחי"          // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "נתונים"
 #define D_DARKLIGHT "חושך"
 #define D_DEBUG "באגים"
@@ -119,6 +121,7 @@
 #define D_NONE "כלום"
 #define D_OFF "כבוי"
 #define D_OFFLINE "מנותק"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "אוקיי"
 #define D_ON "פועל"
 #define D_ONLINE "מחובר"

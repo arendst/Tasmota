@@ -1977,8 +1977,9 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1" D_BUILD_DATE_AND_TIME "}2%s"), GetBuildDateAndTime().c_str());
   WSContentSend_P(PSTR("}1" D_CORE_AND_SDK_VERSION "}2" ARDUINO_ESP8266_RELEASE "/%s"), ESP.getSdkVersion());
   WSContentSend_P(PSTR("}1" D_UPTIME "}2%s"), GetUptime().c_str());
+  WSContentSend_P(PSTR("}1" D_OFFLINE_COUNT "}2%s"), WifiDowntime().c_str());
   WSContentSend_P(PSTR("}1" D_FLASH_WRITE_COUNT "}2%d at 0x%X"), Settings.save_flag, GetSettingsAddress());
-  WSContentSend_P(PSTR("}1" D_BOOT_COUNT "}2%d"), Settings.bootcount);
+  WSContentSend_P(PSTR("}1" D_CYCLES "}2(%d,%d,%d)"), Settings.bootcount, WifiLinkCount(), MqttConnectCount());
   WSContentSend_P(PSTR("}1" D_RESTART_REASON "}2%s"), GetResetReason().c_str());
   uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : devices_present;
 #ifdef USE_SONOFF_IFAN

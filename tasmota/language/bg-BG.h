@@ -75,6 +75,7 @@
 #define D_COUNT "Брой"
 #define D_COUNTER "Брояч"
 #define D_CURRENT "Ток"          // As in Voltage and Current
+#define D_CYCLES "Cycles: Boot,Wifi,MQTT"
 #define D_DATA "Данни"
 #define D_DARKLIGHT "Тъмна"
 #define D_DEBUG "Дебъгване"
@@ -119,6 +120,7 @@
 #define D_NONE "Няма"
 #define D_OFF "Изкл."
 #define D_OFFLINE "Офлайн"
+#define D_OFFLINE_COUNT "Offline duration"
 #define D_OK "Ок"
 #define D_ON "Вкл."
 #define D_ONLINE "Онлайн"
