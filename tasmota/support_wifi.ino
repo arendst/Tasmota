@@ -352,6 +352,14 @@ bool WifiCheckIPv6(void)
   return ipv6_global;
 }
 
+String WifiGetIPv6(void)
+{
+  for (auto a : addrList) {
+    if(!a.isLocal() && a.isV6()) return a.toString();
+  }
+  return "";
+}
+
 bool WifiCheckIPAddrStatus(void)	// Return false for 169.254.x.x or fe80::/64
 {
   bool ip_global=false;

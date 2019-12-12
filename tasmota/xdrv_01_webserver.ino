@@ -598,7 +598,13 @@ void StartWebserver(int type, IPAddress ipweb)
     WebServer->begin(); // Web server start
   }
   if (Web.state != type) {
+#if LWIP_IPV6
+    String ipv6_addr = WifiGetIPv6();
+    if(ipv6_addr!="") AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s and IPv6 global address %s "), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str(),ipv6_addr.c_str());
+    else AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+#else
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+#endif // LWIP_IPV6 = 1
     rules_flag.http_init = 1;
   }
   if (type) { Web.state = type; }
@@ -1990,6 +1996,12 @@ void HandleInformation(void)
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI());
   WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "");
+#if LWIP_IPV6
+    String ipv6_addr = WifiGetIPv6();
+    if(ipv6_addr != ""){
+      WSContentSend_P(PSTR("}1 IPv6 Address }2%s"), ipv6_addr.c_str());
+    }
+#endif
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
     WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), WiFi.localIP().toString().c_str());
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), IPAddress(Settings.ip_address[1]).toString().c_str());
