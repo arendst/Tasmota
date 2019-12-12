@@ -1302,12 +1302,14 @@ void GpioInit(void)
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (pin[GPIO_REL1 +i] < 99) {
       pinMode(pin[GPIO_REL1 +i], OUTPUT);
-      devices_present++;
+      devices_present=i+1;   // highest relay or switch numer defines devices present
       if (EXS_RELAY == my_module_type) {
         digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? 1 : 0);
         if (i &1) { devices_present--; }
       }
     }
+    if (pin[GPIO_SWT1 +i] < 99) {
+      devices_present=i+1;   // highest relay or switch numer defines devices present.    
   }
 
   for (uint32_t i = 0; i < MAX_LEDS; i++) {
