@@ -264,7 +264,7 @@ bool HxCommand(void)
     char item[33];
     dtostrfd((float)Settings.weight_item / 10, 1, item);
     Response_P(PSTR("{\"Sensor34\":{\"" D_JSON_WEIGHT_REF "\":%d,\"" D_JSON_WEIGHT_CAL "\":%d,\"" D_JSON_WEIGHT_MAX "\":%d,\""
-		    D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":%s,\"" D_JSON_WEIGHT_DELTA "\":\"%d\"}}"),
+		    D_JSON_WEIGHT_ITEM "\":%s,\"" D_JSON_WEIGHT_CHANGE "\":%s,\"" D_JSON_WEIGHT_DELTA "\":%d}}"),
 	       Settings.weight_reference, Settings.weight_calibration, Settings.weight_max * 1000,
 	       item, GetStateText(Settings.SensorBits1.hx711_json_weight_change), Settings.weight_change);
   }
