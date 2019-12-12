@@ -235,13 +235,14 @@ void ZigbeeInit(void)
  * Commands
 \*********************************************************************************************/
 
-uint32_t strToUInt(const JsonVariant val) {
+uint32_t strToUInt(const JsonVariant &val) {
   // if the string starts with 0x, it is considered Hex, otherwise it is an int
   if (val.is<unsigned int>()) {
     return val.as<unsigned int>();
   } else {
-    if (val.is<char*>()) {
-      return strtoull(val.as<char*>(), nullptr, 0);
+    if (val.is<const char*>()) {
+      String sval = val.as<String>();
+      return strtoull(sval.c_str(), nullptr, 0);
     }
   }
   return 0;   // couldn't parse anything
@@ -593,6 +594,7 @@ void CmndZigbeeRead(void) {
 
   const JsonVariant &val_attr = getCaseInsensitive(json, PSTR("Read"));
   if (nullptr != &val_attr) {
+    uint16_t val = strToUInt(val_attr);
     if (val_attr.is<JsonArray>()) {
       JsonArray& attr_arr = val_attr;
       attrs_len = attr_arr.size() * 2;
@@ -604,19 +606,18 @@ void CmndZigbeeRead(void) {
         attrs[i++] = val & 0xFF;
         attrs[i++] = val >> 8;
       }
-
     } else {
       attrs_len = 2;
       attrs = new uint8_t[attrs_len];
-      uint16_t val = strToUInt(val_attr);
       attrs[0] = val & 0xFF;    // little endian
       attrs[1] = val >> 8;
     }
   }
 
- ZigbeeZCLSend(device, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, false /* we do want a response */);
+  ZigbeeZCLSend(device, cluster, endpoint, ZCL_READ_ATTRIBUTES, false, attrs, attrs_len, false /* we do want a response */);
 
- if (attrs) { delete[] attrs; }
+  if (attrs) { delete[] attrs; }
+  ResponseCmndDone();
 }
 
 // Allow or Deny pairing of new Zigbee devices
