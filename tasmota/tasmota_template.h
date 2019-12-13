@@ -214,6 +214,7 @@ enum UserSelectablePins {
   GPIO_TASMOTASLAVE_RST_INV, // Slave Reset Inverted
   GPIO_HPMA_RX,        // Honeywell HPMA115S0 Serial interface
   GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
+  GPIO_CC1101_CS,      // CC1101 CS
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -294,6 +295,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
   D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
+  D_SENSOR_CC1101_CS "|"
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -755,6 +757,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif
 #ifdef USE_DEEPSLEEP
   GPIO_DEEPSLEEP
+#endif
+#ifdef USE_MORITZ
+  GPIO_CC1101_CS,
 #endif
 };
 
