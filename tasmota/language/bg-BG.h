@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.5.0.8
+ * Updated until v7.1.2.4
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -71,6 +71,7 @@
 #define D_COLDLIGHT "Хладна"
 #define D_COMMAND "Команда"
 #define D_CONNECTED "Свързан"
+#define D_CORS_DOMAIN "CORS домейн"
 #define D_COUNT "Брой"
 #define D_COUNTER "Брояч"
 #define D_CURRENT "Ток"          // As in Voltage and Current
@@ -113,7 +114,7 @@
 #define D_LWT "LWT"
 #define D_MODULE "Модул"
 #define D_MQTT "MQTT"
-#define D_MULTI_PRESS "множествено натискане"
+#define D_MULTI_PRESS "неколкократно натискане"
 #define D_NOISE "Шум"
 #define D_NONE "Няма"
 #define D_OFF "Изкл."
@@ -284,10 +285,10 @@
 
 #define D_LOGGING_PARAMETERS "Параметри на лога"
 #define D_SERIAL_LOG_LEVEL "Степен на серийния лог"
-#define D_MQTT_LOG_LEVEL "Mqtt log level"
+#define D_MQTT_LOG_LEVEL "Степен на MQTT лога"
 #define D_WEB_LOG_LEVEL "Степен на уеб лога"
 #define D_SYS_LOG_LEVEL "Степен на системния лог"
-#define D_MORE_DEBUG "Още дебъгване"
+#define D_MORE_DEBUG "Допълнителна debug информация"
 #define D_SYSLOG_HOST "Хост на системния лог"
 #define D_SYSLOG_PORT "Порт на системния лог"
 #define D_TELEMETRY_PERIOD "Период на телеметрия"
@@ -381,7 +382,7 @@
 
 #define D_HUE "Hue"
 #define D_HUE_BRIDGE_SETUP "Настройка на Hue bridge"
-#define D_HUE_API_NOT_IMPLEMENTED "Hue API не е внедрено"
+#define D_HUE_API_NOT_IMPLEMENTED "Hue API не е внедрен"
 #define D_HUE_API "Hue API"
 #define D_HUE_POST_ARGS "Hue POST аргументи"
 #define D_3_RESPONSE_PACKETS_SENT "Изпратени са 3 пакета за отговор"
@@ -443,17 +444,17 @@
 #define D_ENERGY_TOTAL "Използвана енергия общо"
 
 // xdrv_27_shutter.ino
-#define D_OPEN "Open"
-#define D_CLOSE "Close"
-#define D_DOMOTICZ_SHUTTER "Shutter"
+#define D_OPEN "Отворена"
+#define D_CLOSE "Затворена"
+#define D_DOMOTICZ_SHUTTER "Щора"
 
 // xdrv_28_pcf8574.ino
-#define D_CONFIGURE_PCF8574 "Configure PCF8574"
-#define D_PCF8574_PARAMETERS "PCF8574 parameters"
-#define D_INVERT_PORTS "Invert Ports"
-#define D_DEVICE "Device"
-#define D_DEVICE_INPUT "Input"
-#define D_DEVICE_OUTPUT "Output"
+#define D_CONFIGURE_PCF8574 "Конфигуриране на PCF8574"
+#define D_PCF8574_PARAMETERS "PCF8574 параметри"
+#define D_INVERT_PORTS "Обърни портовете"
+#define D_DEVICE "Устройство"
+#define D_DEVICE_INPUT "Вход"
+#define D_DEVICE_OUTPUT "Изход"
 
 // xsns_05_ds18b20.ino
 #define D_SENSOR_BUSY "Датчикът DS18x20 е зает"
@@ -674,27 +675,27 @@
 #define D_UNIT_ANGLE      "°"
 
 //SOLAXX1
-#define D_PV1_VOLTAGE     "PV1 Voltage"
-#define D_PV1_CURRENT     "PV1 Current"
-#define D_PV1_POWER       "PV1 Power"
-#define D_PV2_VOLTAGE     "PV2 Voltage"
-#define D_PV2_CURRENT     "PV2 Current"
-#define D_PV2_POWER       "PV2 Power"
-#define D_SOLAR_POWER     "Solar Power"
-#define D_INVERTER_POWER  "Inverter Power"
-#define D_STATUS          "Status"
-#define D_WAITING         "Waiting"
-#define D_CHECKING        "Checking"
-#define D_WORKING         "Working"
-#define D_FAILURE         "Failure"
-#define D_SOLAX_ERROR_0   "No Error Code"
-#define D_SOLAX_ERROR_1   "Grid Lost Fault"
-#define D_SOLAX_ERROR_2   "Grid Voltage Fault"
-#define D_SOLAX_ERROR_3   "Grid Frequency Fault"
-#define D_SOLAX_ERROR_4   "Pv Voltage Fault"
-#define D_SOLAX_ERROR_5   "Isolation Fault"
-#define D_SOLAX_ERROR_6   "Over Temperature Fault"
-#define D_SOLAX_ERROR_7   "Fan Fault"
-#define D_SOLAX_ERROR_8   "Other Device Fault"
+#define D_PV1_VOLTAGE     "Напрежение на PV1"
+#define D_PV1_CURRENT     "Ток на PV1"
+#define D_PV1_POWER       "Мощност на PV1"
+#define D_PV2_VOLTAGE     "Напрежение на PV2"
+#define D_PV2_CURRENT     "Ток на PV2"
+#define D_PV2_POWER       "Мощност на PV2"
+#define D_SOLAR_POWER     "Слънчева мощност"
+#define D_INVERTER_POWER  "Мощност на инвертера"
+#define D_STATUS          "Състояние"
+#define D_WAITING         "Очакване"
+#define D_CHECKING        "Проверка"
+#define D_WORKING         "Работи"
+#define D_FAILURE         "Грешка"
+#define D_SOLAX_ERROR_0   "Грешка - няма код"
+#define D_SOLAX_ERROR_1   "Грешка - загуба на мрежата"
+#define D_SOLAX_ERROR_2   "Грешка - мрежово напрежение"
+#define D_SOLAX_ERROR_3   "Грешка - мрежова честота"
+#define D_SOLAX_ERROR_4   "Грешка - напрежение на Pv"
+#define D_SOLAX_ERROR_5   "Грешка - проблем с изолацията"
+#define D_SOLAX_ERROR_6   "Грешка - прегряване"
+#define D_SOLAX_ERROR_7   "Грешка - вентилатор"
+#define D_SOLAX_ERROR_8   "Грешка - друго оборудване"
 
 #endif  // _LANGUAGE_BG_BG_H_

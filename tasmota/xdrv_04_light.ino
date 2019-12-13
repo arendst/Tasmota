@@ -242,6 +242,7 @@ struct LIGHT {
   uint8_t color_remap[LST_MAX];
 
   uint8_t wheel = 0;
+  uint8_t random = 0;
   uint8_t subtype = 0;                    // LST_ subtype
   uint8_t device = 0;
   uint8_t old_power = 1;
@@ -1444,27 +1445,24 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
 #endif
   // If multi-channels, then we only switch off channels with a value of zero
   if (Light.pwm_multi_channels) {
-//     for (uint32_t i = 0; i < Light.subtype; i++) {
-//       // if channel is non-null, channel is supposed to be on, but it is off, do Power On
-//       if ((Light.current_color[i]) && (bitRead(Light.power, i)) && (0 == bitRead(power, i + Light.device - 1))) {
-//         ExecuteCommandPower(Light.device + i, POWER_ON_NO_STATE, SRC_LIGHT);
-//         //bitSet(Settings.power, i + Light.device - 1);
-//         #ifdef DEBUG_LIGHT
-//           AddLog_P2(LOG_LEVEL_DEBUG, "ExecuteCommandPower ON device=%d", Light.device + i);
-//         #endif
-//       }
-//       // if channel is zero and channel is on, set it off
-//       if ((0 == Light.current_color[i]) && bitRead(power, i + Light.device - 1)) {
-//         ExecuteCommandPower(Light.device + i, POWER_OFF_NO_STATE, SRC_LIGHT);
-//         //bitClear(Settings.power, i + Light.device - 1);
-//         #ifdef DEBUG_LIGHT
-//           AddLog_P2(LOG_LEVEL_DEBUG, "ExecuteCommandPower OFF device=%d", Light.device + i);
-//         #endif
-//       }
-// #ifdef USE_DOMOTICZ
-//       DomoticzUpdatePowerState(Light.device + i);
-// #endif  // USE_DOMOTICZ
-//     }
+    for (uint32_t i = 0; i < Light.subtype; i++) {
+      if (bitRead(channels, i)) {
+        // if channel is non-null, channel is supposed to be on, but it is off, do Power On
+        if ((Light.current_color[i]) && (!bitRead(Light.power, i))) {
+          if (!Settings.flag.not_power_linked) {  // SetOption20 - Control power in relation to Dimmer/Color/Ct changes
+            ExecuteCommandPower(Light.device + i, POWER_ON_NO_STATE, SRC_LIGHT);
+          }
+        } else {
+          // if channel is zero and channel is on, set it off
+          if ((0 == Light.current_color[i]) && bitRead(Light.power, i)) {
+            ExecuteCommandPower(Light.device + i, POWER_OFF_NO_STATE, SRC_LIGHT);
+          }
+        }
+  #ifdef USE_DOMOTICZ
+        DomoticzUpdatePowerState(Light.device + i);
+  #endif  // USE_DOMOTICZ
+      }
+    }
   } else {
     if (light_controller.isCTRGBLinked()) {   // linked, standard
       if (light_state.getBri() && !(Light.power)) {
@@ -1512,58 +1510,27 @@ void LightPreparePower(power_t channels = 0xFFFFFFFF) {    // 1 = only RGB, 2 = 
   LightState(0);
 }
 
-void LightWheel(uint8_t wheel_pos)
-{
-  wheel_pos = 255 - wheel_pos;
-  if (wheel_pos < 85) {
-    Light.entry_color[0] = 255 - wheel_pos * 3;
-    Light.entry_color[1] = 0;
-    Light.entry_color[2] = wheel_pos * 3;
-  } else if (wheel_pos < 170) {
-    wheel_pos -= 85;
-    Light.entry_color[0] = 0;
-    Light.entry_color[1] = wheel_pos * 3;
-    Light.entry_color[2] = 255 - wheel_pos * 3;
-  } else {
-    wheel_pos -= 170;
-    Light.entry_color[0] = wheel_pos * 3;
-    Light.entry_color[1] = 255 - wheel_pos * 3;
-    Light.entry_color[2] = 0;
-  }
-  Light.entry_color[3] = 0;
-  Light.entry_color[4] = 0;
-  float dimmer = 100 / (float)Settings.light_dimmer;
-  for (uint32_t i = 0; i < LST_RGB; i++) {
-    float temp = (float)Light.entry_color[i] / dimmer + 0.5f;
-    Light.entry_color[i] = (uint8_t)temp;
-  }
-}
-
 void LightCycleColor(int8_t direction)
 {
   if (Light.strip_timer_counter % (Settings.light_speed * 2)) {
     return;
   }
-  Light.wheel += direction;
-  LightWheel(Light.wheel);
-  memcpy(Light.new_color, Light.entry_color, sizeof(Light.new_color));
-}
 
-void LightRandomColor(void)
-{
-  bool update = false;
-  for (uint32_t i = 0; i < LST_RGB; i++) {
-    if (Light.new_color[i] != Light.current_color[i]) {
-      update = true;
+  if (0 == direction) {
+    if (Light.random == Light.wheel) {
+      Light.random = random(255);
     }
+    direction = (Light.random < Light.wheel) ? -1 : 1;
   }
-  if (!update) {
-    Light.wheel = random(255);
-    LightWheel(Light.wheel);
-    memcpy(Light.current_color, Light.entry_color, sizeof(Light.current_color));
-  }
+  Light.wheel += direction;
+  uint16_t hue = changeUIntScale(Light.wheel, 0, 255, 0, 359);  // Scale to hue to keep amount of steps low (max 255 instead of 359)
 
-  memcpy(Light.new_color, Light.current_color, sizeof(Light.new_color));
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
+
+  uint8_t sat;
+  light_state.getHSB(nullptr, &sat, nullptr);  // Allow user control over Saturation
+  light_state.setHS(hue, sat);
+  light_controller.calcLevels(Light.new_color);
 }
 
 void LightSetPower(void)
@@ -1604,12 +1571,16 @@ void LightAnimate(void)
 {
   uint8_t cur_col[LST_MAX];
   uint16_t light_still_on = 0;
+  bool power_off = false;
 
   Light.strip_timer_counter++;
   if (!Light.power) {                   // All channels powered off
     Light.strip_timer_counter = 0;
     if (!Light.fade_running) {
       sleep = Settings.sleep;
+    }
+    if (Settings.light_scheme >= LS_MAX) {
+      power_off = true;
     }
   } else {
     if (Settings.sleep > PWM_MAX_SLEEP) {
@@ -1655,14 +1626,14 @@ void LightAnimate(void)
         LightCycleColor(-1);
         break;
       case LS_RANDOM:
-        LightRandomColor();
+        LightCycleColor(0);
         break;
       default:
         XlgtCall(FUNC_SET_SCHEME);
     }
   }
 
-  if (Settings.light_scheme < LS_MAX) {     // exclude WS281X Neopixel
+  if ((Settings.light_scheme < LS_MAX) || power_off) {  // exclude WS281X Neopixel schemes
 
     // Apply power modifiers to Light.new_color
     LightApplyPower(Light.new_color, Light.power);
@@ -1747,7 +1718,7 @@ void LightAnimate(void)
         cur_col_10bits[i] = orig_col_10bits[Light.color_remap[i]];
       }
 
-      if (!Settings.light_fade) { // no fade
+      if (!Settings.light_fade || power_off) { // no fade
         // record the current value for a future Fade
         memcpy(Light.fade_start_8, cur_col, sizeof(Light.fade_start_8));
         memcpy(Light.fade_start_10, cur_col_10bits, sizeof(Light.fade_start_10));
@@ -1795,6 +1766,12 @@ void LightApplyFade(void) {
       // Note: Settings.light_speed is the number of half-seconds for a 100% fade,
       // i.e. light_speed=1 means 1024 steps in 10 ticks (500ms)
       Light.fade_duration = (distance * Settings.light_speed * 10) / 1024;
+      // Also postpone the save_data for the duration of the Fade (in seconds)
+      uint32_t delay_seconds = 1 + (Light.fade_duration + 19) / 20;   // add one more second
+      // AddLog_P2(LOG_LEVEL_INFO, PSTR("delay_seconds %d, save_data_counter %d"), delay_seconds, save_data_counter);
+      if (save_data_counter < delay_seconds) {
+        save_data_counter = delay_seconds;      // pospone
+      }
     } else {
       // no fade needed, we keep the duration at zero, it will fallback directly to end of fade
     }

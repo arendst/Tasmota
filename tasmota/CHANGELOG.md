@@ -1,10 +1,76 @@
 ## Unreleased (development)
 
+### 7.1.2.4 20191209
+
+- Change HTTP CORS from command ``SetOption73 0/1`` to ``Cors <cors_domain>`` allowing user control of specific CORS domain by Shantur Rathore (#7066)
+- Change GUI Shutter button text to Up and Down Arrows based on PR by Xavier Muller (#7166)
+- Change amount of supported DHT sensors from 3 to 4 by Xavier Muller (#7167)
+- Revert removal of exception details from MQTT info on restart
+- Add Wifi Signal Strength in dBm in addition to RSSI Wifi Experience by Andreas Schultz (#7145)
+- Add Yaw, Pitch and Roll support for MPU6050 by Philip Barclay (#7058)
+- Add reporting of raw weight to JSON from HX711 to overcome auto-tare functionality by @tobox (#7171)
+- Add command ``Sensor34 9 <weight code>`` to set minimum delta to trigger JSON message by @tobox (#7188)
+- Fix flashing H801 led at boot by Stefan Hadinger (#7165, #649)
+- Fix duplicated ``Backlog`` when using Event inside a Backlog by Adrian Scillato (#7178, #7147)
+- Fix Gui Timer when using a negative zero offset of -00:00 by Peter Ooms (#7174)
+
+### 7.1.2.3 20191208
+
+- Change Exception reporting removing exception details from both MQTT info and ``Status 1``. Now consolidated in ``Status 12`` if available.
+
+### 7.1.2.2 20191206
+
+- Remove rule trigger ``tele_power1#state`` due to compatibility
+- Add command ``SerialConfig 0..23`` or ``SerialConfig 8N1`` to select Serial Config based in PR by Luis Teixeira (#7108)
+- Add save call stack in RTC memory in case of crash, command ``Status 12`` to dump the stack by Stefan Hadinger
+- Add Home Assistant force update by Frederico Leoni (#7140, #7074)
+
+### 7.1.2.1 20191206
+
+- Add SML bus decoder syntax support for byte order by Gerhard Mutz (#7112)
+- Add rule var ``%topic%`` by Adrian Scillato (#5522)
+- Add rule triggers ``tele_power1#state`` and multiple ``tele-wifi1#xxx`` by Adrian Scillato (#7093)
+- Add experimental support for stepper motor shutter control by Stefan Bode
+- Add optional USE_MQTT_TLS to tasmota-minimal.bin by Bohdan Kmit (#7115)
+
+## Released
+
+### 7.1.2 20191206
+
+- Maintenance Release
+
+### 7.1.1.1 20191201
+
+- Fix lost functionality of GPIO9 and GPIO10 on some devices (#7080)
+- Fix Zigbee uses Hardware Serial if GPIO 1/3 or GPIO 13/15 and SerialLog 0 (#7071)
+- Fix WS2812 power control (#7090)
+- Change light color schemes 2, 3 and 4 from color wheel to Hue driven with user Saturation control
+- Change log buffer size from 520 to 700 characters accomodating full rule text (#7110)
+
+### 7.1.1 20191201
+
+- Maintenance Release
+
+### 7.1.0.1 20191130
+
+- Fix slider for devices with one or two channels like only white or white/yellow
+- Fix TasmotaSlave buffer overrun on Tele
+- Fix light scheme 4 speed (#7072)
+- Add support for TasmotaSlave executing commands on Tasmota
+
+### 7.1.0 20191129
+
+- Release
+
 ### 7.0.0.6 20191122
 
 - Add colorpicker to WebUI by Christian Staars (#6984)
 - Change new Fade system much smoother, Speed now up to 40 (#6942, #3714)
 - Fix Arduino IDE function prototyping compile error (#6982)
+- Change update lib IRremoteESP8266 updated to v2.7.1, -2.7k flash and -1.5k RAM for Tasmota-IR
+- Fix auto--power on/off when setting channel to non-zero or zero value, when SetOption68 1
+- Fix postpone saving settings to flash until Fade is complete, avoids pause in Fade
+- Add command ``SetOption77 0/1`` to keep power on when slider is far left
 
 ### 7.0.0.5 20191118
 
@@ -60,8 +126,6 @@
 - Change ArduinoSlave to TasmotaSlave
 - Add support for Tuya battery powered devices (#6735)
 - Change repository name from Sonoff-Tasmota to Tasmota and all code references from Sonoff to Tasmota
-
-## Released
 
 ### 6.7.1 20191026
 

@@ -129,7 +129,8 @@ a_setoption = [[
     "Enable HTTP CORS",
     "Enable internal pullup for single DS18x20 sensor",
     "GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)",
-    "","",
+    "Enable incrementing bootcount when deepsleep is enabled",
+    "Do not power off if slider moved to far left",
     "","",
     "Enable shutter support",
     "Invert PCF8574 ports"

@@ -134,6 +134,7 @@
 #define D_JSON_SELECTED "selected"
 #define D_JSON_SERIALRECEIVED "SerialReceived"
 #define D_JSON_SET "Set"
+#define D_JSON_SIGNAL "Signal"
 #define D_JSON_SSID "SSId"
 #define D_JSON_STARTDST "StartDST"       // Start Daylight Savings Time
 #define D_JSON_STARTED "Started"
@@ -208,6 +209,7 @@
   #define D_STATUS9_MARGIN "PTH"
   #define D_STATUS10_SENSOR "SNS"
   #define D_STATUS11_STATUS "STS"
+  #define D_STATUS12_STATUS "STK"
 #define D_CMND_STATE "State"
 #define D_CMND_POWER "Power"
 #define D_CMND_FANSPEED "FanSpeed"
@@ -285,6 +287,7 @@
 #define D_CMND_SERIALSEND "SerialSend"
 #define D_CMND_SERIALDELIMITER "SerialDelimiter"
 #define D_CMND_BAUDRATE "Baudrate"
+#define D_CMND_SERIALCONFIG "SerialConfig"
 #define D_CMND_TEMPLATE "Template"
   #define D_JSON_NAME "NAME"
   #define D_JSON_GPIO "GPIO"
@@ -332,6 +335,7 @@
 #define D_CMND_WEBSENSOR "WebSensor"
 #define D_CMND_EMULATION "Emulation"
 #define D_CMND_SENDMAIL "Sendmail"
+#define D_CMND_CORS "CORS"
 
 // Commands xdrv_03_energy.ino
 #define D_CMND_POWERLOW "PowerLow"
@@ -488,6 +492,24 @@
     #define D_JSON_MOTOR_SPR "setSPR"
     #define D_JSON_MOTOR_RPM "setRPM"
     #define D_JSON_MOTOR_MIS "setMIS"
+  #endif
+
+  // Commands xdrv_27_Shutter.ino
+  #ifdef USE_SHUTTER
+    #define D_PRFX_SHUTTER "Shutter"
+    #define D_CMND_SHUTTER_OPEN "Open"
+    #define D_CMND_SHUTTER_CLOSE "Close"
+    #define D_CMND_SHUTTER_STOP "Stop"
+    #define D_CMND_SHUTTER_POSITION "Position"
+    #define D_CMND_SHUTTER_OPENTIME "OpenDuration"
+    #define D_CMND_SHUTTER_CLOSETIME "CloseDuration"
+    #define D_CMND_SHUTTER_RELAY "Relay"
+    #define D_CMND_SHUTTER_SETHALFWAY "SetHalfway"
+    #define D_CMND_SHUTTER_SETCLOSE "SetClose"
+    #define D_CMND_SHUTTER_INVERT "Invert"
+    #define D_CMND_SHUTTER_CLIBRATION "Calibration"
+    #define D_CMND_SHUTTER_MOTORDELAY "MotorDelay"
+    #define D_CMND_SHUTTER_FREQUENCY "Frequency"
   #endif
 
 /********************************************************************************************/

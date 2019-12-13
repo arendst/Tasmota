@@ -438,7 +438,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       String ucommand = commands;
       ucommand.toUpperCase();
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
-      if (ucommand.indexOf("EVENT ") != -1) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
+      if ((ucommand.indexOf("EVENT ") != -1) && (ucommand.indexOf("BACKLOG ") == -1)) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
 
       RulesVarReplace(commands, F("%VALUE%"), Rules.event_value);
       for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
@@ -452,6 +452,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       RulesVarReplace(commands, F("%TIME%"), String(MinutesPastMidnight()));
       RulesVarReplace(commands, F("%UPTIME%"), String(MinutesUptime()));
       RulesVarReplace(commands, F("%TIMESTAMP%"), GetDateAndTime(DT_LOCAL));
+      RulesVarReplace(commands, F("%TOPIC%"), Settings.mqtt_topic);
 #if defined(USE_TIMERS) && defined(USE_SUNRISE)
       RulesVarReplace(commands, F("%SUNRISE%"), String(SunMinutes(0)));
       RulesVarReplace(commands, F("%SUNSET%"), String(SunMinutes(1)));

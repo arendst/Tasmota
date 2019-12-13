@@ -23,7 +23,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_SETOPTION "|" D_CMND_TEMPERATURE_RESOLUTION "|" D_CMND_HUMIDITY_RESOLUTION "|" D_CMND_PRESSURE_RESOLUTION "|" D_CMND_POWER_RESOLUTION "|"
   D_CMND_VOLTAGE_RESOLUTION "|" D_CMND_FREQUENCY_RESOLUTION "|" D_CMND_CURRENT_RESOLUTION "|" D_CMND_ENERGY_RESOLUTION "|" D_CMND_WEIGHT_RESOLUTION "|"
   D_CMND_MODULE "|" D_CMND_MODULES "|" D_CMND_GPIO "|" D_CMND_GPIOS "|" D_CMND_TEMPLATE "|" D_CMND_PWM "|" D_CMND_PWMFREQUENCY "|" D_CMND_PWMRANGE "|"
-  D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SYSLOG "|" D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|"
+  D_CMND_BUTTONDEBOUNCE "|" D_CMND_SWITCHDEBOUNCE "|" D_CMND_SYSLOG "|" D_CMND_LOGHOST "|" D_CMND_LOGPORT "|" D_CMND_SERIALSEND "|" D_CMND_BAUDRATE "|" D_CMND_SERIALCONFIG "|"
   D_CMND_SERIALDELIMITER "|" D_CMND_IPADDRESS "|" D_CMND_NTPSERVER "|" D_CMND_AP "|" D_CMND_SSID "|" D_CMND_PASSWORD "|" D_CMND_HOSTNAME "|" D_CMND_WIFICONFIG "|"
   D_CMND_FRIENDLYNAME "|" D_CMND_SWITCHMODE "|" D_CMND_INTERLOCK "|" D_CMND_TELEPERIOD "|" D_CMND_RESET "|" D_CMND_TIME "|" D_CMND_TIMEZONE "|" D_CMND_TIMESTD "|"
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|"
@@ -38,7 +38,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndSetoption, &CmndTemperatureResolution, &CmndHumidityResolution, &CmndPressureResolution, &CmndPowerResolution,
   &CmndVoltageResolution, &CmndFrequencyResolution, &CmndCurrentResolution, &CmndEnergyResolution, &CmndWeightResolution,
   &CmndModule, &CmndModules, &CmndGpio, &CmndGpios, &CmndTemplate, &CmndPwm, &CmndPwmfrequency, &CmndPwmrange,
-  &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport, &CmndSerialSend, &CmndBaudrate,
+  &CmndButtonDebounce, &CmndSwitchDebounce, &CmndSyslog, &CmndLoghost, &CmndLogport, &CmndSerialSend, &CmndBaudrate, &CmndSerialConfig,
   &CmndSerialDelimiter, &CmndIpAddress, &CmndNtpServer, &CmndAp, &CmndSsid, &CmndPassword, &CmndHostname, &CmndWifiConfig,
   &CmndFriendlyname, &CmndSwitchMode, &CmndInterlock, &CmndTeleperiod, &CmndReset, &CmndTime, &CmndTimezone, &CmndTimeStd,
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndWifiPower, &CmndTempOffset,
@@ -334,6 +334,9 @@ void CmndStatus(void)
   if ((!Settings.flag.mqtt_enabled) && (6 == payload)) { payload = 99; }  // SetOption3 - Enable MQTT
   if (!energy_flg && (9 == payload)) { payload = 99; }
 
+  bool exception_flg = (ResetReason() == REASON_EXCEPTION_RST);
+  if (!exception_flg && (12 == payload)) { payload = 99; }
+
   if ((0 == payload) || (99 == payload)) {
     uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
 #ifdef USE_SONOFF_IFAN
@@ -369,7 +372,7 @@ void CmndStatus(void)
                           D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_JSON_STARTUPUTC "\":\"%s\",\"" D_CMND_SLEEP "\":%d,\""
                           D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_JSON_SAVEADDRESS "\":\"%X\"}}"),
                           baudrate, Settings.mqtt_grptopic, Settings.ota_url,
-                          GetResetReasonInfo().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
+                          GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
                           Settings.cfg_holder, Settings.bootcount, Settings.save_flag, GetSettingsAddress());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "1"));
   }
@@ -377,9 +380,12 @@ void CmndStatus(void)
   if ((0 == payload) || (2 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS2_FIRMWARE "\":{\"" D_JSON_VERSION "\":\"%s%s\",\"" D_JSON_BUILDDATETIME "\":\"%s\",\""
                           D_JSON_BOOTVERSION "\":%d,\"" D_JSON_COREVERSION "\":\"" ARDUINO_ESP8266_RELEASE "\",\"" D_JSON_SDKVERSION "\":\"%s\","
-                          "\"Hardware\":\"%s\"}}"),
+                          "\"Hardware\":\"%s\""
+                          "%s}}"),
                           my_version, my_image, GetBuildDateAndTime().c_str(),
-                          ESP.getBootVersion(), ESP.getSdkVersion(), GetDeviceHardware().c_str());
+                          ESP.getBootVersion(), ESP.getSdkVersion(),
+                          GetDeviceHardware().c_str(),
+                          GetStatistics().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "2"));
   }
 
@@ -483,6 +489,15 @@ void CmndStatus(void)
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "11"));
   }
 
+  if (exception_flg) {
+    if ((0 == payload) || (12 == payload)) {
+      Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS12_STATUS "\":"));
+      CrashDump();
+      ResponseJsonEnd();
+      MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "12"));
+    }
+  }
+
 #ifdef USE_SCRIPT_STATUS
   if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">U",2,mqtt_data);
 #endif
@@ -563,6 +578,9 @@ void CmndRestart(void)
   case 1:
     restart_flag = 2;
     ResponseCmndChar(D_JSON_RESTARTING);
+    break;
+  case -1:
+    CmndCrash();    // force a crash
     break;
   case 99:
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
@@ -1080,6 +1098,48 @@ void CmndBaudrate(void)
     SetSerialBaudrate(baudrate);
   }
   ResponseCmndNumber(Settings.baudrate * 300);
+}
+
+void CmndSerialConfig(void)
+{
+  // See TasmotaSerialConfig for possible options
+  // SerialConfig 0..23 where 3 equals 8N1
+  // SerialConfig 8N1
+
+  if (XdrvMailbox.data_len > 0) {
+    if (XdrvMailbox.data_len < 3) {                    // Use 0..23 as serial config option
+      if ((XdrvMailbox.payload >= TS_SERIAL_5N1) && (XdrvMailbox.payload <= TS_SERIAL_8O2)) {
+        SetSerialConfig(XdrvMailbox.payload);
+      }
+    }
+    else if ((XdrvMailbox.payload >= 5) && (XdrvMailbox.payload <= 8)) {
+      uint8_t serial_config = XdrvMailbox.payload -5;  // Data bits 5, 6, 7 or 8, No parity and 1 stop bit
+
+      bool valid = true;
+      char parity = (XdrvMailbox.data[1] & 0xdf);
+      if ('E' == parity) {
+        serial_config += 0x08;                         // Even parity
+      }
+      else if ('O' == parity) {
+        serial_config += 0x10;                         // Odd parity
+      }
+      else if ('N' != parity) {
+        valid = false;
+      }
+
+      if ('2' == XdrvMailbox.data[2]) {
+        serial_config += 0x04;                         // Stop bits 2
+      }
+      else if ('1' != XdrvMailbox.data[2]) {
+        valid = false;
+      }
+
+      if (valid) {
+        SetSerialConfig(serial_config);
+      }
+    }
+  }
+  ResponseCmndChar(GetSerialConfig().c_str());
 }
 
 void CmndSerialSend(void)

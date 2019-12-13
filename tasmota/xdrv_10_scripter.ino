@@ -4847,11 +4847,11 @@ bool Xdrv10(uint8_t function)
       result = ScriptCommand();
       break;
     case FUNC_SET_POWER:
-    #ifdef SCRIPT_POWER_SECTION
+#ifdef SCRIPT_POWER_SECTION
       if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">P",2,0);
-    #else
+#else
       if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E",2,0);
-    #endif
+#endif
       break;
     case FUNC_RULES_PROCESS:
       if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E",2,mqtt_data);

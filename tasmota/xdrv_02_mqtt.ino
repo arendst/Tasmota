@@ -550,12 +550,23 @@ void MqttConnected(void)
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
     if (Settings.webserver) {
+#if LWIP_IPV6
+      Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"IPv6Address\":\"%s\"}"),
+        (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str(),WifiGetIPv6().c_str());
+#else
       Response_P(PSTR("{\"" D_JSON_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\"}"),
         (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
+#endif // LWIP_IPV6 = 1
       MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "2"));
     }
 #endif  // USE_WEBSERVER
-    Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":\"%s\"}"), GetResetReasonInfo().c_str());
+    Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":"));
+    if (ResetReason() == REASON_EXCEPTION_RST) {
+      CrashDump();
+    } else {
+      ResponseAppend_P(PSTR("\"%s\""), GetResetReason().c_str());
+    }
+    ResponseJsonEnd();
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_INFO "3"));
     MqttPublishAllPowerState();
     if (Settings.tele_period) {
@@ -1070,6 +1081,9 @@ void CmndTlsKey(void) {
         return;
       }
       memcpy_P(spi_buffer, tls_spi_start, tls_spi_len);
+
+      // remove any white space from the base64
+      RemoveAllSpaces(XdrvMailbox.data);
 
       // allocate buffer for decoded base64
       uint32_t bin_len = decode_base64_length((unsigned char*)XdrvMailbox.data);

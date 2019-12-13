@@ -119,7 +119,7 @@ const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in (seri
 const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
 const uint16_t TOPSZ = 100;                 // Max number of characters in topic string
-const uint16_t LOGSZ = 520;                 // Max number of characters in log
+const uint16_t LOGSZ = 700;                 // Max number of characters in log
 const uint16_t MIN_MESSZ = 893;             // Min number of characters in MQTT message
 
 const uint8_t SENSOR_MAX_MISS = 5;          // Max number of missed sensor reads before deciding it's offline
@@ -131,7 +131,7 @@ const uint32_t SOFT_BAUDRATE = 9600;        // Default software serial baudrate
 const uint32_t APP_BAUDRATE = 115200;       // Default serial baudrate
 const uint32_t SERIAL_POLLING = 100;        // Serial receive polling in ms
 const uint32_t ZIGBEE_POLLING = 100;        // Serial receive polling in ms
-const uint8_t MAX_STATUS = 11;              // Max number of status lines
+const uint8_t MAX_STATUS = 12;              // Max number of status lines
 
 const uint32_t START_VALID_TIME = 1451602800;  // Time is synced and after 2016-01-01
 

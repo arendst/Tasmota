@@ -51,7 +51,7 @@ void OsWatchTicker(void)
   uint32_t last_run = abs(t - oswatch_last_loop_time);
 
 #ifdef DEBUG_THEO
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d, last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(WiFi.RSSI()), last_run);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_APPLICATION D_OSWATCH " FreeRam %d, rssi %d %% (%d dBm), last_run %d"), ESP.getFreeHeap(), WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI(), last_run);
 #endif  // DEBUG_THEO
   if (last_run >= (OSWATCH_RESET_TIME * 1000)) {
 //    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));  // Save iram space
@@ -105,12 +105,6 @@ String GetResetReason(void)
   } else {
     return ESP.getResetReason();
   }
-}
-
-String GetResetReasonInfo(void)
-{
-  // "Fatal exception:0 flag:2 (EXCEPTION) epc1:0x704022a7 epc2:0x00000000 epc3:0x00000000 excvaddr:0x00000000 depc:0x00000000"
-  return (ResetReason() == REASON_EXCEPTION_RST) ? ESP.getResetInfo() : GetResetReason();
 }
 
 /*********************************************************************************************\
@@ -383,6 +377,23 @@ char* Trim(char* p)
   return p;
 }
 
+char* RemoveAllSpaces(char* p)
+{
+  // remove any white space from the base64
+  char *cursor = p;
+  uint32_t offset = 0;
+  while (1) {
+    *cursor = *(cursor + offset);
+    if ((' ' == *cursor) || ('\t' == *cursor) || ('\n' == *cursor)) {   // if space found, remove this char until end of string
+      offset++;
+    } else {
+      if (0 == *cursor) { break; }
+      cursor++;
+    }
+  }
+  return p;
+}
+
 char* NoAlNumToUnderscore(char* dest, const char* source)
 {
   char* write = dest;
@@ -521,7 +532,7 @@ char* GetPowerDevice(char* dest, uint32_t idx, size_t size)
   return GetPowerDevice(dest, idx, size, 0);
 }
 
-bool IsEsp8285(void)
+void GetEspHardwareType(void)
 {
   // esptool.py get_efuses
   uint32_t efuse1 = *(uint32_t*)(0x3FF00050);
@@ -529,17 +540,16 @@ bool IsEsp8285(void)
 //  uint32_t efuse3 = *(uint32_t*)(0x3FF00058);
 //  uint32_t efuse4 = *(uint32_t*)(0x3FF0005C);
 
-  bool is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
+  is_8285 = ( (efuse1 & (1 << 4)) || (efuse2 & (1 << 16)) );
   if (is_8285 && (ESP.getFlashChipRealSize() > 1048576)) {
     is_8285 = false;  // ESP8285 can only have 1M flash
   }
-  return is_8285;
 }
 
 String GetDeviceHardware(void)
 {
   char buff[10];
-  if (IsEsp8285()) {
+  if (is_8285) {
     strcpy_P(buff, PSTR("ESP8285"));
   } else {
     strcpy_P(buff, PSTR("ESP8266EX"));
@@ -738,19 +748,50 @@ int GetStateNumber(char *state_text)
   return state_number;
 }
 
+String GetSerialConfig(void)
+{
+  // Settings.serial_config layout
+  // b000000xx - 5, 6, 7 or 8 data bits
+  // b00000x00 - 1 or 2 stop bits
+  // b000xx000 - None, Even or Odd parity
+
+  const char kParity[] = "NEOI";
+
+  char config[4];
+  config[0] = '5' + (Settings.serial_config & 0x3);
+  config[1] = kParity[(Settings.serial_config >> 3) & 0x3];
+  config[2] = '1' + ((Settings.serial_config >> 2) & 0x1);
+  config[3] = '\0';
+  return String(config);
+}
+
+void SetSerialBegin(uint32_t baudrate)
+{
+  if (seriallog_level) {
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Set Serial to %s %d bit/s"), GetSerialConfig().c_str(), baudrate);
+    delay(100);
+  }
+  Serial.flush();
+  Serial.begin(baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
+  delay(10);
+  Serial.println();
+}
+
+void SetSerialConfig(uint32_t serial_config)
+{
+  if (serial_config == Settings.serial_config) { return; }
+  if (serial_config > TS_SERIAL_8O2) { return; }
+
+  Settings.serial_config = serial_config;
+  SetSerialBegin(Serial.baudRate());
+}
+
 void SetSerialBaudrate(int baudrate)
 {
   Settings.baudrate = baudrate / 300;
-  if (Serial.baudRate() != baudrate) {
-    if (seriallog_level) {
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_SET_BAUDRATE_TO " %d"), baudrate);
-    }
-    delay(100);
-    Serial.flush();
-    Serial.begin(baudrate, serial_config);
-    delay(10);
-    Serial.println();
-  }
+  if (Serial.baudRate() == baudrate) { return; }
+
+  SetSerialBegin(baudrate);
 }
 
 void ClaimSerial(void)
@@ -1034,18 +1075,18 @@ bool FlashPin(uint32_t pin)
 
 uint8_t ValidPin(uint32_t pin, uint32_t gpio)
 {
-  uint8_t result = gpio;
-
   if (FlashPin(pin)) {
-    result = GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
+    return GPIO_NONE;    // Disable flash pins GPIO6, GPIO7, GPIO8 and GPIO11
   }
-  if (!IsEsp8285() && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
+
+//  if (!is_8285 && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
+  if ((WEMOS == Settings.module) && !Settings.flag3.user_esp8285_enable) {  // SetOption51 - Enable ESP8285 user GPIO's
     if ((pin == 9) || (pin == 10)) {
-      result = GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
+      return GPIO_NONE;  // Disable possible flash GPIO9 and GPIO10
     }
   }
 
-  return result;
+  return gpio;
 }
 
 bool ValidGPIO(uint32_t pin, uint32_t gpio)
