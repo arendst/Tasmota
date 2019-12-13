@@ -248,25 +248,33 @@ struct SYSCFG {
   SysBitfield   flag;                      // 010
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
+
+  // Start of single char array
+
   char          ota_url[101];              // 017
   char          mqtt_prefix[3][11];        // 07C
+
   uint8_t       ex_baudrate;               // 09D - Free since 6.6.0.9
-  uint8_t       seriallog_level;           // 09E
-  uint8_t       sta_config;                // 09F
-  uint8_t       sta_active;                // 0A0
+  uint8_t       ex_seriallog_level;        // 09E
+  uint8_t       ex_sta_config;             // 09F
+  uint8_t       ex_sta_active;             // 0A0
+
   char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 5
   char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 5
   char          hostname[33];              // 165
   char          syslog_host[33];           // 186
-  uint8_t       rule_stop;                 // 1A7
-  uint16_t      syslog_port;               // 1A8
-  uint8_t       syslog_level;              // 1AA
-  uint8_t       webserver;                 // 1AB
-  uint8_t       weblog_level;              // 1AC
-  uint8_t       mqtt_fingerprint[2][20];   // 1AD
-  uint8_t       adc_param_type;            // 1D5
+
+  uint8_t       ex_rule_stop;              // 1A7
+  uint16_t      ex_syslog_port;            // 1A8
+  uint8_t       ex_syslog_level;           // 1AA
+  uint8_t       ex_webserver;              // 1AB
+  uint8_t       ex_weblog_level;           // 1AC
+  uint8_t       ex_mqtt_fingerprint[2][20];  // 1AD
+  uint8_t       ex_adc_param_type;         // 1D5
 
   uint8_t       free_1d6[10];              // 1D6
+
+  // End of single char array of 446 chars max (phase 3)
 
   SysBitfield4  flag4;                     // 1E0
   uint8_t       serial_config;             // 1E4
@@ -282,6 +290,9 @@ struct SYSCFG {
   char          mqtt_topic[33];            // 26F - Keep together with above items as being copied as one chunck with reset 6
   char          button_topic[33];          // 290
   char          mqtt_grptopic[33];         // 2B1
+
+  // Optional end of single char array of 698 chars max (phase 5)
+
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
   uint8_t       display_refresh;           // 2D4
@@ -302,7 +313,9 @@ struct SYSCFG {
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
   char          state_text[4][11];         // 313
+
   uint8_t       ex_energy_power_delta;     // 33F - Free since 6.6.0.20
+
   uint16_t      domoticz_update_timer;     // 340
   uint16_t      pwm_range;                 // 342
   unsigned long domoticz_relay_idx[MAX_DOMOTICZ_IDX];  // 344
@@ -338,7 +351,7 @@ struct SYSCFG {
   char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
   char          switch_topic[33];          // 430
   char          serial_delimiter;          // 451
-  uint8_t       ex_sbaudrate;              // 452 - Free since 6.6.0.9
+  uint8_t       seriallog_level;           // 452
   uint8_t       sleep;                     // 453
   uint16_t      domoticz_switch_idx[MAX_DOMOTICZ_IDX];      // 454
   uint16_t      domoticz_sensor_idx[MAX_DOMOTICZ_SNS_IDX];  // 45C
@@ -398,7 +411,6 @@ struct SYSCFG {
   uint16_t      baudrate;                  // 778
   uint16_t      sbaudrate;                 // 77A
   EnergyUsage   energy_usage;              // 77C
-//  uint32_t      drivers[3];                // 794 - 6.5.0.12 replaced by below three entries
   uint32_t      adc_param1;                // 794
   uint32_t      adc_param2;                // 798
   int           adc_param3;                // 79C
@@ -414,7 +426,9 @@ struct SYSCFG {
   unsigned long energy_frequency_calibration;  // 7C8 also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
   char          mems[MAX_RULE_MEMS][10];   // 7CE
+
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
+
   TuyaFnidDpidMap tuya_fnid_map[MAX_TUYA_FUNCTIONS];  // E00    32 bytes
   uint16_t      ina226_r_shunt[4];         // E20
   uint16_t      ina226_i_fs[4];            // E28
@@ -436,8 +450,17 @@ struct SYSCFG {
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0 - Needs to be on integer / 3 distance from web_color
   char          cors_domain[33];           // EA6
+  uint8_t       sta_config;                // EC7
+  uint8_t       sta_active;                // EC8
+  uint8_t       rule_stop;                 // EC9
+  uint16_t      syslog_port;               // ECA
+  uint8_t       syslog_level;              // ECC
+  uint8_t       webserver;                 // ECD
+  uint8_t       weblog_level;              // ECE
+  uint8_t       mqtt_fingerprint[2][20];   // ECF
+  uint8_t       adc_param_type;            // EF7
 
-  uint8_t       free_ec7[293];             // EC7
+  uint8_t       free_ef8[244];             // EF8
 
   uint32_t      i2c_drivers[3];            // FEC I2cDriver
   uint32_t      cfg_timestamp;             // FF8

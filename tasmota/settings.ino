@@ -1230,8 +1230,8 @@ void SettingsDelta(void)
       }
     }
     if (Settings.version < 0x06060009) {
-      Settings.baudrate = Settings.ex_baudrate * 4;
-      Settings.sbaudrate = Settings.ex_sbaudrate * 4;
+      Settings.baudrate = APP_BAUDRATE / 300;
+      Settings.sbaudrate = SOFT_BAUDRATE / 300;
     }
     if (Settings.version < 0x0606000A) {
       uint8_t tuyaindex = 0;
@@ -1335,6 +1335,12 @@ void SettingsDelta(void)
       } else {
         Settings.cors_domain[0] = 0;
       }
+    }
+    if (Settings.version < 0x07010205) {
+      Settings.seriallog_level = Settings.ex_seriallog_level;  // 09E -> 452
+      Settings.sta_config = Settings.ex_sta_config;            // 09F -> EC7
+      Settings.sta_active = Settings.ex_sta_active;            // 0A0 -> EC8
+      memcpy((char*)&Settings.rule_stop, (char*)&Settings.ex_rule_stop, 47);  // 1A7 -> EC9
     }
 
     Settings.version = VERSION;

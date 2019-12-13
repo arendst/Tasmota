@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 7.1.2.5 20191213
+
+- Change some Settings locations freeing up space for future single char allowing variable length text
+
 ### 7.1.2.4 20191209
 
 - Change HTTP CORS from command ``SetOption73 0/1`` to ``Cors <cors_domain>`` allowing user control of specific CORS domain by Shantur Rathore (#7066)

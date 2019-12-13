@@ -27,24 +27,17 @@
 struct STATS {
 // uint32_t str_size = 1151;  // Total number of characters reserved as char array in Settings
   uint32_t str_len = 0;   // Total number of characters used within char array
-  uint32_t str_char = 0;  // Total number of character '|' within all char arrays
 } Stats;
 
 void StatisticsChar(const char* text)
 {
   uint32_t len = strlen(text);
   Stats.str_len += len;
-  for (uint32_t i = 0; i < len; i++) {
-    if ('|' == text[i]) {  // Text string separator as currently used in GetTextIndexed()
-      Stats.str_char++;
-    }
-  }
 }
 
 String GetStatistics(void)
 {
   Stats.str_len = 0;
-  Stats.str_char = 0;
 
   for (uint32_t i = 0; i < 2; i++) {
     StatisticsChar(Settings.sta_ssid[i]);
@@ -77,7 +70,7 @@ String GetStatistics(void)
   StatisticsChar(Settings.cors_domain);
 
   char data[40];
-  snprintf_P(data, sizeof(data), PSTR(",\"CR\":\"%d/1151/%d\""), Stats.str_len, Stats.str_char);  // Char Usage Ratio
+  snprintf_P(data, sizeof(data), PSTR(",\"CR\":\"%d/1151\""), Stats.str_len);  // Char Usage Ratio
   return String(data);
 }
 
