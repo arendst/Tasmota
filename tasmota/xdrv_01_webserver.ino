@@ -1972,24 +1972,24 @@ void HandleMetrics(void)
 
   WSContentStart_P(S_METRICS);
   EnergyUsage u = Settings.energy_usage;
-  WSContentSend_P(PSTR("# HELP usage1_kWhtotal Total kWh used (counter 1)."));
-  WSContentSend_P(PSTR("# TYPE usage1_kWhtotal counter"));
-  WSContentSend_P(PSTR("usage1_kWhtotal %f"), (double)u.usage1_kWhtotal);
-  WSContentSend_P(PSTR("# HELP usage2_kWhtotal Total kWh used (counter 2)."));
-  WSContentSend_P(PSTR("# TYPE usage2_kWhtotal counter"));
-  WSContentSend_P(PSTR("usage2_kWhtotal %f"), (double)u.usage2_kWhtotal);
-  WSContentSend_P(PSTR("# HELP return1_kWhtotal Total kWh returned (counter 1)."));
-  WSContentSend_P(PSTR("# TYPE return1_kWhtotal counter"));
-  WSContentSend_P(PSTR("return1_kWhtotal %f"), (double)u.return1_kWhtotal);
-  WSContentSend_P(PSTR("# HELP return2_kWhtotal Total kWh returned (counter 2)."));
-  WSContentSend_P(PSTR("# TYPE return2_kWhtotal counter"));
-  WSContentSend_P(PSTR("return2_kWhtota l%f"), (double)u.return2_kWhtotal);
-  WSContentSend_P(PSTR("# HELP last_return_kWhtotal ???."));
-  WSContentSend_P(PSTR("# TYPE last_return_kWhtotal gauge"));
-  WSContentSend_P(PSTR("last_return_kWhtotal %f"), (double)u.last_return_kWhtotal);
-  WSContentSend_P(PSTR("# HELP last_usage_kWhtotal ???."));
-  WSContentSend_P(PSTR("# TYPE last_usage_kWhtotal gauge"));
-  WSContentSend_P(PSTR("last_usage_kWhtotal %f"), (double)u.last_usage_kWhtotal);
+  WSContentSend_P(PSTR("# HELP usage1_kWhtotal Total kWh used (counter 1).\n"));
+  WSContentSend_P(PSTR("# TYPE usage1_kWhtotal counter\n"));
+  WSContentSend_P(PSTR("usage1_kWhtotal %f\n"), (double)u.usage1_kWhtotal);
+  WSContentSend_P(PSTR("# HELP usage2_kWhtotal Total kWh used (counter 2).\n"));
+  WSContentSend_P(PSTR("# TYPE usage2_kWhtotal counter\n"));
+  WSContentSend_P(PSTR("usage2_kWhtotal %f\n"), (double)u.usage2_kWhtotal);
+  WSContentSend_P(PSTR("# HELP return1_kWhtotal Total kWh returned (counter 1).\n"));
+  WSContentSend_P(PSTR("# TYPE return1_kWhtotal counter\n"));
+  WSContentSend_P(PSTR("return1_kWhtotal %f\n"), (double)u.return1_kWhtotal);
+  WSContentSend_P(PSTR("# HELP return2_kWhtotal Total kWh returned (counter 2).\n"));
+  WSContentSend_P(PSTR("# TYPE return2_kWhtotal counter\n"));
+  WSContentSend_P(PSTR("return2_kWhtota l%f\n"), (double)u.return2_kWhtotal);
+  WSContentSend_P(PSTR("# HELP last_return_kWhtotal ???.\n"));
+  WSContentSend_P(PSTR("# TYPE last_return_kWhtotal gauge\n"));
+  WSContentSend_P(PSTR("last_return_kWhtotal %f\n"), (double)u.last_return_kWhtotal);
+  WSContentSend_P(PSTR("# HELP last_usage_kWhtotal ???.\n"));
+  WSContentSend_P(PSTR("# TYPE last_usage_kWhtotal gauge\n"));
+  WSContentSend_P(PSTR("last_usage_kWhtotal %f\n"), (double)u.last_usage_kWhtotal);
 
   WSContentStop();
 }
