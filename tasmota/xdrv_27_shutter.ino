@@ -46,7 +46,7 @@ void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterFrequency};
 
 const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"direction\":%d}";
-const char MSG_SHUTTER_POS[] PROGMEM = "SHT: " D_PRFX_SHUTTER " %d: Real. %d, Stop: %d, dir %d, pulsetimer: %d, motordelay %d, rtc: %s [s], freq %d";
+const char MSG_SHUTTER_POS[] PROGMEM = "SHT: " D_PRFX_SHUTTER " %d: Real. %d, Start: %d, Stop: %d, dir %d, motordelay %d, rtc: %s [s], freq %d";
 
 #include <Ticker.h>
 
@@ -306,7 +306,7 @@ void ShutterUpdatePosition(void)
         Settings.shutter_position[i] = ShutterRealToPercentPosition(Shutter.real_position[i], i);
 
         dtostrfd((float)Shutter.time[i] / 20, 1, stemp2);
-        AddLog_P2(LOG_LEVEL_DEBUG, PSTR(MSG_SHUTTER_POS), i+1, Shutter.real_position[i], Settings.shutter_position[i], Shutter.direction[i], Settings.pulse_timer[cur_relay -1], Shutter.motordelay[i],stemp2,Shutter.pwm_frequency);
+        AddLog_P2(LOG_LEVEL_INFO, MSG_SHUTTER_POS, i+1, Shutter.real_position[i], Shutter.start_position[i], Shutter.target_position[i], Shutter.direction[i], Shutter.motordelay[i],stemp2,Shutter.pwm_frequency);
         Shutter.start_position[i] = Shutter.real_position[i];
 
         // sending MQTT result to broker
@@ -379,7 +379,7 @@ void ShutterReportPosition(void)
       dtostrfd((float)Shutter.time[i] / 20, 2, stemp2);
       shutter_moving = 1;
       //Settings.shutter_position[i] = Settings.shuttercoeff[2][i] * 5 > Shutter.real_position[i] ? Shutter.real_position[i] / Settings.shuttercoeff[2][i] : (Shutter.real_position[i]-Settings.shuttercoeff[0,i]) / Settings.shuttercoeff[1][i];
-      AddLog_P2(LOG_LEVEL_INFO, PSTR(MSG_SHUTTER_POS), i+1, Shutter.real_position[i], Settings.shutter_position[i], Shutter.direction[i], Settings.pulse_timer[cur_relay -1], Shutter.motordelay[i],stemp2,Shutter.pwm_frequency);
+      AddLog_P2(LOG_LEVEL_INFO, MSG_SHUTTER_POS, i+1, Shutter.real_position[i], Shutter.start_position[i], Shutter.target_position[i], Shutter.direction[i], Shutter.motordelay[i],stemp2,Shutter.pwm_frequency);
       Response_P(PSTR("{"));
       ResponseAppend_P(JSON_SHUTTER_POS, i+1, position, Shutter.direction[i]);
       ResponseJsonEnd();
