@@ -329,7 +329,7 @@ void CmndStatus(void)
   char stemp2[100];
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
-  if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1]) && (!payload)) { option++; }  // TELE
+  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2)) && (!payload)) { option++; }  // TELE
 
   if ((!Settings.flag.mqtt_enabled) && (6 == payload)) { payload = 99; }  // SetOption3 - Enable MQTT
   if (!energy_flg && (9 == payload)) { payload = 99; }
@@ -371,7 +371,7 @@ void CmndStatus(void)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS1_PARAMETER "\":{\"" D_JSON_BAUDRATE "\":%d,\"" D_CMND_GROUPTOPIC "\":\"%s\",\"" D_CMND_OTAURL "\":\"%s\",\""
                           D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_JSON_STARTUPUTC "\":\"%s\",\"" D_CMND_SLEEP "\":%d,\""
                           D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_JSON_SAVEADDRESS "\":\"%X\"}}"),
-                          baudrate, Settings.mqtt_grptopic, Settings.ota_url,
+                          baudrate, Settings.mqtt_grptopic, SettingsText(SET_OTAURL),
                           GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
                           Settings.cfg_holder, Settings.bootcount, Settings.save_flag, GetSettingsAddress());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "1"));
@@ -394,7 +394,7 @@ void CmndStatus(void)
                           D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\""
                           D_JSON_RESOLUTION "\":\"%08X\",\"" D_CMND_SETOPTION "\":[\"%08X\",\"%s\",\"%08X\",\"%08X\"]}}"),
                           Settings.seriallog_level, Settings.weblog_level, Settings.mqttlog_level, Settings.syslog_level,
-                          Settings.syslog_host, Settings.syslog_port, Settings.sta_ssid[0], Settings.sta_ssid[1], Settings.tele_period,
+                          SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), Settings.tele_period,
                           Settings.flag2.data, Settings.flag.data, ToHex_P((unsigned char*)Settings.param, PARAM8_SIZE, stemp2, sizeof(stemp2)),
                           Settings.flag3.data, Settings.flag4.data);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "3"));
@@ -557,10 +557,10 @@ void CmndUpgrade(void)
 
 void CmndOtaUrl(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.ota_url))) {
-    strlcpy(Settings.ota_url, (SC_DEFAULT == Shortcut()) ? OTA_URL : XdrvMailbox.data, sizeof(Settings.ota_url));
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_OTAURL, (SC_DEFAULT == Shortcut()) ? (char*)OTA_URL : XdrvMailbox.data);
   }
-  ResponseCmndChar(Settings.ota_url);
+  ResponseCmndChar(SettingsText(SET_OTAURL));
 }
 
 void CmndSeriallog(void)
@@ -1193,10 +1193,10 @@ void CmndSyslog(void)
 
 void CmndLoghost(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.syslog_host))) {
-    strlcpy(Settings.syslog_host, (SC_DEFAULT == Shortcut()) ? SYS_LOG_HOST : XdrvMailbox.data, sizeof(Settings.syslog_host));
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_SYSLOG_HOST, (SC_DEFAULT == Shortcut()) ? (char*)SYS_LOG_HOST : XdrvMailbox.data);
   }
-  ResponseCmndChar(Settings.syslog_host);
+  ResponseCmndChar(SettingsText(SET_SYSLOG_HOST));
 }
 
 void CmndLogport(void)
@@ -1251,33 +1251,31 @@ void CmndAp(void)
     }
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active]);
+  Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active));
 }
 
 void CmndSsid(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.sta_ssid[0]))) {
-      strlcpy(Settings.sta_ssid[XdrvMailbox.index -1],
-              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_SSID1 : STA_SSID2 : XdrvMailbox.data,
-              sizeof(Settings.sta_ssid[0]));
+    if (XdrvMailbox.data_len > 0) {
+      SettingsUpdateText(SET_STASSID1 + XdrvMailbox.index -1,
+              (SC_CLEAR == Shortcut()) ? (char*)"" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? (char*)STA_SSID1 : (char*)STA_SSID2 : XdrvMailbox.data);
       Settings.sta_active = XdrvMailbox.index -1;
       restart_flag = 2;
     }
-    ResponseCmndIdxChar(Settings.sta_ssid[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(SettingsText(SET_STASSID1 + XdrvMailbox.index -1));
   }
 }
 
 void CmndPassword(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
-    if ((XdrvMailbox.data_len > 4 || SC_CLEAR == Shortcut() || SC_DEFAULT == Shortcut()) && (XdrvMailbox.data_len < sizeof(Settings.sta_pwd[0]))) {
-      strlcpy(Settings.sta_pwd[XdrvMailbox.index -1],
-              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_PASS1 : STA_PASS2 : XdrvMailbox.data,
-              sizeof(Settings.sta_pwd[0]));
+    if ((XdrvMailbox.data_len > 4) || (SC_CLEAR == Shortcut()) || (SC_DEFAULT == Shortcut())) {
+      SettingsUpdateText(SET_STAPWD1 + XdrvMailbox.index -1,
+              (SC_CLEAR == Shortcut()) ? (char*)"" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? (char*)STA_PASS1 : (char*)STA_PASS2 : XdrvMailbox.data);
       Settings.sta_active = XdrvMailbox.index -1;
       restart_flag = 2;
-      ResponseCmndIdxChar(Settings.sta_pwd[XdrvMailbox.index -1]);
+      ResponseCmndIdxChar(SettingsText(SET_STAPWD1 + XdrvMailbox.index -1));
     } else {
       Response_P(S_JSON_COMMAND_INDEX_ASTERISK, XdrvMailbox.command, XdrvMailbox.index);
     }
@@ -1286,14 +1284,14 @@ void CmndPassword(void)
 
 void CmndHostname(void)
 {
-  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.hostname))) {
-    strlcpy(Settings.hostname, (SC_DEFAULT == Shortcut()) ? WIFI_HOSTNAME : XdrvMailbox.data, sizeof(Settings.hostname));
-    if (strstr(Settings.hostname, "%") != nullptr) {
-      strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
+  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
+    SettingsUpdateText(SET_HOSTNAME, (SC_DEFAULT == Shortcut()) ? (char*)WIFI_HOSTNAME : XdrvMailbox.data);
+    if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
+      SettingsUpdateText(SET_HOSTNAME, (char*)WIFI_HOSTNAME);
     }
     restart_flag = 2;
   }
-  ResponseCmndChar(Settings.hostname);
+  ResponseCmndChar(SettingsText(SET_HOSTNAME));
 }
 
 void CmndWifiConfig(void)

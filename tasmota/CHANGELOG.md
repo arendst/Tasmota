@@ -1,3 +1,9 @@
+## Unreleased (test)
+
+### 7.1.2.7 20191214
+
+- Change Settings text handling phase 2 - once uploaded never use a tasmota-minimal.bin below version 7.1.2.7!!
+
 ## Unreleased (development)
 
 ### 7.1.2.6 20191214

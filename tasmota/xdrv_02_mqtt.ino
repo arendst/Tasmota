@@ -261,8 +261,8 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   if (data_len >= MQTT_MAX_PACKET_SIZE) { return; }
 
   // Do not execute multiple times if Prefix1 equals Prefix2
-  if (!strcmp(Settings.mqtt_prefix[0], Settings.mqtt_prefix[1])) {
-    char *str = strstr(mqtt_topic, Settings.mqtt_prefix[0]);
+  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
+    char *str = strstr(mqtt_topic, SettingsText(SET_MQTTPREFIX1));
     if ((str == mqtt_topic) && mqtt_cmnd_publish) {
       if (mqtt_cmnd_publish > 3) {
         mqtt_cmnd_publish -= 3;
@@ -330,8 +330,8 @@ void MqttPublishLogging(const char *mxtime)
       GetTopic_P(stopic, STAT, mqtt_topic, romram);
 
       char *me;
-      if (!strcmp(Settings.mqtt_prefix[0], Settings.mqtt_prefix[1])) {
-        me = strstr(stopic, Settings.mqtt_prefix[0]);
+      if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
+        me = strstr(stopic, SettingsText(SET_MQTTPREFIX1));
         if (me == stopic) {
           mqtt_cmnd_publish += 3;
         }
@@ -389,8 +389,8 @@ void MqttPublish(const char* topic, bool retained)
   retained = false;   // AWS IoT does not support retained, it will disconnect if received
 #endif
 
-  if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1])) {
-    me = strstr(topic,Settings.mqtt_prefix[0]);
+  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
+    me = strstr(topic, SettingsText(SET_MQTTPREFIX1));
     if (me == topic) {
       mqtt_cmnd_publish += 3;
     }
@@ -867,13 +867,14 @@ void CmndFullTopic(void)
 void CmndPrefix(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_prefix[0]))) {
+
+    if (XdrvMailbox.data_len > 0) {
       MakeValidMqtt(0, XdrvMailbox.data);
-      strlcpy(Settings.mqtt_prefix[XdrvMailbox.index -1], (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index)?SUB_PREFIX:(2==XdrvMailbox.index)?PUB_PREFIX:PUB_PREFIX2 : XdrvMailbox.data, sizeof(Settings.mqtt_prefix[0]));
-//      if (Settings.mqtt_prefix[XdrvMailbox.index -1][strlen(Settings.mqtt_prefix[XdrvMailbox.index -1])] == '/') Settings.mqtt_prefix[XdrvMailbox.index -1][strlen(Settings.mqtt_prefix[XdrvMailbox.index -1])] = 0;
+      SettingsUpdateText(SET_MQTTPREFIX1 + XdrvMailbox.index -1,
+        (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index) ? (char*)SUB_PREFIX : (2==XdrvMailbox.index) ? (char*)PUB_PREFIX : (char*)PUB_PREFIX2 : XdrvMailbox.data);
       restart_flag = 2;
     }
-    ResponseCmndIdxChar(Settings.mqtt_prefix[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(SettingsText(SET_MQTTPREFIX1 + XdrvMailbox.index -1));
   }
 }
 

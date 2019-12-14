@@ -60,15 +60,16 @@ char* Format(char* output, const char* input, int size)
 
 char* GetOtaUrl(char *otaurl, size_t otaurl_size)
 {
-  if (strstr(Settings.ota_url, "%04d") != nullptr) {     // OTA url contains placeholder for chip ID
-    snprintf(otaurl, otaurl_size, Settings.ota_url, ESP.getChipId() & 0x1fff);
+  if (strstr(SettingsText(SET_OTAURL), "%04d") != nullptr) {     // OTA url contains placeholder for chip ID
+    snprintf(otaurl, otaurl_size, SettingsText(SET_OTAURL), ESP.getChipId() & 0x1fff);
   }
-  else if (strstr(Settings.ota_url, "%d") != nullptr) {  // OTA url contains placeholder for chip ID
-    snprintf_P(otaurl, otaurl_size, Settings.ota_url, ESP.getChipId());
+  else if (strstr(SettingsText(SET_OTAURL), "%d") != nullptr) {  // OTA url contains placeholder for chip ID
+    snprintf_P(otaurl, otaurl_size, SettingsText(SET_OTAURL), ESP.getChipId());
   }
   else {
-    strlcpy(otaurl, Settings.ota_url, otaurl_size);
+    strlcpy(otaurl, SettingsText(SET_OTAURL), otaurl_size);
   }
+
   return otaurl;
 }
 
@@ -107,11 +108,13 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
       fulltopic += FPSTR(MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
     }
     for (uint32_t i = 0; i < 3; i++) {
-      if ('\0' == Settings.mqtt_prefix[i][0]) {
-        GetTextIndexed(Settings.mqtt_prefix[i], sizeof(Settings.mqtt_prefix[i]), i, kPrefixes);
+      if ('\0' == SettingsText(SET_MQTTPREFIX1 + i)) {
+        char temp[TOPSZ];
+        SettingsUpdateText(SET_MQTTPREFIX1 + i, GetTextIndexed(temp, sizeof(temp), i, kPrefixes));
       }
     }
-    fulltopic.replace(FPSTR(MQTT_TOKEN_PREFIX), Settings.mqtt_prefix[prefix]);
+    fulltopic.replace(FPSTR(MQTT_TOKEN_PREFIX), SettingsText(SET_MQTTPREFIX1 + prefix));
+
     fulltopic.replace(FPSTR(MQTT_TOKEN_TOPIC), topic);
     fulltopic.replace(F("%hostname%"), my_hostname);
     String token_id = WiFi.macAddress();
@@ -584,7 +587,7 @@ void MqttShowState(void)
   }
 
   ResponseAppend_P(PSTR(",\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d,\"" D_JSON_SIGNAL "\":%d,\"" D_JSON_LINK_COUNT "\":%d,\"" D_JSON_DOWNTIME "\":\"%s\"}}"),
-    Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WiFi.BSSIDstr().c_str(), WiFi.channel(),
+    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WiFi.BSSIDstr().c_str(), WiFi.channel(),
     WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI(), WifiLinkCount(), WifiDowntime().c_str());
 }
 
@@ -813,7 +816,6 @@ void Every250mSeconds(void)
     if (ota_state_flag && BACKLOG_EMPTY) {
       ota_state_flag--;
       if (2 == ota_state_flag) {
-        ota_url = Settings.ota_url;
         RtcSettings.ota_loader = 0;  // Try requested image first
         ota_retry_counter = OTA_ATTEMPTS;
         ESPhttpUpdate.rebootOnUpdate(false);
@@ -839,7 +841,7 @@ void Every250mSeconds(void)
             if (!pch) { pch = ech; }
             if (pch) {
               mqtt_data[pch - mqtt_data] = '\0';
-              char *ech = strrchr(Settings.ota_url, '.');  // Change from filename.bin into filename-minimal.bin
+              char *ech = strrchr(SettingsText(SET_OTAURL), '.');  // Change from filename.bin into filename-minimal.bin
               snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ech);  // Minimal filename must be filename-minimal
             }
           }
@@ -903,8 +905,15 @@ void Every250mSeconds(void)
     }
     if (restart_flag && BACKLOG_EMPTY) {
       if ((214 == restart_flag) || (215 == restart_flag) || (216 == restart_flag)) {
-        char storage_wifi[sizeof(Settings.sta_ssid) +
-                          sizeof(Settings.sta_pwd)];
+        // Backup current SSIDs and Passwords
+        char storage_ssid1[strlen(SettingsText(SET_STASSID1)) +1];
+        strncpy(storage_ssid1, SettingsText(SET_STASSID1), sizeof(storage_ssid1));
+        char storage_ssid2[strlen(SettingsText(SET_STASSID2)) +1];
+        strncpy(storage_ssid2, SettingsText(SET_STASSID2), sizeof(storage_ssid2));
+        char storage_pass1[strlen(SettingsText(SET_STAPWD1)) +1];
+        strncpy(storage_pass1, SettingsText(SET_STAPWD1), sizeof(storage_pass1));
+        char storage_pass2[strlen(SettingsText(SET_STAPWD2)) +1];
+        strncpy(storage_pass2, SettingsText(SET_STAPWD2), sizeof(storage_pass2));
 
         char storage_mqtt[sizeof(Settings.mqtt_host) +
                           sizeof(Settings.mqtt_port) +
@@ -914,7 +923,6 @@ void Every250mSeconds(void)
                           sizeof(Settings.mqtt_topic)];
         uint16_t mqtt_port = Settings.mqtt_port;                           // Workaround 7.1.2.6 Settings shuffle
 
-        memcpy(storage_wifi, Settings.sta_ssid, sizeof(storage_wifi));     // Backup current SSIDs and Passwords
         if (216 == restart_flag) {
           memcpy(storage_mqtt, Settings.mqtt_host, sizeof(storage_mqtt));  // Backup mqtt host, port, client, username and password
         }
@@ -922,7 +930,12 @@ void Every250mSeconds(void)
           SettingsErase(0);  // Erase all flash from program end to end of physical flash
         }
         SettingsDefault();
-        memcpy(Settings.sta_ssid, storage_wifi, sizeof(storage_wifi));     // Restore current SSIDs and Passwords
+        // Restore current SSIDs and Passwords
+        SettingsUpdateText(SET_STASSID1, storage_ssid1);
+        SettingsUpdateText(SET_STASSID2, storage_ssid2);
+        SettingsUpdateText(SET_STAPWD1, storage_pass1);
+        SettingsUpdateText(SET_STAPWD2, storage_pass2);
+
         if (216 == restart_flag) {
           memcpy(Settings.mqtt_host, storage_mqtt, sizeof(storage_mqtt));  // Restore the mqtt host, port, client, username and password
           strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));  // Set client to default

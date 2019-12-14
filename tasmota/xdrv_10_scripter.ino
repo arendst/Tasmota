@@ -1523,15 +1523,15 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname,"prefix1",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[0],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX1),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"prefix2",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[1],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX2),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"prefix3",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[2],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX3),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"pow(",4)) {

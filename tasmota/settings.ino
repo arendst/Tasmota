@@ -507,7 +507,7 @@ bool SettingsUpdateText(uint32_t index, char* replace_me)
   return true;
 }
 
-char* SettingsGetText(uint32_t index)
+char* SettingsText(uint32_t index)
 {
   if (index >= SET_MAX) {
     return nullptr;  // Setting not supported - internal error
@@ -755,7 +755,7 @@ void SettingsDefaultSet2(void)
   strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
   strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
   strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));
-  strlcpy(Settings.ota_url, OTA_URL, sizeof(Settings.ota_url));
+  SettingsUpdateText(SET_OTAURL, (char*)OTA_URL);
 
   // Power
   Settings.flag.save_state = SAVE_STATE;
@@ -783,14 +783,14 @@ void SettingsDefaultSet2(void)
   ParseIp(&Settings.ip_address[3], WIFI_DNS);
   Settings.sta_config = WIFI_CONFIG_TOOL;
 //  Settings.sta_active = 0;
-  strlcpy(Settings.sta_ssid[0], STA_SSID1, sizeof(Settings.sta_ssid[0]));
-  strlcpy(Settings.sta_pwd[0], STA_PASS1, sizeof(Settings.sta_pwd[0]));
-  strlcpy(Settings.sta_ssid[1], STA_SSID2, sizeof(Settings.sta_ssid[1]));
-  strlcpy(Settings.sta_pwd[1], STA_PASS2, sizeof(Settings.sta_pwd[1]));
-  strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
+  SettingsUpdateText(SET_STASSID1, (char*)STA_SSID1);
+  SettingsUpdateText(SET_STASSID2, (char*)STA_SSID2);
+  SettingsUpdateText(SET_STAPWD1, (char*)STA_PASS1);
+  SettingsUpdateText(SET_STAPWD2, (char*)STA_PASS2);
+  SettingsUpdateText(SET_HOSTNAME, (char*)WIFI_HOSTNAME);
 
   // Syslog
-  strlcpy(Settings.syslog_host, SYS_LOG_HOST, sizeof(Settings.syslog_host));
+  SettingsUpdateText(SET_SYSLOG_HOST, (char*)SYS_LOG_HOST);
   Settings.syslog_port = SYS_LOG_PORT;
   Settings.syslog_level = SYS_LOG_LEVEL;
 
@@ -834,9 +834,9 @@ void SettingsDefaultSet2(void)
   strlcpy(Settings.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(Settings.mqtt_grptopic));
   strlcpy(Settings.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(Settings.mqtt_fulltopic));
   Settings.mqtt_retry = MQTT_RETRY_SECS;
-  strlcpy(Settings.mqtt_prefix[0], SUB_PREFIX, sizeof(Settings.mqtt_prefix[0]));
-  strlcpy(Settings.mqtt_prefix[1], PUB_PREFIX, sizeof(Settings.mqtt_prefix[1]));
-  strlcpy(Settings.mqtt_prefix[2], PUB_PREFIX2, sizeof(Settings.mqtt_prefix[2]));
+  SettingsUpdateText(SET_MQTTPREFIX1, (char*)SUB_PREFIX);
+  SettingsUpdateText(SET_MQTTPREFIX2, (char*)PUB_PREFIX);
+  SettingsUpdateText(SET_MQTTPREFIX3, (char*)PUB_PREFIX2);
   strlcpy(Settings.state_text[0], MQTT_STATUS_OFF, sizeof(Settings.state_text[0]));
   strlcpy(Settings.state_text[1], MQTT_STATUS_ON, sizeof(Settings.state_text[1]));
   strlcpy(Settings.state_text[2], MQTT_CMND_TOGGLE, sizeof(Settings.state_text[2]));
@@ -1276,6 +1276,35 @@ void SettingsDelta(void)
       Settings.flag4 = Settings.ex_flag4;                      // 1E0 -> EF8
       Settings.mqtt_port = Settings.ex_mqtt_port;              // 20A -> EFC
       memcpy((char*)&Settings.serial_config, (char*)&Settings.ex_serial_config, 5);  // 1E4 -> EFE
+    }
+    if (Settings.version < 0x07010207) {
+      char temp[sizeof(Settings.ota_url)];
+        strncpy(temp, Settings.ota_url, strlen(Settings.ota_url) +1);
+      char temp2[3][sizeof(Settings.mqtt_prefix[0])];
+        strncpy(temp2[0], Settings.mqtt_prefix[0], strlen(Settings.mqtt_prefix[0]) +1);
+        strncpy(temp2[1], Settings.mqtt_prefix[1], strlen(Settings.mqtt_prefix[1]) +1);
+        strncpy(temp2[2], Settings.mqtt_prefix[2], strlen(Settings.mqtt_prefix[2]) +1);
+      char temp3[2][sizeof(Settings.sta_ssid[0])];
+        strncpy(temp3[0], Settings.sta_ssid[0], strlen(Settings.sta_ssid[0]) +1);
+        strncpy(temp3[1], Settings.sta_ssid[1], strlen(Settings.sta_ssid[1]) +1);
+      char temp4[2][sizeof(Settings.sta_pwd[0])];
+        strncpy(temp4[0], Settings.sta_pwd[0], strlen(Settings.sta_pwd[0]) +1);
+        strncpy(temp4[1], Settings.sta_pwd[1], strlen(Settings.sta_pwd[1]) +1);
+      char temp5[sizeof(Settings.hostname)];
+        strncpy(temp5, Settings.hostname, strlen(Settings.hostname) +1);
+      char temp6[sizeof(Settings.syslog_host)];
+        strncpy(temp6, Settings.syslog_host, strlen(Settings.syslog_host) +1);
+
+      SettingsUpdateText(SET_OTAURL, temp);
+      SettingsUpdateText(SET_MQTTPREFIX1, temp2[0]);
+      SettingsUpdateText(SET_MQTTPREFIX2, temp2[1]);
+      SettingsUpdateText(SET_MQTTPREFIX3, temp2[2]);
+      SettingsUpdateText(SET_STASSID1, temp3[0]);
+      SettingsUpdateText(SET_STASSID2, temp3[1]);
+      SettingsUpdateText(SET_STAPWD1, temp4[0]);
+      SettingsUpdateText(SET_STAPWD2, temp4[1]);
+      SettingsUpdateText(SET_HOSTNAME, temp5);
+      SettingsUpdateText(SET_SYSLOG_HOST, temp6);
     }
 
     Settings.version = VERSION;

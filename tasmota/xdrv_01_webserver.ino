@@ -1676,7 +1676,7 @@ void HandleWifiConfiguration(void)
     }
 
     // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
-    WSContentSend_P(HTTP_FORM_WIFI, Settings.sta_ssid[0], Settings.sta_ssid[1], WIFI_HOSTNAME, WIFI_HOSTNAME, Settings.hostname, Settings.cors_domain);
+    WSContentSend_P(HTTP_FORM_WIFI, SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME), Settings.cors_domain);
     WSContentSend_P(HTTP_FORM_END);
   }
 
@@ -1693,24 +1693,25 @@ void HandleWifiConfiguration(void)
 
 void WifiSaveSettings(void)
 {
-  char tmp[sizeof(Settings.sta_pwd[0])];  // Max length is currently 65
+  char tmp[100];  // Max length is currently 65
 
   WebGetArg("h", tmp, sizeof(tmp));
-  strlcpy(Settings.hostname, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp, sizeof(Settings.hostname));
-  if (strstr(Settings.hostname, "%") != nullptr) {
-    strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
+  SettingsUpdateText(SET_HOSTNAME, (!strlen(tmp)) ? (char*)WIFI_HOSTNAME : tmp);
+  if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
+    SettingsUpdateText(SET_HOSTNAME, (char*)WIFI_HOSTNAME);
   }
   WebGetArg("c", tmp, sizeof(tmp));
   strlcpy(Settings.cors_domain, (!strlen(tmp)) ? CORS_DOMAIN : tmp, sizeof(Settings.cors_domain));
   WebGetArg("s1", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_ssid[0], (!strlen(tmp)) ? STA_SSID1 : tmp, sizeof(Settings.sta_ssid[0]));
+  SettingsUpdateText(SET_STASSID1, (!strlen(tmp)) ? (char*)STA_SSID1 : tmp);
   WebGetArg("s2", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_ssid[1], (!strlen(tmp)) ? STA_SSID2 : tmp, sizeof(Settings.sta_ssid[1]));
+  SettingsUpdateText(SET_STASSID2, (!strlen(tmp)) ? (char*)STA_SSID2 : tmp);
   WebGetArg("p1", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_pwd[0], (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? Settings.sta_pwd[0] : tmp, sizeof(Settings.sta_pwd[0]));
+  SettingsUpdateText(SET_STAPWD1, (!strlen(tmp)) ? (char*)"" : (strlen(tmp) < 5) ? (char*)SettingsText(SET_STAPWD1) : tmp);
   WebGetArg("p2", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_pwd[1], (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? Settings.sta_pwd[1] : tmp, sizeof(Settings.sta_pwd[1]));
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_SSID "2 %s, " D_CMND_CORS " %s"), Settings.hostname, Settings.sta_ssid[0], Settings.sta_ssid[1], Settings.cors_domain);
+  SettingsUpdateText(SET_STAPWD2, (!strlen(tmp)) ? (char*)"" : (strlen(tmp) < 5) ? (char*)SettingsText(SET_STAPWD2) : tmp);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_SSID "2 %s, " D_CMND_CORS " %s"),
+    SettingsText(SET_HOSTNAME), SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), Settings.cors_domain);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1747,7 +1748,7 @@ void HandleLoggingConfiguration(void)
     }
     WSContentSend_P(PSTR("</select></p>"));
   }
-  WSContentSend_P(HTTP_FORM_LOG2, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
+  WSContentSend_P(HTTP_FORM_LOG2, SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, Settings.tele_period);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
@@ -1755,7 +1756,7 @@ void HandleLoggingConfiguration(void)
 
 void LoggingSaveSettings(void)
 {
-  char tmp[sizeof(Settings.syslog_host)];  // Max length is currently 33
+  char tmp[100];  // Max length is currently 33
 
   WebGetArg("l0", tmp, sizeof(tmp));
   SetSeriallog((!strlen(tmp)) ? SERIAL_LOG_LEVEL : atoi(tmp));
@@ -1766,7 +1767,7 @@ void LoggingSaveSettings(void)
   WebGetArg("l3", tmp, sizeof(tmp));
   SetSyslog((!strlen(tmp)) ? SYS_LOG_LEVEL : atoi(tmp));
   WebGetArg("lh", tmp, sizeof(tmp));
-  strlcpy(Settings.syslog_host, (!strlen(tmp)) ? SYS_LOG_HOST : tmp, sizeof(Settings.syslog_host));
+  SettingsUpdateText(SET_SYSLOG_HOST, (!strlen(tmp)) ? (char*)SYS_LOG_HOST : tmp);
   WebGetArg("lp", tmp, sizeof(tmp));
   Settings.syslog_port = (!strlen(tmp)) ? SYS_LOG_PORT : atoi(tmp);
   WebGetArg("lt", tmp, sizeof(tmp));
@@ -1775,7 +1776,7 @@ void LoggingSaveSettings(void)
     Settings.tele_period = 10;   // Do not allow periods < 10 seconds
   }
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D_CMND_WEBLOG " %d, " D_CMND_MQTTLOG " %d, " D_CMND_SYSLOG " %d, " D_CMND_LOGHOST " %s, " D_CMND_LOGPORT " %d, " D_CMND_TELEPERIOD " %d"),
-    Settings.seriallog_level, Settings.weblog_level, Settings.mqttlog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
+    Settings.seriallog_level, Settings.weblog_level, Settings.mqttlog_level, Settings.syslog_level, SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, Settings.tele_period);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1994,7 +1995,7 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, Settings.friendlyname[i]);
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-  WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI());
+  WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI());
   WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "");
 #if LWIP_IPV6
     String ipv6_addr = WifiGetIPv6();
@@ -2085,7 +2086,7 @@ void HandleUpgradeFirmware(void)
 
   WSContentStart_P(S_FIRMWARE_UPGRADE);
   WSContentSendStyle();
-  WSContentSend_P(HTTP_FORM_UPG, Settings.ota_url);
+  WSContentSend_P(HTTP_FORM_UPG, SettingsText(SET_OTAURL));
   WSContentSend_P(HTTP_FORM_RST_UPG, D_UPGRADE);
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
@@ -2098,12 +2099,12 @@ void HandleUpgradeFirmwareStart(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  char command[sizeof(Settings.ota_url) + 10];  // OtaUrl
+  char command[128];  // OtaUrl
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
   WifiConfigCounter();
 
-  char otaurl[sizeof(Settings.ota_url)];
+  char otaurl[101];
   WebGetArg("o", otaurl, sizeof(otaurl));
   if (strlen(otaurl)) {
     snprintf_P(command, sizeof(command), PSTR(D_CMND_OTAURL " %s"), otaurl);
