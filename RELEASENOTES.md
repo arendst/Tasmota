@@ -47,7 +47,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 7.1.2.5
+### Version 7.1.2.6
 
 - Change Exception reporting removing exception details from ``Status 1`` and consolidated in ``Status 12`` if available
 - Change HTTP CORS from command ``SetOption73 0/1`` to ``Cors <cors_domain>`` allowing user control of specific CORS domain by Shantur Rathore (#7066)
@@ -69,3 +69,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add Wifi Signal Strength in dBm in addition to RSSI Wifi Experience by Andreas Schultz (#7145)
 - Add Yaw, Pitch and Roll support for MPU6050 by Philip Barclay (#7058)
 - Add reporting of raw weight to JSON from HX711 to overcome auto-tare functionality by @tobox (#7171)
+- Add Zigbee support for Xiaomi Aqara Vibration Sensor and Presence Sensor by Stefan Hadinger
+- Add Shutter functions ramp up/down and MQTT reporting by Stefan Bode

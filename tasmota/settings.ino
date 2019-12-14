@@ -443,132 +443,66 @@ void UpdateQuickPowerCycle(bool update)
 }
 
 /*********************************************************************************************\
- * Config single char array support
+ * Config Settings.text char array support
 \*********************************************************************************************/
 
-enum CharsIndex { SET_OTAURL,
-                  SET_MQTTPREFIX1, SET_MQTTPREFIX2, SET_MQTTPREFIX3,
-//                  SET_STASSID1, SET_STASSID2,
-//                  SET_STAPWD1, SET_STAPWD2, SET_WEBPWD,
-//                  SET_HOSTNAME, SET_SYSLOG_HOST,
-//                  SET_MQTT_HOST, SET_MQTT_CLIENT,
-//                  SET_MQTT_USER, SET_MQTT_PWD,
-//                  SET_MQTT_FULLTOPIC, SET_MQTT_TOPIC,
-//                  SET_MQTT_BUTTON_TOPIC, SET_MQTT_SWITCH_TOPIC, SET_MQTT_GRP_TOPIC,
-//                  SET_STATE_TXT1, SET_STATE_TXT2, SET_STATE_TXT3, SET_STATE_TXT4,
-//                  SET_FRIENDLYNAME1, SET_FRIENDLYNAME2, SET_FRIENDLYNAME3, SET_FRIENDLYNAME4,
+const uint32_t settings_text_size = 457;  // Settings.flag4 (1E0) - Settings.ota_url (017)
 
-//                  SET_FRIENDLYNAME5, SET_FRIENDLYNAME6, SET_FRIENDLYNAME7, SET_FRIENDLYNAME8,  // Future extension
-
-//                  SET_NTPSERVER1, SET_NTPSERVER2, SET_NTPSERVER3,
-//                  SET_MEM1, SET_MEM2, SET_MEM3, SET_MEM4, SET_MEM5,
-//                  SET_CORS,
-
-//                  SET_BUTTON1, SET_BUTTON2, SET_BUTTON3, SET_BUTTON4,      // Future extension
-//                  SET_BUTTON5, SET_BUTTON6, SET_BUTTON7, SET_BUTTON8,      // Future extension
-//                  SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12,   // Future extension
-//                  SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,  // Future extension
-
-                  SET_MAX };
-
-const uint32_t settings_loc_num = 1;     // First phase only ota_url and mqtt_prefix
-const uint32_t settings_max_size = 134;
-
-char settings_fullstr[settings_max_size] = { 0 };
-
-struct LOCATIONS {
-  char* address;
-  uint32_t size = 0;
-} Location[settings_loc_num];
-
-void SettingsInitText(void)
+uint32_t GetSettingsTextLen(void)
 {
-  for (uint32_t i = 0; i < settings_loc_num; i++) {
-    if (0 == i) {
-      Location[i].address = Settings.ota_url;
-      Location[i].size = sizeof(Settings.ota_url) + (3 * sizeof(Settings.mqtt_prefix[0]));
-//      Location[i].address = Settings.char_chunk1;
-//      Location[i].size = sizeof(Settings.char_chunk1);  // 134
-    }
-    else if (1 == i) {
-      Location[i].address = Settings.sta_ssid[0];
-      Location[i].size = (2 * sizeof(Settings.sta_ssid[0])) + (2 * sizeof(Settings.sta_pwd[0])) + sizeof(Settings.hostname) + sizeof(Settings.syslog_host);
-//      Location[i].address = Settings.char_chunk2;
-//      Location[i].size = sizeof(Settings.char_chunk2);  // 262
-    }
-    else if (2 == i) {
-      // Need to move Settings.mqtt_port first!
-      Location[i].address = Settings.mqtt_host;
-      Location[i].size = sizeof(Settings.mqtt_host) + 2 + sizeof(Settings.mqtt_client) + sizeof(Settings.mqtt_user) + sizeof(Settings.mqtt_pwd) + sizeof(Settings.mqtt_topic) + sizeof(Settings.button_topic) + sizeof(Settings.mqtt_grptopic);
-//      Location[i].address = Settings.char_chunk3;
-//      Location[i].size = sizeof(Settings.char_chunk3);  // 233
-    }
+  char* position = Settings.ota_url;
+  for (uint32_t size = 0; size < SET_MAX; size++) {
+    while (*position++ != '\0') { }
   }
-
-  SettingsCopyText(0);  // Load
+  return position - Settings.ota_url;
 }
 
-void SettingsCopyText(uint32_t direction)
-{
-  char* fullstr = settings_fullstr;
-  uint32_t size = 0;
-  for (uint32_t i = 0; i < settings_loc_num; i++) {
-    size = Location[i].size;
-    if (1 == direction) {
-      memcpy(Location[i].address, fullstr, size);  // Save to Settings
-    } else {
-      memcpy(fullstr, Location[i].address, size);  // Load from Settings
-    }
-    fullstr += size;
-  }
-}
-
-bool SettingsUpdateText(uint32_t index, char* replace)
+bool SettingsUpdateText(uint32_t index, char* replace_me)
 {
   if (index >= SET_MAX) {
     return false;  // Setting not supported - internal error
   }
 
-//  SettingsCopyText(0);  // Load
+  // Make a copy first in case we use source from Settings.text
+  uint32_t replace_len = strlen(replace_me);
+  char replace[replace_len +1];
+  memcpy(replace, replace_me, sizeof(replace));
 
   uint32_t start_pos = 0;
   uint32_t end_pos = 0;
-  char* position = settings_fullstr;
+  char* position = Settings.ota_url;
   for (uint32_t size = 0; size < SET_MAX; size++) {
     while (*position++ != '\0') { }
     if (1 == index) {
-      start_pos = position - settings_fullstr;
+      start_pos = position - Settings.ota_url;
     }
     else if (0 == index) {
-      end_pos = position - settings_fullstr -1;
+      end_pos = position - Settings.ota_url -1;
     }
     index--;
   }
-  uint32_t len_pos = position - settings_fullstr;
+  uint32_t char_len = position - Settings.ota_url;
 
   uint32_t current_len = end_pos - start_pos;
-  uint32_t replace_len = strlen(replace);
   int diff = replace_len - current_len;
 
 //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TST: start %d, end %d, len %d, current %d, replace %d, diff %d"),
-//    start_pos, end_pos, len_pos, current_len, replace_len, diff);
+//    start_pos, end_pos, char_len, current_len, replace_len, diff);
 
-  int too_long = (len_pos + diff) - sizeof(settings_fullstr);
+  int too_long = (char_len + diff) - settings_text_size;
   if (too_long > 0) {
 //    AddLog_P2(LOG_LEVEL_INFO, PSTR("CFG: Text too long by %d char(s)"), too_long);
     return false;  // Replace text too long
   }
 
   if (diff != 0) {
-    // Shift full text string up or down
-    memmove_P(settings_fullstr + start_pos + replace_len, settings_fullstr + end_pos, len_pos - end_pos);
+    // Shift Settings.text up or down
+    memmove_P(Settings.ota_url + start_pos + replace_len, Settings.ota_url + end_pos, char_len - end_pos);
   }
   // Replace text
-  memmove_P(settings_fullstr + start_pos, replace, replace_len);
+  memmove_P(Settings.ota_url + start_pos, replace, replace_len);
   // Fill for future use
-  memset(settings_fullstr + len_pos + diff, 0x00, settings_max_size - len_pos - diff);
-
-//  SettingsCopyText(1);  // Save - Hold of for now
+  memset(Settings.ota_url + char_len + diff, 0x00, settings_text_size - char_len - diff);
 
   return true;
 }
@@ -579,9 +513,7 @@ char* SettingsGetText(uint32_t index)
     return nullptr;  // Setting not supported - internal error
   }
 
-//  SettingsCopyText(0);  // Load
-
-  char* position = settings_fullstr;
+  char* position = Settings.ota_url;
   for (;index > 0; index--) {
     while (*position++ != '\0') { }
   }
@@ -706,8 +638,6 @@ void SettingsLoad(void)
   }
   settings_crc32 = GetSettingsCrc32();
 #endif  // FIRMWARE_MINIMAL
-
-  SettingsInitText();
 
   RtcSettingsLoad();
 }
@@ -1341,6 +1271,11 @@ void SettingsDelta(void)
       Settings.sta_config = Settings.ex_sta_config;            // 09F -> EC7
       Settings.sta_active = Settings.ex_sta_active;            // 0A0 -> EC8
       memcpy((char*)&Settings.rule_stop, (char*)&Settings.ex_rule_stop, 47);  // 1A7 -> EC9
+    }
+    if (Settings.version < 0x07010206) {
+      Settings.flag4 = Settings.ex_flag4;                      // 1E0 -> EF8
+      Settings.mqtt_port = Settings.ex_mqtt_port;              // 20A -> EFC
+      memcpy((char*)&Settings.serial_config, (char*)&Settings.ex_serial_config, 5);  // 1E4 -> EFE
     }
 
     Settings.version = VERSION;

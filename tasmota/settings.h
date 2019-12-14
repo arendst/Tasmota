@@ -249,7 +249,7 @@ struct SYSCFG {
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
 
-  // Start of single char array
+  // Start of single char array Settings.text
 
   char          ota_url[101];              // 017
   char          mqtt_prefix[3][11];        // 07C
@@ -272,18 +272,21 @@ struct SYSCFG {
   uint8_t       ex_mqtt_fingerprint[2][20];  // 1AD
   uint8_t       ex_adc_param_type;         // 1D5
 
-  uint8_t       free_1d6[10];              // 1D6
+  uint8_t       ex_free_1d6[10];           // 1D6
 
-  // End of single char array of 446 chars max (phase 3)
+  // End of single char array of 456 chars max (phase 3)
 
-  SysBitfield4  flag4;                     // 1E0
-  uint8_t       serial_config;             // 1E4
-  uint8_t       wifi_output_power;         // 1E5
-  uint8_t       shutter_accuracy;          // 1E6
-  uint8_t       mqttlog_level;             // 1E7
-  uint8_t       sps30_inuse_hours;         // 1E8
+  SysBitfield4  ex_flag4;                  // 1E0
+  uint8_t       ex_serial_config;          // 1E4
+  uint8_t       ex_wifi_output_power;      // 1E5
+  uint8_t       ex_shutter_accuracy;       // 1E6
+  uint8_t       ex_mqttlog_level;          // 1E7
+  uint8_t       ex_sps30_inuse_hours;      // 1E8
+
   char          mqtt_host[33];             // 1E9 - Keep together with below as being copied as one chunck with reset 6
-  uint16_t      mqtt_port;                 // 20A - Keep together
+
+  uint16_t      ex_mqtt_port;              // 20A - Keep together
+
   char          mqtt_client[33];           // 20C - Keep together
   char          mqtt_user[33];             // 22D - Keep together
   char          mqtt_pwd[33];              // 24E - Keep together
@@ -459,8 +462,15 @@ struct SYSCFG {
   uint8_t       weblog_level;              // ECE
   uint8_t       mqtt_fingerprint[2][20];   // ECF
   uint8_t       adc_param_type;            // EF7
+  SysBitfield4  flag4;                     // EF8
+  uint16_t      mqtt_port;                 // EFC
+  uint8_t       serial_config;             // EFE
+  uint8_t       wifi_output_power;         // EFF
+  uint8_t       shutter_accuracy;          // F00
+  uint8_t       mqttlog_level;             // F01
+  uint8_t       sps30_inuse_hours;         // F02
 
-  uint8_t       free_ef8[244];             // EF8
+  uint8_t       free_f03[233];             // F03
 
   uint32_t      i2c_drivers[3];            // FEC I2cDriver
   uint32_t      cfg_timestamp;             // FF8

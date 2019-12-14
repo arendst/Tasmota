@@ -1,9 +1,14 @@
 ## Unreleased (development)
 
+### 7.1.2.6 20191214
+
+- Change some more Settings locations freeing up space for future single char allowing variable length text
+
 ### 7.1.2.5 20191213
 
 - Change some Settings locations freeing up space for future single char allowing variable length text
-- Add Zigbee support for Xiaomi Aqara Vibration Sensor and Presence Sensor
+- Add Zigbee support for Xiaomi Aqara Vibration Sensor and Presence Sensor by Stefan Hadinger
+- Add Shutter functions ramp up/down and MQTT reporting by Stefan Bode
 
 ### 7.1.2.4 20191209
 

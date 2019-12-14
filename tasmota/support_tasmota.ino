@@ -905,12 +905,15 @@ void Every250mSeconds(void)
       if ((214 == restart_flag) || (215 == restart_flag) || (216 == restart_flag)) {
         char storage_wifi[sizeof(Settings.sta_ssid) +
                           sizeof(Settings.sta_pwd)];
+
         char storage_mqtt[sizeof(Settings.mqtt_host) +
                           sizeof(Settings.mqtt_port) +
                           sizeof(Settings.mqtt_client) +
                           sizeof(Settings.mqtt_user) +
                           sizeof(Settings.mqtt_pwd) +
                           sizeof(Settings.mqtt_topic)];
+        uint16_t mqtt_port = Settings.mqtt_port;                           // Workaround 7.1.2.6 Settings shuffle
+
         memcpy(storage_wifi, Settings.sta_ssid, sizeof(storage_wifi));     // Backup current SSIDs and Passwords
         if (216 == restart_flag) {
           memcpy(storage_mqtt, Settings.mqtt_host, sizeof(storage_mqtt));  // Backup mqtt host, port, client, username and password
@@ -923,6 +926,7 @@ void Every250mSeconds(void)
         if (216 == restart_flag) {
           memcpy(Settings.mqtt_host, storage_mqtt, sizeof(storage_mqtt));  // Restore the mqtt host, port, client, username and password
           strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));  // Set client to default
+          Settings.mqtt_port = mqtt_port;                                  // Workaround 7.1.2.6 Settings shuffle
         }
         restart_flag = 2;
       }
