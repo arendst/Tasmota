@@ -1,5 +1,12 @@
 ![Tasmota logo](/tools/logo/TASMOTA_FullLogo_Vector.svg)
 
+# THIS IS TEST SOFTWARE
+
+- It updates the Settings lay-out making fall-back using OTA impossible.
+- Before trying this code be able to fall back using the serial flash method.
+- When uploading only use the accompanying tasmota-minimal.bin as otherwise the upload will fail and only serial flash can recover.
+
+
 Alternative firmware for [ESP8266](https://en.wikipedia.org/wiki/ESP8266) based devices with **easy configuration using webUI, OTA updates, automation using timers or rules, expandability and entirely local control over MQTT, HTTP, Serial or KNX**.
 _Written for Arduino IDE and PlatformIO._
 
