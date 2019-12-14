@@ -1305,6 +1305,47 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_STAPWD2, temp4[1]);
       SettingsUpdateText(SET_HOSTNAME, temp5);
       SettingsUpdateText(SET_SYSLOG_HOST, temp6);
+
+      SettingsUpdateText(SET_WEBPWD, Settings.web_password);
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+      if (!strlen(Settings.mqtt_user)) {
+        SettingsUpdateText(SET_MQTT_HOST, Settings.mqtt_host);
+        SettingsUpdateText(SET_MQTT_USER, Settings.mqtt_user);
+      } else {
+        char mqtt_host[66];
+        strlcpy(mqtt_host, Settings.mqtt_user, sizeof(Settings.mqtt_user));
+        strlcpy(&mqtt_host[sizeof(Settings.mqtt_user)-1], Settings.mqtt_host, sizeof(Settings.mqtt_host));
+        SettingsUpdateText(SET_MQTT_HOST, mqtt_host);
+        SettingsUpdateText(SET_MQTT_USER, (char*)"");
+      }
+#else
+      SettingsUpdateText(SET_MQTT_HOST, Settings.mqtt_host);
+      SettingsUpdateText(SET_MQTT_USER, Settings.mqtt_user);
+#endif
+      SettingsUpdateText(SET_MQTT_CLIENT, Settings.mqtt_client);
+      SettingsUpdateText(SET_MQTT_PWD, Settings.mqtt_pwd);
+      SettingsUpdateText(SET_MQTT_FULLTOPIC, Settings.mqtt_fulltopic);
+      SettingsUpdateText(SET_MQTT_TOPIC, Settings.mqtt_topic);
+      SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, Settings.button_topic);
+      SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, Settings.switch_topic);
+      SettingsUpdateText(SET_MQTT_GRP_TOPIC, Settings.mqtt_grptopic);
+      SettingsUpdateText(SET_STATE_TXT1, Settings.state_text[0]);
+      SettingsUpdateText(SET_STATE_TXT2, Settings.state_text[1]);
+      SettingsUpdateText(SET_STATE_TXT3, Settings.state_text[2]);
+      SettingsUpdateText(SET_STATE_TXT4, Settings.state_text[3]);
+      SettingsUpdateText(SET_NTPSERVER1, Settings.ntp_server[0]);
+      SettingsUpdateText(SET_NTPSERVER2, Settings.ntp_server[1]);
+      SettingsUpdateText(SET_NTPSERVER3, Settings.ntp_server[2]);
+      SettingsUpdateText(SET_MEM1, Settings.mems[0]);
+      SettingsUpdateText(SET_MEM2, Settings.mems[1]);
+      SettingsUpdateText(SET_MEM3, Settings.mems[2]);
+      SettingsUpdateText(SET_MEM4, Settings.mems[3]);
+      SettingsUpdateText(SET_MEM5, Settings.mems[4]);
+      SettingsUpdateText(SET_CORS, Settings.cors_domain);
+      SettingsUpdateText(SET_FRIENDLYNAME1, Settings.friendlyname[0]);
+      SettingsUpdateText(SET_FRIENDLYNAME2, Settings.friendlyname[1]);
+      SettingsUpdateText(SET_FRIENDLYNAME3, Settings.friendlyname[2]);
+      SettingsUpdateText(SET_FRIENDLYNAME4, Settings.friendlyname[3]);
     }
 
     Settings.version = VERSION;
