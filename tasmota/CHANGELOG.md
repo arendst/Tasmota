@@ -3,6 +3,7 @@
 ### 7.1.2.5 20191213
 
 - Change some Settings locations freeing up space for future single char allowing variable length text
+- Add Zigbee support for Xiaomi Aqara Vibration Sensor and Presence Sensor
 
 ### 7.1.2.4 20191209
 

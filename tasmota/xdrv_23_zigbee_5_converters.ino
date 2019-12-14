@@ -49,31 +49,26 @@ public:
     };
 
 
-  void publishMQTTReceived(uint16_t groupid, uint16_t clusterid, Z_ShortAddress srcaddr,
+  void publishMQTTReceived(uint16_t groupid, uint16_t clusterid, uint16_t srcaddr,
                            uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
                            uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
                            uint32_t timestamp) {
 #ifdef ZIGBEE_VERBOSE
     char hex_char[_payload.len()*2+2];
 		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
-    Response_P(PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
                     "\"groupid\":%d," "\"clusterid\":%d," "\"srcaddr\":\"0x%04X\","
                     "\"srcendpoint\":%d," "\"dstendpoint\":%d," "\"wasbroadcast\":%d,"
                     "\"" D_CMND_ZIGBEE_LINKQUALITY "\":%d," "\"securityuse\":%d," "\"seqnumber\":%d,"
                     "\"timestamp\":%d,"
                     "\"fc\":\"0x%02X\",\"manuf\":\"0x%04X\",\"transact\":%d,"
-                    "\"cmdid\":\"0x%02X\",\"payload\":\"%s\""),
+                    "\"cmdid\":\"0x%02X\",\"payload\":\"%s\"}}"),
                     groupid, clusterid, srcaddr,
                     srcendpoint, dstendpoint, wasbroadcast,
                     linkquality, securityuse, seqnumber,
                     timestamp,
                     _frame_control, _manuf_code, _transact_seq, _cmd_id,
                     hex_char);
-
-    ResponseJsonEnd();      // append '}'
-    ResponseJsonEnd();      // append '}'
-  	MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
-  	XdrvRulesProcess();
 #endif
   }
 
@@ -124,6 +119,10 @@ public:
 
   const SBuffer &getPayload(void) const {
     return _payload;
+  }
+
+  uint16_t getManufCode(void) const {
+    return _manuf_code;
   }
 
 private:
@@ -456,7 +455,7 @@ void ZCLFrame::parseClusterSpecificCommand(JsonObject& json, uint8_t offset) {
 // return value:
 // 0 = keep initial value
 // 1 = remove initial value
-typedef int32_t (*Z_AttrConverter)(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper* new_name);
+typedef int32_t (*Z_AttrConverter)(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper* new_name, uint16_t cluster, uint16_t attr);
 typedef struct Z_AttributeConverter {
   uint16_t cluster;
   uint16_t attribute;
@@ -625,6 +624,11 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0101, 0x0004,  "DoorOpenEvents",       &Z_Copy },
   { 0x0101, 0x0005,  "DoorClosedEvents",     &Z_Copy },
   { 0x0101, 0x0006,  "OpenPeriod",           &Z_Copy },
+  // Aqara Lumi Vibration Sensor
+  { 0x0101, 0x0055,  "AqaraVibrationMode",   &Z_AqaraVibration },
+  { 0x0101, 0x0503,  "AqaraVibrationsOrAngle", &Z_Copy },
+  { 0x0101, 0x0505,  "AqaraVibration505",    &Z_Copy },
+  { 0x0101, 0x0508,  "AqaraAccelerometer",   &Z_AqaraVibration },
   // Window Covering cluster
   { 0x0102, 0x0000,  "WindowCoveringType",   &Z_Copy },
   { 0x0102, 0x0001,  "PhysicalClosedLimitLift",&Z_Copy },
@@ -753,13 +757,13 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
 
 // ======================================================================
 // Record Manuf
-int32_t Z_ManufKeep(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name) {
+int32_t Z_ManufKeep(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = value;
   zigbee_devices.setManufId(shortaddr, value.as<const char*>());
   return 1;
 }
 //
-int32_t Z_ModelKeep(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name) {
+int32_t Z_ModelKeep(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = value;
   zigbee_devices.setModelId(shortaddr, value.as<const char*>());
   return 1;
@@ -767,34 +771,89 @@ int32_t Z_ModelKeep(uint16_t shortaddr, JsonObject& json, const char *name, Json
 
 // ======================================================================
 // Remove attribute
-int32_t Z_Remove(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name) {
+int32_t Z_Remove(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
   return 1;   // remove original key
 }
 
 // Copy value as-is
-int32_t Z_Copy(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name) {
+int32_t Z_Copy(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = value;
   return 1;   // remove original key
 }
 
 // Add pressure unit
-int32_t Z_AddPressureUnit(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name) {
+int32_t Z_AddPressureUnit(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = F(D_UNIT_PRESSURE);
   return 0;   // keep original key
 }
 
 // Convert int to float and divide by 100
-int32_t Z_FloatDiv100(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name) {
+int32_t Z_FloatDiv100(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = ((float)value) / 100.0f;
   return 1;   // remove original key
 }
 // Convert int to float and divide by 10
-int32_t Z_FloatDiv10(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name) {
+int32_t Z_FloatDiv10(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = ((float)value) / 10.0f;
   return 1;   // remove original key
 }
 
-int32_t Z_AqaraSensor(uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name) {
+// Aqara Vibration Sensor - special proprietary attributes
+int32_t Z_AqaraVibration(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
+  //json[new_name] = value;
+  switch (attr) {
+    case 0x0055:
+      {
+        int32_t ivalue = value;
+        const __FlashStringHelper * svalue;
+        switch (ivalue) {
+          case 1: svalue = F("vibrate"); break;
+          case 2: svalue = F("tilt"); break;
+          case 3: svalue = F("drop"); break;
+          default: svalue = F("unknown"); break;
+        }
+        json[new_name] = svalue;
+      }
+      break;
+    // case 0x0503:
+    //   break;
+    // case 0x0505:
+    //   break;
+    case 0x0508:
+      {
+        // see https://github.com/Koenkk/zigbee2mqtt/issues/295 and http://faire-ca-soi-meme.fr/domotique/2018/09/03/test-xiaomi-aqara-vibration-sensor/
+        // report accelerometer measures
+        String hex = value;
+        SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
+        int16_t x, y, z;
+        z = buf2.get16(0);
+        y = buf2.get16(2);
+        x = buf2.get16(4);
+        JsonArray& xyz = json.createNestedArray(new_name);
+        xyz.add(x);
+        xyz.add(y);
+        xyz.add(z);
+        // calculate angles
+        float X = x;
+        float Y = y;
+        float Z = z;
+        int32_t Angle_X = 0.5f + atanf(X/sqrtf(z*z+y*y)) * f_180pi;
+        int32_t Angle_Y = 0.5f + atanf(Y/sqrtf(x*x+z*z)) * f_180pi;
+        int32_t Angle_Z = 0.5f + atanf(Z/sqrtf(x*x+y*y)) * f_180pi;
+        // int32_t Angle_X = 0.5f + atanf(X/sqrtf(Z*Z+Y*Y)) * f_180pi;
+        // int32_t Angle_Y = 0.5f + atanf(Y/sqrtf(X*X+Z*Z)) * f_180pi;
+        // int32_t Angle_Z = 0.5f + atanf(Z/sqrtf(X*X+Y*Y)) * f_180pi;
+        JsonArray& angles = json.createNestedArray(F("AqaraAngles"));
+        angles.add(Angle_X);
+        angles.add(Angle_Y);
+        angles.add(Angle_Z);
+      }
+      break;
+  }
+  return 1;   // remove original key
+}
+
+int32_t Z_AqaraSensor(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
   String hex = value;
   SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
   uint32_t i = 0;
@@ -809,35 +868,30 @@ int32_t Z_AqaraSensor(uint16_t shortaddr, JsonObject& json, const char *name, Js
     i += parseSingleAttribute(json, tmp, buf2, i, len);
     float val = json[tmp];
     json.remove(tmp);
-    if (0x64 == attrid) {
-      json[F(D_JSON_TEMPERATURE)] = val / 100.0f;
-    } else if (0x65 == attrid) {
-      json[F(D_JSON_HUMIDITY)] = val / 100.0f;
-    } else if (0x66 == attrid) {
-      json[F(D_JSON_PRESSURE)] = val / 100.0f;
-      json[F(D_JSON_PRESSURE_UNIT)] = F(D_UNIT_PRESSURE);   // hPa
-    } else if (0x01 == attrid) {
+    if (0x01 == attrid) {
       json[F(D_JSON_VOLTAGE)] = val / 1000.0f;
       json[F("Battery")] = toPercentageCR2032(val);
+    } else if (0 == zcl->getManufCode()) {
+      // onla Aqara Temp/Humidity has manuf_code of zero. If non-zero we skip the parameters
+      if (0x64 == attrid) {
+        json[F(D_JSON_TEMPERATURE)] = val / 100.0f;
+      } else if (0x65 == attrid) {
+        json[F(D_JSON_HUMIDITY)] = val / 100.0f;
+      } else if (0x66 == attrid) {
+        json[F(D_JSON_PRESSURE)] = val / 100.0f;
+        json[F(D_JSON_PRESSURE_UNIT)] = F(D_UNIT_PRESSURE);   // hPa
+      } else if (0x01 == attrid) {
+        json[F(D_JSON_VOLTAGE)] = val / 1000.0f;
+        json[F("Battery")] = toPercentageCR2032(val);
+      }
+    } else if (0x115F == zcl->getManufCode()) {
+      // Aqara Motion Sensor, still unknown field
+      json[F("AqaraUnknown")] = val;
     }
   }
   return 1;   // remove original key
 }
 // ======================================================================
-
-// Cluster Specific commands
-// #define ZCL_OO_OFF          "s_0006_00"       // Cluster 0x0006, cmd 0x00 - On/Off - Off
-// #define ZCL_OO_ON           "s_0006_01"       // Cluster 0x0006, cmd 0x01 - On/Off - On
-// #define ZCL_COLORTEMP_MOVE  "s_0300_0A"       // Cluster 0x0300, cmd 0x0A, Move to Color Temp
-// #define ZCL_LC_MOVE         "s_0008_00"       // Cluster 0x0008, cmd 0x00, Level Control Move to Level
-// #define ZCL_LC_MOVE_1       "s_0008_01"       // Cluster 0x0008, cmd 0x01, Level Control Move
-// #define ZCL_LC_STEP         "s_0008_02"       // Cluster 0x0008, cmd 0x02, Level Control Step
-// #define ZCL_LC_STOP         "s_0008_03"       // Cluster 0x0008, cmd 0x03, Level Control Stop
-// #define ZCL_LC_MOVE_WOO     "s_0008_04"       // Cluster 0x0008, cmd 0x04, Level Control Move to Level, with On/Off
-// #define ZCL_LC_MOVE_1_WOO   "s_0008_05"       // Cluster 0x0008, cmd 0x05, Level Control Move, with On/Off
-// #define ZCL_LC_STEP_WOO     "s_0008_06"       // Cluster 0x0008, cmd 0x05, Level Control Step, with On/Off
-// #define ZCL_LC_STOP_WOO     "s_0008_07"       // Cluster 0x0008, cmd 0x07, Level Control Stop
-
 
 void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
   // iterate on json elements
@@ -859,7 +913,7 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
 
         if ((conv_cluster == cluster) &&
             ((conv_attribute == attribute) || (conv_attribute == 0xFFFF)) ) {
-          int32_t drop = (*converter->func)(shortaddr, json, key, value, (const __FlashStringHelper*) converter->name);
+          int32_t drop = (*converter->func)(this, shortaddr, json, key, value, (const __FlashStringHelper*) converter->name, conv_cluster, conv_attribute);
           if (drop) {
             json.remove(key);
           }
@@ -869,158 +923,5 @@ void ZCLFrame::postProcessAttributes(uint16_t shortaddr, JsonObject& json) {
     }
   }
 }
-
-//void ZCLFrame::postProcessAttributes2(JsonObject& json) {
-// void postProcessAttributes2(JsonObject& json) {
-//   const __FlashStringHelper *key;
-//
-//   // Osram Mini Switch
-//   key = F(ZCL_OO_OFF);
-//   if (json.containsKey(key)) {
-//     json.remove(key);
-//     json[F(D_CMND_POWER)] = F("Off");
-//   }
-//   key = F(ZCL_OO_ON);
-//   if (json.containsKey(key)) {
-//     json.remove(key);
-//     json[F(D_CMND_POWER)] = F("On");
-//   }
-//   key = F(ZCL_COLORTEMP_MOVE);
-//   if (json.containsKey(key)) {
-//     String hex = json[key];
-//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-//     uint16_t color_temp = buf2.get16(0);
-//     uint16_t transition_time = buf2.get16(2);
-//     json.remove(key);
-//     json[F("ColorTemp")] = color_temp;
-//     json[F("TransitionTime")] = transition_time / 10.0f;
-//   }
-//   key = F(ZCL_LC_MOVE_WOO);
-//   if (json.containsKey(key)) {
-//     String hex = json[key];
-//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-//     uint8_t level = buf2.get8(0);
-//     uint16_t transition_time = buf2.get16(1);
-//     json.remove(key);
-//     json[F("Dimmer")] = changeUIntScale(level, 0, 255, 0, 100);  // change to percentage
-//     json[F("TransitionTime")] = transition_time / 10.0f;
-//     if (0 == level) {
-//       json[F(D_CMND_POWER)] = F("Off");
-//     } else {
-//       json[F(D_CMND_POWER)] = F("On");
-//     }
-//   }
-//   key = F(ZCL_LC_MOVE);
-//   if (json.containsKey(key)) {
-//     String hex = json[key];
-//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-//     uint8_t level = buf2.get8(0);
-//     uint16_t transition_time = buf2.get16(1);
-//     json.remove(key);
-//     json[F("Dimmer")] = changeUIntScale(level, 0, 255, 0, 100);  // change to percentage
-//     json[F("TransitionTime")] = transition_time / 10.0f;
-//   }
-//   key = F(ZCL_LC_MOVE_1);
-//   if (json.containsKey(key)) {
-//     String hex = json[key];
-//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-//     uint8_t move_mode = buf2.get8(0);
-//     uint8_t move_rate = buf2.get8(1);
-//     json.remove(key);
-//     json[F("Move")] = move_mode ? F("Down") : F("Up");
-//     json[F("Rate")] = move_rate;
-//   }
-//   key = F(ZCL_LC_MOVE_1_WOO);
-//   if (json.containsKey(key)) {
-//     String hex = json[key];
-//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-//     uint8_t move_mode = buf2.get8(0);
-//     uint8_t move_rate = buf2.get8(1);
-//     json.remove(key);
-//     json[F("Move")] = move_mode ? F("Down") : F("Up");
-//     json[F("Rate")] = move_rate;
-//     if (0 == move_mode) {
-//       json[F(D_CMND_POWER)] = F("On");
-//     }
-//   }
-//   key = F(ZCL_LC_STEP);
-//   if (json.containsKey(key)) {
-//     String hex = json[key];
-//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-//     uint8_t step_mode = buf2.get8(0);
-//     uint8_t step_size = buf2.get8(1);
-//     uint16_t transition_time = buf2.get16(2);
-//     json.remove(key);
-//     json[F("Step")] = step_mode ? F("Down") : F("Up");
-//     json[F("StepSize")] = step_size;
-//     json[F("TransitionTime")] = transition_time / 10.0f;
-//   }
-//   key = F(ZCL_LC_STEP_WOO);
-//   if (json.containsKey(key)) {
-//     String hex = json[key];
-//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-//     uint8_t step_mode = buf2.get8(0);
-//     uint8_t step_size = buf2.get8(1);
-//     uint16_t transition_time = buf2.get16(2);
-//     json.remove(key);
-//     json[F("Step")] = step_mode ? F("Down") : F("Up");
-//     json[F("StepSize")] = step_size;
-//     json[F("TransitionTime")] = transition_time / 10.0f;
-//     if (0 == step_mode) {
-//       json[F(D_CMND_POWER)] = F("On");
-//     }
-//   }
-//   key = F(ZCL_LC_STOP);
-//   if (json.containsKey(key)) {
-//     json.remove(key);
-//     json[F("Stop")] = 1;
-//   }
-//   key = F(ZCL_LC_STOP_WOO);
-//   if (json.containsKey(key)) {
-//     json.remove(key);
-//     json[F("Stop")] = 1;
-//   }
-//
-//   // Lumi.weather proprietary field
-//   key = F(ZCL_LUMI_WEATHER);
-//   if (json.containsKey(key)) {
-//     String hex = json[key];
-//     SBuffer buf2 = SBuffer::SBufferFromHex(hex.c_str(), hex.length());
-//     DynamicJsonBuffer jsonBuffer;
-//     JsonObject& json_lumi = jsonBuffer.createObject();
-//     uint32_t i = 0;
-//     uint32_t len = buf2.len();
-//     char shortaddr[8];
-//
-//     while (len - i >= 2) {
-//       uint8_t attrid = buf2.get8(i++);
-//
-//       snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%02X"), attrid);
-//
-//       //json[shortaddr] = parseSingleAttribute(json_lumi, buf2, i, len, nullptr, 0);
-//     }
-//     // parse output
-//     if (json_lumi.containsKey("0x64")) {    // Temperature
-//       int32_t temperature = json_lumi["0x64"];
-//       json[F(D_JSON_TEMPERATURE)] = temperature / 100.0f;
-//     }
-//     if (json_lumi.containsKey("0x65")) {    // Humidity
-//       uint32_t humidity = json_lumi["0x65"];
-//       json[F(D_JSON_HUMIDITY)] = humidity / 100.0f;
-//     }
-//     if (json_lumi.containsKey("0x66")) {    // Pressure
-//       int32_t pressure = json_lumi["0x66"];
-//       json[F(D_JSON_PRESSURE)] = pressure / 100.0f;
-//       json[F(D_JSON_PRESSURE_UNIT)] = F(D_UNIT_PRESSURE);   // hPa
-//     }
-//     if (json_lumi.containsKey("0x01")) {    // Battery Voltage
-//       uint32_t voltage = json_lumi["0x01"];
-//       json[F(D_JSON_VOLTAGE)] = voltage / 1000.0f;
-//       json[F("Battery")] = toPercentageCR2032(voltage);
-//     }
-//     json.remove(key);
-//   }
-//
-// }
 
 #endif // USE_ZIGBEE
