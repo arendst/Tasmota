@@ -46,7 +46,7 @@ const char HASS_DISCOVER_BUTTON_TOGGLE[] PROGMEM =
 
 const char HASS_DISCOVER_SWITCH_TOGGLE[] PROGMEM =
   ",\"value_template\":\"{%%if is_state(entity_id,\\\"on\\\")-%%}OFF{%%-else-%%}ON{%%-endif%%}\"";      // A switch must maintain his state until the next update
- 
+
 const char HASS_DISCOVER_BUTTON_SWITCH_ONOFF[] PROGMEM =
   ",\"value_template\":\"{{value_json.%s}}\","      // STATE
   "\"frc_upd\":true,"                             // In ON/OFF case, enable force_update to make automations work
@@ -86,7 +86,7 @@ const char HASS_DISCOVER_SENSOR[] PROGMEM =
   "{\"name\":\"%s\","                                 // dualr2 1 BTN
   "\"stat_t\":\"%s\","                                // cmnd/dualr2/POWER  (implies "\"optimistic\":\"false\",")
   "\"avty_t\":\"%s\","                                // tele/dualr2/LWT
-  "\"frc_upd\":true,"                                 // force update for better graph representation 
+  "\"frc_upd\":true,"                                 // force update for better graph representation
   "\"pl_avail\":\"" D_ONLINE "\","                    // Online
   "\"pl_not_avail\":\"" D_OFFLINE "\"";               // Offline
 
@@ -253,7 +253,7 @@ void HAssAnnounceRelayLight(void)
       Shorten(&state_topic, prefix);
       Shorten(&availability_topic, prefix);
 
-      Response_P(HASS_DISCOVER_RELAY, name, command_topic, state_topic, value_template, Settings.state_text[0], Settings.state_text[1], availability_topic);
+      Response_P(HASS_DISCOVER_RELAY, name, command_topic, state_topic, value_template, SettingsText(SET_STATE_TXT1), SettingsText(SET_STATE_TXT2), availability_topic);
       TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
       TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
 
@@ -339,11 +339,11 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
     TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO_SHORT, unique_id, ESP.getChipId(), WiFi.macAddress().c_str());
     if (strlen(prefix) > 0 ) TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
     if (toggle) {
-      if (!key) { 
-        TryResponseAppend_P(HASS_DISCOVER_BUTTON_TOGGLE, PSTR(D_RSLT_STATE), Settings.state_text[toggle?2:1]);
+      if (!key) {
+        TryResponseAppend_P(HASS_DISCOVER_BUTTON_TOGGLE, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT1 + toggle?2:1));
       } else {TryResponseAppend_P(HASS_DISCOVER_SWITCH_TOGGLE);}
     }
-    else TryResponseAppend_P(HASS_DISCOVER_BUTTON_SWITCH_ONOFF, PSTR(D_RSLT_STATE), Settings.state_text[toggle?2:1], Settings.state_text[0]);
+    else TryResponseAppend_P(HASS_DISCOVER_BUTTON_SWITCH_ONOFF, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT1 + toggle?2:1), SettingsText(SET_STATE_TXT1));
 
     TryResponseAppend_P(PSTR("}"));
   }
@@ -352,10 +352,10 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
 
 void HAssAnnounceSwitches(void)
 {
-  char sw_topic[sizeof(Settings.switch_topic)];
+  char sw_topic[TOPSZ];
 
   // Send info about buttons
-  char *tmp = Settings.switch_topic;
+  char *tmp = SettingsText(SET_MQTT_SWITCH_TOPIC);
   Format(sw_topic, tmp, sizeof(sw_topic));
   if (!strcmp_P(sw_topic, "0") || strlen(sw_topic) == 0 ) {
     for (uint32_t switch_index = 0; switch_index < MAX_SWITCHES; switch_index++) {
@@ -369,7 +369,7 @@ void HAssAnnounceSwitches(void)
       // Check if MQTT message will be ON/OFF or TOGGLE
       if (Settings.switchmode[switch_index] == FOLLOW || Settings.switchmode[switch_index] == FOLLOW_INV ||
           Settings.flag3.button_switch_force_local ||   // SetOption61 - Force local operation when button/switch topic is set
-          !strcmp(mqtt_topic, sw_topic) || !strcmp(Settings.mqtt_grptopic, sw_topic))
+          !strcmp(mqtt_topic, sw_topic) || !strcmp(SettingsText(SET_MQTT_GRP_TOPIC), sw_topic))
       {
         toggle = 0; // MQTT message will be ON/OFF
       }
@@ -381,10 +381,10 @@ void HAssAnnounceSwitches(void)
 
 void HAssAnnounceButtons(void)
 {
-  char key_topic[sizeof(Settings.button_topic)];
+  char key_topic[TOPSZ];
 
   // Send info about buttons
-  char *tmp = Settings.button_topic;
+  char *tmp = SettingsText(SET_MQTT_BUTTON_TOPIC);
   Format(key_topic, tmp, sizeof(key_topic));
   if (!strcmp_P(key_topic, "0") || strlen(key_topic) == 0 ) {
     for (uint32_t button_index = 0; button_index < MAX_KEYS; button_index++) {
@@ -401,7 +401,7 @@ void HAssAnnounceButtons(void)
 
       // Check if MQTT message will be ON/OFF or TOGGLE
       if (Settings.flag3.button_switch_force_local ||  // SetOption61 - Force local operation when button/switch topic is set
-          !strcmp(mqtt_topic, key_topic) || !strcmp(Settings.mqtt_grptopic, key_topic))
+          !strcmp(mqtt_topic, key_topic) || !strcmp(SettingsText(SET_MQTT_GRP_TOPIC), key_topic))
       {
         toggle = 0; // MQTT message will be ON/OFF
       }
@@ -458,7 +458,7 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_TEMP, TempUnit(), sensorname);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_HUMIDITY))) {
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_HUM, sensorname);
-    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_PRESSURE)) 
+    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_PRESSURE))
                || !strcmp_P(subsensortype, PSTR(D_JSON_PRESSUREATSEALEVEL))){
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_PRESS, PressureUnit().c_str(), sensorname, subsensortype);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_TOTAL))
@@ -588,8 +588,8 @@ void HAssDiscovery(void)
     Settings.flag.decimal_text = 1;          // SetOption17 - Switch between decimal or hexadecimal output - Respond with decimal color values
     Settings.flag3.hass_tele_on_power = 1;   // SetOption59 - Send tele/%topic%/STATE in addition to stat/%topic%/RESULT - send tele/STATE message as stat/RESULT
 //    Settings.light_scheme = 0;             // To just control color it needs to be Scheme 0
-    if (strcmp_P(Settings.mqtt_fulltopic, PSTR("%topic%/%prefix%/"))) {
-      strncpy_P(Settings.mqtt_fulltopic, PSTR("%topic%/%prefix%/"), sizeof(Settings.mqtt_fulltopic));
+    if (strcmp_P(SettingsText(SET_MQTT_FULLTOPIC), PSTR("%topic%/%prefix%/"))) {
+      SettingsUpdateText(SET_MQTT_FULLTOPIC, "%topic%/%prefix%/");
       restart_flag = 2;
       return;                                // As full topic has changed do restart first before sending discovery data
     }

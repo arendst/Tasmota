@@ -508,7 +508,7 @@ void MqttConnected(void)
 
     GetTopic_P(stopic, CMND, mqtt_topic, PSTR("#"));
     MqttSubscribe(stopic);
-    if (strstr_P(Settings.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != nullptr) {
+    if (strstr_P(SettingsText(SET_MQTT_FULLTOPIC), MQTT_TOKEN_TOPIC) != nullptr) {
       GetGroupTopic_P(stopic, PSTR("#"));  // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/# or SetOption75 1: cmnd/<grouptopic>
       MqttSubscribe(stopic);
       GetFallbackTopic_P(stopic, PSTR("#"));
@@ -797,11 +797,11 @@ void CmndMqttRetry(void)
 void CmndStateText(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.state_text[0]))) {
+    if (XdrvMailbox.data_len > 0) {
       for (uint32_t i = 0; i <= XdrvMailbox.data_len; i++) {
         if (XdrvMailbox.data[i] == ' ') XdrvMailbox.data[i] = '_';
       }
-      strlcpy(Settings.state_text[XdrvMailbox.index -1], XdrvMailbox.data, sizeof(Settings.state_text[0]));
+      SettingsUpdateText(SET_STATE_TXT1 + XdrvMailbox.index -1, XdrvMailbox.data);
     }
     ResponseCmndIdxChar(GetStateText(XdrvMailbox.index -1));
   }
@@ -818,19 +818,19 @@ void CmndMqttClient(void)
 
 void CmndFullTopic(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_fulltopic))) {
+  if (XdrvMailbox.data_len > 0) {
     MakeValidMqtt(1, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
     char stemp1[TOPSZ];
     strlcpy(stemp1, (SC_DEFAULT == Shortcut()) ? MQTT_FULLTOPIC : XdrvMailbox.data, sizeof(stemp1));
-    if (strcmp(stemp1, Settings.mqtt_fulltopic)) {
+    if (strcmp(stemp1, SettingsText(SET_MQTT_FULLTOPIC))) {
       Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
       MqttPublishPrefixTopic_P(TELE, PSTR(D_LWT), true);          // Offline or remove previous retained topic
-      strlcpy(Settings.mqtt_fulltopic, stemp1, sizeof(Settings.mqtt_fulltopic));
+      SettingsUpdateText(SET_MQTT_FULLTOPIC, stemp1);
       restart_flag = 2;
     }
   }
-  ResponseCmndChar(Settings.mqtt_fulltopic);
+  ResponseCmndChar(SettingsText(SET_MQTT_FULLTOPIC));
 }
 
 void CmndPrefix(void)
@@ -869,13 +869,13 @@ void CmndPublish(void)
 
 void CmndGroupTopic(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.mqtt_grptopic))) {
+  if (XdrvMailbox.data_len > 0) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
-    strlcpy(Settings.mqtt_grptopic, (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data, sizeof(Settings.mqtt_grptopic));
+    SettingsUpdateText(SET_MQTT_GRP_TOPIC, (SC_DEFAULT == Shortcut()) ? MQTT_GRPTOPIC : XdrvMailbox.data);
     restart_flag = 2;
   }
-  ResponseCmndChar(Settings.mqtt_grptopic);
+  ResponseCmndChar(SettingsText(SET_MQTT_GRP_TOPIC));
 }
 
 void CmndTopic(void)
@@ -897,32 +897,32 @@ void CmndTopic(void)
 
 void CmndButtonTopic(void)
 {
-  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.button_topic))) {
+  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
     switch (Shortcut()) {
-      case SC_CLEAR: strlcpy(Settings.button_topic, "", sizeof(Settings.button_topic)); break;
-      case SC_DEFAULT: strlcpy(Settings.button_topic, mqtt_topic, sizeof(Settings.button_topic)); break;
-      case SC_USER: strlcpy(Settings.button_topic, MQTT_BUTTON_TOPIC, sizeof(Settings.button_topic)); break;
-      default: strlcpy(Settings.button_topic, XdrvMailbox.data, sizeof(Settings.button_topic));
+      case SC_CLEAR: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, ""); break;
+      case SC_DEFAULT: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, mqtt_topic); break;
+      case SC_USER: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, MQTT_BUTTON_TOPIC); break;
+      default: SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, XdrvMailbox.data);
     }
   }
-  ResponseCmndChar(Settings.button_topic);
+  ResponseCmndChar(SettingsText(SET_MQTT_BUTTON_TOPIC));
 }
 
 void CmndSwitchTopic(void)
 {
-  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.switch_topic))) {
+  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
     MakeValidMqtt(0, XdrvMailbox.data);
     if (!strcmp(XdrvMailbox.data, mqtt_client)) { SetShortcutDefault(); }
     switch (Shortcut()) {
-      case SC_CLEAR: strlcpy(Settings.switch_topic, "", sizeof(Settings.switch_topic)); break;
-      case SC_DEFAULT: strlcpy(Settings.switch_topic, mqtt_topic, sizeof(Settings.switch_topic)); break;
-      case SC_USER: strlcpy(Settings.switch_topic, MQTT_SWITCH_TOPIC, sizeof(Settings.switch_topic)); break;
-      default: strlcpy(Settings.switch_topic, XdrvMailbox.data, sizeof(Settings.switch_topic));
+      case SC_CLEAR: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, ""); break;
+      case SC_DEFAULT: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, mqtt_topic); break;
+      case SC_USER: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, MQTT_SWITCH_TOPIC); break;
+      default: SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, XdrvMailbox.data);
     }
   }
-  ResponseCmndChar(Settings.switch_topic);
+  ResponseCmndChar(SettingsText(SET_MQTT_SWITCH_TOPIC));
 }
 
 void CmndButtonRetain(void)
@@ -1201,7 +1201,7 @@ void HandleMqttConfiguration(void)
   WSContentSend_P(HTTP_FORM_MQTT2,
     (!strlen(SettingsText(SET_MQTT_USER))) ? "0" : SettingsText(SET_MQTT_USER),
     Format(str, MQTT_TOPIC, sizeof(str)), MQTT_TOPIC, SettingsText(SET_MQTT_TOPIC),
-    MQTT_FULLTOPIC, MQTT_FULLTOPIC, Settings.mqtt_fulltopic);
+    MQTT_FULLTOPIC, MQTT_FULLTOPIC, SettingsText(SET_MQTT_FULLTOPIC));
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
@@ -1219,12 +1219,12 @@ void MqttSaveSettings(void)
   WebGetArg("mf", tmp, sizeof(tmp));
   strlcpy(stemp2, (!strlen(tmp)) ? MQTT_FULLTOPIC : tmp, sizeof(stemp2));
   MakeValidMqtt(1, stemp2);
-  if ((strcmp(stemp, SettingsText(SET_MQTT_TOPIC))) || (strcmp(stemp2, Settings.mqtt_fulltopic))) {
+  if ((strcmp(stemp, SettingsText(SET_MQTT_TOPIC))) || (strcmp(stemp2, SettingsText(SET_MQTT_FULLTOPIC)))) {
     Response_P((Settings.flag.mqtt_offline) ? S_OFFLINE : "");  // SetOption10 - Control MQTT LWT message format
     MqttPublishPrefixTopic_P(TELE, S_LWT, true);                // Offline or remove previous retained topic
   }
   SettingsUpdateText(SET_MQTT_TOPIC, stemp);
-  strlcpy(Settings.mqtt_fulltopic, stemp2, sizeof(Settings.mqtt_fulltopic));
+  SettingsUpdateText(SET_MQTT_FULLTOPIC, stemp2);
   WebGetArg("mh", tmp, sizeof(tmp));
   SettingsUpdateText(SET_MQTT_HOST, (!strlen(tmp)) ? MQTT_HOST : (!strcmp(tmp,"0")) ? "" : tmp);
   WebGetArg("ml", tmp, sizeof(tmp));
@@ -1233,14 +1233,14 @@ void MqttSaveSettings(void)
   SettingsUpdateText(SET_MQTT_CLIENT, (!strlen(tmp)) ? MQTT_CLIENT_ID : tmp);
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
-    SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_TOPIC), Settings.mqtt_fulltopic);
+    SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_TOPIC), SettingsText(SET_MQTT_FULLTOPIC));
 #else // USE_MQTT_AWS_IOT
   WebGetArg("mu", tmp, sizeof(tmp));
   SettingsUpdateText(SET_MQTT_USER, (!strlen(tmp)) ? MQTT_USER : (!strcmp(tmp,"0")) ? "" : tmp);
   WebGetArg("mp", tmp, sizeof(tmp));
   SettingsUpdateText(SET_MQTT_PWD, (!strlen(tmp)) ? "" : (!strcmp(tmp, D_ASTERISK_PWD)) ? SettingsText(SET_MQTT_PWD) : tmp);
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT D_CMND_MQTTHOST " %s, " D_CMND_MQTTPORT " %d, " D_CMND_MQTTCLIENT " %s, " D_CMND_MQTTUSER " %s, " D_CMND_TOPIC " %s, " D_CMND_FULLTOPIC " %s"),
-    SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_USER), SettingsText(SET_MQTT_TOPIC), Settings.mqtt_fulltopic);
+    SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT), SettingsText(SET_MQTT_USER), SettingsText(SET_MQTT_TOPIC), SettingsText(SET_MQTT_FULLTOPIC));
 #endif
 }
 #endif  // USE_WEBSERVER

@@ -102,7 +102,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
       fulltopic += topic;                     // cmnd/<grouptopic>
     }
   } else {
-    fulltopic = Settings.mqtt_fulltopic;
+    fulltopic = SettingsText(SET_MQTT_FULLTOPIC);
     if ((0 == prefix) && (-1 == fulltopic.indexOf(FPSTR(MQTT_TOKEN_PREFIX)))) {
       fulltopic += F("/");
       fulltopic += FPSTR(MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
@@ -134,7 +134,7 @@ char* GetGroupTopic_P(char *stopic, const char* subtopic)
 {
   // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/#
   // SetOption75 1: cmnd/<grouptopic>
-  return GetTopic_P(stopic, (Settings.flag3.grouptopic_mode) ? CMND +8 : CMND, Settings.mqtt_grptopic, subtopic);  // SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
+  return GetTopic_P(stopic, (Settings.flag3.grouptopic_mode) ? CMND +8 : CMND, SettingsText(SET_MQTT_GRP_TOPIC), subtopic);  // SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
 }
 
 char* GetFallbackTopic_P(char *stopic, const char* subtopic)
@@ -147,7 +147,7 @@ char* GetStateText(uint32_t state)
   if (state > 3) {
     state = 1;
   }
-  return Settings.state_text[state];
+  return SettingsText(SET_STATE_TXT1 + state);
 }
 
 /********************************************************************************************/
@@ -361,10 +361,10 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
 
   char stopic[TOPSZ];
   char scommand[CMDSZ];
-  char key_topic[sizeof(Settings.button_topic)];
+  char key_topic[TOPSZ];
   bool result = false;
 
-  char *tmp = (key) ? Settings.switch_topic : Settings.button_topic;
+  char *tmp = (key) ? SettingsText(SET_MQTT_SWITCH_TOPIC) : SettingsText(SET_MQTT_BUTTON_TOPIC);
   Format(key_topic, tmp, sizeof(key_topic));
   if (Settings.flag.mqtt_enabled && MqttIsConnected() && (strlen(key_topic) != 0) && strcmp(key_topic, "0")) {  // SetOption3 - Enable MQTT
     if (!key && (device > devices_present)) {
@@ -377,7 +377,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
     } else {
       if ((Settings.flag3.button_switch_force_local ||      // SetOption61 - Force local operation when button/switch topic is set
            !strcmp(mqtt_topic, key_topic) ||
-           !strcmp(Settings.mqtt_grptopic, key_topic)) &&
+           !strcmp(SettingsText(SET_MQTT_GRP_TOPIC), key_topic)) &&
           (POWER_TOGGLE == state)) {
         state = ~(power >> (device -1)) &1;                 // POWER_OFF or POWER_ON
       }

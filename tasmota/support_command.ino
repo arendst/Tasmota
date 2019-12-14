@@ -147,7 +147,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
     data_len--;
   }
 
-  bool grpflg = (strstr(topicBuf, Settings.mqtt_grptopic) != nullptr);
+  bool grpflg = (strstr(topicBuf, SettingsText(SET_MQTT_GRP_TOPIC)) != nullptr);
 
   char stemp1[TOPSZ];
   GetFallbackTopic_P(stemp1, "");  // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
@@ -355,10 +355,10 @@ void CmndStatus(void)
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
                           D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d}}"),
                           ModuleNr(), stemp, mqtt_topic,
-                          Settings.button_topic, power, Settings.poweronstate, Settings.ledstate,
+                          SettingsText(SET_MQTT_BUTTON_TOPIC), power, Settings.poweronstate, Settings.ledstate,
                           Settings.ledmask, Settings.save_data,
                           Settings.flag.save_state,           // SetOption0 - Save power state and use after restart
-                          Settings.switch_topic,
+                          SettingsText(SET_MQTT_SWITCH_TOPIC),
                           stemp2,
                           Settings.flag.mqtt_button_retain,   // CMND_BUTTONRETAIN
                           Settings.flag.mqtt_switch_retain,   // CMND_SWITCHRETAIN
@@ -371,7 +371,7 @@ void CmndStatus(void)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS1_PARAMETER "\":{\"" D_JSON_BAUDRATE "\":%d,\"" D_CMND_GROUPTOPIC "\":\"%s\",\"" D_CMND_OTAURL "\":\"%s\",\""
                           D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_JSON_STARTUPUTC "\":\"%s\",\"" D_CMND_SLEEP "\":%d,\""
                           D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_JSON_SAVEADDRESS "\":\"%X\"}}"),
-                          baudrate, Settings.mqtt_grptopic, SettingsText(SET_OTAURL),
+                          baudrate, SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
                           GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
                           Settings.cfg_holder, Settings.bootcount, Settings.save_flag, GetSettingsAddress());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "1"));

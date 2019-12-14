@@ -2022,7 +2022,7 @@ void HandleInformation(void)
     WSContentSend_P(PSTR("}1" D_MQTT_USER "}2%s"), SettingsText(SET_MQTT_USER));
     WSContentSend_P(PSTR("}1" D_MQTT_CLIENT "}2%s"), mqtt_client);
     WSContentSend_P(PSTR("}1" D_MQTT_TOPIC "}2%s"), SettingsText(SET_MQTT_TOPIC));
-//    WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), Settings.mqtt_grptopic);
+//    WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), SettingsText(SET_MQTT_GRP_TOPIC));
     WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), GetGroupTopic_P(stopic, ""));
     WSContentSend_P(PSTR("}1" D_MQTT_FULL_TOPIC "}2%s"), GetTopic_P(stopic, CMND, mqtt_topic, ""));
     WSContentSend_P(PSTR("}1" D_MQTT " " D_FALLBACK_TOPIC "}2%s"), GetFallbackTopic_P(stopic, ""));

@@ -1196,7 +1196,7 @@ void DisplayMqttSubscribe(void)
     char ntopic[TOPSZ];
 
     ntopic[0] = '\0';
-    strlcpy(stopic, Settings.mqtt_fulltopic, sizeof(stopic));
+    strlcpy(stopic, SettingsText(SET_MQTT_FULLTOPIC), sizeof(stopic));
     char *tp = strtok(stopic, "/");
     while (tp != nullptr) {
       if (!strcmp_P(tp, MQTT_TOKEN_PREFIX)) {

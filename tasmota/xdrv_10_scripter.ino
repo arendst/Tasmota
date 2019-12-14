@@ -1366,7 +1366,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname,"gtopic",6)) {
-          if (sp) strlcpy(sp,Settings.mqtt_grptopic,glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTT_GRP_TOPIC),glob_script_mem.max_ssize);
           goto strexit;
         }
         break;
