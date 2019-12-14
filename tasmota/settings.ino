@@ -457,7 +457,7 @@ uint32_t GetSettingsTextLen(void)
   return position - Settings.ota_url;
 }
 
-bool SettingsUpdateText(uint32_t index, char* replace_me)
+bool SettingsUpdateText(uint32_t index, const char* replace_me)
 {
   if (index >= SET_MAX) {
     return false;  // Setting not supported - internal error
@@ -755,7 +755,7 @@ void SettingsDefaultSet2(void)
   strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
   strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
   strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));
-  SettingsUpdateText(SET_OTAURL, (char*)OTA_URL);
+  SettingsUpdateText(SET_OTAURL, OTA_URL);
 
   // Power
   Settings.flag.save_state = SAVE_STATE;
@@ -783,14 +783,14 @@ void SettingsDefaultSet2(void)
   ParseIp(&Settings.ip_address[3], WIFI_DNS);
   Settings.sta_config = WIFI_CONFIG_TOOL;
 //  Settings.sta_active = 0;
-  SettingsUpdateText(SET_STASSID1, (char*)STA_SSID1);
-  SettingsUpdateText(SET_STASSID2, (char*)STA_SSID2);
-  SettingsUpdateText(SET_STAPWD1, (char*)STA_PASS1);
-  SettingsUpdateText(SET_STAPWD2, (char*)STA_PASS2);
-  SettingsUpdateText(SET_HOSTNAME, (char*)WIFI_HOSTNAME);
+  SettingsUpdateText(SET_STASSID1, STA_SSID1);
+  SettingsUpdateText(SET_STASSID2, STA_SSID2);
+  SettingsUpdateText(SET_STAPWD1, STA_PASS1);
+  SettingsUpdateText(SET_STAPWD2, STA_PASS2);
+  SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
 
   // Syslog
-  SettingsUpdateText(SET_SYSLOG_HOST, (char*)SYS_LOG_HOST);
+  SettingsUpdateText(SET_SYSLOG_HOST, SYS_LOG_HOST);
   Settings.syslog_port = SYS_LOG_PORT;
   Settings.syslog_level = SYS_LOG_LEVEL;
 
@@ -798,7 +798,7 @@ void SettingsDefaultSet2(void)
   Settings.flag2.emulation = EMULATION;
   Settings.webserver = WEB_SERVER;
   Settings.weblog_level = WEB_LOG_LEVEL;
-  strlcpy(Settings.web_password, WEB_PASSWORD, sizeof(Settings.web_password));
+  SettingsUpdateText(SET_WEBPWD, WEB_PASSWORD);
   Settings.flag3.mdns_enabled = MDNS_ENABLED;
   strlcpy(Settings.cors_domain, CORS_DOMAIN, sizeof(Settings.cors_domain));
 
@@ -823,20 +823,20 @@ void SettingsDefaultSet2(void)
 //  Settings.flag.mqtt_offline = 0;
 //  Settings.flag.mqtt_serial = 0;
 //  Settings.flag.device_index_enable = 0;
-  strlcpy(Settings.mqtt_host, MQTT_HOST, sizeof(Settings.mqtt_host));
+  SettingsUpdateText(SET_MQTT_HOST, MQTT_HOST);
   Settings.mqtt_port = MQTT_PORT;
-  strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));
-  strlcpy(Settings.mqtt_user, MQTT_USER, sizeof(Settings.mqtt_user));
-  strlcpy(Settings.mqtt_pwd, MQTT_PASS, sizeof(Settings.mqtt_pwd));
-  strlcpy(Settings.mqtt_topic, MQTT_TOPIC, sizeof(Settings.mqtt_topic));
+  SettingsUpdateText(SET_MQTT_CLIENT, MQTT_CLIENT_ID);
+  SettingsUpdateText(SET_MQTT_USER, MQTT_USER);
+  SettingsUpdateText(SET_MQTT_PWD, MQTT_PASS);
+  SettingsUpdateText(SET_MQTT_TOPIC, MQTT_TOPIC);
   strlcpy(Settings.button_topic, MQTT_BUTTON_TOPIC, sizeof(Settings.button_topic));
   strlcpy(Settings.switch_topic, MQTT_SWITCH_TOPIC, sizeof(Settings.switch_topic));
   strlcpy(Settings.mqtt_grptopic, MQTT_GRPTOPIC, sizeof(Settings.mqtt_grptopic));
   strlcpy(Settings.mqtt_fulltopic, MQTT_FULLTOPIC, sizeof(Settings.mqtt_fulltopic));
   Settings.mqtt_retry = MQTT_RETRY_SECS;
-  SettingsUpdateText(SET_MQTTPREFIX1, (char*)SUB_PREFIX);
-  SettingsUpdateText(SET_MQTTPREFIX2, (char*)PUB_PREFIX);
-  SettingsUpdateText(SET_MQTTPREFIX3, (char*)PUB_PREFIX2);
+  SettingsUpdateText(SET_MQTTPREFIX1, SUB_PREFIX);
+  SettingsUpdateText(SET_MQTTPREFIX2, PUB_PREFIX);
+  SettingsUpdateText(SET_MQTTPREFIX3, PUB_PREFIX2);
   strlcpy(Settings.state_text[0], MQTT_STATUS_OFF, sizeof(Settings.state_text[0]));
   strlcpy(Settings.state_text[1], MQTT_STATUS_ON, sizeof(Settings.state_text[1]));
   strlcpy(Settings.state_text[2], MQTT_CMND_TOGGLE, sizeof(Settings.state_text[2]));
@@ -1316,7 +1316,7 @@ void SettingsDelta(void)
         strlcpy(mqtt_host, Settings.mqtt_user, sizeof(Settings.mqtt_user));
         strlcpy(&mqtt_host[sizeof(Settings.mqtt_user)-1], Settings.mqtt_host, sizeof(Settings.mqtt_host));
         SettingsUpdateText(SET_MQTT_HOST, mqtt_host);
-        SettingsUpdateText(SET_MQTT_USER, (char*)"");
+        SettingsUpdateText(SET_MQTT_USER, "");
       }
 #else
       SettingsUpdateText(SET_MQTT_HOST, Settings.mqtt_host);

@@ -425,17 +425,10 @@ void CmndStatus(void)
   }
 
   if (((0 == payload) || (6 == payload)) && Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-#ifdef USE_MQTT_AWS_IOT
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS6_MQTT "\":{\"" D_CMND_MQTTHOST "\":\"%s%s\",\"" D_CMND_MQTTPORT "\":%d,\"" D_CMND_MQTTCLIENT D_JSON_MASK "\":\"%s\",\""
-                          D_CMND_MQTTCLIENT "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d}}"),
-                          Settings.mqtt_user, Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client,
-                          mqtt_client, MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
-#else
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS6_MQTT "\":{\"" D_CMND_MQTTHOST "\":\"%s\",\"" D_CMND_MQTTPORT "\":%d,\"" D_CMND_MQTTCLIENT D_JSON_MASK "\":\"%s\",\""
                           D_CMND_MQTTCLIENT "\":\"%s\",\"" D_CMND_MQTTUSER "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d}}"),
-                          Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client,
-                          mqtt_client, Settings.mqtt_user, MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
-#endif
+                          SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT),
+                          mqtt_client, SettingsText(SET_MQTT_USER), MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "6"));
   }
 
@@ -558,7 +551,7 @@ void CmndUpgrade(void)
 void CmndOtaUrl(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    SettingsUpdateText(SET_OTAURL, (SC_DEFAULT == Shortcut()) ? (char*)OTA_URL : XdrvMailbox.data);
+    SettingsUpdateText(SET_OTAURL, (SC_DEFAULT == Shortcut()) ? OTA_URL : XdrvMailbox.data);
   }
   ResponseCmndChar(SettingsText(SET_OTAURL));
 }
@@ -1194,7 +1187,7 @@ void CmndSyslog(void)
 void CmndLoghost(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    SettingsUpdateText(SET_SYSLOG_HOST, (SC_DEFAULT == Shortcut()) ? (char*)SYS_LOG_HOST : XdrvMailbox.data);
+    SettingsUpdateText(SET_SYSLOG_HOST, (SC_DEFAULT == Shortcut()) ? SYS_LOG_HOST : XdrvMailbox.data);
   }
   ResponseCmndChar(SettingsText(SET_SYSLOG_HOST));
 }
@@ -1259,7 +1252,7 @@ void CmndSsid(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
     if (XdrvMailbox.data_len > 0) {
       SettingsUpdateText(SET_STASSID1 + XdrvMailbox.index -1,
-              (SC_CLEAR == Shortcut()) ? (char*)"" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? (char*)STA_SSID1 : (char*)STA_SSID2 : XdrvMailbox.data);
+              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_SSID1 : STA_SSID2 : XdrvMailbox.data);
       Settings.sta_active = XdrvMailbox.index -1;
       restart_flag = 2;
     }
@@ -1272,7 +1265,7 @@ void CmndPassword(void)
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
     if ((XdrvMailbox.data_len > 4) || (SC_CLEAR == Shortcut()) || (SC_DEFAULT == Shortcut())) {
       SettingsUpdateText(SET_STAPWD1 + XdrvMailbox.index -1,
-              (SC_CLEAR == Shortcut()) ? (char*)"" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? (char*)STA_PASS1 : (char*)STA_PASS2 : XdrvMailbox.data);
+              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_PASS1 : STA_PASS2 : XdrvMailbox.data);
       Settings.sta_active = XdrvMailbox.index -1;
       restart_flag = 2;
       ResponseCmndIdxChar(SettingsText(SET_STAPWD1 + XdrvMailbox.index -1));
@@ -1285,9 +1278,9 @@ void CmndPassword(void)
 void CmndHostname(void)
 {
   if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
-    SettingsUpdateText(SET_HOSTNAME, (SC_DEFAULT == Shortcut()) ? (char*)WIFI_HOSTNAME : XdrvMailbox.data);
+    SettingsUpdateText(SET_HOSTNAME, (SC_DEFAULT == Shortcut()) ? WIFI_HOSTNAME : XdrvMailbox.data);
     if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
-      SettingsUpdateText(SET_HOSTNAME, (char*)WIFI_HOSTNAME);
+      SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
     }
     restart_flag = 2;
   }

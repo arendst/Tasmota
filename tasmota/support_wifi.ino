@@ -482,10 +482,10 @@ void WifiCheck(uint8_t param)
       if (Wifi.config_counter) {
         if (!Wifi.config_counter) {
           if (strlen(WiFi.SSID().c_str())) {
-            SettingsUpdateText(SET_STASSID1, (char*)WiFi.SSID().c_str());
+            SettingsUpdateText(SET_STASSID1, WiFi.SSID().c_str());
           }
           if (strlen(WiFi.psk().c_str())) {
-            SettingsUpdateText(SET_STAPWD1, (char*)WiFi.psk().c_str());
+            SettingsUpdateText(SET_STAPWD1, WiFi.psk().c_str());
           }
           Settings.sta_active = 0;
           AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER D_CMND_SSID "1 %s"), SettingsText(SET_STASSID1));

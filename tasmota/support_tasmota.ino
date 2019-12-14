@@ -915,17 +915,19 @@ void Every250mSeconds(void)
         char storage_pass2[strlen(SettingsText(SET_STAPWD2)) +1];
         strncpy(storage_pass2, SettingsText(SET_STAPWD2), sizeof(storage_pass2));
 
-        char storage_mqtt[sizeof(Settings.mqtt_host) +
-                          sizeof(Settings.mqtt_port) +
-                          sizeof(Settings.mqtt_client) +
-                          sizeof(Settings.mqtt_user) +
-                          sizeof(Settings.mqtt_pwd) +
-                          sizeof(Settings.mqtt_topic)];
-        uint16_t mqtt_port = Settings.mqtt_port;                           // Workaround 7.1.2.6 Settings shuffle
+        char storage_mqtthost[strlen(SettingsText(SET_MQTT_HOST)) +1];
+        strncpy(storage_mqtthost, SettingsText(SET_MQTT_HOST), sizeof(storage_mqtthost));
+        char storage_mqttuser[strlen(SettingsText(SET_MQTT_USER)) +1];
+        strncpy(storage_mqttuser, SettingsText(SET_MQTT_USER), sizeof(storage_mqttuser));
+        char storage_mqttpwd[strlen(SettingsText(SET_MQTT_PWD)) +1];
+        strncpy(storage_mqttpwd, SettingsText(SET_MQTT_PWD), sizeof(storage_mqttpwd));
+        char storage_mqtttopic[strlen(SettingsText(SET_MQTT_TOPIC)) +1];
+        strncpy(storage_mqtttopic, SettingsText(SET_MQTT_TOPIC), sizeof(storage_mqtttopic));
+        uint16_t mqtt_port = Settings.mqtt_port;
 
-        if (216 == restart_flag) {
-          memcpy(storage_mqtt, Settings.mqtt_host, sizeof(storage_mqtt));  // Backup mqtt host, port, client, username and password
-        }
+//        if (216 == restart_flag) {
+          // Backup mqtt host, port, client, username and password
+//        }
         if ((215 == restart_flag) || (216 == restart_flag)) {
           SettingsErase(0);  // Erase all flash from program end to end of physical flash
         }
@@ -935,11 +937,13 @@ void Every250mSeconds(void)
         SettingsUpdateText(SET_STASSID2, storage_ssid2);
         SettingsUpdateText(SET_STAPWD1, storage_pass1);
         SettingsUpdateText(SET_STAPWD2, storage_pass2);
-
         if (216 == restart_flag) {
-          memcpy(Settings.mqtt_host, storage_mqtt, sizeof(storage_mqtt));  // Restore the mqtt host, port, client, username and password
-          strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));  // Set client to default
-          Settings.mqtt_port = mqtt_port;                                  // Workaround 7.1.2.6 Settings shuffle
+          // Restore the mqtt host, port, client, username and password
+          SettingsUpdateText(SET_MQTT_HOST, storage_mqtthost);
+          SettingsUpdateText(SET_MQTT_USER, storage_mqttuser);
+          SettingsUpdateText(SET_MQTT_PWD, storage_mqttpwd);
+          SettingsUpdateText(SET_MQTT_TOPIC, storage_mqtttopic);
+          Settings.mqtt_port = mqtt_port;
         }
         restart_flag = 2;
       }
@@ -990,7 +994,7 @@ void ArduinoOTAInit(void)
 {
   ArduinoOTA.setPort(8266);
   ArduinoOTA.setHostname(my_hostname);
-  if (Settings.web_password[0] !=0) { ArduinoOTA.setPassword(Settings.web_password); }
+  if (strlen(SettingsText(SET_WEBPWD))) { ArduinoOTA.setPassword(SettingsText(SET_WEBPWD)); }
 
   ArduinoOTA.onStart([]()
   {

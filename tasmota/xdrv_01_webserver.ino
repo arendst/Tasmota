@@ -658,8 +658,8 @@ void PollDnsWebserver(void)
 
 bool WebAuthenticate(void)
 {
-  if (Settings.web_password[0] != 0 && HTTP_MANAGER_RESET_ONLY != Web.state) {
-    return WebServer->authenticate(WEB_USERNAME, Settings.web_password);
+  if (strlen(SettingsText(SET_WEBPWD)) && (HTTP_MANAGER_RESET_ONLY != Web.state)) {
+    return WebServer->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD));
   } else {
     return true;
   }
@@ -816,7 +816,7 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
 
 void WSContentStart_P(const char* title, bool auth)
 {
-  if (auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
+  if (auth && strlen(SettingsText(SET_WEBPWD)) && !WebServer->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD))) {
     return WebServer->requestAuthentication();
   }
 
@@ -993,10 +993,10 @@ void HandleRoot(void)
 
   if (WifiIsInManagerMode()) {
 #ifndef FIRMWARE_MINIMAL
-    if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1")) && HTTP_MANAGER_RESET_ONLY != Web.state) {
+    if (strlen(SettingsText(SET_WEBPWD)) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1")) && HTTP_MANAGER_RESET_ONLY != Web.state) {
       HandleWifiLogin();
     } else {
-      if (!(Settings.web_password[0] != 0) || (((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == Settings.web_password )) || HTTP_MANAGER_RESET_ONLY == Web.state)) {
+      if (!strlen(SettingsText(SET_WEBPWD)) || (((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == SettingsText(SET_WEBPWD) )) || HTTP_MANAGER_RESET_ONLY == Web.state)) {
         HandleWifiConfiguration();
       } else {
         // wrong user and pass
@@ -1696,20 +1696,20 @@ void WifiSaveSettings(void)
   char tmp[100];  // Max length is currently 65
 
   WebGetArg("h", tmp, sizeof(tmp));
-  SettingsUpdateText(SET_HOSTNAME, (!strlen(tmp)) ? (char*)WIFI_HOSTNAME : tmp);
+  SettingsUpdateText(SET_HOSTNAME, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp);
   if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
-    SettingsUpdateText(SET_HOSTNAME, (char*)WIFI_HOSTNAME);
+    SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
   }
   WebGetArg("c", tmp, sizeof(tmp));
   strlcpy(Settings.cors_domain, (!strlen(tmp)) ? CORS_DOMAIN : tmp, sizeof(Settings.cors_domain));
   WebGetArg("s1", tmp, sizeof(tmp));
-  SettingsUpdateText(SET_STASSID1, (!strlen(tmp)) ? (char*)STA_SSID1 : tmp);
+  SettingsUpdateText(SET_STASSID1, (!strlen(tmp)) ? STA_SSID1 : tmp);
   WebGetArg("s2", tmp, sizeof(tmp));
-  SettingsUpdateText(SET_STASSID2, (!strlen(tmp)) ? (char*)STA_SSID2 : tmp);
+  SettingsUpdateText(SET_STASSID2, (!strlen(tmp)) ? STA_SSID2 : tmp);
   WebGetArg("p1", tmp, sizeof(tmp));
-  SettingsUpdateText(SET_STAPWD1, (!strlen(tmp)) ? (char*)"" : (strlen(tmp) < 5) ? (char*)SettingsText(SET_STAPWD1) : tmp);
+  SettingsUpdateText(SET_STAPWD1, (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? SettingsText(SET_STAPWD1) : tmp);
   WebGetArg("p2", tmp, sizeof(tmp));
-  SettingsUpdateText(SET_STAPWD2, (!strlen(tmp)) ? (char*)"" : (strlen(tmp) < 5) ? (char*)SettingsText(SET_STAPWD2) : tmp);
+  SettingsUpdateText(SET_STAPWD2, (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? SettingsText(SET_STAPWD2) : tmp);
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_SSID "2 %s, " D_CMND_CORS " %s"),
     SettingsText(SET_HOSTNAME), SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), Settings.cors_domain);
 }
@@ -1767,7 +1767,7 @@ void LoggingSaveSettings(void)
   WebGetArg("l3", tmp, sizeof(tmp));
   SetSyslog((!strlen(tmp)) ? SYS_LOG_LEVEL : atoi(tmp));
   WebGetArg("lh", tmp, sizeof(tmp));
-  SettingsUpdateText(SET_SYSLOG_HOST, (!strlen(tmp)) ? (char*)SYS_LOG_HOST : tmp);
+  SettingsUpdateText(SET_SYSLOG_HOST, (!strlen(tmp)) ? SYS_LOG_HOST : tmp);
   WebGetArg("lp", tmp, sizeof(tmp));
   Settings.syslog_port = (!strlen(tmp)) ? SYS_LOG_PORT : atoi(tmp);
   WebGetArg("lt", tmp, sizeof(tmp));
@@ -1847,7 +1847,7 @@ void OtherSaveSettings(void)
   char friendlyname[sizeof(Settings.friendlyname[0])];
 
   WebGetArg("wp", tmp, sizeof(tmp));
-  strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
+  SettingsUpdateText(SET_WEBPWD, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? SettingsText(SET_WEBPWD) : tmp);
   Settings.flag.mqtt_enabled = WebServer->hasArg("b1");  // SetOption3 - Enable MQTT
 #ifdef USE_EMULATION
   WebGetArg("b2", tmp, sizeof(tmp));
@@ -2017,16 +2017,11 @@ void HandleInformation(void)
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-#ifdef USE_MQTT_AWS_IOT
-    WSContentSend_P(PSTR("}1" D_MQTT_HOST "}2%s%s"), Settings.mqtt_user, Settings.mqtt_host);
+    WSContentSend_P(PSTR("}1" D_MQTT_HOST "}2%s"), SettingsText(SET_MQTT_HOST));
     WSContentSend_P(PSTR("}1" D_MQTT_PORT "}2%d"), Settings.mqtt_port);
-#else
-    WSContentSend_P(PSTR("}1" D_MQTT_HOST "}2%s"), Settings.mqtt_host);
-    WSContentSend_P(PSTR("}1" D_MQTT_PORT "}2%d"), Settings.mqtt_port);
-    WSContentSend_P(PSTR("}1" D_MQTT_USER "}2%s"), Settings.mqtt_user);
-#endif
+    WSContentSend_P(PSTR("}1" D_MQTT_USER "}2%s"), SettingsText(SET_MQTT_USER));
     WSContentSend_P(PSTR("}1" D_MQTT_CLIENT "}2%s"), mqtt_client);
-    WSContentSend_P(PSTR("}1" D_MQTT_TOPIC "}2%s"), Settings.mqtt_topic);
+    WSContentSend_P(PSTR("}1" D_MQTT_TOPIC "}2%s"), SettingsText(SET_MQTT_TOPIC));
 //    WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), Settings.mqtt_grptopic);
     WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), GetGroupTopic_P(stopic, ""));
     WSContentSend_P(PSTR("}1" D_MQTT_FULL_TOPIC "}2%s"), GetTopic_P(stopic, CMND, mqtt_topic, ""));
@@ -2413,12 +2408,12 @@ void HandleHttpCommand(void)
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
 
   bool valid = true;
-  if (Settings.web_password[0] != 0) {
-    char tmp1[sizeof(Settings.web_password)];
+  if (strlen(SettingsText(SET_WEBPWD))) {
+    char tmp1[33];
     WebGetArg("user", tmp1, sizeof(tmp1));
-    char tmp2[sizeof(Settings.web_password)];
+    char tmp2[strlen(SettingsText(SET_WEBPWD)) +1];
     WebGetArg("password", tmp2, sizeof(tmp2));
-    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, Settings.web_password))) { valid = false; }
+    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, SettingsText(SET_WEBPWD)))) { valid = false; }
   }
 
   WSContentBegin(200, CT_JSON);
@@ -2791,9 +2786,9 @@ void CmndWebServer(void)
 
 void CmndWebPassword(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.web_password))) {
-    strlcpy(Settings.web_password, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
-    ResponseCmndChar(Settings.web_password);
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_WEBPWD, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? WEB_PASSWORD : XdrvMailbox.data);
+    ResponseCmndChar(SettingsText(SET_WEBPWD));
   } else {
     Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
   }
