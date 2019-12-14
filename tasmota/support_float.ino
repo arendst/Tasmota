@@ -172,6 +172,7 @@ double const f_sixthpi      = f_pi / 6.0;                   // f_pi/6.0, used in
 double const f_tansixthpi   = tan(f_sixthpi);               // tan(f_pi/6), used in atan routines
 double const f_twelfthpi    = f_pi / 12.0;                  // f_pi/12.0, used in atan routines
 double const f_tantwelfthpi = tan(f_twelfthpi);             // tan(f_pi/12), used in atan routines
+float  const f_180pi        = 180 / f_pi;                   // 180 / pi for angles in degrees
 
 // *******************************************************************
 // ***
