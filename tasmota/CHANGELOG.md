@@ -3,6 +3,7 @@
 ### 7.1.2.7 20191214
 
 - Change Settings text handling phase 2 - once uploaded never use a tasmota-minimal.bin below version 7.1.2.7!!
+- Change Settings text handling allowing variable length text within a total text pool of currently 457 characters
 
 ## Unreleased (development)
 

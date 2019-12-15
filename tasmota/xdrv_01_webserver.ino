@@ -680,8 +680,8 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
 
 void HttpHeaderCors(void)
 {
-  if (Settings.cors_domain[0] != 0) {
-    WebServer->sendHeader(F("Access-Control-Allow-Origin"), Settings.cors_domain);
+  if (strlen(SettingsText(SET_CORS))) {
+    WebServer->sendHeader(F("Access-Control-Allow-Origin"), SettingsText(SET_CORS));
   }
 }
 
@@ -825,7 +825,7 @@ void WSContentStart_P(const char* title, bool auth)
   if (title != nullptr) {
     char ctitle[strlen_P(title) +1];
     strcpy_P(ctitle, title);                       // Get title from flash to RAM
-    WSContentSend_P(HTTP_HEADER, Settings.friendlyname[0], ctitle);
+    WSContentSend_P(HTTP_HEADER, SettingsText(SET_FRIENDLYNAME1), ctitle);
   }
 }
 
@@ -869,7 +869,7 @@ void WSContentSendStyle_P(const char* formatP, ...)
     WebColor(COL_TEXT_WARNING),
 #endif
     WebColor(COL_TITLE),
-    ModuleName().c_str(), Settings.friendlyname[0]);
+    ModuleName().c_str(), SettingsText(SET_FRIENDLYNAME1));
   if (Settings.flag3.gui_hostname_ip) {                // SetOption53 - Show hostanme and IP address in GUI main menu
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
@@ -1676,7 +1676,7 @@ void HandleWifiConfiguration(void)
     }
 
     // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
-    WSContentSend_P(HTTP_FORM_WIFI, SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME), Settings.cors_domain);
+    WSContentSend_P(HTTP_FORM_WIFI, SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME), SettingsText(SET_CORS));
     WSContentSend_P(HTTP_FORM_END);
   }
 
@@ -1701,7 +1701,7 @@ void WifiSaveSettings(void)
     SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
   }
   WebGetArg("c", tmp, sizeof(tmp));
-  strlcpy(Settings.cors_domain, (!strlen(tmp)) ? CORS_DOMAIN : tmp, sizeof(Settings.cors_domain));
+  SettingsUpdateText(SET_CORS, (!strlen(tmp)) ? CORS_DOMAIN : tmp);
   WebGetArg("s1", tmp, sizeof(tmp));
   SettingsUpdateText(SET_STASSID1, (!strlen(tmp)) ? STA_SSID1 : tmp);
   WebGetArg("s2", tmp, sizeof(tmp));
@@ -1711,7 +1711,7 @@ void WifiSaveSettings(void)
   WebGetArg("p2", tmp, sizeof(tmp));
   SettingsUpdateText(SET_STAPWD2, (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? SettingsText(SET_STAPWD2) : tmp);
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_SSID "2 %s, " D_CMND_CORS " %s"),
-    SettingsText(SET_HOSTNAME), SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), Settings.cors_domain);
+    SettingsText(SET_HOSTNAME), SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), SettingsText(SET_CORS));
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1812,7 +1812,7 @@ void HandleOtherConfiguration(void)
       (i) ? stemp : "",
       i,
       (i) ? stemp : "",
-      Settings.friendlyname[i]);
+      SettingsText(SET_FRIENDLYNAME1 + i));
   }
 
 #ifdef USE_EMULATION
@@ -1844,7 +1844,7 @@ void OtherSaveSettings(void)
 {
   char tmp[128];
   char webindex[5];
-  char friendlyname[sizeof(Settings.friendlyname[0])];
+  char friendlyname[TOPSZ];
 
   WebGetArg("wp", tmp, sizeof(tmp));
   SettingsUpdateText(SET_WEBPWD, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? SettingsText(SET_WEBPWD) : tmp);
@@ -1858,8 +1858,8 @@ void OtherSaveSettings(void)
     snprintf_P(webindex, sizeof(webindex), PSTR("a%d"), i);
     WebGetArg(webindex, tmp, sizeof(tmp));
     snprintf_P(friendlyname, sizeof(friendlyname), PSTR(FRIENDLY_NAME"%d"), i +1);
-    strlcpy(Settings.friendlyname[i], (!strlen(tmp)) ? (i) ? friendlyname : FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[i]));
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s%s %s"), log_data, (i) ? "," : "", Settings.friendlyname[i]);
+    SettingsUpdateText(SET_FRIENDLYNAME1 +i, (!strlen(tmp)) ? (i) ? friendlyname : FRIENDLY_NAME : tmp);
+    snprintf_P(log_data, sizeof(log_data), PSTR("%s%s %s"), log_data, (i) ? "," : "", SettingsText(SET_FRIENDLYNAME1 +i));
   }
   AddLog(LOG_LEVEL_INFO);
   WebGetArg("t1", tmp, sizeof(tmp));
@@ -1891,8 +1891,8 @@ void HandleBackupConfiguration(void)
 
   char attachment[100];
 
-//  char friendlyname[sizeof(Settings.friendlyname[0])];
-//  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, Settings.friendlyname[0]), my_version);
+//  char friendlyname[TOPSZ];
+//  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, SettingsText(SET_FRIENDLYNAME1)), my_version);
 
   char hostname[sizeof(my_hostname)];
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(hostname, my_hostname), my_version);
@@ -1992,7 +1992,7 @@ void HandleInformation(void)
   if (IsModuleIfan()) { maxfn = 1; }
 #endif  // USE_SONOFF_IFAN
   for (uint32_t i = 0; i < maxfn; i++) {
-    WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, Settings.friendlyname[i]);
+    WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, SettingsText(SET_FRIENDLYNAME1 +i));
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI());
@@ -2856,10 +2856,10 @@ void CmndWebSensor(void)
 
 void CmndCors(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.cors_domain))) {
-    strlcpy(Settings.cors_domain, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.cors_domain));
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_CORS, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? WEB_PASSWORD : XdrvMailbox.data);
   }
-  ResponseCmndChar(Settings.cors_domain);
+  ResponseCmndChar(SettingsText(SET_CORS));
 }
 
 /*********************************************************************************************\

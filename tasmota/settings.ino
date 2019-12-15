@@ -751,10 +751,10 @@ void SettingsDefaultSet2(void)
   Settings.module = MODULE;
   ModuleDefault(WEMOS);
 //  for (uint32_t i = 0; i < sizeof(Settings.my_gp); i++) { Settings.my_gp.io[i] = GPIO_NONE; }
-  strlcpy(Settings.friendlyname[0], FRIENDLY_NAME, sizeof(Settings.friendlyname[0]));
-  strlcpy(Settings.friendlyname[1], FRIENDLY_NAME"2", sizeof(Settings.friendlyname[1]));
-  strlcpy(Settings.friendlyname[2], FRIENDLY_NAME"3", sizeof(Settings.friendlyname[2]));
-  strlcpy(Settings.friendlyname[3], FRIENDLY_NAME"4", sizeof(Settings.friendlyname[3]));
+  SettingsUpdateText(SET_FRIENDLYNAME1, FRIENDLY_NAME);
+  SettingsUpdateText(SET_FRIENDLYNAME2, FRIENDLY_NAME"2");
+  SettingsUpdateText(SET_FRIENDLYNAME3, FRIENDLY_NAME"3");
+  SettingsUpdateText(SET_FRIENDLYNAME4, FRIENDLY_NAME"4");
   SettingsUpdateText(SET_OTAURL, OTA_URL);
 
   // Power
@@ -800,7 +800,7 @@ void SettingsDefaultSet2(void)
   Settings.weblog_level = WEB_LOG_LEVEL;
   SettingsUpdateText(SET_WEBPWD, WEB_PASSWORD);
   Settings.flag3.mdns_enabled = MDNS_ENABLED;
-  strlcpy(Settings.cors_domain, CORS_DOMAIN, sizeof(Settings.cors_domain));
+  SettingsUpdateText(SET_CORS, CORS_DOMAIN);
 
   // Button
 //  Settings.flag.button_restrict = 0;
@@ -992,15 +992,11 @@ void SettingsDefaultSet2(void)
     Settings.timezone = APP_TIMEZONE / 60;
     Settings.timezone_minutes = abs(APP_TIMEZONE % 60);
   }
-  strlcpy(Settings.ntp_server[0], NTP_SERVER1, sizeof(Settings.ntp_server[0]));
-  strlcpy(Settings.ntp_server[1], NTP_SERVER2, sizeof(Settings.ntp_server[1]));
-  strlcpy(Settings.ntp_server[2], NTP_SERVER3, sizeof(Settings.ntp_server[2]));
-  for (uint32_t j = 0; j < 3; j++) {
-    for (uint32_t i = 0; i < strlen(Settings.ntp_server[j]); i++) {
-      if (Settings.ntp_server[j][i] == ',') {
-        Settings.ntp_server[j][i] = '.';
-      }
-    }
+  SettingsUpdateText(SET_NTPSERVER1, NTP_SERVER1);
+  SettingsUpdateText(SET_NTPSERVER2, NTP_SERVER2);
+  SettingsUpdateText(SET_NTPSERVER3, NTP_SERVER3);
+  for (uint32_t i = 0; i < 3; i++) {
+    SettingsUpdateText(SET_NTPSERVER1 +i, ReplaceCommaWithDot(SettingsText(SET_NTPSERVER1 +i)));
   }
   Settings.latitude = (int)((double)LATITUDE * 1000000);
   Settings.longitude = (int)((double)LONGITUDE * 1000000);

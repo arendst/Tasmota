@@ -239,9 +239,9 @@ void HAssAnnounceRelayLight(void)
       char *availability_topic = stemp3;
 
       if (i > MAX_FRIENDLYNAMES) {
-        snprintf_P(name, sizeof(name), PSTR("%s %d"), Settings.friendlyname[0], i);
+        snprintf_P(name, sizeof(name), PSTR("%s %d"), SettingsText(SET_FRIENDLYNAME1), i);
       } else {
-        snprintf_P(name, sizeof(name), Settings.friendlyname[i -1]);
+        snprintf_P(name, sizeof(name), SettingsText(SET_FRIENDLYNAME1 +i -1));
       }
       GetPowerDevice(value_template, i, sizeof(value_template), Settings.flag.device_index_enable);  // SetOption26 - Switch between POWER or POWER1
       GetTopic_P(command_topic, CMND, mqtt_topic, value_template);
@@ -324,7 +324,7 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
     char *availability_topic = stemp2;
     char jsoname[8];
 
-    snprintf_P(name, sizeof(name), PSTR("%s %s%d"), Settings.friendlyname[0], key?"Switch":"Button", device+1);
+    snprintf_P(name, sizeof(name), PSTR("%s %s%d"), SettingsText(SET_FRIENDLYNAME1), key?"Switch":"Button", device+1);
     snprintf_P(jsoname, sizeof(jsoname), PSTR("%s%d"), key?"SWITCH":"BUTTON", device+1);
     GetPowerDevice(value_template, device+1, sizeof(value_template),
                    key + Settings.flag.device_index_enable); // Force index for Switch 1, Index on Button1 is controlled by SetOption26 - Switch between POWER or POWER1
@@ -445,7 +445,7 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
       GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_SENSOR));
     }
 
-    snprintf_P(name, sizeof(name), PSTR("%s %s %s"), Settings.friendlyname[0], sensorname, subsensortype);
+    snprintf_P(name, sizeof(name), PSTR("%s %s %s"), SettingsText(SET_FRIENDLYNAME1), sensorname, subsensortype);
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
     FindPrefix(state_topic, availability_topic, prefix);
     Shorten(&state_topic, prefix);
@@ -548,7 +548,7 @@ void HAssAnnounceStatusSensor(void)
     char *state_topic = stemp1;
     char *availability_topic = stemp2;
 
-    snprintf_P(name, sizeof(name), PSTR("%s status"), Settings.friendlyname[0]);
+    snprintf_P(name, sizeof(name), PSTR("%s status"), SettingsText(SET_FRIENDLYNAME1));
     GetTopic_P(state_topic, TELE, mqtt_topic, PSTR(D_RSLT_HASS_STATE));
     GetTopic_P(availability_topic, TELE, mqtt_topic, S_LWT);
     FindPrefix(state_topic, availability_topic, prefix);
@@ -558,7 +558,7 @@ void HAssAnnounceStatusSensor(void)
     Response_P(HASS_DISCOVER_SENSOR, name, state_topic, availability_topic);
     TryResponseAppend_P(HASS_DISCOVER_SENSOR_HASS_STATUS, state_topic);
     TryResponseAppend_P(HASS_DISCOVER_DEVICE_INFO, unique_id, ESP.getChipId(), WiFi.macAddress().c_str(),
-               Settings.friendlyname[0], ModuleName().c_str(), my_version, my_image);
+               SettingsText(SET_FRIENDLYNAME1), ModuleName().c_str(), my_version, my_image);
     TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
     TryResponseAppend_P(PSTR("}"));
   }

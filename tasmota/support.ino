@@ -328,6 +328,22 @@ char* RemoveSpace(char* p)
   return p;
 }
 
+char* ReplaceCommaWithDot(char* p)
+{
+  char* write = (char*)p;
+  char* read = (char*)p;
+  char ch = '.';
+
+  while (ch != '\0') {
+    ch = *read++;
+    if (ch == ',') {
+      ch = '.';
+    }
+    *write++ = ch;
+  }
+  return p;
+}
+
 char* LowerCase(char* dest, const char* source)
 {
   char* write = dest;

@@ -325,7 +325,7 @@ void CmndStatus(void)
   uint32_t payload = ((XdrvMailbox.payload < 0) || (XdrvMailbox.payload > MAX_STATUS)) ? 99 : XdrvMailbox.payload;
 
   uint32_t option = STAT;
-  char stemp[MAX_FRIENDLYNAMES * (sizeof(Settings.friendlyname[0]) +MAX_FRIENDLYNAMES)];
+  char stemp[200];
   char stemp2[100];
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
@@ -344,7 +344,7 @@ void CmndStatus(void)
 #endif  // USE_SONOFF_IFAN
     stemp[0] = '\0';
     for (uint32_t i = 0; i < maxfn; i++) {
-      snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), Settings.friendlyname[i]);
+      snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), SettingsText(SET_FRIENDLYNAME1 +i));
     }
     stemp2[0] = '\0';
     for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
@@ -1217,17 +1217,15 @@ void CmndIpAddress(void)
 void CmndNtpServer(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.ntp_server[0]))) {
-      strlcpy(Settings.ntp_server[XdrvMailbox.index -1],
-              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index)?NTP_SERVER1:(2==XdrvMailbox.index)?NTP_SERVER2:NTP_SERVER3 : XdrvMailbox.data,
-              sizeof(Settings.ntp_server[0]));
-      for (uint32_t i = 0; i < strlen(Settings.ntp_server[XdrvMailbox.index -1]); i++) {
-        if (Settings.ntp_server[XdrvMailbox.index -1][i] == ',') Settings.ntp_server[XdrvMailbox.index -1][i] = '.';
-      }
+    uint32_t ntp_server = SET_NTPSERVER1 + XdrvMailbox.index -1;
+    if (XdrvMailbox.data_len > 0) {
+      SettingsUpdateText(ntp_server,
+        (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? NTP_SERVER1 : (2 == XdrvMailbox.index) ? NTP_SERVER2 : NTP_SERVER3 : XdrvMailbox.data);
+      SettingsUpdateText(ntp_server, ReplaceCommaWithDot(SettingsText(ntp_server)));
 //        restart_flag = 2;  // Issue #3890
       ntp_force_sync = true;
     }
-    ResponseCmndIdxChar(Settings.ntp_server[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(SettingsText(ntp_server));
   }
 }
 
@@ -1306,16 +1304,16 @@ void CmndWifiConfig(void)
 void CmndFriendlyname(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_FRIENDLYNAMES)) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.friendlyname[0]))) {
+    if (XdrvMailbox.data_len > 0) {
       char stemp1[TOPSZ];
       if (1 == XdrvMailbox.index) {
         snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME));
       } else {
         snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME "%d"), XdrvMailbox.index);
       }
-      strlcpy(Settings.friendlyname[XdrvMailbox.index -1], (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data, sizeof(Settings.friendlyname[XdrvMailbox.index -1]));
+      SettingsUpdateText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1, (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data);
     }
-    ResponseCmndIdxChar(Settings.friendlyname[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(SettingsText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1));
   }
 }
 
