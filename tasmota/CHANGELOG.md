@@ -4,6 +4,7 @@
 
 - Change some more Settings locations freeing up space for future single char allowing variable length text
 - Add Zigbee send automatic ZigbeeRead after sending a command
+- Add Zigbee improving Occupancy:false detection for Aqara sensor
 
 ### 7.1.2.5 20191213
 
