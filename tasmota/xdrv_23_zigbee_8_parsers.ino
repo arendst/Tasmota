@@ -372,12 +372,10 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   zigbee_devices.updateLastSeen(srcaddr);
   ZCLFrame zcl_received = ZCLFrame::parseRawFrame(buf, 19, buf.get8(18), clusterid, groupid);
 
-#ifdef ZIGBEE_VERBOSE
   zcl_received.publishMQTTReceived(groupid, clusterid, srcaddr,
                                   srcendpoint, dstendpoint, wasbroadcast,
                                   linkquality, securityuse, seqnumber,
                                   timestamp);
-#endif
 
   char shortaddr[8];
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
