@@ -191,14 +191,9 @@ void ZigbeeInput(void)
 
 			SBuffer znp_buffer = zigbee_buffer->subBuffer(2, zigbee_frame_len - 3);	// remove SOF, LEN and FCS
 
-#ifdef ZIGBEE_VERBOSE
 			ToHex_P((unsigned char*)znp_buffer.getBuffer(), znp_buffer.len(), hex_char, sizeof(hex_char));
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPRECEIVED " %s"),
                                  hex_char);
-	    // Response_P(PSTR("{\"" D_JSON_ZIGBEEZNPRECEIVED "\":\"%s\"}"), hex_char);
-	    // MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZNPRECEIVED));
-	    // XdrvRulesProcess();
-#endif
 
 			// now process the message
       ZigbeeProcessInput(znp_buffer);
@@ -320,15 +315,13 @@ void ZigbeeZNPSend(const uint8_t *msg, size_t len) {
 		ZigbeeSerial->write(fcs);			// finally send fcs checksum byte
 		AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("ZNPSend FCS %02X"), fcs);
   }
-#ifdef ZIGBEE_VERBOSE
 	// Now send a MQTT message to report the sent message
 	char hex_char[(len * 2) + 2];
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZNPSENT " %s"),
                                		ToHex_P(msg, len, hex_char, sizeof(hex_char)));
-#endif
 }
 
-void ZigbeeZCLSend(uint16_t dtsAddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool disableDefResp = true, uint8_t transacId = 1) {
+void ZigbeeZCLSend(uint16_t dtsAddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool disableDefResp, uint8_t transacId) {
   SBuffer buf(25+len);
   buf.add8(Z_SREQ | Z_AF);        // 24
   buf.add8(AF_DATA_REQUEST);      // 01
@@ -423,6 +416,10 @@ void zigbeeZCLSendStr(uint16_t dstAddr, uint8_t endpoint, const char *data) {
 
   // everything is good, we can send the command
   ZigbeeZCLSend(dstAddr, cluster, endpoint, cmd, clusterSpecific, buf.getBuffer(), buf.len());
+  // now set the timer, if any, to read back the state later
+  if (clusterSpecific) {
+    zigbeeSetCommandTimer(dstAddr, cluster, endpoint);
+  }
   ResponseCmndDone();
 }
 
@@ -648,6 +645,11 @@ bool Xdrv23(uint8_t function)
 
   if (zigbee.active) {
     switch (function) {
+      case FUNC_EVERY_50_MSECOND:
+        if (!zigbee.init_phase) {
+          zigbee_devices.runTimer();
+        }
+        break;
       case FUNC_LOOP:
         if (ZigbeeSerial) { ZigbeeInput(); }
 				if (zigbee.state_machine) {

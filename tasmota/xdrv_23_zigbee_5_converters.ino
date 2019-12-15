@@ -53,7 +53,6 @@ public:
                            uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
                            uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
                            uint32_t timestamp) {
-#ifdef ZIGBEE_VERBOSE
     char hex_char[_payload.len()*2+2];
 		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
@@ -69,7 +68,6 @@ public:
                     timestamp,
                     _frame_control, _manuf_code, _transact_seq, _cmd_id,
                     hex_char);
-#endif
   }
 
   static ZCLFrame parseRawFrame(const SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid) { // parse a raw frame and build the ZCL frame object
@@ -497,7 +495,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0007, 0x0000,  "SwitchType",           &Z_Copy },
 
   // Level Control cluster
-  { 0x0008, 0x0000,  "CurrentLevel",         &Z_Copy },
+  { 0x0008, 0x0000,  "Dimmer",               &Z_Copy },
   // { 0x0008, 0x0001,  "RemainingTime",        &Z_Copy },
   // { 0x0008, 0x0010,  "OnOffTransitionTime",  &Z_Copy },
   // { 0x0008, 0x0011,  "OnLevel",              &Z_Copy },
@@ -652,14 +650,14 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0102, 0x0019,  "IntermediateSetpointsTilt",&Z_Copy },
 
   // Color Control cluster
-  { 0x0300, 0x0000,  "CurrentHue",           &Z_Copy },
-  { 0x0300, 0x0001,  "CurrentSaturation",    &Z_Copy },
+  { 0x0300, 0x0000,  "Hue",                  &Z_Copy },
+  { 0x0300, 0x0001,  "Sat",                  &Z_Copy },
   { 0x0300, 0x0002,  "RemainingTime",        &Z_Copy },
-  { 0x0300, 0x0003,  "CurrentX",             &Z_Copy },
-  { 0x0300, 0x0004,  "CurrentY",             &Z_Copy },
+  { 0x0300, 0x0003,  "X",                    &Z_Copy },
+  { 0x0300, 0x0004,  "Y",                    &Z_Copy },
   { 0x0300, 0x0005,  "DriftCompensation",    &Z_Copy },
   { 0x0300, 0x0006,  "CompensationText",     &Z_Copy },
-  { 0x0300, 0x0007,  "ColorTemperatureMireds",&Z_Copy },
+  { 0x0300, 0x0007,  "CT",                   &Z_Copy },
   { 0x0300, 0x0008,  "ColorMode",            &Z_Copy },
   { 0x0300, 0x0010,  "NumberOfPrimaries",    &Z_Copy },
   { 0x0300, 0x0011,  "Primary1X",            &Z_Copy },

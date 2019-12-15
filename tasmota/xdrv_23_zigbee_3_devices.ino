@@ -22,6 +22,9 @@
 #include <vector>
 #include <map>
 
+
+typedef int32_t (*Z_DeviceTimer)(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, uint32_t value);
+
 typedef struct Z_Device {
   uint16_t              shortaddr;      // unique key if not null, or unspecified if null
   uint64_t              longaddr;       // 0x00 means unspecified
@@ -33,6 +36,12 @@ typedef struct Z_Device {
   std::vector<uint32_t> endpoints;      // encoded as high 16 bits is endpoint, low 16 bits is ProfileId
   std::vector<uint32_t> clusters_in;    // encoded as high 16 bits is endpoint, low 16 bits is cluster number
   std::vector<uint32_t> clusters_out;   // encoded as high 16 bits is endpoint, low 16 bits is cluster number
+  // below are per device timers, used for example to query the new state of the device
+  uint32_t              timer;          // millis() when to fire the timer, 0 if no timer
+  uint16_t              cluster;        // cluster to use for the timer
+  uint16_t              endpoint;       // endpoint to use for timer
+  uint32_t              value;          // any raw value to use for the timer
+  Z_DeviceTimer         func;           // function to call when timer occurs
 } Z_Device;
 
 // All devices are stored in a Vector
@@ -69,6 +78,11 @@ public:
 
   // Dump json
   String dump(uint32_t dump_mode, int32_t device_num = 0) const;
+
+  // Timers
+  void resetTimer(uint32_t shortaddr);
+  void setTimer(uint32_t shortaddr, uint32_t wait_ms, uint16_t cluster, uint16_t endpoint, uint32_t value, Z_DeviceTimer func);
+  void runTimer(void);
 
 private:
   std::vector<Z_Device> _devices = {};
@@ -157,7 +171,9 @@ Z_Device & Z_Devices::createDeviceEntry(uint16_t shortaddr, uint64_t longaddr) {
                       String(),   // FriendlyName
                       std::vector<uint32_t>(),
                       std::vector<uint32_t>(),
-                      std::vector<uint32_t>() };
+                      std::vector<uint32_t>(),
+                      0,0,0,0,
+                      nullptr };
   _devices.push_back(device);
   return _devices.back();
 }
@@ -345,6 +361,47 @@ void Z_Devices::updateLastSeen(uint16_t shortaddr) {
   if (&device == nullptr) { return; }                 // don't crash if not found
   _updateLastSeen(device);
 }
+
+// Per device timers
+//
+// Reset the timer for a specific device
+void Z_Devices::resetTimer(uint32_t shortaddr) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+  device.timer = 0;
+  device.func = nullptr;
+}
+
+// Set timer for a specific device
+void Z_Devices::setTimer(uint32_t shortaddr, uint32_t wait_ms, uint16_t cluster, uint16_t endpoint, uint32_t value, Z_DeviceTimer func) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+
+  device.cluster = cluster;
+  device.endpoint = endpoint;
+  device.value = value;
+  device.func = func;
+  device.timer = wait_ms + millis();
+}
+
+// Run timer at each tick
+void Z_Devices::runTimer(void) {
+  uint32_t now = millis();
+
+  for (std::vector<Z_Device>::iterator it = _devices.begin(); it != _devices.end(); ++it) {
+    Z_Device &device = *it;
+    uint16_t shortaddr = device.shortaddr;
+
+    uint32_t timer = device.timer;
+    if ((timer) && (timer <= now)) {
+      // trigger the timer
+      (*device.func)(device.shortaddr, device.cluster, device.endpoint, device.value);
+
+      device.timer = 0;       // cancel the timer
+    }
+  }
+}
+
 
 // Dump the internal memory of Zigbee devices
 // Mode = 1: simple dump of devices addresses and names
