@@ -39,20 +39,23 @@ class ZCLFrame {
 public:
 
   ZCLFrame(uint8_t frame_control, uint16_t manuf_code, uint8_t transact_seq, uint8_t cmd_id,
-    const char *buf, size_t buf_len, uint16_t clusterid = 0, uint16_t groupid = 0):
+    const char *buf, size_t buf_len, uint16_t clusterid = 0, uint16_t groupid = 0,
+    uint16_t srcaddr = 0, uint8_t srcendpoint = 0, uint8_t dstendpoint = 0, uint8_t wasbroadcast = 0,
+    uint8_t linkquality = 0, uint8_t securityuse = 0, uint8_t seqnumber = 0,
+    uint32_t timestamp = 0):
     _cmd_id(cmd_id), _manuf_code(manuf_code), _transact_seq(transact_seq),
     _payload(buf_len ? buf_len : 250),      // allocate the data frame from source or preallocate big enough
-    _cluster_id(clusterid), _group_id(groupid)
+    _cluster_id(clusterid), _group_id(groupid),
+    _srcaddr(srcaddr), _srcendpoint(srcendpoint), _dstendpoint(dstendpoint), _wasbroadcast(wasbroadcast),
+    _linkquality(linkquality), _securityuse(securityuse), _seqnumber(seqnumber),
+    _timestamp(timestamp)
     {
       _frame_control.d8 = frame_control;
       _payload.addBuffer(buf, buf_len);
     };
 
 
-  void publishMQTTReceived(uint16_t groupid, uint16_t clusterid, uint16_t srcaddr,
-                           uint8_t srcendpoint, uint8_t dstendpoint, uint8_t wasbroadcast,
-                           uint8_t linkquality, uint8_t securityuse, uint8_t seqnumber,
-                           uint32_t timestamp) {
+  void log(void) {
     char hex_char[_payload.len()*2+2];
 		ToHex_P((unsigned char*)_payload.getBuffer(), _payload.len(), hex_char, sizeof(hex_char));
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("{\"" D_JSON_ZIGBEEZCL_RECEIVED "\":{"
@@ -62,15 +65,18 @@ public:
                     "\"timestamp\":%d,"
                     "\"fc\":\"0x%02X\",\"manuf\":\"0x%04X\",\"transact\":%d,"
                     "\"cmdid\":\"0x%02X\",\"payload\":\"%s\"}}"),
-                    groupid, clusterid, srcaddr,
-                    srcendpoint, dstendpoint, wasbroadcast,
-                    linkquality, securityuse, seqnumber,
-                    timestamp,
+                    _group_id, _cluster_id, _srcaddr,
+                    _srcendpoint, _dstendpoint, _wasbroadcast,
+                    _linkquality, _securityuse, _seqnumber,
+                    _timestamp,
                     _frame_control, _manuf_code, _transact_seq, _cmd_id,
                     hex_char);
   }
 
-  static ZCLFrame parseRawFrame(const SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid) { // parse a raw frame and build the ZCL frame object
+  static ZCLFrame parseRawFrame(const SBuffer &buf, uint8_t offset, uint8_t len, uint16_t clusterid, uint16_t groupid,
+                                uint16_t srcaddr = 0, uint8_t srcendpoint = 0, uint8_t dstendpoint = 0, uint8_t wasbroadcast = 0,
+                                uint8_t linkquality = 0, uint8_t securityuse = 0, uint8_t seqnumber = 0,
+                                uint32_t timestamp = 0) { // parse a raw frame and build the ZCL frame object
     uint32_t i = offset;
     ZCLHeaderFrameControl_t frame_control;
     uint16_t manuf_code = 0;
@@ -115,6 +121,10 @@ public:
     return _cluster_id;
   }
 
+  inline uint16_t getSrcEndpoint(void) const {
+    return _srcendpoint;
+  }
+
   const SBuffer &getPayload(void) const {
     return _payload;
   }
@@ -131,6 +141,15 @@ private:
   uint16_t                _cluster_id = 0;
   uint16_t                _group_id = 0;
   SBuffer                 _payload;
+  // information from decoded ZCL frame
+  uint16_t                _srcaddr;
+  uint8_t                 _srcendpoint;
+  uint8_t                 _dstendpoint;
+  uint8_t                 _wasbroadcast;
+  uint8_t                 _linkquality;
+  uint8_t                 _securityuse;
+  uint8_t                 _seqnumber;
+  uint32_t                _timestamp;
 };
 
 // Zigbee ZCL converters
@@ -461,6 +480,8 @@ typedef struct Z_AttributeConverter {
   Z_AttrConverter func;
 } Z_AttributeConverter;
 
+#define OCCUPANCY "Occupancy"             // global define for Aqara
+
 // list of post-processing directives
 const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0000, 0x0000,  "ZCLVersion",           &Z_Copy },
@@ -729,7 +750,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0405, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other values
 
   // Occupancy Sensing cluster
-  { 0x0406, 0x0000,  "Occupancy",            &Z_Copy },    // Occupancy (map8)
+  { 0x0406, 0x0000,  OCCUPANCY,              &Z_AqaraOccupancy },    // Occupancy (map8)
   { 0x0406, 0x0001,  "OccupancySensorType",  &Z_Copy },    // OccupancySensorType
   { 0x0406, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
 
@@ -793,6 +814,30 @@ int32_t Z_FloatDiv100(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject&
 // Convert int to float and divide by 10
 int32_t Z_FloatDiv10(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
   json[new_name] = ((float)value) / 10.0f;
+  return 1;   // remove original key
+}
+
+
+// Aqara Occupancy behavior: the Aqara device only sends Occupancy: true events every 60 seconds.
+// Here we add a timer so if we don't receive a Occupancy event for 90 seconds, we send Occupancy:false
+const uint32_t OCCUPANCY_TIMEOUT = 90 * 1000;  // 90 s
+
+int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, uint32_t value) {
+  // send Occupancy:false message
+  Response_P(PSTR("{\"" D_CMND_ZIGBEE_RECEIVED "\":{\"0x%04X\":{\"" OCCUPANCY "\":0}}}"), shortaddr);
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
+  XdrvRulesProcess();
+}
+
+int32_t Z_AqaraOccupancy(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
+  json[new_name] = value;
+  uint32_t occupancy = value;
+
+  if (occupancy) {
+    zigbee_devices.setTimer(shortaddr, OCCUPANCY_TIMEOUT, cluster, zcl->getSrcEndpoint(), 0, &Z_OccupancyCallback);
+  } else {
+    zigbee_devices.resetTimer(shortaddr);
+  }
   return 1;   // remove original key
 }
 
