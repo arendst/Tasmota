@@ -1,5 +1,5 @@
 /*
-  xdrv_10_scripter.ino - script support for Sonoff-Tasmota
+  xdrv_10_scripter.ino - script support for Tasmota
 
   Copyright (C) 2019  Gerhard Mutz and Theo Arends
 
