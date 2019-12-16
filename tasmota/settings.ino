@@ -1273,32 +1273,27 @@ void SettingsDelta(void)
       Settings.mqtt_port = Settings.ex_mqtt_port;              // 20A -> EFC
       memcpy((char*)&Settings.serial_config, (char*)&Settings.ex_serial_config, 5);  // 1E4 -> EFE
     }
+
     if (Settings.version < 0x07010207) {
-      char temp[sizeof(Settings.ota_url)];
-        strncpy(temp, Settings.ota_url, strlen(Settings.ota_url) +1);
-      char temp2[3][sizeof(Settings.mqtt_prefix[0])];
-        strncpy(temp2[0], Settings.mqtt_prefix[0], strlen(Settings.mqtt_prefix[0]) +1);
-        strncpy(temp2[1], Settings.mqtt_prefix[1], strlen(Settings.mqtt_prefix[1]) +1);
-        strncpy(temp2[2], Settings.mqtt_prefix[2], strlen(Settings.mqtt_prefix[2]) +1);
-      char temp3[2][sizeof(Settings.sta_ssid[0])];
-        strncpy(temp3[0], Settings.sta_ssid[0], strlen(Settings.sta_ssid[0]) +1);
-        strncpy(temp3[1], Settings.sta_ssid[1], strlen(Settings.sta_ssid[1]) +1);
-      char temp4[2][sizeof(Settings.sta_pwd[0])];
-        strncpy(temp4[0], Settings.sta_pwd[0], strlen(Settings.sta_pwd[0]) +1);
-        strncpy(temp4[1], Settings.sta_pwd[1], strlen(Settings.sta_pwd[1]) +1);
-      char temp5[sizeof(Settings.hostname)];
-        strncpy(temp5, Settings.hostname, strlen(Settings.hostname) +1);
-      char temp6[sizeof(Settings.syslog_host)];
-        strncpy(temp6, Settings.syslog_host, strlen(Settings.syslog_host) +1);
+      char temp[strlen(Settings.ota_url) +1];          strncpy(temp, Settings.ota_url, sizeof(temp));
+      char temp21[strlen(Settings.mqtt_prefix[0]) +1]; strncpy(temp21, Settings.mqtt_prefix[0], sizeof(temp21));
+      char temp22[strlen(Settings.mqtt_prefix[1]) +1]; strncpy(temp22, Settings.mqtt_prefix[1], sizeof(temp22));
+      char temp23[strlen(Settings.mqtt_prefix[2]) +1]; strncpy(temp23, Settings.mqtt_prefix[2], sizeof(temp23));
+      char temp31[strlen(Settings.sta_ssid[0]) +1];    strncpy(temp31, Settings.sta_ssid[0], sizeof(temp31));
+      char temp32[strlen(Settings.sta_ssid[1]) +1];    strncpy(temp32, Settings.sta_ssid[1], sizeof(temp32));
+      char temp41[strlen(Settings.sta_pwd[0]) +1];     strncpy(temp41, Settings.sta_pwd[0], sizeof(temp41));
+      char temp42[strlen(Settings.sta_pwd[1]) +1];     strncpy(temp42, Settings.sta_pwd[0], sizeof(temp42));
+      char temp5[strlen(Settings.hostname) +1];        strncpy(temp5, Settings.hostname, sizeof(temp5));
+      char temp6[strlen(Settings.syslog_host) +1];     strncpy(temp6, Settings.syslog_host, sizeof(temp5));
 
       SettingsUpdateText(SET_OTAURL, temp);
-      SettingsUpdateText(SET_MQTTPREFIX1, temp2[0]);
-      SettingsUpdateText(SET_MQTTPREFIX2, temp2[1]);
-      SettingsUpdateText(SET_MQTTPREFIX3, temp2[2]);
-      SettingsUpdateText(SET_STASSID1, temp3[0]);
-      SettingsUpdateText(SET_STASSID2, temp3[1]);
-      SettingsUpdateText(SET_STAPWD1, temp4[0]);
-      SettingsUpdateText(SET_STAPWD2, temp4[1]);
+      SettingsUpdateText(SET_MQTTPREFIX1, temp21);
+      SettingsUpdateText(SET_MQTTPREFIX2, temp22);
+      SettingsUpdateText(SET_MQTTPREFIX3, temp23);
+      SettingsUpdateText(SET_STASSID1, temp31);
+      SettingsUpdateText(SET_STASSID2, temp32);
+      SettingsUpdateText(SET_STAPWD1, temp41);
+      SettingsUpdateText(SET_STAPWD2, temp42);
       SettingsUpdateText(SET_HOSTNAME, temp5);
       SettingsUpdateText(SET_SYSLOG_HOST, temp6);
 
