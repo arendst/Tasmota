@@ -24,53 +24,10 @@
  * Gather statistics
 \*********************************************************************************************/
 
-struct STATS {
-// uint32_t str_size = 1151;  // Total number of characters reserved as char array in Settings
-  uint32_t str_len = 0;   // Total number of characters used within char array
-} Stats;
-
-void StatisticsChar(const char* text)
-{
-  uint32_t len = strlen(text);
-  Stats.str_len += len;
-}
-
 String GetStatistics(void)
 {
-  Stats.str_len = 0;
-
-  for (uint32_t i = 0; i < 2; i++) {
-    StatisticsChar(Settings.sta_ssid[i]);
-    StatisticsChar(Settings.sta_pwd[i]);
-  }
-  for (uint32_t i = 0; i < 3; i++) {
-    StatisticsChar(Settings.mqtt_prefix[i]);
-    StatisticsChar(Settings.ntp_server[i]);
-  }
-  for (uint32_t i = 0; i < 4; i++) {
-    StatisticsChar(Settings.state_text[i]);
-    StatisticsChar(Settings.friendlyname[i]);
-  }
-  for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
-    StatisticsChar(Settings.mems[i]);
-  }
-  StatisticsChar(Settings.ota_url);
-  StatisticsChar(Settings.hostname);
-  StatisticsChar(Settings.syslog_host);
-  StatisticsChar(Settings.mqtt_host);
-  StatisticsChar(Settings.mqtt_client);
-  StatisticsChar(Settings.mqtt_user);
-  StatisticsChar(Settings.mqtt_pwd);
-  StatisticsChar(Settings.mqtt_topic);
-  StatisticsChar(Settings.button_topic);
-  StatisticsChar(Settings.switch_topic);
-  StatisticsChar(Settings.mqtt_grptopic);
-  StatisticsChar(Settings.web_password);
-  StatisticsChar(Settings.mqtt_fulltopic);
-  StatisticsChar(Settings.cors_domain);
-
   char data[40];
-  snprintf_P(data, sizeof(data), PSTR(",\"CR\":\"%d/1151\""), Stats.str_len);  // Char Usage Ratio
+  snprintf_P(data, sizeof(data), PSTR(",\"CR\":\"%d/%d\""), GetSettingsTextLen(), settings_text_size);  // Char Usage Ratio
   return String(data);
 }
 

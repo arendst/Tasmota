@@ -469,9 +469,9 @@ void RtcSetTime(uint32_t epoch)
 
 void RtcInit(void)
 {
-  sntp_setservername(0, Settings.ntp_server[0]);
-  sntp_setservername(1, Settings.ntp_server[1]);
-  sntp_setservername(2, Settings.ntp_server[2]);
+  sntp_setservername(0, SettingsText(SET_NTPSERVER1));
+  sntp_setservername(1, SettingsText(SET_NTPSERVER2));
+  sntp_setservername(2, SettingsText(SET_NTPSERVER3));
   sntp_stop();
   sntp_set_timezone(0);      // UTC time
   sntp_init();

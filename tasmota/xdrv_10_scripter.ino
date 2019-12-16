@@ -1041,7 +1041,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
                 if (sp) strlcpy(sp,str_value,SCRIPT_MAXSSIZE);
                 return lp+len;
               }
-
+              
             } else {
               if (fp) {
                 if (!strncmp(vn.c_str(),"Epoch",5)) {
@@ -1370,7 +1370,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname,"gtopic",6)) {
-          if (sp) strlcpy(sp,Settings.mqtt_grptopic,glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTT_GRP_TOPIC),glob_script_mem.max_ssize);
           goto strexit;
         }
         break;
@@ -1527,15 +1527,15 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname,"prefix1",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[0],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX1),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"prefix2",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[1],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX2),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"prefix3",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[2],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX3),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"pow(",4)) {
@@ -1744,7 +1744,7 @@ chknext:
           goto strexit;
         }
         if (!strncmp(vname,"topic",5)) {
-          if (sp) strlcpy(sp,Settings.mqtt_topic,glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTT_TOPIC),glob_script_mem.max_ssize);
           goto strexit;
         }
 #ifdef USE_DISPLAY

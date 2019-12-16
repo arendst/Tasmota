@@ -110,7 +110,6 @@ uint32_t web_log_index = 1;                 // Index in Web log buffer (should n
 float global_temperature = 9999;            // Provide a global temperature to be used by some sensors
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
 float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
-char *ota_url;                              // OTA url string pointer
 uint16_t tele_period = 9999;                // Tele period timer
 uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
 uint16_t blink_counter = 0;                 // Number of blink cycles
@@ -265,13 +264,13 @@ void setup(void)
     }
   }
 
-  Format(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
-  Format(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
-  if (strstr(Settings.hostname, "%") != nullptr) {
-    strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
-    snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname, mqtt_topic, ESP.getChipId() & 0x1FFF);
+  Format(mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(mqtt_client));
+  Format(mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(mqtt_topic));
+  if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
+    SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
+    snprintf_P(my_hostname, sizeof(my_hostname)-1, SettingsText(SET_HOSTNAME), mqtt_topic, ESP.getChipId() & 0x1FFF);
   } else {
-    snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname);
+    snprintf_P(my_hostname, sizeof(my_hostname)-1, SettingsText(SET_HOSTNAME));
   }
 
   GetEspHardwareType();
@@ -330,7 +329,7 @@ void setup(void)
   }
   blink_powersave = power;
 
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE), PROJECT, Settings.friendlyname[0], my_version, my_image);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE), PROJECT, SettingsText(SET_FRIENDLYNAME1), my_version, my_image);
 #ifdef FIRMWARE_MINIMAL
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
