@@ -366,7 +366,7 @@ void HueLightStatus1(uint8_t device, String *response)
 bool HueActive(uint8_t device) {
   if (device > MAX_FRIENDLYNAMES) { device = MAX_FRIENDLYNAMES; }
 //  return '$' != Settings.friendlyname[device-1][0];
-  return '$' != *SettingsText(SET_FRIENDLYNAME1 +device -1];
+  return '$' != *SettingsText(SET_FRIENDLYNAME1 +device -1);
 }
 
 void HueLightStatus2(uint8_t device, String *response)
