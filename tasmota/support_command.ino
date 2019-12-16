@@ -147,7 +147,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
     data_len--;
   }
 
-  bool grpflg = (strstr(topicBuf, Settings.mqtt_grptopic) != nullptr);
+  bool grpflg = (strstr(topicBuf, SettingsText(SET_MQTT_GRP_TOPIC)) != nullptr);
 
   char stemp1[TOPSZ];
   GetFallbackTopic_P(stemp1, "");  // Full Fallback topic = cmnd/DVES_xxxxxxxx_fb/
@@ -325,11 +325,11 @@ void CmndStatus(void)
   uint32_t payload = ((XdrvMailbox.payload < 0) || (XdrvMailbox.payload > MAX_STATUS)) ? 99 : XdrvMailbox.payload;
 
   uint32_t option = STAT;
-  char stemp[MAX_FRIENDLYNAMES * (sizeof(Settings.friendlyname[0]) +MAX_FRIENDLYNAMES)];
+  char stemp[200];
   char stemp2[100];
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
-  if (!strcmp(Settings.mqtt_prefix[0],Settings.mqtt_prefix[1]) && (!payload)) { option++; }  // TELE
+  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2)) && (!payload)) { option++; }  // TELE
 
   if ((!Settings.flag.mqtt_enabled) && (6 == payload)) { payload = 99; }  // SetOption3 - Enable MQTT
   if (!energy_flg && (9 == payload)) { payload = 99; }
@@ -344,7 +344,7 @@ void CmndStatus(void)
 #endif  // USE_SONOFF_IFAN
     stemp[0] = '\0';
     for (uint32_t i = 0; i < maxfn; i++) {
-      snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), Settings.friendlyname[i]);
+      snprintf_P(stemp, sizeof(stemp), PSTR("%s%s\"%s\"" ), stemp, (i > 0 ? "," : ""), SettingsText(SET_FRIENDLYNAME1 +i));
     }
     stemp2[0] = '\0';
     for (uint32_t i = 0; i < MAX_SWITCHES; i++) {
@@ -355,10 +355,10 @@ void CmndStatus(void)
                           D_CMND_LEDMASK "\":\"%04X\",\"" D_CMND_SAVEDATA "\":%d,\"" D_JSON_SAVESTATE "\":%d,\"" D_CMND_SWITCHTOPIC "\":\"%s\",\""
                           D_CMND_SWITCHMODE "\":[%s],\"" D_CMND_BUTTONRETAIN "\":%d,\"" D_CMND_SWITCHRETAIN "\":%d,\"" D_CMND_SENSORRETAIN "\":%d,\"" D_CMND_POWERRETAIN "\":%d}}"),
                           ModuleNr(), stemp, mqtt_topic,
-                          Settings.button_topic, power, Settings.poweronstate, Settings.ledstate,
+                          SettingsText(SET_MQTT_BUTTON_TOPIC), power, Settings.poweronstate, Settings.ledstate,
                           Settings.ledmask, Settings.save_data,
                           Settings.flag.save_state,           // SetOption0 - Save power state and use after restart
-                          Settings.switch_topic,
+                          SettingsText(SET_MQTT_SWITCH_TOPIC),
                           stemp2,
                           Settings.flag.mqtt_button_retain,   // CMND_BUTTONRETAIN
                           Settings.flag.mqtt_switch_retain,   // CMND_SWITCHRETAIN
@@ -371,7 +371,7 @@ void CmndStatus(void)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS1_PARAMETER "\":{\"" D_JSON_BAUDRATE "\":%d,\"" D_CMND_GROUPTOPIC "\":\"%s\",\"" D_CMND_OTAURL "\":\"%s\",\""
                           D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_JSON_STARTUPUTC "\":\"%s\",\"" D_CMND_SLEEP "\":%d,\""
                           D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_JSON_SAVEADDRESS "\":\"%X\"}}"),
-                          baudrate, Settings.mqtt_grptopic, Settings.ota_url,
+                          baudrate, SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
                           GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
                           Settings.cfg_holder, Settings.bootcount, Settings.save_flag, GetSettingsAddress());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "1"));
@@ -394,7 +394,7 @@ void CmndStatus(void)
                           D_CMND_LOGHOST "\":\"%s\",\"" D_CMND_LOGPORT "\":%d,\"" D_CMND_SSID "\":[\"%s\",\"%s\"],\"" D_CMND_TELEPERIOD "\":%d,\""
                           D_JSON_RESOLUTION "\":\"%08X\",\"" D_CMND_SETOPTION "\":[\"%08X\",\"%s\",\"%08X\",\"%08X\"]}}"),
                           Settings.seriallog_level, Settings.weblog_level, Settings.mqttlog_level, Settings.syslog_level,
-                          Settings.syslog_host, Settings.syslog_port, Settings.sta_ssid[0], Settings.sta_ssid[1], Settings.tele_period,
+                          SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), Settings.tele_period,
                           Settings.flag2.data, Settings.flag.data, ToHex_P((unsigned char*)Settings.param, PARAM8_SIZE, stemp2, sizeof(stemp2)),
                           Settings.flag3.data, Settings.flag4.data);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "3"));
@@ -425,17 +425,10 @@ void CmndStatus(void)
   }
 
   if (((0 == payload) || (6 == payload)) && Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-#ifdef USE_MQTT_AWS_IOT
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS6_MQTT "\":{\"" D_CMND_MQTTHOST "\":\"%s%s\",\"" D_CMND_MQTTPORT "\":%d,\"" D_CMND_MQTTCLIENT D_JSON_MASK "\":\"%s\",\""
-                          D_CMND_MQTTCLIENT "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d}}"),
-                          Settings.mqtt_user, Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client,
-                          mqtt_client, MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
-#else
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS6_MQTT "\":{\"" D_CMND_MQTTHOST "\":\"%s\",\"" D_CMND_MQTTPORT "\":%d,\"" D_CMND_MQTTCLIENT D_JSON_MASK "\":\"%s\",\""
                           D_CMND_MQTTCLIENT "\":\"%s\",\"" D_CMND_MQTTUSER "\":\"%s\",\"" D_JSON_MQTT_COUNT "\":%d,\"MAX_PACKET_SIZE\":%d,\"KEEPALIVE\":%d}}"),
-                          Settings.mqtt_host, Settings.mqtt_port, Settings.mqtt_client,
-                          mqtt_client, Settings.mqtt_user, MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
-#endif
+                          SettingsText(SET_MQTT_HOST), Settings.mqtt_port, SettingsText(SET_MQTT_CLIENT),
+                          mqtt_client, SettingsText(SET_MQTT_USER), MqttConnectCount(), MQTT_MAX_PACKET_SIZE, MQTT_KEEPALIVE);
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "6"));
   }
 
@@ -557,10 +550,10 @@ void CmndUpgrade(void)
 
 void CmndOtaUrl(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.ota_url))) {
-    strlcpy(Settings.ota_url, (SC_DEFAULT == Shortcut()) ? OTA_URL : XdrvMailbox.data, sizeof(Settings.ota_url));
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_OTAURL, (SC_DEFAULT == Shortcut()) ? OTA_URL : XdrvMailbox.data);
   }
-  ResponseCmndChar(Settings.ota_url);
+  ResponseCmndChar(SettingsText(SET_OTAURL));
 }
 
 void CmndSeriallog(void)
@@ -1193,10 +1186,10 @@ void CmndSyslog(void)
 
 void CmndLoghost(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.syslog_host))) {
-    strlcpy(Settings.syslog_host, (SC_DEFAULT == Shortcut()) ? SYS_LOG_HOST : XdrvMailbox.data, sizeof(Settings.syslog_host));
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_SYSLOG_HOST, (SC_DEFAULT == Shortcut()) ? SYS_LOG_HOST : XdrvMailbox.data);
   }
-  ResponseCmndChar(Settings.syslog_host);
+  ResponseCmndChar(SettingsText(SET_SYSLOG_HOST));
 }
 
 void CmndLogport(void)
@@ -1224,17 +1217,15 @@ void CmndIpAddress(void)
 void CmndNtpServer(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.ntp_server[0]))) {
-      strlcpy(Settings.ntp_server[XdrvMailbox.index -1],
-              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index)?NTP_SERVER1:(2==XdrvMailbox.index)?NTP_SERVER2:NTP_SERVER3 : XdrvMailbox.data,
-              sizeof(Settings.ntp_server[0]));
-      for (uint32_t i = 0; i < strlen(Settings.ntp_server[XdrvMailbox.index -1]); i++) {
-        if (Settings.ntp_server[XdrvMailbox.index -1][i] == ',') Settings.ntp_server[XdrvMailbox.index -1][i] = '.';
-      }
+    uint32_t ntp_server = SET_NTPSERVER1 + XdrvMailbox.index -1;
+    if (XdrvMailbox.data_len > 0) {
+      SettingsUpdateText(ntp_server,
+        (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? NTP_SERVER1 : (2 == XdrvMailbox.index) ? NTP_SERVER2 : NTP_SERVER3 : XdrvMailbox.data);
+      SettingsUpdateText(ntp_server, ReplaceCommaWithDot(SettingsText(ntp_server)));
 //        restart_flag = 2;  // Issue #3890
       ntp_force_sync = true;
     }
-    ResponseCmndIdxChar(Settings.ntp_server[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(SettingsText(ntp_server));
   }
 }
 
@@ -1251,33 +1242,31 @@ void CmndAp(void)
     }
     restart_flag = 2;
   }
-  Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active]);
+  Response_P(S_JSON_COMMAND_NVALUE_SVALUE, XdrvMailbox.command, Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active));
 }
 
 void CmndSsid(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.sta_ssid[0]))) {
-      strlcpy(Settings.sta_ssid[XdrvMailbox.index -1],
-              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_SSID1 : STA_SSID2 : XdrvMailbox.data,
-              sizeof(Settings.sta_ssid[0]));
+    if (XdrvMailbox.data_len > 0) {
+      SettingsUpdateText(SET_STASSID1 + XdrvMailbox.index -1,
+              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_SSID1 : STA_SSID2 : XdrvMailbox.data);
       Settings.sta_active = XdrvMailbox.index -1;
       restart_flag = 2;
     }
-    ResponseCmndIdxChar(Settings.sta_ssid[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(SettingsText(SET_STASSID1 + XdrvMailbox.index -1));
   }
 }
 
 void CmndPassword(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 2)) {
-    if ((XdrvMailbox.data_len > 4 || SC_CLEAR == Shortcut() || SC_DEFAULT == Shortcut()) && (XdrvMailbox.data_len < sizeof(Settings.sta_pwd[0]))) {
-      strlcpy(Settings.sta_pwd[XdrvMailbox.index -1],
-              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_PASS1 : STA_PASS2 : XdrvMailbox.data,
-              sizeof(Settings.sta_pwd[0]));
+    if ((XdrvMailbox.data_len > 4) || (SC_CLEAR == Shortcut()) || (SC_DEFAULT == Shortcut())) {
+      SettingsUpdateText(SET_STAPWD1 + XdrvMailbox.index -1,
+              (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? (1 == XdrvMailbox.index) ? STA_PASS1 : STA_PASS2 : XdrvMailbox.data);
       Settings.sta_active = XdrvMailbox.index -1;
       restart_flag = 2;
-      ResponseCmndIdxChar(Settings.sta_pwd[XdrvMailbox.index -1]);
+      ResponseCmndIdxChar(SettingsText(SET_STAPWD1 + XdrvMailbox.index -1));
     } else {
       Response_P(S_JSON_COMMAND_INDEX_ASTERISK, XdrvMailbox.command, XdrvMailbox.index);
     }
@@ -1286,14 +1275,14 @@ void CmndPassword(void)
 
 void CmndHostname(void)
 {
-  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.hostname))) {
-    strlcpy(Settings.hostname, (SC_DEFAULT == Shortcut()) ? WIFI_HOSTNAME : XdrvMailbox.data, sizeof(Settings.hostname));
-    if (strstr(Settings.hostname, "%") != nullptr) {
-      strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
+  if (!XdrvMailbox.grpflg && (XdrvMailbox.data_len > 0)) {
+    SettingsUpdateText(SET_HOSTNAME, (SC_DEFAULT == Shortcut()) ? WIFI_HOSTNAME : XdrvMailbox.data);
+    if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
+      SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
     }
     restart_flag = 2;
   }
-  ResponseCmndChar(Settings.hostname);
+  ResponseCmndChar(SettingsText(SET_HOSTNAME));
 }
 
 void CmndWifiConfig(void)
@@ -1315,16 +1304,16 @@ void CmndWifiConfig(void)
 void CmndFriendlyname(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_FRIENDLYNAMES)) {
-    if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.friendlyname[0]))) {
+    if (XdrvMailbox.data_len > 0) {
       char stemp1[TOPSZ];
       if (1 == XdrvMailbox.index) {
         snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME));
       } else {
         snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME "%d"), XdrvMailbox.index);
       }
-      strlcpy(Settings.friendlyname[XdrvMailbox.index -1], (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data, sizeof(Settings.friendlyname[XdrvMailbox.index -1]));
+      SettingsUpdateText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1, (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data);
     }
-    ResponseCmndIdxChar(Settings.friendlyname[XdrvMailbox.index -1]);
+    ResponseCmndIdxChar(SettingsText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1));
   }
 }
 

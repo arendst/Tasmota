@@ -1,5 +1,18 @@
 ## Unreleased (development)
 
+### 7.1.2.6 20191214
+
+- Change some more Settings locations freeing up space for future single char allowing variable length text
+- Add Zigbee send automatic ZigbeeRead after sending a command
+- Add Zigbee improving Occupancy:false detection for Aqara sensor
+- Add fallback functionality from next version 7.1.2.7
+
+### 7.1.2.5 20191213
+
+- Change some Settings locations freeing up space for future single char allowing variable length text
+- Add Zigbee support for Xiaomi Aqara Vibration Sensor and Presence Sensor by Stefan Hadinger
+- Add Shutter functions ramp up/down and MQTT reporting by Stefan Bode
+
 ### 7.1.2.4 20191209
 
 - Change HTTP CORS from command ``SetOption73 0/1`` to ``Cors <cors_domain>`` allowing user control of specific CORS domain by Shantur Rathore (#7066)

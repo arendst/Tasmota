@@ -1,7 +1,7 @@
 /*
-  support_statistics.ino - gather statistics for Tasmota
+  xdrv_23_zigbee_1_headers.ino - zigbee support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2019  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,25 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define USE_STATS_CODE
+#ifdef USE_ZIGBEE
 
-#ifdef USE_STATS_CODE
-/*********************************************************************************************\
- * Gather statistics
-\*********************************************************************************************/
+// contains some definitions for functions used before their declarations
 
-String GetStatistics(void)
-{
-  char data[40];
-  snprintf_P(data, sizeof(data), PSTR(",\"CR\":\"%d/%d\""), GetSettingsTextLen(), settings_text_size);  // Char Usage Ratio
-  return String(data);
-}
+void ZigbeeZCLSend(uint16_t dtsAddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool disableDefResp = true, uint8_t transacId = 1);
 
-#else
-
-String GetStatistics(void)
-{
-  return String("");
-}
-
-#endif  // USE_STATS_CODE
+#endif // USE_ZIGBEE

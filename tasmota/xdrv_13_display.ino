@@ -1008,7 +1008,7 @@ void DisplayLogBufferInit(void)
 
     snprintf_P(buffer, sizeof(buffer), PSTR(D_CMND_HOSTNAME " %s"), my_hostname);
     DisplayLogBufferAdd(buffer);
-    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), Settings.sta_ssid[Settings.sta_active]);
+    snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_SSID " %s"), SettingsText(SET_STASSID1 + Settings.sta_active));
     DisplayLogBufferAdd(buffer);
     snprintf_P(buffer, sizeof(buffer), PSTR(D_JSON_MAC " %s"), WiFi.macAddress().c_str());
     DisplayLogBufferAdd(buffer);
@@ -1196,7 +1196,7 @@ void DisplayMqttSubscribe(void)
     char ntopic[TOPSZ];
 
     ntopic[0] = '\0';
-    strlcpy(stopic, Settings.mqtt_fulltopic, sizeof(stopic));
+    strlcpy(stopic, SettingsText(SET_MQTT_FULLTOPIC), sizeof(stopic));
     char *tp = strtok(stopic, "/");
     while (tp != nullptr) {
       if (!strcmp_P(tp, MQTT_TOKEN_PREFIX)) {
@@ -1205,7 +1205,7 @@ void DisplayMqttSubscribe(void)
       strncat_P(ntopic, PSTR("+/"), sizeof(ntopic) - strlen(ntopic) -1);           // Add single-level wildcards
       tp = strtok(nullptr, "/");
     }
-    strncat(ntopic, Settings.mqtt_prefix[2], sizeof(ntopic) - strlen(ntopic) -1);  // Subscribe to tele messages
+    strncat(ntopic, SettingsText(SET_MQTTPREFIX3), sizeof(ntopic) - strlen(ntopic) -1);  // Subscribe to tele messages
     strncat_P(ntopic, PSTR("/#"), sizeof(ntopic) - strlen(ntopic) -1);             // Add multi-level wildcard
     MqttSubscribe(ntopic);
     disp_subscribed = true;
@@ -1219,7 +1219,7 @@ bool DisplayMqttData(void)
   if (disp_subscribed) {
     char stopic[TOPSZ];
 
-    snprintf_P(stopic, sizeof(stopic) , PSTR("%s/"), Settings.mqtt_prefix[2]);  // tele/
+    snprintf_P(stopic, sizeof(stopic) , PSTR("%s/"), SettingsText(SET_MQTTPREFIX3));  // tele/
     char *tp = strstr(XdrvMailbox.topic, stopic);
     if (tp) {                                                // tele/tasmota/SENSOR
       if (Settings.display_mode &0x04) {

@@ -370,15 +370,12 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   uint8_t         seqnumber = buf.get8(17);
 
   zigbee_devices.updateLastSeen(srcaddr);
-  ZCLFrame zcl_received = ZCLFrame::parseRawFrame(buf, 19, buf.get8(18), clusterid, groupid);
-
-#ifdef ZIGBEE_VERBOSE
-  zcl_received.publishMQTTReceived(groupid, clusterid, srcaddr,
-                                  srcendpoint, dstendpoint, wasbroadcast,
-                                  linkquality, securityuse, seqnumber,
-                                  timestamp);
-#endif
-
+  ZCLFrame zcl_received = ZCLFrame::parseRawFrame(buf, 19, buf.get8(18), clusterid, groupid,
+                              srcaddr,
+                              srcendpoint, dstendpoint, wasbroadcast,
+                              linkquality, securityuse, seqnumber,
+                              timestamp);
+  zcl_received.log();
   char shortaddr[8];
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
 
@@ -398,7 +395,7 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   String msg("");
   msg.reserve(100);
   json_root.printTo(msg);
-  AddLog_P2(LOG_LEVEL_INFO, PSTR("ZigbeeZCLRawReceived: %s"), msg.c_str());
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZigbeeZCLRawReceived: %s"), msg.c_str());
 
   zcl_received.postProcessAttributes(srcaddr, json);
   // Add linkquality
