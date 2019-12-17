@@ -44,46 +44,46 @@ The serial pins are GPX_RX and GPS_TX, no further installation steps needed. To 
   
 ## Commands:  
   
-+ sensor92 0  
++ sensor58 0  
   write to all available sectors, then restart and overwrite the older ones
   
-+ sensor92 1  
++ sensor58 1  
   write to all available sectors, then restart and overwrite the older ones
   
-+ sensor92 2  
++ sensor58 2  
   filter out horizontal drift noise
   
-+ sensor92 3  
++ sensor58 3  
   turn off noise filter
   
-+ sensor92 4  
++ sensor58 4  
   start recording, new data will be appended
   
-+ sensor92 5  
++ sensor58 5  
   start new recording, old data will lost
   
-+ sensor92 6  
++ sensor58 6  
   stop recording, download link will be visible in Web-UI
   
-+ sensor92 7  
++ sensor58 7  
   send mqtt on new postion + TELE -> consider to set TELE to a very high value
   
-+ sensor92 8  
++ sensor58 8  
   only TELE message
   
-+ sensor92 9  
++ sensor58 9  
   start NTP-server
   
-+ sensor92 10  
++ sensor58 10  
   deactivate NTP-server
   
-+ sensor92 11  
++ sensor58 11  
   force update of Tasmota-system-UTC with every new GPS-time-message
   
-+ sensor92 12  
++ sensor58 12  
   do not update of Tasmota-system-UTC with every new GPS-time-message
   
-+ sensor92 13  
++ sensor58 13  
   set latitude and longitude in settings  
   
   
@@ -91,7 +91,7 @@ The serial pins are GPX_RX and GPS_TX, no further installation steps needed. To 
 ## Rules examples for SSD1306 32x128  
   
   
-rule1 on tele-GPS#lat do DisplayText [s1p21c1l01f1]LAT: %value% endon on tele-GPS#lon do DisplayText [s1p21c1l2]LON: %value% endon on switch1#state==3 do sensor92 4 endon on switch1#state==2 do sensor92 6 endon
+rule1 on tele-GPS#lat do DisplayText [s1p21c1l01f1]LAT: %value% endon on tele-GPS#lon do DisplayText [s1p21c1l2]LON: %value% endon on switch1#state==3 do sensor58 4 endon on switch1#state==2 do sensor58 6 endon
 
 rule2  on tele-GPS#int>9 do DisplayText [f0c9l4]I%value%  endon  on tele-GPS#int<10 do DisplayText [f0c9l4]I0%value%  endon on tele-GPS#fil==1 do DisplayText [f0c18l4]F endon on tele-GPS#fil==0 do DisplayText [f0c18l4]N endon
 
@@ -715,7 +715,7 @@ counter++;
   const char kGPSFix5[] PROGMEM = "Time only fix";
   const char * kGPSFix[] PROGMEM ={kGPSFix0, kGPSFix1, kGPSFix2, kGPSFix3, kGPSFix4, kGPSFix5};
 
-//   const char UBX_GOOGLE_MAPS[] ="<iframe width='100%%' src='https://maps.google.com/maps?width=&amp;height=&amp;hl=en&amp;q=%s %s+(Tasmota)&amp;ie=UTF8&amp;t=&amp;z=10&amp;iwloc=B&amp;output=embed' frameborder='0' scrolling='no' marginheight='0' marginwidth='0'></iframe>";
+//  const char UBX_GOOGLE_MAPS[] ="<iframe width='100%%' src='https://maps.google.com/maps?width=&amp;height=&amp;hl=en&amp;q=%s %s+(Tasmota)&amp;ie=UTF8&amp;t=&amp;z=10&amp;iwloc=B&amp;output=embed' frameborder='0' scrolling='no' marginheight='0' marginwidth='0'></iframe>";
                                 
 
 #endif  // USE_WEBSERVER
@@ -735,7 +735,8 @@ void UBXShow(bool json)
     dtostrfd((double)UBX.state.last_vAcc/1000.0f,3,hAcc);
     dtostrfd((double)UBX.state.last_hAcc/1000.0f,3,vAcc);
 
-  if (json) {
+  if (json) 
+  {
     ResponseAppend_P(PSTR(",\"GPS\":{"));
     if(UBX.mode.send_UI_only){
       uint32_t i = UBX.state.log_interval / 10;
@@ -748,9 +749,9 @@ void UBXShow(bool json)
 #endif //USE_FLOG
     UBX.mode.send_UI_only = false;
 #ifdef USE_WEBSERVER
-    } else {
+  } else {
       WSContentSend_PD(HTTP_SNS_GPS, lat, lon, height, hAcc, vAcc, kGPSFix[UBX.state.gpsFix]);
-      // WSContentSend_PD(UBX_GOOGLE_MAPS, lat, lon);
+      //WSContentSend_P(UBX_GOOGLE_MAPS, lat, lon);
 #ifdef DEBUG_TASMOTA_SENSOR
 #ifdef USE_FLOG
     WSContentSend_PD(HTTP_SNS_FLOGVER, Flog->num_sectors, Flog->size, Flog->current_sector, Flog->sectors_left, Flog->sector.header.physical_start_sector);
@@ -771,7 +772,7 @@ void UBXShow(bool json)
       WSContentSend_P(HTTP_SNS_NTPSERVER);
     }
 #endif  // USE_WEBSERVER
-      }
+  }
 }
 
 
