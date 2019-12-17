@@ -135,6 +135,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_SGP30                                // Add I2C code for SGP30 sensor (+1k1 code)
 //#define USE_SI1145                               // Add I2C code for SI1145/46/47 sensor (+1k code)
 #define USE_LM75AD                               // Add I2C code for LM75AD sensor (+0k5 code)
+#define USE_DHT12                                // Add I2C code for DHT12 temperature and humidity sensor (+0kx code)
 //#define USE_APDS9960                             // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
 //#define USE_MCP230xx                             // Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
 //  #define USE_MCP230xx_ADDR 0x20                 // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x27 - set according to your wired setup)
