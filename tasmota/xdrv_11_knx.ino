@@ -499,6 +499,7 @@ void KNX_INIT(void)
   if (GetUsedInModule(GPIO_DHT22, my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
   if (GetUsedInModule(GPIO_SI7021, my_module.io)) { device_param[KNX_HUMIDITY-1].show = true; }
 
+#if defined(USE_ENERGY_SENSOR)
   // Any device with a Power Monitoring
   if ( energy_flg != ENERGY_NONE ) {
     device_param[KNX_ENERGY_POWER-1].show = true;
@@ -509,6 +510,7 @@ void KNX_INIT(void)
     device_param[KNX_ENERGY_CURRENT-1].show = true;
     device_param[KNX_ENERGY_POWERFACTOR-1].show = true;
   }
+#endif
 
 #ifdef USE_RULES
   device_param[KNX_SLOT1-1].show = true;
