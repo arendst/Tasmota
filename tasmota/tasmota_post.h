@@ -390,17 +390,17 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif  // FIRMWARE_IR
 
 /*********************************************************************************************\
- * [tasmota-basic.bin]
+ * [tasmota-lite.bin]
  * Provide an image without sensors
 \*********************************************************************************************/
 
-#ifdef FIRMWARE_BASIC
+#ifdef FIRMWARE_LITE
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 4
 
 #undef APP_SLEEP
-#define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_BASIC
+#define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_LITE
 
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #undef USE_DOMOTICZ                              // Disable Domoticz
@@ -502,7 +502,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef CODE_IMAGE
 #define CODE_IMAGE 1
 
-#undef FIRMWARE_BASIC                           // Disable tasmota-basic with no sensors
+#undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
 #undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
 #undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
