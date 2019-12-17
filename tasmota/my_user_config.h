@@ -572,6 +572,7 @@
 
 //#define FIRMWARE_LITE                            // Create tasmota-lite with no sensors
 //#define FIRMWARE_SENSORS                         // Create tasmota-sensors with useful sensors enabled
+//#define FIRMWARE_SHUTTER                         // Create tasmota-shutter with shutter function enabled
 //#define FIRMWARE_KNX_NO_EMULATION                // Create tasmota-knx with KNX but without Emulation
 //#define FIRMWARE_DISPLAYS                        // Create tasmota-display with display drivers enabled
 //#define FIRMWARE_IR                              // Create tasmota-ir with IR full protocols activated, and many sensors disabled

@@ -15,6 +15,7 @@ env:
   - ENV=tasmota-lite
   - ENV=tasmota-knx
   - ENV=tasmota-sensors
+  - ENV=tasmota-shutter
   - ENV=tasmota-display
   - ENV=tasmota-ir
   - ENV=tasmota-BG

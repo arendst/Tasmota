@@ -215,6 +215,17 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif  // FIRMWARE_SENSORS
 
 /*********************************************************************************************\
+ * [tasmota-shutter.bin]
+ * Provide an image with shutter function enabled
+\*********************************************************************************************/
+
+#ifdef FIRMWARE_SHUTTER
+
+#define USE_SHUTTER                               // Enable Shutter support for up to 4 shutter with different motortypes (+6k code)
+
+#endif  // FIRMWARE_SHUTTER
+
+/*********************************************************************************************\
  * [tasmota-knx.bin]
  * Provide a dedicated KNX image allowing enough code and memory space
 \*********************************************************************************************/
