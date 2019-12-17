@@ -1,5 +1,5 @@
 /*
-  xsns_92_GPS_UBX.ino - GPS UBLOX support for Sonoff-Tasmota
+  xsns_58_GPS_UBX.ino - GPS UBLOX support for Sonoff-Tasmota
 
   Copyright (C) 2019  Theo Arends, Christian Baars and Adrian Scillato
 
