@@ -34,7 +34,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 - **tasmota.bin** = The Tasmota version with sensors. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
-- **tasmota-basic.bin** = The Basic version without most sensors.
+- **tasmota-lite.bin** = The Lite version without most sensors.
 - **tasmota-knx.bin** = The Knx version without some features but adds KNX support.
 - **tasmota-sensors.bin** = The Sensors version adds more useful sensors.
 - **tasmota-ir** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features.
