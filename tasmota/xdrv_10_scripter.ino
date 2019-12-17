@@ -1030,8 +1030,10 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
             if ((*jo).is<char*>(vn)) {
               if (!strncmp(str_value,"ON",2)) {
                 if (fp) *fp=1;
+                goto nexit;
               } else if (!strncmp(str_value,"OFF",3)) {
                 if (fp) *fp=0;
+                goto nexit;
               } else {
                 *vtype=STR_RES;
                 tind->bits.constant=1;
@@ -1039,6 +1041,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
                 if (sp) strlcpy(sp,str_value,SCRIPT_MAXSSIZE);
                 return lp+len;
               }
+              
             } else {
               if (fp) {
                 if (!strncmp(vn.c_str(),"Epoch",5)) {
@@ -1047,6 +1050,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
                   *fp=CharToFloat((char*)str_value);
                 }
               }
+              nexit:
               *vtype=NUM_RES;
               tind->bits.constant=1;
               tind->bits.is_string=0;
@@ -1366,7 +1370,7 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname,"gtopic",6)) {
-          if (sp) strlcpy(sp,Settings.mqtt_grptopic,glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTT_GRP_TOPIC),glob_script_mem.max_ssize);
           goto strexit;
         }
         break;
@@ -1523,15 +1527,15 @@ chknext:
           goto exit;
         }
         if (!strncmp(vname,"prefix1",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[0],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX1),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"prefix2",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[1],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX2),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"prefix3",7)) {
-          if (sp) strlcpy(sp,Settings.mqtt_prefix[2],glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTTPREFIX3),glob_script_mem.max_ssize);
           goto strexit;
         }
         if (!strncmp(vname,"pow(",4)) {
@@ -1740,7 +1744,7 @@ chknext:
           goto strexit;
         }
         if (!strncmp(vname,"topic",5)) {
-          if (sp) strlcpy(sp,Settings.mqtt_topic,glob_script_mem.max_ssize);
+          if (sp) strlcpy(sp,SettingsText(SET_MQTT_TOPIC),glob_script_mem.max_ssize);
           goto strexit;
         }
 #ifdef USE_DISPLAY
@@ -4843,6 +4847,12 @@ bool Xdrv10(uint8_t function)
       result = ScriptCommand();
       break;
     case FUNC_SET_POWER:
+#ifdef SCRIPT_POWER_SECTION
+      if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">P",2,0);
+#else
+      if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E",2,0);
+#endif
+      break;
     case FUNC_RULES_PROCESS:
       if (bitRead(Settings.rule_enabled, 0)) Run_Scripter(">E",2,mqtt_data);
       break;

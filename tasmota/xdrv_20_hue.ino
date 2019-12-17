@@ -365,17 +365,18 @@ void HueLightStatus1(uint8_t device, String *response)
 // Any device whose friendly name start with "$" is considered hidden
 bool HueActive(uint8_t device) {
   if (device > MAX_FRIENDLYNAMES) { device = MAX_FRIENDLYNAMES; }
-  return '$' != Settings.friendlyname[device-1][0];
+//  return '$' != Settings.friendlyname[device-1][0];
+  return '$' != *SettingsText(SET_FRIENDLYNAME1 +device -1);
 }
 
 void HueLightStatus2(uint8_t device, String *response)
 {
   *response += FPSTR(HUE_LIGHTS_STATUS_JSON2);
   if (device <= MAX_FRIENDLYNAMES) {
-    response->replace("{j1", Settings.friendlyname[device-1]);
+    response->replace("{j1", SettingsText(SET_FRIENDLYNAME1 +device -1));
   } else {
     char fname[33];
-    strcpy(fname, Settings.friendlyname[MAX_FRIENDLYNAMES-1]);
+    strcpy(fname, SettingsText(SET_FRIENDLYNAME1 + MAX_FRIENDLYNAMES -1));
     uint32_t fname_len = strlen(fname);
     if (fname_len > 30) { fname_len = 30; }
     fname[fname_len++] = '-';

@@ -499,7 +499,10 @@ const uint8_t meter[]=
 #define USE_SML_MEDIAN_FILTER
 
 // max number of vars , may be adjusted
+#ifndef MAX_VARS
 #define MAX_VARS 20
+#endif
+
 // max number of meters , may be adjusted
 #define MAX_METERS 5
 double meter_vars[MAX_VARS];
@@ -1427,14 +1430,25 @@ void SML_Decode(uint8_t index) {
               //ignore
               mp+=2;
               cp++;
-            } else if (!strncmp(mp,"uuuuuuuu",8)) {
+            } else if (!strncmp(mp,"UUuuUUuu",8)) {
               uint32_t val= (cp[0]<<24)|(cp[1]<<16)|(cp[2]<<8)|(cp[3]<<0);
               ebus_dval=val;
               mbus_dval=val;
               mp+=8;
               cp+=4;
-            }
-            else if (*mp=='u' && *(mp+1)=='u' && *(mp+2)=='u' && *(mp+3)=='u'){
+            } else if (*mp=='U' && *(mp+1)=='U' && *(mp+2)=='u' && *(mp+3)=='u'){
+              uint16_t val = cp[1]|(cp[0]<<8);
+              mbus_dval=val;
+              ebus_dval=val;
+              mp+=4;
+              cp+=2;
+            } else if (!strncmp(mp,"SSssSSss",8)) {
+              int32_t val= (cp[0]<<24)|(cp[1]<<16)|(cp[2]<<8)|(cp[3]<<0);
+              ebus_dval=val;
+              mbus_dval=val;
+              mp+=8;
+              cp+=4;
+            } else if (*mp=='u' && *(mp+1)=='u' && *(mp+2)=='U' && *(mp+3)=='U'){
               uint16_t val = cp[0]|(cp[1]<<8);
               mbus_dval=val;
               ebus_dval=val;
@@ -1442,17 +1456,25 @@ void SML_Decode(uint8_t index) {
               cp+=2;
             } else if (*mp=='u' && *(mp+1)=='u') {
               uint8_t val = *cp++;
+              mbus_dval=val;
               ebus_dval=val;
               mp+=2;
-            }
-            else if (*mp=='s' && *(mp+1)=='s' && *(mp+2)=='s' && *(mp+3)=='s') {
+            } else if (*mp=='s' && *(mp+1)=='s' && *(mp+2)=='S' && *(mp+3)=='S') {
               int16_t val = *cp|(*(cp+1)<<8);
+              mbus_dval=val;
+              ebus_dval=val;
+              mp+=4;
+              cp+=2;
+            } else if (*mp=='S' && *(mp+1)=='S' && *(mp+2)=='s' && *(mp+3)=='s') {
+              int16_t val = cp[1]|(cp[0]<<8);
+              mbus_dval=val;
               ebus_dval=val;
               mp+=4;
               cp+=2;
             }
             else if (*mp=='s' && *(mp+1)=='s') {
               int8_t val = *cp++;
+              mbus_dval=val;
               ebus_dval=val;
               mp+=2;
             }

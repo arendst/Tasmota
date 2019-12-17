@@ -191,18 +191,20 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   case 2:  // Toggle
     Settings.sta_active ^= 1;
   }        // 3: Current AP
-  if ('\0' == Settings.sta_ssid[Settings.sta_active][0]) { Settings.sta_active ^= 1; }  // Skip empty SSID
+  if ('\0' == SettingsText(SET_STASSID1 + Settings.sta_active)) {
+    Settings.sta_active ^= 1;  // Skip empty SSID
+  }
   if (Settings.ip_address[0]) {
     WiFi.config(Settings.ip_address[0], Settings.ip_address[1], Settings.ip_address[2], Settings.ip_address[3]);  // Set static IP
   }
   WiFi.hostname(my_hostname);
   if (channel) {
-    WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active], channel, Wifi.bssid);
+    WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active), channel, Wifi.bssid);
   } else {
-    WiFi.begin(Settings.sta_ssid[Settings.sta_active], Settings.sta_pwd[Settings.sta_active]);
+    WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active));
   }
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
-    Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
+    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
 
 #if LWIP_IPV6
   for (bool configured = false; !configured;) {
@@ -278,10 +280,10 @@ void WifiBeginAfterScan(void)
         bool known = false;
         uint32_t j;
         for (j = 0; j < 2; j++) {
-          if (ssid_scan == Settings.sta_ssid[j]) {  // SSID match
+          if (ssid_scan == SettingsText(SET_STASSID1 + j)) {  // SSID match
             known = true;
             if (rssi_scan > best_network_db) {      // Best network
-              if (sec_scan == ENC_TYPE_NONE || Settings.sta_pwd[j]) {  // Check for passphrase if not open wlan
+              if (sec_scan == ENC_TYPE_NONE || SettingsText(SET_STAPWD1 + j)) {  // Check for passphrase if not open wlan
                 best_network_db = (int8_t)rssi_scan;
                 channel = chan_scan;
                 ap = j;                             // AP1 or AP2
@@ -350,6 +352,14 @@ bool WifiCheckIPv6(void)
     if(!a.isLocal() && a.isV6()) ipv6_global=true;
   }
   return ipv6_global;
+}
+
+String WifiGetIPv6(void)
+{
+  for (auto a : addrList) {
+    if(!a.isLocal() && a.isV6()) return a.toString();
+  }
+  return "";
 }
 
 bool WifiCheckIPAddrStatus(void)	// Return false for 169.254.x.x or fe80::/64
@@ -426,7 +436,7 @@ void WifiCheckIp(void)
         if (!Wifi.retry || ((Wifi.retry_init / 2) == Wifi.retry)) {
           AddLog_P(LOG_LEVEL_INFO, S_LOG_WIFI, PSTR(D_CONNECT_FAILED_AP_TIMEOUT));
         } else {
-          if (('\0' == Settings.sta_ssid[0][0]) && ('\0' == Settings.sta_ssid[1][0])) {
+          if (('\0' == SettingsText(SET_STASSID1)) && ('\0' == SettingsText(SET_STASSID2))) {
             wifi_config_tool = WIFI_MANAGER;  // Skip empty SSIDs and start Wifi config tool
             Wifi.retry = 0;
           } else {
@@ -472,13 +482,13 @@ void WifiCheck(uint8_t param)
       if (Wifi.config_counter) {
         if (!Wifi.config_counter) {
           if (strlen(WiFi.SSID().c_str())) {
-            strlcpy(Settings.sta_ssid[0], WiFi.SSID().c_str(), sizeof(Settings.sta_ssid[0]));
+            SettingsUpdateText(SET_STASSID1, WiFi.SSID().c_str());
           }
           if (strlen(WiFi.psk().c_str())) {
-            strlcpy(Settings.sta_pwd[0], WiFi.psk().c_str(), sizeof(Settings.sta_pwd[0]));
+            SettingsUpdateText(SET_STAPWD1, WiFi.psk().c_str());
           }
           Settings.sta_active = 0;
-          AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER D_CMND_SSID "1 %s"), Settings.sta_ssid[0]);
+          AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_WCFG_2_WIFIMANAGER D_CMND_SSID "1 %s"), SettingsText(SET_STASSID1));
         }
       }
       if (!Wifi.config_counter) {
@@ -617,6 +627,7 @@ void WifiShutdown(void)
 void EspRestart(void)
 {
   WifiShutdown();
+  CrashDumpClear();           // Clear the stack dump in RTC
 //  ESP.restart();            // This results in exception 3 on restarts on core 2.3.0
   ESP.reset();
 }

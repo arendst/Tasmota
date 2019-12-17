@@ -60,15 +60,16 @@ char* Format(char* output, const char* input, int size)
 
 char* GetOtaUrl(char *otaurl, size_t otaurl_size)
 {
-  if (strstr(Settings.ota_url, "%04d") != nullptr) {     // OTA url contains placeholder for chip ID
-    snprintf(otaurl, otaurl_size, Settings.ota_url, ESP.getChipId() & 0x1fff);
+  if (strstr(SettingsText(SET_OTAURL), "%04d") != nullptr) {     // OTA url contains placeholder for chip ID
+    snprintf(otaurl, otaurl_size, SettingsText(SET_OTAURL), ESP.getChipId() & 0x1fff);
   }
-  else if (strstr(Settings.ota_url, "%d") != nullptr) {  // OTA url contains placeholder for chip ID
-    snprintf_P(otaurl, otaurl_size, Settings.ota_url, ESP.getChipId());
+  else if (strstr(SettingsText(SET_OTAURL), "%d") != nullptr) {  // OTA url contains placeholder for chip ID
+    snprintf_P(otaurl, otaurl_size, SettingsText(SET_OTAURL), ESP.getChipId());
   }
   else {
-    strlcpy(otaurl, Settings.ota_url, otaurl_size);
+    strlcpy(otaurl, SettingsText(SET_OTAURL), otaurl_size);
   }
+
   return otaurl;
 }
 
@@ -101,17 +102,19 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
       fulltopic += topic;                     // cmnd/<grouptopic>
     }
   } else {
-    fulltopic = Settings.mqtt_fulltopic;
+    fulltopic = SettingsText(SET_MQTT_FULLTOPIC);
     if ((0 == prefix) && (-1 == fulltopic.indexOf(FPSTR(MQTT_TOKEN_PREFIX)))) {
       fulltopic += F("/");
       fulltopic += FPSTR(MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
     }
     for (uint32_t i = 0; i < 3; i++) {
-      if ('\0' == Settings.mqtt_prefix[i][0]) {
-        GetTextIndexed(Settings.mqtt_prefix[i], sizeof(Settings.mqtt_prefix[i]), i, kPrefixes);
+      if ('\0' == SettingsText(SET_MQTTPREFIX1 + i)) {
+        char temp[TOPSZ];
+        SettingsUpdateText(SET_MQTTPREFIX1 + i, GetTextIndexed(temp, sizeof(temp), i, kPrefixes));
       }
     }
-    fulltopic.replace(FPSTR(MQTT_TOKEN_PREFIX), Settings.mqtt_prefix[prefix]);
+    fulltopic.replace(FPSTR(MQTT_TOKEN_PREFIX), SettingsText(SET_MQTTPREFIX1 + prefix));
+
     fulltopic.replace(FPSTR(MQTT_TOKEN_TOPIC), topic);
     fulltopic.replace(F("%hostname%"), my_hostname);
     String token_id = WiFi.macAddress();
@@ -131,7 +134,7 @@ char* GetGroupTopic_P(char *stopic, const char* subtopic)
 {
   // SetOption75 0: %prefix%/nothing/%topic% = cmnd/nothing/<grouptopic>/#
   // SetOption75 1: cmnd/<grouptopic>
-  return GetTopic_P(stopic, (Settings.flag3.grouptopic_mode) ? CMND +8 : CMND, Settings.mqtt_grptopic, subtopic);  // SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
+  return GetTopic_P(stopic, (Settings.flag3.grouptopic_mode) ? CMND +8 : CMND, SettingsText(SET_MQTT_GRP_TOPIC), subtopic);  // SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
 }
 
 char* GetFallbackTopic_P(char *stopic, const char* subtopic)
@@ -144,7 +147,7 @@ char* GetStateText(uint32_t state)
   if (state > 3) {
     state = 1;
   }
-  return Settings.state_text[state];
+  return SettingsText(SET_STATE_TXT1 + state);
 }
 
 /********************************************************************************************/
@@ -358,10 +361,10 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
 
   char stopic[TOPSZ];
   char scommand[CMDSZ];
-  char key_topic[sizeof(Settings.button_topic)];
+  char key_topic[TOPSZ];
   bool result = false;
 
-  char *tmp = (key) ? Settings.switch_topic : Settings.button_topic;
+  char *tmp = (key) ? SettingsText(SET_MQTT_SWITCH_TOPIC) : SettingsText(SET_MQTT_BUTTON_TOPIC);
   Format(key_topic, tmp, sizeof(key_topic));
   if (Settings.flag.mqtt_enabled && MqttIsConnected() && (strlen(key_topic) != 0) && strcmp(key_topic, "0")) {  // SetOption3 - Enable MQTT
     if (!key && (device > devices_present)) {
@@ -374,7 +377,7 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
     } else {
       if ((Settings.flag3.button_switch_force_local ||      // SetOption61 - Force local operation when button/switch topic is set
            !strcmp(mqtt_topic, key_topic) ||
-           !strcmp(Settings.mqtt_grptopic, key_topic)) &&
+           !strcmp(SettingsText(SET_MQTT_GRP_TOPIC), key_topic)) &&
           (POWER_TOGGLE == state)) {
         state = ~(power >> (device -1)) &1;                 // POWER_OFF or POWER_ON
       }
@@ -583,8 +586,9 @@ void MqttShowState(void)
     MqttShowPWMState();
   }
 
-  ResponseAppend_P(PSTR(",\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d,\"" D_JSON_LINK_COUNT "\":%d,\"" D_JSON_DOWNTIME "\":\"%s\"}}"),
-    Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WiFi.BSSIDstr().c_str(), WiFi.channel(), WifiGetRssiAsQuality(WiFi.RSSI()), WifiLinkCount(), WifiDowntime().c_str());
+  ResponseAppend_P(PSTR(",\"" D_JSON_WIFI "\":{\"" D_JSON_AP "\":%d,\"" D_JSON_SSID "\":\"%s\",\"" D_JSON_BSSID "\":\"%s\",\"" D_JSON_CHANNEL "\":%d,\"" D_JSON_RSSI "\":%d,\"" D_JSON_SIGNAL "\":%d,\"" D_JSON_LINK_COUNT "\":%d,\"" D_JSON_DOWNTIME "\":\"%s\"}}"),
+    Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WiFi.BSSIDstr().c_str(), WiFi.channel(),
+    WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI(), WifiLinkCount(), WifiDowntime().c_str());
 }
 
 void MqttPublishTeleState(void)
@@ -592,7 +596,7 @@ void MqttPublishTeleState(void)
   mqtt_data[0] = '\0';
   MqttShowState();
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_STATE), MQTT_TELE_RETAIN);
-#ifdef USE_SCRIPT
+#if defined(USE_RULES) || defined(USE_SCRIPT)
   RulesTeleperiod();  // Allow rule based HA messages
 #endif  // USE_SCRIPT
 }
@@ -812,7 +816,6 @@ void Every250mSeconds(void)
     if (ota_state_flag && BACKLOG_EMPTY) {
       ota_state_flag--;
       if (2 == ota_state_flag) {
-        ota_url = Settings.ota_url;
         RtcSettings.ota_loader = 0;  // Try requested image first
         ota_retry_counter = OTA_ATTEMPTS;
         ESPhttpUpdate.rebootOnUpdate(false);
@@ -838,7 +841,7 @@ void Every250mSeconds(void)
             if (!pch) { pch = ech; }
             if (pch) {
               mqtt_data[pch - mqtt_data] = '\0';
-              char *ech = strrchr(Settings.ota_url, '.');  // Change from filename.bin into filename-minimal.bin
+              char *ech = strrchr(SettingsText(SET_OTAURL), '.');  // Change from filename.bin into filename-minimal.bin
               snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ech);  // Minimal filename must be filename-minimal
             }
           }
@@ -902,26 +905,45 @@ void Every250mSeconds(void)
     }
     if (restart_flag && BACKLOG_EMPTY) {
       if ((214 == restart_flag) || (215 == restart_flag) || (216 == restart_flag)) {
-        char storage_wifi[sizeof(Settings.sta_ssid) +
-                          sizeof(Settings.sta_pwd)];
-        char storage_mqtt[sizeof(Settings.mqtt_host) +
-                          sizeof(Settings.mqtt_port) +
-                          sizeof(Settings.mqtt_client) +
-                          sizeof(Settings.mqtt_user) +
-                          sizeof(Settings.mqtt_pwd) +
-                          sizeof(Settings.mqtt_topic)];
-        memcpy(storage_wifi, Settings.sta_ssid, sizeof(storage_wifi));     // Backup current SSIDs and Passwords
-        if (216 == restart_flag) {
-          memcpy(storage_mqtt, Settings.mqtt_host, sizeof(storage_mqtt));  // Backup mqtt host, port, client, username and password
-        }
+        // Backup current SSIDs and Passwords
+        char storage_ssid1[strlen(SettingsText(SET_STASSID1)) +1];
+        strncpy(storage_ssid1, SettingsText(SET_STASSID1), sizeof(storage_ssid1));
+        char storage_ssid2[strlen(SettingsText(SET_STASSID2)) +1];
+        strncpy(storage_ssid2, SettingsText(SET_STASSID2), sizeof(storage_ssid2));
+        char storage_pass1[strlen(SettingsText(SET_STAPWD1)) +1];
+        strncpy(storage_pass1, SettingsText(SET_STAPWD1), sizeof(storage_pass1));
+        char storage_pass2[strlen(SettingsText(SET_STAPWD2)) +1];
+        strncpy(storage_pass2, SettingsText(SET_STAPWD2), sizeof(storage_pass2));
+
+        char storage_mqtthost[strlen(SettingsText(SET_MQTT_HOST)) +1];
+        strncpy(storage_mqtthost, SettingsText(SET_MQTT_HOST), sizeof(storage_mqtthost));
+        char storage_mqttuser[strlen(SettingsText(SET_MQTT_USER)) +1];
+        strncpy(storage_mqttuser, SettingsText(SET_MQTT_USER), sizeof(storage_mqttuser));
+        char storage_mqttpwd[strlen(SettingsText(SET_MQTT_PWD)) +1];
+        strncpy(storage_mqttpwd, SettingsText(SET_MQTT_PWD), sizeof(storage_mqttpwd));
+        char storage_mqtttopic[strlen(SettingsText(SET_MQTT_TOPIC)) +1];
+        strncpy(storage_mqtttopic, SettingsText(SET_MQTT_TOPIC), sizeof(storage_mqtttopic));
+        uint16_t mqtt_port = Settings.mqtt_port;
+
+//        if (216 == restart_flag) {
+          // Backup mqtt host, port, client, username and password
+//        }
         if ((215 == restart_flag) || (216 == restart_flag)) {
           SettingsErase(0);  // Erase all flash from program end to end of physical flash
         }
         SettingsDefault();
-        memcpy(Settings.sta_ssid, storage_wifi, sizeof(storage_wifi));     // Restore current SSIDs and Passwords
+        // Restore current SSIDs and Passwords
+        SettingsUpdateText(SET_STASSID1, storage_ssid1);
+        SettingsUpdateText(SET_STASSID2, storage_ssid2);
+        SettingsUpdateText(SET_STAPWD1, storage_pass1);
+        SettingsUpdateText(SET_STAPWD2, storage_pass2);
         if (216 == restart_flag) {
-          memcpy(Settings.mqtt_host, storage_mqtt, sizeof(storage_mqtt));  // Restore the mqtt host, port, client, username and password
-          strlcpy(Settings.mqtt_client, MQTT_CLIENT_ID, sizeof(Settings.mqtt_client));  // Set client to default
+          // Restore the mqtt host, port, client, username and password
+          SettingsUpdateText(SET_MQTT_HOST, storage_mqtthost);
+          SettingsUpdateText(SET_MQTT_USER, storage_mqttuser);
+          SettingsUpdateText(SET_MQTT_PWD, storage_mqttpwd);
+          SettingsUpdateText(SET_MQTT_TOPIC, storage_mqtttopic);
+          Settings.mqtt_port = mqtt_port;
         }
         restart_flag = 2;
       }
@@ -972,7 +994,7 @@ void ArduinoOTAInit(void)
 {
   ArduinoOTA.setPort(8266);
   ArduinoOTA.setHostname(my_hostname);
-  if (Settings.web_password[0] !=0) { ArduinoOTA.setPassword(Settings.web_password); }
+  if (strlen(SettingsText(SET_WEBPWD))) { ArduinoOTA.setPassword(SettingsText(SET_WEBPWD)); }
 
   ArduinoOTA.onStart([]()
   {
@@ -1285,15 +1307,19 @@ void GpioInit(void)
   }
 #endif  // USE_SONOFF_SC
 
-  if (!light_type) {
-    for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
-      if (pin[GPIO_PWM1 +i] < 99) {
+  for (uint32_t i = 0; i < MAX_PWMS; i++) {     // Basic PWM control only
+    if (pin[GPIO_PWM1 +i] < 99) {
+      pinMode(pin[GPIO_PWM1 +i], OUTPUT);
+      if (light_type) {
+        // force PWM GPIOs to low or high mode, see #7165
+        analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range : 0);
+      } else {
         pwm_present = true;
-        pinMode(pin[GPIO_PWM1 +i], OUTPUT);
         analogWrite(pin[GPIO_PWM1 +i], bitRead(pwm_inverted, i) ? Settings.pwm_range - Settings.pwm_value[i] : Settings.pwm_value[i]);
       }
     }
   }
+
   for (uint32_t i = 0; i < MAX_RELAYS; i++) {
     if (pin[GPIO_REL1 +i] < 99) {
       pinMode(pin[GPIO_REL1 +i], OUTPUT);

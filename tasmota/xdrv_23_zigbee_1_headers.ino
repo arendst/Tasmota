@@ -1,7 +1,7 @@
 /*
-  tasmota_version.h - Version header file for Tasmota
+  xdrv_23_zigbee_1_headers.ino - zigbee support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2019  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -17,9 +17,10 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _TASMOTA_VERSION_H_
-#define _TASMOTA_VERSION_H_
+#ifdef USE_ZIGBEE
 
-const uint32_t VERSION = 0x07020000;
+// contains some definitions for functions used before their declarations
 
-#endif  // _TASMOTA_VERSION_H_
+void ZigbeeZCLSend(uint16_t dtsAddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool disableDefResp = true, uint8_t transacId = 1);
+
+#endif // USE_ZIGBEE
