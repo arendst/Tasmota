@@ -5,7 +5,7 @@
 - Change some more Settings locations freeing up space for future single char allowing variable length text
 - Add Zigbee send automatic ZigbeeRead after sending a command
 - Add Zigbee improving Occupancy:false detection for Aqara sensor
-- Add fallback functionality from next version 7.1.2.7
+- Add fallback functionality from next version 8.x
 
 ### 7.1.2.5 20191213
 

@@ -471,7 +471,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me)
   char replace[replace_len +1];
   memcpy(replace, replace_me, sizeof(replace));
 
-  if (Settings.version < 0x07010207) {
+  if (Settings.version < 0x08000000) {
     uint32_t idx = 0;
     switch (index) {
       case SET_OTAURL:            strlcpy(Settings.ota_url, replace, sizeof(Settings.ota_url)); break;
@@ -575,7 +575,7 @@ char* SettingsText(uint32_t index)
 
   char* position = Settings.ota_url;
 
-  if (Settings.version < 0x07010207) {
+  if (Settings.version < 0x08000000) {
     uint32_t idx = 0;
     switch (index) {
       case SET_MQTTPREFIX3:       idx++;
@@ -1387,7 +1387,7 @@ void SettingsDelta(void)
       memcpy((char*)&Settings.serial_config, (char*)&Settings.ex_serial_config, 5);  // 1E4 -> EFE
     }
 
-    if ((VERSION < 0x7010207) && (Settings.version > VERSION)) {
+    if ((VERSION < 0x08000000) && (Settings.version > VERSION)) {
       char temp[strlen(SettingsText(SET_OTAURL)) +1];        strncpy(temp, SettingsText(SET_OTAURL), sizeof(temp));
       char temp21[strlen(SettingsText(SET_MQTTPREFIX1)) +1]; strncpy(temp21, SettingsText(SET_MQTTPREFIX1), sizeof(temp21));
       char temp22[strlen(SettingsText(SET_MQTTPREFIX2)) +1]; strncpy(temp22, SettingsText(SET_MQTTPREFIX2), sizeof(temp22));
