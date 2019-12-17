@@ -20,7 +20,7 @@
   Version Date      Action    Description
   --------------------------------------------------------------------------------------------
 
-  0.9.1.0 20191216  integrate - Added pin specifications from Tasmota WEB UI
+  0.9.1.0 20191216  integrate - Added pin specifications from Tasmota WEB UI. Minor tweaks.
   ---
   0.9.0.0 20190817  started   - further development by Christian Baars  - https://github.com/Staars/Sonoff-Tasmota
                     forked    - from arendst/tasmota                    - https://github.com/arendst/Sonoff-Tasmota
@@ -299,17 +299,6 @@ void UBXinitCFG(void){
     UBXSerial->write( pgm_read_byte(UBLOX_INIT+i) );
   }
   DEBUG_SENSOR_LOG(PSTR("UBX: turn off NMEA"));
-
-/*
- AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_KNX D_ADD " GA #%d: %s " D_TO " %d/%d/%d"),
-   Settings.knx_GA_registered,
-   device_param_ga[GAop-1],
-   GA_FNUM, GA_AREA, GA_FDEF );
-*/
-
-
-
-
 }
 
 void UBXTriggerTele(void){
@@ -435,11 +424,10 @@ uint32_t UBXprocessGPS() {
     }
   }
   // DEBUG_SENSOR_LOG(PSTR("UBX: got none or unknown Message"));
-  if(data_bytes!=0){
+  if(data_bytes!=0) {
       UBX.state.non_empty_loops++;
       DEBUG_SENSOR_LOG(PSTR("UBX: got %u bytes, non-empty-loop: %u"), data_bytes, UBX.state.non_empty_loops); 
-  }
-  else{
+  } else {
       UBX.state.non_empty_loops = 0; // now a hidden GPS-device reset is unlikely
   }
   return MT_NONE;
@@ -449,7 +437,7 @@ uint32_t UBXprocessGPS() {
 | * callback functions for the download
 \*********************************************************************************************/
 #ifdef USE_FLOG
-void UBXsendHeader(void){
+void UBXsendHeader(void) {
   WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);
   WebServer->sendHeader(F("Content-Disposition"), F("attachment; filename=TASMOTA.gpx"));
   WSSend(200, CT_STREAM, F(
@@ -461,17 +449,17 @@ void UBXsendHeader(void){
 }
 
 void UBXsendRecord(uint8_t *buf){
-      char record[100];
-      char stime[32];
-      UBX_t::entry_t *entry = (UBX_t::entry_t*)buf;
-      snprintf_P(stime, sizeof(stime), GetDT(entry->time).c_str());
-      char lat[12];
-      char lon[12];
-      dtostrfd((double)entry->lat/10000000.0f,7,lat);
-      dtostrfd((double)entry->lon/10000000.0f,7,lon);
-      snprintf_P(record, sizeof(record),PSTR("<trkpt\n\t lat=\"%s\" lon=\"%s\">\n\t<time>%s</time>\n</trkpt>\n"),lat ,lon, stime);
-      // DEBUG_SENSOR_LOG(PSTR("FLOG: DL %u %u"), Flog->sector.dword_buffer[k+j],Flog->sector.dword_buffer[k+j+1]);
-      WebServer->sendContent_P(record);
+	char record[100];
+	char stime[32];
+	UBX_t::entry_t *entry = (UBX_t::entry_t*)buf;
+	snprintf_P(stime, sizeof(stime), GetDT(entry->time).c_str());
+	char lat[12];
+	char lon[12];
+	dtostrfd((double)entry->lat/10000000.0f,7,lat);
+	dtostrfd((double)entry->lon/10000000.0f,7,lon);
+	snprintf_P(record, sizeof(record),PSTR("<trkpt\n\t lat=\"%s\" lon=\"%s\">\n\t<time>%s</time>\n</trkpt>\n"),lat ,lon, stime);
+	// DEBUG_SENSOR_LOG(PSTR("FLOG: DL %u %u"), Flog->sector.dword_buffer[k+j],Flog->sector.dword_buffer[k+j+1]);
+	WebServer->sendContent_P(record);
 }
 
 void UBXsendFooter(void){
@@ -482,8 +470,8 @@ void UBXsendFooter(void){
 
 /********************************************************************************************/
 void UBXsendFile(void){
-      if (!HttpCheckPriviledgedAccess()) { return; }
-      Flog->startDownload(sizeof(UBX.rec_buffer),UBXsendHeader,UBXsendRecord,UBXsendFooter);
+  if (!HttpCheckPriviledgedAccess()) { return; }
+  Flog->startDownload(sizeof(UBX.rec_buffer),UBXsendHeader,UBXsendRecord,UBXsendFooter);
 }
 #endif //USE_FLOG
 /********************************************************************************************/
@@ -512,69 +500,67 @@ void UBXSetRate(uint16_t interval){
 
 
 void UBXSelectMode(uint16_t mode){
-	DEBUG_SENSOR_LOG(PSTR("UBX: set mode to %u"),mode);
-	switch(mode){
+  DEBUG_SENSOR_LOG(PSTR("UBX: set mode to %u"),mode);
+  switch(mode){
 #ifdef USE_FLOG
-	case 0:
-    Flog->mode = 0; // write once to all available sectors, then stop
-    break;
+    case 0:
+      Flog->mode = 0; // write once to all available sectors, then stop
+      break;
     case 1:
-    Flog->mode = 1; // write to all available sectors, then restart and overwrite the older ones
-    break;
+      Flog->mode = 1; // write to all available sectors, then restart and overwrite the older ones
+      break;
     case 2:
-    UBX.mode.filter_noise = true;  // filter out horizontal drift noise, TODO: find useful values
-    break;
+      UBX.mode.filter_noise = true;  // filter out horizontal drift noise, TODO: find useful values
+      break;
     case 3:
-    UBX.mode.filter_noise = false; 
-    break;
+      UBX.mode.filter_noise = false; 
+      break;
     case 4:
-    Flog->startRecording(true);
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: start recording - appending"));
-    break;
+      Flog->startRecording(true);
+      AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: start recording - appending"));
+      break;
     case 5:
-    Flog->startRecording(false);
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: start recording - new log"));
-    break;
+      Flog->startRecording(false);
+      AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: start recording - new log"));
+      break;
     case 6:
-    if(Flog->recording == true){
-      Flog->stopRecording();
-    }
-    AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: stop recording"));
-    break;
+      if(Flog->recording == true){
+        Flog->stopRecording();
+      }
+      AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: stop recording"));
+      break;
+#endif //USE_FLOG		  
     case 7:
-    UBX.mode.send_when_new = 1; // send mqtt on new postion + TELE -> consider to set TELE to a very high value
-    break;
+      UBX.mode.send_when_new = 1; // send mqtt on new postion + TELE -> consider to set TELE to a very high value
+      break;
     case 8:
-    UBX.mode.send_when_new = 0; // only TELE
-    break;
+      UBX.mode.send_when_new = 0; // only TELE
+      break;
     case 9:
-    if (timeServer.beginListening()){
-    UBX.mode.runningNTP = true;
-    }
-    break;
+      if (timeServer.beginListening()){
+        UBX.mode.runningNTP = true;
+      }
+      break;
     case 10:
-    UBX.mode.runningNTP = false;
-    break;
+      UBX.mode.runningNTP = false;
+      break;
     case 11:
-    UBX.mode.forceUTCupdate = true;
-    break;
+      UBX.mode.forceUTCupdate = true;
+      break;
     case 12:
-    UBX.mode.forceUTCupdate = false;
-    break;
+      UBX.mode.forceUTCupdate = false;
+      break;
     case 13:
-    Settings.latitude = UBX.state.last_lat;
-    Settings.longitude = UBX.state.last_lon;
-    break;
-    
-
-#endif //USE_FLOG
+      Settings.latitude = UBX.state.last_lat;
+      Settings.longitude = UBX.state.last_lon;
+      break;
     default:
       if(mode>1000 && mode <1066) {
         // UBXSetRate(mode-1000); // min. 1001 = 0.001 Hz, but will be converted to 1/65535 anyway ~0.015 Hz, max. 2000 = 1.000 Hz
         UBXSetRate(mode-1000); // set interval between measurements in seconds from 1 to 65 
       }
-    break;
-	}
+      break;
+  }
   UBX.mode.send_UI_only = true;
   UBXTriggerTele();
 }
@@ -601,8 +587,7 @@ bool UBXHandlePOSLLH(){
             UBXTriggerTele();
         }
         return true; // new position
-        }
-    else {
+    } else {
         DEBUG_SENSOR_LOG(PSTR("UBX: no valid position data"));
     }
     return false; // no GPS-fix
@@ -611,12 +596,13 @@ bool UBXHandlePOSLLH(){
 void UBXHandleSTATUS(){
     DEBUG_SENSOR_LOG(PSTR("UBX: gpsFix: %u, valid: %u"),UBX.Message.navStatus.gpsFix, (UBX.Message.navStatus.flags)&1);
     if((UBX.Message.navStatus.flags)&1){
-    UBX.state.gpsFix = UBX.Message.navStatus.gpsFix; //only store fixed status if flag is valid
+      UBX.state.gpsFix = UBX.Message.navStatus.gpsFix; //only store fixed status if flag is valid
     }
     else{
-    UBX.state.gpsFix = 0; // without valid flag, everything is "no fix"
+      UBX.state.gpsFix = 0; // without valid flag, everything is "no fix"
     }
 }
+
 void UBXHandleTIME(){
     DEBUG_SENSOR_LOG(PSTR("UBX: UTC-Time: %u-%u-%u %u:%u:%u"),UBX.Message.navTime.year, UBX.Message.navTime.month ,UBX.Message.navTime.day,UBX.Message.navTime.hour,UBX.Message.navTime.min,UBX.Message.navTime.sec);
     if(UBX.Message.navTime.valid.UTC){
@@ -636,7 +622,8 @@ void UBXHandleTIME(){
     }
 }
 
-void UBXHandleOther(void){
+void UBXHandleOther(void)
+{
   if(UBX.state.non_empty_loops>6){ // we expect only 4-5 non-empty loops in a row, could change with other sensor speed (Hz)
     UBXinitCFG();                  // this should only happen with lots of NMEA-messages, but it is only a guess!!
     AddLog_P(LOG_LEVEL_ERROR, PSTR("UBX: possible device-reset, will re-init"));
@@ -647,7 +634,8 @@ void UBXHandleOther(void){
 
 /********************************************************************************************/
 
-void UBXTimeServer(){
+void UBXTimeServer()
+{
   if(UBX.mode.runningNTP){
     timeServer.processOneRequest(Rtc.utc_time, UBX.state.last_iTOW%1000);
   }
@@ -662,17 +650,17 @@ void UBXLoop(void)
 
   switch(msgType){
     case MT_NAV_POSLLH:
-    new_position = UBXHandlePOSLLH();
-    break;
+      new_position = UBXHandlePOSLLH();
+      break;
     case MT_NAV_STATUS:
-    UBXHandleSTATUS();
-    break;
+      UBXHandleSTATUS();
+      break;
     case MT_NAV_TIME:
-    UBXHandleTIME();
-    break;
+      UBXHandleTIME();
+      break;
     default:
-    UBXHandleOther();
-    break;
+      UBXHandleOther();
+      break;
   }
 
 #ifdef USE_FLOG
@@ -752,8 +740,7 @@ void UBXShow(bool json)
     if(UBX.mode.send_UI_only){
       uint32_t i = UBX.state.log_interval / 10;
       ResponseAppend_P(PSTR("\"fil\":%u,\"int\":%u}"),UBX.mode.filter_noise, i);
-    }
-    else{
+    } else {
       ResponseAppend_P(PSTR("\"lat\":%s,\"lon\":%s,\"height\":%s,\"hAcc\":%s,\"vAcc\":%s}"), lat, lon, height, hAcc, vAcc);
     }
 #ifdef USE_FLOG
@@ -768,7 +755,7 @@ void UBXShow(bool json)
 #ifdef USE_FLOG
     WSContentSend_PD(HTTP_SNS_FLOGVER, Flog->num_sectors, Flog->size, Flog->current_sector, Flog->sectors_left, Flog->sector.header.physical_start_sector);
     if(Flog->recording){
-    WSContentSend_PD(HTTP_SNS_FLOGREC, Flog->sector.header.buf_pointer - 8);
+      WSContentSend_PD(HTTP_SNS_FLOGREC, Flog->sector.header.buf_pointer - 8);
     }
 #endif //USE_FLOG
 #endif // DEBUG_TASMOTA_SENSOR
@@ -794,10 +781,10 @@ void UBXShow(bool json)
 
 bool UBXCmd(void) {
   bool serviced = true;
-			if (XdrvMailbox.data_len > 0) {
-        UBXSelectMode(XdrvMailbox.payload); 
-        Response_P(S_JSON_UBX_COMMAND_NVALUE, XdrvMailbox.command, XdrvMailbox.payload);
-        }
+    if (XdrvMailbox.data_len > 0) {
+      UBXSelectMode(XdrvMailbox.payload); 
+      Response_P(S_JSON_UBX_COMMAND_NVALUE, XdrvMailbox.command, XdrvMailbox.payload);
+    }
   return serviced;
 }
 
@@ -805,7 +792,7 @@ bool UBXCmd(void) {
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_58                     58
+#define XSNS_58        58
 
 bool Xsns58(uint8_t function)
 {
@@ -816,12 +803,12 @@ bool Xsns58(uint8_t function)
       case FUNC_INIT:
         UBXDetect();
         break;
-			case FUNC_COMMAND_SENSOR:
-				if (XSNS_92 == XdrvMailbox.index){
+      case FUNC_COMMAND_SENSOR:
+	if (XSNS_58 == XdrvMailbox.index){
           result = UBXCmd();
         }  
         break;
-        case FUNC_EVERY_50_MSECOND:
+      case FUNC_EVERY_50_MSECOND:
         UBXTimeServer();
         break;
       case FUNC_EVERY_100_MSECOND:
@@ -834,8 +821,8 @@ bool Xsns58(uint8_t function)
         break;
 #ifdef USE_FLOG
       case FUNC_WEB_ADD_HANDLER:
-      WebServer->on("/UBX", UBXsendFile);
-      break;
+        WebServer->on("/UBX", UBXsendFile);
+        break;
 #endif //USE_FLOG
       case FUNC_JSON_APPEND:
         UBXShow(1);
