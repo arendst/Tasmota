@@ -1274,7 +1274,7 @@ void SettingsDelta(void)
       memcpy((char*)&Settings.serial_config, (char*)&Settings.ex_serial_config, 5);  // 1E4 -> EFE
     }
 
-    if (Settings.version < 0x07010207) {
+    if (Settings.version < 0x08000000) {
       char temp[strlen(Settings.ota_url) +1];          strncpy(temp, Settings.ota_url, sizeof(temp));
       char temp21[strlen(Settings.mqtt_prefix[0]) +1]; strncpy(temp21, Settings.mqtt_prefix[0], sizeof(temp21));
       char temp22[strlen(Settings.mqtt_prefix[1]) +1]; strncpy(temp22, Settings.mqtt_prefix[1], sizeof(temp22));
