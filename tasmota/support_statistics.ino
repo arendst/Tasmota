@@ -45,7 +45,6 @@ String GetStatistics(void)
     for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
       str_len += strlen(Settings.mems[i]);
     }
-
     str_len += strlen(Settings.ota_url);
     str_len += strlen(Settings.hostname);
     str_len += strlen(Settings.syslog_host);
@@ -60,7 +59,7 @@ String GetStatistics(void)
     str_len += strlen(Settings.web_password);
     str_len += strlen(Settings.mqtt_fulltopic);
     str_len += strlen(Settings.cors_domain);
-    snprintf_P(data, sizeof(data), PSTR(",\"CR\":\"%d/1151\""), str_len);  // Char Usage Ratio
+    snprintf_P(data, sizeof(data), PSTR(",\"CR\":\"%d/1151\""), 37 + str_len);  // Char Usage Ratio
   } else {
     snprintf_P(data, sizeof(data), PSTR(",\"CR\":\"%d/%d\""), GetSettingsTextLen(), settings_text_size);  // Char Usage Ratio
   }
