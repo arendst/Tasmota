@@ -1286,6 +1286,7 @@ void SettingsDelta(void)
       char temp5[strlen(Settings.hostname) +1];        strncpy(temp5, Settings.hostname, sizeof(temp5));
       char temp6[strlen(Settings.syslog_host) +1];     strncpy(temp6, Settings.syslog_host, sizeof(temp6));
 
+      memset(Settings.ota_url, 0x00, settings_text_size);
       SettingsUpdateText(SET_OTAURL, temp);
       SettingsUpdateText(SET_MQTTPREFIX1, temp21);
       SettingsUpdateText(SET_MQTTPREFIX2, temp22);
