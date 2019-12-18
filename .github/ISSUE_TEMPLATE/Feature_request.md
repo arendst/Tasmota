@@ -10,7 +10,7 @@ Please take a few minutes to complete the requested information below. Our abili
 DO NOT DELETE ANY TEXT from this template! Otherwise the issue will be auto-closed.
 -->
 
-**Have you looked for this feature in other issues and in the wiki?**  
+**Have you looked for this feature in other issues and in the docs?**  
 
 **Is your feature request related to a problem? Please describe.**  
 _A clear and concise description of what the problem is._
