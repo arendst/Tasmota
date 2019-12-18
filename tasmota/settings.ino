@@ -1284,7 +1284,7 @@ void SettingsDelta(void)
       char temp41[strlen(Settings.sta_pwd[0]) +1];     strncpy(temp41, Settings.sta_pwd[0], sizeof(temp41));
       char temp42[strlen(Settings.sta_pwd[1]) +1];     strncpy(temp42, Settings.sta_pwd[1], sizeof(temp42));
       char temp5[strlen(Settings.hostname) +1];        strncpy(temp5, Settings.hostname, sizeof(temp5));
-      char temp6[strlen(Settings.syslog_host) +1];     strncpy(temp6, Settings.syslog_host, sizeof(temp5));
+      char temp6[strlen(Settings.syslog_host) +1];     strncpy(temp6, Settings.syslog_host, sizeof(temp6));
 
       SettingsUpdateText(SET_OTAURL, temp);
       SettingsUpdateText(SET_MQTTPREFIX1, temp21);
@@ -1298,6 +1298,7 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_SYSLOG_HOST, temp6);
 
       SettingsUpdateText(SET_WEBPWD, Settings.web_password);
+      SettingsUpdateText(SET_CORS, Settings.cors_domain);
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
       if (!strlen(Settings.mqtt_user)) {
         SettingsUpdateText(SET_MQTT_HOST, Settings.mqtt_host);
@@ -1332,7 +1333,6 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_MEM3, Settings.mems[2]);
       SettingsUpdateText(SET_MEM4, Settings.mems[3]);
       SettingsUpdateText(SET_MEM5, Settings.mems[4]);
-      SettingsUpdateText(SET_CORS, Settings.cors_domain);
       SettingsUpdateText(SET_FRIENDLYNAME1, Settings.friendlyname[0]);
       SettingsUpdateText(SET_FRIENDLYNAME2, Settings.friendlyname[1]);
       SettingsUpdateText(SET_FRIENDLYNAME3, Settings.friendlyname[2]);
