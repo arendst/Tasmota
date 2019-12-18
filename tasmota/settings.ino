@@ -1282,7 +1282,7 @@ void SettingsDelta(void)
       char temp31[strlen(Settings.sta_ssid[0]) +1];    strncpy(temp31, Settings.sta_ssid[0], sizeof(temp31));
       char temp32[strlen(Settings.sta_ssid[1]) +1];    strncpy(temp32, Settings.sta_ssid[1], sizeof(temp32));
       char temp41[strlen(Settings.sta_pwd[0]) +1];     strncpy(temp41, Settings.sta_pwd[0], sizeof(temp41));
-      char temp42[strlen(Settings.sta_pwd[1]) +1];     strncpy(temp42, Settings.sta_pwd[0], sizeof(temp42));
+      char temp42[strlen(Settings.sta_pwd[1]) +1];     strncpy(temp42, Settings.sta_pwd[1], sizeof(temp42));
       char temp5[strlen(Settings.hostname) +1];        strncpy(temp5, Settings.hostname, sizeof(temp5));
       char temp6[strlen(Settings.syslog_host) +1];     strncpy(temp6, Settings.syslog_host, sizeof(temp5));
 
