@@ -590,8 +590,7 @@ char* SettingsText(uint32_t index)
       case SET_WEBPWD:            position = Settings.web_password; break;
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
       case SET_MQTT_HOST:
-        strlcpy(aws_mqtt_host, Settings.mqtt_user, strlen(Settings.mqtt_user));
-        strlcpy(&aws_mqtt_host[strlen(Settings.mqtt_user)], Settings.mqtt_host, sizeof(Settings.mqtt_host));
+        snprintf_P(aws_mqtt_host, sizeof(aws_mqtt_host), PSTR("%s%s"), Settings.mqtt_user, Settings.mqtt_host);
         position = aws_mqtt_host; break;
       case SET_MQTT_USER:         position = aws_mqtt_user; break;
 #else
