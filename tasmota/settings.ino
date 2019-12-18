@@ -1387,16 +1387,23 @@ void SettingsDelta(void)
     }
 
     if ((VERSION < 0x08000000) && (Settings.version > VERSION)) {
-      char temp[strlen(SettingsText(SET_OTAURL)) +1];        strncpy(temp, SettingsText(SET_OTAURL), sizeof(temp));
-      char temp21[strlen(SettingsText(SET_MQTTPREFIX1)) +1]; strncpy(temp21, SettingsText(SET_MQTTPREFIX1), sizeof(temp21));
-      char temp22[strlen(SettingsText(SET_MQTTPREFIX2)) +1]; strncpy(temp22, SettingsText(SET_MQTTPREFIX2), sizeof(temp22));
-      char temp23[strlen(SettingsText(SET_MQTTPREFIX3)) +1]; strncpy(temp23, SettingsText(SET_MQTTPREFIX3), sizeof(temp23));
-      char temp31[strlen(SettingsText(SET_STASSID1)) +1];    strncpy(temp31, SettingsText(SET_STASSID1), sizeof(temp31));
-      char temp32[strlen(SettingsText(SET_STASSID2)) +1];    strncpy(temp32, SettingsText(SET_STASSID2), sizeof(temp32));
-      char temp41[strlen(SettingsText(SET_STAPWD1)) +1];     strncpy(temp41, SettingsText(SET_STAPWD1), sizeof(temp41));
-      char temp42[strlen(SettingsText(SET_STAPWD2)) +1];     strncpy(temp42, SettingsText(SET_STAPWD2), sizeof(temp42));
-      char temp5[strlen(SettingsText(SET_HOSTNAME)) +1];     strncpy(temp5, SettingsText(SET_HOSTNAME), sizeof(temp5));
-      char temp6[strlen(SettingsText(SET_SYSLOG_HOST)) +1];  strncpy(temp6, SettingsText(SET_SYSLOG_HOST), sizeof(temp5));
+      char temp[strlen(SettingsText(SET_OTAURL)) +1];              strncpy(temp, SettingsText(SET_OTAURL), sizeof(temp));
+      char temp21[strlen(SettingsText(SET_MQTTPREFIX1)) +1];       strncpy(temp21, SettingsText(SET_MQTTPREFIX1), sizeof(temp21));
+      char temp22[strlen(SettingsText(SET_MQTTPREFIX2)) +1];       strncpy(temp22, SettingsText(SET_MQTTPREFIX2), sizeof(temp22));
+      char temp23[strlen(SettingsText(SET_MQTTPREFIX3)) +1];       strncpy(temp23, SettingsText(SET_MQTTPREFIX3), sizeof(temp23));
+      char temp31[strlen(SettingsText(SET_STASSID1)) +1];          strncpy(temp31, SettingsText(SET_STASSID1), sizeof(temp31));
+      char temp32[strlen(SettingsText(SET_STASSID2)) +1];          strncpy(temp32, SettingsText(SET_STASSID2), sizeof(temp32));
+      char temp41[strlen(SettingsText(SET_STAPWD1)) +1];           strncpy(temp41, SettingsText(SET_STAPWD1), sizeof(temp41));
+      char temp42[strlen(SettingsText(SET_STAPWD2)) +1];           strncpy(temp42, SettingsText(SET_STAPWD2), sizeof(temp42));
+      char temp5[strlen(SettingsText(SET_HOSTNAME)) +1];           strncpy(temp5, SettingsText(SET_HOSTNAME), sizeof(temp5));
+      char temp6[strlen(SettingsText(SET_SYSLOG_HOST)) +1];        strncpy(temp6, SettingsText(SET_SYSLOG_HOST), sizeof(temp6));
+      char temp7[strlen(SettingsText(SET_MQTT_HOST)) +1];          strncpy(temp7, SettingsText(SET_MQTT_HOST), sizeof(temp7));
+      char temp8[strlen(SettingsText(SET_MQTT_CLIENT)) +1];        strncpy(temp8, SettingsText(SET_MQTT_CLIENT), sizeof(temp8));
+      char temp9[strlen(SettingsText(SET_MQTT_USER)) +1];          strncpy(temp9, SettingsText(SET_MQTT_USER), sizeof(temp9));
+      char temp10[strlen(SettingsText(SET_MQTT_PWD)) +1];          strncpy(temp10, SettingsText(SET_MQTT_PWD), sizeof(temp10));
+      char temp11[strlen(SettingsText(SET_MQTT_TOPIC)) +1];        strncpy(temp11, SettingsText(SET_MQTT_TOPIC), sizeof(temp11));
+      char temp12[strlen(SettingsText(SET_MQTT_BUTTON_TOPIC)) +1]; strncpy(temp12, SettingsText(SET_MQTT_BUTTON_TOPIC), sizeof(temp12));
+      char temp13[strlen(SettingsText(SET_MQTT_GRP_TOPIC)) +1];    strncpy(temp13, SettingsText(SET_MQTT_GRP_TOPIC), sizeof(temp13));
 
       uint32_t version = Settings.version;
       Settings.version = VERSION;
@@ -1410,6 +1417,13 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_STAPWD2, temp42);
       SettingsUpdateText(SET_HOSTNAME, temp5);
       SettingsUpdateText(SET_SYSLOG_HOST, temp6);
+      SettingsUpdateText(SET_MQTT_HOST, temp7);
+      SettingsUpdateText(SET_MQTT_CLIENT, temp8);
+      SettingsUpdateText(SET_MQTT_USER, temp9);
+      SettingsUpdateText(SET_MQTT_PWD, temp10);
+      SettingsUpdateText(SET_MQTT_TOPIC, temp11);
+      SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, temp12);
+      SettingsUpdateText(SET_MQTT_GRP_TOPIC, temp13);
       Settings.version = version;
     }
 
