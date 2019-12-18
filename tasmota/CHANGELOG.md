@@ -6,7 +6,7 @@
 - Change tasmota-basic.bin and FIRMWARE_BASIC to tasmota-lite.bin and FIRMWARE_LITE
 - Add Zigbee send automatic ZigbeeRead after sending a command
 - Add Zigbee improving Occupancy:false detection for Aqara sensor
-- Add fallback functionality from next version 8.x
+- Add fallback support from version 8.x
 
 ### 7.1.2.5 20191213
 
