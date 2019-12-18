@@ -72,4 +72,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add reporting of raw weight to JSON from HX711 to overcome auto-tare functionality by @tobox (#7171)
 - Add Zigbee support for Xiaomi Aqara Vibration Sensor and Presence Sensor by Stefan Hadinger
 - Add Shutter functions ramp up/down and MQTT reporting by Stefan Bode
-- Add fallback functionality from version 8.x
+- Add fallback support from version 8.x
