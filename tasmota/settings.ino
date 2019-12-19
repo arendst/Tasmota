@@ -471,97 +471,59 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me)
   char replace[replace_len +1];
   memcpy(replace, replace_me, sizeof(replace));
 
-  if (Settings.version < 0x08000000) {
-    uint32_t idx = 0;
-    switch (index) {
-      case SET_OTAURL:            strlcpy(Settings.ota_url, replace, sizeof(Settings.ota_url)); break;
-      case SET_MQTTPREFIX3:       idx++;
-      case SET_MQTTPREFIX2:       idx++;
-      case SET_MQTTPREFIX1:       strlcpy(Settings.mqtt_prefix[idx], replace, sizeof(Settings.mqtt_prefix[idx])); break;
-      case SET_STASSID2:          idx++;
-      case SET_STASSID1:          strlcpy(Settings.sta_ssid[idx], replace, sizeof(Settings.sta_ssid[idx])); break;
-      case SET_STAPWD2:           idx++;
-      case SET_STAPWD1:           strlcpy(Settings.sta_pwd[idx], replace, sizeof(Settings.sta_pwd[idx])); break;
-      case SET_HOSTNAME:          strlcpy(Settings.hostname, replace, sizeof(Settings.hostname)); break;
-      case SET_SYSLOG_HOST:       strlcpy(Settings.syslog_host, replace, sizeof(Settings.syslog_host)); break;
-      case SET_WEBPWD:            strlcpy(Settings.web_password, replace, sizeof(Settings.web_password)); break;
+  uint32_t idx = 0;
+  switch (index) {
+    case SET_OTAURL:            strlcpy(Settings.ota_url, replace, sizeof(Settings.ota_url)); break;
+    case SET_MQTTPREFIX3:       idx++;
+    case SET_MQTTPREFIX2:       idx++;
+    case SET_MQTTPREFIX1:       strlcpy(Settings.mqtt_prefix[idx], replace, sizeof(Settings.mqtt_prefix[idx])); break;
+    case SET_STASSID2:          idx++;
+    case SET_STASSID1:          strlcpy(Settings.sta_ssid[idx], replace, sizeof(Settings.sta_ssid[idx])); break;
+    case SET_STAPWD2:           idx++;
+    case SET_STAPWD1:           strlcpy(Settings.sta_pwd[idx], replace, sizeof(Settings.sta_pwd[idx])); break;
+    case SET_HOSTNAME:          strlcpy(Settings.hostname, replace, sizeof(Settings.hostname)); break;
+    case SET_SYSLOG_HOST:       strlcpy(Settings.syslog_host, replace, sizeof(Settings.syslog_host)); break;
+    case SET_WEBPWD:            strlcpy(Settings.web_password, replace, sizeof(Settings.web_password)); break;
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-      case SET_MQTT_HOST:
-        if (strlen(replace) <= sizeof(Settings.mqtt_host)) {
-          strlcpy(Settings.mqtt_host, replace, sizeof(Settings.mqtt_host));
-          Settings.mqtt_user[0] = 0;
-        } else {
-          // need to split in mqtt_user first then mqtt_host
-          strlcpy(Settings.mqtt_user, replace, sizeof(Settings.mqtt_user));
-          strlcpy(Settings.mqtt_host, &replace[sizeof(Settings.mqtt_user)-1], sizeof(Settings.mqtt_host));
-        }
-        break;
-      case SET_MQTT_USER:         break;
+    case SET_MQTT_HOST:
+      if (strlen(replace) <= sizeof(Settings.mqtt_host)) {
+        strlcpy(Settings.mqtt_host, replace, sizeof(Settings.mqtt_host));
+        Settings.mqtt_user[0] = 0;
+      } else {
+        // need to split in mqtt_user first then mqtt_host
+        strlcpy(Settings.mqtt_user, replace, sizeof(Settings.mqtt_user));
+        strlcpy(Settings.mqtt_host, &replace[sizeof(Settings.mqtt_user)-1], sizeof(Settings.mqtt_host));
+      }
+      break;
+    case SET_MQTT_USER:         break;
 #else
-      case SET_MQTT_HOST:         strlcpy(Settings.mqtt_host, replace, sizeof(Settings.mqtt_host)); break;
-      case SET_MQTT_USER:         strlcpy(Settings.mqtt_user, replace, sizeof(Settings.mqtt_user)); break;
+    case SET_MQTT_HOST:         strlcpy(Settings.mqtt_host, replace, sizeof(Settings.mqtt_host)); break;
+    case SET_MQTT_USER:         strlcpy(Settings.mqtt_user, replace, sizeof(Settings.mqtt_user)); break;
 #endif
-      case SET_MQTT_CLIENT:       strlcpy(Settings.mqtt_client, replace, sizeof(Settings.mqtt_client)); break;
-      case SET_MQTT_PWD:          strlcpy(Settings.mqtt_pwd, replace, sizeof(Settings.mqtt_pwd)); break;
-      case SET_MQTT_FULLTOPIC:    strlcpy(Settings.mqtt_fulltopic, replace, sizeof(Settings.mqtt_fulltopic)); break;
-      case SET_MQTT_TOPIC:        strlcpy(Settings.mqtt_topic, replace, sizeof(Settings.mqtt_topic)); break;
-      case SET_MQTT_BUTTON_TOPIC: strlcpy(Settings.button_topic, replace, sizeof(Settings.button_topic)); break;
-      case SET_MQTT_SWITCH_TOPIC: strlcpy(Settings.switch_topic, replace, sizeof(Settings.switch_topic)); break;
-      case SET_MQTT_GRP_TOPIC:    strlcpy(Settings.mqtt_grptopic, replace, sizeof(Settings.mqtt_grptopic)); break;
-      case SET_STATE_TXT4:        idx++;
-      case SET_STATE_TXT3:        idx++;
-      case SET_STATE_TXT2:        idx++;
-      case SET_STATE_TXT1:        strlcpy(Settings.state_text[idx], replace, sizeof(Settings.state_text[idx])); break;
-      case SET_NTPSERVER3:        idx++;
-      case SET_NTPSERVER2:        idx++;
-      case SET_NTPSERVER1:        strlcpy(Settings.ntp_server[idx], replace, sizeof(Settings.ntp_server[idx])); break;
-      case SET_MEM5:              idx++;
-      case SET_MEM4:              idx++;
-      case SET_MEM3:              idx++;
-      case SET_MEM2:              idx++;
-      case SET_MEM1:              strlcpy(Settings.mems[idx], replace, sizeof(Settings.mems[idx])); break;
-      case SET_CORS:              strlcpy(Settings.cors_domain, replace, sizeof(Settings.cors_domain)); break;
-      case SET_FRIENDLYNAME4:     idx++;
-      case SET_FRIENDLYNAME3:     idx++;
-      case SET_FRIENDLYNAME2:     idx++;
-      case SET_FRIENDLYNAME1:     strlcpy(Settings.friendlyname[idx], replace, sizeof(Settings.friendlyname[idx])); break;
-    }
-  } else {
-    uint32_t start_pos = 0;
-    uint32_t end_pos = 0;
-    char* position = Settings.ota_url;
-    for (uint32_t size = 0; size < SET_MAX; size++) {
-      while (*position++ != '\0') { }
-      if (1 == index) {
-        start_pos = position - Settings.ota_url;
-      }
-      else if (0 == index) {
-        end_pos = position - Settings.ota_url -1;
-      }
-      index--;
-    }
-    uint32_t char_len = position - Settings.ota_url;
-
-    uint32_t current_len = end_pos - start_pos;
-    int diff = replace_len - current_len;
-
-  //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("TST: start %d, end %d, len %d, current %d, replace %d, diff %d"),
-  //    start_pos, end_pos, char_len, current_len, replace_len, diff);
-
-    int too_long = (char_len + diff) - settings_text_size;
-    if (too_long > 0) {
-  //    AddLog_P2(LOG_LEVEL_INFO, PSTR("CFG: Text too long by %d char(s)"), too_long);
-      return false;  // Replace text too long
-    }
-
-    if (diff != 0) {
-      // Shift Settings.text up or down
-      memmove_P(Settings.ota_url + start_pos + replace_len, Settings.ota_url + end_pos, char_len - end_pos);
-    }
-    // Replace text
-    memmove_P(Settings.ota_url + start_pos, replace, replace_len);
-    // Fill for future use
-    memset(Settings.ota_url + char_len + diff, 0x00, settings_text_size - char_len - diff);
+    case SET_MQTT_CLIENT:       strlcpy(Settings.mqtt_client, replace, sizeof(Settings.mqtt_client)); break;
+    case SET_MQTT_PWD:          strlcpy(Settings.mqtt_pwd, replace, sizeof(Settings.mqtt_pwd)); break;
+    case SET_MQTT_FULLTOPIC:    strlcpy(Settings.mqtt_fulltopic, replace, sizeof(Settings.mqtt_fulltopic)); break;
+    case SET_MQTT_TOPIC:        strlcpy(Settings.mqtt_topic, replace, sizeof(Settings.mqtt_topic)); break;
+    case SET_MQTT_BUTTON_TOPIC: strlcpy(Settings.button_topic, replace, sizeof(Settings.button_topic)); break;
+    case SET_MQTT_SWITCH_TOPIC: strlcpy(Settings.switch_topic, replace, sizeof(Settings.switch_topic)); break;
+    case SET_MQTT_GRP_TOPIC:    strlcpy(Settings.mqtt_grptopic, replace, sizeof(Settings.mqtt_grptopic)); break;
+    case SET_STATE_TXT4:        idx++;
+    case SET_STATE_TXT3:        idx++;
+    case SET_STATE_TXT2:        idx++;
+    case SET_STATE_TXT1:        strlcpy(Settings.state_text[idx], replace, sizeof(Settings.state_text[idx])); break;
+    case SET_NTPSERVER3:        idx++;
+    case SET_NTPSERVER2:        idx++;
+    case SET_NTPSERVER1:        strlcpy(Settings.ntp_server[idx], replace, sizeof(Settings.ntp_server[idx])); break;
+    case SET_MEM5:              idx++;
+    case SET_MEM4:              idx++;
+    case SET_MEM3:              idx++;
+    case SET_MEM2:              idx++;
+    case SET_MEM1:              strlcpy(Settings.mems[idx], replace, sizeof(Settings.mems[idx])); break;
+    case SET_CORS:              strlcpy(Settings.cors_domain, replace, sizeof(Settings.cors_domain)); break;
+    case SET_FRIENDLYNAME4:     idx++;
+    case SET_FRIENDLYNAME3:     idx++;
+    case SET_FRIENDLYNAME2:     idx++;
+    case SET_FRIENDLYNAME1:     strlcpy(Settings.friendlyname[idx], replace, sizeof(Settings.friendlyname[idx])); break;
   }
 
   return true;
@@ -1402,6 +1364,27 @@ void SettingsDelta(void)
     }
 
     if ((VERSION < 0x08000000) && (Settings.version >= 0x08000000)) {
+      SettingsUpdateText(SET_WEBPWD, SettingsText(SET_WEBPWD));
+      SettingsUpdateText(SET_CORS, SettingsText(SET_CORS));
+      SettingsUpdateText(SET_MQTT_FULLTOPIC, SettingsText(SET_MQTT_FULLTOPIC));
+      SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, SettingsText(SET_MQTT_SWITCH_TOPIC));
+      SettingsUpdateText(SET_STATE_TXT1, SettingsText(SET_STATE_TXT1));
+      SettingsUpdateText(SET_STATE_TXT2, SettingsText(SET_STATE_TXT2));
+      SettingsUpdateText(SET_STATE_TXT3, SettingsText(SET_STATE_TXT3));
+      SettingsUpdateText(SET_STATE_TXT4, SettingsText(SET_STATE_TXT4));
+      SettingsUpdateText(SET_NTPSERVER1, SettingsText(SET_NTPSERVER1));
+      SettingsUpdateText(SET_NTPSERVER2, SettingsText(SET_NTPSERVER2));
+      SettingsUpdateText(SET_NTPSERVER3, SettingsText(SET_NTPSERVER3));
+      SettingsUpdateText(SET_MEM1, SettingsText(SET_MEM1));
+      SettingsUpdateText(SET_MEM2, SettingsText(SET_MEM2));
+      SettingsUpdateText(SET_MEM3, SettingsText(SET_MEM3));
+      SettingsUpdateText(SET_MEM4, SettingsText(SET_MEM4));
+      SettingsUpdateText(SET_MEM5, SettingsText(SET_MEM5));
+      SettingsUpdateText(SET_FRIENDLYNAME1, SettingsText(SET_FRIENDLYNAME1));
+      SettingsUpdateText(SET_FRIENDLYNAME2, SettingsText(SET_FRIENDLYNAME2));
+      SettingsUpdateText(SET_FRIENDLYNAME3, SettingsText(SET_FRIENDLYNAME3));
+      SettingsUpdateText(SET_FRIENDLYNAME4, SettingsText(SET_FRIENDLYNAME4));
+
       char temp[strlen(SettingsText(SET_OTAURL)) +1];              strncpy(temp, SettingsText(SET_OTAURL), sizeof(temp));
       char temp21[strlen(SettingsText(SET_MQTTPREFIX1)) +1];       strncpy(temp21, SettingsText(SET_MQTTPREFIX1), sizeof(temp21));
       char temp22[strlen(SettingsText(SET_MQTTPREFIX2)) +1];       strncpy(temp22, SettingsText(SET_MQTTPREFIX2), sizeof(temp22));
@@ -1420,8 +1403,6 @@ void SettingsDelta(void)
       char temp12[strlen(SettingsText(SET_MQTT_BUTTON_TOPIC)) +1]; strncpy(temp12, SettingsText(SET_MQTT_BUTTON_TOPIC), sizeof(temp12));
       char temp13[strlen(SettingsText(SET_MQTT_GRP_TOPIC)) +1];    strncpy(temp13, SettingsText(SET_MQTT_GRP_TOPIC), sizeof(temp13));
 
-      uint32_t version = Settings.version;
-      Settings.version = VERSION;
       SettingsUpdateText(SET_OTAURL, temp);
       SettingsUpdateText(SET_MQTTPREFIX1, temp21);
       SettingsUpdateText(SET_MQTTPREFIX2, temp22);
@@ -1439,7 +1420,6 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_MQTT_TOPIC, temp11);
       SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, temp12);
       SettingsUpdateText(SET_MQTT_GRP_TOPIC, temp13);
-      Settings.version = version;
 
       SettingsBackwardCompat();
     }
