@@ -1128,6 +1128,10 @@ void SettingsDefaultSet2(void)
 
   memset(&Settings.monitors, 0xFF, 20);  // Enable all possible monitors, displays and sensors
   SettingsEnableAllI2cDrivers();
+
+  if (VERSION < 0x08000000) {
+    SettingsBackwardCompat();
+  }
 }
 
 /********************************************************************************************/
@@ -1165,6 +1169,17 @@ void SettingsEnableAllI2cDrivers(void)
   Settings.i2c_drivers[0] = 0xFFFFFFFF;
   Settings.i2c_drivers[1] = 0xFFFFFFFF;
   Settings.i2c_drivers[2] = 0xFFFFFFFF;
+}
+
+void SettingsBackwardCompat(void)
+{
+  Settings.ex_seriallog_level = Settings.seriallog_level;  // 09E <- 452
+  Settings.ex_sta_config = Settings.sta_config;            // 09F <- EC7
+  Settings.ex_sta_active = Settings.sta_active;            // 0A0 <- EC8
+  memcpy((char*)&Settings.ex_rule_stop, (char*)&Settings.rule_stop, 47);  // 1A7 <- EC9
+  Settings.ex_flag4 = Settings.flag4;                      // 1E0 <- EF8
+  Settings.ex_mqtt_port = Settings.mqtt_port;              // 20A <- EFC
+  memcpy((char*)&Settings.ex_serial_config, (char*)&Settings.serial_config, 5);  // 1E4 <- EFE
 }
 
 /********************************************************************************************/
@@ -1425,6 +1440,8 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, temp12);
       SettingsUpdateText(SET_MQTT_GRP_TOPIC, temp13);
       Settings.version = version;
+
+      SettingsBackwardCompat();
     }
 
     Settings.version = VERSION;
