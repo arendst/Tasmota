@@ -58,6 +58,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix flashing H801 led at boot by Stefan Hadinger (#7165, #649)
 - Fix duplicated ``Backlog`` when using Event inside a Backlog by Adrian Scillato (#7178, #7147)
 - Fix Gui Timer when using a negative zero offset of -00:00 by Peter Ooms (#7174)
+- Fix DeepSleep in case there is no wifi by Stefan Bode (#7213)
 - Add command ``SerialConfig 0..23`` or ``SerialConfig 8N1`` to select Serial Config based in PR by Luis Teixeira (#7108)
 - Add command ``Sensor34 9 <weight code>`` to set minimum delta to trigger JSON message by @tobox (#7188)
 - Add rule var ``%topic%`` by Adrian Scillato (#5522)
@@ -74,3 +75,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add Shutter functions ramp up/down and MQTT reporting by Stefan Bode
 - Add fallback support from version 8.x
 - Add restriction if fallback firmware is incompatible with settings resulting in unreachable device
+- Add support for DHT12 Temperature and Humidity sensor by Stefan Oskamp
