@@ -345,6 +345,10 @@ void SetFlashModeDout(void)
 
 uint32_t OtaVersion(void)
 {
+  if (Settings.flag3.compatibility_check) {
+    return 0xFFFFFFFF;
+  }
+
   eboot_command ebcmd;
   eboot_command_read(&ebcmd);
   uint32_t start_address = ebcmd.args[0];
