@@ -10,6 +10,7 @@
 - Add fallback support from version 8.x
 - Add restriction if fallback firmware is incompatible with settings resulting in unreachable device
 - Add support for DHT12 Temperature and Humidity sensor by Stefan Oskamp
+- Fix Fade would ignore ``savedata 0`` and store to flash anyways (#7262)
 
 ### 7.1.2.5 20191213
 
