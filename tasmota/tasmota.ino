@@ -334,6 +334,8 @@ void setup(void)
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
 
+  memcpy_P(log_data, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
+
   RtcInit();
 
 #ifdef USE_ARDUINO_OTA

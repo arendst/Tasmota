@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "Грешка при изтриване на RF чипа"
 #define D_UPLOAD_ERR_12 "Грешка при записване в RF чипа"
 #define D_UPLOAD_ERR_13 "Грешка при декодиране на RF фърмуера"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Код на грешка при зареждането"
 
 #define D_ENTER_COMMAND "Въвеждане на команда"

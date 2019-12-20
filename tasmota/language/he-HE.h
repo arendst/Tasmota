@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "נכשלה RF מחיקת שבב"
 #define D_UPLOAD_ERR_12 "נכשלה RF כתיבת שבב"
 #define D_UPLOAD_ERR_13 "נכשלה RF קידוד קושחת שבב"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "שגיאת קוד העלאה"
 
 #define D_ENTER_COMMAND "הקש פקודה"

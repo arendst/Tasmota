@@ -866,13 +866,21 @@ void Every250mSeconds(void)
       }
       if (90 == ota_state_flag) {  // Allow MQTT to reconnect
         ota_state_flag = 0;
+        Response_P(PSTR("{\"" D_CMND_UPGRADE "\":\""));
         if (ota_result) {
 //          SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
-          Response_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
+          if (OtaVersion() < VERSION_COMPATIBLE) {
+            AbandonOta();
+            ResponseAppend_P(PSTR(D_JSON_FAILED " " D_UPLOAD_ERR_14));
+          } else {
+            ResponseAppend_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
+            restart_flag = 2;
+          }
         } else {
-          Response_P(PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
+          ResponseAppend_P(PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
         }
-        restart_flag = 2;          // Restart anyway to keep memory clean webserver
+        ResponseAppend_P(PSTR("\"}"));
+//        restart_flag = 2;          // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_UPGRADE));
       }
     }

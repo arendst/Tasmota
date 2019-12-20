@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "Failed to erase RF chip"
 #define D_UPLOAD_ERR_12 "Failed to write to RF chip"
 #define D_UPLOAD_ERR_13 "Failed to decode RF firmware"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Upload error code"
 
 #define D_ENTER_COMMAND "Komut girişi"
