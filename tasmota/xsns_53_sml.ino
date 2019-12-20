@@ -1865,7 +1865,7 @@ uint8_t *script_meter;
 #endif
 
 #ifndef METER_DEF_SIZE
-#define METER_DEF_SIZE 2000
+#define METER_DEF_SIZE 3000
 #endif
 
 bool Gpio_used(uint8_t gpiopin) {
