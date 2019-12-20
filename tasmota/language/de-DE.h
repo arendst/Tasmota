@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.6.0.21
+ * Updated until v8.0.0
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -353,7 +353,7 @@
 #define D_UPLOAD_ERR_11 "RF Chip löschen fehlgeschlagen"
 #define D_UPLOAD_ERR_12 "RF Chip beschreiben fehlgeschlagen"
 #define D_UPLOAD_ERR_13 "RF Firmware ungültig"
-#define D_UPLOAD_ERR_14 "Not compatible"
+#define D_UPLOAD_ERR_14 "Nicht kompatibel"
 #define D_UPLOAD_ERROR_CODE "Upload Fehler Nummer"
 
 #define D_ENTER_COMMAND "Befehl eingeben"
