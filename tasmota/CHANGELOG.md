@@ -10,8 +10,11 @@
 ### 7.1.2.6 20191214
 
 - Change some more Settings locations freeing up space for future single char allowing variable length text
+- Change tasmota-basic.bin and FIRMWARE_BASIC to tasmota-lite.bin and FIRMWARE_LITE
 - Add Zigbee send automatic ZigbeeRead after sending a command
 - Add Zigbee improving Occupancy:false detection for Aqara sensor
+- Add fallback support from version 8.x
+- Add restriction if fallback firmware is incompatible with settings resulting in unreachable device
 
 ### 7.1.2.5 20191213
 

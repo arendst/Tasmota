@@ -34,7 +34,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 - **tasmota.bin** = The Tasmota version with sensors. **RECOMMENDED RELEASE BINARY**
 - **tasmota-BG.bin** to **tasmota-TW.bin** = The Tasmota version in different languages.
-- **tasmota-basic.bin** = The Basic version without most sensors.
+- **tasmota-lite.bin** = The Lite version without most sensors.
 - **tasmota-knx.bin** = The Knx version without some features but adds KNX support.
 - **tasmota-sensors.bin** = The Sensors version adds more useful sensors.
 - **tasmota-ir** = The InfraRed Receiver and transmitter version allowing all available protocols provided by library IRremoteESP8266 but without most other features.
@@ -54,6 +54,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change GUI Shutter button text to Up and Down Arrows based on PR by Xavier Muller (#7166)
 - Change amount of supported DHT sensors from 3 to 4 by Xavier Muller (#7167)
 - Change some Settings locations freeing up space for future single char allowing variable length text
+- Change tasmota-basic.bin and FIRMWARE_BASIC to tasmota-lite.bin and FIRMWARE_LITE
 - Fix flashing H801 led at boot by Stefan Hadinger (#7165, #649)
 - Fix duplicated ``Backlog`` when using Event inside a Backlog by Adrian Scillato (#7178, #7147)
 - Fix Gui Timer when using a negative zero offset of -00:00 by Peter Ooms (#7174)
@@ -71,3 +72,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add reporting of raw weight to JSON from HX711 to overcome auto-tare functionality by @tobox (#7171)
 - Add Zigbee support for Xiaomi Aqara Vibration Sensor and Presence Sensor by Stefan Hadinger
 - Add Shutter functions ramp up/down and MQTT reporting by Stefan Bode
+- Add fallback support from version 8.x
+- Add restriction if fallback firmware is incompatible with settings resulting in unreachable device

@@ -570,9 +570,7 @@ void McpSnsInit(void)
     } else {
       mcp_buffer = (char*)(malloc(MCP_BUFFER_SIZE));
     }
-    if (pin[GPIO_MCP39F5_RST] < 99) {
-      digitalWrite(pin[GPIO_MCP39F5_RST], 1);  // MCP enable
-    }
+    DigitalWrite(GPIO_MCP39F5_RST, 1);  // MCP enable
   } else {
     energy_flg = ENERGY_NONE;
   }

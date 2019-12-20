@@ -511,6 +511,8 @@ const char kUploadErrors[] PROGMEM =
   D_UPLOAD_ERR_1 "|" D_UPLOAD_ERR_2 "|" D_UPLOAD_ERR_3 "|" D_UPLOAD_ERR_4 "|" D_UPLOAD_ERR_5 "|" D_UPLOAD_ERR_6 "|" D_UPLOAD_ERR_7 "|" D_UPLOAD_ERR_8 "|" D_UPLOAD_ERR_9
 #ifdef USE_RF_FLASH
   "|" D_UPLOAD_ERR_10 "|" D_UPLOAD_ERR_11 "|" D_UPLOAD_ERR_12 "|" D_UPLOAD_ERR_13
+#else
+  "|" D_UPLOAD_ERR_14
 #endif
   ;
 
@@ -2137,12 +2139,11 @@ void HandleUploadDone(void)
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
   if (Web.upload_error) {
-//    WSContentSend_P(PSTR(COLOR_TEXT_WARNING "'>" D_FAILED "</font></b><br><br>"));
     WSContentSend_P(PSTR("%06x'>" D_FAILED "</font></b><br><br>"), WebColor(COL_TEXT_WARNING));
 #ifdef USE_RF_FLASH
     if (Web.upload_error < 14) {
 #else
-    if (Web.upload_error < 10) {
+    if (Web.upload_error < 11) {
 #endif
       GetTextIndexed(error, sizeof(error), Web.upload_error -1, kUploadErrors);
     } else {
@@ -2374,6 +2375,11 @@ void HandleUploadLoop(void)
       if (!Update.end(true)) { // true to set the size to the current progress
         if (_serialoutput) { Update.printError(Serial); }
         Web.upload_error = 6;  // Upload failed. Enable logging 3
+        return;
+      }
+      if (OtaVersion() < VERSION_COMPATIBLE) {
+        AbandonOta();
+        Web.upload_error = 10;  // Not compatible
         return;
       }
     }

@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "擦除 RF 芯片失败"
 #define D_UPLOAD_ERR_12 "写入 RF 芯片失败"
 #define D_UPLOAD_ERR_13 "解码 RF 固件失败"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "上传错误代码"
 
 #define D_ENTER_COMMAND "输入命令"

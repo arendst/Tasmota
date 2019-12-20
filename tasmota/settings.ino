@@ -343,6 +343,44 @@ void SetFlashModeDout(void)
   delete[] _buffer;
 }
 
+uint32_t OtaVersion(void)
+{
+  eboot_command ebcmd;
+  eboot_command_read(&ebcmd);
+  uint32_t start_address = ebcmd.args[0];
+  uint32_t end_address = start_address + (ebcmd.args[2] & 0xFFFFF000) + FLASH_SECTOR_SIZE;
+  uint32_t* buffer = new uint32_t[FLASH_SECTOR_SIZE / 4];
+
+  uint32_t version[3] = { 0 };
+  bool found = false;
+  for (uint32_t address = start_address; address < end_address; address = address + FLASH_SECTOR_SIZE) {
+    ESP.flashRead(address, (uint32_t*)buffer, FLASH_SECTOR_SIZE);
+    for (uint32_t i = 0; i < (FLASH_SECTOR_SIZE / 4); i++) {
+      version[0] = version[1];
+      version[1] = version[2];
+      version[2] = buffer[i];
+      if ((version[0] == MARKER_START) && (version[2] == MARKER_END)) {
+        found = true;
+        break;
+      }
+    }
+    if (found) { break; }
+  }
+  delete[] buffer;
+
+  if (!found) { version[1] = 0; }
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("OTA: Version 0x%08X, Compatible 0x%08X"), version[1], VERSION_COMPATIBLE);
+
+  return version[1];
+}
+
+void AbandonOta(void)
+{
+  uint32_t eboot_magic = 0;
+  ESP.rtcUserMemoryWrite(0, (uint32_t*)&eboot_magic, sizeof(eboot_magic));
+}
+
 void SettingsBufferFree(void)
 {
   if (settings_buffer != nullptr) {
@@ -491,7 +529,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me)
 
   int too_long = (char_len + diff) - settings_text_size;
   if (too_long > 0) {
-//    AddLog_P2(LOG_LEVEL_INFO, PSTR("CFG: Text too long by %d char(s)"), too_long);
+//    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Text too long by %d char(s)"), too_long);
     return false;  // Replace text too long
   }
 
@@ -503,6 +541,8 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me)
   memmove_P(Settings.ota_url + start_pos, replace, replace_len);
   // Fill for future use
   memset(Settings.ota_url + char_len + diff, 0x00, settings_text_size - char_len - diff);
+
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d"), GetSettingsTextLen(), settings_text_size);
 
   return true;
 }

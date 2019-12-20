@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "Wissen RF chip mislukt"
 #define D_UPLOAD_ERR_12 "Opwaarderen RF chip mislukt"
 #define D_UPLOAD_ERR_13 "Decoderen RF bestand mislukt"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Opwaardeer foutcode"
 
 #define D_ENTER_COMMAND "Geef opdracht"

@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "No se pudo borrar en el chip RF"
 #define D_UPLOAD_ERR_12 "No se puedo escribir en el chip RF"
 #define D_UPLOAD_ERR_13 "No se pudo decodificar firmware RF"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Código de error de carga"
 
 #define D_ENTER_COMMAND "Ingresar comando"
