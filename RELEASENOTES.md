@@ -73,3 +73,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add Zigbee support for Xiaomi Aqara Vibration Sensor and Presence Sensor by Stefan Hadinger
 - Add Shutter functions ramp up/down and MQTT reporting by Stefan Bode
 - Add fallback support from version 8.x
+- Add restriction if fallback firmware is incompatible with settings resulting in unreachable device

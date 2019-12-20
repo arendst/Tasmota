@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "Chyba zmazania RF chipu"
 #define D_UPLOAD_ERR_12 "Chyba pri zápise do RF chipu"
 #define D_UPLOAD_ERR_13 "Chyba dekódovania RF firmwaru"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Chyba nahrávania"
 
 #define D_ENTER_COMMAND "Vlož príkaz"

@@ -13,6 +13,7 @@
 - Add Zigbee send automatic ZigbeeRead after sending a command
 - Add Zigbee improving Occupancy:false detection for Aqara sensor
 - Add fallback support from version 8.x
+- Add restriction if fallback firmware is incompatible with settings resulting in unreachable device
 
 ### 7.1.2.5 20191213
 

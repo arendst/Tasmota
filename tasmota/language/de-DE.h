@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "RF Chip löschen fehlgeschlagen"
 #define D_UPLOAD_ERR_12 "RF Chip beschreiben fehlgeschlagen"
 #define D_UPLOAD_ERR_13 "RF Firmware ungültig"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Upload Fehler Nummer"
 
 #define D_ENTER_COMMAND "Befehl eingeben"

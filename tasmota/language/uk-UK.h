@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "Помилка стирання чипу RF"
 #define D_UPLOAD_ERR_12 "Помилка запису чипу RF"
 #define D_UPLOAD_ERR_13 "Помилка розкодування прошивки RF"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Код помилки завантаження"
 
 #define D_ENTER_COMMAND "Уведіть команду"

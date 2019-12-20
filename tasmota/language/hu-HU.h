@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "Az RF chip törlése sikertelen"
 #define D_UPLOAD_ERR_12 "Az RF chip írása sikertelen"
 #define D_UPLOAD_ERR_13 "Az RF firmware dekódolása sikertelen"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Feltöltési hibakód"
 
 #define D_ENTER_COMMAND "Kérem a parancsot..."
