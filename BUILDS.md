@@ -1,6 +1,6 @@
 ## Available Features and Sensors
 
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 |-----------------------|---------|-------|--------|-----|---------|----|---------|--------
 | MY_LANGUAGE en-GB     | x | x | x | x | x | x | x |
 | USE_ARDUINO_OTA       | - | - | - | - | - | - | - |
@@ -27,7 +27,7 @@
 | USE_EXPRESSION        | - | - | - | - | - | - | - |
 | SUPPORT_IF_STATEMENT  | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | ROTARY_V1             | - | - | - | - | - | - | - |
 | USE_SONOFF_RF         | - | - | x | x | x | - | - |
 | USE_RF_FLASH          | - | - | x | x | x | - | - |
@@ -42,7 +42,7 @@
 | USE_DEEPSLEEP         | - | - | x | - | x | - | - |
 | USE_EXS_DIMMER        | - | - | x | x | - | - | - |
 |                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_LIGHT             | - | x | x | x | x | x | x |
 | USE_WS2812            | - | - | x | x | x | - | x |
 | USE_WS2812_DMA        | - | - | - | - | - | - | - |
@@ -69,7 +69,7 @@
 | USE_MAX31855          | - | - | - | - | x | - | - |
 | USE_MAX31865          | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_I2C               | - | - | x | x | x | - | x |
 | USE_SHT               | - | - | x | x | x | - | x |
 | USE_HTU               | - | - | x | x | x | - | x |
@@ -106,8 +106,9 @@
 | USE_PAJ7620           | - | - | - | - | - | - | - |
 | USE_PCF8574           | - | - | - | - | - | - | - |
 | USE_HIH6              | - | - | - | - | x | - | - |
+| USE_DHT12             | - | - | - | - | x | - | - |
 |                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
 | USE_MHZ19             | - | - | x | x | x | - | x |
 | USE_SENSEAIR          | - | - | x | x | x | - | x |
@@ -133,7 +134,7 @@
 | USE_A4988_STEPPER     | - | - | - | - | - | - | - |
 | USE_TASMOTA_SLAVE     | - | - | - | - | - | - | - | Experimental
 |                       |   |   |   |   |   |   |   |
-| Feature or Sensor     | minimal | basic | tasmota | knx | sensors | ir | display | Remarks
+| Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_DISPLAY           | - | - | - | - | - | - | x |
 | USE_DISPLAY_LCD       | - | - | - | - | - | - | x |
 | USE_DISPLAY_SSD1306   | - | - | - | - | - | - | x |
