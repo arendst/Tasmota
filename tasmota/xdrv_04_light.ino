@@ -1766,11 +1766,13 @@ void LightApplyFade(void) {
       // Note: Settings.light_speed is the number of half-seconds for a 100% fade,
       // i.e. light_speed=1 means 1024 steps in 10 ticks (500ms)
       Light.fade_duration = (distance * Settings.light_speed * 10) / 1024;
-      // Also postpone the save_data for the duration of the Fade (in seconds)
-      uint32_t delay_seconds = 1 + (Light.fade_duration + 19) / 20;   // add one more second
-      // AddLog_P2(LOG_LEVEL_INFO, PSTR("delay_seconds %d, save_data_counter %d"), delay_seconds, save_data_counter);
-      if (save_data_counter < delay_seconds) {
-        save_data_counter = delay_seconds;      // pospone
+      if (Settings.save_data) {
+        // Also postpone the save_data for the duration of the Fade (in seconds)
+        uint32_t delay_seconds = 1 + (Light.fade_duration + 19) / 20;   // add one more second
+        // AddLog_P2(LOG_LEVEL_INFO, PSTR("delay_seconds %d, save_data_counter %d"), delay_seconds, save_data_counter);
+        if (save_data_counter < delay_seconds) {
+          save_data_counter = delay_seconds;      // pospone
+        }
       }
     } else {
       // no fade needed, we keep the duration at zero, it will fallback directly to end of fade

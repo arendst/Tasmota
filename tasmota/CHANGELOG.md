@@ -11,6 +11,7 @@
 - Change some more Settings locations freeing up space for future single char allowing variable length text
 - Change tasmota-basic.bin and FIRMWARE_BASIC to tasmota-lite.bin and FIRMWARE_LITE
 - Fix DeepSleep in case there is no wifi by Stefan Bode (#7213)
+- Fix Fade would ignore ``savedata 0`` and store to flash anyways (#7262)
 - Add Zigbee send automatic ZigbeeRead after sending a command
 - Add Zigbee improving Occupancy:false detection for Aqara sensor
 - Add fallback support from version 8.x

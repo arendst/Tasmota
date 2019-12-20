@@ -14,6 +14,8 @@ See [migration path](https://tasmota.github.io/docs/#/Upgrading?id=migration-pat
 4. Migrate to **Sonoff-Tasmota 6.x**
 5. Migrate to **Tasmota 7.x**
 
+Only this version will support fallback from version 8.x.
+
 ## Supported Core versions
 
 This release will be supported from ESP8266/Arduino library Core version **2.6.1** due to reported security and stability issues on previous Core version.
@@ -59,6 +61,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix duplicated ``Backlog`` when using Event inside a Backlog by Adrian Scillato (#7178, #7147)
 - Fix Gui Timer when using a negative zero offset of -00:00 by Peter Ooms (#7174)
 - Fix DeepSleep in case there is no wifi by Stefan Bode (#7213)
+- Fix Fade would ignore ``savedata 0`` and store to flash anyways (#7262)
 - Add command ``SerialConfig 0..23`` or ``SerialConfig 8N1`` to select Serial Config based in PR by Luis Teixeira (#7108)
 - Add command ``Sensor34 9 <weight code>`` to set minimum delta to trigger JSON message by @tobox (#7188)
 - Add rule var ``%topic%`` by Adrian Scillato (#5522)
