@@ -585,7 +585,9 @@ void StartWebserver(int type, IPAddress ipweb)
       WebServer->on("/rs", HandleRestoreConfiguration);
       WebServer->on("/rt", HandleResetConfiguration);
       WebServer->on("/in", HandleInformation);
+#ifdef USE_PROMETHEUS
       WebServer->on("/metrics", HandleMetrics);
+#endif  // USE_PROMETHEUS
       XdrvCall(FUNC_WEB_ADD_HANDLER);
       XsnsCall(FUNC_WEB_ADD_HANDLER);
 #endif  // Not FIRMWARE_MINIMAL
@@ -1964,6 +1966,7 @@ void HandleRestoreConfiguration(void)
 
 /*-------------------------------------------------------------------------------------------*/
 
+#ifdef USE_PROMETHEUS
 void HandleMetrics(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
@@ -1993,6 +1996,7 @@ void HandleMetrics(void)
 
   WSContentStop();
 }
+#endif  // USE_PROMETHEUS
 
 /*-------------------------------------------------------------------------------------------*/
 
