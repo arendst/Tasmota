@@ -28,82 +28,94 @@
 #define XSNS_58              58
 #define XI2C_41              41  // See I2CDEVICES.md
 
-#define DHT12_ADDR          (uint8_t) 0x5C
+#define DHT12_ADDR           0x5C
 
-char    dht12_name[] = "DHT12-0x00";
-uint8_t dht12_count = 0;
-float   dht12_temperature = NAN;
-float   dht12_humidity = NAN;
+struct DHT12 {
+  float   temperature = NAN;
+  float   humidity = NAN;
+  uint8_t valid = 0;
+  uint8_t count = 0;
+  char    name[6] = "DHT12";
+} Dht12;
 
 bool Dht12Read(void)
 {
-    Wire.beginTransmission(DHT12_ADDR);
-    Wire.write(0);
-    if (Wire.endTransmission() != 0) {
-        return false;
-    }
-    delay(50);
-    Wire.requestFrom(DHT12_ADDR, (uint8_t) 5);
-    delay(5);
-    uint8_t humidity      = Wire.read();
-    uint8_t humidityTenth = Wire.read();
-    uint8_t temp          = Wire.read();
-    uint8_t tempTenth     = Wire.read();
-    uint8_t checksum      = Wire.read();
-    dht12_humidity    = (float) humidity + (float) humidityTenth/(float) 10.0;
-    dht12_temperature = (float) temp     + (float) tempTenth/(float) 10.0;
-    return (!isnan(dht12_temperature) && !isnan(dht12_humidity));
+  if (Dht12.valid) { Dht12.valid--; }
+
+  Wire.beginTransmission(DHT12_ADDR);
+  Wire.write(0);
+  if (Wire.endTransmission() != 0) { return false; }
+
+  delay(50);
+
+  Wire.requestFrom(DHT12_ADDR, 5);
+  delay(5);
+  uint8_t humidity      = Wire.read();
+  uint8_t humidityTenth = Wire.read();
+  uint8_t temp          = Wire.read();
+  uint8_t tempTenth     = Wire.read();
+  uint8_t checksum      = Wire.read();
+
+  Dht12.humidity    = ConvertHumidity( (float) humidity + (float) humidityTenth/(float) 10.0 );
+  Dht12.temperature = ConvertTemp( (float) temp + (float) tempTenth/(float) 10.0 );
+
+  if (isnan(Dht12.temperature) || isnan(Dht12.humidity)) { return false; }
+
+  Dht12.valid = SENSOR_MAX_MISS;
+  return true;
 }
+
+/********************************************************************************************/
 
 void Dht12Detect(void)
 {
-    if (Dht12Read()) {
-        snprintf_P(log_data, sizeof(log_data), S_LOG_I2C_FOUND_AT, dht12_name, DHT12_ADDR);
-        AddLog(LOG_LEVEL_DEBUG);
-        snprintf_P(dht12_name, sizeof(dht12_name), PSTR("%s%c0x%02X"), "DHT12", IndexSeparator(), DHT12_ADDR);
-        dht12_count = 1;
-    }
+  if (I2cActive(DHT12_ADDR)) { return; }
+
+  if (Dht12Read()) {
+    I2cSetActiveFound(DHT12_ADDR, Dht12.name);
+    Dht12.count = 1;
+  }
 }
 
-void Dht12Show(bool json)
+void Dht12EverySecond(void)
 {
-  if (dht12_count > 0)
-  {
-    char temperature[33];
-    dtostrfd(dht12_temperature, Settings.flag2.temperature_resolution, temperature);
-    char humidity[33];
-    dtostrfd(dht12_humidity, Settings.flag2.humidity_resolution, humidity);
-
-    if (json)
-    {
-      ResponseAppend_P(JSON_SNS_TEMPHUM, dht12_name, temperature, humidity);
-#ifdef USE_DOMOTICZ
-      if ((0 == tele_period))
-      {
-        DomoticzTempHumSensor(temperature, humidity);
-      }
-#endif // USE_DOMOTICZ
-
-#ifdef USE_KNX
-      if (0 == tele_period)
-      {
-        KnxSensor(KNX_TEMPERATURE, dht12_temperature);
-        KnxSensor(KNX_HUMIDITY, dht12_humidity);
-      }
-#endif // USE_KNX
-
-#ifdef USE_WEBSERVER
-    }
-    else
-    {
-      WSContentSend_PD(HTTP_SNS_TEMP, dht12_name, temperature, TempUnit());
-      WSContentSend_PD(HTTP_SNS_HUM, dht12_name, humidity);
-#endif // USE_WEBSERVER
+  if (uptime &1) {
+    // DHT12: 55mS
+    if (!Dht12Read()) {
+      AddLogMissed(Dht12.name, Dht12.valid);
     }
   }
 }
 
+void Dht12Show(bool json)
+{
+  if (Dht12.valid) {
+    char temperature[33];
+    dtostrfd(Dht12.temperature, Settings.flag2.temperature_resolution, temperature);
+    char humidity[33];
+    dtostrfd(Dht12.humidity, Settings.flag2.humidity_resolution, humidity);
 
+    if (json) {
+      ResponseAppend_P(JSON_SNS_TEMPHUM, Dht12.name, temperature, humidity);
+#ifdef USE_DOMOTICZ
+      if ((0 == tele_period)) {
+        DomoticzTempHumSensor(temperature, humidity);
+      }
+#endif // USE_DOMOTICZ
+#ifdef USE_KNX
+      if (0 == tele_period) {
+        KnxSensor(KNX_TEMPERATURE, Dht12.temperature);
+        KnxSensor(KNX_HUMIDITY, Dht12.humidity);
+      }
+#endif // USE_KNX
+#ifdef USE_WEBSERVER
+    } else {
+      WSContentSend_PD(HTTP_SNS_TEMP, Dht12.name, temperature, TempUnit());
+      WSContentSend_PD(HTTP_SNS_HUM, Dht12.name, humidity);
+#endif // USE_WEBSERVER
+    }
+  }
+}
 
 /*********************************************************************************************\
  * Interface
@@ -118,10 +130,10 @@ bool Xsns58(uint8_t function)
   if (FUNC_INIT == function) {
     Dht12Detect();
   }
-  else if (dht12_count > 0) {
+  else if (Dht12.count) {
     switch (function) {
     case FUNC_EVERY_SECOND:
-      Dht12Read();
+      Dht12EverySecond();
       break;
     case FUNC_JSON_APPEND:
       Dht12Show(1);
