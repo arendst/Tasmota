@@ -1,5 +1,13 @@
 ## Unreleased (development)
 
+### 7.2.0.1 20191221
+
+## Released
+
+### 7.2.0 20191221
+
+- Release
+
 ### 7.1.2.6 20191214
 
 - Change some more Settings locations freeing up space for future single char allowing variable length text
@@ -50,8 +58,6 @@
 - Add rule triggers ``tele_power1#state`` and multiple ``tele-wifi1#xxx`` by Adrian Scillato (#7093)
 - Add experimental support for stepper motor shutter control by Stefan Bode
 - Add optional USE_MQTT_TLS to tasmota-minimal.bin by Bohdan Kmit (#7115)
-
-## Released
 
 ### 7.1.2 20191206
 

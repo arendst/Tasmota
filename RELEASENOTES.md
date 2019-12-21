@@ -49,7 +49,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 7.1.2.6
+### Version 7.2.0 Constance
 
 - Change Exception reporting removing exception details from ``Status 1`` and consolidated in ``Status 12`` if available
 - Change HTTP CORS from command ``SetOption73 0/1`` to ``Cors <cors_domain>`` allowing user control of specific CORS domain by Shantur Rathore (#7066)
