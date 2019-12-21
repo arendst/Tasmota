@@ -3,6 +3,7 @@
 ### 8.0.0.1 20191221
 
 - Change Settings text handling allowing variable length text within a total text pool of 699 characters
+- Change Smoother ``Fade`` using 100Hz instead of 20Hz animation (#7179)
 
 ## Released
 
