@@ -5,6 +5,9 @@
 ### 7.2.0 20191221
 
 - Release
+- Fix Arduino IDE compile error (#7277)
+- Fix restore ShutterAccuracy, MqttLog, WifiConfig, WifiPower and SerialConfig (#7281)
+- Fix no AP on initial install (#7282)
 
 ### 7.1.2.6 20191214
 

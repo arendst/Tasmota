@@ -1327,8 +1327,8 @@ void SettingsDelta(void)
       memset((char*)&Settings +0x1D6, 0x00, 16);
     }
     if (Settings.version < 0x0606000F) {
-      Settings.shutter_accuracy = 0;
-      Settings.mqttlog_level = MQTT_LOG_LEVEL;
+      Settings.ex_shutter_accuracy = 0;
+      Settings.ex_mqttlog_level = MQTT_LOG_LEVEL;
     }
     if (Settings.version < 0x06060011) {
       Settings.param[P_BACKLOG_DELAY] = MIN_BACKLOG_DELAY;
@@ -1368,7 +1368,7 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x06060015) {
       if ((EX_WIFI_SMARTCONFIG == Settings.sta_config) || (EX_WIFI_WPSCONFIG == Settings.sta_config)) {
-        Settings.sta_config = WIFI_MANAGER;
+        Settings.ex_sta_config = WIFI_MANAGER;
       }
     }
 
@@ -1381,10 +1381,10 @@ void SettingsDelta(void)
       SettingsEnableAllI2cDrivers();
     }
     if (Settings.version < 0x07000004) {
-      Settings.wifi_output_power = 170;
+      Settings.ex_wifi_output_power = 170;
     }
     if (Settings.version < 0x07010202) {
-      Settings.serial_config = TS_SERIAL_8N1;
+      Settings.ex_serial_config = TS_SERIAL_8N1;
     }
     if (Settings.version < 0x07010204) {
       if (Settings.flag3.ex_cors_enabled == 1) {
