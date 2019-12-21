@@ -108,7 +108,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
       fulltopic += FPSTR(MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
     }
     for (uint32_t i = 0; i < 3; i++) {
-      if ('\0' == SettingsText(SET_MQTTPREFIX1 + i)) {
+      if (!strlen(SettingsText(SET_MQTTPREFIX1 + i))) {
         char temp[TOPSZ];
         SettingsUpdateText(SET_MQTTPREFIX1 + i, GetTextIndexed(temp, sizeof(temp), i, kPrefixes));
       }
