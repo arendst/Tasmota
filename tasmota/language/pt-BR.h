@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "Comandar"
 #define D_CONFIGURATION "Configuração"
 #define D_INFORMATION "Informação"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "Atualização de Firmware"
 #define D_CONSOLE "Console"
 #define D_CONFIRM_RESTART "Confirmar o reinicio"

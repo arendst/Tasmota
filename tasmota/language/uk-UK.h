@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "Переключити"
 #define D_CONFIGURATION "Конфігурація"
 #define D_INFORMATION "Інформація"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "Оновлення прошивки"
 #define D_CONSOLE "Консоль"
 #define D_CONFIRM_RESTART "Підтвердити перезавантаження"

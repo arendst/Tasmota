@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "Megfordítás"
 #define D_CONFIGURATION "Beállítások"
 #define D_INFORMATION "Információ"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "Firmware frissítés"
 #define D_CONSOLE "Konzol"
 #define D_CONFIRM_RESTART "Biztosan újraindítsam a modult?"

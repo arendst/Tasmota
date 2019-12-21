@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "状态切换"
 #define D_CONFIGURATION "设置"
 #define D_INFORMATION "信息"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "固件升级"
 #define D_CONSOLE "控制台"
 #define D_CONFIRM_RESTART "确认重启"

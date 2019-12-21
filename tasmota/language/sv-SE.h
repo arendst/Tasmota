@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "Växla"
 #define D_CONFIGURATION "Konfigurering"
 #define D_INFORMATION "Information"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "Uppgradera firmware"
 #define D_CONSOLE "Konsol"
 #define D_CONFIRM_RESTART "Bekräfta omstart"

@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "Превключване"
 #define D_CONFIGURATION "Конфигурация"
 #define D_INFORMATION "Информация"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "Обновяване на фърмуера"
 #define D_CONSOLE "Конзола"
 #define D_CONFIRM_RESTART "Потвърдете рестартирането"

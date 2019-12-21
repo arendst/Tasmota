@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "Εναλλαγή"
 #define D_CONFIGURATION "Ρυθμίσεις"
 #define D_INFORMATION "Πληροφορίες"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "Αναβάθμιση"
 #define D_CONSOLE "Κονσόλα"
 #define D_CONFIRM_RESTART "Επιβεβαίωση επανεκκίνησης"

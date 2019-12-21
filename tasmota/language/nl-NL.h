@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "Toggle"  // Wissel, Tuimel
 #define D_CONFIGURATION "Configuratie"
 #define D_INFORMATION "Informatie"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "Opwaarderen"
 #define D_CONSOLE "Console"
 #define D_CONFIRM_RESTART "Bevestig herstart"

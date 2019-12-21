@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "Prepínač"
 #define D_CONFIGURATION "Nastavenia"
 #define D_INFORMATION "Informácie"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "Aktualizácia firmware"
 #define D_CONSOLE "Konzola"
 #define D_CONFIRM_RESTART "Potvrdenie reštartu"

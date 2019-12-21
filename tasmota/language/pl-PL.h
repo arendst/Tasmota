@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "Załącz/Wyłącz"
 #define D_CONFIGURATION "Konfiguracja"
 #define D_INFORMATION "Informacje"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "Aktualizacja oprogramowania"
 #define D_CONSOLE "Konsola"
 #define D_CONFIRM_RESTART "Potwierdź restart"

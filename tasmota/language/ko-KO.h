@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "켜기/끄기"
 #define D_CONFIGURATION "설정 메뉴"
 #define D_INFORMATION "정보"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "펌웨어 업그레이드"
 #define D_CONSOLE "콘솔"
 #define D_CONFIRM_RESTART "재시작"

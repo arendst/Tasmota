@@ -239,6 +239,7 @@
 #define D_BUTTON_TOGGLE "מצב"
 #define D_CONFIGURATION "הגדרות"
 #define D_INFORMATION "מידע"
+#define D_METRICS "Metrics"
 #define D_FIRMWARE_UPGRADE "שדרוג קושחה"
 #define D_CONSOLE "קונסול"
 #define D_CONFIRM_RESTART "אישור הפעלה מחדש"
