@@ -1355,7 +1355,7 @@ void SettingsDelta(void)
       } else {
         char aws_mqtt_host[66];
         snprintf_P(aws_mqtt_host, sizeof(aws_mqtt_host), PSTR("%s%s"), temp9, temp7);
-        SettingsUpdateText(SET_MQTT_HOST, mqtt_host);
+        SettingsUpdateText(SET_MQTT_HOST, aws_mqtt_host);
         SettingsUpdateText(SET_MQTT_USER, "");
       }
 #else
