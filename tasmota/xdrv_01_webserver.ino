@@ -1973,8 +1973,10 @@ void HandleMetrics(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_METRICS);
 
-  WSContentStart_P(S_METRICS);
   EnergyUsage u = Settings.energy_usage;
+
+  WSContentBegin(200, CT_PLAIN);
+
   WSContentSend_P(PSTR("# TYPE usage1_kWhtotal counter\n"));
   WSContentSend_P(PSTR("usage1_kWhtotal %f\n"), (double)u.usage1_kWhtotal);
   WSContentSend_P(PSTR("# TYPE usage2_kWhtotal counter\n"));
@@ -1988,7 +1990,7 @@ void HandleMetrics(void)
   WSContentSend_P(PSTR("# TYPE last_usage_kWhtotal gauge\n"));
   WSContentSend_P(PSTR("last_usage_kWhtotal %f\n"), (double)u.last_usage_kWhtotal);
 
-  WSContentStop();
+  WSContentEnd();
 }
 #endif  // USE_PROMETHEUS
 
