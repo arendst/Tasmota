@@ -231,13 +231,6 @@ typedef struct {
 
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
-/*
-struct SYSCFG {
-  unsigned long cfg_holder;                // 000 Pre v6 header
-  unsigned long save_flag;                 // 004
-  unsigned long version;                   // 008
-  unsigned long bootcount;                 // 00C
-*/
 struct SYSCFG {
   uint16_t      cfg_holder;                // 000 v6 header
   uint16_t      cfg_size;                  // 002
@@ -273,8 +266,6 @@ struct SYSCFG {
   uint8_t       ex_adc_param_type;         // 1D5
 
   uint8_t       ex_free_1d6[10];           // 1D6
-
-  // End of single char array of 456 chars max (phase 3)
 
   SysBitfield4  ex_flag4;                  // 1E0
   uint8_t       ex_serial_config;          // 1E4

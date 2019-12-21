@@ -1,6 +1,8 @@
 ## Unreleased (development)
 
-### 7.2.0.1 20191221
+### 8.0.0.1 20191221
+
+- Change Settings text handling allowing variable length text within a total text pool of 699 characters
 
 ## Released
 
