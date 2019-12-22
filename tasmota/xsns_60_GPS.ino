@@ -1,5 +1,5 @@
 /*
-  xsns_58_GPS_UBX.ino - GPS UBLOX support for Sonoff-Tasmota
+  xsns_60_GPS.ino - GPS UBLOX support for Sonoff-Tasmota
 
   Copyright (C) 2019  Theo Arends, Christian Baars and Adrian Scillato
 
@@ -44,46 +44,46 @@ The serial pins are GPX_RX and GPS_TX, no further installation steps needed. To 
   
 ## Commands:  
   
-+ sensor58 0  
++ sensor60 0  
   write to all available sectors, then restart and overwrite the older ones
   
-+ sensor58 1  
++ sensor60 1  
   write to all available sectors, then restart and overwrite the older ones
   
-+ sensor58 2  
++ sensor60 2  
   filter out horizontal drift noise
   
-+ sensor58 3  
++ sensor60 3  
   turn off noise filter
   
-+ sensor58 4  
++ sensor60 4  
   start recording, new data will be appended
   
-+ sensor58 5  
++ sensor60 5  
   start new recording, old data will lost
   
-+ sensor58 6  
++ sensor60 6  
   stop recording, download link will be visible in Web-UI
   
-+ sensor58 7  
++ sensor60 7  
   send mqtt on new postion + TELE -> consider to set TELE to a very high value
   
-+ sensor58 8  
++ sensor60 8  
   only TELE message
   
-+ sensor58 9  
++ sensor60 9  
   start NTP-server
   
-+ sensor58 10  
++ sensor60 10  
   deactivate NTP-server
   
-+ sensor58 11  
++ sensor60 11  
   force update of Tasmota-system-UTC with every new GPS-time-message
   
-+ sensor58 12  
++ sensor60 12  
   do not update of Tasmota-system-UTC with every new GPS-time-message
   
-+ sensor58 13  
++ sensor60 13  
   set latitude and longitude in settings  
   
   
@@ -91,7 +91,7 @@ The serial pins are GPX_RX and GPS_TX, no further installation steps needed. To 
 ## Rules examples for SSD1306 32x128  
   
   
-rule1 on tele-GPS#lat do DisplayText [s1p21c1l01f1]LAT: %value% endon on tele-GPS#lon do DisplayText [s1p21c1l2]LON: %value% endon on switch1#state==3 do sensor58 4 endon on switch1#state==2 do sensor58 6 endon
+rule1 on tele-GPS#lat do DisplayText [s1p21c1l01f1]LAT: %value% endon on tele-GPS#lon do DisplayText [s1p21c1l2]LON: %value% endon on switch1#state==3 do sensor60 4 endon on switch1#state==2 do sensor60 6 endon
 
 rule2  on tele-GPS#int>9 do DisplayText [f0c9l4]I%value%  endon  on tele-GPS#int<10 do DisplayText [f0c9l4]I0%value%  endon on tele-GPS#fil==1 do DisplayText [f0c18l4]F endon on tele-GPS#fil==0 do DisplayText [f0c18l4]N endon
 
@@ -793,9 +793,9 @@ bool UBXCmd(void) {
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_58        58
+#define XSNS_60        60
 
-bool Xsns58(uint8_t function)
+bool Xsns60(uint8_t function)
 {
   bool result = false;
 
@@ -805,7 +805,7 @@ bool Xsns58(uint8_t function)
         UBXDetect();
         break;
       case FUNC_COMMAND_SENSOR:
-	if (XSNS_58 == XdrvMailbox.index){
+	if (XSNS_60 == XdrvMailbox.index){
           result = UBXCmd();
         }  
         break;
@@ -843,4 +843,4 @@ bool Xsns58(uint8_t function)
   return result;
 }
 
-#endif  // USE_GPS_UBX
+#endif  // USE_GPS
