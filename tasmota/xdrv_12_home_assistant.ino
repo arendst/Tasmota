@@ -340,10 +340,10 @@ void HAssAnnounceButtonSwitch(uint8_t device, char* topic, uint8_t present, uint
     if (strlen(prefix) > 0 ) TryResponseAppend_P(HASS_DISCOVER_TOPIC_PREFIX, prefix);
     if (toggle) {
       if (!key) {
-        TryResponseAppend_P(HASS_DISCOVER_BUTTON_TOGGLE, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT1 + toggle?2:1));
+        TryResponseAppend_P(HASS_DISCOVER_BUTTON_TOGGLE, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT3));
       } else {TryResponseAppend_P(HASS_DISCOVER_SWITCH_TOGGLE);}
     }
-    else TryResponseAppend_P(HASS_DISCOVER_BUTTON_SWITCH_ONOFF, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT1 + toggle?2:1), SettingsText(SET_STATE_TXT1));
+    else TryResponseAppend_P(HASS_DISCOVER_BUTTON_SWITCH_ONOFF, PSTR(D_RSLT_STATE), SettingsText(SET_STATE_TXT2), SettingsText(SET_STATE_TXT1));
 
     TryResponseAppend_P(PSTR("}"));
   }

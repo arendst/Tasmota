@@ -512,6 +512,7 @@ const char kUploadErrors[] PROGMEM =
 #ifdef USE_RF_FLASH
   "|" D_UPLOAD_ERR_10 "|" D_UPLOAD_ERR_11 "|" D_UPLOAD_ERR_12 "|" D_UPLOAD_ERR_13
 #endif
+  "|" D_UPLOAD_ERR_14
   ;
 
 const uint16_t DNS_PORT = 53;
@@ -2137,12 +2138,12 @@ void HandleUploadDone(void)
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
   if (Web.upload_error) {
-//    WSContentSend_P(PSTR(COLOR_TEXT_WARNING "'>" D_FAILED "</font></b><br><br>"));
     WSContentSend_P(PSTR("%06x'>" D_FAILED "</font></b><br><br>"), WebColor(COL_TEXT_WARNING));
 #ifdef USE_RF_FLASH
-    if (Web.upload_error < 14) {
+    if (Web.upload_error < 15) {
 #else
-    if (Web.upload_error < 10) {
+    if ((Web.upload_error < 10) || (14 == Web.upload_error)) {
+      if (14 == Web.upload_error) { Web.upload_error = 10; }
 #endif
       GetTextIndexed(error, sizeof(error), Web.upload_error -1, kUploadErrors);
     } else {
@@ -2237,7 +2238,7 @@ void HandleUploadLoop(void)
           Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_EFM8BB1;
 
-          Web.upload_error = SnfBrUpdateInit();
+          Web.upload_error = SnfBrUpdateInit();  // 10, 11
           if (Web.upload_error != 0) { return; }
         } else
 #endif  // USE_RF_FLASH
@@ -2245,7 +2246,7 @@ void HandleUploadLoop(void)
         if ((WEMOS == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO SLAVE hex file
           Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_TASMOTASLAVE;
-          Web.upload_error = TasmotaSlave_UpdateInit();
+          Web.upload_error = TasmotaSlave_UpdateInit();  // 0
           if (Web.upload_error != 0) { return; }
         } else
 #endif
@@ -2280,13 +2281,13 @@ void HandleUploadLoop(void)
         free(efm8bb1_update);
         efm8bb1_update = nullptr;
         if (result != 0) {
-          Web.upload_error = abs(result);  // 2 = Not enough space, 8 = File invalid
+          Web.upload_error = abs(result);  // 2 = Not enough space, 8 = File invalid, 12, 13
           return;
         }
       }
       ssize_t result = rf_search_and_write(upload.buf, upload.currentSize);
       if (result < 0) {
-        Web.upload_error = abs(result);
+        Web.upload_error = abs(result);  // 8, 12, 13
         return;
       } else if (result > 0) {
         if ((size_t)result > upload.currentSize) {
@@ -2374,6 +2375,11 @@ void HandleUploadLoop(void)
       if (!Update.end(true)) { // true to set the size to the current progress
         if (_serialoutput) { Update.printError(Serial); }
         Web.upload_error = 6;  // Upload failed. Enable logging 3
+        return;
+      }
+      if (OtaVersion() < VERSION_COMPATIBLE) {
+        AbandonOta();
+        Web.upload_error = 14;  // Not compatible
         return;
       }
     }

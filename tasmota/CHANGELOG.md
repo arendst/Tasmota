@@ -1,11 +1,30 @@
 ## Unreleased (development)
 
+### 8.0.0.1 20191221
+
+- Change Settings text handling allowing variable length text within a total text pool of 699 characters
+- Change Smoother ``Fade`` using 100Hz instead of 20Hz animation (#7179)
+
+## Released
+
+### 7.2.0 20191221
+
+- Release
+- Fix Arduino IDE compile error (#7277)
+- Fix restore ShutterAccuracy, MqttLog, WifiConfig, WifiPower and SerialConfig (#7281)
+- Fix no AP on initial install (#7282)
+
 ### 7.1.2.6 20191214
 
 - Change some more Settings locations freeing up space for future single char allowing variable length text
+- Change tasmota-basic.bin and FIRMWARE_BASIC to tasmota-lite.bin and FIRMWARE_LITE
+- Fix DeepSleep in case there is no wifi by Stefan Bode (#7213)
+- Fix Fade would ignore ``savedata 0`` and store to flash anyways (#7262)
 - Add Zigbee send automatic ZigbeeRead after sending a command
 - Add Zigbee improving Occupancy:false detection for Aqara sensor
-- Add fallback functionality from next version 7.1.2.7
+- Add fallback support from version 8.x
+- Add restriction if fallback firmware is incompatible with settings resulting in unreachable device
+- Add support for DHT12 Temperature and Humidity sensor by Stefan Oskamp
 
 ### 7.1.2.5 20191213
 
@@ -45,8 +64,6 @@
 - Add rule triggers ``tele_power1#state`` and multiple ``tele-wifi1#xxx`` by Adrian Scillato (#7093)
 - Add experimental support for stepper motor shutter control by Stefan Bode
 - Add optional USE_MQTT_TLS to tasmota-minimal.bin by Bohdan Kmit (#7115)
-
-## Released
 
 ### 7.1.2 20191206
 

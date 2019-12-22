@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "RF 칩 삭제 실패"
 #define D_UPLOAD_ERR_12 "RF 칩 쓰기 실패"
 #define D_UPLOAD_ERR_13 "RF 펌웨어 decode 실패"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "업로드 에러 코드"
 
 #define D_ENTER_COMMAND "커맨드 입력"

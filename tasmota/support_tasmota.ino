@@ -108,7 +108,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
       fulltopic += FPSTR(MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
     }
     for (uint32_t i = 0; i < 3; i++) {
-      if ('\0' == SettingsText(SET_MQTTPREFIX1 + i)) {
+      if (!strlen(SettingsText(SET_MQTTPREFIX1 + i))) {
         char temp[TOPSZ];
         SettingsUpdateText(SET_MQTTPREFIX1 + i, GetTextIndexed(temp, sizeof(temp), i, kPrefixes));
       }
@@ -166,9 +166,7 @@ void SetLatchingRelay(power_t lpower, uint32_t state)
 
   for (uint32_t i = 0; i < devices_present; i++) {
     uint32_t port = (i << 1) + ((latching_power >> i) &1);
-    if (pin[GPIO_REL1 +port] < 99) {
-      digitalWrite(pin[GPIO_REL1 +port], bitRead(rel_inverted, port) ? !state : state);
-    }
+    DigitalWrite(GPIO_REL1 +port, bitRead(rel_inverted, port) ? !state : state);
   }
 }
 
@@ -226,8 +224,8 @@ void SetDevicePower(power_t rpower, uint32_t source)
   else {
     for (uint32_t i = 0; i < devices_present; i++) {
       power_t state = rpower &1;
-      if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
-        digitalWrite(pin[GPIO_REL1 +i], bitRead(rel_inverted, i) ? !state : state);
+      if (i < MAX_RELAYS) {
+        DigitalWrite(GPIO_REL1 +i, bitRead(rel_inverted, i) ? !state : state);
       }
       rpower >>= 1;
     }
@@ -293,7 +291,7 @@ void SetLedPowerIdx(uint32_t led, uint32_t state)
     } else {
       led_power &= (0xFF ^ mask);
     }
-    digitalWrite(pin[GPIO_LED1 + led], bitRead(led_inverted, led) ? !state : state);
+    DigitalWrite(GPIO_LED1 + led, bitRead(led_inverted, led) ? !state : state);
   }
 }
 
@@ -868,13 +866,21 @@ void Every250mSeconds(void)
       }
       if (90 == ota_state_flag) {  // Allow MQTT to reconnect
         ota_state_flag = 0;
+        Response_P(PSTR("{\"" D_CMND_UPGRADE "\":\""));
         if (ota_result) {
 //          SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
-          Response_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
+          if (OtaVersion() < VERSION_COMPATIBLE) {
+            AbandonOta();
+            ResponseAppend_P(PSTR(D_JSON_FAILED " " D_UPLOAD_ERR_14));
+          } else {
+            ResponseAppend_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
+            restart_flag = 2;
+          }
         } else {
-          Response_P(PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
+          ResponseAppend_P(PSTR(D_JSON_FAILED " %s"), ESPhttpUpdate.getLastErrorString().c_str());
         }
-        restart_flag = 2;          // Restart anyway to keep memory clean webserver
+        ResponseAppend_P(PSTR("\"}"));
+//        restart_flag = 2;          // Restart anyway to keep memory clean webserver
         MqttPublishPrefixTopic_P(STAT, PSTR(D_CMND_UPGRADE));
       }
     }

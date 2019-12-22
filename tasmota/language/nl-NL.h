@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v6.7.0
+ * Updated until v8.0.0
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "Wissen RF chip mislukt"
 #define D_UPLOAD_ERR_12 "Opwaarderen RF chip mislukt"
 #define D_UPLOAD_ERR_13 "Decoderen RF bestand mislukt"
+#define D_UPLOAD_ERR_14 "Niet geschikt"
 #define D_UPLOAD_ERROR_CODE "Opwaardeer foutcode"
 
 #define D_ENTER_COMMAND "Geef opdracht"
@@ -478,12 +479,12 @@
 #define D_PARTICALS_BEYOND "Stofdeeltjes"
 
 // xsns_32_mpu6050.ino
-#define D_AX_AXIS "Accel. X-Axis"
-#define D_AY_AXIS "Accel. Y-Axis"
-#define D_AZ_AXIS "Accel. Z-Axis"
-#define D_GX_AXIS "Gyro X-Axis"
-#define D_GY_AXIS "Gyro Y-Axis"
-#define D_GZ_AXIS "Gyro Z-Axis"
+#define D_AX_AXIS "Versn. X-as"
+#define D_AY_AXIS "Versn. Y-as"
+#define D_AZ_AXIS "Versn. Z-as"
+#define D_GX_AXIS "Gyro X-as"
+#define D_GY_AXIS "Gyro Y-as"
+#define D_GZ_AXIS "Gyro Z-as"
 
 // xsns_34_hx711.ino
 #define D_HX_CAL_REMOVE "Verwijder gewicht"
@@ -626,9 +627,9 @@
 #define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 #define D_SENSOR_DEEPSLEEP     "DeepSleep"
 #define D_SENSOR_EXS_ENABLE    "EXS Enable"
-#define D_SENSOR_SLAVE_TX    "Slave TX"
-#define D_SENSOR_SLAVE_RX    "Slave RX"
-#define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_SLAVE_TX      "Slave TX"
+#define D_SENSOR_SLAVE_RX      "Slave RX"
+#define D_SENSOR_SLAVE_RESET   "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
 

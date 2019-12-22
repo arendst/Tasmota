@@ -103,7 +103,7 @@ void DeepSleepPrepare(void)
   // if more then 10% timeslip = 0 == non valid wakeup; maybe manual
   timeslip = (timeslip < -(int32_t)Settings.deepsleep) ? 0 : (timeslip > (int32_t)Settings.deepsleep) ? 0 : 1;
   if (timeslip) {
-    RtcSettings.deepsleep_slip = (Settings.deepsleep + RtcSettings.nextwakeup - UtcTime()) * RtcSettings.deepsleep_slip / (Settings.deepsleep - (millis() / 1000));
+    RtcSettings.deepsleep_slip = (Settings.deepsleep + RtcSettings.nextwakeup - UtcTime()) * RtcSettings.deepsleep_slip / tmax((Settings.deepsleep - (millis() / 1000)),5);
     // Avoid crazy numbers. Again maximum 10% deviation.
     RtcSettings.deepsleep_slip = tmin(tmax(RtcSettings.deepsleep_slip, 9000), 11000);
     RtcSettings.nextwakeup += Settings.deepsleep;

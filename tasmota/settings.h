@@ -91,7 +91,7 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
     uint32_t grouptopic_mode : 1;          // bit 25 (v7.0.0.1)  - SetOption75 - GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)
     uint32_t bootcount_update : 1;         // bit 26 (v7.0.0.4)  - SetOption76 - Enable incrementing bootcount when deepsleep is enabled
     uint32_t slider_dimmer_stay_on : 1;    // bit 27 (v7.0.0.6)  - SetOption77 - Do not power off if slider moved to far left
-    uint32_t spare28 : 1;
+    uint32_t compatibility_check : 1;      // bit 28 (v7.1.2.6)  - SetOption78 - Disable OTA compatibility check
     uint32_t spare29 : 1;
     uint32_t shutter_mode : 1;             // bit 30 (v6.6.0.14) - SetOption80 - Enable shutter support
     uint32_t pcf8574_ports_inverted : 1;   // bit 31 (v6.6.0.14) - SetOption81 - Invert all ports on PCF8574 devices
@@ -231,13 +231,6 @@ typedef struct {
 
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
-/*
-struct SYSCFG {
-  unsigned long cfg_holder;                // 000 Pre v6 header
-  unsigned long save_flag;                 // 004
-  unsigned long version;                   // 008
-  unsigned long bootcount;                 // 00C
-*/
 struct SYSCFG {
   uint16_t      cfg_holder;                // 000 v6 header
   uint16_t      cfg_size;                  // 002
@@ -273,8 +266,6 @@ struct SYSCFG {
   uint8_t       ex_adc_param_type;         // 1D5
 
   uint8_t       ex_free_1d6[10];           // 1D6
-
-  // End of single char array of 456 chars max (phase 3)
 
   SysBitfield4  ex_flag4;                  // 1E0
   uint8_t       ex_serial_config;          // 1E4
@@ -428,7 +419,7 @@ struct SYSCFG {
   unsigned long weight_calibration;        // 7C4
   unsigned long energy_frequency_calibration;  // 7C8 also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
-  char          mems[MAX_RULE_MEMS][10];   // 7CE
+  char          mems[MAX_RULE_MEMS][10];   // 7CE - Used by scripter as script_pram
 
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
 

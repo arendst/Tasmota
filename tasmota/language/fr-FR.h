@@ -353,6 +353,7 @@
 #define D_UPLOAD_ERR_11 "Erreur d'effacement du chip RF"
 #define D_UPLOAD_ERR_12 "Erreur d'accès en écriture au chip RF"
 #define D_UPLOAD_ERR_13 "Erreur de décodage du firmware RF"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Code d'erreur téléchargement"
 
 #define D_ENTER_COMMAND "Saisir une commande"

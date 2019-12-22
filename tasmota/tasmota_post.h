@@ -21,7 +21,7 @@
 #define _TASMOTA_POST_H_
 
 /*********************************************************************************************\
- * Function declarations
+ * Function prototypes
 \*********************************************************************************************/
 
 // Needed for core 2.3.0 compilation (#6721)
@@ -39,6 +39,7 @@ void KNX_CB_Action(message_t const &msg, void *arg);
 //#endif  // USE_KNX
 
 char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, char inbetween = '\0');
+extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack, uint32_t stack_end);
 
 /*********************************************************************************************\
  * Default global defines
@@ -135,6 +136,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #define USE_SGP30                                // Add I2C code for SGP30 sensor (+1k1 code)
 //#define USE_SI1145                               // Add I2C code for SI1145/46/47 sensor (+1k code)
 #define USE_LM75AD                               // Add I2C code for LM75AD sensor (+0k5 code)
+#define USE_DHT12                                // Add I2C code for DHT12 temperature and humidity sensor (+0k7 code)
 //#define USE_APDS9960                             // Add I2C code for APDS9960 Proximity Sensor. Disables SHT and VEML6070 (+4k7 code)
 //#define USE_MCP230xx                             // Enable MCP23008/MCP23017 - Must define I2C Address in #define USE_MCP230xx_ADDR below - range 0x20 - 0x27 (+4k7 code)
 //  #define USE_MCP230xx_ADDR 0x20                 // Enable MCP23008/MCP23017 I2C Address to use (Must be within range 0x20 through 0x27 - set according to your wired setup)
@@ -390,17 +392,17 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #endif  // FIRMWARE_IR
 
 /*********************************************************************************************\
- * [tasmota-basic.bin]
+ * [tasmota-lite.bin]
  * Provide an image without sensors
 \*********************************************************************************************/
 
-#ifdef FIRMWARE_BASIC
+#ifdef FIRMWARE_LITE
 
 #undef CODE_IMAGE
 #define CODE_IMAGE 4
 
 #undef APP_SLEEP
-#define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_BASIC
+#define APP_SLEEP 1                              // Default to sleep = 1 for FIRMWARE_LITE
 
 #undef USE_ARDUINO_OTA                           // Disable support for Arduino OTA
 #undef USE_DOMOTICZ                              // Disable Domoticz
@@ -502,7 +504,7 @@ char* ToHex_P(const unsigned char * in, size_t insz, char * out, size_t outsz, c
 #undef CODE_IMAGE
 #define CODE_IMAGE 1
 
-#undef FIRMWARE_BASIC                           // Disable tasmota-basic with no sensors
+#undef FIRMWARE_LITE                            // Disable tasmota-lite with no sensors
 #undef FIRMWARE_SENSORS                         // Disable tasmota-sensors with useful sensors enabled
 #undef FIRMWARE_KNX_NO_EMULATION                // Disable tasmota-knx with KNX but without Emulation
 #undef FIRMWARE_DISPLAYS                        // Disable tasmota-display with display drivers enabled
