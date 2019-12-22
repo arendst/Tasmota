@@ -68,7 +68,7 @@
 // Structs
 #include "settings.h"
 
-const char kCodeImage[] PROGMEM = "tasmota|minimal|sensors|knx|basic|display|ir";
+const char kCodeImage[] PROGMEM = "tasmota|minimal|sensors|knx|lite|display|ir";
 
 /*********************************************************************************************\
  * Global variables

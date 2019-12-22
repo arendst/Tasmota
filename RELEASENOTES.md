@@ -57,6 +57,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change amount of supported DHT sensors from 3 to 4 by Xavier Muller (#7167)
 - Change some Settings locations freeing up space for future single char allowing variable length text
 - Change tasmota-basic.bin and FIRMWARE_BASIC to tasmota-lite.bin and FIRMWARE_LITE
+- Change basic version string to lite (#7291)
 - Fix flashing H801 led at boot by Stefan Hadinger (#7165, #649)
 - Fix duplicated ``Backlog`` when using Event inside a Backlog by Adrian Scillato (#7178, #7147)
 - Fix Gui Timer when using a negative zero offset of -00:00 by Peter Ooms (#7174)

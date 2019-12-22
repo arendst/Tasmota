@@ -9,6 +9,7 @@
 - Fix restore ShutterAccuracy, MqttLog, WifiConfig, WifiPower and SerialConfig (#7281)
 - Fix no AP on initial install (#7282)
 - Fix failing downgrade (#7285)
+- Change basic version string to lite (#7291)
 
 ### 7.1.2.6 20191214
 
