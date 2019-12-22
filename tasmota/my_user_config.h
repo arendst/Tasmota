@@ -530,6 +530,7 @@
   #define USE_ZIGBEE_PRECFGKEY_L 0x0F0D0B0907050301L  // note: changing requires to re-pair all devices
   #define USE_ZIGBEE_PRECFGKEY_H 0x0D0C0A0806040200L  // note: changing requires to re-pair all devices
   #define USE_ZIGBEE_PERMIT_JOIN false           // don't allow joining by default
+  #define USE_ZIGBEE_COALESCE_ATTR_TIMER 350     // timer to coalesce attribute values (in ms)
 
 // -- Other sensors/drivers -----------------------
 
