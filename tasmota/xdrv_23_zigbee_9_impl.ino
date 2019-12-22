@@ -423,25 +423,6 @@ void zigbeeZCLSendStr(uint16_t dstAddr, uint8_t endpoint, const char *data) {
   ResponseCmndDone();
 }
 
-// Get an JSON attribute, with case insensitive key search
-JsonVariant &getCaseInsensitive(const JsonObject &json, const char *needle) {
-  // key can be in PROGMEM
-  if ((nullptr == &json) || (nullptr == needle) || (0 == pgm_read_byte(needle))) {
-    return *(JsonVariant*)nullptr;
-  }
-
-  for (auto kv : json) {
-    const char *key = kv.key;
-    JsonVariant &value = kv.value;
-
-    if (0 == strcasecmp_P(key, needle)) {
-      return value;
-    }
-  }
-  // if not found
-  return *(JsonVariant*)nullptr;
-}
-
 void CmndZigbeeSend(void) {
   // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":1} }
   // ZigbeeSend { "device":"0x1234", "endpoint":"0x03", "send":{"Power":"3"} }

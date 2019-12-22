@@ -7,6 +7,7 @@
 - Change max number of rule ``Mem``s from 5 to 16 (#4933)
 - Change max number of rule ``Var``s from 5 to 16 (#4933)
 - Add support for max 150 characters in most command parameter strings (#3686, #4754)
+- Add Zigbee coalesce sensor attributes into a single message
 
 ## Released
 

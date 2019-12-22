@@ -42,6 +42,9 @@ typedef struct Z_Device {
   uint16_t              endpoint;       // endpoint to use for timer
   uint32_t              value;          // any raw value to use for the timer
   Z_DeviceTimer         func;           // function to call when timer occurs
+  // json buffer used for attribute reporting
+  DynamicJsonBuffer    *json_buffer;
+  JsonObject           *json;
 } Z_Device;
 
 // All devices are stored in a Vector
@@ -83,6 +86,11 @@ public:
   void resetTimer(uint32_t shortaddr);
   void setTimer(uint32_t shortaddr, uint32_t wait_ms, uint16_t cluster, uint16_t endpoint, uint32_t value, Z_DeviceTimer func);
   void runTimer(void);
+
+  // Append or clear attributes Json structure
+  void jsonClear(uint16_t shortaddr);
+  void jsonAppend(uint16_t shortaddr, JsonObject &values);
+  const JsonObject *jsonGet(uint16_t shortaddr);
 
 private:
   std::vector<Z_Device> _devices = {};
@@ -173,7 +181,9 @@ Z_Device & Z_Devices::createDeviceEntry(uint16_t shortaddr, uint64_t longaddr) {
                       std::vector<uint32_t>(),
                       std::vector<uint32_t>(),
                       0,0,0,0,
-                      nullptr };
+                      nullptr,
+                      nullptr, nullptr };
+  device.json_buffer = new DynamicJsonBuffer();
   _devices.push_back(device);
   return _devices.back();
 }
@@ -394,14 +404,55 @@ void Z_Devices::runTimer(void) {
 
     uint32_t timer = device.timer;
     if ((timer) && (timer <= now)) {
+      device.timer = 0;       // cancel the timer before calling, so the callback can set another timer
       // trigger the timer
       (*device.func)(device.shortaddr, device.cluster, device.endpoint, device.value);
-
-      device.timer = 0;       // cancel the timer
     }
   }
 }
 
+void Z_Devices::jsonClear(uint16_t shortaddr) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+
+  device.json = nullptr;
+  device.json_buffer->clear();
+}
+
+void Z_Devices::jsonAppend(uint16_t shortaddr, JsonObject &values) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return; }                 // don't crash if not found
+  if (&values == nullptr) { return; }
+
+  if (nullptr == device.json) {
+    device.json = &(device.json_buffer->createObject());
+  }
+  // copy all values from 'values' to 'json'
+  for (auto kv : values) {
+    String key_string = kv.key;
+    const char * key = key_string.c_str();
+    JsonVariant &val = kv.value;
+
+    device.json->remove(key_string);    // force remove to have metadata like LinkQuality at the end
+
+    if (val.is<char*>()) {
+      String sval = val.as<String>();       // force a copy of the String value
+      device.json->set(key_string, sval);
+    } else if (val.is<JsonArray>()) {
+      // todo
+    } else if (val.is<JsonObject>()) {
+      // todo
+    } else {
+      device.json->set(key_string, kv.value);
+    }
+  }
+}
+
+const JsonObject *Z_Devices::jsonGet(uint16_t shortaddr) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return nullptr; }                 // don't crash if not found
+  return device.json;
+}
 
 // Dump the internal memory of Zigbee devices
 // Mode = 1: simple dump of devices addresses and names

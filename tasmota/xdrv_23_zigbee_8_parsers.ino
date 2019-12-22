@@ -357,6 +357,39 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
+// Aqara Occupancy behavior: the Aqara device only sends Occupancy: true events every 60 seconds.
+// Here we add a timer so if we don't receive a Occupancy event for 90 seconds, we send Occupancy:false
+const uint32_t OCCUPANCY_TIMEOUT = 90 * 1000;  // 90 s
+
+void Z_AqaraOccupancy(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, const JsonObject *json) {
+  // Read OCCUPANCY value if any
+  const JsonVariant &val_endpoint = getCaseInsensitive(*json, PSTR(OCCUPANCY));
+  if (nullptr != &val_endpoint) {
+    uint32_t occupancy = strToUInt(val_endpoint);
+
+    if (occupancy) {
+      zigbee_devices.setTimer(shortaddr, OCCUPANCY_TIMEOUT, cluster, endpoint, 0, &Z_OccupancyCallback);
+    }
+  }
+}
+
+
+// Publish the received values once they have been coalesced
+int32_t Z_PublishAttributes(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, uint32_t value) {
+  const JsonObject *json = zigbee_devices.jsonGet(shortaddr);
+  if (json == nullptr) { return 0; }                 // don't crash if not found
+
+  // Post-provess for Aqara Presence Senson
+  Z_AqaraOccupancy(shortaddr, cluster, endpoint, json);
+
+  String msg = "";
+  json->printTo(msg);
+  zigbee_devices.jsonClear(shortaddr);
+  Response_P(PSTR("{\"" D_CMND_ZIGBEE_RECEIVED "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
+  XdrvRulesProcess();
+}
+
 int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   uint16_t        groupid = buf.get16(2);
   uint16_t        clusterid = buf.get16(4);
@@ -368,6 +401,8 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   uint8_t         securityuse = buf.get8(12);
   uint32_t        timestamp = buf.get32(13);
   uint8_t         seqnumber = buf.get8(17);
+
+  bool            defer_attributes = false;     // do we defer attributes reporting to coalesce
 
   zigbee_devices.updateLastSeen(srcaddr);
   ZCLFrame zcl_received = ZCLFrame::parseRawFrame(buf, 19, buf.get8(18), clusterid, groupid,
@@ -384,13 +419,13 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   JsonObject& json1 = json_root.createNestedObject(F(D_CMND_ZIGBEE_RECEIVED));
   JsonObject& json = json1.createNestedObject(shortaddr);
 
-  // TODO add name field if it is known
   if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
-   zcl_received.parseRawAttributes(json);
+    zcl_received.parseRawAttributes(json);
+    if (clusterid) { defer_attributes = true; }  // don't defer system Cluster=0 messages
   } else if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_READ_ATTRIBUTES_RESPONSE == zcl_received.getCmdId())) {
     zcl_received.parseReadAttributes(json);
   } else if (zcl_received.isClusterSpecificCommand()) {
-   zcl_received.parseClusterSpecificCommand(json);
+    zcl_received.parseClusterSpecificCommand(json);
   }
   String msg("");
   msg.reserve(100);
@@ -401,11 +436,18 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   // Add linkquality
   json[F(D_CMND_ZIGBEE_LINKQUALITY)] = linkquality;
 
-  msg = "";
-  json_root.printTo(msg);
-  Response_P(PSTR("%s"), msg.c_str());
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-  XdrvRulesProcess();
+  if (defer_attributes) {
+    // Prepare for publish
+    zigbee_devices.jsonAppend(srcaddr, json);
+    zigbee_devices.setTimer(srcaddr, USE_ZIGBEE_COALESCE_ATTR_TIMER, clusterid, srcendpoint, 0, &Z_PublishAttributes);
+  } else {
+    // Publish immediately
+    msg = "";
+    json_root.printTo(msg);
+    Response_P(PSTR("%s"), msg.c_str());
+    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
+    XdrvRulesProcess();
+  }
   return -1;
 }
 
