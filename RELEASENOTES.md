@@ -65,6 +65,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix Arduino IDE compile error (#7277)
 - Fix restore ShutterAccuracy, MqttLog, WifiConfig, WifiPower and SerialConfig (#7281)
 - Fix no AP on initial install (#7282)
+- Fix failing downgrade (#7285)
 - Add command ``SerialConfig 0..23`` or ``SerialConfig 8N1`` to select Serial Config based in PR by Luis Teixeira (#7108)
 - Add command ``Sensor34 9 <weight code>`` to set minimum delta to trigger JSON message by @tobox (#7188)
 - Add rule var ``%topic%`` by Adrian Scillato (#5522)
