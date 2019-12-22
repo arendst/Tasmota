@@ -73,7 +73,7 @@ const uint8_t MAX_PCF8574 = 8;              // Max number of PCF8574 devices
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
 
-const uint8_t MAX_RULE_MEMS = 5;            // Max number of saved vars
+const uint8_t MAX_RULE_MEMS = 16;           // Max number of saved vars
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 
 const char MQTT_TOKEN_PREFIX[] PROGMEM = "%prefix%";  // To be substituted by mqtt_prefix[x]
