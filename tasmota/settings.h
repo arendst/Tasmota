@@ -229,6 +229,7 @@ typedef struct {
   uint8_t dpid = 0;
 } TuyaFnidDpidMap;
 
+const uint32_t settings_text_size = 699;   // Settings.text_pool[size] = Settings.display_model (2D2) - Settings.text_pool (017)
 const uint8_t MAX_TUYA_FUNCTIONS = 16;
 
 struct SYSCFG {
@@ -242,21 +243,19 @@ struct SYSCFG {
   int16_t       save_data;                 // 014
   int8_t        timezone;                  // 016
 
-  // Start of single char array Settings.text
+  // Start of char array storing all parameter strings
 
-  char          ota_url[101];              // 017
-  char          mqtt_prefix[3][11];        // 07C
+  char          text_pool[101];            // 017 - was ota_url[101] - size is settings_text_size
 
-  uint8_t       ex_baudrate;               // 09D - Free since 6.6.0.9
+  char          ex_mqtt_prefix[3][11];     // 07C
+  uint8_t       ex_baudrate;               // 09D
   uint8_t       ex_seriallog_level;        // 09E
   uint8_t       ex_sta_config;             // 09F
   uint8_t       ex_sta_active;             // 0A0
-
-  char          sta_ssid[2][33];           // 0A1 - Keep together with sta_pwd as being copied as one chunck with reset 5
-  char          sta_pwd[2][65];            // 0E3 - Keep together with sta_ssid as being copied as one chunck with reset 5
-  char          hostname[33];              // 165
-  char          syslog_host[33];           // 186
-
+  char          ex_sta_ssid[2][33];        // 0A1
+  char          ex_sta_pwd[2][65];         // 0E3
+  char          ex_hostname[33];           // 165
+  char          ex_syslog_host[33];        // 186
   uint8_t       ex_rule_stop;              // 1A7
   uint16_t      ex_syslog_port;            // 1A8
   uint8_t       ex_syslog_level;           // 1AA
@@ -264,28 +263,23 @@ struct SYSCFG {
   uint8_t       ex_weblog_level;           // 1AC
   uint8_t       ex_mqtt_fingerprint[2][20];  // 1AD
   uint8_t       ex_adc_param_type;         // 1D5
-
   uint8_t       ex_free_1d6[10];           // 1D6
-
   SysBitfield4  ex_flag4;                  // 1E0
   uint8_t       ex_serial_config;          // 1E4
   uint8_t       ex_wifi_output_power;      // 1E5
   uint8_t       ex_shutter_accuracy;       // 1E6
   uint8_t       ex_mqttlog_level;          // 1E7
   uint8_t       ex_sps30_inuse_hours;      // 1E8
+  char          ex_mqtt_host[33];          // 1E9
+  uint16_t      ex_mqtt_port;              // 20A
+  char          ex_mqtt_client[33];        // 20C
+  char          ex_mqtt_user[33];          // 22D
+  char          ex_mqtt_pwd[33];           // 24E
+  char          ex_mqtt_topic[33];         // 26F
+  char          ex_button_topic[33];       // 290
+  char          ex_mqtt_grptopic[33];      // 2B1
 
-  char          mqtt_host[33];             // 1E9 - Keep together with below as being copied as one chunck with reset 6
-
-  uint16_t      ex_mqtt_port;              // 20A - Keep together
-
-  char          mqtt_client[33];           // 20C - Keep together
-  char          mqtt_user[33];             // 22D - Keep together
-  char          mqtt_pwd[33];              // 24E - Keep together
-  char          mqtt_topic[33];            // 26F - Keep together with above items as being copied as one chunck with reset 6
-  char          button_topic[33];          // 290
-  char          mqtt_grptopic[33];         // 2B1
-
-  // Optional end of single char array of 698 chars max (phase 5)
+  // End of single char array of 698 chars max
 
   uint8_t       display_model;             // 2D2
   uint8_t       display_mode;              // 2D3
@@ -306,8 +300,8 @@ struct SYSCFG {
   uint8_t       param[PARAM8_SIZE];        // 2FC  SetOption32 .. SetOption49
   int16_t       toffset[2];                // 30E
   uint8_t       display_font;              // 312
-  char          state_text[4][11];         // 313
 
+  char          ex_state_text[4][11];      // 313
   uint8_t       ex_energy_power_delta;     // 33F - Free since 6.6.0.20
 
   uint16_t      domoticz_update_timer;     // 340
@@ -342,8 +336,10 @@ struct SYSCFG {
   uint16_t      light_rotation;            // 39E
   SysBitfield3  flag3;                     // 3A0
   uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
-  char          friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
-  char          switch_topic[33];          // 430
+
+  char          ex_friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
+  char          ex_switch_topic[33];       // 430
+
   char          serial_delimiter;          // 451
   uint8_t       seriallog_level;           // 452
   uint8_t       sleep;                     // 453
@@ -367,15 +363,21 @@ struct SYSCFG {
   uint8_t       knx_GA_registered;         // 4A5  Number of Group Address to read
   uint16_t      light_wakeup;              // 4A6
   uint8_t       knx_CB_registered;         // 4A8  Number of Group Address to write
-  char          web_password[33];          // 4A9
+
+  char          ex_web_password[33];       // 4A9
+
   uint8_t       interlock[MAX_INTERLOCKS]; // 4CA
-  char          ntp_server[3][33];         // 4CE
+
+  char          ex_ntp_server[3][33];      // 4CE
+
   uint8_t       ina219_mode;               // 531
   uint16_t      pulse_timer[MAX_PULSETIMERS]; // 532
   uint16_t      button_debounce;           // 542
   uint32_t      ip_address[4];             // 544
   unsigned long energy_kWhtotal;           // 554
-  char          mqtt_fulltopic[100];       // 558
+
+  char          ex_mqtt_fulltopic[100];    // 558
+
   SysBitfield2  flag2;                     // 5BC
   unsigned long pulse_counter[MAX_COUNTERS];  // 5C0
   uint16_t      pulse_counter_type;        // 5D0
@@ -419,7 +421,7 @@ struct SYSCFG {
   unsigned long weight_calibration;        // 7C4
   unsigned long energy_frequency_calibration;  // 7C8 also used by HX711 to save last weight
   uint16_t      web_refresh;               // 7CC
-  char          mems[5][10];               // 7CE - Used by scripter as script_pram
+  char          script_pram[5][10];        // 7CE
 
   char          rules[MAX_RULE_SETS][MAX_RULE_SIZE];  // 800 uses 512 bytes in v5.12.0m, 3 x 512 bytes in v5.14.0b
 
@@ -443,7 +445,9 @@ struct SYSCFG {
   int8_t        temp_comp;                 // E9E
   uint8_t       weight_change;             // E9F
   uint8_t       web_color2[2][3];          // EA0 - Needs to be on integer / 3 distance from web_color
-  char          cors_domain[33];           // EA6
+
+  char          ex_cors_domain[33];        // EA6
+
   uint8_t       sta_config;                // EC7
   uint8_t       sta_active;                // EC8
   uint8_t       rule_stop;                 // EC9

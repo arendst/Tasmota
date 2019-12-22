@@ -488,15 +488,13 @@ void UpdateQuickPowerCycle(bool update)
  * Config Settings.text char array support
 \*********************************************************************************************/
 
-const uint32_t settings_text_size = 699;  // Settings.display_model (2D2) - Settings.ota_url (017)
-
 uint32_t GetSettingsTextLen(void)
 {
-  char* position = Settings.ota_url;
+  char* position = Settings.text_pool;
   for (uint32_t size = 0; size < SET_MAX; size++) {
     while (*position++ != '\0') { }
   }
-  return position - Settings.ota_url;
+  return position - Settings.text_pool;
 }
 
 bool SettingsUpdateText(uint32_t index, const char* replace_me)
@@ -512,18 +510,18 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me)
 
   uint32_t start_pos = 0;
   uint32_t end_pos = 0;
-  char* position = Settings.ota_url;
+  char* position = Settings.text_pool;
   for (uint32_t size = 0; size < SET_MAX; size++) {
     while (*position++ != '\0') { }
     if (1 == index) {
-      start_pos = position - Settings.ota_url;
+      start_pos = position - Settings.text_pool;
     }
     else if (0 == index) {
-      end_pos = position - Settings.ota_url -1;
+      end_pos = position - Settings.text_pool -1;
     }
     index--;
   }
-  uint32_t char_len = position - Settings.ota_url;
+  uint32_t char_len = position - Settings.text_pool;
 
   uint32_t current_len = end_pos - start_pos;
   int diff = replace_len - current_len;
@@ -539,12 +537,12 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me)
 
   if (diff != 0) {
     // Shift Settings.text up or down
-    memmove_P(Settings.ota_url + start_pos + replace_len, Settings.ota_url + end_pos, char_len - end_pos);
+    memmove_P(Settings.text_pool + start_pos + replace_len, Settings.text_pool + end_pos, char_len - end_pos);
   }
   // Replace text
-  memmove_P(Settings.ota_url + start_pos, replace, replace_len);
+  memmove_P(Settings.text_pool + start_pos, replace, replace_len);
   // Fill for future use
-  memset(Settings.ota_url + char_len + diff, 0x00, settings_text_size - char_len - diff);
+  memset(Settings.text_pool + char_len + diff, 0x00, settings_text_size - char_len - diff);
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_CONFIG "CR %d/%d"), GetSettingsTextLen(), settings_text_size);
 
@@ -557,7 +555,7 @@ char* SettingsText(uint32_t index)
     return nullptr;  // Setting not supported - internal error
   }
 
-  char* position = Settings.ota_url;
+  char* position = Settings.text_pool;
   for (;index > 0; index--) {
     while (*position++ != '\0') { }
   }
@@ -1301,9 +1299,9 @@ void SettingsDelta(void)
     }
     if (Settings.version < 0x07010204) {
       if (Settings.flag3.ex_cors_enabled == 1) {
-        strlcpy(Settings.cors_domain, CORS_ENABLED_ALL, sizeof(Settings.cors_domain));
+        strlcpy(Settings.ex_cors_domain, CORS_ENABLED_ALL, sizeof(Settings.ex_cors_domain));
       } else {
-        Settings.cors_domain[0] = 0;
+        Settings.ex_cors_domain[0] = 0;
       }
     }
     if (Settings.version < 0x07010205) {
@@ -1319,25 +1317,25 @@ void SettingsDelta(void)
     }
 
     if (Settings.version < 0x08000000) {
-      char temp[strlen(Settings.ota_url) +1];          strncpy(temp, Settings.ota_url, sizeof(temp));
-      char temp21[strlen(Settings.mqtt_prefix[0]) +1]; strncpy(temp21, Settings.mqtt_prefix[0], sizeof(temp21));
-      char temp22[strlen(Settings.mqtt_prefix[1]) +1]; strncpy(temp22, Settings.mqtt_prefix[1], sizeof(temp22));
-      char temp23[strlen(Settings.mqtt_prefix[2]) +1]; strncpy(temp23, Settings.mqtt_prefix[2], sizeof(temp23));
-      char temp31[strlen(Settings.sta_ssid[0]) +1];    strncpy(temp31, Settings.sta_ssid[0], sizeof(temp31));
-      char temp32[strlen(Settings.sta_ssid[1]) +1];    strncpy(temp32, Settings.sta_ssid[1], sizeof(temp32));
-      char temp41[strlen(Settings.sta_pwd[0]) +1];     strncpy(temp41, Settings.sta_pwd[0], sizeof(temp41));
-      char temp42[strlen(Settings.sta_pwd[1]) +1];     strncpy(temp42, Settings.sta_pwd[1], sizeof(temp42));
-      char temp5[strlen(Settings.hostname) +1];        strncpy(temp5, Settings.hostname, sizeof(temp5));
-      char temp6[strlen(Settings.syslog_host) +1];     strncpy(temp6, Settings.syslog_host, sizeof(temp6));
-      char temp7[strlen(Settings.mqtt_host) +1];       strncpy(temp7, Settings.mqtt_host, sizeof(temp7));
-      char temp8[strlen(Settings.mqtt_client) +1];     strncpy(temp8, Settings.mqtt_client, sizeof(temp8));
-      char temp9[strlen(Settings.mqtt_user) +1];       strncpy(temp9, Settings.mqtt_user, sizeof(temp9));
-      char temp10[strlen(Settings.mqtt_pwd) +1];       strncpy(temp10, Settings.mqtt_pwd, sizeof(temp10));
-      char temp11[strlen(Settings.mqtt_topic) +1];     strncpy(temp11, Settings.mqtt_topic, sizeof(temp11));
-      char temp12[strlen(Settings.button_topic) +1];   strncpy(temp12, Settings.button_topic, sizeof(temp12));
-      char temp13[strlen(Settings.mqtt_grptopic) +1];  strncpy(temp13, Settings.mqtt_grptopic, sizeof(temp13));
+      char temp[strlen(Settings.text_pool) +1];           strncpy(temp, Settings.text_pool, sizeof(temp));  // Was ota_url
+      char temp21[strlen(Settings.ex_mqtt_prefix[0]) +1]; strncpy(temp21, Settings.ex_mqtt_prefix[0], sizeof(temp21));
+      char temp22[strlen(Settings.ex_mqtt_prefix[1]) +1]; strncpy(temp22, Settings.ex_mqtt_prefix[1], sizeof(temp22));
+      char temp23[strlen(Settings.ex_mqtt_prefix[2]) +1]; strncpy(temp23, Settings.ex_mqtt_prefix[2], sizeof(temp23));
+      char temp31[strlen(Settings.ex_sta_ssid[0]) +1];    strncpy(temp31, Settings.ex_sta_ssid[0], sizeof(temp31));
+      char temp32[strlen(Settings.ex_sta_ssid[1]) +1];    strncpy(temp32, Settings.ex_sta_ssid[1], sizeof(temp32));
+      char temp41[strlen(Settings.ex_sta_pwd[0]) +1];     strncpy(temp41, Settings.ex_sta_pwd[0], sizeof(temp41));
+      char temp42[strlen(Settings.ex_sta_pwd[1]) +1];     strncpy(temp42, Settings.ex_sta_pwd[1], sizeof(temp42));
+      char temp5[strlen(Settings.ex_hostname) +1];        strncpy(temp5, Settings.ex_hostname, sizeof(temp5));
+      char temp6[strlen(Settings.ex_syslog_host) +1];     strncpy(temp6, Settings.ex_syslog_host, sizeof(temp6));
+      char temp7[strlen(Settings.ex_mqtt_host) +1];       strncpy(temp7, Settings.ex_mqtt_host, sizeof(temp7));
+      char temp8[strlen(Settings.ex_mqtt_client) +1];     strncpy(temp8, Settings.ex_mqtt_client, sizeof(temp8));
+      char temp9[strlen(Settings.ex_mqtt_user) +1];       strncpy(temp9, Settings.ex_mqtt_user, sizeof(temp9));
+      char temp10[strlen(Settings.ex_mqtt_pwd) +1];       strncpy(temp10, Settings.ex_mqtt_pwd, sizeof(temp10));
+      char temp11[strlen(Settings.ex_mqtt_topic) +1];     strncpy(temp11, Settings.ex_mqtt_topic, sizeof(temp11));
+      char temp12[strlen(Settings.ex_button_topic) +1];   strncpy(temp12, Settings.ex_button_topic, sizeof(temp12));
+      char temp13[strlen(Settings.ex_mqtt_grptopic) +1];  strncpy(temp13, Settings.ex_mqtt_grptopic, sizeof(temp13));
 
-      memset(Settings.ota_url, 0x00, settings_text_size);
+      memset(Settings.text_pool, 0x00, settings_text_size);
       SettingsUpdateText(SET_OTAURL, temp);
       SettingsUpdateText(SET_MQTTPREFIX1, temp21);
       SettingsUpdateText(SET_MQTTPREFIX2, temp22);
@@ -1349,7 +1347,7 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_HOSTNAME, temp5);
       SettingsUpdateText(SET_SYSLOG_HOST, temp6);
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-      if (!strlen(Settings.mqtt_user)) {
+      if (!strlen(Settings.ex_mqtt_user)) {
         SettingsUpdateText(SET_MQTT_HOST, temp7);
         SettingsUpdateText(SET_MQTT_USER, temp9);
       } else {
@@ -1368,26 +1366,26 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_MQTT_BUTTON_TOPIC, temp12);
       SettingsUpdateText(SET_MQTT_GRP_TOPIC, temp13);
 
-      SettingsUpdateText(SET_WEBPWD, Settings.web_password);
-      SettingsUpdateText(SET_CORS, Settings.cors_domain);
-      SettingsUpdateText(SET_MQTT_FULLTOPIC, Settings.mqtt_fulltopic);
-      SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, Settings.switch_topic);
-      SettingsUpdateText(SET_STATE_TXT1, Settings.state_text[0]);
-      SettingsUpdateText(SET_STATE_TXT2, Settings.state_text[1]);
-      SettingsUpdateText(SET_STATE_TXT3, Settings.state_text[2]);
-      SettingsUpdateText(SET_STATE_TXT4, Settings.state_text[3]);
-      SettingsUpdateText(SET_NTPSERVER1, Settings.ntp_server[0]);
-      SettingsUpdateText(SET_NTPSERVER2, Settings.ntp_server[1]);
-      SettingsUpdateText(SET_NTPSERVER3, Settings.ntp_server[2]);
-      SettingsUpdateText(SET_MEM1, Settings.mems[0]);
-      SettingsUpdateText(SET_MEM2, Settings.mems[1]);
-      SettingsUpdateText(SET_MEM3, Settings.mems[2]);
-      SettingsUpdateText(SET_MEM4, Settings.mems[3]);
-      SettingsUpdateText(SET_MEM5, Settings.mems[4]);
-      SettingsUpdateText(SET_FRIENDLYNAME1, Settings.friendlyname[0]);
-      SettingsUpdateText(SET_FRIENDLYNAME2, Settings.friendlyname[1]);
-      SettingsUpdateText(SET_FRIENDLYNAME3, Settings.friendlyname[2]);
-      SettingsUpdateText(SET_FRIENDLYNAME4, Settings.friendlyname[3]);
+      SettingsUpdateText(SET_WEBPWD, Settings.ex_web_password);
+      SettingsUpdateText(SET_CORS, Settings.ex_cors_domain);
+      SettingsUpdateText(SET_MQTT_FULLTOPIC, Settings.ex_mqtt_fulltopic);
+      SettingsUpdateText(SET_MQTT_SWITCH_TOPIC, Settings.ex_switch_topic);
+      SettingsUpdateText(SET_STATE_TXT1, Settings.ex_state_text[0]);
+      SettingsUpdateText(SET_STATE_TXT2, Settings.ex_state_text[1]);
+      SettingsUpdateText(SET_STATE_TXT3, Settings.ex_state_text[2]);
+      SettingsUpdateText(SET_STATE_TXT4, Settings.ex_state_text[3]);
+      SettingsUpdateText(SET_NTPSERVER1, Settings.ex_ntp_server[0]);
+      SettingsUpdateText(SET_NTPSERVER2, Settings.ex_ntp_server[1]);
+      SettingsUpdateText(SET_NTPSERVER3, Settings.ex_ntp_server[2]);
+      SettingsUpdateText(SET_MEM1, Settings.script_pram[0]);
+      SettingsUpdateText(SET_MEM2, Settings.script_pram[1]);
+      SettingsUpdateText(SET_MEM3, Settings.script_pram[2]);
+      SettingsUpdateText(SET_MEM4, Settings.script_pram[3]);
+      SettingsUpdateText(SET_MEM5, Settings.script_pram[4]);
+      SettingsUpdateText(SET_FRIENDLYNAME1, Settings.ex_friendlyname[0]);
+      SettingsUpdateText(SET_FRIENDLYNAME2, Settings.ex_friendlyname[1]);
+      SettingsUpdateText(SET_FRIENDLYNAME3, Settings.ex_friendlyname[2]);
+      SettingsUpdateText(SET_FRIENDLYNAME4, Settings.ex_friendlyname[3]);
     }
 
     Settings.version = VERSION;

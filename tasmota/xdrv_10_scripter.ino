@@ -4754,7 +4754,7 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_ram=Settings.rules[0];
       glob_script_mem.script_size=MAX_SCRIPT_SIZE;
       glob_script_mem.flags=0;
-      glob_script_mem.script_pram=(uint8_t*)Settings.mems[0];
+      glob_script_mem.script_pram=(uint8_t*)Settings.script_pram[0];
       glob_script_mem.script_pram_size=5*10;
 
 #ifdef USE_BUTTON_EVENT
