@@ -488,7 +488,7 @@ void UpdateQuickPowerCycle(bool update)
  * Config Settings.text char array support
 \*********************************************************************************************/
 
-const uint32_t settings_text_size = 699;  // Settings.flag4 (2D2) - Settings.ota_url (017)
+const uint32_t settings_text_size = 699;  // Settings.display_model (2D2) - Settings.ota_url (017)
 
 uint32_t GetSettingsTextLen(void)
 {
@@ -1280,7 +1280,7 @@ void SettingsDelta(void)
       Settings.ex_energy_power_delta = 0;
     }
     if (Settings.version < 0x06060015) {
-      if ((EX_WIFI_SMARTCONFIG == Settings.sta_config) || (EX_WIFI_WPSCONFIG == Settings.sta_config)) {
+      if ((EX_WIFI_SMARTCONFIG == Settings.ex_sta_config) || (EX_WIFI_WPSCONFIG == Settings.ex_sta_config)) {
         Settings.ex_sta_config = WIFI_MANAGER;
       }
     }
