@@ -511,6 +511,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
 
   // On/off cluster
   { 0x0006, 0x0000,  "Power",                &Z_Copy },
+  { 0x0006, 0x8000,  "Power",                &Z_Copy },   // See 7280
 
   // On/Off Switch Configuration cluster
   { 0x0007, 0x0000,  "SwitchType",           &Z_Copy },
