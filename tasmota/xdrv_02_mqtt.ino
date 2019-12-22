@@ -1190,7 +1190,7 @@ void HandleMqttConfiguration(void)
     return;
   }
 
-  char str[33];
+  char str[TOPSZ];
 
   WSContentStart_P(S_CONFIGURE_MQTT);
   WSContentSendStyle();
@@ -1209,7 +1209,7 @@ void HandleMqttConfiguration(void)
 
 void MqttSaveSettings(void)
 {
-  char tmp[100];
+  char tmp[TOPSZ];
   char stemp[TOPSZ];
   char stemp2[TOPSZ];
 

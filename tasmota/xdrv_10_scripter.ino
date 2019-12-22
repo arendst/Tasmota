@@ -56,7 +56,7 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_MAXSSIZE 48
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
-#define SCRIPT_MAXPERM (MAX_RULE_MEMS*10)-4/sizeof(float)
+#define SCRIPT_MAXPERM (5*10)-4/sizeof(float)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
@@ -1041,7 +1041,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
                 if (sp) strlcpy(sp,str_value,SCRIPT_MAXSSIZE);
                 return lp+len;
               }
-              
+
             } else {
               if (fp) {
                 if (!strncmp(vn.c_str(),"Epoch",5)) {
@@ -1575,7 +1575,7 @@ chknext:
 
       case 'r':
         if (!strncmp(vname,"ram",3)) {
-          fvar=glob_script_mem.script_mem_size+(glob_script_mem.script_size)+(MAX_RULE_MEMS*10);
+          fvar=glob_script_mem.script_mem_size+(glob_script_mem.script_size)+(5*10);
           goto exit;
         }
         break;
@@ -2995,7 +2995,7 @@ void ScripterEvery100ms(void) {
   if (fast_script==99) Run_Scripter(">F",2,0);
 }
 
-//mems[MAX_RULE_MEMS] is 50 bytes in 6.5
+//mems[5] is 50 bytes in 6.5
 // can hold 11 floats or floats + strings
 // should report overflow later
 void Scripter_save_pvars(void) {
@@ -3007,7 +3007,7 @@ void Scripter_save_pvars(void) {
     if (vtp[count].bits.is_permanent && !vtp[count].bits.is_string) {
       uint8_t index=vtp[count].index;
       mlen+=sizeof(float);
-      if (mlen>MAX_RULE_MEMS*10) {
+      if (mlen>5*10) {
         vtp[count].bits.is_permanent=0;
         return;
       }
@@ -3021,7 +3021,7 @@ void Scripter_save_pvars(void) {
       char *sp=glob_script_mem.glob_snp+(index*glob_script_mem.max_ssize);
       uint8_t slen=strlen(sp);
       mlen+=slen+1;
-      if (mlen>MAX_RULE_MEMS*10) {
+      if (mlen>5*10) {
         vtp[count].bits.is_permanent=0;
         return;
       }
@@ -4755,7 +4755,7 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_size=MAX_SCRIPT_SIZE;
       glob_script_mem.flags=0;
       glob_script_mem.script_pram=(uint8_t*)Settings.mems[0];
-      glob_script_mem.script_pram_size=MAX_RULE_MEMS*10;
+      glob_script_mem.script_pram_size=5*10;
 
 #ifdef USE_BUTTON_EVENT
       for (uint32_t cnt=0;cnt<MAX_KEYS;cnt++) {

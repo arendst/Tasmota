@@ -68,7 +68,7 @@
 // Structs
 #include "settings.h"
 
-const char kCodeImage[] PROGMEM = "tasmota|minimal|sensors|knx|basic|display|ir";
+const char kCodeImage[] PROGMEM = "tasmota|minimal|sensors|knx|lite|display|ir";
 
 /*********************************************************************************************\
  * Global variables
@@ -161,8 +161,8 @@ StateBitfield global_state;                 // Global states (currently Wifi and
 char my_version[33];                        // Composed version string
 char my_image[33];                          // Code image and/or commit
 char my_hostname[33];                       // Composed Wifi hostname
-char mqtt_client[33];                       // Composed MQTT Clientname
-char mqtt_topic[33];                        // Composed MQTT topic
+char mqtt_client[TOPSZ];                    // Composed MQTT Clientname
+char mqtt_topic[TOPSZ];                     // Composed MQTT topic
 char serial_in_buffer[INPUT_BUFFER_SIZE];   // Receive buffer
 char mqtt_data[MESSZ];                      // MQTT publish buffer and web page ajax buffer
 char log_data[LOGSZ];                       // Logging

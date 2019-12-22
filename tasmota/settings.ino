@@ -533,7 +533,7 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me)
 
   int too_long = (char_len + diff) - settings_text_size;
   if (too_long > 0) {
-//    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Text too long by %d char(s)"), too_long);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_CONFIG "Text overflow by %d char(s)"), too_long);
     return false;  // Replace text too long
   }
 

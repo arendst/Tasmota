@@ -326,7 +326,7 @@ void CmndStatus(void)
 
   uint32_t option = STAT;
   char stemp[200];
-  char stemp2[100];
+  char stemp2[TOPSZ];
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
   if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2)) && (!payload)) { option++; }  // TELE

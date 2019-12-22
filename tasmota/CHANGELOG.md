@@ -10,10 +10,13 @@
 
 - Change Settings text handling allowing variable length text within a total text pool of 699 characters
 - Change Smoother ``Fade`` using 100Hz instead of 20Hz animation (#7179)
+- Change max number of rule ``Mem``s from 5 to 16 (#4933)
+- Add support for max 150 characters in most command parameter strings (#3686, #4754)
 
 ### 7.2.0 20191221
 
 - Release
+- Change basic version string to lite (#7291)
 - Fix Arduino IDE compile error (#7277)
 - Fix restore ShutterAccuracy, MqttLog, WifiConfig, WifiPower and SerialConfig (#7281)
 - Fix no AP on initial install (#7282)
