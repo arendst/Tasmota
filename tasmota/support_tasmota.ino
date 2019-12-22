@@ -546,7 +546,7 @@ void MqttShowPWMState(void)
 
 void MqttShowState(void)
 {
-  char stemp1[33];
+  char stemp1[TOPSZ];
 
   ResponseAppendTime();
   ResponseAppend_P(PSTR(",\"" D_JSON_UPTIME "\":\"%s\",\"UptimeSec\":%u"), GetUptime().c_str(), UpTime());

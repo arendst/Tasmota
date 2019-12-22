@@ -70,10 +70,10 @@ const uint8_t MAX_XSNS_DRIVERS = 96;        // Max number of allowed sensor driv
 const uint8_t MAX_I2C_DRIVERS = 96;         // Max number of allowed i2c drivers
 const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
 const uint8_t MAX_PCF8574 = 8;              // Max number of PCF8574 devices
-const uint8_t MAX_RULE_MEMS = 5;            // Max number of saved vars
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
 
+const uint8_t MAX_RULE_MEMS = 5;            // Max number of saved vars
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 
 const char MQTT_TOKEN_PREFIX[] PROGMEM = "%prefix%";  // To be substituted by mqtt_prefix[x]
@@ -118,7 +118,7 @@ const uint8_t OTA_ATTEMPTS = 5;             // Number of times to try fetching t
 const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in (serial and http) command buffer
 const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
-const uint16_t TOPSZ = 100;                 // Max number of characters in topic string
+const uint16_t TOPSZ = 151;                 // Max number of characters in topic string
 const uint16_t LOGSZ = 700;                 // Max number of characters in log
 const uint16_t MIN_MESSZ = 893;             // Min number of characters in MQTT message
 

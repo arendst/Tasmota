@@ -1694,7 +1694,7 @@ void HandleWifiConfiguration(void)
 
 void WifiSaveSettings(void)
 {
-  char tmp[100];  // Max length is currently 65
+  char tmp[TOPSZ];  // Max length is currently 150
 
   WebGetArg("h", tmp, sizeof(tmp));
   SettingsUpdateText(SET_HOSTNAME, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp);
@@ -1757,7 +1757,7 @@ void HandleLoggingConfiguration(void)
 
 void LoggingSaveSettings(void)
 {
-  char tmp[100];  // Max length is currently 33
+  char tmp[TOPSZ];  // Max length is currently 33
 
   WebGetArg("l0", tmp, sizeof(tmp));
   SetSeriallog((!strlen(tmp)) ? SERIAL_LOG_LEVEL : atoi(tmp));
@@ -1843,7 +1843,7 @@ void HandleOtherConfiguration(void)
 
 void OtherSaveSettings(void)
 {
-  char tmp[128];
+  char tmp[TOPSZ];
   char webindex[5];
   char friendlyname[TOPSZ];
 
@@ -1890,7 +1890,7 @@ void HandleBackupConfiguration(void)
   WiFiClient myClient = WebServer->client();
   WebServer->setContentLength(sizeof(Settings));
 
-  char attachment[100];
+  char attachment[TOPSZ];
 
 //  char friendlyname[TOPSZ];
 //  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, SettingsText(SET_FRIENDLYNAME1)), my_version);
@@ -2095,12 +2095,12 @@ void HandleUpgradeFirmwareStart(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  char command[128];  // OtaUrl
+  char command[TOPSZ + 10];  // OtaUrl
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
   WifiConfigCounter();
 
-  char otaurl[101];
+  char otaurl[TOPSZ];
   WebGetArg("o", otaurl, sizeof(otaurl));
   if (strlen(otaurl)) {
     snprintf_P(command, sizeof(command), PSTR(D_CMND_OTAURL " %s"), otaurl);
@@ -2637,7 +2637,7 @@ int WebSend(char *buffer)
       if (user) {
         user = strtok_r(user, ":", &password);  // user = |admin|, password = |joker|
         if (user && password) {
-          char userpass[128];
+          char userpass[200];
           snprintf_P(userpass, sizeof(userpass), PSTR("user=%s&password=%s&"), user, password);
           url += userpass;                    // url = |http://192.168.178.86/cm?user=admin&password=joker&|
         }
