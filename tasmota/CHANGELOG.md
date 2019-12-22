@@ -5,6 +5,7 @@
 - Change Settings text handling allowing variable length text within a total text pool of 699 characters
 - Change Smoother ``Fade`` using 100Hz instead of 20Hz animation (#7179)
 - Change max number of rule ``Mem``s from 5 to 16 (#4933)
+- Change max number of rule ``Var``s from 5 to 16 (#4933)
 - Add support for max 150 characters in most command parameter strings (#3686, #4754)
 
 ## Released

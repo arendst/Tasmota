@@ -143,7 +143,7 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 \*********************************************************************************************/
 
 #define MAX_RULE_TIMERS        8            // Max number of rule timers (4 bytes / timer)
-#define MAX_RULE_VARS          5            // Max number of rule variables (10 bytes / variable)
+#define MAX_RULE_VARS          16           // Max number of rule variables (33 bytes / variable)
 
 /*
 // Removed from esp8266 core since 20171105
