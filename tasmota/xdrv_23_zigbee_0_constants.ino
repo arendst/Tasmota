@@ -19,6 +19,8 @@
 
 #ifdef USE_ZIGBEE
 
+#define OCCUPANCY "Occupancy"             // global define for Aqara
+
 typedef uint64_t Z_IEEEAddress;
 typedef uint16_t Z_ShortAddress;
 

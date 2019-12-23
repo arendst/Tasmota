@@ -480,8 +480,6 @@ typedef struct Z_AttributeConverter {
   Z_AttrConverter func;
 } Z_AttributeConverter;
 
-#define OCCUPANCY "Occupancy"             // global define for Aqara
-
 // list of post-processing directives
 const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0000, 0x0000,  "ZCLVersion",           &Z_Copy },
@@ -751,7 +749,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x0405, 0xFFFF,  nullptr,                &Z_Remove },     // Remove all other values
 
   // Occupancy Sensing cluster
-  { 0x0406, 0x0000,  OCCUPANCY,              &Z_AqaraOccupancy },    // Occupancy (map8)
+  { 0x0406, 0x0000,  OCCUPANCY,              &Z_Copy },    // Occupancy (map8)
   { 0x0406, 0x0001,  "OccupancySensorType",  &Z_Copy },    // OccupancySensorType
   { 0x0406, 0xFFFF,  nullptr,                &Z_Remove },    // Remove all other values
 
@@ -818,28 +816,12 @@ int32_t Z_FloatDiv10(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& 
   return 1;   // remove original key
 }
 
-
-// Aqara Occupancy behavior: the Aqara device only sends Occupancy: true events every 60 seconds.
-// Here we add a timer so if we don't receive a Occupancy event for 90 seconds, we send Occupancy:false
-const uint32_t OCCUPANCY_TIMEOUT = 90 * 1000;  // 90 s
-
+// Publish a message for `"Occupancy":0` when the timer expired
 int32_t Z_OccupancyCallback(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, uint32_t value) {
   // send Occupancy:false message
   Response_P(PSTR("{\"" D_CMND_ZIGBEE_RECEIVED "\":{\"0x%04X\":{\"" OCCUPANCY "\":0}}}"), shortaddr);
   MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
   XdrvRulesProcess();
-}
-
-int32_t Z_AqaraOccupancy(const class ZCLFrame *zcl, uint16_t shortaddr, JsonObject& json, const char *name, JsonVariant& value, const __FlashStringHelper *new_name, uint16_t cluster, uint16_t attr) {
-  json[new_name] = value;
-  uint32_t occupancy = value;
-
-  if (occupancy) {
-    zigbee_devices.setTimer(shortaddr, OCCUPANCY_TIMEOUT, cluster, zcl->getSrcEndpoint(), 0, &Z_OccupancyCallback);
-  } else {
-    zigbee_devices.resetTimer(shortaddr);
-  }
-  return 1;   // remove original key
 }
 
 // Aqara Vibration Sensor - special proprietary attributes

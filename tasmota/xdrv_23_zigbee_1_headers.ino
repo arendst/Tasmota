@@ -23,4 +23,24 @@
 
 void ZigbeeZCLSend(uint16_t dtsAddr, uint16_t clusterId, uint8_t endpoint, uint8_t cmdId, bool clusterSpecific, const uint8_t *msg, size_t len, bool disableDefResp = true, uint8_t transacId = 1);
 
+
+// Get an JSON attribute, with case insensitive key search
+JsonVariant &getCaseInsensitive(const JsonObject &json, const char *needle) {
+  // key can be in PROGMEM
+  if ((nullptr == &json) || (nullptr == needle) || (0 == pgm_read_byte(needle))) {
+    return *(JsonVariant*)nullptr;
+  }
+
+  for (auto kv : json) {
+    const char *key = kv.key;
+    JsonVariant &value = kv.value;
+
+    if (0 == strcasecmp_P(key, needle)) {
+      return value;
+    }
+  }
+  // if not found
+  return *(JsonVariant*)nullptr;
+}
+
 #endif // USE_ZIGBEE
