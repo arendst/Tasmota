@@ -31,12 +31,14 @@ TasmotaSerial *ZigbeeSerial = nullptr;
 const char kZigbeeCommands[] PROGMEM = "|"
   D_CMND_ZIGBEEZNPSEND "|" D_CMND_ZIGBEE_PERMITJOIN "|"
   D_CMND_ZIGBEE_STATUS "|" D_CMND_ZIGBEE_RESET "|" D_CMND_ZIGBEE_SEND "|"
-  D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ ;
+  D_CMND_ZIGBEE_PROBE "|" D_CMND_ZIGBEE_READ "|" D_CMND_ZIGBEEZNPRECEIVE
+  ;
 
 void (* const ZigbeeCommand[])(void) PROGMEM = {
   &CmndZigbeeZNPSend, &CmndZigbeePermitJoin,
   &CmndZigbeeStatus, &CmndZigbeeReset, &CmndZigbeeSend,
-  &CmndZigbeeProbe, &CmndZigbeeRead };
+  &CmndZigbeeProbe, &CmndZigbeeRead, &CmndZigbeeZNPReceive
+  };
 
 int32_t ZigbeeProcessInput(class SBuffer &buf) {
   if (!zigbee.state_machine) { return -1; }     // if state machine is stopped, send 'ignore' message
@@ -268,7 +270,7 @@ void CmndZigbeeStatus(void) {
   }
 }
 
-void CmndZigbeeZNPSend(void)
+void CmndZigbeeZNPSendOrReceive(bool send)
 {
   if (ZigbeeSerial && (XdrvMailbox.data_len > 0)) {
     uint8_t code;
@@ -286,9 +288,24 @@ void CmndZigbeeZNPSend(void)
       size -= 2;
       codes += 2;
     }
-		ZigbeeZNPSend(buf.getBuffer(), buf.len());
+    if (send) {
+      ZigbeeZNPSend(buf.getBuffer(), buf.len());
+    } else {
+      ZigbeeProcessInput(buf);
+    }
   }
   ResponseCmndDone();
+}
+
+// For debug purposes only, simulates a message received
+void CmndZigbeeZNPReceive(void)
+{
+  CmndZigbeeZNPSendOrReceive(false);
+}
+
+void CmndZigbeeZNPSend(void)
+{
+  CmndZigbeeZNPSendOrReceive(true);
 }
 
 void ZigbeeZNPSend(const uint8_t *msg, size_t len) {

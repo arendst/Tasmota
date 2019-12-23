@@ -67,7 +67,9 @@ See [wiki migration path](https://tasmota.github.io/docs/#/Upgrading?id=migratio
 3. Migrate to **Sonoff-Tasmota 5.14**
 4. Migrate to **Sonoff-Tasmota 6.x**
 5. Migrate to **Tasmota 7.x**
+
 --- Major change in parameter storage layout ---
+
 6. Migrate to **Tasmota 8.1**
 7. Migrate to **Tasmota 8.x**
 

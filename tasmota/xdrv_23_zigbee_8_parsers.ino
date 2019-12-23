@@ -357,6 +357,28 @@ int32_t Z_ReceiveEndDeviceAnnonce(int32_t res, const class SBuffer &buf) {
   return -1;
 }
 
+// 45CA
+int32_t Z_ReceiveTCDevInd(int32_t res, const class SBuffer &buf) {
+  Z_ShortAddress    srcAddr = buf.get16(2);
+  Z_IEEEAddress     ieeeAddr = buf.get64(4);
+  Z_ShortAddress    parentNw = buf.get16(12);
+
+  zigbee_devices.updateDevice(srcAddr, ieeeAddr);
+
+  char hex[20];
+  Uint64toHex(ieeeAddr, hex, 64);
+  Response_P(PSTR("{\"" D_JSON_ZIGBEE_STATE "\":{"
+                  "\"Status\":%d,\"IEEEAddr\":\"%s\",\"ShortAddr\":\"0x%04X\""
+                  ",\"ParentNetwork\":\"0x%04X\"}}"),
+                  ZIGBEE_STATUS_DEVICE_INDICATION, hex, srcAddr, parentNw
+                  );
+
+  MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_ZIGBEEZCL_RECEIVED));
+  XdrvRulesProcess();
+  //Z_SendActiveEpReq(srcAddr);
+  return -1;
+}
+
 // Aqara Occupancy behavior: the Aqara device only sends Occupancy: true events every 60 seconds.
 // Here we add a timer so if we don't receive a Occupancy event for 90 seconds, we send Occupancy:false
 const uint32_t OCCUPANCY_TIMEOUT = 90 * 1000;  // 90 s
@@ -378,16 +400,11 @@ void Z_AqaraOccupancy(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, c
 int32_t Z_PublishAttributes(uint16_t shortaddr, uint16_t cluster, uint16_t endpoint, uint32_t value) {
   const JsonObject *json = zigbee_devices.jsonGet(shortaddr);
   if (json == nullptr) { return 0; }                 // don't crash if not found
-
   // Post-provess for Aqara Presence Senson
   Z_AqaraOccupancy(shortaddr, cluster, endpoint, json);
 
-  String msg = "";
-  json->printTo(msg);
-  zigbee_devices.jsonClear(shortaddr);
-  Response_P(PSTR("{\"" D_CMND_ZIGBEE_RECEIVED "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
-  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-  XdrvRulesProcess();
+  zigbee_devices.jsonPublish(shortaddr);
+  return 1;
 }
 
 int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
@@ -438,8 +455,13 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
 
   if (defer_attributes) {
     // Prepare for publish
-    zigbee_devices.jsonAppend(srcaddr, json);
-    zigbee_devices.setTimer(srcaddr, USE_ZIGBEE_COALESCE_ATTR_TIMER, clusterid, srcendpoint, 0, &Z_PublishAttributes);
+    if (zigbee_devices.jsonIsConflict(srcaddr, json)) {
+      // there is conflicting values, force a publish of the previous message now and don't coalesce
+      zigbee_devices.jsonPublish(srcaddr);
+    } else {
+      zigbee_devices.jsonAppend(srcaddr, json);
+      zigbee_devices.setTimer(srcaddr, USE_ZIGBEE_COALESCE_ATTR_TIMER, clusterid, srcendpoint, 0, &Z_PublishAttributes);
+    }
   } else {
     // Publish immediately
     msg = "";
@@ -459,6 +481,7 @@ typedef struct Z_Dispatcher {
 // Filters for ZCL frames
 ZBM(AREQ_AF_INCOMING_MESSAGE, Z_AREQ | Z_AF, AF_INCOMING_MSG)              // 4481
 ZBM(AREQ_END_DEVICE_ANNCE_IND, Z_AREQ | Z_ZDO, ZDO_END_DEVICE_ANNCE_IND)   // 45C1
+ZBM(AREQ_END_DEVICE_TC_DEV_IND, Z_AREQ | Z_ZDO, ZDO_TC_DEV_IND)   // 45CA
 ZBM(AREQ_PERMITJOIN_OPEN_XX, Z_AREQ | Z_ZDO, ZDO_PERMIT_JOIN_IND )    // 45CB
 ZBM(AREQ_ZDO_ACTIVEEPRSP, Z_AREQ | Z_ZDO, ZDO_ACTIVE_EP_RSP)    // 4585
 ZBM(AREQ_ZDO_SIMPLEDESCRSP, Z_AREQ | Z_ZDO, ZDO_SIMPLE_DESC_RSP)    // 4584
@@ -466,6 +489,7 @@ ZBM(AREQ_ZDO_SIMPLEDESCRSP, Z_AREQ | Z_ZDO, ZDO_SIMPLE_DESC_RSP)    // 4584
 const Z_Dispatcher Z_DispatchTable[] PROGMEM = {
   { AREQ_AF_INCOMING_MESSAGE,     &Z_ReceiveAfIncomingMessage },
   { AREQ_END_DEVICE_ANNCE_IND,    &Z_ReceiveEndDeviceAnnonce },
+  { AREQ_END_DEVICE_TC_DEV_IND,   &Z_ReceiveTCDevInd },
   { AREQ_PERMITJOIN_OPEN_XX,      &Z_ReceivePermitJoinStatus },
   { AREQ_ZDO_NODEDESCRSP,         &Z_ReceiveNodeDesc },
   { AREQ_ZDO_ACTIVEEPRSP,         &Z_ReceiveActiveEp },

@@ -9,6 +9,7 @@
 ### 8.0.0.2 20191223
 
 - Changed Settings variable namings
+- Add Zigbee better support for Xiaomi Double Switch and Xiaomi Vibration sensor
 
 ### 8.0.0.1 20191221
 

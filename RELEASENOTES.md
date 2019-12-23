@@ -11,7 +11,9 @@ See [migration path](https://tasmota.github.io/docs/#/Upgrading?id=migration-pat
 3. Migrate to **Sonoff-Tasmota 5.14**
 4. Migrate to **Sonoff-Tasmota 6.x**
 5. Migrate to **Tasmota 7.x**
+
 --- Major change in parameter storage layout ---
+
 6. Migrate to **Tasmota 8.1**
 7. Migrate to **Tasmota 8.x**
 
@@ -56,4 +58,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for max 150 characters in most command parameter strings (#3686, #4754)
 - Add support for GPS as NTP server by Christian Baars and Adrian Scillato
 - Add Zigbee coalesce sensor attributes into a single message
+- Add Zigbee better support for Xiaomi Double Switch and Xiaomi Vibration sensor
 - Add Deepsleep start delay based on Teleperiod if ``Teleperiod`` differs from 10 or 300
