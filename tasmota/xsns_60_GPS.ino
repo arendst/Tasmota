@@ -1,5 +1,5 @@
 /*
-  xsns_60_GPS.ino - GPS UBLOX support for Sonoff-Tasmota
+  xsns_60_GPS.ino - GPS UBLOX support for Tasmota
 
   Copyright (C) 2019  Theo Arends, Christian Baars and Adrian Scillato
 
@@ -15,7 +15,10 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
+#ifdef USE_GPS
+/*********************************************************************************************\
   --------------------------------------------------------------------------------------------
   Version Date      Action    Description
   --------------------------------------------------------------------------------------------
@@ -25,85 +28,84 @@
   0.9.0.0 20190817  started   - further development by Christian Baars  - https://github.com/Staars/Sonoff-Tasmota
                     forked    - from arendst/tasmota                    - https://github.com/arendst/Sonoff-Tasmota
                     base      - code base from arendst and              - https://www.youtube.com/watch?v=TwhCX0c8Xe0
-  
-## GPS-driver for the Ublox-series 6-8  
+
+## GPS-driver for the Ublox-series 6-8
 Driver is tested on a NEO-6m and a Beitian-220. Series 7 should work too. This adds only about 6kb to the program size, because the efficient UBX-protocol is used. These modules are quite cheap, starting at about 3.50€ for the NEO-6m.
 
-## Features:  
+## Features:
 - get position and time data
-- sets system time automatically and Settings.latitude and Settings.longitude via command  
+- sets system time automatically and Settings.latitude and Settings.longitude via command
 - can log postion data with timestamp to flash with a small memory footprint of only 12 Bytes per record
-- constructs a GPX-file for download of this data  
-- Web-UI 
+- constructs a GPX-file for download of this data
+- Web-UI
 - simplified NTP-server
-- command interface 
-   
-## Usage:  
-The serial pins are GPX_RX and GPS_TX, no further installation steps needed. To get more debug information compile it with option "DEBUG_TASMOTA_SENSOR". 
+- command interface
 
-  
-## Commands:  
-  
-+ sensor60 0  
+## Usage:
+The serial pins are GPX_RX and GPS_TX, no further installation steps needed. To get more debug information compile it with option "DEBUG_TASMOTA_SENSOR".
+
+
+## Commands:
+
++ sensor60 0
   write to all available sectors, then restart and overwrite the older ones
-  
-+ sensor60 1  
+
++ sensor60 1
   write to all available sectors, then restart and overwrite the older ones
-  
-+ sensor60 2  
+
++ sensor60 2
   filter out horizontal drift noise
-  
-+ sensor60 3  
+
++ sensor60 3
   turn off noise filter
-  
-+ sensor60 4  
+
++ sensor60 4
   start recording, new data will be appended
-  
-+ sensor60 5  
+
++ sensor60 5
   start new recording, old data will lost
-  
-+ sensor60 6  
+
++ sensor60 6
   stop recording, download link will be visible in Web-UI
-  
-+ sensor60 7  
+
++ sensor60 7
   send mqtt on new postion + TELE -> consider to set TELE to a very high value
-  
-+ sensor60 8  
+
++ sensor60 8
   only TELE message
-  
-+ sensor60 9  
+
++ sensor60 9
   start NTP-server
-  
-+ sensor60 10  
+
++ sensor60 10
   deactivate NTP-server
-  
-+ sensor60 11  
+
++ sensor60 11
   force update of Tasmota-system-UTC with every new GPS-time-message
-  
-+ sensor60 12  
+
++ sensor60 12
   do not update of Tasmota-system-UTC with every new GPS-time-message
-  
-+ sensor60 13  
-  set latitude and longitude in settings  
-  
-  
-  
-## Rules examples for SSD1306 32x128  
-  
-  
+
++ sensor60 13
+  set latitude and longitude in settings
+
+
+
+## Rules examples for SSD1306 32x128
+
+
 rule1 on tele-GPS#lat do DisplayText [s1p21c1l01f1]LAT: %value% endon on tele-GPS#lon do DisplayText [s1p21c1l2]LON: %value% endon on switch1#state==3 do sensor60 4 endon on switch1#state==2 do sensor60 6 endon
 
 rule2  on tele-GPS#int>9 do DisplayText [f0c9l4]I%value%  endon  on tele-GPS#int<10 do DisplayText [f0c9l4]I0%value%  endon on tele-GPS#fil==1 do DisplayText [f0c18l4]F endon on tele-GPS#fil==0 do DisplayText [f0c18l4]N endon
 
 rule3 on tele-FLOG#sec do DisplayText  [f0c1l4]SAV:%value%  endon on tele-FLOG#rec==1 do DisplayText [f0c1l4]REC: endon on tele-FLOG#mode do DisplayText [f0c14l4]M%value% endon
 
-*/
+\*********************************************************************************************/
 
-#ifdef USE_GPS
+#define XSNS_60        60
 
 #include "NTPServer.h"
 #include "NTPPacket.h"
-
 
 /*********************************************************************************************\
  * constants
@@ -116,7 +118,6 @@ const char S_JSON_UBX_COMMAND_NVALUE[] PROGMEM = "{\"" D_CMND_UBX "%s\":%d}";
 const char kUBXTypes[] PROGMEM = "UBX";
 
 #define UBX_LAT_LON_THRESHOLD 1000 // filter out some noise of local drift
-
 
 /********************************************************************************************\
 | *globals
@@ -152,13 +153,13 @@ const char UBLOX_INIT[] PROGMEM = {
 
 char       UBX_name[4];
 
-struct UBX_t{
+struct UBX_t {
   const char UBX_HEADER[2]        = { 0xB5, 0x62 }; // TODO: Check if we really save space here inside the struct
   const char NAV_POSLLH_HEADER[2] = { 0x01, 0x02 };
   const char NAV_STATUS_HEADER[2] = { 0x01, 0x03 };
   const char NAV_TIME_HEADER[2]   = { 0x01, 0x21 };
 
-  struct entry_t{
+  struct entry_t {
           int32_t lat;    //raw sensor value
           int32_t lon;    //raw sensor value
           uint32_t time;  //local time from system (maybe provided by the sensor)
@@ -200,7 +201,7 @@ struct UBX_t{
     uint32_t ttff;
     uint32_t msss;
     };
-  
+
   struct NAV_TIME_UTC {
     uint8_t cls;
     uint8_t id;
@@ -281,7 +282,9 @@ NtpServer timeServer(PortUdp);
 /*********************************************************************************************\
  * helper function
 \*********************************************************************************************/
-void UBXcalcChecksum(char* CK, size_t msgSize) {
+
+void UBXcalcChecksum(char* CK, size_t msgSize)
+{
   memset(CK, 0, 2);
   for (int i = 0; i < msgSize; i++) {
     CK[0] += ((char*)(&UBX.Message))[i];
@@ -289,19 +292,22 @@ void UBXcalcChecksum(char* CK, size_t msgSize) {
   }
 }
 
-boolean UBXcompareMsgHeader(const char* msgHeader) {
+bool UBXcompareMsgHeader(const char* msgHeader)
+{
   char* ptr = (char*)(&UBX.Message);
   return ptr[0] == msgHeader[0] && ptr[1] == msgHeader[1];
 }
 
-void UBXinitCFG(void){
-  for(uint32_t i = 0; i < sizeof(UBLOX_INIT); i++) {                        
+void UBXinitCFG(void)
+{
+  for (uint32_t i = 0; i < sizeof(UBLOX_INIT); i++) {
     UBXSerial->write( pgm_read_byte(UBLOX_INIT+i) );
   }
   DEBUG_SENSOR_LOG(PSTR("UBX: turn off NMEA"));
 }
 
-void UBXTriggerTele(void){
+void UBXTriggerTele(void)
+{
   mqtt_data[0] = '\0';
   if (MqttShowSensor()) {
     MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
@@ -313,23 +319,22 @@ void UBXTriggerTele(void){
 
 /********************************************************************************************/
 
-
 void UBXDetect(void)
 {
   if ((pin[GPIO_GPS_RX] < 99) && (pin[GPIO_GPS_TX] < 99)) {
     UBXSerial = new TasmotaSerial(pin[GPIO_GPS_RX], pin[GPIO_GPS_TX], 1, 0, 96); // 64 byte buffer is NOT enough
     if (UBXSerial->begin(9600)) {
       DEBUG_SENSOR_LOG(PSTR("UBX: started serial"));
-       if (UBXSerial->hardwareSerial()) { 
-        ClaimSerial(); 
+      if (UBXSerial->hardwareSerial()) {
+        ClaimSerial();
         DEBUG_SENSOR_LOG(PSTR("UBX: claim HW"));
-        }
+      }
     }
   }
 
   UBXinitCFG();                 // turn of NMEA, only use "our" UBX-messages
 #ifdef USE_FLOG
-  if(!Flog){
+  if (!Flog) {
     Flog = new FLOG;            // init Flash Log
     Flog->init();
   }
@@ -340,7 +345,8 @@ void UBXDetect(void)
   UBXTriggerTele();             // ... once at after start
 }
 
-uint32_t UBXprocessGPS() {
+uint32_t UBXprocessGPS()
+{
   static uint32_t fpos = 0;
   static char checksum[2];
   static uint8_t currentMsgType = MT_NONE;
@@ -350,27 +356,27 @@ uint32_t UBXprocessGPS() {
   uint32_t data_bytes = 0;
   while ( UBXSerial->available() ) {
     data_bytes++;
-    byte c = UBXSerial->read();    
+    byte c = UBXSerial->read();
     if ( fpos < 2 ) {
       // For the first two bytes we are simply looking for a match with the UBX header bytes (0xB5,0x62)
-      if ( c == UBX.UBX_HEADER[fpos] )
+      if ( c == UBX.UBX_HEADER[fpos] ) {
         fpos++;
-      else
+      } else {
         fpos = 0; // Reset to beginning state.
-    }
-    else {
+      }
+    } else {
       // If we come here then fpos >= 2, which means we have found a match with the UBX_HEADER
       // and we are now reading in the bytes that make up the payload.
-      
+
       // Place the incoming byte into the ubxMessage struct. The position is fpos-2 because
       // the struct does not include the initial two-byte header (UBX_HEADER).
-      if ( (fpos-2) < payloadSize )
+      if ( (fpos-2) < payloadSize ) {
         ((char*)(&UBX.Message))[fpos-2] = c;
-
+      }
       fpos++;
-      
+
       if ( fpos == 4 ) {
-        // We have just received the second byte of the message type header, 
+        // We have just received the second byte of the message type header,
         // so now we can check to see what kind of message it is.
         if ( UBXcompareMsgHeader(UBX.NAV_POSLLH_HEADER) ) {
           currentMsgType = MT_NAV_POSLLH;
@@ -395,7 +401,7 @@ uint32_t UBXprocessGPS() {
       }
 
       if ( fpos == (payloadSize+2) ) {
-        // All payload bytes have now been received, so we can calculate the 
+        // All payload bytes have now been received, so we can calculate the
         // expected checksum value to compare with the next two incoming bytes.
         UBXcalcChecksum(checksum, payloadSize);
       }
@@ -404,7 +410,7 @@ uint32_t UBXprocessGPS() {
         // Does it match the first byte of the checksum we calculated?
         if ( c != checksum[0] ) {
           // Checksum doesn't match, reset to beginning state and try again.
-          fpos = 0; 
+          fpos = 0;
         }
       }
       else if ( fpos == (payloadSize+4) ) {
@@ -417,18 +423,18 @@ uint32_t UBXprocessGPS() {
         }
       }
       else if ( fpos > (payloadSize+4) ) {
-        // We have now read more bytes than both the expected payload and checksum 
+        // We have now read more bytes than both the expected payload and checksum
         // together, so something went wrong. Reset to beginning state and try again.
         fpos = 0;
       }
     }
   }
   // DEBUG_SENSOR_LOG(PSTR("UBX: got none or unknown Message"));
-  if(data_bytes!=0) {
-      UBX.state.non_empty_loops++;
-      DEBUG_SENSOR_LOG(PSTR("UBX: got %u bytes, non-empty-loop: %u"), data_bytes, UBX.state.non_empty_loops); 
+  if (data_bytes!=0) {
+    UBX.state.non_empty_loops++;
+    DEBUG_SENSOR_LOG(PSTR("UBX: got %u bytes, non-empty-loop: %u"), data_bytes, UBX.state.non_empty_loops);
   } else {
-      UBX.state.non_empty_loops = 0; // now a hidden GPS-device reset is unlikely
+    UBX.state.non_empty_loops = 0; // now a hidden GPS-device reset is unlikely
   }
   return MT_NONE;
 }
@@ -436,19 +442,22 @@ uint32_t UBXprocessGPS() {
 /********************************************************************************************\
 | * callback functions for the download
 \*********************************************************************************************/
+
 #ifdef USE_FLOG
-void UBXsendHeader(void) {
+void UBXsendHeader(void)
+{
   WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN);
   WebServer->sendHeader(F("Content-Disposition"), F("attachment; filename=TASMOTA.gpx"));
   WSSend(200, CT_STREAM, F(
-     "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\r\n"
+    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\r\n"
     "<GPX version=\"1.1\" creator=\"TASMOTA\" xmlns=\"http://www.topografix.com/GPX/1/1\" \r\n"
     "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n"
     "xsi:schemaLocation=\"http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd\">\r\n"
     "<trk>\r\n<trkseg>\r\n"));
 }
 
-void UBXsendRecord(uint8_t *buf){
+void UBXsendRecord(uint8_t *buf)
+{
 	char record[100];
 	char stime[32];
 	UBX_t::entry_t *entry = (UBX_t::entry_t*)buf;
@@ -462,27 +471,32 @@ void UBXsendRecord(uint8_t *buf){
 	WebServer->sendContent_P(record);
 }
 
-void UBXsendFooter(void){
+void UBXsendFooter(void)
+{
   WebServer->sendContent(F("</trkseg>\n</trk>\n</gpx>"));
   WebServer->sendContent("");
   Rtc.user_time_entry = false; // we have blocked the main loop and want a new valid time
 }
 
 /********************************************************************************************/
-void UBXsendFile(void){
+
+void UBXsendFile(void)
+{
   if (!HttpCheckPriviledgedAccess()) { return; }
   Flog->startDownload(sizeof(UBX.rec_buffer),UBXsendHeader,UBXsendRecord,UBXsendFooter);
 }
 #endif //USE_FLOG
+
 /********************************************************************************************/
 
-void UBXSetRate(uint16_t interval){
+void UBXSetRate(uint16_t interval)
+{
   UBX.Message.cfgRate.cls = 0x06;
   UBX.Message.cfgRate.id = 0x08;
   UBX.Message.cfgRate.len = 6;
   uint32_t measRate = (1000*(uint32_t)interval); //seconds to milliseconds
   if (measRate > 0xffff) {
-      measRate = 0xffff; // max. 65535 ms interval
+    measRate = 0xffff; // max. 65535 ms interval
   }
   UBX.Message.cfgRate.measRate = (uint16_t)measRate;
   UBX.Message.cfgRate.navRate = 1;
@@ -491,15 +505,15 @@ void UBXSetRate(uint16_t interval){
   DEBUG_SENSOR_LOG(PSTR("UBX: requested interval: %u seconds measRate: %u ms"), interval, UBX.Message.cfgRate.measRate);
   UBXSerial->write(UBX.UBX_HEADER[0]);
   UBXSerial->write(UBX.UBX_HEADER[1]);
-  for(uint32_t i =0; i<sizeof(UBX.Message.cfgRate); i++){
+  for (uint32_t i =0; i<sizeof(UBX.Message.cfgRate); i++) {
     UBXSerial->write(((uint8_t*)(&UBX.Message.cfgRate))[i]);
     DEBUG_SENSOR_LOG(PSTR("UBX: cfgRate byte %u: %x"), i, ((uint8_t*)(&UBX.Message.cfgRate))[i]);
   }
-  UBX.state.log_interval = 10*interval; 
+  UBX.state.log_interval = 10*interval;
 }
 
-
-void UBXSelectMode(uint16_t mode){
+void UBXSelectMode(uint16_t mode)
+{
   DEBUG_SENSOR_LOG(PSTR("UBX: set mode to %u"),mode);
   switch(mode){
 #ifdef USE_FLOG
@@ -513,7 +527,7 @@ void UBXSelectMode(uint16_t mode){
       UBX.mode.filter_noise = true;  // filter out horizontal drift noise, TODO: find useful values
       break;
     case 3:
-      UBX.mode.filter_noise = false; 
+      UBX.mode.filter_noise = false;
       break;
     case 4:
       Flog->startRecording(true);
@@ -529,7 +543,7 @@ void UBXSelectMode(uint16_t mode){
       }
       AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: stop recording"));
       break;
-#endif //USE_FLOG		  
+#endif //USE_FLOG
     case 7:
       UBX.mode.send_when_new = 1; // send mqtt on new postion + TELE -> consider to set TELE to a very high value
       break;
@@ -537,7 +551,7 @@ void UBXSelectMode(uint16_t mode){
       UBX.mode.send_when_new = 0; // only TELE
       break;
     case 9:
-      if (timeServer.beginListening()){
+      if (timeServer.beginListening()) {
         UBX.mode.runningNTP = true;
       }
       break;
@@ -555,77 +569,80 @@ void UBXSelectMode(uint16_t mode){
       Settings.longitude = UBX.state.last_lon;
       break;
     default:
-      if(mode>1000 && mode <1066) {
+      if (mode>1000 && mode <1066) {
         // UBXSetRate(mode-1000); // min. 1001 = 0.001 Hz, but will be converted to 1/65535 anyway ~0.015 Hz, max. 2000 = 1.000 Hz
-        UBXSetRate(mode-1000); // set interval between measurements in seconds from 1 to 65 
+        UBXSetRate(mode-1000); // set interval between measurements in seconds from 1 to 65
       }
       break;
   }
   UBX.mode.send_UI_only = true;
   UBXTriggerTele();
 }
+
 /********************************************************************************************/
 
-bool UBXHandlePOSLLH(){
-    DEBUG_SENSOR_LOG(PSTR("UBX: iTOW: %u"),UBX.Message.navPosllh.iTOW);
-    if(UBX.state.gpsFix>1){
-        if(UBX.mode.filter_noise){
-            if((UBX.Message.navPosllh.lat-UBX.rec_buffer.values.lat<abs(UBX_LAT_LON_THRESHOLD))||(UBX.Message.navPosllh.lon-UBX.rec_buffer.values.lon<abs(UBX_LAT_LON_THRESHOLD))){
-                DEBUG_SENSOR_LOG(PSTR("UBX: Diff lat: %u lon: %u "),UBX.Message.navPosllh.lat-UBX.rec_buffer.values.lat, UBX.Message.navPosllh.lon-UBX.rec_buffer.values.lon);
-                return false; //no new position
-            }
-        }
-        UBX.rec_buffer.values.lat = UBX.Message.navPosllh.lat;
-        UBX.rec_buffer.values.lon = UBX.Message.navPosllh.lon;
-        DEBUG_SENSOR_LOG(PSTR("UBX: lat/lon: %i / %i"),UBX.rec_buffer.values.lat, UBX.rec_buffer.values.lon);
-        DEBUG_SENSOR_LOG(PSTR("UBX: hAcc: %d"),UBX.Message.navPosllh.hAcc);
-        UBX.state.last_iTOW = UBX.Message.navPosllh.iTOW; 
-        UBX.state.last_height = UBX.Message.navPosllh.height;
-        UBX.state.last_vAcc = UBX.Message.navPosllh.vAcc;
-        UBX.state.last_hAcc = UBX.Message.navPosllh.hAcc;
-        if(UBX.mode.send_when_new){
-            UBXTriggerTele();
-        }
-        return true; // new position
-    } else {
-        DEBUG_SENSOR_LOG(PSTR("UBX: no valid position data"));
+bool UBXHandlePOSLLH()
+{
+  DEBUG_SENSOR_LOG(PSTR("UBX: iTOW: %u"),UBX.Message.navPosllh.iTOW);
+  if (UBX.state.gpsFix>1) {
+    if (UBX.mode.filter_noise) {
+      if ((UBX.Message.navPosllh.lat-UBX.rec_buffer.values.lat<abs(UBX_LAT_LON_THRESHOLD))||(UBX.Message.navPosllh.lon-UBX.rec_buffer.values.lon<abs(UBX_LAT_LON_THRESHOLD))) {
+        DEBUG_SENSOR_LOG(PSTR("UBX: Diff lat: %u lon: %u "),UBX.Message.navPosllh.lat-UBX.rec_buffer.values.lat, UBX.Message.navPosllh.lon-UBX.rec_buffer.values.lon);
+        return false; //no new position
+      }
     }
-    return false; // no GPS-fix
+    UBX.rec_buffer.values.lat = UBX.Message.navPosllh.lat;
+    UBX.rec_buffer.values.lon = UBX.Message.navPosllh.lon;
+    DEBUG_SENSOR_LOG(PSTR("UBX: lat/lon: %i / %i"), UBX.rec_buffer.values.lat, UBX.rec_buffer.values.lon);
+    DEBUG_SENSOR_LOG(PSTR("UBX: hAcc: %d"), UBX.Message.navPosllh.hAcc);
+    UBX.state.last_iTOW = UBX.Message.navPosllh.iTOW;
+    UBX.state.last_height = UBX.Message.navPosllh.height;
+    UBX.state.last_vAcc = UBX.Message.navPosllh.vAcc;
+    UBX.state.last_hAcc = UBX.Message.navPosllh.hAcc;
+    if (UBX.mode.send_when_new) {
+      UBXTriggerTele();
+    }
+    return true; // new position
+  } else {
+    DEBUG_SENSOR_LOG(PSTR("UBX: no valid position data"));
+  }
+  return false; // no GPS-fix
 }
 
-void UBXHandleSTATUS(){
-    DEBUG_SENSOR_LOG(PSTR("UBX: gpsFix: %u, valid: %u"),UBX.Message.navStatus.gpsFix, (UBX.Message.navStatus.flags)&1);
-    if((UBX.Message.navStatus.flags)&1){
-      UBX.state.gpsFix = UBX.Message.navStatus.gpsFix; //only store fixed status if flag is valid
-    }
-    else{
-      UBX.state.gpsFix = 0; // without valid flag, everything is "no fix"
-    }
+void UBXHandleSTATUS()
+{
+  DEBUG_SENSOR_LOG(PSTR("UBX: gpsFix: %u, valid: %u"), UBX.Message.navStatus.gpsFix, (UBX.Message.navStatus.flags)&1);
+  if ((UBX.Message.navStatus.flags)&1) {
+    UBX.state.gpsFix = UBX.Message.navStatus.gpsFix; //only store fixed status if flag is valid
+  } else {
+    UBX.state.gpsFix = 0; // without valid flag, everything is "no fix"
+  }
 }
 
-void UBXHandleTIME(){
-    DEBUG_SENSOR_LOG(PSTR("UBX: UTC-Time: %u-%u-%u %u:%u:%u"),UBX.Message.navTime.year, UBX.Message.navTime.month ,UBX.Message.navTime.day,UBX.Message.navTime.hour,UBX.Message.navTime.min,UBX.Message.navTime.sec);
-    if(UBX.Message.navTime.valid.UTC){
-      DEBUG_SENSOR_LOG(PSTR("UBX: UTC-Time is valid"));
-      if(Rtc.user_time_entry == false || UBX.mode.forceUTCupdate){ 
-        AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: UTC-Time is valid, set system time"));
-        TIME_T gpsTime;
-        gpsTime.year = UBX.Message.navTime.year - 1970;
-        gpsTime.month = UBX.Message.navTime.month;
-        gpsTime.day_of_month = UBX.Message.navTime.day;
-        gpsTime.hour = UBX.Message.navTime.hour;
-        gpsTime.minute = UBX.Message.navTime.min;
-        gpsTime.second = UBX.Message.navTime.sec;
-        Rtc.utc_time = MakeTime(gpsTime);
-        Rtc.user_time_entry = true;
-      } 
+void UBXHandleTIME()
+{
+  DEBUG_SENSOR_LOG(PSTR("UBX: UTC-Time: %u-%u-%u %u:%u:%u"), UBX.Message.navTime.year, UBX.Message.navTime.month ,UBX.Message.navTime.day,UBX.Message.navTime.hour,UBX.Message.navTime.min,UBX.Message.navTime.sec);
+  if (UBX.Message.navTime.valid.UTC) {
+    DEBUG_SENSOR_LOG(PSTR("UBX: UTC-Time is valid"));
+    if (Rtc.user_time_entry == false || UBX.mode.forceUTCupdate) {
+      AddLog_P(LOG_LEVEL_INFO, PSTR("UBX: UTC-Time is valid, set system time"));
+      TIME_T gpsTime;
+      gpsTime.year = UBX.Message.navTime.year - 1970;
+      gpsTime.month = UBX.Message.navTime.month;
+      gpsTime.day_of_month = UBX.Message.navTime.day;
+      gpsTime.hour = UBX.Message.navTime.hour;
+      gpsTime.minute = UBX.Message.navTime.min;
+      gpsTime.second = UBX.Message.navTime.sec;
+      Rtc.utc_time = MakeTime(gpsTime);
+      Rtc.user_time_entry = true;
     }
+  }
 }
 
 void UBXHandleOther(void)
 {
-  if(UBX.state.non_empty_loops>6){ // we expect only 4-5 non-empty loops in a row, could change with other sensor speed (Hz)
-    UBXinitCFG();                  // this should only happen with lots of NMEA-messages, but it is only a guess!!
+  if (UBX.state.non_empty_loops>6) {  // we expect only 4-5 non-empty loops in a row, could change with other sensor speed (Hz)
+    UBXinitCFG();                     // this should only happen with lots of NMEA-messages, but it is only a guess!!
     AddLog_P(LOG_LEVEL_ERROR, PSTR("UBX: possible device-reset, will re-init"));
     UBXSerial->flush();
     UBX.state.non_empty_loops = 0;
@@ -645,7 +662,7 @@ void UBXLoop(void)
 {
   static uint16_t counter; //count up every 100 msec
   static bool new_position;
-  
+
   uint32_t msgType = UBXprocessGPS();
 
   switch(msgType){
@@ -664,8 +681,8 @@ void UBXLoop(void)
   }
 
 #ifdef USE_FLOG
-  if(counter>UBX.state.log_interval){
-    if(Flog->recording && new_position){
+  if (counter>UBX.state.log_interval) {
+    if (Flog->recording && new_position) {
       UBX.rec_buffer.values.time = Rtc.local_time;
       Flog->addToBuffer(UBX.rec_buffer.bytes, sizeof(UBX.rec_buffer.bytes));
       counter = 0;
@@ -673,7 +690,7 @@ void UBXLoop(void)
   }
 #endif // USE_FLOG
 
-counter++;
+  counter++;
 }
 
 /********************************************************************************************/
@@ -716,7 +733,7 @@ counter++;
   const char * kGPSFix[] PROGMEM ={kGPSFix0, kGPSFix1, kGPSFix2, kGPSFix3, kGPSFix4, kGPSFix5};
 
 //  const char UBX_GOOGLE_MAPS[] ="<iframe width='100%%' src='https://maps.google.com/maps?width=&amp;height=&amp;hl=en&amp;q=%s %s+(Tasmota)&amp;ie=UTF8&amp;t=&amp;z=10&amp;iwloc=B&amp;output=embed' frameborder='0' scrolling='no' marginheight='0' marginwidth='0'></iframe>";
-                                
+
 
 #endif  // USE_WEBSERVER
 
@@ -724,23 +741,22 @@ counter++;
 
 void UBXShow(bool json)
 {
-    char lat[12];
-    char lon[12];
-    char height[12];
-    char hAcc[12];
-    char vAcc[12];
-    dtostrfd((double)UBX.rec_buffer.values.lat/10000000.0f,7,lat);
-    dtostrfd((double)UBX.rec_buffer.values.lon/10000000.0f,7,lon);
-    dtostrfd((double)UBX.state.last_height/1000.0f,3,height);
-    dtostrfd((double)UBX.state.last_vAcc/1000.0f,3,hAcc);
-    dtostrfd((double)UBX.state.last_hAcc/1000.0f,3,vAcc);
+  char lat[12];
+  char lon[12];
+  char height[12];
+  char hAcc[12];
+  char vAcc[12];
+  dtostrfd((double)UBX.rec_buffer.values.lat/10000000.0f,7,lat);
+  dtostrfd((double)UBX.rec_buffer.values.lon/10000000.0f,7,lon);
+  dtostrfd((double)UBX.state.last_height/1000.0f,3,height);
+  dtostrfd((double)UBX.state.last_vAcc/1000.0f,3,hAcc);
+  dtostrfd((double)UBX.state.last_hAcc/1000.0f,3,vAcc);
 
-  if (json) 
-  {
+  if (json) {
     ResponseAppend_P(PSTR(",\"GPS\":{"));
-    if(UBX.mode.send_UI_only){
+    if (UBX.mode.send_UI_only) {
       uint32_t i = UBX.state.log_interval / 10;
-      ResponseAppend_P(PSTR("\"fil\":%u,\"int\":%u}"),UBX.mode.filter_noise, i);
+      ResponseAppend_P(PSTR("\"fil\":%u,\"int\":%u}"), UBX.mode.filter_noise, i);
     } else {
       ResponseAppend_P(PSTR("\"lat\":%s,\"lon\":%s,\"height\":%s,\"hAcc\":%s,\"vAcc\":%s}"), lat, lon, height, hAcc, vAcc);
     }
@@ -755,37 +771,37 @@ void UBXShow(bool json)
 #ifdef DEBUG_TASMOTA_SENSOR
 #ifdef USE_FLOG
     WSContentSend_PD(HTTP_SNS_FLOGVER, Flog->num_sectors, Flog->size, Flog->current_sector, Flog->sectors_left, Flog->sector.header.physical_start_sector);
-    if(Flog->recording){
+    if (Flog->recording) {
       WSContentSend_PD(HTTP_SNS_FLOGREC, Flog->sector.header.buf_pointer - 8);
     }
 #endif //USE_FLOG
 #endif // DEBUG_TASMOTA_SENSOR
 #ifdef USE_FLOG
-    if(Flog->ready){
+    if (Flog->ready) {
       WSContentSend_P(HTTP_SNS_FLOG,kFLOG_STATE[Flog->recording]);
     }
-    if(!Flog->recording && Flog->found_saved_data){
+    if (!Flog->recording && Flog->found_saved_data) {
       WSContentSend_P(HTTP_BTN_FLOG_DL);
     }
 #endif //USE_FLOG
-    if(UBX.mode.runningNTP){
+    if (UBX.mode.runningNTP) {
       WSContentSend_P(HTTP_SNS_NTPSERVER);
     }
 #endif  // USE_WEBSERVER
   }
 }
 
-
 /*********************************************************************************************\
  * check the UBX commands
 \*********************************************************************************************/
 
-bool UBXCmd(void) {
+bool UBXCmd(void)
+{
   bool serviced = true;
-    if (XdrvMailbox.data_len > 0) {
-      UBXSelectMode(XdrvMailbox.payload); 
-      Response_P(S_JSON_UBX_COMMAND_NVALUE, XdrvMailbox.command, XdrvMailbox.payload);
-    }
+  if (XdrvMailbox.data_len > 0) {
+    UBXSelectMode(XdrvMailbox.payload);
+    Response_P(S_JSON_UBX_COMMAND_NVALUE, XdrvMailbox.command, XdrvMailbox.payload);
+  }
   return serviced;
 }
 
@@ -793,28 +809,26 @@ bool UBXCmd(void) {
  * Interface
 \*********************************************************************************************/
 
-#define XSNS_60        60
-
 bool Xsns60(uint8_t function)
 {
   bool result = false;
 
-  if (true) {  
+  if (true) {
     switch (function) {
       case FUNC_INIT:
         UBXDetect();
         break;
       case FUNC_COMMAND_SENSOR:
-	if (XSNS_60 == XdrvMailbox.index){
+        if (XSNS_60 == XdrvMailbox.index) {
           result = UBXCmd();
-        }  
+        }
         break;
       case FUNC_EVERY_50_MSECOND:
         UBXTimeServer();
         break;
       case FUNC_EVERY_100_MSECOND:
 #ifdef USE_FLOG
-        if(!Flog->running_download)
+        if (!Flog->running_download)
 #endif //USE_FLOG
         {
           UBXLoop();
@@ -831,7 +845,7 @@ bool Xsns60(uint8_t function)
 #ifdef USE_WEBSERVER
       case FUNC_WEB_SENSOR:
 #ifdef USE_FLOG
-        if(!Flog->running_download)
+        if (!Flog->running_download)
 #endif //USE_FLOG
         {
           UBXShow(0);

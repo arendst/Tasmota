@@ -295,7 +295,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
   D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
-  D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX
+  D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
+  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -673,6 +674,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif // USE_SOLAX_X1
 #endif  // USE_ENERGY_SENSOR
 
+// Serial
 #ifdef USE_SERIAL_BRIDGE
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
@@ -727,6 +729,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_IBEACON_RX,
   GPIO_IBEACON_TX,
 #endif
+#ifdef USE_GPS
+  GPIO_GPS_RX,         // GPS serial interface
+  GPIO_GPS_TX,         // GPS serial interface
+#endif
+
 #ifdef USE_MGC3130
   GPIO_MGC3130_XFER,
   GPIO_MGC3130_RESET,
@@ -756,11 +763,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_A4988_MS3,     // A4988 microstep pin3
 #endif
 #ifdef USE_DEEPSLEEP
-  GPIO_DEEPSLEEP
-#endif
-#ifdef USE_GPS
-  GPIO_GPS_RX,         // GPS serial interface
-  GPIO_GPS_TX          // GPS serial interface
+  GPIO_DEEPSLEEP,
 #endif
 
 };

@@ -54,5 +54,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change Smoother ``Fade`` using 100Hz instead of 20Hz animation (#7179)
 - Change number of rule ``Var``s and ``Mem``s from 5 to 16 (#4933)
 - Add support for max 150 characters in most command parameter strings (#3686, #4754)
+- Add support for GPS as NTP server by Christian Baars and Adrian Scillato
 - Add Zigbee coalesce sensor attributes into a single message
 - Add Deepsleep start delay based on Teleperiod if ``Teleperiod`` differs from 10 or 300
