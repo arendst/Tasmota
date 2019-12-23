@@ -468,6 +468,7 @@
 #define D_CMND_ZIGBEE_STATUS "ZigbeeStatus"
 #define D_CMND_ZIGBEE_RESET "ZigbeeReset"
   #define D_JSON_ZIGBEE_CC2530 "CC2530"
+#define D_CMND_ZIGBEEZNPRECEIVE "ZigbeeZNPReceive"      // only for debug
 #define D_CMND_ZIGBEEZNPSEND "ZigbeeZNPSend"
   #define D_JSON_ZIGBEE_STATE "ZigbeeState"
   #define D_JSON_ZIGBEEZNPRECEIVED "ZigbeeZNPReceived"

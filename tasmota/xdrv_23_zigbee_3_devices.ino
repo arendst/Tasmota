@@ -91,6 +91,8 @@ public:
   void jsonClear(uint16_t shortaddr);
   void jsonAppend(uint16_t shortaddr, JsonObject &values);
   const JsonObject *jsonGet(uint16_t shortaddr);
+  const void jsonPublish(uint16_t shortaddr);    // publish the json message and clear buffer
+  bool jsonIsConflict(uint16_t shortaddr, const JsonObject &values);
 
 private:
   std::vector<Z_Device> _devices = {};
@@ -419,6 +421,67 @@ void Z_Devices::jsonClear(uint16_t shortaddr) {
   device.json_buffer->clear();
 }
 
+void CopyJsonVariant(JsonObject &to, const String &key, const JsonVariant &val) {
+  to.remove(key);    // force remove to have metadata like LinkQuality at the end
+
+  if (val.is<char*>()) {
+    String sval = val.as<String>();       // force a copy of the String value
+    to.set(key, sval);
+  } else if (val.is<JsonArray>()) {
+    JsonArray &nested_arr = to.createNestedArray(key);
+    CopyJsonArray(nested_arr, val.as<JsonArray>());
+  } else if (val.is<JsonObject>()) {
+    JsonObject &nested_obj = to.createNestedObject(key);
+    CopyJsonObject(nested_obj, val.as<JsonObject>());
+  } else {
+    to.set(key, val);
+  }
+}
+
+void CopyJsonArray(JsonArray &to, const JsonArray &arr) {
+  for (auto v : arr) {
+    if (v.is<char*>()) {
+      String sval = v.as<String>();       // force a copy of the String value
+      to.add(sval);
+    } else if (v.is<JsonArray>()) {
+    } else if (v.is<JsonObject>()) {
+    } else {
+      to.add(v);
+    }
+  }
+}
+
+void CopyJsonObject(JsonObject &to, const JsonObject &from) {
+  for (auto kv : from) {
+    String key_string = kv.key;
+    JsonVariant &val = kv.value;
+
+    CopyJsonVariant(to, key_string, val);
+  }
+}
+
+// does the new payload conflicts with the existing payload, i.e. values would be overwritten
+bool Z_Devices::jsonIsConflict(uint16_t shortaddr, const JsonObject &values) {
+  Z_Device & device = getShortAddr(shortaddr);
+  if (&device == nullptr) { return false; }                 // don't crash if not found
+  if (&values == nullptr) { return false; }
+
+  if (nullptr == device.json) {
+    return false;                                           // if no previous value, no conflict
+  }
+
+  for (auto kv : values) {
+    String key_string = kv.key;
+
+    if (strcasecmp_P(kv.key, PSTR(D_CMND_ZIGBEE_LINKQUALITY))) {  // exception = ignore duplicates for LinkQuality
+      if (device.json->containsKey(kv.key)) {
+        return true;          // conflict!
+      }
+    }
+  }
+  return false;
+}
+
 void Z_Devices::jsonAppend(uint16_t shortaddr, JsonObject &values) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
@@ -428,24 +491,7 @@ void Z_Devices::jsonAppend(uint16_t shortaddr, JsonObject &values) {
     device.json = &(device.json_buffer->createObject());
   }
   // copy all values from 'values' to 'json'
-  for (auto kv : values) {
-    String key_string = kv.key;
-    const char * key = key_string.c_str();
-    JsonVariant &val = kv.value;
-
-    device.json->remove(key_string);    // force remove to have metadata like LinkQuality at the end
-
-    if (val.is<char*>()) {
-      String sval = val.as<String>();       // force a copy of the String value
-      device.json->set(key_string, sval);
-    } else if (val.is<JsonArray>()) {
-      // todo
-    } else if (val.is<JsonObject>()) {
-      // todo
-    } else {
-      device.json->set(key_string, kv.value);
-    }
-  }
+  CopyJsonObject(*device.json, values);
 }
 
 const JsonObject *Z_Devices::jsonGet(uint16_t shortaddr) {
@@ -453,6 +499,19 @@ const JsonObject *Z_Devices::jsonGet(uint16_t shortaddr) {
   if (&device == nullptr) { return nullptr; }                 // don't crash if not found
   return device.json;
 }
+
+const void Z_Devices::jsonPublish(uint16_t shortaddr) {
+  const JsonObject *json = zigbee_devices.jsonGet(shortaddr);
+  if (json == nullptr) { return; }                 // don't crash if not found
+
+  String msg = "";
+  json->printTo(msg);
+  zigbee_devices.jsonClear(shortaddr);
+  Response_P(PSTR("{\"" D_CMND_ZIGBEE_RECEIVED "\":{\"0x%04X\":%s}}"), shortaddr, msg.c_str());
+  MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
+  XdrvRulesProcess();
+}
+
 
 // Dump the internal memory of Zigbee devices
 // Mode = 1: simple dump of devices addresses and names
