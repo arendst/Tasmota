@@ -214,6 +214,8 @@ enum UserSelectablePins {
   GPIO_TASMOTASLAVE_RST_INV, // Slave Reset Inverted
   GPIO_HPMA_RX,        // Honeywell HPMA115S0 Serial interface
   GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
+  GPIO_GPS_RX,         // GPS serial interface
+  GPIO_GPS_TX,         // GPS serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -293,7 +295,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_SM2135_CLK "|" D_SENSOR_SM2135_DAT "|"
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
   D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
-  D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
+  D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -756,6 +758,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_DEEPSLEEP
   GPIO_DEEPSLEEP
 #endif
+#ifdef USE_GPS
+  GPIO_GPS_RX,         // GPS serial interface
+  GPIO_GPS_TX          // GPS serial interface
+#endif
+
 };
 
 const uint8_t kModuleNiceList[] PROGMEM = {
