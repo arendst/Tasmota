@@ -48,7 +48,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.0.0.1
+### Version 8.0.0.2
 
 - Change Settings text handling allowing variable length text within a total text pool of 699 characters
 - Change Smoother ``Fade`` using 100Hz instead of 20Hz animation (#7179)
