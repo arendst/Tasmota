@@ -11,7 +11,9 @@ See [migration path](https://tasmota.github.io/docs/#/Upgrading?id=migration-pat
 3. Migrate to **Sonoff-Tasmota 5.14**
 4. Migrate to **Sonoff-Tasmota 6.x**
 5. Migrate to **Tasmota 7.x**
-6. Migrate to **Tasmota 8.x**
+--- Major change in parameter storage layout ---
+6. Migrate to **Tasmota 8.1**
+7. Migrate to **Tasmota 8.x**
 
 ## Supported Core versions
 
@@ -50,6 +52,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 - Change Settings text handling allowing variable length text within a total text pool of 699 characters
 - Change Smoother ``Fade`` using 100Hz instead of 20Hz animation (#7179)
-- Change max number of rule ``Mem``s from 5 to 16 (#4933)
-- Change max number of rule ``Var``s from 5 to 16 (#4933)
+- Change number of rule ``Var``s and ``Mem``s from 5 to 16 (#4933)
 - Add support for max 150 characters in most command parameter strings (#3686, #4754)
+- Add Zigbee coalesce sensor attributes into a single message
+- Add Deepsleep start delay based on Teleperiod if ``Teleperiod`` differs from 10 or 300
