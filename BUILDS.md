@@ -119,6 +119,9 @@
 | USE_MP3_PLAYER        | - | - | - | - | x | - | - |
 | USE_AZ7798            | - | - | - | - | - | - | - |
 | USE_PN532_HSU         | - | - | - | - | x | - | - |
+| USE_RDM6300           | - | - | - | - | x | - | - |
+| USE_IBEACON           | - | - | - | - | x | - | - |
+| USE_GPS               | - | - | - | - | - | - | - |
 | USE_ZIGBEE            | - | - | - | - | - | - | - |
 |                       |   |   |   |   |   |   |   |
 | USE_IR_REMOTE         | - | - | x | x | x | x | x |

@@ -493,7 +493,9 @@ void GetFeatures(void)
   feature5 |= 0x00100000;
 #endif
 //  feature5 |= 0x00200000;
-//  feature5 |= 0x00400000;
+#ifdef USE_GPS
+  feature5 |= 0x00400000;
+#endif
 //  feature5 |= 0x00800000;
 
 //  feature5 |= 0x01000000;

@@ -131,7 +131,8 @@ a_setoption = [[
     "GroupTopic replaces %topic% (0) or fixed topic cmnd/grouptopic (1)",
     "Enable incrementing bootcount when deepsleep is enabled",
     "Do not power off if slider moved to far left",
-    "","",
+    "Bypass Compatibility check",
+    "",
     "Enable shutter support",
     "Invert PCF8574 ports"
     ],[
@@ -187,7 +188,7 @@ a_features = [[
     "USE_SHUTTER","USE_PCF8574","USE_DDSU666","USE_DEEPSLEEP",
     "USE_SONOFF_SC","USE_SONOFF_RF","USE_SONOFF_L1","USE_EXS_DIMMER",
     "USE_ARDUINO_SLAVE","USE_HIH6","USE_HPMA","USE_TSL2591",
-    "USE_DHT12","","","",
+    "USE_DHT12","","USE_GPS","",
     "","","","",
     "","","",""
     ]]
