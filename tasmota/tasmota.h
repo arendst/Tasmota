@@ -73,8 +73,9 @@ const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 5
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
 
 // Changes to the following MAX_ defines need to be in line with enum SettingsTextIndex
-const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
 const uint8_t MAX_RULE_MEMS = 16;           // Max number of saved vars
+const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
+const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 
@@ -290,10 +291,8 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_MEM9, SET_MEM10, SET_MEM11, SET_MEM12, SET_MEM13, SET_MEM14, SET_MEM15, SET_MEM16,
                          SET_FRIENDLYNAME1, SET_FRIENDLYNAME2, SET_FRIENDLYNAME3, SET_FRIENDLYNAME4,
                          SET_FRIENDLYNAME5, SET_FRIENDLYNAME6, SET_FRIENDLYNAME7, SET_FRIENDLYNAME8,
-                         SET_BUTTON1, SET_BUTTON2, SET_BUTTON3, SET_BUTTON4,
-                         SET_BUTTON5, SET_BUTTON6, SET_BUTTON7, SET_BUTTON8,
-                         SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12,
-                         SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,
+                         SET_BUTTON1, SET_BUTTON2, SET_BUTTON3, SET_BUTTON4, SET_BUTTON5, SET_BUTTON6, SET_BUTTON7, SET_BUTTON8,
+                         SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12, SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,
                          SET_MAX };
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
