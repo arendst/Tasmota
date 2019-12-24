@@ -50,6 +50,7 @@
 #define D_JSON_COUNT "Count"
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
+#define D_JSON_DARKNESS "Darkness"
 #define D_JSON_DATA "Data"
 #define D_JSON_DISTANCE "Distance"
 #define D_JSON_DNSSERVER "DNSServer"
@@ -458,7 +459,6 @@
 #define D_CMND_LONGITUDE "Longitude"
 
 // Commands xdrv_16_tuyadimmer.ino
-
 #define D_CMND_TUYA_MCU "TuyaMCU"
 #define D_CMND_TUYA_MCU_SEND_STATE "TuyaSend"
 #define D_JSON_TUYA_MCU_RECEIVED "TuyaReceived"
@@ -485,34 +485,33 @@
 #define D_CMND_ZIGBEE_SEND "ZigbeeSend"
   #define D_JSON_ZIGBEE_ZCL_SENT "ZigbeeZCLSent"
 
-  // Commands xdrv_25_A4988_Stepper.ino
-  #ifdef USE_A4988_STEPPER
-    #define D_CMND_MOTOR "MOTOR"
-    #define D_JSON_MOTOR_MOVE "doMove"
-    #define D_JSON_MOTOR_ROTATE "doRotate"
-    #define D_JSON_MOTOR_TURN "doTurn"
-    #define D_JSON_MOTOR_SPR "setSPR"
-    #define D_JSON_MOTOR_RPM "setRPM"
-    #define D_JSON_MOTOR_MIS "setMIS"
-  #endif
+// Commands xdrv_25_A4988_Stepper.ino
+#define D_CMND_MOTOR "MOTOR"
+#define D_JSON_MOTOR_MOVE "doMove"
+#define D_JSON_MOTOR_ROTATE "doRotate"
+#define D_JSON_MOTOR_TURN "doTurn"
+#define D_JSON_MOTOR_SPR "setSPR"
+#define D_JSON_MOTOR_RPM "setRPM"
+#define D_JSON_MOTOR_MIS "setMIS"
 
-  // Commands xdrv_27_Shutter.ino
-  #ifdef USE_SHUTTER
-    #define D_PRFX_SHUTTER "Shutter"
-    #define D_CMND_SHUTTER_OPEN "Open"
-    #define D_CMND_SHUTTER_CLOSE "Close"
-    #define D_CMND_SHUTTER_STOP "Stop"
-    #define D_CMND_SHUTTER_POSITION "Position"
-    #define D_CMND_SHUTTER_OPENTIME "OpenDuration"
-    #define D_CMND_SHUTTER_CLOSETIME "CloseDuration"
-    #define D_CMND_SHUTTER_RELAY "Relay"
-    #define D_CMND_SHUTTER_SETHALFWAY "SetHalfway"
-    #define D_CMND_SHUTTER_SETCLOSE "SetClose"
-    #define D_CMND_SHUTTER_INVERT "Invert"
-    #define D_CMND_SHUTTER_CLIBRATION "Calibration"
-    #define D_CMND_SHUTTER_MOTORDELAY "MotorDelay"
-    #define D_CMND_SHUTTER_FREQUENCY "Frequency"
-  #endif
+// Commands xdrv_27_Shutter.ino
+#define D_PRFX_SHUTTER "Shutter"
+#define D_CMND_SHUTTER_OPEN "Open"
+#define D_CMND_SHUTTER_CLOSE "Close"
+#define D_CMND_SHUTTER_STOP "Stop"
+#define D_CMND_SHUTTER_POSITION "Position"
+#define D_CMND_SHUTTER_OPENTIME "OpenDuration"
+#define D_CMND_SHUTTER_CLOSETIME "CloseDuration"
+#define D_CMND_SHUTTER_RELAY "Relay"
+#define D_CMND_SHUTTER_SETHALFWAY "SetHalfway"
+#define D_CMND_SHUTTER_SETCLOSE "SetClose"
+#define D_CMND_SHUTTER_INVERT "Invert"
+#define D_CMND_SHUTTER_CLIBRATION "Calibration"
+#define D_CMND_SHUTTER_MOTORDELAY "MotorDelay"
+#define D_CMND_SHUTTER_FREQUENCY "Frequency"
+
+// Commands xsns_02_analog.ino
+#define D_CMND_ADCPARAM "AdcParam"
 
 /********************************************************************************************/
 

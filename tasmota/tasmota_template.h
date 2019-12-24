@@ -311,9 +311,9 @@ enum UserSelectableAdc0 {
   ADC0_LIGHT,          // Light sensor
   ADC0_BUTTON,         // Button
   ADC0_BUTTON_INV,
+  ADC0_MOIST,          // Moisture
 //  ADC0_SWITCH,         // Switch
 //  ADC0_SWITCH_INV,
-  ADC0_MOIST,          // Moisture
   ADC0_END };
 
 // Programmer selectable ADC0 functionality

@@ -146,7 +146,7 @@ void AdcEverySecond(void)
 }
 
 void AdcShow(bool json)
-{ 
+{
   if (ADC0_INPUT == my_adc0) {
     uint16_t analog = AdcRead(5);
 
@@ -193,12 +193,12 @@ void AdcShow(bool json)
 #ifdef USE_WEBSERVER
     } else {
       WSContentSend_PD(HTTP_SNS_ILLUMINANCE, "", adc_light);
-
 #endif  // USE_WEBSERVER
     }
   }
   else if (ADC0_MOIST == my_adc0) {
     uint16_t adc_moist = AdcGetMoist();
+
     if (json) {
       ResponseAppend_P(JSON_SNS_MOISTURE, "ANALOG", adc_moist);
 #ifdef USE_WEBSERVER
@@ -206,14 +206,13 @@ void AdcShow(bool json)
       WSContentSend_PD(HTTP_SNS_MOISTURE, "", adc_moist);
 #endif  // USE_WEBSERVER
     }
-   }
+  }
 }
 
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
-#define D_CMND_ADCPARAM "AdcParam"
 const char kAdcCommands[] PROGMEM = "|"  // No prefix
   D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_ADCPARAM;
 
@@ -248,7 +247,7 @@ void CmndAdcs(void)
 void CmndAdcParam(void)
 {
   if (XdrvMailbox.data_len) {
-    if ((ADC0_TEMP == XdrvMailbox.payload) || (ADC0_LIGHT == XdrvMailbox.payload) || (ADC0_MOIST == XdrvMailbox.payload)) { 
+    if ((ADC0_TEMP == XdrvMailbox.payload) || (ADC0_LIGHT == XdrvMailbox.payload) || (ADC0_MOIST == XdrvMailbox.payload)) {
 //      if ((XdrvMailbox.payload == my_adc0) && ((ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0))) {
       if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
@@ -283,10 +282,11 @@ void CmndAdcParam(void)
   if ((ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0)) {
     Response_P(PSTR("{\"" D_CMND_ADCPARAM "\":[%d,%d,%d,%s]}"),
       Settings.adc_param_type, Settings.adc_param1, Settings.adc_param2, param3);
-  } else if (ADC0_MOIST == my_adc0) {
+  }
+  else if (ADC0_MOIST == my_adc0) {
     Response_P(PSTR("{\"" D_CMND_ADCPARAM "\":[%d,%d,%d]}"),
       Settings.adc_param_type, Settings.adc_param1, Settings.adc_param2);
-  } 
+  }
 }
 
 /*********************************************************************************************\
