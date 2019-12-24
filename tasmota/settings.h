@@ -337,7 +337,7 @@ struct SYSCFG {
   SysBitfield3  flag3;                     // 3A0
   uint8_t       switchmode[MAX_SWITCHES];  // 3A4  (6.0.0b - moved from 0x4CA)
 
-  char          ex_friendlyname[MAX_FRIENDLYNAMES][33]; // 3AC
+  char          ex_friendlyname[4][33];    // 3AC
   char          ex_switch_topic[33];       // 430
 
   char          serial_delimiter;          // 451

@@ -1846,6 +1846,7 @@ void OtherSaveSettings(void)
   char tmp[TOPSZ];
   char webindex[5];
   char friendlyname[TOPSZ];
+  char message[LOGSZ];
 
   WebGetArg("wp", tmp, sizeof(tmp));
   SettingsUpdateText(SET_WEBPWD, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? SettingsText(SET_WEBPWD) : tmp);
@@ -1854,15 +1855,17 @@ void OtherSaveSettings(void)
   WebGetArg("b2", tmp, sizeof(tmp));
   Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
 #endif  // USE_EMULATION
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
+
+  snprintf_P(message, sizeof(message), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
   for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("a%d"), i);
     WebGetArg(webindex, tmp, sizeof(tmp));
     snprintf_P(friendlyname, sizeof(friendlyname), PSTR(FRIENDLY_NAME"%d"), i +1);
     SettingsUpdateText(SET_FRIENDLYNAME1 +i, (!strlen(tmp)) ? (i) ? friendlyname : FRIENDLY_NAME : tmp);
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s%s %s"), log_data, (i) ? "," : "", SettingsText(SET_FRIENDLYNAME1 +i));
+    snprintf_P(message, sizeof(message), PSTR("%s%s %s"), message, (i) ? "," : "", SettingsText(SET_FRIENDLYNAME1 +i));
   }
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P(LOG_LEVEL_INFO, message);
+
   WebGetArg("t1", tmp, sizeof(tmp));
   if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
     char svalue[128];

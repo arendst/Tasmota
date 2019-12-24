@@ -1400,8 +1400,7 @@ bool evaluateLogicalExpression(const char * expression, int len)
   memcpy(expbuff, expression, len);
   expbuff[len] = '\0';
 
-  //snprintf_P(log_data, sizeof(log_data), PSTR("EvalLogic: |%s|"), expbuff);
-  //AddLog(LOG_LEVEL_DEBUG);
+  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("EvalLogic: |%s|"), expbuff);
   char * pointer = expbuff;
   LinkedList<bool> values;
   LinkedList<int8_t> logicOperators;
@@ -1527,8 +1526,7 @@ void ExecuteCommandBlock(const char * commands, int len)
   memcpy(cmdbuff, commands, len);
   cmdbuff[len] = '\0';
 
-  //snprintf_P(log_data, sizeof(log_data), PSTR("ExecCmd: |%s|"), cmdbuff);
-  //AddLog(LOG_LEVEL_DEBUG);
+  //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ExecCmd: |%s|"), cmdbuff);
   char oneCommand[len + 1];     //To put one command
   int insertPosition = 0;       //When insert into backlog, we should do it by 0, 1, 2 ...
   char * pos = cmdbuff;

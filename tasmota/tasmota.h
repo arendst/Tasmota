@@ -58,7 +58,6 @@ const uint8_t MAX_PWMS = 5;                 // Max number of PWM channels
 const uint8_t MAX_COUNTERS = 4;             // Max number of counter sensors
 const uint8_t MAX_TIMERS = 16;              // Max number of Timers
 const uint8_t MAX_PULSETIMERS = 8;          // Max number of supported pulse timers
-const uint8_t MAX_FRIENDLYNAMES = 4;        // Max number of Friendly names
 const uint8_t MAX_DOMOTICZ_IDX = 4;         // Max number of Domoticz device, key and switch indices
 const uint8_t MAX_DOMOTICZ_SNS_IDX = 12;    // Max number of Domoticz sensors indices
 const uint8_t MAX_KNX_GA = 10;              // Max number of KNX Group Addresses to read that can be set
@@ -73,7 +72,10 @@ const uint8_t MAX_PCF8574 = 8;              // Max number of PCF8574 devices
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
 
+// Changes to the following MAX_ defines need to be in line with enum SettingsTextIndex
+const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
 const uint8_t MAX_RULE_MEMS = 16;           // Max number of saved vars
+
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 
 const char MQTT_TOKEN_PREFIX[] PROGMEM = "%prefix%";  // To be substituted by mqtt_prefix[x]
@@ -287,13 +289,11 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_MEM1, SET_MEM2, SET_MEM3, SET_MEM4, SET_MEM5, SET_MEM6, SET_MEM7, SET_MEM8,
                          SET_MEM9, SET_MEM10, SET_MEM11, SET_MEM12, SET_MEM13, SET_MEM14, SET_MEM15, SET_MEM16,
                          SET_FRIENDLYNAME1, SET_FRIENDLYNAME2, SET_FRIENDLYNAME3, SET_FRIENDLYNAME4,
-
-//                         SET_FRIENDLYNAME5, SET_FRIENDLYNAME6, SET_FRIENDLYNAME7, SET_FRIENDLYNAME8,  // Future extension
-//                         SET_BUTTON1, SET_BUTTON2, SET_BUTTON3, SET_BUTTON4,      // Future extension
-//                         SET_BUTTON5, SET_BUTTON6, SET_BUTTON7, SET_BUTTON8,      // Future extension
-//                         SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12,   // Future extension
-//                         SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,  // Future extension
-
+                         SET_FRIENDLYNAME5, SET_FRIENDLYNAME6, SET_FRIENDLYNAME7, SET_FRIENDLYNAME8,
+                         SET_BUTTON1, SET_BUTTON2, SET_BUTTON3, SET_BUTTON4,
+                         SET_BUTTON5, SET_BUTTON6, SET_BUTTON7, SET_BUTTON8,
+                         SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12,
+                         SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,
                          SET_MAX };
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,
