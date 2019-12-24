@@ -100,6 +100,12 @@ const char HASS_DISCOVER_SENSOR_HUM[] PROGMEM =
   "\"val_tpl\":\"{{value_json['%s'].Humidity}}\","    // "SI7021-14":{"Temperature":null,"Humidity":null} -> {{ value_json['SI7021-14'].Humidity }}
   "\"dev_cla\":\"humidity\"";                         // humidity
 
+const char HASS_DISCOVER_SENSOR_MOIST[] PROGMEM =
+  ",\"unit_of_meas\":\"%%\","                         // %
+  "\"val_tpl\":\"{{value_json['%s'].Moisture}}\","    // "ANALOG":{"Moisture":78} -> {{ value_json['ANALOG'].Moisture }}
+  "\"dev_cla\":\"humidity\","                         // humidity
+  "\"ic\":\"mdi:cup-water\"";                         // cup-water icon
+
 const char HASS_DISCOVER_SENSOR_PRESS[] PROGMEM =
   ",\"unit_of_meas\":\"%s\","                         // PressureUnit() setting
   "\"val_tpl\":\"{{value_json['%s'].%s}}\","          // "BME280":{"Temperature":19.7,"Humidity":27.8,"Pressure":990.1} -> {{ value_json['BME280'].Pressure }}
@@ -473,6 +479,8 @@ void HAssAnnounceSensor(const char* sensorname, const char* subsensortype)
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_AMPERE, sensorname, subsensortype);
     } else if (!strcmp_P(subsensortype, PSTR(D_JSON_ILLUMINANCE))){
       TryResponseAppend_P(HASS_DISCOVER_SENSOR_ILLUMINANCE, sensorname, subsensortype);
+    } else if (!strcmp_P(subsensortype, PSTR(D_JSON_MOISTURE))){
+      TryResponseAppend_P(HASS_DISCOVER_SENSOR_MOIST, sensorname, subsensortype);
     } else {
         if (is_sensor){
         TryResponseAppend_P(PSTR(",\"unit_of_meas\":\" \""));   // " " As unit of measurement to get a value graph (not available for binary sensors)
