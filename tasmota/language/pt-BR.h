@@ -113,6 +113,7 @@
 #define D_LIGHT "Luz"
 #define D_LWT "LWT"
 #define D_MODULE "Módulo"
+#define D_MOISTURE "Umidade"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-pressão"
 #define D_NOISE "Ruído"

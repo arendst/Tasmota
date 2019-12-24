@@ -399,7 +399,7 @@ void ChirpEvery100MSecond(void)
 /********************************************************************************************/
 // normaly in i18n.h
 
-#define D_JSON_MOISTURE "Moisture"
+// #define D_JSON_MOISTURE "Moisture" // on i18n.h
 #define D_JSON_DARKNESS "Darkness"
 
 #ifdef USE_WEBSERVER
