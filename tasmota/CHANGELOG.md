@@ -6,6 +6,10 @@
 
 - Release
 
+### 8.0.0.3 20191224
+
+- Version bump due to internal Settings change
+
 ### 8.0.0.2 20191223
 
 - Changed Settings variable namings
