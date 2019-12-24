@@ -1014,7 +1014,7 @@ void HandleRoot(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_MAIN_MENU);
 
-  char stemp[10];
+  char stemp[33];
 
   WSContentStart_P(S_MAIN_MENU);
 #ifdef USE_SCRIPT_WEB_DISPLAY
@@ -1106,14 +1106,19 @@ void HandleRoot(void)
     WSContentSend_P(PSTR("<tr>"));
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) {
-      WSContentSend_P(HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
+      WSContentSend_P(HTTP_DEVICE_CONTROL, 36, 1,
+        (strlen(SettingsText(SET_BUTTON1))) ? SettingsText(SET_BUTTON1) : D_BUTTON_TOGGLE,
+        "");
       for (uint32_t i = 0; i < MaxFanspeed(); i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
-        WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i +2, stemp, "");
+        WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i +2,
+          (strlen(SettingsText(SET_BUTTON2 + i))) ? SettingsText(SET_BUTTON2 + i) : stemp,
+          "");
       }
     } else {
 #endif  // USE_SONOFF_IFAN
       for (uint32_t idx = 1; idx <= devices_present; idx++) {
+        bool set_button = ((idx <= MAX_BUTTON_TEXT) && strlen(SettingsText(SET_BUTTON1 + idx -1)));
 #ifdef USE_SHUTTER
         if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
           bool shutter_used = false;
@@ -1124,13 +1129,17 @@ void HandleRoot(void)
             }
           }
           if (shutter_used) {
-            WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx, (idx % 2) ? "▲" : "▼" , "");
+            WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx,
+              (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (idx % 2) ? "▲" : "▼",
+              "");
             continue;
           }
         }
 #endif  // USE_SHUTTER
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
+        WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx,
+          (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (devices_present < 5) ? D_BUTTON_TOGGLE : "",
+          (set_button) ? "" : (devices_present > 1) ? stemp : "");
       }
 #ifdef USE_SONOFF_IFAN
     }
@@ -1146,7 +1155,9 @@ void HandleRoot(void)
       if (idx > 0) { WSContentSend_P(PSTR("</tr><tr>")); }
       for (uint32_t j = 0; j < 4; j++) {
         idx++;
-        WSContentSend_P(PSTR("<td style='width:25%%'><button onclick='la(\"&k=%d\");'>%d</button></td>"), idx, idx);  // &k is related to WebGetArg("k", tmp, sizeof(tmp));
+        snprintf_P(stemp, sizeof(stemp), PSTR("%d"), idx);
+        WSContentSend_P(PSTR("<td style='width:25%%'><button onclick='la(\"&k=%d\");'>%s</button></td>"), idx,  // &k is related to WebGetArg("k", tmp, sizeof(tmp));
+          (strlen(SettingsText(SET_BUTTON1 + idx -1))) ? SettingsText(SET_BUTTON1 + idx -1) : stemp);
       }
     }
     WSContentSend_P(PSTR("</tr></table>"));
@@ -1846,6 +1857,7 @@ void OtherSaveSettings(void)
   char tmp[TOPSZ];
   char webindex[5];
   char friendlyname[TOPSZ];
+  char message[LOGSZ];
 
   WebGetArg("wp", tmp, sizeof(tmp));
   SettingsUpdateText(SET_WEBPWD, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? SettingsText(SET_WEBPWD) : tmp);
@@ -1854,15 +1866,17 @@ void OtherSaveSettings(void)
   WebGetArg("b2", tmp, sizeof(tmp));
   Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
 #endif  // USE_EMULATION
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
+
+  snprintf_P(message, sizeof(message), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
   for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("a%d"), i);
     WebGetArg(webindex, tmp, sizeof(tmp));
     snprintf_P(friendlyname, sizeof(friendlyname), PSTR(FRIENDLY_NAME"%d"), i +1);
     SettingsUpdateText(SET_FRIENDLYNAME1 +i, (!strlen(tmp)) ? (i) ? friendlyname : FRIENDLY_NAME : tmp);
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s%s %s"), log_data, (i) ? "," : "", SettingsText(SET_FRIENDLYNAME1 +i));
+    snprintf_P(message, sizeof(message), PSTR("%s%s %s"), message, (i) ? "," : "", SettingsText(SET_FRIENDLYNAME1 +i));
   }
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P(LOG_LEVEL_INFO, message);
+
   WebGetArg("t1", tmp, sizeof(tmp));
   if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
     char svalue[128];
@@ -2730,7 +2744,8 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_SENDMAIL
   D_CMND_SENDMAIL "|"
 #endif
-  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR "|" D_CMND_CORS;
+  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|"
+  D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON "|" D_CMND_CORS;
 
 void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
@@ -2739,7 +2754,8 @@ void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_SENDMAIL
   &CmndSendmail,
 #endif
-  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor, &CmndWebSensor, &CmndCors };
+  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor,
+  &CmndWebSensor, &CmndWebButton, &CmndCors };
 
 /*********************************************************************************************\
  * Commands
@@ -2858,6 +2874,24 @@ void CmndWebSensor(void)
   Response_P(PSTR("{\"" D_CMND_WEBSENSOR "\":"));
   XsnsSensorState();
   ResponseJsonEnd();
+}
+
+void CmndWebButton(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_BUTTON_TEXT)) {
+    if (!XdrvMailbox.usridx) {
+      mqtt_data[0] = '\0';
+      for (uint32_t i = 0; i < MAX_BUTTON_TEXT; i++) {
+        ResponseAppend_P(PSTR("%c\"WebButton%d\":\"%s\""), (i) ? ',' : '{', i +1, SettingsText(SET_BUTTON1 +i));
+      }
+      ResponseJsonEnd();
+    } else {
+      if (XdrvMailbox.data_len > 0) {
+        SettingsUpdateText(SET_BUTTON1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);
+      }
+      ResponseCmndIdxChar(SettingsText(SET_BUTTON1 + XdrvMailbox.index -1));
+    }
+  }
 }
 
 void CmndCors(void)

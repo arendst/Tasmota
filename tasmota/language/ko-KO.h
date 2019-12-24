@@ -113,6 +113,7 @@
 #define D_LIGHT "밝게"
 #define D_LWT "LWT"
 #define D_MODULE "모듈"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-press"
 #define D_NOISE "소음"

@@ -66,6 +66,12 @@ void AdcInit(void)
       Settings.adc_param2 = ANALOG_LDR_LUX_CALC_SCALAR;
       Settings.adc_param3 = ANALOG_LDR_LUX_CALC_EXPONENT * 10000;
     }
+    else if (ADC0_MOIST == my_adc0) {
+      Settings.adc_param_type = ADC0_MOIST;
+      Settings.adc_param1 = 0;
+      Settings.adc_param2 = 1023;
+      Settings.adc_param3 = 0;
+    }
   }
 }
 
@@ -111,6 +117,20 @@ uint16_t AdcGetLux(void)
   double ldrLux = (double)Settings.adc_param2 * FastPrecisePow(ldrResistance, (double)Settings.adc_param3 / 10000);
 
   return (uint16_t)ldrLux;
+}
+
+uint16_t AdcGetMoist(void)
+// formula for calibration: value, fromLow, fromHigh, toHigh, toLow
+// Example: 632, 0, 1023, 100, 0
+// int( ( ( (<param2> - <analogue-value>) / ( <param2> - <param1> ) ) * ( <param3> - <param4> ) ) + <param4> )
+// double amoist = ((Settings.adc_param2 - (double)adc) / (Settings.adc_param2 - Settings.adc_param1) * 100;
+// int((((1023 - <analog-reading>) / ( 1023 - 0 )) * ( 100 - 0 )) + 0 )
+
+{
+   int adc = AdcRead(2);
+   double amoist = ((double)Settings.adc_param2 - (double)adc) / ((double)Settings.adc_param2 - (double)Settings.adc_param1) * 100;
+   //double amoist = ((1023 - (double)adc) / 1023) * 100;
+   return (uint16_t)amoist;
 }
 
 void AdcEverySecond(void)
@@ -176,13 +196,23 @@ void AdcShow(bool json)
 #endif  // USE_WEBSERVER
     }
   }
+  else if (ADC0_MOIST == my_adc0) {
+    uint16_t adc_moist = AdcGetMoist();
+
+    if (json) {
+      ResponseAppend_P(JSON_SNS_MOISTURE, "ANALOG", adc_moist);
+#ifdef USE_WEBSERVER
+    } else {
+      WSContentSend_PD(HTTP_SNS_MOISTURE, "", adc_moist);
+#endif  // USE_WEBSERVER
+    }
+  }
 }
 
 /*********************************************************************************************\
  * Commands
 \*********************************************************************************************/
 
-#define D_CMND_ADCPARAM "AdcParam"
 const char kAdcCommands[] PROGMEM = "|"  // No prefix
   D_CMND_ADC "|" D_CMND_ADCS "|" D_CMND_ADCPARAM;
 
@@ -217,7 +247,7 @@ void CmndAdcs(void)
 void CmndAdcParam(void)
 {
   if (XdrvMailbox.data_len) {
-    if ((ADC0_TEMP == XdrvMailbox.payload) || (ADC0_LIGHT == XdrvMailbox.payload)) {
+    if ((ADC0_TEMP == XdrvMailbox.payload) || (ADC0_LIGHT == XdrvMailbox.payload) || (ADC0_MOIST == XdrvMailbox.payload)) {
 //      if ((XdrvMailbox.payload == my_adc0) && ((ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0))) {
       if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
@@ -227,10 +257,13 @@ void CmndAdcParam(void)
 //          Settings.adc_param_type = my_adc0;
         Settings.adc_param1 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
         Settings.adc_param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
-        Settings.adc_param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)) * 10000);
+        if (!ADC0_MOIST == XdrvMailbox.payload) {
+          Settings.adc_param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)) * 10000);
+        }
       } else {                                         // Set default values based on current adc type
         // AdcParam 2
         // AdcParam 3
+        // AdcParam 6
         Settings.adc_param_type = 0;
         AdcInit();
       }
@@ -246,8 +279,14 @@ void CmndAdcParam(void)
   }
   char param3[33];
   dtostrfd(((double)Settings.adc_param3)/10000, precision, param3);
-  Response_P(PSTR("{\"" D_CMND_ADCPARAM "\":[%d,%d,%d,%s]}"),
-    Settings.adc_param_type, Settings.adc_param1, Settings.adc_param2, param3);
+  if ((ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0)) {
+    Response_P(PSTR("{\"" D_CMND_ADCPARAM "\":[%d,%d,%d,%s]}"),
+      Settings.adc_param_type, Settings.adc_param1, Settings.adc_param2, param3);
+  }
+  else if (ADC0_MOIST == my_adc0) {
+    Response_P(PSTR("{\"" D_CMND_ADCPARAM "\":[%d,%d,%d]}"),
+      Settings.adc_param_type, Settings.adc_param1, Settings.adc_param2);
+  }
 }
 
 /*********************************************************************************************\
@@ -263,7 +302,7 @@ bool Xsns02(uint8_t function)
       result = DecodeCommand(kAdcCommands, AdcCommand);
       break;
     default:
-      if ((ADC0_INPUT == my_adc0) || (ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0)) {
+      if ((ADC0_INPUT == my_adc0) || (ADC0_TEMP == my_adc0) || (ADC0_LIGHT == my_adc0) || (ADC0_MOIST == my_adc0)) {
         switch (function) {
 #ifdef USE_RULES
           case FUNC_EVERY_250_MSECOND:

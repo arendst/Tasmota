@@ -113,6 +113,7 @@
 #define D_LIGHT "Светлина"
 #define D_LWT "LWT"
 #define D_MODULE "Модул"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "неколкократно натискане"
 #define D_NOISE "Шум"

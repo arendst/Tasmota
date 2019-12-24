@@ -32,9 +32,7 @@ const char kMqttCommands[] PROGMEM = "|"  // No prefix
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   D_CMND_MQTTFINGERPRINT "|"
 #endif
-#if !defined(USE_MQTT_TLS) || !defined(USE_MQTT_AWS_IOT) // user and password are disabled with AWS IoT
   D_CMND_MQTTUSER "|" D_CMND_MQTTPASSWORD "|"
-#endif
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   D_CMND_TLSKEY "|"
 #endif
@@ -46,9 +44,7 @@ void (* const MqttCommand[])(void) PROGMEM = {
 #if defined(USE_MQTT_TLS) && !defined(USE_MQTT_TLS_CA_CERT)
   &CmndMqttFingerprint,
 #endif
-#if !defined(USE_MQTT_TLS) || !defined(USE_MQTT_AWS_IOT) // user and password are disabled with AWS IoT
   &CmndMqttUser, &CmndMqttPassword,
-#endif
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   &CmndTlsKey,
 #endif
@@ -640,7 +636,6 @@ void MqttReconnect(void)
 #endif
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "AWS IoT endpoint: %s"), SettingsText(SET_MQTT_HOST));
-  //if (MqttClient.connect(mqtt_client, nullptr, nullptr, nullptr, 0, false, nullptr)) {
   if (MqttClient.connect(mqtt_client, nullptr, nullptr, stopic, 1, false, mqtt_data, MQTT_CLEAN_SESSION)) {
 #else
   if (MqttClient.connect(mqtt_client, mqtt_user, mqtt_pwd, stopic, 1, true, mqtt_data, MQTT_CLEAN_SESSION)) {
@@ -737,7 +732,6 @@ void CmndMqttFingerprint(void)
 }
 #endif
 
-#if !defined(USE_MQTT_TLS) || !defined(USE_MQTT_AWS_IOT) // user and password are disabled with AWS IoT
 void CmndMqttUser(void)
 {
   if (XdrvMailbox.data_len > 0) {
@@ -757,7 +751,6 @@ void CmndMqttPassword(void)
     Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
   }
 }
-#endif // USE_MQTT_AWS_IOT
 
 void CmndMqttlog(void)
 {
@@ -1171,10 +1164,8 @@ const char HTTP_FORM_MQTT1[] PROGMEM =
   "<p><b>" D_PORT "</b> (" STR(MQTT_PORT) ")<br><input id='ml' placeholder='" STR(MQTT_PORT) "' value='%d'></p>"
   "<p><b>" D_CLIENT "</b> (%s)<br><input id='mc' placeholder='%s' value='%s'></p>";
 const char HTTP_FORM_MQTT2[] PROGMEM =
-#if !defined(USE_MQTT_TLS) || !defined(USE_MQTT_AWS_IOT) // user and password disabled with AWS IoT
   "<p><b>" D_USER "</b> (" MQTT_USER ")<br><input id='mu' placeholder='" MQTT_USER "' value='%s'></p>"
   "<p><b>" D_PASSWORD "</b><input type='checkbox' onclick='sp(\"mp\")'><br><input id='mp' type='password' placeholder='" D_PASSWORD "' value='" D_ASTERISK_PWD "'></p>"
-#endif // USE_MQTT_AWS_IOT
   "<p><b>" D_TOPIC "</b> = %%topic%% (%s)<br><input id='mt' placeholder='%s' value='%s'></p>"
   "<p><b>" D_FULL_TOPIC "</b> (%s)<br><input id='mf' placeholder='%s' value='%s'></p>";
 

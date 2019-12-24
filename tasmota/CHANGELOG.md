@@ -9,7 +9,10 @@
 ### 8.0.0.2 20191223
 
 - Changed Settings variable namings
+- Change number of ``FriendlyName``s from 4 to 8
 - Add Zigbee better support for Xiaomi Double Switch and Xiaomi Vibration sensor
+- Add support for ``AdcParam`` parameters to control ADC0 Moisture formula by Federico Leoni (#7309)
+- Add commands ``WebButton1`` until ``WebButton16`` to support user defined GUI button text (#7166)
 
 ### 8.0.0.1 20191221
 

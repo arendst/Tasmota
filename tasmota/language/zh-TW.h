@@ -113,6 +113,7 @@
 #define D_LIGHT "燈"
 #define D_LWT "LWT"
 #define D_MODULE "模組"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "多次按鍵"
 #define D_NOISE "雜訊"

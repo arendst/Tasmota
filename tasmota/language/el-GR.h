@@ -113,6 +113,7 @@
 #define D_LIGHT "Φως"
 #define D_LWT "LWT"
 #define D_MODULE "Μονάδα"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "ανίχνευση για πολλαπλά πατήματα"
 #define D_NOISE "Θόρυβος"

@@ -113,6 +113,7 @@
 #define D_LIGHT "אור"
 #define D_LWT "LWT"
 #define D_MODULE "מודול"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "לחיצה מרובה"
 #define D_NOISE "רעש"

@@ -551,13 +551,14 @@ bool SettingsUpdateText(uint32_t index, const char* replace_me)
 
 char* SettingsText(uint32_t index)
 {
-  if (index >= SET_MAX) {
-    return nullptr;  // Setting not supported - internal error
-  }
-
   char* position = Settings.text_pool;
-  for (;index > 0; index--) {
-    while (*position++ != '\0') { }
+
+  if (index >= SET_MAX) {
+    position += settings_text_size -1;  // Setting not supported - internal error - return empty string
+  } else {
+    for (;index > 0; index--) {
+      while (*position++ != '\0') { }
+    }
   }
   return position;
 }

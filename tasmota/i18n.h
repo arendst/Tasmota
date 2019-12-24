@@ -50,6 +50,7 @@
 #define D_JSON_COUNT "Count"
 #define D_JSON_COUNTER "Counter"
 #define D_JSON_CURRENT "Current"         // As in Voltage and Current
+#define D_JSON_DARKNESS "Darkness"
 #define D_JSON_DATA "Data"
 #define D_JSON_DISTANCE "Distance"
 #define D_JSON_DNSSERVER "DNSServer"
@@ -99,6 +100,7 @@
 #define D_JSON_MEMORY_ERROR "Memory error"
 #define D_JSON_MINIMAL "minimal"
 #define D_JSON_MODEL "Model"
+#define D_JSON_MOISTURE "Moisture"
 #define D_JSON_MQTT_COUNT "MqttCount"
 #define D_JSON_NO "No"
 #define D_JSON_NOISE "Noise"
@@ -332,6 +334,7 @@
 #define D_CMND_WEBREFRESH "WebRefresh"
 #define D_CMND_WEBSEND "WebSend"
 #define D_CMND_WEBCOLOR "WebColor"
+#define D_CMND_WEBBUTTON "WebButton"
 #define D_CMND_WEBSENSOR "WebSensor"
 #define D_CMND_EMULATION "Emulation"
 #define D_CMND_SENDMAIL "Sendmail"
@@ -457,7 +460,6 @@
 #define D_CMND_LONGITUDE "Longitude"
 
 // Commands xdrv_16_tuyadimmer.ino
-
 #define D_CMND_TUYA_MCU "TuyaMCU"
 #define D_CMND_TUYA_MCU_SEND_STATE "TuyaSend"
 #define D_JSON_TUYA_MCU_RECEIVED "TuyaReceived"
@@ -484,34 +486,33 @@
 #define D_CMND_ZIGBEE_SEND "ZigbeeSend"
   #define D_JSON_ZIGBEE_ZCL_SENT "ZigbeeZCLSent"
 
-  // Commands xdrv_25_A4988_Stepper.ino
-  #ifdef USE_A4988_STEPPER
-    #define D_CMND_MOTOR "MOTOR"
-    #define D_JSON_MOTOR_MOVE "doMove"
-    #define D_JSON_MOTOR_ROTATE "doRotate"
-    #define D_JSON_MOTOR_TURN "doTurn"
-    #define D_JSON_MOTOR_SPR "setSPR"
-    #define D_JSON_MOTOR_RPM "setRPM"
-    #define D_JSON_MOTOR_MIS "setMIS"
-  #endif
+// Commands xdrv_25_A4988_Stepper.ino
+#define D_CMND_MOTOR "MOTOR"
+#define D_JSON_MOTOR_MOVE "doMove"
+#define D_JSON_MOTOR_ROTATE "doRotate"
+#define D_JSON_MOTOR_TURN "doTurn"
+#define D_JSON_MOTOR_SPR "setSPR"
+#define D_JSON_MOTOR_RPM "setRPM"
+#define D_JSON_MOTOR_MIS "setMIS"
 
-  // Commands xdrv_27_Shutter.ino
-  #ifdef USE_SHUTTER
-    #define D_PRFX_SHUTTER "Shutter"
-    #define D_CMND_SHUTTER_OPEN "Open"
-    #define D_CMND_SHUTTER_CLOSE "Close"
-    #define D_CMND_SHUTTER_STOP "Stop"
-    #define D_CMND_SHUTTER_POSITION "Position"
-    #define D_CMND_SHUTTER_OPENTIME "OpenDuration"
-    #define D_CMND_SHUTTER_CLOSETIME "CloseDuration"
-    #define D_CMND_SHUTTER_RELAY "Relay"
-    #define D_CMND_SHUTTER_SETHALFWAY "SetHalfway"
-    #define D_CMND_SHUTTER_SETCLOSE "SetClose"
-    #define D_CMND_SHUTTER_INVERT "Invert"
-    #define D_CMND_SHUTTER_CLIBRATION "Calibration"
-    #define D_CMND_SHUTTER_MOTORDELAY "MotorDelay"
-    #define D_CMND_SHUTTER_FREQUENCY "Frequency"
-  #endif
+// Commands xdrv_27_Shutter.ino
+#define D_PRFX_SHUTTER "Shutter"
+#define D_CMND_SHUTTER_OPEN "Open"
+#define D_CMND_SHUTTER_CLOSE "Close"
+#define D_CMND_SHUTTER_STOP "Stop"
+#define D_CMND_SHUTTER_POSITION "Position"
+#define D_CMND_SHUTTER_OPENTIME "OpenDuration"
+#define D_CMND_SHUTTER_CLOSETIME "CloseDuration"
+#define D_CMND_SHUTTER_RELAY "Relay"
+#define D_CMND_SHUTTER_SETHALFWAY "SetHalfway"
+#define D_CMND_SHUTTER_SETCLOSE "SetClose"
+#define D_CMND_SHUTTER_INVERT "Invert"
+#define D_CMND_SHUTTER_CLIBRATION "Calibration"
+#define D_CMND_SHUTTER_MOTORDELAY "MotorDelay"
+#define D_CMND_SHUTTER_FREQUENCY "Frequency"
+
+// Commands xsns_02_analog.ino
+#define D_CMND_ADCPARAM "AdcParam"
 
 /********************************************************************************************/
 
@@ -589,6 +590,7 @@ const char JSON_SNS_TEMP[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s}";
 const char JSON_SNS_TEMPHUM[] PROGMEM = ",\"%s\":{\"" D_JSON_TEMPERATURE "\":%s,\"" D_JSON_HUMIDITY "\":%s}";
 
 const char JSON_SNS_ILLUMINANCE[] PROGMEM = ",\"%s\":{\"" D_JSON_ILLUMINANCE "\":%d}";
+const char JSON_SNS_MOISTURE[] PROGMEM = ",\"%s\":{\"" D_JSON_MOISTURE "\":%d}";
 
 const char JSON_SNS_GNGPM[] PROGMEM = ",\"%s\":{\"" D_JSON_TOTAL_USAGE "\":%s,\"" D_JSON_FLOWRATE "\":%s}";
 
@@ -618,6 +620,8 @@ const char HTTP_SNS_CO2[] PROGMEM = "{s}%s " D_CO2 "{m}%d " D_UNIT_PARTS_PER_MIL
 const char HTTP_SNS_CO2EAVG[] PROGMEM = "{s}%s " D_ECO2 "{m}%d " D_UNIT_PARTS_PER_MILLION "{e}";  // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_GALLONS[] PROGMEM = "{s}%s " D_TOTAL_USAGE "{m}%s " D_UNIT_GALLONS " {e}";    // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
 const char HTTP_SNS_GPM[] PROGMEM = "{s}%s " D_FLOW_RATE "{m}%s " D_UNIT_GALLONS_PER_MIN" {e}";   // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+const char HTTP_SNS_MOISTURE[] PROGMEM = "{s}%s " D_MOISTURE "{m}%d %%{e}";                        // {s} = <tr><th>, {m} = </th><td>, {e} = </td></tr>
+
 
 const char S_MAIN_MENU[] PROGMEM = D_MAIN_MENU;
 const char S_CONFIGURATION[] PROGMEM = D_CONFIGURATION;

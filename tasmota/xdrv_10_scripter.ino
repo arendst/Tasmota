@@ -2203,8 +2203,7 @@ void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
 
 void toLog(const char *str) {
   if (!str) return;
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s"),str);
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P(LOG_LEVEL_INFO, str);
 }
 
 
@@ -2681,8 +2680,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                     }
                     cmd[count]=*lp++;
                   }
-                  //snprintf_P(log_data, sizeof(log_data), tmp);
-                  //AddLog(LOG_LEVEL_INFO);
+                  //AddLog_P(LOG_LEVEL_INFO, tmp);
                   // replace vars in cmd
                   char *tmp=cmdmem+SCRIPT_CMDMEM/2;
                   Replace_Cmd_Vars(cmd,tmp,SCRIPT_CMDMEM/2);
@@ -2694,8 +2692,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   } else {
                     if (!sflag) {
                       tasm_cmd_activ=1;
-                      snprintf_P(log_data, sizeof(log_data), PSTR("Script: performs \"%s\""), tmp);
-                      AddLog(glob_script_mem.script_loglevel&0x7f);
+                      AddLog_P2(glob_script_mem.script_loglevel&0x7f, PSTR("Script: performs \"%s\""), tmp);
                     } else if (sflag==2) {
                       // allow recursive call
                     } else {
@@ -3544,8 +3541,7 @@ void ScriptSaveSettings(void) {
   if (bitRead(Settings.rule_enabled, 0)) {
     int16_t res=Init_Scripter();
     if (res) {
-      snprintf_P(log_data, sizeof(log_data), PSTR("script init error: %d"),res);
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
       return;
     }
     Run_Scripter(">B",2,0);

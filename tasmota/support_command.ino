@@ -1311,7 +1311,7 @@ void CmndFriendlyname(void)
       } else {
         snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME "%d"), XdrvMailbox.index);
       }
-      SettingsUpdateText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1, (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data);
+      SettingsUpdateText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data);
     }
     ResponseCmndIdxChar(SettingsText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1));
   }
