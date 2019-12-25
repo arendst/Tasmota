@@ -1378,11 +1378,6 @@ void SettingsDelta(void)
       SettingsUpdateText(SET_NTPSERVER1, Settings.ex_ntp_server[0]);
       SettingsUpdateText(SET_NTPSERVER2, Settings.ex_ntp_server[1]);
       SettingsUpdateText(SET_NTPSERVER3, Settings.ex_ntp_server[2]);
-      SettingsUpdateText(SET_MEM1, Settings.script_pram[0]);
-      SettingsUpdateText(SET_MEM2, Settings.script_pram[1]);
-      SettingsUpdateText(SET_MEM3, Settings.script_pram[2]);
-      SettingsUpdateText(SET_MEM4, Settings.script_pram[3]);
-      SettingsUpdateText(SET_MEM5, Settings.script_pram[4]);
       SettingsUpdateText(SET_FRIENDLYNAME1, Settings.ex_friendlyname[0]);
       SettingsUpdateText(SET_FRIENDLYNAME2, Settings.ex_friendlyname[1]);
       SettingsUpdateText(SET_FRIENDLYNAME3, Settings.ex_friendlyname[2]);
