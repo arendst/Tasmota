@@ -1692,6 +1692,62 @@ void HandleWifiConfiguration(void)
   WSContentStop();
 }
 
+// Converts a hex digit to a number
+// returns 'Z' if non-hex input.
+char FromHexDigitNoFail(char ch) {
+  if (ch >= '0' && ch <= '9') {
+    return ch - '0';
+  }
+  else if (ch >= 'a' && ch <= 'f') {
+    return ch - 'a' + 10;
+  }
+  else if (ch >= 'A' && ch <= 'F') {
+    return ch - 'A' + 10;
+  }
+
+  //bad digit
+  return 'Z';
+}
+
+// Unescapes URL parameter in place.
+// Escaped characters must be in the form %XX, where X is a hex digit.
+// Malformed escaped characters are partially skipped.
+char* UrlParamUnescape(char* urlParam) {
+  if (urlParam == nullptr) {
+    return nullptr;
+  }
+
+  char* pp = urlParam;
+  for (const char* p = urlParam; *p != 0; ) {
+    if (*p == '%') {
+      //Skip %
+      p++;
+      char ch = FromHexDigitNoFail(*p);
+      if (ch == 'Z') {
+        // Bad escaping, just skip it.
+        continue;
+      }
+
+      *pp = ch * 16;
+      ch = FromHexDigitNoFail(*(++p));
+      if (ch == 'Z') {
+        // Bad escaping, just skip it.
+        continue;
+      }      
+
+      *(pp++) += ch;
+      p++;
+      continue;
+    }
+    else {
+      *(pp++) = *(p++);
+    }
+  }
+
+  *pp = 0;
+  return urlParam;
+}
+
 void WifiSaveSettings(void)
 {
   char tmp[TOPSZ];  // Max length is currently 150
@@ -1708,8 +1764,10 @@ void WifiSaveSettings(void)
   WebGetArg("s2", tmp, sizeof(tmp));
   SettingsUpdateText(SET_STASSID2, (!strlen(tmp)) ? STA_SSID2 : tmp);
   WebGetArg("p1", tmp, sizeof(tmp));
+  UrlParamUnescape(tmp);
   SettingsUpdateText(SET_STAPWD1, (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? SettingsText(SET_STAPWD1) : tmp);
   WebGetArg("p2", tmp, sizeof(tmp));
+  UrlParamUnescape(tmp);
   SettingsUpdateText(SET_STAPWD2, (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? SettingsText(SET_STAPWD2) : tmp);
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_SSID "2 %s, " D_CMND_CORS " %s"),
     SettingsText(SET_HOSTNAME), SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), SettingsText(SET_CORS));
