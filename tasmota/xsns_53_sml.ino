@@ -493,19 +493,19 @@ const uint8_t meter[]=
 //=====================================================
 
 // median filter eliminates outliers, but uses much RAM and CPU cycles
-// 672 bytes extra RAM with MAX_VARS = 16
+// 672 bytes extra RAM with SML_MAX_VARS = 16
 // default compile on, but must be enabled by descriptor flag 16
 // may be undefined if RAM must be saved
 #define USE_SML_MEDIAN_FILTER
 
 // max number of vars , may be adjusted
-#ifndef MAX_VARS
-#define MAX_VARS 20
+#ifndef SML_MAX_VARS
+#define SML_MAX_VARS 20
 #endif
 
 // max number of meters , may be adjusted
 #define MAX_METERS 5
-double meter_vars[MAX_VARS];
+double meter_vars[SML_MAX_VARS];
 // calulate deltas
 #define MAX_DVARS MAX_METERS*2
 double dvalues[MAX_DVARS];
@@ -540,7 +540,7 @@ uint8_t sml_desc_cnt;
 struct SML_MEDIAN_FILTER {
 double buffer[MEDIAN_SIZE];
 int8_t index;
-} sml_mf[MAX_VARS];
+} sml_mf[SML_MAX_VARS];
 
 #ifndef FLT_MAX
 #define FLT_MAX 99999999
@@ -1326,7 +1326,7 @@ void SML_Decode(uint8_t index) {
         uint32_t ind;
         ind=atoi(mp);
         while (*mp>='0' && *mp<='9') mp++;
-        if (ind<1 || ind>MAX_VARS) ind=1;
+        if (ind<1 || ind>SML_MAX_VARS) ind=1;
         dvar=meter_vars[ind-1];
         for (uint8_t p=0;p<5;p++) {
           if (*mp=='@') {
@@ -1345,7 +1345,7 @@ void SML_Decode(uint8_t index) {
           }
           ind=atoi(mp);
           while (*mp>='0' && *mp<='9') mp++;
-          if (ind<1 || ind>MAX_VARS) ind=1;
+          if (ind<1 || ind>SML_MAX_VARS) ind=1;
           switch (opr) {
               case '+':
                 if (iflg) dvar+=ind;
@@ -1381,7 +1381,7 @@ void SML_Decode(uint8_t index) {
           while (*mp==' ') mp++;
           uint8_t ind=atoi(mp);
           while (*mp>='0' && *mp<='9') mp++;
-          if (ind<1 || ind>MAX_VARS) ind=1;
+          if (ind<1 || ind>SML_MAX_VARS) ind=1;
           uint32_t delay=atoi(mp)*1000;
           uint32_t dtime=millis()-dtimes[dindex];
           if (dtime>delay) {
@@ -1604,7 +1604,7 @@ void SML_Decode(uint8_t index) {
     }
 nextsect:
     // next section
-    if (vindex<MAX_VARS-1) {
+    if (vindex<SML_MAX_VARS-1) {
       vindex++;
     }
     mp = strchr(mp, '|');
@@ -1770,7 +1770,7 @@ void SML_Show(boolean json) {
             }
           }
         }
-        if (index<MAX_VARS-1) {
+        if (index<SML_MAX_VARS-1) {
           index++;
         }
         // next section
@@ -1864,7 +1864,9 @@ struct METER_DESC  script_meter_desc[MAX_METERS];
 uint8_t *script_meter;
 #endif
 
-#define METER_DEF_SIZE 2000
+#ifndef METER_DEF_SIZE
+#define METER_DEF_SIZE 3000
+#endif
 
 bool Gpio_used(uint8_t gpiopin) {
   for (uint16_t i=0;i<GPIO_SENSOR_END;i++) {
@@ -1882,7 +1884,7 @@ void SML_Init(void) {
 
   sml_desc_cnt=0;
 
-  for (uint32_t cnt=0;cnt<MAX_VARS;cnt++) {
+  for (uint32_t cnt=0;cnt<SML_MAX_VARS;cnt++) {
     meter_vars[cnt]=0;
   }
 
