@@ -56,7 +56,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_MAXSSIZE 48
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
-#define SCRIPT_MAXPERM (5*10)-4/sizeof(float)
+#define PMEM_SIZE sizeof(Settings.script_pram)
+#define SCRIPT_MAXPERM (PMEM_SIZE)-4/sizeof(float)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
@@ -1575,7 +1576,7 @@ chknext:
 
       case 'r':
         if (!strncmp(vname,"ram",3)) {
-          fvar=glob_script_mem.script_mem_size+(glob_script_mem.script_size)+(5*10);
+          fvar=glob_script_mem.script_mem_size+(glob_script_mem.script_size)+(PMEM_SIZE);
           goto exit;
         }
         break;
@@ -3004,7 +3005,7 @@ void Scripter_save_pvars(void) {
     if (vtp[count].bits.is_permanent && !vtp[count].bits.is_string) {
       uint8_t index=vtp[count].index;
       mlen+=sizeof(float);
-      if (mlen>5*10) {
+      if (mlen>PMEM_SIZE) {
         vtp[count].bits.is_permanent=0;
         return;
       }
@@ -3018,7 +3019,7 @@ void Scripter_save_pvars(void) {
       char *sp=glob_script_mem.glob_snp+(index*glob_script_mem.max_ssize);
       uint8_t slen=strlen(sp);
       mlen+=slen+1;
-      if (mlen>5*10) {
+      if (mlen>PMEM_SIZE) {
         vtp[count].bits.is_permanent=0;
         return;
       }
@@ -4751,7 +4752,7 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_size=MAX_SCRIPT_SIZE;
       glob_script_mem.flags=0;
       glob_script_mem.script_pram=(uint8_t*)Settings.script_pram[0];
-      glob_script_mem.script_pram_size=5*10;
+      glob_script_mem.script_pram_size=PMEM_SIZE;
 
 #ifdef USE_BUTTON_EVENT
       for (uint32_t cnt=0;cnt<MAX_KEYS;cnt++) {
