@@ -33,7 +33,7 @@
 #define MORITZ_BASE_ADDRESS 0x567890
 //#define MORITZ_BASE_ADDRESS 0x123456
 
-#define MORITZ_SDEBUG
+//#define MORITZ_SDEBUG
 
 uint8_t moritz_ready = 0;
 uint8_t moritz_on;
@@ -1355,6 +1355,8 @@ uint8_t spi_set=0;
     moritz_cs=pin[GPIO_CC1101_CS];
   } else return;
 
+  //AddLog_P2(LOG_LEVEL_INFO, PSTR("Moritz: cs=%d"), moritz_cs);
+
   pinMode(moritz_cs, OUTPUT);
   digitalWrite(moritz_cs,1);
 
@@ -1372,10 +1374,11 @@ uint8_t spi_set=0;
 
 #ifdef USE_24C256
   if (i2c_flg) {
-    if (I2cSetDevice(EEPROM_ADDRESS)) {
+    if (I2cActive(EEPROM_ADDRESS) || I2cSetDevice(EEPROM_ADDRESS)) {
       // eeprom is present
       moritz_flags|=MORITZ_EEPROM_FOUND;
       I2cSetActiveFound(EEPROM_ADDRESS, "24C256");
+      //AddLog_P2(LOG_LEVEL_INFO, PSTR("Moritz eeprom: addr=%d"), EEPROM_ADDRESS);
     }
   }
 #endif
