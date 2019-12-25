@@ -113,6 +113,7 @@
 #define D_LIGHT "Luz"
 #define D_LWT "LWT"
 #define D_MODULE "Módulo"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-pressão"
 #define D_NOISE "Ruído"
@@ -353,6 +354,7 @@
 #define D_UPLOAD_ERR_11 "Falha ao apagar o chip de RF"
 #define D_UPLOAD_ERR_12 "Falha ao escrever no chip de RF"
 #define D_UPLOAD_ERR_13 "Falha ao descodificar o firmware RF"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Código de erro do envio"
 
 #define D_ENTER_COMMAND "Inserir comando"
@@ -629,6 +631,8 @@
 #define D_SENSOR_SLAVE_TX    "Slave TX"
 #define D_SENSOR_SLAVE_RX    "Slave RX"
 #define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_GPS_RX        "GPS RX"
+#define D_SENSOR_GPS_TX        "GPS TX"
 
 // Units
 #define D_UNIT_AMPERE "A"

@@ -262,8 +262,8 @@ struct LIGHT {
   uint16_t fade_start_10[LST_MAX] = {0,0,0,0,0};
   uint16_t fade_cur_10[LST_MAX];
   uint16_t fade_end_10[LST_MAX];         // 10 bits resolution target channel values
-  uint16_t fade_counter = 0;             // fade timer in ticks (50ms)
-  uint16_t fade_duration = 0;            // duration of fade in ticks (50ms)
+  uint16_t fade_duration = 0;            // duration of fade in milliseconds
+  uint32_t fade_start = 0;               // fade start time in milliseconds, compared to millis()
 } Light;
 
 power_t LightPower(void)
@@ -1574,20 +1574,25 @@ void LightAnimate(void)
   bool power_off = false;
 
   Light.strip_timer_counter++;
-  if (!Light.power) {                   // All channels powered off
-    Light.strip_timer_counter = 0;
-    if (!Light.fade_running) {
-      sleep = Settings.sleep;
-    }
-    if (Settings.light_scheme >= LS_MAX) {
-      power_off = true;
-    }
-  } else {
+
+  // set sleep parameter: either settings,
+  // or set a maximum of PWM_MAX_SLEEP if light is on or Fade is running
+  if (Light.power || Light.fade_running) {
     if (Settings.sleep > PWM_MAX_SLEEP) {
       sleep = PWM_MAX_SLEEP;      // set a maxumum value of 50 milliseconds to ensure that animations are smooth
     } else {
       sleep = Settings.sleep;     // or keep the current sleep if it's lower than 50
     }
+  } else {
+    sleep = Settings.sleep;
+  }
+
+  if (!Light.power) {                   // All channels powered off
+    Light.strip_timer_counter = 0;
+    if (Settings.light_scheme >= LS_MAX) {
+      power_off = true;
+    }
+  } else {
     switch (Settings.light_scheme) {
       case LS_POWER:
         light_controller.calcLevels(Light.new_color);
@@ -1733,27 +1738,35 @@ void LightAnimate(void)
         memcpy(Light.fade_end_8, cur_col, sizeof(Light.fade_start_8));
         memcpy(Light.fade_end_10, cur_col_10bits, sizeof(Light.fade_start_10));
         Light.fade_running = true;
-        Light.fade_counter = 0;
         Light.fade_duration = 0;    // set the value to zero to force a recompute
+        Light.fade_start = 0;
         // Fade will applied immediately below
       }
     }
     if (Light.fade_running) {
-      LightApplyFade();
-      // AddLog_P2(LOG_LEVEL_INFO, PSTR("LightApplyFade %d %d %d %d %d - %d %d %d %d %d"),
-      //   Light.fade_cur_8[0], Light.fade_cur_8[1], Light.fade_cur_8[2], Light.fade_cur_8[3], Light.fade_cur_8[4],
-      //   Light.fade_cur_10[0], Light.fade_cur_10[1], Light.fade_cur_10[2], Light.fade_cur_10[3], Light.fade_cur_10[4]);
+      if (LightApplyFade()) {
+        // AddLog_P2(LOG_LEVEL_INFO, PSTR("LightApplyFade %d %d %d %d %d - %d %d %d %d %d"),
+        //   Light.fade_cur_8[0], Light.fade_cur_8[1], Light.fade_cur_8[2], Light.fade_cur_8[3], Light.fade_cur_8[4],
+        //   Light.fade_cur_10[0], Light.fade_cur_10[1], Light.fade_cur_10[2], Light.fade_cur_10[3], Light.fade_cur_10[4]);
 
-      LightSetOutputs(Light.fade_cur_8, Light.fade_cur_10);
+        LightSetOutputs(Light.fade_cur_8, Light.fade_cur_10);
+      }
     }
   }
 }
 
-void LightApplyFade(void) {
+bool LightApplyFade(void) {   // did the value chanegd and needs to be applied
+  static uint32_t last_millis = 0;
+  uint32_t now = millis();
+
+  if ((now - last_millis) <= 5) {
+    return false;     // the value was not changed in the last 5 milliseconds, ignore
+  }
+  last_millis = now;
 
   // Check if we need to calculate the duration
   if (0 == Light.fade_duration) {
-    Light.fade_counter = 0;
+    Light.fade_start = now;
     // compute the distance between start and and color (max of distance for each channel)
     uint32_t distance = 0;
     for (uint32_t i = 0; i < Light.subtype; i++) {
@@ -1764,26 +1777,30 @@ void LightApplyFade(void) {
     if (distance > 0) {
       // compute the duration of the animation
       // Note: Settings.light_speed is the number of half-seconds for a 100% fade,
-      // i.e. light_speed=1 means 1024 steps in 10 ticks (500ms)
-      Light.fade_duration = (distance * Settings.light_speed * 10) / 1024;
-      // Also postpone the save_data for the duration of the Fade (in seconds)
-      uint32_t delay_seconds = 1 + (Light.fade_duration + 19) / 20;   // add one more second
-      // AddLog_P2(LOG_LEVEL_INFO, PSTR("delay_seconds %d, save_data_counter %d"), delay_seconds, save_data_counter);
-      if (save_data_counter < delay_seconds) {
-        save_data_counter = delay_seconds;      // pospone
+      // i.e. light_speed=1 means 1024 steps in 500ms
+      Light.fade_duration = (distance * Settings.light_speed * 500) / 1023;
+      if (Settings.save_data) {
+        // Also postpone the save_data for the duration of the Fade (in seconds)
+        uint32_t delay_seconds = 1 + (Light.fade_duration + 999) / 1000;   // add one more second
+        // AddLog_P2(LOG_LEVEL_INFO, PSTR("delay_seconds %d, save_data_counter %d"), delay_seconds, save_data_counter);
+        if (save_data_counter < delay_seconds) {
+          save_data_counter = delay_seconds;      // pospone
+        }
       }
     } else {
       // no fade needed, we keep the duration at zero, it will fallback directly to end of fade
+      Light.fade_running = false;
     }
   }
 
-  Light.fade_counter++;
-  if (Light.fade_counter <= Light.fade_duration) {    // fade not finished
+  uint16_t fade_current = now - Light.fade_start;   // number of milliseconds since start of fade
+  if (fade_current <= Light.fade_duration) {    // fade not finished
+    //Serial.printf("Fade: %d / %d - ", fade_current, Light.fade_duration);
     for (uint32_t i = 0; i < Light.subtype; i++) {
-      Light.fade_cur_8[i] = changeUIntScale(Light.fade_counter,
+      Light.fade_cur_8[i] = changeUIntScale(fade_current,
                                             0, Light.fade_duration,
                                             Light.fade_start_8[i], Light.fade_end_8[i]);
-      Light.fade_cur_10[i] = changeUIntScale(Light.fade_counter,
+      Light.fade_cur_10[i] = changeUIntScale(fade_current,
                                               0, Light.fade_duration,
                                               Light.fade_start_10[i], Light.fade_end_10[i]);
     }
@@ -1791,7 +1808,7 @@ void LightApplyFade(void) {
     // stop fade
 //AddLop_P2(LOG_LEVEL_DEBUG, PSTR("Stop fade"));
     Light.fade_running = false;
-    Light.fade_counter = 0;
+    Light.fade_start = 0;
     Light.fade_duration = 0;
     // set light to target value
     memcpy(Light.fade_cur_8, Light.fade_end_8, sizeof(Light.fade_end_8));
@@ -1800,7 +1817,7 @@ void LightApplyFade(void) {
     memcpy(Light.fade_start_8, Light.fade_end_8, sizeof(Light.fade_start_8));
     memcpy(Light.fade_start_10, Light.fade_end_10, sizeof(Light.fade_start_10));
   }
-
+  return true;
 }
 
 // On entry we take the 5 channels 8 bits entry, and we apply Power modifiers
@@ -2425,6 +2442,13 @@ bool Xdrv04(uint8_t function)
     switch (function) {
       case FUNC_SERIAL:
         result = XlgtCall(FUNC_SERIAL);
+        break;
+      case FUNC_LOOP:
+        if (Light.fade_running) {
+          if (LightApplyFade()) {
+            LightSetOutputs(Light.fade_cur_8, Light.fade_cur_10);
+          }
+        }
         break;
       case FUNC_EVERY_50_MSECOND:
         LightAnimate();

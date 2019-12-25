@@ -995,6 +995,13 @@ int ResponseJsonEndEnd(void)
  * GPIO Module and Template management
 \*********************************************************************************************/
 
+void DigitalWrite(uint32_t gpio_pin, uint32_t state)
+{
+  if (pin[gpio_pin] < 99) {
+    digitalWrite(pin[gpio_pin], state &1);
+  }
+}
+
 uint8_t ModuleNr(void)
 {
   // 0    = User module (255)

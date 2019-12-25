@@ -489,9 +489,13 @@ void GetFeatures(void)
 #ifdef USE_TSL2591
   feature5 |= 0x00080000;
 #endif
-//  feature5 |= 0x00100000;
+#ifdef USE_DHT12
+  feature5 |= 0x00100000;
+#endif
 //  feature5 |= 0x00200000;
-//  feature5 |= 0x00400000;
+#ifdef USE_GPS
+  feature5 |= 0x00400000;
+#endif
 //  feature5 |= 0x00800000;
 
 //  feature5 |= 0x01000000;

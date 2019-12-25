@@ -61,4 +61,5 @@ Index | Define              | Driver  | Device   | Address(es) | Description
   38  | USE_DISPLAY_ILI9488 | xdsp_08 | FT6236   | 0x38        | Touch panel controller
   39  | USE_DISPLAY_RA8876  | xdsp_10 | FT5316   | 0x38        | Touch panel controller
   40  | USE_TSL2591         | xsns_57 | TLS2591  | 0x29        | Light intensity sensor
+  41  | USE_DHT12           | xsns_58 | DHT12    | 0x5C        | Temperature and humidity sensor
 
