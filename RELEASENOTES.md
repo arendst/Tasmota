@@ -17,6 +17,8 @@ See [migration path](https://tasmota.github.io/docs/#/Upgrading?id=migration-pat
 6. Migrate to **Tasmota 8.1**
 7. Migrate to **Tasmota 8.x**
 
+While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v8.1.0 Doris** the Settings are re-allocated in such a way that fallback is only allowed and possible to release **v7.2.0 Constance**. Once at v7.2.0 you're on your own when downgrading even further.
+
 ## Supported Core versions
 
 This release will be supported from ESP8266/Arduino library Core version **2.6.1** due to reported security and stability issues on previous Core version.
