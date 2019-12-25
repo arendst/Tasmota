@@ -1,5 +1,13 @@
 ## Unreleased (development)
 
+### 8.1.0.1 20191225
+
+## Released
+
+### 8.1.0 20191225
+
+- Release
+
 ### 8.0.0.3 20191224
 
 - Version bump due to internal Settings change
@@ -21,8 +29,6 @@
 - Add support for GPS as NTP server by Christian Baars and Adrian Scillato
 - Add Zigbee coalesce sensor attributes into a single message
 - Add Deepsleep start delay based on Teleperiod if ``Teleperiod`` differs from 10 or 300
-
-## Released
 
 ### 7.2.0 20191221
 
