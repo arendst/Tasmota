@@ -1372,9 +1372,10 @@ uint8_t spi_set=0;
 
 #ifdef USE_24C256
   if (i2c_flg) {
-    if (I2cDevice(EEPROM_ADDRESS)) {
+    if (I2cSetDevice(EEPROM_ADDRESS)) {
       // eeprom is present
       moritz_flags|=MORITZ_EEPROM_FOUND;
+      I2cSetActiveFound(EEPROM_ADDRESS, "24C256");
     }
   }
 #endif

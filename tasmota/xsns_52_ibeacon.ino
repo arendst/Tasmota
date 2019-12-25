@@ -27,7 +27,7 @@
 
 #define HM17_BAUDRATE 9600
 
-//#define IBEACON_DEBUG
+#define IBEACON_DEBUG
 
 // keyfob expires after N seconds
 #define IB_TIMEOUT_INTERVAL 30
