@@ -326,7 +326,7 @@ void CmndStatus(void)
 
   uint32_t option = STAT;
   char stemp[200];
-  char stemp2[100];
+  char stemp2[TOPSZ];
 
   // Workaround MQTT - TCP/IP stack queueing when SUB_PREFIX = PUB_PREFIX
   if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2)) && (!payload)) { option++; }  // TELE
@@ -1311,7 +1311,7 @@ void CmndFriendlyname(void)
       } else {
         snprintf_P(stemp1, sizeof(stemp1), PSTR(FRIENDLY_NAME "%d"), XdrvMailbox.index);
       }
-      SettingsUpdateText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1, (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data);
+      SettingsUpdateText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : (SC_DEFAULT == Shortcut()) ? stemp1 : XdrvMailbox.data);
     }
     ResponseCmndIdxChar(SettingsText(SET_FRIENDLYNAME1 + XdrvMailbox.index -1));
   }

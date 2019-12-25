@@ -58,7 +58,6 @@ const uint8_t MAX_PWMS = 5;                 // Max number of PWM channels
 const uint8_t MAX_COUNTERS = 4;             // Max number of counter sensors
 const uint8_t MAX_TIMERS = 16;              // Max number of Timers
 const uint8_t MAX_PULSETIMERS = 8;          // Max number of supported pulse timers
-const uint8_t MAX_FRIENDLYNAMES = 4;        // Max number of Friendly names
 const uint8_t MAX_DOMOTICZ_IDX = 4;         // Max number of Domoticz device, key and switch indices
 const uint8_t MAX_DOMOTICZ_SNS_IDX = 12;    // Max number of Domoticz sensors indices
 const uint8_t MAX_KNX_GA = 10;              // Max number of KNX Group Addresses to read that can be set
@@ -70,9 +69,13 @@ const uint8_t MAX_XSNS_DRIVERS = 96;        // Max number of allowed sensor driv
 const uint8_t MAX_I2C_DRIVERS = 96;         // Max number of allowed i2c drivers
 const uint8_t MAX_SHUTTERS = 4;             // Max number of shutters
 const uint8_t MAX_PCF8574 = 8;              // Max number of PCF8574 devices
-const uint8_t MAX_RULE_MEMS = 5;            // Max number of saved vars
 const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 512 characters
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
+
+// Changes to the following MAX_ defines need to be in line with enum SettingsTextIndex
+const uint8_t MAX_RULE_MEMS = 16;           // Max number of saved vars
+const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
+const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
 
 const uint8_t MAX_HUE_DEVICES = 15;         // Max number of Philips Hue device per emulation
 
@@ -118,7 +121,7 @@ const uint8_t OTA_ATTEMPTS = 5;             // Number of times to try fetching t
 const uint16_t INPUT_BUFFER_SIZE = 520;     // Max number of characters in (serial and http) command buffer
 const uint16_t FLOATSZ = 16;                // Max number of characters in float result from dtostrfd (max 32)
 const uint16_t CMDSZ = 24;                  // Max number of characters in command
-const uint16_t TOPSZ = 100;                 // Max number of characters in topic string
+const uint16_t TOPSZ = 151;                 // Max number of characters in topic string
 const uint16_t LOGSZ = 700;                 // Max number of characters in log
 const uint16_t MIN_MESSZ = 893;             // Min number of characters in MQTT message
 
@@ -143,7 +146,7 @@ const uint32_t LOOP_SLEEP_DELAY = 50;       // Lowest number of milliseconds to 
 \*********************************************************************************************/
 
 #define MAX_RULE_TIMERS        8            // Max number of rule timers (4 bytes / timer)
-#define MAX_RULE_VARS          5            // Max number of rule variables (10 bytes / variable)
+#define MAX_RULE_VARS          16           // Max number of rule variables (33 bytes / variable)
 
 /*
 // Removed from esp8266 core since 20171105
@@ -287,13 +290,9 @@ enum SettingsTextIndex { SET_OTAURL,
                          SET_MEM1, SET_MEM2, SET_MEM3, SET_MEM4, SET_MEM5, SET_MEM6, SET_MEM7, SET_MEM8,
                          SET_MEM9, SET_MEM10, SET_MEM11, SET_MEM12, SET_MEM13, SET_MEM14, SET_MEM15, SET_MEM16,
                          SET_FRIENDLYNAME1, SET_FRIENDLYNAME2, SET_FRIENDLYNAME3, SET_FRIENDLYNAME4,
-
-//                         SET_FRIENDLYNAME5, SET_FRIENDLYNAME6, SET_FRIENDLYNAME7, SET_FRIENDLYNAME8,  // Future extension
-//                         SET_BUTTON1, SET_BUTTON2, SET_BUTTON3, SET_BUTTON4,      // Future extension
-//                         SET_BUTTON5, SET_BUTTON6, SET_BUTTON7, SET_BUTTON8,      // Future extension
-//                         SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12,   // Future extension
-//                         SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,  // Future extension
-
+                         SET_FRIENDLYNAME5, SET_FRIENDLYNAME6, SET_FRIENDLYNAME7, SET_FRIENDLYNAME8,
+                         SET_BUTTON1, SET_BUTTON2, SET_BUTTON3, SET_BUTTON4, SET_BUTTON5, SET_BUTTON6, SET_BUTTON7, SET_BUTTON8,
+                         SET_BUTTON9, SET_BUTTON10, SET_BUTTON11, SET_BUTTON12, SET_BUTTON13, SET_BUTTON14, SET_BUTTON15, SET_BUTTON16,
                          SET_MAX };
 
 enum CommandSource { SRC_IGNORE, SRC_MQTT, SRC_RESTART, SRC_BUTTON, SRC_SWITCH, SRC_BACKLOG, SRC_SERIAL, SRC_WEBGUI, SRC_WEBCOMMAND, SRC_WEBCONSOLE, SRC_PULSETIMER,

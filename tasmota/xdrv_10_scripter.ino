@@ -56,7 +56,8 @@ keywords if then else endif, or, and are better readable for beginners (others m
 #define SCRIPT_MAXSSIZE 48
 #define SCRIPT_EOL '\n'
 #define SCRIPT_FLOAT_PRECISION 2
-#define SCRIPT_MAXPERM (MAX_RULE_MEMS*10)-4/sizeof(float)
+#define PMEM_SIZE sizeof(Settings.script_pram)
+#define SCRIPT_MAXPERM (PMEM_SIZE)-4/sizeof(float)
 #define MAX_SCRIPT_SIZE MAX_RULE_SIZE*MAX_RULE_SETS
 
 // offsets epoch readings by 1.1.2019 00:00:00 to fit into float with second resolution
@@ -1041,7 +1042,7 @@ char *isvar(char *lp, uint8_t *vtype,struct T_INDEX *tind,float *fp,char *sp,Jso
                 if (sp) strlcpy(sp,str_value,SCRIPT_MAXSSIZE);
                 return lp+len;
               }
-              
+
             } else {
               if (fp) {
                 if (!strncmp(vn.c_str(),"Epoch",5)) {
@@ -1575,7 +1576,7 @@ chknext:
 
       case 'r':
         if (!strncmp(vname,"ram",3)) {
-          fvar=glob_script_mem.script_mem_size+(glob_script_mem.script_size)+(MAX_RULE_MEMS*10);
+          fvar=glob_script_mem.script_mem_size+(glob_script_mem.script_size)+(PMEM_SIZE);
           goto exit;
         }
         break;
@@ -2203,8 +2204,7 @@ void Replace_Cmd_Vars(char *srcbuf,char *dstbuf,uint16_t dstsize) {
 
 void toLog(const char *str) {
   if (!str) return;
-  snprintf_P(log_data, sizeof(log_data), PSTR("%s"),str);
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P(LOG_LEVEL_INFO, str);
 }
 
 
@@ -2681,8 +2681,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                     }
                     cmd[count]=*lp++;
                   }
-                  //snprintf_P(log_data, sizeof(log_data), tmp);
-                  //AddLog(LOG_LEVEL_INFO);
+                  //AddLog_P(LOG_LEVEL_INFO, tmp);
                   // replace vars in cmd
                   char *tmp=cmdmem+SCRIPT_CMDMEM/2;
                   Replace_Cmd_Vars(cmd,tmp,SCRIPT_CMDMEM/2);
@@ -2694,8 +2693,7 @@ int16_t Run_Scripter(const char *type, int8_t tlen, char *js) {
                   } else {
                     if (!sflag) {
                       tasm_cmd_activ=1;
-                      snprintf_P(log_data, sizeof(log_data), PSTR("Script: performs \"%s\""), tmp);
-                      AddLog(glob_script_mem.script_loglevel&0x7f);
+                      AddLog_P2(glob_script_mem.script_loglevel&0x7f, PSTR("Script: performs \"%s\""), tmp);
                     } else if (sflag==2) {
                       // allow recursive call
                     } else {
@@ -2995,7 +2993,7 @@ void ScripterEvery100ms(void) {
   if (fast_script==99) Run_Scripter(">F",2,0);
 }
 
-//mems[MAX_RULE_MEMS] is 50 bytes in 6.5
+//mems[5] is 50 bytes in 6.5
 // can hold 11 floats or floats + strings
 // should report overflow later
 void Scripter_save_pvars(void) {
@@ -3007,7 +3005,7 @@ void Scripter_save_pvars(void) {
     if (vtp[count].bits.is_permanent && !vtp[count].bits.is_string) {
       uint8_t index=vtp[count].index;
       mlen+=sizeof(float);
-      if (mlen>MAX_RULE_MEMS*10) {
+      if (mlen>PMEM_SIZE) {
         vtp[count].bits.is_permanent=0;
         return;
       }
@@ -3021,7 +3019,7 @@ void Scripter_save_pvars(void) {
       char *sp=glob_script_mem.glob_snp+(index*glob_script_mem.max_ssize);
       uint8_t slen=strlen(sp);
       mlen+=slen+1;
-      if (mlen>MAX_RULE_MEMS*10) {
+      if (mlen>PMEM_SIZE) {
         vtp[count].bits.is_permanent=0;
         return;
       }
@@ -3544,8 +3542,7 @@ void ScriptSaveSettings(void) {
   if (bitRead(Settings.rule_enabled, 0)) {
     int16_t res=Init_Scripter();
     if (res) {
-      snprintf_P(log_data, sizeof(log_data), PSTR("script init error: %d"),res);
-      AddLog(LOG_LEVEL_INFO);
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("script init error: %d"), res);
       return;
     }
     Run_Scripter(">B",2,0);
@@ -4754,8 +4751,8 @@ bool Xdrv10(uint8_t function)
       glob_script_mem.script_ram=Settings.rules[0];
       glob_script_mem.script_size=MAX_SCRIPT_SIZE;
       glob_script_mem.flags=0;
-      glob_script_mem.script_pram=(uint8_t*)Settings.mems[0];
-      glob_script_mem.script_pram_size=MAX_RULE_MEMS*10;
+      glob_script_mem.script_pram=(uint8_t*)Settings.script_pram[0];
+      glob_script_mem.script_pram_size=PMEM_SIZE;
 
 #ifdef USE_BUTTON_EVENT
       for (uint32_t cnt=0;cnt<MAX_KEYS;cnt++) {

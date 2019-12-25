@@ -20,7 +20,7 @@ In addition to the [release webpage](https://github.com/arendst/Tasmota/releases
 
 ## Development
 
-[![Dev Version](https://img.shields.io/badge/development%20version-v7.2.x.x-blue.svg)](https://github.com/arendst/Tasmota)
+[![Dev Version](https://img.shields.io/badge/development%20version-v8.1.x.x-blue.svg)](https://github.com/arendst/Tasmota)
 [![Download Dev](https://img.shields.io/badge/download-development-yellow.svg)](http://thehackbox.org/tasmota/)
 [![Build Status](https://img.shields.io/travis/arendst/Tasmota.svg)](https://travis-ci.org/arendst/Tasmota)
 
@@ -67,6 +67,11 @@ See [wiki migration path](https://tasmota.github.io/docs/#/Upgrading?id=migratio
 3. Migrate to **Sonoff-Tasmota 5.14**
 4. Migrate to **Sonoff-Tasmota 6.x**
 5. Migrate to **Tasmota 7.x**
+
+--- Major change in parameter storage layout ---
+
+6. Migrate to **Tasmota 8.1**
+7. Migrate to **Tasmota 8.x**
 
 ## Support Information
 

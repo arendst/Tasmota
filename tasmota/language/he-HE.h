@@ -113,6 +113,7 @@
 #define D_LIGHT "אור"
 #define D_LWT "LWT"
 #define D_MODULE "מודול"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "לחיצה מרובה"
 #define D_NOISE "רעש"
@@ -630,6 +631,8 @@
 #define D_SENSOR_SLAVE_TX    "Slave TX"
 #define D_SENSOR_SLAVE_RX    "Slave RX"
 #define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_GPS_RX        "GPS RX"
+#define D_SENSOR_GPS_TX        "GPS TX"
 
 // Units
 #define D_UNIT_AMPERE "A"
