@@ -1693,10 +1693,11 @@ void HandleWifiConfiguration(void)
   }
 
   if (WifiIsInManagerMode()) {
-    WSContentSpaceButton(BUTTON_RESTART);
 #ifndef FIRMWARE_MINIMAL
+    WSContentSpaceButton(BUTTON_RESTORE);
     WSContentSpaceButton(BUTTON_RESET_CONFIGURATION);
 #endif  // FIRMWARE_MINIMAL
+    WSContentSpaceButton(BUTTON_RESTART);
   } else {
     WSContentSpaceButton(BUTTON_CONFIGURATION);
   }
@@ -1970,7 +1971,11 @@ void HandleRestoreConfiguration(void)
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_RST);
   WSContentSend_P(HTTP_FORM_RST_UPG, D_RESTORE);
-  WSContentSpaceButton(BUTTON_CONFIGURATION);
+  if (WifiIsInManagerMode()) {
+    WSContentSpaceButton(BUTTON_MAIN);
+  } else {
+    WSContentSpaceButton(BUTTON_CONFIGURATION);
+  }
   WSContentStop();
 
   Web.upload_error = 0;
