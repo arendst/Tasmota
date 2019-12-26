@@ -17,6 +17,8 @@ See [migration path](https://tasmota.github.io/docs/#/Upgrading?id=migration-pat
 6. Migrate to **Tasmota 8.1**
 7. Migrate to **Tasmota 8.x**
 
+While fallback or downgrading is common practice it was never supported due to Settings additions or changes in newer releases. Starting with release **v8.1.0 Doris** the Settings are re-allocated in such a way that fallback is only allowed and possible to release **v7.2.0 Constance**. Once at v7.2.0 you're on your own when downgrading even further.
+
 ## Supported Core versions
 
 This release will be supported from ESP8266/Arduino library Core version **2.6.1** due to reported security and stability issues on previous Core version.
@@ -50,16 +52,6 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.0.0.3
+### Version 8.1.0.1
 
-- Change Settings text handling allowing variable length text within a total text pool of 699 characters
-- Change Smoother ``Fade`` using 100Hz instead of 20Hz animation (#7179)
-- Change number of rule ``Var``s and ``Mem``s from 5 to 16 (#4933)
-- Change number of ``FriendlyName``s from 4 to 8
-- Add commands ``WebButton1`` until ``WebButton16`` to support user defined GUI button text (#7166)
-- Add support for max 150 characters in most command parameter strings (#3686, #4754)
-- Add support for GPS as NTP server by Christian Baars and Adrian Scillato
-- Add support for ``AdcParam`` parameters to control ADC0 Moisture formula by Federico Leoni (#7309)
-- Add Zigbee coalesce sensor attributes into a single message
-- Add Zigbee better support for Xiaomi Double Switch and Xiaomi Vibration sensor
-- Add Deepsleep start delay based on Teleperiod if ``Teleperiod`` differs from 10 or 300
+- Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)

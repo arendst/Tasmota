@@ -731,6 +731,13 @@ bool DecodeCommand(const char* haystack, void (* const MyCommand[])(void))
 {
   GetTextIndexed(XdrvMailbox.command, CMDSZ, 0, haystack);  // Get prefix if available
   int prefix_length = strlen(XdrvMailbox.command);
+  if (prefix_length) {
+    char prefix[prefix_length +1];
+    snprintf_P(prefix, sizeof(prefix), XdrvMailbox.topic);  // Copy prefix part only
+    if (strcasecmp(prefix, XdrvMailbox.command)) {
+      return false;                                         // Prefix not in command
+    }
+  }
   int command_code = GetCommandCode(XdrvMailbox.command + prefix_length, CMDSZ, XdrvMailbox.topic + prefix_length, haystack);
   if (command_code > 0) {                                   // Skip prefix
     XdrvMailbox.command_code = command_code -1;

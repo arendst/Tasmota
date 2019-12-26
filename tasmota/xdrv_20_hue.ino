@@ -124,6 +124,7 @@ const char HUE_DESCRIPTION_XML[] PROGMEM =
     "<friendlyName>Amazon-Echo-HA-Bridge ({x1)</friendlyName>"
 //    "<friendlyName>Philips hue ({x1)</friendlyName>"
     "<manufacturer>Royal Philips Electronics</manufacturer>"
+    "<manufacturerURL>http://www.philips.com</manufacturerURL>"
     "<modelDescription>Philips hue Personal Wireless Lighting</modelDescription>"
     "<modelName>Philips hue bridge 2012</modelName>"
     "<modelNumber>929000226503</modelNumber>"
