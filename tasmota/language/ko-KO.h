@@ -113,6 +113,7 @@
 #define D_LIGHT "밝게"
 #define D_LWT "LWT"
 #define D_MODULE "모듈"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-press"
 #define D_NOISE "소음"
@@ -353,6 +354,7 @@
 #define D_UPLOAD_ERR_11 "RF 칩 삭제 실패"
 #define D_UPLOAD_ERR_12 "RF 칩 쓰기 실패"
 #define D_UPLOAD_ERR_13 "RF 펌웨어 decode 실패"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "업로드 에러 코드"
 
 #define D_ENTER_COMMAND "커맨드 입력"
@@ -629,6 +631,8 @@
 #define D_SENSOR_SLAVE_TX    "Slave TX"
 #define D_SENSOR_SLAVE_RX    "Slave RX"
 #define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_GPS_RX        "GPS RX"
+#define D_SENSOR_GPS_TX        "GPS TX"
 
 // Units
 #define D_UNIT_AMPERE "A"

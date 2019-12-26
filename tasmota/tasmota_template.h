@@ -214,6 +214,8 @@ enum UserSelectablePins {
   GPIO_TASMOTASLAVE_RST_INV, // Slave Reset Inverted
   GPIO_HPMA_RX,        // Honeywell HPMA115S0 Serial interface
   GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
+  GPIO_GPS_RX,         // GPS serial interface
+  GPIO_GPS_TX,         // GPS serial interface
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -294,6 +296,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
   D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
+  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -308,6 +311,7 @@ enum UserSelectableAdc0 {
   ADC0_LIGHT,          // Light sensor
   ADC0_BUTTON,         // Button
   ADC0_BUTTON_INV,
+  ADC0_MOIST,          // Moisture
 //  ADC0_SWITCH,         // Switch
 //  ADC0_SWITCH_INV,
   ADC0_END };
@@ -323,6 +327,7 @@ const char kAdc0Names[] PROGMEM =
   D_SENSOR_NONE "|" D_ANALOG_INPUT "|"
   D_TEMPERATURE "|" D_LIGHT "|"
   D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|"
+  D_MOISTURE "|"
 //  D_SENSOR_SWITCH "|" D_SENSOR_SWITCH "i|"
   ;
 
@@ -671,6 +676,7 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #endif // USE_SOLAX_X1
 #endif  // USE_ENERGY_SENSOR
 
+// Serial
 #ifdef USE_SERIAL_BRIDGE
   GPIO_SBR_TX,         // Serial Bridge Serial interface
   GPIO_SBR_RX,         // Serial Bridge Serial interface
@@ -725,6 +731,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_IBEACON_RX,
   GPIO_IBEACON_TX,
 #endif
+#ifdef USE_GPS
+  GPIO_GPS_RX,         // GPS serial interface
+  GPIO_GPS_TX,         // GPS serial interface
+#endif
+
 #ifdef USE_MGC3130
   GPIO_MGC3130_XFER,
   GPIO_MGC3130_RESET,
@@ -754,8 +765,9 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_A4988_MS3,     // A4988 microstep pin3
 #endif
 #ifdef USE_DEEPSLEEP
-  GPIO_DEEPSLEEP
+  GPIO_DEEPSLEEP,
 #endif
+
 };
 
 const uint8_t kModuleNiceList[] PROGMEM = {

@@ -39,7 +39,7 @@ issueConfigs:
   - "EXPECTED BEHAVIOUR" 
 - content:
 # template 2: feature request
-  - "Have you looked for this feature in other issues and in the wiki"
+  - "Have you looked for this feature in other issues and in the docs"
   - "Describe the solution you'd like"
   
 # Optional configuration:

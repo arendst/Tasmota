@@ -113,6 +113,7 @@
 #define D_LIGHT "Fény"
 #define D_LWT "LWT"
 #define D_MODULE "Modul"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "több lenyomás"
 #define D_NOISE "Zaj"
@@ -353,6 +354,7 @@
 #define D_UPLOAD_ERR_11 "Az RF chip törlése sikertelen"
 #define D_UPLOAD_ERR_12 "Az RF chip írása sikertelen"
 #define D_UPLOAD_ERR_13 "Az RF firmware dekódolása sikertelen"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Feltöltési hibakód"
 
 #define D_ENTER_COMMAND "Kérem a parancsot..."
@@ -629,6 +631,8 @@
 #define D_SENSOR_SLAVE_TX    "Slave TX"
 #define D_SENSOR_SLAVE_RX    "Slave RX"
 #define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_GPS_RX        "GPS RX"
+#define D_SENSOR_GPS_TX        "GPS TX"
 
 // Units
 #define D_UNIT_AMPERE "A"

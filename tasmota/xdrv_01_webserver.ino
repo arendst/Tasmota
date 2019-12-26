@@ -512,6 +512,7 @@ const char kUploadErrors[] PROGMEM =
 #ifdef USE_RF_FLASH
   "|" D_UPLOAD_ERR_10 "|" D_UPLOAD_ERR_11 "|" D_UPLOAD_ERR_12 "|" D_UPLOAD_ERR_13
 #endif
+  "|" D_UPLOAD_ERR_14
   ;
 
 const uint16_t DNS_PORT = 53;
@@ -598,7 +599,13 @@ void StartWebserver(int type, IPAddress ipweb)
     WebServer->begin(); // Web server start
   }
   if (Web.state != type) {
+#if LWIP_IPV6
+    String ipv6_addr = WifiGetIPv6();
+    if(ipv6_addr!="") AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s and IPv6 global address %s "), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str(),ipv6_addr.c_str());
+    else AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+#else
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_HTTP D_WEBSERVER_ACTIVE_ON " %s%s " D_WITH_IP_ADDRESS " %s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "", ipweb.toString().c_str());
+#endif // LWIP_IPV6 = 1
     rules_flag.http_init = 1;
   }
   if (type) { Web.state = type; }
@@ -652,8 +659,8 @@ void PollDnsWebserver(void)
 
 bool WebAuthenticate(void)
 {
-  if (Settings.web_password[0] != 0 && HTTP_MANAGER_RESET_ONLY != Web.state) {
-    return WebServer->authenticate(WEB_USERNAME, Settings.web_password);
+  if (strlen(SettingsText(SET_WEBPWD)) && (HTTP_MANAGER_RESET_ONLY != Web.state)) {
+    return WebServer->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD));
   } else {
     return true;
   }
@@ -674,8 +681,8 @@ bool HttpCheckPriviledgedAccess(bool autorequestauth = true)
 
 void HttpHeaderCors(void)
 {
-  if (Settings.cors_domain[0] != 0) {
-    WebServer->sendHeader(F("Access-Control-Allow-Origin"), Settings.cors_domain);
+  if (strlen(SettingsText(SET_CORS))) {
+    WebServer->sendHeader(F("Access-Control-Allow-Origin"), SettingsText(SET_CORS));
   }
 }
 
@@ -810,7 +817,7 @@ void WSContentSend_PD(const char* formatP, ...)    // Content send snprintf_P ch
 
 void WSContentStart_P(const char* title, bool auth)
 {
-  if (auth && (Settings.web_password[0] != 0) && !WebServer->authenticate(WEB_USERNAME, Settings.web_password)) {
+  if (auth && strlen(SettingsText(SET_WEBPWD)) && !WebServer->authenticate(WEB_USERNAME, SettingsText(SET_WEBPWD))) {
     return WebServer->requestAuthentication();
   }
 
@@ -819,7 +826,7 @@ void WSContentStart_P(const char* title, bool auth)
   if (title != nullptr) {
     char ctitle[strlen_P(title) +1];
     strcpy_P(ctitle, title);                       // Get title from flash to RAM
-    WSContentSend_P(HTTP_HEADER, Settings.friendlyname[0], ctitle);
+    WSContentSend_P(HTTP_HEADER, SettingsText(SET_FRIENDLYNAME1), ctitle);
   }
 }
 
@@ -863,7 +870,7 @@ void WSContentSendStyle_P(const char* formatP, ...)
     WebColor(COL_TEXT_WARNING),
 #endif
     WebColor(COL_TITLE),
-    ModuleName().c_str(), Settings.friendlyname[0]);
+    ModuleName().c_str(), SettingsText(SET_FRIENDLYNAME1));
   if (Settings.flag3.gui_hostname_ip) {                // SetOption53 - Show hostanme and IP address in GUI main menu
     bool lip = (static_cast<uint32_t>(WiFi.localIP()) != 0);
     bool sip = (static_cast<uint32_t>(WiFi.softAPIP()) != 0);
@@ -987,10 +994,10 @@ void HandleRoot(void)
 
   if (WifiIsInManagerMode()) {
 #ifndef FIRMWARE_MINIMAL
-    if ((Settings.web_password[0] != 0) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1")) && HTTP_MANAGER_RESET_ONLY != Web.state) {
+    if (strlen(SettingsText(SET_WEBPWD)) && !(WebServer->hasArg("USER1")) && !(WebServer->hasArg("PASS1")) && HTTP_MANAGER_RESET_ONLY != Web.state) {
       HandleWifiLogin();
     } else {
-      if (!(Settings.web_password[0] != 0) || (((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == Settings.web_password )) || HTTP_MANAGER_RESET_ONLY == Web.state)) {
+      if (!strlen(SettingsText(SET_WEBPWD)) || (((WebServer->arg("USER1") == WEB_USERNAME ) && (WebServer->arg("PASS1") == SettingsText(SET_WEBPWD) )) || HTTP_MANAGER_RESET_ONLY == Web.state)) {
         HandleWifiConfiguration();
       } else {
         // wrong user and pass
@@ -1007,7 +1014,7 @@ void HandleRoot(void)
 
   AddLog_P(LOG_LEVEL_DEBUG, S_LOG_HTTP, S_MAIN_MENU);
 
-  char stemp[10];
+  char stemp[33];
 
   WSContentStart_P(S_MAIN_MENU);
 #ifdef USE_SCRIPT_WEB_DISPLAY
@@ -1099,14 +1106,19 @@ void HandleRoot(void)
     WSContentSend_P(PSTR("<tr>"));
 #ifdef USE_SONOFF_IFAN
     if (IsModuleIfan()) {
-      WSContentSend_P(HTTP_DEVICE_CONTROL, 36, 1, D_BUTTON_TOGGLE, "");
+      WSContentSend_P(HTTP_DEVICE_CONTROL, 36, 1,
+        (strlen(SettingsText(SET_BUTTON1))) ? SettingsText(SET_BUTTON1) : D_BUTTON_TOGGLE,
+        "");
       for (uint32_t i = 0; i < MaxFanspeed(); i++) {
         snprintf_P(stemp, sizeof(stemp), PSTR("%d"), i);
-        WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i +2, stemp, "");
+        WSContentSend_P(HTTP_DEVICE_CONTROL, 16, i +2,
+          (strlen(SettingsText(SET_BUTTON2 + i))) ? SettingsText(SET_BUTTON2 + i) : stemp,
+          "");
       }
     } else {
 #endif  // USE_SONOFF_IFAN
       for (uint32_t idx = 1; idx <= devices_present; idx++) {
+        bool set_button = ((idx <= MAX_BUTTON_TEXT) && strlen(SettingsText(SET_BUTTON1 + idx -1)));
 #ifdef USE_SHUTTER
         if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
           bool shutter_used = false;
@@ -1117,13 +1129,17 @@ void HandleRoot(void)
             }
           }
           if (shutter_used) {
-            WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx, (idx % 2) ? "▲" : "▼" , "");
+            WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx,
+              (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (idx % 2) ? "▲" : "▼",
+              "");
             continue;
           }
         }
 #endif  // USE_SHUTTER
         snprintf_P(stemp, sizeof(stemp), PSTR(" %d"), idx);
-        WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx, (devices_present < 5) ? D_BUTTON_TOGGLE : "", (devices_present > 1) ? stemp : "");
+        WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx,
+          (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (devices_present < 5) ? D_BUTTON_TOGGLE : "",
+          (set_button) ? "" : (devices_present > 1) ? stemp : "");
       }
 #ifdef USE_SONOFF_IFAN
     }
@@ -1139,7 +1155,9 @@ void HandleRoot(void)
       if (idx > 0) { WSContentSend_P(PSTR("</tr><tr>")); }
       for (uint32_t j = 0; j < 4; j++) {
         idx++;
-        WSContentSend_P(PSTR("<td style='width:25%%'><button onclick='la(\"&k=%d\");'>%d</button></td>"), idx, idx);  // &k is related to WebGetArg("k", tmp, sizeof(tmp));
+        snprintf_P(stemp, sizeof(stemp), PSTR("%d"), idx);
+        WSContentSend_P(PSTR("<td style='width:25%%'><button onclick='la(\"&k=%d\");'>%s</button></td>"), idx,  // &k is related to WebGetArg("k", tmp, sizeof(tmp));
+          (strlen(SettingsText(SET_BUTTON1 + idx -1))) ? SettingsText(SET_BUTTON1 + idx -1) : stemp);
       }
     }
     WSContentSend_P(PSTR("</tr></table>"));
@@ -1670,15 +1688,16 @@ void HandleWifiConfiguration(void)
     }
 
     // As WIFI_HOSTNAME may contain %s-%04d it cannot be part of HTTP_FORM_WIFI where it will exception
-    WSContentSend_P(HTTP_FORM_WIFI, Settings.sta_ssid[0], Settings.sta_ssid[1], WIFI_HOSTNAME, WIFI_HOSTNAME, Settings.hostname, Settings.cors_domain);
+    WSContentSend_P(HTTP_FORM_WIFI, SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), WIFI_HOSTNAME, WIFI_HOSTNAME, SettingsText(SET_HOSTNAME), SettingsText(SET_CORS));
     WSContentSend_P(HTTP_FORM_END);
   }
 
   if (WifiIsInManagerMode()) {
-    WSContentSpaceButton(BUTTON_RESTART);
 #ifndef FIRMWARE_MINIMAL
-    WSContentSpaceButton(BUTTON_RESET_CONFIGURATION);
+    WSContentSpaceButton(BUTTON_RESTORE);
+    WSContentButton(BUTTON_RESET_CONFIGURATION);
 #endif  // FIRMWARE_MINIMAL
+    WSContentSpaceButton(BUTTON_RESTART);
   } else {
     WSContentSpaceButton(BUTTON_CONFIGURATION);
   }
@@ -1687,24 +1706,25 @@ void HandleWifiConfiguration(void)
 
 void WifiSaveSettings(void)
 {
-  char tmp[sizeof(Settings.sta_pwd[0])];  // Max length is currently 65
+  char tmp[TOPSZ];  // Max length is currently 150
 
   WebGetArg("h", tmp, sizeof(tmp));
-  strlcpy(Settings.hostname, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp, sizeof(Settings.hostname));
-  if (strstr(Settings.hostname, "%") != nullptr) {
-    strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
+  SettingsUpdateText(SET_HOSTNAME, (!strlen(tmp)) ? WIFI_HOSTNAME : tmp);
+  if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
+    SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
   }
   WebGetArg("c", tmp, sizeof(tmp));
-  strlcpy(Settings.cors_domain, (!strlen(tmp)) ? CORS_DOMAIN : tmp, sizeof(Settings.cors_domain));
+  SettingsUpdateText(SET_CORS, (!strlen(tmp)) ? CORS_DOMAIN : tmp);
   WebGetArg("s1", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_ssid[0], (!strlen(tmp)) ? STA_SSID1 : tmp, sizeof(Settings.sta_ssid[0]));
+  SettingsUpdateText(SET_STASSID1, (!strlen(tmp)) ? STA_SSID1 : tmp);
   WebGetArg("s2", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_ssid[1], (!strlen(tmp)) ? STA_SSID2 : tmp, sizeof(Settings.sta_ssid[1]));
+  SettingsUpdateText(SET_STASSID2, (!strlen(tmp)) ? STA_SSID2 : tmp);
   WebGetArg("p1", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_pwd[0], (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? Settings.sta_pwd[0] : tmp, sizeof(Settings.sta_pwd[0]));
+  SettingsUpdateText(SET_STAPWD1, (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? SettingsText(SET_STAPWD1) : tmp);
   WebGetArg("p2", tmp, sizeof(tmp));
-  strlcpy(Settings.sta_pwd[1], (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? Settings.sta_pwd[1] : tmp, sizeof(Settings.sta_pwd[1]));
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_SSID "2 %s, " D_CMND_CORS " %s"), Settings.hostname, Settings.sta_ssid[0], Settings.sta_ssid[1], Settings.cors_domain);
+  SettingsUpdateText(SET_STAPWD2, (!strlen(tmp)) ? "" : (strlen(tmp) < 5) ? SettingsText(SET_STAPWD2) : tmp);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CMND_HOSTNAME " %s, " D_CMND_SSID "1 %s, " D_CMND_SSID "2 %s, " D_CMND_CORS " %s"),
+    SettingsText(SET_HOSTNAME), SettingsText(SET_STASSID1), SettingsText(SET_STASSID2), SettingsText(SET_CORS));
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1741,7 +1761,7 @@ void HandleLoggingConfiguration(void)
     }
     WSContentSend_P(PSTR("</select></p>"));
   }
-  WSContentSend_P(HTTP_FORM_LOG2, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
+  WSContentSend_P(HTTP_FORM_LOG2, SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, Settings.tele_period);
   WSContentSend_P(HTTP_FORM_END);
   WSContentSpaceButton(BUTTON_CONFIGURATION);
   WSContentStop();
@@ -1749,7 +1769,7 @@ void HandleLoggingConfiguration(void)
 
 void LoggingSaveSettings(void)
 {
-  char tmp[sizeof(Settings.syslog_host)];  // Max length is currently 33
+  char tmp[TOPSZ];  // Max length is currently 33
 
   WebGetArg("l0", tmp, sizeof(tmp));
   SetSeriallog((!strlen(tmp)) ? SERIAL_LOG_LEVEL : atoi(tmp));
@@ -1760,7 +1780,7 @@ void LoggingSaveSettings(void)
   WebGetArg("l3", tmp, sizeof(tmp));
   SetSyslog((!strlen(tmp)) ? SYS_LOG_LEVEL : atoi(tmp));
   WebGetArg("lh", tmp, sizeof(tmp));
-  strlcpy(Settings.syslog_host, (!strlen(tmp)) ? SYS_LOG_HOST : tmp, sizeof(Settings.syslog_host));
+  SettingsUpdateText(SET_SYSLOG_HOST, (!strlen(tmp)) ? SYS_LOG_HOST : tmp);
   WebGetArg("lp", tmp, sizeof(tmp));
   Settings.syslog_port = (!strlen(tmp)) ? SYS_LOG_PORT : atoi(tmp);
   WebGetArg("lt", tmp, sizeof(tmp));
@@ -1769,7 +1789,7 @@ void LoggingSaveSettings(void)
     Settings.tele_period = 10;   // Do not allow periods < 10 seconds
   }
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_LOG D_CMND_SERIALLOG " %d, " D_CMND_WEBLOG " %d, " D_CMND_MQTTLOG " %d, " D_CMND_SYSLOG " %d, " D_CMND_LOGHOST " %s, " D_CMND_LOGPORT " %d, " D_CMND_TELEPERIOD " %d"),
-    Settings.seriallog_level, Settings.weblog_level, Settings.mqttlog_level, Settings.syslog_level, Settings.syslog_host, Settings.syslog_port, Settings.tele_period);
+    Settings.seriallog_level, Settings.weblog_level, Settings.mqttlog_level, Settings.syslog_level, SettingsText(SET_SYSLOG_HOST), Settings.syslog_port, Settings.tele_period);
 }
 
 /*-------------------------------------------------------------------------------------------*/
@@ -1805,7 +1825,7 @@ void HandleOtherConfiguration(void)
       (i) ? stemp : "",
       i,
       (i) ? stemp : "",
-      Settings.friendlyname[i]);
+      SettingsText(SET_FRIENDLYNAME1 + i));
   }
 
 #ifdef USE_EMULATION
@@ -1835,26 +1855,29 @@ void HandleOtherConfiguration(void)
 
 void OtherSaveSettings(void)
 {
-  char tmp[128];
+  char tmp[TOPSZ];
   char webindex[5];
-  char friendlyname[sizeof(Settings.friendlyname[0])];
+  char friendlyname[TOPSZ];
+  char message[LOGSZ];
 
   WebGetArg("wp", tmp, sizeof(tmp));
-  strlcpy(Settings.web_password, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? Settings.web_password : tmp, sizeof(Settings.web_password));
+  SettingsUpdateText(SET_WEBPWD, (!strlen(tmp)) ? "" : (strchr(tmp,'*')) ? SettingsText(SET_WEBPWD) : tmp);
   Settings.flag.mqtt_enabled = WebServer->hasArg("b1");  // SetOption3 - Enable MQTT
 #ifdef USE_EMULATION
   WebGetArg("b2", tmp, sizeof(tmp));
   Settings.flag2.emulation = (!strlen(tmp)) ? 0 : atoi(tmp);
 #endif  // USE_EMULATION
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
+
+  snprintf_P(message, sizeof(message), PSTR(D_LOG_OTHER D_MQTT_ENABLE " %s, " D_CMND_EMULATION " %d, " D_CMND_FRIENDLYNAME), GetStateText(Settings.flag.mqtt_enabled), Settings.flag2.emulation);
   for (uint32_t i = 0; i < MAX_FRIENDLYNAMES; i++) {
     snprintf_P(webindex, sizeof(webindex), PSTR("a%d"), i);
     WebGetArg(webindex, tmp, sizeof(tmp));
     snprintf_P(friendlyname, sizeof(friendlyname), PSTR(FRIENDLY_NAME"%d"), i +1);
-    strlcpy(Settings.friendlyname[i], (!strlen(tmp)) ? (i) ? friendlyname : FRIENDLY_NAME : tmp, sizeof(Settings.friendlyname[i]));
-    snprintf_P(log_data, sizeof(log_data), PSTR("%s%s %s"), log_data, (i) ? "," : "", Settings.friendlyname[i]);
+    SettingsUpdateText(SET_FRIENDLYNAME1 +i, (!strlen(tmp)) ? (i) ? friendlyname : FRIENDLY_NAME : tmp);
+    snprintf_P(message, sizeof(message), PSTR("%s%s %s"), message, (i) ? "," : "", SettingsText(SET_FRIENDLYNAME1 +i));
   }
-  AddLog(LOG_LEVEL_INFO);
+  AddLog_P(LOG_LEVEL_INFO, message);
+
   WebGetArg("t1", tmp, sizeof(tmp));
   if (strlen(tmp)) {  // {"NAME":"12345678901234","GPIO":[255,255,255,255,255,255,255,255,255,255,255,255,255],"FLAG":255,"BASE":255}
     char svalue[128];
@@ -1882,10 +1905,10 @@ void HandleBackupConfiguration(void)
   WiFiClient myClient = WebServer->client();
   WebServer->setContentLength(sizeof(Settings));
 
-  char attachment[100];
+  char attachment[TOPSZ];
 
-//  char friendlyname[sizeof(Settings.friendlyname[0])];
-//  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, Settings.friendlyname[0]), my_version);
+//  char friendlyname[TOPSZ];
+//  snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(friendlyname, SettingsText(SET_FRIENDLYNAME1)), my_version);
 
   char hostname[sizeof(my_hostname)];
   snprintf_P(attachment, sizeof(attachment), PSTR("attachment; filename=Config_%s_%s.dmp"), NoAlNumToUnderscore(hostname, my_hostname), my_version);
@@ -1948,7 +1971,11 @@ void HandleRestoreConfiguration(void)
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_RST);
   WSContentSend_P(HTTP_FORM_RST_UPG, D_RESTORE);
-  WSContentSpaceButton(BUTTON_CONFIGURATION);
+  if (WifiIsInManagerMode()) {
+    WSContentSpaceButton(BUTTON_MAIN);
+  } else {
+    WSContentSpaceButton(BUTTON_CONFIGURATION);
+  }
   WSContentStop();
 
   Web.upload_error = 0;
@@ -1985,11 +2012,17 @@ void HandleInformation(void)
   if (IsModuleIfan()) { maxfn = 1; }
 #endif  // USE_SONOFF_IFAN
   for (uint32_t i = 0; i < maxfn; i++) {
-    WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, Settings.friendlyname[i]);
+    WSContentSend_P(PSTR("}1" D_FRIENDLY_NAME " %d}2%s"), i +1, SettingsText(SET_FRIENDLYNAME1 +i));
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
-  WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, Settings.sta_ssid[Settings.sta_active], WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI());
+  WSContentSend_P(PSTR("}1" D_AP "%d " D_SSID " (" D_RSSI ")}2%s (%d%%, %d dBm)"), Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), WifiGetRssiAsQuality(WiFi.RSSI()), WiFi.RSSI());
   WSContentSend_P(PSTR("}1" D_HOSTNAME "}2%s%s"), my_hostname, (Wifi.mdns_begun) ? ".local" : "");
+#if LWIP_IPV6
+    String ipv6_addr = WifiGetIPv6();
+    if(ipv6_addr != ""){
+      WSContentSend_P(PSTR("}1 IPv6 Address }2%s"), ipv6_addr.c_str());
+    }
+#endif
   if (static_cast<uint32_t>(WiFi.localIP()) != 0) {
     WSContentSend_P(PSTR("}1" D_IP_ADDRESS "}2%s"), WiFi.localIP().toString().c_str());
     WSContentSend_P(PSTR("}1" D_GATEWAY "}2%s"), IPAddress(Settings.ip_address[1]).toString().c_str());
@@ -2004,17 +2037,12 @@ void HandleInformation(void)
   }
   WSContentSend_P(PSTR("}1}2&nbsp;"));  // Empty line
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-#ifdef USE_MQTT_AWS_IOT
-    WSContentSend_P(PSTR("}1" D_MQTT_HOST "}2%s%s"), Settings.mqtt_user, Settings.mqtt_host);
+    WSContentSend_P(PSTR("}1" D_MQTT_HOST "}2%s"), SettingsText(SET_MQTT_HOST));
     WSContentSend_P(PSTR("}1" D_MQTT_PORT "}2%d"), Settings.mqtt_port);
-#else
-    WSContentSend_P(PSTR("}1" D_MQTT_HOST "}2%s"), Settings.mqtt_host);
-    WSContentSend_P(PSTR("}1" D_MQTT_PORT "}2%d"), Settings.mqtt_port);
-    WSContentSend_P(PSTR("}1" D_MQTT_USER "}2%s"), Settings.mqtt_user);
-#endif
+    WSContentSend_P(PSTR("}1" D_MQTT_USER "}2%s"), SettingsText(SET_MQTT_USER));
     WSContentSend_P(PSTR("}1" D_MQTT_CLIENT "}2%s"), mqtt_client);
-    WSContentSend_P(PSTR("}1" D_MQTT_TOPIC "}2%s"), Settings.mqtt_topic);
-//    WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), Settings.mqtt_grptopic);
+    WSContentSend_P(PSTR("}1" D_MQTT_TOPIC "}2%s"), SettingsText(SET_MQTT_TOPIC));
+//    WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), SettingsText(SET_MQTT_GRP_TOPIC));
     WSContentSend_P(PSTR("}1" D_MQTT_GROUP_TOPIC "}2%s"), GetGroupTopic_P(stopic, ""));
     WSContentSend_P(PSTR("}1" D_MQTT_FULL_TOPIC "}2%s"), GetTopic_P(stopic, CMND, mqtt_topic, ""));
     WSContentSend_P(PSTR("}1" D_MQTT " " D_FALLBACK_TOPIC "}2%s"), GetFallbackTopic_P(stopic, ""));
@@ -2073,7 +2101,7 @@ void HandleUpgradeFirmware(void)
 
   WSContentStart_P(S_FIRMWARE_UPGRADE);
   WSContentSendStyle();
-  WSContentSend_P(HTTP_FORM_UPG, Settings.ota_url);
+  WSContentSend_P(HTTP_FORM_UPG, SettingsText(SET_OTAURL));
   WSContentSend_P(HTTP_FORM_RST_UPG, D_UPGRADE);
   WSContentSpaceButton(BUTTON_MAIN);
   WSContentStop();
@@ -2086,12 +2114,12 @@ void HandleUpgradeFirmwareStart(void)
 {
   if (!HttpCheckPriviledgedAccess()) { return; }
 
-  char command[sizeof(Settings.ota_url) + 10];  // OtaUrl
+  char command[TOPSZ + 10];  // OtaUrl
 
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_UPGRADE_STARTED));
   WifiConfigCounter();
 
-  char otaurl[sizeof(Settings.ota_url)];
+  char otaurl[TOPSZ];
   WebGetArg("o", otaurl, sizeof(otaurl));
   if (strlen(otaurl)) {
     snprintf_P(command, sizeof(command), PSTR(D_CMND_OTAURL " %s"), otaurl);
@@ -2129,12 +2157,12 @@ void HandleUploadDone(void)
   WSContentSendStyle();
   WSContentSend_P(PSTR("<div style='text-align:center;'><b>" D_UPLOAD " <font color='#"));
   if (Web.upload_error) {
-//    WSContentSend_P(PSTR(COLOR_TEXT_WARNING "'>" D_FAILED "</font></b><br><br>"));
     WSContentSend_P(PSTR("%06x'>" D_FAILED "</font></b><br><br>"), WebColor(COL_TEXT_WARNING));
 #ifdef USE_RF_FLASH
-    if (Web.upload_error < 14) {
+    if (Web.upload_error < 15) {
 #else
-    if (Web.upload_error < 10) {
+    if ((Web.upload_error < 10) || (14 == Web.upload_error)) {
+      if (14 == Web.upload_error) { Web.upload_error = 10; }
 #endif
       GetTextIndexed(error, sizeof(error), Web.upload_error -1, kUploadErrors);
     } else {
@@ -2229,7 +2257,7 @@ void HandleUploadLoop(void)
           Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_EFM8BB1;
 
-          Web.upload_error = SnfBrUpdateInit();
+          Web.upload_error = SnfBrUpdateInit();  // 10, 11
           if (Web.upload_error != 0) { return; }
         } else
 #endif  // USE_RF_FLASH
@@ -2237,7 +2265,7 @@ void HandleUploadLoop(void)
         if ((WEMOS == my_module_type) && (upload.buf[0] == ':')) {  // Check if this is a ARDUINO SLAVE hex file
           Update.end();              // End esp8266 update session
           Web.upload_file_type = UPL_TASMOTASLAVE;
-          Web.upload_error = TasmotaSlave_UpdateInit();
+          Web.upload_error = TasmotaSlave_UpdateInit();  // 0
           if (Web.upload_error != 0) { return; }
         } else
 #endif
@@ -2272,13 +2300,13 @@ void HandleUploadLoop(void)
         free(efm8bb1_update);
         efm8bb1_update = nullptr;
         if (result != 0) {
-          Web.upload_error = abs(result);  // 2 = Not enough space, 8 = File invalid
+          Web.upload_error = abs(result);  // 2 = Not enough space, 8 = File invalid, 12, 13
           return;
         }
       }
       ssize_t result = rf_search_and_write(upload.buf, upload.currentSize);
       if (result < 0) {
-        Web.upload_error = abs(result);
+        Web.upload_error = abs(result);  // 8, 12, 13
         return;
       } else if (result > 0) {
         if ((size_t)result > upload.currentSize) {
@@ -2368,6 +2396,11 @@ void HandleUploadLoop(void)
         Web.upload_error = 6;  // Upload failed. Enable logging 3
         return;
       }
+      if (OtaVersion() < VERSION_COMPATIBLE) {
+        AbandonOta();
+        Web.upload_error = 14;  // Not compatible
+        return;
+      }
     }
     if (!Web.upload_error) {
       AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD D_SUCCESSFUL " %u bytes. " D_RESTARTING), upload.totalSize);
@@ -2400,12 +2433,12 @@ void HandleHttpCommand(void)
   AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_HTTP D_COMMAND));
 
   bool valid = true;
-  if (Settings.web_password[0] != 0) {
-    char tmp1[sizeof(Settings.web_password)];
+  if (strlen(SettingsText(SET_WEBPWD))) {
+    char tmp1[33];
     WebGetArg("user", tmp1, sizeof(tmp1));
-    char tmp2[sizeof(Settings.web_password)];
+    char tmp2[strlen(SettingsText(SET_WEBPWD)) +1];
     WebGetArg("password", tmp2, sizeof(tmp2));
-    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, Settings.web_password))) { valid = false; }
+    if (!(!strcmp(tmp1, WEB_USERNAME) && !strcmp(tmp2, SettingsText(SET_WEBPWD)))) { valid = false; }
   }
 
   WSContentBegin(200, CT_JSON);
@@ -2623,7 +2656,7 @@ int WebSend(char *buffer)
       if (user) {
         user = strtok_r(user, ":", &password);  // user = |admin|, password = |joker|
         if (user && password) {
-          char userpass[128];
+          char userpass[200];
           snprintf_P(userpass, sizeof(userpass), PSTR("user=%s&password=%s&"), user, password);
           url += userpass;                    // url = |http://192.168.178.86/cm?user=admin&password=joker&|
         }
@@ -2716,7 +2749,8 @@ const char kWebCommands[] PROGMEM = "|"  // No prefix
 #ifdef USE_SENDMAIL
   D_CMND_SENDMAIL "|"
 #endif
-  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|" D_CMND_WEBSENSOR "|" D_CMND_CORS;
+  D_CMND_WEBSERVER "|" D_CMND_WEBPASSWORD "|" D_CMND_WEBLOG "|" D_CMND_WEBREFRESH "|" D_CMND_WEBSEND "|" D_CMND_WEBCOLOR "|"
+  D_CMND_WEBSENSOR "|" D_CMND_WEBBUTTON "|" D_CMND_CORS;
 
 void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_EMULATION
@@ -2725,7 +2759,8 @@ void (* const WebCommand[])(void) PROGMEM = {
 #ifdef USE_SENDMAIL
   &CmndSendmail,
 #endif
-  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor, &CmndWebSensor, &CmndCors };
+  &CmndWebServer, &CmndWebPassword, &CmndWeblog, &CmndWebRefresh, &CmndWebSend, &CmndWebColor,
+  &CmndWebSensor, &CmndWebButton, &CmndCors };
 
 /*********************************************************************************************\
  * Commands
@@ -2778,9 +2813,9 @@ void CmndWebServer(void)
 
 void CmndWebPassword(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.web_password))) {
-    strlcpy(Settings.web_password, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.web_password));
-    ResponseCmndChar(Settings.web_password);
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_WEBPWD, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? WEB_PASSWORD : XdrvMailbox.data);
+    ResponseCmndChar(SettingsText(SET_WEBPWD));
   } else {
     Response_P(S_JSON_COMMAND_ASTERISK, XdrvMailbox.command);
   }
@@ -2846,12 +2881,30 @@ void CmndWebSensor(void)
   ResponseJsonEnd();
 }
 
+void CmndWebButton(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_BUTTON_TEXT)) {
+    if (!XdrvMailbox.usridx) {
+      mqtt_data[0] = '\0';
+      for (uint32_t i = 0; i < MAX_BUTTON_TEXT; i++) {
+        ResponseAppend_P(PSTR("%c\"WebButton%d\":\"%s\""), (i) ? ',' : '{', i +1, SettingsText(SET_BUTTON1 +i));
+      }
+      ResponseJsonEnd();
+    } else {
+      if (XdrvMailbox.data_len > 0) {
+        SettingsUpdateText(SET_BUTTON1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);
+      }
+      ResponseCmndIdxChar(SettingsText(SET_BUTTON1 + XdrvMailbox.index -1));
+    }
+  }
+}
+
 void CmndCors(void)
 {
-  if ((XdrvMailbox.data_len > 0) && (XdrvMailbox.data_len < sizeof(Settings.cors_domain))) {
-    strlcpy(Settings.cors_domain, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? WEB_PASSWORD : XdrvMailbox.data, sizeof(Settings.cors_domain));
+  if (XdrvMailbox.data_len > 0) {
+    SettingsUpdateText(SET_CORS, (SC_CLEAR == Shortcut()) ? "" : (SC_DEFAULT == Shortcut()) ? WEB_PASSWORD : XdrvMailbox.data);
   }
-  ResponseCmndChar(Settings.cors_domain);
+  ResponseCmndChar(SettingsText(SET_CORS));
 }
 
 /*********************************************************************************************\

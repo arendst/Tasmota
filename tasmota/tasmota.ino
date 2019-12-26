@@ -68,7 +68,7 @@
 // Structs
 #include "settings.h"
 
-const char kCodeImage[] PROGMEM = "tasmota|minimal|sensors|knx|basic|display|ir";
+const char kCodeImage[] PROGMEM = "tasmota|minimal|sensors|knx|lite|display|ir";
 
 /*********************************************************************************************\
  * Global variables
@@ -110,7 +110,6 @@ uint32_t web_log_index = 1;                 // Index in Web log buffer (should n
 float global_temperature = 9999;            // Provide a global temperature to be used by some sensors
 float global_humidity = 0;                  // Provide a global humidity to be used by some sensors
 float global_pressure = 0;                  // Provide a global pressure to be used by some sensors
-char *ota_url;                              // OTA url string pointer
 uint16_t tele_period = 9999;                // Tele period timer
 uint16_t mqtt_cmnd_publish = 0;             // ignore flag for publish command
 uint16_t blink_counter = 0;                 // Number of blink cycles
@@ -162,8 +161,8 @@ StateBitfield global_state;                 // Global states (currently Wifi and
 char my_version[33];                        // Composed version string
 char my_image[33];                          // Code image and/or commit
 char my_hostname[33];                       // Composed Wifi hostname
-char mqtt_client[33];                       // Composed MQTT Clientname
-char mqtt_topic[33];                        // Composed MQTT topic
+char mqtt_client[TOPSZ];                    // Composed MQTT Clientname
+char mqtt_topic[TOPSZ];                     // Composed MQTT topic
 char serial_in_buffer[INPUT_BUFFER_SIZE];   // Receive buffer
 char mqtt_data[MESSZ];                      // MQTT publish buffer and web page ajax buffer
 char log_data[LOGSZ];                       // Logging
@@ -265,13 +264,13 @@ void setup(void)
     }
   }
 
-  Format(mqtt_client, Settings.mqtt_client, sizeof(mqtt_client));
-  Format(mqtt_topic, Settings.mqtt_topic, sizeof(mqtt_topic));
-  if (strstr(Settings.hostname, "%") != nullptr) {
-    strlcpy(Settings.hostname, WIFI_HOSTNAME, sizeof(Settings.hostname));
-    snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname, mqtt_topic, ESP.getChipId() & 0x1FFF);
+  Format(mqtt_client, SettingsText(SET_MQTT_CLIENT), sizeof(mqtt_client));
+  Format(mqtt_topic, SettingsText(SET_MQTT_TOPIC), sizeof(mqtt_topic));
+  if (strstr(SettingsText(SET_HOSTNAME), "%") != nullptr) {
+    SettingsUpdateText(SET_HOSTNAME, WIFI_HOSTNAME);
+    snprintf_P(my_hostname, sizeof(my_hostname)-1, SettingsText(SET_HOSTNAME), mqtt_topic, ESP.getChipId() & 0x1FFF);
   } else {
-    snprintf_P(my_hostname, sizeof(my_hostname)-1, Settings.hostname);
+    snprintf_P(my_hostname, sizeof(my_hostname)-1, SettingsText(SET_HOSTNAME));
   }
 
   GetEspHardwareType();
@@ -330,10 +329,12 @@ void setup(void)
   }
   blink_powersave = power;
 
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE), PROJECT, Settings.friendlyname[0], my_version, my_image);
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE), PROJECT, SettingsText(SET_FRIENDLYNAME1), my_version, my_image);
 #ifdef FIRMWARE_MINIMAL
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
 #endif  // FIRMWARE_MINIMAL
+
+  memcpy_P(log_data, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
 
   RtcInit();
 
@@ -349,15 +350,18 @@ void BacklogLoop(void)
 {
   if (TimeReached(backlog_delay)) {
     if (!BACKLOG_EMPTY && !backlog_mutex) {
-      backlog_mutex = true;
 #ifdef SUPPORT_IF_STATEMENT
-      ExecuteCommand((char*)backlog.shift().c_str(), SRC_BACKLOG);
+      backlog_mutex = true;
+      String cmd = backlog.shift();
+      backlog_mutex = false;
+      ExecuteCommand((char*)cmd.c_str(), SRC_BACKLOG);
 #else
+      backlog_mutex = true;
       ExecuteCommand((char*)backlog[backlog_pointer].c_str(), SRC_BACKLOG);
       backlog_pointer++;
       if (backlog_pointer >= MAX_BACKLOG) { backlog_pointer = 0; }
-#endif
       backlog_mutex = false;
+#endif
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
-  tasmota_version.h - Version header file for Tasmota
+  support_statistics.ino - gather statistics for Tasmota
 
   Copyright (C) 2019  Theo Arends
 
@@ -17,12 +17,25 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _TASMOTA_VERSION_H_
-#define _TASMOTA_VERSION_H_
+#define USE_STATS_CODE
 
-const uint32_t VERSION = 0x08010001;
+#ifdef USE_STATS_CODE
+/*********************************************************************************************\
+ * Gather statistics
+\*********************************************************************************************/
 
-// Lowest compatible version
-const uint32_t VERSION_COMPATIBLE = 0x07010006;
+String GetStatistics(void)
+{
+  char data[40];
+  snprintf_P(data, sizeof(data), PSTR(",\"CR\":\"%d/%d\""), GetSettingsTextLen(), settings_text_size);  // Char Usage Ratio
+  return String(data);
+}
 
-#endif  // _TASMOTA_VERSION_H_
+#else
+
+String GetStatistics(void)
+{
+  return String("");
+}
+
+#endif  // USE_STATS_CODE

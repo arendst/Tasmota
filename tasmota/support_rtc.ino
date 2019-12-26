@@ -460,7 +460,9 @@ void RtcSetTime(uint32_t epoch)
   if (epoch < START_VALID_TIME) {  // 2016-01-01
     Rtc.user_time_entry = false;
     ntp_force_sync = true;
+    sntp_init();
   } else {
+    sntp_stop();
     Rtc.user_time_entry = true;
     Rtc.utc_time = epoch -1;    // Will be corrected by RtcSecond
   }
@@ -469,9 +471,9 @@ void RtcSetTime(uint32_t epoch)
 
 void RtcInit(void)
 {
-  sntp_setservername(0, Settings.ntp_server[0]);
-  sntp_setservername(1, Settings.ntp_server[1]);
-  sntp_setservername(2, Settings.ntp_server[2]);
+  sntp_setservername(0, SettingsText(SET_NTPSERVER1));
+  sntp_setservername(1, SettingsText(SET_NTPSERVER2));
+  sntp_setservername(2, SettingsText(SET_NTPSERVER3));
   sntp_stop();
   sntp_set_timezone(0);      // UTC time
   sntp_init();

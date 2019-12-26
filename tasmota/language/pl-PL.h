@@ -113,6 +113,7 @@
 #define D_LIGHT "Światło"
 #define D_LWT "LWT"
 #define D_MODULE "Moduł"
+#define D_MOISTURE "Moisture"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "Wielokrotne naciśnięcie"
 #define D_NOISE "Szum"
@@ -353,6 +354,7 @@
 #define D_UPLOAD_ERR_11 "Błąd kasowania układu RF"
 #define D_UPLOAD_ERR_12 "Błąd zapisu układu RF"
 #define D_UPLOAD_ERR_13 "Błąd dekodowania oprrogramowania układu RF"
+#define D_UPLOAD_ERR_14 "Not compatible"
 #define D_UPLOAD_ERROR_CODE "Błąd wgrywania"
 
 #define D_ENTER_COMMAND "Wprowadź polecenie"
@@ -629,6 +631,8 @@
 #define D_SENSOR_SLAVE_TX    "Slave TX"
 #define D_SENSOR_SLAVE_RX    "Slave RX"
 #define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_GPS_RX        "GPS RX"
+#define D_SENSOR_GPS_TX        "GPS TX"
 
 // Units
 #define D_UNIT_AMPERE "A"
