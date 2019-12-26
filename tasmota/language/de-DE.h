@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v8.0.0
+ * Updated until v8.1.0.1
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -66,7 +66,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Kanal"
-#define D_CO2 "CO²"
+#define D_CO2 "CO₂"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "kalt"
 #define D_COMMAND "Befehl"
@@ -83,7 +83,7 @@
 #define D_DNS_SERVER "DNS-Server"
 #define D_DONE "erledigt"
 #define D_DST_TIME "DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "Emulation"
 #define D_ENABLED "aktiviert"
 #define D_ERASE "löschen"
@@ -647,7 +647,7 @@
 #define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m3"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
