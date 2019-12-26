@@ -2,6 +2,8 @@
 
 ### 8.1.0.1 20191225
 
+- Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
+
 ## Released
 
 ### 8.1.0 20191225
