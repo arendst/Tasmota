@@ -62,7 +62,7 @@
 #define D_BRIGHTLIGHT "Jasny"
 #define D_BSSID "BSSId"
 #define D_BUTTON "Przycisk"
-#define D_BY "by"                    // Written by me
+#define D_BY "przez"                    // Written by me
 #define D_BYTES "Bajtów"
 #define D_CELSIUS "Celsiusz"
 #define D_CHANNEL "Kanał"
@@ -71,7 +71,7 @@
 #define D_COLDLIGHT "Zimny"
 #define D_COMMAND "Komenda"
 #define D_CONNECTED "Połączony"
-#define D_CORS_DOMAIN "CORS Domain"
+#define D_CORS_DOMAIN "Domena CORS"
 #define D_COUNT "Licz"
 #define D_COUNTER "Licznik"
 #define D_CURRENT "Prąd"          // As in Voltage and Current
@@ -113,7 +113,7 @@
 #define D_LIGHT "Światło"
 #define D_LWT "LWT"
 #define D_MODULE "Moduł"
-#define D_MOISTURE "Moisture"
+#define D_MOISTURE "Wilgotność"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "Wielokrotne naciśnięcie"
 #define D_NOISE "Szum"
