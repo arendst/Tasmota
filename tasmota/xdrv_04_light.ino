@@ -161,73 +161,65 @@ struct LCwColor {
 const uint8_t MAX_FIXED_COLD_WARM = 4;
 const LCwColor kFixedColdWarm[MAX_FIXED_COLD_WARM] PROGMEM = { 0,0, 255,0, 0,255, 128,128 };
 
-// New version of Gamma correction table, with adaptative resolution
-// from 11 bits (lower values) to 8 bits (upper values).
-// We're using the fact that lower values are small and can fit within 8 bits
-// To save flash space, the array is only 8 bits uint
-#ifdef XFUNC_PTR_IN_ROM
-const uint8_t _ledTable[] PROGMEM = {
-#else
-const uint8_t _ledTable[] = {
-#endif
-  // 11 bits resolution
-    0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  2,  2,  // 11 bits, 0..2047
-    2,  2,  2,  2,  3,  3,  3,  3,  4,  4,  4,  5,  5,  6,  6,  7,  // 11 bits, 0..2047
-    7,  8,  8,  9, 10, 10, 11, 12, 12, 13, 14, 15, 16, 17, 18, 19,  // 11 bits, 0..2047
-   20, 21, 22, 24, 25, 26, 28, 29, 30, 32, 33, 35, 37, 38, 40, 42,  // 11 bits, 0..2047
-  // 10 bits resolution
-   22, 23, 24, 25, 26, 27, 28, 30, 31, 32, 33, 34, 36, 37, 38, 39,  // 10 bits, 0..1023
-   41, 42, 44, 45, 47, 48, 50, 51, 53, 55, 56, 58, 60, 62, 64, 65,  // 10 bits, 0..1023
-   67, 69, 71, 73, 75, 78, 80, 82, 84, 86, 89, 91, 93, 96, 98,101,  // 10 bits, 0..1023
-  103,106,108,111,114,116,119,122,125,128,131,134,137,140,143,146,  // 10 bits, 0..1023
-  // 9 bits resolution
-   75, 77, 78, 80, 82, 84, 85, 87, 89, 91, 93, 94, 96, 98,100,102,  //  9 bits, 0..511
-  104,106,108,110,112,115,117,119,121,123,125,128,130,132,135,137,  //  9 bits, 0..511
-  140,142,144,147,149,152,155,157,160,163,165,168,171,173,176,179,  //  9 bits, 0..511
-  182,185,188,191,194,197,200,203,206,209,212,215,219,222,225,229,  //  9 bits, 0..511
-  // 8 bits resolution
-  116,118,120,121,123,125,127,128,130,132,134,136,138,139,141,143,  //  8 bits, 0..255
-  145,147,149,151,153,155,157,159,161,163,165,168,170,172,174,176,  //  8 bits, 0..255
-  178,181,183,185,187,190,192,194,197,199,201,204,206,209,211,214,  //  8 bits, 0..255
-  216,219,221,224,226,229,232,234,237,240,242,245,248,250,253,255   //  8 bits, 0..255
+// New version of Gamma correction compute
+// Instead of a table, we do a multi-linear approximation, which is close enough
+// At low levels, the slope is a bit higher than actual gamma, to make changes smoother
+// Internal resolution is 10 bits.
+
+typedef struct gamma_table_t {
+  uint16_t from8;
+  uint16_t to8;
+  uint16_t from10;
+  uint16_t to10;
+} gamma_table_t;
+
+const gamma_table_t gamma_table[] PROGMEM {
+  {   0,   0,    0,    0 },
+  {   1,  63,    1,   32 },
+  {  64, 127,   33,  128 },
+  { 128, 191,  132,  447 },
+  { 192, 223,  455,  703 },
+  { 224, 255,  713, 1023}
 };
 
 // For reference, below are the computed gamma tables, via ledGamma()
 // for 8 bits output:
-//  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
-//  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
-//  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,
-//  3,  3,  3,  3,  4,  4,  4,  4,  4,  4,  5,  5,  5,  5,  5,  6,
-//  6,  6,  6,  7,  7,  7,  7,  8,  8,  8,  9,  9,  9, 10, 10, 10,
-// 11, 11, 11, 12, 12, 12, 13, 13, 14, 14, 14, 15, 15, 16, 16, 17,
-// 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 23, 23, 24, 24, 25, 26,
-// 26, 27, 27, 28, 29, 29, 30, 31, 32, 32, 33, 34, 35, 35, 36, 37,
-// 38, 39, 39, 40, 41, 42, 43, 44, 45, 46, 47, 47, 48, 49, 50, 51,
-// 52, 53, 54, 55, 56, 58, 59, 60, 61, 62, 63, 64, 65, 66, 68, 69,
-// 70, 71, 72, 74, 75, 76, 78, 79, 80, 82, 83, 84, 86, 87, 88, 90,
-// 91, 93, 94, 96, 97, 99,100,102,103,105,106,108,110,111,113,115,
-//116,118,120,121,123,125,127,128,130,132,134,136,138,139,141,143,
-//145,147,149,151,153,155,157,159,161,163,165,168,170,172,174,176,
-//178,181,183,185,187,190,192,194,197,199,201,204,206,209,211,214,
-//216,219,221,224,226,229,232,234,237,240,242,245,248,250,253,255
+//   0,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,
+//   3,  3,  3,  3,  3,  3,  4,  4,  4,  4,  4,  4,  4,  4,  5,  5,
+//   5,  5,  5,  5,  5,  5,  6,  6,  6,  6,  6,  6,  6,  6,  7,  7,
+//   7,  7,  7,  7,  7,  7,  8,  8,  8,  8,  8,  8,  8,  8,  9,  9,
+//   9,  9, 10, 10, 10, 11, 11, 12, 12, 12, 13, 13, 13, 14, 14, 15,
+//  15, 15, 16, 16, 16, 17, 17, 18, 18, 18, 19, 19, 19, 20, 20, 21,
+//  21, 21, 22, 22, 22, 23, 23, 24, 24, 24, 25, 25, 25, 26, 26, 27,
+//  27, 27, 28, 28, 28, 29, 29, 30, 30, 30, 31, 31, 31, 32, 32, 33,
+//  34, 35, 36, 37, 39, 40, 41, 42, 43, 45, 46, 47, 48, 50, 51, 52,
+//  53, 55, 56, 57, 58, 60, 61, 62, 63, 65, 66, 67, 68, 70, 71, 72,
+//  73, 75, 76, 77, 78, 80, 81, 82, 83, 85, 86, 87, 88, 89, 91, 92,
+//  93, 94, 96, 97, 98, 99,101,102,103,104,106,107,108,109,111,112,
+// 114,116,118,120,122,124,126,128,130,132,134,136,138,140,142,144,
+// 146,148,150,152,154,156,158,160,162,164,166,168,170,171,173,175,
+// 178,180,183,185,188,190,193,195,198,200,203,205,208,210,213,215,
+// 218,220,223,225,228,230,233,235,238,240,243,245,248,250,253,255
+
 //
 // and for 10 bits output:
-//  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
-//  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,  4,
-//  4,  4,  4,  5,  5,  5,  6,  6,  6,  7,  7,  8,  8,  9,  9, 10,
-// 10, 11, 11, 12, 13, 13, 14, 15, 15, 16, 17, 18, 19, 19, 20, 21,
-// 22, 23, 24, 25, 26, 27, 28, 30, 31, 32, 33, 34, 36, 37, 38, 39,
-// 41, 42, 44, 45, 47, 48, 50, 51, 53, 55, 56, 58, 60, 62, 64, 65,
-// 67, 69, 71, 73, 75, 78, 80, 82, 84, 86, 89, 91, 93, 96, 98,101,
-//103,106,108,111,114,116,119,122,125,128,131,134,137,140,143,146,
-//151,155,157,161,165,169,171,175,179,183,187,189,193,197,201,205,
-//209,213,217,221,225,231,235,239,243,247,251,257,261,265,271,275,
-//281,285,289,295,299,305,311,315,321,327,331,337,343,347,353,359,
-//365,371,377,383,389,395,401,407,413,419,425,431,439,445,451,459,
-//467,475,483,487,495,503,511,515,523,531,539,547,555,559,567,575,
-//583,591,599,607,615,623,631,639,647,655,663,675,683,691,699,707,
-//715,727,735,743,751,763,771,779,791,799,807,819,827,839,847,859,
-//867,879,887,899,907,919,931,939,951,963,971,983,995,1003,1015,1023
+//    0,   1,   2,   2,   3,   3,   4,   4,   5,   5,   6,   6,   7,   7,   8,   8,
+//    9,   9,  10,  10,  11,  11,  12,  12,  13,  13,  14,  14,  15,  15,  16,  16,
+//   17,  17,  18,  18,  19,  19,  20,  20,  21,  21,  22,  22,  23,  23,  24,  24,
+//   25,  25,  26,  26,  27,  27,  28,  28,  29,  29,  30,  30,  31,  31,  32,  32,
+//   33,  35,  36,  38,  39,  41,  42,  44,  45,  47,  48,  50,  51,  53,  54,  56,
+//   57,  59,  60,  62,  63,  65,  66,  68,  69,  71,  72,  74,  75,  77,  78,  80,
+//   81,  83,  84,  86,  87,  89,  90,  92,  93,  95,  96,  98,  99, 101, 102, 104,
+//  105, 107, 108, 110, 111, 113, 114, 116, 117, 119, 120, 122, 123, 125, 126, 128,
+//  132, 137, 142, 147, 152, 157, 162, 167, 172, 177, 182, 187, 192, 197, 202, 207,
+//  212, 217, 222, 227, 232, 237, 242, 247, 252, 257, 262, 267, 272, 277, 282, 287,
+//  292, 297, 302, 307, 312, 317, 322, 327, 332, 337, 342, 347, 352, 357, 362, 367,
+//  372, 377, 382, 387, 392, 397, 402, 407, 412, 417, 422, 427, 432, 437, 442, 447,
+//  455, 463, 471, 479, 487, 495, 503, 511, 519, 527, 535, 543, 551, 559, 567, 575,
+//  583, 591, 599, 607, 615, 623, 631, 639, 647, 655, 663, 671, 679, 687, 695, 703,
+//  713, 723, 733, 743, 753, 763, 773, 783, 793, 803, 813, 823, 833, 843, 853, 863,
+//  873, 883, 893, 903, 913, 923, 933, 943, 953, 963, 973, 983, 993,1003,1013,1023
+
 
 struct LIGHT {
   uint32_t strip_timer_counter = 0;  // Bars and Gradient
@@ -1073,35 +1065,42 @@ LightStateClass light_state = LightStateClass();
 LightControllerClass light_controller = LightControllerClass(light_state);
 
 /*********************************************************************************************\
+ * Change scales from 8 bits to 10 bits and vice versa
+\*********************************************************************************************/
+// 8 to 10 to 8 is garanteed to give the same result
+uint16_t change8to10(uint8_t v) {
+  return changeUIntScale(v, 0, 255, 0, 1023);
+}
+// change from 10 bits to 8 bits, but any non-zero input will be non-zero
+uint8_t change10to8(uint16_t v) {
+  return (0 == v) ? 0 : changeUIntScale(v, 4, 1023, 1, 255);
+}
+
+/*********************************************************************************************\
  * Gamma correction
 \*********************************************************************************************/
 // Calculate the gamma corrected value for LEDS
-// You can request 11, 10, 9 or 8 bits resolution via 'bits_out' parameter
-uint16_t ledGamma(uint8_t v, uint16_t bits_out = 8) {
-  uint16_t result;
-  // bits_resolution: the resolution of _ledTable[v], between 8 and 11
-  uint32_t bits_resolution = 11 - (v / 64);                     // 8..11
-  int32_t  bits_correction = bits_out - bits_resolution;      // -3..3
-#ifdef XFUNC_PTR_IN_ROM
-  uint32_t uncorrected_value = pgm_read_byte(_ledTable + v);  // 0..255
-#else
-  uint32_t uncorrected_value = _ledTable[v];        // 0..255
-#endif
-  if (0 == bits_correction) {
-    // we already match the required resolution, no change
-    result = uncorrected_value;
-  } else if (bits_correction > 0) {
-    // the output resolution is higher than our value, we need to extrapolate
-    // we shift by bits_correction, and force last bits to 1
-    uint32_t bits_mask = (1 << bits_correction) - 1;  // 1, 3, 7
-    result = (uncorrected_value << bits_correction) | bits_mask;
-  } else {  // bits_correction < 0
-    // our resolution is too high, we need to remove bits
-    // we add 1, 3 or 7 to force rouding to the nearest high value
-    uint32_t bits_mask = (1 << -bits_correction) - 1;  // 1, 3, 7
-    result = ((uncorrected_value + bits_mask) >> -bits_correction);
+// 10 bits resolution
+uint16_t ledGamma10(uint8_t v) {
+  uint32_t vg;  // internal representation on 10 bits 0..1023
+
+  for (const gamma_table_t *gt = gamma_table; ; gt++) {
+    const uint16_t from8 = pgm_read_dword(&gt->from8);
+    const uint16_t to8 = pgm_read_dword(&gt->to8);
+    const uint16_t to10 = pgm_read_dword(&gt->to10);
+    const uint16_t from10 = pgm_read_dword(&gt->from10);
+    if (v <= to8) {
+      return changeUIntScale(v, from8, to8, from10, to10);
+    }
   }
-  return result;
+}
+// 8 bits resolution
+uint16_t ledGamma8(uint8_t v) {
+  return change10to8(ledGamma10(v));
+}
+// 10 bits in, 10 bits out
+uint16_t ledGamma10_10(uint16_t v) {
+  return ledGamma10(change10to8(v));
 }
 
 /********************************************************************************************/
@@ -1660,7 +1659,7 @@ void LightAnimate(void)
       for (uint32_t i = 0; i < LST_MAX; i++) {
         cur_col[i] = Light.last_color[i] = Light.new_color[i];
         // Extend from 8 to 10 bits if no correction (in case no gamma correction is required)
-        cur_col_10bits[i] = changeUIntScale(cur_col[i], 0, 255, 0, 1023);
+        cur_col_10bits[i] = change8to10(cur_col[i]);
       }
 
       if (Light.pwm_multi_channels) {
@@ -1678,7 +1677,7 @@ void LightAnimate(void)
           uint8_t min_rgb = min3(cur_col[0], cur_col[1], cur_col[2]);
           for (uint32_t i=0; i<3; i++) {
             // substract white and adjust according to rgbwwTable
-            uint32_t adjust10 = changeUIntScale(Settings.rgbwwTable[i], 0, 255, 0, 1023);
+            uint32_t adjust10 = change8to10(Settings.rgbwwTable[i]);
             cur_col_10bits[i] = changeUIntScale(cur_col_10bits[i] - min_rgb_10, 0, 1023, 0, adjust10);
             cur_col[i] = changeUIntScale(cur_col[i] - min_rgb, 0, 255, 0, Settings.rgbwwTable[i]);
           }
@@ -1899,14 +1898,14 @@ void calcGammaCTPwm(uint8_t cur_col[5], uint16_t cur_col_10bits[5]) {
   uint16_t pxBri = cur_col[cw0] + cur_col[cw1];
   if (pxBri > 255) { pxBri = 255; }
   cur_col[cw1] = changeUIntScale(cold, 0, cold + warm, 0, 255);   //
-  cur_col_10bits[cw1] = changeUIntScale(cur_col[cw1], 0, 255, 0, 1023);
+  cur_col_10bits[cw1] = change8to10(cur_col[cw1]);
   // channel 0=intensity, channel1=temperature
   if (Settings.light_correction) { // gamma correction
-    cur_col[cw0] = ledGamma(pxBri);
-    cur_col_10bits[cw0] = ledGamma(pxBri, 10);    // 10 bits gamma correction
+    cur_col[cw0] = ledGamma8(pxBri);
+    cur_col_10bits[cw0] = ledGamma10(pxBri);    // 10 bits gamma correction
   } else {
     cur_col[cw0] = pxBri;
-    cur_col_10bits[cw0] = changeUIntScale(pxBri, 0, 255, 0, 1023);  // no gamma, extend to 10 bits
+    cur_col_10bits[cw0] = change8to10(pxBri);  // no gamma, extend to 10 bits
   }
 }
 
@@ -1915,8 +1914,8 @@ void calcGammaMultiChannels(uint8_t cur_col[5], uint16_t cur_col_10bits[5]) {
   // Apply gamma correction for 8 and 10 bits resolutions, if needed
   if (Settings.light_correction) {
     for (uint32_t i = 0; i < LST_MAX; i++) {
-      cur_col_10bits[i] = ledGamma(cur_col[i], 10);
-      cur_col[i] = ledGamma(cur_col[i]);
+      cur_col_10bits[i] = ledGamma10(cur_col[i]);
+      cur_col[i] = ledGamma8(cur_col[i]);
     }
   }
 }
@@ -1935,31 +1934,31 @@ void calcGammaBulbs(uint8_t cur_col[5], uint16_t cur_col_10bits[5]) {
       // if sum of both channels is > 255, then channels are probablu uncorrelated
       if (white_bri <= 255) {
         // we calculate the gamma corrected sum of CW + WW
-        uint16_t white_bri_10bits = ledGamma(white_bri, 10);
-        uint8_t white_bri_8bits = ledGamma(white_bri);
+        uint16_t white_bri_10bits = ledGamma10(white_bri);
+        uint8_t white_bri_8bits = ledGamma8(white_bri);
         // then we split the total energy among the cold and warm leds
         cur_col_10bits[w_idx[0]] = changeUIntScale(cur_col[w_idx[0]], 0, white_bri, 0, white_bri_10bits);
         cur_col_10bits[w_idx[1]] = changeUIntScale(cur_col[w_idx[1]], 0, white_bri, 0, white_bri_10bits);
         cur_col[w_idx[0]] = changeUIntScale(cur_col[w_idx[0]], 0, white_bri, 0, white_bri_8bits);
         cur_col[w_idx[1]] = changeUIntScale(cur_col[w_idx[1]], 0, white_bri, 0, white_bri_8bits);
       } else {
-        cur_col_10bits[w_idx[0]] = ledGamma(cur_col[w_idx[0]], 10);
-        cur_col_10bits[w_idx[1]] = ledGamma(cur_col[w_idx[1]], 10);
-        cur_col[w_idx[0]] = ledGamma(cur_col[w_idx[0]]);
-        cur_col[w_idx[1]] = ledGamma(cur_col[w_idx[1]]);
+        cur_col_10bits[w_idx[0]] = ledGamma10(cur_col[w_idx[0]]);
+        cur_col_10bits[w_idx[1]] = ledGamma10(cur_col[w_idx[1]]);
+        cur_col[w_idx[0]] = ledGamma8(cur_col[w_idx[0]]);
+        cur_col[w_idx[1]] = ledGamma8(cur_col[w_idx[1]]);
       }
     }
     // then apply gamma correction to RGB channels
     if (LST_RGB <= Light.subtype) {
       for (uint32_t i = 0; i < 3; i++) {
-        cur_col_10bits[i] = ledGamma(cur_col[i], 10);
-        cur_col[i] = ledGamma(cur_col[i]);
+        cur_col_10bits[i] = ledGamma10(cur_col[i]);
+        cur_col[i] = ledGamma8(cur_col[i]);
       }
     }
     // If RGBW or Single channel, also adjust White channel
     if ((LST_COLDWARM != Light.subtype) && (LST_RGBWC != Light.subtype)) {
-      cur_col_10bits[3] = ledGamma(cur_col[3], 10);
-      cur_col[3] = ledGamma(cur_col[3]);
+      cur_col_10bits[3] = ledGamma10(cur_col[3]);
+      cur_col[3] = ledGamma8(cur_col[3]);
     }
   }
 }

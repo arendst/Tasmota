@@ -3,6 +3,7 @@
 ### 8.1.0.1 20191225
 
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
+- Change Gamma correction for smoother changes at low brightness
 
 ## Released
 
