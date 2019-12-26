@@ -1695,7 +1695,7 @@ void HandleWifiConfiguration(void)
   if (WifiIsInManagerMode()) {
 #ifndef FIRMWARE_MINIMAL
     WSContentSpaceButton(BUTTON_RESTORE);
-    WSContentSpaceButton(BUTTON_RESET_CONFIGURATION);
+    WSContentButton(BUTTON_RESET_CONFIGURATION);
 #endif  // FIRMWARE_MINIMAL
     WSContentSpaceButton(BUTTON_RESTART);
   } else {
