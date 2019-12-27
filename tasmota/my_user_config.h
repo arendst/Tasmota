@@ -265,7 +265,7 @@
 //#define MY_LANGUAGE            sk-SK           // Slovak in Slovakia
 //#define MY_LANGUAGE            sv-SE           // Swedish in Sweden
 //#define MY_LANGUAGE            tr-TR           // Turkish in Turkey
-//#define MY_LANGUAGE            uk-UK           // Ukrainian in Ukraine
+//#define MY_LANGUAGE            uk-UA           // Ukrainian in Ukraine
 //#define MY_LANGUAGE            zh-CN           // Chinese (Simplified) in China
 //#define MY_LANGUAGE            zh-TW           // Chinese (Traditional) in Taiwan
 
