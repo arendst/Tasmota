@@ -222,8 +222,7 @@ void SnfL1ModuleSelected(void)
 {
   if (SONOFF_L1 == my_module_type) {
     if ((pin[GPIO_RXD] < 99) && (pin[GPIO_TXD] < 99)) {
-      Settings.flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
-      baudrate = 19200;
+      PrepSerial(19200, TS_SERIAL_8N1);
 
       light_type = LT_RGB;
       light_flg = XLGT_05;

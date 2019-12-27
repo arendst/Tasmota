@@ -578,8 +578,7 @@ bool Xdrv06(uint8_t function)
         SonoffBridgeSendCommand(0xA7);  // Stop reading RF signals enabling iTead default RF handling
         break;
       case FUNC_PRE_INIT:
-        Settings.flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
-        baudrate = 19200;
+        PrepSerial(19200, TS_SERIAL_8N1);
         break;
     }
   }

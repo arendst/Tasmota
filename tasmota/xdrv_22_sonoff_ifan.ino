@@ -217,9 +217,7 @@ void CmndFanspeed(void)
 bool SonoffIfanInit(void)
 {
   if (SONOFF_IFAN03 == my_module_type) {
-    Settings.flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
-    baudrate = 9600;
-    SetSeriallog(LOG_LEVEL_NONE);
+    PrepSerial(9600, TS_SERIAL_8N1);
   }
   return false;  // Continue init chain
 }

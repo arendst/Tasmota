@@ -1296,20 +1296,16 @@ void GpioInit(void)
 //    devices_present = 1;
   }
   else if (SONOFF_DUAL == my_module_type) {
-    Settings.flag.mqtt_serial = 0;           // CMND_SERIALSEND and CMND_SERIALLOG
     devices_present = 2;
-    baudrate = 19200;
+    PrepSerial(19200, TS_SERIAL_8N1);
   }
   else if (CH4 == my_module_type) {
-    Settings.flag.mqtt_serial = 0;           // CMND_SERIALSEND and CMND_SERIALLOG
     devices_present = 4;
-    baudrate = 19200;
+    PrepSerial(19200, TS_SERIAL_8N1);
   }
 #ifdef USE_SONOFF_SC
   else if (SONOFF_SC == my_module_type) {
-    Settings.flag.mqtt_serial = 0;           // CMND_SERIALSEND and CMND_SERIALLOG
-    devices_present = 0;
-    baudrate = 19200;
+    PrepSerial(19200, TS_SERIAL_8N1);
   }
 #endif  // USE_SONOFF_SC
 

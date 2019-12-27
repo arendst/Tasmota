@@ -790,14 +790,9 @@ String GetSerialConfig(void)
 
 void SetSerialBegin(uint32_t baudrate)
 {
-  if (seriallog_level) {
-    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Set Serial to %s %d bit/s"), GetSerialConfig().c_str(), baudrate);
-    delay(100);
-  }
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Set Serial to %s %d bit/s"), GetSerialConfig().c_str(), baudrate);
   Serial.flush();
   Serial.begin(baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
-  delay(10);
-  Serial.println();
 }
 
 void SetSerialConfig(uint32_t serial_config)
@@ -812,9 +807,15 @@ void SetSerialConfig(uint32_t serial_config)
 void SetSerialBaudrate(int baudrate)
 {
   Settings.baudrate = baudrate / 300;
-  if (Serial.baudRate() == baudrate) { return; }
-
   SetSerialBegin(baudrate);
+}
+
+void PrepSerial(int prep_baudrate, uint32_t serial_config)
+{
+  Settings.flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
+  Settings.serial_config = serial_config;
+  baudrate = prep_baudrate;
+  SetSeriallog(LOG_LEVEL_NONE);
 }
 
 void ClaimSerial(void)

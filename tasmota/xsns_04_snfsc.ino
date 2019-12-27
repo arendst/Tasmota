@@ -159,9 +159,6 @@ bool Xsns04(uint8_t function)
 
   if (SONOFF_SC == my_module_type) {
     switch (function) {
-      case FUNC_INIT:
-        SonoffScInit();
-        break;
       case FUNC_JSON_APPEND:
         SonoffScShow(1);
         break;
@@ -170,6 +167,9 @@ bool Xsns04(uint8_t function)
         SonoffScShow(0);
         break;
 #endif  // USE_WEBSERVER
+      case FUNC_INIT:
+        SonoffScInit();
+        break;
     }
   }
   return result;
