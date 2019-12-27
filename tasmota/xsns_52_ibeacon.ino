@@ -348,6 +348,7 @@ void hm17_decode(void) {
         break;
       }
       if (!strncmp(hm17_sbuffer,"OK+DIS0:",8)) {
+        goto hm17_v110;
         if (hm17_sindex==20) {
           hm17_result=HM17_SUCESS;
 #ifdef IBEACON_DEBUG
