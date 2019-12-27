@@ -587,6 +587,13 @@ int WifiState(void)
   return state;
 }
 
+String WifiGetOutputPower(void)
+{
+  char stemp1[TOPSZ];
+  dtostrfd((float)(Settings.wifi_output_power) / 10, 1, stemp1);
+  return String(stemp1);
+}
+
 void WifiSetOutputPower(void)
 {
   WiFi.setOutputPower((float)(Settings.wifi_output_power) / 10);

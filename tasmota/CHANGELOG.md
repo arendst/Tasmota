@@ -3,6 +3,8 @@
 ### 8.1.0.1 20191225
 
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
+- Add SerialConfig to ``Status 1``
+- Add WifiPower to ``Status 5``
 
 ## Released
 

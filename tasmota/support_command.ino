@@ -193,7 +193,7 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 //    backlog_delay = millis() + (100 * MIN_BACKLOG_DELAY);
     backlog_delay = millis() + Settings.param[P_BACKLOG_DELAY];
 
-    char command[CMDSZ];
+    char command[CMDSZ] = { 0 };
     XdrvMailbox.command = command;
     XdrvMailbox.index = index;
     XdrvMailbox.data_len = data_len;
@@ -368,10 +368,10 @@ void CmndStatus(void)
   }
 
   if ((0 == payload) || (1 == payload)) {
-    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS1_PARAMETER "\":{\"" D_JSON_BAUDRATE "\":%d,\"" D_CMND_GROUPTOPIC "\":\"%s\",\"" D_CMND_OTAURL "\":\"%s\",\""
+    Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS1_PARAMETER "\":{\"" D_JSON_BAUDRATE "\":%d,\"" D_CMND_SERIALCONFIG "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\",\"" D_CMND_OTAURL "\":\"%s\",\""
                           D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_JSON_STARTUPUTC "\":\"%s\",\"" D_CMND_SLEEP "\":%d,\""
                           D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_JSON_SAVEADDRESS "\":\"%X\"}}"),
-                          baudrate, SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
+                          baudrate, GetSerialConfig().c_str(), SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
                           GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
                           Settings.cfg_holder, Settings.bootcount, Settings.save_flag, GetSettingsAddress());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "1"));
@@ -417,10 +417,10 @@ void CmndStatus(void)
   if ((0 == payload) || (5 == payload)) {
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS5_NETWORK "\":{\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\",\"" D_JSON_GATEWAY "\":\"%s\",\""
                           D_JSON_SUBNETMASK "\":\"%s\",\"" D_JSON_DNSSERVER "\":\"%s\",\"" D_JSON_MAC "\":\"%s\",\""
-                          D_CMND_WEBSERVER "\":%d,\"" D_CMND_WIFICONFIG "\":%d}}"),
+                          D_CMND_WEBSERVER "\":%d,\"" D_CMND_WIFICONFIG "\":%d,\"" D_CMND_WIFIPOWER "\":%s}}"),
                           my_hostname, WiFi.localIP().toString().c_str(), IPAddress(Settings.ip_address[1]).toString().c_str(),
                           IPAddress(Settings.ip_address[2]).toString().c_str(), IPAddress(Settings.ip_address[3]).toString().c_str(), WiFi.macAddress().c_str(),
-                          Settings.webserver, Settings.sta_config);
+                          Settings.webserver, Settings.sta_config, WifiGetOutputPower().c_str());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "5"));
   }
 
@@ -1607,7 +1607,7 @@ void CmndWifiPower(void)
     }
     WifiSetOutputPower();
   }
-  ResponseCmndFloat((float)(Settings.wifi_output_power) / 10, 1);
+  ResponseCmndChar(WifiGetOutputPower().c_str());
 }
 
 #ifdef USE_I2C

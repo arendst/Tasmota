@@ -55,3 +55,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 ### Version 8.1.0.1
 
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
+- Add SerialConfig to ``Status 1``
+- Add WifiPower to ``Status 5``
