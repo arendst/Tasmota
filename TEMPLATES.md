@@ -59,7 +59,7 @@ Luminea ZX-2832 E27 RGBW {"NAME":"Luminea RGBW","GPIO":[255,255,255,255,140,37,2
 Lyasi PT-BW09         {"NAME":"Lyasi PT-BW09","GPIO":[17,255,255,255,143,144,0,0,0,0,0,0,0],"FLAG":0,"BASE":27}
 Maxcio YX-L01P-E7     {"NAME":"Maxcio YXL01P","GPIO":[17,255,255,255,143,144,0,0,0,0,0,0,0],"FLAG":0,"BASE":27}
 Merkury A19 60W       {"NAME":"MI-BW902-999W","GPIO":[0,0,0,0,0,37,0,0,0,0,0,0,0],"FLAG":0,"BASE":18}
-Merkury A21 75W       {"NAME":"MI-BW904-999W","GPIO":[0,0,0,0,140,37,0,0,0,142,141,0,0],"FLAG":1,"BASE":69}
+Merkury A21 75W       {"NAME":"MI-BW904-999W","GPIO":[0,0,0,0,140,37,0,0,38,142,141,0,0],"FLAG":1,"BASE":69}
 Merkury BR30 65W      {"NAME":"MI-BW905-999W","GPIO":[0,0,0,0,37,37,0,0,38,0,0,0,0],"FLAG":0,"BASE":18}
 Mirabella Genio CW    {"NAME":"GenioBulbCW","GPIO":[0,0,0,0,38,37,0,0,0,40,39,0,0],"FLAG":0,"BASE":18}
 Mirabella Genio Dimmable {"NAME":"GenioBulbCCT","GPIO":[0,0,0,0,0,37,0,0,0,38,0,0,0],"FLAG":0,"BASE":18}
