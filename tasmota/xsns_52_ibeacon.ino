@@ -357,10 +357,13 @@ void hm17_decode(void) {
           }
 #endif
           hm17_sbclr();
+        } else {
+          goto hm17_v110;
         }
         break;
       }
       if (!strncmp(hm17_sbuffer,"OK+DISC:",8)) {
+hm17_v110:
         if (hm17_cmd==HM17_DISI) {
           if (hm17_sindex==78) {
 #ifdef IBEACON_DEBUG
