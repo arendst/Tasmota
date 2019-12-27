@@ -329,6 +329,14 @@ void hm17_decode(void) {
 #endif
         break;
       }
+      if (!strncmp(hm17_sbuffer,"OK+DISIS",8)) {
+        hm17_sbclr();
+        hm17_result=1;
+#ifdef IBEACON_DEBUG
+        if (hm17_debug) AddLog_P2(LOG_LEVEL_INFO, PSTR("DISIS OK"));
+#endif
+        break;
+      }
       if (!strncmp(hm17_sbuffer,"OK+DISCE",8)) {
         hm17_sbclr();
         hm17_result=HM17_SUCESS;
