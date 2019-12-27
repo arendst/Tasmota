@@ -188,7 +188,7 @@ a_features = [[
     "USE_SHUTTER","USE_PCF8574","USE_DDSU666","USE_DEEPSLEEP",
     "USE_SONOFF_SC","USE_SONOFF_RF","USE_SONOFF_L1","USE_EXS_DIMMER",
     "USE_ARDUINO_SLAVE","USE_HIH6","USE_HPMA","USE_TSL2591",
-    "USE_DHT12","","USE_GPS","",
+    "USE_DHT12","USE_DS1624","USE_GPS","",
     "","","","",
     "","","",""
     ]]

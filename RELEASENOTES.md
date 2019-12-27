@@ -50,6 +50,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
+For merge for Changelog:
+- Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
 ## Changelog
 
 ### Version 8.1.0.1

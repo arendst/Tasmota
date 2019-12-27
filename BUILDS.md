@@ -107,6 +107,7 @@
 | USE_PCF8574           | - | - | - | - | - | - | - |
 | USE_HIH6              | - | - | - | - | x | - | - |
 | USE_DHT12             | - | - | - | - | x | - | - |
+| USE_DS1624            | - | - | - | - | x | - | - |
 |                       |   |   |   |   |   |   |   |
 | Feature or Sensor     | minimal | lite | tasmota | knx | sensors | ir | display | Remarks
 | USE_SPI               | - | - | - | - | - | - | x |
