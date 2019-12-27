@@ -6,6 +6,7 @@
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
 - Add SerialConfig to ``Status 1``
 - Add WifiPower to ``Status 5``
+- Change Lights: simplified gamma correction and 10 bits internal computation
 
 ## Released
 
