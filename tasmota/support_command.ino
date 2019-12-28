@@ -334,7 +334,7 @@ void CmndStatus(void)
   if ((!Settings.flag.mqtt_enabled) && (6 == payload)) { payload = 99; }  // SetOption3 - Enable MQTT
   if (!energy_flg && (9 == payload)) { payload = 99; }
 
-  bool exception_flg = (ResetReason() == REASON_EXCEPTION_RST);
+  bool exception_flg = (ResetReason() == REASON_EXCEPTION_RST) || (ResetReason() == REASON_SOFT_WDT_RST);
   if (!exception_flg && (12 == payload)) { payload = 99; }
 
   if ((0 == payload) || (99 == payload)) {
@@ -574,6 +574,9 @@ void CmndRestart(void)
     break;
   case -1:
     CmndCrash();    // force a crash
+    break;
+  case -2:
+    CmndWDT();
     break;
   case 99:
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));
