@@ -50,6 +50,15 @@ void CmndCrash(void)
   dummy = *((uint32_t*) 0x00000000);
 }
 
+// do an infinite loop to trigger WDT watchdog
+void CmndWDT(void)
+{
+  volatile uint32_t dummy = 0;
+  while (1) {
+    dummy++;
+  }
+}
+
 // Clear the RTC dump counter when we do a normal reboot, this avoids garbage data to stay in RTC
 void CrashDumpClear(void)
 {
