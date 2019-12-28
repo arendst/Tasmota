@@ -296,14 +296,14 @@
 
 #define D_OTHER_PARAMETERS "Параметри Інше"
 #define D_TEMPLATE "Шаблони"
-#define D_ACTIVATE "Активувний"
+#define D_ACTIVATE "Активований"
 #define D_WEB_ADMIN_PASSWORD "Гасло адміністратора Web"
 #define D_MQTT_ENABLE "MQTT активний"
-#define D_FRIENDLY_NAME "Дружнє Ім'я"
+#define D_FRIENDLY_NAME "Дружня назва"
 #define D_BELKIN_WEMO "Belkin WeMo"
-#define D_HUE_BRIDGE "Hue Bridge"
-#define D_SINGLE_DEVICE "одиночне"
-#define D_MULTI_DEVICE "мульти"
+#define D_HUE_BRIDGE "Міст Hue"
+#define D_SINGLE_DEVICE "один пристрій"
+#define D_MULTI_DEVICE "декілька пристроїв"
 
 #define D_CONFIGURE_TEMPLATE "Конфігурація шаблона"
 #define D_TEMPLATE_PARAMETERS "Параметри шаблона"
@@ -701,5 +701,18 @@
 #define D_SOLAX_ERROR_6   "Перегрів"
 #define D_SOLAX_ERROR_7   "Вентилятор"
 #define D_SOLAX_ERROR_8   "Інший пристрій"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Конфігурація сценарія"
+#define D_SCRIPT               "Редагування сценарія"
+#define D_SDCARD_UPLOAD        "завантажити файл на карту SD"
+#define D_SDCARD_DIR           "завантажити файл в каталог на карту SD"
+#define D_UPL_DONE             "Готово"
+#define D_SCRIPT_CHARS_LEFT    "символів ще вільно"
+#define D_SCRIPT_CHARS_NO_MORE "більше немає місця"
+#define D_SCRIPT_DOWNLOAD      "Звантажити"
+#define D_SCRIPT_ENABLE        "Сценарій увімкнено"
+#define D_SCRIPT_UPLOAD        "Завантажити"
+#define D_SCRIPT_UPLOAD_FILES  "Завантажити файли"
 
 #endif // _LANGUAGE_UK_UA_H_

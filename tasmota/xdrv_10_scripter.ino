@@ -3033,11 +3033,6 @@ void Scripter_save_pvars(void) {
 #ifdef USE_WEBSERVER
 
 #define WEB_HANDLE_SCRIPT "s10"
-#define D_CONFIGURE_SCRIPT "Edit script"
-#define D_SCRIPT "edit script"
-#define D_SDCARD_UPLOAD "file upload"
-#define D_SDCARD_DIR "sd card directory"
-#define D_UPL_DONE "Done"
 
 const char S_CONFIGURE_SCRIPT[] PROGMEM = D_CONFIGURE_SCRIPT;
 
@@ -3051,7 +3046,7 @@ const char HTTP_FORM_SCRIPT[] PROGMEM =
 
 const char HTTP_FORM_SCRIPT1[] PROGMEM =
     "<div style='text-align:right' id='charNum'> </div>"
-    "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>script enable</b><br/>"
+    "<input style='width:3%%;' id='c%d' name='c%d' type='checkbox'%s><b>" D_SCRIPT_ENABLE "</b><br/>"
     "<br><textarea  id='t1' name='t1' rows='8' cols='80' maxlength='%d' style='font-size: 12pt' >";
 
 const char HTTP_FORM_SCRIPT1b[] PROGMEM =
@@ -3064,9 +3059,9 @@ const char HTTP_FORM_SCRIPT1b[] PROGMEM =
     "var ml=this.getAttribute('maxlength');"
     "var cl=this.value.length;"
     "if(cl>=ml){"
-      "eb('charNum').innerHTML='no more chars';"
+    "eb('charNum').innerHTML='" D_SCRIPT_CHARS_NO_MORE "';"
     "}else{"
-      "eb('charNum').innerHTML=ml-cl+' chars left';"
+    "eb('charNum').innerHTML=ml-cl+' " D_SCRIPT_CHARS_LEFT "';"
     "}"
 
 #if 0
@@ -3137,13 +3132,13 @@ const char HTTP_SCRIPT_FORM_END[] PROGMEM =
 
 #ifdef USE_SCRIPT_FATFS
 const char HTTP_FORM_SCRIPT1c[] PROGMEM =
-"<button name='d%d' type='submit' class='button bgrn'>Download '%s'</button>";
+    "<button name='d%d' type='submit' class='button bgrn'>" D_SCRIPT_DOWNLOAD " '%s'</button>";
 #ifdef SDCARD_DIR
 const char HTTP_FORM_SCRIPT1d[] PROGMEM =
-"<button method='post' name='upl' type='submit' class='button bgrn'>SD card directory</button>";
+    "<button method='post' name='upl' type='submit' class='button bgrn'>" D_SDCARD_DIR "</button>";
 #else
 const char HTTP_FORM_SCRIPT1d[] PROGMEM =
-"<button method='post' name='upl' type='submit' class='button bgrn'>Upload files</button>";
+    "<button method='post' name='upl' type='submit' class='button bgrn'>" D_SCRIPT_UPLOAD_FILES "</button>";
 #endif
 
 #ifdef SDCARD_DIR
@@ -3286,7 +3281,7 @@ void Script_FileUploadConfiguration(void)
   WSContentStart_P(S_SCRIPT_FILE_UPLOAD);
   WSContentSendStyle();
   WSContentSend_P(HTTP_FORM_FILE_UPLOAD,D_SDCARD_DIR);
-  WSContentSend_P(HTTP_FORM_FILE_UPG, "upload");
+  WSContentSend_P(HTTP_FORM_FILE_UPG, D_SCRIPT_UPLOAD);
 #ifdef SDCARD_DIR
   WSContentSend_P(HTTP_FORM_SDC_DIRa);
   if (glob_script_mem.script_sd_found) {
