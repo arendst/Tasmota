@@ -464,8 +464,9 @@ struct SYSCFG {
   uint8_t       shutter_accuracy;          // F00
   uint8_t       mqttlog_level;             // F01
   uint8_t       sps30_inuse_hours;         // F02
+  uint8_t       hotplug_scan;              // F03 -- scan for hotplug every 'hoplugscan' time
 
-  uint8_t       free_f03[233];             // F03
+  uint8_t       free_f04[232];             // F04
 
   uint32_t      i2c_drivers[3];            // FEC I2cDriver
   uint32_t      cfg_timestamp;             // FF8

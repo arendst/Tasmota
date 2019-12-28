@@ -170,8 +170,6 @@ void DS1624Show(bool json)
  * Interface
 \*********************************************************************************************/
 
-#define FUNC_HOTPLUG_SCAN 255 // FIXME remove it after HOTPLUG supported
-
 bool Xsns59(uint8_t function)
 {
   if (!I2cEnabled(XI2C_42)) { return false; }
