@@ -610,11 +610,13 @@ boolean PubSubClient::unsubscribe(const char* topic) {
     return false;
 }
 
-void PubSubClient::disconnect() {
+void PubSubClient::disconnect(bool disconnect_package) {
     buffer[0] = MQTTDISCONNECT;
     buffer[1] = 0;
     if (_client != nullptr) {
-      _client->write(buffer,2);
+      if (disconnect_package) {
+        _client->write(buffer,2);
+      }
       _client->flush();
       _client->stop();
     }
