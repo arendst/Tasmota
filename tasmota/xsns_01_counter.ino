@@ -150,9 +150,6 @@ void CounterShow(bool json)
           ResponseAppend_P(PSTR(",\"COUNTER\":{"));
         }
         ResponseAppend_P(PSTR("%s\"C%d\":%s"), (header)?",":"", i +1, counter);
-        if ((0 == tele_period ) && (Settings.flag3.counter_reset_on_tele)) {
-          RtcSettings.pulse_counter[i] = 0;
-        }
         header = true;
 #ifdef USE_DOMOTICZ
         if ((0 == tele_period) && (1 == dsxflg)) {
@@ -160,6 +157,9 @@ void CounterShow(bool json)
           dsxflg++;
         }
 #endif  // USE_DOMOTICZ
+        if ((0 == tele_period ) && (Settings.flag3.counter_reset_on_tele)) {
+          RtcSettings.pulse_counter[i] = 0;
+        }
 #ifdef USE_WEBSERVER
       } else {
         WSContentSend_PD(PSTR("{s}" D_COUNTER "%d{m}%s%s{e}"),
