@@ -936,9 +936,11 @@ public:
     switch (mode) {
       case 1:
         changeBriRGB(bri);
+        if (_ct_rgb_linked) { _state->setColorMode(LCM_RGB); }   // try to force CT
         break;
       case 2:
         changeBriCT(bri);
+        if (_ct_rgb_linked) { _state->setColorMode(LCM_CT); }   // try to force CT
         break;
       default:
         changeBri(bri);
@@ -1421,6 +1423,14 @@ void LightState(uint8_t append)
       bri = changeUIntScale(bri, 0, 255, 0, 100);
 
       ResponseAppend_P(PSTR(",\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), hue,sat,bri);
+      // Add White level
+      if (LST_RGBW <= Light.subtype) {
+        ResponseAppend_P(PSTR(",\"" D_CMND_WHITE "\":%d"), light_state.getDimmer(2));
+      }
+      // Add CT
+      if ((LST_COLDWARM == Light.subtype) || (LST_RGBWC == Light.subtype)) {
+        ResponseAppend_P(PSTR(",\"" D_CMND_COLORTEMPERATURE "\":%d"), light_state.getCT());
+      }
       // Add status for each channel
       ResponseAppend_P(PSTR(",\"" D_CMND_CHANNEL "\":[" ));
       for (uint32_t i = 0; i < Light.subtype; i++) {
@@ -1431,9 +1441,6 @@ void LightState(uint8_t append)
         ResponseAppend_P(PSTR("%s%d" ), (i > 0 ? "," : ""), channel);
       }
       ResponseAppend_P(PSTR("]"));
-    }
-    if ((LST_COLDWARM == Light.subtype) || (LST_RGBWC == Light.subtype)) {
-      ResponseAppend_P(PSTR(",\"" D_CMND_COLORTEMPERATURE "\":%d"), light_state.getCT());
     }
 
     if (append) {
@@ -2087,18 +2094,12 @@ void CmndColor(void)
 
 void CmndWhite(void)
 {
-  if ((Light.subtype == LST_RGBW) && (XdrvMailbox.index == 1)) {
+  if (Light.pwm_multi_channels) { return; }
+  if ((Light.subtype >= LST_RGBW) && (XdrvMailbox.index == 1)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-      uint32_t whiteBri = changeUIntScale(XdrvMailbox.payload,0,100,0,255);
-      char scolor[LIGHT_COLOR_SIZE];
-      snprintf_P(scolor, sizeof(scolor), PSTR("0,0,0,%d"), whiteBri);
-      light_state.setBri(whiteBri); // save target Bri, will be confirmed below
-      XdrvMailbox.data = scolor;
-      XdrvMailbox.data_len = strlen(scolor);
-    } else {
-      XdrvMailbox.data_len = 0;
+      light_controller.changeDimmer(XdrvMailbox.payload, 2);
+      LightPreparePower(2);
     }
-    CmndSupportColor();
   }
 }
 
@@ -2189,7 +2190,6 @@ void CmndHsbColor(void)
       if (validHSB) {
         light_controller.changeHSB(HSB[0], HSB[1], HSB[2]);
         LightPreparePower(1);
-        MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_COLOR));
       }
     } else {
       LightState(0);
@@ -2239,6 +2239,7 @@ void CmndWakeup(void)
 
 void CmndColorTemperature(void)
 {
+  if (Light.pwm_multi_channels) { return; }
   if ((LST_COLDWARM == Light.subtype) || (LST_RGBWC == Light.subtype)) { // ColorTemp
     uint32_t ct = light_state.getCT();
     if (1 == XdrvMailbox.data_len) {
