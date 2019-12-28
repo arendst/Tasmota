@@ -10,6 +10,7 @@
 - Add WifiPower to ``Status 5``
 - Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
 - Add Zigbee attribute decoder for Xiaomi Aqara Cube
+- Fix ``White`` added to light status (#7142)
 
 ## Released
 
