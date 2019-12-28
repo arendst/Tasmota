@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v7.0.0.5
+ * Updated until v8.1.0.1
 \*********************************************************************/
 
 #define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -71,7 +71,7 @@
 #define D_COLDLIGHT "Fría"
 #define D_COMMAND "Comando"
 #define D_CONNECTED "Conectado"
-#define D_CORS_DOMAIN "CORS Domain"
+#define D_CORS_DOMAIN "Sitio WEB para CORS"
 #define D_COUNT "Conteo"
 #define D_COUNTER "Contador"
 #define D_CURRENT "Corriente"          // As in Voltage and Current
@@ -80,7 +80,7 @@
 #define D_DEBUG "Debug"
 #define D_DISABLED "Deshabilitado"
 #define D_DISTANCE "Distancia"
-#define D_DNS_SERVER "DNS Server"
+#define D_DNS_SERVER "Servidor DNS"
 #define D_DONE "Listo"
 #define D_DST_TIME "DST"
 #define D_ECO2 "eCO2"
@@ -113,7 +113,7 @@
 #define D_LIGHT "Luz"
 #define D_LWT "LWT"
 #define D_MODULE "Módulo"
-#define D_MOISTURE "Moisture"
+#define D_MOISTURE "Humedad del Suelo"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "multi-press"
 #define D_NOISE "Ruido"
@@ -512,7 +512,7 @@
 
 // tasmota_template.h - keep them as short as possible to be able to fit them in GUI drop down box
 #define D_SENSOR_NONE          "Ninguno"
-#define D_SENSOR_USER          "User"
+#define D_SENSOR_USER          "Por Usuario"
 #define D_SENSOR_DHT11         "DHT11"
 #define D_SENSOR_AM2301        "AM2301"
 #define D_SENSOR_SI7021        "SI7021"
@@ -703,16 +703,16 @@
 #define D_SOLAX_ERROR_8   "Falla del Dispositivo"
 
 //xdrv_10_scripter.ino
-#define D_CONFIGURE_SCRIPT     "Edit script"
-#define D_SCRIPT               "edit script"
-#define D_SDCARD_UPLOAD        "file upload"
-#define D_SDCARD_DIR           "sd card directory"
-#define D_UPL_DONE             "Done"
-#define D_SCRIPT_CHARS_LEFT    "chars left"
-#define D_SCRIPT_CHARS_NO_MORE "no more chars"
-#define D_SCRIPT_DOWNLOAD      "Download"
-#define D_SCRIPT_ENABLE        "script enable"
-#define D_SCRIPT_UPLOAD        "Upload"
-#define D_SCRIPT_UPLOAD_FILES  "Upload files"
+#define D_CONFIGURE_SCRIPT     "Editar Script"
+#define D_SCRIPT               "Editar Script"
+#define D_SDCARD_UPLOAD        "Subir Archivo"
+#define D_SDCARD_DIR           "Directorio en Tarjeta SD"
+#define D_UPL_DONE             "Listo"
+#define D_SCRIPT_CHARS_LEFT    "Caracteres disponibles"
+#define D_SCRIPT_CHARS_NO_MORE "No hay mas espacio"
+#define D_SCRIPT_DOWNLOAD      "Descargar"
+#define D_SCRIPT_ENABLE        "Habilitar Script"
+#define D_SCRIPT_UPLOAD        "Cargar"
+#define D_SCRIPT_UPLOAD_FILES  "Cargar Archivos"
 
 #endif  // _LANGUAGE_ES_ES_H_
