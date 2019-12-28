@@ -57,8 +57,13 @@ void OsWatchTicker(void)
 //    AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_OSWATCH " " D_BLOCKED_LOOP ". " D_RESTARTING));  // Save iram space
     RtcSettings.oswatch_blocked_loop = 1;
     RtcSettingsSave();
+
 //    ESP.restart();  // normal reboot
-    ESP.reset();  // hard reset
+//    ESP.reset();  // hard reset
+
+    // Force an exception to get a stackdump
+    volatile uint32_t dummy;
+    dummy = *((uint32_t*) 0x00000000);
   }
 }
 

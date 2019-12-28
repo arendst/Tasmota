@@ -50,12 +50,20 @@ void CmndCrash(void)
   dummy = *((uint32_t*) 0x00000000);
 }
 
-// do an infinite loop to trigger WDT watchdog
+// Do an infinite loop to trigger WDT watchdog
 void CmndWDT(void)
 {
   volatile uint32_t dummy = 0;
   while (1) {
     dummy++;
+  }
+}
+
+// This will trigger the os watch after OSWATCH_RESET_TIME (=120) seconds
+void CmndBlockedLoop(void)
+{
+  while (1) {
+    delay(1000);
   }
 }
 
@@ -69,6 +77,11 @@ void CrashDumpClear(void)
 /*********************************************************************************************\
  * CmndCrashDump - dump the crash history - called by `Status 12`
 \*********************************************************************************************/
+
+bool CrashFlag(void)
+{
+  return ((ResetReason() == REASON_EXCEPTION_RST) || (ResetReason() == REASON_SOFT_WDT_RST) || oswatch_blocked_loop);
+}
 
 void CrashDump(void)
 {

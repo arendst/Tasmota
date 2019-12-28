@@ -333,9 +333,7 @@ void CmndStatus(void)
 
   if ((!Settings.flag.mqtt_enabled) && (6 == payload)) { payload = 99; }  // SetOption3 - Enable MQTT
   if (!energy_flg && (9 == payload)) { payload = 99; }
-
-  bool exception_flg = (ResetReason() == REASON_EXCEPTION_RST) || (ResetReason() == REASON_SOFT_WDT_RST);
-  if (!exception_flg && (12 == payload)) { payload = 99; }
+  if (!CrashFlag() && (12 == payload)) { payload = 99; }
 
   if ((0 == payload) || (99 == payload)) {
     uint32_t maxfn = (devices_present > MAX_FRIENDLYNAMES) ? MAX_FRIENDLYNAMES : (!devices_present) ? 1 : devices_present;
@@ -482,7 +480,7 @@ void CmndStatus(void)
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "11"));
   }
 
-  if (exception_flg) {
+  if (CrashFlag()) {
     if ((0 == payload) || (12 == payload)) {
       Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS12_STATUS "\":"));
       CrashDump();
@@ -577,6 +575,9 @@ void CmndRestart(void)
     break;
   case -2:
     CmndWDT();
+    break;
+  case -3:
+    CmndBlockedLoop();
     break;
   case 99:
     AddLog_P(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION D_RESTARTING));

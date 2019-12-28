@@ -532,7 +532,7 @@ void MqttConnected(void)
     }
 #endif  // USE_WEBSERVER
     Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":"));
-    if (ResetReason() == REASON_EXCEPTION_RST) {
+    if (CrashFlag()) {
       CrashDump();
     } else {
       ResponseAppend_P(PSTR("\"%s\""), GetResetReason().c_str());
