@@ -1,5 +1,5 @@
 /*
-  uk-UK.h - localization for Ukrainian - Ukraine for Tasmota
+  uk-UA.h - localization for Ukrainian - Ukraine for Tasmota
 
   Copyright (C) 2019  Theo Arends / vadym-adik
 
@@ -17,8 +17,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _LANGUAGE_UK_UK_H_
-#define _LANGUAGE_UK_UK_H_
+#ifndef _LANGUAGE_UK_UA_H_
+#define _LANGUAGE_UK_UA_H_
 
 /*************************** ATTENTION *******************************\
  *
@@ -51,7 +51,7 @@
 #define D_DECIMAL_SEPARATOR ","
 
 // Common
-#define D_ADMIN "Admin"
+#define D_ADMIN "Адміністратор"
 #define D_AIR_QUALITY "Якість повітря"
 #define D_AP "Точка доступу"        // Access Point
 #define D_AS "як"
@@ -63,7 +63,7 @@
 #define D_BSSID "BSSId"
 #define D_BUTTON "Кнопка"
 #define D_BY " "                    // Written by me
-#define D_BYTES "Байт"
+#define D_BYTES "Байтів"
 #define D_CELSIUS "Цельсія"
 #define D_CHANNEL "Канал"
 #define D_CO2 "Вуглек. газ"
@@ -71,27 +71,27 @@
 #define D_COLDLIGHT "Холодний"
 #define D_COMMAND "Команда"
 #define D_CONNECTED "Під'єднано"
-#define D_CORS_DOMAIN "CORS Domain"
-#define D_COUNT "Розмір"
+#define D_CORS_DOMAIN "Домен CORS"
+#define D_COUNT "разів"
 #define D_COUNTER "Лічильник"
 #define D_CURRENT "Струм"           // As in Voltage and Current
 #define D_DATA "Дані"
 #define D_DARKLIGHT "Темний"
 #define D_DEBUG "Налагодження"
-#define D_DISABLED "Заблоковано"
+#define D_DISABLED "Вимкнено"
 #define D_DISTANCE "Відстань"
 #define D_DNS_SERVER "Сервер DNS"
 #define D_DONE "Виконано"
 #define D_DST_TIME "Літній час"
 #define D_ECO2 "eCO2"
 #define D_EMULATION "Емуляція"
-#define D_ENABLED "Активно"
+#define D_ENABLED "Увімкнено"
 #define D_ERASE "Стирати"
 #define D_ERROR "Помилка"
 #define D_FAHRENHEIT "Фаренгейт"
 #define D_FAILED "Невдало"
-#define D_FALLBACK "Зворотній зв'язок"
-#define D_FALLBACK_TOPIC "Топік зворотнього зв'язку"
+#define D_FALLBACK "Запасний"
+#define D_FALLBACK_TOPIC "Запасний топік"
 #define D_FALSE "Ні"
 #define D_FILE "Файл"
 #define D_FLOW_RATE "Потік"
@@ -106,34 +106,34 @@
 #define D_ILLUMINANCE "Освітленність"
 #define D_IMMEDIATE "Негайно"       // Button immediate
 #define D_INDEX "Індекс"
-#define D_INFO "Інфо"
+#define D_INFO "Інформація"
 #define D_INFRARED "Інфрачервоний"
 #define D_INITIALIZED "Ініціалізовано"
 #define D_IP_ADDRESS "IP адреса"
 #define D_LIGHT "Світло"
 #define D_LWT "LWT"
 #define D_MODULE "Модуль"
-#define D_MOISTURE "Moisture"
+#define D_MOISTURE "Волога"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "Багаторазове натискання"
 #define D_NOISE "Шум"
 #define D_NONE "Нічого"
-#define D_OFF "Вимк."
-#define D_OFFLINE "Офф-лайн"
+#define D_OFF "Вимкнено"
+#define D_OFFLINE "Неактивний"
 #define D_OK "Ок"
-#define D_ON "Увімк."
-#define D_ONLINE "Он-лайн"
+#define D_ON "Увімкнено"
+#define D_ONLINE "Активний"
 #define D_PASSWORD "Гасло"
 #define D_PORT "Порт"
 #define D_POWER_FACTOR "Коефіцієнт потужності"
 #define D_POWERUSAGE "Потужність"
 #define D_POWERUSAGE_ACTIVE "Активна потужність"
-#define D_POWERUSAGE_APPARENT "Дійсна потужність"
+#define D_POWERUSAGE_APPARENT "Загальна потужність"
 #define D_POWERUSAGE_REACTIVE "Реактивна потужність"
 #define D_PRESSURE "Тиск"
 #define D_PRESSUREATSEALEVEL "Тиск на рівні моря"
 #define D_PROGRAM_FLASH_SIZE "Розмір Flash для програм"
-#define D_PROGRAM_SIZE "Розмір програм"
+#define D_PROGRAM_SIZE "Розмір програми"
 #define D_PROJECT "Проект"
 #define D_RAIN "Дощ"
 #define D_RECEIVED "Отримано"
@@ -194,7 +194,7 @@
 #define D_SET_BAUDRATE_TO "Встановити швидкість передачі (Baudrate)"
 #define D_RECEIVED_TOPIC "Отриманий Топік"
 #define D_DATA_SIZE "Розмір даних"
-#define D_ANALOG_INPUT "Напруга"
+#define D_ANALOG_INPUT "Аналоговий вхід"
 
 // support.ino
 #define D_OSWATCH "osWatch"
@@ -203,7 +203,7 @@
 #define D_ACTIVE_FOR_3_MINUTES "активний протягом 3 хвилин"
 #define D_FAILED_TO_START "не вдалось запустити"
 #define D_PATCH_ISSUE_2186 "Проблема з виправленням 2186"
-#define D_CONNECTING_TO_AP "Підключення до AP"
+#define D_CONNECTING_TO_AP "Підключення до Точки Доступу"
 #define D_IN_MODE "в режимі"
 #define D_CONNECT_FAILED_NO_IP_ADDRESS "Помилка підключення, IP-адреса не отримана"
 #define D_CONNECT_FAILED_AP_NOT_REACHED "Помилка з'єднання, AP не знайдено"
@@ -213,12 +213,12 @@
 #define D_CHECKING_CONNECTION "Перевірка з'єднання..."
 #define D_QUERY_DONE "Запит виконаний. Виявлено сервер MQTT"
 #define D_MQTT_SERVICE_FOUND "MQTT сервер знайдено"
-#define D_FOUND_AT "знайдено в"
+#define D_FOUND_AT "знайдено за адресою"
 #define D_SYSLOG_HOST_NOT_FOUND "Сервер журналу не знайдено"
 
 // settings.ino
-#define D_SAVED_TO_FLASH_AT "Збережено в флэш-пам'ять"
-#define D_LOADED_FROM_FLASH_AT "Завантажено з флэш-пам'яті"
+#define D_SAVED_TO_FLASH_AT "Збережено в Flash-пам'ять"
+#define D_LOADED_FROM_FLASH_AT "Завантажено з Flash-пам'яті"
 #define D_USE_DEFAULTS "Використовувати значення за замовчуванням"
 #define D_ERASED_SECTOR "Стерто сектор"
 
@@ -230,7 +230,7 @@
 #define D_WEBSERVER_STOPPED "Веб-сервер зупинений"
 #define D_FILE_NOT_FOUND "Файл не знайдений"
 #define D_REDIRECTED "Перенаправлено на адаптивний портал"
-#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifi менеджер встановлює Точку Доступу і зберігає параметри"
+#define D_WIFIMANAGER_SET_ACCESSPOINT_AND_STATION "Wifi менеджер встановлює Точку Доступу і станцію"
 #define D_WIFIMANAGER_SET_ACCESSPOINT "Wifi менеджер встановив Точку Доступу"
 #define D_TRYING_TO_CONNECT "Спроба підключення пристрою до мережі"
 
@@ -286,18 +286,18 @@
 
 #define D_LOGGING_PARAMETERS "Параметри журналу"
 #define D_SERIAL_LOG_LEVEL "Serial рівень"
-#define D_MQTT_LOG_LEVEL "Mqtt log level"
+#define D_MQTT_LOG_LEVEL "Mqtt рівень"
 #define D_WEB_LOG_LEVEL "Web рівень"
-#define D_SYS_LOG_LEVEL "System рівень"
+#define D_SYS_LOG_LEVEL "Syslog рівень"
 #define D_MORE_DEBUG "Додаткова інформація для налагодження"
-#define D_SYSLOG_HOST "System хост"
-#define D_SYSLOG_PORT "System порт"
+#define D_SYSLOG_HOST "Syslog хост"
+#define D_SYSLOG_PORT "Syslog порт"
 #define D_TELEMETRY_PERIOD "Період телеметрії"
 
 #define D_OTHER_PARAMETERS "Параметри Інше"
 #define D_TEMPLATE "Шаблони"
-#define D_ACTIVATE "Activate"
-#define D_WEB_ADMIN_PASSWORD "Гасло Web адміністратора"
+#define D_ACTIVATE "Активувний"
+#define D_WEB_ADMIN_PASSWORD "Гасло адміністратора Web"
 #define D_MQTT_ENABLE "MQTT активний"
 #define D_FRIENDLY_NAME "Дружнє Ім'я"
 #define D_BELKIN_WEMO "Belkin WeMo"
@@ -328,14 +328,14 @@
 #define D_MQTT_GROUP_TOPIC "MQTT Топік групи"
 #define D_MQTT_FULL_TOPIC "MQTT Топік повний"
 #define D_MDNS_DISCOVERY "mDNS Виявлення"
-#define D_MDNS_ADVERTISE "mDNS Транcляція"
+#define D_MDNS_ADVERTISE "mDNS Анонс"
 #define D_ESP_CHIP_ID "ID чипу ESP"
 #define D_FLASH_CHIP_ID "ID чипу Flash пам'яті"
 #define D_FLASH_CHIP_SIZE "Розмір Flash пам'яті"
 #define D_FREE_PROGRAM_SPACE "Вільний простір для програм"
 
 #define D_UPGRADE_BY_WEBSERVER "Оновлення через Веб-сервер"
-#define D_OTA_URL "OTA Url"
+#define D_OTA_URL "OTA URL"
 #define D_START_UPGRADE "Почати оновлення"
 #define D_UPGRADE_BY_FILE_UPLOAD "Оновлення шляхом завантаження файлів"
 #define D_UPLOAD_STARTED "Завантаження почалось"
@@ -350,11 +350,11 @@
 #define D_UPLOAD_ERR_7 "Завантаження перервано"
 #define D_UPLOAD_ERR_8 "Файл невірний"
 #define D_UPLOAD_ERR_9 "Занадто великий файл"
-#define D_UPLOAD_ERR_10 "Помилка ініціалізаціції чипу FR"
+#define D_UPLOAD_ERR_10 "Помилка ініціалізаціції чипу RF"
 #define D_UPLOAD_ERR_11 "Помилка стирання чипу RF"
 #define D_UPLOAD_ERR_12 "Помилка запису чипу RF"
 #define D_UPLOAD_ERR_13 "Помилка розкодування прошивки RF"
-#define D_UPLOAD_ERR_14 "Not compatible"
+#define D_UPLOAD_ERR_14 "Не сумісно"
 #define D_UPLOAD_ERROR_CODE "Код помилки завантаження"
 
 #define D_ENTER_COMMAND "Уведіть команду"
@@ -363,7 +363,7 @@
 
 // xdrv_01_mqtt.ino
 #define D_FINGERPRINT "Перевірка відбитка TLS..."
-#define D_TLS_CONNECT_FAILED_TO "Збій підключення TLS до"
+#define D_TLS_CONNECT_FAILED_TO "Збій TLS підключення до"
 #define D_RETRY_IN "Повторити"
 #define D_VERIFIED "Перевірено відбиток"
 #define D_INSECURE "Небезпечне з'єднання, недійсний відбиток"
@@ -414,7 +414,7 @@
 #define D_TIMER_ARM "Увімкнений"
 #define D_TIMER_TIME "Час"
 #define D_TIMER_DAYS "Дні"
-#define D_TIMER_REPEAT "Повтор"
+#define D_TIMER_REPEAT "Повторення"
 #define D_TIMER_OUTPUT "Вихід"
 #define D_TIMER_ACTION "Дія"
 
@@ -459,9 +459,9 @@
 #define D_DEVICE_OUTPUT "Output"
 
 // xsns_05_ds18b20.ino
-#define D_SENSOR_BUSY "Датчик DS18x20 зайнятий"
-#define D_SENSOR_CRC_ERROR "Датчик DS18x20 - помилка CRC"
-#define D_SENSORS_FOUND "Датчик DS18x20 знайдено"
+#define D_SENSOR_BUSY "Давач DS18x20 зайнятий"
+#define D_SENSOR_CRC_ERROR "Давач DS18x20 - помилка CRC"
+#define D_SENSORS_FOUND "Давач DS18x20 знайдено"
 
 // xsns_06_dht.ino
 #define D_TIMEOUT_WAITING_FOR "Тайм-аут, в очікуванні"
@@ -471,7 +471,7 @@
 #define D_CHECKSUM_FAILURE "Помилка контрольної суми"
 
 // xsns_07_sht1x.ino
-#define D_SENSOR_DID_NOT_ACK_COMMAND "Датчик не підтвердив отримання команди"
+#define D_SENSOR_DID_NOT_ACK_COMMAND "Давач не підтвердив отримання команди"
 #define D_SHT1X_FOUND "SHT1X знайдено"
 
 // xsns_18_pms5003.ino
@@ -543,7 +543,7 @@
 #define D_SENSOR_SPI_MISO      "SPI MISO"
 #define D_SENSOR_SPI_MOSI      "SPI MOSI"
 #define D_SENSOR_SPI_CLK       "SPI CLK"
-#define D_SENSOR_BACKLIGHT     "Backlight"
+#define D_SENSOR_BACKLIGHT     "OLED Light"
 #define D_SENSOR_PMS5003       "PMS5003"
 #define D_SENSOR_SDS0X1_RX     "SDS0X1 Rx"
 #define D_SENSOR_SDS0X1_TX     "SDS0X1 Tx"
@@ -564,7 +564,7 @@
 #define D_SENSOR_HX711_DAT     "HX711 DAT"
 #define D_SENSOR_TX20_TX       "TX20"
 #define D_SENSOR_RFSEND        "RFSend"
-#define D_SENSOR_RFRECV        "RFrecv"
+#define D_SENSOR_RFRECV        "RFRecv"
 #define D_SENSOR_TUYA_TX       "Tuya Tx"
 #define D_SENSOR_TUYA_RX       "Tuya Rx"
 #define D_SENSOR_MGC3130_XFER  "MGC3130 Xfr"
@@ -628,9 +628,9 @@
 #define D_SENSOR_SM2135_DAT    "SM2135 Dat"
 #define D_SENSOR_DEEPSLEEP     "DeepSleep"
 #define D_SENSOR_EXS_ENABLE    "EXS Enable"
-#define D_SENSOR_SLAVE_TX    "Slave TX"
-#define D_SENSOR_SLAVE_RX    "Slave RX"
-#define D_SENSOR_SLAVE_RESET "Slave RST"
+#define D_SENSOR_SLAVE_TX      "Slave TX"
+#define D_SENSOR_SLAVE_RX      "Slave RX"
+#define D_SENSOR_SLAVE_RESET   "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
 
@@ -640,20 +640,20 @@
 #define D_UNIT_HERTZ "Гц"
 #define D_UNIT_HOUR "Г"
 #define D_UNIT_GALLONS "гал"
-#define D_UNIT_GALLONS_PER_MIN "g/m"
+#define D_UNIT_GALLONS_PER_MIN "гал/хв"
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "кг"
 #define D_UNIT_KILOMETER_PER_HOUR "км/г"  // or "km/h"
 #define D_UNIT_KILOOHM "кОм"
-#define D_UNIT_KILOWATTHOUR "кВт"
+#define D_UNIT_KILOWATTHOUR "кВт/г"
 #define D_UNIT_LUX "лк"
 #define D_UNIT_MICROGRAM_PER_CUBIC_METER "мкг/м3"
 #define D_UNIT_MICROMETER "мкм"
-#define D_UNIT_MICROSECOND "мкс"
+#define D_UNIT_MICROSECOND "мкС"
 #define D_UNIT_MILLIAMPERE "мА"
 #define D_UNIT_MILLIMETER "мм"
 #define D_UNIT_MILLIMETER_MERCURY "ммHg"
-#define D_UNIT_MILLISECOND "мс"
+#define D_UNIT_MILLISECOND "мС"
 #define D_UNIT_MINUTE "хв"
 #define D_UNIT_PARTS_PER_BILLION "ppb"
 #define D_UNIT_PARTS_PER_DECILITER "ppd"
@@ -665,8 +665,8 @@
 #define D_UNIT_VAR "ВАр"
 #define D_UNIT_VOLT "В"
 #define D_UNIT_WATT "Вт"
-#define D_UNIT_WATTHOUR "Вт/Год"
-#define D_UNIT_WATT_METER_QUADRAT "Вт/m²"
+#define D_UNIT_WATTHOUR "Вт/г"
+#define D_UNIT_WATT_METER_QUADRAT "Вт/м²"
 
 //SDM220
 #define D_PHASE_ANGLE     "Кут фази"
@@ -679,27 +679,27 @@
 #define D_UNIT_ANGLE      "Град"
 
 //SOLAXX1
-#define D_PV1_VOLTAGE     "PV1 Voltage"
-#define D_PV1_CURRENT     "PV1 Current"
-#define D_PV1_POWER       "PV1 Power"
-#define D_PV2_VOLTAGE     "PV2 Voltage"
-#define D_PV2_CURRENT     "PV2 Current"
-#define D_PV2_POWER       "PV2 Power"
-#define D_SOLAR_POWER     "Solar Power"
-#define D_INVERTER_POWER  "Inverter Power"
-#define D_STATUS          "Status"
-#define D_WAITING         "Waiting"
-#define D_CHECKING        "Checking"
-#define D_WORKING         "Working"
-#define D_FAILURE         "Failure"
-#define D_SOLAX_ERROR_0   "No Error Code"
-#define D_SOLAX_ERROR_1   "Grid Lost Fault"
-#define D_SOLAX_ERROR_2   "Grid Voltage Fault"
-#define D_SOLAX_ERROR_3   "Grid Frequency Fault"
-#define D_SOLAX_ERROR_4   "Pv Voltage Fault"
-#define D_SOLAX_ERROR_5   "Isolation Fault"
-#define D_SOLAX_ERROR_6   "Over Temperature Fault"
-#define D_SOLAX_ERROR_7   "Fan Fault"
-#define D_SOLAX_ERROR_8   "Other Device Fault"
+#define D_PV1_VOLTAGE     "PV1 Напруга"
+#define D_PV1_CURRENT     "PV1 Струм"
+#define D_PV1_POWER       "PV1 Потужність"
+#define D_PV2_VOLTAGE     "PV2 Напруга"
+#define D_PV2_CURRENT     "PV2 Струм"
+#define D_PV2_POWER       "PV2 Потужність"
+#define D_SOLAR_POWER     "Solar Потужність"
+#define D_INVERTER_POWER  "Inverter Потужність"
+#define D_STATUS          "Стан"
+#define D_WAITING         "Очікування"
+#define D_CHECKING        "Перевірка"
+#define D_WORKING         "Працює"
+#define D_FAILURE         "Помилка"
+#define D_SOLAX_ERROR_0   "Немає помилки"
+#define D_SOLAX_ERROR_1   "Втрата мережі"
+#define D_SOLAX_ERROR_2   "Напруга мережі"
+#define D_SOLAX_ERROR_3   "Частота мережі"
+#define D_SOLAX_ERROR_4   "Напруга Pv"
+#define D_SOLAX_ERROR_5   "Ізоляція"
+#define D_SOLAX_ERROR_6   "Перегрів"
+#define D_SOLAX_ERROR_7   "Вентилятор"
+#define D_SOLAX_ERROR_8   "Інший пристрій"
 
-#endif // _LANGUAGE_UK_UK_H_
+#endif // _LANGUAGE_UK_UA_H_
