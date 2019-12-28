@@ -50,13 +50,13 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 [Complete list](BUILDS.md) of available feature and sensors.
 
-For merge for Changelog:
-- Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
 ## Changelog
 
 ### Version 8.1.0.1
 
+- Change Lights: simplified gamma correction and 10 bits internal computation
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
 - Add SerialConfig to ``Status 1``
 - Add WifiPower to ``Status 5``
+- Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev

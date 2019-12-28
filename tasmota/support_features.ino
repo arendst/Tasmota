@@ -492,7 +492,9 @@ void GetFeatures(void)
 #ifdef USE_DHT12
   feature5 |= 0x00100000;
 #endif
-//  feature5 |= 0x00200000;
+#ifdef USE_DS1624
+  feature5 |= 0x00200000;
+#endif
 #ifdef USE_GPS
   feature5 |= 0x00400000;
 #endif
