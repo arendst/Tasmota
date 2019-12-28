@@ -157,6 +157,9 @@ void CounterShow(bool json)
           dsxflg++;
         }
 #endif  // USE_DOMOTICZ
+        if ((0 == tele_period ) && (Settings.flag3.counter_reset_on_tele)) {
+          RtcSettings.pulse_counter[i] = 0;
+        }
 #ifdef USE_WEBSERVER
       } else {
         WSContentSend_PD(PSTR("{s}" D_COUNTER "%d{m}%s%s{e}"),
