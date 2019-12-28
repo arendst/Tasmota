@@ -1416,15 +1416,17 @@ void LightState(uint8_t append)
 
     if (Light.subtype > LST_SINGLE) {
       ResponseAppend_P(PSTR(",\"" D_CMND_COLOR "\":\"%s\""), LightGetColor(scolor));
-      uint16_t hue;
-      uint8_t  sat, bri;
-      light_state.getHSB(&hue, &sat, &bri);
-      sat = changeUIntScale(sat, 0, 255, 0, 100);
-      bri = changeUIntScale(bri, 0, 255, 0, 100);
+      if (LST_RGB <= Light.subtype) {
+        uint16_t hue;
+        uint8_t  sat, bri;
+        light_state.getHSB(&hue, &sat, &bri);
+        sat = changeUIntScale(sat, 0, 255, 0, 100);
+        bri = changeUIntScale(bri, 0, 255, 0, 100);
 
-      ResponseAppend_P(PSTR(",\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), hue,sat,bri);
+        ResponseAppend_P(PSTR(",\"" D_CMND_HSBCOLOR "\":\"%d,%d,%d\""), hue,sat,bri);
+      }
       // Add White level
-      if (LST_RGBW <= Light.subtype) {
+      if ((LST_COLDWARM == Light.subtype) || (LST_RGBW <= Light.subtype)) {
         ResponseAppend_P(PSTR(",\"" D_CMND_WHITE "\":%d"), light_state.getDimmer(2));
       }
       // Add CT
@@ -2095,10 +2097,12 @@ void CmndColor(void)
 void CmndWhite(void)
 {
   if (Light.pwm_multi_channels) { return; }
-  if ((Light.subtype >= LST_RGBW) && (XdrvMailbox.index == 1)) {
+  if ( ((Light.subtype >= LST_RGBW) || (LST_COLDWARM == Light.subtype)) && (XdrvMailbox.index == 1)) {
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
       light_controller.changeDimmer(XdrvMailbox.payload, 2);
       LightPreparePower(2);
+    } else {
+      ResponseCmndNumber(light_state.getDimmer(2));
     }
   }
 }
