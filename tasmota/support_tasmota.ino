@@ -1169,7 +1169,7 @@ void GpioInit(void)
   SetModuleType();
 
   if (Settings.module != Settings.last_module) {
-    baudrate = APP_BAUDRATE;
+    Settings.baudrate = APP_BAUDRATE / 300;
   }
 
   for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
@@ -1297,15 +1297,15 @@ void GpioInit(void)
   }
   else if (SONOFF_DUAL == my_module_type) {
     devices_present = 2;
-    PrepSerial(19200, TS_SERIAL_8N1);
+    SetSerial(19200, TS_SERIAL_8N1);
   }
   else if (CH4 == my_module_type) {
     devices_present = 4;
-    PrepSerial(19200, TS_SERIAL_8N1);
+    SetSerial(19200, TS_SERIAL_8N1);
   }
 #ifdef USE_SONOFF_SC
   else if (SONOFF_SC == my_module_type) {
-    PrepSerial(19200, TS_SERIAL_8N1);
+    SetSerial(19200, TS_SERIAL_8N1);
   }
 #endif  // USE_SONOFF_SC
 

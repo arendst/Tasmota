@@ -4,13 +4,14 @@
 
 - Change Lights: simplified gamma correction and 10 bits internal computation
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
+- Fix Serial initialization regression from previous fix
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
+- Fix ``White`` added to light status (#7142)
 - Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
 - Add SerialConfig to ``Status 1``
 - Add WifiPower to ``Status 5``
 - Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
 - Add Zigbee attribute decoder for Xiaomi Aqara Cube
-- Fix ``White`` added to light status (#7142)
 
 ## Released
 

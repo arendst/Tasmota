@@ -369,7 +369,7 @@ void CmndStatus(void)
     Response_P(PSTR("{\"" D_CMND_STATUS D_STATUS1_PARAMETER "\":{\"" D_JSON_BAUDRATE "\":%d,\"" D_CMND_SERIALCONFIG "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\",\"" D_CMND_OTAURL "\":\"%s\",\""
                           D_JSON_RESTARTREASON "\":\"%s\",\"" D_JSON_UPTIME "\":\"%s\",\"" D_JSON_STARTUPUTC "\":\"%s\",\"" D_CMND_SLEEP "\":%d,\""
                           D_JSON_CONFIG_HOLDER "\":%d,\"" D_JSON_BOOTCOUNT "\":%d,\"" D_JSON_SAVECOUNT "\":%d,\"" D_JSON_SAVEADDRESS "\":\"%X\"}}"),
-                          baudrate, GetSerialConfig().c_str(), SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
+                          Settings.baudrate * 300, GetSerialConfig().c_str(), SettingsText(SET_MQTT_GRP_TOPIC), SettingsText(SET_OTAURL),
                           GetResetReason().c_str(), GetUptime().c_str(), GetDateAndTime(DT_RESTART).c_str(), Settings.sleep,
                           Settings.cfg_holder, Settings.bootcount, Settings.save_flag, GetSettingsAddress());
     MqttPublishPrefixTopic_P(option, PSTR(D_CMND_STATUS "1"));
@@ -1091,7 +1091,7 @@ void CmndBaudrate(void)
 {
   if (XdrvMailbox.payload >= 300) {
     XdrvMailbox.payload /= 300;  // Make it a valid baudrate
-    baudrate = (XdrvMailbox.payload & 0xFFFF) * 300;
+    uint32_t baudrate = (XdrvMailbox.payload & 0xFFFF) * 300;
     SetSerialBaudrate(baudrate);
   }
   ResponseCmndNumber(Settings.baudrate * 300);

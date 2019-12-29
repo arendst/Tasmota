@@ -96,7 +96,6 @@ power_t blink_mask = 0;                     // Blink relay active mask
 power_t blink_powersave;                    // Blink start power save state
 power_t latching_power = 0;                 // Power state at latching start
 power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
-int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 int serial_in_byte_counter = 0;             // Index in receive buffer
 int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
@@ -193,7 +192,7 @@ void setup(void)
   RtcReboot.fast_reboot_count++;
   RtcRebootSave();
 
-  Serial.begin(baudrate);
+  Serial.begin(APP_BAUDRATE);
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
   snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
@@ -215,7 +214,6 @@ void setup(void)
     XdrvCall(FUNC_SETTINGS_OVERRIDE);
   }
 
-  baudrate = Settings.baudrate * 300;
 //  mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
   seriallog_level = Settings.seriallog_level;
   seriallog_timer = SERIALLOG_TIMER;
@@ -273,8 +271,6 @@ void setup(void)
 
   GetEspHardwareType();
   GpioInit();
-
-  SetSerialBaudrate(baudrate);
 
   WifiConnect();
 

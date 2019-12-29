@@ -217,7 +217,7 @@ void CmndFanspeed(void)
 bool SonoffIfanInit(void)
 {
   if (SONOFF_IFAN03 == my_module_type) {
-    PrepSerial(9600, TS_SERIAL_8N1);
+    SetSerial(9600, TS_SERIAL_8N1);
   }
   return false;  // Continue init chain
 }

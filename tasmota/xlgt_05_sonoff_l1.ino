@@ -222,7 +222,7 @@ void SnfL1ModuleSelected(void)
 {
   if (SONOFF_L1 == my_module_type) {
     if ((pin[GPIO_RXD] < 99) && (pin[GPIO_TXD] < 99)) {
-      PrepSerial(19200, TS_SERIAL_8N1);
+      SetSerial(19200, TS_SERIAL_8N1);
 
       light_type = LT_RGB;
       light_flg = XLGT_05;

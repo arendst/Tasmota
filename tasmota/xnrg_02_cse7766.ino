@@ -210,7 +210,7 @@ void CseEverySecond(void)
 void CseDrvInit(void)
 {
   if ((3 == pin[GPIO_CSE7766_RX]) && (1 == pin[GPIO_CSE7766_TX])) {  // As it uses 8E1 currently only hardware serial is supported
-    PrepSerial(4800, TS_SERIAL_8E1);
+    SetSerial(4800, TS_SERIAL_8E1);
     if (0 == Settings.param[P_CSE7766_INVALID_POWER]) {
       Settings.param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
     }

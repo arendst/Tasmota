@@ -793,34 +793,40 @@ String GetSerialConfig(void)
   return String(config);
 }
 
-void SetSerialBegin(uint32_t baudrate)
+void SetSerialBegin()
 {
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_APPLICATION "Set Serial to %s %d bit/s"), GetSerialConfig().c_str(), baudrate);
+  uint32_t baudrate = Settings.baudrate * 300;
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_SERIAL "Set to %s %d bit/s"), GetSerialConfig().c_str(), baudrate);
   Serial.flush();
   Serial.begin(baudrate, (SerialConfig)pgm_read_byte(kTasmotaSerialConfig + Settings.serial_config));
 }
 
 void SetSerialConfig(uint32_t serial_config)
 {
-  if (serial_config == Settings.serial_config) { return; }
-  if (serial_config > TS_SERIAL_8O2) { return; }
-
-  Settings.serial_config = serial_config;
-  SetSerialBegin(Serial.baudRate());
+  if (serial_config > TS_SERIAL_8O2) {
+    serial_config = TS_SERIAL_8N1;
+  }
+  if (serial_config != Settings.serial_config) {
+    Settings.serial_config = serial_config;
+    SetSerialBegin();
+  }
 }
 
-void SetSerialBaudrate(int baudrate)
+void SetSerialBaudrate(uint32_t baudrate)
 {
   Settings.baudrate = baudrate / 300;
-  SetSerialBegin(baudrate);
+  if (Serial.baudRate() != baudrate) {
+    SetSerialBegin();
+  }
 }
 
-void PrepSerial(int prep_baudrate, uint32_t serial_config)
+void SetSerial(uint32_t baudrate, uint32_t serial_config)
 {
   Settings.flag.mqtt_serial = 0;  // CMND_SERIALSEND and CMND_SERIALLOG
   Settings.serial_config = serial_config;
-  baudrate = prep_baudrate;
+  Settings.baudrate = baudrate / 300;
   SetSeriallog(LOG_LEVEL_NONE);
+  SetSerialBegin();
 }
 
 void ClaimSerial(void)
@@ -828,8 +834,7 @@ void ClaimSerial(void)
   serial_local = true;
   AddLog_P(LOG_LEVEL_INFO, PSTR("SNS: Hardware Serial"));
   SetSeriallog(LOG_LEVEL_NONE);
-  baudrate = Serial.baudRate();
-  Settings.baudrate = baudrate / 300;
+  Settings.baudrate = Serial.baudRate() / 300;
 }
 
 void SerialSendRaw(char *codes)
