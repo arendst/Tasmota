@@ -188,7 +188,7 @@ void ShutterInit(void)
         }
       } else {
         Shutter.mode = SHT_OFF_ON__OPEN_CLOSE;
-        if (pin[GPIO_PWM1+i] < 99 && pin[GPIO_CNTR1+i]) {
+        if (pin[GPIO_PWM1+i] < 99 && pin[GPIO_CNTR1+i] < 99) {
           Shutter.mode = SHT_OFF_ON__OPEN_CLOSE_STEPPER;
           Shutter.pwm_frequency = 0;
           analogWriteFreq(Shutter.pwm_frequency);
@@ -394,7 +394,7 @@ void ShutterWaitForMotorStop(uint8_t i)
 {
   AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Wait for Motorstop.."));
   if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE || Shutter.mode == SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
-    if ( Shutter.mode = SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
+    if ( Shutter.mode == SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
       //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Frequency change %d"), Shutter.pwm_frequency);
       while (Shutter.pwm_frequency > 0) {
         Shutter.accelerator[i] = 0;
