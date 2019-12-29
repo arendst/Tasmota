@@ -188,7 +188,7 @@ void ShutterInit(void)
         }
       } else {
         Shutter.mode = SHT_OFF_ON__OPEN_CLOSE;
-        if (pin[GPIO_PWM1+i] < 99 && pin[GPIO_CNTR1+i]) {
+        if (pin[GPIO_PWM1+i] < 99 && pin[GPIO_CNTR1+i] < 99) {
           Shutter.mode = SHT_OFF_ON__OPEN_CLOSE_STEPPER;
           Shutter.pwm_frequency = 0;
           analogWriteFreq(Shutter.pwm_frequency);
