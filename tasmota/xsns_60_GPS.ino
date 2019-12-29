@@ -246,6 +246,7 @@ struct UBX_t {
   } state;
 
   struct {
+    uint32_t init:1;
     uint32_t filter_noise:1;
     uint32_t send_when_new:1; // no teleinterval
     uint32_t send_UI_only:1;
@@ -321,6 +322,7 @@ void UBXTriggerTele(void)
 
 void UBXDetect(void)
 {
+  UBX.mode.init = 0;
   if ((pin[GPIO_GPS_RX] < 99) && (pin[GPIO_GPS_TX] < 99)) {
     UBXSerial = new TasmotaSerial(pin[GPIO_GPS_RX], pin[GPIO_GPS_TX], 1, 0, 96); // 64 byte buffer is NOT enough
     if (UBXSerial->begin(9600)) {
@@ -331,8 +333,13 @@ void UBXDetect(void)
       }
     }
   }
+  else {
+    return;
+  }
 
-  UBXinitCFG();                 // turn of NMEA, only use "our" UBX-messages
+  UBXinitCFG();                 // turn off NMEA, only use "our" UBX-messages
+  UBX.mode.init = 1;
+
 #ifdef USE_FLOG
   if (!Flog) {
     Flog = new FLOG;            // init Flash Log
@@ -813,11 +820,12 @@ bool Xsns60(uint8_t function)
 {
   bool result = false;
 
-  if (true) {
+  if (FUNC_INIT == function) {
+    UBXDetect();
+  }
+
+  if (UBX.mode.init) {
     switch (function) {
-      case FUNC_INIT:
-        UBXDetect();
-        break;
       case FUNC_COMMAND_SENSOR:
         if (XSNS_60 == XdrvMailbox.index) {
           result = UBXCmd();
