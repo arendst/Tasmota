@@ -477,7 +477,7 @@
 // xsns_18_pms5003.ino
 #define D_STANDARD_CONCENTRATION "CF-1 PM"     // Standard Particle CF-1 Particle Matter
 #define D_ENVIRONMENTAL_CONCENTRATION "PM"     // Environmetal Particle Matter
-#define D_PARTICALS_BEYOND "Particals"
+#define D_PARTICALS_BEYOND "Particles"
 
 // xsns_32_mpu6050.ino
 #define D_AX_AXIS "Accel. X-Axis"
