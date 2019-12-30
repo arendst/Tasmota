@@ -183,7 +183,7 @@ struct UBX_t {
     uint32_t iTOW;
     int32_t lon;
     int32_t lat;
-    int32_t height;
+    int32_t alt;
     int32_t hMSL;
     uint32_t hAcc;
     uint32_t vAcc;
@@ -237,7 +237,7 @@ struct UBX_t {
     uint32_t last_iTOW;
     int32_t last_lat;
     int32_t last_lon;
-    int32_t last_height;
+    int32_t last_alt;
     uint32_t last_hAcc;
     uint32_t last_vAcc;
     uint8_t gpsFix;
@@ -603,7 +603,7 @@ bool UBXHandlePOSLLH()
     DEBUG_SENSOR_LOG(PSTR("UBX: lat/lon: %i / %i"), UBX.rec_buffer.values.lat, UBX.rec_buffer.values.lon);
     DEBUG_SENSOR_LOG(PSTR("UBX: hAcc: %d"), UBX.Message.navPosllh.hAcc);
     UBX.state.last_iTOW = UBX.Message.navPosllh.iTOW;
-    UBX.state.last_height = UBX.Message.navPosllh.height;
+    UBX.state.last_alt = UBX.Message.navPosllh.alt;
     UBX.state.last_vAcc = UBX.Message.navPosllh.vAcc;
     UBX.state.last_hAcc = UBX.Message.navPosllh.hAcc;
     if (UBX.mode.send_when_new) {
@@ -726,7 +726,7 @@ void UBXLoop(void)
 
   const char HTTP_SNS_GPS[] PROGMEM = "{s} GPS latitude {m}%s{e}"
                                       "{s} GPS longitude {m}%s{e}"
-                                      "{s} GPS height {m}%s   m{e}"
+                                      "{s} GPS altitude {m}%s   m{e}"
                                       "{s} GPS hor. Accuracy {m}%s   m{e}"
                                       "{s} GPS vert. Accuracy {m}%s   m{e}"
                                       "{s} GPS sat-fix status {m}%s{e}";
@@ -750,12 +750,12 @@ void UBXShow(bool json)
 {
   char lat[12];
   char lon[12];
-  char height[12];
+  char alt[12];
   char hAcc[12];
   char vAcc[12];
   dtostrfd((double)UBX.rec_buffer.values.lat/10000000.0f,7,lat);
   dtostrfd((double)UBX.rec_buffer.values.lon/10000000.0f,7,lon);
-  dtostrfd((double)UBX.state.last_height/1000.0f,3,height);
+  dtostrfd((double)UBX.state.last_alt/1000.0f,3,alt);
   dtostrfd((double)UBX.state.last_vAcc/1000.0f,3,hAcc);
   dtostrfd((double)UBX.state.last_hAcc/1000.0f,3,vAcc);
 
@@ -765,7 +765,7 @@ void UBXShow(bool json)
       uint32_t i = UBX.state.log_interval / 10;
       ResponseAppend_P(PSTR("\"fil\":%u,\"int\":%u}"), UBX.mode.filter_noise, i);
     } else {
-      ResponseAppend_P(PSTR("\"lat\":%s,\"lon\":%s,\"height\":%s,\"hAcc\":%s,\"vAcc\":%s}"), lat, lon, height, hAcc, vAcc);
+      ResponseAppend_P(PSTR("\"lat\":%s,\"lon\":%s,\"alt\":%s,\"hAcc\":%s,\"vAcc\":%s}"), lat, lon, alt, hAcc, vAcc);
     }
 #ifdef USE_FLOG
     ResponseAppend_P(PSTR(",\"FLOG\":{\"rec\":%u,\"mode\":%u,\"sec\":%u}"), Flog->recording, Flog->mode, Flog->sectors_left);
@@ -773,7 +773,7 @@ void UBXShow(bool json)
     UBX.mode.send_UI_only = false;
 #ifdef USE_WEBSERVER
   } else {
-      WSContentSend_PD(HTTP_SNS_GPS, lat, lon, height, hAcc, vAcc, kGPSFix[UBX.state.gpsFix]);
+      WSContentSend_PD(HTTP_SNS_GPS, lat, lon, alt, hAcc, vAcc, kGPSFix[UBX.state.gpsFix]);
       //WSContentSend_P(UBX_GOOGLE_MAPS, lat, lon);
 #ifdef DEBUG_TASMOTA_SENSOR
 #ifdef USE_FLOG
