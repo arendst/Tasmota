@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Počítaj"
 #define D_COUNTER "Počítadlo"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Prúd"          // As in Voltage and Current
 #define D_DATA "Dáta"
 #define D_FLOW_RATE "Flow rate"

@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Подсчет"
 #define D_COUNTER "Счетчик"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Ток"          // As in Voltage and Current
 #define D_DATA "Данные"
 #define D_DARKLIGHT "Темный"

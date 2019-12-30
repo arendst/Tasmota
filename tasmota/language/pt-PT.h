@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Contagem"
 #define D_COUNTER "Contador"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Corrente"          // As in Voltage and Current
 #define D_DATA "Dados"
 #define D_DARKLIGHT "Luz Escura"

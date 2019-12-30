@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "סופר"
 #define D_COUNTER "מונה"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "נוכחי"          // As in Voltage and Current
 #define D_DATA "נתונים"
 #define D_DARKLIGHT "חושך"

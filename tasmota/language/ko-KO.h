@@ -74,6 +74,7 @@
 #define D_COUNT "횟수"
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNTER "Counter"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "전류"          // As in Voltage and Current
 #define D_DATA "Data"
 #define D_DARKLIGHT "어둡게"

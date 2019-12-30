@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "数量:"
 #define D_COUNTER "计数器"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "电流"          // As in Voltage and Current
 #define D_DATA "数据:"
 #define D_DARKLIGHT "暗"

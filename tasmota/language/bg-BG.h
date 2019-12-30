@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS домейн"
 #define D_COUNT "Брой"
 #define D_COUNTER "Брояч"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Ток"          // As in Voltage and Current
 #define D_DATA "Данни"
 #define D_DARKLIGHT "Тъмна"

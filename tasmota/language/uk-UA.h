@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "Домен CORS"
 #define D_COUNT "разів"
 #define D_COUNTER "Лічильник"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Струм"           // As in Voltage and Current
 #define D_DATA "Дані"
 #define D_DARKLIGHT "Темний"

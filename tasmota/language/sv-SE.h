@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Räkna"
 #define D_COUNTER "Räknare"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Ström"          // As in Voltage and Current
 #define D_DATA "Data"
 #define D_DARKLIGHT "Mörkt"

@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.1.0.2 20191230
+
+- Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
+
 ### 8.1.0.1 20191225
 
 - Change Lights: simplified gamma correction and 10 bits internal computation

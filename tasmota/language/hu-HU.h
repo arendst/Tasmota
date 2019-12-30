@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "Szám"
 #define D_COUNTER "Számláló"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Áramerősség"          // As in Voltage and Current
 #define D_DATA "Adat"
 #define D_DARKLIGHT "Min. fényerő"

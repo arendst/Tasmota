@@ -1062,15 +1062,12 @@ void EnergyShow(bool json)
 #ifdef USE_WEBSERVER
   } else {
     if (Energy.voltage_available) {
-      WSContentSend_PD(PSTR("{s}" D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"),
-        EnergyFormat(value_chr, voltage_chr[0], json, Energy.voltage_common));
+      WSContentSend_PD(HTTP_SNS_VOLTAGE, EnergyFormat(value_chr, voltage_chr[0], json, Energy.voltage_common));
     }
     if (Energy.current_available) {
-      WSContentSend_PD(PSTR("{s}" D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"),
-        EnergyFormat(value_chr, current_chr[0], json));
+      WSContentSend_PD(HTTP_SNS_CURRENT, EnergyFormat(value_chr, current_chr[0], json));
     }
-    WSContentSend_PD(PSTR("{s}" D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}"),
-      EnergyFormat(value_chr, active_power_chr[0], json));
+    WSContentSend_PD(HTTP_SNS_POWER, EnergyFormat(value_chr, active_power_chr[0], json));
     if (!Energy.type_dc) {
       if (Energy.current_available && Energy.voltage_available) {
         WSContentSend_PD(HTTP_ENERGY_SNS1, EnergyFormat(value_chr, apparent_power_chr[0], json),

@@ -52,7 +52,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.1.0.1
+### Version 8.1.0.2
 
 - Change Lights: simplified gamma correction and 10 bits internal computation
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
@@ -63,3 +63,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add WifiPower to ``Status 5``
 - Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
 - Add Zigbee attribute decoder for Xiaomi Aqara Cube
+- Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
