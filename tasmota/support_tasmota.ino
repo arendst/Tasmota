@@ -1170,6 +1170,7 @@ void GpioInit(void)
 
   if (Settings.module != Settings.last_module) {
     Settings.baudrate = APP_BAUDRATE / 300;
+    Settings.serial_config = TS_SERIAL_8N1;
   }
 
   for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {

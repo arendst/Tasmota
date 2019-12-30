@@ -511,6 +511,9 @@
 #define D_CMND_SHUTTER_MOTORDELAY "MotorDelay"
 #define D_CMND_SHUTTER_FREQUENCY "Frequency"
 
+// Commands xdrv_32_hotplug.ino
+#define D_CMND_HOTPLUG "HotPlug"
+
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"
 

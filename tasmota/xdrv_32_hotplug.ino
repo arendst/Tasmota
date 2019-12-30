@@ -23,42 +23,43 @@
  *
  * - Rescan bus every N seconds. It send FUNC_HOTPLUG_SCAN event to every sensors.
  * - If HotPlug is 0 or 0xFF -- HotPlug is off
- *
- * See wiki https://github.com/arendst/Tasmota/wiki/HotPlug FIXME
 \*********************************************************************************************/
 
-#define XDRV_32                32
+#define XDRV_32              32
 
-#define D_PRFX_HOTPLUG "HotPlug"
+const uint32_t HOTPLUG_MAX = 254;  // 0 and 0xFF is OFF
 
-const uint32_t HOTPLUG_MAX = 254; // 0 and 0xFF is OFF
+const char kHotPlugCommands[] PROGMEM = "|"  // No prefix
+  D_CMND_HOTPLUG;
 
-const char kHotPlugCommands[] PROGMEM = "|" D_PRFX_HOTPLUG;
-void (* const HotPlugCommand[])(void) PROGMEM = { &CmndHotPlugTime };
+void (* const HotPlugCommand[])(void) PROGMEM = {
+  &CmndHotPlugTime };
 
-uint32_t hotplug_sleeptime = 0;
-bool     hotplug_enabled = false;
-uint8_t  hotplug_timeout = 0;
+struct {
+//  uint32_t sleeptime = 0;
+  bool     enabled = false;
+  uint8_t  timeout = 0;
+} Hotplug;
 
 void HotPlugInit(void)
 {
   // If empty eeprom is 0xFF by default
-  if (Settings.hotplug_scan == 0xFF) Settings.hotplug_scan = 0;
+  if (Settings.hotplug_scan == 0xFF) { Settings.hotplug_scan = 0; }
   if (Settings.hotplug_scan != 0) {
-    hotplug_enabled = true;
-    hotplug_timeout = 1; // first scan in a second
+    Hotplug.enabled = true;
+    Hotplug.timeout = 1;  // First scan in a second
   } else
-    hotplug_enabled = false;
+    Hotplug.enabled = false;
 }
 
 void HotPlugEverySecond(void)
 {
-  if (hotplug_enabled) {
-    if (hotplug_timeout == 0) {
+  if (Hotplug.enabled) {
+    if (Hotplug.timeout == 0) {
       XsnsCall(FUNC_HOTPLUG_SCAN);
-      hotplug_timeout = Settings.hotplug_scan;
+      Hotplug.timeout = Settings.hotplug_scan;
     }
-    hotplug_timeout--;
+    Hotplug.timeout--;
   }
 }
 
@@ -72,7 +73,7 @@ void CmndHotPlugTime(void)
     Settings.hotplug_scan = XdrvMailbox.payload;
     HotPlugInit();
   }
-  Response_P(S_JSON_COMMAND_NVALUE, XdrvMailbox.command, Settings.hotplug_scan);
+  ResponseCmndNumber(Settings.hotplug_scan);
 }
 
 /*********************************************************************************************\
@@ -96,5 +97,5 @@ bool Xdrv32(uint8_t function)
   }
   return result;
 }
-     
+
 #endif //USE_HOTPLUG

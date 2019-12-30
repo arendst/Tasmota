@@ -98,8 +98,8 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #define USE_ARILUX_RF                            // Add support for Arilux RF remote controller (+0k8 code, 252 iram (non 2.3.0))
 //#define USE_SHUTTER                              // Add Shutter support for up to 4 shutter with different motortypes (+6k code)
 #define USE_DEEPSLEEP                            // Add support for deepsleep (+1k code)
-#define USE_EXS_DIMMER                         // Add support for EX-Store WiFi Dimmer
-#define USE_HOTPLUG                               // Add support for HotPlug
+#define USE_EXS_DIMMER                           // Add support for EX-Store WiFi Dimmer
+#define USE_HOTPLUG                              // Add support for sensor HotPlug
 
 // -- Optional light modules ----------------------
 #define USE_LIGHT                                // Add Dimmer/Light support

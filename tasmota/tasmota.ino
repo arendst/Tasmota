@@ -272,6 +272,8 @@ void setup(void)
   GetEspHardwareType();
   GpioInit();
 
+//  SetSerialBaudrate(Settings.baudrate * 300);  // Allow reset of serial interface if current baudrate is different from requested baudrate
+
   WifiConnect();
 
   if (MOTOR == my_module_type) { Settings.poweronstate = POWER_ALL_ON; }  // Needs always on else in limbo!
