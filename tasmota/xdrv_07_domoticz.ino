@@ -51,6 +51,10 @@ uint32_t domoticz_fan_debounce = 0;             // iFan02 state debounce timer
 bool domoticz_subscribe = false;
 bool domoticz_update_flag = true;
 
+#ifdef USE_SHUTTER
+bool domoticz_is_shutter = false;
+#endif // USE_SHUTTER
+
 int DomoticzBatteryQuality(void)
 {
   // Battery 0%: ESP 2.6V (minimum operating voltage is 2.5)
@@ -108,6 +112,11 @@ void MqttPublishDomoticzPowerState(uint8_t device)
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
     if ((device < 1) || (device > devices_present)) { device = 1; }
     if (Settings.domoticz_relay_idx[device -1]) {
+#ifdef USE_SHUTTER
+      if (domoticz_is_shutter) {
+        // Shutter is updated by sensor update - power state should not be sent
+      } else {
+#endif  // USE_SHUTTER
 #ifdef USE_SONOFF_IFAN
       if (IsModuleIfan() && (device > 1)) {
         // Fan handled by MqttPublishDomoticzFanState
@@ -121,6 +130,9 @@ void MqttPublishDomoticzPowerState(uint8_t device)
 #ifdef USE_SONOFF_IFAN
       }
 #endif // USE_SONOFF_IFAN
+#ifdef USE_SHUTTER
+      }
+#endif //USE_SHUTTER
     }
   }
 }
@@ -140,6 +152,13 @@ void DomoticzMqttUpdate(void)
     if (domoticz_update_timer <= 0) {
       domoticz_update_timer = Settings.domoticz_update_timer;
       for (uint32_t i = 1; i <= devices_present; i++) {
+#ifdef USE_SHUTTER
+        if (domoticz_is_shutter)
+        {
+            // no power state updates for shutters
+            break;
+        }
+#endif // USE_SHUTTER
 #ifdef USE_SONOFF_IFAN
         if (IsModuleIfan() && (i > 1)) {
           MqttPublishDomoticzFanState();
@@ -163,6 +182,7 @@ void DomoticzMqttSubscribe(void)
       domoticz_subscribe = true;
     }
   }
+
   if (domoticz_subscribe) {
     char stopic[TOPSZ];
     snprintf_P(stopic, sizeof(stopic), PSTR(DOMOTICZ_OUT_TOPIC "/#")); // domoticz topic
@@ -230,6 +250,8 @@ bool DomoticzMqttData(void)
     for (uint32_t i = 0; i < maxdev; i++) {
       if (idx == Settings.domoticz_relay_idx[i]) {
         bool iscolordimmer = strcmp_P(domoticz["dtype"],PSTR("Color Switch")) == 0;
+        bool isShutter = strcmp_P(domoticz["dtype"],PSTR("Light/Switch")) == 0 & strncmp_P(domoticz["switchType"],PSTR("Blinds"), 6) == 0;
+
         char stemp1[10];
         snprintf_P(stemp1, sizeof(stemp1), PSTR("%d"), i +1);
 #ifdef USE_SONOFF_IFAN
@@ -252,6 +274,28 @@ bool DomoticzMqttData(void)
           found = true;
         } else
 #endif  // USE_SONOFF_IFAN
+#ifdef USE_SHUTTER
+        if (isShutter)
+        {
+          if (domoticz.containsKey("nvalue")) {
+            nvalue = domoticz["nvalue"];
+          }
+
+          uint8_t position = 0;
+          if (domoticz.containsKey("svalue1")) {
+            position = domoticz["svalue1"];
+          }
+          if (nvalue != 2) {
+            position = nvalue == 0 ? 0 : 100;
+          }
+
+          snprintf_P(XdrvMailbox.topic, TOPSZ, PSTR("/" D_PRFX_SHUTTER D_CMND_SHUTTER_POSITION));
+          snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), position);
+          XdrvMailbox.data_len = position > 99 ? 3 : (position > 9 ? 2 : 1);
+
+          found = true;
+        } else
+#endif // USE_SHUTTER
         if (iscolordimmer && 10 == nvalue) {  // Color_SetColor
           JsonObject& color = domoticz["Color"];
           uint16_t level = nvalue = domoticz["svalue1"];
@@ -592,6 +636,9 @@ bool Xdrv07(uint8_t function)
 #endif  // USE_WEBSERVER
       case FUNC_MQTT_SUBSCRIBE:
         DomoticzMqttSubscribe();
+#ifdef USE_SHUTTER
+        if (Settings.domoticz_sensor_idx[DZ_SHUTTER]) { domoticz_is_shutter = true; }
+#endif // USE_SHUTTER
         break;
       case FUNC_MQTT_INIT:
         domoticz_update_timer = 2;
