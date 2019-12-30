@@ -99,6 +99,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 //#define USE_SHUTTER                              // Add Shutter support for up to 4 shutter with different motortypes (+6k code)
 #define USE_DEEPSLEEP                            // Add support for deepsleep (+1k code)
 #define USE_EXS_DIMMER                         // Add support for EX-Store WiFi Dimmer
+#define USE_HOTPLUG                               // Add support for HotPlug
 
 // -- Optional light modules ----------------------
 #define USE_LIGHT                                // Add Dimmer/Light support
@@ -268,6 +269,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
 #undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
 #undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
+#undef USE_HOTPLUG                               // Disable support for HotPlug
 
 #undef USE_ENERGY_SENSOR                         // Disable energy sensors (-14k code)
   #undef USE_PZEM004T                            // Disable PZEM004T energy sensor
@@ -340,6 +342,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
 #undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
 #undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
+#undef USE_HOTPLUG                               // Disable support for HotPlug
 
 // -- Optional light modules ----------------------
 //#undef USE_LIGHT                                 // Also disable all Dimmer/Light support
@@ -439,6 +442,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
 #undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
 #undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
+#undef USE_HOTPLUG                               // Disable support for HotPlug
 
 // -- Optional light modules ----------------------
 //#undef USE_LIGHT                                 // Also disable all Dimmer/Light support
@@ -547,6 +551,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_SHUTTER                               // Disable Shutter support for up to 4 shutter with different motortypes (+6k code)
 #undef USE_DEEPSLEEP                             // Disable support for deepsleep (+1k code)
 #undef USE_EXS_DIMMER                            // Disable support for EX-Store WiFi Dimmer
+#undef USE_HOTPLUG                               // Disable support for HotPlug
 
 // -- Optional light modules ----------------------
 #undef USE_LIGHT                                 // Disable support for lights
