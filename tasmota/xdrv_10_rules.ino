@@ -439,13 +439,11 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       ucommand.toUpperCase();
 
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
-
-//      if ((ucommand.indexOf("EVENT ") != -1) && (ucommand.indexOf("BACKLOG ") == -1)) {
-//        commands = "backlog " + commands;  // Always use Backlog with event to prevent rule event loop exception
-//      }
-
-      if ((ucommand.indexOf("IF ") == -1) && (ucommand.indexOf("EVENT ") != -1) && (ucommand.indexOf("BACKLOG ") == -1)) {
-        commands = "backlog " + commands;  // Use Backlog with event unless IF is used which uses an implicit backlog to prevent rule event loop exception
+      // Use Backlog with event to prevent rule event loop exception unless IF is used which uses an implicit backlog
+      if ((ucommand.indexOf("IF ") == -1) &&
+          (ucommand.indexOf("EVENT ") != -1) &&
+          (ucommand.indexOf("BACKLOG ") == -1)) {
+        commands = "backlog " + commands;
       }
 
       RulesVarReplace(commands, F("%VALUE%"), Rules.event_value);
