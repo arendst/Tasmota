@@ -1,7 +1,7 @@
 /*
   xsns_38_az7798.ino - AZ_Instrument 7798 CO2/temperature/humidity meter support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

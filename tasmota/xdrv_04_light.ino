@@ -1,7 +1,7 @@
 /*
   xdrv_04_light.ino - PWM, WS2812 and sonoff led support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -1874,7 +1874,7 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
   char msg[24];
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: Channels %s"),
             ToHex_P((const unsigned char *)cur_col_10, 10, msg, sizeof(msg)));
-  
+
   uint8_t cur_col[LST_MAX];
   for (uint32_t i = 0; i < LST_MAX; i++) {
     cur_col[i] = change10to8(cur_col_10[i]);

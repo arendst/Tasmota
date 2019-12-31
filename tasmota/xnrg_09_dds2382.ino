@@ -1,7 +1,7 @@
 /*
   xnrg_09_dds2382.ino - Hiking DDS238-2 Modbus energy meter support for Tasmota
 
-  Copyright (C) 2019  Matteo Campanella - based on the work of Gennaro Tortone
+  Copyright (C) 2020  Matteo Campanella - based on the work of Gennaro Tortone
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

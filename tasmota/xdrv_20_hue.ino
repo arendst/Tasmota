@@ -1,7 +1,7 @@
 /*
   xdrv_20_hue.ino - Philips Hue support for Tasmota
 
-  Copyright (C) 2019  Heiko Krupp and Theo Arends
+  Copyright (C) 2020  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

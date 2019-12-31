@@ -1,7 +1,7 @@
 /*
   xdsp_05_epaper.ino - Display e-paper support for Tasmota
 
-  Copyright (C) 2019  Theo Arends, Gerhard Mutz and Waveshare
+  Copyright (C) 2020  Theo Arends, Gerhard Mutz and Waveshare
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

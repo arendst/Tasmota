@@ -1,7 +1,7 @@
 /*
   xsns_60_GPS.ino - GPS UBLOX support for Tasmota
 
-  Copyright (C) 2019  Theo Arends, Christian Baars and Adrian Scillato
+  Copyright (C) 2020  Theo Arends, Christian Baars and Adrian Scillato
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

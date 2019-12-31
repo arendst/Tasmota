@@ -1,7 +1,7 @@
 /*
   pt-PT.h - localization for Portuguese - Portugal for Tasmota
 
-  Copyright (C) 2019  Paulo Paiva
+  Copyright (C) 2020  Paulo Paiva
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

@@ -1,7 +1,7 @@
 /*
   support_flash_log.ino - log to flash support for Sonoff-Tasmota
 
-  Copyright (C) 2019  Theo Arends & Christian Baars
+  Copyright (C) 2020  Theo Arends & Christian Baars
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -30,8 +30,8 @@
 
 /********************************************************************************************\
 | * Generic helper class to log arbitrary data to the OTA-partition
-| * Working principle: Add preferrable small chunks of data to the sector buffer, which will 
-| *                    be written to FLASH when full automatically. The next sector will be 
+| * Working principle: Add preferrable small chunks of data to the sector buffer, which will
+| *                    be written to FLASH when full automatically. The next sector will be
 | *                    erased and is the anchor point for downloading and state configuration
 | *                    after reboot.
 \*********************************************************************************************/
@@ -93,7 +93,7 @@ public:
   void startRecording(bool append);
   void stopRecording(void);
 
-  typedef void (*CallbackNoArgs) ();                      // simple typedef for a callback 
+  typedef void (*CallbackNoArgs) ();                      // simple typedef for a callback
   typedef void (*CallbackWithArgs) (uint8_t *_record);    // typedef for a callback with one argument
 
   void startDownload(size_t size, CallbackNoArgs sendHeader, CallbackWithArgs sendRecord, CallbackNoArgs sendFooter);
@@ -129,41 +129,41 @@ ready = true;
 }
 
 /********************************************************************************************\
-| * 
+| *
 | * private helper functions
-| * 
+| *
 \*********************************************************************************************/
 
 /**
  * @brief Read a sector into the global buffer
- * 
+ *
  * @param one_sector as an uint8_t
  */
 void FLOG::_readSector(uint8_t one_sector){
-  DEBUG_SENSOR_LOG(PSTR("FLOG: read sector number: %u" ), one_sector);  
+  DEBUG_SENSOR_LOG(PSTR("FLOG: read sector number: %u" ), one_sector);
   ESP.flashRead(start+(one_sector * FLASH_SECTOR_SIZE),(uint32_t *)&sector.dword_buffer, FLASH_SECTOR_SIZE);
 }
 /**
  * @brief Erase the given sector og the OTA-partition
- * 
+ *
  * @param one_sector as an uint8_t
  */
 void FLOG::_eraseSector(uint8_t one_sector){ // Erase sector of FLOG/OTA
-  DEBUG_SENSOR_LOG(PSTR("FLOG: erasing sector number: %u" ), one_sector);  
+  DEBUG_SENSOR_LOG(PSTR("FLOG: erasing sector number: %u" ), one_sector);
   ESP.flashEraseSector((start/FLASH_SECTOR_SIZE)+one_sector);
 }
 /**
  * @brief Write the global buffer to the given sector
- * 
+ *
  * @param one_sector as an uint8_t
  */
 void FLOG::_writeSector(uint8_t one_sector){ // Write sector of FLOG/OTA
-  DEBUG_SENSOR_LOG(PSTR("FLOG: write buffer to sector number: %u" ), one_sector);  
+  DEBUG_SENSOR_LOG(PSTR("FLOG: write buffer to sector number: %u" ), one_sector);
   ESP.flashWrite(start+(one_sector * FLASH_SECTOR_SIZE),(uint32_t *)&sector.dword_buffer, FLASH_SECTOR_SIZE);
 }
 /**
  * @brief Clear the global buffer, but leave the header intact
- * 
+ *
  */
 void FLOG::_clearBuffer(){ //not the header
   for (uint32_t i = sizeof(sector.header)/4; i<(sizeof(sector.dword_buffer)/4); i++){
@@ -174,7 +174,7 @@ void FLOG::_clearBuffer(){ //not the header
 }
 /**
  * @brief Write global buffer to FLASH and set the current sector to the next valid position, maybe to 0
- * 
+ *
  */
 void FLOG::_saveBufferToSector(){ // save buffer to already erased(!) sector, erase next sector, clear buffer, increment number
   DEBUG_SENSOR_LOG(PSTR("FLOG: write buffer to current sector: %u" ),current_sector);
@@ -193,7 +193,7 @@ void FLOG::_saveBufferToSector(){ // save buffer to already erased(!) sector, er
 
 /**
  * @brief Typically after restart find the first erased sector as a starting point for further operations
- * 
+ *
  */
 void FLOG::_findFirstErasedSector(){
   for (uint32_t i = 0; i<num_sectors; i++){
@@ -219,7 +219,7 @@ void FLOG::_findFirstErasedSector(){
 }
 /**
  * @brief Look at the sector before the first erased sector to check, if there could be saved data
- * 
+ *
  */
 void FLOG::_searchSaves(void){
   //check if old Data is present
@@ -260,13 +260,13 @@ void FLOG::_searchSaves(void){
 }
 /**
  * @brief Start with a new buffer to be able to start a write session
- * 
+ *
  */
 void FLOG::_initBuffer(void){
   if(!found_saved_data){ // we must re-init this, because the buffer is in an undefined state
-    sector.header.physical_start_sector = (uint16_t)first_erased_sector; 
+    sector.header.physical_start_sector = (uint16_t)first_erased_sector;
   }
-  DEBUG_SENSOR_LOG(PSTR("FLOG: init header")); 
+  DEBUG_SENSOR_LOG(PSTR("FLOG: init header"));
   sector.header.magic_word = MAGIC_WORD_FL; //F, L
   sector.header.number = 0;
   sector.header.buf_pointer = (uint16_t)sizeof(sector.header);
@@ -276,15 +276,15 @@ void FLOG::_initBuffer(void){
 }
 /**
  * @brief - a pure debug function
- * 
+ *
  */
 void FLOG::_showBuffer(void){
   DEBUG_SENSOR_LOG(PSTR("FLOG: Header: %c %c"), sector.byte_buffer[0],sector.byte_buffer[1]);
-  DEBUG_SENSOR_LOG(PSTR("FLOG: V_Start_sector: %u, sector number: %u, pointer: %u "), sector.header.physical_start_sector, sector.header.number, sector.header.buf_pointer); 
+  DEBUG_SENSOR_LOG(PSTR("FLOG: V_Start_sector: %u, sector number: %u, pointer: %u "), sector.header.physical_start_sector, sector.header.number, sector.header.buf_pointer);
   uint32_t j = 0;
-  for (uint32_t i = sector.header.buf_pointer-16; i<(sizeof(sector.byte_buffer)); i+=8){ 
+  for (uint32_t i = sector.header.buf_pointer-16; i<(sizeof(sector.byte_buffer)); i+=8){
       // DEBUG_SENSOR_LOG(PSTR("FLOG: buffer: %c %c %c %c %c %c %c %c  "), sector.byte_buffer[i], sector.byte_buffer[i+1], sector.byte_buffer[i+2], sector.byte_buffer[i+3], sector.byte_buffer[i+4], sector.byte_buffer[i+5], sector.byte_buffer[i+6], sector.byte_buffer[i+7]);
-      DEBUG_SENSOR_LOG(PSTR("FLOG: buffer: %u %u %u %u %u %u %u %u  "), sector.byte_buffer[i], sector.byte_buffer[i+1], sector.byte_buffer[i+2], sector.byte_buffer[i+3], sector.byte_buffer[i+4], sector.byte_buffer[i+5], sector.byte_buffer[i+6], sector.byte_buffer[i+7]);    
+      DEBUG_SENSOR_LOG(PSTR("FLOG: buffer: %u %u %u %u %u %u %u %u  "), sector.byte_buffer[i], sector.byte_buffer[i+1], sector.byte_buffer[i+2], sector.byte_buffer[i+3], sector.byte_buffer[i+4], sector.byte_buffer[i+5], sector.byte_buffer[i+6], sector.byte_buffer[i+7]);
       j++;
       if(j>3){
         break;
@@ -294,7 +294,7 @@ void FLOG::_showBuffer(void){
 
 /**
  * @brief pass a data entry/record as uint8_t array with its size
- * 
+ *
  * @param src uint8_t array
  * @param size uint32_t size of the array
  */
@@ -327,7 +327,7 @@ void FLOG::addToBuffer(uint8_t src[], uint32_t size){
 
 /**
  * @brief shows that it is ready to accept recording
- * 
+ *
  * @param append - if true append to current log, else start a new log
  */
 void FLOG::startRecording(bool append){
@@ -339,14 +339,14 @@ void FLOG::startRecording(bool append){
     DEBUG_SENSOR_LOG(PSTR("FLOG: start recording"));
     _initBuffer();
     if(!found_saved_data) {
-      append = false; // nothing to append to, we silently start a new log 
+      append = false; // nothing to append to, we silently start a new log
     }
     if(append){
         sector.header.number = _saved_header.number+1; // continue with the next number
         sector.header.physical_start_sector = _saved_header.physical_start_sector; // keep the old start sector
     }
     else{ //new log, old data is lost
-        sector.header.physical_start_sector = (uint16_t)first_erased_sector; 
+        sector.header.physical_start_sector = (uint16_t)first_erased_sector;
         found_saved_data = false;
         sectors_left = 0;
     }
@@ -354,7 +354,7 @@ void FLOG::startRecording(bool append){
 
 /**
  * @brief stop recording including saving current buffer to FLASH
- * 
+ *
  */
 void FLOG::stopRecording(void){
       _saveBufferToSector();
@@ -367,16 +367,16 @@ void FLOG::stopRecording(void){
 
 /**
  * @brief Will start a downloads, needs the correct implementation of 3 callback functions
- * 
+ *
  * @param size:         size of the data entry/record in bytes, i.e. sizeof(myStruct)
  * @param sendHeader:   should implement at least something like:
  * @example             WebServer->setContentLength(CONTENT_LENGTH_UNKNOWN); // This is very likely unknown!!
  *                      WebServer->sendHeader(F("Content-Disposition"), F("attachment; filename=myfile.txt"));
  * @param sendRecord:   will receive the memory address as "uint8_t* addr" and should consume the current entry/record
- * @example             myStruct_t *entry = (myStruct_t*)addr; 
+ * @example             myStruct_t *entry = (myStruct_t*)addr;
  *                      Then make useful Strings and send it, i.e.: WebServer->sendContent_P(myString);
- * @param sendFooter:   finish the download, should implement at least: 
- * @example             WebServer->sendContent(""); 
+ * @param sendFooter:   finish the download, should implement at least:
+ * @example             WebServer->sendContent("");
  */
   void FLOG::startDownload(size_t size, CallbackNoArgs sendHeader, CallbackWithArgs sendRecord, CallbackNoArgs sendFooter){
 
@@ -409,7 +409,7 @@ void FLOG::stopRecording(void){
       else{
         bytes_left = 0;
         DEBUG_SENSOR_LOG(PSTR("FLOG: Flog->bytes_left not dividable by 8 ??????"));
-        }   
+        }
       }
     next_sector++;
     if(next_sector>num_sectors){
@@ -420,7 +420,7 @@ void FLOG::stopRecording(void){
     bytes_left = sector.header.buf_pointer - sizeof(sector.header);
     OsWatchLoop();
     delay(sleep);
-  }  
+  }
   running_download = false;
   // Callback 3: create a footer or simply finish the download with an empty payload
   sendFooter();

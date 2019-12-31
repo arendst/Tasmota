@@ -1,7 +1,7 @@
 /*
   xdrv_30_exs_dimmer.ino - ex-store dimmer support for Tasmota
 
-  Copyright (C) 2019  Andreas Schultz
+  Copyright (C) 2020  Andreas Schultz
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

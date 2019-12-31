@@ -1,7 +1,7 @@
 /*
   he-HE.h - localization for Hebrew - Israel for Tasmota
 
-  Copyright (C) 2019  Yuval Mejahez
+  Copyright (C) 2020  Yuval Mejahez
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

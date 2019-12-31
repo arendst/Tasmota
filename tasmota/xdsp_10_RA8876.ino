@@ -1,7 +1,7 @@
 /*
   xdsp_09_SSD1351.ino - Display SSD1351 support for Tasmota
 
-  Copyright (C) 2019  Gerhard Mutz and Theo Arends
+  Copyright (C) 2020  Gerhard Mutz and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

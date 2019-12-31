@@ -1,7 +1,7 @@
 /*
   xdrv_08_serial_bridge.ino - serial bridge support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Dániel Zoltán Tolnai
+  Copyright (C) 2020  Theo Arends and Dániel Zoltán Tolnai
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

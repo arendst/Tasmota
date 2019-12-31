@@ -1,7 +1,7 @@
 /*
   xsns_58_dht12.ino - DHT12 I2C temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2019  Stefan Oskamp and Theo Arends
+  Copyright (C) 2020  Stefan Oskamp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

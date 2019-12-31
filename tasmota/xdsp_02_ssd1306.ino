@@ -1,7 +1,7 @@
 /*
   xdsp_02_ssd1306.ino - Display Oled SSD1306 support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Adafruit
+  Copyright (C) 2020  Theo Arends and Adafruit
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

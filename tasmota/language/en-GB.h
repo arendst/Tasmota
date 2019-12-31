@@ -1,7 +1,7 @@
 /*
   en-GB.h - localization for English - United Kingdom for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

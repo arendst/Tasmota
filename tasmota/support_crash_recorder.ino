@@ -1,7 +1,7 @@
 /*
   support_crash_recorder.ino - record the call stack in RTC in case of crash
 
-  Copyright (C) 2019  Stephan Hadinger, Theo Arends,
+  Copyright (C) 2020  Stephan Hadinger, Theo Arends,
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

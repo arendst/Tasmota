@@ -1,7 +1,7 @@
 /*
   xdrv_23_zigbee_converters.ino - zigbee support for Tasmota
 
-  Copyright (C) 2019  Theo Arends and Stephan Hadinger
+  Copyright (C) 2020  Theo Arends and Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -534,7 +534,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   // { 0x0008, 0x0012,  "OnTransitionTime",     &Z_Copy },
   // { 0x0008, 0x0013,  "OffTransitionTime",    &Z_Copy },
   // { 0x0008, 0x0014,  "DefaultMoveRate",      &Z_Copy },
-  
+
   // Alarms cluster
   { 0x0009, 0x0000,  "AlarmCount",           &Z_Copy },
   // Time cluster

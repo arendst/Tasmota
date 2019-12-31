@@ -1,7 +1,7 @@
 /*
   xsns_35_Tx20.ino - La Crosse Tx20 wind sensor support for Tasmota
 
-  Copyright (C) 2019  Thomas Eckerstorfer and Theo Arends
+  Copyright (C) 2020  Thomas Eckerstorfer and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

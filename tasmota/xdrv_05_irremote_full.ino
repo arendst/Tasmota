@@ -1,7 +1,7 @@
 /*
   xdrv_05_irremote_full.ino - complete integration of IRremoteESP8266 for Tasmota
 
-  Copyright (C) 2019  Heiko Krupp, Lazar Obradovic, Theo Arends, Stephan Hadinger
+  Copyright (C) 2020  Heiko Krupp, Lazar Obradovic, Theo Arends, Stephan Hadinger
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

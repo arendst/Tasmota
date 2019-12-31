@@ -1,7 +1,7 @@
 /*
   sk-SK.h - localization for Slovak with diacritics - Slovak for Tasmota
 
-  Copyright (C) 2019  Vladimír Jendroľ
+  Copyright (C) 2020  Vladimír Jendroľ
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

@@ -1,7 +1,7 @@
 /*
   xsns_59_ds1624.ino - Support for I2C DS1624 Temperature Sensor
 
-  Copyright (C) 2019 Leonid Myravjev <asm@asm.pp.ru>
+  Copyright (C) 2020 Leonid Myravjev <asm@asm.pp.ru>
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

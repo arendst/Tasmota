@@ -1,7 +1,7 @@
 /*
   xsns_33_ds3231.ino - ds3231 RTC chip, act like sensor support for Tasmota
 
-  Copyright (C) 2019  Guy Elgabsi (guy.elg AT gmail.com)
+  Copyright (C) 2020  Guy Elgabsi (guy.elg AT gmail.com)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

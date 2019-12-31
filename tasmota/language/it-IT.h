@@ -1,7 +1,7 @@
 /*
   it-IT.h - localization for Italian - Italy for Tasmota
 
-  Copyright (C) 2019 Gennaro Tortone - some mods by Antonio Fragola
+  Copyright (C) 2020 Gennaro Tortone - some mods by Antonio Fragola
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

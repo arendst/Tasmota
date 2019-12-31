@@ -1,7 +1,7 @@
 /*
   xsns_42_scd30.ino - SC30 CO2 sensor support for Tasmota
 
-  Copyright (C) 2019 Frogmore42
+  Copyright (C) 2020 Frogmore42
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
