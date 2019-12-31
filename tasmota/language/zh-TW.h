@@ -84,7 +84,7 @@
 #define D_DNS_SERVER "DNS伺服器"
 #define D_DONE "完成"
 #define D_DST_TIME "DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "設備模擬"
 #define D_ENABLED "啟用"
 #define D_ERASE "刪除"
