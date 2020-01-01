@@ -58,6 +58,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
 - Fix ``White`` added to light status (#7142)
+- Fix Improved fade linearity with gamma correction
 - Fix LCD line and column positioning (#7387)
 - Fix Display handling of hexadecimal escape characters (#7387)
 - Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
@@ -66,3 +67,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
 - Add Zigbee attribute decoder for Xiaomi Aqara Cube
 - Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
+- Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)

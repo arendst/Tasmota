@@ -3,6 +3,7 @@
 ### 8.1.0.2 20191230
 
 - Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
+- Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
 - Fix LCD line and column positioning (#7387)
 - Fix Display handling of hexadecimal escape characters (#7387)
 - Fix Improved fade linearity with gamma correction
