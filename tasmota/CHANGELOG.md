@@ -5,6 +5,7 @@
 - Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
 - Fix LCD line and column positioning (#7387)
 - Fix Display handling of hexadecimal escape characters (#7387)
+- Fix Improved fade linearity with gamma correction
 
 ### 8.1.0.1 20191225
 
