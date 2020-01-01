@@ -85,6 +85,10 @@ void LcdInitDriver(void)
 
 void LcdDrawStringAt(void)
 {
+  if (dsp_flag) {  // Supply Line and Column starting with Line 1 and Column 1
+    dsp_x--;
+    dsp_y--;
+  }
   lcd->setCursor(dsp_x, dsp_y);
   lcd->print(dsp_str);
 }

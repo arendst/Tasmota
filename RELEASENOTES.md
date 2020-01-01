@@ -58,6 +58,8 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
 - Fix ``White`` added to light status (#7142)
+- Fix LCD line and column positioning (#7387)
+- Fix Display handling of hexadecimal escape characters (#7387)
 - Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
 - Add SerialConfig to ``Status 1``
 - Add WifiPower to ``Status 5``
