@@ -514,6 +514,7 @@
 
 // Commands xdrv_32_hotplug.ino
 #define D_CMND_HOTPLUG "HotPlug"
+#define D_CMND_SHUTTER_BUTTON "Button"
 
 // Commands xsns_02_analog.ino
 #define D_CMND_ADCPARAM "AdcParam"

@@ -34,18 +34,19 @@ uint16_t messwerte[5] = {30,50,70,90,100};
 uint16_t last_execute_step;
 
 enum ShutterModes { SHT_OFF_OPEN__OFF_CLOSE, SHT_OFF_ON__OPEN_CLOSE, SHT_PULSE_OPEN__PULSE_CLOSE, SHT_OFF_ON__OPEN_CLOSE_STEPPER,};
+enum ShutterButtonStates { SHT_NOT_PRESSED, SHT_PRESSED_MULTI, SHT_PRESSED_HOLD, SHT_PRESSED_IMMEDIATE,};
 
 const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION  "|"
   D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
-  D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY;
+  D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterStop, &CmndShutterPosition,
   &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay,
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
-  &CmndShutterFrequency};
+  &CmndShutterFrequency, &CmndShutterButton};
 
 const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"direction\":%d}";
 const char MSG_SHUTTER_POS[] PROGMEM = "SHT: " D_PRFX_SHUTTER " %d: Real. %d, Start: %d, Stop: %d, dir %d, motordelay %d, rtc: %s [s], freq %d";
@@ -496,6 +497,104 @@ void ShutterRelayChanged(void)
 	}
 }
 
+void ShutterButtonHandler(void)
+{
+  uint8_t buttonState = SHT_NOT_PRESSED;
+  uint8_t button = XdrvMailbox.payload;
+  uint8_t press_index;
+  uint32_t button_index = XdrvMailbox.index;
+  uint8_t shutter_index = Settings.shutter_button[button_index] & 0x03;
+
+  uint16_t loops_per_second = 1000 / Settings.button_debounce;  // ButtonDebounce (50)
+
+  if ((PRESSED == button) && (NOT_PRESSED == Button.last_state[button_index])) {
+    if (Settings.flag.button_single) {                   // SetOption13 (0) - Allow only single button press for immediate action
+        buttonState = SHT_PRESSED_MULTI;
+        press_index = 1;
+    } else {
+      if ((Shutter.direction[shutter_index]) && (Button.press_counter[button_index]==0)) {
+        buttonState = SHT_PRESSED_IMMEDIATE;
+        press_index = 1;
+        Button.press_counter[button_index] = 99; // Remember to discard further action for press & hold within button timings
+      } else
+        Button.press_counter[button_index] = (Button.window_timer[button_index]) ? Button.press_counter[button_index] +1 : 1;
+      Button.window_timer[button_index] = loops_per_second / 2;  // 0.5 second multi press window
+    }
+    blinks = 201;
+  }
+
+  if (NOT_PRESSED == button) {
+    Button.hold_timer[button_index] = 0;
+  } else {
+    Button.hold_timer[button_index]++;
+    if (!Settings.flag.button_single) {                   // SetOption13 (0) - Allow only single button press for immediate action
+      if (Settings.param[P_HOLD_IGNORE] > 0) {         // SetOption40 (0) - Do not ignore button hold
+        if (Button.hold_timer[button_index] > loops_per_second * Settings.param[P_HOLD_IGNORE] / 10) {
+          Button.hold_timer[button_index] = 0;         // Reset button hold counter to stay below hold trigger
+          Button.press_counter[button_index] = 0;      // Discard button press to disable functionality
+        }
+      }
+      if (Button.hold_timer[button_index] == loops_per_second * Settings.param[P_HOLD_TIME] / 10) {  // SetOption32 (40) - Button hold
+        if (Button.press_counter[button_index]<99)
+          buttonState = SHT_PRESSED_HOLD;
+        Button.press_counter[button_index] = 0;
+      }
+    }
+  }
+
+  if (!Settings.flag.button_single) {                    // SetOption13 (0) - Allow multi-press
+    if (Button.window_timer[button_index]) {
+      Button.window_timer[button_index]--;
+    } else {
+      if (!restart_flag && !Button.hold_timer[button_index] && (Button.press_counter[button_index] > 0)) {
+        if (Button.press_counter[button_index]<99) {
+          press_index = Button.press_counter[button_index];
+          buttonState = SHT_PRESSED_MULTI;
+        }
+        Button.press_counter[button_index] = 0;
+      }
+    }
+  }
+
+  if (buttonState != SHT_NOT_PRESSED) {
+    if (Settings.shutter_startrelay[shutter_index] && Settings.shutter_startrelay[shutter_index] <9) {
+      if (press_index>3) press_index=3;
+      press_index = (buttonState == SHT_PRESSED_HOLD) ? 3 : (press_index-1); 
+      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: shutter %d, button %d = %d (single=1, double=2, tripple=3, hold=4)"), shutter_index+1, button_index+1, press_index+1);
+      XdrvMailbox.index = shutter_index +1;
+      if (buttonState == SHT_PRESSED_IMMEDIATE) {
+        XdrvMailbox.payload = XdrvMailbox.index;
+        CmndShutterStop();
+      }
+      else {
+        uint8_t position = (Settings.shutter_button[button_index]>>(6*press_index + 2)) & 0x03f;
+        if (position) {
+          if (Shutter.direction[shutter_index]) {
+            XdrvMailbox.payload = XdrvMailbox.index;
+            CmndShutterStop();
+          } else {
+            XdrvMailbox.payload = position = (position-1)<<1;
+            CmndShutterPosition();
+            if ((Settings.shutter_button[button_index]>>(press_index + 26)) & 0x01) {
+              // MQTT broadcast to grouptopic
+              char scommand[CMDSZ];
+              char stopic[TOPSZ];
+              for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
+                if ((i==shutter_index) || ((Settings.shutter_button[button_index]>>30) & 0x01)) {
+                  snprintf_P(scommand, sizeof(scommand),PSTR("ShutterPosition%d"), i+1);
+                  GetGroupTopic_P(stopic, scommand);
+                  Response_P("%d", position);
+                  MqttPublish(stopic, false);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 void ShutterSetPosition(uint8_t device, uint8_t position)
 {
   char svalue[32];                   // Command and number parameter
@@ -676,6 +775,92 @@ void CmndShutterRelay(void)
   }
 }
 
+void CmndShutterButton(void)
+{
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KEYS)) {
+    uint32_t setting = 0;
+    // (setting>>31)&(0x01) : enabled
+    // (setting>>30)&(0x01) : mqtt broadcast to all index
+    // (setting>>29)&(0x01) : mqtt broadcast hold
+    // (setting>>28)&(0x01) : mqtt broadcast tripple press
+    // (setting>>27)&(0x01) : mqtt broadcast double press
+    // (setting>>26)&(0x01) : mqtt broadcast single press
+    // (setting>>20)&(0x3f) : shutter_position hold; 0 disabled, 1..101 == 0..100%
+    // (setting>>14)&(0x3f) : shutter_position tripple press 0 disabled, 1..101 == 0..100%
+    // (setting>> 8)&(0x3f) : shutter_position double press 0 disabled, 1..101 == 0..100%
+    // (setting>> 2)&(0x3f) : shutter_position single press 0 disabled, 1..101 == 0..100%
+    // (setting>> 0)&(0x03) : shutter_index
+    if (XdrvMailbox.data_len > 0) {
+        uint32_t i = 0;
+        bool done = false;
+        char *str_ptr;
+        char* version_dup = strdup(XdrvMailbox.data);  // Duplicate the version_str as strtok_r will modify it.
+        // Loop through the version string, splitting on ' ' seperators.
+        for (char *str = strtok_r(version_dup, " ", &str_ptr); str && i < (1+4+4+1); str = strtok_r(nullptr, " ", &str_ptr), i++) {
+          int field;
+          if (str[0] == '-')
+            field = -1;
+          else
+            field = atoi(str);
+
+          switch (i) {
+            case 0:
+              if ((field >= 1) && (field<=4)) {
+                setting |= (1<<31);
+                setting |= field-1;
+              } else
+                done = true;
+            break;
+            case 1:
+              if (!strcmp_P(str, PSTR("up"))) {
+                setting |= (((100>>1)+1)<<2) | (((50>>1)+1)<<8) | (((75>>1)+1)<<14) | (((100>>1)+1)<<20) | (0x18<<26);
+                done = true;
+                break;
+              } else if (!strcmp_P(str, PSTR("down"))) {
+                setting |= (((0>>1)+1)<<2) | (((50>>1)+1)<<8) | (((25>>1)+1)<<14) | (((0>>1)+1)<<20) | (0x18<<26);
+                done = true;
+                break;
+              } else if (!strcmp_P(str, PSTR("updown"))) {
+                setting |= (((100>>1)+1)<<2) | (((0>>1)+1)<<8) | (((50>>1)+1)<<14);
+                done = true;
+                break;
+              }
+            case 2:
+            case 3:
+            case 4:
+              if ((field >= -1) && (field<=100))
+                setting |= (((field>>1)+1)<<(i*6 + (2-6)));
+            break;
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+              if (field==1)
+                setting |= (1<<(i + (26-5)));
+            break;
+          }
+          if (done) break;
+        }
+        free(version_dup);
+        Settings.shutter_button[XdrvMailbox.index-1] = setting;
+        ResponseCmndIdxChar(XdrvMailbox.data);
+      } else {
+        setting = Settings.shutter_button[XdrvMailbox.index-1];
+
+        char setting_chr[30] = "0";
+        if ((setting>>31)&(0x01)) {
+          snprintf_P(setting_chr, sizeof(setting_chr), PSTR("%d %d %d %d %d %d %d %d %d %d"), ((setting>> 0)&(0x03))+1, (((setting>> 2)&(0x3f))-1)<<1, (((setting>> 8)&(0x3f))-1)<<1, (((setting>>14)&(0x3f))-1)<<1, (((setting>>20)&(0x3f))-1)<<1, (setting>>26)&(0x01), (setting>>27)&(0x01),  (setting>>28)&(0x01), (setting>>29)&(0x01), (setting>>30)&(0x01));
+          for (uint32_t i=0 ; i < sizeof(setting_chr)-1 ; i++) {
+            if ((setting_chr[i]=='-') && (setting_chr[i+1])) setting_chr[++i]='-'; // dirty '-x' to '--'
+            if (!setting_chr[i]) break;
+          }
+        }
+        ResponseCmndIdxChar(setting_chr);
+      }
+   }
+}
+
 void CmndShutterSetHalfway(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
@@ -807,6 +992,12 @@ bool Xdrv27(uint8_t function)
           Shutter.skip_relay_change = 0;
           AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: Skipping switch off relay %d"),i);
           ExecuteCommandPower(i+1, 0, SRC_SHUTTER);
+        }
+      break;
+      case FUNC_BUTTON_PRESSED:
+        if (Settings.shutter_button[XdrvMailbox.index] & (1<<31)) {
+          ShutterButtonHandler();
+          result = true;
         }
       break;
     }
