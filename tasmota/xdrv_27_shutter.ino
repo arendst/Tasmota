@@ -731,20 +731,24 @@ void CmndShutterCalibration(void)  // ????
         // Loop through the version string, splitting on '.' seperators.
         for (char *str = strtok_r(version_dup, " ", &str_ptr); str && i < 5; str = strtok_r(nullptr, " ", &str_ptr), i++) {
           int field = atoi(str);
-          // The fields in a version string can only range from 1-255.
+          // The fields in a version string can only range from 1-30000.
           // and following value must be higher than previous one
-          if ((field <= 0) || (field > 255) ||  ( (i>0) && (field <= messwerte[i-1]) ) ) {
-            free(version_dup);
+          if ((field <= 0) || (field > 30000) ||  ( (i>0) && (field <= messwerte[i-1]) ) ) {
             break;
           }
           messwerte[i] = field;
         }
+        free(version_dup);
         for (i=0 ; i < 5 ; i++) {
-          Settings.shuttercoeff[i][XdrvMailbox.index -1] = messwerte[i] * 1000 / messwerte[4];
+          Settings.shuttercoeff[i][XdrvMailbox.index -1] = (uint32_t)messwerte[i] * 1000 / messwerte[4];
           AddLog_P2(LOG_LEVEL_INFO, PSTR("Settings.shuttercoeff: %d, i: %d, value: %d, messwert %d"), i,XdrvMailbox.index -1,Settings.shuttercoeff[i][XdrvMailbox.index -1], messwerte[i]);
         }
         ShutterInit();
         ResponseCmndIdxChar(XdrvMailbox.data);
+    } else {
+      char setting_chr[30] = "0";
+      snprintf_P(setting_chr, sizeof(setting_chr), PSTR("%d %d %d %d %d"), Settings.shuttercoeff[0][XdrvMailbox.index -1], Settings.shuttercoeff[1][XdrvMailbox.index -1], Settings.shuttercoeff[2][XdrvMailbox.index -1], Settings.shuttercoeff[3][XdrvMailbox.index -1], Settings.shuttercoeff[4][XdrvMailbox.index -1]);
+      ResponseCmndIdxChar(setting_chr);
     }
   }
 }
