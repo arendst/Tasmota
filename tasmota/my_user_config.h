@@ -440,25 +440,21 @@
 
 // -- SPI sensors ---------------------------------
 //#define USE_SPI                                  // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
-
 #ifdef USE_SPI
-  // #ifndef USE_DISPLAY
-  // #define USE_DISPLAY                            // Add SPI Display support for 320x240 and 480x320 TFT
-  // #endif
-  //   #define USE_DISPLAY_ILI9341                  // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
-//    #define USE_DISPLAY_EPAPER_29                // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
-//    #define USE_DISPLAY_EPAPER_42                // [DisplayModel 6] Enable e-paper 4.2 inch display
-//    #define USE_DISPLAY_ILI9488                  // [DisplayModel 8] [I2cDriver38] (Touch)
-//    #define USE_DISPLAY_SSD1351                  // [DisplayModel 9]
-//    #define USE_DISPLAY_RA8876                   // [DisplayModel 10] [I2cDriver39] (Touch)
-  
-  #define USE_NRF24                                // add support for NRF24L01(+), (+2k3 of code)
-    #ifdef USE_DISPLAY
-      #undef USE_DISPLAY                           // Display drivers should be disabled
+//  #define USE_NRF24                              // Add SPI support for NRF24L01(+) (+2k6 code)
+  #ifdef USE_NRF24
+    #define USE_MIBLE                            // BLE-bridge for some Mijia-BLE-sensors (+4k7 code)
+  #else
+    #ifndef USE_DISPLAY
+      #define USE_DISPLAY                        // Add SPI Display support for 320x240 and 480x320 TFT
     #endif
-    #ifdef USE_NRF24
-      #define USE_MIBLE                            // BLE-bridge for some Mijia-BLE-sensors (+4k6 of code)
-  #endif // USE_NRF24
+      #define USE_DISPLAY_ILI9341                // [DisplayModel 4] Enable ILI9341 Tft 480x320 display (+19k code)
+//      #define USE_DISPLAY_EPAPER_29              // [DisplayModel 5] Enable e-paper 2.9 inch display (+19k code)
+//      #define USE_DISPLAY_EPAPER_42              // [DisplayModel 6] Enable e-paper 4.2 inch display
+//      #define USE_DISPLAY_ILI9488                // [DisplayModel 8] [I2cDriver38] (Touch)
+//      #define USE_DISPLAY_SSD1351                // [DisplayModel 9]
+//      #define USE_DISPLAY_RA8876                 // [DisplayModel 10] [I2cDriver39] (Touch)
+  #endif  // USE_NRF24
 #endif  // USE_SPI
 
 // -- Serial sensors ------------------------------

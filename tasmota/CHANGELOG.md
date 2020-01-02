@@ -5,6 +5,7 @@
 - Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
 - Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
 - Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
+- Add experimental support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
 - Fix LCD line and column positioning (#7387)
 - Fix Display handling of hexadecimal escape characters (#7387)
 - Fix Improved fade linearity with gamma correction

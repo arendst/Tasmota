@@ -1,14 +1,18 @@
 /*
-  nrf24l01 support for Tasmota
-  Copyright (C) 2019  Christian Baars and Theo Arends
+  xdrv_33_nrf24l01.ino - nrf24l01 support for Tasmota
+
+  Copyright (C) 2020  Christian Baars and Theo Arends
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -54,7 +58,7 @@ struct {
 
 RF24 NRF24radio;
 
-bool NRF24initRadio() 
+bool NRF24initRadio()
 {
   NRF24radio.begin(pin[GPIO_SPI_CS],pin[GPIO_SPI_DC]);
   NRF24radio.powerUp();
@@ -68,7 +72,7 @@ bool NRF24initRadio()
 }
 
 bool NRF24Detect(void)
-{  
+{
   if  ((pin[GPIO_SPI_CS]<99) && (pin[GPIO_SPI_DC]<99)){
     SPI.pins(SCK,MOSI,MISO,-1);
     if(NRF24initRadio()){
@@ -80,7 +84,7 @@ bool NRF24Detect(void)
       }
       return true;
     }
-  } 
+  }
   return false;
 }
 

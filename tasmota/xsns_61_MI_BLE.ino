@@ -1,14 +1,18 @@
 /*
-  MI-BLE-sensors via nrf24l01 support for Tasmota
-  Copyright (C) 2019  Christian Baars and Theo Arends
+  xsns_61_Ml_BLE.ino - MI-BLE-sensors via nrf24l01 support for Tasmota
+
+  Copyright (C) 2020  Christian Baars and Theo Arends
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -39,7 +43,7 @@
 * MIBLE
 * BLE-Sniffer/Bridge for MIJIA/XIAOMI Temperatur/Humidity-Sensor, Mi Flora
 *
-* Usage: Configure NRF24 
+* Usage: Configure NRF24
 \*********************************************************************************************/
 
 #define XSNS_61             61
@@ -131,7 +135,7 @@ union MJ_HT_V1Packet_t {    // related to the whole 32-byte-packet/buffer
       uint8_t valueTen;
       uint8_t effectiveDataLength; // 4
       uint16_t temp;
-      uint16_t hum; 
+      uint16_t hum;
   } TH;   // mode 0d
       struct {
       uint8_t padding[3];
@@ -246,7 +250,7 @@ std::vector<mi_sensor_t> MIBLEsensors;
 /********************************************************************************************/
 
 
-bool MIBLEinitBLE(uint8_t _mode) 
+bool MIBLEinitBLE(uint8_t _mode)
 {
   NRF24radio.begin(pin[GPIO_SPI_CS],pin[GPIO_SPI_DC]);
   NRF24radio.setAutoAck(false);
@@ -280,7 +284,7 @@ void MIBLEhopChannel()
 
 /**
  * @brief Read out FIFO-buffer, swap buffer and whiten
- * 
+ *
  * @return true - If something is in the buffer
  * @return false - Nothing is in the buffer
  */
@@ -335,10 +339,10 @@ void MIBLEshowBuffer(uint8_t (&buf)[32]){ // we use this only for the 32-byte-FI
 
 /**
  * @brief change lsfrBuffer content to "wire bit order"
- * 
+ *
  * @param len Buffer lenght (could be hardcoded to 32)
  */
-void MIBLEswapbuf(uint8_t len) 
+void MIBLEswapbuf(uint8_t len)
 {
   uint8_t* buf = (uint8_t*)&MIBLE.buffer;
   while(len--) {
@@ -358,7 +362,7 @@ void MIBLEswapbuf(uint8_t len)
 
 /**
  * @brief Whiten the packet buffer
- * 
+ *
  * @param buf   The packet buffer
  * @param len   Lenght of the packet buffer
  * @param lfsr  Start lsfr-byte
@@ -385,11 +389,11 @@ void MIBLEwhiten(uint8_t *buf, uint8_t len, uint8_t lfsr)
 
 /**
  * @brief Set packet mode and fitting PDU-type of the NRF24L01
- * 
+ *
  * @param _mode The internal packet mode number
  */
 void MIBLEchangePacketModeTo(uint8_t _mode) {
-  switch(_mode){      
+  switch(_mode){
     case 0: // normal BLE advertisement
       NRF24radio.openReadingPipe(0,0x6B7D9171); // advertisement address: 0x8E89BED6 (bit-reversed -> 0x6B7D9171)
     break;
@@ -407,7 +411,7 @@ void MIBLEchangePacketModeTo(uint8_t _mode) {
 
 /**
  * @brief Return the slot number of a known sensor or return create new sensor slot
- * 
+ *
  * @param _serial     BLE address of the sensor
  * @param _type       Type number of the sensor
  * @return uint32_t   Known or new slot in the sensors-vector
@@ -442,7 +446,7 @@ uint32_t MIBLEgetSensorSlot(uint8_t (&_serial)[6], uint8_t _type){
       _newSensor.MJ_HT_V1.temp=-1000.0f;
       _newSensor.MJ_HT_V1.hum=-1.0f;
       _newSensor.MJ_HT_V1.bat=0xff;
-      break; 
+      break;
     default:
       break;
     }
@@ -659,7 +663,7 @@ void MIBLEShow(bool json)
             ResponseAppend_P(PSTR(",\"Battery\":%u"), MIBLEsensors.at(i).MJ_HT_V1.bat);
           }
           ResponseAppend_P(PSTR("}"));
-          break;  
+          break;
       }
     }
 #ifdef USE_WEBSERVER
@@ -684,7 +688,7 @@ void MIBLEShow(bool json)
               WSContentSend_PD(HTTP_SNS_TEMP, MIBLESlaveFlora, temperature_flora, TempUnit());
             }
             if(MIBLEsensors.at(i).Flora.lux!=0xffff){ // this is the error code -> no temperature
-              WSContentSend_PD(HTTP_SNS_ILLUMINANCE, MIBLESlaveFlora, MIBLEsensors.at(i).Flora.lux); 
+              WSContentSend_PD(HTTP_SNS_ILLUMINANCE, MIBLESlaveFlora, MIBLEsensors.at(i).Flora.lux);
             }
             if(MIBLEsensors.at(i).Flora.moisture!=-1000.0f){ // this is the error code -> no temperature
               WSContentSend_PD(HTTP_SNS_MOISTURE, MIBLESlaveFlora, MIBLEsensors.at(i).Flora.moisture);
@@ -716,7 +720,7 @@ void MIBLEShow(bool json)
         }
       }
     }
-  }        
+  }
 #endif  // USE_WEBSERVER
 }
 
