@@ -9,6 +9,7 @@
 - Fix LCD line and column positioning (#7387)
 - Fix Display handling of hexadecimal escape characters (#7387)
 - Fix Improved fade linearity with gamma correction
+- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
 
 ### 8.1.0.1 20191225
 
