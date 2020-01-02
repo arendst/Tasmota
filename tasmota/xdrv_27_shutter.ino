@@ -132,7 +132,7 @@ uint8_t ShutterRealToPercentPosition(int32_t realpos, uint8_t index)
     uint16_t realpercent;
 
     for (uint8_t i=0 ; i < 5 ; i++) {
-      if (realpos > Shutter.open_max[index] * calibrate_pos[i+1] / 100) {
+      if (realpos >= Shutter.open_max[index] * calibrate_pos[i+1] / 100) {
         realpercent = Settings.shuttercoeff[i][index] /10;
         //AddLog_P2(LOG_LEVEL_INFO, PSTR("Realpercent TEMP1: %d, %% %d, coeff %d"), realpercent, realpos, Shutter_Open_Max[index] * calibrate_pos[i+1] / 100);
       } else {
