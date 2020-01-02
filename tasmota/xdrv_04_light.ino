@@ -1709,9 +1709,6 @@ void LightAnimate(void)
         calcGammaMultiChannels(cur_col_10);
       } else {
         calcGammaBulbs(cur_col_10);
-        if (PHILIPS == my_module_type) {
-          calcGammaCTPwm(cur_col_10);
-        }
 
         // Now see if we need to mix RGB and True White
         // Valid only for LST_RGBW, LST_RGBWC, rgbwwTable[4] is zero, and white is zero (see doc)
@@ -1941,26 +1938,6 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
   XdrvMailbox.topic = tmp_topic;
 }
 
-// Do specific computation is SetOption73 is on, Color Temp is a separate PWM channel
-void calcGammaCTPwm(uint16_t cur_col_10[5]) {
-  // Xiaomi Philips bulbs follow a different scheme:
-  uint8_t cold, warm;   // channel 1 is the color tone, mapped to cold channel (0..255)
-  light_state.getCW(&cold, &warm);
-  // channels for white are always the last two channels
-  uint32_t cw1 = Light.subtype - 1;       // address for the ColorTone PWM
-  uint32_t cw0 = Light.subtype - 2;       // address for the White Brightness PWM
-  // overall brightness
-  uint16_t pxBri10 = cur_col_10[cw0] + cur_col_10[cw1];
-  if (pxBri10 > 1023) { pxBri10 = 1023; }
-  cur_col_10[cw1] = changeUIntScale(cold, 0, cold + warm, 0, 1023);   //
-  // channel 0=intensity, channel1=temperature
-  if (Settings.light_correction) { // gamma correction
-    cur_col_10[cw0] = ledGamma10_10(pxBri10);    // 10 bits gamma correction
-  } else {
-    cur_col_10[cw0] = pxBri10;  // no gamma, extend to 10 bits
-  }
-}
-
 // Just apply basic Gamma to each channel
 void calcGammaMultiChannels(uint16_t cur_col_10[5]) {
   // Apply gamma correction for 8 and 10 bits resolutions, if needed
@@ -1976,22 +1953,35 @@ void calcGammaBulbs(uint16_t cur_col_10[5]) {
   if (Settings.light_correction) {
     // First apply combined correction to the overall white power
     if ((LST_COLDWARM == Light.subtype) || (LST_RGBWC == Light.subtype)) {
-      uint8_t w_idx[2] = {0, 1};        // if LST_COLDWARM, channels 0 and 1
-      if (LST_RGBWC == Light.subtype) { // if LST_RGBWC, channels 3 and 4
-        w_idx[0] = 3;
-        w_idx[1] = 4;
-      }
-      uint16_t white_bri10 = cur_col_10[w_idx[0]] + cur_col_10[w_idx[1]];
-      // if sum of both channels is > 255, then channels are probablu uncorrelated
-      if (white_bri10 <= 1023) {
-        // we calculate the gamma corrected sum of CW + WW
-        uint16_t white_bri_10bits = ledGamma10_10(white_bri10);
-        // then we split the total energy among the cold and warm leds
-        cur_col_10[w_idx[0]] = changeUIntScale(cur_col_10[w_idx[0]], 0, white_bri10, 0, white_bri_10bits);
-        cur_col_10[w_idx[1]] = changeUIntScale(cur_col_10[w_idx[1]], 0, white_bri10, 0, white_bri_10bits);
+      // channels for white are always the last two channels
+      uint32_t cw1 = Light.subtype - 1;       // address for the ColorTone PWM
+      uint32_t cw0 = Light.subtype - 2;       // address for the White Brightness PWM
+      uint16_t white_bri10 = cur_col_10[cw0] + cur_col_10[cw1];   // cumulated brightness
+      uint16_t white_bri10_1023 = (white_bri10 > 1023) ? 1023 : white_bri10;    // max 1023
+
+      if (PHILIPS == my_module_type) {   // channel 1 is the color tone, mapped to cold channel (0..255)
+        // Xiaomi Philips bulbs follow a different scheme:
+        uint8_t cold, warm;
+        light_state.getCW(&cold, &warm);
+        cur_col_10[cw1] = changeUIntScale(cold, 0, cold + warm, 0, 1023);   //
+        // channel 0=intensity, channel1=temperature
+        if (Settings.light_correction) { // gamma correction
+          cur_col_10[cw0] = ledGamma10_10(white_bri10_1023);    // 10 bits gamma correction
+        } else {
+          cur_col_10[cw0] = white_bri10_1023;  // no gamma, extend to 10 bits
+        }
       } else {
-        cur_col_10[w_idx[0]] = ledGamma10_10(cur_col_10[w_idx[0]]);
-        cur_col_10[w_idx[1]] = ledGamma10_10(cur_col_10[w_idx[1]]);
+        // if sum of both channels is > 255, then channels are probably uncorrelated
+        if (white_bri10 <= 1031) {      // take a margin of 8 above 1023 to account for rounding errors
+          // we calculate the gamma corrected sum of CW + WW
+          uint16_t white_bri_gamma10 = ledGamma10_10(white_bri10_1023);
+          // then we split the total energy among the cold and warm leds
+          cur_col_10[cw0] = changeUIntScale(cur_col_10[cw0], 0, white_bri10_1023, 0, white_bri_gamma10);
+          cur_col_10[cw1] = changeUIntScale(cur_col_10[cw1], 0, white_bri10_1023, 0, white_bri_gamma10);
+        } else {
+          cur_col_10[cw0] = ledGamma10_10(cur_col_10[cw0]);
+          cur_col_10[cw1] = ledGamma10_10(cur_col_10[cw1]);
+        }
       }
     }
     // then apply gamma correction to RGB channels
