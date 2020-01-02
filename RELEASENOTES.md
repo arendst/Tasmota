@@ -70,3 +70,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
 - Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
 - Add experimental support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
+- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
