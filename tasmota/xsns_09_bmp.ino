@@ -654,7 +654,7 @@ bool Xsns09(uint8_t function)
       case FUNC_SAVE_BEFORE_RESTART:
         BMP_EnterSleep();
         break;
-#endif USE_DEEPSLEEP
+#endif // USE_DEEPSLEEP
     }
   }
   return result;
