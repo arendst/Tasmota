@@ -609,8 +609,10 @@ const char HTTP_MIBLE_FLORA_DATA[] PROGMEM =
 
 void MIBLEShow(bool json)
 {
-  if (json && MIBLEsensors.size()) {
-    for(uint32_t i=0; i<MIBLEsensors.size(); i++){
+  if (json) {
+    if (!MIBLEsensors.size()) { return; }
+
+    for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
       char slave[33];
       switch(MIBLEsensors.at(i).type){
         case 1:
@@ -668,55 +670,58 @@ void MIBLEShow(bool json)
     }
 #ifdef USE_WEBSERVER
   } else {
-      WSContentSend_PD(HTTP_NRF24, NRF24type, NRF24.chipType);
-      for(uint32_t i=0; i<MIBLEsensors.size(); i++){
-        switch(MIBLEsensors.at(i).type){
-          case 1:
-            if(MIBLEsensors.at(i).showedUp < 3){
-              DEBUG_SENSOR_LOG(PSTR("MIBLE: sensor not fully registered yet"));
-              break;
-            }
-            char temperature_flora[33];
-            dtostrfd(MIBLEsensors.at(i).Flora.temp, Settings.flag2.temperature_resolution, temperature_flora);
-            char lux_flora[33];
-            dtostrfd((float)MIBLEsensors.at(i).Flora.lux, 0, lux_flora);
-            char fertility_flora[33];
-            dtostrfd(MIBLEsensors.at(i).Flora.fertility, 0, fertility_flora);
+    WSContentSend_PD(HTTP_NRF24, NRF24type, NRF24.chipType);
 
-            WSContentSend_PD(HTTP_MIBLE_SERIAL, F("Flora "), MIBLEsensors.at(i).serial[5], MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]);
-            if(MIBLEsensors.at(i).Flora.temp!=-1000.0f){ // this is the error code -> no temperature
-              WSContentSend_PD(HTTP_SNS_TEMP, MIBLESlaveFlora, temperature_flora, TempUnit());
-            }
-            if(MIBLEsensors.at(i).Flora.lux!=0xffff){ // this is the error code -> no temperature
-              WSContentSend_PD(HTTP_SNS_ILLUMINANCE, MIBLESlaveFlora, MIBLEsensors.at(i).Flora.lux);
-            }
-            if(MIBLEsensors.at(i).Flora.moisture!=-1000.0f){ // this is the error code -> no temperature
-              WSContentSend_PD(HTTP_SNS_MOISTURE, MIBLESlaveFlora, MIBLEsensors.at(i).Flora.moisture);
-            }
-            if(MIBLEsensors.at(i).Flora.fertility!=-1000.0f){ // this is the error code -> no temperature
-              WSContentSend_PD(HTTP_MIBLE_FLORA_DATA, MIBLESlaveFlora, fertility_flora);
-            }
-            break;
-          case 2:
-            if(MIBLEsensors.at(i).showedUp < 3){
-              DEBUG_SENSOR_LOG(PSTR("MIBLE: sensor not fully registered yet"));
-              break;
-            }
-            char temperature[33];
-            dtostrfd(MIBLEsensors.at(i).MJ_HT_V1.temp, Settings.flag2.temperature_resolution, temperature);
-            char humidity[33];
-            dtostrfd(MIBLEsensors.at(i).MJ_HT_V1.hum, 1, humidity);
+    if (!MIBLEsensors.size()) { return; }
 
-            WSContentSend_PD(HTTP_MIBLE_SERIAL, MIBLESlaveMJ_HT_V1, MIBLEsensors.at(i).serial[5], MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]);
-            if(MIBLEsensors.at(i).MJ_HT_V1.temp!=-1000.0f){
-              WSContentSend_PD(HTTP_SNS_TEMP, MIBLESlaveMJ_HT_V1, temperature, TempUnit());
-            }
-            if(MIBLEsensors.at(i).MJ_HT_V1.hum!=-1.0f){
-              WSContentSend_PD(HTTP_SNS_HUM, MIBLESlaveMJ_HT_V1, humidity);
-            }
-            if(MIBLEsensors.at(i).MJ_HT_V1.bat!=0xff){
-              WSContentSend_PD(HTTP_BATTERY, MIBLESlaveMJ_HT_V1, MIBLEsensors.at(i).MJ_HT_V1.bat);
+    for (uint32_t i = 0; i < MIBLEsensors.size(); i++) {
+      switch(MIBLEsensors.at(i).type){
+        case 1:
+          if(MIBLEsensors.at(i).showedUp < 3){
+            DEBUG_SENSOR_LOG(PSTR("MIBLE: sensor not fully registered yet"));
             break;
+          }
+          char temperature_flora[33];
+          dtostrfd(MIBLEsensors.at(i).Flora.temp, Settings.flag2.temperature_resolution, temperature_flora);
+          char lux_flora[33];
+          dtostrfd((float)MIBLEsensors.at(i).Flora.lux, 0, lux_flora);
+          char fertility_flora[33];
+          dtostrfd(MIBLEsensors.at(i).Flora.fertility, 0, fertility_flora);
+
+          WSContentSend_PD(HTTP_MIBLE_SERIAL, F("Flora "), MIBLEsensors.at(i).serial[5], MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]);
+          if(MIBLEsensors.at(i).Flora.temp!=-1000.0f){ // this is the error code -> no temperature
+            WSContentSend_PD(HTTP_SNS_TEMP, MIBLESlaveFlora, temperature_flora, TempUnit());
+          }
+          if(MIBLEsensors.at(i).Flora.lux!=0xffff){ // this is the error code -> no temperature
+            WSContentSend_PD(HTTP_SNS_ILLUMINANCE, MIBLESlaveFlora, MIBLEsensors.at(i).Flora.lux);
+          }
+          if(MIBLEsensors.at(i).Flora.moisture!=-1000.0f){ // this is the error code -> no temperature
+            WSContentSend_PD(HTTP_SNS_MOISTURE, MIBLESlaveFlora, MIBLEsensors.at(i).Flora.moisture);
+          }
+          if(MIBLEsensors.at(i).Flora.fertility!=-1000.0f){ // this is the error code -> no temperature
+            WSContentSend_PD(HTTP_MIBLE_FLORA_DATA, MIBLESlaveFlora, fertility_flora);
+          }
+          break;
+        case 2:
+          if(MIBLEsensors.at(i).showedUp < 3){
+            DEBUG_SENSOR_LOG(PSTR("MIBLE: sensor not fully registered yet"));
+            break;
+          }
+          char temperature[33];
+          dtostrfd(MIBLEsensors.at(i).MJ_HT_V1.temp, Settings.flag2.temperature_resolution, temperature);
+          char humidity[33];
+          dtostrfd(MIBLEsensors.at(i).MJ_HT_V1.hum, 1, humidity);
+
+          WSContentSend_PD(HTTP_MIBLE_SERIAL, MIBLESlaveMJ_HT_V1, MIBLEsensors.at(i).serial[5], MIBLEsensors.at(i).serial[4],MIBLEsensors.at(i).serial[3],MIBLEsensors.at(i).serial[2],MIBLEsensors.at(i).serial[1],MIBLEsensors.at(i).serial[0]);
+          if(MIBLEsensors.at(i).MJ_HT_V1.temp!=-1000.0f){
+            WSContentSend_PD(HTTP_SNS_TEMP, MIBLESlaveMJ_HT_V1, temperature, TempUnit());
+          }
+          if(MIBLEsensors.at(i).MJ_HT_V1.hum!=-1.0f){
+            WSContentSend_PD(HTTP_SNS_HUM, MIBLESlaveMJ_HT_V1, humidity);
+          }
+          if(MIBLEsensors.at(i).MJ_HT_V1.bat!=0xff){
+            WSContentSend_PD(HTTP_BATTERY, MIBLESlaveMJ_HT_V1, MIBLEsensors.at(i).MJ_HT_V1.bat);
+          break;
         }
       }
     }
