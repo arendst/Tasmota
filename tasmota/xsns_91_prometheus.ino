@@ -34,6 +34,7 @@ void HandleMetrics(void)
 
   WSContentBegin(200, CT_PLAIN);
 
+
   char parameter[FLOATSZ];
 
   if (global_temperature != 9999) {
@@ -57,10 +58,24 @@ void HandleMetrics(void)
   dtostrfd(Energy.active_power[0], Settings.flag2.wattage_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE active_power guage\nactive_power %s\n"), parameter);
   dtostrfd(Energy.daily, Settings.flag2.energy_resolution, parameter);
-  WSContentSend_P(PSTR("# TYPE energy_daily counter\nenergy_daily %s\n"), parameter);
+  WSContentSend_P(PSTR("# TYPE energy_daily gauge\nenergy_daily %s\n"), parameter);
   dtostrfd(Energy.total, Settings.flag2.energy_resolution, parameter);
   WSContentSend_P(PSTR("# TYPE energy_total counter\nenergy_total %s\n"), parameter);
 #endif
+
+/*
+  // Alternative method using the complete sensor JSON data
+  // For prometheus it may need to be decoded to # TYPE messages
+  mqtt_data[0] = '\0';
+  MqttShowSensor();
+  char json[strlen(mqtt_data) +1];
+  snprintf_P(json, sizeof(json), mqtt_data);
+
+  // Do your Prometheus specific processing here.
+  // Look at function DisplayAnalyzeJson() in file xdrv_13_display.ino as an example how to decode the JSON message
+
+  WSContentSend_P(json);
+*/
 
   WSContentEnd();
 }
