@@ -62,6 +62,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix LCD line and column positioning (#7387)
 - Fix Display handling of hexadecimal escape characters (#7387)
 - Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
+- Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
 - Add SerialConfig to ``Status 1``
 - Add WifiPower to ``Status 5``
 - Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
