@@ -6,10 +6,11 @@
 - Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
 - Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
 - Add experimental support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
+- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
 - Fix LCD line and column positioning (#7387)
 - Fix Display handling of hexadecimal escape characters (#7387)
 - Fix Improved fade linearity with gamma correction
-- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
+- Fix wrong gamma correction for Module 48 lights (PWM5 for CT)
 
 ### 8.1.0.1 20191225
 
