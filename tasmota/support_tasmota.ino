@@ -1000,7 +1000,9 @@ void ArduinoOTAInit(void)
 {
   ArduinoOTA.setPort(8266);
   ArduinoOTA.setHostname(my_hostname);
-  if (strlen(SettingsText(SET_WEBPWD))) { ArduinoOTA.setPassword(SettingsText(SET_WEBPWD)); }
+  if (strlen(SettingsText(SET_WEBPWD))) {
+    ArduinoOTA.setPassword(SettingsText(SET_WEBPWD));
+  }
 
   ArduinoOTA.onStart([]()
   {
@@ -1058,6 +1060,14 @@ void ArduinoOTAInit(void)
 
   ArduinoOTA.begin();
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_ENABLED " " D_PORT " 8266"));
+}
+
+void ArduinoOtaLoop(void)
+{
+  MDNS.update();
+  ArduinoOTA.handle();
+  // Once OTA is triggered, only handle that and dont do other stuff. (otherwise it fails)
+  while (arduino_ota_triggered) { ArduinoOTA.handle(); }
 }
 #endif  // USE_ARDUINO_OTA
 

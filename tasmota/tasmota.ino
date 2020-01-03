@@ -405,10 +405,7 @@ void loop(void)
   if (!serial_local) { SerialInput(); }
 
 #ifdef USE_ARDUINO_OTA
-  MDNS.update();
-  ArduinoOTA.handle();
-  // Once OTA is triggered, only handle that and dont do other stuff. (otherwise it fails)
-  while (arduino_ota_triggered) ArduinoOTA.handle();
+  ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
 
   uint32_t my_activity = millis() - my_sleep;
