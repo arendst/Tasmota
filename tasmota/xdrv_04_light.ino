@@ -277,6 +277,16 @@ power_t LightPower(void)
   return Light.power;                     // Make external
 }
 
+// IRAM variant for rotary
+#ifndef ARDUINO_ESP8266_RELEASE_2_3_0      // Fix core 2.5.x ISR not in IRAM Exception
+power_t LightPowerIRAM(void) ICACHE_RAM_ATTR;
+#endif  // ARDUINO_ESP8266_RELEASE_2_3_0
+
+power_t LightPowerIRAM(void)
+{
+  return Light.power;                     // Make external
+}
+
 uint8_t LightDevice(void)
 {
   return Light.device;                    // Make external

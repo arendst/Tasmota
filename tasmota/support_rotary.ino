@@ -43,7 +43,7 @@ void update_rotary(void) ICACHE_RAM_ATTR;
 void update_rotary(void)
 {
   if (MI_DESK_LAMP == my_module_type) {
-    if (LightPower()) {
+    if (LightPowerIRAM()) {
       /*
       * https://github.com/PaulStoffregen/Encoder/blob/master/Encoder.h
       */
