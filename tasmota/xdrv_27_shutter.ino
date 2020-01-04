@@ -575,12 +575,12 @@ void ShutterButtonHandler(void)
           } else {
             XdrvMailbox.payload = position = (position-1)<<1;
             CmndShutterPosition();
-            if ((Settings.shutter_button[button_index]>>(press_index + 26)) & 0x01) {
+            if (Settings.shutter_button[button_index] & ((0x01<<26)<<press_index)) {
               // MQTT broadcast to grouptopic
               char scommand[CMDSZ];
               char stopic[TOPSZ];
               for (uint32_t i = 0; i < MAX_SHUTTERS; i++) {
-                if ((i==shutter_index) || ((Settings.shutter_button[button_index]>>30) & 0x01)) {
+                if ((i==shutter_index) || (Settings.shutter_button[button_index] & (0x01<<30))) {
                   snprintf_P(scommand, sizeof(scommand),PSTR("ShutterPosition%d"), i+1);
                   GetGroupTopic_P(stopic, scommand);
                   Response_P("%d", position);
@@ -787,7 +787,7 @@ void CmndShutterRelay(void)
 
 void CmndShutterButton(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_KEYS)) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_SHUTTERS)) {
     uint32_t setting = 0;
     // (setting>>31)&(0x01) : enabled
     // (setting>>30)&(0x01) : mqtt broadcast to all index
@@ -801,7 +801,7 @@ void CmndShutterButton(void)
     // (setting>> 2)&(0x3f) : shutter_position single press 0 disabled, 1..101 == 0..100%
     // (setting>> 0)&(0x03) : shutter_index
     if (XdrvMailbox.data_len > 0) {
-        uint32_t i = 0;
+        uint32_t i = 0, button_index = 0;
         bool done = false;
         char *str_ptr;
         char* version_dup = strdup(XdrvMailbox.data);  // Duplicate the version_str as strtok_r will modify it.
@@ -815,9 +815,9 @@ void CmndShutterButton(void)
 
           switch (i) {
             case 0:
-              if ((field >= 1) && (field<=4)) {
-                setting |= (1<<31);
-                setting |= field-1;
+              if ((field >= -1) && (field<=4)) {
+                button_index = (field<=0)?(-1):field;
+                done = (button_index==-1);
               } else
                 done = true;
             break;
@@ -853,21 +853,48 @@ void CmndShutterButton(void)
           if (done) break;
         }
         free(version_dup);
-        Settings.shutter_button[XdrvMailbox.index-1] = setting;
-        ResponseCmndIdxChar(XdrvMailbox.data);
-      } else {
-        setting = Settings.shutter_button[XdrvMailbox.index-1];
 
-        char setting_chr[30] = "0";
-        if ((setting>>31)&(0x01)) {
-          snprintf_P(setting_chr, sizeof(setting_chr), PSTR("%d %d %d %d %d %d %d %d %d %d"), ((setting>> 0)&(0x03))+1, (((setting>> 2)&(0x3f))-1)<<1, (((setting>> 8)&(0x3f))-1)<<1, (((setting>>14)&(0x3f))-1)<<1, (((setting>>20)&(0x3f))-1)<<1, (setting>>26)&(0x01), (setting>>27)&(0x01),  (setting>>28)&(0x01), (setting>>29)&(0x01), (setting>>30)&(0x01));
-          for (uint32_t i=0 ; i < sizeof(setting_chr)-1 ; i++) {
-            if ((setting_chr[i]=='-') && (setting_chr[i+1])) setting_chr[++i]='-'; // dirty '-x' to '--'
-            if (!setting_chr[i]) break;
+        if (button_index) {
+          if (button_index==-1) {
+            // remove all buttons for this shutter
+            for (uint32_t i=0 ; i < MAX_KEYS ; i++)
+              if ((Settings.shutter_button[i]&0x3) == (XdrvMailbox.index-1))
+                Settings.shutter_button[i] = 0;
+          } else {
+            if (setting) {
+              // anything was set
+              setting |= (1<<31);
+              setting |= (XdrvMailbox.index-1) & 0x3;
+            }
+            Settings.shutter_button[button_index-1] = setting;
           }
         }
-        ResponseCmndIdxChar(setting_chr);
       }
+      char setting_chr[30*MAX_KEYS] = "-", *setting_chr_ptr = setting_chr;
+      for (uint32_t i=0 ; i < MAX_KEYS ; i++) {
+        setting = Settings.shutter_button[i];
+        if ((setting&(1<<31)) && ((setting&0x3) == (XdrvMailbox.index-1))) {
+          if (*setting_chr_ptr == 0)
+            setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR("|"));
+          setting_chr_ptr += snprintf_P(setting_chr_ptr, 2, PSTR("%d"), i+1);
+
+          for (uint32_t j=0 ; j < 4 ; j++) {
+            int8_t pos = (((setting>> (2+6*j))&(0x3f))-1)<<1;
+            if (pos>=0)
+              setting_chr_ptr += snprintf_P(setting_chr_ptr, 5, PSTR(" %d"), pos);
+            else
+              setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR(" -"));
+          }
+          for (uint32_t j=0 ; j < 5 ; j++) {
+            bool mqtt = ((setting>>(26+j))&(0x01)!=0);
+            if (mqtt)
+              setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR(" 1"));
+            else
+              setting_chr_ptr += sprintf_P(setting_chr_ptr, PSTR(" -"));
+          }
+        }
+      }
+      ResponseCmndIdxChar(setting_chr);
    }
 }
 
