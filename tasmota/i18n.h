@@ -500,6 +500,8 @@
 #define D_PRFX_SHUTTER "Shutter"
 #define D_CMND_SHUTTER_OPEN "Open"
 #define D_CMND_SHUTTER_CLOSE "Close"
+#define D_CMND_SHUTTER_UP "Up"
+#define D_CMND_SHUTTER_DOWN "Down"
 #define D_CMND_SHUTTER_STOP "Stop"
 #define D_CMND_SHUTTER_POSITION "Position"
 #define D_CMND_SHUTTER_OPENTIME "OpenDuration"
