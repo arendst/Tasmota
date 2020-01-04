@@ -304,8 +304,20 @@ bool DomoticzMqttData(void)
           uint16_t b = color["b"]; b = b * level / 100;
           uint16_t cw = color["cw"]; cw = cw * level / 100;
           uint16_t ww = color["ww"]; ww = ww * level / 100;
-          snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_COLOR));
-          snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%02x%02x%02x%02x%02x"), r, g, b, cw, ww);
+
+          uint16_t m = 0;
+          uint16_t t = 0;
+          if (color.containsKey("m")) {
+            m = color["m"];
+            t = color["t"];
+          }
+          if (2 == m) {  // White with color temperature. Valid fields: t
+            snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_COLORTEMPERATURE ));
+            snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), changeUIntScale(t, 0, 255, CT_MIN, CT_MAX));
+          } else {
+            snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_COLOR));
+            snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%02x%02x%02x%02x%02x"), r, g, b, cw, ww);
+          }
           found = true;
         }
         else if ((!iscolordimmer && 2 == nvalue) ||  // gswitch_sSetLevel
