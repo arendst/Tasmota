@@ -242,6 +242,39 @@ void ShutterInit(void)
   }
 }
 
+
+void ShutterReportPosition(bool always = false)
+{
+  uint16_t shutter_moving = 0;
+  Response_P(PSTR("{"));
+  for (uint8_t i = 0; i < shutters_present; i++) {
+    //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d: Real Pos: %d"), i+1,Shutter.real_position[i]);
+    uint8_t position =  ShutterRealToPercentPosition(Shutter.real_position[i], i);
+    if (Shutter.direction[i] != 0) {
+      char stemp2[10];
+      uint8_t position =  ShutterRealToPercentPosition(Shutter.real_position[i], i);
+      dtostrfd((float)Shutter.time[i] / steps_per_second, 2, stemp2);
+      shutter_moving = 1;
+      //Settings.shutter_position[i] = Settings.shuttercoeff[2][i] * 5 > Shutter.real_position[i] ? Shutter.real_position[i] / Settings.shuttercoeff[2][i] : (Shutter.real_position[i]-Settings.shuttercoeff[0,i]) / Settings.shuttercoeff[1][i];
+      AddLog_P2(LOG_LEVEL_INFO, MSG_SHUTTER_POS, i+1, Shutter.real_position[i], Shutter.start_position[i], Shutter.target_position[i], Shutter.direction[i], Shutter.motordelay[i],stemp2,Shutter.pwm_frequency);
+    }
+    ResponseAppend_P(JSON_SHUTTER_POS, i+1, Settings.shutter_invert[i] ? 100-position : position, Shutter.direction[i]);
+    if (i < shutters_present - 1)
+      ResponseAppend_P(PSTR(", "));
+  }
+  ResponseJsonEnd();
+  if (always || shutter_moving == 1) {
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
+  }
+  if (rules_flag.shutter_moving > shutter_moving) {
+    rules_flag.shutter_moved = 1;
+  } else {
+    rules_flag.shutter_moved = 0;
+  }
+  rules_flag.shutter_moving = shutter_moving;
+  //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
+}
+
 void ShutterUpdatePosition(void)
 {
 
@@ -344,11 +377,7 @@ void ShutterUpdatePosition(void)
         MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
 
         Shutter.direction[i] = 0;
-        uint8_t position =  Settings.shutter_invert[i] ? 100 - Settings.shutter_position[i]: Settings.shutter_position[i];
-        Response_P(PSTR("{"));
-        ResponseAppend_P(JSON_SHUTTER_POS, i+1, position, 0 /*Shutter.direction[i]*/);
-        ResponseJsonEnd();
-        MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
+        ShutterReportPosition(true);
         XdrvRulesProcess();
       }
     }
@@ -413,33 +442,6 @@ void ShutterWaitForMotorStop(uint8_t i)
   } else {
     delay(MOTOR_STOP_TIME);
   }
-}
-
-void ShutterReportPosition(void)
-{
-  uint16_t shutter_moving = 0;
-  for (uint8_t i = 0; i < shutters_present; i++) {
-    //AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d: Real Pos: %d"), i+1,Shutter.real_position[i]);
-    if (Shutter.direction[i] != 0) {
-      char stemp2[10];
-      uint8_t position =  ShutterRealToPercentPosition(Shutter.real_position[i], i);
-      dtostrfd((float)Shutter.time[i] / steps_per_second, 2, stemp2);
-      shutter_moving = 1;
-      //Settings.shutter_position[i] = Settings.shuttercoeff[2][i] * 5 > Shutter.real_position[i] ? Shutter.real_position[i] / Settings.shuttercoeff[2][i] : (Shutter.real_position[i]-Settings.shuttercoeff[0,i]) / Settings.shuttercoeff[1][i];
-      AddLog_P2(LOG_LEVEL_INFO, MSG_SHUTTER_POS, i+1, Shutter.real_position[i], Shutter.start_position[i], Shutter.target_position[i], Shutter.direction[i], Shutter.motordelay[i],stemp2,Shutter.pwm_frequency);
-      Response_P(PSTR("{"));
-      ResponseAppend_P(JSON_SHUTTER_POS, i+1, Settings.shutter_invert[i] ? 100-position : position, Shutter.direction[i]);
-      ResponseJsonEnd();
-      MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
-    }
-  }
-  if (rules_flag.shutter_moving > shutter_moving) {
-    rules_flag.shutter_moved = 1;
-  } else {
-    rules_flag.shutter_moved = 0;
-  }
-  rules_flag.shutter_moving = shutter_moving;
-  //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
 }
 
 int32_t ShutterCounterBasedPosition(uint8 i)
@@ -660,10 +662,20 @@ void CmndShutterPosition(void)
 
     // value 0 with data_len > 0 can mean Open
     if (XdrvMailbox.data_len > 1 &&  XdrvMailbox.payload <=0) {
-      UpperCase(XdrvMailbox.data, XdrvMailbox.data);
-      if (!strcmp(XdrvMailbox.data,"UP"))   { CmndShutterOpen(); return; }
-      if (!strcmp(XdrvMailbox.data,"DOWN")) { CmndShutterClose(); return; }
-      if (!strcmp(XdrvMailbox.data,"STOP")) { CmndShutterStop(); return; }
+      //UpperCase(XdrvMailbox.data, XdrvMailbox.data);
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN)) { 
+        CmndShutterOpen(); 
+        return; 
+      }
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_DOWN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE)) {
+        CmndShutterClose(); 
+        return; 
+      }
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP)) { 
+        XdrvMailbox.payload = -99; 
+        CmndShutterStop(); 
+        return; 
+      }
     }
 
     int8_t target_pos_percent = XdrvMailbox.payload < 0 ? 0 : (XdrvMailbox.payload > 100 ? 100 : XdrvMailbox.payload);
