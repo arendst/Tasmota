@@ -292,7 +292,7 @@ void HAssAnnounceRelayLight(void)
           Shorten(&white_temp_command_topic, prefix);
           TryResponseAppend_P(HASS_DISCOVER_LIGHT_WHITE, white_temp_command_topic, state_topic);
         }
-        if ((LST_COLDWARM == Light.subtype) || (LST_RGBWC == Light.subtype)) {
+        if ((LST_COLDWARM == Light.subtype) || (LST_RGBCW == Light.subtype)) {
           char *color_temp_command_topic = stemp1;
 
           GetTopic_P(color_temp_command_topic, CMND, mqtt_topic, D_CMND_COLORTEMPERATURE);

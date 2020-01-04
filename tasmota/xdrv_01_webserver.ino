@@ -1032,7 +1032,7 @@ void HandleRoot(void)
     if (light_type) {
       uint8_t light_subtype = light_type &7;
       if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
-        if ((LST_COLDWARM == light_subtype) || (LST_RGBWC == light_subtype)) {
+        if ((LST_COLDWARM == light_subtype) || (LST_RGBCW == light_subtype)) {
 
           WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Cold Warm
             "a",             // a - Unique HTML id
