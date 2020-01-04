@@ -562,6 +562,11 @@ void ShutterButtonHandler(void)
       press_index = (buttonState == SHT_PRESSED_HOLD) ? 3 : (press_index-1); 
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: shutter %d, button %d = %d (single=1, double=2, tripple=3, hold=4)"), shutter_index+1, button_index+1, press_index+1);
       XdrvMailbox.index = shutter_index +1;
+      last_source = SRC_BUTTON;
+      XdrvMailbox.data_len = 0;
+      char databuf[1] = "";
+      XdrvMailbox.data = databuf;
+      XdrvMailbox.command = NULL;
       if (buttonState == SHT_PRESSED_IMMEDIATE) {
         XdrvMailbox.payload = XdrvMailbox.index;
         CmndShutterStop();
@@ -646,7 +651,8 @@ void CmndShutterStop(void)
       last_source = SRC_WEBGUI;
       CmndShutterPosition();
     } else {
-      ResponseCmndDone();
+      if (XdrvMailbox.command)
+        ResponseCmndDone();
     }
   }
 }
@@ -714,7 +720,8 @@ void CmndShutterPosition(void)
       target_pos_percent = ShutterRealToPercentPosition(Shutter.real_position[index], index);
     }
     XdrvMailbox.index = index +1;  // Fix random index for ShutterClose
-    ResponseCmndIdxNumber(Settings.shutter_invert[index] ? 100 - target_pos_percent : target_pos_percent);
+    if (XdrvMailbox.command)
+      ResponseCmndIdxNumber(Settings.shutter_invert[index] ? 100 - target_pos_percent : target_pos_percent);
   }
 }
 
