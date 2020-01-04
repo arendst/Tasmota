@@ -297,6 +297,7 @@ bool DomoticzMqttData(void)
         } else
 #endif // USE_SHUTTER
         if (iscolordimmer && 10 == nvalue) {  // Color_SetColor
+          // https://www.domoticz.com/wiki/Domoticz_API/JSON_URL%27s#Set_a_light_to_a_certain_color_or_color_temperature
           JsonObject& color = domoticz["Color"];
           uint16_t level = nvalue = domoticz["svalue1"];
           uint16_t r = color["r"]; r = r * level / 100;
@@ -304,7 +305,6 @@ bool DomoticzMqttData(void)
           uint16_t b = color["b"]; b = b * level / 100;
           uint16_t cw = color["cw"]; cw = cw * level / 100;
           uint16_t ww = color["ww"]; ww = ww * level / 100;
-
           uint16_t m = 0;
           uint16_t t = 0;
           if (color.containsKey("m")) {
@@ -312,8 +312,8 @@ bool DomoticzMqttData(void)
             t = color["t"];
           }
           if (2 == m) {  // White with color temperature. Valid fields: t
-            snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_COLORTEMPERATURE ));
-            snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%d"), changeUIntScale(t, 0, 255, CT_MIN, CT_MAX));
+            snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_BACKLOG));
+            snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR(D_CMND_COLORTEMPERATURE " %d;" D_CMND_DIMMER " %d"), changeUIntScale(t, 0, 255, CT_MIN, CT_MAX), level);
           } else {
             snprintf_P(XdrvMailbox.topic, XdrvMailbox.index, PSTR("/" D_CMND_COLOR));
             snprintf_P(XdrvMailbox.data, XdrvMailbox.data_len, PSTR("%02x%02x%02x%02x%02x"), r, g, b, cw, ww);
