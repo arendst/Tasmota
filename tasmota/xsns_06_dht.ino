@@ -1,7 +1,7 @@
 /*
   xsns_06_dht.ino - DHTxx, AM23xx and SI7021 temperature and humidity sensor support for Tasmota
 
-  Copyright (C) 2020  Theo Arends
+  Copyright (C) 2019  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -72,28 +72,43 @@ bool DhtRead(uint8_t sensor)
 
   dht_data[0] = dht_data[1] = dht_data[2] = dht_data[3] = dht_data[4] = 0;
 
-//  digitalWrite(Dht[sensor].pin, HIGH);
-//  delay(250);
-
   if (Dht[sensor].lastresult > DHT_MAX_RETRY) {
     Dht[sensor].lastresult = 0;
     digitalWrite(Dht[sensor].pin, HIGH);  // Retry read prep
     delay(250);
   }
-  pinMode(Dht[sensor].pin, OUTPUT);
-  digitalWrite(Dht[sensor].pin, LOW);
 
-  if (GPIO_SI7021 == Dht[sensor].type) {
-    delayMicroseconds(500);
-  } else {
-    delay(20);
+  // Activate sensor using its protocol
+  pinMode(Dht[sensor].pin, OUTPUT);
+
+  switch (Dht[sensor].type) {
+    case GPIO_SI7021: // Reverse-engineered start protocol for iTead SI7021
+      digitalWrite(Dht[sensor].pin, LOW);
+      delayMicroseconds(500);
+      digitalWrite(Dht[sensor].pin, HIGH);
+      delayMicroseconds(40);
+      break;
+
+    case GPIO_DHT22: // Start protocol for DHT21, DHT22, AM2301, AM2302, AM2321
+      digitalWrite(Dht[sensor].pin, LOW);
+      delayMicroseconds(1100); // data sheet says "at least 1ms to 10ms"
+      digitalWrite(Dht[sensor].pin, HIGH);
+      delayMicroseconds(30); // data sheet says "20 to 40us"
+      break;
+
+    case GPIO_DHT11: // Start protocol for DHT11
+    default:
+      digitalWrite(Dht[sensor].pin, LOW);
+      delay(20); // data sheet says at least 18ms, 20ms just to be safe
+      digitalWrite(Dht[sensor].pin, HIGH);
+      delayMicroseconds(30); // data sheet says "20 to 40us"
+      break;
   }
 
+  // Listen to the sensor response
   noInterrupts();
-  digitalWrite(Dht[sensor].pin, HIGH);
-  delayMicroseconds(40);
   pinMode(Dht[sensor].pin, INPUT_PULLUP);
-  delayMicroseconds(10);
+
   if (-1 == DhtExpectPulse(sensor, LOW)) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR(D_LOG_DHT D_TIMEOUT_WAITING_FOR " " D_START_SIGNAL_LOW " " D_PULSE));
     error = 1;
@@ -111,6 +126,7 @@ bool DhtRead(uint8_t sensor)
   interrupts();
   if (error) { return false; }
 
+  // Decode response
   for (uint32_t i = 0; i < 40; ++i) {
     int32_t lowCycles  = cycles[2*i];
     int32_t highCycles = cycles[2*i+1];
@@ -124,6 +140,7 @@ bool DhtRead(uint8_t sensor)
     }
   }
 
+  // Check response
   uint8_t checksum = (dht_data[0] + dht_data[1] + dht_data[2] + dht_data[3]) & 0xFF;
   if (dht_data[4] != checksum) {
     char hex_char[15];
