@@ -231,7 +231,7 @@ void HueConfig(String *path)
 }
 
 // device is forced to CT mode instead of HSB
-// only makes sense for LST_COLDWARM, LST_RGBW and LST_RGBWC
+// only makes sense for LST_COLDWARM, LST_RGBW and LST_RGBCW
 bool g_gotct = false;
 
 // store previously set values from the Alexa app

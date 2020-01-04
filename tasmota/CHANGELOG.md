@@ -11,6 +11,7 @@
 - Fix Display handling of hexadecimal escape characters (#7387)
 - Fix Improved fade linearity with gamma correction
 - Fix wrong gamma correction for Module 48 lights (PWM5 for CT)
+- Add SetOption82 to limit the CT range for Alexa to 200..380
 
 ### 8.1.0.1 20191225
 
