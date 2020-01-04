@@ -242,7 +242,6 @@ void ShutterInit(void)
   }
 }
 
-
 void ShutterReportPosition(bool always = false)
 {
   uint16_t shutter_moving = 0;
@@ -258,13 +257,15 @@ void ShutterReportPosition(bool always = false)
       //Settings.shutter_position[i] = Settings.shuttercoeff[2][i] * 5 > Shutter.real_position[i] ? Shutter.real_position[i] / Settings.shuttercoeff[2][i] : (Shutter.real_position[i]-Settings.shuttercoeff[0,i]) / Settings.shuttercoeff[1][i];
       AddLog_P2(LOG_LEVEL_INFO, MSG_SHUTTER_POS, i+1, Shutter.real_position[i], Shutter.start_position[i], Shutter.target_position[i], Shutter.direction[i], Shutter.motordelay[i],stemp2,Shutter.pwm_frequency);
     }
+
+    if (i) { ResponseAppend_P(PSTR(",")); }
     ResponseAppend_P(JSON_SHUTTER_POS, i+1, Settings.shutter_invert[i] ? 100-position : position, Shutter.direction[i]);
-    if (i < shutters_present - 1)
-      ResponseAppend_P(PSTR(", "));
+//    if (i < shutters_present - 1)
+//      ResponseAppend_P(PSTR(", "));
   }
   ResponseJsonEnd();
-  if (always || shutter_moving == 1) {
-    MqttPublishPrefixTopic_P(RESULT_OR_TELE, mqtt_data);
+  if (always || (1 == shutter_moving)) {
+    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_PRFX_SHUTTER));
   }
   if (rules_flag.shutter_moving > shutter_moving) {
     rules_flag.shutter_moved = 1;
@@ -561,7 +562,7 @@ void ShutterButtonHandler(void)
   if (buttonState != SHT_NOT_PRESSED) {
     if (Settings.shutter_startrelay[shutter_index] && Settings.shutter_startrelay[shutter_index] <9) {
       if (press_index>3) press_index=3;
-      press_index = (buttonState == SHT_PRESSED_HOLD) ? 3 : (press_index-1); 
+      press_index = (buttonState == SHT_PRESSED_HOLD) ? 3 : (press_index-1);
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: shutter %d, button %d = %d (single=1, double=2, tripple=3, hold=4)"), shutter_index+1, button_index+1, press_index+1);
       XdrvMailbox.index = shutter_index +1;
       if (buttonState == SHT_PRESSED_IMMEDIATE) {
@@ -663,18 +664,18 @@ void CmndShutterPosition(void)
     // value 0 with data_len > 0 can mean Open
     if (XdrvMailbox.data_len > 1 &&  XdrvMailbox.payload <=0) {
       //UpperCase(XdrvMailbox.data, XdrvMailbox.data);
-      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN)) { 
-        CmndShutterOpen(); 
-        return; 
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN)) {
+        CmndShutterOpen();
+        return;
       }
       if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_DOWN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE)) {
-        CmndShutterClose(); 
-        return; 
+        CmndShutterClose();
+        return;
       }
-      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP)) { 
-        XdrvMailbox.payload = -99; 
-        CmndShutterStop(); 
-        return; 
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP)) {
+        XdrvMailbox.payload = -99;
+        CmndShutterStop();
+        return;
       }
     }
 
