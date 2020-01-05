@@ -113,6 +113,7 @@ void FifLEEvery250ms(void)
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus error %d"), error);
     } else {
+      //if (Le01mr.read_state == 0) 
       Energy.data_valid[0] = 0;
 
       // SA=Slave Address, FC=Function Code, BC=Byte Count, B3..B0=Data byte, Ch Cl = crc16 checksum
@@ -135,8 +136,6 @@ void FifLEEvery250ms(void)
       // for register table items 0..2 use 2 bytes (U16) 
       if (Le01mr.read_state >= 0 &&  Le01mr.read_state < 3) { // 
         value_buff = ((uint32_t)buffer[3])<<8 | buffer[4];
-        //((uint8_t*)&value_buff)[1] = buffer[3];
-        //((uint8_t*)&value_buff)[0] = buffer[4];
       } else {
         value_buff = ((uint32_t)buffer[3])<<24 | ((uint32_t)buffer[4])<<16 | ((uint32_t)buffer[5])<<8 | buffer[6];
       }
@@ -154,7 +153,7 @@ void FifLEEvery250ms(void)
           break;
 
         case 2:
-          Energy.power_factor[0] = ((int16_t)value_buff) * 0.001f; // 1000 => 1.000
+          Energy.power_factor[0] = ((int16_t)value_buff) * 0.001f; // 1000 => 1.000 //note: I never saw this negative...
           break;
 
         case 3:
@@ -218,7 +217,7 @@ void FifLESnsInit(void)
 
 void FifLEDrvInit(void)
 {
-  if ((pin[GPIO_LE01MR_RX] < 99) && (pin[GPIO_LE01MR_RX] < 99)) {
+  if ((pin[GPIO_LE01MR_RX] < 99) && (pin[GPIO_LE01MR_TX] < 99)) {
     energy_flg = XNRG_13;
   }
 }
@@ -258,24 +257,14 @@ void FifLEShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-// just to slow down tramitter (for deug purpouses)
-//#define SLOW_DOWN_X250MS 1
-//uint8_t slowdown = SLOW_DOWN_X250MS;
-
 bool Xnrg13(uint8_t function)
 {
   bool result = false;
 
   switch (function) {
-    // TODO: Verify if there is corrleaction with 250ms scan time, 
-    //       and MQTT breaking connection and causing exception in ESP8266 after few minutes
-    //       test with "FUNC_EVERY_SECOND"
     case FUNC_EVERY_250_MSECOND:
       if (uptime > 4) {
-        //if (--slowdown == 0) {
           FifLEEvery250ms(); 
-        //  slowdown=SLOW_DOWN_X250MS;
-        //}
       }
       break;
     case FUNC_JSON_APPEND:
