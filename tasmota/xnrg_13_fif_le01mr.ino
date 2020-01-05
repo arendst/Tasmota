@@ -198,7 +198,7 @@ void FifLEEvery250ms(void)
     // some registers are 1reg in size
     if (Le01mr.read_state < 3) reg_count=1;
     // send request
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus req reg %X, count %d"), le01mr_register_addresses[Le01mr.read_state], reg_count);
+    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus req reg %X, count %d"), le01mr_register_addresses[Le01mr.read_state], reg_count);
     FifLEModbus->Send(LE01MR_ADDR, 0x03, le01mr_register_addresses[Le01mr.read_state], reg_count);
   } else {
     Le01mr.send_retry--;
@@ -226,24 +226,30 @@ void FifLEDrvInit(void)
 void FifLEReset(void)
 {
   Le01mr.total_active = 0;
+  Le01mr.total_reactive = 0;
 }
 
 #ifdef USE_WEBSERVER
 const char HTTP_ENERGY_LE01MR[] PROGMEM =
-  "{s}" D_IMPORT_REACTIVE "{m}%s " D_UNIT_KWARH "{e}";
+  "{s}" D_TOTAL_ACTIVE "{m}%s " D_UNIT_KILOWATTHOUR "{e}"
+  "{s}" D_TOTAL_REACTIVE "{m}%s " D_UNIT_KWARH "{e}"
+  ;
 #endif  // USE_WEBSERVER
 
 void FifLEShow(bool json)
 {
   char total_reactive_chr[FLOATSZ];
   dtostrfd(Le01mr.total_reactive, Settings.flag2.energy_resolution, total_reactive_chr);
+  char total_active_chr[FLOATSZ];
+  dtostrfd(Le01mr.total_active, Settings.flag2.energy_resolution, total_active_chr);
   
+
   if (json) {
-    ResponseAppend_P(PSTR(",\"" D_JSON_IMPORT_REACTIVE "\":%s"),
-      total_reactive_chr);
+    ResponseAppend_P(PSTR(",\"" D_JSON_TOTAL_ACTIVE "\":%s,\"" D_JSON_TOTAL_REACTIVE "\":%s"),
+      total_active_chr, total_reactive_chr);
 #ifdef USE_WEBSERVER
   } else {
-    WSContentSend_PD(HTTP_ENERGY_LE01MR, total_reactive_chr);
+    WSContentSend_PD(HTTP_ENERGY_LE01MR, total_active_chr, total_reactive_chr);
 #endif  // USE_WEBSERVER
   }
 }
@@ -253,20 +259,23 @@ void FifLEShow(bool json)
 \*********************************************************************************************/
 
 // just to slow down tramitter (for deug purpouses)
-#define SLOW_DOWN_X250MS 1
-uint8_t slowdown = SLOW_DOWN_X250MS;
+//#define SLOW_DOWN_X250MS 1
+//uint8_t slowdown = SLOW_DOWN_X250MS;
 
 bool Xnrg13(uint8_t function)
 {
   bool result = false;
 
   switch (function) {
+    // TODO: Verify if there is corrleaction with 250ms scan time, 
+    //       and MQTT breaking connection and causing exception in ESP8266 after few minutes
+    //       test with "FUNC_EVERY_SECOND"
     case FUNC_EVERY_250_MSECOND:
-      if (uptime > 4) { 
-        if (--slowdown == 0) {
+      if (uptime > 4) {
+        //if (--slowdown == 0) {
           FifLEEvery250ms(); 
-          slowdown=SLOW_DOWN_X250MS;
-        }
+        //  slowdown=SLOW_DOWN_X250MS;
+        //}
       }
       break;
     case FUNC_JSON_APPEND:

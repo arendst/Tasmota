@@ -183,6 +183,7 @@
 #define D_JSON_SOLAR_POWER "SolarPower"
 #define D_JSON_USAGE "Usage"
 #define D_JSON_EXPORT "Export"
+#define D_JSON_TOTAL_ACTIVE "TotalActive"
 
 #define D_RSLT_ENERGY "ENERGY"
 #define D_RSLT_HASS_STATE "HASS_STATE"
