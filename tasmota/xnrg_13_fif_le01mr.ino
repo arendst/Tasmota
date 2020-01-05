@@ -102,7 +102,7 @@ void FifLEEvery250ms(void)
   if (data_ready) {
     uint8_t buffer[14];  // At least 9
     uint8_t reg_count = 2;
-    if (Le01mr.read_state >= 0 &&  Le01mr.read_state < 3) {
+    if (Le01mr.read_state < 3) {
       reg_count=1;
     }
 
@@ -141,6 +141,9 @@ void FifLEEvery250ms(void)
         value_buff = ((uint32_t)buffer[3])<<24 | ((uint32_t)buffer[4])<<16 | ((uint32_t)buffer[5])<<8 | buffer[6];
       }
 
+      //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR buff[3..6]: %2x %2x %2x %2x"), buffer[3], buffer[4], buffer[5], buffer[6]);
+      //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR reg_count/value_buff: %d / %d"), reg_count,value_buff);
+
       switch(Le01mr.read_state) {
         case 0:
           Energy.frequency[0] = value_buff * 0.01f;  // 5000 => 50.00
@@ -159,23 +162,23 @@ void FifLEEvery250ms(void)
           break;
         
         case 4:
-          Energy.active_power[0] = value_buff * 0.001f;
+          Energy.active_power[0] = value_buff * 1.0f; // P [W]
           break;
 
         case 5:
-          Energy.reactive_power[0] = value_buff * 0.001f;
+          Energy.reactive_power[0] = value_buff * 1.0f; // Q [var]
           break;
 
         case 6:
-          Energy.apparent_power[0] = value_buff * 0.001f;
+          Energy.apparent_power[0] = value_buff * 1.0f; // S [VA]
           break;
 
         case 7:
-          Le01mr.total_active = value_buff * 0.01f;
+          Le01mr.total_active = value_buff * 0.01f; // [kWh]
           break;
 
         case 8:
-          Le01mr.total_reactive = value_buff * 0.01f; // 176 => 1.76
+          Le01mr.total_reactive = value_buff * 0.01f; // [kvarh] 176 => 1.76
           break;
       }
 
@@ -193,7 +196,7 @@ void FifLEEvery250ms(void)
 
     Le01mr.send_retry = 5;
     // some registers are 1reg in size
-    if (Le01mr.read_state >= 0 &&  Le01mr.read_state < 3) reg_count=1;
+    if (Le01mr.read_state < 3) reg_count=1;
     // send request
     AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus req reg %X, count %d"), le01mr_register_addresses[Le01mr.read_state], reg_count);
     FifLEModbus->Send(LE01MR_ADDR, 0x03, le01mr_register_addresses[Le01mr.read_state], reg_count);
@@ -204,7 +207,7 @@ void FifLEEvery250ms(void)
 
 void FifLESnsInit(void)
 {
-  FifLEModbus = new TasmotaModbus(pin[GPIO_LE01MR_RX], pin[GPIO_LE01MR_RX]);
+  FifLEModbus = new TasmotaModbus(pin[GPIO_LE01MR_RX], pin[GPIO_LE01MR_TX]);
   uint8_t result = FifLEModbus->Begin(LE01MR_SPEED);
   if (result) {
     if (2 == result) { ClaimSerial(); }
@@ -249,7 +252,8 @@ void FifLEShow(bool json)
  * Interface
 \*********************************************************************************************/
 
-#define SLOW_DOWN_X250MS 6
+// just to slow down tramitter (for deug purpouses)
+#define SLOW_DOWN_X250MS 1
 uint8_t slowdown = SLOW_DOWN_X250MS;
 
 bool Xnrg13(uint8_t function)
