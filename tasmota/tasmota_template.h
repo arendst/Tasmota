@@ -216,6 +216,8 @@ enum UserSelectablePins {
   GPIO_HPMA_TX,        // Honeywell HPMA115S0 Serial interface
   GPIO_GPS_RX,         // GPS serial interface
   GPIO_GPS_TX,         // GPS serial interface
+  GPIO_LE01MR_RX,      // F&F LE-01MR energy meter
+  GPIO_LE01MR_TX,      // F&F LE-01MR energy meter
   GPIO_SENSOR_END };
 
 // Programmer selectable GPIO functionality
@@ -296,7 +298,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_DEEPSLEEP "|" D_SENSOR_EXS_ENABLE "|"
   D_SENSOR_SLAVE_TX "|" D_SENSOR_SLAVE_RX "|" D_SENSOR_SLAVE_RESET "|" D_SENSOR_SLAVE_RESET "i|"
   D_SENSOR_HPMA_RX "|" D_SENSOR_HPMA_TX "|"
-  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX
+  D_SENSOR_GPS_RX "|" D_SENSOR_GPS_TX "|"
+  D_SENSOR_LE01MR_RX "|" D_SENSOR_LE01MR_TX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -676,6 +679,10 @@ const uint8_t kGpioNiceList[] PROGMEM = {
   GPIO_SOLAXX1_TX,     // Solax Inverter tx pin
   GPIO_SOLAXX1_RX,     // Solax Inverter rx pin
 #endif // USE_SOLAX_X1
+#ifdef USE_LE01MR
+  GPIO_LE01MR_RX,     // F7F LE-01MR energy meter rx pin
+  GPIO_LE01MR_TX,     // F7F LE-01MR energy meter tx pin
+#endif // IFDEF:USE_LE01MR
 #endif  // USE_ENERGY_SENSOR
 
 // Serial

@@ -501,8 +501,9 @@ void GetFeatures(void)
 #ifdef USE_HOTPLUG
   feature5 |= 0x00800000;
 #endif
-
-//  feature5 |= 0x01000000;
+#ifdef USE_LE01MR
+  feature5 |= 0x01000000;
+#endif
 //  feature5 |= 0x02000000;
 //  feature5 |= 0x04000000;
 //  feature5 |= 0x08000000;

@@ -194,6 +194,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #define USE_DDS2382                              // Add support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #define USE_DDSU666                              // Add support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 //#define USE_SOLAX_X1                             // Add support for Solax X1 series Modbus log info (+3k1 code)
+//#define USE_LE01MR                               // Add support for F&F LE-01MR modbus energy meter
 
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #define USE_MAX31855                             // Add support for MAX31855 K-Type thermocouple sensor using softSPI
@@ -281,6 +282,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
   #undef USE_DDS2382                             // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #undef USE_DDSU666                             // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
   #undef USE_SOLAX_X1                            // Disable support for Solax X1 series Modbus log info (+3k1 code)
+  #undef USE_LE01MR                              // Disable support for F&F LE-01MR Modbus energy meter
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
   #define USE_DISPLAY                            // Add I2C Display Support (+2k code)
@@ -362,6 +364,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
   #undef USE_DDS2382                             // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
   #undef USE_DDSU666                             // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
   #undef USE_SOLAX_X1                            // Disable support for Solax X1 series Modbus log info (+3k1 code)
+  #undef USE_LE01MR                              // Disable support for F&F LE-01MR Modbus energy meter
 
 //#undef USE_DS18x20                               // Disable support for DS18x20 sensors with id sort, single scan and read retry (+1k3 code)
 
@@ -481,6 +484,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 #undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k1 code)
+#undef USE_LE01MR                                // Disable support for F&F LE-01MR Modbus energy meter
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI
@@ -592,6 +596,7 @@ extern "C" void custom_crash_callback(struct rst_info * rst_info, uint32_t stack
 #undef USE_DDS2382                               // Disable support for Hiking DDS2382 Modbus energy monitor (+0k6 code)
 #undef USE_DDSU666                               // Disable support for Chint DDSU666 Modbus energy monitor (+0k6 code)
 #undef USE_SOLAX_X1                              // Disable support for Solax X1 series Modbus log info (+3k1 code)
+#undef USE_LE01MR                                // Disable support for F&F LE-01MR Modbus energy meter
 
 #undef USE_DHT                                   // Disable support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor
 #undef USE_MAX31855                              // Disable MAX31855 K-Type thermocouple sensor using softSPI

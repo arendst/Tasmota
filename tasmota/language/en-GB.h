@@ -634,6 +634,8 @@
 #define D_SENSOR_SLAVE_RESET "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
 
 // Units
 #define D_UNIT_AMPERE "A"
