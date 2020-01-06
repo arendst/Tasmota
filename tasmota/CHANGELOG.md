@@ -1,17 +1,21 @@
 ## Unreleased (development)
 
+### 8.1.0.3 20200106
+
+- Add support for gzipped binaries
+
 ### 8.1.0.2 20191230
 
-- Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
-- Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
-- Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
-- Add experimental support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
-- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
 - Fix LCD line and column positioning (#7387)
 - Fix Display handling of hexadecimal escape characters (#7387)
 - Fix Improved fade linearity with gamma correction
 - Fix wrong gamma correction for Module 48 lights (PWM5 for CT)
-- Add SetOption82 to limit the CT range for Alexa to 200..380
+- Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
+- Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
+- Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
+- Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
+- Add experimental support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
+- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
 
 ### 8.1.0.1 20191225
 

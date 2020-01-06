@@ -359,6 +359,11 @@ uint32_t OtaVersion(void)
   bool found = false;
   for (uint32_t address = start_address; address < end_address; address = address + FLASH_SECTOR_SIZE) {
     ESP.flashRead(address, (uint32_t*)buffer, FLASH_SECTOR_SIZE);
+    if ((address == start_address) && (0x1F == (buffer[0] & 0xFF))) {
+      version[1] = 0xFFFFFFFF;  // Ota file is gzipped and can not be checked for compatibility
+      found = true;
+      break;
+    }
     for (uint32_t i = 0; i < (FLASH_SECTOR_SIZE / 4); i++) {
       version[0] = version[1];
       version[1] = version[2];

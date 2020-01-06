@@ -2270,16 +2270,18 @@ void HandleUploadLoop(void)
         } else
 #endif
         {
-          if (upload.buf[0] != 0xE9) {
+          if ((upload.buf[0] != 0xE9) && (upload.buf[0] != 0x1F)) {  // 0x1F is gzipped 0xE9
             Web.upload_error = 3;  // Magic byte is not 0xE9
             return;
           }
-          uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
-          if(bin_flash_size > ESP.getFlashChipRealSize()) {
-            Web.upload_error = 4;  // Program flash size is larger than real flash size
-            return;
+          if (0xE9 == upload.buf[0]) {
+            uint32_t bin_flash_size = ESP.magicFlashChipSize((upload.buf[3] & 0xf0) >> 4);
+            if (bin_flash_size > ESP.getFlashChipRealSize()) {
+              Web.upload_error = 4;  // Program flash size is larger than real flash size
+              return;
+            }
+//            upload.buf[2] = 3;  // Force DOUT - ESP8285
           }
-//          upload.buf[2] = 3;  // Force DOUT - ESP8285
         }
       }
     }
