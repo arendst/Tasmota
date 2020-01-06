@@ -9,8 +9,8 @@
 Cette librairie vous permetra de **recevoir et d'envoyer des signaux** infrarouge sur le protocole [ESP8266](https://github.com/esp8266/Arduino) ou sur le protocole
 [ESP32](https://github.com/espressif/arduino-esp32) en utilisant le [Arduino framework](https://www.arduino.cc/) qui utilise la norme 940nm IR LEDs et le module basique de reception d'onde IR. Exemple : TSOP{17,22,24,36,38,44,48}* modules etc.
 
-## v2.7.1 disponible
-Version 2.7.1 de la libraire est maintenant [disponible](https://github.com/crankyoldgit/IRremoteESP8266/releases/latest). Vous pouvez voir le [Release Notes](ReleaseNotes.md) pour tous les changements importants.
+## v2.7.2 disponible
+Version 2.7.2 de la libraire est maintenant [disponible](https://github.com/crankyoldgit/IRremoteESP8266/releases/latest). Vous pouvez voir le [Release Notes](ReleaseNotes.md) pour tous les changements importants.
 
 #### mise à jour depuis pre-v2.0
 L'utilisation de la librairie à un peu changer depuis la version in v2.0. Si vous voulez l'utiliser vous devrez changer votre utilisation aussi. Vous pouvez vous renseigner sur les précondition d'utilisation ici : [Upgrade to v2.0](https://github.com/crankyoldgit/IRremoteESP8266/wiki/Upgrading-to-v2.0) page.

@@ -25,6 +25,7 @@
 #include "ir_Haier.h"
 #include "ir_Hitachi.h"
 #include "ir_Kelvinator.h"
+#include "ir_LG.h"
 #include "ir_Midea.h"
 #include "ir_Mitsubishi.h"
 #include "ir_MitsubishiHeavy.h"
@@ -148,6 +149,10 @@ bool IRac::isProtocolSupported(const decode_type_t protocol) {
 #endif
 #if SEND_KELVINATOR
     case decode_type_t::KELVINATOR:
+#endif
+#if SEND_LG
+    case decode_type_t::LG:
+    case decode_type_t::LG2:
 #endif
 #if SEND_MIDEA
     case decode_type_t::MIDEA:
@@ -719,6 +724,30 @@ void IRac::kelvinator(IRKelvinatorAC *ac,
 }
 #endif  // SEND_KELVINATOR
 
+#if SEND_LG
+void IRac::lg(IRLgAc *ac, const lg_ac_remote_model_t model,
+              const bool on, const stdAc::opmode_t mode,
+              const float degrees, const stdAc::fanspeed_t fan) {
+  ac->begin();
+  ac->setModel(model);
+  ac->setPower(on);
+  ac->setMode(ac->convertMode(mode));
+  ac->setTemp(degrees);
+  ac->setFan(ac->convertFan(fan));
+  // No Vertical swing setting available.
+  // No Horizontal swing setting available.
+  // No Quiet setting available.
+  // No Turbo setting available.
+  // No Light setting available.
+  // No Filter setting available.
+  // No Clean setting available.
+  // No Beep setting available.
+  // No Sleep setting available.
+  // No Clock setting available.
+  ac->send();
+}
+#endif  // SEND_LG
+
 #if SEND_MIDEA
 void IRac::midea(IRMideaAC *ac,
                  const bool on, const stdAc::opmode_t mode, const bool celsius,
@@ -1144,6 +1173,20 @@ void IRac::whirlpool(IRWhirlpoolAc *ac, const whirlpool_ac_remote_model_t model,
 }
 #endif  // SEND_WHIRLPOOL_AC
 
+// Create a new state base on the provided state that has been suitably fixed.
+// Args:
+//   state: The state_t structure describing the desired a/c state.
+//
+// Returns:
+//   A stdAc::state_t with the needed settings.
+stdAc::state_t IRac::cleanState(const stdAc::state_t state) {
+  stdAc::state_t result = state;
+  // A hack for Home Assistant, it appears to need/want an Off opmode.
+  // So enforce the power is off if the mode is also off.
+  if (state.mode == stdAc::opmode_t::kOff) result.power = false;
+  return result;
+}
+
 // Create a new state base on desired & previous states but handle
 // any state changes for options that need to be toggled.
 // Args:
@@ -1244,23 +1287,18 @@ bool IRac::sendAc(const decode_type_t vendor, const int16_t model,
 // Returns:
 //   boolean: True, if accepted/converted/attempted. False, if unsupported.
 bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
-  stdAc::state_t send = this->handleToggles(desired, prev);
-  // Convert the temperature to Celsius.
-  float degC;
-  if (desired.celsius)
-    degC = send.degrees;
-  else
-    degC = fahrenheitToCelsius(desired.degrees);
-  bool on = desired.power;
-  // A hack for Home Assistant, it appears to need/want an Off opmode.
-  if (desired.mode == stdAc::opmode_t::kOff) on = false;
+  // Convert the temp from Fahrenheit to Celsius if we are not in Celsius mode.
+  float degC = desired.celsius ? desired.degrees
+                               : fahrenheitToCelsius(desired.degrees);
+  // special `state_t` that is required to be sent based on that.
+  stdAc::state_t send = this->handleToggles(this->cleanState(desired), prev);
   // Per vendor settings & setup.
   switch (send.protocol) {
 #if SEND_AMCOR
     case AMCOR:
     {
       IRAmcorAc ac(_pin, _inverted, _modulation);
-      amcor(&ac, on, send.mode, degC, send.fanspeed);
+      amcor(&ac, send.power, send.mode, degC, send.fanspeed);
       break;
     }
 #endif  // SEND_AMCOR
@@ -1268,8 +1306,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case ARGO:
     {
       IRArgoAC ac(_pin, _inverted, _modulation);
-      argo(&ac, on, send.mode, degC, send.fanspeed, send.swingv, send.turbo,
-          send.sleep);
+      argo(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
+           send.turbo, send.sleep);
       break;
     }
 #endif  // SEND_ARGO
@@ -1277,8 +1315,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case COOLIX:
     {
       IRCoolixAC ac(_pin, _inverted, _modulation);
-      coolix(&ac, on, send.mode, degC, send.fanspeed, send.swingv, send.swingh,
-             send.turbo, send.light, send.clean, send.sleep);
+      coolix(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
+             send.swingh, send.turbo, send.light, send.clean, send.sleep);
       break;
     }
 #endif  // SEND_COOLIX
@@ -1286,8 +1324,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case DAIKIN:
     {
       IRDaikinESP ac(_pin, _inverted, _modulation);
-      daikin(&ac, on, send.mode, degC, send.fanspeed, send.swingv, send.swingh,
-             send.quiet, send.turbo, send.econo, send.clean);
+      daikin(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
+             send.swingh, send.quiet, send.turbo, send.econo, send.clean);
       break;
     }
 #endif  // SEND_DAIKIN
@@ -1295,7 +1333,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case DAIKIN128:
     {
       IRDaikin128 ac(_pin, _inverted, _modulation);
-      daikin128(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
+      daikin128(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
                 send.quiet, send.turbo, send.light, send.econo, send.sleep,
                 send.clock);
       break;
@@ -1305,7 +1343,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case DAIKIN152:
     {
       IRDaikin152 ac(_pin, _inverted, _modulation);
-      daikin152(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
+      daikin152(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
                 send.quiet, send.turbo, send.econo);
       break;
     }
@@ -1314,7 +1352,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case DAIKIN160:
     {
       IRDaikin160 ac(_pin, _inverted, _modulation);
-      daikin160(&ac, on, send.mode, degC, send.fanspeed, send.swingv);
+      daikin160(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv);
       break;
     }
 #endif  // SEND_DAIKIN160
@@ -1322,7 +1360,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case DAIKIN176:
     {
       IRDaikin176 ac(_pin, _inverted, _modulation);
-      daikin176(&ac, on, send.mode, degC, send.fanspeed, send.swingh);
+      daikin176(&ac, send.power, send.mode, degC, send.fanspeed, send.swingh);
       break;
     }
 #endif  // SEND_DAIKIN176
@@ -1330,9 +1368,9 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case DAIKIN2:
     {
       IRDaikin2 ac(_pin, _inverted, _modulation);
-      daikin2(&ac, on, send.mode, degC, send.fanspeed, send.swingv, send.swingh,
-              send.quiet, send.turbo, send.light, send.econo, send.filter,
-              send.clean, send.beep, send.sleep, send.clock);
+      daikin2(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
+              send.swingh, send.quiet, send.turbo, send.light, send.econo,
+              send.filter, send.clean, send.beep, send.sleep, send.clock);
       break;
     }
 #endif  // SEND_DAIKIN2
@@ -1340,7 +1378,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case DAIKIN216:
     {
       IRDaikin216 ac(_pin, _inverted, _modulation);
-      daikin216(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
+      daikin216(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
                 send.swingh, send.quiet, send.turbo);
       break;
     }
@@ -1349,7 +1387,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case ELECTRA_AC:
     {
       IRElectraAc ac(_pin, _inverted, _modulation);
-      electra(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
+      electra(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
               send.swingh);
       break;
     }
@@ -1359,9 +1397,9 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     {
       IRFujitsuAC ac(_pin, (fujitsu_ac_remote_model_t)send.model, _inverted,
                      _modulation);
-      fujitsu(&ac, (fujitsu_ac_remote_model_t)send.model, on, send.mode, degC,
-              send.fanspeed, send.swingv, send.swingh, send.quiet, send.turbo,
-              send.econo, send.filter, send.clean);
+      fujitsu(&ac, (fujitsu_ac_remote_model_t)send.model, send.power, send.mode,
+              degC, send.fanspeed, send.swingv, send.swingh, send.quiet,
+              send.turbo, send.econo, send.filter, send.clean);
       break;
     }
 #endif  // SEND_FUJITSU_AC
@@ -1369,7 +1407,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case GOODWEATHER:
     {
       IRGoodweatherAc ac(_pin, _inverted, _modulation);
-      goodweather(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
+      goodweather(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
                   send.turbo, send.light, send.sleep);
       break;
     }
@@ -1379,7 +1417,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     {
       IRGreeAC ac(_pin, (gree_ac_remote_model_t)send.model, _inverted,
                   _modulation);
-      gree(&ac, (gree_ac_remote_model_t)send.model, on, send.mode, degC,
+      gree(&ac, (gree_ac_remote_model_t)send.model, send.power, send.mode, degC,
            send.fanspeed, send.swingv, send.turbo, send.light, send.clean,
            send.sleep);
       break;
@@ -1389,8 +1427,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case HAIER_AC:
     {
       IRHaierAC ac(_pin, _inverted, _modulation);
-      haier(&ac, on, send.mode, degC, send.fanspeed, send.swingv, send.filter,
-            send.sleep, send.clock);
+      haier(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
+            send.filter, send.sleep, send.clock);
       break;
     }
 #endif  // SEND_HAIER_AC
@@ -1398,7 +1436,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case HAIER_AC_YRW02:
     {
       IRHaierACYRW02 ac(_pin, _inverted, _modulation);
-      haierYrwo2(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
+      haierYrwo2(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
                  send.turbo, send.filter, send.sleep);
       break;
     }
@@ -1407,7 +1445,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case HITACHI_AC:
     {
       IRHitachiAc ac(_pin, _inverted, _modulation);
-      hitachi(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
+      hitachi(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
               send.swingh);
       break;
     }
@@ -1416,7 +1454,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case HITACHI_AC424:
     {
       IRHitachiAc424 ac(_pin, _inverted, _modulation);
-      hitachi424(&ac, on, send.mode, degC, send.fanspeed, send.swingv);
+      hitachi424(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv);
       break;
     }
 #endif  // SEND_HITACHI_AC424
@@ -1424,18 +1462,28 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case KELVINATOR:
     {
       IRKelvinatorAC ac(_pin, _inverted, _modulation);
-      kelvinator(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
+      kelvinator(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
                  send.swingh, send.quiet, send.turbo, send.light, send.filter,
                  send.clean);
       break;
     }
 #endif  // SEND_KELVINATOR
+#if SEND_LG
+    case LG:
+    case LG2:
+    {
+      IRLgAc ac(_pin, _inverted, _modulation);
+      lg(&ac, (lg_ac_remote_model_t)send.model, send.power, send.mode,
+         send.degrees, send.fanspeed);
+      break;
+    }
+#endif  // SEND_LG
 #if SEND_MIDEA
     case MIDEA:
     {
       IRMideaAC ac(_pin, _inverted, _modulation);
-      midea(&ac, on, send.mode, send.celsius, send.degrees, send.fanspeed,
-            send.swingv, send.sleep);
+      midea(&ac, send.power, send.mode, send.celsius, send.degrees,
+            send.fanspeed, send.swingv, send.sleep);
       break;
     }
 #endif  // SEND_MIDEA
@@ -1443,7 +1491,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case MITSUBISHI_AC:
     {
       IRMitsubishiAC ac(_pin, _inverted, _modulation);
-      mitsubishi(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
+      mitsubishi(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
                  send.swingh, send.quiet, send.clock);
       break;
     }
@@ -1452,8 +1500,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case MITSUBISHI112:
     {
       IRMitsubishi112 ac(_pin, _inverted, _modulation);
-      mitsubishi112(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
-                    send.swingh, send.quiet);
+      mitsubishi112(&ac, send.power, send.mode, degC, send.fanspeed,
+                    send.swingv, send.swingh, send.quiet);
       break;
     }
 #endif  // SEND_MITSUBISHI112
@@ -1461,8 +1509,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case MITSUBISHI136:
     {
       IRMitsubishi136 ac(_pin, _inverted, _modulation);
-      mitsubishi136(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
-                    send.quiet);
+      mitsubishi136(&ac, send.power, send.mode, degC, send.fanspeed,
+                    send.swingv, send.quiet);
       break;
     }
 #endif  // SEND_MITSUBISHI136
@@ -1470,16 +1518,17 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case MITSUBISHI_HEAVY_88:
     {
       IRMitsubishiHeavy88Ac ac(_pin, _inverted, _modulation);
-      mitsubishiHeavy88(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
-                        send.swingh, send.turbo, send.econo, send.clean);
+      mitsubishiHeavy88(&ac, send.power, send.mode, degC, send.fanspeed,
+                        send.swingv, send.swingh, send.turbo, send.econo,
+                        send.clean);
       break;
     }
     case MITSUBISHI_HEAVY_152:
     {
       IRMitsubishiHeavy152Ac ac(_pin, _inverted, _modulation);
-      mitsubishiHeavy152(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
-                         send.swingh, send.quiet, send.turbo, send.econo,
-                         send.filter, send.clean, send.sleep);
+      mitsubishiHeavy152(&ac, send.power, send.mode, degC, send.fanspeed,
+                         send.swingv, send.swingh, send.quiet, send.turbo,
+                         send.econo, send.filter, send.clean, send.sleep);
       break;
     }
 #endif  // SEND_MITSUBISHIHEAVY
@@ -1487,7 +1536,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case NEOCLIMA:
     {
       IRNeoclimaAc ac(_pin, _inverted, _modulation);
-      neoclima(&ac, on, send.mode, degC, send.fanspeed, send.swingv,
+      neoclima(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
                send.swingh, send.turbo, send.light, send.filter, send.sleep);
       break;
     }
@@ -1496,9 +1545,9 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case PANASONIC_AC:
     {
       IRPanasonicAc ac(_pin, _inverted, _modulation);
-      panasonic(&ac, (panasonic_ac_remote_model_t)send.model, on, send.mode,
-                degC, send.fanspeed, send.swingv, send.swingh, send.quiet,
-                send.turbo, send.clock);
+      panasonic(&ac, (panasonic_ac_remote_model_t)send.model, send.power,
+                send.mode, degC, send.fanspeed, send.swingv, send.swingh,
+                send.quiet, send.turbo, send.clock);
       break;
     }
 #endif  // SEND_PANASONIC_AC
@@ -1506,8 +1555,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case SAMSUNG_AC:
     {
       IRSamsungAc ac(_pin, _inverted, _modulation);
-      samsung(&ac, on, send.mode, degC, send.fanspeed, send.swingv, send.quiet,
-              send.turbo, send.clean, send.beep, prev->power);
+      samsung(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
+              send.quiet, send.turbo, send.clean, send.beep, prev->power);
       break;
     }
 #endif  // SEND_SAMSUNG_AC
@@ -1515,7 +1564,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case SHARP_AC:
     {
       IRSharpAc ac(_pin, _inverted, _modulation);
-      sharp(&ac, on, send.mode, degC, send.fanspeed);
+      sharp(&ac, send.power, send.mode, degC, send.fanspeed);
       break;
     }
 #endif  // SEND_SHARP_AC
@@ -1523,8 +1572,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case TCL112AC:
     {
       IRTcl112Ac ac(_pin, _inverted, _modulation);
-      tcl112(&ac, on, send.mode, degC, send.fanspeed, send.swingv, send.swingh,
-             send.turbo, send.light, send.econo, send.filter);
+      tcl112(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
+             send.swingh, send.turbo, send.light, send.econo, send.filter);
       break;
     }
 #endif  // SEND_TCL112AC
@@ -1532,8 +1581,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case TECO:
     {
       IRTecoAc ac(_pin, _inverted, _modulation);
-      teco(&ac, on, send.mode, degC, send.fanspeed, send.swingv, send.light,
-           send.sleep);
+      teco(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
+           send.light, send.sleep);
       break;
     }
 #endif  // SEND_TECO
@@ -1541,7 +1590,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case TOSHIBA_AC:
     {
       IRToshibaAC ac(_pin, _inverted, _modulation);
-      toshiba(&ac, on, send.mode, degC, send.fanspeed);
+      toshiba(&ac, send.power, send.mode, degC, send.fanspeed);
       break;
     }
 #endif  // SEND_TOSHIBA_AC
@@ -1549,7 +1598,7 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case TROTEC:
     {
       IRTrotecESP ac(_pin, _inverted, _modulation);
-      trotec(&ac, on, send.mode, degC, send.fanspeed, send.sleep);
+      trotec(&ac, send.power, send.mode, degC, send.fanspeed, send.sleep);
       break;
     }
 #endif  // SEND_TROTEC
@@ -1557,8 +1606,8 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case VESTEL_AC:
     {
       IRVestelAc ac(_pin, _inverted, _modulation);
-      vestel(&ac, on, send.mode, degC, send.fanspeed, send.swingv, send.turbo,
-             send.filter, send.sleep, send.clock);
+      vestel(&ac, send.power, send.mode, degC, send.fanspeed, send.swingv,
+             send.turbo, send.filter, send.sleep, send.clock);
       break;
     }
 #endif  // SEND_VESTEL_AC
@@ -1566,9 +1615,9 @@ bool IRac::sendAc(const stdAc::state_t desired, const stdAc::state_t *prev) {
     case WHIRLPOOL_AC:
     {
       IRWhirlpoolAc ac(_pin, _inverted, _modulation);
-      whirlpool(&ac, (whirlpool_ac_remote_model_t)send.model, on, send.mode,
-                degC, send.fanspeed, send.swingv, send.turbo, send.light,
-                send.sleep, send.clock);
+      whirlpool(&ac, (whirlpool_ac_remote_model_t)send.model, send.power,
+                send.mode, degC, send.fanspeed, send.swingv, send.turbo,
+                send.light, send.sleep, send.clock);
       break;
     }
 #endif  // SEND_WHIRLPOOL_AC
@@ -2129,6 +2178,21 @@ namespace IRAcUtils {
         return ac.toString();
       }
 #endif  // DECODE_TCL112AC
+#if DECODE_LG
+      case decode_type_t::LG:
+      case decode_type_t::LG2: {
+        IRLgAc ac(0);
+        ac.setRaw(result->value);  // Like Coolix, use value instead of state.
+        switch (result->decode_type) {
+          case decode_type_t::LG2:
+            ac.setModel(lg_ac_remote_model_t::AKB75215403);
+            break;
+          default:
+            ac.setModel(lg_ac_remote_model_t::GE6711AR2853M);
+        }
+        return ac.isValidLgAc() ? ac.toString() : "";
+      }
+#endif  // DECODE_LG
       default:
         return "";
     }
@@ -2299,6 +2363,23 @@ namespace IRAcUtils {
         break;
       }
 #endif  // DECODE_KELVINATOR
+#if DECODE_LG
+      case decode_type_t::LG:
+      case decode_type_t::LG2: {
+        IRLgAc ac(kGpioUnused);
+        ac.setRaw(decode->value);  // Uses value instead of state.
+        if (!ac.isValidLgAc()) return false;
+        switch (decode->decode_type) {
+          case decode_type_t::LG2:
+            ac.setModel(lg_ac_remote_model_t::AKB75215403);
+            break;
+          default:
+            ac.setModel(lg_ac_remote_model_t::GE6711AR2853M);
+        }
+        *result = ac.toCommon();
+        break;
+      }
+#endif  // DECODE_LG
 #if DECODE_MIDEA
       case decode_type_t::MIDEA: {
         IRMideaAC ac(kGpioUnused);

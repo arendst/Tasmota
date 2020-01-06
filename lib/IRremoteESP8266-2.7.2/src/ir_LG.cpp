@@ -8,9 +8,19 @@
 
 #include "ir_LG.h"
 #include <algorithm>
+#include "IRac.h"
 #include "IRrecv.h"
 #include "IRsend.h"
+#include "IRtext.h"
 #include "IRutils.h"
+
+using irutils::addBoolToString;
+using irutils::addModeToString;
+using irutils::addModelToString;
+using irutils::addFanToString;
+using irutils::addTempToString;
+using irutils::setBit;
+using irutils::setBits;
 
 // LG decode originally added by Darryl Smith (based on the JVC protocol)
 // LG send originally added by https://github.com/chaeplin
@@ -283,3 +293,254 @@ bool IRrecv::decodeLG(decode_results *results, uint16_t nbits, bool strict) {
   return true;
 }
 #endif
+
+// LG A/C Class
+// Support for LG-type A/C units.
+// Ref:
+//   https://github.com/arendst/Tasmota/blob/54c2eb283a02e4287640a4595e506bc6eadbd7f2/sonoff/xdrv_05_irremote.ino#L327-438
+IRLgAc::IRLgAc(const uint16_t pin, const bool inverted,
+               const bool use_modulation)
+    : _irsend(pin, inverted, use_modulation) { this->stateReset(); }
+
+void IRLgAc::stateReset(void) {
+  setRaw(kLgAcOffCommand);
+  setModel(lg_ac_remote_model_t::GE6711AR2853M);
+}
+
+void IRLgAc::begin(void) { _irsend.begin(); }
+
+#if SEND_LG
+void IRLgAc::send(const uint16_t repeat) {
+  if (this->getPower())
+    _irsend.send(this->_protocol, this->getRaw(), kLgBits, repeat);
+  else
+    // Always send the special Off command if the power is set to off.
+    // Ref: https://github.com/crankyoldgit/IRremoteESP8266/issues/1008#issuecomment-570763580
+    _irsend.send(this->_protocol, kLgAcOffCommand, kLgBits, repeat);
+}
+#endif  // SEND_LG
+
+void IRLgAc::setModel(const lg_ac_remote_model_t model) {
+  switch (model) {
+    case lg_ac_remote_model_t::AKB75215403:
+      _protocol = decode_type_t::LG2;
+      break;
+    case lg_ac_remote_model_t::GE6711AR2853M:
+      // FALL THRU
+    default:
+      _protocol = decode_type_t::LG;
+  }
+}
+
+lg_ac_remote_model_t IRLgAc::getModel(void) {
+  switch (_protocol) {
+    case LG2:
+      return lg_ac_remote_model_t::AKB75215403;
+    case LG:
+      // FALL THRU
+    default:
+      return lg_ac_remote_model_t::GE6711AR2853M;
+  }
+}
+
+uint32_t IRLgAc::getRaw(void) {
+  checksum();
+  return remote_state;
+}
+
+void IRLgAc::setRaw(const uint32_t new_code) {
+  remote_state = new_code;
+  _temp = 15;  // Ensure there is a "sane" previous temp.
+  _temp = getTemp();
+}
+
+// Calculate the checksum for a given state.
+// Args:
+//   state:  The value to calculate the checksum of.
+// Returns:
+//   A uint8_t of the checksum.
+uint8_t IRLgAc::calcChecksum(const uint32_t state) {
+  return calcLGChecksum(state >> 4);
+}
+
+// Verify the checksum is valid for a given state.
+// Args:
+//   state:  The value to verify the checksum of.
+// Returns:
+//   A boolean.
+bool IRLgAc::validChecksum(const uint32_t state) {
+  return calcChecksum(state) == GETBITS32(state, kLgAcChecksumOffset,
+                                          kLgAcChecksumSize);
+}
+
+void IRLgAc::checksum(void) {
+  setBits(&remote_state, kLgAcChecksumOffset, kLgAcChecksumSize,
+          calcChecksum(remote_state));
+}
+
+void IRLgAc::on(void) { setPower(true); }
+
+void IRLgAc::off(void) { setPower(false); }
+
+void IRLgAc::setPower(const bool on) {
+  setBits(&remote_state, kLgAcPowerOffset, kLgAcPowerSize,
+          on ? kLgAcPowerOn : kLgAcPowerOff);
+  if (on)
+    setTemp(_temp);  // Reset the temp if we are on.
+  else
+    _setTemp(0);  // Off clears the temp.
+}
+
+bool IRLgAc::getPower(void) {
+  return GETBITS32(remote_state, kLgAcPowerOffset, kLgAcPowerSize) ==
+      kLgAcPowerOn;
+}
+
+// Set the temp. (Internal use only)
+void IRLgAc::_setTemp(const uint8_t value) {
+  setBits(&remote_state, kLgAcTempOffset, kLgAcTempSize, value);
+}
+
+// Set the temp. in deg C
+void IRLgAc::setTemp(const uint8_t degrees) {
+  uint8_t temp = std::max(kLgAcMinTemp, degrees);
+  temp = std::min(kLgAcMaxTemp, temp);
+  _temp = temp;
+  _setTemp(temp - kLgAcTempAdjust);
+}
+
+// Return the set temp. in deg C
+uint8_t IRLgAc::getTemp(void) {
+  if (getPower())
+    return GETBITS32(remote_state, kLgAcTempOffset, kLgAcTempSize) +
+        kLgAcTempAdjust;
+  else
+    return _temp;
+}
+
+// Set the speed of the fan.
+void IRLgAc::setFan(const uint8_t speed) {
+  switch (speed) {
+    case kLgAcFanAuto:
+    case kLgAcFanLow:
+    case kLgAcFanMedium:
+    case kLgAcFanHigh:
+      setBits(&remote_state, kLgAcFanOffset, kLgAcFanSize, speed);
+      break;
+    default:
+      setFan(kLgAcFanAuto);
+  }
+}
+
+uint8_t IRLgAc::getFan(void) {
+  return GETBITS32(remote_state, kLgAcFanOffset, kLgAcFanSize);
+}
+
+uint8_t IRLgAc::getMode(void) {
+  return GETBITS32(remote_state, kLgAcModeOffset, kLgAcModeSize);
+}
+
+void IRLgAc::setMode(const uint8_t mode) {
+  switch (mode) {
+    case kLgAcAuto:
+    case kLgAcDry:
+    case kLgAcHeat:
+    case kLgAcCool:
+    case kLgAcFan:
+      setBits(&remote_state, kLgAcModeOffset, kLgAcModeSize, mode);
+      break;
+    default:  // If we get an unexpected mode, default to AUTO.
+      this->setMode(kLgAcAuto);
+  }
+}
+
+// Convert a standard A/C mode into its native mode.
+uint8_t IRLgAc::convertMode(const stdAc::opmode_t mode) {
+  switch (mode) {
+    case stdAc::opmode_t::kCool: return kLgAcCool;
+    case stdAc::opmode_t::kHeat: return kLgAcHeat;
+    case stdAc::opmode_t::kFan:  return kLgAcFan;
+    case stdAc::opmode_t::kDry:  return kLgAcDry;
+    default:                     return kLgAcAuto;
+  }
+}
+
+// Convert a native mode to it's common equivalent.
+stdAc::opmode_t IRLgAc::toCommonMode(const uint8_t mode) {
+  switch (mode) {
+    case kLgAcCool: return stdAc::opmode_t::kCool;
+    case kLgAcHeat: return stdAc::opmode_t::kHeat;
+    case kLgAcDry:  return stdAc::opmode_t::kDry;
+    case kLgAcFan:  return stdAc::opmode_t::kFan;
+    default:        return stdAc::opmode_t::kAuto;
+  }
+}
+
+// Convert a standard A/C Fan speed into its native fan speed.
+uint8_t IRLgAc::convertFan(const stdAc::fanspeed_t speed) {
+  switch (speed) {
+    case stdAc::fanspeed_t::kMin:
+    case stdAc::fanspeed_t::kLow:    return kLgAcFanLow;
+    case stdAc::fanspeed_t::kMedium: return kLgAcFanMedium;
+    case stdAc::fanspeed_t::kHigh:
+    case stdAc::fanspeed_t::kMax:    return kHitachiAcFanHigh;
+    default:                         return kHitachiAcFanAuto;
+  }
+}
+
+// Convert a native fan speed to it's common equivalent.
+stdAc::fanspeed_t IRLgAc::toCommonFanSpeed(const uint8_t speed) {
+  switch (speed) {
+    case kLgAcFanHigh:    return stdAc::fanspeed_t::kMax;
+    case kLgAcFanMedium:  return stdAc::fanspeed_t::kMedium;
+    case kLgAcFanLow:     return stdAc::fanspeed_t::kLow;
+    default:              return stdAc::fanspeed_t::kAuto;
+  }
+}
+
+// Convert the A/C state to it's common equivalent.
+stdAc::state_t IRLgAc::toCommon(void) {
+  stdAc::state_t result;
+  result.protocol = decode_type_t::LG;
+  result.model = this->getModel();
+  result.power = this->getPower();
+  result.mode = this->toCommonMode(this->getMode());
+  result.celsius = true;
+  result.degrees = this->getTemp();
+  result.fanspeed = this->toCommonFanSpeed(this->getFan());
+  // Not supported.
+  result.swingv = stdAc::swingv_t::kOff;
+  result.swingh = stdAc::swingh_t::kOff;
+  result.quiet = false;
+  result.turbo = false;
+  result.light = false;
+  result.filter = false;
+  result.clean = false;
+  result.econo = false;
+  result.beep = false;
+  result.sleep = -1;
+  result.clock = -1;
+  return result;
+}
+
+// Convert the internal state into a human readable string.
+String IRLgAc::toString(void) {
+  String result = "";
+  result.reserve(80);  // Reserve some heap for the string to reduce fragging.
+  result += addModelToString(_protocol, getModel(), false);
+  result += addBoolToString(getPower(), kPowerStr);
+  if (getPower()) {  // Only display the rest if is in power on state.
+    result += addModeToString(getMode(), kLgAcAuto, kLgAcCool,
+                              kLgAcHeat, kLgAcDry, kLgAcFan);
+    result += addTempToString(getTemp());
+    result += addFanToString(getFan(), kLgAcFanHigh, kLgAcFanLow,
+                             kLgAcFanAuto, kLgAcFanAuto, kLgAcFanMedium);
+  }
+  return result;
+}
+
+bool IRLgAc::isValidLgAc(void) {
+  return validChecksum(remote_state) &&
+      (GETBITS32(remote_state, kLgAcSignatureOffset, kLgAcSignatureSize) ==
+       kLgAcSignature);
+}

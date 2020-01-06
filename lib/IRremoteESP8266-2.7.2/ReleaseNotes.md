@@ -1,5 +1,18 @@
 # Release Notes
 
+## _v2.7.2 (20200106)_
+
+**[Bug Fixes]**
+- Common AC api: Better handle protocols with power toggles. (#1002)
+
+**[Features]**
+- Experimental detailed support for LG a/c. (#1008 #1009)
+
+**[Misc]**
+- Add remote codes for Aloka LED lamp. (#1005)
+- Improve Supported Devices scraping. (#1006)
+
+
 ## _v2.7.1 (20191125)_
 
 **[Bug Fixes]**

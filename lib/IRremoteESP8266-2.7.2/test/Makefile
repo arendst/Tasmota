@@ -265,7 +265,7 @@ ir_RCMM_test : $(COMMON_OBJ) ir_RCMM_test.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 
 ir_LG.o : $(USER_DIR)/ir_LG.h $(USER_DIR)/ir_LG.cpp $(COMMON_DEPS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/ir_LG.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -c $(USER_DIR)/ir_LG.cpp
 
 ir_LG_test.o : ir_LG_test.cpp $(USER_DIR)/ir_LG.h $(COMMON_TEST_DEPS) $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(INCLUDES) -c ir_LG_test.cpp
