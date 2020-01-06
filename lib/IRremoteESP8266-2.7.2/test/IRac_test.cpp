@@ -11,6 +11,7 @@
 #include "ir_Haier.h"
 #include "ir_Hitachi.h"
 #include "ir_Kelvinator.h"
+#include "ir_LG.h"
 #include "ir_Midea.h"
 #include "ir_Mitsubishi.h"
 #include "ir_MitsubishiHeavy.h"
@@ -637,6 +638,30 @@ TEST(TestIRac, Kelvinator) {
   EXPECT_TRUE(capture.decode(&ac._irsend.capture));
   ASSERT_EQ(KELVINATOR, ac._irsend.capture.decode_type);
   ASSERT_EQ(kKelvinatorBits, ac._irsend.capture.bits);
+  ASSERT_EQ(expected, IRAcUtils::resultAcToString(&ac._irsend.capture));
+}
+
+TEST(TestIRac, LG) {
+  IRLgAc ac(0);
+  IRac irac(0);
+  IRrecv capture(0);
+  char expected[] =
+      "Model: 1 (GE6711AR2853M), "
+      "Power: On, Mode: 1 (Dry), Temp: 27C, Fan: 2 (Medium)";
+
+  ac.begin();
+  irac.lg(&ac,
+          lg_ac_remote_model_t::GE6711AR2853M,  // Model
+          true,                                 // Power
+          stdAc::opmode_t::kDry,                // Mode
+          27,                                   // Degrees C
+          stdAc::fanspeed_t::kMedium);          // Fan speed
+
+  ASSERT_EQ(expected, ac.toString());
+  ac._irsend.makeDecodeResult();
+  EXPECT_TRUE(capture.decode(&ac._irsend.capture));
+  ASSERT_EQ(LG, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kLgBits, ac._irsend.capture.bits);
   ASSERT_EQ(expected, IRAcUtils::resultAcToString(&ac._irsend.capture));
 }
 
@@ -1484,4 +1509,91 @@ TEST(TestIRac, Issue821) {
       "m560s1680m560s560m560s1680m560s1680m560s560m560s1680m560s1680m560s1680"
       "m560s105040",
       ac._irsend.outputStr());
+}
+
+// Check power toggling in Whirlpool common a/c handling.
+TEST(TestIRac, Issue1001) {
+  stdAc::state_t desired;  // New desired state
+  stdAc::state_t prev;     // Previously desired state
+  stdAc::state_t result;   // State we need to send to get to `desired`
+  prev.protocol = decode_type_t::WHIRLPOOL_AC;
+  prev.model = 1;
+  prev.power = true;
+  prev.mode = stdAc::opmode_t::kAuto;
+  prev.degrees = 24;
+  prev.celsius = true;
+  prev.fanspeed = stdAc::fanspeed_t::kAuto;
+  prev.swingv = stdAc::swingv_t::kOff;
+  prev.swingh = stdAc::swingh_t::kOff;
+  prev.quiet = false;
+  prev.turbo = false;
+  prev.econo = false;
+  prev.light = false;
+  prev.filter = false;
+  prev.clean = false;
+  prev.beep = false;
+  prev.sleep = -1;
+
+  desired = prev;
+  desired.power = false;
+
+  IRac irac(0);
+  IRrecv capture(0);
+  IRWhirlpoolAc ac(0);
+
+  ac.begin();
+  ASSERT_TRUE(prev.power);
+  ASSERT_FALSE(desired.power);
+  result = irac.handleToggles(irac.cleanState(desired), &prev);
+  ASSERT_TRUE(result.power);
+  irac.sendAc(desired, &prev);
+  ASSERT_FALSE(desired.power);
+  irac.whirlpool(&ac,
+                 (whirlpool_ac_remote_model_t)result.model,  // Model
+                 result.power,     // Power
+                 result.mode,      // Mode
+                 result.degrees,   // Celsius
+                 result.fanspeed,  // Fan speed
+                 result.swingv,    // Veritcal swing
+                 result.turbo,     // Turbo
+                 result.light,     // Light
+                 result.sleep);    // Sleep
+  ac._irsend.makeDecodeResult();
+  EXPECT_TRUE(capture.decode(&ac._irsend.capture));
+  ASSERT_EQ(WHIRLPOOL_AC, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kWhirlpoolAcBits, ac._irsend.capture.bits);
+  ASSERT_EQ("Model: 1 (DG11J13A), Power Toggle: On, Mode: 1 (Auto), Temp: 24C, "
+            "Fan: 0 (Auto), Swing: Off, Light: Off, Clock: 00:00, "
+            "On Timer: Off, Off Timer: Off, Sleep: Off, Super: Off, "
+            "Command: 1 (Power)",
+            IRAcUtils::resultAcToString(&ac._irsend.capture));
+
+  // Now check if the mode is set to "Off" instead of just change to power off.
+  // i.e. How Home Assistant expects things to work.
+  ac._irsend.reset();
+  desired.power = true;
+  desired.mode = stdAc::opmode_t::kOff;
+  result = irac.handleToggles(irac.cleanState(desired), &prev);
+  ASSERT_TRUE(result.power);
+  irac.sendAc(desired, &prev);
+  ASSERT_TRUE(desired.power);
+  irac.whirlpool(&ac,
+                 (whirlpool_ac_remote_model_t)result.model,  // Model
+                 result.power,     // Power
+                 result.mode,      // Mode
+                 result.degrees,   // Celsius
+                 result.fanspeed,  // Fan speed
+                 result.swingv,    // Veritcal swing
+                 result.turbo,     // Turbo
+                 result.light,     // Light
+                 result.sleep);    // Sleep
+  ac._irsend.makeDecodeResult();
+  EXPECT_TRUE(capture.decode(&ac._irsend.capture));
+  ASSERT_EQ(WHIRLPOOL_AC, ac._irsend.capture.decode_type);
+  ASSERT_EQ(kWhirlpoolAcBits, ac._irsend.capture.bits);
+  ASSERT_EQ("Model: 1 (DG11J13A), Power Toggle: On, Mode: 1 (Auto), Temp: 24C, "
+            "Fan: 0 (Auto), Swing: Off, Light: Off, Clock: 00:00, "
+            "On Timer: Off, Off Timer: Off, Sleep: Off, Super: Off, "
+            "Command: 1 (Power)",
+            IRAcUtils::resultAcToString(&ac._irsend.capture));
 }

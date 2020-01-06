@@ -141,6 +141,11 @@ enum whirlpool_ac_remote_model_t {
   DG11J191,
 };
 
+enum lg_ac_remote_model_t {
+  GE6711AR2853M = 1,  // (1) LG 28-bit Protocol (default)
+  AKB75215403,        // (2) LG2 28-bit Protocol
+};
+
 
 // Classes
 class IRsend {

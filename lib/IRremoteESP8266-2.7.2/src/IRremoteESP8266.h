@@ -1,4 +1,4 @@
-/***************************************************
+ /***************************************************
  * IRremote for ESP8266
  *
  * Based on the IRremote library for Arduino by Ken Shirriff
@@ -52,7 +52,7 @@
 #endif  // UNIT_TEST
 
 // Library Version
-#define _IRREMOTEESP8266_VERSION_ "2.7.1"
+#define _IRREMOTEESP8266_VERSION_ "2.7.2"
 
 // Set the language & locale for the library. See the `locale` dir for options.
 #ifndef _IR_LOCALE_
@@ -588,6 +588,7 @@ const uint16_t kSingleRepeat = 1;
 
 const uint16_t kAiwaRcT501Bits = 15;
 const uint16_t kAiwaRcT501MinRepeats = kSingleRepeat;
+const uint16_t kAlokaBits = 32;
 const uint16_t kAmcorStateLength = 8;
 const uint16_t kAmcorBits = kAmcorStateLength * 8;
 const uint16_t kAmcorDefaultRepeat = kSingleRepeat;
@@ -668,6 +669,7 @@ const uint16_t kLegoPfBits = 16;
 const uint16_t kLegoPfMinRepeat = kNoRepeat;
 const uint16_t kLgBits = 28;
 const uint16_t kLg32Bits = 32;
+const uint16_t kLgDefaultRepeat = kNoRepeat;
 const uint16_t kLutronBits = 35;
 const uint16_t kMagiquestBits = 56;
 const uint16_t kMideaBits = 48;

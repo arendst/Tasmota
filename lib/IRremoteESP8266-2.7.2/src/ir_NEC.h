@@ -12,6 +12,7 @@
 // Supports:
 //   Brand: Yamaha,  Model: RAV561 remote
 //   Brand: Yamaha,  Model: RXV585B A/V Receiver
+//   Brand: Aloka,   Model: SleepyLights LED Lamp
 
 // Constants
 // Ref:
@@ -41,4 +42,32 @@ const uint16_t kNecMinGapTicks =
     (kNecHdrMarkTicks + kNecHdrSpaceTicks +
      kNECBits * (kNecBitMarkTicks + kNecOneSpaceTicks) + kNecBitMarkTicks);
 
+// IR codes and structure for kids ALOKA SleepyLights LED Lamp.
+// https://aloka-designs.com/
+// Ref: https://github.com/crankyoldgit/IRremoteESP8266/issues/1004
+//
+// May be useful for someone wanting to control the lamp.
+//
+// The lamp is toggled On and Off with the same power button.
+// The colour, when selected, is the brightest and there are 4 levels of
+// brightness that decrease on each send of the colour. A fifth send of the
+// colour resets to brightest again.
+//
+// Remote buttons defined left to right, top line to bottom line on the remote.
+const uint32_t kAlokaPower =         0xFF609F;
+const uint32_t kAlokaLedWhite =      0xFF906F;
+const uint32_t kAlokaLedGreen =      0xFF9867;
+const uint32_t kAlokaLedBlue =       0xFFD827;
+const uint32_t kAlokaLedPinkRed =    0xFF8877;
+const uint32_t kAlokaLedRed =        0xFFA857;
+const uint32_t kAlokaLedLightGreen = 0xFFE817;
+const uint32_t kAlokaLedMidBlue =    0xFF48B7;
+const uint32_t kAlokaLedPink =       0xFF6897;
+const uint32_t kAlokaLedOrange =     0xFFB24D;
+const uint32_t kAlokaLedYellow =     0xFF00FF;
+const uint32_t kAlokaNightFade =     0xFF50AF;
+const uint32_t kAlokaNightTimer =    0xFF7887;
+const uint32_t kAlokaLedRainbow =    0xFF708F;
+// Didn't have a better description for it...
+const uint32_t kAlokaLedTreeGrow =   0xFF58A7;
 #endif  // IR_NEC_H_

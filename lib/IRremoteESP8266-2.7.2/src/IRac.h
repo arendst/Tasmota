@@ -18,6 +18,7 @@
 #include "ir_Haier.h"
 #include "ir_Hitachi.h"
 #include "ir_Kelvinator.h"
+#include "ir_LG.h"
 #include "ir_Midea.h"
 #include "ir_Mitsubishi.h"
 #include "ir_MitsubishiHeavy.h"
@@ -136,16 +137,16 @@ class IRac {
                  const bool quiet, const bool turbo, const bool econo);
 #endif  // SEND_DAIKIN152
 #if SEND_DAIKIN160
-void daikin160(IRDaikin160 *ac,
-               const bool on, const stdAc::opmode_t mode,
-               const float degrees, const stdAc::fanspeed_t fan,
-               const stdAc::swingv_t swingv);
+  void daikin160(IRDaikin160 *ac,
+                 const bool on, const stdAc::opmode_t mode,
+                 const float degrees, const stdAc::fanspeed_t fan,
+                 const stdAc::swingv_t swingv);
 #endif  // SEND_DAIKIN160
 #if SEND_DAIKIN176
-void daikin176(IRDaikin176 *ac,
-               const bool on, const stdAc::opmode_t mode,
-               const float degrees, const stdAc::fanspeed_t fan,
-               const stdAc::swingh_t swingh);
+  void daikin176(IRDaikin176 *ac,
+                 const bool on, const stdAc::opmode_t mode,
+                 const float degrees, const stdAc::fanspeed_t fan,
+                 const stdAc::swingh_t swingh);
 #endif  // SEND_DAIKIN176
 #if SEND_DAIKIN2
   void daikin2(IRDaikin2 *ac,
@@ -230,6 +231,11 @@ void electra(IRElectraAc *ac,
                   const bool quiet, const bool turbo, const bool light,
                   const bool filter, const bool clean);
 #endif  // SEND_KELVINATOR
+#if SEND_LG
+  void lg(IRLgAc *ac, const lg_ac_remote_model_t model,
+          const bool on, const stdAc::opmode_t mode,
+          const float degrees, const stdAc::fanspeed_t fan);
+#endif  // SEND_LG
 #if SEND_MIDEA
   void midea(IRMideaAC *ac,
              const bool on, const stdAc::opmode_t mode, const bool celsius,
@@ -340,6 +346,7 @@ void electra(IRElectraAc *ac,
                  const bool turbo, const bool light,
                  const int16_t sleep = -1, const int16_t clock = -1);
 #endif  // SEND_WHIRLPOOL_AC
+static stdAc::state_t cleanState(const stdAc::state_t state);
 static stdAc::state_t handleToggles(const stdAc::state_t desired,
                                     const stdAc::state_t *prev = NULL);
 };  // IRac class
