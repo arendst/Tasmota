@@ -2398,8 +2398,7 @@ void HandleUploadLoop(void)
         Web.upload_error = 6;  // Upload failed. Enable logging 3
         return;
       }
-      if (OtaVersion() < VERSION_COMPATIBLE) {
-        AbandonOta();
+      if (!VersionCompatible()) {
         Web.upload_error = 14;  // Not compatible
         return;
       }

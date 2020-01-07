@@ -343,10 +343,10 @@ void SetFlashModeDout(void)
   delete[] _buffer;
 }
 
-uint32_t OtaVersion(void)
+bool VersionCompatible(void)
 {
   if (Settings.flag3.compatibility_check) {
-    return 0xFFFFFFFF;
+    return true;
   }
 
   eboot_command ebcmd;
@@ -362,15 +362,15 @@ uint32_t OtaVersion(void)
     if ((address == start_address) && (0x1F == (buffer[0] & 0xFF))) {
       version[1] = 0xFFFFFFFF;  // Ota file is gzipped and can not be checked for compatibility
       found = true;
-      break;
-    }
-    for (uint32_t i = 0; i < (FLASH_SECTOR_SIZE / 4); i++) {
-      version[0] = version[1];
-      version[1] = version[2];
-      version[2] = buffer[i];
-      if ((version[0] == MARKER_START) && (version[2] == MARKER_END)) {
-        found = true;
-        break;
+    } else {
+      for (uint32_t i = 0; i < (FLASH_SECTOR_SIZE / 4); i++) {
+        version[0] = version[1];
+        version[1] = version[2];
+        version[2] = buffer[i];
+        if ((MARKER_START == version[0]) && (MARKER_END == version[2])) {
+          found = true;
+          break;
+        }
       }
     }
     if (found) { break; }
@@ -381,13 +381,13 @@ uint32_t OtaVersion(void)
 
   AddLog_P2(LOG_LEVEL_DEBUG, PSTR("OTA: Version 0x%08X, Compatible 0x%08X"), version[1], VERSION_COMPATIBLE);
 
-  return version[1];
-}
+  if (version[1] < VERSION_COMPATIBLE) {
+    uint32_t eboot_magic = 0;  // Abandon OTA result
+    ESP.rtcUserMemoryWrite(0, (uint32_t*)&eboot_magic, sizeof(eboot_magic));
+    return false;
+  }
 
-void AbandonOta(void)
-{
-  uint32_t eboot_magic = 0;
-  ESP.rtcUserMemoryWrite(0, (uint32_t*)&eboot_magic, sizeof(eboot_magic));
+  return true;
 }
 
 void SettingsBufferFree(void)
