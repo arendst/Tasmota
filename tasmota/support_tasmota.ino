@@ -833,13 +833,15 @@ void Every250mSeconds(void)
           strlcpy(mqtt_data, GetOtaUrl(log_data, sizeof(log_data)), sizeof(mqtt_data));
 #ifndef FIRMWARE_MINIMAL
           if (RtcSettings.ota_loader) {
-            char *bch = strrchr(mqtt_data, '/');                        // Only consider filename after last backslash prevent change of urls having "-" in it
+            char *bch = strrchr(mqtt_data, '/');                           // Only consider filename after last backslash prevent change of urls having "-" in it
             char *pch = strrchr((bch != nullptr) ? bch : mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
-            char *ech = strrchr((bch != nullptr) ? bch : mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
+//            char *ech = strrchr((bch != nullptr) ? bch : mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
+            char *ech = strchr((bch != nullptr) ? bch : mqtt_data, '.');   // Change from filename.bin into filename-minimal.bin or filename.bin.gz into filename-minimal.bin.gz
             if (!pch) { pch = ech; }
             if (pch) {
               mqtt_data[pch - mqtt_data] = '\0';
-              char *ech = strrchr(SettingsText(SET_OTAURL), '.');  // Change from filename.bin into filename-minimal.bin
+//              char *ech = strrchr(SettingsText(SET_OTAURL), '.');          // Change from filename.bin into filename-minimal.bin
+              char *ech = strchr(SettingsText(SET_OTAURL), '.');          // Change from filename.bin into filename-minimal.bin
               snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ech);  // Minimal filename must be filename-minimal
             }
           }
