@@ -146,6 +146,8 @@ enum UserSelectablePins {
   GPIO_MAX31855CS,     // MAX31855 Serial interface
   GPIO_MAX31855CLK,    // MAX31855 Serial interface
   GPIO_MAX31855DO,     // MAX31855 Serial interface
+ GPIO_SR04_TRIGPIN,     // SK04T Trigger Serial interface
+  GPIO_SR04_ECHOPIN,    // SK04T Echo Serial interface
   GPIO_KEY1_INV,       // Inverted buttons
   GPIO_KEY2_INV,
   GPIO_KEY3_INV,
@@ -728,6 +730,11 @@ const uint8_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_MGC3130
   GPIO_MGC3130_XFER,
   GPIO_MGC3130_RESET,
+#endif
+
+#ifdef USE_SK04T
+ GPIO_SR04_TRIGPIN,     // SK04T Trigger Serial interface
+  GPIO_SR04_ECHOPIN,    // SK04T Echo Serial interface
 #endif
 #ifdef USE_MAX31855
   GPIO_MAX31855CS,     // MAX31855 Serial interface
