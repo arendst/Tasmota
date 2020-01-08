@@ -1612,13 +1612,19 @@ void LightCycleColor(int8_t direction)
   if (0 == direction) {
     if (Light.random == Light.wheel) {
       Light.random = random(255);
+
+      uint8_t my_dir = ((Light.random < Light.wheel -128) || (Light.random > Light.wheel +128)) ? 1 : 0;
+      Light.random |= my_dir;
+
+//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: random %d"), Light.random);
     }
-    direction = (Light.random < Light.wheel) ? -1 : 1;
+//    direction = (Light.random < Light.wheel) ? -1 : 1;
+    direction = (Light.random &1) ? -1 : 1;
   }
   Light.wheel += direction;
   uint16_t hue = changeUIntScale(Light.wheel, 0, 255, 0, 359);  // Scale to hue to keep amount of steps low (max 255 instead of 359)
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("DBG: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
 
   uint8_t sat;
   light_state.getHSB(nullptr, &sat, nullptr);  // Allow user control over Saturation
@@ -1964,9 +1970,9 @@ void LightSetOutputs(const uint16_t *cur_col_10) {
       }
     }
   }
-  char msg[24];
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: Channels %s"),
-            ToHex_P((const unsigned char *)cur_col_10, 10, msg, sizeof(msg)));
+
+//  char msg[24];
+//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: Channels %s"), ToHex_P((const unsigned char *)cur_col_10, 10, msg, sizeof(msg)));
 
   uint8_t cur_col[LST_MAX];
   for (uint32_t i = 0; i < LST_MAX; i++) {
