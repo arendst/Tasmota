@@ -1613,13 +1613,15 @@ void LightCycleColor(int8_t direction)
     if (Light.random == Light.wheel) {
       Light.random = random(255);
 
-      uint8_t my_dir = ((Light.random < Light.wheel -128) || (Light.random > Light.wheel +128)) ? 1 : 0;
-      Light.random |= my_dir;
+      uint8_t my_dir = (Light.random < Light.wheel -128) ? 1 :
+                       (Light.random < Light.wheel     ) ? 0 :
+                       (Light.random > Light.wheel +128) ? 0 : 1;  // Increment or Decrement and roll-over
+      Light.random = (Light.random & 0xFE) | my_dir;
 
 //      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: random %d"), Light.random);
     }
 //    direction = (Light.random < Light.wheel) ? -1 : 1;
-    direction = (Light.random &1) ? -1 : 1;
+    direction = (Light.random &0x01) ? 1 : -1;
   }
   Light.wheel += direction;
   uint16_t hue = changeUIntScale(Light.wheel, 0, 255, 0, 359);  // Scale to hue to keep amount of steps low (max 255 instead of 359)
