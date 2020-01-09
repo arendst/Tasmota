@@ -499,17 +499,14 @@ bool NewerVersion(char* version_str)
   uint32_t version = 0;
   uint32_t i = 0;
   char *str_ptr;
-  char* version_dup = strdup(version_str);  // Duplicate the version_str as strtok_r will modify it.
 
-  if (!version_dup) {
-    return false;  // Bail if we can't duplicate. Assume bad.
-  }
+  char version_dup[strlen(version_str) +1];
+  strncpy(version_dup, version_str, sizeof(version_dup));  // Duplicate the version_str as strtok_r will modify it.
   // Loop through the version string, splitting on '.' seperators.
   for (char *str = strtok_r(version_dup, ".", &str_ptr); str && i < sizeof(VERSION); str = strtok_r(nullptr, ".", &str_ptr), i++) {
     int field = atoi(str);
     // The fields in a version string can only range from 0-255.
     if ((field < 0) || (field > 255)) {
-      free(version_dup);
       return false;
     }
     // Shuffle the accumulated bytes across, and add the new byte.
@@ -521,7 +518,6 @@ bool NewerVersion(char* version_str)
       i++;
     }
   }
-  free(version_dup);  // We no longer need this.
   // A version string should have 2-4 fields. e.g. 1.2, 1.2.3, or 1.2.3a (= 1.2.3.1).
   // If not, then don't consider it a valid version string.
   if ((i < 2) || (i > sizeof(VERSION))) {

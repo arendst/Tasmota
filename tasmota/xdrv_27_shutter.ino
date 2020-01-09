@@ -808,18 +808,22 @@ void CmndShutterButton(void)
     // (setting>> 2)&(0x3f) : shutter_position single press 0 disabled, 1..101 == 0..100%
     // (setting>> 0)&(0x03) : shutter_index
     if (XdrvMailbox.data_len > 0) {
-        uint32_t i = 0, button_index = 0;
-        bool done = false, isShortCommand = false;
+        uint32_t i = 0;
+        uint32_t button_index = 0;
+        bool done = false;
+        bool isShortCommand = false;
         char *str_ptr;
-        char* version_dup = strdup(XdrvMailbox.data);  // Duplicate the version_str as strtok_r will modify it.
-        // Loop through the version string, splitting on ' ' seperators.
-        for (char *str = strtok_r(version_dup, " ", &str_ptr); str && i < (1+4+4+1); str = strtok_r(nullptr, " ", &str_ptr), i++) {
-          int field;
-          if (str[0] == '-')
-            field = -1;
-          else
-            field = atoi(str);
 
+        char data_copy[strlen(XdrvMailbox.data) +1];
+        strncpy(data_copy, XdrvMailbox.data, sizeof(data_copy));  // Duplicate data as strtok_r will modify it.
+        // Loop through the data string, splitting on ' ' seperators.
+        for (char *str = strtok_r(data_copy, " ", &str_ptr); str && i < (1+4+4+1); str = strtok_r(nullptr, " ", &str_ptr), i++) {
+          int field;
+          if (str[0] == '-') {
+            field = -1;
+          } else {
+            field = atoi(str);
+          }
           switch (i) {
             case 0:
               if ((field >= -1) && (field<=4)) {
@@ -866,7 +870,6 @@ void CmndShutterButton(void)
           }
           if (done) break;
         }
-        free(version_dup);
 
         if (button_index) {
           if (button_index==-1) {
@@ -957,30 +960,31 @@ void CmndShutterInvert(void)
   }
 }
 
-void CmndShutterCalibration(void)  // ????
+void CmndShutterCalibration(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
     if (XdrvMailbox.data_len > 0) {
-        uint32_t i = 0;
-        char *str_ptr;
-        char* version_dup = strdup(XdrvMailbox.data);  // Duplicate the version_str as strtok_r will modify it.
-        // Loop through the version string, splitting on '.' seperators.
-        for (char *str = strtok_r(version_dup, " ", &str_ptr); str && i < 5; str = strtok_r(nullptr, " ", &str_ptr), i++) {
-          int field = atoi(str);
-          // The fields in a version string can only range from 1-30000.
-          // and following value must be higher than previous one
-          if ((field <= 0) || (field > 30000) ||  ( (i>0) && (field <= messwerte[i-1]) ) ) {
-            break;
-          }
-          messwerte[i] = field;
+      uint32_t i = 0;
+      char *str_ptr;
+
+      char data_copy[strlen(XdrvMailbox.data) +1];
+      strncpy(data_copy, XdrvMailbox.data, sizeof(data_copy));  // Duplicate data as strtok_r will modify it.
+      // Loop through the data string, splitting on ' ' seperators.
+      for (char *str = strtok_r(data_copy, " ", &str_ptr); str && i < 5; str = strtok_r(nullptr, " ", &str_ptr), i++) {
+        int field = atoi(str);
+        // The fields in a data string can only range from 1-30000.
+        // and following value must be higher than previous one
+        if ((field <= 0) || (field > 30000) || ( (i>0) && (field <= messwerte[i-1]) ) ) {
+          break;
         }
-        free(version_dup);
-        for (i=0 ; i < 5 ; i++) {
-          Settings.shuttercoeff[i][XdrvMailbox.index -1] = (uint32_t)messwerte[i] * 1000 / messwerte[4];
-          AddLog_P2(LOG_LEVEL_INFO, PSTR("Settings.shuttercoeff: %d, i: %d, value: %d, messwert %d"), i,XdrvMailbox.index -1,Settings.shuttercoeff[i][XdrvMailbox.index -1], messwerte[i]);
-        }
-        ShutterInit();
-        ResponseCmndIdxChar(XdrvMailbox.data);
+        messwerte[i] = field;
+      }
+      for (i = 0; i < 5; i++) {
+        Settings.shuttercoeff[i][XdrvMailbox.index -1] = (uint32_t)messwerte[i] * 1000 / messwerte[4];
+        AddLog_P2(LOG_LEVEL_INFO, PSTR("Settings.shuttercoeff: %d, i: %d, value: %d, messwert %d"), i,XdrvMailbox.index -1,Settings.shuttercoeff[i][XdrvMailbox.index -1], messwerte[i]);
+      }
+      ShutterInit();
+      ResponseCmndIdxChar(XdrvMailbox.data);
     } else {
       char setting_chr[30] = "0";
       snprintf_P(setting_chr, sizeof(setting_chr), PSTR("%d %d %d %d %d"), Settings.shuttercoeff[0][XdrvMailbox.index -1], Settings.shuttercoeff[1][XdrvMailbox.index -1], Settings.shuttercoeff[2][XdrvMailbox.index -1], Settings.shuttercoeff[3][XdrvMailbox.index -1], Settings.shuttercoeff[4][XdrvMailbox.index -1]);
