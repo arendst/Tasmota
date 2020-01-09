@@ -667,15 +667,15 @@ void CmndShutterPosition(void)
     // value 0 with data_len > 0 can mean Open
     if ((XdrvMailbox.data_len > 1) && (XdrvMailbox.payload <= 0)) {
       //UpperCase(XdrvMailbox.data, XdrvMailbox.data);
-      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN)) {
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_UP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_OPEN) || ((Shutter.direction[index]==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_TOGGLEUP))) {
         CmndShutterOpen();
         return;
       }
-      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_DOWN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE)) {
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_DOWN) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_CLOSE) || ((Shutter.direction[index]==0) && !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_TOGGLEDOWN))) {
         CmndShutterClose();
         return;
       }
-      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP)) {
+      if (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_STOP) || ((Shutter.direction[index]) && (!strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_TOGGLEUP) || !strcasecmp(XdrvMailbox.data,D_CMND_SHUTTER_TOGGLEDOWN)))) {
         XdrvMailbox.payload = -99;
         CmndShutterStop();
         return;

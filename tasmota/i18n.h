@@ -502,6 +502,8 @@
 #define D_CMND_SHUTTER_CLOSE "Close"
 #define D_CMND_SHUTTER_UP "Up"
 #define D_CMND_SHUTTER_DOWN "Down"
+#define D_CMND_SHUTTER_TOGGLEUP "ToggleUp"
+#define D_CMND_SHUTTER_TOGGLEDOWN "ToggleDown"
 #define D_CMND_SHUTTER_STOP "Stop"
 #define D_CMND_SHUTTER_POSITION "Position"
 #define D_CMND_SHUTTER_OPENTIME "OpenDuration"
