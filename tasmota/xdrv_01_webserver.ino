@@ -1675,8 +1675,9 @@ void HandleWifiConfiguration(void)
         for (uint32_t i = 0; i < n; i++) {
           if (-1 == indices[i]) { continue; }
           cssid = WiFi.SSID(indices[i]);
+          uint32_t cschn = WiFi.channel(indices[i]);
           for (uint32_t j = i + 1; j < n; j++) {
-            if (cssid == WiFi.SSID(indices[j])) {
+            if ((cssid == WiFi.SSID(indices[j])) && (cschn == WiFi.channel(indices[j]))) {
               DEBUG_CORE_LOG(PSTR(D_LOG_WIFI D_DUPLICATE_ACCESSPOINT " %s"), WiFi.SSID(indices[j]).c_str());
               indices[j] = -1;  // set dup aps to index -1
             }
