@@ -809,7 +809,7 @@ void CmndShutterButton(void)
     // (setting>> 0)&(0x03) : shutter_index
     if (XdrvMailbox.data_len > 0) {
         uint32_t i = 0, button_index = 0;
-        bool done = false;
+        bool done = false, isShortCommand = false;
         char *str_ptr;
         char* version_dup = strdup(XdrvMailbox.data);  // Duplicate the version_str as strtok_r will modify it.
         // Loop through the version string, splitting on ' ' seperators.
@@ -830,19 +830,26 @@ void CmndShutterButton(void)
             break;
             case 1:
               if (!strcmp_P(str, PSTR("up"))) {
-                setting |= (((100>>1)+1)<<2) | (((50>>1)+1)<<8) | (((75>>1)+1)<<14) | (((100>>1)+1)<<20) | (0x18<<26);
-                done = true;
+                setting |= (((100>>1)+1)<<2) | (((50>>1)+1)<<8) | (((75>>1)+1)<<14) | (((100>>1)+1)<<20);
+                isShortCommand = true;
                 break;
               } else if (!strcmp_P(str, PSTR("down"))) {
-                setting |= (((0>>1)+1)<<2) | (((50>>1)+1)<<8) | (((25>>1)+1)<<14) | (((0>>1)+1)<<20) | (0x18<<26);
-                done = true;
+                setting |= (((0>>1)+1)<<2) | (((50>>1)+1)<<8) | (((25>>1)+1)<<14) | (((0>>1)+1)<<20);
+                isShortCommand = true;
                 break;
               } else if (!strcmp_P(str, PSTR("updown"))) {
                 setting |= (((100>>1)+1)<<2) | (((0>>1)+1)<<8) | (((50>>1)+1)<<14);
-                done = true;
+                isShortCommand = true;
                 break;
               }
             case 2:
+              if (isShortCommand) {
+                if ((field==1) && (setting & (0x3F<<(2+6*3))))
+                  // if short command up or down then also enable MQTT broadcast
+                  setting |= (0x3<<29);
+                done = true;
+                break;
+              }
             case 3:
             case 4:
               if ((field >= -1) && (field<=100))
