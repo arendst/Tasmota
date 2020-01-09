@@ -1696,7 +1696,7 @@ void HandleWifiConfiguration(void)
             HtmlEscape(WiFi.SSID(indices[i])).c_str(),
             WiFi.channel(indices[i]),
             GetTextIndexed(encryption, sizeof(encryption), auth +1, kEncryptionType),
-            quality, WiFi.RSSI()
+            quality, WiFi.RSSI(indices[i])
           );
           delay(0);
 
