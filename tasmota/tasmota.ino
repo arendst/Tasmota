@@ -276,6 +276,22 @@ void setup(void)
 
   WifiConnect();
 
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE), PROJECT, SettingsText(SET_FRIENDLYNAME1), my_version, my_image);
+#ifdef FIRMWARE_MINIMAL
+  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
+#endif  // FIRMWARE_MINIMAL
+
+  memcpy_P(log_data, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
+
+  RtcInit();
+
+#ifdef USE_ARDUINO_OTA
+  ArduinoOTAInit();
+#endif  // USE_ARDUINO_OTA
+
+  XdrvCall(FUNC_INIT);
+  XsnsCall(FUNC_INIT);
+
   if (MOTOR == my_module_type) { Settings.poweronstate = POWER_ALL_ON; }  // Needs always on else in limbo!
   if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
     SetDevicePower(1, SRC_RESTART);
@@ -325,21 +341,6 @@ void setup(void)
   }
   blink_powersave = power;
 
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE), PROJECT, SettingsText(SET_FRIENDLYNAME1), my_version, my_image);
-#ifdef FIRMWARE_MINIMAL
-  AddLog_P2(LOG_LEVEL_INFO, PSTR(D_WARNING_MINIMAL_VERSION));
-#endif  // FIRMWARE_MINIMAL
-
-  memcpy_P(log_data, VERSION_MARKER, 1);  // Dummy for compiler saving VERSION_MARKER
-
-  RtcInit();
-
-#ifdef USE_ARDUINO_OTA
-  ArduinoOTAInit();
-#endif  // USE_ARDUINO_OTA
-
-  XdrvCall(FUNC_INIT);
-  XsnsCall(FUNC_INIT);
 }
 
 void BacklogLoop(void)
