@@ -4,6 +4,7 @@
 
 - Add support for gzipped binaries
 - Update IRremoteESP8266 lib updated to v2.7.2
+- Fix ``WakeUp <x>`` ignores provided value (#7473)
 
 ### 8.1.0.2 20191230
 

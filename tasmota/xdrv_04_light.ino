@@ -2325,7 +2325,7 @@ void CmndScheme(void)
 void CmndWakeup(void)
 {
   if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= 100)) {
-    Settings.light_dimmer = XdrvMailbox.payload;
+    light_controller.changeDimmer(XdrvMailbox.payload);
   }
   Light.wakeup_active = 3;
   Settings.light_scheme = LS_WAKEUP;
