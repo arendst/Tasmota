@@ -124,17 +124,25 @@
 #define XDRV_04              4
 // #define DEBUG_LIGHT
 
+#define LPALETTE_MAX 16 //Must be <= light_pallete size in settings.h
+
 enum LightSchemes { LS_POWER, LS_WAKEUP, LS_CYCLEUP, LS_CYCLEDN, LS_RANDOM, LS_MAX };
 
 const uint8_t LIGHT_COLOR_SIZE = 25;   // Char array scolor size
 
 const char kLightCommands[] PROGMEM = "|"  // No prefix
   D_CMND_COLOR "|" D_CMND_COLORTEMPERATURE "|" D_CMND_DIMMER "|" D_CMND_DIMMER_RANGE "|" D_CMND_LEDTABLE "|" D_CMND_FADE "|"
+#ifdef USE_PALETTE
+  D_CMND_PALETTE "|"
+#endif
   D_CMND_RGBWWTABLE "|" D_CMND_SCHEME "|" D_CMND_SPEED "|" D_CMND_WAKEUP "|" D_CMND_WAKEUPDURATION "|"
   D_CMND_WHITE "|" D_CMND_CHANNEL "|" D_CMND_HSBCOLOR "|UNDOCA" ;
 
 void (* const LightCommand[])(void) PROGMEM = {
   &CmndColor, &CmndColorTemperature, &CmndDimmer, &CmndDimmerRange, &CmndLedTable, &CmndFade,
+#ifdef USE_PALETTE
+  &CmndPalette,
+#endif
   &CmndRgbwwTable, &CmndScheme, &CmndSpeed, &CmndWakeup, &CmndWakeupDuration,
   &CmndWhite, &CmndChannel, &CmndHsbColor, &CmndUndocA };
 
@@ -278,6 +286,10 @@ struct LIGHT {
   uint16_t fade_end_10[LST_MAX];         // 10 bits resolution target channel values
   uint16_t fade_duration = 0;            // duration of fade in milliseconds
   uint32_t fade_start = 0;               // fade start time in milliseconds, compared to millis()
+#ifdef USE_PALETTE
+  uint8_t palette_count = 0;
+  uint8_t palette[LPALETTE_MAX][LST_MAX];
+#endif
 } Light;
 
 power_t LightPower(void)
@@ -960,6 +972,10 @@ public:
         _state->setBriCT(bri);
       }
     }
+#ifdef USE_PALETTE
+    Light.palette_count = Settings.light_palette_count;
+    memcpy(Light.palette, Settings.light_palette, sizeof(Light.palette));
+#endif
   }
 
   void changeCTB(uint16_t new_ct, uint8_t briCT) {
@@ -1098,6 +1114,10 @@ public:
         Settings.light_dimmer = _state->BriToDimmer(_state->getBriCT());
       }
     }
+#ifdef USE_PALETTE
+    Settings.light_palette_count = Light.palette_count;
+    memcpy(Settings.light_palette, Light.palette, sizeof(Settings.light_palette));
+#endif
 #ifdef DEBUG_LIGHT
     AddLog_P2(LOG_LEVEL_DEBUG_MORE, "LightControllerClass::saveSettings Settings.light_color (%d %d %d %d %d - %d)",
       Settings.light_color[0], Settings.light_color[1], Settings.light_color[2],
@@ -1609,28 +1629,52 @@ void LightCycleColor(int8_t direction)
     return;
   }
 
-  if (0 == direction) {
-    if (Light.random == Light.wheel) {
-      Light.random = random(255);
-
-      uint8_t my_dir = (Light.random < Light.wheel -128) ? 1 :
-                       (Light.random < Light.wheel     ) ? 0 :
-                       (Light.random > Light.wheel +128) ? 0 : 1;  // Increment or Decrement and roll-over
-      Light.random = (Light.random & 0xFE) | my_dir;
-
-//      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: random %d"), Light.random);
+#ifdef USE_PALETTE
+  if (Light.palette_count) {
+//    if (Light.fade_running) return 1; //if we're still fading from the previous color, just keep fading
+    if (0 == direction) {
+      Light.wheel = random(Light.palette_count);
     }
-//    direction = (Light.random < Light.wheel) ? -1 : 1;
-    direction = (Light.random &0x01) ? 1 : -1;
+    else {
+      Light.wheel += direction;
+      if (Light.wheel >= Light.palette_count) {
+        Light.wheel = (direction < 0 ? Light.palette_count - 1 : 0);
+      }
+    }
+//AddLog_P2(LOG_LEVEL_INFO, PSTR("palette color %02X%02X%02X%02X%02X"),
+//     Light.palette[Light.wheel][0], Light.palette[Light.wheel][1], Light.palette[Light.wheel][2], Light.palette[Light.wheel][3], L
+    uint32_t old_bri = light_state.getBri();
+    light_state.setBri(255);
+    light_state.setChannels(Light.palette[Light.wheel]);
+    light_state.setBri(old_bri);
   }
-  Light.wheel += direction;
-  uint16_t hue = changeUIntScale(Light.wheel, 0, 255, 0, 359);  // Scale to hue to keep amount of steps low (max 255 instead of 359)
+  else {
+#endif
+    if (0 == direction) {
+      if (Light.random == Light.wheel) {
+        Light.random = random(255);
 
-//  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
+        uint8_t my_dir = (Light.random < Light.wheel -128) ? 1 :
+                        (Light.random < Light.wheel     ) ? 0 :
+                        (Light.random > Light.wheel +128) ? 0 : 1;  // Increment or Decrement and roll-over
+        Light.random = (Light.random & 0xFE) | my_dir;
 
-  uint8_t sat;
-  light_state.getHSB(nullptr, &sat, nullptr);  // Allow user control over Saturation
-  light_state.setHS(hue, sat);
+  //      AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: random %d"), Light.random);
+      }
+  //    direction = (Light.random < Light.wheel) ? -1 : 1;
+      direction = (Light.random &0x01) ? 1 : -1;
+    }
+    Light.wheel += direction;
+    uint16_t hue = changeUIntScale(Light.wheel, 0, 255, 0, 359);  // Scale to hue to keep amount of steps low (max 255 instead of 359)
+
+  //  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("LGT: random %d, wheel %d, hue %d"), Light.random, Light.wheel, hue);
+
+    uint8_t sat;
+    light_state.getHSB(nullptr, &sat, nullptr);  // Allow user control over Saturation
+    light_state.setHS(hue, sat);
+#ifdef USE_PALETTE
+  }
+#endif
   light_controller.calcLevels(Light.new_color);
 }
 
@@ -2138,6 +2182,34 @@ void CmndSupportColor(void)
   bool valid_entry = false;
   bool coldim = false;
 
+#ifdef USE_PALETTE
+  if (XdrvMailbox.index == 7) {
+    if (XdrvMailbox.data_len > 0) {
+      //Color7 x: Set palette index. x=+, - or index
+      if (Light.palette_count) {
+        if (XdrvMailbox.data_len == 1 && ('+' == XdrvMailbox.data[0] || '-' == XdrvMailbox.data[0])) {
+          int8_t direction = ('+' == XdrvMailbox.data[0] ? 1 : -1);
+          Light.wheel += direction;
+          if (Light.wheel >= Light.palette_count) {
+            Light.wheel = (direction < 0 ? Light.palette_count - 1 : 0);
+          }
+        }
+        else {
+          Light.wheel = (atoi(XdrvMailbox.data) - 1) % Light.palette_count;
+        }
+        uint32_t old_bri = light_state.getBri();
+        light_state.setBri(255);
+        light_controller.changeChannels(Light.palette[Light.wheel]);
+        light_controller.changeBri(old_bri);
+      }
+    }
+
+    char scolor[LIGHT_COLOR_SIZE];
+    ResponseCmndChar(LightGetColor(scolor));
+    return;
+  }
+#endif
+
   if (XdrvMailbox.data_len > 0) {
     valid_entry = LightColorEntry(XdrvMailbox.data, XdrvMailbox.data_len);
     if (valid_entry) {
@@ -2437,6 +2509,44 @@ void CmndLedTable(void)
   }
   ResponseCmndStateText(Settings.light_correction);
 }
+
+#ifdef USE_PALETTE
+void CmndPalette(void)
+{
+  if (XdrvMailbox.data_len) {
+    Light.wheel = 0;
+    Light.palette_count = 0;
+    if (XdrvMailbox.data[0] != '=') {
+      char *color = strtok(XdrvMailbox.data, " ");
+      while ((color != nullptr) && Light.palette_count < LPALETTE_MAX)
+      {
+        color = Trim(color);
+        if (*color != '\0' && LightColorEntry(color, strlen(color))) {
+            memcpy(Light.palette[Light.palette_count++], &Light.entry_color, sizeof(Light.entry_color));
+        }
+        color = strtok(nullptr, " ");
+      }
+    }
+    light_controller.saveSettings();
+  }
+
+  uint32_t palette_size = 5 * Light.subtype * LPALETTE_MAX;
+  char palette[palette_size];
+  palette[0] = '\0';
+  palette[1] = '\0';
+  for (uint32_t p = 0; p < Light.palette_count; p++) {
+    snprintf_P(palette, palette_size, PSTR("%s "), palette);
+    for (uint32_t i = 0; i < Light.subtype; i++) {
+      if (Settings.flag.decimal_text) {  // SetOption17 - Switch between decimal or hexadecimal output
+        snprintf_P(palette, palette_size, PSTR("%s%s%d"), palette, (i > 0) ? "," : "", Light.palette[p][i]);
+      } else {
+        snprintf_P(palette, palette_size, PSTR("%s%02X"), palette, Light.palette[p][i]);
+      }
+    }
+  }
+  ResponseCmndIdxChar(&palette[1]);
+}
+#endif
 
 void CmndRgbwwTable(void)
 {

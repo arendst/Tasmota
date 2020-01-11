@@ -466,8 +466,10 @@ struct SYSCFG {
   uint8_t       sps30_inuse_hours;         // F02
   uint8_t       hotplug_scan;              // F03
   uint8_t       reserved1;                 // F04 - reserved for s-hadinger
+  uint8_t       light_palette_count;       // F05
+  uint8_t       light_palette[16][5];      // F06
 
-  uint8_t       free_f05[215];             // F05
+  uint8_t       free_f56[134];             // F56
 
   uint32_t      shutter_button[MAX_KEYS];  // FDC
   uint32_t      i2c_drivers[3];            // FEC I2cDriver
