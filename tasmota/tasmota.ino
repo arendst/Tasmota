@@ -276,54 +276,7 @@ void setup(void)
 
   WifiConnect();
 
-  if (MOTOR == my_module_type) { Settings.poweronstate = POWER_ALL_ON; }  // Needs always on else in limbo!
-  if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
-    SetDevicePower(1, SRC_RESTART);
-  } else {
-    if ((ResetReason() == REASON_DEFAULT_RST) || (ResetReason() == REASON_EXT_SYS_RST)) {
-      switch (Settings.poweronstate) {
-      case POWER_ALL_OFF:
-      case POWER_ALL_OFF_PULSETIME_ON:
-        power = 0;
-        SetDevicePower(power, SRC_RESTART);
-        break;
-      case POWER_ALL_ON:  // All on
-        power = (1 << devices_present) -1;
-        SetDevicePower(power, SRC_RESTART);
-        break;
-      case POWER_ALL_SAVED_TOGGLE:
-        power = (Settings.power & ((1 << devices_present) -1)) ^ POWER_MASK;
-        if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart
-          SetDevicePower(power, SRC_RESTART);
-        }
-        break;
-      case POWER_ALL_SAVED:
-        power = Settings.power & ((1 << devices_present) -1);
-        if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart
-          SetDevicePower(power, SRC_RESTART);
-        }
-        break;
-      }
-    } else {
-      power = Settings.power & ((1 << devices_present) -1);
-      if (Settings.flag.save_state) {    // SetOption0 - Save power state and use after restart
-        SetDevicePower(power, SRC_RESTART);
-      }
-    }
-  }
-
-  // Issue #526 and #909
-  for (uint32_t i = 0; i < devices_present; i++) {
-    if (!Settings.flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
-      if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
-        bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
-      }
-    }
-    if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
-      SetPulseTimer(i, Settings.pulse_timer[i]);
-    }
-  }
-  blink_powersave = power;
+  SetPowerOnState();
 
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE), PROJECT, SettingsText(SET_FRIENDLYNAME1), my_version, my_image);
 #ifdef FIRMWARE_MINIMAL
