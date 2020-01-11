@@ -2253,7 +2253,12 @@ void CmndSupportColor(void)
 
 void CmndColor(void)
 {
-  if ((Light.subtype > LST_SINGLE) && (XdrvMailbox.index > 0) && (XdrvMailbox.index <= 6)) {
+  if ((Light.subtype > LST_SINGLE) && (XdrvMailbox.index > 0) &&
+#ifdef USE_PALETTE
+    (XdrvMailbox.index <= 7)) {
+#else
+    (XdrvMailbox.index <= 6)) {
+#endif
     CmndSupportColor();
   }
 }
