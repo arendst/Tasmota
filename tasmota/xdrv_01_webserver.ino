@@ -1212,7 +1212,6 @@ bool HandleRootStatusRefresh(void)
       int32_t ShutterWebButton;
       if (ShutterWebButton = IsShutterWebButton(device)) {
         snprintf_P(svalue, sizeof(svalue), PSTR("ShutterPosition%d %s"), abs(ShutterWebButton), (ShutterWebButton>0) ? PSTR(D_CMND_SHUTTER_TOGGLEUP) : PSTR(D_CMND_SHUTTER_TOGGLEDOWN));
-        AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: WebButton %d, %s"), ShutterWebButton, svalue);
         ExecuteWebCommand(svalue, SRC_WEBGUI);
       } else {
 #endif  // USE_SHUTTER
