@@ -181,7 +181,7 @@ uint32_t IrRemoteCmndIrSendJson(void)
   // IRsend { "protocol": "RC5", "bits": 12, "data":"0xC86" }
   // IRsend { "protocol": "SAMSUNG", "bits": 32, "data": 551502015 }
 
-  char dataBufUc[XdrvMailbox.data_len];
+  char dataBufUc[XdrvMailbox.data_len + 1];
   UpperCase(dataBufUc, XdrvMailbox.data);
   RemoveSpace(dataBufUc);
   if (strlen(dataBufUc) < 8) {

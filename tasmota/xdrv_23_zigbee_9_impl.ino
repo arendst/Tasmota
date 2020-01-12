@@ -548,7 +548,7 @@ void CmndZigbeeSend(void) {
 // Probe a specific device to get its endpoints and supported clusters
 void CmndZigbeeProbe(void) {
   if (zigbee.init_phase) { ResponseCmndChar(D_ZIGBEE_NOT_STARTED); return; }
-  char dataBufUc[XdrvMailbox.data_len];
+  char dataBufUc[XdrvMailbox.data_len + 1];
   UpperCase(dataBufUc, XdrvMailbox.data);
   RemoveSpace(dataBufUc);
   if (strlen(dataBufUc) < 3) { ResponseCmndChar("Invalid destination"); return; }
