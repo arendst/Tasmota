@@ -1812,11 +1812,7 @@ void CmndMemory(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_MEMS)) {
     if (!XdrvMailbox.usridx) {
-      mqtt_data[0] = '\0';
-      for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
-        ResponseAppend_P(PSTR("%c\"Mem%d\":\"%s\""), (i) ? ',' : '{', i +1, SettingsText(SET_MEM1 +i));
-      }
-      ResponseJsonEnd();
+      ResponseCmndAll(SET_MEM1, MAX_RULE_MEMS);
     } else {
       if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION

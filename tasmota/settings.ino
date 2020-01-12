@@ -1043,7 +1043,7 @@ void SettingsDefaultSet2(void)
   SettingsUpdateText(SET_NTPSERVER1, NTP_SERVER1);
   SettingsUpdateText(SET_NTPSERVER2, NTP_SERVER2);
   SettingsUpdateText(SET_NTPSERVER3, NTP_SERVER3);
-  for (uint32_t i = 0; i < 3; i++) {
+  for (uint32_t i = 0; i < MAX_NTP_SERVERS; i++) {
     SettingsUpdateText(SET_NTPSERVER1 +i, ReplaceCommaWithDot(SettingsText(SET_NTPSERVER1 +i)));
   }
   Settings.latitude = (int)((double)LATITUDE * 1000000);

@@ -279,7 +279,7 @@ void WifiBeginAfterScan(void)
 
         bool known = false;
         uint32_t j;
-        for (j = 0; j < 2; j++) {
+        for (j = 0; j < MAX_SSIDS; j++) {
           if (ssid_scan == SettingsText(SET_STASSID1 + j)) {  // SSID match
             known = true;
             if (rssi_scan > best_network_db) {      // Best network

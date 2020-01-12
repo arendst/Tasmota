@@ -2906,11 +2906,7 @@ void CmndWebButton(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_BUTTON_TEXT)) {
     if (!XdrvMailbox.usridx) {
-      mqtt_data[0] = '\0';
-      for (uint32_t i = 0; i < MAX_BUTTON_TEXT; i++) {
-        ResponseAppend_P(PSTR("%c\"WebButton%d\":\"%s\""), (i) ? ',' : '{', i +1, SettingsText(SET_BUTTON1 +i));
-      }
-      ResponseJsonEnd();
+      ResponseCmndAll(SET_BUTTON1, MAX_BUTTON_TEXT);
     } else {
       if (XdrvMailbox.data_len > 0) {
         SettingsUpdateText(SET_BUTTON1 + XdrvMailbox.index -1, ('"' == XdrvMailbox.data[0]) ? "" : XdrvMailbox.data);

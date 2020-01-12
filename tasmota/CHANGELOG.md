@@ -2,6 +2,7 @@
 
 ### 8.1.0.3 20200106
 
+- Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
 - Add support for gzipped binaries
 - Update IRremoteESP8266 lib updated to v2.7.2
 - Fix ``WakeUp <x>`` ignores provided value (#7473)

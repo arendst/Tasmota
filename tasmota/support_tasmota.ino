@@ -107,7 +107,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
       fulltopic += F("/");
       fulltopic += FPSTR(MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
     }
-    for (uint32_t i = 0; i < 3; i++) {
+    for (uint32_t i = 0; i < MAX_MQTT_PREFIXES; i++) {
       if (!strlen(SettingsText(SET_MQTTPREFIX1 + i))) {
         char temp[TOPSZ];
         SettingsUpdateText(SET_MQTTPREFIX1 + i, GetTextIndexed(temp, sizeof(temp), i, kPrefixes));
@@ -144,7 +144,7 @@ char* GetFallbackTopic_P(char *stopic, const char* subtopic)
 
 char* GetStateText(uint32_t state)
 {
-  if (state > 3) {
+  if (state >= MAX_STATE_TEXT) {
     state = 1;
   }
   return SettingsText(SET_STATE_TXT1 + state);

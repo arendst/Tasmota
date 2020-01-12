@@ -73,6 +73,10 @@ const uint8_t MAX_RULE_SETS = 3;            // Max number of rule sets of size 5
 const uint16_t MAX_RULE_SIZE = 512;         // Max number of characters in rules
 
 // Changes to the following MAX_ defines need to be in line with enum SettingsTextIndex
+const uint8_t MAX_MQTT_PREFIXES = 3;        // Max number of MQTT prefixes (cmnd, stat, tele)
+const uint8_t MAX_SSIDS = 2;                // Max number of SSIDs
+const uint8_t MAX_STATE_TEXT = 4;           // Max number of State names (OFF, ON, TOGGLE, HOLD)
+const uint8_t MAX_NTP_SERVERS = 3;          // Max number of NTP servers
 const uint8_t MAX_RULE_MEMS = 16;           // Max number of saved vars
 const uint8_t MAX_FRIENDLYNAMES = 8;        // Max number of Friendly names
 const uint8_t MAX_BUTTON_TEXT = 16;         // Max number of GUI button labels
