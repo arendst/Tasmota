@@ -1394,6 +1394,11 @@ void CmndInterlock(void)
           SetDevicePower(power, SRC_IGNORE);                    // Remove multiple relays if set
         }
       }
+#ifdef USE_SHUTTER
+      if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
+        ShutterInit(); // to update shutter mode
+      }
+#endif  // USE_SHUTTER
     }
     Response_P(PSTR("{\"" D_CMND_INTERLOCK "\":\"%s\",\"" D_JSON_GROUPS "\":\""), GetStateText(Settings.flag.interlock));
     uint32_t anygroup = 0;
