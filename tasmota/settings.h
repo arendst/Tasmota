@@ -432,7 +432,7 @@ struct SYSCFG {
   uint16_t      shutter_opentime[MAX_SHUTTERS];      // E40
   uint16_t      shutter_closetime[MAX_SHUTTERS];     // E48
   int16_t       shuttercoeff[5][MAX_SHUTTERS];       // E50
-  uint8_t       shutter_invert[MAX_SHUTTERS];        // E78
+  uint8_t       shutter_options[MAX_SHUTTERS];        // E78
   uint8_t       shutter_set50percent[MAX_SHUTTERS];  // E7C
   uint8_t       shutter_position[MAX_SHUTTERS];      // E80
   uint8_t       shutter_startrelay[MAX_SHUTTERS];    // E84
