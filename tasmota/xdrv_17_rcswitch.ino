@@ -105,7 +105,7 @@ void CmndRfSend(void)
     int repeat = 10;
     int pulse = 350;
 
-    char dataBufUc[XdrvMailbox.data_len];
+    char dataBufUc[XdrvMailbox.data_len + 1];
     UpperCase(dataBufUc, XdrvMailbox.data);
     StaticJsonBuffer<150> jsonBuf;  // ArduinoJSON entry used to calculate jsonBuf: JSON_OBJECT_SIZE(5) + 40 = 134
     JsonObject &root = jsonBuf.parseObject(dataBufUc);

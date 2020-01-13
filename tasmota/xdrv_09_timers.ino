@@ -364,7 +364,7 @@ void CmndTimer(void)
 #if defined(USE_RULES)==0 && defined(USE_SCRIPT)==0
         if (devices_present) {
 #endif
-          char dataBufUc[XdrvMailbox.data_len];
+          char dataBufUc[XdrvMailbox.data_len + 1];
           UpperCase(dataBufUc, XdrvMailbox.data);
           StaticJsonBuffer<256> jsonBuffer;
           JsonObject& root = jsonBuffer.parseObject(dataBufUc);
