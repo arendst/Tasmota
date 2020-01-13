@@ -40,13 +40,13 @@ const char kShutterCommands[] PROGMEM = D_PRFX_SHUTTER "|"
   D_CMND_SHUTTER_OPEN "|" D_CMND_SHUTTER_CLOSE "|" D_CMND_SHUTTER_STOP "|" D_CMND_SHUTTER_POSITION  "|"
   D_CMND_SHUTTER_OPENTIME "|" D_CMND_SHUTTER_CLOSETIME "|" D_CMND_SHUTTER_RELAY "|"
   D_CMND_SHUTTER_SETHALFWAY "|" D_CMND_SHUTTER_SETCLOSE "|" D_CMND_SHUTTER_INVERT "|" D_CMND_SHUTTER_CLIBRATION "|"
-  D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK;
+  D_CMND_SHUTTER_MOTORDELAY "|" D_CMND_SHUTTER_FREQUENCY "|" D_CMND_SHUTTER_BUTTON "|" D_CMND_SHUTTER_LOCK "|" D_CMND_SHUTTER_ENABLEENDSTOPTIME;
 
 void (* const ShutterCommand[])(void) PROGMEM = {
   &CmndShutterOpen, &CmndShutterClose, &CmndShutterStop, &CmndShutterPosition,
   &CmndShutterOpenTime, &CmndShutterCloseTime, &CmndShutterRelay,
   &CmndShutterSetHalfway, &CmndShutterSetClose, &CmndShutterInvert, &CmndShutterCalibration , &CmndShutterMotorDelay,
-  &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock};
+  &CmndShutterFrequency, &CmndShutterButton, &CmndShutterLock, &CmndShutterEnableEndStopTime};
 
 const char JSON_SHUTTER_POS[] PROGMEM = "\"" D_PRFX_SHUTTER "%d\":{\"Position\":%d,\"Direction\":%d}";
 
@@ -115,7 +115,7 @@ int32_t ShutterPercentToRealPosition(uint32_t percent, uint32_t index)
       }
     }
     for (uint32_t i = 0; i < 5; i++) {
-      if ((percent * 10) > Settings.shuttercoeff[i][index]) {
+      if ((percent * 10) >= Settings.shuttercoeff[i][index]) {
         realpos = SHT_DIV_ROUND(Shutter.open_max[index] * calibrate_pos[i+1], 100);
         //AddLog_P2(LOG_LEVEL_INFO, PSTR("Realposition TEMP1: %d, %% %d, coeff %d"), realpos, percent, Settings.shuttercoeff[i][index]);
       } else {
@@ -235,10 +235,10 @@ void ShutterInit(void)
       dtostrfd((float)Shutter.open_time[i] / 10 , 1, shutter_open_chr);
       char shutter_close_chr[10];
       dtostrfd((float)Shutter.close_time[i] / 10, 1, shutter_close_chr);
-      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100, Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoeffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, is locked %d, shuttermode %d, motordelay %d"),
+      AddLog_P2(LOG_LEVEL_INFO, PSTR("SHT: Shutter %d (Relay:%d): Init. Pos: %d [%d %%], Open Vel.: 100, Close Vel.: %d , Max Way: %d, Opentime %s [s], Closetime %s [s], CoeffCalc: c0: %d, c1 %d, c2: %d, c3: %d, c4: %d, binmask %d, is inverted %d, is locked %d, end stop time enabled %d, shuttermode %d, motordelay %d"),
         i+1, Settings.shutter_startrelay[i], Shutter.real_position[i], Settings.shutter_position[i], Shutter.close_velocity[i], Shutter.open_max[i], shutter_open_chr, shutter_close_chr,
         Settings.shuttercoeff[0][i], Settings.shuttercoeff[1][i], Settings.shuttercoeff[2][i], Settings.shuttercoeff[3][i], Settings.shuttercoeff[4][i],
-        Shutter.mask, (Settings.shutter_options[i]&1) ? 1 : 0, (Settings.shutter_options[i]&2) ? 1 : 0, Shutter.mode, Shutter.motordelay[i]);
+        Shutter.mask, (Settings.shutter_options[i]&1) ? 1 : 0, (Settings.shutter_options[i]&2) ? 1 : 0, (Settings.shutter_options[i]&4) ? 1 : 0, Shutter.mode, Shutter.motordelay[i]);
 
     } else {
       // terminate loop at first INVALID shutter.
@@ -274,6 +274,13 @@ void ShutterReportPosition(bool always)
   }
   rules_flag.shutter_moving = shutter_moving;
   //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: rules_flag.shutter_moving: %d, moved %d"), rules_flag.shutter_moving, rules_flag.shutter_moved);
+}
+
+void ShutterLimitRealAndTargetPositions(uint32_t i) {
+  if (Shutter.real_position[i]<0) Shutter.real_position[i] = 0;
+  if (Shutter.real_position[i]>Shutter.open_max[i]) Shutter.real_position[i] = Shutter.open_max[i];
+  if (Shutter.target_position[i]<0) Shutter.target_position[i] = 0;
+  if (Shutter.target_position[i]>Shutter.open_max[i]) Shutter.target_position[i] = Shutter.open_max[i];
 }
 
 void ShutterUpdatePosition(void)
@@ -364,6 +371,7 @@ void ShutterUpdatePosition(void)
             }
           break;
         }
+        ShutterLimitRealAndTargetPositions(i);
         Settings.shutter_position[i] = ShutterRealToPercentPosition(Shutter.real_position[i], i);
 
         ShutterLogPos(i);
@@ -464,6 +472,7 @@ void ShutterRelayChanged(void)
     //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: Shutter %d: source: %s, powerstate_local %ld, Shutter.switched_relay %d, manual change %d"), i+1, GetTextIndexed(stemp1, sizeof(stemp1), last_source, kCommandSource), powerstate_local,Shutter.switched_relay,manual_relays_changed);
     if (manual_relays_changed) {
       //Shutter.skip_relay_change = true;
+      ShutterLimitRealAndTargetPositions(i);
       if (Shutter.mode == SHT_OFF_ON__OPEN_CLOSE ||  Shutter.mode == SHT_OFF_ON__OPEN_CLOSE_STEPPER) {
         ShutterWaitForMotorStop(i);
 				switch (powerstate_local) {
@@ -748,7 +757,13 @@ void CmndShutterPosition(void)
       target_pos_percent = ((Settings.shutter_options[index] & 1) && (SRC_WEBGUI != last_source)) ? 100 - target_pos_percent : target_pos_percent;
       if (XdrvMailbox.payload != -99) {
         //target_pos_percent = (Settings.shutter_options[index] & 1) ? 100 - target_pos_percent : target_pos_percent;
-        Shutter.target_position[index] = ShutterPercentToRealPosition(target_pos_percent, index);
+        if (0 == target_pos_percent) {
+          Shutter.target_position[index] = (Settings.shutter_options[index] & 4) ? (-1 * 2000) : 0;
+        } else if (100 == target_pos_percent) {
+          Shutter.target_position[index] = (Settings.shutter_options[index] & 4) ? (Shutter.open_max[index] + 1 * 2000) : Shutter.open_max[index];
+      	} else {
+          Shutter.target_position[index] = ShutterPercentToRealPosition(target_pos_percent, index);
+        }
         Shutter.accelerator[index] = Shutter.max_pwm_frequency / ((Shutter.motordelay[index] > 0) ? Shutter.motordelay[index] : 1);
         //Shutter.target_position[index] = XdrvMailbox.payload < 5 ?  Settings.shuttercoeff[2][index] * XdrvMailbox.payload : Settings.shuttercoeff[1][index] * XdrvMailbox.payload + Settings.shuttercoeff[0,index];
         AddLog_P2(LOG_LEVEL_DEBUG, PSTR("SHT: lastsource %d:, real %d, target %d, payload %d"), last_source, Shutter.real_position[index] ,Shutter.target_position[index],target_pos_percent);
@@ -1068,6 +1083,17 @@ void CmndShutterLock(void) {
       Settings.shutter_options[XdrvMailbox.index -1] |= (2);
     }
     ResponseCmndIdxNumber((Settings.shutter_options[XdrvMailbox.index -1] & 2) ? 1 : 0);
+  }
+}
+
+void CmndShutterEnableEndStopTime(void) {
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= shutters_present)) {
+    if (XdrvMailbox.payload == 0) {
+      Settings.shutter_options[XdrvMailbox.index -1] &= ~(4);
+    } else if (XdrvMailbox.payload == 1) {
+      Settings.shutter_options[XdrvMailbox.index -1] |= (4);
+    }
+    ResponseCmndIdxNumber((Settings.shutter_options[XdrvMailbox.index -1] & 4) ? 1 : 0);
   }
 }
 
