@@ -265,7 +265,7 @@ void ShutterReportPosition(bool always)
   }
   ResponseJsonEnd();
   if (always || (1 == shutter_moving)) {
-    MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_PRFX_SHUTTER));
+    MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_PRFX_SHUTTER));
   }
   if (rules_flag.shutter_moving > shutter_moving) {
     rules_flag.shutter_moved = 1;
