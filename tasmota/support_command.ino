@@ -237,9 +237,9 @@ void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)
 
   if (type == nullptr) {
     blinks = 201;
-    snprintf_P(topicBuf, sizeof(topicBuf), PSTR(D_JSON_COMMAND));
+    snprintf_P(stemp1, sizeof(stemp1), PSTR(D_JSON_COMMAND));
     Response_P(PSTR("{\"" D_JSON_COMMAND "\":\"" D_JSON_UNKNOWN "\"}"));
-    type = (char*)topicBuf;
+    type = (char*)stemp1;
   }
 
   if (mqtt_data[0] != '\0') {
