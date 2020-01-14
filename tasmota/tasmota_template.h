@@ -1,7 +1,7 @@
 /*
   tasmota_template.h - template settings for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -314,6 +314,7 @@ enum UserSelectableAdc0 {
   ADC0_BUTTON,         // Button
   ADC0_BUTTON_INV,
   ADC0_MOIST,          // Moisture
+  ADC0_CT_POWER,       // Current
 //  ADC0_SWITCH,         // Switch
 //  ADC0_SWITCH_INV,
   ADC0_END };
@@ -330,6 +331,7 @@ const char kAdc0Names[] PROGMEM =
   D_TEMPERATURE "|" D_LIGHT "|"
   D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|"
   D_MOISTURE "|"
+  D_CT_POWER "|"
 //  D_SENSOR_SWITCH "|" D_SENSOR_SWITCH "i|"
   ;
 

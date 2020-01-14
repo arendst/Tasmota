@@ -1,7 +1,7 @@
 /*
   xdrv_10_rules.ino - rule support for Tasmota
 
-  Copyright (C) 2019  ESP Easy Group and Theo Arends
+  Copyright (C) 2020  ESP Easy Group and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -437,8 +437,14 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
       commands.trim();
       String ucommand = commands;
       ucommand.toUpperCase();
+
 //      if (!ucommand.startsWith("BACKLOG")) { commands = "backlog " + commands; }  // Always use Backlog to prevent power race exception
-      if ((ucommand.indexOf("EVENT ") != -1) && (ucommand.indexOf("BACKLOG ") == -1)) { commands = "backlog " + commands; }  // Always use Backlog with event to prevent rule event loop exception
+      // Use Backlog with event to prevent rule event loop exception unless IF is used which uses an implicit backlog
+      if ((ucommand.indexOf("IF ") == -1) &&
+          (ucommand.indexOf("EVENT ") != -1) &&
+          (ucommand.indexOf("BACKLOG ") == -1)) {
+        commands = "backlog " + commands;
+      }
 
       RulesVarReplace(commands, F("%VALUE%"), Rules.event_value);
       for (uint32_t i = 0; i < MAX_RULE_VARS; i++) {
@@ -1806,11 +1812,7 @@ void CmndMemory(void)
 {
   if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_RULE_MEMS)) {
     if (!XdrvMailbox.usridx) {
-      mqtt_data[0] = '\0';
-      for (uint32_t i = 0; i < MAX_RULE_MEMS; i++) {
-        ResponseAppend_P(PSTR("%c\"Mem%d\":\"%s\""), (i) ? ',' : '{', i +1, SettingsText(SET_MEM1 +i));
-      }
-      ResponseJsonEnd();
+      ResponseCmndAll(SET_MEM1, MAX_RULE_MEMS);
     } else {
       if (XdrvMailbox.data_len > 0) {
 #ifdef USE_EXPRESSION

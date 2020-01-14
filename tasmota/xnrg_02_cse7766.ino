@@ -1,7 +1,7 @@
 /*
   xnrg_02_cse7766.ino - CSE7766 and HLW8032 energy sensor support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -193,7 +193,9 @@ void CseEverySecond(void)
       if (cf_frequency && Energy.active_power[0])  {
         unsigned long delta = (cf_frequency * Settings.energy_power_calibration) / 36;
         // prevent invalid load delta steps even checksum is valid (issue #5789):
-        if (delta <= (3680*100/36) * 10 ) {  // max load for S31/Pow R2: 3.68kW
+//        if (delta <= (3680*100/36) * 10 ) {  // max load for S31/Pow R2: 3.68kW
+        // prevent invalid load delta steps even checksum is valid but allow up to 4kW (issue #7155):
+        if (delta <= (4000*100/36) * 10 ) {  // max load for S31/Pow R2: 4.00kW
           Cse.cf_pulses_last_time = Cse.cf_pulses;
           Energy.kWhtoday_delta += delta;
         }
@@ -210,8 +212,7 @@ void CseEverySecond(void)
 void CseDrvInit(void)
 {
   if ((3 == pin[GPIO_CSE7766_RX]) && (1 == pin[GPIO_CSE7766_TX])) {  // As it uses 8E1 currently only hardware serial is supported
-    baudrate = 4800;
-    Settings.serial_config = TS_SERIAL_8E1;
+    SetSerial(4800, TS_SERIAL_8E1);
     if (0 == Settings.param[P_CSE7766_INVALID_POWER]) {
       Settings.param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
     }

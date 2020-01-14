@@ -1,7 +1,7 @@
 /*
   xdrv_11_knx.ino - KNX IP Protocol support for Tasmota
 
-  Copyright (C) 2019  Adrian Scillato  (https://github.com/ascillato)
+  Copyright (C) 2020  Adrian Scillato  (https://github.com/ascillato)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

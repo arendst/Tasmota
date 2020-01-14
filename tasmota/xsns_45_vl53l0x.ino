@@ -1,7 +1,7 @@
 /*
-  xsns_99_vl53l0x.ino - VL53L0X support for Tasmota
+  xsns_45_vl53l0x.ino - VL53L0X support for Tasmota
 
-  Copyright (C) 2018  Theo Arends and Gerhard Mutz
+  Copyright (C) 2020  Theo Arends and Gerhard Mutz
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

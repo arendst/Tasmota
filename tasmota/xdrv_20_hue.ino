@@ -1,7 +1,7 @@
 /*
   xdrv_20_hue.ino - Philips Hue support for Tasmota
 
-  Copyright (C) 2019  Heiko Krupp and Theo Arends
+  Copyright (C) 2020  Heiko Krupp and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -231,7 +231,7 @@ void HueConfig(String *path)
 }
 
 // device is forced to CT mode instead of HSB
-// only makes sense for LST_COLDWARM, LST_RGBW and LST_RGBWC
+// only makes sense for LST_COLDWARM, LST_RGBW and LST_RGBCW
 bool g_gotct = false;
 
 // store previously set values from the Alexa app
@@ -279,7 +279,7 @@ void HueLightStatus1(uint8_t device, String *response)
 
 #ifdef USE_SHUTTER
   if (ShutterState(device)) {
-    bri = (float)(Settings.shutter_invert[device-1] ? 100 - Settings.shutter_position[device-1] : Settings.shutter_position[device-1]) / 100;
+    bri = (float)((Settings.shutter_options[device-1] & 1) ? 100 - Settings.shutter_position[device-1] : Settings.shutter_position[device-1]) / 100;
   }
 #endif
 
@@ -681,7 +681,7 @@ void HueLights(String *path)
       if (change) {
 #ifdef USE_SHUTTER
         if (ShutterState(device)) {
-          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_invert[device-1]);
+          AddLog_P2(LOG_LEVEL_DEBUG, PSTR("Settings.shutter_invert: %d"), Settings.shutter_options[device-1] & 1);
           ShutterSetPosition(device, bri * 100.0f );
         } else
 #endif

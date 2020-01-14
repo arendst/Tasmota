@@ -1,7 +1,7 @@
 /*
   xsns_40_pn532.ino - Support for PN532 (HSU) NFC Tag Reader on Tasmota
 
-  Copyright (C) 2019  Andre Thomas and Theo Arends
+  Copyright (C) 2020  Andre Thomas and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

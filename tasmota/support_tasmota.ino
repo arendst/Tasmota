@@ -1,7 +1,7 @@
 /*
   support_tasmota.ino - Core support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -107,7 +107,7 @@ char* GetTopic_P(char *stopic, uint32_t prefix, char *topic, const char* subtopi
       fulltopic += F("/");
       fulltopic += FPSTR(MQTT_TOKEN_PREFIX);  // Need prefix for commands to handle mqtt topic loops
     }
-    for (uint32_t i = 0; i < 3; i++) {
+    for (uint32_t i = 0; i < MAX_MQTT_PREFIXES; i++) {
       if (!strlen(SettingsText(SET_MQTTPREFIX1 + i))) {
         char temp[TOPSZ];
         SettingsUpdateText(SET_MQTTPREFIX1 + i, GetTextIndexed(temp, sizeof(temp), i, kPrefixes));
@@ -144,7 +144,7 @@ char* GetFallbackTopic_P(char *stopic, const char* subtopic)
 
 char* GetStateText(uint32_t state)
 {
-  if (state > 3) {
+  if (state >= MAX_STATE_TEXT) {
     state = 1;
   }
   return SettingsText(SET_STATE_TXT1 + state);
@@ -274,6 +274,60 @@ void SetAllPower(uint32_t state, uint32_t source)
   if (publish_power) {
     MqttPublishAllPowerState();
   }
+}
+
+void SetPowerOnState(void)
+{
+  if (MOTOR == my_module_type) {
+    Settings.poweronstate = POWER_ALL_ON;   // Needs always on else in limbo!
+  }
+  if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
+    SetDevicePower(1, SRC_RESTART);
+  } else {
+    if ((ResetReason() == REASON_DEFAULT_RST) || (ResetReason() == REASON_EXT_SYS_RST)) {
+      switch (Settings.poweronstate) {
+      case POWER_ALL_OFF:
+      case POWER_ALL_OFF_PULSETIME_ON:
+        power = 0;
+        SetDevicePower(power, SRC_RESTART);
+        break;
+      case POWER_ALL_ON:  // All on
+        power = (1 << devices_present) -1;
+        SetDevicePower(power, SRC_RESTART);
+        break;
+      case POWER_ALL_SAVED_TOGGLE:
+        power = (Settings.power & ((1 << devices_present) -1)) ^ POWER_MASK;
+        if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart
+          SetDevicePower(power, SRC_RESTART);
+        }
+        break;
+      case POWER_ALL_SAVED:
+        power = Settings.power & ((1 << devices_present) -1);
+        if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart
+          SetDevicePower(power, SRC_RESTART);
+        }
+        break;
+      }
+    } else {
+      power = Settings.power & ((1 << devices_present) -1);
+      if (Settings.flag.save_state) {    // SetOption0 - Save power state and use after restart
+        SetDevicePower(power, SRC_RESTART);
+      }
+    }
+  }
+
+  // Issue #526 and #909
+  for (uint32_t i = 0; i < devices_present; i++) {
+    if (!Settings.flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
+      if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
+        bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
+      }
+    }
+    if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
+      SetPulseTimer(i, Settings.pulse_timer[i]);
+    }
+  }
+  blink_powersave = power;
 }
 
 void SetLedPowerIdx(uint32_t led, uint32_t state)
@@ -833,13 +887,15 @@ void Every250mSeconds(void)
           strlcpy(mqtt_data, GetOtaUrl(log_data, sizeof(log_data)), sizeof(mqtt_data));
 #ifndef FIRMWARE_MINIMAL
           if (RtcSettings.ota_loader) {
-            char *bch = strrchr(mqtt_data, '/');                        // Only consider filename after last backslash prevent change of urls having "-" in it
+            char *bch = strrchr(mqtt_data, '/');                           // Only consider filename after last backslash prevent change of urls having "-" in it
             char *pch = strrchr((bch != nullptr) ? bch : mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
-            char *ech = strrchr((bch != nullptr) ? bch : mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
+//            char *ech = strrchr((bch != nullptr) ? bch : mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
+            char *ech = strchr((bch != nullptr) ? bch : mqtt_data, '.');   // Change from filename.bin into filename-minimal.bin or filename.bin.gz into filename-minimal.bin.gz
             if (!pch) { pch = ech; }
             if (pch) {
               mqtt_data[pch - mqtt_data] = '\0';
-              char *ech = strrchr(SettingsText(SET_OTAURL), '.');  // Change from filename.bin into filename-minimal.bin
+//              char *ech = strrchr(SettingsText(SET_OTAURL), '.');          // Change from filename.bin into filename-minimal.bin
+              char *ech = strchr(SettingsText(SET_OTAURL), '.');          // Change from filename.bin into filename-minimal.bin
               snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ech);  // Minimal filename must be filename-minimal
             }
           }
@@ -869,8 +925,7 @@ void Every250mSeconds(void)
         Response_P(PSTR("{\"" D_CMND_UPGRADE "\":\""));
         if (ota_result) {
 //          SetFlashModeDout();      // Force DOUT for both ESP8266 and ESP8285
-          if (OtaVersion() < VERSION_COMPATIBLE) {
-            AbandonOta();
+          if (!VersionCompatible()) {
             ResponseAppend_P(PSTR(D_JSON_FAILED " " D_UPLOAD_ERR_14));
           } else {
             ResponseAppend_P(PSTR(D_JSON_SUCCESSFUL ". " D_JSON_RESTARTING));
@@ -1000,7 +1055,9 @@ void ArduinoOTAInit(void)
 {
   ArduinoOTA.setPort(8266);
   ArduinoOTA.setHostname(my_hostname);
-  if (strlen(SettingsText(SET_WEBPWD))) { ArduinoOTA.setPassword(SettingsText(SET_WEBPWD)); }
+  if (strlen(SettingsText(SET_WEBPWD))) {
+    ArduinoOTA.setPassword(SettingsText(SET_WEBPWD));
+  }
 
   ArduinoOTA.onStart([]()
   {
@@ -1058,6 +1115,14 @@ void ArduinoOTAInit(void)
 
   ArduinoOTA.begin();
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_UPLOAD "Arduino OTA " D_ENABLED " " D_PORT " 8266"));
+}
+
+void ArduinoOtaLoop(void)
+{
+  MDNS.update();
+  ArduinoOTA.handle();
+  // Once OTA is triggered, only handle that and dont do other stuff. (otherwise it fails)
+  while (arduino_ota_triggered) { ArduinoOTA.handle(); }
 }
 #endif  // USE_ARDUINO_OTA
 
@@ -1169,7 +1234,8 @@ void GpioInit(void)
   SetModuleType();
 
   if (Settings.module != Settings.last_module) {
-    baudrate = APP_BAUDRATE;
+    Settings.baudrate = APP_BAUDRATE / 300;
+    Settings.serial_config = TS_SERIAL_8N1;
   }
 
   for (uint32_t i = 0; i < sizeof(Settings.user_template.gp); i++) {
@@ -1296,20 +1362,16 @@ void GpioInit(void)
 //    devices_present = 1;
   }
   else if (SONOFF_DUAL == my_module_type) {
-    Settings.flag.mqtt_serial = 0;           // CMND_SERIALSEND and CMND_SERIALLOG
     devices_present = 2;
-    baudrate = 19200;
+    SetSerial(19200, TS_SERIAL_8N1);
   }
   else if (CH4 == my_module_type) {
-    Settings.flag.mqtt_serial = 0;           // CMND_SERIALSEND and CMND_SERIALLOG
     devices_present = 4;
-    baudrate = 19200;
+    SetSerial(19200, TS_SERIAL_8N1);
   }
 #ifdef USE_SONOFF_SC
   else if (SONOFF_SC == my_module_type) {
-    Settings.flag.mqtt_serial = 0;           // CMND_SERIALSEND and CMND_SERIALLOG
-    devices_present = 0;
-    baudrate = 19200;
+    SetSerial(19200, TS_SERIAL_8N1);
   }
 #endif  // USE_SONOFF_SC
 

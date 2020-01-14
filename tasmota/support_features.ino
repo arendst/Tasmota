@@ -1,7 +1,7 @@
 /*
   support_features.ino - feature support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -492,11 +492,15 @@ void GetFeatures(void)
 #ifdef USE_DHT12
   feature5 |= 0x00100000;
 #endif
-//  feature5 |= 0x00200000;
+#ifdef USE_DS1624
+  feature5 |= 0x00200000;
+#endif
 #ifdef USE_GPS
   feature5 |= 0x00400000;
 #endif
-//  feature5 |= 0x00800000;
+#ifdef USE_HOTPLUG
+  feature5 |= 0x00800000;
+#endif
 
 //  feature5 |= 0x01000000;
 //  feature5 |= 0x02000000;

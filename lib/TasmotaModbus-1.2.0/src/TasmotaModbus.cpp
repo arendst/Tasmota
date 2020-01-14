@@ -1,7 +1,7 @@
 /*
   TasmotaModbus.cpp - Basic modbus wrapper for TasmotaSerial for Tasmota
 
-  Copyright (C) 2018 Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This library is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

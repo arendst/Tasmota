@@ -1,7 +1,7 @@
 /*
   xdsp_08_ILI9488.ino - Display ILI9488 support for Tasmota
 
-  Copyright (C) 2019  Theo Arends, Gerhard Mutz
+  Copyright (C) 2020  Theo Arends, Gerhard Mutz
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by

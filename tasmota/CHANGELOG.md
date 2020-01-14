@@ -1,8 +1,37 @@
 ## Unreleased (development)
 
+### 8.1.0.3 20200106
+
+- Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
+- Add support for gzipped binaries
+- Update IRremoteESP8266 lib updated to v2.7.2
+- Fix ``WakeUp <x>`` ignores provided value (#7473)
+
+### 8.1.0.2 20191230
+
+- Fix LCD line and column positioning (#7387)
+- Fix Display handling of hexadecimal escape characters (#7387)
+- Fix Improved fade linearity with gamma correction
+- Fix wrong gamma correction for Module 48 lights (PWM5 for CT)
+- Add support for ``AdcParam`` parameters to control ADC0 Current Transformer Apparent Power formula by Jodi Dillon (#7100)
+- Add optional support for Prometheus using file xsns_91_prometheus.ino (#7216)
+- Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)
+- Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
+- Add experimental support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
+- Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
+
 ### 8.1.0.1 20191225
 
+- Change Lights: simplified gamma correction and 10 bits internal computation
+- Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
+- Fix Serial initialization regression from previous fix
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
+- Fix ``White`` added to light status (#7142)
+- Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
+- Add SerialConfig to ``Status 1``
+- Add WifiPower to ``Status 5``
+- Add support for DS1624, DS1621 Temperature sensor by Leonid Myravjev
+- Add Zigbee attribute decoder for Xiaomi Aqara Cube
 
 ## Released
 

@@ -1,7 +1,7 @@
 /*
   tasmota.ino - Tasmota firmware for iTead Sonoff, Wemos and NodeMCU hardware
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -96,7 +96,6 @@ power_t blink_mask = 0;                     // Blink relay active mask
 power_t blink_powersave;                    // Blink start power save state
 power_t latching_power = 0;                 // Power state at latching start
 power_t rel_inverted = 0;                   // Relay inverted flag (1 = (0 = On, 1 = Off))
-int baudrate = APP_BAUDRATE;                // Serial interface baud rate
 int serial_in_byte_counter = 0;             // Index in receive buffer
 int ota_state_flag = 0;                     // OTA state flag
 int ota_result = 0;                         // OTA result
@@ -193,9 +192,7 @@ void setup(void)
   RtcReboot.fast_reboot_count++;
   RtcRebootSave();
 
-  Serial.begin(baudrate);
-  delay(10);
-  Serial.println();
+  Serial.begin(APP_BAUDRATE);
   seriallog_level = LOG_LEVEL_INFO;  // Allow specific serial messages until config loaded
 
   snprintf_P(my_version, sizeof(my_version), PSTR("%d.%d.%d"), VERSION >> 24 & 0xff, VERSION >> 16 & 0xff, VERSION >> 8 & 0xff);  // Release version 6.3.0
@@ -217,7 +214,6 @@ void setup(void)
     XdrvCall(FUNC_SETTINGS_OVERRIDE);
   }
 
-  baudrate = Settings.baudrate * 300;
 //  mdns_delayed_start = Settings.param[P_MDNS_DELAYED_START];
   seriallog_level = Settings.seriallog_level;
   seriallog_timer = SERIALLOG_TIMER;
@@ -276,58 +272,11 @@ void setup(void)
   GetEspHardwareType();
   GpioInit();
 
-  SetSerialBaudrate(baudrate);
+//  SetSerialBaudrate(Settings.baudrate * 300);  // Allow reset of serial interface if current baudrate is different from requested baudrate
 
   WifiConnect();
 
-  if (MOTOR == my_module_type) { Settings.poweronstate = POWER_ALL_ON; }  // Needs always on else in limbo!
-  if (POWER_ALL_ALWAYS_ON == Settings.poweronstate) {
-    SetDevicePower(1, SRC_RESTART);
-  } else {
-    if ((ResetReason() == REASON_DEFAULT_RST) || (ResetReason() == REASON_EXT_SYS_RST)) {
-      switch (Settings.poweronstate) {
-      case POWER_ALL_OFF:
-      case POWER_ALL_OFF_PULSETIME_ON:
-        power = 0;
-        SetDevicePower(power, SRC_RESTART);
-        break;
-      case POWER_ALL_ON:  // All on
-        power = (1 << devices_present) -1;
-        SetDevicePower(power, SRC_RESTART);
-        break;
-      case POWER_ALL_SAVED_TOGGLE:
-        power = (Settings.power & ((1 << devices_present) -1)) ^ POWER_MASK;
-        if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart
-          SetDevicePower(power, SRC_RESTART);
-        }
-        break;
-      case POWER_ALL_SAVED:
-        power = Settings.power & ((1 << devices_present) -1);
-        if (Settings.flag.save_state) {  // SetOption0 - Save power state and use after restart
-          SetDevicePower(power, SRC_RESTART);
-        }
-        break;
-      }
-    } else {
-      power = Settings.power & ((1 << devices_present) -1);
-      if (Settings.flag.save_state) {    // SetOption0 - Save power state and use after restart
-        SetDevicePower(power, SRC_RESTART);
-      }
-    }
-  }
-
-  // Issue #526 and #909
-  for (uint32_t i = 0; i < devices_present; i++) {
-    if (!Settings.flag3.no_power_feedback) {  // SetOption63 - Don't scan relay power state at restart - #5594 and #5663
-      if ((i < MAX_RELAYS) && (pin[GPIO_REL1 +i] < 99)) {
-        bitWrite(power, i, digitalRead(pin[GPIO_REL1 +i]) ^ bitRead(rel_inverted, i));
-      }
-    }
-    if ((i < MAX_PULSETIMERS) && (bitRead(power, i) || (POWER_ALL_OFF_PULSETIME_ON == Settings.poweronstate))) {
-      SetPulseTimer(i, Settings.pulse_timer[i]);
-    }
-  }
-  blink_powersave = power;
+  SetPowerOnState();
 
   AddLog_P2(LOG_LEVEL_INFO, PSTR(D_PROJECT " %s %s " D_VERSION " %s%s-" ARDUINO_ESP8266_RELEASE), PROJECT, SettingsText(SET_FRIENDLYNAME1), my_version, my_image);
 #ifdef FIRMWARE_MINIMAL
@@ -409,10 +358,7 @@ void loop(void)
   if (!serial_local) { SerialInput(); }
 
 #ifdef USE_ARDUINO_OTA
-  MDNS.update();
-  ArduinoOTA.handle();
-  // Once OTA is triggered, only handle that and dont do other stuff. (otherwise it fails)
-  while (arduino_ota_triggered) ArduinoOTA.handle();
+  ArduinoOtaLoop();
 #endif  // USE_ARDUINO_OTA
 
   uint32_t my_activity = millis() - my_sleep;

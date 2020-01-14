@@ -1,7 +1,7 @@
 /*
   pl-PL-d.h - localization for Polish with diacritics - Poland for Tasmota
 
-  Copyright (C) 2019  Theo Arends (translated by roblad - Robert L., upgraded by R. Turala)
+  Copyright (C) 2020  Theo Arends (translated by roblad - Robert L., upgraded by R. Turala)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@
 #define D_BRIGHTLIGHT "Jasny"
 #define D_BSSID "BSSId"
 #define D_BUTTON "Przycisk"
-#define D_BY "by"                    // Written by me
+#define D_BY "przez"                    // Written by me
 #define D_BYTES "Bajtów"
 #define D_CELSIUS "Celsiusz"
 #define D_CHANNEL "Kanał"
@@ -71,9 +71,10 @@
 #define D_COLDLIGHT "Zimny"
 #define D_COMMAND "Komenda"
 #define D_CONNECTED "Połączony"
-#define D_CORS_DOMAIN "CORS Domain"
+#define D_CORS_DOMAIN "Domena CORS"
 #define D_COUNT "Licz"
 #define D_COUNTER "Licznik"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Prąd"          // As in Voltage and Current
 #define D_DATA "Data"
 #define D_DARKLIGHT "Ciemny"
@@ -83,7 +84,7 @@
 #define D_DNS_SERVER "Serwer DNS"
 #define D_DONE "Wykonane"
 #define D_DST_TIME "Czas DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "Emulacja"
 #define D_ENABLED "Załączony"
 #define D_ERASE "Wyczyść"
@@ -113,7 +114,7 @@
 #define D_LIGHT "Światło"
 #define D_LWT "LWT"
 #define D_MODULE "Moduł"
-#define D_MOISTURE "Moisture"
+#define D_MOISTURE "Wilgotność"
 #define D_MQTT "MQTT"
 #define D_MULTI_PRESS "Wielokrotne naciśnięcie"
 #define D_NOISE "Szum"
@@ -644,12 +645,12 @@
 #define D_UNIT_INCREMENTS "inc"
 #define D_UNIT_KILOGRAM "kg"
 #define D_UNIT_KILOMETER_PER_HOUR "km/h"  // or "km/h"
-#define D_UNIT_KILOOHM "kOhm"
+#define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "ug/m3"
-#define D_UNIT_MICROMETER "um"
-#define D_UNIT_MICROSECOND "us"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
+#define D_UNIT_MICROMETER "µm"
+#define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
 #define D_UNIT_MILLIMETER "mm"
 #define D_UNIT_MILLIMETER_MERCURY "mmHg"
@@ -701,5 +702,18 @@
 #define D_SOLAX_ERROR_6   "Błąd - przegrzanie"
 #define D_SOLAX_ERROR_7   "Błąd - wentylator"
 #define D_SOLAX_ERROR_8   "Błąd - inne urządzenie"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Edit script"
+#define D_SCRIPT               "edit script"
+#define D_SDCARD_UPLOAD        "file upload"
+#define D_SDCARD_DIR           "sd card directory"
+#define D_UPL_DONE             "Done"
+#define D_SCRIPT_CHARS_LEFT    "chars left"
+#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
 #endif  // _LANGUAGE_PL_PL_D_H_

@@ -1,7 +1,7 @@
 /*
   xdrv_16_tuyamcu.ino - Tuya MCU support for Tasmota
 
-  Copyright (C) 2019  digiblur, Joel Stein and Theo Arends
+  Copyright (C) 2020  digiblur, Joel Stein and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -794,7 +794,7 @@ bool Xdrv16(uint8_t function)
       case FUNC_MODULE_INIT:
         result = TuyaModuleSelected();
         break;
-      case FUNC_INIT:
+      case FUNC_PRE_INIT:
         TuyaInit();
         break;
       case FUNC_SET_DEVICE_POWER:

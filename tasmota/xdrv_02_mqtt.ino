@@ -1,7 +1,7 @@
 /*
   xdrv_02_mqtt.ino - mqtt support for Tasmota
 
-  Copyright (C) 2019  Theo Arends
+  Copyright (C) 2020  Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -532,7 +532,7 @@ void MqttConnected(void)
     }
 #endif  // USE_WEBSERVER
     Response_P(PSTR("{\"" D_JSON_RESTARTREASON "\":"));
-    if (ResetReason() == REASON_EXCEPTION_RST) {
+    if (CrashFlag()) {
       CrashDump();
     } else {
       ResponseAppend_P(PSTR("\"%s\""), GetResetReason().c_str());
@@ -789,14 +789,18 @@ void CmndMqttRetry(void)
 
 void CmndStateText(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 4)) {
-    if (XdrvMailbox.data_len > 0) {
-      for (uint32_t i = 0; i <= XdrvMailbox.data_len; i++) {
-        if (XdrvMailbox.data[i] == ' ') XdrvMailbox.data[i] = '_';
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_STATE_TEXT)) {
+    if (!XdrvMailbox.usridx) {
+      ResponseCmndAll(SET_STATE_TXT1, MAX_STATE_TEXT);
+    } else {
+      if (XdrvMailbox.data_len > 0) {
+        for (uint32_t i = 0; i <= XdrvMailbox.data_len; i++) {
+          if (XdrvMailbox.data[i] == ' ') XdrvMailbox.data[i] = '_';
+        }
+        SettingsUpdateText(SET_STATE_TXT1 + XdrvMailbox.index -1, XdrvMailbox.data);
       }
-      SettingsUpdateText(SET_STATE_TXT1 + XdrvMailbox.index -1, XdrvMailbox.data);
+      ResponseCmndIdxChar(GetStateText(XdrvMailbox.index -1));
     }
-    ResponseCmndIdxChar(GetStateText(XdrvMailbox.index -1));
   }
 }
 
@@ -828,15 +832,18 @@ void CmndFullTopic(void)
 
 void CmndPrefix(void)
 {
-  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= 3)) {
-
-    if (XdrvMailbox.data_len > 0) {
-      MakeValidMqtt(0, XdrvMailbox.data);
-      SettingsUpdateText(SET_MQTTPREFIX1 + XdrvMailbox.index -1,
-        (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index) ? SUB_PREFIX : (2==XdrvMailbox.index) ? PUB_PREFIX : PUB_PREFIX2 : XdrvMailbox.data);
-      restart_flag = 2;
+  if ((XdrvMailbox.index > 0) && (XdrvMailbox.index <= MAX_MQTT_PREFIXES)) {
+    if (!XdrvMailbox.usridx) {
+      ResponseCmndAll(SET_MQTTPREFIX1, MAX_MQTT_PREFIXES);
+    } else {
+      if (XdrvMailbox.data_len > 0) {
+        MakeValidMqtt(0, XdrvMailbox.data);
+        SettingsUpdateText(SET_MQTTPREFIX1 + XdrvMailbox.index -1,
+          (SC_DEFAULT == Shortcut()) ? (1==XdrvMailbox.index) ? SUB_PREFIX : (2==XdrvMailbox.index) ? PUB_PREFIX : PUB_PREFIX2 : XdrvMailbox.data);
+        restart_flag = 2;
+      }
+      ResponseCmndIdxChar(SettingsText(SET_MQTTPREFIX1 + XdrvMailbox.index -1));
     }
-    ResponseCmndIdxChar(SettingsText(SET_MQTTPREFIX1 + XdrvMailbox.index -1));
   }
 }
 

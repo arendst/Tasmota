@@ -1,7 +1,7 @@
 /*
   de-DE.h - localization for German - Germany for Tasmota
 
-  Copyright (C) 2019  VinceMasuka
+  Copyright (C) 2020  VinceMasuka
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
  * Use online command StateText to translate ON, OFF, HOLD and TOGGLE.
  * Use online command Prefix to translate cmnd, stat and tele.
  *
- * Updated until v8.0.0
+ * Updated until v8.1.0.1
 \*********************************************************************/
 
 //#define LANGUAGE_MODULE_NAME         // Enable to display "Module Generic" (ie Spanish), Disable to display "Generic Module" (ie English)
@@ -66,7 +66,7 @@
 #define D_BYTES "Bytes"
 #define D_CELSIUS "Celsius"
 #define D_CHANNEL "Kanal"
-#define D_CO2 "CO²"
+#define D_CO2 "CO₂"
 #define D_CODE "code"                // Button code
 #define D_COLDLIGHT "kalt"
 #define D_COMMAND "Befehl"
@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "zählen"
 #define D_COUNTER "Zähler"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "Strom"          // As in Voltage and Current
 #define D_DATA "Daten"
 #define D_DARKLIGHT "dunkel"
@@ -83,7 +84,7 @@
 #define D_DNS_SERVER "DNS-Server"
 #define D_DONE "erledigt"
 #define D_DST_TIME "DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "Emulation"
 #define D_ENABLED "aktiviert"
 #define D_ERASE "löschen"
@@ -647,7 +648,7 @@
 #define D_UNIT_KILOOHM "kΩ"
 #define D_UNIT_KILOWATTHOUR "kWh"
 #define D_UNIT_LUX "lx"
-#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m3"
+#define D_UNIT_MICROGRAM_PER_CUBIC_METER "µg/m³"
 #define D_UNIT_MICROMETER "µm"
 #define D_UNIT_MICROSECOND "µs"
 #define D_UNIT_MILLIAMPERE "mA"
@@ -701,5 +702,18 @@
 #define D_SOLAX_ERROR_6   "Übertemperatur"
 #define D_SOLAX_ERROR_7   "Lüfterfehler"
 #define D_SOLAX_ERROR_8   "sonstiger Fehler"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Skript konfigurieren"
+#define D_SCRIPT               "Skript bearbeiten"
+#define D_SDCARD_UPLOAD        "Datei speichern"
+#define D_SDCARD_DIR           "SD Card Verzeichnis"
+#define D_UPL_DONE             "Fertig"
+#define D_SCRIPT_CHARS_LEFT    "Zeichen übrig"
+#define D_SCRIPT_CHARS_NO_MORE "kein Speicher mehr"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "Skript aktivieren"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload Dateien"
 
 #endif  // _LANGUAGE_DE_DE_H_

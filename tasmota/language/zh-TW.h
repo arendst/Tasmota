@@ -1,7 +1,7 @@
 /*
   zh-TW.h - localization for Chinese (Traditional) - Taiwan for Tasmota
 
-  Copyright (C) 2019  Theo Arends (translated by dannydu)
+  Copyright (C) 2020  Theo Arends (translated by dannydu)
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -74,6 +74,7 @@
 #define D_CORS_DOMAIN "CORS Domain"
 #define D_COUNT "數量:"
 #define D_COUNTER "Counter"
+#define D_CT_POWER "CT Power"
 #define D_CURRENT "電流"          // As in Voltage and Current
 #define D_DATA "數據:"
 #define D_DARKLIGHT "Dark"
@@ -83,7 +84,7 @@
 #define D_DNS_SERVER "DNS伺服器"
 #define D_DONE "完成"
 #define D_DST_TIME "DST"
-#define D_ECO2 "eCO2"
+#define D_ECO2 "eCO₂"
 #define D_EMULATION "設備模擬"
 #define D_ENABLED "啟用"
 #define D_ERASE "刪除"
@@ -701,5 +702,18 @@
 #define D_SOLAX_ERROR_6   "Over Temperature Fault"
 #define D_SOLAX_ERROR_7   "Fan Fault"
 #define D_SOLAX_ERROR_8   "Other Device Fault"
+
+//xdrv_10_scripter.ino
+#define D_CONFIGURE_SCRIPT     "Edit script"
+#define D_SCRIPT               "edit script"
+#define D_SDCARD_UPLOAD        "file upload"
+#define D_SDCARD_DIR           "sd card directory"
+#define D_UPL_DONE             "Done"
+#define D_SCRIPT_CHARS_LEFT    "chars left"
+#define D_SCRIPT_CHARS_NO_MORE "no more chars"
+#define D_SCRIPT_DOWNLOAD      "Download"
+#define D_SCRIPT_ENABLE        "script enable"
+#define D_SCRIPT_UPLOAD        "Upload"
+#define D_SCRIPT_UPLOAD_FILES  "Upload files"
 
 #endif  // _LANGUAGE_ZH_TW_H_

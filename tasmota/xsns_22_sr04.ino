@@ -1,7 +1,7 @@
 /*
   xsns_22_sr04.ino - SR04 ultrasonic sensor support for Tasmota
 
-  Copyright (C) 2019  Nuno Ferreira and Theo Arends
+  Copyright (C) 2020  Nuno Ferreira and Theo Arends
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@ TasmotaSerial* sonar_serial = nullptr;
 
 
 uint8_t Sr04TModeDetect(void)
-{  
+{
   sr04_type = 0;
   if (pin[GPIO_SR04_ECHO]>=99) return sr04_type;
 
@@ -50,11 +50,11 @@ uint8_t Sr04TModeDetect(void)
   sr04_trig_pin = (pin[GPIO_SR04_TRIG] < 99) ? pin[GPIO_SR04_TRIG] : -1;
   sonar_serial = new TasmotaSerial(sr04_echo_pin, sr04_trig_pin, 1);
 
-  if (sonar_serial->begin(9600,1)) {    
+  if (sonar_serial->begin(9600,1)) {
     DEBUG_SENSOR_LOG(PSTR("SR04: Detect mode"));
-    
+
     if (sr04_trig_pin!=-1) {
-        sr04_type = (Sr04TMiddleValue(Sr04TMode3Distance(),Sr04TMode3Distance(),Sr04TMode3Distance())!=NO_ECHO)?3:1;        
+        sr04_type = (Sr04TMiddleValue(Sr04TMode3Distance(),Sr04TMode3Distance(),Sr04TMode3Distance())!=NO_ECHO)?3:1;
     } else {
         sr04_type = 2;
     }
@@ -90,34 +90,34 @@ uint16_t Sr04TMiddleValue(uint16_t first, uint16_t second, uint16_t third)
     return second;
   } else {
     return third;
-  }  
+  }
 }
 
 uint16_t Sr04TMode3Distance() {
-  
+
     sonar_serial->write(0x55);
     sonar_serial->flush();
 
     return Sr04TMode2Distance();
 }
 
-uint16_t Sr04TMode2Distance(void) 
-{ 
+uint16_t Sr04TMode2Distance(void)
+{
   sonar_serial->setTimeout(300);
   const char startByte = 0xff;
-  
+
   if (!sonar_serial->find(startByte)) {
       //DEBUG_SENSOR_LOG(PSTR("SR04: No start byte"));
       return NO_ECHO;
-  }  
-  
+  }
+
   delay(5);
 
   uint8_t crc = sonar_serial->read();
   //read high byte
-  uint16_t distance = ((uint16_t)crc) << 8;  
+  uint16_t distance = ((uint16_t)crc) << 8;
 
-  //read low byte  
+  //read low byte
   distance += sonar_serial->read();
   crc += distance & 0x00ff;
   crc += 0x00FF;
@@ -126,20 +126,20 @@ uint16_t Sr04TMode2Distance(void)
   if (crc != sonar_serial->read()) {
     AddLog_P2(LOG_LEVEL_ERROR,PSTR("SR04: Reading CRC error."));
     return NO_ECHO;
-  }  
+  }
   //DEBUG_SENSOR_LOG(PSTR("SR04: Distance: %d"), distance);
-  return distance;  
+  return distance;
 }
 
 void Sr04TReading(void) {
-  
+
   if (sonar_serial==nullptr && sonar==nullptr) {
     Sr04TModeDetect();
   }
 
   switch (sr04_type) {
       case 3:
-        distance = (real64_t)(Sr04TMiddleValue(Sr04TMode3Distance(),Sr04TMode3Distance(),Sr04TMode3Distance()))/ 10; //convert to cm        
+        distance = (real64_t)(Sr04TMiddleValue(Sr04TMode3Distance(),Sr04TMode3Distance(),Sr04TMode3Distance()))/ 10; //convert to cm
         break;
       case 2:
         //empty input buffer first
@@ -162,7 +162,7 @@ const char HTTP_SNS_DISTANCE[] PROGMEM =
 #endif  // USE_WEBSERVER
 
 void Sr04Show(bool json)
-{  
+{
 
   if (distance != 0) {                // Check if read failed
     char distance_chr[33];
