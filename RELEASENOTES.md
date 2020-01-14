@@ -56,6 +56,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 - Change Lights: simplified gamma correction and 10 bits internal computation
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
+- Change IRremoteESP8266 library updated to v2.7.2
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
 - Fix ``White`` added to light status (#7142)
@@ -63,6 +64,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Fix LCD line and column positioning (#7387)
 - Fix Display handling of hexadecimal escape characters (#7387)
 - Fix ``WakeUp <x>`` ignores provided value (#7473)
+- Fix exception 9 restart on log message in Ticker interrupt service routines NTP, Wemos and Hue emulation (#7496)
 - Add command ``SetOption79 0/1`` to enable reset of counters at teleperiod time by Andre Thomas (#7355)
 - Add command ``SetOption82 0/1`` to limit the CT range for Alexa to 200..380
 - Add command ``ShutterButton <parameters>`` to control shutter(s) by to-scho (#7403)

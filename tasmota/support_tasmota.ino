@@ -698,13 +698,6 @@ void PerformEverySecond(void)
 {
   uptime++;
 
-  if (ntp_synced_message) {
-    // Moved here to fix syslog UDP exception 9 during RtcSecond
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: Drift %d, (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-      DriftTime(), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
-    ntp_synced_message = false;
-  }
-
   if (POWER_CYCLE_TIME == uptime) {
     UpdateQuickPowerCycle(false);
   }
@@ -781,6 +774,11 @@ void Every100mSeconds(void)
 {
   // As the max amount of sleep = 250 mSec this loop will shift in time...
   power_t power_now;
+
+  if (prepped_loglevel) {
+    AddLog(prepped_loglevel);
+    prepped_loglevel = 0;
+  }
 
   if (latching_relay_pulse) {
     latching_relay_pulse--;

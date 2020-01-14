@@ -139,6 +139,7 @@ uint8_t my_module_type;                     // Current copy of Settings.module o
 uint8_t my_adc0;                            // Active copy of Module ADC0
 uint8_t last_source = 0;                    // Last command source
 uint8_t shutters_present = 0;               // Number of actual define shutters
+uint8_t prepped_loglevel = 0;               // Delayed log level message
 //uint8_t mdns_delayed_start = 0;             // mDNS delayed start
 bool serial_local = false;                  // Handle serial locally;
 bool fallback_topic_flag = false;           // Use Topic or FallbackTopic
@@ -152,7 +153,6 @@ bool i2c_flg = false;                       // I2C configured
 bool spi_flg = false;                       // SPI configured
 bool soft_spi_flg = false;                  // Software SPI configured
 bool ntp_force_sync = false;                // Force NTP sync
-bool ntp_synced_message = false;            // NTP synced message flag
 bool is_8285 = false;                       // Hardware device ESP8266EX (0) or ESP8285 (1)
 myio my_module;                             // Active copy of Module GPIOs (17 x 8 bits)
 gpio_flag my_module_flag;                   // Active copy of Template GPIO flags

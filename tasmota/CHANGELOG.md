@@ -3,9 +3,10 @@
 ### 8.1.0.3 20200106
 
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
-- Add support for gzipped binaries
-- Update IRremoteESP8266 lib updated to v2.7.2
+- Change IRremoteESP8266 library updated to v2.7.2
 - Fix ``WakeUp <x>`` ignores provided value (#7473)
+- Fix exception 9 restart on log message in Ticker interrupt service routines NTP, Wemos and Hue emulation (#7496)
+- Add support for gzipped binaries
 
 ### 8.1.0.2 20191230
 

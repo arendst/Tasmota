@@ -1678,6 +1678,16 @@ void AddLog_P(uint32_t loglevel, const char *formatP, const char *formatP2)
   AddLog(loglevel);
 }
 
+void PrepLog_P2(uint32_t loglevel, PGM_P formatP, ...)
+{
+  va_list arg;
+  va_start(arg, formatP);
+  vsnprintf_P(log_data, sizeof(log_data), formatP, arg);
+  va_end(arg);
+
+  prepped_loglevel = loglevel;
+}
+
 void AddLog_P2(uint32_t loglevel, PGM_P formatP, ...)
 {
   va_list arg;
