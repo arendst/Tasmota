@@ -2249,31 +2249,31 @@ void CmndHsbColor(void)
     bool validHSB = (XdrvMailbox.data_len > 0);
     if (validHSB) {
       uint16_t HSB[3];
-      if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Command with 3 comma separated parameters, Hue (0<H<360), Saturation (0<S<100) AND Brightness (0<B<100)
-        for (uint32_t i = 0; i < 3; i++) {
-          char *substr;
+      uint16_t c_hue;
+      uint8_t  c_sat;
 
-          if (0 == i) {
-            substr = strtok(XdrvMailbox.data, ",");
-          } else {
-            substr = strtok(nullptr, ",");
-          }
-          if (substr != nullptr) {
-            HSB[i] = atoi(substr);
-            if (0 < i) {
-              HSB[i] = changeUIntScale(HSB[i], 0, 100, 0, 255); // change sat and bri to 0..255
-            }
-          } else {
-            validHSB = false;
+      light_state.getHSB(&c_hue, &c_sat, nullptr);
+      HSB[0] = c_hue;
+      HSB[1] = c_sat;
+      HSB[2] = light_state.getBriRGB();
+
+      char *substr = strstr(XdrvMailbox.data, ",");
+      if (substr != nullptr) { // Command with comma separated parameters, Hue (0<H<360), Saturation (0<S<100) AND optional Brightness (0<B<100)
+        HSB[0] = atoi(XdrvMailbox.data);
+
+        for (uint32_t i = 1; i < 3; i++) {
+          substr++;
+          HSB[i] = atoi(substr);
+          HSB[i] = changeUIntScale(HSB[i], 0, 100, 0, 255); // change sat and bri to 0..255
+          substr = strstr(substr, ",");
+          if (substr == nullptr) {
+            break;
           }
         }
+        if (substr != nullptr) {
+          validHSB = false;
+        }
       } else {  // Command with only 1 parameter, Hue (0<H<360), Saturation (0<S<100) OR Brightness (0<B<100)
-        uint16_t c_hue;
-        uint8_t  c_sat;
-        light_state.getHSB(&c_hue, &c_sat, nullptr);
-        HSB[0] = c_hue;
-        HSB[1] = c_sat;
-        HSB[2] = light_state.getBri();
 
         if (1 == XdrvMailbox.index) {
           HSB[0] = XdrvMailbox.payload;
