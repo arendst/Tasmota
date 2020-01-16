@@ -1,5 +1,9 @@
 ## Unreleased (development)
 
+### 8.1.0.4 20200116
+
+- Bump version
+
 ### 8.1.0.3 20200106
 
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
