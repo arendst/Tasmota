@@ -7,6 +7,7 @@
 - Fix ``WakeUp <x>`` ignores provided value (#7473)
 - Fix exception 9 restart on log message in Ticker interrupt service routines NTP, Wemos and Hue emulation (#7496)
 - Add support for gzipped binaries
+- Add ``SwitchMode 8`` ToggleMulti, ``SwitchMode 9`` FollowMulti and ``SwitchMode 10`` FollowMultiInverted (#7522)
 
 ### 8.1.0.2 20191230
 
