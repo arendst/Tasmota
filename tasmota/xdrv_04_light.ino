@@ -2351,7 +2351,7 @@ void CmndColorTemperature(void)
       }
     }
     if ((XdrvMailbox.payload >= CT_MIN) && (XdrvMailbox.payload <= CT_MAX)) {  // https://developers.meethue.com/documentation/core-concepts
-      light_controller.changeCTB(XdrvMailbox.payload, light_state.getBri());
+      light_controller.changeCTB(XdrvMailbox.payload, light_state.getBriCT());
       LightPreparePower(2);
     } else {
       ResponseCmndNumber(ct);
