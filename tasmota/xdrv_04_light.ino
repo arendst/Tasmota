@@ -1336,11 +1336,15 @@ void LightUpdateColorMapping(void)
   //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("%d colors: %d %d %d %d %d") ,Settings.param[P_RGB_REMAP], Light.color_remap[0],Light.color_remap[1],Light.color_remap[2],Light.color_remap[3],Light.color_remap[4]);
 }
 
+uint8_t LightGetDimmer(uint8_t dimmer) {
+  return light_state.getDimmer(dimmer);
+}
+
 void LightSetDimmer(uint8_t dimmer) {
   light_controller.changeDimmer(dimmer);
 }
 
-uint32_t LightGetHSB(uint16_t *hue,uint8_t  *sat, uint8_t *bri) {
+void LightGetHSB(uint16_t *hue, uint8_t *sat, uint8_t *bri) {
   light_state.getHSB(hue, sat, bri);
 }
 

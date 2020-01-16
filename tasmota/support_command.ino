@@ -141,8 +141,8 @@ void ExecuteCommand(const char *cmnd, uint32_t source)
 /********************************************************************************************/
 
 // topicBuf:                    /power1  dataBuf: toggle  = Console command
-// topicBuf:         cmnd/tasmota/power1  dataBuf: toggle  = Mqtt command using topic
-// topicBuf:        cmnd/tasmotas/power1  dataBuf: toggle  = Mqtt command using a group topic
+// topicBuf:        cmnd/tasmota/power1  dataBuf: toggle  = Mqtt command using topic
+// topicBuf:       cmnd/tasmotas/power1  dataBuf: toggle  = Mqtt command using a group topic
 // topicBuf: cmnd/DVES_83BB10_fb/power1  dataBuf: toggle  = Mqtt command using fallback topic
 
 void CommandHandler(char* topicBuf, char* dataBuf, uint32_t data_len)

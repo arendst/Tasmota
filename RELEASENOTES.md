@@ -78,3 +78,4 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add experimental support for NRF24L01 as BLE-bridge for Mijia Bluetooth sensors by Christian Baars (#7394)
 - Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
 - Add support for gzipped binaries
+- Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)

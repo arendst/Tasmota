@@ -2,7 +2,7 @@
 
 ### 8.1.0.4 20200116
 
-- Bump version
+- Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)
 
 ### 8.1.0.3 20200106
 
