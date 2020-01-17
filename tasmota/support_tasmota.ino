@@ -887,14 +887,19 @@ void Every250mSeconds(void)
           if (RtcSettings.ota_loader) {
             char *bch = strrchr(mqtt_data, '/');                           // Only consider filename after last backslash prevent change of urls having "-" in it
             char *pch = strrchr((bch != nullptr) ? bch : mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
-//            char *ech = strrchr((bch != nullptr) ? bch : mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
-            char *ech = strchr((bch != nullptr) ? bch : mqtt_data, '.');   // Change from filename.bin into filename-minimal.bin or filename.bin.gz into filename-minimal.bin.gz
-            if (!pch) { pch = ech; }
+            char *ech = strrchr((bch != nullptr) ? bch : mqtt_data, '.');  // Find file type (none, .bin or .bin.gz)
+            if ((ech != nullptr) && (0 == strncasecmp_P(ech, PSTR(".GZ"), 3))) {
+              char *fch = ech;
+              *fch = '\0';
+              ech = strrchr((bch != nullptr) ? bch : mqtt_data, '.');      // Find file type .bin.gz
+              *fch = '.';
+            }
+            char ota_url_type[strlen(ech) +1];
+            strncpy(ota_url_type, ech, sizeof(ota_url_type));              // Either nothing, .bin or .bin.gz
+            if (pch == nullptr) { pch = ech; }
             if (pch) {
               mqtt_data[pch - mqtt_data] = '\0';
-//              char *ech = strrchr(SettingsText(SET_OTAURL), '.');          // Change from filename.bin into filename-minimal.bin
-              char *ech = strchr(SettingsText(SET_OTAURL), '.');          // Change from filename.bin into filename-minimal.bin
-              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ech);  // Minimal filename must be filename-minimal
+              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ota_url_type);  // Minimal filename must be filename-minimal
             }
           }
 #endif  // FIRMWARE_MINIMAL
