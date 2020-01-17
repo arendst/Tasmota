@@ -5,6 +5,7 @@
 - Fix ``PowerDelta`` zero power detection (#7515)
 - Fix OTA minimal gzipped detection regression from 8.1.0.3
 - Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)
+- Add Zigbee persistence and friendly names
 
 ### 8.1.0.3 20200106
 
