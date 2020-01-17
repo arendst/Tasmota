@@ -885,22 +885,36 @@ void Every250mSeconds(void)
           strlcpy(mqtt_data, GetOtaUrl(log_data, sizeof(log_data)), sizeof(mqtt_data));
 #ifndef FIRMWARE_MINIMAL
           if (RtcSettings.ota_loader) {
-            char *bch = strrchr(mqtt_data, '/');                           // Only consider filename after last backslash prevent change of urls having "-" in it
-            char *pch = strrchr((bch != nullptr) ? bch : mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
-            char *ech = strrchr((bch != nullptr) ? bch : mqtt_data, '.');  // Find file type (none, .bin or .bin.gz)
+            // OTA File too large so try OTA minimal version
+            // Replace tasmota                                         with tasmota-minimal
+            // Replace tasmota-DE                                      with tasmota-minimal
+            // Replace tasmota.bin                                     with tasmota-minimal.bin
+            // Replace tasmota.xyz                                     with tasmota-minimal.xyz
+            // Replace tasmota.bin.gz                                  with tasmota-minimal.bin.gz
+            // Replace tasmota.xyz.gz                                  with tasmota-minimal.xyz.gz
+            // Replace http://domus1:80/api/arduino/tasmota.bin        with http://domus1:80/api/arduino/tasmota-minimal.bin
+            // Replace http://domus1:80/api/arduino/tasmota.bin.gz     with http://domus1:80/api/arduino/tasmota-minimal.bin.gz
+            // Replace http://domus1:80/api/arduino/tasmota-DE.bin.gz  with http://domus1:80/api/arduino/tasmota-minimal.bin.gz
+            // Replace http://domus1:80/api/ard-uino/tasmota-DE.bin.gz with http://domus1:80/api/ard-uino/tasmota-minimal.bin.gz
+
+            char *bch = strrchr(mqtt_data, '/');                       // Only consider filename after last backslash prevent change of urls having "-" in it
+            if (bch == nullptr) { bch = mqtt_data; }                   // No path found so use filename only
+
+            char *ech = strrchr(bch, '.');                             // Find file type in filename (none, .bin or .gz)
             if ((ech != nullptr) && (0 == strncasecmp_P(ech, PSTR(".GZ"), 3))) {
               char *fch = ech;
               *fch = '\0';
-              ech = strrchr((bch != nullptr) ? bch : mqtt_data, '.');      // Find file type .bin.gz
+              ech = strrchr(bch, '.');                                 // Find file type .bin.gz
               *fch = '.';
             }
+            if (ech == nullptr) { ech = mqtt_data + strlen(mqtt_data); }
             char ota_url_type[strlen(ech) +1];
-            strncpy(ota_url_type, ech, sizeof(ota_url_type));              // Either nothing, .bin or .bin.gz
-            if (pch == nullptr) { pch = ech; }
-            if (pch) {
-              mqtt_data[pch - mqtt_data] = '\0';
-              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ota_url_type);  // Minimal filename must be filename-minimal
-            }
+            strncpy(ota_url_type, ech, sizeof(ota_url_type));          // Either empty, .bin or .bin.gz
+
+            char *pch = strrchr(bch, '-');                             // Find last dash (-) and ignore remainder - handles tasmota-DE
+            if (pch == nullptr) { pch = ech; }                         // No dash so ignore filetype
+            *pch = '\0';                                               // mqtt_data = http://domus1:80/api/arduino/tasmota
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ota_url_type);  // Minimal filename must be filename-minimal
           }
 #endif  // FIRMWARE_MINIMAL
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), mqtt_data);
