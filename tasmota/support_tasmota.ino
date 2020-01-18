@@ -692,7 +692,12 @@ void MqttPublishSensor(void)
   }
 }
 
-/********************************************************************************************/
+/*********************************************************************************************\
+ * State loops
+\*********************************************************************************************/
+/*-------------------------------------------------------------------------------------------*\
+ * Every second
+\*-------------------------------------------------------------------------------------------*/
 
 void PerformEverySecond(void)
 {
@@ -713,6 +718,13 @@ void PerformEverySecond(void)
 #ifdef USE_DEEPSLEEP
     }
 #endif
+  }
+
+  if (mqtt_cmnd_blocked_reset) {
+    mqtt_cmnd_blocked_reset--;
+    if (!mqtt_cmnd_blocked_reset) {
+      mqtt_cmnd_blocked = 0;             // Clean up MQTT cmnd loop block
+    }
   }
 
   if (seriallog_timer) {
@@ -763,9 +775,6 @@ void PerformEverySecond(void)
   }
 }
 
-/*********************************************************************************************\
- * State loops
-\*********************************************************************************************/
 /*-------------------------------------------------------------------------------------------*\
  * Every 0.1 second
 \*-------------------------------------------------------------------------------------------*/
@@ -821,8 +830,6 @@ void Every250mSeconds(void)
 
   state_250mS++;
   state_250mS &= 0x3;
-
-  if (mqtt_cmnd_publish) mqtt_cmnd_publish--;             // Clean up
 
   if (!Settings.flag.global_state) {                      // Problem blinkyblinky enabled - SetOption31 - Control link led blinking
     if (global_state.data) {                              // Any problem

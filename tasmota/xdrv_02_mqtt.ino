@@ -225,10 +225,8 @@ bool MqttPublishLib(const char* topic, bool retained)
   if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
     char *str = strstr(topic, SettingsText(SET_MQTTPREFIX1));
     if (str == topic) {
-      if (0 == mqtt_cmnd_publish) {
-        mqtt_cmnd_publish += 3;
-      }
-      mqtt_cmnd_publish += 3;
+      mqtt_cmnd_blocked_reset = 4;  // Allow up to four seconds before resetting residual cmnd blocks
+      mqtt_cmnd_blocked++;
     }
   }
 
@@ -249,12 +247,8 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   // Do not execute multiple times if Prefix1 equals Prefix2
   if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
     char *str = strstr(mqtt_topic, SettingsText(SET_MQTTPREFIX1));
-    if ((str == mqtt_topic) && mqtt_cmnd_publish) {
-      if (mqtt_cmnd_publish > 3) {
-        mqtt_cmnd_publish -= 3;
-      } else {
-        mqtt_cmnd_publish = 0;
-      }
+    if ((str == mqtt_topic) && mqtt_cmnd_blocked) {
+      mqtt_cmnd_blocked--;
       return;
     }
   }
