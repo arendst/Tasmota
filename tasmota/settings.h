@@ -101,8 +101,8 @@ typedef union {                            // Restricted by MISRA-C Rule 18.4 bu
 typedef union {                            // Restricted by MISRA-C Rule 18.4 but so useful...
   uint32_t data;                           // Allow bit manipulation using SetOption
   struct {                                 // SetOption82 .. SetOption113
-    uint32_t alexa_ct_range : 1;         // bit 0 (v8.1.0.2)   - SetOption82 - Reduced CT range for Alexa
-    uint32_t spare01 : 1;
+    uint32_t alexa_ct_range : 1;           // bit 0 (v8.1.0.2)   - SetOption82 - Reduced CT range for Alexa
+    uint32_t zigbee_use_names : 1;         // bit 1 (V8.1.0.4)   - SetOption83 - Use FriendlyNames instead of ShortAddresses when possible
     uint32_t spare02 : 1;
     uint32_t spare03 : 1;
     uint32_t spare04 : 1;

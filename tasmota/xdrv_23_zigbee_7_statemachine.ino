@@ -354,7 +354,7 @@ static const Zigbee_Instruction zb_prog[] PROGMEM = {
     //ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "starting zigbee coordinator")
 ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_WAIT_RECV(2000, ZBR_STARTUPFROMAPP)        // wait for sync ack of command
-    ZI_WAIT_UNTIL(5000, AREQ_STARTUPFROMAPP)      // wait for async message that coordinator started
+    ZI_WAIT_UNTIL(10000, AREQ_STARTUPFROMAPP)      // wait for async message that coordinator started
     ZI_SEND(ZBS_GETDEVICEINFO)                    // GetDeviceInfo
     ZI_WAIT_RECV_FUNC(2000, ZBR_GETDEVICEINFO, &Z_ReceiveDeviceInfo)
     //ZI_WAIT_RECV(2000, ZBR_GETDEVICEINFO)         // memorize info
@@ -386,6 +386,7 @@ ZI_SEND(ZBS_STARTUPFROMAPP)                       // start coordinator
     ZI_MQTT_STATE(ZIGBEE_STATUS_OK, "Started")
     ZI_LOG(LOG_LEVEL_INFO, D_LOG_ZIGBEE "Zigbee started")
     ZI_CALL(&Z_State_Ready, 1)                    // Now accept incoming messages
+    ZI_CALL(&Z_Load_Devices, 0)
   ZI_LABEL(ZIGBEE_LABEL_MAIN_LOOP)
     ZI_WAIT_FOREVER()
     ZI_GOTO(ZIGBEE_LABEL_READY)
