@@ -438,9 +438,9 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
 #ifdef USE_DOMOTICZ
     if (!(DomoticzSendKey(key, device, state, strlen(mqtt_data)))) {
 #endif  // USE_DOMOTICZ
-      MqttPublishDirect(stopic, ((key) ? Settings.flag.mqtt_switch_retain                         // CMND_SWITCHRETAIN
-                                       : Settings.flag.mqtt_button_retain) &&                     // CMND_BUTTONRETAIN
-                                       (state != POWER_HOLD || !Settings.flag3.no_hold_retain));  // SetOption62 - Don't use retain flag on HOLD messages
+      MqttPublish(stopic, ((key) ? Settings.flag.mqtt_switch_retain                         // CMND_SWITCHRETAIN
+                                 : Settings.flag.mqtt_button_retain) &&                     // CMND_BUTTONRETAIN
+                                 (state != POWER_HOLD || !Settings.flag3.no_hold_retain));  // SetOption62 - Don't use retain flag on HOLD messages
 #ifdef USE_DOMOTICZ
     }
 #endif  // USE_DOMOTICZ

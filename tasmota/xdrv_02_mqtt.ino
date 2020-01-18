@@ -221,6 +221,17 @@ void MqttUnsubscribeLib(const char *topic)
 
 bool MqttPublishLib(const char* topic, bool retained)
 {
+  // If Prefix1 equals Prefix2 disable next MQTT subscription to prevent loop
+  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
+    char *str = strstr(topic, SettingsText(SET_MQTTPREFIX1));
+    if (str == topic) {
+      if (0 == mqtt_cmnd_publish) {
+        mqtt_cmnd_publish += 3;
+      }
+      mqtt_cmnd_publish += 3;
+    }
+  }
+
   bool result = MqttClient.publish(topic, mqtt_data, retained);
   yield();  // #3313
   return result;
@@ -291,43 +302,37 @@ void MqttUnsubscribe(const char *topic)
 
 void MqttPublishLogging(const char *mxtime)
 {
-  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if (MqttIsConnected()) {
+  if (MqttIsConnected()) {
+    char saved_mqtt_data[MESSZ];
+    memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
 
-      char saved_mqtt_data[MESSZ];
-      memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
-//      ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
-      Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
+//    ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
+    Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
 
-      char romram[33];
-      char stopic[TOPSZ];
-      snprintf_P(romram, sizeof(romram), PSTR("LOGGING"));
-      GetTopic_P(stopic, STAT, mqtt_topic, romram);
+    char stopic[TOPSZ];
+    GetTopic_P(stopic, STAT, mqtt_topic, PSTR("LOGGING"));
+    MqttPublishLib(stopic, false);
 
-      char *me;
-      if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
-        me = strstr(stopic, SettingsText(SET_MQTTPREFIX1));
-        if (me == stopic) {
-          mqtt_cmnd_publish += 3;
-        }
-      }
-      MqttPublishLib(stopic, false);
-
-      memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
-    }
+    memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
   }
 }
 
-void MqttPublishDirect(const char* topic, bool retained)
+void MqttPublish(const char* topic, bool retained)
 {
-  char sretained[CMDSZ];
-  char slog_type[20];
-
 #ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("MqttPublishDirect"));
+  ShowFreeMem(PSTR("MqttPublish"));
 #endif
 
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+  if (retained) {
+//    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
+    retained = false;   // AWS IoT does not support retained, it will disconnect if received
+  }
+#endif
+
+  char sretained[CMDSZ];
   sretained[0] = '\0';
+  char slog_type[20];
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
 
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
@@ -352,25 +357,6 @@ void MqttPublishDirect(const char* topic, bool retained)
   if (Settings.ledstate &0x04) {
     blinks++;
   }
-}
-
-void MqttPublish(const char* topic, bool retained)
-{
-  char *me;
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  if (retained) {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
-  }
-  retained = false;   // AWS IoT does not support retained, it will disconnect if received
-#endif
-
-  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
-    me = strstr(topic, SettingsText(SET_MQTTPREFIX1));
-    if (me == topic) {
-      mqtt_cmnd_publish += 3;
-    }
-  }
-  MqttPublishDirect(topic, retained);
 }
 
 void MqttPublish(const char* topic)
@@ -860,7 +846,7 @@ void CmndPublish(void)
       } else {
         mqtt_data[0] = '\0';
       }
-      MqttPublishDirect(stemp1, (XdrvMailbox.index == 2));
+      MqttPublish(stemp1, (XdrvMailbox.index == 2));
 //      ResponseCmndDone();
       mqtt_data[0] = '\0';
     }
