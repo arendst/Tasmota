@@ -296,18 +296,16 @@ void MqttUnsubscribe(const char *topic)
 
 void MqttPublishLogging(const char *mxtime)
 {
-  if (MqttIsConnected()) {
-    char saved_mqtt_data[strlen(mqtt_data) +1];
-    memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
+  char saved_mqtt_data[strlen(mqtt_data) +1];
+  memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
 
 //    ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
-    Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
-    char stopic[TOPSZ];
-    GetTopic_P(stopic, STAT, mqtt_topic, PSTR("LOGGING"));
-    MqttPublishLib(stopic, false);
+  Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
+  char stopic[TOPSZ];
+  GetTopic_P(stopic, STAT, mqtt_topic, PSTR("LOGGING"));
+  MqttPublishLib(stopic, false);
 
-    memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
-  }
+  memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
 }
 
 void MqttPublish(const char* topic, bool retained)
@@ -317,10 +315,10 @@ void MqttPublish(const char* topic, bool retained)
 #endif
 
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  if (retained) {
+//  if (retained) {
 //    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
-    retained = false;   // AWS IoT does not support retained, it will disconnect if received
-  }
+//  }
+  retained = false;   // AWS IoT does not support retained, it will disconnect if received
 #endif
 
   char sretained[CMDSZ];
@@ -329,12 +327,10 @@ void MqttPublish(const char* topic, bool retained)
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
 
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if (MqttIsConnected()) {
-      if (MqttPublishLib(topic, retained)) {
-        snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
-        if (retained) {
-          snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
-        }
+    if (MqttPublishLib(topic, retained)) {
+      snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
+      if (retained) {
+        snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
       }
     }
   }
