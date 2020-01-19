@@ -1521,11 +1521,7 @@ bool I2cSetDevice(uint32_t addr)
     return false;       // If already active report as not present;
   }
   Wire.beginTransmission((uint8_t)addr);
-  bool result = (0 == Wire.endTransmission());
-  if (result) {
-    I2cSetActive(addr, 1);
-  }
-  return result;
+  return (0 == Wire.endTransmission());
 }
 #endif  // USE_I2C
 
