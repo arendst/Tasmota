@@ -432,16 +432,7 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   snprintf_P(shortaddr, sizeof(shortaddr), PSTR("0x%04X"), srcaddr);
 
   DynamicJsonBuffer jsonBuffer;
-  JsonObject& json_root = jsonBuffer.createObject();
-
-  JsonObject& json1 = json_root.createNestedObject(F(D_CMND_ZIGBEE_RECEIVED));
-
-  const String * fname = zigbee_devices.getFriendlyName(srcaddr);
-  bool use_fname = (Settings.flag4.zigbee_use_names) && (fname);    // should we replace shortaddr with friendlyname?
-  JsonObject& json = json1.createNestedObject(use_fname ? fname->c_str() : shortaddr);
-  if (use_fname) {
-    json[F(D_JSON_ZIGBEE_DEVICE)] = shortaddr;
-  }
+  JsonObject& json = jsonBuffer.createObject();
 
   if ( (!zcl_received.isClusterSpecificCommand()) && (ZCL_REPORT_ATTRIBUTES == zcl_received.getCmdId())) {
     zcl_received.parseRawAttributes(json);
@@ -453,13 +444,8 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   }
   String msg("");
   msg.reserve(100);
-  json_root.printTo(msg);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR("ZigbeeZCLRawReceived: %s"), msg.c_str());
-
-  // Add friendly name
-  if ((!use_fname) && (fname)) {
-    json[F(D_JSON_ZIGBEE_NAME)] = (char*)fname->c_str();   // (char*) will force a copy of the string
-  }
+  json.printTo(msg);
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZigbeeZCLRawReceived: {\"0x%04X\":%s}"), srcaddr, msg.c_str());
 
   zcl_received.postProcessAttributes(srcaddr, json);
   // Add linkquality
@@ -476,11 +462,7 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
     }
   } else {
     // Publish immediately
-    msg = "";
-    json_root.printTo(msg);
-    Response_P(PSTR("%s"), msg.c_str());
-    MqttPublishPrefixTopic_P(TELE, PSTR(D_RSLT_SENSOR));
-    XdrvRulesProcess();
+    zigbee_devices.jsonPublishNow(srcaddr, json);
   }
   return -1;
 }

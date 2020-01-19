@@ -575,10 +575,10 @@ void CmndZigbeeName(void) {
 
   if (p == nullptr) {
     const String * friendlyName = zigbee_devices.getFriendlyName(shortaddr);
-    Response_P(PSTR("{\"0x%04X\":{\"name\":\"%s\"}}"), shortaddr, friendlyName ? friendlyName->c_str() : "");
+    Response_P(PSTR("{\"0x%04X\":{\"" D_JSON_ZIGBEE_NAME "\":\"%s\"}}"), shortaddr, friendlyName ? friendlyName->c_str() : "");
   } else {
     zigbee_devices.setFriendlyName(shortaddr, p);
-    Response_P(PSTR("{\"0x%04X\":{\"name\":\"%s\"}}"), shortaddr, p);
+    Response_P(PSTR("{\"0x%04X\":{\"" D_JSON_ZIGBEE_NAME "\":\"%s\"}}"), shortaddr, p);
   }
 }
 
