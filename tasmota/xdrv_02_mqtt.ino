@@ -297,12 +297,11 @@ void MqttUnsubscribe(const char *topic)
 void MqttPublishLogging(const char *mxtime)
 {
   if (MqttIsConnected()) {
-    char saved_mqtt_data[MESSZ];
+    char saved_mqtt_data[strlen(mqtt_data) +1];
     memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
 
 //    ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
     Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
-
     char stopic[TOPSZ];
     GetTopic_P(stopic, STAT, mqtt_topic, PSTR("LOGGING"));
     MqttPublishLib(stopic, false);
