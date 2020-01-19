@@ -4775,6 +4775,7 @@ bool Xdrv10(uint8_t function)
           glob_script_mem.script_pram_size=MAX_SCRIPT_SIZE;
 
           glob_script_mem.flags=1;
+          I2cSetActiveFound(EEPROM_ADDRESS, "EEPROM");
         }
       }
 #endif

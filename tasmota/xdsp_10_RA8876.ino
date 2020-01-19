@@ -101,6 +101,7 @@ void RA8876_InitDriver()
     if (I2cEnabled(XI2C_39) && I2cSetDevice(FT5316_address)) {
       FT6236begin(FT5316_address);
       FT5316_found=1;
+      I2cSetActiveFound(FT5316_address, "FT5316");
     } else {
       FT5316_found=0;
     }
