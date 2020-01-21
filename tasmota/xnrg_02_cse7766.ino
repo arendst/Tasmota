@@ -20,7 +20,7 @@
 #ifdef USE_ENERGY_SENSOR
 #ifdef USE_CSE7766
 /*********************************************************************************************\
- * CSE7766 - Energy (Sonoff S31 and Sonoff Pow R2)
+ * CSE7759 and CSE7766 - Energy (Sonoff S31 and Sonoff Pow R2)
  * HLW8032 - Energy (Blitzwolf SHP5)
  *
  * Based on datasheet from http://www.chipsea.com/UploadFiles/2017/08/11144342F01B5662.pdf
@@ -37,6 +37,12 @@
 #define CSE_PREF                    1000
 #define CSE_UREF                    100
 
+#define CSE_BUFFER_SIZE             25
+
+#include <TasmotaSerial.h>
+
+TasmotaSerial *CseSerial = nullptr;
+
 struct CSE {
   long voltage_cycle = 0;
   long current_cycle = 0;
@@ -45,6 +51,8 @@ struct CSE {
   long cf_pulses = 0;
   long cf_pulses_last_time = CSE_PULSES_NOT_INITIALIZED;
 
+  int byte_counter = 0;
+  uint8_t *rx_buffer = nullptr;
   uint8_t power_invalid = 0;
   bool received = false;
 } Cse;
@@ -57,7 +65,7 @@ void CseReceived(void)
   // 55 5A 02 F7 60 00 03 AB 00 40 10 02 60 5D 51 A6 58 03 E9 EF 71 0B 7A 36 - 55 = Ok, 71 = Ok
   // Hd Id VCal---- Voltage- ICal---- Current- PCal---- Power--- Ad CF--- Ck
 
-  uint8_t header = serial_in_buffer[0];
+  uint8_t header = Cse.rx_buffer[0];
   if ((header & 0xFC) == 0xFC) {
     AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: Abnormal hardware"));
     return;
@@ -67,30 +75,30 @@ void CseReceived(void)
   if (HLW_UREF_PULSE == Settings.energy_voltage_calibration) {
     long voltage_coefficient = 191200;  // uSec
     if (CSE_NOT_CALIBRATED != header) {
-      voltage_coefficient = serial_in_buffer[2] << 16 | serial_in_buffer[3] << 8 | serial_in_buffer[4];
+      voltage_coefficient = Cse.rx_buffer[2] << 16 | Cse.rx_buffer[3] << 8 | Cse.rx_buffer[4];
     }
     Settings.energy_voltage_calibration = voltage_coefficient / CSE_UREF;
   }
   if (HLW_IREF_PULSE == Settings.energy_current_calibration) {
     long current_coefficient = 16140;  // uSec
     if (CSE_NOT_CALIBRATED != header) {
-      current_coefficient = serial_in_buffer[8] << 16 | serial_in_buffer[9] << 8 | serial_in_buffer[10];
+      current_coefficient = Cse.rx_buffer[8] << 16 | Cse.rx_buffer[9] << 8 | Cse.rx_buffer[10];
     }
     Settings.energy_current_calibration = current_coefficient;
   }
   if (HLW_PREF_PULSE == Settings.energy_power_calibration) {
     long power_coefficient = 5364000;  // uSec
     if (CSE_NOT_CALIBRATED != header) {
-      power_coefficient = serial_in_buffer[14] << 16 | serial_in_buffer[15] << 8 | serial_in_buffer[16];
+      power_coefficient = Cse.rx_buffer[14] << 16 | Cse.rx_buffer[15] << 8 | Cse.rx_buffer[16];
     }
     Settings.energy_power_calibration = power_coefficient / CSE_PREF;
   }
 
-  uint8_t adjustement = serial_in_buffer[20];
-  Cse.voltage_cycle = serial_in_buffer[5] << 16 | serial_in_buffer[6] << 8 | serial_in_buffer[7];
-  Cse.current_cycle = serial_in_buffer[11] << 16 | serial_in_buffer[12] << 8 | serial_in_buffer[13];
-  Cse.power_cycle = serial_in_buffer[17] << 16 | serial_in_buffer[18] << 8 | serial_in_buffer[19];
-  Cse.cf_pulses = serial_in_buffer[21] << 8 | serial_in_buffer[22];
+  uint8_t adjustement = Cse.rx_buffer[20];
+  Cse.voltage_cycle = Cse.rx_buffer[5] << 16 | Cse.rx_buffer[6] << 8 | Cse.rx_buffer[7];
+  Cse.current_cycle = Cse.rx_buffer[11] << 16 | Cse.rx_buffer[12] << 8 | Cse.rx_buffer[13];
+  Cse.power_cycle = Cse.rx_buffer[17] << 16 | Cse.rx_buffer[18] << 8 | Cse.rx_buffer[19];
+  Cse.cf_pulses = Cse.rx_buffer[21] << 8 | Cse.rx_buffer[22];
 
   if (Energy.power_on) {  // Powered on
     if (adjustement & 0x40) {  // Voltage valid
@@ -134,41 +142,44 @@ void CseReceived(void)
 
 bool CseSerialInput(void)
 {
-  if (Cse.received) {
-    serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
-    if (24 == serial_in_byte_counter) {
+  while (CseSerial->available()) {
+    yield();
+    uint8_t serial_in_byte = CseSerial->read();
 
-      AddLogSerial(LOG_LEVEL_DEBUG_MORE);
+    if (Cse.received) {
+      Cse.rx_buffer[Cse.byte_counter++] = serial_in_byte;
+      if (24 == Cse.byte_counter) {
 
-      uint8_t checksum = 0;
-      for (uint32_t i = 2; i < 23; i++) { checksum += serial_in_buffer[i]; }
-      if (checksum == serial_in_buffer[23]) {
-        Energy.data_valid[0] = 0;
-        CseReceived();
-        Cse.received = false;
-        return true;
-      } else {
-        AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: " D_CHECKSUM_FAILURE));
-        do {  // Sync buffer with data (issue #1907 and #3425)
-          memmove(serial_in_buffer, serial_in_buffer +1, 24);
-          serial_in_byte_counter--;
-        } while ((serial_in_byte_counter > 2) && (0x5A != serial_in_buffer[1]));
-        if (0x5A != serial_in_buffer[1]) {
+        AddLogBuffer(LOG_LEVEL_DEBUG_MORE, Cse.rx_buffer, 24);
+
+        uint8_t checksum = 0;
+        for (uint32_t i = 2; i < 23; i++) { checksum += Cse.rx_buffer[i]; }
+        if (checksum == Cse.rx_buffer[23]) {
+          Energy.data_valid[0] = 0;
+          CseReceived();
           Cse.received = false;
-          serial_in_byte_counter = 0;
+          return true;
+        } else {
+          AddLog_P(LOG_LEVEL_DEBUG, PSTR("CSE: " D_CHECKSUM_FAILURE));
+          do {  // Sync buffer with data (issue #1907 and #3425)
+            memmove(Cse.rx_buffer, Cse.rx_buffer +1, 24);
+            Cse.byte_counter--;
+          } while ((Cse.byte_counter > 2) && (0x5A != Cse.rx_buffer[1]));
+          if (0x5A != Cse.rx_buffer[1]) {
+            Cse.received = false;
+            Cse.byte_counter = 0;
+          }
         }
       }
-    }
-  } else {
-    if ((0x5A == serial_in_byte) && (1 == serial_in_byte_counter)) {  // 0x5A - Packet header 2
-      Cse.received = true;
     } else {
-      serial_in_byte_counter = 0;
+      if ((0x5A == serial_in_byte) && (1 == Cse.byte_counter)) {  // 0x5A - Packet header 2
+        Cse.received = true;
+      } else {
+        Cse.byte_counter = 0;
+      }
+      Cse.rx_buffer[Cse.byte_counter++] = serial_in_byte;
     }
-    serial_in_buffer[serial_in_byte_counter++] = serial_in_byte;
   }
-  serial_in_byte = 0;  // Discard
-  return false;
 }
 
 /********************************************************************************************/
@@ -209,15 +220,31 @@ void CseEverySecond(void)
   }
 }
 
-void CseDrvInit(void)
+void CseSnsInit(void)
 {
-  if ((3 == pin[GPIO_CSE7766_RX]) && (1 == pin[GPIO_CSE7766_TX])) {  // As it uses 8E1 currently only hardware serial is supported
-    SetSerial(4800, TS_SERIAL_8E1);
+  // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
+  CseSerial = new TasmotaSerial(pin[GPIO_CSE7766_RX], pin[GPIO_CSE7766_TX], 1);
+  if (CseSerial->begin(4800, 2)) {  // Fake Software Serial 8E1 by using two stop bits
+    if (CseSerial->hardwareSerial()) {
+      SetSerial(4800, TS_SERIAL_8E1);
+      ClaimSerial();
+    }
     if (0 == Settings.param[P_CSE7766_INVALID_POWER]) {
       Settings.param[P_CSE7766_INVALID_POWER] = CSE_MAX_INVALID_POWER;  // SetOption39 1..255
     }
     Cse.power_invalid = Settings.param[P_CSE7766_INVALID_POWER];
-    energy_flg = XNRG_02;
+  } else {
+    energy_flg = ENERGY_NONE;
+  }
+}
+
+void CseDrvInit(void)
+{
+  Cse.rx_buffer = (uint8_t*)(malloc(CSE_BUFFER_SIZE));
+  if (Cse.rx_buffer != nullptr) {
+    if ((pin[GPIO_CSE7766_RX] < 99) && (pin[GPIO_CSE7766_TX] < 99)) {
+      energy_flg = XNRG_02;
+    }
   }
 }
 
@@ -254,14 +281,17 @@ bool Xnrg02(uint8_t function)
   bool result = false;
 
   switch (function) {
-    case FUNC_SERIAL:
-      result = CseSerialInput();
+    case FUNC_LOOP:
+      if (CseSerial) { CseSerialInput(); }
       break;
     case FUNC_ENERGY_EVERY_SECOND:
       CseEverySecond();
       break;
     case FUNC_COMMAND:
       result = CseCommand();
+      break;
+    case FUNC_INIT:
+      CseSnsInit();
       break;
     case FUNC_PRE_INIT:
       CseDrvInit();

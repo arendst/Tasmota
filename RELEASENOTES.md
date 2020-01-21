@@ -80,3 +80,5 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Add support to BMP driver to enter reset state (sleep enable) when deep sleep is used in Tasmota
 - Add support for gzipped binaries
 - Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)
+- Add most SetOptions as defines to my_user_config.h
+- Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
