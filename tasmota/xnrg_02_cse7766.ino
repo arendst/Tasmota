@@ -223,7 +223,8 @@ void CseEverySecond(void)
 void CseSnsInit(void)
 {
   // Software serial init needs to be done here as earlier (serial) interrupts may lead to Exceptions
-  CseSerial = new TasmotaSerial(pin[GPIO_CSE7766_RX], pin[GPIO_CSE7766_TX], 1);
+//  CseSerial = new TasmotaSerial(pin[GPIO_CSE7766_RX], pin[GPIO_CSE7766_TX], 1);
+  CseSerial = new TasmotaSerial(pin[GPIO_CSE7766_RX], -1, 1);
   if (CseSerial->begin(4800, 2)) {  // Fake Software Serial 8E1 by using two stop bits
     if (CseSerial->hardwareSerial()) {
       SetSerial(4800, TS_SERIAL_8E1);
@@ -242,7 +243,8 @@ void CseDrvInit(void)
 {
   Cse.rx_buffer = (uint8_t*)(malloc(CSE_BUFFER_SIZE));
   if (Cse.rx_buffer != nullptr) {
-    if ((pin[GPIO_CSE7766_RX] < 99) && (pin[GPIO_CSE7766_TX] < 99)) {
+//    if ((pin[GPIO_CSE7766_RX] < 99) && (pin[GPIO_CSE7766_TX] < 99)) {
+    if (pin[GPIO_CSE7766_RX] < 99) {
       energy_flg = XNRG_02;
     }
   }
