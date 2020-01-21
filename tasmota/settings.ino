@@ -874,7 +874,7 @@ void SettingsDefaultSet2(void)
   Settings.flag.mqtt_power_retain = MQTT_POWER_RETAIN;
   Settings.flag.mqtt_button_retain = MQTT_BUTTON_RETAIN;
   Settings.flag.mqtt_switch_retain = MQTT_SWITCH_RETAIN;
-//  Settings.flag.mqtt_sensor_retain = 0;
+  Settings.flag.mqtt_sensor_retain = MQTT_SENSOR_RETAIN;
 //  Settings.flag.mqtt_serial = 0;
   Settings.flag.device_index_enable = MQTT_POWER_FORMAT;
   Settings.flag3.time_append_timezone = MQTT_APPEND_TIMEZONE;
@@ -987,14 +987,17 @@ void SettingsDefaultSet2(void)
 //  for (uint32_t i = 1; i < MAX_RULE_SETS; i++) { Settings.rules[i][0] = '\0'; }
   Settings.flag2.calc_resolution = CALC_RESOLUTION;
 
+  // Timer
+  Settings.flag3.timers_enable = TIMERS_ENABLED;
+
   // Home Assistant
   Settings.flag.hass_light = HASS_AS_LIGHT;
   Settings.flag.hass_discovery = HOME_ASSISTANT_DISCOVERY_ENABLE;
   Settings.flag3.hass_tele_on_power = TELE_ON_POWER;
 
   // Knx
-//  Settings.flag.knx_enabled = 0;
-//  Settings.flag.knx_enable_enhancement = 0;
+  Settings.flag.knx_enabled = KNX_ENABLED;
+  Settings.flag.knx_enable_enhancement = KNX_ENHANCED;
 
   // Light
   Settings.flag.pwm_control = LIGHT_MODE;
