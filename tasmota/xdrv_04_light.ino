@@ -1799,6 +1799,14 @@ void LightAnimate(void)
         }
       }
 
+      // Apply RGBWWTable only if Settings.rgbwwTable[4] != 0
+      if (0 != Settings.rgbwwTable[4]) {
+        for (uint32_t i = 0; i<Light.subtype; i++) {
+          uint32_t adjust = change8to10(Settings.rgbwwTable[i]);
+          cur_col_10[i] = changeUIntScale(cur_col_10[i], 0, 1023, 0, adjust);
+        }
+      }
+
       // final adjusments for PMW, post-gamma correction
       for (uint32_t i = 0; i < LST_MAX; i++) {
         // scale from 0..1023 to 0..pwm_range, but keep any non-zero value to at least 1
