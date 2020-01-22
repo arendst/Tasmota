@@ -2311,6 +2311,10 @@ void CmndScheme(void)
       }
     }
     if ((XdrvMailbox.payload >= 0) && (XdrvMailbox.payload <= max_scheme)) {
+      uint32_t parm[2];
+      if (ParseParameters(2, parm) > 1) {
+        Light.wheel = parm[1];
+      }
       Settings.light_scheme = XdrvMailbox.payload;
       if (LS_WAKEUP == Settings.light_scheme) {
         Light.wakeup_active = 3;
@@ -2403,16 +2407,10 @@ void CmndDimmer(void)
 void CmndDimmerRange(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    char *p;
-    uint8_t i = 0;
-    uint16_t parm[2];
+    uint32_t parm[2];
     parm[0] = Settings.dimmer_hw_min;
     parm[1] = Settings.dimmer_hw_max;
-    for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 2; str = strtok_r(nullptr, ", ", &p)) {
-      parm[i] = strtoul(str, nullptr, 0);
-      i++;
-    }
-
+    ParseParameters(2, parm);
     if (parm[0] < parm[1]) {
       Settings.dimmer_hw_min = parm[0];
       Settings.dimmer_hw_max = parm[1];

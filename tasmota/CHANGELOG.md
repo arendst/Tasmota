@@ -8,6 +8,7 @@
 - Add Zigbee persistence and friendly names
 - Add most SetOptions as defines to my_user_config.h
 - Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
+- Add optional parameter <startcolor> to command ``Scheme <scheme>, <startcolor>`` to control initial start color
 
 ### 8.1.0.3 20200106
 

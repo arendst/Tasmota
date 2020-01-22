@@ -493,6 +493,17 @@ bool ParseIp(uint32_t* addr, const char* str)
   return (3 == i);
 }
 
+uint32_t ParseParameters(uint32_t count, uint32_t *params)
+{
+  char *p;
+  uint32_t i = 0;
+  for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < count; str = strtok_r(nullptr, ", ", &p)) {
+    params[i] = strtoul(str, nullptr, 0);
+    i++;
+  }
+  return i;
+}
+
 // Function to parse & check if version_str is newer than our currently installed version.
 bool NewerVersion(char* version_str)
 {

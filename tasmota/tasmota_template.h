@@ -169,7 +169,7 @@ enum UserSelectablePins {
   GPIO_SM16716_SEL,    // SM16716 SELECT
   GPIO_DI,             // my92x1 PWM input
   GPIO_DCKI,           // my92x1 CLK input
-  GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2)
+  GPIO_CSE7766_TX,     // CSE7766 Serial interface (S31 and Pow R2) - Not used anymore 20200121
   GPIO_CSE7766_RX,     // CSE7766 Serial interface (S31 and Pow R2)
   GPIO_ARIRFRCV,       // AriLux RF Receive input
   GPIO_TXD,            // Serial interface

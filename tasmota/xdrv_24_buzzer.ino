@@ -155,13 +155,8 @@ void CmndBuzzer(void)
 
   if (XdrvMailbox.data_len > 0) {
     if (XdrvMailbox.payload > 0) {
-      char *p;
-      uint32_t i = 0;
       uint32_t parm[4] = { 0 };
-      for (char *str = strtok_r(XdrvMailbox.data, ", ", &p); str && i < 4; str = strtok_r(nullptr, ", ", &p)) {
-        parm[i] = strtoul(str, nullptr, 0);
-        i++;
-      }
+      ParseParameters(4, parm);
       for (uint32_t i = 0; i < 3; i++) {
         if (parm[i] < 1) { parm[i] = 1; }  // Default Count, On time, Off time
       }
