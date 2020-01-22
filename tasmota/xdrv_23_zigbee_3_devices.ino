@@ -123,6 +123,7 @@ public:
 
   // Mark data as 'dirty' and requiring to save in Flash
   void dirty(void);
+  void clean(void);   // avoid writing to flash the last changes
 
   // Find device by name, can be short_addr, long_addr, number_in_array or name
   uint16_t parseDeviceParam(const char * param, bool short_must_be_known = false) const;
@@ -469,22 +470,28 @@ void Z_Devices::setManufId(uint16_t shortaddr, const char * str) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
   _updateLastSeen(device);
+  if (!device.manufacturerId.equals(str)) {
+    dirty();
+  }
   device.manufacturerId = str;
-  dirty();
 }
 void Z_Devices::setModelId(uint16_t shortaddr, const char * str) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
   _updateLastSeen(device);
+  if (!device.modelId.equals(str)) {
+    dirty();
+  }
   device.modelId = str;
-  dirty();
 }
 void Z_Devices::setFriendlyName(uint16_t shortaddr, const char * str) {
   Z_Device & device = getShortAddr(shortaddr);
   if (&device == nullptr) { return; }                 // don't crash if not found
   _updateLastSeen(device);
+  if (!device.friendlyName.equals(str)) {
+    dirty();
+  }
   device.friendlyName = str;
-  dirty();
 }
 
 const String * Z_Devices::getFriendlyName(uint16_t shortaddr) const {
@@ -690,6 +697,9 @@ void Z_Devices::jsonPublishNow(uint16_t shortaddr, JsonObject & values) {
 
 void Z_Devices::dirty(void) {
   _saveTimer = kZigbeeSaveDelaySeconds * 1000 + millis();
+}
+void Z_Devices::clean(void) {
+  _saveTimer = 0;
 }
 
 // Parse the command parameters for either:

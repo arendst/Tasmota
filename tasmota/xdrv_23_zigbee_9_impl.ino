@@ -463,7 +463,7 @@ void CmndZigbeeSend(void) {
   if (nullptr != &val_device) { device = strToUInt(val_device); }
   const JsonVariant &val_endpoint = getCaseInsensitive(json, PSTR("endpoint"));
   if (nullptr != &val_endpoint) { endpoint = strToUInt(val_endpoint); }
-  const JsonVariant val_cmd = getCaseInsensitive(json, PSTR("Send"));
+  const JsonVariant &val_cmd = getCaseInsensitive(json, PSTR("Send"));
   if (nullptr != &val_cmd) {
     // probe the type of the argument
     // If JSON object, it's high level commands
