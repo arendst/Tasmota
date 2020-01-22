@@ -268,6 +268,7 @@ void loadZigbeeDevices(void) {
     buf.addBuffer(z_dev_start + sizeof(z_flashdata_t), buf_len);
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "Zigbee devices data in Flash (%d bytes)"), buf_len);
     hidrateDevices(buf);
+    zigbee_devices.clean();   // don't write back to Flash what we just loaded
   } else {
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_ZIGBEE "No zigbee devices data in Flash"));
   }
@@ -308,6 +309,7 @@ void saveZigbeeDevices(void) {
 
 // Erase the flash area containing the ZigbeeData
 void eraseZigbeeDevices(void) {
+  zigbee_devices.clean();     // avoid writing data to flash after erase
   // first copy SPI buffer into ram
   uint8_t *spi_buffer = (uint8_t*) malloc(z_spi_len);
   if (!spi_buffer) {

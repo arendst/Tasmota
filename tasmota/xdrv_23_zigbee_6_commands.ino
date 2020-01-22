@@ -40,11 +40,11 @@ const Z_CommandConverter Z_Commands[] = {
   { "Color",        "0300!07/xxxxyyyy0A00" }, // x, y (uint16)
   { "CT",           "0300!0A/xxxx0A00" },     // Color Temperature Mireds (uint16)
   { "Shutter",      "0102!xx" },
-  { "ShutterOpen",  "0102!00"},
-  { "ShutterClose", "0102!01"},
-  { "ShutterStop",  "0102!02"},
-  { "ShutterLift",  "0102!05xx"},           // Lift percentage, 0%=open, 100%=closed
-  { "ShutterTilt",  "0102!08xx"},           // Tilt percentage
+  { "ShutterOpen",  "0102!00" },
+  { "ShutterClose", "0102!01" },
+  { "ShutterStop",  "0102!02" },
+  { "ShutterLift",  "0102!05xx" },            // Lift percentage, 0%=open, 100%=closed
+  { "ShutterTilt",  "0102!08xx" },            // Tilt percentage
 };
 
 #define ZLE(x) ((x) & 0xFF), ((x) >> 8)     // Little Endian
