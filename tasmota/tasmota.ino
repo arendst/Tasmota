@@ -68,7 +68,7 @@
 // Structs
 #include "settings.h"
 
-const char kCodeImage[] PROGMEM = "tasmota|minimal|sensors|knx|lite|display|ir";
+const char my_image[] PROGMEM = "(" CODE_IMAGE_STR ")";
 
 /*********************************************************************************************\
  * Global variables
@@ -159,7 +159,6 @@ myio my_module;                             // Active copy of Module GPIOs (17 x
 gpio_flag my_module_flag;                   // Active copy of Template GPIO flags
 StateBitfield global_state;                 // Global states (currently Wifi and Mqtt) (8 bits)
 char my_version[33];                        // Composed version string
-char my_image[33];                          // Code image and/or commit
 char my_hostname[33];                       // Composed Wifi hostname
 char mqtt_client[TOPSZ];                    // Composed MQTT Clientname
 char mqtt_topic[TOPSZ];                     // Composed MQTT topic
@@ -200,8 +199,6 @@ void setup(void)
   if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
     snprintf_P(my_version, sizeof(my_version), PSTR("%s.%d"), my_version, VERSION & 0xff);
   }
-  char code_image[20];
-  snprintf_P(my_image, sizeof(my_image), PSTR("(%s)"), GetTextIndexed(code_image, sizeof(code_image), CODE_IMAGE, kCodeImage));
 
   SettingsLoad();
   SettingsDelta();
