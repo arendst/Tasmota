@@ -71,7 +71,7 @@ struct {
 
 void AdcInit(void)
 {
-  if ((Settings.adc_param_type != my_adc0) || (Settings.adc_param1 > 1000000) || (Settings.adc_param1 < 100)) {
+  if ((Settings.adc_param_type != my_adc0) || (Settings.adc_param1 > 1000000)) {
     if (ADC0_TEMP == my_adc0) {
       // Default Shelly 2.5 and 1PM parameters
       Settings.adc_param_type = ADC0_TEMP;
@@ -90,6 +90,7 @@ void AdcInit(void)
       Settings.adc_param1 = 0;
       Settings.adc_param2 = 1023;
       Settings.adc_param3 = 0;
+      Settings.adc_param4 = 100;
     }
     else if (ADC0_CT_POWER == my_adc0) {
       Settings.adc_param_type = ADC0_CT_POWER;
@@ -147,13 +148,10 @@ uint16_t AdcGetLux(void)
 uint16_t AdcGetMoist(void)
 {
   // formula for calibration: value, fromLow, fromHigh, toHigh, toLow
-  // Example: 632, 0, 1023, 100, 0
+  // Example: 632, 0, 1023, 0, 100
   // int( ( ( (<param2> - <analogue-value>) / ( <param2> - <param1> ) ) * ( <param3> - <param4> ) ) + <param4> )
-  // double amoist = ((Settings.adc_param2 - (double)adc) / (Settings.adc_param2 - Settings.adc_param1) * 100;
-  // int((((1023 - <analog-reading>) / ( 1023 - 0 )) * ( 100 - 0 )) + 0 )
   int adc = AdcRead(2);
-  double amoist = ((double)Settings.adc_param2 - (double)adc) / ((double)Settings.adc_param2 - (double)Settings.adc_param1) * 100;
-  //double amoist = ((1023 - (double)adc) / 1023) * 100;
+  double amoist = ( ((double)Settings.adc_param2 - (double)adc) / ( ((double)Settings.adc_param2 - (double)Settings.adc_param1)) * ((double)Settings.adc_param3 - (double)Settings.adc_param4) + (double)Settings.adc_param4 );
   return (uint16_t)amoist;
 }
 
@@ -348,10 +346,14 @@ void CmndAdcParam(void)
         char sub_string[XdrvMailbox.data_len +1];
         // AdcParam 2, 32000, 10000, 3350
         // AdcParam 3, 10000, 12518931, -1.405
+        // AdcParam 6, 0, 1023, 0, 100
         Settings.adc_param_type = XdrvMailbox.payload;
         Settings.adc_param1 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
         Settings.adc_param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
-        if (!ADC0_MOIST == XdrvMailbox.payload) {
+        if (ADC0_MOIST == XdrvMailbox.payload) {
+          Settings.adc_param3 = abs(strtol(subStr(sub_string, XdrvMailbox.data, ",", 4), nullptr, 10));
+          Settings.adc_param4 = abs(strtol(subStr(sub_string, XdrvMailbox.data, ",", 5), nullptr, 10));
+        } else {
           Settings.adc_param3 = (int)(CharToFloat(subStr(sub_string, XdrvMailbox.data, ",", 4)) * 10000);
         }
         if (ADC0_CT_POWER == XdrvMailbox.payload) {
@@ -373,7 +375,9 @@ void CmndAdcParam(void)
 
   // AdcParam
   Response_P(PSTR("{\"" D_CMND_ADCPARAM "\":[%d,%d,%d"), Settings.adc_param_type, Settings.adc_param1, Settings.adc_param2);
-  if (ADC0_MOIST != my_adc0) {
+  if (ADC0_MOIST == my_adc0) {
+    ResponseAppend_P(PSTR(",%d,%d"), Settings.adc_param3, Settings.adc_param4);
+  } else {
     int value = Settings.adc_param3;
     uint8_t precision;
     for (precision = 4; precision > 0; precision--) {
