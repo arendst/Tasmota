@@ -23,13 +23,19 @@
  *               (and bidirectional energy counting - enabled by RS485).
  * It measure: Active energy imported AE+ [kWh] , Reactive energy imported RE+ [kvarh],
  *             Voltage V [V], Current I [A], Frequency F [Hz], power factor (aka "cos-phi"),
- *             Active power P [kW], Reactive power Q [kvar], Apparent power S [kVA],
+ *             Active power P [kW], Reactive power Q [kVAr], Apparent power S [kVA],
  *             *Active energy exported AE- [kWh] (when meter is switched to bi-directional counting then 
  *                  reactive energy imported register contains value of Active energy exported).
  *
  * Meter descriptions at manufacturer page (english version have some description errors):
  *    EN: https://www.fif.com.pl/en/usage-electric-power-meters/517-electricity-consumption-meter-le-01mr.html
  *    PL: https://www.fif.com.pl/pl/liczniki-zuzycia-energii-elektrycznej/517-licznik-zuzycia-energii-le-01mr.html
+ * 
+ * Note about communication settings: The meter must be reconfigured to use baudrate 2400 (or 9600) *without* 
+ *                                    parity bit - by default the meter is configured to 9600 8E1 
+ *                                    (Frame format: "EVEN 1") . To make those changes, use LE-Config 
+ *                                    software (can be found in download tab in product page - link above)
+ *                                    and USB-RS485 dongle (those cheap ~2$ from ali works fine)
  * 
  * Register descriptions (not all, only those that are being read):
  * 
@@ -54,6 +60,11 @@
  *                 second register contains lower word of 32bit dword:
  *                   value_32bit = (register+0)<<16 | (register+1); 
  *                   /or/ val32bit = (reg+0)*65536 + (reg+1);
+ * 
+ * Note about MQTT/JSON: In fields "ENERGY.TotalActive" and "ENERGY.TotalReactive" there are 
+ *                        counters values directly from the meter (without Tasmota calculation,
+ *                        energy used calculated by Tasmota is in Total/Today fields ).
+ *                       Filed "ENERGY.Period" is always zero.
 \*********************************************************************************************/
 
 #define XNRG_13             13
@@ -113,7 +124,6 @@ void FifLEEvery250ms(void)
     if (error) {
       AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus error %d"), error);
     } else {
-      //if (Le01mr.read_state == 0) 
       Energy.data_valid[0] = 0;
 
       // SA=Slave Address, FC=Function Code, BC=Byte Count, B3..B0=Data byte, Ch Cl = crc16 checksum
@@ -139,9 +149,6 @@ void FifLEEvery250ms(void)
       } else {
         value_buff = ((uint32_t)buffer[3])<<24 | ((uint32_t)buffer[4])<<16 | ((uint32_t)buffer[5])<<8 | buffer[6];
       }
-
-      //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR buff[3..6]: %2x %2x %2x %2x"), buffer[3], buffer[4], buffer[5], buffer[6]);
-      //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR reg_count/value_buff: %d / %d"), reg_count,value_buff);
 
       switch(Le01mr.read_state) {
         case 0:
@@ -197,7 +204,6 @@ void FifLEEvery250ms(void)
     // some registers are 1reg in size
     if (Le01mr.read_state < 3) reg_count=1;
     // send request
-    //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("FiF-LE: LE01MR Modbus req reg %X, count %d"), le01mr_register_addresses[Le01mr.read_state], reg_count);
     FifLEModbus->Send(LE01MR_ADDR, 0x03, le01mr_register_addresses[Le01mr.read_state], reg_count);
   } else {
     Le01mr.send_retry--;

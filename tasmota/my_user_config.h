@@ -499,7 +499,7 @@
   #define SOLAXX1_SPEED        9600              // Solax X1 Modbus RS485 serial speed (default: 9600 baud)
   #define SOLAXX1_PV2                            // Solax X1 using second PV
 //#define USE_LE01MR                               // Add support for F&F LE-01MR modbus energy meter
-  #define LE01MR_SPEED         2400              // LE-01MR modbus baudrate (2400 default)
+  #define LE01MR_SPEED         2400              // LE-01MR modbus baudrate (9600 default) (+2k code, +36 RAM)
   #define LE01MR_ADDR          1                 // LE-01MR modbus address (0x01 default)
 // -- Low level interface devices -----------------
 #define USE_DHT                                  // Add support for DHT11, AM2301 (DHT21, DHT22, AM2302, AM2321) and SI7021 Temperature and Humidity sensor (1k6 code)
