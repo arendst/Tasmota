@@ -38,6 +38,9 @@
 #define DS1621_COUNTER_REGISTER   0xA8 //exists on 1621 and 1624(undocumented)
 #define DS1621_SLOPE_REGISTER     0xA9 //exists on 1624 and 1624(undocumented)
 
+#define DS1621_CFG_1SHOT     (1<<0)
+#define DS1621_CFG_DONE      (1<<7)
+
 enum {
   DS1624_TYPE_DS1624,
   DS1624_TYPE_DS1621
@@ -50,12 +53,25 @@ bool ds1624_init = false;
 struct {
   float   value;
   uint8_t type;
+  int     errcnt;
+  int     misscnt;
   bool    valid;
   char    name[9];
 } ds1624_sns[DS1624_MAX_SENSORS];
 
 uint32_t DS1624_Idx2Addr(uint32_t idx) {
   return 0x48 + idx;
+}
+
+int DS1624_Restart(uint8_t config, uint32_t idx) {
+  uint32_t addr = DS1624_Idx2Addr(idx);
+  if ((config & 1) == 1) {
+    config &= ~(DS1621_CFG_DONE|DS1621_CFG_1SHOT);
+    I2cWrite8(addr, DS1624_CONF_REGISTER, config);  // 1shot off
+    delay(10);                                      // by spec after writing
+    AddLog_P2(LOG_LEVEL_ERROR, "%s addr %x is reset, reconfig: %x", ds1624_sns[idx].name, addr, config);
+  }
+  I2cValidRead(addr, DS1624_START_REGISTER, 1);
 }
 
 void DS1624_HotPlugUp(uint32_t idx)
@@ -75,12 +91,9 @@ void DS1624_HotPlugUp(uint32_t idx)
     I2cSetActiveFound(addr, ds1624_sns[idx].name);
 
     ds1624_sns[idx].valid = true;
-    if ((config & 1) == 1) {
-      config &= 0xfe;
-      I2cWrite8(addr, DS1624_CONF_REGISTER, config);  // 1show off
-      delay(10);                                      // by spec after writing
-    }
-    I2cValidRead(addr, DS1624_START_REGISTER, 1);     // FIXME 0 must read, but 0 isn't work for tasmota
+    ds1624_sns[idx].errcnt = 0;
+    ds1624_sns[idx].misscnt = 0;
+    DS1624_Restart(config,idx);
     AddLog_P2(LOG_LEVEL_INFO, "Hot Plug %s addr %x config: %x", ds1624_sns[idx].name, addr, config);
   }
 }
@@ -98,16 +111,37 @@ bool DS1624GetTemp(float *value, int idx)
 {
   uint32_t addr = DS1624_Idx2Addr(idx);
 
+  uint8_t config;
+  if (!I2cValidRead8(&config, addr, DS1624_CONF_REGISTER)) {
+    ds1624_sns[idx].misscnt++;
+    AddLog_P2(LOG_LEVEL_INFO, "%s device missing (errors: %i)", ds1624_sns[idx].name, ds1624_sns[idx].misscnt);
+    return false;
+  }
+  ds1624_sns[idx].misscnt=0;
+  if (config & (DS1621_CFG_1SHOT|DS1621_CFG_DONE)) {
+    ds1624_sns[idx].errcnt++;
+    AddLog_P2(LOG_LEVEL_INFO, "%s config error, restart... (errors: %i)", ds1624_sns[idx].name, ds1624_sns[idx].errcnt);
+    DS1624_Restart(config, idx);
+    return false;
+  }
+
   uint16_t t;
   if (!I2cValidRead16(&t, DS1624_Idx2Addr(idx), DS1624_TEMP_REGISTER)) { return false; }
-  *value = ((float)(int8_t)(t>>8)) + ((t>>4)&0xf)*0.0625;
-  if (ds1624_sns[idx].type == DS1624_TYPE_DS1621) {  // Higher resolution
+  if (ds1624_sns[idx].type == DS1624_TYPE_DS1624) {
+    *value = ((float)(int8_t)(t>>8)) + ((t>>4)&0xf)*0.0625;
+  } else { //type == DS1624_TYPE_DS1621
+    // Datasheet for ds1621 is wrong for high resolution, real is:
+    *value = ((float)(int8_t)(t>>8));
     uint8_t remain;
     if (!I2cValidRead8(&remain, addr, DS1621_COUNTER_REGISTER)) { return true; }
     uint8_t perc;
     if (!I2cValidRead8(&perc, addr, DS1621_SLOPE_REGISTER)) { return true; }
-    *value += ((float)perc - (float)remain)/((float)perc) - 0.25;
+    float fix=(float)(perc - remain)/(float)perc;
+    *value+=fix;
   }
+  ds1624_sns[idx].errcnt=0;
+  config &= ~(DS1621_CFG_DONE);
+  I2cWrite8(addr, DS1624_CONF_REGISTER, config);
   return true;
 }
 
@@ -120,9 +154,11 @@ void DS1624HotPlugScan(void)
     if (I2cActive(addr) && !ds1624_sns[idx].valid) {
       continue;  // is busy by another driver
     }
-    if (!I2cValidRead16(&t, DS1624_Idx2Addr(idx), DS1624_TEMP_REGISTER)) {
-      DS1624_HotPlugDown(idx);
-      continue;
+    if (ds1624_sns[idx].valid) {
+      if ((ds1624_sns[idx].misscnt>2)||(ds1624_sns[idx].errcnt>2)) {
+        DS1624_HotPlugDown(idx);
+        continue;
+      }
     }
     DS1624_HotPlugUp(idx);
   }
