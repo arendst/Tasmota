@@ -311,7 +311,7 @@ enum UserSelectableAdc0 {
   ADC0_LIGHT,          // Light sensor
   ADC0_BUTTON,         // Button
   ADC0_BUTTON_INV,
-  ADC0_MOIST,          // Moisture
+  ADC0_RANGE,          // Range
   ADC0_CT_POWER,       // Current
 //  ADC0_SWITCH,         // Switch
 //  ADC0_SWITCH_INV,
@@ -328,7 +328,7 @@ const char kAdc0Names[] PROGMEM =
   D_SENSOR_NONE "|" D_ANALOG_INPUT "|"
   D_TEMPERATURE "|" D_LIGHT "|"
   D_SENSOR_BUTTON "|" D_SENSOR_BUTTON "i|"
-  D_MOISTURE "|"
+  D_RANGE "|"
   D_CT_POWER "|"
 //  D_SENSOR_SWITCH "|" D_SENSOR_SWITCH "i|"
   ;
