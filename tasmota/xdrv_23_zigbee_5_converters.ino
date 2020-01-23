@@ -356,7 +356,12 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
 
     // TODO
     case 0x39:      // float
-      i += 4;
+      {
+        uint32_t uint32_val = buf.get32(i);
+        float  * float_val = (float*) &uint32_val;
+        i += 4;
+        json[attrid_str] = *float_val;
+      }
       break;
 
     case 0xE0:      // ToD
@@ -401,7 +406,12 @@ uint32_t parseSingleAttribute(JsonObject& json, char *attrid_str, class SBuffer 
       i += 2;
       break;
     case 0x3A:      // double precision
-      i += 8;
+      {
+        uint64_t uint64_val = buf.get64(i);
+        double  * double_val = (double*) &uint64_val;
+        i += 8;
+        json[attrid_str] = *double_val;
+      }
       break;
   }
 
@@ -561,7 +571,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x000C, 0x0041,  "MaxPresentValue",      &Z_Copy },
   { 0x000C, 0x0045,  "MinPresentValue",      &Z_Copy },
   { 0x000C, 0x0051,  "OutOfService",         &Z_Copy },
-  { 0x000C, 0x0055,  "PresentValue",         &Z_Copy },
+  { 0x000C, 0x0055,  "AqaraRotate",          &Z_Copy },
   { 0x000C, 0x0057,  "PriorityArray",        &Z_Copy },
   { 0x000C, 0x0067,  "Reliability",          &Z_Copy },
   { 0x000C, 0x0068,  "RelinquishDefault",    &Z_Copy },
@@ -569,6 +579,7 @@ const Z_AttributeConverter Z_PostProcess[] PROGMEM = {
   { 0x000C, 0x006F,  "StatusFlags",          &Z_Copy },
   { 0x000C, 0x0075,  "EngineeringUnits",     &Z_Copy },
   { 0x000C, 0x0100,  "ApplicationType",      &Z_Copy },
+  { 0x000C, 0xFF05,  "Aqara_FF05",           &Z_Copy },
   // Binary Output cluster
   { 0x0010, 0x0004,  "ActiveText",           &Z_Copy },
   { 0x0010, 0x001C,  "Description",          &Z_Copy },
