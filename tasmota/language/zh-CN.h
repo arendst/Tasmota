@@ -634,6 +634,8 @@
 #define D_SENSOR_SLAVE_RESET "Slave RST"
 #define D_SENSOR_GPS_RX        "GPS RX"
 #define D_SENSOR_GPS_TX        "GPS TX"
+#define D_SENSOR_LE01MR_RX     "LE-01MR Rx"
+#define D_SENSOR_LE01MR_TX     "LE-01MR Tx"
 
 // Units
 #define D_UNIT_AMPERE "安"
@@ -669,7 +671,7 @@
 #define D_UNIT_WATTHOUR "瓦时"
 #define D_UNIT_WATT_METER_QUADRAT "瓦/平米"
 
-//SDM220
+//SDM220, SDM120, LE01MR
 #define D_PHASE_ANGLE     "相位角"
 #define D_IMPORT_ACTIVE   "有功输入"
 #define D_EXPORT_ACTIVE   "有功输出"
@@ -678,6 +680,7 @@
 #define D_TOTAL_REACTIVE  "总无功功率"
 #define D_UNIT_KWARH      "千乏时"
 #define D_UNIT_ANGLE      "度"
+#define D_TOTAL_ACTIVE    "Total Active"
 
 //SOLAXX1
 #define D_PV1_VOLTAGE     "PV1 Voltage"
