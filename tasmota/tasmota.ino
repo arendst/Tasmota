@@ -198,8 +198,9 @@ void setup(void)
   if (VERSION & 0xff) {  // Development or patched version 6.3.0.10
     snprintf_P(my_version, sizeof(my_version), PSTR("%s.%d"), my_version, VERSION & 0xff);
   }
-  snprintf_P(my_image, sizeof(my_image), PSTR("(%s)"), CODE_IMAGE_STR);
-  
+  // Thehackbox inserts "release" or "commit number" before compiling using sed -i -e 's/PSTR("(%s)")/PSTR("(85cff52-%s)")/g' tasmota.ino
+  snprintf_P(my_image, sizeof(my_image), PSTR("(%s)"), CODE_IMAGE_STR);  // Results in (85cff52-tasmota) or (release-tasmota)
+
   SettingsLoad();
   SettingsDelta();
 
