@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Μέγεθος προγράμματος"
 #define D_PROJECT "Έργο"
 #define D_RAIN "Rain"
+#define D_RANGE "Range"
 #define D_RECEIVED "Ελήφθη"
 #define D_RESTART "Επανεκκίνηση"
 #define D_RESTARTING "Επανεκκινεί"

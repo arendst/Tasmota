@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Tamanho do Programa"
 #define D_PROJECT "Projeto"
 #define D_RAIN "Chuva"
+#define D_RANGE "Range"
 #define D_RECEIVED "Recebido"
 #define D_RESTART "Reiniciar"
 #define D_RESTARTING "A reiniciar"

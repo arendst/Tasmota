@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "גודל תוכנית"
 #define D_PROJECT "פרויקט"
 #define D_RAIN "גשם"
+#define D_RANGE "Range"
 #define D_RECEIVED "התקבל"
 #define D_RESTART "איתחול"
 #define D_RESTARTING "הפעלה מחדש"
