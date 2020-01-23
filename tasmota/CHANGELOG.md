@@ -4,12 +4,13 @@
 
 - Fix ``PowerDelta`` zero power detection (#7515)
 - Fix OTA minimal gzipped detection regression from 8.1.0.3
+- Fix ``RGBWWTable`` ignored (#7572)
 - Add web page sliders when ``SetOption37 128`` is active allowing control of white(s)
 - Add Zigbee persistence and friendly names
 - Add most SetOptions as defines to my_user_config.h
 - Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
 - Add optional parameter <startcolor> to command ``Scheme <scheme>, <startcolor>`` to control initial start color
-- Fix ``RGBWWTable`` ignored (#7572)
+- Add rule trigger on one level deeper using syntax with two ``#`` like ``on zigbeereceived#vibration_sensor#aqaracubeside=0 do ...``
 
 ### 8.1.0.3 20200106
 

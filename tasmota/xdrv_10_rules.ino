@@ -259,6 +259,7 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
   JsonObject &root = jsonBuf.parseObject(event);
   if (!root.success()) { return false; }               // No valid JSON data
 
+  String rule_subfield = "";
   const char* str_value;
   if ((pos = rule_name.indexOf("[")) > 0) {            // "CURRENT[1]"
     int rule_name_idx = rule_name.substring(pos +1).toInt();
@@ -267,6 +268,11 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
     }
     rule_name = rule_name.substring(0, pos);           // "CURRENT"
     str_value = root[rule_task][rule_name][rule_name_idx -1];  // "ENERGY" and "CURRENT" and 0
+  }
+  else if ((pos = rule_name.indexOf("#")) > 0) {       // "VIBRATION_SENSOR#AQARACUBESIDE"
+    rule_subfield = rule_name.substring(pos +1);       // "AQARACUBESIDE"
+    rule_name = rule_name.substring(0, pos);           // "VIBRATION_SENSOR"
+    str_value = root[rule_task][rule_name][rule_subfield];  // "ZIGBEERECEIVED", "VIBRATION_SENSOR" and "AQARACUBESIDE"
   } else {
     str_value = root[rule_task][rule_name];            // "INA219" and "CURRENT"
   }
@@ -274,7 +280,11 @@ bool RulesRuleMatch(uint8_t rule_set, String &event, String &rule)
 //AddLog_P2(LOG_LEVEL_DEBUG, PSTR("RUL: Task %s, Name %s, Value |%s|, TrigCnt %d, TrigSt %d, Source %s, Json %s"),
 //  rule_task.c_str(), rule_name.c_str(), rule_svalue, Rules.trigger_count[rule_set], bitRead(Rules.triggers[rule_set], Rules.trigger_count[rule_set]), event.c_str(), (str_value) ? str_value : "none");
 
-  if (!root[rule_task][rule_name].success()) { return false; }
+  if (rule_subfield.length()) {
+    if (!root[rule_task][rule_name][rule_subfield].success()) { return false; }
+  } else {
+    if (!root[rule_task][rule_name].success()) { return false; }
+  }
   // No value but rule_name is ok
 
   Rules.event_value = str_value;                       // Prepare %value%
