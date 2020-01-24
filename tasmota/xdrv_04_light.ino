@@ -1723,8 +1723,16 @@ void LightAnimate(void)
               Light.new_color[i] = Light.current_color[i];
             }
           } else {
+/*
             Response_P(PSTR("{\"" D_CMND_WAKEUP "\":\"" D_JSON_DONE "\"}"));
             MqttPublishPrefixTopic_P(TELE, PSTR(D_CMND_WAKEUP));
+*/
+            Response_P(PSTR("{\"" D_CMND_WAKEUP "\":\"" D_JSON_DONE "\""));
+            LightState(1);
+            ResponseJsonEnd();
+            MqttPublishPrefixTopic_P(RESULT_OR_STAT, PSTR(D_CMND_WAKEUP));
+            XdrvRulesProcess();
+
             Light.wakeup_active = 0;
             Settings.light_scheme = LS_POWER;
           }
