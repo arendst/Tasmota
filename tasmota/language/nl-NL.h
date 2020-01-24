@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Programma Grootte"
 #define D_PROJECT "Project"
 #define D_RAIN "Regen"
+#define D_RANGE "Range"
 #define D_RECEIVED "Ontvangen"
 #define D_RESTART "Herstart"
 #define D_RESTARTING "Herstarten"

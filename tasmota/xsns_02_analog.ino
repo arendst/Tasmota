@@ -85,8 +85,8 @@ void AdcInit(void)
       Settings.adc_param2 = ANALOG_LDR_LUX_CALC_SCALAR;
       Settings.adc_param3 = ANALOG_LDR_LUX_CALC_EXPONENT * 10000;
     }
-    else if (ADC0_MOIST == my_adc0) {
-      Settings.adc_param_type = ADC0_MOIST;
+    else if (ADC0_RANGE == my_adc0) {
+      Settings.adc_param_type = ADC0_RANGE;
       Settings.adc_param1 = 0;
       Settings.adc_param2 = 1023;
       Settings.adc_param3 = 0;
@@ -145,14 +145,14 @@ uint16_t AdcGetLux(void)
   return (uint16_t)ldrLux;
 }
 
-uint16_t AdcGetMoist(void)
+uint16_t AdcGetRange(void)
 {
-  // formula for calibration: value, fromLow, fromHigh, toHigh, toLow
-  // Example: 632, 0, 1023, 0, 100
-  // int( ( ( (<param2> - <analogue-value>) / ( <param2> - <param1> ) ) * ( <param3> - <param4> ) ) + <param4> )
+  // formula for calibration: value, fromLow, fromHigh, toLow, toHigh
+  // Example: 514, 632, 236, 0, 100
+  // int( ((<param2> - <analog-value>) / (<param2> - <param1>) ) * (<param3> - <param4>) ) + <param4> )
   int adc = AdcRead(2);
-  double amoist = ( ((double)Settings.adc_param2 - (double)adc) / ( ((double)Settings.adc_param2 - (double)Settings.adc_param1)) * ((double)Settings.adc_param3 - (double)Settings.adc_param4) + (double)Settings.adc_param4 );
-  return (uint16_t)amoist;
+  double adcrange = ( ((double)Settings.adc_param2 - (double)adc) / ( ((double)Settings.adc_param2 - (double)Settings.adc_param1)) * ((double)Settings.adc_param3 - (double)Settings.adc_param4) + (double)Settings.adc_param4 );
+  return (uint16_t)adcrange;
 }
 
 void AdcGetCurrentPower(uint8_t factor)
@@ -253,14 +253,14 @@ void AdcShow(bool json)
     }
   }
 
-  else if (ADC0_MOIST == my_adc0) {
-    uint16_t adc_moist = AdcGetMoist();
+  else if (ADC0_RANGE == my_adc0) {
+    uint16_t adc_range = AdcGetRange();
 
     if (json) {
-      ResponseAppend_P(JSON_SNS_MOISTURE, "ANALOG", adc_moist);
+      ResponseAppend_P(JSON_SNS_RANGE, "ANALOG", adc_range);
 #ifdef USE_WEBSERVER
     } else {
-      WSContentSend_PD(HTTP_SNS_MOISTURE, "", adc_moist);
+      WSContentSend_PD(HTTP_SNS_RANGE, "", adc_range);
 #endif  // USE_WEBSERVER
     }
   }
@@ -340,7 +340,7 @@ void CmndAdcParam(void)
   if (XdrvMailbox.data_len) {
     if ((ADC0_TEMP == XdrvMailbox.payload) ||
         (ADC0_LIGHT == XdrvMailbox.payload) ||
-        (ADC0_MOIST == XdrvMailbox.payload) ||
+        (ADC0_RANGE == XdrvMailbox.payload) ||
         (ADC0_CT_POWER == XdrvMailbox.payload)) {
       if (strstr(XdrvMailbox.data, ",") != nullptr) {  // Process parameter entry
         char sub_string[XdrvMailbox.data_len +1];
@@ -350,7 +350,7 @@ void CmndAdcParam(void)
         Settings.adc_param_type = XdrvMailbox.payload;
         Settings.adc_param1 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 2), nullptr, 10);
         Settings.adc_param2 = strtol(subStr(sub_string, XdrvMailbox.data, ",", 3), nullptr, 10);
-        if (ADC0_MOIST == XdrvMailbox.payload) {
+        if (ADC0_RANGE == XdrvMailbox.payload) {
           Settings.adc_param3 = abs(strtol(subStr(sub_string, XdrvMailbox.data, ",", 4), nullptr, 10));
           Settings.adc_param4 = abs(strtol(subStr(sub_string, XdrvMailbox.data, ",", 5), nullptr, 10));
         } else {
@@ -375,7 +375,7 @@ void CmndAdcParam(void)
 
   // AdcParam
   Response_P(PSTR("{\"" D_CMND_ADCPARAM "\":[%d,%d,%d"), Settings.adc_param_type, Settings.adc_param1, Settings.adc_param2);
-  if (ADC0_MOIST == my_adc0) {
+  if (ADC0_RANGE == my_adc0) {
     ResponseAppend_P(PSTR(",%d,%d"), Settings.adc_param3, Settings.adc_param4);
   } else {
     int value = Settings.adc_param3;
@@ -407,7 +407,7 @@ bool Xsns02(uint8_t function)
       if ((ADC0_INPUT == my_adc0) ||
           (ADC0_TEMP == my_adc0) ||
           (ADC0_LIGHT == my_adc0) ||
-          (ADC0_MOIST == my_adc0) ||
+          (ADC0_RANGE == my_adc0) ||
           (ADC0_CT_POWER == my_adc0)) {
         switch (function) {
 #ifdef USE_RULES

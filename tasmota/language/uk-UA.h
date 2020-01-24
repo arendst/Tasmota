@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Розмір програми"
 #define D_PROJECT "Проект"
 #define D_RAIN "Дощ"
+#define D_RANGE "Range"
 #define D_RECEIVED "Отримано"
 #define D_RESTART "Перезавантаження"
 #define D_RESTARTING "Перезавантаження"
