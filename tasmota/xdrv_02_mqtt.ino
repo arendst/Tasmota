@@ -221,6 +221,15 @@ void MqttUnsubscribeLib(const char *topic)
 
 bool MqttPublishLib(const char* topic, bool retained)
 {
+  // If Prefix1 equals Prefix2 disable next MQTT subscription to prevent loop
+  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
+    char *str = strstr(topic, SettingsText(SET_MQTTPREFIX1));
+    if (str == topic) {
+      mqtt_cmnd_blocked_reset = 4;  // Allow up to four seconds before resetting residual cmnd blocks
+      mqtt_cmnd_blocked++;
+    }
+  }
+
   bool result = MqttClient.publish(topic, mqtt_data, retained);
   yield();  // #3313
   return result;
@@ -238,12 +247,8 @@ void MqttDataHandler(char* mqtt_topic, uint8_t* mqtt_data, unsigned int data_len
   // Do not execute multiple times if Prefix1 equals Prefix2
   if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
     char *str = strstr(mqtt_topic, SettingsText(SET_MQTTPREFIX1));
-    if ((str == mqtt_topic) && mqtt_cmnd_publish) {
-      if (mqtt_cmnd_publish > 3) {
-        mqtt_cmnd_publish -= 3;
-      } else {
-        mqtt_cmnd_publish = 0;
-      }
+    if ((str == mqtt_topic) && mqtt_cmnd_blocked) {
+      mqtt_cmnd_blocked--;
       return;
     }
   }
@@ -291,52 +296,41 @@ void MqttUnsubscribe(const char *topic)
 
 void MqttPublishLogging(const char *mxtime)
 {
-  if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if (MqttIsConnected()) {
+  char saved_mqtt_data[strlen(mqtt_data) +1];
+  memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
 
-      char saved_mqtt_data[MESSZ];
-      memcpy(saved_mqtt_data, mqtt_data, sizeof(saved_mqtt_data));
-//      ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
-      Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
+//    ResponseTime_P(PSTR(",\"Log\":{\"%s\"}}"), log_data);  // Will fail as some messages contain JSON
+  Response_P(PSTR("%s%s"), mxtime, log_data);            // No JSON and ugly!!
+  char stopic[TOPSZ];
+  GetTopic_P(stopic, STAT, mqtt_topic, PSTR("LOGGING"));
+  MqttPublishLib(stopic, false);
 
-      char romram[33];
-      char stopic[TOPSZ];
-      snprintf_P(romram, sizeof(romram), PSTR("LOGGING"));
-      GetTopic_P(stopic, STAT, mqtt_topic, romram);
-
-      char *me;
-      if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
-        me = strstr(stopic, SettingsText(SET_MQTTPREFIX1));
-        if (me == stopic) {
-          mqtt_cmnd_publish += 3;
-        }
-      }
-      MqttPublishLib(stopic, false);
-
-      memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
-    }
-  }
+  memcpy(mqtt_data, saved_mqtt_data, sizeof(saved_mqtt_data));
 }
 
-void MqttPublishDirect(const char* topic, bool retained)
+void MqttPublish(const char* topic, bool retained)
 {
-  char sretained[CMDSZ];
-  char slog_type[20];
-
 #ifdef USE_DEBUG_DRIVER
-  ShowFreeMem(PSTR("MqttPublishDirect"));
+  ShowFreeMem(PSTR("MqttPublish"));
 #endif
 
+#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
+//  if (retained) {
+//    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
+//  }
+  retained = false;   // AWS IoT does not support retained, it will disconnect if received
+#endif
+
+  char sretained[CMDSZ];
   sretained[0] = '\0';
+  char slog_type[20];
   snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_RESULT));
 
   if (Settings.flag.mqtt_enabled) {  // SetOption3 - Enable MQTT
-    if (MqttIsConnected()) {
-      if (MqttPublishLib(topic, retained)) {
-        snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
-        if (retained) {
-          snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
-        }
+    if (MqttPublishLib(topic, retained)) {
+      snprintf_P(slog_type, sizeof(slog_type), PSTR(D_LOG_MQTT));
+      if (retained) {
+        snprintf_P(sretained, sizeof(sretained), PSTR(" (" D_RETAINED ")"));
       }
     }
   }
@@ -352,25 +346,6 @@ void MqttPublishDirect(const char* topic, bool retained)
   if (Settings.ledstate &0x04) {
     blinks++;
   }
-}
-
-void MqttPublish(const char* topic, bool retained)
-{
-  char *me;
-#if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
-  if (retained) {
-    AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR("Retained are not supported by AWS IoT, using retained = false."));
-  }
-  retained = false;   // AWS IoT does not support retained, it will disconnect if received
-#endif
-
-  if (!strcmp(SettingsText(SET_MQTTPREFIX1), SettingsText(SET_MQTTPREFIX2))) {
-    me = strstr(topic, SettingsText(SET_MQTTPREFIX1));
-    if (me == topic) {
-      mqtt_cmnd_publish += 3;
-    }
-  }
-  MqttPublishDirect(topic, retained);
 }
 
 void MqttPublish(const char* topic)
@@ -860,7 +835,7 @@ void CmndPublish(void)
       } else {
         mqtt_data[0] = '\0';
       }
-      MqttPublishDirect(stemp1, (XdrvMailbox.index == 2));
+      MqttPublish(stemp1, (XdrvMailbox.index == 2));
 //      ResponseCmndDone();
       mqtt_data[0] = '\0';
     }
@@ -986,8 +961,10 @@ void CmndSensorRetain(void)
 \*********************************************************************************************/
 #if defined(USE_MQTT_TLS) && defined(USE_MQTT_AWS_IOT)
 
-const static uint16_t tls_spi_start_sector = SPIFFS_END + 4;  // 0xXXFF
-const static uint8_t* tls_spi_start    = (uint8_t*) ((tls_spi_start_sector * SPI_FLASH_SEC_SIZE) + 0x40200000);  // 0x40XFF000
+// const static uint16_t tls_spi_start_sector = SPIFFS_END + 4;  // 0xXXFF
+// const static uint8_t* tls_spi_start    = (uint8_t*) ((tls_spi_start_sector * SPI_FLASH_SEC_SIZE) + 0x40200000);  // 0x40XFF000
+const static uint16_t tls_spi_start_sector = 0xFF;  // Force last bank of first MB
+const static uint8_t* tls_spi_start    = (uint8_t*) 0x402FF000;  // 0x402FF000
 const static size_t   tls_spi_len      = 0x1000;  // 4kb blocs
 const static size_t   tls_block_offset = 0x0400;
 const static size_t   tls_block_len    = 0x0400;   // 1kb

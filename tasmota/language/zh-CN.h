@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "固件大小"
 #define D_PROJECT "项目:"
 #define D_RAIN "降水量"
+#define D_RANGE "Range"
 #define D_RECEIVED "已接收"
 #define D_RESTART "重启"
 #define D_RESTARTING "正在重启"

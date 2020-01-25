@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Program méret"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Eső"
+#define D_RANGE "Range"
 #define D_RECEIVED "Érkezett"
 #define D_RESTART "Újraindítás"
 #define D_RESTARTING "Újraindítás"

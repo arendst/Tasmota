@@ -187,7 +187,8 @@ const char HTTP_SCRIPT_CONSOL[] PROGMEM =
       "c=eb('c1');"
       "o='&c1='+encodeURIComponent(c.value);"
       "c.value='';"
-      "t.scrollTop=sn;"
+      "t.scrollTop=99999;"
+      "sn=t.scrollTop;"
     "}"
     "if(t.scrollTop>=sn){"                // User scrolled back so no updates
       "if(x!=null){x.abort();}"           // Abort if no response within 2 seconds (happens on restart 1)
@@ -341,7 +342,7 @@ const char HTTP_HEAD_STYLE1[] PROGMEM =
   "input[type=checkbox],input[type=radio]{width:1em;margin-right:6px;vertical-align:-1px;}"
   "input[type=range]{width:99%%;}"
   "select{width:100%%;background:#%06x;color:#%06x;}"  // COLOR_INPUT, COLOR_INPUT_TEXT
-  "textarea{resize:none;width:98%%;height:318px;padding:5px;overflow:auto;background:#%06x;color:#%06x;}"  // COLOR_CONSOLE, COLOR_CONSOLE_TEXT
+  "textarea{resize:vertical;width:98%%;height:318px;padding:5px;overflow:auto;background:#%06x;color:#%06x;}"  // COLOR_CONSOLE, COLOR_CONSOLE_TEXT
   "body{text-align:center;font-family:verdana,sans-serif;background:#%06x;}"  // COLOR_BACKGROUND
   "td{padding:0px;}";
 const char HTTP_HEAD_STYLE2[] PROGMEM =
@@ -983,6 +984,17 @@ void HandleWifiLogin(void)
   WSContentStop();
 }
 
+void WebSliderColdWarm(void)
+{
+  WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Cold Warm
+    "a",             // a - Unique HTML id
+    "#fff", "#ff0",  // White to Yellow
+    1,               // sl1
+    153, 500,        // Range color temperature
+    LightGetColorTemp(),
+    't', 0);         // t0 - Value id releated to lc("t0", value) and WebGetArg("t0", tmp, sizeof(tmp));
+}
+
 void HandleRoot(void)
 {
   if (CaptivePortal()) { return; }  // If captive portal redirect instead of displaying the page.
@@ -1032,17 +1044,13 @@ void HandleRoot(void)
     if (light_type) {
       uint8_t light_subtype = light_type &7;
       if (!Settings.flag3.pwm_multi_channels) {  // SetOption68 0 - Enable multi-channels PWM instead of Color PWM
-        if ((LST_COLDWARM == light_subtype) || (LST_RGBCW == light_subtype)) {
+        bool split_white = ((LST_RGBW <= light_subtype) && (devices_present > 1));  // Only on RGBW or RGBCW and SetOption37 128
 
-          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // Cold Warm
-            "a",             // a - Unique HTML id
-            "#fff", "#ff0",  // White to Yellow
-            1,               // sl1
-            153, 500,        // Range color temperature
-            LightGetColorTemp(),
-            't', 0);         // t0 - Value id releated to lc("t0", value) and WebGetArg("t0", tmp, sizeof(tmp));
+        if ((LST_COLDWARM == light_subtype) || ((LST_RGBCW == light_subtype) && !split_white)) {
+          WebSliderColdWarm();
         }
-        if (light_subtype > 2) {
+
+        if (light_subtype > 2) {  // No W or CW
           uint16_t hue;
           uint8_t sat;
           LightGetHSB(&hue, &sat, nullptr);
@@ -1078,6 +1086,19 @@ void HandleRoot(void)
           Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100%
           Settings.light_dimmer,
           'd', 0);           // d0 - Value id is related to lc("d0", value) and WebGetArg("d0", tmp, sizeof(tmp));
+
+        if (split_white) {   // SetOption37 128
+          if (LST_RGBCW == light_subtype) {
+            WebSliderColdWarm();
+          }
+          WSContentSend_P(HTTP_MSG_SLIDER_GRADIENT,  // White brightness - Black to White
+            "f",             // f - Unique HTML id
+            "#000", "#fff",  // Black to White
+            5,               // sl5 - Unique range HTML id - Not used
+            Settings.flag3.slider_dimmer_stay_on, 100,  // Range 0/1 to 100%
+            LightGetDimmer(2),
+            'w', 0);         // w0 - Value id is related to lc("w0", value) and WebGetArg("w0", tmp, sizeof(tmp));
+        }
       } else {  // Settings.flag3.pwm_multi_channels - SetOption68 1 - Enable multi-channels PWM instead of Color PWM
         uint32_t pwm_channels = light_subtype > LST_MAX ? LST_MAX : light_subtype;
         stemp[0] = 'e'; stemp[1] = '0'; stemp[2] = '\0';  // d0
@@ -1123,7 +1144,7 @@ void HandleRoot(void)
         int32_t ShutterWebButton;
         if (ShutterWebButton = IsShutterWebButton(idx)) {
           WSContentSend_P(HTTP_DEVICE_CONTROL, 100 / devices_present, idx,
-            (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : (ShutterWebButton>0) ? "▲" : "▼",
+            (set_button) ? SettingsText(SET_BUTTON1 + idx -1) : ((Settings.shutter_options[abs(ShutterWebButton)-1] & 2) /* is locked */ ? "-" : ((ShutterWebButton>0) ? "▲" : "▼")),
             "");
           continue;
         }
@@ -1226,6 +1247,11 @@ bool HandleRootStatusRefresh(void)
   WebGetArg("d0", tmp, sizeof(tmp));  // 0 - 100 Dimmer value
   if (strlen(tmp)) {
     snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_DIMMER " %s"), tmp);
+    ExecuteWebCommand(svalue, SRC_WEBGUI);
+  }
+  WebGetArg("w0", tmp, sizeof(tmp));  // 0 - 100 White value
+  if (strlen(tmp)) {
+    snprintf_P(svalue, sizeof(svalue), PSTR(D_CMND_WHITE " %s"), tmp);
     ExecuteWebCommand(svalue, SRC_WEBGUI);
   }
   uint32_t pwm_channels = (light_type & 7) > LST_MAX ? LST_MAX : (light_type & 7);

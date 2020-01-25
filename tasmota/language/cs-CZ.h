@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Velikost programu"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Rain"
+#define D_RANGE "Range"
 #define D_RECEIVED "Přijatý"
 #define D_RESTART "Restart"
 #define D_RESTARTING "Restartování"

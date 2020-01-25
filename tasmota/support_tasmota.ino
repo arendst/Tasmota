@@ -438,9 +438,9 @@ bool SendKey(uint32_t key, uint32_t device, uint32_t state)
 #ifdef USE_DOMOTICZ
     if (!(DomoticzSendKey(key, device, state, strlen(mqtt_data)))) {
 #endif  // USE_DOMOTICZ
-      MqttPublishDirect(stopic, ((key) ? Settings.flag.mqtt_switch_retain                         // CMND_SWITCHRETAIN
-                                       : Settings.flag.mqtt_button_retain) &&                     // CMND_BUTTONRETAIN
-                                       (state != POWER_HOLD || !Settings.flag3.no_hold_retain));  // SetOption62 - Don't use retain flag on HOLD messages
+      MqttPublish(stopic, ((key) ? Settings.flag.mqtt_switch_retain                         // CMND_SWITCHRETAIN
+                                 : Settings.flag.mqtt_button_retain) &&                     // CMND_BUTTONRETAIN
+                                 (state != POWER_HOLD || !Settings.flag3.no_hold_retain));  // SetOption62 - Don't use retain flag on HOLD messages
 #ifdef USE_DOMOTICZ
     }
 #endif  // USE_DOMOTICZ
@@ -664,7 +664,7 @@ bool MqttShowSensor(void)
 #else
     if (pin[GPIO_SWT1 +i] < 99) {
 #endif  // USE_TM1638
-      bool swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]));
+      bool swm = ((FOLLOW_INV == Settings.switchmode[i]) || (PUSHBUTTON_INV == Settings.switchmode[i]) || (PUSHBUTTONHOLD_INV == Settings.switchmode[i]) || (FOLLOWMULTI_INV == Settings.switchmode[i]));
       ResponseAppend_P(PSTR(",\"" D_JSON_SWITCH "%d\":\"%s\""), i +1, GetStateText(swm ^ SwitchLastState(i)));
     }
   }
@@ -692,18 +692,16 @@ void MqttPublishSensor(void)
   }
 }
 
-/********************************************************************************************/
+/*********************************************************************************************\
+ * State loops
+\*********************************************************************************************/
+/*-------------------------------------------------------------------------------------------*\
+ * Every second
+\*-------------------------------------------------------------------------------------------*/
 
 void PerformEverySecond(void)
 {
   uptime++;
-
-  if (ntp_synced_message) {
-    // Moved here to fix syslog UDP exception 9 during RtcSecond
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR("NTP: Drift %d, (" D_UTC_TIME ") %s, (" D_DST_TIME ") %s, (" D_STD_TIME ") %s"),
-      DriftTime(), GetTime(0).c_str(), GetTime(2).c_str(), GetTime(3).c_str());
-    ntp_synced_message = false;
-  }
 
   if (POWER_CYCLE_TIME == uptime) {
     UpdateQuickPowerCycle(false);
@@ -720,6 +718,13 @@ void PerformEverySecond(void)
 #ifdef USE_DEEPSLEEP
     }
 #endif
+  }
+
+  if (mqtt_cmnd_blocked_reset) {
+    mqtt_cmnd_blocked_reset--;
+    if (!mqtt_cmnd_blocked_reset) {
+      mqtt_cmnd_blocked = 0;             // Clean up MQTT cmnd loop block
+    }
   }
 
   if (seriallog_timer) {
@@ -770,9 +775,6 @@ void PerformEverySecond(void)
   }
 }
 
-/*********************************************************************************************\
- * State loops
-\*********************************************************************************************/
 /*-------------------------------------------------------------------------------------------*\
  * Every 0.1 second
 \*-------------------------------------------------------------------------------------------*/
@@ -781,6 +783,11 @@ void Every100mSeconds(void)
 {
   // As the max amount of sleep = 250 mSec this loop will shift in time...
   power_t power_now;
+
+  if (prepped_loglevel) {
+    AddLog(prepped_loglevel);
+    prepped_loglevel = 0;
+  }
 
   if (latching_relay_pulse) {
     latching_relay_pulse--;
@@ -823,8 +830,6 @@ void Every250mSeconds(void)
 
   state_250mS++;
   state_250mS &= 0x3;
-
-  if (mqtt_cmnd_publish) mqtt_cmnd_publish--;             // Clean up
 
   if (!Settings.flag.global_state) {                      // Problem blinkyblinky enabled - SetOption31 - Control link led blinking
     if (global_state.data) {                              // Any problem
@@ -887,17 +892,36 @@ void Every250mSeconds(void)
           strlcpy(mqtt_data, GetOtaUrl(log_data, sizeof(log_data)), sizeof(mqtt_data));
 #ifndef FIRMWARE_MINIMAL
           if (RtcSettings.ota_loader) {
-            char *bch = strrchr(mqtt_data, '/');                           // Only consider filename after last backslash prevent change of urls having "-" in it
-            char *pch = strrchr((bch != nullptr) ? bch : mqtt_data, '-');  // Change from filename-DE.bin into filename-minimal.bin
-//            char *ech = strrchr((bch != nullptr) ? bch : mqtt_data, '.');  // Change from filename.bin into filename-minimal.bin
-            char *ech = strchr((bch != nullptr) ? bch : mqtt_data, '.');   // Change from filename.bin into filename-minimal.bin or filename.bin.gz into filename-minimal.bin.gz
-            if (!pch) { pch = ech; }
-            if (pch) {
-              mqtt_data[pch - mqtt_data] = '\0';
-//              char *ech = strrchr(SettingsText(SET_OTAURL), '.');          // Change from filename.bin into filename-minimal.bin
-              char *ech = strchr(SettingsText(SET_OTAURL), '.');          // Change from filename.bin into filename-minimal.bin
-              snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ech);  // Minimal filename must be filename-minimal
+            // OTA File too large so try OTA minimal version
+            // Replace tasmota                                         with tasmota-minimal
+            // Replace tasmota-DE                                      with tasmota-minimal
+            // Replace tasmota.bin                                     with tasmota-minimal.bin
+            // Replace tasmota.xyz                                     with tasmota-minimal.xyz
+            // Replace tasmota.bin.gz                                  with tasmota-minimal.bin.gz
+            // Replace tasmota.xyz.gz                                  with tasmota-minimal.xyz.gz
+            // Replace http://domus1:80/api/arduino/tasmota.bin        with http://domus1:80/api/arduino/tasmota-minimal.bin
+            // Replace http://domus1:80/api/arduino/tasmota.bin.gz     with http://domus1:80/api/arduino/tasmota-minimal.bin.gz
+            // Replace http://domus1:80/api/arduino/tasmota-DE.bin.gz  with http://domus1:80/api/arduino/tasmota-minimal.bin.gz
+            // Replace http://domus1:80/api/ard-uino/tasmota-DE.bin.gz with http://domus1:80/api/ard-uino/tasmota-minimal.bin.gz
+
+            char *bch = strrchr(mqtt_data, '/');                       // Only consider filename after last backslash prevent change of urls having "-" in it
+            if (bch == nullptr) { bch = mqtt_data; }                   // No path found so use filename only
+
+            char *ech = strrchr(bch, '.');                             // Find file type in filename (none, .bin or .gz)
+            if ((ech != nullptr) && (0 == strncasecmp_P(ech, PSTR(".GZ"), 3))) {
+              char *fch = ech;
+              *fch = '\0';
+              ech = strrchr(bch, '.');                                 // Find file type .bin.gz
+              *fch = '.';
             }
+            if (ech == nullptr) { ech = mqtt_data + strlen(mqtt_data); }
+            char ota_url_type[strlen(ech) +1];
+            strncpy(ota_url_type, ech, sizeof(ota_url_type));          // Either empty, .bin or .bin.gz
+
+            char *pch = strrchr(bch, '-');                             // Find last dash (-) and ignore remainder - handles tasmota-DE
+            if (pch == nullptr) { pch = ech; }                         // No dash so ignore filetype
+            *pch = '\0';                                               // mqtt_data = http://domus1:80/api/arduino/tasmota
+            snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("%s-" D_JSON_MINIMAL "%s"), mqtt_data, ota_url_type);  // Minimal filename must be filename-minimal
           }
 #endif  // FIRMWARE_MINIMAL
           AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_UPLOAD "%s"), mqtt_data);
@@ -1211,8 +1235,11 @@ void SerialInput(void)
   if (Settings.flag.mqtt_serial && serial_in_byte_counter && (millis() > (serial_polling_window + SERIAL_POLLING))) {  // CMND_SERIALSEND and CMND_SERIALLOG
     serial_in_buffer[serial_in_byte_counter] = 0;                                // Serial data completed
     char hex_char[(serial_in_byte_counter * 2) + 2];
-    Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":\"%s\"}"),
-      (Settings.flag.mqtt_serial_raw) ? ToHex_P((unsigned char*)serial_in_buffer, serial_in_byte_counter, hex_char, sizeof(hex_char)) : serial_in_buffer);
+    bool assume_json = (!Settings.flag.mqtt_serial_raw && (serial_in_buffer[0] == '{'));
+    Response_P(PSTR("{\"" D_JSON_SERIALRECEIVED "\":%s%s%s}"),
+      (assume_json) ? "" : """",
+      (Settings.flag.mqtt_serial_raw) ? ToHex_P((unsigned char*)serial_in_buffer, serial_in_byte_counter, hex_char, sizeof(hex_char)) : serial_in_buffer,
+      (assume_json) ? "" : """");
     MqttPublishPrefixTopic_P(RESULT_OR_TELE, PSTR(D_JSON_SERIALRECEIVED));
     XdrvRulesProcess();
     serial_in_byte_counter = 0;

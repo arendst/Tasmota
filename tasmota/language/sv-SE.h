@@ -137,6 +137,7 @@
 #define D_PROGRAM_SIZE "Programstorlek"
 #define D_PROJECT "Projekt"
 #define D_RAIN "Regn"
+#define D_RANGE "Range"
 #define D_RECEIVED "Mottagen"
 #define D_RESTART "Omstart"
 #define D_RESTARTING "Startar om"
