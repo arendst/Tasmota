@@ -667,11 +667,6 @@ void MqttCheck(void)
     if (!MqttIsConnected()) {
       global_state.mqtt_down = 1;
       if (!Mqtt.retry_counter) {
-#ifdef USE_DISCOVERY
-#ifdef MQTT_HOST_DISCOVERY
-        if (!strlen(SettingsText(SET_MQTT_HOST)) && !Wifi.mdns_begun) { return; }
-#endif  // MQTT_HOST_DISCOVERY
-#endif  // USE_DISCOVERY
         MqttReconnect();
       } else {
         Mqtt.retry_counter--;
@@ -681,7 +676,9 @@ void MqttCheck(void)
     }
   } else {
     global_state.mqtt_down = 0;
-    if (Mqtt.initial_connection_state) MqttReconnect();
+    if (Mqtt.initial_connection_state) {
+      MqttReconnect();
+    }
   }
 }
 
