@@ -545,7 +545,7 @@ void ZigbeeStateMachine_Run(void) {
     }
 
     // load current instruction details
-    AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Executing instruction pc=%d"), zigbee.pc);
+    //AddLog_P2(LOG_LEVEL_DEBUG_MORE, PSTR(D_LOG_ZIGBEE "Executing instruction pc=%d"), zigbee.pc);
     const Zigbee_Instruction *cur_instr_line = &zb_prog[zigbee.pc];
     cur_instr = pgm_read_byte(&cur_instr_line->i.i);
     cur_d8    = pgm_read_byte(&cur_instr_line->i.d8);

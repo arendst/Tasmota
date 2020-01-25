@@ -184,7 +184,7 @@ class SBuffer hibernateDevices(void) {
   // Log
   char *hex_char = (char*) malloc((buf_len * 2) + 2);
   if (hex_char) {
-    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZigbeeFlashStore %s"),
+    AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZbFlashStore %s"),
                                     ToHex_P(buf.getBuffer(), buf_len, hex_char, (buf_len * 2) + 2));
     free(hex_char);
   }
