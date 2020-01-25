@@ -445,7 +445,7 @@ int32_t Z_ReceiveAfIncomingMessage(int32_t res, const class SBuffer &buf) {
   String msg("");
   msg.reserve(100);
   json.printTo(msg);
-  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE "ZigbeeZCLRawReceived: {\"0x%04X\":%s}"), srcaddr, msg.c_str());
+  AddLog_P2(LOG_LEVEL_DEBUG, PSTR(D_LOG_ZIGBEE D_JSON_ZIGBEEZCL_RAW_RECEIVED ": {\"0x%04X\":%s}"), srcaddr, msg.c_str());
 
   zcl_received.postProcessAttributes(srcaddr, json);
   // Add linkquality
