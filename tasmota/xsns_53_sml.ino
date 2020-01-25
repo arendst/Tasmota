@@ -2111,6 +2111,8 @@ init10:
 
 #ifdef USE_SML_SCRIPT_CMD
 uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
+  if (meter<1 || meter>meters_used) return 0;
+  meter--;
   if (!meter_ss[meter]) return 0;
   if (meter_ss[meter]->begin(br)) {
     meter_ss[meter]->flush();
@@ -2124,20 +2126,22 @@ uint32_t SML_SetBaud(uint32_t meter, uint32_t br) {
 }
 
 uint32_t SML_Write(uint32_t meter,char *hstr) {
-    if (!meter_ss[meter]) return 0;
-    uint8_t sbuff[32];
-    uint8_t *ucp=sbuff,slen=0;
-    char *cp=hstr;
-    while (*cp) {
-      if (!*cp || !*(cp+1)) break;
-      uint8_t iob=(sml_hexnibble(*cp) << 4) | sml_hexnibble(*(cp+1));
-      cp+=2;
-      *ucp++=iob;
-      slen++;
-      if (slen>=sizeof(sbuff)) break;
-    }
-    meter_ss[meter]->write(sbuff,slen);
-    return slen;
+  if (meter<1 || meter>meters_used) return 0;
+  meter--;
+  if (!meter_ss[meter]) return 0;
+  uint8_t sbuff[32];
+  uint8_t *ucp=sbuff,slen=0;
+  char *cp=hstr;
+  while (*cp) {
+    if (!*cp || !*(cp+1)) break;
+    uint8_t iob=(sml_hexnibble(*cp) << 4) | sml_hexnibble(*(cp+1));
+    cp+=2;
+    *ucp++=iob;
+    slen++;
+    if (slen>=sizeof(sbuff)) break;
+  }
+  meter_ss[meter]->write(sbuff,slen);
+  return slen;
 }
 #endif
 
