@@ -211,14 +211,17 @@ void WifiBegin(uint8_t flag, uint8_t channel)
   if (channel) {
     WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active), channel, Wifi.bssid);
     // add debug output to console to show connected BSSID and channel for multi-AP installations
-	AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s Channel %d BSSId %s " D_IN_MODE " 11%c " D_AS " %s..."),
-      Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), channel, ToHex_P((unsigned char*)Wifi.bssid, 6, hex_char, sizeof(hex_char), ':'),kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s Channel %d BSSId %s " D_IN_MODE " 11%c " D_AS " %s..."),
+      Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active),
+      channel, ToHex_P((unsigned char*)Wifi.bssid, 6, hex_char, sizeof(hex_char), ':'),
+      kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
   } else {
     WiFi.begin(SettingsText(SET_STASSID1 + Settings.sta_active), SettingsText(SET_STAPWD1 + Settings.sta_active));
     AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_WIFI D_CONNECTING_TO_AP "%d %s " D_IN_MODE " 11%c " D_AS " %s..."),
-      Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active), kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
+      Settings.sta_active +1, SettingsText(SET_STASSID1 + Settings.sta_active),
+      kWifiPhyMode[WiFi.getPhyMode() & 0x3], my_hostname);
   }
-  
+
 #if LWIP_IPV6
   for (bool configured = false; !configured;) {
     uint16_t cfgcnt = 0;

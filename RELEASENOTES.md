@@ -58,6 +58,7 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
 - Change IRremoteESP8266 library updated to v2.7.2
 - Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
+- Change wifi connectivity stability (#7602)
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
 - Fix ``White`` added to light status (#7142)

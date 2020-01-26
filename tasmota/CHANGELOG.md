@@ -2,7 +2,7 @@
 
 ### 8.1.0.5 20200126
 
-- Bump version
+- Change wifi connectivity stability (#7602)
 
 ### 8.1.0.4 20200116
 
