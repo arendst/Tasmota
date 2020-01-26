@@ -52,11 +52,12 @@ The following binary downloads have been compiled with ESP8266/Arduino library c
 
 ## Changelog
 
-### Version 8.1.0.4
+### Version 8.1.0.5
 
 - Change Lights: simplified gamma correction and 10 bits internal computation
 - Change commands ``Prefix``, ``Ssid``, ``StateText``, ``NTPServer``, and ``FriendlyName`` displaying all items
 - Change IRremoteESP8266 library updated to v2.7.2
+- Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
 - Fix Sonoff Bridge, Sc, L1, iFan03 and CSE7766 serial interface to forced speed, config and disable logging
 - Fix commands ``Display`` and ``Counter`` from overruling command processing (#7322)
 - Fix ``White`` added to light status (#7142)

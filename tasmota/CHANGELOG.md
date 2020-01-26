@@ -1,7 +1,12 @@
 ## Unreleased (development)
 
+### 8.1.0.5 20200126
+
+- Bump version
+
 ### 8.1.0.4 20200116
 
+- Change Zigbee command prefix from ``Zigbee*`` to ``Zb*``
 - Fix ``PowerDelta`` zero power detection (#7515)
 - Fix OTA minimal gzipped detection regression from 8.1.0.3
 - Fix ``RGBWWTable`` ignored (#7572)
@@ -11,7 +16,6 @@
 - Add SoftwareSerial to CSE7766 driver allowing different GPIOs (#7563)
 - Add optional parameter <startcolor> to command ``Scheme <scheme>, <startcolor>`` to control initial start color
 - Add rule trigger on one level deeper using syntax with two ``#`` like ``on zigbeereceived#vibration_sensor#aqaracubeside=0 do ...``
-- Change Zigbee commands renamed to ``Zb*``
 
 ### 8.1.0.3 20200106
 
