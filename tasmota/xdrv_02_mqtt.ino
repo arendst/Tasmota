@@ -389,7 +389,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
     }
     // update topic is "$aws/things/<topic>/shadow/update"
     snprintf_P(romram, sizeof(romram), PSTR("$aws/things/%s/shadow/update"), topic2);
-    
+
     // copy buffer
     char *mqtt_save = (char*) malloc(strlen(mqtt_data)+1);
     if (!mqtt_save) { return; }    // abort
@@ -852,13 +852,13 @@ void CmndPrefix(void)
 void CmndPublish(void)
 {
   if (XdrvMailbox.data_len > 0) {
-    char *mqtt_part = strtok(XdrvMailbox.data, " ");
+    char *payload_part;
+    char *mqtt_part = strtok_r(XdrvMailbox.data, " ", &payload_part);
     if (mqtt_part) {
       char stemp1[TOPSZ];
       strlcpy(stemp1, mqtt_part, sizeof(stemp1));
-      mqtt_part = strtok(nullptr, " ");
-      if (mqtt_part) {
-        strlcpy(mqtt_data, mqtt_part, sizeof(mqtt_data));
+      if ((payload_part != nullptr) && strlen(payload_part)) {
+        strlcpy(mqtt_data, payload_part, sizeof(mqtt_data));
       } else {
         mqtt_data[0] = '\0';
       }
