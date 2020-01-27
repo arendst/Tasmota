@@ -362,7 +362,7 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
  * prefix 5 = stat using subtopic or RESULT
  * prefix 6 = tele using subtopic or RESULT
  */
-  char romram[33];
+  char romram[64];
   char stopic[TOPSZ];
 
   snprintf_P(romram, sizeof(romram), ((prefix > 3) && !Settings.flag.mqtt_response) ? S_RSLT_RESULT : subtopic);  // SetOption4 - Switch between MQTT RESULT or COMMAND
@@ -372,6 +372,36 @@ void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic, bool retain
   prefix &= 3;
   GetTopic_P(stopic, prefix, mqtt_topic, romram);
   MqttPublish(stopic, retained);
+
+#ifdef USE_MQTT_AWS_IOT
+  if ((prefix > 0) && (Settings.flag4.awsiot_shadow)) {    // placeholder for SetOptionXX
+    // compute the target topic
+    char *topic = SettingsText(SET_MQTT_TOPIC);
+    char topic2[strlen(topic)+1];       // save buffer onto stack
+    strcpy(topic2, topic);
+    // replace any '/' with '_'
+    char *s = topic2;
+    while (*s) {
+      if ('/' == *s) {
+        *s = '_';
+      }
+      s++;
+    }
+    // update topic is "$aws/things/<topic>/shadow/update"
+    snprintf_P(romram, sizeof(romram), PSTR("$aws/things/%s/shadow/update"), topic2);
+    
+    // copy buffer
+    char *mqtt_save = (char*) malloc(strlen(mqtt_data)+1);
+    if (!mqtt_save) { return; }    // abort
+    strcpy(mqtt_save, mqtt_data);
+    snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"state\":{\"reported\":%s}}"), mqtt_save);
+    free(mqtt_save);
+
+    bool result = MqttClient.publish(romram, mqtt_data, false);
+    AddLog_P2(LOG_LEVEL_INFO, PSTR(D_LOG_MQTT "Updated shadow: %s"), romram);
+    yield();  // #3313
+  }
+#endif // USE_MQTT_AWS_IOT
 }
 
 void MqttPublishPrefixTopic_P(uint32_t prefix, const char* subtopic)
