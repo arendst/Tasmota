@@ -233,7 +233,7 @@ void ShutterInit(void)
 
       Shutter.real_position[i] = ShutterPercentToRealPosition(Settings.shutter_position[i], i);
       //Shutter.real_position[i] =   Settings.shutter_position[i] <= 5 ?  Settings.shuttercoeff[2][i] * Settings.shutter_position[i] : Settings.shuttercoeff[1][i] * Settings.shutter_position[i] + Settings.shuttercoeff[0,i];
-      Shutter.start_position[i] = Shutter.real_position[i];
+      Shutter.start_position[i] = Shutter.target_position[i] = Shutter.real_position[i];
       Shutter.motordelay[i] = Settings.shutter_motordelay[i];
 
       char shutter_open_chr[10];
