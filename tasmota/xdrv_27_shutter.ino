@@ -513,11 +513,11 @@ void ShutterRelayChanged(void)
 	}
 }
 
-bool ShutterButtonIsSimultaneousHold(uint32_t button_index) {
+bool ShutterButtonIsSimultaneousHold(uint32_t button_index, uint32_t shutter_index) {
   // check for simultaneous shutter button hold
   uint32 min_shutterbutton_hold_timer = -1;
   for (uint32_t i = 0; i < MAX_KEYS; i++) {
-    if ((Settings.shutter_button[i] & (1<<31)) && (Button.hold_timer[i] < min_shutterbutton_hold_timer))
+    if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (Button.hold_timer[i] < min_shutterbutton_hold_timer))
       min_shutterbutton_hold_timer = Button.hold_timer[i];
   }
   return (min_shutterbutton_hold_timer > (Button.hold_timer[button_index]>>1));
@@ -562,10 +562,10 @@ void ShutterButtonHandler(void)
       }
       if ((Button.press_counter[button_index]<99) && (Button.hold_timer[button_index] == loops_per_second * Settings.param[P_HOLD_TIME] / 10)) {  // press still valid && SetOption32 (40) - Button hold
         // check for simultaneous shutter button hold
-        if (ShutterButtonIsSimultaneousHold(button_index)) {
+        if (ShutterButtonIsSimultaneousHold(button_index, shutter_index)) {
           // simultaneous shutter button hold detected
           for (uint32_t i = 0; i < MAX_KEYS; i++)
-            if (Settings.shutter_button[i] & (1<<31))
+            if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index))
               Button.press_counter[i] = 99; // Remember to discard further action for press & hold within button timings
           press_index = 0;
           buttonState = SHT_PRESSED_HOLD_SIMULTANEOUS;
@@ -578,7 +578,7 @@ void ShutterButtonHandler(void)
       }
       if ((Button.press_counter[button_index]==0) && (Button.hold_timer[button_index] == loops_per_second * IMMINENT_RESET_FACTOR * Settings.param[P_HOLD_TIME] / 10)) {  // SetOption32 (40) - Button held for factor times longer
         // check for simultaneous shutter button extend hold
-        if (ShutterButtonIsSimultaneousHold(button_index)) {
+        if (ShutterButtonIsSimultaneousHold(button_index, shutter_index)) {
           // simultaneous shutter button extend hold detected
           press_index = 0;
           buttonState = SHT_PRESSED_EXT_HOLD_SIMULTANEOUS;
@@ -596,14 +596,14 @@ void ShutterButtonHandler(void)
           // check for simultaneous shutter button press
           uint32 min_shutterbutton_press_counter = -1;
           for (uint32_t i = 0; i < MAX_KEYS; i++) {
-            if ((Settings.shutter_button[i] & (1<<31)) && (Button.press_counter[i] < min_shutterbutton_press_counter))
+            if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index) && (Button.press_counter[i] < min_shutterbutton_press_counter))
               min_shutterbutton_press_counter = Button.press_counter[i];
           }
           if (min_shutterbutton_press_counter == Button.press_counter[button_index]) {
             // simultaneous shutter button press detected
             press_index = Button.press_counter[button_index];
             for (uint32_t i = 0; i < MAX_KEYS; i++)
-              if (Settings.shutter_button[i] & (1<<31))
+              if ((Settings.shutter_button[i] & (1<<31)) && ((Settings.shutter_button[i] & 0x03) == shutter_index))
                 Button.press_counter[i] = 99; // Remember to discard further action for press & hold within button timings
             buttonState = SHT_PRESSED_MULTI_SIMULTANEOUS;
           }
